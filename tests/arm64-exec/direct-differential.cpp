@@ -50,7 +50,7 @@ int main()
         for (unsigned i = 0; i < 64; ++i) {
             unsigned rd = i & 31, rn = (i + sample) & 31, rm = random() & 31;
             unsigned sf = random() & 1, op = random() & 3;
-            switch ((i + sample) % 12) {
+            switch ((i + sample) % 16) {
             case 0: code[i] = (sf << 31) | (op << 29) | 0x11000000 |
                              ((random() & 4095) << 10) | (rn << 5) | rd; break;
             case 1: code[i] = (sf << 31) | (op << 29) | 0x0b000000 |
@@ -86,6 +86,18 @@ int main()
             case 10: code[i] = (sf << 31) | 0x1b000000 | ((random() & 1) << 15) |
                               ((random() & 31) << 10) | (rm << 16) | (rn << 5) | rd; break;
             case 11: code[i] = 0xdac00c00 | (rn << 5) | rd; break;
+            case 12: code[i] = 0x8b200000 | (op << 29) | (rm << 16) |
+                              ((random() & 7) << 13) | ((random() % 5) << 10) | (rn << 5) | rd; break;
+            case 13: code[i] = (sf << 31) | (op << 29) | 0x1a000000 |
+                              (rm << 16) | (rn << 5) | rd; break;
+            case 14: code[i] = (sf << 31) | ((random() & 1) << 30) | 0x3a400000 |
+                              ((random() & 1) << 11) | ((random() & 15) << 12) |
+                              (rm << 16) | (rn << 5) | (random() & 15); break;
+            case 15: {
+                constexpr uint32_t ops[] = {0x9b207c00, 0x9ba07c00, 0x9b407c00, 0x9bc07c00};
+                code[i] = ops[random() % 4] | (rm << 16) | (rn << 5) | rd;
+                break;
+            }
             }
         }
         code[64] = 0xd4000001;
@@ -189,4 +201,36 @@ int main()
     std::puts("PASS: 65536 differential integer instructions, all GPRs, SP, NZCV");
     std::puts("PASS: 930 mapped-loop register combinations and guest-memory results");
     std::puts("PASS: pair writeback, register offsets, signed indices, guest-memory results");
+    for (unsigned sample = 0; sample < 2048; ++sample) {
+        unsigned rn = sample & 31, rt = random() & 31, size = (sample >> 5) & 3;
+        if (rn == rt && rn != 31) continue;
+        code.fill(0);
+        if (sample & 1) {
+            code[0] = (size << 30) | 0x089ffc00 | (rn << 5) | rt; // STLR
+            code[1] = 0xd2800000 | rt;
+            code[2] = code[0] | (1U << 22); // LDAR
+            code[3] = 0xd4000001;
+        } else {
+            size %= 3;
+            unsigned opc = size < 2 && (sample & 64) ? 3 : 2;
+            code[0] = (size << 30) | 0x38000400 | (opc << 22) | (16 << 12) | (rn << 5) | rt;
+            code[1] = 0xd4000001;
+        }
+        HuskArm64State a{};
+        for (auto &r : a.x) r = random();
+        a.sp = 0x20040;
+        if (rn != 31) a.x[rn] = a.sp;
+        a.pc = 0x10000;
+        a.nzcv = random() & 0xf0000000;
+        auto b = a;
+        Memory ma, mb;
+        for (auto &value : ma.bytes) value = random();
+        mb = ma;
+        HuskArm64Memory ca{&ma, Memory::read, Memory::write, Memory::map};
+        HuskArm64Memory cb{&mb, Memory::read, Memory::write, Memory::map};
+        CHECK(husk_arm64_run(reference.get(), &a, 0x10000, code.data(), ca, 100) == HUSK_ARM64_FALLBACK);
+        CHECK(husk_arm64_run(direct.get(), &b, 0x10000, code.data(), cb, 100) == HUSK_ARM64_FALLBACK);
+        CHECK(!std::memcmp(&a, &b, sizeof(a)) && ma.bytes == mb.bytes);
+    }
+    std::puts("PASS: signed loads, acquire/release memory, NZCV preservation");
 }

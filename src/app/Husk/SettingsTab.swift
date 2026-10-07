@@ -134,7 +134,8 @@ struct LibrarySettings: View {
 
 struct PerformanceSettings: View {
     @ObservedObject private var runner = QemuRunner.shared
-    @AppStorage("husk.directExecution") private var directExecution = true
+    @AppStorage("husk.directExecution") private var directExecution = false
+    @AppStorage("husk.gfxstream") private var gfxstream = false
     @State private var gpuMode =
         UserDefaults.standard.object(forKey: "husk.gpuMode") as? Bool ?? true
     @State private var sound = UserDefaults.standard.bool(forKey: "husk.sound")
@@ -145,31 +146,40 @@ struct PerformanceSettings: View {
         Form {
             if GuestImage.isCustomGuest {
                 Section {
+                    Toggle("Metal GLES (Experimental)", isOn: $gfxstream)
+                } header: {
+                    Text("Android graphics")
+                } footer: {
+                    Text("Requires the HyperOS GPU driver update. Close and reopen Husk after changing this setting. Saved VM states are unavailable in this mode.")
+                }
+                Section {
                     Toggle("ARM64 Direct (Experimental)", isOn: $directExecution)
                 } header: {
                     Text("CPU execution")
                 } footer: {
-                    Text("Uses one virtual CPU. Turn off to use standard TCG with four virtual CPUs. Close and reopen Husk after changing this setting.")
+                    Text(gfxstream
+                        ? "Both CPU modes use one virtual CPU with Metal GLES. Close and reopen Husk after changing this setting."
+                        : "Uses one virtual CPU. Turn off to use standard TCG with four virtual CPUs. Close and reopen Husk after changing this setting.")
                 }
             }
-            Section {
-                Picker("Renderer", selection: $gpuMode) {
-                    Text("GPU").tag(true)
-                    Text("CPU").tag(false)
+            if !GuestImage.isCustomGuest || !gfxstream {
+                Section {
+                    Picker("Renderer", selection: $gpuMode) {
+                        Text("GPU").tag(true)
+                        Text("CPU").tag(false)
+                    }
+                    .pickerStyle(.segmented)
+                    .onChange(of: gpuMode) { v in
+                        UserDefaults.standard.set(v, forKey: "husk.gpuMode")
+                        HuskLog.log("ui", v ? "GPU renderer selected" : "CPU renderer selected")
+                    }
+                } header: {
+                    Text("Renderer")
+                } footer: {
+                    Text(gpuMode
+                         ? "Tries the virgl renderer. Uses the CPU renderer if its graphics check fails."
+                         : "Android renders through the emulated CPU.")
                 }
-                .pickerStyle(.segmented)
-                .onChange(of: gpuMode) { v in
-                    UserDefaults.standard.set(v, forKey: "husk.gpuMode")
-                    HuskLog.log("ui", v ? "GPU renderer selected" : "CPU renderer selected")
-                }
-            } header: {
-                Text("Renderer")
-            } footer: {
-                Text(gpuMode
-                     ? "Android draws on the real GPU through Metal — about four times "
-                     + "the frame rate. This is the default."
-                     : "Every pixel is drawn by the emulated CPU. Much slower, and only "
-                     + "worth choosing if the GPU misbehaves.")
             }
 
             Section {

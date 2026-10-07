@@ -1,0 +1,325 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 639baeb..207ebc7 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -98,8 +98,15 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+ set(CMAKE_CXX_STANDARD 17)
+ set(CMAKE_C_STANDARD 11)
+ 
++if(CMAKE_SYSTEM_NAME STREQUAL "iOS")
++    set(GFXSTREAM_IOS TRUE)
++    add_compile_definitions(GFXSTREAM_IOS)
++endif()
++
+ if (APPLE)
+-    add_compile_definitions(VK_USE_PLATFORM_MACOS_MVK)
++    if(NOT GFXSTREAM_IOS)
++        add_compile_definitions(VK_USE_PLATFORM_MACOS_MVK)
++    endif()
+     add_compile_definitions(VK_USE_PLATFORM_METAL_EXT)
+ elseif(QNX)
+     # TODO(jsimonot): fix build error
+diff --git a/common/base/CMakeLists.txt b/common/base/CMakeLists.txt
+index 090901f..809b0c7 100644
+--- a/common/base/CMakeLists.txt
++++ b/common/base/CMakeLists.txt
+@@ -109,6 +109,8 @@ elseif(LINUX)
+     set(gfxstream_common_base_platform_deps
+         dl
+         rt)
++elseif(GFXSTREAM_IOS)
++    set(gfxstream_common_base_platform_deps "-framework Foundation")
+ elseif(APPLE)
+     set(gfxstream_common_base_platform_deps
+         "-framework Foundation"
+diff --git a/common/base/System.cpp b/common/base/System.cpp
+index 130af2e..4971c30 100644
+--- a/common/base/System.cpp
++++ b/common/base/System.cpp
+@@ -33,7 +33,11 @@
+ #endif
+ 
+ #ifdef __APPLE__
++#ifdef GFXSTREAM_IOS
++#include <mach-o/dyld.h>
++#else
+ #include <libproc.h>
++#endif
+ #include <mach/clock.h>
+ #include <mach/mach.h>
+ #endif  // __APPLE__
+@@ -90,7 +94,7 @@ private:
+     uint64_t mStartTimeUs;
+ #ifdef _WIN32
+     long long mFreqPerSec = 0;    // 0 means 'high perf counter isn't available'
+-#elif defined(__APPLE__)
++#elif defined(__APPLE__) && !defined(GFXSTREAM_IOS)
+     clock_serv_t mClockServ;
+ #endif
+ 
+@@ -101,13 +105,13 @@ public:
+         if (::QueryPerformanceFrequency(&freq)) {
+             mFreqPerSec = freq.QuadPart;
+         }
+-#elif defined(__APPLE__)
++#elif defined(__APPLE__) && !defined(GFXSTREAM_IOS)
+         host_get_clock_service(mach_host_self(), SYSTEM_CLOCK, &mClockServ);
+ #endif
+         mStartTimeUs = getUs();
+     }
+ 
+-#ifdef __APPLE__
++#if defined(__APPLE__) && !defined(GFXSTREAM_IOS)
+     ~TickCountImpl() {
+         mach_port_deallocate(mach_task_self(), mClockServ);
+     }
+@@ -125,7 +129,7 @@ public:
+     LARGE_INTEGER now;
+     ::QueryPerformanceCounter(&now);
+     return (now.QuadPart * 1000000ULL) / mFreqPerSec;
+-#elif defined __linux__ || defined __QNX__
++#elif defined __linux__ || defined __QNX__ || defined GFXSTREAM_IOS
+     timespec ts;
+     clock_gettime(CLOCK_MONOTONIC, &ts);
+     return ts.tv_sec * 1000000LL + ts.tv_nsec / 1000;
+@@ -341,8 +345,13 @@ std::string getProgramDirectoryFromPlatform() {
+     }
+ #elif defined(__APPLE__)
+     char s[PATH_MAX];
++#ifdef GFXSTREAM_IOS
++    uint32_t length = sizeof(s);
++    if (_NSGetExecutablePath(s, &length)) return {};
++#else
+     auto pid = getpid();
+     proc_pidpath(pid, s, sizeof(s));
++#endif
+     char* x = ::strrchr(s, '/');
+     if (x) {
+         // skip all slashes - there might be more than one
+diff --git a/common/base/system-native-mac.mm b/common/base/system-native-mac.mm
+index 47d5c38..3e73a07 100644
+--- a/common/base/system-native-mac.mm
++++ b/common/base/system-native-mac.mm
+@@ -17,12 +17,14 @@
+ #include "gfxstream/system/System.h"
+ 
+ #include <CoreFoundation/CoreFoundation.h>
++#ifndef GFXSTREAM_IOS
+ #include <IOKit/IOBSD.h>
+ #include <IOKit/IOKitLib.h>
+ #include <AppKit/AppKit.h>
+ 
+ #include <IOKit/kext/KextManager.h>
+ #include <IOKit/storage/IOBlockStorageDevice.h>
++#endif
+ 
+ #import <Foundation/Foundation.h>
+ #import <Foundation/NSProcessInfo.h>
+@@ -40,12 +42,14 @@
+ // From:
+ // https://stackoverflow.com/questions/49677034/thread-sleeps-too-long-on-os-x-when-in-background
+ void disableAppNap_macImpl(void) {
++#ifndef GFXSTREAM_IOS
+    if ([[NSProcessInfo processInfo]
+         respondsToSelector:@selector(beginActivityWithOptions:reason:)]) {
+       [[NSProcessInfo processInfo]
+        beginActivityWithOptions:0x00FFFFFF
+        reason:@"Not sleepy and don't want to nap"];
+    }
++#endif
+ }
+ 
+ // based on https://stackoverflow.com/questions/13893134/get-current-pthread-cpu-usage-mac-os-x
+@@ -82,6 +86,7 @@ void cpuUsageCurrentThread_macImpl(
+ }
+ 
+ Optional<DiskKind> nativeDiskKind(int st_dev) {
++#ifndef GFXSTREAM_IOS
+     const char* devName = devname(st_dev, S_IFBLK);
+     if (!devName) {
+         return {};
+@@ -149,18 +154,20 @@ void cpuUsageCurrentThread_macImpl(
+         }
+     }
+     IOObjectRelease(entryIterator);
+-
++#endif
+     return {};
+ }
+ 
+ // From:
+ // https://stackoverflow.com/questions/6796028/start-a-gui-process-in-mac-os-x-without-dock-icon
+ void hideDockIcon_macImpl(void) {
++#ifndef GFXSTREAM_IOS
+     if (NSApp == nil) {
+         // Initialize the global variable "NSApp"
+         [NSApplication sharedApplication];
+     }
+     [NSApp setActivationPolicy:NSApplicationActivationPolicyAccessory];
++#endif
+ 
+ }
+ 
+diff --git a/host/CMakeLists.txt b/host/CMakeLists.txt
+index 6b61ae5..8f58dd1 100644
+--- a/host/CMakeLists.txt
++++ b/host/CMakeLists.txt
+@@ -151,7 +151,9 @@ target_include_directories(
+         ${GFXSTREAM_REPO_ROOT}/host/vulkan/cereal/common
+         )
+ 
+-if (APPLE)
++if (GFXSTREAM_IOS)
++    target_link_libraries(gfxstream_backend_static PUBLIC "-framework Foundation -framework QuartzCore -framework Metal -framework IOSurface")
++elseif (APPLE)
+     target_link_libraries(gfxstream_backend_static PUBLIC "-framework AppKit -framework QuartzCore -framework IOSurface")
+ endif()
+ if (WIN32)
+@@ -192,7 +194,7 @@ target_link_libraries(
+     PRIVATE
+     )
+ 
+-if (APPLE)
++if (APPLE AND NOT GFXSTREAM_IOS)
+     set_target_properties(gfxstream_backend
+         PROPERTIES
+         LINK_FLAGS  "-undefined dynamic_lookup -flat_namespace")
+diff --git a/host/gl/emulation_gl.cpp b/host/gl/emulation_gl.cpp
+index d6c04ef..c9c652b 100644
+--- a/host/gl/emulation_gl.cpp
++++ b/host/gl/emulation_gl.cpp
+@@ -1618,7 +1618,7 @@ void EmulationGl::updateYUVTextures(uint32_t type, uint32_t* textures, void* pri
+         gtextures[2] = s_gles2.glGetGlobalTexName(textures[2]);
+     }
+ 
+-#ifdef __APPLE__
++#if defined(__APPLE__) && !defined(GFXSTREAM_IOS)
+     EGLContext prevContext = s_egl.eglGetCurrentContext();
+     auto mydisp = EglGlobalInfo::getInstance()->getDisplayFromDisplayType(EGL_DEFAULT_DISPLAY);
+     void* nativecontext = mydisp->getLowLevelContext(prevContext);
+diff --git a/host/gl/glestranslator/egl/CMakeLists.txt b/host/gl/glestranslator/egl/CMakeLists.txt
+index 103b18e..c65ee2b 100644
+--- a/host/gl/glestranslator/egl/CMakeLists.txt
++++ b/host/gl/glestranslator/egl/CMakeLists.txt
+@@ -54,6 +54,8 @@ if (WIN32)
+         EGL_translator_static
+         ${egl-translator-common-sources}
+         ${egl-translator-windows-sources})
++elseif (GFXSTREAM_IOS)
++    add_library(EGL_translator_static ${egl-translator-common-sources} egl_os_api_egl.cpp egl-platform.mm)
+ elseif (APPLE)
+     add_library(
+         EGL_translator_static
+@@ -94,6 +96,8 @@ if (APPLE)
+ endif()
+ 
+ if (WIN32)
++elseif (GFXSTREAM_IOS)
++    target_link_libraries(EGL_translator_static PUBLIC "-framework Foundation -framework QuartzCore -framework Metal")
+ elseif (APPLE)
+     target_link_libraries(EGL_translator_static PUBLIC "-framework AppKit -framework IOSurface")
+ elseif (QNX)
+diff --git a/host/gl/glestranslator/egl/egl_global_info.cpp b/host/gl/glestranslator/egl/egl_global_info.cpp
+index 7056a79..c1d29c6 100644
+--- a/host/gl/glestranslator/egl/egl_global_info.cpp
++++ b/host/gl/glestranslator/egl/egl_global_info.cpp
+@@ -64,8 +64,9 @@ EglGlobalInfo* EglGlobalInfo::getInstance(bool nullEgl) {
+ }
+ 
+ EglGlobalInfo::EglGlobalInfo(bool nullEgl) {
+-#if defined(ANDROID) || defined(__QNX__)
++#if defined(ANDROID) || defined(__QNX__) || defined(GFXSTREAM_IOS)
+     sEgl2Egl = true;
++    setGles2Gles(true);
+     sEgl2EglSyncSafeToUse = true;
+     m_engine = EglOS::
+         getEgl2EglHostInstance(nullEgl);
+diff --git a/host/gl/glestranslator/egl/egl_os_api_egl.cpp b/host/gl/glestranslator/egl/egl_os_api_egl.cpp
+index 9a9038d..4c83757 100644
+--- a/host/gl/glestranslator/egl/egl_os_api_egl.cpp
++++ b/host/gl/glestranslator/egl/egl_os_api_egl.cpp
+@@ -78,6 +78,10 @@ static const char* kGLES2LibNameAlt = "libGLESv2.so.2";
+ static const char* kEGLLibName = "libEGL.so";
+ static const char* kGLES2LibName = "libGLESv2.so";
+ 
++#elif defined(GFXSTREAM_IOS)
++#include "egl-platform.h"
++static const char* kEGLLibName = "@rpath/libANGLE-shared.dylib";
++static const char* kGLES2LibName = "@rpath/libANGLE-shared.dylib";
+ #else // __APPLE__
+ 
+ #include "mac_native.h"
+@@ -216,7 +220,13 @@ public:
+         if (!mLib) {
+             return NULL;
+         }
++#ifdef GFXSTREAM_IOS
++        using GetProc = GlFunctionPointer (*)(const char *);
++        auto getProc = reinterpret_cast<GetProc>(mLib->findSymbol("eglGetProcAddress"));
++        return getProc ? getProc(name) : nullptr;
++#else
+         return reinterpret_cast<GlFunctionPointer>(mLib->findSymbol(name));
++#endif
+     }
+     ~EglOsGlLibrary() = default;
+ 
+@@ -378,8 +388,17 @@ EglOsEglDisplay::EglOsEglDisplay(bool nullEgl) {
+ #endif
+     }
+ 
++#ifdef GFXSTREAM_IOS
++    if (mDisplay == EGL_NO_DISPLAY) {
++        const EGLint attributes[] = {EGL_PLATFORM_ANGLE_TYPE_ANGLE,
++            EGL_PLATFORM_ANGLE_TYPE_METAL_ANGLE, EGL_NONE};
++        mDisplay = mDispatcher.eglGetPlatformDisplayEXT(EGL_PLATFORM_ANGLE_ANGLE,
++            nullptr, attributes);
++    }
++#else
+     if (mDisplay == EGL_NO_DISPLAY)
+         mDisplay = mDispatcher.eglGetDisplay(EGL_DEFAULT_DISPLAY);
++#endif
+ 
+     mDispatcher.eglInitialize(mDisplay, nullptr, nullptr);
+     mDispatcher.eglSwapInterval(mDisplay, 0);
+@@ -689,7 +708,7 @@ Surface* EglOsEglDisplay::createWindowSurface(PixelFormat* pf,
+ #endif
+     }
+     surface_attribs.push_back(EGL_NONE);
+-#ifdef __APPLE__
++#if defined(__APPLE__) && !defined(GFXSTREAM_IOS)
+     win = nsGetLayer(win);
+ #endif
+     EGLSurface surface = mDispatcher.eglCreateWindowSurface(
+@@ -780,6 +799,9 @@ bool EglOsEglDisplay::isValidNativeWin(EGLNativeWindowType win) {
+ #elif defined(__QNX__)
+     int size[2];
+     return screen_get_window_property_iv(win, SCREEN_PROPERTY_SIZE, size) != -1;
++#elif defined(GFXSTREAM_IOS)
++    unsigned width, height;
++    return huskGfxstreamWindowSize(win, &width, &height);
+ #else // __APPLE__
+     unsigned int width, height;
+     return nsGetWinDims(win, &width, &height);
+@@ -818,6 +840,8 @@ bool EglOsEglDisplay::checkWindowPixelFormatMatch(EGLNativeWindowType win,
+     *width = size[0];
+     *height = size[1];
+     return true;
++#elif defined(GFXSTREAM_IOS)
++    return huskGfxstreamWindowSize(win, width, height);
+ #else // __APPLE__
+     bool ret = nsGetWinDims(win, width, height);
+ 
+diff --git a/host/native_window/CMakeLists.txt b/host/native_window/CMakeLists.txt
+index c31cab6..1b22cc3 100644
+--- a/host/native_window/CMakeLists.txt
++++ b/host/native_window/CMakeLists.txt
+@@ -1,6 +1,8 @@
+ 
+ 
+-if (APPLE)
++if (GFXSTREAM_IOS)
++    set(gfxstream_host_native_window_platform_sources native-window.mm)
++elseif (APPLE)
+     set(gfxstream_host_native_window_platform_sources
+         native_sub_window_cocoa.mm)
+ elseif (WIN32)

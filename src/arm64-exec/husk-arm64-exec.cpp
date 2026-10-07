@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 #include "husk-arm64-exec.h"
 #include "husk-arm64-direct.h"
+#include "husk-arm64-layout.h"
 
 #include <algorithm>
 #include <array>
@@ -18,6 +19,10 @@ using Dynarmic::HaltReason;
 
 static bool dynarmic_supported(uint32_t insn)
 {
+    // This reference backend does not specialize its cache by guest FEAT_LSE.
+    if ((insn & 0x3fa07c00) == 0x08a07c00 ||
+        ((insn & 0x3f200c00) == 0x38200000 && ((insn >> 12) & 15) <= 8)) return false;
+    if (husk_direct_supported(insn)) return true;
     /* Admit baseline ARMv8 integer classes; optional ISA features stay with QEMU. */
     if ((insn & 0x1f000000) == 0x10000000) { // ADR / ADRP
         return true;
@@ -103,6 +108,7 @@ struct HuskArm64Exec final : Dynarmic::A64::UserCallbacks {
     uint64_t page = UINT64_MAX;
     HuskArm64Memory memory{};
     uint64_t ticks = 0;
+    uint64_t tpidr_el0 = 0;
     bool fallback = false;
     std::optional<uint64_t> fallback_pc;
 
@@ -116,6 +122,7 @@ struct HuskArm64Exec final : Dynarmic::A64::UserCallbacks {
         }
         Dynarmic::A64::UserConfig config{};
         config.callbacks = this;
+        config.tpidr_el0 = &tpidr_el0;
         config.code_cache_size = 16 * 1024 * 1024;
         config.check_halt_on_memory_access = true;
         config.memory_access_cache = access_cache.data();
@@ -231,12 +238,14 @@ HuskArm64Exit husk_arm64_run(HuskArm64Exec *ctx, HuskArm64State *state,
     }
     try {
         if (ctx->direct) return husk_direct_run(ctx->direct.get(), state, page, bytes, memory, budget);
+        if ((state->fpcr & ~HUSK_FPCR_MASK) || (state->access_flags & 2)) return HUSK_ARM64_FALLBACK;
         if (ctx->page != page || std::memcmp(ctx->code.data(), bytes, 4096)) {
             ctx->jit->ClearCache();
             ctx->page = page;
             std::memcpy(ctx->code.data(), bytes, 4096);
         }
         ctx->memory = memory;
+        ctx->tpidr_el0 = state->tpidr_el0;
         /* Kernel execution between slices may change any address-space mapping. */
         for (size_t i = 0; i < ctx->populated_count; ++i) {
             ctx->access_cache[ctx->populated_entries[i]] = {UINT64_MAX, nullptr, nullptr, 0};
@@ -253,12 +262,20 @@ HuskArm64Exit husk_arm64_run(HuskArm64Exec *ctx, HuskArm64State *state,
         ctx->jit->SetSP(state->sp);
         ctx->jit->SetPC(state->pc);
         ctx->jit->SetPstate(state->nzcv & 0xf0000000);
+        std::array<Vector, 32> vectors;
+        std::memcpy(vectors.data(), state->v, sizeof(state->v));
+        ctx->jit->SetVectors(vectors);
+        ctx->jit->SetFpcr(state->fpcr);
+        ctx->jit->SetFpsr(state->fpsr);
         ctx->jit->Run();
         regs = ctx->jit->GetRegisters();
         std::memcpy(state->x, regs.data(), sizeof(state->x));
         state->sp = ctx->jit->GetSP();
         state->pc = ctx->fallback_pc.value_or(ctx->jit->GetPC());
         state->nzcv = ctx->jit->GetPstate() & 0xf0000000;
+        vectors = ctx->jit->GetVectors();
+        std::memcpy(state->v, vectors.data(), sizeof(state->v));
+        state->fpsr = ctx->jit->GetFpsr();
         return ctx->fallback ? HUSK_ARM64_FALLBACK : HUSK_ARM64_BUDGET;
     } catch (const std::exception &error) {
         std::fprintf(stderr, "[husk-arm64] execution: %s\n", error.what());

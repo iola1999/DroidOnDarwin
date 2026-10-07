@@ -16,9 +16,14 @@ final class QemuRunner: ObservableObject {
     private(set) var isRunning = false
     // Settings changes apply to the next process; snapshot metadata must describe this VM.
     nonisolated(unsafe) private static var activeDirectExecution: Bool?
+    nonisolated(unsafe) private static var activeGfxstream: Bool?
+    nonisolated static var gfxstreamEnabled: Bool {
+        activeGfxstream ?? (GuestImage.isCustomGuest &&
+            UserDefaults.standard.bool(forKey: "husk.gfxstream"))
+    }
     nonisolated static var directExecutionEnabled: Bool {
         activeDirectExecution ?? (GuestImage.isCustomGuest &&
-            (UserDefaults.standard.object(forKey: "husk.directExecution") as? Bool ?? true))
+            UserDefaults.standard.bool(forKey: "husk.directExecution"))
     }
 
     /// Last line the guest printed about its own setup. The first-boot service in
@@ -194,7 +199,7 @@ final class QemuRunner: ObservableObject {
     /// restore is even possible. Was just the display; sound joins it because
     /// it changes the same thing.
     nonisolated static var machineStamp: String {
-        (glProven ? "gl" : "sw")
+        (gfxstreamEnabled ? "gfxstream-gles-v1" : (glProven ? "gl" : "sw"))
             + (soundEnabled ? "+snd" : "")
             + (landscapeGuest ? "+land" : "")
             + (customResolution.map { "+\($0.w)x\($0.h)" } ?? "")
@@ -203,7 +208,7 @@ final class QemuRunner: ObservableObject {
 
     /// Imported guests cold-boot; bundled guests use the auto-save preference.
     nonisolated static var autoSaveEnabled: Bool {
-        if GuestImage.isCustomGuest { return false }
+        if GuestImage.isCustomGuest || gfxstreamEnabled { return false }
         return UserDefaults.standard.object(forKey: "husk.autoSave") as? Bool ?? true
     }
 
@@ -382,6 +387,11 @@ final class QemuRunner: ObservableObject {
     /// as that takes. Callers are expected to say so.
     func saveState(reason: String, completion: ((Bool) -> Void)? = nil) {
         guard isRunning else { completion?(false); return }
+        // Rutabaga's GLES resources cannot be restored by QEMU migration.
+        guard !Self.gfxstreamEnabled else {
+            HuskLog.log("snap", "gfxstream requires a cold boot; state save unavailable")
+            completion?(false); return
+        }
         guard !isSavingState else {
             HuskLog.log("snap", "save already in progress; ignoring \(reason)")
             completion?(false); return
@@ -917,7 +927,7 @@ final class QemuRunner: ObservableObject {
                                             : GuestImage.defaultCpu
     }
     private var machineSmp: Int {
-        if Self.directExecutionEnabled { return 1 }
+        if Self.directExecutionEnabled || Self.gfxstreamEnabled { return 1 }
         return GuestImage.shared.hasShippedSnapshot ? GuestImage.shared.snapshotPins.smp
                                             : GuestImage.defaultSmp
     }
@@ -1106,7 +1116,7 @@ final class QemuRunner: ObservableObject {
             "-cpu", machineCpu,
             "-smp", "\(machineSmp)",
             "-m", "\(memMiB)",
-            "-accel", "tcg,tb-size=256,thread=\(Self.directExecutionEnabled ? "single" : "multi"),split-wx=on",
+            "-accel", "tcg,tb-size=256,thread=\(machineSmp == 1 ? "single" : "multi"),split-wx=on",
 
             // The balloon was written earlier and never put on the machine, so
             // nothing could ever reclaim guest memory. With it present the guest
@@ -1151,23 +1161,11 @@ final class QemuRunner: ObservableObject {
                      + "hostfwd=tcp:127.0.0.1:5599-:5599",
             "-L", "\(Bundle.main.bundlePath)/pc-bios",
 
-            // 360x640 rather than 1280x800: a quarter of the pixels.
-            //
-            // This is the dominant term. There is no GPU, so every pixel is
-            // rasterised in software by a CPU that is itself emulated, and the
-            // cost is paid twice -- ~1M pixels per frame at a ~10x emulation
-            // penalty lands almost exactly on the 2 FPS observed. Cutting pixel
-            // count 4.4x attacks the multiplication rather than one of its
-            // factors. It is also a measurement: if the frame rate does not move
-            // roughly in proportion then fill is not the bottleneck and this
-            // model is wrong, which is worth knowing before tuning anything else.
-            // GL only if it has been proven to work on this device, because the
-            // choice is not reversible: a console created for virtio-gpu-gl
-            // demands a GL listener, so when GL then fails to initialise the
-            // software display cannot register and QEMU aborts with "The
-            // console requires a GL context". Falling back has to mean not
-            // asking for the GL device in the first place.
-            "-device", QemuRunner.glProven
+            // gfxstream owns GLES execution and returns pixels through the
+            // existing display bridge. virgl requires its GL probe to succeed.
+            "-device", Self.gfxstreamEnabled
+                ? "virtio-gpu-rutabaga-pci,x-gfxstream-gles=on,xres=\(guestResolution.w),yres=\(guestResolution.h)"
+                : QemuRunner.glProven
                 ? "virtio-gpu-gl-pci,xres=\(guestResolution.w),yres=\(guestResolution.h)"
                 : "virtio-gpu-pci,xres=\(guestResolution.w),yres=\(guestResolution.h)",
 
@@ -1231,6 +1229,7 @@ final class QemuRunner: ObservableObject {
         }
         isRunning = true
         Self.activeDirectExecution = profile == .phase1Android && Self.directExecutionEnabled
+        Self.activeGfxstream = profile == .phase1Android && Self.gfxstreamEnabled
         // 冷启动可能持续数分钟，自动锁屏会挂起模拟器并触发客体 watchdog。
         DispatchQueue.main.async { UIApplication.shared.isIdleTimerDisabled = true }
         startedAt = Date()
@@ -1256,61 +1255,23 @@ final class QemuRunner: ObservableObject {
         startSerialTailer()
     }
 
-    /// Set once the GL stack has been shown to work on this device. Persisted,
-    /// because the device choice happens before anything can be tested and a
-    /// wrong guess costs the whole session.
-    /// Software display unless the user asks otherwise.
-    ///
-    /// Not a retreat from the GL work -- that stack is finished and correct --
-    /// but a reading of the evidence. Runs on the software display reached
-    /// sys.boot_completed twice, at 281s and 321s. No run on the GPU has
-    /// reached it at all, and the run that got closest spent longer after the
-    /// boot animation than the software runs took in total. virtio-gpu-gl makes
-    /// the guest drive Mesa's virgl driver and SurfaceFlinger's full render
-    /// engine, and all of that is emulated code; what it buys back is
-    /// rasterisation of a 360x640 screen, which was never the expensive part.
-    /// Get a booted machine snapshotted first, then re-open the question.
+    /// GPU display requires the user's setting and a successful context probe.
+    /// snapshotDisplay selects a cold boot when the saved device type differs.
     nonisolated(unsafe) static var glProven: Bool {
-        // The display device is part of the machine's shape, exactly like its
-        // RAM size -- and the shipped snapshot was saved against virtio-gpu-pci.
-        //
-        // Restoring it into virtio-gpu-gl-pci produces a machine whose guest
-        // holds virgl resource IDs that the freshly created virgl context has
-        // never heard of, and every scanout then fails:
-        //
-        //   virgl_cmd_set_scanout: illegal resource specified 57
-        //   virtio_gpu_virgl_process_cmd: ctrl 0x103, error 0x1203
-        //
-        // Android is alive behind that -- services start, adbd runs -- but
-        // nothing can ever be drawn. RAM and resolution were pinned for this
-        // reason; the display was missed.
-        // GPU mode replaces the blanket refusal that used to sit here.
-        //
-        // The refusal was right at the time: the shipped snapshot was saved
-        // against virtio-gpu-pci, and restoring it into virtio-gpu-gl-pci hands
-        // the guest virgl resource ids a fresh renderer has never created. What
-        // was missing was not a reason to allow it but a way to tell the two
-        // kinds of snapshot apart, which snapshotDisplay now does -- a machine
-        // saved in the wrong display mode is cold-booted instead of restored.
+        guard !gfxstreamEnabled else { return false }
         guard QemuRunner.gpuModeEnabled else { return false }
         return UserDefaults.standard.bool(forKey: "husk.glProven")
     }
 
-    /// Try the GL stack without committing to it. Runs before the QEMU command
-    /// line is built, so its answer can pick the virtio-gpu device.
-    /// Create the GL context and surface, and on the first run decide whether
-    /// GL is usable at all.
-    ///
-    /// The early-return that used to sit here -- `guard !glProven` -- meant the
-    /// context and surface were only ever built on the run that proved GL
-    /// worked. Every launch after that skipped straight past creation, and
-    /// husk_display_gl_bind() was then asked to make current a context that had
-    /// never been made, failed, and fell back to the software display. So GL
-    /// worked exactly once, on the run that discovered it, and never again.
-    ///
-    /// Creation is unconditional now. Only the *probe* is skipped once the
-    /// answer is known, because that is the part that is merely a question.
+    /// Each GPU run needs a new context. A previous successful probe can skip
+    /// the rendering check after context creation succeeds.
     private func probeGL() {
+        // gfxstream owns EGL and returns scanout pixels to Husk's display bridge.
+        guard !Self.gfxstreamEnabled else { return }
+        guard Self.gpuModeEnabled else {
+            HuskLog.log("gl", "software display selected; skipping GL context creation")
+            return
+        }
         HuskGLView.surfaceReady.lock()
         let deadline = Date().addingTimeInterval(5)
         while HuskGLView.layerForGL == nil, Date() < deadline {
@@ -1321,6 +1282,7 @@ final class QemuRunner: ObservableObject {
         HuskGLView.surfaceReady.unlock()
 
         guard let layer, size.width > 0 else {
+            UserDefaults.standard.set(false, forKey: "husk.glProven")
             HuskLog.log("gl", "no layer to probe with; staying on the software display")
             return
         }
@@ -1335,7 +1297,7 @@ final class QemuRunner: ObservableObject {
             created = husk_display_gl_create(Unmanaged.passUnretained(layer).toOpaque(),
                                              Int32(size.width), Int32(size.height))
         }
-        if QemuRunner.glProven {
+        if created && QemuRunner.glProven {
             HuskLog.log("gl", "GL already proven on this device; context created "
                             + "(create=\(created)), skipping the probe")
             return
@@ -1343,10 +1305,9 @@ final class QemuRunner: ObservableObject {
 
         let works = created && husk_display_gl_probe()
         HuskLog.log("gl", "probe: create=\(created) usable=\(works)")
+        UserDefaults.standard.set(works, forKey: "husk.glProven")
         if works {
-            // glProven is computed now, so only the stored fact is written here.
-            UserDefaults.standard.set(true, forKey: "husk.glProven")
-            HuskLog.log("gl", "GL works; this and future runs use the GPU")
+            HuskLog.log("gl", "GPU display selected; GL context probe succeeded")
         } else {
             HuskLog.log("gl", "GL not usable on this device; software display it is")
         }
@@ -1360,8 +1321,9 @@ final class QemuRunner: ObservableObject {
         let args = (profile == .phase0Alpine) ? phase0Arguments() : phase1Arguments()
         HuskLog.log("qemu", "profile: \(profile.rawValue)")
         HuskLog.log("qemu", "DISPLAY MODE: "
-                          + (QemuRunner.glProven ? "GPU (virtio-gpu-gl)"
-                                                 : "software (CPU framebuffer)"))
+                          + (Self.gfxstreamEnabled ? "gfxstream GLES / ANGLE Metal / framebuffer scanout"
+                             : QemuRunner.glProven ? "GPU (virtio-gpu-gl)"
+                                                  : "software (CPU framebuffer)"))
         if QemuRunner.glProven {
             // This used to say the GPU and fast relaunch were mutually
             // exclusive, because QEMU refuses to snapshot a virgl machine:
@@ -1383,7 +1345,7 @@ final class QemuRunner: ObservableObject {
         // was running with page and mmu logging on, which would be ruinous.
         HuskLog.log("qemu", profile == .phase0Alpine
             ? "---- verbosity: \(verbosity) (-d \(verbosity.rawValue)) ----"
-            : "---- verbosity: fixed for Android (-d guest_errors,unimp) ----")
+            : "---- QEMU instruction logging disabled for Android ----")
 
         // Confirm the guest images are actually in the bundle before QEMU tries to
         // open them; "could not load kernel" is a far less obvious error message.
@@ -1502,7 +1464,7 @@ final class QemuRunner: ObservableObject {
             HuskLog.log("qemu", "saved machine is a \(haveDisplay) machine and this one is "
                               + "\(wantDisplay); booting cold and saving a new one")
         }
-        let restored = snapshotFits && displayFits && husk_snapshot_load_at_startup()
+        let restored = !Self.gfxstreamEnabled && snapshotFits && displayFits && husk_snapshot_load_at_startup()
         HuskLog.log("qemu", restored
             ? "restored a saved machine -- Android is already booted"
             : "no saved machine; booting Android from cold")

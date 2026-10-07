@@ -8,6 +8,7 @@ from pathlib import Path
 import socket
 import subprocess
 import time
+from build_arm64_exec import verify_qemu_build
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -37,7 +38,9 @@ def main():
     parser.add_argument("--seconds", type=int, default=180)
     parser.add_argument("--stage", choices=("policy", "boot"), default="policy")
     parser.add_argument("--stats", action="store_true")
+    parser.add_argument("--cpu", help="Override the guest CPU for an explicit feature comparison")
     args = parser.parse_args()
+    verify_qemu_build()
     output = args.output.resolve()
     output.mkdir(parents=True, exist_ok=False)
     command = json.loads((ROOT / "work/hyperos3-phone-profile/command.json").read_text())
@@ -49,6 +52,8 @@ def main():
     }
     for option, value in replacements.items():
         command[command.index(option) + 1] = value
+    if args.cpu:
+        command[command.index("-cpu") + 1] = args.cpu
     for i, item in enumerate(command):
         if "unit=0," in item and item.startswith("if=pflash"):
             command[i] = "if=pflash,unit=0,format=raw,readonly=on,file=" + str(
@@ -58,6 +63,7 @@ def main():
         env["HUSK_ARM64_STATS"] = "1"
     (output / "command.json").write_text(json.dumps(command, indent=2) + "\n")
     result = {"mode": args.mode, "stage": args.stage, "passed": False,
+              "backend_env": {k: v for k, v in env.items() if k.startswith("HUSK_ARM64_")},
               "qemu_sha256": hashlib.sha256(Path(command[0]).read_bytes()).hexdigest(), "events": {}}
     patterns = ("Compiling SELinux policy", "Loading SELinux policy", "starting service 'bootanim'",
                 "sys.boot_completed=1", "HUSK-SETUP")
@@ -91,8 +97,15 @@ def main():
         finally:
             result["elapsed_seconds"] = round(time.monotonic() - start, 3)
             if process.poll() is None:
+                if args.stage == "boot" and not result["passed"]:
+                    with (output / "sample.txt").open("w") as sample:
+                        try:
+                            subprocess.run(["sample", str(process.pid), "3", "10"],
+                                           stdout=sample, stderr=subprocess.STDOUT, timeout=15)
+                        except (OSError, subprocess.TimeoutExpired) as error:
+                            result["sample_error"] = str(error)
                 try:
-                    if args.stage == "boot" and result["passed"]:
+                    if args.stage == "boot":
                         qmp(16257, "screendump", {"filename": str(output / "screen.ppm")})
                     qmp(16257, "quit")
                     process.wait(timeout=5)

@@ -1,6 +1,6 @@
-# 用户态执行后端开发进展
+# HyperOS 执行与图形后端开发进展
 
-更新日期：2026-10-07。
+更新日期：2026-10-08。
 
 ## 目标与当前决策
 
@@ -9,13 +9,19 @@
 客体内核和图形实现。开发与功能验证集中在 Mac，形成有实际收益的阶段产物后
 再安排手机测试。E2 iOS 试用发现 SELinux 编译阶段长时间停顿；E3 已在 Mac
 复现并修正这处退化，扩大整数和访存指令覆盖。完整 Android 启动已通过，
-桌面持续操作和手机整机收益仍待验证。
+E3 手机日志和用户体验确认当前交互速度仍未达到基础可用性。
+E4/E5 已扩大执行覆盖，浮点、向量和跨页调用有微基准收益，完整启动未测到
+稳定提升。内核 Direct 实验继续默认关闭。
 
 用户明确指出约 1.5 倍的局部提升不足以满足目标。E1 的整数测试约快 1.7 倍，
 短访存测试存在波动。E2 已加入直接执行后端，当前整数循环约快 3 倍，固定
-地址的访存循环与 TCG 接近；完整 HyperOS 的性能尚待验证。后续优先扩大
-**用户态直接执行、宿主快速映射与客体内核配合**，同时研究 gfxstream 图形
-命令转发。ARM64 User-Mode Linux 的 Darwin 移植列为更高投入的候选，先核对
+地址的访存循环与 TCG 接近；完整 HyperOS 的性能尚待验证。G1 已实现 gfxstream
+GLES → ANGLE Metal，并完成 Mac 上完整 HyperOS 的驱动和绘制验证；build 36
+及客体驱动更新包已生成，手机端尚未验证。E6 的 Linux 间接调用测试约快 7.1 倍，
+完整 HyperOS 的结束截图已显示桌面，但 1,000 秒内的启动查询未成功，实际启动
+耗时未知。后续 CPU 改动优先研究跨执行片段的
+映射复用、代码失效通知与客体内核配合。ARM64 User-Mode Linux 的 Darwin
+移植列为更高投入的候选，先核对
 平台条件。收益判断采用完整 HyperOS 的桌面、设置、应用切换和持续运行表现。
 
 ## 阶段 E1：已完成的本机原型
@@ -466,9 +472,9 @@ Direct 一致，Dynarmic 差分参考使用自己的解码过滤器。
 该实验尝试让 QEMU MMU 按客体配置检查高位标签，Direct 保留原始地址作为
 缓存键和基址写回值。宿主测试和 Linux 带标签循环、写保护测试通过，但完整
 HyperOS 运行 601.699 秒仍未确认启动完成，最后串口记录在客体约 443 秒。
-运行波动和指令兼容性问题尚未区分，故该实验保存为
-`patches/experimental-direct-tagged-data.patch`，当前默认源码已恢复到此前
-完成桌面启动的实现。下一次验证需要补采挂起时的 CPU 调用栈与客体状态。
+运行波动和指令兼容性问题尚未区分，故当时将实验保存为独立补丁，E3 默认源码恢复到此前完成桌面启动的实现。
+原始补丁随 E3 提交保存；E4 已将标签访问纳入后端。后续验证同时采集 CPU
+调用栈与客体状态。
 
 默认源码恢复后，Mac QEMU 的 SHA-256 与完成桌面启动的二进制完全一致：
 `16495c2c370d45fb8cc0fe790f3a9d183bf832b91bdc39b5bc416b06c4b1b594`。
@@ -520,7 +526,7 @@ Mac 验证还修复了 QEMU Cocoa 显示缓冲区的生命周期：Core Graphics
 标识 `E3-direct-cache`，45,022,413 字节。SHA-256：
 `9b6a5edea581a9cf61714adb41224b7bdf88184832bc56fdfda671d5c94896a9`。
 Release 构建、ZIP CRC、版本标识、代码标记、应用与 QEMU 可执行代码段一致性、
-ad-hoc 深层严格签名检查均通过。摘要保存在同目录 JSON。该包尚未进行手机测试。
+ad-hoc 深层严格签名检查均通过。摘要保存在同目录 JSON。后续手机测试结果见 E4 的手机现状。
 
 ### 复杂度审查与后续重点
 
@@ -535,3 +541,592 @@ SIMD/浮点直接执行、快速地址映射和 gfxstream 尚未实现。后续�
 当前默认版本的整数循环约快 2.7 倍，仍不足以验收用户要求的整机可用性目标。
 下一轮优先评估普通访存发射代码中的 NZCV 保存/恢复和寄存器复制，再扩展
 SIMD/浮点覆盖。访存错误、权限变化和异常地址必须继续交给 QEMU 处理。
+
+## E4：扩大实际执行覆盖
+
+### 手机现状
+
+E3 阶段代码已提交为 `9738ee4`，未推送。2026-10-07 从 F17 读取的日志保存在
+`work/performance/e3-phone-review/`，确认运行 `0.8.1 (33)`、`E3-direct-cache`、
+1 vCPU、5120 MiB 客体内存。SELinux 编译从客体 1.596 秒到 5.319 秒，约
+3.724 秒；这处启动退化已修复。
+
+日志更新至宿主约 580 秒时，画面每 5 秒更新 0–4 次，热状态为 2；这些计数
+记录显示缓冲区更新，无法直接换算为动画 FPS。Direct 累计 179,373 次调用、
+31,994 次编译、78 次清空代码缓存；总耗时 7.441 秒，其中编译 6.437 秒。
+扣除编译约 1.004 秒，仍包含映射与调度。当前统计无法直接计算客体指令覆盖率。
+用户反馈操作远未达到基础可用性，与低画面更新频率一致。
+
+实际图形为软件路径：命令行 `virtio-gpu-pci`，客体 `-virgl`，
+`ro.vendor.graphics=swiftshader`，Metal 回调计数为 0。读取的偏好中
+`husk.gpuMode=false`、`husk.glProven=true`。ANGLE Metal 探测成功说明宿主接口
+可用；本次启动继续采用用户选择的软件显示。已修改 GL 初始化：软件模式直接
+跳过创建上下文；GPU 模式创建失败会清除探测成功记录，日志明确本次选择。
+
+### 实现
+
+- 保存、恢复全部 V0–V31、FPCR、FPSR，扩展到常见 SIMD 整数、FP32/FP64 运算、
+  转换和向量访存。宿主 D8–D15 与浮点环境在退出时恢复。FP16、未覆盖的指令
+  和受限浮点模式继续由 QEMU 执行。C++ 与汇编共用状态布局常量，编译时校验偏移。
+- 增加整数扩展加减、带进位运算、条件比较、长乘法和高半乘法、有符号加载、
+  LDAR/STLR、TLS 与部分状态读取。保留 CPU 功能、异常、BTI、MTE、SVE/SME
+  和单 vCPU 条件检查。FP/SIMD 访问受限时，整数指令可以继续执行；到达受限
+  指令才回到 QEMU 产生异常。代码缓存按访问许可区分版本，许可恢复时可复用已有代码。
+- 访存检查使用不修改 NZCV 的指令，减少标志保存与寄存器复制。QEMU 校验
+  带标签地址，Direct 保留标签用于缓存键和地址写回；普通非对齐访问须由
+  客体 SCTLR 允许且完整落在同一页。SP、LDAR/STLR 继续执行各自的对齐检查。
+- 同页 RET 通过页内入口表继续执行，并检查预算；跨代码页跳转有独立退出原因，
+  重新校验执行权限后可继续 Direct。TCG 的
+  间接块连接每 64 次检查一次 Direct 调度，观察到内核返回时也检查。
+- 通过实验开关 `HUSK_ARM64_TCG_BRIDGE=1`，可让指针认证、BTI、间接跳转和
+  屏障在 QEMU 执行一个指令后重试 Direct。该设置默认关闭：完整 Android 中
+  频繁切换增加了开销。默认保留 2 ms TCG 连续运行时间。
+- 新增指针认证回调，调用 QEMU 原有密钥、认证和异常处理。回调执行前同步
+  完整客体状态，异常使用当前客体 PC；成功后同页 Direct 继续执行。已经通过
+  入口检查的块内 BTI 提示也可继续执行。该回调只处理已列出的指令，保持代码页
+  和内存映射有效。
+- 统计增加跨页退出、预算退出、认证回调和高频回退指令，供完整系统采样使用。
+
+### 本地验证边界
+
+6 项宿主测试通过，覆盖 65,536 条随机整数指令、930 种循环寄存器组合、
+131,072 条 SIMD/浮点指令、2,048 种向量访存组合，以及标签、非对齐、越页、
+写保护、代码变化、状态保存和宿主浮点环境。
+
+差分参考 Dynarmic 有两处限制：64 位无符号向量比较会进入其未实现分支；
+双通道 FP32 除法会对未使用的高通道计算 `0/0`，额外设置异常标志。两项改用
+独立 Linux 客体测试检查返回值与 FPSR。参考测试保留其余受支持组合。
+
+首轮完整 HyperOS 运行 600.448 秒仍未确认 `sys.boot_completed=1`，日志继续推进。
+路径 `work/performance/e4-full-boot-first/`，二进制 SHA-256 为
+`048e3250b0cdff21c332b6bc1228f4e25d9694a1b24d138dac832feaec496f90`。
+该轮高频回退为 AUTIASP、BR 和屏障，因此随后增加调度和认证回调。
+
+已完成的调度实验 `e4-full-boot-memory` 在 900.191 秒内未确认启动完成。
+最后统计为 Direct 调用 145,340,914 次、编译 276,505 次、缓存清空 591 次；
+编译耗时 89.787 秒。该轮开启短 TCG 切换，尚未加入认证回调和页内返回。
+这项结果促使短切换改为显式实验选项，默认采用连续 TCG 与认证回调。
+
+加入认证回调与页内返回后，`e4-linux-local-return` 的三轮 TCG/Direct/
+关闭循环映射对照共 9 次通过，包括 BTI、有效认证和认证失败到 Linux 信号。
+日志确认执行过认证回调。该轮在调整 FP 访问检查之前，计时中位数如下。
+
+| 负载 | TCG | Direct | 关闭循环映射的 Direct |
+| --- | ---: | ---: | ---: |
+| 整数循环 | 98.866 ms | 39.245 ms | 38.834 ms |
+| 固定地址访存 | 124.760 ms | 128.613 ms | 128.470 ms |
+| 带标签访存 | 129.913 ms | 128.458 ms | 137.436 ms |
+| getpid | 15.438 ms | 15.406 ms | 14.706 ms |
+| 管道往返 | 68.787 ms | 64.547 ms | 62.264 ms |
+| 向量整数 | 12.215 ms | 8.352 ms | 8.246 ms |
+| 浮点加法 | 56.965 ms | 9.590 ms | 8.760 ms |
+| 向量访存 | 62.372 ms | 15.116 ms | 14.352 ms |
+| 跨页函数调用 | 1.470 ms | 1.675 ms | 1.602 ms |
+| 认证循环 | 20.074 ms | 20.928 ms | 21.040 ms |
+
+浮点与向量访存的局部收益清楚；普通访存仍未改善。较早的个别轮次曾出现普通
+访存约 72 ms，后续未稳定复现，暂不将其列为已确认收益。系统调用、函数调用
+和认证循环也未体现显著改善。该表无法推导手机交互速度或温度变化。
+
+Linux 客体的 PAC 检查使用 `prctl(PR_PAC_GET_ENABLED_KEYS)`，常量 61 来自
+[Linux UAPI 头文件](https://github.com/torvalds/linux/blob/master/include/uapi/linux/prctl.h)。
+测试会分别记录平台支持、认证回调是否执行及错误认证的信号结果。
+
+完整系统对照 `e4-full-boot-assist` 随后在客体约 519 秒停止推进。CPU 采样
+持续停在同一生成代码地址，LLDB 显示该地址出现执行权限 `EXC_BAD_ACCESS`。
+源码核对发现 QEMU 的 `tb_add_jump`、`tb_gen_code` 可让当前线程进入 MAP_JIT
+写模式；Direct 命中缓存时直接执行，缺少恢复执行模式的步骤。现在 Mac 的
+每次原生入口都恢复执行权限，包括 MMU 回调返回后的重新进入。回归测试主动
+在缓存命中前和映射回调内切到写模式，验证 Direct 仍完成读取。iOS 沿用 RX/RW
+双映射，其入口不调用这项 Mac API。
+
+`e4-full-boot-assist/results.json` 的 758.444 秒结束值发生在 LLDB 附加期间，
+不能作为正常退出或启动计时结果。完整记录保留在同目录的 `sample-mid.txt`
+和 `lldb-threads.txt`。该故障修复后重新进行整组验证。
+
+最终构建再次通过 6 项宿主测试和 9 次 Linux 客体运行，记录在
+`work/performance/e4-linux-final/`。三轮中位数如下；关闭循环映射的对照也已保存。
+
+| 负载 | TCG | Direct |
+| --- | ---: | ---: |
+| 整数循环 | 97.501 ms | 39.945 ms |
+| 固定地址访存 | 119.203 ms | 132.948 ms |
+| 带标签访存 | 119.493 ms | 132.166 ms |
+| 浮点加法 | 56.552 ms | 9.209 ms |
+| 向量访存 | 60.827 ms | 15.647 ms |
+
+该轮普通访存约慢 11%，浮点约快 6.1 倍、向量访存约快 3.9 倍。收益取决于代码
+实际进入 Direct 的范围，整机收益需要另行测量。
+
+最终完整 HyperOS 验证已通过：宿主第 587.550 秒观察到串口启动完成动作，
+第 588.264 秒通过网络读取 `sys.boot_completed=1`。截图已确认桌面、应用图标
+和导航区域完成显示，记录在 `work/performance/e4-full-boot-final/`。QEMU
+SHA-256 为 `d494013fc08349691120b8eb51bd88b423ef15d893d64eec68353b110c7b4410`。
+测试结束后已关闭窗口与进程。
+
+最后统计为 Direct 调用 5,112,926 次、编译 148,177 次、清空缓存 318 次、
+认证回调 11,333,285 次；编译耗时 38.201 秒，后端总耗时 47.287 秒。
+缓存清空和编译开销仍高，间接跳转仍是主要回退指令。该轮确认了完整系统
+兼容性，尚未测量桌面交互延迟。与 E3 的启动记录相比也未体现加速；磁盘与
+系统缓存复用、宿主负载和实现变化同时存在，需固定条件后比较整体性能。
+
+iOS ARM64 静态库、QEMU 动态库和 Release 应用均已构建通过，版本
+`0.8.1 (34)`，标识 `E4-simd-assist`。应用内嵌 QEMU 与构建库的 `__text`
+SHA-256 均为 `582b219fc67268082ef00291aa23e99d17e1667f7ce00024f752f8f0ee0920b8`。
+摘要位于 `work/performance/architecture-research/e4-build-summary.json`。
+当前产物为本地构建，尚未安装到手机。
+
+### 后续方向与取舍
+
+当前 SIMD/浮点覆盖是计算路径的阶段改动。整机可用性仍按完整 HyperOS 的
+启动、桌面、设置、应用切换和持续发热验收。继续开发按以下顺序处理：
+
+1. **减少执行切换和整页比较。** 真实启动采样出现大量进入/退出与 4 KiB
+   `memcmp`。先验证认证回调与调度改动的净收益，再研究连接代码块及接入
+   QEMU 代码失效通知。失效通知必须覆盖页表切换、写入代码和物理别名。
+2. **快速内存访问与客体内核配合。** 普通内存循环仍未获得明确收益。候选为
+   批量验证循环访问范围、保持有效映射和由客体通知地址空间变化。需要验证
+   4 KiB 客体页与宿主页的权限差异、Binder 进程切换成本及失效开销。
+3. **将图形命令和合成交给宿主。** 当前手机使用 SwiftShader；gfxstream 或
+   定制 GLES/HWC 传输可能减少客体绘图工作。需要实现 iOS surface、共享缓冲区、
+   同步和客体驱动，再与现有 virgl 路径比较完整操作耗时。
+4. **客体内核的宿主用户态执行。** 继续保留 ARM64 UML/Darwin 方向，先做
+   最小 Linux 进程、异常、调度与内存映射原型；已有 Linux 宿主实现的接口
+   需要针对 iOS 重做。平台可行性与 HyperOS 兼容性尚待验证。
+
+### 复杂度审查
+
+SIMD 扩展继续使用现有指令分类与生成器；共享状态偏移消除了 C++/汇编中的
+两套常量。指针认证复用 QEMU 实现，回调入口与原有映射回调共用上下文。
+取消认证回调会恢复同页认证指令的 TCG 切换；取消调度检查会使长时间的 TCG
+间接连接绕过 Direct 入口。两项均提供环境变量用于消融，性能结论按测试结果
+保留。页内 RET 入口表复用现有代码页，表项指向已有预算检查；另对每次动态
+返回计数，覆盖跳到基本块中间和自循环的情况。此阶段没有加入新的调度框架。
+
+所有 QEMU 验证使用可见窗口，结束后关闭。本轮读取已有手机日志，未安装
+新构建或安排新的手机操作。新的执行语义先通过宿主和 Linux 验证，再用于完整
+Android；达到可比较的阶段结果后再安排真机验证。
+
+## E5：按需编译与连续用户态执行（进行中，2026-10-08）
+
+目标是在函数和代码页之间保留原生寄存器及已检查的内存映射，减少每次返回
+QEMU 时的状态复制、整页比较和重新映射。图形命令传输及 ARM64 UML/Darwin
+继续作为独立架构方向评估。用户允许继续扩大改动，本阶段先做本地验证。
+
+已实现按实际入口遍历代码页中的控制流，仅编译可达区域；后续入口增量编译。
+BR/BLR 通过 QEMU 回调保留 BTYPE、目标地址标签和 BTI 检查。着陆指令需要
+保留异常状态时，由 TCG 执行该指令。新增补丁复用 QEMU 的目标检查函数。
+
+增量编译最初漏掉了条件分支指向已编译区域的情况，Linux 管道测试停在原生
+`b.ne` 自循环。已修复，并加入同页多入口、条件跳转和代码修改回归测试。
+修复后的 `e5-linux-links` 三种模式全部通过。较早的 `e5-linux-demand` 使用了
+构建失败前的 E4 二进制，已在 manifest 标记排除；测试脚本现在要求源码输入
+和 QEMU 哈希匹配成功构建的 manifest。
+
+首次完整系统实验 `e5-full-demand` 最后记录编译 55,185 次、清空缓存 10 次、
+编译耗时 4.289 秒；Direct 调用仍高达 35,865,625 次。客体约 141 秒时，
+`hypsys_system` 的 BootMonitor 请求重启到 recovery，未完成 Android 启动。
+此结果只能确认编译开销下降，整体性能结论仍待验证。
+
+跨页代码连接已实现。首次进入目标页检查执行权限，后续通过入口表跳转，
+保留原生寄存器及数据映射。每个执行片段开始时清空入口表并重新检查代码；
+新代码页加入时撤销此前的数据写映射，再由 QEMU 检查所有已访问代码页的
+物理别名。执行权限变化、片段间修改代码和先写后执行的别名测试均通过。
+
+`e5-full-chain` 已启动完整 HyperOS：串口在 690.803 秒记录启动完成，网络
+在 695.345 秒确认属性。最后记录 Direct 调用 16,764,460 次、编译 569,633 次、
+清空缓存 162 次，编译耗时 44.265 秒、后端总耗时 99.122 秒。与 E4 的
+588.264 秒记录相比，本轮更慢。磁盘持续复用，宿主还承担开发工作；这些记录
+足以否定当前已有整机明显提速的结论，精确回退幅度仍需固定条件测量。
+
+随后加入 FEAT_LSE 原子操作直接执行，保留客体特性、宿主特性、访问权限、
+自然对齐和代码页写保护检查；未满足条件时交回 QEMU。独立测试覆盖四种宽度、
+十种操作、内存顺序编码、寄存器重叠与零寄存器，共 10,240 组数值检查，另验
+证特性缺失、错位地址和写保护均不改变状态。SVC 之后取消额外的 2 ms TCG
+等待，系统调用仍完整进入客体内核。
+
+更新后的 Linux 测试 `e5-linux-lse` 在 TCG、Direct 和关闭循环映射的 Direct
+三种模式通过，包含 LSE 写保护引发 Linux SIGSEGV。测试脚本现在自动重建
+initramfs，并记录二进制摘要。`e5-linux-atomics` 使用较早的客体程序，未覆盖
+新增 LSE 测试；该目录仅保留当时已有检查的结果。
+
+| 负载 | TCG | Direct |
+| --- | ---: | ---: |
+| 跨页函数调用，1,000 万次 | 136.798 ms | 16.844 ms |
+| 浮点加法 | 54.703 ms | 7.328 ms |
+| 向量访存 | 60.955 ms | 13.908 ms |
+| LSE 原子循环 | 39.826 ms | 64.347 ms |
+| PAC 认证循环 | 19.935 ms | 77.351 ms |
+
+跨页调用约快 8.1 倍，原子和认证循环仍有退化。原子操作的价值还需检查其能否
+减少实际 Android 负载的回退时间。上述结果来自单轮 Mac 测试，手机交互、温度
+和整机启动收益均需另行确认。
+
+### 内核执行实验
+
+`HUSK_ARM64_PROFILE=1` 通过 QEMU 的异常级切换通知与线程 CPU 时钟，分别
+统计用户态 TCG、内核 TCG 和 Direct 时间。Direct 时间包含编译和回调；计时
+从后端第一次建立上下文开始，未包含此前启动阶段，也不计休眠和宿主调度等待。
+`e5-full-lse` 的启动中间采样记录用户态 TCG 93.065 秒、内核 TCG 145.896 秒、
+Direct 66.675 秒。内核约占这段 vCPU CPU 时间的 48%，用户态优化受到这一占比
+限制。
+
+已接入 `HUSK_ARM64_KERNEL=1` 实验选项，让 EL1 的普通计算、访存和控制流
+使用同一后端。每次映射继续使用 QEMU 当前异常级的 MMU 权限。系统寄存器、
+异常、MMIO 和未支持指令由 TCG 执行；片段结束后经过现有中断检查。该选项
+当前默认关闭。高地址代码连接及 8 项宿主测试通过。修复用户态与内核共用
+回退等待时间的问题后，`e5-linux-kernel-quantum` 三种模式均通过，日志确认
+内核 Direct 实际执行。完整 HyperOS 测试 `e5-full-kernel` 在 900.237 秒内
+未完成启动，尚未测到整机收益。此前开启线程计时的 `e5-full-lse` 同样在
+900.13 秒内未完成；最终记录用户态 TCG 372.596 秒、内核 TCG 271.923 秒、
+Direct 196.155 秒。计时本身有额外开销，不能直接比较这两次耗时。
+
+### 图形方向
+
+gfxstream 源码已取得固定提交 `07ee40efb0e7037a9a9b7fe59071e7c4997e7cbe`，
+已加入 iOS 适配补丁，处理桌面框架、系统 API、EGL 动态加载及离屏 surface。
+Rutabaga 固定提交为 `ced6af5b1135173c269a037e06213e8a263de271`。两者的
+macOS 动态库、iOS gfxstream 动态库与 Rutabaga 静态库均构建成功；
+`scripts/build_gfxstream.py` 记录
+源码、依赖锁文件与产物摘要。iOS EGL 使用 Husk 已有的 ANGLE Metal 实现。
+
+`scripts/test_gfxstream.py` 已通过两层测试：宿主 Rutabaga C API，以及
+当前 Android 内核的 DRM ioctl → QEMU virtio-gpu → Rutabaga → gfxstream
+→ ANGLE Metal。两者均检查 GLES 创建上下文、清屏、裁剪、6,144 个像素读回
+及 GL 错误；宿主测试另检查 fence 和销毁。日志确认 `ANGLE Metal Renderer`。
+结果保存在 `work/performance/gfxstream-metal-v1`。这是基本渲染正确性验证，
+尚未测量 Android UI 性能。
+
+### G1：完整 HyperOS 的 gfxstream GLES
+
+已将 HyperOS AVD 的九个 GLES 编码库加入现有客体。启动检测程序通过 DRM 的
+`VIRTGPU_PARAM_SUPPORTED_CAPSET_IDs` 检查 GLES capset 8，再设置 EGL、
+minigbm 和 virtio-gpu-pipe。它在既有 `virtgpu_detect` 前执行。其他 GPU 设备
+继续使用客体原有的驱动选择，Mesa 库保留在原路径。
+
+`gfxstream-hyperos-cold` 在单 vCPU HVF 下冷启动通过，42.756 秒查询到
+`sys.boot_completed=1`。SurfaceFlinger 和独立 EGL 程序均报告
+`Android Emulator OpenGL ES Translator (ANGLE ... Metal Renderer: Apple M5 Ultra)`。
+桌面图标、导航栏可见。壁纸在 gfxstream 与后续软件渲染对照实例中均为黑色，
+其原因仍需检查。HVF 用于驱动兼容性开发，
+iPhone 运行时的 QEMU、gfxstream、ANGLE 和 Android 均在手机内执行。
+
+`tests/gfxstream/android-bench.c` 使用 360×800 pbuffer、全屏三角形及每像素
+16 次纹理采样。预热后测量 60 帧，每帧 `glFinish`；最后读回一个像素并检查颜色。
+上述 HVF 测试得到 5.281 ms/帧。此前 llvmpipe 测试为 29.635 ms/帧，但使用四个
+vCPU；两者只能用于功能检查。
+此负载用于测量绘制成本，手机桌面帧率、输入延迟及持续发热需要另外测试。
+
+`g1-tcg-gfxstream` 使用单 vCPU、4,096 MiB、标准 TCG，关闭 ARM64 Direct，
+完整 HyperOS 在 545.581 秒查询到启动完成。三次 60 帧测试均通过，分别为
+10.960、16.169、10.636 ms/帧，中位数 10.960 ms/帧。SurfaceFlinger 与测试
+进程均报告 Metal。此前同一 QEMU 和测试二进制的软件组 `g1-tcg-software`
+在 692.656 秒启动，renderer 为 ANGLE/SwiftShader；其图形测试超过 180 秒
+仍未完成。超时包含 EGL 初始化、着色器编译和绘制，无法由此计算稳定绘制
+速度的倍数。`g1-tcg-software-long` 将上限延长到 600 秒，仍然超时，且只输出了
+SwiftShader renderer。这轮在 895.172 秒查询到系统启动，测试期间另做了两次
+只读进程查询，分别耗时 10.375 和 13.233 秒；主线程等待 futex，一个工作线程
+处于可运行状态。现有记录仍不足以区分编译、预热及绘制阶段，后续版本已加入
+阶段计时输出。软件组的稳定帧耗时与提速倍数继续保留为未知。
+
+两组复用同一份磁盘，顺序启动，过程中没有其他 QEMU 实例。磁盘缓存与 Android
+持久状态没有复位，启动时间只能作为本轮观察。更早的 `gfxstream-baseline-tcg`
+测试受到人工 ADB 重连影响，其绘制结果已排除；后续自动测试期间不重连或重启
+adbd。测试脚本现已保留超时前输出，便于区分初始化与运行失败。
+
+QEMU 的 iOS 动态库及 Husk build 35（`G1-gfxstream-metal`）均构建成功。
+Rutabaga 的 Rust 动态库触发 Xcode 27 链接器的 LINKEDIT 字符串表对齐检查，
+当前将其静态链接到 QEMU；gfxstream 和 ANGLE 随应用作为动态库加载。
+应用新增 `Metal GLES (Experimental)`，初始关闭，要求先更新客体驱动。
+启用后使用 `virtio-gpu-rutabaga-pci`，跳过旧 virgl 的窗口探测，并禁止恢复和保存
+该显卡的 VM 状态。当前显示经过 GPU 读回、Pixman 和 Husk 已有显示组件，仍有
+复制成本。iPhone 上的初始化、画面与性能尚未验证。当前仅加速 GLES，Vulkan 应用兼容性
+未验证。`work/performance/ipas/Husk-G1.ipa` 已通过包内资源、动态库与签名检查。
+
+为检查 iOS 专用代码的运行行为，新增 `macos-ios-api` 构建目标：在 Mac 执行
+相同的 EGL 动态加载、无窗口平台实现及 GLES 转发。首次加载暴露了残留的
+macOS 视频纹理函数 `_nsConvertVideoFrameToNV12Textures`。已限定该调用只在
+桌面后端编译，并去掉 iOS 后端的 `-undefined dynamic_lookup -flat_namespace`，
+后续未解析符号会导致链接失败。修复后 iOS 库重新构建成功；
+`g1-ios-api` 完成 Metal 渲染、6,144 个像素、fence 和资源销毁检查。
+该检查运行于 Mac，仍需验证 iPhone 的实际加载和图形行为。
+
+已检查图形缓冲区的分配入口：当前 `ExternalBlob` 和 `SystemBlob` 均关闭，
+ring blob 使用进程内的对齐内存。命名 POSIX 共享内存位于另一条分配路径，
+当前 GLES 配置未启用该路径。此项为源码与初始化日志核对；iOS 沙盒中的运行
+结果仍待确认。
+
+当时的 build 35 安装包 SHA-256 为
+`fd99110e066780f6a5f159e84e959ea21fb07348b56fa00bc995d054cab0ea71`。
+该构建的主应用及 JIT helper 构建号均为 35，新增图形依赖的许可证随应用打包。
+同一路径现已替换为下文记录的 build 36。
+
+驱动包由 `scripts/prepare_gfxstream_guest.py` 生成，包含文件摘要、检测程序及
+安装脚本，压缩后约 600 KB。`scripts/install_gfxstream_guest.py` 通过指定 ADB
+连接原地写入 vendor。库文件先写入同目录临时文件，再用 rename 替换，运行中的
+进程继续引用旧 inode，重启后加载新库。安装脚本限定当前 SELinux permissive
+HyperOS profile，检查既有 init 入口后插入一次检测调用。`g1-app-driver-check`
+连续安装两次成功；九个库及检测程序的目标摘要全部匹配，init 调用仅出现一次，
+安装临时文件已清理。当前 QEMU 的客体内重启
+曾停在 UEFI，后续测试使用关闭进程后重新启动。
+
+### G1 完整界面检查
+
+`g1-ui-gfxstream` 在单核 TCG 下使用 Metal，Settings 冷启动的 Android
+`TotalTime` 为 96,042 ms、`WaitTime` 为 97,982 ms。六次 600 ms 滑动后，
+`gfxinfo` 在服务内部超过 10 秒查询上限，未取得有效帧统计。截图显示进入了
+通知与状态栏子页面，输入负载也未保持为预期列表滑动，因此本轮没有有效的
+界面帧率对照。后续采集延长滑动时长和查询上限，仍需检查操作结果。
+软件界面对照 `g1-ui-software` 在测量前人工结束，排除其性能结果。
+
+`g1-app-driver-check` 使用同一磁盘、单核 HVF，Settings 冷启动为 5,461 ms。
+进程映射显示 Settings 加载 `/vendor/lib64/egl/libEGL_emulation.so` 和
+GLES 编码库；`debug.hwui.renderer=skiagl`，`Pipeline=Skia (OpenGL)`。
+系统为 `zygote64`，32 位 ABI 列表为空。这些检查排除了 Settings 仍使用
+SwiftShader 或 32 位驱动的推测。此时约 1,520 MB 内存可用，未启用交换空间。
+HVF 与 TCG 的启动数字包含不同缓存与后台状态，仅说明当前观察到的差异。
+
+加入初始化阶段计时后，同一测试程序、单核 HVF、每组三帧的绘制检查均完成。
+软件组 `g1-software-setup` 为 531.938 ms/帧；Metal 组为 5.305 ms/帧。
+两组均通过像素检查，但样本短，且宿主使用 HVF；手机收益仍待确认。
+此前 TCG 软件组 600 秒超时的具体阶段仍未知。
+
+这些结果确认图形路径已接入宿主 GPU，完整界面仍有很长延迟。下一阶段同时
+检查 Direct 与新图形路径的组合、CPU 时间分布和界面等待，继续以实际交互判断
+可用性。
+
+### G1 构建和复测
+
+```sh
+python3 scripts/build_gfxstream.py --platform ios
+python3 scripts/build_arm64_ios.py
+PATH="$PWD/work/qemu10-src/build-macos/pyvenv/bin:$PATH" bash scripts/build_ios.sh qemurebuild
+```
+
+图形库要求 CMake、Ninja、Rust 与 `aarch64-apple-ios` target。`scripts/ci_build.sh`
+也已加入图形库步骤。客体包的构建参数为已有 HyperOS AVD EROFS vendor 分区、
+Android NDK 路径及一个新输出目录：
+
+```sh
+python3 scripts/prepare_gfxstream_guest.py \
+  --vendor work/boot-lab/images/os3-partitions/vendor.img \
+  --ndk /opt/homebrew/share/android-commandlinetools/ndk/27.2.12479018 \
+  --output work/performance/gfxstream-guest-package
+python3 scripts/install_gfxstream_guest.py \
+  --serial 127.0.0.1:16255 \
+  --package work/performance/gfxstream-guest-package.tar.gz
+```
+
+上述 ADB 地址属于 Mac 验证实例；安装到手机时须使用手机客体的 ADB 连接。
+更新完成后关闭模拟器，再启用 Metal GLES 并重启 Husk。后续日常运行在手机内完成。
+
+Android 绘制测试程序可使用 Android NDK 的 `aarch64-linux-android26-clang`
+构建，源文件为 `tests/gfxstream/android-bench.c`，参数为
+`-O2 -Wall -Wextra -Werror -lEGL -lGLESv2`。验证完整 HyperOS 时使用
+`scripts/test_gfxstream_hyperos.py --gpu software|gfxstream --accel tcg`，并传入
+`--angle-path`、`--bench` 和独立的 `--output` 目录。默认绘制 60 帧、重复三次，
+每次上限 180 秒；`--bench-seconds` 可以延长慢速软件渲染的等待时间。
+
+### G1 复杂度审查
+
+- QEMU 使用上游 Rutabaga C API，GLES 编码使用现有 AVD 驱动。未新增一套产品
+  图形协议；测试中的少量命令编码用于独立检查传输和像素结果。
+- 显示沿用已有 Pixman 回调。删除本轮最初加入的 UIKit 子图层创建与跨线程生命周期
+  代码，iOS 的 native-window 必需接口仅拒绝窗口请求。实际调用使用离屏 surface。
+- 保留旧 virgl、软件显示及原有 Mesa 库：现有镜像和设置仍使用这些路径，新路径
+  的手机验证也尚未完成。
+- 内核 Direct 实验继续默认关闭，完整启动尚未测到收益。GPU 改动与该实验独立。
+- 新增依赖固定源码提交，Rust 依赖固定锁文件。iOS 构建始终包含 gfxstream，运行
+  时只保留一个实验选项；编译开关未再增加第二份可用状态。
+- `macos-ios-api` 仅供构建验证，复用 iOS 平台源码；其运行检查已经发现并帮助
+  修复一处动态加载问题，因此保留。手机运行使用打包的 iOS 库。
+
+
+## E6：间接调用继续在 Direct 内执行（2026-10-08）
+
+G1 与 E5 组合的启动采样中，Direct 曾进入 25,192,159 次，其中 24,752,075 次
+以 branch 状态返回 QEMU。此前 BR/BLR 的辅助函数总会结束执行段，后续调用
+重新复制完整寄存器状态、核对代码页并建立数据映射。函数内的微基准收益未能
+覆盖这种频繁调用。
+
+新增 `HUSK_ASSIST_CHAIN` 返回值。QEMU 仍执行目标地址规范化、BTI 和指针认证
+检查；无待处理 BTYPE，或 BTI/PAC 入口已完成时，Direct 可继续执行目标代码。
+需要保留首条指令异常语义的其他入口仍返回 QEMU。目的页继续检查执行权限，
+同一执行段内已验证且保持不变的代码页可复用入口。每次间接调用消耗指令预算，
+即使目标落在同一基本块中，也会定期返回 CPU 循环。
+
+同一段执行中的 BLR 目标第一次经过上述检查后，可缓存宿主入口。后续命中直接
+由生成代码完成查表、更新 LR 和跳转。缓存只记录没有逐次 PAC 副作用的目标；
+认证入口继续执行辅助函数。跨页末尾 BTI、带地址标签的目标等情况保留慢路径。
+缓存随执行段结束或代码池清空而失效，目的代码页继续受物理别名写保护。
+
+初版仅延长 C++ 执行循环，Linux 一百万次间接调用仍需 50.503 ms，TCG 为
+13.764 ms。完成生成代码内的入口缓存后，三轮 Linux 对照中位数如下。测试
+使用单 vCPU、`max,pauth-impdef=on,sve=off,sme=off`，数据见
+`work/performance/e6-linux-native-calls/medians.json`。
+
+| 固定负载 | TCG | Direct | TCG 耗时 / Direct 耗时 |
+| --- | ---: | ---: | ---: |
+| 一百万次间接调用 | 13.271 ms | 1.878 ms | 7.07 |
+| 一千万次跨页直接调用 | 130.211 ms | 15.948 ms | 8.16 |
+| 浮点循环 | 52.612 ms | 7.232 ms | 7.27 |
+| 向量访存循环 | 58.321 ms | 13.256 ms | 4.40 |
+| 整数循环 | 94.261 ms | 41.392 ms | 2.28 |
+| 通用访存循环 | 114.763 ms | 137.476 ms | 0.83 |
+| 系统调用 | 13.779 ms | 16.802 ms | 0.82 |
+| 原子操作 | 39.012 ms | 62.104 ms | 0.63 |
+| 指针认证 | 20.146 ms | 75.187 ms | 0.27 |
+
+八组宿主测试及六次 Linux 完整功能运行通过。覆盖代码修改后的重新编译、
+取消执行权限、代码物理别名写保护、间接自调用的预算退出、BTI 非法目标的
+SIGILL 和 PAC 认证失败。`HUSK_ARM64_BRANCH_CHAIN=0` 仅供对照测量；应用界面
+未增加开关。间接调用与计算测试的收益不能用于推算完整 HyperOS 速度，访存、
+系统调用、原子操作和认证的退化仍需处理。
+
+修改前的 E5 + G1 运行 `g1-direct-ui` 在 1,000 秒内未查询到启动完成，未取得
+界面数据。这轮开启了逐段 Direct 统计和 CPU 分阶段计时，并在启动中进行过
+宿主采样及本地构建。最终 CPU 分布记录于 `cpu-phases.json`；计时工具本身有
+开销，该轮不用于严谨的启动速度比较。后续完整系统性能测试默认关闭这些统计，
+通过 `--profile` 单独开启。
+
+复杂度审查：复用现有 assist 和 map_code 所有者，新增两种完成状态和一张
+仅在执行段内有效的调用入口表。跨执行段缓存与多 CPU 同步尚未实现，当前
+映射仍在每段执行后失效。BTI 与指针认证继续使用 QEMU 原实现。
+
+`g1-e6-art-ui` 使用 E6、Metal GLES 和 A1 预编译产物，关闭 Direct 统计与
+分阶段计时，在 1,000 秒内仍未查询到启动完成，未取得设置和滑动数据。
+复查退出前的 `screen.ppm`，桌面图标和导航区域已显示。该结果只能说明查询
+超时，无法确认实际启动耗时，也不能据此判定启动失败。
+本轮 QEMU 摘要为
+`c275220a2d0ba8762fb80077ad234546cc6fa7e041691c6955f5147a1c2498c6`。
+Linux 微测成功还不足以确认完整 HyperOS 的收益。
+
+build 36（`G1-E6-native-calls`）已完成 iOS 构建、IPA 资源和签名检查，
+文件为 `work/performance/ipas/Husk-G1.ipa`，SHA-256 为
+`2d1334c7c12b93be47b56591a8b2ef10ab280da632aaca3dc64b132a1482ec61`。
+同目录 JSON 记录库摘要、构建标识和手机验证状态。签名检查针对打包脚本的
+已签名 staging bundle；DerivedData 中用于生成 IPA 的原始应用没有签名。
+新安装默认关闭 ARM64 Direct，既有用户显式保存的选项保持有效。启用 Direct
+或 Metal GLES 时使用单 vCPU，TCG 的线程参数与该核数保持一致。
+
+## A1：SystemUI 与设置的 ART 预编译（2026-10-08）
+
+`g1-art-inspection` 查询到 SystemUI 为 `verify`、设置为 `speed-profile`、
+桌面为 `speed`。Settings 的进程映射显示 boot/framework OAT 和应用代码均已
+加载；系统 boot image 可用。
+
+新增 `scripts/prepare_hyperos_art.py`，逐个检查显式指定的应用。带 `--compile`
+时，对尚未达到 `speed` 的应用执行 `pm compile -m speed -f`，再查询 ART 是否
+接受生成产物；仅保存属性与执行日志。现有桌面产物无需重编译。SystemUI 和
+设置已生成 `speed` 产物，结果记录于 `work/performance/g1-art-speed/`。
+这些改动位于 Mac 验证镜像，手机客体尚未更新。`g1-art-cold-adoption` 已在
+后续冷启动中确认三个应用仍为 `speed`，没有重新编译。完整界面收益继续验证，
+后续将生成与当前手机镜像相匹配的更新方式。
+
+```sh
+python3 scripts/prepare_hyperos_art.py --serial 127.0.0.1:16255 \
+  --package com.android.systemui --package com.android.settings \
+  --package com.miui.home --compile --output work/performance/art-speed-run
+```
+
+省略 `--compile` 只查询编译状态。程序复用 Android ART 的编译和产物校验入口，
+未另行实现 OAT 文件格式或拷贝活动应用数据。产物随 APK、ART 或 boot classpath
+变化可能失效，更新镜像后需要重新核对。
+
+## M1：Darwin 内存映射原型（2026-10-08）
+
+新增独立程序 `tests/arm64-exec/darwin-memory.c`，在自身保留的地址范围内调用
+`vm_remap` 和 `vm_protect`。Mac 检查通过：共享物理页的读写一致、两个别名
+拥有独立权限、COW、同一地址替换物理页、撤销权限后的访问异常。保护错误和
+未映射访问的信号恢复仅在独立 Mac 程序中运行，尚未接入 Husk 的异常处理。
+
+本机宿主页为 16,384 字节；4、16、64、128、512 GiB 的虚拟地址保留均成功，
+各次申请后立即释放，没有访问这些保留页。对一个 4 KiB 子区间设置只读后，
+整个 16 KiB 宿主页都变为只读。2,000 次逐页重新映射并设置权限的平均耗时为
+1,521 ns/页。映射后的原生汇编访存循环一亿次为 29.795 ms，结果正确。
+这组数据用于检查宿主接口与映射成本；完整 Linux、HyperOS 和手机收益尚未测得。
+
+源码通过 iOS arm64 编译，iPhone 上的地址保留、数据映射与异常行为尚未运行。
+程序使用的临时 RAM 为六个宿主页；测试结束后释放全部映射。
+构建及结果位于 `work/performance/m1-darwin-memory/`。
+
+```sh
+clang -O2 -Wall -Wextra -Werror -Wno-unused-function \
+  tests/arm64-exec/darwin-memory.c \
+  -o work/performance/m1-darwin-memory/probe
+work/performance/m1-darwin-memory/probe
+xcrun --sdk iphoneos clang -target arm64-apple-ios16.4 \
+  -O2 -Wall -Wextra -Werror -Wno-unused-function -c \
+  tests/arm64-exec/darwin-memory.c \
+  -o work/performance/m1-darwin-memory/probe-ios.o
+```
+
+另有 `tests/arm64-exec/android-mapping-coverage.c`，只读指定进程的 maps 和
+pagemap，统计同一 VMA 内的 16 KiB 对齐虚拟区间中，四个 4 KiB 页是否驻留、
+物理连续且按 16 KiB 对齐。输出区分 VMA 边界、未驻留页面和内核隐藏 PFN。
+采样不会暂停目标进程；采样期间页表仍可能变化。候选比例只用于选择设计方向，
+尚未检查代码写别名、COW 权限和 DMA，一次采样不能用于建立可执行映射。
+
+`m1-android-coverage` 在同一镜像的单核 HVF 实例中运行。五个目标进程的 PFN
+均可读取；需要在完成图形检查后将 adbd 切换为 root。初步候选占已采样驻留页的
+比例为 system_server 14.68%、SystemUI 13.14%、桌面 18.06%、设置 15.24%、
+SurfaceFlinger 10.05%。这组统计按页面数量计算，尚无访存频次权重。
+进程可读虚拟地址的最高位置接近 512 GiB，单进程完整线性窗口需要考虑此范围。
+
+客体内核为 `6.12.81-4k-g4f6bf47200d9`，提供
+`/sys/kernel/mm/transparent_hugepage/hugepages-16kB/enabled`，当前为 `never`。
+Linux 的 mTHP 可以通过连续物理页承载匿名内存，继续使用 4 KiB PTE 和用户接口。
+新增 `--allocation-sample` 模式，每次仅申请并写入 16 MiB 匿名内存，然后统计
+自身映射。`never` 的三次候选比例为 0.08%、5.32%、8.29%；临时设为 `always`
+后为 89.09%、89.51%、84.87%。统计包含该小程序的其他映射，详细数据在
+`mthp-allocation.json`。测试后恢复 `never`，未修改持久启动配置。
+
+这一结果支持先尝试 mTHP 与 fastmem 配合：现有内核可以增加连续匿名页，无需
+先变更整个镜像的页大小。已有进程、文件映射、共享内存和 COW 后的情况仍需
+处理。页面候选比例增加的幅度不能换算成应用提速倍数。
+来源：[Linux THP 文档](https://docs.kernel.org/admin-guide/mm/transhuge.html)。
+
+复杂度审查：本阶段仅增加两个独立的实验程序，使用现有 Mach 接口和 Linux
+proc 接口。未在生产执行路径引入第二套内存状态，也未增加界面选项。后续接入
+需要覆盖失效和故障恢复；当前测试不能替代完整客体的验证。
+
+### 完整系统采集修正
+
+`g1-tcg-art-ui` 已显示桌面，独立命令通道也返回 `sys.boot_completed=1`，但
+ADB 持续显示 offline。暂停测试脚本后重连当前 ADB 连接即可恢复，未重启客体
+或 adbd。随后 SurfaceFlinger 查询为空，脚本未取得交互数据。本轮包含人工
+连接恢复与宿主采样，启动耗时排除比较。
+
+`test_gfxstream_hyperos.py` 现使用既有命令服务确认启动，再建立 ADB 连接；
+取消启动过程中反复断开连接的轮询。SurfaceFlinger 查询显式检查退出码和
+renderer 字段，并延长服务内部上限，查询失败单独记录。新流程已在
+`m1-android-coverage` 的 HVF 运行中通过启动、renderer 和绘制检查。
+E6 的旧轮次只有结束截图与查询超时，继续保留为启动耗时未知。
+
+`g1-tcg-art-ui-v2` 使用修正后的查询流程，单 vCPU、4 GiB RAM、TCG、
+Metal GLES 和已接受的 ART speed 产物，723.678 秒后查询到启动完成。
+SurfaceFlinger 返回 ANGLE Metal renderer。设置冷启动的 `TotalTime` 为
+174,492 ms，`WaitTime` 为 178,249 ms。此前 `g1-ui-gfxstream` 的对应
+`TotalTime` 为 96,042 ms；两个轮次没有组成重复的 ART 开关对照，不能据此
+计算 ART 的提速或退化比例。完整系统的响应仍未达到目标。
+
+本轮设置的 gfxinfo 返回 `Failure while dumping the app`，未取得帧耗时。
+结束截图已进入通知与状态栏子页面，预定的六次输入未保持在设置主列表。
+因此本轮只采用启动确认与设置冷启动数据，滑动结果无效。总运行时间为
+1,101.45 秒，QEMU 已关闭，检查记录为同目录 `review.json`。
+
+测量脚本继续保留已完成阶段的设置启动数据，后续滑动或服务查询失败时也会
+保存。新增设置打开后的截图与有界 logcat 采集，用于检查页面和失败原因。
+这两项记录改动在 v2 启动后完成，v2 的 Python 进程仍使用启动时的脚本内容。
+
+### 阶段检查
+
+本轮八组执行器宿主测试、六次 Linux 对照运行、Mac GLES 像素与同步检查、
+iOS 库和应用构建均通过。Darwin 内存原型与 Android 进程映射采样已完成，
+冷启动后 ART 仍接受预编译产物；完整界面测试仍未取得有效滑动数据。
+本轮没有安装或启动手机应用。
+
+复杂度审查保留已有 QEMU、ANGLE、Rutabaga 和 ART 接口。Direct 的调用缓存
+限定在执行段内，内存探索使用两个独立程序；尚未为待验证架构增加运行时
+状态或产品选项。新补丁的空白上下文标记属于 patch 格式，新增源码行的空白
+检查与补丁反向应用检查均通过。

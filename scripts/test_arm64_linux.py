@@ -9,6 +9,8 @@ import re
 import platform
 import subprocess
 import time
+from build_arm64_exec import verify_qemu_build
+from build_arm64_test_guest import main as build_guest
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -18,17 +20,20 @@ def main():
     parser.add_argument("--runs", type=int, default=1)
     parser.add_argument("--cpu", default="cortex-a57")
     parser.add_argument("--modes", nargs="+", choices=("tcg", "hybrid", "direct", "direct-checked"),
-                        default=("tcg", "hybrid", "direct"))
+                        default=("tcg", "direct"))
     parser.add_argument("--output", type=Path, default=ROOT / "work/performance/arm64-linux")
     args = parser.parse_args()
+    verify_qemu_build()
     if args.runs < 1:
         parser.error("--runs must be positive")
+    build_guest()
     args.output.mkdir(parents=True, exist_ok=True)
     artifacts = ("work/qemu10-src/build-macos/qemu-system-aarch64",
                  "work/performance/build-inputs/upstream/Payload/Husk.app/vmlinuz-virt",
                  "work/arm64-exec-guest/initramfs.cpio.gz")
     (args.output / "manifest.json").write_text(json.dumps({
-        "host": platform.platform(), "runs": args.runs, "modes": args.modes,
+        "host": platform.platform(), "runs": args.runs, "modes": args.modes, "cpu": args.cpu,
+        "backend_env": {k: v for k, v in os.environ.items() if k.startswith("HUSK_ARM64_")},
         "sha256": {name: hashlib.sha256((ROOT / name).read_bytes()).hexdigest() for name in artifacts},
     }, indent=2) + "\n")
     results = []
@@ -72,8 +77,10 @@ def main():
             row = {"sample": sample, "mode": mode, "exit_code": process.returncode,
                    "elapsed_seconds": time.monotonic() - start, "timeout": expired,
                    "passed": "HUSK-EL0-TEST PASS" in output and "HUSK-EL0-TEST FAIL" not in output,
-                   "engine_active": "integer EL0 engine active" in host_output,
+                   "engine_active": "EL0 engine active" in host_output,
                    "direct_active": "backend=direct" in host_output,
+                   "pauth_assist_active": "PAUTH assist active" in host_output,
+                   "kernel_active": "kernel Direct active" in host_output,
                    "integer_ns": int(benchmark[1]) if benchmark else None,
                    "memory_ns": int(memory_benchmark[1]) if memory_benchmark else None,
                    "tagged_ns": int(tagged_benchmark[1]) if tagged_benchmark else None,
@@ -81,9 +88,20 @@ def main():
                    "switch_ns": int(switch_benchmark[1]) if switch_benchmark else None}
             if not all((benchmark, memory_benchmark, tagged_benchmark, syscall_benchmark, switch_benchmark)):
                 row["passed"] = False
+            for name in ("vector", "float", "vector_memory", "calls", "indirect_calls", "atomic"):
+                measured = re.search(rf"BENCH {name}_ns=(\d+) value=(\d+)", output)
+                row[name + "_ns"] = int(measured[1]) if measured else None
+                if not measured and not (name == "atomic" and "SKIP LSE unavailable" in output):
+                    row["passed"] = False
+            pauth = re.search(r"BENCH pauth_ns=(\d+) count=(\d+)", output)
+            row["pauth_ns"] = int(pauth[1]) if pauth else None
+            if not pauth:
+                row["passed"] = False
             if mode != "tcg" and not row["engine_active"]:
                 row["passed"] = False
             if mode.startswith("direct") and not row["direct_active"]:
+                row["passed"] = False
+            if mode.startswith("direct") and env.get("HUSK_ARM64_KERNEL") == "1" and not row["kernel_active"]:
                 row["passed"] = False
             results.append(row)
             (args.output / "results.json").write_text(json.dumps(results, indent=2) + "\n")

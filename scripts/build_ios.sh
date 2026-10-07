@@ -1,10 +1,9 @@
 #!/bin/bash
 # Husk: cross-compile QEMU + its minimal dependency set for arm64-apple-ios.
 #
-# Toolchain setup follows UTM's scripts/build_dependencies.sh (the -target triple,
-# the meson cross-file shape, needs_exe_wrapper) because those details are the
-# hard-won part. The dependency list does not: Husk builds 5 libraries where UTM
-# builds ~25, since we have no spice/gstreamer/virgl/MoltenVK/usb/tpm surface.
+# Toolchain setup follows UTM's scripts/build_dependencies.sh for target triples,
+# Meson cross files and needs_exe_wrapper. Build graphics dependencies through
+# ci_build.sh before configuring QEMU.
 #
 # Usage: ./scripts/build_ios.sh [stage ...]      (no args = all stages)
 #        stages: libffi glib pixman libucontext libslirp qemu
@@ -19,7 +18,7 @@ mkdir -p "$PREFIX" "$LOGS" "$STAMPS"
 
 ARCH=arm64
 SDK=iphoneos
-SDKMINVER="${SDKMINVER:-16.0}"
+SDKMINVER="${SDKMINVER:-16.4}"
 NCPU="$(sysctl -n hw.ncpu)"
 
 SDKROOT="$(xcrun --sdk $SDK --show-sdk-path)"
@@ -158,9 +157,9 @@ stage_libslirp()    { apply_patch libslirp-v4.9.1 libslirp-v4.9.1.patch
 stage_qemu() {
     local dir="$SRC/qemu-10.0.12-utm"
     local log="$LOGS/qemu.log"
-    local engine_options=()
+    local engine_options=(-Drutabaga_gfx=enabled)
     if [ "${HUSK_ARM64_EXEC_BUILD:-0}" = 1 ]; then
-        engine_options=(-Dhusk_arm64_exec=true)
+        engine_options+=(-Dhusk_arm64_exec=true)
     fi
     done_stage qemu && { echo "[skip] qemu"; return 0; }
     apply_patch qemu-10.0.12-utm qemu-10.0.12-utm.patch
@@ -209,7 +208,9 @@ stage_qemurebuild() {
     local dir="$SRC/qemu-10.0.12-utm"
     local log="$LOGS/qemu-rebuild.log"
     banner "rebuilding qemu (incremental)"
-    ( cd "$dir/_husk_build" && ninja libqemu-aarch64-softmmu.dylib ) > "$log" 2>&1 \
+    ( cd "$dir/_husk_build" \
+      && meson setup --reconfigure --clearcache -Drutabaga_gfx=enabled \
+      && ninja libqemu-aarch64-softmmu.dylib ) > "$log" 2>&1 \
         || fail qemu-rebuild "$log"
     echo "[ok  ] $(ls -lh "$dir/_husk_build/libqemu-aarch64-softmmu.dylib" | awk '{print $5}')"
     husk_stage_dylib

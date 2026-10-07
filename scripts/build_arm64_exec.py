@@ -15,6 +15,15 @@ BUILD = ROOT / "work/arm64-exec-build"
 LOGS = ROOT / "work/performance/architecture-research"
 
 
+def verify_qemu_build():
+    manifest = json.loads((BUILD / "manifest.json").read_text())
+    stale = [name for name, digest in manifest["inputs"].items()
+             if hashlib.sha256((ROOT / name).read_bytes()).hexdigest() != digest]
+    binary = Path(manifest["qemu_source"]) / "build-macos/qemu-system-aarch64"
+    if stale or hashlib.sha256(binary.read_bytes()).hexdigest() != manifest.get("qemu_sha256"):
+        raise SystemExit("QEMU build differs from current inputs; run scripts/build_arm64_exec.py first")
+
+
 def run(command, name, cwd=ROOT):
     log = LOGS / f"{name}.log"
     with log.open("w") as output:
@@ -42,6 +51,8 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--qemu-source", type=Path, default=ROOT / "work/qemu10-src")
     parser.add_argument("--engine-only", action="store_true")
+    parser.add_argument("--gfxstream", action="store_true",
+                        help="Link the graphics libraries from scripts/build_gfxstream.py --platform macos")
     args = parser.parse_args()
     if platform.system() != "Darwin" or platform.machine() != "arm64":
         parser.error("This build script requires an Apple Silicon Mac")
@@ -86,6 +97,8 @@ def main():
         "Libs: -L${libdir} -lhusk-arm64-exec -lc++\nCflags: -I${includedir}\n")
     if not args.engine_only:
         apply(qemu, "qemu-arm64-exec.patch")
+        apply(qemu, "qemu-arm64-pauth-assist.patch")
+        apply(qemu, "qemu-arm64-branch-assist.patch")
         apply(qemu, "qemu-cocoa-surface-lifetime.patch")
         shutil.copyfile(ROOT / "src/arm64-exec/husk-arm64-qemu.c", qemu / "target/arm/tcg/husk-arm64-qemu.c")
         qbuild = qemu / "build-macos"
@@ -96,16 +109,24 @@ def main():
                  "--disable-vnc", "--disable-spice", "--disable-opengl", "--disable-virglrenderer",
                  "--disable-curses", "--disable-curl", "--disable-libusb", "--disable-usb-redir",
                  "--disable-tpm", "--disable-docs", "--disable-guest-agent", "--disable-tools",
-                 "--disable-hvf", "--disable-debug-info"], "qemu-engine-configure", qbuild)
+                 "--enable-hvf", "--disable-debug-info"], "qemu-engine-configure", qbuild)
+        pkgpaths = [str(prefix / "lib/pkgconfig")]
+        if args.gfxstream:
+            pkgpaths.append(str(ROOT / "work/gfxstream-build-macos/prefix/lib/pkgconfig"))
         run([qbuild / "pyvenv/bin/meson", "configure", qbuild, "-Dhusk_arm64_exec=true",
-             f"-Dpkg_config_path={prefix}/lib/pkgconfig"], "qemu-engine-meson")
+             "-Dhvf=enabled",
+             f"-Drutabaga_gfx={'enabled' if args.gfxstream else 'disabled'}",
+             f"-Dpkg_config_path={','.join(pkgpaths)}"], "qemu-engine-meson")
         run(["ninja", "-C", qbuild, "-j", "8", "qemu-system-aarch64"], "qemu-engine-build")
     inputs = (list((ROOT / "src/arm64-exec").glob("*")) +
               list((ROOT / "patches").glob("*arm64*.patch")) +
               [ROOT / "patches/qemu-cocoa-surface-lifetime.patch"])
     manifest = {"dynarmic_revision": revision, "qemu_source": str(qemu),
+                "gfxstream": args.gfxstream,
                 "inputs": {str(p.relative_to(ROOT)): hashlib.sha256(p.read_bytes()).hexdigest()
                            for p in inputs if p.is_file()}}
+    if not args.engine_only:
+        manifest["qemu_sha256"] = hashlib.sha256((qbuild / "qemu-system-aarch64").read_bytes()).hexdigest()
     (BUILD / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
     print(f"Engine tests passed; build manifest: {BUILD / 'manifest.json'}")
 

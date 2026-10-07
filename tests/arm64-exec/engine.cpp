@@ -8,6 +8,7 @@
 #include <cstring>
 #include <initializer_list>
 #include <memory>
+#include <pthread.h>
 
 #define CHECK(condition) do { if (!(condition)) { \
     std::fprintf(stderr, "%s:%d: %s\n", __FILE__, __LINE__, #condition); \
@@ -17,10 +18,13 @@ struct Memory {
     std::array<uint8_t, 4096> ram{};
     std::array<uint8_t, 4096> collision_ram{};
     bool writable = true;
+    bool tagged = false;
+    bool jit_write_on_map = false;
     unsigned reads = 0;
     unsigned writes = 0;
     uint8_t *Locate(uint64_t a, size_t n)
     {
+        if (tagged) a &= UINT64_C(0x00ffffffffffffff);
         uint64_t page = a & ~UINT64_C(4095);
         if (n > 4096 || (a & 4095) > 4096 - n) return nullptr;
         auto *base = page == 0x20000 ? ram.data() : page == 0x120000 ? collision_ram.data() : nullptr;
@@ -47,6 +51,7 @@ struct Memory {
     static void *Map(void *opaque, uint64_t page, bool write)
     {
         auto &m = *static_cast<Memory *>(opaque);
+        if (m.jit_write_on_map) pthread_jit_write_protect_np(0);
         return !write || m.writable ? m.Locate(page, 4096) : nullptr;
     }
 };
@@ -172,6 +177,18 @@ int main()
     memory.writable = true;
 
     if (direct) {
+        // A later entry can branch into an already compiled region on the same
+        // page. Its conditional target must bind to that region's actual code.
+        program({0x91000400, 0xd4000001});
+        code[32] = 0xb4000001 | ((unsigned(-32) & 0x7ffff) << 5); // cbz x1,-128
+        code[33] = 0xd4000001;
+        CHECK(run() == HUSK_ARM64_FALLBACK && state.x[0] == 1);
+        state.pc = 0x10080;
+        CHECK(run() == HUSK_ARM64_FALLBACK && state.x[0] == 2 && state.pc == 0x10004);
+        code[0] = 0x91000800; // add x0,x0,2 after both entries were cached
+        state.pc = 0x10080;
+        CHECK(run() == HUSK_ARM64_FALLBACK && state.x[0] == 4);
+
         // Keep the branch PC and link register intact for QEMU's BTYPE handling.
         for (uint32_t branch : {0xd61f0000U, 0xd63f0000U}) {
             program({0x91000421, branch});
@@ -220,15 +237,103 @@ int main()
     CHECK(state.x[0] == 1 && state.x[30] == 0x10004);
 
     program({0x14000400}); // b to the next code page
-    CHECK(run() == HUSK_ARM64_FALLBACK && state.pc == 0x11000);
-    for (uint32_t unsupported : {0xd4000001U, 0xd53bd040U, 0xc85f7c20U,
-                                 0xc8027c20U, 0xad400440U, 0x4e228420U,
+    CHECK(run() == (direct ? HUSK_ARM64_BRANCH : HUSK_ARM64_FALLBACK) && state.pc == 0x11000);
+    for (uint32_t unsupported : {0xd4000001U, 0xc85f7c20U,
+                                 0xc8027c20U,
                                  0x1ac24020U, 0xba000400U, 0x91800000U}) {
         CHECK(!husk_arm64_supported(unsupported));
         program({unsupported});
         CHECK(run() == HUSK_ARM64_FALLBACK && state.pc == 0x10000);
     }
     if (direct) {
+        program({0xf9400020, 0xd4000001}); // ldr x0,[x1]; svc 0
+        state.x[1] = 0x20000;
+        memory.ram.fill(0);
+        memory.ram[0] = 42;
+        CHECK(run() == HUSK_ARM64_FALLBACK && state.x[0] == 42);
+        state.pc = 0x10000;
+        memory.jit_write_on_map = true;
+        pthread_jit_write_protect_np(0);
+        CHECK(run() == HUSK_ARM64_FALLBACK && state.x[0] == 42);
+        memory.jit_write_on_map = false;
+        for (uint32_t fp : {0x4e208400U, 0x1e202800U, 0x3dc00020U,
+                            0x3d800020U, 0xd53b4402U, 0xd53b4422U}) {
+            program({0x91000400, fp, 0xd4000001});
+            state.access_flags = 2;
+            state.x[1] = 0x20000;
+            state.v[0][0] = 0x12345678;
+            auto expected = state;
+            expected.pc += 4;
+            expected.x[0] = 1;
+            auto old_memory = memory.ram;
+            CHECK(run() == HUSK_ARM64_FALLBACK && !std::memcmp(&state, &expected, sizeof(state)));
+            CHECK(memory.ram == old_memory);
+            state.access_flags = 0;
+            CHECK(run() == HUSK_ARM64_FALLBACK && state.pc == 0x10008);
+        }
+        program({0xd503201f, 0xd65f0000}); // nop; ret x0 to a non-leader within this page
+        state.x[0] = 0x10004;
+        CHECK(run(20) == HUSK_ARM64_BUDGET && state.pc == 0x10004);
+        program({0xf8408420, 0xd4000001}); // ldr x0,[x1],8
+        state.x[0] = 17;
+        state.x[1] = UINT64_C(0xb400000000020000);
+        CHECK(run() == HUSK_ARM64_FALLBACK && state.pc == 0x10000 && state.x[0] == 17);
+        memory.tagged = true;
+        memory.ram.fill(0);
+        memory.ram[0] = 91;
+        state.pc = 0x10000;
+        CHECK(run() == HUSK_ARM64_FALLBACK && state.pc == 0x10004 && state.x[0] == 91);
+        CHECK(state.x[1] == UINT64_C(0xb400000000020008));
+        program({0xf9400020, 0x91000400, 0xf9000020, 0xf1000442, 0x54ffff81, 0xd4000001});
+        state.x[1] = UINT64_C(0xb400000000020000);
+        state.x[2] = 10;
+        CHECK(run() == HUSK_ARM64_FALLBACK && memory.ram[0] == 101);
+        memory.tagged = false;
+        state.pc = 0x10000;
+        CHECK(run() == HUSK_ARM64_FALLBACK && state.pc == 0x10000);
+
+        program({0xad400440, 0xd4000001}); // ldp q0,q1,[x2]
+        state.x[2] = 0x20003;
+        for (unsigned i = 0; i < 32; ++i) memory.ram[i + 3] = i + 17;
+        CHECK(run() == HUSK_ARM64_FALLBACK && state.pc == 0x10000);
+        state.access_flags = 1;
+        CHECK(run() == HUSK_ARM64_FALLBACK && state.pc == 0x10004);
+        CHECK(!std::memcmp(state.v, memory.ram.data() + 3, 32));
+        state.pc = 0x10000;
+        state.x[2] = 0x20fe1;
+        auto unaligned_before = state;
+        CHECK(run() == HUSK_ARM64_FALLBACK && !std::memcmp(&state, &unaligned_before, sizeof(state)));
+        state.x[2] = 0x20003;
+        state.access_flags = 0;
+        CHECK(run() == HUSK_ARM64_FALLBACK && state.pc == 0x10000);
+
+        program({0xd53bd050, 0xd53b4212, 0xd53b4401, 0xd53b443f, 0xd4000001});
+        state.tpidr_el0 = 0x123456789abcdef0;
+        state.nzcv = 0xb0000000;
+        state.fpcr = 0x03000000;
+        CHECK(run() == HUSK_ARM64_FALLBACK && state.pc == 0x10010);
+        CHECK(state.x[16] == state.tpidr_el0 && state.x[18] == state.nzcv && state.x[1] == state.fpcr);
+        // Vector faults preserve both registers, NZCV, FPSR and writeback.
+        program({0xacc10440, 0xd4000001}); // ldp q0,q1,[x2],32
+        state.x[2] = 0x20ff0;
+        state.nzcv = 0xa0000000;
+        state.fpsr = 0x08000000;
+        for (auto &v : state.v) { v[0] = 17; v[1] = 23; }
+        auto before_state = state;
+        CHECK(run() == HUSK_ARM64_FALLBACK && !std::memcmp(&state, &before_state, sizeof(state)));
+        program({0xad810440, 0xd4000001}); // stp q0,q1,[x2,32]!
+        state.x[2] = 0x20000;
+        memory.writable = false;
+        auto before_memory = memory.ram;
+        before_state = state;
+        CHECK(run() == HUSK_ARM64_FALLBACK && !std::memcmp(&state, &before_state, sizeof(state)));
+        CHECK(memory.ram == before_memory);
+        memory.writable = true;
+        program({0x1e202800, 0xd4000001}); // fadd s0,s0,s0
+        state.fpcr = 1U << 8; // Guest exception traps stay with QEMU.
+        before_state = state;
+        CHECK(run() == HUSK_ARM64_FALLBACK && !std::memcmp(&state, &before_state, sizeof(state)));
+
         // A pair crossing into an unmapped page must leave QEMU the whole access.
         program({0xa8c10440, 0xd4000001}); // ldp x0,x1,[x2],16
         state.x[0] = 17;

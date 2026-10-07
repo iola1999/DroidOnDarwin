@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 #include "husk-arm64-direct.h"
+#include "husk-arm64-layout.h"
 
 #include <algorithm>
 #include <array>
@@ -14,6 +15,7 @@
 #include <libkern/OSCacheControl.h>
 #include <pthread.h>
 #include <sys/mman.h>
+#include <sys/sysctl.h>
 #include <TargetConditionals.h>
 #include <oaknut/oaknut.hpp>
 #if TARGET_OS_IPHONE
@@ -24,19 +26,32 @@ using namespace oaknut;
 using namespace oaknut::util;
 
 namespace {
-enum Stop : uint64_t { Budget, Fallback, ReadPage, WritePage, PrepareLoop };
+enum Stop : uint64_t { Budget, Fallback, ReadPage, WritePage, PrepareLoop, CodeBranch };
 struct Frame {
     HuskArm64State state;
     uint64_t budget, address, reason, loop_base;
+    void *code_routes;
+    void *call_routes;
 };
-static_assert(offsetof(Frame, state.pc) == 256);
-static_assert(offsetof(Frame, state.nzcv) == 264);
-static_assert(offsetof(Frame, budget) == 272);
-static_assert(offsetof(Frame, address) == 280);
-static_assert(offsetof(Frame, reason) == 288);
-static_assert(offsetof(Frame, loop_base) == 296);
+static_assert(offsetof(Frame, state.pc) == HUSK_PC);
+static_assert(offsetof(Frame, state.nzcv) == HUSK_NZCV);
+static_assert(offsetof(Frame, state.fpcr) == HUSK_FPCR);
+static_assert(offsetof(Frame, state.fpsr) == HUSK_FPSR);
+static_assert(offsetof(Frame, state.access_flags) == HUSK_ACCESS_FLAGS);
+static_assert(offsetof(Frame, state.tpidr_el0) == HUSK_TPIDR);
+static_assert(offsetof(Frame, state.v) == HUSK_VECTORS);
+static_assert(offsetof(Frame, budget) == HUSK_BUDGET);
+static_assert(offsetof(Frame, address) == HUSK_ADDRESS);
+static_assert(offsetof(Frame, reason) == HUSK_REASON);
+static_assert(offsetof(Frame, loop_base) == HUSK_LOOP_BASE);
+static_assert(offsetof(Frame, code_routes) == HUSK_CODE_ROUTES);
+static_assert(offsetof(Frame, call_routes) == HUSK_CALL_ROUTES);
 struct Mapping { uint64_t tag; void *read, *write; uint64_t reserved; };
+struct CodeRoute { uint64_t tag; void **entries; };
+struct CallRoute { uint64_t target; void *entry; };
 static_assert(sizeof(Mapping) == 32);
+static_assert(sizeof(CodeRoute) == 16);
+static_assert(sizeof(CallRoute) == 16);
 extern "C" void husk_direct_enter(Frame *, void *, Mapping *);
 extern "C" void husk_direct_leave();
 
@@ -48,8 +63,9 @@ int64_t sign_extend(uint32_t value, unsigned bits)
 
 /* Only these validated encodings can execute as host instructions. */
 enum Kind { Other, AddImm, MoveWide, AddReg, LogicalReg, LogicalImm, Bitfield,
-            Extract, Unary, Binary, Select, Multiply, Adr, Branch, Conditional,
-            CompareBranch, TestBranch, Indirect, Memory, Pair };
+            Extract, Unary, Binary, Select, Multiply, AddExt, Carry, Adr, Branch, Conditional,
+            CompareBranch, TestBranch, Indirect, Memory, Pair, Vector,
+            VectorFromGpr, GprFromVector, FpFromGpr, GprFromFp, Compare, Hint, SystemRead, Assist, Atomic };
 Kind decode(uint32_t w)
 {
     bool sf = w >> 31;
@@ -83,34 +99,132 @@ Kind decode(uint32_t w)
     }
     if ((w & 0x3fe00800) == 0x1a800000) return Select;
     if ((w & 0x7fe00000) == 0x1b000000) return Multiply;
+    if ((w & 0xffe00000) == 0x9b200000 || (w & 0xffe00000) == 0x9ba00000 ||
+        (w & 0xffe0fc00) == 0x9b407c00 || (w & 0xffe0fc00) == 0x9bc07c00) return Multiply;
+    if ((w & 0x9fe00000) == 0x8b200000 && ((w >> 10) & 7) <= 4) return AddExt;
+    if ((w & 0x1fe0fc00) == 0x1a000000) return Carry;
+    if ((w & 0x3fe00410) == 0x3a400000) return Compare;
+    if (w == 0xd503201f) return Hint; // NOP; barriers and branch landing checks stay in QEMU.
+    switch (w & 0xffffffe0) {
+    case 0xd53bd040: case 0xd53b4200: case 0xd53b4400: case 0xd53b4420: return SystemRead;
+    }
     if ((w & 0x1f000000) == 0x10000000) return Adr;
     if ((w & 0x7c000000) == 0x14000000) return Branch;
     if ((w & 0xff000010) == 0x54000000) return Conditional;
     if ((w & 0x7e000000) == 0x34000000) return CompareBranch;
     if ((w & 0x7e000000) == 0x36000000) return TestBranch;
     auto br = w & 0xfffffc1f;
-    // BR/BLR update guest BTYPE; QEMU must execute them and check the landing pad.
+    // BR/BLR retain the owner's BTYPE and destination checks through its assist.
+    if (br == 0xd61f0000 || br == 0xd63f0000) return Assist;
     if (br == 0xd65f0000) return Indirect;
-    if ((w & 0x3e000000) == 0x28000000 && ((w >> 30) & 1) == 0) {
+    switch (w) {
+    case 0xd50320ff:
+    case 0xd503211f: case 0xd503215f: case 0xd503219f: case 0xd50321df:
+    case 0xd503231f: case 0xd503233f: case 0xd503235f: case 0xd503237f:
+    case 0xd503239f: case 0xd50323bf: case 0xd50323df: case 0xd50323ff:
+    case 0xd503241f: case 0xd503245f: case 0xd503249f: case 0xd50324df:
+        return Assist;
+    }
+    if ((w & 0xfffff0ff) == 0xd50330bf || (w & 0xfffff0ff) == 0xd503309f)
+        return Assist; // DMB/DSB; the callback performs a full host barrier.
+    bool vector = w & 0x04000000;
+    if ((w & 0x3fa07c00) == 0x08a07c00 ||
+        ((w & 0x3f200c00) == 0x38200000 && ((w >> 12) & 15) <= 8)) return Atomic;
+    if ((w & 0x3fbffc00) == 0x089ffc00) return Memory; // LDAR/STLR, all integer sizes
+    if ((w & 0x3a000000) == 0x28000000 &&
+        (vector ? (w >> 30) < 3 : ((w >> 30) & 1) == 0)) {
         unsigned rn = (w >> 5) & 31, rt = w & 31, rt2 = (w >> 10) & 31;
         bool writeback = (w >> 23) & 1;
         if (((w >> 22) & 1) && rt == rt2) return Other;
-        if (writeback && rn != 31 && (rn == rt || rn == rt2)) return Other;
+        if (!vector && writeback && rn != 31 && (rn == rt || rn == rt2)) return Other;
         return Pair;
     }
-    if (!(w & 0x04000000) && ((w >> 22) & 3) <= 1) {
+    unsigned opc = (w >> 22) & 3, size = w >> 30;
+    bool scalar_memory = opc <= 1 || (opc == 2 && size < 3) || (opc == 3 && size < 2);
+    if (vector ? size + ((opc >> 1) * 4) <= 4 : scalar_memory) {
         if ((w & 0x3b000000) == 0x39000000) return Memory;
         if ((w & 0x3b200c00) == 0x38200800 && (w & (1U << 14))) return Memory;
         if ((w & 0x3b200000) == 0x38000000 && ((w >> 10) & 3) != 2) {
             // Writeback with Rn == Rt has constrained-unpredictable semantics.
-            if ((w & 0xc00) && ((w >> 5) & 31) == (w & 31) && (w & 31) != 31)
+            if (!vector && (w & 0xc00) && ((w >> 5) & 31) == (w & 31) && (w & 31) != 31)
                 return Other;
             return Memory;
         }
     }
+
+    // Baseline Advanced SIMD encodings only. Size and Q restrictions reject
+    // reserved encodings before any guest word can run on the host CPU.
+    unsigned q = (w >> 30) & 1, element = (w >> 22) & 3;
+    if ((w & 0x9ff80c00) == 0x0f000400 &&
+        (q || !((w >> 29) & 1) || ((w >> 12) & 15) != 15)) return Vector;
+    if ((w & 0x9f20fc00) == 0x0e201c00) return Vector; // AND/BIC/ORR/ORN/EOR/BSL/BIT/BIF
+    switch (w & 0xbf20fc00) {
+    case 0x0e001800: case 0x0e002800: case 0x0e003800:
+    case 0x0e005800: case 0x0e006800: case 0x0e007800:
+    case 0x0e208400: case 0x2e208400: case 0x0e20bc00:
+    case 0x0e203400: case 0x0e203c00: case 0x2e203400:
+    case 0x2e203c00: case 0x2e208c00: case 0x0e208c00:
+        if (element != 3 || q) return Vector;
+        break;
+    case 0x0e209c00: case 0x0e209400: case 0x2e209400:
+    case 0x0e206400: case 0x0e206c00: case 0x2e206400: case 0x2e206c00:
+        if (element != 3) return Vector;
+        break;
+    }
+    if ((w & 0xbfe08400) == 0x2e000000 && (q || !(w & (1U << 14)))) return Vector;
+    unsigned imm5 = (w >> 16) & 31;
+    if (imm5) {
+        unsigned lane_size = __builtin_ctz(imm5);
+        if (lane_size < 4) {
+            switch (w & 0xbfe0fc00) {
+            case 0x0e000400: if (lane_size < 3 || q) return Vector; break;
+            case 0x0e000c00: if (lane_size < 3 || q) return VectorFromGpr; break;
+            case 0x0e002c00: if (lane_size < (q ? 3U : 2U)) return GprFromVector; break;
+            case 0x0e003c00: if (q ? lane_size == 3 : lane_size < 3) return GprFromVector; break;
+            }
+            if ((w & 0xffe0fc00) == 0x4e001c00) return VectorFromGpr;
+            if ((w & 0xffe08400) == 0x6e000400 &&
+                !(((w >> 11) & 15) & ((1U << lane_size) - 1))) return Vector;
+        }
+    }
+    // FP32/FP64 use the guest FPCR/FPSR. FP16 and newer optional features
+    // retain QEMU's implementation and feature checks.
+    if (!((w >> 22) & 1) || q) {
+        switch (w & 0xbfa0fc00) {
+        case 0x0e20cc00: case 0x0ea0cc00: case 0x0e20d400:
+        case 0x0ea0d400: case 0x2e20dc00: case 0x2e20fc00: return Vector;
+        }
+    }
+    if (element <= 1) {
+        switch (w & 0xff3ffc00) {
+        case 0x1e204000: case 0x1e20c000: case 0x1e214000:
+        case 0x1e21c000: case 0x1e244000: case 0x1e24c000:
+        case 0x1e254000: case 0x1e25c000: case 0x1e264000:
+        case 0x1e274000: case 0x1e27c000: return Vector;
+        }
+        switch (w & 0xff20fc00) {
+        case 0x1e200800: case 0x1e201800: case 0x1e202800:
+        case 0x1e203800: case 0x1e204800: case 0x1e205800:
+        case 0x1e206800: case 0x1e207800: return Vector;
+        }
+        if ((w & 0xff200c00) == 0x1e200c00 || // FCSEL
+            (w & 0xff201fe0) == 0x1e201000 || // FMOV immediate
+            (w & 0xff000000) == 0x1f000000) return Vector; // FMADD/FMSUB/FNMADD/FNMSUB
+        if ((w & 0xff20fc07) == 0x1e202000 &&
+            (!(w & 8) || !((w >> 16) & 31))) return Vector; // FCMP/FCMPE
+        if ((w & 0x7f3ffc00) == 0x1e220000 ||
+            (w & 0x7f3ffc00) == 0x1e230000) return FpFromGpr; // SCVTF/UCVTF
+        if ((w & 0x7f3ffc00) == 0x1e380000 ||
+            (w & 0x7f3ffc00) == 0x1e390000) return GprFromFp; // FCVTZS/FCVTZU
+    }
+    switch (w & 0xfffffc00) {
+    case 0x1e270000: case 0x9e670000: case 0x9eaf0000: return FpFromGpr;
+    case 0x1e260000: case 0x9e660000: case 0x9eae0000: return GprFromFp;
+    case 0x1e22c000: case 0x1e624000: return Vector; // FCVT S/D
+    }
     return Other;
 }
-bool integer_kind(Kind kind) { return kind >= AddImm && kind <= Multiply; }
+bool integer_kind(Kind kind) { return kind >= AddImm && kind <= Carry; }
 uint64_t target(uint32_t w, Kind kind, uint64_t pc)
 {
     if (kind == Branch) return pc + sign_extend(w & 0x3ffffff, 26) * 4;
@@ -129,18 +243,39 @@ struct CompiledPage {
     static constexpr size_t max_bytes = 1024 * 1024;
     std::array<uint32_t, 1024> source{};
     std::array<void *, 1024> entries{};
+    std::array<void *, 1024> branch_entries{};
     std::vector<Loop> loops;
+    bool unaligned;
 
-    size_t compile(uint64_t new_page, const void *bytes, uint32_t *executable, uint32_t *writable)
+    size_t compile(uint64_t new_page, const void *bytes, size_t entry,
+                   uint32_t *executable, uint32_t *writable, uint32_t flags)
     {
+        unaligned = flags & 1;
         std::array<uint32_t, 1024> input;
         std::memcpy(input.data(), bytes, 4096);
         std::array<Label, 1025> labels;
         std::array<Label, 1024> exhausted;
+        std::array<bool, 1024> emit{};
+        std::vector<size_t> pending{entry};
+        while (!pending.empty()) {
+            size_t i = pending.back();
+            pending.pop_back();
+            for (; i < input.size() && !emit[i] && !entries[i]; ++i) {
+                emit[i] = true;
+                Kind k = decode(input[i]);
+                if (k >= Branch && k <= TestBranch) {
+                    uint64_t address = target(input[i], k, new_page + i * 4);
+                    if (address >= new_page && address - new_page < 4096)
+                        pending.push_back((address - new_page) / 4);
+                }
+                if (k == Other || k == Indirect ||
+                    (k == Branch && !(input[i] & 0x80000000))) break;
+            }
+        }
         std::array<bool, 1025> leaders{};
         leaders[1024] = true;
         for (size_t i = 0; i < input.size(); ++i) {
-            if (!(i % 32)) leaders[i] = true;
+            if (!(i % 32) || i == entry || (i && !emit[i - 1])) leaders[i] = true;
             Kind k = decode(input[i]);
             if (k >= Branch && k <= TestBranch) {
                 uint64_t address = target(input[i], k, new_page + i * 4);
@@ -149,11 +284,11 @@ struct CompiledPage {
             }
             if (k == Other || (k >= Branch && k <= Indirect)) leaders[i + 1] = true;
         }
-        loops.clear();
+        size_t old_loops = loops.size();
         const char *loop_setting = std::getenv("HUSK_ARM64_LOOP_MAP");
         if (!loop_setting || std::strcmp(loop_setting, "0")) {
             for (size_t end = 1; end < input.size(); ++end) {
-                if (decode(input[end]) != Conditional) continue;
+                if (!emit[end] || decode(input[end]) != Conditional) continue;
                 uint64_t start = target(input[end], Conditional, new_page + end * 4);
                 if (start < new_page || start >= new_page + end * 4) continue;
                 size_t begin = (start - new_page) / 4;
@@ -161,9 +296,10 @@ struct CompiledPage {
                 Loop loop{begin, end, 32};
                 bool valid = true;
                 for (size_t j = begin; j < end; ++j) {
+                    if (!emit[j]) valid = false;
                     auto w = input[j];
                     auto kind = decode(w);
-                    if (kind == Memory && (w & 0x3b000000) == 0x39000000) {
+                    if (kind == Memory && (w & 0x3f000000) == 0x39000000 && ((w >> 22) & 3) <= 1) {
                         unsigned base = (w >> 5) & 31, size = 1U << (w >> 30);
                         if (base == 31 || (loop.base != 32 && loop.base != base)) valid = false;
                         loop.base = base;
@@ -186,9 +322,9 @@ struct CompiledPage {
         }
         std::vector<uint32_t> output;
         VectorCodeGenerator c(output, executable);
-        auto store_pc = [&](uint64_t pc) { c.MOV(X17, pc); c.STR(X17, X27, 256); };
+        auto store_pc = [&](uint64_t pc) { c.MOV(X17, pc); c.STR(X17, X27, HUSK_PC); };
         auto leave = [&](Stop reason) {
-            c.MOV(X17, uint64_t(reason)); c.STR(X17, X27, 288);
+            c.MOV(X17, uint64_t(reason)); c.STR(X17, X27, HUSK_REASON);
             c.MOV(X16, uint64_t(&husk_direct_leave)); c.BR(X16);
         };
         auto exit = [&](uint64_t pc, Stop reason) { store_pc(pc); leave(reason); };
@@ -202,8 +338,25 @@ struct CompiledPage {
             else if (r != 31 || sp) c.STR(from, X27, r * 8);
         };
         auto jump = [&](uint64_t pc) {
-            if (pc >= new_page && pc - new_page < 4096) c.B(labels[(pc - new_page) / 4]);
-            else exit(pc, Fallback);
+            if (pc >= new_page && pc - new_page < 4096) {
+                size_t index = (pc - new_page) / 4;
+                if (emit[index]) { c.B(labels[index]); return; }
+                if (branch_entries[index]) {
+                    c.MOV(X16, uint64_t(branch_entries[index])); c.BR(X16); return;
+                }
+            }
+            // Routes only contain pages validated during this uninterrupted
+            // user slice. Guest registers and vectors remain resident across it.
+            Label miss;
+            c.LDR(X16, X27, HUSK_CODE_ROUTES);
+            c.ADD(X16, X16, ((pc >> 12) & 255) * sizeof(CodeRoute));
+            c.LDR(X17, X16);
+            c.MOV(X26, pc >> 12); c.EOR(X17, X17, X26); c.CBNZ(X17, miss);
+            c.LDR(X16, X16, 8);
+            c.LDR(X16, X16, ((pc & 4095) / 4) * 8); c.CBZ(X16, miss);
+            c.BR(X16);
+            c.l(miss);
+            exit(pc, CodeBranch);
         };
         auto integer = [&](uint32_t w, Kind kind, unsigned third_scratch) {
             unsigned rd = w & 31, rn = (w >> 5) & 31, rm = (w >> 16) & 31, ra = (w >> 10) & 31;
@@ -221,12 +374,13 @@ struct CompiledPage {
             };
             bool set_flags = w & (1U << 29);
             bool two_sources = kind == AddReg || kind == LogicalReg || kind == Extract ||
-                               kind == Binary || kind == Select || kind == Multiply;
+                               kind == Binary || kind == Select || kind == Multiply ||
+                               kind == AddExt || kind == Carry;
             unsigned n = 0, m = 0, a = 0;
-            if (kind != MoveWide) n = operand(rn, kind == AddImm);
+            if (kind != MoveWide) n = operand(rn, kind == AddImm || kind == AddExt);
             if (two_sources) m = operand(rm);
             if (kind == Multiply) a = operand(ra);
-            bool dest_sp = (kind == AddImm && !set_flags) ||
+            bool dest_sp = ((kind == AddImm || kind == AddExt) && !set_flags) ||
                            (kind == LogicalImm && ((w >> 29) & 3) != 3);
             unsigned d;
             if (kind == Multiply && !resident(rd) && rd != 31 && aliases[rd] == -1) {
@@ -245,144 +399,230 @@ struct CompiledPage {
         };
 
         for (size_t i = 0; i < input.size(); ++i) {
-            uint64_t pc = new_page + i * 4;
-            c.l(labels[i]);
-            if (leaders[i]) {
-                size_t end = i + 1;
-                while (!leaders[end]) ++end;
-                c.SUB(X29, X29, end - i);
-                c.TBNZ(X29, 63, exhausted[i]);
-            }
-            // Slow-path re-entry already charged this block's execution budget.
-            entries[i] = c.xptr<void *>();
-            for (auto &loop : loops) {
-                if (loop.begin == i) {
-                    exit(pc, PrepareLoop);
-                    loop.generic = c.xptr<void *>();
+            if (emit[i]) {
+                uint64_t pc = new_page + i * 4;
+                c.l(labels[i]);
+                branch_entries[i] = c.xptr<void *>();
+                if (leaders[i]) {
+                    size_t end = i + 1;
+                    while (!leaders[end] && emit[end]) ++end;
+                    c.SUB(X29, X29, end - i);
+                    c.TBNZ(X29, 63, exhausted[i]);
                 }
-            }
-            uint32_t w = input[i];
-            unsigned rd = w & 31, rn = (w >> 5) & 31;
-            Kind kind = decode(w);
-            if (integer_kind(kind)) {
-                integer(w, kind, 26);
-            } else if (kind == Adr) {
-                int64_t imm = sign_extend(((w >> 29) & 3) | ((w >> 3) & 0x1ffffc), 21);
-                uint64_t value = w >> 31 ? (pc & ~UINT64_C(4095)) + imm * 4096 : pc + imm;
-                c.MOV(X16, value); save(rd, X16);
-            } else if (kind >= Branch && kind <= TestBranch) {
-                uint64_t dest = target(w, kind, pc);
-                if (kind == Branch) {
-                    if (w >> 31) { c.MOV(X16, pc + 4); save(30, X16); }
-                    jump(dest);
-                } else {
-                    Label outside, next;
-                    bool in_page = dest >= new_page && dest - new_page < 4096;
-                    bool near_branch = in_page && kind != TestBranch;
-                    Label &taken = near_branch ? labels[(dest - new_page) / 4] : outside;
-                    if (kind == Conditional) c.B(Cond(w & 15), taken);
-                    else {
-                        load(rd, X16);
-                        if (kind == TestBranch) {
-                            unsigned bit = ((w >> 26) & 32) | ((w >> 19) & 31);
-                            if (w & (1U << 24)) c.TBNZ(X16, bit, taken); else c.TBZ(X16, bit, taken);
-                        } else if (w >> 31) {
-                            if (w & (1U << 24)) c.CBNZ(X16, taken); else c.CBZ(X16, taken);
-                        } else {
-                            if (w & (1U << 24)) c.CBNZ(W16, taken); else c.CBZ(W16, taken);
+                // Slow-path re-entry already charged this block's execution budget.
+                entries[i] = c.xptr<void *>();
+                for (auto &loop : loops) {
+                    if (loop.begin == i) {
+                        exit(pc, PrepareLoop);
+                        loop.generic = c.xptr<void *>();
+                    }
+                }
+                uint32_t w = input[i];
+                unsigned rd = w & 31, rn = (w >> 5) & 31;
+                Kind kind = decode(w);
+                bool fp_access = (kind >= Vector && kind <= GprFromFp) ||
+                    ((kind == Memory || kind == Pair) && (w & 0x04000000)) ||
+                    (kind == SystemRead && ((w & 0xffffffe0) == 0xd53b4400 ||
+                                           (w & 0xffffffe0) == 0xd53b4420));
+                if ((flags & 2) && fp_access) kind = Other;
+                if (kind == Atomic && !(flags & 4)) kind = Other;
+                if (integer_kind(kind)) {
+                    integer(w, kind, 26);
+                } else if (kind == Hint) {
+                    // The guest NOP has no architectural side effects.
+                } else if (kind == SystemRead) {
+                    if ((w & 0xffffffe0) == 0xd53bd040) c.LDR(X16, X27, HUSK_TPIDR);
+                    else c.dw((w & ~31U) | 16);
+                    save(rd, X16);
+                } else if (kind == Compare) {
+                    load(rn, X16);
+                    w = (w & ~(31U << 5)) | (16 << 5);
+                    if (!(w & (1U << 11))) {
+                        load((w >> 16) & 31, X17);
+                        w = (w & ~(31U << 16)) | (17 << 16);
+                    }
+                    c.dw(w);
+                } else if (kind == Vector) {
+                    c.dw(w);
+                } else if (kind == VectorFromGpr || kind == FpFromGpr) {
+                    load(rn, X16);
+                    c.dw((w & ~(31U << 5)) | (16 << 5));
+                } else if (kind == GprFromVector || kind == GprFromFp) {
+                    c.dw((w & ~31U) | 16);
+                    save(rd, X16);
+                } else if (kind == Adr) {
+                    int64_t imm = sign_extend(((w >> 29) & 3) | ((w >> 3) & 0x1ffffc), 21);
+                    uint64_t value = w >> 31 ? (pc & ~UINT64_C(4095)) + imm * 4096 : pc + imm;
+                    c.MOV(X16, value); save(rd, X16);
+                } else if (kind >= Branch && kind <= TestBranch) {
+                    uint64_t dest = target(w, kind, pc);
+                    if (kind == Branch) {
+                        if (w >> 31) { c.MOV(X16, pc + 4); save(30, X16); }
+                        jump(dest);
+                    } else {
+                        Label outside, next;
+                        bool in_page = dest >= new_page && dest - new_page < 4096;
+                        bool near_branch = in_page && emit[(dest - new_page) / 4] && kind != TestBranch;
+                        Label &taken = near_branch ? labels[(dest - new_page) / 4] : outside;
+                        if (kind == Conditional) c.B(Cond(w & 15), taken);
+                        else {
+                            load(rd, X16);
+                            if (kind == TestBranch) {
+                                unsigned bit = ((w >> 26) & 32) | ((w >> 19) & 31);
+                                if (w & (1U << 24)) c.TBNZ(X16, bit, taken); else c.TBZ(X16, bit, taken);
+                            } else if (w >> 31) {
+                                if (w & (1U << 24)) c.CBNZ(X16, taken); else c.CBZ(X16, taken);
+                            } else {
+                                if (w & (1U << 24)) c.CBNZ(W16, taken); else c.CBZ(W16, taken);
+                            }
                         }
+                        if (!near_branch) { c.B(next); c.l(outside); jump(dest); c.l(next); }
                     }
-                    if (!near_branch) { c.B(next); c.l(outside); jump(dest); c.l(next); }
-                }
-            } else if (kind == Indirect) {
-                load(rn, X16);
-                c.STR(X16, X27, 256);
-                // Dynamic targets return to the owner for execute-permission checks.
-                leave(Fallback);
-            } else if (kind == Memory || kind == Pair) {
-                bool write = !(w & (1U << 22));
-                bool pair = kind == Pair;
-                bool reg_offset = !pair && (w & 0x3b200c00) == 0x38200800;
-                bool indexed = !pair && !reg_offset && (w & 0x3b000000) != 0x39000000;
-                unsigned mode = pair ? (((w >> 23) & 1) ? ((w >> 23) & 3) : 0) :
-                                indexed ? (w >> 10) & 3 : 0;
-                unsigned size_log2 = pair ? 2 + (w >> 31) : w >> 30;
-                int64_t offset = pair ? sign_extend((w >> 15) & 127, 7) * (1 << size_log2) :
-                                 reg_offset ? 0 : indexed ? sign_extend((w >> 12) & 511, 9) :
-                                 ((w >> 10) & 4095) << size_log2;
-                Label miss, invalid, done;
-                c.MRS(X30, SystemReg::NZCV);
-                if (pair) c.STR(W30, X27, 264);
-                load(rn, X16, true);
-                if (rn == 31) { c.TST(X16, 15); c.B(NE, invalid); }
-                if (reg_offset) {
-                    load((w >> 16) & 31, X17);
-                    unsigned option = (w >> 13) & 7;
-                    if (option == 2) c.UBFX(X17, X17, 0, 32);
-                    if (option == 6) c.SXTW(X17, W17);
-                    c.ADD(X16, X16, X17, LSL, (w & (1U << 12)) ? size_log2 : 0);
-                }
-                if (mode != 1 && offset) {
-                    if (offset > 4095) { c.MOV(X17, uint64_t(offset)); c.ADD(X16, X16, X17); }
-                    else if (offset > 0) c.ADD(X16, X16, offset);
-                    else c.SUB(X16, X16, -offset);
-                }
-                c.LSR(X17, X16, 56); c.CBNZ(X17, invalid);
-                if (size_log2) { c.TST(X16, (1U << size_log2) - 1); c.B(NE, invalid); }
-                if (pair) {
-                    c.AND(X17, X16, 4095);
-                    c.CMP(X17, 4096 - (2U << size_log2)); c.B(HI, invalid);
-                }
-                c.UBFX(X17, X16, 12, 8);
-                c.ADD(X17, X28, X17, LSL, 5);
-                c.LDR(X26, X17);
-                c.CMP(X26, X16, LSR, 12); c.B(NE, miss);
-                c.LDR(X17, X17, write ? 16 : 8); c.CBZ(X17, miss);
-                c.AND(X26, X16, 4095); c.ADD(X17, X17, X26);
-                if (write) load(rd, X26);
-                if (pair) {
-                    unsigned rt2 = (w >> 10) & 31;
-                    if (write) load(rt2, X30);
-                    // Preserve a single architectural pair access after validating
-                    // both elements, including their common page boundary.
-                    c.dw(((size_log2 - 2) << 31) | 0x29000000 | (write ? 0 : 1U << 22) |
-                         (30 << 10) | (17 << 5) | 26);
-                    if (!write) { save(rd, X26); save(rt2, X30); }
-                    c.LDR(W30, X27, 264);
+                } else if ((w & 0xfffffc1f) == 0xd63f0000) {
+                    Label miss, exhausted;
+                    load(rn, X16);
+                    c.LDR(X26, X27, HUSK_CALL_ROUTES);
+                    c.UBFX(X17, X16, 2, 8); c.ADD(X26, X26, X17, LSL, 4);
+                    c.LDR(X17, X26); c.EOR(X17, X17, X16); c.CBNZ(X17, miss);
+                    c.LDR(X26, X26, 8); c.CBZ(X26, miss);
+                    c.SUB(X29, X29, 1); c.TBNZ(X29, 63, exhausted);
+                    c.MOV(X17, pc + 4); save(30, X17);
+                    c.BR(X26);
+                    c.l(miss); exit(pc, Fallback);
+                    c.l(exhausted); exit(pc, Budget);
+                } else if (kind == Indirect) {
+                    Label budget_end;
+                    // A dynamic target can be inside a static block. Charge each
+                    // return too, so a self-return cannot bypass the slice budget.
+                    c.SUB(X29, X29, 1); c.TBNZ(X29, 63, budget_end);
+                    load(rn, X16);
+                    Label outside;
+                    c.MOV(X17, new_page);
+                    c.EOR(X17, X17, X16); c.LSR(X17, X17, 12); c.CBNZ(X17, outside);
+                    c.AND(X17, X16, 3); c.CBNZ(X17, outside);
+                    // This immutable page already has execute permission. Local
+                    // returns use the same budget-checked entries as direct branches.
+                    c.AND(X26, X16, 4095);
+                    c.MOV(X17, uint64_t(branch_entries.data()));
+                    c.ADD(X17, X17, X26, LSL, 1);
+                    c.LDR(X26, X17); c.CBZ(X26, outside); c.BR(X26);
+                    c.l(outside);
+                    Label miss;
+                    c.AND(X17, X16, 3); c.CBNZ(X17, miss);
+                    c.LDR(X26, X27, HUSK_CODE_ROUTES);
+                    c.UBFX(X17, X16, 12, 8); c.ADD(X17, X26, X17, LSL, 4);
+                    c.LDR(X26, X17); c.EOR(X26, X26, X16, LSR, 12); c.CBNZ(X26, miss);
+                    c.LDR(X17, X17, 8);
+                    c.AND(X26, X16, 4095); c.ADD(X17, X17, X26, LSL, 1);
+                    c.LDR(X26, X17); c.CBZ(X26, miss); c.BR(X26);
+                    c.l(miss);
+                    c.STR(X16, X27, HUSK_PC);
+                    // Dynamic targets return to the owner for execute-permission checks.
+                    leave(CodeBranch);
+                    c.l(budget_end); exit(pc, Budget);
+                } else if (kind == Memory || kind == Pair || kind == Atomic) {
+                    bool pair = kind == Pair;
+                    bool atomic = kind == Atomic;
+                    bool ordered = atomic || (!pair && (w & 0x3fbffc00) == 0x089ffc00);
+                    bool vector = w & 0x04000000;
+                    bool write = atomic || (pair || vector || ordered ? !(w & (1U << 22)) : ((w >> 22) & 3) == 0);
+                    bool reg_offset = !pair && (w & 0x3b200c00) == 0x38200800;
+                    bool indexed = !pair && !ordered && !reg_offset && (w & 0x3b000000) != 0x39000000;
+                    unsigned mode = pair ? (((w >> 23) & 1) ? ((w >> 23) & 3) : 0) :
+                                    indexed ? (w >> 10) & 3 : 0;
+                    unsigned size_log2 = pair ? 2 + (vector ? w >> 30 : w >> 31) :
+                                               (w >> 30) + (vector ? ((w >> 23) & 1) * 4 : 0);
+                    int64_t offset = pair ? sign_extend((w >> 15) & 127, 7) * (1 << size_log2) :
+                                     reg_offset || ordered ? 0 : indexed ? sign_extend((w >> 12) & 511, 9) :
+                                     ((w >> 10) & 4095) << size_log2;
+                    Label miss, invalid, done;
+                    load(rn, X16, true);
+                    if (rn == 31) { c.AND(X17, X16, 15); c.CBNZ(X17, invalid); }
+                    if (reg_offset) {
+                        load((w >> 16) & 31, X17);
+                        unsigned option = (w >> 13) & 7;
+                        if (option == 2) c.UBFX(X17, X17, 0, 32);
+                        if (option == 6) c.SXTW(X17, W17);
+                        c.ADD(X16, X16, X17, LSL, (w & (1U << 12)) ? size_log2 : 0);
+                    }
+                    if (mode != 1 && offset) {
+                        if (offset > 4095) { c.MOV(X17, uint64_t(offset)); c.ADD(X16, X16, X17); }
+                        else if (offset > 0) c.ADD(X16, X16, offset);
+                        else c.SUB(X16, X16, -offset);
+                    }
+                    // Retain tags in both the mapping key and architectural
+                    // writeback. The owner's MMU validates them before mapping RAM.
+                    if (size_log2 && (!unaligned || ordered)) {
+                        c.AND(X17, X16, (1U << size_log2) - 1); c.CBNZ(X17, invalid);
+                    }
+                    if (pair || (unaligned && !ordered && size_log2)) {
+                        c.ADD(X17, X16, ((pair ? 2U : 1U) << size_log2) - 1);
+                        c.EOR(X17, X17, X16); c.LSR(X17, X17, 12); c.CBNZ(X17, invalid);
+                    }
+                    c.UBFX(X17, X16, 12, 8);
+                    c.ADD(X17, X28, X17, LSL, 5);
+                    c.LDR(X26, X17);
+                    c.EOR(X26, X26, X16, LSR, 12); c.CBNZ(X26, miss);
+                    c.LDR(X17, X17, write ? 16 : 8); c.CBZ(X17, miss);
+                    c.AND(X26, X16, 4095); c.ADD(X17, X17, X26);
+                    unsigned data = vector || resident(rd) || rd == 31 ? rd : 26;
+                    if (atomic) {
+                        unsigned rs = (w >> 16) & 31;
+                        load(rs, X26); load(rd, X30);
+                        c.dw((w & ~((31U << 16) | 1023U)) | (26 << 16) | (17 << 5) | 30);
+                        if ((w & 0x3fa07c00) == 0x08a07c00) save(rs, X26);
+                        else save(rd, X30);
+                    } else if (pair) {
+                        if (write && !vector && data == 26) load(rd, X26);
+                        unsigned rt2 = (w >> 10) & 31;
+                        unsigned data2 = vector || resident(rt2) || rt2 == 31 ? rt2 : 30;
+                        if (write && !vector && data2 == 30) load(rt2, X30);
+                        // Preserve a single architectural pair access after validating
+                        // both elements, including their common page boundary.
+                        c.dw((w & 0xc4400000) | 0x29000000 | (data2 << 10) | (17 << 5) | data);
+                        if (!write && !vector) {
+                            if (data == 26) save(rd, X26);
+                            if (data2 == 30) save(rt2, X30);
+                        }
+                    } else {
+                        if (write && !vector && data == 26) load(rd, X26);
+                        c.dw(ordered ? (w & ~1023U) | (17 << 5) | data :
+                             (w & 0xc4c00000) | 0x39000000 | (17 << 5) | data);
+                        if (!write && !vector && data == 26) save(rd, X26);
+                    }
+                    if (mode) {
+                        if (mode == 1 && offset) {
+                            if (offset > 0) c.ADD(X16, X16, offset); else c.SUB(X16, X16, -offset);
+                        }
+                        save(rn, X16, true);
+                    }
+                    c.B(done);
+                    c.l(miss);
+                    c.STR(X16, X27, HUSK_ADDRESS);
+                    exit(pc, write ? WritePage : ReadPage);
+                    c.l(invalid); exit(pc, Fallback);
+                    c.l(done);
                 } else {
-                    c.dw((size_log2 << 30) | 0x39000000 | (write ? 0 : 1U << 22) | (17 << 5) | 26);
-                    if (!write) save(rd, X26);
+                    exit(pc, Fallback);
                 }
-                if (mode) {
-                    if (mode == 1 && offset) {
-                        if (offset > 0) c.ADD(X16, X16, offset); else c.SUB(X16, X16, -offset);
-                    }
-                    save(rn, X16, true);
-                }
-                c.MSR(SystemReg::NZCV, X30); c.B(done);
-                c.l(miss);
-                c.MSR(SystemReg::NZCV, X30); c.STR(X16, X27, 280);
-                exit(pc, write ? WritePage : ReadPage);
-                c.l(invalid); c.MSR(SystemReg::NZCV, X30); exit(pc, Fallback);
-                c.l(done);
-            } else {
-                exit(pc, Fallback);
+                if (i + 1 < input.size() && !emit[i + 1]) jump(pc + 4);
             }
             if (i % 32 == 31) {
                 // TBNZ has a 32 KiB reach. Keep budget exits near their callers.
                 Label next;
                 c.B(next);
                 for (size_t j = i - 31; j <= i; ++j) {
-                    if (leaders[j]) { c.l(exhausted[j]); exit(new_page + j * 4, Budget); }
+                    if (emit[j] && leaders[j]) { c.l(exhausted[j]); exit(new_page + j * 4, Budget); }
                 }
                 c.l(next);
             }
         }
         c.l(labels[1024]);
-        exit(new_page + 4096, Fallback);
-        for (auto &loop : loops) {
+        exit(new_page + 4096, CodeBranch);
+        for (size_t index = old_loops; index < loops.size(); ++index) {
+            auto &loop = loops[index];
             loop.fast = c.xptr<void *>();
-            c.LDR(X26, X27, 296);
+            c.LDR(X26, X27, HUSK_LOOP_BASE);
             Label again, budget_end;
             c.l(again);
             c.SUB(X29, X29, loop.end - loop.begin + 1);
@@ -431,14 +671,23 @@ struct HuskArm64Direct {
     size_t used = 0;
     std::unordered_map<uint64_t, std::unique_ptr<CompiledPage>> pages;
     std::array<Mapping, 256> mappings{};
+    std::array<CodeRoute, 256> routes{};
+    std::array<CallRoute, 256> call_routes{};
     std::array<uint8_t, 256> populated{};
     size_t populated_count = 0;
     bool profile = std::getenv("HUSK_ARM64_STATS") != nullptr;
+    bool native_lse = false;
     uint64_t calls = 0, compiles = 0, flushes = 0, compile_ns = 0, run_ns = 0;
+    uint64_t branches = 0, budget_exits = 0, assists = 0, chained_assists = 0;
+    std::unordered_map<uint32_t, uint64_t> fallbacks;
     std::chrono::steady_clock::time_point report = std::chrono::steady_clock::now();
 
     HuskArm64Direct()
     {
+        mappings.fill({UINT64_MAX, nullptr, nullptr, 0});
+        int lse = 0;
+        size_t lse_size = sizeof(lse);
+        native_lse = !sysctlbyname("hw.optional.arm.FEAT_LSE", &lse, &lse_size, nullptr, 0) && lse;
 #if TARGET_OS_IPHONE
         mapping = husk_ios_jit_acquire_el0(capacity);
         if (!mapping.rw_addr) throw std::runtime_error("EL0 JIT partition unavailable; enable JIT before boot");
@@ -460,24 +709,31 @@ struct HuskArm64Direct {
 #endif
     }
 
-    CompiledPage &code_page(uint64_t page, const void *bytes)
+    CompiledPage &code_page(uint64_t page, const void *bytes, uint32_t flags, size_t entry)
     {
-        auto found = pages.find(page);
+        // Page addresses leave the low bits free for access-mode variants.
+        // Lazy FP enable/disable can otherwise recompile the same page each time.
+        uint64_t key = page | flags;
+        auto found = pages.find(key);
         // QEMU rechecks execute permission; bytes also distinguish address spaces
         // and writable aliases. Data mappings are validated again on every run.
-        if (found != pages.end() && !std::memcmp(found->second->source.data(), bytes, 4096))
-            return *found->second;
+        if (found != pages.end()) {
+            if (std::memcmp(found->second->source.data(), bytes, 4096)) {
+                pages.erase(found);
+            } else if (found->second->entries[entry]) {
+                return *found->second;
+            }
+        }
         if (capacity - used < CompiledPage::max_bytes) {
             pages.clear();
             used = 0;
             ++flushes;
         }
-        auto compiled = std::make_unique<CompiledPage>();
-        used += compiled->compile(page, bytes, executable + used / 4, writable + used / 4);
+        auto &compiled = pages[key];
+        if (!compiled) compiled = std::make_unique<CompiledPage>();
+        used += compiled->compile(page, bytes, entry, executable + used / 4, writable + used / 4, flags);
         ++compiles;
-        auto &entry = pages[page];
-        entry = std::move(compiled);
-        return *entry;
+        return *compiled;
     }
 };
 
@@ -490,27 +746,107 @@ HuskArm64Exit husk_direct_run(HuskArm64Direct *ctx, HuskArm64State *state,
                             HuskArm64Memory memory, uint64_t budget)
 {
     auto started = ctx->profile ? std::chrono::steady_clock::now() : std::chrono::steady_clock::time_point{};
-    if (state->pc < page || state->pc - page >= 4096 || (state->pc & 3))
+    if ((state->fpcr & ~HUSK_FPCR_MASK) || state->pc < page || state->pc - page >= 4096 || (state->pc & 3))
         return HUSK_ARM64_FALLBACK;
-    auto previous_compiles = ctx->compiles;
-    auto &code = ctx->code_page(page, bytes);
-    if (ctx->profile && previous_compiles != ctx->compiles)
-        ctx->compile_ns += std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now() - started).count();
+    uint32_t access_flags = state->access_flags & (ctx->native_lse ? 7 : 3);
+    auto resolve = [&](uint64_t address, const void *contents) -> CompiledPage * {
+        auto compile_start = ctx->profile ? std::chrono::steady_clock::now() : std::chrono::steady_clock::time_point{};
+        auto previous_compiles = ctx->compiles, previous_flushes = ctx->flushes;
+        auto *compiled = &ctx->code_page(address & ~UINT64_C(4095), contents,
+                                         access_flags, (address & 4095) / 4);
+        if (ctx->profile && previous_compiles != ctx->compiles)
+            ctx->compile_ns += std::chrono::duration_cast<std::chrono::nanoseconds>(
+                std::chrono::steady_clock::now() - compile_start).count();
+        if (ctx->flushes != previous_flushes) {
+            ctx->routes.fill({UINT64_MAX, nullptr});
+            ctx->call_routes.fill({UINT64_MAX, nullptr});
+        }
+        ctx->routes[(address >> 12) & 255] = {address >> 12, compiled->branch_entries.data()};
+        return compiled;
+    };
+    ctx->routes.fill({UINT64_MAX, nullptr});
+    ctx->call_routes.fill({UINT64_MAX, nullptr});
+    auto *code = resolve(state->pc, bytes);
     for (size_t i = 0; i < ctx->populated_count; ++i)
         ctx->mappings[ctx->populated[i]] = {UINT64_MAX, nullptr, nullptr, 0};
     ctx->populated_count = 0;
-    Frame frame{*state, std::min(budget, uint64_t(INT64_MAX)), 0, 0, 0};
-    void *next = code.entries[(state->pc - page) / 4];
+    Frame frame{*state, std::min(budget, uint64_t(INT64_MAX)), 0, 0, 0,
+                ctx->routes.data(), ctx->call_routes.data()};
+    void *next = code->entries[(state->pc - page) / 4];
     for (;;) {
+#if !TARGET_OS_IPHONE
+        // QEMU translation, linking or an MMU callback can leave this thread
+        // in MAP_JIT write mode, including when the Direct code is cached.
+        pthread_jit_write_protect_np(1);
+#endif
         husk_direct_enter(&frame, next, ctx->mappings.data());
+        if (frame.reason != CodeBranch) {
+            page = frame.state.pc & ~UINT64_C(4095);
+            code = ctx->pages.at(page | access_flags).get();
+        }
+        HuskArm64Assist assisted = HUSK_ASSIST_DECLINED;
+        uint64_t call_target = UINT64_MAX;
+        if (frame.reason == Fallback && memory.assist) {
+            uint32_t word = code->source[(frame.state.pc - page) / 4];
+            if ((word & 0xfffffc1f) == 0xd63f0000 && ((word >> 5) & 31) != 31)
+                call_target = frame.state.x[(word >> 5) & 31];
+            assisted = memory.assist(memory.opaque, &frame.state, word);
+            // A skipped BTI at the end of a page needs two immutable pages.
+            // Such targets, and tagged addresses, keep the checked slow path.
+            if (assisted != HUSK_ASSIST_CHAIN_CALL ||
+                (call_target & ~UINT64_C(4095)) != (frame.state.pc & ~UINT64_C(4095)))
+                call_target = UINT64_MAX;
+        }
+        if (assisted != HUSK_ASSIST_DECLINED) {
+            ++ctx->assists;
+            if (assisted == HUSK_ASSIST_BRANCH) { frame.reason = CodeBranch; break; }
+            if (assisted == HUSK_ASSIST_CHAIN || assisted == HUSK_ASSIST_CHAIN_CALL) {
+                ++ctx->chained_assists;
+                // An indirect target can enter in the middle of a static block.
+                // Charge the branch even when that target has no block budget.
+                --frame.budget;
+                if (int64_t(frame.budget) < 0) { frame.reason = Budget; break; }
+                frame.reason = CodeBranch;
+            } else if (frame.state.pc < page || frame.state.pc - page >= 4096 ||
+                !code->entries[(frame.state.pc - page) / 4]) {
+                frame.reason = CodeBranch;
+            } else {
+                next = code->entries[(frame.state.pc - page) / 4];
+                continue;
+            }
+        }
+        if (frame.reason == CodeBranch) {
+            if (!memory.map_code || (frame.state.pc & 3) || int64_t(frame.budget) < 0) break;
+            uint64_t destination = frame.state.pc & ~UINT64_C(4095);
+            const auto &route = ctx->routes[(destination >> 12) & 255];
+            if (route.tag == destination >> 12 && route.entries[(frame.state.pc & 4095) / 4]) {
+                // Only immutable code pages from this run are present here.
+                next = route.entries[(frame.state.pc & 4095) / 4];
+                if (call_target != UINT64_MAX)
+                    ctx->call_routes[(call_target >> 2) & 255] = {call_target, next};
+                continue;
+            }
+            const void *contents = memory.map_code(memory.opaque, destination);
+            if (!contents) break;
+            // A previously writable data page can now be executable. Recheck
+            // writes so every code page visited in this slice remains immutable.
+            for (size_t i = 0; i < ctx->populated_count; ++i)
+                ctx->mappings[ctx->populated[i]].write = nullptr;
+            code = resolve(frame.state.pc, contents);
+            page = destination;
+            next = code->branch_entries[(frame.state.pc - page) / 4];
+            if (call_target != UINT64_MAX)
+                ctx->call_routes[(call_target >> 2) & 255] = {call_target, next};
+            continue;
+        }
         if (frame.reason == Budget || frame.reason == Fallback) break;
         if (frame.reason == PrepareLoop) {
-            const auto &loop = *std::find_if(code.loops.begin(), code.loops.end(), [&](const auto &l) {
+            const auto &loop = *std::find_if(code->loops.begin(), code->loops.end(), [&](const auto &l) {
                 return page + l.begin * 4 == frame.state.pc;
             });
             next = loop.generic;
             uint64_t base = frame.state.x[loop.base];
-            if (memory.map_page && !(base >> 56) && !(base & (loop.alignment - 1)) &&
+            if (memory.map_page && (code->unaligned || !(base & (loop.alignment - 1))) &&
                 (base & 4095) + loop.extent <= 4096 &&
                 (!loop.write || (base & ~UINT64_C(4095)) != page)) {
                 void *read = loop.read ? memory.map_page(memory.opaque, base & ~UINT64_C(4095), false) : nullptr;
@@ -528,23 +864,38 @@ HuskArm64Exit husk_direct_run(HuskArm64Direct *ctx, HuskArm64State *state,
         if (!host || (write && base == page)) { frame.reason = Fallback; break; }
         uint64_t tag = base >> 12;
         auto &entry = ctx->mappings[tag & 255];
-        if (!entry.read && !entry.write) ctx->populated[ctx->populated_count++] = tag & 255;
+        if (entry.tag == UINT64_MAX) ctx->populated[ctx->populated_count++] = tag & 255;
         if (entry.tag != tag) entry = {tag, nullptr, nullptr, 0};
         (write ? entry.write : entry.read) = host;
-        next = code.entries[(frame.state.pc - page) / 4];
+        next = code->entries[(frame.state.pc - page) / 4];
     }
     *state = frame.state;
     if (ctx->profile) {
         auto now = std::chrono::steady_clock::now();
         ++ctx->calls;
+        ctx->branches += frame.reason == CodeBranch;
+        ctx->budget_exits += frame.reason == Budget;
+        if (frame.reason == Fallback && state->pc >= page && state->pc - page < 4096)
+            ++ctx->fallbacks[code->source[(state->pc - page) / 4]];
         ctx->run_ns += std::chrono::duration_cast<std::chrono::nanoseconds>(now - started).count();
         if (now - ctx->report > std::chrono::seconds(5)) {
-            std::fprintf(stderr, "[husk-direct-stats] calls=%llu compiles=%llu compile_ms=%.3f run_ms=%.3f pages=%zu code_kb=%zu flushes=%llu pc=%llx\n",
+            std::fprintf(stderr, "[husk-direct-stats] calls=%llu compiles=%llu compile_ms=%.3f run_ms=%.3f pages=%zu code_kb=%zu flushes=%llu branches=%llu budgets=%llu assists=%llu chained_assists=%llu pc=%llx\n",
                 (unsigned long long)ctx->calls, (unsigned long long)ctx->compiles,
                 ctx->compile_ns / 1e6, ctx->run_ns / 1e6, ctx->pages.size(), ctx->used / 1024,
-                (unsigned long long)ctx->flushes, (unsigned long long)state->pc);
+                (unsigned long long)ctx->flushes, (unsigned long long)ctx->branches,
+                (unsigned long long)ctx->budget_exits, (unsigned long long)ctx->assists,
+                (unsigned long long)ctx->chained_assists,
+                (unsigned long long)state->pc);
+            std::vector<std::pair<uint64_t, uint32_t>> hottest;
+            for (auto [word, count] : ctx->fallbacks) hottest.emplace_back(count, word);
+            std::partial_sort(hottest.begin(), hottest.begin() + std::min(size_t(8), hottest.size()), hottest.end(), std::greater<>());
+            std::fprintf(stderr, "[husk-direct-fallback]");
+            for (size_t i = 0; i < std::min(size_t(8), hottest.size()); ++i)
+                std::fprintf(stderr, " %08x:%llu", hottest[i].second, (unsigned long long)hottest[i].first);
+            std::fprintf(stderr, "\n");
             ctx->report = now;
         }
     }
-    return frame.reason == Budget ? HUSK_ARM64_BUDGET : HUSK_ARM64_FALLBACK;
+    return frame.reason == Budget ? HUSK_ARM64_BUDGET :
+           frame.reason == CodeBranch ? HUSK_ARM64_BRANCH : HUSK_ARM64_FALLBACK;
 }

@@ -1,0 +1,45 @@
+--- a/target/arm/internals.h
++++ b/target/arm/internals.h
+@@ -2001,4 +2001,10 @@
+  */
+ void vfp_set_fpcr_to_host(CPUARMState *env, uint32_t val, uint32_t mask);
+ 
++#ifdef CONFIG_HUSK_ARM64_EXEC
++/* The caller has synchronized CPU state; faults retain that PC (return address 0). */
++uint64_t arm_husk_pauth(CPUARMState *env, uint64_t value, uint64_t modifier,
++                        unsigned operation);
+ #endif
++
++#endif
+--- a/target/arm/tcg/pauth_helper.c
++++ b/target/arm/tcg/pauth_helper.c
+@@ -630,3 +630,29 @@
+ {
+     return pauth_strip(env, a, true);
+ }
++
++#ifdef CONFIG_HUSK_ARM64_EXEC
++uint64_t arm_husk_pauth(CPUARMState *env, uint64_t value, uint64_t modifier,
++                        unsigned operation)
++{
++    /* Use the same key, trap and authentication logic as the TCG helpers.
++     * CPU state is already synchronized; there is no generated TCG return PC. */
++    if (operation == 4) {
++        return pauth_strip(env, value, false);
++    }
++    if (operation == 2) {
++        return pauth_autia(env, value, modifier, 0, false);
++    }
++    if (operation == 3) {
++        return pauth_autib(env, value, modifier, 0, false);
++    }
++    int el = arm_current_el(env);
++    uint32_t bit = operation ? SCTLR_EnIB : SCTLR_EnIA;
++    if (!pauth_key_enabled(env, el, bit)) {
++        return value;
++    }
++    pauth_check_trap(env, el, 0);
++    return pauth_addpac(env, value, modifier,
++                        operation ? &env->keys.apib : &env->keys.apia, false);
++}
++#endif

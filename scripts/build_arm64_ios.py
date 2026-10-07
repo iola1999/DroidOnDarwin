@@ -42,6 +42,8 @@ def main():
         "Libs: -L${libdir} -lhusk-arm64-exec -lc++\nCflags: -I${includedir}\n")
     qemu = ROOT / "third_party/build/qemu-10.0.12-utm"
     apply(qemu, "qemu-arm64-exec.patch")
+    apply(qemu, "qemu-arm64-pauth-assist.patch")
+    apply(qemu, "qemu-arm64-branch-assist.patch")
     shutil.copyfile(source / "husk-arm64-qemu.c", qemu / "target/arm/tcg/husk-arm64-qemu.c")
     tracked = inputs + [source / "husk-arm64-qemu.c"] + list(source.glob("*.h")) + list((ROOT / "src/ios-jit").glob("husk-ios-jit.*"))
     (build / "manifest.json").write_text(json.dumps({

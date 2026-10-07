@@ -6,16 +6,22 @@ HyperOS 3，并大幅改善持续交互速度与发热。本文记录源码核�
 
 ## 当前判断
 
-实现进展与本机测试见 [开发进展](execution-progress.md)。首轮混合后端已通过
-小型完整 Linux 的功能测试；整数测试约快 1.7 倍，尚未满足用户要求的整体
-可用性提升。后续优先级扩展到直接执行、客体内核配合和图形命令转发。
+实现进展与本机测试见 [开发进展](execution-progress.md)。E6 的间接调用、跨页
+连接、SIMD 和浮点循环已有数倍微基准收益，完整启动未测到稳定提升。新安装
+默认关闭 Direct，内核 Direct 实验继续关闭。手机上的 E3 仍未达到基础可用性。
+
+gfxstream GLES → ANGLE Metal 已完成 Mac 上完整 HyperOS 验证，iOS 图形库、
+QEMU 和应用已构建。单核 TCG 的固定绘制中位数为 10.960 ms/帧；两轮设置
+冷启动分别约 96 秒和 174 秒，后者已使用 ART speed 产物。手机端验证尚未完成。
+后续 CPU 大改优先验证快速映射与客体内核
+配合，单项循环的加速不能推导为整机加速。
 
 继续做架构原型有技术依据。缺少 HVF 会限制现成的硬件虚拟化路径，但用户态
 ARM64 指令仍可通过 JIT、专用动态翻译或受控的直接执行运行。已有模拟器实现了
 其中一些部件。完整 Android 所需的多进程内存、异常与内核协作仍需要开发和验证。
 
-优先候选为：**QEMU 保留 Linux 内核和设备模拟，Android 用户态增加专用 ARM64
-执行后端，并逐步加入快速内存访问。** 图形侧另行评估 gfxstream 与宿主合成。
+两条实现方向为：QEMU 保留 Linux 内核和设备模拟，Android 用户态增加专用
+ARM64 执行后端；GLES 命令通过 gfxstream 在宿主 GPU 执行。
 两者都保留 Android framework、系统服务、应用及客体 Linux 内核。
 
 本次没有查到可直接集成、并已在普通侧载 iPhone 上验证完整 Android 大幅提速的
@@ -30,7 +36,7 @@ ARM64 指令仍可通过 JIT、专用动态翻译或受控的直接执行运行�
 | Strato NCE | 修改 SVC、TLS 和计数器访问，进入宿主处理函数；安装信号处理器 | 可参考执行切换与指令修补；其系统调用由 Switch 服务实现处理，本项目需要进入客体 Linux |
 | MeloNX 的 NCE-New 分支 | `NceThreadPal`、`NceCpuContext`、`NcePatcher` 有 iOS/macOS 分支 | 仅作为移植线索；本次没有构建、运行，也未确认该分支的可用程度 |
 | DolphiniOS fastmem | 作者记录过在满足内存条件的未越狱设备上使用 fastmem | 说明 iOS 用户态映射值得验证；2020 年该实现有完整 MMU 游戏限制，当前设备仍须实测 |
-| gfxstream | GLES/Vulkan 命令转发；Apple 分支包含 Metal surface 相关处理 | 可减少客体图形驱动工作；当前窗口代码使用 Cocoa/AppKit，需要实现 iOS 后端 |
+| gfxstream | GLES/Vulkan 命令转发；Apple 分支包含 Metal surface 相关处理 | 已实现 iOS 无窗口 GLES 后端，Mac 完整 HyperOS 已使用 Metal；手机性能待验证 |
 | Husk JIT | RX/RW 双映射、预分配代码池；手机日志中执行自检返回 42 | 具备运行生成代码的基础；其他地址范围的映射和故障恢复尚待测试 |
 
 源码按提交固定，下载文件位于 `work/performance/architecture-research/`：
@@ -132,6 +138,17 @@ ELF64 的 `PT_LOAD`。没有导出完整分区或修改镜像。结果保存在
 客体通知用于减少重复发现映射变化的工作。宿主仍须校验通知和失效次序，
 保留故障处理。先限定一个 vCPU、一个地址空间验证，再扩展并发。
 
+E5 的实际代码显示，`husk_direct_run` 每次进入都会清空代码入口表和数据映射；
+`code_page` 命中缓存时仍比较整页 4,096 字节。这些检查处理了进程切换、代码
+修改与写别名，但频繁退出后会重复执行。下一步的 CPU 架构实验应先连接
+QEMU 的 TLB 与代码失效通知，再测量跨执行片段复用映射和代码入口的收益。
+
+具体实现需要覆盖 `tlb_flush_by_mmuidx_async_work`、页面及范围失效、写保护
+变化、地址空间切换和设备写入。仅监听 TCG 翻译块失效仍不足：只由 Direct
+执行的代码页也必须加入写保护和失效管理。应先实现保守的失效代数，再按测量
+决定是否细分到页；确认正确性后再开展 16 KiB 内核或选择性 fastmem 实验。
+这部分目前为待实现设计，尚无性能结果。
+
 参考：[AOSP 16 KB 支持](https://source.android.com/docs/core/architecture/16kb-page-size/16kb)、
 [Apple 虚拟内存说明](https://developer.apple.com/library/archive/documentation/Performance/Conceptual/ManagingMemory/Articles/AboutMemory.html)、
 [扩展虚拟地址权限](https://developer.apple.com/documentation/bundleresources/entitlements/com.apple.developer.kernel.extended-virtual-addressing)。
@@ -139,22 +156,23 @@ ELF64 的 `PT_LOAD`。没有导出完整分区或修改镜像。结果保存在
 
 ## 路径三：图形协议与合成在宿主执行
 
-现有 GPU 路径经过客体 Mesa/virgl、宿主 virglrenderer、ANGLE 和 Metal。
+原有 GPU 路径经过客体 Mesa/virgl、宿主 virglrenderer、ANGLE 和 Metal。
 gfxstream 可将 GLES/Vulkan 命令交给宿主解码执行，减少客体驱动中由 TCG 执行
 的工作。结合 Android HWC 协议，还可研究将图层合成操作移到宿主；SurfaceFlinger
 的系统协调职责继续留在客体。
 
-源码检查确认 gfxstream 的 Apple 构建链接 AppKit、QuartzCore、IOSurface，
-窗口代码使用 `NSWindow`、`NSOpenGLView` 和 `CAMetalLayer`。需要实现 UIKit
-或无窗口的 surface 路径，处理缓冲区共享、纹理所有权与同步，再连接已有 ANGLE
-Metal 后端。Vulkan 可另行评估 MoltenVK 与设备功能兼容；首个实验宜限定 GLES。
+上游 gfxstream 的 Apple 构建链接 AppKit、QuartzCore、IOSurface，窗口代码
+使用 `NSWindow`、`NSOpenGLView` 和 `CAMetalLayer`。G1 已加入 iOS 无窗口
+surface 路径，并连接已有 ANGLE Metal。当前 QEMU 通过读回像素提供 scanout；
+共享纹理及其同步仍需开发。Vulkan 可另行评估 MoltenVK 与设备功能兼容，
+G1 限定 GLES。
 
 QEMU 文档列出了 gfxstream GLES 和 composer 支持，并将相关参数标为实验性。
-文档对应的主线版本与 Husk 当前 QEMU 10.0.12-utm 不同，需移植对应后端、客体
-驱动和传输支持；仅追加命令行参数不足以接入。
+文档对应的主线版本与 Husk 当前 QEMU 10.0.12-utm 不同。G1 已构建 Rutabaga
+后端，加入 AVD GLES 客体驱动，并在完整 HyperOS 中验证 virtio-gpu-pipe 传输。
 
-第一个图形原型只渲染固定 GLES 场景并检查同步，随后接入 SystemUI 和设置。
-比较客体 CPU、宿主 CPU、帧耗时和温度。已有 Metal 显示的旧构建也收到卡顿
+固定 GLES 场景与像素、同步检查已通过，完整 HyperOS 的 SurfaceFlinger 已使用
+Metal。后续继续比较客体 CPU、宿主 CPU、帧耗时和温度。已有 Metal 显示的旧构建也收到卡顿
 反馈，因此收益应来自减少客体图形处理或等待时间，仍需实际占用数据支持。
 
 参考：[QEMU VirtIO GPU](https://www.qemu.org/docs/master/system/devices/virtio/virtio-gpu.html)。
@@ -163,6 +181,77 @@ QEMU 文档列出了 gfxstream GLES 和 composer 支持，并将相关参数标�
 
 用户允许修改客体内核、执行后端与图形实现，不以改动工作量限制候选范围。
 当前局部提速不足，接下来按可能消除的运行开销和平台条件安排实验。
+
+### 2026-10-08 的实施优先级
+
+| 方向 | 要消除的主要开销 | 需要联动修改的部分 | 当前进展与继续条件 |
+| --- | --- | --- | --- |
+| M：客体内核配合的直接访存与长段执行 | 逐次软件地址转换、重复校验、用户态与执行器之间的频繁切换 | 客体页表与地址空间通知、QEMU 失效处理、Direct 访存和异常恢复、必要时调整内核页大小及分配 | Darwin 映射原型通过 Mac 检查；五个 Android 进程的初步候选页约 10%–18%，mTHP 分配实验约 85%–90%；下一步接入执行器 |
+| N：Linux 内核原生运行 | 客体内核指令的 TCG 翻译、内核辅助函数及部分执行切换 | Linux 架构与宿主接口、进程调度、地址空间、系统调用进入和返回、Binder/futex/信号、设备接口 | 已核对 ARM64 UML 对 Linux 宿主的依赖；Darwin 完整内核原型尚未实现 |
+| G：图形合成和显示传输 | 客体图形驱动工作、合成与 GPU 像素读回 | gfxstream、Android HWC/composer、共享纹理、fence、Husk Metal 显示 | GLES 已实现；composer 与共享纹理待做。需测量其占界面延迟的比例 |
+| A：镜像构建时完成运行准备 | ART 解释执行和运行时编译、缺失硬件服务的重复尝试 | ART 编译产物与依赖清单、系统服务配置、镜像更新流程 | SystemUI 与设置已生成 speed 产物；服务裁减仍需按实际调用和占用决定 |
+
+M 作为下一项 CPU 主线，N 保留独立的最小原型任务。G、A 与 CPU 改造可以结合。
+当前原生 BLR 缓存只覆盖调用的一部分成本，常规访存和指针认证仍慢于 TCG。
+继续添加局部优化，尚无充分数据支持整体达到基础可用性。
+
+此前带统计的 E5 + G1 启动运行中，内核 TCG 占 vCPU 线程时间约 34.3%。若仅将
+其余部分加速到耗时趋近于零，按该占比计算的 CPU 时间加速上限约为 2.91 倍。
+这一计算只说明保留内核成本的限制：样本含统计开销，属于启动阶段，不能用于
+预测桌面或手机性能。因此 N 值得研究，工作量不能作为排除它的理由。
+
+M 的最小实现必须同时包含以下行为，单独增加映射缓存还不够：
+
+1. 以地址空间标识及版本区分进程。页表、权限、代码和设备写入变化完成失效后，
+   才能继续执行。初版限定一个 vCPU。
+2. 对符合宿主页粒度的 RAM 建立共享映射；其他页面继续检查。代码写入别名、
+   COW 和 MMIO 仍须回到正确的客体处理路径。
+3. 为故障位置记录客体 PC 和寄存器恢复信息。宿主保护异常须转成客体异常，
+   不能由宿主直接跳过故障指令。
+4. 在长执行段保留可中断点，并同时测量映射更新、系统调用和进程切换成本。
+   若地址空间切换时大量逐页 remap 抵消收益，应改用每进程窗口或分区映射。
+
+M1 的只读采样显示，五个关键进程约 10%–18% 的驻留页初步满足 16 KiB
+映射条件。现有 `6.12.81-4k` 内核已支持 mTHP：16 MiB 匿名分配实验中，
+临时启用 16 KiB mTHP 后，候选比例达到约 85%–90%。因此先验证保留 4 KiB
+用户接口的连续页分配，再决定是否需要 16 KiB 内核与 vendor 模块构建。
+该变更还涉及 ELF 段权限、APEX、APK 内 native 库和硬编码页大小；现有八个 ELF
+样本不足以确认兼容性。AOSP 的 16 KiB 支持可供实现参考，本项目的混合 HyperOS
+镜像仍需单独验证。
+
+N 的首个可运行产物应启动完整 Linux 的 init，并通过 fork/exec、COW、futex、
+信号和文件读写，再加入 Binder 和 Android 启动。需要把宿主相关的 `clone`、
+`ptrace`、seccomp 和线程状态访问替换为 Darwin 下的进程管理与受控执行接口。
+用户态 SVC 仍进入这份客体 Linux；Android framework 和系统服务继续保留。
+内核能够作为一个库初始化，尚不足以通过这个阶段。
+
+### 下一阶段如何判断大改的收益
+
+M 先实现一个 vCPU 下的受控内存窗口。生成代码使用当前地址空间的窗口基址
+访问数据；首次映射、权限变化、COW 和代码写入交给所有者处理。先在小型 Linux
+客体中验证两个进程使用相同虚拟地址、共享页、代码修改与保护异常，再进入
+HyperOS。测试必须包含频繁系统调用和进程切换，统计映射建立及失效成本。
+只有固定地址循环变快，仍不足以扩大到完整镜像。
+
+已有原型测得逐页 remap 加权限设置平均约 1.5 微秒。若每次客体进程切换都重建
+大量映射，这项成本会累积。因此需要比较保留各地址空间的映射窗口与共享窗口
+两种做法。Mac 已成功保留单个 512 GiB 窗口；iOS 的可用范围、多个窗口的限制
+和真实签名下的异常处理均待验证。若大范围窗口不可用，应验证分区映射，并
+重新测量地址选择的指令开销。
+
+G 的下一阶段保留 SurfaceFlinger 的系统协调职责，将合适的图层合成交给宿主，
+并用共享纹理替代当前 GPU 读回、Pixman 传递和显示上传。验收包含图层变化、
+旋转、fence 顺序、资源释放和持续显示；性能统计要区分客体 CPU、宿主 CPU、
+GPU 与等待时间。绘制微测成功只能确认这条图形路径可执行。
+
+N 使用独立原型验证完整 Linux 进程环境，避免先改动当前 HyperOS 的启动方式。
+其目标同时覆盖用户态和内核执行成本，工程范围最大，平台限制尚未验证。
+当原型能够运行 init 和上述进程测试后，再评估 Binder、Android framework
+及现有 vendor 接口。现阶段不能给出它在 iPhone 上的提速倍数。
+
+整机验收继续使用桌面滑动、设置冷启动、应用切换和持续运行。重做镜像时，
+ART 产物校验与虚拟硬件服务配置应进入可复现的构建流程；服务调整需要先确认
+实际等待或 CPU 占用，不能仅根据缺失 HAL 的日志数量决定删除哪些组件。
 
 ### 用户态直接执行与快速映射
 
@@ -224,14 +313,33 @@ iOS 可提供的运行接口及最小完整 Linux，再决定是否转为主要�
 
 gfxstream 与前两种 CPU 方向可以结合。目标是让 GLES 绘制、着色器处理及合适
 的图层合成在宿主执行，减少客体中需要模拟的图形代码与数据复制。QEMU 已有
-面向 Android 的实验性 GLES/composer 接口，但本项目仍需移植 iOS 后端和
-客体驱动、实现共享缓冲区及同步。
+面向 Android 的实验性 GLES/composer 接口。G1 已实现 iOS GLES 后端与客体
+驱动更新，composer 和共享纹理尚未接入。
 
 若当前负载的大部分时间用于软件绘图或客体驱动，这一改变可能明显改善帧
 耗时；具体占比尚待采样。旧构建使用过 Metal 图形路径仍收到卡顿反馈，因此
 需要比较新协议减少了哪些客体工作，单独更换显示输出无法证明收益。
 
 来源：[QEMU VirtIO GPU](https://www.qemu.org/docs/master/system/devices/virtio/virtio-gpu.html)。
+
+## 镜像构建阶段的 ART 预编译
+
+单独检查 boot image、system_server、SystemUI、桌面和设置的实际编译状态。
+AOSP 的 `verify` 只验证 DEX；`speed` 预编译全部方法；`speed-profile` 预编译
+profile 覆盖的方法并优化对应类加载。预编译产物依赖 boot classpath 等输入，
+混合镜像需要核对运行时是否接受已有产物。
+
+若存在大量解释执行，应将 AOT 生成、APK/JAR 摘要、ART/APEX 版本和依赖校验
+加入镜像构建流程。开发机可以完成一次性预编译，日常启动直接加载镜像内产物。
+需要测量额外存储、启动、交互和缺页成本；不能由 compiler filter 配置推断收益。
+`g1-app-driver-check` 的 Settings 进程已加载 boot/framework OAT 与
+`/data/dalvik-cache/arm64/system_ext@priv-app@Settings@Settings.apk@classes.dex`
+中的可执行代码，并同时存在 JIT cache。boot image 已加载；各应用具体 compiler
+filter 已进一步查询：SystemUI 为 `verify`、设置为 `speed-profile`、桌面为
+`speed`。A1 已为前两者生成 ART 接受的 `speed` 产物，后续冷启动查询仍为
+`speed`。完整界面收益继续验证，编译方法的实际运行占比尚未测量。
+
+来源：[AOSP ART 配置](https://source.android.com/docs/core/runtime/configure)。
 
 ## 其他高投入方向
 

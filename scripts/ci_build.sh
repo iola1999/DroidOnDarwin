@@ -33,6 +33,9 @@ if [ ! -f build/ios-arm64/sysroot/lib/libvirglrenderer.a ]; then
         ./scripts/build_gpu_ios.sh
 fi
 
+step "gfxstream GLES + Rutabaga"
+python3 scripts/build_gfxstream.py --platform ios
+
 step "QEMU"
 ./scripts/build_ios.sh qemu
 

@@ -22,20 +22,32 @@
  audio_drivers_selected = []
 --- a/include/accel/tcg/cpu-ops.h
 +++ b/include/accel/tcg/cpu-ops.h
-@@ -18,6 +18,10 @@
+@@ -18,6 +18,12 @@
  #include "exec/vaddr.h"
  
  struct TCGCPUOps {
 +#ifdef CONFIG_HUSK_ARM64_EXEC
 +    /* 1: executed a slice; -1: state updated, execute TCG; 0: unchanged. */
 +    int (*husk_exec_user)(CPUState *cpu);
++    /* Request the normal CPU loop at an indirect TB boundary. */
++    bool (*husk_dispatch)(CPUState *cpu);
 +#endif
      /**
       * @initialize: Initialize TCG state
       *
 --- a/accel/tcg/cpu-exec.c
 +++ b/accel/tcg/cpu-exec.c
-@@ -959,6 +959,17 @@
+@@ -399,4 +399,9 @@
+      * The next TB, if we chain to it, will clear the flag again.
+      */
+     cpu->neg.can_do_io = true;
++#ifdef CONFIG_HUSK_ARM64_EXEC
++    if (cpu->cc->tcg_ops->husk_dispatch && cpu->cc->tcg_ops->husk_dispatch(cpu)) {
++        return tcg_code_gen_epilogue;
++    }
++#endif
+     cpu_get_tb_cpu_state(env, &pc, &cs_base, &flags);
+@@ -959,6 +964,17 @@
              uint64_t cs_base;
              uint32_t flags, cflags;
  
@@ -65,13 +77,14 @@
  
      /* Coprocessor information */
      GHashTable *cp_regs;
-@@ -1311,6 +1314,11 @@
+@@ -1311,6 +1314,12 @@
  {
      return env->aarch64;
  }
 +
 +#if defined(CONFIG_HUSK_ARM64_EXEC) && defined(TARGET_AARCH64) && !defined(CONFIG_USER_ONLY)
 +int arm_husk_exec_user(CPUState *cpu);
++bool arm_husk_dispatch(CPUState *cpu);
 +void arm_husk_exec_destroy(ARMCPU *cpu);
 +#endif
  
@@ -89,12 +102,13 @@
      g_hash_table_destroy(cpu->cp_regs);
  
      QLIST_FOREACH_SAFE(hook, &cpu->pre_el_change_hooks, node, next) {
-@@ -2683,6 +2686,9 @@
+@@ -2683,6 +2686,10 @@
  
  #ifdef CONFIG_TCG
  static const TCGCPUOps arm_tcg_ops = {
 +#if defined(CONFIG_HUSK_ARM64_EXEC) && defined(TARGET_AARCH64) && !defined(CONFIG_USER_ONLY)
 +    .husk_exec_user = arm_husk_exec_user,
++    .husk_dispatch = arm_husk_dispatch,
 +#endif
      .initialize = arm_translate_init,
      .translate_code = arm_translate_code,

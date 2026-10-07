@@ -1,0 +1,228 @@
+#!/usr/bin/env python3
+"""复用现有 HyperOS 磁盘，验证客体驱动并计时 GLES 绘制。窗口始终可见。"""
+import argparse
+import csv
+import hashlib
+import json
+import os
+from pathlib import Path
+import re
+import socket
+import subprocess
+import statistics
+import time
+
+from build_arm64_exec import ROOT, verify_qemu_build
+from test_hyperos_boot import qmp
+
+
+def measure_settings(adb_run, output, metrics):
+    def shell(command, seconds=120):
+        response = adb_run("shell", command, seconds=seconds)
+        if response.returncode:
+            raise RuntimeError(response.stdout + response.stderr)
+        return response.stdout
+
+    shell("input keyevent KEYCODE_WAKEUP; wm dismiss-keyguard")
+    shell("am force-stop com.android.settings")
+    launch_start = time.monotonic()
+    launch = shell("am start -W -a android.settings.SETTINGS", seconds=240)
+    launch_seconds = time.monotonic() - launch_start
+    (output / "settings-launch.txt").write_text(launch)
+    metrics["launch_command_seconds"] = round(launch_seconds, 3)
+    for label in ("TotalTime", "WaitTime"):
+        value = re.search(rf"^{label}: (\d+)$", launch, re.MULTILINE)
+        if value:
+            metrics[label + "_ms"] = int(value[1])
+    if "Status: ok" not in launch:
+        raise RuntimeError("Settings launch did not complete")
+    qmp(16257, "screendump", {"filename": str(output / "settings-open.ppm")})
+    time.sleep(5)
+    shell("dumpsys -t 60 gfxinfo com.android.settings reset")
+    start = time.monotonic()
+    for index in range(6):
+        bottom, top = (650, 220) if index % 2 == 0 else (220, 650)
+        shell(f"input swipe 180 {bottom} 180 {top} 2000")
+        time.sleep(1)
+    action_seconds = time.monotonic() - start
+    metrics["swipe_action_seconds"] = round(action_seconds, 3)
+    time.sleep(3)
+    frames = shell("dumpsys -t 60 gfxinfo com.android.settings framestats")
+    (output / "settings-frames.txt").write_text(frames)
+    durations = []
+    columns = None
+    for row in csv.reader(frames.splitlines()):
+        if row and row[0] == "Flags":
+            columns = row
+        elif columns and row and row[0].isdigit() and len(row) == len(columns):
+            frame = dict(zip(columns, row))
+            if int(frame["Flags"]) != 0:
+                continue
+            begin, end = int(frame["IntendedVsync"]), int(frame["FrameCompleted"])
+            if 0 < begin < end < (1 << 63) - 1:
+                durations.append((end - begin) / 1e6)
+    if not durations:
+        raise RuntimeError("Settings did not return valid frame timings")
+    durations.sort()
+    metrics.update(frame_count=len(durations), median_ms=statistics.median(durations),
+                   p90_ms=durations[(len(durations) * 9 - 1) // 10], max_ms=durations[-1])
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--gpu", choices=("software", "gfxstream"), required=True)
+    parser.add_argument("--accel", choices=("tcg", "hvf"), default="tcg")
+    parser.add_argument("--execution", choices=("tcg", "direct"), default="tcg",
+                        help="Select the CPU execution backend; Direct requires --accel tcg")
+    parser.add_argument("--profile", action="store_true", help="Collect Direct statistics and CPU phase times")
+    parser.add_argument("--angle-path", type=Path, required=True)
+    parser.add_argument("--bench", type=Path, required=True)
+    parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--seconds", type=int, default=900)
+    parser.add_argument("--hold-seconds", type=int, default=0)
+    parser.add_argument("--bench-runs", type=int, default=3)
+    parser.add_argument("--bench-frames", type=int, default=60)
+    parser.add_argument("--bench-seconds", type=int, default=180)
+    parser.add_argument("--interaction", action="store_true",
+                        help="Measure opening Settings and six list swipes before the GLES benchmark")
+    args = parser.parse_args()
+    if args.execution == "direct" and args.accel != "tcg":
+        parser.error("Direct requires --accel tcg")
+    if (not 1 <= args.bench_frames <= 1000 or args.bench_runs < 0 or
+        args.bench_seconds < 1 or (args.bench_runs == 0 and not args.interaction)):
+        parser.error("frames must be 1..1000; runs=0 requires --interaction; seconds must be positive")
+    verify_qemu_build()
+    output = args.output.resolve()
+    output.mkdir(parents=True, exist_ok=False)
+    command = json.loads((ROOT / "work/hyperos3-phone-profile/command.json").read_text())
+    changes = {"-name": f"HyperOS {args.gpu} {args.accel} {args.execution}", "-accel": args.accel,
+        "-smp": "1", "-m": "4096", "-cpu": "host" if args.accel == "hvf" else "max,pauth-impdef=on,sve=off,sme=off",
+        "-serial": f"file:{output}/serial.log", "-pidfile": str(output / "qemu.pid"),
+        "-qmp": "tcp:127.0.0.1:16257,server=on,wait=off"}
+    if args.accel == "tcg": changes["-accel"] = "tcg,thread=single,tb-size=256"
+    for option, value in changes.items(): command[command.index(option) + 1] = value
+    for i, item in enumerate(command):
+        if "unit=0," in item and item.startswith("if=pflash"):
+            command[i] = "if=pflash,unit=0,format=raw,readonly=on,file=" + str(
+                ROOT / "work/performance/build-inputs/upstream/Payload/Husk.app/edk2-aarch64-code.fd")
+        if item.startswith("virtio-gpu"):
+            device = "virtio-gpu-rutabaga-pci,x-gfxstream-gles=on" if args.gpu == "gfxstream" else "virtio-gpu-pci"
+            command[i] = device + ",xres=360,yres=800"
+    env = dict(os.environ, HUSK_ARM64_EXEC="1" if args.execution == "direct" else "0",
+               HUSK_ARM64_BACKEND="direct",
+               ANGLE_DEFAULT_PLATFORM="metal",
+               DYLD_LIBRARY_PATH=str(args.angle_path.resolve()))
+    for name in ("HUSK_ARM64_STATS", "HUSK_ARM64_PROFILE"):
+        if args.profile: env[name] = "1"
+        else: env.pop(name, None)
+    result = {"gpu": args.gpu, "accel": args.accel, "execution": args.execution, "passed": False,
+              "backend_env": {k: v for k, v in env.items() if k.startswith("HUSK_ARM64_")},
+              "bench_frames": args.bench_frames, "bench_limit_seconds": args.bench_seconds,
+              "qemu_sha256": hashlib.sha256(Path(command[0]).read_bytes()).hexdigest(),
+              "bench_sha256": hashlib.sha256(args.bench.read_bytes()).hexdigest()}
+    graphics = [args.angle_path / name for name in ("libEGL.dylib", "libGLESv2.dylib")]
+    graphics += [ROOT / "work/gfxstream-build-macos/prefix/lib" / name
+                 for name in ("libgfxstream_backend.dylib", "librutabaga_gfx_ffi.dylib")]
+    result["graphics_sha256"] = {str(p.resolve()): hashlib.sha256(p.read_bytes()).hexdigest()
+                                  for p in graphics}
+    (output / "command.json").write_text(json.dumps(command, indent=2) + "\n")
+    adb = ["adb", "-s", "127.0.0.1:16255"]
+
+    def adb_run(*options, seconds=15):
+        return subprocess.run([*adb, *options], capture_output=True, text=True,
+                              errors="replace", timeout=seconds)
+
+    start = time.monotonic()
+    subprocess.run(["adb", "disconnect", "127.0.0.1:16255"],
+                   stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=5)
+    with (output / "host.log").open("w") as log:
+        process = subprocess.Popen(command, env=env, stdout=log, stderr=subprocess.STDOUT)
+        try:
+            while process.poll() is None and time.monotonic() - start < args.seconds:
+                try:
+                    # The guest command service is independent of adbd. Repeated
+                    # ADB disconnects can interrupt its slow startup handshake.
+                    with socket.create_connection(("127.0.0.1", 16256), timeout=3) as guest:
+                        guest.settimeout(min(15, max(1, args.seconds - (time.monotonic() - start))))
+                        guest.sendall(b"getprop sys.boot_completed; exit\n")
+                        if guest.recv(128).strip() == b"1": break
+                except OSError: pass
+                time.sleep(3)
+            else: raise RuntimeError("Could not confirm sys.boot_completed through the guest command service")
+            result["boot_seconds"] = round(time.monotonic() - start, 3)
+            result["boot_query_transport"] = "guest command service"
+            print("boot_completed", result["boot_seconds"], flush=True)
+            connect = subprocess.run(["adb", "connect", "127.0.0.1:16255"],
+                                     capture_output=True, text=True, timeout=30)
+            (output / "adb-connect.txt").write_text(connect.stdout + connect.stderr)
+            ready = adb_run("wait-for-device", seconds=60)
+            if ready.returncode: raise RuntimeError("ADB did not become ready: " + ready.stderr)
+            dump = adb_run("shell", "dumpsys -t 60 SurfaceFlinger", seconds=90)
+            (output / "surfaceflinger.txt").write_text(dump.stdout + dump.stderr)
+            result["renderer"] = next((line.strip() for line in dump.stdout.splitlines() if "GLES:" in line), "")
+            if dump.returncode or not result["renderer"]:
+                raise RuntimeError(f"SurfaceFlinger query did not return a renderer (exit {dump.returncode})")
+            if args.gpu == "gfxstream" and "ANGLE Metal Renderer" not in result["renderer"]:
+                raise RuntimeError("SurfaceFlinger did not use the Metal renderer")
+            if args.interaction:
+                # Keep completed phases when a later UI query times out.
+                result["settings"] = {}
+                measure_settings(adb_run, output, result["settings"])
+                print("settings", json.dumps(result["settings"]), flush=True)
+            push = adb_run("push", str(args.bench.resolve()), "/data/local/tmp/husk-gles-bench")
+            if push.returncode: raise RuntimeError(push.stderr)
+            result["passed"] = True
+            result["bench_exit_codes"] = []
+            for run in range(args.bench_runs):
+                bench_log = output / f"bench-{run + 1}.log"
+                try:
+                    bench = adb_run("shell", "chmod 755 /data/local/tmp/husk-gles-bench; "
+                                    f"/data/local/tmp/husk-gles-bench {args.bench_frames}",
+                                    seconds=args.bench_seconds)
+                except subprocess.TimeoutExpired as error:
+                    # TimeoutExpired retains bytes even when subprocess text mode is enabled.
+                    bench_log.write_bytes((error.stdout or b"") + (error.stderr or b""))
+                    raise
+                bench_log.write_text(bench.stdout + bench.stderr)
+                result["bench_exit_codes"].append(bench.returncode)
+                print(bench.stdout, flush=True)
+                result["passed"] &= bench.returncode == 0 and "PASS frames=" in bench.stdout
+                if args.gpu == "gfxstream":
+                    result["passed"] &= "ANGLE Metal Renderer" in result["renderer"] and "ANGLE Metal Renderer" in bench.stdout
+                if not result["passed"]: break
+            if args.hold_seconds:
+                print(f"holding visible VM for {args.hold_seconds} seconds", flush=True)
+                until = time.monotonic() + args.hold_seconds
+                while process.poll() is None and time.monotonic() < until: time.sleep(1)
+        except (OSError, RuntimeError, subprocess.TimeoutExpired) as error:
+            result["error"] = str(error)
+            result["passed"] = False
+            if isinstance(error, subprocess.TimeoutExpired):
+                (output / "failed-command.txt").write_bytes(
+                    (error.stdout or b"") + (error.stderr or b""))
+        finally:
+            if "boot_seconds" in result and process.poll() is None:
+                try:
+                    logcat = adb_run("logcat", "-d", "-t", "1500", seconds=15)
+                    (output / "logcat.txt").write_text(logcat.stdout + logcat.stderr)
+                except (OSError, subprocess.TimeoutExpired) as error:
+                    result["logcat_error"] = str(error)
+            if process.poll() is None:
+                try:
+                    qmp(16257, "screendump", {"filename": str(output / "screen.ppm")})
+                    qmp(16257, "quit")
+                    process.wait(timeout=10)
+                except (OSError, ValueError, RuntimeError, subprocess.TimeoutExpired):
+                    process.terminate()
+                    try: process.wait(timeout=5)
+                    except subprocess.TimeoutExpired:
+                        process.kill()
+                        process.wait()
+            result["elapsed_seconds"] = round(time.monotonic() - start, 3)
+            (output / "results.json").write_text(json.dumps(result, indent=2) + "\n")
+    print(json.dumps(result), flush=True)
+    if not result["passed"]: raise SystemExit(1)
+
+
+if __name__ == "__main__":
+    main()

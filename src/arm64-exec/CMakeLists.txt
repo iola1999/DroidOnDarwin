@@ -24,6 +24,16 @@ set_tests_properties(arm64_direct_checked PROPERTIES ENVIRONMENT "HUSK_ARM64_BAC
 add_executable(arm64_direct_differential ../../tests/arm64-exec/direct-differential.cpp)
 target_link_libraries(arm64_direct_differential PRIVATE husk_arm64_exec)
 add_test(NAME arm64_direct_differential COMMAND arm64_direct_differential)
+add_executable(arm64_direct_simd ../../tests/arm64-exec/direct-simd.cpp)
+target_link_libraries(arm64_direct_simd PRIVATE husk_arm64_exec)
+add_test(NAME arm64_direct_simd COMMAND arm64_direct_simd)
+add_executable(arm64_direct_slices ../../tests/arm64-exec/direct-slices.cpp)
+target_link_libraries(arm64_direct_slices PRIVATE husk_arm64_exec)
+add_test(NAME arm64_direct_slices COMMAND arm64_direct_slices)
+set_tests_properties(arm64_direct_slices PROPERTIES TIMEOUT 30)
+add_executable(arm64_direct_atomics ../../tests/arm64-exec/direct-atomics.cpp)
+target_link_libraries(arm64_direct_atomics PRIVATE husk_arm64_exec)
+add_test(NAME arm64_direct_atomics COMMAND arm64_direct_atomics)
 
 # Exercise the same C ABI wrapper shipped in the iOS archive on the host.
 add_executable(arm64_direct_api_test ../../tests/arm64-exec/engine.cpp

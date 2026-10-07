@@ -1,20 +1,51 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
+#include "husk-arm64-layout.h"
 .text
 .p2align 2
 .globl _husk_direct_enter
 _husk_direct_enter:
-    stp x19, x20, [sp, #-96]!
+    stp x19, x20, [sp, #-176]!
     stp x21, x22, [sp, #16]
     stp x23, x24, [sp, #32]
     stp x25, x26, [sp, #48]
     stp x27, x28, [sp, #64]
     stp x29, x30, [sp, #80]
+    stp d8, d9, [sp, #96]
+    stp d10, d11, [sp, #112]
+    stp d12, d13, [sp, #128]
+    stp d14, d15, [sp, #144]
+    mrs x3, fpcr
+    mrs x4, fpsr
+    stp x3, x4, [sp, #160]
     // x18 belongs to Darwin. Guest x16-x18 and x26-x30 stay in the frame.
     mov x27, x0
     mov x16, x1
     mov x28, x2
-    ldr x29, [x27, #272]
-    ldr w17, [x27, #264]
+    ldr x29, [x27, #HUSK_BUDGET]
+    ldr w17, [x27, #HUSK_FPCR]
+    msr fpcr, x17
+    ldr w17, [x27, #HUSK_FPSR]
+    msr fpsr, x17
+    // All guest vectors are resident; the Darwin callee-save D registers
+    // and host floating-point environment are restored on every exit.
+    add x17, x27, #HUSK_VECTORS
+    ldp q0, q1, [x17]
+    ldp q2, q3, [x17, #32]
+    ldp q4, q5, [x17, #64]
+    ldp q6, q7, [x17, #96]
+    ldp q8, q9, [x17, #128]
+    ldp q10, q11, [x17, #160]
+    ldp q12, q13, [x17, #192]
+    ldp q14, q15, [x17, #224]
+    ldp q16, q17, [x17, #256]
+    ldp q18, q19, [x17, #288]
+    ldp q20, q21, [x17, #320]
+    ldp q22, q23, [x17, #352]
+    ldp q24, q25, [x17, #384]
+    ldp q26, q27, [x17, #416]
+    ldp q28, q29, [x17, #448]
+    ldp q30, q31, [x17, #480]
+    ldr w17, [x27, #HUSK_NZCV]
     msr nzcv, x17
     ldp x0, x1, [x27]
     ldp x2, x3, [x27, #16]
@@ -46,13 +77,39 @@ _husk_direct_leave:
     stp x23, x24, [x27, #184]
     str x25, [x27, #200]
     mrs x16, nzcv
-    str w16, [x27, #264]
-    str x29, [x27, #272]
+    str w16, [x27, #HUSK_NZCV]
+    str x29, [x27, #HUSK_BUDGET]
+    add x16, x27, #HUSK_VECTORS
+    stp q0, q1, [x16]
+    stp q2, q3, [x16, #32]
+    stp q4, q5, [x16, #64]
+    stp q6, q7, [x16, #96]
+    stp q8, q9, [x16, #128]
+    stp q10, q11, [x16, #160]
+    stp q12, q13, [x16, #192]
+    stp q14, q15, [x16, #224]
+    stp q16, q17, [x16, #256]
+    stp q18, q19, [x16, #288]
+    stp q20, q21, [x16, #320]
+    stp q22, q23, [x16, #352]
+    stp q24, q25, [x16, #384]
+    stp q26, q27, [x16, #416]
+    stp q28, q29, [x16, #448]
+    stp q30, q31, [x16, #480]
+    mrs x16, fpsr
+    str w16, [x27, #HUSK_FPSR]
+    ldp x3, x4, [sp, #160]
+    msr fpcr, x3
+    msr fpsr, x4
+    ldp d8, d9, [sp, #96]
+    ldp d10, d11, [sp, #112]
+    ldp d12, d13, [sp, #128]
+    ldp d14, d15, [sp, #144]
     ldp x19, x20, [sp]
     ldp x21, x22, [sp, #16]
     ldp x23, x24, [sp, #32]
     ldp x25, x26, [sp, #48]
     ldp x27, x28, [sp, #64]
     ldp x29, x30, [sp, #80]
-    add sp, sp, #96
+    add sp, sp, #176
     ret
