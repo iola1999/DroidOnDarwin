@@ -145,6 +145,7 @@ struct ContentView: View {
         // deprecated there but still works, and is the only one that compiles
         // against the 16.4 deployment target.
         .onChange(of: scenePhase) { phase in
+            HuskLog.log("lifecycle", "scene=\(phase) qemuRunning=\(runner.isRunning)")
             // StikDebug relaunches Husk after attaching, so returning to the
             // foreground is the moment worth re-checking, not first launch.
             if phase == .active { evaluate() }

@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 import Foundation
+import UIKit
 import os
 
 /// Runs QEMU inside this process on a dedicated thread.
@@ -13,6 +14,12 @@ final class QemuRunner: ObservableObject {
     static let shared = QemuRunner()
     private var thread: Thread?
     private(set) var isRunning = false
+    // Settings changes apply to the next process; snapshot metadata must describe this VM.
+    nonisolated(unsafe) private static var activeDirectExecution: Bool?
+    nonisolated static var directExecutionEnabled: Bool {
+        activeDirectExecution ?? (GuestImage.isCustomGuest &&
+            (UserDefaults.standard.object(forKey: "husk.directExecution") as? Bool ?? true))
+    }
 
     /// Last line the guest printed about its own setup. The first-boot service in
     /// the guest writes HUSK-SETUP markers to the serial console, which is already
@@ -191,17 +198,13 @@ final class QemuRunner: ObservableObject {
             + (soundEnabled ? "+snd" : "")
             + (landscapeGuest ? "+land" : "")
             + (customResolution.map { "+\($0.w)x\($0.h)" } ?? "")
+            + (directExecutionEnabled ? "+direct-1cpu" : "")
     }
 
-    /// Whether Husk saves the machine on its own once Android settles.
-    ///
-    /// On by default, because a machine that is never saved cold-boots every
-    /// launch. Off is for when the save itself is the problem -- it fires while
-    /// you are using the guest, freezes the picture for fifteen seconds, and
-    /// until today could take the whole app down with it. The manual button in
-    /// the library is unaffected either way.
+    /// Imported guests cold-boot; bundled guests use the auto-save preference.
     nonisolated static var autoSaveEnabled: Bool {
-        UserDefaults.standard.object(forKey: "husk.autoSave") as? Bool ?? true
+        if GuestImage.isCustomGuest { return false }
+        return UserDefaults.standard.object(forKey: "husk.autoSave") as? Bool ?? true
     }
 
     nonisolated(unsafe) static var qemuReady = false
@@ -264,7 +267,9 @@ final class QemuRunner: ObservableObject {
             // would have QEMU reach for a stdin that does not exist on iOS and
             // fail during init -- a bad way to lose a first device run. A tailer
             // folds this back into the unified log a moment later.
-            "-chardev", "file,id=ser0,path=\(guestSerialLogPath)",
+            "-chardev", HuskConsole.enabled
+                ? "socket,id=ser0,host=127.0.0.1,port=5560,server=on,wait=off,logfile=\(guestSerialLogPath)"
+                : "file,id=ser0,path=\(guestSerialLogPath)",
             "-serial", "chardev:ser0",
 
             // Our own DisplayChangeListener is the display; QEMU needs no backend.
@@ -912,7 +917,8 @@ final class QemuRunner: ObservableObject {
                                             : GuestImage.defaultCpu
     }
     private var machineSmp: Int {
-        GuestImage.shared.hasShippedSnapshot ? GuestImage.shared.snapshotPins.smp
+        if Self.directExecutionEnabled { return 1 }
+        return GuestImage.shared.hasShippedSnapshot ? GuestImage.shared.snapshotPins.smp
                                             : GuestImage.defaultSmp
     }
 
@@ -1100,7 +1106,7 @@ final class QemuRunner: ObservableObject {
             "-cpu", machineCpu,
             "-smp", "\(machineSmp)",
             "-m", "\(memMiB)",
-            "-accel", "tcg,tb-size=256,thread=multi,split-wx=on",
+            "-accel", "tcg,tb-size=256,thread=\(Self.directExecutionEnabled ? "single" : "multi"),split-wx=on",
 
             // The balloon was written earlier and never put on the machine, so
             // nothing could ever reclaim guest memory. With it present the guest
@@ -1224,6 +1230,9 @@ final class QemuRunner: ObservableObject {
             return
         }
         isRunning = true
+        Self.activeDirectExecution = profile == .phase1Android && Self.directExecutionEnabled
+        // 冷启动可能持续数分钟，自动锁屏会挂起模拟器并触发客体 watchdog。
+        DispatchQueue.main.async { UIApplication.shared.isIdleTimerDisabled = true }
         startedAt = Date()
         QemuRunner.bootStarted = Date()
 
@@ -1344,6 +1353,9 @@ final class QemuRunner: ObservableObject {
     }
 
     private func run() {
+        defer {
+            DispatchQueue.main.async { UIApplication.shared.isIdleTimerDisabled = false }
+        }
         probeGL()
         let args = (profile == .phase0Alpine) ? phase0Arguments() : phase1Arguments()
         HuskLog.log("qemu", "profile: \(profile.rawValue)")
@@ -1397,6 +1409,14 @@ final class QemuRunner: ObservableObject {
         }
 
         HuskLog.logFootprint("before-qemu-init")
+        setenv("HUSK_ARM64_EXEC", Self.directExecutionEnabled ? "1" : "0", 1)
+        setenv("HUSK_ARM64_BACKEND", "direct", 1)
+        if Self.directExecutionEnabled {
+            setenv("HUSK_ARM64_STATS", "1", 1)
+        } else {
+            unsetenv("HUSK_ARM64_STATS")
+        }
+        HuskLog.log("qemu", "CPU execution: \(Self.directExecutionEnabled ? "ARM64 Direct, 1 vCPU" : "TCG")")
 
         // qemu_init takes ownership of argv for the life of the process, so these
         // strdup'd copies are intentionally never freed.
@@ -1552,16 +1572,18 @@ final class QemuRunner: ObservableObject {
             var quietWindows = 0
             var lastAudioFrames: UInt64 = 0
             var lastAudioSilent: UInt64 = 0
+            var lastSample = ProcessInfo.processInfo.systemUptime
             while true {
                 Thread.sleep(forTimeInterval: 5)
+                let now = ProcessInfo.processInfo.systemUptime
+                let interval = now - lastSample
+                lastSample = now
                 tick += 1
+                HuskConsole.poll()
                 HuskLog.logFootprint("t+\(tick * 5)s")
 
-                // Frame rate, as a number rather than an impression. "Slow" is
-                // not something two people can compare across builds; frames per
-                // second is. The sequence counter increments once per surface
-                // update the guest pushed, so this is what the guest actually
-                // produced, not what we managed to draw.
+                // QEMU 显示更新次数包含提交前丢弃的帧。Metal 统计另行记录提交、
+                // GPU 完成和实际显示事件；静止画面也可能没有显示更新。
                 let glFrames = husk_display_gl_frames()
                 let frames = glFrames > 0 ? glFrames : husk_display_sequence()
                 let delta = frames >= lastFrames ? frames - lastFrames : 0
@@ -1578,11 +1600,12 @@ final class QemuRunner: ObservableObject {
                           + "\(aSilent - lastAudioSilent) silent"
                 lastAudioFrames = aFrames
                 lastAudioSilent = aSilent
-                let rate = Double(delta) / 5.0
+                let rate = interval > 0 ? Double(delta) / interval : 0
                 DispatchQueue.main.async { [weak self] in self?.fps = rate }
-                HuskLog.log("perf", "guest produced \(delta) frames in 5s "
-                                  + "(\(String(format: "%.1f", Double(delta) / 5.0)) fps)"
-                                  + audio)
+                HuskLog.log("perf", "display updates=\(delta) "
+                                  + String(format: "window=%.3fs rate=%.1f/s", interval, rate)
+                                  + " thermal=\(ProcessInfo.processInfo.thermalState.rawValue)" + audio)
+                HuskLog.log("perf", HuskFrameMetrics.shared.takeWindow().summary)
 
                 // Save the machine once Android is genuinely up, and only once.
                 //

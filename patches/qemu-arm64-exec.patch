@@ -1,0 +1,112 @@
+--- a/meson_options.txt
++++ b/meson_options.txt
+@@ -392,3 +392,5 @@
+        description: 'Rust support')
+ option('strict_rust_lints', type: 'boolean', value: false,
+        description: 'Enable stricter set of Rust warnings')
++
++option('husk_arm64_exec', type: 'boolean', value: false, description: 'Husk experimental ARM64 EL0 backend')
+--- a/meson.build
++++ b/meson.build
+@@ -2336,6 +2336,11 @@
+ #################
+ 
+ config_host_data = configuration_data()
++husk_arm64_exec = declare_dependency()
++if get_option('husk_arm64_exec')
++  husk_arm64_exec = dependency('husk-arm64-exec', required: true)
++endif
++config_host_data.set('CONFIG_HUSK_ARM64_EXEC', get_option('husk_arm64_exec'))
+ 
+ config_host_data.set('CONFIG_HAVE_RUST', have_rust)
+ audio_drivers_selected = []
+--- a/include/accel/tcg/cpu-ops.h
++++ b/include/accel/tcg/cpu-ops.h
+@@ -18,6 +18,10 @@
+ #include "exec/vaddr.h"
+ 
+ struct TCGCPUOps {
++#ifdef CONFIG_HUSK_ARM64_EXEC
++    /* 1: executed a slice; -1: state updated, execute TCG; 0: unchanged. */
++    int (*husk_exec_user)(CPUState *cpu);
++#endif
+     /**
+      * @initialize: Initialize TCG state
+      *
+--- a/accel/tcg/cpu-exec.c
++++ b/accel/tcg/cpu-exec.c
+@@ -959,6 +959,17 @@
+             uint64_t cs_base;
+             uint32_t flags, cflags;
+ 
++#ifdef CONFIG_HUSK_ARM64_EXEC
++            if (cpu->cc->tcg_ops->husk_exec_user) {
++                int result = cpu->cc->tcg_ops->husk_exec_user(cpu);
++                if (result) {
++                    last_tb = NULL;
++                    if (result > 0) {
++                        continue;
++                    }
++                }
++            }
++#endif
+             cpu_get_tb_cpu_state(cpu_env(cpu), &pc, &cs_base, &flags);
+ 
+             /*
+--- a/target/arm/cpu.h
++++ b/target/arm/cpu.h
+@@ -866,6 +866,9 @@
+     CPUState parent_obj;
+ 
+     CPUARMState env;
++#if defined(CONFIG_HUSK_ARM64_EXEC) && defined(TARGET_AARCH64) && !defined(CONFIG_USER_ONLY)
++    void *husk_exec;
++#endif
+ 
+     /* Coprocessor information */
+     GHashTable *cp_regs;
+@@ -1311,6 +1314,11 @@
+ {
+     return env->aarch64;
+ }
++
++#if defined(CONFIG_HUSK_ARM64_EXEC) && defined(TARGET_AARCH64) && !defined(CONFIG_USER_ONLY)
++int arm_husk_exec_user(CPUState *cpu);
++void arm_husk_exec_destroy(ARMCPU *cpu);
++#endif
+ 
+ /**
+  * pmu_op_start/finish
+--- a/target/arm/cpu.c
++++ b/target/arm/cpu.c
+@@ -1907,6 +1907,9 @@
+     ARMCPU *cpu = ARM_CPU(obj);
+     ARMELChangeHook *hook, *next;
+ 
++#if defined(CONFIG_HUSK_ARM64_EXEC) && defined(TARGET_AARCH64) && !defined(CONFIG_USER_ONLY)
++    arm_husk_exec_destroy(cpu);
++#endif
+     g_hash_table_destroy(cpu->cp_regs);
+ 
+     QLIST_FOREACH_SAFE(hook, &cpu->pre_el_change_hooks, node, next) {
+@@ -2683,6 +2686,9 @@
+ 
+ #ifdef CONFIG_TCG
+ static const TCGCPUOps arm_tcg_ops = {
++#if defined(CONFIG_HUSK_ARM64_EXEC) && defined(TARGET_AARCH64) && !defined(CONFIG_USER_ONLY)
++    .husk_exec_user = arm_husk_exec_user,
++#endif
+     .initialize = arm_translate_init,
+     .translate_code = arm_translate_code,
+     .synchronize_from_tb = arm_cpu_synchronize_from_tb,
+--- a/target/arm/tcg/meson.build
++++ b/target/arm/tcg/meson.build
+@@ -63,3 +63,8 @@
+ 
+ arm_system_ss.add(when: 'CONFIG_ARM_V7M', if_true: files('cpu-v7m.c'))
+ arm_user_ss.add(when: 'TARGET_AARCH64', if_false: files('cpu-v7m.c'))
++
++if get_option('husk_arm64_exec')
++  arm_system_ss.add(when: 'TARGET_AARCH64',
++                    if_true: [files('husk-arm64-qemu.c'), husk_arm64_exec])
++endif

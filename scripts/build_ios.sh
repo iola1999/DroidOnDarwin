@@ -158,8 +158,21 @@ stage_libslirp()    { apply_patch libslirp-v4.9.1 libslirp-v4.9.1.patch
 stage_qemu() {
     local dir="$SRC/qemu-10.0.12-utm"
     local log="$LOGS/qemu.log"
+    local engine_options=()
+    if [ "${HUSK_ARM64_EXEC_BUILD:-0}" = 1 ]; then
+        engine_options=(-Dhusk_arm64_exec=true)
+    fi
     done_stage qemu && { echo "[skip] qemu"; return 0; }
     apply_patch qemu-10.0.12-utm qemu-10.0.12-utm.patch
+    # QEMU detects Darwin from the compiler target. iOS test executables cannot
+    # run on the build Mac, even when both CPUs are arm64.
+    cat > "$dir/configs/meson/darwin.txt" <<EOF
+[properties]
+needs_exe_wrapper = true
+[host_machine]
+kernel = 'xnu'
+subsystem = 'ios'
+EOF
     banner "building qemu (this is the long one)"
     rm -rf "$dir/_husk_build"; mkdir -p "$dir/_husk_build"
     ( cd "$dir/_husk_build" \
@@ -181,7 +194,8 @@ stage_qemu() {
             --disable-nettle --disable-gcrypt --disable-auth-pam \
             --disable-install-blobs --disable-sparse --disable-debug-info \
             --extra-cflags="$CFLAGS" --extra-ldflags="$LDFLAGS" \
-      && make -j"$NCPU" ) > "$log" 2>&1 || fail qemu "$log"
+            "${engine_options[@]}" \
+      && ninja -j"$NCPU" libqemu-aarch64-softmmu.dylib ) > "$log" 2>&1 || fail qemu "$log"
     husk_stage_dylib
     mark_stage qemu
 }

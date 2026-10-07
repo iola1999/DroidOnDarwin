@@ -76,12 +76,17 @@ HUSK_EXPORT void husk_ios_jit_install_trap_handler(void);
  */
 HuskDualMapping husk_ios_jit_allocate(size_t bytes);
 
+/* Borrow the 32 MiB EL0 partition reserved by prewarm. One owner at a time;
+ * release returns the partition without unmapping the shared allocation. */
+HuskDualMapping husk_ios_jit_acquire_el0(size_t bytes);
+void husk_ios_jit_release_el0(HuskDualMapping *mapping);
+
 /*
  * Claim the JIT region now, at app launch, and hold it until QEMU asks.
  * StikDebug does not stay attached forever, and a first run spends a minute
  * downloading the guest before QEMU starts -- by which time the debugger has
  * let go and no executable memory can be had at all. Pass the same size QEMU
- * will ask for (tb-size).
+ * will ask for (tb-size). Prewarm reserves an additional 32 MiB for EL0 code.
  */
 HUSK_EXPORT bool husk_ios_jit_prewarm(size_t bytes);
 

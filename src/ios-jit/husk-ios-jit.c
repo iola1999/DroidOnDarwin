@@ -301,6 +301,9 @@ static HuskDualMapping husk_ios_jit_allocate_real(size_t bytes);
 
 static HuskDualMapping husk_prewarmed;
 static bool husk_prewarm_done;
+static size_t husk_tcg_capacity;
+static atomic_bool husk_el0_claimed;
+enum { HUSK_EL0_JIT_BYTES = 32 * 1024 * 1024 };
 
 HUSK_EXPORT bool husk_ios_jit_prewarm(size_t bytes)
 {
@@ -308,9 +311,11 @@ HUSK_EXPORT bool husk_ios_jit_prewarm(size_t bytes)
         return husk_prewarmed.rw_addr != NULL;
     }
     husk_prewarm_done = true;
-    husk_prewarmed = husk_ios_jit_allocate_real(bytes);
-    fprintf(stderr, "[husk-jit] prewarm %s: %zu bytes\n",
-            husk_prewarmed.rw_addr ? "OK" : "FAILED", bytes);
+    if (bytes > SIZE_MAX - HUSK_EL0_JIT_BYTES || bytes % 16384) return false;
+    husk_tcg_capacity = bytes;
+    husk_prewarmed = husk_ios_jit_allocate_real(bytes + HUSK_EL0_JIT_BYTES);
+    fprintf(stderr, "[husk-jit] prewarm %s: TCG=%zu EL0=%u bytes\n",
+            husk_prewarmed.rw_addr ? "OK" : "FAILED", bytes, HUSK_EL0_JIT_BYTES);
     return husk_prewarmed.rw_addr != NULL;
 }
 
@@ -321,10 +326,11 @@ HuskDualMapping husk_ios_jit_allocate(size_t bytes)
      * exactly tb-size, which is what prewarm was given, so this is the normal
      * path -- the fallback below only runs if prewarm never happened.
      */
-    if (husk_prewarmed.rw_addr && husk_prewarmed.size >= bytes) {
-        fprintf(stderr, "[husk-jit] using the prewarmed region (%zu bytes)\n",
-                husk_prewarmed.size);
-        return husk_prewarmed;
+    if (husk_prewarmed.rw_addr && husk_tcg_capacity >= bytes) {
+        fprintf(stderr, "[husk-jit] using the TCG partition (%zu bytes)\n", bytes);
+        HuskDualMapping region = husk_prewarmed;
+        region.size = bytes;
+        return region;
     }
     /*
      * No second trap after a prewarm already went unanswered.
@@ -339,6 +345,31 @@ HuskDualMapping husk_ios_jit_allocate(size_t bytes)
         return none;
     }
     return husk_ios_jit_allocate_real(bytes);
+}
+
+HuskDualMapping husk_ios_jit_acquire_el0(size_t bytes)
+{
+    HuskDualMapping none = { NULL, NULL, 0 };
+    if (!husk_prewarmed.rw_addr || !bytes || bytes > HUSK_EL0_JIT_BYTES ||
+        atomic_exchange(&husk_el0_claimed, true)) return none;
+    HuskDualMapping region = {
+        husk_prewarmed.rw_addr + husk_tcg_capacity,
+        husk_prewarmed.rx_addr + husk_tcg_capacity,
+        HUSK_EL0_JIT_BYTES,
+    };
+    HUSK_LOG("EL0 partition acquired: rw=%p rx=%p size=%zu", region.rw_addr,
+             region.rx_addr, region.size);
+    return region;
+}
+
+void husk_ios_jit_release_el0(HuskDualMapping *region)
+{
+    if (region && husk_prewarmed.rw_addr &&
+        region->rw_addr == husk_prewarmed.rw_addr + husk_tcg_capacity &&
+        region->rx_addr == husk_prewarmed.rx_addr + husk_tcg_capacity) {
+        *region = (HuskDualMapping){ NULL, NULL, 0 };
+        atomic_store(&husk_el0_claimed, false);
+    }
 }
 
 static HuskDualMapping husk_ios_jit_allocate_real(size_t bytes)
@@ -463,6 +494,12 @@ static HuskDualMapping husk_ios_jit_allocate_real(size_t bytes)
 void husk_ios_jit_release(HuskDualMapping *m)
 {
     if (m == NULL) {
+        return;
+    }
+    /* Prewarm owns both partitions for the process lifetime. */
+    if (m->rw_addr && m->rw_addr == husk_prewarmed.rw_addr &&
+        m->rx_addr == husk_prewarmed.rx_addr && m->size <= husk_tcg_capacity) {
+        *m = (HuskDualMapping){ NULL, NULL, 0 };
         return;
     }
     if (m->rw_addr != NULL) {
@@ -636,6 +673,8 @@ HuskDualMapping husk_ios_jit_allocate(size_t bytes)
     return husk_ios_jit_allocate_real(bytes);
 }
 bool husk_ios_jit_prewarm(size_t bytes) { (void)bytes; return false; }
+HuskDualMapping husk_ios_jit_acquire_el0(size_t bytes) { return husk_ios_jit_allocate_real(bytes); }
+void husk_ios_jit_release_el0(HuskDualMapping *m) { (void)m; }
 void husk_ios_jit_release(HuskDualMapping *m) { (void)m; }
 void husk_ios_jit_detach(void) {}
 bool husk_ios_jit_is_available(void) { return false; }

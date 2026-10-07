@@ -16,7 +16,7 @@ def rd(off, length):
         capture_output=True, text=True, check=True).stdout
     data = bytearray()
     for line in out.splitlines():
-        m = re.match(r"^[0-9a-f]{8}:\s+((?:[0-9a-f]{2} )+)", line)
+        m = re.match(r"^[0-9a-f]{8,}:\s+((?:[0-9a-f]{2} )+)", line)
         if m:
             data += bytes.fromhex(m.group(1).replace(" ", ""))
     return bytes(data[:length])

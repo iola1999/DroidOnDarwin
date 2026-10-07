@@ -34,7 +34,9 @@
 		</dict>
 	</array>
 	<key>CFBundleVersion</key>
-	<string>29</string>
+	<string>33</string>
+	<key>HuskPerformanceBuild</key>
+	<string>E3-direct-cache</string>
 	<key>LSApplicationQueriesSchemes</key>
 	<array>
 		<string>stikjit</string>

@@ -66,9 +66,16 @@ final class GuestImage: ObservableObject {
     /// Version shared by the blank userdata seed and downloaded snapshots.
     private static let userdataSeedVersion = "v10"
 
+    /// 导入工具创建此标记后，系统盘和数据盘由导入流程维护。
+    nonisolated static var isCustomGuest: Bool {
+        let documents = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        return FileManager.default.fileExists(
+            atPath: documents.appendingPathComponent("husk-custom-guest").path)
+    }
+
     /// Whether to fetch the pre-booted snapshot rather than boot from cold.
     static var wantsSnapshot: Bool {
-        UserDefaults.standard.object(forKey: "husk.downloadSnapshot") as? Bool ?? true
+        !isCustomGuest && (UserDefaults.standard.object(forKey: "husk.downloadSnapshot") as? Bool ?? true)
     }
 
     /// A machine that has already finished booting, gzipped.
@@ -212,7 +219,9 @@ final class GuestImage: ObservableObject {
     /// wrong: a stamp that outlived the files it described, and an asset
     /// published under a new name carrying the old bytes.
     func checkForUpdates() async {
+        guard !Self.isCustomGuest else { update = .none; return }
         guard let m = await GuestManifest.fetch() else { return }
+        guard !Self.isCustomGuest else { update = .none; return }
         manifest = m
         snapshotPinsToRecord = m.snapshot
 
@@ -320,7 +329,8 @@ final class GuestImage: ObservableObject {
         if case .installing = state { return }
 
         guard FileManager.default.fileExists(atPath: diskPath) else {
-            state = .missing
+            state = Self.isCustomGuest
+                ? .failed("Imported system disk is missing. Restore the imported disk pair.") : .missing
             return
         }
         // Validate every time, not just after downloading: a previous run may have
@@ -328,7 +338,7 @@ final class GuestImage: ObservableObject {
         // that ("Image is not in qcow2 format") points at QEMU rather than here.
         // A valid image of the wrong version is still the wrong image.
         let installed = try? String(contentsOfFile: versionStampPath, encoding: .utf8)
-        if installed != Self.imageVersion {
+        if !Self.isCustomGuest, installed != Self.imageVersion {
             HuskLog.log("guest", "installed guest is \(installed ?? "unversioned"), "
                                + "need \(Self.imageVersion); re-downloading")
             try? FileManager.default.removeItem(atPath: diskPath)
@@ -338,9 +348,14 @@ final class GuestImage: ObservableObject {
 
         let check = Self.validate(path: diskPath)
         if let why = check.problem {
-            HuskLog.log("guest", "existing guest disk is INVALID (\(why)); removing it")
-            try? FileManager.default.removeItem(atPath: diskPath)
-            state = .failed("The runtime on disk is not a valid image (\(why)). Tap to retry.")
+            if Self.isCustomGuest {
+                HuskLog.log("guest", "imported guest disk failed validation: \(why)")
+                state = .failed("Imported system disk is invalid (\(why)). Restore the imported disk pair.")
+            } else {
+                HuskLog.log("guest", "existing guest disk is INVALID (\(why)); removing it")
+                try? FileManager.default.removeItem(atPath: diskPath)
+                state = .failed("The runtime on disk is not a valid image (\(why)). Tap to retry.")
+            }
         } else {
             HuskLog.log("guest", "guest disk present and valid: \(check.size ?? 0) bytes")
             state = .ready
@@ -381,6 +396,10 @@ final class GuestImage: ObservableObject {
     func prepareFirmware() throws {
         cleanUpPreviousGuest()
         let fm = FileManager.default
+        guard !Self.isCustomGuest || fm.fileExists(atPath: userdataPath) else {
+            throw NSError(domain: "husk", code: 3, userInfo: [NSLocalizedDescriptionKey:
+                "Imported userdata disk is missing. Restore the imported disk pair."])
+        }
         if !fm.fileExists(atPath: firmwarePath) {
             guard let src = Bundle.main.path(forResource: "edk2-aarch64-code", ofType: "fd") else {
                 throw NSError(domain: "husk", code: 1, userInfo: [
@@ -441,7 +460,7 @@ final class GuestImage: ObservableObject {
         // including a multi-gigabyte snapshot of it -- has to go.
         let seedVersion = Self.userdataSeedVersion
         let seededWith = try? String(contentsOf: seedStamp, encoding: .utf8)
-        if fm.fileExists(atPath: userdataPath), seededWith != seedVersion {
+        if !Self.isCustomGuest, fm.fileExists(atPath: userdataPath), seededWith != seedVersion {
             if hasShippedSnapshot {
                 // Snapshot installs use the same userdata disk but historically
                 // did not write this seed stamp. Repair the stamp instead of
@@ -476,6 +495,10 @@ final class GuestImage: ObservableObject {
     }
 
     func download() {
+        guard !Self.isCustomGuest else {
+            state = .failed("Restore the imported disk pair to update this system.")
+            return
+        }
         if case .downloading = state { return }
         state = .downloading(progress: 0, received: 0, total: 0)
         HuskLog.log("guest", "downloading guest image from \(Self.imageURL.absoluteString)")
@@ -500,6 +523,7 @@ final class GuestImage: ObservableObject {
     @Published private(set) var isFetchingSnapshot = false
 
     func downloadSnapshotNow() {
+        guard !Self.isCustomGuest else { return }
         if case .downloading = state { return }
         if hasShippedSnapshot {
             // A valid but older snapshot may be on disk when the manifest

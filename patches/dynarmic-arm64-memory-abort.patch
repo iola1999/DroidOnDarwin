@@ -1,0 +1,39 @@
+diff --git a/src/dynarmic/backend/arm64/emit_arm64_memory.cpp b/src/dynarmic/backend/arm64/emit_arm64_memory.cpp
+index 339e2c5..c84129b 100644
+--- a/src/dynarmic/backend/arm64/emit_arm64_memory.cpp
++++ b/src/dynarmic/backend/arm64/emit_arm64_memory.cpp
+@@ -135,6 +135,10 @@ void CallbackOnlyEmitReadMemory(oaknut::CodeGenerator& code, EmitContext& ctx, I
+     const bool ordered = IsOrdered(args[2].GetImmediateAccType());
+ 
+     EmitRelocation(code, ctx, ReadMemoryLinkTarget(bitsize));
++    // A failed callback must exit before the load destination or writeback changes.
++    oaknut::Label read_ok;
++    ctx.conf.emit_check_memory_abort(code, ctx, inst, read_ok);
++    code.l(read_ok);
+     if (ordered) {
+         code.DMB(oaknut::BarrierOp::ISH);
+     }
+@@ -178,6 +182,10 @@ void CallbackOnlyEmitWriteMemory(oaknut::CodeGenerator& code, EmitContext& ctx,
+         code.DMB(oaknut::BarrierOp::ISH);
+     }
+     EmitRelocation(code, ctx, WriteMemoryLinkTarget(bitsize));
++    // Match the abort handling used by the inline page-table path.
++    oaknut::Label write_ok;
++    ctx.conf.emit_check_memory_abort(code, ctx, inst, write_ok);
++    code.l(write_ok);
+     if (ordered) {
+         code.DMB(oaknut::BarrierOp::ISH);
+     }
+--- a/src/dynarmic/backend/arm64/emit_arm64_a64.cpp
++++ b/src/dynarmic/backend/arm64/emit_arm64_a64.cpp
+@@ -153,8 +153,8 @@
+ 
+     const A64::LocationDescriptor current_location{IR::LocationDescriptor{inst->GetArg(0).GetU64()}};
+ 
+-    code.LDAR(Xscratch0, Xhalt);
+-    code.TST(Xscratch0, static_cast<u32>(HaltReason::MemoryAbort));
++    code.LDAR(Wscratch0, Xhalt);
++    code.TST(Wscratch0, static_cast<u32>(HaltReason::MemoryAbort));
+     code.B(EQ, end);
+     code.MOV(Xscratch0, current_location.PC());
+     code.STR(Xscratch0, Xstate, offsetof(A64JitState, pc));

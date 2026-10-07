@@ -1,0 +1,73 @@
+--- a/src/arm64-exec/husk-arm64-direct.cpp
++++ b/src/arm64-exec/husk-arm64-direct.cpp
+@@ -327,7 +327,8 @@
+                     else if (offset > 0) c.ADD(X16, X16, offset);
+                     else c.SUB(X16, X16, -offset);
+                 }
+-                c.LSR(X17, X16, 56); c.CBNZ(X17, invalid);
++                // Keep address tags in the cache key. QEMU's MMU validates the
++                // complete guest address before exposing a host RAM mapping.
+                 if (size_log2) { c.TST(X16, (1U << size_log2) - 1); c.B(NE, invalid); }
+                 if (pair) {
+                     c.AND(X17, X16, 4095);
+@@ -510,7 +511,7 @@
+             });
+             next = loop.generic;
+             uint64_t base = frame.state.x[loop.base];
+-            if (memory.map_page && !(base >> 56) && !(base & (loop.alignment - 1)) &&
++            if (memory.map_page && !(base & (loop.alignment - 1)) &&
+                 (base & 4095) + loop.extent <= 4096 &&
+                 (!loop.write || (base & ~UINT64_C(4095)) != page)) {
+                 void *read = loop.read ? memory.map_page(memory.opaque, base & ~UINT64_C(4095), false) : nullptr;
+--- a/src/arm64-exec/husk-arm64-exec.h
++++ b/src/arm64-exec/husk-arm64-exec.h
+@@ -24,7 +24,8 @@
+     /* Failure must leave guest memory unchanged. Never unwind through JIT code. */
+     bool (*read)(void *, uint64_t, void *, size_t);
+     bool (*write)(void *, uint64_t, const void *, size_t);
+-    /* Optional: validate an entire 4 KiB RAM page for this slice. No MMIO or
++    /* Optional: validate an entire 4 KiB RAM page for this slice, including
++     * address tags under the guest's current MMU configuration. No MMIO or
+      * watched pages; writes must reject physical aliases of the current code.
+      * The mapping and permissions must remain valid until run() returns. */
+     void *(*map_page)(void *, uint64_t page_address, bool write);
+--- a/tests/arm64-exec/engine.cpp
++++ b/tests/arm64-exec/engine.cpp
+@@ -17,10 +17,12 @@
+     std::array<uint8_t, 4096> ram{};
+     std::array<uint8_t, 4096> collision_ram{};
+     bool writable = true;
++    bool tagged = false;
+     unsigned reads = 0;
+     unsigned writes = 0;
+     uint8_t *Locate(uint64_t a, size_t n)
+     {
++        if (tagged) a &= UINT64_C(0x00ffffffffffffff);
+         uint64_t page = a & ~UINT64_C(4095);
+         if (n > 4096 || (a & 4095) > 4096 - n) return nullptr;
+         auto *base = page == 0x20000 ? ram.data() : page == 0x120000 ? collision_ram.data() : nullptr;
+@@ -229,6 +231,24 @@
+         CHECK(run() == HUSK_ARM64_FALLBACK && state.pc == 0x10000);
+     }
+     if (direct) {
++        program({0xf8408420, 0xd4000001}); // ldr x0,[x1],8
++        state.x[0] = 17;
++        state.x[1] = UINT64_C(0xb400000000020000);
++        CHECK(run() == HUSK_ARM64_FALLBACK && state.pc == 0x10000 && state.x[0] == 17);
++        memory.tagged = true;
++        memory.ram.fill(0);
++        memory.ram[0] = 91;
++        state.pc = 0x10000;
++        CHECK(run() == HUSK_ARM64_FALLBACK && state.pc == 0x10004 && state.x[0] == 91);
++        CHECK(state.x[1] == UINT64_C(0xb400000000020008));
++        program({0xf9400020, 0x91000400, 0xf9000020, 0xf1000442, 0x54ffff81, 0xd4000001});
++        state.x[1] = UINT64_C(0xb400000000020000);
++        state.x[2] = 10;
++        CHECK(run() == HUSK_ARM64_FALLBACK && memory.ram[0] == 101);
++        memory.tagged = false;
++        state.pc = 0x10000;
++        CHECK(run() == HUSK_ARM64_FALLBACK && state.pc == 0x10000);
++
+         // A pair crossing into an unmapped page must leave QEMU the whole access.
+         program({0xa8c10440, 0xd4000001}); // ldp x0,x1,[x2],16
+         state.x[0] = 17;

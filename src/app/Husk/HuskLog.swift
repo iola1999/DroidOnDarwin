@@ -345,6 +345,9 @@ enum HuskLog {
         let commit  = info["HuskBuildCommit"] as? String ?? "unstamped"
         let built   = info["HuskBuildDate"] as? String ?? "?"
         log("boot", "build       : \(version) (\(build)) \(commit) built \(built)")
+        if let experiment = info["HuskPerformanceBuild"] as? String {
+            log("boot", "experiment  : \(experiment)")
+        }
         log("boot", "pid         : \(getpid())")
         log("boot", "log file    : \(logFileURL.path)")
         // Every iOS 27 device except iPad8,11/8,12 enforces TXM, which is what makes

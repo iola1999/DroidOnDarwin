@@ -1,0 +1,173 @@
+--- a/src/dynarmic/interface/A64/config.h
++++ b/src/dynarmic/interface/A64/config.h
+@@ -204,6 +204,17 @@
+     /// If an entry in page_table is null, the relevant memory callback will be called.
+     /// If page_table is nullptr, all memory accesses hit the memory callbacks.
+     void** page_table = nullptr;
++
++    // ARM64 backend only. 256 direct-mapped entries, indexed by (vaddr >> 12) & 255.
++    // The owner supplies whole RAM pages and invalidates entries before mappings
++    // or permissions change. Null read/write pointers invoke memory callbacks.
++    struct MemoryAccessCacheEntry {
++        std::uint64_t page_index;
++        void* read;
++        void* write;
++        std::uint64_t reserved;
++    };
++    MemoryAccessCacheEntry* memory_access_cache = nullptr;
+     /// Declares how many valid address bits are there in virtual addresses.
+     /// Determines the size of page_table. Valid values are between 12 and 64 inclusive.
+     /// This is only used if page_table is not nullptr.
+--- a/src/dynarmic/backend/arm64/emit_arm64.h
++++ b/src/dynarmic/backend/arm64/emit_arm64.h
+@@ -124,6 +124,7 @@
+ 
+     // Page table
+     u64 page_table_pointer;
++    u64 memory_access_cache_pointer = 0;
+     size_t page_table_address_space_bits;
+     int page_table_pointer_mask_bits;
+     bool silently_mirror_page_table;
+--- a/src/dynarmic/backend/arm64/a64_address_space.cpp
++++ b/src/dynarmic/backend/arm64/a64_address_space.cpp
+@@ -334,8 +334,8 @@
+ 
+     Optimization::A64CallbackConfigPass(ir_block, conf);
+     Optimization::NamingPass(ir_block);
+-    if (conf.HasOptimization(OptimizationFlag::GetSetElimination) && !conf.check_halt_on_memory_access) {
+-        Optimization::A64GetSetElimination(ir_block);
++    if (conf.HasOptimization(OptimizationFlag::GetSetElimination)) {
++        Optimization::A64GetSetElimination(ir_block, conf.check_halt_on_memory_access);
+         Optimization::DeadCodeElimination(ir_block);
+     }
+     if (conf.HasOptimization(OptimizationFlag::ConstProp)) {
+@@ -407,8 +407,8 @@
+         code.MOV(X19, X0);
+         code.MOV(Xstate, X1);
+         code.MOV(Xhalt, X2);
+-        if (conf.page_table) {
+-            code.MOV(Xpagetable, mcl::bit_cast<u64>(conf.page_table));
++        if (conf.memory_access_cache || conf.page_table) {
++            code.MOV(Xpagetable, conf.memory_access_cache ? mcl::bit_cast<u64>(conf.memory_access_cache) : mcl::bit_cast<u64>(conf.page_table));
+         }
+         if (conf.fastmem_pointer) {
+             code.MOV(Xfastmem, *conf.fastmem_pointer);
+@@ -445,8 +445,8 @@
+         code.MOV(X19, X0);
+         code.MOV(Xstate, X1);
+         code.MOV(Xhalt, X2);
+-        if (conf.page_table) {
+-            code.MOV(Xpagetable, mcl::bit_cast<u64>(conf.page_table));
++        if (conf.memory_access_cache || conf.page_table) {
++            code.MOV(Xpagetable, conf.memory_access_cache ? mcl::bit_cast<u64>(conf.memory_access_cache) : mcl::bit_cast<u64>(conf.page_table));
+         }
+         if (conf.fastmem_pointer) {
+             code.MOV(Xfastmem, *conf.fastmem_pointer);
+@@ -557,6 +557,7 @@
+         .check_halt_on_memory_access = conf.check_halt_on_memory_access,
+ 
+         .page_table_pointer = mcl::bit_cast<u64>(conf.page_table),
++        .memory_access_cache_pointer = mcl::bit_cast<u64>(conf.memory_access_cache),
+         .page_table_address_space_bits = conf.page_table_address_space_bits,
+         .page_table_pointer_mask_bits = conf.page_table_pointer_mask_bits,
+         .silently_mirror_page_table = conf.silently_mirror_page_table,
+--- a/src/dynarmic/ir/opt/passes.h
++++ b/src/dynarmic/ir/opt/passes.h
+@@ -36,7 +36,7 @@
+ void A32ConstantMemoryReads(IR::Block& block, A32::UserCallbacks* cb);
+ void A32GetSetElimination(IR::Block& block, A32GetSetEliminationOptions opt);
+ void A64CallbackConfigPass(IR::Block& block, const A64::UserConfig& conf);
+-void A64GetSetElimination(IR::Block& block);
++void A64GetSetElimination(IR::Block& block, bool memory_abort_barriers = false);
+ void A64MergeInterpretBlocksPass(IR::Block& block, A64::UserCallbacks* cb);
+ void ConstantPropagation(IR::Block& block);
+ void DeadCodeElimination(IR::Block& block);
+--- a/src/dynarmic/ir/opt/a64_get_set_elimination_pass.cpp
++++ b/src/dynarmic/ir/opt/a64_get_set_elimination_pass.cpp
+@@ -15,7 +15,7 @@
+ 
+ namespace Dynarmic::Optimization {
+ 
+-void A64GetSetElimination(IR::Block& block) {
++void A64GetSetElimination(IR::Block& block, bool memory_abort_barriers) {
+     using Iterator = IR::Block::iterator;
+ 
+     enum class TrackingType {
+@@ -72,6 +72,13 @@
+     };
+ 
+     for (auto inst = block.begin(); inst != block.end(); ++inst) {
++        if (memory_abort_barriers && inst->IsMemoryReadOrWrite()) {
++            // A memory callback can exit here; retain all preceding state writes.
++            reg_info = {};
++            vec_info = {};
++            sp_info = {};
++            nzcv_info = {};
++        }
+         switch (inst->GetOpcode()) {
+         case IR::Opcode::A64GetW: {
+             const size_t index = A64::RegNumber(inst->GetArg(0).GetA64RegRef());
+--- a/src/dynarmic/backend/arm64/emit_arm64_memory.cpp
++++ b/src/dynarmic/backend/arm64/emit_arm64_memory.cpp
+@@ -259,11 +259,24 @@
+ // Address to read/write = [ret0 + ret1], ret0 is always Xscratch0 and ret1 is either Xaddr or Xscratch1
+ // Trashes NZCV
+ template<size_t bitsize>
+-std::pair<oaknut::XReg, oaknut::XReg> InlinePageTableEmitVAddrLookup(oaknut::CodeGenerator& code, EmitContext& ctx, oaknut::XReg Xaddr, const SharedLabel& fallback) {
++std::pair<oaknut::XReg, oaknut::XReg> InlinePageTableEmitVAddrLookup(oaknut::CodeGenerator& code, EmitContext& ctx, oaknut::XReg Xaddr, const SharedLabel& fallback, bool write) {
+     const size_t valid_page_index_bits = ctx.conf.page_table_address_space_bits - page_bits;
+     const size_t unused_top_bits = 64 - ctx.conf.page_table_address_space_bits;
+ 
+     EmitDetectMisalignedVAddr<bitsize>(code, ctx, Xaddr, fallback);
++
++    if (ctx.conf.memory_access_cache_pointer) {
++        // Full page tags prevent hash collisions and tagged pointers from aliasing RAM.
++        code.UBFX(Xscratch0, Xaddr, page_bits, 8);
++        code.ADD(Xscratch0, Xpagetable, Xscratch0, LSL, 5);
++        code.LDR(Xscratch1, Xscratch0);
++        code.CMP(Xscratch1, Xaddr, LSR, page_bits);
++        code.B(NE, *fallback);
++        code.LDR(Xscratch0, Xscratch0, write ? 16 : 8);
++        code.CBZ(Xscratch0, *fallback);
++        code.AND(Xscratch1, Xaddr, page_mask);
++        return std::make_pair(Xscratch0, Xscratch1);
++    }
+ 
+     if (ctx.conf.silently_mirror_page_table || unused_top_bits == 0) {
+         code.UBFX(Xscratch0, Xaddr, page_bits, valid_page_index_bits);
+@@ -428,7 +441,7 @@
+ 
+     SharedLabel fallback = GenSharedLabel(), end = GenSharedLabel();
+ 
+-    const auto [Xbase, Xoffset] = InlinePageTableEmitVAddrLookup<bitsize>(code, ctx, Xaddr, fallback);
++    const auto [Xbase, Xoffset] = InlinePageTableEmitVAddrLookup<bitsize>(code, ctx, Xaddr, fallback, false);
+     EmitMemoryLdr<bitsize>(code, Rvalue->index(), Xbase, Xoffset, ordered);
+ 
+     ctx.deferred_emits.emplace_back([&code, &ctx, inst, Xaddr = *Xaddr, Rvalue = *Rvalue, ordered, fallback, end] {
+@@ -468,7 +481,7 @@
+ 
+     SharedLabel fallback = GenSharedLabel(), end = GenSharedLabel();
+ 
+-    const auto [Xbase, Xoffset] = InlinePageTableEmitVAddrLookup<bitsize>(code, ctx, Xaddr, fallback);
++    const auto [Xbase, Xoffset] = InlinePageTableEmitVAddrLookup<bitsize>(code, ctx, Xaddr, fallback, true);
+     EmitMemoryStr<bitsize>(code, Rvalue->index(), Xbase, Xoffset, ordered);
+ 
+     ctx.deferred_emits.emplace_back([&code, &ctx, inst, Xaddr = *Xaddr, Rvalue = *Rvalue, ordered, fallback, end] {
+@@ -639,7 +652,7 @@
+ void EmitReadMemory(oaknut::CodeGenerator& code, EmitContext& ctx, IR::Inst* inst) {
+     if (const auto marker = ShouldFastmem(ctx, inst)) {
+         FastmemEmitReadMemory<bitsize>(code, ctx, inst, *marker);
+-    } else if (ctx.conf.page_table_pointer != 0) {
++    } else if (ctx.conf.page_table_pointer != 0 || ctx.conf.memory_access_cache_pointer != 0) {
+         InlinePageTableEmitReadMemory<bitsize>(code, ctx, inst);
+     } else {
+         CallbackOnlyEmitReadMemory<bitsize>(code, ctx, inst);
+@@ -655,7 +668,7 @@
+ void EmitWriteMemory(oaknut::CodeGenerator& code, EmitContext& ctx, IR::Inst* inst) {
+     if (const auto marker = ShouldFastmem(ctx, inst)) {
+         FastmemEmitWriteMemory<bitsize>(code, ctx, inst, *marker);
+-    } else if (ctx.conf.page_table_pointer != 0) {
++    } else if (ctx.conf.page_table_pointer != 0 || ctx.conf.memory_access_cache_pointer != 0) {
+         InlinePageTableEmitWriteMemory<bitsize>(code, ctx, inst);
+     } else {
+         CallbackOnlyEmitWriteMemory<bitsize>(code, ctx, inst);

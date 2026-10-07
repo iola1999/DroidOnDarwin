@@ -163,6 +163,7 @@ echo "==> entitlements in the signed app:"
 codesign -d --entitlements - "$SAPP" 2>/dev/null | grep -E "get-task-allow|dynamic-codesigning|increased-memory|extended-virtual" \
     || { echo "==> entitlements did not embed; refusing to package" >&2; rm -rf "$STAGE"; exit 1; }
 TMP_IPA="$STAGE/Husk.ipa"
+codesign --verify --deep --strict "$SAPP"
 ( cd "$STAGE" && zip -qry "$TMP_IPA" Payload )
 
 # Atomic replace so a half-written IPA never sits where the good one was.

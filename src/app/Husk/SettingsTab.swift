@@ -134,6 +134,7 @@ struct LibrarySettings: View {
 
 struct PerformanceSettings: View {
     @ObservedObject private var runner = QemuRunner.shared
+    @AppStorage("husk.directExecution") private var directExecution = true
     @State private var gpuMode =
         UserDefaults.standard.object(forKey: "husk.gpuMode") as? Bool ?? true
     @State private var sound = UserDefaults.standard.bool(forKey: "husk.sound")
@@ -142,6 +143,15 @@ struct PerformanceSettings: View {
 
     var body: some View {
         Form {
+            if GuestImage.isCustomGuest {
+                Section {
+                    Toggle("ARM64 Direct (Experimental)", isOn: $directExecution)
+                } header: {
+                    Text("CPU execution")
+                } footer: {
+                    Text("Uses one virtual CPU. Turn off to use standard TCG with four virtual CPUs. Close and reopen Husk after changing this setting.")
+                }
+            }
             Section {
                 Picker("Renderer", selection: $gpuMode) {
                     Text("GPU").tag(true)

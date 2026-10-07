@@ -139,16 +139,31 @@ final class HuskMetalPresenter {
 
     /// Called from QEMU's thread, once per guest frame.
     func present(texture: MTLTexture, flip: Bool) {
+        let start = CACurrentMediaTime()
         lock.lock()
-        defer { lock.unlock() }
+        let acquired = CACurrentMediaTime()
+        var drawableWait: Double?
+        var encodeTime: Double?
+        var submitted = false
+        var noDrawable = false
+        defer {
+            lock.unlock()
+            HuskFrameMetrics.shared.recordCallback(
+                start: start, lockWait: acquired - start, drawableWait: drawableWait,
+                encode: encodeTime, elapsed: CACurrentMediaTime() - start,
+                submitted: submitted, noDrawable: noDrawable)
+        }
 
         guard let layer else { return }
         guard prepare(for: texture, layer),
               let queue, let pipeline, let sampler else { return }
 
-        // nextDrawable returns nil when the pool is exhausted -- a dropped
-        // frame, not an error, and the guest will send another.
-        guard let drawable = layer.nextDrawable() else { return }
+        // drawable 池耗尽时会等待。单独计时，区分等待与 Metal 编码的耗时。
+        let drawableStart = CACurrentMediaTime()
+        let next = layer.nextDrawable()
+        let encodeStart = CACurrentMediaTime()
+        drawableWait = encodeStart - drawableStart
+        guard let drawable = next else { noDrawable = true; return }
 
         let pass = MTLRenderPassDescriptor()
         pass.colorAttachments[0].texture = drawable.texture
@@ -186,8 +201,22 @@ final class HuskMetalPresenter {
         // No manual retain of `texture`: a command buffer keeps every resource
         // it references alive until it completes, which is exactly the window
         // in which the GPU reads it.
+        let commitStart = CACurrentMediaTime()
+        buffer.addCompletedHandler { completed in
+            let gpu = completed.gpuStartTime > 0 && completed.gpuEndTime >= completed.gpuStartTime
+                ? completed.gpuEndTime - completed.gpuStartTime : nil
+            HuskFrameMetrics.shared.recordCompletion(
+                elapsed: CACurrentMediaTime() - commitStart, gpu: gpu,
+                failed: completed.status == .error)
+        }
+        drawable.addPresentedHandler { displayed in
+            guard displayed.presentedTime > 0 else { return }
+            HuskFrameMetrics.shared.recordDisplay(elapsed: displayed.presentedTime - start)
+        }
         buffer.present(drawable)
         buffer.commit()
+        encodeTime = CACurrentMediaTime() - encodeStart
+        submitted = true
 
         presented &+= 1
         if presented == 1 || presented % 1800 == 0 {
