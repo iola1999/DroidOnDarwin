@@ -30,6 +30,7 @@
 using namespace oaknut;
 using namespace oaknut::util;
 
+struct CompiledPage;
 namespace {
 constexpr uint32_t CompileFastmem = 16, CompileLanding = 32, CompileInlineAssists = 256;
 constexpr uint32_t CompileExclusive = 512, CompileTail = 1024;
@@ -49,6 +50,8 @@ struct Frame {
     void *pauth_cache;
     const FaultSite *fault_sites;
     size_t fault_count, fault_index;
+    uint64_t code_page;
+    CompiledPage *code;
 };
 static_assert(offsetof(Frame, state.pc) == HUSK_PC);
 static_assert(offsetof(Frame, state.nzcv) == HUSK_NZCV);
@@ -69,12 +72,13 @@ static_assert(offsetof(Frame, read_windows) == HUSK_READ_WINDOWS);
 static_assert(offsetof(Frame, write_windows) == HUSK_WRITE_WINDOWS);
 static_assert(offsetof(Frame, pauth_cache) == HUSK_PAUTH_CACHE);
 struct Mapping { uint64_t tag; void *read, *write; uint64_t reserved; };
-struct CodeRoute { uint64_t tag; void **entries; };
-struct CallRoute { uint64_t target; void *entry; };
+struct CodeRoute { uint64_t tag; void **entries; CompiledPage *code; uint64_t reserved; };
+struct CallRoute { uint64_t target; void *entry; uint64_t page; CompiledPage *code; };
+struct SourceRoute { const void *source; CompiledPage *code; uint32_t flags; };
 struct PauthResult { uint64_t value, modifier, result, instruction; };
 static_assert(sizeof(Mapping) == 32);
-static_assert(sizeof(CodeRoute) == 16);
-static_assert(sizeof(CallRoute) == 16);
+static_assert(sizeof(CodeRoute) == 32);
+static_assert(sizeof(CallRoute) == 32);
 static_assert(sizeof(PauthResult) == 32);
 extern "C" void husk_direct_enter(Frame *, void *, Mapping *);
 extern "C" void husk_direct_leave();
@@ -407,6 +411,9 @@ struct CompiledPage {
     struct Allocation { size_t offset, size; };
     std::vector<Allocation> allocations;
     uint64_t last_used = 0;
+    uint64_t first_address = 0;
+    uint64_t cache_key = 0;
+    uint32_t compile_flags = 0;
     struct Loop {
         size_t begin, end;
         unsigned base, extent = 0, alignment = 1;
@@ -426,7 +433,8 @@ struct CompiledPage {
 
     CompiledPage() = default;
     CompiledPage(const CompiledPage &other)
-        : allocations(other.allocations), last_used(other.last_used), source(other.source),
+        : allocations(other.allocations), last_used(other.last_used), first_address(other.first_address),
+          cache_key(other.cache_key), compile_flags(other.compile_flags), source(other.source),
           entries(other.entries), branch_entries(other.branch_entries),
           landings(other.landings ? std::make_unique<Landings>(*other.landings) : nullptr),
           loops(other.loops), unaligned(other.unaligned) {}
@@ -524,7 +532,16 @@ struct CompiledPage {
         }
         std::vector<uint32_t> output;
         VectorCodeGenerator c(output, executable);
-        auto store_pc = [&](uint64_t pc) { c.MOV(X17, pc); c.STR(X17, X27, HUSK_PC); };
+        auto relative_address = [&](XReg reg, uint64_t offset, XReg scratch) {
+            c.LDR(reg, X27, offsetof(Frame, code_page));
+            if (!offset) return;
+            if (offset <= 4095) c.ADD(reg, reg, offset);
+            else if (offset >= UINT64_MAX - 4094) c.SUB(reg, reg, -offset);
+            else { c.MOV(scratch, offset); c.ADD(reg, reg, scratch); }
+        };
+        auto store_pc = [&](uint64_t pc) {
+            relative_address(X17, pc - new_page, X16); c.STR(X17, X27, HUSK_PC);
+        };
         auto leave = [&](Stop reason) {
             c.MOV(X17, uint64_t(reason)); c.STR(X17, X27, HUSK_REASON);
             c.MOV(X16, uint64_t(&husk_direct_leave)); c.BR(X16);
@@ -539,6 +556,22 @@ struct CompiledPage {
             if (resident(r)) c.MOV(XReg(r), from);
             else if (r != 31 || sp) c.STR(from, X27, r * 8);
         };
+        // X16 holds a guest target. The owner and guest page travel with a
+        // cached destination, allowing identical code at different guest VAs.
+        auto dynamic_jump = [&] {
+            Label miss;
+            c.AND(X17, X16, 3); c.CBNZ(X17, miss);
+            c.LDR(X26, X27, HUSK_CODE_ROUTES);
+            c.UBFX(X17, X16, 12, 8); c.ADD(X17, X26, X17, LSL, 5);
+            c.LDR(X26, X17); c.EOR(X26, X26, X16, LSR, 12); c.CBNZ(X26, miss);
+            c.LDR(X26, X17, 8);
+            c.AND(X30, X16, 4095); c.ADD(X26, X26, X30, LSL, 1);
+            c.LDR(X26, X26); c.CBZ(X26, miss);
+            c.LDR(X17, X17, 16); c.STR(X17, X27, offsetof(Frame, code));
+            c.AND(X17, X16, ~UINT64_C(4095)); c.STR(X17, X27, offsetof(Frame, code_page));
+            c.BR(X26);
+            c.l(miss); c.STR(X16, X27, HUSK_PC); leave(CodeBranch);
+        };
         auto jump = [&](uint64_t pc) {
             // Landing variants only own the first instruction. Continuations
             // must use normal code so memory retries select the matching page.
@@ -549,18 +582,8 @@ struct CompiledPage {
                     c.MOV(X16, uint64_t(branch_entries[index])); c.BR(X16); return;
                 }
             }
-            // Routes only contain pages validated during this uninterrupted
-            // user slice. Guest registers and vectors remain resident across it.
-            Label miss;
-            c.LDR(X16, X27, HUSK_CODE_ROUTES);
-            c.ADD(X16, X16, ((pc >> 12) & 255) * sizeof(CodeRoute));
-            c.LDR(X17, X16);
-            c.MOV(X26, pc >> 12); c.EOR(X17, X17, X26); c.CBNZ(X17, miss);
-            c.LDR(X16, X16, 8);
-            c.LDR(X16, X16, ((pc & 4095) / 4) * 8); c.CBZ(X16, miss);
-            c.BR(X16);
-            c.l(miss);
-            exit(pc, CodeBranch);
+            relative_address(X16, pc - new_page, X17);
+            dynamic_jump();
         };
         auto integer = [&](uint32_t w, Kind kind, unsigned third_scratch) {
             unsigned rd = w & 31, rn = (w >> 5) & 31, rm = (w >> 16) & 31, ra = (w >> 10) & 31;
@@ -789,11 +812,11 @@ struct CompiledPage {
                 } else if (kind == Adr) {
                     int64_t imm = sign_extend(((w >> 29) & 3) | ((w >> 3) & 0x1ffffc), 21);
                     uint64_t value = w >> 31 ? (pc & ~UINT64_C(4095)) + imm * 4096 : pc + imm;
-                    c.MOV(X16, value); save(rd, X16);
+                    relative_address(X16, value - new_page, X17); save(rd, X16);
                 } else if (kind >= Branch && kind <= TestBranch) {
                     uint64_t dest = target(w, kind, pc);
                     if (kind == Branch) {
-                        if (w >> 31) { c.MOV(X16, pc + 4); save(30, X16); }
+                        if (w >> 31) { relative_address(X16, pc + 4 - new_page, X17); save(30, X16); }
                         jump(dest);
                     } else {
                         Label outside, next;
@@ -820,13 +843,15 @@ struct CompiledPage {
                     Label miss, exhausted;
                     load(rn, X16);
                     c.LDR(X26, X27, HUSK_CALL_ROUTES);
-                    if (!link) c.ADD(X26, X26, 4096);
-                    c.UBFX(X17, X16, 2, 8); c.ADD(X26, X26, X17, LSL, 4);
+                    if (!link) c.ADD(X26, X26, 8192);
+                    c.UBFX(X17, X16, 2, 8); c.ADD(X26, X26, X17, LSL, 5);
                     c.LDR(X17, X26); c.EOR(X17, X17, X16); c.CBNZ(X17, miss);
-                    c.LDR(X26, X26, 8); c.CBZ(X26, miss);
+                    c.LDR(X30, X26, 8); c.CBZ(X30, miss);
                     c.SUB(X29, X29, 1); c.TBNZ(X29, 63, exhausted);
-                    if (link) { c.MOV(X17, pc + 4); save(30, X17); }
-                    c.BR(X26);
+                    if (link) { relative_address(X17, pc + 4 - new_page, X16); save(30, X17); }
+                    c.LDR(X17, X26, 16); c.STR(X17, X27, offsetof(Frame, code_page));
+                    c.LDR(X17, X26, 24); c.STR(X17, X27, offsetof(Frame, code));
+                    c.BR(X30);
                     c.l(miss); exit(pc, Fallback);
                     c.l(exhausted); exit(pc, Budget);
                 } else if (kind == Indirect) {
@@ -836,7 +861,7 @@ struct CompiledPage {
                     c.SUB(X29, X29, 1); c.TBNZ(X29, 63, budget_end);
                     load(rn, X16);
                     Label outside;
-                    c.MOV(X17, new_page);
+                    c.LDR(X17, X27, offsetof(Frame, code_page));
                     c.EOR(X17, X17, X16); c.LSR(X17, X17, 12); c.CBNZ(X17, outside);
                     c.AND(X17, X16, 3); c.CBNZ(X17, outside);
                     // This immutable page already has execute permission. Local
@@ -846,18 +871,7 @@ struct CompiledPage {
                     c.ADD(X17, X17, X26, LSL, 1);
                     c.LDR(X26, X17); c.CBZ(X26, outside); c.BR(X26);
                     c.l(outside);
-                    Label miss;
-                    c.AND(X17, X16, 3); c.CBNZ(X17, miss);
-                    c.LDR(X26, X27, HUSK_CODE_ROUTES);
-                    c.UBFX(X17, X16, 12, 8); c.ADD(X17, X26, X17, LSL, 4);
-                    c.LDR(X26, X17); c.EOR(X26, X26, X16, LSR, 12); c.CBNZ(X26, miss);
-                    c.LDR(X17, X17, 8);
-                    c.AND(X26, X16, 4095); c.ADD(X17, X17, X26, LSL, 1);
-                    c.LDR(X26, X17); c.CBZ(X26, miss); c.BR(X26);
-                    c.l(miss);
-                    c.STR(X16, X27, HUSK_PC);
-                    // Dynamic targets return to the owner for execute-permission checks.
-                    leave(CodeBranch);
+                    dynamic_jump();
                     c.l(budget_end); exit(pc, Budget);
                 } else if (kind == ExclusiveLoad || kind == ExclusiveStore) {
                     bool write = kind == ExclusiveStore;
@@ -1108,12 +1122,13 @@ struct HuskArm64Direct {
 #endif
     size_t used = 0;
     std::vector<CompiledPage::Allocation> free_ranges;
-    std::unordered_map<uint64_t, std::unique_ptr<CompiledPage>> pages;
+    std::unordered_multimap<uint64_t, std::unique_ptr<CompiledPage>> pages;
     std::array<Mapping, 256> mappings{};
     std::array<PauthResult, 256> pauth_cache{};
     std::array<CodeRoute, 256> routes{};
     // BLR and BR x16/x17 use separate banks because their BTYPE differs.
     std::array<CallRoute, 512> call_routes{};
+    std::array<SourceRoute, 256> source_routes{};
     std::array<uint8_t, 256> populated{};
     std::unique_ptr<HuskArm64Fastmem> fastmem;
     std::vector<FaultSite> fault_sites;
@@ -1125,6 +1140,8 @@ struct HuskArm64Direct {
     bool exclusive = true;
     bool tail_cache = true;
     bool reclaim_cache = true;
+    bool share_code = true;
+    uint64_t shared_hits = 0;
     uint64_t cache_clock = 0, cache_generation = 0, evictions = 0;
     uint64_t calls = 0, compiles = 0, flushes = 0, compile_ns = 0, run_ns = 0;
     uint64_t branches = 0, budget_exits = 0, assists = 0, chained_assists = 0;
@@ -1138,6 +1155,8 @@ struct HuskArm64Direct {
         free_ranges.push_back({0, capacity});
         const char *reclaim_setting = std::getenv("HUSK_ARM64_CACHE_RECLAIM");
         reclaim_cache = !reclaim_setting || std::strcmp(reclaim_setting, "0");
+        const char *sharing_setting = std::getenv("HUSK_ARM64_CODE_SHARING");
+        share_code = !sharing_setting || std::strcmp(sharing_setting, "0");
         const char *inline_setting = std::getenv("HUSK_ARM64_INLINE_ASSISTS");
         inline_assists = !inline_setting || std::strcmp(inline_setting, "0");
         const char *exclusive_setting = std::getenv("HUSK_ARM64_EXCLUSIVE");
@@ -1183,7 +1202,7 @@ struct HuskArm64Direct {
 #endif
     }
 
-    void erase_page(decltype(pages)::iterator page, bool invalidate_routes)
+    void erase_page(decltype(pages)::iterator page)
     {
         for (const auto &allocation : page->second->allocations) {
             auto begin = uintptr_t(executable) + allocation.offset;
@@ -1197,6 +1216,7 @@ struct HuskArm64Direct {
             used -= allocation.size;
         }
         pages.erase(page);
+        source_routes.fill({});
         std::sort(free_ranges.begin(), free_ranges.end(),
                   [](const auto &a, const auto &b) { return a.offset < b.offset; });
         size_t count = 0;
@@ -1206,7 +1226,7 @@ struct HuskArm64Direct {
             else free_ranges[count++] = range;
         }
         free_ranges.resize(count);
-        if (invalidate_routes) ++cache_generation;
+        ++cache_generation;
     }
 
     size_t reserve_code(size_t required)
@@ -1217,6 +1237,7 @@ struct HuskArm64Direct {
             if (range != free_ranges.end()) return range - free_ranges.begin();
             if (!reclaim_cache) {
                 pages.clear();
+                source_routes.fill({});
                 fault_sites.clear();
                 free_ranges = {{0, capacity}};
                 used = 0;
@@ -1228,7 +1249,7 @@ struct HuskArm64Direct {
                 if (oldest == pages.end()) throw std::logic_error("Direct cache allocation lost");
                 // A page owns all of its emitted blocks, including direct local
                 // branches between blocks. Recycle them together after leaving JIT.
-                erase_page(oldest, true);
+                erase_page(oldest);
                 ++evictions;
             }
         }
@@ -1236,31 +1257,62 @@ struct HuskArm64Direct {
 
     CompiledPage &code_page(uint64_t page, const void *bytes, uint32_t flags, size_t entry)
     {
-        // Page addresses leave the low bits free for access-mode variants.
-        // Lazy FP enable/disable can otherwise recompile the same page each time.
-        uint64_t key = page | flags;
-        auto found = pages.find(key);
-        // QEMU rechecks execute permission; bytes also distinguish address spaces
-        // and writable aliases. Data mappings are validated again on every run.
-        if (found != pages.end()) {
-            if (std::memcmp(found->second->source.data(), bytes, 4096)) {
-                // The owner keeps visited code immutable until run() returns.
-                // A stale variant therefore has no route in this run; other
-                // variants already validated against the new bytes stay live.
-                erase_page(found, false);
-            } else if (found->second->entries[entry]) {
-                found->second->last_used = ++cache_clock;
-                return *found->second;
+        unsigned slot = ((uintptr_t(bytes) >> 12) ^ flags) & 255;
+        auto &route = source_routes[slot];
+        bool known = route.source == bytes && route.flags == flags && route.code &&
+            (share_code || route.code->first_address == page) &&
+            !std::memcmp(route.code->source.data(), bytes, 4096);
+        if (known && route.code->entries[entry]) {
+            route.code->last_used = ++cache_clock;
+            shared_hits += route.code->first_address != page;
+            return *route.code;
+        }
+        uint64_t key = known ? route.code->cache_key : UINT64_C(0xcbf29ce484222325);
+        if (!known) {
+            for (size_t i = 0; i < 4096; i += 8) {
+                uint64_t word;
+                std::memcpy(&word, static_cast<const char *>(bytes) + i, 8);
+                key = (key ^ word) * UINT64_C(0x100000001b3);
             }
+            key ^= uint64_t(flags) * UINT64_C(0x9e3779b97f4a7c15);
+            if (!share_code) key ^= page * UINT64_C(0x9e3779b97f4a7c15);
+        }
+        auto find = [&] {
+            auto range = pages.equal_range(key);
+            for (auto found = range.first; found != range.second; ++found) {
+                const auto &compiled = *found->second;
+                // Hash equality only narrows the lookup. Exact bytes and mode
+                // are required; permissions still come from the current owner.
+                if (compiled.compile_flags == flags &&
+                    (share_code || compiled.first_address == page) &&
+                    !std::memcmp(compiled.source.data(), bytes, 4096)) return found;
+            }
+            return pages.end();
+        };
+        auto found = find();
+        if (found != pages.end() && found->second->entries[entry]) {
+            found->second->last_used = ++cache_clock;
+            shared_hits += found->second->first_address != page;
+            route = {bytes, found->second.get(), flags};
+            return *found->second;
         }
         size_t required = 16;
         for (;;) {
             size_t range_index = reserve_code(required);
-            auto &compiled = pages[key];
-            if (!compiled) compiled = std::make_unique<CompiledPage>();
+            found = find();
+            if (found == pages.end()) {
+                auto compiled = std::make_unique<CompiledPage>();
+                compiled->compile_flags = flags;
+                compiled->first_address = page;
+                compiled->cache_key = key;
+                compiled->last_used = ++cache_clock;
+                std::memcpy(compiled->source.data(), bytes, 4096);
+                found = pages.emplace(key, std::move(compiled));
+            }
+            auto &compiled = found->second;
             CompiledPage candidate(*compiled);
             auto &range = free_ranges[range_index];
-            size_t emitted = candidate.compile(page, bytes, entry, executable + range.offset / 4,
+            size_t emitted = candidate.compile(0, bytes, entry, executable + range.offset / 4,
                                               writable + range.offset / 4, flags, fault_sites, range.size,
                                               compiled->branch_entries.data());
             emitted = (emitted + 15) & ~size_t(15);
@@ -1273,6 +1325,7 @@ struct HuskArm64Direct {
             if (!range.size) free_ranges.erase(free_ranges.begin() + range_index);
             used += emitted;
             ++compiles;
+            route = {bytes, compiled.get(), flags};
             return *compiled;
         }
     }
@@ -1281,7 +1334,7 @@ struct HuskArm64Direct {
 HuskArm64Direct *husk_direct_create(size_t cache_bytes) { return new HuskArm64Direct(cache_bytes); }
 HuskArm64CacheStats husk_direct_cache_stats(const HuskArm64Direct *ctx)
 {
-    return {ctx->compiles, ctx->evictions, ctx->flushes, ctx->used, ctx->pages.size()};
+    return {ctx->compiles, ctx->evictions, ctx->flushes, ctx->shared_hits, ctx->used, ctx->pages.size()};
 }
 bool husk_direct_supported(uint32_t instruction) { return decode(instruction) != Other; }
 bool husk_arm64_landing_supported(uint32_t instruction)
@@ -1326,7 +1379,7 @@ HuskArm64Exit husk_direct_run(HuskArm64Direct *ctx, HuskArm64State *state,
             ctx->call_routes.fill({UINT64_MAX, nullptr});
         }
         if (!landing)
-            ctx->routes[(address >> 12) & 255] = {address >> 12, compiled->branch_entries.data()};
+            ctx->routes[(address >> 12) & 255] = {address >> 12, compiled->branch_entries.data(), compiled, 0};
         return compiled;
     };
     ctx->routes.fill({UINT64_MAX, nullptr});
@@ -1339,7 +1392,8 @@ HuskArm64Exit husk_direct_run(HuskArm64Direct *ctx, HuskArm64State *state,
     Frame frame{*state, std::min(budget, uint64_t(INT64_MAX)), 0, 0, 0,
                 ctx->routes.data(), ctx->call_routes.data(),
                 ctx->fastmem ? ctx->fastmem->bases(false) : nullptr,
-                ctx->fastmem ? ctx->fastmem->bases(true) : nullptr, ctx->pauth_cache.data(), nullptr, 0, 0};
+                ctx->fastmem ? ctx->fastmem->bases(true) : nullptr, ctx->pauth_cache.data(), nullptr, 0, 0,
+                page, code};
     void *next = code->entries[(state->pc - page) / 4];
     for (;;) {
 #if !TARGET_OS_IPHONE
@@ -1357,8 +1411,8 @@ HuskArm64Exit husk_direct_run(HuskArm64Direct *ctx, HuskArm64State *state,
         husk_direct_enter(&frame, next, ctx->mappings.data());
         if (ctx->fastmem) active_fastmem.store(nullptr);
         if (frame.reason != CodeBranch) {
-            page = frame.state.pc & ~UINT64_C(4095);
-            code = ctx->pages.at(page | access_flags | ((frame.state.access_flags & HUSK_BTYPE_MASK) ? CompileLanding : 0)).get();
+            page = frame.code_page;
+            code = frame.code;
         }
         HuskArm64Assist assisted = HUSK_ASSIST_DECLINED;
         uint64_t call_target = UINT64_MAX;
@@ -1425,8 +1479,11 @@ HuskArm64Exit husk_direct_run(HuskArm64Direct *ctx, HuskArm64State *state,
                 route.entries[(frame.state.pc & 4095) / 4]) {
                 // Only immutable code pages from this run are present here.
                 next = route.entries[(frame.state.pc & 4095) / 4];
+                frame.code_page = destination;
+                frame.code = route.code;
                 if (call_target != UINT64_MAX)
-                    ctx->call_routes[((call_target >> 2) & 255) + (cached_jump ? 256 : 0)] = {call_target, next};
+                    ctx->call_routes[((call_target >> 2) & 255) + (cached_jump ? 256 : 0)] =
+                        {call_target, next, destination, route.code};
                 continue;
             }
             const void *contents = memory.map_code(memory.opaque, destination);
@@ -1438,11 +1495,14 @@ HuskArm64Exit husk_direct_run(HuskArm64Direct *ctx, HuskArm64State *state,
             if (ctx->fastmem) ctx->fastmem->protect_code(contents);
             code = resolve(frame.state.pc, contents, frame.state.access_flags & HUSK_BTYPE_MASK);
             page = destination;
+            frame.code_page = page;
+            frame.code = code;
             next = code->branch_entries[(frame.state.pc - page) / 4];
             if (call_target != UINT64_MAX)
                 ctx->call_routes[((call_target >> 2) & 255) + (cached_jump ? 256 : 0)] = {call_target,
                     (frame.state.access_flags & HUSK_BTYPE_MASK) ?
-                        (cached_jump ? code->landings->jumps : code->landings->calls)[(frame.state.pc - page) / 4] : next};
+                        (cached_jump ? code->landings->jumps : code->landings->calls)[(frame.state.pc - page) / 4] : next,
+                    page, code};
             continue;
         }
         if (frame.reason == Budget || frame.reason == Fallback) break;
@@ -1508,10 +1568,11 @@ HuskArm64Exit husk_direct_run(HuskArm64Direct *ctx, HuskArm64State *state,
             ++ctx->fallbacks[code->source[(state->pc - page) / 4]];
         ctx->run_ns += std::chrono::duration_cast<std::chrono::nanoseconds>(now - started).count();
         if (now - ctx->report > std::chrono::seconds(5)) {
-            std::fprintf(stderr, "[husk-direct-stats] calls=%llu compiles=%llu compile_ms=%.3f run_ms=%.3f pages=%zu code_kb=%zu flushes=%llu evictions=%llu branches=%llu budgets=%llu assists=%llu chained_assists=%llu pc=%llx\n",
+            std::fprintf(stderr, "[husk-direct-stats] calls=%llu compiles=%llu compile_ms=%.3f run_ms=%.3f pages=%zu code_kb=%zu flushes=%llu evictions=%llu shared_hits=%llu branches=%llu budgets=%llu assists=%llu chained_assists=%llu pc=%llx\n",
                 (unsigned long long)ctx->calls, (unsigned long long)ctx->compiles,
                 ctx->compile_ns / 1e6, ctx->run_ns / 1e6, ctx->pages.size(), ctx->used / 1024,
-                (unsigned long long)ctx->flushes, (unsigned long long)ctx->evictions, (unsigned long long)ctx->branches,
+                (unsigned long long)ctx->flushes, (unsigned long long)ctx->evictions,
+                (unsigned long long)ctx->shared_hits, (unsigned long long)ctx->branches,
                 (unsigned long long)ctx->budget_exits, (unsigned long long)ctx->assists,
                 (unsigned long long)ctx->chained_assists,
                 (unsigned long long)state->pc);

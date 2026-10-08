@@ -57,8 +57,9 @@ struct Memory {
     }
 };
 
-static void chained_reuse(bool fastmem)
+static void chained_reuse(bool fastmem, bool sharing = false)
 {
+    setenv("HUSK_ARM64_CODE_SHARING", sharing ? "1" : "0", 1);
     setenv("HUSK_ARM64_FASTMEM", fastmem ? "1" : "0", 1);
     setenv("HUSK_ARM64_CACHE_RECLAIM", "1", 1);
     setenv("HUSK_ARM64_LOOP_MAP", "0", 1);
@@ -82,7 +83,8 @@ static void chained_reuse(bool fastmem)
         CHECK(husk_direct_run(engine.get(), &state, base, m.code[0].data(), callbacks, 100000) == HUSK_ARM64_FALLBACK);
         CHECK(state.x[0] == 256 * m.code.size());
         CHECK(state.x[2] == m.data[0] && state.pc == base + 127 * 4096 + 2048);
-        CHECK(husk_direct_cache_stats(engine.get()).evictions > 0);
+        auto stats = husk_direct_cache_stats(engine.get());
+        CHECK(sharing ? stats.compiles == 2 && !stats.evictions : stats.evictions > 0);
     }
     // Recycled JIT addresses must use their new fault records. Permission
     // revocation also checks that a former native mapping cannot be reused.
@@ -105,8 +107,8 @@ static void chained_reuse(bool fastmem)
     CHECK(state.pc == base + 4 && state.x[0] == 2);
     auto stats = husk_direct_cache_stats(engine.get());
     CHECK(stats.bytes <= 2 * 1024 * 1024 && !stats.flushes);
-    std::printf("cache chained reuse fastmem=%d evictions=%llu PASS\n", fastmem,
-                (unsigned long long)stats.evictions);
+    std::printf("cache chained reuse fastmem=%d sharing=%d compiles=%llu evictions=%llu PASS\n",
+                fastmem, sharing, (unsigned long long)stats.compiles, (unsigned long long)stats.evictions);
 }
 
 static void local_return_table()
@@ -127,11 +129,56 @@ static void local_return_table()
     std::puts("cache stable local return table PASS");
 }
 
+static void shared_addresses(bool sharing)
+{
+    setenv("HUSK_ARM64_CODE_SHARING", sharing ? "1" : "0", 1);
+    Engine engine(husk_direct_create(2 * 1024 * 1024), husk_direct_destroy);
+    Page code;
+    code.fill(0xd4000001);
+    code[0] = 0x10000000; // adr x0,.
+    code[1] = 0xb0000001; // adrp x1,.+4096
+    code[2] = 0x94000002; // bl .+8
+    code[4] = 0x910003c2; // add x2,x30,#0
+    code[5] = 0xd65f03c0;
+    auto started = std::chrono::steady_clock::now();
+    for (unsigned i = 0; i < 512; ++i) {
+        uint64_t address = i & 1 ? UINT64_C(0xffff800001000000) : UINT64_C(0x7f0001000000);
+        address += i * 16384;
+        HuskArm64State state{};
+        state.pc = address;
+        CHECK(husk_direct_run(engine.get(), &state, address, code.data(), {}, 128) == HUSK_ARM64_FALLBACK);
+        CHECK(state.pc == address + 12 && state.x[0] == address && state.x[1] == address + 4096);
+        CHECK(state.x[2] == address + 12 && state.x[30] == address + 12);
+    }
+    auto elapsed = std::chrono::duration_cast<std::chrono::microseconds>(
+        std::chrono::steady_clock::now() - started).count();
+    auto stats = husk_direct_cache_stats(engine.get());
+    CHECK(stats.compiles == (sharing ? 1 : 512) && stats.shared_hits == (sharing ? 511 : 0));
+    // Different bytes at one VA, followed by the original image at another VA,
+    // must select their own code while preserving the reusable original image.
+    code[0] = 0x10000080; // adr x0,.+16
+    HuskArm64State state{};
+    state.pc = base;
+    CHECK(husk_direct_run(engine.get(), &state, base, code.data(), {}, 128) == HUSK_ARM64_FALLBACK);
+    CHECK(state.x[0] == base + 16);
+    code[0] = 0x10000000;
+    state = {}; state.pc = base + 4096;
+    CHECK(husk_direct_run(engine.get(), &state, state.pc, code.data(), {}, 128) == HUSK_ARM64_FALLBACK);
+    CHECK(state.x[0] == base + 4096 && husk_direct_cache_stats(engine.get()).compiles == (sharing ? 2 : 514));
+    std::printf("cache guest addresses sharing=%d compiles=%llu hits=%llu us=%lld PASS\n", sharing,
+                (unsigned long long)stats.compiles, (unsigned long long)stats.shared_hits, (long long)elapsed);
+}
+
 int main()
 {
+    setenv("HUSK_ARM64_CODE_SHARING", "0", 1);
     auto flushed = working_set(false), reclaimed = working_set(true);
     CHECK(reclaimed.compiles == 432 && reclaimed.compiles < flushed.compiles);
     chained_reuse(false);
     chained_reuse(true);
     local_return_table();
+    chained_reuse(false, true);
+    chained_reuse(true, true);
+    shared_addresses(false);
+    shared_addresses(true);
 }

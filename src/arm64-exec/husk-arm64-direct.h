@@ -6,7 +6,7 @@ struct HuskArm64Direct;
 bool husk_direct_supported(uint32_t instruction);
 HuskArm64Direct *husk_direct_create(size_t cache_bytes = 32 * 1024 * 1024);
 struct HuskArm64CacheStats {
-    uint64_t compiles, evictions, flushes;
+    uint64_t compiles, evictions, flushes, shared_hits;
     size_t bytes, pages;
 };
 HuskArm64CacheStats husk_direct_cache_stats(const HuskArm64Direct *);
