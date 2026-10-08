@@ -251,7 +251,8 @@ static bool husk_pauth_parameters(CPUARMState *env, HuskArm64Pauth *parameters)
         enabled = !value || strcmp(value, "0");
     }
     ARMCPU *cpu = env_archcpu(env);
-    if (!enabled || arm_current_el(env) != 0 ||
+    unsigned el = arm_current_el(env);
+    if (!enabled || el > 1 ||
         !EX_TBFLAG_A64(env->hflags, PAUTH_ACTIVE) ||
         cpu_isar_feature(aa64_pauth_qarma5, cpu) ||
         cpu_isar_feature(aa64_pauth_qarma3, cpu) ||
@@ -260,13 +261,14 @@ static bool husk_pauth_parameters(CPUARMState *env, HuskArm64Pauth *parameters)
     /* Match pauth_check_trap before permitting a non-throwing native call. */
     if (arm_is_el2_enabled(env)) {
         uint64_t hcr = arm_hcr_el2_eff(env);
-        if (!(hcr & HCR_API) && (hcr & (HCR_E2H | HCR_TGE)) != (HCR_E2H | HCR_TGE))
+        if (!(hcr & HCR_API) &&
+            (el != 0 || (hcr & (HCR_E2H | HCR_TGE)) != (HCR_E2H | HCR_TGE)))
             return false;
     }
     if (arm_feature(env, ARM_FEATURE_EL3) && !(env->cp15.scr_el3 & SCR_API))
         return false;
     ARMMMUIdx mmu = arm_stage1_mmu_idx(env);
-    uint64_t sctlr = arm_sctlr(env, 0);
+    uint64_t sctlr = arm_sctlr(env, el);
     for (unsigned upper = 0; upper < 2; ++upper) {
         ARMVAParameters va = aa64_va_parameters(env, (uint64_t)upper << 55, mmu, false, false);
         unsigned bottom = 64 - va.tsz, top = 64 - 8 * va.tbi;
@@ -515,7 +517,7 @@ landing_ready:
         ctx->landing = landing;
         ctx->pauth_landing = pauth_landing;
         const char *reuse = getenv("HUSK_ARM64_FASTMEM_REUSE");
-        ctx->reuse_mappings = direct && !kernel && (!reuse || strcmp(reuse, "0"));
+        ctx->reuse_mappings = direct && (!reuse || strcmp(reuse, "0"));
         ctx->profile = getenv("HUSK_ARM64_PROFILE") != NULL;
         if (ctx->profile) {
             arm_register_el_change_hook(cpu, husk_profile_el, ctx);

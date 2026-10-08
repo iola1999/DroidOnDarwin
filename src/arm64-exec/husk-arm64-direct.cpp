@@ -123,9 +123,8 @@ void fastmem_signal(int signal, siginfo_t *info, void *opaque)
         if (low < frame->fault_count && frame->fault_sites[low].instruction == pc) {
             const auto &site = frame->fault_sites[low];
             uint64_t address = uc->uc_mcontext->__ss.__x[16];
-            if (frame->state.access_flags & 8) address &= UINT64_C(0x00ffffffffffffff);
             const auto *windows = site.write ? frame->write_windows : frame->read_windows;
-            if (!(address >> HuskArm64Fastmem::address_bits)) {
+            if (HuskArm64Fastmem::compact_address(address, frame->state.access_flags & 8)) {
                 uintptr_t host = windows[address >> HuskArm64Fastmem::segment_bits] +
                                  (address & (HuskArm64Fastmem::segment_size - 1));
                 uintptr_t fault = reinterpret_cast<uintptr_t>(info->si_addr);
@@ -994,11 +993,21 @@ struct CompiledPage {
                         c.NOP(); // Replaced with a branch if this site needs checked mappings.
                         if (flags & 8) c.UBFX(X17, X16, HuskArm64Fastmem::address_bits,
                                              56 - HuskArm64Fastmem::address_bits);
-                        else c.LSR(X17, X16, HuskArm64Fastmem::address_bits);
+                        else {
+                            Label lower;
+                            c.LSR(X17, X16, HuskArm64Fastmem::address_bits);
+                            c.CBZ(X17, lower); c.EOR(X17, X17, 65535);
+                            c.l(lower);
+                        }
                         c.CBNZ(X17, checked);
                         c.LDR(X26, X27, write ? HUSK_WRITE_WINDOWS : HUSK_READ_WINDOWS);
                         c.UBFX(X17, X16, HuskArm64Fastmem::segment_bits,
                                HuskArm64Fastmem::address_bits - HuskArm64Fastmem::segment_bits);
+                        if (!(flags & 8)) {
+                            c.LSR(X30, X16, 63);
+                            c.ORR(X17, X17, X30, LSL,
+                                  HuskArm64Fastmem::address_bits - HuskArm64Fastmem::segment_bits);
+                        }
                         c.LDR(X17, X26, X17, LSL, 3);
                         c.AND(X26, X16, HuskArm64Fastmem::segment_size - 1);
                         c.ADD(X17, X17, X26);

@@ -47,12 +47,13 @@ bool HuskArm64Fastmem::map_validated(uint64_t address, bool write, HuskArm64Memo
 {
     uint64_t tag = ignore_top_byte ? address & UINT64_C(0xff00000000000000) : 0;
     address &= ~tag;
-    if (!guard || !memory.map_page || address >> address_bits) return false;
+    uint64_t original_page = address & ~(uint64_t(host_page) - 1);
+    if (!guard || !memory.map_page || !compact_address(address, false)) return false;
     uint64_t page = address & ~(uint64_t(host_page) - 1);
     uintptr_t physical = 0;
     rejection = "mmu";
     for (size_t offset = 0; offset < host_page; offset += 4096) {
-        auto host = reinterpret_cast<uintptr_t>(memory.map_page(memory.opaque, (page + offset) | tag, write));
+        auto host = reinterpret_cast<uintptr_t>(memory.map_page(memory.opaque, (original_page + offset) | tag, write));
         if (!host) return false;
         if (!offset) physical = host;
         if (physical & (host_page - 1)) { rejection = "alignment"; return false; }

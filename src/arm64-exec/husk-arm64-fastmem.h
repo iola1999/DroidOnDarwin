@@ -5,13 +5,22 @@
 #include <cstdint>
 #include <vector>
 
-/* Each table entry covers 1 GiB of a 48-bit guest address space. Unused
- * entries share a protected reservation; physical RAM is never copied. */
+/* Each entry covers 1 GiB. Lower and upper 48-bit guest regions have separate
+ * indices, so equal low address bits cannot alias. Unused entries share a
+ * protected reservation; physical RAM is never copied. */
 class HuskArm64Fastmem {
 public:
     static constexpr unsigned segment_bits = 30, address_bits = 48;
     static constexpr uint64_t segment_size = UINT64_C(1) << segment_bits;
-    static constexpr size_t segment_count = 1U << (address_bits - segment_bits);
+    static constexpr size_t segment_count = 1U << (address_bits + 1 - segment_bits);
+    static bool compact_address(uint64_t &address, bool ignore_top_byte) {
+        if (ignore_top_byte) address &= UINT64_C(0x00ffffffffffffff);
+        uint64_t upper = address >> address_bits;
+        if (upper != 0 && upper != 0xffff) return false;
+        address = (address & ((UINT64_C(1) << address_bits) - 1)) |
+                  (uint64_t(upper != 0) << address_bits);
+        return true;
+    }
 
     HuskArm64Fastmem();
     ~HuskArm64Fastmem();

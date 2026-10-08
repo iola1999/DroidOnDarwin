@@ -20,6 +20,7 @@ struct Memory {
     std::array<bool, 4> readable{true, true, true, true}, writable = readable;
     std::array<unsigned, 4> offsets{0, 4096, 8192, 12288};
     bool code_protected = false;
+    bool dual_regions = false, upper_writable = true;
     unsigned probes = 0;
     Memory() { CHECK(ram != MAP_FAILED); }
     ~Memory() { munmap(ram, bytes); }
@@ -27,12 +28,15 @@ struct Memory {
     static void *Map(void *opaque, uint64_t page, bool write) {
         auto &m = *static_cast<Memory *>(opaque);
         ++m.probes;
-        page &= UINT64_C(0x00ffffffffffffff);
+        bool upper = page >> 48 == 0xffff;
+        if (upper && m.dual_regions) page &= UINT64_C(0x0000ffffffffffff);
+        else if (!upper) page &= UINT64_C(0x00ffffffffffffff);
         if (page < m.base || page - m.base >= 16384) return nullptr;
         unsigned index = (page - m.base) / 4096;
         if (!(write ? m.writable : m.readable)[index]) return nullptr;
+        if (write && upper && !m.upper_writable) return nullptr;
         if (write && m.code_protected && !m.offsets[index]) return nullptr;
-        return m.ram + m.bank + m.offsets[index];
+        return m.ram + (m.dual_regions && upper ? 16384 : m.bank) + m.offsets[index];
     }
     static const void *Code(void *opaque, uint64_t page) {
         auto &m = *static_cast<Memory *>(opaque);
@@ -100,13 +104,36 @@ int main()
 
     for (unsigned i = 0; i < 64; ++i) {
         m.bank = (i & 1) * 16384;
-        m.base = (i & 2) ? UINT64_C(0x7fff00020000) : 0x20000;
+        m.base = (i & 2) ? UINT64_C(0xffff800000020000) : 0x20000;
         m.value() = i;
         state = initial();
         CHECK(run(state) == HUSK_ARM64_FALLBACK && m.value() == i + 1 && state.x[0] == i + 1);
     }
     m.base = 0x20000; m.bank = 0;
     std::puts("PASS address-space replacement and sparse high virtual addresses");
+
+    code.fill(0xd4000001);
+    code[0] = 0xf9400020; code[1] = 0xf9400043; // ldr x0,[x1]; ldr x3,[x2]
+    code[2] = 0x91000400; code[3] = 0x91000463;
+    code[4] = 0xf9000020; code[5] = 0xf9000043;
+    m.dual_regions = true; epoch = 70;
+    m.value() = 41;
+    auto &upper_value = *reinterpret_cast<uint64_t *>(m.ram + 16384);
+    upper_value = 901;
+    for (unsigned i = 0; i < 2; ++i) {
+        state = initial(); state.x[2] = m.base | UINT64_C(0xffff000000000000);
+        probes = m.probes;
+        CHECK(run(state) == HUSK_ARM64_FALLBACK && state.pc == 0x10018);
+        CHECK(state.x[0] == 42 + i && state.x[3] == 902 + i);
+        CHECK(m.value() == 42 + i && upper_value == 902 + i);
+        CHECK(m.probes == probes + (i ? 0 : 16));
+    }
+    m.upper_writable = false; ++epoch;
+    state = initial(); state.x[2] = m.base | UINT64_C(0xffff000000000000);
+    CHECK(run(state) == HUSK_ARM64_FALLBACK && state.pc == 0x10014);
+    CHECK(m.value() == 44 && upper_value == 903);
+    m.dual_regions = false; m.upper_writable = true; epoch = 0;
+    std::puts("PASS upper/lower region isolation, native reuse and permission revocation");
 
     // Reusing compiled code after a permission change must fault before storing.
     code.fill(0xd4000001); code[0] = 0xf9000020;
