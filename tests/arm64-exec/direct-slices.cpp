@@ -16,6 +16,7 @@ struct Memory {
     unsigned code_probes = 0;
     bool chain_assist = false;
     bool pending_landing = false, data_allowed = true;
+    uint64_t reject_general_page = 0;
     alignas(16384) std::array<uint8_t, 16384> data{};
     unsigned assists = 0;
     bool pauth_allowed = true;
@@ -53,13 +54,17 @@ struct Memory {
             return HUSK_ASSIST_PAUTH;
         }
         bool link = (word & 0xfffffc1f) == 0xd63f0000;
-        if (!link && word != 0xd61f0200 && word != 0xd61f0220) return HUSK_ASSIST_DECLINED;
+        if (!link && (word & 0xfffffc1f) != 0xd61f0000) return HUSK_ASSIST_DECLINED;
         ++m.assists;
-        auto target = state->x[(word >> 5) & 31];
+        unsigned reg = (word >> 5) & 31;
+        bool general = !link && reg != 16 && reg != 17;
+        if (general && (state->pc & ~UINT64_C(4095)) == m.reject_general_page)
+            return HUSK_ASSIST_DECLINED;
+        auto target = reg == 31 ? 0 : state->x[reg];
         if (link) state->x[30] = state->pc + 4;
         state->pc = target;
         if (m.pending_landing) {
-            state->access_flags = (state->access_flags & ~48U) | (link ? 32 : 16);
+            state->access_flags = (state->access_flags & ~48U) | (link ? 32 : general ? 48 : 16);
             return link ? HUSK_ASSIST_CHAIN_LANDING_CALL : HUSK_ASSIST_CHAIN_LANDING_JUMP;
         }
         return m.chain_assist ? (link ? HUSK_ASSIST_CHAIN_CALL : HUSK_ASSIST_CHAIN_JUMP) : HUSK_ASSIST_BRANCH;
@@ -193,15 +198,32 @@ int main()
     CHECK(husk_direct_run(engine.get(), &state, 0x10000, m.a.data(), callbacks, 4096) == HUSK_ARM64_FALLBACK);
     CHECK(state.pc == 0x11000 && state.x[0] == value && state.x[1] == 0x40000);
     CHECK(state.x[30] == 0x1000c && (state.access_flags & 48) == 32 && m.assists == 1);
-    for (uint32_t word : {0xd61f0200U, 0xd61f0220U}) {
+    for (uint32_t word : {0xd61f0200U, 0xd61f0220U, 0xd61f0120U}) {
         m.a[0] = word; m.a[2] = word;
         state = {}; state.pc = 0x10000; state.x[1] = 0x30000;
         state.x[(word >> 5) & 31] = 0x11000; state.x[30] = 0x10004;
         m.assists = 0;
         CHECK(husk_direct_run(engine.get(), &state, 0x10000, m.a.data(), callbacks, 4096) == HUSK_ARM64_FALLBACK);
         CHECK(state.pc == 0x11000 && state.x[0] == value && state.x[1] == 0x40000);
-        CHECK(state.x[30] == 0x10004 && (state.access_flags & 48) == 16 && m.assists == 1);
+        CHECK(state.x[30] == 0x10004 && (state.access_flags & 48) ==
+              (word == 0xd61f0120U ? 48 : 16) && m.assists == 1);
     }
+    // The same target from another guarded source, or another BR register
+    // class, must reach the owner again for its different BTI requirements.
+    m.pending_landing = false;
+    for (bool same_source : {false, true}) {
+        m.a.fill(0xd4000001); m.b.fill(0xd4000001);
+        m.a[0] = same_source ? 0xd61f0200 : 0xd61f0120;
+        m.a[32] = 0x91000400;
+        m.a[33] = same_source ? 0xd61f0120 : 0x140003df;
+        m.b[0] = 0xd61f0120;
+        m.reject_general_page = same_source ? 0x10000 : 0x11000;
+        state = {}; state.pc = 0x10000; state.x[9] = state.x[16] = 0x10080;
+        m.assists = 0;
+        CHECK(husk_direct_run(engine.get(), &state, 0x10000, m.a.data(), callbacks, 4096) == HUSK_ARM64_FALLBACK);
+        CHECK(state.pc == (same_source ? 0x10084 : 0x11000) && state.x[0] == 1 && m.assists == 2);
+    }
+    m.reject_general_page = 0;
     CHECK(husk_arm64_landing_supported(0xa9bf7bfd)); // stp x29,x30,[sp,#-16]!
     CHECK(!husk_arm64_landing_supported(0xd63f0060)); // blr x3
     CHECK(!husk_arm64_landing_supported(0xd503233f)); // paciasp

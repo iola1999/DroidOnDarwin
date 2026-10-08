@@ -94,6 +94,11 @@ int main()
         for (auto &x : state.x) x = random();
         state.pc = 0x80000; state.nzcv = 0xb0000000;
         state.x[0] = 0x10000 + to; state.x[1] = set ? from : 0x10000 + from; state.x[2] = length;
+        if (sample & 1) {
+            state.access_flags |= 8;
+            state.x[0] |= UINT64_C(0xab00000000000000);
+            if (!set) state.x[1] |= UINT64_C(0xcd00000000000000);
+        }
         auto expected_state = state;
         expected_state.x[2] = 0; expected_state.pc += 12; expected_state.nzcv = 0;
         if (set || !(from < to && to - from < length)) {
@@ -167,6 +172,11 @@ int main()
             state.access_flags = HUSK_MOPS_ALLOWED;
             state.x[rd] = 0x10000 + to; state.x[rn] = length;
             if (rs != 31) state.x[rs] = set ? fill : 0x10000 + from;
+            if (variant & 1) {
+                state.access_flags |= 8;
+                state.x[rd] |= UINT64_C(0xab00000000000000);
+                if (!set) state.x[rs] |= UINT64_C(0xcd00000000000000);
+            }
             expected = state;
             bool reverse = !set && from < to && to - from < length;
             if (!reverse) {

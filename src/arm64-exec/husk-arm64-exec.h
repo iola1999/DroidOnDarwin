@@ -58,8 +58,10 @@ typedef enum {
     /* BLR target checked; its first instruction still needs to retire. Cached
      * calls must restore BTYPE=2 before that instruction can fault. */
     HUSK_ASSIST_CHAIN_LANDING_CALL,
-    /* BR x16/x17 target checked with BTYPE=1, without per-branch effects.
-     * The landing form still needs to retire its first instruction. */
+    /* BR target checked without per-branch effects. Cached entries must also
+     * match the source page and distinguish x16/x17 from other registers:
+     * general BR derives BTYPE from the source page's guarded status.
+     * The landing form preserves pending BTYPE until its first retirement. */
     HUSK_ASSIST_CHAIN_JUMP,
     HUSK_ASSIST_CHAIN_LANDING_JUMP,
     /* Completed PAC hint: only its operand register and PC changed. The owner

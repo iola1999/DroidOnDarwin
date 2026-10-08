@@ -79,7 +79,40 @@ extern u64 husk_atomic_loop(u64 *p, u64 n);
 extern u64 husk_exclusive_loop(u64 *p, u64 n);
 extern u64 husk_exclusive_bridge(u64 *p, u64 n);
 extern u64 husk_tail_call_loop(u64 n);
+extern u64 husk_dispatch_ip_loop(u64 n);
+extern u64 husk_dispatch_general_loop(u64 n);
 extern u64 husk_counter_loop(u64 n);
+extern void *husk_mops_copy(void *to, const void *from, u64 length);
+extern u64 husk_mops_tagged_loop(void *to, const void *from, u64 count);
+
+static void mops_benchmark(void)
+{
+    const u64 length = 65537, size = 2 * 131072;
+    s64 address = call(222, 0, size, 3, 0x22, (u64)-1, 0);
+    CHECK(address > 0);
+    unsigned char *to = (void *)address, *from = to + 131072;
+    for (u64 i = 0; i < length; ++i) from[i] = i * 17 + 3;
+    void *tagged_to = (void *)((u64)to | 0xab00000000000000UL);
+    void *tagged_from = (void *)((u64)from | 0xcd00000000000000UL);
+    CHECK(husk_mops_copy(tagged_to, tagged_from, length) == tagged_to);
+    for (u64 i = 0; i < length; ++i) CHECK(to[i] == from[i]);
+    u64 start = ns(), value = husk_mops_tagged_loop(tagged_to, tagged_from, 100000);
+    u64 elapsed = ns() - start;
+    CHECK(value == 3200000);
+    print("BENCH mops_tagged_ns="); number(elapsed); print(" value="); number(value); print("\n");
+    CHECK(call(226, (u64)to + 4096, 4096, 1, 0, 0, 0) == 0);
+    s64 child = call(220, 17, 0, 0, 0, 0, 0);
+    CHECK(child >= 0);
+    if (!child) {
+        husk_mops_copy(tagged_to, tagged_from, 8192);
+        call(93, 0, 0, 0, 0, 0, 0);
+        for (;;) {}
+    }
+    int status = 0;
+    CHECK(call(260, child, (u64)&status, 0, 0, 0, 0) == child && (status & 127) == 11);
+    CHECK(call(215, address, size, 0, 0, 0, 0) == 0);
+    print("PASS MOPS tagged pointers, large copy and Linux write fault\n");
+}
 
 static void vector_benchmarks(void)
 {
@@ -133,6 +166,16 @@ static void vector_benchmarks(void)
     elapsed = ns() - start;
     CHECK(value == 1000000);
     print("BENCH tail_calls_ns="); number(elapsed); print(" value="); number(value); print("\n");
+    start = ns();
+    value = husk_dispatch_ip_loop(1000000);
+    elapsed = ns() - start;
+    CHECK(value == 1000000);
+    print("BENCH dispatch_ip_ns="); number(elapsed); print(" value="); number(value); print("\n");
+    start = ns();
+    value = husk_dispatch_general_loop(1000000);
+    elapsed = ns() - start;
+    CHECK(value == 1000000);
+    print("BENCH dispatch_general_ns="); number(elapsed); print(" value="); number(value); print("\n");
     values[0] = 0;
     start = ns();
     CHECK(husk_exclusive_loop(values, 1000000) == 0 && values[0] == 1000000);
@@ -274,9 +317,14 @@ void guest_main(u64 *initial_stack)
 {
     u64 *auxv = initial_stack + initial_stack[0] + 2;
     while (*auxv++) {}
-    u64 hwcap = 0;
-    for (; auxv[0]; auxv += 2) if (auxv[0] == 16) hwcap = auxv[1];
+    u64 hwcap = 0, hwcap2 = 0;
+    for (; auxv[0]; auxv += 2) {
+        if (auxv[0] == 16) hwcap = auxv[1];
+        if (auxv[0] == 26) hwcap2 = auxv[1];
+    }
     print("HUSK-EL0-TEST START\n");
+    if (hwcap2 & (1UL << 43)) mops_benchmark();
+    else print("SKIP MOPS unavailable\n");
     CHECK(call(172, 0, 0, 0, 0, 0, 0) == 1);
 #ifdef HUSK_TEST_MTHP
     enable_mthp();

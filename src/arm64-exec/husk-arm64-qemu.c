@@ -28,11 +28,11 @@ typedef struct {
     unsigned dispatch_polls;
     bool profile;
     unsigned profile_phase;
-    int64_t profile_last, profile_report, profile_ns[3];
+    int64_t profile_last, profile_report, profile_ns[4];
     struct { uint64_t page; unsigned entries; } warm_pages[1024];
 } HuskArm64Qemu;
 
-/* Attribute vCPU thread time to EL0 TCG, kernel TCG or Direct. CPU time excludes
+/* Attribute vCPU thread time to EL0/kernel TCG and Direct. CPU time excludes
  * waits and host scheduling; Direct includes compilation and its callbacks. */
 static void husk_profile_phase(HuskArm64Qemu *ctx, unsigned phase)
 {
@@ -44,8 +44,10 @@ static void husk_profile_phase(HuskArm64Qemu *ctx, unsigned phase)
     ctx->profile_last = now;
     ctx->profile_phase = phase;
     if (now - ctx->profile_report > 5000000000LL) {
-        fprintf(stderr, "[husk-cpu-time] user_tcg_ms=%.3f kernel_tcg_ms=%.3f direct_ms=%.3f\n",
-                ctx->profile_ns[0] / 1e6, ctx->profile_ns[1] / 1e6, ctx->profile_ns[2] / 1e6);
+        fprintf(stderr, "[husk-cpu-time] user_tcg_ms=%.3f kernel_tcg_ms=%.3f direct_ms=%.3f user_direct_ms=%.3f kernel_direct_ms=%.3f\n",
+                ctx->profile_ns[0] / 1e6, ctx->profile_ns[1] / 1e6,
+                (ctx->profile_ns[2] + ctx->profile_ns[3]) / 1e6,
+                ctx->profile_ns[2] / 1e6, ctx->profile_ns[3] / 1e6);
         ctx->profile_report = now;
     }
 }
@@ -72,8 +74,18 @@ bool arm_husk_dispatch(CPUState *cs)
     return qemu_clock_get_ns(QEMU_CLOCK_REALTIME) >= ctx->resume_after_ns[el != 0];
 }
 
-static bool husk_tcg_bridge(uint32_t insn)
+static bool husk_tcg_bridge(uint32_t insn, unsigned el)
 {
+    /* Kernel system operations keep QEMU's register, MMU, interrupt and trap
+     * behavior, then recheck Direct eligibility after that single instruction.
+     * ERET also returns through QEMU before the next privilege-level check. */
+    if (el == 1 && ((insn & 0xff000000) == 0xd5000000 || insn == 0xd69f03e0))
+        return true;
+    /* A refused MOPS sequence still consists of three adjacent instructions.
+     * QEMU owns partial progress, faults and large copies for these encodings. */
+    if ((insn & 0xff20fc00) == 0x1d000400 ||
+        (insn & 0xffe03c00) == 0x19c00400)
+        return true;
     /* Keep QEMU's PAUTH, BTI and system-register semantics. These short
      * sequences otherwise stop Direct at nearly every function boundary. */
     switch (insn) {
@@ -270,7 +282,7 @@ static HuskArm64Assist husk_assist(void *opaque, HuskArm64State *state, uint32_t
         state->x[30] = env->xregs[30];
         if (!ctx->chain_assist) return HUSK_ASSIST_BRANCH;
         bool cache_call = branch == 0xd63f0000;
-        bool cache_jump = insn == 0xd61f0200 || insn == 0xd61f0220;
+        bool cache_jump = branch == 0xd61f0000 && ((insn >> 5) & 31) != 31;
         if (!env->btype) return cache_call ? HUSK_ASSIST_CHAIN_CALL :
             cache_jump ? HUSK_ASSIST_CHAIN_JUMP : HUSK_ASSIST_CHAIN;
         /* Validate BTI before Direct executes the first instruction. BTYPE
@@ -417,7 +429,7 @@ int arm_husk_exec_user(CPUState *cs)
     }
     uint32_t insn = ldl_le_p((uint8_t *)code_host + env->pc - page);
     if (!husk_arm64_supported(insn)) {
-        if (direct && bridge && ctx && husk_tcg_bridge(insn)) husk_one_tcg(cs);
+        if (direct && bridge && ctx && husk_tcg_bridge(insn, el)) husk_one_tcg(cs);
         return 0;
     }
     if (direct && env->btype) {
@@ -512,7 +524,7 @@ landing_ready:
     for (unsigned i = 0; i < 32; ++i) {
         memcpy(state.v[i], aa64_vfp_qreg(env, i), sizeof(state.v[i]));
     }
-    husk_profile_phase(ctx, 2);
+    husk_profile_phase(ctx, 2 + (el != 0));
     uint64_t epoch = 0;
     if (ctx->reuse_mappings) {
         uint64_t generation = tlb_husk_mapping_generation();
@@ -547,7 +559,7 @@ landing_ready:
             ctx->resume_after_ns[el != 0] = 0;
             return -1;
         }
-        if (direct && bridge && husk_tcg_bridge(stopped_insn)) {
+        if (direct && bridge && husk_tcg_bridge(stopped_insn, el)) {
             ctx->resume_after_ns[el != 0] = 0;
             husk_one_tcg(cs);
             return -1;

@@ -108,7 +108,7 @@ def main():
                 row["passed"] = False
             if not all((benchmark, memory_benchmark, tagged_benchmark, syscall_benchmark, switch_benchmark)):
                 row["passed"] = False
-            for name in ("vector", "float", "vector_memory", "vector_structures", "counter", "calls", "indirect_calls", "plain_calls", "tail_calls", "exclusive", "atomic", "pointer", "pointer_write"):
+            for name in ("vector", "float", "vector_memory", "vector_structures", "counter", "calls", "indirect_calls", "plain_calls", "tail_calls", "dispatch_ip", "dispatch_general", "exclusive", "atomic", "pointer", "pointer_write"):
                 measured = re.search(rf"BENCH {name}_ns=(\d+) value=(\d+)", output)
                 row[name + "_ns"] = int(measured[1]) if measured else None
                 if not measured and not (name == "atomic" and "SKIP LSE unavailable" in output):
@@ -116,6 +116,11 @@ def main():
             pauth = re.search(r"BENCH pauth_ns=(\d+) count=(\d+)", output)
             row["pauth_ns"] = int(pauth[1]) if pauth else None
             if not pauth:
+                row["passed"] = False
+            mops = re.search(r"BENCH mops_tagged_ns=(\d+) value=(\d+)", output)
+            row["mops_tagged_ns"] = int(mops[1]) if mops else None
+            row["mops_checked"] = "PASS MOPS tagged pointers, large copy and Linux write fault" in output
+            if not row["mops_checked"] and "SKIP MOPS unavailable" not in output:
                 row["passed"] = False
             if mode != "tcg" and not row["engine_active"]:
                 row["passed"] = False

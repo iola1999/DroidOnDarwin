@@ -73,12 +73,23 @@ static_assert(offsetof(Frame, write_windows) == HUSK_WRITE_WINDOWS);
 static_assert(offsetof(Frame, pauth_cache) == HUSK_PAUTH_CACHE);
 struct Mapping { uint64_t tag; void *read, *write; uint64_t reserved; };
 struct CodeRoute { uint64_t tag; void **entries; CompiledPage *code; uint64_t reserved; };
-struct CallRoute { uint64_t target; void *entry; uint64_t page; CompiledPage *code; };
+struct CallRoute {
+    uint64_t target;
+    void *entry;
+    uint64_t page;
+    CompiledPage *code;
+    uint64_t source_tag;
+    uint32_t btype;
+    uint32_t reserved[5];
+};
+unsigned call_slot(uint64_t target, bool jump) {
+    return ((target >> 2) ^ (target >> 10)) % 256 + (jump ? 256 : 0);
+}
 struct SourceRoute { const void *source; CompiledPage *code; uint32_t flags; };
 struct PauthResult { uint64_t value, modifier, result, instruction; };
 static_assert(sizeof(Mapping) == 32);
 static_assert(sizeof(CodeRoute) == 32);
-static_assert(sizeof(CallRoute) == 32);
+static_assert(sizeof(CallRoute) == 64);
 static_assert(sizeof(PauthResult) == 32);
 extern "C" void husk_direct_enter(Frame *, void *, Mapping *);
 extern "C" void husk_direct_leave();
@@ -424,10 +435,6 @@ struct CompiledPage {
     std::array<uint32_t, 1024> source{};
     std::array<void *, 1024> entries{};
     std::array<void *, 1024> branch_entries{};
-    struct Landings {
-        std::array<void *, 1024> calls{}, jumps{};
-    };
-    std::unique_ptr<Landings> landings;
     std::vector<Loop> loops;
     bool unaligned = false;
 
@@ -436,7 +443,6 @@ struct CompiledPage {
         : allocations(other.allocations), last_used(other.last_used), first_address(other.first_address),
           cache_key(other.cache_key), compile_flags(other.compile_flags), source(other.source),
           entries(other.entries), branch_entries(other.branch_entries),
-          landings(other.landings ? std::make_unique<Landings>(*other.landings) : nullptr),
           loops(other.loops), unaligned(other.unaligned) {}
     CompiledPage &operator=(CompiledPage &&) = default;
 
@@ -446,7 +452,6 @@ struct CompiledPage {
     {
         std::vector<FaultSite> new_faults;
         bool landing = flags & CompileLanding;
-        if (landing && !landings) landings = std::make_unique<Landings>();
         unaligned = flags & 1;
         std::array<uint32_t, 1024> input;
         std::memcpy(input.data(), bytes, 4096);
@@ -634,6 +639,10 @@ struct CompiledPage {
                 // A colliding pair would evict each other on every map retry.
                 Label no_collision;
                 load(rd, X16); load(rs, X17);
+                if (flags & 8) {
+                    c.AND(X16, X16, UINT64_C(0x00ffffffffffffff));
+                    c.AND(X17, X17, UINT64_C(0x00ffffffffffffff));
+                }
                 c.EOR(X17, X17, X16); c.LSR(X17, X17, 12); c.CBZ(X17, no_collision);
                 c.EOR(X17, X17, X17, LSR, 8);
                 c.AND(X17, X17, 255); c.CBZ(X17, slow);
@@ -641,6 +650,7 @@ struct CompiledPage {
             }
             auto map = [&](unsigned reg, XReg host, bool write, Label &miss) {
                 load(reg, X16);
+                if (flags & 8) c.AND(X16, X16, UINT64_C(0x00ffffffffffffff));
                 c.LSR(X17, X16, 48); c.CBNZ(X17, slow);
                 load(rn, X17); c.ADD(X17, X16, X17); c.SUB(X17, X17, 1);
                 c.EOR(X17, X17, X16); c.LSR(X17, X17, 12); c.CBNZ(X17, slow);
@@ -702,7 +712,13 @@ struct CompiledPage {
             if (!set) {
                 // Option A leaves pointers at their starting addresses after
                 // reverse copies; all other completed sequences advance them.
-                load(rs, X17); c.SUB(X26, X16, X17); c.SUB(X26, X26, 1);
+                load(rs, X17);
+                if (flags & 8) {
+                    c.AND(X26, X16, UINT64_C(0x00ffffffffffffff));
+                    c.AND(X17, X17, UINT64_C(0x00ffffffffffffff));
+                    c.SUB(X26, X26, X17);
+                } else c.SUB(X26, X16, X17);
+                c.SUB(X26, X26, 1);
                 c.SUB(X17, X30, 1); c.CMP(X26, X17); c.CSEL(X30, XZR, X30, Cond::LO);
                 load(rs, X17); c.ADD(X17, X17, X30); save(rs, X17);
             }
@@ -718,18 +734,6 @@ struct CompiledPage {
             if (emit[i]) {
                 uint64_t pc = new_page + i * 4;
                 c.l(labels[i - first]);
-                if (landing) {
-                    Label checked;
-                    landings->jumps[i] = c.xptr<void *>();
-                    c.LDR(W17, X27, HUSK_ACCESS_FLAGS);
-                    c.AND(W17, W17, ~uint32_t(HUSK_BTYPE_MASK)); c.ORR(W17, W17, 1U << HUSK_BTYPE_SHIFT);
-                    c.STR(W17, X27, HUSK_ACCESS_FLAGS); c.B(checked);
-                    landings->calls[i] = c.xptr<void *>();
-                    c.LDR(W17, X27, HUSK_ACCESS_FLAGS);
-                    c.AND(W17, W17, ~uint32_t(HUSK_BTYPE_MASK)); c.ORR(W17, W17, 2U << HUSK_BTYPE_SHIFT);
-                    c.STR(W17, X27, HUSK_ACCESS_FLAGS);
-                    c.l(checked);
-                }
                 branch_entries[i] = c.xptr<void *>();
                 if (leaders[i]) {
                     size_t end = i + 1;
@@ -838,16 +842,32 @@ struct CompiledPage {
                         if (!near_branch) { c.B(next); c.l(outside); jump(dest); c.l(next); }
                     }
                 } else if ((w & 0xfffffc1f) == 0xd63f0000 ||
-                           ((flags & CompileTail) && (w == 0xd61f0200 || w == 0xd61f0220))) {
+                           ((flags & CompileTail) && (w & 0xfffffc1f) == 0xd61f0000 && rn != 31)) {
                     bool link = (w & 0xfffffc1f) == 0xd63f0000;
                     Label miss, exhausted;
                     load(rn, X16);
                     c.LDR(X26, X27, HUSK_CALL_ROUTES);
-                    if (!link) c.ADD(X26, X26, 8192);
-                    c.UBFX(X17, X16, 2, 8); c.ADD(X26, X26, X17, LSL, 5);
+                    if (!link) c.ADD(X26, X26, 16384);
+                    c.EOR(X17, X16, X16, LSR, 8);
+                    c.UBFX(X17, X17, 2, 8); c.ADD(X26, X26, X17, LSL, 6);
                     c.LDR(X17, X26); c.EOR(X17, X17, X16); c.CBNZ(X17, miss);
+                    if (!link) {
+                        // General BR obtains BTYPE from its source page. Keep
+                        // that page and the x16/x17 distinction in the key.
+                        if (rn == 16 || rn == 17) c.MOV(X17, 1);
+                        else {
+                            c.LDR(X17, X27, offsetof(Frame, code_page));
+                            c.ORR(X17, X17, 3);
+                        }
+                        c.LDR(X30, X26, offsetof(CallRoute, source_tag));
+                        c.EOR(X17, X17, X30); c.CBNZ(X17, miss);
+                    }
                     c.LDR(X30, X26, 8); c.CBZ(X30, miss);
                     c.SUB(X29, X29, 1); c.TBNZ(X29, 63, exhausted);
+                    c.LDR(W17, X27, HUSK_ACCESS_FLAGS);
+                    c.AND(W17, W17, ~uint32_t(HUSK_BTYPE_MASK));
+                    c.LDR(W16, X26, offsetof(CallRoute, btype));
+                    c.ORR(W17, W17, W16); c.STR(W17, X27, HUSK_ACCESS_FLAGS);
                     if (link) { relative_address(X17, pc + 4 - new_page, X16); save(30, X17); }
                     c.LDR(X17, X26, 16); c.STR(X17, X27, offsetof(Frame, code_page));
                     c.LDR(X17, X26, 24); c.STR(X17, X27, offsetof(Frame, code));
@@ -1126,7 +1146,7 @@ struct HuskArm64Direct {
     std::array<Mapping, 256> mappings{};
     std::array<PauthResult, 256> pauth_cache{};
     std::array<CodeRoute, 256> routes{};
-    // BLR and BR x16/x17 use separate banks because their BTYPE differs.
+    // BLR and BR use separate banks. BR also validates the source page/class.
     std::array<CallRoute, 512> call_routes{};
     std::array<SourceRoute, 256> source_routes{};
     std::array<uint8_t, 256> populated{};
@@ -1145,7 +1165,7 @@ struct HuskArm64Direct {
     uint64_t cache_clock = 0, cache_generation = 0, evictions = 0;
     uint64_t calls = 0, compiles = 0, flushes = 0, compile_ns = 0, run_ns = 0;
     uint64_t branches = 0, budget_exits = 0, assists = 0, chained_assists = 0;
-    std::unordered_map<uint32_t, uint64_t> fallbacks;
+    std::unordered_map<uint32_t, uint64_t> fallbacks, assist_samples;
     std::chrono::steady_clock::time_point report = std::chrono::steady_clock::now();
 
     explicit HuskArm64Direct(size_t cache_bytes) : capacity(cache_bytes)
@@ -1415,10 +1435,12 @@ HuskArm64Exit husk_direct_run(HuskArm64Direct *ctx, HuskArm64State *state,
             code = frame.code;
         }
         HuskArm64Assist assisted = HUSK_ASSIST_DECLINED;
-        uint64_t call_target = UINT64_MAX;
+        uint32_t assisted_insn = 0;
+        uint64_t call_target = UINT64_MAX, call_source = 0;
         bool cached_jump = false;
         if (frame.reason == Fallback && memory.assist) {
             uint32_t word = code->source[(frame.state.pc - page) / 4];
+            assisted_insn = word;
             bool pauth = decode(word) == Pauth;
             unsigned pauth_reg = pauth_register(word);
             uint64_t pauth_value = pauth ? frame.state.x[pauth_reg] : 0;
@@ -1429,8 +1451,11 @@ HuskArm64Exit husk_direct_run(HuskArm64Direct *ctx, HuskArm64State *state,
                     frame.state.x[(word >> 5) & 31] : 0;
             if ((word & 0xfffffc1f) == 0xd63f0000 && ((word >> 5) & 31) != 31)
                 call_target = frame.state.x[(word >> 5) & 31];
-            if (ctx->inline_assists && ctx->tail_cache && (word == 0xd61f0200 || word == 0xd61f0220)) {
-                call_target = frame.state.x[(word >> 5) & 31];
+            if (ctx->inline_assists && ctx->tail_cache &&
+                (word & 0xfffffc1f) == 0xd61f0000 && ((word >> 5) & 31) != 31) {
+                unsigned reg = (word >> 5) & 31;
+                call_target = frame.state.x[reg];
+                call_source = (reg == 16 || reg == 17) ? 1 : frame.code_page | 3;
                 cached_jump = true;
             }
             assisted = memory.assist(memory.opaque, &frame.state, word);
@@ -1453,6 +1478,7 @@ HuskArm64Exit husk_direct_run(HuskArm64Direct *ctx, HuskArm64State *state,
         }
         if (assisted != HUSK_ASSIST_DECLINED) {
             ++ctx->assists;
+            if (ctx->profile && !(ctx->assists & 4095)) ++ctx->assist_samples[assisted_insn];
             if (assisted == HUSK_ASSIST_BRANCH) { frame.reason = CodeBranch; break; }
             if (assisted == HUSK_ASSIST_CHAIN || assisted == HUSK_ASSIST_CHAIN_CALL ||
                 assisted == HUSK_ASSIST_CHAIN_LANDING_CALL || assisted == HUSK_ASSIST_CHAIN_JUMP ||
@@ -1482,8 +1508,8 @@ HuskArm64Exit husk_direct_run(HuskArm64Direct *ctx, HuskArm64State *state,
                 frame.code_page = destination;
                 frame.code = route.code;
                 if (call_target != UINT64_MAX)
-                    ctx->call_routes[((call_target >> 2) & 255) + (cached_jump ? 256 : 0)] =
-                        {call_target, next, destination, route.code};
+                    ctx->call_routes[call_slot(call_target, cached_jump)] =
+                        {call_target, next, destination, route.code, call_source, 0, {}};
                 continue;
             }
             const void *contents = memory.map_code(memory.opaque, destination);
@@ -1499,10 +1525,8 @@ HuskArm64Exit husk_direct_run(HuskArm64Direct *ctx, HuskArm64State *state,
             frame.code = code;
             next = code->branch_entries[(frame.state.pc - page) / 4];
             if (call_target != UINT64_MAX)
-                ctx->call_routes[((call_target >> 2) & 255) + (cached_jump ? 256 : 0)] = {call_target,
-                    (frame.state.access_flags & HUSK_BTYPE_MASK) ?
-                        (cached_jump ? code->landings->jumps : code->landings->calls)[(frame.state.pc - page) / 4] : next,
-                    page, code};
+                ctx->call_routes[call_slot(call_target, cached_jump)] = {call_target, next,
+                    page, code, call_source, frame.state.access_flags & HUSK_BTYPE_MASK, {}};
             continue;
         }
         if (frame.reason == Budget || frame.reason == Fallback) break;
@@ -1576,13 +1600,17 @@ HuskArm64Exit husk_direct_run(HuskArm64Direct *ctx, HuskArm64State *state,
                 (unsigned long long)ctx->budget_exits, (unsigned long long)ctx->assists,
                 (unsigned long long)ctx->chained_assists,
                 (unsigned long long)state->pc);
-            std::vector<std::pair<uint64_t, uint32_t>> hottest;
-            for (auto [word, count] : ctx->fallbacks) hottest.emplace_back(count, word);
-            std::partial_sort(hottest.begin(), hottest.begin() + std::min(size_t(8), hottest.size()), hottest.end(), std::greater<>());
-            std::fprintf(stderr, "[husk-direct-fallback]");
-            for (size_t i = 0; i < std::min(size_t(8), hottest.size()); ++i)
-                std::fprintf(stderr, " %08x:%llu", hottest[i].second, (unsigned long long)hottest[i].first);
-            std::fprintf(stderr, "\n");
+            auto histogram = [](const char *label, const auto &counts) {
+                std::vector<std::pair<uint64_t, uint32_t>> hottest;
+                for (auto [word, count] : counts) hottest.emplace_back(count, word);
+                std::partial_sort(hottest.begin(), hottest.begin() + std::min(size_t(8), hottest.size()), hottest.end(), std::greater<>());
+                std::fprintf(stderr, "[%s]", label);
+                for (size_t i = 0; i < std::min(size_t(8), hottest.size()); ++i)
+                    std::fprintf(stderr, " %08x:%llu", hottest[i].second, (unsigned long long)hottest[i].first);
+                std::fprintf(stderr, "\n");
+            };
+            histogram("husk-direct-fallback", ctx->fallbacks);
+            histogram("husk-direct-assist-sample-4096", ctx->assist_samples);
             ctx->report = now;
         }
     }

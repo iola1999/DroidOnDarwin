@@ -339,3 +339,59 @@ husk_atomic_loop:
     ret
 2:  mov x0, #1
     ret
+
+// ART's nterp handlers are 128 bytes apart. Exercise all 256 destinations,
+// including a general BR register whose BTI source-page rules differ from x16.
+.macro dispatch_loop name, reg
+.global \name
+\name:
+    mov x2, x0
+    mov x0, #0
+    mov x3, #0
+    adr x4, .Lhandlers\@
+    br x4
+    .balign 128
+.Lhandlers\@:
+    .rept 256
+    add x0, x0, #1
+    subs x2, x2, #1
+    b.eq .Ldispatch_done\@
+    add x3, x3, #17
+    and x3, x3, #255
+    add \reg, x4, x3, lsl #7
+    br \reg
+    .balign 128
+    .endr
+.Ldispatch_done\@:
+    ret
+.endm
+dispatch_loop husk_dispatch_ip_loop, x16
+dispatch_loop husk_dispatch_general_loop, x10
+
+.global husk_mops_copy
+husk_mops_copy:
+    mov x3, x0
+    .inst 0x1d010443 // cpyp [x3]!,[x1]!,x2!
+    .inst 0x1d410443 // cpym [x3]!,[x1]!,x2!
+    .inst 0x1d810443 // cpye [x3]!,[x1]!,x2!
+    ret
+
+.global husk_mops_tagged_loop
+husk_mops_tagged_loop:
+    mov x6, x0
+    mov x7, x1
+    mov x5, x2
+    mov x8, #0
+1:  mov x3, x6
+    mov x1, x7
+    mov x2, #64
+    .inst 0x1d010443
+    .inst 0x1d410443
+    .inst 0x1d810443
+    .rept 32
+    add x8, x8, #1
+    .endr
+    subs x5, x5, #1
+    b.ne 1b
+    mov x0, x8
+    ret

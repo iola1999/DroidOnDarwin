@@ -79,6 +79,10 @@ bool husk_arm64_mops(HuskArm64State *state, const uint32_t code[3], HuskArm64Mem
     bool set = (word & 0xffe0fc00) == 0x19c00400;
     unsigned rd = word & 31, rn = (word >> 5) & 31, rs = (word >> 16) & 31;
     uint64_t to = state->x[rd], from = rs == 31 ? 0 : state->x[rs], length = state->x[rn];
+    if (state->access_flags & 8) {
+        to &= UINT64_C(0x00ffffffffffffff);
+        if (!set) from &= UINT64_C(0x00ffffffffffffff);
+    }
     if ((to >> 48) || (!set && (from >> 48)) ||
         !bulk(to, from, length, set ? HUSK_BULK_SET : HUSK_BULK_MOVE, memory, true)) return false;
     bool reverse = !set && from < to && to - from < length;
