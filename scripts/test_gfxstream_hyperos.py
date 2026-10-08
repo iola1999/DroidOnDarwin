@@ -151,6 +151,10 @@ def main():
         process = subprocess.Popen(command, env=env, stdout=log, stderr=subprocess.STDOUT)
         try:
             while process.poll() is None and time.monotonic() - start < args.seconds:
+                serial_path = output / "serial.log"
+                serial_text = serial_path.read_text(errors="replace") if serial_path.exists() else ""
+                if "Boot command: boot-recovery" in serial_text or "reboot: Restarting system with command 'recovery'" in serial_text:
+                    raise RuntimeError("Guest entered Recovery; inspect serial.log for the reboot request")
                 try:
                     # The guest command service is independent of adbd. Repeated
                     # ADB disconnects can interrupt its slow startup handshake.

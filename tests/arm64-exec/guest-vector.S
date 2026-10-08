@@ -2,6 +2,16 @@
 .text
 .arch armv8-a+crypto
 .balign 16
+.global husk_collision_loop
+husk_collision_loop:
+1:  ldr x3, [x0]
+    str x3, [x1]
+    subs x2, x2, #1
+    b.ne 1b
+    mov x0, x3
+    ret
+
+.balign 16
 .global husk_sha256_schedule_loop
 husk_sha256_schedule_loop:
     movi v0.4s, #1

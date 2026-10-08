@@ -87,6 +87,7 @@ extern u64 husk_counter_loop(u64 n);
 extern u64 husk_sha256_schedule_loop(u64 n);
 extern void husk_sha256_blocks(unsigned count, unsigned digest[8]);
 extern u64 husk_widen_loop(u64 n);
+extern u64 husk_collision_loop(const u64 *source, u64 *destination, u64 count);
 extern void husk_kernel_read(unsigned index);
 extern void *husk_mops_copy(void *to, const void *from, u64 length);
 extern u64 husk_mops_tagged_loop(void *to, const void *from, u64 count);
@@ -567,6 +568,17 @@ void guest_main(u64 *initial_stack)
         print("BENCH sha256_ns="); number(elapsed); print(" value="); number(result); print("\n");
     } else print("SKIP SHA256 unavailable\n");
     mixed_code_benchmark();
+    s64 read_page = call(222, 0x40010000, 4096, 3, 0x100022, (u64)-1, 0);
+    s64 write_page = call(222, 0x40111000, 4096, 3, 0x100022, (u64)-1, 0);
+    CHECK(read_page == 0x40010000 && write_page == 0x40111000);
+    *(u64 *)read_page = 0x123456789abcdef0UL;
+    start = ns();
+    result = husk_collision_loop((void *)read_page, (void *)write_page, 100000);
+    elapsed = ns() - start;
+    CHECK(result == 0x123456789abcdef0UL && *(u64 *)write_page == result);
+    print("BENCH collision_ns="); number(elapsed); print(" value="); number(result); print("\n");
+    CHECK(call(215, read_page, 4096, 0, 0, 0, 0) == 0);
+    CHECK(call(215, write_page, 4096, 0, 0, 0, 0) == 0);
     if (hwcap & (1UL << 8)) {
         u64 atomic_value = 0;
         start = ns();

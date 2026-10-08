@@ -192,7 +192,7 @@ int main()
     }
     // Feature changes reuse one engine. Rejected cases must leave both memory
     // and architectural state intact, including flags changed by a later success.
-    for (unsigned failure = 0; failure < 10; ++failure) {
+    for (unsigned failure = 0; failure < 9; ++failure) {
         std::copy(std::begin(mops_words), std::end(mops_words), code.begin());
         state = {}; state.pc = 0x80000; state.nzcv = 0xa0000000;
         state.access_flags = HUSK_MOPS_ALLOWED;
@@ -206,12 +206,20 @@ int main()
         if (failure == 6) memory.denied_read = 1;
         if (failure == 7) code[1] ^= 1;
         if (failure == 8) state.x[2] = 65;
-        if (failure == 9) state.x[1] = 0x111000;
         auto before = state; auto ram_before = memory.bytes;
         CHECK(husk_direct_run(engine.get(), &state, 0x80000, code.data(), callbacks, 4096) == HUSK_ARM64_FALLBACK);
         CHECK(!std::memcmp(&state, &before, sizeof(state)) && memory.bytes == ram_before);
         memory.denied_write = memory.denied_read = -1;
     }
+    // Read and write entries with the same hash slot retain separate tags.
+    std::copy(std::begin(mops_words), std::end(mops_words), code.begin());
+    state = {}; state.pc = 0x80000; state.access_flags = HUSK_MOPS_ALLOWED;
+    state.x[0] = 0x10000; state.x[1] = 0x111000; state.x[2] = 64;
+    auto ram_expected = memory.bytes;
+    std::memmove(ram_expected.data(), ram_expected.data() + 4096, 64);
+    CHECK(husk_direct_run(engine.get(), &state, 0x80000, code.data(), callbacks, 4096) == HUSK_ARM64_FALLBACK);
+    CHECK(state.pc == 0x8000c && state.x[0] == 0x10040 && state.x[1] == 0x111040 && !state.x[2]);
+    CHECK(memory.bytes == ram_expected);
     std::puts("bulk copy/move/set, overlap, bounds and refusal without partial writes PASS");
     std::puts("Direct bulk assist preserves complete guest state and returns on its byte budget PASS");
     std::puts("native MOPS lengths 1..64, arbitrary registers, overlap and access gating PASS");

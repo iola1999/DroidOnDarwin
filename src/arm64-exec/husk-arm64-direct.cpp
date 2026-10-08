@@ -92,7 +92,9 @@ static_assert(offsetof(Frame, call_routes) == HUSK_CALL_ROUTES);
 static_assert(offsetof(Frame, read_windows) == HUSK_READ_WINDOWS);
 static_assert(offsetof(Frame, write_windows) == HUSK_WRITE_WINDOWS);
 static_assert(offsetof(Frame, pauth_cache) == HUSK_PAUTH_CACHE);
-struct Mapping { uint64_t tag; void *read, *write; uint64_t reserved; };
+struct Mapping { uint64_t read_tag, read_addend, write_tag, write_addend; };
+constexpr Mapping EmptyMapping{UINT64_MAX, 0, UINT64_MAX, 0};
+static_assert(sizeof(Mapping) == 32 && offsetof(Mapping, write_tag) == 16);
 struct CodeRoute { uint64_t tag; void **entries; CompiledPage *code; uint64_t reserved; };
 struct CallRoute {
     uint64_t target;
@@ -688,19 +690,6 @@ struct CompiledPage {
             Label slow, read_miss, write_miss, copied;
             load(rn, X16);
             c.SUB(X17, X16, 1); c.LSR(X17, X17, 6); c.CBNZ(X17, slow);
-            if (!set) {
-                // A colliding pair would evict each other on every map retry.
-                Label no_collision;
-                load(rd, X16); load(rs, X17);
-                if (flags & 8) {
-                    c.AND(X16, X16, UINT64_C(0x00ffffffffffffff));
-                    c.AND(X17, X17, UINT64_C(0x00ffffffffffffff));
-                }
-                c.EOR(X17, X17, X16); c.LSR(X17, X17, 12); c.CBZ(X17, no_collision);
-                c.EOR(X17, X17, X17, LSR, 8);
-                c.AND(X17, X17, 255); c.CBZ(X17, slow);
-                c.l(no_collision);
-            }
             auto map = [&](unsigned reg, XReg host, bool write, Label &miss) {
                 load(reg, X16);
                 if (flags & 8) c.AND(X16, X16, UINT64_C(0x00ffffffffffffff));
@@ -709,9 +698,9 @@ struct CompiledPage {
                 c.EOR(X17, X17, X16); c.LSR(X17, X17, 12); c.CBNZ(X17, slow);
                 c.LSR(X17, X16, 12); c.EOR(X17, X17, X17, LSR, 8); c.AND(X17, X17, 255);
                 c.ADD(X17, X28, X17, LSL, 5);
-                c.LDR(host, X17); c.EOR(host, host, X16, LSR, 12); c.CBNZ(host, miss);
-                c.LDR(host, X17, write ? 16 : 8); c.CBZ(host, miss);
-                c.AND(X17, X16, 4095); c.ADD(host, host, X17);
+                c.LDP(host, X17, X17, write ? 16 : 0);
+                c.EOR(host, host, X16, LSR, 12); c.CBNZ(host, miss);
+                c.ADD(host, X16, X17);
             };
             map(rd, X26, true, write_miss);
             if (!set) map(rs, X30, false, read_miss);
@@ -982,9 +971,9 @@ struct CompiledPage {
                     // transition. Host exclusive reservations would not.
                     c.LSR(X17, X16, 12); c.EOR(X17, X17, X17, LSR, 8); c.AND(X17, X17, 255);
                     c.ADD(X17, X28, X17, LSL, 5);
-                    c.LDR(X26, X17); c.EOR(X26, X26, X16, LSR, 12); c.CBNZ(X26, miss);
-                    c.LDR(X17, X17, write ? 16 : 8); c.CBZ(X17, miss);
-                    c.AND(X26, X16, 4095); c.ADD(X17, X17, X26);
+                    c.LDP(X26, X17, X17, write ? 16 : 0);
+                    c.EOR(X26, X26, X16, LSR, 12); c.CBNZ(X26, miss);
+                    c.ADD(X17, X16, X17);
                     if (write) {
                         c.LDR(X26, X27, HUSK_EXCLUSIVE_VALUE); load(rd, X30);
                         c.dw((size << 30) | 0x08e0fc00 | (26 << 16) | (17 << 5) | 30); // casal
@@ -1075,10 +1064,9 @@ struct CompiledPage {
                     fault.checked = uintptr_t(c.xptr<void *>());
                     c.LSR(X17, X16, 12); c.EOR(X17, X17, X17, LSR, 8); c.AND(X17, X17, 255);
                     c.ADD(X17, X28, X17, LSL, 5);
-                    c.LDR(X26, X17);
+                    c.LDP(X26, X17, X17, write ? 16 : 0);
                     c.EOR(X26, X26, X16, LSR, 12); c.CBNZ(X26, miss);
-                    c.LDR(X17, X17, write ? 16 : 8); c.CBZ(X17, miss);
-                    c.AND(X26, X16, 4095); c.ADD(X17, X17, X26);
+                    c.ADD(X17, X16, X17);
                     c.l(access);
                     unsigned data = vector || resident(rd) || rd == 31 ? rd : 26;
                     if (structure) {
@@ -1227,11 +1215,10 @@ struct HuskArm64Direct {
     // BLR and BR use separate banks. BR also validates the source page/class.
     std::array<CallRoute, 512> call_routes{};
     std::array<SourceRoute, 256> source_routes{};
-    std::array<uint8_t, 256> populated{};
+    std::array<uint64_t, 4> populated{};
     std::unique_ptr<HuskArm64Fastmem> fastmem;
     std::vector<FaultSite> fault_sites;
     uint64_t mapping_epoch = 0;
-    size_t populated_count = 0;
     bool profile = std::getenv("HUSK_ARM64_STATS") != nullptr;
     bool native_lse = false, native_crc = false;
     uint32_t native_crypto = 0;
@@ -1281,7 +1268,7 @@ struct HuskArm64Direct {
                 std::fprintf(stderr, "[husk-fastmem] reservation unavailable; checked mappings active\n");
             }
         }
-        mappings.fill({UINT64_MAX, nullptr, nullptr, 0});
+        mappings.fill(EmptyMapping);
         int lse = 0;
         size_t lse_size = sizeof(lse);
         native_lse = !sysctlbyname("hw.optional.arm.FEAT_LSE", &lse, &lse_size, nullptr, 0) && lse;
@@ -1318,6 +1305,18 @@ struct HuskArm64Direct {
 #else
         munmap(executable, capacity);
 #endif
+    }
+
+    void clear_mappings(bool writes_only = false)
+    {
+        for (unsigned word = 0; word < populated.size(); ++word) {
+            for (uint64_t pending = populated[word]; pending; pending &= pending - 1) {
+                auto &entry = mappings[word * 64 + __builtin_ctzll(pending)];
+                if (writes_only) entry.write_tag = UINT64_MAX;
+                else entry = EmptyMapping;
+            }
+        }
+        if (!writes_only) populated.fill(0);
     }
 
     void erase_page(decltype(pages)::iterator page)
@@ -1539,9 +1538,7 @@ HuskArm64Exit husk_direct_run(HuskArm64Direct *ctx, HuskArm64State *state,
     ctx->routes.fill({UINT64_MAX, nullptr});
     ctx->call_routes.fill({UINT64_MAX, nullptr});
     auto *code = resolve(state->pc, bytes, state->access_flags & HUSK_BTYPE_MASK);
-    for (size_t i = 0; i < ctx->populated_count; ++i)
-        ctx->mappings[ctx->populated[i]] = {UINT64_MAX, nullptr, nullptr, 0};
-    ctx->populated_count = 0;
+    ctx->clear_mappings();
     ctx->pauth_cache.fill({});
     Frame frame{*state, std::min(budget, uint64_t(INT64_MAX)), 0, 0, 0,
                 ctx->routes.data(), ctx->call_routes.data(),
@@ -1668,8 +1665,7 @@ HuskArm64Exit husk_direct_run(HuskArm64Direct *ctx, HuskArm64State *state,
             if (!contents) break;
             // A previously writable data page can now be executable. Recheck
             // writes so every code page visited in this slice remains immutable.
-            for (size_t i = 0; i < ctx->populated_count; ++i)
-                ctx->mappings[ctx->populated[i]].write = nullptr;
+            ctx->clear_mappings(true);
             if (ctx->fastmem) ctx->fastmem->protect_code(contents);
             code = resolve(frame.state.pc, contents, frame.state.access_flags & HUSK_BTYPE_MASK);
             page = destination;
@@ -1729,9 +1725,9 @@ HuskArm64Exit husk_direct_run(HuskArm64Direct *ctx, HuskArm64State *state,
         uint64_t tag = base >> 12;
         unsigned slot = (tag ^ (tag >> 8)) & 255;
         auto &entry = ctx->mappings[slot];
-        if (entry.tag == UINT64_MAX) ctx->populated[ctx->populated_count++] = slot;
-        if (entry.tag != tag) entry = {tag, nullptr, nullptr, 0};
-        (write ? entry.write : entry.read) = host;
+        ctx->populated[slot / 64] |= UINT64_C(1) << (slot % 64);
+        (write ? entry.write_tag : entry.read_tag) = tag;
+        (write ? entry.write_addend : entry.read_addend) = uintptr_t(host) - base;
         next = code->entries[(frame.state.pc - page) / 4];
     }
     *state = frame.state;
