@@ -4,7 +4,9 @@
 
 struct HuskArm64Direct;
 bool husk_direct_supported(uint32_t instruction);
-HuskArm64Direct *husk_direct_create(size_t cache_bytes = 32 * 1024 * 1024);
+// Zero reads HUSK_ARM64_CODE_CACHE_MIB (default 32). iOS also requires that
+// the prewarmed JIT partition can hold the requested capacity.
+HuskArm64Direct *husk_direct_create(size_t cache_bytes = 0);
 struct HuskArm64CacheStats {
     uint64_t compiles, evictions, flushes, shared_hits;
     size_t bytes, pages;

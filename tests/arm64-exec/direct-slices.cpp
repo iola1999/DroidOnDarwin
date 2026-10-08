@@ -226,7 +226,25 @@ int main()
     m.reject_general_page = 0;
     CHECK(husk_arm64_landing_supported(0xa9bf7bfd)); // stp x29,x30,[sp,#-16]!
     CHECK(!husk_arm64_landing_supported(0xd63f0060)); // blr x3
-    CHECK(!husk_arm64_landing_supported(0xd503233f)); // paciasp
+    CHECK(husk_arm64_landing_supported(0xd503233f)); // paciasp
+
+    m.a.fill(0xd4000001); m.b.fill(0xd4000001);
+    m.a[0] = 0x10000045; m.a[1] = 0xd63f0060; // adr x5,.+8; blr x3
+    m.a[2] = 0x910043ff; // add sp,sp,#16
+    m.a[3] = 0x10000045; m.a[4] = 0xd63f0060;
+    m.b[0] = 0xd503233f; m.b[1] = 0xca1e00e7; // paciasp; eor x7,x7,x30
+    m.b[2] = 0xaa0503fe; m.b[3] = 0xd65f03c0; // mov x30,x5; ret
+    m.pending_landing = true; m.assists = m.pauth_calls = 0;
+    state = {}; state.pc = 0x10000; state.x[3] = 0x11000; state.sp = 0x50000;
+    CHECK(husk_direct_run(engine.get(), &state, 0x10000, m.a.data(), callbacks, 4096) == HUSK_ARM64_FALLBACK);
+    CHECK(state.pc == 0x10014 && state.sp == 0x50010 && state.x[7] == 0xc);
+    CHECK(m.assists == 1 && m.pauth_calls == 2 && !(state.access_flags & HUSK_BTYPE_MASK));
+    m.pauth_allowed = false;
+    state = {}; state.pc = 0x10000; state.x[3] = 0x11000; state.sp = 0x50000;
+    CHECK(husk_direct_run(engine.get(), &state, 0x10000, m.a.data(), callbacks, 4096) == HUSK_ARM64_FALLBACK);
+    CHECK(state.pc == 0x11000 && state.x[30] == 0x10008 && !state.x[7] &&
+          (state.access_flags & HUSK_BTYPE_MASK) == 32);
+    m.pauth_allowed = true; m.pending_landing = false;
 
     // Adjacent addresses can each have a cached landing variant. After the
     // first instruction retires, a later memory miss must resume normal code.

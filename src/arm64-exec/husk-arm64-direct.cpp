@@ -8,6 +8,7 @@
 #include <atomic>
 #include <cstring>
 #include <cstdlib>
+#include <cerrno>
 #include <chrono>
 #include <cstdio>
 #include <stdexcept>
@@ -1170,8 +1171,8 @@ struct HuskArm64Direct {
 
     explicit HuskArm64Direct(size_t cache_bytes) : capacity(cache_bytes)
     {
-        if (capacity < 2 * CompiledPage::max_bytes || capacity > 32 * 1024 * 1024 || capacity % 16384)
-            throw std::invalid_argument("Direct cache must be 2..32 MiB, aligned to 16 KiB");
+        if (capacity < 2 * CompiledPage::max_bytes || capacity > 256 * 1024 * 1024 || capacity % 16384)
+            throw std::invalid_argument("Direct cache must be 2..256 MiB, aligned to 16 KiB");
         free_ranges.push_back({0, capacity});
         const char *reclaim_setting = std::getenv("HUSK_ARM64_CACHE_RECLAIM");
         reclaim_cache = !reclaim_setting || std::strcmp(reclaim_setting, "0");
@@ -1351,7 +1352,21 @@ struct HuskArm64Direct {
     }
 };
 
-HuskArm64Direct *husk_direct_create(size_t cache_bytes) { return new HuskArm64Direct(cache_bytes); }
+HuskArm64Direct *husk_direct_create(size_t cache_bytes)
+{
+    if (!cache_bytes) {
+        unsigned long mib = 32;
+        if (const char *setting = std::getenv("HUSK_ARM64_CODE_CACHE_MIB")) {
+            char *end;
+            errno = 0;
+            mib = std::strtoul(setting, &end, 10);
+            if (errno || end == setting || *end || mib < 2 || mib > 256)
+                throw std::invalid_argument("HUSK_ARM64_CODE_CACHE_MIB must be 2..256");
+        }
+        cache_bytes = mib * 1024 * 1024;
+    }
+    return new HuskArm64Direct(cache_bytes);
+}
 HuskArm64CacheStats husk_direct_cache_stats(const HuskArm64Direct *ctx)
 {
     return {ctx->compiles, ctx->evictions, ctx->flushes, ctx->shared_hits, ctx->used, ctx->pages.size()};
@@ -1360,7 +1375,8 @@ bool husk_direct_supported(uint32_t instruction) { return decode(instruction) !=
 bool husk_arm64_landing_supported(uint32_t instruction)
 {
     Kind kind = decode(instruction);
-    return kind != Other && kind != Assist && kind != Pauth && !(kind >= Branch && kind <= Indirect);
+    return instruction == 0xd503233f || instruction == 0xd503237f ||
+        (kind != Other && kind != Assist && kind != Pauth && !(kind >= Branch && kind <= Indirect));
 }
 void husk_direct_destroy(HuskArm64Direct *ctx) { delete ctx; }
 
@@ -1459,6 +1475,10 @@ HuskArm64Exit husk_direct_run(HuskArm64Direct *ctx, HuskArm64State *state,
                 cached_jump = true;
             }
             assisted = memory.assist(memory.opaque, &frame.state, word);
+            // A PAC landing keeps BTYPE until authentication/signing succeeds.
+            // The owner exports the pending state before any guest exception.
+            if (pauth && assisted == HUSK_ASSIST_PAUTH && (code->compile_flags & CompileLanding))
+                frame.state.access_flags &= ~uint32_t(HUSK_BTYPE_MASK);
             if (ctx->inline_assists && pauth && assisted == HUSK_ASSIST_PAUTH)
                 ctx->pauth_cache[pauth_slot(word, pauth_value, pauth_modifier)] =
                     {pauth_value, pauth_modifier, frame.state.x[pauth_reg], word};

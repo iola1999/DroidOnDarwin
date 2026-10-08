@@ -23,7 +23,7 @@ typedef struct {
     uint64_t mapping_epoch, mapping_generation;
     int mapping_mmu;
     int64_t resume_after_ns[2];
-    bool poll_dispatch, assist, assisted_pauth, chain_assist, landing, kernel, kernel_started, mops_started;
+    bool poll_dispatch, assist, assisted_pauth, chain_assist, landing, pauth_landing, kernel, kernel_started, mops_started;
     unsigned last_el;
     unsigned dispatch_polls;
     bool profile;
@@ -297,6 +297,9 @@ static HuskArm64Assist husk_assist(void *opaque, HuskArm64State *state, uint32_t
         case 0xd503241f: case 0xd503245f: case 0xd503249f: case 0xd50324df:
             break;
         case 0xd503233f: case 0xd503237f:
+            if (ctx->landing && ctx->pauth_landing)
+                return cache_call ? HUSK_ASSIST_CHAIN_LANDING_CALL :
+                    cache_jump ? HUSK_ASSIST_CHAIN_LANDING_JUMP : HUSK_ASSIST_CHAIN;
             cache_call = false;
             cache_jump = false;
             if (EX_TBFLAG_A64(env->hflags, PAUTH_ACTIVE)) {
@@ -363,7 +366,7 @@ int arm_husk_exec_user(CPUState *cs)
     static bool direct;
     static bool bridge;
     static bool kernel;
-    static bool landing = true;
+    static bool landing = true, pauth_landing = true;
     static unsigned tcg_quantum_us = 2000;
     static unsigned slice_budget = 4096;
     if (enabled == -1) {
@@ -377,6 +380,8 @@ int arm_husk_exec_user(CPUState *cs)
         bridge = bridge_setting && !strcmp(bridge_setting, "1");
         const char *landing_setting = getenv("HUSK_ARM64_LANDING");
         landing = !landing_setting || strcmp(landing_setting, "0");
+        const char *pauth_setting = getenv("HUSK_ARM64_PAC_LANDING");
+        pauth_landing = !pauth_setting || strcmp(pauth_setting, "0");
         const char *quantum = getenv("HUSK_ARM64_TCG_QUANTUM_US");
         if (quantum && (qemu_strtoui(quantum, NULL, 10, &tcg_quantum_us) || tcg_quantum_us > 1000000)) {
             error_report("HUSK_ARM64_TCG_QUANTUM_US must be between 0 and 1000000");
@@ -438,6 +443,7 @@ int arm_husk_exec_user(CPUState *cs)
         case 0xd503241f: case 0xd503245f: case 0xd503249f: case 0xd50324df:
             break;
         case 0xd503233f: case 0xd503237f:
+            if (landing && pauth_landing) goto landing_ready;
             if (EX_TBFLAG_A64(env->hflags, PAUTH_ACTIVE)) {
                 env->xregs[30] = arm_husk_pauth(env, env->xregs[30], env->xregs[31],
                                                insn == 0xd503237f);
@@ -470,6 +476,7 @@ landing_ready:
         cpu->husk_exec = ctx;
         ctx->kernel = kernel;
         ctx->landing = landing;
+        ctx->pauth_landing = pauth_landing;
         const char *reuse = getenv("HUSK_ARM64_FASTMEM_REUSE");
         ctx->reuse_mappings = direct && !kernel && (!reuse || strcmp(reuse, "0"));
         ctx->profile = getenv("HUSK_ARM64_PROFILE") != NULL;

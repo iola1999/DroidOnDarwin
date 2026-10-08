@@ -368,6 +368,22 @@ husk_atomic_loop:
 dispatch_loop husk_dispatch_ip_loop, x16
 dispatch_loop husk_dispatch_general_loop, x10
 
+.global husk_pac_call_loop
+husk_pac_call_loop:
+    stp x19, x30, [sp, #-16]!
+    mov x19, x0
+    mov x0, #0
+    adr x16, 2f
+1:  blr x16
+    subs x19, x19, #1
+    b.ne 1b
+    ldp x19, x30, [sp], #16
+    ret
+2:  hint #25 // paciasp
+    add x0, x0, #1
+    hint #29 // autiasp
+    ret
+
 .global husk_mops_copy
 husk_mops_copy:
     mov x3, x0
