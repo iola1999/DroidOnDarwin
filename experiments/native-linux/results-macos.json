@@ -1,0 +1,482 @@
+{
+  "date": "2026-10-08",
+  "scope": "Mac N0 and LKL subsystem prototype; full Linux user processes and iPhone runtime unverified",
+  "n0": {
+    "platform": "macOS-27.0-arm64-arm-64bit-Mach-O",
+    "kernel_integrated": false,
+    "ios_status": "compiled; device execution pending",
+    "benchmarks": [
+      {
+        "syscall_interval": 0,
+        "native_ms": 3.632833,
+        "nce_ms": 3.676666,
+        "nce_over_native": 1.0120657899771335,
+        "extra_ns_per_call": null
+      },
+      {
+        "syscall_interval": 4096,
+        "native_ms": 3.500834,
+        "nce_ms": 3.524834,
+        "nce_over_native": 1.0068555092872156,
+        "extra_ns_per_call": 24.59016393442623
+      },
+      {
+        "syscall_interval": 256,
+        "native_ms": 3.809375,
+        "nce_ms": 3.929417,
+        "nce_over_native": 1.0315122559474978,
+        "extra_ns_per_call": 7.682688
+      },
+      {
+        "syscall_interval": 16,
+        "native_ms": 3.758917,
+        "nce_ms": 9.757042,
+        "nce_over_native": 2.5957056247850114,
+        "extra_ns_per_call": 23.9925
+      },
+      {
+        "syscall_interval": 1,
+        "native_ms": 4.087,
+        "nce_ms": 93.249416,
+        "nce_over_native": 22.816103743577195,
+        "extra_ns_per_call": 22.290604
+      }
+    ],
+    "input_sha256": {
+      "experiments/native-linux/entry.S": "807fdfec45fc6ba388866437f61669ef86e3c974a85af819e7b3bbdb766ca0b9",
+      "experiments/native-linux/guest.S": "7324315f95bb8a78937cf6bffc97208161a5e172c67dbc23a4ebb5a9d836a1d1",
+      "experiments/native-linux/main.c": "1428a8c23f39cbbea7ec612579006b10895d72466491b1e5ece5ba5e8501f2a2",
+      "experiments/native-linux/nce.c": "d67a92e39d8a308d9c9f0863993d0e2218312993a9587701d71f65b21ebb7d1d",
+      "experiments/native-linux/nce.h": "e93a07fbd72456f38e6d98224039dc83e812c68b4e7c1557944301289f60aede",
+      "experiments/native-linux/probe.c": "2107d99762f392e97184fc98381bb59d74772267446a209ac094bf34624bae54",
+      "experiments/native-linux/probe.h": "8baab7ee2ba77cdc01b9ef19c721874ebe2a79216240da4dfd28fe411b60915d",
+      "scripts/probe_native_linux.py": "910ad4d76e6aae7a42231a70dbfac15edf52e79bba37c95bfca3bb577167e219"
+    }
+  },
+  "n0_records": [
+    {
+      "prototype": "N0",
+      "host_page": 16384,
+      "linux_kernel_integrated": false
+    },
+    {
+      "test": "registers_simd_flags",
+      "passed": true
+    },
+    {
+      "test": "tls_read_write",
+      "passed": true
+    },
+    {
+      "test": "dual_alias_code_update",
+      "passed": true
+    },
+    {
+      "test": "protection_faults",
+      "passed": true
+    },
+    {
+      "test": "4k_subpage_protect",
+      "host_page": 16384,
+      "return": -1,
+      "errno": 22
+    },
+    {
+      "test": "two_address_spaces_cow_shared_tls_stack",
+      "passed": true,
+      "switches": 4001,
+      "ns_per_switch_including_guest": 1973.67
+    },
+    {
+      "bench": "native_vs_nce",
+      "interval": 0,
+      "run": 0,
+      "iterations": 4000000,
+      "native_ns": 3821458,
+      "nce_ns": 3676666,
+      "calls": 1
+    },
+    {
+      "bench": "native_vs_nce",
+      "interval": 0,
+      "run": 1,
+      "iterations": 4000000,
+      "native_ns": 3684000,
+      "nce_ns": 3591417,
+      "calls": 1
+    },
+    {
+      "bench": "native_vs_nce",
+      "interval": 0,
+      "run": 2,
+      "iterations": 4000000,
+      "native_ns": 3570792,
+      "nce_ns": 3754166,
+      "calls": 1
+    },
+    {
+      "bench": "native_vs_nce",
+      "interval": 0,
+      "run": 3,
+      "iterations": 4000000,
+      "native_ns": 3629875,
+      "nce_ns": 3805667,
+      "calls": 1
+    },
+    {
+      "bench": "native_vs_nce",
+      "interval": 0,
+      "run": 4,
+      "iterations": 4000000,
+      "native_ns": 3632833,
+      "nce_ns": 3586791,
+      "calls": 1
+    },
+    {
+      "bench": "native_vs_nce",
+      "interval": 4096,
+      "run": 0,
+      "iterations": 4000000,
+      "native_ns": 3482750,
+      "nce_ns": 3543584,
+      "calls": 977
+    },
+    {
+      "bench": "native_vs_nce",
+      "interval": 4096,
+      "run": 1,
+      "iterations": 4000000,
+      "native_ns": 3510416,
+      "nce_ns": 3524834,
+      "calls": 977
+    },
+    {
+      "bench": "native_vs_nce",
+      "interval": 4096,
+      "run": 2,
+      "iterations": 4000000,
+      "native_ns": 3477375,
+      "nce_ns": 3507083,
+      "calls": 977
+    },
+    {
+      "bench": "native_vs_nce",
+      "interval": 4096,
+      "run": 3,
+      "iterations": 4000000,
+      "native_ns": 3510083,
+      "nce_ns": 3518500,
+      "calls": 977
+    },
+    {
+      "bench": "native_vs_nce",
+      "interval": 4096,
+      "run": 4,
+      "iterations": 4000000,
+      "native_ns": 3500834,
+      "nce_ns": 3677166,
+      "calls": 977
+    },
+    {
+      "bench": "native_vs_nce",
+      "interval": 256,
+      "run": 0,
+      "iterations": 4000000,
+      "native_ns": 3667958,
+      "nce_ns": 3901000,
+      "calls": 15626
+    },
+    {
+      "bench": "native_vs_nce",
+      "interval": 256,
+      "run": 1,
+      "iterations": 4000000,
+      "native_ns": 3723250,
+      "nce_ns": 3929417,
+      "calls": 15626
+    },
+    {
+      "bench": "native_vs_nce",
+      "interval": 256,
+      "run": 2,
+      "iterations": 4000000,
+      "native_ns": 5255416,
+      "nce_ns": 3880292,
+      "calls": 15626
+    },
+    {
+      "bench": "native_vs_nce",
+      "interval": 256,
+      "run": 3,
+      "iterations": 4000000,
+      "native_ns": 3836625,
+      "nce_ns": 4121333,
+      "calls": 15626
+    },
+    {
+      "bench": "native_vs_nce",
+      "interval": 256,
+      "run": 4,
+      "iterations": 4000000,
+      "native_ns": 3809375,
+      "nce_ns": 4160291,
+      "calls": 15626
+    },
+    {
+      "bench": "native_vs_nce",
+      "interval": 16,
+      "run": 0,
+      "iterations": 4000000,
+      "native_ns": 3807583,
+      "nce_ns": 9687125,
+      "calls": 250001
+    },
+    {
+      "bench": "native_vs_nce",
+      "interval": 16,
+      "run": 1,
+      "iterations": 4000000,
+      "native_ns": 3758917,
+      "nce_ns": 9757042,
+      "calls": 250001
+    },
+    {
+      "bench": "native_vs_nce",
+      "interval": 16,
+      "run": 2,
+      "iterations": 4000000,
+      "native_ns": 3783792,
+      "nce_ns": 9782625,
+      "calls": 250001
+    },
+    {
+      "bench": "native_vs_nce",
+      "interval": 16,
+      "run": 3,
+      "iterations": 4000000,
+      "native_ns": 3551166,
+      "nce_ns": 9819625,
+      "calls": 250001
+    },
+    {
+      "bench": "native_vs_nce",
+      "interval": 16,
+      "run": 4,
+      "iterations": 4000000,
+      "native_ns": 3484500,
+      "nce_ns": 9616250,
+      "calls": 250001
+    },
+    {
+      "bench": "native_vs_nce",
+      "interval": 1,
+      "run": 0,
+      "iterations": 4000000,
+      "native_ns": 4087000,
+      "nce_ns": 93146875,
+      "calls": 4000001
+    },
+    {
+      "bench": "native_vs_nce",
+      "interval": 1,
+      "run": 1,
+      "iterations": 4000000,
+      "native_ns": 4131083,
+      "nce_ns": 93668500,
+      "calls": 4000001
+    },
+    {
+      "bench": "native_vs_nce",
+      "interval": 1,
+      "run": 2,
+      "iterations": 4000000,
+      "native_ns": 4040000,
+      "nce_ns": 93249416,
+      "calls": 4000001
+    },
+    {
+      "bench": "native_vs_nce",
+      "interval": 1,
+      "run": 3,
+      "iterations": 4000000,
+      "native_ns": 3850250,
+      "nce_ns": 93718166,
+      "calls": 4000001
+    },
+    {
+      "bench": "native_vs_nce",
+      "interval": 1,
+      "run": 4,
+      "iterations": 4000000,
+      "native_ns": 4099541,
+      "nce_ns": 93144417,
+      "calls": 4000001
+    },
+    {
+      "bench": "remap",
+      "touch_all": false,
+      "fragmented": false,
+      "pages": 1,
+      "bytes": 16384,
+      "switches": 1000,
+      "ns_per_switch": 1357.38
+    },
+    {
+      "bench": "remap",
+      "touch_all": false,
+      "fragmented": false,
+      "pages": 16,
+      "bytes": 262144,
+      "switches": 1000,
+      "ns_per_switch": 1460.08
+    },
+    {
+      "bench": "remap",
+      "touch_all": false,
+      "fragmented": false,
+      "pages": 128,
+      "bytes": 2097152,
+      "switches": 1000,
+      "ns_per_switch": 2057.25
+    },
+    {
+      "bench": "remap",
+      "touch_all": false,
+      "fragmented": true,
+      "pages": 1,
+      "bytes": 16384,
+      "switches": 1000,
+      "ns_per_switch": 1377.29
+    },
+    {
+      "bench": "remap",
+      "touch_all": false,
+      "fragmented": true,
+      "pages": 16,
+      "bytes": 262144,
+      "switches": 1000,
+      "ns_per_switch": 13214.92
+    },
+    {
+      "bench": "remap",
+      "touch_all": false,
+      "fragmented": true,
+      "pages": 128,
+      "bytes": 2097152,
+      "switches": 1000,
+      "ns_per_switch": 103202.83
+    },
+    {
+      "bench": "remap",
+      "touch_all": true,
+      "fragmented": false,
+      "pages": 1,
+      "bytes": 16384,
+      "switches": 1000,
+      "ns_per_switch": 1414.5
+    },
+    {
+      "bench": "remap",
+      "touch_all": true,
+      "fragmented": false,
+      "pages": 16,
+      "bytes": 262144,
+      "switches": 1000,
+      "ns_per_switch": 6805.17
+    },
+    {
+      "bench": "remap",
+      "touch_all": true,
+      "fragmented": false,
+      "pages": 128,
+      "bytes": 2097152,
+      "switches": 1000,
+      "ns_per_switch": 48349.54
+    },
+    {
+      "bench": "remap",
+      "touch_all": true,
+      "fragmented": true,
+      "pages": 1,
+      "bytes": 16384,
+      "switches": 1000,
+      "ns_per_switch": 1495.04
+    },
+    {
+      "bench": "remap",
+      "touch_all": true,
+      "fragmented": true,
+      "pages": 16,
+      "bytes": 262144,
+      "switches": 1000,
+      "ns_per_switch": 24224.67
+    },
+    {
+      "bench": "remap",
+      "touch_all": true,
+      "fragmented": true,
+      "pages": 128,
+      "bytes": 2097152,
+      "switches": 1000,
+      "ns_per_switch": 193981.75
+    },
+    {
+      "result": "passed"
+    }
+  ],
+  "n1": {
+    "source_revision": "d0f76a77e8c2ca68bd7d96190b8da09040eab072",
+    "platform": "macOS-27.0-arm64-arm-64bit-Mach-O",
+    "results": [
+      {
+        "test": "native_linux_boot",
+        "passed": true,
+        "ms": 34.947
+      },
+      {
+        "test": "linux_uname",
+        "sysname": "Linux",
+        "release": "6.12.0"
+      },
+      {
+        "test": "nce_linux_file_and_timer",
+        "passed": true
+      },
+      {
+        "test": "linux_pipe_host_threads",
+        "passed": true
+      },
+      {
+        "test": "linux_futex_wait_wake",
+        "passed": true
+      },
+      {
+        "bench": "native_linux_getpid",
+        "iterations": 100000,
+        "ns_per_call": 14.95
+      },
+      {
+        "bench": "nce_linux_getpid_with_compute",
+        "iterations": 100000,
+        "ns_per_iteration": 46.46
+      },
+      {
+        "result": "passed",
+        "linux_user_processes": false
+      }
+    ],
+    "ios_status": "host operations compiled; kernel loading and execution untested",
+    "config_sha256": "4d0914024ce470603bdd9af78b0f83dd29edc7341b4d407c6ca28866899de7b6",
+    "kernel_sha256": "d7b08b9e5ee246b589c67890ad65efcda0206bc9f922e3e53c46614d3c4e0c47",
+    "input_sha256": {
+      "experiments/native-linux/lkl-main.c": "6ecda4ebf4d5be9d414797646cd753413ce53d54b640899b4787b3e8351acef6",
+      "experiments/native-linux/lkl-host.c": "a99a508454f8a5bb8be38e4ef9066dd1e26b28b1c0991f4fc888a4ddc193a834",
+      "experiments/native-linux/nce.c": "d67a92e39d8a308d9c9f0863993d0e2218312993a9587701d71f65b21ebb7d1d",
+      "experiments/native-linux/entry.S": "807fdfec45fc6ba388866437f61669ef86e3c974a85af819e7b3bbdb766ca0b9",
+      "experiments/native-linux/lkl-bridge.c": "78c13872fff1c7769d4c2de19565d3a88dd5cf6e96016be0b7e9d4c928bee79d",
+      "experiments/native-linux/nce.h": "e93a07fbd72456f38e6d98224039dc83e812c68b4e7c1557944301289f60aede",
+      "experiments/native-linux/guest.S": "7324315f95bb8a78937cf6bffc97208161a5e172c67dbc23a4ebb5a9d836a1d1",
+      "scripts/probe_lkl.py": "1ff2e97c06716654dbe89ed71e069c81f25d30d2f9728e184f980129bf3488fc"
+    }
+  }
+}

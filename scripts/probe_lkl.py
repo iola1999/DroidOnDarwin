@@ -1,0 +1,158 @@
+#!/usr/bin/env python3
+"""在 Darwin 原生执行 LKL，并从受控 ARM64 ELF 调用真实 Linux 文件与定时器接口。"""
+import hashlib
+import json
+import os
+from pathlib import Path
+import platform
+import shlex
+import shutil
+import struct
+import subprocess
+import tarfile
+import urllib.request
+
+ROOT = Path(__file__).resolve().parents[1]
+OUT = ROOT / "work/native-linux-nce"
+SOURCE = OUT / "lkl-source"
+BUILD = OUT / "lkl-build"
+EXPERIMENT = ROOT / "experiments/native-linux"
+REVISION = "d0f76a77e8c2ca68bd7d96190b8da09040eab072"
+
+
+def run(args, **kwargs):
+    return subprocess.run([str(x) for x in args], check=True, timeout=300, **kwargs)
+
+
+def package_elf(path):
+    data = path.read_bytes()
+    phoff, shoff = struct.unpack_from("<QQ", data, 32)
+    phsize, phnum, shsize, shnum = struct.unpack_from("<HHHH", data, 54)
+    segments = []
+    for i in range(phnum):
+        kind, flags, offset, va, _, filesz, memsz, _ = struct.unpack_from("<IIQQQQQQ", data, phoff + phsize * i)
+        if kind == 1:
+            segments.append((flags, offset, va, filesz, memsz))
+    total = (max(va + memsz for _, _, va, _, memsz in segments) + 16383) & ~16383
+    image = bytearray(total)
+    protection = []
+    for flags, offset, va, filesz, memsz in segments:
+        image[va:va + filesz] = data[offset:offset + filesz]
+        begin, end = va & ~16383, (va + memsz + 16383) & ~16383
+        protection.append((begin, end - begin, ((flags & 4) >> 2) | (flags & 2) | ((flags & 1) << 2)))
+    sections = [struct.unpack_from("<IIQQQQIIQQ", data, shoff + i * shsize) for i in range(shnum)]
+    relocations = []
+    for section in sections:
+        if section[1] != 4:
+            continue
+        for pos in range(section[4], section[4] + section[5], section[9]):
+            offset, info, addend = struct.unpack_from("<QQq", data, pos)
+            if info != 1027 or not 0 <= offset <= total - 8 or not 0 <= addend < total:
+                raise RuntimeError(f"Unsupported ELF relocation: {offset:x}, {info:x}, {addend:x}")
+            relocations.append((offset, addend))
+    symbols = {}
+    symtab = next(s for s in sections if s[1] == 11)
+    strings = sections[symtab[6]]
+    strings = data[strings[4]:strings[4] + strings[5]]
+    required = {"lkl_init", "lkl_syscall", "lkl_sys_halt", "lkl_cleanup", "nce_lkl_start"}
+    for pos in range(symtab[4], symtab[4] + symtab[5], symtab[9]):
+        index, _, _, _, value, _ = struct.unpack_from("<IBBHQQ", data, pos)
+        name = strings[index:strings.index(b"\0", index)].decode()
+        if name in required:
+            symbols[name] = value
+    if symbols.keys() != required:
+        raise RuntimeError(f"Missing exports: {required - symbols.keys()}")
+    header = f"#define LKL_IMAGE_SIZE {total}\n"
+    header += "".join(f"#define {name.upper()} {value}\n" for name, value in symbols.items())
+    header += "static const unsigned long lkl_segments[][3] = {\n"
+    header += "".join(f"{{{a},{b},{c}}},\n" for a, b, c in protection) + "};\n"
+    header += "static const unsigned long lkl_relocations[][2] = {\n"
+    header += "".join(f"{{{a},{b}}},\n" for a, b in relocations) + "};\n"
+    (OUT / "lkl-image.h").write_text(header)
+    (OUT / "lkl-image.bin").write_bytes(image)
+
+
+def main():
+    if platform.system() != "Darwin" or platform.machine() != "arm64":
+        raise SystemExit("Requires an Apple Silicon Mac")
+    if not (OUT / "guest-image.h").exists():
+        raise SystemExit("Run scripts/probe_native_linux.py first")
+    if (OUT / "guest-source.sha256").read_text().strip() != hashlib.sha256((EXPERIMENT / "guest.S").read_bytes()).hexdigest():
+        raise SystemExit("ELF fixture changed; run scripts/probe_native_linux.py first")
+    for tool in ("gmake", "gsed", "ld.lld", "brew"):
+        if not shutil.which(tool):
+            raise SystemExit(f"Missing build tool: {tool}")
+    if not SOURCE.exists():
+        archive = OUT / "lkl.tar.gz"
+        print("Downloading pinned Linux source", flush=True)
+        urllib.request.urlretrieve(f"https://codeload.github.com/lkl/linux/tar.gz/{REVISION}", archive)
+        with tarfile.open(archive) as tar:
+            tar.extractall(OUT, filter="data")
+        (OUT / f"linux-{REVISION}").rename(SOURCE)
+        (SOURCE / ".husk-source-revision").write_text(REVISION + "\n")
+        archive.unlink()
+    if (SOURCE / ".husk-source-revision").read_text().strip() != REVISION:
+        raise SystemExit("Unexpected LKL source revision")
+    # This host-tool type conflicts with Darwin's uuid_t from sys/types.h.
+    mod = SOURCE / "scripts/mod/file2alias.c"
+    text = mod.read_text()
+    if "#define uuid_t lkl_mod_uuid_t" not in text:
+        mod.write_text(text.replace("#include <stdbool.h>", "#include <stdbool.h>\n#ifdef __APPLE__\n#define uuid_t lkl_mod_uuid_t\n#endif"))
+    include = OUT / "host-include"
+    include.mkdir(exist_ok=True)
+    if not (include / "elf.h").exists():
+        urllib.request.urlretrieve("https://raw.githubusercontent.com/ifduyue/musl/v1.2.5/include/elf.h", include / "elf.h")
+    (include / "byteswap.h").write_text("#define bswap_16 __builtin_bswap16\n#define bswap_32 __builtin_bswap32\n#define bswap_64 __builtin_bswap64\n")
+    llvm = Path(subprocess.check_output(["brew", "--prefix", "llvm"], text=True).strip()) / "bin"
+    sdk = subprocess.check_output(["xcrun", "--sdk", "macosx", "--show-sdk-path"], text=True).strip()
+    clang = subprocess.check_output(["xcrun", "--find", "clang"], text=True).strip()
+    env = os.environ.copy()
+    sed_prefix = subprocess.check_output(["brew", "--prefix", "gnu-sed"], text=True).strip()
+    env["PATH"] = f"{sed_prefix}/libexec/gnubin:{llvm}:" + env["PATH"]
+    target = [llvm / "clang", "--target=aarch64-linux-gnu", "-ffixed-x18"]
+    make = ["gmake", "-C", SOURCE, f"O={BUILD}", "ARCH=lkl", "CLANG_TARGET_FLAGS_lkl=aarch64-linux-gnu",
+            f"CC={shlex.join(map(str, target))}", f"HOSTCC={shlex.join([clang, '-isysroot', sdk, '-I', str(include)])}",
+            f"LD={shutil.which('ld.lld')}", "AR=llvm-ar", "NM=llvm-nm", "OBJCOPY=llvm-objcopy",
+            "OBJDUMP=llvm-objdump", "STRIP=llvm-strip"]
+    BUILD.mkdir(exist_ok=True)
+    with (OUT / "lkl-build.log").open("w") as log:
+        if not (BUILD / ".config").exists():
+            run([*make, "allnoconfig"], env=env, stdout=log, stderr=subprocess.STDOUT)
+        options = ["64BIT", "EXPERT", "PROC_FS", "SYSFS", "FUTEX", "EPOLL", "SIGNALFD", "TIMERFD",
+                   "LKL_HOST_MEMCPY", "LKL_HOST_MEMSET", "LKL_HOST_MEMMOVE"]
+        switches = [arg for name in options for arg in ("-e", name)]
+        switches += [arg for name in ("KALLSYMS", "BLOCK", "DEBUG_INFO", "SLUB_DEBUG") for arg in ("-d", name)]
+        run([SOURCE / "scripts/config", "--file", BUILD / ".config", *switches], env=env)
+        run([*make, "olddefconfig"], env=env, stdout=log, stderr=subprocess.STDOUT)
+        run([*make, "-j8", "all"], env=env, stdout=log, stderr=subprocess.STDOUT)
+    shutil.copyfile(SOURCE / "arch/lkl/include/uapi/asm/host_ops.h", OUT / "lkl-host-ops.h")
+    run([*target, "-fPIC", "-fno-stack-protector", "-O2", "-I", OUT,
+         "-c", EXPERIMENT / "lkl-bridge.c", "-o", OUT / "lkl-bridge.o"])
+    run([llvm / "llvm-objcopy", "--globalize-symbol=vsnprintf", "--globalize-symbol=lkl_ops",
+         BUILD / "lkl.o", OUT / "lkl-exports.o"])
+    run(["ld.lld", "-shared", "-Bsymbolic", "--no-undefined", "-z", "max-page-size=16384",
+         "-z", "common-page-size=16384", OUT / "lkl-exports.o", OUT / "lkl-bridge.o", "-o", OUT / "lkl.so"])
+    package_elf(OUT / "lkl.so")
+    inputs = [EXPERIMENT / name for name in ("lkl-main.c", "lkl-host.c", "nce.c", "entry.S")]
+    flags = ["-O2", "-g", "-Wall", "-Wextra", "-Werror", "-I", OUT, "-I", EXPERIMENT]
+    run([clang, *flags, "-isysroot", sdk, *inputs, "-o", OUT / "lkl-probe"])
+    ios_sdk = subprocess.check_output(["xcrun", "--sdk", "iphoneos", "--show-sdk-path"], text=True).strip()
+    run([clang, *flags, "-target", "arm64-apple-ios17.0", "-isysroot", ios_sdk,
+         "-c", EXPERIMENT / "lkl-host.c", "-o", OUT / "ios-lkl-host.o"])
+    with (OUT / "lkl-results.jsonl").open("w") as output, (OUT / "lkl-console.log").open("w") as log:
+        run([OUT / "lkl-probe", OUT / "lkl-image.bin"], stdout=output, stderr=log)
+    results = [json.loads(line) for line in (OUT / "lkl-results.jsonl").read_text().splitlines()]
+    if results[-1].get("result") != "passed":
+        raise SystemExit("LKL probe did not complete")
+    manifest = {"source_revision": REVISION, "platform": platform.platform(), "results": results,
+                "ios_status": "host operations compiled; kernel loading and execution untested",
+                "config_sha256": hashlib.sha256((BUILD / ".config").read_bytes()).hexdigest(),
+                "kernel_sha256": hashlib.sha256((OUT / "lkl-image.bin").read_bytes()).hexdigest()}
+    sources = [*inputs, EXPERIMENT / "lkl-bridge.c", EXPERIMENT / "nce.h", EXPERIMENT / "guest.S", Path(__file__).resolve()]
+    manifest["input_sha256"] = {str(p.relative_to(ROOT)): hashlib.sha256(p.read_bytes()).hexdigest() for p in sources}
+    (OUT / "lkl-summary.json").write_text(json.dumps(manifest, indent=2) + "\n")
+    print(json.dumps(manifest, indent=2))
+
+
+if __name__ == "__main__":
+    main()

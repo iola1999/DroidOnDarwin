@@ -1,0 +1,88 @@
+/* SPDX-License-Identifier: GPL-2.0-or-later */
+#include "nce.h"
+#include <libkern/OSCacheControl.h>
+#include <string.h>
+
+_Static_assert(offsetof(NceState, sp) == 248, "assembly layout");
+_Static_assert(offsetof(NceState, vector) == 288, "assembly layout");
+_Static_assert(offsetof(NceState, host_sp) == 800, "assembly layout");
+_Static_assert(offsetof(NceState, resume) == 816, "assembly layout");
+_Static_assert(offsetof(NceState, instruction) == 824, "assembly layout");
+_Static_assert(offsetof(NceState, done) == 848, "assembly layout");
+
+extern const unsigned char nce_stub[], nce_stub_end[];
+
+static int branch(uint32_t *out, uintptr_t from, uintptr_t to)
+{
+    intptr_t distance = (intptr_t)to - (intptr_t)from;
+    if ((distance & 3) || distance < -(1 << 27) || distance >= (1 << 27))
+        return -1;
+    *out = 0x14000000u | ((uint32_t)(distance / 4) & 0x03ffffffu);
+    return 0;
+}
+
+void nce_sync_code(NceCode code)
+{
+    sys_dcache_flush(code.rw, code.size);
+    sys_icache_invalidate(code.rx, code.size);
+}
+
+int nce_prepare(NceCode code, NceState *s, const void *bytes, size_t size,
+                size_t entry)
+{
+    size_t cursor = (size + 15) & ~(size_t)15;
+    if (!code.rw || !code.rx || (size & 3) || (entry & 3) || entry >= size ||
+        cursor + 16 > code.size || nce_stub_end - nce_stub != 80)
+        return -1;
+    memcpy(code.rw, bytes, size);
+    /* Entry and syscall returns restore x16/x17 after leaving the common gate. */
+    uint32_t *start = (void *)(code.rw + cursor);
+    start[0] = 0xa8c147f0; /* ldp x16, x17, [sp], #16 */
+    if (branch(&start[1], (uintptr_t)code.rx + cursor + 4,
+               (uintptr_t)code.rx + entry)) return -1;
+    s->resume = (uintptr_t)code.rx + cursor;
+    s->pc = (uintptr_t)code.rx + entry;
+    cursor += 16;
+    for (size_t pos = 0; pos < size; pos += 4) {
+        uint32_t word;
+        memcpy(&word, code.rw + pos, 4);
+        int svc = (word & 0xffe0001f) == 0xd4000001;
+        int tls = (word & 0xffffffe0) == 0xd53bd040 ||
+                  (word & 0xffffffe0) == 0xd51bd040;
+        if (!svc && !tls) continue;
+        if (cursor + 80 > code.size) return -1;
+        unsigned char *stub = code.rw + cursor;
+        memcpy(stub, nce_stub, 80);
+        uint64_t context = (uintptr_t)s;
+        uint64_t resume = (uintptr_t)code.rx + cursor + 36;
+        uint64_t gate = (uintptr_t)nce_gate;
+        memcpy(stub + 48, &context, 8);
+        memcpy(stub + 56, &resume, 8);
+        memcpy(stub + 64, &word, 4);
+        memcpy(stub + 72, &gate, 8);
+        if (branch((void *)(stub + 40), (uintptr_t)code.rx + cursor + 40,
+                   (uintptr_t)code.rx + pos + 4) ||
+            branch((void *)(code.rw + pos), (uintptr_t)code.rx + pos,
+                   (uintptr_t)code.rx + cursor)) return -1;
+        cursor += 80;
+    }
+    nce_sync_code(code);
+    return 0;
+}
+
+NceState *nce_dispatch(NceState *s)
+{
+    uint32_t word = s->instruction;
+    unsigned reg = word & 31;
+    if ((word & 0xffffffe0) == 0xd53bd040) {
+        if (reg != 31) s->x[reg] = s->tls;
+        ++s->tls_accesses;
+    } else if ((word & 0xffffffe0) == 0xd51bd040) {
+        s->tls = reg == 31 ? 0 : s->x[reg];
+        ++s->tls_accesses;
+    } else {
+        ++s->calls;
+        s->syscall(s);
+    }
+    return s;
+}
