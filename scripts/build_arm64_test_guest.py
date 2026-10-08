@@ -38,8 +38,12 @@ def main(mthp=False, bulk=None):
                     str(ROOT / "tests/arm64-exec/guest.c"), "-o", str(OUT / "guest.o")], check=True)
     subprocess.run([clang, "--target=aarch64-none-elf", "-march=armv8-a", "-c",
                     str(ROOT / "tests/arm64-exec/guest-vector.S"), "-o", str(OUT / "guest-vector.o")], check=True)
+    subprocess.run([clang, "--target=aarch64-none-elf", "-march=armv8-a+crypto", "-O2",
+                    "-ffreestanding", "-fno-builtin", "-fno-stack-protector", "-fno-pic", "-c",
+                    str(ROOT / "tests/arm64-exec/guest-crypto.c"), "-o", str(OUT / "guest-crypto.o")], check=True)
     subprocess.run([linker, "-m", "aarch64elf", "-static", "-e", "_start",
                     "--build-id=none", str(OUT / "guest.o"), str(OUT / "guest-vector.o"),
+                    str(OUT / "guest-crypto.o"),
                     "-o", str(OUT / "init")], check=True)
     sdk = subprocess.check_output(["xcrun", "--sdk", "macosx", "--show-sdk-path"], text=True).strip()
     subprocess.run([clang, "-isysroot", sdk, "-O2", "-arch", "arm64", "-mgeneral-regs-only",

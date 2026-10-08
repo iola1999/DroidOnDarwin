@@ -1,0 +1,139 @@
+--- a/host/include/aarch64/host/cpuinfo.h
++++ b/host/include/aarch64/host/cpuinfo.h
+@@ -12,6 +12,7 @@
+ #define CPUINFO_AES             (1u << 3)
+ #define CPUINFO_PMULL           (1u << 4)
+ #define CPUINFO_BTI             (1u << 5)
++#define CPUINFO_SHA256          (1u << 6)
+ 
+ /* Initialized with a constructor. */
+ extern unsigned cpuinfo;
+--- a/util/cpuinfo-aarch64.c
++++ b/util/cpuinfo-aarch64.c
+@@ -70,6 +70,7 @@
+     info |= (hwcap & HWCAP_USCAT ? CPUINFO_LSE2 : 0);
+     info |= (hwcap & HWCAP_AES ? CPUINFO_AES : 0);
+     info |= (hwcap & HWCAP_PMULL ? CPUINFO_PMULL : 0);
++    info |= (hwcap & HWCAP_SHA2 ? CPUINFO_SHA256 : 0);
+ 
+     unsigned long hwcap2 = qemu_getauxval(AT_HWCAP2);
+     info |= (hwcap2 & HWCAP2_BTI ? CPUINFO_BTI : 0);
+@@ -80,6 +81,7 @@
+     info |= sysctl_for_bool("hw.optional.arm.FEAT_AES") * CPUINFO_AES;
+     info |= sysctl_for_bool("hw.optional.arm.FEAT_PMULL") * CPUINFO_PMULL;
+     info |= sysctl_for_bool("hw.optional.arm.FEAT_BTI") * CPUINFO_BTI;
++    info |= sysctl_for_bool("hw.optional.arm.FEAT_SHA256") * CPUINFO_SHA256;
+ #endif
+ #if defined(__OpenBSD__) && !defined(CONFIG_ELF_AUX_INFO)
+     int mib[2];
+@@ -112,6 +114,11 @@
+     }
+ #endif
+ 
++    /* Keep the software helper available for execution comparisons. */
++    const char *sha = getenv("HUSK_ARM64_TCG_SHA256");
++    if (sha && !strcmp(sha, "0")) {
++        info &= ~CPUINFO_SHA256;
++    }
+     cpuinfo = info;
+     return info;
+ }
+--- a/target/arm/tcg/crypto_helper.c
++++ b/target/arm/tcg/crypto_helper.c
+@@ -17,6 +17,40 @@
+ #include "crypto/aes-round.h"
+ #include "crypto/sm4.h"
+ #include "vec_internal.h"
++
++#if defined(__aarch64__) && !HOST_BIG_ENDIAN
++#include "host/cpuinfo.h"
++#include <arm_neon.h>
++
++/* Load every source before writing vd: architectural operands can alias. */
++static void __attribute__((target("+crypto")))
++sha256h_native(void *vd, const void *vn, const void *vm)
++{
++    uint32x4_t d = vld1q_u32(vd), n = vld1q_u32(vn), m = vld1q_u32(vm);
++    vst1q_u32(vd, vsha256hq_u32(d, n, m));
++}
++
++static void __attribute__((target("+crypto")))
++sha256h2_native(void *vd, const void *vn, const void *vm)
++{
++    uint32x4_t d = vld1q_u32(vd), n = vld1q_u32(vn), m = vld1q_u32(vm);
++    vst1q_u32(vd, vsha256h2q_u32(d, n, m));
++}
++
++static void __attribute__((target("+crypto")))
++sha256su0_native(void *vd, const void *vm)
++{
++    uint32x4_t d = vld1q_u32(vd), m = vld1q_u32(vm);
++    vst1q_u32(vd, vsha256su0q_u32(d, m));
++}
++
++static void __attribute__((target("+crypto")))
++sha256su1_native(void *vd, const void *vn, const void *vm)
++{
++    uint32x4_t d = vld1q_u32(vd), n = vld1q_u32(vn), m = vld1q_u32(vm);
++    vst1q_u32(vd, vsha256su1q_u32(d, n, m));
++}
++#endif
+ 
+ union CRYPTO_STATE {
+     uint8_t    bytes[16];
+@@ -296,6 +330,13 @@
+ 
+ void HELPER(crypto_sha256h)(void *vd, void *vn, void *vm, uint32_t desc)
+ {
++#if defined(__aarch64__) && !HOST_BIG_ENDIAN
++    if (likely(cpuinfo & CPUINFO_SHA256)) {
++        sha256h_native(vd, vn, vm);
++        clear_tail_16(vd, desc);
++        return;
++    }
++#endif
+     uint64_t *rd = vd;
+     uint64_t *rn = vn;
+     uint64_t *rm = vm;
+@@ -331,6 +372,13 @@
+ 
+ void HELPER(crypto_sha256h2)(void *vd, void *vn, void *vm, uint32_t desc)
+ {
++#if defined(__aarch64__) && !HOST_BIG_ENDIAN
++    if (likely(cpuinfo & CPUINFO_SHA256)) {
++        sha256h2_native(vd, vn, vm);
++        clear_tail_16(vd, desc);
++        return;
++    }
++#endif
+     uint64_t *rd = vd;
+     uint64_t *rn = vn;
+     uint64_t *rm = vm;
+@@ -358,6 +406,13 @@
+ 
+ void HELPER(crypto_sha256su0)(void *vd, void *vm, uint32_t desc)
+ {
++#if defined(__aarch64__) && !HOST_BIG_ENDIAN
++    if (likely(cpuinfo & CPUINFO_SHA256)) {
++        sha256su0_native(vd, vm);
++        clear_tail_16(vd, desc);
++        return;
++    }
++#endif
+     uint64_t *rd = vd;
+     uint64_t *rm = vm;
+     union CRYPTO_STATE d = { .l = { rd[0], rd[1] } };
+@@ -376,6 +431,13 @@
+ 
+ void HELPER(crypto_sha256su1)(void *vd, void *vn, void *vm, uint32_t desc)
+ {
++#if defined(__aarch64__) && !HOST_BIG_ENDIAN
++    if (likely(cpuinfo & CPUINFO_SHA256)) {
++        sha256su1_native(vd, vn, vm);
++        clear_tail_16(vd, desc);
++        return;
++    }
++#endif
+     uint64_t *rd = vd;
+     uint64_t *rn = vn;
+     uint64_t *rm = vm;

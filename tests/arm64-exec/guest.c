@@ -85,6 +85,7 @@ extern u64 husk_pac_call_loop(u64 n);
 extern u64 husk_pauth_diverse_loop(u64 n);
 extern u64 husk_counter_loop(u64 n);
 extern u64 husk_sha256_schedule_loop(u64 n);
+extern void husk_sha256_blocks(unsigned count, unsigned digest[8]);
 extern u64 husk_widen_loop(u64 n);
 extern void husk_kernel_read(unsigned index);
 extern void *husk_mops_copy(void *to, const void *from, u64 length);
@@ -518,6 +519,18 @@ void guest_main(u64 *initial_stack)
         elapsed = ns() - start;
         // SHA256SU0 recurrence from [1,1,1,1] with source [2,2,2,2].
         CHECK(result == 0xa120000176f77d22UL);
+        unsigned digest[8];
+        const unsigned empty_digest[8] = {0xe3b0c442, 0x98fc1c14, 0x9afbf4c8, 0x996fb924, 0x27ae41e4, 0x649b934c, 0xa495991b, 0x7852b855};
+        const unsigned mib_digest[8] = {0x9bc1b2a2, 0x88b26af7, 0x257a3627, 0x7ae3816a, 0x7d4f16e8, 0x9c1e7e77, 0xd0a5c48b, 0xad62b360};
+        husk_sha256_blocks(0, digest);
+        for (unsigned i = 0; i < 8; ++i) CHECK(digest[i] == empty_digest[i]);
+        u64 hash_start = ns();
+        husk_sha256_blocks(16384, digest);
+        u64 hash_elapsed = ns() - hash_start;
+        for (unsigned i = 0; i < 8; ++i) CHECK(digest[i] == mib_digest[i]);
+        print("BENCH sha256_hash_ns="); number(hash_elapsed);
+        print(" value="); number(digest[0]); print("\n");
+
         print("BENCH sha256_ns="); number(elapsed); print(" value="); number(result); print("\n");
     } else print("SKIP SHA256 unavailable\n");
     mixed_code_benchmark();

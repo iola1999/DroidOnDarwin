@@ -99,6 +99,7 @@ def main():
         apply(qemu, "qemu-arm64-exec.patch")
         apply(qemu, "qemu-arm64-pauth-assist.patch")
         apply(qemu, "qemu-arm64-mops-gating.patch")
+        apply(qemu, "qemu-arm64-host-sha256.patch")
         apply(qemu, "qemu-arm64-branch-assist.patch")
         apply(qemu, "qemu-arm64-fastmem-generation.patch")
         apply(qemu, "qemu-arm64-bulk-memory.patch")
