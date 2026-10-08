@@ -4,19 +4,15 @@
 
 ## 安装包
 
-`work/native-linux-nce/ios/Husk-NativeLinux-N2-R1.ipa`
-
-完整路径：
-
 ```text
-/Users/fan/project/app/husk_hyos/work/native-linux-nce/ios/Husk-NativeLinux-N2-R1.ipa
+/Users/fan/project/app/husk_hyos/work/native-linux-nce/ios/Husk-NativeLinux-N2-R2.ipa
 ```
 
-构建编号 `N2-R1-iOS-20261009-002805`，包大小 14.29 MiB。
+构建编号 `N2-R2-iOS-20261009-005529`，包大小 14.30 MiB。
 SHA-256：
 
 ```text
-f2e6ff69c0ff4238b2aaf6ed21993175f353b82e479feff11d721c25d3cf5ebb
+36e8730b164b01572bd51027e18f4a4db39dedaad2f08cddefd0f13e7150a244
 ```
 
 这是原生 Linux 与 NCE 的独立测试界面。它使用 `com.husk.app`，通过 iLoader
@@ -29,9 +25,9 @@ f2e6ff69c0ff4238b2aaf6ed21993175f353b82e479feff11d721c25d3cf5ebb
 2. 打开手机上的 LocalDevVPN 并连接，然后打开 Husk NCE。
 3. 点“启用内置 JIT 并测试”。应用会复用已有配对文件；若提示缺少文件，导入
    这台手机已有的 remote pairing 文件，或使用“通过 StikDebug 启用并测试”。
-4. 保持 Husk 在前台。应用会准备 80 MiB JIT 内存，断开调试器后运行检查，
+4. 保持 Husk 在前台。应用会准备 208 MiB JIT 内存，断开调试器后运行检查，
    完成时显示“全部测试通过”。运行时禁用自动锁屏，完成后恢复。
-   界面上的构建编号应以 `N2-R1-iOS-` 开头。
+   界面上的构建编号应以 `N2-R2-iOS-` 开头。
 5. 点“导出测试日志”，将 `native-linux-n2-ios.log` 放到 Mac 的
    `/Users/fan/Downloads/husk-log/`，用于分析本轮结果。
 
@@ -45,43 +41,63 @@ f2e6ff69c0ff4238b2aaf6ed21993175f353b82e479feff11d721c25d3cf5ebb
 
 | 日志项目 | 验证内容 |
 | --- | --- |
-| `prepare_jit_pool` | 调试器是否能准备 80 MiB 可执行内存，原有 JIT 分配器是否能创建 RW 别名并执行代码 |
-| `wait_debugger_detach` / `debugger_detached` | 等待 `P_TRACED` 清除，最长五秒；超时会显示失败并保存日志 |
-| `prepared_jit_fixed_remap_after_detach` | 同一地址交替重映射两页代码，八次执行均返回正确数值 |
+| `prepare_jit_pool` | 调试器准备 208 MiB 内存，原有 JIT 分配器创建 RW 别名并执行代码 |
+| `wait_debugger_detach` / `debugger_detached` | 等待 `P_TRACED` 清除，最长五秒；超时返回界面并保存日志 |
+| `prepared_fixed_address_code_updates` | 在原始 RX 地址交替写入两段代码，八次执行分别返回 42 或 43 |
+| `data_fixed_remap_after_detach` | 同一数据地址交替重映射两页，八次读取均符合预期 |
 | `prepared_nce_compute` | 同一段 400 万次计算/访存的直接执行与 NCE 耗时，五轮结果一致性检查 |
 | `native_linux_boot` / `linux_uname` | Linux 6.12 内核原生装载、启动和系统调用 |
 | `linux_nce_fork_cow_shared_futex_pipe_exec_wait` | 32 轮独立 Linux 进程、COW、共享页、futex、pipe、ELF exec 和 wait |
+| `linux_exec_then_fork_cow_wait` | exec 后再次 clone；固定代码地址继续执行，栈 COW、父子 TLS 和退出状态正确 |
 | `linux_exec_file_unchanged` | 改写指令后，原始 ELF 文件内容保持一致 |
-| `linux_nce_context_lifetime` | 分配与释放各 64 个 NCE 上下文 |
+| `fixed_linux_code_view` | 记录固定执行地址从 Linux 私有页恢复代码的次数 |
+| `linux_nce_context_lifetime` | 分配与释放各 96 个 NCE 上下文 |
 | `result: passed` | 本轮全部检查和内核关闭完成 |
 
-日志文件逐步写入。失败前最后一个阶段可帮助定位 JIT 分配、代码重映射、
-内核装载或 Linux 进程执行的问题。
+日志逐步写入。早期执行探针增加限定代码范围的异常恢复；Mac 上通过了
+非法指令、访问异常、返回值错误、恢复执行与原信号处理器恢复检查。
+iOS 签名异常的恢复效果仍待确认，后续 Linux 故障尚未全部接入恢复流程。
+
+## R1 闪退原因与 R2 调整
+
+本次 `native-linux-n2-ios 2.log` 来自 R1。80 MiB JIT 分配和原始 RX 地址上的
+函数执行成功，断开等待耗时 13 ms。日志结束于 `check_executable_remapping`。
+
+取回的两份 R1 系统崩溃报告中，`Husk-2026-10-09-003108.ips` 记录新映射
+地址 `0x1099f4000` 取指失败，异常为 `EXC_BAD_ACCESS / SIGBUS`，返回码
+`0x32`。iPhoneOS SDK 的 `mach/kern_return.h` 将 50 定义为
+`KERN_CODESIGN_ERROR`。该页显示 `r-x`，执行仍被 iOS 拒绝。
+另一份 `003112` 报告属于本次日志的 PID 30048，记录原有信号处理器重新
+抛出的 SIGBUS，其主线程位置无法确定最初故障点。摘要与文件哈希保存在
+`experiments/native-linux/results-ios-n2-r1.json`。
+
+R2 保留调试器最初准备的 RX 地址。进程切换时，将 Linux 私有代码页复制到
+这个地址对应的 RW 别名；数据页继续按 Linux 页表重映射。客体地址窗口缩为
+64 MiB，与 64 MiB 物理内存、64 MiB 内核虚拟地址区一起纳入准备的内存池。
+受控 ELF 固定使用一个 64 KiB 代码区，系统调用和 TLS 改写写回私有页。
+Linux 数据和栈的默认权限改为读写。
+
+这个实现需要测量代码复制的调度成本。当前支持固定布局的受控 ELF，任意
+ELF、动态代码、独立 init、完整信号语义、Android 和 GPU 仍需继续实现。
 
 ## 已完成的检查与边界
 
-共用内存池的 Mac 运行通过八次代码页重映射、五轮计算对照、Linux 启动和
-32 轮进程检查；N0/N1 回归通过。iOS Release 构建、ARM64 架构、动态库依赖、
-应用及扩展的签名完整性、IPA ZIP 完整性检查通过。包中包含内核映像、JIT
-脚本、HuskJITHelper 和 StikJIT。
+共用运行核心的 Mac 检查通过八次代码更新、八次数据重映射、五轮计算对照、
+Linux 启动和 32 轮进程检查；96 个上下文全部释放。iOS Release 构建、应用及
+扩展的签名完整性、IPA ZIP 完整性检查通过。包中包含内核映像、JIT 脚本、
+HuskJITHelper 和 StikJIT。IPA 使用临时签名，需要 iLoader 重签。
 
-IPA 使用临时签名，需要 iLoader 重签。初版已在手机安装并进入测试；
-R1 的安装和执行待验证。这次手机结果决定后续内存实现能否继续沿用。独立用户态 init、
-完整 Linux 信号语义、任意 ELF、Android 和 GPU 仍在后续范围内；当前测试
-无法给出 HyperOS 的整机加速倍数。
+R2 手机已完成固定地址代码执行、数据重映射和计算对照。Linux 初始化中的
+物理内存映射调用失败，随后触发断言退出；具体返回码尚未记录，修复继续。
+当前结果无法给出 HyperOS 整机加速倍数。
 
-## 初次手机运行与 R1 修复
+## 初版断开问题
 
-用户提供的 `native-linux-n2-ios.log` 来自初版 `N2-iOS-20261009-001629`。
-80 MiB JIT 分配成功，RW/RX 别名能读到相同指令，原生 ARM64 函数返回 42。
-断开请求返回后，`!nce_debugger_attached()` 断言失败，程序调用 `abort()`。
-代码页重映射与 Linux 启动尚未开始。
-
-R1 改为每 10 ms 查询一次调试状态，最多等待五秒。查询失败或超时会释放
-内存池并返回界面，保留日志。回归覆盖立即断开、延迟断开、持续连接、查询
-失败和返回数据长度异常，五种场景通过；Mac 的 32 轮 Linux 进程检查通过。
+初版 `N2-iOS-20261009-001629` 在断开请求返回后立即检查调试状态，
+`!nce_debugger_attached()` 断言失败并调用 `abort()`。R1 改为每 10 ms
+查询一次，最多等待五秒；查询失败或超时返回界面。立即断开、延迟断开、
+持续连接、查询失败和返回数据长度异常五种场景均通过回归检查。
 
 [debugserver 的公开实现](https://github.com/llvm/llvm-project/blob/main/lldb/tools/debugserver/source/MacOSX/MachProcess.mm#L1676-L1777)
 在处理断开时可能先恢复进程，再安排 SIGSTOP 与 `PT_DETACH`。
-这说明目标程序可能在断开尚未完成时继续执行；本次日志确认了检查发生时
-调试标志仍然存在。R1 会记录实际等待时间，手机结果仍待取得。
+R1 手机日志已确认等待后调试标志清除。

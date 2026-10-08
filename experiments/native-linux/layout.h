@@ -1,0 +1,10 @@
+/* SPDX-License-Identifier: GPL-2.0-or-later */
+#ifndef NCE_LAYOUT_H
+#define NCE_LAYOUT_H
+#define NCE_PAGE_SIZE 16384UL
+#define NCE_USER_SIZE 0x4000000UL
+#define NCE_RAM_SIZE 0x4000000UL
+#define NCE_VMALLOC_SIZE 0x4000000UL
+#define NCE_EXEC_OFFSET 0x10000UL
+#define NCE_EXEC_SIZE 65536UL
+#endif

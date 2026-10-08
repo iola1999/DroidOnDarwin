@@ -1,0 +1,52 @@
+{
+  "source_log_sha256": "9284d02ba4ec684c5ac461427d9ffcf28b7471c851a030b51784e3f6b2608bbc",
+  "build": "N2-R1-iOS-20261009-002805",
+  "ios": "27.2",
+  "log_pid": 30048,
+  "prepared_bytes": 83886080,
+  "rw_rx_alias_verified": true,
+  "native_return_value_before_detach": 42,
+  "debugger_detach_elapsed_ms": 13,
+  "last_logged_phase": "check_executable_remapping",
+  "linux_started": false,
+  "crash_reports": [
+    {
+      "file": "Husk-2026-10-09-003108.ips",
+      "sha256": "eb2f5f3f53a8c0642dbf1057fef75b66ec2a0f7d118caa990050a8f26077b0aa",
+      "pid": 30042,
+      "exception": {
+        "codes": "0x0000000000000032, 0x00000001099f4000",
+        "rawCodes": [
+          50,
+          4456398848
+        ],
+        "type": "EXC_BAD_ACCESS",
+        "signal": "SIGBUS",
+        "subtype": "UNKNOWN_0x32 at 0x00000001099f4000"
+      },
+      "pc": "0x1099f4000",
+      "region": "0x1099f4000 is in 0x1099f4000-0x1099f8000;  bytes after start: 0  bytes before end: 16383\n      REGION TYPE                   START - END        [ VSIZE] PRT/MAX SHRMOD  REGION DETAIL\n      CoreAnimation              1099cc000-1099f4000   [  160K] rw-/rwx SM=PRV  \n--->  shared memory              1099f4000-1099f8000   [   16K] r-x/rwx SM=SHM  \n      GAP OF 0x8000 BYTES\n      CoreAnimation              109a00000-109a0c000   [   48K] rw-/rwx SM=PRV  ",
+      "interpretation": "Instruction fetch at executable remap; KERN_CODESIGN_ERROR"
+    },
+    {
+      "file": "Husk-2026-10-09-003112.ips",
+      "sha256": "d0299b29b4ab86ceee1c50575a54f96893510fc415fef26c4f76800c8c7bb2fb",
+      "pid": 30048,
+      "exception": {
+        "codes": "0x0000000000000000, 0x0000000000000000",
+        "rawCodes": [
+          0,
+          0
+        ],
+        "type": "EXC_CRASH",
+        "signal": "SIGBUS"
+      },
+      "pc": "0x18be29a10",
+      "region": null,
+      "interpretation": "SIGBUS re-raised by the existing trap handler; crash thread does not identify original fault"
+    }
+  ],
+  "error_definition": "iPhoneOS SDK mach/kern_return.h: KERN_CODESIGN_ERROR = 50",
+  "r2_change": "Keep prepared executable addresses; copy per-process code; remap data only",
+  "r2_device_execution": "pending"
+}

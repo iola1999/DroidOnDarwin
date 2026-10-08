@@ -165,7 +165,7 @@ def main():
     flags = ["-O2", "-g", "-Wall", "-Wextra", "-Werror", "-I", OUT, "-I", EXPERIMENT]
     if PROCESS:
         flags += ["-DNCE_PROCESS"]
-        inputs += [EXPERIMENT / "lkl-process-host.c", EXPERIMENT / "memory.c", EXPERIMENT / "compute.c"]
+        inputs += [EXPERIMENT / "lkl-process-host.c", EXPERIMENT / "memory.c", EXPERIMENT / "execute-check.c", EXPERIMENT / "compute.c"]
         run([clang, *flags, "-isysroot", sdk, "-DNATIVE", "-c", EXPERIMENT / "guest.S", "-o", OUT / "native.o"])
     run([clang, *flags, "-isysroot", sdk, *inputs, *([OUT / "native.o"] if PROCESS else []), "-o", OUT / "lkl-probe"])
     ios_sdk = subprocess.check_output(["xcrun", "--sdk", "iphoneos", "--show-sdk-path"], text=True).strip()
@@ -185,7 +185,7 @@ def main():
                 "kernel_sha256": hashlib.sha256((OUT / "lkl-image.bin").read_bytes()).hexdigest()}
     sources = [*inputs, EXPERIMENT / "lkl-bridge.c", EXPERIMENT / "nce.h", EXPERIMENT / "guest.S", Path(__file__).resolve()]
     if PROCESS:
-        sources += [EXPERIMENT / "memory.h", Path(__file__).with_name("lkl_nce_patch.py"),
+        sources += [EXPERIMENT / "memory.h", EXPERIMENT / "layout.h", EXPERIMENT / "execute-check.h", Path(__file__).with_name("lkl_nce_patch.py"),
                     *sorted(EXPERIMENT.glob("lkl-*.h")),
                     *sorted(EXPERIMENT.glob("lkl-nce-*.c")), EXPERIMENT / "exec-guest.S"]
         manifest["stage"] = "N2a controlled Linux user processes"

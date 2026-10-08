@@ -14,7 +14,7 @@ ROOT = Path(__file__).resolve().parents[1]
 EXP = ROOT / 'experiments/native-linux'
 INPUT = ROOT / 'work/native-linux-nce/processes'
 OUT = ROOT / 'work/native-linux-nce/ios'
-REVISION = 'N2-R1'
+REVISION = 'N2-R2'
 
 
 def run(args, **kwargs):
@@ -44,6 +44,10 @@ def main():
          EXP / 'ios/Bridge.c', EXP / 'ios/detach-test.c', '-o', OUT / 'detach-test'])
     with (OUT / 'detach-test.log').open('w') as log:
         run([OUT / 'detach-test'], stdout=log)
+    run(['xcrun', 'clang', '-O2', '-Wall', '-Wextra', '-Werror', '-isysroot', sdk, '-I', EXP,
+         EXP / 'execute-check.c', EXP / 'ios/execute-test.c', '-o', OUT / 'execute-test'])
+    with (OUT / 'execute-test.log').open('w') as log:
+        run([OUT / 'execute-test'], stdout=log)
     build_id = REVISION + '-iOS-' + time.strftime('%Y%m%d-%H%M%S')
     info = plistlib.loads((ROOT / 'src/app/Husk/Info.plist').read_bytes())
     for key in ['CFBundleIcons', 'CFBundleIcons~ipad', 'HuskPerformanceBuild']:
@@ -53,13 +57,13 @@ def main():
                 UISupportedInterfaceOrientations=['UIInterfaceOrientationPortrait',
                     'UIInterfaceOrientationPortraitUpsideDown',
                     'UIInterfaceOrientationLandscapeLeft', 'UIInterfaceOrientationLandscapeRight'],
-                CFBundleShortVersionString='0.8.1', CFBundleVersion='36')
+                CFBundleShortVersionString='0.8.2', CFBundleVersion='37')
     plist(OUT / 'Info.plist', info)
     # Deployment entitlements are supplied by iLoader. This ad-hoc signature is
     # for archive integrity; get-task-allow is needed by the in-app JIT helper.
     plist(OUT / 'Husk.entitlements', {'get-task-allow': True})
     sources = [{'path': str(EXP / name)} for name in
-               ['lkl-main.c', 'lkl-host.c', 'lkl-process-host.c', 'memory.c', 'compute.c', 'nce.c', 'entry.S',
+               ['lkl-main.c', 'lkl-host.c', 'lkl-process-host.c', 'memory.c', 'execute-check.c', 'compute.c', 'nce.c', 'entry.S',
                 'ios/Bridge.c', 'ios/NativeLinuxApp.swift']]
     sources += [{'path': str(EXP / 'guest.S'), 'compilerFlags': ['-DNATIVE']}]
     sources += [{'path': str(ROOT / name)} for name in

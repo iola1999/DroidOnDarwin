@@ -17,7 +17,47 @@ _start:
     svc #0
     cmp x0, #1
     b.le fail
+    // Return to this ELF's fixed code address after clone, COW and wait.
+    sub sp, sp, #32
+    mov w9, #0x1357
+    str w9, [sp, #16]
+    mov x0, #0x11
+    movk x0, #8, lsl #16
+    mov x1, #0
+    mov x2, #0
+    mov x3, #0x456
+    mov x4, #0
+    mov x8, #220
+    svc #0
+    cbz x0, child
+    cmp x0, #0
+    b.lt fail
+    mov x20, x0
+    mov x1, sp
+    mov x2, #0
+    mov x3, #0
+    mov x8, #260
+    svc #0
+    cmp x0, x20
+    b.ne fail
+    ldr w9, [sp]
+    mov w10, #0x2b00
+    cmp w9, w10
+    b.ne fail
+    ldr w9, [sp, #16]
+    mov w10, #0x1357
+    cmp w9, w10
+    b.ne fail
+    mrs x9, tpidr_el0
+    cbnz x9, fail
     mov x0, #42
+    b finish
+child:
+    mrs x9, tpidr_el0
+    cmp x9, #0x456
+    b.ne fail
+    str wzr, [sp, #16]
+    mov x0, #43
     b finish
 fail:
     mov x0, #98

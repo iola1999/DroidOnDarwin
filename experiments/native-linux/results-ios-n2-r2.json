@@ -1,0 +1,110 @@
+{
+  "build": "N2-R2-iOS-20261009-005529",
+  "ios": "27.2",
+  "pid": 30286,
+  "log_sha256": "1c7307f8950c0ecf798bc7f92bf93ebbabc6c0ecaa812c02262721fe788bf4d0",
+  "results": [
+    {
+      "phase": "prepare_jit_pool",
+      "bytes": 218103808
+    },
+    {
+      "phase": "wait_debugger_detach"
+    },
+    {
+      "phase": "debugger_detached",
+      "elapsed_ms": 0
+    },
+    {
+      "phase": "check_fixed_code_and_data_remap"
+    },
+    {
+      "phase": "execute_original_jit_address",
+      "iteration": 0
+    },
+    {
+      "phase": "execute_original_jit_address",
+      "iteration": 1
+    },
+    {
+      "phase": "execute_original_jit_address",
+      "iteration": 2
+    },
+    {
+      "phase": "execute_original_jit_address",
+      "iteration": 3
+    },
+    {
+      "phase": "execute_original_jit_address",
+      "iteration": 4
+    },
+    {
+      "phase": "execute_original_jit_address",
+      "iteration": 5
+    },
+    {
+      "phase": "execute_original_jit_address",
+      "iteration": 6
+    },
+    {
+      "phase": "execute_original_jit_address",
+      "iteration": 7
+    },
+    {
+      "test": "prepared_fixed_address_code_updates",
+      "passed": true,
+      "updates": 8
+    },
+    {
+      "test": "data_fixed_remap_after_detach",
+      "passed": true,
+      "switches": 8
+    },
+    {
+      "bench": "prepared_nce_compute",
+      "sample": 0,
+      "iterations": 4000000,
+      "direct_ns": 4523708,
+      "nce_ns": 4428959
+    },
+    {
+      "bench": "prepared_nce_compute",
+      "sample": 1,
+      "iterations": 4000000,
+      "direct_ns": 3771000,
+      "nce_ns": 3778125
+    },
+    {
+      "bench": "prepared_nce_compute",
+      "sample": 2,
+      "iterations": 4000000,
+      "direct_ns": 3770167,
+      "nce_ns": 3963792
+    },
+    {
+      "bench": "prepared_nce_compute",
+      "sample": 3,
+      "iterations": 4000000,
+      "direct_ns": 4132250,
+      "nce_ns": 3837208
+    },
+    {
+      "bench": "prepared_nce_compute",
+      "sample": 4,
+      "iterations": 4000000,
+      "direct_ns": 4088333,
+      "nce_ns": 3783042
+    },
+    {
+      "phase": "load_linux_image"
+    },
+    {
+      "phase": "linux_init"
+    }
+  ],
+  "crash_report": "Husk-2026-10-09-010126.ips",
+  "crash_report_sha256": "4b80171e5554786e59b8a1aceee3b42e0394fe1213171f9f5a4c9021e909ef67",
+  "failure": "shmem_map vm_remap returned non-success during Linux init; exact return value was not logged",
+  "exception": "SIGABRT",
+  "linux_boot_completed": false
+}

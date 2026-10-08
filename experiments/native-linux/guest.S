@@ -304,8 +304,14 @@ process_awakened:
     b.ne process_fail
     mov x9, #789
     msr tpidr_el0, x9
-    adr x0, process_exec_path
-    sub sp, sp, #32
+    // Linux string helpers require the pathname inside the guest address range.
+    adr x9, process_exec_path
+    ldr x10, [x9]
+    ldrh w11, [x9, #8]
+    sub sp, sp, #64
+    str x10, [sp, #32]
+    strh w11, [sp, #40]
+    add x0, sp, #32
     stp x0, xzr, [sp]
     mov x1, sp
     mov x2, #0

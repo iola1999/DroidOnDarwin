@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 #include "nce.h"
 #include "memory.h"
+#include "layout.h"
 #include "lkl-host-ops.h"
 #include "guest-image.h"
 #include "exec-image.h"
@@ -17,13 +18,15 @@
 #define REQUIRE(c) do { if (!(c)) { fprintf(stderr, "N2 failure %s:%d: %s\n", __FILE__, __LINE__, #c); abort(); } } while (0)
 static uintptr_t user_base;
 #define USER_BASE user_base
-#define USER_SIZE 0x10000000UL
-#define PAGE 16384UL
+#define USER_SIZE NCE_USER_SIZE
+#define PAGE NCE_PAGE_SIZE
 extern struct lkl_host_operations nce_lkl_host;
-typedef struct { NceState state; void *signal_stack; void *exec_rw; } Process;
+typedef struct { NceState state; void *signal_stack; } Process;
 static NceState *active;
 static NceCode code;
-static NceCode ram;
+static NceCode ram, address_space, executable;
+static unsigned long code_backing[NCE_EXEC_SIZE / NCE_PAGE_SIZE];
+static unsigned long code_copies;
 static size_t ram_size;
 static long (*run_syscall)(long, long *);
 static int (*page_fault)(unsigned long, int);
@@ -33,28 +36,50 @@ static struct sigaction old_segv, old_bus;
 static void shmem_init(unsigned long size)
 {
     ram_size = size;
-    REQUIRE(size == 0x4000000UL);
-    ram = nce_memory_take(size);
+    REQUIRE(size == NCE_RAM_SIZE);
+    ram = (NceCode){address_space.rw + NCE_USER_SIZE, address_space.rx + NCE_USER_SIZE, size};
     memset(ram.rw, 0, size);
 }
 static void *shmem_map(void *address, unsigned long offset, unsigned long size, enum lkl_prot prot)
 {
+    uintptr_t start = (uintptr_t)address;
+    uintptr_t code_start = (uintptr_t)executable.rx;
+    REQUIRE(!(offset % PAGE) && !(size % PAGE) && offset <= ram_size && size <= ram_size - offset);
+    if (start >= code_start && start < code_start + executable.size) {
+        REQUIRE(size <= code_start + executable.size - start);
+        size_t position = start - code_start;
+        /* Execute from the debugger-prepared address. Task switches copy
+         * Linux's private pages without replacing this VM entry. */
+        memcpy(executable.rw + position, ram.rw + offset, size);
+        for (size_t i = 0; i < size; i += PAGE) code_backing[(position + i) / PAGE] = offset + i;
+        nce_sync_code((NceCode){executable.rw + position, executable.rx + position, size});
+        ++code_copies;
+        return address;
+    }
+    REQUIRE(!(prot & LKL_PROT_EXEC));
     vm_address_t target = (uintptr_t)address;
     vm_prot_t current, maximum;
-    REQUIRE(!(offset % PAGE) && !(size % PAGE) && offset <= ram_size && size <= ram_size - offset);
     REQUIRE(vm_remap(mach_task_self(), &target, size, 0, VM_FLAGS_FIXED | VM_FLAGS_OVERWRITE,
-                     mach_task_self(), (uintptr_t)((prot & LKL_PROT_EXEC) && !(prot & LKL_PROT_WRITE) ? ram.rx : ram.rw) + offset, FALSE, &current, &maximum,
+                     mach_task_self(), (uintptr_t)ram.rw + offset, FALSE, &current, &maximum,
                      VM_INHERIT_NONE) == KERN_SUCCESS);
-    int host_prot = ((prot & LKL_PROT_READ) ? PROT_READ : 0) | ((prot & LKL_PROT_WRITE) ? PROT_WRITE : 0) | ((prot & LKL_PROT_EXEC) ? PROT_EXEC : 0);
-    /* RX ELF mappings and the bootstrap pool execute directly. Writable Linux
-     * mappings remain non-executable; dynamic code needs a separate policy. */
-    if (host_prot & PROT_WRITE) host_prot &= ~PROT_EXEC;
+    int host_prot = ((prot & LKL_PROT_READ) ? PROT_READ : 0) | ((prot & LKL_PROT_WRITE) ? PROT_WRITE : 0);
     if (mprotect(address, size, host_prot)) { perror("shmem mprotect"); fprintf(stderr, "address=%p size=%lx prot=%x\n", address, size, prot); abort(); }
     return address;
 }
 static int protect_none(void *address, unsigned long size)
 {
-    return mprotect(address, size, PROT_NONE);
+    uintptr_t start = (uintptr_t)address, end = start + size;
+    uintptr_t code_start = (uintptr_t)executable.rx, code_end = code_start + executable.size;
+    if (end <= code_start || start >= code_end) return mprotect(address, size, PROT_NONE);
+    if (start < code_start && mprotect((void *)start, code_start - start, PROT_NONE)) return -1;
+    if (end > code_end && mprotect((void *)code_end, end - code_end, PROT_NONE)) return -1;
+    size_t offset = start > code_start ? start - code_start : 0;
+    size_t stop = end < code_end ? end - code_start : executable.size;
+    /* UDF instructions reject stale execution while the RX mapping stays put. */
+    memset(executable.rw + offset, 0, stop - offset);
+    for (size_t i = offset; i < stop; i += PAGE) code_backing[i / PAGE] = ~0UL;
+    nce_sync_code((NceCode){executable.rw + offset, executable.rx + offset, stop - offset});
+    return 0;
 }
 
 static void fault(int signal, siginfo_t *info, void *opaque)
@@ -87,7 +112,6 @@ static void *user_clone(void *parent, unsigned long sp, unsigned long tls, unsig
 static void user_free(void *state)
 {
     Process *process = state;
-    if (process->exec_rw) REQUIRE(munmap(process->exec_rw, 65536) == 0);
     free(process->signal_stack);
     ++freed;
     free(process);
@@ -120,29 +144,30 @@ static void user_exec(void *opaque, unsigned long entry, unsigned long stack)
     Process *process = opaque;
     NceState *state = &process->state;
     unsigned char original[EXEC_TEXT_SIZE];
-    /* Linux has created private pages before exposing this writable alias. */
+    /* start_thread() made these pages private with FOLL_WRITE | FOLL_FORCE. */
+    REQUIRE(entry == (uintptr_t)executable.rx);
     memcpy(original, (void *)entry, sizeof(original));
-    vm_address_t rw = 0;
-    vm_prot_t current, maximum;
-    REQUIRE(vm_remap(mach_task_self(), &rw, 65536, 0, VM_FLAGS_ANYWHERE,
-                     mach_task_self(), entry, FALSE, &current, &maximum, VM_INHERIT_NONE) == KERN_SUCCESS);
-    REQUIRE(mprotect((void *)rw, 65536, PROT_READ | PROT_WRITE) == 0);
-    if (process->exec_rw) REQUIRE(munmap(process->exec_rw, 65536) == 0);
-    process->exec_rw = (void *)rw;
     memset(state->x, 0, sizeof(state->x));
     memset(state->vector, 0, sizeof(state->vector));
     state->sp = stack;
     state->tls = state->nzcv = state->fpcr = state->fpsr = 0;
-    REQUIRE(nce_prepare_shared((NceCode){(void *)rw, (void *)entry, 65536}, state,
+    REQUIRE(nce_prepare_shared(executable, state,
                                &active, original, sizeof(original), 0) == 0);
+    /* Preserve patched instructions in Linux's private backing pages so the
+     * next switch can restore this process without changing its code address. */
+    for (size_t i = 0; i < executable.size; i += PAGE) {
+        REQUIRE(code_backing[i / PAGE] < ram_size);
+        memcpy(ram.rw + code_backing[i / PAGE], executable.rw + i, PAGE);
+    }
 }
 unsigned long nce_process_setup(void)
 {
     REQUIRE(getpagesize() == PAGE);
-    vm_address_t target = 0;
-    REQUIRE(vm_allocate(mach_task_self(), &target, USER_SIZE + 0x8000000UL, VM_FLAGS_ANYWHERE) == KERN_SUCCESS);
-    user_base = target;
-    REQUIRE(mprotect((void *)target, USER_SIZE + 0x8000000UL, PROT_NONE) == 0);
+    address_space = nce_memory_take(NCE_USER_SIZE + NCE_RAM_SIZE + NCE_VMALLOC_SIZE);
+    user_base = (uintptr_t)address_space.rx;
+    executable = (NceCode){address_space.rw + NCE_EXEC_OFFSET, address_space.rx + NCE_EXEC_OFFSET, NCE_EXEC_SIZE};
+    memset(code_backing, 0xff, sizeof(code_backing));
+    REQUIRE(protect_none(address_space.rx, address_space.size) == 0);
     nce_lkl_host.shmem_init = shmem_init;
     nce_lkl_host.shmem_mmap = shmem_map;
     nce_lkl_host.munmap = protect_none;
@@ -192,8 +217,10 @@ void nce_process_tests(long (*host_syscall)(long, long *), long (*guest_syscall)
     }
     REQUIRE(clock_gettime(CLOCK_MONOTONIC_RAW, &end) == 0);
     double elapsed_ms = (end.tv_sec - begin.tv_sec) * 1000.0 + (end.tv_nsec - begin.tv_nsec) / 1e6;
+    REQUIRE(allocated == rounds * 3);
     printf("{\"test\":\"linux_nce_fork_cow_shared_futex_pipe_exec_wait\",\"passed\":true,\"rounds\":%u,\"faults\":%lu,\"elapsed_ms\":%.3f}\n", rounds, faults, elapsed_ms);
     REQUIRE(faults >= rounds);
+    puts("{\"test\":\"linux_exec_then_fork_cow_wait\",\"passed\":true}");
     file_args[0] = -100; file_args[1] = (long)"/nce-exec"; file_args[2] = 0;
     fd = host_syscall(56, file_args);
     REQUIRE(fd >= 0);
@@ -212,8 +239,8 @@ void nce_process_cleanup(void)
 {
     REQUIRE(sigaction(SIGSEGV, &old_segv, NULL) == 0);
     REQUIRE(sigaction(SIGBUS, &old_bus, NULL) == 0);
-    REQUIRE(munmap((void *)USER_BASE, USER_SIZE + 0x8000000UL) == 0);
-    /* Physical RAM and bootstrap code belong to the prepared pool. */
+    /* The address space, physical RAM and code belong to the prepared pool. */
+    printf("{\"test\":\"fixed_linux_code_view\",\"copies\":%lu,\"passed\":true}\n", code_copies);
     printf("{\"test\":\"linux_nce_context_lifetime\",\"allocated\":%lu,\"freed\":%lu}\n", allocated, freed);
     REQUIRE(allocated == freed);
 }

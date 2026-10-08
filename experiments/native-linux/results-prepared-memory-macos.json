@@ -4,13 +4,50 @@
   "results": [
     {
       "phase": "prepare_jit_pool",
-      "bytes": 83886080
+      "bytes": 218103808
     },
     {
-      "phase": "check_executable_remapping"
+      "phase": "check_fixed_code_and_data_remap"
     },
     {
-      "test": "prepared_jit_fixed_remap_after_detach",
+      "phase": "execute_original_jit_address",
+      "iteration": 0
+    },
+    {
+      "phase": "execute_original_jit_address",
+      "iteration": 1
+    },
+    {
+      "phase": "execute_original_jit_address",
+      "iteration": 2
+    },
+    {
+      "phase": "execute_original_jit_address",
+      "iteration": 3
+    },
+    {
+      "phase": "execute_original_jit_address",
+      "iteration": 4
+    },
+    {
+      "phase": "execute_original_jit_address",
+      "iteration": 5
+    },
+    {
+      "phase": "execute_original_jit_address",
+      "iteration": 6
+    },
+    {
+      "phase": "execute_original_jit_address",
+      "iteration": 7
+    },
+    {
+      "test": "prepared_fixed_address_code_updates",
+      "passed": true,
+      "updates": 8
+    },
+    {
+      "test": "data_fixed_remap_after_detach",
       "passed": true,
       "switches": 8
     },
@@ -18,36 +55,36 @@
       "bench": "prepared_nce_compute",
       "sample": 0,
       "iterations": 4000000,
-      "direct_ns": 4409292,
-      "nce_ns": 4181125
+      "direct_ns": 3732333,
+      "nce_ns": 3778625
     },
     {
       "bench": "prepared_nce_compute",
       "sample": 1,
       "iterations": 4000000,
-      "direct_ns": 4234250,
-      "nce_ns": 4026625
+      "direct_ns": 3749709,
+      "nce_ns": 3637458
     },
     {
       "bench": "prepared_nce_compute",
       "sample": 2,
       "iterations": 4000000,
-      "direct_ns": 3990375,
-      "nce_ns": 3838666
+      "direct_ns": 3763458,
+      "nce_ns": 3749042
     },
     {
       "bench": "prepared_nce_compute",
       "sample": 3,
       "iterations": 4000000,
-      "direct_ns": 3790125,
-      "nce_ns": 3854791
+      "direct_ns": 3688000,
+      "nce_ns": 3582458
     },
     {
       "bench": "prepared_nce_compute",
       "sample": 4,
       "iterations": 4000000,
-      "direct_ns": 3869584,
-      "nce_ns": 3750875
+      "direct_ns": 3620708,
+      "nce_ns": 3611334
     },
     {
       "phase": "load_linux_image"
@@ -58,7 +95,7 @@
     {
       "test": "native_linux_boot",
       "passed": true,
-      "ms": 29.362
+      "ms": 28.086
     },
     {
       "test": "linux_uname",
@@ -72,8 +109,12 @@
       "test": "linux_nce_fork_cow_shared_futex_pipe_exec_wait",
       "passed": true,
       "rounds": 32,
-      "faults": 288,
-      "elapsed_ms": 11.734
+      "faults": 352,
+      "elapsed_ms": 15.237
+    },
+    {
+      "test": "linux_exec_then_fork_cow_wait",
+      "passed": true
     },
     {
       "test": "linux_exec_file_unchanged",
@@ -87,38 +128,46 @@
       "phase": "linux_shutdown"
     },
     {
+      "test": "fixed_linux_code_view",
+      "copies": 512,
+      "passed": true
+    },
+    {
       "test": "linux_nce_context_lifetime",
-      "allocated": 64,
-      "freed": 64
+      "allocated": 96,
+      "freed": 96
     },
     {
       "result": "passed"
     }
   ],
-  "ios_status": "N2-R1 IPA built; initial device run passed JIT selftest and aborted during detach check; R1 device run pending",
+  "ios_status": "R2 device passed fixed-address code updates, data remap and compute; shmem_map failed vm_remap during Linux init",
   "config_sha256": "c8b4b3145456e28575f08d993f9300dd7d40d1702a173dabd6dee262ba2c62f8",
-  "kernel_sha256": "847a9795b7551d09e65dc62ca06db0074aec3471496343a5101cbdcc518da3ff",
+  "kernel_sha256": "9331f72d98ea785c4727c064de94f517130929031f8732543071620de99e92c7",
   "stage": "N2a controlled Linux user processes",
-  "exec_elf_sha256": "f7621430db6d466cbd93fe20212b2cf01b744f5e56571acd6fb88bffb401989f",
+  "exec_elf_sha256": "2653f70b168f2c2b58e048b5fe81137ebf36d6a8e6e13a37f4d579b02f6c3e9d",
   "input_sha256": {
     "experiments/native-linux/lkl-main.c": "d43f1031c3abf30b4f12632452154bde6472ace5c0ad91238e353e862a47d15a",
     "experiments/native-linux/lkl-host.c": "a99a508454f8a5bb8be38e4ef9066dd1e26b28b1c0991f4fc888a4ddc193a834",
     "experiments/native-linux/nce.c": "d219210048a93b5a6da8bc95521c03b5a518f84fd563376eda8068a5823c58c6",
     "experiments/native-linux/entry.S": "c0fa4912d8e82cd0bec0f8589c27f60742ba612019ab7a80bf57efdca57cc79b",
-    "experiments/native-linux/lkl-process-host.c": "6b577da85a4c35adddde90463c87ab7cd69c918ed9575e166669d91e99e0dc73",
-    "experiments/native-linux/memory.c": "9c02327e1e2b0e3e9ce27cfba81f378e6bc88dfda8bbfeacf5cbdfc34d6283e2",
+    "experiments/native-linux/lkl-process-host.c": "56350384c4d6d8f7be82d44b08bad6f93511bb835346a402280dad446c7c3816",
+    "experiments/native-linux/memory.c": "847c12af96b020b08bac3d3030c22a55808f867604053ac8d0af5030093b0904",
+    "experiments/native-linux/execute-check.c": "6a9f682b36b21b70ba28e8bc6b0023693a2906f7dfbecb46fbe8c50ff68195ef",
     "experiments/native-linux/compute.c": "ed859290238192fa05f87f2be03a04b376fde0df1c4821cf7982fa30bfab5161",
     "experiments/native-linux/lkl-bridge.c": "78c13872fff1c7769d4c2de19565d3a88dd5cf6e96016be0b7e9d4c928bee79d",
     "experiments/native-linux/nce.h": "dbc57eb21250fda9fea4fd9c6322af48cf094b61693040dd9cc786d3c098163c",
-    "experiments/native-linux/guest.S": "a384a4c82e767e1742fd1eb0a497d63fbf6d41044244e7261d6b547b77294354",
-    "scripts/probe_lkl.py": "e06e238af5ad8af8e3a4b60d0a6a17fcdc76d61f92b5e1ca58eb53e50e73358a",
+    "experiments/native-linux/guest.S": "6e6c2ad54238e847546f96b4614ec1e280bb4ec6ded63db858756fea753ab496",
+    "scripts/probe_lkl.py": "3646b3dbf978555a6072b41fa4bf80599be994279ee75eaf6b6172ad9682befb",
     "experiments/native-linux/memory.h": "28f52175938e4ba88adaba094442d3fd6a4d8d5a9dc0f878f7e4956cb5aea481",
-    "scripts/lkl_nce_patch.py": "d4fa7abb77d6e16d03cd1a817a6ae8d0439682ad311f99179663093bf94619a6",
-    "experiments/native-linux/lkl-elf.h": "4cd475ba087021ed24c1f1f476bf0bd76ca887694e8b41fa43bb2f09e72b3d30",
+    "experiments/native-linux/layout.h": "08ef2e03c2333cc64672461fa94aa566aa3c8582966edc070960c8521430607e",
+    "experiments/native-linux/execute-check.h": "3bf58a2a09ea16d489f96b49f50bfaa7b1106216c15f40a7d4bde588d53f2541",
+    "scripts/lkl_nce_patch.py": "2fe849f2b7ace07d0d4cf9a1e4e59f7a3a21d2be4e6a49abd3b1f5142ed114ee",
+    "experiments/native-linux/lkl-elf.h": "cd41b49a7b5918d4909c27893056c6f7b92ae36f2107324054c856a1c065a88d",
     "experiments/native-linux/lkl-mmu-context.h": "5241bd972afbd9353238e058897c2afef08626d8fc04a800df6508f0f567d1d9",
     "experiments/native-linux/lkl-tlbflush.h": "59da32cd018e19b31ea49f868ecadb3122bf0b09dd4b40c5780b96797577df5d",
-    "experiments/native-linux/lkl-nce-mmu.c": "f56f51c0d3da5d169d774e927f8d59b265fe84604a0dbbbeb3ca839a82ce06a1",
+    "experiments/native-linux/lkl-nce-mmu.c": "67107a928a80b99da2fa244d9931d0dc09394165fc2b6e3ff8fbe767c3ce6949",
     "experiments/native-linux/lkl-nce-process.c": "fddbf5abe93c8806ff179d41ad61d6bb4fcf403fa26fa2a8751c5e577446e220",
-    "experiments/native-linux/exec-guest.S": "2e1e1e67018374bd239c244ab1f99f4ffaf360d681818a6822d2067f644cc8c5"
+    "experiments/native-linux/exec-guest.S": "833d10bd1b10f0b3a35c7324aaec8a24b1774a42200c24389bd772facb0244e8"
   }
 }

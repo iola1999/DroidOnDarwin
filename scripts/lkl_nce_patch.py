@@ -14,6 +14,7 @@ def apply(source: Path, experiment: Path):
         path.write_text(text.replace(before, after))
 
     arch = "arch/lkl/"
+    edit(arch + "include/asm/page.h", "#include <asm/page-mmu.h>", "#include <asm/page-mmu.h>\n#define VM_DATA_DEFAULT_FLAGS VM_DATA_FLAGS_NON_EXEC")
     edit(arch + "include/asm/page-mmu.h", "#define PAGE_SHIFT\t12", "#define PAGE_SHIFT\t14")
     edit(arch + "include/asm/thread_info.h", "#define THREAD_SIZE\t       (4096)", "#define THREAD_SIZE\t       (16384)")
     edit(arch + "Kconfig", "\tselect ARCH_THREAD_STACK_ALLOCATOR", "\tselect ARCH_THREAD_STACK_ALLOCATOR\n\tselect CLONE_BACKWARDS if MMU")
@@ -51,7 +52,8 @@ def apply(source: Path, experiment: Path):
     edit(arch + "kernel/setup.c", "\tinit_pid_ns.child_reaper = 0;", "#ifndef CONFIG_MMU\n\tinit_pid_ns.child_reaper = 0;\n#endif")
     edit(arch + "mm/Makefile", "obj-$(CONFIG_MMU) += mmu_mem.o", "obj-$(CONFIG_MMU) += mmu_mem.o nce_mmu.o")
     edit(arch + "kernel/Makefile", "\tsyscalls_32.o cpu.o init.o stacktrace.o", "\tsyscalls_32.o cpu.o init.o stacktrace.o\nobj-$(CONFIG_MMU) += nce_process.o")
-    for local, destination in (("lkl-nce-mmu.c", "mm/nce_mmu.c"),
+    for local, destination in (("layout.h", "include/asm/nce-layout.h"),
+                               ("lkl-nce-mmu.c", "mm/nce_mmu.c"),
                                ("lkl-nce-process.c", "kernel/nce_process.c"),
                                ("lkl-mmu-context.h", "include/asm/mmu_context.h"),
                                ("lkl-elf.h", "include/asm/elf.h"),

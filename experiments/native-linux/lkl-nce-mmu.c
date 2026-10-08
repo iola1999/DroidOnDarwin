@@ -2,12 +2,13 @@
 #include <linux/mm.h>
 #include <linux/pgtable.h>
 #include <asm/host_ops.h>
+#include <asm/nce-layout.h>
 
 unsigned long nce_user_base, nce_task_size, nce_memory_start;
 void nce_set_layout(unsigned long base)
 {
     nce_user_base = base;
-    nce_task_size = base + 0x10000000UL;
+    nce_task_size = base + NCE_USER_SIZE;
     nce_memory_start = nce_task_size;
 }
 #define USER_BASE nce_user_base
