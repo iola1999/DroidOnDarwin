@@ -24,7 +24,8 @@ extern struct lkl_host_operations nce_lkl_host;
 typedef struct { NceState state; void *signal_stack; } Process;
 static NceState *active;
 static NceCode code;
-static NceCode ram, address_space, executable;
+static unsigned char *ram;
+static NceCode executable;
 static unsigned long code_backing[NCE_EXEC_SIZE / NCE_PAGE_SIZE];
 static unsigned long code_copies;
 static size_t ram_size;
@@ -37,8 +38,8 @@ static void shmem_init(unsigned long size)
 {
     ram_size = size;
     REQUIRE(size == NCE_RAM_SIZE);
-    ram = (NceCode){address_space.rw + NCE_USER_SIZE, address_space.rx + NCE_USER_SIZE, size};
-    memset(ram.rw, 0, size);
+    ram = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_ANON | MAP_PRIVATE, -1, 0);
+    REQUIRE(ram != MAP_FAILED);
 }
 static void *shmem_map(void *address, unsigned long offset, unsigned long size, enum lkl_prot prot)
 {
@@ -50,20 +51,15 @@ static void *shmem_map(void *address, unsigned long offset, unsigned long size, 
         size_t position = start - code_start;
         /* Execute from the debugger-prepared address. Task switches copy
          * Linux's private pages without replacing this VM entry. */
-        memcpy(executable.rw + position, ram.rw + offset, size);
+        memcpy(executable.rw + position, ram + offset, size);
         for (size_t i = 0; i < size; i += PAGE) code_backing[(position + i) / PAGE] = offset + i;
         nce_sync_code((NceCode){executable.rw + position, executable.rx + position, size});
         ++code_copies;
         return address;
     }
     REQUIRE(!(prot & LKL_PROT_EXEC));
-    vm_address_t target = (uintptr_t)address;
-    vm_prot_t current, maximum;
-    REQUIRE(vm_remap(mach_task_self(), &target, size, 0, VM_FLAGS_FIXED | VM_FLAGS_OVERWRITE,
-                     mach_task_self(), (uintptr_t)ram.rw + offset, FALSE, &current, &maximum,
-                     VM_INHERIT_NONE) == KERN_SUCCESS);
     int host_prot = ((prot & LKL_PROT_READ) ? PROT_READ : 0) | ((prot & LKL_PROT_WRITE) ? PROT_WRITE : 0);
-    if (mprotect(address, size, host_prot)) { perror("shmem mprotect"); fprintf(stderr, "address=%p size=%lx prot=%x\n", address, size, prot); abort(); }
+    REQUIRE(nce_memory_remap(address, ram + offset, size, host_prot) == 0);
     return address;
 }
 static int protect_none(void *address, unsigned long size)
@@ -157,17 +153,16 @@ static void user_exec(void *opaque, unsigned long entry, unsigned long stack)
      * next switch can restore this process without changing its code address. */
     for (size_t i = 0; i < executable.size; i += PAGE) {
         REQUIRE(code_backing[i / PAGE] < ram_size);
-        memcpy(ram.rw + code_backing[i / PAGE], executable.rw + i, PAGE);
+        memcpy(ram + code_backing[i / PAGE], executable.rw + i, PAGE);
     }
 }
 unsigned long nce_process_setup(void)
 {
     REQUIRE(getpagesize() == PAGE);
-    address_space = nce_memory_take(NCE_USER_SIZE + NCE_RAM_SIZE + NCE_VMALLOC_SIZE);
-    user_base = (uintptr_t)address_space.rx;
-    executable = (NceCode){address_space.rw + NCE_EXEC_OFFSET, address_space.rx + NCE_EXEC_OFFSET, NCE_EXEC_SIZE};
+    executable = nce_memory_guest_code();
+    user_base = (uintptr_t)executable.rx - NCE_EXEC_OFFSET;
     memset(code_backing, 0xff, sizeof(code_backing));
-    REQUIRE(protect_none(address_space.rx, address_space.size) == 0);
+    REQUIRE(protect_none((void *)user_base, NCE_USER_SIZE + NCE_RAM_SIZE + NCE_VMALLOC_SIZE) == 0);
     nce_lkl_host.shmem_init = shmem_init;
     nce_lkl_host.shmem_mmap = shmem_map;
     nce_lkl_host.munmap = protect_none;
@@ -239,7 +234,8 @@ void nce_process_cleanup(void)
 {
     REQUIRE(sigaction(SIGSEGV, &old_segv, NULL) == 0);
     REQUIRE(sigaction(SIGBUS, &old_bus, NULL) == 0);
-    /* The address space, physical RAM and code belong to the prepared pool. */
+    REQUIRE(munmap(ram, ram_size) == 0);
+    /* The virtual address reservation and code belong to memory.c. */
     printf("{\"test\":\"fixed_linux_code_view\",\"copies\":%lu,\"passed\":true}\n", code_copies);
     printf("{\"test\":\"linux_nce_context_lifetime\",\"allocated\":%lu,\"freed\":%lu}\n", allocated, freed);
     REQUIRE(allocated == freed);

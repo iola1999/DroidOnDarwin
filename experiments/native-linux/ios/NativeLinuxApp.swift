@@ -55,7 +55,7 @@ final class ProbeModel: ObservableObject {
             else if log.contains("\"phase\":\"linux_init\"") { status = "正在启动 Linux 内核（\(seconds) 秒）" }
             else if log.contains("\"phase\":\"check_fixed_code_and_data_remap\"") { status = "正在检查代码执行和数据映射（\(seconds) 秒）" }
             else if log.contains("\"phase\":\"wait_debugger_detach\"") { status = "正在等待 JIT 助手断开（\(seconds) 秒）" }
-            else { status = "正在准备 208 MiB JIT 内存（\(seconds) 秒）" }
+            else { status = "正在准备 JIT 代码区域（\(seconds) 秒）" }
         }
     }
     private func beginAttempt() -> Bool {

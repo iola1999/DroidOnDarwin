@@ -158,9 +158,9 @@ Linux 缺页处理，尚未解决所有重入和持锁条件。后续需要建�
 分别处理客体访问失败与宿主故障。
 
 2026-10-09 已将内核装载和 N2a 进程检查接入 iOS 应用，生成
-`work/native-linux-nce/ios/Husk-NativeLinux-N2-R2.ipa`。安装包的构建、签名完整性
-和 ZIP 检查通过。R1 已完成手机断开检查，在执行重映射代码时失败；R2 的
-手机执行待验证。运行方式见[手机测试说明](native-linux-n2-ios-test.md)。
+`work/native-linux-nce/ios/Husk-NativeLinux-N2-R3.ipa`。安装包的构建、签名完整性
+和 ZIP 检查通过。R1 在执行重映射代码时失败；R2 通过执行预检，在 Linux
+初始化的数据映射中失败。R3 的手机执行待验证。运行方式见[手机测试说明](native-linux-n2-ios-test.md)。
 
 其他待做项包括任意 ELF 的指令检查、x18 使用、4 KiB/16 KiB 混合保护、
 异步抢占、多核、ART 动态代码和 Android 图形。
@@ -172,7 +172,8 @@ R1 手机日志确认 80 MiB JIT 分配、原始 RX 地址执行和调试器断�
 页面权限为 `r-x`。具体报告与版本对应关系见[手机测试说明](native-linux-n2-ios-test.md)。
 
 R2 将客体执行地址放在最初准备的 RX 映射中，执行代码期间保持该 VM 映射。
-Mac 和 iPhone 的 N2 检查共用 208 MiB RX/RW 内存池，包含预检、计算探针、
+以下记录 R2 的布局；R3 在后文调整了 JIT 准备范围。
+R2 的 Mac 和 iPhone 检查共用 208 MiB RX/RW 内存池，包含预检、计算探针、
 Linux 内核映像、192 MiB 的地址范围和进程启动代码。192 MiB 分为 64 MiB
 客体窗口、64 MiB Linux 物理内存和 64 MiB 内核虚拟地址区。`layout.h`
 同时提供宿主与内核需要的布局常量。
@@ -199,9 +200,9 @@ Linux 内核映像、192 MiB 的地址范围和进程启动代码。192 MiB 分�
    代码在实际任务切换后仍能执行；检查 ELF 文件原文和系统调用边界。
 6. 关闭内核，确认 96 个 NCE 上下文全部释放。
 
-共用运行核心的 Mac 检查通过。最终构建的内核启动 28.086 ms，32 轮进程
+R2 的 Mac 检查通过。该版内核启动 28.086 ms，32 轮进程
 检查共 15.237 ms，缺页 352 次，复制代码页 512 次。
-原始结果与源码哈希保存在 `experiments/native-linux/results-prepared-memory-macos.json`。
+最新 Mac 结果与源码哈希保存在 `experiments/native-linux/results-prepared-memory-macos.json`。
 Mac 使用本地 RX/RW 分配，未运行 iOS 的调试器准备流程。这些结果只覆盖短时
 受控程序；R2 手机已完成预检与计算对照，在 Linux 初始化的物理内存映射中触发断言。
 
@@ -287,3 +288,37 @@ R2 手机结果（2026-10-09 01:01）：208 MiB 分配、断开、八次代码�
 `vm_remap` 返回失败，随后触发断言；日志尚未记录具体返回码。系统报告为
 SIGABRT。原始阶段与计算结果见 `experiments/native-linux/results-ios-n2-r2.json`。
 下一步调整需要可替换的数据映射与已准备代码映射的地址布局。
+
+## R3：限定 JIT 准备范围
+
+R2 的数据映射错误没有记录具体 Mach 返回码。Apple 的
+[XNU 实现](https://github.com/apple-oss-distributions/xnu/blob/main/osfmk/vm/vm_map.c)
+包含将已关联代码映射标记为 `vme_permanent` 的处理；永久映射的替换受到
+限制。这与 R2 把数据目标也纳入 JIT 准备范围的布局吻合，实际拒绝分支仍待
+带返回码的日志确认。
+
+R3 使用普通内存保留 208 MiB 地址，前 16 MiB 用于内核和 NCE 主代码池，
+后 192 MiB 仍按客体窗口、Linux 物理内存映射、内核虚拟地址区各 64 MiB
+布局。仅主代码池和客体窗口偏移 `0x10000` 处的 64 KiB 代码区接受调试器
+准备。两个可执行区域各有 RW 别名；数据保持普通映射。Linux RAM 的后备
+存储单独申请 64 MiB 匿名内存，由进程运行模块释放。
+
+`husk_ios_jit_prepare_range` 复用现有脚本的指定地址分支、连接检查、别名
+创建和执行自检。原有申请新区域的调用仍传空地址。预检和 Linux 的数据
+映射共用 `nce_memory_remap`，失败时记录 `kr` 或 `errno`、源地址、目标
+地址和字节数。Linux 初始化之前，预检覆盖实际代码区两侧的数据地址以及
+64 MiB RAM 目标；映射失败直接返回测试界面。
+
+Mac 已通过两个代码区各八次更新、两个数据目标各八次切换、64 MiB RAM
+映射、五轮计算对照和 32 轮 Linux 进程检查，96 个上下文全部释放。失败
+回归使用无效源地址得到 `KERN_INVALID_ADDRESS`，正常代码随后仍能执行。
+iOS Release 构建通过；R3 的手机执行待验证。
+
+内存释放按代码区域和普通区域分别处理。iOS 若拒绝释放已准备的代码映射，
+日志记录该状态，代码区域保留到应用进程退出。本原型每次进程启动只运行
+一轮。当前仍只支持固定布局的受控 ELF。
+
+R3 复杂度审查：共用一个 Mach 映射函数；64 MiB RAM 由运行模块持有，代码
+和虚拟地址范围由内存模块持有。指定地址准备复用原有 JIT 实现。此次调整
+保留了代码复制策略，改变了代码与数据的分配方式；下一步验证手机上的
+内存操作后再继续 init 和信号支持。

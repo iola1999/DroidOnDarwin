@@ -208,7 +208,7 @@ int nce_lkl_run(const char *image_path)
     REQUIRE(munmap(stack, 65536) == 0);
     #endif
     #ifdef NCE_PROCESS
-    nce_memory_release();
+    if (nce_memory_release()) return 1;
     #else
     release(kernel);
     #endif

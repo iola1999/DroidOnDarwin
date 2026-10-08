@@ -299,7 +299,7 @@ static bool husk_jit_selftest(const HuskDualMapping *m)
  * work. So the region is claimed at app launch, while the attachment is fresh,
  * and held until QEMU asks for it.
  */
-static HuskDualMapping husk_ios_jit_allocate_real(size_t bytes);
+static HuskDualMapping husk_ios_jit_allocate_real(void *requested, size_t bytes);
 
 static HuskDualMapping husk_prewarmed;
 static bool husk_prewarm_done;
@@ -315,7 +315,7 @@ HUSK_EXPORT bool husk_ios_jit_prewarm(size_t bytes)
     husk_prewarm_done = true;
     if (bytes > SIZE_MAX - HUSK_EL0_JIT_BYTES || bytes % 16384) return false;
     husk_tcg_capacity = bytes;
-    husk_prewarmed = husk_ios_jit_allocate_real(bytes + HUSK_EL0_JIT_BYTES);
+    husk_prewarmed = husk_ios_jit_allocate_real(NULL, bytes + HUSK_EL0_JIT_BYTES);
     fprintf(stderr, "[husk-jit] prewarm %s: TCG=%zu EL0=%u bytes\n",
             husk_prewarmed.rw_addr ? "OK" : "FAILED", bytes, HUSK_EL0_JIT_BYTES);
     return husk_prewarmed.rw_addr != NULL;
@@ -346,7 +346,7 @@ HuskDualMapping husk_ios_jit_allocate(size_t bytes)
         HuskDualMapping none = { NULL, NULL, 0 };
         return none;
     }
-    return husk_ios_jit_allocate_real(bytes);
+    return husk_ios_jit_allocate_real(NULL, bytes);
 }
 
 HuskDualMapping husk_ios_jit_acquire_el0(size_t bytes)
@@ -374,7 +374,7 @@ void husk_ios_jit_release_el0(HuskDualMapping *region)
     }
 }
 
-static HuskDualMapping husk_ios_jit_allocate_real(size_t bytes)
+static HuskDualMapping husk_ios_jit_allocate_real(void *requested, size_t bytes)
 {
     HuskDualMapping region = { NULL, NULL, 0 };
     uint64_t n = atomic_fetch_add(&g_alloc_counter, 1) + 1;
@@ -408,16 +408,8 @@ static HuskDualMapping husk_ios_jit_allocate_real(size_t bytes)
                  (unsigned long long)n, (unsigned long long)probe);
     }
 
-    /*
-     * Ask for a FRESH region (x0 == 0) so StikDebug allocates it with
-     * debugserver `_M<size>,rx` and then walks every 16 KiB page with
-     * `M<addr>,1:69`. Requesting a fresh region is the only branch that gets
-     * those pages prepared; handing in an address we allocated ourselves does not.
-     *
-     * StikDebug can be momentarily unresponsive (busy, or briefly suspended by
-     * iOS) rather than permanently gone, and the two are indistinguishable from
-     * here, so retry a few times before giving up.
-     */
+    /* A caller-provided RX range is prepared in place by the same script.
+     * Keeping adjacent data outside that range allows later data remapping. */
     enum { kMaxAttempts = 3 };
     void *rx = NULL;
     for (int attempt = 1; attempt <= kMaxAttempts; attempt++) {
@@ -427,7 +419,7 @@ static HuskDualMapping husk_ios_jit_allocate_real(size_t bytes)
                  attempt, kMaxAttempts);
 
         g_expecting_jit_trap = true;
-        rx = husk_brk_get_jit_mapping(NULL, bytes);
+        rx = husk_brk_get_jit_mapping(requested, bytes);
         g_expecting_jit_trap = false;
 
         HUSK_LOG("#%llu: BreakGetJITMapping returned %p", (unsigned long long)n, rx);
@@ -439,7 +431,7 @@ static HuskDualMapping husk_ios_jit_allocate_real(size_t bytes)
         }
     }
 
-    if (rx == NULL) {
+    if (rx == NULL || (requested && rx != requested)) {
         HUSK_LOG("#%llu: FAILED after %d attempts. StikDebug must be attached with "
                  "the Universal JIT script BEFORE the guest is started.",
                  (unsigned long long)n, kMaxAttempts);
@@ -667,18 +659,19 @@ bool husk_ios_jit_mapjit_works(void)
 #else /* !iOS: keep the symbols so host builds and tests link */
 
 void husk_ios_jit_install_trap_handler(void) {}
-static HuskDualMapping husk_ios_jit_allocate_real(size_t bytes)
+static HuskDualMapping husk_ios_jit_allocate_real(void *requested, size_t bytes)
 {
+    (void)requested;
     (void)bytes;
     HuskDualMapping m = { NULL, NULL, 0 };
     return m;
 }
 HuskDualMapping husk_ios_jit_allocate(size_t bytes)
 {
-    return husk_ios_jit_allocate_real(bytes);
+    return husk_ios_jit_allocate_real(NULL, bytes);
 }
 bool husk_ios_jit_prewarm(size_t bytes) { (void)bytes; return false; }
-HuskDualMapping husk_ios_jit_acquire_el0(size_t bytes) { return husk_ios_jit_allocate_real(bytes); }
+HuskDualMapping husk_ios_jit_acquire_el0(size_t bytes) { return husk_ios_jit_allocate_real(NULL, bytes); }
 void husk_ios_jit_release_el0(HuskDualMapping *m) { (void)m; }
 void husk_ios_jit_release(HuskDualMapping *m) { (void)m; }
 void husk_ios_jit_detach(void) {}
@@ -688,3 +681,10 @@ void husk_ios_jit_log_footprint(const char *tag) { (void)tag; }
 size_t husk_ios_available_memory(void) { return 0; }
 
 #endif
+
+HuskDualMapping husk_ios_jit_prepare_range(void *address, size_t bytes)
+{
+    if (!address || !bytes || ((uintptr_t)address % 16384) || (bytes % 16384))
+        return (HuskDualMapping){NULL, NULL, 0};
+    return husk_ios_jit_allocate_real(address, bytes);
+}

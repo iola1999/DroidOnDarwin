@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 #include "execute-check.h"
+#include "memory.h"
 #include <assert.h>
 #include <libkern/OSCacheControl.h>
 #include <mach/mach.h>
@@ -41,6 +42,7 @@ int main(void)
     memcpy(rw, words, sizeof(words));
     sys_dcache_flush(rw, size);
     sys_icache_invalidate((void *)rx, size);
+    assert(nce_memory_remap((void *)rx, NULL, size, PROT_READ) == -1);
     assert(nce_check_execute(code, 42) == 0);
     for (unsigned i = 0; i < 3; ++i) {
         struct sigaction action;
@@ -48,5 +50,5 @@ int main(void)
         assert(action.sa_handler == original_handler);
     }
     assert(munmap(rw, size) == 0 && munmap((void *)rx, size) == 0);
-    puts("execute regression: values, instruction/access faults, recovery and handler restoration passed");
+    puts("execute regression: values, instruction/access faults, remap failure, recovery and handler restoration passed");
 }

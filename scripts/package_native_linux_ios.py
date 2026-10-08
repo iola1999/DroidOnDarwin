@@ -14,7 +14,7 @@ ROOT = Path(__file__).resolve().parents[1]
 EXP = ROOT / 'experiments/native-linux'
 INPUT = ROOT / 'work/native-linux-nce/processes'
 OUT = ROOT / 'work/native-linux-nce/ios'
-REVISION = 'N2-R2'
+REVISION = 'N2-R3'
 
 
 def run(args, **kwargs):
@@ -45,7 +45,8 @@ def main():
     with (OUT / 'detach-test.log').open('w') as log:
         run([OUT / 'detach-test'], stdout=log)
     run(['xcrun', 'clang', '-O2', '-Wall', '-Wextra', '-Werror', '-isysroot', sdk, '-I', EXP,
-         EXP / 'execute-check.c', EXP / 'ios/execute-test.c', '-o', OUT / 'execute-test'])
+         EXP / 'execute-check.c', EXP / 'memory.c', EXP / 'nce.c', EXP / 'entry.S',
+         EXP / 'ios/execute-test.c', '-o', OUT / 'execute-test'])
     with (OUT / 'execute-test.log').open('w') as log:
         run([OUT / 'execute-test'], stdout=log)
     build_id = REVISION + '-iOS-' + time.strftime('%Y%m%d-%H%M%S')
@@ -57,7 +58,7 @@ def main():
                 UISupportedInterfaceOrientations=['UIInterfaceOrientationPortrait',
                     'UIInterfaceOrientationPortraitUpsideDown',
                     'UIInterfaceOrientationLandscapeLeft', 'UIInterfaceOrientationLandscapeRight'],
-                CFBundleShortVersionString='0.8.2', CFBundleVersion='37')
+                CFBundleShortVersionString='0.8.3', CFBundleVersion='38')
     plist(OUT / 'Info.plist', info)
     # Deployment entitlements are supplied by iLoader. This ad-hoc signature is
     # for archive integrity; get-task-allow is needed by the in-app JIT helper.
@@ -139,7 +140,7 @@ def main():
                 'kernel_sha256': summary['kernel_sha256'],
                 'device_execution': 'pending', 'mac_validation': summary['results'],
                 'source_sha256': {str(path.relative_to(ROOT)): hashlib.sha256(path.read_bytes()).hexdigest()
-                                  for path in [Path(__file__).resolve(), *sorted(EXP.glob('ios/*')),
+                                  for path in [Path(__file__).resolve(), ROOT / 'src/ios-jit/husk-ios-jit.h', *sorted(EXP.glob('ios/*')),
                                                *[Path(item['path']) for item in sources]] if path.is_file()}}
 
     (OUT / 'package.json').write_text(json.dumps(manifest, indent=2) + '\n')
