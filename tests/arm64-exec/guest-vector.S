@@ -121,6 +121,25 @@ husk_vector_structures:
     b.ne 1b
     ret
 
+.global husk_counter_loop
+husk_counter_loop:
+    mov x2, #0
+    mrs x3, cntvct_el0
+1:  mrs x4, cntvct_el0
+    cmp x4, x3
+    b.lo 3f
+    mov x3, x4
+    mov x5, #4096
+2:  add x2, x2, #17
+    subs x5, x5, #1
+    b.ne 2b
+    subs x0, x0, #1
+    b.ne 1b
+    mov x0, x2
+    ret
+3:  mov x0, #-1
+    ret
+
 .global husk_vector_checks
 husk_vector_checks:
     msr fpcr, xzr

@@ -79,6 +79,7 @@ extern u64 husk_atomic_loop(u64 *p, u64 n);
 extern u64 husk_exclusive_loop(u64 *p, u64 n);
 extern u64 husk_exclusive_bridge(u64 *p, u64 n);
 extern u64 husk_tail_call_loop(u64 n);
+extern u64 husk_counter_loop(u64 n);
 
 static void vector_benchmarks(void)
 {
@@ -106,6 +107,11 @@ static void vector_benchmarks(void)
     elapsed = ns() - start;
     CHECK(vectors[4] == 0x0404040404040404UL && vectors[5] == vectors[4] && !vectors[6] && !vectors[7]);
     print("BENCH vector_structures_ns="); number(elapsed); print(" value="); number(vectors[4]); print("\n");
+    start = ns();
+    value = husk_counter_loop(1000);
+    elapsed = ns() - start;
+    CHECK(value == 69632000);
+    print("BENCH counter_ns="); number(elapsed); print(" value="); number(value); print("\n");
     CHECK(husk_vector_checks(n) == 0);
     start = ns();
     value = husk_call_loop(10000000);

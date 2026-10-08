@@ -102,6 +102,14 @@ int main(void)
     }
     printf("BENCH mixed_ns=%llu mixed_value=%llu\n",
            (unsigned long long)(ns() - mixed_start), (unsigned long long)mixed);
+    size_t (*volatile string_length)(const char *) = strlen;
+    memset(destination, 'a', 64);
+    destination[63] = 0;
+    uint64_t string_start = ns(), string_sum = 0;
+    for (unsigned i = 0; i < 262144; ++i) string_sum += string_length((char *)destination);
+    CHECK(string_sum == 262144UL * 63);
+    printf("BENCH strlen_ns=%llu strlen_value=%llu\n",
+           (unsigned long long)(ns() - string_start), (unsigned long long)string_sum);
     memset(destination, 0, maximum);
     for (size_t s = 0; s < sizeof(sizes) / sizeof(sizes[0]); ++s) {
         size_t size = sizes[s], iterations = 16777216 / size;

@@ -102,7 +102,7 @@ int main()
             unsigned rd = i & 31, rn = random() & 31, rm = random() & 31;
             unsigned q = random() & 1, size = random() % (q ? 4 : 3);
             uint32_t operands = (rm << 16) | (rn << 5) | rd;
-            switch ((sample + i) % 14) {
+            switch ((sample + i) % 17) {
             case 0:
                 code[i] = 0x0e201c00 | (q << 30) | ((random() & 1) << 29) |
                           ((random() & 3) << 22) | operands;
@@ -190,6 +190,29 @@ int main()
                 code[i] = ops[random() % 4] | (q << 30) | ((size % 3) << 22) | operands;
                 break;
             }
+            case 14: {
+                constexpr uint32_t ops[] = {0x0e303800, 0x2e303800, 0x0e30a800, 0x2e30a800,
+                                           0x0e31a800, 0x2e31a800, 0x0e31b800};
+                size %= q ? 3 : 2;
+                code[i] = ops[random() % std::size(ops)] | (q << 30) | (size << 22) | (rn << 5) | rd;
+                break;
+            }
+            case 15: {
+                constexpr uint32_t ops[] = {0x0e202800, 0x2e202800, 0x0e206800, 0x2e206800,
+                    0x0e212800, 0x2e212800, 0x0e214800, 0x2e214800, 0x2e213800};
+                code[i] = ops[random() % std::size(ops)] | (q << 30) | ((size % 3) << 22) | (rn << 5) | rd;
+                break;
+            }
+            case 16: {
+                constexpr unsigned opcodes[] = {0, 2, 4, 6, 8, 10, 12, 14, 16, 17, 18, 19, 20};
+                unsigned op = opcodes[random() % std::size(opcodes)], u = random() & 1;
+                if (op == 8 || op == 12) u = 1;
+                if (op >= 16) size %= 3;
+                unsigned width = 8U << size, immediate = width + random() % width;
+                code[i] = 0x0f000400 | (q << 30) | (u << 29) | (immediate << 16) |
+                          (op << 11) | (rn << 5) | rd;
+                break;
+            }
             }
             CHECK(husk_arm64_supported(code[i]));
         }
@@ -267,7 +290,8 @@ int main()
     for (uint32_t word : {0x0e228400U | (3U << 22), 0x1ee02800U, 0x0e000c00U,
                           0x0f00f400U | (1U << 29), 0x7dc00000U, 0xec400440U,
                           0x4c403000U, 0x4c417000U, 0x0c408c00U, 0x0ee09800U,
-                          0x6ee2ac20U, 0x4ee05800U})
+                          0x6ee2ac20U, 0x4ee05800U, 0x0eb03800U, 0x4ef03800U,
+                          0x0f404400U, 0x4f406400U, 0x0f084400U, 0x4f40a400U})
         CHECK(!husk_arm64_supported(word));
     std::puts("PASS: 131072 SIMD/FP instructions, 4096 vector memory cases, all vectors/GPRs, FPCR/FPSR, host FP environment");
 }

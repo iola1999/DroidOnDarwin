@@ -83,6 +83,12 @@ static bool husk_tcg_bridge(uint32_t insn)
     case 0xd503241f: case 0xd503245f: case 0xd503249f: case 0xd50324df:
     case 0xd65f0bff: case 0xd65f0fff: return true;
     }
+    switch (insn & 0xffffffe0) {
+    case 0xd53be000: case 0xd53be020: case 0xd53be040:
+    case 0xd53be0a0: case 0xd53be0c0:
+        // QEMU retains counter frequency, offsets, virtual time and trap checks.
+        return true;
+    }
     uint32_t branch = insn & 0xfffffc1f;
     return branch == 0xd61f0000 || branch == 0xd63f0000 ||
            (insn & 0xfffff09f) == 0xd503309f;

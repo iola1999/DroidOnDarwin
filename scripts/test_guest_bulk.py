@@ -86,11 +86,14 @@ def main():
             if counts: row.update(completed=int(counts[1]), refused=int(counts[2]), transferred=int(counts[3]))
             mixed = re.search(r"mixed_ns=(\d+) mixed_value=(\d+)", body)
             if mixed: row.update(mixed_ns=int(mixed[1]), mixed_value=int(mixed[2]))
+            strings = re.search(r"strlen_ns=(\d+) strlen_value=(\d+)", body)
+            if strings: row.update(strlen_ns=int(strings[1]), strlen_value=int(strings[2]))
             rows.append(row)
         passed = process.returncode == 0 and "HUSK-BIONIC PASS" in text and len(rows) == 9
         passed &= all(r["enabled"] == (r["kind"] == "enabled" and not r["mops"])
                       and len(r["measurements"]) == 6
                       and r.get("mixed_ns", 0) > 0
+                      and r.get("strlen_ns", 0) > 0 and r.get("strlen_value") == 262144 * 63
                       and (not r["enabled"] or r.get("completed", 0) > 0) for r in rows)
         values = {r["mixed_value"] for result in results for r in result["rows"]}
         values.update(r.get("mixed_value") for r in rows)

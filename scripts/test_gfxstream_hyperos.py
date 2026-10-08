@@ -48,8 +48,12 @@ def measure_settings(adb_run, output, metrics):
     metrics["swipe_action_seconds"] = round(action_seconds, 3)
     time.sleep(3)
     frames = shell("dumpsys -t 60 gfxinfo com.android.settings framestats")
+    # Sample the same guest clock after the dump. Renderer-provided completion
+    # times outside this interval cannot describe a frame in this capture.
+    guest_uptime_ns = int(float(shell("cat /proc/uptime").split()[0]) * 1e9)
     (output / "settings-frames.txt").write_text(frames)
     durations = []
+    invalid_frames = 0
     columns = None
     for row in csv.reader(frames.splitlines()):
         if row and row[0] == "Flags":
@@ -59,12 +63,16 @@ def measure_settings(adb_run, output, metrics):
             if int(frame["Flags"]) != 0:
                 continue
             begin, end = int(frame["IntendedVsync"]), int(frame["FrameCompleted"])
-            if 0 < begin < end < (1 << 63) - 1:
+            if 0 < begin < end <= guest_uptime_ns:
                 durations.append((end - begin) / 1e6)
+            elif begin > 0 and end != (1 << 63) - 1:
+                invalid_frames += 1
     if not durations:
         raise RuntimeError("Settings did not return valid frame timings")
     durations.sort()
-    metrics.update(frame_count=len(durations), median_ms=statistics.median(durations),
+    metrics.update(frame_count=len(durations), invalid_frame_count=invalid_frames,
+                   frame_timing_valid=not invalid_frames, guest_uptime_ns=guest_uptime_ns,
+                   median_ms=statistics.median(durations),
                    p90_ms=durations[(len(durations) * 9 - 1) // 10], max_ms=durations[-1])
 
 
@@ -233,6 +241,8 @@ def main():
                 while process.poll() is None and time.monotonic() < until: time.sleep(1)
             if process.poll() is not None:
                 raise RuntimeError(f"QEMU exited before validation ended: {process.returncode}")
+            if args.interaction and not result["settings"]["frame_timing_valid"]:
+                raise RuntimeError("Settings returned invalid frame completion timestamps")
         except (OSError, RuntimeError, subprocess.TimeoutExpired) as error:
             result["error"] = str(error)
             result["passed"] = False
