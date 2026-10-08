@@ -722,7 +722,9 @@ landing_ready:
         ++ctx->cold_handoffs;
         if (ctx->profile && !(ctx->cold_handoffs & (ctx->cold_handoffs - 1)))
             fprintf(stderr, "[husk-hot-tier] cold_handoffs=%" PRIu64 "\n", ctx->cold_handoffs);
-        ctx->resume_after_ns[el != 0] = qemu_clock_get_ns(QEMU_CLOCK_REALTIME) + (int64_t)tcg_quantum_us * 1000;
+        /* Admission already throttles cold targets. Preserve the ordinary
+         * unsupported-instruction cooldown without delaying hot callers. */
+        ctx->resume_after_ns[el != 0] = 0;
         return -1;
     }
     if (result == HUSK_ARM64_FALLBACK) {

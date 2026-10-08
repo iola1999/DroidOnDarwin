@@ -45,9 +45,12 @@ struct Memory {
     std::vector<Page> code{128};
     alignas(16384) std::array<uint64_t, 2048> data{};
     bool readable = true;
+    unsigned root_probes = 0, leaf_probes = 0;
     static const void *Code(void *opaque, uint64_t page) {
         auto &m = *static_cast<Memory *>(opaque);
         size_t index = (page - base) / 4096;
+        m.root_probes += index == 0;
+        m.leaf_probes += index == 1;
         return index < m.code.size() ? m.code[index].data() : nullptr;
     }
     static void *Data(void *opaque, uint64_t page, bool write) {
@@ -56,6 +59,57 @@ struct Memory {
             reinterpret_cast<char *>(m.data.data()) + page - 0x20000 : nullptr;
     }
 };
+
+static void active_routes_under_pressure()
+{
+    setenv("HUSK_ARM64_CODE_SHARING", "0", 1);
+    setenv("HUSK_ARM64_FASTMEM", "0", 1);
+    setenv("HUSK_ARM64_CACHE_RECLAIM", "1", 1);
+    auto memory = std::make_unique<Memory>();
+    auto &m = *memory;
+    m.code.resize(1026);
+    for (auto &code : m.code) code.fill(0xd4000001);
+    // Keep the caller and one leaf active while crossing a much larger set of
+    // one-use functions. Each cold page has distinct immutable bytes.
+    const uint32_t caller[] = {
+        0xd63f0060, // blr x3
+        0x940003ff, // bl base+4096
+        0x91400463, // add x3,x3,#4096
+        0xf1000484, // subs x4,x4,#1
+        0x54ffff81, // b.ne base
+    };
+    std::copy(std::begin(caller), std::end(caller), m.code[0].begin());
+    m.code[1][0] = 0x91000400;
+    m.code[1][1] = 0xd65f03c0;
+    for (size_t page = 2; page < m.code.size(); ++page) {
+        auto &code = m.code[page];
+        for (unsigned i = 0; i < 512; i += 2) {
+            code[i] = 0xf9400022;
+            code[i + 1] = 0x91000400;
+        }
+        code[512] = 0xd65f03c0;
+        code.back() = page;
+    }
+    Engine engine(husk_direct_create(2 * 1024 * 1024), husk_direct_destroy);
+    auto assist = [](void *, HuskArm64State *state, uint32_t word) {
+        if (word != 0xd63f0060) return HUSK_ASSIST_DECLINED;
+        state->x[30] = state->pc + 4;
+        state->pc = state->x[3];
+        return HUSK_ASSIST_CHAIN_CALL;
+    };
+    HuskArm64Memory callbacks{&m, nullptr, nullptr, Memory::Data, assist, Memory::Code};
+    HuskArm64State state{};
+    state.pc = base; state.x[1] = 0x20000; state.x[3] = base + 8192; state.x[4] = 1024;
+    CHECK(husk_direct_run(engine.get(), &state, base, m.code[0].data(), callbacks, 1000000) == HUSK_ARM64_FALLBACK);
+    CHECK(state.pc == base + 20 && state.x[0] == 1024 * 257 && !state.x[4]);
+    auto stats = husk_direct_cache_stats(engine.get());
+    CHECK(stats.evictions && !stats.flushes);
+    CHECK(m.root_probes < 32 && m.leaf_probes < 32);
+    CHECK(stats.compiles == m.code.size());
+    std::printf("cache active routes compiles=%llu evictions=%llu root_probes=%u leaf_probes=%u PASS\n",
+                (unsigned long long)stats.compiles, (unsigned long long)stats.evictions,
+                m.root_probes, m.leaf_probes);
+}
 
 static void chained_reuse(bool fastmem, bool sharing = false)
 {
@@ -221,4 +275,5 @@ int main()
         auto after = stub_workload(true, fastmem);
         CHECK(after < before);
     }
+    active_routes_under_pressure();
 }

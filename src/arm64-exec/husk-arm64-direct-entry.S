@@ -145,6 +145,8 @@ _husk_direct_branch_stub:
     cbz x26, Lbranch_miss
     ldr x17, [x17, #16]
     str x17, [x27, #HUSK_CODE]
+    ldr x30, [x27, #HUSK_CACHE_CLOCK]
+    str x30, [x17, #HUSK_CODE_LAST_USED]
     and x17, x16, #0xfffffffffffff000
     str x17, [x27, #HUSK_CODE_PAGE]
     br x26
