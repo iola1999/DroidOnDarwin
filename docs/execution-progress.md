@@ -1,14 +1,17 @@
 # HyperOS 执行与图形后端开发进展
 
-更新日期：2026-10-08。
+更新日期：2026-10-09。
 
 ## 目标与当前决策
 
 2026-10-08 启动独立的[原生 Linux 与 NCE 原型](native-linux-nce-prototype.md)。
 N0 地址空间与直接执行测试已通过；N1 已在 Mac 原生启动 Linux 6.12 LKL，
 并通过 NCE 文件操作、定时器、pipe 和 futex 检查。N2a 已通过 32 轮真实 Linux
-用户进程的 fork、COW、共享内存、futex、pipe、ELF exec 与 wait 检查。下一阶段
-继续用户态 init、信号与异常恢复。手机运行和 HyperOS 整机收益尚未验证。
+用户进程的 fork、COW、共享内存、futex、pipe、ELF exec 与 wait 检查。
+2026-10-09 已构建 [N2 iOS 测试包](native-linux-n2-ios-test.md)：复用手机端 JIT，
+断开调试器后执行页面重映射、计算对照、Linux 内核与上述进程检查。安装包
+完整性检查通过，手机执行待验证。后续继续用户态 init、信号与异常恢复；
+HyperOS 整机收益尚未验证。
 
 此前结束了 QEMU 优化开发。M33 的整机检查仍失败；按照用户要求，重新评估了
 可能获得 HVF 量级收益的架构路线，尚未找到满足当前运行条件且有足够收益

@@ -1,0 +1,124 @@
+{
+  "source_revision": "d0f76a77e8c2ca68bd7d96190b8da09040eab072",
+  "platform": "macOS-27.0-arm64-arm-64bit-Mach-O",
+  "results": [
+    {
+      "phase": "prepare_jit_pool",
+      "bytes": 83886080
+    },
+    {
+      "phase": "check_executable_remapping"
+    },
+    {
+      "test": "prepared_jit_fixed_remap_after_detach",
+      "passed": true,
+      "switches": 8
+    },
+    {
+      "bench": "prepared_nce_compute",
+      "sample": 0,
+      "iterations": 4000000,
+      "direct_ns": 4463250,
+      "nce_ns": 4291834
+    },
+    {
+      "bench": "prepared_nce_compute",
+      "sample": 1,
+      "iterations": 4000000,
+      "direct_ns": 4155959,
+      "nce_ns": 4078375
+    },
+    {
+      "bench": "prepared_nce_compute",
+      "sample": 2,
+      "iterations": 4000000,
+      "direct_ns": 4132542,
+      "nce_ns": 3910875
+    },
+    {
+      "bench": "prepared_nce_compute",
+      "sample": 3,
+      "iterations": 4000000,
+      "direct_ns": 3937042,
+      "nce_ns": 3846791
+    },
+    {
+      "bench": "prepared_nce_compute",
+      "sample": 4,
+      "iterations": 4000000,
+      "direct_ns": 3638625,
+      "nce_ns": 3792041
+    },
+    {
+      "phase": "load_linux_image"
+    },
+    {
+      "phase": "linux_init"
+    },
+    {
+      "test": "native_linux_boot",
+      "passed": true,
+      "ms": 45.039
+    },
+    {
+      "test": "linux_uname",
+      "sysname": "Linux",
+      "release": "6.12.0"
+    },
+    {
+      "phase": "linux_process_tests"
+    },
+    {
+      "test": "linux_nce_fork_cow_shared_futex_pipe_exec_wait",
+      "passed": true,
+      "rounds": 32,
+      "faults": 288,
+      "elapsed_ms": 17.66
+    },
+    {
+      "test": "linux_exec_file_unchanged",
+      "passed": true
+    },
+    {
+      "test": "linux_syscall_bounds",
+      "passed": true
+    },
+    {
+      "phase": "linux_shutdown"
+    },
+    {
+      "test": "linux_nce_context_lifetime",
+      "allocated": 64,
+      "freed": 64
+    },
+    {
+      "result": "passed"
+    }
+  ],
+  "ios_status": "Release IPA built and integrity checked; device execution pending",
+  "config_sha256": "c8b4b3145456e28575f08d993f9300dd7d40d1702a173dabd6dee262ba2c62f8",
+  "kernel_sha256": "847a9795b7551d09e65dc62ca06db0074aec3471496343a5101cbdcc518da3ff",
+  "stage": "N2a controlled Linux user processes",
+  "exec_elf_sha256": "f7621430db6d466cbd93fe20212b2cf01b744f5e56571acd6fb88bffb401989f",
+  "input_sha256": {
+    "experiments/native-linux/lkl-main.c": "d43f1031c3abf30b4f12632452154bde6472ace5c0ad91238e353e862a47d15a",
+    "experiments/native-linux/lkl-host.c": "a99a508454f8a5bb8be38e4ef9066dd1e26b28b1c0991f4fc888a4ddc193a834",
+    "experiments/native-linux/nce.c": "d219210048a93b5a6da8bc95521c03b5a518f84fd563376eda8068a5823c58c6",
+    "experiments/native-linux/entry.S": "c0fa4912d8e82cd0bec0f8589c27f60742ba612019ab7a80bf57efdca57cc79b",
+    "experiments/native-linux/lkl-process-host.c": "6b577da85a4c35adddde90463c87ab7cd69c918ed9575e166669d91e99e0dc73",
+    "experiments/native-linux/memory.c": "81289012a44eb520dccc701f9ed0f6dd85cd9d35359d16a7f82cc0dd7a7e3e9e",
+    "experiments/native-linux/compute.c": "ed859290238192fa05f87f2be03a04b376fde0df1c4821cf7982fa30bfab5161",
+    "experiments/native-linux/lkl-bridge.c": "78c13872fff1c7769d4c2de19565d3a88dd5cf6e96016be0b7e9d4c928bee79d",
+    "experiments/native-linux/nce.h": "dbc57eb21250fda9fea4fd9c6322af48cf094b61693040dd9cc786d3c098163c",
+    "experiments/native-linux/guest.S": "a384a4c82e767e1742fd1eb0a497d63fbf6d41044244e7261d6b547b77294354",
+    "scripts/probe_lkl.py": "e06e238af5ad8af8e3a4b60d0a6a17fcdc76d61f92b5e1ca58eb53e50e73358a",
+    "experiments/native-linux/memory.h": "28f52175938e4ba88adaba094442d3fd6a4d8d5a9dc0f878f7e4956cb5aea481",
+    "scripts/lkl_nce_patch.py": "d4fa7abb77d6e16d03cd1a817a6ae8d0439682ad311f99179663093bf94619a6",
+    "experiments/native-linux/lkl-elf.h": "4cd475ba087021ed24c1f1f476bf0bd76ca887694e8b41fa43bb2f09e72b3d30",
+    "experiments/native-linux/lkl-mmu-context.h": "5241bd972afbd9353238e058897c2afef08626d8fc04a800df6508f0f567d1d9",
+    "experiments/native-linux/lkl-tlbflush.h": "59da32cd018e19b31ea49f868ecadb3122bf0b09dd4b40c5780b96797577df5d",
+    "experiments/native-linux/lkl-nce-mmu.c": "f56f51c0d3da5d169d774e927f8d59b265fe84604a0dbbbeb3ca839a82ce06a1",
+    "experiments/native-linux/lkl-nce-process.c": "fddbf5abe93c8806ff179d41ad61d6bb4fcf403fa26fa2a8751c5e577446e220",
+    "experiments/native-linux/exec-guest.S": "2e1e1e67018374bd239c244ab1f99f4ffaf360d681818a6822d2067f644cc8c5"
+  }
+}

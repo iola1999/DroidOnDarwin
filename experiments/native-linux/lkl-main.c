@@ -2,6 +2,7 @@
 #include "nce.h"
 #ifdef NCE_PROCESS
 #include "memory.h"
+void nce_compute_benchmark(void);
 #endif
 #include "lkl-host-ops.h"
 #include "lkl-image.h"
@@ -125,6 +126,7 @@ int nce_lkl_run(const char *image_path)
     setvbuf(stdout, NULL, _IOLBF, 0);
     #ifdef NCE_PROCESS
     if (nce_memory_prepare() != 0) return 1;
+    nce_compute_benchmark();
     NceCode kernel = nce_memory_take(LKL_IMAGE_SIZE);
     #else
     NceCode kernel = dual(LKL_IMAGE_SIZE);
@@ -140,7 +142,7 @@ int nce_lkl_run(const char *image_path)
         memcpy(kernel.rw + lkl_relocations[i][0], &value, sizeof(value));
     }
     for (size_t i = 0; i < sizeof(lkl_segments) / sizeof(lkl_segments[0]); ++i) {
-        unsigned protection = lkl_segments[i][2];
+        int protection = (int)lkl_segments[i][2];
         REQUIRE(mprotect(kernel.rx + lkl_segments[i][0], lkl_segments[i][1], protection) == 0);
     }
     nce_sync_code(kernel);
