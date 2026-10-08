@@ -61,4 +61,46 @@ int main()
         run(v.key ? 0xd50323ff : 0xd50323bf, v.signature, v.signature, true);
     }
     std::puts("native PAC signatures, tags, keys, refusal and register preservation PASS");
+
+    const uint32_t hints[] = {
+        0xd50320ff, 0xd503211f, 0xd503215f, 0xd503219f, 0xd50321df,
+        0xd503231f, 0xd503233f, 0xd503235f, 0xd503237f,
+        0xd503239f, 0xd50323bf, 0xd50323df, 0xd50323ff,
+    };
+    unsigned assists = 0;
+    memory = {};
+    memory.opaque = &assists;
+    memory.assist = [](void *opaque, HuskArm64State *, uint32_t word) {
+        if (word != 0xd4000001) ++*static_cast<unsigned *>(opaque);
+        return HUSK_ASSIST_DECLINED;
+    };
+    for (uint32_t hint : hints) {
+        code[0] = hint;
+        // Reuse the same code bytes while the owner's PAC controls change.
+        for (bool inactive : {true, false, true}) {
+            HuskArm64State state{};
+            state.pc = 0x10000;
+            state.sp = 0x1234567890abcdefULL;
+            state.nzcv = 0xb0000000;
+            state.access_flags = inactive ? HUSK_PAUTH_HINTS_NOP : 0;
+            for (unsigned i = 0; i < 31; ++i) state.x[i] = 0xabc0123456789defULL + i;
+            for (unsigned i = 0; i < 32; ++i) {
+                state.v[i][0] = i + 11; state.v[i][1] = i + 19;
+            }
+            auto expected = state;
+            if (inactive) expected.pc += 4;
+            assists = 0;
+            CHECK(husk_direct_run(engine.get(), &state, 0x10000, code.data(), memory, 100) == HUSK_ARM64_FALLBACK);
+            CHECK(!std::memcmp(&state, &expected, sizeof(state)));
+            CHECK(assists == (inactive ? 0 : 1));
+        }
+    }
+    // PACIA x0,x1 is outside the HINT space and must still leave Direct.
+    code[0] = 0xdac10020;
+    HuskArm64State state{};
+    state.pc = 0x10000; state.access_flags = HUSK_PAUTH_HINTS_NOP;
+    auto expected = state;
+    CHECK(husk_direct_run(engine.get(), &state, 0x10000, code.data(), memory, 100) == HUSK_ARM64_FALLBACK);
+    CHECK(!std::memcmp(&state, &expected, sizeof(state)));
+    std::puts("inactive PAC hints, control transitions and explicit PAC fallback PASS");
 }

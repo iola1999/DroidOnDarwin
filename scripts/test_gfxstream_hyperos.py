@@ -156,6 +156,8 @@ def main():
             while process.poll() is None and time.monotonic() - start < args.seconds:
                 serial_path = output / "serial.log"
                 serial_text = serial_path.read_text(errors="replace") if serial_path.exists() else ""
+                if "Kernel panic - not syncing:" in serial_text:
+                    raise RuntimeError("Guest kernel panic; inspect serial.log")
                 if "Boot command: boot-recovery" in serial_text or "reboot: Restarting system with command 'recovery'" in serial_text:
                     raise RuntimeError("Guest entered Recovery; inspect serial.log for the reboot request")
                 try:

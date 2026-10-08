@@ -13,6 +13,7 @@
 #include <cstdio>
 #include <stdexcept>
 #include <memory>
+#include <list>
 #include <map>
 #include <mutex>
 #include <set>
@@ -41,6 +42,8 @@ constexpr uint32_t CompilePauthVerify = 2048;
 constexpr uint32_t CompileKernelReads = 4096;
 constexpr uint32_t CompileSharedStubs = 8192;
 constexpr uint32_t CompileAes = 16384, CompileSha1 = 32768, CompileSha256 = 65536;
+constexpr uint32_t CompilePauthNop = 131072;
+constexpr uint32_t CompileRelocatable = 262144;
 enum Stop : uint64_t { Budget, Fallback, ReadPage, WritePage, PrepareLoop, CodeBranch,
                        FastReadPage, FastWritePage, PauthCheck };
 struct FaultSite {
@@ -471,6 +474,11 @@ struct CompiledPage {
     uint64_t first_address = 0;
     uint64_t cache_key = 0;
     uint32_t compile_flags = 0;
+    // Dormant code is not executable. Non-null code pointers store offset+1
+    // until the page is restored into the executable arena.
+    std::vector<uint32_t> dormant;
+    std::vector<FaultSite> dormant_faults;
+    std::list<CompiledPage *>::iterator dormant_position;
     struct Loop {
         size_t begin, end;
         unsigned base, extent = 0, alignment = 1;
@@ -641,7 +649,13 @@ struct CompiledPage {
                 size_t index = (pc - new_page) / 4;
                 if (emit[index]) { c.B(labels[index - first]); return; }
                 if (branch_entries[index]) {
-                    c.MOV(X16, uint64_t(branch_entries[index])); c.BR(X16); return;
+                    if (flags & CompileRelocatable) {
+                        c.MOV(X16, uint64_t(stable_entries));
+                        c.LDR(X16, X16, index * sizeof(void *));
+                    } else {
+                        c.MOV(X16, uint64_t(branch_entries[index]));
+                    }
+                    c.BR(X16); return;
                 }
             }
             relative_address(X16, pc - new_page, X17);
@@ -812,6 +826,8 @@ struct CompiledPage {
                     mops(w, pc);
                 } else if (integer_kind(kind)) {
                     integer(w, kind, 26);
+                } else if (kind == Pauth && (flags & CompilePauthNop)) {
+                    // Only the architectural HINT encodings become NOPs.
                 } else if (kind == Pauth && (flags & CompileInlineAssists)) {
                     Label slow, done;
                     unsigned reg = pauth_register(w);
@@ -1216,6 +1232,9 @@ struct HuskArm64Direct {
     // bounds; refresh stale roots before choosing a page to evict.
     using CodeAge = std::pair<uint64_t, CompiledPage *>;
     std::vector<CodeAge> code_age;
+    std::list<CompiledPage *> dormant_pages;
+    size_t dormant_limit = 0, dormant_bytes = 0;
+    uint64_t restores = 0;
     std::array<Mapping, 256> mappings{};
     std::array<PauthResult, 256> pauth_cache{};
     std::array<CodeRoute, 256> routes{};
@@ -1226,6 +1245,8 @@ struct HuskArm64Direct {
     std::unique_ptr<HuskArm64Fastmem> fastmem;
     std::vector<FaultSite> fault_sites;
     uint64_t mapping_epoch = 0;
+    void *mapping_owner = nullptr;
+    decltype(HuskArm64Memory::map_page) mapping_callback = nullptr;
     bool profile = std::getenv("HUSK_ARM64_STATS") != nullptr;
     bool native_lse = false, native_crc = false;
     uint32_t native_crypto = 0;
@@ -1254,6 +1275,14 @@ struct HuskArm64Direct {
         release_code({0, capacity});
         const char *reclaim_setting = std::getenv("HUSK_ARM64_CACHE_RECLAIM");
         reclaim_cache = !reclaim_setting || std::strcmp(reclaim_setting, "0");
+        if (const char *setting = std::getenv("HUSK_ARM64_COLD_CACHE_MIB")) {
+            char *end;
+            errno = 0;
+            unsigned long mib = std::strtoul(setting, &end, 10);
+            if (errno || end == setting || *end || mib > 256)
+                throw std::invalid_argument("HUSK_ARM64_COLD_CACHE_MIB must be 0..256");
+            if (reclaim_cache) dormant_limit = mib * 1024 * 1024;
+        }
         const char *sharing_setting = std::getenv("HUSK_ARM64_CODE_SHARING");
         share_code = !sharing_setting || std::strcmp(sharing_setting, "0");
         const char *stub_setting = std::getenv("HUSK_ARM64_SHARED_STUBS");
@@ -1369,26 +1398,121 @@ struct HuskArm64Direct {
         return pages.end();
     }
 
-    void erase_page(decltype(pages)::iterator page)
+    static size_t dormant_cost(const CompiledPage &code)
     {
-        // Other pages' routes remain valid. Clearing all routes here forces
-        // active callers back through mapping and lookup after each eviction.
-        auto *code = page->second.get();
+        return sizeof(code) + code.dormant.capacity() * sizeof(uint32_t) +
+            code.dormant_faults.capacity() * sizeof(FaultSite) +
+            code.allocations.capacity() * sizeof(CompiledPage::Allocation) +
+            code.loops.capacity() * sizeof(CompiledPage::Loop);
+    }
+
+    template<class Relocate> static void relocate_page(CompiledPage &code, Relocate relocate)
+    {
+        for (auto &entry : code.entries) if (entry) entry = (void *)relocate(uintptr_t(entry));
+        for (auto &entry : code.branch_entries) if (entry) entry = (void *)relocate(uintptr_t(entry));
+        for (auto &loop : code.loops) {
+            if (loop.generic) loop.generic = (void *)relocate(uintptr_t(loop.generic));
+            if (loop.fast) loop.fast = (void *)relocate(uintptr_t(loop.fast));
+        }
+        for (auto &site : code.dormant_faults) {
+            site.instruction = relocate(site.instruction); site.slow = relocate(site.slow);
+            site.patch = relocate(site.patch); site.checked = relocate(site.checked);
+        }
+    }
+
+    void clear_routes(CompiledPage *code)
+    {
         for (auto &route : source_routes) if (route.code == code) route = {};
         for (auto &route : routes) if (route.code == code) route = {UINT64_MAX, nullptr};
         for (auto &route : call_routes) if (route.code == code) route = {UINT64_MAX, nullptr};
-        for (const auto &allocation : page->second->allocations) {
+    }
+
+    void erase_page(decltype(pages)::iterator page)
+    {
+        auto *code = page->second.get();
+        clear_routes(code);
+        size_t bytes = 0;
+        for (const auto &allocation : code->allocations) bytes += allocation.size;
+        // Leave room for a maximum-sized extension after restoring a page.
+        bool retain = dormant_limit && bytes <= capacity / 2;
+        if (retain) code->dormant.reserve(bytes / 4);
+        for (const auto &allocation : code->allocations) {
             auto begin = uintptr_t(executable) + allocation.offset;
             auto end = begin + allocation.size;
             auto first = std::lower_bound(fault_sites.begin(), fault_sites.end(), begin,
                 [](const auto &site, uintptr_t address) { return site.instruction < address; });
             auto last = std::lower_bound(first, fault_sites.end(), end,
                 [](const auto &site, uintptr_t address) { return site.instruction < address; });
+            if (retain) {
+                code->dormant.insert(code->dormant.end(), (const uint32_t *)begin, (const uint32_t *)end);
+                code->dormant_faults.insert(code->dormant_faults.end(), first, last);
+            }
             fault_sites.erase(first, last);
             release_code(allocation);
             used -= allocation.size;
         }
+        if (retain) {
+            relocate_page(*code, [&](uintptr_t address) {
+                size_t compact = 1;
+                for (const auto &allocation : code->allocations) {
+                    uintptr_t begin = uintptr_t(executable) + allocation.offset;
+                    if (address >= begin && address < begin + allocation.size) return compact + address - begin;
+                    compact += allocation.size;
+                }
+                throw std::logic_error("Direct code relocation outside page");
+            });
+            code->allocations.clear();
+            dormant_pages.push_back(code);
+            code->dormant_position = std::prev(dormant_pages.end());
+            dormant_bytes += dormant_cost(*code);
+            while (dormant_bytes > dormant_limit) {
+                auto *oldest = dormant_pages.front();
+                dormant_bytes -= dormant_cost(*oldest);
+                dormant_pages.pop_front();
+                clear_routes(oldest);
+                auto range = pages.equal_range(oldest->cache_key);
+                auto found = std::find_if(range.first, range.second,
+                    [oldest](const auto &entry) { return entry.second.get() == oldest; });
+                pages.erase(found);
+            }
+            return;
+        }
         pages.erase(page);
+    }
+
+    void restore_page(CompiledPage &code)
+    {
+        dormant_bytes -= dormant_cost(code);
+        dormant_pages.erase(code.dormant_position);
+        size_t bytes = code.dormant.size() * 4;
+        auto range = reserve_code(bytes);
+#if !TARGET_OS_IPHONE
+        pthread_jit_write_protect_np(0);
+#endif
+        std::memcpy((char *)writable + range.offset, code.dormant.data(), bytes);
+#if !TARGET_OS_IPHONE
+        pthread_jit_write_protect_np(1);
+#endif
+        auto address = uintptr_t(executable) + range.offset;
+        sys_icache_invalidate((void *)address, bytes);
+        relocate_page(code, [address](uintptr_t offset) { return address + offset - 1; });
+        auto previous = fault_sites.size();
+        std::sort(code.dormant_faults.begin(), code.dormant_faults.end(),
+                  [](const auto &a, const auto &b) { return a.instruction < b.instruction; });
+        fault_sites.insert(fault_sites.end(), code.dormant_faults.begin(), code.dormant_faults.end());
+        std::inplace_merge(fault_sites.begin(), fault_sites.begin() + previous, fault_sites.end(),
+                          [](const auto &a, const auto &b) { return a.instruction < b.instruction; });
+        std::vector<uint32_t>().swap(code.dormant);
+        std::vector<FaultSite>().swap(code.dormant_faults);
+        code.allocations.push_back({range.offset, bytes});
+        free_ranges.erase(range.offset);
+        free_sizes.erase({range.size, range.offset});
+        if (range.size > bytes) release_code({range.offset + bytes, range.size - bytes});
+        used += bytes;
+        code.last_used = ++cache_clock;
+        code_age.emplace_back(code.last_used, &code);
+        std::push_heap(code_age.begin(), code_age.end(), older_first);
+        ++restores;
     }
 
     CompiledPage::Allocation reserve_code(size_t required)
@@ -1463,6 +1587,7 @@ struct HuskArm64Direct {
             return pages.end();
         };
         auto found = find();
+        if (found != pages.end() && !found->second->dormant.empty()) restore_page(*found->second);
         if (found != pages.end() && found->second->entries[entry]) {
             found->second->last_used = ++cache_clock;
             shared_hits += found->second->first_address != page;
@@ -1473,6 +1598,10 @@ struct HuskArm64Direct {
         for (;;) {
             auto range = reserve_code(required);
             found = find();
+            if (found != pages.end() && !found->second->dormant.empty()) {
+                restore_page(*found->second);
+                continue;
+            }
             if (found == pages.end()) {
                 auto compiled = std::make_unique<CompiledPage>();
                 compiled->compile_flags = flags;
@@ -1523,7 +1652,7 @@ HuskArm64Direct *husk_direct_create(size_t cache_bytes)
 HuskArm64CacheStats husk_direct_cache_stats(const HuskArm64Direct *ctx)
 {
     return {ctx->compiles, ctx->evictions, ctx->flushes, ctx->shared_hits, ctx->used, ctx->pages.size(),
-            ctx->code_version_hits, ctx->code_checks};
+            ctx->code_version_hits, ctx->code_checks, ctx->restores, ctx->dormant_bytes};
 }
 bool husk_direct_supported(uint32_t instruction) { return decode(instruction) != Other; }
 bool husk_arm64_landing_supported(uint32_t instruction)
@@ -1556,10 +1685,15 @@ HuskArm64Exit husk_direct_run(HuskArm64Direct *ctx, HuskArm64State *state,
     if (state->access_flags & HUSK_AES) access_flags |= ctx->native_crypto & CompileAes;
     if (state->access_flags & HUSK_SHA1) access_flags |= ctx->native_crypto & CompileSha1;
     if (state->access_flags & HUSK_SHA256) access_flags |= ctx->native_crypto & CompileSha256;
+    if (state->access_flags & HUSK_PAUTH_HINTS_NOP) access_flags |= CompilePauthNop;
+    if (ctx->dormant_limit) access_flags |= CompileRelocatable;
+    bool same_mappings = memory.mapping_epoch && memory.mapping_epoch == ctx->mapping_epoch &&
+        memory.opaque == ctx->mapping_owner && memory.map_page == ctx->mapping_callback;
+    ctx->mapping_epoch = memory.mapping_epoch;
+    ctx->mapping_owner = memory.opaque;
+    ctx->mapping_callback = memory.map_page;
     if (ctx->fastmem) {
-        if (!memory.mapping_epoch || memory.mapping_epoch != ctx->mapping_epoch)
-            ctx->fastmem->reset();
-        ctx->mapping_epoch = memory.mapping_epoch;
+        if (!same_mappings) ctx->fastmem->reset();
         ctx->fastmem->protect_code(bytes);
     }
     if (ctx->version_owner != memory.opaque || ctx->version_callback != memory.code_version) {
@@ -1583,7 +1717,9 @@ HuskArm64Exit husk_direct_run(HuskArm64Direct *ctx, HuskArm64State *state,
     ctx->routes.fill({UINT64_MAX, nullptr});
     ctx->call_routes.fill({UINT64_MAX, nullptr});
     auto *code = resolve(state->pc, bytes, state->access_flags & HUSK_BTYPE_MASK);
-    ctx->clear_mappings();
+    // The new entry page can alias an earlier writable mapping. Read mappings
+    // survive only while the owner keeps its mapping generation unchanged.
+    ctx->clear_mappings(same_mappings);
     ctx->pauth_cache.fill({});
     Frame frame{*state, std::min(budget, uint64_t(INT64_MAX)), 0, 0, 0,
                 ctx->routes.data(), ctx->call_routes.data(),
@@ -1785,7 +1921,7 @@ HuskArm64Exit husk_direct_run(HuskArm64Direct *ctx, HuskArm64State *state,
             ++ctx->fallbacks[code->source[(state->pc - page) / 4]];
         ctx->run_ns += std::chrono::duration_cast<std::chrono::nanoseconds>(now - started).count();
         if (now - ctx->report > std::chrono::seconds(5)) {
-            std::fprintf(stderr, "[husk-direct-stats] calls=%llu compiles=%llu compile_ms=%.3f run_ms=%.3f pages=%zu code_kb=%zu flushes=%llu evictions=%llu shared_hits=%llu branches=%llu budgets=%llu assists=%llu chained_assists=%llu code_version_hits=%llu code_checks=%llu pc=%llx\n",
+            std::fprintf(stderr, "[husk-direct-stats] calls=%llu compiles=%llu compile_ms=%.3f run_ms=%.3f pages=%zu code_kb=%zu flushes=%llu evictions=%llu shared_hits=%llu branches=%llu budgets=%llu assists=%llu chained_assists=%llu code_version_hits=%llu code_checks=%llu restores=%llu cold_kb=%zu pc=%llx\n",
                 (unsigned long long)ctx->calls, (unsigned long long)ctx->compiles,
                 ctx->compile_ns / 1e6, ctx->run_ns / 1e6, ctx->pages.size(), ctx->used / 1024,
                 (unsigned long long)ctx->flushes, (unsigned long long)ctx->evictions,
@@ -1793,6 +1929,7 @@ HuskArm64Exit husk_direct_run(HuskArm64Direct *ctx, HuskArm64State *state,
                 (unsigned long long)ctx->budget_exits, (unsigned long long)ctx->assists,
                 (unsigned long long)ctx->chained_assists,
                 (unsigned long long)ctx->code_version_hits, (unsigned long long)ctx->code_checks,
+                (unsigned long long)ctx->restores, ctx->dormant_bytes / 1024,
                 (unsigned long long)state->pc);
             auto histogram = [](const char *label, const auto &counts) {
                 std::vector<std::pair<uint64_t, uint32_t>> hottest;

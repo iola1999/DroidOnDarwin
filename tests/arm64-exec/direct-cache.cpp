@@ -6,6 +6,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <memory>
+#include <string>
 #include <vector>
 
 #define CHECK(x) do { if (!(x)) { std::fprintf(stderr, "failed line %d: %s\n", __LINE__, #x); std::exit(1); } } while (0)
@@ -341,8 +342,73 @@ static void fragmented_cache()
                 (unsigned long long)stats.compiles, (unsigned long long)stats.evictions, (long long)us);
 }
 
+static void dormant_relocation(bool fastmem, unsigned cold_mib)
+{
+    setenv("HUSK_ARM64_COLD_CACHE_MIB", std::to_string(cold_mib).c_str(), 1);
+    setenv("HUSK_ARM64_CODE_SHARING", "0", 1);
+    setenv("HUSK_ARM64_FASTMEM", fastmem ? "1" : "0", 1);
+    setenv("HUSK_ARM64_LOOP_MAP", "1", 1);
+    auto memory = std::make_unique<Memory>();
+    auto &m = *memory;
+    m.data[0] = 0x123456789abcdef0;
+    for (auto &code : m.code) {
+        code.fill(0xd4000001);
+        for (unsigned i = 0; i < 512; i += 2) {
+            code[i] = 0xf9400022; code[i + 1] = 0x91000400;
+        }
+        code[768] = 0x17fffd00; // b entry 0, compiled in an earlier allocation
+        code[800] = 0xf9400022; code[801] = 0x91000400;
+        code[802] = 0xf1000484; code[803] = 0x54ffffa1; // subs x4; b.ne entry 800
+    }
+    Engine engine(husk_direct_create(2 * 1024 * 1024), husk_direct_destroy);
+    HuskArm64Memory callbacks{&m, nullptr, nullptr, Memory::Data};
+    auto run = [&](size_t page, unsigned entry, bool readable) {
+        HuskArm64State state{};
+        state.pc = base + page * 4096 + entry * 4;
+        state.x[1] = 0x20000; state.x[4] = 100;
+        m.readable = readable;
+        CHECK(husk_direct_run(engine.get(), &state, base + page * 4096, m.code[page].data(), callbacks, 100000) == HUSK_ARM64_FALLBACK);
+        CHECK(state.pc == base + page * 4096 + (readable ? (entry == 800 ? 804 : 512) * 4 : 0));
+        CHECK(state.x[0] == (readable ? (entry == 800 ? 100 : 256) : 0));
+        CHECK(state.x[2] == (readable ? m.data[0] : 0));
+    };
+    auto start = std::chrono::steady_clock::now();
+    uint64_t initial_compiles = 0;
+    for (unsigned round = 0; round < 5; ++round) {
+        for (size_t page = 0; page < m.code.size(); ++page) {
+            // Later rounds enter the relocated cross-allocation branch first.
+            run(page, round ? 768 : 0, true);
+            run(page, 768, true);
+            run(page, 800, true);
+        }
+        auto stats = husk_direct_cache_stats(engine.get());
+        if (!round) initial_compiles = stats.compiles;
+        if (cold_mib >= 16) CHECK(stats.compiles == initial_compiles);
+        CHECK(stats.dormant_bytes <= cold_mib * 1024 * 1024);
+    }
+    auto us = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - start).count();
+    auto stats = husk_direct_cache_stats(engine.get());
+    CHECK(stats.evictions && (cold_mib < 16 || stats.restores));
+    std::printf("cold cache fastmem=%d mib=%u compiles=%llu restores=%llu cold_bytes=%zu us=%lld PASS\n",
+        fastmem, cold_mib, (unsigned long long)stats.compiles, (unsigned long long)stats.restores,
+        stats.dormant_bytes, (long long)us);
+    // Patch a restored fastmem instruction after permission refusal, evict it,
+    // and restore it again. Its checked fallback branch must remain local.
+    run(0, 768, false);
+    for (size_t page = 1; page < m.code.size(); ++page) run(page, 768, true);
+    run(0, 768, true);
+    m.code[0][0] = 0xd2800120; m.code[0][1] = 0xd4000001;
+    HuskArm64State state{}; state.pc = base;
+    CHECK(husk_direct_run(engine.get(), &state, base, m.code[0].data(), callbacks, 1000) == HUSK_ARM64_FALLBACK);
+    CHECK(state.pc == base + 4 && state.x[0] == 9);
+}
+
 int main(int argc, char **argv)
 {
+    if (argc == 2 && !std::strcmp(argv[1], "--cold-cache-only")) {
+        for (bool fastmem : {false, true}) for (unsigned mib : {0U, 1U, 16U}) dormant_relocation(fastmem, mib);
+        return 0;
+    }
     if (argc == 2 && !std::strcmp(argv[1], "--fragmentation-only")) {
         fragmented_cache();
         return 0;

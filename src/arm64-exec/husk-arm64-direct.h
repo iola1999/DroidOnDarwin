@@ -11,6 +11,8 @@ struct HuskArm64CacheStats {
     uint64_t compiles, evictions, flushes, shared_hits;
     size_t bytes, pages;
     uint64_t code_version_hits, code_checks;
+    uint64_t restores;
+    size_t dormant_bytes;
 };
 HuskArm64CacheStats husk_direct_cache_stats(const HuskArm64Direct *);
 void husk_direct_destroy(HuskArm64Direct *);

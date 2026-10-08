@@ -682,6 +682,7 @@ landing_ready:
                                  (cpu_isar_feature(aa64_aes, cpu) ? HUSK_AES : 0) |
                                  (cpu_isar_feature(aa64_sha1, cpu) ? HUSK_SHA1 : 0) |
                                  (cpu_isar_feature(aa64_sha256, cpu) ? HUSK_SHA256 : 0) |
+                                 (!EX_TBFLAG_A64(env->hflags, PAUTH_ACTIVE) ? HUSK_PAUTH_HINTS_NOP : 0) |
                                  (husk_mops_allowed(env) ? HUSK_MOPS_ALLOWED : 0) |
                                  ((el == 0 && (EX_TBFLAG_A64(env->hflags, TBID) & 1)) ? 8 : 0) |
                                  (env->btype << HUSK_BTYPE_SHIFT),
