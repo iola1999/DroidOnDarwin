@@ -20,7 +20,7 @@ typedef struct {
     void *code_host;
     void *code_hosts[256];
     unsigned code_count;
-    bool reuse_mappings;
+    bool reuse_mappings, code_versions;
     uint64_t mapping_epoch, mapping_generation;
     int mapping_mmu;
     int64_t resume_after_ns[2];
@@ -287,6 +287,11 @@ static const void *husk_map_code(void *opaque, uint64_t page)
     if (ctx->code_count == ARRAY_SIZE(ctx->code_hosts)) return NULL;
     ctx->code_hosts[ctx->code_count++] = host;
     return host;
+}
+
+static uint64_t husk_code_version(void *opaque, const void *host)
+{
+    return tb_husk_code_version((void *)host);
 }
 
 static void husk_export_state(CPUARMState *env, const HuskArm64State *state)
@@ -615,6 +620,8 @@ landing_ready:
         ctx->pauth_landing = pauth_landing;
         const char *reuse = getenv("HUSK_ARM64_FASTMEM_REUSE");
         ctx->reuse_mappings = direct && (!reuse || strcmp(reuse, "0"));
+        const char *versions = getenv("HUSK_ARM64_CODE_VERSIONS");
+        ctx->code_versions = direct && versions && !strcmp(versions, "1");
         const char *system_reads = getenv("HUSK_ARM64_SYSTEM_READS");
         ctx->system_reads = !system_reads || strcmp(system_reads, "0");
         const char *system_exec = getenv("HUSK_ARM64_KERNEL_SYSTEM");
@@ -712,7 +719,8 @@ landing_ready:
                                                          ctx->assist ? husk_assist : NULL,
                                                          direct ? husk_map_code : NULL, epoch,
                                                          native_pauth ? &pauth : NULL,
-                                                         native_kernel_reads ? &kernel_reads : NULL},
+                                                         native_kernel_reads ? &kernel_reads : NULL,
+                                                         ctx->code_versions ? husk_code_version : NULL},
                                         slice_budget);
     husk_profile_phase(ctx, el != 0);
     if (result == HUSK_ARM64_ERROR) {

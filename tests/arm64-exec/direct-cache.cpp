@@ -258,6 +258,48 @@ static size_t stub_workload(bool shared, bool fastmem)
     return stats.bytes;
 }
 
+static void versioned_code(bool enabled)
+{
+    setenv("HUSK_ARM64_FASTMEM", "0", 1);
+    Engine engine(husk_direct_create(), husk_direct_destroy);
+    Page code;
+    code.fill(0xd4000001);
+    code[0] = 0xd28000e0;
+    uint64_t version = 1, other_owner = 1;
+    HuskArm64Memory callbacks{};
+    callbacks.opaque = &version;
+    if (enabled) callbacks.code_version = [](void *p, const void *) { return *static_cast<uint64_t *>(p); };
+    auto run = [&](uint64_t expected) {
+        HuskArm64State state{};
+        state.pc = base;
+        CHECK(husk_direct_run(engine.get(), &state, base, code.data(), callbacks, 64) == HUSK_ARM64_FALLBACK);
+        CHECK(state.x[0] == expected && state.pc == base + 4);
+    };
+    run(7);
+    auto start = std::chrono::steady_clock::now();
+    for (unsigned i = 0; i < 100000; ++i) run(7);
+    auto us = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - start).count();
+    auto stats = husk_direct_cache_stats(engine.get());
+    CHECK(stats.compiles == 1);
+    CHECK(enabled ? stats.code_version_hits == 100000 && !stats.code_checks : stats.code_checks == 100000);
+    ++version;
+    code[0] = 0xd2800120;
+    run(9);
+    // Identical numbers from a different owner cannot validate old content.
+    other_owner = version;
+    callbacks.opaque = &other_owner;
+    code[0] = 0xd2800160;
+    run(11);
+    other_owner = 0;
+    code[0] = 0xd28001a0;
+    run(13);
+    code[0] = 0xd28001e0;
+    run(15);
+    std::printf("cache versions=%d lookups=100000 us=%lld content_checks=%llu version_hits=%llu PASS\n",
+                enabled, (long long)us, (unsigned long long)stats.code_checks,
+                (unsigned long long)stats.code_version_hits);
+}
+
 int main()
 {
     setenv("HUSK_ARM64_CODE_SHARING", "0", 1);
@@ -276,4 +318,6 @@ int main()
         CHECK(after < before);
     }
     active_routes_under_pressure();
+    versioned_code(false);
+    versioned_code(true);
 }

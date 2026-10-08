@@ -106,7 +106,7 @@ struct CallRoute {
 unsigned call_slot(uint64_t target, bool jump) {
     return ((target >> 2) ^ (target >> 10)) % 256 + (jump ? 256 : 0);
 }
-struct SourceRoute { const void *source; CompiledPage *code; uint32_t flags; };
+struct SourceRoute { const void *source; CompiledPage *code; uint32_t flags; uint64_t version; };
 struct PauthResult { uint64_t value, modifier, result, instruction; };
 static_assert(sizeof(Mapping) == 32);
 static_assert(sizeof(CodeRoute) == 32);
@@ -1245,6 +1245,9 @@ struct HuskArm64Direct {
     bool shared_stubs = true;
     uint64_t shared_hits = 0;
     uint64_t cache_clock = 0, evictions = 0;
+    uint64_t code_version_hits = 0, code_checks = 0;
+    void *version_owner = nullptr;
+    decltype(HuskArm64Memory::code_version) version_callback = nullptr;
     uint64_t calls = 0, compiles = 0, flushes = 0, compile_ns = 0, run_ns = 0;
     uint64_t branches = 0, budget_exits = 0, assists = 0, chained_assists = 0;
     std::unordered_map<uint32_t, uint64_t> fallbacks, assist_samples;
@@ -1375,13 +1378,20 @@ struct HuskArm64Direct {
         }
     }
 
-    CompiledPage &code_page(uint64_t page, const void *bytes, uint32_t flags, size_t entry)
+    CompiledPage &code_page(uint64_t page, const void *bytes, uint32_t flags, size_t entry,
+                            uint64_t version)
     {
+        auto same_content = [&](const CompiledPage &code) {
+            ++code_checks;
+            return !std::memcmp(code.source.data(), bytes, 4096);
+        };
         unsigned slot = ((uintptr_t(bytes) >> 12) ^ flags) & 255;
         auto &route = source_routes[slot];
         bool known = route.source == bytes && route.flags == flags && route.code &&
             (share_code || route.code->first_address == page) &&
-            !std::memcmp(route.code->source.data(), bytes, 4096);
+            ((version && route.version == version) || same_content(*route.code));
+        if (known && version && route.version == version) ++code_version_hits;
+        if (known) route.version = version;
         if (known && route.code->entries[entry]) {
             route.code->last_used = ++cache_clock;
             shared_hits += route.code->first_address != page;
@@ -1405,7 +1415,7 @@ struct HuskArm64Direct {
                 // are required; permissions still come from the current owner.
                 if (compiled.compile_flags == flags &&
                     (share_code || compiled.first_address == page) &&
-                    !std::memcmp(compiled.source.data(), bytes, 4096)) return found;
+                    ((known && route.code == &compiled) || same_content(compiled))) return found;
             }
             return pages.end();
         };
@@ -1413,7 +1423,7 @@ struct HuskArm64Direct {
         if (found != pages.end() && found->second->entries[entry]) {
             found->second->last_used = ++cache_clock;
             shared_hits += found->second->first_address != page;
-            route = {bytes, found->second.get(), flags};
+            route = {bytes, found->second.get(), flags, version};
             return *found->second;
         }
         size_t required = 16;
@@ -1445,7 +1455,7 @@ struct HuskArm64Direct {
             if (!range.size) free_ranges.erase(free_ranges.begin() + range_index);
             used += emitted;
             ++compiles;
-            route = {bytes, compiled.get(), flags};
+            route = {bytes, compiled.get(), flags, version};
             return *compiled;
         }
     }
@@ -1468,7 +1478,8 @@ HuskArm64Direct *husk_direct_create(size_t cache_bytes)
 }
 HuskArm64CacheStats husk_direct_cache_stats(const HuskArm64Direct *ctx)
 {
-    return {ctx->compiles, ctx->evictions, ctx->flushes, ctx->shared_hits, ctx->used, ctx->pages.size()};
+    return {ctx->compiles, ctx->evictions, ctx->flushes, ctx->shared_hits, ctx->used, ctx->pages.size(),
+            ctx->code_version_hits, ctx->code_checks};
 }
 bool husk_direct_supported(uint32_t instruction) { return decode(instruction) != Other; }
 bool husk_arm64_landing_supported(uint32_t instruction)
@@ -1507,11 +1518,17 @@ HuskArm64Exit husk_direct_run(HuskArm64Direct *ctx, HuskArm64State *state,
         ctx->mapping_epoch = memory.mapping_epoch;
         ctx->fastmem->protect_code(bytes);
     }
+    if (ctx->version_owner != memory.opaque || ctx->version_callback != memory.code_version) {
+        ctx->source_routes.fill({});
+        ctx->version_owner = memory.opaque;
+        ctx->version_callback = memory.code_version;
+    }
     auto resolve = [&](uint64_t address, const void *contents, bool landing) -> CompiledPage * {
         auto compile_start = ctx->profile ? std::chrono::steady_clock::now() : std::chrono::steady_clock::time_point{};
         auto previous_compiles = ctx->compiles;
         auto *compiled = &ctx->code_page(address & ~UINT64_C(4095), contents,
-                                         access_flags | (landing ? CompileLanding : 0), (address & 4095) / 4);
+                                         access_flags | (landing ? CompileLanding : 0), (address & 4095) / 4,
+                                         memory.code_version ? memory.code_version(memory.opaque, contents) : 0);
         if (ctx->profile && previous_compiles != ctx->compiles)
             ctx->compile_ns += std::chrono::duration_cast<std::chrono::nanoseconds>(
                 std::chrono::steady_clock::now() - compile_start).count();
@@ -1727,13 +1744,14 @@ HuskArm64Exit husk_direct_run(HuskArm64Direct *ctx, HuskArm64State *state,
             ++ctx->fallbacks[code->source[(state->pc - page) / 4]];
         ctx->run_ns += std::chrono::duration_cast<std::chrono::nanoseconds>(now - started).count();
         if (now - ctx->report > std::chrono::seconds(5)) {
-            std::fprintf(stderr, "[husk-direct-stats] calls=%llu compiles=%llu compile_ms=%.3f run_ms=%.3f pages=%zu code_kb=%zu flushes=%llu evictions=%llu shared_hits=%llu branches=%llu budgets=%llu assists=%llu chained_assists=%llu pc=%llx\n",
+            std::fprintf(stderr, "[husk-direct-stats] calls=%llu compiles=%llu compile_ms=%.3f run_ms=%.3f pages=%zu code_kb=%zu flushes=%llu evictions=%llu shared_hits=%llu branches=%llu budgets=%llu assists=%llu chained_assists=%llu code_version_hits=%llu code_checks=%llu pc=%llx\n",
                 (unsigned long long)ctx->calls, (unsigned long long)ctx->compiles,
                 ctx->compile_ns / 1e6, ctx->run_ns / 1e6, ctx->pages.size(), ctx->used / 1024,
                 (unsigned long long)ctx->flushes, (unsigned long long)ctx->evictions,
                 (unsigned long long)ctx->shared_hits, (unsigned long long)ctx->branches,
                 (unsigned long long)ctx->budget_exits, (unsigned long long)ctx->assists,
                 (unsigned long long)ctx->chained_assists,
+                (unsigned long long)ctx->code_version_hits, (unsigned long long)ctx->code_checks,
                 (unsigned long long)state->pc);
             auto histogram = [](const char *label, const auto &counts) {
                 std::vector<std::pair<uint64_t, uint32_t>> hottest;

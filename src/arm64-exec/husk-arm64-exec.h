@@ -115,6 +115,12 @@ typedef struct {
     uint64_t mapping_epoch;
     const HuskArm64Pauth *pauth;
     const HuskArm64KernelReads *kernel_reads;
+    /* Optional content version for a physical code page. A nonzero value must
+     * change before any write, including aliases, DMA and restored memory.
+     * The page remains immutable during run(). Versions belong to this opaque
+     * owner and callback; execute permissions are still checked by map_code.
+     * Zero requires an exact content comparison on every lookup. */
+    uint64_t (*code_version)(void *, const void *host_page);
 } HuskArm64Memory;
 
 /* map_page must reject MMIO, watched pages and writable code aliases. All

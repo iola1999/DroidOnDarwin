@@ -82,7 +82,8 @@ def main():
             switch_benchmark = re.search(r"BENCH switch_ns=(\d+) count=(\d+)", output)
             row = {"sample": sample, "mode": mode, "exit_code": process.returncode,
                    "elapsed_seconds": time.monotonic() - start, "timeout": expired,
-                   "passed": "HUSK-EL0-TEST PASS" in output and "HUSK-EL0-TEST FAIL" not in output,
+                   "passed": "HUSK-EL0-TEST PASS" in output and "HUSK-EL0-TEST FAIL" not in output
+                             and "PASS executable aliases, kernel writes and revoked execution" in output,
                    "engine_active": "EL0 engine active" in host_output,
                    "direct_active": "backend=direct" in host_output,
                    "fastmem_active": "[husk-fastmem] segmented mapping active" in host_output,

@@ -48,6 +48,7 @@ def main():
     apply(qemu, "qemu-arm64-host-sha256.patch")
     apply(qemu, "qemu-arm64-branch-assist.patch")
     apply(qemu, "qemu-arm64-fastmem-generation.patch")
+    apply(qemu, "qemu-arm64-code-versions.patch")
     apply(qemu, "qemu-arm64-bulk-memory.patch")
     apply(qemu, "qemu-arm64-bulk-discovery.patch")
     apply(qemu, "qemu-arm64-bulk-acpi.patch")

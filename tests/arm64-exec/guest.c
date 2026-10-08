@@ -486,6 +486,39 @@ void guest_main(u64 *initial_stack)
     CHECK(function() == 9);
     print("PASS modified executable page\n");
 
+    // Shared RW/RX mappings exercise writes through a different virtual page,
+    // including a kernel write into the file page after native code was cached.
+    s64 code_fd = call(279, (u64)"husk-code", 0, 0, 0, 0, 0);
+    CHECK(code_fd >= 0 && call(46, code_fd, 4096, 0, 0, 0, 0) == 0);
+    s64 rw_alias = call(222, 0, 4096, 3, 1, code_fd, 0);
+    s64 rx_alias = call(222, 0, 4096, 5, 1, code_fd, 0);
+    CHECK(rw_alias > 0 && rx_alias > 0 && rw_alias != rx_alias);
+    volatile unsigned *shared = (void *)rw_alias;
+    u64 (*aliased_function)(void) = (void *)rx_alias;
+    shared[0] = 0xd28000e0; shared[1] = 0xd65f03c0;
+    __asm__ volatile("dc cvau, %0\ndsb ish\nic ivau, %1\ndsb ish\nisb" : : "r"(rw_alias), "r"(rx_alias) : "memory");
+    for (unsigned i = 0; i < 10000; ++i) CHECK(aliased_function() == 7);
+    shared[0] = 0xd2800120;
+    __asm__ volatile("dc cvau, %0\ndsb ish\nic ivau, %1\ndsb ish\nisb" : : "r"(rw_alias), "r"(rx_alias) : "memory");
+    for (unsigned i = 0; i < 10000; ++i) CHECK(aliased_function() == 9);
+    unsigned new_instruction = 0xd2800160;
+    CHECK(call(68, code_fd, (u64)&new_instruction, 4, 0, 0, 0) == 4);
+    __asm__ volatile("dc cvau, %0\ndsb ish\nic ivau, %1\ndsb ish\nisb" : : "r"(rw_alias), "r"(rx_alias) : "memory");
+    for (unsigned i = 0; i < 10000; ++i) CHECK(aliased_function() == 11);
+    CHECK(call(226, rx_alias, 4096, 1, 0, 0, 0) == 0);
+    child = call(220, 17, 0, 0, 0, 0, 0);
+    CHECK(child >= 0);
+    if (!child) {
+        call(93, aliased_function(), 0, 0, 0, 0, 0);
+        for (;;) {}
+    }
+    CHECK(call(260, child, (u64)&status, 0, 0, 0, 0) == child);
+    CHECK((status & 127) == 11);
+    CHECK(call(215, rw_alias, 4096, 0, 0, 0, 0) == 0);
+    CHECK(call(215, rx_alias, 4096, 0, 0, 0, 0) == 0);
+    CHECK(call(57, code_fd, 0, 0, 0, 0, 0) == 0);
+    print("PASS executable aliases, kernel writes and revoked execution\n");
+
     code[0] = 0xd503245f; // bti c
     code[1] = 0xd2800160; // mov x0,11
     code[2] = 0xd65f03c0; // ret
