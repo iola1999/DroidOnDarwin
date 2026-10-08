@@ -110,10 +110,12 @@ def main():
                 row["passed"] = False
             if not all((benchmark, memory_benchmark, tagged_benchmark, syscall_benchmark, switch_benchmark)):
                 row["passed"] = False
-            for name in ("vector", "float", "vector_memory", "vector_structures", "counter", "calls", "indirect_calls", "plain_calls", "tail_calls", "dispatch_ip", "dispatch_general", "pac_calls", "pac_diverse", "exclusive", "atomic", "pointer", "pointer_write", "mixed_code"):
+            for name in ("vector", "float", "vector_memory", "vector_structures", "counter", "calls", "indirect_calls", "plain_calls", "tail_calls", "dispatch_ip", "dispatch_general", "pac_calls", "pac_diverse", "exclusive", "atomic", "pointer", "pointer_write", "mixed_code", "widen", "sha256"):
                 measured = re.search(rf"BENCH {name}_ns=(\d+) value=(\d+)", output)
                 row[name + "_ns"] = int(measured[1]) if measured else None
-                if not measured and not (name == "atomic" and "SKIP LSE unavailable" in output):
+                skipped = (name == "atomic" and "SKIP LSE unavailable" in output) or (
+                    name == "sha256" and "SKIP SHA256 unavailable" in output)
+                if not measured and not skipped:
                     row["passed"] = False
             pauth = re.search(r"BENCH pauth_ns=(\d+) count=(\d+)", output)
             row["pauth_ns"] = int(pauth[1]) if pauth else None

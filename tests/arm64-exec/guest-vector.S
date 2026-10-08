@@ -1,5 +1,32 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 .text
+.arch armv8-a+crypto
+.balign 16
+.global husk_sha256_schedule_loop
+husk_sha256_schedule_loop:
+    movi v0.4s, #1
+    movi v1.4s, #2
+1:  sha256su0 v0.4s, v1.4s
+    subs x0, x0, #1
+    b.ne 1b
+    umov w0, v0.s[0]
+    umov w1, v0.s[3]
+    orr x0, x0, x1, lsl #32
+    ret
+
+.balign 16
+.global husk_widen_loop
+husk_widen_loop:
+    movi v0.4s, #0
+    movi v1.8h, #3
+    movi v2.8h, #5
+1:  umlal v0.4s, v1.4h, v2.4h
+    subs x0, x0, #1
+    b.ne 1b
+    addv s0, v0.4s
+    fmov w0, s0
+    ret
+
 .balign 16
 .global husk_neon_copy
 husk_neon_copy:

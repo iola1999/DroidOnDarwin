@@ -38,6 +38,7 @@ constexpr uint32_t CompileExclusive = 512, CompileTail = 1024;
 constexpr uint32_t CompilePauthVerify = 2048;
 constexpr uint32_t CompileKernelReads = 4096;
 constexpr uint32_t CompileSharedStubs = 8192;
+constexpr uint32_t CompileAes = 16384, CompileSha1 = 32768, CompileSha256 = 65536;
 enum Stop : uint64_t { Budget, Fallback, ReadPage, WritePage, PrepareLoop, CodeBranch,
                        FastReadPage, FastWritePage, PauthCheck };
 struct FaultSite {
@@ -197,7 +198,7 @@ int64_t sign_extend(uint32_t value, unsigned bits)
 /* Only these validated encodings can execute as host instructions. */
 enum Kind { Other, AddImm, MoveWide, AddReg, LogicalReg, LogicalImm, Bitfield,
             Extract, Unary, Binary, Crc, Select, Multiply, AddExt, Carry, Adr, Branch, Conditional,
-            CompareBranch, TestBranch, Indirect, Memory, Pair, Vector,
+            CompareBranch, TestBranch, Indirect, Memory, Pair, Vector, CryptoAes, CryptoSha1, CryptoSha256,
             VectorFromGpr, GprFromVector, FpFromGpr, GprFromFp, Compare, Hint, SystemRead, Assist, Atomic,
             Pauth, Barrier, Bti, ExclusiveLoad, ExclusiveStore, ClearExclusive, Structure, KernelRead };
 
@@ -318,6 +319,15 @@ Kind decode(uint32_t w)
     // Baseline Advanced SIMD encodings only. Size and Q restrictions reject
     // reserved encodings before any guest word can run on the host CPU.
     unsigned q = (w >> 30) & 1, element = (w >> 22) & 3;
+    switch (w & 0xfffffc00) {
+    case 0x4e284800: case 0x4e285800: case 0x4e286800: case 0x4e287800: return CryptoAes;
+    case 0x5e280800: case 0x5e281800: return CryptoSha1;
+    case 0x5e282800: return CryptoSha256;
+    }
+    switch (w & 0xffe0fc00) {
+    case 0x5e000000: case 0x5e001000: case 0x5e002000: case 0x5e003000: return CryptoSha1;
+    case 0x5e004000: case 0x5e005000: case 0x5e006000: return CryptoSha256;
+    }
     if ((w & 0xbf200000) == 0x0c000000 && structure_registers(w)) {
         unsigned opcode = (w >> 12) & 15;
         bool sequential = opcode == 2 || opcode == 6 || opcode == 7 || opcode == 10;
@@ -346,11 +356,17 @@ Kind decode(uint32_t w)
     case 0x0e208400: case 0x2e208400: case 0x0e20bc00:
     case 0x0e203400: case 0x0e203c00: case 0x2e203400:
     case 0x2e203c00: case 0x2e208c00: case 0x0e208c00:
+    case 0x0e204400: case 0x2e204400: // SSHL/USHL
+    case 0x0e204c00: case 0x2e204c00: // SQSHL/UQSHL
+    case 0x0e205400: case 0x2e205400: // SRSHL/URSHL
         if (element != 3 || q) return Vector;
         break;
     case 0x0e209c00: case 0x0e209400: case 0x2e209400:
     case 0x0e206400: case 0x0e206c00: case 0x2e206400: case 0x2e206c00:
     case 0x0e20a400: case 0x0e20ac00: case 0x2e20a400: case 0x2e20ac00:
+    case 0x0e20c000: case 0x2e20c000: // SMULL/UMULL
+    case 0x0e208000: case 0x2e208000: // SMLAL/UMLAL
+    case 0x0e20a000: case 0x2e20a000: // SMLSL/UMLSL
         if (element != 3) return Vector;
         break;
     }
@@ -796,6 +812,9 @@ struct CompiledPage {
                 if ((flags & 2) && fp_access) kind = Other;
                 if (kind == Atomic && !(flags & 4)) kind = Other;
                 if (kind == Crc && !(flags & 64)) kind = Other;
+                if ((kind == CryptoAes && !(flags & CompileAes)) ||
+                    (kind == CryptoSha1 && !(flags & CompileSha1)) ||
+                    (kind == CryptoSha256 && !(flags & CompileSha256))) kind = Other;
                 if ((kind == ExclusiveLoad || kind == ExclusiveStore || kind == ClearExclusive) &&
                     !(flags & CompileExclusive)) kind = Other;
                 if (mops_at(i)) {
@@ -851,7 +870,7 @@ struct CompiledPage {
                         w = (w & ~(31U << 16)) | (17 << 16);
                     }
                     c.dw(w);
-                } else if (kind == Vector) {
+                } else if (kind == Vector || kind == CryptoAes || kind == CryptoSha1 || kind == CryptoSha256) {
                     c.dw(w);
                 } else if (kind == VectorFromGpr || kind == FpFromGpr) {
                     load(rn, X16);
@@ -1215,6 +1234,7 @@ struct HuskArm64Direct {
     size_t populated_count = 0;
     bool profile = std::getenv("HUSK_ARM64_STATS") != nullptr;
     bool native_lse = false, native_crc = false;
+    uint32_t native_crypto = 0;
     bool verify_pauth = std::getenv("HUSK_ARM64_NATIVE_PAUTH_VERIFY") != nullptr;
     uint64_t pauth_checks = 0;
     bool inline_assists = true;
@@ -1265,6 +1285,17 @@ struct HuskArm64Direct {
         int crc = 0;
         size_t crc_size = sizeof(crc);
         native_crc = !sysctlbyname("hw.optional.armv8_crc32", &crc, &crc_size, nullptr, 0) && crc;
+        const char *crypto_setting = std::getenv("HUSK_ARM64_NATIVE_CRYPTO");
+        if (!crypto_setting || std::strcmp(crypto_setting, "0")) {
+            for (auto feature : {std::pair{"hw.optional.arm.FEAT_AES", CompileAes},
+                                 std::pair{"hw.optional.arm.FEAT_SHA1", CompileSha1},
+                                 std::pair{"hw.optional.arm.FEAT_SHA256", CompileSha256}}) {
+                int supported = 0;
+                size_t size = sizeof(supported);
+                if (!sysctlbyname(feature.first, &supported, &size, nullptr, 0) && supported)
+                    native_crypto |= feature.second;
+            }
+        }
 #if TARGET_OS_IPHONE
         mapping = husk_ios_jit_acquire_el0(capacity);
         if (!mapping.rw_addr) throw std::runtime_error("EL0 JIT partition unavailable; enable JIT before boot");
@@ -1467,6 +1498,9 @@ HuskArm64Exit husk_direct_run(HuskArm64Direct *ctx, HuskArm64State *state,
     if (ctx->verify_pauth && memory.assist) access_flags |= CompilePauthVerify;
     if (memory.kernel_reads) access_flags |= CompileKernelReads;
     if (ctx->shared_stubs) access_flags |= CompileSharedStubs;
+    if (state->access_flags & HUSK_AES) access_flags |= ctx->native_crypto & CompileAes;
+    if (state->access_flags & HUSK_SHA1) access_flags |= ctx->native_crypto & CompileSha1;
+    if (state->access_flags & HUSK_SHA256) access_flags |= ctx->native_crypto & CompileSha256;
     if (ctx->fastmem) {
         if (!memory.mapping_epoch || memory.mapping_epoch != ctx->mapping_epoch)
             ctx->fastmem->reset();

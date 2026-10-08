@@ -19,7 +19,8 @@ typedef struct HuskArm64Exec HuskArm64Exec;
 enum { HUSK_BULK_COPY, HUSK_BULK_MOVE, HUSK_BULK_SET, HUSK_BULK_LIMIT = 65536 };
 
 enum { HUSK_BTYPE_SHIFT = 4, HUSK_BTYPE_MASK = 3U << HUSK_BTYPE_SHIFT,
-       HUSK_MOPS_ALLOWED = 1U << 7 };
+       HUSK_MOPS_ALLOWED = 1U << 7, HUSK_AES = 1U << 8,
+       HUSK_SHA1 = 1U << 9, HUSK_SHA256 = 1U << 10 };
 
 typedef struct {
     uint64_t x[31];
@@ -35,7 +36,8 @@ typedef struct {
      * Bits 4..5: pending architectural BTYPE, after the owner checked the target.
      * Direct clears these bits only after the first instruction completes.
      * Bit 6: guest exposes FEAT_CRC32.
-     * Bit 7: owner permits MOPS at EL0 with MTE disabled. */
+     * Bit 7: owner permits MOPS at EL0 with MTE disabled.
+     * Bits 8..10: guest exposes FEAT_AES, FEAT_SHA1 and FEAT_SHA256. */
     uint32_t access_flags;
     uint64_t tpidr_el0;
     uint64_t v[32][2];

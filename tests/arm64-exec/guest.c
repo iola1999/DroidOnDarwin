@@ -84,6 +84,8 @@ extern u64 husk_dispatch_general_loop(u64 n);
 extern u64 husk_pac_call_loop(u64 n);
 extern u64 husk_pauth_diverse_loop(u64 n);
 extern u64 husk_counter_loop(u64 n);
+extern u64 husk_sha256_schedule_loop(u64 n);
+extern u64 husk_widen_loop(u64 n);
 extern void husk_kernel_read(unsigned index);
 extern void *husk_mops_copy(void *to, const void *from, u64 length);
 extern u64 husk_mops_tagged_loop(void *to, const void *from, u64 count);
@@ -505,6 +507,19 @@ void guest_main(u64 *initial_stack)
         print("SKIP BTI unavailable\n");
     }
     vector_benchmarks();
+    start = ns();
+    result = husk_widen_loop(1000000);
+    elapsed = ns() - start;
+    CHECK(result == 60000000);
+    print("BENCH widen_ns="); number(elapsed); print(" value="); number(result); print("\n");
+    if (hwcap & (1UL << 6)) {
+        start = ns();
+        result = husk_sha256_schedule_loop(1000000);
+        elapsed = ns() - start;
+        // SHA256SU0 recurrence from [1,1,1,1] with source [2,2,2,2].
+        CHECK(result == 0xa120000176f77d22UL);
+        print("BENCH sha256_ns="); number(elapsed); print(" value="); number(result); print("\n");
+    } else print("SKIP SHA256 unavailable\n");
     mixed_code_benchmark();
     if (hwcap & (1UL << 8)) {
         u64 atomic_value = 0;

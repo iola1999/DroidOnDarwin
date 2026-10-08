@@ -219,6 +219,59 @@ int main()
         code[64] = 0xd4000001;
         compare(a, 64, sample);
     }
+    for (unsigned sample = 0; sample < 1024; ++sample) {
+        auto a = state();
+        code.fill(0);
+        constexpr uint32_t widen[] = {0x0e20c000, 0x2e20c000, 0x0e208000,
+                                     0x2e208000, 0x0e20a000, 0x2e20a000};
+        constexpr uint32_t shift[] = {0x0e204400, 0x2e204400, 0x0e204c00, 0x2e204c00,
+                                     0x0e205400, 0x2e205400};
+        for (unsigned i = 0; i < 64; ++i) {
+            unsigned q = random() & 1, rd = i & 31, rn = random() & 31, rm = random() & 31;
+            unsigned size = random() % (i & 1 ? 3 : q ? 4 : 3);
+            uint32_t op = i & 1 ? widen[random() % std::size(widen)] : shift[random() % std::size(shift)];
+            code[i] = op | (q << 30) | (size << 22) | (rm << 16) | (rn << 5) | rd;
+            CHECK(husk_arm64_supported(code[i]));
+        }
+        code[64] = 0xd4000001;
+        compare(a, 64, 30000 + sample);
+    }
+    constexpr uint32_t aes[] = {0x4e284800, 0x4e285800, 0x4e286800, 0x4e287800};
+    constexpr uint32_t sha1_two[] = {0x5e280800, 0x5e281800};
+    constexpr uint32_t sha_three[] = {0x5e000000, 0x5e001000, 0x5e002000, 0x5e003000,
+                                    0x5e004000, 0x5e005000, 0x5e006000};
+    for (unsigned sample = 0; sample < 1024; ++sample) {
+        auto a = state();
+        a.access_flags |= HUSK_AES | HUSK_SHA1 | HUSK_SHA256;
+        code.fill(0);
+        for (unsigned i = 0; i < 64; ++i) {
+            unsigned rd = i & 31, rn = random() & 31, rm = random() & 31;
+            unsigned op = (sample + i) % 14;
+            code[i] = (op < 4 ? aes[op] : op < 6 ? sha1_two[op - 4] : op == 6 ? 0x5e282800 :
+                       sha_three[op - 7] | (rm << 16)) | (rn << 5) | rd;
+            CHECK(husk_arm64_supported(code[i]));
+        }
+        code[64] = 0xd4000001;
+        compare(a, 64, 40000 + sample);
+    }
+    // A previously compiled crypto block must stop when the owner withdraws
+    // its feature or requires an FP/SIMD trap, preserving every guest field.
+    for (uint32_t word : {0x4e284800U, 0x5e000000U, 0x5e282800U}) {
+        Memory memory;
+        HuskArm64Memory callbacks{&memory, Memory::read, Memory::write, Memory::map};
+        code.fill(0); code[0] = word; code[1] = 0xd4000001;
+        auto warm = state();
+        warm.access_flags = HUSK_AES | HUSK_SHA1 | HUSK_SHA256;
+        CHECK(husk_arm64_run(direct.get(), &warm, 0x10000, code.data(), callbacks, 1024) == HUSK_ARM64_FALLBACK);
+        CHECK(warm.pc == 0x10004);
+        for (uint32_t flags : {0U, 2U | HUSK_AES | HUSK_SHA1 | HUSK_SHA256}) {
+            auto a = state();
+            a.access_flags = flags;
+            auto before = a;
+            CHECK(husk_arm64_run(direct.get(), &a, 0x10000, code.data(), callbacks, 1024) == HUSK_ARM64_FALLBACK);
+            CHECK(!std::memcmp(&a, &before, sizeof(a)));
+        }
+    }
     // Loads and stores include all vector registers, base registers, pair sizes
     // and writeback modes. Compare the complete state and memory after each run.
     for (unsigned sample = 0; sample < 2048; ++sample) {
@@ -291,7 +344,8 @@ int main()
                           0x0f00f400U | (1U << 29), 0x7dc00000U, 0xec400440U,
                           0x4c403000U, 0x4c417000U, 0x0c408c00U, 0x0ee09800U,
                           0x6ee2ac20U, 0x4ee05800U, 0x0eb03800U, 0x4ef03800U,
-                          0x0f404400U, 0x4f406400U, 0x0f084400U, 0x4f40a400U})
+                          0x0f404400U, 0x4f406400U, 0x0f084400U, 0x4f40a400U,
+                          0x0ee28020U, 0x0ee24420U, 0x5e007000U, 0x4e384800U})
         CHECK(!husk_arm64_supported(word));
-    std::puts("PASS: 131072 SIMD/FP instructions, 4096 vector memory cases, all vectors/GPRs, FPCR/FPSR, host FP environment");
+    std::puts("PASS: 262144 SIMD/FP/crypto instructions, 4096 vector memory cases, all vectors/GPRs, feature checks, FPCR/FPSR, host FP environment");
 }
