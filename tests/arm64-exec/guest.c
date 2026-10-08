@@ -338,6 +338,53 @@ static void timer_preemption(void)
 #include "guest-bulk.h"
 #endif
 
+static void mixed_code_benchmark(void)
+{
+    const unsigned pages = 2048, hot_pages = 8, loads = 128;
+    const u64 size = pages * 4096UL;
+    s64 mapping = call(222, 0, size, 3, 0x22, (u64)-1, 0);
+    CHECK(mapping > 0);
+    for (unsigned page = 0; page < pages; ++page) {
+        unsigned *code = (void *)(mapping + page * 4096UL);
+        code[0] = 0xd2800000 | (page << 5); // mov x0,page
+        for (unsigned i = 0; i < loads; ++i) {
+            code[1 + i * 2] = 0xf9400022; // ldr x2,[x1]
+            code[2 + i * 2] = 0x8b020000; // add x0,x0,x2
+        }
+        code[1 + loads * 2] = 0xd65f03c0;
+        for (unsigned offset = 0; offset < 1040; offset += 16)
+            __asm__ volatile("dc cvau, %0" : : "r"((u64)code + offset) : "memory");
+    }
+    __asm__ volatile("dsb ish" : : : "memory");
+    for (unsigned page = 0; page < pages; ++page)
+        for (unsigned offset = 0; offset < 1040; offset += 16)
+            __asm__ volatile("ic ivau, %0" : : "r"(mapping + page * 4096UL + offset) : "memory");
+    __asm__ volatile("dsb ish\nisb" : : : "memory");
+    CHECK(call(226, mapping, size, 5, 0, 0, 0) == 0);
+    u64 value = 3, checksum = 0, expected = 0;
+    typedef u64 (*Function)(u64, const u64 *);
+    for (unsigned i = 0; i < 4096; ++i) {
+        unsigned page = i % hot_pages;
+        Function fn = (void *)(mapping + page * 4096UL);
+        CHECK(fn(0, &value) == page + loads * value);
+    }
+    u64 start = ns();
+    for (unsigned page = hot_pages; page < pages; ++page) {
+        Function cold = (void *)(mapping + page * 4096UL);
+        checksum += cold(0, &value);
+        expected += page + loads * value;
+        for (unsigned hot = 0; hot < hot_pages; ++hot) {
+            Function fn = (void *)(mapping + hot * 4096UL);
+            checksum += fn(0, &value);
+            expected += hot + loads * value;
+        }
+    }
+    u64 elapsed = ns() - start;
+    CHECK(checksum == expected);
+    print("BENCH mixed_code_ns="); number(elapsed); print(" value="); number(checksum); print("\n");
+    CHECK(call(215, mapping, size, 0, 0, 0, 0) == 0);
+}
+
 void guest_main(u64 *initial_stack)
 {
     u64 *auxv = initial_stack + initial_stack[0] + 2;
@@ -458,6 +505,7 @@ void guest_main(u64 *initial_stack)
         print("SKIP BTI unavailable\n");
     }
     vector_benchmarks();
+    mixed_code_benchmark();
     if (hwcap & (1UL << 8)) {
         u64 atomic_value = 0;
         start = ns();

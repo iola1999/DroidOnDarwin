@@ -89,6 +89,7 @@ def main():
                    "pauth_assist_active": "PAUTH assist active" in host_output,
                    "native_pauth_active": "native implementation-defined PAUTH active" in host_output,
                    "kernel_active": "kernel Direct active" in host_output,
+                   "hot_tier_active": "[husk-hot-tier] threshold=" in host_output,
                    "integer_ns": int(benchmark[1]) if benchmark else None,
                    "memory_ns": int(memory_benchmark[1]) if memory_benchmark else None,
                    "tagged_ns": int(tagged_benchmark[1]) if tagged_benchmark else None,
@@ -109,7 +110,7 @@ def main():
                 row["passed"] = False
             if not all((benchmark, memory_benchmark, tagged_benchmark, syscall_benchmark, switch_benchmark)):
                 row["passed"] = False
-            for name in ("vector", "float", "vector_memory", "vector_structures", "counter", "calls", "indirect_calls", "plain_calls", "tail_calls", "dispatch_ip", "dispatch_general", "pac_calls", "pac_diverse", "exclusive", "atomic", "pointer", "pointer_write"):
+            for name in ("vector", "float", "vector_memory", "vector_structures", "counter", "calls", "indirect_calls", "plain_calls", "tail_calls", "dispatch_ip", "dispatch_general", "pac_calls", "pac_diverse", "exclusive", "atomic", "pointer", "pointer_write", "mixed_code"):
                 measured = re.search(rf"BENCH {name}_ns=(\d+) value=(\d+)", output)
                 row[name + "_ns"] = int(measured[1]) if measured else None
                 if not measured and not (name == "atomic" and "SKIP LSE unavailable" in output):
@@ -130,6 +131,8 @@ def main():
             if mode == "direct-fastmem" and not row["fastmem_active"]:
                 row["passed"] = False
             if mode.startswith("direct") and env.get("HUSK_ARM64_KERNEL") == "1" and not row["kernel_active"]:
+                row["passed"] = False
+            if mode.startswith("direct") and int(env.get("HUSK_ARM64_HOT_THRESHOLD", "0")) and not row["hot_tier_active"]:
                 row["passed"] = False
             results.append(row)
             (args.output / "results.json").write_text(json.dumps(results, indent=2) + "\n")

@@ -32,7 +32,30 @@ typedef struct {
     unsigned profile_phase;
     int64_t profile_last, profile_report, profile_ns[4];
     struct { uint64_t page; unsigned entries; } warm_pages[1024];
+    struct { uintptr_t source; unsigned visits; } hot_pages[16384];
+    unsigned hot_threshold;
+    bool cold_handoff;
+    uint64_t cold_handoffs;
 } HuskArm64Qemu;
+
+static bool husk_hot_code(HuskArm64Qemu *ctx, const void *host)
+{
+    if (!ctx->hot_threshold) return true;
+    uintptr_t source = (uintptr_t)host;
+    unsigned slot = ((source >> 12) ^ (source >> 26)) & (ARRAY_SIZE(ctx->hot_pages) - 1);
+    if (ctx->hot_pages[slot].source != source) {
+        ctx->hot_pages[slot].source = source;
+        ctx->hot_pages[slot].visits = 0;
+    }
+    /* This table controls compilation cost only. Reused physical addresses or
+     * collisions can change admission timing; code and permissions are still
+     * validated independently before execution. */
+    if (ctx->hot_pages[slot].visits < ctx->hot_threshold) {
+        ++ctx->hot_pages[slot].visits;
+        return false;
+    }
+    return true;
+}
 
 /* Attribute vCPU thread time to EL0/kernel TCG and Direct. CPU time excludes
  * waits and host scheduling; Direct includes compilation and its callbacks. */
@@ -256,6 +279,10 @@ static const void *husk_map_code(void *opaque, uint64_t page)
     if (flags || !host) return NULL;
     for (unsigned i = 0; i < ctx->code_count; ++i) {
         if (ctx->code_hosts[i] == host) return host;
+    }
+    if (!husk_hot_code(ctx, host)) {
+        ctx->cold_handoff = true;
+        return NULL;
     }
     if (ctx->code_count == ARRAY_SIZE(ctx->code_hosts)) return NULL;
     ctx->code_hosts[ctx->code_count++] = host;
@@ -592,13 +619,23 @@ landing_ready:
         ctx->system_reads = !system_reads || strcmp(system_reads, "0");
         const char *system_exec = getenv("HUSK_ARM64_KERNEL_SYSTEM");
         ctx->system_exec = kernel && system_exec && !strcmp(system_exec, "1");
+        const char *hot_threshold = getenv("HUSK_ARM64_HOT_THRESHOLD");
+        if (hot_threshold && (qemu_strtoui(hot_threshold, NULL, 10, &ctx->hot_threshold) ||
+                              ctx->hot_threshold > 65536)) {
+            error_report("HUSK_ARM64_HOT_THRESHOLD must be between 0 and 65536");
+            exit(EXIT_FAILURE);
+        }
+        if (ctx->hot_threshold)
+            fprintf(stderr, "[husk-hot-tier] threshold=%u\n", ctx->hot_threshold);
         ctx->profile = getenv("HUSK_ARM64_PROFILE") != NULL;
         if (ctx->profile) {
             arm_register_el_change_hook(cpu, husk_profile_el, ctx);
             husk_profile_phase(ctx, el != 0);
         }
     }
-    if (direct) {
+    if (direct && ctx->hot_threshold) {
+        if (!husk_hot_code(ctx, code_host)) return 0;
+    } else if (direct) {
         unsigned index = ((page >> 12) ^ (page >> 24)) & 1023;
         if (ctx->warm_pages[index].page != page) {
             ctx->warm_pages[index].page = page;
@@ -627,6 +664,7 @@ landing_ready:
     ctx->code_host = code_host;
     ctx->code_hosts[0] = code_host;
     ctx->code_count = 1;
+    ctx->cold_handoff = false;
     HuskArm64State state = { .sp = env->xregs[31], .pc = env->pc,
                              .nzcv = pstate_read(env) & PSTATE_NZCV,
                              .fpcr = vfp_get_fpcr(env), .fpsr = vfp_get_fpsr(env),
@@ -680,6 +718,13 @@ landing_ready:
     }
     if (result == HUSK_ARM64_BRANCH) state.pc = arm_husk_branch_pc(env, state.pc);
     husk_export_state(env, &state);
+    if (result == HUSK_ARM64_BRANCH && ctx->cold_handoff) {
+        ++ctx->cold_handoffs;
+        if (ctx->profile && !(ctx->cold_handoffs & (ctx->cold_handoffs - 1)))
+            fprintf(stderr, "[husk-hot-tier] cold_handoffs=%" PRIu64 "\n", ctx->cold_handoffs);
+        ctx->resume_after_ns[el != 0] = qemu_clock_get_ns(QEMU_CLOCK_REALTIME) + (int64_t)tcg_quantum_us * 1000;
+        return -1;
+    }
     if (result == HUSK_ARM64_FALLBACK) {
         void *stopped_host = NULL;
         int stopped_flags = probe_access_flags(env, state.pc, 4, MMU_INST_FETCH,
