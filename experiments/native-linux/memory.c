@@ -8,7 +8,7 @@
 #include <sys/mman.h>
 #if TARGET_OS_IPHONE
 #include "husk-ios-jit.h"
-extern bool nce_debugger_attached(void);
+extern int nce_wait_debugger_detach(unsigned timeout_ms);
 #endif
 
 #define PAGE 16384UL
@@ -65,8 +65,10 @@ int nce_memory_prepare(void)
     }
     pool = (NceCode){prepared.rw_addr, prepared.rx_addr, prepared.size};
     husk_ios_jit_detach();
-    REQUIRE(!nce_debugger_attached());
-    puts("{\"phase\":\"debugger_detached\"}");
+    if (nce_wait_debugger_detach(5000) != 0) {
+        nce_memory_release();
+        return -1;
+    }
 #else
     void *rw = mmap(NULL, POOL_BYTES, PROT_READ | PROT_WRITE, MAP_ANON | MAP_PRIVATE, -1, 0);
     REQUIRE(rw != MAP_FAILED);

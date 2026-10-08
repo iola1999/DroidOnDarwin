@@ -6,5 +6,8 @@ int nce_lkl_run(const char *image_path);
 int nce_open_log(const char *path);
 void nce_log(const char *message);
 bool nce_debugger_attached(void);
+/* Waits on the worker thread. Returns 0 after detach, -1 on query failure,
+ * or -2 on timeout; these failures leave the UI available for log export. */
+int nce_wait_debugger_detach(unsigned timeout_ms);
 void husk_ios_jit_install_trap_handler(void);
 #endif

@@ -1,0 +1,13 @@
+{
+  "source_log_sha256": "02f6991ab05cee6dc613e67ad4447ae7f901c097acff26552241e871e17c6828",
+  "build": "N2-iOS-20261009-001629",
+  "ios": "27.2",
+  "prepared_bytes": 83886080,
+  "rw_rx_alias_verified": true,
+  "native_return_value": 42,
+  "footprint_mib_after_jit_alloc": 99.1,
+  "failed_condition": "!nce_debugger_attached()",
+  "failure_action": "abort",
+  "linux_started": false,
+  "fix": "N2-R1: poll detach for up to 5000 ms; report errors without abort"
+}

@@ -14,6 +14,7 @@ ROOT = Path(__file__).resolve().parents[1]
 EXP = ROOT / 'experiments/native-linux'
 INPUT = ROOT / 'work/native-linux-nce/processes'
 OUT = ROOT / 'work/native-linux-nce/ios'
+REVISION = 'N2-R1'
 
 
 def run(args, **kwargs):
@@ -38,7 +39,12 @@ def main():
     if hashlib.sha256((INPUT / 'lkl-image.bin').read_bytes()).hexdigest() != summary['kernel_sha256']:
         raise SystemExit('Kernel image does not match the validated manifest')
     OUT.mkdir(parents=True, exist_ok=True)
-    build_id = 'N2-iOS-' + time.strftime('%Y%m%d-%H%M%S')
+    sdk = subprocess.check_output(['xcrun', '--sdk', 'macosx', '--show-sdk-path'], text=True).strip()
+    run(['xcrun', 'clang', '-O2', '-Wall', '-Wextra', '-Werror', '-isysroot', sdk,
+         EXP / 'ios/Bridge.c', EXP / 'ios/detach-test.c', '-o', OUT / 'detach-test'])
+    with (OUT / 'detach-test.log').open('w') as log:
+        run([OUT / 'detach-test'], stdout=log)
+    build_id = REVISION + '-iOS-' + time.strftime('%Y%m%d-%H%M%S')
     info = plistlib.loads((ROOT / 'src/app/Husk/Info.plist').read_bytes())
     for key in ['CFBundleIcons', 'CFBundleIcons~ipad', 'HuskPerformanceBuild']:
         info.pop(key, None)
@@ -116,7 +122,7 @@ def main():
         run(['codesign', '--force', '--sign', '-', '--timestamp=none', *entitlements, component])
         run(['codesign', '--verify', '--strict', component])
     run(['codesign', '--verify', '--deep', '--strict', app])
-    package = OUT / 'Husk-NativeLinux-N2.ipa'
+    package = OUT / f'Husk-NativeLinux-{REVISION}.ipa'
     with zipfile.ZipFile(package, 'w', compression=zipfile.ZIP_DEFLATED) as archive:
         for path in sorted(app.rglob('*')):
             if path.is_file():

@@ -51,4 +51,3 @@ enum JITPairingFileStore {
         UserDefaults.standard.set(source.rawValue, forKey: sourceKey)
     }
 }
-

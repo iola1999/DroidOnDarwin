@@ -54,6 +54,7 @@ final class ProbeModel: ObservableObject {
             if log.contains("\"phase\":\"linux_process_tests\"") { status = "正在测试 Linux 进程（\(seconds) 秒）" }
             else if log.contains("\"phase\":\"linux_init\"") { status = "正在启动 Linux 内核（\(seconds) 秒）" }
             else if log.contains("\"phase\":\"check_executable_remapping\"") { status = "正在检查代码页重映射（\(seconds) 秒）" }
+            else if log.contains("\"phase\":\"wait_debugger_detach\"") { status = "正在等待 JIT 助手断开（\(seconds) 秒）" }
             else { status = "正在准备 80 MiB JIT 内存（\(seconds) 秒）" }
         }
     }
@@ -161,6 +162,8 @@ struct NativeLinuxApp: App {
             NavigationStack {
                 List {
                     Section("N2 · 原生 Linux + NCE") {
+                        Text(Bundle.main.object(forInfoDictionaryKey: "NCEBuildID") as? String ?? "N2")
+                            .font(.caption).foregroundStyle(.secondary)
                         Text(model.status).font(.headline).accessibilityIdentifier("probe-status")
                         Text("测试代码页重映射、Linux 启动和进程操作。运行时请保持应用在前台。")
                             .foregroundStyle(.secondary)
