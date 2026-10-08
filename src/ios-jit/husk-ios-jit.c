@@ -78,7 +78,9 @@ int pipe2(int fds[2], int flags)
  * inside QEMU's tcg/ directory, so the same header is the right one to use, and
  * using anything else would risk testing a different mechanism from the one the
  * emulator will actually run on. */
+#ifndef HUSK_PREPARED_JIT_ONLY
 #include "tcg/tcg-apple-jit.h"
+#endif
 
 /* Maximum verbosity by default: this path is nearly impossible to debug after the
  * fact on device, and every line here is printed at most a handful of times per
@@ -528,6 +530,7 @@ bool husk_ios_jit_is_available(void)
 }
 
 /* ------------------------------------------------------------- MAP_JIT probe */
+#ifndef HUSK_PREPARED_JIT_ONLY
 /*
  * Ask the kernel what it actually granted, before branching into it.
  *
@@ -658,6 +661,8 @@ bool husk_ios_jit_mapjit_works(void)
     atomic_store(&cached, ok ? 1 : -1);
     return ok;
 }
+
+#endif /* !HUSK_PREPARED_JIT_ONLY */
 
 #else /* !iOS: keep the symbols so host builds and tests link */
 

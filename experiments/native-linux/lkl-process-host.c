@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 #include "nce.h"
+#include "memory.h"
 #include "lkl-host-ops.h"
 #include "guest-image.h"
 #include "exec-image.h"
@@ -22,7 +23,7 @@ extern struct lkl_host_operations nce_lkl_host;
 typedef struct { NceState state; void *signal_stack; void *exec_rw; } Process;
 static NceState *active;
 static NceCode code;
-static void *ram;
+static NceCode ram;
 static size_t ram_size;
 static long (*run_syscall)(long, long *);
 static int (*page_fault)(unsigned long, int);
@@ -33,8 +34,8 @@ static void shmem_init(unsigned long size)
 {
     ram_size = size;
     REQUIRE(size == 0x4000000UL);
-    ram = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANON, -1, 0);
-    REQUIRE(ram != MAP_FAILED);
+    ram = nce_memory_take(size);
+    memset(ram.rw, 0, size);
 }
 static void *shmem_map(void *address, unsigned long offset, unsigned long size, enum lkl_prot prot)
 {
@@ -42,7 +43,7 @@ static void *shmem_map(void *address, unsigned long offset, unsigned long size, 
     vm_prot_t current, maximum;
     REQUIRE(!(offset % PAGE) && !(size % PAGE) && offset <= ram_size && size <= ram_size - offset);
     REQUIRE(vm_remap(mach_task_self(), &target, size, 0, VM_FLAGS_FIXED | VM_FLAGS_OVERWRITE,
-                     mach_task_self(), (uintptr_t)ram + offset, FALSE, &current, &maximum,
+                     mach_task_self(), (uintptr_t)((prot & LKL_PROT_EXEC) && !(prot & LKL_PROT_WRITE) ? ram.rx : ram.rw) + offset, FALSE, &current, &maximum,
                      VM_INHERIT_NONE) == KERN_SUCCESS);
     int host_prot = ((prot & LKL_PROT_READ) ? PROT_READ : 0) | ((prot & LKL_PROT_WRITE) ? PROT_WRITE : 0) | ((prot & LKL_PROT_EXEC) ? PROT_EXEC : 0);
     /* RX ELF mappings and the bootstrap pool execute directly. Writable Linux
@@ -161,16 +162,8 @@ void nce_process_tests(long (*host_syscall)(long, long *), long (*guest_syscall)
 {
     run_syscall = guest_syscall;
     page_fault = handle_fault;
-    code.size = 65536;
-    code.rw = mmap(NULL, code.size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANON, -1, 0);
-    REQUIRE(code.rw != MAP_FAILED);
-    vm_address_t rx = 0;
-    vm_prot_t current, maximum;
-    REQUIRE(vm_remap(mach_task_self(), &rx, code.size, 0, VM_FLAGS_ANYWHERE,
-                     mach_task_self(), (uintptr_t)code.rw, FALSE, &current, &maximum,
-                     VM_INHERIT_NONE) == KERN_SUCCESS);
-    code.rx = (void *)rx;
-    REQUIRE(mprotect(code.rx, code.size, PROT_READ | PROT_EXEC) == 0);
+    code = nce_memory_take(65536);
+    puts("{\"phase\":\"linux_process_tests\"}");
     long file_args[6] = {-100, (long)"/nce-exec", 0x42, 0700};
     long fd = host_syscall(56, file_args);
     REQUIRE(fd >= 0);
@@ -220,8 +213,7 @@ void nce_process_cleanup(void)
     REQUIRE(sigaction(SIGSEGV, &old_segv, NULL) == 0);
     REQUIRE(sigaction(SIGBUS, &old_bus, NULL) == 0);
     REQUIRE(munmap((void *)USER_BASE, USER_SIZE + 0x8000000UL) == 0);
-    REQUIRE(munmap(ram, ram_size) == 0);
-    REQUIRE(munmap(code.rw, code.size) == 0 && munmap(code.rx, code.size) == 0);
+    /* Physical RAM and bootstrap code belong to the prepared pool. */
     printf("{\"test\":\"linux_nce_context_lifetime\",\"allocated\":%lu,\"freed\":%lu}\n", allocated, freed);
     REQUIRE(allocated == freed);
 }

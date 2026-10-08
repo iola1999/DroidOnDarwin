@@ -165,7 +165,7 @@ def main():
     flags = ["-O2", "-g", "-Wall", "-Wextra", "-Werror", "-I", OUT, "-I", EXPERIMENT]
     if PROCESS:
         flags += ["-DNCE_PROCESS"]
-        inputs += [EXPERIMENT / "lkl-process-host.c"]
+        inputs += [EXPERIMENT / "lkl-process-host.c", EXPERIMENT / "memory.c"]
     run([clang, *flags, "-isysroot", sdk, *inputs, "-o", OUT / "lkl-probe"])
     ios_sdk = subprocess.check_output(["xcrun", "--sdk", "iphoneos", "--show-sdk-path"], text=True).strip()
     run([clang, *flags, "-target", "arm64-apple-ios17.0", "-isysroot", ios_sdk,

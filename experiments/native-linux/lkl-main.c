@@ -1,5 +1,8 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 #include "nce.h"
+#ifdef NCE_PROCESS
+#include "memory.h"
+#endif
 #include "lkl-host-ops.h"
 #include "lkl-image.h"
 #include "guest-image.h"
@@ -17,6 +20,7 @@
 extern struct lkl_host_operations nce_lkl_host;
 static long (*kernel_syscall)(long, long *);
 
+#ifndef NCE_PROCESS
 static void *mapped(size_t size)
 {
     void *p = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_ANON | MAP_PRIVATE, -1, 0);
@@ -38,6 +42,7 @@ static void release(NceCode code)
     REQUIRE(munmap(code.rw, code.size) == 0);
     REQUIRE(munmap(code.rx, code.size) == 0);
 }
+#endif
 static uint64_t now(void)
 {
     struct timespec t;
@@ -115,12 +120,17 @@ void nce_process_cleanup(void);
 void nce_process_tests(long (*)(long, long *), long (*)(long, long *), int (*)(unsigned long, int));
 #endif
 
-int main(int argc, char **argv)
+int nce_lkl_run(const char *image_path)
 {
-    REQUIRE(argc == 2);
     setvbuf(stdout, NULL, _IOLBF, 0);
+    #ifdef NCE_PROCESS
+    if (nce_memory_prepare() != 0) return 1;
+    NceCode kernel = nce_memory_take(LKL_IMAGE_SIZE);
+    #else
     NceCode kernel = dual(LKL_IMAGE_SIZE);
-    FILE *file = fopen(argv[1], "rb");
+    #endif
+    puts("{\"phase\":\"load_linux_image\"}");
+    FILE *file = fopen(image_path, "rb");
     REQUIRE(file);
     REQUIRE(fread(kernel.rw, 1, LKL_IMAGE_SIZE, file) == LKL_IMAGE_SIZE);
     REQUIRE(fgetc(file) == EOF);
@@ -143,6 +153,7 @@ int main(int argc, char **argv)
     void (*set_layout)(unsigned long) = (void *)(kernel.rx + NCE_SET_LAYOUT);
     set_layout(nce_process_setup());
     #endif
+    puts("{\"phase\":\"linux_init\"}");
     REQUIRE(init(&nce_lkl_host) == 0);
     uint64_t started = now();
     REQUIRE(start() == 0);
@@ -185,6 +196,7 @@ int main(int argc, char **argv)
     printf("{\"bench\":\"nce_linux_getpid_with_compute\",\"iterations\":%u,\"ns_per_iteration\":%.2f}\n",
            iterations, (double)(now() - started) / iterations);
     #endif
+    puts("{\"phase\":\"linux_shutdown\"}");
     REQUIRE(halt() == 0);
     cleanup();
     #ifdef NCE_PROCESS
@@ -193,7 +205,19 @@ int main(int argc, char **argv)
     release(code);
     REQUIRE(munmap(stack, 65536) == 0);
     #endif
+    #ifdef NCE_PROCESS
+    nce_memory_release();
+    #else
     release(kernel);
+    #endif
     puts("{\"result\":\"passed\"}");
     return 0;
 }
+
+#ifndef NCE_IOS_APP
+int main(int argc, char **argv)
+{
+    REQUIRE(argc == 2);
+    return nce_lkl_run(argv[1]);
+}
+#endif
