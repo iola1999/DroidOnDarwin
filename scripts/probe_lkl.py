@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """在 Darwin 原生执行 LKL，并从受控 ARM64 ELF 调用真实 Linux 文件与定时器接口。"""
+import argparse
 import hashlib
+from lkl_nce_patch import apply
 import json
 import os
 from pathlib import Path
@@ -55,6 +57,8 @@ def package_elf(path):
     strings = sections[symtab[6]]
     strings = data[strings[4]:strings[4] + strings[5]]
     required = {"lkl_init", "lkl_syscall", "lkl_sys_halt", "lkl_cleanup", "nce_lkl_start"}
+    if PROCESS:
+        required |= {"nce_run_syscall", "nce_page_fault", "nce_set_layout"}
     for pos in range(symtab[4], symtab[4] + symtab[5], symtab[9]):
         index, _, _, _, value, _ = struct.unpack_from("<IBBHQQ", data, pos)
         name = strings[index:strings.index(b"\0", index)].decode()
@@ -73,6 +77,17 @@ def package_elf(path):
 
 
 def main():
+    global OUT, BUILD, PROCESS
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--processes", action="store_true")
+    PROCESS = parser.parse_args().processes
+    base = OUT
+    if PROCESS:
+        BUILD = base / "lkl-process-build"
+        OUT = base / "processes"
+        OUT.mkdir(exist_ok=True)
+        for name in ("guest-image.h", "guest-source.sha256"):
+            shutil.copyfile(base / name, OUT / name)
     if platform.system() != "Darwin" or platform.machine() != "arm64":
         raise SystemExit("Requires an Apple Silicon Mac")
     if not (OUT / "guest-image.h").exists():
@@ -93,6 +108,8 @@ def main():
         archive.unlink()
     if (SOURCE / ".husk-source-revision").read_text().strip() != REVISION:
         raise SystemExit("Unexpected LKL source revision")
+    if PROCESS:
+        apply(SOURCE, EXPERIMENT)
     # This host-tool type conflicts with Darwin's uuid_t from sys/types.h.
     mod = SOURCE / "scripts/mod/file2alias.c"
     text = mod.read_text()
@@ -120,6 +137,8 @@ def main():
             run([*make, "allnoconfig"], env=env, stdout=log, stderr=subprocess.STDOUT)
         options = ["64BIT", "EXPERT", "PROC_FS", "SYSFS", "FUTEX", "EPOLL", "SIGNALFD", "TIMERFD",
                    "LKL_HOST_MEMCPY", "LKL_HOST_MEMSET", "LKL_HOST_MEMMOVE"]
+        if PROCESS:
+            options += ["MMU", "PRINTK"]
         switches = [arg for name in options for arg in ("-e", name)]
         switches += [arg for name in ("KALLSYMS", "BLOCK", "DEBUG_INFO", "SLUB_DEBUG") for arg in ("-d", name)]
         run([SOURCE / "scripts/config", "--file", BUILD / ".config", *switches], env=env)
@@ -128,17 +147,32 @@ def main():
     shutil.copyfile(SOURCE / "arch/lkl/include/uapi/asm/host_ops.h", OUT / "lkl-host-ops.h")
     run([*target, "-fPIC", "-fno-stack-protector", "-O2", "-I", OUT,
          "-c", EXPERIMENT / "lkl-bridge.c", "-o", OUT / "lkl-bridge.o"])
-    run([llvm / "llvm-objcopy", "--globalize-symbol=vsnprintf", "--globalize-symbol=lkl_ops",
+    exports = ["--globalize-symbol=nce_run_syscall", "--globalize-symbol=nce_page_fault", "--globalize-symbol=nce_set_layout"] if PROCESS else []
+    run([llvm / "llvm-objcopy", "--globalize-symbol=vsnprintf", "--globalize-symbol=lkl_ops", *exports,
          BUILD / "lkl.o", OUT / "lkl-exports.o"])
     run(["ld.lld", "-shared", "-Bsymbolic", "--no-undefined", "-z", "max-page-size=16384",
          "-z", "common-page-size=16384", OUT / "lkl-exports.o", OUT / "lkl-bridge.o", "-o", OUT / "lkl.so"])
     package_elf(OUT / "lkl.so")
+    if PROCESS:
+        run([clang, "--target=aarch64-none-elf", "-c", EXPERIMENT / "exec-guest.S", "-o", OUT / "exec-guest.o"])
+        run(["ld.lld", "-pie", "--no-dynamic-linker", "--entry=_start", "-Ttext=0x10000", "-z", "max-page-size=16384",
+             OUT / "exec-guest.o", "-o", OUT / "exec-guest.elf"])
+        elf = (OUT / "exec-guest.elf").read_bytes()
+        nm = subprocess.check_output([llvm / "llvm-nm", "--defined-only", OUT / "exec-guest.elf"], text=True)
+        symbols = {parts[2]: int(parts[0], 16) for line in nm.splitlines() if len(parts := line.split()) == 3}
+        (OUT / "exec-image.h").write_text("#define EXEC_TEXT_SIZE " + str(symbols["exec_text_end"] - symbols["_start"]) + "\nstatic const unsigned char exec_elf[] = {" + ",".join(map(str, elf)) + "};\n")
     inputs = [EXPERIMENT / name for name in ("lkl-main.c", "lkl-host.c", "nce.c", "entry.S")]
     flags = ["-O2", "-g", "-Wall", "-Wextra", "-Werror", "-I", OUT, "-I", EXPERIMENT]
+    if PROCESS:
+        flags += ["-DNCE_PROCESS"]
+        inputs += [EXPERIMENT / "lkl-process-host.c"]
     run([clang, *flags, "-isysroot", sdk, *inputs, "-o", OUT / "lkl-probe"])
     ios_sdk = subprocess.check_output(["xcrun", "--sdk", "iphoneos", "--show-sdk-path"], text=True).strip()
     run([clang, *flags, "-target", "arm64-apple-ios17.0", "-isysroot", ios_sdk,
          "-c", EXPERIMENT / "lkl-host.c", "-o", OUT / "ios-lkl-host.o"])
+    if PROCESS:
+        run([clang, *flags, "-target", "arm64-apple-ios17.0", "-isysroot", ios_sdk,
+             "-c", EXPERIMENT / "lkl-process-host.c", "-o", OUT / "ios-lkl-process-host.o"])
     with (OUT / "lkl-results.jsonl").open("w") as output, (OUT / "lkl-console.log").open("w") as log:
         run([OUT / "lkl-probe", OUT / "lkl-image.bin"], stdout=output, stderr=log)
     results = [json.loads(line) for line in (OUT / "lkl-results.jsonl").read_text().splitlines()]
@@ -149,6 +183,12 @@ def main():
                 "config_sha256": hashlib.sha256((BUILD / ".config").read_bytes()).hexdigest(),
                 "kernel_sha256": hashlib.sha256((OUT / "lkl-image.bin").read_bytes()).hexdigest()}
     sources = [*inputs, EXPERIMENT / "lkl-bridge.c", EXPERIMENT / "nce.h", EXPERIMENT / "guest.S", Path(__file__).resolve()]
+    if PROCESS:
+        sources += [Path(__file__).with_name("lkl_nce_patch.py"),
+                    *sorted(EXPERIMENT.glob("lkl-*.h")),
+                    *sorted(EXPERIMENT.glob("lkl-nce-*.c")), EXPERIMENT / "exec-guest.S"]
+        manifest["stage"] = "N2a controlled Linux user processes"
+        manifest["exec_elf_sha256"] = hashlib.sha256((OUT / "exec-guest.elf").read_bytes()).hexdigest()
     manifest["input_sha256"] = {str(p.relative_to(ROOT)): hashlib.sha256(p.read_bytes()).hexdigest() for p in sources}
     (OUT / "lkl-summary.json").write_text(json.dumps(manifest, indent=2) + "\n")
     print(json.dumps(manifest, indent=2))

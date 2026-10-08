@@ -3,7 +3,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-/* Single-threaded probe ABI. x18 remains owned by Darwin. */
+/* Serialized guest execution ABI. x18 remains owned by Darwin. */
 typedef struct NceState NceState;
 struct NceState {
     uint64_t x[31], sp, pc, nzcv, fpcr, fpsr;
@@ -13,6 +13,7 @@ struct NceState {
     void (*syscall)(NceState *);
     void *opaque;
     uint64_t done, tls, calls, tls_accesses;
+    NceState *self;
 };
 
 typedef struct {
@@ -23,6 +24,8 @@ typedef struct {
 /* Loads the controlled, relocation-free fixture. Both mappings refer to the
  * same storage; the caller owns executable-memory authorization and lifetime. */
 int nce_prepare(NceCode, NceState *, const void *, size_t, size_t entry);
+/* The active slot must outlive the code and track every guest task switch. */
+int nce_prepare_shared(NceCode, NceState *, NceState **active, const void *, size_t, size_t entry);
 void nce_enter(NceState *);
 void nce_gate(void);
 NceState *nce_dispatch(NceState *);

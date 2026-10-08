@@ -8,8 +8,8 @@
 ## 当前判断
 
 2026-10-08 已开始[原生 Linux 与 NCE 原型](native-linux-nce-prototype.md)，
-直接执行、地址空间探针与真实 Linux 子系统检查已在 Mac 通过，完整 Linux
-用户进程与手机运行尚待实现和验证。
+直接执行、真实 Linux 子系统，以及 N2a 的 fork/COW/共享内存/futex/pipe/ELF
+exec/wait 已在 Mac 通过。用户态 init、完整信号与手机运行仍待实现和验证。
 
 此前结束 QEMU 优化开发。M33 完整 HyperOS 仍需 744.865 秒确认启动，
 设置启动命令耗时 182.346 秒，帧完成时间检查失败。重新核对硬件虚拟化、

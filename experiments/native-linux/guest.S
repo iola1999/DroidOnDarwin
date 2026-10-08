@@ -176,3 +176,150 @@ guest_linux_file:
 4:  .quad 0x123456789abcdef0
 .balign 4
 #endif
+
+// Linux owns the mappings, child PID, COW, and wait status.
+.p2align 2
+.global guest_linux_process
+guest_linux_process:
+    add x0, x21, #0x100, lsl #12
+    mov x1, #65536
+    mov x2, #3
+    mov x3, #0x32
+    mov x4, #-1
+    mov x5, #0
+    mov x8, #222
+    svc #0
+    tbnz x0, #63, process_fail
+    mov x19, x0
+    mov x9, #7
+    str x9, [x19]
+    add x0, x21, #0x200, lsl #12
+    mov x1, #16384
+    mov x2, #3
+    mov x3, #0x31
+    mov x4, #-1
+    mov x5, #0
+    mov x8, #222
+    svc #0
+    tbnz x0, #63, process_fail
+    mov x22, x0
+    mov x9, #77
+    str x9, [x22]
+    add x0, x19, #16
+    mov x1, #0
+    mov x8, #59
+    svc #0
+    cbnz x0, process_fail
+    mov x9, #123
+    msr tpidr_el0, x9
+    mov x0, #17
+    movk x0, #8, lsl #16
+    mov x1, #0
+    mov x2, #0
+    mov x3, #456
+    mov x4, #0
+    mov x8, #220
+    svc #0
+    tbnz x0, #63, process_fail
+    cbz x0, process_child
+    mov x20, x0
+    mov x0, x22
+    mov x1, #0
+    mov x2, #77
+    mov x3, #0
+    mov x4, #0
+    mov x5, #0
+    mov x8, #98
+    svc #0
+    cbnz x0, process_fail
+    ldr w0, [x19, #16]
+    add x1, x19, #24
+    mov x2, #8
+    mov x8, #63
+    svc #0
+    cmp x0, #8
+    b.ne process_fail
+    ldr x9, [x19, #24]
+    cmp x9, #90
+    b.ne process_fail
+    ldr x9, [x22]
+    cmp x9, #88
+    b.ne process_fail
+    mov x0, x20
+    add x1, x19, #8
+    mov x2, #0
+    mov x3, #0
+    mov x8, #260
+    svc #0
+    tbnz x0, #63, process_fail
+    ldr x9, [x19]
+    cmp x9, #7
+    b.ne process_fail
+    ldr w9, [x19, #8]
+    mov w10, #10752
+    cmp w9, w10
+    b.ne process_fail
+    mrs x9, tpidr_el0
+    cmp x9, #123
+    b.ne process_fail
+    mov x0, #0
+    b process_exit
+process_child:
+    mrs x9, tpidr_el0
+    cmp x9, #456
+    b.ne process_fail
+    ldr x9, [x19]
+    cmp x9, #7
+    b.ne process_fail
+    mov x9, #11
+    str x9, [x19]
+    mov x9, #77
+    str x9, [x22]
+process_wake:
+    mov x0, x22
+    mov x1, #1
+    mov x2, #1
+    mov x3, #0
+    mov x4, #0
+    mov x5, #0
+    mov x8, #98
+    svc #0
+    cmp x0, #1
+    b.eq process_awakened
+    cbnz x0, process_fail
+    mov x8, #124
+    svc #0
+    b process_wake
+process_awakened:
+    mov x9, #88
+    str x9, [x22]
+    mov x9, #90
+    str x9, [x19, #32]
+    ldr w0, [x19, #20]
+    add x1, x19, #32
+    mov x2, #8
+    mov x8, #64
+    svc #0
+    cmp x0, #8
+    b.ne process_fail
+    mov x9, #789
+    msr tpidr_el0, x9
+    adr x0, process_exec_path
+    sub sp, sp, #32
+    stp x0, xzr, [sp]
+    mov x1, sp
+    mov x2, #0
+    mov x8, #221
+    svc #0
+    b process_fail
+process_fail:
+    mov x0, #99
+process_exit:
+    mov x8, #93
+    svc #0
+    brk #0
+
+.p2align 2
+process_exec_path:
+    .asciz "/nce-exec"
+.p2align 2

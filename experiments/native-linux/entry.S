@@ -143,6 +143,7 @@ Lfinish:
 _nce_stub:
     stp x16, x17, [sp, #-16]!
     ldr x16, 1f
+    ldr x16, [x16]
     str x30, [x16, #240]
     ldr x17, 2f
     str x17, [x16, #816]
@@ -152,7 +153,6 @@ _nce_stub:
     br x17
     ldp x16, x17, [sp], #16
     b .
-    nop
 1:  .quad 0
 2:  .quad 0
 3:  .word 0

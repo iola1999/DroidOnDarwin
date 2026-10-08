@@ -45,6 +45,7 @@ static uint64_t now(void)
     return (uint64_t)t.tv_sec * 1000000000 + t.tv_nsec;
 }
 
+#ifndef NCE_PROCESS
 static void linux_syscall(NceState *s)
 {
     if (s->x[8] == 93) { s->done = 1; return; }
@@ -108,6 +109,12 @@ static void blocking_tests(void)
     puts("{\"test\":\"linux_futex_wait_wake\",\"passed\":true}");
 }
 
+#else
+unsigned long nce_process_setup(void);
+void nce_process_cleanup(void);
+void nce_process_tests(long (*)(long, long *), long (*)(long, long *), int (*)(unsigned long, int));
+#endif
+
 int main(int argc, char **argv)
 {
     REQUIRE(argc == 2);
@@ -132,6 +139,10 @@ int main(int argc, char **argv)
     long (*halt)(void) = (void *)(kernel.rx + LKL_SYS_HALT);
     void (*cleanup)(void) = (void *)(kernel.rx + LKL_CLEANUP);
     kernel_syscall = (void *)(kernel.rx + LKL_SYSCALL);
+    #ifdef NCE_PROCESS
+    void (*set_layout)(unsigned long) = (void *)(kernel.rx + NCE_SET_LAYOUT);
+    set_layout(nce_process_setup());
+    #endif
     REQUIRE(init(&nce_lkl_host) == 0);
     uint64_t started = now();
     REQUIRE(start() == 0);
@@ -142,6 +153,10 @@ int main(int argc, char **argv)
     REQUIRE(strcmp(uts, "Linux") == 0);
     printf("{\"test\":\"linux_uname\",\"sysname\":\"%s\",\"release\":\"%s\"}\n", uts, uts + 130);
 
+    #ifdef NCE_PROCESS
+    nce_process_tests(kernel_syscall, (void *)(kernel.rx + NCE_RUN_SYSCALL),
+                      (void *)(kernel.rx + NCE_PAGE_FAULT));
+    #else
     NceCode code = dual(65536);
     REQUIRE(mprotect(code.rx, code.size, PROT_READ | PROT_EXEC) == 0);
     void *stack = mapped(65536);
@@ -169,11 +184,16 @@ int main(int argc, char **argv)
     REQUIRE(state.x[0] == (data ^ ((uint64_t)pid * iterations)));
     printf("{\"bench\":\"nce_linux_getpid_with_compute\",\"iterations\":%u,\"ns_per_iteration\":%.2f}\n",
            iterations, (double)(now() - started) / iterations);
+    #endif
     REQUIRE(halt() == 0);
     cleanup();
+    #ifdef NCE_PROCESS
+    nce_process_cleanup();
+    #else
     release(code);
     REQUIRE(munmap(stack, 65536) == 0);
+    #endif
     release(kernel);
-    puts("{\"result\":\"passed\",\"linux_user_processes\":false}");
+    puts("{\"result\":\"passed\"}");
     return 0;
 }

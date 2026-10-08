@@ -27,8 +27,8 @@ void nce_sync_code(NceCode code)
     sys_icache_invalidate(code.rx, code.size);
 }
 
-int nce_prepare(NceCode code, NceState *s, const void *bytes, size_t size,
-                size_t entry)
+int nce_prepare_shared(NceCode code, NceState *s, NceState **active,
+                       const void *bytes, size_t size, size_t entry)
 {
     size_t cursor = (size + 15) & ~(size_t)15;
     if (!code.rw || !code.rx || (size & 3) || (entry & 3) || entry >= size ||
@@ -53,14 +53,14 @@ int nce_prepare(NceCode code, NceState *s, const void *bytes, size_t size,
         if (cursor + 80 > code.size) return -1;
         unsigned char *stub = code.rw + cursor;
         memcpy(stub, nce_stub, 80);
-        uint64_t context = (uintptr_t)s;
-        uint64_t resume = (uintptr_t)code.rx + cursor + 36;
+        uint64_t context = (uintptr_t)active;
+        uint64_t resume = (uintptr_t)code.rx + cursor + 40;
         uint64_t gate = (uintptr_t)nce_gate;
         memcpy(stub + 48, &context, 8);
         memcpy(stub + 56, &resume, 8);
         memcpy(stub + 64, &word, 4);
         memcpy(stub + 72, &gate, 8);
-        if (branch((void *)(stub + 40), (uintptr_t)code.rx + cursor + 40,
+        if (branch((void *)(stub + 44), (uintptr_t)code.rx + cursor + 44,
                    (uintptr_t)code.rx + pos + 4) ||
             branch((void *)(code.rw + pos), (uintptr_t)code.rx + pos,
                    (uintptr_t)code.rx + cursor)) return -1;
@@ -68,6 +68,12 @@ int nce_prepare(NceCode code, NceState *s, const void *bytes, size_t size,
     }
     nce_sync_code(code);
     return 0;
+}
+
+int nce_prepare(NceCode code, NceState *s, const void *bytes, size_t size, size_t entry)
+{
+    s->self = s;
+    return nce_prepare_shared(code, s, &s->self, bytes, size, entry);
 }
 
 NceState *nce_dispatch(NceState *s)
