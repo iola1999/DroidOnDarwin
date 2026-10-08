@@ -14,7 +14,7 @@
 #include <sys/syscall.h>
 #include <unistd.h>
 
-#define CHECK(c) do { if (!(c)) { dprintf(2, "worker:%d errno=%d\n", __LINE__, errno); return 93; } } while (0)
+#define CHECK(c) do { if (!(c)) { dprintf(2, "worker:%d errno=%d\n", __LINE__, errno); return __LINE__; } } while (0)
 static _Thread_local unsigned local = 123;
 static volatile unsigned private_value = 17;
 static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;

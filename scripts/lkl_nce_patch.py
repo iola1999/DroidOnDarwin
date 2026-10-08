@@ -14,6 +14,7 @@ def apply(source: Path, experiment: Path):
         path.write_text(text.replace(before, after))
 
     arch = "arch/lkl/"
+    edit(arch + "Kconfig", "\tselect UACCESS_MEMCPY", "\tselect UACCESS_MEMCPY if !MMU")
     edit(arch + "include/asm/page.h", "#include <asm/page-mmu.h>", "#include <asm/page-mmu.h>\n#define VM_DATA_DEFAULT_FLAGS VM_DATA_FLAGS_NON_EXEC")
     edit(arch + "include/asm/page-mmu.h", "#define PAGE_SHIFT\t12", "#define PAGE_SHIFT\t14")
     edit(arch + "include/asm/thread_info.h", "#define THREAD_SIZE\t       (4096)", "#define THREAD_SIZE\t       (16384)")
@@ -65,23 +66,14 @@ def apply(source: Path, experiment: Path):
                                ("lkl-nce-mmu.c", "mm/nce_mmu.c"),
                                ("lkl-nce-process.c", "kernel/nce_process.c"),
                                ("lkl-mmu-context.h", "include/asm/mmu_context.h"),
+                               ("lkl-mmu.h", "include/asm/mmu.h"),
+                               ("lkl-uaccess.h", "include/asm/uaccess.h"),
                                ("lkl-elf.h", "include/asm/elf.h"),
                                ("lkl-tlbflush.h", "include/asm/tlbflush.h")):
         target = source / arch / destination
         content = (experiment / local).read_bytes()
         if not target.exists() or target.read_bytes() != content:
             target.write_bytes(content)
-    uaccess = """/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _LKL_NCE_UACCESS_H
-#define _LKL_NCE_UACCESS_H
-/* The controlled host syscall API also accepts pointers outside the guest. */
-#define __access_ok(addr, size) 1
-#include <asm-generic/uaccess.h>
-#endif
-"""
-    access_path = source / arch / "include/asm/uaccess.h"
-    if not access_path.exists() or access_path.read_text() != uaccess:
-        access_path.write_text(uaccess)
     mmu = source / arch / "mm/mmu_mem.c"
     text = mmu.read_text()
     if "void mmap_pages_for_ptes(" in text:

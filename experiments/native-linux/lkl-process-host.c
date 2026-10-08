@@ -44,7 +44,7 @@ static struct sigaction old_preempt;
 static NceState *active;
 static NceCode code;
 static unsigned char *ram;
-static unsigned long code_copies;
+static unsigned long code_copies, code_copy_bytes, data_maps, data_map_bytes, revocations;
 static size_t ram_size;
 static long (*run_syscall)(long, long *);
 static int (*page_fault)(unsigned long, int);
@@ -74,16 +74,20 @@ static void *shmem_map(void *address, unsigned long offset, unsigned long size, 
             for (size_t k = 0; k < size; k += PAGE) s->backing[(position + k) / PAGE] = offset + k;
             nce_sync_code((NceCode){s->code.rw + position, s->code.rx + position, size});
             ++code_copies;
+            code_copy_bytes += size;
             return address;
         }
     }
     REQUIRE(!(prot & LKL_PROT_EXEC));
     int host_prot = ((prot & LKL_PROT_READ) ? PROT_READ : 0) | ((prot & LKL_PROT_WRITE) ? PROT_WRITE : 0);
     REQUIRE(nce_memory_remap(address, ram + offset, size, host_prot) == 0);
+    ++data_maps;
+    data_map_bytes += size;
     return address;
 }
 static int protect_none(void *address, unsigned long size)
 {
+    ++revocations;
     uintptr_t start = (uintptr_t)address, end = start + size;
     uintptr_t cursor = start;
     for (size_t i = 0; i < nce_program_count; ++i) {
@@ -401,18 +405,8 @@ static long get_file(long (*call)(long, long *), const char *path, char *buffer,
     return count;
 }
 
-static void userspace_tests(long (*call)(long, long *))
+static void run_program(long (*call)(long, long *), const char *path)
 {
-    struct timespec begin, end;
-    unsigned long previous_stackless = stackless_exits;
-    unsigned long previous_preemptions = preemptions;
-    REQUIRE(clock_gettime(CLOCK_MONOTONIC_RAW, &begin) == 0);
-    for (size_t i = 1; i < nce_program_count; ++i)
-        put_file(call, nce_programs[i].path, nce_programs[i].file, nce_programs[i].size);
-    put_file(call, "/unregistered-elf", nce_programs[2].file, nce_programs[2].size);
-    const char *script = "/worker check\n/worker check\n/worker check\n/worker check\n"
-                         "/worker check\n/worker check\n/worker check\n/worker check\n";
-    put_file(call, "/boot.script", script, strlen(script));
     const char *streams[] = {"/stdin", "/stdout", "/stderr"};
     for (long fd = 0; fd < 3; ++fd) {
         long args[6] = {-100, (long)streams[fd], 0x242, 0600};
@@ -428,9 +422,8 @@ static void userspace_tests(long (*call)(long, long *))
     REQUIRE(process);
     ++allocated;
     process->state.syscall = syscall_from_guest;
-    process->exec_path = "/init-user";
+    process->exec_path = path;
     long args[6] = {(long)process, 1};
-    puts("{\"phase\":\"linux_userspace_tests\"}");
     long pid = call(246, args);
     REQUIRE(pid > 0);
     int status = -1;
@@ -440,10 +433,27 @@ static void userspace_tests(long (*call)(long, long *))
     if (get_file(call, "/stderr", buffer, sizeof(buffer)) > 0) fprintf(stderr, "%s", buffer);
     if (status) fprintf(stderr, "userspace pid=%ld waited=%ld status=%d\n", pid, waited, status);
     REQUIRE(waited == pid && status == 0);
+    for (long fd = 0; fd < 3; ++fd) { args[0] = fd; REQUIRE(call(57, args) == 0); }
+}
+
+static void userspace_tests(long (*call)(long, long *))
+{
+    struct timespec begin, end;
+    unsigned long previous_stackless = stackless_exits;
+    unsigned long previous_preemptions = preemptions;
+    REQUIRE(clock_gettime(CLOCK_MONOTONIC_RAW, &begin) == 0);
+    for (size_t i = 1; i < nce_program_count; ++i)
+        put_file(call, nce_programs[i].path, nce_programs[i].file, nce_programs[i].size);
+    put_file(call, "/unregistered-elf", nce_programs[2].file, nce_programs[2].size);
+    const char *script = "/worker check\n/worker check\n/worker check\n/worker check\n"
+                         "/worker check\n/worker check\n/worker check\n/worker check\n";
+    put_file(call, "/boot.script", script, strlen(script));
+    puts("{\"phase\":\"linux_userspace_tests\"}");
+    run_program(call, "/init-user");
+    char buffer[4096];
     REQUIRE(get_file(call, "/userspace.result", buffer, sizeof(buffer)) > 0);
     REQUIRE(strstr(buffer, "init pid=1 commands=8 libc=musl passed"));
     fprintf(stderr, "%s", buffer);
-    for (long fd = 0; fd < 3; ++fd) { args[0] = fd; REQUIRE(call(57, args) == 0); }
     for (size_t i = 1; i < nce_program_count; ++i) {
         NceProgram *p = &nce_programs[i];
         unsigned char *bytes = malloc(p->size + 1);
@@ -520,11 +530,29 @@ void nce_process_tests(long (*host_syscall)(long, long *), long (*guest_syscall)
     puts("{\"test\":\"linux_exec_file_unchanged\",\"passed\":true}");
     REQUIRE(host_syscall(-1, args) == -38 && host_syscall(99999, args) == -38);
     puts("{\"test\":\"linux_syscall_bounds\",\"passed\":true}");
-    for (unsigned iteration = 0; iteration < 16; ++iteration) {
+    unsigned stress_rounds = 16;
+    const char *requested_rounds = getenv("NCE_STRESS_ROUNDS");
+    if (requested_rounds) {
+        char *end;
+        unsigned long value = strtoul(requested_rounds, &end, 10);
+        REQUIRE(*requested_rounds && !*end && value >= 1 && value <= 1024);
+        stress_rounds = (unsigned)value;
+    }
+    for (unsigned iteration = 0; iteration < stress_rounds; ++iteration) {
         printf("{\"phase\":\"linux_userspace_round\",\"round\":%u}\n", iteration);
         userspace_tests(host_syscall);
     }
-    puts("{\"test\":\"linux_userspace_stress\",\"passed\":true,\"rounds\":16,\"commands\":128,\"threads\":896}");
+    printf("{\"test\":\"linux_userspace_stress\",\"passed\":true,\"rounds\":%u,\"commands\":%u,\"threads\":%u}\n",
+           stress_rounds, stress_rounds * 8, stress_rounds * 56);
+    puts("{\"phase\":\"linux_mm_benchmark\"}");
+    unsigned long maps_before = data_maps, copied_before = code_copy_bytes, revoked_before = revocations;
+    run_program(host_syscall, "/mm-bench");
+    char benchmark[16384];
+    REQUIRE(get_file(host_syscall, "/stdout", benchmark, sizeof(benchmark)) > 0);
+    REQUIRE(strstr(benchmark, "linux_mm_exchange_integrity"));
+    fputs(benchmark, stdout);
+    printf("{\"test\":\"linux_mm_host_operations\",\"data_maps\":%lu,\"code_copy_bytes\":%lu,\"revocations\":%lu}\n",
+           data_maps - maps_before, code_copy_bytes - copied_before, revocations - revoked_before);
 }
 void nce_process_cleanup(void)
 {
@@ -541,6 +569,8 @@ void nce_process_cleanup(void)
         }
     /* The virtual address reservation and code belong to memory.c. */
     printf("{\"test\":\"fixed_linux_code_view\",\"copies\":%lu,\"passed\":true}\n", code_copies);
+    printf("{\"test\":\"linux_host_mapping_totals\",\"data_maps\":%lu,\"data_bytes\":%lu,\"code_copy_bytes\":%lu,\"revocations\":%lu}\n",
+           data_maps, data_map_bytes, code_copy_bytes, revocations);
     printf("{\"test\":\"linux_nce_context_lifetime\",\"allocated\":%lu,\"freed\":%lu}\n", allocated, freed);
     REQUIRE(allocated == freed);
     printf("{\"test\":\"linux_guest_events\",\"preemptions\":%lu,\"deferred_faults\":%lu,\"stack_resumes\":%lu,\"stack_calls\":%lu}\n", preemptions, deferred_faults, stack_resumes, stack_calls);

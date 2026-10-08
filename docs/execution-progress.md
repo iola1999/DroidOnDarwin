@@ -15,7 +15,11 @@ R3 已在 iPhone / iOS 27.2 通过全部受控进程检查。
 回归检查通过。N2-B1 在手机完成扩大的执行区及旧进程检查后，停在 C 用户态
 第一轮。Mac 已从 GCD 入口复现：客体线程继承了被屏蔽的抢占信号。
 [N2-B2](native-linux-n2-ios-test.md) 已修复并通过两种宿主入口回归，手机
-完整线程流程待确认。[路线复核](native-linux-nce-feasibility-review.md)已将
+全部检查通过，16 轮 C 用户态累计 742.691 ms。当前进入
+[N2c 阶段](native-linux-n2c-progress.md) 已完成映射差异更新、按需恢复与
+Linux 用户指针检查；Mac 三次对照中，16 MiB 稀疏访问通信快约 78–87 倍，
+密集私有访问快约 1.82 倍。256 轮压力测试完成 14,336 个线程，18,814 个
+上下文全部释放。N2-C1 已生成，iOS 映射性能与权限行为待验证。[路线复核](native-linux-nce-feasibility-review.md)已将
 地址空间切换的性能评估提前，随后验证 Linux 信号、Bionic / ART 动态代码
 和图形共享缓冲区。HyperOS 整机收益尚未验证。
 

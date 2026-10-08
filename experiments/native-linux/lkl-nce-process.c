@@ -16,6 +16,7 @@ static int user_start(void *state)
 
 long nce_launch(long *params)
 {
+    if (current->thread.nce_state) return -ENOSYS;
     if (params[1] & ~1L) return -EINVAL;
     struct kernel_clone_args args = {
         .flags = params[1] ? CLONE_NEWPID : 0,

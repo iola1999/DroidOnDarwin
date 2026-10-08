@@ -10,7 +10,7 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
-#define CHECK(c) do { if (!(c)) { dprintf(2, "init:%d errno=%d\n", __LINE__, errno); return 90; } } while (0)
+#define CHECK(c) do { if (!(c)) { dprintf(2, "init:%d errno=%d\n", __LINE__, errno); return __LINE__; } } while (0)
 
 static volatile unsigned initialized = 0x19761234;
 static volatile unsigned char bss[65536];

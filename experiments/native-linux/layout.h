@@ -7,4 +7,7 @@
 #define NCE_RAM_SIZE 0x4000000UL
 #define NCE_VMALLOC_SIZE 0x4000000UL
 #define NCE_MMAP_OFFSET 0x2000000UL
+#define NCE_MM_DIFF 0
+#define NCE_MM_FULL 1
+#define NCE_MM_LAZY 2
 #endif

@@ -1,0 +1,88 @@
+/* SPDX-License-Identifier: GPL-2.0-or-later */
+#define _GNU_SOURCE
+#include <errno.h>
+#include <fcntl.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <string.h>
+#include <sys/mman.h>
+#include <sys/syscall.h>
+#include <sys/uio.h>
+#include <sys/wait.h>
+#include <unistd.h>
+
+#define PAGE 16384
+#define CHECK(c) do { if (!(c)) { dprintf(2, "mm-tests:%d errno=%d\n", __LINE__, errno); _exit(__LINE__); } } while (0)
+
+void memory_tests(void)
+{
+    unsigned char *data = mmap(NULL, 4 * PAGE, PROT_READ | PROT_WRITE,
+                               MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+    CHECK(data != MAP_FAILED);
+    int fd = open("/memory-tests", O_CREAT | O_TRUNC | O_RDWR, 0600);
+    CHECK(fd >= 0);
+    memset(data, 17, 4 * PAGE);
+    struct iovec vec[] = {{NULL, 0}, {data, 32}};
+    CHECK(writev(fd, vec, 2) == 32);
+    CHECK(syscall(SYS_write, fd, 0, 1) == -1 && errno == EFAULT);
+    CHECK(syscall(SYS_write, fd, UINTPTR_MAX - 7, 32) == -1 && errno == EFAULT);
+    CHECK(syscall(SYS_openat, AT_FDCWD, 1, O_RDONLY, 0) == -1 && errno == EFAULT);
+    CHECK(syscall(246, 0, 0) == -1 && errno == ENOSYS);
+    CHECK(mprotect(data + PAGE, PAGE, PROT_NONE) == 0);
+    CHECK(syscall(SYS_write, fd, data + PAGE, 1) == -1 && errno == EFAULT);
+    CHECK(syscall(SYS_futex, data + PAGE, 128, 0, 0, 0, 0) == -1 && errno == EFAULT);
+    CHECK(syscall(SYS_write, fd, data + PAGE - 16, 32) == 16);
+    CHECK(lseek(fd, 0, SEEK_SET) == 0);
+    CHECK(read(fd, data + PAGE - 16, 32) == 16);
+    CHECK(mprotect(data, PAGE, PROT_READ) == 0);
+    CHECK(pread(fd, data, 1, 0) == -1 && errno == EFAULT);
+    CHECK(write(fd, data, 1) == 1);
+    CHECK(mprotect(data, PAGE, PROT_READ | PROT_WRITE) == 0);
+    CHECK(mprotect(data + PAGE, PAGE, PROT_READ | PROT_WRITE) == 0);
+
+    int to_child[2], to_parent[2];
+    CHECK(pipe(to_child) == 0 && pipe(to_parent) == 0);
+    volatile unsigned char *shared = mmap(NULL, PAGE, PROT_READ | PROT_WRITE,
+                                          MAP_SHARED | MAP_ANONYMOUS, -1, 0);
+    CHECK(shared != MAP_FAILED);
+    shared[0] = 0;
+    pid_t child = fork();
+    CHECK(child >= 0);
+    if (!child) {
+        close(to_child[1]); close(to_parent[0]);
+        char value;
+        for (unsigned i = 1; i <= 64; ++i) {
+            CHECK(read(to_child[0], &value, 1) == 1);
+            CHECK(shared[0] == i);
+            CHECK(pread(fd, data, 1, 0) == 1 && data[0] == 17);
+            data[0] = 33;
+            CHECK(mprotect(data + PAGE, PAGE, PROT_NONE) == 0);
+            CHECK(mprotect(data + PAGE, PAGE, PROT_READ | PROT_WRITE) == 0);
+            CHECK(madvise(data + PAGE, PAGE, MADV_DONTNEED) == 0);
+            CHECK(data[PAGE] == 0);
+            data[PAGE] = 77;
+            CHECK(munmap(data + 2 * PAGE, PAGE) == 0);
+            CHECK(mmap(data + 2 * PAGE, PAGE, PROT_READ | PROT_WRITE,
+                       MAP_PRIVATE | MAP_ANONYMOUS | MAP_FIXED, -1, 0) == data + 2 * PAGE);
+            CHECK(data[2 * PAGE] == 0);
+            data[2 * PAGE] = 88;
+            shared[0] = (unsigned char)(i + 64);
+            CHECK(write(to_parent[1], &value, 1) == 1);
+        }
+        _exit(0);
+    }
+    close(to_child[0]); close(to_parent[1]);
+    char value = 1;
+    for (unsigned i = 1; i <= 64; ++i) {
+        shared[0] = (unsigned char)i;
+        CHECK(write(to_child[1], &value, 1) == 1);
+        CHECK(read(to_parent[0], &value, 1) == 1);
+        CHECK(shared[0] == i + 64);
+        CHECK(data[0] == 17 && data[PAGE] == 17 && data[2 * PAGE] == 17);
+    }
+    int status;
+    CHECK(waitpid(child, &status, 0) == child && WIFEXITED(status) && WEXITSTATUS(status) == 0);
+    CHECK(close(to_child[1]) == 0 && close(to_parent[0]) == 0 && close(fd) == 0);
+    CHECK(munmap((void *)shared, PAGE) == 0 && munmap(data, 4 * PAGE) == 0);
+    puts("{\"test\":\"linux_user_memory_boundaries\",\"passed\":true,\"reuse_rounds\":64}");
+}

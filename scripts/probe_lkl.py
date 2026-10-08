@@ -200,11 +200,11 @@ def main():
                     *sorted((EXPERIMENT / "userspace").glob("*"))]
         run(["python3", ROOT / "scripts/test_nce_userspace.py"])
         sources.append(ROOT / "scripts/test_nce_userspace.py")
-        manifest["stage"] = "N2b musl static PIE, threads and asynchronous preemption"
+        manifest["stage"] = "N2c process address spaces and checked user memory"
         manifest["userspace_libraries"] = {"musl": "1.2.5", "compiler-rt": "20.1.8"}
         manifest["generated_sha256"] = {name: hashlib.sha256((OUT / name).read_bytes()).hexdigest()
                                         for name in ["program-images.h", "lkl-image.h", "lkl-host-ops.h", "guest-image.h",
-                                                     "exec-guest.elf", "init.elf", "worker.elf"]}
+                                                     "exec-guest.elf", "init.elf", "worker.elf", "mm-bench.elf"]}
     manifest["input_sha256"] = {str(p.relative_to(ROOT)): hashlib.sha256(p.read_bytes()).hexdigest() for p in sources}
     (OUT / "lkl-summary.json").write_text(json.dumps(manifest, indent=2) + "\n")
     print(json.dumps(manifest, indent=2))
