@@ -13,7 +13,9 @@
 #include <cstdio>
 #include <stdexcept>
 #include <memory>
+#include <map>
 #include <mutex>
+#include <set>
 #include <unordered_map>
 #include <vector>
 #include <libkern/OSCacheControl.h>
@@ -1207,8 +1209,13 @@ struct HuskArm64Direct {
     HuskDualMapping mapping{};
 #endif
     size_t used = 0;
-    std::vector<CompiledPage::Allocation> free_ranges;
+    std::map<size_t, size_t> free_ranges;
+    std::set<std::pair<size_t, size_t>> free_sizes;
     std::unordered_multimap<uint64_t, std::unique_ptr<CompiledPage>> pages;
+    // Native route hits update last_used directly. Heap timestamps are lower
+    // bounds; refresh stale roots before choosing a page to evict.
+    using CodeAge = std::pair<uint64_t, CompiledPage *>;
+    std::vector<CodeAge> code_age;
     std::array<Mapping, 256> mappings{};
     std::array<PauthResult, 256> pauth_cache{};
     std::array<CodeRoute, 256> routes{};
@@ -1244,7 +1251,7 @@ struct HuskArm64Direct {
     {
         if (capacity < 2 * CompiledPage::max_bytes || capacity > 256 * 1024 * 1024 || capacity % 16384)
             throw std::invalid_argument("Direct cache must be 2..256 MiB, aligned to 16 KiB");
-        free_ranges.push_back({0, capacity});
+        release_code({0, capacity});
         const char *reclaim_setting = std::getenv("HUSK_ARM64_CACHE_RECLAIM");
         reclaim_cache = !reclaim_setting || std::strcmp(reclaim_setting, "0");
         const char *sharing_setting = std::getenv("HUSK_ARM64_CODE_SHARING");
@@ -1319,6 +1326,49 @@ struct HuskArm64Direct {
         if (!writes_only) populated.fill(0);
     }
 
+    static bool older_first(const CodeAge &a, const CodeAge &b) { return a.first > b.first; }
+
+    void release_code(CompiledPage::Allocation allocation)
+    {
+        auto next = free_ranges.lower_bound(allocation.offset);
+        if (next != free_ranges.begin()) {
+            auto previous = std::prev(next);
+            if (previous->first + previous->second == allocation.offset) {
+                free_sizes.erase({previous->second, previous->first});
+                allocation.offset = previous->first;
+                allocation.size += previous->second;
+                free_ranges.erase(previous);
+            }
+        }
+        if (next != free_ranges.end() && allocation.offset + allocation.size == next->first) {
+            free_sizes.erase({next->second, next->first});
+            allocation.size += next->second;
+            free_ranges.erase(next);
+        }
+        free_ranges.emplace(allocation.offset, allocation.size);
+        free_sizes.emplace(allocation.size, allocation.offset);
+    }
+
+    auto oldest_page()
+    {
+        while (!code_age.empty()) {
+            std::pop_heap(code_age.begin(), code_age.end(), older_first);
+            auto &[stamp, code] = code_age.back();
+            if (stamp != code->last_used) {
+                stamp = code->last_used;
+                std::push_heap(code_age.begin(), code_age.end(), older_first);
+                continue;
+            }
+            auto range = pages.equal_range(code->cache_key);
+            auto found = std::find_if(range.first, range.second,
+                [code](const auto &entry) { return entry.second.get() == code; });
+            if (found == range.second) throw std::logic_error("Direct cache page lost");
+            code_age.pop_back();
+            return found;
+        }
+        return pages.end();
+    }
+
     void erase_page(decltype(pages)::iterator page)
     {
         // Other pages' routes remain valid. Clearing all routes here forces
@@ -1335,39 +1385,33 @@ struct HuskArm64Direct {
             auto last = std::lower_bound(first, fault_sites.end(), end,
                 [](const auto &site, uintptr_t address) { return site.instruction < address; });
             fault_sites.erase(first, last);
-            free_ranges.push_back(allocation);
+            release_code(allocation);
             used -= allocation.size;
         }
         pages.erase(page);
-        std::sort(free_ranges.begin(), free_ranges.end(),
-                  [](const auto &a, const auto &b) { return a.offset < b.offset; });
-        size_t count = 0;
-        for (auto range : free_ranges) {
-            if (count && free_ranges[count - 1].offset + free_ranges[count - 1].size == range.offset)
-                free_ranges[count - 1].size += range.size;
-            else free_ranges[count++] = range;
-        }
-        free_ranges.resize(count);
     }
 
-    size_t reserve_code(size_t required)
+    CompiledPage::Allocation reserve_code(size_t required)
     {
         for (;;) {
-            auto range = std::find_if(free_ranges.begin(), free_ranges.end(),
-                [required](const auto &r) { return r.size >= required; });
-            if (range != free_ranges.end()) return range - free_ranges.begin();
+            // Emitted size is known after branch relocation. Start with the
+            // largest gap so a small fragment cannot force repeated compilation.
+            if (!free_sizes.empty() && free_sizes.rbegin()->first >= required)
+                return {free_sizes.rbegin()->second, free_sizes.rbegin()->first};
             if (!reclaim_cache) {
                 pages.clear();
+                code_age.clear();
                 source_routes.fill({});
                 routes.fill({UINT64_MAX, nullptr});
                 call_routes.fill({UINT64_MAX, nullptr});
                 fault_sites.clear();
-                free_ranges = {{0, capacity}};
+                free_ranges.clear();
+                free_sizes.clear();
+                release_code({0, capacity});
                 used = 0;
                 ++flushes;
             } else {
-                auto oldest = std::min_element(pages.begin(), pages.end(),
-                    [](const auto &a, const auto &b) { return a.second->last_used < b.second->last_used; });
+                auto oldest = oldest_page();
                 if (oldest == pages.end()) throw std::logic_error("Direct cache allocation lost");
                 // A page owns all of its emitted blocks, including direct local
                 // branches between blocks. Recycle them together after leaving JIT.
@@ -1427,7 +1471,7 @@ struct HuskArm64Direct {
         }
         size_t required = 16;
         for (;;) {
-            size_t range_index = reserve_code(required);
+            auto range = reserve_code(required);
             found = find();
             if (found == pages.end()) {
                 auto compiled = std::make_unique<CompiledPage>();
@@ -1437,10 +1481,11 @@ struct HuskArm64Direct {
                 compiled->last_used = ++cache_clock;
                 std::memcpy(compiled->source.data(), bytes, 4096);
                 found = pages.emplace(key, std::move(compiled));
+                code_age.emplace_back(found->second->last_used, found->second.get());
+                std::push_heap(code_age.begin(), code_age.end(), older_first);
             }
             auto &compiled = found->second;
             CompiledPage candidate(*compiled);
-            auto &range = free_ranges[range_index];
             size_t emitted = candidate.compile(0, bytes, entry, executable + range.offset / 4,
                                               writable + range.offset / 4, flags, fault_sites, range.size,
                                               compiled->branch_entries.data());
@@ -1449,9 +1494,9 @@ struct HuskArm64Direct {
             candidate.allocations.push_back({range.offset, emitted});
             candidate.last_used = ++cache_clock;
             *compiled = std::move(candidate);
-            range.offset += emitted;
-            range.size -= emitted;
-            if (!range.size) free_ranges.erase(free_ranges.begin() + range_index);
+            free_ranges.erase(range.offset);
+            free_sizes.erase({range.size, range.offset});
+            if (range.size > emitted) release_code({range.offset + emitted, range.size - emitted});
             used += emitted;
             ++compiles;
             route = {bytes, compiled.get(), flags, version};

@@ -4,6 +4,7 @@
 #include <chrono>
 #include <cstdio>
 #include <cstdlib>
+#include <cstring>
 #include <memory>
 #include <vector>
 
@@ -300,8 +301,52 @@ static void versioned_code(bool enabled)
                 (unsigned long long)stats.code_version_hits);
 }
 
-int main()
+static void fragmented_cache()
 {
+    setenv("HUSK_ARM64_CODE_SHARING", "1", 1);
+    setenv("HUSK_ARM64_CACHE_RECLAIM", "1", 1);
+    setenv("HUSK_ARM64_FASTMEM", "0", 1);
+    std::vector<Page> input(8192);
+    for (size_t page = 0; page < input.size(); ++page) {
+        auto &code = input[page];
+        code.fill(0xd4000001);
+        std::fill_n(code.begin(), 16 + page * 37 % 192, 0x91000400);
+        std::fill_n(code.begin() + 512, 8 + page % 23, 0x91000800);
+        code.back() = page;
+    }
+    Engine engine(husk_direct_create(2 * 1024 * 1024), husk_direct_destroy);
+    auto run = [&](size_t page, size_t entry, size_t count, unsigned addend) {
+        HuskArm64State state{};
+        state.pc = base + page * 4096 + entry * 4;
+        CHECK(husk_direct_run(engine.get(), &state, base + page * 4096,
+                             input[page].data(), {}, 4096) == HUSK_ARM64_FALLBACK);
+        CHECK(state.pc == base + page * 4096 + (entry + count) * 4);
+        CHECK(state.x[0] == count * addend);
+    };
+    auto start = std::chrono::steady_clock::now();
+    for (unsigned round = 0; round < 2; ++round) {
+        for (size_t page = 0; page < input.size(); ++page) {
+            run(page, 0, 16 + page * 37 % 192, 1);
+            // Extending a page must retain its first block while new pages
+            // produce differently sized gaps in the generated-code arena.
+            run(page, 512, 8 + page % 23, 2);
+            run(page, 0, 16 + page * 37 % 192, 1);
+        }
+    }
+    auto us = std::chrono::duration_cast<std::chrono::microseconds>(
+        std::chrono::steady_clock::now() - start).count();
+    auto stats = husk_direct_cache_stats(engine.get());
+    CHECK(stats.bytes <= 2 * 1024 * 1024 && stats.evictions && !stats.flushes);
+    std::printf("cache fragmentation pages=8192 rounds=2 compiles=%llu evictions=%llu us=%lld PASS\n",
+                (unsigned long long)stats.compiles, (unsigned long long)stats.evictions, (long long)us);
+}
+
+int main(int argc, char **argv)
+{
+    if (argc == 2 && !std::strcmp(argv[1], "--fragmentation-only")) {
+        fragmented_cache();
+        return 0;
+    }
     setenv("HUSK_ARM64_CODE_SHARING", "0", 1);
     auto flushed = working_set(false), reclaimed = working_set(true);
     CHECK(reclaimed.compiles == 432 && reclaimed.compiles < flushed.compiles);
@@ -320,4 +365,5 @@ int main()
     active_routes_under_pressure();
     versioned_code(false);
     versioned_code(true);
+    fragmented_cache();
 }

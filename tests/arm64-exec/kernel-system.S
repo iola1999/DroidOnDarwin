@@ -34,6 +34,68 @@ _start:
     b.ne fail
     msr daifset, #2
 
+    mrs x23, cntvct_el0
+    mov x24, #0x4240
+    movk x24, #0xf, lsl #16
+    adr x9, branch_first
+    adr x10, branch_second
+branch_first:
+    br x10
+branch_second:
+    subs x24, x24, #1
+    b.eq branch_done
+    br x9
+branch_done:
+    mrs x24, cntvct_el0
+    sub x23, x24, x23
+    adr x0, branch_elapsed
+    bl print
+    mov x0, x23
+    bl hex
+    adr x0, frequency
+    bl print
+    mrs x0, cntfrq_el0
+    bl hex
+
+    /* Exercise TCR-dependent PAC stripping before enabling the MMU. Repeat
+     * lower/upper instruction/data queries after every control-register write. */
+    adr x9, va_controls
+    mov x10, #0x1234
+    mov x11, #8192
+    mov x17, #0
+va_loop:
+    and x12, x11, #7
+    ldr x13, [x9, x12, lsl #3]
+    msr tcr_el1, x13
+    isb
+    eor x10, x10, x10, lsl #13
+    eor x10, x10, x10, lsr #7
+    eor x10, x10, x10, lsl #17
+    mov x0, x10
+    mov x1, x10
+    .inst 0xdac143e0 // xpaci x0
+    .inst 0xdac143e1 // xpaci x1
+    cmp x0, x1
+    b.ne fail
+    mov x2, x10
+    .inst 0xdac147e2 // xpacd x2
+    eor x3, x10, #0x80000000000000
+    mov x4, x3
+    .inst 0xdac143e3 // xpaci x3
+    .inst 0xdac147e4 // xpacd x4
+    ror x17, x17, #7
+    eor x17, x17, x0
+    add x17, x17, x2
+    ror x17, x17, #11
+    eor x17, x17, x3
+    add x17, x17, x4
+    subs x11, x11, #1
+    b.ne va_loop
+    adr x0, va_hash
+    bl print
+    mov x0, x17
+    bl hex
+
     /* All executable code remains identity-mapped while TTBR0 changes the
      * test VA between two physical RAM blocks. Tables use 4 KiB granules. */
     adr x0, root_a
@@ -66,6 +128,19 @@ _start:
     orr x3, x3, #1
     adr x4, level2_b
     str x3, [x4]
+    /* The same executable VA must follow the new physical mapping after TLBI. */
+    mov x2, #0x40200000
+    mov w3, #0x0527
+    movk w3, #0xd280, lsl #16
+    str w3, [x2, #256] // mov x7, #41
+    mov w3, #0x03c0
+    movk w3, #0xd65f, lsl #16
+    str w3, [x2, #260] // ret
+    mov x2, #0x40400000
+    str w3, [x2, #260]
+    mov w3, #0x0927
+    movk w3, #0xd280, lsl #16
+    str w3, [x2, #256] // mov x7, #73
     msr ttbr0_el1, x0
     mov x2, #0x3519
     msr tcr_el1, x2
@@ -87,12 +162,20 @@ _start:
     ldr x7, [x5]
     cmp x7, #41
     b.ne fail
+    add x12, x5, #256
+    blr x12
+    cmp x7, #41
+    b.ne fail
     adr x0, root_b
     msr ttbr0_el1, x0
     tlbi vmalle1
     dsb ish
     isb
     ldr x7, [x5]
+    cmp x7, #73
+    b.ne fail
+    add x12, x5, #256
+    blr x12
     cmp x7, #73
     b.ne fail
     subs x6, x6, #1
@@ -201,6 +284,12 @@ exception:
     eret
 
 .section .data
+branch_elapsed: .asciz "BENCH kernel_branch_ticks="
+va_hash: .asciz "VA_HASH="
+.balign 8
+va_controls:
+    .quad 0, 0x3519, 0x0000002000353519, 0x0000016000353519
+    .quad 0x00000060b535b519, 0x0000016040357510, 0x080000200035350c, 0x00000060b535b53f
 elapsed: .asciz "BENCH kernel_ticks="
 frequency: .asciz " frequency="
 passed: .asciz "\nHUSK-KERNEL-TEST PASS\n"

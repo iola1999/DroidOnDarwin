@@ -1,0 +1,100 @@
+--- a/target/arm/cpu.h
++++ b/target/arm/cpu.h
+@@ -873,4 +873,7 @@
+     /* Coprocessor information */
+     GHashTable *cp_regs;
++#if defined(CONFIG_HUSK_ARM64_EXEC) && defined(TARGET_AARCH64) && !defined(CONFIG_USER_ONLY)
++    struct HuskVAParameterCache *husk_va_cache;
++#endif
+     /* For marshalling (mostly coprocessor) register state between the
+      * kernel and QEMU (for KVM) and between two QEMUs (for migration),
+--- a/target/arm/cpu.c
++++ b/target/arm/cpu.c
+@@ -1929,4 +1929,7 @@
+     }
+ #endif
++#if defined(CONFIG_HUSK_ARM64_EXEC) && defined(TARGET_AARCH64) && !defined(CONFIG_USER_ONLY)
++    g_free(cpu->husk_va_cache);
++#endif
+ }
+ 
+--- a/target/arm/helper.c
++++ b/target/arm/helper.c
+@@ -11174,7 +11174,7 @@
+     return Gran64K;
+ }
+ 
+-ARMVAParameters aa64_va_parameters(CPUARMState *env, uint64_t va,
++static ARMVAParameters aa64_va_parameters_uncached(CPUARMState *env, uint64_t va,
+                                    ARMMMUIdx mmu_idx, bool data,
+                                    bool el1_is_aa32)
+ {
+@@ -11316,6 +11316,68 @@
+ }
+ 
+ 
++#if defined(CONFIG_HUSK_ARM64_EXEC) && defined(TARGET_AARCH64) && !defined(CONFIG_USER_ONLY)
++struct HuskVAParameterCache {
++    bool enabled, verify;
++    struct {
++        uint64_t tcr;
++        unsigned key;
++        ARMVAParameters parameters;
++    } entries[64];
++};
++#endif
++
++ARMVAParameters aa64_va_parameters(CPUARMState *env, uint64_t va,
++                                   ARMMMUIdx mmu_idx, bool data,
++                                   bool el1_is_aa32)
++{
++#if defined(CONFIG_HUSK_ARM64_EXEC) && defined(TARGET_AARCH64) && !defined(CONFIG_USER_ONLY)
++    ARMCPU *cpu = env_archcpu(env);
++    struct HuskVAParameterCache *cache = cpu->husk_va_cache;
++    if (unlikely(!cache)) {
++        const char *setting = getenv("HUSK_ARM64_VA_CACHE");
++        cache = cpu->husk_va_cache = g_new0(struct HuskVAParameterCache, 1);
++        cache->enabled = setting && (!strcmp(setting, "1") || !strcmp(setting, "verify"));
++        cache->verify = setting && !strcmp(setting, "verify");
++        if (cache->verify) {
++            fprintf(stderr, "[husk-va-cache] verification active\n");
++        }
++    }
++    if (cache->enabled) {
++        /* The function depends on TCR, the regime and bit 55, plus CPU model
++         * features fixed at realize time. Compare all dynamic inputs on each
++         * hit, including after register writes, reset and migration. */
++        uint64_t tcr = regime_tcr(env, mmu_idx);
++        unsigned key = ((unsigned)mmu_idx << 3) | (data << 2) |
++                       (el1_is_aa32 << 1) | extract64(va, 55, 1);
++        unsigned slot = key & (ARRAY_SIZE(cache->entries) - 1);
++        ++key; /* Zero denotes an uninitialized entry. */
++        typeof(cache->entries[0]) *entry = &cache->entries[slot];
++        bool hit = entry->key == key && entry->tcr == tcr;
++        if (hit && !cache->verify) {
++            return entry->parameters;
++        }
++        ARMVAParameters result = aa64_va_parameters_uncached(env, va, mmu_idx,
++                                                             data, el1_is_aa32);
++        if (hit) {
++            ARMVAParameters old = entry->parameters;
++            g_assert(old.tsz == result.tsz && old.ps == result.ps &&
++                     old.sh == result.sh && old.select == result.select &&
++                     old.tbi == result.tbi && old.epd == result.epd &&
++                     old.hpd == result.hpd && old.tsz_oob == result.tsz_oob &&
++                     old.ds == result.ds && old.ha == result.ha &&
++                     old.hd == result.hd && old.gran == result.gran);
++        }
++        entry->tcr = tcr;
++        entry->key = key;
++        entry->parameters = result;
++        return result;
++    }
++#endif
++    return aa64_va_parameters_uncached(env, va, mmu_idx, data, el1_is_aa32);
++}
++
++
+ /*
+  * Return the exception level to which FP-disabled exceptions should
+  * be taken, or 0 if FP is enabled.

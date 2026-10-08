@@ -62,11 +62,21 @@ def main():
             text = serial.read_text(errors="replace") if serial.exists() else ""
             host = stem.with_suffix(".host.log").read_text(errors="replace")
             bench = re.search(r"kernel_ticks=([0-9a-f]+) frequency=([0-9a-f]+)", text)
+            branches = re.search(r"kernel_branch_ticks=([0-9a-f]+) frequency=([0-9a-f]+)", text)
+            va_hash = re.search(r"VA_HASH=([0-9a-f]+)", text)
             row = {"sample": sample, "mode": mode, "exit_code": process.returncode, "timeout": expired,
                    "passed": not expired and process.returncode == 0 and "HUSK-KERNEL-TEST PASS" in text,
                    "kernel_system_active": "[husk-kernel-system] completed=" in host,
                    "kernel_ms": int(bench[1], 16) * 1000 / int(bench[2], 16) if bench else None}
-            row["passed"] &= bool(bench)
+            row["passed"] &= bool(bench and branches and va_hash)
+            row["kernel_branch_ms"] = int(branches[1], 16) * 1000 / int(branches[2], 16) if branches else None
+            row["va_hash"] = va_hash[1] if va_hash else None
+            row["inline_lookup_active"] = "[husk-tcg] inline EL1 jump lookup active" in host
+            row["backend_env"] = {k: v for k, v in env.items() if k.startswith("HUSK_ARM64_")}
+            if results:
+                row["passed"] &= row["va_hash"] == results[0]["va_hash"]
+            if mode == "tcg" and env.get("HUSK_ARM64_TCG_INLINE_LOOKUP") == "1":
+                row["passed"] &= row["inline_lookup_active"]
             if mode != "tcg":
                 row["passed"] &= "kernel Direct active" in host
             if mode.endswith("system"):

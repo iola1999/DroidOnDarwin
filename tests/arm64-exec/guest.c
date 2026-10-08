@@ -316,6 +316,24 @@ static void pointer_benchmark(void)
     CHECK(call(215, allocation, region_size * 2, 0, 0, 0, 0) == 0);
 }
 
+static void tlb_stride_benchmark(void)
+{
+    const u64 size = 16 * 1024 * 1024, count = 64, iterations = 2000000;
+    s64 allocation = call(222, 0, size * 2, 3, 0x22, (u64)-1, 0);
+    CHECK(allocation > 0);
+    u64 base = ((u64)allocation + size - 1) & ~(size - 1);
+    for (u64 stride = 4096; stride <= 262144; stride *= 4) {
+        for (u64 i = 0; i < count; ++i)
+            *(u64 *)(base + i * stride) = base + ((i + 1) % count) * stride;
+        u64 start = ns();
+        CHECK(pointer_loop(base, iterations) == base);
+        u64 elapsed = ns() - start;
+        print("BENCH stride_"); number(stride); print("_ns="); number(elapsed);
+        print(" value="); number(iterations); print("\n");
+    }
+    CHECK(call(215, allocation, size * 2, 0, 0, 0, 0) == 0);
+}
+
 static void timer_preemption(void)
 {
     u64 worst = 0;
@@ -433,6 +451,7 @@ void guest_main(u64 *initial_stack)
     print("BENCH syscall_ns="); number(elapsed); print(" count=10000\n");
     switching_benchmark();
     pointer_benchmark();
+    tlb_stride_benchmark();
     timer_preemption();
 #ifdef HUSK_TEST_BULK
     bulk_tests();

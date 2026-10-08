@@ -1,0 +1,52 @@
+--- a/tcg/meson.build
++++ b/tcg/meson.build
+@@ -23,7 +23,7 @@
+ endif
+ 
+ tcg_ss.add(when: libdw, if_true: files('debuginfo.c'))
+-if host_os == 'linux'
++if host_os in ['linux', 'darwin', 'ios']
+   tcg_ss.add(files('perf.c'))
+ endif
+ 
+--- a/include/tcg/perf.h
++++ b/include/tcg/perf.h
+@@ -7,7 +7,7 @@
+ #ifndef TCG_PERF_H
+ #define TCG_PERF_H
+ 
+-#if defined(CONFIG_TCG) && defined(CONFIG_LINUX)
++#if defined(CONFIG_TCG) && (defined(CONFIG_LINUX) || defined(CONFIG_DARWIN))
+ /* Start writing perf-<pid>.map. */
+ void perf_enable_perfmap(void);
+ 
+--- a/qemu-options.hx
++++ b/qemu-options.hx
+@@ -5339,14 +5339,13 @@
+     Enable synchronization profiling.
+ ERST
+ 
+-#if defined(CONFIG_TCG) && defined(CONFIG_LINUX)
++#if defined(CONFIG_TCG) && (defined(CONFIG_LINUX) || defined(CONFIG_DARWIN))
+ DEF("perfmap", 0, QEMU_OPTION_perfmap,
+     "-perfmap        generate a /tmp/perf-${pid}.map file for perf\n",
+     QEMU_ARCH_ALL)
+ SRST
+ ``-perfmap``
+-    Generate a map file for Linux perf tools that will allow basic profiling
+-    information to be broken down into basic blocks.
++    Generate a host-to-guest code map for Linux perf or macOS sampling tools.
+ ERST
+ 
+ DEF("jitdump", 0, QEMU_OPTION_jitdump,
+--- a/system/vl.c
++++ b/system/vl.c
+@@ -3136,7 +3136,7 @@
+             case QEMU_OPTION_DFILTER:
+                 qemu_set_dfilter_ranges(optarg, &error_fatal);
+                 break;
+-#if defined(CONFIG_TCG) && defined(CONFIG_LINUX)
++#if defined(CONFIG_TCG) && (defined(CONFIG_LINUX) || defined(CONFIG_DARWIN))
+             case QEMU_OPTION_perfmap:
+                 perf_enable_perfmap();
+                 break;

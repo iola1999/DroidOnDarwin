@@ -84,6 +84,7 @@ def main():
     parser.add_argument("--execution", choices=("tcg", "direct"), default="tcg",
                         help="Select the CPU execution backend; Direct requires --accel tcg")
     parser.add_argument("--profile", action="store_true", help="Collect Direct statistics and CPU phase times")
+    parser.add_argument("--perfmap", action="store_true", help="Record TCG host-to-guest instruction addresses")
     parser.add_argument("--angle-path", type=Path, required=True)
     parser.add_argument("--bench", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
@@ -119,6 +120,8 @@ def main():
         if item.startswith("virtio-gpu"):
             device = "virtio-gpu-rutabaga-pci,x-gfxstream-gles=on" if args.gpu == "gfxstream" else "virtio-gpu-pci"
             command[i] = device + ",xres=360,yres=800"
+    if args.perfmap:
+        command.append("-perfmap")
     env = dict(os.environ, HUSK_ARM64_EXEC="1" if args.execution == "direct" else "0",
                HUSK_ARM64_BACKEND="direct",
                ANGLE_DEFAULT_PLATFORM="metal",
@@ -278,6 +281,9 @@ def main():
                         process.kill()
                         process.wait()
             result["elapsed_seconds"] = round(time.monotonic() - start, 3)
+            perfmap = Path(f"/tmp/perf-{process.pid}.map")
+            if args.perfmap and perfmap.exists():
+                perfmap.rename(output / "tcg-perf.map")
             (output / "results.json").write_text(json.dumps(result, indent=2) + "\n")
     print(json.dumps(result), flush=True)
     if not result["passed"]: raise SystemExit(1)

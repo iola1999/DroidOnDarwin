@@ -119,6 +119,14 @@ def main():
                 if not measured and not skipped:
                     row["passed"] = False
             pauth = re.search(r"BENCH pauth_ns=(\d+) count=(\d+)", output)
+            row["tlb_hash_active"] = "[husk-tlb] XOR page index active" in host_output
+            if env.get("HUSK_ARM64_TLB_HASH") == "1" and not row["tlb_hash_active"]:
+                row["passed"] = False
+            for stride in (4096, 16384, 65536, 262144):
+                measured = re.search(rf"BENCH stride_{stride}_ns=(\d+) value=2000000", output)
+                row[f"stride_{stride}_ns"] = int(measured[1]) if measured else None
+                if not measured:
+                    row["passed"] = False
             row["pauth_ns"] = int(pauth[1]) if pauth else None
             if not pauth:
                 row["passed"] = False
