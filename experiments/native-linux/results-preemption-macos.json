@@ -1,0 +1,219 @@
+{
+  "source_revision": "d0f76a77e8c2ca68bd7d96190b8da09040eab072",
+  "platform": "macOS-27.0-arm64-arm-64bit-Mach-O",
+  "regression": "NCE preemption from a GCD worker with SIGUSR2 initially blocked",
+  "before_fix": {
+    "source_commit": "10249b2",
+    "entry": "dispatch_async_f QOS_CLASS_USER_INITIATED",
+    "status": "timeout",
+    "timeout_seconds": 10,
+    "last_phase": "linux_userspace_tests",
+    "userspace_round": 0,
+    "raw_log_sha256": "66cc3feaa4dba9708dab52a809bf543db7b1955b1c3112bbdcfc65c1a01e9d55",
+    "initial_signal_mask": {
+      "test": "dispatch_signal_mask",
+      "sigusr2_blocked": 1
+    }
+  },
+  "after_fix": {
+    "results": {
+      "status": "passed",
+      "userspace_total_ms": 1142.183,
+      "round_ms": [
+        70.909,
+        72.26,
+        75.774,
+        72.197,
+        72.166,
+        72.595,
+        71.947,
+        68.814,
+        69.168,
+        76.697,
+        71.951,
+        68.942,
+        67.647,
+        69.667,
+        69.693,
+        71.756
+      ],
+      "round_median_ms": 71.8515,
+      "summary": [
+        {
+          "test": "linux_userspace_stress",
+          "passed": true,
+          "rounds": 16,
+          "commands": 128,
+          "threads": 896
+        },
+        {
+          "test": "linux_nce_context_lifetime",
+          "allocated": 1264,
+          "freed": 1264
+        },
+        {
+          "test": "linux_guest_events",
+          "preemptions": 152,
+          "deferred_faults": 36180,
+          "stack_resumes": 19781,
+          "stack_calls": 2240
+        },
+        {
+          "test": "guest_preemption_signal_mask",
+          "inherited_blocked_threads": 0,
+          "passed": true
+        }
+      ],
+      "raw_log_sha256": "2fc917e100e2952499094bab94c3e68e6d1a82a0098e1d45b4dfbe032f039c36"
+    },
+    "dispatch_results": {
+      "status": "passed",
+      "userspace_total_ms": 1147.064,
+      "round_ms": [
+        69.271,
+        68.2,
+        68.559,
+        68.763,
+        70.133,
+        72.956,
+        75.957,
+        69.696,
+        76.13,
+        74.75,
+        71.399,
+        80.241,
+        69.856,
+        72.626,
+        68.177,
+        70.35
+      ],
+      "round_median_ms": 70.2415,
+      "summary": [
+        {
+          "test": "dispatch_signal_mask",
+          "sigusr2_blocked": 1
+        },
+        {
+          "test": "linux_userspace_stress",
+          "passed": true,
+          "rounds": 16,
+          "commands": 128,
+          "threads": 896
+        },
+        {
+          "test": "linux_nce_context_lifetime",
+          "allocated": 1264,
+          "freed": 1264
+        },
+        {
+          "test": "linux_guest_events",
+          "preemptions": 143,
+          "deferred_faults": 36185,
+          "stack_resumes": 19779,
+          "stack_calls": 2240
+        },
+        {
+          "test": "guest_preemption_signal_mask",
+          "inherited_blocked_threads": 48,
+          "passed": true
+        }
+      ],
+      "raw_log_sha256": "c964055280db515247a63a462247b100940d1bec520e2be5afa9a841f46b2afb"
+    }
+  },
+  "validation": {
+    "elf_layout_tests": 8,
+    "detach_scenarios": 5,
+    "execute_exception_regression": "passed",
+    "ios_release_build": "passed",
+    "codesign_verification": "passed",
+    "ipa_integrity": "passed",
+    "ios_execution": "pending"
+  },
+  "kernel_sha256": "8abdc3701d09130615ff055d073821e2451c20c42f0b82f33920f8b1a497b240",
+  "input_sha256": {
+    "experiments/native-linux/lkl-main.c": "d4e7c597f07e6e69aed7d8c0a213adb8c097825185f849b3766b40356c82e7eb",
+    "experiments/native-linux/lkl-host.c": "4381c02fa6d97ef50a2a6e55a471fb944bf2f19376acd593505305b69820c058",
+    "experiments/native-linux/nce.c": "93b14fe41f3e69bf9acb645e314f0c4d1f2b5d5e6228bb87b8195ea70af87d9d",
+    "experiments/native-linux/entry.S": "0133eb524e45bebb880c0c2b299b610023856f97bd5cc52f812850f06bd56cc7",
+    "experiments/native-linux/lkl-process-host.c": "afb10d85ac08ef2fb51c50d4393c1571b6aa4fe287d59e71f4bf589b6528abb4",
+    "experiments/native-linux/programs.c": "0611e75ae50d4a8c6be6bb450ded32a12c1453be4f8f619e952c8d39c208036b",
+    "experiments/native-linux/memory.c": "922829a9d0cfdc843ed6e05e5a58a05b7537fad83e651220d4a0a9779d22a208",
+    "experiments/native-linux/execute-check.c": "6a9f682b36b21b70ba28e8bc6b0023693a2906f7dfbecb46fbe8c50ff68195ef",
+    "experiments/native-linux/compute.c": "ed859290238192fa05f87f2be03a04b376fde0df1c4821cf7982fa30bfab5161",
+    "experiments/native-linux/lkl-bridge.c": "78c13872fff1c7769d4c2de19565d3a88dd5cf6e96016be0b7e9d4c928bee79d",
+    "experiments/native-linux/nce.h": "65f01883db5aaf64c973f32c0f9e72eb329148d8b6f8bf9564b44f0d52af0c80",
+    "experiments/native-linux/guest.S": "6e6c2ad54238e847546f96b4614ec1e280bb4ec6ded63db858756fea753ab496",
+    "scripts/probe_lkl.py": "0903b42a0399135d7b9cafeba1479756ba04b5dabe4305f643afc8012214e4bf",
+    "experiments/native-linux/memory.h": "f8e9d2dbb4e61674f03f27ce38e9fe4f03ec71656a00fef6a9e60771ca3685f2",
+    "experiments/native-linux/layout.h": "83d599bc5cb395f51e4489b925650579fa525b2a4012e7814931d1fba3666fb3",
+    "experiments/native-linux/execute-check.h": "3bf58a2a09ea16d489f96b49f50bfaa7b1106216c15f40a7d4bde588d53f2541",
+    "scripts/lkl_nce_patch.py": "271f0dcb195fb9edb8d249fe30fd9e20009c42c8cec3f81157966a55d2b90785",
+    "experiments/native-linux/lkl-elf.h": "7778c5cb62c239593f86b8d1fe603978efabc93124b58440bfc5f78cd9280623",
+    "experiments/native-linux/lkl-mmu-context.h": "5241bd972afbd9353238e058897c2afef08626d8fc04a800df6508f0f567d1d9",
+    "experiments/native-linux/lkl-tlbflush.h": "59da32cd018e19b31ea49f868ecadb3122bf0b09dd4b40c5780b96797577df5d",
+    "experiments/native-linux/lkl-nce-mmu.c": "67107a928a80b99da2fa244d9931d0dc09394165fc2b6e3ff8fbe767c3ce6949",
+    "experiments/native-linux/lkl-nce-process.c": "c6bc633ffb123f7803c4a72d033627a54f89fc3a1d0f7f9024def998b8e53d3b",
+    "experiments/native-linux/exec-guest.S": "833d10bd1b10f0b3a35c7324aaec8a24b1774a42200c24389bd772facb0244e8",
+    "experiments/native-linux/programs.h": "aff7323d9397c2c80521a0dc6a9ae7d41df069a415871dd53cde25e82e812c57",
+    "scripts/build_nce_userspace.py": "499e8dfac8058b0dab1094ffae8df0b06c2312a4797eb122f4edebf243535530",
+    "experiments/native-linux/dispatch-test.c": "98db736c4895469a1a2152ec9952ec192b0b79a1c1b12d0438bdb59aae63341f",
+    "experiments/native-linux/userspace/init.c": "e88b8f3f18b9a262ab3bc64bdec59775d89ec88f24b73d80dea3c02b673eeca3",
+    "experiments/native-linux/userspace/worker.c": "e80b6c2de5959b3b8bb12a92156a31540e5583a03a6ae30a558d4da816a96839",
+    "scripts/test_nce_userspace.py": "37ba744be606576fcb86f9863933ade2dcbc64dff35a81126dbc3e37bbf08660"
+  },
+  "generated_sha256": {
+    "program-images.h": "817d6a6dd7e4d7c62aa70e99bf7302d2c5dba675759d9fabc838fc37fb9aab02",
+    "lkl-image.h": "52c2a13e3bb04654ac730f352d42b3b7355850ae886abd4d194607d6c6f07456",
+    "lkl-host-ops.h": "3fd5ecc4dbe336887fedfa052b33e5120e5431134a7c9dbc95e7e32fdf582092",
+    "guest-image.h": "ecb4c21664e7f8926d8afe067d25f587bf907db5bf0d2354b6c14b5cd3e9c420",
+    "exec-guest.elf": "2653f70b168f2c2b58e048b5fe81137ebf36d6a8e6e13a37f4d579b02f6c3e9d",
+    "init.elf": "3cb8d63eb4500d96aa7c71938fb3678adcbde92e7605b7fe93d2ba8df49ceedf",
+    "worker.elf": "406f180c94bd293aa0e231da12cae62769ccb9c90b3f8f44d42771b79b3e833b"
+  },
+  "package": {
+    "build": "N2-B2-iOS-20261009-025346",
+    "ipa": "/Users/fan/project/app/husk_hyos/work/native-linux-nce/ios/Husk-NativeLinux-N2-B2.ipa",
+    "bytes": 15157359,
+    "sha256": "456f9200d76cd4aaad3bc6e88e038d52e5f7f63aa2ae81834e351fa582feebe2",
+    "kernel_sha256": "8abdc3701d09130615ff055d073821e2451c20c42f0b82f33920f8b1a497b240",
+    "generated_sha256": {
+      "program-images.h": "817d6a6dd7e4d7c62aa70e99bf7302d2c5dba675759d9fabc838fc37fb9aab02",
+      "lkl-image.h": "52c2a13e3bb04654ac730f352d42b3b7355850ae886abd4d194607d6c6f07456",
+      "lkl-host-ops.h": "3fd5ecc4dbe336887fedfa052b33e5120e5431134a7c9dbc95e7e32fdf582092",
+      "guest-image.h": "ecb4c21664e7f8926d8afe067d25f587bf907db5bf0d2354b6c14b5cd3e9c420",
+      "exec-guest.elf": "2653f70b168f2c2b58e048b5fe81137ebf36d6a8e6e13a37f4d579b02f6c3e9d",
+      "init.elf": "3cb8d63eb4500d96aa7c71938fb3678adcbde92e7605b7fe93d2ba8df49ceedf",
+      "worker.elf": "406f180c94bd293aa0e231da12cae62769ccb9c90b3f8f44d42771b79b3e833b"
+    },
+    "device_execution": "pending",
+    "source_sha256": {
+      "scripts/package_native_linux_ios.py": "2a524f98130c4d6e3579d26bab6137bed9c9633a8a3297994238c71a0937747c",
+      "src/ios-jit/husk-ios-jit.h": "194fe09c2986b87873df2a267877c57089c759f82f7585eba88e3917b6ff1360",
+      "experiments/native-linux/ios/Bridge.c": "69d7e6d5a39524737112afecce2d485b8b5b7cf970dfcc42a826e43c4198e834",
+      "experiments/native-linux/ios/Bridge.h": "27766321402d5024558e46e2e98111f9a6b1363c6ad65bf1e786c396050e0468",
+      "experiments/native-linux/ios/NativeLinuxApp.swift": "5190e87d9928b7031f37129e89fc4b239dfad807d484e52e4ab0963d77615821",
+      "experiments/native-linux/ios/detach-test.c": "2424d3f5035cefe26812557333a2eb1ad5670454aa8bfe31b7f456a80c2bf9e6",
+      "experiments/native-linux/ios/execute-test.c": "4c90fc839c88a1f51d355a87ef29b2ff855afd50099638023c37b8674eff6cb6",
+      "experiments/native-linux/lkl-main.c": "d4e7c597f07e6e69aed7d8c0a213adb8c097825185f849b3766b40356c82e7eb",
+      "experiments/native-linux/lkl-host.c": "4381c02fa6d97ef50a2a6e55a471fb944bf2f19376acd593505305b69820c058",
+      "experiments/native-linux/lkl-process-host.c": "afb10d85ac08ef2fb51c50d4393c1571b6aa4fe287d59e71f4bf589b6528abb4",
+      "experiments/native-linux/programs.c": "0611e75ae50d4a8c6be6bb450ded32a12c1453be4f8f619e952c8d39c208036b",
+      "experiments/native-linux/memory.c": "922829a9d0cfdc843ed6e05e5a58a05b7537fad83e651220d4a0a9779d22a208",
+      "experiments/native-linux/execute-check.c": "6a9f682b36b21b70ba28e8bc6b0023693a2906f7dfbecb46fbe8c50ff68195ef",
+      "experiments/native-linux/compute.c": "ed859290238192fa05f87f2be03a04b376fde0df1c4821cf7982fa30bfab5161",
+      "experiments/native-linux/nce.c": "93b14fe41f3e69bf9acb645e314f0c4d1f2b5d5e6228bb87b8195ea70af87d9d",
+      "experiments/native-linux/entry.S": "0133eb524e45bebb880c0c2b299b610023856f97bd5cc52f812850f06bd56cc7",
+      "experiments/native-linux/guest.S": "6e6c2ad54238e847546f96b4614ec1e280bb4ec6ded63db858756fea753ab496",
+      "src/ios-jit/husk-ios-jit.c": "c6193440f47743f39b12ef978d050e23e42eb9871ac184fd70474df08f71523b",
+      "src/ios-jit/husk-brk.S": "d11df097d81a01886c9d247f8a0297b1dab8f4d68a955a6a701e14662103c069",
+      "src/app/Husk/JITBuiltIn.swift": "7fff006c794c31f0d22e02d8fd0f56a48b42aa860285910bc3df63d3dae12b6d",
+      "src/app/Husk/JITPairingFileStore.swift": "bca19d0e402cd5dd44a7dd11aad25e11121f1bb9cd5e89fabce9c8fac685f1fc",
+      "src/app/HuskJITHelper/HuskJITMessages.swift": "d0d5f4ba159d7640f4ee637cecd703506ae9eb807a2d41dd99ac1e90f6761132",
+      "work/native-linux-nce/processes/lkl-image.bin": "8abdc3701d09130615ff055d073821e2451c20c42f0b82f33920f8b1a497b240",
+      "src/app/Husk/Resources/husk-jit.js": "fffd376fcbab381e303ac2034eab246047868301271c119b38c9b44d9f011c35",
+      "work/native-linux-nce/musl-1.2.5/COPYRIGHT": "f9bc4423732350eb0b3f7ed7e91d530298476f8fec0c6c427a1c04ade22655af",
+      "work/native-linux-nce/compiler-rt-20.1.8.src/LICENSE.TXT": "1a8f1058753f1ba890de984e48f0242a3a5c29a6a8f2ed9fd813f36985387e8d"
+    }
+  }
+}

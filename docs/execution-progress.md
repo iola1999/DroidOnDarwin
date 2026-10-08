@@ -12,9 +12,12 @@ R3 已在 iPhone / iOS 27.2 通过全部受控进程检查。
 2026-10-09 的 [N2b 阶段](native-linux-n2b-progress.md) 已在 Mac 跑通 musl
 静态 PIE、PID namespace 内的用户态 init、pthread 和异步抢占。16 轮检查
 执行 128 次 worker、896 个线程，1,264 个 NCE 上下文全部释放；8 项 ELF
-回归检查通过。[N2-B1 手机测试](native-linux-n2-ios-test.md) 用于确认扩大的
-执行区、信号返回和线程退出。随后继续用户指针检查、Linux 信号、动态加载
-与完整 shell。HyperOS 整机收益尚未验证。
+回归检查通过。N2-B1 在手机完成扩大的执行区及旧进程检查后，停在 C 用户态
+第一轮。Mac 已从 GCD 入口复现：客体线程继承了被屏蔽的抢占信号。
+[N2-B2](native-linux-n2-ios-test.md) 已修复并通过两种宿主入口回归，手机
+完整线程流程待确认。[路线复核](native-linux-nce-feasibility-review.md)已将
+地址空间切换的性能评估提前，随后验证 Linux 信号、Bionic / ART 动态代码
+和图形共享缓冲区。HyperOS 整机收益尚未验证。
 
 此前结束了 QEMU 优化开发。M33 的整机检查仍失败；按照用户要求，重新评估了
 可能获得 HVF 量级收益的架构路线，尚未找到满足当前运行条件且有足够收益

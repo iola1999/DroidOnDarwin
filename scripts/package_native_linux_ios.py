@@ -14,7 +14,7 @@ ROOT = Path(__file__).resolve().parents[1]
 EXP = ROOT / 'experiments/native-linux'
 INPUT = ROOT / 'work/native-linux-nce/processes'
 OUT = ROOT / 'work/native-linux-nce/ios'
-REVISION = 'N2-B1'
+REVISION = 'N2-B2'
 
 
 def run(args, **kwargs):
@@ -62,7 +62,7 @@ def main():
                 UISupportedInterfaceOrientations=['UIInterfaceOrientationPortrait',
                     'UIInterfaceOrientationPortraitUpsideDown',
                     'UIInterfaceOrientationLandscapeLeft', 'UIInterfaceOrientationLandscapeRight'],
-                CFBundleShortVersionString='0.9.0', CFBundleVersion='39')
+                CFBundleShortVersionString='0.9.1', CFBundleVersion='40')
     plist(OUT / 'Info.plist', info)
     helper_info = plistlib.loads((ROOT / 'src/app/HuskJITHelper/Info.plist').read_bytes())
     for key in ['CFBundleShortVersionString', 'CFBundleVersion']:
@@ -150,6 +150,7 @@ def main():
                 'kernel_sha256': summary['kernel_sha256'],
                 'generated_sha256': summary['generated_sha256'],
                 'device_execution': 'pending', 'mac_validation': summary['results'],
+                'dispatch_validation': summary['dispatch_results'],
                 'source_sha256': {str(path.relative_to(ROOT)): hashlib.sha256(path.read_bytes()).hexdigest()
                                   for path in [Path(__file__).resolve(), ROOT / 'src/ios-jit/husk-ios-jit.h', *sorted(EXP.glob('ios/*')),
                                                *[Path(item['path']) for item in sources]] if path.is_file()}}

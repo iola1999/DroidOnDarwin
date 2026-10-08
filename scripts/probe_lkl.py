@@ -174,16 +174,30 @@ def main():
     results = [json.loads(line) for line in (OUT / "lkl-results.jsonl").read_text().splitlines()]
     if results[-1].get("result") != "passed":
         raise SystemExit("LKL probe did not complete")
+    dispatch_results = None
+    if PROCESS:
+        run([clang, *flags, "-DNCE_IOS_APP", "-isysroot", sdk, *inputs, OUT / "native.o",
+             EXPERIMENT / "dispatch-test.c", "-o", OUT / "dispatch-probe"])
+        with (OUT / "dispatch-results.jsonl").open("w") as output, (OUT / "dispatch-console.log").open("w") as log:
+            subprocess.run([OUT / "dispatch-probe", OUT / "lkl-image.bin"], check=True,
+                           timeout=30, stdout=output, stderr=log)
+        dispatch_results = [json.loads(line) for line in (OUT / "dispatch-results.jsonl").read_text().splitlines()]
+        if dispatch_results[-1].get("result") != "passed":
+            raise SystemExit("GCD probe did not complete")
+        if not any(r.get("inherited_blocked_threads", 0) > 0 for r in dispatch_results):
+            raise SystemExit("GCD regression did not exercise an inherited signal mask")
     manifest = {"source_revision": REVISION, "platform": platform.platform(), "results": results,
                 "ios_status": "this build compiled for iOS; device execution pending",
                 "config_sha256": hashlib.sha256((BUILD / ".config").read_bytes()).hexdigest(),
                 "kernel_sha256": hashlib.sha256((OUT / "lkl-image.bin").read_bytes()).hexdigest()}
     sources = [*inputs, EXPERIMENT / "lkl-bridge.c", EXPERIMENT / "nce.h", EXPERIMENT / "guest.S", Path(__file__).resolve()]
     if PROCESS:
+        manifest["dispatch_results"] = dispatch_results
         sources += [EXPERIMENT / "memory.h", EXPERIMENT / "layout.h", EXPERIMENT / "execute-check.h", Path(__file__).with_name("lkl_nce_patch.py"),
                     *sorted(EXPERIMENT.glob("lkl-*.h")),
                     *sorted(EXPERIMENT.glob("lkl-nce-*.c")), EXPERIMENT / "exec-guest.S", EXPERIMENT / "programs.h",
-                    Path(__file__).with_name("build_nce_userspace.py"), *sorted((EXPERIMENT / "userspace").glob("*"))]
+                    Path(__file__).with_name("build_nce_userspace.py"), EXPERIMENT / "dispatch-test.c",
+                    *sorted((EXPERIMENT / "userspace").glob("*"))]
         run(["python3", ROOT / "scripts/test_nce_userspace.py"])
         sources.append(ROOT / "scripts/test_nce_userspace.py")
         manifest["stage"] = "N2b musl static PIE, threads and asynchronous preemption"

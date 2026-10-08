@@ -37,6 +37,7 @@ static pthread_t target_thread, timer_thread;
 static atomic_int timer_stopping;
 static NceCode event_resume;
 static unsigned long preemptions, deferred_faults, stack_resumes, stack_calls, stackless_exits;
+static unsigned long inherited_preempt_blocks;
 static volatile sig_atomic_t logged_redirect, logged_stack_restore;
 static struct sigaction old_preempt;
 
@@ -294,6 +295,16 @@ static void user_run(void *opaque)
     REQUIRE(process->signal_stack);
     stack_t signal_stack = {.ss_sp = process->signal_stack, .ss_size = 65536};
     REQUIRE(sigaltstack(&signal_stack, NULL) == 0);
+    /* pthreads created from the iOS dispatch worker inherit its blocked
+     * SIGUSR2. Only the Linux-owned guest thread changes its signal mask. */
+    sigset_t preempt_mask, inherited_mask;
+    sigemptyset(&preempt_mask);
+    sigaddset(&preempt_mask, SIGUSR2);
+    REQUIRE(pthread_sigmask(SIG_UNBLOCK, &preempt_mask, &inherited_mask) == 0);
+    if (sigismember(&inherited_mask, SIGUSR2)) {
+        if (!inherited_preempt_blocks) puts("{\"phase\":\"unblocked_inherited_preemption_signal\"}");
+        ++inherited_preempt_blocks;
+    }
     if (!state->sp) {
         long args[6] = {USER_BASE + 0xf00000, 65536, 3, 0x32, -1, 0};
         REQUIRE(run_syscall(222, args) == args[0]);
@@ -533,4 +544,5 @@ void nce_process_cleanup(void)
     printf("{\"test\":\"linux_nce_context_lifetime\",\"allocated\":%lu,\"freed\":%lu}\n", allocated, freed);
     REQUIRE(allocated == freed);
     printf("{\"test\":\"linux_guest_events\",\"preemptions\":%lu,\"deferred_faults\":%lu,\"stack_resumes\":%lu,\"stack_calls\":%lu}\n", preemptions, deferred_faults, stack_resumes, stack_calls);
+    printf("{\"test\":\"guest_preemption_signal_mask\",\"inherited_blocked_threads\":%lu,\"passed\":true}\n", inherited_preempt_blocks);
 }

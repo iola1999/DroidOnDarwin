@@ -1,0 +1,302 @@
+{
+  "build": "N2-B1-iOS-20261009-023323",
+  "ios": "27.2",
+  "pid": 31171,
+  "source_commit": "10249b2",
+  "log_name": "native-linux-n2-ios (2).log",
+  "log_sha256": "0f13ef21e335215068cb36e36374dfd48a84aaff2d4449e0c3a8ee5db13c5e40",
+  "ipa_sha256": "488864cfbba74548a15f3744291c1b91d122c981021a0520a0dd8f704c5bde53",
+  "kernel_sha256": "8abdc3701d09130615ff055d073821e2451c20c42f0b82f33920f8b1a497b240",
+  "status": "stalled",
+  "last_phase": "linux_userspace_tests",
+  "userspace_round": 0,
+  "user_reported_wait_seconds": ">100",
+  "logged_wait_duration_available": false,
+  "results": [
+    {
+      "phase": "prepare_jit_pool",
+      "reserved_bytes": 218103808,
+      "prepared_code_bytes": 17006592
+    },
+    {
+      "phase": "wait_debugger_detach"
+    },
+    {
+      "phase": "debugger_detached",
+      "elapsed_ms": 1
+    },
+    {
+      "phase": "check_fixed_code_and_data_remap"
+    },
+    {
+      "phase": "execute_original_jit_address",
+      "range": 0,
+      "iteration": 0
+    },
+    {
+      "phase": "execute_original_jit_address",
+      "range": 0,
+      "iteration": 1
+    },
+    {
+      "phase": "execute_original_jit_address",
+      "range": 0,
+      "iteration": 2
+    },
+    {
+      "phase": "execute_original_jit_address",
+      "range": 0,
+      "iteration": 3
+    },
+    {
+      "phase": "execute_original_jit_address",
+      "range": 0,
+      "iteration": 4
+    },
+    {
+      "phase": "execute_original_jit_address",
+      "range": 0,
+      "iteration": 5
+    },
+    {
+      "phase": "execute_original_jit_address",
+      "range": 0,
+      "iteration": 6
+    },
+    {
+      "phase": "execute_original_jit_address",
+      "range": 0,
+      "iteration": 7
+    },
+    {
+      "phase": "execute_original_jit_address",
+      "range": 1,
+      "iteration": 0
+    },
+    {
+      "phase": "execute_original_jit_address",
+      "range": 1,
+      "iteration": 1
+    },
+    {
+      "phase": "execute_original_jit_address",
+      "range": 1,
+      "iteration": 2
+    },
+    {
+      "phase": "execute_original_jit_address",
+      "range": 1,
+      "iteration": 3
+    },
+    {
+      "phase": "execute_original_jit_address",
+      "range": 1,
+      "iteration": 4
+    },
+    {
+      "phase": "execute_original_jit_address",
+      "range": 1,
+      "iteration": 5
+    },
+    {
+      "phase": "execute_original_jit_address",
+      "range": 1,
+      "iteration": 6
+    },
+    {
+      "phase": "execute_original_jit_address",
+      "range": 1,
+      "iteration": 7
+    },
+    {
+      "phase": "execute_original_jit_address",
+      "range": 2,
+      "iteration": 0
+    },
+    {
+      "phase": "execute_original_jit_address",
+      "range": 2,
+      "iteration": 1
+    },
+    {
+      "phase": "execute_original_jit_address",
+      "range": 2,
+      "iteration": 2
+    },
+    {
+      "phase": "execute_original_jit_address",
+      "range": 2,
+      "iteration": 3
+    },
+    {
+      "phase": "execute_original_jit_address",
+      "range": 2,
+      "iteration": 4
+    },
+    {
+      "phase": "execute_original_jit_address",
+      "range": 2,
+      "iteration": 5
+    },
+    {
+      "phase": "execute_original_jit_address",
+      "range": 2,
+      "iteration": 6
+    },
+    {
+      "phase": "execute_original_jit_address",
+      "range": 2,
+      "iteration": 7
+    },
+    {
+      "phase": "execute_original_jit_address",
+      "range": 3,
+      "iteration": 0
+    },
+    {
+      "phase": "execute_original_jit_address",
+      "range": 3,
+      "iteration": 1
+    },
+    {
+      "phase": "execute_original_jit_address",
+      "range": 3,
+      "iteration": 2
+    },
+    {
+      "phase": "execute_original_jit_address",
+      "range": 3,
+      "iteration": 3
+    },
+    {
+      "phase": "execute_original_jit_address",
+      "range": 3,
+      "iteration": 4
+    },
+    {
+      "phase": "execute_original_jit_address",
+      "range": 3,
+      "iteration": 5
+    },
+    {
+      "phase": "execute_original_jit_address",
+      "range": 3,
+      "iteration": 6
+    },
+    {
+      "phase": "execute_original_jit_address",
+      "range": 3,
+      "iteration": 7
+    },
+    {
+      "test": "prepared_fixed_address_code_updates",
+      "passed": true,
+      "ranges": 4,
+      "updates_per_range": 8
+    },
+    {
+      "test": "data_fixed_remap_after_detach",
+      "passed": true,
+      "targets": 2,
+      "switches_per_target": 8
+    },
+    {
+      "phase": "check_linux_ram_remap"
+    },
+    {
+      "test": "linux_ram_remap",
+      "passed": true,
+      "bytes": 67108864
+    },
+    {
+      "bench": "prepared_nce_compute",
+      "sample": 0,
+      "iterations": 4000000,
+      "direct_ns": 16886666,
+      "nce_ns": 9946208
+    },
+    {
+      "bench": "prepared_nce_compute",
+      "sample": 1,
+      "iterations": 4000000,
+      "direct_ns": 7695500,
+      "nce_ns": 6612500
+    },
+    {
+      "bench": "prepared_nce_compute",
+      "sample": 2,
+      "iterations": 4000000,
+      "direct_ns": 6035792,
+      "nce_ns": 5467584
+    },
+    {
+      "bench": "prepared_nce_compute",
+      "sample": 3,
+      "iterations": 4000000,
+      "direct_ns": 5093500,
+      "nce_ns": 4822083
+    },
+    {
+      "bench": "prepared_nce_compute",
+      "sample": 4,
+      "iterations": 4000000,
+      "direct_ns": 4491083,
+      "nce_ns": 4317708
+    },
+    {
+      "phase": "load_linux_image"
+    },
+    {
+      "phase": "linux_init"
+    },
+    {
+      "test": "native_linux_boot",
+      "passed": true,
+      "ms": 17.232
+    },
+    {
+      "test": "linux_uname",
+      "sysname": "Linux",
+      "release": "6.12.0"
+    },
+    {
+      "phase": "linux_process_tests"
+    },
+    {
+      "phase": "signal_restore_without_guest_stack"
+    },
+    {
+      "phase": "signal_redirect_to_host_entry"
+    },
+    {
+      "phase": "guest_fault_on_host_stack"
+    },
+    {
+      "test": "linux_nce_fork_cow_shared_futex_pipe_exec_wait",
+      "passed": true,
+      "rounds": 32,
+      "faults": 352,
+      "elapsed_ms": 26.269
+    },
+    {
+      "test": "linux_exec_then_fork_cow_wait",
+      "passed": true
+    },
+    {
+      "test": "linux_exec_file_unchanged",
+      "passed": true
+    },
+    {
+      "test": "linux_syscall_bounds",
+      "passed": true
+    },
+    {
+      "phase": "linux_userspace_round",
+      "round": 0
+    },
+    {
+      "phase": "linux_userspace_tests"
+    }
+  ],
+  "assessment": "GCD entry reproduced the same stalled stage on Mac with inherited SIGUSR2 blocked. N2-B2 unblocks the signal in guest pthreads; fixed iOS execution pending."
+}

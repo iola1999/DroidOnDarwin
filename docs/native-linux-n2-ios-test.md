@@ -1,4 +1,4 @@
-# N2-B1 原生 Linux + NCE 手机测试
+# N2-B2 原生 Linux + NCE 手机测试
 
 日期：2026-10-09。适用设备：当前的 iPhone 17 / iOS 27.2。
 方案、当前范围和后续安排见 [N2b 实现记录](native-linux-n2b-progress.md)。
@@ -6,14 +6,14 @@
 ## 安装包
 
 ```text
-/Users/fan/project/app/husk_hyos/work/native-linux-nce/ios/Husk-NativeLinux-N2-B1.ipa
+/Users/fan/project/app/husk_hyos/work/native-linux-nce/ios/Husk-NativeLinux-N2-B2.ipa
 ```
 
-构建编号 `N2-B1-iOS-20261009-023323`，版本 `0.9.0 (39)`，包大小 14.45 MiB。
+构建编号 `N2-B2-iOS-20261009-025346`，版本 `0.9.1 (40)`，包大小 14.46 MiB。
 SHA-256：
 
 ```text
-488864cfbba74548a15f3744291c1b91d122c981021a0520a0dd8f704c5bde53
+456f9200d76cd4aaad3bc6e88e038d52e5f7f63aa2ae81834e351fa582feebe2
 ```
 
 应用使用 `com.husk.app`，通过 iLoader 沿用当前账号覆盖安装后显示为 Husk NCE。
@@ -24,7 +24,7 @@ SHA-256：
 
 1. 在 iLoader 中导入这个 IPA，沿用原来安装 Husk 的账号，保留 JIT Helper 扩展。
 2. 打开手机上的 LocalDevVPN 并连接，然后打开 Husk NCE。
-3. 确认界面构建编号为 `N2-B1-iOS-20261009-023323`，点“启用内置 JIT 并测试”。
+3. 确认界面构建编号为 `N2-B2-iOS-20261009-025346`，点“启用内置 JIT 并测试”。
    应用复用已有配对文件；若提示缺少文件，导入这台手机已有的 remote pairing
    文件，或使用“通过 StikDebug 启用并测试”。
 4. 保持 Husk 在前台。应用完成 JIT 准备与调试器断开后，检查内存映射、运行
@@ -37,12 +37,17 @@ SHA-256：
 当前日志再关闭应用。再次测试需要从多任务界面关闭 Husk 后重新打开；开始
 新一轮会覆盖本轮日志。
 
+Mac 的 GCD 回归中，16 轮 C 用户态测试累计约 1.15 秒，JIT 准备另计。
+手机耗时尚待测量。本轮建议进入 `linux_userspace_tests` 后若超过 30 秒仍
+无后续记录，就导出日志并关闭应用；30 秒是此次排查的停止等待条件。
+
 ## 为什么现在需要手机验证
 
-N2-B1 新增多个 ELF 执行区、Darwin 信号上下文恢复、定时抢占，以及线程自行
-释放栈后的退出处理。这些路径已在 Mac 共用运行核心中通过，iOS 的签名与
-信号返回约束需要设备确认。前一版 R3 已验证固定代码地址与数据重映射。
-本次集中验证新增路径，随后继续 Linux 信号与动态加载。
+N2-B1 已在手机通过多个 ELF 执行区和原有进程检查，随后停在第一轮 C 程序
+测试。Mac 用与 iOS 一致的 GCD 入口复现了停顿：客体线程继承被屏蔽的
+`SIGUSR2`，计算循环无法被抢占。N2-B2 在客体线程入口启用该信号，并通过
+新增的 GCD 完整回归。当前需要确认手机能完成全部 pthread、抢占和线程
+退出检查。运行范围及后续安排见 [路线复核](native-linux-nce-feasibility-review.md)。
 
 ## 日志检查项
 
@@ -55,6 +60,7 @@ N2-B1 新增多个 ELF 执行区、Darwin 信号上下文恢复、定时抢占�
 | `prepared_nce_compute` | 五轮直接执行与 NCE 的相同计算结果 |
 | `native_linux_boot` / `linux_uname` | 原生启动 Linux 6.12 |
 | `linux_nce_fork_cow_shared_futex_pipe_exec_wait` | 原有 32 轮受控进程回归 |
+| `unblocked_inherited_preemption_signal` | 客体线程发现并解除继承的 SIGUSR2 屏蔽 |
 | `signal_redirect_to_host_entry` / `guest_fault_on_host_stack` | 通过信号返回离开 Darwin 回调，再在宿主栈处理客体缺页或抢占 |
 | `signal_restore_without_guest_stack` | 通过信号上下文恢复寄存器，覆盖客体栈暂时不可写或已释放的场景 |
 | `linux_musl_static_pie_processes` | 每轮运行 8 次 worker，检查 PID 1、PIE、参数、环境变量、pipe、exec、wait 与 2 MiB COW |
@@ -63,10 +69,12 @@ N2-B1 新增多个 ELF 执行区、Darwin 信号上下文恢复、定时抢占�
 | `linux_userspace_stress` | 16 轮、128 次命令、896 个线程全部完成 |
 | `linux_nce_context_lifetime` | 分配与释放各 1,264 个 NCE 上下文 |
 | `linux_guest_events` | 记录抢占、缺页和栈恢复次数 |
+| `guest_preemption_signal_mask` | 记录解除继承信号屏蔽的线程数 |
 | `after_userspace` | 每轮结束采样物理占用与进程常驻内存峰值 |
 | `result: passed` | 本轮检查及内核关闭完成 |
 
-Mac 已通过 N0/N1/N2b、8 项 ELF 单测、5 项调试器断开检查和执行异常恢复检查。
+本包通过 N2b 的主线程与 GCD 两种入口回归、8 项 ELF 单测、5 项调试器断开
+检查和执行异常恢复检查。此前 N0/N1 检查结果保留在原型记录。
 iOS Release 构建、应用及扩展签名、IPA 完整性检查通过。安装包使用临时签名，
 由 iLoader 重签。当前仍有用户指针隔离、Linux 信号语义和任意 ELF 等限制，
 详见 N2b 记录；本次尚无 HyperOS 整机性能结论。
