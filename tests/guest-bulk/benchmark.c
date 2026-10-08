@@ -89,6 +89,19 @@ int main(void)
     CHECK(source != MAP_FAILED);
     unsigned char *destination = source + maximum;
     for (size_t i = 0; i < maximum; ++i) source[i] = (i * 31 + i / 4096) & 255;
+    uint64_t mixed = 7, mixed_start = ns();
+    for (unsigned i = 0; i < 4096; ++i) {
+        memcpy(destination, source, 64);
+        mixed += destination[i & 63];
+        unsigned remaining = 4096;
+        __asm__ volatile("1: add %0, %0, #17\n"
+                         "eor %0, %0, %0, ror #13\n"
+                         "subs %w1, %w1, #1\n"
+                         "b.ne 1b\n"
+                         : "+r"(mixed), "+r"(remaining) : : "cc");
+    }
+    printf("BENCH mixed_ns=%llu mixed_value=%llu\n",
+           (unsigned long long)(ns() - mixed_start), (unsigned long long)mixed);
     memset(destination, 0, maximum);
     for (size_t s = 0; s < sizeof(sizes) / sizeof(sizes[0]); ++s) {
         size_t size = sizes[s], iterations = 16777216 / size;

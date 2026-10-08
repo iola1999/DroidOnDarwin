@@ -1,0 +1,29 @@
+--- a/target/arm/internals.h
++++ b/target/arm/internals.h
+@@ -1659,5 +1659,9 @@
+ uint64_t mte_check(CPUARMState *env, uint32_t desc, uint64_t ptr, uintptr_t ra);
+ 
++#ifdef CONFIG_HUSK_ARM64_EXEC
++bool arm_husk_mops_allowed(CPUARMState *env);
++#endif
++
+ /**
+  * mte_mops_probe: Check where the next MTE failure is for a FEAT_MOPS operation
+  * @env: CPU env
+--- a/target/arm/tcg/helper-a64.c
++++ b/target/arm/tcg/helper-a64.c
+@@ -870,6 +870,14 @@
+     return true;
+ }
+ 
++#ifdef CONFIG_HUSK_ARM64_EXEC
++bool arm_husk_mops_allowed(CPUARMState *env)
++{
++    return arm_current_el(env) == 0 &&
++           cpu_isar_feature(aa64_mops, env_archcpu(env)) && mops_enabled(env);
++}
++#endif
++
+ static void check_mops_enabled(CPUARMState *env, uintptr_t ra)
+ {
+     if (!mops_enabled(env)) {

@@ -238,13 +238,20 @@ int main()
 
     program({0x14000400}); // b to the next code page
     CHECK(run() == (direct ? HUSK_ARM64_BRANCH : HUSK_ARM64_FALLBACK) && state.pc == 0x11000);
-    for (uint32_t unsupported : {0xd4000001U, 0xc85f7c20U,
-                                 0xc8027c20U,
-                                 0x1ac24020U, 0xba000400U, 0x91800000U}) {
+    for (uint32_t unsupported : {0xd4000001U, 0xc87f7c20U,
+                                 0xc8227c20U,
+                                 0x9ac24020U, 0xba000400U, 0x91800000U}) {
         CHECK(!husk_arm64_supported(unsupported));
         program({unsupported});
         CHECK(run() == HUSK_ARM64_FALLBACK && state.pc == 0x10000);
     }
+    // CRC code must be rechecked when the owner changes guest feature exposure.
+    program({0x1ac24020, 0xd4000001}); // crc32b w0,w1,w2
+    CHECK(run() == HUSK_ARM64_FALLBACK && state.pc == 0x10000);
+    state.access_flags = 64;
+    CHECK(run() == HUSK_ARM64_FALLBACK && state.pc == 0x10004 && state.x[0] == 0);
+    state.pc = 0x10000; state.access_flags = 0;
+    CHECK(run() == HUSK_ARM64_FALLBACK && state.pc == 0x10000);
     if (direct) {
         program({0xf9400020, 0xd4000001}); // ldr x0,[x1]; svc 0
         state.x[1] = 0x20000;

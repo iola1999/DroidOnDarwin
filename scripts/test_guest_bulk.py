@@ -64,6 +64,9 @@ def main():
                    HUSK_ARM64_BACKEND="direct", HUSK_ARM64_BULK="1",
                    HUSK_ARM64_FASTMEM="1" if mode == "direct-fastmem" else "0",
                    HUSK_ARM64_SLICE_BUDGET="65536")
+        manifest.setdefault("backend_env", {})[mode] = {
+            k: v for k, v in env.items() if k.startswith("HUSK_ARM64_")}
+        (output / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
         (output / f"{mode}.command.json").write_text(json.dumps(command, indent=2) + "\n")
         with (output / f"{mode}.host.log").open("w") as log:
             process = subprocess.Popen(command, env=env, stdout=log, stderr=subprocess.STDOUT)
@@ -81,11 +84,17 @@ def main():
                     for m in re.finditer(r"BENCH size=(\d+) bytes=(\d+) copy_ns=(\d+) set_ns=(\d+)", body)]}
             counts = re.search(r"completed=(\d+) refused=(\d+) transferred=(\d+)", body)
             if counts: row.update(completed=int(counts[1]), refused=int(counts[2]), transferred=int(counts[3]))
+            mixed = re.search(r"mixed_ns=(\d+) mixed_value=(\d+)", body)
+            if mixed: row.update(mixed_ns=int(mixed[1]), mixed_value=int(mixed[2]))
             rows.append(row)
         passed = process.returncode == 0 and "HUSK-BIONIC PASS" in text and len(rows) == 9
         passed &= all(r["enabled"] == (r["kind"] == "enabled" and not r["mops"])
                       and len(r["measurements"]) == 6
+                      and r.get("mixed_ns", 0) > 0
                       and (not r["enabled"] or r.get("completed", 0) > 0) for r in rows)
+        values = {r["mixed_value"] for result in results for r in result["rows"]}
+        values.update(r.get("mixed_value") for r in rows)
+        passed &= len(values) == 1 and None not in values
         result = {"mode": mode, "passed": passed, "rows": rows}
         results.append(result)
         (output / "results.json").write_text(json.dumps(results, indent=2) + "\n")

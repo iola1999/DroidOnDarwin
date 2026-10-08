@@ -31,7 +31,8 @@ using namespace oaknut;
 using namespace oaknut::util;
 
 namespace {
-constexpr uint32_t CompileFastmem = 16, CompileLanding = 32;
+constexpr uint32_t CompileFastmem = 16, CompileLanding = 32, CompileInlineAssists = 256;
+constexpr uint32_t CompileExclusive = 512;
 enum Stop : uint64_t { Budget, Fallback, ReadPage, WritePage, PrepareLoop, CodeBranch,
                        FastReadPage, FastWritePage };
 struct FaultSite {
@@ -45,6 +46,7 @@ struct Frame {
     void *code_routes;
     void *call_routes;
     const uintptr_t *read_windows, *write_windows;
+    void *pauth_cache;
     const FaultSite *fault_sites;
     size_t fault_count, fault_index;
 };
@@ -55,6 +57,8 @@ static_assert(offsetof(Frame, state.fpsr) == HUSK_FPSR);
 static_assert(offsetof(Frame, state.access_flags) == HUSK_ACCESS_FLAGS);
 static_assert(offsetof(Frame, state.tpidr_el0) == HUSK_TPIDR);
 static_assert(offsetof(Frame, state.v) == HUSK_VECTORS);
+static_assert(offsetof(Frame, state.exclusive_address) == HUSK_EXCLUSIVE_ADDR);
+static_assert(offsetof(Frame, state.exclusive_value) == HUSK_EXCLUSIVE_VALUE);
 static_assert(offsetof(Frame, budget) == HUSK_BUDGET);
 static_assert(offsetof(Frame, address) == HUSK_ADDRESS);
 static_assert(offsetof(Frame, reason) == HUSK_REASON);
@@ -63,12 +67,15 @@ static_assert(offsetof(Frame, code_routes) == HUSK_CODE_ROUTES);
 static_assert(offsetof(Frame, call_routes) == HUSK_CALL_ROUTES);
 static_assert(offsetof(Frame, read_windows) == HUSK_READ_WINDOWS);
 static_assert(offsetof(Frame, write_windows) == HUSK_WRITE_WINDOWS);
+static_assert(offsetof(Frame, pauth_cache) == HUSK_PAUTH_CACHE);
 struct Mapping { uint64_t tag; void *read, *write; uint64_t reserved; };
 struct CodeRoute { uint64_t tag; void **entries; };
 struct CallRoute { uint64_t target; void *entry; };
+struct PauthResult { uint64_t value, modifier, result, instruction; };
 static_assert(sizeof(Mapping) == 32);
 static_assert(sizeof(CodeRoute) == 16);
 static_assert(sizeof(CallRoute) == 16);
+static_assert(sizeof(PauthResult) == 32);
 extern "C" void husk_direct_enter(Frame *, void *, Mapping *);
 extern "C" void husk_direct_leave();
 
@@ -151,9 +158,27 @@ int64_t sign_extend(uint32_t value, unsigned bits)
 
 /* Only these validated encodings can execute as host instructions. */
 enum Kind { Other, AddImm, MoveWide, AddReg, LogicalReg, LogicalImm, Bitfield,
-            Extract, Unary, Binary, Select, Multiply, AddExt, Carry, Adr, Branch, Conditional,
+            Extract, Unary, Binary, Crc, Select, Multiply, AddExt, Carry, Adr, Branch, Conditional,
             CompareBranch, TestBranch, Indirect, Memory, Pair, Vector,
-            VectorFromGpr, GprFromVector, FpFromGpr, GprFromFp, Compare, Hint, SystemRead, Assist, Atomic };
+            VectorFromGpr, GprFromVector, FpFromGpr, GprFromFp, Compare, Hint, SystemRead, Assist, Atomic,
+            Pauth, Barrier, Bti, ExclusiveLoad, ExclusiveStore, ClearExclusive, Structure };
+
+unsigned structure_registers(uint32_t word)
+{
+    switch ((word >> 12) & 15) {
+    case 0: case 2: return 4;
+    case 4: case 6: return 3;
+    case 7: return 1;
+    case 8: case 10: return 2;
+    default: return 0;
+    }
+}
+
+unsigned pauth_register(uint32_t word) { return (word & 0xffffff3f) == 0xd503211f ? 17 : 30; }
+unsigned pauth_slot(uint32_t word, uint64_t value, uint64_t modifier)
+{
+    return ((value >> 2) ^ (value >> 32) ^ (modifier >> 4) ^ (word >> 5)) & 255;
+}
 Kind decode(uint32_t w)
 {
     bool sf = w >> 31;
@@ -185,14 +210,19 @@ Kind decode(uint32_t w)
     case 0x1ac00800: case 0x1ac00c00: case 0x1ac02000:
     case 0x1ac02400: case 0x1ac02800: case 0x1ac02c00: return Binary;
     }
+    switch (w & 0xffe0fc00) {
+    case 0x1ac04000: case 0x1ac04400: case 0x1ac04800: case 0x9ac04c00:
+    case 0x1ac05000: case 0x1ac05400: case 0x1ac05800: case 0x9ac05c00: return Crc;
+    }
     if ((w & 0x3fe00800) == 0x1a800000) return Select;
     if ((w & 0x7fe00000) == 0x1b000000) return Multiply;
     if ((w & 0xffe00000) == 0x9b200000 || (w & 0xffe00000) == 0x9ba00000 ||
         (w & 0xffe0fc00) == 0x9b407c00 || (w & 0xffe0fc00) == 0x9bc07c00) return Multiply;
-    if ((w & 0x9fe00000) == 0x8b200000 && ((w >> 10) & 7) <= 4) return AddExt;
+    if ((w & 0x1fe00000) == 0x0b200000 && ((w >> 10) & 7) <= 4) return AddExt;
     if ((w & 0x1fe0fc00) == 0x1a000000) return Carry;
     if ((w & 0x3fe00410) == 0x3a400000) return Compare;
-    if (w == 0xd503201f) return Hint; // NOP; barriers and branch landing checks stay in QEMU.
+    if (w == 0xd503201f) return Hint;
+    if ((w & 0xfffff0ff) == 0xd503305f) return ClearExclusive;
     switch (w & 0xffffffe0) {
     case 0xd53bd040: case 0xd53b4200: case 0xd53b4400: case 0xd53b4420: return SystemRead;
     }
@@ -205,18 +235,21 @@ Kind decode(uint32_t w)
     // BR/BLR retain the owner's BTYPE and destination checks through its assist.
     if (br == 0xd61f0000 || br == 0xd63f0000) return Assist;
     if (br == 0xd65f0000) return Indirect;
-    if (w == HUSK_BULK_INSN) return Assist;
+    if (w == HUSK_BULK_INSN || husk_arm64_mops_prologue(w)) return Assist;
     switch (w) {
     case 0xd50320ff:
     case 0xd503211f: case 0xd503215f: case 0xd503219f: case 0xd50321df:
     case 0xd503231f: case 0xd503233f: case 0xd503235f: case 0xd503237f:
     case 0xd503239f: case 0xd50323bf: case 0xd50323df: case 0xd50323ff:
+        return Pauth;
     case 0xd503241f: case 0xd503245f: case 0xd503249f: case 0xd50324df:
-        return Assist;
+        return Bti;
     }
     if ((w & 0xfffff0ff) == 0xd50330bf || (w & 0xfffff0ff) == 0xd503309f)
-        return Assist; // DMB/DSB; the callback performs a full host barrier.
+        return Barrier;
     bool vector = w & 0x04000000;
+    if ((w & 0x3fff7c00) == 0x085f7c00) return ExclusiveLoad;
+    if ((w & 0x3fe07c00) == 0x08007c00) return ExclusiveStore;
     if ((w & 0x3fa07c00) == 0x08a07c00 ||
         ((w & 0x3f200c00) == 0x38200000 && ((w >> 12) & 15) <= 8)) return Atomic;
     if ((w & 0x3fbffc00) == 0x089ffc00) return Memory; // LDAR/STLR, all integer sizes
@@ -244,6 +277,12 @@ Kind decode(uint32_t w)
     // Baseline Advanced SIMD encodings only. Size and Q restrictions reject
     // reserved encodings before any guest word can run on the host CPU.
     unsigned q = (w >> 30) & 1, element = (w >> 22) & 3;
+    if ((w & 0xbf200000) == 0x0c000000 && structure_registers(w)) {
+        unsigned opcode = (w >> 12) & 15;
+        bool sequential = opcode == 2 || opcode == 6 || opcode == 7 || opcode == 10;
+        if (((w & (1U << 23)) || !((w >> 16) & 31)) &&
+            (((w >> 10) & 3) != 3 || q || sequential)) return Structure;
+    }
     if ((w & 0x9ff80c00) == 0x0f000400 &&
         (q || !((w >> 29) & 1) || ((w >> 12) & 15) != 15)) return Vector;
     if ((w & 0x9f20fc00) == 0x0e201c00) return Vector; // AND/BIC/ORR/ORN/EOR/BSL/BIT/BIF
@@ -257,8 +296,25 @@ Kind decode(uint32_t w)
         break;
     case 0x0e209c00: case 0x0e209400: case 0x2e209400:
     case 0x0e206400: case 0x0e206c00: case 0x2e206400: case 0x2e206c00:
+    case 0x0e20a400: case 0x0e20ac00: case 0x2e20a400: case 0x2e20ac00:
         if (element != 3) return Vector;
         break;
+    }
+    switch (w & 0xbffffc00) {
+    case 0x0e205800: case 0x2e205800: case 0x2e605800: // CNT/NOT/RBIT
+    case 0x0e201800: return Vector; // REV16
+    }
+    switch (w & 0xbf3ffc00) {
+    case 0x0e209800: case 0x0e208800: case 0x2e208800:
+    case 0x2e209800: case 0x0e20a800: // signed comparisons with zero
+    case 0x0e20b800: case 0x2e20b800: // ABS/NEG
+        if (element != 3 || q) return Vector;
+        break;
+    case 0x0e204800: case 0x2e204800: // CLS/CLZ
+    case 0x0e200800: // REV64
+        if (element != 3) return Vector;
+        break;
+    case 0x2e200800: if (element < 2) return Vector; break; // REV32
     }
     if ((w & 0xbfe08400) == 0x2e000000 && (q || !(w & (1U << 14)))) return Vector;
     unsigned imm5 = (w >> 16) & 31;
@@ -333,7 +389,10 @@ struct CompiledPage {
     std::array<uint32_t, 1024> source{};
     std::array<void *, 1024> entries{};
     std::array<void *, 1024> branch_entries{};
-    std::array<void *, 1024> landing_call_entries{};
+    struct Landings {
+        std::array<void *, 1024> calls{}, jumps{};
+    };
+    std::unique_ptr<Landings> landings;
     std::vector<Loop> loops;
     bool unaligned;
 
@@ -343,9 +402,14 @@ struct CompiledPage {
     {
         std::vector<FaultSite> new_faults;
         bool landing = flags & CompileLanding;
+        if (landing && !landings) landings = std::make_unique<Landings>();
         unaligned = flags & 1;
         std::array<uint32_t, 1024> input;
         std::memcpy(input.data(), bytes, 4096);
+        auto mops_at = [&](size_t i) {
+            return !landing && (flags & HUSK_MOPS_ALLOWED) && i + 2 < input.size() &&
+                husk_arm64_mops_sequence(input.data() + i);
+        };
         std::array<Label, 1025> labels;
         std::array<Label, 1024> exhausted;
         std::array<bool, 1024> emit{};
@@ -356,6 +420,10 @@ struct CompiledPage {
             for (; i < input.size() && !emit[i] && !entries[i]; ++i) {
                 emit[i] = true;
                 Kind k = decode(input[i]);
+                if (mops_at(i)) {
+                    if (i + 3 < input.size()) pending.push_back(i + 3);
+                    break;
+                }
                 if (k >= Branch && k <= TestBranch) {
                     uint64_t address = target(input[i], k, new_page + i * 4);
                     if (address >= new_page && address - new_page < 4096)
@@ -399,7 +467,7 @@ struct CompiledPage {
                         loop.extent = std::max(loop.extent, (((w >> 10) & 4095) + 1) * size);
                         loop.alignment = std::max(loop.alignment, size);
                         (w & (1U << 22) ? loop.read : loop.write) = true;
-                    } else if (!integer_kind(kind)) {
+                    } else if (!integer_kind(kind) || (kind == Crc && !(flags & 64))) {
                         valid = false;
                     }
                 }
@@ -431,7 +499,9 @@ struct CompiledPage {
             else if (r != 31 || sp) c.STR(from, X27, r * 8);
         };
         auto jump = [&](uint64_t pc) {
-            if (pc >= new_page && pc - new_page < 4096) {
+            // Landing variants only own the first instruction. Continuations
+            // must use normal code so memory retries select the matching page.
+            if (!landing && pc >= new_page && pc - new_page < 4096) {
                 size_t index = (pc - new_page) / 4;
                 if (emit[index]) { c.B(labels[index]); return; }
                 if (branch_entries[index]) {
@@ -467,7 +537,7 @@ struct CompiledPage {
             };
             bool set_flags = w & (1U << 29);
             bool two_sources = kind == AddReg || kind == LogicalReg || kind == Extract ||
-                               kind == Binary || kind == Select || kind == Multiply ||
+                               kind == Binary || kind == Crc || kind == Select || kind == Multiply ||
                                kind == AddExt || kind == Carry;
             unsigned n = 0, m = 0, a = 0;
             if (kind != MoveWide) n = operand(rn, kind == AddImm || kind == AddExt);
@@ -490,16 +560,111 @@ struct CompiledPage {
             c.dw(w);
             if (!resident(rd) && (rd != 31 || dest_sp)) c.STR(XReg(d), X27, rd * 8);
         };
+        auto mops = [&](uint32_t w, uint64_t pc) {
+            unsigned rd = w & 31, rn = (w >> 5) & 31, rs = (w >> 16) & 31;
+            bool set = (w & 0xffe0fc00) == 0x19c00400;
+            Label slow, read_miss, write_miss, copied;
+            load(rn, X16);
+            c.SUB(X17, X16, 1); c.LSR(X17, X17, 6); c.CBNZ(X17, slow);
+            if (!set) {
+                // A colliding pair would evict each other on every map retry.
+                Label no_collision;
+                load(rd, X16); load(rs, X17);
+                c.EOR(X17, X17, X16); c.LSR(X17, X17, 12); c.CBZ(X17, no_collision);
+                c.EOR(X17, X17, X17, LSR, 8);
+                c.AND(X17, X17, 255); c.CBZ(X17, slow);
+                c.l(no_collision);
+            }
+            auto map = [&](unsigned reg, XReg host, bool write, Label &miss) {
+                load(reg, X16);
+                c.LSR(X17, X16, 48); c.CBNZ(X17, slow);
+                load(rn, X17); c.ADD(X17, X16, X17); c.SUB(X17, X17, 1);
+                c.EOR(X17, X17, X16); c.LSR(X17, X17, 12); c.CBNZ(X17, slow);
+                c.LSR(X17, X16, 12); c.EOR(X17, X17, X17, LSR, 8); c.AND(X17, X17, 255);
+                c.ADD(X17, X28, X17, LSL, 5);
+                c.LDR(host, X17); c.EOR(host, host, X16, LSR, 12); c.CBNZ(host, miss);
+                c.LDR(host, X17, write ? 16 : 8); c.CBZ(host, miss);
+                c.AND(X17, X16, 4095); c.ADD(host, host, X17);
+            };
+            map(rd, X26, true, write_miss);
+            if (!set) map(rs, X30, false, read_miss);
+
+            // All memory is validated before borrowing guest SIMD registers.
+            // First/last chunks are loaded before any store, including overlap.
+            c.STP(Q28, Q29, X27, HUSK_VECTORS + 28 * 16);
+            c.STP(Q30, Q31, X27, HUSK_VECTORS + 30 * 16);
+            if (set) {
+                load(rs, X16);
+                c.dw(0x4e010c00 | (16 << 5) | 28); // dup v28.16b,w16
+                c.MOV(V29.B16(), V28.B16());
+            }
+            load(rn, X16);
+            std::array<Label, 6> sizes;
+            for (int bit = 5; bit >= 1; --bit) {
+                c.LSR(X17, X16, bit); c.CBNZ(X17, sizes[bit]);
+            }
+            c.B(sizes[0]);
+            auto chunks = [&](auto first, auto last, unsigned size, unsigned bit) {
+                c.l(sizes[bit]);
+                c.SUB(X16, X16, size);
+                if (!set) {
+                    c.ADD(X17, X30, X16);
+                    c.LDR(first, X30); c.LDR(last, X17);
+                }
+                c.ADD(X17, X26, X16);
+                c.STR(first, X26); c.STR(set ? first : last, X17);
+                c.B(copied);
+            };
+            chunks(B28, B29, 1, 0);
+            chunks(H28, H29, 2, 1);
+            chunks(S28, S29, 4, 2);
+            chunks(D28, D29, 8, 3);
+            chunks(Q28, Q29, 16, 4);
+            c.l(sizes[5]);
+            c.SUB(X16, X16, 32);
+            if (!set) {
+                c.ADD(X17, X30, X16);
+                c.LDP(Q28, Q29, X30); c.LDP(Q30, Q31, X17);
+            }
+            c.ADD(X17, X26, X16);
+            c.STP(Q28, Q29, X26);
+            if (set) c.STP(Q28, Q29, X17); else c.STP(Q30, Q31, X17);
+            c.l(copied);
+            c.LDP(Q28, Q29, X27, HUSK_VECTORS + 28 * 16);
+            c.LDP(Q30, Q31, X27, HUSK_VECTORS + 30 * 16);
+            load(rn, X30);
+            c.LSR(X17, X30, 4); c.SUB(X29, X29, X17);
+            load(rd, X16);
+            if (!set) {
+                // Option A leaves pointers at their starting addresses after
+                // reverse copies; all other completed sequences advance them.
+                load(rs, X17); c.SUB(X26, X16, X17); c.SUB(X26, X26, 1);
+                c.SUB(X17, X30, 1); c.CMP(X26, X17); c.CSEL(X30, XZR, X30, Cond::LO);
+                load(rs, X17); c.ADD(X17, X17, X30); save(rs, X17);
+            }
+            c.ADD(X16, X16, X30); save(rd, X16); save(rn, XZR);
+            c.MSR(SystemReg::NZCV, XZR);
+            jump(pc + 12);
+            c.l(read_miss); c.STR(X16, X27, HUSK_ADDRESS); exit(pc, ReadPage);
+            c.l(write_miss); c.STR(X16, X27, HUSK_ADDRESS); exit(pc, WritePage);
+            c.l(slow); exit(pc, Fallback);
+        };
 
         for (size_t i = 0; i < input.size(); ++i) {
             if (emit[i]) {
                 uint64_t pc = new_page + i * 4;
                 c.l(labels[i]);
                 if (landing) {
-                    landing_call_entries[i] = c.xptr<void *>();
+                    Label checked;
+                    landings->jumps[i] = c.xptr<void *>();
+                    c.LDR(W17, X27, HUSK_ACCESS_FLAGS);
+                    c.AND(W17, W17, ~uint32_t(HUSK_BTYPE_MASK)); c.ORR(W17, W17, 1U << HUSK_BTYPE_SHIFT);
+                    c.STR(W17, X27, HUSK_ACCESS_FLAGS); c.B(checked);
+                    landings->calls[i] = c.xptr<void *>();
                     c.LDR(W17, X27, HUSK_ACCESS_FLAGS);
                     c.AND(W17, W17, ~uint32_t(HUSK_BTYPE_MASK)); c.ORR(W17, W17, 2U << HUSK_BTYPE_SHIFT);
                     c.STR(W17, X27, HUSK_ACCESS_FLAGS);
+                    c.l(checked);
                 }
                 branch_entries[i] = c.xptr<void *>();
                 if (leaders[i]) {
@@ -519,14 +684,45 @@ struct CompiledPage {
                 uint32_t w = input[i];
                 unsigned rd = w & 31, rn = (w >> 5) & 31;
                 Kind kind = decode(w);
-                bool fp_access = (kind >= Vector && kind <= GprFromFp) ||
+                bool fp_access = kind == Structure || (kind >= Vector && kind <= GprFromFp) ||
                     ((kind == Memory || kind == Pair) && (w & 0x04000000)) ||
                     (kind == SystemRead && ((w & 0xffffffe0) == 0xd53b4400 ||
                                            (w & 0xffffffe0) == 0xd53b4420));
                 if ((flags & 2) && fp_access) kind = Other;
                 if (kind == Atomic && !(flags & 4)) kind = Other;
-                if (integer_kind(kind)) {
+                if (kind == Crc && !(flags & 64)) kind = Other;
+                if ((kind == ExclusiveLoad || kind == ExclusiveStore || kind == ClearExclusive) &&
+                    !(flags & CompileExclusive)) kind = Other;
+                if (mops_at(i)) {
+                    mops(w, pc);
+                } else if (integer_kind(kind)) {
                     integer(w, kind, 26);
+                } else if (kind == Pauth && (flags & CompileInlineAssists)) {
+                    Label miss, done;
+                    unsigned reg = pauth_register(w);
+                    load(reg, X16);
+                    if (reg == 17) load(16, X17);
+                    else if (w != 0xd50320ff && (w & 32)) load(31, X17, true);
+                    else c.MOV(X17, 0);
+                    c.LSR(X26, X16, 2); c.EOR(X26, X26, X16, LSR, 32);
+                    c.EOR(X26, X26, X17, LSR, 4);
+                    c.MOV(X30, uint64_t((w >> 5) & 255)); c.EOR(X26, X26, X30);
+                    c.AND(X26, X26, 255); c.LDR(X30, X27, HUSK_PAUTH_CACHE);
+                    c.ADD(X26, X30, X26, LSL, 5);
+                    c.LDR(X30, X26); c.EOR(X30, X30, X16); c.CBNZ(X30, miss);
+                    c.LDR(X30, X26, 8); c.EOR(X30, X30, X17); c.CBNZ(X30, miss);
+                    c.LDR(W30, X26, 24); c.MOV(W17, w); c.EOR(W30, W30, W17); c.CBNZ(W30, miss);
+                    c.LDR(X16, X26, 16); save(reg, X16); c.B(done);
+                    c.l(miss); exit(pc, Fallback);
+                    c.l(done);
+                } else if (kind == Barrier && (flags & CompileInlineAssists)) {
+                    // QEMU's assist uses a full host memory barrier. Device
+                    // accesses leave Direct before reaching this instruction.
+                    c.dw(0xd5033bbf); // dmb ish
+                } else if (kind == Bti && (flags & CompileInlineAssists)) {
+                    // The owner checks guarded targets before entering Direct.
+                } else if (kind == ClearExclusive) {
+                    c.MOV(X16, UINT64_MAX); c.STR(X16, X27, HUSK_EXCLUSIVE_ADDR);
                 } else if (kind == Hint) {
                     // The guest NOP has no architectural side effects.
                 } else if (kind == SystemRead) {
@@ -577,15 +773,18 @@ struct CompiledPage {
                         }
                         if (!near_branch) { c.B(next); c.l(outside); jump(dest); c.l(next); }
                     }
-                } else if ((w & 0xfffffc1f) == 0xd63f0000) {
+                } else if ((w & 0xfffffc1f) == 0xd63f0000 ||
+                           ((flags & CompileInlineAssists) && (w == 0xd61f0200 || w == 0xd61f0220))) {
+                    bool link = (w & 0xfffffc1f) == 0xd63f0000;
                     Label miss, exhausted;
                     load(rn, X16);
                     c.LDR(X26, X27, HUSK_CALL_ROUTES);
+                    if (!link) c.ADD(X26, X26, 4096);
                     c.UBFX(X17, X16, 2, 8); c.ADD(X26, X26, X17, LSL, 4);
                     c.LDR(X17, X26); c.EOR(X17, X17, X16); c.CBNZ(X17, miss);
                     c.LDR(X26, X26, 8); c.CBZ(X26, miss);
                     c.SUB(X29, X29, 1); c.TBNZ(X29, 63, exhausted);
-                    c.MOV(X17, pc + 4); save(30, X17);
+                    if (link) { c.MOV(X17, pc + 4); save(30, X17); }
                     c.BR(X26);
                     c.l(miss); exit(pc, Fallback);
                     c.l(exhausted); exit(pc, Budget);
@@ -619,19 +818,66 @@ struct CompiledPage {
                     // Dynamic targets return to the owner for execute-permission checks.
                     leave(CodeBranch);
                     c.l(budget_end); exit(pc, Budget);
-                } else if (kind == Memory || kind == Pair || kind == Atomic) {
+                } else if (kind == ExclusiveLoad || kind == ExclusiveStore) {
+                    bool write = kind == ExclusiveStore;
+                    unsigned size = w >> 30, status = (w >> 16) & 31;
+                    Label failed, miss, invalid, done, completed;
+                    load(rn, X16, true);
+                    if (flags & 8) c.TBNZ(X16, 55, invalid);
+                    auto clean = [&](XReg to) {
+                        if (flags & 8) {
+                            c.AND(to, X16, UINT64_C(0x00ffffffffffffff));
+                        } else c.MOV(to, X16);
+                    };
+                    if (write) {
+                        if (w & 0x8000) c.dw(0xd5033bbf); // release also orders a failed STLXR
+                        clean(X26); c.LDR(X17, X27, HUSK_EXCLUSIVE_ADDR);
+                        c.EOR(X17, X17, X26); c.CBNZ(X17, failed);
+                    }
+                    // QEMU checks the monitor before store alignment or access.
+                    if (rn == 31) { c.AND(X17, X16, 15); c.CBNZ(X17, invalid); }
+                    if (size) { c.AND(X17, X16, (1U << size) - 1); c.CBNZ(X17, invalid); }
+                    // A software monitor survives mapping callbacks and a TCG
+                    // transition. Host exclusive reservations would not.
+                    c.LSR(X17, X16, 12); c.EOR(X17, X17, X17, LSR, 8); c.AND(X17, X17, 255);
+                    c.ADD(X17, X28, X17, LSL, 5);
+                    c.LDR(X26, X17); c.EOR(X26, X26, X16, LSR, 12); c.CBNZ(X26, miss);
+                    c.LDR(X17, X17, write ? 16 : 8); c.CBZ(X17, miss);
+                    c.AND(X26, X16, 4095); c.ADD(X17, X17, X26);
+                    if (write) {
+                        c.LDR(X26, X27, HUSK_EXCLUSIVE_VALUE); load(rd, X30);
+                        c.dw((size << 30) | 0x08e0fc00 | (26 << 16) | (17 << 5) | 30); // casal
+                        c.LDR(X17, X27, HUSK_EXCLUSIVE_VALUE);
+                        c.EOR(X17, X17, X26); c.CBNZ(X17, failed);
+                        c.MOV(X26, 0); c.B(completed);
+                        c.l(failed); c.MOV(X26, 1);
+                        c.l(completed); save(status, X26);
+                        c.MOV(X26, UINT64_MAX); c.STR(X26, X27, HUSK_EXCLUSIVE_ADDR);
+                    } else {
+                        c.dw((size << 30) | 0x08dffc00 | (17 << 5) | 26); // ldar, stronger than relaxed LDXR
+                        c.STR(X26, X27, HUSK_EXCLUSIVE_VALUE);
+                        clean(X17); c.STR(X17, X27, HUSK_EXCLUSIVE_ADDR); save(rd, X26);
+                    }
+                    c.B(done);
+                    c.l(miss); c.STR(X16, X27, HUSK_ADDRESS); exit(pc, write ? WritePage : ReadPage);
+                    c.l(invalid); exit(pc, Fallback);
+                    c.l(done);
+                } else if (kind == Memory || kind == Pair || kind == Atomic || kind == Structure) {
                     bool pair = kind == Pair;
                     bool atomic = kind == Atomic;
-                    bool ordered = atomic || (!pair && (w & 0x3fbffc00) == 0x089ffc00);
+                    bool structure = kind == Structure;
+                    bool ordered = atomic || (!pair && !structure && (w & 0x3fbffc00) == 0x089ffc00);
                     bool vector = w & 0x04000000;
                     bool write = atomic || (pair || vector || ordered ? !(w & (1U << 22)) : ((w >> 22) & 3) == 0);
-                    bool reg_offset = !pair && (w & 0x3b200c00) == 0x38200800;
-                    bool indexed = !pair && !ordered && !reg_offset && (w & 0x3b000000) != 0x39000000;
-                    unsigned mode = pair ? (((w >> 23) & 1) ? ((w >> 23) & 3) : 0) :
+                    bool reg_offset = !structure && !pair && (w & 0x3b200c00) == 0x38200800;
+                    bool indexed = !structure && !pair && !ordered && !reg_offset && (w & 0x3b000000) != 0x39000000;
+                    unsigned mode = structure ? ((w >> 23) & 1) : pair ? (((w >> 23) & 1) ? ((w >> 23) & 3) : 0) :
                                     indexed ? (w >> 10) & 3 : 0;
-                    unsigned size_log2 = pair ? 2 + (vector ? w >> 30 : w >> 31) :
+                    unsigned size_log2 = structure ? (w >> 10) & 3 : pair ? 2 + (vector ? w >> 30 : w >> 31) :
                                                (w >> 30) + (vector ? ((w >> 23) & 1) * 4 : 0);
-                    int64_t offset = pair ? sign_extend((w >> 15) & 127, 7) * (1 << size_log2) :
+                    unsigned access_bytes = structure ? structure_registers(w) * (w & (1U << 30) ? 16 : 8) :
+                                                       (pair ? 2U : 1U) << size_log2;
+                    int64_t offset = structure ? 0 : pair ? sign_extend((w >> 15) & 127, 7) * (1 << size_log2) :
                                      reg_offset || ordered ? 0 : indexed ? sign_extend((w >> 12) & 511, 9) :
                                      ((w >> 10) & 4095) << size_log2;
                     Label miss, invalid, done, checked, access;
@@ -655,8 +901,8 @@ struct CompiledPage {
                     if (size_log2 && (!unaligned || ordered)) {
                         c.AND(X17, X16, (1U << size_log2) - 1); c.CBNZ(X17, invalid);
                     }
-                    if (pair || (unaligned && !ordered && size_log2)) {
-                        c.ADD(X17, X16, ((pair ? 2U : 1U) << size_log2) - 1);
+                    if (structure || pair || (unaligned && !ordered && size_log2)) {
+                        c.ADD(X17, X16, access_bytes - 1);
                         c.EOR(X17, X17, X16); c.LSR(X17, X17, 12); c.CBNZ(X17, invalid);
                     }
                     if (flags & CompileFastmem) {
@@ -676,7 +922,7 @@ struct CompiledPage {
                     }
                     c.l(checked);
                     fault.checked = uintptr_t(c.xptr<void *>());
-                    c.UBFX(X17, X16, 12, 8);
+                    c.LSR(X17, X16, 12); c.EOR(X17, X17, X17, LSR, 8); c.AND(X17, X17, 255);
                     c.ADD(X17, X28, X17, LSL, 5);
                     c.LDR(X26, X17);
                     c.EOR(X26, X26, X16, LSR, 12); c.CBNZ(X26, miss);
@@ -684,7 +930,12 @@ struct CompiledPage {
                     c.AND(X26, X16, 4095); c.ADD(X17, X17, X26);
                     c.l(access);
                     unsigned data = vector || resident(rd) || rd == 31 ? rd : 26;
-                    if (atomic) {
+                    if (structure) {
+                        // Validate the complete list before issuing the host access.
+                        // Guest writeback follows success and retains address tags.
+                        fault.instruction = uintptr_t(c.xptr<void *>());
+                        c.dw((w & ~((1U << 23) | (31U << 16) | (31U << 5))) | (17 << 5));
+                    } else if (atomic) {
                         unsigned rs = (w >> 16) & 31;
                         load(rs, X26); load(rd, X30);
                         fault.instruction = uintptr_t(c.xptr<void *>());
@@ -712,7 +963,11 @@ struct CompiledPage {
                         if (!write && !vector && data == 26) save(rd, X26);
                     }
                     if (mode) {
-                        if (mode == 1 && offset) {
+                        if (structure) {
+                            unsigned rm = (w >> 16) & 31;
+                            if (rm == 31) c.ADD(X16, X16, access_bytes);
+                            else { load(rm, X17); c.ADD(X16, X16, X17); }
+                        } else if (mode == 1 && offset) {
                             if (offset > 0) c.ADD(X16, X16, offset); else c.SUB(X16, X16, -offset);
                         }
                         save(rn, X16, true);
@@ -720,7 +975,7 @@ struct CompiledPage {
                     c.B(done);
                     if (flags & CompileFastmem) {
                         fault.slow = uintptr_t(c.xptr<void *>());
-                        fault.bytes = (pair ? 2U : 1U) << size_log2;
+                        fault.bytes = access_bytes;
                         fault.write = write;
                         new_faults.push_back(fault);
                         c.STR(X16, X27, HUSK_ADDRESS);
@@ -738,7 +993,7 @@ struct CompiledPage {
                     c.LDR(W17, X27, HUSK_ACCESS_FLAGS);
                     c.AND(W17, W17, ~uint32_t(HUSK_BTYPE_MASK)); c.STR(W17, X27, HUSK_ACCESS_FLAGS);
                     jump(pc + 4);
-                } else if (i + 1 < input.size() && !emit[i + 1]) jump(pc + 4);
+                } else if (!mops_at(i) && i + 1 < input.size() && !emit[i + 1]) jump(pc + 4);
             }
             if (i % 32 == 31) {
                 // TBNZ has a 32 KiB reach. Keep budget exits near their callers.
@@ -805,15 +1060,19 @@ struct HuskArm64Direct {
     size_t used = 0;
     std::unordered_map<uint64_t, std::unique_ptr<CompiledPage>> pages;
     std::array<Mapping, 256> mappings{};
+    std::array<PauthResult, 256> pauth_cache{};
     std::array<CodeRoute, 256> routes{};
-    std::array<CallRoute, 256> call_routes{};
+    // BLR and BR x16/x17 use separate banks because their BTYPE differs.
+    std::array<CallRoute, 512> call_routes{};
     std::array<uint8_t, 256> populated{};
     std::unique_ptr<HuskArm64Fastmem> fastmem;
     std::vector<FaultSite> fault_sites;
     uint64_t mapping_epoch = 0;
     size_t populated_count = 0;
     bool profile = std::getenv("HUSK_ARM64_STATS") != nullptr;
-    bool native_lse = false;
+    bool native_lse = false, native_crc = false;
+    bool inline_assists = true;
+    bool exclusive = true;
     uint64_t calls = 0, compiles = 0, flushes = 0, compile_ns = 0, run_ns = 0;
     uint64_t branches = 0, budget_exits = 0, assists = 0, chained_assists = 0;
     std::unordered_map<uint32_t, uint64_t> fallbacks;
@@ -821,6 +1080,10 @@ struct HuskArm64Direct {
 
     HuskArm64Direct()
     {
+        const char *inline_setting = std::getenv("HUSK_ARM64_INLINE_ASSISTS");
+        inline_assists = !inline_setting || std::strcmp(inline_setting, "0");
+        const char *exclusive_setting = std::getenv("HUSK_ARM64_EXCLUSIVE");
+        exclusive = !exclusive_setting || std::strcmp(exclusive_setting, "0");
         const char *fast = std::getenv("HUSK_ARM64_FASTMEM");
         if (fast && !std::strcmp(fast, "1")) {
             fastmem = std::make_unique<HuskArm64Fastmem>();
@@ -836,6 +1099,9 @@ struct HuskArm64Direct {
         int lse = 0;
         size_t lse_size = sizeof(lse);
         native_lse = !sysctlbyname("hw.optional.arm.FEAT_LSE", &lse, &lse_size, nullptr, 0) && lse;
+        int crc = 0;
+        size_t crc_size = sizeof(crc);
+        native_crc = !sysctlbyname("hw.optional.armv8_crc32", &crc, &crc_size, nullptr, 0) && crc;
 #if TARGET_OS_IPHONE
         mapping = husk_ios_jit_acquire_el0(capacity);
         if (!mapping.rw_addr) throw std::runtime_error("EL0 JIT partition unavailable; enable JIT before boot");
@@ -892,7 +1158,7 @@ bool husk_direct_supported(uint32_t instruction) { return decode(instruction) !=
 bool husk_arm64_landing_supported(uint32_t instruction)
 {
     Kind kind = decode(instruction);
-    return kind != Other && kind != Assist && !(kind >= Branch && kind <= Indirect);
+    return kind != Other && kind != Assist && kind != Pauth && !(kind >= Branch && kind <= Indirect);
 }
 void husk_direct_destroy(HuskArm64Direct *ctx) { delete ctx; }
 
@@ -907,6 +1173,10 @@ HuskArm64Exit husk_direct_run(HuskArm64Direct *ctx, HuskArm64State *state,
         !husk_arm64_landing_supported(static_cast<const uint32_t *>(bytes)[(state->pc - page) / 4]))
         return HUSK_ARM64_FALLBACK;
     uint32_t access_flags = (state->access_flags & (ctx->native_lse ? 15 : 11)) | (ctx->fastmem ? CompileFastmem : 0);
+    access_flags |= state->access_flags & HUSK_MOPS_ALLOWED;
+    if (ctx->inline_assists) access_flags |= CompileInlineAssists;
+    if (ctx->native_lse && ctx->exclusive) access_flags |= CompileExclusive;
+    if (ctx->native_crc) access_flags |= state->access_flags & 64;
     if (ctx->fastmem) {
         if (!memory.mapping_epoch || memory.mapping_epoch != ctx->mapping_epoch)
             ctx->fastmem->reset();
@@ -935,10 +1205,11 @@ HuskArm64Exit husk_direct_run(HuskArm64Direct *ctx, HuskArm64State *state,
     for (size_t i = 0; i < ctx->populated_count; ++i)
         ctx->mappings[ctx->populated[i]] = {UINT64_MAX, nullptr, nullptr, 0};
     ctx->populated_count = 0;
+    ctx->pauth_cache.fill({});
     Frame frame{*state, std::min(budget, uint64_t(INT64_MAX)), 0, 0, 0,
                 ctx->routes.data(), ctx->call_routes.data(),
                 ctx->fastmem ? ctx->fastmem->bases(false) : nullptr,
-                ctx->fastmem ? ctx->fastmem->bases(true) : nullptr, nullptr, 0, 0};
+                ctx->fastmem ? ctx->fastmem->bases(true) : nullptr, ctx->pauth_cache.data(), nullptr, 0, 0};
     void *next = code->entries[(state->pc - page) / 4];
     for (;;) {
 #if !TARGET_OS_IPHONE
@@ -961,20 +1232,38 @@ HuskArm64Exit husk_direct_run(HuskArm64Direct *ctx, HuskArm64State *state,
         }
         HuskArm64Assist assisted = HUSK_ASSIST_DECLINED;
         uint64_t call_target = UINT64_MAX;
+        bool cached_jump = false;
         if (frame.reason == Fallback && memory.assist) {
             uint32_t word = code->source[(frame.state.pc - page) / 4];
+            bool pauth = decode(word) == Pauth;
+            unsigned pauth_reg = pauth_register(word);
+            uint64_t pauth_value = pauth ? frame.state.x[pauth_reg] : 0;
+            uint64_t pauth_modifier = !pauth ? 0 : pauth_reg == 17 ? frame.state.x[16] :
+                word != 0xd50320ff && (word & 32) ? frame.state.sp : 0;
+            uint64_t bulk_bytes = word == HUSK_BULK_INSN ? frame.state.x[2] :
+                husk_arm64_mops_prologue(word) && ((word >> 5) & 31) < 31 ?
+                    frame.state.x[(word >> 5) & 31] : 0;
             if ((word & 0xfffffc1f) == 0xd63f0000 && ((word >> 5) & 31) != 31)
                 call_target = frame.state.x[(word >> 5) & 31];
+            if (ctx->inline_assists && (word == 0xd61f0200 || word == 0xd61f0220)) {
+                call_target = frame.state.x[(word >> 5) & 31];
+                cached_jump = true;
+            }
             assisted = memory.assist(memory.opaque, &frame.state, word);
-            if (word == HUSK_BULK_INSN && assisted != HUSK_ASSIST_DECLINED) {
+            if (ctx->inline_assists && pauth && assisted == HUSK_ASSIST_PAUTH)
+                ctx->pauth_cache[pauth_slot(word, pauth_value, pauth_modifier)] =
+                    {pauth_value, pauth_modifier, frame.state.x[pauth_reg], word};
+            if ((word == HUSK_BULK_INSN || husk_arm64_mops_prologue(word)) && assisted != HUSK_ASSIST_DECLINED) {
                 // Bulk calls consume a byte-weighted budget so repeated host
                 // copies return to the owner for pending interrupts.
-                frame.budget -= 1 + std::min(frame.state.x[2], uint64_t(HUSK_BULK_LIMIT)) / 16;
+                frame.budget -= (word == HUSK_BULK_INSN ? 1 : 3) +
+                    std::min(bulk_bytes, uint64_t(HUSK_BULK_LIMIT)) / 16;
                 if (int64_t(frame.budget) < 0) { frame.reason = Budget; break; }
             }
             // A skipped BTI at the end of a page needs two immutable pages.
             // Such targets, and tagged addresses, keep the checked slow path.
-            if ((assisted != HUSK_ASSIST_CHAIN_CALL && assisted != HUSK_ASSIST_CHAIN_LANDING_CALL) ||
+            if ((cached_jump ? assisted != HUSK_ASSIST_CHAIN_JUMP && assisted != HUSK_ASSIST_CHAIN_LANDING_JUMP :
+                               assisted != HUSK_ASSIST_CHAIN_CALL && assisted != HUSK_ASSIST_CHAIN_LANDING_CALL) ||
                 (call_target & ~UINT64_C(4095)) != (frame.state.pc & ~UINT64_C(4095)))
                 call_target = UINT64_MAX;
         }
@@ -982,7 +1271,8 @@ HuskArm64Exit husk_direct_run(HuskArm64Direct *ctx, HuskArm64State *state,
             ++ctx->assists;
             if (assisted == HUSK_ASSIST_BRANCH) { frame.reason = CodeBranch; break; }
             if (assisted == HUSK_ASSIST_CHAIN || assisted == HUSK_ASSIST_CHAIN_CALL ||
-                assisted == HUSK_ASSIST_CHAIN_LANDING_CALL) {
+                assisted == HUSK_ASSIST_CHAIN_LANDING_CALL || assisted == HUSK_ASSIST_CHAIN_JUMP ||
+                assisted == HUSK_ASSIST_CHAIN_LANDING_JUMP) {
                 ++ctx->chained_assists;
                 // An indirect target can enter in the middle of a static block.
                 // Charge the branch even when that target has no block budget.
@@ -1006,7 +1296,7 @@ HuskArm64Exit husk_direct_run(HuskArm64Direct *ctx, HuskArm64State *state,
                 // Only immutable code pages from this run are present here.
                 next = route.entries[(frame.state.pc & 4095) / 4];
                 if (call_target != UINT64_MAX)
-                    ctx->call_routes[(call_target >> 2) & 255] = {call_target, next};
+                    ctx->call_routes[((call_target >> 2) & 255) + (cached_jump ? 256 : 0)] = {call_target, next};
                 continue;
             }
             const void *contents = memory.map_code(memory.opaque, destination);
@@ -1020,8 +1310,9 @@ HuskArm64Exit husk_direct_run(HuskArm64Direct *ctx, HuskArm64State *state,
             page = destination;
             next = code->branch_entries[(frame.state.pc - page) / 4];
             if (call_target != UINT64_MAX)
-                ctx->call_routes[(call_target >> 2) & 255] = {call_target,
-                    (frame.state.access_flags & HUSK_BTYPE_MASK) ? code->landing_call_entries[(frame.state.pc - page) / 4] : next};
+                ctx->call_routes[((call_target >> 2) & 255) + (cached_jump ? 256 : 0)] = {call_target,
+                    (frame.state.access_flags & HUSK_BTYPE_MASK) ?
+                        (cached_jump ? code->landings->jumps : code->landings->calls)[(frame.state.pc - page) / 4] : next};
             continue;
         }
         if (frame.reason == Budget || frame.reason == Fallback) break;
@@ -1070,8 +1361,9 @@ HuskArm64Exit husk_direct_run(HuskArm64Direct *ctx, HuskArm64State *state,
         void *host = memory.map_page ? memory.map_page(memory.opaque, base, write) : nullptr;
         if (!host || (write && base == page)) { frame.reason = Fallback; break; }
         uint64_t tag = base >> 12;
-        auto &entry = ctx->mappings[tag & 255];
-        if (entry.tag == UINT64_MAX) ctx->populated[ctx->populated_count++] = tag & 255;
+        unsigned slot = (tag ^ (tag >> 8)) & 255;
+        auto &entry = ctx->mappings[slot];
+        if (entry.tag == UINT64_MAX) ctx->populated[ctx->populated_count++] = slot;
         if (entry.tag != tag) entry = {tag, nullptr, nullptr, 0};
         (write ? entry.write : entry.read) = host;
         next = code->entries[(frame.state.pc - page) / 4];

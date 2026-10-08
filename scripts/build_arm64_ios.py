@@ -44,6 +44,7 @@ def main():
     qemu = ROOT / "third_party/build/qemu-10.0.12-utm"
     apply(qemu, "qemu-arm64-exec.patch")
     apply(qemu, "qemu-arm64-pauth-assist.patch")
+    apply(qemu, "qemu-arm64-mops-gating.patch")
     apply(qemu, "qemu-arm64-branch-assist.patch")
     apply(qemu, "qemu-arm64-fastmem-generation.patch")
     apply(qemu, "qemu-arm64-bulk-memory.patch")

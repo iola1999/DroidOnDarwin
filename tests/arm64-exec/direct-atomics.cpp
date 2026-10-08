@@ -13,9 +13,11 @@
 struct Memory {
     alignas(16384) std::array<uint8_t, 16384> bytes{};
     bool writable = true;
+    bool readable = true, tbi = false;
     static void *Map(void *opaque, uint64_t page, bool write) {
         auto &m = *static_cast<Memory *>(opaque);
-        return page >= 0x20000 && page < 0x24000 && (!write || m.writable) ?
+        if (m.tbi) page &= UINT64_C(0x00ffffffffffffff);
+        return page >= 0x20000 && page < 0x24000 && (write ? m.writable : m.readable) ?
             m.bytes.data() + page - 0x20000 : nullptr;
     }
 };
@@ -105,4 +107,64 @@ int main()
         CHECK(!std::memcmp(&state, &original, sizeof(state)) && memory.bytes == bytes);
     }
     std::printf("LSE values, register aliases and fault boundaries PASS (%u cases)\n", samples);
+    memory.writable = true;
+    for (unsigned width = 0; width < 4; ++width) for (unsigned sample = 0; sample < 256; ++sample) {
+        unsigned bits = 8U << width;
+        uint64_t mask = UINT64_MAX >> (64 - bits), old = random() & mask;
+        unsigned base = sample & 31, value = random() & 31, status = random() & 31;
+        memory.tbi = sample & 8;
+        uint64_t address = 0x20040 | (memory.tbi ? UINT64_C(0xab00000000000000) : 0);
+        HuskArm64State state{};
+        for (auto &r : state.x) r = random();
+        for (auto &v : state.v) { v[0] = random(); v[1] = random(); }
+        state.pc = 0x10000; state.nzcv = random() & 0xf0000000;
+        state.access_flags = memory.tbi ? 8 : 0;
+        if (base == 31) state.sp = address; else state.x[base] = address;
+        state.exclusive_address = state.exclusive_value = UINT64_MAX;
+        std::memcpy(memory.bytes.data() + 64, &old, bits / 8);
+        code[0] = (width << 30) | 0x085f7c00 | ((sample & 1) << 15) | (base << 5) | value;
+        auto expected_state = state;
+        expected_state.pc += 4; expected_state.exclusive_address = 0x20040;
+        expected_state.exclusive_value = old;
+        if (value != 31) expected_state.x[value] = old;
+        auto bytes = memory.bytes;
+        CHECK(husk_direct_run(engine.get(), &state, 0x10000, code.data(), callbacks, 1024) == HUSK_ARM64_FALLBACK);
+        CHECK(!std::memcmp(&state, &expected_state, sizeof(state)) && memory.bytes == bytes);
+
+        state.pc = 0x10000;
+        if (base == 31) state.sp = address; else state.x[base] = address;
+        // Preserve the software monitor across calls, as when TCG loaded it.
+        if ((sample & 3) == 0) state.exclusive_value ^= 1;
+        if ((sample & 3) == 1) state.exclusive_address += 4096;
+        code[0] = (width << 30) | 0x08007c00 | ((sample & 2) << 14) |
+            (status << 16) | (base << 5) | value;
+        uint64_t replacement = value == 31 ? 0 : state.x[value];
+        bool success = state.exclusive_address == 0x20040 && state.exclusive_value == old;
+        expected_state = state; expected_state.pc += 4; expected_state.exclusive_address = UINT64_MAX;
+        if (status != 31) expected_state.x[status] = !success;
+        if (success) std::memcpy(bytes.data() + 64, &replacement, bits / 8);
+        CHECK(husk_direct_run(engine.get(), &state, 0x10000, code.data(), callbacks, 1024) == HUSK_ARM64_FALLBACK);
+        CHECK(!std::memcmp(&state, &expected_state, sizeof(state)) && memory.bytes == bytes);
+    }
+    memory.tbi = false;
+    for (unsigned condition = 0; condition < 7; ++condition) {
+        HuskArm64State state{};
+        state.pc = 0x10000; state.x[0] = 0x123; state.x[1] = 0x20000;
+        state.exclusive_address = 0x20000; state.exclusive_value = 0x123;
+        code[0] = condition == 0 ? 0xc85ffc22 : 0xc803fc20; // ldaxr x2,[x1] / stlxr w3,x0,[x1]
+        memory.readable = condition != 0; memory.writable = condition != 1;
+        if (condition == 2) state.x[1] = state.exclusive_address = 0x20001;
+        if (condition == 3) { state.access_flags = 8; state.x[1] = UINT64_C(0xffff000000020000); }
+        if (condition == 4) { state.x[1] = 0; state.exclusive_address = UINT64_MAX; }
+        if (condition == 5) code[0] = 0xd5033f5f; // clrex
+        if (condition == 6) { code[0] = 0xc803ffe0; state.sp = 0x20001; }
+        auto expected = state; auto bytes = memory.bytes;
+        if (condition >= 4) {
+            expected.pc += 4; expected.exclusive_address = UINT64_MAX;
+            if (condition == 4 || condition == 6) expected.x[3] = 1;
+        }
+        CHECK(husk_direct_run(engine.get(), &state, 0x10000, code.data(), callbacks, 1024) == HUSK_ARM64_FALLBACK);
+        CHECK(!std::memcmp(&state, &expected, sizeof(state)) && memory.bytes == bytes);
+    }
+    std::puts("exclusive load/store, monitor handoff, tags, CLREX and fault boundaries PASS");
 }

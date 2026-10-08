@@ -48,10 +48,11 @@ int main()
         a.sp = random() & ~15ULL;
         a.pc = 0x10000;
         a.nzcv = uint32_t(random()) & 0xf0000000;
+        a.access_flags = 64;
         for (unsigned i = 0; i < 64; ++i) {
             unsigned rd = i & 31, rn = (i + sample) & 31, rm = random() & 31;
             unsigned sf = random() & 1, op = random() & 3;
-            switch ((i + sample) % 16) {
+            switch ((i + sample) % 17) {
             case 0: code[i] = (sf << 31) | (op << 29) | 0x11000000 |
                              ((random() & 4095) << 10) | (rn << 5) | rd; break;
             case 1: code[i] = (sf << 31) | (op << 29) | 0x0b000000 |
@@ -87,7 +88,7 @@ int main()
             case 10: code[i] = (sf << 31) | 0x1b000000 | ((random() & 1) << 15) |
                               ((random() & 31) << 10) | (rm << 16) | (rn << 5) | rd; break;
             case 11: code[i] = 0xdac00c00 | (rn << 5) | rd; break;
-            case 12: code[i] = 0x8b200000 | (op << 29) | (rm << 16) |
+            case 12: code[i] = (sf << 31) | 0x0b200000 | (op << 29) | (rm << 16) |
                               ((random() & 7) << 13) | ((random() % 5) << 10) | (rn << 5) | rd; break;
             case 13: code[i] = (sf << 31) | (op << 29) | 0x1a000000 |
                               (rm << 16) | (rn << 5) | rd; break;
@@ -97,6 +98,12 @@ int main()
             case 15: {
                 constexpr uint32_t ops[] = {0x9b207c00, 0x9ba07c00, 0x9b407c00, 0x9bc07c00};
                 code[i] = ops[random() % 4] | (rm << 16) | (rn << 5) | rd;
+                break;
+            }
+            case 16: {
+                constexpr uint32_t ops[] = {0x1ac04000, 0x1ac04400, 0x1ac04800, 0x9ac04c00,
+                                            0x1ac05000, 0x1ac05400, 0x1ac05800, 0x9ac05c00};
+                code[i] = ops[random() % 8] | (rm << 16) | (rn << 5) | rd;
                 break;
             }
             }

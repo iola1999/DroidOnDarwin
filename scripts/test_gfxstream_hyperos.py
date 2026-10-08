@@ -231,6 +231,8 @@ def main():
                 print(f"holding visible VM for {args.hold_seconds} seconds", flush=True)
                 until = time.monotonic() + args.hold_seconds
                 while process.poll() is None and time.monotonic() < until: time.sleep(1)
+            if process.poll() is not None:
+                raise RuntimeError(f"QEMU exited before validation ended: {process.returncode}")
         except (OSError, RuntimeError, subprocess.TimeoutExpired) as error:
             result["error"] = str(error)
             result["passed"] = False
@@ -238,6 +240,9 @@ def main():
                 (output / "failed-command.txt").write_bytes(
                     (error.stdout or b"") + (error.stderr or b""))
         finally:
+            if process.poll() is not None:
+                result["qemu_unexpected_exit"] = process.returncode
+                result["passed"] = False
             if "boot_seconds" in result and process.poll() is None:
                 try:
                     logcat = adb_run("logcat", "-d", "-t", "1500", seconds=15)

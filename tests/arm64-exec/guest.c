@@ -68,6 +68,7 @@ static void enable_mthp(void)
 extern u64 husk_vector_loop(u64 n);
 extern u64 husk_float_loop(u64 n);
 extern void husk_vector_memory(u64 *p, u64 n);
+extern void husk_vector_structures(u64 *p, u64 n);
 extern u64 husk_vector_checks(u64 n);
 extern u64 husk_call_loop(u64 n);
 extern u64 husk_indirect_call_loop(u64 n);
@@ -75,6 +76,9 @@ extern u64 husk_plain_call_loop(u64 n);
 extern u64 husk_pauth_loop(u64 n);
 extern u64 husk_pauth_invalid(u64 n);
 extern u64 husk_atomic_loop(u64 *p, u64 n);
+extern u64 husk_exclusive_loop(u64 *p, u64 n);
+extern u64 husk_exclusive_bridge(u64 *p, u64 n);
+extern u64 husk_tail_call_loop(u64 n);
 
 static void vector_benchmarks(void)
 {
@@ -94,6 +98,14 @@ static void vector_benchmarks(void)
     elapsed = ns() - start;
     CHECK(values[0] == n && values[1] == n + 3);
     print("BENCH vector_memory_ns="); number(elapsed); print(" value="); number(values[0]); print("\n");
+    __attribute__((aligned(16))) u64 vectors[8] = {
+        0x5555555555555555UL, 0x5555555555555555UL,
+        0x5555555555555555UL, 0x5555555555555555UL, 0, 0, 0, 0};
+    start = ns();
+    husk_vector_structures(vectors, 1000000);
+    elapsed = ns() - start;
+    CHECK(vectors[4] == 0x0404040404040404UL && vectors[5] == vectors[4] && !vectors[6] && !vectors[7]);
+    print("BENCH vector_structures_ns="); number(elapsed); print(" value="); number(vectors[4]); print("\n");
     CHECK(husk_vector_checks(n) == 0);
     start = ns();
     value = husk_call_loop(10000000);
@@ -110,6 +122,18 @@ static void vector_benchmarks(void)
     elapsed = ns() - start;
     CHECK(value == 1000000);
     print("BENCH plain_calls_ns="); number(elapsed); print(" value="); number(value); print("\n");
+    start = ns();
+    value = husk_tail_call_loop(1000000);
+    elapsed = ns() - start;
+    CHECK(value == 1000000);
+    print("BENCH tail_calls_ns="); number(elapsed); print(" value="); number(value); print("\n");
+    values[0] = 0;
+    start = ns();
+    CHECK(husk_exclusive_loop(values, 1000000) == 0 && values[0] == 1000000);
+    elapsed = ns() - start;
+    print("BENCH exclusive_ns="); number(elapsed); print(" value="); number(values[0]); print("\n");
+    CHECK(husk_exclusive_bridge(values, 1000) == 0 && values[0] == 1001000);
+    print("PASS exclusive monitor across TCG ISB\n");
     start = ns();
     CHECK(husk_pauth_loop(100000) == 0);
     elapsed = ns() - start;
@@ -376,6 +400,17 @@ void guest_main(u64 *initial_stack)
     } else {
         print("SKIP LSE unavailable\n");
     }
+    CHECK(call(226, mapping, 4096, 1, 0, 0, 0) == 0);
+    child = call(220, 17, 0, 0, 0, 0, 0);
+    CHECK(child >= 0);
+    if (!child) {
+        husk_exclusive_loop((u64 *)mapping, 100000);
+        call(93, 0, 0, 0, 0, 0, 0);
+        for (;;) {}
+    }
+    CHECK(call(260, child, (u64)&status, 0, 0, 0, 0) == child);
+    CHECK((status & 127) == 11);
+    print("PASS exclusive write permission reaches Linux SIGSEGV\n");
     finish(1);
 }
 

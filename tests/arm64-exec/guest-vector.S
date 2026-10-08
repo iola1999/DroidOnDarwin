@@ -108,6 +108,19 @@ husk_vector_memory:
     b.ne 1b
     ret
 
+.global husk_vector_structures
+husk_vector_structures:
+1:  mov x2, x0
+    ld1 {v0.16b, v1.16b}, [x2], #32
+    cnt v0.16b, v0.16b
+    cnt v1.16b, v1.16b
+    uminp v2.16b, v0.16b, v1.16b
+    cmeq v3.16b, v2.16b, #0
+    st1 {v2.16b, v3.16b}, [x2]
+    subs x1, x1, #1
+    b.ne 1b
+    ret
+
 .global husk_vector_checks
 husk_vector_checks:
     msr fpcr, xzr
@@ -253,6 +266,44 @@ husk_pauth_invalid:
     ret
 
 .arch_extension lse
+.global husk_exclusive_loop
+husk_exclusive_loop:
+1:  ldaxr x2, [x0]
+    add x2, x2, #1
+    stlxr w3, x2, [x0]
+    cbnz w3, 1b
+    subs x1, x1, #1
+    b.ne 1b
+    mov x0, #0
+    ret
+
+.global husk_exclusive_bridge
+husk_exclusive_bridge:
+1:  ldaxr x2, [x0]
+    isb
+    add x2, x2, #1
+    stlxr w3, x2, [x0]
+    cbnz w3, 1b
+    subs x1, x1, #1
+    b.ne 1b
+    mov x0, #0
+    ret
+
+.global husk_tail_call_loop
+husk_tail_call_loop:
+    stp x19, x30, [sp, #-16]!
+    mov x19, x0
+    mov x0, #0
+    adr x16, 3f
+1:  bl 2f
+    subs x19, x19, #1
+    b.ne 1b
+    ldp x19, x30, [sp], #16
+    ret
+2:  br x16
+3:  add x0, x0, #1
+    ret
+
 .global husk_atomic_loop
 husk_atomic_loop:
     mov x2, #1

@@ -18,7 +18,8 @@ typedef struct HuskArm64Exec HuskArm64Exec;
 #define HUSK_BULK_INSN UINT32_C(0xd44909a0)
 enum { HUSK_BULK_COPY, HUSK_BULK_MOVE, HUSK_BULK_SET, HUSK_BULK_LIMIT = 65536 };
 
-enum { HUSK_BTYPE_SHIFT = 4, HUSK_BTYPE_MASK = 3U << HUSK_BTYPE_SHIFT };
+enum { HUSK_BTYPE_SHIFT = 4, HUSK_BTYPE_MASK = 3U << HUSK_BTYPE_SHIFT,
+       HUSK_MOPS_ALLOWED = 1U << 7 };
 
 typedef struct {
     uint64_t x[31];
@@ -32,10 +33,15 @@ typedef struct {
      * Bit 2: guest exposes FEAT_LSE.
      * Bit 3: EL0 lower data addresses ignore their top byte and do not use MTE.
      * Bits 4..5: pending architectural BTYPE, after the owner checked the target.
-     * Direct clears these bits only after the first instruction completes. */
+     * Direct clears these bits only after the first instruction completes.
+     * Bit 6: guest exposes FEAT_CRC32.
+     * Bit 7: owner permits MOPS at EL0 with MTE disabled. */
     uint32_t access_flags;
     uint64_t tpidr_el0;
     uint64_t v[32][2];
+    /* QEMU's software exclusive monitor: cleaned virtual address and loaded
+     * value. UINT64_MAX means cleared. Pair-load high state stays with QEMU. */
+    uint64_t exclusive_address, exclusive_value;
 } HuskArm64State;
 
 typedef enum {
@@ -52,6 +58,15 @@ typedef enum {
     /* BLR target checked; its first instruction still needs to retire. Cached
      * calls must restore BTYPE=2 before that instruction can fault. */
     HUSK_ASSIST_CHAIN_LANDING_CALL,
+    /* BR x16/x17 target checked with BTYPE=1, without per-branch effects.
+     * The landing form still needs to retire its first instruction. */
+    HUSK_ASSIST_CHAIN_JUMP,
+    HUSK_ASSIST_CHAIN_LANDING_JUMP,
+    /* Completed PAC hint: only its operand register and PC changed. The owner
+     * permits reuse for identical instruction/value/modifier in this run().
+     * Keys, execution controls and address parameters stay fixed until return;
+     * an authentication exception must leave through the owner, never return. */
+    HUSK_ASSIST_PAUTH,
 } HuskArm64Assist;
 
 typedef struct {
@@ -85,6 +100,30 @@ typedef struct {
  * validated pages remain accessible for the call. Zero length needs no mapping. */
 bool husk_arm64_bulk(uint64_t destination, uint64_t source, uint64_t length,
                      unsigned operation, HuskArm64Memory memory);
+
+/* CPYP/SETP prologues using normal access and default cache hints. */
+static inline bool husk_arm64_mops_prologue(uint32_t word)
+{
+    return (word & 0xffe0fc00) == 0x1d000400 || (word & 0xffe0fc00) == 0x19c00400;
+}
+
+static inline bool husk_arm64_mops_sequence(const uint32_t code[3])
+{
+    uint32_t word = code[0];
+    bool set = (word & 0xffe0fc00) == 0x19c00400;
+    uint32_t stage = set ? 0x4000 : 0x400000;
+    unsigned rd = word & 31, rn = (word >> 5) & 31, rs = (word >> 16) & 31;
+    return husk_arm64_mops_prologue(word) && code[1] == (word | stage) &&
+        code[2] == (word | (stage * 2)) && rd != rn && rd != rs && rn != rs &&
+        rd != 31 && rn != 31 && (set || rs != 31);
+}
+
+/* The owner checks FEAT_MOPS, execution controls and disabled MTE, and supplies
+ * three immutable instructions on one executable page. Success completes the
+ * matching P/M/E sequence using QEMU's Option A register state. Refusal changes
+ * neither memory nor state, so QEMU can handle faults and partial progress. */
+bool husk_arm64_mops(HuskArm64State *state, const uint32_t instructions[3],
+                     HuskArm64Memory memory);
 
 typedef enum {
     HUSK_ARM64_BUDGET,

@@ -19,6 +19,10 @@ using Dynarmic::HaltReason;
 
 static bool dynarmic_supported(uint32_t insn)
 {
+    if (husk_arm64_mops_prologue(insn)) return false;
+    // Exclusive state belongs to QEMU; this reference backend has its own monitor.
+    if ((insn & 0x3f800000) == 0x08000000 ||
+        (insn & 0xfffff0ff) == 0xd503305f) return false;
     // This reference backend does not specialize its cache by guest FEAT_LSE.
     if ((insn & 0x3fa07c00) == 0x08a07c00 ||
         ((insn & 0x3f200c00) == 0x38200000 && ((insn >> 12) & 15) <= 8)) return false;
@@ -110,6 +114,7 @@ struct HuskArm64Exec final : Dynarmic::A64::UserCallbacks {
     uint64_t ticks = 0;
     uint64_t tpidr_el0 = 0;
     bool fallback = false;
+    bool crc_enabled = false;
     std::optional<uint64_t> fallback_pc;
 
     HuskArm64Exec()
@@ -162,6 +167,7 @@ struct HuskArm64Exec final : Dynarmic::A64::UserCallbacks {
         }
         uint32_t insn;
         std::memcpy(&insn, code.data() + address - page, sizeof(insn));
+        if (!crc_enabled && (insn & 0x7fe0e000) == 0x1ac04000) return std::nullopt;
         return dynarmic_supported(insn) ? std::optional{insn} : std::nullopt;
     }
 
@@ -239,8 +245,10 @@ HuskArm64Exit husk_arm64_run(HuskArm64Exec *ctx, HuskArm64State *state,
     try {
         if (ctx->direct) return husk_direct_run(ctx->direct.get(), state, page, bytes, memory, budget);
         if ((state->fpcr & ~HUSK_FPCR_MASK) || (state->access_flags & 2)) return HUSK_ARM64_FALLBACK;
-        if (ctx->page != page || std::memcmp(ctx->code.data(), bytes, 4096)) {
+        bool crc = state->access_flags & 64;
+        if (ctx->page != page || ctx->crc_enabled != crc || std::memcmp(ctx->code.data(), bytes, 4096)) {
             ctx->jit->ClearCache();
+            ctx->crc_enabled = crc;
             ctx->page = page;
             std::memcpy(ctx->code.data(), bytes, 4096);
         }

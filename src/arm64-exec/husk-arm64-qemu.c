@@ -23,7 +23,7 @@ typedef struct {
     uint64_t mapping_epoch, mapping_generation;
     int mapping_mmu;
     int64_t resume_after_ns[2];
-    bool poll_dispatch, assist, assisted_pauth, chain_assist, landing, kernel, kernel_started;
+    bool poll_dispatch, assist, assisted_pauth, chain_assist, landing, kernel, kernel_started, mops_started;
     unsigned last_el;
     unsigned dispatch_polls;
     bool profile;
@@ -205,11 +205,24 @@ static void husk_export_state(CPUARMState *env, const HuskArm64State *state)
     memcpy(env->xregs, state->x, sizeof(state->x));
     env->xregs[31] = state->sp;
     env->pc = state->pc;
+    env->exclusive_addr = state->exclusive_address;
+    env->exclusive_val = state->exclusive_value;
     pstate_write(env, (pstate_read(env) & ~PSTATE_NZCV) | state->nzcv);
     for (unsigned i = 0; i < 32; ++i) {
         memcpy(aa64_vfp_qreg(env, i), state->v[i], sizeof(state->v[i]));
     }
     vfp_set_fpsr(env, state->fpsr);
+}
+
+static bool husk_mops_allowed(CPUARMState *env)
+{
+    static int enabled = -1;
+    if (enabled < 0) {
+        const char *setting = getenv("HUSK_ARM64_MOPS");
+        enabled = !setting || strcmp(setting, "0");
+    }
+    return enabled && arm_husk_mops_allowed(env) &&
+        !EX_TBFLAG_A64(env->hflags, MTE_ACTIVE);
 }
 
 static HuskArm64Assist husk_assist(void *opaque, HuskArm64State *state, uint32_t insn)
@@ -219,6 +232,21 @@ static HuskArm64Assist husk_assist(void *opaque, HuskArm64State *state, uint32_t
     unsigned reg = 30, operation;
     uint64_t modifier = 0;
     uint32_t branch = insn & 0xfffffc1f;
+    if (husk_arm64_mops_prologue(insn)) {
+        if (!husk_mops_allowed(env) || (state->pc & 4095) > 4084)
+            return HUSK_ASSIST_DECLINED;
+        const uint8_t *page = husk_map_code(ctx, state->pc & ~UINT64_C(4095));
+        if (!page) return HUSK_ASSIST_DECLINED;
+        const uint8_t *code = page + (state->pc & 4095);
+        uint32_t words[3] = {ldl_le_p(code), ldl_le_p(code + 4), ldl_le_p(code + 8)};
+        HuskArm64Memory memory = { .opaque = ctx, .map_page = husk_map_page };
+        if (!husk_arm64_mops(state, words, memory)) return HUSK_ASSIST_DECLINED;
+        if (!ctx->mops_started) {
+            fprintf(stderr, "[husk-arm64] MOPS sequence assist active\n");
+            ctx->mops_started = true;
+        }
+        return HUSK_ASSIST_CONTINUE;
+    }
     if (insn == HUSK_BULK_INSN) {
         HuskArm64Memory memory = { .opaque = ctx, .map_page = husk_map_page };
         state->x[8] = 1;
@@ -236,7 +264,9 @@ static HuskArm64Assist husk_assist(void *opaque, HuskArm64State *state, uint32_t
         state->x[30] = env->xregs[30];
         if (!ctx->chain_assist) return HUSK_ASSIST_BRANCH;
         bool cache_call = branch == 0xd63f0000;
-        if (!env->btype) return cache_call ? HUSK_ASSIST_CHAIN_CALL : HUSK_ASSIST_CHAIN;
+        bool cache_jump = insn == 0xd61f0200 || insn == 0xd61f0220;
+        if (!env->btype) return cache_call ? HUSK_ASSIST_CHAIN_CALL :
+            cache_jump ? HUSK_ASSIST_CHAIN_JUMP : HUSK_ASSIST_CHAIN;
         /* Validate BTI before Direct executes the first instruction. BTYPE
          * stays pending until that instruction completes successfully. */
         void *host = NULL;
@@ -250,6 +280,7 @@ static HuskArm64Assist husk_assist(void *opaque, HuskArm64State *state, uint32_t
             break;
         case 0xd503233f: case 0xd503237f:
             cache_call = false;
+            cache_jump = false;
             if (EX_TBFLAG_A64(env->hflags, PAUTH_ACTIVE)) {
                 state->x[30] = arm_husk_pauth(env, state->x[30], state->sp,
                                              landing == 0xd503237f);
@@ -257,13 +288,14 @@ static HuskArm64Assist husk_assist(void *opaque, HuskArm64State *state, uint32_t
             break;
         default:
             if (ctx->landing && husk_arm64_landing_supported(landing))
-                return cache_call ? HUSK_ASSIST_CHAIN_LANDING_CALL : HUSK_ASSIST_CHAIN;
+                return cache_call ? HUSK_ASSIST_CHAIN_LANDING_CALL :
+                    cache_jump ? HUSK_ASSIST_CHAIN_LANDING_JUMP : HUSK_ASSIST_CHAIN;
             return HUSK_ASSIST_BRANCH;
         }
         state->pc += 4;
         env->btype = 0;
         state->access_flags &= ~HUSK_BTYPE_MASK;
-        return cache_call ? HUSK_ASSIST_CHAIN_CALL : HUSK_ASSIST_CHAIN;
+        return cache_call ? HUSK_ASSIST_CHAIN_CALL : cache_jump ? HUSK_ASSIST_CHAIN_JUMP : HUSK_ASSIST_CHAIN;
     }
     if ((insn & 0xfffff0ff) == 0xd50330bf || (insn & 0xfffff0ff) == 0xd503309f) {
         smp_mb();
@@ -301,7 +333,7 @@ static HuskArm64Assist husk_assist(void *opaque, HuskArm64State *state, uint32_t
         state->x[reg] = arm_husk_pauth(env, state->x[reg], modifier, operation);
     }
     state->pc += 4;
-    return HUSK_ASSIST_CONTINUE;
+    return HUSK_ASSIST_PAUTH;
 }
 
 int arm_husk_exec_user(CPUState *cs)
@@ -463,9 +495,13 @@ landing_ready:
                              .access_flags = !EX_TBFLAG_ANY(env->hflags, ALIGN_MEM) |
                                  (EX_TBFLAG_ANY(env->hflags, FPEXC_EL) ? 2 : 0) |
                                  (cpu_isar_feature(aa64_atomics, cpu) ? 4 : 0) |
+                                 (cpu_isar_feature(aa64_crc32, cpu) ? 64 : 0) |
+                                 (husk_mops_allowed(env) ? HUSK_MOPS_ALLOWED : 0) |
                                  ((el == 0 && (EX_TBFLAG_A64(env->hflags, TBID) & 1)) ? 8 : 0) |
                                  (env->btype << HUSK_BTYPE_SHIFT),
-                             .tpidr_el0 = env->cp15.tpidr_el[0] };
+                             .tpidr_el0 = env->cp15.tpidr_el[0],
+                             .exclusive_address = env->exclusive_addr,
+                             .exclusive_value = env->exclusive_val };
     memcpy(state.x, env->xregs, sizeof(state.x));
     for (unsigned i = 0; i < 32; ++i) {
         memcpy(state.v[i], aa64_vfp_qreg(env, i), sizeof(state.v[i]));

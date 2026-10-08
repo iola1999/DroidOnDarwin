@@ -18,6 +18,9 @@ struct Memory {
     bool pending_landing = false, data_allowed = true;
     alignas(16384) std::array<uint8_t, 16384> data{};
     unsigned assists = 0;
+    bool pauth_allowed = true;
+    uint64_t pauth_key = 0x18273645;
+    unsigned pauth_calls = 0;
     uint64_t base = 0x10000;
 
     static const void *Code(void *opaque, uint64_t page) {
@@ -38,16 +41,28 @@ struct Memory {
     }
     static HuskArm64Assist Assist(void *opaque, HuskArm64State *state, uint32_t word) {
         auto &m = *static_cast<Memory *>(opaque);
-        if ((word & 0xfffffc1f) != 0xd63f0000) return HUSK_ASSIST_DECLINED;
+        if (word == 0xd50320ff || (word & 0xffffff3f) == 0xd503211f ||
+            (word & 0xfffffe1f) == 0xd503221f) {
+            ++m.pauth_calls;
+            if (!m.pauth_allowed) return HUSK_ASSIST_DECLINED;
+            unsigned reg = (word & 0xffffff3f) == 0xd503211f ? 17 : 30;
+            uint64_t modifier = reg == 17 ? state->x[16] :
+                word != 0xd50320ff && (word & 32) ? state->sp : 0;
+            state->x[reg] ^= modifier ^ m.pauth_key ^ word;
+            state->pc += 4;
+            return HUSK_ASSIST_PAUTH;
+        }
+        bool link = (word & 0xfffffc1f) == 0xd63f0000;
+        if (!link && word != 0xd61f0200 && word != 0xd61f0220) return HUSK_ASSIST_DECLINED;
         ++m.assists;
         auto target = state->x[(word >> 5) & 31];
-        state->x[30] = state->pc + 4;
+        if (link) state->x[30] = state->pc + 4;
         state->pc = target;
         if (m.pending_landing) {
-            state->access_flags = (state->access_flags & ~48U) | 32;
-            return HUSK_ASSIST_CHAIN_LANDING_CALL;
+            state->access_flags = (state->access_flags & ~48U) | (link ? 32 : 16);
+            return link ? HUSK_ASSIST_CHAIN_LANDING_CALL : HUSK_ASSIST_CHAIN_LANDING_JUMP;
         }
-        return m.chain_assist ? HUSK_ASSIST_CHAIN_CALL : HUSK_ASSIST_BRANCH;
+        return m.chain_assist ? (link ? HUSK_ASSIST_CHAIN_CALL : HUSK_ASSIST_CHAIN_JUMP) : HUSK_ASSIST_BRANCH;
     }
 };
 
@@ -178,8 +193,70 @@ int main()
     CHECK(husk_direct_run(engine.get(), &state, 0x10000, m.a.data(), callbacks, 4096) == HUSK_ARM64_FALLBACK);
     CHECK(state.pc == 0x11000 && state.x[0] == value && state.x[1] == 0x40000);
     CHECK(state.x[30] == 0x1000c && (state.access_flags & 48) == 32 && m.assists == 1);
+    for (uint32_t word : {0xd61f0200U, 0xd61f0220U}) {
+        m.a[0] = word; m.a[2] = word;
+        state = {}; state.pc = 0x10000; state.x[1] = 0x30000;
+        state.x[(word >> 5) & 31] = 0x11000; state.x[30] = 0x10004;
+        m.assists = 0;
+        CHECK(husk_direct_run(engine.get(), &state, 0x10000, m.a.data(), callbacks, 4096) == HUSK_ARM64_FALLBACK);
+        CHECK(state.pc == 0x11000 && state.x[0] == value && state.x[1] == 0x40000);
+        CHECK(state.x[30] == 0x10004 && (state.access_flags & 48) == 16 && m.assists == 1);
+    }
     CHECK(husk_arm64_landing_supported(0xa9bf7bfd)); // stp x29,x30,[sp,#-16]!
     CHECK(!husk_arm64_landing_supported(0xd63f0060)); // blr x3
     CHECK(!husk_arm64_landing_supported(0xd503233f)); // paciasp
+
+    // Adjacent addresses can each have a cached landing variant. After the
+    // first instruction retires, a later memory miss must resume normal code.
+    m.a.fill(0xd4000001);
+    m.a[0] = 0x91000400; m.a[1] = 0xf9400020; // add x0,x0,#1; ldr x0,[x1]
+    state = {}; state.pc = 0x10004; state.x[1] = 0x30000; state.access_flags = 32;
+    CHECK(husk_direct_run(engine.get(), &state, 0x10000, m.a.data(), callbacks, 4096) == HUSK_ARM64_FALLBACK);
+    CHECK(state.pc == 0x10008 && state.x[0] == value && !state.access_flags);
+    state = {}; state.pc = 0x10000; state.x[1] = 0x30000; state.access_flags = 32;
+    CHECK(husk_direct_run(engine.get(), &state, 0x10000, m.a.data(), callbacks, 4096) == HUSK_ARM64_FALLBACK);
+    CHECK(state.pc == 0x10008 && state.x[0] == value && !state.access_flags);
+    m.a.fill(0xd4000001);
+    const uint32_t ordering[] = {0xd5033bbf, 0xd5033f9f, 0xd503245f, 0xd503249f, 0xd50324df};
+    std::copy(std::begin(ordering), std::end(ordering), m.a.begin());
+    state = {}; state.pc = 0x10000; state.nzcv = 0xa0000000; state.x[16] = 0x1234;
+    auto ordering_expected = state; ordering_expected.pc += sizeof(ordering);
+    CHECK(husk_direct_run(engine.get(), &state, 0x10000, m.a.data(), callbacks, 4096) == HUSK_ARM64_FALLBACK);
+    CHECK(!std::memcmp(&state, &ordering_expected, sizeof(state)));
+    const uint32_t pauth_words[] = {
+        0xd50320ff, 0xd503211f, 0xd503215f, 0xd503219f, 0xd50321df,
+        0xd503231f, 0xd503233f, 0xd503235f, 0xd503237f,
+        0xd503239f, 0xd50323bf, 0xd50323df, 0xd50323ff,
+    };
+    for (uint32_t word : pauth_words) for (unsigned generation = 0; generation < 2; ++generation) {
+        unsigned reg = (word & 0xffffff3f) == 0xd503211f ? 17 : 30;
+        m.a.fill(0xd4000001);
+        m.a[0] = 0xaa0403e0 | reg; // mov operand,x4
+        m.a[1] = word;
+        m.a[2] = 0xca0000e7 | (reg << 16); // eor x7,x7,operand
+        m.a[3] = 0xf1000442; m.a[4] = 0x54ffff81;
+        state = {}; state.pc = 0x10000; state.x[2] = 10001; state.x[4] = 0x12345678;
+        state.x[16] = 0x98765544; state.sp = 0x76543210;
+        state.fpcr = 0x03000000; state.fpsr = 0x08000091;
+        for (unsigned i = 0; i < 32; ++i) { state.v[i][0] = i + 17; state.v[i][1] = i + 913; }
+        ++m.pauth_key;
+        uint64_t modifier = reg == 17 ? state.x[16] :
+            word != 0xd50320ff && (word & 32) ? state.sp : 0;
+        uint64_t result = state.x[4] ^ modifier ^ m.pauth_key ^ word;
+        auto expected = state;
+        expected.pc += 20; expected.x[2] = 0; expected.x[reg] = expected.x[7] = result;
+        expected.nzcv = 0x60000000;
+        m.pauth_calls = 0;
+        CHECK(husk_direct_run(engine.get(), &state, 0x10000, m.a.data(), callbacks, 100000) == HUSK_ARM64_FALLBACK);
+        CHECK(!std::memcmp(&state, &expected, sizeof(state)) && m.pauth_calls == 1);
+        // No entry may survive run(), even for unchanged instruction operands.
+        m.pauth_allowed = false;
+        state = expected; state.pc = 0x10000; state.x[2] = 1; m.pauth_calls = 0;
+        expected = state; expected.x[reg] = state.x[4]; expected.pc += 4;
+        CHECK(husk_direct_run(engine.get(), &state, 0x10000, m.a.data(), callbacks, 4096) == HUSK_ARM64_FALLBACK);
+        CHECK(!std::memcmp(&state, &expected, sizeof(state)) && m.pauth_calls == 1);
+        m.pauth_allowed = true;
+    }
     std::puts("cross-page execution, invalidation and physical alias checks PASS");
+    std::puts("PAC hint reuse, full state preservation and per-run invalidation PASS");
 }

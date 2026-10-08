@@ -108,7 +108,7 @@ def main():
                 row["passed"] = False
             if not all((benchmark, memory_benchmark, tagged_benchmark, syscall_benchmark, switch_benchmark)):
                 row["passed"] = False
-            for name in ("vector", "float", "vector_memory", "calls", "indirect_calls", "plain_calls", "atomic", "pointer", "pointer_write"):
+            for name in ("vector", "float", "vector_memory", "vector_structures", "calls", "indirect_calls", "plain_calls", "tail_calls", "exclusive", "atomic", "pointer", "pointer_write"):
                 measured = re.search(rf"BENCH {name}_ns=(\d+) value=(\d+)", output)
                 row[name + "_ns"] = int(measured[1]) if measured else None
                 if not measured and not (name == "atomic" and "SKIP LSE unavailable" in output):
