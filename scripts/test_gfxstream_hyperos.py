@@ -80,6 +80,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--gpu", choices=("software", "gfxstream"), required=True)
     parser.add_argument("--accel", choices=("tcg", "hvf"), default="tcg")
+    parser.add_argument("--cpu", help="Override the QEMU CPU model for feature comparisons")
     parser.add_argument("--execution", choices=("tcg", "direct"), default="tcg",
                         help="Select the CPU execution backend; Direct requires --accel tcg")
     parser.add_argument("--profile", action="store_true", help="Collect Direct statistics and CPU phase times")
@@ -105,7 +106,8 @@ def main():
     output.mkdir(parents=True, exist_ok=False)
     command = json.loads((ROOT / "work/hyperos3-phone-profile/command.json").read_text())
     changes = {"-name": f"HyperOS {args.gpu} {args.accel} {args.execution}", "-accel": args.accel,
-        "-smp": "1", "-m": "4096", "-cpu": "host" if args.accel == "hvf" else "max,pauth-impdef=on,sve=off,sme=off",
+        "-smp": "1", "-m": "4096", "-cpu": args.cpu or (
+            "host" if args.accel == "hvf" else "max,pauth-impdef=on,sve=off,sme=off"),
         "-serial": f"file:{output}/serial.log", "-pidfile": str(output / "qemu.pid"),
         "-qmp": "tcp:127.0.0.1:16257,server=on,wait=off"}
     if args.accel == "tcg": changes["-accel"] = "tcg,thread=single,tb-size=256"
@@ -125,6 +127,7 @@ def main():
         if args.profile: env[name] = "1"
         else: env.pop(name, None)
     result = {"gpu": args.gpu, "accel": args.accel, "execution": args.execution, "passed": False,
+              "cpu": changes["-cpu"],
               "backend_env": {k: v for k, v in env.items() if k.startswith("HUSK_ARM64_")},
               "bench_frames": args.bench_frames, "bench_limit_seconds": args.bench_seconds,
               "qemu_sha256": hashlib.sha256(Path(command[0]).read_bytes()).hexdigest(),

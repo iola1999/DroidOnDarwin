@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 #include "qemu/osdep.h"
 #include "cpu.h"
+#include "cpregs.h"
 #include "internals.h"
 #include "exec/exec-all.h"
 #include "exec/cputlb.h"
@@ -26,7 +27,7 @@ typedef struct {
     bool poll_dispatch, assist, assisted_pauth, chain_assist, landing, pauth_landing, kernel, kernel_started, mops_started;
     unsigned last_el;
     unsigned dispatch_polls;
-    bool profile, native_pauth_started;
+    bool profile, native_pauth_started, system_reads;
     unsigned profile_phase;
     int64_t profile_last, profile_report, profile_ns[4];
     struct { uint64_t page; unsigned entries; } warm_pages[1024];
@@ -289,6 +290,27 @@ static HuskArm64Assist husk_assist(void *opaque, HuskArm64State *state, uint32_t
     unsigned reg = 30, operation;
     uint64_t modifier = 0;
     uint32_t branch = insn & 0xfffffc1f;
+    switch (insn & 0xffffffe0) {
+    case 0xd53be000: case 0xd53be020: case 0xd53be040:
+    case 0xd53be0a0: case 0xd53be0c0: {
+        /* Counter reads preserve mappings. Use QEMU's permission and virtual
+         * clock callbacks; unsupported/trapping contexts still execute in TCG. */
+        if (!ctx->system_reads || EX_TBFLAG_ANY(env->hflags, FGT_ACTIVE) ||
+            EX_TBFLAG_A64(env->hflags, NV)) return HUSK_ASSIST_DECLINED;
+        uint32_t key = ENCODE_AA64_CP_REG(CP_REG_ARM64_SYSREG_CP,
+            (insn >> 12) & 15, (insn >> 8) & 15, (insn >> 19) & 3,
+            (insn >> 16) & 7, (insn >> 5) & 7);
+        const ARMCPRegInfo *ri = get_arm_cp_reginfo(env_archcpu(env)->cp_regs, key);
+        if (!ri || !cp_access_ok(arm_current_el(env), ri, true) ||
+            (ri->accessfn && ri->accessfn(env, ri, true) != CP_ACCESS_OK))
+            return HUSK_ASSIST_DECLINED;
+        uint64_t value = ri->readfn ? ri->readfn(env, ri) :
+            *(uint64_t *)((char *)env + ri->fieldoffset);
+        if ((insn & 31) != 31) state->x[insn & 31] = value;
+        state->pc += 4;
+        return HUSK_ASSIST_CONTINUE;
+    }
+    }
     if (husk_arm64_mops_prologue(insn)) {
         if (!husk_mops_allowed(env) || (state->pc & 4095) > 4084)
             return HUSK_ASSIST_DECLINED;
@@ -518,6 +540,8 @@ landing_ready:
         ctx->pauth_landing = pauth_landing;
         const char *reuse = getenv("HUSK_ARM64_FASTMEM_REUSE");
         ctx->reuse_mappings = direct && (!reuse || strcmp(reuse, "0"));
+        const char *system_reads = getenv("HUSK_ARM64_SYSTEM_READS");
+        ctx->system_reads = !system_reads || strcmp(system_reads, "0");
         ctx->profile = getenv("HUSK_ARM64_PROFILE") != NULL;
         if (ctx->profile) {
             arm_register_el_change_hook(cpu, husk_profile_el, ctx);
@@ -583,6 +607,10 @@ landing_ready:
         epoch = ctx->mapping_epoch;
     }
     HuskArm64Pauth pauth;
+    HuskArm64KernelReads kernel_reads = {env->cp15.tpidr_el[1], env->sp_el[0], env->daif};
+    bool native_kernel_reads = direct && ctx->system_reads && el == 1 &&
+        (env->pstate & PSTATE_SP) && !EX_TBFLAG_ANY(env->hflags, FGT_ACTIVE) &&
+        !EX_TBFLAG_A64(env->hflags, NV);
     bool native_pauth = direct && husk_pauth_parameters(env, &pauth);
     if (native_pauth && !ctx->native_pauth_started) {
         fprintf(stderr, "[husk-arm64] native implementation-defined PAUTH active\n");
@@ -592,7 +620,8 @@ landing_ready:
                                         (HuskArm64Memory){ctx, husk_read, husk_write, husk_map_page,
                                                          ctx->assist ? husk_assist : NULL,
                                                          direct ? husk_map_code : NULL, epoch,
-                                                         native_pauth ? &pauth : NULL},
+                                                         native_pauth ? &pauth : NULL,
+                                                         native_kernel_reads ? &kernel_reads : NULL},
                                         slice_budget);
     husk_profile_phase(ctx, el != 0);
     if (result == HUSK_ARM64_ERROR) {

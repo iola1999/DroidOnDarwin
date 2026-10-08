@@ -81,6 +81,11 @@ typedef struct {
 } HuskArm64PauthKey;
 typedef struct { HuskArm64PauthKey keys[4]; } HuskArm64Pauth;
 
+/* Optional EL1 reads. The owner permits these only with SP_EL1 selected and
+ * without fine-grained or nested-virtualization traps. Writes end the slice,
+ * so values stay unchanged until run() returns. */
+typedef struct { uint64_t tpidr_el1, sp_el0, daif; } HuskArm64KernelReads;
+
 typedef struct {
     void *opaque;
     /* Failure must leave guest memory unchanged. Never unwind through JIT code. */
@@ -107,6 +112,7 @@ typedef struct {
      * each call. map_page must also reject aliases of all code in this call. */
     uint64_t mapping_epoch;
     const HuskArm64Pauth *pauth;
+    const HuskArm64KernelReads *kernel_reads;
 } HuskArm64Memory;
 
 /* map_page must reject MMIO, watched pages and writable code aliases. All

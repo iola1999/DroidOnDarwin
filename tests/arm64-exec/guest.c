@@ -84,6 +84,7 @@ extern u64 husk_dispatch_general_loop(u64 n);
 extern u64 husk_pac_call_loop(u64 n);
 extern u64 husk_pauth_diverse_loop(u64 n);
 extern u64 husk_counter_loop(u64 n);
+extern void husk_kernel_read(unsigned index);
 extern void *husk_mops_copy(void *to, const void *from, u64 length);
 extern u64 husk_mops_tagged_loop(void *to, const void *from, u64 count);
 
@@ -118,6 +119,18 @@ static void mops_benchmark(void)
 
 static void vector_benchmarks(void)
 {
+    for (unsigned index = 0; index < 3; ++index) {
+        s64 child = call(220, 17, 0, 0, 0, 0, 0);
+        CHECK(child >= 0);
+        if (!child) {
+            husk_kernel_read(index);
+            call(93, 0, 0, 0, 0, 0, 0);
+            for (;;) {}
+        }
+        int status = 0;
+        CHECK(call(260, child, (u64)&status, 0, 0, 0, 0) == child && (status & 127) == 4);
+    }
+    print("PASS EL0 privileged system-register reads raise SIGILL\n");
     const u64 n = 10000000;
     u64 start = ns(), value = husk_vector_loop(n);
     u64 elapsed = ns() - start;

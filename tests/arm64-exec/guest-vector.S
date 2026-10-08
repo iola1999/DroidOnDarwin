@@ -122,6 +122,18 @@ husk_vector_structures:
     ret
 
 .global husk_counter_loop
+.global husk_kernel_read
+husk_kernel_read:
+    cbz w0, 1f
+    cmp w0, #1
+    b.eq 2f
+    mrs x0, daif
+    ret
+1:  mrs x0, sp_el0
+    ret
+2:  mrs x0, tpidr_el1
+    ret
+
 husk_counter_loop:
     mov x2, #0
     mrs x3, cntvct_el0

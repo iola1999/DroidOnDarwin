@@ -36,6 +36,7 @@ namespace {
 constexpr uint32_t CompileFastmem = 16, CompileLanding = 32, CompileInlineAssists = 256;
 constexpr uint32_t CompileExclusive = 512, CompileTail = 1024;
 constexpr uint32_t CompilePauthVerify = 2048;
+constexpr uint32_t CompileKernelReads = 4096;
 enum Stop : uint64_t { Budget, Fallback, ReadPage, WritePage, PrepareLoop, CodeBranch,
                        FastReadPage, FastWritePage, PauthCheck };
 struct FaultSite {
@@ -55,7 +56,10 @@ struct Frame {
     uint64_t code_page;
     CompiledPage *code;
     const HuskArm64Pauth *pauth;
+    const HuskArm64KernelReads *kernel_reads;
 };
+static_assert(offsetof(Frame, kernel_reads) == HUSK_KERNEL_READS);
+static_assert(sizeof(HuskArm64KernelReads) == 24);
 static_assert(offsetof(Frame, pauth) == HUSK_NATIVE_PAUTH);
 static_assert(sizeof(HuskArm64PauthKey) == 32);
 static_assert(offsetof(HuskArm64PauthKey, mask) == 16);
@@ -183,7 +187,7 @@ enum Kind { Other, AddImm, MoveWide, AddReg, LogicalReg, LogicalImm, Bitfield,
             Extract, Unary, Binary, Crc, Select, Multiply, AddExt, Carry, Adr, Branch, Conditional,
             CompareBranch, TestBranch, Indirect, Memory, Pair, Vector,
             VectorFromGpr, GprFromVector, FpFromGpr, GprFromFp, Compare, Hint, SystemRead, Assist, Atomic,
-            Pauth, Barrier, Bti, ExclusiveLoad, ExclusiveStore, ClearExclusive, Structure };
+            Pauth, Barrier, Bti, ExclusiveLoad, ExclusiveStore, ClearExclusive, Structure, KernelRead };
 
 unsigned structure_registers(uint32_t word)
 {
@@ -247,6 +251,9 @@ Kind decode(uint32_t w)
     if ((w & 0xfffff0ff) == 0xd503305f) return ClearExclusive;
     switch (w & 0xffffffe0) {
     case 0xd53bd040: case 0xd53b4200: case 0xd53b4400: case 0xd53b4420: return SystemRead;
+    case 0xd538d080: case 0xd5384100: case 0xd53b4220: return KernelRead;
+    case 0xd53be000: case 0xd53be020: case 0xd53be040:
+    case 0xd53be0a0: case 0xd53be0c0: return Assist;
     }
     if ((w & 0x1f000000) == 0x10000000) return Adr;
     if ((w & 0x7c000000) == 0x14000000) return Branch;
@@ -801,6 +808,14 @@ struct CompiledPage {
                     c.MOV(X16, UINT64_MAX); c.STR(X16, X27, HUSK_EXCLUSIVE_ADDR);
                 } else if (kind == Hint) {
                     // The guest NOP has no architectural side effects.
+                } else if (kind == KernelRead) {
+                    if (!(flags & CompileKernelReads)) exit(pc, Fallback);
+                    else {
+                        unsigned offset = (w & 0xffffffe0) == 0xd538d080 ? 0 :
+                            (w & 0xffffffe0) == 0xd5384100 ? 8 : 16;
+                        c.LDR(X16, X27, HUSK_KERNEL_READS);
+                        c.LDR(X16, X16, offset); save(rd, X16);
+                    }
                 } else if (kind == SystemRead) {
                     if ((w & 0xffffffe0) == 0xd53bd040) c.LDR(X16, X27, HUSK_TPIDR);
                     else c.dw((w & ~31U) | 16);
@@ -1415,7 +1430,8 @@ HuskArm64Exit husk_direct_run(HuskArm64Direct *ctx, HuskArm64State *state,
     if (ctx->inline_assists && ctx->tail_cache) access_flags |= CompileTail;
     if (ctx->native_lse && ctx->exclusive) access_flags |= CompileExclusive;
     if (ctx->native_crc) access_flags |= state->access_flags & 64;
-    if (ctx->verify_pauth) access_flags |= CompilePauthVerify;
+    if (ctx->verify_pauth && memory.assist) access_flags |= CompilePauthVerify;
+    if (memory.kernel_reads) access_flags |= CompileKernelReads;
     if (ctx->fastmem) {
         if (!memory.mapping_epoch || memory.mapping_epoch != ctx->mapping_epoch)
             ctx->fastmem->reset();
@@ -1449,7 +1465,7 @@ HuskArm64Exit husk_direct_run(HuskArm64Direct *ctx, HuskArm64State *state,
                 ctx->routes.data(), ctx->call_routes.data(),
                 ctx->fastmem ? ctx->fastmem->bases(false) : nullptr,
                 ctx->fastmem ? ctx->fastmem->bases(true) : nullptr, ctx->pauth_cache.data(), nullptr, 0, 0,
-                page, code, memory.pauth};
+                page, code, memory.pauth, memory.kernel_reads};
     void *next = code->entries[(state->pc - page) / 4];
     for (;;) {
 #if !TARGET_OS_IPHONE
