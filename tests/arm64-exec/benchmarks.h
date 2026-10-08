@@ -11,6 +11,22 @@ __attribute__((noinline)) static unsigned long calculate(unsigned long n)
     return result;
 }
 
+__attribute__((noinline)) static unsigned long pointer_loop(unsigned long p, unsigned long n)
+{
+    __asm__ volatile("1: ldr %0, [%0]\nsubs %1, %1, #1\nb.ne 1b"
+                     : "+r"(p), "+r"(n) : : "memory", "cc");
+    return p;
+}
+
+__attribute__((noinline)) static unsigned long pointer_write_loop(unsigned long p, unsigned long n)
+{
+    unsigned long value;
+    __asm__ volatile("1: ldr %0, [%0]\nldr %2, [%0, #8]\nadd %2, %2, #1\n"
+                     "str %2, [%0, #8]\nsubs %1, %1, #1\nb.ne 1b"
+                     : "+r"(p), "+r"(n), "=&r"(value) : : "memory", "cc");
+    return p;
+}
+
 __attribute__((noinline)) static void memory_loop(volatile unsigned long *p, unsigned long n)
 {
     unsigned long value;

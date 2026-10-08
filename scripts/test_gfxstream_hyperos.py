@@ -85,6 +85,7 @@ def main():
     parser.add_argument("--bench-seconds", type=int, default=180)
     parser.add_argument("--interaction", action="store_true",
                         help="Measure opening Settings and six list swipes before the GLES benchmark")
+    parser.add_argument("--bulk-dir", type=Path, help="Run Android libc comparisons from build_guest_bulk.py")
     args = parser.parse_args()
     if args.execution == "direct" and args.accel != "tcg":
         parser.error("Direct requires --accel tcg")
@@ -157,13 +158,49 @@ def main():
             (output / "adb-connect.txt").write_text(connect.stdout + connect.stderr)
             ready = adb_run("wait-for-device", seconds=60)
             if ready.returncode: raise RuntimeError("ADB did not become ready: " + ready.stderr)
-            dump = adb_run("shell", "dumpsys -t 60 SurfaceFlinger", seconds=90)
+            for attempt in range(3):
+                dump = adb_run("shell", "dumpsys -t 60 SurfaceFlinger", seconds=90)
+                if not dump.returncode or not any(message in dump.stderr for message in ("closed", "offline")):
+                    break
+                adb_run("wait-for-device", seconds=60)
+                time.sleep(1)
             (output / "surfaceflinger.txt").write_text(dump.stdout + dump.stderr)
             result["renderer"] = next((line.strip() for line in dump.stdout.splitlines() if "GLES:" in line), "")
             if dump.returncode or not result["renderer"]:
                 raise RuntimeError(f"SurfaceFlinger query did not return a renderer (exit {dump.returncode})")
             if args.gpu == "gfxstream" and "ANGLE Metal Renderer" not in result["renderer"]:
                 raise RuntimeError("SurfaceFlinger did not use the Metal renderer")
+            if args.bulk_dir:
+                result["bulk"] = []
+                for name in ("libhusk_bulk.so", "husk-bulk-bench"):
+                    local = args.bulk_dir / name
+                    result.setdefault("bulk_sha256", {})[name] = hashlib.sha256(local.read_bytes()).hexdigest()
+                    transfer = adb_run("push", str(local.resolve()), "/data/local/tmp/" + name)
+                    if transfer.returncode: raise RuntimeError(transfer.stderr)
+                for sample in range(3):
+                    for mode in ("stock", "disabled", "enabled"):
+                        prefix = "" if mode == "stock" else (
+                            "LD_PRELOAD=/data/local/tmp/libhusk_bulk.so HUSK_BULK_STATS=1 "
+                            f"HUSK_BULK_DISABLE={1 if mode == 'disabled' else 0} ")
+                        run = adb_run("shell", "chmod 755 /data/local/tmp/husk-bulk-bench; " +
+                                      prefix + "/data/local/tmp/husk-bulk-bench", seconds=300)
+                        (output / f"bulk-{sample}-{mode}.log").write_text(run.stdout + run.stderr)
+                        row = {"sample": sample, "mode": mode, "exit_code": run.returncode,
+                               "passed": run.returncode == 0 and "PASS Android libc bulk" in run.stdout,
+                               "enabled": "bulk_enabled=1" in run.stdout,
+                               "mops": "mops=1" in run.stdout}
+                        expected = (mode == "enabled" and args.accel == "tcg" and
+                                    env.get("HUSK_ARM64_BULK") == "1" and not row["mops"])
+                        row["passed"] &= row["enabled"] == expected
+                        counts = re.search(r"completed=(\d+) refused=(\d+) transferred=(\d+)", run.stdout)
+                        if counts:
+                            row.update(completed=int(counts[1]), refused=int(counts[2]), transferred=int(counts[3]))
+                        if expected: row["passed"] &= bool(counts and int(counts[1]) > 0)
+                        row["measurements"] = [dict(size=int(m[1]), bytes=int(m[2]), copy_ns=int(m[3]), set_ns=int(m[4]))
+                            for m in re.finditer(r"BENCH size=(\d+) bytes=(\d+) copy_ns=(\d+) set_ns=(\d+)", run.stdout)]
+                        result["bulk"].append(row)
+                        print("bulk", json.dumps(row), flush=True)
+                        if not row["passed"]: raise RuntimeError("Android libc bulk validation failed")
             if args.interaction:
                 # Keep completed phases when a later UI query times out.
                 result["settings"] = {}

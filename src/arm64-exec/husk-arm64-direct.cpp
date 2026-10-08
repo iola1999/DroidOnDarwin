@@ -1,21 +1,26 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 #include "husk-arm64-direct.h"
 #include "husk-arm64-layout.h"
+#include "husk-arm64-fastmem.h"
 
 #include <algorithm>
 #include <array>
+#include <atomic>
 #include <cstring>
 #include <cstdlib>
 #include <chrono>
 #include <cstdio>
 #include <stdexcept>
 #include <memory>
+#include <mutex>
 #include <unordered_map>
 #include <vector>
 #include <libkern/OSCacheControl.h>
 #include <pthread.h>
 #include <sys/mman.h>
 #include <sys/sysctl.h>
+#include <sys/ucontext.h>
+#include <signal.h>
 #include <TargetConditionals.h>
 #include <oaknut/oaknut.hpp>
 #if TARGET_OS_IPHONE
@@ -26,12 +31,22 @@ using namespace oaknut;
 using namespace oaknut::util;
 
 namespace {
-enum Stop : uint64_t { Budget, Fallback, ReadPage, WritePage, PrepareLoop, CodeBranch };
+constexpr uint32_t CompileFastmem = 16, CompileLanding = 32;
+enum Stop : uint64_t { Budget, Fallback, ReadPage, WritePage, PrepareLoop, CodeBranch,
+                       FastReadPage, FastWritePage };
+struct FaultSite {
+    uintptr_t instruction, slow, patch, checked;
+    unsigned bytes;
+    bool write;
+};
 struct Frame {
     HuskArm64State state;
     uint64_t budget, address, reason, loop_base;
     void *code_routes;
     void *call_routes;
+    const uintptr_t *read_windows, *write_windows;
+    const FaultSite *fault_sites;
+    size_t fault_count, fault_index;
 };
 static_assert(offsetof(Frame, state.pc) == HUSK_PC);
 static_assert(offsetof(Frame, state.nzcv) == HUSK_NZCV);
@@ -46,6 +61,8 @@ static_assert(offsetof(Frame, reason) == HUSK_REASON);
 static_assert(offsetof(Frame, loop_base) == HUSK_LOOP_BASE);
 static_assert(offsetof(Frame, code_routes) == HUSK_CODE_ROUTES);
 static_assert(offsetof(Frame, call_routes) == HUSK_CALL_ROUTES);
+static_assert(offsetof(Frame, read_windows) == HUSK_READ_WINDOWS);
+static_assert(offsetof(Frame, write_windows) == HUSK_WRITE_WINDOWS);
 struct Mapping { uint64_t tag; void *read, *write; uint64_t reserved; };
 struct CodeRoute { uint64_t tag; void **entries; };
 struct CallRoute { uint64_t target; void *entry; };
@@ -54,6 +71,77 @@ static_assert(sizeof(CodeRoute) == 16);
 static_assert(sizeof(CallRoute) == 16);
 extern "C" void husk_direct_enter(Frame *, void *, Mapping *);
 extern "C" void husk_direct_leave();
+
+/* Fastmem currently executes on one vCPU. Identity is checked against the
+ * saved native frame register before the handler dereferences that frame. */
+std::atomic<Frame *> active_fastmem;
+static_assert(decltype(active_fastmem)::is_always_lock_free);
+struct sigaction previous_bus, previous_segv;
+
+void fastmem_signal(int signal, siginfo_t *info, void *opaque)
+{
+    auto *uc = static_cast<ucontext_t *>(opaque);
+    Frame *frame = active_fastmem.load(std::memory_order_relaxed);
+    if (frame && uc && info && uc->uc_mcontext->__ss.__x[27] == uintptr_t(frame)) {
+        uintptr_t pc = uc->uc_mcontext->__ss.__pc;
+        size_t low = 0, high = frame->fault_count;
+        while (low < high) {
+            size_t middle = low + (high - low) / 2;
+            if (frame->fault_sites[middle].instruction < pc) low = middle + 1;
+            else high = middle;
+        }
+        if (low < frame->fault_count && frame->fault_sites[low].instruction == pc) {
+            const auto &site = frame->fault_sites[low];
+            uint64_t address = uc->uc_mcontext->__ss.__x[16];
+            if (frame->state.access_flags & 8) address &= UINT64_C(0x00ffffffffffffff);
+            const auto *windows = site.write ? frame->write_windows : frame->read_windows;
+            if (!(address >> HuskArm64Fastmem::address_bits)) {
+                uintptr_t host = windows[address >> HuskArm64Fastmem::segment_bits] +
+                                 (address & (HuskArm64Fastmem::segment_size - 1));
+                uintptr_t fault = reinterpret_cast<uintptr_t>(info->si_addr);
+                if (host == uc->uc_mcontext->__ss.__x[17] && fault >= host && fault - host < site.bytes) {
+                    frame->fault_index = low;
+                    uc->uc_mcontext->__ss.__pc = site.slow;
+                    return;
+                }
+            }
+        }
+    }
+    auto &previous = signal == SIGBUS ? previous_bus : previous_segv;
+    if (previous.sa_handler == SIG_DFL || previous.sa_handler == SIG_IGN) {
+        sigaction(signal, &previous, nullptr);
+        raise(signal);
+    } else if (previous.sa_flags & SA_SIGINFO) {
+        previous.sa_sigaction(signal, info, opaque);
+    } else {
+        previous.sa_handler(signal);
+    }
+}
+
+void install_fastmem_signals()
+{
+    static std::once_flag once;
+    std::call_once(once, [] {
+        struct sigaction action{};
+        action.sa_sigaction = fastmem_signal;
+        action.sa_flags = SA_SIGINFO;
+        sigemptyset(&action.sa_mask);
+        if (sigaction(SIGBUS, &action, &previous_bus))
+            throw std::runtime_error("fastmem SIGBUS handler installation failed");
+        if (sigaction(SIGSEGV, &action, &previous_segv)) {
+            sigaction(SIGBUS, &previous_bus, nullptr);
+            throw std::runtime_error("fastmem SIGSEGV handler installation failed");
+        }
+    });
+    /* QEMU worker threads inherit a blocked SIGBUS on Darwin. A synchronous
+     * protection fault needs delivery on this executing thread. */
+    sigset_t faults;
+    sigemptyset(&faults);
+    sigaddset(&faults, SIGBUS);
+    sigaddset(&faults, SIGSEGV);
+    if (pthread_sigmask(SIG_UNBLOCK, &faults, nullptr))
+        throw std::runtime_error("fastmem fault signal delivery failed");
+}
 
 bool resident(unsigned reg) { return reg < 16 || (reg >= 19 && reg < 26); }
 int64_t sign_extend(uint32_t value, unsigned bits)
@@ -117,6 +205,7 @@ Kind decode(uint32_t w)
     // BR/BLR retain the owner's BTYPE and destination checks through its assist.
     if (br == 0xd61f0000 || br == 0xd63f0000) return Assist;
     if (br == 0xd65f0000) return Indirect;
+    if (w == HUSK_BULK_INSN) return Assist;
     switch (w) {
     case 0xd50320ff:
     case 0xd503211f: case 0xd503215f: case 0xd503219f: case 0xd50321df:
@@ -244,12 +333,16 @@ struct CompiledPage {
     std::array<uint32_t, 1024> source{};
     std::array<void *, 1024> entries{};
     std::array<void *, 1024> branch_entries{};
+    std::array<void *, 1024> landing_call_entries{};
     std::vector<Loop> loops;
     bool unaligned;
 
     size_t compile(uint64_t new_page, const void *bytes, size_t entry,
-                   uint32_t *executable, uint32_t *writable, uint32_t flags)
+                   uint32_t *executable, uint32_t *writable, uint32_t flags,
+                   std::vector<FaultSite> &fault_sites)
     {
+        std::vector<FaultSite> new_faults;
+        bool landing = flags & CompileLanding;
         unaligned = flags & 1;
         std::array<uint32_t, 1024> input;
         std::memcpy(input.data(), bytes, 4096);
@@ -268,7 +361,7 @@ struct CompiledPage {
                     if (address >= new_page && address - new_page < 4096)
                         pending.push_back((address - new_page) / 4);
                 }
-                if (k == Other || k == Indirect ||
+                if (landing || k == Other || k == Indirect ||
                     (k == Branch && !(input[i] & 0x80000000))) break;
             }
         }
@@ -286,7 +379,7 @@ struct CompiledPage {
         }
         size_t old_loops = loops.size();
         const char *loop_setting = std::getenv("HUSK_ARM64_LOOP_MAP");
-        if (!loop_setting || std::strcmp(loop_setting, "0")) {
+        if (!landing && (!loop_setting || std::strcmp(loop_setting, "0"))) {
             for (size_t end = 1; end < input.size(); ++end) {
                 if (!emit[end] || decode(input[end]) != Conditional) continue;
                 uint64_t start = target(input[end], Conditional, new_page + end * 4);
@@ -402,6 +495,12 @@ struct CompiledPage {
             if (emit[i]) {
                 uint64_t pc = new_page + i * 4;
                 c.l(labels[i]);
+                if (landing) {
+                    landing_call_entries[i] = c.xptr<void *>();
+                    c.LDR(W17, X27, HUSK_ACCESS_FLAGS);
+                    c.AND(W17, W17, ~uint32_t(HUSK_BTYPE_MASK)); c.ORR(W17, W17, 2U << HUSK_BTYPE_SHIFT);
+                    c.STR(W17, X27, HUSK_ACCESS_FLAGS);
+                }
                 branch_entries[i] = c.xptr<void *>();
                 if (leaders[i]) {
                     size_t end = i + 1;
@@ -535,7 +634,8 @@ struct CompiledPage {
                     int64_t offset = pair ? sign_extend((w >> 15) & 127, 7) * (1 << size_log2) :
                                      reg_offset || ordered ? 0 : indexed ? sign_extend((w >> 12) & 511, 9) :
                                      ((w >> 10) & 4095) << size_log2;
-                    Label miss, invalid, done;
+                    Label miss, invalid, done, checked, access;
+                    FaultSite fault{};
                     load(rn, X16, true);
                     if (rn == 31) { c.AND(X17, X16, 15); c.CBNZ(X17, invalid); }
                     if (reg_offset) {
@@ -559,16 +659,35 @@ struct CompiledPage {
                         c.ADD(X17, X16, ((pair ? 2U : 1U) << size_log2) - 1);
                         c.EOR(X17, X17, X16); c.LSR(X17, X17, 12); c.CBNZ(X17, invalid);
                     }
+                    if (flags & CompileFastmem) {
+                        fault.patch = uintptr_t(c.xptr<void *>());
+                        c.NOP(); // Replaced with a branch if this site needs checked mappings.
+                        if (flags & 8) c.UBFX(X17, X16, HuskArm64Fastmem::address_bits,
+                                             56 - HuskArm64Fastmem::address_bits);
+                        else c.LSR(X17, X16, HuskArm64Fastmem::address_bits);
+                        c.CBNZ(X17, checked);
+                        c.LDR(X26, X27, write ? HUSK_WRITE_WINDOWS : HUSK_READ_WINDOWS);
+                        c.UBFX(X17, X16, HuskArm64Fastmem::segment_bits,
+                               HuskArm64Fastmem::address_bits - HuskArm64Fastmem::segment_bits);
+                        c.LDR(X17, X26, X17, LSL, 3);
+                        c.AND(X26, X16, HuskArm64Fastmem::segment_size - 1);
+                        c.ADD(X17, X17, X26);
+                        c.B(access);
+                    }
+                    c.l(checked);
+                    fault.checked = uintptr_t(c.xptr<void *>());
                     c.UBFX(X17, X16, 12, 8);
                     c.ADD(X17, X28, X17, LSL, 5);
                     c.LDR(X26, X17);
                     c.EOR(X26, X26, X16, LSR, 12); c.CBNZ(X26, miss);
                     c.LDR(X17, X17, write ? 16 : 8); c.CBZ(X17, miss);
                     c.AND(X26, X16, 4095); c.ADD(X17, X17, X26);
+                    c.l(access);
                     unsigned data = vector || resident(rd) || rd == 31 ? rd : 26;
                     if (atomic) {
                         unsigned rs = (w >> 16) & 31;
                         load(rs, X26); load(rd, X30);
+                        fault.instruction = uintptr_t(c.xptr<void *>());
                         c.dw((w & ~((31U << 16) | 1023U)) | (26 << 16) | (17 << 5) | 30);
                         if ((w & 0x3fa07c00) == 0x08a07c00) save(rs, X26);
                         else save(rd, X30);
@@ -579,6 +698,7 @@ struct CompiledPage {
                         if (write && !vector && data2 == 30) load(rt2, X30);
                         // Preserve a single architectural pair access after validating
                         // both elements, including their common page boundary.
+                        fault.instruction = uintptr_t(c.xptr<void *>());
                         c.dw((w & 0xc4400000) | 0x29000000 | (data2 << 10) | (17 << 5) | data);
                         if (!write && !vector) {
                             if (data == 26) save(rd, X26);
@@ -586,6 +706,7 @@ struct CompiledPage {
                         }
                     } else {
                         if (write && !vector && data == 26) load(rd, X26);
+                        fault.instruction = uintptr_t(c.xptr<void *>());
                         c.dw(ordered ? (w & ~1023U) | (17 << 5) | data :
                              (w & 0xc4c00000) | 0x39000000 | (17 << 5) | data);
                         if (!write && !vector && data == 26) save(rd, X26);
@@ -597,6 +718,14 @@ struct CompiledPage {
                         save(rn, X16, true);
                     }
                     c.B(done);
+                    if (flags & CompileFastmem) {
+                        fault.slow = uintptr_t(c.xptr<void *>());
+                        fault.bytes = (pair ? 2U : 1U) << size_log2;
+                        fault.write = write;
+                        new_faults.push_back(fault);
+                        c.STR(X16, X27, HUSK_ADDRESS);
+                        exit(pc, write ? FastWritePage : FastReadPage);
+                    }
                     c.l(miss);
                     c.STR(X16, X27, HUSK_ADDRESS);
                     exit(pc, write ? WritePage : ReadPage);
@@ -605,7 +734,11 @@ struct CompiledPage {
                 } else {
                     exit(pc, Fallback);
                 }
-                if (i + 1 < input.size() && !emit[i + 1]) jump(pc + 4);
+                if (landing) {
+                    c.LDR(W17, X27, HUSK_ACCESS_FLAGS);
+                    c.AND(W17, W17, ~uint32_t(HUSK_BTYPE_MASK)); c.STR(W17, X27, HUSK_ACCESS_FLAGS);
+                    jump(pc + 4);
+                } else if (i + 1 < input.size() && !emit[i + 1]) jump(pc + 4);
             }
             if (i % 32 == 31) {
                 // TBNZ has a 32 KiB reach. Keep budget exits near their callers.
@@ -656,6 +789,7 @@ struct CompiledPage {
         pthread_jit_write_protect_np(1);
 #endif
         sys_icache_invalidate(executable, output.size() * 4);
+        fault_sites.insert(fault_sites.end(), new_faults.begin(), new_faults.end());
         source = input;
         return output.size() * 4;
     }
@@ -674,6 +808,9 @@ struct HuskArm64Direct {
     std::array<CodeRoute, 256> routes{};
     std::array<CallRoute, 256> call_routes{};
     std::array<uint8_t, 256> populated{};
+    std::unique_ptr<HuskArm64Fastmem> fastmem;
+    std::vector<FaultSite> fault_sites;
+    uint64_t mapping_epoch = 0;
     size_t populated_count = 0;
     bool profile = std::getenv("HUSK_ARM64_STATS") != nullptr;
     bool native_lse = false;
@@ -684,6 +821,17 @@ struct HuskArm64Direct {
 
     HuskArm64Direct()
     {
+        const char *fast = std::getenv("HUSK_ARM64_FASTMEM");
+        if (fast && !std::strcmp(fast, "1")) {
+            fastmem = std::make_unique<HuskArm64Fastmem>();
+            if (fastmem->available()) {
+                install_fastmem_signals();
+                std::fprintf(stderr, "[husk-fastmem] segmented mapping active\n");
+            } else {
+                fastmem.reset();
+                std::fprintf(stderr, "[husk-fastmem] reservation unavailable; checked mappings active\n");
+            }
+        }
         mappings.fill({UINT64_MAX, nullptr, nullptr, 0});
         int lse = 0;
         size_t lse_size = sizeof(lse);
@@ -726,12 +874,14 @@ struct HuskArm64Direct {
         }
         if (capacity - used < CompiledPage::max_bytes) {
             pages.clear();
+            fault_sites.clear();
             used = 0;
             ++flushes;
         }
         auto &compiled = pages[key];
         if (!compiled) compiled = std::make_unique<CompiledPage>();
-        used += compiled->compile(page, bytes, entry, executable + used / 4, writable + used / 4, flags);
+        used += compiled->compile(page, bytes, entry, executable + used / 4, writable + used / 4,
+                                  flags, fault_sites);
         ++compiles;
         return *compiled;
     }
@@ -739,6 +889,11 @@ struct HuskArm64Direct {
 
 HuskArm64Direct *husk_direct_create() { return new HuskArm64Direct; }
 bool husk_direct_supported(uint32_t instruction) { return decode(instruction) != Other; }
+bool husk_arm64_landing_supported(uint32_t instruction)
+{
+    Kind kind = decode(instruction);
+    return kind != Other && kind != Assist && !(kind >= Branch && kind <= Indirect);
+}
 void husk_direct_destroy(HuskArm64Direct *ctx) { delete ctx; }
 
 HuskArm64Exit husk_direct_run(HuskArm64Direct *ctx, HuskArm64State *state,
@@ -748,12 +903,21 @@ HuskArm64Exit husk_direct_run(HuskArm64Direct *ctx, HuskArm64State *state,
     auto started = ctx->profile ? std::chrono::steady_clock::now() : std::chrono::steady_clock::time_point{};
     if ((state->fpcr & ~HUSK_FPCR_MASK) || state->pc < page || state->pc - page >= 4096 || (state->pc & 3))
         return HUSK_ARM64_FALLBACK;
-    uint32_t access_flags = state->access_flags & (ctx->native_lse ? 7 : 3);
-    auto resolve = [&](uint64_t address, const void *contents) -> CompiledPage * {
+    if ((state->access_flags & HUSK_BTYPE_MASK) &&
+        !husk_arm64_landing_supported(static_cast<const uint32_t *>(bytes)[(state->pc - page) / 4]))
+        return HUSK_ARM64_FALLBACK;
+    uint32_t access_flags = (state->access_flags & (ctx->native_lse ? 15 : 11)) | (ctx->fastmem ? CompileFastmem : 0);
+    if (ctx->fastmem) {
+        if (!memory.mapping_epoch || memory.mapping_epoch != ctx->mapping_epoch)
+            ctx->fastmem->reset();
+        ctx->mapping_epoch = memory.mapping_epoch;
+        ctx->fastmem->protect_code(bytes);
+    }
+    auto resolve = [&](uint64_t address, const void *contents, bool landing) -> CompiledPage * {
         auto compile_start = ctx->profile ? std::chrono::steady_clock::now() : std::chrono::steady_clock::time_point{};
         auto previous_compiles = ctx->compiles, previous_flushes = ctx->flushes;
         auto *compiled = &ctx->code_page(address & ~UINT64_C(4095), contents,
-                                         access_flags, (address & 4095) / 4);
+                                         access_flags | (landing ? CompileLanding : 0), (address & 4095) / 4);
         if (ctx->profile && previous_compiles != ctx->compiles)
             ctx->compile_ns += std::chrono::duration_cast<std::chrono::nanoseconds>(
                 std::chrono::steady_clock::now() - compile_start).count();
@@ -761,17 +925,20 @@ HuskArm64Exit husk_direct_run(HuskArm64Direct *ctx, HuskArm64State *state,
             ctx->routes.fill({UINT64_MAX, nullptr});
             ctx->call_routes.fill({UINT64_MAX, nullptr});
         }
-        ctx->routes[(address >> 12) & 255] = {address >> 12, compiled->branch_entries.data()};
+        if (!landing)
+            ctx->routes[(address >> 12) & 255] = {address >> 12, compiled->branch_entries.data()};
         return compiled;
     };
     ctx->routes.fill({UINT64_MAX, nullptr});
     ctx->call_routes.fill({UINT64_MAX, nullptr});
-    auto *code = resolve(state->pc, bytes);
+    auto *code = resolve(state->pc, bytes, state->access_flags & HUSK_BTYPE_MASK);
     for (size_t i = 0; i < ctx->populated_count; ++i)
         ctx->mappings[ctx->populated[i]] = {UINT64_MAX, nullptr, nullptr, 0};
     ctx->populated_count = 0;
     Frame frame{*state, std::min(budget, uint64_t(INT64_MAX)), 0, 0, 0,
-                ctx->routes.data(), ctx->call_routes.data()};
+                ctx->routes.data(), ctx->call_routes.data(),
+                ctx->fastmem ? ctx->fastmem->bases(false) : nullptr,
+                ctx->fastmem ? ctx->fastmem->bases(true) : nullptr, nullptr, 0, 0};
     void *next = code->entries[(state->pc - page) / 4];
     for (;;) {
 #if !TARGET_OS_IPHONE
@@ -779,10 +946,18 @@ HuskArm64Exit husk_direct_run(HuskArm64Direct *ctx, HuskArm64State *state,
         // in MAP_JIT write mode, including when the Direct code is cached.
         pthread_jit_write_protect_np(1);
 #endif
+        if (ctx->fastmem) {
+            frame.fault_sites = ctx->fault_sites.data();
+            frame.fault_count = ctx->fault_sites.size();
+            Frame *expected = nullptr;
+            if (!active_fastmem.compare_exchange_strong(expected, &frame))
+                throw std::runtime_error("fastmem requires serialized execution");
+        }
         husk_direct_enter(&frame, next, ctx->mappings.data());
+        if (ctx->fastmem) active_fastmem.store(nullptr);
         if (frame.reason != CodeBranch) {
             page = frame.state.pc & ~UINT64_C(4095);
-            code = ctx->pages.at(page | access_flags).get();
+            code = ctx->pages.at(page | access_flags | ((frame.state.access_flags & HUSK_BTYPE_MASK) ? CompileLanding : 0)).get();
         }
         HuskArm64Assist assisted = HUSK_ASSIST_DECLINED;
         uint64_t call_target = UINT64_MAX;
@@ -791,16 +966,23 @@ HuskArm64Exit husk_direct_run(HuskArm64Direct *ctx, HuskArm64State *state,
             if ((word & 0xfffffc1f) == 0xd63f0000 && ((word >> 5) & 31) != 31)
                 call_target = frame.state.x[(word >> 5) & 31];
             assisted = memory.assist(memory.opaque, &frame.state, word);
+            if (word == HUSK_BULK_INSN && assisted != HUSK_ASSIST_DECLINED) {
+                // Bulk calls consume a byte-weighted budget so repeated host
+                // copies return to the owner for pending interrupts.
+                frame.budget -= 1 + std::min(frame.state.x[2], uint64_t(HUSK_BULK_LIMIT)) / 16;
+                if (int64_t(frame.budget) < 0) { frame.reason = Budget; break; }
+            }
             // A skipped BTI at the end of a page needs two immutable pages.
             // Such targets, and tagged addresses, keep the checked slow path.
-            if (assisted != HUSK_ASSIST_CHAIN_CALL ||
+            if ((assisted != HUSK_ASSIST_CHAIN_CALL && assisted != HUSK_ASSIST_CHAIN_LANDING_CALL) ||
                 (call_target & ~UINT64_C(4095)) != (frame.state.pc & ~UINT64_C(4095)))
                 call_target = UINT64_MAX;
         }
         if (assisted != HUSK_ASSIST_DECLINED) {
             ++ctx->assists;
             if (assisted == HUSK_ASSIST_BRANCH) { frame.reason = CodeBranch; break; }
-            if (assisted == HUSK_ASSIST_CHAIN || assisted == HUSK_ASSIST_CHAIN_CALL) {
+            if (assisted == HUSK_ASSIST_CHAIN || assisted == HUSK_ASSIST_CHAIN_CALL ||
+                assisted == HUSK_ASSIST_CHAIN_LANDING_CALL) {
                 ++ctx->chained_assists;
                 // An indirect target can enter in the middle of a static block.
                 // Charge the branch even when that target has no block budget.
@@ -819,7 +1001,8 @@ HuskArm64Exit husk_direct_run(HuskArm64Direct *ctx, HuskArm64State *state,
             if (!memory.map_code || (frame.state.pc & 3) || int64_t(frame.budget) < 0) break;
             uint64_t destination = frame.state.pc & ~UINT64_C(4095);
             const auto &route = ctx->routes[(destination >> 12) & 255];
-            if (route.tag == destination >> 12 && route.entries[(frame.state.pc & 4095) / 4]) {
+            if (!(frame.state.access_flags & HUSK_BTYPE_MASK) && route.tag == destination >> 12 &&
+                route.entries[(frame.state.pc & 4095) / 4]) {
                 // Only immutable code pages from this run are present here.
                 next = route.entries[(frame.state.pc & 4095) / 4];
                 if (call_target != UINT64_MAX)
@@ -832,14 +1015,38 @@ HuskArm64Exit husk_direct_run(HuskArm64Direct *ctx, HuskArm64State *state,
             // writes so every code page visited in this slice remains immutable.
             for (size_t i = 0; i < ctx->populated_count; ++i)
                 ctx->mappings[ctx->populated[i]].write = nullptr;
-            code = resolve(frame.state.pc, contents);
+            if (ctx->fastmem) ctx->fastmem->protect_code(contents);
+            code = resolve(frame.state.pc, contents, frame.state.access_flags & HUSK_BTYPE_MASK);
             page = destination;
             next = code->branch_entries[(frame.state.pc - page) / 4];
             if (call_target != UINT64_MAX)
-                ctx->call_routes[(call_target >> 2) & 255] = {call_target, next};
+                ctx->call_routes[(call_target >> 2) & 255] = {call_target,
+                    (frame.state.access_flags & HUSK_BTYPE_MASK) ? code->landing_call_entries[(frame.state.pc - page) / 4] : next};
             continue;
         }
         if (frame.reason == Budget || frame.reason == Fallback) break;
+        if (frame.reason == FastReadPage || frame.reason == FastWritePage) {
+            bool write = frame.reason == FastWritePage;
+            if (!ctx->fastmem->map(frame.address, write, memory, access_flags & 8)) {
+                // One incompatible access switches this instruction to its checked
+                // implementation. Future accesses do not repeat a host fault.
+                const auto &site = ctx->fault_sites.at(frame.fault_index);
+                int64_t distance = int64_t(site.checked) - int64_t(site.patch);
+                if (distance % 4 || distance < -(INT64_C(1) << 27) || distance >= (INT64_C(1) << 27))
+                    throw std::runtime_error("fastmem fallback branch out of range");
+                auto *word = ctx->writable + (site.patch - uintptr_t(ctx->executable)) / 4;
+#if !TARGET_OS_IPHONE
+                pthread_jit_write_protect_np(0);
+#endif
+                *word = 0x14000000 | (uint32_t(distance / 4) & 0x3ffffff);
+#if !TARGET_OS_IPHONE
+                pthread_jit_write_protect_np(1);
+#endif
+                sys_icache_invalidate(reinterpret_cast<void *>(site.patch), 4);
+            }
+            next = code->entries[(frame.state.pc - page) / 4];
+            continue;
+        }
         if (frame.reason == PrepareLoop) {
             const auto &loop = *std::find_if(code->loops.begin(), code->loops.end(), [&](const auto &l) {
                 return page + l.begin * 4 == frame.state.pc;

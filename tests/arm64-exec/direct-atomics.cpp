@@ -11,11 +11,12 @@
 #define CHECK(x) do { if (!(x)) { std::fprintf(stderr, "failed line %d\n", __LINE__); std::exit(1); } } while (0)
 
 struct Memory {
-    alignas(16) std::array<uint8_t, 4096> bytes{};
+    alignas(16384) std::array<uint8_t, 16384> bytes{};
     bool writable = true;
     static void *Map(void *opaque, uint64_t page, bool write) {
         auto &m = *static_cast<Memory *>(opaque);
-        return page == 0x20000 && (!write || m.writable) ? m.bytes.data() : nullptr;
+        return page >= 0x20000 && page < 0x24000 && (!write || m.writable) ?
+            m.bytes.data() + page - 0x20000 : nullptr;
     }
 };
 

@@ -10,13 +10,29 @@ ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "work/arm64-exec-guest"
 
 
-def main():
+def write_initramfs(path, entries):
+    """写入 newc 归档；entries 为名称、mode、内容和设备 minor。"""
+    archive = bytearray()
+    for name, mode, data, minor in [*entries, ("TRAILER!!!", 0, b"", 0)]:
+        fields = [1, mode, 0, 0, 1, 0, len(data), 0, 0, 5 if minor else 0, minor,
+                  len(name.encode()) + 1, 0]
+        archive.extend(b"070701" + "".join(f"{value:08x}" for value in fields).encode())
+        archive.extend(name.encode() + b"\0")
+        archive.extend(b"\0" * (-len(archive) % 4))
+        archive.extend(data)
+        archive.extend(b"\0" * (-len(archive) % 4))
+    path.write_bytes(gzip.compress(archive, mtime=0))
+
+
+def main(mthp=False, bulk=None):
     OUT.mkdir(parents=True, exist_ok=True)
     clang = subprocess.check_output(["xcrun", "--find", "clang"], text=True).strip()
     linker = shutil.which("ld.lld")
     if not linker:
         raise SystemExit("ld.lld is required")
     subprocess.run([clang, "--target=aarch64-none-elf", "-O2", "-march=armv8-a",
+                    *(["-DHUSK_TEST_MTHP=1"] if mthp else []),
+                    *(["-DHUSK_TEST_BULK=1", f"-DHUSK_TEST_BULK_ENABLED={int(bulk)}"] if bulk is not None else []),
                     "-mgeneral-regs-only", "-ffreestanding", "-fno-builtin",
                     "-fno-stack-protector", "-fno-pic", "-c",
                     str(ROOT / "tests/arm64-exec/guest.c"), "-o", str(OUT / "guest.o")], check=True)
@@ -31,22 +47,11 @@ def main():
                     str(OUT / "native-bench")], check=True)
 
     # newc preserves the console device without creating a host device node.
-    archive = bytearray()
-
-    def entry(name, mode, data=b"", minor=0):
-        fields = [1, mode, 0, 0, 1, 0, len(data), 0, 0, 5 if minor else 0, minor,
-                  len(name.encode()) + 1, 0]
-        archive.extend(b"070701" + "".join(f"{value:08x}" for value in fields).encode())
-        archive.extend(name.encode() + b"\0")
-        archive.extend(b"\0" * (-len(archive) % 4))
-        archive.extend(data)
-        archive.extend(b"\0" * (-len(archive) % 4))
-
-    entry("dev", stat.S_IFDIR | 0o755)
-    entry("dev/console", stat.S_IFCHR | 0o600, minor=1)
-    entry("init", stat.S_IFREG | 0o755, (OUT / "init").read_bytes())
-    entry("TRAILER!!!", 0)
-    (OUT / "initramfs.cpio.gz").write_bytes(gzip.compress(archive, mtime=0))
+    write_initramfs(OUT / "initramfs.cpio.gz", [
+        ("dev", stat.S_IFDIR | 0o755, b"", 0),
+        ("sys", stat.S_IFDIR | 0o755, b"", 0),
+        ("dev/console", stat.S_IFCHR | 0o600, b"", 1),
+        ("init", stat.S_IFREG | 0o755, (OUT / "init").read_bytes(), 0)])
     print(OUT / "initramfs.cpio.gz")
 
 

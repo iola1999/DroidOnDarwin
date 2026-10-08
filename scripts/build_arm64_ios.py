@@ -25,7 +25,8 @@ def main():
         (prefix / folder).mkdir(parents=True, exist_ok=True)
     objects = []
     inputs = [source / name for name in (
-        "husk-arm64-direct.cpp", "husk-arm64-direct-api.cpp", "husk-arm64-direct-entry.S")]
+        "husk-arm64-direct.cpp", "husk-arm64-direct-api.cpp", "husk-arm64-direct-entry.S",
+        "husk-arm64-fastmem.cpp", "husk-arm64-bulk.cpp")]
     for path in inputs:
         obj = build / (path.name + ".o")
         flags = ["-std=c++20", "-Wall", "-Wextra"] if path.suffix == ".cpp" else []
@@ -44,6 +45,10 @@ def main():
     apply(qemu, "qemu-arm64-exec.patch")
     apply(qemu, "qemu-arm64-pauth-assist.patch")
     apply(qemu, "qemu-arm64-branch-assist.patch")
+    apply(qemu, "qemu-arm64-fastmem-generation.patch")
+    apply(qemu, "qemu-arm64-bulk-memory.patch")
+    apply(qemu, "qemu-arm64-bulk-discovery.patch")
+    apply(qemu, "qemu-arm64-bulk-acpi.patch")
     shutil.copyfile(source / "husk-arm64-qemu.c", qemu / "target/arm/tcg/husk-arm64-qemu.c")
     tracked = inputs + [source / "husk-arm64-qemu.c"] + list(source.glob("*.h")) + list((ROOT / "src/ios-jit").glob("husk-ios-jit.*"))
     (build / "manifest.json").write_text(json.dumps({

@@ -99,6 +99,10 @@ def main():
         apply(qemu, "qemu-arm64-exec.patch")
         apply(qemu, "qemu-arm64-pauth-assist.patch")
         apply(qemu, "qemu-arm64-branch-assist.patch")
+        apply(qemu, "qemu-arm64-fastmem-generation.patch")
+        apply(qemu, "qemu-arm64-bulk-memory.patch")
+        apply(qemu, "qemu-arm64-bulk-discovery.patch")
+        apply(qemu, "qemu-arm64-bulk-acpi.patch")
         apply(qemu, "qemu-cocoa-surface-lifetime.patch")
         shutil.copyfile(ROOT / "src/arm64-exec/husk-arm64-qemu.c", qemu / "target/arm/tcg/husk-arm64-qemu.c")
         qbuild = qemu / "build-macos"

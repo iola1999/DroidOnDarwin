@@ -52,12 +52,26 @@ static u64 ns(void)
 
 #include "benchmarks.h"
 
+#ifdef HUSK_TEST_MTHP
+static void enable_mthp(void)
+{
+    CHECK(call(40, (u64)"sysfs", (u64)"/sys", (u64)"sysfs", 0, 0, 0) == 0);
+    s64 file = call(56, (u64)-100,
+        (u64)"/sys/kernel/mm/transparent_hugepage/hugepages-16kB/enabled", 1, 0, 0, 0);
+    CHECK(file >= 0);
+    CHECK(call(64, file, (u64)"always", 6, 0, 0, 0) == 6);
+    CHECK(call(57, file, 0, 0, 0, 0, 0) == 0);
+    print("MTHP 16 KiB enabled\n");
+}
+#endif
+
 extern u64 husk_vector_loop(u64 n);
 extern u64 husk_float_loop(u64 n);
 extern void husk_vector_memory(u64 *p, u64 n);
 extern u64 husk_vector_checks(u64 n);
 extern u64 husk_call_loop(u64 n);
 extern u64 husk_indirect_call_loop(u64 n);
+extern u64 husk_plain_call_loop(u64 n);
 extern u64 husk_pauth_loop(u64 n);
 extern u64 husk_pauth_invalid(u64 n);
 extern u64 husk_atomic_loop(u64 *p, u64 n);
@@ -91,6 +105,11 @@ static void vector_benchmarks(void)
     elapsed = ns() - start;
     CHECK(value == 1000000);
     print("BENCH indirect_calls_ns="); number(elapsed); print(" value="); number(value); print("\n");
+    start = ns();
+    value = husk_plain_call_loop(1000000);
+    elapsed = ns() - start;
+    CHECK(value == 1000000);
+    print("BENCH plain_calls_ns="); number(elapsed); print(" value="); number(value); print("\n");
     start = ns();
     CHECK(husk_pauth_loop(100000) == 0);
     elapsed = ns() - start;
@@ -146,6 +165,81 @@ static void switching_benchmark(void)
     }
 }
 
+static void pointer_benchmark(void)
+{
+    const u64 region_size = 2 * 1024 * 1024, count = 64, iterations = 10000000;
+    s64 allocation = call(222, 0, region_size * 2, 3, 0x22, (u64)-1, 0);
+    CHECK(allocation > 0);
+    u64 base = ((u64)allocation + region_size - 1) & ~(region_size - 1);
+    // MADV_HUGEPAGE permits contiguous groups when the kernel supports THP.
+    // The traversal remains valid with ordinary 4 KiB pages too.
+    s64 advice = call(233, base, region_size, 14, 0, 0, 0);
+    print("POINTER hugepage_advice="); number(advice == 0); print("\n");
+    for (u64 offset = 0; offset < region_size; offset += 4096)
+        *(volatile u64 *)(base + offset) = 0;
+    for (u64 i = 0; i < count; ++i)
+        *(u64 *)(base + i * 16384) = base + ((i + 1) % count) * 16384;
+    u64 start = ns();
+    u64 value = pointer_loop(base, iterations);
+    u64 elapsed = ns() - start;
+    CHECK(value == base);
+    print("BENCH pointer_ns="); number(elapsed); print(" value="); number(iterations); print("\n");
+    start = ns();
+    CHECK(pointer_write_loop(base, iterations) == base);
+    elapsed = ns() - start;
+    for (u64 i = 0; i < count; ++i)
+        CHECK(*(u64 *)(base + i * 16384 + 8) == iterations / count);
+    print("BENCH pointer_write_ns="); number(elapsed); print(" value="); number(iterations); print("\n");
+
+    s64 child = call(220, 17, 0, 0, 0, 0, 0);
+    CHECK(child >= 0);
+    if (!child) {
+        *(u64 *)base = base;
+        call(93, pointer_loop(base, 10001) == base ? 73 : 1, 0, 0, 0, 0, 0);
+        for (;;) {}
+    }
+    int status = 0;
+    CHECK(call(260, child, (u64)&status, 0, 0, 0, 0) == child && status == (73 << 8));
+    CHECK(pointer_loop(base, 65) == base + 16384);
+    CHECK(call(226, base, 4096, 1, 0, 0, 0) == 0);
+    child = call(220, 17, 0, 0, 0, 0, 0);
+    CHECK(child >= 0);
+    if (!child) {
+        pointer_write_loop(base, 128);
+        call(93, 1, 0, 0, 0, 0, 0);
+        for (;;) {}
+    }
+    CHECK(call(260, child, (u64)&status, 0, 0, 0, 0) == child && (status & 127) == 11);
+    print("PASS mapped ring COW, parent isolation and 4 KiB write revocation\n");
+    CHECK(call(215, allocation, region_size * 2, 0, 0, 0, 0) == 0);
+}
+
+static void timer_preemption(void)
+{
+    u64 worst = 0;
+    for (unsigned i = 0; i < 8; ++i) {
+        s64 child = call(220, 17, 0, 0, 0, 0, 0);
+        CHECK(child >= 0);
+        if (!child) {
+            __asm__ volatile("mov x0, #0\n1: add x0, x0, #1\nb 1b" : : : "x0", "memory");
+            for (;;) {}
+        }
+        s64 delay[2] = {0, 2000000};
+        u64 start = ns();
+        CHECK(call(101, (u64)delay, 0, 0, 0, 0, 0) == 0);
+        CHECK(call(129, child, 9, 0, 0, 0, 0) == 0);
+        int status = 0;
+        CHECK(call(260, child, (u64)&status, 0, 0, 0, 0) == child && (status & 127) == 9);
+        u64 elapsed = ns() - start;
+        if (elapsed > worst) worst = elapsed;
+    }
+    print("PASS timer preemption of native loop; worst_ns="); number(worst); print("\n");
+}
+
+#ifdef HUSK_TEST_BULK
+#include "guest-bulk.h"
+#endif
+
 void guest_main(u64 *initial_stack)
 {
     u64 *auxv = initial_stack + initial_stack[0] + 2;
@@ -154,6 +248,9 @@ void guest_main(u64 *initial_stack)
     for (; auxv[0]; auxv += 2) if (auxv[0] == 16) hwcap = auxv[1];
     print("HUSK-EL0-TEST START\n");
     CHECK(call(172, 0, 0, 0, 0, 0, 0) == 1);
+#ifdef HUSK_TEST_MTHP
+    enable_mthp();
+#endif
     u64 start = ns();
     u64 result = calculate(INTEGER_ITERATIONS);
     u64 elapsed = ns() - start;
@@ -181,6 +278,11 @@ void guest_main(u64 *initial_stack)
     elapsed = ns() - start;
     print("BENCH syscall_ns="); number(elapsed); print(" count=10000\n");
     switching_benchmark();
+    pointer_benchmark();
+    timer_preemption();
+#ifdef HUSK_TEST_BULK
+    bulk_tests();
+#endif
     p[0] = 41;
     s64 child = call(220, 17, 0, 0, 0, 0, 0);
     CHECK(child >= 0);

@@ -1373,11 +1373,7 @@ final class QemuRunner: ObservableObject {
         HuskLog.logFootprint("before-qemu-init")
         setenv("HUSK_ARM64_EXEC", Self.directExecutionEnabled ? "1" : "0", 1)
         setenv("HUSK_ARM64_BACKEND", "direct", 1)
-        if Self.directExecutionEnabled {
-            setenv("HUSK_ARM64_STATS", "1", 1)
-        } else {
-            unsetenv("HUSK_ARM64_STATS")
-        }
+        // Leave profiling opt-in: per-slice clock reads affect execution timing.
         HuskLog.log("qemu", "CPU execution: \(Self.directExecutionEnabled ? "ARM64 Direct, 1 vCPU" : "TCG")")
 
         // qemu_init takes ownership of argv for the life of the process, so these

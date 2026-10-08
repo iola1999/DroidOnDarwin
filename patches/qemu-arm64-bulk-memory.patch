@@ -1,0 +1,25 @@
+--- a/target/arm/tcg/translate-a64.c
++++ b/target/arm/tcg/translate-a64.c
+@@ -2863,6 +2863,12 @@
+ 
+ static bool trans_HLT(DisasContext *s, arg_i *a)
+ {
++#if defined(CONFIG_HUSK_ARM64_EXEC) && !defined(CONFIG_USER_ONLY)
++    if (a->imm == 0x484d && s->current_el == 0) {
++        gen_helper_husk_bulk(tcg_env);
++        return true;
++    }
++#endif
+     /*
+      * HLT. This has two purposes.
+      * Architecturally, it is an external halting debug instruction.
+--- a/target/arm/tcg/helper-a64.h
++++ b/target/arm/tcg/helper-a64.h
+@@ -145,3 +145,7 @@
+ DEF_HELPER_FLAGS_5(gvec_fmulx_idx_h, TCG_CALL_NO_RWG, void, ptr, ptr, ptr, fpst, i32)
+ DEF_HELPER_FLAGS_5(gvec_fmulx_idx_s, TCG_CALL_NO_RWG, void, ptr, ptr, ptr, fpst, i32)
+ DEF_HELPER_FLAGS_5(gvec_fmulx_idx_d, TCG_CALL_NO_RWG, void, ptr, ptr, ptr, fpst, i32)
++
++#if defined(CONFIG_HUSK_ARM64_EXEC) && !defined(CONFIG_USER_ONLY)
++DEF_HELPER_1(husk_bulk, void, env)
++#endif

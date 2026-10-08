@@ -1,0 +1,31 @@
+--- a/hw/arm/virt-acpi-build.c
++++ b/hw/arm/virt-acpi-build.c
+@@ -27,6 +27,7 @@
+  */
+ 
+ #include "qemu/osdep.h"
++#include "system/tcg.h"
+ #include "qapi/error.h"
+ #include "qemu/bitmap.h"
+ #include "qemu/error-report.h"
+@@ -958,6 +959,20 @@
+                    vms->oem_id, vms->oem_table_id);
+     }
+ 
++#ifdef CONFIG_HUSK_ARM64_EXEC
++    const char *husk_bulk = getenv("HUSK_ARM64_BULK");
++    if (tcg_enabled() && ms->smp.cpus == 1 && husk_bulk &&
++        !strcmp(husk_bulk, "1")) {
++        AcpiTable table = {
++            .sig = "HUSK", .rev = 1,
++            .oem_id = "HUSK", .oem_table_id = "BULKv001",
++        };
++        acpi_add_table(table_offsets, tables_blob);
++        acpi_table_begin(&table, tables_blob);
++        acpi_table_end(tables->linker, &table);
++    }
++#endif
++
+     /* XSDT is pointed to by RSDP */
+     xsdt = tables_blob->len;
+     build_xsdt(tables_blob, tables->linker, table_offsets, vms->oem_id,

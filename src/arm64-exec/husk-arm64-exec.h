@@ -12,6 +12,14 @@ extern "C" {
 
 typedef struct HuskArm64Exec HuskArm64Exec;
 
+/* Experimental full-system guest ABI: x0=destination, x1=source/fill byte,
+ * x2=length, x3=operation; HLT #0x484d returns status in x8 (0=done, 1=refused).
+ * Refusal preserves RAM and all argument registers. Matching QEMU is required. */
+#define HUSK_BULK_INSN UINT32_C(0xd44909a0)
+enum { HUSK_BULK_COPY, HUSK_BULK_MOVE, HUSK_BULK_SET, HUSK_BULK_LIMIT = 65536 };
+
+enum { HUSK_BTYPE_SHIFT = 4, HUSK_BTYPE_MASK = 3U << HUSK_BTYPE_SHIFT };
+
 typedef struct {
     uint64_t x[31];
     uint64_t sp;
@@ -21,7 +29,10 @@ typedef struct {
     uint32_t fpsr;
     /* Bit 0: SCTLR allows normal unaligned RAM accesses.
      * Bit 1: FP/SIMD access must trap through QEMU.
-     * Bit 2: guest exposes FEAT_LSE. */
+     * Bit 2: guest exposes FEAT_LSE.
+     * Bit 3: EL0 lower data addresses ignore their top byte and do not use MTE.
+     * Bits 4..5: pending architectural BTYPE, after the owner checked the target.
+     * Direct clears these bits only after the first instruction completes. */
     uint32_t access_flags;
     uint64_t tpidr_el0;
     uint64_t v[32][2];
@@ -38,6 +49,9 @@ typedef enum {
     /* BLR landing checks completed without per-call effects such as PAC.
      * Within this slice, the same target may reuse the checked destination. */
     HUSK_ASSIST_CHAIN_CALL,
+    /* BLR target checked; its first instruction still needs to retire. Cached
+     * calls must restore BTYPE=2 before that instruction can fault. */
+    HUSK_ASSIST_CHAIN_LANDING_CALL,
 } HuskArm64Assist;
 
 typedef struct {
@@ -60,7 +74,17 @@ typedef struct {
      * writes through physical aliases, and preserve all earlier data mappings.
      * NULL ends the slice before executing the destination. */
     const void *(*map_code)(void *, uint64_t page_address);
+    /* Optional nonzero generation permits Direct to retain data mappings
+     * between calls. The owner must change it after any address-space, RAM,
+     * permission, watchpoint or code-dirty tracking change. Zero revalidates
+     * each call. map_page must also reject aliases of all code in this call. */
+    uint64_t mapping_epoch;
 } HuskArm64Memory;
+
+/* map_page must reject MMIO, watched pages and writable code aliases. All
+ * validated pages remain accessible for the call. Zero length needs no mapping. */
+bool husk_arm64_bulk(uint64_t destination, uint64_t source, uint64_t length,
+                     unsigned operation, HuskArm64Memory memory);
 
 typedef enum {
     HUSK_ARM64_BUDGET,
@@ -71,6 +95,8 @@ typedef enum {
 } HuskArm64Exit;
 
 bool husk_arm64_supported(uint32_t instruction);
+/* Direct can retire this non-control instruction with precise landing faults. */
+bool husk_arm64_landing_supported(uint32_t instruction);
 HuskArm64Exec *husk_arm64_create(void);
 void husk_arm64_destroy(HuskArm64Exec *context);
 

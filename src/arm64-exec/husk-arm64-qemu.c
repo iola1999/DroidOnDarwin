@@ -3,6 +3,8 @@
 #include "cpu.h"
 #include "internals.h"
 #include "exec/exec-all.h"
+#include "exec/cputlb.h"
+#include "exec/helper-proto.h"
 #include "exec/translation-block.h"
 #include "accel/tcg/internal-common.h"
 #include "hw/boards.h"
@@ -17,8 +19,11 @@ typedef struct {
     void *code_host;
     void *code_hosts[256];
     unsigned code_count;
+    bool reuse_mappings;
+    uint64_t mapping_epoch, mapping_generation;
+    int mapping_mmu;
     int64_t resume_after_ns[2];
-    bool poll_dispatch, assist, assisted_pauth, chain_assist, kernel, kernel_started;
+    bool poll_dispatch, assist, assisted_pauth, chain_assist, landing, kernel, kernel_started;
     unsigned last_el;
     unsigned dispatch_polls;
     bool profile;
@@ -148,6 +153,37 @@ static void *husk_map_page(void *opaque, uint64_t page, bool write)
     return host;
 }
 
+static bool husk_bulk_enabled(void)
+{
+    static int enabled = -1;
+    if (enabled < 0) {
+        const char *value = getenv("HUSK_ARM64_BULK");
+        enabled = value && !strcmp(value, "1") && current_machine->smp.cpus == 1;
+    }
+    return enabled;
+}
+
+static void *husk_bulk_tcg_page(void *opaque, uint64_t page, bool write)
+{
+    CPUARMState *env = opaque;
+    void *host = NULL;
+    int flags = probe_access_flags(env, page, 4096,
+                                  write ? MMU_DATA_STORE : MMU_DATA_LOAD,
+                                  arm_env_mmu_index(env), true, &host, 0);
+    return flags ? NULL : host;
+}
+
+void HELPER(husk_bulk)(CPUARMState *env)
+{
+    HuskArm64Memory memory = { .opaque = env, .map_page = husk_bulk_tcg_page };
+    env->xregs[8] = 1;
+    if (husk_bulk_enabled() && arm_current_el(env) == 0 &&
+        env->xregs[3] <= HUSK_BULK_SET &&
+        !EX_TBFLAG_A64(env->hflags, MTE_ACTIVE) &&
+        husk_arm64_bulk(env->xregs[0], env->xregs[1], env->xregs[2], env->xregs[3], memory))
+        env->xregs[8] = 0;
+}
+
 static const void *husk_map_code(void *opaque, uint64_t page)
 {
     HuskArm64Qemu *ctx = opaque;
@@ -165,6 +201,7 @@ static const void *husk_map_code(void *opaque, uint64_t page)
 
 static void husk_export_state(CPUARMState *env, const HuskArm64State *state)
 {
+    env->btype = (state->access_flags & HUSK_BTYPE_MASK) >> HUSK_BTYPE_SHIFT;
     memcpy(env->xregs, state->x, sizeof(state->x));
     env->xregs[31] = state->sp;
     env->pc = state->pc;
@@ -182,16 +219,26 @@ static HuskArm64Assist husk_assist(void *opaque, HuskArm64State *state, uint32_t
     unsigned reg = 30, operation;
     uint64_t modifier = 0;
     uint32_t branch = insn & 0xfffffc1f;
+    if (insn == HUSK_BULK_INSN) {
+        HuskArm64Memory memory = { .opaque = ctx, .map_page = husk_map_page };
+        state->x[8] = 1;
+        if (husk_bulk_enabled() && arm_current_el(env) == 0 && state->x[3] <= HUSK_BULK_SET &&
+            husk_arm64_bulk(state->x[0], state->x[1], state->x[2], state->x[3], memory))
+            state->x[8] = 0;
+        state->pc += 4;
+        return HUSK_ASSIST_CONTINUE;
+    }
     if (branch == 0xd61f0000 || branch == 0xd63f0000) {
         husk_export_state(env, state);
         arm_husk_branch(env, (insn >> 5) & 31, branch == 0xd63f0000);
+        state->access_flags = (state->access_flags & ~HUSK_BTYPE_MASK) | (env->btype << HUSK_BTYPE_SHIFT);
         state->pc = env->pc;
         state->x[30] = env->xregs[30];
         if (!ctx->chain_assist) return HUSK_ASSIST_BRANCH;
         bool cache_call = branch == 0xd63f0000;
         if (!env->btype) return cache_call ? HUSK_ASSIST_CHAIN_CALL : HUSK_ASSIST_CHAIN;
-        /* Keep BTYPE until a non-faulting landing instruction completes. Data
-         * accesses and other faultable first instructions still enter QEMU. */
+        /* Validate BTI before Direct executes the first instruction. BTYPE
+         * stays pending until that instruction completes successfully. */
         void *host = NULL;
         int flags = probe_access_flags(env, state->pc, 4, MMU_INST_FETCH,
                                       arm_env_mmu_index(env), true, &host, 0);
@@ -209,10 +256,13 @@ static HuskArm64Assist husk_assist(void *opaque, HuskArm64State *state, uint32_t
             }
             break;
         default:
+            if (ctx->landing && husk_arm64_landing_supported(landing))
+                return cache_call ? HUSK_ASSIST_CHAIN_LANDING_CALL : HUSK_ASSIST_CHAIN;
             return HUSK_ASSIST_BRANCH;
         }
         state->pc += 4;
         env->btype = 0;
+        state->access_flags &= ~HUSK_BTYPE_MASK;
         return cache_call ? HUSK_ASSIST_CHAIN_CALL : HUSK_ASSIST_CHAIN;
     }
     if ((insn & 0xfffff0ff) == 0xd50330bf || (insn & 0xfffff0ff) == 0xd503309f) {
@@ -263,7 +313,9 @@ int arm_husk_exec_user(CPUState *cs)
     static bool direct;
     static bool bridge;
     static bool kernel;
+    static bool landing = true;
     static unsigned tcg_quantum_us = 2000;
+    static unsigned slice_budget = 4096;
     if (enabled == -1) {
         const char *setting = getenv("HUSK_ARM64_EXEC");
         enabled = setting && !strcmp(setting, "1");
@@ -273,9 +325,17 @@ int arm_husk_exec_user(CPUState *cs)
         kernel = direct && kernel_setting && !strcmp(kernel_setting, "1");
         const char *bridge_setting = getenv("HUSK_ARM64_TCG_BRIDGE");
         bridge = bridge_setting && !strcmp(bridge_setting, "1");
+        const char *landing_setting = getenv("HUSK_ARM64_LANDING");
+        landing = !landing_setting || strcmp(landing_setting, "0");
         const char *quantum = getenv("HUSK_ARM64_TCG_QUANTUM_US");
         if (quantum && (qemu_strtoui(quantum, NULL, 10, &tcg_quantum_us) || tcg_quantum_us > 1000000)) {
             error_report("HUSK_ARM64_TCG_QUANTUM_US must be between 0 and 1000000");
+            exit(EXIT_FAILURE);
+        }
+        const char *budget = getenv("HUSK_ARM64_SLICE_BUDGET");
+        if (budget && (qemu_strtoui(budget, NULL, 10, &slice_budget) ||
+                       slice_budget < 256 || slice_budget > 1048576)) {
+            error_report("HUSK_ARM64_SLICE_BUDGET must be between 256 and 1048576");
             exit(EXIT_FAILURE);
         }
         if (enabled && (current_machine->smp.cpus != 1 || icount_enabled())) {
@@ -294,8 +354,8 @@ int arm_husk_exec_user(CPUState *cs)
         EX_TBFLAG_ANY(env->hflags, PSTATE__IL) ||
         EX_TBFLAG_A64(env->hflags, VL) ||
         EX_TBFLAG_A64(env->hflags, SME_TRAP_NONSTREAMING) ||
-        /* Indirect branch landing checks run in TCG before direct execution.
-         * BT enables those checks; a zero BTYPE has no pending landing check. */
+        /* The Direct backend uses QEMU helpers for BTI validation. Other
+         * backends leave guarded-page execution to TCG. */
         (EX_TBFLAG_A64(env->hflags, BT) && !direct) ||
         EX_TBFLAG_A64(env->hflags, MTE_ACTIVE) ||
         EX_TBFLAG_A64(env->hflags, PSTATE_SM)) {
@@ -334,15 +394,20 @@ int arm_husk_exec_user(CPUState *cs)
             }
             break;
         default:
-            /* Preserve BTYPE in the exception state if the first instruction
-             * faults. QEMU executes that instruction before another Direct entry. */
-            husk_one_tcg(cs);
-            return 0;
+            /* Unsupported landing instructions retain BTYPE and run in TCG.
+             * Supported instructions export it if execution faults. */
+            if (!landing || !husk_arm64_landing_supported(insn)) {
+                husk_one_tcg(cs);
+                return 0;
+            }
+            goto landing_ready;
         }
         env->pc += 4;
         env->btype = 0;
         return 1;
     }
+
+landing_ready:
 
     if (!ctx) {
         ctx = g_new0(HuskArm64Qemu, 1);
@@ -354,6 +419,9 @@ int arm_husk_exec_user(CPUState *cs)
         ctx->chain_assist = !chain || strcmp(chain, "0");
         cpu->husk_exec = ctx;
         ctx->kernel = kernel;
+        ctx->landing = landing;
+        const char *reuse = getenv("HUSK_ARM64_FASTMEM_REUSE");
+        ctx->reuse_mappings = direct && !kernel && (!reuse || strcmp(reuse, "0"));
         ctx->profile = getenv("HUSK_ARM64_PROFILE") != NULL;
         if (ctx->profile) {
             arm_register_el_change_hook(cpu, husk_profile_el, ctx);
@@ -394,18 +462,31 @@ int arm_husk_exec_user(CPUState *cs)
                              .fpcr = vfp_get_fpcr(env), .fpsr = vfp_get_fpsr(env),
                              .access_flags = !EX_TBFLAG_ANY(env->hflags, ALIGN_MEM) |
                                  (EX_TBFLAG_ANY(env->hflags, FPEXC_EL) ? 2 : 0) |
-                                 (cpu_isar_feature(aa64_atomics, cpu) ? 4 : 0),
+                                 (cpu_isar_feature(aa64_atomics, cpu) ? 4 : 0) |
+                                 ((el == 0 && (EX_TBFLAG_A64(env->hflags, TBID) & 1)) ? 8 : 0) |
+                                 (env->btype << HUSK_BTYPE_SHIFT),
                              .tpidr_el0 = env->cp15.tpidr_el[0] };
     memcpy(state.x, env->xregs, sizeof(state.x));
     for (unsigned i = 0; i < 32; ++i) {
         memcpy(state.v[i], aa64_vfp_qreg(env, i), sizeof(state.v[i]));
     }
     husk_profile_phase(ctx, 2);
+    uint64_t epoch = 0;
+    if (ctx->reuse_mappings) {
+        uint64_t generation = tlb_husk_mapping_generation();
+        int mmu = arm_env_mmu_index(env);
+        if (ctx->mapping_generation != generation || ctx->mapping_mmu != mmu) {
+            ctx->mapping_generation = generation;
+            ctx->mapping_mmu = mmu;
+            ++ctx->mapping_epoch;
+        }
+        epoch = ctx->mapping_epoch;
+    }
     HuskArm64Exit result = husk_arm64_run(ctx->engine, &state, page, code_host,
                                         (HuskArm64Memory){ctx, husk_read, husk_write, husk_map_page,
                                                          ctx->assist ? husk_assist : NULL,
-                                                         direct ? husk_map_code : NULL},
-                                        4096);
+                                                         direct ? husk_map_code : NULL, epoch},
+                                        slice_budget);
     husk_profile_phase(ctx, el != 0);
     if (result == HUSK_ARM64_ERROR) {
         error_report("Husk ARM64 execution failed at guest PC 0x%" PRIx64, env->pc);

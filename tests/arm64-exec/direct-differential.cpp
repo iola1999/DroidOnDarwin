@@ -10,19 +10,20 @@
 #define CHECK(c) do { if (!(c)) { std::fprintf(stderr, "line %d: %s\n", __LINE__, #c); std::abort(); } } while (0)
 
 struct Memory {
-    std::array<unsigned char, 4096> bytes{};
+    alignas(16384) std::array<unsigned char, 16384> bytes{};
     static bool read(void *p, uint64_t a, void *out, size_t n) {
-        if (a < 0x20000 || a - 0x20000 > 4096 - n) return false;
+        if (a < 0x20000 || n > 16384 || a - 0x20000 > 16384 - n) return false;
         std::memcpy(out, static_cast<Memory *>(p)->bytes.data() + a - 0x20000, n);
         return true;
     }
     static bool write(void *p, uint64_t a, const void *in, size_t n) {
-        if (a < 0x20000 || a - 0x20000 > 4096 - n) return false;
+        if (a < 0x20000 || n > 16384 || a - 0x20000 > 16384 - n) return false;
         std::memcpy(static_cast<Memory *>(p)->bytes.data() + a - 0x20000, in, n);
         return true;
     }
     static void *map(void *p, uint64_t a, bool) {
-        return a == 0x20000 ? static_cast<Memory *>(p)->bytes.data() : nullptr;
+        return a >= 0x20000 && a < 0x24000 ?
+            static_cast<Memory *>(p)->bytes.data() + a - 0x20000 : nullptr;
     }
 };
 
