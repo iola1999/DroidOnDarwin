@@ -1,63 +1,75 @@
-# N2 原生 Linux + NCE 手机测试
+# N2-B1 原生 Linux + NCE 手机测试
 
 日期：2026-10-09。适用设备：当前的 iPhone 17 / iOS 27.2。
+方案、当前范围和后续安排见 [N2b 实现记录](native-linux-n2b-progress.md)。
 
 ## 安装包
 
 ```text
-/Users/fan/project/app/husk_hyos/work/native-linux-nce/ios/Husk-NativeLinux-N2-R3.ipa
+/Users/fan/project/app/husk_hyos/work/native-linux-nce/ios/Husk-NativeLinux-N2-B1.ipa
 ```
 
-构建编号 `N2-R3-iOS-20261009-011553`，包大小 14.30 MiB。
+构建编号 `N2-B1-iOS-20261009-023323`，版本 `0.9.0 (39)`，包大小 14.45 MiB。
 SHA-256：
 
 ```text
-fa42c8e1b4d0ef53a825008f9ceed937d79ddafbd5aac425e2af7268ddf68f5f
+488864cfbba74548a15f3744291c1b91d122c981021a0520a0dd8f704c5bde53
 ```
 
-这是原生 Linux 与 NCE 的独立测试界面。它使用 `com.husk.app`，通过 iLoader
-沿用当前账号覆盖安装后显示为 Husk NCE。手机中的配对文件使用原有路径。
-运行内容是内置 Linux 内核和受控 ARM64 程序；HyperOS 用户界面尚未接入。
+应用使用 `com.husk.app`，通过 iLoader 沿用当前账号覆盖安装后显示为 Husk NCE。
+手机中的配对文件沿用原有路径。运行内容为 Linux 6.12 与 musl 编译的 ARM64
+程序；HyperOS 用户界面尚未接入。运行过程全部在 iPhone 内完成。
 
 ## 操作
 
 1. 在 iLoader 中导入这个 IPA，沿用原来安装 Husk 的账号，保留 JIT Helper 扩展。
 2. 打开手机上的 LocalDevVPN 并连接，然后打开 Husk NCE。
-3. 点“启用内置 JIT 并测试”。应用会复用已有配对文件；若提示缺少文件，导入
-   这台手机已有的 remote pairing 文件，或使用“通过 StikDebug 启用并测试”。
-4. 保持 Husk 在前台。应用会准备 16 MiB 加 64 KiB JIT 代码区域，断开调试器后运行检查，
-   完成时显示“全部测试通过”。运行时禁用自动锁屏，完成后恢复。
-   界面上的构建编号应以 `N2-R3-iOS-` 开头。
+3. 确认界面构建编号为 `N2-B1-iOS-20261009-023323`，点“启用内置 JIT 并测试”。
+   应用复用已有配对文件；若提示缺少文件，导入这台手机已有的 remote pairing
+   文件，或使用“通过 StikDebug 启用并测试”。
+4. 保持 Husk 在前台。应用完成 JIT 准备与调试器断开后，检查内存映射、运行
+   Linux 内核、进程与线程测试。完成时显示“全部测试通过”。运行时禁用自动
+   锁屏，完成后恢复。
 5. 点“导出测试日志”，将 `native-linux-n2-ios.log` 放到 Mac 的
-   `/Users/fan/Downloads/husk-log/`，用于分析本轮结果。
-
-手机测试执行全部在 iPhone 内完成；安装与取回日志可以使用 Mac。
+   `/Users/fan/Downloads/husk-log/`，或直接提供日志文件。
 
 若应用退回桌面，重新打开 Husk 后直接导出上次日志。若停在某一步，先保留
 当前日志再关闭应用。再次测试需要从多任务界面关闭 Husk 后重新打开；开始
 新一轮会覆盖本轮日志。
 
-## 这次检查什么
+## 为什么现在需要手机验证
+
+N2-B1 新增多个 ELF 执行区、Darwin 信号上下文恢复、定时抢占，以及线程自行
+释放栈后的退出处理。这些路径已在 Mac 共用运行核心中通过，iOS 的签名与
+信号返回约束需要设备确认。前一版 R3 已验证固定代码地址与数据重映射。
+本次集中验证新增路径，随后继续 Linux 信号与动态加载。
+
+## 日志检查项
 
 | 日志项目 | 验证内容 |
 | --- | --- |
-| `prepare_jit_pool` | 保留 208 MiB 虚拟地址，只为 16 MiB 加 64 KiB 代码区域做 JIT 准备 |
-| `wait_debugger_detach` / `debugger_detached` | 等待 `P_TRACED` 清除，最长五秒；超时返回界面并保存日志 |
-| `prepared_fixed_address_code_updates` | 主代码池和客体代码区各执行八次，分别返回 42 或 43 |
-| `data_fixed_remap_after_detach` | 代码区两侧的真实数据地址各切换八次，读取符合预期 |
-| `linux_ram_remap` | 在 Linux 物理内存的实际目标地址映射 64 MiB，检查首尾页面与共享写入 |
-| `prepared_nce_compute` | 同一段 400 万次计算/访存的直接执行与 NCE 耗时，五轮结果一致性检查 |
-| `native_linux_boot` / `linux_uname` | Linux 6.12 内核原生装载、启动和系统调用 |
-| `linux_nce_fork_cow_shared_futex_pipe_exec_wait` | 32 轮独立 Linux 进程、COW、共享页、futex、pipe、ELF exec 和 wait |
-| `linux_exec_then_fork_cow_wait` | exec 后再次 clone；固定代码地址继续执行，栈 COW、父子 TLS 和退出状态正确 |
-| `linux_exec_file_unchanged` | 改写指令后，原始 ELF 文件内容保持一致 |
-| `fixed_linux_code_view` | 记录固定执行地址从 Linux 私有页恢复代码的次数 |
-| `linux_nce_context_lifetime` | 分配与释放各 96 个 NCE 上下文 |
-| `result: passed` | 本轮全部检查和内核关闭完成 |
+| `prepare_jit_pool` | 保留 208 MiB 虚拟地址，准备 16 MiB 主代码池及合计 224 KiB 的三个程序执行区 |
+| `wait_debugger_detach` / `debugger_detached` | 等待 `P_TRACED` 清除，最长五秒 |
+| `prepared_fixed_address_code_updates` | 四个代码范围各执行八次更新 |
+| `data_fixed_remap_after_detach` / `linux_ram_remap` | 代码区两侧数据切换，64 MiB Linux RAM 映射与共享写入 |
+| `prepared_nce_compute` | 五轮直接执行与 NCE 的相同计算结果 |
+| `native_linux_boot` / `linux_uname` | 原生启动 Linux 6.12 |
+| `linux_nce_fork_cow_shared_futex_pipe_exec_wait` | 原有 32 轮受控进程回归 |
+| `signal_redirect_to_host_entry` / `guest_fault_on_host_stack` | 通过信号返回离开 Darwin 回调，再在宿主栈处理客体缺页或抢占 |
+| `signal_restore_without_guest_stack` | 通过信号上下文恢复寄存器，覆盖客体栈暂时不可写或已释放的场景 |
+| `linux_musl_static_pie_processes` | 每轮运行 8 次 worker，检查 PID 1、PIE、参数、环境变量、pipe、exec、wait 与 2 MiB COW |
+| `linux_musl_threads_preemption` | 每轮 56 个 pthread 线程、8 次释放栈后的退出；无系统调用的循环可被抢占 |
+| `linux_compiled_elf_files_unchanged` | 指令改写后原始 ELF 内容保持一致 |
+| `linux_userspace_stress` | 16 轮、128 次命令、896 个线程全部完成 |
+| `linux_nce_context_lifetime` | 分配与释放各 1,264 个 NCE 上下文 |
+| `linux_guest_events` | 记录抢占、缺页和栈恢复次数 |
+| `after_userspace` | 每轮结束采样物理占用与进程常驻内存峰值 |
+| `result: passed` | 本轮检查及内核关闭完成 |
 
-日志逐步写入。早期执行探针增加限定代码范围的异常恢复；Mac 上通过了
-非法指令、访问异常、返回值错误、恢复执行与原信号处理器恢复检查。
-iOS 签名异常的恢复效果仍待确认，后续 Linux 故障尚未全部接入恢复流程。
+Mac 已通过 N0/N1/N2b、8 项 ELF 单测、5 项调试器断开检查和执行异常恢复检查。
+iOS Release 构建、应用及扩展签名、IPA 完整性检查通过。安装包使用临时签名，
+由 iLoader 重签。当前仍有用户指针隔离、Linux 信号语义和任意 ELF 等限制，
+详见 N2b 记录；本次尚无 HyperOS 整机性能结论。
 
 ## R1 闪退原因与 R2 调整
 
@@ -103,7 +115,7 @@ R3 先保留普通虚拟地址，仅准备实际代码区域：16 MiB 主代码�
 Mac 上已验证失败调用能返回错误，随后正常代码仍可执行。内核运行中的
 异常恢复仍有限制。iOS 若保留已准备的代码映射，它们随应用进程退出回收。
 
-## 已完成的检查与边界
+## R3 已完成的检查与边界
 
 共用运行核心的 Mac 检查通过两个代码区的更新、代码区两侧的数据重映射、
 64 MiB RAM 映射、五轮计算对照、
@@ -117,8 +129,8 @@ Linux 6.12.0 启动耗时 15.678 ms；32 轮进程检查共 14.227 ms，处理 3
 缺页、复制代码 512 次，分配与释放各 96 个 NCE 上下文。完整记录保存在
 `experiments/native-linux/results-ios-n2-r3.json`。
 
-本轮暂时无需追加手机测试，可以进入普通 ELF、init、线程、信号和较大工作集
-的实现。下一次手机验证集中使用该阶段产物，范围见[原型记录](native-linux-nce-prototype.md#n2b普通-linux-用户态)。
+R3 验收后进入普通 ELF、init、线程、信号和较大工作集的实现。后续产物与
+验证安排见 [N2b 记录](native-linux-n2b-progress.md)。
 这次运行时间很短，代码仍为受控程序；持续性能、运行峰值内存与 HyperOS
 整机加速倍数尚未测量。
 

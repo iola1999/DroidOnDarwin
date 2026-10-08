@@ -8,12 +8,13 @@
 N0 地址空间与直接执行测试已通过；N1 已在 Mac 原生启动 Linux 6.12 LKL，
 并通过 NCE 文件操作、定时器、pipe 和 futex 检查。N2a 已通过 32 轮真实 Linux
 用户进程的 fork、COW、共享内存、futex、pipe、ELF exec 与 wait 检查。
-2026-10-09 已构建 [N2 iOS 测试包](native-linux-n2-ios-test.md)：复用手机端 JIT，
-断开调试器后执行页面重映射、计算对照、Linux 内核与上述进程检查。安装包
-完整性检查通过。初次手机运行通过 JIT 分配和原生代码自检，但断开状态的
-即时断言触发闪退；R1 已改为有限等待和界面失败提示，真机复测待进行。
-后续继续用户态 init、信号与异常恢复；
-HyperOS 整机收益尚未验证。
+R3 已在 iPhone / iOS 27.2 通过全部受控进程检查。
+2026-10-09 的 [N2b 阶段](native-linux-n2b-progress.md) 已在 Mac 跑通 musl
+静态 PIE、PID namespace 内的用户态 init、pthread 和异步抢占。16 轮检查
+执行 128 次 worker、896 个线程，1,264 个 NCE 上下文全部释放；8 项 ELF
+回归检查通过。[N2-B1 手机测试](native-linux-n2-ios-test.md) 用于确认扩大的
+执行区、信号返回和线程退出。随后继续用户指针检查、Linux 信号、动态加载
+与完整 shell。HyperOS 整机收益尚未验证。
 
 此前结束了 QEMU 优化开发。M33 的整机检查仍失败；按照用户要求，重新评估了
 可能获得 HVF 量级收益的架构路线，尚未找到满足当前运行条件且有足够收益
@@ -2338,3 +2339,30 @@ N2b 先完成普通 ELF 和可扩大的执行区布局，再实现 init、shell�
 与抢占；较大工作集和动态代码检查纳入同一个阶段产物，随后集中进行手机
 测试。实现顺序、验收要求和复杂度审查见[原型记录](native-linux-nce-prototype.md#n2b普通-linux-用户态)。
 本次只更新验收记录和实施范围，运行代码与安装包保持 R3。
+
+## N2b-B1：musl 用户程序、线程与抢占（2026-10-09）
+
+新增 ELF 段布局与指令映射符号处理，运行 musl 1.2.5 编译的 ARM64 静态 PIE。
+独立 PID namespace 内的用户态 PID 1 执行批处理命令，通过 pipe、fork、exec
+与 wait 组织 worker。线程覆盖 TLS、互斥锁、join、异步抢占和释放栈后的退出。
+worker 的执行区为 112 KiB，并验证 2 MiB 数据的 COW。实现与取舍见
+[N2b 记录](native-linux-n2b-progress.md)。
+
+N0/N1 回归通过；N2b 连续 16 轮执行 128 次命令、896 个 pthread 线程，
+1,264 个 NCE 上下文全部释放，128 次释放栈后的退出完成。本次发生
+138 次客体抢占和 36,315 次转到宿主栈的缺页处理。新增 8 项 ELF 单测，
+保留 5 项调试器断开检查和执行异常恢复检查；LKL 补丁重复应用保持文件内容
+与修改时间不变。原始结果和哈希保存于
+`experiments/native-linux/results-userspace-macos.json`。
+
+iOS Release 构建、签名完整性与 IPA 检查通过，构建编号 `N2-B1-iOS-20261009-023323`，
+安装步骤见[手机测试](native-linux-n2-ios-test.md)。本次需要确认新的信号返回
+与异步抢占路径；手机结果待确认。
+
+复杂度审查将执行区元数据用于准备、改写和清理，保留 Linux 私有页偏移用于
+任务切换后的代码恢复。原有汇编程序继续作为回归用例，新的 C 程序验证真实
+libc 行为。统一构建生成内置 ELF 清单，移除旧的独立 `exec-image.h` 生成流程。
+Linux 负责调度和进程生命周期，宿主定时线程只发送抢占信号。
+
+相对 N2b 计划，本次先交付静态用户态和异常返回阶段。完整 shell、动态加载、
+Linux 信号与用户指针隔离仍需继续实现。暂未测量长期温度与 HyperOS 整机收益。

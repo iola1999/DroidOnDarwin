@@ -14,6 +14,7 @@ struct NceState {
     void *opaque;
     uint64_t done, tls, calls, tls_accesses;
     NceState *self;
+    NceState *(*event)(NceState *);
 };
 
 typedef struct {
@@ -28,5 +29,13 @@ int nce_prepare(NceCode, NceState *, const void *, size_t, size_t entry);
 int nce_prepare_shared(NceCode, NceState *, NceState **active, const void *, size_t, size_t entry);
 void nce_enter(NceState *);
 void nce_gate(void);
+void nce_event_gate(void);
+void nce_restore_stack(void);
 NceState *nce_dispatch(NceState *);
+NceState *nce_event_dispatch(NceState *);
 void nce_sync_code(NceCode);
+/* Emits one resume entry or one SVC/TLS stub into caller-owned storage. The
+ * caller supplies a distinct stub for each instruction and flushes afterwards. */
+int nce_write_entry(NceCode stub, uintptr_t entry);
+int nce_write_patch(uint32_t *write_address, uintptr_t execute_address,
+                    NceCode stub, NceState **active, uint32_t instruction);

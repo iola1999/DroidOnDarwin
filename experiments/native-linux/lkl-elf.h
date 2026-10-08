@@ -1,6 +1,10 @@
 /* SPDX-License-Identifier: GPL-2.0 */
 #ifndef _ASM_LKL_ELF_H
 #define _ASM_LKL_ELF_H
+#ifdef CONFIG_MMU
+#include <asm/host_ops.h>
+#define NCE_ELF_LAYOUT(path, header, phdrs) lkl_ops->user_elf(path, header, phdrs)
+#endif
 #define elf_check_arch(x) ((x)->e_machine == EM_AARCH64)
 #define ELF_CLASS ELFCLASS64
 #define ELF_DATA ELFDATA2LSB

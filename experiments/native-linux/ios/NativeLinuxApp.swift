@@ -51,7 +51,8 @@ final class ProbeModel: ObservableObject {
             }
         } else if busy && didRun {
             let seconds = Int(Date().timeIntervalSince(startedAt))
-            if log.contains("\"phase\":\"linux_process_tests\"") { status = "正在测试 Linux 进程（\(seconds) 秒）" }
+            if log.contains("\"phase\":\"linux_userspace_tests\"") { status = "正在测试 C 程序和线程（\(seconds) 秒）" }
+            else if log.contains("\"phase\":\"linux_process_tests\"") { status = "正在测试 Linux 进程（\(seconds) 秒）" }
             else if log.contains("\"phase\":\"linux_init\"") { status = "正在启动 Linux 内核（\(seconds) 秒）" }
             else if log.contains("\"phase\":\"check_fixed_code_and_data_remap\"") { status = "正在检查代码执行和数据映射（\(seconds) 秒）" }
             else if log.contains("\"phase\":\"wait_debugger_detach\"") { status = "正在等待 JIT 助手断开（\(seconds) 秒）" }
@@ -161,11 +162,11 @@ struct NativeLinuxApp: App {
         WindowGroup {
             NavigationStack {
                 List {
-                    Section("N2 · 原生 Linux + NCE") {
+                    Section("N2b · Linux 用户态") {
                         Text(Bundle.main.object(forInfoDictionaryKey: "NCEBuildID") as? String ?? "N2")
                             .font(.caption).foregroundStyle(.secondary)
                         Text(model.status).font(.headline).accessibilityIdentifier("probe-status")
-                        Text("测试代码执行、Linux 启动和进程操作。运行时请保持应用在前台。")
+                        Text("启动 Linux，运行 C 程序并检查进程、线程和调度。测试时请保持应用在前台。")
                             .foregroundStyle(.secondary)
                         if model.busy { ProgressView() }
                     }

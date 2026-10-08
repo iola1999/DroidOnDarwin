@@ -80,7 +80,14 @@ static lkl_thread_t thread_create(void (*fn)(void *), void *arg)
     return (unsigned long)thread;
 }
 static void thread_detach(void) { REQUIRE(pthread_detach(pthread_self()) == 0); }
-static void thread_exit(void) { pthread_exit(NULL); }
+static void thread_exit(void)
+{
+#ifdef NCE_PROCESS
+    extern void nce_process_thread_exit(void);
+    nce_process_thread_exit();
+#endif
+    pthread_exit(NULL);
+}
 static int thread_join(lkl_thread_t t) { return pthread_join((pthread_t)t, NULL) ? -1 : 0; }
 static lkl_thread_t thread_self(void) { return (unsigned long)pthread_self(); }
 static int thread_equal(lkl_thread_t a, lkl_thread_t b) { return pthread_equal((pthread_t)a, (pthread_t)b); }

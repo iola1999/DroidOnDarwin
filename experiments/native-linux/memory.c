@@ -2,6 +2,7 @@
 #include "memory.h"
 #include "execute-check.h"
 #include "layout.h"
+#include "programs.h"
 #include <TargetConditionals.h>
 #include <errno.h>
 #include <mach/mach.h>
@@ -19,7 +20,7 @@ extern int nce_wait_debugger_detach(unsigned timeout_ms);
 #define RESERVED_BYTES (NCE_CODE_POOL_SIZE + SPACE_BYTES)
 #define REQUIRE(c) do { if (!(c)) { fprintf(stderr, "memory failure line %d: %s\n", __LINE__, #c); abort(); } } while (0)
 static unsigned char *reservation;
-static NceCode pool, guest_code;
+static NceCode pool;
 static size_t used;
 
 NceCode nce_memory_take(size_t size)
@@ -31,7 +32,7 @@ NceCode nce_memory_take(size_t size)
     return result;
 }
 
-NceCode nce_memory_guest_code(void) { return guest_code; }
+uintptr_t nce_memory_user_base(void) { return (uintptr_t)reservation + NCE_CODE_POOL_SIZE; }
 
 int nce_memory_remap(void *target, void *source, size_t size, int protection)
 {
@@ -80,16 +81,20 @@ static int verify_memory(void)
     NceCode pages = nce_memory_take(2 * PAGE);
     uint32_t first[] = {0x52800540, 0xd65f03c0}; /* mov w0,42; ret */
     uint32_t second[] = {0x52800560, 0xd65f03c0}; /* mov w0,43; ret */
-    NceCode ranges[] = {pages, guest_code};
-    for (unsigned range = 0; range < 2; ++range) {
-        for (unsigned i = 0; i < 8; ++i) {
-            memcpy(ranges[range].rw, i % 2 ? second : first, sizeof(first));
-            nce_sync_code(ranges[range]);
-            printf("{\"phase\":\"execute_original_jit_address\",\"range\":%u,\"iteration\":%u}\n", range, i);
-            if (nce_check_execute(ranges[range], 42 + (int)(i % 2))) return -1;
+    unsigned range = 0;
+    for (size_t program = 0; program <= nce_program_count; ++program) {
+        size_t count = program ? nce_programs[program - 1].segment_count : 1;
+        for (size_t segment = 0; segment < count; ++segment, ++range) {
+            NceCode target = program ? nce_programs[program - 1].segments[segment].code : pages;
+            for (unsigned i = 0; i < 8; ++i) {
+                memcpy(target.rw, i % 2 ? second : first, sizeof(first));
+                nce_sync_code(target);
+                printf("{\"phase\":\"execute_original_jit_address\",\"range\":%u,\"iteration\":%u}\n", range, i);
+                if (nce_check_execute(target, 42 + (int)(i % 2))) return -1;
+            }
         }
     }
-    puts("{\"test\":\"prepared_fixed_address_code_updates\",\"passed\":true,\"ranges\":2,\"updates_per_range\":8}");
+    printf("{\"test\":\"prepared_fixed_address_code_updates\",\"passed\":true,\"ranges\":%u,\"updates_per_range\":8}\n", range);
 
     unsigned char *backing = mmap(NULL, NCE_RAM_SIZE, PROT_READ | PROT_WRITE, MAP_ANON | MAP_PRIVATE, -1, 0);
     if (backing == MAP_FAILED) return -1;
@@ -99,7 +104,8 @@ static int verify_memory(void)
     unsigned char *base = reservation + NCE_CODE_POOL_SIZE;
     int result = -1;
     /* Probe the actual data destinations on both sides of the prepared code. */
-    void *targets[] = {base, base + NCE_EXEC_OFFSET + NCE_EXEC_SIZE};
+    NceSegment *first_code = &nce_programs[0].segments[0];
+    void *targets[] = {base, first_code->code.rx + first_code->size};
     for (unsigned t = 0; t < 2; ++t) {
         for (unsigned i = 0; i < 8; ++i) {
             if (nce_memory_remap(targets[t], backing + (i % 2) * PAGE, PAGE, PROT_READ)) goto done;
@@ -123,8 +129,11 @@ done:
 int nce_memory_prepare(void)
 {
     REQUIRE(!reservation);
-    printf("{\"phase\":\"prepare_jit_pool\",\"reserved_bytes\":%lu,\"prepared_code_bytes\":%lu}\n",
-           RESERVED_BYTES, NCE_CODE_POOL_SIZE + NCE_EXEC_SIZE);
+    size_t prepared = NCE_CODE_POOL_SIZE;
+    for (size_t i = 0; i < nce_program_count; ++i)
+        for (size_t j = 0; j < nce_programs[i].segment_count; ++j) prepared += nce_programs[i].segments[j].size;
+    printf("{\"phase\":\"prepare_jit_pool\",\"reserved_bytes\":%lu,\"prepared_code_bytes\":%zu}\n",
+           RESERVED_BYTES, prepared);
     reservation = mmap(NULL, RESERVED_BYTES, PROT_NONE, MAP_ANON | MAP_PRIVATE, -1, 0);
     if (reservation == MAP_FAILED) {
         reservation = NULL;
@@ -132,7 +141,16 @@ int nce_memory_prepare(void)
         return -1;
     }
     pool = prepare_code(reservation, NCE_CODE_POOL_SIZE);
-    if (pool.rw) guest_code = prepare_code(reservation + NCE_CODE_POOL_SIZE + NCE_EXEC_OFFSET, NCE_EXEC_SIZE);
+    int valid = pool.rw != NULL;
+    for (size_t i = 0; valid && i < nce_program_count; ++i) {
+        NceProgram *p = &nce_programs[i];
+        p->base = nce_memory_user_base() + p->offset;
+        for (size_t j = 0; valid && j < p->segment_count; ++j) {
+            NceSegment *s = &p->segments[j];
+            s->code = prepare_code((void *)(p->base + s->offset), s->size);
+            valid = s->code.rw != NULL;
+        }
+    }
 #if TARGET_OS_IPHONE
     husk_ios_jit_detach();
     if (nce_wait_debugger_detach(5000) != 0) {
@@ -140,7 +158,7 @@ int nce_memory_prepare(void)
         return -1;
     }
 #endif
-    if (!pool.rw || !guest_code.rw) {
+    if (!valid) {
         puts("{\"result\":\"failed\",\"reason\":\"jit_preparation\"}");
         nce_memory_release();
         return -1;
@@ -172,16 +190,27 @@ int nce_memory_release(void)
 {
     int result = 0;
     result |= release_range(pool.rw, pool.size, 1);
-    result |= release_range(guest_code.rw, guest_code.size, 1);
     if (reservation) {
-        size_t end = NCE_CODE_POOL_SIZE + NCE_EXEC_OFFSET + NCE_EXEC_SIZE;
         result |= release_range(reservation, NCE_CODE_POOL_SIZE, 1);
-        result |= release_range(reservation + NCE_CODE_POOL_SIZE, NCE_EXEC_OFFSET, 0);
-        result |= release_range(reservation + NCE_CODE_POOL_SIZE + NCE_EXEC_OFFSET, NCE_EXEC_SIZE, 1);
-        result |= release_range(reservation + end, RESERVED_BYTES - end, 0);
+        uintptr_t cursor = nce_memory_user_base();
+        for (size_t i = 0; i < nce_program_count; ++i) {
+            NceProgram *p = &nce_programs[i];
+            for (size_t j = 0; j < p->segment_count; ++j) {
+                NceSegment *s = &p->segments[j];
+                uintptr_t begin = nce_memory_user_base() + p->offset + s->offset;
+                REQUIRE(begin >= cursor);
+                if (begin > cursor) result |= release_range((void *)cursor, begin - cursor, 0);
+                result |= release_range(s->code.rw, s->size, 1);
+                result |= release_range((void *)begin, s->size, s->code.rx != NULL);
+                cursor = begin + s->size;
+                s->code = (NceCode){0};
+            }
+            p->stubs = (NceCode){0};
+        }
+        result |= release_range((void *)cursor, (uintptr_t)reservation + RESERVED_BYTES - cursor, 0);
     }
     reservation = NULL;
-    pool = guest_code = (NceCode){0};
+    pool = (NceCode){0};
     used = 0;
     return result;
 }

@@ -3,6 +3,7 @@
 import argparse
 import hashlib
 from lkl_nce_patch import apply
+from build_nce_userspace import build as build_userspace
 import json
 import os
 from pathlib import Path
@@ -138,7 +139,7 @@ def main():
         options = ["64BIT", "EXPERT", "PROC_FS", "SYSFS", "FUTEX", "EPOLL", "SIGNALFD", "TIMERFD",
                    "LKL_HOST_MEMCPY", "LKL_HOST_MEMSET", "LKL_HOST_MEMMOVE"]
         if PROCESS:
-            options += ["MMU", "PRINTK"]
+            options += ["MMU", "PRINTK", "NAMESPACES", "PID_NS"]
         switches = [arg for name in options for arg in ("-e", name)]
         switches += [arg for name in ("KALLSYMS", "BLOCK", "DEBUG_INFO", "SLUB_DEBUG") for arg in ("-d", name)]
         run([SOURCE / "scripts/config", "--file", BUILD / ".config", *switches], env=env)
@@ -154,18 +155,12 @@ def main():
          "-z", "common-page-size=16384", OUT / "lkl-exports.o", OUT / "lkl-bridge.o", "-o", OUT / "lkl.so"])
     package_elf(OUT / "lkl.so")
     if PROCESS:
-        run([clang, "--target=aarch64-none-elf", "-c", EXPERIMENT / "exec-guest.S", "-o", OUT / "exec-guest.o"])
-        run(["ld.lld", "-pie", "--no-dynamic-linker", "--entry=_start", "-Ttext=0x10000", "-z", "max-page-size=16384",
-             OUT / "exec-guest.o", "-o", OUT / "exec-guest.elf"])
-        elf = (OUT / "exec-guest.elf").read_bytes()
-        nm = subprocess.check_output([llvm / "llvm-nm", "--defined-only", OUT / "exec-guest.elf"], text=True)
-        symbols = {parts[2]: int(parts[0], 16) for line in nm.splitlines() if len(parts := line.split()) == 3}
-        (OUT / "exec-image.h").write_text("#define EXEC_TEXT_SIZE " + str(symbols["exec_text_end"] - symbols["_start"]) + "\nstatic const unsigned char exec_elf[] = {" + ",".join(map(str, elf)) + "};\n")
+        build_userspace(OUT, llvm)
     inputs = [EXPERIMENT / name for name in ("lkl-main.c", "lkl-host.c", "nce.c", "entry.S")]
     flags = ["-O2", "-g", "-Wall", "-Wextra", "-Werror", "-I", OUT, "-I", EXPERIMENT]
     if PROCESS:
         flags += ["-DNCE_PROCESS"]
-        inputs += [EXPERIMENT / "lkl-process-host.c", EXPERIMENT / "memory.c", EXPERIMENT / "execute-check.c", EXPERIMENT / "compute.c"]
+        inputs += [EXPERIMENT / "lkl-process-host.c", EXPERIMENT / "programs.c", EXPERIMENT / "memory.c", EXPERIMENT / "execute-check.c", EXPERIMENT / "compute.c"]
         run([clang, *flags, "-isysroot", sdk, "-DNATIVE", "-c", EXPERIMENT / "guest.S", "-o", OUT / "native.o"])
     run([clang, *flags, "-isysroot", sdk, *inputs, *([OUT / "native.o"] if PROCESS else []), "-o", OUT / "lkl-probe"])
     ios_sdk = subprocess.check_output(["xcrun", "--sdk", "iphoneos", "--show-sdk-path"], text=True).strip()
@@ -180,16 +175,22 @@ def main():
     if results[-1].get("result") != "passed":
         raise SystemExit("LKL probe did not complete")
     manifest = {"source_revision": REVISION, "platform": platform.platform(), "results": results,
-                "ios_status": "host operations compiled; kernel loading and execution untested",
+                "ios_status": "this build compiled for iOS; device execution pending",
                 "config_sha256": hashlib.sha256((BUILD / ".config").read_bytes()).hexdigest(),
                 "kernel_sha256": hashlib.sha256((OUT / "lkl-image.bin").read_bytes()).hexdigest()}
     sources = [*inputs, EXPERIMENT / "lkl-bridge.c", EXPERIMENT / "nce.h", EXPERIMENT / "guest.S", Path(__file__).resolve()]
     if PROCESS:
         sources += [EXPERIMENT / "memory.h", EXPERIMENT / "layout.h", EXPERIMENT / "execute-check.h", Path(__file__).with_name("lkl_nce_patch.py"),
                     *sorted(EXPERIMENT.glob("lkl-*.h")),
-                    *sorted(EXPERIMENT.glob("lkl-nce-*.c")), EXPERIMENT / "exec-guest.S"]
-        manifest["stage"] = "N2a controlled Linux user processes"
-        manifest["exec_elf_sha256"] = hashlib.sha256((OUT / "exec-guest.elf").read_bytes()).hexdigest()
+                    *sorted(EXPERIMENT.glob("lkl-nce-*.c")), EXPERIMENT / "exec-guest.S", EXPERIMENT / "programs.h",
+                    Path(__file__).with_name("build_nce_userspace.py"), *sorted((EXPERIMENT / "userspace").glob("*"))]
+        run(["python3", ROOT / "scripts/test_nce_userspace.py"])
+        sources.append(ROOT / "scripts/test_nce_userspace.py")
+        manifest["stage"] = "N2b musl static PIE, threads and asynchronous preemption"
+        manifest["userspace_libraries"] = {"musl": "1.2.5", "compiler-rt": "20.1.8"}
+        manifest["generated_sha256"] = {name: hashlib.sha256((OUT / name).read_bytes()).hexdigest()
+                                        for name in ["program-images.h", "lkl-image.h", "lkl-host-ops.h", "guest-image.h",
+                                                     "exec-guest.elf", "init.elf", "worker.elf"]}
     manifest["input_sha256"] = {str(p.relative_to(ROOT)): hashlib.sha256(p.read_bytes()).hexdigest() for p in sources}
     (OUT / "lkl-summary.json").write_text(json.dumps(manifest, indent=2) + "\n")
     print(json.dumps(manifest, indent=2))

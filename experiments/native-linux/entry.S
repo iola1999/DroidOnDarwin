@@ -75,10 +75,23 @@ _nce_gate:
     ldr x1, [x0, #848]
     cbnz x1, Lfinish
     mov x16, x0
+    b Lrestore
+
+// Signal return enters here on the saved host stack. Kernel work then runs
+// outside the Darwin signal handler, with the host floating-point state.
+.globl _nce_event_gate
+_nce_event_gate:
+    ldp x1, x2, [sp, #160]
+    msr fpcr, x1
+    msr fpsr, x2
+    bl _nce_event_dispatch
+    mov x16, x0
 Lrestore:
     ldr x17, [x16, #248]
     sub x17, x17, #16
     ldp x0, x1, [x16, #128]
+.globl _nce_restore_stack
+_nce_restore_stack:
     stp x0, x1, [x17]
     mov sp, x17
     add x0, x16, #288

@@ -27,6 +27,30 @@ void nce_sync_code(NceCode code)
     sys_icache_invalidate(code.rx, code.size);
 }
 
+int nce_write_entry(NceCode stub, uintptr_t entry)
+{
+    if (stub.size < 16 || (entry & 3)) return -1;
+    uint32_t *words = (void *)stub.rw;
+    words[0] = 0xa8c147f0;
+    return branch(&words[1], (uintptr_t)stub.rx + 4, entry);
+}
+
+int nce_write_patch(uint32_t *write_address, uintptr_t execute_address,
+                    NceCode stub, NceState **active, uint32_t instruction)
+{
+    if (stub.size < 80 || nce_stub_end - nce_stub != 80) return -1;
+    memcpy(stub.rw, nce_stub, 80);
+    uint64_t context = (uintptr_t)active;
+    uint64_t resume = (uintptr_t)stub.rx + 40;
+    uint64_t gate = (uintptr_t)nce_gate;
+    memcpy(stub.rw + 48, &context, 8);
+    memcpy(stub.rw + 56, &resume, 8);
+    memcpy(stub.rw + 64, &instruction, 4);
+    memcpy(stub.rw + 72, &gate, 8);
+    if (branch((void *)(stub.rw + 44), (uintptr_t)stub.rx + 44, execute_address + 4)) return -1;
+    return branch(write_address, execute_address, (uintptr_t)stub.rx);
+}
+
 int nce_prepare_shared(NceCode code, NceState *s, NceState **active,
                        const void *bytes, size_t size, size_t entry)
 {
@@ -36,10 +60,8 @@ int nce_prepare_shared(NceCode code, NceState *s, NceState **active,
         return -1;
     memcpy(code.rw, bytes, size);
     /* Entry and syscall returns restore x16/x17 after leaving the common gate. */
-    uint32_t *start = (void *)(code.rw + cursor);
-    start[0] = 0xa8c147f0; /* ldp x16, x17, [sp], #16 */
-    if (branch(&start[1], (uintptr_t)code.rx + cursor + 4,
-               (uintptr_t)code.rx + entry)) return -1;
+    if (nce_write_entry((NceCode){code.rw + cursor, code.rx + cursor, 16},
+                        (uintptr_t)code.rx + entry)) return -1;
     s->resume = (uintptr_t)code.rx + cursor;
     s->pc = (uintptr_t)code.rx + entry;
     cursor += 16;
@@ -51,19 +73,8 @@ int nce_prepare_shared(NceCode code, NceState *s, NceState **active,
                   (word & 0xffffffe0) == 0xd51bd040;
         if (!svc && !tls) continue;
         if (cursor + 80 > code.size) return -1;
-        unsigned char *stub = code.rw + cursor;
-        memcpy(stub, nce_stub, 80);
-        uint64_t context = (uintptr_t)active;
-        uint64_t resume = (uintptr_t)code.rx + cursor + 40;
-        uint64_t gate = (uintptr_t)nce_gate;
-        memcpy(stub + 48, &context, 8);
-        memcpy(stub + 56, &resume, 8);
-        memcpy(stub + 64, &word, 4);
-        memcpy(stub + 72, &gate, 8);
-        if (branch((void *)(stub + 44), (uintptr_t)code.rx + cursor + 44,
-                   (uintptr_t)code.rx + pos + 4) ||
-            branch((void *)(code.rw + pos), (uintptr_t)code.rx + pos,
-                   (uintptr_t)code.rx + cursor)) return -1;
+        if (nce_write_patch((void *)(code.rw + pos), (uintptr_t)code.rx + pos,
+                            (NceCode){code.rw + cursor, code.rx + cursor, 80}, active, word)) return -1;
         cursor += 80;
     }
     nce_sync_code(code);
@@ -78,6 +89,10 @@ int nce_prepare(NceCode code, NceState *s, const void *bytes, size_t size, size_
 
 NceState *nce_dispatch(NceState *s)
 {
+    /* Every synchronous resume has a B to the next guest instruction. */
+    uint32_t branch_word;
+    memcpy(&branch_word, (void *)(s->resume + 4), 4);
+    s->pc = s->resume + 4 + ((int64_t)(int32_t)(branch_word << 6) >> 4);
     uint32_t word = s->instruction;
     unsigned reg = word & 31;
     if ((word & 0xffffffe0) == 0xd53bd040) {
@@ -92,3 +107,5 @@ NceState *nce_dispatch(NceState *s)
     }
     return s;
 }
+
+NceState *nce_event_dispatch(NceState *s) { return s->event(s); }

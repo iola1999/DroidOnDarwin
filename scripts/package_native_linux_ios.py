@@ -14,7 +14,7 @@ ROOT = Path(__file__).resolve().parents[1]
 EXP = ROOT / 'experiments/native-linux'
 INPUT = ROOT / 'work/native-linux-nce/processes'
 OUT = ROOT / 'work/native-linux-nce/ios'
-REVISION = 'N2-R3'
+REVISION = 'N2-B1'
 
 
 def run(args, **kwargs):
@@ -38,14 +38,18 @@ def main():
             raise SystemExit(f'{name} changed; run with --rebuild-kernel')
     if hashlib.sha256((INPUT / 'lkl-image.bin').read_bytes()).hexdigest() != summary['kernel_sha256']:
         raise SystemExit('Kernel image does not match the validated manifest')
+    for name, digest in summary['generated_sha256'].items():
+        if hashlib.sha256((INPUT / name).read_bytes()).hexdigest() != digest:
+            raise SystemExit(f'{name} does not match the validated manifest')
     OUT.mkdir(parents=True, exist_ok=True)
     sdk = subprocess.check_output(['xcrun', '--sdk', 'macosx', '--show-sdk-path'], text=True).strip()
     run(['xcrun', 'clang', '-O2', '-Wall', '-Wextra', '-Werror', '-isysroot', sdk,
          EXP / 'ios/Bridge.c', EXP / 'ios/detach-test.c', '-o', OUT / 'detach-test'])
     with (OUT / 'detach-test.log').open('w') as log:
         run([OUT / 'detach-test'], stdout=log)
-    run(['xcrun', 'clang', '-O2', '-Wall', '-Wextra', '-Werror', '-isysroot', sdk, '-I', EXP,
+    run(['xcrun', 'clang', '-O2', '-Wall', '-Wextra', '-Werror', '-isysroot', sdk, '-I', EXP, '-I', INPUT,
          EXP / 'execute-check.c', EXP / 'memory.c', EXP / 'nce.c', EXP / 'entry.S',
+         EXP / 'programs.c',
          EXP / 'ios/execute-test.c', '-o', OUT / 'execute-test'])
     with (OUT / 'execute-test.log').open('w') as log:
         run([OUT / 'execute-test'], stdout=log)
@@ -58,13 +62,17 @@ def main():
                 UISupportedInterfaceOrientations=['UIInterfaceOrientationPortrait',
                     'UIInterfaceOrientationPortraitUpsideDown',
                     'UIInterfaceOrientationLandscapeLeft', 'UIInterfaceOrientationLandscapeRight'],
-                CFBundleShortVersionString='0.8.3', CFBundleVersion='38')
+                CFBundleShortVersionString='0.9.0', CFBundleVersion='39')
     plist(OUT / 'Info.plist', info)
+    helper_info = plistlib.loads((ROOT / 'src/app/HuskJITHelper/Info.plist').read_bytes())
+    for key in ['CFBundleShortVersionString', 'CFBundleVersion']:
+        helper_info[key] = info[key]
+    plist(OUT / 'Helper-Info.plist', helper_info)
     # Deployment entitlements are supplied by iLoader. This ad-hoc signature is
     # for archive integrity; get-task-allow is needed by the in-app JIT helper.
     plist(OUT / 'Husk.entitlements', {'get-task-allow': True})
     sources = [{'path': str(EXP / name)} for name in
-               ['lkl-main.c', 'lkl-host.c', 'lkl-process-host.c', 'memory.c', 'execute-check.c', 'compute.c', 'nce.c', 'entry.S',
+               ['lkl-main.c', 'lkl-host.c', 'lkl-process-host.c', 'programs.c', 'memory.c', 'execute-check.c', 'compute.c', 'nce.c', 'entry.S',
                 'ios/Bridge.c', 'ios/NativeLinuxApp.swift']]
     sources += [{'path': str(EXP / 'guest.S'), 'compilerFlags': ['-DNATIVE']}]
     sources += [{'path': str(ROOT / name)} for name in
@@ -72,7 +80,9 @@ def main():
                  'src/app/Husk/JITBuiltIn.swift', 'src/app/Husk/JITPairingFileStore.swift',
                  'src/app/HuskJITHelper/HuskJITMessages.swift', 'src/app/Husk/Assets.xcassets']]
     sources += [{'path': str(path), 'buildPhase': 'resources'} for path in
-                [INPUT / 'lkl-image.bin', ROOT / 'src/app/Husk/Resources/husk-jit.js']]
+                [INPUT / 'lkl-image.bin', ROOT / 'src/app/Husk/Resources/husk-jit.js',
+                 ROOT / 'work/native-linux-nce/musl-1.2.5/COPYRIGHT',
+                 ROOT / 'work/native-linux-nce/compiler-rt-20.1.8.src/LICENSE.TXT']]
     framework = ROOT / 'src/app/Frameworks/StikJIT.xcframework'
     spec = {
         'name': 'HuskNCE',
@@ -97,10 +107,10 @@ def main():
                 'dependencies': [{'target': 'HuskJITHelper'}]},
             'HuskJITHelper': {
                 'type': 'app-extension', 'platform': 'iOS',
-                'sources': [{'path': str(ROOT / 'src/app/HuskJITHelper')}],
+                'sources': [{'path': str(ROOT / 'src/app/HuskJITHelper'), 'excludes': ['Info.plist']}],
                 'settings': {'base': {
                     'PRODUCT_BUNDLE_IDENTIFIER': 'com.husk.app.JITHelper',
-                    'INFOPLIST_FILE': str(ROOT / 'src/app/HuskJITHelper/Info.plist'),
+                    'INFOPLIST_FILE': str(OUT / 'Helper-Info.plist'),
                     'APPLICATION_EXTENSION_API_ONLY': 'YES',
                     'LD_RUNPATH_SEARCH_PATHS': ['$(inherited)', '@executable_path/../../Frameworks']}},
                 'dependencies': [{'framework': str(framework), 'embed': False}]}}}
@@ -138,6 +148,7 @@ def main():
     manifest = {'build': build_id, 'ipa': str(package), 'bytes': package.stat().st_size,
                 'sha256': hashlib.sha256(package.read_bytes()).hexdigest(),
                 'kernel_sha256': summary['kernel_sha256'],
+                'generated_sha256': summary['generated_sha256'],
                 'device_execution': 'pending', 'mac_validation': summary['results'],
                 'source_sha256': {str(path.relative_to(ROOT)): hashlib.sha256(path.read_bytes()).hexdigest()
                                   for path in [Path(__file__).resolve(), ROOT / 'src/ios-jit/husk-ios-jit.h', *sorted(EXP.glob('ios/*')),

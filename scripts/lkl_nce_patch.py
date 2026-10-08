@@ -34,8 +34,17 @@ def apply(source: Path, experiment: Path):
     edit(arch + "include/asm/processor.h", "#define TASK_SIZE ((unsigned long)-1)", "#ifdef CONFIG_MMU\nextern unsigned long nce_user_base, nce_task_size, nce_memory_start;\n#define TASK_SIZE nce_task_size\n#else\n#define TASK_SIZE ((unsigned long)-1)\n#endif")
     edit(arch + "include/asm/processor.h", "(CONFIG_LKL_MEMORY_START - 16 * PAGE_SIZE)", "(TASK_SIZE - 16 * PAGE_SIZE)")
     edit(arch + "mm/bootmem.c", "(void *)CONFIG_LKL_MEMORY_START", "(void *)nce_memory_start")
-    edit(arch + "include/asm/processor.h", "#define TASK_UNMAPPED_BASE\tCONFIG_LKL_TASK_UNMAPPED_BASE", "#define TASK_UNMAPPED_BASE\tnce_user_base")
+    processor = source / arch / "include/asm/processor.h"
+    original = processor.read_text()
+    migrated = original.replace("#define TASK_UNMAPPED_BASE\tnce_user_base\n", "#define TASK_UNMAPPED_BASE\tCONFIG_LKL_TASK_UNMAPPED_BASE\n")
+    if migrated != original:
+        processor.write_text(migrated)
+    edit(arch + "include/asm/processor.h", "#define TASK_UNMAPPED_BASE\tCONFIG_LKL_TASK_UNMAPPED_BASE", "#include <asm/nce-layout.h>\n#define TASK_UNMAPPED_BASE\t(nce_user_base + NCE_MMAP_OFFSET)")
     edit(arch + "include/uapi/asm/host_ops.h", "\tstruct lkl_dev_pci_ops *pci_ops;", "\tstruct lkl_dev_pci_ops *pci_ops;\n\n\t/* N2 controlled userspace. The Linux CPU owns the active context. */\n\tvoid *(*user_clone)(void *parent, unsigned long sp, unsigned long tls, unsigned long flags);\n\tvoid (*user_free)(void *state);\n\tvoid (*user_switch)(void *state);\n\tvoid (*user_run)(void *state);\n\tvoid (*user_exec)(void *state, unsigned long entry, unsigned long stack);\n")
+    edit(arch + "include/uapi/asm/host_ops.h", "\tvoid (*user_exec)(void *state, unsigned long entry, unsigned long stack);", "\tvoid (*user_exec)(void *state, unsigned long entry, unsigned long stack);\n\tunsigned long (*user_elf)(const char *path, const void *header, const void *phdrs);")
+    edit("fs/binfmt_elf.c", "unsigned long load_bias = 0, phdr_addr = 0;", "unsigned long load_bias = 0, phdr_addr = 0;\n#ifdef NCE_ELF_LAYOUT\n\tunsigned long nce_bias;\n#endif")
+    edit("fs/binfmt_elf.c", "\t/* Flush all traces of the currently running executable */", "#ifdef NCE_ELF_LAYOUT\n\tnce_bias = interpreter ? 0 : NCE_ELF_LAYOUT(bprm->filename, elf_ex, elf_phdata);\n\tif (!nce_bias) {\n\t\tretval = -ENOEXEC;\n\t\tgoto out_free_dentry;\n\t}\n#endif\n\t/* Flush all traces of the currently running executable */")
+    edit("fs/binfmt_elf.c", "\t\t\tload_bias = ELF_PAGESTART(load_bias - vaddr);", "#ifdef NCE_ELF_LAYOUT\n\t\t\tload_bias = nce_bias;\n\t\t\telf_flags |= MAP_FIXED_NOREPLACE;\n#endif\n\t\t\tload_bias = ELF_PAGESTART(load_bias - vaddr);")
     edit(arch + "kernel/threads.c", "\tti->flags = org_ti->flags;", "\tp->thread.nce_state = NULL;\n\tti->flags = org_ti->flags;")
     edit(arch + "kernel/threads.c", "\tkill_thread(ti);\n\tkfree(ti);", "\tkill_thread(ti);\n#ifdef CONFIG_MMU\n\tif (tsk->thread.nce_state)\n\t\tlkl_ops->user_free(tsk->thread.nce_state);\n#endif\n\tkfree(ti);")
     edit(arch + "kernel/threads.c", "\tlkl_ops->sem_up(_next->sched_sem);", "#ifdef CONFIG_MMU\n\tif (lkl_ops->user_switch)\n\t\tlkl_ops->user_switch(next->thread.nce_state);\n#endif\n\tlkl_ops->sem_up(_next->sched_sem);")
