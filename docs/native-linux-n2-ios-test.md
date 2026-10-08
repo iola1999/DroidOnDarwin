@@ -111,8 +111,16 @@ Linux 启动和 32 轮进程检查；96 个上下文全部释放。iOS Release �
 扩展的签名完整性、IPA ZIP 完整性检查通过。包中包含内核映像、JIT 脚本、
 HuskJITHelper 和 StikJIT。IPA 使用临时签名，需要 iLoader 重签。
 
-R3 尚未在手机执行。下一轮要确认只准备代码区域后，实际的 64 MiB 数据
-映射与 Linux 初始化能否完成。当前结果无法给出 HyperOS 整机加速倍数。
+R3 已在当前 iPhone / iOS 27.2 完成全部检查。日志来自构建
+`N2-R3-iOS-20261009-011553`，最终结果为 `passed`：64 MiB 数据映射成功，
+Linux 6.12.0 启动耗时 15.678 ms；32 轮进程检查共 14.227 ms，处理 352 次
+缺页、复制代码 512 次，分配与释放各 96 个 NCE 上下文。完整记录保存在
+`experiments/native-linux/results-ios-n2-r3.json`。
+
+本轮暂时无需追加手机测试，可以进入普通 ELF、init、线程、信号和较大工作集
+的实现。下一次手机验证集中使用该阶段产物，范围见[原型记录](native-linux-nce-prototype.md#n2b普通-linux-用户态)。
+这次运行时间很短，代码仍为受控程序；持续性能、运行峰值内存与 HyperOS
+整机加速倍数尚未测量。
 
 ## 初版断开问题
 

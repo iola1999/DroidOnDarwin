@@ -1,0 +1,229 @@
+{
+  "build": "N2-R3-iOS-20261009-011553",
+  "ios": "27.2",
+  "pid": 30591,
+  "log_sha256": "5cfbacdc9c30318b85b31f00af8b24780a2278183a5cfc4bf3ffe595810c585c",
+  "ipa_sha256": "fa42c8e1b4d0ef53a825008f9ceed937d79ddafbd5aac425e2af7268ddf68f5f",
+  "kernel_sha256": "76ae2e62945f691b97ebdb538664c0caf5654859b788b4d5bf28e18811bb2453",
+  "source_commit": "91ab4a5",
+  "source_hashes_match_package_manifest": true,
+  "results": [
+    {
+      "phase": "prepare_jit_pool",
+      "reserved_bytes": 218103808,
+      "prepared_code_bytes": 16842752
+    },
+    {
+      "phase": "wait_debugger_detach"
+    },
+    {
+      "phase": "debugger_detached",
+      "elapsed_ms": 0
+    },
+    {
+      "phase": "check_fixed_code_and_data_remap"
+    },
+    {
+      "phase": "execute_original_jit_address",
+      "range": 0,
+      "iteration": 0
+    },
+    {
+      "phase": "execute_original_jit_address",
+      "range": 0,
+      "iteration": 1
+    },
+    {
+      "phase": "execute_original_jit_address",
+      "range": 0,
+      "iteration": 2
+    },
+    {
+      "phase": "execute_original_jit_address",
+      "range": 0,
+      "iteration": 3
+    },
+    {
+      "phase": "execute_original_jit_address",
+      "range": 0,
+      "iteration": 4
+    },
+    {
+      "phase": "execute_original_jit_address",
+      "range": 0,
+      "iteration": 5
+    },
+    {
+      "phase": "execute_original_jit_address",
+      "range": 0,
+      "iteration": 6
+    },
+    {
+      "phase": "execute_original_jit_address",
+      "range": 0,
+      "iteration": 7
+    },
+    {
+      "phase": "execute_original_jit_address",
+      "range": 1,
+      "iteration": 0
+    },
+    {
+      "phase": "execute_original_jit_address",
+      "range": 1,
+      "iteration": 1
+    },
+    {
+      "phase": "execute_original_jit_address",
+      "range": 1,
+      "iteration": 2
+    },
+    {
+      "phase": "execute_original_jit_address",
+      "range": 1,
+      "iteration": 3
+    },
+    {
+      "phase": "execute_original_jit_address",
+      "range": 1,
+      "iteration": 4
+    },
+    {
+      "phase": "execute_original_jit_address",
+      "range": 1,
+      "iteration": 5
+    },
+    {
+      "phase": "execute_original_jit_address",
+      "range": 1,
+      "iteration": 6
+    },
+    {
+      "phase": "execute_original_jit_address",
+      "range": 1,
+      "iteration": 7
+    },
+    {
+      "test": "prepared_fixed_address_code_updates",
+      "passed": true,
+      "ranges": 2,
+      "updates_per_range": 8
+    },
+    {
+      "test": "data_fixed_remap_after_detach",
+      "passed": true,
+      "targets": 2,
+      "switches_per_target": 8
+    },
+    {
+      "phase": "check_linux_ram_remap"
+    },
+    {
+      "test": "linux_ram_remap",
+      "passed": true,
+      "bytes": 67108864
+    },
+    {
+      "bench": "prepared_nce_compute",
+      "sample": 0,
+      "iterations": 4000000,
+      "direct_ns": 13064875,
+      "nce_ns": 8929375
+    },
+    {
+      "bench": "prepared_nce_compute",
+      "sample": 1,
+      "iterations": 4000000,
+      "direct_ns": 7076875,
+      "nce_ns": 6110375
+    },
+    {
+      "bench": "prepared_nce_compute",
+      "sample": 2,
+      "iterations": 4000000,
+      "direct_ns": 5678667,
+      "nce_ns": 5213250
+    },
+    {
+      "bench": "prepared_nce_compute",
+      "sample": 3,
+      "iterations": 4000000,
+      "direct_ns": 5165708,
+      "nce_ns": 4644667
+    },
+    {
+      "bench": "prepared_nce_compute",
+      "sample": 4,
+      "iterations": 4000000,
+      "direct_ns": 4353125,
+      "nce_ns": 4222000
+    },
+    {
+      "phase": "load_linux_image"
+    },
+    {
+      "phase": "linux_init"
+    },
+    {
+      "test": "native_linux_boot",
+      "passed": true,
+      "ms": 15.678
+    },
+    {
+      "test": "linux_uname",
+      "sysname": "Linux",
+      "release": "6.12.0"
+    },
+    {
+      "phase": "linux_process_tests"
+    },
+    {
+      "test": "linux_nce_fork_cow_shared_futex_pipe_exec_wait",
+      "passed": true,
+      "rounds": 32,
+      "faults": 352,
+      "elapsed_ms": 14.227
+    },
+    {
+      "test": "linux_exec_then_fork_cow_wait",
+      "passed": true
+    },
+    {
+      "test": "linux_exec_file_unchanged",
+      "passed": true
+    },
+    {
+      "test": "linux_syscall_bounds",
+      "passed": true
+    },
+    {
+      "phase": "linux_shutdown"
+    },
+    {
+      "test": "fixed_linux_code_view",
+      "copies": 512,
+      "passed": true
+    },
+    {
+      "test": "linux_nce_context_lifetime",
+      "allocated": 96,
+      "freed": 96
+    },
+    {
+      "result": "passed"
+    }
+  ],
+  "footprint_after_jit_alloc_mib": 47.9,
+  "assessment": {
+    "controlled_n2a_device_execution": "passed",
+    "next_stage": "N2b general ELF, Linux userspace and working-set validation",
+    "additional_device_test_before_implementation": false,
+    "limitations": [
+      "One short run using controlled ARM64 fixtures and a fixed 64 KiB executable region.",
+      "Compute timings decrease across samples; sustained performance and HyperOS speedup remain unmeasured.",
+      "The footprint sample was taken after JIT allocation, not at the peak of the complete run.",
+      "Context counts cover NCE state only; complete VM mapping reclamation was not measured.",
+      "General ELF, userspace init, Linux signal delivery, preemption and Android are not yet implemented."
+    ]
+  }
+}

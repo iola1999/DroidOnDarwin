@@ -200,7 +200,7 @@
       "result": "passed"
     }
   ],
-  "ios_status": "R3 IPA built; device execution pending. R2 passed code/data preflight and compute, then aborted on Linux init remap.",
+  "ios_status": "R3 controlled N2a tests passed on iOS 27.2; see results-ios-n2-r3.json for device results and scope.",
   "config_sha256": "c8b4b3145456e28575f08d993f9300dd7d40d1702a173dabd6dee262ba2c62f8",
   "kernel_sha256": "76ae2e62945f691b97ebdb538664c0caf5654859b788b4d5bf28e18811bb2453",
   "stage": "N2a controlled Linux user processes",
