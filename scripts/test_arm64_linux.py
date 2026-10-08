@@ -87,6 +87,7 @@ def main():
                    "direct_active": "backend=direct" in host_output,
                    "fastmem_active": "[husk-fastmem] segmented mapping active" in host_output,
                    "pauth_assist_active": "PAUTH assist active" in host_output,
+                   "native_pauth_active": "native implementation-defined PAUTH active" in host_output,
                    "kernel_active": "kernel Direct active" in host_output,
                    "integer_ns": int(benchmark[1]) if benchmark else None,
                    "memory_ns": int(memory_benchmark[1]) if memory_benchmark else None,
@@ -108,7 +109,7 @@ def main():
                 row["passed"] = False
             if not all((benchmark, memory_benchmark, tagged_benchmark, syscall_benchmark, switch_benchmark)):
                 row["passed"] = False
-            for name in ("vector", "float", "vector_memory", "vector_structures", "counter", "calls", "indirect_calls", "plain_calls", "tail_calls", "dispatch_ip", "dispatch_general", "pac_calls", "exclusive", "atomic", "pointer", "pointer_write"):
+            for name in ("vector", "float", "vector_memory", "vector_structures", "counter", "calls", "indirect_calls", "plain_calls", "tail_calls", "dispatch_ip", "dispatch_general", "pac_calls", "pac_diverse", "exclusive", "atomic", "pointer", "pointer_write"):
                 measured = re.search(rf"BENCH {name}_ns=(\d+) value=(\d+)", output)
                 row[name + "_ns"] = int(measured[1]) if measured else None
                 if not measured and not (name == "atomic" and "SKIP LSE unavailable" in output):

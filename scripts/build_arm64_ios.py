@@ -26,7 +26,7 @@ def main():
     objects = []
     inputs = [source / name for name in (
         "husk-arm64-direct.cpp", "husk-arm64-direct-api.cpp", "husk-arm64-direct-entry.S",
-        "husk-arm64-fastmem.cpp", "husk-arm64-bulk.cpp")]
+        "husk-arm64-pauth.S", "husk-arm64-fastmem.cpp", "husk-arm64-bulk.cpp")]
     for path in inputs:
         obj = build / (path.name + ".o")
         flags = ["-std=c++20", "-Wall", "-Wextra"] if path.suffix == ".cpp" else []

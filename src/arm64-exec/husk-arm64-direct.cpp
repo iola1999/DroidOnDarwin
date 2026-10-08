@@ -35,8 +35,9 @@ struct CompiledPage;
 namespace {
 constexpr uint32_t CompileFastmem = 16, CompileLanding = 32, CompileInlineAssists = 256;
 constexpr uint32_t CompileExclusive = 512, CompileTail = 1024;
+constexpr uint32_t CompilePauthVerify = 2048;
 enum Stop : uint64_t { Budget, Fallback, ReadPage, WritePage, PrepareLoop, CodeBranch,
-                       FastReadPage, FastWritePage };
+                       FastReadPage, FastWritePage, PauthCheck };
 struct FaultSite {
     uintptr_t instruction, slow, patch, checked;
     unsigned bytes;
@@ -53,7 +54,12 @@ struct Frame {
     size_t fault_count, fault_index;
     uint64_t code_page;
     CompiledPage *code;
+    const HuskArm64Pauth *pauth;
 };
+static_assert(offsetof(Frame, pauth) == HUSK_NATIVE_PAUTH);
+static_assert(sizeof(HuskArm64PauthKey) == 32);
+static_assert(offsetof(HuskArm64PauthKey, mask) == 16);
+static_assert(offsetof(HuskArm64PauthKey, enabled) == 24);
 static_assert(offsetof(Frame, state.pc) == HUSK_PC);
 static_assert(offsetof(Frame, state.nzcv) == HUSK_NZCV);
 static_assert(offsetof(Frame, state.fpcr) == HUSK_FPCR);
@@ -94,6 +100,7 @@ static_assert(sizeof(CallRoute) == 64);
 static_assert(sizeof(PauthResult) == 32);
 extern "C" void husk_direct_enter(Frame *, void *, Mapping *);
 extern "C" void husk_direct_leave();
+extern "C" void husk_direct_pauth();
 
 /* Fastmem currently executes on one vCPU. Identity is checked against the
  * saved native frame register before the handler dereferences that frame. */
@@ -767,22 +774,23 @@ struct CompiledPage {
                 } else if (integer_kind(kind)) {
                     integer(w, kind, 26);
                 } else if (kind == Pauth && (flags & CompileInlineAssists)) {
-                    Label miss, done;
+                    Label slow, done;
                     unsigned reg = pauth_register(w);
                     load(reg, X16);
                     if (reg == 17) load(16, X17);
                     else if (w != 0xd50320ff && (w & 32)) load(31, X17, true);
                     else c.MOV(X17, 0);
-                    c.LSR(X26, X16, 2); c.EOR(X26, X26, X16, LSR, 32);
-                    c.EOR(X26, X26, X17, LSR, 4);
-                    c.MOV(X30, uint64_t((w >> 5) & 255)); c.EOR(X26, X26, X30);
-                    c.AND(X26, X26, 255); c.LDR(X30, X27, HUSK_PAUTH_CACHE);
-                    c.ADD(X26, X30, X26, LSL, 5);
-                    c.LDR(X30, X26); c.EOR(X30, X30, X16); c.CBNZ(X30, miss);
-                    c.LDR(X30, X26, 8); c.EOR(X30, X30, X17); c.CBNZ(X30, miss);
-                    c.LDR(W30, X26, 24); c.MOV(W17, w); c.EOR(W30, W30, W17); c.CBNZ(W30, miss);
-                    c.LDR(X16, X26, 16); save(reg, X16); c.B(done);
-                    c.l(miss); exit(pc, Fallback);
+                    c.MOV(W26, w);
+                    c.MOV(X30, uint64_t(&husk_direct_pauth)); c.BLR(X30);
+                    c.CBZ(X26, slow);
+                    if (flags & CompilePauthVerify) {
+                        Label cached;
+                        c.SUB(X26, X26, 1); c.CBNZ(X26, cached);
+                        c.STR(X16, X27, HUSK_ADDRESS); exit(pc, PauthCheck);
+                        c.l(cached);
+                    }
+                    save(reg, X16); c.B(done);
+                    c.l(slow); exit(pc, Fallback);
                     c.l(done);
                 } else if (kind == Barrier && (flags & CompileInlineAssists)) {
                     // QEMU's assist uses a full host memory barrier. Device
@@ -1157,6 +1165,8 @@ struct HuskArm64Direct {
     size_t populated_count = 0;
     bool profile = std::getenv("HUSK_ARM64_STATS") != nullptr;
     bool native_lse = false, native_crc = false;
+    bool verify_pauth = std::getenv("HUSK_ARM64_NATIVE_PAUTH_VERIFY") != nullptr;
+    uint64_t pauth_checks = 0;
     bool inline_assists = true;
     bool exclusive = true;
     bool tail_cache = true;
@@ -1396,6 +1406,7 @@ HuskArm64Exit husk_direct_run(HuskArm64Direct *ctx, HuskArm64State *state,
     if (ctx->inline_assists && ctx->tail_cache) access_flags |= CompileTail;
     if (ctx->native_lse && ctx->exclusive) access_flags |= CompileExclusive;
     if (ctx->native_crc) access_flags |= state->access_flags & 64;
+    if (ctx->verify_pauth) access_flags |= CompilePauthVerify;
     if (ctx->fastmem) {
         if (!memory.mapping_epoch || memory.mapping_epoch != ctx->mapping_epoch)
             ctx->fastmem->reset();
@@ -1429,7 +1440,7 @@ HuskArm64Exit husk_direct_run(HuskArm64Direct *ctx, HuskArm64State *state,
                 ctx->routes.data(), ctx->call_routes.data(),
                 ctx->fastmem ? ctx->fastmem->bases(false) : nullptr,
                 ctx->fastmem ? ctx->fastmem->bases(true) : nullptr, ctx->pauth_cache.data(), nullptr, 0, 0,
-                page, code};
+                page, code, memory.pauth};
     void *next = code->entries[(state->pc - page) / 4];
     for (;;) {
 #if !TARGET_OS_IPHONE
@@ -1454,7 +1465,7 @@ HuskArm64Exit husk_direct_run(HuskArm64Direct *ctx, HuskArm64State *state,
         uint32_t assisted_insn = 0;
         uint64_t call_target = UINT64_MAX, call_source = 0;
         bool cached_jump = false;
-        if (frame.reason == Fallback && memory.assist) {
+        if ((frame.reason == Fallback || frame.reason == PauthCheck) && memory.assist) {
             uint32_t word = code->source[(frame.state.pc - page) / 4];
             assisted_insn = word;
             bool pauth = decode(word) == Pauth;
@@ -1475,6 +1486,15 @@ HuskArm64Exit husk_direct_run(HuskArm64Direct *ctx, HuskArm64State *state,
                 cached_jump = true;
             }
             assisted = memory.assist(memory.opaque, &frame.state, word);
+            if (frame.reason == PauthCheck &&
+                (assisted != HUSK_ASSIST_PAUTH || frame.state.x[pauth_reg] != frame.address))
+                throw std::runtime_error("native PAUTH differs from owner result");
+            if (frame.reason == PauthCheck) {
+                ++ctx->pauth_checks;
+                if (!(ctx->pauth_checks & (ctx->pauth_checks - 1)))
+                    std::fprintf(stderr, "[husk-native-pauth] verified=%llu\n",
+                                 (unsigned long long)ctx->pauth_checks);
+            }
             // A PAC landing keeps BTYPE until authentication/signing succeeds.
             // The owner exports the pending state before any guest exception.
             if (pauth && assisted == HUSK_ASSIST_PAUTH && (code->compile_flags & CompileLanding))

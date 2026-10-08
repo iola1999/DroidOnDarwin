@@ -71,6 +71,16 @@ typedef enum {
     HUSK_ASSIST_PAUTH,
 } HuskArm64Assist;
 
+/* Parameters for QEMU's implementation-defined PAC hash with FEAT_PAuth2 or
+ * later. The owner checks traps and refreshes keys/VA masks on every run().
+ * Entries are lower A/B followed by upper A/B, selected by pointer bit 55.
+ * Other PAC algorithms and failed authentication continue through assist. */
+typedef struct {
+    uint64_t key_lo, key_hi, mask;
+    uint32_t enabled, reserved;
+} HuskArm64PauthKey;
+typedef struct { HuskArm64PauthKey keys[4]; } HuskArm64Pauth;
+
 typedef struct {
     void *opaque;
     /* Failure must leave guest memory unchanged. Never unwind through JIT code. */
@@ -96,6 +106,7 @@ typedef struct {
      * permission, watchpoint or code-dirty tracking change. Zero revalidates
      * each call. map_page must also reject aliases of all code in this call. */
     uint64_t mapping_epoch;
+    const HuskArm64Pauth *pauth;
 } HuskArm64Memory;
 
 /* map_page must reject MMIO, watched pages and writable code aliases. All

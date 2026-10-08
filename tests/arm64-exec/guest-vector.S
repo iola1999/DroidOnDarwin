@@ -384,6 +384,33 @@ husk_pac_call_loop:
     hint #29 // autiasp
     ret
 
+.global husk_pauth_diverse_loop
+husk_pauth_diverse_loop:
+    mov x3, x30
+    mov x4, sp
+    sub sp, sp, #4096
+    mov x5, sp
+1:
+    add x30, x3, x0, lsl #2
+    mov x2, x30
+    and x1, x0, #255
+    add x1, x5, x1, lsl #4
+    mov sp, x1
+    paciasp
+    autiasp
+    cmp x30, x2
+    b.ne 2f
+    pacibsp
+    autibsp
+    cmp x30, x2
+    b.ne 2f
+    subs x0, x0, #1
+    b.ne 1b
+2:
+    mov sp, x4
+    mov x30, x3
+    ret
+
 .global husk_mops_copy
 husk_mops_copy:
     mov x3, x0

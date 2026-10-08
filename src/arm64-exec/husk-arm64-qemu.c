@@ -26,7 +26,7 @@ typedef struct {
     bool poll_dispatch, assist, assisted_pauth, chain_assist, landing, pauth_landing, kernel, kernel_started, mops_started;
     unsigned last_el;
     unsigned dispatch_polls;
-    bool profile;
+    bool profile, native_pauth_started;
     unsigned profile_phase;
     int64_t profile_last, profile_report, profile_ns[4];
     struct { uint64_t page; unsigned entries; } warm_pages[1024];
@@ -241,6 +241,43 @@ static bool husk_mops_allowed(CPUARMState *env)
     }
     return enabled && arm_husk_mops_allowed(env) &&
         !EX_TBFLAG_A64(env->hflags, MTE_ACTIVE);
+}
+
+static bool husk_pauth_parameters(CPUARMState *env, HuskArm64Pauth *parameters)
+{
+    static int enabled = -1;
+    if (enabled < 0) {
+        const char *value = getenv("HUSK_ARM64_NATIVE_PAUTH");
+        enabled = !value || strcmp(value, "0");
+    }
+    ARMCPU *cpu = env_archcpu(env);
+    if (!enabled || arm_current_el(env) != 0 ||
+        !EX_TBFLAG_A64(env->hflags, PAUTH_ACTIVE) ||
+        cpu_isar_feature(aa64_pauth_qarma5, cpu) ||
+        cpu_isar_feature(aa64_pauth_qarma3, cpu) ||
+        cpu_isar_feature(pauth_feature, cpu) < PauthFeat_2)
+        return false;
+    /* Match pauth_check_trap before permitting a non-throwing native call. */
+    if (arm_is_el2_enabled(env)) {
+        uint64_t hcr = arm_hcr_el2_eff(env);
+        if (!(hcr & HCR_API) && (hcr & (HCR_E2H | HCR_TGE)) != (HCR_E2H | HCR_TGE))
+            return false;
+    }
+    if (arm_feature(env, ARM_FEATURE_EL3) && !(env->cp15.scr_el3 & SCR_API))
+        return false;
+    ARMMMUIdx mmu = arm_stage1_mmu_idx(env);
+    uint64_t sctlr = arm_sctlr(env, 0);
+    for (unsigned upper = 0; upper < 2; ++upper) {
+        ARMVAParameters va = aa64_va_parameters(env, (uint64_t)upper << 55, mmu, false, false);
+        unsigned bottom = 64 - va.tsz, top = 64 - 8 * va.tbi;
+        if (bottom >= 55 || bottom >= top) return false;
+        uint64_t mask = MAKE_64BIT_MASK(bottom, top - bottom);
+        parameters->keys[upper * 2] = (HuskArm64PauthKey){
+            env->keys.apia.lo, env->keys.apia.hi, mask, !!(sctlr & SCTLR_EnIA), 0};
+        parameters->keys[upper * 2 + 1] = (HuskArm64PauthKey){
+            env->keys.apib.lo, env->keys.apib.hi, mask, !!(sctlr & SCTLR_EnIB), 0};
+    }
+    return true;
 }
 
 static HuskArm64Assist husk_assist(void *opaque, HuskArm64State *state, uint32_t insn)
@@ -543,10 +580,17 @@ landing_ready:
         }
         epoch = ctx->mapping_epoch;
     }
+    HuskArm64Pauth pauth;
+    bool native_pauth = direct && husk_pauth_parameters(env, &pauth);
+    if (native_pauth && !ctx->native_pauth_started) {
+        fprintf(stderr, "[husk-arm64] native implementation-defined PAUTH active\n");
+        ctx->native_pauth_started = true;
+    }
     HuskArm64Exit result = husk_arm64_run(ctx->engine, &state, page, code_host,
                                         (HuskArm64Memory){ctx, husk_read, husk_write, husk_map_page,
                                                          ctx->assist ? husk_assist : NULL,
-                                                         direct ? husk_map_code : NULL, epoch},
+                                                         direct ? husk_map_code : NULL, epoch,
+                                                         native_pauth ? &pauth : NULL},
                                         slice_budget);
     husk_profile_phase(ctx, el != 0);
     if (result == HUSK_ARM64_ERROR) {
