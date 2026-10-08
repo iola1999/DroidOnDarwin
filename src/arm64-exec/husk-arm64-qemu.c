@@ -27,7 +27,8 @@ typedef struct {
     bool poll_dispatch, assist, assisted_pauth, chain_assist, landing, pauth_landing, kernel, kernel_started, mops_started;
     unsigned last_el;
     unsigned dispatch_polls;
-    bool profile, native_pauth_started, system_reads;
+    bool profile, native_pauth_started, system_reads, system_exec;
+    uint64_t system_operations;
     unsigned profile_phase;
     int64_t profile_last, profile_report, profile_ns[4];
     struct { uint64_t page; unsigned entries; } warm_pages[1024];
@@ -111,6 +112,49 @@ static void husk_one_tcg(CPUState *cs)
 {
     cs->cflags_next_tb = (curr_cflags(cs) & ~CF_COUNT_MASK) |
                         1 | CF_NO_GOTO_TB | CF_NO_GOTO_PTR;
+}
+
+static bool husk_kernel_system(HuskArm64Qemu *ctx, uint32_t insn)
+{
+    CPUARMState *env = ctx->env;
+    if (!ctx->system_exec || arm_current_el(env) != 1 || env->btype ||
+        EX_TBFLAG_ANY(env->hflags, FGT_ACTIVE) || EX_TBFLAG_A64(env->hflags, NV))
+        return false;
+    /* The caller has exported all guest state and is outside generated code.
+     * Return to the CPU loop after every operation so pending interrupts and
+     * changed MMU/PAC controls are checked before the next native slice. */
+    if ((insn & 0xfffff0df) == 0xd50340df) {
+        if (insn & 32) helper_msr_i_daifclear(env, (insn >> 8) & 15);
+        else helper_msr_i_daifset(env, (insn >> 8) & 15);
+    } else {
+        if ((insn & 0xffd00000) != 0xd5100000) return false;
+        unsigned crn = (insn >> 12) & 15;
+        if (crn == 11 || crn == 15) return false; // TIDCP has additional priority rules.
+        bool read = insn & (1U << 21);
+        uint32_t key = ENCODE_AA64_CP_REG(CP_REG_ARM64_SYSREG_CP,
+            crn, (insn >> 8) & 15, (insn >> 19) & 3, (insn >> 16) & 7, (insn >> 5) & 7);
+        const ARMCPRegInfo *ri = get_arm_cp_reginfo(env_archcpu(env)->cp_regs, key);
+        if (!ri || (ri->type & (ARM_CP_SPECIAL_MASK | ARM_CP_FPU | ARM_CP_SVE | ARM_CP_SME |
+                               ARM_CP_RAISES_EXC | ARM_CP_NEWEL)) ||
+            !cp_access_ok(1, ri, read) ||
+            (ri->accessfn && ri->accessfn(env, ri, read) != CP_ACCESS_OK)) return false;
+        unsigned reg = insn & 31;
+        if (read) {
+            uint64_t value = ri->type & ARM_CP_CONST ? ri->resetvalue :
+                ri->readfn ? ri->readfn(env, ri) : *(uint64_t *)((char *)env + ri->fieldoffset);
+            if (reg != 31) env->xregs[reg] = value;
+        } else if (!(ri->type & ARM_CP_CONST)) {
+            uint64_t value = reg == 31 ? 0 : env->xregs[reg];
+            if (ri->writefn) ri->writefn(env, ri, value);
+            else *(uint64_t *)((char *)env + ri->fieldoffset) = value;
+            arm_rebuild_hflags(env);
+        }
+    }
+    env->pc += 4;
+    ++ctx->system_operations;
+    if (ctx->profile && !(ctx->system_operations & (ctx->system_operations - 1)))
+        fprintf(stderr, "[husk-kernel-system] completed=%" PRIu64 "\n", ctx->system_operations);
+    return true;
 }
 
 static bool husk_memory(HuskArm64Qemu *ctx, uint64_t addr, void *buffer,
@@ -494,6 +538,10 @@ int arm_husk_exec_user(CPUState *cs)
         return 0;
     }
     uint32_t insn = ldl_le_p((uint8_t *)code_host + env->pc - page);
+    if (ctx && el == 1) {
+        ctx->env = env;
+        if (husk_kernel_system(ctx, insn)) return 1;
+    }
     if (!husk_arm64_supported(insn)) {
         if (direct && bridge && ctx && husk_tcg_bridge(insn, el)) husk_one_tcg(cs);
         return 0;
@@ -542,6 +590,8 @@ landing_ready:
         ctx->reuse_mappings = direct && (!reuse || strcmp(reuse, "0"));
         const char *system_reads = getenv("HUSK_ARM64_SYSTEM_READS");
         ctx->system_reads = !system_reads || strcmp(system_reads, "0");
+        const char *system_exec = getenv("HUSK_ARM64_KERNEL_SYSTEM");
+        ctx->system_exec = kernel && system_exec && !strcmp(system_exec, "1");
         ctx->profile = getenv("HUSK_ARM64_PROFILE") != NULL;
         if (ctx->profile) {
             arm_register_el_change_hook(cpu, husk_profile_el, ctx);
@@ -635,6 +685,10 @@ landing_ready:
         int stopped_flags = probe_access_flags(env, state.pc, 4, MMU_INST_FETCH,
                                                arm_env_mmu_index(env), true, &stopped_host, 0);
         uint32_t stopped_insn = !stopped_flags && stopped_host ? ldl_le_p(stopped_host) : 0;
+        if (el == 1 && husk_kernel_system(ctx, stopped_insn)) {
+            ctx->resume_after_ns[1] = 0;
+            return 1;
+        }
         if ((stopped_insn & 0xffe0001f) == 0xd4000001) {
             /* SVC already ends the user region. Kernel execution supplies the
              * transition; delaying EL0 after its return discards useful slices. */
