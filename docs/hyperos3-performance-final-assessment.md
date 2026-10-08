@@ -147,25 +147,18 @@ Android 的进程环境；本轮没有据此增加新的运行后端。
 补丁移除，生成的 QEMU 源码也已反向应用该补丁。已完成的 M1–M33 等源码、
 补丁、测试和记录保留在 Git；本轮没有继续扩展运行时设计。
 
-共清理 155 个文件或目录目标，包括旧虚拟机磁盘、重复下载与解包镜像、镜像
+第一次清理涉及 155 个文件或目录目标，包括旧虚拟机磁盘、重复下载与解包镜像、镜像
 构建中间文件、构建缓存、旧 IPA 及解包目录、可重新生成的反汇编和性能映射表。
 按文件分配量累计约 93.28 GiB；项目目录由约 104.99 GiB 降至 11.71 GiB。
 清理前后 `df` 的可用空间增加约 75.32 GiB。APFS 共享块及其他进程的磁盘活动
-会影响两种统计，分别记录。清理清单位于
-`work/performance/final-review-cleanup.json`。
+会影响两种统计，分别记录。
 
-保留一套现有 HyperOS 磁盘及其依赖：
-
-- `work/hyperos3-phone-profile/system.qcow2`
-- `work/hyperos3-package/lineage-vda.qcow2`，为上述系统盘的 backing file
-- `work/hyperos3-phone-profile/userdata.qcow2`
-- `work/hyperos3-phone-profile/efi-vars.qcow2`
-- `work/performance/build-inputs/upstream/Payload/Husk.app/edk2-aarch64-code.fd`
-
-系统盘依赖检查通过，系统 overlay、userdata 和 EFI 变量盘的 `qemu-img check`
-通过。实验日志、测试结果和已下载的研究源码保留。QEMU 与应用构建产物已清理，
-恢复运行需要重新构建。进程检查未发现运行中的 QEMU 或构建任务。本轮清理
-仅操作 Mac 项目目录；手机上的应用与当前镜像没有变动。
+用户随后要求清空剩余本地产物。第二次清理涵盖全部镜像、下载源码、原始实验
+日志和结果、构建缓存及打包目录，磁盘可用空间增加约 11.71 GiB。最终项目
+占用约 42.61 MiB，保留 Git 历史及其管理的源码、测试、脚本、补丁和文档。
+本文件中的实验结果和路径用于记录开发过程；恢复实验需要重新下载依赖和
+镜像并构建。清理前确认相关虚拟机和构建任务均未运行，清理后确认所有 Git
+管理的文件完整。两次清理均限定在 Mac 项目目录。
 
 ## 重新评估所需的新信息
 
