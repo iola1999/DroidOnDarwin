@@ -44,6 +44,7 @@ M33 的固定代码缓存压力测试约快四倍，完整系统仍未达到目�
 | 路线 | 大幅提速的来源 | 当前限制与判断 |
 | --- | --- | --- |
 | HVF 或其他硬件虚拟化后端 | 客体用户态和内核直接执行，硬件承担地址转换 | 收益基础明确；当前侧载环境缺少已验证可用的 iOS 内核接口和授权 |
+| 系统级修改或直接启动 Linux/Android | 获得虚拟化访问条件，或直接使用硬件执行完整系统 | 已核对的越狱与裸机移植项目未提供 iPhone 17 / iOS 27.2 路径，还需相应硬件驱动 |
 | 原生 Linux 内核 + Android 用户态 NCE | 同时消除大量内核和用户态动态翻译 | 可能减少两类执行开销；完整 Linux 的宿主进程、内存和异常实现尚未建立，整机收益未知 |
 | 保留 QEMU 内核，扩大 NCE / fastmem | 减少用户态指令和访存开销 | 内核模拟仍存在；多进程映射与 4 KiB/16 KiB 页兼容继续产生开销，现有实现未获得目标收益 |
 | 16 KiB 客体内核 + 每进程宿主地址窗口 | 增加直接映射比例，减少重复映射 | 只解决部分访存条件；仍要处理地址重写、权限、JIT 和闭源库兼容，手机可用地址范围未知 |
@@ -72,6 +73,21 @@ iOS 26.4.1 的固件进行了静态分析，报告 Stage-2、VMID、客体进入
 [UTM 安装条件](https://docs.getutm.app/installation/ios/)、
 [固件分析，提交 9604483](https://github.com/cloverfield11/ios26-hypervisor-research/tree/960448392da7f7c3b6b1f749e3fb80890a2e39a8)、
 [尚未解答的启用条件](https://github.com/cloverfield11/ios26-hypervisor-research/issues/1)。
+
+### 系统级修改与直接启动 Android
+
+也检查了修改宿主系统和直接启动 Linux/Android 的路线。Dopamine 当前说明的
+版本与芯片组合未覆盖 iPhone 17 / iOS 27.2；palera1n 的硬件范围为 A8–A11
+及 T2。Project Sandcastle 的发布构建限于 iPhone 7/7+、iPod touch 7，功能表
+仍将 GPU、音频和蜂窝支持列为未实现。
+
+直接启动可消除模拟开销，但需要本机可用的启动方式及显示、GPU、输入、存储
+等驱动。本次核对的项目未提供目标设备所需条件；增加 Husk 的后端无法完成
+这部分宿主系统和硬件适配。以上判断限定于所列公开项目与本次查询时间。
+
+来源：[Dopamine](https://github.com/opa334/Dopamine)、
+[palera1n](https://github.com/palera1n/palera1n)、
+[Project Sandcastle 支持状态](https://projectsandcastle.org/status)。
 
 ### 原生 Linux：潜力存在，运行条件仍缺失
 
