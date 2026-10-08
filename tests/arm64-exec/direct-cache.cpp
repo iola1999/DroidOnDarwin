@@ -169,6 +169,41 @@ static void shared_addresses(bool sharing)
                 (unsigned long long)stats.compiles, (unsigned long long)stats.shared_hits, (long long)elapsed);
 }
 
+static size_t stub_workload(bool shared, bool fastmem)
+{
+    setenv("HUSK_ARM64_SHARED_STUBS", shared ? "1" : "0", 1);
+    setenv("HUSK_ARM64_FASTMEM", fastmem ? "1" : "0", 1);
+    setenv("HUSK_ARM64_CODE_SHARING", "0", 1);
+    auto memory = std::make_unique<Memory>();
+    auto &m = *memory;
+    m.code.resize(8);
+    m.data[0] = 0xabcdef0123456789;
+    for (size_t page = 0; page < m.code.size(); ++page) {
+        auto &code = m.code[page];
+        code.fill(0xd4000001);
+        for (unsigned i = 0; i < 512; i += 2) {
+            code[i] = 0xf9400022; // ldr x2,[x1]
+            code[i + 1] = 0x91000400; // add x0,x0,#1
+        }
+        if (page + 1 < m.code.size()) code[512] = 0x14000200;
+    }
+    Engine engine(husk_direct_create(2 * 1024 * 1024), husk_direct_destroy);
+    HuskArm64Memory callbacks{&m, nullptr, nullptr, Memory::Data, nullptr, Memory::Code};
+    for (unsigned round = 0; round < 32; ++round) {
+        HuskArm64State state{};
+        state.pc = base; state.x[1] = 0x20000; state.nzcv = 0xb0000000;
+        for (unsigned r = 3; r < 32; ++r) state.x[r] = UINT64_C(0xffeeddccbb000000) + r;
+        CHECK(husk_direct_run(engine.get(), &state, base, m.code[0].data(), callbacks, 100000) == HUSK_ARM64_FALLBACK);
+        CHECK(state.x[0] == 256 * m.code.size() && state.x[2] == m.data[0]);
+        CHECK(state.pc == base + 7 * 4096 + 2048 && state.nzcv == 0xb0000000);
+        for (unsigned r = 3; r < 32; ++r) CHECK(state.x[r] == UINT64_C(0xffeeddccbb000000) + r);
+    }
+    auto stats = husk_direct_cache_stats(engine.get());
+    CHECK(!stats.evictions && stats.compiles == m.code.size());
+    std::printf("cache shared stubs=%d fastmem=%d bytes=%zu PASS\n", shared, fastmem, stats.bytes);
+    return stats.bytes;
+}
+
 int main()
 {
     setenv("HUSK_ARM64_CODE_SHARING", "0", 1);
@@ -181,4 +216,9 @@ int main()
     chained_reuse(true, true);
     shared_addresses(false);
     shared_addresses(true);
+    for (bool fastmem : {false, true}) {
+        auto before = stub_workload(false, fastmem);
+        auto after = stub_workload(true, fastmem);
+        CHECK(after < before);
+    }
 }

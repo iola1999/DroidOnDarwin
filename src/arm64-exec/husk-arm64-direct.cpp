@@ -37,6 +37,7 @@ constexpr uint32_t CompileFastmem = 16, CompileLanding = 32, CompileInlineAssist
 constexpr uint32_t CompileExclusive = 512, CompileTail = 1024;
 constexpr uint32_t CompilePauthVerify = 2048;
 constexpr uint32_t CompileKernelReads = 4096;
+constexpr uint32_t CompileSharedStubs = 8192;
 enum Stop : uint64_t { Budget, Fallback, ReadPage, WritePage, PrepareLoop, CodeBranch,
                        FastReadPage, FastWritePage, PauthCheck };
 struct FaultSite {
@@ -57,7 +58,13 @@ struct Frame {
     CompiledPage *code;
     const HuskArm64Pauth *pauth;
     const HuskArm64KernelReads *kernel_reads;
+    void (*exit_stub)(), (*branch_stub)();
 };
+static_assert(offsetof(Frame, exit_stub) == HUSK_EXIT_STUB);
+static_assert(offsetof(Frame, branch_stub) == HUSK_BRANCH_STUB);
+static_assert(offsetof(Frame, code_page) == HUSK_CODE_PAGE);
+static_assert(offsetof(Frame, code) == HUSK_CODE);
+static_assert(CodeBranch == 5 && PauthCheck < 16);
 static_assert(offsetof(Frame, kernel_reads) == HUSK_KERNEL_READS);
 static_assert(sizeof(HuskArm64KernelReads) == 24);
 static_assert(offsetof(Frame, pauth) == HUSK_NATIVE_PAUTH);
@@ -100,10 +107,13 @@ struct SourceRoute { const void *source; CompiledPage *code; uint32_t flags; };
 struct PauthResult { uint64_t value, modifier, result, instruction; };
 static_assert(sizeof(Mapping) == 32);
 static_assert(sizeof(CodeRoute) == 32);
+static_assert(offsetof(CodeRoute, entries) == 8 && offsetof(CodeRoute, code) == 16);
 static_assert(sizeof(CallRoute) == 64);
 static_assert(sizeof(PauthResult) == 32);
 extern "C" void husk_direct_enter(Frame *, void *, Mapping *);
 extern "C" void husk_direct_leave();
+extern "C" void husk_direct_exit_stub();
+extern "C" void husk_direct_branch_stub();
 extern "C" void husk_direct_pauth();
 
 /* Fastmem currently executes on one vCPU. Identity is checked against the
@@ -565,7 +575,13 @@ struct CompiledPage {
             c.MOV(X17, uint64_t(reason)); c.STR(X17, X27, HUSK_REASON);
             c.MOV(X16, uint64_t(&husk_direct_leave)); c.BR(X16);
         };
-        auto exit = [&](uint64_t pc, Stop reason) { store_pc(pc); leave(reason); };
+        auto exit = [&](uint64_t pc, Stop reason) {
+            if ((flags & CompileSharedStubs) && pc - new_page < 4096) {
+                // A page-relative PC keeps shared guest images relocatable.
+                c.MOV(W17, uint32_t(((pc - new_page) << 4) | reason));
+                c.LDR(X26, X27, HUSK_EXIT_STUB); c.BR(X26);
+            } else { store_pc(pc); leave(reason); }
+        };
         auto load = [&](unsigned r, XReg to, bool sp = false) {
             if (resident(r)) c.MOV(to, XReg(r));
             else if (r == 31 && !sp) c.MOV(to, 0);
@@ -578,6 +594,10 @@ struct CompiledPage {
         // X16 holds a guest target. The owner and guest page travel with a
         // cached destination, allowing identical code at different guest VAs.
         auto dynamic_jump = [&] {
+            if (flags & CompileSharedStubs) {
+                c.LDR(X26, X27, HUSK_BRANCH_STUB); c.BR(X26);
+                return;
+            }
             Label miss;
             c.AND(X17, X16, 3); c.CBNZ(X17, miss);
             c.LDR(X26, X27, HUSK_CODE_ROUTES);
@@ -1196,6 +1216,7 @@ struct HuskArm64Direct {
     bool tail_cache = true;
     bool reclaim_cache = true;
     bool share_code = true;
+    bool shared_stubs = true;
     uint64_t shared_hits = 0;
     uint64_t cache_clock = 0, cache_generation = 0, evictions = 0;
     uint64_t calls = 0, compiles = 0, flushes = 0, compile_ns = 0, run_ns = 0;
@@ -1212,6 +1233,8 @@ struct HuskArm64Direct {
         reclaim_cache = !reclaim_setting || std::strcmp(reclaim_setting, "0");
         const char *sharing_setting = std::getenv("HUSK_ARM64_CODE_SHARING");
         share_code = !sharing_setting || std::strcmp(sharing_setting, "0");
+        const char *stub_setting = std::getenv("HUSK_ARM64_SHARED_STUBS");
+        shared_stubs = !stub_setting || std::strcmp(stub_setting, "0");
         const char *inline_setting = std::getenv("HUSK_ARM64_INLINE_ASSISTS");
         inline_assists = !inline_setting || std::strcmp(inline_setting, "0");
         const char *exclusive_setting = std::getenv("HUSK_ARM64_EXCLUSIVE");
@@ -1432,6 +1455,7 @@ HuskArm64Exit husk_direct_run(HuskArm64Direct *ctx, HuskArm64State *state,
     if (ctx->native_crc) access_flags |= state->access_flags & 64;
     if (ctx->verify_pauth && memory.assist) access_flags |= CompilePauthVerify;
     if (memory.kernel_reads) access_flags |= CompileKernelReads;
+    if (ctx->shared_stubs) access_flags |= CompileSharedStubs;
     if (ctx->fastmem) {
         if (!memory.mapping_epoch || memory.mapping_epoch != ctx->mapping_epoch)
             ctx->fastmem->reset();
@@ -1465,7 +1489,8 @@ HuskArm64Exit husk_direct_run(HuskArm64Direct *ctx, HuskArm64State *state,
                 ctx->routes.data(), ctx->call_routes.data(),
                 ctx->fastmem ? ctx->fastmem->bases(false) : nullptr,
                 ctx->fastmem ? ctx->fastmem->bases(true) : nullptr, ctx->pauth_cache.data(), nullptr, 0, 0,
-                page, code, memory.pauth, memory.kernel_reads};
+                page, code, memory.pauth, memory.kernel_reads,
+                husk_direct_exit_stub, husk_direct_branch_stub};
     void *next = code->entries[(state->pc - page) / 4];
     for (;;) {
 #if !TARGET_OS_IPHONE

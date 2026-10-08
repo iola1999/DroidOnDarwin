@@ -113,3 +113,43 @@ _husk_direct_leave:
     ldp x29, x30, [sp, #80]
     add sp, sp, #176
     ret
+
+// Private JIT ABI: x27 is Frame; x16, x17, x26 and x30 are scratch.
+// Neither stub may change NZCV or guest resident GPR/SIMD state.
+.p2align 2
+.globl _husk_direct_exit_stub
+_husk_direct_exit_stub:
+    and x16, x17, #15
+    str x16, [x27, #HUSK_REASON]
+    lsr x17, x17, #4
+    ldr x16, [x27, #HUSK_CODE_PAGE]
+    add x17, x16, x17
+    str x17, [x27, #HUSK_PC]
+    b _husk_direct_leave
+
+.p2align 2
+.globl _husk_direct_branch_stub
+_husk_direct_branch_stub:
+    and x17, x16, #3
+    cbnz x17, Lbranch_miss
+    ldr x26, [x27, #HUSK_CODE_ROUTES]
+    ubfx x17, x16, #12, #8
+    add x17, x26, x17, lsl #5
+    ldr x26, [x17]
+    eor x26, x26, x16, lsr #12
+    cbnz x26, Lbranch_miss
+    ldr x26, [x17, #8]
+    and x30, x16, #4095
+    add x26, x26, x30, lsl #1
+    ldr x26, [x26]
+    cbz x26, Lbranch_miss
+    ldr x17, [x17, #16]
+    str x17, [x27, #HUSK_CODE]
+    and x17, x16, #0xfffffffffffff000
+    str x17, [x27, #HUSK_CODE_PAGE]
+    br x26
+Lbranch_miss:
+    str x16, [x27, #HUSK_PC]
+    mov x17, #5 // CodeBranch
+    str x17, [x27, #HUSK_REASON]
+    b _husk_direct_leave
