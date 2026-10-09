@@ -14,6 +14,7 @@ import urllib.request
 from prepare_android_runtime import main as prepare_android_runtime
 from build_android_linker import build as build_android_linker
 from build_android_libc import build as build_android_libc
+from build_android_art import build as build_android_art
 
 ROOT = Path(__file__).resolve().parents[1]
 EXP = ROOT / 'experiments/native-linux'
@@ -64,14 +65,15 @@ def x18_instruction(word):
             word & 0xff800000 == 0xa9000000 and 18 in (rd, (word >> 10) & 31))
 
 
-def android_dependencies(llvm):
+def android_dependencies(llvm, replacements):
     root = WORK / 'android/android36'
     files = {}
     for directory in ('lib64', 'com.android.art/lib64', 'com.android.runtime/lib64/bionic',
                       'com.android.i18n/lib64', 'com.android.os.statsd/lib64'):
         for path in (root / directory).glob('*.so'):
             if path.is_file(): files[path.name] = path
-    pending = ['libart.so']
+    files.update(replacements)
+    pending = ['libart.so', 'libjavacore.so', 'libopenjdk.so', 'libicu_jni.so', 'libartpalette-system.so']
     result = {}
     while pending:
         name = pending.pop()
@@ -84,6 +86,29 @@ def android_dependencies(llvm):
         dynamic = subprocess.check_output([llvm / 'llvm-readelf', '-d', path], text=True)
         pending += re.findall(r'Shared library: \[(.*?)\]', dynamic)
     return [('/system/lib64/' + name, path) for name, path in sorted(result.items())]
+
+
+def android_data(out):
+    root = WORK / 'android/android36'
+    java = Path('/opt/homebrew/opt/openjdk@17/bin')
+    sdk = Path('/opt/homebrew/share/android-commandlinetools')
+    classes = out / 'java-classes'
+    classes.mkdir(exist_ok=True)
+    run([java / 'javac', '--release', '11', '-d', classes, EXP / 'art/NceWorkload.java'])
+    run([java / 'java', '-cp', sdk / 'build-tools/36.0.0/lib/d8.jar', 'com.android.tools.r8.D8',
+         '--min-api', '35', '--lib', sdk / 'platforms/android-35/android.jar', '--output', classes,
+         *sorted(classes.glob('*.class'))])
+    files = [('/data/nce/NceWorkload.dex', classes / 'classes.dex'),
+             ('/linkerconfig/ld.config.txt', EXP / 'art/ld.config.txt'),
+             ('/system/etc/public.libraries.txt', EXP / 'art/public.libraries.txt')]
+    for module, names in {
+        'com.android.art': ('core-oj', 'core-libart', 'okhttp', 'bouncycastle', 'apache-xml'),
+        'com.android.i18n': ('core-icu4j',), 'com.android.conscrypt': ('conscrypt',),
+    }.items():
+        files += [(f'/apex/{module}/javalib/{name}.jar', root / module / 'javalib' / (name + '.jar'))
+                  for name in names]
+    files += [('/apex/com.android.i18n/etc/icu/icudt76l.dat', root / 'com.android.i18n/etc/icu/icudt76l.dat')]
+    return files
 
 
 def inspect(path, shared=False, function_symbols=False):
@@ -166,6 +191,7 @@ def inspect(path, shared=False, function_symbols=False):
                 if info & 15 == 2 and size:
                     functions.setdefault(sec, []).append((addr, addr + size))
     patches = []
+    instruction_ranges = []
     for index, sec in enumerate(sections):
         if not sec[2] & 4 or not sec[5]:
             continue
@@ -209,13 +235,27 @@ def inspect(path, shared=False, function_symbols=False):
                 continue
             if begin % 4 or end % 4:
                 raise RuntimeError(f'{path}: unaligned instruction span')
+            instruction_ranges.append((begin, end))
             for address in range(begin, end, 4):
                 word, = struct.unpack_from('<I', data, sec[4] + address - sec[3])
                 if word & 0xffe0001f == 0xd4000001 or word & 0xffffffe0 in (0xd53bd040, 0xd51bd040) or x18_instruction(word):
                     patches.append((address, word))
     return dict(data=data, entry=entry, phoff=phoff, phsize=phnum*phentsize, segments=segments, patches=patches,
                 span=(max(p[3] + p[6] for p in loads) + PAGE - 1) & -PAGE,
-                alignment=max(PAGE, max(p[7] for p in loads)))
+                alignment=max(PAGE, max(p[7] for p in loads)), instruction_ranges=instruction_ranges)
+
+
+def check_x18_disassembly(path, elf, disassembly):
+    patched = {address for address, _ in elf['patches']}
+    for line in disassembly.splitlines():
+        if not re.search(r'\b[wx]18\b', line):
+            continue
+        match = re.match(r'\s*([0-9a-f]+):', line)
+        if not match:
+            raise RuntimeError(f'{path}: unrecognized x18 disassembly: {line.strip()}')
+        address = int(match[1], 16)
+        if any(begin <= address < end for begin, end in elf['instruction_ranges']) and address not in patched:
+            raise RuntimeError(f'{path}: unsupported use of x18: {line.strip()}')
 
 
 def compiler_runtime(llvm, libc):
@@ -342,17 +382,22 @@ def build(out, llvm):
          '-Wl,-z,max-page-size=16384,-z,common-page-size=16384',
          EXP / 'userspace/bionic-test.c', '-o', out / 'bionic-test.elf'])
     programs.append(('/bionic-test', out / 'bionic-test.elf'))
+    run([ndk / 'toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android35-clang',
+         '-ffixed-x18', '-mno-outline-atomics', '-g', '-O2', '-Wall', '-Wextra', '-Werror',
+         '-Wl,-z,max-page-size=16384,-z,common-page-size=16384',
+         EXP / 'art/reference_heap.c', EXP / 'art/reference_heap_test.c', '-o', out / 'art-heap-test.elf'])
+    programs.append(('/art-heap-test', out / 'art-heap-test.elf'))
     prepare_android_runtime()
     android = WORK / 'android/android36/com.android.runtime'
     programs.append((ANDROID_INTERPRETER, build_android_linker()))
     programs.append(('/system/lib64/libc.so', build_android_libc()))
     programs.append(('/system/lib64/libdl.so', android / 'lib64/bionic/libdl.so'))
-    programs += android_dependencies(llvm)
+    programs += android_dependencies(llvm, build_android_art())
     run([ndk / 'toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android35-clang',
          '-ffixed-x18', '-mno-outline-atomics', '-g', '-O2', '-Wall', '-Wextra', '-Werror',
          '-Wl,-z,max-page-size=16384,-z,common-page-size=16384',
          EXP / 'userspace/art-test.c', '-ldl', '-o', out / 'art-test.elf'])
-    programs.append(('/art-test', out / 'art-test.elf'))
+    programs.append(('/system/bin/art-test', out / 'art-test.elf'))
     shutil.copyfile(libc / 'lib/libc.so', out / 'libc.so')
     programs.append((INTERPRETER, out / 'libc.so'))
     for name in ('dependency', 'plugin', 'dynamic'):
@@ -368,19 +413,14 @@ def build(out, llvm):
     header, entries = [], []
     offset = 0
     for i, (name, path) in enumerate(programs):
-        elf = inspect(path, shared=name.endswith('.so'), function_symbols=name.startswith('/system/') or name in ('/bionic-test', '/art-test'))
+        elf = inspect(path, shared=name.endswith('.so'), function_symbols=name.startswith('/system/') or name in ('/bionic-test', '/art-test', '/art-heap-test'))
         offset = (offset + elf['alignment'] - 1) & -elf['alignment']
         if offset + elf['span'] > PROGRAM_LIMIT:
             raise RuntimeError('Program layouts overlap the mmap area')
         if name == '/worker' and sum(size for _, size in elf['segments']) <= 65536:
             raise RuntimeError('Large-text fixture did not exceed 64 KiB')
         dis = subprocess.check_output([llvm / 'llvm-objdump', '-d', path], text=True)
-        patched = {address for address, _ in elf['patches']}
-        for line in dis.splitlines():
-            if re.search(r'\b[wx]18\b', line):
-                address = re.match(r'\s*([0-9a-f]+):', line)
-                if not address or int(address[1], 16) not in patched:
-                    raise RuntimeError(f'{path}: unsupported use of x18: {line.strip()}')
+        check_x18_disassembly(path, elf, dis)
         header.append(f'static const unsigned char image_{i}[] = {{' + ','.join(map(str, elf['data'])) + '};')
         header.append(f'static NceSegment segments_{i}[] = {{' + ','.join(
             f'{{.offset={lo},.size={size}}}' for lo, size in elf['segments']) + '};')
@@ -395,5 +435,12 @@ def build(out, llvm):
     header += ['NceProgram nce_programs[] = {' + ',\n'.join(entries) + '};',
                f'const size_t nce_program_count = {len(entries)};']
     (out / 'program-images.h').write_text('\n'.join(header) + '\n')
-    (out / 'user-scripts.h').write_text('static const char shell_script[] = ' +
-                                       json.dumps((EXP / 'userspace/shell-tests.sh').read_text()) + ';\n')
+    assets = ['static const char shell_script[] = ' +
+              json.dumps((EXP / 'userspace/shell-tests.sh').read_text()) + ';\n']
+    entries = []
+    for i, (name, path) in enumerate(android_data(out)):
+        assets.append(f'static const unsigned char art_asset_{i}[] = {{' + ','.join(map(str, path.read_bytes())) + '};')
+        entries.append(f'{{"{name}",art_asset_{i},sizeof(art_asset_{i})}}')
+    assets.append('static const struct { const char *path; const void *data; size_t size; } art_assets[] = {' +
+                  ',\n'.join(entries) + '};')
+    (out / 'user-scripts.h').write_text('\n'.join(assets) + '\n')

@@ -13,6 +13,7 @@ import shutil
 import struct
 import subprocess
 import tarfile
+import time
 import urllib.request
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -79,6 +80,7 @@ def package_elf(path):
 
 def main():
     global OUT, BUILD, PROCESS
+    started_ns = time.time_ns()
     parser = argparse.ArgumentParser()
     parser.add_argument("--processes", action="store_true")
     PROCESS = parser.parse_args().processes
@@ -207,21 +209,25 @@ def main():
                     *sorted(EXPERIMENT.glob("lkl-nce-*.c")), EXPERIMENT / "exec-guest.S", EXPERIMENT / "programs.h",
                     Path(__file__).with_name("build_nce_userspace.py"), EXPERIMENT / "dispatch-test.c", EXPERIMENT / "host-context-test.c",
                     Path(__file__).with_name("prepare_android_runtime.py"), Path(__file__).with_name("build_android_linker.py"),
-                    Path(__file__).with_name("build_android_libc.py"), EXPERIMENT / "android-sources.json",
+                    Path(__file__).with_name("build_android_libc.py"), Path(__file__).with_name("build_android_art.py"),
+                    EXPERIMENT / "android-sources.json", *sorted((EXPERIMENT / "art").glob("*")),
                     *sorted((EXPERIMENT / "userspace").glob("*"))]
         run(["python3", ROOT / "scripts/test_nce_userspace.py"])
         sources.append(ROOT / "scripts/test_nce_userspace.py")
-        manifest["stage"] = "Android Bionic, Binder and sparse address spaces"
+        manifest["stage"] = "Android Bionic, Binder and ART Java workload"
         manifest["userspace_libraries"] = {"musl": "1.2.5", "compiler-rt": "20.1.8", "dash": "0.5.12"}
         manifest["generated_sha256"] = {name: hashlib.sha256((OUT / name).read_bytes()).hexdigest()
                                         for name in ["program-images.h", "user-scripts.h", "lkl-image.h", "lkl-host-ops.h", "guest-image.h",
                                                      "exec-guest.elf", "init.elf", "worker.elf", "mm-bench.elf", "dash.elf",
-                                                     "libc.so", "dependency.so", "plugin.so", "dynamic.elf", "binder-test.elf", "bionic-test.elf", "art-test.elf"]}
+                                                     "libc.so", "dependency.so", "plugin.so", "dynamic.elf", "binder-test.elf", "bionic-test.elf", "art-test.elf", "art-heap-test.elf"]}
         android = ROOT / "work/native-linux-nce/android"
         manifest["android_builds"] = {name: json.loads((android / name / "manifest.json").read_text())
-                                      for name in ("linker-build", "libc-build")}
+                                      for name in ("linker-build", "libc-build", "art-build")}
         manifest["android_runtime_manifest_sha256"] = hashlib.sha256(
             (android / "android36-runtime.json").read_bytes()).hexdigest()
+    changed = [str(p.relative_to(ROOT)) for p in sources if p.stat().st_mtime_ns > started_ns]
+    if changed:
+        raise SystemExit("Build inputs changed during validation; rerun: " + ", ".join(changed))
     manifest["input_sha256"] = {str(p.relative_to(ROOT)): hashlib.sha256(p.read_bytes()).hexdigest() for p in sources}
     (OUT / "lkl-summary.json").write_text(json.dumps(manifest, indent=2) + "\n")
     print(json.dumps(manifest, indent=2))

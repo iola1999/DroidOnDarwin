@@ -1,0 +1,74 @@
+{
+  "archives": [
+    {
+      "repo": "platform/art",
+      "revision": "ed6c006bd06ae060bd9698fd2cb25c4865512ec3",
+      "sha256": "56b8df0269ede57ea781b6c8226d1804bd64d1c68d41d3c51a62eae6190e6b11",
+      "name": "art"
+    },
+    {
+      "name": "fmt",
+      "repo": "platform/external/fmtlib",
+      "revision": "b94c6ae0bc963c4f38bce355fe74bec30eaf0be2",
+      "sha256": "f59c483a17eeb43612b0927cc6ee210ffdec4960919531ebfd89a49df7b14cc0"
+    },
+    {
+      "name": "dlmalloc",
+      "repo": "platform/external/dlmalloc",
+      "revision": "2b0d5c4ab4e2c677384c02f3eb04cce63b6f10f0",
+      "sha256": "7297f4bc1e9c198c8d2b8be88e2ee067b2a2581525ca3e079349ea6abc418e1e"
+    },
+    {
+      "name": "libnativehelper",
+      "repo": "platform/libnativehelper",
+      "revision": "5c36ece5ac42b20f0e384d9e57400f2f22aad9fb",
+      "sha256": "4e44c5b7fb4afddb0df38bbdabc6b010f4ce85e872b8fe67de325a10d30abfa1"
+    },
+    {
+      "name": "cpu_features",
+      "repo": "platform/external/cpu_features",
+      "revision": "3aed778c722edb68321d66a5e1cd7b35ae2c891c",
+      "sha256": "7d89f0d07142e1ec99d3ebe976539e64de7ff22e4fa2d1d365d7050f90c00829"
+    },
+    {
+      "name": "tinyxml2",
+      "repo": "platform/external/tinyxml2",
+      "revision": "7485b22521f577cf944e5687361548d8993d8d2c",
+      "sha256": "7a786555b5f49b6c386d99a2193c18783d8266849dd50beaba3ba00690eb855f"
+    },
+    {
+      "name": "unwinding",
+      "repo": "platform/system/unwinding",
+      "revision": "525f941b6ccdba2f9df02de8ab7a83aea883d952",
+      "subtree": "",
+      "sha256": "300aca72ec071872fd72430fdd01a3b014078e0415b79d120bf0d4776d6edb4b"
+    },
+    {
+      "name": "modules-utils",
+      "repo": "platform/frameworks/libs/modules-utils",
+      "revision": "7f0ae25f0e410849caf643da36c9a1ba161caca7",
+      "subtree": "",
+      "sha256": "d92b5c8c3041f98d86f563a5260ee8be3daa122981ba6b8af21b4d15612d19e9"
+    },
+    {
+      "name": "lz4",
+      "repo": "platform/external/lz4",
+      "revision": "f072532f6846b40417438d29daa8183a8e53b63c",
+      "subtree": "",
+      "sha256": "fcdbdd958216e93308025085e776afc88a8086cced6600b8aa271f65000a3f63"
+    },
+    {
+      "name": "lzma",
+      "repo": "platform/external/lzma",
+      "revision": "c1bc713526e9740aec88f0f18e0bca0b0c54f1f9",
+      "sha256": "222558ca5e5180e09bfed41fde2e988735b5dff0221badb8ab7d0babae605a0d"
+    }
+  ],
+  "headers": [
+    {
+      "path": "perfetto-heap/perfetto/heap_profile.h",
+      "url": "https://android.googlesource.com/platform/external/perfetto/+/94a71474cc396db2b0fcff6755b8f2d3f7e304d0/src/profiling/memory/include/perfetto/heap_profile.h?format=TEXT",
+      "sha256": "a56248243d481b25e8c93b08d1cc8103dcaf589dcbba8b17139f4db7953f51de"
+    }
+  ]
+}

@@ -51,7 +51,11 @@ final class ProbeModel: ObservableObject {
             }
         } else if busy && didRun {
             let seconds = Int(Date().timeIntervalSince(startedAt))
-            if log.contains("\"phase\":\"linux_dynamic_program\"") { status = "正在检查动态库和线程（\(seconds) 秒）" }
+            if log.contains("\"phase\":\"android_art_load\"") { status = "正在运行 Java 测试（\(seconds) 秒）" }
+            else if log.contains("\"phase\":\"android_art_reference_heap\"") { status = "正在检查 Android 对象内存（\(seconds) 秒）" }
+            else if log.contains("\"phase\":\"android_bionic_dynamic\"") { status = "正在检查 Android 运行库（\(seconds) 秒）" }
+            else if log.contains("\"phase\":\"linux_binder_program\"") { status = "正在检查 Binder 进程通信（\(seconds) 秒）" }
+            else if log.contains("\"phase\":\"linux_dynamic_program\"") { status = "正在检查动态库和线程（\(seconds) 秒）" }
             else if log.contains("\"phase\":\"linux_dash_shell\"") { status = "正在运行 shell 脚本（\(seconds) 秒）" }
             else if log.contains("\"phase\":\"linux_mm_benchmark\"") { status = "正在检查信号与内存（\(seconds) 秒）" }
             else if log.contains("\"phase\":\"linux_userspace_tests\"") { status = "正在测试 C 程序和线程（\(seconds) 秒）" }
@@ -137,6 +141,7 @@ final class ProbeModel: ObservableObject {
         }
         didRun = true
         setenv("NCE_MM_MODE", "lazy", 1)
+        setenv("NCE_STRESS_ROUNDS", "3", 1)
         startedAt = Date()
         status = "正在准备 JIT 内存"
         // The guest switches stacks and pthreads. Keep the Swift UI on its own queue.
@@ -166,11 +171,11 @@ struct NativeLinuxApp: App {
         WindowGroup {
             NavigationStack {
                 List {
-                    Section("N2e · Linux 动态程序") {
-                        Text(Bundle.main.object(forInfoDictionaryKey: "NCEBuildID") as? String ?? "N2")
+                    Section("N3 · Android 运行时") {
+                        Text(Bundle.main.object(forInfoDictionaryKey: "NCEBuildID") as? String ?? "N3")
                             .font(.caption).foregroundStyle(.secondary)
                         Text(model.status).font(.headline).accessibilityIdentifier("probe-status")
-                        Text("检查 Linux 信号、动态库、线程与 shell 脚本。运行时请保持应用在前台。")
+                        Text("运行 Android 运行库、Binder 和 Java 测试。请保持应用在前台。")
                             .foregroundStyle(.secondary)
                         if model.busy { ProgressView() }
                     }

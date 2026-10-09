@@ -14,7 +14,7 @@ ROOT = Path(__file__).resolve().parents[1]
 EXP = ROOT / 'experiments/native-linux'
 INPUT = ROOT / 'work/native-linux-nce/processes'
 OUT = ROOT / 'work/native-linux-nce/ios'
-REVISION = 'N2-E1'
+REVISION = 'N3-A1'
 
 
 def run(args, **kwargs):
@@ -62,7 +62,7 @@ def main():
                 UISupportedInterfaceOrientations=['UIInterfaceOrientationPortrait',
                     'UIInterfaceOrientationPortraitUpsideDown',
                     'UIInterfaceOrientationLandscapeLeft', 'UIInterfaceOrientationLandscapeRight'],
-                CFBundleShortVersionString='0.9.1', CFBundleVersion='61')
+                CFBundleShortVersionString='0.10.0', CFBundleVersion='70')
     plist(OUT / 'Info.plist', info)
     helper_info = plistlib.loads((ROOT / 'src/app/HuskJITHelper/Info.plist').read_bytes())
     for key in ['CFBundleShortVersionString', 'CFBundleVersion']:
@@ -84,6 +84,17 @@ def main():
                  ROOT / 'work/native-linux-nce/musl-1.2.5/COPYRIGHT',
                  ROOT / 'work/native-linux-nce/dash-0.5.12/COPYING',
                  ROOT / 'work/native-linux-nce/compiler-rt-20.1.8.src/LICENSE.TXT']]
+    android = ROOT / 'work/native-linux-nce/android'
+    notices = OUT / 'Android-NOTICES.txt'
+    notice_paths = ['android36/NOTICE.txt', 'art/NOTICE', 'bionic-source/libc/NOTICE',
+                    'bionic-source/linker/NOTICE', 'scudo/LICENSE.TXT',
+                    'libunwind-20.1.8.src/LICENSE.TXT', 'fmt/LICENSE', 'dlmalloc/NOTICE',
+                    'libnativehelper/NOTICE', 'cpu_features/LICENSE', 'tinyxml2/LICENSE.txt',
+                    'lz4/lib/LICENSE', 'lzma/NOTICE', 'libbase/NOTICE', 'liblog/liblog/NOTICE']
+    notices.write_bytes(b''.join(f'\n===== {name} =====\n'.encode() + (android / name).read_bytes()
+                                for name in notice_paths))
+    sources += [{'path': str(notices), 'buildPhase': 'resources'},
+                {'path': str(android / 'android36/etc/NOTICE.xml.gz'), 'buildPhase': 'resources'}]
     framework = ROOT / 'src/app/Frameworks/StikJIT.xcframework'
     spec = {
         'name': 'HuskNCE',

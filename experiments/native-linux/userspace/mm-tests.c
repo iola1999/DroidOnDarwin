@@ -7,6 +7,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <sys/mman.h>
+#include <sys/resource.h>
+#include <signal.h>
 #include <sys/syscall.h>
 #include <sys/uio.h>
 #include <sys/wait.h>
@@ -15,8 +17,31 @@
 #define PAGE 16384
 #define CHECK(c) do { if (!(c)) { dprintf(2, "mm-tests:%d errno=%d\n", __LINE__, errno); _exit(__LINE__); } } while (0)
 
+__attribute__((noinline)) static unsigned grow_stack(unsigned depth)
+{
+    volatile unsigned char page[PAGE];
+    /* Keep the complete stack allocation observable to the compiler. */
+    __asm__ volatile("" : : "r"(page) : "memory");
+    page[0] = depth;
+    page[PAGE - 1] = depth + 1;
+    unsigned result = depth ? grow_stack(depth - 1) : 0;
+    return result + page[0] + page[PAGE - 1];
+}
+
 void memory_tests(void)
 {
+    pid_t limited = fork();
+    CHECK(limited >= 0);
+    if (!limited) {
+        struct rlimit limit = {128 * 1024, 128 * 1024};
+        CHECK(setrlimit(RLIMIT_STACK, &limit) == 0);
+        _exit(grow_stack(64) == 4225 ? 0 : 1);
+    }
+    int limited_status;
+    CHECK(waitpid(limited, &limited_status, 0) == limited);
+    CHECK(WIFSIGNALED(limited_status) && WTERMSIG(limited_status) == SIGSEGV);
+    CHECK(grow_stack(64) == 4225);
+    puts("{\"test\":\"linux_stack_growth_and_limit\",\"passed\":true}");
     CHECK(syscall(245, -1, PAGE) == -1 && errno == EBADF);
     int ordinary = open("/reserve-not-elf", O_CREAT | O_RDWR, 0600);
     CHECK(ordinary >= 0);

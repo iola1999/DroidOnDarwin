@@ -1,0 +1,20 @@
+# The standalone fixture stores its APEX dependencies under /system/lib64.
+dir.nce = /system/bin
+
+[nce]
+additional.namespaces = com_android_art,com_android_i18n,com_android_conscrypt
+namespace.default.isolated = false
+namespace.default.visible = true
+namespace.default.search.paths = /system/lib64
+namespace.com_android_art.isolated = false
+namespace.com_android_art.visible = true
+namespace.com_android_art.links = default
+namespace.com_android_art.link.default.allow_all_shared_libs = true
+namespace.com_android_i18n.isolated = false
+namespace.com_android_i18n.visible = true
+namespace.com_android_i18n.links = default
+namespace.com_android_i18n.link.default.allow_all_shared_libs = true
+namespace.com_android_conscrypt.isolated = false
+namespace.com_android_conscrypt.visible = true
+namespace.com_android_conscrypt.links = default
+namespace.com_android_conscrypt.link.default.allow_all_shared_libs = true

@@ -1,0 +1,475 @@
+--- a/libartbase/base/logging.cc
++++ b/libartbase/base/logging.cc
+@@ -79,7 +79,7 @@
+     gCmdLine.reset(new std::string("<unset>"));
+   }
+ 
+-#ifdef ART_TARGET_ANDROID
++#if defined(ART_TARGET_ANDROID) && !defined(ART_NCE)
+   // android::base::LogdLogger breaks messages up into line delimited 4K chunks, since that is the
+   // most that logd can handle per message.  To prevent other threads from interleaving their
+   // messages, LogdLoggerLocked uses a mutex to ensure that only one ART thread is logging at a
+--- a/libartbase/base/mem_map.cc
++++ b/libartbase/base/mem_map.cc
+@@ -15,6 +15,7 @@
+  */
+ 
+ #include "mem_map.h"
++#include "reference_heap.h"
+ 
+ #include <inttypes.h>
+ #include <stdlib.h>
+@@ -1181,6 +1182,7 @@
+                           int fd,
+                           off_t offset,
+                           bool low_4gb) {
++  if (low_4gb) return nce_art_heap_map(addr, length, prot, flags, fd, offset);
+ #ifdef __LP64__
+   // When requesting low_4g memory and having an expectation, the requested range should fit into
+   // 4GB.
+--- a/libartbase/base/mem_map_unix.cc
++++ b/libartbase/base/mem_map_unix.cc
+@@ -15,13 +15,14 @@
+  */
+ 
+ #include "mem_map.h"
++#include "reference_heap.h"
+ 
+ #include "mman.h"
+ 
+ namespace art {
+ 
+ void MemMap::TargetMMapInit() {
+-  // no-op for unix
++  CHECK_EQ(nce_art_heap_init(), 0) << "NCE reference heap reservation failed";
+ }
+ 
+ void* MemMap::TargetMMap(void* start, size_t len, int prot, int flags, int fd, off_t fd_off) {
+@@ -29,6 +30,7 @@
+ }
+ 
+ int MemMap::TargetMUnmap(void* start, size_t len) {
++  if (nce_art_heap_contains(start, len)) return nce_art_heap_unmap(start, len);
+   return munmap(start, len);
+ }
+ 
+--- a/runtime/class_table-inl.h
++++ b/runtime/class_table-inl.h
+@@ -214,12 +214,12 @@
+ }
+ 
+ inline ObjPtr<mirror::Class> ClassTable::TableSlot::ExtractPtr(uint32_t data) {
+-  return reinterpret_cast<mirror::Class*>(data & ~kHashMask);
++  return nce_art_reference_cast<mirror::Class*>(data & ~kHashMask);
+ }
+ 
+ inline uint32_t ClassTable::TableSlot::Encode(ObjPtr<mirror::Class> klass, uint32_t hash_bits) {
+   DCHECK_LE(hash_bits, kHashMask);
+-  return reinterpret_cast<uintptr_t>(klass.Ptr()) | hash_bits;
++  return nce_art_encode_reference(klass.Ptr()) | hash_bits;
+ }
+ 
+ inline ClassTable::TableSlot::TableSlot(ObjPtr<mirror::Class> klass, uint32_t descriptor_hash)
+--- a/runtime/gc/collector/mark_compact.cc
++++ b/runtime/gc/collector/mark_compact.cc
+@@ -61,7 +61,9 @@
+ 
+ #ifdef ART_TARGET_ANDROID
+ #include "android-modules-utils/sdk_level.h"
++#ifdef ART_USE_READ_BARRIER
+ #include "com_android_art.h"
++#endif
+ #include "com_android_art_flags.h"
+ #endif
+ 
+--- a/runtime/gc/heap.cc
++++ b/runtime/gc/heap.cc
+@@ -728,7 +728,7 @@
+   // Start at 4 KB, we can be sure there are no spaces mapped this low since the address range is
+   // reserved by the kernel.
+   static constexpr size_t kMinHeapAddress = 4 * KB;
+-  card_table_.reset(accounting::CardTable::Create(reinterpret_cast<uint8_t*>(kMinHeapAddress),
++  card_table_.reset(accounting::CardTable::Create(reinterpret_cast<uint8_t*>(nce_art_reference_base + kMinHeapAddress),
+                                                   4 * GB - kMinHeapAddress));
+   CHECK(card_table_.get() != nullptr) << "Failed to create card table";
+   if (foreground_collector_type_ == kCollectorTypeCC && kUseTableLookupReadBarrier) {
+--- a/runtime/gc/space/space.cc
++++ b/runtime/gc/space/space.cc
+@@ -79,11 +79,12 @@
+ DiscontinuousSpace::DiscontinuousSpace(const std::string& name,
+                                        GcRetentionPolicy gc_retention_policy) :
+     Space(name, gc_retention_policy) {
+-  // TODO: Fix this if we ever support objects not in the low 32 bit.
++  // Large-object bitmaps cover the same address range as compressed references.
+   const size_t capacity = static_cast<size_t>(std::numeric_limits<uint32_t>::max());
+-  live_bitmap_ = accounting::LargeObjectBitmap::Create("large live objects", nullptr, capacity);
++  uint8_t* begin = reinterpret_cast<uint8_t*>(nce_art_reference_base);
++  live_bitmap_ = accounting::LargeObjectBitmap::Create("large live objects", begin, capacity);
+   CHECK(live_bitmap_.IsValid());
+-  mark_bitmap_ = accounting::LargeObjectBitmap::Create("large marked objects", nullptr, capacity);
++  mark_bitmap_ = accounting::LargeObjectBitmap::Create("large marked objects", begin, capacity);
+   CHECK(mark_bitmap_.IsValid());
+ }
+ 
+--- a/runtime/handle_scope-inl.h
++++ b/runtime/handle_scope-inl.h
+@@ -41,7 +41,7 @@
+   if (kIsDebugBuild) {
+     // Fill storage with "DEAD HAndleSCope", mapping H->"4" and S->"5".
+     for (size_t i = 0; i < kNumReferences; ++i) {
+-      GetReferences()[i].Assign(reinterpret_cast32<mirror::Object*>(0xdead4a5c));
++      GetReferences()[i].Assign(nce_art_reference_cast<mirror::Object*>(0xdead4a5c));
+     }
+   }
+ }
+--- a/runtime/interpreter/interpreter.cc
++++ b/runtime/interpreter/interpreter.cc
+@@ -40,7 +40,7 @@
+ 
+ ALWAYS_INLINE static ObjPtr<mirror::Object> ObjArg(uint32_t arg)
+     REQUIRES_SHARED(Locks::mutator_lock_) {
+-  return reinterpret_cast<mirror::Object*>(arg);
++  return nce_art_reference_cast<mirror::Object*>(arg);
+ }
+ 
+ static void InterpreterJni(Thread* self,
+--- a/runtime/interpreter/interpreter_common.cc
++++ b/runtime/interpreter/interpreter_common.cc
+@@ -274,10 +274,10 @@
+   for (uint32_t i = 0, e = shadow_frame->NumberOfVRegs(); i < e; ++i) {
+     if (shadow_frame->GetVRegReference(i) == existing) {
+       DCHECK_EQ(shadow_frame->GetVRegReference(i),
+-                reinterpret_cast32<mirror::Object*>(shadow_frame->GetVReg(i)));
++                nce_art_reference_cast<mirror::Object*>(shadow_frame->GetVReg(i)));
+       shadow_frame->SetVRegReference(i, result.GetL());
+       DCHECK_EQ(shadow_frame->GetVRegReference(i),
+-                reinterpret_cast32<mirror::Object*>(shadow_frame->GetVReg(i)));
++                nce_art_reference_cast<mirror::Object*>(shadow_frame->GetVReg(i)));
+     }
+   }
+ }
+@@ -1128,7 +1128,7 @@
+   // If both register locations contains the same value, the register probably holds a reference.
+   // Note: As an optimization, non-moving collectors leave a stale reference value
+   // in the references array even after the original vreg was overwritten to a non-reference.
+-  if (src_value == reinterpret_cast32<uint32_t>(o.Ptr())) {
++  if (src_value == nce_art_reference_cast<uint32_t>(o.Ptr())) {
+     new_shadow_frame->SetVRegReference(dest_reg, o);
+   } else {
+     new_shadow_frame->SetVReg(dest_reg, src_value);
+--- a/runtime/interpreter/unstarted_runtime.cc
++++ b/runtime/interpreter/unstarted_runtime.cc
+@@ -643,7 +643,7 @@
+   }
+ 
+   uint32_t args[1];
+-  args[0] = reinterpret_cast32<uint32_t>(h_array.Get());
++  args[0] = nce_art_reference_cast<uint32_t>(h_array.Get());
+   EnterInterpreterFromInvoke(self, constructor, h_obj.Get(), args, nullptr);
+ 
+   if (self->IsExceptionPending()) {
+@@ -1928,7 +1928,7 @@
+     JValue* result) {
+   int32_t length = args[1];
+   DCHECK_GE(length, 0);
+-  ObjPtr<mirror::Object> element_class = reinterpret_cast32<mirror::Object*>(args[0])->AsClass();
++  ObjPtr<mirror::Object> element_class = nce_art_reference_cast<mirror::Object*>(args[0])->AsClass();
+   if (element_class == nullptr) {
+     AbortTransactionOrFail(self, "VMRuntime.newUnpaddedArray with null element_class.");
+     return;
+@@ -2051,7 +2051,7 @@
+                                                    mirror::Object* receiver,
+                                                    uint32_t* args,
+                                                    JValue* result) {
+-  ObjPtr<mirror::Object> rhs = reinterpret_cast32<mirror::Object*>(args[0]);
++  ObjPtr<mirror::Object> rhs = nce_art_reference_cast<mirror::Object*>(args[0]);
+   if (rhs == nullptr) {
+     AbortTransactionOrFail(self, "String.compareTo with null object.");
+     return;
+@@ -2068,7 +2068,7 @@
+   Handle<mirror::String> h_receiver(hs.NewHandle(
+       reinterpret_cast<mirror::String*>(receiver)->AsString()));
+   Handle<mirror::ByteArray> h_buffer(hs.NewHandle(
+-      reinterpret_cast<mirror::ByteArray*>(args[0])->AsByteArray()));
++      nce_art_reference_cast<mirror::ByteArray*>(args[0])->AsByteArray()));
+   int32_t index = static_cast<int32_t>(args[1]);
+   h_receiver->FillBytesLatin1(h_buffer, index);
+ }
+@@ -2082,7 +2082,7 @@
+   Handle<mirror::String> h_receiver(hs.NewHandle(
+       reinterpret_cast<mirror::String*>(receiver)->AsString()));
+   Handle<mirror::ByteArray> h_buffer(hs.NewHandle(
+-      reinterpret_cast<mirror::ByteArray*>(args[0])->AsByteArray()));
++      nce_art_reference_cast<mirror::ByteArray*>(args[0])->AsByteArray()));
+   int32_t index = static_cast<int32_t>(args[1]);
+   h_receiver->FillBytesUTF16(h_buffer, index);
+ }
+@@ -2101,8 +2101,8 @@
+                                                          uint32_t* args,
+                                                          JValue* result) {
+   StackHandleScope<2> hs(self);
+-  auto h_class(hs.NewHandle(reinterpret_cast<mirror::Class*>(args[0])->AsClass()));
+-  auto h_dimensions(hs.NewHandle(reinterpret_cast<mirror::IntArray*>(args[1])->AsIntArray()));
++  auto h_class(hs.NewHandle(nce_art_reference_cast<mirror::Class*>(args[0])->AsClass()));
++  auto h_dimensions(hs.NewHandle(nce_art_reference_cast<mirror::IntArray*>(args[1])->AsIntArray()));
+   result->SetL(mirror::Array::CreateMultiArray(self, h_class, h_dimensions));
+ }
+ 
+@@ -2116,7 +2116,7 @@
+     ThrowNegativeArraySizeException(length);
+     return;
+   }
+-  ObjPtr<mirror::Class> element_class = reinterpret_cast<mirror::Class*>(args[0])->AsClass();
++  ObjPtr<mirror::Class> element_class = nce_art_reference_cast<mirror::Class*>(args[0])->AsClass();
+   Runtime* runtime = Runtime::Current();
+   ClassLinker* class_linker = runtime->GetClassLinker();
+   ObjPtr<mirror::Class> array_class = class_linker->FindArrayClass(self, element_class);
+@@ -2197,7 +2197,7 @@
+     [[maybe_unused]] mirror::Object* receiver,
+     uint32_t* args,
+     JValue* result) {
+-  ObjPtr<mirror::Object> obj = reinterpret_cast32<mirror::Object*>(args[0]);
++  ObjPtr<mirror::Object> obj = nce_art_reference_cast<mirror::Object*>(args[0]);
+   if (obj == nullptr) {
+     AbortTransactionOrFail(self, "Cannot access null object, retry at runtime.");
+     return;
+@@ -2242,7 +2242,7 @@
+     [[maybe_unused]] mirror::Object* receiver,
+     uint32_t* args,
+     JValue* result) {
+-  ObjPtr<mirror::Object> obj = reinterpret_cast32<mirror::Object*>(args[0]);
++  ObjPtr<mirror::Object> obj = nce_art_reference_cast<mirror::Object*>(args[0]);
+   if (obj == nullptr) {
+     AbortTransactionOrFail(self, "Unsafe.compareAndSwapIntVolatile with null object.");
+     return;
+@@ -2257,13 +2257,13 @@
+                                                          [[maybe_unused]] mirror::Object* receiver,
+                                                          uint32_t* args,
+                                                          [[maybe_unused]] JValue* result) {
+-  ObjPtr<mirror::Object> obj = reinterpret_cast32<mirror::Object*>(args[0]);
++  ObjPtr<mirror::Object> obj = nce_art_reference_cast<mirror::Object*>(args[0]);
+   if (obj == nullptr) {
+     AbortTransactionOrFail(self, "Unsafe.putObject with null object.");
+     return;
+   }
+   jlong offset = (static_cast<uint64_t>(args[2]) << 32) | args[1];
+-  ObjPtr<mirror::Object> new_value = reinterpret_cast32<mirror::Object*>(args[3]);
++  ObjPtr<mirror::Object> new_value = nce_art_reference_cast<mirror::Object*>(args[3]);
+   Runtime* runtime = Runtime::Current();
+   if (runtime->IsActiveTransaction()) {
+     if (runtime->GetClassLinker()->TransactionWriteConstraint(self, obj) ||
+@@ -2291,7 +2291,7 @@
+     [[maybe_unused]] mirror::Object* receiver,
+     uint32_t* args,
+     JValue* result) {
+-  ObjPtr<mirror::Object> component = reinterpret_cast32<mirror::Object*>(args[0]);
++  ObjPtr<mirror::Object> component = nce_art_reference_cast<mirror::Object*>(args[0]);
+   if (component == nullptr) {
+     AbortTransactionOrFail(self, "Unsafe.getArrayBaseOffsetForComponentType with null component.");
+     return;
+@@ -2306,7 +2306,7 @@
+     [[maybe_unused]] mirror::Object* receiver,
+     uint32_t* args,
+     JValue* result) {
+-  ObjPtr<mirror::Object> component = reinterpret_cast32<mirror::Object*>(args[0]);
++  ObjPtr<mirror::Object> component = nce_art_reference_cast<mirror::Object*>(args[0]);
+   if (component == nullptr) {
+     AbortTransactionOrFail(self, "Unsafe.getArrayIndexScaleForComponentType with null component.");
+     return;
+--- a/runtime/jni/local_reference_table.cc
++++ b/runtime/jni/local_reference_table.cc
+@@ -509,7 +509,7 @@
+   if (is_top_entry) {
+     // Top-most entry. Scan up and consume holes created with the current CheckJNI setting.
+     constexpr uint32_t kDeadLocalValue = 0xdead10c0;
+-    entry->SetReference(reinterpret_cast32<mirror::Object*>(kDeadLocalValue));
++    entry->SetReference(nce_art_reference_cast<mirror::Object*>(kDeadLocalValue));
+ 
+     // TODO: Maybe we should not prune free entries from the top of the segment
+     // because it has quadratic worst-case complexity. We could still prune while
+@@ -554,7 +554,7 @@
+         DCHECK_NE(free_index, kFreeListEnd);
+         LrtEntry* pruned_entry = GetEntry(free_index);
+         free_index = pruned_entry->GetNextFree();
+-        pruned_entry->SetReference(reinterpret_cast32<mirror::Object*>(kDeadLocalValue));
++        pruned_entry->SetReference(nce_art_reference_cast<mirror::Object*>(kDeadLocalValue));
+         --remaining;
+       }
+       free_entries_list_ = FirstFreeField::Update(free_index, free_entries_list_);
+@@ -570,7 +570,7 @@
+         }
+         LrtEntry* pruned_entry = GetEntry(free_entry->GetNextFree());
+         free_entry->SetNextFree(pruned_entry->GetNextFree());
+-        pruned_entry->SetReference(reinterpret_cast32<mirror::Object*>(kDeadLocalValue));
++        pruned_entry->SetReference(nce_art_reference_cast<mirror::Object*>(kDeadLocalValue));
+         --remaining;
+       }
+       DCHECK(free_index == kFreeListEnd || free_index < prune_start)
+--- a/runtime/metrics/statsd.h
++++ b/runtime/metrics/statsd.h
+@@ -27,7 +27,7 @@
+ class MetricsBackend;
+ 
+ // Statsd is only supported on Android
+-#ifdef __ANDROID__
++#if defined(__ANDROID__) && !defined(ART_NCE)
+ std::unique_ptr<MetricsBackend> CreateStatsdBackend();
+ void SetupCallbackForDeviceStatus();
+ void ReportDeviceMetrics();
+--- a/runtime/mirror/object_reference.h
++++ b/runtime/mirror/object_reference.h
+@@ -18,6 +18,7 @@
+ #define ART_RUNTIME_MIRROR_OBJECT_REFERENCE_H_
+ 
+ #include <array>
++#include "reference_heap.h"
+ #include <string_view>
+ 
+ #include "base/atomic.h"
+@@ -97,14 +98,14 @@
+  public:
+   // Compress reference to its bit representation.
+   static uint32_t Compress(MirrorType* mirror_ptr) {
+-    uint32_t as_bits = reinterpret_cast32<uint32_t>(mirror_ptr);
++    uint32_t as_bits = nce_art_reference_cast<uint32_t>(mirror_ptr);
+     return kPoisonReferences ? -as_bits : as_bits;
+   }
+ 
+   // Uncompress an encoded reference from its bit representation.
+   static MirrorType* Decompress(uint32_t ref) {
+     uint32_t as_bits = kPoisonReferences ? -ref : ref;
+-    return reinterpret_cast32<MirrorType*>(as_bits);
++    return nce_art_reference_cast<MirrorType*>(as_bits);
+   }
+ 
+   // Convert an ObjPtr to a compressed reference.
+--- a/runtime/monitor.cc
++++ b/runtime/monitor.cc
+@@ -1529,7 +1529,7 @@
+       // not be optimized out.
+       success = stack_visitor->GetVReg(m, dex_reg, kReferenceVReg, &value);
+       if (success) {
+-        mirror::Object* mp = reinterpret_cast<mirror::Object*>(value);
++        mirror::Object* mp = nce_art_reference_cast<mirror::Object*>(value);
+         // TODO(b/299577730) Remove the extra checks here once the underlying bug is fixed.
+         const gc::Verification* v = Runtime::Current()->GetHeap()->GetVerification();
+         if (v->IsValidObject(mp)) {
+--- a/runtime/native/java_lang_Class.cc
++++ b/runtime/native/java_lang_Class.cc
+@@ -958,7 +958,7 @@
+   }
+   // Invoke the constructor.
+   JValue result;
+-  uint32_t args[1] = { static_cast<uint32_t>(reinterpret_cast<uintptr_t>(receiver.Get())) };
++  uint32_t args[1] = { nce_art_encode_reference(receiver.Get()) };
+   constructor->Invoke(soa.Self(), args, sizeof(args), &result, "V");
+   if (UNLIKELY(soa.Self()->IsExceptionPending())) {
+     return nullptr;
+--- a/runtime/quick_exception_handler.cc
++++ b/runtime/quick_exception_handler.cc
+@@ -660,7 +660,7 @@
+         }
+       }
+       if (is_reference) {
+-        new_frame->SetVRegReference(vreg, reinterpret_cast<mirror::Object*>(value));
++        new_frame->SetVRegReference(vreg, nce_art_reference_cast<mirror::Object*>(value));
+       } else {
+         new_frame->SetVReg(vreg, value);
+       }
+--- a/runtime/runtime.cc
++++ b/runtime/runtime.cc
+@@ -184,8 +184,10 @@
+ #ifdef ART_TARGET_ANDROID
+ #include <android/api-level.h>
+ #include <android/set_abort_message.h>
++#ifndef ART_NCE
+ #include "com_android_apex.h"
+ namespace apex = com::android::apex;
++#endif
+ 
+ #endif
+ 
+@@ -1489,7 +1491,7 @@
+   if (!kIsTargetBuild || !OS::FileExists(kApexFileName)) {
+     return empty_apex_versions;
+   }
+-#ifdef ART_TARGET_ANDROID
++#if defined(ART_TARGET_ANDROID) && !defined(ART_NCE)
+   if (access(kApexFileName, R_OK) != 0) {
+     PLOG(WARNING) << "Failed to read " << kApexFileName;
+     return empty_apex_versions;
+--- a/runtime/runtime.h
++++ b/runtime/runtime.h
+@@ -863,7 +863,7 @@
+   // This helps diagnosing in case code tries to wrongly access such
+   // entries.
+   static mirror::Class* GetWeakClassSentinel() {
+-    return reinterpret_cast<mirror::Class*>(0xebadbeef);
++    return nce_art_reference_cast<mirror::Class*>(UINT32_C(0xebadbeef));
+   }
+ 
+   // Create a normal LinearAlloc or low 4gb version if we are 64 bit AOT compiler.
+--- a/runtime/stack.cc
++++ b/runtime/stack.cc
+@@ -213,7 +213,7 @@
+       if (!GetVReg(m, reg, kReferenceVReg, &value)) {
+         return nullptr;
+       }
+-      return reinterpret_cast<mirror::Object*>(value);
++      return nce_art_reference_cast<mirror::Object*>(value);
+     }
+   }
+ }
+@@ -234,8 +234,7 @@
+     if (updated_vreg_flags[vreg]) {
+       // Value is set by the debugger.
+       if (kind == kReferenceVReg) {
+-        *val = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(
+-            shadow_frame->GetVRegReference(vreg)));
++        *val = nce_art_encode_reference(shadow_frame->GetVRegReference(vreg));
+       } else {
+         *val = shadow_frame->GetVReg(vreg);
+       }
+@@ -281,17 +280,14 @@
+     }
+     if (kind == kReferenceVReg) {
+       // Perform a read barrier in case we are in a different thread and GC is ongoing.
+-      mirror::Object* out = reinterpret_cast<mirror::Object*>(static_cast<uintptr_t>(*val));
+-      uintptr_t ptr_out = reinterpret_cast<uintptr_t>(GcRoot<mirror::Object>(out).Read());
+-      DCHECK_LT(ptr_out, std::numeric_limits<uint32_t>::max());
+-      *val = static_cast<uint32_t>(ptr_out);
++      mirror::Object* out = nce_art_reference_cast<mirror::Object*>(*val);
++      *val = nce_art_encode_reference(GcRoot<mirror::Object>(out).Read());
+     }
+     return result;
+   } else {
+     DCHECK(cur_shadow_frame_ != nullptr);
+     if (kind == kReferenceVReg) {
+-      *val = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(
+-          cur_shadow_frame_->GetVRegReference(vreg)));
++      *val = nce_art_encode_reference(cur_shadow_frame_->GetVRegReference(vreg));
+     } else {
+       *val = cur_shadow_frame_->GetVReg(vreg);
+     }
+--- a/runtime/string_builder_append.cc
++++ b/runtime/string_builder_append.cc
+@@ -345,7 +345,7 @@
+     switch (static_cast<Argument>(f & kArgMask)) {
+       case Argument::kString: {
+         Handle<mirror::String> str =
+-            hs_.NewHandle(reinterpret_cast32<mirror::String*>(*current_arg));
++            hs_.NewHandle(nce_art_reference_cast<mirror::String*>(*current_arg));
+         if (str != nullptr) {
+           length += str->GetLength();
+           compressible = compressible && str->IsCompressed();
+--- a/runtime/thread.h
++++ b/runtime/thread.h
+@@ -1341,7 +1341,7 @@
+   static mirror::Throwable* GetDeoptimizationException() {
+     // Note that the mirror::Throwable must be aligned to kObjectAlignment or else it cannot be
+     // represented by ObjPtr.
+-    return reinterpret_cast<mirror::Throwable*>(0x100);
++    return nce_art_reference_cast<mirror::Throwable*>(UINT32_C(0x100));
+   }
+ 
+   // Currently deoptimization invokes verifier which can trigger class loading

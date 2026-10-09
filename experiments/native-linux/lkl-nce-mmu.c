@@ -203,6 +203,12 @@ int nce_page_fault(unsigned long address, int access)
     if (!mm || address < USER_BASE || address >= TASK_SIZE) return -EFAULT;
     mmap_read_lock(mm);
     vma = find_vma(mm, address);
+    if (vma && address < vma->vm_start && (vma->vm_flags & VM_GROWSDOWN)) {
+        /* expand_stack checks RLIMIT_STACK and the neighboring guard gap.
+         * It returns with the read lock held, or drops it on failure. */
+        vma = expand_stack(mm, address);
+        if (!vma) return -EFAULT;
+    }
     if (!vma || address < vma->vm_start || !(vma->vm_flags & (execute ? VM_EXEC : write ? VM_WRITE : VM_READ))) {
         mmap_read_unlock(mm);
         return -EFAULT;

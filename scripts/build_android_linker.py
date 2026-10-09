@@ -73,7 +73,7 @@ def build():
     includes = [bionic / 'libc', bionic / 'libc/platform', bionic / 'libc/async_safe/include',
                 WORK / 'libbase/include', WORK / 'libziparchive/include',
                 WORK / 'libziparchive/incfs_support/include', WORK / 'liblog/liblog/include', WORK / 'core-include']
-    flags = ['--target=aarch64-linux-android10000', '-O2', '-g', '-fPIC', '-ffixed-x18', '-mno-outline-atomics',
+    flags = ['--target=aarch64-linux-android10000', '-O2', '-g', '-fPIC', '-ftrivial-auto-var-init=zero', '-ffixed-x18', '-mno-outline-atomics',
              '-fno-stack-protector', '-fvisibility=hidden', '-ffunction-sections', '-fdata-sections',
              '-D__BIONIC_BUILD_FOR_ANDROID_SUPPORT', '-D__ANDROID_APEX__', '-DZLIB_CONST',
              '-DINCFS_SUPPORT_DISABLED=1', '-DANDROID_DEBUGGABLE=1', '-DSNET_EVENT_LOG_TAG=0x534e4554',

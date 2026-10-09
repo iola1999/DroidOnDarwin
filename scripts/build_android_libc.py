@@ -44,7 +44,7 @@ def build():
                 WORK / 'core-include', WORK / 'liblog/liblog/include',
                 scudo / 'standalone/include', scudo / 'config', compiler_rt,
                 bionic.parent / 'libdl/include_private']
-    flags = ['--target=aarch64-linux-android10000', '-O2', '-g', '-fPIC', '-ffixed-x18',
+    flags = ['--target=aarch64-linux-android10000', '-O2', '-g', '-fPIC', '-ftrivial-auto-var-init=zero', '-ffixed-x18',
              '-mno-outline-atomics', '-march=armv8-a+crc', '-fno-stack-protector', '-fno-builtin',
              '-ffunction-sections', '-fdata-sections', '-nostdinc++', '-DUSE_SCUDO',
              '-D__BIONIC_BUILD_FOR_ANDROID_SUPPORT', '-D__ANDROID_APEX__',

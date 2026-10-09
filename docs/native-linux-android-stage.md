@@ -1,6 +1,6 @@
 # 原生 Linux + NCE：Android 用户态阶段
 
-更新日期：2026-10-09。goal 状态：进行中。
+更新日期：2026-10-09。N3-A1 已完成本地回归和打包，等待集中设备验证。
 
 ## 验收目标与暂停条件
 
@@ -22,7 +22,8 @@
 
 已完成 Linux 信号、musl 静态和动态用户态、dash、Binder 跨进程通信，以及
 Bionic 动态程序。Bionic 测试覆盖线程、TLS、分配释放和 setjmp/longjmp。
-下一步接入 ART 的共享库、启动文件和堆地址适配。
+采用高地址对象堆的 ART 已完成 VM 创建、Java 负载和 VM 销毁。
+CLI 与 GCD 两种入口均通过，N3-A1 合并手机测试包已生成并校验。
 
 后续根据实际程序需求扩展执行区、ELF 装载和 ABI。先保留 Linux 的进程、
 文件、内存与 Binder 语义，宿主仅处理原生执行和 Darwin 所需映射。ART 的
@@ -41,7 +42,7 @@ ART 动态代码与运行时执行区复用仍需实现。
 
 Bionic 的预编译 ELF 是否保留指令映射信息、共享库布局和 x18 使用方式，
 需要逐个检查。ART 的内存需求、启动文件和内核接口由源码与实际运行确认。
-当前还没有 ART 执行结果。
+当前 Java 测试采用解释执行；完整 Android 服务、图形显示和持续交互仍需实现。
 
 ## Binder 与内核回归（2026-10-09）
 
@@ -119,8 +120,8 @@ LLVM 20.1.8 libunwind 源码。NDK 静态归档中这些符号具有隐藏可见
 
 Linux RAM 增至 256 MiB，保留 16 GiB 稀疏地址窗口。CLI 与 GCD 完整回归
 均通过：Android 链接器成功装载 ART 及其依赖，调用 `JNI_GetCreatedJavaVMs`
-返回成功且 VM 数量为零。此测试确认装载、重定位和构造函数执行；Java VM
-创建及 Java 负载仍待实现。内核 WARNING、BUG、Bad page 检查均通过。
+返回成功且 VM 数量为零。该轮测试确认装载、重定位和构造函数执行；后续
+Java 结果见 N3-A1 本地回归结果。内核 WARNING、BUG、Bad page 检查均通过。
 
 ## ART 地址限制与实现调整（2026-10-09）
 
@@ -134,7 +135,117 @@ Linux RAM 增至 256 MiB，保留 16 GiB 稀疏地址窗口。CLI 与 GCD 完整
 要求 64 位 ARM 进程具有 4 GiB hard page zero，并通过 VM map 下界实施。
 独立低地址数据区的原计划因此调整。
 
-继续完成 ELF 装载和依赖验证，再修改 ART 的压缩引用及相关堆地址计算。
-实现需要覆盖空引用、GC、解释器、JNI 和运行时汇编，后续编译执行还需同步
-更新代码生成。单独修改对象指针的压缩函数不足以完成此适配。当前没有
-修改 ART 的执行结果，不安排手机复测。
+实现覆盖空引用、GC、解释器、JNI 和运行时汇编，后续编译执行还需同步
+更新代码生成。单独修改对象指针的压缩函数不足以完成此适配。修改后的
+ART 已完成下文记录的 Java 回归。
+
+### 高地址堆与 ART 源码构建
+
+`scripts/build_android_art.py` 固定 ART 和依赖的源码提交、归档校验值，并将
+补丁保存在 `experiments/native-linux/art/android16.patch`。构建重新生成汇编
+偏移、枚举输出和解释器汇编，产出 `libart.so` 与 `libartbase.so`。编译使用
+NDK 29；C++ 头文件配置采用平台库的 `__1` 命名空间。当前组合的 ABI 检查
+范围为下文列出的实际负载，完整 Android 集成还需覆盖更多平台接口。
+
+`reference_heap.c` 预留 4 GiB 高地址区域，对象引用保存区域内的 32 位偏移，
+零表示空引用。第一页保持保留，释放页面后重新映射为 `PROT_NONE`，继续保留
+地址所有权。分配位图由互斥锁保护。宿主测试已通过空引用、最大偏移、映射
+冲突、末页越界、局部释放、失败后的重试和四线程并发分配。
+
+当前补丁接入 MemMap、对象引用、解释器虚拟寄存器、JNI 引用表和 GC card
+table。验证配置采用上游受限执行模式与 mark-sweep GC，通过 `-Xint` 运行。
+源码构建将 aconfig 标志全部设为 false，统计上报使用上游宿主空实现；独立
+测试环境缺少 APEX 更新元数据，版本查询使用空标记。这些属于本阶段的配置
+调整，后续完整 Android 集成需重新确认。JIT 入口明确终止；机器码对象访问
+尚未完成地址适配。
+
+Java 负载分配 16 MiB 临时数组、验证弱引用回收、两个线程通过 monitor 共享
+计数，并捕获三类异常。JNI 启动程序创建 VM、调用负载并销毁 VM。
+最终回归结果见下节。
+
+### VM 初始化中的修复与检查
+
+ART 设置主线程的栈保护页时，会先访问尚未提交的栈页面。NCE 的缺页处理
+已接入 Linux `expand_stack()`，由 Linux 检查 `VM_GROWSDOWN`、栈大小限制和
+相邻映射的保护间隔。新增回归验证约 1 MiB 的递归栈可用，同时确认设置
+128 KiB 栈限制的子进程收到 `SIGSEGV`。该回归已通过。
+
+高地址堆测试也已在 Bionic 程序中通过。类表、JNI、启动解释器和栈检查中的
+对象地址转换继续使用同一偏移编码；越界编码会输出地址并终止。宿主回归
+已验证三个越界值均触发 `SIGABRT`。
+
+独立环境通过 `ld.config.txt` 提供 ART、i18n 和 conscrypt 的可见命名空间，
+这些命名空间从 default 加载同一组依赖。运行库统一存放于 `/system/lib64`，
+完整 Android 的 APEX 隔离配置仍需单独集成。ART 日志使用上游 stderr 输出，
+测试入口完整读取错误日志，便于检查初始化失败。
+
+VM 已进入核心类装载。调试器确认方法链接链表的索引 0 指向自身，循环持续
+占用 CPU。源码中的 `BitVector` 构造函数复用调用者提供的存储，未主动清零；
+独立构建遗漏了 Android Soong 默认的 `-ftrivial-auto-var-init=zero`。另外，
+ART `build/art.go` 默认启用 `USE_D8_DESUGAR`，该配置影响 String 的启动布局。
+构建已补齐这两项配置，并保留上游类布局检查。Java 执行、GC 和 VM 销毁仍须
+全部通过后，才安排合并真机验证。
+
+补齐构建参数后，VM 通过核心类装载，进入原生库初始化。独立文件系统增加
+`/system/etc/public.libraries.txt`，声明已随包提供的 libc、libdl、libm 和
+liblog。JNI 测试入口设置 90 秒期限，超时记录原因并以状态 124 退出。
+
+VM 随后创建成功，执行到 `NceWorkload.main` 的数组分配。第一次 GC 在
+`HeapBitmap::Test` 拒绝大对象地址：`DiscontinuousSpace` 的两个位图仍覆盖
+原来的低 32 位地址区间。补丁将其起点移到高地址对象堆，保持原来的容量和
+每页一位布局。弱引用回收测试继续检查这条路径。
+
+## N3-A1 本地回归结果
+
+2026-10-09 的最终 CLI 与 GCD 回归均通过，两个入口使用相同 Linux 内核、
+客体 ELF 和 Java DEX。GCD 入口另外验证从宿主继承信号屏蔽的场景。
+
+| 项目 | 已验证结果 |
+| --- | --- |
+| Bionic | 16 KiB 页面、动态链接、分配器、TLS 与 pthread |
+| Binder | 32 次跨进程往返，最大负载 65,536 字节，文件描述符传递与无效句柄处理 |
+| ART 对象与 GC | 16 MiB 临时数组内容正确，弱引用已回收，64 个循环关联对象在 GC 后仍保持身份与字段值 |
+| ART 线程 | 两个 Java 线程通过 monitor 更新共享值，结果为 4,002,000 |
+| ART 异常 | NullPointerException、ArrayIndexOutOfBoundsException、IllegalStateException 均被预期处理 |
+| VM 生命周期 | JNI 创建、Java 调用和销毁全部完成 |
+| Linux 回归 | 3 轮、24 次命令、168 个 pthread；信号、栈增长、地址边界、动态链接与 shell 均通过 |
+| 资源与内核 | 两种入口均分配并释放 407 个 NCE 上下文；内核 WARNING、BUG、Bad page 检查通过 |
+| ELF 检查 | 12 项单测通过，覆盖布局、映射符号、代码中的常量与实际 x18 指令 |
+
+本机测得 JNI 创建至 VM 销毁分别为 94.654 ms（CLI）、86.774 ms（GCD）。
+该计时包括 Java 负载，未包含 Linux 启动、文件准备和 ART 的 dlopen。
+这些是 Mac 上的小型功能负载数据；手机性能、完整 Android 启动与交互耗时待测。
+
+复现命令：
+
+```sh
+NCE_STRESS_ROUNDS=3 python3 scripts/probe_lkl.py --processes
+python3 scripts/package_native_linux_ios.py
+```
+
+构建需要 Apple Silicon Mac、Xcode、NDK 29、OpenJDK 17、Android build-tools
+36.0.0 和 android-35 平台文件。源码与 SDK 文件的校验值由构建记录保存。
+结果位于 `work/native-linux-nce/processes/lkl-summary.json`；打包校验其中的
+输入、内核和生成文件校验值。验证期间源文件发生修改时，脚本拒绝生成成功记录。
+
+### 关键选择与复杂度审查
+
+高地址适配集中在一个对象堆分配器和 ART 中实际使用的对象引用转换处。
+ART 原有解释器、类链接、JNI、GC、线程与异常实现继续负责运行语义。
+测试已经确认：大对象位图保留低地址范围时，首次 GC 失败；
+位图和 card table 的地址范围需要同步调整。
+
+源码构建脚本按固定 ART 模块读取上游源文件列表，生成所需汇编偏移和枚举。
+对象文件复用依据编译命令、编译器与实际头文件的内容校验值；该检查用于缩短
+调试期间的构建时间。文件系统配置仅声明本阶段实际提供的依赖与命名空间。
+
+与最初低地址预留计划相比，当前使用高地址区域加 32 位偏移；这是 Darwin
+地址下界要求产生的调整。当前 ART 使用 imageless 启动、受限解释执行与
+mark-sweep GC。编译代码、boot image、完整 APEX 隔离和 Android 系统服务
+仍需要后续实现。下一次集中设备验证检查 16 GiB 虚拟地址预留、增加后的固定
+代码范围，以及真实 Bionic/ART 在线程和 GC 场景中的 iOS 执行条件。
+
+安装说明见 [N3-A1 手机测试](native-linux-n3-ios-test.md)。安装包为 40.29 MiB，
+版本 `0.10.0 (70)`，构建编号 `N3-A1-iOS-20261009-121807`。
+Xcode Release 构建、代码签名完整性、IPA 归档、JIT 助手断开与执行异常恢复
+检查均通过。手机尚未运行本包。

@@ -434,6 +434,17 @@ unsigned long nce_process_setup(void)
 }
 static void put_file(long (*call)(long, long *), const char *path, const void *data, size_t size)
 {
+    char parent[512];
+    REQUIRE(strlen(path) < sizeof(parent));
+    strcpy(parent, path);
+    for (char *slash = parent + 1; *slash; ++slash) {
+        if (*slash != '/') continue;
+        *slash = 0;
+        long mkdir_args[6] = {-100, (long)parent, 0755};
+        long result = call(34, mkdir_args);
+        REQUIRE(result == 0 || result == -17);
+        *slash = '/';
+    }
     long args[6] = {-100, (long)path, 0x242, 0700};
     long fd = call(56, args);
     REQUIRE(fd >= 0);
@@ -452,6 +463,18 @@ static long get_file(long (*call)(long, long *), const char *path, char *buffer,
     REQUIRE(call(57, args) == 0);
     if (count >= 0) buffer[count] = 0;
     return count;
+}
+
+static void dump_file(long (*call)(long, long *), const char *path)
+{
+    long args[6] = {-100, (long)path, 0};
+    long fd = call(56, args);
+    if (fd < 0) return;
+    char buffer[4096];
+    long count;
+    args[0] = fd; args[1] = (long)buffer; args[2] = sizeof(buffer);
+    while ((count = call(63, args)) > 0) fwrite(buffer, 1, count, stderr);
+    REQUIRE(call(57, args) == 0);
 }
 
 static void run_program(long (*call)(long, long *), const char *path, const char *input)
@@ -479,9 +502,9 @@ static void run_program(long (*call)(long, long *), const char *path, const char
     int status = -1;
     args[0] = pid; args[1] = (long)&status; args[2] = 0;
     long waited = call(260, args);
-    char buffer[4096];
-    if (get_file(call, "/stderr", buffer, sizeof(buffer)) > 0) fprintf(stderr, "%s", buffer);
+    dump_file(call, "/stderr");
     if (status) {
+        dump_file(call, "/stdout");
         fprintf(stderr, "userspace pid=%ld waited=%ld status=%d\n", pid, waited, status);
         char messages[16384];
         long logs[6] = {3, (long)messages, sizeof(messages)};
@@ -666,10 +689,21 @@ void nce_process_tests(long (*host_syscall)(long, long *), long (*guest_syscall)
     REQUIRE(get_file(host_syscall, "/stdout", benchmark, sizeof(benchmark)) > 0);
     REQUIRE(strstr(benchmark, "android_bionic_threads_allocator_tls"));
     fputs(benchmark, stdout);
+    puts("{\"phase\":\"android_art_reference_heap\"}");
+    run_program(host_syscall, "/art-heap-test", NULL);
+    REQUIRE(get_file(host_syscall, "/stdout", benchmark, sizeof(benchmark)) > 0);
+    REQUIRE(strstr(benchmark, "art_high_reference_heap"));
+    fputs(benchmark, stdout);
     puts("{\"phase\":\"android_art_load\"}");
-    run_program(host_syscall, "/art-test", NULL);
+    for (size_t i = 0; i < sizeof(art_assets) / sizeof(art_assets[0]); ++i)
+        put_file(host_syscall, art_assets[i].path, art_assets[i].data, art_assets[i].size);
+    put_file(host_syscall, "/data/dalvik-cache/arm64/.keep", "", 0);
+    put_file(host_syscall, "/apex/com.android.art/lib64/.keep", "", 0);
+    run_program(host_syscall, "/system/bin/art-test", NULL);
     REQUIRE(get_file(host_syscall, "/stdout", benchmark, sizeof(benchmark)) > 0);
     REQUIRE(strstr(benchmark, "android_art_library_loaded"));
+    REQUIRE(strstr(benchmark, "android_art_java_workload"));
+    REQUIRE(strstr(benchmark, "android_art_vm_destroyed"));
     fputs(benchmark, stdout);
     check_program_files(host_syscall);
     puts("{\"test\":\"linux_dynamic_elf_files_unchanged\",\"passed\":true}");

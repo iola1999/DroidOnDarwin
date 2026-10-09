@@ -7,7 +7,7 @@ import subprocess
 import tempfile
 import unittest
 
-from build_nce_userspace import inspect, PAGE, WORK
+from build_nce_userspace import inspect, check_x18_disassembly, PAGE, WORK
 
 
 class ElfLayoutTests(unittest.TestCase):
@@ -119,6 +119,17 @@ class ElfLayoutTests(unittest.TestCase):
                 changed = True
         self.assertTrue(changed)
         self.check_rejected('lacks mapping symbols')
+
+    def test_x18_in_text_constant_and_in_real_instruction(self):
+        path = WORK / 'android/android36/com.android.art/lib64/libjavacore.so'
+        elf = inspect(path, shared=True, function_symbols=True)
+        disassembly = subprocess.check_output([self.llvm / 'llvm-objdump', '-d', path], text=True)
+        self.assertNotIn(0x1525c, dict(elf['patches']))
+        self.assertFalse(any(lo <= 0x1525c < hi for lo, hi in elf['instruction_ranges']))
+        check_x18_disassembly(path, elf, disassembly)
+        begin = elf['instruction_ranges'][0][0]
+        with self.assertRaisesRegex(RuntimeError, 'unsupported use of x18'):
+            check_x18_disassembly(path, elf, f'{begin:x}: d2800032 mov x18, #1')
 
 
 if __name__ == '__main__':
