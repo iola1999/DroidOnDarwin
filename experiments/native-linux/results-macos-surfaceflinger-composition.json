@@ -1,0 +1,46 @@
+{
+  "description": "SurfaceControl Canvas -> SurfaceFlinger -> GLES composition and ScreenCapture; normal app_process exit",
+  "date": "2026-10-10",
+  "device_validation": false,
+  "runs": {
+    "lkl": {
+      "passed_test_names": 104,
+      "composition": [
+        {
+          "test": "android_surfaceflinger_composed_pixels",
+          "passed": true,
+          "frames": 3
+        }
+      ],
+      "last_record": {
+        "result": "passed"
+      }
+    },
+    "dispatch": {
+      "passed_test_names": 104,
+      "composition": [
+        {
+          "test": "android_surfaceflinger_composed_pixels",
+          "passed": true,
+          "frames": 3
+        }
+      ],
+      "last_record": {
+        "result": "passed"
+      }
+    },
+    "window": {
+      "passed_test_names": 105,
+      "composition": [
+        {
+          "test": "android_surfaceflinger_composed_pixels",
+          "passed": true,
+          "frames": 3
+        }
+      ],
+      "last_record": {
+        "result": "passed"
+      }
+    }
+  }
+}

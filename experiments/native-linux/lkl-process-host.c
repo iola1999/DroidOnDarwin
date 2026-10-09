@@ -62,7 +62,7 @@ static void (*user_return)(long, long, unsigned long);
 static void (*user_fault)(unsigned long, int);
 static void (*user_preempt)(void);
 static unsigned long faults, allocated, freed;
-static int trace;
+static int trace, fault_trace;
 static struct sigaction old_segv, old_bus, old_ill, old_trap;
 
 static void shmem_init(unsigned long size)
@@ -320,10 +320,12 @@ static NceState *handle_event(NceState *state)
     if (p->event_kind == 1) {
         if (!deferred_faults) puts("{\"phase\":\"guest_fault_on_host_stack\"}");
         int result = page_fault(p->fault_address, p->fault_execute ? NCE_FAULT_EXEC : p->fault_write);
-        if (result && (trace || p->fault_illegal)) {
+        if (result && (trace || fault_trace || p->fault_illegal)) {
             fprintf(stderr, "guest fault pc=%lx address=%lx write=%d illegal=%d result=%d instruction=%08x trapped=%08x\n",
                     state->regs.pc, p->fault_address, p->fault_write, p->fault_illegal, result,
                     p->fault_illegal ? *(const uint32_t *)state->regs.pc : 0, p->fault_instruction);
+            if (fault_trace) fprintf(stderr, "fault registers x0=%lx x1=%lx x8=%lx x19=%lx sp=%lx\n",
+                                     state->regs.x[0], state->regs.x[1], state->regs.x[8], state->regs.x[19], state->regs.sp);
             for (size_t i = 0; i < nce_program_count; ++i) {
                 NceProgram *program = &nce_programs[i];
                 if (state->regs.pc >= program->base && state->regs.pc - program->base < program->span)
@@ -458,6 +460,8 @@ static int guest_memory(NceState *state, uintptr_t address, void *buffer, size_t
     else memcpy(buffer, (void *)address, size);
     return 0;
 fault:
+    if (fault_trace) fprintf(stderr, "operand fault pc=%lx address=%lx size=%zu write=%d x0=%lx x8=%lx\n",
+                             state->regs.pc - 4, bad, size, write, state->regs.x[0], state->regs.x[8]);
     state->regs.pc -= 4;
     user_fault(bad, 0);
     prepare_resume(state);
@@ -543,6 +547,7 @@ unsigned long nce_process_setup(void)
 {
     REQUIRE(getpagesize() == PAGE);
     trace = getenv("NCE_TRACE") != NULL;
+    fault_trace = getenv("NCE_FAULT_TRACE") != NULL;
     user_base = nce_memory_user_base();
     dynamic_cache = (NceSegment){.size = NCE_EXEC_SIZE, .code = nce_memory_dynamic_code()};
     for (size_t i = 0; i < nce_program_count; ++i)

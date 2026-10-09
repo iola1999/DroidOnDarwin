@@ -17,8 +17,9 @@
 
 N4-G1 已在 iPhone 17 / iOS 27.2 通过 102 个命名测试。gfxstream 经 ANGLE
 Metal 使用 Apple A19 GPU，360×640 的 120 帧提交共 2037.544 ms。当前 GPU
-测试直接发送 GLES 与 renderControl 协议；原版 SurfaceFlinger 和普通 Android
-应用所需的标准 EGL 驱动、缓冲区分配与 Composer 接口尚待集成。
+测试直接发送 GLES 与 renderControl 协议。随后在 Mac 上完成标准 EGL 驱动、
+缓冲区分配、Composer 与 SurfaceFlinger 集成，已检查普通 Surface 的三组
+绘图和合成像素。新增部分尚待后续整包手机测试。
 
 原版 system_server 已进入 DisplayManager 初始化，正在等待 SurfaceFlinger。
 原版 installd 的应用目录管理检查已通过，应用目录目前位于临时文件系统。
@@ -86,5 +87,23 @@ Linux 原始字节。内容与权限相同的页面直接恢复访问，发生�
 SurfaceFlinger 注册、Zygote 请求和 Java 子进程。CLI 本轮复用代码内容
 10,104,766,464 字节，实际复制 81,608,704 字节。原有动态代码检查继续覆盖
 128 次内容更新、同址替换、fork、执行权限与信号。手机上的权限切换结果仍待
-下一次整包测试。尚未验证 SurfaceFlinger 实际窗口像素，系统桌面和应用交互
-继续列为后续验收项。
+下一次整包测试。系统桌面和应用交互继续列为后续验收项。
+
+### Surface 窗口与合成像素
+
+Java 测试通过原版 `SurfaceControl` 建立 360×640 窗口，连续提交三组左右
+不同颜色的 Canvas 内容；每帧通过 Android `ScreenCapture` 获取
+SurfaceFlinger 合成结果，核对大小和两侧像素。最后一帧保存为 PNG。
+CLI/GCD/可见窗口分别通过 104/104/105 个命名测试；可见窗口也确认显示
+左白右黑。摘要为 `experiments/native-linux/results-macos-surfaceflinger-composition.json`。
+
+本轮发现测试退出时的库生命周期问题：`DisplayControl` 需要加载
+`libandroid_servers.so`，其依赖与已加载的 `libmediautils.so` 含有同名
+`IBatteryStats::descriptor`。服务库卸载后，Framework 的静态字符串仍引用
+已解除映射的数据。图形测试改为启动时加载服务库，使相关静态对象在进程
+退出前保持有效；`app_process` 正常返回和退出检查随后通过。此加载设置仅
+用于独立图形测试。图形像素检查通过后继续启动完整系统服务。
+
+复杂度检查：使用 Android 原有窗口、截图和缓冲区接口；未增加宿主截图协议。
+该检查同时覆盖图形更新、跨进程合成和进程退出，与直接 EGL 清屏检查的范围
+不同。调试时加入可选 `NCE_FAULT_TRACE`，只输出失败的客体访存位置与寄存器。

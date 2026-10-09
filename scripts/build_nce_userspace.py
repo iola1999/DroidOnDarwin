@@ -260,7 +260,8 @@ def android_data(out):
     framework_classes = out / 'framework-classes'
     framework_classes.mkdir(exist_ok=True)
     run([java / 'javac', '--release', '11', '-cp', sdk / 'platforms/android-35/android.jar',
-         '-d', framework_classes, EXP / 'services/NceFramework.java', EXP / 'services/NceZygoteChild.java'])
+         '-d', framework_classes, EXP / 'services/NceFramework.java', EXP / 'services/NceZygoteChild.java',
+         EXP / 'services/NceSurface.java'])
     run([java / 'java', '-cp', sdk / 'build-tools/36.0.0/lib/d8.jar', 'com.android.tools.r8.D8',
          '--min-api', '35', '--lib', sdk / 'platforms/android-35/android.jar', '--output', framework_classes,
          *sorted(framework_classes.glob('*.class'))])

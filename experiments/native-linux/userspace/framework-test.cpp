@@ -201,6 +201,28 @@ static int control_socket(const char *name)
     return fd;
 }
 
+void nce_surface_test()
+{
+    pid_t child = fork();
+    CHECK(child >= 0);
+    if (!child) {
+        runtime_environment();
+        // DisplayControl belongs to the server JNI library. Keep its static
+        // Binder descriptors alive until process exit, alongside Framework.
+        CHECK(setenv("LD_PRELOAD", "/system/lib64/libnce-qemupipe.so:/system/lib64/libnce-framework-log.so:/system/lib64/libandroid_servers.so", 1) == 0);
+        char classpath[16384];
+        CHECK(snprintf(classpath, sizeof(classpath), "/system/framework/nce-framework.jar:%s", getenv("SYSTEMSERVERCLASSPATH")) < static_cast<int>(sizeof(classpath)));
+        CHECK(setenv("CLASSPATH", classpath, 1) == 0);
+        execl("/system/bin/app_process64", "app_process64", "-Djava.library.path=/system/lib64",
+              "/system/bin", "NceSurface", nullptr);
+        _exit(108);
+    }
+    int status;
+    CHECK(waitpid(child, &status, 0) == child);
+    if (status) dprintf(2, "surface-test child=%d status=%d\n", child, status);
+    CHECK(WIFEXITED(status) && WEXITSTATUS(status) == 0);
+}
+
 static void receive_bytes(int fd, void *buffer, size_t size)
 {
     while (size) {

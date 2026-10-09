@@ -35,6 +35,7 @@ void nce_property_service(int ready);
 void nce_display_start();
 void nce_display_stop();
 void nce_framework_test();
+void nce_surface_test();
 void nce_zygote_test();
 void nce_crypto_tests();
 void nce_apex_service(int ready);
@@ -438,6 +439,7 @@ int main(int argc, char **argv)
     pid_t installd = nce_installd_start(argv[0]);
     puts("{\"phase\":\"android_zygote_launch\"}");
     nce_zygote_test();
+    if (access("/data/nce/graphics", F_OK) == 0) nce_surface_test();
     if (access("/data/nce/graphics", F_OK) == 0) nce_display_stop();
     alarm(20);
     int binder_fd;
