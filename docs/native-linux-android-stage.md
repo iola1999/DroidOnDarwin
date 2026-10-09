@@ -21,8 +21,8 @@
 ## 实现顺序与当前状态
 
 已完成 Linux 信号、musl 静态和动态用户态、dash，以及稀疏内存映射。
-下一步启用当前 Linux 内核已有的 Binder 驱动，用跨进程测试检查真实 ioctl
-协议；同时确定 Bionic / ART 的源码、构建依赖和可复用产物。
+Binder 已启用，跨进程测试通过。接下来实现 Bionic 所需的 x18 状态保存和
+地址空间支持，并确定 Android 动态链接器与 ART 的构建方式。
 
 后续根据实际程序需求扩展执行区、ELF 装载和 ABI。先保留 Linux 的进程、
 文件、内存与 Binder 语义，宿主仅处理原生执行和 Darwin 所需映射。ART 的
@@ -39,3 +39,27 @@ mprotect、ART 动态代码与运行时执行区复用仍需实现。
 
 Bionic 的预编译 ELF 是否保留指令映射信息、共享库布局和 x18 使用方式，
 需要逐个检查。ART 的内存需求、启动文件和内核接口由源码与实际运行确认。
+
+## Binder 与内核回归（2026-10-09）
+
+`binder-test.c` 使用真实 binderfs 和 Binder ioctl，两个 Linux 进程完成
+32 次请求与回复，负载包含 0、128、16,380、65,536 字节。测试检查内容、
+校验和、对端 PID、缓冲区释放，以及文件描述符传递后的共享文件写入。
+无效句柄和无效用户指针的返回也已检查。
+
+首次运行发现 LKL 释放 PTE 页时缺少 `pagetable_pte_dtor`，Binder 复用该
+物理页会被 `vm_insert_page` 拒绝。已补齐页表析构。内核日志检查又发现
+NCE 在预取 ELF 页和生成 SIGSEGV 原因时缺少 mmap 读锁，已按 Linux
+接口要求修复。每轮完整回归现在检查内核日志中的 WARNING、BUG 和 Bad page。
+
+CLI 与 GCD 两种入口均通过完整回归，用户态压力轮数为 1，包含已有
+fork、exec、信号、线程、动态链接与 shell 测试。结果保存在
+`work/native-linux-nce/processes/lkl-results.jsonl` 和
+`dispatch-results.jsonl`。此结果只覆盖 Mac 原生执行环境；Binder 单项完成后
+继续开发 Bionic 和 ART。
+
+已检查本机 NDK 29 的 Bionic 静态库：最小静态 PIE 保留指令映射符号，
+使用 16 KiB 段对齐，初始化代码包含一次 `mov x18, x19`。Bionic 源码为
+Android 16 提交 `09a271af557444c9a6b3f3146d6d474156fd6cdb`。另已检查官方
+runtime APEX 提交 `070571b455076f77a01c7b07154a15e545d2b428`；其 linker64
+采用 4 KiB 布局，代码与可写数据共用宿主页，需要重新构建或扩展映射实现。

@@ -139,12 +139,17 @@ def main():
         options = ["64BIT", "EXPERT", "PROC_FS", "SYSFS", "FUTEX", "EPOLL", "SIGNALFD", "TIMERFD",
                    "LKL_HOST_MEMCPY", "LKL_HOST_MEMSET", "LKL_HOST_MEMMOVE"]
         if PROCESS:
-            options += ["MMU", "PRINTK", "NAMESPACES", "PID_NS", "POSIX_TIMERS"]
+            options += ["MMU", "PRINTK", "NAMESPACES", "PID_NS", "POSIX_TIMERS", "ANDROID_BINDER_IPC", "ANDROID_BINDERFS"]
         switches = [arg for name in options for arg in ("-e", name)]
         switches += [arg for name in ("KALLSYMS", "BLOCK", "DEBUG_INFO", "SLUB_DEBUG") for arg in ("-d", name)]
         run([SOURCE / "scripts/config", "--file", BUILD / ".config", *switches], env=env)
         run([*make, "olddefconfig"], env=env, stdout=log, stderr=subprocess.STDOUT)
         run([*make, "-j8", "all"], env=env, stdout=log, stderr=subprocess.STDOUT)
+        if PROCESS:
+            run(["gmake", "-C", SOURCE, "ARCH=arm64", "O=" + str(OUT / "linux-uapi-build"),
+                 "HOSTCC=" + shlex.join([clang, "-isysroot", sdk]),
+                 "headers_install", "INSTALL_HDR_PATH=" + str(OUT / "linux-uapi")],
+                env=env, stdout=log, stderr=subprocess.STDOUT)
     shutil.copyfile(SOURCE / "arch/lkl/include/uapi/asm/host_ops.h", OUT / "lkl-host-ops.h")
     run([*target, "-fPIC", "-fno-stack-protector", "-O2", "-I", OUT,
          "-c", EXPERIMENT / "lkl-bridge.c", "-o", OUT / "lkl-bridge.o"])
@@ -209,7 +214,7 @@ def main():
         manifest["generated_sha256"] = {name: hashlib.sha256((OUT / name).read_bytes()).hexdigest()
                                         for name in ["program-images.h", "user-scripts.h", "lkl-image.h", "lkl-host-ops.h", "guest-image.h",
                                                      "exec-guest.elf", "init.elf", "worker.elf", "mm-bench.elf", "dash.elf",
-                                                     "libc.so", "dependency.so", "plugin.so", "dynamic.elf"]}
+                                                     "libc.so", "dependency.so", "plugin.so", "dynamic.elf", "binder-test.elf"]}
     manifest["input_sha256"] = {str(p.relative_to(ROOT)): hashlib.sha256(p.read_bytes()).hexdigest() for p in sources}
     (OUT / "lkl-summary.json").write_text(json.dumps(manifest, indent=2) + "\n")
     print(json.dumps(manifest, indent=2))

@@ -31,6 +31,7 @@ void start_thread(struct pt_regs *regs, unsigned long entry, unsigned long stack
 {
     struct vm_area_struct *vma;
     VMA_ITERATOR(iter, current->mm, 0);
+    mmap_read_lock(current->mm);
     for_each_vma(iter, vma) {
         if (!(vma->vm_flags & VM_EXEC)) continue;
         for (unsigned long address = vma->vm_start; address < vma->vm_end; address += PAGE_SIZE) {
@@ -40,6 +41,7 @@ void start_thread(struct pt_regs *regs, unsigned long entry, unsigned long stack
             put_page(page);
         }
     }
+    mmap_read_unlock(current->mm);
     /* Populate prepared executable ranges before the first user instruction. */
     lkl_ops->user_exec(current->thread.nce_state, entry, stack);
 }

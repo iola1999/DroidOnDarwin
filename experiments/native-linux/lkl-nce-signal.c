@@ -125,8 +125,10 @@ void nce_user_fault(unsigned long address, int illegal_instruction)
 {
     if (illegal_instruction) force_sig_fault(SIGILL, ILL_ILLOPC, (void __user *)address);
     else {
+        mmap_read_lock(current->mm);
         struct vm_area_struct *vma = find_vma(current->mm, address);
         int code = vma && address >= vma->vm_start ? SEGV_ACCERR : SEGV_MAPERR;
+        mmap_read_unlock(current->mm);
         force_sig_fault(SIGSEGV, code, (void __user *)address);
     }
     nce_user_return(-1, 0, 0);

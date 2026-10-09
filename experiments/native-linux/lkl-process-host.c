@@ -447,7 +447,13 @@ static void run_program(long (*call)(long, long *), const char *path, const char
     long waited = call(260, args);
     char buffer[4096];
     if (get_file(call, "/stderr", buffer, sizeof(buffer)) > 0) fprintf(stderr, "%s", buffer);
-    if (status) fprintf(stderr, "userspace pid=%ld waited=%ld status=%d\n", pid, waited, status);
+    if (status) {
+        fprintf(stderr, "userspace pid=%ld waited=%ld status=%d\n", pid, waited, status);
+        char messages[16384];
+        long logs[6] = {3, (long)messages, sizeof(messages)};
+        long bytes = call(116, logs);
+        if (bytes > 0) fwrite(messages, 1, bytes, stderr);
+    }
     REQUIRE(waited == pid && status == 0);
     for (long fd = 0; fd < 3; ++fd) { args[0] = fd; REQUIRE(call(57, args) == 0); }
 }
@@ -593,8 +599,25 @@ void nce_process_tests(long (*host_syscall)(long, long *), long (*guest_syscall)
     REQUIRE(get_file(host_syscall, "/stdout", benchmark, sizeof(benchmark)) > 0);
     REQUIRE(strstr(benchmark, "linux_dynamic_fork_signal"));
     fputs(benchmark, stdout);
+    puts("{\"phase\":\"linux_binder_program\"}");
+    run_program(host_syscall, "/binder-test", NULL);
+    REQUIRE(get_file(host_syscall, "/stdout", benchmark, sizeof(benchmark)) > 0);
+    REQUIRE(strstr(benchmark, "linux_binder_invalid_handle_cleanup"));
+    fputs(benchmark, stdout);
     check_program_files(host_syscall);
     puts("{\"test\":\"linux_dynamic_elf_files_unchanged\",\"passed\":true}");
+    long log_args[6] = {10};
+    long log_size = host_syscall(116, log_args);
+    REQUIRE(log_size > 0);
+    char *messages = calloc(1, log_size + 1);
+    REQUIRE(messages);
+    log_args[0] = 3; log_args[1] = (long)messages; log_args[2] = log_size;
+    REQUIRE(host_syscall(116, log_args) >= 0);
+    int warnings = strstr(messages, "WARNING:") || strstr(messages, "BUG:") || strstr(messages, "Bad page");
+    if (warnings) fputs(messages, stderr);
+    free(messages);
+    REQUIRE(!warnings);
+    puts("{\"test\":\"linux_kernel_warnings\",\"passed\":true}");
 }
 void nce_process_cleanup(void)
 {

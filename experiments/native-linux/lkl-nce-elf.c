@@ -46,7 +46,7 @@ static int populate_code(unsigned long address, unsigned long length)
     unsigned long end = PAGE_ALIGN(address + length);
     while (address < end) {
         struct page *page;
-        long count = get_user_pages(address, 1, 0, &page);
+        long count = get_user_pages_unlocked(address, 1, &page, 0);
         if (count != 1) return count < 0 ? count : -EFAULT;
         put_page(page);
         address += PAGE_SIZE;

@@ -25,6 +25,10 @@ def apply(source: Path, experiment: Path):
     edit(arch + "include/asm/page-mmu.h", "#define PAGE_SHIFT\t12", "#define PAGE_SHIFT\t14")
     edit(arch + "include/asm/thread_info.h", "#define THREAD_SIZE\t       (4096)", "#define THREAD_SIZE\t       (16384)")
     edit(arch + "Kconfig", "\tselect ARCH_THREAD_STACK_ALLOCATOR", "\tselect ARCH_THREAD_STACK_ALLOCATOR\n\tselect CLONE_BACKWARDS if MMU")
+    # Released PTE pages must lose their page-table type before reuse by drivers.
+    edit(arch + "include/asm/pgalloc.h",
+         "#define __pte_free_tlb(tlb, pte, address) tlb_remove_page((tlb), (pte))",
+         "#define __pte_free_tlb(tlb, pte, address) do { \\\n\tpagetable_pte_dtor(page_ptdesc(pte)); \\\n\ttlb_remove_page_ptdesc((tlb), page_ptdesc(pte)); \\\n} while (0)")
     pg = arch + "include/asm/pgtable-mmu-3level.h"
     edit(pg, "#define PGDIR_SHIFT\t30", "#define PGDIR_SHIFT\t36")
     edit(pg, "#define PMD_SHIFT\t21", "#define PMD_SHIFT\t25")
