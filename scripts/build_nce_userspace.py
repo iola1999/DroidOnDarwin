@@ -2,6 +2,7 @@
 """编译内置 Linux 程序，按 ELF 段与 AArch64 映射符号生成执行布局。"""
 import hashlib
 import json
+import lzma
 from pathlib import Path
 import re
 import shlex
@@ -18,7 +19,8 @@ ROOT = Path(__file__).resolve().parents[1]
 EXP = ROOT / 'experiments/native-linux'
 WORK = ROOT / 'work/native-linux-nce'
 PAGE = 16384
-PROGRAM_SLOT = 2 * 1024 * 1024
+PROGRAM_LIMIT = 112 * 1024 * 1024
+MAX_ALIGNMENT = 2 * 1024 * 1024
 INTERPRETER = '/lib/ld-musl-aarch64.so.1'
 ANDROID_INTERPRETER = '/system/bin/linker64'
 MUSL_SHA = 'a9a118bbe84d8764da0ea0d28b3ab3fae8477fc7e4085d90102b8596fc7c75e4'
@@ -62,6 +64,28 @@ def x18_instruction(word):
             word & 0xff800000 == 0xa9000000 and 18 in (rd, (word >> 10) & 31))
 
 
+def android_dependencies(llvm):
+    root = WORK / 'android/android36'
+    files = {}
+    for directory in ('lib64', 'com.android.art/lib64', 'com.android.runtime/lib64/bionic',
+                      'com.android.i18n/lib64', 'com.android.os.statsd/lib64'):
+        for path in (root / directory).glob('*.so'):
+            if path.is_file(): files[path.name] = path
+    pending = ['libart.so']
+    result = {}
+    while pending:
+        name = pending.pop()
+        if name in result or name in ('libc.so', 'libdl.so', 'ld-android.so'):
+            continue
+        if name not in files:
+            raise RuntimeError(f'Missing Android dependency: {name}')
+        path = files[name]
+        result[name] = path
+        dynamic = subprocess.check_output([llvm / 'llvm-readelf', '-d', path], text=True)
+        pending += re.findall(r'Shared library: \[(.*?)\]', dynamic)
+    return [('/system/lib64/' + name, path) for name, path in sorted(result.items())]
+
+
 def inspect(path, shared=False, function_symbols=False):
     data = path.read_bytes()
     if len(data) < 64 or data[:7] != b'\x7fELF\x02\x01\x01' or struct.unpack_from('<HH', data, 16) != (3, 183):
@@ -84,9 +108,10 @@ def inspect(path, shared=False, function_symbols=False):
             raise RuntimeError(f'{path}: unsupported ELF interpreter')
     segments = []
     for _, flags, offset, va, _, filesz, memsz, align in loads:
-        if align > PAGE or (va - offset) % PAGE or filesz > memsz or offset + filesz > len(data):
+        if (align > MAX_ALIGNMENT or align and align & (align - 1) or
+                (va - offset) % max(PAGE, align) or filesz > memsz or offset + filesz > len(data)):
             raise RuntimeError(f'{path}: unsupported segment layout')
-        if va + memsz > PROGRAM_SLOT:
+        if va + memsz > PROGRAM_LIMIT:
             raise RuntimeError(f'{path}: exceeds the current per-program range')
         if flags & 1 and memsz:
             if flags & 2:
@@ -102,25 +127,44 @@ def inspect(path, shared=False, function_symbols=False):
     sections = [struct.unpack_from('<IIQQQQIIQQ', data, shoff + i * shentsize) for i in range(shnum)]
     mappings = {}
     functions = {}
-    for symtab in sections:
-        if symtab[1] != 2:
-            continue
-        if symtab[9] != 24 or symtab[5] % 24 or symtab[6] >= len(sections) or symtab[4] + symtab[5] > len(data):
-            raise RuntimeError(f'{path}: invalid symbol table')
-        strings = sections[symtab[6]]
-        if strings[4] + strings[5] > len(data):
-            raise RuntimeError(f'{path}: truncated symbol strings')
-        strings = data[strings[4]:strings[4] + strings[5]]
-        for off in range(symtab[4], symtab[4] + symtab[5], symtab[9]):
-            name, info, _, sec, addr, size = struct.unpack_from('<IBBHQQ', data, off)
-            end = strings.find(b'\0', name)
-            if end < 0:
-                raise RuntimeError(f'{path}: invalid symbol name')
-            name = strings[name:end].decode()
-            if re.fullmatch(r'\$[xd](?:\..*)?', name):
-                mappings.setdefault(sec, set()).add((addr, name[1]))
-            if info & 15 == 2 and size:
-                functions.setdefault(sec, []).append((addr, addr + size))
+    symbol_sources = [(data, sections, False)]
+    if function_symbols:
+        names = sections[struct.unpack_from('<H', data, 62)[0]]
+        names = data[names[4]:names[4] + names[5]]
+        for section in sections:
+            if names[section[0]:names.find(b'\0', section[0])] != b'.gnu_debugdata':
+                continue
+            debug = lzma.decompress(data[section[4]:section[4] + section[5]], memlimit=64 * 1024 * 1024)
+            if debug[:7] != b'\x7fELF\x02\x01\x01' or len(debug) < 64:
+                raise RuntimeError(f'{path}: invalid mini debug ELF')
+            off, = struct.unpack_from('<Q', debug, 40)
+            entsize, count = struct.unpack_from('<HH', debug, 58)
+            if entsize != 64 or off + count * entsize > len(debug):
+                raise RuntimeError(f'{path}: invalid mini debug sections')
+            symbol_sources.append((debug, [struct.unpack_from('<IIQQQQIIQQ', debug, off + i * 64)
+                                            for i in range(count)], True))
+    for symbol_bytes, symbol_sections, mini in symbol_sources:
+        for symtab in symbol_sections:
+            if symtab[1] != 2 and not (function_symbols and symtab[1] == 11):
+                continue
+            if symtab[9] != 24 or symtab[5] % 24 or symtab[6] >= len(symbol_sections) or symtab[4] + symtab[5] > len(symbol_bytes):
+                raise RuntimeError(f'{path}: invalid symbol table')
+            strings = symbol_sections[symtab[6]]
+            if strings[4] + strings[5] > len(symbol_bytes):
+                raise RuntimeError(f'{path}: truncated symbol strings')
+            strings = symbol_bytes[strings[4]:strings[4] + strings[5]]
+            for off in range(symtab[4], symtab[4] + symtab[5], symtab[9]):
+                name, info, _, sec, addr, size = struct.unpack_from('<IBBHQQ', symbol_bytes, off)
+                end = strings.find(b'\0', name)
+                if end < 0:
+                    raise RuntimeError(f'{path}: invalid symbol name')
+                name = strings[name:end].decode()
+                if mini:
+                    sec = next((i for i, s in enumerate(sections) if s[2] & 4 and s[3] <= addr < s[3] + s[5]), -1)
+                if not mini and re.fullmatch(r'\$[xd](?:\..*)?', name):
+                    mappings.setdefault(sec, set()).add((addr, name[1]))
+                if info & 15 == 2 and size:
+                    functions.setdefault(sec, []).append((addr, addr + size))
     patches = []
     for index, sec in enumerate(sections):
         if not sec[2] & 4 or not sec[5]:
@@ -136,12 +180,20 @@ def inspect(path, shared=False, function_symbols=False):
         if not markers and function_symbols:
             # Pinned Android platform binaries retain function boundaries but
             # can omit mapping symbols. Scan only those function ranges.
-            ranges = functions.get(index, [])
+            ranges = sorted(set(functions.get(index, [])))
             inferred = True
-            boundaries = sorted({sec[3], sec[3] + sec[5]} | {x for pair in ranges for x in pair})
-            if boundaries[0] != sec[3] or boundaries[-1] != sec[3] + sec[5]:
-                raise RuntimeError(f'{path}: function symbol outside executable section')
-            markers = [(a, 'x' if any(lo <= a < hi for lo, hi in ranges) else 'd') for a in boundaries[:-1]]
+            merged = []
+            for lo, hi in ranges:
+                if lo < sec[3] or hi > sec[3] + sec[5]:
+                    raise RuntimeError(f'{path}: function symbol outside executable section')
+                if merged and lo <= merged[-1][1]:
+                    merged[-1] = (merged[-1][0], max(hi, merged[-1][1]))
+                else:
+                    merged.append((lo, hi))
+            markers = [(sec[3], 'd')] if not merged or merged[0][0] > sec[3] else []
+            for lo, hi in merged:
+                markers.append((lo, 'x'))
+                if hi < sec[3] + sec[5]: markers.append((hi, 'd'))
         if not markers or markers[0][0] != sec[3]:
             raise RuntimeError(f'{path}: executable section lacks mapping symbols')
         for i, (begin, kind) in enumerate(markers):
@@ -161,7 +213,9 @@ def inspect(path, shared=False, function_symbols=False):
                 word, = struct.unpack_from('<I', data, sec[4] + address - sec[3])
                 if word & 0xffe0001f == 0xd4000001 or word & 0xffffffe0 in (0xd53bd040, 0xd51bd040) or x18_instruction(word):
                     patches.append((address, word))
-    return dict(data=data, entry=entry, phoff=phoff, phsize=phnum*phentsize, segments=segments, patches=patches)
+    return dict(data=data, entry=entry, phoff=phoff, phsize=phnum*phentsize, segments=segments, patches=patches,
+                span=(max(p[3] + p[6] for p in loads) + PAGE - 1) & -PAGE,
+                alignment=max(PAGE, max(p[7] for p in loads)))
 
 
 def compiler_runtime(llvm, libc):
@@ -293,6 +347,12 @@ def build(out, llvm):
     programs.append((ANDROID_INTERPRETER, build_android_linker()))
     programs.append(('/system/lib64/libc.so', build_android_libc()))
     programs.append(('/system/lib64/libdl.so', android / 'lib64/bionic/libdl.so'))
+    programs += android_dependencies(llvm)
+    run([ndk / 'toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android35-clang',
+         '-ffixed-x18', '-mno-outline-atomics', '-g', '-O2', '-Wall', '-Wextra', '-Werror',
+         '-Wl,-z,max-page-size=16384,-z,common-page-size=16384',
+         EXP / 'userspace/art-test.c', '-ldl', '-o', out / 'art-test.elf'])
+    programs.append(('/art-test', out / 'art-test.elf'))
     shutil.copyfile(libc / 'lib/libc.so', out / 'libc.so')
     programs.append((INTERPRETER, out / 'libc.so'))
     for name in ('dependency', 'plugin', 'dynamic'):
@@ -305,11 +365,13 @@ def build(out, llvm):
              out / f'{name}.o', *([out / 'dependency.so', '-rpath', '/lib'] if name == 'dynamic' else []),
              '-L' + str(libc / 'lib'), '-lc', runtime, libc / 'lib/crtn.o', '-o', file])
         programs.append(('/dynamic' if name == 'dynamic' else '/lib/' + name + '.so', file))
-    if len(programs) * PROGRAM_SLOT > 32 * 1024 * 1024:
-        raise RuntimeError('Program slots overlap the mmap area')
     header, entries = [], []
+    offset = 0
     for i, (name, path) in enumerate(programs):
-        elf = inspect(path, shared=name.endswith('.so'), function_symbols=name.startswith('/system/') or name == '/bionic-test')
+        elf = inspect(path, shared=name.endswith('.so'), function_symbols=name.startswith('/system/') or name in ('/bionic-test', '/art-test'))
+        offset = (offset + elf['alignment'] - 1) & -elf['alignment']
+        if offset + elf['span'] > PROGRAM_LIMIT:
+            raise RuntimeError('Program layouts overlap the mmap area')
         if name == '/worker' and sum(size for _, size in elf['segments']) <= 65536:
             raise RuntimeError('Large-text fixture did not exceed 64 KiB')
         dis = subprocess.check_output([llvm / 'llvm-objdump', '-d', path], text=True)
@@ -324,10 +386,11 @@ def build(out, llvm):
             f'{{.offset={lo},.size={size}}}' for lo, size in elf['segments']) + '};')
         header.append(f'static const NcePatch patches_{i}[] = {{' + ','.join(
             f'{{{va},{word}}}' for va, word in elf['patches']) + '};')
-        entries.append(f'{{.path="{name}",.file=image_{i},.size=sizeof(image_{i}),.offset={i*PROGRAM_SLOT},'
+        entries.append(f'{{.path="{name}",.file=image_{i},.size=sizeof(image_{i}),.offset={offset},.span={elf["span"]},'
                        f'.entry={elf["entry"]},.phoff={elf["phoff"]},.phsize={elf["phsize"]},'
                        f'.segments=segments_{i},.segment_count={len(elf["segments"])},'
                        f'.patches=patches_{i},.patch_count={len(elf["patches"])}}}')
+        offset += elf['span']
         print(f'{name}: {len(elf["data"])} bytes, {len(elf["segments"])} executable segments, {len(elf["patches"])} patched instructions', flush=True)
     header += ['NceProgram nce_programs[] = {' + ',\n'.join(entries) + '};',
                f'const size_t nce_program_count = {len(entries)};']

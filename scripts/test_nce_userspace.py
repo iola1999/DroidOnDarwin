@@ -70,7 +70,7 @@ class ElfLayoutTests(unittest.TestCase):
             inspect(self.path)
 
     def test_unsupported_alignment(self):
-        struct.pack_into('<Q', self.data, self.rx[0] + 48, PAGE * 2)
+        struct.pack_into('<Q', self.data, self.rx[0] + 48, PAGE * 3)
         self.check_rejected('unsupported segment layout')
 
     def test_entry_in_executable_page_padding(self):
@@ -94,6 +94,17 @@ class ElfLayoutTests(unittest.TestCase):
         self.assertEqual(inspect(WORK / 'processes/plugin.so', shared=True)['entry'], 0)
         with self.assertRaisesRegex(RuntimeError, 'missing executable entry'):
             inspect(WORK / 'processes/plugin.so')
+
+    def test_android_art_large_segments_and_mini_debug(self):
+        path = WORK / 'android/android36/com.android.art/lib64/libart.so'
+        elf = inspect(path, shared=True, function_symbols=True)
+        self.assertGreater(elf['span'], 2 * 1024 * 1024)
+        self.assertEqual(elf['alignment'], 2 * 1024 * 1024)
+        self.assertIn(0xa9094c12, dict(elf['patches']).values())
+        self.assertGreater(len(elf['patches']), 1000)
+        self.path.write_bytes(path.read_bytes().replace(b'.gnu_debugdata', b'.nce_debugdata'))
+        with self.assertRaisesRegex(RuntimeError, 'patch candidate outside function symbols'):
+            inspect(self.path, shared=True, function_symbols=True)
 
     def test_linker_purecode_flag_is_required_without_symbols(self):
         self.data = bytearray((WORK / 'processes/dash.elf').read_bytes())

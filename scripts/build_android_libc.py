@@ -5,6 +5,8 @@ import hashlib
 import json
 import shutil
 import subprocess
+import tarfile
+import urllib.request
 from pathlib import Path
 
 from build_android_linker import WORK, TOOL, SOURCES, build as build_linker, sha
@@ -15,8 +17,17 @@ def build():
     out = WORK / 'libc-build'
     out.mkdir(exist_ok=True)
     library = TOOL / 'sysroot/usr/lib/aarch64-linux-android'
+    unwind_archive = WORK / 'libunwind.tar.xz'
+    if not unwind_archive.exists():
+        urllib.request.urlretrieve('https://github.com/llvm/llvm-project/releases/download/llvmorg-20.1.8/libunwind-20.1.8.src.tar.xz', unwind_archive)
+    if sha(unwind_archive) != '0bced9d701e300f8fe6599523367e214c1f928ac559afceece58f47018e9c4a7':
+        raise RuntimeError('libunwind source checksum mismatch')
+    unwind = WORK / 'libunwind-20.1.8.src'
+    if not unwind.exists():
+        with tarfile.open(unwind_archive) as package:
+            package.extractall(WORK, filter='data')
     inputs = {str(path.relative_to(WORK.parent)) if path.is_relative_to(WORK.parent) else str(path): sha(path)
-              for path in (library / 'libc.a', linker,
+              for path in (library / 'libc.a', linker, unwind_archive,
                            WORK / 'android36/com.android.runtime/lib64/bionic/libdl.so',
                            WORK.parent / 'compiler-rt-20.1.8.src.tar.xz')}
     fingerprint = hashlib.sha256(Path(__file__).read_bytes() + SOURCES.read_bytes() +
@@ -64,6 +75,16 @@ def build():
 
     with concurrent.futures.ThreadPoolExecutor(6) as pool:
         objects = list(pool.map(compile, units))
+    for name in ('libunwind.cpp', 'UnwindLevel1.c', 'UnwindLevel1-gcc-ext.c',
+                 'UnwindRegistersRestore.S', 'UnwindRegistersSave.S'):
+        source, obj = unwind / 'src' / name, out / ('unwind-' + name + '.o')
+        cpp = source.suffix == '.cpp'
+        unwind_flags = [f for f in flags if f != '-nostdinc++']
+        subprocess.run([TOOL / 'bin' / ('clang++' if cpp else 'clang'), *unwind_flags,
+                        '-I', unwind / 'include', '-D_LIBUNWIND_IS_NATIVE_ONLY',
+                        *(['-std=gnu++20', '-fno-exceptions', '-fno-rtti'] if cpp else []),
+                        '-c', source, '-o', obj], check=True, timeout=120)
+        objects.append(obj)
     # NDK 的归档保留了通用 Bionic 对象；共享库启动和分配器按源码重新编译。
     archive = out / 'libc-common.a'
     shutil.copyfile(library / 'libc.a', archive)
@@ -83,7 +104,6 @@ def build():
                '-Wl,-z,defs,--gc-sections,--version-script=' + str(version_map), *objects,
                '-Wl,--whole-archive', archive, '-Wl,--no-whole-archive',
                WORK / 'android36/com.android.runtime/lib64/bionic/libdl.so', linker,
-               TOOL / 'lib/clang/21/lib/linux/aarch64/libunwind.a',
                TOOL / 'lib/clang/21/lib/linux/libclang_rt.builtins-aarch64-android.a', '-o', binary]
     subprocess.run(command, check=True, timeout=120)
     subprocess.run([TOOL / 'bin/llvm-strip', '--strip-debug', binary], check=True)

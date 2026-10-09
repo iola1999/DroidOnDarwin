@@ -119,7 +119,7 @@ static int verify_memory(void)
     if (*(uint32_t *)physical != first[0] || *(uint32_t *)(physical + NCE_RAM_SIZE - PAGE) != second[0]) goto done;
     *(uint32_t *)physical = 123;
     if (*(uint32_t *)backing != 123) goto done;
-    puts("{\"test\":\"linux_ram_remap\",\"passed\":true,\"bytes\":67108864}");
+    printf("{\"test\":\"linux_ram_remap\",\"passed\":true,\"bytes\":%lu}\n", NCE_RAM_SIZE);
     result = 0;
 done:
     REQUIRE(munmap(backing, NCE_RAM_SIZE) == 0);
@@ -134,12 +134,17 @@ int nce_memory_prepare(void)
         for (size_t j = 0; j < nce_programs[i].segment_count; ++j) prepared += nce_programs[i].segments[j].size;
     printf("{\"phase\":\"prepare_jit_pool\",\"reserved_bytes\":%lu,\"prepared_code_bytes\":%zu}\n",
            RESERVED_BYTES, prepared);
-    reservation = mmap(NULL, RESERVED_BYTES, PROT_NONE, MAP_ANON | MAP_PRIVATE, -1, 0);
-    if (reservation == MAP_FAILED) {
+    const size_t alignment = 2 * 1024 * 1024;
+    void *raw = mmap(NULL, RESERVED_BYTES + alignment, PROT_NONE, MAP_ANON | MAP_PRIVATE, -1, 0);
+    if (raw == MAP_FAILED) {
         reservation = NULL;
         puts("{\"result\":\"failed\",\"reason\":\"address_reservation\"}");
         return -1;
     }
+    reservation = (void *)(((uintptr_t)raw + alignment - 1) & ~(alignment - 1));
+    size_t prefix = reservation - (unsigned char *)raw;
+    if (prefix) REQUIRE(munmap(raw, prefix) == 0);
+    REQUIRE(munmap(reservation + RESERVED_BYTES, alignment - prefix) == 0);
     pool = prepare_code(reservation, NCE_CODE_POOL_SIZE);
     int valid = pool.rw != NULL;
     for (size_t i = 0; valid && i < nce_program_count; ++i) {

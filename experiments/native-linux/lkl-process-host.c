@@ -189,7 +189,7 @@ static NceState *handle_event(NceState *state)
                     state->regs.pc, p->fault_address, p->fault_write, p->fault_illegal, result);
             for (size_t i = 0; i < nce_program_count; ++i) {
                 NceProgram *program = &nce_programs[i];
-                if (state->regs.pc >= program->base && state->regs.pc - program->base < 2 * 1024 * 1024)
+                if (state->regs.pc >= program->base && state->regs.pc - program->base < program->span)
                     fprintf(stderr, "guest program=%s offset=%lx\n", program->path, state->regs.pc - program->base);
             }
         }
@@ -592,7 +592,7 @@ void nce_process_tests(long (*host_syscall)(long, long *), long (*guest_syscall)
         REQUIRE(state);
         ++allocated;
         state->syscall = syscall_from_guest;
-        state->regs.x[21] = USER_BASE;
+        state->regs.x[21] = USER_BASE + NCE_MMAP_OFFSET;
         REQUIRE(nce_prepare_shared(code, state, &active, guest_image, sizeof(guest_image), GUEST_LINUX_PROCESS) == 0);
         args[0] = (long)state;
         args[1] = 0;
@@ -665,6 +665,11 @@ void nce_process_tests(long (*host_syscall)(long, long *), long (*guest_syscall)
     run_program(host_syscall, "/bionic-test", NULL);
     REQUIRE(get_file(host_syscall, "/stdout", benchmark, sizeof(benchmark)) > 0);
     REQUIRE(strstr(benchmark, "android_bionic_threads_allocator_tls"));
+    fputs(benchmark, stdout);
+    puts("{\"phase\":\"android_art_load\"}");
+    run_program(host_syscall, "/art-test", NULL);
+    REQUIRE(get_file(host_syscall, "/stdout", benchmark, sizeof(benchmark)) > 0);
+    REQUIRE(strstr(benchmark, "android_art_library_loaded"));
     fputs(benchmark, stdout);
     check_program_files(host_syscall);
     puts("{\"test\":\"linux_dynamic_elf_files_unchanged\",\"passed\":true}");

@@ -151,7 +151,7 @@ def main():
                  "headers_install", "INSTALL_HDR_PATH=" + str(OUT / "linux-uapi")],
                 env=env, stdout=log, stderr=subprocess.STDOUT)
     shutil.copyfile(SOURCE / "arch/lkl/include/uapi/asm/host_ops.h", OUT / "lkl-host-ops.h")
-    run([*target, "-fPIC", "-fno-stack-protector", "-O2", "-I", OUT,
+    run([*target, "-fPIC", "-fno-stack-protector", "-O2", "-I", OUT, "-I", EXPERIMENT,
          "-c", EXPERIMENT / "lkl-bridge.c", "-o", OUT / "lkl-bridge.o"])
     exports = ["--globalize-symbol=nce_run_syscall", "--globalize-symbol=nce_page_fault", "--globalize-symbol=nce_set_layout", "--globalize-symbol=nce_user_return", "--globalize-symbol=nce_user_fault"] if PROCESS else []
     run([llvm / "llvm-objcopy", "--globalize-symbol=vsnprintf", "--globalize-symbol=lkl_ops", *exports,
@@ -216,7 +216,7 @@ def main():
         manifest["generated_sha256"] = {name: hashlib.sha256((OUT / name).read_bytes()).hexdigest()
                                         for name in ["program-images.h", "user-scripts.h", "lkl-image.h", "lkl-host-ops.h", "guest-image.h",
                                                      "exec-guest.elf", "init.elf", "worker.elf", "mm-bench.elf", "dash.elf",
-                                                     "libc.so", "dependency.so", "plugin.so", "dynamic.elf", "binder-test.elf", "bionic-test.elf"]}
+                                                     "libc.so", "dependency.so", "plugin.so", "dynamic.elf", "binder-test.elf", "bionic-test.elf", "art-test.elf"]}
         android = ROOT / "work/native-linux-nce/android"
         manifest["android_builds"] = {name: json.loads((android / name / "manifest.json").read_text())
                                       for name in ("linker-build", "libc-build")}

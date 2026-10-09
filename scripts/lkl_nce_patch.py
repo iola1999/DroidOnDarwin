@@ -34,7 +34,10 @@ def apply(source: Path, experiment: Path):
     edit(pg, "#define PMD_SHIFT\t21", "#define PMD_SHIFT\t25")
     for level in ("PTE", "PMD", "PGD"):
         edit(pg, f"#define PTRS_PER_{level} 512", f"#define PTRS_PER_{level} 2048")
-    edit(pg, "#define VMALLOC_END\t((TASK_SIZE - 4 * PAGE_SIZE))", "#define VMALLOC_END\t(nce_memory_start + 0x8000000UL)")
+    vmalloc_end = "#define VMALLOC_END\t(nce_memory_start + NCE_RAM_SIZE + NCE_VMALLOC_SIZE)"
+    if "#define VMALLOC_END\t(nce_memory_start + 0x8000000UL)" in (source / pg).read_text():
+        edit(pg, "#define VMALLOC_END\t(nce_memory_start + 0x8000000UL)", vmalloc_end)
+    edit(pg, "#define VMALLOC_END\t((TASK_SIZE - 4 * PAGE_SIZE))", vmalloc_end)
     edit(pg, "#define _PAGE_DIRTY\t0x100", "#define _PAGE_DIRTY\t0x100\n#define _PAGE_EXEC\t0x200")
     edit(pg, "return ((pte_get_bits(pte, _PAGE_USER)) &&\n\t       !(pte_get_bits(pte, _PAGE_PROTNONE)));\n}\n\nstatic inline int pte_write", "return ((pte_get_bits(pte, _PAGE_EXEC)) &&\n\t       !(pte_get_bits(pte, _PAGE_PROTNONE)));\n}\n\nstatic inline int pte_write")
     edit(pg, "void mmap_pages_for_ptes(unsigned long va, unsigned int nr, pte_t pte);\nvoid munmap_page_for_pte(unsigned long addr, pte_t *xp);", "void mmap_pages_for_ptes(struct mm_struct *mm, unsigned long va, unsigned int nr, pte_t pte);\nvoid munmap_page_for_pte(struct mm_struct *mm, unsigned long addr, pte_t *xp);")

@@ -22,7 +22,7 @@
 
 已完成 Linux 信号、musl 静态和动态用户态、dash、Binder 跨进程通信，以及
 Bionic 动态程序。Bionic 测试覆盖线程、TLS、分配释放和 setjmp/longjmp。
-下一步接入 ART 的共享库、启动文件和低地址堆。
+下一步接入 ART 的共享库、启动文件和堆地址适配。
 
 后续根据实际程序需求扩展执行区、ELF 装载和 ABI。先保留 Linux 的进程、
 文件、内存与 Binder 语义，宿主仅处理原生执行和 Darwin 所需映射。ART 的
@@ -36,7 +36,7 @@ Bionic 动态程序。Bionic 测试覆盖线程、TLS、分配释放和 setjmp/l
 当前接受构建时登记、宿主页兼容布局的 ELF。x18 作为客体状态保存；目前
 支持已遇到的 MOV/ORR、两条 Bionic setjmp 掩码指令，以及含 x18 的 64 位
 LDP/STP 偏移寻址。构建检查会拒绝其他 x18 指令。客体地址窗口为 16 GiB，
-Linux RAM 为 64 MiB。执行区在 JIT 准备期间确定，通用可执行 mprotect、
+Linux RAM 为 256 MiB。执行区在 JIT 准备期间确定，通用可执行 mprotect、
 ART 动态代码与运行时执行区复用仍需实现。
 
 Bionic 的预编译 ELF 是否保留指令映射信息、共享库布局和 x18 使用方式，
@@ -103,5 +103,38 @@ CLI 和 GCD 完整回归均通过 Bionic 动态程序、8 GiB 稀疏预留、既
 预留增加一个专用调用，避免在普通 mmap 中猜测 Android 链接器的意图。
 构建脚本按具体产物组织，未引入通用构建框架。
 
-后续需要解除 ART ELF 的 2 MiB 单文件上限、支持其更大段对齐，并提供
-满足压缩对象引用要求的低地址堆。代码更新与信号恢复仍按 Linux 状态验证。
+后续需要修改 ART 压缩对象引用和堆地址计算。代码更新与信号恢复仍按 Linux
+状态验证。
+
+## ART 共享库装载（2026-10-09）
+
+ELF 现在按实际段范围连续安排地址，支持最多 2 MiB 段对齐。ART 的
+`libart.so` 占用 12,730,368 字节虚拟空间；构建检查从 `.gnu_debugdata`
+取得函数范围并定位需要改写的指令，共生成 8,559 处补丁。缺少指令范围信息
+时构建失败，相关边界已有回归。ELF 区域与手写内核测试的数据区已分开。
+
+预编译平台库需要 `_Unwind_Resume` 等共享库导出，Bionic 构建因此加入
+LLVM 20.1.8 libunwind 源码。NDK 静态归档中这些符号具有隐藏可见性，无法
+直接作为平台共享库接口使用。源码归档 SHA-256 随构建校验。
+
+Linux RAM 增至 256 MiB，保留 16 GiB 稀疏地址窗口。CLI 与 GCD 完整回归
+均通过：Android 链接器成功装载 ART 及其依赖，调用 `JNI_GetCreatedJavaVMs`
+返回成功且 VM 数量为零。此测试确认装载、重定位和构造函数执行；Java VM
+创建及 Java 负载仍待实现。内核 WARNING、BUG、Bad page 检查均通过。
+
+## ART 地址限制与实现调整（2026-10-09）
+
+已检查 ART 提交 `ed6c006bd06ae060bd9698fd2cb25c4865512ec3`。
+`runtime/mirror/object_reference.h` 将对象地址直接压缩为 32 位，
+`libartbase/base/mem_map.cc` 因此要求对象堆位于 4 GiB 以下。
+
+本地最小程序使用缩小的 PAGEZERO 后被系统终止；保留默认布局的程序调用
+`vm_deallocate` 后，再向低地址申请内存，实际返回 `0x7000000000`。
+[XNU 的 ARM64 装载检查](https://github.com/apple-oss-distributions/xnu/blob/main/bsd/kern/mach_loader.c)
+要求 64 位 ARM 进程具有 4 GiB hard page zero，并通过 VM map 下界实施。
+独立低地址数据区的原计划因此调整。
+
+继续完成 ELF 装载和依赖验证，再修改 ART 的压缩引用及相关堆地址计算。
+实现需要覆盖空引用、GC、解释器、JNI 和运行时汇编，后续编译执行还需同步
+更新代码生成。单独修改对象指针的压缩函数不足以完成此适配。当前没有
+修改 ART 的执行结果，不安排手机复测。
