@@ -10,4 +10,5 @@ bool nce_debugger_attached(void);
  * or -2 on timeout; these failures leave the UI available for log export. */
 int nce_wait_debugger_detach(unsigned timeout_ms);
 void husk_ios_jit_install_trap_handler(void);
+void nce_graphics_set_window(void *layer);
 #endif

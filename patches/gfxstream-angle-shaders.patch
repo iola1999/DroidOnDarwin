@@ -1,0 +1,58 @@
+diff --git a/host/gl/emulation_gl.cpp b/host/gl/emulation_gl.cpp
+index d6c04ef..1139d28 100644
+--- a/host/gl/emulation_gl.cpp
++++ b/host/gl/emulation_gl.cpp
+@@ -571,13 +571,16 @@ std::unique_ptr<EmulationGl> EmulationGl::create(uint32_t width, uint32_t height
+         return nullptr;
+     }
+ 
+-    s_gles2.glGetError();
+-    GLint numDeviceUuids = 0;
+-    s_gles2.glGetIntegerv(GL_NUM_DEVICE_UUIDS_EXT, &numDeviceUuids);
+-    if (numDeviceUuids == 1) {
+-        GlesUuid uuid{};
+-        s_gles2.glGetUnsignedBytei_vEXT(GL_DEVICE_UUID_EXT, 0, uuid.data());
+-        emulationGl->mGlesDeviceUuid = uuid;
++    // UUID queries require EXT_memory_object; ANGLE Metal can omit this extension.
++    if ((" " + emulationGl->mGlesExtensions + " ").find(" GL_EXT_memory_object ") !=
++        std::string::npos) {
++        GLint numDeviceUuids = 0;
++        s_gles2.glGetIntegerv(GL_NUM_DEVICE_UUIDS_EXT, &numDeviceUuids);
++        if (numDeviceUuids == 1) {
++            GlesUuid uuid{};
++            s_gles2.glGetUnsignedBytei_vEXT(GL_DEVICE_UUID_EXT, 0, uuid.data());
++            emulationGl->mGlesDeviceUuid = uuid;
++        }
+     }
+ 
+     emulationGl->mGlesVulkanInteropSupported = false;
+diff --git a/host/gl/glestranslator/common/gles_context.cpp b/host/gl/glestranslator/common/gles_context.cpp
+index df539a4..2e945bf 100644
+--- a/host/gl/glestranslator/common/gles_context.cpp
++++ b/host/gl/glestranslator/common/gles_context.cpp
+@@ -2617,9 +2617,9 @@ void GLEScontext::initTexImageEmulation() {
+ 
+     auto& gl = dispatcher();
+ 
+-    std::string vshaderSrc = isCoreProfile() ? "#version 330 core\n" : "#version 300 es\n";
++    std::string vshaderSrc = (isCoreProfile() && !isGles2Gles()) ? "#version 330 core\n" : "#version 300 es\n";
+     vshaderSrc += kTexImageEmulationVShaderSrc;
+-    std::string fshaderSrc = isCoreProfile() ? "#version 330 core\n" : "#version 300 es\n";
++    std::string fshaderSrc = (isCoreProfile() && !isGles2Gles()) ? "#version 330 core\n" : "#version 300 es\n";
+     fshaderSrc += kTexImageEmulationFShaderSrc;
+ 
+     GLuint vshader =
+@@ -2836,11 +2836,11 @@ void GLEScontext::setupImageBlitState() {
+     if (m_blitState.program) return;
+ 
+     std::string vshaderSrc =
+-        isCoreProfile() ? "#version 330 core\n" : "#version 300 es\n";
++        (isCoreProfile() && !isGles2Gles()) ? "#version 330 core\n" : "#version 300 es\n";
+     vshaderSrc += kTexImageEmulationVShaderSrcFlipped;
+ 
+     std::string fshaderSrc =
+-        isCoreProfile() ? "#version 330 core\n" : "#version 300 es\n";
++        (isCoreProfile() && !isGles2Gles()) ? "#version 330 core\n" : "#version 300 es\n";
+     fshaderSrc += kTexImageEmulationFShaderSrc;
+ 
+     GLuint vshader =

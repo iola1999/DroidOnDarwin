@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 import SwiftUI
 import UniformTypeIdentifiers
+import Metal
 
 // The existing JIT helper uses this logger in both app targets.
 enum HuskLog {
@@ -21,6 +22,8 @@ final class ProbeModel: ObservableObject {
     @Published var didRun = false
     @Published var importing = false
     @Published var graphics: UIImage?
+    @Published var hasGPUImage = false
+    let metalLayer = CAMetalLayer()
     private let logReader = ProbeLogReader()
     private var phase: String?
     private var refreshing = false
@@ -31,10 +34,16 @@ final class ProbeModel: ObservableObject {
     let documents = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
     var logURL: URL { documents.appendingPathComponent("native-linux-n2-ios.log") }
     var graphicsURL: URL { documents.appendingPathComponent("framework.png") }
+    var gpuURL: URL { documents.appendingPathComponent("gpu.bmp") }
     var paired: Bool { JITPairingFileStore.exists }
 
     init() {
         husk_ios_jit_install_trap_handler()
+        metalLayer.device = MTLCreateSystemDefaultDevice()
+        metalLayer.pixelFormat = .bgra8Unorm
+        metalLayer.framebufferOnly = false
+        metalLayer.drawableSize = CGSize(width: 360, height: 640)
+        nce_graphics_set_window(Unmanaged.passUnretained(metalLayer).toOpaque())
         Task {
             await refresh()
             if !busy && !didRun && !logLines.isEmpty { status = "已保留上次日志" }
@@ -83,7 +92,7 @@ final class ProbeModel: ObservableObject {
         UIApplication.shared.isIdleTimerDisabled = true
         startedAt = Date()
         let build = Bundle.main.object(forInfoDictionaryKey: "NCEBuildID") as? String ?? "unknown"
-        HuskLog.log("probe", "N3 iOS; build=\(build); iOS=\(UIDevice.current.systemVersion); pid=\(getpid())")
+        HuskLog.log("probe", "N4 iOS; build=\(build); iOS=\(UIDevice.current.systemVersion); pid=\(getpid())")
         return true
     }
     private func script() -> Data? {
@@ -180,6 +189,7 @@ final class ProbeModel: ObservableObject {
         setenv("NCE_MM_MODE", "lazy", 1)
         setenv("NCE_STRESS_ROUNDS", "3", 1)
         setenv("NCE_GRAPHICS_OUTPUT", graphicsURL.path, 1)
+        setenv("NCE_GPU_OUTPUT", gpuURL.path, 1)
         startedAt = Date()
         status = "正在准备 JIT 内存"
         // The guest switches stacks and pthreads. Keep the Swift UI on its own queue.
@@ -190,6 +200,7 @@ final class ProbeModel: ObservableObject {
                 UIApplication.shared.isIdleTimerDisabled = false
                 self.status = result == 0 ? "全部测试通过" : "测试失败，请导出日志"
                 Task { await self.refresh() }
+                self.hasGPUImage = FileManager.default.fileExists(atPath: self.gpuURL.path)
                 self.graphics = result == 0 ? UIImage(contentsOfFile: self.graphicsURL.path) : nil
             }
         }
@@ -203,47 +214,80 @@ final class ProbeModel: ObservableObject {
     }
 }
 
+struct GuestMetalDisplay: UIViewRepresentable {
+    let metalLayer: CAMetalLayer
+    final class DisplayView: UIView {
+        var metalLayer: CAMetalLayer?
+        override func layoutSubviews() {
+            super.layoutSubviews()
+            CATransaction.begin()
+            CATransaction.setDisableActions(true)
+            metalLayer?.frame = bounds
+            CATransaction.commit()
+        }
+    }
+    func makeUIView(context: Context) -> DisplayView {
+        let view = DisplayView()
+        view.metalLayer = metalLayer
+        view.layer.addSublayer(metalLayer)
+        return view
+    }
+    func updateUIView(_ view: DisplayView, context: Context) {}
+}
+
 @main
 struct NativeLinuxApp: App {
     @StateObject private var model = ProbeModel()
     var body: some Scene {
         WindowGroup {
             NavigationStack {
-                List {
-                    Section("N3 · Android 运行时") {
-                        Text(Bundle.main.object(forInfoDictionaryKey: "NCEBuildID") as? String ?? "N3")
-                            .font(.caption).foregroundStyle(.secondary)
-                        Text(model.status).font(.headline).accessibilityIdentifier("probe-status")
-                        Text("运行 Android 运行库、Binder、Java 与编译执行测试。请保持应用在前台。")
-                            .foregroundStyle(.secondary)
-                        if model.busy { ProgressView() }
-                    }
-                    Section {
-                        Button("启用内置 JIT 并测试") { model.builtIn() }
-                        Button("通过 StikDebug 启用并测试") { model.external() }
-                        if nce_debugger_attached() {
-                            Button("使用已连接的 JIT 测试") { model.runAttached() }
-                        }
-                        Button(model.paired ? "更换配对文件" : "导入配对文件") { model.importing = true }
-                    }.disabled(model.busy || model.didRun)
-                    if model.didRun && !model.busy {
-                        Section { Text("再次测试前，请从多任务界面关闭 Husk 后重新打开。") }
-                    }
-                    if let graphics = model.graphics {
-                        Section("Android 绘图") {
-                            Image(uiImage: graphics).resizable().interpolation(.none)
-                                .scaledToFit().frame(maxWidth: 384)
-                            ShareLink("导出图片", item: model.graphicsURL)
-                        }
-                    }
-                    if !model.logLines.isEmpty {
-                        Section("日志") {
-                            ShareLink("导出测试日志", item: model.logURL)
-                            Text("显示最近 80 行，导出可查看完整日志。")
+                VStack(spacing: 0) {
+                    GuestMetalDisplay(metalLayer: model.metalLayer)
+                        .aspectRatio(360.0 / 640.0, contentMode: .fit)
+                        .frame(height: 240)
+                        .frame(maxWidth: .infinity)
+                        .background(.black)
+                    List {
+                        Section("N4 · Android 图形") {
+                            Text(Bundle.main.object(forInfoDictionaryKey: "NCEBuildID") as? String ?? "N4")
                                 .font(.caption).foregroundStyle(.secondary)
-                            ForEach(model.logLines) { line in
-                                Text(line.text).font(.system(.caption, design: .monospaced))
-                                    .lineLimit(4)
+                            Text(model.status).font(.headline).accessibilityIdentifier("probe-status")
+                            Text("测试 GPU 绘图、Android 运行库与系统服务。请保持应用在前台。")
+                                .foregroundStyle(.secondary)
+                            if model.busy { ProgressView() }
+                        }
+                        Section {
+                            Button("启用内置 JIT 并测试") { model.builtIn() }
+                            Button("通过 StikDebug 启用并测试") { model.external() }
+                            if nce_debugger_attached() {
+                                Button("使用已连接的 JIT 测试") { model.runAttached() }
+                            }
+                            Button(model.paired ? "更换配对文件" : "导入配对文件") { model.importing = true }
+                        }.disabled(model.busy || model.didRun)
+                        if model.hasGPUImage {
+                            Section("GPU 图片") {
+                                ShareLink("导出 GPU 图片", item: model.gpuURL)
+                            }
+                        }
+                        if model.didRun && !model.busy {
+                            Section { Text("再次测试前，请从多任务界面关闭 Husk 后重新打开。") }
+                        }
+                        if let graphics = model.graphics {
+                            Section("Android 绘图") {
+                                Image(uiImage: graphics).resizable().interpolation(.none)
+                                    .scaledToFit().frame(maxWidth: 384)
+                                ShareLink("导出图片", item: model.graphicsURL)
+                            }
+                        }
+                        if !model.logLines.isEmpty {
+                            Section("日志") {
+                                ShareLink("导出测试日志", item: model.logURL)
+                                Text("显示最近 80 行，导出可查看完整日志。")
+                                    .font(.caption).foregroundStyle(.secondary)
+                                ForEach(model.logLines) { line in
+                                    Text(line.text).font(.system(.caption, design: .monospaced))
+                                        .lineLimit(4)
+                                }
                             }
                         }
                     }

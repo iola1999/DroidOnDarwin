@@ -8,6 +8,7 @@ import json
 import os
 from pathlib import Path
 import platform
+import plistlib
 import shlex
 import shutil
 import struct
@@ -83,7 +84,20 @@ def main():
     started_ns = time.time_ns()
     parser = argparse.ArgumentParser()
     parser.add_argument("--processes", action="store_true")
-    PROCESS = parser.parse_args().processes
+    parser.add_argument("--graphics-angle", type=Path,
+                        help="Run Linux GLES over the in-process renderer using these macOS ANGLE libraries")
+    parser.add_argument("--graphics-window", action="store_true", help="Validate presentation in a visible Metal window")
+    arguments = parser.parse_args()
+    PROCESS = arguments.processes
+    angle = arguments.graphics_angle.resolve() if arguments.graphics_angle else None
+    if arguments.graphics_window and not angle:
+        parser.error("--graphics-window requires --graphics-angle")
+    if angle and not PROCESS:
+        parser.error("--graphics-angle requires --processes")
+    if angle:
+        for name in ("libANGLE-shared.dylib",):
+            if not (angle / name).is_file():
+                parser.error("Missing ANGLE library: " + str(angle / name))
     base = OUT
     if PROCESS:
         BUILD = base / "lkl-process-build"
@@ -175,7 +189,37 @@ def main():
         inputs += [EXPERIMENT / "lkl-process-host.c", EXPERIMENT / "programs.c", EXPERIMENT / "memory.c", EXPERIMENT / "execute-check.c", EXPERIMENT / "compute.c"]
         run([clang, *flags, "-isysroot", sdk, "-DNATIVE", "-c", EXPERIMENT / "guest.S", "-o", OUT / "native.o"])
     payload = [OUT / "payload.S"] if PROCESS else []
-    run([clang, *flags, "-isysroot", sdk, *inputs, *payload, *([OUT / "native.o"] if PROCESS else []), "-o", OUT / "lkl-probe"])
+    graphics_link = []
+    graphics_files = []
+    graphics_env = {}
+    if angle:
+        gfx = ROOT / "work/gfxstream-src"
+        prefix = ROOT / "work/gfxstream-build-macos-ios-api/prefix"
+        build = json.loads((prefix.parent / "manifest.json").read_text())
+        for name, expected in build["inputs"].items():
+            if hashlib.sha256((ROOT / name).read_bytes()).hexdigest() != expected:
+                raise SystemExit("Rebuild gfxstream; input changed: " + name)
+        for name, expected in build["libraries"].items():
+            if hashlib.sha256(Path(name).read_bytes()).hexdigest() != expected:
+                raise SystemExit("Rebuild gfxstream; library changed: " + name)
+        flags.append("-DNCE_GRAPHICS")
+        run([clang, "-std=c++17", "-O2", "-g", "-Wall", "-Wextra", "-Werror", "-Wno-return-type-c-linkage",
+             "-isysroot", sdk,
+             "-isystem", gfx / "host/include", "-isystem", gfx / "host/features/include", "-isystem", gfx / "common/base/include",
+             "-c", EXPERIMENT / "graphics/host-graphics.cpp", "-o", OUT / "host-graphics.o"])
+        graphics_link = [OUT / "host-graphics.o", "-L", prefix / "lib", "-lgfxstream_backend", "-lc++",
+                         "-Wl,-rpath," + str(prefix / "lib"), "-Wl,-rpath," + str(angle)]
+        graphics_env = {"DYLD_LIBRARY_PATH": str(angle), "ANGLE_DEFAULT_PLATFORM": "metal"}
+        graphics_files = [prefix / "lib/libgfxstream_backend.dylib", angle / "libANGLE-shared.dylib"]
+        run([clang, "-std=c++17", "-O2", "-Wno-return-type-c-linkage", "-isysroot", sdk,
+             "-I", gfx / "host/include", "-I", gfx / "host/features/include", "-I", gfx / "common/base/include",
+             "-I", EXPERIMENT / "graphics/protocol", "-I", angle.parent / "include",
+             EXPERIMENT / "graphics/channel-test.cpp", *graphics_link[1:], "-o", OUT / "channel-test"])
+        with (OUT / "channel-test.log").open("w") as log:
+            run([OUT / "channel-test"], stdout=log, stderr=subprocess.STDOUT,
+                env={**os.environ, **graphics_env})
+    run([clang, *flags, "-isysroot", sdk, *inputs, *payload, *([OUT / "native.o"] if PROCESS else []),
+         *graphics_link, "-o", OUT / "lkl-probe"])
     if PROCESS:
         seed = OUT / "storage-seed.img"
         with seed.open("wb") as image:
@@ -184,8 +228,8 @@ def main():
              "-E", "lazy_itable_init=0,lazy_journal_init=0", seed])
         shutil.copyfile(seed, OUT / "storage-test.img")
     with (OUT / "lkl-results.jsonl").open("w") as output, (OUT / "lkl-console.log").open("w") as log:
-        probe_env = {**os.environ, "NCE_GRAPHICS_OUTPUT": str(OUT / "framework.png"), "NCE_STORAGE_IMAGE": str(OUT / "storage-test.img"), "NCE_SYSTEM_IMAGE": str(OUT / "system.img")} if PROCESS else os.environ
-        run([OUT / "lkl-probe", OUT / "lkl-image.bin"], stdout=output, stderr=log, env=probe_env)
+        probe_env = {**os.environ, "NCE_GPU_OUTPUT": str(OUT / "gpu.bmp"), "NCE_GRAPHICS_OUTPUT": str(OUT / "framework.png"), "NCE_STORAGE_IMAGE": str(OUT / "storage-test.img"), "NCE_SYSTEM_IMAGE": str(OUT / "system.img")} if PROCESS else os.environ
+        run([OUT / "lkl-probe", OUT / "lkl-image.bin"], stdout=output, stderr=log, env={**probe_env, **graphics_env})
     results = [json.loads(line) for line in (OUT / "lkl-results.jsonl").read_text().splitlines()]
     if results[-1].get("result") != "passed":
         raise SystemExit("LKL probe did not complete")
@@ -204,11 +248,11 @@ def main():
              "-o", OUT / "host-context-test"])
         run([OUT / "host-context-test"])
         run([clang, *flags, "-DNCE_IOS_APP", "-isysroot", sdk, *inputs, *payload, OUT / "native.o",
-             EXPERIMENT / "dispatch-test.c", "-o", OUT / "dispatch-probe"])
+             EXPERIMENT / "dispatch-test.c", *graphics_link, "-o", OUT / "dispatch-probe"])
         with (OUT / "dispatch-results.jsonl").open("w") as output, (OUT / "dispatch-console.log").open("w") as log:
             subprocess.run([OUT / "dispatch-probe", OUT / "lkl-image.bin"], check=True,
                            timeout=120, stdout=output, stderr=log,
-                           env={**os.environ, "NCE_GRAPHICS_OUTPUT": str(OUT / "dispatch-framework.png"), "NCE_STORAGE_IMAGE": str(OUT / "storage-test.img"), "NCE_SYSTEM_IMAGE": str(OUT / "system.img")})
+                           env={**os.environ, **graphics_env, "NCE_GPU_OUTPUT": str(OUT / "dispatch-gpu.bmp"), "NCE_GRAPHICS_OUTPUT": str(OUT / "dispatch-framework.png"), "NCE_STORAGE_IMAGE": str(OUT / "storage-test.img"), "NCE_SYSTEM_IMAGE": str(OUT / "system.img")})
         dispatch_results = [json.loads(line) for line in (OUT / "dispatch-results.jsonl").read_text().splitlines()]
         if dispatch_results[-1].get("result") != "passed":
             raise SystemExit("GCD probe did not complete")
@@ -221,10 +265,39 @@ def main():
         run(["/opt/homebrew/opt/e2fsprogs/sbin/e2fsck", "-fn", OUT / "storage-test.img"])
         if (OUT / "framework.png").read_bytes() != (OUT / "dispatch-framework.png").read_bytes():
             raise SystemExit("CLI and GCD framework images differ")
+        if angle and (OUT / "gpu.bmp").read_bytes() != (OUT / "dispatch-gpu.bmp").read_bytes():
+            raise SystemExit("CLI and GCD GPU images differ")
+    window_results = None
+    if arguments.graphics_window:
+        app = OUT / "HuskNCEGPU.app/Contents"
+        (app / "MacOS").mkdir(parents=True, exist_ok=True)
+        (app / "Info.plist").write_bytes(plistlib.dumps({
+            "CFBundleIdentifier": "com.husk.nce.graphics-test",
+            "CFBundleExecutable": "graphics-window", "CFBundleName": "Husk NCE GPU",
+            "CFBundlePackageType": "APPL", "NSHighResolutionCapable": True}))
+        window_binary = app / "MacOS/graphics-window"
+        run([clang, "-std=c++17", "-O2", "-fobjc-arc", "-isysroot", sdk,
+             "-c", EXPERIMENT / "graphics/window-test.mm", "-o", OUT / "graphics-window.o"])
+        run([clang, *flags, "-DNCE_IOS_APP", "-isysroot", sdk, *inputs, *payload, OUT / "native.o",
+             OUT / "graphics-window.o", *graphics_link, "-framework", "AppKit", "-framework", "Metal",
+             "-framework", "QuartzCore", "-o", window_binary])
+        with (OUT / "window-results.jsonl").open("w") as output, (OUT / "window-console.log").open("w") as log:
+            run([window_binary, OUT / "lkl-image.bin"], stdout=output, stderr=log,
+                env={**probe_env, **graphics_env, "NCE_GPU_OUTPUT": str(OUT / "window-gpu.bmp")})
+        window_results = [json.loads(line) for line in (OUT / "window-results.jsonl").read_text().splitlines()]
+        if window_results[-1].get("result") != "passed" or not any(
+                r.get("test") == "native_metal_display_created" and r.get("passed") for r in window_results):
+            raise SystemExit("Metal window validation did not complete")
+        if (OUT / "gpu.bmp").read_bytes() != (OUT / "window-gpu.bmp").read_bytes():
+            raise SystemExit("Headless and visible GPU output differ")
     manifest = {"source_revision": REVISION, "platform": platform.platform(), "results": results,
                 "ios_status": "this build compiled for iOS; device execution pending",
                 "config_sha256": hashlib.sha256((BUILD / ".config").read_bytes()).hexdigest(),
                 "kernel_sha256": hashlib.sha256((OUT / "lkl-image.bin").read_bytes()).hexdigest()}
+    if angle:
+        manifest["window_results"] = window_results
+        manifest["graphics_libraries_sha256"] = {str(p): hashlib.sha256(p.read_bytes()).hexdigest() for p in graphics_files}
+        manifest["ios_status"] = "core compiled for iOS; graphics integration and device execution pending"
     sources = [*inputs, EXPERIMENT / "lkl-bridge.c", EXPERIMENT / "nce.h", EXPERIMENT / "guest-registers.h", EXPERIMENT / "guest.S", Path(__file__).resolve()]
     if PROCESS:
         manifest["dispatch_results"] = dispatch_results
@@ -236,7 +309,8 @@ def main():
                     Path(__file__).with_name("build_android_libc.py"), Path(__file__).with_name("build_android_art.py"),
                     Path(__file__).with_name("build_android_crypto.py"),
                     EXPERIMENT / "android-sources.json", *sorted((EXPERIMENT / "art").glob("*")),
-                    *sorted((EXPERIMENT / "userspace").glob("*")), *sorted(p for p in (EXPERIMENT / "services").rglob("*") if p.is_file())]
+                    *sorted((EXPERIMENT / "userspace").glob("*")), *sorted(p for p in (EXPERIMENT / "services").rglob("*") if p.is_file()),
+                    *sorted(p for p in (EXPERIMENT / "graphics").rglob("*") if p.is_file())]
         run(["python3", ROOT / "scripts/test_nce_userspace.py"])
         sources.append(ROOT / "scripts/test_nce_userspace.py")
         manifest["stage"] = "Android Bionic, Binder, ART Java and ARM64 JIT workloads"
@@ -244,7 +318,7 @@ def main():
         manifest["generated_sha256"] = {name: hashlib.sha256((OUT / name).read_bytes()).hexdigest()
                                         for name in ["system.img", "storage-seed.img", "storage-test.elf", "program-images.h", "user-scripts.h", "payload.S", "payload.bin", "lkl-image.h", "lkl-host-ops.h", "guest-image.h",
                                                      "exec-guest.elf", "sigreturn.elf", "init.elf", "worker.elf", "mm-bench.elf", "dash.elf",
-                                                     "libc.so", "dependency.so", "plugin.so", "dynamic.elf", "binder-test.elf", "bionic-test.elf", "art-test.elf", "art-heap-test.elf", "android-services-test.elf"]}
+                                                     "libc.so", "dependency.so", "plugin.so", "dynamic.elf", "binder-test.elf", "gpu-test.elf", "bionic-test.elf", "art-test.elf", "art-heap-test.elf", "android-services-test.elf"]}
         android = ROOT / "work/native-linux-nce/android"
         manifest["android_builds"] = {name: json.loads((android / name / "manifest.json").read_text())
                                       for name in ("linker-build", "libc-build", "art-build", "crypto-build")}

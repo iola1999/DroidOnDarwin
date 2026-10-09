@@ -1,0 +1,14 @@
+{
+  "repository": "https://github.com/google/gfxstream",
+  "revision": "07ee40efb0e7037a9a9b7fe59071e7c4997e7cbe",
+  "files": {
+    "renderControl_opcodes.h": {
+      "source": "host/renderControl_dec/renderControl_opcodes.h",
+      "sha256": "cdfe0e627071592e0176c03a7e75cea86caac82e8750d57befd2a3c2868e4627"
+    },
+    "gles2_opcodes.h": {
+      "source": "host/gl/gles2_dec/gles2_opcodes.h",
+      "sha256": "006c946813dd6e35a7093b5f752e9637fcf1cb97d8fb0c9552a2fd86c0ff8526"
+    }
+  }
+}

@@ -1,116 +1,68 @@
 #!/bin/bash
-# Build ANGLE (EGL + GLES over Metal) for iOS arm64.
-#
-# This is the host-side GPU stack Husk needs. virglrenderer turns the guest's
-# GL calls into real draw calls, but it needs an EGL/GLES implementation to make
-# them against -- and iOS has no EGL at all. ANGLE supplies one on top of Metal.
-# UTM does the same thing, which is what makes GPU acceleration inside a QEMU
-# guest on iOS a solved problem rather than a hope.
-#
-# ANGLE is taken from WebKit rather than upstream because WebKit carries an
-# Xcode project for it, which avoids needing depot_tools and gn. A blob-filtered
-# sparse checkout keeps that to ~260 MB instead of cloning all of WebKit.
+# Build the WebKit ANGLE Metal backend for iPhone or macOS validation.
 set -euo pipefail
 
 HUSK_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 GPU="$HUSK_ROOT/third_party/gpu"
 WK="$GPU/webkit"
-PREFIX="$HUSK_ROOT/build/ios-arm64/sysroot"
-LOG="$HUSK_ROOT/build/logs/angle-build.log"
+REVISION=2edaa071178a43a44dfaa4c37716247c43642c66
+SDK="${1:-iphoneos}"
+case "$SDK" in
+    iphoneos) PREFIX="$HUSK_ROOT/build/ios-arm64/sysroot" ;;
+    macosx) PREFIX="$HUSK_ROOT/work/angle-macos/prefix" ;;
+    *) echo "Usage: $0 [iphoneos|macosx]" >&2; exit 2 ;;
+esac
+LOG="$HUSK_ROOT/build/logs/angle-build-$SDK.log"
 mkdir -p "$GPU" "$(dirname "$LOG")"
-
 if [ ! -d "$WK" ]; then
-    echo "==> sparse-cloning WebKit for its ANGLE tree"
-    git clone --depth 1 --filter=blob:none --sparse \
-        https://github.com/WebKit/WebKit.git "$WK"
+    git init "$WK"
+    git -C "$WK" remote add origin https://github.com/WebKit/WebKit.git
+    git -C "$WK" sparse-checkout init --cone
+    git -C "$WK" fetch --depth 1 --filter=blob:none origin "$REVISION"
+    git -C "$WK" checkout --detach FETCH_HEAD
 fi
-
-# Configurations and Tools/ccache are not optional: the ANGLE xcconfigs include
-# ../../../../Tools/ccache/ccache.xcconfig, and the build fails to even start
-# without it.
-( cd "$WK" && git sparse-checkout set \
-    Source/ThirdParty/ANGLE Configurations Tools/Scripts Tools/ccache )
-
+[ "$(git -C "$WK" rev-parse HEAD)" = "$REVISION" ] || { echo "Unexpected WebKit revision" >&2; exit 1; }
+git -C "$WK" sparse-checkout set Source/ThirdParty/ANGLE Configurations Tools/Scripts Tools/ccache
 cd "$WK/Source/ThirdParty/ANGLE"
-
-# Two overrides worth explaining.
-#
-# WK_AVAILABILITY_OVERLAY_FLAGS points at a clang VFS overlay that WebKit
-# generates to defuse availability annotations. Nothing in this subset of the
-# tree generates it, so the build dies looking for availability-overlay.yaml.
-# Clearing the flag drops the overlay -- which then surfaces the errors it was
-# hiding, all of the form "MTLPixelFormatBC1_RGBA is only available on iOS
-# 16.4". Hence the deployment target: 16.4 is the version those annotations
-# actually ask for, so they are satisfied honestly rather than suppressed. It
-# was 17.0 while Husk itself required 17.0; Husk now deploys to 16.4, and
-# building ANGLE any higher than the app produces a dylib dyld refuses to load
-# on the oldest supported OS.
 ALIASES="$GPU/angle-aliases.txt"
 
 angle_build () {
-    # The alias flag has to reach xcodebuild as ONE argument. Written inline as
-    # an unquoted ${1:+...} it word-splits at the space, xcodebuild sees a bare
-    # "-Wl,-alias_list,..." and dies with "invalid option" -- which the error
-    # filter below then hides, because it drops lines mentioning xcodebuild.
-    # Build it in an array instead, and expand that array quoted.
-    #
-    # $(inherited) is for xcodebuild to expand, not the shell, so it stays
-    # backslash-escaped here.
     local ldflags=()
     if [ -n "${1:-}" ]; then
         ldflags=("OTHER_LDFLAGS=\$(inherited) -Wl,-alias_list,$1")
     fi
-
+    # This sparse source tree does not generate WebKit's availability overlay.
     env -i PATH="$PATH" HOME="$HOME" xcodebuild archive \
-        -archivePath "ANGLE" -scheme "ANGLE" \
-        -sdk iphoneos -arch arm64 -configuration Release \
-        WEBCORE_LIBRARY_DIR="/usr/local/lib" NORMAL_UMBRELLA_FRAMEWORKS_DIR="" \
-        CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO \
+        -archivePath "ANGLE-$SDK" -scheme ANGLE -sdk "$SDK" -arch arm64 -configuration Release \
+        WEBCORE_LIBRARY_DIR=/usr/local/lib NORMAL_UMBRELLA_FRAMEWORKS_DIR="" \
+        CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO ANGLE_ALLOWABLE_CLIENTS="" \
         WK_AVAILABILITY_OVERLAY_FLAGS="" WK_AVAILABILITY_OVERLAY_SWIFT_FLAGS="" \
-        IPHONEOS_DEPLOYMENT_TARGET="16.4" \
-        ${ldflags[@]+"${ldflags[@]}"} \
-        > "$LOG" 2>&1 \
-      || { echo "ANGLE build failed; last errors:" >&2
-           grep -a "error:\|^ld: " "$LOG" | head -10 >&2; exit 1; }
+        IPHONEOS_DEPLOYMENT_TARGET=16.4 MACOSX_DEPLOYMENT_TARGET=15.0 \
+        ${ldflags[@]+"${ldflags[@]}"} > "$LOG" 2>&1 \
+        || { tail -60 "$LOG" >&2; exit 1; }
 }
 
-# Two passes, because of a name mismatch.
-#
-# WebKit builds ANGLE with its entry points renamed -- the dylib exports
-# EGL_ChooseConfig, not eglChooseConfig -- since WebCore reaches them through
-# ANGLE's own loader. libepoxy and virglrenderer expect the standard names.
-# Rather than hand-write ~115 forwarding functions, the second pass relinks with
-# ld's -alias_list, which adds the standard name as an alias of each renamed
-# symbol. No wrappers, no extra indirection at call time.
-#
-# EGL only, deliberately. Aliasing the 828 GL_* exports the same way fails with
-# "ld: 828 duplicate symbols" -- ANGLE already carries internal gl* symbols that
-# the aliases collide with. It is also unnecessary: epoxy resolves GL entry
-# points through eglGetProcAddress, so EGL is the only surface that must be
-# reachable by its standard name.
-echo "==> building ANGLE for iOS arm64, pass 1 (log: $LOG)"
+echo "Building ANGLE for $SDK (log: $LOG)"
 angle_build ""
-
-echo "==> generating EGL symbol aliases"
-nm -g "ANGLE.xcarchive/Products/usr/local/lib/libANGLE-shared.dylib" \
-  | awk '$2=="T"{print $3}' | grep -E '^_EGL_' \
-  | awk '{o=$1; a=$1; sub(/^_EGL_/,"_egl",a); print o, a}' > "$ALIASES"
-echo "    $(wc -l < "$ALIASES") aliases"
-
-echo "==> pass 2, relinking with standard EGL names"
+DYLIB="ANGLE-$SDK.xcarchive/Products/usr/local/lib/libANGLE-shared.dylib"
+# WebKit renames EGL exports. GL functions are resolved through eglGetProcAddress.
+nm -g "$DYLIB" | awk '$2=="T" && $3 ~ /^_EGL_/ {o=$3; a=$3; sub(/^_EGL_/,"_egl",a); print o, a}' > "$ALIASES"
 angle_build "$ALIASES"
-
-DYLIB="ANGLE.xcarchive/Products/usr/local/lib/libANGLE-shared.dylib"
-[ -f "$DYLIB" ] || { echo "no dylib at $DYLIB" >&2; exit 1; }
-
 install -d "$PREFIX/lib" "$PREFIX/include"
 cp "$DYLIB" "$PREFIX/lib/"
-rsync -a "include/" "$PREFIX/include/"
-
-# WebKit ships it for loading out of WebCore.framework; ours is embedded in the
-# app, so the install name has to say so or dyld will not find it at runtime.
-install_name_tool -id "@rpath/libANGLE-shared.dylib" "$PREFIX/lib/libANGLE-shared.dylib"
-
-echo "==> staged $(ls -lh "$PREFIX/lib/libANGLE-shared.dylib" | awk '{print $5}') to $PREFIX/lib"
-otool -D "$PREFIX/lib/libANGLE-shared.dylib" | tail -1
-echo "==> standard EGL entry points exported: $(nm -g "$PREFIX/lib/libANGLE-shared.dylib" | grep -c ' T _egl')"
+rsync -a include/ "$PREFIX/include/"
+install_name_tool -id @rpath/libANGLE-shared.dylib "$PREFIX/lib/libANGLE-shared.dylib"
+python3 - "$HUSK_ROOT" "$PREFIX" "$REVISION" "$SDK" <<'PY'
+import hashlib, json, subprocess, sys
+from pathlib import Path
+root, prefix = map(Path, sys.argv[1:3])
+library = prefix / 'lib/libANGLE-shared.dylib'
+script = root / 'scripts/build_angle_ios.sh'
+(prefix / 'angle-manifest.json').write_text(json.dumps({
+    'revision': sys.argv[3], 'platform': sys.argv[4],
+    'sdk': subprocess.check_output(['xcrun', '--sdk', sys.argv[4], '--show-sdk-version'], text=True).strip(),
+    'library': str(library), 'sha256': hashlib.sha256(library.read_bytes()).hexdigest(),
+    'script_sha256': hashlib.sha256(script.read_bytes()).hexdigest(),
+}, indent=2) + '\n')
+PY
+echo "Built $PREFIX/lib/libANGLE-shared.dylib"

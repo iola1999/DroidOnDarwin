@@ -616,6 +616,15 @@ def build(out, llvm):
          '-Wl,-z,max-page-size=16384,-z,common-page-size=16384',
          EXP / 'userspace/art-test.c', '-ldl', '-o', out / 'art-test.elf'])
     programs.append(('/system/bin/art-test', out / 'art-test.elf'))
+    protocol = EXP / 'graphics/protocol'
+    for name, origin in json.loads((protocol / 'sources.json').read_text())['files'].items():
+        if hashlib.sha256((protocol / name).read_bytes()).hexdigest() != origin['sha256']:
+            raise RuntimeError('Graphics protocol checksum mismatch: ' + name)
+    run([ndk / 'toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android35-clang',
+         '-ffixed-x18', '-mno-outline-atomics', '-g', '-O2', '-Wall', '-Wextra', '-Werror',
+         '-I', protocol, '-Wl,-z,max-page-size=16384,-z,common-page-size=16384',
+         EXP / 'userspace/gpu-test.c', '-o', out / 'gpu-test.elf'])
+    programs.append(('/system/bin/gpu-test', out / 'gpu-test.elf'))
     programs.append(('/system/bin/secilc', WORK / 'android/android36/bin/secilc'))
     programs.append(('/system/bin/servicemanager', WORK / 'android/android36/bin/servicemanager'))
     programs.append(('/system/bin/aconfigd-system', WORK / 'android/android36/bin/aconfigd-system'))

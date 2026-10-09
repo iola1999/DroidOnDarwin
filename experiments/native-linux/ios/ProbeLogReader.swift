@@ -22,6 +22,7 @@ actor ProbeLogReader {
     private var phase: String?
     static let lineLimit = 80
     static let phaseLabels = [
+        "native_graphics_start": "正在测试 Metal 图形",
         "linux_shutdown": "正在结束测试",
         "android_zygote_launch": "正在检查 Android 进程启动",
         "android_framework_launch": "正在检查 Android 系统框架",

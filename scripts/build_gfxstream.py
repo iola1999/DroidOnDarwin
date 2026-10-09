@@ -49,6 +49,8 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--platform", choices=("ios", "macos", "macos-ios-api"), default="ios",
                         help="macos-ios-api runs the iOS EGL/platform code on a Mac for validation")
+    parser.add_argument("--renderer-only", action="store_true",
+                        help="Build the renderer for direct RenderChannel clients")
     args = parser.parse_args()
     platform = args.platform
     source = ROOT / "work/gfxstream-src"
@@ -65,12 +67,14 @@ def main():
     if revision != REVISION:
         raise SystemExit(f"gfxstream revision {revision}; expected {REVISION}")
     apply(source, "gfxstream-ios.patch")
+    apply(source, "gfxstream-ios-serial-gles.patch")
+    apply(source, "gfxstream-angle-shaders.patch")
     destinations = {
         "native-window.mm": "host/native_window",
         "egl-platform.mm": "host/gl/glestranslator/egl",
         "egl-platform.h": "host/gl/glestranslator/egl",
     }
-    inputs = [ROOT / "patches/gfxstream-ios.patch", Path(__file__).resolve()]
+    inputs = [ROOT / "patches/gfxstream-ios.patch", ROOT / "patches/gfxstream-ios-serial-gles.patch", ROOT / "patches/gfxstream-angle-shaders.patch", Path(__file__).resolve()]
     for name, directory in destinations.items():
         path = ROOT / "src/gfxstream-ios" / name
         shutil.copyfile(path, source / directory / name)
@@ -92,57 +96,61 @@ def main():
     shutil.copyfile(build / artifact.name, artifact)
     run(["xcrun", "install_name_tool", "-id", f"@rpath/{artifact.name}", artifact],
         f"gfxstream-install-name-{platform}")
-    rust_source = ROOT / "work/rutabaga-src"
-    if not rust_source.exists():
-        run(["git", "init", rust_source], "rutabaga-init")
-        run(["git", "remote", "add", "origin", "https://github.com/magma-gpu/rutabaga_gfx.git"],
-            "rutabaga-remote", rust_source)
-        run(["git", "fetch", "--depth=1", "origin", RUTABAGA_REVISION], "rutabaga-fetch", rust_source)
-        run(["git", "checkout", "--detach", RUTABAGA_REVISION], "rutabaga-checkout", rust_source)
-    actual = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=rust_source, text=True).strip()
-    if actual != RUTABAGA_REVISION:
-        raise SystemExit(f"Rutabaga revision {actual}; expected {RUTABAGA_REVISION}")
-    lock = ROOT / "scripts/locks/rutabaga-Cargo.lock"
-    inputs.append(lock)
-    shutil.copyfile(lock, rust_source / "Cargo.lock")
-    rust_target = "aarch64-apple-ios" if platform == "ios" else "aarch64-apple-darwin"
-    run(["env", f"GFXSTREAM_PATH={prefix}/lib", "IPHONEOS_DEPLOYMENT_TARGET=16.4",
-         "cargo", "build", "--manifest-path", rust_source / "ffi/Cargo.toml", "--locked",
-         "--release", "--features", "gfxstream", "--target", rust_target], f"rutabaga-{platform}")
-    # Link Rust into QEMU on iOS; its generated dylib's string table currently
-    # fails the Xcode 27 linker's alignment check.
-    rutabaga = prefix / ("lib/librutabaga_gfx_ffi.a" if platform == "ios"
-                         else "lib/librutabaga_gfx_ffi.dylib")
-    shutil.copyfile(rust_source / f"target/{rust_target}/release" / rutabaga.name, rutabaga)
-    if platform == "ios":
-        (prefix / "lib/librutabaga_gfx_ffi.dylib").unlink(missing_ok=True)
-    else:
-        run(["xcrun", "install_name_tool", "-id", f"@rpath/{rutabaga.name}", rutabaga],
-            f"rutabaga-install-name-{platform}")
-    include = prefix / "include/rutabaga_gfx"
-    include.mkdir(parents=True, exist_ok=True)
-    shutil.copyfile(rust_source / "ffi/src/include/rutabaga_gfx_ffi.h", include / "rutabaga_gfx_ffi.h")
-    rpath = f" -Wl,-rpath,{prefix}/lib" if platform != "ios" else ""
-    rust_link = "${libdir}/librutabaga_gfx_ffi.a -liconv" if platform == "ios" else "-lrutabaga_gfx_ffi"
-    (prefix / "lib/pkgconfig/rutabaga_gfx_ffi.pc").write_text(
-        f"prefix={prefix}\nlibdir=${{prefix}}/lib\nincludedir=${{prefix}}/include\n"
-        "Name: rutabaga_gfx_ffi\nDescription: Rutabaga C interface with gfxstream\nVersion: 0.1.85\n"
-        f"Libs: -L${{libdir}} {rust_link} -lgfxstream_backend{rpath}\n"
-        "Cflags: -I${includedir}\n")
-    run(["xcrun", "otool", "-L", artifact, rutabaga], f"gfxstream-dependencies-{platform}")
+    actual = None
+    libraries = [artifact]
+    if not args.renderer_only:
+        rust_source = ROOT / "work/rutabaga-src"
+        if not rust_source.exists():
+            run(["git", "init", rust_source], "rutabaga-init")
+            run(["git", "remote", "add", "origin", "https://github.com/magma-gpu/rutabaga_gfx.git"],
+                "rutabaga-remote", rust_source)
+            run(["git", "fetch", "--depth=1", "origin", RUTABAGA_REVISION], "rutabaga-fetch", rust_source)
+            run(["git", "checkout", "--detach", RUTABAGA_REVISION], "rutabaga-checkout", rust_source)
+        actual = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=rust_source, text=True).strip()
+        if actual != RUTABAGA_REVISION:
+            raise SystemExit(f"Rutabaga revision {actual}; expected {RUTABAGA_REVISION}")
+        lock = ROOT / "scripts/locks/rutabaga-Cargo.lock"
+        inputs.append(lock)
+        shutil.copyfile(lock, rust_source / "Cargo.lock")
+        rust_target = "aarch64-apple-ios" if platform == "ios" else "aarch64-apple-darwin"
+        run(["env", f"GFXSTREAM_PATH={prefix}/lib", "IPHONEOS_DEPLOYMENT_TARGET=16.4",
+             "cargo", "build", "--manifest-path", rust_source / "ffi/Cargo.toml", "--locked",
+             "--release", "--features", "gfxstream", "--target", rust_target], f"rutabaga-{platform}")
+        # Link Rust into QEMU on iOS; its generated dylib's string table currently
+        # fails the Xcode 27 linker's alignment check.
+        rutabaga = prefix / ("lib/librutabaga_gfx_ffi.a" if platform == "ios"
+                             else "lib/librutabaga_gfx_ffi.dylib")
+        shutil.copyfile(rust_source / f"target/{rust_target}/release" / rutabaga.name, rutabaga)
+        if platform == "ios":
+            (prefix / "lib/librutabaga_gfx_ffi.dylib").unlink(missing_ok=True)
+        else:
+            run(["xcrun", "install_name_tool", "-id", f"@rpath/{rutabaga.name}", rutabaga],
+                f"rutabaga-install-name-{platform}")
+        include = prefix / "include/rutabaga_gfx"
+        include.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(rust_source / "ffi/src/include/rutabaga_gfx_ffi.h", include / "rutabaga_gfx_ffi.h")
+        rpath = f" -Wl,-rpath,{prefix}/lib" if platform != "ios" else ""
+        rust_link = "${libdir}/librutabaga_gfx_ffi.a -liconv" if platform == "ios" else "-lrutabaga_gfx_ffi"
+        (prefix / "lib/pkgconfig/rutabaga_gfx_ffi.pc").write_text(
+            f"prefix={prefix}\nlibdir=${{prefix}}/lib\nincludedir=${{prefix}}/include\n"
+            "Name: rutabaga_gfx_ffi\nDescription: Rutabaga C interface with gfxstream\nVersion: 0.1.85\n"
+            f"Libs: -L${{libdir}} {rust_link} -lgfxstream_backend{rpath}\n"
+            "Cflags: -I${includedir}\n")
+        libraries.append(rutabaga)
+    run(["xcrun", "otool", "-L", *libraries], f"gfxstream-dependencies-{platform}")
     sdk_name = "iphoneos" if platform == "ios" else "macosx"
     sdk = subprocess.check_output(["xcrun", "--sdk", sdk_name, "--show-sdk-version"],
                                   text=True).strip()
     (build / "manifest.json").write_text(json.dumps({
         "revision": revision, "rutabaga_revision": actual, "sdk": sdk, "platform": platform,
         "libraries": {str(p): hashlib.sha256(p.read_bytes()).hexdigest()
-                      for p in (artifact, rutabaga)},
+                      for p in libraries},
         "inputs": {str(p.relative_to(ROOT)): hashlib.sha256(p.read_bytes()).hexdigest()
                    for p in inputs},
     }, indent=2) + "\n")
-    if platform == "ios":
+    if platform == "ios" and not args.renderer_only:
         write_notices(source, rust_source)
-    print(f"Built gfxstream and Rutabaga for {platform}: {prefix}")
+    print(f"Built {len(libraries)} graphics libraries for {platform}: {prefix}")
 
 
 if __name__ == "__main__":

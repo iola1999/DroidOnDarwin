@@ -1219,3 +1219,86 @@ Android 多进程负载可能受到这种映射成本影响；当前还采用单
 完成，旧 HyperOS 与当前 Android 原型也有功能和负载差异。下一次整机判断
 需要同设备、同系统内容的冷启动、应用启动、连续滑动、切换和持续温度数据。
 S6 的滚动改善来自 iOS 日志界面调整，Android 窗口交互仍待实现。
+
+
+## N4-G1：同进程 Metal 图形（2026-10-09 晚间）
+
+本轮交付截止时间为北京时间 23:30。已实现 Linux 客体到 GPU 的绘图、图形
+缓冲区提交和原生窗口显示，真机包包含图形阶段与已有运行时的合并测试。
+完整 SurfaceFlinger 及 Composer 仍需要后续集成。
+
+### 实现范围
+
+gfxstream 使用 `07ee40efb0e7037a9a9b7fe59071e7c4997e7cbe`，ANGLE 取自
+WebKit `2edaa071178a43a44dfaa4c37716247c43642c66`。构建同时覆盖 iOS
+和使用相同平台适配代码的 macOS。两端均使用本项目构建的 ANGLE。
+
+Android Bionic 测试程序通过真实 Linux Unix socket `/dev/nce-render`
+发送 gfxstream GLES/renderControl 协议，宿主将字节流交给
+`gfxstream::RenderChannel`。每条连接独立维护输入、输出及退出状态。
+这次客体直接生成协议，标准 Android `libEGL` 客户端尚未接入。
+
+绘图包含 GLES 着色器编译、程序链接、顶点缓冲区、uniform 更新，以及
+360×640 的 120 帧三角形动画。每帧复制到 renderControl color buffer 后
+提交。应用持有 `CAMetalLayer`，gfxstream 创建 EGL window surface，
+ANGLE Metal 在专用显示线程提交。连续显示通过 GPU 表面完成；结束时读回
+像素供校验和 BMP 导出。iOS 图形视图固定在列表上方，滚动日志时保留其视图
+和图层。所有运行库、内核和客体程序随 IPA 提供。
+
+### 本轮修复
+
+并发检查曾返回全零像素。仅启用 gfxstream 原有的指令串行执行后，重复运行
+又出现等待。线程采样停在 ANGLE `CommandQueue::ensureResourceReadyForCPU`；
+该实现按命令缓冲区创建序号判断完成情况，并等待队列中的命令缓冲区。
+另一个上下文尚未提交的命令会影响等待与完成判断。当前处理同时约束 GLES
+批次的执行顺序，并在每批结束时 `glFlush`，退出时也按同一锁顺序清理。
+加入该处理后，连续五轮完整 Linux 回归通过。批次串行对大型图形负载的影响
+仍需测量。
+
+缓冲区复制曾在 GLES 后端选择 `#version 330 core`。已按实际后端选择
+GLSL ES 3.00，逐像素检查复制结果，并按 gfxstream 的上下翻转约定比较行。
+初始化时的 UUID 查询改为检查 `GL_EXT_memory_object` 后执行；ANGLE Metal
+未提供该扩展时，原查询会留下 `GL_INVALID_ENUM`。
+
+可见窗口还遇到首次 `rcFBPost` 一直等待。gfxstream 的 Apple 默认路径将
+显示任务交给 UI 回调，而默认回调为空。Metal 平台适配改为使用已有专用
+显示线程；应用主线程负责视图和图层布局。
+
+ANGLE 构建补充 WebKit EGL 导出别名，并清除原工程仅允许 WebCore 客户端
+链接的配置。打包脚本检查内核、客体程序、构建输入和图形库校验值；iOS
+依赖库经过嵌入、签名及归档检查。
+
+### 验证与复杂度审查
+
+宿主直接通道测试覆盖 202 个上下文，其中 100 组并发上下文绘制不同颜色；
+Linux 集成测试覆盖 113 字节分片、串行重建、两个进程同时绘图、23.04 万
+像素的缓冲区复制与读回，以及全部连接释放。CLI、GCD 和可见窗口分别运行
+完整回归，并比较导出图像。可见窗口已检查到方向和颜色正常的三角形。
+最终本机 CLI/GCD/可见窗口通过 101/102/102 个命名测试，图像逐字节一致。
+可见窗口 120 帧耗时 1977.663 ms，平均 16.481 ms/帧，包含
+显示同步等待。该结果只覆盖简单三角形场景。另有 15 项 ELF、10 项 JIT
+协议和 5 组日志读取回归通过。iOS Release 构建、签名及归档校验已完成。
+构建 `N4-G1-iOS-20261009-225459`，真机执行待确认；具体结果见
+[N4-G1 本机结果](../experiments/native-linux/results-macos-n4-g1.json)。
+
+按 reclaim-code-entropy 审查后保留一个 Unix socket 转发实现，复用
+RenderChannel 的背压和 gfxstream 原有执行锁。若去掉双向独立工作线程，
+客体等待读回时可能阻塞待发送响应；若去掉退出时的 shutdown/join，渲染器
+销毁会与线程读写并发。因此保留这两处生命周期处理。
+宿主通道测试用于复现渲染库并发问题，Linux 测试同时检查系统调用和进程
+切换；两者覆盖不同边界。转发与连接生命周期集中在 `host-graphics.cpp`。
+
+### 后续顺序
+
+1. 在 iPhone 确认 N4-G1 的 Metal 初始化、连续提交、颜色、退出与峰值内存。
+2. 接入标准 Android EGL/GLES encoder，将连接建立接到现有 Linux socket，
+   检查 EGL 配置、共享上下文、线程 TLS 和上下文销毁。
+3. 实现 Android buffer allocator/mapper 和 Composer 所需接口，处理
+   native_handle、像素格式、stride、读写映射及同步 fence。
+4. 启动 SurfaceFlinger，接通 DisplayManager，继续 system_server 与桌面。
+5. 同设备比较整机启动、应用启动、滑动、进程切换和持续温度。
+
+当前性能数字只覆盖测试场景。完整 Android 桌面帧率、与旧 QEMU 的整机差异
+以及长时间功耗仍待测量。接口集成继续优先复用 Android/gfxstream 现有实现。
+
+本轮操作与结果见 [N4-G1 真机测试说明](native-linux-n3-ios-test.md)。

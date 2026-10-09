@@ -1,0 +1,56 @@
+diff --git a/host/frame_buffer.cpp b/host/frame_buffer.cpp
+index 473fcea..f2ddd5d 100644
+--- a/host/frame_buffer.cpp
++++ b/host/frame_buffer.cpp
+@@ -113,7 +113,8 @@ using gfxstream::host::vk::PostWorkerVk;
+     }
+ 
+ bool postOnlyOnMainThread() {
+-#if defined(__APPLE__) && !defined(QEMU_NEXT)
++// The app owns CAMetalLayer; ANGLE Metal presents from the post worker.
++#if defined(__APPLE__) && !defined(QEMU_NEXT) && !defined(GFXSTREAM_IOS)
+     return true;
+ #else
+     return false;
+diff --git a/host/render_thread.cpp b/host/render_thread.cpp
+index 050077b..55a4f00 100644
+--- a/host/render_thread.cpp
++++ b/host/render_thread.cpp
+@@ -76,7 +76,13 @@ RenderThread::RenderThread(RenderChannelImpl* channel,
+     : gfxstream::base::Thread(gfxstream::base::ThreadFlags::MaskSignals, 2 * 1024 * 1024,
+                             "RenderThread"),
+       mChannel(channel),
+-      mRunInLimitedMode(gfxstream::base::getCpuCoreCount() < kMinThreadsToRunUnlimited),
++      mRunInLimitedMode(
++#ifdef GFXSTREAM_IOS
++          true
++#else
++          gfxstream::base::getCpuCoreCount() < kMinThreadsToRunUnlimited
++#endif
++          ),
+       mContextId(virtioGpuContextId)
+ {
+     if (load) {
+@@ -526,12 +532,22 @@ intptr_t RenderThread::main() {
+                     progress = true;
+                 }
+             }
++#endif
++#ifdef GFXSTREAM_IOS
++            // ANGLE Metal tracks completion by command-buffer creation order.
++            // Submit each serialized batch before another context creates work.
++            if (progress && tInfo->m_glInfo && tInfo->m_glInfo->currContext) {
++                tInfo->m_glInfo->m_gl2Dec.glFlush();
++            }
+ #endif
+         } while (progress);
+     }
+ 
+ #if GFXSTREAM_ENABLE_HOST_GLES
+     if (tInfo->m_glInfo) {
++#ifdef GFXSTREAM_IOS
++        gfxstream::base::AutoLock limitedModeLock(sThreadRunLimiter);
++#endif
+         FrameBuffer::getFB()->drainGlRenderThreadResources();
+     }
+ #endif

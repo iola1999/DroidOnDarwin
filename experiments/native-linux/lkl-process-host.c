@@ -5,6 +5,9 @@
 #include "lkl-host-ops.h"
 #include "guest-image.h"
 #include "programs.h"
+#ifdef NCE_GRAPHICS
+#include "graphics/host-graphics.h"
+#endif
 #include "user-scripts.h"
 #include <mach/mach.h>
 #include <CommonCrypto/CommonDigest.h>
@@ -855,6 +858,27 @@ void nce_process_tests(long (*host_syscall)(long, long *), long (*guest_syscall)
     REQUIRE(get_file(host_syscall, "/stdout", benchmark, sizeof(benchmark)) > 0);
     REQUIRE(strstr(benchmark, "android_bionic_threads_allocator_tls"));
     fputs(benchmark, stdout);
+#ifdef NCE_GRAPHICS
+    puts("{\"phase\":\"native_graphics_start\"}");
+    REQUIRE(nce_graphics_start(host_syscall) == 0);
+    run_program(host_syscall, "/system/bin/gpu-test", NULL);
+    REQUIRE(get_file(host_syscall, "/stdout", benchmark, sizeof(benchmark)) > 0);
+    REQUIRE(strstr(benchmark, "linux_native_gles_metal"));
+    REQUIRE(strstr(benchmark, "linux_native_gles_shader_frames"));
+    fputs(benchmark, stdout);
+    nce_graphics_stop();
+    const char *gpu_output = getenv("NCE_GPU_OUTPUT");
+    if (gpu_output) {
+        size_t capacity = NCE_GPU_WIDTH * NCE_GPU_HEIGHT * 4 + 55;
+        void *pixels = malloc(capacity);
+        REQUIRE(pixels);
+        long bytes = get_file(host_syscall, "/data/nce/gpu.bmp", pixels, capacity);
+        REQUIRE(bytes == (long)capacity - 1 && !memcmp(pixels, "BM", 2));
+        FILE *file = fopen(gpu_output, "wb");
+        REQUIRE(file && fwrite(pixels, 1, bytes, file) == (size_t)bytes && fclose(file) == 0);
+        free(pixels);
+    }
+#endif
     puts("{\"phase\":\"android_art_reference_heap\"}");
     run_program(host_syscall, "/art-heap-test", NULL);
     REQUIRE(get_file(host_syscall, "/stdout", benchmark, sizeof(benchmark)) > 0);
