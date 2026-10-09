@@ -9,6 +9,8 @@
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
+#include <sys/wait.h>
+#include "../layout.h"
 #include <android/log.h>
 
 static void deadline(int signal_number)
@@ -17,6 +19,24 @@ static void deadline(int signal_number)
     const char message[] = "ART Java test exceeded its 90-second deadline\n";
     write(STDERR_FILENO, message, sizeof(message) - 1);
     _exit(124);
+}
+
+static void check_cfi(void)
+{
+    size_t (*shadow_size)(void) = dlsym(RTLD_DEFAULT, "__cfi_shadow_size");
+    void (*slowpath)(uint64_t, void *) = dlsym(RTLD_DEFAULT, "__cfi_slowpath");
+    if (!shadow_size || !slowpath || shadow_size() != ((NCE_HOST_ADDRESS_LIMIT - 1) >> 17)) abort();
+    slowpath(0, (void *)getpid);
+    pid_t child = fork();
+    if (child < 0) abort();
+    if (!child) {
+        slowpath(0, (void *)NCE_HOST_ADDRESS_LIMIT);
+        _exit(99);
+    }
+    int status;
+    if (waitpid(child, &status, 0) != child || !WIFSIGNALED(status) ||
+        WTERMSIG(status) != SIGTRAP) abort();
+    printf("{\"test\":\"android_cfi_bounded_shadow\",\"passed\":true,\"shadow_bytes\":%zu}\n", shadow_size());
 }
 
 static double now_ms(void)
@@ -355,6 +375,7 @@ int main(void)
     setenv("ICU_DATA", "/apex/com.android.i18n/etc/icu", 1);
     jint (*create)(JavaVM **, void **, void *) = dlsym(library, "JNI_CreateJavaVM");
     if (!create) return 4;
+    check_cfi();
     JavaVMOption options[] = {
         {.optionString = "-Xusejit:true"},
         {.optionString = "-Xjitmaxsize:32m"},

@@ -123,9 +123,10 @@ void nce_user_return(long syscall, long result, unsigned long original_x0)
     restore_saved_sigmask();
 }
 
-void nce_user_fault(unsigned long address, int illegal_instruction)
+void nce_user_fault(unsigned long address, int kind)
 {
-    if (illegal_instruction) force_sig_fault(SIGILL, ILL_ILLOPC, (void __user *)address);
+    if (kind == 2) force_sig_fault(SIGTRAP, TRAP_BRKPT, (void __user *)address);
+    else if (kind == 1) force_sig_fault(SIGILL, ILL_ILLOPC, (void __user *)address);
     else {
         mmap_read_lock(current->mm);
         struct vm_area_struct *vma = find_vma(current->mm, address);

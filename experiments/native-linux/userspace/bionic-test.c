@@ -20,6 +20,26 @@ void file_tests(const char *libc);
 void signal_tests(const char *libc);
 void seccomp_tests(void);
 
+static void allocator_class_growth(void)
+{
+    /* Exceed one 32 MiB Scudo size class and exercise its allocation fallback. */
+    enum { count = 1024, bytes = 49152 };
+    unsigned char **blocks = calloc(count, sizeof(*blocks));
+    if (!blocks) abort();
+    for (unsigned i = 0; i < count; ++i) {
+        blocks[i] = malloc(bytes);
+        if (!blocks[i]) abort();
+        memset(blocks[i], (unsigned char)i, bytes);
+    }
+    for (unsigned i = 0; i < count; ++i) {
+        for (unsigned j = 0; j < bytes; ++j)
+            if (blocks[i][j] != (unsigned char)i) abort();
+        free(blocks[i]);
+    }
+    free(blocks);
+    puts("{\"test\":\"android_scudo_class_growth\",\"passed\":true,\"allocated_bytes\":50331648}");
+}
+
 int main(void)
 {
     file_tests("bionic");
@@ -36,6 +56,7 @@ int main(void)
     int jumped = setjmp(saved);
     if (!jumped) longjmp(saved, 7);
     if (jumped != 7) return 3;
+    allocator_class_growth();
     printf("{\"test\":\"android_bionic_threads_allocator_tls\",\"passed\":true,\"page_size\":%ld}\n",
            sysconf(_SC_PAGESIZE));
     return 0;

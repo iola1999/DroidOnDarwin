@@ -587,7 +587,7 @@ def build(out, llvm):
     android = WORK / 'android/android36/com.android.runtime'
     programs.append((ANDROID_INTERPRETER, build_android_linker()))
     programs.append(('/system/lib64/libc.so', build_android_libc()))
-    programs.append(('/system/lib64/libdl.so', android / 'lib64/bionic/libdl.so'))
+    programs.append(('/system/lib64/libdl.so', WORK / 'android/linker-build/libdl.so'))
     crypto = build_android_crypto()
     replacements = {**build_android_art(), **crypto}
     programs += android_dependencies(llvm, replacements)

@@ -91,7 +91,7 @@ void memory_tests(void)
     CHECK(close(elf) == 0);
     puts("{\"test\":\"linux_android_elf_reservation_boundaries\",\"passed\":true}");
 
-    const size_t reserve = 8UL * 1024 * 1024 * 1024;
+    const size_t reserve = 2UL * 1024 * 1024 * 1024;
     unsigned char *sparse = mmap(NULL, reserve, PROT_NONE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
     CHECK(sparse != MAP_FAILED);
     const size_t offsets[] = {0, 1024UL * 1024 * 1024, reserve - PAGE};
@@ -112,7 +112,7 @@ void memory_tests(void)
     CHECK(waitpid(sparse_child, &sparse_status, 0) == sparse_child && sparse_status == 0);
     for (unsigned i = 0; i < 3; ++i) CHECK(sparse[offsets[i]] == 17 + i);
     CHECK(munmap(sparse, reserve) == 0);
-    puts("{\"test\":\"linux_8gib_sparse_reservation_cow\",\"passed\":true}");
+    printf("{\"test\":\"linux_sparse_reservation_cow\",\"passed\":true,\"reserved_bytes\":%zu}\n", reserve);
 
     unsigned char *data = mmap(NULL, 4 * PAGE, PROT_READ | PROT_WRITE,
                                MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);

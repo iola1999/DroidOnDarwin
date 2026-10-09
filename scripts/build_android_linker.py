@@ -31,13 +31,16 @@ def build():
     library = TOOL / 'sysroot/usr/lib/aarch64-linux-android'
     ndk_inputs = {name: sha(library / name) for name in
                   ('libc++_static.a', 'libc++abi.a', 'libc.a', 'libm.a', 'libdl.a', 'libz.a')}
-    fingerprint = hashlib.sha256(Path(__file__).read_bytes() + SOURCES.read_bytes() +
+    layout = ROOT / 'experiments/native-linux/layout.h'
+    fingerprint = hashlib.sha256(Path(__file__).read_bytes() + SOURCES.read_bytes() + layout.read_bytes() +
                                  json.dumps(ndk_inputs, sort_keys=True).encode()).hexdigest()
     manifest = output / 'manifest.json'
     binary = output / 'linker64'
-    if manifest.exists() and binary.exists():
+    libdl = output / 'libdl.so'
+    if manifest.exists() and binary.exists() and libdl.exists():
         previous = json.loads(manifest.read_text())
-        if previous['build_inputs'] == fingerprint and previous['sha256'] == sha(binary):
+        if (previous['build_inputs'] == fingerprint and previous['sha256'] == sha(binary)
+                and previous.get('libdl_sha256') == sha(libdl)):
             return binary
     sources = json.loads(SOURCES.read_text())
     for item in sources['archives']:
@@ -70,7 +73,14 @@ def build():
     if text.count(original) != 1:
         raise RuntimeError('Android linker reservation code changed')
     phdr.write_text(text.replace(original, replacement))
-    includes = [bionic / 'libc', bionic / 'libc/platform', bionic / 'libc/async_safe/include',
+    cfi = bionic / 'libc/private/CFIShadow.h'
+    text = cfi.read_text()
+    original = 'static constexpr uintptr_t kMaxTargetAddr = 0xffffffffffff;'
+    if text.count(original) != 1:
+        raise RuntimeError('Android CFI address limit changed')
+    cfi.write_text(text.replace('#include <stdint.h>', '#include <stdint.h>\n#include "layout.h"')
+                       .replace(original, 'static constexpr uintptr_t kMaxTargetAddr = NCE_HOST_ADDRESS_LIMIT - 1;'))
+    includes = [layout.parent, bionic / 'libc', bionic / 'libc/platform', bionic / 'libc/async_safe/include',
                 WORK / 'libbase/include', WORK / 'libziparchive/include',
                 WORK / 'libziparchive/incfs_support/include', WORK / 'liblog/liblog/include', WORK / 'core-include']
     flags = ['--target=aarch64-linux-android10000', '-O2', '-g', '-fPIC', '-ftrivial-auto-var-init=zero', '-ffixed-x18', '-mno-outline-atomics',
@@ -97,6 +107,8 @@ def build():
         obj = output / (str(source.relative_to(WORK)).replace('/', '_') + '.o')
         cpp = source.suffix in ('.cpp', '.cc')
         extra = ['-std=gnu++20', '-fno-exceptions', '-fno-rtti'] if cpp else ['-D__ASSEMBLY__'] if source.suffix == '.S' else []
+        if source.parent == bionic / 'libdl':
+            extra += ['-fvisibility=default']
         result = subprocess.run([TOOL / 'bin' / ('clang++' if cpp else 'clang'), *flags, *extra,
                                  '-c', source, '-o', obj], capture_output=True, text=True, timeout=120)
         if result.returncode:
@@ -115,7 +127,21 @@ def build():
                TOOL / 'lib/clang/21/lib/linux/libclang_rt.builtins-aarch64-android.a', '-o', binary]
     subprocess.run(command, check=True, timeout=120)
     subprocess.run([TOOL / 'bin/llvm-strip', '--strip-debug', binary], check=True, timeout=30)
+    dl_objects = [compile(bionic / 'libdl' / name) for name in ('libdl.cpp', 'libdl_cfi.cpp')]
+    version_map = output / 'libdl.arm64.map'
+    lines = []
+    for line in (bionic / 'libdl/libdl.map.txt').read_text().splitlines():
+        arches = set(line.partition('#')[2].split()) & {'arm', 'arm64', 'x86', 'x86_64', 'riscv64'}
+        if not arches or 'arm64' in arches:
+            lines.append(line)
+    version_map.write_text('\n'.join(lines) + '\n')
+    subprocess.run([TOOL / 'bin/aarch64-linux-android35-clang++', '-nostdlib', '-shared',
+                    '-Wl,-soname,libdl.so,-Bsymbolic,-z,defs,-z,max-page-size=16384,-z,common-page-size=16384',
+                    '-Wl,--version-script=' + str(version_map), *dl_objects, binary, '-o', libdl],
+                   check=True, timeout=120)
+    subprocess.run([TOOL / 'bin/llvm-strip', '--strip-debug', libdl], check=True, timeout=30)
     manifest.write_text(json.dumps(dict(build_inputs=fingerprint, sha256=sha(binary),
+                                       libdl_sha256=sha(libdl), layout_sha256=sha(layout),
                                        sources=sources, ndk_inputs=ndk_inputs, reservation_syscall=245), indent=2) + '\n')
     return binary
 

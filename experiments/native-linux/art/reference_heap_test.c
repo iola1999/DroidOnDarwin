@@ -74,7 +74,9 @@ int main(void)
     for (size_t i = 0; i < page_size; ++i) {
         assert(hole[i] == 0 && region[i] == 0xa5 && region[2 * page_size + i] == 0xa5);
     }
-    void *last = (void *)(base + (UINT64_C(1) << 32) - page_size);
+    assert(nce_art_heap_contains((void *)base, NCE_ART_HEAP_SIZE));
+    assert(!nce_art_heap_contains((void *)(base + NCE_ART_HEAP_SIZE), 1));
+    void *last = (void *)(base + NCE_ART_HEAP_SIZE - page_size);
     assert(map_pages(last, 1, MAP_FIXED_NOREPLACE) == last);
     *(unsigned char *)last = 0x53;
     assert(map_pages(last, 2, 0) == MAP_FAILED);

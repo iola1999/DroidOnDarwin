@@ -11,7 +11,7 @@
 #define MAP_FIXED_NOREPLACE 0x100000
 #endif
 
-#define HEAP_SIZE (UINT64_C(1) << 32)
+#define HEAP_SIZE NCE_ART_HEAP_SIZE
 #define MIN_PAGE_SIZE 4096
 
 uintptr_t nce_art_reference_base;

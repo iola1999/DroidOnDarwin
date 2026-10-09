@@ -12,6 +12,8 @@ extern "C" {
 #endif
 
 extern uintptr_t nce_art_reference_base;
+/* Reserved capacity; compressed references retain their 32-bit format. */
+#define NCE_ART_HEAP_SIZE (UINT64_C(1) << 30)
 int nce_art_heap_init(void);
 int nce_art_heap_contains(const void *address, size_t length);
 void *nce_art_heap_map(void *address, size_t length, int prot, int flags, int fd, off_t offset);

@@ -58,7 +58,7 @@ static void (*user_fault)(unsigned long, int);
 static void (*user_preempt)(void);
 static unsigned long faults, allocated, freed;
 static int trace;
-static struct sigaction old_segv, old_bus, old_ill;
+static struct sigaction old_segv, old_bus, old_ill, old_trap;
 
 static void shmem_init(unsigned long size)
 {
@@ -274,6 +274,8 @@ static NceState *handle_event(NceState *state)
     } else if (p->event_kind == 2) {
         user_preempt();
         ++preemptions;
+    } else if (p->event_kind == 4) {
+        user_fault(state->regs.pc, 2);
     } else {
         ++stack_calls;
         if (p->stack_unmapped && state->regs.x[8] == 93) ++stackless_exits;
@@ -311,7 +313,7 @@ static void fault(int signal, siginfo_t *info, void *opaque)
                 logged_redirect = 1;
             }
             capture_state(&p->state, u);
-            p->event_kind = signal == SIGUSR2 ? 2 : stub ? 3 : 1;
+            p->event_kind = signal == SIGUSR2 ? 2 : signal == SIGTRAP ? 4 : stub ? 3 : 1;
             p->fault_address = address;
             p->fault_write = is_write;
             p->fault_illegal = signal == SIGILL;
@@ -497,6 +499,7 @@ unsigned long nce_process_setup(void)
     REQUIRE(sigaction(SIGSEGV, &action, &old_segv) == 0);
     REQUIRE(sigaction(SIGBUS, &action, &old_bus) == 0);
     REQUIRE(sigaction(SIGILL, &action, &old_ill) == 0);
+    REQUIRE(sigaction(SIGTRAP, &action, &old_trap) == 0);
     REQUIRE(sigaction(SIGUSR2, &action, &old_preempt) == 0);
     event_resume = nce_memory_take(PAGE);
     REQUIRE(pthread_create(&timer_thread, NULL, preempt_timer, NULL) == 0);
@@ -955,6 +958,7 @@ void nce_process_cleanup(void)
     REQUIRE(sigaction(SIGSEGV, &old_segv, NULL) == 0);
     REQUIRE(sigaction(SIGBUS, &old_bus, NULL) == 0);
     REQUIRE(sigaction(SIGILL, &old_ill, NULL) == 0);
+    REQUIRE(sigaction(SIGTRAP, &old_trap, NULL) == 0);
     REQUIRE(munmap(ram, ram_size) == 0);
     /* The virtual address reservation and code belong to memory.c. */
     printf("{\"test\":\"fixed_linux_code_view\",\"copies\":%lu,\"passed\":true}\n", code_copies);

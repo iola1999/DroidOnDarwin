@@ -6,7 +6,8 @@ ext4 系统盘与数据盘、Zygote、cgroup、seccomp、APEX 查询、aconfig �
 指令扩展、ART intrinsic 与方法内联。原版 system_server 已推进到显示服务
 初始化；完整系统服务和桌面尚未启动。最新合并包与检查范围见
 [手机测试说明](native-linux-n3-ios-test.md)。
-用户外出期间继续本机开发，手机执行结果保留为待确认。
+N3-S3 手机测试在地址预留阶段失败，Linux 尚未启动。缩减地址后的 CLI/GCD
+回归已通过，N3-S4 已构建并通过归档和签名检查，等待手机执行。
 
 ## 阶段验收与验证安排
 
@@ -40,7 +41,7 @@ CLI 与 GCD 两种入口均通过，N3-A1 合并手机测试包已生成并校�
 
 当前接受构建时登记、宿主页兼容布局的 ELF。x18 作为客体状态保存；目前
 支持已遇到的 MOV/ORR、两条 Bionic setjmp 掩码指令，以及含 x18 的 64 位
-LDP/STP 偏移寻址。构建检查会拒绝其他 x18 指令。客体地址窗口为 16 GiB，
+LDP/STP 偏移寻址。构建检查会拒绝其他 x18 指令。客体地址窗口已改为 4 GiB，
 Linux RAM 为 512 MiB。静态 ELF 布局范围为 512 MiB，执行区在 JIT 准备期间
 确定。ART 动态代码使用额外的 64 MiB 预授权范围，通过 memfd 可写映射和显式提交更新；通用可执行 mprotect
 仍受限制。
@@ -1073,3 +1074,50 @@ SystemServer 的 StartInstaller 在 27 ms 内返回，随后仍等待 SurfaceFli
 并要求实际默认显示。后续需要同时完成 EGL/GLES、缓冲区分配及 Composer
 接口。此前 G1 的 gfxstream/ANGLE Metal 源码可供复用；NCE 仍需实现客体
 图形请求到同一应用内宿主图形库的传输，以及窗口缓冲区与同步接口。
+
+## N3-S3 手机地址预留失败（2026-10-09 20:34）
+
+手机日志记录构建 `N3-S3-iOS-20261009-195329`，在 `prepare_jit_pool`
+后返回 `address_reservation`。该调用使用 PROT_NONE 申请约 16.58 GiB 连续
+虚拟地址，失败发生在代码准备和 Linux 启动之前。原日志没有 errno，当前
+无法据此区分进程地址上限与连续地址不足。手机上的应用和 JITHelper 进程
+仍存在，直接读取的日志与用户导出文件一致。
+
+修复将客体地址窗口缩至 4 GiB，总预留降至约 4.58 GiB。Scudo 的每个尺寸
+分配区改为 32 MiB，并在首次使用时预留；原有大尺寸分配区和 secondary
+分配路径继续处理当前分配区耗尽。ART 对象堆预留缩至 1 GiB，压缩引用仍用
+32 位偏移编码。新增 48 MiB 同尺寸分配检查，保留堆末端、越界、并发分配、
+稀疏页面及 fork 写时复制检查。稀疏预留测试改为 2 GiB，以覆盖当前窗口内
+相隔较远的页面。
+
+缩减后首次本机回归通过 Scudo 的 48 MiB 检查，ART 初始化仍因空间不足
+失败。读取客体 `/proc/self/maps` 后确认 Bionic 的 CFI 检查表还占用约
+2 GiB 地址。链接器和 libdl 现从同一份源码、同一个地址上限构建，将覆盖范围
+限制在宿主地址 1 TiB 以下，检查表预留约 8 MiB。宿主在启动前校验整个客体
+范围满足该上限。回归同时检查有效目标和超出覆盖范围的目标被拒绝。
+
+CFI 拒绝检查还发现客体 BRK 导致宿主进程退出的问题。NCE 现将该事件交给
+Linux，以 SIGTRAP/TRAP_BRKPT 通知客体；执行结束后恢复宿主原有 SIGTRAP
+处理函数。回归中的无效 CFI 目标只终止客体子进程，父进程继续运行。
+
+地址申请失败日志增加 errno 和实际申请字节数；失败路径也会断开内置 JIT
+调试器。完整 CLI/GCD 回归分别通过 97/98 个命名测试，15 项 ELF 检查及
+iOS 目标编译通过，521 个 NCE 上下文全部释放。总预留为 4,915,724,288
+字节，代码准备量为 172,802,048 字节。日志为
+`work/native-linux-nce/compact-address-probe.log`。手机能否接受缩减后的地址
+范围仍需确认，N3-S4 已构建并通过归档和签名检查，等待手机执行。
+原始日志位于 `work/native-linux-nce/ios/device-s3-reservation.log`。
+
+复杂度审查保留原有 Scudo、ART 堆管理和 CFI 算法，只调整各自的地址范围。
+链接器与 libdl 共用一份 CFI 定义，并检查构建产物的校验值。宿主地址上限
+由 layout.h 提供；若宿主返回超出范围的地址，启动前报告 ERANGE。当前
+没有引入第二套分配器或运行时地址配置入口。
+
+## 同一进程内的图形传输进展（2026-10-09 晚间）
+
+Linux 客体通过 Unix socket 向同一宿主进程内的 gfxstream RenderChannel
+发送指令，再由 ANGLE Metal 绘制。串行检查已完成两次独立连接的 6,144 像素
+回读；并发连接仍有一次输出全零的问题。客体传入指令相同，宿主渲染器输出
+时已经出现错误。脱离 Linux 的直接 RenderChannel 对照运行 15 次，其中
+1 次也失败，后续继续检查 gfxstream 与 ANGLE 并发处理。图形实现尚未进入
+手机包，完整 SurfaceFlinger 和 Composer 集成仍待推进。

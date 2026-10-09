@@ -139,9 +139,21 @@ int nce_memory_prepare(void)
            RESERVED_BYTES, prepared);
     const size_t alignment = 2 * 1024 * 1024;
     void *raw = mmap(NULL, RESERVED_BYTES + alignment, PROT_NONE, MAP_ANON | MAP_PRIVATE, -1, 0);
+    if (raw != MAP_FAILED && ((uintptr_t)raw >= NCE_HOST_ADDRESS_LIMIT ||
+        RESERVED_BYTES + alignment > NCE_HOST_ADDRESS_LIMIT - (uintptr_t)raw)) {
+        REQUIRE(munmap(raw, RESERVED_BYTES + alignment) == 0);
+        raw = MAP_FAILED;
+        errno = ERANGE;
+    }
     if (raw == MAP_FAILED) {
+        int error = errno;
         reservation = NULL;
-        puts("{\"result\":\"failed\",\"reason\":\"address_reservation\"}");
+        printf("{\"result\":\"failed\",\"reason\":\"address_reservation\",\"errno\":%d,\"requested_bytes\":%zu}\n",
+               error, RESERVED_BYTES + alignment);
+#if TARGET_OS_IPHONE
+        husk_ios_jit_detach();
+        nce_wait_debugger_detach(5000);
+#endif
         return -1;
     }
     reservation = (void *)(((uintptr_t)raw + alignment - 1) & ~(alignment - 1));

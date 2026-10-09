@@ -28,7 +28,7 @@ def build():
             package.extractall(WORK, filter='data')
     inputs = {str(path.relative_to(WORK.parent)) if path.is_relative_to(WORK.parent) else str(path): sha(path)
               for path in (library / 'libc.a', linker, unwind_archive,
-                           WORK / 'android36/com.android.runtime/lib64/bionic/libdl.so',
+                           linker.parent / 'libdl.so',
                            WORK.parent / 'compiler-rt-20.1.8.src.tar.xz')}
     fingerprint = hashlib.sha256(Path(__file__).read_bytes() + SOURCES.read_bytes() +
                                  json.dumps(inputs, sort_keys=True).encode()).hexdigest()
@@ -39,8 +39,23 @@ def build():
             return binary
     bionic = WORK / 'bionic-source/libc'
     scudo = WORK / 'scudo'
+    configuration = (scudo / 'config/custom_scudo_config.h').read_text()
+    selector = 'typedef AndroidNormalConfig Config;'
+    if configuration.count(selector) != 1:
+        raise RuntimeError('Scudo Android configuration selector changed')
+    configuration = configuration.replace(selector, '''
+// iOS has a bounded guest address window. Reserve size classes on first use;
+// exhausted classes retain Scudo's larger-class and secondary allocation path.
+struct NceConfig : AndroidNormalConfig {
+  struct Primary : AndroidNormalConfig::Primary {
+    static const uptr RegionSizeLog = 25U;
+    static const bool EnableContiguousRegions = false;
+  };
+};
+typedef NceConfig Config;''')
+    (out / 'custom_scudo_config.h').write_text(configuration)
     compiler_rt = WORK.parent / 'compiler-rt-20.1.8.src/lib'
-    includes = [bionic, bionic / 'platform', bionic / 'async_safe/include',
+    includes = [out, bionic, bionic / 'platform', bionic / 'async_safe/include',
                 WORK / 'core-include', WORK / 'liblog/liblog/include',
                 scudo / 'standalone/include', scudo / 'config', compiler_rt,
                 bionic.parent / 'libdl/include_private']
@@ -103,12 +118,14 @@ def build():
                '-Wl,-soname,libc.so,-Bsymbolic-functions,-z,max-page-size=16384,-z,common-page-size=16384',
                '-Wl,-z,defs,--gc-sections,--version-script=' + str(version_map), *objects,
                '-Wl,--whole-archive', archive, '-Wl,--no-whole-archive',
-               WORK / 'android36/com.android.runtime/lib64/bionic/libdl.so', linker,
+               linker.parent / 'libdl.so', linker,
                TOOL / 'lib/clang/21/lib/linux/libclang_rt.builtins-aarch64-android.a', '-o', binary]
     subprocess.run(command, check=True, timeout=120)
     subprocess.run([TOOL / 'bin/llvm-strip', '--strip-debug', binary], check=True)
     manifest.write_text(json.dumps(dict(build_inputs=fingerprint, sha256=sha(binary),
-                                       inputs=inputs, scudo_disable_tbi=True), indent=2) + '\n')
+                                       inputs=inputs, scudo_disable_tbi=True,
+                                       scudo_region_bytes=1 << 25,
+                                       scudo_contiguous_regions=False), indent=2) + '\n')
     return binary
 
 
