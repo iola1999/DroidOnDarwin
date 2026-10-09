@@ -194,8 +194,9 @@ vold、storaged 和 artd 已发布服务。系统继续进入 NetworkManagementS
 校验值保存在 `experiments/native-linux/services/network-sources.json`。
 
 LKL 当前使用内核 BPF 解释器，加载器对原型跳过 BPF JIT 配置和 JIT 代码长度
-要求。内核程序校验、映射创建、挂接和失败返回继续执行。首个网络程序已通过
-内核校验并加载为解释执行代码，正在继续检查全部网络对象和 netd 启动。
+要求。内核程序校验、映射创建、挂接和失败返回继续执行。网络对象中的全部
+程序已通过内核校验并加载为解释执行代码；netd 已进入主函数，初始化时退出，
+正在检查退出原因。
 
 宿主采样发现，内存映射频繁遍历全部程序和共享库。现利用生成布局的地址顺序
 二分查找相关程序，并仅遍历涉及的范围；代码权限、原始字节比较与跳转区域
@@ -211,4 +212,92 @@ Surface 三组合成像素检查已通过。桌面交互速度尚待完整启动
 
 后续网络程序校验报告 `misaligned packet access`。NCE 的 LKL MMU 端口固定使用
 ARM64，现按该执行架构声明 `HAVE_EFFICIENT_UNALIGNED_ACCESS`；程序继续经过
-原有内核校验。该项与 `NET_SCHED`、流量分类配置正在一起复测。
+原有内核校验。该配置已通过全部网络程序加载检查。原版平台 BPF 加载器还需要
+init 的 `file /dev/kmsg w` 配置提供 `ANDROID_FILE__dev_kmsg`，现由启动进程
+打开文件并传入；加载器已正常退出。补入原版 netd 使用的 iptables 命令链接，
+并将 libbase 后续选择的 logd 输出转到现有实时日志，以保留服务初始化错误。
+
+### CFI 库地址对齐
+
+netd 已完成 BPF 挂接与映射初始化，随后触发 `SIGTRAP`。触发位置属于
+`libnetutils.so` 的 CFI 校验函数，待校验地址却位于 `libnetdutils.so`。
+Bionic 的 `CFIShadow.h` 要求每个 256 KiB 对齐区间最多放一个 DSO；NCE 原有
+布局仅按 ELF 段对齐，相邻小库可能共用 CFI 项。动态加载、卸载会改写这些项。
+
+现将程序起始地址至少按 256 KiB 对齐，保留更大的 ELF 对齐要求。增加独立
+CFI 回归：两个库交替卸载和重新加载 16 次，其间检查有效调用；子进程使用
+错误函数签名时必须触发 `SIGTRAP`。该检查已通过，netd 随后进入 iptables
+初始化。地址间隔增加占用虚拟地址，客体 RAM 配额保持 512 MiB。
+
+iptables 的恢复命令通过符号链接调用同一原版二进制。NCE 的主程序查找原先
+使用调用路径，返回 `ENOEXEC`；现与解释器和共享库一致，使用内核已打开文件
+的实际路径，同时校验 ELF 头和段表。新增符号链接执行检查正在运行。
+内核配置按原版 Controllers、BandwidthController 和 XfrmController 的调用
+加入 NAT、raw 表、BPF/mark/policy/conntrack 匹配及 XFRM 用户接口。
+
+符号链接执行检查已在 musl 和 Bionic 下通过。加入 SDK 原有的空
+`/system/etc/xtables.lock` 后，iptables 可以在只读系统分区上打开该锁文件。
+netd 已发布服务，ActivityManager 与 lmkd 已建立连接。系统继续通过输入法、
+无障碍和存储服务初始化。artd 采用按需服务注册，启动进程现持有它的 Binder
+引用直到会话结束；随后系统推进到 NetworkStatsService，正在补入其动态加载
+的原版 `libservice-connectivity.so`。
+
+该库的 ClatCoordinator 在 JNI 注册时核对 clatd 的属主、权限及 SELinux
+标签。现已加入原版 clatd，在系统镜像中设置其 AID、模式和扩展属性；BPF
+文件系统的标签直接采用固定 SDK 的 `genfscon bpf` 规则。上述检查已通过，
+正在补入 Connectivity Framework 通过 `System.loadLibrary` 加载的 JNI 库。
+
+本轮复杂度审查：程序和库仍使用同一执行布局，新增的 256 KiB 对齐同时修复
+CFI 地址重叠，未建立额外映射表。符号链接执行复用原有的已打开文件查找。
+BPF 标签从既有 SDK 规则生成；clatd 文件元数据由原版初始化检查核对。
+现有 15 项 ELF 分类测试、CFI 重新加载检查及两个 libc 的符号链接执行检查
+通过。完整系统启动继续按未通过记录。
+
+### APK 内嵌原生库
+
+NetworkStack APK 含有 `libnativehelper_compat_libc++.so` 和
+`libnetworkstackutilsjni.so`，SystemUI APK 含有 `libtensorflowlite_jni.so`。
+当前 NCE 仅为独立 ELF 文件登记执行布局；这些 APK 使用压缩包内的库路径，
+需要继续支持按 APK 路径及文件内偏移识别 ELF，并保留原 APK 内容与签名。
+
+原始库检查中，TensorFlow Lite 与 nativehelper 已通过指令分类。
+networkstack JNI 库包含未保留函数符号的 libunwind 汇编段，现有检查在
+`0x33eb4` 拒绝处理。已确认已知函数通过直接分支到达该段；后续将检查可达
+指令范围，并保留对代码区常量的独立测试。
+
+
+### 音频与 APK 加载适配（2026-10-10 凌晨）
+
+Connectivity JNI 库补齐后，系统进入 AudioService。缺少 audioserver 时，主线程
+反复等待音频 Binder 服务，最终由 Watchdog 结束 system_server。原版 audioserver
+需要音频 HAL，单独启动会在 HAL 为空时退出。现已加入 SDK 的 HIDL 音频实现、
+hwservicemanager、共享内存分配服务、音频配置与媒体统计服务。HIDL 管理器须在
+第一次图形库查询之前启动；仅将其放在 Zygote 前会使 gralloc 检查一直等待。
+调整后的启动顺序正在验证，声音输出尚未验证。
+
+APK 执行布局新增原归档路径与 ELF 起始偏移。Bionic 将文件偏移传给 NCE 的
+地址预留接口；Linux 从对应偏移读取 ELF 头与段表，加载后的文件片段仍进行
+SHA-256 检查。APK 原始内容保留。构建阶段检查原生库为未压缩、16 KiB 对齐，
+当前范围为随系统打包的已登记原生库。
+
+NetworkStack 的 libunwind 汇编缺少函数符号。指令分类现从已有函数的直接分支
+继续检查可达范围，遇到返回或无条件间接跳转结束该路径。分支进入数据符号、
+未定义指令，以及剩余未分类范围中的待改写指令均返回错误。18 项 ELF 回归
+已通过，原版 NetworkStack JNI 的两处 x18 保存和恢复指令已被识别。同一 ZIP 中两份库的加载、fork 后重新加载和错误偏移检查已在本机通过。
+跨执行段的直接分支也已覆盖，包含 21 项 Python 检查的回归已通过。
+
+持久存储回归改为检查连续两次启动的代数差为一，并检查当前 Android 数据盘。
+这保留了之前启动写入的数据，支持在多次开发运行之间继续校验。
+
+本轮复杂度审查：APK 与独立 ELF 共用程序布局、代码改写和 Linux 映射流程，
+仅增加归档偏移。未另建应用链接器。无函数符号的汇编检查仅在既有符号覆盖不足
+时启用，仍要求直接分支可达。音频使用 SDK 原版服务和 HAL；完整桌面检查
+继续执行，当前尚无整机启动成功或交互性能结果。
+
+
+APK 运行回归同时保留了 CFI 的错误函数签名检查，16 次库重新加载后仍能拒绝
+该调用。HIDL 管理器启动时还会检查 `android.hidl.manager@1.2` 的 VINTF 声明；
+现将 SDK 原有的 system_ext 清单及 allocator 清单一并打包，继续验证。
+退出完整 Android 会话时，启动器按进程组停止 Zygote 和所拥有的服务，回收后
+才结束显示服务；内核退出前卸载 `/data/nce` 与 `/data`。该完整退出流程待系统
+启动完成后检查。旧的 64 MiB 存储测试盘与对应种子已移除。

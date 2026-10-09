@@ -4,4 +4,9 @@
         <version>4</version>
         <fqname>IComposer/default</fqname>
     </hal>
+    <hal format="hidl">
+        <name>android.hardware.audio.effect</name>
+        <transport>hwbinder</transport>
+        <fqname>@7.0::IEffectsFactory/default</fqname>
+    </hal>
 </manifest>

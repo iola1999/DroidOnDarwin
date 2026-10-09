@@ -8,12 +8,12 @@
 #define ARCH_HAS_SETUP_ADDITIONAL_PAGES 1
 struct linux_binprm;
 int arch_setup_additional_pages(struct linux_binprm *, int);
-#define NCE_ELF_LAYOUT(path, header, phdrs) lkl_ops->user_elf(path, header, phdrs)
+#define NCE_ELF_LAYOUT(file, header, phdrs) nce_elf_file_layout(file, 0, header, phdrs)
 struct file;
 struct elf64_hdr;
 struct elf64_phdr;
-unsigned long nce_elf_file_layout(struct file *, const struct elf64_hdr *, const struct elf64_phdr *);
-#define NCE_ELF_INTERP_LAYOUT(file, header, phdrs) nce_elf_file_layout(file, header, phdrs)
+unsigned long nce_elf_file_layout(struct file *, unsigned long, const struct elf64_hdr *, const struct elf64_phdr *);
+#define NCE_ELF_INTERP_LAYOUT(file, header, phdrs) nce_elf_file_layout(file, 0, header, phdrs)
 #endif
 #define elf_check_arch(x) ((x)->e_machine == EM_AARCH64)
 #define ELF_CLASS ELFCLASS64

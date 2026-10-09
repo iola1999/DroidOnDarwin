@@ -11,6 +11,12 @@
 #include <string.h>
 #include <sys/prctl.h>
 
+/* libbase can select LogdLogger after the preload constructor has run. */
+void __android_log_logd_logger(const struct __android_log_message *message)
+{
+    __android_log_stderr_logger(message);
+}
+
 /* libandroid_runtime calls this exported function through its PLT. Keep the
  * SDK's ARM64 policy, with explicit entries for NCE's three code-map calls. */
 bool nce_seccomp_policy(int type) __asm__("_Z19_set_seccomp_filter10FilterType");

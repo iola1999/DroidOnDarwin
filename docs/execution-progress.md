@@ -12,7 +12,8 @@ Android servicemanager、属性服务及 Zygote 派生均已通过本机 CLI/GCD
 installd，完成应用数据目录、访问权限、清理与删除检查。原版 system_server
 已完成默认显示、PackageManager、WindowManager 和 InputManager 初始化，
 发布 `activity`、`package`、`window` 和 `input` 服务。持久 ext4 数据盘上的
-installd 应用目录检查已通过，正在接入完整启动所需的存储服务。桌面仍待实现，
+installd 应用目录检查已通过。vold、storaged、artd、netd 和 lmkd 已接入，
+系统已推进到音频服务初始化。音频 HAL、APK 内嵌原生库与桌面交互继续开发，
 具体失败位置和检查结果记录在桌面实施计划中。
 
 早期 N2 进程原型已通过 iPhone 17 / iOS 27.2 检查。用户返回后测试 N3-S3，

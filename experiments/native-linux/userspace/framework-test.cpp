@@ -258,7 +258,9 @@ static void wait_system_service(pid_t child, const char *name)
 {
     for (unsigned i = 0; i < 100; ++i) {
         int status;
-        CHECK(waitpid(child, &status, WNOHANG) == 0);
+        pid_t exited = waitpid(child, &status, WNOHANG);
+        if (exited == child) dprintf(2, "service %s pid=%d exited status=%d\n", name, child, status);
+        CHECK(exited == 0);
         AIBinder *service = AServiceManager_checkService(name);
         if (service) {
             AIBinder_decStrong(service);
@@ -270,12 +272,33 @@ static void wait_system_service(pid_t child, const char *name)
     CHECK(false);
 }
 
+static void stop_process_group(pid_t leader)
+{
+    CHECK(leader > 1);
+    CHECK(kill(-leader, SIGTERM) == 0 || errno == ESRCH);
+    for (unsigned attempt = 0; attempt < 100; ++attempt) {
+        int status;
+        pid_t child;
+        while ((child = waitpid(-leader, &status, WNOHANG)) > 0) {}
+        CHECK(child == 0 || errno == ECHILD);
+        if (kill(-leader, 0) == -1) {
+            CHECK(errno == ESRCH);
+            return;
+        }
+        if (attempt == 50) CHECK(kill(-leader, SIGKILL) == 0 || errno == ESRCH);
+        usleep(10000);
+    }
+    dprintf(2, "process group %d did not stop\n", leader);
+    CHECK(false);
+}
+
 pid_t nce_start_system_service(const char *path, const char *name, uid_t uid,
                                std::initializer_list<const char *> arguments)
 {
     pid_t child = fork();
     CHECK(child >= 0);
     if (!child) {
+        CHECK(setpgid(0, 0) == 0);
         runtime_environment();
         CHECK(setgid(uid == 0 ? 0 : 1000) == 0 && setuid(uid) == 0);
         char *argv[16] = {const_cast<char *>(path)};
@@ -285,7 +308,7 @@ pid_t nce_start_system_service(const char *path, const char *name, uid_t uid,
         execv(path, argv);
         _exit(108);
     }
-    wait_system_service(child, name);
+    if (name) wait_system_service(child, name);
     return child;
 }
 
@@ -301,6 +324,7 @@ static pid_t start_socket_service(const char *path, const char *service,
     pid_t child = fork();
     CHECK(child >= 0);
     if (!child) {
+        CHECK(setpgid(0, 0) == 0);
         runtime_environment();
         unsigned i = 0;
         for (const char *name : names) {
@@ -350,6 +374,8 @@ void nce_zygote_test()
 {
     bool system_server = access("/data/nce/system-server-probe", F_OK) == 0;
     pid_t idmap = -1, health = -1, vold = -1, storaged = -1, artd = -1, netd = -1, lmkd = -1;
+    pid_t audio = -1, metrics = -1, audio_hal = -1, allocator = -1;
+    AIBinder *artd_reference = nullptr;
     void *setup = dlopen("libprocessgroup_setup.so", RTLD_NOW);
     CHECK(setup);
     auto initialize = reinterpret_cast<bool (*)()>(dlsym(setup, "_Z11CgroupSetupv"));
@@ -382,6 +408,8 @@ void nce_zygote_test()
             {"/data/misc/vold", 0700, 0}, {"/metadata/vold", 0700, 0},
             {"/data/misc/storaged", 0700, 0},
             {"/data/misc/net", 0750, 0},
+            {"/data/misc/audioserver", 0700, 1041}, {"/dev/socket/audioserver", 0775, 1041},
+            {"/data/misc/media", 0770, 1013},
         };
         for (const auto &directory : directories) {
             CHECK(mkdir(directory.path, directory.mode) == 0 || errno == EEXIST);
@@ -401,6 +429,9 @@ void nce_zygote_test()
              "--fsck_context=u:r:nce_t:s0", "--fsck_untrusted_context=u:r:nce_t:s0"});
         storaged = nce_start_system_service("/system/bin/storaged", "storaged", 0, {});
         artd = nce_start_system_service("/apex/com.android.art/bin/artd", "artd", 0, {});
+        // Keep this lazy service alive until the Android session is stopped.
+        artd_reference = AServiceManager_checkService("artd");
+        CHECK(artd_reference);
         CHECK(mount("bpf", "/sys/fs/bpf", "bpf", 0, nullptr) == 0);
         rlimit locked = {1024 * 1024 * 1024, 1024 * 1024 * 1024};
         CHECK(setrlimit(RLIMIT_MEMLOCK, &locked) == 0);
@@ -408,6 +439,12 @@ void nce_zygote_test()
         CHECK(loader >= 0);
         if (!loader) {
             runtime_environment();
+            // Android init's `file /dev/kmsg w` contract survives the loader's exec chain.
+            int kmsg = open("/dev/kmsg", O_WRONLY);
+            CHECK(kmsg >= 0);
+            char descriptor[32];
+            snprintf(descriptor, sizeof(descriptor), "%d", kmsg);
+            CHECK(setenv("ANDROID_FILE__dev_kmsg", descriptor, 1) == 0);
             execl("/apex/com.android.tethering/bin/netbpfload", "netbpfload", nullptr);
             _exit(108);
         }
@@ -418,6 +455,11 @@ void nce_zygote_test()
         puts("{\"test\":\"android_network_bpf_loaded\",\"passed\":true}");
         netd = start_socket_service("/system/bin/netd", "netd", {"dnsproxyd", "mdns", "fwmarkd"}, SOCK_STREAM);
         lmkd = start_socket_service("/system/bin/lmkd", nullptr, {"lmkd"}, SOCK_SEQPACKET);
+        allocator = nce_start_system_service("/system_ext/bin/hw/android.hidl.allocator@1.0-service", nullptr, 1000, {});
+        audio_hal = nce_start_system_service("/vendor/bin/hw/android.hardware.audio.service", nullptr, 1041, {});
+        metrics = nce_start_system_service("/system/bin/mediametrics", "media.metrics", 1013, {});
+        audio = nce_start_system_service("/system/bin/audioserver", "media.audio_flinger", 1041, {});
+        wait_system_service(audio, "media.audio_policy");
     }
     CHECK(mkdir("/data/nce/zygote", 0777) == 0 && chmod("/data/nce/zygote", 0777) == 0);
     int command = control_socket("zygote");
@@ -472,15 +514,18 @@ void nce_zygote_test()
             __system_property_get("sys.boot_completed", completed);
             if (ready && !strcmp(completed, "1")) {
                 puts("{\"test\":\"android_system_boot_completed\",\"passed\":true}");
-                CHECK(kill(zygote, SIGTERM) == 0 && waitpid(zygote, &status, 0) == zygote);
-                for (pid_t service : {idmap, health, vold, storaged, artd, netd, lmkd})
-                    CHECK(kill(service, SIGTERM) == 0 && waitpid(service, &status, 0) == service);
+                stop_process_group(zygote);
+                AIBinder_decStrong(artd_reference);
+                for (pid_t service : {idmap, health, vold, storaged, artd, netd, lmkd, audio, metrics, audio_hal, allocator})
+                    stop_process_group(service);
                 for (const char *socket : {"dnsproxyd", "mdns", "fwmarkd", "lmkd"}) {
                     char path[64];
                     snprintf(path, sizeof(path), "/dev/socket/%s", socket);
                     CHECK(unlink(path) == 0);
                 }
                 CHECK(unlink("/dev/socket/zygote") == 0 && unlink("/dev/socket/usap_pool_primary") == 0);
+                CHECK(rmdir("/dev/socket/audioserver") == 0);
+                puts("{\"test\":\"android_system_process_groups_stopped\",\"passed\":true}");
                 return;
             }
             usleep(100000);

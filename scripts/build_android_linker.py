@@ -67,7 +67,7 @@ def build():
     phdr = bionic / 'linker/linker_phdr.cpp'
     original = ('start = ReserveWithAlignmentPadding(load_size_, kLibraryAlignment, start_alignment, &gap_start_,\n'
                 '                                        &gap_size_);\n    if (start == nullptr)')
-    replacement = ('start = reinterpret_cast<void*>(syscall(245, fd_, load_size_));\n'
+    replacement = ('start = reinterpret_cast<void*>(syscall(245, fd_, load_size_, file_offset_));\n'
                    '    gap_start_ = nullptr;\n    gap_size_ = 0;\n    if (start == MAP_FAILED)')
     text = phdr.read_text()
     if text.count(original) != 1:

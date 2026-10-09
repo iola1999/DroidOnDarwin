@@ -378,6 +378,15 @@ int main(int argc, char **argv)
     if (received != 1) { int status; CHECK(waitpid(service, &status, 0) == service); dprintf(2, "service failed status=%d\n", status); }
     CHECK(received == 1 && value == 'r' && close(ready[0]) == 0);
     puts("{\"test\":\"android_platform_servicemanager_registration\",\"passed\":true}");
+    pid_t hwmanager = nce_start_system_service("/system_ext/bin/hwservicemanager", nullptr, 1000, {});
+    for (unsigned i = 0; ; ++i) {
+        int status;
+        CHECK(i < 100 && waitpid(hwmanager, &status, WNOHANG) == 0);
+        char ready[PROP_VALUE_MAX] = {};
+        __system_property_get("hwservicemanager.ready", ready);
+        if (!strcmp(ready, "true")) break;
+        usleep(100000);
+    }
     if (access("/data/nce/graphics", F_OK) == 0) {
         CHECK(__system_property_set("ro.hardware.gralloc", "ranchu") == 0);
         pid_t graphics = fork();
@@ -476,6 +485,7 @@ int main(int argc, char **argv)
     CHECK(kill(suspend, SIGTERM) == 0 && waitpid(suspend, &status, 0) == suspend);
     CHECK(kill(installd, SIGTERM) == 0 && waitpid(installd, &status, 0) == installd);
     CHECK(kill(apex, SIGTERM) == 0 && waitpid(apex, &status, 0) == apex);
+    CHECK(kill(hwmanager, SIGTERM) == 0 && waitpid(hwmanager, &status, 0) == hwmanager);
     CHECK(kill(manager, SIGTERM) == 0);
     CHECK(waitpid(manager, &status, 0) == manager && WIFSIGNALED(status) && WTERMSIG(status) == SIGTERM);
     CHECK(unlink("/dev/binder") == 0 && unlink("/binderfs/nce-platform") == 0);

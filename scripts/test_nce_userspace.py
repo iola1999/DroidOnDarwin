@@ -6,8 +6,9 @@ import struct
 import subprocess
 import tempfile
 import unittest
+import zipfile
 
-from build_nce_userspace import inspect, check_x18_disassembly, elf_disassembly, PAGE, WORK
+from build_nce_userspace import inspect, check_x18_disassembly, elf_disassembly, apk_native_libraries, native_library_zip, PAGE, WORK
 
 
 class ElfLayoutTests(unittest.TestCase):
@@ -50,6 +51,86 @@ class ElfLayoutTests(unittest.TestCase):
         self.assertIn(words[0], patches.values())
         for word in words[1:]:
             self.assertIn(word, [instruction & 0xffffffe0 for instruction in patches.values()])
+
+    def assembly_without_mapping_symbols(self, assembly):
+        source = self.path.with_suffix('.S')
+        source.write_text(assembly)
+        subprocess.run([self.llvm / 'clang', '--target=aarch64-linux-gnu', '-nostdlib',
+                        '-fuse-ld=lld', '-shared', '-Wl,-z,max-page-size=16384', source,
+                        '-o', self.path], check=True)
+        data = bytearray(self.path.read_bytes())
+        shoff = struct.unpack_from('<Q', data, 40)[0]
+        count = struct.unpack_from('<H', data, 60)[0]
+        sections = [struct.unpack_from('<IIQQQQIIQQ', data, shoff + i * 64) for i in range(count)]
+        for table in sections:
+            if table[1] != 2:
+                continue
+            strings = sections[table[6]][4]
+            for pos in range(table[4], table[4] + table[5], 24):
+                name = strings + struct.unpack_from('<I', data, pos)[0]
+                if data[name:name + 2] in (b'$x', b'$d'):
+                    data[name] = ord('z')
+        self.path.write_bytes(data)
+
+    def test_reachable_unlabelled_assembly_keeps_unreachable_data(self):
+        self.assembly_without_mapping_symbols("""
+.text
+.global entry
+.type entry,%function
+entry: b hidden
+.size entry,.-entry
+.type constant,%object
+constant: .word 0x12345678
+.size constant,.-constant
+hidden: mov x0,x18
+ret
+""")
+        elf = inspect(self.path, shared=True, function_symbols=True)
+        self.assertEqual(len(elf['patches']), 1)
+        self.assertEqual(elf['patches'][0][1], 0xaa1203e0)
+        constant = elf['patches'][0][0] - 4
+        self.assertFalse(any(lo <= constant < hi for lo, hi in elf['instruction_ranges']))
+
+    def test_direct_call_to_unlabelled_executable_section(self):
+        self.assembly_without_mapping_symbols("""
+.text
+.global entry
+.type entry,%function
+entry: b hidden
+.size entry,.-entry
+.section assembly_body,"ax",%progbits
+hidden: mov x0,x18
+ret
+""")
+        elf = inspect(self.path, shared=True, function_symbols=True)
+        self.assertEqual(len(elf['patches']), 1)
+        self.assertEqual(elf['patches'][0][1], 0xaa1203e0)
+
+    def test_unreachable_patch_candidate_is_rejected(self):
+        self.assembly_without_mapping_symbols("""
+.text
+.global entry
+.type entry,%function
+entry: ret
+.size entry,.-entry
+.word 0xd4000001
+""")
+        with self.assertRaisesRegex(RuntimeError, 'patch candidate outside function symbols'):
+            inspect(self.path, shared=True, function_symbols=True)
+
+    def test_direct_branch_into_object_is_rejected(self):
+        self.assembly_without_mapping_symbols("""
+.text
+.global entry
+.type entry,%function
+entry: b constant
+.size entry,.-entry
+.type constant,%object
+constant: .word 0xd4000001,0xd65f03c0
+.size constant,.-constant
+""")
+        with self.assertRaisesRegex(RuntimeError, 'direct branch enters an object symbol'):
+            inspect(self.path, shared=True, function_symbols=True)
 
     def test_writable_executable_segment(self):
         off, p = self.rx
@@ -129,7 +210,7 @@ class ElfLayoutTests(unittest.TestCase):
         self.assertIn(0xa9094c12, dict(elf['patches']).values())
         self.assertGreater(len(elf['patches']), 1000)
         self.path.write_bytes(path.read_bytes().replace(b'.gnu_debugdata', b'.nce_debugdata'))
-        with self.assertRaisesRegex(RuntimeError, 'patch candidate outside function symbols'):
+        with self.assertRaisesRegex(RuntimeError, 'patch candidate outside function symbols|direct branch reaches undefined instruction'):
             inspect(self.path, shared=True, function_symbols=True)
 
     def test_stripped_rust_metadata_disassembly_keeps_runtime_bytes(self):
@@ -170,6 +251,40 @@ class ElfLayoutTests(unittest.TestCase):
         begin = elf['instruction_ranges'][0][0]
         with self.assertRaisesRegex(RuntimeError, 'unsupported use of x18'):
             check_x18_disassembly(path, elf, f'{begin:x}: d2800032 mov x18, #1')
+
+
+class ApkLibraryTests(unittest.TestCase):
+    def setUp(self):
+        self.directory = tempfile.TemporaryDirectory(prefix='apk-test-', dir=WORK)
+        self.addCleanup(self.directory.cleanup)
+        self.out = Path(self.directory.name)
+        for name in ('libnce-cfi-a.so', 'libnce-cfi-b.so'):
+            shutil.copyfile(WORK / 'processes' / name, self.out / name)
+
+    def test_distinct_member_offsets_preserve_archive_bytes(self):
+        asset = native_library_zip(self.out)
+        original = asset[1].read_bytes()
+        programs, locations = apk_native_libraries(self.out, [asset])
+        self.assertEqual(len(programs), 2)
+        offsets = set()
+        for guest, binary in programs:
+            container, offset = locations[guest]
+            offsets.add(offset)
+            self.assertEqual(container, asset[0])
+            self.assertEqual(offset % PAGE, 0)
+            self.assertEqual(original[offset:offset + binary.stat().st_size], binary.read_bytes())
+        self.assertEqual(len(offsets), 2)
+        self.assertEqual(asset[1].read_bytes(), original)
+
+    def test_compressed_and_unaligned_libraries_are_rejected(self):
+        for compression, error in ((zipfile.ZIP_DEFLATED, 'without compression'),
+                                   (zipfile.ZIP_STORED, 'not aligned')):
+            with self.subTest(compression=compression):
+                path = self.out / 'invalid.apk'
+                with zipfile.ZipFile(path, 'w', compression=compression) as archive:
+                    archive.writestr('lib/arm64-v8a/libtest.so', (self.out / 'libnce-cfi-a.so').read_bytes())
+                with self.assertRaisesRegex(RuntimeError, error):
+                    apk_native_libraries(self.out, [('/system/app/invalid.apk', path)])
 
 
 if __name__ == '__main__':

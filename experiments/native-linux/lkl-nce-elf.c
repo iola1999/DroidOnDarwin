@@ -18,7 +18,7 @@ static bool overlaps_dynamic(unsigned long addr, unsigned long length)
            (addr >= base || length > base - addr);
 }
 
-unsigned long nce_elf_file_layout(struct file *file, const struct elfhdr *header,
+unsigned long nce_elf_file_layout(struct file *file, unsigned long source_offset, const struct elfhdr *header,
                                  const struct elf_phdr *phdrs)
 {
     char *buffer = kmalloc(PATH_MAX, GFP_KERNEL);
@@ -26,19 +26,19 @@ unsigned long nce_elf_file_layout(struct file *file, const struct elfhdr *header
     char *path;
     if (!buffer) return 0;
     path = d_path(&file->f_path, buffer, PATH_MAX);
-    if (!IS_ERR(path)) base = lkl_ops->user_elf(path, header, phdrs);
+    if (!IS_ERR(path)) base = lkl_ops->user_elf(path, source_offset, header, phdrs);
     kfree(buffer);
     return base;
 }
 
-static unsigned long file_layout(struct file *file, unsigned long *length)
+static unsigned long file_layout(struct file *file, unsigned long source_offset, unsigned long *length)
 {
     struct elfhdr header;
     struct elf_phdr *phdrs;
-    loff_t pos = 0;
+    loff_t pos = source_offset;
     size_t bytes;
     unsigned long base = 0;
-    if (!file->f_op->read_iter) return 0;
+    if (!file->f_op->read_iter || source_offset > LLONG_MAX - sizeof(header)) return 0;
     if (kernel_read(file, &header, sizeof(header), &pos) != sizeof(header) ||
         memcmp(header.e_ident, ELFMAG, SELFMAG) || header.e_type != ET_DYN ||
         header.e_machine != EM_AARCH64 || header.e_phentsize != sizeof(*phdrs) ||
@@ -46,9 +46,10 @@ static unsigned long file_layout(struct file *file, unsigned long *length)
     bytes = header.e_phnum * sizeof(*phdrs);
     phdrs = kmalloc(bytes, GFP_KERNEL);
     if (!phdrs) return 0;
-    pos = header.e_phoff;
-    if (pos >= 0 && kernel_read(file, phdrs, bytes, &pos) == bytes) {
-        base = nce_elf_file_layout(file, &header, phdrs);
+    if (source_offset > LLONG_MAX - bytes || header.e_phoff > LLONG_MAX - source_offset - bytes) { kfree(phdrs); return 0; }
+    pos = source_offset + header.e_phoff;
+    if (kernel_read(file, phdrs, bytes, &pos) == bytes) {
+        base = nce_elf_file_layout(file, source_offset, &header, phdrs);
         if (base && length) {
             *length = 0;
             for (unsigned i = 0; i < header.e_phnum; ++i)
@@ -67,7 +68,8 @@ long nce_reserve_elf(long *params)
     struct fd file = fdget(params[0]);
     unsigned long length = 0, base;
     if (fd_empty(file)) return -EBADF;
-    base = file_layout(fd_file(file), &length);
+    if (params[2] < 0 || offset_in_page(params[2])) { fdput(file); return -EINVAL; }
+    base = file_layout(fd_file(file), params[2], &length);
     fdput(file);
     if (!base) return -ENOEXEC;
     if (!length || params[1] != length) return -EINVAL;
@@ -98,7 +100,7 @@ int arch_setup_additional_pages(struct linux_binprm *bprm, int uses_interp)
     loff_t position = 0;
     int error = -ENOEXEC;
     if (IS_ERR(file)) return PTR_ERR(file);
-    base = file_layout(file, &length);
+    base = file_layout(file, 0, &length);
     if (!base || kernel_read(file, &header, sizeof(header), &position) != sizeof(header) ||
         header.e_entry >= length) goto out;
     unsigned long mapped = vm_mmap(file, base, length, PROT_READ | PROT_EXEC,
@@ -199,7 +201,7 @@ SYSCALL_DEFINE6(nce_mmap, unsigned long, addr, unsigned long, len,
     if (!(flags & MAP_ANONYMOUS)) {
         struct fd file = fdget(fd);
         if (fd_empty(file)) return -EBADF;
-        base = file_layout(fd_file(file), &load_length);
+        base = file_layout(fd_file(file), lkl_ops->user_elf_offset(addr), &load_length);
         fdput(file);
     }
     if (prot & PROT_EXEC) {

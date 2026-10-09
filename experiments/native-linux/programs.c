@@ -11,11 +11,11 @@ NceProgram *nce_program_entry(uintptr_t entry)
     return NULL;
 }
 
-unsigned long nce_program_layout(const char *path, const void *header, const void *phdrs)
+unsigned long nce_program_layout(const char *path, unsigned long source_offset, const void *header, const void *phdrs)
 {
     for (size_t i = 0; i < nce_program_count; ++i) {
         NceProgram *p = &nce_programs[i];
-        if (!strcmp(path, p->path) && !memcmp(header, p->file, 64) &&
+        if (source_offset == p->source_offset && !strcmp(path, p->container) && !memcmp(header, p->file, 64) &&
             !memcmp(phdrs, p->file + p->phoff, p->phsize)) return p->base;
     }
     return 0;
@@ -31,6 +31,16 @@ size_t nce_program_index(uintptr_t address)
         else hi = mid;
     }
     return lo;
+}
+
+
+unsigned long nce_program_source_offset(unsigned long address)
+{
+    size_t i = nce_program_index(address);
+    if (i < nce_program_count && address >= nce_programs[i].base &&
+        address < nce_programs[i].base + nce_programs[i].span)
+        return nce_programs[i].source_offset;
+    return 0;
 }
 
 int nce_program_reserved(unsigned long address, unsigned long length)

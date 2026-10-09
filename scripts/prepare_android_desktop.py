@@ -12,7 +12,7 @@ from prepare_android_runtime import ROOT, URL, SHA1, SIZE, DEBUGFS, digest, syst
 OUT = ROOT / 'android36-desktop'
 DIRECTORIES = {
     'system': ('app', 'priv-app'),
-    'system_ext': ('app', 'priv-app', 'lib64', 'framework', 'etc'),
+    'system_ext': ('app', 'priv-app', 'lib64', 'framework', 'etc', 'bin'),
     'product': ('app', 'priv-app', 'lib64', 'framework', 'etc', 'overlay'),
     'vendor': ('bin', 'lib64', 'etc', 'apex'),
 }

@@ -341,6 +341,16 @@ static NceState *handle_event(NceState *state)
         user_preempt();
         ++preemptions;
     } else if (p->event_kind == 4) {
+        if (fault_trace) {
+            fprintf(stderr, "guest trap pc=%lx lr=%lx instruction=%08x x0=%lx x1=%lx x8=%lx\n",
+                    state->regs.pc, state->regs.x[30], *(const uint32_t *)state->regs.pc,
+                    state->regs.x[0], state->regs.x[1], state->regs.x[8]);
+            for (size_t i = 0; i < nce_program_count; ++i) {
+                NceProgram *program = &nce_programs[i];
+                if (state->regs.pc >= program->base && state->regs.pc - program->base < program->span)
+                    fprintf(stderr, "guest trap program=%s offset=%lx\n", program->path, state->regs.pc - program->base);
+            }
+        }
         user_fault(state->regs.pc, 2);
     } else {
         ++stack_calls;
@@ -574,6 +584,7 @@ unsigned long nce_process_setup(void)
     nce_lkl_host.user_run = user_run;
     nce_lkl_host.user_exec = user_exec;
     nce_lkl_host.user_elf = nce_program_layout;
+    nce_lkl_host.user_elf_offset = nce_program_source_offset;
     nce_lkl_host.user_reserved = nce_program_reserved;
     struct sigaction action = {.sa_sigaction = fault, .sa_flags = SA_SIGINFO | SA_ONSTACK};
     sigemptyset(&action.sa_mask);
@@ -779,7 +790,15 @@ static void check_program_files(long (*call)(long, long *))
         NceProgram *p = &nce_programs[i];
         unsigned char *bytes = malloc(p->size + 1);
         REQUIRE(bytes);
-        REQUIRE(get_file(call, p->path, (void *)bytes, p->size + 1) == (long)p->size);
+        if (p->source_offset) {
+            long args[6] = {-100, (long)p->container, 0};
+            long fd = call(56, args);
+            REQUIRE(fd >= 0);
+            args[0] = fd; args[1] = (long)bytes; args[2] = p->size; args[3] = p->source_offset;
+            REQUIRE(call(67, args) == (long)p->size && call(57, args) == 0);
+        } else {
+            REQUIRE(get_file(call, p->container, (void *)bytes, p->size + 1) == (long)p->size);
+        }
         unsigned char digest[CC_SHA256_DIGEST_LENGTH];
         REQUIRE(p->size <= UINT32_MAX);
         CC_SHA256(bytes, (CC_LONG)p->size, digest);
@@ -1057,6 +1076,10 @@ void nce_process_tests(long (*host_syscall)(long, long *), long (*guest_syscall)
         free(pixels);
     }
 #endif
+    run_program(host_syscall, "/system/bin/cfi-test", NULL);
+    REQUIRE(get_file(host_syscall, "/stdout", benchmark, sizeof(benchmark)) > 0);
+    REQUIRE(strstr(benchmark, "android_cfi_library_reload"));
+    fputs(benchmark, stdout);
     puts("{\"phase\":\"android_art_reference_heap\"}");
     run_program(host_syscall, "/art-heap-test", NULL);
     REQUIRE(get_file(host_syscall, "/stdout", benchmark, sizeof(benchmark)) > 0);

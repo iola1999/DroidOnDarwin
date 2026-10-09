@@ -73,7 +73,7 @@ def x18_instruction(word):
             word in (0x92403643, 0x9272c652) or
             word & 0xff800000 == 0xa9000000 and 18 in (rd, (word >> 10) & 31))
 
-def android_dependencies(llvm, replacements):
+def android_dependencies(llvm, replacements, embedded=()):
     root = WORK / 'android/android36'
     files = {}
     for directory in ('lib64', 'com.android.art/lib64', 'com.android.runtime/lib64/bionic',
@@ -87,16 +87,25 @@ def android_dependencies(llvm, replacements):
     pending = ['libart.so', 'libjavacore.so', 'libopenjdk.so', 'libicu_jni.so',
                'libstats_jni.so', 'libjavacrypto.so', 'libartpalette-system.so', 'libbinder_ndk.so', 'libandroid.so',
                'libprocessgroup_setup.so', 'libframework-connectivity-tiramisu-jni.so', 'libandroid_servers.so',
-               'libalarm_jni.so', 'libbpf.so']
+               'libalarm_jni.so', 'libbpf.so', 'libservice-connectivity.so',
+               'libframework-connectivity-jni.so',
+               'libandroid_net_connectivity_com_android_net_module_util_jni.so']
     for name in ('servicemanager', 'app_process64', 'aconfigd-system', 'installd', 'idmap2', 'idmap2d',
                  'vold', 'storaged', 'cmd', 'dumpsys', 'netd', 'lmkd', 'bpfloader',
-                 'iptables', 'hw/android.system.suspend-service'):
+                 'iptables', 'audioserver', 'mediametrics', 'hw/android.system.suspend-service'):
         pending += re.findall(r'Shared library: \[(.*?)\]',
                               subprocess.check_output([llvm / 'llvm-readelf', '-d', root / 'bin' / name], text=True))
     pending += re.findall(r'Shared library: \[(.*?)\]', subprocess.check_output(
         [llvm / 'llvm-readelf', '-d', root / 'com.android.art/bin/artd'], text=True))
     pending += re.findall(r'Shared library: \[(.*?)\]', subprocess.check_output(
+        [llvm / 'llvm-readelf', '-d', root / 'com.android.tethering/bin/for-system/clatd'], text=True))
+    pending += re.findall(r'Shared library: \[(.*?)\]', subprocess.check_output(
         [llvm / 'llvm-readelf', '-d', root / 'com.android.sdkext/bin/derive_classpath'], text=True))
+    for guest, binary in embedded:
+        siblings = {Path(name).name for name, _ in embedded if name.split('!/', 1)[0] == guest.split('!/', 1)[0]}
+        needed = re.findall(r'Shared library: \[(.*?)\]',
+                            subprocess.check_output([llvm / 'llvm-readelf', '-d', binary], text=True))
+        pending += [name for name in needed if name not in siblings]
     result = {}
     while pending:
         name = pending.pop()
@@ -111,7 +120,6 @@ def android_dependencies(llvm, replacements):
     return [('/system/lib64/' + name, path) for name, path in sorted(result.items())]
 
 def android_graphics_dependencies(llvm, programs):
-    prepare_android_desktop()
     power = prepare_vendor_module('com.android.hardware.power')
     system = WORK / 'android/android36/lib64'
     vendor = DESKTOP / 'vendor/lib64'
@@ -134,12 +142,25 @@ def android_graphics_dependencies(llvm, programs):
     for name in ('android.hardware.power-service.example', 'android.hardware.power.stats-service.example'):
         replacements[name] = power / 'bin/hw' / name
         pending.append((name, '/vendor/bin/hw/' + name))
+    for name in ('hwservicemanager', 'hw/android.hidl.allocator@1.0-service'):
+        binary = DESKTOP / 'system_ext/bin' / name
+        replacements[binary.name] = binary
+        pending.append((binary.name, '/system_ext/bin/' + name))
+    audio = DESKTOP / 'vendor/bin/hw/android.hardware.audio.service'
+    replacements[audio.name] = audio
+    pending.append((audio.name, '/vendor/bin/hw/' + audio.name))
+    for name in ('android.hardware.audio@7.1-impl.ranchu.so',
+                 'android.hardware.audio.effect@7.0-impl.so', 'audio.primary.default.so',
+                 'audio.r_submix.default.so'):
+        replacements[name] = vendor / 'hw' / name
+        pending.append((name, '/vendor/lib64/hw/' + name))
+    pending.append(('libaudiohal@7.1.so', '/system/lib64/libaudiohal@7.1.so'))
     result = []
     while pending:
         name, guest = pending.pop()
         if name in provided:
             continue
-        path = replacements.get(name) or next((base / name for base in (system, vendor, vendor / 'egl', power / 'lib64') if (base / name).is_file()), None)
+        path = replacements.get(name) or next((base / name for base in (system, vendor, vendor / 'egl', DESKTOP / 'system_ext/lib64', power / 'lib64') if (base / name).is_file()), None)
         if path is None:
             raise RuntimeError('Missing graphics dependency: ' + name)
         provided.add(name)
@@ -220,8 +241,13 @@ def android_service_policy(out):
     if 'service_manager' not in classes or not {'kernel', 'security', 'unlabeled', 'init'} <= set(sids):
         raise RuntimeError('Android SELinux declarations changed')
     rules = [(EXP / 'services/nce-policy.cil').read_text()]
+    bpf_labels = [line for line in platform_policy.splitlines() if line.startswith('(genfscon bpf ')]
+    bpf_types = sorted({re.search(r'\(u object_r (\w+) ', line)[1] for line in bpf_labels})
+    rules += [f'(type {name})' for name in bpf_types]
+    rules += ['(typeattributeset nce_all (' + ' '.join(bpf_types) + '))',
+              '(allow nce_all fs_bpf (filesystem (associate)))', *bpf_labels]
     rules += [f'(sidcontext {name} (u r nce_t ((s0) (s0))))' for name in sids]
-    rules += [f'(allow nce_process nce_all ({name} (all)))' for name in classes if name != 'service_manager']
+    rules += [f'(allow nce_process nce_all ({name} (all)))' for name in classes if name not in ('service_manager', 'hwservice_manager')]
     path = out / 'nce-policy.cil'
     path.write_text('\n'.join(declarations + rules) + '\n')
     return path
@@ -284,6 +310,23 @@ def android_data(out):
     power = prepare_vendor_module('com.android.hardware.power')
     files += [('/vendor/etc/vintf/manifest/' + path.name, path)
               for path in sorted((power / 'etc/vintf').glob('*.xml'))]
+    hardware_names = set()
+    for source in (root / 'etc/selinux/plat_hwservice_contexts',
+                   DESKTOP / 'vendor/etc/selinux/vendor_hwservice_contexts'):
+        for line in source.read_text().splitlines():
+            fields = line.partition('#')[0].split()
+            if fields and fields[0] != '*':
+                hardware_names.add(fields[0])
+    hardware_contexts = out / 'plat_hwservice_contexts'
+    hardware_contexts.write_text(''.join(f'{name} u:object_r:nce_service:s0\n'
+                                        for name in sorted(hardware_names)) + '* u:object_r:nce_denied:s0\n')
+    files += [('/system/etc/selinux/plat_hwservice_contexts', hardware_contexts)]
+    audio_manifest = 'vendor/etc/vintf/manifest/android.hardware.audio@7.1-impl.ranchu.xml'
+    files += [('/' + audio_manifest, DESKTOP / audio_manifest)]
+    for source in sorted((DESKTOP / 'vendor/etc').glob('*audio*.xml')):
+        files.append(('/vendor/etc/' + source.name, source))
+    for name in ('default_volume_tables.xml',):
+        files.append(('/vendor/etc/' + name, DESKTOP / 'vendor/etc' / name))
     files += [('/system/etc/selinux/plat_seapp_contexts', EXP / 'services/seapp_contexts')]
     files += [('/system/etc/selinux/plat_mac_permissions.xml', root / 'etc/selinux/plat_mac_permissions.xml')]
     files += [('/system/etc/selinux/plat_file_contexts', EXP / 'services/file_contexts')]
@@ -293,6 +336,7 @@ def android_data(out):
               for path in sorted((root / 'usr').rglob('*')) if path.is_file()]
     files += [('/vendor/etc/fstab.nce', EXP / 'services/fstab.nce')]
     files += [('/system/etc/init/netbpfload.rc', root / 'etc/init/netbpfload.rc')]
+    files += [('/system/etc/xtables.lock', root / 'etc/xtables.lock')]
     files += [('/apex/' + str(path.relative_to(root)), path)
               for path in sorted((root / 'com.android.tethering/etc/bpf').rglob('*')) if path.is_file()]
     files += [(f'/system/etc/{name}.json', EXP / 'services' / f'{name}.json')
@@ -320,6 +364,7 @@ def android_data(out):
         'system/priv-app/IntentResolver/IntentResolver.apk',
         'system/priv-app/InputDevices/InputDevices.apk',
         'system/priv-app/Shell/Shell.apk',
+        'system/priv-app/NetworkStackGoogle/NetworkStackGoogle.apk',
         'system/priv-app/DocumentsUIGoogle/DocumentsUIGoogle.apk',
         'system/priv-app/DownloadProvider/DownloadProvider.apk',
         'system/priv-app/DownloadProviderUi/DownloadProviderUi.apk',
@@ -354,6 +399,8 @@ def android_data(out):
     files += [('/system/etc/vintf/' + name, root / 'etc/vintf' / name)
               for name in ('manifest.xml', 'manifest/android.system.suspend-service.xml',
                            'manifest/android.system.net.netd-service.xml')]
+    files += [('/' + str(path.relative_to(DESKTOP)), path)
+              for path in sorted((DESKTOP / 'system_ext/etc/vintf').rglob('*.xml'))]
     for directory in ('permissions', 'sysconfig', 'compatconfig'):
         for path in sorted((root / 'etc' / directory).rglob('*')):
             if path.is_file():
@@ -380,6 +427,130 @@ def android_data(out):
     files += [(f'/system/fonts/{path.name}', path) for path in sorted((root / 'fonts').glob('*')) if path.is_file()]
     files += [(f'/system/etc/{name}', root / 'etc' / name) for name in ('fonts.xml', 'font_fallback.xml')]
     return files
+
+
+
+
+def apk_native_libraries(out, assets):
+    """登记未压缩、按客体页对齐的 APK 原生库，保留原 APK 字节。"""
+    programs, locations = [], {}
+    for guest, source in assets:
+        if not guest.endswith('.apk'):
+            continue
+        with zipfile.ZipFile(source) as archive, source.open('rb') as raw:
+            for item in archive.infolist():
+                if not item.filename.startswith('lib/arm64-v8a/') or not item.filename.endswith('.so'):
+                    continue
+                if item.compress_type != zipfile.ZIP_STORED or item.flag_bits & 1:
+                    raise RuntimeError(f'{source}: native library must be stored without compression or encryption')
+                raw.seek(item.header_offset)
+                header = raw.read(30)
+                if len(header) != 30 or header[:4] != b'PK\x03\x04':
+                    raise RuntimeError(f'{source}: invalid ZIP local header')
+                name_size, extra_size = struct.unpack_from('<HH', header, 26)
+                offset = item.header_offset + 30 + name_size + extra_size
+                if offset % PAGE:
+                    raise RuntimeError(f'{source}: native library is not aligned to {PAGE} bytes')
+                data = archive.read(item)
+                raw.seek(offset)
+                if raw.read(item.file_size) != data:
+                    raise RuntimeError(f'{source}: ZIP native library bytes differ')
+                path = out / 'apk-libraries' / hashlib.sha256(guest.encode()).hexdigest()[:16] / Path(item.filename).name
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_bytes(data)
+                name = guest + '!/' + item.filename
+                if name in locations:
+                    raise RuntimeError(f'{source}: duplicate native library entry {item.filename}')
+                programs.append((name, path))
+                locations[name] = (guest, offset)
+    return programs, locations
+
+
+def native_library_zip(out):
+    path = out / 'nce-native-libraries.apk'
+    with zipfile.ZipFile(path, 'w') as archive:
+        for name in ('libnce-cfi-a.so', 'libnce-cfi-b.so'):
+            item = zipfile.ZipInfo('lib/arm64-v8a/' + name)
+            padding = -(archive.fp.tell() + 30 + len(item.filename)) % PAGE
+            if 0 < padding < 4:
+                padding += PAGE
+            if padding:
+                item.extra = struct.pack('<HH', 0xffff, padding - 4) + bytes(padding - 4)
+            archive.writestr(item, (out / name).read_bytes())
+    return '/system/etc/nce-native-libraries.apk', path
+
+
+def direct_branch(word, address):
+    """返回直接分支目标及是否存在顺序执行路径。"""
+    if word & 0x7c000000 == 0x14000000:
+        bits, immediate = 26, word & 0x3ffffff
+        fallthrough = bool(word & 0x80000000)
+    elif word & 0xff000000 == 0x54000000 or word & 0x7e000000 == 0x34000000:
+        bits, immediate, fallthrough = 19, (word >> 5) & 0x7ffff, True
+    elif word & 0x7e000000 == 0x36000000:
+        bits, immediate, fallthrough = 14, (word >> 5) & 0x3fff, True
+    else:
+        return None, True
+    displacement = immediate - ((immediate >> (bits - 1)) << bits)
+    return address + displacement * 4, fallthrough
+
+
+def extend_function_ranges(path, data, section, ranges, objects, sections=(), functions=None):
+    # Stripped libunwind assembly can lack STT_FUNC. Follow only direct branches
+    # from classified instructions; unreachable bytes retain the existing checks.
+    base, length = section[3], section[5]
+    classified = bytearray(length // 4)
+    for lo, hi in ranges:
+        if lo % 4 or hi % 4:
+            raise RuntimeError(f'{path}: unaligned instruction span')
+        classified[(lo - base) // 4:(hi - base) // 4] = b'\1' * ((hi - lo) // 4)
+    pending = []
+    for source_index, source_ranges in (functions or {}).items():
+        if not 0 <= source_index < len(sections):
+            continue
+        source = sections[source_index]
+        if source == section or not source[2] & 4:
+            continue
+        for lo, hi in set(source_ranges):
+            if not source[3] <= lo < hi <= source[3] + source[5] or lo % 4 or hi % 4:
+                continue
+            for address in range(lo, hi, 4):
+                word, = struct.unpack_from('<I', data, source[4] + address - source[3])
+                target, _ = direct_branch(word, address)
+                if target is not None and base <= target < base + length:
+                    pending.append(target)
+    for index, known in enumerate(classified):
+        if known:
+            word, = struct.unpack_from('<I', data, section[4] + index * 4)
+            target, _ = direct_branch(word, base + index * 4)
+            if target is not None and base <= target < base + length:
+                pending.append(target)
+    while pending:
+        address = pending.pop()
+        while base <= address < base + length and not classified[(address - base) // 4]:
+            if any(lo <= address < hi for lo, hi in objects):
+                raise RuntimeError(f'{path}: direct branch enters an object symbol at {address:x}')
+            word, = struct.unpack_from('<I', data, section[4] + address - base)
+            if word == 0:
+                raise RuntimeError(f'{path}: direct branch reaches undefined instruction at {address:x}')
+            classified[(address - base) // 4] = 1
+            target, fallthrough = direct_branch(word, address)
+            if target is not None and base <= target < base + length:
+                pending.append(target)
+            # BR/RET terminate this path. BLR returns to the next instruction.
+            if (not fallthrough or
+                    word & 0xfe000000 == 0xd6000000 and word & 0xfffffc1f != 0xd63f0000 or
+                    word & 0xffe0001f in (0xd4200000, 0xd4400000)):
+                break
+            address += 4
+    merged, start = [], None
+    for index, known in enumerate([*classified, 0]):
+        if known and start is None:
+            start = base + index * 4
+        elif not known and start is not None:
+            merged.append((start, base + index * 4))
+            start = None
+    return merged
 
 
 def inspect(path, shared=False, function_symbols=False):
@@ -423,6 +594,7 @@ def inspect(path, shared=False, function_symbols=False):
     sections = [struct.unpack_from('<IIQQQQIIQQ', data, shoff + i * shentsize) for i in range(shnum)]
     mappings = {}
     functions = {}
+    objects = {}
     symbol_sources = [(data, sections, False)]
     if function_symbols:
         names = sections[struct.unpack_from('<H', data, 62)[0]]
@@ -461,6 +633,8 @@ def inspect(path, shared=False, function_symbols=False):
                     mappings.setdefault(sec, set()).add((addr, name[1]))
                 if info & 15 == 2 and size:
                     functions.setdefault(sec, []).append((addr, addr + size))
+                if info & 15 == 1 and size:
+                    objects.setdefault(sec, []).append((addr, addr + size))
     patches = []
     instruction_ranges = []
     for index, sec in enumerate(sections):
@@ -497,6 +671,14 @@ def inspect(path, shared=False, function_symbols=False):
                     merged[-1] = (merged[-1][0], max(hi, merged[-1][1]))
                 else:
                     merged.append((lo, hi))
+            # Resolve assembly gaps only when they contain instructions requiring rewriting.
+            gaps = [(sec[3], merged[0][0])] if merged else [(sec[3], sec[3] + sec[5])]
+            gaps += [(hi, merged[i + 1][0] if i + 1 < len(merged) else sec[3] + sec[5])
+                     for i, (_, hi) in enumerate(merged)]
+            if any(x18_instruction(word) or word & 0xffe0001f == 0xd4000001 or
+                   word & 0xffffffe0 in (0xd53bd040, 0xd51bd040)
+                   for lo, hi in gaps for (word,) in struct.iter_unpack('<I', data[sec[4] + lo - sec[3]:sec[4] + hi - sec[3]])):
+                merged = extend_function_ranges(path, data, sec, merged, objects.get(index, []), sections, functions)
             markers = [(sec[3], 'd')] if not merged or merged[0][0] > sec[3] else []
             for lo, hi in merged:
                 markers.append((lo, 'x'))
@@ -699,6 +881,17 @@ def build(out, llvm):
          EXP / 'userspace/bionic-test.c', EXP / 'userspace/file-tests.c', EXP / 'userspace/seccomp-tests.c',
          EXP / 'userspace/signal-tests.c', EXP / 'userspace/signal-registers.S', '-o', out / 'bionic-test.elf'])
     programs.append(('/bionic-test', out / 'bionic-test.elf'))
+    cfi_flags = [ndk / 'toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android35-clang',
+                 '-ffixed-x18', '-mno-outline-atomics', '-O2', '-g', '-flto',
+                 '-fsanitize=cfi-icall', '-fsanitize-cfi-cross-dso', '-fsanitize-trap=cfi-icall',
+                 '-fvisibility=hidden', '-Wl,-z,max-page-size=16384,-z,common-page-size=16384']
+    for name, increment in (('a', 11), ('b', 29)):
+        library = out / f'libnce-cfi-{name}.so'
+        run([*cfi_flags, '-shared', '-fPIC', '-DNCE_CFI_INCREMENT=' + str(increment),
+             EXP / 'userspace/cfi-library.c', '-o', library])
+        programs.append(('/system/lib64/' + library.name, library))
+    run([*cfi_flags, EXP / 'userspace/cfi-test.c', '-ldl', '-o', out / 'cfi-test.elf'])
+    programs.append(('/system/bin/cfi-test', out / 'cfi-test.elf'))
     run([ndk / 'toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android35-clang',
          '-ffixed-x18', '-mno-outline-atomics', '-g', '-O2', '-Wall', '-Wextra', '-Werror',
          '-Wl,-z,max-page-size=16384,-z,common-page-size=16384',
@@ -711,7 +904,11 @@ def build(out, llvm):
     programs.append(('/system/lib64/libdl.so', WORK / 'android/linker-build/libdl.so'))
     crypto = build_android_crypto()
     replacements = {**build_android_art(), **crypto}
-    programs += android_dependencies(llvm, replacements)
+    prepare_android_desktop()
+    assets = android_data(out) + [native_library_zip(out)]
+    embedded, program_locations = apk_native_libraries(out, assets)
+    programs += android_dependencies(llvm, replacements, embedded)
+    programs += embedded
     android_service_headers()
     programs += android_graphics_dependencies(llvm, programs)
     module = 'com.android.configinfrastructure'
@@ -768,10 +965,12 @@ def build(out, llvm):
     programs.append(('/system/bin/aconfigd-system', WORK / 'android/android36/bin/aconfigd-system'))
     programs.append(('/system/bin/installd', WORK / 'android/android36/bin/installd'))
     for name in ('idmap2', 'idmap2d', 'vold', 'storaged', 'cmd', 'dumpsys', 'netd', 'lmkd',
-                 'bpfloader', 'iptables'):
+                 'bpfloader', 'iptables', 'audioserver', 'mediametrics'):
         programs.append(('/system/bin/' + name, WORK / 'android/android36/bin' / name))
     programs.append(('/apex/com.android.art/bin/artd', WORK / 'android/android36/com.android.art/bin/artd'))
     programs.append(('/apex/com.android.tethering/bin/netbpfload', build_android_network()))
+    programs.append(('/apex/com.android.tethering/bin/for-system/clatd',
+                     WORK / 'android/android36/com.android.tethering/bin/for-system/clatd'))
     programs.append(('/system/bin/hw/android.system.suspend-service', WORK / 'android/android36/bin/hw/android.system.suspend-service'))
     programs.append(('/system/bin/app_process64', WORK / 'android/android36/bin/app_process64'))
     programs.append(('/system/bin/derive_classpath', WORK / 'android/android36/com.android.sdkext/bin/derive_classpath'))
@@ -826,11 +1025,14 @@ def build(out, llvm):
         if cached and cached['sha256'] == digest:
             elf = dict(cached['layout'], data=data)
         else:
-            elf = inspect(path, shared=name.endswith('.so'), function_symbols=name.startswith(('/system/', '/vendor/', '/apex/')) or name in ('/bionic-test', '/art-test', '/art-heap-test'))
+            elf = inspect(path, shared=name.endswith('.so'), function_symbols=name.startswith(('/system/', '/vendor/', '/apex/', '/system_ext/', '/product/')) or name in ('/bionic-test', '/art-test', '/art-heap-test'))
             dis = elf_disassembly(llvm, path, elf)
             check_x18_disassembly(path, elf, dis)
             cache['files'][name] = {'sha256': digest, 'layout': {k: v for k, v in elf.items() if k != 'data'}}
-        offset = (offset + elf['alignment'] - 1) & -elf['alignment']
+        # Bionic's CFI shadow permits only one DSO in each 256 KiB address block.
+        # This also applies to libraries without CFI, whose unload clears shadow entries.
+        alignment = max(elf['alignment'], 1 << 18)
+        offset = (offset + alignment - 1) & -alignment
         stub_size = (32 + 80 * len(elf['patches']) + PAGE - 1) & -PAGE
         if elf['span'] + stub_size >= 128 * 1024 * 1024:
             raise RuntimeError('ELF and its branch stubs exceed the AArch64 branch range')
@@ -842,15 +1044,16 @@ def build(out, llvm):
         if name == '/worker' and sum(size for _, size in elf['segments']) <= 65536:
             raise RuntimeError('Large-text fixture did not exceed 64 KiB')
         position = len(payload)
-        system_image = name.startswith(('/system/', '/vendor/', '/apex/'))
-        if system_image:
+        system_image = name.startswith(('/system/', '/vendor/', '/apex/', '/system_ext/', '/product/'))
+        if system_image and name not in program_locations:
             system_files.append((name, path))
         payload.extend(elf['data'][:elf['phoff'] + elf['phsize']] if system_image else elf['data'])
         header.append(f'static NceSegment segments_{i}[] = {{' + ','.join(
             f'{{.offset={lo},.size={size}}}' for lo, size in elf['segments']) + '};')
         header.append(f'static const NcePatch patches_{i}[] = {{' + ','.join(
             f'{{{va},{word}}}' for va, word in elf['patches']) + '};')
-        entries.append(f'{{.path="{name}",.file=nce_payload+{position},.size={len(elf["data"])},.system_image={int(system_image)},.sha256={{' + ','.join(str(x) for x in hashlib.sha256(elf['data']).digest()) + f'}},.offset={offset},.span={elf["span"]},'
+        container, source_offset = program_locations.get(name, (name, 0))
+        entries.append(f'{{.path="{name}",.container="{container}",.source_offset={source_offset},.file=nce_payload+{position},.size={len(elf["data"])},.system_image={int(system_image)},.sha256={{' + ','.join(str(x) for x in hashlib.sha256(elf['data']).digest()) + f'}},.offset={offset},.span={elf["span"]},'
                        f'.stub_size={stub_size},.entry={elf["entry"]},.phoff={elf["phoff"]},.phsize={elf["phsize"]},'
                        f'.segments=segments_{i},.segment_count={len(elf["segments"])},'
                        f'.patches=patches_{i},.patch_count={len(elf["patches"])}}}')
@@ -860,19 +1063,19 @@ def build(out, llvm):
     header += ['NceProgram nce_programs[] = {' + ',\n'.join(entries) + '};',
                f'const size_t nce_program_count = {len(entries)};']
     (out / 'program-images.h').write_text('\n'.join(header) + '\n')
-    assets = ['extern const unsigned char nce_payload[];', 'static const char shell_script[] = ' +
+    asset_header = ['extern const unsigned char nce_payload[];', 'static const char shell_script[] = ' +
               json.dumps((EXP / 'userspace/shell-tests.sh').read_text()) + ';\n']
     entries = []
-    for name, path in android_data(out):
+    for name, path in assets:
         if name.startswith(('/system/', '/apex/', '/system_ext/', '/product/', '/vendor/')):
             system_files.append((name, path))
             continue
         data = path.read_bytes()
         entries.append(f'{{"{name}",nce_payload+{len(payload)},{len(data)}}}')
         payload.extend(data)
-    assets.append('static const struct { const char *path; const void *data; size_t size; } art_assets[] = {' +
+    asset_header.append('static const struct { const char *path; const void *data; size_t size; } art_assets[] = {' +
                   ',\n'.join(entries) + '};')
-    (out / 'user-scripts.h').write_text('\n'.join(assets) + '\n')
+    (out / 'user-scripts.h').write_text('\n'.join(asset_header) + '\n')
     (out / 'payload.bin').write_bytes(payload)
     system_root = out / 'system-root'
     if system_root.exists():
@@ -885,6 +1088,8 @@ def build(out, llvm):
         target.chmod(0o755 if '/bin/' in name else 0o644)
     (system_root / 'system/bin/bootstrap').mkdir(exist_ok=True)
     (system_root / 'system/bin/bootstrap/linker64').symlink_to('/system/bin/linker64')
+    for name in ('ip6tables', 'iptables-restore', 'ip6tables-restore'):
+        (system_root / 'system/bin' / name).symlink_to('iptables')
     (system_root / 'apex/com.android.art/lib64').mkdir(parents=True, exist_ok=True)
     image = out / 'system.img'
     with image.open('wb') as disk:
@@ -892,6 +1097,18 @@ def build(out, llvm):
         disk.truncate((size + 64 * 1024 * 1024 - 1) & -(64 * 1024 * 1024))
     run(['/opt/homebrew/opt/e2fsprogs/sbin/mke2fs', '-F', '-q', '-t', 'ext4', '-b', '4096',
          '-O', '^has_journal', '-E', 'lazy_itable_init=0', '-d', system_root, image])
+    # ClatCoordinator validates the APEX executable's ownership, mode and label at JNI load.
+    metadata = out / 'system-metadata.debugfs'
+    commands = []
+    for path, mode, uid, gid, label in (
+        ('/apex/com.android.tethering/bin/for-system', '040750', 1029, 1000, 'system_file'),
+        ('/apex/com.android.tethering/bin/for-system/clatd', '0106755', 1029, 1029, 'clatd_exec')):
+        commands += [f'set_inode_field {path} mode {mode}', f'set_inode_field {path} uid {uid}',
+                     f'set_inode_field {path} gid {gid}',
+                     f'ea_set {path} security.selinux u:object_r:{label}:s0']
+    metadata.write_text('\n'.join(commands) + '\n')
+    run(['/opt/homebrew/opt/e2fsprogs/sbin/debugfs', '-w', '-f', metadata, image],
+        stdout=subprocess.DEVNULL)
     shutil.rmtree(system_root)
     payload_path = str((out / 'payload.bin').resolve()).replace('\\', '\\\\').replace('"', '\\"')
     (out / 'payload.S').write_text('.section __TEXT,__const\n.p2align 4\n.globl _nce_payload\n'

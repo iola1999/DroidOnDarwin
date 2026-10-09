@@ -63,10 +63,10 @@ void memory_tests(void)
     CHECK(WIFSIGNALED(limited_status) && WTERMSIG(limited_status) == SIGSEGV);
     CHECK(grow_stack(64) == 4225);
     puts("{\"test\":\"linux_stack_growth_and_limit\",\"passed\":true}");
-    CHECK(syscall(245, -1, PAGE) == -1 && errno == EBADF);
+    CHECK(syscall(245, -1, PAGE, 0UL) == -1 && errno == EBADF);
     int ordinary = open("/reserve-not-elf", O_CREAT | O_RDWR, 0600);
     CHECK(ordinary >= 0);
-    CHECK(syscall(245, ordinary, PAGE) == -1 && errno == ENOEXEC);
+    CHECK(syscall(245, ordinary, PAGE, 0UL) == -1 && errno == ENOEXEC);
     CHECK(close(ordinary) == 0);
     int elf = open("/bionic-test", O_RDONLY);
     CHECK(elf >= 0);
@@ -80,10 +80,10 @@ void memory_tests(void)
             load_size = phdr.p_vaddr + phdr.p_memsz;
     }
     load_size = (load_size + PAGE - 1) & ~(size_t)(PAGE - 1);
-    CHECK(syscall(245, elf, load_size + PAGE) == -1 && errno == EINVAL);
-    void *elf_reservation = (void *)syscall(245, elf, load_size);
+    CHECK(syscall(245, elf, load_size + PAGE, 0UL) == -1 && errno == EINVAL);
+    void *elf_reservation = (void *)syscall(245, elf, load_size, 0UL);
     CHECK(elf_reservation != MAP_FAILED);
-    CHECK(syscall(245, elf, load_size) == -1 && errno == EEXIST);
+    CHECK(syscall(245, elf, load_size, 0UL) == -1 && errno == EEXIST);
     void *metadata = mmap(NULL, PAGE, PROT_READ, MAP_PRIVATE, elf, 0);
     CHECK(metadata != MAP_FAILED && metadata != elf_reservation);
     CHECK(!memcmp(metadata, ELFMAG, SELFMAG));

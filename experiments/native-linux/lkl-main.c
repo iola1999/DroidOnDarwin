@@ -242,6 +242,12 @@ int nce_lkl_run(const char *image_path)
            iterations, (double)(now() - started) / iterations);
     #endif
     puts("{\"phase\":\"linux_shutdown\"}");
+    #ifdef NCE_PROCESS
+    long unmount_args[6] = {(long)"/data/nce", 0};
+    REQUIRE(kernel_syscall(39, unmount_args) == 0);
+    unmount_args[0] = (long)"/data";
+    REQUIRE(kernel_syscall(39, unmount_args) == 0);
+    #endif
     REQUIRE(halt() == 0);
     cleanup();
     nce_disk_close();

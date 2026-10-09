@@ -13,7 +13,8 @@ typedef struct { size_t address; uint32_t instruction; } NcePatch;
 /* Generated from the bundled ELF files before executable addresses are
  * authorized. Linux still owns file loading, relocations and process pages. */
 typedef struct {
-    const char *path;
+    const char *path, *container;
+    size_t source_offset;
     const unsigned char *file;
     unsigned char sha256[32];
     int system_image;
@@ -29,7 +30,8 @@ typedef struct {
 extern NceProgram nce_programs[];
 extern const size_t nce_program_count;
 NceProgram *nce_program_entry(uintptr_t entry);
-unsigned long nce_program_layout(const char *path, const void *header, const void *phdrs);
+unsigned long nce_program_layout(const char *path, unsigned long source_offset, const void *header, const void *phdrs);
+unsigned long nce_program_source_offset(unsigned long address);
 int nce_program_reserved(unsigned long address, unsigned long length);
 /* First program whose complete reserved range ends after address, or count.
  * The generated layout orders all program ranges by increasing address. */

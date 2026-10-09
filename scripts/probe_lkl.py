@@ -170,6 +170,15 @@ def main():
                         "IPV6_MULTIPLE_TABLES", "NET_SCHED", "NET_CLS_ACT", "NET_CLS_CGROUP", "NET_CLS_BPF", "NET_ACT_BPF",
                         "NET_SCH_INGRESS", "NETFILTER_XTABLES", "IP_NF_IPTABLES", "IP_NF_FILTER",
                         "IP_NF_MANGLE", "IP6_NF_IPTABLES", "IP6_NF_FILTER", "IP6_NF_MANGLE"]
+            options += ["NF_CONNTRACK", "NF_NAT", "IP_NF_NAT", "IP_NF_RAW", "IP6_NF_RAW",
+                        "IP_NF_TARGET_REJECT", "IP6_NF_TARGET_REJECT", "XFRM_USER",
+                        "NETFILTER_XT_MATCH_BPF", "NETFILTER_XT_MATCH_MARK", "NETFILTER_XT_TARGET_MARK",
+                        "NETFILTER_XT_MATCH_POLICY", "NETFILTER_XT_MATCH_OWNER",
+                        "NETFILTER_XT_MATCH_CONNMARK", "NETFILTER_XT_TARGET_CONNMARK",
+                        "NETFILTER_XT_MATCH_CONNTRACK", "NETFILTER_XT_TARGET_NFLOG",
+                        "NETFILTER_XT_TARGET_TCPMSS", "NETFILTER_XT_TARGET_CT",
+                        "NETFILTER_XT_TARGET_MASQUERADE"]
+            options += ["NETFILTER_XT_MATCH_U32", "NETFILTER_XT_MATCH_STATE", "NETFILTER_XT_MATCH_TCPMSS"]
         switches = [arg for name in options for arg in ("-e", name)]
         if PROCESS:
             switches += ["--set-str", "LSM", "selinux"]
@@ -266,11 +275,12 @@ def main():
             raise SystemExit("GCD probe did not complete")
         if not any(r.get("inherited_blocked_threads", 0) > 0 for r in dispatch_results):
             raise SystemExit("GCD regression did not exercise an inherited signal mask")
-        for records, generation in ((results, 1), (dispatch_results, 2)):
-            if not any(r.get("test") == "linux_ext4_persistence" and r.get("generation") == generation
-                       and r.get("passed") for r in records):
-                raise SystemExit("Persistent storage did not survive kernel restart")
-        run(["/opt/homebrew/opt/e2fsprogs/sbin/e2fsck", "-fn", OUT / "storage-test.img"])
+        generations = [next((r.get("generation", 0) for r in records
+                             if r.get("test") == "linux_ext4_persistence" and r.get("passed")), 0)
+                       for records in (results, dispatch_results)]
+        if generations[0] < 1 or generations[1] != generations[0] + 1:
+            raise SystemExit("Persistent storage did not survive kernel restart")
+        run(["/opt/homebrew/opt/e2fsprogs/sbin/e2fsck", "-fn", OUT / "android-data.img"])
         if (OUT / "framework.png").read_bytes() != (OUT / "dispatch-framework.png").read_bytes():
             raise SystemExit("CLI and GCD framework images differ")
         if angle and (OUT / "gpu.bmp").read_bytes() != (OUT / "dispatch-gpu.bmp").read_bytes():
@@ -316,7 +326,7 @@ def main():
                     Path(__file__).with_name("prepare_android_runtime.py"), Path(__file__).with_name("prepare_android_modules.py"),
                     Path(__file__).with_name("prepare_android_desktop.py"), Path(__file__).with_name("build_android_linker.py"),
                     Path(__file__).with_name("build_android_libc.py"), Path(__file__).with_name("build_android_art.py"),
-                    Path(__file__).with_name("build_android_crypto.py"), Path(__file__).with_name("build_android_gralloc.py"),
+                    Path(__file__).with_name("build_android_crypto.py"), Path(__file__).with_name("build_android_gralloc.py"), Path(__file__).with_name("build_android_network.py"),
                     ROOT / "patches/nce-gralloc-memfd.patch",
                     EXPERIMENT / "android-sources.json", *sorted((EXPERIMENT / "art").glob("*")),
                     *sorted((EXPERIMENT / "userspace").glob("*")), *sorted(p for p in (EXPERIMENT / "services").rglob("*") if p.is_file()),
@@ -326,9 +336,9 @@ def main():
         manifest["stage"] = "Android Bionic, Binder, ART Java and ARM64 JIT workloads"
         manifest["userspace_libraries"] = {"musl": "1.2.5", "compiler-rt": "20.1.8", "dash": "0.5.12"}
         manifest["generated_sha256"] = {name: hashlib.sha256((OUT / name).read_bytes()).hexdigest()
-                                        for name in ["system.img", "storage-seed.img", "storage-test.elf", "program-images.h", "user-scripts.h", "payload.S", "payload.bin", "lkl-image.h", "lkl-host-ops.h", "guest-image.h",
+                                        for name in ["system.img", "android-data-seed.img", "storage-test.elf", "program-images.h", "user-scripts.h", "payload.S", "payload.bin", "lkl-image.h", "lkl-host-ops.h", "guest-image.h",
                                                      "exec-guest.elf", "sigreturn.elf", "init.elf", "worker.elf", "mm-bench.elf", "dash.elf",
-                                                     "libc.so", "dependency.so", "plugin.so", "dynamic.elf", "binder-test.elf", "gpu-test.elf", "egl-test.elf", "gralloc-test.elf", "libnce-qemupipe.so", "bionic-test.elf", "art-test.elf", "art-heap-test.elf", "android-services-test.elf"]}
+                                                     "libc.so", "dependency.so", "plugin.so", "dynamic.elf", "binder-test.elf", "gpu-test.elf", "egl-test.elf", "gralloc-test.elf", "libnce-qemupipe.so", "bionic-test.elf", "cfi-test.elf", "libnce-cfi-a.so", "libnce-cfi-b.so", "nce-native-libraries.apk", "art-test.elf", "art-heap-test.elf", "android-services-test.elf"]}
         android = ROOT / "work/native-linux-nce/android"
         manifest["android_builds"] = {name: json.loads((android / name / "manifest.json").read_text())
                                       for name in ("linker-build", "libc-build", "art-build", "crypto-build")}

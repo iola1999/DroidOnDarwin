@@ -8,6 +8,7 @@
 #include <sys/stat.h>
 #include <sys/ioctl.h>
 #include <sys/mman.h>
+#include <sys/wait.h>
 #include <unistd.h>
 
 #define CHECK(c) do { if (!(c)) { dprintf(2, "file-tests:%d errno=%d: %s\n", __LINE__, errno, #c); _exit(111); } } while (0)
@@ -42,6 +43,17 @@ void file_tests(const char *libc)
         if (!strcmp(entry->d_name, "link")) seen |= 2;
     }
     CHECK(seen == 3 && closedir(entries) == 0);
+    CHECK(symlink("/bin/sh", "/open-flags/shell") == 0);
+    pid_t child = fork();
+    CHECK(child >= 0);
+    if (!child) {
+        execl("/open-flags/shell", "shell", "-c", "exit 23", NULL);
+        _exit(112);
+    }
+    int status;
+    CHECK(waitpid(child, &status, 0) == child && WIFEXITED(status) && WEXITSTATUS(status) == 23);
+    CHECK(unlink("/open-flags/shell") == 0);
+    printf("{\"test\":\"linux_exec_symlink\",\"passed\":true,\"libc\":\"%s\"}\n", libc);
     CHECK(unlink("/open-flags/link") == 0 && unlink("/open-flags/data") == 0 && rmdir("/open-flags") == 0);
     printf("{\"test\":\"linux_aarch64_file_open_flags\",\"passed\":true,\"libc\":\"%s\"}\n", libc);
 }

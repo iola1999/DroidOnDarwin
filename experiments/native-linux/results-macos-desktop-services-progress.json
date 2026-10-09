@@ -1,7 +1,7 @@
 {
   "date": "2026-10-10",
   "complete_android_boot": false,
-  "remaining_failure": "Network BPF loader exited with status 2; verifier diagnostics pending",
+  "remaining_failure": "Audio HAL/HIDL startup and APK embedded native loading under validation; complete desktop boot pending",
   "checks": [
     {
       "test": "native_program_range_index",
@@ -32,6 +32,42 @@
       "test": "android_surfaceflinger_composed_pixels",
       "passed": true,
       "frames": 3
+    },
+    {
+      "test": "android_network_bpf_loaded",
+      "passed": true
+    },
+    {
+      "test": "android_cfi_library_reload",
+      "passed": true,
+      "reloads": 16,
+      "wrong_type_rejected": true
+    },
+    {
+      "test": "linux_exec_symlink",
+      "passed": true,
+      "libc": "musl"
+    },
+    {
+      "test": "linux_exec_symlink",
+      "passed": true,
+      "libc": "bionic"
+    },
+    {
+      "test": "android_apk_native_libraries",
+      "passed": true,
+      "libraries": 2,
+      "fork_reload": true,
+      "invalid_offset_rejected": true
     }
-  ]
+  ],
+  "service_observations": [
+    "netd registered",
+    "ActivityManager connected to lmkd",
+    "StorageManagerService initialized",
+    "artd retained by a Binder reference",
+    "ClatCoordinator executable and BPF labels validated",
+    "NetworkStatsService initialized; system_server entered AudioService"
+  ],
+  "python_elf_tests": 21
 }
