@@ -887,3 +887,25 @@ CLI、GCD、3 轮进程压力、14 项 ELF 检查和 iOS 目标编译通过，�
 复杂度审查保留 Android 原有类路径解析、cgroup 调整与密码库调用。system_server
 检查作为可选集成入口，常规回归继续运行完整类路径的 Framework 和 Zygote。
 apexservice 需要真实模块信息及模块生命周期支持，后续按这一依赖继续实现。
+
+## ART 字符串与数值 intrinsic（2026-10-09）
+
+ARM64 intrinsic 分派启用 26 项已检查的路径：String.equals、高低位查找、位计数、
+位序/字节序翻转、浮点原始位转换、平方根及取整。String.equals 使用独立临时
+寄存器恢复两个对象的原生地址，保留压缩引用和输出寄存器的分配约束；原版的
+常量字符串、压缩字符串和 UTF-16 比较算法继续使用。其余 intrinsic 保持普通
+方法调用。
+
+新增回归强制编译测试入口，再比较 264 个整数输入、15 个浮点边界、原始浮点
+位往返、28 组字符串内容/类型/空值/GC 检查和 5 个常量字符串分支。首轮发现
+JNI 刚加载的类仍使用 resolution stub，ART 拒绝同步编译；测试入口现先完成
+类初始化的跨线程发布。CLI、GCD、3 轮进程压力、14 项 ELF 检查及 iOS 编译通过。
+日志为 `work/native-linux-nce/intrinsics-initialization-probe.log`。
+
+20 万轮位运算在 CLI 的解释/JIT 耗时为 58.591/1.030 ms，GCD 为
+58.695/1.031 ms。该对照约 57 倍，只适用于此计算负载。尚未测得旧版普通
+方法调用 JIT 与本版 intrinsic 的独立差值，也尚无本轮手机性能数据。
+
+本轮复杂度审查复用 ART 原有指令生成，只维护一处 intrinsic 准入列表，
+编译器的后续检查接受该列表产生的调用。测试单独放入 NceIntrinsics，临时
+编译诊断已移除。

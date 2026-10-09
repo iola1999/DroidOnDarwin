@@ -31,6 +31,54 @@ static jobject native_identity(JNIEnv *env, jclass klass, jobject value)
     return (*env)->NewLocalRef(env, value);
 }
 
+static int test_intrinsics(JNIEnv *env, void *library)
+{
+    bool (*compile)(JNIEnv *, jmethodID) = dlsym(library, "nce_art_compile_method");
+    void (*keep_interpreted)(JNIEnv *, jmethodID) = dlsym(library, "nce_art_keep_interpreted");
+    jclass klass = (*env)->FindClass(env, "NceIntrinsics");
+    if (!klass || !compile || !keep_interpreted) return 60;
+    const char *methods[][2] = {
+        {"$compile$bits", "(J)J"}, {"$compile$math", "(D)J"},
+        {"$compile$doubleBits", "(J)J"}, {"$compile$floatBits", "(I)I"},
+        {"$compile$constants", "(Ljava/lang/String;)I"}, {"$compile$mix", "(IJ)J"},
+        {"bitsBaseline", "(J)J"}, {"mathBaseline", "(D)J"},
+        {"mixBaseline", "(IJ)J"}, {"checkResults", "()V"},
+    };
+    for (unsigned i = 0; i < sizeof(methods) / sizeof(methods[0]); ++i) {
+        jmethodID method = (*env)->GetStaticMethodID(env, klass, methods[i][0], methods[i][1]);
+        if (!method) return 61;
+        if (i < 6) {
+            if (!compile(env, method)) {
+                fprintf(stderr, "ART could not compile intrinsic test %s\n", methods[i][0]);
+                return 62;
+            }
+        } else keep_interpreted(env, method);
+    }
+    jmethodID check = (*env)->GetStaticMethodID(env, klass, "checkResults", "()V");
+    (*env)->CallStaticVoidMethod(env, klass, check);
+    if ((*env)->ExceptionCheck(env)) { (*env)->ExceptionDescribe(env); return 63; }
+    jmethodID baseline = (*env)->GetStaticMethodID(env, klass, "mixBaseline", "(IJ)J");
+    jmethodID native = (*env)->GetStaticMethodID(env, klass, "$compile$mix", "(IJ)J");
+    double interpreter_ms = 1e30, jit_ms = 1e30;
+    jlong checksum = 0;
+    for (int i = 0; i < 3; ++i) {
+        double start = now_ms();
+        jlong first = (*env)->CallStaticLongMethod(env, klass, baseline, 200000, (jlong)413);
+        double elapsed = now_ms() - start;
+        if (elapsed < interpreter_ms) interpreter_ms = elapsed;
+        start = now_ms();
+        jlong second = (*env)->CallStaticLongMethod(env, klass, native, 200000, (jlong)413);
+        elapsed = now_ms() - start;
+        if (elapsed < jit_ms) jit_ms = elapsed;
+        if ((*env)->ExceptionCheck(env) || first != second) return 64;
+        checksum = second;
+    }
+    printf("{\"test\":\"android_art_intrinsics_benchmark\",\"passed\":true,"
+           "\"iterations\":200000,\"interpreter_ms\":%.3f,\"jit_ms\":%.3f,\"checksum\":\"%016llx\"}\n",
+           interpreter_ms, jit_ms, (unsigned long long)checksum);
+    return 0;
+}
+
 static int test_jit(JNIEnv *env, jclass workload, void *library)
 {
     bool (*compile)(JNIEnv *, jmethodID) = dlsym(library, "nce_art_compile_method");
@@ -189,6 +237,8 @@ static int test_jit(JNIEnv *env, jclass workload, void *library)
     fflush(stdout);
     (*env)->CallStaticVoidMethod(env, workload, strings);
     if ((*env)->ExceptionCheck(env)) { (*env)->ExceptionDescribe(env); return 49; }
+    int intrinsic_result = test_intrinsics(env, library);
+    if (intrinsic_result) return intrinsic_result;
     jmethodID types = (*env)->GetStaticMethodID(env, workload, "compiledTypes", "()V");
     if (!types) return 50;
     puts("{\"phase\":\"android_art_jit_types\"}");

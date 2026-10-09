@@ -12,6 +12,13 @@
 extern "C" JNIEXPORT bool nce_art_compile_method(JNIEnv* env, jmethodID id)
 {
     art::ScopedObjectAccess soa(env);
+    // JNI lookup may leave a newly initialized class behind its resolution entrypoint.
+    // Publish initialization before requesting a synchronous test compilation.
+    {
+        art::ScopedThreadSuspension suspended(soa.Self(), art::ThreadState::kNative);
+        art::Runtime::Current()->GetClassLinker()->MakeInitializedClassesVisiblyInitialized(
+            soa.Self(), true);
+    }
     art::ArtMethod* method = art::jni::DecodeArtMethod(id);
     art::jit::Jit* jit = art::Runtime::Current()->GetJit();
     if (!jit || !method) return false;

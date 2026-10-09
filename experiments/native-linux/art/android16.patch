@@ -772,134 +772,6 @@
        const DexFile& dex_file,
        dex::ProtoIndex proto_index,
        Handle<mirror::MethodType> handle,
---- a/compiler/optimizing/optimizing_compiler.cc
-+++ b/compiler/optimizing/optimizing_compiler.cc
-@@ -774,10 +774,82 @@
-   bool GraphRejected() const { return has_unsupported_instructions_; }
-
-  private:
--  void VisitInstruction(HInstruction*) override {
--    // Currently we don't support compiling methods unless they were annotated with $compile$.
--    RejectGraph();
--  }
-+  void VisitInstruction(HInstruction*) override { RejectGraph(); }
-+#ifdef ART_NCE
-+  // Admit only code generation paths adapted to the high-address heap.
-+  // Unknown instructions retain interpreter execution, including after inlining.
-+#define NCE_ALLOW(name) void Visit##name(H##name*) override {}
-+  NCE_ALLOW(BinaryOperation)
-+  NCE_ALLOW(DataProcWithShifterOp)
-+  NCE_ALLOW(MultiplyAccumulate)
-+  NCE_ALLOW(UnaryOperation)
-+  NCE_ALLOW(Condition)
-+  NCE_ALLOW(Constant)
-+  NCE_ALLOW(Phi)
-+  NCE_ALLOW(ParallelMove)
-+  NCE_ALLOW(ParameterValue)
-+  NCE_ALLOW(CurrentMethod)
-+  NCE_ALLOW(NullConstant)
-+  NCE_ALLOW(NullCheck)
-+  NCE_ALLOW(BoundsCheck)
-+  NCE_ALLOW(DivZeroCheck)
-+  NCE_ALLOW(Select)
-+  NCE_ALLOW(TypeConversion)
-+  NCE_ALLOW(Return)
-+  NCE_ALLOW(ReturnVoid)
-+  NCE_ALLOW(Goto)
-+  NCE_ALLOW(If)
-+  NCE_ALLOW(Exit)
-+  NCE_ALLOW(Nop)
-+  NCE_ALLOW(SuspendCheck)
-+  NCE_ALLOW(PackedSwitch)
-+  NCE_ALLOW(MemoryBarrier)
-+  NCE_ALLOW(InstanceFieldGet)
-+  NCE_ALLOW(InstanceFieldSet)
-+  NCE_ALLOW(NewInstance)
-+  NCE_ALLOW(NewArray)
-+  NCE_ALLOW(ConstructorFence)
-+  NCE_ALLOW(InvokeInterface)
-+  NCE_ALLOW(MonitorOperation)
-+  NCE_ALLOW(TryBoundary)
-+  NCE_ALLOW(LoadException)
-+  NCE_ALLOW(ClearException)
-+  NCE_ALLOW(Throw)
-+  NCE_ALLOW(StaticFieldGet)
-+  NCE_ALLOW(StaticFieldSet)
-+  NCE_ALLOW(ArraySet)
-+  NCE_ALLOW(ArrayLength)
-+  NCE_ALLOW(ArrayGet)
-+  NCE_ALLOW(ClinitCheck)
-+  NCE_ALLOW(IntermediateAddress)
-+  NCE_ALLOW(IntermediateAddressIndex)
-+  NCE_ALLOW(VecReplicateScalar)
-+  NCE_ALLOW(VecExtractScalar)
-+  NCE_ALLOW(VecReduce)
-+  NCE_ALLOW(VecAdd)
-+  NCE_ALLOW(VecMul)
-+  NCE_ALLOW(VecStore)
-+#undef NCE_ALLOW
-+  void VisitLoadClass(HLoadClass* load) override {
-+    if (load->GetLoadKind() != HLoadClass::LoadKind::kJitTableAddress &&
-+        load->GetLoadKind() != HLoadClass::LoadKind::kReferrersClass &&
-+        load->GetLoadKind() != HLoadClass::LoadKind::kRuntimeCall) RejectGraph();
-+  }
-+  void VisitInvokeVirtual(HInvokeVirtual* call) override {
-+    if (call->GetLocations()->Intrinsified()) RejectGraph();
-+  }
-+  void VisitLoadString(HLoadString* load) override {
-+    if (load->GetLoadKind() != HLoadString::LoadKind::kJitTableAddress &&
-+        load->GetLoadKind() != HLoadString::LoadKind::kRuntimeCall) RejectGraph();
-+  }
-+  void VisitVecLoad(HVecLoad* access) override {
-+    if (access->IsStringCharAt()) RejectGraph();
-+  }
-+  void VisitInvokeStaticOrDirect(HInvokeStaticOrDirect* call) override {
-+    if (call->GetLocations()->Intrinsified() || call->GetMethodLoadKind() == MethodLoadKind::kStringInit ||
-+        call->GetMethodLoadKind() == MethodLoadKind::kRuntimeCall) RejectGraph();
-+  }
-+#endif
-   void RejectGraph() {
-     has_unsupported_instructions_ = true;
-   }
-@@ -793,9 +865,11 @@
- //
- // TODO(Simulator): compile and simulate all the methods as in regular host mode.
- bool ShouldMethodBeCompiled(HGraph* graph, const std::string& method_name) {
-+#ifndef ART_NCE
-   if (method_name.find("$compile$") != std::string::npos) {
-     return true;
-   }
-+#endif
-
-   CompilationFilterForRestrictedMode filter_visitor(graph);
-   filter_visitor.VisitReversePostOrder();
-@@ -1010,6 +1084,12 @@
-   // TODO(Simulator): support and compile all methods.
-   std::string method_name = dex_file.PrettyMethod(method_idx);
-   if (!ShouldMethodBeCompiled(graph, method_name)) {
-+#ifdef ART_NCE
-+    if (method != nullptr) {
-+      ScopedObjectAccess soa(Thread::Current());
-+      method->SetDontCompile();
-+    }
-+#endif
-     return nullptr;
-   }
- #endif  // ART_USE_RESTRICTED_MODE
-@@ -1461,7 +1541,12 @@
-   {
-     // Go to native so that we don't block GC during compilation.
-     ScopedThreadSuspension sts(self, ThreadState::kNative);
--    if (com::android::art::flags::fast_baseline_compiler() &&
-+    if (
-+#ifndef ART_NCE
-+        com::android::art::flags::fast_baseline_compiler() &&
-+#else
-+        false &&
-+#endif
-         compilation_kind == CompilationKind::kBaseline &&
-         !compiler_options.GetDebuggable()) {
-       fast_compiler = FastCompiler::Compile(method,
 --- a/libartbase/base/logging.cc
 +++ b/libartbase/base/logging.cc
 @@ -79,7 +79,7 @@
@@ -1973,17 +1845,6 @@
      GetAssembler()->MaybeUnpoisonHeapReference(out_reg);
    }
  }
---- a/compiler/optimizing/optimizing_compiler.cc
-+++ b/compiler/optimizing/optimizing_compiler.cc
-@@ -821,6 +821,8 @@
-   NCE_ALLOW(ArrayLength)
-   NCE_ALLOW(ArrayGet)
-   NCE_ALLOW(ClinitCheck)
-+  NCE_ALLOW(InstanceOf)
-+  NCE_ALLOW(CheckCast)
-   NCE_ALLOW(IntermediateAddress)
-   NCE_ALLOW(IntermediateAddressIndex)
-   NCE_ALLOW(VecReplicateScalar)
 --- a/runtime/lock_word.h
 +++ b/runtime/lock_word.h
 @@ -25,6 +25,7 @@
@@ -2015,3 +1876,297 @@
  }
 
  inline LockWord::LockWord() : value_(0) {
+--- a/compiler/optimizing/intrinsics_arm64.cc
++++ b/compiler/optimizing/intrinsics_arm64.cc
+@@ -21,6 +21,9 @@
+ #include "arch/arm64/callee_save_frame_arm64.h"
+ #include "arch/arm64/instruction_set_features_arm64.h"
+ #include "art_method.h"
++#ifdef ART_NCE
++#include "reference_heap.h"
++#endif
+ #include "base/bit_utils.h"
+ #include "code_generator_arm64.h"
+ #include "common_arm64.h"
+@@ -203,11 +206,45 @@
+ #undef __
+
+ bool IntrinsicLocationsBuilderARM64::TryDispatch(HInvoke* invoke) {
+-#ifdef ART_USE_RESTRICTED_MODE
++#if defined(ART_USE_RESTRICTED_MODE) && !defined(ART_NCE)
+   // TODO(Simulator): support intrinsics.
+   USE(invoke);
+   return false;
+ #else
++#ifdef ART_NCE
++  // Other intrinsics retain regular calls until their heap/runtime paths are adapted.
++  switch (invoke->GetIntrinsic()) {
++    case Intrinsics::kStringEquals:
++    case Intrinsics::kDoubleDoubleToRawLongBits:
++    case Intrinsics::kDoubleLongBitsToDouble:
++    case Intrinsics::kFloatFloatToRawIntBits:
++    case Intrinsics::kFloatIntBitsToFloat:
++    case Intrinsics::kShortReverseBytes:
++    case Intrinsics::kIntegerReverse:
++    case Intrinsics::kIntegerReverseBytes:
++    case Intrinsics::kIntegerBitCount:
++    case Intrinsics::kIntegerHighestOneBit:
++    case Intrinsics::kIntegerLowestOneBit:
++    case Intrinsics::kIntegerNumberOfLeadingZeros:
++    case Intrinsics::kIntegerNumberOfTrailingZeros:
++    case Intrinsics::kLongReverse:
++    case Intrinsics::kLongReverseBytes:
++    case Intrinsics::kLongBitCount:
++    case Intrinsics::kLongHighestOneBit:
++    case Intrinsics::kLongLowestOneBit:
++    case Intrinsics::kLongNumberOfLeadingZeros:
++    case Intrinsics::kLongNumberOfTrailingZeros:
++    case Intrinsics::kMathSqrt:
++    case Intrinsics::kMathCeil:
++    case Intrinsics::kMathFloor:
++    case Intrinsics::kMathRint:
++    case Intrinsics::kMathRoundDouble:
++    case Intrinsics::kMathRoundFloat:
++      break;
++    default:
++      return false;
++  }
++#endif
+   Dispatch(invoke);
+   LocationSummary* res = invoke->GetLocations();
+   if (res == nullptr) {
+@@ -2279,6 +2316,12 @@
+     locations->AddTemp(Location::RequiresRegister());
+   }
+
++#ifdef ART_NCE
++  // Keep decoded addresses separate from compressed references and the overlapping output.
++  locations->AddTemp(Location::RequiresRegister());
++  locations->AddTemp(Location::RequiresRegister());
++#endif
++
+   // TODO: If the String.equals() is used only for an immediately following HIf, we can
+   // mark it as emitted-at-use-site and emit branches directly to the appropriate blocks.
+   // Then we shall need an extra temporary register instead of the output register.
+@@ -2319,6 +2362,16 @@
+   // Reference equality check, return true if same reference.
+   __ Cmp(str, arg);
+   __ B(&return_true, eq);
++
++  Register str_address = str.X();
++  Register arg_address = arg.X();
++#ifdef ART_NCE
++  str_address = XRegisterFrom(locations->GetTemp(locations->GetTempCount() - 2));
++  arg_address = XRegisterFrom(locations->GetTemp(locations->GetTempCount() - 1));
++  __ Mov(str_address, nce_art_reference_base);
++  __ Add(arg_address, str_address, Operand(arg, UXTW));
++  __ Add(str_address, str_address, Operand(str, UXTW));
++#endif
+
+   if (!optimizations.GetArgumentIsString()) {
+     // Instanceof check for the argument by comparing class fields.
+@@ -2330,9 +2383,9 @@
+     // field from String.equals' arguments without read barriers.
+     AssertNonMovableStringClass();
+     // /* HeapReference<Class> */ temp = str->klass_
+-    __ Ldr(temp, MemOperand(str.X(), class_offset));
++    __ Ldr(temp, MemOperand(str_address, class_offset));
+     // /* HeapReference<Class> */ temp1 = arg->klass_
+-    __ Ldr(temp1, MemOperand(arg.X(), class_offset));
++    __ Ldr(temp1, MemOperand(arg_address, class_offset));
+     // Also, because we use the previously loaded class references only in the
+     // following comparison, we don't need to unpoison them.
+     __ Cmp(temp, temp1);
+@@ -2347,6 +2400,7 @@
+     const_string = GetConstString(invoke->InputAt(1), &const_string_length);
+     if (const_string != nullptr) {
+       std::swap(str, arg);  // Make sure the const string is in `str`.
++      std::swap(str_address, arg_address);
+     }
+   }
+   bool is_compressed =
+@@ -2357,7 +2411,7 @@
+   if (const_string != nullptr) {
+     // Load `count` field of the argument string and check if it matches the const string.
+     // Also compares the compression style, if differs return false.
+-    __ Ldr(temp, MemOperand(arg.X(), count_offset));
++    __ Ldr(temp, MemOperand(arg_address, count_offset));
+     // Temporarily release temp1 as we may not be able to embed the flagged count in CMP immediate.
+     scratch_scope.Release(temp1);
+     __ Cmp(temp, Operand(mirror::String::GetFlaggedCount(const_string_length, is_compressed)));
+@@ -2365,8 +2419,8 @@
+     __ B(&return_false, ne);
+   } else {
+     // Load `count` fields of this and argument strings.
+-    __ Ldr(temp, MemOperand(str.X(), count_offset));
+-    __ Ldr(temp1, MemOperand(arg.X(), count_offset));
++    __ Ldr(temp, MemOperand(str_address, count_offset));
++    __ Ldr(temp1, MemOperand(arg_address, count_offset));
+     // Check if `count` fields are equal, return false if they're not.
+     // Also compares the compression style, if differs return false.
+     __ Cmp(temp, temp1);
+@@ -2390,8 +2444,8 @@
+     temp1 = temp1.X();
+     while (remaining_bytes > sizeof(uint64_t)) {
+       Register temp2 = XRegisterFrom(locations->GetTemp(0));
+-      __ Ldp(temp, temp1, MemOperand(str.X(), offset));
+-      __ Ldp(temp2, out, MemOperand(arg.X(), offset));
++      __ Ldp(temp, temp1, MemOperand(str_address, offset));
++      __ Ldp(temp2, out, MemOperand(arg_address, offset));
+       __ Cmp(temp, temp2);
+       __ Ccmp(temp1, out, NoFlag, eq);
+       __ B(&return_false, ne);
+@@ -2399,8 +2453,8 @@
+       remaining_bytes -= 2u * sizeof(uint64_t);
+     }
+     if (remaining_bytes != 0u) {
+-      __ Ldr(temp, MemOperand(str.X(), offset));
+-      __ Ldr(temp1, MemOperand(arg.X(), offset));
++      __ Ldr(temp, MemOperand(str_address, offset));
++      __ Ldr(temp1, MemOperand(arg_address, offset));
+       __ Cmp(temp, temp1);
+       __ B(&return_false, ne);
+     }
+@@ -2425,8 +2479,8 @@
+     Register temp2 = XRegisterFrom(locations->GetTemp(0));
+     // Loop to compare strings 8 bytes at a time starting at the front of the string.
+     __ Bind(&loop);
+-    __ Ldr(out, MemOperand(str.X(), temp1));
+-    __ Ldr(temp2, MemOperand(arg.X(), temp1));
++    __ Ldr(out, MemOperand(str_address, temp1));
++    __ Ldr(temp2, MemOperand(arg_address, temp1));
+     __ Add(temp1, temp1, Operand(sizeof(uint64_t)));
+     __ Cmp(out, temp2);
+     __ B(&return_false, ne);
+--- a/compiler/optimizing/optimizing_compiler.cc
++++ b/compiler/optimizing/optimizing_compiler.cc
+@@ -774,10 +774,86 @@
+   bool GraphRejected() const { return has_unsupported_instructions_; }
+
+  private:
+-  void VisitInstruction(HInstruction*) override {
+-    // Currently we don't support compiling methods unless they were annotated with $compile$.
+-    RejectGraph();
+-  }
++  void VisitInstruction(HInstruction*) override { RejectGraph(); }
++#ifdef ART_NCE
++  // Admit only code generation paths adapted to the high-address heap.
++  // Unknown instructions retain interpreter execution, including after inlining.
++#define NCE_ALLOW(name) void Visit##name(H##name*) override {}
++  NCE_ALLOW(BinaryOperation)
++  NCE_ALLOW(DataProcWithShifterOp)
++  NCE_ALLOW(MultiplyAccumulate)
++  NCE_ALLOW(UnaryOperation)
++  NCE_ALLOW(Condition)
++  NCE_ALLOW(Constant)
++  NCE_ALLOW(Phi)
++  NCE_ALLOW(ParallelMove)
++  NCE_ALLOW(ParameterValue)
++  NCE_ALLOW(CurrentMethod)
++  NCE_ALLOW(NullConstant)
++  NCE_ALLOW(NullCheck)
++  NCE_ALLOW(BoundsCheck)
++  NCE_ALLOW(DivZeroCheck)
++  NCE_ALLOW(Select)
++  NCE_ALLOW(TypeConversion)
++  NCE_ALLOW(Return)
++  NCE_ALLOW(ReturnVoid)
++  NCE_ALLOW(Goto)
++  NCE_ALLOW(If)
++  NCE_ALLOW(Exit)
++  NCE_ALLOW(Nop)
++  NCE_ALLOW(SuspendCheck)
++  NCE_ALLOW(PackedSwitch)
++  NCE_ALLOW(MemoryBarrier)
++  NCE_ALLOW(InstanceFieldGet)
++  NCE_ALLOW(InstanceFieldSet)
++  NCE_ALLOW(NewInstance)
++  NCE_ALLOW(NewArray)
++  NCE_ALLOW(ConstructorFence)
++  NCE_ALLOW(InvokeInterface)
++  NCE_ALLOW(MonitorOperation)
++  NCE_ALLOW(TryBoundary)
++  NCE_ALLOW(LoadException)
++  NCE_ALLOW(ClearException)
++  NCE_ALLOW(Throw)
++  NCE_ALLOW(StaticFieldGet)
++  NCE_ALLOW(StaticFieldSet)
++  NCE_ALLOW(ArraySet)
++  NCE_ALLOW(ArrayLength)
++  NCE_ALLOW(ArrayGet)
++  NCE_ALLOW(ClinitCheck)
++  NCE_ALLOW(InstanceOf)
++  NCE_ALLOW(CheckCast)
++  NCE_ALLOW(IntermediateAddress)
++  NCE_ALLOW(IntermediateAddressIndex)
++  NCE_ALLOW(VecReplicateScalar)
++  NCE_ALLOW(VecExtractScalar)
++  NCE_ALLOW(VecReduce)
++  NCE_ALLOW(VecAdd)
++  NCE_ALLOW(VecMul)
++  NCE_ALLOW(VecStore)
++#undef NCE_ALLOW
++  void VisitLoadClass(HLoadClass* load) override {
++    if (load->GetLoadKind() != HLoadClass::LoadKind::kJitTableAddress &&
++        load->GetLoadKind() != HLoadClass::LoadKind::kReferrersClass &&
++        load->GetLoadKind() != HLoadClass::LoadKind::kRuntimeCall) RejectGraph();
++  }
++  void VisitInvokeVirtual(HInvokeVirtual* call) override {
++    // ARM64 TryDispatch admits only the reviewed NCE intrinsic paths.
++    (void)call;
++  }
++  void VisitLoadString(HLoadString* load) override {
++    if (load->GetLoadKind() != HLoadString::LoadKind::kJitTableAddress &&
++        load->GetLoadKind() != HLoadString::LoadKind::kRuntimeCall) RejectGraph();
++  }
++  void VisitVecLoad(HVecLoad* access) override {
++    if (access->IsStringCharAt()) RejectGraph();
++  }
++  void VisitInvokeStaticOrDirect(HInvokeStaticOrDirect* call) override {
++    if (call->GetLocations()->Intrinsified()) return;
++    if (call->GetMethodLoadKind() == MethodLoadKind::kStringInit ||
++        call->GetMethodLoadKind() == MethodLoadKind::kRuntimeCall) RejectGraph();
++  }
++#endif
+   void RejectGraph() {
+     has_unsupported_instructions_ = true;
+   }
+@@ -793,9 +869,11 @@
+ //
+ // TODO(Simulator): compile and simulate all the methods as in regular host mode.
+ bool ShouldMethodBeCompiled(HGraph* graph, const std::string& method_name) {
++#ifndef ART_NCE
+   if (method_name.find("$compile$") != std::string::npos) {
+     return true;
+   }
++#endif
+
+   CompilationFilterForRestrictedMode filter_visitor(graph);
+   filter_visitor.VisitReversePostOrder();
+@@ -1010,6 +1088,12 @@
+   // TODO(Simulator): support and compile all methods.
+   std::string method_name = dex_file.PrettyMethod(method_idx);
+   if (!ShouldMethodBeCompiled(graph, method_name)) {
++#ifdef ART_NCE
++    if (method != nullptr) {
++      ScopedObjectAccess soa(Thread::Current());
++      method->SetDontCompile();
++    }
++#endif
+     return nullptr;
+   }
+ #endif  // ART_USE_RESTRICTED_MODE
+@@ -1461,7 +1545,12 @@
+   {
+     // Go to native so that we don't block GC during compilation.
+     ScopedThreadSuspension sts(self, ThreadState::kNative);
+-    if (com::android::art::flags::fast_baseline_compiler() &&
++    if (
++#ifndef ART_NCE
++        com::android::art::flags::fast_baseline_compiler() &&
++#else
++        false &&
++#endif
+         compilation_kind == CompilationKind::kBaseline &&
+         !compiler_options.GetDebuggable()) {
+       fast_compiler = FastCompiler::Compile(method,

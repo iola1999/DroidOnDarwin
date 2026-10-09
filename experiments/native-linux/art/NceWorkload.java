@@ -317,7 +317,7 @@ public final class NceWorkload {
         check($compile$stringLiteral() == "native-linux-jit", "JIT string root identity");
         check($compile$stringEquals(ascii, new String(ascii))
                 && !$compile$stringEquals(ascii, unicode) && !$compile$stringEquals(ascii, null),
-                "recognized intrinsic executes through its regular method call");
+                "compiled string equality");
         int exceptions = 0;
         try { $compile$stringAt(null, 0); }
         catch (NullPointerException expected) { exceptions++; }
