@@ -524,6 +524,7 @@ def build(out, llvm):
         programs.append(('/dynamic' if name == 'dynamic' else '/lib/' + name + '.so', file))
     header, entries = ['extern const unsigned char nce_payload[];'], []
     payload = bytearray()
+    system_files = []
     offset = 0
     for i, (name, path) in enumerate(programs):
         elf = inspect(path, shared=name.endswith('.so'), function_symbols=name.startswith('/system/') or name in ('/bionic-test', '/art-test', '/art-heap-test'))
@@ -535,12 +536,15 @@ def build(out, llvm):
         dis = subprocess.check_output([llvm / 'llvm-objdump', '-d', path], text=True)
         check_x18_disassembly(path, elf, dis)
         position = len(payload)
-        payload.extend(elf['data'])
+        system_image = name.startswith('/system/')
+        if system_image:
+            system_files.append((name, path))
+        payload.extend(elf['data'][:elf['phoff'] + elf['phsize']] if system_image else elf['data'])
         header.append(f'static NceSegment segments_{i}[] = {{' + ','.join(
             f'{{.offset={lo},.size={size}}}' for lo, size in elf['segments']) + '};')
         header.append(f'static const NcePatch patches_{i}[] = {{' + ','.join(
             f'{{{va},{word}}}' for va, word in elf['patches']) + '};')
-        entries.append(f'{{.path="{name}",.file=nce_payload+{position},.size={len(elf["data"])},.offset={offset},.span={elf["span"]},'
+        entries.append(f'{{.path="{name}",.file=nce_payload+{position},.size={len(elf["data"])},.system_image={int(system_image)},.sha256={{' + ','.join(str(x) for x in hashlib.sha256(elf['data']).digest()) + f'}},.offset={offset},.span={elf["span"]},'
                        f'.entry={elf["entry"]},.phoff={elf["phoff"]},.phsize={elf["phsize"]},'
                        f'.segments=segments_{i},.segment_count={len(elf["segments"])},'
                        f'.patches=patches_{i},.patch_count={len(elf["patches"])}}}')
@@ -553,6 +557,9 @@ def build(out, llvm):
               json.dumps((EXP / 'userspace/shell-tests.sh').read_text()) + ';\n']
     entries = []
     for name, path in android_data(out):
+        if name.startswith(('/system/', '/apex/')):
+            system_files.append((name, path))
+            continue
         data = path.read_bytes()
         entries.append(f'{{"{name}",nce_payload+{len(payload)},{len(data)}}}')
         payload.extend(data)
@@ -560,6 +567,24 @@ def build(out, llvm):
                   ',\n'.join(entries) + '};')
     (out / 'user-scripts.h').write_text('\n'.join(assets) + '\n')
     (out / 'payload.bin').write_bytes(payload)
+    system_root = out / 'system-root'
+    if system_root.exists():
+        shutil.rmtree(system_root)
+    system_root.mkdir()
+    for name, path in system_files:
+        target = system_root / name.lstrip('/')
+        target.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(path, target)
+        target.chmod(0o755 if name.startswith('/system/bin/') else 0o644)
+    (system_root / 'system/bin/bootstrap').mkdir(exist_ok=True)
+    (system_root / 'system/bin/bootstrap/linker64').symlink_to('/system/bin/linker64')
+    (system_root / 'apex/com.android.art/lib64').mkdir(parents=True, exist_ok=True)
+    image = out / 'system.img'
+    with image.open('wb') as disk:
+        disk.truncate(384 * 1024 * 1024)
+    run(['/opt/homebrew/opt/e2fsprogs/sbin/mke2fs', '-F', '-q', '-t', 'ext4', '-b', '4096',
+         '-O', '^has_journal', '-E', 'lazy_itable_init=0', '-d', system_root, image])
+    shutil.rmtree(system_root)
     payload_path = str((out / 'payload.bin').resolve()).replace('\\', '\\\\').replace('"', '\\"')
     (out / 'payload.S').write_text('.section __TEXT,__const\n.p2align 4\n.globl _nce_payload\n'
                                  '_nce_payload:\n.incbin "' + payload_path + '"\n')

@@ -12,6 +12,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <sys/stat.h>
+#include <sys/file.h>
 
 #define REQUIRE(c) do { if (!(c)) { fprintf(stderr, "LKL host failure: %s\n", #c); abort(); } } while (0)
 struct lkl_sem { pthread_mutex_t mutex; pthread_cond_t cond; unsigned count; };
@@ -21,40 +22,49 @@ struct timer { dispatch_source_t source; dispatch_queue_t queue; void (*fn)(void
 
 static void host_print(const char *s, int n) { fwrite(s, 1, n, stderr); }
 static void host_panic(void) { abort(); }
-static int disk_fd = -1;
-static unsigned long long disk_bytes;
+/* Slot 0 is persistent data; slot 1 is the read-only bundled system. */
+static struct { int fd; unsigned long long bytes; } disks[2] = {{-1, 0}, {-1, 0}};
 
-int nce_disk_open(const char *path)
+int nce_disk_open(unsigned index, const char *path)
 {
+    if (index >= 2) return -1;
     if (!path) return 0;
-    REQUIRE(disk_fd == -1);
-    disk_fd = open(path, O_RDWR | O_CLOEXEC);
-    if (disk_fd < 0) return -1;
+    REQUIRE(disks[index].fd == -1);
+    int fd = open(path, (index ? O_RDONLY : O_RDWR) | O_CLOEXEC);
+    if (fd < 0) return -1;
     struct stat info;
-    if (fstat(disk_fd, &info) || !S_ISREG(info.st_mode) || info.st_size < 512 || info.st_size % 512) {
-        close(disk_fd); disk_fd = -1;
+    if (fstat(fd, &info) || !S_ISREG(info.st_mode) || info.st_size < 512 || info.st_size % 512 ||
+        flock(fd, (index ? LOCK_SH : LOCK_EX) | LOCK_NB)) {
+        close(fd);
         return -1;
     }
-    disk_bytes = info.st_size;
+    disks[index].fd = fd;
+    disks[index].bytes = info.st_size;
     return 0;
 }
 
 void nce_disk_close(void)
 {
-    if (disk_fd < 0) return;
-    REQUIRE(fsync(disk_fd) == 0 && close(disk_fd) == 0);
-    disk_fd = -1;
-    disk_bytes = 0;
+    for (unsigned index = 0; index < 2; ++index) {
+        if (disks[index].fd < 0) continue;
+        if (!index) REQUIRE(fsync(disks[index].fd) == 0);
+        REQUIRE(close(disks[index].fd) == 0);
+        disks[index].fd = -1;
+        disks[index].bytes = 0;
+    }
 }
 
-static unsigned long long disk_size(void) { return disk_bytes; }
-static int disk_io(unsigned int operation, unsigned long long offset, void *buffer, unsigned long size)
+static unsigned long long disk_size(unsigned int index) { return index < 2 ? disks[index].bytes : 0; }
+static int disk_io(unsigned int index, unsigned int operation, unsigned long long offset,
+                   void *buffer, unsigned long size)
 {
-    if (disk_fd < 0) return -1;
-    if (operation == 2) return fsync(disk_fd) ? -1 : 0;
-    if (operation > 1 || offset > disk_bytes || size > disk_bytes - offset) return -1;
+    if (index >= 2 || disks[index].fd < 0) return -1;
+    int fd = disks[index].fd;
+    if (operation == 2) return index ? 0 : (fsync(fd) ? -1 : 0);
+    if (operation > 1 || (operation && index) || offset > disks[index].bytes ||
+        size > disks[index].bytes - offset) return -1;
     while (size) {
-        ssize_t count = operation ? pwrite(disk_fd, buffer, size, offset) : pread(disk_fd, buffer, size, offset);
+        ssize_t count = operation ? pwrite(fd, buffer, size, offset) : pread(fd, buffer, size, offset);
         if (count < 0 && errno == EINTR) continue;
         if (count <= 0) return -1;
         buffer = (char *)buffer + count;

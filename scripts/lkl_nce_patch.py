@@ -15,9 +15,9 @@ def apply(source: Path, experiment: Path):
 
     arch = "arch/lkl/"
     edit(arch + "include/uapi/asm/host_ops.h", "\tconst char *virtio_devices;",
-         "\tconst char *virtio_devices;\n\tunsigned long long (*disk_size)(void);\n"
+         "\tconst char *virtio_devices;\n\tunsigned long long (*disk_size)(unsigned int index);\n"
          "\t/* operation: 0 read, 1 write, 2 flush; offset and length are bytes. */\n"
-         "\tint (*disk_io)(unsigned int operation, unsigned long long offset, void *buffer, unsigned long length);")
+         "\tint (*disk_io)(unsigned int index, unsigned int operation, unsigned long long offset, void *buffer, unsigned long length);")
     edit("include/linux/shmem_fs.h", "\tunsigned int\t\tseals;\t\t/* shmem seals */",
          "\tunsigned int\t\tseals;\t\t/* shmem seals */\n\tbool nce_memfd;")
     edit("mm/memfd.c", "\tfile->f_mode |= FMODE_LSEEK | FMODE_PREAD | FMODE_PWRITE;",

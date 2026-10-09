@@ -7,6 +7,8 @@
 #include "programs.h"
 #include "user-scripts.h"
 #include <mach/mach.h>
+#include <CommonCrypto/CommonDigest.h>
+#include <sys/resource.h>
 #include <signal.h>
 #include <pthread.h>
 #include <stdatomic.h>
@@ -498,6 +500,48 @@ static long get_file(long (*call)(long, long *), const char *path, char *buffer,
     return count;
 }
 
+static void mount_system(long (*call)(long, long *))
+{
+    char device[64];
+    unsigned major, minor;
+    REQUIRE(get_file(call, "/sys/block/ncedisk1/dev", device, sizeof(device)) > 0);
+    REQUIRE(sscanf(device, "%u:%u", &major, &minor) == 2 && major < 4096 && minor < 256);
+    long args[6] = {-100, (long)"/dev/ncesystem", 0060400, (major << 8) | minor};
+    REQUIRE(call(33, args) == 0);
+    const char *directories[] = {"/system-image", "/apex"};
+    for (unsigned i = 0; i < sizeof(directories) / sizeof(*directories); ++i) {
+        args[0] = -100; args[1] = (long)directories[i]; args[2] = 0755;
+        REQUIRE(call(34, args) == 0);
+    }
+    args[0] = (long)"/dev/ncesystem"; args[1] = (long)"/system-image";
+    args[2] = (long)"ext4"; args[3] = 1; args[4] = 0;
+    REQUIRE(call(40, args) == 0);
+    const char *sources[] = {"/system-image/system", "/system-image/apex"};
+    const char *targets[] = {"/system", "/apex"};
+    for (unsigned i = 0; i < sizeof(sources) / sizeof(*sources); ++i) {
+        args[0] = (long)sources[i]; args[1] = (long)targets[i]; args[2] = 0; args[3] = 4096;
+        REQUIRE(call(40, args) == 0);
+    }
+    args[0] = -100; args[1] = (long)"/system/write-test"; args[2] = 0x241; args[3] = 0600;
+    REQUIRE(call(56, args) == -30);
+    puts("{\"test\":\"android_system_image_readonly\",\"passed\":true}");
+}
+
+static void memory_report(long (*call)(long, long *), const char *phase)
+{
+    char info[4096];
+    REQUIRE(get_file(call, "/proc/meminfo", info, sizeof(info)) > 0);
+    unsigned long available = 0, shmem = 0;
+    char *line = strstr(info, "MemAvailable:");
+    REQUIRE(line && sscanf(line, "MemAvailable: %lu", &available) == 1);
+    line = strstr(info, "Shmem:");
+    REQUIRE(line && sscanf(line, "Shmem: %lu", &shmem) == 1);
+    struct rusage usage;
+    REQUIRE(getrusage(RUSAGE_SELF, &usage) == 0);
+    printf("{\"memory\":\"%s\",\"linux_available_kib\":%lu,\"linux_shmem_kib\":%lu,"
+           "\"host_peak_rss_bytes\":%ld}\n", phase, available, shmem, usage.ru_maxrss);
+}
+
 static void dump_file(long (*call)(long, long *), const char *path)
 {
     long args[6] = {-100, (long)path, 0};
@@ -555,9 +599,34 @@ static void check_program_files(long (*call)(long, long *))
         unsigned char *bytes = malloc(p->size + 1);
         REQUIRE(bytes);
         REQUIRE(get_file(call, p->path, (void *)bytes, p->size + 1) == (long)p->size);
-        REQUIRE(!memcmp(bytes, p->file, p->size));
+        unsigned char digest[CC_SHA256_DIGEST_LENGTH];
+        REQUIRE(p->size <= UINT32_MAX);
+        CC_SHA256(bytes, (CC_LONG)p->size, digest);
+        REQUIRE(!memcmp(digest, p->sha256, sizeof(digest)));
         free(bytes);
     }
+}
+
+static void reclaim_file_cache(long (*call)(long, long *))
+{
+    char info[4096];
+    unsigned long before, after;
+    REQUIRE(get_file(call, "/proc/meminfo", info, sizeof(info)) > 0);
+    char *line = strstr(info, "Cached:");
+    REQUIRE(line && sscanf(line, "Cached: %lu", &before) == 1);
+    long args[6] = {0};
+    REQUIRE(call(81, args) == 0);
+    args[0] = -100; args[1] = (long)"/proc/sys/vm/drop_caches"; args[2] = 1;
+    long fd = call(56, args);
+    REQUIRE(fd >= 0);
+    args[0] = fd; args[1] = (long)"3\n"; args[2] = 2;
+    REQUIRE(call(64, args) == 2 && call(57, args) == 0);
+    REQUIRE(get_file(call, "/proc/meminfo", info, sizeof(info)) > 0);
+    line = strstr(info, "Cached:");
+    REQUIRE(line && sscanf(line, "Cached: %lu", &after) == 1);
+    REQUIRE(before > after + 1024);
+    check_program_files(call);
+    printf("{\"test\":\"android_system_cache_reclaim\",\"before_kib\":%lu,\"after_kib\":%lu,\"passed\":true}\n", before, after);
 }
 
 static void userspace_tests(long (*call)(long, long *))
@@ -635,12 +704,15 @@ void nce_process_tests(long (*host_syscall)(long, long *), long (*guest_syscall)
     random_args[0] = (long)entropy.data; random_args[1] = sizeof(entropy.data); random_args[2] = 1;
     REQUIRE(host_syscall(278, random_args) == sizeof(entropy.data));
     puts("{\"test\":\"linux_random_initialized\",\"passed\":true}");
+    mount_system(host_syscall);
+    memory_report(host_syscall, "system_mounted");
     code = nce_memory_take(65536);
     puts("{\"phase\":\"linux_process_tests\"}");
     const unsigned char *exec_elf = nce_programs[0].file;
     size_t exec_size = nce_programs[0].size;
     for (size_t i = 0; i < nce_program_count; ++i)
-        put_file(host_syscall, nce_programs[i].path, nce_programs[i].file, nce_programs[i].size);
+        if (!nce_programs[i].system_image)
+            put_file(host_syscall, nce_programs[i].path, nce_programs[i].file, nce_programs[i].size);
     long file_args[6] = {0}, fd;
     struct timespec begin, end;
     REQUIRE(clock_gettime(CLOCK_MONOTONIC_RAW, &begin) == 0);
@@ -735,11 +807,11 @@ void nce_process_tests(long (*host_syscall)(long, long *), long (*guest_syscall)
     REQUIRE(get_file(host_syscall, "/stdout", benchmark, sizeof(benchmark)) > 0);
     REQUIRE(strstr(benchmark, "art_high_reference_heap"));
     fputs(benchmark, stdout);
+    memory_report(host_syscall, "before_art");
     puts("{\"phase\":\"android_art_load\"}");
     for (size_t i = 0; i < sizeof(art_assets) / sizeof(art_assets[0]); ++i)
         put_file(host_syscall, art_assets[i].path, art_assets[i].data, art_assets[i].size);
     put_file(host_syscall, "/data/dalvik-cache/arm64/.keep", "", 0);
-    put_file(host_syscall, "/apex/com.android.art/lib64/.keep", "", 0);
     run_program(host_syscall, "/system/bin/art-test", NULL);
     REQUIRE(get_file(host_syscall, "/stdout", benchmark, sizeof(benchmark)) > 0);
     REQUIRE(strstr(benchmark, "android_art_library_loaded"));
@@ -755,6 +827,7 @@ void nce_process_tests(long (*host_syscall)(long, long *), long (*guest_syscall)
     REQUIRE(strstr(benchmark, "android_art_jit_types"));
     REQUIRE(strstr(benchmark, "android_art_vm_destroyed"));
     fputs(benchmark, stdout);
+    memory_report(host_syscall, "after_art");
     puts("{\"phase\":\"android_platform_services\"}");
     run_program(host_syscall, "/system/bin/android-services-test", NULL);
     REQUIRE(get_file(host_syscall, "/stdout", benchmark, sizeof(benchmark)) > 0);
@@ -763,6 +836,7 @@ void nce_process_tests(long (*host_syscall)(long, long *), long (*guest_syscall)
     REQUIRE(strstr(benchmark, "android_framework_graphics\",\"passed\":true"));
     REQUIRE(strstr(benchmark, "android_crypto"));
     fputs(benchmark, stdout);
+    memory_report(host_syscall, "after_framework");
     const char *graphics_path = getenv("NCE_GRAPHICS_OUTPUT");
     if (graphics_path) {
         long bytes = get_file(host_syscall, "/data/nce/framework.png", benchmark, sizeof(benchmark));
@@ -773,6 +847,7 @@ void nce_process_tests(long (*host_syscall)(long, long *), long (*guest_syscall)
         REQUIRE(fclose(graphics) == 0);
     }
     check_program_files(host_syscall);
+    reclaim_file_cache(host_syscall);
     puts("{\"test\":\"linux_dynamic_elf_files_unchanged\",\"passed\":true}");
     long log_args[6] = {10};
     long log_size = host_syscall(116, log_args);

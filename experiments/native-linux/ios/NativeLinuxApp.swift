@@ -159,6 +159,10 @@ final class ProbeModel: ObservableObject {
                 }
                 try manager.copyItem(at: seed, to: disk)
             }
+            guard let system = Bundle.main.path(forResource: "system", ofType: "img") else {
+                throw CocoaError(.fileNoSuchFile)
+            }
+            setenv("NCE_SYSTEM_IMAGE", system, 1)
             setenv("NCE_STORAGE_IMAGE", disk.path, 1)
         } catch {
             busy = false

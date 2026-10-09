@@ -14,6 +14,8 @@ typedef struct { size_t address; uint32_t instruction; } NcePatch;
 typedef struct {
     const char *path;
     const unsigned char *file;
+    unsigned char sha256[32];
+    int system_image;
     size_t size, offset, span, entry, phoff, phsize;
     NceSegment *segments;
     size_t segment_count;

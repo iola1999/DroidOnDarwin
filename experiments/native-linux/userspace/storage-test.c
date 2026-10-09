@@ -21,11 +21,11 @@ static unsigned char actual[LENGTH];
 int main(void)
 {
     unsigned major, minor;
-    FILE *device = fopen("/sys/block/ncedisk/dev", "r");
+    FILE *device = fopen("/sys/block/ncedisk0/dev", "r");
     CHECK(device && fscanf(device, "%u:%u", &major, &minor) == 2 && fclose(device) == 0);
-    CHECK(mknod("/dev/ncedisk", S_IFBLK | 0600, makedev(major, minor)) == 0);
+    CHECK(mknod("/dev/ncedisk0", S_IFBLK | 0600, makedev(major, minor)) == 0);
     CHECK(mkdir("/storage", 0700) == 0);
-    CHECK(mount("/dev/ncedisk", "/storage", "ext4", MS_NOATIME, NULL) == 0);
+    CHECK(mount("/dev/ncedisk0", "/storage", "ext4", MS_NOATIME, NULL) == 0);
     unsigned generation = 0;
     int counter = open("/storage/generation", O_RDWR | O_CREAT | O_CLOEXEC, 0600);
     CHECK(counter >= 0);
@@ -69,7 +69,7 @@ int main(void)
     int directory = open("/storage", O_RDONLY | O_DIRECTORY | O_CLOEXEC);
     CHECK(directory >= 0 && fsync(directory) == 0 && close(directory) == 0);
     CHECK(umount("/storage") == 0);
-    CHECK(mount("/dev/ncedisk", "/storage", "ext4", MS_RDONLY | MS_NOATIME, NULL) == 0);
+    CHECK(mount("/dev/ncedisk0", "/storage", "ext4", MS_RDONLY | MS_NOATIME, NULL) == 0);
     fd = open("/storage/payload", O_RDONLY | O_CLOEXEC);
     CHECK(fd >= 0 && read(fd, actual, LENGTH) == LENGTH);
     CHECK(memcmp(actual, expected, LENGTH) == 0);

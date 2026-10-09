@@ -184,7 +184,7 @@ def main():
              "-E", "lazy_itable_init=0,lazy_journal_init=0", seed])
         shutil.copyfile(seed, OUT / "storage-test.img")
     with (OUT / "lkl-results.jsonl").open("w") as output, (OUT / "lkl-console.log").open("w") as log:
-        probe_env = {**os.environ, "NCE_GRAPHICS_OUTPUT": str(OUT / "framework.png"), "NCE_STORAGE_IMAGE": str(OUT / "storage-test.img")} if PROCESS else os.environ
+        probe_env = {**os.environ, "NCE_GRAPHICS_OUTPUT": str(OUT / "framework.png"), "NCE_STORAGE_IMAGE": str(OUT / "storage-test.img"), "NCE_SYSTEM_IMAGE": str(OUT / "system.img")} if PROCESS else os.environ
         run([OUT / "lkl-probe", OUT / "lkl-image.bin"], stdout=output, stderr=log, env=probe_env)
     results = [json.loads(line) for line in (OUT / "lkl-results.jsonl").read_text().splitlines()]
     if results[-1].get("result") != "passed":
@@ -208,7 +208,7 @@ def main():
         with (OUT / "dispatch-results.jsonl").open("w") as output, (OUT / "dispatch-console.log").open("w") as log:
             subprocess.run([OUT / "dispatch-probe", OUT / "lkl-image.bin"], check=True,
                            timeout=120, stdout=output, stderr=log,
-                           env={**os.environ, "NCE_GRAPHICS_OUTPUT": str(OUT / "dispatch-framework.png"), "NCE_STORAGE_IMAGE": str(OUT / "storage-test.img")})
+                           env={**os.environ, "NCE_GRAPHICS_OUTPUT": str(OUT / "dispatch-framework.png"), "NCE_STORAGE_IMAGE": str(OUT / "storage-test.img"), "NCE_SYSTEM_IMAGE": str(OUT / "system.img")})
         dispatch_results = [json.loads(line) for line in (OUT / "dispatch-results.jsonl").read_text().splitlines()]
         if dispatch_results[-1].get("result") != "passed":
             raise SystemExit("GCD probe did not complete")
@@ -242,7 +242,7 @@ def main():
         manifest["stage"] = "Android Bionic, Binder, ART Java and ARM64 JIT workloads"
         manifest["userspace_libraries"] = {"musl": "1.2.5", "compiler-rt": "20.1.8", "dash": "0.5.12"}
         manifest["generated_sha256"] = {name: hashlib.sha256((OUT / name).read_bytes()).hexdigest()
-                                        for name in ["storage-seed.img", "storage-test.elf", "program-images.h", "user-scripts.h", "payload.S", "payload.bin", "lkl-image.h", "lkl-host-ops.h", "guest-image.h",
+                                        for name in ["system.img", "storage-seed.img", "storage-test.elf", "program-images.h", "user-scripts.h", "payload.S", "payload.bin", "lkl-image.h", "lkl-host-ops.h", "guest-image.h",
                                                      "exec-guest.elf", "sigreturn.elf", "init.elf", "worker.elf", "mm-bench.elf", "dash.elf",
                                                      "libc.so", "dependency.so", "plugin.so", "dynamic.elf", "binder-test.elf", "bionic-test.elf", "art-test.elf", "art-heap-test.elf", "android-services-test.elf"]}
         android = ROOT / "work/native-linux-nce/android"

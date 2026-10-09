@@ -20,7 +20,7 @@ void nce_compute_benchmark(void);
 
 #define REQUIRE(c) do { if (!(c)) { fprintf(stderr, "FAIL %s:%d: %s\n", __FILE__, __LINE__, #c); abort(); } } while (0)
 extern struct lkl_host_operations nce_lkl_host;
-int nce_disk_open(const char *path);
+int nce_disk_open(unsigned index, const char *path);
 void nce_disk_close(void);
 static long (*kernel_syscall)(long, long *);
 
@@ -167,7 +167,8 @@ int nce_lkl_run(const char *image_path)
     set_layout(nce_process_setup(), mapping_mode, views);
     #endif
     puts("{\"phase\":\"linux_init\"}");
-    REQUIRE(nce_disk_open(getenv("NCE_STORAGE_IMAGE")) == 0);
+    REQUIRE(nce_disk_open(0, getenv("NCE_STORAGE_IMAGE")) == 0);
+    REQUIRE(nce_disk_open(1, getenv("NCE_SYSTEM_IMAGE")) == 0);
     REQUIRE(init(&nce_lkl_host) == 0);
     uint64_t started = now();
     REQUIRE(start() == 0);
