@@ -1278,7 +1278,7 @@ Linux 集成测试覆盖 113 字节分片、串行重建、两个进程同时绘
 可见窗口 120 帧耗时 1977.663 ms，平均 16.481 ms/帧，包含
 显示同步等待。该结果只覆盖简单三角形场景。另有 15 项 ELF、10 项 JIT
 协议和 5 组日志读取回归通过。iOS Release 构建、签名及归档校验已完成。
-构建 `N4-G1-iOS-20261009-225459`，真机执行待确认；具体结果见
+构建 `N4-G1-iOS-20261009-225459`；本机具体结果见
 [N4-G1 本机结果](../experiments/native-linux/results-macos-n4-g1.json)。
 
 按 reclaim-code-entropy 审查后保留一个 Unix socket 转发实现，复用
@@ -1290,7 +1290,8 @@ RenderChannel 的背压和 gfxstream 原有执行锁。若去掉双向独立工�
 
 ### 后续顺序
 
-1. 在 iPhone 确认 N4-G1 的 Metal 初始化、连续提交、颜色、退出与峰值内存。
+1. N4-G1 真机已完成 Metal 初始化、连续提交、像素校验、退出与内存采样；
+   大型图形负载及持续运行仍待测量。
 2. 接入标准 Android EGL/GLES encoder，将连接建立接到现有 Linux socket，
    检查 EGL 配置、共享上下文、线程 TLS 和上下文销毁。
 3. 实现 Android buffer allocator/mapper 和 Composer 所需接口，处理
@@ -1302,3 +1303,20 @@ RenderChannel 的背压和 gfxstream 原有执行锁。若去掉双向独立工�
 以及长时间功耗仍待测量。接口集成继续优先复用 Android/gfxstream 现有实现。
 
 本轮操作与结果见 [N4-G1 真机测试说明](native-linux-n3-ios-test.md)。
+
+### N4-G1 真机结果
+
+已从连接的 iPhone 17 / iOS 27.2 直接读取本次日志。构建编号为
+`N4-G1-iOS-20261009-225459`，最终结果 `passed`，102 个不同名称的测试通过。
+渲染器报告 `ANGLE Metal Renderer: Apple A19 GPU`，原生显示表面创建成功。
+360×640 的 120 帧绘制与提交耗时 2037.544 ms，平均 16.980 ms/帧，包含
+显示同步等待。这个短场景约为每秒 58.9 次提交，完整 Android 桌面的性能
+仍需后续集成后测量。
+
+23.04 万像素的缓冲区复制与读回逐通道差值为 0；5 条图形连接全部释放，
+524 个 NCE 上下文全部释放，Linux 内核告警检查通过。本次记录的峰值 RSS
+为 861.73 MiB，内存回收后 footprint 为 472.13 MiB。两项采用不同指标；
+当前没有同一负载的功耗与温度测量。
+
+日志、GPU 导出文件的校验值和测试记录见
+[真机结果](../experiments/native-linux/results-ios-n4-g1.json)。

@@ -1,0 +1,1053 @@
+{
+  "stage": "N4-G1",
+  "date": "2026-10-09",
+  "device": "iPhone 17",
+  "os": "iOS 27.2",
+  "build": "N4-G1-iOS-20261009-225459",
+  "source_commit": "a702efa",
+  "package_sha256": "e4d5846d46bfd12df38aa6d38e79d485be258987d22eead7424b68b11bb2e644",
+  "log": "work/native-linux-nce/ios/device-n4-g1.log",
+  "log_sha256": "17648572b64708a988ede10092f9f379926f54d19c94c5e6b5c3b4931d642969",
+  "test_record_count": 123,
+  "distinct_test_count": 102,
+  "result": "passed",
+  "gpu_image": {
+    "path": "work/native-linux-nce/ios/device-n4-g1-gpu.bmp",
+    "sha256": "5dfc5a5233abdfd6655ee4c227da6cc81784ab85670cdd440bb9b8fe4efcdd9a",
+    "width": 360,
+    "height": 640,
+    "bits_per_pixel": 32,
+    "max_channel_delta_vs_mac": 0
+  },
+  "results": [
+    {
+      "test": "prepared_fixed_address_code_updates",
+      "passed": true,
+      "ranges": 444,
+      "updates_per_range": 8
+    },
+    {
+      "test": "data_fixed_remap_after_detach",
+      "passed": true,
+      "targets": 2,
+      "switches_per_target": 8
+    },
+    {
+      "test": "linux_ram_remap",
+      "passed": true,
+      "bytes": 536870912
+    },
+    {
+      "bench": "prepared_nce_compute",
+      "sample": 0,
+      "iterations": 4000000,
+      "direct_ns": 6138625,
+      "nce_ns": 5864209
+    },
+    {
+      "bench": "prepared_nce_compute",
+      "sample": 1,
+      "iterations": 4000000,
+      "direct_ns": 5484291,
+      "nce_ns": 5471917
+    },
+    {
+      "bench": "prepared_nce_compute",
+      "sample": 2,
+      "iterations": 4000000,
+      "direct_ns": 5106791,
+      "nce_ns": 4758208
+    },
+    {
+      "bench": "prepared_nce_compute",
+      "sample": 3,
+      "iterations": 4000000,
+      "direct_ns": 4500041,
+      "nce_ns": 4250625
+    },
+    {
+      "bench": "prepared_nce_compute",
+      "sample": 4,
+      "iterations": 4000000,
+      "direct_ns": 4119083,
+      "nce_ns": 3934292
+    },
+    {
+      "test": "native_linux_boot",
+      "passed": true,
+      "ms": 52.261
+    },
+    {
+      "test": "linux_uname",
+      "sysname": "Linux",
+      "release": "6.12.0"
+    },
+    {
+      "test": "linux_random_initialized",
+      "passed": true
+    },
+    {
+      "test": "android_system_image_readonly",
+      "passed": true
+    },
+    {
+      "memory": "system_mounted",
+      "linux_available_kib": 499248,
+      "linux_shmem_kib": 0,
+      "host_peak_rss_bytes": 411549696,
+      "host_footprint_bytes": 366627160,
+      "reclaimed_bytes": 0,
+      "reclaimed_ranges": 0
+    },
+    {
+      "test": "linux_nce_fork_cow_shared_futex_pipe_exec_wait",
+      "passed": true,
+      "rounds": 32,
+      "faults": 319,
+      "elapsed_ms": 14.115
+    },
+    {
+      "test": "linux_exec_then_fork_cow_wait",
+      "passed": true
+    },
+    {
+      "test": "linux_exec_file_unchanged",
+      "passed": true
+    },
+    {
+      "test": "linux_syscall_bounds",
+      "passed": true
+    },
+    {
+      "test": "linux_musl_static_pie_processes",
+      "passed": true,
+      "commands": 8,
+      "cow_bytes_per_command": 2097152
+    },
+    {
+      "test": "linux_compiled_elf_files_unchanged",
+      "passed": true
+    },
+    {
+      "test": "linux_musl_threads_preemption",
+      "passed": true,
+      "threads": 56,
+      "stackless_exits": 8,
+      "elapsed_ms": 186.903
+    },
+    {
+      "memory": "after_userspace",
+      "phys_footprint": 547998184,
+      "resident_peak": 595427328
+    },
+    {
+      "test": "linux_musl_static_pie_processes",
+      "passed": true,
+      "commands": 8,
+      "cow_bytes_per_command": 2097152
+    },
+    {
+      "test": "linux_compiled_elf_files_unchanged",
+      "passed": true
+    },
+    {
+      "test": "linux_musl_threads_preemption",
+      "passed": true,
+      "threads": 56,
+      "stackless_exits": 8,
+      "elapsed_ms": 106.618
+    },
+    {
+      "memory": "after_userspace",
+      "phys_footprint": 552634856,
+      "resident_peak": 602341376
+    },
+    {
+      "test": "linux_musl_static_pie_processes",
+      "passed": true,
+      "commands": 8,
+      "cow_bytes_per_command": 2097152
+    },
+    {
+      "test": "linux_compiled_elf_files_unchanged",
+      "passed": true
+    },
+    {
+      "test": "linux_musl_threads_preemption",
+      "passed": true,
+      "threads": 56,
+      "stackless_exits": 8,
+      "elapsed_ms": 96.581
+    },
+    {
+      "memory": "after_userspace",
+      "phys_footprint": 552667624,
+      "resident_peak": 602423296
+    },
+    {
+      "test": "linux_userspace_stress",
+      "passed": true,
+      "rounds": 3,
+      "commands": 24,
+      "threads": 168
+    },
+    {
+      "test": "linux_reserved_branch_stubs",
+      "passed": true
+    },
+    {
+      "test": "linux_dynamic_code",
+      "passed": true,
+      "updates": 128,
+      "sum_iterations": 10000000
+    },
+    {
+      "test": "linux_signal_mask_altstack_nested",
+      "passed": true
+    },
+    {
+      "test": "linux_signal_register_restore",
+      "passed": true
+    },
+    {
+      "test": "linux_signal_eintr_restart",
+      "passed": true
+    },
+    {
+      "test": "linux_signal_fault_recovery",
+      "passed": true
+    },
+    {
+      "test": "linux_signal_frame_validation_stop_exit",
+      "passed": true
+    },
+    {
+      "test": "linux_pthread_cancel_signal",
+      "passed": true
+    },
+    {
+      "test": "linux_signal_timer_preemption",
+      "passed": true
+    },
+    {
+      "test": "linux_signal_suite",
+      "passed": true,
+      "libc": "musl"
+    },
+    {
+      "test": "linux_brk_growth_cow",
+      "passed": true
+    },
+    {
+      "test": "linux_aarch64_file_open_flags",
+      "passed": true,
+      "libc": "musl"
+    },
+    {
+      "test": "linux_stack_growth_and_limit",
+      "passed": true
+    },
+    {
+      "test": "linux_android_elf_reservation_boundaries",
+      "passed": true
+    },
+    {
+      "test": "linux_sparse_reservation_cow",
+      "passed": true,
+      "reserved_bytes": 2147483648
+    },
+    {
+      "test": "linux_mmap_byte_offset",
+      "passed": true
+    },
+    {
+      "test": "linux_user_memory_boundaries",
+      "passed": true,
+      "reuse_rounds": 64
+    },
+    {
+      "bench": "linux_mm_exchange",
+      "bytes": 2097152,
+      "shared_percent": 0,
+      "touch_all": 0,
+      "threads": 0,
+      "rounds": 128,
+      "ns_per_roundtrip": 33617
+    },
+    {
+      "bench": "linux_mm_exchange",
+      "bytes": 2097152,
+      "shared_percent": 0,
+      "touch_all": 1,
+      "threads": 0,
+      "rounds": 128,
+      "ns_per_roundtrip": 636007
+    },
+    {
+      "bench": "linux_mm_exchange",
+      "bytes": 2097152,
+      "shared_percent": 50,
+      "touch_all": 0,
+      "threads": 0,
+      "rounds": 128,
+      "ns_per_roundtrip": 32875
+    },
+    {
+      "bench": "linux_mm_exchange",
+      "bytes": 2097152,
+      "shared_percent": 50,
+      "touch_all": 1,
+      "threads": 0,
+      "rounds": 128,
+      "ns_per_roundtrip": 329968
+    },
+    {
+      "bench": "linux_mm_exchange",
+      "bytes": 2097152,
+      "shared_percent": 100,
+      "touch_all": 0,
+      "threads": 0,
+      "rounds": 128,
+      "ns_per_roundtrip": 21523
+    },
+    {
+      "bench": "linux_mm_exchange",
+      "bytes": 2097152,
+      "shared_percent": 100,
+      "touch_all": 1,
+      "threads": 0,
+      "rounds": 128,
+      "ns_per_roundtrip": 30656
+    },
+    {
+      "bench": "linux_mm_exchange",
+      "bytes": 2097152,
+      "shared_percent": 0,
+      "touch_all": 1,
+      "threads": 1,
+      "rounds": 128,
+      "ns_per_roundtrip": 4820
+    },
+    {
+      "bench": "linux_mm_exchange",
+      "bytes": 4194304,
+      "shared_percent": 0,
+      "touch_all": 0,
+      "threads": 0,
+      "rounds": 128,
+      "ns_per_roundtrip": 34335
+    },
+    {
+      "bench": "linux_mm_exchange",
+      "bytes": 4194304,
+      "shared_percent": 0,
+      "touch_all": 1,
+      "threads": 0,
+      "rounds": 128,
+      "ns_per_roundtrip": 1070593
+    },
+    {
+      "bench": "linux_mm_exchange",
+      "bytes": 4194304,
+      "shared_percent": 50,
+      "touch_all": 0,
+      "threads": 0,
+      "rounds": 128,
+      "ns_per_roundtrip": 33507
+    },
+    {
+      "bench": "linux_mm_exchange",
+      "bytes": 4194304,
+      "shared_percent": 50,
+      "touch_all": 1,
+      "threads": 0,
+      "rounds": 128,
+      "ns_per_roundtrip": 633023
+    },
+    {
+      "bench": "linux_mm_exchange",
+      "bytes": 4194304,
+      "shared_percent": 100,
+      "touch_all": 0,
+      "threads": 0,
+      "rounds": 128,
+      "ns_per_roundtrip": 22632
+    },
+    {
+      "bench": "linux_mm_exchange",
+      "bytes": 4194304,
+      "shared_percent": 100,
+      "touch_all": 1,
+      "threads": 0,
+      "rounds": 128,
+      "ns_per_roundtrip": 36960
+    },
+    {
+      "bench": "linux_mm_exchange",
+      "bytes": 4194304,
+      "shared_percent": 0,
+      "touch_all": 1,
+      "threads": 1,
+      "rounds": 128,
+      "ns_per_roundtrip": 7625
+    },
+    {
+      "bench": "linux_mm_exchange",
+      "bytes": 8388608,
+      "shared_percent": 0,
+      "touch_all": 0,
+      "threads": 0,
+      "rounds": 128,
+      "ns_per_roundtrip": 35093
+    },
+    {
+      "bench": "linux_mm_exchange",
+      "bytes": 8388608,
+      "shared_percent": 0,
+      "touch_all": 1,
+      "threads": 0,
+      "rounds": 128,
+      "ns_per_roundtrip": 2334789
+    },
+    {
+      "bench": "linux_mm_exchange",
+      "bytes": 8388608,
+      "shared_percent": 50,
+      "touch_all": 0,
+      "threads": 0,
+      "rounds": 128,
+      "ns_per_roundtrip": 30843
+    },
+    {
+      "bench": "linux_mm_exchange",
+      "bytes": 8388608,
+      "shared_percent": 50,
+      "touch_all": 1,
+      "threads": 0,
+      "rounds": 128,
+      "ns_per_roundtrip": 1353156
+    },
+    {
+      "bench": "linux_mm_exchange",
+      "bytes": 8388608,
+      "shared_percent": 100,
+      "touch_all": 0,
+      "threads": 0,
+      "rounds": 128,
+      "ns_per_roundtrip": 23109
+    },
+    {
+      "bench": "linux_mm_exchange",
+      "bytes": 8388608,
+      "shared_percent": 100,
+      "touch_all": 1,
+      "threads": 0,
+      "rounds": 128,
+      "ns_per_roundtrip": 57929
+    },
+    {
+      "bench": "linux_mm_exchange",
+      "bytes": 8388608,
+      "shared_percent": 0,
+      "touch_all": 1,
+      "threads": 1,
+      "rounds": 128,
+      "ns_per_roundtrip": 11562
+    },
+    {
+      "bench": "linux_mm_exchange",
+      "bytes": 16777216,
+      "shared_percent": 0,
+      "touch_all": 0,
+      "threads": 0,
+      "rounds": 128,
+      "ns_per_roundtrip": 41164
+    },
+    {
+      "bench": "linux_mm_exchange",
+      "bytes": 16777216,
+      "shared_percent": 0,
+      "touch_all": 1,
+      "threads": 0,
+      "rounds": 128,
+      "ns_per_roundtrip": 4643250
+    },
+    {
+      "bench": "linux_mm_exchange",
+      "bytes": 16777216,
+      "shared_percent": 50,
+      "touch_all": 0,
+      "threads": 0,
+      "rounds": 128,
+      "ns_per_roundtrip": 33156
+    },
+    {
+      "bench": "linux_mm_exchange",
+      "bytes": 16777216,
+      "shared_percent": 50,
+      "touch_all": 1,
+      "threads": 0,
+      "rounds": 128,
+      "ns_per_roundtrip": 2639265
+    },
+    {
+      "bench": "linux_mm_exchange",
+      "bytes": 16777216,
+      "shared_percent": 100,
+      "touch_all": 0,
+      "threads": 0,
+      "rounds": 128,
+      "ns_per_roundtrip": 25750
+    },
+    {
+      "bench": "linux_mm_exchange",
+      "bytes": 16777216,
+      "shared_percent": 100,
+      "touch_all": 1,
+      "threads": 0,
+      "rounds": 128,
+      "ns_per_roundtrip": 93546
+    },
+    {
+      "bench": "linux_mm_exchange",
+      "bytes": 16777216,
+      "shared_percent": 0,
+      "touch_all": 1,
+      "threads": 1,
+      "rounds": 128,
+      "ns_per_roundtrip": 18835
+    },
+    {
+      "test": "linux_mm_exchange_integrity",
+      "passed": true,
+      "cases": 28
+    },
+    {
+      "test": "linux_mm_host_operations",
+      "data_maps": 717192,
+      "code_copy_bytes": 7110656,
+      "revocations": 24938
+    },
+    {
+      "test": "linux_dash_pipeline_redirection",
+      "passed": true
+    },
+    {
+      "test": "linux_dash_fork_exec_environment",
+      "passed": true
+    },
+    {
+      "test": "linux_dash_trap_background_wait",
+      "passed": true
+    },
+    {
+      "test": "linux_dash_shell_suite",
+      "passed": true
+    },
+    {
+      "test": "linux_dynamic_link_dlopen_constructors",
+      "passed": true
+    },
+    {
+      "test": "linux_dynamic_tls_threads",
+      "passed": true
+    },
+    {
+      "test": "linux_dynamic_fork_signal",
+      "passed": true
+    },
+    {
+      "test": "linux_ext4_persistence",
+      "generation": 3,
+      "bytes": 1048576,
+      "passed": true
+    },
+    {
+      "test": "linux_binder_cross_process_roundtrip",
+      "passed": true,
+      "rounds": 32,
+      "max_payload": 65536
+    },
+    {
+      "test": "linux_binder_fd_transfer",
+      "passed": true
+    },
+    {
+      "test": "linux_binder_invalid_handle_cleanup",
+      "passed": true
+    },
+    {
+      "test": "linux_aarch64_file_open_flags",
+      "passed": true,
+      "libc": "bionic"
+    },
+    {
+      "test": "linux_signal_mask_altstack_nested",
+      "passed": true
+    },
+    {
+      "test": "linux_signal_register_restore",
+      "passed": true
+    },
+    {
+      "test": "linux_signal_eintr_restart",
+      "passed": true
+    },
+    {
+      "test": "linux_signal_fault_recovery",
+      "passed": true
+    },
+    {
+      "test": "linux_signal_frame_validation_stop_exit",
+      "passed": true
+    },
+    {
+      "test": "linux_signal_timer_preemption",
+      "passed": true
+    },
+    {
+      "test": "linux_signal_suite",
+      "passed": true,
+      "libc": "bionic"
+    },
+    {
+      "test": "linux_seccomp_filter",
+      "passed": true,
+      "fork_inheritance": true,
+      "thread_sync": true,
+      "trap_metadata": true
+    },
+    {
+      "test": "android_scudo_class_growth",
+      "passed": true,
+      "allocated_bytes": 50331648
+    },
+    {
+      "test": "android_bionic_threads_allocator_tls",
+      "passed": true,
+      "page_size": 16384
+    },
+    {
+      "test": "native_metal_display_created",
+      "passed": true
+    },
+    {
+      "renderer": "Android Emulator OpenGL ES Translator (ANGLE (Apple, ANGLE Metal Renderer: Apple A19 GPU, Version 27.2 (Build 24B5089g)))"
+    },
+    {
+      "renderer": "Android Emulator OpenGL ES Translator (ANGLE (Apple, ANGLE Metal Renderer: Apple A19 GPU, Version 27.2 (Build 24B5089g)))"
+    },
+    {
+      "renderer": "Android Emulator OpenGL ES Translator (ANGLE (Apple, ANGLE Metal Renderer: Apple A19 GPU, Version 27.2 (Build 24B5089g)))"
+    },
+    {
+      "renderer": "Android Emulator OpenGL ES Translator (ANGLE (Apple, ANGLE Metal Renderer: Apple A19 GPU, Version 27.2 (Build 24B5089g)))"
+    },
+    {
+      "renderer": "Android Emulator OpenGL ES Translator (ANGLE (Apple, ANGLE Metal Renderer: Apple A19 GPU, Version 27.2 (Build 24B5089g)))"
+    },
+    {
+      "test": "linux_native_gles_color_buffer",
+      "passed": true,
+      "pixels": 230400,
+      "max_channel_delta": 0
+    },
+    {
+      "test": "linux_native_gles_shader_frames",
+      "passed": true,
+      "width": 360,
+      "height": 640,
+      "frames": 120,
+      "draw_and_post_ms": 2037.544,
+      "ms_per_frame": 16.98
+    },
+    {
+      "test": "linux_native_gles_metal",
+      "passed": true,
+      "connections": 5,
+      "pixels_per_connection": 6144
+    },
+    {
+      "test": "native_graphics_channels_released",
+      "passed": true,
+      "opened": 5,
+      "closed": 5
+    },
+    {
+      "test": "art_high_reference_heap",
+      "passed": true
+    },
+    {
+      "memory": "before_art",
+      "linux_available_kib": 437792,
+      "linux_shmem_kib": 3744,
+      "host_peak_rss_bytes": 729743360,
+      "host_footprint_bytes": 656624272,
+      "reclaimed_bytes": 326369280,
+      "reclaimed_ranges": 34
+    },
+    {
+      "test": "android_art_library_loaded",
+      "passed": true
+    },
+    {
+      "test": "android_cfi_bounded_shadow",
+      "passed": true,
+      "shadow_bytes": 8388607
+    },
+    {
+      "test": "android_art_java_workload",
+      "passed": true,
+      "allocated_bytes": 16777216,
+      "gc_weak_reference_cleared": true,
+      "retained_cycle_nodes": 64,
+      "threads": 2,
+      "exceptions": 3,
+      "sum": 4002000
+    },
+    {
+      "test": "android_art_proxy_references",
+      "passed": true,
+      "annotation": true,
+      "gc_requests": 3,
+      "stack_arguments": true,
+      "exception": true
+    },
+    {
+      "test": "android_art_jit_arithmetic",
+      "passed": true,
+      "iterations": 2000000,
+      "compile_ms": 0.053,
+      "interpreter_ms": 198.551,
+      "jit_ms": 2.834,
+      "checksum": "de0adba4164b790e"
+    },
+    {
+      "test": "android_art_jit_objects",
+      "passed": true,
+      "array_updates": 32768,
+      "field_traversals": 20000000,
+      "gc_requests": 8,
+      "retained_cycle_nodes": 64,
+      "exceptions": 2
+    },
+    {
+      "test": "android_art_jit_calls",
+      "passed": true,
+      "reference_returns": 5,
+      "null_returns": 4
+    },
+    {
+      "test": "android_art_jit_allocations",
+      "passed": true,
+      "object_array_pairs": 40000,
+      "virtual_targets": 2,
+      "exceptions": 2
+    },
+    {
+      "test": "android_art_jit_patterns",
+      "passed": true,
+      "installed_patterns": 11
+    },
+    {
+      "test": "android_art_jit_runtime_features",
+      "passed": true,
+      "reference_elements": 256,
+      "interface_targets": 2,
+      "monitor_calls": 4000,
+      "monitor_updates": 20001,
+      "exceptions": 6
+    },
+    {
+      "test": "android_art_jit_strings_classes",
+      "passed": true,
+      "strings": 8,
+      "combined_iterations": 100000,
+      "gc_requests": 8,
+      "initialization_errors": 2,
+      "string_exceptions": 3
+    },
+    {
+      "test": "android_art_jit_intrinsics",
+      "passed": true,
+      "integer_inputs": 264,
+      "floating_inputs": 15,
+      "string_cases": 28
+    },
+    {
+      "test": "android_art_intrinsics_benchmark",
+      "passed": true,
+      "iterations": 200000,
+      "interpreter_ms": 62.847,
+      "jit_ms": 1.114,
+      "checksum": "0771c65354c7f465"
+    },
+    {
+      "test": "android_art_jit_types",
+      "passed": true,
+      "instanceof_calls": 12012,
+      "casts": 41,
+      "rejected": 79,
+      "caught": 64
+    },
+    {
+      "test": "android_art_jit_automatic",
+      "passed": true,
+      "warmup_calls": 200000,
+      "unsupported_retains_interpreter": true
+    },
+    {
+      "test": "android_art_vm_destroyed",
+      "passed": true,
+      "elapsed_ms": 1062.387
+    },
+    {
+      "test": "android_art_library_loaded",
+      "passed": true
+    },
+    {
+      "test": "android_cfi_bounded_shadow",
+      "passed": true,
+      "shadow_bytes": 8388607
+    },
+    {
+      "test": "android_art_jit_inlining",
+      "passed": true,
+      "enabled": false,
+      "inline_depth": 0,
+      "gc_requests": 16,
+      "exception_frames": 3,
+      "iterations": 1000000,
+      "elapsed_ms": 1.69,
+      "checksum": 62504000000
+    },
+    {
+      "test": "android_art_vm_destroyed",
+      "passed": true,
+      "elapsed_ms": 90.459
+    },
+    {
+      "test": "android_art_library_loaded",
+      "passed": true
+    },
+    {
+      "test": "android_cfi_bounded_shadow",
+      "passed": true,
+      "shadow_bytes": 8388607
+    },
+    {
+      "test": "android_art_jit_inlining",
+      "passed": true,
+      "enabled": true,
+      "inline_depth": 2,
+      "gc_requests": 16,
+      "exception_frames": 3,
+      "iterations": 1000000,
+      "elapsed_ms": 0.775,
+      "checksum": 62504000000
+    },
+    {
+      "test": "android_art_vm_destroyed",
+      "passed": true,
+      "elapsed_ms": 88.085
+    },
+    {
+      "memory": "after_art",
+      "linux_available_kib": 450624,
+      "linux_shmem_kib": 3872,
+      "host_peak_rss_bytes": 729743360,
+      "host_footprint_bytes": 628181696,
+      "reclaimed_bytes": 326369280,
+      "reclaimed_ranges": 34
+    },
+    {
+      "test": "android_proc_pid_namespace",
+      "passed": true
+    },
+    {
+      "test": "linux_unix_socket_credentials_fd",
+      "passed": true
+    },
+    {
+      "test": "linux_selinux_service_policy",
+      "passed": true,
+      "enforcing": true
+    },
+    {
+      "test": "android_property_shared_area",
+      "passed": true
+    },
+    {
+      "test": "android_property_writer_credentials",
+      "passed": true
+    },
+    {
+      "test": "android_property_protocol_wait",
+      "passed": true,
+      "rejected_requests": 6
+    },
+    {
+      "test": "android_platform_servicemanager_registration",
+      "passed": true
+    },
+    {
+      "test": "android_apex_registry",
+      "passed": true,
+      "modules": 28,
+      "mutation_rejected": true
+    },
+    {
+      "test": "android_platform_binder_roundtrip",
+      "passed": true,
+      "rounds": 32,
+      "max_payload": 65536
+    },
+    {
+      "test": "android_platform_binder_fd_transfer",
+      "passed": true
+    },
+    {
+      "test": "android_crypto",
+      "passed": true,
+      "fips": false,
+      "known_answers": true,
+      "reject_bad_tag": true
+    },
+    {
+      "test": "android_aconfig_storage",
+      "passed": true,
+      "containers": 26,
+      "initializations": 2
+    },
+    {
+      "test": "android_derived_classpaths",
+      "passed": true,
+      "variables": 4
+    },
+    {
+      "test": "android_framework_jca",
+      "passed": true
+    },
+    {
+      "test": "android_framework_file_observer",
+      "passed": true
+    },
+    {
+      "test": "android_framework_graphics",
+      "passed": true,
+      "canvas": true,
+      "png_roundtrip": true
+    },
+    {
+      "test": "android_framework_runtime",
+      "passed": true,
+      "parcel": true,
+      "looper": true,
+      "shared_memory": true,
+      "binder": true
+    },
+    {
+      "test": "android_system_suspend_wakelocks",
+      "passed": true,
+      "acquisitions": 3,
+      "repeat_release": true
+    },
+    {
+      "test": "android_installd_app_data",
+      "passed": true,
+      "packages": 2,
+      "storage_types": 2,
+      "caller_uid": 1000
+    },
+    {
+      "test": "android_zygote_command_server",
+      "queries": 3,
+      "passed": true
+    },
+    {
+      "test": "android_zygote_java_children",
+      "children": 2,
+      "passed": true
+    },
+    {
+      "test": "android_platform_binder_cleanup",
+      "passed": true,
+      "death_notifications": 1
+    },
+    {
+      "memory": "after_framework",
+      "linux_available_kib": 433104,
+      "linux_shmem_kib": 6960,
+      "host_peak_rss_bytes": 903593984,
+      "host_footprint_bytes": 765922128,
+      "reclaimed_bytes": 326369280,
+      "reclaimed_ranges": 34
+    },
+    {
+      "test": "android_system_cache_reclaim",
+      "before_kib": 232944,
+      "after_kib": 6960,
+      "passed": true
+    },
+    {
+      "memory": "after_host_reclaim",
+      "linux_available_kib": 438256,
+      "linux_shmem_kib": 6960,
+      "host_peak_rss_bytes": 903593984,
+      "host_footprint_bytes": 495061672,
+      "reclaimed_bytes": 592183296,
+      "reclaimed_ranges": 129
+    },
+    {
+      "test": "linux_reclaimed_ram_reuse",
+      "passed": true,
+      "bytes_per_round": 67108864,
+      "rounds": 2
+    },
+    {
+      "test": "linux_dynamic_elf_files_unchanged",
+      "passed": true
+    },
+    {
+      "test": "linux_kernel_warnings",
+      "passed": true
+    },
+    {
+      "test": "fixed_linux_code_view",
+      "copies": 28144,
+      "passed": true
+    },
+    {
+      "test": "linux_host_mapping_totals",
+      "data_maps": 902471,
+      "data_bytes": 17714757632,
+      "code_copy_bytes": 1476689920,
+      "revocations": 159050
+    },
+    {
+      "test": "linux_nce_context_lifetime",
+      "allocated": 524,
+      "freed": 524
+    },
+    {
+      "test": "linux_guest_events",
+      "preemptions": 587,
+      "deferred_faults": 118129,
+      "stack_resumes": 8764,
+      "stack_calls": 1454
+    },
+    {
+      "test": "guest_preemption_signal_mask",
+      "inherited_blocked_threads": 48,
+      "passed": true
+    },
+    {
+      "result": "passed"
+    }
+  ],
+  "limitations": [
+    "The GPU workload is a 360x640 triangle animation with 120 submitted frames.",
+    "Standard Android EGL clients, SurfaceFlinger and the complete Android desktop remain unfinished.",
+    "No temperature measurement or sustained interaction measurement was taken."
+  ]
+}

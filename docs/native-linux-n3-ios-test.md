@@ -21,7 +21,8 @@ e4d5846d46bfd12df38aa6d38e79d485be258987d22eead7424b68b11bb2e644
 ```
 
 CLI/GCD/可见窗口回归、ELF 检查、iOS 构建、归档与签名完整性检查均已通过。
-完整构建记录保存在同目录的 `package.json`，本轮真机执行待确认。
+完整构建记录保存在同目录的 `package.json`。本轮真机已通过全部 102 个
+命名测试，最终结果为 `passed`；见 [真机结果](../experiments/native-linux/results-ios-n4-g1.json)。
 本机测试摘要见 [N4-G1 结果](../experiments/native-linux/results-macos-n4-g1.json)。
 N3-S3 在手机上申请约 16.58 GiB 连续虚拟地址失败。此包将总预留缩至约
 4.58 GiB，并调整 Scudo、ART 对象堆及 CFI 检查表。N3-S4 手机已通过预留，

@@ -25,7 +25,8 @@ installd，完成应用数据目录、访问权限、清理与删除检查。原
 页面滚动恢复流畅。Android 整机性能尚待显示与桌面集成后比较。
 本轮目标为交付 N4-G1，截止北京时间 2026-10-09 23:30。Linux → gfxstream →
 ANGLE Metal 已完成着色器绘图、图形缓冲区复制及原生窗口显示。本机并发、
-像素和可见窗口回归通过，iOS 构建、签名和归档校验已完成，真机执行待确认。标准 EGL 客户端、
+像素和可见窗口回归通过。N4-G1 真机随后通过全部 102 个命名测试，渲染器
+确认为 Apple A19 GPU，120 帧提交耗时 2037.544 ms。标准 EGL 客户端、
 allocator/mapper、Composer 与 SurfaceFlinger 为后续集成范围；详见
 [N4-G1 阶段记录](native-linux-android-stage.md#n4-g1同进程-metal-图形2026-10-09-晚间)。
 
