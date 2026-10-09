@@ -112,6 +112,17 @@ static int test_intrinsics(JNIEnv *env, void *library)
     void (*keep_interpreted)(JNIEnv *, jmethodID) = dlsym(library, "nce_art_keep_interpreted");
     jclass klass = (*env)->FindClass(env, "NceIntrinsics");
     if (!klass || !compile || !keep_interpreted) return 60;
+    jclass math = (*env)->FindClass(env, "java/lang/Math");
+    jmethodID max = math ? (*env)->GetStaticMethodID(env, math, "max", "(II)I") : NULL;
+    if (!max) return 65;
+    // The native compile helper also checks intrinsic metadata after rejection.
+    for (unsigned attempt = 0; attempt < 2; ++attempt) {
+        (void)compile(env, max);
+        if ((*env)->CallStaticIntMethod(env, math, max, -7, 19) != 19 ||
+            (*env)->ExceptionCheck(env)) return 66;
+    }
+    (*env)->DeleteLocalRef(env, math);
+    puts("{\"test\":\"android_art_intrinsic_recompile_identity\",\"passed\":true,\"attempts\":2}");
     const char *methods[][2] = {
         {"$compile$bits", "(J)J"}, {"$compile$math", "(D)J"},
         {"$compile$doubleBits", "(J)J"}, {"$compile$floatBits", "(I)I"},

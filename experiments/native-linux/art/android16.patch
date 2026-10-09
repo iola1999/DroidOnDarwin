@@ -2160,20 +2160,22 @@
 
    CompilationFilterForRestrictedMode filter_visitor(graph);
    filter_visitor.VisitReversePostOrder();
-@@ -1010,6 +1088,12 @@
+@@ -1010,6 +1088,14 @@
    // TODO(Simulator): support and compile all methods.
    std::string method_name = dex_file.PrettyMethod(method_idx);
    if (!ShouldMethodBeCompiled(graph, method_name)) {
 +#ifdef ART_NCE
 +    if (method != nullptr) {
 +      ScopedObjectAccess soa(Thread::Current());
-+      method->SetDontCompile();
++      // Intrinsic identifiers share these flag bits with kAccCompileDontBother.
++      // Preserve their identity when the restricted compiler rejects a graph.
++      if (!method->IsIntrinsic()) method->SetDontCompile();
 +    }
 +#endif
      return nullptr;
    }
  #endif  // ART_USE_RESTRICTED_MODE
-@@ -1461,7 +1545,12 @@
+@@ -1461,7 +1547,12 @@
    {
      // Go to native so that we don't block GC during compilation.
      ScopedThreadSuspension sts(self, ThreadState::kNative);

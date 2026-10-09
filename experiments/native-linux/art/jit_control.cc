@@ -24,8 +24,12 @@ extern "C" JNIEXPORT bool nce_art_compile_method(JNIEnv* env, jmethodID id)
     art::ArtMethod* method = art::jni::DecodeArtMethod(id);
     art::jit::Jit* jit = art::Runtime::Current()->GetJit();
     if (!jit || !method) return false;
-    if (!jit->CompileMethod(method, soa.Self(), art::CompilationKind::kOptimized, false)) return false;
-    return jit->GetCodeCache()->ContainsPc(method->GetEntryPointFromQuickCompiledCode());
+    const bool intrinsic = method->IsIntrinsic();
+    const auto identity = intrinsic ? method->GetIntrinsic() : art::Intrinsics::kNone;
+    const bool compiled = jit->CompileMethod(method, soa.Self(), art::CompilationKind::kOptimized, false);
+    // Rejection must preserve intrinsic dispatch for later callers and inlining.
+    if (intrinsic) CHECK(method->IsIntrinsic() && method->GetIntrinsic() == identity);
+    return compiled && jit->GetCodeCache()->ContainsPc(method->GetEntryPointFromQuickCompiledCode());
 }
 
 extern "C" JNIEXPORT void nce_art_keep_interpreted(JNIEnv* env, jmethodID id)
