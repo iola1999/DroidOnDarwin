@@ -31,6 +31,7 @@ static bool died;
 static void deadline(int) { dprintf(2, "android-services deadline exceeded\n"); _exit(124); }
 void nce_property_service(int ready);
 void nce_framework_test();
+void nce_zygote_test();
 void nce_crypto_tests();
 
 static void wait_success(pid_t child)
@@ -355,6 +356,8 @@ int main(int argc, char **argv)
     nce_crypto_tests();
     puts("{\"phase\":\"android_framework_launch\"}");
     nce_framework_test();
+    puts("{\"phase\":\"android_zygote_launch\"}");
+    nce_zygote_test();
     alarm(20);
     int binder_fd;
     CHECK(ABinderProcess_setupPolling(&binder_fd) == STATUS_OK && binder_fd >= 0);

@@ -724,3 +724,21 @@ CLI 与 GCD 的完整回归均通过。CLI 完成 Framework 后，文件缓存�
 复杂度审查采用固定的系统盘、数据盘两个槽位，复用原有 ELF 登记、挂载、哈希
 校验与回归入口。没有增加通用存储插件或异步请求管理。系统资源的临时构建
 目录在生成镜像后删除。下一步推进 Zygote 启动、命令处理和 Java 进程派生。
+
+## Zygote 启动与命令处理（2026-10-09）
+
+原版 `app_process64 -Xzygote` 已启动 ZygoteInit，并在独立挂载命名空间中处理
+命令。测试客户端使用 Linux system UID 1000，连续查询 ABI、PID、ABI，校验
+回复与实际 Zygote 进程一致，再终止并回收进程。CLI、GCD、3 轮压力回归及
+14 项 ELF 检查通过。运行日志为 `work/native-linux-nce/zygote-probe.log`。
+
+启动资源增加 statsd 的 framework-statsd.jar、JNI 库和链接器命名空间。
+JDWP 使用原版 `dalvik.vm.jdwp-provider=none` 配置；当前测试没有调试连接
+需求。启动参数与固定 SDK 的 init.zygote64.rc 对照。测试采用原版的延迟
+预加载参数，后续还需验证 Java 进程派生、cgroup、seccomp 和应用初始化。
+当前尚未运行完整类/资源预加载，系统桌面与 system_server 尚未启动。
+
+构建增加 ELF 扫描缓存，键包含 ELF 路径、文件 SHA-256、构建脚本 SHA-256
+和 llvm-objdump 版本。文件内容或检查规则变化会重新扫描指令；执行布局范围
+仍在每次生成时检查。首次全扫描与后续缓存构建都完成了相同的运行回归。
+缓存只保存解析结果，完整系统文件继续通过生成清单与运行时 SHA-256 校验。

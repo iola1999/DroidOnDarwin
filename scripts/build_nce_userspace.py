@@ -78,7 +78,7 @@ def android_dependencies(llvm, replacements):
         if path.is_file(): files.setdefault(path.name, path)
     files.update(replacements)
     pending = ['libart.so', 'libjavacore.so', 'libopenjdk.so', 'libicu_jni.so',
-               'libartpalette-system.so', 'libbinder_ndk.so', 'libandroid.so', 'libframework-connectivity-tiramisu-jni.so']
+               'libstats_jni.so', 'libartpalette-system.so', 'libbinder_ndk.so', 'libandroid.so', 'libframework-connectivity-tiramisu-jni.so']
     for name in ('servicemanager', 'app_process64'):
         pending += re.findall(r'Shared library: \[(.*?)\]',
                               subprocess.check_output([llvm / 'llvm-readelf', '-d', root / 'bin' / name], text=True))
@@ -167,6 +167,7 @@ def android_data(out):
         'com.android.tethering': ('framework-connectivity', 'framework-connectivity-b',
                                   'framework-connectivity-t', 'framework-tethering'),
         'com.android.configinfrastructure': ('framework-configinfrastructure',),
+        'com.android.os.statsd': ('framework-statsd',),
     }.items():
         files += [(f'/apex/{module}/javalib/{name}.jar', root / module / 'javalib' / (name + '.jar'))
                   for name in names]
@@ -525,16 +526,29 @@ def build(out, llvm):
     header, entries = ['extern const unsigned char nce_payload[];'], []
     payload = bytearray()
     system_files = []
+    cache_path = out / 'elf-inspection-cache.json'
+    inspector = hashlib.sha256(Path(__file__).read_bytes() + subprocess.check_output(
+        [llvm / 'llvm-objdump', '--version'])).hexdigest()
+    cache = json.loads(cache_path.read_text()) if cache_path.exists() else {}
+    if cache.get('inspector') != inspector:
+        cache = {'inspector': inspector, 'files': {}}
     offset = 0
     for i, (name, path) in enumerate(programs):
-        elf = inspect(path, shared=name.endswith('.so'), function_symbols=name.startswith('/system/') or name in ('/bionic-test', '/art-test', '/art-heap-test'))
+        data = path.read_bytes()
+        digest = hashlib.sha256(data).hexdigest()
+        cached = cache['files'].get(name)
+        if cached and cached['sha256'] == digest:
+            elf = dict(cached['layout'], data=data)
+        else:
+            elf = inspect(path, shared=name.endswith('.so'), function_symbols=name.startswith('/system/') or name in ('/bionic-test', '/art-test', '/art-heap-test'))
+            dis = subprocess.check_output([llvm / 'llvm-objdump', '-d', path], text=True)
+            check_x18_disassembly(path, elf, dis)
+            cache['files'][name] = {'sha256': digest, 'layout': {k: v for k, v in elf.items() if k != 'data'}}
         offset = (offset + elf['alignment'] - 1) & -elf['alignment']
         if offset + elf['span'] > PROGRAM_LIMIT:
             raise RuntimeError('Program layouts overlap the mmap area')
         if name == '/worker' and sum(size for _, size in elf['segments']) <= 65536:
             raise RuntimeError('Large-text fixture did not exceed 64 KiB')
-        dis = subprocess.check_output([llvm / 'llvm-objdump', '-d', path], text=True)
-        check_x18_disassembly(path, elf, dis)
         position = len(payload)
         system_image = name.startswith('/system/')
         if system_image:
@@ -550,6 +564,7 @@ def build(out, llvm):
                        f'.patches=patches_{i},.patch_count={len(elf["patches"])}}}')
         offset += elf['span']
         print(f'{name}: {len(elf["data"])} bytes, {len(elf["segments"])} executable segments, {len(elf["patches"])} patched instructions', flush=True)
+    cache_path.write_text(json.dumps(cache) + '\n')
     header += ['NceProgram nce_programs[] = {' + ',\n'.join(entries) + '};',
                f'const size_t nce_program_count = {len(entries)};']
     (out / 'program-images.h').write_text('\n'.join(header) + '\n')

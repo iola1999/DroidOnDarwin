@@ -833,6 +833,7 @@ void nce_process_tests(long (*host_syscall)(long, long *), long (*guest_syscall)
     REQUIRE(get_file(host_syscall, "/stdout", benchmark, sizeof(benchmark)) > 0);
     REQUIRE(strstr(benchmark, "android_platform_binder_cleanup"));
     REQUIRE(strstr(benchmark, "android_framework_runtime"));
+    REQUIRE(strstr(benchmark, "android_zygote_command_server"));
     REQUIRE(strstr(benchmark, "android_framework_graphics\",\"passed\":true"));
     REQUIRE(strstr(benchmark, "android_crypto"));
     fputs(benchmark, stdout);
