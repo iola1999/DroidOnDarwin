@@ -14,6 +14,17 @@ def apply(source: Path, experiment: Path):
         path.write_text(text.replace(before, after))
 
     arch = "arch/lkl/"
+    edit("include/linux/shmem_fs.h", "\tunsigned int\t\tseals;\t\t/* shmem seals */",
+         "\tunsigned int\t\tseals;\t\t/* shmem seals */\n\tbool nce_memfd;")
+    edit("mm/memfd.c", "\tfile->f_mode |= FMODE_LSEEK | FMODE_PREAD | FMODE_PWRITE;",
+         "\tif (!(flags & MFD_HUGETLB))\n\t\tSHMEM_I(file_inode(file))->nce_memfd = true;\n"
+         "\tfile->f_mode |= FMODE_LSEEK | FMODE_PREAD | FMODE_PWRITE;")
+    edit("mm/shmem.c", "static const struct file_operations shmem_file_operations = {",
+         "/* Android libcutils probes memfd with ASHMEM_GET_SIZE before using seals. */\n"
+         "static long nce_memfd_ioctl(struct file *file, unsigned int cmd, unsigned long arg)\n"
+         "{\n\tif (!SHMEM_I(file_inode(file))->nce_memfd || cmd != _IO(0x77, 4))\n"
+         "\t\treturn -ENOTTY;\n\treturn i_size_read(file_inode(file));\n}\n\n"
+         "static const struct file_operations shmem_file_operations = {\n\t.unlocked_ioctl = nce_memfd_ioctl,")
     edit(arch + "include/asm/Kbuild", "generic-y += signal.h", "# signal.h uses the AArch64 userspace ABI")
     for name in ("signal.h", "sigcontext.h", "ucontext.h", "sve_context.h"):
         target = source / arch / "include/uapi/asm" / name

@@ -49,7 +49,7 @@ def main():
         run([OUT / 'detach-test'], stdout=log)
     run(['xcrun', 'clang', '-O2', '-Wall', '-Wextra', '-Werror', '-isysroot', sdk, '-I', EXP, '-I', INPUT,
          EXP / 'execute-check.c', EXP / 'memory.c', EXP / 'nce.c', EXP / 'entry.S',
-         EXP / 'programs.c',
+         EXP / 'programs.c', INPUT / 'payload.S',
          EXP / 'ios/execute-test.c', '-o', OUT / 'execute-test'])
     with (OUT / 'execute-test.log').open('w') as log:
         run([OUT / 'execute-test'], stdout=log)
@@ -75,6 +75,7 @@ def main():
                ['lkl-main.c', 'lkl-host.c', 'lkl-process-host.c', 'programs.c', 'memory.c', 'execute-check.c', 'compute.c', 'nce.c', 'entry.S',
                 'ios/Bridge.c', 'ios/NativeLinuxApp.swift']]
     sources += [{'path': str(EXP / 'guest.S'), 'compilerFlags': ['-DNATIVE']}]
+    sources += [{'path': str(INPUT / 'payload.S')}]
     sources += [{'path': str(ROOT / name)} for name in
                 ['src/ios-jit/husk-ios-jit.c', 'src/ios-jit/husk-brk.S',
                  'src/app/Husk/JITBuiltIn.swift', 'src/app/Husk/JITPairingFileStore.swift',
@@ -91,7 +92,7 @@ def main():
                     'libunwind-20.1.8.src/LICENSE.TXT', 'fmt/LICENSE', 'dlmalloc/NOTICE',
                     'libnativehelper/NOTICE', 'cpu_features/LICENSE', 'tinyxml2/LICENSE.txt',
                     'lz4/lib/LICENSE', 'lzma/NOTICE', 'libbase/NOTICE', 'liblog/liblog/NOTICE',
-                    'vixl/LICENCE']
+                    'vixl/LICENCE', 'boringssl/src/LICENSE']
     notices.write_bytes(b''.join(f'\n===== {name} =====\n'.encode() + (android / name).read_bytes()
                                 for name in notice_paths))
     sources += [{'path': str(notices), 'buildPhase': 'resources'},

@@ -6,14 +6,24 @@
 #include <stdio.h>
 #include <string.h>
 #include <sys/stat.h>
+#include <sys/ioctl.h>
+#include <sys/mman.h>
 #include <unistd.h>
 
 #define CHECK(c) do { if (!(c)) { dprintf(2, "file-tests:%d errno=%d: %s\n", __LINE__, errno, #c); _exit(111); } } while (0)
 void file_tests(const char *libc)
 {
     CHECK(mkdir("/open-flags", 0700) == 0);
+    int memory = memfd_create("ashmem-size", MFD_CLOEXEC | MFD_ALLOW_SEALING);
+    CHECK(memory >= 0 && ioctl(memory, _IO(0x77, 4), 0) == 0);
+    CHECK(ftruncate(memory, 16384) == 0 && ioctl(memory, _IO(0x77, 4), 0) == 16384);
+    CHECK(ftruncate(memory, 32768) == 0 && ioctl(memory, _IO(0x77, 4), 0) == 32768);
+    CHECK(ioctl(memory, _IO(0x77, 99), 0) == -1 && errno == ENOTTY);
+    CHECK(fcntl(memory, F_ADD_SEALS, F_SEAL_FUTURE_WRITE) == 0 && close(memory) == 0);
     int file = open("/open-flags/data", O_CREAT | O_RDWR | O_CLOEXEC, 0600);
-    CHECK(file >= 0 && fcntl(file, F_GETFD) == FD_CLOEXEC && close(file) == 0);
+    CHECK(file >= 0 && fcntl(file, F_GETFD) == FD_CLOEXEC);
+    CHECK(ioctl(file, _IO(0x77, 4), 0) == -1 && errno == ENOTTY);
+    CHECK(close(file) == 0);
     CHECK(symlink("data", "/open-flags/link") == 0);
     CHECK(open("/open-flags/data", O_RDONLY | O_DIRECTORY) == -1 && errno == ENOTDIR);
     CHECK(open("/open-flags/link", O_RDONLY | O_NOFOLLOW) == -1 && errno == ELOOP);

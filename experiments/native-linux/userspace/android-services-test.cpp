@@ -30,6 +30,8 @@ static constexpr const char *kService = "nce.test";
 static bool died;
 static void deadline(int) { dprintf(2, "android-services deadline exceeded\n"); _exit(124); }
 void nce_property_service(int ready);
+void nce_framework_test();
+void nce_crypto_tests();
 
 static void wait_success(pid_t child)
 {
@@ -251,10 +253,10 @@ static void property_boundaries()
 int main(int argc, char **argv)
 {
     CHECK(signal(SIGALRM, deadline) != SIG_ERR);
-    alarm(20);
     setvbuf(stdout, nullptr, _IONBF, 0);
     if (argc == 3 && !strcmp(argv[1], "server")) { server(atoi(argv[2])); return 1; }
     if (argc == 3 && !strcmp(argv[1], "properties")) { nce_property_service(atoi(argv[2])); return 1; }
+    alarm(20);
     unix_sockets();
     load_service_policy();
     int properties_ready[2];
@@ -286,10 +288,15 @@ int main(int argc, char **argv)
     CHECK(mount(nullptr, "/binderfs", "binder", 0, nullptr) == 0);
     int control = open("/binderfs/binder-control", O_RDWR | O_CLOEXEC);
     CHECK(control >= 0);
-    binderfs_device device = {};
-    strcpy(device.name, "nce-platform");
-    CHECK(ioctl(control, BINDER_CTL_ADD, &device) == 0 && close(control) == 0);
+    const char *devices[] = {"nce-platform", "nce-hardware"};
+    for (const char *name : devices) {
+        binderfs_device device = {};
+        strcpy(device.name, name);
+        CHECK(ioctl(control, BINDER_CTL_ADD, &device) == 0);
+    }
+    CHECK(close(control) == 0);
     CHECK(symlink("/binderfs/nce-platform", "/dev/binder") == 0);
+    CHECK(symlink("/binderfs/nce-hardware", "/dev/hwbinder") == 0);
     pid_t manager = fork();
     CHECK(manager >= 0);
     if (!manager) { execl("/system/bin/servicemanager", "servicemanager", nullptr); _exit(101); }
@@ -344,6 +351,11 @@ int main(int argc, char **argv)
     CHECK(pread(transferred, data, 15, 0) == 15 && !strcmp(data, "platform-binder"));
     CHECK(close(transferred) == 0);
     puts("{\"test\":\"android_platform_binder_fd_transfer\",\"passed\":true}");
+    alarm(60);
+    nce_crypto_tests();
+    puts("{\"phase\":\"android_framework_launch\"}");
+    nce_framework_test();
+    alarm(20);
     int binder_fd;
     CHECK(ABinderProcess_setupPolling(&binder_fd) == STATUS_OK && binder_fd >= 0);
     AIBinder_DeathRecipient *recipient = AIBinder_DeathRecipient_new(binder_died);
@@ -362,6 +374,7 @@ int main(int argc, char **argv)
     CHECK(kill(manager, SIGTERM) == 0);
     CHECK(waitpid(manager, &status, 0) == manager && WIFSIGNALED(status) && WTERMSIG(status) == SIGTERM);
     CHECK(unlink("/dev/binder") == 0 && unlink("/binderfs/nce-platform") == 0);
+    CHECK(unlink("/dev/hwbinder") == 0 && unlink("/binderfs/nce-hardware") == 0);
     /* ProcessState retains the driver fd until this client process exits. */
     CHECK(umount2("/binderfs", MNT_DETACH) == 0 && rmdir("/binderfs") == 0);
     CHECK(kill(properties, SIGTERM) == 0);

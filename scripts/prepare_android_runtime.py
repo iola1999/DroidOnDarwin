@@ -16,7 +16,8 @@ SHA1 = 'dda632745023567113d9954101709c6526a3c250'
 SIZE = 1875087037
 APEX = ('com.android.runtime.apex', 'com.google.android.art.capex',
         'com.android.i18n.apex', 'com.google.android.conscrypt.capex',
-        'com.google.android.os.statsd.apex')
+        'com.google.android.os.statsd.apex', 'com.google.android.tethering.capex',
+        'com.google.android.configinfrastructure.capex', 'com.google.android.tzdata6.apex')
 DEBUGFS = '/opt/homebrew/opt/e2fsprogs/sbin/debugfs'
 SYSTEM_DIRECTORIES = ('lib64', 'etc', 'bin', 'framework')
 
@@ -110,7 +111,9 @@ def main():
             intermediates.append(payload)
             with zipfile.ZipFile(path) as package:
                 payload.write_bytes(package.read('apex_payload.img'))
-            destination = DEST / name.removesuffix('.apex').removesuffix('.capex').replace('com.google.android.', 'com.android.')
+            module = name.removesuffix('.apex').removesuffix('.capex').replace('com.google.android.', 'com.android.')
+            if module == 'com.android.tzdata6': module = 'com.android.tzdata'
+            destination = DEST / module
             destination.mkdir(exist_ok=True)
             debug(f'rdump / {destination}', payload)
         for name in SYSTEM_DIRECTORIES:

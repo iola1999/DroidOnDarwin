@@ -104,6 +104,23 @@ class ElfLayoutTests(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, 'ELF interpreter'):
             inspect(self.path, function_symbols=True)
 
+    def test_android_cfi_branch_table_symbol_size(self):
+        path = WORK / 'android/android36/lib64/camera_platform_flags_c_lib.so'
+        elf = inspect(path, shared=True, function_symbols=True)
+        address = 0x5110
+        self.assertTrue(any(lo <= address < hi for lo, hi in elf['instruction_ranges']))
+        data = bytearray(path.read_bytes())
+        phoff = struct.unpack_from('<Q', data, 32)[0]
+        phnum = struct.unpack_from('<H', data, 56)[0]
+        headers = [struct.unpack_from('<IIQQQQQQ', data, phoff + i * 56) for i in range(phnum)]
+        segment = next(p for p in headers if p[0] == 1 and p[3] <= address < p[3] + p[5])
+        for word in (0xd503201f, 0x14000001):
+            with self.subTest(word=hex(word)):
+                struct.pack_into('<I', data, segment[2] + address - segment[3], word)
+                self.path.write_bytes(data)
+                with self.assertRaisesRegex(RuntimeError, 'function symbol outside executable section'):
+                    inspect(self.path, shared=True, function_symbols=True)
+
     def test_android_art_large_segments_and_mini_debug(self):
         path = WORK / 'android/android36/com.android.art/lib64/libart.so'
         elf = inspect(path, shared=True, function_symbols=True)

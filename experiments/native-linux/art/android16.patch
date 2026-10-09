@@ -1797,3 +1797,13 @@
    }
 
    // Currently deoptimization invokes verifier which can trigger class loading
+--- a/runtime/class_linker.cc
++++ b/runtime/class_linker.cc
+@@ -3323,6 +3323,7 @@
+                          *pair.first,
+                          *pair.second);
+     } else {
++      VLOG(class_linker) << "NCE boot class missing: " << sv_descriptor;
+       // The boot class loader is searched ahead of the application class loader, failures are
+       // expected and will be wrapped in a ClassNotFoundException. Use the pre-allocated error to
+       // trigger the chaining with a proper stack trace.

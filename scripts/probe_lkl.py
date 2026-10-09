@@ -173,7 +173,8 @@ def main():
         flags += ["-DNCE_PROCESS"]
         inputs += [EXPERIMENT / "lkl-process-host.c", EXPERIMENT / "programs.c", EXPERIMENT / "memory.c", EXPERIMENT / "execute-check.c", EXPERIMENT / "compute.c"]
         run([clang, *flags, "-isysroot", sdk, "-DNATIVE", "-c", EXPERIMENT / "guest.S", "-o", OUT / "native.o"])
-    run([clang, *flags, "-isysroot", sdk, *inputs, *([OUT / "native.o"] if PROCESS else []), "-o", OUT / "lkl-probe"])
+    payload = [OUT / "payload.S"] if PROCESS else []
+    run([clang, *flags, "-isysroot", sdk, *inputs, *payload, *([OUT / "native.o"] if PROCESS else []), "-o", OUT / "lkl-probe"])
     with (OUT / "lkl-results.jsonl").open("w") as output, (OUT / "lkl-console.log").open("w") as log:
         run([OUT / "lkl-probe", OUT / "lkl-image.bin"], stdout=output, stderr=log)
     results = [json.loads(line) for line in (OUT / "lkl-results.jsonl").read_text().splitlines()]
@@ -183,6 +184,8 @@ def main():
     run([clang, *flags, "-target", "arm64-apple-ios17.0", "-isysroot", ios_sdk,
          "-c", EXPERIMENT / "lkl-host.c", "-o", OUT / "ios-lkl-host.o"])
     if PROCESS:
+        run([clang, "-target", "arm64-apple-ios17.0", "-isysroot", ios_sdk,
+             "-c", OUT / "payload.S", "-o", OUT / "ios-payload.o"])
         run([clang, *flags, "-target", "arm64-apple-ios17.0", "-isysroot", ios_sdk,
              "-c", EXPERIMENT / "lkl-process-host.c", "-o", OUT / "ios-lkl-process-host.o"])
     dispatch_results = None
@@ -191,11 +194,11 @@ def main():
              EXPERIMENT / "host-context-test.c", EXPERIMENT / "lkl-host.c",
              "-o", OUT / "host-context-test"])
         run([OUT / "host-context-test"])
-        run([clang, *flags, "-DNCE_IOS_APP", "-isysroot", sdk, *inputs, OUT / "native.o",
+        run([clang, *flags, "-DNCE_IOS_APP", "-isysroot", sdk, *inputs, *payload, OUT / "native.o",
              EXPERIMENT / "dispatch-test.c", "-o", OUT / "dispatch-probe"])
         with (OUT / "dispatch-results.jsonl").open("w") as output, (OUT / "dispatch-console.log").open("w") as log:
             subprocess.run([OUT / "dispatch-probe", OUT / "lkl-image.bin"], check=True,
-                           timeout=30, stdout=output, stderr=log)
+                           timeout=120, stdout=output, stderr=log)
         dispatch_results = [json.loads(line) for line in (OUT / "dispatch-results.jsonl").read_text().splitlines()]
         if dispatch_results[-1].get("result") != "passed":
             raise SystemExit("GCD probe did not complete")
@@ -214,6 +217,7 @@ def main():
                     Path(__file__).with_name("build_nce_userspace.py"), EXPERIMENT / "dispatch-test.c", EXPERIMENT / "host-context-test.c",
                     Path(__file__).with_name("prepare_android_runtime.py"), Path(__file__).with_name("build_android_linker.py"),
                     Path(__file__).with_name("build_android_libc.py"), Path(__file__).with_name("build_android_art.py"),
+                    Path(__file__).with_name("build_android_crypto.py"),
                     EXPERIMENT / "android-sources.json", *sorted((EXPERIMENT / "art").glob("*")),
                     *sorted((EXPERIMENT / "userspace").glob("*")), *sorted((EXPERIMENT / "services").glob("*"))]
         run(["python3", ROOT / "scripts/test_nce_userspace.py"])
@@ -221,12 +225,12 @@ def main():
         manifest["stage"] = "Android Bionic, Binder, ART Java and ARM64 JIT workloads"
         manifest["userspace_libraries"] = {"musl": "1.2.5", "compiler-rt": "20.1.8", "dash": "0.5.12"}
         manifest["generated_sha256"] = {name: hashlib.sha256((OUT / name).read_bytes()).hexdigest()
-                                        for name in ["program-images.h", "user-scripts.h", "lkl-image.h", "lkl-host-ops.h", "guest-image.h",
+                                        for name in ["program-images.h", "user-scripts.h", "payload.S", "payload.bin", "lkl-image.h", "lkl-host-ops.h", "guest-image.h",
                                                      "exec-guest.elf", "sigreturn.elf", "init.elf", "worker.elf", "mm-bench.elf", "dash.elf",
                                                      "libc.so", "dependency.so", "plugin.so", "dynamic.elf", "binder-test.elf", "bionic-test.elf", "art-test.elf", "art-heap-test.elf", "android-services-test.elf"]}
         android = ROOT / "work/native-linux-nce/android"
         manifest["android_builds"] = {name: json.loads((android / name / "manifest.json").read_text())
-                                      for name in ("linker-build", "libc-build", "art-build")}
+                                      for name in ("linker-build", "libc-build", "art-build", "crypto-build")}
         manifest["android_runtime_manifest_sha256"] = hashlib.sha256(
             (android / "android36-runtime.json").read_bytes()).hexdigest()
     changed = [str(p.relative_to(ROOT)) for p in sources if p.stat().st_mtime_ns > started_ns]

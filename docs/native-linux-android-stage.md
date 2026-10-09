@@ -573,3 +573,78 @@ ART 的全部既有负载继续通过。运行日志为
 初步依赖检查找到 236 个可执行文件及共享库，当前提取材料均已包含；部分
 库的函数符号描述超出 text 段，需先核对 CFI 跳转表等实际指令布局。后续仍
 在 Mac 上完成 Linux 客体集成，设备验证留到集中测试阶段。
+
+## app_process 与 framework 接入（2026-10-09，进行中）
+
+新增目标使用 SDK 原版 `app_process64`、`libandroid_runtime.so` 及其依赖，
+启动 `NceFramework` Java 测试。测试准备检查 Parcel 序列化、HandlerThread
+延时消息、SharedMemory，以及 Java IBinder 到平台 NDK 服务的跨进程调用。
+属性服务和 servicemanager 在这组测试期间保持运行，完成后统一回收进程。
+当前还未验证 framework 测试完成。
+
+`app_process64` 的 236 项可执行文件及共享库依赖均已找到，函数与 x18 指令
+检查通过。18 个共享库的动态符号指向 CFI 分支表入口，符号长度仍使用函数
+体长度，部分范围越过 text 末尾。构建器仅在入口确认为 AArch64 无条件 B、
+目标落在已有函数范围时，将该入口按 4 字节扫描；其他越界符号继续拒绝。
+新增测试覆盖正常入口、替换为 NOP、跳到 text 之外三种情况，14 项 ELF
+检查通过。CFI 跳转表的设计可参考
+[Clang CFI 文档](https://clang.llvm.org/docs/ControlFlowIntegrity.html)。
+
+启动参数对照 AOSP frameworks/base 提交
+`99b01a65cc4c104933788b3143285ab6bae65827` 的
+[AndroidRuntime.cpp](https://android.googlesource.com/platform/frameworks/base/+/99b01a65cc4c104933788b3143285ab6bae65827/core/jni/AndroidRuntime.cpp)
+和 `app_main.cpp`。沿用已适配 ART，提供实际 boot class path、属性区和
+动态链接器配置。日志测试库在 exec 后设置 liblog 的 stderr 输出，便于
+读取平台 JNI 初始化失败的位置。
+
+资源增加后，原有 256 MiB Linux 内存配置触及 rootfs 的 tmpfs 默认容量。
+写入 ICU 文件时只完成 14,745,600 / 29,094,000 字节，测试在此停止。Linux
+的 `shmem_default_max_blocks` 默认取可用页数的一半；现将客体内存配置改为
+512 MiB，后续实际内存占用以运行测量为准。
+
+程序和 Java 资源改由一个 `payload.bin` 与 Mach-O 汇编 `.incbin` 嵌入。
+原来约 550 MiB 的两份 C 数组头文件缩至约 1 MiB；当前二进制资源约 185 MiB。
+程序注册信息、指令改写表和资产路径仍采用原有结构。CLI、GCD、iOS 编译及
+IPA 打包均已调整为链接同一份资源，校验清单同时记录生成汇编和二进制的
+SHA-256，运行测试继续检查客体文件字节。
+
+原版 `libcrypto.so` 在动态库初始化时执行 FIPS 代码完整性校验，NCE 的指令
+改写会改变参与校验的 text 字节，导致初始化中止。现从 Android BoringSSL
+提交 `1e3b727981831886a0910cd9e82d5bbee4cc7029` 构建 `FIPS=OFF` 的
+libcrypto/libssl，保留 ARM64 汇编实现。源码归档与产物均记录 SHA-256；
+该构建不具有原版库的 FIPS 认证状态。客体已通过 BoringSSL 全部内置已知
+答案自检、SHA-256、AES-128-GCM 已知结果、解密和错误标签拒绝测试。
+
+`app_process64` 已创建 ART 并进入 `AndroidRuntime::startReg`，HWUI 初始化
+通过 dlopen 查找 `libandroid.so`，该库未出现在初始 DT_NEEDED 依赖集合。
+现将其加入运行资源，继续验证后续 JNI 初始化。
+
+进一步启动暴露了 `ro.build.version.sdk_full`、TrafficStats 和 DeviceConfig
+依赖。版本属性与固定 SDK 的 `/system/build.prop` 对照，新增 tethering、
+configinfrastructure、tzdata APEX 资源和对应的动态链接器命名空间。ART
+增加 `-verbose:class` 下的缺失 boot class 名称日志，常规测试关闭详细输出。
+原版 `RuntimeInit` 随后已调用 `NceFramework.main`，Parcel 和 HandlerThread
+步骤已执行，共享内存创建触发了下一处内核兼容问题。
+
+Android libcutils 通过 `ro.treble.enabled`、`sys.use_memfd` 和
+`ASHMEM_GET_SIZE` 探测 memfd。原型内核已支持 memfd 与 seals，新增仅用于
+memfd 的大小查询 ioctl，普通 tmpfs 文件和其他 ioctl 返回 ENOTTY。musl
+和 Bionic 共用测试覆盖初始大小、两次 resize、未知命令、普通文件拒绝及
+F_SEAL_FUTURE_WRITE。共享内存读写与只读别名由 Framework 测试继续验证。
+AndroidRuntime 的退出路径还会打开 hwbinder，现由 binderfs 创建独立节点，
+与平台 Binder 分别清理。当前尚未启动硬件服务管理器。
+
+本阶段 CLI 与 GCD 完整回归均通过，包含 3 轮压力测试、14 项 ELF/构建检查
+和 iOS 目标编译。两种入口均完成 Framework 的 Parcel、Looper、SharedMemory
+和 Java→NDK Binder 测试，并分配、释放各 444 个 NCE 上下文。加密库检查及
+全部既有 ART 测试继续通过。运行日志为
+`work/native-linux-nce/android-framework-probe.log`，源文件与产物校验值记录于
+`work/native-linux-nce/processes/lkl-summary.json`。当前资源为 201,850,832 字节。
+本轮未运行手机测试；尚未验证 Android 桌面、系统服务启动及图形显示。
+
+复杂度审查保留 SDK 的 app_process、Framework、JNI 和 Binder 实现，通过
+真实调用检查依赖。内核只增加 libcutils 实际要求的 memfd 大小查询，其他
+ashmem ioctl 仍返回 ENOTTY。资源改为单个二进制文件，减少生成 C 数组的
+编译负担，路径和字节校验继续由原有程序注册信息完成。源码构建的密码库
+保留汇编与已有接口。探索阶段重复提取的 APEX 已与正式文件逐项核对后删除。
+下一步验证 Framework 图形绘制，并扩大 ART 类型检查等常用 JIT 路径。

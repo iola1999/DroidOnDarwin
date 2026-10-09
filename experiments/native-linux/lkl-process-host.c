@@ -479,7 +479,10 @@ static void put_file(long (*call)(long, long *), const char *path, const void *d
     long fd = call(56, args);
     REQUIRE(fd >= 0);
     args[0] = fd; args[1] = (long)data; args[2] = size;
-    REQUIRE(call(64, args) == (long)size);
+    long written = call(64, args);
+    if (written != (long)size)
+        fprintf(stderr, "write guest file %s: wrote=%ld expected=%zu\n", path, written, size);
+    REQUIRE(written == (long)size);
     REQUIRE(call(57, args) == 0);
 }
 
@@ -750,6 +753,8 @@ void nce_process_tests(long (*host_syscall)(long, long *), long (*guest_syscall)
     run_program(host_syscall, "/system/bin/android-services-test", NULL);
     REQUIRE(get_file(host_syscall, "/stdout", benchmark, sizeof(benchmark)) > 0);
     REQUIRE(strstr(benchmark, "android_platform_binder_cleanup"));
+    REQUIRE(strstr(benchmark, "android_framework_runtime"));
+    REQUIRE(strstr(benchmark, "android_crypto"));
     fputs(benchmark, stdout);
     check_program_files(host_syscall);
     puts("{\"test\":\"linux_dynamic_elf_files_unchanged\",\"passed\":true}");

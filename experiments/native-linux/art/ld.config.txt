@@ -2,7 +2,7 @@
 dir.nce = /system/bin
 
 [nce]
-additional.namespaces = com_android_art,com_android_i18n,com_android_conscrypt
+additional.namespaces = com_android_art,com_android_i18n,com_android_conscrypt,com_android_tethering
 namespace.default.isolated = false
 namespace.default.visible = true
 namespace.default.search.paths = /system/lib64
@@ -18,3 +18,7 @@ namespace.com_android_conscrypt.isolated = false
 namespace.com_android_conscrypt.visible = true
 namespace.com_android_conscrypt.links = default
 namespace.com_android_conscrypt.link.default.allow_all_shared_libs = true
+namespace.com_android_tethering.isolated = false
+namespace.com_android_tethering.visible = true
+namespace.com_android_tethering.links = default
+namespace.com_android_tethering.link.default.allow_all_shared_libs = true

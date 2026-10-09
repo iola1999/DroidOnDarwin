@@ -16,6 +16,7 @@ from prepare_android_runtime import main as prepare_android_runtime
 from build_android_linker import build as build_android_linker
 from build_android_libc import build as build_android_libc
 from build_android_art import build as build_android_art
+from build_android_crypto import build as build_android_crypto
 
 ROOT = Path(__file__).resolve().parents[1]
 EXP = ROOT / 'experiments/native-linux'
@@ -73,11 +74,14 @@ def android_dependencies(llvm, replacements):
                       'com.android.i18n/lib64', 'com.android.os.statsd/lib64'):
         for path in (root / directory).glob('*.so'):
             if path.is_file(): files[path.name] = path
+    for path in (root / 'com.android.tethering/lib64').glob('*.so'):
+        if path.is_file(): files.setdefault(path.name, path)
     files.update(replacements)
-    pending = ['libart.so', 'libjavacore.so', 'libopenjdk.so', 'libicu_jni.so', 'libartpalette-system.so', 'libbinder_ndk.so']
-    manager = root / 'bin/servicemanager'
-    pending += re.findall(r'Shared library: \[(.*?)\]',
-                          subprocess.check_output([llvm / 'llvm-readelf', '-d', manager], text=True))
+    pending = ['libart.so', 'libjavacore.so', 'libopenjdk.so', 'libicu_jni.so',
+               'libartpalette-system.so', 'libbinder_ndk.so', 'libandroid.so', 'libframework-connectivity-tiramisu-jni.so']
+    for name in ('servicemanager', 'app_process64'):
+        pending += re.findall(r'Shared library: \[(.*?)\]',
+                              subprocess.check_output([llvm / 'llvm-readelf', '-d', root / 'bin' / name], text=True))
     result = {}
     while pending:
         name = pending.pop()
@@ -160,11 +164,27 @@ def android_data(out):
     for module, names in {
         'com.android.art': ('core-oj', 'core-libart', 'okhttp', 'bouncycastle', 'apache-xml'),
         'com.android.i18n': ('core-icu4j',), 'com.android.conscrypt': ('conscrypt',),
+        'com.android.tethering': ('framework-connectivity', 'framework-connectivity-b',
+                                  'framework-connectivity-t', 'framework-tethering'),
+        'com.android.configinfrastructure': ('framework-configinfrastructure',),
     }.items():
         files += [(f'/apex/{module}/javalib/{name}.jar', root / module / 'javalib' / (name + '.jar'))
                   for name in names]
     files += [('/system/etc/selinux/plat_service_contexts', EXP / 'services/service_contexts')]
     files += [('/apex/com.android.i18n/etc/icu/icudt76l.dat', root / 'com.android.i18n/etc/icu/icudt76l.dat')]
+    timezone = root / 'com.android.tzdata/etc/tz'
+    files += [(f'/apex/com.android.tzdata/etc/tz/{path.relative_to(timezone)}', path)
+              for path in sorted(timezone.rglob('*')) if path.is_file()]
+    framework_classes = out / 'framework-classes'
+    framework_classes.mkdir(exist_ok=True)
+    run([java / 'javac', '--release', '11', '-cp', sdk / 'platforms/android-35/android.jar',
+         '-d', framework_classes, EXP / 'services/NceFramework.java'])
+    run([java / 'java', '-cp', sdk / 'build-tools/36.0.0/lib/d8.jar', 'com.android.tools.r8.D8',
+         '--min-api', '35', '--lib', sdk / 'platforms/android-35/android.jar', '--output', framework_classes,
+         *sorted(framework_classes.glob('*.class'))])
+    files += [('/data/nce/NceFramework.dex', framework_classes / 'classes.dex')]
+    for name in ('framework', 'framework-graphics', 'framework-location', 'ext'):
+        files.append((f'/system/framework/{name}.jar', root / 'framework' / f'{name}.jar'))
     return files
 
 
@@ -267,6 +287,16 @@ def inspect(path, shared=False, function_symbols=False):
             inferred = True
             merged = []
             for lo, hi in ranges:
+                # Android CFI exports can point at a 4-byte branch table entry
+                # while retaining the target function's size in .dynsym.
+                if sec[3] <= lo <= sec[3] + sec[5] - 4 and hi > sec[3] + sec[5]:
+                    word, = struct.unpack_from('<I', data, sec[4] + lo - sec[3])
+                    displacement = (word & 0x3ffffff) - ((word & 0x2000000) << 1)
+                    target = lo + displacement * 4
+                    if word & 0xfc000000 == 0x14000000 and any(
+                            sec[3] <= first <= target < last <= sec[3] + sec[5]
+                            for first, last in ranges):
+                        hi = lo + 4
                 if lo < sec[3] or hi > sec[3] + sec[5]:
                     raise RuntimeError(f'{path}: function symbol outside executable section')
                 if merged and lo <= merged[-1][1]:
@@ -455,7 +485,8 @@ def build(out, llvm):
     programs.append((ANDROID_INTERPRETER, build_android_linker()))
     programs.append(('/system/lib64/libc.so', build_android_libc()))
     programs.append(('/system/lib64/libdl.so', android / 'lib64/bionic/libdl.so'))
-    programs += android_dependencies(llvm, build_android_art())
+    crypto = build_android_crypto()
+    programs += android_dependencies(llvm, {**build_android_art(), **crypto})
     run([ndk / 'toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android35-clang',
          '-ffixed-x18', '-mno-outline-atomics', '-g', '-O2', '-Wall', '-Wextra', '-Werror',
          '-Wl,-z,max-page-size=16384,-z,common-page-size=16384',
@@ -463,11 +494,19 @@ def build(out, llvm):
     programs.append(('/system/bin/art-test', out / 'art-test.elf'))
     programs.append(('/system/bin/secilc', WORK / 'android/android36/bin/secilc'))
     programs.append(('/system/bin/servicemanager', WORK / 'android/android36/bin/servicemanager'))
+    programs.append(('/system/bin/app_process64', WORK / 'android/android36/bin/app_process64'))
+    run([ndk / 'toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android35-clang',
+         '-shared', '-fPIC', '-ffixed-x18', '-O2', '-Wall', '-Wextra', '-Werror',
+         '-Wl,-z,max-page-size=16384,-z,common-page-size=16384',
+         EXP / 'services/framework-log.c', '-llog', '-o', out / 'libnce-framework-log.so'])
+    programs.append(('/system/lib64/libnce-framework-log.so', out / 'libnce-framework-log.so'))
     run([ndk / 'toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android35-clang++',
          '-ffixed-x18', '-mno-outline-atomics', '-g', '-O2', '-Wall', '-Wextra', '-Werror',
          '-std=c++17', '-nostdlib++', '-I', android_service_headers(),
          '-Wl,-z,max-page-size=16384,-z,common-page-size=16384',
-         EXP / 'userspace/android-services-test.cpp', EXP / 'userspace/property-service.cpp', '-ldl',
+         EXP / 'userspace/android-services-test.cpp', EXP / 'userspace/property-service.cpp',
+         EXP / 'userspace/framework-test.cpp', EXP / 'userspace/crypto-tests.cpp',
+         '-I', WORK / 'android/boringssl/src/include', crypto['libcrypto.so'], '-ldl',
          WORK / 'android/android36/lib64/libbinder_ndk.so',
          '-o', out / 'android-services-test.elf'])
     programs.append(('/system/bin/android-services-test', out / 'android-services-test.elf'))
@@ -483,7 +522,8 @@ def build(out, llvm):
              out / f'{name}.o', *([out / 'dependency.so', '-rpath', '/lib'] if name == 'dynamic' else []),
              '-L' + str(libc / 'lib'), '-lc', runtime, libc / 'lib/crtn.o', '-o', file])
         programs.append(('/dynamic' if name == 'dynamic' else '/lib/' + name + '.so', file))
-    header, entries = [], []
+    header, entries = ['extern const unsigned char nce_payload[];'], []
+    payload = bytearray()
     offset = 0
     for i, (name, path) in enumerate(programs):
         elf = inspect(path, shared=name.endswith('.so'), function_symbols=name.startswith('/system/') or name in ('/bionic-test', '/art-test', '/art-heap-test'))
@@ -494,12 +534,13 @@ def build(out, llvm):
             raise RuntimeError('Large-text fixture did not exceed 64 KiB')
         dis = subprocess.check_output([llvm / 'llvm-objdump', '-d', path], text=True)
         check_x18_disassembly(path, elf, dis)
-        header.append(f'static const unsigned char image_{i}[] = {{' + ','.join(map(str, elf['data'])) + '};')
+        position = len(payload)
+        payload.extend(elf['data'])
         header.append(f'static NceSegment segments_{i}[] = {{' + ','.join(
             f'{{.offset={lo},.size={size}}}' for lo, size in elf['segments']) + '};')
         header.append(f'static const NcePatch patches_{i}[] = {{' + ','.join(
             f'{{{va},{word}}}' for va, word in elf['patches']) + '};')
-        entries.append(f'{{.path="{name}",.file=image_{i},.size=sizeof(image_{i}),.offset={offset},.span={elf["span"]},'
+        entries.append(f'{{.path="{name}",.file=nce_payload+{position},.size={len(elf["data"])},.offset={offset},.span={elf["span"]},'
                        f'.entry={elf["entry"]},.phoff={elf["phoff"]},.phsize={elf["phsize"]},'
                        f'.segments=segments_{i},.segment_count={len(elf["segments"])},'
                        f'.patches=patches_{i},.patch_count={len(elf["patches"])}}}')
@@ -508,12 +549,17 @@ def build(out, llvm):
     header += ['NceProgram nce_programs[] = {' + ',\n'.join(entries) + '};',
                f'const size_t nce_program_count = {len(entries)};']
     (out / 'program-images.h').write_text('\n'.join(header) + '\n')
-    assets = ['static const char shell_script[] = ' +
+    assets = ['extern const unsigned char nce_payload[];', 'static const char shell_script[] = ' +
               json.dumps((EXP / 'userspace/shell-tests.sh').read_text()) + ';\n']
     entries = []
-    for i, (name, path) in enumerate(android_data(out)):
-        assets.append(f'static const unsigned char art_asset_{i}[] = {{' + ','.join(map(str, path.read_bytes())) + '};')
-        entries.append(f'{{"{name}",art_asset_{i},sizeof(art_asset_{i})}}')
+    for name, path in android_data(out):
+        data = path.read_bytes()
+        entries.append(f'{{"{name}",nce_payload+{len(payload)},{len(data)}}}')
+        payload.extend(data)
     assets.append('static const struct { const char *path; const void *data; size_t size; } art_assets[] = {' +
                   ',\n'.join(entries) + '};')
     (out / 'user-scripts.h').write_text('\n'.join(assets) + '\n')
+    (out / 'payload.bin').write_bytes(payload)
+    payload_path = str((out / 'payload.bin').resolve()).replace('\\', '\\\\').replace('"', '\\"')
+    (out / 'payload.S').write_text('.section __TEXT,__const\n.p2align 4\n.globl _nce_payload\n'
+                                 '_nce_payload:\n.incbin "' + payload_path + '"\n')
