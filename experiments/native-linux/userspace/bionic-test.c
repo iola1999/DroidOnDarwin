@@ -18,11 +18,13 @@ static void *worker(void *pointer)
 
 void file_tests(const char *libc);
 void signal_tests(const char *libc);
+void seccomp_tests(void);
 
 int main(void)
 {
     file_tests("bionic");
     signal_tests("bionic");
+    seccomp_tests();
     pthread_t thread;
     void *result;
     unsigned char *memory = malloc(65536);

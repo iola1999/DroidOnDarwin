@@ -122,7 +122,7 @@ static void blocking_tests(void)
 unsigned long nce_process_setup(void);
 void nce_process_cleanup(void);
 void nce_process_tests(long (*)(long, long *), long (*)(long, long *), int (*)(unsigned long, int),
-                       void (*)(long, long, unsigned long), void (*)(unsigned long, int));
+                       void (*)(long, long, unsigned long), void (*)(unsigned long, int), void (*)(void));
 #endif
 
 int nce_lkl_run(const char *image_path)
@@ -182,7 +182,7 @@ int nce_lkl_run(const char *image_path)
     #ifdef NCE_PROCESS
     nce_process_tests(kernel_syscall, (void *)(kernel.rx + NCE_RUN_SYSCALL),
                       (void *)(kernel.rx + NCE_PAGE_FAULT), (void *)(kernel.rx + NCE_USER_RETURN),
-                      (void *)(kernel.rx + NCE_USER_FAULT));
+                      (void *)(kernel.rx + NCE_USER_FAULT), (void *)(kernel.rx + NCE_USER_PREEMPT));
     #else
     NceCode code = dual(65536);
     REQUIRE(mprotect(code.rx, code.size, PROT_READ | PROT_EXEC) == 0);

@@ -14,6 +14,13 @@ def apply(source: Path, experiment: Path):
         path.write_text(text.replace(before, after))
 
     arch = "arch/lkl/"
+    edit(arch + "Kconfig", "depends on !SMP && !COREDUMP && !SECCOMP && !UPROBES",
+         "depends on !SMP && !COREDUMP && !UPROBES")
+    edit(arch + "Kconfig", "\tselect GENERIC_ATOMIC64",
+         "\tselect HAVE_ARCH_SECCOMP_FILTER if MMU\n\tselect GENERIC_ATOMIC64")
+    edit(arch + "include/asm/Kbuild", "generic-y += seccomp.h", "# seccomp.h uses the AArch64 syscall ABI")
+    edit(arch + "include/asm/thread_info.h", "#define TIF_NOTIFY_SIGNAL\t\t9",
+         "#define TIF_NOTIFY_SIGNAL\t\t9\n#define TIF_SECCOMP\t\t\t10")
     edit(arch + "include/uapi/asm/host_ops.h", "\tconst char *virtio_devices;",
          "\tconst char *virtio_devices;\n\tunsigned long long (*disk_size)(unsigned int index);\n"
          "\t/* operation: 0 read, 1 write, 2 flush; offset and length are bytes. */\n"
@@ -60,6 +67,10 @@ def apply(source: Path, experiment: Path):
     edit(pg, "mmap_pages_for_ptes(addr, nr, pte);", "mmap_pages_for_ptes(mm, addr, nr, pte);")
     edit(arch + "include/asm/processor.h", "struct thread_struct { };", "struct thread_struct { void *nce_state; };")
     edit(arch + "include/asm/processor.h", "#define task_pt_regs(tsk) (struct pt_regs *)(NULL)", "#ifdef CONFIG_MMU\n#define task_pt_regs(tsk) ((struct pt_regs *)(tsk)->thread.nce_state)\n#else\n#define task_pt_regs(tsk) (struct pt_regs *)(NULL)\n#endif")
+    edit(arch + "include/asm/processor.h", "#define KSTK_EIP(tsk)\t(0)",
+         "#define KSTK_EIP(tsk) (task_pt_regs(tsk) ? task_pt_regs(tsk)->pc : 0)")
+    edit(arch + "include/asm/processor.h", "#define KSTK_ESP(tsk)\t(0)",
+         "#define KSTK_ESP(tsk) (task_pt_regs(tsk) ? task_pt_regs(tsk)->sp : 0)")
     ptrace = arch + "include/asm/ptrace.h"
     edit(ptrace, "#include <linux/errno.h>", "#include <linux/errno.h>\n#include <asm/guest-registers.h>")
     edit(ptrace, "#define user_stack_pointer(regs) 0", "#define user_stack_pointer(regs) ((regs) ? (regs)->sp : 0)")
@@ -98,6 +109,12 @@ def apply(source: Path, experiment: Path):
         edit(arch + "kernel/syscalls.c", "static long run_syscall(long no, long *params)", "#ifdef CONFIG_MMU\nextern long nce_launch(long *params);\n#endif\nlong nce_run_syscall(long no, long *params)")
         edit(arch + "kernel/syscalls.c", "\tsyscall_handler_t handler = (syscall_handler_t)syscall_table[no];\n\n\tif (no < 0 || no >= __NR_syscalls)\n\t\treturn -ENOSYS;", "\tsyscall_handler_t handler;\n\tif (no < 0 || no >= __NR_syscalls)\n\t\treturn -ENOSYS;\n#ifdef CONFIG_MMU\n\tif (no == 246)\n\t\treturn nce_launch(params);\n#endif\n\thandler = (syscall_handler_t)syscall_table[no];")
     edit(arch + "kernel/syscalls.c", "ret = run_syscall(no, params);", "ret = nce_run_syscall(no, params);")
+    edit(arch + "kernel/syscalls.c", "#include <linux/task_work.h>",
+         "#include <linux/task_work.h>\n#include <linux/seccomp.h>\n#include <asm/ptrace.h>")
+    edit(arch + "kernel/syscalls.c", "\tsyscall_handler_t handler;",
+         "\tsyscall_handler_t handler;\n#ifdef CONFIG_SECCOMP\n"
+         "\tif (current->thread.nce_state && secure_computing())\n"
+         "\t\treturn task_pt_regs(current)->x[0];\n#endif")
     edit(arch + "kernel/syscalls.c", "extern long nce_launch(long *params);", "extern long nce_launch(long *params);\nextern long nce_reserve_elf(long *params);")
     edit(arch + "kernel/syscalls.c", "\tif (no == 246)", "\tif (no == 245)\n\t\treturn nce_reserve_elf(params);\n\tif (no == 246)")
     edit(arch + "kernel/syscalls.c", "extern long nce_reserve_elf(long *params);", "extern long nce_reserve_elf(long *params);\nextern long nce_map_code(long *params);\nextern long nce_publish_code(long *params);\nextern long nce_check_memory_syscall(long no, long *params);")
@@ -112,6 +129,8 @@ def apply(source: Path, experiment: Path):
     edit(arch + "kernel/Makefile", "nce_process.o nce_signal.o nce_elf.o",
          "nce_process.o nce_signal.o nce_elf.o\nobj-$(CONFIG_BLOCK) += nce_block.o")
     for local, destination in (("layout.h", "include/asm/nce-layout.h"),
+                               ("lkl-syscall.h", "include/asm/syscall.h"),
+                               ("lkl-seccomp.h", "include/asm/seccomp.h"),
                                ("guest-registers.h", "include/asm/guest-registers.h"),
                                ("lkl-signal.h", "include/asm/signal.h"),
                                ("lkl-nce-mmu.c", "mm/nce_mmu.c"),

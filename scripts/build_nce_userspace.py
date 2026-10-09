@@ -12,6 +12,7 @@ import struct
 import subprocess
 import tarfile
 import urllib.request
+import zipfile
 from prepare_android_runtime import main as prepare_android_runtime
 from build_android_linker import build as build_android_linker
 from build_android_libc import build as build_android_libc
@@ -78,7 +79,8 @@ def android_dependencies(llvm, replacements):
         if path.is_file(): files.setdefault(path.name, path)
     files.update(replacements)
     pending = ['libart.so', 'libjavacore.so', 'libopenjdk.so', 'libicu_jni.so',
-               'libstats_jni.so', 'libartpalette-system.so', 'libbinder_ndk.so', 'libandroid.so', 'libframework-connectivity-tiramisu-jni.so']
+               'libstats_jni.so', 'libartpalette-system.so', 'libbinder_ndk.so', 'libandroid.so',
+               'libprocessgroup_setup.so', 'libframework-connectivity-tiramisu-jni.so']
     for name in ('servicemanager', 'app_process64'):
         pending += re.findall(r'Shared library: \[(.*?)\]',
                               subprocess.check_output([llvm / 'llvm-readelf', '-d', root / 'bin' / name], text=True))
@@ -172,6 +174,9 @@ def android_data(out):
         files += [(f'/apex/{module}/javalib/{name}.jar', root / module / 'javalib' / (name + '.jar'))
                   for name in names]
     files += [('/system/etc/selinux/plat_service_contexts', EXP / 'services/service_contexts')]
+    files += [('/system/etc/selinux/plat_seapp_contexts', EXP / 'services/seapp_contexts')]
+    files += [(f'/system/etc/{name}.json', EXP / 'services' / f'{name}.json')
+              for name in ('cgroups', 'task_profiles')]
     files += [('/apex/com.android.i18n/etc/icu/icudt76l.dat', root / 'com.android.i18n/etc/icu/icudt76l.dat')]
     timezone = root / 'com.android.tzdata/etc/tz'
     files += [(f'/apex/com.android.tzdata/etc/tz/{path.relative_to(timezone)}', path)
@@ -179,11 +184,14 @@ def android_data(out):
     framework_classes = out / 'framework-classes'
     framework_classes.mkdir(exist_ok=True)
     run([java / 'javac', '--release', '11', '-cp', sdk / 'platforms/android-35/android.jar',
-         '-d', framework_classes, EXP / 'services/NceFramework.java'])
+         '-d', framework_classes, EXP / 'services/NceFramework.java', EXP / 'services/NceZygoteChild.java'])
     run([java / 'java', '-cp', sdk / 'build-tools/36.0.0/lib/d8.jar', 'com.android.tools.r8.D8',
          '--min-api', '35', '--lib', sdk / 'platforms/android-35/android.jar', '--output', framework_classes,
          *sorted(framework_classes.glob('*.class'))])
-    files += [('/data/nce/NceFramework.dex', framework_classes / 'classes.dex')]
+    framework_jar = out / 'nce-framework.jar'
+    with zipfile.ZipFile(framework_jar, 'w') as jar:
+        jar.writestr(zipfile.ZipInfo('classes.dex'), (framework_classes / 'classes.dex').read_bytes())
+    files += [('/system/framework/nce-framework.jar', framework_jar)]
     for name in ('framework', 'framework-graphics', 'framework-location', 'ext'):
         files.append((f'/system/framework/{name}.jar', root / 'framework' / f'{name}.jar'))
     return files
@@ -473,7 +481,7 @@ def build(out, llvm):
     run([ndk / 'toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android35-clang',
          '-ffixed-x18', '-mno-outline-atomics', '-g', '-O2', '-Wall', '-Wextra', '-Werror',
          '-Wl,-z,max-page-size=16384,-z,common-page-size=16384',
-         EXP / 'userspace/bionic-test.c', EXP / 'userspace/file-tests.c',
+         EXP / 'userspace/bionic-test.c', EXP / 'userspace/file-tests.c', EXP / 'userspace/seccomp-tests.c',
          EXP / 'userspace/signal-tests.c', EXP / 'userspace/signal-registers.S', '-o', out / 'bionic-test.elf'])
     programs.append(('/bionic-test', out / 'bionic-test.elf'))
     run([ndk / 'toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android35-clang',
@@ -499,7 +507,7 @@ def build(out, llvm):
     run([ndk / 'toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android35-clang',
          '-shared', '-fPIC', '-ffixed-x18', '-O2', '-Wall', '-Wextra', '-Werror',
          '-Wl,-z,max-page-size=16384,-z,common-page-size=16384',
-         EXP / 'services/framework-log.c', '-llog', '-o', out / 'libnce-framework-log.so'])
+         EXP / 'services/framework-log.c', '-llog', '-ldl', '-o', out / 'libnce-framework-log.so'])
     programs.append(('/system/lib64/libnce-framework-log.so', out / 'libnce-framework-log.so'))
     run([ndk / 'toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android35-clang++',
          '-ffixed-x18', '-mno-outline-atomics', '-g', '-O2', '-Wall', '-Wextra', '-Werror',

@@ -53,6 +53,7 @@ static long (*run_syscall)(long, long *);
 static int (*page_fault)(unsigned long, int);
 static void (*user_return)(long, long, unsigned long);
 static void (*user_fault)(unsigned long, int);
+static void (*user_preempt)(void);
 static unsigned long faults, allocated, freed;
 static int trace;
 static struct sigaction old_segv, old_bus, old_ill;
@@ -235,9 +236,7 @@ static NceState *handle_event(NceState *state)
         else user_return(-1, 0, 0);
         ++faults; ++deferred_faults;
     } else if (p->event_kind == 2) {
-        long args[6] = {0};
-        REQUIRE(run_syscall(124, args) == 0);
-        user_return(-1, 0, 0);
+        user_preempt();
         ++preemptions;
     } else {
         ++stack_calls;
@@ -661,12 +660,14 @@ static void userspace_tests(long (*call)(long, long *))
 
 void nce_process_tests(long (*host_syscall)(long, long *), long (*guest_syscall)(long, long *),
                        int (*handle_fault)(unsigned long, int),
-                       void (*return_to_user)(long, long, unsigned long), void (*signal_fault)(unsigned long, int))
+                       void (*return_to_user)(long, long, unsigned long), void (*signal_fault)(unsigned long, int),
+                       void (*preempt_user)(void))
 {
     run_syscall = guest_syscall;
     page_fault = handle_fault;
     user_return = return_to_user;
     user_fault = signal_fault;
+    user_preempt = preempt_user;
     long mkdir_args[6] = {-100, (long)"/bin", 0755};
     REQUIRE(host_syscall(34, mkdir_args) == 0);
     mkdir_args[1] = (long)"/lib";

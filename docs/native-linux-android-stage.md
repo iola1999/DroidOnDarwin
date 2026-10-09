@@ -742,3 +742,38 @@ JDWP 使用原版 `dalvik.vm.jdwp-provider=none` 配置；当前测试没有调�
 和 llvm-objdump 版本。文件内容或检查规则变化会重新扫描指令；执行布局范围
 仍在每次生成时检查。首次全扫描与后续缓存构建都完成了相同的运行回归。
 缓存只保存解析结果，完整系统文件继续通过生成清单与运行时 SHA-256 校验。
+
+## Zygote 派生与进程隔离（2026-10-09）
+
+原版 Zygote 已调用 fork 产生子进程。首次派生触发堆压缩，暴露出 ART LockWord
+转发地址仍保存原生指针低 32 位的问题。转发地址现复用堆内偏移编码；读取时
+恢复原生地址，Zygote 已完成压缩与派生。
+
+Linux 配置启用 cgroup v2、memory controller 与 seccomp filter。启动测试调用
+SDK 的 CgroupSetup，按项目配置挂载 cgroup 并建立 system/apps 目录。单 CPU
+原型的前台调度配置目前调整 timer slack；后续 CPU 拓扑与资源分配配置需要
+随实际调度支持扩展。
+
+seccomp 使用 Linux 原有 BPF 过滤与信号实现，LKL 架构层提供 ARM64 系统调用
+号、参数、返回值、程序计数器和线程标志。Android 平台适配保留 SDK 导出的
+ARM64 过滤表，并显式加入代码映射调用 243–245；客体自行安装的过滤器仍可
+拒绝这些调用。测试覆盖 errno、非法调用号、SIGSYS 上下文、fork 继承、进程
+终止和 TSYNC。首轮测试发现 LKL 的 KSTK_EIP 固定为零，已改为读取客体寄存器，
+CLI 与 GCD 的完整回归均通过。宿主定时调度另使用 nce_user_preempt 入口，
+直接调用 Linux 调度器；只有客体发出的系统调用经过 seccomp。
+
+两个子进程均以 UID 1000 运行，检查自身 cgroup 路径和 seccomp mode 2；分别
+创建并校验 4,096 个字符串，经过 GC 后继续读取，启动 Java 线程，完成 Parcel
+往返，并同步写入结果。System properties 中的子进程标记没有出现在下一次
+派生的进程中。测试 JAR 位于只读系统镜像，Binder 节点允许普通 UID 打开，
+服务访问仍经过 SELinux 检查。
+
+动态可执行区扩大为 64 MiB，使 Zygote 的共享 JIT 区与子进程的私有 JIT 区可
+同时映射；每个 ART 实例的 JIT 容量配置保持 32 MiB。测试期间 CLI 宿主峰值
+RSS 为 634,667,008 字节。代码缓存目前提前填充全部可执行页，后续将检查按需
+填充与宿主物理页回收，降低手机内存压力。
+
+本轮同时通过 iOS 目标编译、3 轮进程压力回归和 14 项 ELF/构建检查。日志为
+`work/native-linux-nce/zygote-security-probe.log`。复杂度审查保留原版 Zygote、
+libprocessgroup 与 BPF 解释器，只增加实际消费的架构入口和原型配置；尚未
+建立 Android 应用间完整的安全策略，system_server 与系统桌面仍待实现。

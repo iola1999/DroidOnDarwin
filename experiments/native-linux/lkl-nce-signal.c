@@ -135,3 +135,11 @@ void nce_user_fault(unsigned long address, int illegal_instruction)
     }
     nce_user_return(-1, 0, 0);
 }
+
+/* Host timer delivery yields the current Linux task without issuing a guest
+ * syscall. The saved x8 still belongs to the interrupted guest instruction. */
+void nce_user_preempt(void)
+{
+    sys_sched_yield();
+    nce_user_return(-1, 0, 0);
+}

@@ -294,6 +294,9 @@ int main(int argc, char **argv)
         binderfs_device device = {};
         strcpy(device.name, name);
         CHECK(ioctl(control, BINDER_CTL_ADD, &device) == 0);
+        char path[128];
+        snprintf(path, sizeof(path), "/binderfs/%s", name);
+        CHECK(chmod(path, 0666) == 0);
     }
     CHECK(close(control) == 0);
     CHECK(symlink("/binderfs/nce-platform", "/dev/binder") == 0);

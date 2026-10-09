@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 #include <errno.h>
+#include <dlfcn.h>
 #include <arpa/inet.h>
 #include <fcntl.h>
 #include <signal.h>
@@ -23,7 +24,7 @@ static void runtime_environment()
         {"ANDROID_I18N_ROOT", "/apex/com.android.i18n"},
         {"ANDROID_TZDATA_ROOT", "/apex/com.android.tzdata"},
         {"ICU_DATA", "/apex/com.android.i18n/etc/icu"},
-        {"CLASSPATH", "/data/nce/NceFramework.dex"},
+        {"CLASSPATH", "/system/framework/nce-framework.jar"},
         {"LD_PRELOAD", "/system/lib64/libnce-framework-log.so"},
         {"BOOTCLASSPATH", "/apex/com.android.art/javalib/core-oj.jar:"
             "/apex/com.android.art/javalib/core-libart.jar:/apex/com.android.art/javalib/okhttp.jar:"
@@ -98,12 +99,23 @@ static void receive_bytes(int fd, void *buffer, size_t size)
 
 void nce_zygote_test()
 {
+    CHECK(symlink("/system/etc", "/etc") == 0);
+    void *setup = dlopen("libprocessgroup_setup.so", RTLD_NOW);
+    CHECK(setup);
+    auto initialize = reinterpret_cast<bool (*)()>(dlsym(setup, "_Z11CgroupSetupv"));
+    CHECK(initialize && initialize());
+    CHECK(dlclose(setup) == 0);
+    CHECK(mkdir("/data/nce/zygote", 0777) == 0 && chmod("/data/nce/zygote", 0777) == 0);
     int command = control_socket("zygote");
     int usap = control_socket("usap_pool_primary");
     pid_t zygote = fork();
     CHECK(zygote >= 0);
     if (!zygote) {
         runtime_environment();
+        const char *boot = getenv("BOOTCLASSPATH");
+        char classpath[4096];
+        CHECK(snprintf(classpath, sizeof(classpath), "%s:/system/framework/nce-framework.jar", boot) < static_cast<int>(sizeof(classpath)));
+        CHECK(setenv("BOOTCLASSPATH", classpath, 1) == 0);
         char descriptor[32];
         snprintf(descriptor, sizeof(descriptor), "%d", command);
         CHECK(setenv("ANDROID_SOCKET_zygote", descriptor, 1) == 0);
@@ -138,6 +150,35 @@ void nce_zygote_test()
             if (round == 1) CHECK(atoi(response) == zygote);
             else CHECK(strcmp(response, "arm64-v8a") == 0);
         }
+        for (unsigned round = 0; round < 2; ++round) {
+            char request[512];
+            int bytes = snprintf(request, sizeof(request),
+                "8\n--runtime-args\n--setuid=1000\n--setgid=1000\n--target-sdk-version=36\n"
+                "--nice-name=nce-zygote-child\n--seinfo=platform\nNceZygoteChild\n%u\n", round);
+            CHECK(bytes > 0 && bytes < static_cast<int>(sizeof(request)));
+            CHECK(write(client, request, bytes) == bytes);
+            uint32_t pid;
+            unsigned char wrapper;
+            receive_bytes(client, &pid, sizeof(pid));
+            receive_bytes(client, &wrapper, 1);
+            pid = ntohl(pid);
+            CHECK(pid > 0 && pid < 32768 && wrapper == 0);
+            char path[128];
+            snprintf(path, sizeof(path), "/data/nce/zygote/child-%u", round);
+            int output = -1;
+            for (unsigned attempt = 0; attempt < 500; ++attempt) {
+                output = open(path, O_RDONLY | O_CLOEXEC);
+                if (output >= 0) break;
+                CHECK(errno == ENOENT);
+                usleep(10000);
+            }
+            CHECK(output >= 0);
+            char result[128] = {};
+            CHECK(read(output, result, sizeof(result) - 1) > 0 && close(output) == 0);
+            char expected[128];
+            snprintf(expected, sizeof(expected), "%u:%d:1000:4096\n", pid, zygote);
+            CHECK(strcmp(result, expected) == 0);
+        }
         CHECK(close(client) == 0);
         _exit(0);
     }
@@ -148,4 +189,5 @@ void nce_zygote_test()
     CHECK(waitpid(zygote, &status, 0) == zygote && WIFSIGNALED(status) && WTERMSIG(status) == SIGTERM);
     CHECK(unlink("/dev/socket/zygote") == 0 && unlink("/dev/socket/usap_pool_primary") == 0);
     puts("{\"test\":\"android_zygote_command_server\",\"queries\":3,\"passed\":true}");
+    puts("{\"test\":\"android_zygote_java_children\",\"children\":2,\"passed\":true}");
 }

@@ -21,8 +21,8 @@ static uint8_t occupied[HEAP_SIZE / MIN_PAGE_SIZE / 8];
 
 void nce_art_invalid_reference(const void *pointer)
 {
-    fprintf(stderr, "NCE ART: reference outside heap: pointer=%p base=%p\n",
-            pointer, (void *)nce_art_reference_base);
+    fprintf(stderr, "NCE ART: reference outside heap: pointer=%p base=%p caller=%p\n",
+            pointer, (void *)nce_art_reference_base, __builtin_return_address(0));
     abort();
 }
 

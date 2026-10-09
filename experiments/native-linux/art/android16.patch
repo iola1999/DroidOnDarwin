@@ -1984,3 +1984,34 @@
    NCE_ALLOW(IntermediateAddress)
    NCE_ALLOW(IntermediateAddressIndex)
    NCE_ALLOW(VecReplicateScalar)
+--- a/runtime/lock_word.h
++++ b/runtime/lock_word.h
+@@ -25,6 +25,7 @@
+ #include "base/bit_utils.h"
+ #include "base/macros.h"
+ #include "read_barrier.h"
++#include "reference_heap.h"
+
+ namespace art HIDDEN {
+ namespace mirror {
+@@ -151,7 +152,8 @@
+
+   static LockWord FromForwardingAddress(size_t target) {
+     DCHECK_ALIGNED(target, (1 << kStateSize));
+-    return LockWord((target >> kForwardingAddressShift) | kStateForwardingAddressShifted);
++    uint32_t reference = nce_art_encode_reference(reinterpret_cast<const void*>(target));
++    return LockWord((reference >> kForwardingAddressShift) | kStateForwardingAddressShifted);
+   }
+
+   static LockWord FromHashCode(uint32_t hash_code, uint32_t gc_state) {
+--- a/runtime/lock_word-inl.h
++++ b/runtime/lock_word-inl.h
+@@ -43,7 +43,7 @@
+
+ inline size_t LockWord::ForwardingAddress() const {
+   DCHECK_EQ(GetState(), kForwardingAddress);
+-  return value_ << kForwardingAddressShift;
++  return reinterpret_cast<size_t>(nce_art_decode_reference(value_ << kForwardingAddressShift));
+ }
+
+ inline LockWord::LockWord() : value_(0) {
