@@ -59,6 +59,7 @@ final class ProbeModel: ObservableObject {
             else if log.contains("\"phase\":\"android_art_reference_heap\"") { status = "正在检查 Android 对象内存（\(seconds) 秒）" }
             else if log.contains("\"phase\":\"android_bionic_dynamic\"") { status = "正在检查 Android 运行库（\(seconds) 秒）" }
             else if log.contains("\"phase\":\"linux_binder_program\"") { status = "正在检查 Binder 进程通信（\(seconds) 秒）" }
+            else if log.contains("\"phase\":\"linux_storage_program\"") { status = "正在检查文件存储（\(seconds) 秒）" }
             else if log.contains("\"phase\":\"linux_dynamic_program\"") { status = "正在检查动态库和线程（\(seconds) 秒）" }
             else if log.contains("\"phase\":\"linux_dash_shell\"") { status = "正在运行 shell 脚本（\(seconds) 秒）" }
             else if log.contains("\"phase\":\"linux_mm_benchmark\"") { status = "正在检查信号与内存（\(seconds) 秒）" }
@@ -141,6 +142,29 @@ final class ProbeModel: ObservableObject {
             busy = false
             UIApplication.shared.isIdleTimerDisabled = false
             status = "安装包缺少 Linux 内核"
+            return
+        }
+        do {
+            let manager = FileManager.default
+            var directory = manager.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
+                .appendingPathComponent("NativeLinux", isDirectory: true)
+            try manager.createDirectory(at: directory, withIntermediateDirectories: true)
+            var attributes = URLResourceValues()
+            attributes.isExcludedFromBackup = true
+            try directory.setResourceValues(attributes)
+            let disk = directory.appendingPathComponent("data.img")
+            if !manager.fileExists(atPath: disk.path) {
+                guard let seed = Bundle.main.url(forResource: "storage-seed", withExtension: "img") else {
+                    throw CocoaError(.fileNoSuchFile)
+                }
+                try manager.copyItem(at: seed, to: disk)
+            }
+            setenv("NCE_STORAGE_IMAGE", disk.path, 1)
+        } catch {
+            busy = false
+            UIApplication.shared.isIdleTimerDisabled = false
+            status = "存储初始化失败：\(error.localizedDescription)"
+            HuskLog.log("storage", status)
             return
         }
         didRun = true

@@ -715,6 +715,11 @@ void nce_process_tests(long (*host_syscall)(long, long *), long (*guest_syscall)
     REQUIRE(get_file(host_syscall, "/stdout", benchmark, sizeof(benchmark)) > 0);
     REQUIRE(strstr(benchmark, "linux_dynamic_fork_signal"));
     fputs(benchmark, stdout);
+    puts("{\"phase\":\"linux_storage_program\"}");
+    run_program(host_syscall, "/storage-test", NULL);
+    REQUIRE(get_file(host_syscall, "/stdout", benchmark, sizeof(benchmark)) > 0);
+    REQUIRE(strstr(benchmark, "linux_ext4_persistence"));
+    fputs(benchmark, stdout);
     puts("{\"phase\":\"linux_binder_program\"}");
     run_program(host_syscall, "/binder-test", NULL);
     REQUIRE(get_file(host_syscall, "/stdout", benchmark, sizeof(benchmark)) > 0);

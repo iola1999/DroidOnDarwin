@@ -9,6 +9,9 @@
 #include <sys/mman.h>
 #include <time.h>
 #include <unistd.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <sys/stat.h>
 
 #define REQUIRE(c) do { if (!(c)) { fprintf(stderr, "LKL host failure: %s\n", #c); abort(); } } while (0)
 struct lkl_sem { pthread_mutex_t mutex; pthread_cond_t cond; unsigned count; };
@@ -18,6 +21,48 @@ struct timer { dispatch_source_t source; dispatch_queue_t queue; void (*fn)(void
 
 static void host_print(const char *s, int n) { fwrite(s, 1, n, stderr); }
 static void host_panic(void) { abort(); }
+static int disk_fd = -1;
+static unsigned long long disk_bytes;
+
+int nce_disk_open(const char *path)
+{
+    if (!path) return 0;
+    REQUIRE(disk_fd == -1);
+    disk_fd = open(path, O_RDWR | O_CLOEXEC);
+    if (disk_fd < 0) return -1;
+    struct stat info;
+    if (fstat(disk_fd, &info) || !S_ISREG(info.st_mode) || info.st_size < 512 || info.st_size % 512) {
+        close(disk_fd); disk_fd = -1;
+        return -1;
+    }
+    disk_bytes = info.st_size;
+    return 0;
+}
+
+void nce_disk_close(void)
+{
+    if (disk_fd < 0) return;
+    REQUIRE(fsync(disk_fd) == 0 && close(disk_fd) == 0);
+    disk_fd = -1;
+    disk_bytes = 0;
+}
+
+static unsigned long long disk_size(void) { return disk_bytes; }
+static int disk_io(unsigned int operation, unsigned long long offset, void *buffer, unsigned long size)
+{
+    if (disk_fd < 0) return -1;
+    if (operation == 2) return fsync(disk_fd) ? -1 : 0;
+    if (operation > 1 || offset > disk_bytes || size > disk_bytes - offset) return -1;
+    while (size) {
+        ssize_t count = operation ? pwrite(disk_fd, buffer, size, offset) : pread(disk_fd, buffer, size, offset);
+        if (count < 0 && errno == EINTR) continue;
+        if (count <= 0) return -1;
+        buffer = (char *)buffer + count;
+        offset += count;
+        size -= count;
+    }
+    return 0;
+}
 static struct lkl_sem *sem_alloc(int count)
 {
     struct lkl_sem *s = calloc(1, sizeof(*s));
@@ -159,6 +204,7 @@ static void jump_set(struct lkl_jmp_buf *b, void (*fn)(void))
 static void jump_back(struct lkl_jmp_buf *b, int value) { _longjmp(*(jmp_buf *)b, value); }
 
 struct lkl_host_operations nce_lkl_host = {
+    .disk_size = disk_size, .disk_io = disk_io,
     .print = host_print, .panic = host_panic,
     .sem_alloc = sem_alloc, .sem_free = sem_free, .sem_up = sem_up, .sem_down = sem_down,
     .mutex_alloc = mutex_alloc, .mutex_free = mutex_free, .mutex_lock = mutex_lock, .mutex_unlock = mutex_unlock,

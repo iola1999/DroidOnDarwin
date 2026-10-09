@@ -14,6 +14,10 @@ def apply(source: Path, experiment: Path):
         path.write_text(text.replace(before, after))
 
     arch = "arch/lkl/"
+    edit(arch + "include/uapi/asm/host_ops.h", "\tconst char *virtio_devices;",
+         "\tconst char *virtio_devices;\n\tunsigned long long (*disk_size)(void);\n"
+         "\t/* operation: 0 read, 1 write, 2 flush; offset and length are bytes. */\n"
+         "\tint (*disk_io)(unsigned int operation, unsigned long long offset, void *buffer, unsigned long length);")
     edit("include/linux/shmem_fs.h", "\tunsigned int\t\tseals;\t\t/* shmem seals */",
          "\tunsigned int\t\tseals;\t\t/* shmem seals */\n\tbool nce_memfd;")
     edit("mm/memfd.c", "\tfile->f_mode |= FMODE_LSEEK | FMODE_PREAD | FMODE_PWRITE;",
@@ -105,6 +109,8 @@ def apply(source: Path, experiment: Path):
     edit(arch + "kernel/Makefile", "\tsyscalls_32.o cpu.o init.o stacktrace.o", "\tsyscalls_32.o cpu.o init.o stacktrace.o\nobj-$(CONFIG_MMU) += nce_process.o")
     edit(arch + "kernel/Makefile", "obj-$(CONFIG_MMU) += nce_process.o", "obj-$(CONFIG_MMU) += nce_process.o nce_signal.o")
     edit(arch + "kernel/Makefile", "nce_process.o nce_signal.o", "nce_process.o nce_signal.o nce_elf.o")
+    edit(arch + "kernel/Makefile", "nce_process.o nce_signal.o nce_elf.o",
+         "nce_process.o nce_signal.o nce_elf.o\nobj-$(CONFIG_BLOCK) += nce_block.o")
     for local, destination in (("layout.h", "include/asm/nce-layout.h"),
                                ("guest-registers.h", "include/asm/guest-registers.h"),
                                ("lkl-signal.h", "include/asm/signal.h"),
@@ -112,6 +118,7 @@ def apply(source: Path, experiment: Path):
                                ("lkl-nce-process.c", "kernel/nce_process.c"),
                                ("lkl-nce-signal.c", "kernel/nce_signal.c"),
                                ("lkl-nce-elf.c", "kernel/nce_elf.c"),
+                               ("lkl-nce-block.c", "kernel/nce_block.c"),
                                ("lkl-mmu-context.h", "include/asm/mmu_context.h"),
                                ("lkl-mmu.h", "include/asm/mmu.h"),
                                ("lkl-uaccess.h", "include/asm/uaccess.h"),

@@ -149,10 +149,11 @@ def main():
             options += ["MMU", "PRINTK", "NAMESPACES", "PID_NS", "POSIX_TIMERS", "ANDROID_BINDER_IPC", "ANDROID_BINDERFS", "MEMFD_CREATE", "TMPFS", "TMPFS_XATTR",
                         "NET", "UNIX", "INET", "AUDIT", "SECURITY", "SECURITY_NETWORK",
                         "SECURITY_SELINUX", "SECURITY_SELINUX_DEVELOP"]
+            options += ["BLOCK", "EXT4_FS"]
         switches = [arg for name in options for arg in ("-e", name)]
         if PROCESS:
             switches += ["--set-str", "LSM", "selinux"]
-        switches += [arg for name in ("KALLSYMS", "BLOCK", "DEBUG_INFO", "SLUB_DEBUG") for arg in ("-d", name)]
+        switches += [arg for name in ("KALLSYMS", "DEBUG_INFO", "SLUB_DEBUG", *([] if PROCESS else ["BLOCK"])) for arg in ("-d", name)]
         run([SOURCE / "scripts/config", "--file", BUILD / ".config", *switches], env=env)
         run([*make, "olddefconfig"], env=env, stdout=log, stderr=subprocess.STDOUT)
         run([*make, "-j8", "all"], env=env, stdout=log, stderr=subprocess.STDOUT)
@@ -175,8 +176,15 @@ def main():
         run([clang, *flags, "-isysroot", sdk, "-DNATIVE", "-c", EXPERIMENT / "guest.S", "-o", OUT / "native.o"])
     payload = [OUT / "payload.S"] if PROCESS else []
     run([clang, *flags, "-isysroot", sdk, *inputs, *payload, *([OUT / "native.o"] if PROCESS else []), "-o", OUT / "lkl-probe"])
+    if PROCESS:
+        seed = OUT / "storage-seed.img"
+        with seed.open("wb") as image:
+            image.truncate(64 * 1024 * 1024)
+        run(["/opt/homebrew/opt/e2fsprogs/sbin/mke2fs", "-F", "-q", "-t", "ext4", "-b", "4096",
+             "-E", "lazy_itable_init=0,lazy_journal_init=0", seed])
+        shutil.copyfile(seed, OUT / "storage-test.img")
     with (OUT / "lkl-results.jsonl").open("w") as output, (OUT / "lkl-console.log").open("w") as log:
-        probe_env = {**os.environ, "NCE_GRAPHICS_OUTPUT": str(OUT / "framework.png")} if PROCESS else os.environ
+        probe_env = {**os.environ, "NCE_GRAPHICS_OUTPUT": str(OUT / "framework.png"), "NCE_STORAGE_IMAGE": str(OUT / "storage-test.img")} if PROCESS else os.environ
         run([OUT / "lkl-probe", OUT / "lkl-image.bin"], stdout=output, stderr=log, env=probe_env)
     results = [json.loads(line) for line in (OUT / "lkl-results.jsonl").read_text().splitlines()]
     if results[-1].get("result") != "passed":
@@ -200,12 +208,17 @@ def main():
         with (OUT / "dispatch-results.jsonl").open("w") as output, (OUT / "dispatch-console.log").open("w") as log:
             subprocess.run([OUT / "dispatch-probe", OUT / "lkl-image.bin"], check=True,
                            timeout=120, stdout=output, stderr=log,
-                           env={**os.environ, "NCE_GRAPHICS_OUTPUT": str(OUT / "dispatch-framework.png")})
+                           env={**os.environ, "NCE_GRAPHICS_OUTPUT": str(OUT / "dispatch-framework.png"), "NCE_STORAGE_IMAGE": str(OUT / "storage-test.img")})
         dispatch_results = [json.loads(line) for line in (OUT / "dispatch-results.jsonl").read_text().splitlines()]
         if dispatch_results[-1].get("result") != "passed":
             raise SystemExit("GCD probe did not complete")
         if not any(r.get("inherited_blocked_threads", 0) > 0 for r in dispatch_results):
             raise SystemExit("GCD regression did not exercise an inherited signal mask")
+        for records, generation in ((results, 1), (dispatch_results, 2)):
+            if not any(r.get("test") == "linux_ext4_persistence" and r.get("generation") == generation
+                       and r.get("passed") for r in records):
+                raise SystemExit("Persistent storage did not survive kernel restart")
+        run(["/opt/homebrew/opt/e2fsprogs/sbin/e2fsck", "-fn", OUT / "storage-test.img"])
         if (OUT / "framework.png").read_bytes() != (OUT / "dispatch-framework.png").read_bytes():
             raise SystemExit("CLI and GCD framework images differ")
     manifest = {"source_revision": REVISION, "platform": platform.platform(), "results": results,
@@ -229,7 +242,7 @@ def main():
         manifest["stage"] = "Android Bionic, Binder, ART Java and ARM64 JIT workloads"
         manifest["userspace_libraries"] = {"musl": "1.2.5", "compiler-rt": "20.1.8", "dash": "0.5.12"}
         manifest["generated_sha256"] = {name: hashlib.sha256((OUT / name).read_bytes()).hexdigest()
-                                        for name in ["program-images.h", "user-scripts.h", "payload.S", "payload.bin", "lkl-image.h", "lkl-host-ops.h", "guest-image.h",
+                                        for name in ["storage-seed.img", "storage-test.elf", "program-images.h", "user-scripts.h", "payload.S", "payload.bin", "lkl-image.h", "lkl-host-ops.h", "guest-image.h",
                                                      "exec-guest.elf", "sigreturn.elf", "init.elf", "worker.elf", "mm-bench.elf", "dash.elf",
                                                      "libc.so", "dependency.so", "plugin.so", "dynamic.elf", "binder-test.elf", "bionic-test.elf", "art-test.elf", "art-heap-test.elf", "android-services-test.elf"]}
         android = ROOT / "work/native-linux-nce/android"
