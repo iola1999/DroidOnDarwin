@@ -14,7 +14,7 @@ ROOT = Path(__file__).resolve().parents[1]
 EXP = ROOT / 'experiments/native-linux'
 INPUT = ROOT / 'work/native-linux-nce/processes'
 OUT = ROOT / 'work/native-linux-nce/ios'
-REVISION = 'N3-S4'
+REVISION = 'N3-S5'
 
 
 def run(args, **kwargs):
@@ -53,6 +53,7 @@ def main():
          EXP / 'ios/execute-test.c', '-o', OUT / 'execute-test'])
     with (OUT / 'execute-test.log').open('w') as log:
         run([OUT / 'execute-test'], stdout=log)
+    run(['node', ROOT / 'tests/ios-jit/script-test.cjs'])
     build_id = REVISION + '-iOS-' + time.strftime('%Y%m%d-%H%M%S')
     info = plistlib.loads((ROOT / 'src/app/Husk/Info.plist').read_bytes())
     for key in ['CFBundleIcons', 'CFBundleIcons~ipad', 'HuskPerformanceBuild']:
@@ -62,7 +63,7 @@ def main():
                 UISupportedInterfaceOrientations=['UIInterfaceOrientationPortrait',
                     'UIInterfaceOrientationPortraitUpsideDown',
                     'UIInterfaceOrientationLandscapeLeft', 'UIInterfaceOrientationLandscapeRight'],
-                CFBundleShortVersionString='0.11.1', CFBundleVersion='75')
+                CFBundleShortVersionString='0.11.1', CFBundleVersion='76')
     plist(OUT / 'Info.plist', info)
     helper_info = plistlib.loads((ROOT / 'src/app/HuskJITHelper/Info.plist').read_bytes())
     for key in ['CFBundleShortVersionString', 'CFBundleVersion']:

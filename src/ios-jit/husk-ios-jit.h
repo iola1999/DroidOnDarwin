@@ -78,8 +78,9 @@ HuskDualMapping husk_ios_jit_allocate(size_t bytes);
 
 /* Prepare a caller-owned RX range while the debugger is attached. Address and
  * size must be 16 KiB aligned. The script prepares pages at that exact address;
- * success returns a separate RW alias. NULL rw_addr reports failure. Preparing
- * a range can make its mappings permanent until the process exits on iOS. */
+ * success returns a separate RW alias. NULL rw_addr reports failure. The caller
+ * must verify execution after detaching; this function only checks aliasing.
+ * Preparing a range can make its mappings permanent until the process exits. */
 HuskDualMapping husk_ios_jit_prepare_range(void *address, size_t bytes);
 
 /* Borrow the 32 MiB EL0 partition reserved by prewarm. One owner at a time;

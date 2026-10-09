@@ -238,7 +238,7 @@ size_t husk_ios_available_memory(void)
  * So: write a two-instruction function through the RW alias, then CALL it
  * through the RX alias. If JIT works at all, this returns 42.
  */
-static bool husk_jit_selftest(const HuskDualMapping *m)
+static bool husk_jit_selftest(const HuskDualMapping *m, bool execute)
 {
     /* movz w0, #42  ;  ret */
     static const uint32_t kCode[2] = { 0x52800540u, 0xD65F03C0u };
@@ -268,6 +268,11 @@ static bool husk_jit_selftest(const HuskDualMapping *m)
     HUSK_LOG("selftest: RX alias reflects RW writes (0x%08x 0x%08x) -- aliasing OK",
              readback[0], readback[1]);
 
+    /* NCE validates every prepared range with a signal guard after detaching. */
+    if (!execute) {
+        HUSK_LOG("selftest: execution deferred until debugger detach");
+        return true;
+    }
     HUSK_LOG("selftest: CALLING generated code at %p ...", (void *)m->rx_addr);
     int (*fn)(void) = (int (*)(void))(void *)m->rx_addr;
     int result = fn();
@@ -473,7 +478,7 @@ static HuskDualMapping husk_ios_jit_allocate_real(void *requested, size_t bytes)
              region.size, (long long)(region.rx_addr - region.rw_addr));
     husk_ios_jit_log_footprint("after-jit-alloc");
 
-    if (!husk_jit_selftest(&region)) {
+    if (!husk_jit_selftest(&region, requested == NULL)) {
         HUSK_LOG("#%llu: SELFTEST FAILED -- the region is not usable as JIT memory. "
                  "Refusing to hand it to TCG; QEMU would crash on its first "
                  "generated block instead of failing here.",

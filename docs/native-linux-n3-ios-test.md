@@ -1,4 +1,4 @@
-# N3-S4 原生 Linux 与 Android 合并测试
+# N3-S5 原生 Linux 与 Android 合并测试
 
 日期：2026-10-09。适用设备：当前 iPhone 17 / iOS 27.2。
 
@@ -9,30 +9,34 @@
 ## 安装包
 
 ```text
-/Users/fan/project/app/husk_hyos/work/native-linux-nce/ios/Husk-NativeLinux-N3-S4.ipa
+/Users/fan/project/app/husk_hyos/work/native-linux-nce/ios/Husk-NativeLinux-N3-S5.ipa
 ```
 
-版本 `0.11.1 (75)`，构建编号 `N3-S4-iOS-20261009-205621`，大小 319.22 MiB。
+版本 `0.11.1 (76)`，构建编号 `N3-S5-iOS-20261009-213113`，大小 319.22 MiB。
 SHA-256：
 
 ```text
-cd293a64f5ab9b4f6f3e6e69fb5181719c6e9432cc4ab3e7faecbed8ae92f6b4
+f13d8222563b5b1e09f1dce11a234528a7cbc4fef7a1905ceeac620ba44450d3
 ```
 
 CLI/GCD 回归、ELF 检查、iOS 构建、归档与签名完整性检查均已通过。
 完整构建记录保存在同目录的 `package.json`。
 N3-S3 在手机上申请约 16.58 GiB 连续虚拟地址失败。此包将总预留缩至约
-4.58 GiB，并调整 Scudo、ART 对象堆及 CFI 检查表；手机执行待确认。
+4.58 GiB，并调整 Scudo、ART 对象堆及 CFI 检查表。N3-S4 手机已通过预留，
+但 JIT 准备工具截断高地址，执行时卡住。N3-S5 修复完整地址传递、每页回复
+检查和异常退出，10 组协议回归通过；手机执行待确认。
 
 ## 操作
 
 1. 在 iLoader 中导入 IPA，沿用当前账号覆盖安装，保留 JIT Helper 扩展。
-2. 在手机上连接 LocalDevVPN，打开 Husk NCE，确认构建编号以 N3-S4 开头。
+2. 在手机上连接 LocalDevVPN，打开 Husk NCE，确认构建编号以 N3-S5 开头。
 3. 点“启用内置 JIT 并测试”，保持应用在前台，等待“全部测试通过”。
 4. 导出日志，并保留 Android 绘图结果。
 
 应用测试期间会禁用自动锁屏。若闪退，重新打开后先导出上次日志；再次启动
 测试会覆盖日志。日志文件继续使用 `native-linux-n2-ios.log` 这一名称。
+辅助进程的详细记录位于其独立容器 `Documents/husk-jit-helper.log`，可通过
+已连接的 Mac 直接读取。JIT 准备逐页检查回复，初次准备耗时待测。
 ART 单进程检查设有 90 秒期限，Framework 与基础服务阶段设有 60 秒期限。
 若长时间停在同一阶段，保留日志即可，无需反复运行。
 

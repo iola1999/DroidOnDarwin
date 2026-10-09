@@ -16,6 +16,16 @@ private enum HuskJITWork {
         let root = manager.urls(for: .libraryDirectory, in: .userDomainMask)[0]
             .appendingPathComponent("StikJIT", isDirectory: true)
         let paths = DDIPaths.default(in: root)
+        let documents = manager.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        try? manager.createDirectory(at: documents, withIntermediateDirectories: true)
+        let logURL = documents.appendingPathComponent("husk-jit-helper.log")
+        manager.createFile(atPath: logURL.path, contents: nil)
+        let logFile = try? FileHandle(forWritingTo: logURL)
+        defer { try? logFile?.close() }
+        func report(_ message: String) {
+            NSLog("[HuskJIT] %{public}@", message)
+            try? logFile?.write(contentsOf: Data((message + "\n").utf8))
+        }
 
         do {
             try manager.createDirectory(at: root, withIntermediateDirectories: true)
@@ -37,7 +47,7 @@ private enum HuskJITWork {
             case .prepare:
                 let readiness = StikJIT.prepareDevice(
                     pairingFile: pairingURL, paths: paths,
-                    progress: { NSLog("[HuskJIT] prepare: %@", String(describing: $0)) })
+                    progress: { report("prepare: \(String(describing: $0))") })
                 switch readiness {
                 case .ready(let security):
                     return .init(success: true,
@@ -62,14 +72,15 @@ private enum HuskJITWork {
                     ddiPaths: paths,
                     script: .customBase64(scriptBase64),
                     forceScript: true,
-                    preparationProgress: { NSLog("[HuskJIT] prepare: %@", String(describing: $0)) },
-                    progress: { NSLog("[HuskJIT] %@", $0) })
+                    preparationProgress: { report("prepare: \(String(describing: $0))") },
+                    progress: { report($0) })
                 return .init(success: true, message: "Husk detached cleanly from its built-in JIT helper.",
                              txmPresent: StikJIT.isTXMPresent)
             case .resetDDI:
                 preconditionFailure("Handled above")
             }
         } catch {
+            report("failed: \(error.localizedDescription)")
             return .init(success: false, message: error.localizedDescription,
                          txmPresent: StikJIT.isTXMPresent)
         }
