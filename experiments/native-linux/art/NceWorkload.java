@@ -73,8 +73,100 @@ public final class NceWorkload {
         return sum;
     }
 
-    public static Object $compile$unsupportedCast(Object value) {
-        return (Class<?>)value;
+    public interface Marker {}
+    public interface SubMarker extends Marker {}
+    public abstract static class AbstractKind {}
+    public static class ParentKind extends AbstractKind implements SubMarker {}
+    public static final class FinalKind extends ParentKind {}
+    public static final class OtherKind {}
+
+    public static int $compile$instanceTypes(Object value) {
+        int result = 0;
+        if (value instanceof FinalKind) result |= 1;
+        if (value instanceof AbstractKind) result |= 2;
+        if (value instanceof ParentKind) result |= 4;
+        if (value instanceof Marker) result |= 8;
+        if (value instanceof Object[]) result |= 16;
+        if (value instanceof Marker[]) result |= 32;
+        if (value instanceof int[]) result |= 64;
+        if (value instanceof Marker[][]) result |= 128;
+        if (value instanceof Cloneable) result |= 256;
+        if (value instanceof java.io.Serializable) result |= 512;
+        return result;
+    }
+
+    public static Object $compile$cast0(Object value) { return (FinalKind)value; }
+    public static Object $compile$cast1(Object value) { return (AbstractKind)value; }
+    public static Object $compile$cast2(Object value) { return (ParentKind)value; }
+    public static Object $compile$cast3(Object value) { return (Marker)value; }
+    public static Object $compile$cast4(Object value) { return (Object[])value; }
+    public static Object $compile$cast5(Object value) { return (Marker[])value; }
+    public static Object $compile$cast6(Object value) { return (int[])value; }
+    public static Object $compile$cast7(Object value) { return (Marker[][])value; }
+    public static Object $compile$cast8(Object value) { return (Cloneable)value; }
+    public static Object $compile$cast9(Object value) { return (java.io.Serializable)value; }
+
+    public static int $compile$catchType(Object value, Node live) {
+        try { return ((ParentKind)value) == null ? 0 : 1; }
+        catch (ClassCastException expected) { return live.value; }
+    }
+
+    private static Object castType(int kind, Object value) {
+        switch (kind) {
+            case 0: return $compile$cast0(value);
+            case 1: return $compile$cast1(value);
+            case 2: return $compile$cast2(value);
+            case 3: return $compile$cast3(value);
+            case 4: return $compile$cast4(value);
+            case 5: return $compile$cast5(value);
+            case 6: return $compile$cast6(value);
+            case 7: return $compile$cast7(value);
+            case 8: return $compile$cast8(value);
+            case 9: return $compile$cast9(value);
+            default: throw new AssertionError();
+        }
+    }
+
+    public static void compiledTypes() {
+        Class<?>[] kinds = {FinalKind.class, AbstractKind.class, ParentKind.class, Marker.class, Object[].class, Marker[].class, int[].class, Marker[][].class, Cloneable.class, java.io.Serializable.class};
+        Object[] values = {null, new Object(), new FinalKind(), new ParentKind(), new OtherKind(),
+                           new Object[1], new FinalKind[1], new Marker[1], new int[1], new int[1][1],
+                           new FinalKind[1][1], new String[1]};
+        int casts = 0, rejected = 0;
+        for (Object value : values) {
+            int expected = 0;
+            for (int i = 0; i < kinds.length; i++) {
+                boolean matches = kinds[i].isInstance(value);
+                if (matches) expected |= 1 << i;
+                try {
+                    Object actual = castType(i, value);
+                    check(value == null || matches, "cast accepted incompatible type " + i);
+                    check(actual == value, "cast reference result " + i);
+                    casts++;
+                } catch (ClassCastException error) {
+                    check(value != null && !matches, "cast rejected compatible type " + i);
+                    rejected++;
+                }
+            }
+            check($compile$instanceTypes(value) == expected, "instanceof type matrix");
+            for (int i = 0; i < 1000; i++) {
+                check($compile$instanceTypes(value) == expected, "repeated type matrix");
+            }
+        }
+        Node live = new Node(117);
+        check($compile$catchType(null, live) == 0, "null cast");
+        check($compile$catchType(values[2], live) == 1, "subclass cast");
+        for (int i = 0; i < 64; i++) {
+            if ((i & 7) == 0) System.gc();
+            check($compile$catchType(values[4], live) == 117, "caught cast and live reference");
+        }
+        check(casts + rejected == 120 && rejected > 0, "type matrix coverage");
+        System.out.println("{\"test\":\"android_art_jit_types\",\"passed\":true,\"instanceof_calls\":12012,"
+                + "\"casts\":" + casts + ",\"rejected\":" + rejected + ",\"caught\":64}");
+    }
+
+    public static Object $compile$unsupportedString(Object value) {
+        return new String((char[])value);
     }
 
     public static Node $compile$newNode(int value) { return new Node(value); }

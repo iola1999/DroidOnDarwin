@@ -1807,3 +1807,180 @@
        // The boot class loader is searched ahead of the application class loader, failures are
        // expected and will be wrapped in a ClassNotFoundException. Use the pre-allocated error to
        // trigger the chaining with a proper stack trace.
+--- a/compiler/optimizing/code_generator_arm64.cc
++++ b/compiler/optimizing/code_generator_arm64.cc
+@@ -534,6 +534,10 @@
+                                locations->InAt(1),
+                                LocationFrom(calling_convention.GetRegisterAt(1)),
+                                DataType::Type::kReference);
++#ifdef ART_NCE
++    NceRuntimeReference(arm64_codegen->GetVIXLAssembler(), calling_convention.GetRegisterAt(0));
++    NceRuntimeReference(arm64_codegen->GetVIXLAssembler(), calling_convention.GetRegisterAt(1));
++#endif
+     if (instruction_->IsInstanceOf()) {
+       arm64_codegen->InvokeRuntime(kQuickInstanceofNonTrivial, instruction_, this);
+       CheckEntrypointTypes<kQuickInstanceofNonTrivial, size_t, mirror::Object*, mirror::Class*>();
+@@ -2260,12 +2264,19 @@
+   DCHECK(IsPowerOfTwo(mask + 1));
+   size_t mask_bits = WhichPowerOf2(mask + 1);
+
++#ifdef ART_NCE
++  UseScratchRegisterScope temps(GetVIXLAssembler());
++  Register address = NceHeapAddress(GetVIXLAssembler(), &temps, temp);
++  MemOperand status(address, mirror::Class::StatusOffset().Int32Value());
++#else
++  MemOperand status = HeapOperand(temp, mirror::Class::StatusOffset());
++#endif
+   if (mask_bits == 16u) {
+     // Load only the bitstring part of the status word.
+-    __ Ldrh(temp, HeapOperand(temp, mirror::Class::StatusOffset()));
++    __ Ldrh(temp, status);
+   } else {
+     // /* uint32_t */ temp = temp->status_
+-    __ Ldr(temp, HeapOperand(temp, mirror::Class::StatusOffset()));
++    __ Ldr(temp, status);
+     // Extract the bitstring bits.
+     __ Ubfx(temp, temp, 0, mask_bits);
+   }
+@@ -4583,7 +4594,15 @@
+                                        read_barrier_option);
+       // If `out` is null, we use it for the result, and jump to `done`.
+       __ Cbz(out, &done);
++#ifdef ART_NCE
++      {
++        UseScratchRegisterScope temps(GetVIXLAssembler());
++        Register address = NceHeapAddress(GetVIXLAssembler(), &temps, out);
++        __ Ldrh(out, MemOperand(address, primitive_offset));
++      }
++#else
+       __ Ldrh(out, HeapOperand(out, primitive_offset));
++#endif
+       static_assert(Primitive::kPrimNot == 0, "Expected 0 for kPrimNot");
+       __ Cbnz(out, &zero);
+       __ Bind(&exact_check);
+@@ -4629,6 +4648,29 @@
+       }
+
+       // Fast-path without read barriers.
++#ifdef ART_NCE
++      UseScratchRegisterScope temps(GetVIXLAssembler());
++      Register table = temps.AcquireX();
++      Register current = temps.AcquireW();
++      __ Mov(current.X(), nce_art_reference_base);
++      __ Add(table, current.X(), Operand(obj.W(), UXTW));
++      __ Ldr(table.W(), MemOperand(table, class_offset));
++      GetAssembler()->MaybeUnpoisonHeapReference(table.W());
++      __ Add(table, current.X(), Operand(table.W(), UXTW));
++      __ Ldr(table.W(), MemOperand(table, iftable_offset));
++      GetAssembler()->MaybeUnpoisonHeapReference(table.W());
++      __ Add(table, current.X(), Operand(table.W(), UXTW));
++      __ Ldr(out, MemOperand(table, array_length_offset));
++      vixl::aarch64::Label loop;
++      __ Bind(&loop);
++      __ Cbz(out, &done);
++      __ Ldr(current, MemOperand(table, object_array_data_offset));
++      GetAssembler()->MaybeUnpoisonHeapReference(current);
++      __ Add(table, table, 2 * kHeapReferenceSize);
++      __ Sub(out, out, 2);
++      __ Cmp(cls, current);
++      __ B(ne, &loop);
++#else
+       UseScratchRegisterScope temps(GetVIXLAssembler());
+       Register temp = temps.AcquireW();
+       Register temp2 = temps.AcquireW();
+@@ -4652,6 +4694,7 @@
+       // Compare the classes and continue the loop if they do not match.
+       __ Cmp(cls, temp2);
+       __ B(ne, &loop);
++#endif
+       __ Mov(out, 1);
+       if (zero.IsLinked()) {
+         __ B(&done);
+@@ -4871,7 +4914,15 @@
+       __ Cbz(temp, type_check_slow_path->GetEntryLabel());
+       // Otherwise, the object is indeed an array. Further check that this component type is not a
+       // primitive type.
++#ifdef ART_NCE
++      {
++        UseScratchRegisterScope temps(GetVIXLAssembler());
++        Register address = NceHeapAddress(GetVIXLAssembler(), &temps, temp);
++        __ Ldrh(temp, MemOperand(address, primitive_offset));
++      }
++#else
+       __ Ldrh(temp, HeapOperand(temp, primitive_offset));
++#endif
+       static_assert(Primitive::kPrimNot == 0, "Expected 0 for kPrimNot");
+       __ Cbnz(temp, type_check_slow_path->GetEntryLabel());
+       break;
+@@ -4905,15 +4956,32 @@
+                                        maybe_temp2_loc,
+                                        kWithoutReadBarrier);
+       // Load the size of the `IfTable`. The `Class::iftable_` is never null.
++#ifdef ART_NCE
++      {
++        UseScratchRegisterScope temps(GetVIXLAssembler());
++        Register address = NceHeapAddress(GetVIXLAssembler(), &temps, temp);
++        __ Mov(temp.X(), address);
++      }
++      __ Ldr(WRegisterFrom(maybe_temp2_loc), MemOperand(temp.X(), array_length_offset));
++#else
+       __ Ldr(WRegisterFrom(maybe_temp2_loc), HeapOperand(temp.W(), array_length_offset));
++#endif
+       // Loop through the iftable and check if any class matches.
+       vixl::aarch64::Label start_loop;
+       __ Bind(&start_loop);
+       __ Cbz(WRegisterFrom(maybe_temp2_loc), type_check_slow_path->GetEntryLabel());
++#ifdef ART_NCE
++      __ Ldr(WRegisterFrom(maybe_temp3_loc), MemOperand(temp.X(), object_array_data_offset));
++#else
+       __ Ldr(WRegisterFrom(maybe_temp3_loc), HeapOperand(temp.W(), object_array_data_offset));
++#endif
+       GetAssembler()->MaybeUnpoisonHeapReference(WRegisterFrom(maybe_temp3_loc));
+       // Go to next interface.
++#ifdef ART_NCE
++      __ Add(temp.X(), temp.X(), 2 * kHeapReferenceSize);
++#else
+       __ Add(temp, temp, 2 * kHeapReferenceSize);
++#endif
+       __ Sub(WRegisterFrom(maybe_temp2_loc), WRegisterFrom(maybe_temp2_loc), 2);
+       // Compare the classes and continue the loop if they do not match.
+       __ Cmp(cls, WRegisterFrom(maybe_temp3_loc));
+@@ -7216,7 +7284,13 @@
+   } else {
+     // Plain load with no read barrier.
+     // /* HeapReference<Object> */ out = *(out + offset)
++#ifdef ART_NCE
++    UseScratchRegisterScope temps(GetVIXLAssembler());
++    Register address = NceHeapAddress(GetVIXLAssembler(), &temps, out_reg);
++    __ Ldr(out_reg, MemOperand(address, offset));
++#else
+     __ Ldr(out_reg, HeapOperand(out_reg, offset));
++#endif
+     GetAssembler()->MaybeUnpoisonHeapReference(out_reg);
+   }
+ }
+@@ -7252,7 +7326,13 @@
+   } else {
+     // Plain load with no read barrier.
+     // /* HeapReference<Object> */ out = *(obj + offset)
++#ifdef ART_NCE
++    UseScratchRegisterScope temps(GetVIXLAssembler());
++    Register address = NceHeapAddress(GetVIXLAssembler(), &temps, obj_reg);
++    __ Ldr(out_reg, MemOperand(address, offset));
++#else
+     __ Ldr(out_reg, HeapOperand(obj_reg, offset));
++#endif
+     GetAssembler()->MaybeUnpoisonHeapReference(out_reg);
+   }
+ }
+--- a/compiler/optimizing/optimizing_compiler.cc
++++ b/compiler/optimizing/optimizing_compiler.cc
+@@ -821,6 +821,8 @@
+   NCE_ALLOW(ArrayLength)
+   NCE_ALLOW(ArrayGet)
+   NCE_ALLOW(ClinitCheck)
++  NCE_ALLOW(InstanceOf)
++  NCE_ALLOW(CheckCast)
+   NCE_ALLOW(IntermediateAddress)
+   NCE_ALLOW(IntermediateAddressIndex)
+   NCE_ALLOW(VecReplicateScalar)

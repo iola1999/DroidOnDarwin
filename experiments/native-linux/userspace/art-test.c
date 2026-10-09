@@ -102,6 +102,18 @@ static int test_jit(JNIEnv *env, jclass workload, void *library)
         {"$compile$interfaceIdentity", "(LNceWorkload$Reader;Ljava/lang/Object;)Ljava/lang/Object;"},
         {"$compile$monitor", "(LNceWorkload$Node;Ljava/lang/Object;ILjava/lang/RuntimeException;)LNceWorkload$Node;"},
         {"$compile$catchStore", "([Ljava/lang/Object;Ljava/lang/Object;)I"},
+        {"$compile$instanceTypes", "(Ljava/lang/Object;)I"},
+        {"$compile$catchType", "(Ljava/lang/Object;LNceWorkload$Node;)I"},
+        {"$compile$cast0", "(Ljava/lang/Object;)Ljava/lang/Object;"},
+        {"$compile$cast1", "(Ljava/lang/Object;)Ljava/lang/Object;"},
+        {"$compile$cast2", "(Ljava/lang/Object;)Ljava/lang/Object;"},
+        {"$compile$cast3", "(Ljava/lang/Object;)Ljava/lang/Object;"},
+        {"$compile$cast4", "(Ljava/lang/Object;)Ljava/lang/Object;"},
+        {"$compile$cast5", "(Ljava/lang/Object;)Ljava/lang/Object;"},
+        {"$compile$cast6", "(Ljava/lang/Object;)Ljava/lang/Object;"},
+        {"$compile$cast7", "(Ljava/lang/Object;)Ljava/lang/Object;"},
+        {"$compile$cast8", "(Ljava/lang/Object;)Ljava/lang/Object;"},
+        {"$compile$cast9", "(Ljava/lang/Object;)Ljava/lang/Object;"},
     };
     for (unsigned i = 0; i < sizeof(methods) / sizeof(methods[0]); ++i) {
         jmethodID method = (*env)->GetStaticMethodID(env, workload, methods[i][0], methods[i][1]);
@@ -177,11 +189,25 @@ static int test_jit(JNIEnv *env, jclass workload, void *library)
     fflush(stdout);
     (*env)->CallStaticVoidMethod(env, workload, strings);
     if ((*env)->ExceptionCheck(env)) { (*env)->ExceptionDescribe(env); return 49; }
-    jmethodID unsupported = (*env)->GetStaticMethodID(env, workload, "$compile$unsupportedCast",
+    jmethodID types = (*env)->GetStaticMethodID(env, workload, "compiledTypes", "()V");
+    if (!types) return 50;
+    puts("{\"phase\":\"android_art_jit_types\"}");
+    fflush(stdout);
+    (*env)->CallStaticVoidMethod(env, workload, types);
+    if ((*env)->ExceptionCheck(env)) { (*env)->ExceptionDescribe(env); return 51; }
+    jmethodID unsupported = (*env)->GetStaticMethodID(env, workload, "$compile$unsupportedString",
                                                      "(Ljava/lang/Object;)Ljava/lang/Object;");
     if (!unsupported || compile(env, unsupported)) return 31;
-    jobject fallback = (*env)->CallStaticObjectMethod(env, workload, unsupported, workload);
-    if ((*env)->ExceptionCheck(env) || !(*env)->IsSameObject(env, fallback, workload)) return 37;
+    const jchar expected_chars[] = {'N', 'C', 'E', 0x4e2d};
+    jcharArray chars = (*env)->NewCharArray(env, 4);
+    if (!chars) return 52;
+    (*env)->SetCharArrayRegion(env, chars, 0, 4, expected_chars);
+    jstring fallback = (*env)->CallStaticObjectMethod(env, workload, unsupported, chars);
+    if ((*env)->ExceptionCheck(env) || !fallback || (*env)->GetStringLength(env, fallback) != 4) return 37;
+    jchar actual_chars[4];
+    (*env)->GetStringRegion(env, fallback, 0, 4, actual_chars);
+    for (unsigned i = 0; i < 4; ++i) if (actual_chars[i] != expected_chars[i]) return 53;
+    (*env)->DeleteLocalRef(env, chars);
     (*env)->DeleteLocalRef(env, fallback);
     jmethodID hot = (*env)->GetStaticMethodID(env, workload, "automaticMix", "(I)I");
     jmethodID warm = (*env)->GetStaticMethodID(env, workload, "warmJit", "()J");
