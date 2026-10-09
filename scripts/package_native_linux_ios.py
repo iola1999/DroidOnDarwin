@@ -14,7 +14,7 @@ ROOT = Path(__file__).resolve().parents[1]
 EXP = ROOT / 'experiments/native-linux'
 INPUT = ROOT / 'work/native-linux-nce/processes'
 OUT = ROOT / 'work/native-linux-nce/ios'
-REVISION = 'N3-J1'
+REVISION = 'N3-F1'
 
 
 def run(args, **kwargs):

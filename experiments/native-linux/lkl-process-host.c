@@ -754,8 +754,18 @@ void nce_process_tests(long (*host_syscall)(long, long *), long (*guest_syscall)
     REQUIRE(get_file(host_syscall, "/stdout", benchmark, sizeof(benchmark)) > 0);
     REQUIRE(strstr(benchmark, "android_platform_binder_cleanup"));
     REQUIRE(strstr(benchmark, "android_framework_runtime"));
+    REQUIRE(strstr(benchmark, "android_framework_graphics\",\"passed\":true"));
     REQUIRE(strstr(benchmark, "android_crypto"));
     fputs(benchmark, stdout);
+    const char *graphics_path = getenv("NCE_GRAPHICS_OUTPUT");
+    if (graphics_path) {
+        long bytes = get_file(host_syscall, "/data/nce/framework.png", benchmark, sizeof(benchmark));
+        REQUIRE(bytes > 8 && bytes < (long)sizeof(benchmark) - 1);
+        REQUIRE(!memcmp(benchmark, "\x89PNG\r\n\x1a\n", 8));
+        FILE *graphics = fopen(graphics_path, "wb");
+        REQUIRE(graphics && fwrite(benchmark, 1, bytes, graphics) == (size_t)bytes);
+        REQUIRE(fclose(graphics) == 0);
+    }
     check_program_files(host_syscall);
     puts("{\"test\":\"linux_dynamic_elf_files_unchanged\",\"passed\":true}");
     long log_args[6] = {10};

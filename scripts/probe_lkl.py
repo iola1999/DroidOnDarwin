@@ -176,7 +176,8 @@ def main():
     payload = [OUT / "payload.S"] if PROCESS else []
     run([clang, *flags, "-isysroot", sdk, *inputs, *payload, *([OUT / "native.o"] if PROCESS else []), "-o", OUT / "lkl-probe"])
     with (OUT / "lkl-results.jsonl").open("w") as output, (OUT / "lkl-console.log").open("w") as log:
-        run([OUT / "lkl-probe", OUT / "lkl-image.bin"], stdout=output, stderr=log)
+        probe_env = {**os.environ, "NCE_GRAPHICS_OUTPUT": str(OUT / "framework.png")} if PROCESS else os.environ
+        run([OUT / "lkl-probe", OUT / "lkl-image.bin"], stdout=output, stderr=log, env=probe_env)
     results = [json.loads(line) for line in (OUT / "lkl-results.jsonl").read_text().splitlines()]
     if results[-1].get("result") != "passed":
         raise SystemExit("LKL probe did not complete")
@@ -198,12 +199,15 @@ def main():
              EXPERIMENT / "dispatch-test.c", "-o", OUT / "dispatch-probe"])
         with (OUT / "dispatch-results.jsonl").open("w") as output, (OUT / "dispatch-console.log").open("w") as log:
             subprocess.run([OUT / "dispatch-probe", OUT / "lkl-image.bin"], check=True,
-                           timeout=120, stdout=output, stderr=log)
+                           timeout=120, stdout=output, stderr=log,
+                           env={**os.environ, "NCE_GRAPHICS_OUTPUT": str(OUT / "dispatch-framework.png")})
         dispatch_results = [json.loads(line) for line in (OUT / "dispatch-results.jsonl").read_text().splitlines()]
         if dispatch_results[-1].get("result") != "passed":
             raise SystemExit("GCD probe did not complete")
         if not any(r.get("inherited_blocked_threads", 0) > 0 for r in dispatch_results):
             raise SystemExit("GCD regression did not exercise an inherited signal mask")
+        if (OUT / "framework.png").read_bytes() != (OUT / "dispatch-framework.png").read_bytes():
+            raise SystemExit("CLI and GCD framework images differ")
     manifest = {"source_revision": REVISION, "platform": platform.platform(), "results": results,
                 "ios_status": "this build compiled for iOS; device execution pending",
                 "config_sha256": hashlib.sha256((BUILD / ".config").read_bytes()).hexdigest(),

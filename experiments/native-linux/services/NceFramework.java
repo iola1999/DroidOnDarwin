@@ -5,6 +5,14 @@ import android.os.IBinder;
 import android.os.Parcel;
 import android.os.SharedMemory;
 import android.os.SystemClock;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.Path;
+import java.io.ByteArrayOutputStream;
+import java.io.FileOutputStream;
 import java.nio.ByteBuffer;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -12,6 +20,40 @@ import java.util.concurrent.TimeUnit;
 public final class NceFramework {
     private static void check(boolean condition) {
         if (!condition) throw new AssertionError();
+    }
+
+    private static void graphics() throws Exception {
+        System.out.println("{\"phase\":\"android_framework_graphics\"}");
+        Bitmap bitmap = Bitmap.createBitmap(128, 96, Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(bitmap);
+        canvas.drawColor(Color.BLACK);
+        Paint paint = new Paint();
+        paint.setColor(Color.RED);
+        canvas.drawRect(8, 8, 72, 56, paint);
+        paint.setColor(Color.BLUE);
+        canvas.drawCircle(96, 32, 20, paint);
+        canvas.save();
+        canvas.translate(16, 64);
+        canvas.clipRect(0, 0, 96, 24);
+        canvas.drawColor(Color.GREEN);
+        canvas.restore();
+        Path triangle = new Path();
+        triangle.moveTo(80, 60); triangle.lineTo(112, 60); triangle.lineTo(96, 84); triangle.close();
+        paint.setColor(Color.WHITE);
+        canvas.drawPath(triangle, paint);
+        check(bitmap.getPixel(1, 1) == Color.BLACK && bitmap.getPixel(10, 10) == Color.RED);
+        check(bitmap.getPixel(96, 32) == Color.BLUE && bitmap.getPixel(20, 70) == Color.GREEN);
+        check(bitmap.getPixel(96, 65) == Color.WHITE);
+        ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+        check(bitmap.compress(Bitmap.CompressFormat.PNG, 100, bytes));
+        byte[] png = bytes.toByteArray();
+        Bitmap decoded = BitmapFactory.decodeByteArray(png, 0, png.length);
+        check(decoded != null && decoded.sameAs(bitmap));
+        try (FileOutputStream output = new FileOutputStream("/data/nce/framework.png")) {
+            output.write(png);
+        }
+        decoded.recycle(); bitmap.recycle();
+        System.out.println("{\"test\":\"android_framework_graphics\",\"passed\":true,\"canvas\":true,\"png_roundtrip\":true}");
     }
 
     public static void main(String[] args) throws Exception {
@@ -61,6 +103,7 @@ public final class NceFramework {
         check(service.transact(1, input, output, 0));
         check(output.readInt() == 73 && output.readInt() == sum);
         input.recycle(); output.recycle();
+        graphics();
         System.out.println("{\"test\":\"android_framework_runtime\",\"passed\":true,\"parcel\":true,\"looper\":true,\"shared_memory\":true,\"binder\":true}");
     }
 }

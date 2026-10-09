@@ -648,3 +648,16 @@ ashmem ioctl 仍返回 ENOTTY。资源改为单个二进制文件，减少生成
 编译负担，路径和字节校验继续由原有程序注册信息完成。源码构建的密码库
 保留汇编与已有接口。探索阶段重复提取的 APEX 已与正式文件逐项核对后删除。
 下一步验证 Framework 图形绘制，并扩大 ART 类型检查等常用 JIT 路径。
+
+## Framework 图形绘制（2026-10-09）
+
+原版 Android Canvas / Paint / Path 已完成矩形、圆形、裁剪、平移和路径绘制，
+测试逐点检查颜色，再进行 PNG 编码、解码和 Bitmap.sameAs 比较。CLI 与 GCD
+生成的图片字节完全一致，图片见
+`work/native-linux-nce/processes/framework.png`。iOS 测试界面增加绘图结果展示
+与图片导出，运行时状态增加系统服务和 Framework 阶段。
+
+3 轮完整回归、14 项 ELF/构建检查及 iOS 目标编译继续通过。N3-F1 IPA 已完成
+Xcode 构建、签名结构和 ZIP 完整性检查，待设备运行。当前图形测试覆盖 CPU
+绘制与图片编解码；窗口系统、GPU 后端和桌面合成尚未接入。此阶段继续本机
+开发，设备测试安排在后续集中验证。

@@ -16,12 +16,14 @@ final class ProbeModel: ObservableObject {
     @Published var busy = false
     @Published var didRun = false
     @Published var importing = false
+    @Published var graphics: UIImage?
     private var waiting = false
     private var attachDeadline = Date.distantPast
     private var polling: Timer?
     private var startedAt = Date()
     let documents = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
     var logURL: URL { documents.appendingPathComponent("native-linux-n2-ios.log") }
+    var graphicsURL: URL { documents.appendingPathComponent("framework.png") }
     var paired: Bool { JITPairingFileStore.exists }
 
     init() {
@@ -51,7 +53,9 @@ final class ProbeModel: ObservableObject {
             }
         } else if busy && didRun {
             let seconds = Int(Date().timeIntervalSince(startedAt))
-            if log.contains("\"phase\":\"android_art_load\"") { status = "正在运行 Java 与编译执行测试（\(seconds) 秒）" }
+            if log.contains("\"phase\":\"android_framework_launch\"") { status = "正在检查 Android 系统框架（\(seconds) 秒）" }
+            else if log.contains("\"phase\":\"android_platform_services\"") { status = "正在检查 Android 系统服务（\(seconds) 秒）" }
+            else if log.contains("\"phase\":\"android_art_load\"") { status = "正在运行 Java 与编译执行测试（\(seconds) 秒）" }
             else if log.contains("\"phase\":\"android_art_reference_heap\"") { status = "正在检查 Android 对象内存（\(seconds) 秒）" }
             else if log.contains("\"phase\":\"android_bionic_dynamic\"") { status = "正在检查 Android 运行库（\(seconds) 秒）" }
             else if log.contains("\"phase\":\"linux_binder_program\"") { status = "正在检查 Binder 进程通信（\(seconds) 秒）" }
@@ -142,6 +146,7 @@ final class ProbeModel: ObservableObject {
         didRun = true
         setenv("NCE_MM_MODE", "lazy", 1)
         setenv("NCE_STRESS_ROUNDS", "3", 1)
+        setenv("NCE_GRAPHICS_OUTPUT", graphicsURL.path, 1)
         startedAt = Date()
         status = "正在准备 JIT 内存"
         // The guest switches stacks and pthreads. Keep the Swift UI on its own queue.
@@ -152,6 +157,7 @@ final class ProbeModel: ObservableObject {
                 UIApplication.shared.isIdleTimerDisabled = false
                 self.status = result == 0 ? "全部测试通过" : "测试失败，请导出日志"
                 self.refresh()
+                self.graphics = result == 0 ? UIImage(contentsOfFile: self.graphicsURL.path) : nil
             }
         }
     }
@@ -189,6 +195,13 @@ struct NativeLinuxApp: App {
                     }.disabled(model.busy || model.didRun)
                     if model.didRun && !model.busy {
                         Section { Text("再次测试前，请从多任务界面关闭 Husk 后重新打开。") }
+                    }
+                    if let graphics = model.graphics {
+                        Section("Android 绘图") {
+                            Image(uiImage: graphics).resizable().interpolation(.none)
+                                .scaledToFit().frame(maxWidth: 384)
+                            ShareLink("导出图片", item: model.graphicsURL)
+                        }
                     }
                     if !model.log.isEmpty {
                         Section("日志") {
