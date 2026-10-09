@@ -7,7 +7,7 @@
 #define NCE_RAM_SIZE 0x20000000UL
 #define NCE_VMALLOC_SIZE 0x4000000UL
 #define NCE_EXEC_SIZE (64UL * 1024 * 1024)
-#define NCE_EXEC_DATA_OFFSET 0x7000000UL
+#define NCE_EXEC_DATA_OFFSET 0x20000000UL
 #define NCE_EXEC_OFFSET (NCE_EXEC_DATA_OFFSET + NCE_EXEC_SIZE)
 #define NCE_BRK_OFFSET (NCE_EXEC_OFFSET + NCE_EXEC_SIZE)
 /* Keep initial brk growth clear of loader metadata and anonymous mappings. */

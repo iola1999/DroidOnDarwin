@@ -16,7 +16,7 @@ typedef struct {
     const unsigned char *file;
     unsigned char sha256[32];
     int system_image;
-    size_t size, offset, span, entry, phoff, phsize;
+    size_t size, offset, span, stub_size, entry, phoff, phsize;
     NceSegment *segments;
     size_t segment_count;
     const NcePatch *patches;
@@ -29,6 +29,7 @@ extern NceProgram nce_programs[];
 extern const size_t nce_program_count;
 NceProgram *nce_program_entry(uintptr_t entry);
 unsigned long nce_program_layout(const char *path, const void *header, const void *phdrs);
+int nce_program_reserved(unsigned long address, unsigned long length);
 int nce_program_prepare(NceProgram *program);
 int nce_program_patch_range(NceProgram *program, NceSegment *segment,
                             size_t offset, size_t size, NceState **active);

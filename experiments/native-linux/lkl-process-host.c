@@ -84,6 +84,7 @@ static void *shmem_map(void *address, unsigned long offset, unsigned long size, 
     uintptr_t start = (uintptr_t)address;
     REQUIRE(!(offset % PAGE) && !(size % PAGE) && offset <= ram_size && size <= ram_size - offset);
     uintptr_t end = start + size;
+    REQUIRE(!nce_program_reserved(start, size));
     while (start < end) {
         uintptr_t stop = end;
         NceProgram *program = NULL;
@@ -149,6 +150,13 @@ static int protect_none(void *address, unsigned long size)
             memset(s->code.rw + first, 0, stop - first);
             nce_sync_code((NceCode){s->code.rw + first, s->code.rx + first, stop - first});
             cursor = lo + stop;
+        }
+        /* Branch stubs belong to the host and survive guest address-space changes. */
+        uintptr_t lo = (uintptr_t)p->stubs.rx, hi = lo + p->stubs.size;
+        if (hi > start && lo < end) {
+            if (cursor < lo && mmap((void *)cursor, lo - cursor, PROT_NONE,
+                                   MAP_ANON | MAP_PRIVATE | MAP_FIXED, -1, 0) == MAP_FAILED) return -1;
+            cursor = hi < end ? hi : end;
         }
     }
     NceCode dynamic = nce_memory_dynamic_code();
@@ -230,6 +238,14 @@ static void prepare_resume(NceState *state)
     NceCode dynamic = nce_memory_dynamic_code();
     if (state->regs.pc >= (uintptr_t)dynamic.rx && state->regs.pc < (uintptr_t)dynamic.rx + dynamic.size)
         resume = (NceCode){dynamic.rw, dynamic.rx, 16};
+    for (size_t i = 0; i < nce_program_count; ++i) {
+        NceProgram *p = &nce_programs[i];
+        if (state->regs.pc >= p->base && state->regs.pc < p->base + p->span) {
+            size_t offset = p->stubs.size - 16;
+            resume = (NceCode){p->stubs.rw + offset, p->stubs.rx + offset, 16};
+            break;
+        }
+    }
     REQUIRE(nce_write_entry(resume, state->regs.pc) == 0);
     nce_sync_code(resume);
     state->resume = (uintptr_t)resume.rx;
@@ -472,6 +488,7 @@ unsigned long nce_process_setup(void)
     nce_lkl_host.user_run = user_run;
     nce_lkl_host.user_exec = user_exec;
     nce_lkl_host.user_elf = nce_program_layout;
+    nce_lkl_host.user_reserved = nce_program_reserved;
     struct sigaction action = {.sa_sigaction = fault, .sa_flags = SA_SIGINFO | SA_ONSTACK};
     sigemptyset(&action.sa_mask);
     REQUIRE(sigaction(SIGSEGV, &action, &old_segv) == 0);

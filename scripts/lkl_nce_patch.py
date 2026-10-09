@@ -99,6 +99,10 @@ def apply(source: Path, experiment: Path):
     edit("fs/binfmt_elf.c", "nce_bias = interpreter ? 0 : NCE_ELF_LAYOUT(bprm->filename, elf_ex, elf_phdata);", "nce_bias = NCE_ELF_LAYOUT(bprm->filename, elf_ex, elf_phdata);")
     edit("fs/binfmt_elf.c", "if (!nce_bias) {", "if (!nce_bias || (interpreter && !NCE_ELF_INTERP_LAYOUT(interpreter, interp_elf_ex, interp_elf_phdata))) {")
     edit("fs/binfmt_elf.c", "\t\t\tmap_addr = elf_load(interpreter, load_addr + vaddr,", "#ifdef NCE_ELF_INTERP_LAYOUT\n\t\t\tif (!load_addr_set) {\n\t\t\t\tload_addr = NCE_ELF_INTERP_LAYOUT(interpreter, interp_elf_ex, interp_elf_phdata);\n\t\t\t\tif (!load_addr) return -ENOEXEC;\n\t\t\t\telf_type |= MAP_FIXED_NOREPLACE;\n\t\t\t}\n#endif\n\t\t\tmap_addr = elf_load(interpreter, load_addr + vaddr,")
+    edit(arch + "include/uapi/asm/host_ops.h",
+         "\tunsigned long (*user_elf)(const char *path, const void *header, const void *phdrs);",
+         "\tunsigned long (*user_elf)(const char *path, const void *header, const void *phdrs);\n"
+         "\tint (*user_reserved)(unsigned long address, unsigned long length);")
     edit(arch + "kernel/threads.c", "\tti->flags = org_ti->flags;", "\tp->thread.nce_state = NULL;\n\tti->flags = org_ti->flags;")
     edit(arch + "kernel/threads.c", "\tkill_thread(ti);\n\tkfree(ti);", "\tkill_thread(ti);\n#ifdef CONFIG_MMU\n\tif (tsk->thread.nce_state)\n\t\tlkl_ops->user_free(tsk->thread.nce_state);\n#endif\n\tkfree(ti);")
     edit(arch + "kernel/threads.c", "\tlkl_ops->sem_up(_next->sched_sem);", "#ifdef CONFIG_MMU\n\tif (lkl_ops->user_switch)\n\t\tlkl_ops->user_switch(next->thread.nce_state);\n#endif\n\tlkl_ops->sem_up(_next->sched_sem);")

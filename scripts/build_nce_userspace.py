@@ -23,7 +23,7 @@ ROOT = Path(__file__).resolve().parents[1]
 EXP = ROOT / 'experiments/native-linux'
 WORK = ROOT / 'work/native-linux-nce'
 PAGE = 16384
-PROGRAM_LIMIT = 112 * 1024 * 1024
+PROGRAM_LIMIT = 512 * 1024 * 1024
 MAX_ALIGNMENT = 2 * 1024 * 1024
 INTERPRETER = '/lib/ld-musl-aarch64.so.1'
 ANDROID_INTERPRETER = '/system/bin/linker64'
@@ -553,7 +553,13 @@ def build(out, llvm):
             check_x18_disassembly(path, elf, dis)
             cache['files'][name] = {'sha256': digest, 'layout': {k: v for k, v in elf.items() if k != 'data'}}
         offset = (offset + elf['alignment'] - 1) & -elf['alignment']
-        if offset + elf['span'] > PROGRAM_LIMIT:
+        stub_size = (32 + 80 * len(elf['patches']) + PAGE - 1) & -PAGE
+        if elf['span'] + stub_size >= 128 * 1024 * 1024:
+            raise RuntimeError('ELF and its branch stubs exceed the AArch64 branch range')
+        # Exercise linking and syscalls beyond the original global branch range.
+        if name == '/dynamic':
+            offset = max(offset, 256 * 1024 * 1024)
+        if offset + elf['span'] + stub_size > PROGRAM_LIMIT:
             raise RuntimeError('Program layouts overlap the mmap area')
         if name == '/worker' and sum(size for _, size in elf['segments']) <= 65536:
             raise RuntimeError('Large-text fixture did not exceed 64 KiB')
@@ -567,10 +573,10 @@ def build(out, llvm):
         header.append(f'static const NcePatch patches_{i}[] = {{' + ','.join(
             f'{{{va},{word}}}' for va, word in elf['patches']) + '};')
         entries.append(f'{{.path="{name}",.file=nce_payload+{position},.size={len(elf["data"])},.system_image={int(system_image)},.sha256={{' + ','.join(str(x) for x in hashlib.sha256(elf['data']).digest()) + f'}},.offset={offset},.span={elf["span"]},'
-                       f'.entry={elf["entry"]},.phoff={elf["phoff"]},.phsize={elf["phsize"]},'
+                       f'.stub_size={stub_size},.entry={elf["entry"]},.phoff={elf["phoff"]},.phsize={elf["phsize"]},'
                        f'.segments=segments_{i},.segment_count={len(elf["segments"])},'
                        f'.patches=patches_{i},.patch_count={len(elf["patches"])}}}')
-        offset += elf['span']
+        offset += elf['span'] + stub_size
         print(f'{name}: {len(elf["data"])} bytes, {len(elf["segments"])} executable segments, {len(elf["patches"])} patched instructions', flush=True)
     cache_path.write_text(json.dumps(cache) + '\n')
     header += ['NceProgram nce_programs[] = {' + ',\n'.join(entries) + '};',

@@ -163,7 +163,9 @@ long nce_check_memory_syscall(long number, long *params)
     if (!length && number == 216) length = PAGE_SIZE;
     if (!length) return 0;
     if (start + length < start) return -EINVAL;
+    if (lkl_ops->user_reserved(start, length)) return -EACCES;
     if (number == 216) {
+        if ((params[3] & MREMAP_FIXED) && lkl_ops->user_reserved(params[4], params[2])) return -EACCES;
         if ((params[3] & MREMAP_FIXED) && overlaps_dynamic(params[4], params[2])) return -EACCES;
         if (overlaps_dynamic(start, length)) return -EACCES;
     } else {
@@ -192,6 +194,7 @@ SYSCALL_DEFINE6(nce_mmap, unsigned long, addr, unsigned long, len,
     long result;
     /* AArch64 mmap takes a byte offset; LKL's generic wrapper used pages. */
     if (offset & ~PAGE_MASK) return -EINVAL;
+    if ((flags & (MAP_FIXED | MAP_FIXED_NOREPLACE)) && lkl_ops->user_reserved(addr, len)) return -EACCES;
     if ((flags & (MAP_FIXED | MAP_FIXED_NOREPLACE)) && overlaps_dynamic(addr, len)) return -EACCES;
     if (!(flags & MAP_ANONYMOUS)) {
         struct fd file = fdget(fd);

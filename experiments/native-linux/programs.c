@@ -21,9 +21,21 @@ unsigned long nce_program_layout(const char *path, const void *header, const voi
     return 0;
 }
 
+int nce_program_reserved(unsigned long address, unsigned long length)
+{
+    if (!length) return 0;
+    if (address + length < address) return 1;
+    for (size_t i = 0; i < nce_program_count; ++i) {
+        NceProgram *p = &nce_programs[i];
+        uintptr_t begin = p->base + p->span;
+        if (address < begin + p->stub_size && address + length > begin) return 1;
+    }
+    return 0;
+}
+
 int nce_program_prepare(NceProgram *p)
 {
-    if (!p->stubs.rw) p->stubs = nce_memory_take(16 + 80 * p->patch_count);
+    if (!p->stubs.rw) return -1;
     if (nce_write_entry(p->stubs, p->base + p->entry)) return -1;
     nce_sync_code(p->stubs);
     return 0;

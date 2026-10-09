@@ -2,6 +2,9 @@
 #define _GNU_SOURCE
 #include "../layout.h"
 #include <errno.h>
+#include <elf.h>
+#include <fcntl.h>
+#include <sys/auxv.h>
 #include <signal.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -38,8 +41,31 @@ static void expect_fault(Code code, int write_access)
     CHECK(WIFSIGNALED(status) && WTERMSIG(status) == SIGSEGV);
 }
 
+static void reserved_stubs(void)
+{
+    Elf64_Ehdr header;
+    int file = open("/proc/self/exe", O_RDONLY);
+    CHECK(file >= 0 && read(file, &header, sizeof(header)) == sizeof(header) && close(file) == 0);
+    const Elf64_Phdr *phdrs = (const void *)getauxval(AT_PHDR);
+    uintptr_t base = (uintptr_t)phdrs - header.e_phoff, end = 0;
+    for (unsigned i = 0; i < header.e_phnum; ++i)
+        if (phdrs[i].p_type == PT_LOAD && phdrs[i].p_vaddr + phdrs[i].p_memsz > end)
+            end = phdrs[i].p_vaddr + phdrs[i].p_memsz;
+    void *reserved = (void *)(base + ((end + PAGE - 1) & -PAGE));
+    CHECK(mmap(reserved, PAGE, PROT_READ | PROT_WRITE,
+               MAP_PRIVATE | MAP_ANONYMOUS | MAP_FIXED, -1, 0) == MAP_FAILED && errno == EACCES);
+    CHECK(mprotect(reserved, PAGE, PROT_NONE) == -1 && errno == EACCES);
+    void *data = mmap(NULL, PAGE, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+    CHECK(data != MAP_FAILED);
+    CHECK(mremap(data, PAGE, PAGE, MREMAP_MAYMOVE | MREMAP_FIXED, reserved) == MAP_FAILED && errno == EACCES);
+    CHECK(munmap(data, PAGE) == 0 && munmap(reserved, PAGE) == 0);
+    CHECK(getpid() > 0);
+    puts("{\"test\":\"linux_reserved_branch_stubs\",\"passed\":true}");
+}
+
 void code_tests(void)
 {
+    reserved_stubs();
     CHECK(syscall(NCE_SYS_MAP_CODE, -1, PAGE, 0) == -1 && errno == EBADF);
     int fd = memfd_create("nce-code", MFD_CLOEXEC);
     CHECK(fd >= 0 && ftruncate(fd, 2 * PAGE) == 0);

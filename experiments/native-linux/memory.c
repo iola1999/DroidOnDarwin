@@ -131,8 +131,10 @@ int nce_memory_prepare(void)
 {
     REQUIRE(!reservation);
     size_t prepared = NCE_CODE_POOL_SIZE + NCE_EXEC_SIZE;
-    for (size_t i = 0; i < nce_program_count; ++i)
+    for (size_t i = 0; i < nce_program_count; ++i) {
+        prepared += nce_programs[i].stub_size;
         for (size_t j = 0; j < nce_programs[i].segment_count; ++j) prepared += nce_programs[i].segments[j].size;
+    }
     printf("{\"phase\":\"prepare_jit_pool\",\"reserved_bytes\":%lu,\"prepared_code_bytes\":%zu}\n",
            RESERVED_BYTES, prepared);
     const size_t alignment = 2 * 1024 * 1024;
@@ -152,6 +154,8 @@ int nce_memory_prepare(void)
     for (size_t i = 0; valid && i < nce_program_count; ++i) {
         NceProgram *p = &nce_programs[i];
         p->base = nce_memory_user_base() + p->offset;
+        p->stubs = prepare_code((void *)(p->base + p->span), p->stub_size);
+        valid = p->stubs.rw != NULL;
         for (size_t j = 0; valid && j < p->segment_count; ++j) {
             NceSegment *s = &p->segments[j];
             s->code = prepare_code((void *)(p->base + s->offset), s->size);
@@ -212,6 +216,12 @@ int nce_memory_release(void)
                 cursor = begin + s->size;
                 s->code = (NceCode){0};
             }
+            uintptr_t stub_start = nce_memory_user_base() + p->offset + p->span;
+            REQUIRE(cursor <= stub_start);
+            if (cursor < stub_start) result |= release_range((void *)cursor, stub_start - cursor, 0);
+            result |= release_range(p->stubs.rw, p->stub_size, 1);
+            result |= release_range((void *)stub_start, p->stub_size, p->stubs.rx != NULL);
+            cursor = stub_start + p->stub_size;
             p->stubs = (NceCode){0};
         }
         uintptr_t dynamic_start = nce_memory_user_base() + NCE_EXEC_OFFSET;
