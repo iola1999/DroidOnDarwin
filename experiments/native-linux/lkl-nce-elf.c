@@ -146,10 +146,8 @@ long nce_map_code(long *params)
                          &populate, &uf);
     mmap_write_unlock(mm);
     userfaultfd_unmap_complete(mm, &uf);
-    if (!IS_ERR_VALUE(result)) {
-        int error = nce_populate_code(result, length);
-        if (error) { vm_munmap(result, length); result = error; }
-    }
+    /* Publish or the first instruction fault installs the executable pages.
+     * Reserving an ART cache must not allocate its unused maximum capacity. */
 out:
     fdput(fd);
     return result;

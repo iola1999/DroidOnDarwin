@@ -797,3 +797,15 @@ CLI 完成 Framework/Zygote 后的宿主 footprint 为 607,978,696 字节。清�
 ELF/构建检查通过。日志为 `work/native-linux-nce/memory-reclaim-probe.log`。
 本机单独实验中 madvise 返回成功但没有降低共享 RAM 的占用，因此实现采用了
 已验证的映射替换。手机上的物理内存统计仍待后续集中验证。
+
+## JIT 页面按需填充（2026-10-09）
+
+ART 申请可执行缓存时只保留 VMA，代码发布或首次执行才填充页面。固定地址
+执行检查也只同步实际写入的 8 字节，保留每个执行区的 8 次更新与执行校验。
+CLI 峰值 RSS 从 634,961,920 降至 564,953,088 字节，GCD 为 565,559,296 字节；
+CLI 完成回收后的 footprint 为 295,732,280 字节。完整回归、3 轮进程压力与
+14 项 ELF 检查通过，日志为 `work/native-linux-nce/lazy-jit-memory-probe.log`。
+
+Linux 启动时同时从设备宿主的 CLOCK_REALTIME 初始化墙钟，避免 Android 日志
+继续使用宿主运行时长作为日期。运行中的 Linux 与 Android 均留在同一应用
+进程内。下一步扩展 ELF 跳转区布局，再推进 system_server。

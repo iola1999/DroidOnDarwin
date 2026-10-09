@@ -173,6 +173,10 @@ int nce_lkl_run(const char *image_path)
     uint64_t started = now();
     REQUIRE(start() == 0);
     printf("{\"test\":\"native_linux_boot\",\"passed\":true,\"ms\":%.3f}\n", (now() - started) / 1e6);
+    struct timespec realtime;
+    REQUIRE(clock_gettime(CLOCK_REALTIME, &realtime) == 0);
+    long time_args[6] = {0, (long)&realtime};
+    REQUIRE(kernel_syscall(112, time_args) == 0);
     char uts[390] = {0};
     long args[6] = {(long)uts};
     REQUIRE(kernel_syscall(160, args) == 0);

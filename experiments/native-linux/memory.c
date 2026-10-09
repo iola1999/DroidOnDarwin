@@ -89,7 +89,7 @@ static int verify_memory(void)
             NceCode target = !program ? pages : program > nce_program_count ? dynamic_code : nce_programs[program - 1].segments[segment].code;
             for (unsigned i = 0; i < 8; ++i) {
                 memcpy(target.rw, i % 2 ? second : first, sizeof(first));
-                nce_sync_code(target);
+                nce_sync_code((NceCode){target.rw, target.rx, sizeof(first)});
                 printf("{\"phase\":\"execute_original_jit_address\",\"range\":%u,\"iteration\":%u}\n", range, i);
                 if (nce_check_execute(target, 42 + (int)(i % 2))) return -1;
             }
