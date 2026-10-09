@@ -9,7 +9,9 @@
 #define NCE_EXEC_SIZE (32UL * 1024 * 1024)
 #define NCE_EXEC_DATA_OFFSET 0x7000000UL
 #define NCE_EXEC_OFFSET (NCE_EXEC_DATA_OFFSET + NCE_EXEC_SIZE)
-#define NCE_MMAP_OFFSET (NCE_EXEC_OFFSET + NCE_EXEC_SIZE)
+#define NCE_BRK_OFFSET (NCE_EXEC_OFFSET + NCE_EXEC_SIZE)
+/* Keep initial brk growth clear of loader metadata and anonymous mappings. */
+#define NCE_MMAP_OFFSET (NCE_BRK_OFFSET + 64UL * 1024 * 1024)
 #define NCE_SYS_MAP_CODE 243
 #define NCE_SYS_PUBLISH_CODE 244
 #define NCE_MM_DIFF 0

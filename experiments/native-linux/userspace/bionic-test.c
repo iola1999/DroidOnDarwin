@@ -16,8 +16,13 @@ static void *worker(void *pointer)
     return pointer;
 }
 
+void file_tests(const char *libc);
+void signal_tests(const char *libc);
+
 int main(void)
 {
+    file_tests("bionic");
+    signal_tests("bionic");
     pthread_t thread;
     void *result;
     unsigned char *memory = malloc(65536);

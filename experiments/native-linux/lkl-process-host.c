@@ -563,8 +563,6 @@ static void userspace_tests(long (*call)(long, long *))
     unsigned long previous_stackless = stackless_exits;
     unsigned long previous_preemptions = preemptions;
     REQUIRE(clock_gettime(CLOCK_MONOTONIC_RAW, &begin) == 0);
-    for (size_t i = 1; i < nce_program_count; ++i)
-        put_file(call, nce_programs[i].path, nce_programs[i].file, nce_programs[i].size);
     put_file(call, "/unregistered-elf", nce_programs[2].file, nce_programs[2].size);
     const char *script = "/worker check\n/worker check\n/worker check\n/worker check\n"
                          "/worker check\n/worker check\n/worker check\n/worker check\n";
@@ -601,14 +599,22 @@ void nce_process_tests(long (*host_syscall)(long, long *), long (*guest_syscall)
     REQUIRE(host_syscall(34, mkdir_args) == 0);
     mkdir_args[1] = (long)"/lib";
     REQUIRE(host_syscall(34, mkdir_args) == 0);
-    const char *directories[] = {"/system", "/system/bin", "/system/lib64", "/proc"};
+    const char *directories[] = {"/system", "/system/bin", "/system/lib64", "/system/bin/bootstrap", "/proc", "/sys"};
     for (unsigned i = 0; i < sizeof(directories) / sizeof(*directories); ++i) {
         mkdir_args[1] = (long)directories[i];
         REQUIRE(host_syscall(34, mkdir_args) == 0);
     }
     long mount_args[6] = {(long)"proc", (long)"/proc", (long)"proc", 0, 0};
     REQUIRE(host_syscall(40, mount_args) == 0);
+    mount_args[0] = (long)"sysfs"; mount_args[1] = (long)"/sys"; mount_args[2] = (long)"sysfs";
+    REQUIRE(host_syscall(40, mount_args) == 0);
+    mount_args[0] = (long)"selinuxfs"; mount_args[1] = (long)"/sys/fs/selinux"; mount_args[2] = (long)"selinuxfs";
+    REQUIRE(host_syscall(40, mount_args) == 0);
+    long link_args[6] = {(long)"/system/bin/linker64", -100, (long)"/system/bin/bootstrap/linker64"};
+    REQUIRE(host_syscall(36, link_args) == 0);
     long null_args[6] = {-100, (long)"/dev/null", 0020666, 259};
+    REQUIRE(host_syscall(33, null_args) == 0);
+    null_args[1] = (long)"/dev/kmsg"; null_args[3] = 267;
     REQUIRE(host_syscall(33, null_args) == 0);
     null_args[1] = (long)"/dev/random"; null_args[3] = 264;
     REQUIRE(host_syscall(33, null_args) == 0);
@@ -630,12 +636,9 @@ void nce_process_tests(long (*host_syscall)(long, long *), long (*guest_syscall)
     puts("{\"phase\":\"linux_process_tests\"}");
     const unsigned char *exec_elf = nce_programs[0].file;
     size_t exec_size = nce_programs[0].size;
-    long file_args[6] = {-100, (long)"/nce-exec", 0x42, 0700};
-    long fd = host_syscall(56, file_args);
-    REQUIRE(fd >= 0);
-    file_args[0] = fd; file_args[1] = (long)exec_elf; file_args[2] = exec_size;
-    REQUIRE(host_syscall(64, file_args) == (long)exec_size);
-    REQUIRE(host_syscall(57, file_args) == 0);
+    for (size_t i = 0; i < nce_program_count; ++i)
+        put_file(host_syscall, nce_programs[i].path, nce_programs[i].file, nce_programs[i].size);
+    long file_args[6] = {0}, fd;
     struct timespec begin, end;
     REQUIRE(clock_gettime(CLOCK_MONOTONIC_RAW, &begin) == 0);
     long args[6] = {0};
@@ -742,6 +745,11 @@ void nce_process_tests(long (*host_syscall)(long, long *), long (*guest_syscall)
     REQUIRE(strstr(benchmark, "android_art_jit_patterns"));
     REQUIRE(strstr(benchmark, "android_art_jit_strings_classes"));
     REQUIRE(strstr(benchmark, "android_art_vm_destroyed"));
+    fputs(benchmark, stdout);
+    puts("{\"phase\":\"android_platform_services\"}");
+    run_program(host_syscall, "/system/bin/android-services-test", NULL);
+    REQUIRE(get_file(host_syscall, "/stdout", benchmark, sizeof(benchmark)) > 0);
+    REQUIRE(strstr(benchmark, "android_platform_binder_cleanup"));
     fputs(benchmark, stdout);
     check_program_files(host_syscall);
     puts("{\"test\":\"linux_dynamic_elf_files_unchanged\",\"passed\":true}");

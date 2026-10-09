@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """编译内置 Linux 程序，按 ELF 段与 AArch64 映射符号生成执行布局。"""
+import base64
 import hashlib
 import json
 import lzma
@@ -24,6 +25,7 @@ PROGRAM_LIMIT = 112 * 1024 * 1024
 MAX_ALIGNMENT = 2 * 1024 * 1024
 INTERPRETER = '/lib/ld-musl-aarch64.so.1'
 ANDROID_INTERPRETER = '/system/bin/linker64'
+ANDROID_BOOTSTRAP_INTERPRETER = '/system/bin/bootstrap/linker64'
 MUSL_SHA = 'a9a118bbe84d8764da0ea0d28b3ab3fae8477fc7e4085d90102b8596fc7c75e4'
 RT_SHA = '15277402f6fd63397c0917a5c7171cda82d16d226094b828c1ed0f58f73b9c69'
 DASH_SHA = '6a474ac46e8b0b32916c4c60df694c82058d3297d8b385b74508030ca4a8f28a'
@@ -64,7 +66,6 @@ def x18_instruction(word):
             word in (0x92403643, 0x9272c652) or
             word & 0xff800000 == 0xa9000000 and 18 in (rd, (word >> 10) & 31))
 
-
 def android_dependencies(llvm, replacements):
     root = WORK / 'android/android36'
     files = {}
@@ -73,7 +74,10 @@ def android_dependencies(llvm, replacements):
         for path in (root / directory).glob('*.so'):
             if path.is_file(): files[path.name] = path
     files.update(replacements)
-    pending = ['libart.so', 'libjavacore.so', 'libopenjdk.so', 'libicu_jni.so', 'libartpalette-system.so']
+    pending = ['libart.so', 'libjavacore.so', 'libopenjdk.so', 'libicu_jni.so', 'libartpalette-system.so', 'libbinder_ndk.so']
+    manager = root / 'bin/servicemanager'
+    pending += re.findall(r'Shared library: \[(.*?)\]',
+                          subprocess.check_output([llvm / 'llvm-readelf', '-d', manager], text=True))
     result = {}
     while pending:
         name = pending.pop()
@@ -87,6 +91,56 @@ def android_dependencies(llvm, replacements):
         pending += re.findall(r'Shared library: \[(.*?)\]', dynamic)
     return [('/system/lib64/' + name, path) for name, path in sorted(result.items())]
 
+def android_service_headers():
+    directory = WORK / 'android/binder-include/android'
+    directory.mkdir(parents=True, exist_ok=True)
+    sources = json.loads((EXP / 'services/sources.json').read_text())
+    for item in sources['headers']:
+        path = directory / item['name']
+        if not path.exists():
+            path.write_bytes(base64.b64decode(urllib.request.urlopen(item['url'], timeout=30).read()))
+        if hashlib.sha256(path.read_bytes()).hexdigest() != item['sha256']:
+            raise RuntimeError('Binder header checksum mismatch: ' + item['name'])
+    return directory.parent
+
+def android_property_info(out):
+    item = json.loads((EXP / 'services/sources.json').read_text())['property_service']
+    archive = WORK / 'android/property-service.tar.gz'
+    if not archive.exists():
+        archive.write_bytes(urllib.request.urlopen(item['url'], timeout=30).read())
+    if hashlib.sha256(archive.read_bytes()).hexdigest() != item['sha256']:
+        raise RuntimeError('Property serializer source checksum mismatch')
+    source = WORK / 'android/property-service'
+    with tarfile.open(archive) as package:
+        for member in package:
+            if not member.issym():
+                package.extract(member, source, filter='data')
+    serializer = source / 'libpropertyinfoserializer'
+    base = WORK / 'android/libbase'
+    run(['xcrun', 'clang++', '-std=c++20', '-O2',
+         '-I', serializer / 'include', '-I', source / 'libpropertyinfoparser/include',
+         '-I', base / 'include', EXP / 'services/property-info.cpp',
+         *[serializer / name for name in ('property_info_serializer.cpp', 'trie_builder.cpp', 'trie_serializer.cpp')],
+         source / 'libpropertyinfoparser/property_info_parser.cpp',
+         base / 'strings.cpp', base / 'stringprintf.cpp', base / 'posix_strerror_r.cpp',
+         '-o', out / 'property-info-builder'])
+    run([out / 'property-info-builder', out / 'property_info'])
+    return out / 'property_info'
+
+def android_service_policy(out):
+    platform_policy = (WORK / 'android/android36/etc/selinux/plat_sepolicy.cil').read_text()
+    declarations = [line for line in platform_policy.splitlines()
+                    if re.match(r'^\((?:class|classcommon|classorder|common|sid|sidorder) ', line)]
+    classes = re.findall(r'^\(class (\w+) ', platform_policy, re.M)
+    sids = re.findall(r'^\(sid (\w+)\)', platform_policy, re.M)
+    if 'service_manager' not in classes or not {'kernel', 'security', 'unlabeled', 'init'} <= set(sids):
+        raise RuntimeError('Android SELinux declarations changed')
+    rules = [(EXP / 'services/nce-policy.cil').read_text()]
+    rules += [f'(sidcontext {name} (u r nce_t ((s0) (s0))))' for name in sids]
+    rules += [f'(allow nce_t nce_all ({name} (all)))' for name in classes if name != 'service_manager']
+    path = out / 'nce-policy.cil'
+    path.write_text('\n'.join(declarations + rules) + '\n')
+    return path
 
 def android_data(out):
     root = WORK / 'android/android36'
@@ -98,7 +152,9 @@ def android_data(out):
     run([java / 'java', '-cp', sdk / 'build-tools/36.0.0/lib/d8.jar', 'com.android.tools.r8.D8',
          '--min-api', '35', '--lib', sdk / 'platforms/android-35/android.jar', '--output', classes,
          *sorted(classes.glob('*.class'))])
-    files = [('/data/nce/NceWorkload.dex', classes / 'classes.dex'),
+    files = [('/data/nce/nce-policy.cil', android_service_policy(out)),
+             ('/data/nce/property_info', android_property_info(out)),
+             ('/data/nce/NceWorkload.dex', classes / 'classes.dex'),
              ('/linkerconfig/ld.config.txt', EXP / 'art/ld.config.txt'),
              ('/system/etc/public.libraries.txt', EXP / 'art/public.libraries.txt')]
     for module, names in {
@@ -107,6 +163,7 @@ def android_data(out):
     }.items():
         files += [(f'/apex/{module}/javalib/{name}.jar', root / module / 'javalib' / (name + '.jar'))
                   for name in names]
+    files += [('/system/etc/selinux/plat_service_contexts', EXP / 'services/service_contexts')]
     files += [('/apex/com.android.i18n/etc/icu/icudt76l.dat', root / 'com.android.i18n/etc/icu/icudt76l.dat')]
     return files
 
@@ -129,7 +186,7 @@ def inspect(path, shared=False, function_symbols=False):
     if len(interpreters) > 1:
         raise RuntimeError(f'{path}: multiple ELF interpreters')
     for p in interpreters:
-        if p[2] + p[5] > len(data) or data[p[2]:p[2] + p[5]] not in [i.encode() + b'\0' for i in (INTERPRETER, ANDROID_INTERPRETER)]:
+        if p[2] + p[5] > len(data) or data[p[2]:p[2] + p[5]] not in [i.encode() + b'\0' for i in (INTERPRETER, ANDROID_INTERPRETER, ANDROID_BOOTSTRAP_INTERPRETER)]:
             raise RuntimeError(f'{path}: unsupported ELF interpreter')
     segments = []
     for _, flags, offset, va, _, filesz, memsz, align in loads:
@@ -346,6 +403,11 @@ def build(out, llvm):
     run([shutil.which('ld.lld'), '-pie', '--no-dynamic-linker', '--entry=_start', '-Ttext=0x10000',
          '-z', 'max-page-size=16384', out / 'exec-guest.o', '-o', out / 'exec-guest.elf'])
     programs = [('/nce-exec', out / 'exec-guest.elf')]
+    run([llvm / 'clang', '--target=aarch64-linux-gnu', '-c', EXP / 'userspace/sigreturn.S', '-o', out / 'sigreturn.o'])
+    run([shutil.which('ld.lld'), '-pie', '--no-dynamic-linker', '--entry=_start',
+         '-T', EXP / 'userspace/sigreturn.ld', '-z', 'max-page-size=16384',
+         out / 'sigreturn.o', '-o', out / 'sigreturn.elf'])
+    programs.append(('/lib/nce-sigreturn.so', out / 'sigreturn.elf'))
     # Force a real ELF text segment beyond the former 64 KiB limit. The table
     # also exercises static-PIE relocations and indirect calls across that text.
     large = out / 'large-text.c'
@@ -356,7 +418,7 @@ def build(out, llvm):
         'unsigned exercise_large_text(unsigned x) { for (unsigned i=0;i<4096;++i) x=functions[i](x); return x; }\n')
     run([llvm / 'clang', '--target=aarch64-linux-musl', '-ffixed-x18', '-mno-outline-atomics',
          '-fPIE', '-O2', '-c', large, '-o', out / 'large-text.o'])
-    for unit in ('mm-tests', 'signal-tests', 'code-tests'):
+    for unit in ('mm-tests', 'signal-tests', 'code-tests', 'file-tests'):
         run([llvm / 'clang', '--target=aarch64-linux-musl', '-ffixed-x18', '-mno-outline-atomics',
              '-fPIE', '-O2', '-g', '-Wall', '-Wextra', '-Werror', '-nostdinc', '-isystem', libc / 'include', '-isystem', resource,
              '-c', EXP / f'userspace/{unit}.c', '-o', out / f'{unit}.o'])
@@ -370,7 +432,7 @@ def build(out, llvm):
         run([shutil.which('ld.lld'), '-pie', '--no-dynamic-linker', '-z', 'max-page-size=16384',
              '-z', 'common-page-size=16384', libc / 'lib/rcrt1.o', libc / 'lib/crti.o',
              out / f'{name}.o', *([out / 'large-text.o'] if name == 'worker' else []),
-             *([out / 'mm-tests.o', out / 'signal-tests.o', out / 'signal-registers.o', out / 'code-tests.o'] if name == 'mm-bench' else []),
+             *([out / 'mm-tests.o', out / 'file-tests.o', out / 'signal-tests.o', out / 'signal-registers.o', out / 'code-tests.o'] if name == 'mm-bench' else []),
              libc / 'lib/libc.a', runtime, libc / 'lib/crtn.o', '-o', out / f'{name}.elf'])
         programs.append(('/init-user' if name == 'init' else '/' + name, out / f'{name}.elf'))
     programs.append(('/bin/sh', dash(out, llvm, libc, runtime, resource)))
@@ -380,7 +442,8 @@ def build(out, llvm):
     run([ndk / 'toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android35-clang',
          '-ffixed-x18', '-mno-outline-atomics', '-g', '-O2', '-Wall', '-Wextra', '-Werror',
          '-Wl,-z,max-page-size=16384,-z,common-page-size=16384',
-         EXP / 'userspace/bionic-test.c', '-o', out / 'bionic-test.elf'])
+         EXP / 'userspace/bionic-test.c', EXP / 'userspace/file-tests.c',
+         EXP / 'userspace/signal-tests.c', EXP / 'userspace/signal-registers.S', '-o', out / 'bionic-test.elf'])
     programs.append(('/bionic-test', out / 'bionic-test.elf'))
     run([ndk / 'toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android35-clang',
          '-ffixed-x18', '-mno-outline-atomics', '-g', '-O2', '-Wall', '-Wextra', '-Werror',
@@ -398,6 +461,16 @@ def build(out, llvm):
          '-Wl,-z,max-page-size=16384,-z,common-page-size=16384',
          EXP / 'userspace/art-test.c', '-ldl', '-o', out / 'art-test.elf'])
     programs.append(('/system/bin/art-test', out / 'art-test.elf'))
+    programs.append(('/system/bin/secilc', WORK / 'android/android36/bin/secilc'))
+    programs.append(('/system/bin/servicemanager', WORK / 'android/android36/bin/servicemanager'))
+    run([ndk / 'toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android35-clang++',
+         '-ffixed-x18', '-mno-outline-atomics', '-g', '-O2', '-Wall', '-Wextra', '-Werror',
+         '-std=c++17', '-nostdlib++', '-I', android_service_headers(),
+         '-Wl,-z,max-page-size=16384,-z,common-page-size=16384',
+         EXP / 'userspace/android-services-test.cpp', EXP / 'userspace/property-service.cpp', '-ldl',
+         WORK / 'android/android36/lib64/libbinder_ndk.so',
+         '-o', out / 'android-services-test.elf'])
+    programs.append(('/system/bin/android-services-test', out / 'android-services-test.elf'))
     shutil.copyfile(libc / 'lib/libc.so', out / 'libc.so')
     programs.append((INTERPRETER, out / 'libc.so'))
     for name in ('dependency', 'plugin', 'dynamic'):

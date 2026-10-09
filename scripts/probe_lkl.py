@@ -131,27 +131,31 @@ def main():
     env["PATH"] = f"{sed_prefix}/libexec/gnubin:{llvm}:" + env["PATH"]
     target = [llvm / "clang", "--target=aarch64-linux-gnu", "-ffixed-x18"]
     make = ["gmake", "-C", SOURCE, f"O={BUILD}", "ARCH=lkl", "CLANG_TARGET_FLAGS_lkl=aarch64-linux-gnu",
-            f"CC={shlex.join(map(str, target))}", f"HOSTCC={shlex.join([clang, '-isysroot', sdk, '-I', str(include)])}",
+            f"CC={shlex.join(map(str, target))}", f"HOSTCC={shlex.join([clang, '-isysroot', sdk, '-I', str(include), *(['-idirafter', str(OUT / 'linux-uapi/include')] if PROCESS else [])])}",
             f"LD={shutil.which('ld.lld')}", "AR=llvm-ar", "NM=llvm-nm", "OBJCOPY=llvm-objcopy",
             "OBJDUMP=llvm-objdump", "STRIP=llvm-strip"]
     BUILD.mkdir(exist_ok=True)
     with (OUT / "lkl-build.log").open("w") as log:
-        if not (BUILD / ".config").exists():
-            run([*make, "allnoconfig"], env=env, stdout=log, stderr=subprocess.STDOUT)
-        options = ["64BIT", "EXPERT", "PROC_FS", "SYSFS", "FUTEX", "EPOLL", "SIGNALFD", "TIMERFD",
-                   "LKL_HOST_MEMCPY", "LKL_HOST_MEMSET", "LKL_HOST_MEMMOVE"]
-        if PROCESS:
-            options += ["MMU", "PRINTK", "NAMESPACES", "PID_NS", "POSIX_TIMERS", "ANDROID_BINDER_IPC", "ANDROID_BINDERFS", "MEMFD_CREATE", "TMPFS"]
-        switches = [arg for name in options for arg in ("-e", name)]
-        switches += [arg for name in ("KALLSYMS", "BLOCK", "DEBUG_INFO", "SLUB_DEBUG") for arg in ("-d", name)]
-        run([SOURCE / "scripts/config", "--file", BUILD / ".config", *switches], env=env)
-        run([*make, "olddefconfig"], env=env, stdout=log, stderr=subprocess.STDOUT)
-        run([*make, "-j8", "all"], env=env, stdout=log, stderr=subprocess.STDOUT)
         if PROCESS:
             run(["gmake", "-C", SOURCE, "ARCH=arm64", "O=" + str(OUT / "linux-uapi-build"),
                  "HOSTCC=" + shlex.join([clang, "-isysroot", sdk]),
                  "headers_install", "INSTALL_HDR_PATH=" + str(OUT / "linux-uapi")],
                 env=env, stdout=log, stderr=subprocess.STDOUT)
+        if not (BUILD / ".config").exists():
+            run([*make, "allnoconfig"], env=env, stdout=log, stderr=subprocess.STDOUT)
+        options = ["64BIT", "EXPERT", "PROC_FS", "SYSFS", "FUTEX", "EPOLL", "SIGNALFD", "TIMERFD",
+                   "LKL_HOST_MEMCPY", "LKL_HOST_MEMSET", "LKL_HOST_MEMMOVE"]
+        if PROCESS:
+            options += ["MMU", "PRINTK", "NAMESPACES", "PID_NS", "POSIX_TIMERS", "ANDROID_BINDER_IPC", "ANDROID_BINDERFS", "MEMFD_CREATE", "TMPFS", "TMPFS_XATTR",
+                        "NET", "UNIX", "INET", "AUDIT", "SECURITY", "SECURITY_NETWORK",
+                        "SECURITY_SELINUX", "SECURITY_SELINUX_DEVELOP"]
+        switches = [arg for name in options for arg in ("-e", name)]
+        if PROCESS:
+            switches += ["--set-str", "LSM", "selinux"]
+        switches += [arg for name in ("KALLSYMS", "BLOCK", "DEBUG_INFO", "SLUB_DEBUG") for arg in ("-d", name)]
+        run([SOURCE / "scripts/config", "--file", BUILD / ".config", *switches], env=env)
+        run([*make, "olddefconfig"], env=env, stdout=log, stderr=subprocess.STDOUT)
+        run([*make, "-j8", "all"], env=env, stdout=log, stderr=subprocess.STDOUT)
     shutil.copyfile(SOURCE / "arch/lkl/include/uapi/asm/host_ops.h", OUT / "lkl-host-ops.h")
     run([*target, "-fPIC", "-fno-stack-protector", "-O2", "-I", OUT, "-I", EXPERIMENT,
          "-c", EXPERIMENT / "lkl-bridge.c", "-o", OUT / "lkl-bridge.o"])
@@ -211,15 +215,15 @@ def main():
                     Path(__file__).with_name("prepare_android_runtime.py"), Path(__file__).with_name("build_android_linker.py"),
                     Path(__file__).with_name("build_android_libc.py"), Path(__file__).with_name("build_android_art.py"),
                     EXPERIMENT / "android-sources.json", *sorted((EXPERIMENT / "art").glob("*")),
-                    *sorted((EXPERIMENT / "userspace").glob("*"))]
+                    *sorted((EXPERIMENT / "userspace").glob("*")), *sorted((EXPERIMENT / "services").glob("*"))]
         run(["python3", ROOT / "scripts/test_nce_userspace.py"])
         sources.append(ROOT / "scripts/test_nce_userspace.py")
         manifest["stage"] = "Android Bionic, Binder, ART Java and ARM64 JIT workloads"
         manifest["userspace_libraries"] = {"musl": "1.2.5", "compiler-rt": "20.1.8", "dash": "0.5.12"}
         manifest["generated_sha256"] = {name: hashlib.sha256((OUT / name).read_bytes()).hexdigest()
                                         for name in ["program-images.h", "user-scripts.h", "lkl-image.h", "lkl-host-ops.h", "guest-image.h",
-                                                     "exec-guest.elf", "init.elf", "worker.elf", "mm-bench.elf", "dash.elf",
-                                                     "libc.so", "dependency.so", "plugin.so", "dynamic.elf", "binder-test.elf", "bionic-test.elf", "art-test.elf", "art-heap-test.elf"]}
+                                                     "exec-guest.elf", "sigreturn.elf", "init.elf", "worker.elf", "mm-bench.elf", "dash.elf",
+                                                     "libc.so", "dependency.so", "plugin.so", "dynamic.elf", "binder-test.elf", "bionic-test.elf", "art-test.elf", "art-heap-test.elf", "android-services-test.elf"]}
         android = ROOT / "work/native-linux-nce/android"
         manifest["android_builds"] = {name: json.loads((android / name / "manifest.json").read_text())
                                       for name in ("linker-build", "libc-build", "art-build")}

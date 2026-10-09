@@ -1,0 +1,3 @@
+manager u:object_r:nce_service:s0
+nce.test u:object_r:nce_service:s0
+nce.denied u:object_r:nce_denied:s0

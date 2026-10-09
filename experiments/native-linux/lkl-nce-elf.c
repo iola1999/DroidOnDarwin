@@ -38,6 +38,7 @@ static unsigned long file_layout(struct file *file, unsigned long *length)
     loff_t pos = 0;
     size_t bytes;
     unsigned long base = 0;
+    if (!file->f_op->read_iter) return 0;
     if (kernel_read(file, &header, sizeof(header), &pos) != sizeof(header) ||
         memcmp(header.e_ident, ELFMAG, SELFMAG) || header.e_type != ET_DYN ||
         header.e_machine != EM_AARCH64 || header.e_phentsize != sizeof(*phdrs) ||
@@ -85,6 +86,29 @@ int nce_populate_code(unsigned long address, unsigned long length)
         address += PAGE_SIZE;
     }
     return 0;
+}
+
+/* AArch64 libc may leave sa_restorer unset. Every ELF process receives the
+ * same registered return stub, with its mapping owned by the Linux mm. */
+int arch_setup_additional_pages(struct linux_binprm *bprm, int uses_interp)
+{
+    struct file *file = filp_open("/lib/nce-sigreturn.so", O_RDONLY, 0);
+    struct elfhdr header;
+    unsigned long base, length = 0;
+    loff_t position = 0;
+    int error = -ENOEXEC;
+    if (IS_ERR(file)) return PTR_ERR(file);
+    base = file_layout(file, &length);
+    if (!base || kernel_read(file, &header, sizeof(header), &position) != sizeof(header) ||
+        header.e_entry >= length) goto out;
+    unsigned long mapped = vm_mmap(file, base, length, PROT_READ | PROT_EXEC,
+                                   MAP_PRIVATE | MAP_FIXED_NOREPLACE, 0);
+    if (IS_ERR_VALUE(mapped)) { error = mapped; goto out; }
+    error = nce_populate_code(mapped, length);
+    if (!error) current->mm->context.sigreturn = base + header.e_entry;
+out:
+    fput(file);
+    return error;
 }
 
 /* The fixed host executable window survives debugger detach. Linux still

@@ -28,8 +28,29 @@ __attribute__((noinline)) static unsigned grow_stack(unsigned depth)
     return result + page[0] + page[PAGE - 1];
 }
 
+void file_tests(const char *libc);
+
 void memory_tests(void)
 {
+    /* Raw brk changes precede libc's first allocation so its arena stays intact. */
+    unsigned char *heap = (void *)syscall(SYS_brk, 0);
+    CHECK((void *)syscall(SYS_brk, heap + 8 * PAGE) == heap + 8 * PAGE);
+    for (unsigned i = 0; i < 8; ++i) heap[i * PAGE] = i + 1;
+    pid_t heap_child = fork();
+    CHECK(heap_child >= 0);
+    if (!heap_child) {
+        for (unsigned i = 0; i < 8; ++i) {
+            CHECK(heap[i * PAGE] == i + 1);
+            heap[i * PAGE] = i + 17;
+        }
+        _exit(0);
+    }
+    int heap_status;
+    CHECK(waitpid(heap_child, &heap_status, 0) == heap_child && heap_status == 0);
+    for (unsigned i = 0; i < 8; ++i) CHECK(heap[i * PAGE] == i + 1);
+    CHECK((void *)syscall(SYS_brk, heap) == heap);
+    puts("{\"test\":\"linux_brk_growth_cow\",\"passed\":true}");
+    file_tests("musl");
     pid_t limited = fork();
     CHECK(limited >= 0);
     if (!limited) {

@@ -1,0 +1,20 @@
+{
+  "revision": "2827a4a16b0340ecd07c2d5a6c89991799b362bb",
+  "headers": [
+    {
+      "name": "binder_manager.h",
+      "url": "https://android.googlesource.com/platform/frameworks/native/+/2827a4a16b0340ecd07c2d5a6c89991799b362bb/libs/binder/ndk/include_platform/android/binder_manager.h?format=TEXT",
+      "sha256": "8421f0e031b078d9161a692ccda2e3acd145db2f1fb37aa97bb41e97d636f066"
+    },
+    {
+      "name": "binder_process.h",
+      "url": "https://android.googlesource.com/platform/frameworks/native/+/2827a4a16b0340ecd07c2d5a6c89991799b362bb/libs/binder/ndk/include_platform/android/binder_process.h?format=TEXT",
+      "sha256": "fe9626e20b24d32cfc1c0dc1dc5de1cb80c07489cbb38afc563fa5082bf4a00a"
+    }
+  ],
+  "property_service": {
+    "url": "https://android.googlesource.com/platform/system/core/+archive/68be0c2c0006a0740d0b1809abe4717308f90d15/property_service.tar.gz",
+    "revision": "68be0c2c0006a0740d0b1809abe4717308f90d15",
+    "sha256": "3aa340c056435d9302ae2deaacc82b445b4cbc94770eadb4039aa307f4e5e8e0"
+  }
+}

@@ -22,7 +22,9 @@ static int setup_frame(struct ksignal *signal, struct pt_regs *regs)
     int error;
     if (top < sizeof(*frame) || !access_ok(user, sizeof(*frame))) return -EFAULT;
     if (on_sig_stack(top) && !on_sig_stack(address)) return -EFAULT;
-    if (!(signal->ka.sa.sa_flags & SA_RESTORER) || !signal->ka.sa.sa_restorer) return -EINVAL;
+    unsigned long restorer = signal->ka.sa.sa_flags & SA_RESTORER ?
+        (unsigned long)signal->ka.sa.sa_restorer : current->mm->context.sigreturn;
+    if (!restorer) return -EINVAL;
     /* Keep the 4 KiB extension area off the 16 KiB Linux kernel stack. */
     frame = kzalloc(sizeof(*frame), GFP_KERNEL);
     if (!frame) return -ENOMEM;
@@ -47,7 +49,7 @@ static int setup_frame(struct ksignal *signal, struct pt_regs *regs)
     regs->x[0] = signal->sig;
     regs->x[1] = (unsigned long)&user->info;
     regs->x[2] = (unsigned long)&user->uc;
-    regs->x[30] = (unsigned long)signal->ka.sa.sa_restorer;
+    regs->x[30] = restorer;
     regs->sp = address;
     regs->pc = (unsigned long)signal->ka.sa.sa_handler;
     return 0;

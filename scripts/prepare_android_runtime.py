@@ -18,6 +18,7 @@ APEX = ('com.android.runtime.apex', 'com.google.android.art.capex',
         'com.android.i18n.apex', 'com.google.android.conscrypt.capex',
         'com.google.android.os.statsd.apex')
 DEBUGFS = '/opt/homebrew/opt/e2fsprogs/sbin/debugfs'
+SYSTEM_DIRECTORIES = ('lib64', 'etc', 'bin', 'framework')
 
 
 def digest(path, algorithm='sha256'):
@@ -70,7 +71,7 @@ def main():
     manifest = ROOT / 'android36-runtime.json'
     if manifest.exists():
         prior = json.loads(manifest.read_text())
-        if prior['archive_sha1'] == SHA1 and prior.get('apex') == list(APEX) and all((DEST / name).is_file() and digest(DEST / name) == sha
+        if prior['archive_sha1'] == SHA1 and prior.get('apex') == list(APEX) and prior.get('system_directories') == list(SYSTEM_DIRECTORIES) and all((DEST / name).is_file() and digest(DEST / name) == sha
                                                 for name, sha in prior['files'].items()):
             print('Android runtime files verified')
             return
@@ -112,7 +113,7 @@ def main():
             destination = DEST / name.removesuffix('.apex').removesuffix('.capex').replace('com.google.android.', 'com.android.')
             destination.mkdir(exist_ok=True)
             debug(f'rdump / {destination}', payload)
-        for name in ('lib64', 'etc'):
+        for name in SYSTEM_DIRECTORIES:
             debug(f'rdump /system/{name} {DEST}', partition)
     for name in ('com.android.runtime/bin/linker64', 'com.android.runtime/lib64/bionic/libc.so',
                  'com.android.art/bin/dalvikvm64', 'com.android.art/lib64/libart.so'):
@@ -120,7 +121,7 @@ def main():
             raise RuntimeError(f'Missing extracted ELF: {name}')
     files = {str(path.relative_to(DEST)): digest(path) for path in sorted(DEST.rglob('*'))
              if not path.is_symlink() and path.is_file()}
-    manifest.write_text(json.dumps(dict(url=URL, archive_sha1=SHA1, apex=APEX, files=files), indent=2) + '\n')
+    manifest.write_text(json.dumps(dict(url=URL, archive_sha1=SHA1, apex=APEX, system_directories=SYSTEM_DIRECTORIES, files=files), indent=2) + '\n')
     for path in intermediates:
         path.unlink(missing_ok=True)
     print(f'Extracted and hashed {len(files)} runtime files; intermediate images removed')

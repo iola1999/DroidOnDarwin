@@ -95,6 +95,15 @@ class ElfLayoutTests(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, 'missing executable entry'):
             inspect(WORK / 'processes/plugin.so')
 
+    def test_android_bootstrap_interpreter(self):
+        path = WORK / 'android/android36/bin/servicemanager'
+        elf = inspect(path, function_symbols=True)
+        self.assertGreater(elf['entry'], 0)
+        self.path.write_bytes(path.read_bytes().replace(b'/system/bin/bootstrap/linker64',
+                                                       b'/system/bin/bootstrap/unknown!'))
+        with self.assertRaisesRegex(RuntimeError, 'ELF interpreter'):
+            inspect(self.path, function_symbols=True)
+
     def test_android_art_large_segments_and_mini_debug(self):
         path = WORK / 'android/android36/com.android.art/lib64/libart.so'
         elf = inspect(path, shared=True, function_symbols=True)

@@ -4,7 +4,7 @@
 #ifdef CONFIG_MMU
 #include <asm/nce-layout.h>
 typedef struct {
-    unsigned long end_brk;
+    unsigned long sigreturn;
     /* Pages faulted back into the host window after a process switch. */
     unsigned long *accessed;
 } mm_context_t;

@@ -90,6 +90,7 @@ static void interrupted_read(int restart)
     CHECK(close(pipefd[0]) == 0 && close(pipefd[1]) == 0);
 }
 
+#ifndef __BIONIC__
 static void *cancel_wait(void *opaque)
 {
     int fd = *(int *)opaque;
@@ -97,6 +98,7 @@ static void *cancel_wait(void *opaque)
     CHECK(read(fd, &byte, 1) == 1);
     return NULL;
 }
+#endif
 
 static void tick(int signal)
 {
@@ -104,7 +106,7 @@ static void tick(int signal)
     alarmed = 1;
 }
 
-void signal_tests(void)
+void signal_tests(const char *libc)
 {
     main_thread = pthread_self();
     alternate = mmap(NULL, 65536, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
@@ -179,6 +181,7 @@ void signal_tests(void)
     CHECK(waitpid(child, &status, 0) == child && WIFSIGNALED(status) && WTERMSIG(status) == SIGTERM);
     puts("{\"test\":\"linux_signal_frame_validation_stop_exit\",\"passed\":true}");
 
+#ifndef __BIONIC__
     int pipefd[2];
     CHECK(pipe(pipefd) == 0);
     CHECK(pthread_create(&sender, NULL, cancel_wait, &pipefd[0]) == 0);
@@ -187,6 +190,7 @@ void signal_tests(void)
     CHECK(pthread_join(sender, &result) == 0 && result == PTHREAD_CANCELED);
     CHECK(close(pipefd[0]) == 0 && close(pipefd[1]) == 0);
     puts("{\"test\":\"linux_pthread_cancel_signal\",\"passed\":true}");
+#endif
 
     CHECK(signal(SIGALRM, tick) != SIG_ERR);
     struct itimerval timer = {.it_value.tv_usec = 5000};
@@ -199,4 +203,5 @@ void signal_tests(void)
     stack.ss_flags = SS_DISABLE;
     CHECK(sigaltstack(&stack, NULL) == 0);
     CHECK(munmap(alternate, 65536) == 0);
+    printf("{\"test\":\"linux_signal_suite\",\"passed\":true,\"libc\":\"%s\"}\n", libc);
 }

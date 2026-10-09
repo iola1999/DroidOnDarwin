@@ -471,3 +471,105 @@ CLI/GCD 回归均通过八种字符串、10 万轮字符串/数组/接口组合�
 注册与跨进程调用检查 Android 系统服务所需行为。SDK 提取范围增加 `bin`
 和 `framework`；下载与提取完成后清理中间镜像，运行材料仍放在项目 work
 目录。
+
+## Android 平台服务接入（2026-10-09，进行中）
+
+下一组验证使用 SDK 镜像中的原版 `servicemanager`、`libbinder.so` 和
+`libbinder_ndk.so`。新增测试进程通过平台 AIBinder/AParcel API 注册服务、
+查找服务、发送不同长度的数据、传递文件描述符，并接收服务退出通知。
+现有直接操作 Binder ioctl 的测试继续检查驱动边界。
+
+平台 `Access` 构造函数会调用 `selinux_status_open` 和 `getcon`。因此本轮
+启用 Linux 的 NET、UNIX、INET、AUDIT、SECURITY 和 SELinux，并挂载
+sysfs、selinuxfs。当前使用内核的开发配置，完整 Android 策略仍待接入。
+这些设置只作用于进程内的 Linux 客体。Unix socket 测试另行检查跨进程
+SCM_RIGHTS、SCM_CREDENTIALS 和接收端 FD_CLOEXEC。
+
+系统镜像提取扩展到 bin 和 framework；构建仍只打包实际测试需要的文件和
+共享库依赖。平台头文件固定到 frameworks/native 提交
+`2827a4a16b0340ecd07c2d5a6c89991799b362bb`，下载时校验 SHA-256。
+servicemanager 的 `/system/bin/bootstrap/linker64` 指向已适配的 Android
+动态链接器，ELF 检查只增加这个已登记的解释器路径。
+
+首次编译发现 SELinux 的宿主生成工具需要 Linux UAPI 的 asm 类型头文件。
+已将头文件导出移到内核编译之前，并通过 `-idirafter` 提供给宿主编译器。
+运行结果将在本轮验证完成后记录。
+
+平台服务运行已确认以下前置条件：
+
+- binderfs 会自动创建配置中的 `binder` 节点。测试改用独立的 `nce-platform`
+  节点，并将 `/dev/binder` 指向该节点。
+- Unix socket 凭据和文件描述符传递已通过。SELinux 状态映射也已进入运行。
+- `BackendUnifiedServiceManager` 会等待 `servicemanager.ready=true`。
+  当前缺少属性区时，Bionic 的属性等待反复读取时钟，服务注册无法继续。
+  因此增加属性服务原型，由 Bionic 创建和更新共享属性区，提供属性协议 v2
+  的 Unix socket。servicemanager 通过原有 `SetProperty` 发布就绪状态。
+- 属性信息文件由 AOSP `libpropertyinfoserializer` 生成。当前原型使用一个
+  属性 context，只接受 root 客户端；名称上限 255 字节，值上限 4095 字节，
+  普通属性仍受 `PROP_VALUE_MAX` 限制。`ro.*` 创建后只读，`ctl.*` 返回控制
+  消息错误。完整的 init 属性权限、持久化和控制消息处理仍待实现。
+- 特殊文件的 mmap 会经过 ELF 布局识别。新增 `read_iter` 检查，跳过无法
+  使用 `kernel_read` 的文件，保留其原有 mmap 实现。
+
+跟踪日志中反复出现的时钟调用已汇总计数，原始大日志已清理。
+
+属性共享区及 `ro.*` 拒绝更新已通过，随后真实服务注册返回 `EX_SECURITY`。
+日志确认原因为 SELinux 尚未加载 `service_manager` 类定义。现增加原型
+CIL 策略：复用 SDK 的类、权限和初始 SID 声明，给测试进程配置 `nce_t`
+域，分别定义允许注册的 `nce_service` 和拒绝注册的 `nce_denied`。
+Android 自带 secilc 在客体内编译策略，测试写入 selinuxfs 后启用 enforcing。
+
+策略加载和 enforcing 状态检查已通过。首次运行发现属性文件改标签还需要
+文件类型到 tmpfs 的 `filesystem associate` 权限，已加入该规则。当前策略
+只服务于这组原型进程；Android 的应用域划分和完整平台策略仍待实现。
+
+进一步检查发现通用文件 ABI 错误：LKL 的 fcntl 头文件沿用了 asm-generic
+定义，AArch64 用户态的 `O_DIRECTORY`、`O_NOFOLLOW`、`O_DIRECT`、
+`O_LARGEFILE` 值与之不同。`service_manager/index` 可读，权限目录的
+`opendir` 则返回 EINVAL。已加入 AArch64 fcntl 定义，由 LKL 内核直接
+采用正确标志值。
+
+新增同一组文件边界测试，分别用 musl 和 Bionic 编译执行：目录打开、普通
+文件加 O_DIRECTORY 返回 ENOTDIR、符号链接加 O_NOFOLLOW 返回 ELOOP、
+O_PATH 保留符号链接类型、FD_CLOEXEC，以及 readdir 的目录内容。SELinux
+测试另行检查 service_manager 的编号和三个权限文件。平台测试为 PID 1
+显式安装 SIGALRM 处理，超时以 124 退出并记录原因。
+
+文件测试还触发了 `brk` 布局问题。musl 的 `opendir` 首次分配小块内存时，
+堆从程序尾部增长，进入相邻程序预先准备的代码区；Linux 缺页处理返回成功，
+宿主仍保留代码页的只读权限，导致同一写指令不断缺页。现将 brk 起点移至
+动态执行区之后，普通 mmap 起点再后移 64 MiB。该间隔只占虚拟地址，实际
+内存仍由 Linux 按需分配。新增 8 页堆增长、读写、fork COW 和缩回测试。
+堆测试及 musl/Bionic 文件测试已通过，原有 ART 负载继续通过。
+
+平台服务现已完成 SELinux enforcing 下的允许和拒绝注册、服务查找、32 轮
+跨进程数据校验（最大 64 KiB）和文件描述符传递。退出通知测试曾在无事件时
+调用 `ABinderProcess_handlePolledCommands`，该函数会阻塞；现仅在 poll
+报告可读后调用。
+
+同次排查发现 Bionic 的信号处理未提供 SA_RESTORER，原型内核原先只接受
+libc 提供返回入口，定时器信号因此变成 SIGSEGV。新增固定登记的信号返回
+ELF，每次 exec 由 Linux 映射，fork 继承映射和返回地址。SA_RESTORER 存在
+时继续使用 libc 的入口。共享信号测试同时编译给 musl 和 Bionic，覆盖嵌套
+信号、备用栈、寄存器恢复、EINTR/SA_RESTART、缺页恢复、非法信号帧及定时器。
+Bionic 未实现 pthread_cancel，取消线程测试只在 musl 中运行。本轮完整验证
+仍在进行。
+
+本轮 CLI、GCD 完整回归通过，包含 3 轮用户态压力测试、13 项 ELF/构建检查
+和 iOS 目标编译。两种入口均分配并释放 434 个 NCE 上下文；平台 Binder
+服务退出通知、资源清理、6 种属性协议拒绝请求和跨进程属性等待唤醒均通过。
+ART 的全部既有负载继续通过。运行日志为
+`work/native-linux-nce/android-services-probe.log`，完整结果和源文件校验值见
+`work/native-linux-nce/processes/lkl-summary.json`。本轮未运行手机测试。
+
+复杂度审查保留了 Bionic 的属性区实现和原版 Binder 库，原型只提供当前缺少
+的属性 socket 服务。信号返回入口共用已登记 ELF 的加载与指令改写流程。
+删除了未使用的 mm context `end_brk` 字段；程序文件改在测试开始时写入一次，
+压力循环继续检查文件内容，省去每轮重复写入。Binder 客户端的 ProcessState
+在退出前持有驱动文件，因此测试使用 MNT_DETACH 分离挂载点，随后由进程
+退出释放文件和映射。
+
+下一步运行原版 `app_process64`，接入 framework Java 类和 JNI 初始化。
+初步依赖检查找到 236 个可执行文件及共享库，当前提取材料均已包含；部分
+库的函数符号描述超出 text 段，需先核对 CFI 跳转表等实际指令布局。后续仍
+在 Mac 上完成 Linux 客体集成，设备验证留到集中测试阶段。

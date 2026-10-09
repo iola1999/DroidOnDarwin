@@ -3,6 +3,11 @@
 #define _ASM_LKL_ELF_H
 #ifdef CONFIG_MMU
 #include <asm/host_ops.h>
+#include <asm/nce-layout.h>
+#define NCE_ELF_BRK (nce_user_base + NCE_BRK_OFFSET)
+#define ARCH_HAS_SETUP_ADDITIONAL_PAGES 1
+struct linux_binprm;
+int arch_setup_additional_pages(struct linux_binprm *, int);
 #define NCE_ELF_LAYOUT(path, header, phdrs) lkl_ops->user_elf(path, header, phdrs)
 struct file;
 struct elf64_hdr;

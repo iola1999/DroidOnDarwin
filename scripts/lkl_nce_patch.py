@@ -65,6 +65,7 @@ def apply(source: Path, experiment: Path):
     if "\tnce_bias =" not in (source / "fs/binfmt_elf.c").read_text():
         edit("fs/binfmt_elf.c", "\t/* Flush all traces of the currently running executable */", "#ifdef NCE_ELF_LAYOUT\n\tnce_bias = interpreter ? 0 : NCE_ELF_LAYOUT(bprm->filename, elf_ex, elf_phdata);\n\tif (!nce_bias) {\n\t\tretval = -ENOEXEC;\n\t\tgoto out_free_dentry;\n\t}\n#endif\n\t/* Flush all traces of the currently running executable */")
     edit("fs/binfmt_elf.c", "\t\t\tload_bias = ELF_PAGESTART(load_bias - vaddr);", "#ifdef NCE_ELF_LAYOUT\n\t\t\tload_bias = nce_bias;\n\t\t\telf_flags |= MAP_FIXED_NOREPLACE;\n#endif\n\t\t\tload_bias = ELF_PAGESTART(load_bias - vaddr);")
+    edit("fs/binfmt_elf.c", "\tif (current->personality & MMAP_PAGE_ZERO) {", "#ifdef NCE_ELF_BRK\n\t/* Other registered programs retain prepared host code at nearby addresses. */\n\tmm->brk = mm->start_brk = NCE_ELF_BRK;\n#endif\n\tif (current->personality & MMAP_PAGE_ZERO) {")
     edit("fs/binfmt_elf.c", "nce_bias = interpreter ? 0 : NCE_ELF_LAYOUT(bprm->filename, elf_ex, elf_phdata);", "nce_bias = NCE_ELF_LAYOUT(bprm->filename, elf_ex, elf_phdata);")
     edit("fs/binfmt_elf.c", "if (!nce_bias) {", "if (!nce_bias || (interpreter && !NCE_ELF_INTERP_LAYOUT(interpreter, interp_elf_ex, interp_elf_phdata))) {")
     edit("fs/binfmt_elf.c", "\t\t\tmap_addr = elf_load(interpreter, load_addr + vaddr,", "#ifdef NCE_ELF_INTERP_LAYOUT\n\t\t\tif (!load_addr_set) {\n\t\t\t\tload_addr = NCE_ELF_INTERP_LAYOUT(interpreter, interp_elf_ex, interp_elf_phdata);\n\t\t\t\tif (!load_addr) return -ENOEXEC;\n\t\t\t\telf_type |= MAP_FIXED_NOREPLACE;\n\t\t\t}\n#endif\n\t\t\tmap_addr = elf_load(interpreter, load_addr + vaddr,")
@@ -104,6 +105,7 @@ def apply(source: Path, experiment: Path):
                                ("lkl-mmu.h", "include/asm/mmu.h"),
                                ("lkl-uaccess.h", "include/asm/uaccess.h"),
                                ("lkl-elf.h", "include/asm/elf.h"),
+                               ("lkl-fcntl.h", "include/uapi/asm/fcntl.h"),
                                ("lkl-tlbflush.h", "include/asm/tlbflush.h")):
         target = source / arch / destination
         content = (experiment / local).read_bytes()
