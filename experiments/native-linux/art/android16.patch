@@ -25,11 +25,10 @@
                 << " (kind=" << compilation_kind << ")"
 --- a/compiler/optimizing/code_generator_arm64.cc
 +++ b/compiler/optimizing/code_generator_arm64.cc
-@@ -95,6 +95,18 @@
- using helpers::VIXLRegCodeFromART;
+@@ -96,6 +96,28 @@
  using helpers::WRegisterFrom;
  using helpers::XRegisterFrom;
-+
+
 +#ifdef ART_NCE
 +// Registers and stack maps retain compressed references. Only the address
 +// used by a heap access is expanded to the native pointer.
@@ -40,11 +39,33 @@
 +  masm->Add(address, address, Operand(reference.W(), UXTW));
 +  return address;
 +}
++
++// Runtime entrypoints take native pointers; null must remain zero.
++static void NceRuntimeReference(MacroAssembler* masm, Register reference) {
++  vixl::aarch64::Label done;
++  masm->Cbz(reference.W(), &done);
++  UseScratchRegisterScope temps(masm);
++  Register address = NceHeapAddress(masm, &temps, reference);
++  masm->Mov(reference.X(), address);
++  masm->Bind(&done);
++}
 +#endif
-
++
  // TODO(mythria): Expand SystemRegister in vixl to include this value.
  uint16_t SYS_CNTVCT_EL0 = SystemRegisterEncoder<1, 3, 14, 0, 2>::value;
-@@ -1630,7 +1642,13 @@
+
+@@ -575,6 +597,10 @@
+     codegen->GetMoveResolver()->EmitNativeCode(&parallel_move);
+
+     CodeGeneratorARM64* arm64_codegen = down_cast<CodeGeneratorARM64*>(codegen);
++#ifdef ART_NCE
++    NceRuntimeReference(arm64_codegen->GetVIXLAssembler(), calling_convention.GetRegisterAt(0));
++    NceRuntimeReference(arm64_codegen->GetVIXLAssembler(), calling_convention.GetRegisterAt(2));
++#endif
+     arm64_codegen->InvokeRuntime(kQuickAputObject, instruction_, this);
+     CheckEntrypointTypes<kQuickAputObject, void, mirror::Array*, int32_t, mirror::Object*>();
+     RestoreLiveRegisters(codegen, locations);
+@@ -1630,7 +1656,13 @@
    // Load the address of the card table into `card`.
    __ Ldr(card, MemOperand(tr, Thread::CardTableOffset<kArm64PointerSize>().Int32Value()));
    // Calculate the offset (in the card table) of the card corresponding to `object`.
@@ -58,7 +79,7 @@
    // Write the `art::gc::accounting::CardTable::kCardDirty` value into the
    // `object`'s card.
    //
-@@ -1655,7 +1673,13 @@
+@@ -1655,7 +1687,13 @@
    // Load the address of the card table into `card`.
    __ Ldr(card, MemOperand(tr, Thread::CardTableOffset<kArm64PointerSize>().Int32Value()));
    // Calculate the offset (in the card table) of the card corresponding to `object`.
@@ -72,7 +93,7 @@
    // assert (!clean || !self->is_gc_marking)
    __ Ldrb(temp, MemOperand(card, temp.X()));
    static_assert(gc::accounting::CardTable::kCardClean == 0);
-@@ -2357,8 +2381,16 @@
+@@ -2357,8 +2395,16 @@
    uint32_t offset = field_info.GetFieldOffset().Uint32Value();
    DCHECK_EQ(DataType::Size(field_info.GetFieldType()), DataType::Size(instruction->GetType()));
    DataType::Type load_type = instruction->GetType();
@@ -89,7 +110,7 @@
 
    if (load_type == DataType::Type::kReference && codegen_->EmitBakerReadBarrier()) {
      // Object FieldGet with Baker's read barrier case.
-@@ -2440,13 +2472,19 @@
+@@ -2440,13 +2486,19 @@
        source = temp;
      }
 
@@ -111,7 +132,7 @@
        codegen_->MaybeRecordImplicitNullCheck(instruction);
      }
    }
-@@ -2869,6 +2907,18 @@
+@@ -2869,6 +2921,18 @@
    MacroAssembler* masm = GetVIXLAssembler();
    UseScratchRegisterScope temps(masm);
 
@@ -130,7 +151,7 @@
    // The non-Baker read barrier instrumentation of object ArrayGet instructions
    // does not support the HIntermediateAddress instruction.
    DCHECK(!((type == DataType::Type::kReference) &&
-@@ -2997,12 +3047,18 @@
+@@ -2997,12 +3061,18 @@
  void InstructionCodeGeneratorARM64::VisitArrayLength(HArrayLength* instruction) {
    uint32_t offset = CodeGenerator::GetArrayLengthOffset(instruction);
    vixl::aarch64::Register out = OutputRegister(instruction);
@@ -149,7 +170,7 @@
    // Mask out compression flag from String's array length.
    if (mirror::kUseStringCompression && instruction->IsStringLength()) {
      __ Lsr(out.W(), out.W(), 1u);
-@@ -3044,6 +3100,18 @@
+@@ -3044,6 +3114,18 @@
    MemOperand destination = HeapOperand(array);
    MacroAssembler* masm = GetVIXLAssembler();
 
@@ -168,7 +189,133 @@
    if (!needs_write_barrier) {
      if (codegen_->ShouldCheckGCCard(value_type, instruction->GetValue(), write_barrier_kind)) {
        codegen_->CheckGCCardIsValid(array);
-@@ -5180,10 +5248,18 @@
+@@ -3051,6 +3133,13 @@
+
+     DCHECK(!needs_type_check);
+     UseScratchRegisterScope temps(masm);
++#ifdef ART_NCE
++    Register address = NceHeapAddress(masm, &temps, array);
++    if (!instruction->GetArray()->IsIntermediateAddress()) __ Add(address, address, offset);
++    destination = index.IsConstant()
++        ? MemOperand(address, Int64FromLocation(index) << DataType::SizeShift(value_type))
++        : MemOperand(address, XRegisterFrom(index), LSL, DataType::SizeShift(value_type));
++#else
+     if (index.IsConstant()) {
+       offset += Int64FromLocation(index) << DataType::SizeShift(value_type);
+       destination = HeapOperand(array, offset);
+@@ -3074,6 +3163,7 @@
+                                 DataType::SizeShift(value_type));
+     }
+
++#endif
+     if (kPoisonHeapReferences && value_type == DataType::Type::kReference) {
+       DCHECK(value.IsW());
+       Register temp_src = temps.AcquireW();
+@@ -3130,6 +3220,17 @@
+         // false negative, in which case we would take the ArraySet
+         // slow path.
+
++#ifdef ART_NCE
++        __ Mov(temp.X(), nce_art_reference_base);
++        __ Add(temp.X(), temp.X(), Operand(array.W(), UXTW));
++        __ Ldr(temp.W(), MemOperand(temp.X(), class_offset));
++        __ Mov(temp2.X(), nce_art_reference_base);
++        __ Add(temp2.X(), temp2.X(), Operand(temp.W(), UXTW));
++        __ Ldr(temp.W(), MemOperand(temp2.X(), component_offset));
++        __ Mov(temp2.X(), nce_art_reference_base);
++        __ Add(temp2.X(), temp2.X(), Operand(Register(value).W(), UXTW));
++        __ Ldr(temp2.W(), MemOperand(temp2.X(), class_offset));
++#else
+         // /* HeapReference<Class> */ temp = array->klass_
+         {
+           // Ensure that between load and MaybeRecordImplicitNullCheck there are no pools emitted.
+@@ -3145,6 +3246,7 @@
+         __ Ldr(temp2, HeapOperand(Register(value), class_offset));
+         // If heap poisoning is enabled, no need to unpoison `temp`
+         // nor `temp2`, as we are comparing two poisoned references.
++#endif
+         __ Cmp(temp, temp2);
+
+         if (instruction->StaticTypeOfArrayIsObjectArray()) {
+@@ -3155,7 +3257,13 @@
+           GetAssembler()->MaybeUnpoisonHeapReference(temp);
+
+           // /* HeapReference<Class> */ temp = temp->super_class_
++#ifdef ART_NCE
++          __ Mov(temp2.X(), nce_art_reference_base);
++          __ Add(temp2.X(), temp2.X(), Operand(temp.W(), UXTW));
++          __ Ldr(temp.W(), MemOperand(temp2.X(), super_offset));
++#else
+           __ Ldr(temp, HeapOperand(temp, super_offset));
++#endif
+           // If heap poisoning is enabled, no need to unpoison
+           // `temp`, as we are comparing against null below.
+           __ Cbnz(temp, slow_path->GetEntryLabel());
+@@ -3191,6 +3299,13 @@
+       source = temp_source;
+     }
+
++#ifdef ART_NCE
++    Register address = NceHeapAddress(masm, &temps, array);
++    if (!instruction->GetArray()->IsIntermediateAddress()) __ Add(address, address, offset);
++    destination = index.IsConstant()
++        ? MemOperand(address, Int64FromLocation(index) << DataType::SizeShift(value_type))
++        : MemOperand(address, XRegisterFrom(index), LSL, DataType::SizeShift(value_type));
++#else
+     if (index.IsConstant()) {
+       offset += Int64FromLocation(index) << DataType::SizeShift(value_type);
+       destination = HeapOperand(array, offset);
+@@ -3203,6 +3318,7 @@
+                                 DataType::SizeShift(value_type));
+     }
+
++#endif
+     {
+       // Ensure that between store and MaybeRecordImplicitNullCheck there are no pools emitted.
+       EmissionCheckScope guard(GetVIXLAssembler(), kMaxMacroInstructionSizeInBytes);
+@@ -4865,6 +4981,16 @@
+   Offset class_offset = mirror::Object::ClassOffset();
+   Offset entry_point = ArtMethod::EntryPointFromQuickCompiledCodeOffset(kArm64PointerSize);
+
++#ifdef ART_NCE
++  {
++    UseScratchRegisterScope temps(GetVIXLAssembler());
++    Register object = temp.W();
++    if (receiver.IsStackSlot()) __ Ldr(object, StackOperandFrom(receiver));
++    else __ Mov(object, WRegisterFrom(receiver));
++    Register address = NceHeapAddress(GetVIXLAssembler(), &temps, object);
++    __ Ldr(temp.W(), MemOperand(address, class_offset.Int32Value()));
++  }
++#else
+   // Ensure that between load and MaybeRecordImplicitNullCheck there are no pools emitted.
+   if (receiver.IsStackSlot()) {
+     __ Ldr(temp.W(), StackOperandFrom(receiver));
+@@ -4880,6 +5006,8 @@
+     __ Ldr(temp.W(), HeapOperandFrom(receiver, class_offset));
+     codegen_->MaybeRecordImplicitNullCheck(invoke);
+   }
++
++#endif
+
+   // Instead of simply (possibly) unpoisoning `temp` here, we should
+   // emit a read barrier for the previous class reference load.
+@@ -4914,8 +5042,15 @@
+         invoke->GetHiddenArgumentLoadKind(), Location::RegisterLocation(ip1.GetCode()), invoke);
+   }
+
++#ifdef ART_NCE
++  {
++    Register address = NceHeapAddress(masm, &scratch_scope, temp.W());
++    __ Ldr(temp, MemOperand(address, mirror::Class::ImtPtrOffset(kArm64PointerSize).Uint32Value()));
++  }
++#else
+   __ Ldr(temp,
+       MemOperand(temp, mirror::Class::ImtPtrOffset(kArm64PointerSize).Uint32Value()));
++#endif
+   uint32_t method_offset = static_cast<uint32_t>(ImTable::OffsetOfElement(
+       invoke->GetImtIndex(), kArm64PointerSize));
+   // temp = temp->GetImtEntryAt(method_offset);
+@@ -5180,10 +5315,18 @@
 
    {
      // Ensure that between load and MaybeRecordImplicitNullCheck there are no pools emitted.
@@ -187,7 +334,7 @@
    }
    // Instead of simply (possibly) unpoisoning `temp` here, we should
    // emit a read barrier for the previous class reference load.
-@@ -5198,7 +5274,15 @@
+@@ -5198,7 +5341,15 @@
    MaybeGenerateInlineCacheCheck(invoke, temp);
 
    // temp = temp->GetMethodAt(method_offset);
@@ -203,7 +350,7 @@
    // lr = temp->GetEntryPoint();
    __ Ldr(lr, MemOperand(temp, entry_point.SizeValue()));
    {
-@@ -5825,7 +5909,12 @@
+@@ -5825,7 +5976,12 @@
        break;
      }
      case HLoadClass::LoadKind::kJitTableAddress: {
@@ -217,7 +364,7 @@
                                                         cls->GetTypeIndex(),
                                                         cls->GetClass()));
        codegen_->GenerateGcRootFieldLoad(cls,
-@@ -5919,7 +6008,12 @@
+@@ -5919,7 +6075,12 @@
        return;
      }
      case HLoadMethodType::LoadKind::kJitTableAddress: {
@@ -231,7 +378,36 @@
                                                              load->GetProtoIndex(),
                                                              load->GetMethodType()));
        codegen_->GenerateGcRootFieldLoad(load,
-@@ -6056,7 +6150,12 @@
+@@ -5948,7 +6109,16 @@
+ }
+
+ void InstructionCodeGeneratorARM64::VisitLoadException(HLoadException* instruction) {
++#ifdef ART_NCE
++  UseScratchRegisterScope temps(GetVIXLAssembler());
++  Register base = temps.AcquireX();
++  Register output = OutputRegister(instruction);
++  __ Ldr(output.X(), GetExceptionTlsAddress());
++  __ Mov(base, nce_art_reference_base);
++  __ Sub(output.X(), output.X(), base);
++#else
+   __ Ldr(OutputRegister(instruction), GetExceptionTlsAddress());
++#endif
+ }
+
+ void LocationsBuilderARM64::VisitClearException(HClearException* clear) {
+@@ -5956,7 +6126,11 @@
+ }
+
+ void InstructionCodeGeneratorARM64::VisitClearException([[maybe_unused]] HClearException* clear) {
++#ifdef ART_NCE
++  __ Str(xzr, GetExceptionTlsAddress());
++#else
+   __ Str(wzr, GetExceptionTlsAddress());
++#endif
+ }
+
+ HLoadString::LoadKind CodeGeneratorARM64::GetSupportedLoadStringKind(
+@@ -6056,7 +6230,12 @@
        return;
      }
      case HLoadString::LoadKind::kJitTableAddress: {
@@ -245,7 +421,17 @@
                                                          load->GetStringIndex(),
                                                          load->GetString()));
        codegen_->GenerateGcRootFieldLoad(load,
-@@ -6196,7 +6295,22 @@
+@@ -6096,6 +6275,9 @@
+ }
+
+ void InstructionCodeGeneratorARM64::VisitMonitorOperation(HMonitorOperation* instruction) {
++#ifdef ART_NCE
++  NceRuntimeReference(GetVIXLAssembler(), x0);
++#endif
+   codegen_->InvokeRuntime(instruction->IsEnter() ? kQuickLockObject : kQuickUnlockObject,
+                           instruction);
+   if (instruction->IsEnter()) {
+@@ -6196,7 +6378,22 @@
  void InstructionCodeGeneratorARM64::VisitNewArray(HNewArray* instruction) {
    // Note: if heap poisoning is enabled, the entry point takes care of poisoning the reference.
    QuickEntrypointEnum entrypoint = CodeGenerator::GetArrayAllocationEntrypoint(instruction);
@@ -268,7 +454,7 @@
    CheckEntrypointTypes<kQuickAllocArrayResolved, void*, mirror::Class*, int32_t>();
    codegen_->MaybeGenerateMarkingRegisterCheck(/* code= */ __LINE__);
  }
-@@ -6210,7 +6324,22 @@
+@@ -6210,7 +6407,22 @@
  }
 
  void InstructionCodeGeneratorARM64::VisitNewInstance(HNewInstance* instruction) {
@@ -291,7 +477,17 @@
    CheckEntrypointTypes<kQuickAllocObjectWithChecks, void*, mirror::Class*>();
    codegen_->MaybeGenerateMarkingRegisterCheck(/* code= */ __LINE__);
  }
-@@ -7383,7 +7512,18 @@
+@@ -6740,6 +6952,9 @@
+ }
+
+ void InstructionCodeGeneratorARM64::VisitThrow(HThrow* instruction) {
++#ifdef ART_NCE
++  NceRuntimeReference(GetVIXLAssembler(), x0);
++#endif
+   codegen_->InvokeRuntime(kQuickDeliverException, instruction);
+   CheckEntrypointTypes<kQuickDeliverException, void, mirror::Object*>();
+ }
+@@ -7383,7 +7598,18 @@
      /*out*/ Register* scratch) {
    LocationSummary* locations = instruction->GetLocations();
    Register base = InputRegisterAt(instruction, 0);
@@ -311,7 +507,7 @@
    if (instruction->InputAt(1)->IsIntermediateAddressIndex()) {
      DCHECK(!is_string_char_at);
      return MemOperand(base.X(), InputRegisterAt(instruction, 1).X());
-@@ -7406,6 +7546,7 @@
+@@ -7406,6 +7632,7 @@
      __ Add(*scratch, base, Operand(WRegisterFrom(index), LSL, shift));
      return HeapOperand(*scratch, offset);
    }
@@ -486,7 +682,7 @@
        Handle<mirror::MethodType> handle,
 --- a/compiler/optimizing/optimizing_compiler.cc
 +++ b/compiler/optimizing/optimizing_compiler.cc
-@@ -774,10 +774,73 @@
+@@ -774,10 +774,79 @@
    bool GraphRejected() const { return has_unsupported_instructions_; }
 
   private:
@@ -529,6 +725,15 @@
 +  NCE_ALLOW(NewInstance)
 +  NCE_ALLOW(NewArray)
 +  NCE_ALLOW(ConstructorFence)
++  NCE_ALLOW(InvokeInterface)
++  NCE_ALLOW(MonitorOperation)
++  NCE_ALLOW(TryBoundary)
++  NCE_ALLOW(LoadException)
++  NCE_ALLOW(ClearException)
++  NCE_ALLOW(Throw)
++  NCE_ALLOW(StaticFieldGet)
++  NCE_ALLOW(StaticFieldSet)
++  NCE_ALLOW(ArraySet)
 +  NCE_ALLOW(ArrayLength)
 +  NCE_ALLOW(IntermediateAddress)
 +  NCE_ALLOW(IntermediateAddressIndex)
@@ -550,9 +755,6 @@
 +  void VisitArrayGet(HArrayGet* access) override {
 +    if (access->IsStringCharAt()) RejectGraph();
 +  }
-+  void VisitArraySet(HArraySet* access) override {
-+    if (access->GetComponentType() == DataType::Type::kReference) RejectGraph();
-+  }
 +  void VisitVecLoad(HVecLoad* access) override {
 +    if (access->IsStringCharAt()) RejectGraph();
 +  }
@@ -564,7 +766,7 @@
    void RejectGraph() {
      has_unsupported_instructions_ = true;
    }
-@@ -793,9 +856,11 @@
+@@ -793,9 +862,11 @@
  //
  // TODO(Simulator): compile and simulate all the methods as in regular host mode.
  bool ShouldMethodBeCompiled(HGraph* graph, const std::string& method_name) {
@@ -576,7 +778,7 @@
 
    CompilationFilterForRestrictedMode filter_visitor(graph);
    filter_visitor.VisitReversePostOrder();
-@@ -1010,6 +1075,12 @@
+@@ -1010,6 +1081,12 @@
    // TODO(Simulator): support and compile all methods.
    std::string method_name = dex_file.PrettyMethod(method_idx);
    if (!ShouldMethodBeCompiled(graph, method_name)) {
@@ -589,7 +791,7 @@
      return nullptr;
    }
  #endif  // ART_USE_RESTRICTED_MODE
-@@ -1461,7 +1532,12 @@
+@@ -1461,7 +1538,12 @@
    {
      // Go to native so that we don't block GC during compilation.
      ScopedThreadSuspension sts(self, ThreadState::kNative);
@@ -686,7 +888,75 @@
 
 --- a/runtime/arch/arm64/quick_entrypoints_arm64.S
 +++ b/runtime/arch/arm64/quick_entrypoints_arm64.S
-@@ -1206,7 +1206,11 @@
+@@ -384,6 +384,14 @@
+     // Helper signature is always
+     // (method_idx, *this_object, *caller_method, *self, sp)
+
++#ifdef ART_NCE
++    cbz w1, 9f
++    adrp xIP0, :got:nce_art_reference_base
++    ldr xIP0, [xIP0, :got_lo12:nce_art_reference_base]
++    ldr xIP0, [xIP0]
++    add x1, xIP0, w1, uxtw
++9:
++#endif
+     mov    x2, xSELF                      // pass Thread::Current
+     mov    x3, sp
+     CALL_SYMBOL \cxx_name                 // (method_idx, this, Thread*, SP)
+@@ -1036,6 +1044,12 @@
+ #endif  // USE_READ_BARRIER
+     ldr w3, [x0, #MIRROR_OBJECT_CLASS_OFFSET]          // Heap reference = 32b; zero-extends to x3.
+     UNPOISON_HEAP_REF w3
++#ifdef ART_NCE
++    adrp x4, :got:nce_art_reference_base
++    ldr x4, [x4, :got_lo12:nce_art_reference_base]
++    ldr x4, [x4]
++    add x3, x4, w3, uxtw
++#endif
+     ldr w3, [x3, #MIRROR_CLASS_COMPONENT_TYPE_OFFSET]  // Heap reference = 32b; zero-extends to x3.
+     UNPOISON_HEAP_REF w3
+     ldr w4, [x2, #MIRROR_OBJECT_CLASS_OFFSET]          // Heap reference = 32b; zero-extends to x4.
+@@ -1045,6 +1059,12 @@
+     bne .Laput_obj_check_assignability
+ .Laput_obj_store:
+     add x3, x0, #MIRROR_OBJECT_ARRAY_DATA_OFFSET
++#ifdef ART_NCE
++    adrp x4, :got:nce_art_reference_base
++    ldr x4, [x4, :got_lo12:nce_art_reference_base]
++    ldr x4, [x4]
++    sub x2, x2, x4
++#endif
+     POISON_HEAP_REF w2
+     str w2, [x3, x1, lsl #2]                           // Heap reference = 32b.
+     ldr x3, [xSELF, #THREAD_CARD_TABLE_OFFSET]
+@@ -1065,6 +1085,13 @@
+     // Call runtime code
+     mov x0, x3              // Heap reference, 32b, "uncompress" = do nothing, already zero-extended
+     mov x1, x4              // Heap reference, 32b, "uncompress" = do nothing, already zero-extended
++#ifdef ART_NCE
++    adrp x5, :got:nce_art_reference_base
++    ldr x5, [x5, :got_lo12:nce_art_reference_base]
++    ldr x5, [x5]
++    add x0, x5, w0, uxtw
++    add x1, x5, w1, uxtw
++#endif
+     CALL_SYMBOL artIsAssignableFromCode
+
+     // Check for exception
+@@ -1076,6 +1103,12 @@
+     RESTORE_TWO_REGS_DECREASE_FRAME x0, x1, 32
+
+     add x3, x0, #MIRROR_OBJECT_ARRAY_DATA_OFFSET
++#ifdef ART_NCE
++    adrp x4, :got:nce_art_reference_base
++    ldr x4, [x4, :got_lo12:nce_art_reference_base]
++    ldr x4, [x4]
++    sub x2, x2, x4
++#endif
+     POISON_HEAP_REF w2
+     str w2, [x3, x1, lsl #2]                           // Heap reference = 32b.
+     ldr x3, [xSELF, #THREAD_CARD_TABLE_OFFSET]
+@@ -1206,7 +1239,11 @@
 
  .macro RETURN_OR_DEOPT_IF_RESULT_IS_NON_NULL_OR_DELIVER
      CFI_REMEMBER_STATE
@@ -698,7 +968,7 @@
      DEOPT_OR_RETURN x1, /*is_ref=*/1 // check for deopt or return
  1:
      CFI_RESTORE_STATE_AND_DEF_CFA sp, 0
-@@ -1314,6 +1318,12 @@
+@@ -1314,6 +1351,12 @@
  #if ROSALLOC_SLOT_NEXT_OFFSET != MIRROR_OBJECT_CLASS_OFFSET
  #error "Class pointer needs to overwrite next pointer."
  #endif
@@ -711,7 +981,7 @@
      POISON_HEAP_REF w0
      str    w0, [x3, #MIRROR_OBJECT_CLASS_OFFSET]
                                                                // Push the new object onto the thread
-@@ -1321,7 +1331,12 @@
+@@ -1321,7 +1364,12 @@
                                                                // increment the thread local
                                                                // allocation stack top.
      ldr    x1, [xSELF, #THREAD_LOCAL_ALLOC_STACK_TOP_OFFSET]
@@ -1072,6 +1342,117 @@
    }
 +#endif
    return true;
+ }
+
+--- a/runtime/jit/small_pattern_matcher.cc
++++ b/runtime/jit/small_pattern_matcher.cc
+@@ -26,6 +26,21 @@
+ // The following methods will be directly invoked by our own JIT/AOT compiled
+ // code.
+
++// These functions are installed directly as managed method entrypoints.
++#ifdef ART_NCE
++using QuickReference = uint32_t;
++static mirror::Object* DecodeQuickReference(QuickReference reference) {
++  return static_cast<mirror::Object*>(nce_art_decode_reference(reference));
++}
++static QuickReference EncodeQuickReference(mirror::Object* object) {
++  return nce_art_encode_reference(object);
++}
++#else
++using QuickReference = mirror::Object*;
++static mirror::Object* DecodeQuickReference(QuickReference reference) { return reference; }
++static QuickReference EncodeQuickReference(mirror::Object* object) { return object; }
++#endif
++
+ static void EmptyMethod() {}
+ static int32_t ReturnZero() { return 0; }
+ static int32_t ReturnOne() { return 1; }
+@@ -35,15 +50,16 @@
+
+ template <int offset, typename T>
+ static std::conditional_t<(sizeof(T) < sizeof(int32_t)), int32_t, T> ReturnFieldAt(
+-    [[maybe_unused]] ArtMethod* method, mirror::Object* obj) REQUIRES_SHARED(Locks::mutator_lock_) {
+-  return obj->GetFieldPrimitive<T, /* kIsVolatile= */ false>(
++    [[maybe_unused]] ArtMethod* method, QuickReference obj) REQUIRES_SHARED(Locks::mutator_lock_) {
++  return DecodeQuickReference(obj)->GetFieldPrimitive<T, /* kIsVolatile= */ false>(
+       MemberOffset(offset + sizeof(mirror::Object)));
+ }
+
+ template <int offset, typename unused>
+-static mirror::Object* ReturnFieldObjectAt([[maybe_unused]] ArtMethod* method, mirror::Object* obj)
+-    REQUIRES_SHARED(Locks::mutator_lock_) {
+-  return obj->GetFieldObject<mirror::Object>(MemberOffset(offset + sizeof(mirror::Object)));
++static QuickReference ReturnFieldObjectAt([[maybe_unused]] ArtMethod* method, QuickReference obj)
++    REQUIRES_SHARED(Locks::mutator_lock_) {
++  return EncodeQuickReference(DecodeQuickReference(obj)->GetFieldObject<mirror::Object>(
++      MemberOffset(offset + sizeof(mirror::Object))));
+ }
+
+ template <int offset, typename T>
+@@ -56,45 +72,45 @@
+ }
+
+ template <int offset, typename unused>
+-static mirror::Object* ReturnStaticFieldObjectAt(ArtMethod* method)
++static QuickReference ReturnStaticFieldObjectAt(ArtMethod* method)
+     REQUIRES_SHARED(Locks::mutator_lock_) {
+   ObjPtr<mirror::Class> cls = method->GetDeclaringClass();
+   MemberOffset first_field_offset = cls->GetFirstReferenceStaticFieldOffset(kRuntimePointerSize);
+-  return cls->GetFieldObject<mirror::Object>(
+-      MemberOffset(offset + first_field_offset.Int32Value()));
++  return EncodeQuickReference(cls->GetFieldObject<mirror::Object>(
++      MemberOffset(offset + first_field_offset.Int32Value())));
+ }
+
+ template <int offset, typename T>
+-static void SetFieldAt([[maybe_unused]] ArtMethod* method, mirror::Object* obj, T value)
+-    REQUIRES_SHARED(Locks::mutator_lock_) {
+-  obj->SetFieldPrimitive<T, /* kIsVolatile= */ false>(
++static void SetFieldAt([[maybe_unused]] ArtMethod* method, QuickReference obj, T value)
++    REQUIRES_SHARED(Locks::mutator_lock_) {
++  DecodeQuickReference(obj)->SetFieldPrimitive<T, /* kIsVolatile= */ false>(
+       MemberOffset(offset + sizeof(mirror::Object)), value);
+ }
+
+ template <int offset, typename unused>
+ static void SetFieldObjectAt([[maybe_unused]] ArtMethod* method,
+-                             mirror::Object* obj,
+-                             mirror::Object* value)
+-    REQUIRES_SHARED(Locks::mutator_lock_) {
+-  obj->SetFieldObject</* kTransactionActive */ false>(
+-      MemberOffset(offset + sizeof(mirror::Object)), value);
++                             QuickReference obj,
++                             QuickReference value)
++    REQUIRES_SHARED(Locks::mutator_lock_) {
++  DecodeQuickReference(obj)->SetFieldObject</* kTransactionActive */ false>(
++      MemberOffset(offset + sizeof(mirror::Object)), DecodeQuickReference(value));
+ }
+
+ template <int offset, typename T>
+-static void ConstructorSetFieldAt([[maybe_unused]] ArtMethod* method, mirror::Object* obj, T value)
+-    REQUIRES_SHARED(Locks::mutator_lock_) {
+-  obj->SetFieldPrimitive<T, /* kIsVolatile= */ false>(
++static void ConstructorSetFieldAt([[maybe_unused]] ArtMethod* method, QuickReference obj, T value)
++    REQUIRES_SHARED(Locks::mutator_lock_) {
++  DecodeQuickReference(obj)->SetFieldPrimitive<T, /* kIsVolatile= */ false>(
+       MemberOffset(offset + sizeof(mirror::Object)), value);
+   QuasiAtomic::ThreadFenceForConstructor();
+ }
+
+ template <int offset, typename unused>
+ static void ConstructorSetFieldObjectAt([[maybe_unused]] ArtMethod* method,
+-                                        mirror::Object* obj,
+-                                        mirror::Object* value)
+-    REQUIRES_SHARED(Locks::mutator_lock_) {
+-  obj->SetFieldObject</* kTransactionActive */ false>(
+-      MemberOffset(offset + sizeof(mirror::Object)), value);
++                                        QuickReference obj,
++                                        QuickReference value)
++    REQUIRES_SHARED(Locks::mutator_lock_) {
++  DecodeQuickReference(obj)->SetFieldObject</* kTransactionActive */ false>(
++      MemberOffset(offset + sizeof(mirror::Object)), DecodeQuickReference(value));
+   QuasiAtomic::ThreadFenceForConstructor();
  }
 
 --- a/runtime/jni/local_reference_table.cc

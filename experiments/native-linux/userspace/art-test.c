@@ -84,6 +84,15 @@ static int test_jit(JNIEnv *env, jclass workload, void *library)
         {"$compile$newArray", "(I)[I"},
         {"$compile$allocateLoop", "(I)J"},
         {"$compile$virtual", "(LNceWorkload$Value;)I"},
+        {"$compile$interfaceCollision", "(LNceWorkload$CollisionReader;)I"},
+        {"$compile$patternRoundTrip", "(LNceWorkload$PatternBox;Ljava/lang/Object;)Ljava/lang/Object;"},
+        {"$compile$referenceStore", "([Ljava/lang/Object;ILjava/lang/Object;)Ljava/lang/Object;"},
+        {"$compile$typedStore", "([LNceWorkload$Node;ILNceWorkload$Node;)V"},
+        {"$compile$clearStore", "([Ljava/lang/Object;I)V"},
+        {"$compile$interfaceRead", "(LNceWorkload$Reader;)I"},
+        {"$compile$interfaceIdentity", "(LNceWorkload$Reader;Ljava/lang/Object;)Ljava/lang/Object;"},
+        {"$compile$monitor", "(LNceWorkload$Node;Ljava/lang/Object;ILjava/lang/RuntimeException;)LNceWorkload$Node;"},
+        {"$compile$catchStore", "([Ljava/lang/Object;Ljava/lang/Object;)I"},
     };
     for (unsigned i = 0; i < sizeof(methods) / sizeof(methods[0]); ++i) {
         jmethodID method = (*env)->GetStaticMethodID(env, workload, methods[i][0], methods[i][1]);
@@ -117,7 +126,43 @@ static int test_jit(JNIEnv *env, jclass workload, void *library)
     if (!allocations) return 35;
     (*env)->CallStaticVoidMethod(env, workload, allocations);
     if ((*env)->ExceptionCheck(env)) { (*env)->ExceptionDescribe(env); return 36; }
-    jmethodID unsupported = (*env)->GetStaticMethodID(env, workload, "$compile$unsupportedMonitor",
+    bool (*compile_pattern)(JNIEnv *, jmethodID) = dlsym(library, "nce_art_compile_pattern");
+    jclass box = (*env)->FindClass(env, "NceWorkload$PatternBox");
+    if (!compile_pattern || !box) return 41;
+    jmethodID static_reference = (*env)->GetStaticMethodID(env, box, "getStaticReference", "()Ljava/lang/Object;");
+    if (!static_reference) return 45;
+    jobject initial = (*env)->CallStaticObjectMethod(env, box, static_reference);
+    if ((*env)->ExceptionCheck(env) || initial) return 46;
+    const char *patterns[][2] = {
+        {"<init>", "(I)V"}, {"<init>", "(Ljava/lang/Object;)V"},
+        {"getNumber", "()I"}, {"setNumber", "(I)V"},
+        {"getReference", "()Ljava/lang/Object;"}, {"setReference", "(Ljava/lang/Object;)V"},
+        {"getFraction", "()F"}, {"setFraction", "(F)V"},
+        {"getWide", "()J"}, {"setWide", "(J)V"},
+        {"getStaticReference", "()Ljava/lang/Object;"},
+    };
+    for (unsigned i = 0; i < sizeof(patterns) / sizeof(patterns[0]); ++i) {
+        jmethodID method = i < 10
+            ? (*env)->GetMethodID(env, box, patterns[i][0], patterns[i][1])
+            : (*env)->GetStaticMethodID(env, box, patterns[i][0], patterns[i][1]);
+        if (!method || !compile_pattern(env, method)) {
+            fprintf(stderr, "ART could not install pattern %s %s\n", patterns[i][0], patterns[i][1]);
+            return 42;
+        }
+    }
+    jmethodID static_wide = (*env)->GetStaticMethodID(env, box, "getStaticWide", "()J");
+    if (!static_wide || !compile(env, static_wide)) return 47;
+    jmethodID pattern_test = (*env)->GetStaticMethodID(env, workload, "compiledPatterns", "()V");
+    if (!pattern_test) return 43;
+    (*env)->CallStaticVoidMethod(env, workload, pattern_test);
+    if ((*env)->ExceptionCheck(env)) { (*env)->ExceptionDescribe(env); return 44; }
+    jmethodID runtime_features = (*env)->GetStaticMethodID(env, workload, "compiledRuntimeFeatures", "()V");
+    if (!runtime_features) return 39;
+    puts("{\"phase\":\"android_art_jit_runtime_features\"}");
+    fflush(stdout);
+    (*env)->CallStaticVoidMethod(env, workload, runtime_features);
+    if ((*env)->ExceptionCheck(env)) { (*env)->ExceptionDescribe(env); return 40; }
+    jmethodID unsupported = (*env)->GetStaticMethodID(env, workload, "$compile$unsupportedCast",
                                                      "(Ljava/lang/Object;)Ljava/lang/Object;");
     if (!unsupported || compile(env, unsupported)) return 31;
     jobject fallback = (*env)->CallStaticObjectMethod(env, workload, unsupported, workload);

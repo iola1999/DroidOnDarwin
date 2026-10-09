@@ -1,7 +1,9 @@
 /* SPDX-License-Identifier: Apache-2.0 */
 #include "art_method-inl.h"
+#include "class_linker.h"
 #include "jit/jit.h"
 #include "jit/jit_code_cache.h"
+#include "jit/small_pattern_matcher.h"
 #include "jni/jni_internal.h"
 #include "scoped_thread_state_change-inl.h"
 
@@ -30,4 +32,29 @@ extern "C" JNIEXPORT bool nce_art_wait_for_compilation(JNIEnv* env, jmethodID id
     if (!jit) return false;
     jit->WaitForCompilationToFinish(soa.Self());
     return jit->GetCodeCache()->ContainsPc(art::jni::DecodeArtMethod(id)->GetEntryPointFromQuickCompiledCode());
+}
+
+extern "C" JNIEXPORT bool nce_art_compile_pattern(JNIEnv* env, jmethodID id)
+{
+    art::ScopedObjectAccess soa(env);
+    // Static pattern entrypoints require the class initialization checkpoint.
+    {
+        art::ScopedThreadSuspension suspended(soa.Self(), art::ThreadState::kNative);
+        art::Runtime::Current()->GetClassLinker()->MakeInitializedClassesVisiblyInitialized(
+            soa.Self(), true);
+    }
+    art::ArtMethod* method = art::jni::DecodeArtMethod(id);
+    art::jit::Jit* jit = art::Runtime::Current()->GetJit();
+    if (!jit || !method) return false;
+    const void* expected = art::jit::SmallPatternMatcher::TryMatch(method);
+    if (!expected) {
+        fprintf(stderr, "ART pattern did not match %s\n", method->PrettyMethod().c_str());
+        return false;
+    }
+    bool installed = jit->TryPatternMatch(method, art::CompilationKind::kBaseline);
+    bool matched = method->GetEntryPointFromQuickCompiledCode() == expected;
+    if (!matched) fprintf(stderr, "ART pattern was not installed %s installed=%d clinit=%d compilable=%d\n",
+                         method->PrettyMethod().c_str(), installed, method->StillNeedsClinitCheck(),
+                         method->IsCompilable());
+    return matched;
 }

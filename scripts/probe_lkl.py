@@ -170,17 +170,17 @@ def main():
         inputs += [EXPERIMENT / "lkl-process-host.c", EXPERIMENT / "programs.c", EXPERIMENT / "memory.c", EXPERIMENT / "execute-check.c", EXPERIMENT / "compute.c"]
         run([clang, *flags, "-isysroot", sdk, "-DNATIVE", "-c", EXPERIMENT / "guest.S", "-o", OUT / "native.o"])
     run([clang, *flags, "-isysroot", sdk, *inputs, *([OUT / "native.o"] if PROCESS else []), "-o", OUT / "lkl-probe"])
+    with (OUT / "lkl-results.jsonl").open("w") as output, (OUT / "lkl-console.log").open("w") as log:
+        run([OUT / "lkl-probe", OUT / "lkl-image.bin"], stdout=output, stderr=log)
+    results = [json.loads(line) for line in (OUT / "lkl-results.jsonl").read_text().splitlines()]
+    if results[-1].get("result") != "passed":
+        raise SystemExit("LKL probe did not complete")
     ios_sdk = subprocess.check_output(["xcrun", "--sdk", "iphoneos", "--show-sdk-path"], text=True).strip()
     run([clang, *flags, "-target", "arm64-apple-ios17.0", "-isysroot", ios_sdk,
          "-c", EXPERIMENT / "lkl-host.c", "-o", OUT / "ios-lkl-host.o"])
     if PROCESS:
         run([clang, *flags, "-target", "arm64-apple-ios17.0", "-isysroot", ios_sdk,
              "-c", EXPERIMENT / "lkl-process-host.c", "-o", OUT / "ios-lkl-process-host.o"])
-    with (OUT / "lkl-results.jsonl").open("w") as output, (OUT / "lkl-console.log").open("w") as log:
-        run([OUT / "lkl-probe", OUT / "lkl-image.bin"], stdout=output, stderr=log)
-    results = [json.loads(line) for line in (OUT / "lkl-results.jsonl").read_text().splitlines()]
-    if results[-1].get("result") != "passed":
-        raise SystemExit("LKL probe did not complete")
     dispatch_results = None
     if PROCESS:
         run([clang, "-O2", "-Wall", "-Wextra", "-Werror", "-isysroot", sdk, "-I", OUT,

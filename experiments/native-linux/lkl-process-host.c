@@ -738,6 +738,8 @@ void nce_process_tests(long (*host_syscall)(long, long *), long (*guest_syscall)
     REQUIRE(strstr(benchmark, "android_art_jit_calls"));
     REQUIRE(strstr(benchmark, "android_art_jit_allocations"));
     REQUIRE(strstr(benchmark, "android_art_jit_automatic"));
+    REQUIRE(strstr(benchmark, "android_art_jit_runtime_features"));
+    REQUIRE(strstr(benchmark, "android_art_jit_patterns"));
     REQUIRE(strstr(benchmark, "android_art_vm_destroyed"));
     fputs(benchmark, stdout);
     check_program_files(host_syscall);

@@ -73,14 +73,18 @@ public final class NceWorkload {
         return sum;
     }
 
-    public static Object $compile$unsupportedMonitor(Object value) {
-        synchronized (value) { return value; }
+    public static Object $compile$unsupportedCast(Object value) {
+        return (Class<?>)value;
     }
 
     public static Node $compile$newNode(int value) { return new Node(value); }
     public static int[] $compile$newArray(int size) { return new int[size]; }
 
-    public abstract static class Value { public abstract int read(); }
+    public interface Reader {
+        int read();
+        default Object identity(Object value) { return value; }
+    }
+    public abstract static class Value implements Reader { public abstract int read(); }
     public static final class FirstValue extends Value { public int read() { return 17; } }
     public static final class SecondValue extends Value { public int read() { return 29; } }
     public static int $compile$virtual(Value value) { return value.read(); }
@@ -94,6 +98,167 @@ public final class NceWorkload {
             checksum += array[3];
         }
         return checksum;
+    }
+
+    // ART hashes abstract interface names with multiplier 31; Aa and BB collide.
+    public interface CollisionReader { int Aa(); int BB(); }
+    public static final class CollisionValue implements CollisionReader {
+        public int Aa() { return 11; }
+        public int BB() { return 31; }
+    }
+    public static int $compile$interfaceCollision(CollisionReader reader) {
+        return reader.Aa() * 100 + reader.BB();
+    }
+
+    public static final class PatternBox {
+        private int number;
+        private Object reference;
+        private float fraction;
+        private long wide;
+        private static Object staticReference;
+        private static long staticWide;
+        public PatternBox(int value) { number = value; }
+        public PatternBox(Object value) { reference = value; }
+        public int getNumber() { return number; }
+        public void setNumber(int value) { number = value; }
+        public Object getReference() { return reference; }
+        public void setReference(Object value) { reference = value; }
+        public float getFraction() { return fraction; }
+        public void setFraction(float value) { fraction = value; }
+        public long getWide() { return wide; }
+        public void setWide(long value) { wide = value; }
+        public static Object getStaticReference() { return staticReference; }
+        public static long getStaticWide() { return staticWide; }
+    }
+
+    public static Object $compile$patternRoundTrip(PatternBox box, Object reference) {
+        box.setReference(reference);
+        return box.getReference();
+    }
+
+    public static void compiledPatterns() {
+        Object marker = new Object();
+        PatternBox numeric = new PatternBox(71);
+        PatternBox object = new PatternBox(marker);
+        check(numeric.getNumber() == 71 && object.getReference() == marker, "pattern constructors");
+        numeric.setNumber(-93);
+        numeric.setFraction(1.25f);
+        numeric.setWide(0x123456789abcdefL);
+        check(numeric.getNumber() == -93 && numeric.getFraction() == 1.25f
+                && numeric.getWide() == 0x123456789abcdefL, "pattern primitive field access");
+        check($compile$patternRoundTrip(numeric, marker) == marker, "JIT calls reference patterns");
+        check($compile$patternRoundTrip(numeric, null) == null, "pattern null reference");
+        object.setReference(numeric);
+        PatternBox.staticReference = object;
+        PatternBox.staticWide = 0x7123456789abcdeL;
+        System.gc();
+        check(object.getReference() == numeric && PatternBox.getStaticReference() == object
+                && PatternBox.getStaticWide() == 0x7123456789abcdeL, "pattern roots survive GC");
+        PatternBox.staticReference = null;
+        System.out.println("{\"test\":\"android_art_jit_patterns\",\"passed\":true,\"installed_patterns\":11}");
+    }
+
+    public static Object $compile$referenceStore(Object[] array, int index, Object value) {
+        array[index] = value;
+        return array[index];
+    }
+
+    public static void $compile$typedStore(Node[] array, int index, Node value) {
+        array[index] = value;
+    }
+
+    public static void $compile$clearStore(Object[] array, int index) { array[index] = null; }
+    public static int $compile$interfaceRead(Reader value) { return value.read(); }
+    public static Object $compile$interfaceIdentity(Reader reader, Object value) {
+        return reader.identity(value);
+    }
+
+    public static Node $compile$monitor(Node node, Object monitor, int rounds,
+                                        RuntimeException failure) {
+        synchronized (monitor) {
+            synchronized (monitor) {
+                for (int i = 0; i < rounds; i++) node.visits++;
+                if (failure != null) throw failure;
+                return node;
+            }
+        }
+    }
+
+    public static int $compile$catchStore(Object[] array, Object value) {
+        try {
+            array[0] = value;
+            return 7;
+        } catch (ArrayStoreException exception) {
+            return 13;
+        }
+    }
+
+    public static void compiledRuntimeFeatures() throws Exception {
+        CollisionReader collision = new CollisionValue();
+        for (int i = 0; i < 256; i++)
+            check($compile$interfaceCollision(collision) == 1131, "interface conflict resolution");
+        Object[] references = new Object[256];
+        Node[] typed = new Node[256];
+        for (int i = 0; i < typed.length; i++) {
+            Node value = new Node(i);
+            check($compile$referenceStore(references, i, value) == value, "reference store identity");
+            $compile$typedStore(typed, i, value);
+        }
+        System.gc();
+        for (int i = 0; i < typed.length; i++) {
+            check(references[i] == typed[i] && typed[i].value == i, "reference arrays survive GC");
+        }
+        $compile$clearStore(references, 0);
+        check(references[0] == null, "constant null store");
+        check($compile$referenceStore(references, 1, null) == null, "runtime null store");
+        Value first = new FirstValue();
+        Value second = new SecondValue();
+        Object[] covariant = new Value[4];
+        check($compile$referenceStore(covariant, 0, first) == first, "covariant subclass store");
+        check($compile$referenceStore(covariant, 1, second) == second, "second subclass store");
+        check($compile$interfaceRead(first) == 17 && $compile$interfaceRead(second) == 29,
+                "interface dispatch targets");
+        check($compile$interfaceIdentity(first, typed[7]) == typed[7]
+                && $compile$interfaceIdentity(second, null) == null, "default interface method");
+        check($compile$catchStore(covariant, first) == 7
+                && $compile$catchStore(covariant, typed[0]) == 13,
+                "compiled exception handler receives array-store exception");
+        int exceptions = 0;
+        try { $compile$referenceStore(covariant, 0, typed[0]); }
+        catch (ArrayStoreException expected) { exceptions++; }
+        try { $compile$referenceStore(null, 0, first); }
+        catch (NullPointerException expected) { exceptions++; }
+        try { $compile$referenceStore(covariant, covariant.length, first); }
+        catch (ArrayIndexOutOfBoundsException expected) { exceptions++; }
+        try { $compile$interfaceRead(null); }
+        catch (NullPointerException expected) { exceptions++; }
+        Object monitor = new Object();
+        Node shared = new Node(71);
+        RuntimeException failure = new IllegalStateException("monitor-test");
+        try { $compile$monitor(shared, monitor, 1, failure); }
+        catch (RuntimeException caught) {
+            check(caught == failure, "compiled rethrow preserves exception identity");
+            exceptions++;
+        }
+        try { $compile$monitor(shared, null, 1, null); }
+        catch (NullPointerException expected) { exceptions++; }
+        Thread firstWorker = new Thread(() -> {
+            for (int i = 0; i < 2000; i++) $compile$monitor(shared, monitor, 5, null);
+        }, "nce-jit-monitor-1");
+        Thread secondWorker = new Thread(() -> {
+            for (int i = 0; i < 2000; i++) $compile$monitor(shared, monitor, 5, null);
+        }, "nce-jit-monitor-2");
+        firstWorker.start();
+        secondWorker.start();
+        for (int i = 0; i < 4; i++) System.gc();
+        firstWorker.join();
+        secondWorker.join();
+        check(shared.visits == 20001, "compiled monitors release on exception and serialize updates");
+        check($compile$monitor(shared, monitor, 0, null) == shared, "monitor reference return");
+        check(exceptions == 6, "runtime feature exceptions");
+        System.out.println("{\"test\":\"android_art_jit_runtime_features\",\"passed\":true,"
+                + "\"reference_elements\":256,\"interface_targets\":2,"
+                + "\"monitor_calls\":4000,\"monitor_updates\":20001,\"exceptions\":6}");
     }
 
     public static void compiledAllocations() {
@@ -126,7 +291,6 @@ public final class NceWorkload {
         check($compile$identity(null) == null && $compile$callInterpreted(null) == null
                 && $compile$callCompiled(null) == null && $compile$callNative(null) == null,
                 "null reference returns");
-        check($compile$unsupportedMonitor(value) == value, "unsupported method retains interpreter");
         System.out.println("{\"test\":\"android_art_jit_calls\",\"passed\":true,"
                 + "\"reference_returns\":5,\"null_returns\":4}");
         return value;
