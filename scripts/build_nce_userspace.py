@@ -89,7 +89,7 @@ def android_dependencies(llvm, replacements, embedded=()):
     pending = ['libart.so', 'libjavacore.so', 'libopenjdk.so', 'libicu_jni.so',
                'libstats_jni.so', 'libjavacrypto.so', 'libartpalette-system.so', 'libbinder_ndk.so', 'libandroid.so',
                'libprocessgroup_setup.so', 'libframework-connectivity-tiramisu-jni.so', 'libandroid_servers.so',
-               'libalarm_jni.so', 'libbpf.so', 'libservice-connectivity.so', 'libmedia_jni.so', 'libsoundpool.so',
+               'libalarm_jni.so', 'libbpf.so', 'libservice-connectivity.so', 'libmedia_jni.so', 'libsoundpool.so', 'libvintf_jni.so',
                'libframework-connectivity-jni.so',
                'libandroid_net_connectivity_com_android_net_module_util_jni.so']
     for name in ('servicemanager', 'app_process64', 'aconfigd-system', 'installd', 'idmap2', 'idmap2d',
@@ -361,7 +361,7 @@ def android_data(out):
     framework_classes.mkdir(exist_ok=True)
     run([java / 'javac', '--release', '11', '-cp', sdk / 'platforms/android-35/android.jar',
          '-d', framework_classes, EXP / 'services/NceFramework.java', EXP / 'services/NceZygoteChild.java',
-         EXP / 'services/NceSurface.java'])
+         EXP / 'services/NceSurface.java', EXP / 'services/NceShutdown.java'])
     run([java / 'java', '-cp', sdk / 'build-tools/36.0.0/lib/d8.jar', 'com.android.tools.r8.D8',
          '--min-api', '35', '--lib', sdk / 'platforms/android-35/android.jar', '--output', framework_classes,
          *sorted(framework_classes.glob('*.class'))])
@@ -915,7 +915,7 @@ def build(out, llvm):
     run([ndk / 'toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android35-clang',
          '-ffixed-x18', '-mno-outline-atomics', '-g', '-O2', '-Wall', '-Wextra', '-Werror',
          '-Wl,-z,max-page-size=16384,-z,common-page-size=16384',
-         EXP / 'userspace/bionic-test.c', EXP / 'userspace/file-tests.c', EXP / 'userspace/seccomp-tests.c',
+         EXP / 'userspace/bionic-test.c', EXP / 'userspace/proc-exit-tests.c', EXP / 'userspace/file-tests.c', EXP / 'userspace/seccomp-tests.c',
          EXP / 'userspace/signal-tests.c', EXP / 'userspace/signal-registers.S', '-o', out / 'bionic-test.elf'])
     programs.append(('/bionic-test', out / 'bionic-test.elf'))
     cfi_flags = [ndk / 'toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android35-clang',
@@ -1027,7 +1027,7 @@ def build(out, llvm):
          EXP / 'userspace/display-service-test.cpp',
          EXP / 'userspace/input-service.cpp',
          EXP / 'userspace/framework-test.cpp', EXP / 'userspace/desktop-session.cpp', EXP / 'userspace/crypto-tests.cpp',
-         EXP / 'userspace/apex-service.cpp', EXP / 'userspace/suspend-test.cpp', EXP / 'userspace/installd-test.cpp',
+         EXP / 'userspace/apex-service.cpp', EXP / 'userspace/suspend-test.cpp', EXP / 'userspace/installd-test.cpp', EXP / 'userspace/storage-layout.cpp',
          *sorted(apex_generated.rglob('*.cpp')),
          WORK / 'android/android36/lib64/libc++.so',
          '-I', WORK / 'android/boringssl/src/include', crypto['libcrypto.so'], '-ldl',

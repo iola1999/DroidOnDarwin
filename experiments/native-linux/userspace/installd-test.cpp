@@ -13,6 +13,7 @@
 #include <unistd.h>
 
 using namespace aidl::android::os;
+void nce_android_storage_prepare();
 #define CHECK(c) \
     do { \
         if (!(c)) { \
@@ -103,28 +104,7 @@ static void client(const char *executable, const char *stage, uid_t uid = 1000)
 
 pid_t nce_installd_start(const char *executable)
 {
-    const struct {
-        const char *path;
-        mode_t mode;
-        uid_t uid;
-        gid_t gid;
-    } directories[] = {
-        {"/data/misc", 01771, 1000, 9998},
-        {"/data/misc/user", 0755, 0, 0},
-        {"/data/misc/installd", 0700, 0, 0},
-        {"/data/user", 0711, 1000, 1000},
-        {"/data/user/0", 0771, 1000, 1000},
-        {"/data/user_de", 0711, 1000, 1000},
-        {"/data/user_de/0", 0771, 1000, 1000},
-        {"/data/misc/profiles", 0771, 1000, 1000},
-        {"/data/misc/profiles/cur", 0771, 1000, 1000},
-        {"/data/misc/profiles/cur/0", 0771, 1000, 1000},
-        {"/data/misc/profiles/ref", 0771, 1000, 1000},
-    };
-    for (const auto &directory : directories) {
-        CHECK(mkdir(directory.path, directory.mode) == 0 || errno == EEXIST);
-        CHECK(chmod(directory.path, directory.mode) == 0 && chown(directory.path, directory.uid, directory.gid) == 0);
-    }
+    nce_android_storage_prepare();
     pid_t child = fork();
     CHECK(child >= 0);
     if (!child) {

@@ -12,17 +12,20 @@ enum HuskLog {
 
 @MainActor
 final class ProbeModel: ObservableObject {
-    @Published var status = "准备测试"
+    @Published var status = "准备启动 Android"
+    @Published var desktopReady = false
+    @Published var stopping = false
     @Published var logLines: [ProbeLogLine] = []
     @Published var busy = false {
         didSet {
-            if !busy { polling?.invalidate(); polling = nil }
+            if !busy {
+                polling?.invalidate()
+                polling = nil
+            }
         }
     }
     @Published var didRun = false
     @Published var importing = false
-    @Published var graphics: UIImage?
-    @Published var hasGPUImage = false
     let metalLayer = CAMetalLayer()
     private let logReader = ProbeLogReader()
     private var phase: String?
@@ -32,10 +35,18 @@ final class ProbeModel: ObservableObject {
     private var polling: Timer?
     private var startedAt = Date()
     let documents = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
-    var logURL: URL { documents.appendingPathComponent("native-linux-n2-ios.log") }
-    var graphicsURL: URL { documents.appendingPathComponent("framework.png") }
-    var gpuURL: URL { documents.appendingPathComponent("gpu.bmp") }
-    var paired: Bool { JITPairingFileStore.exists }
+    var logURL: URL {
+        documents.appendingPathComponent("native-linux-n2-ios.log")
+    }
+    var graphicsURL: URL {
+        documents.appendingPathComponent("framework.png")
+    }
+    var gpuURL: URL {
+        documents.appendingPathComponent("gpu.bmp")
+    }
+    var paired: Bool {
+        JITPairingFileStore.exists
+    }
 
     init() {
         husk_ios_jit_install_trap_handler()
@@ -46,18 +57,25 @@ final class ProbeModel: ObservableObject {
         nce_graphics_set_window(Unmanaged.passUnretained(metalLayer).toOpaque())
         Task {
             await refresh()
-            if !busy && !didRun && !logLines.isEmpty { status = "已保留上次日志" }
+            if !busy && !didRun && !logLines.isEmpty {
+                status = "已保留上次日志"
+            }
         }
     }
 
     private func refresh() async {
         if let snapshot = try? await logReader.read(from: logURL) {
-            if snapshot.lines != logLines { logLines = snapshot.lines }
+            if snapshot.lines != logLines {
+                logLines = snapshot.lines
+            }
             phase = snapshot.phase
+            desktopReady = busy && didRun && snapshot.phase == "android_desktop_running"
         }
     }
     private func tick() async {
-        guard busy && !refreshing else { return }
+        guard busy && !refreshing else {
+            return
+        }
         refreshing = true
         defer { refreshing = false }
         await refresh()
@@ -73,19 +91,36 @@ final class ProbeModel: ObservableObject {
                 HuskLog.log("probe", status)
             }
         } else if busy && didRun {
+            if stopping {
+                status = "正在停止 Android"
+                return
+            }
+            if desktopReady {
+                status = "Android 正在运行"
+                return
+            }
             let seconds = Int(Date().timeIntervalSince(startedAt))
             let label = phase.flatMap { ProbeLogReader.phaseLabels[$0] } ?? "正在准备 JIT 代码区域"
             let nextStatus = "\(label)（\(seconds) 秒）"
-            if status != nextStatus { status = nextStatus }
+            if status != nextStatus {
+                status = nextStatus
+            }
         }
     }
     private func beginAttempt() -> Bool {
-        guard !busy && !didRun else { return false }
-        guard nce_open_log(logURL.path) == 0 else { status = "日志文件无法写入"; return false }
+        guard !busy && !didRun else {
+            return false
+        }
+        guard nce_open_log(logURL.path) == 0 else {
+            status = "日志文件无法写入"
+            return false
+        }
         busy = true
         logLines = []
         phase = nil
-        Task { await logReader.reset(); await refresh() }
+        Task { await logReader.reset()
+            await refresh()
+        }
         polling = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { [weak self] _ in
             Task { @MainActor in await self?.tick() }
         }
@@ -96,7 +131,9 @@ final class ProbeModel: ObservableObject {
         return true
     }
     private func script() -> Data? {
-        guard let path = Bundle.main.url(forResource: "husk-jit", withExtension: "js") else { return nil }
+        guard let path = Bundle.main.url(forResource: "husk-jit", withExtension: "js") else {
+            return nil
+        }
         return try? Data(contentsOf: path)
     }
     func builtIn() {
@@ -104,18 +141,24 @@ final class ProbeModel: ObservableObject {
             status = "先导入这台 iPhone 的配对文件，或使用 StikDebug"
             return
         }
-        guard let js = script(), beginAttempt() else { return }
+        guard let js = script(), beginAttempt() else {
+            return
+        }
         status = "正在连接手机内的 JIT 助手"
         waiting = true
         attachDeadline = Date().addingTimeInterval(90)
         HuskBuiltInJIT.send(.enable(targetPID: getpid(), pairingData: pairing,
-                                   scriptBase64: js.base64EncodedString())) { [weak self] result in
-            guard let self else { return }
+                                    scriptBase64: js.base64EncodedString())) { [weak self] result in
+            guard let self else {
+                return
+            }
             var failure: String?
             switch result {
             case .success(let response):
                 HuskLog.log("jit-helper", response.message)
-                if !response.success { failure = response.message }
+                if !response.success {
+                    failure = response.message
+                }
             case .failure(let error): failure = error.localizedDescription
             }
             if let failure {
@@ -130,7 +173,9 @@ final class ProbeModel: ObservableObject {
         }
     }
     func external() {
-        guard let js = script(), let bundleID = Bundle.main.bundleIdentifier else { return }
+        guard let js = script(), let bundleID = Bundle.main.bundleIdentifier else {
+            return
+        }
         var components = URLComponents(string: "stikjit://enable-jit")!
         let encoded = js.base64EncodedString().replacingOccurrences(of: "+", with: "-")
             .replacingOccurrences(of: "/", with: "_").replacingOccurrences(of: "=", with: "")
@@ -140,18 +185,24 @@ final class ProbeModel: ObservableObject {
             status = "未找到 StikDebug"
             return
         }
-        guard beginAttempt() else { return }
+        guard beginAttempt() else {
+            return
+        }
         status = "请在 StikDebug 中启用 JIT，然后返回 Husk"
         waiting = true
         attachDeadline = Date().addingTimeInterval(180)
         UIApplication.shared.open(url)
     }
     func runAttached() {
-        guard nce_debugger_attached(), beginAttempt() else { return }
+        guard nce_debugger_attached(), beginAttempt() else {
+            return
+        }
         run()
     }
     private func run() {
-        guard !didRun else { return }
+        guard !didRun else {
+            return
+        }
         guard let path = Bundle.main.path(forResource: "lkl-image", ofType: "bin") else {
             busy = false
             UIApplication.shared.isIdleTimerDisabled = false
@@ -186,6 +237,7 @@ final class ProbeModel: ObservableObject {
             return
         }
         didRun = true
+        setenv("NCE_DESKTOP", "1", 1)
         setenv("NCE_MM_MODE", "lazy", 1)
         setenv("NCE_STRESS_ROUNDS", "3", 1)
         setenv("NCE_GRAPHICS_OUTPUT", graphicsURL.path, 1)
@@ -198,16 +250,35 @@ final class ProbeModel: ObservableObject {
             DispatchQueue.main.async {
                 self.busy = false
                 UIApplication.shared.isIdleTimerDisabled = false
-                self.status = result == 0 ? "全部测试通过" : "测试失败，请导出日志"
+                self.desktopReady = false
+                self.stopping = false
+                self.status = result == 0 ? "Android 已停止" : "启动失败，请导出日志"
                 Task { await self.refresh() }
-                self.hasGPUImage = FileManager.default.fileExists(atPath: self.gpuURL.path)
-                self.graphics = result == 0 ? UIImage(contentsOfFile: self.graphicsURL.path) : nil
+            }
+        }
+    }
+    func stop() {
+        guard busy && didRun && !stopping else {
+            return
+        }
+        stopping = true
+        status = "正在停止 Android"
+        DispatchQueue.global(qos: .userInitiated).async {
+            let result = nce_session_request_stop()
+            if result != 0 {
+                DispatchQueue.main.async {
+                    self.stopping = false
+                    self.status = "启动准备尚未完成，请稍后停止"
+                    HuskLog.log("session", "stop request returned \(result)")
+                }
             }
         }
     }
     func importPairing(_ result: Result<[URL], Error>) {
         do {
-            guard let url = try result.get().first else { return }
+            guard let url = try result.get().first else {
+                return
+            }
             try JITPairingFileStore.importFile(from: url)
             status = "配对文件已导入"
         } catch { status = error.localizedDescription }
@@ -227,23 +298,31 @@ struct GuestMetalDisplay: UIViewRepresentable {
         var metalLayer: CAMetalLayer?
         private var activeTouch: UITouch?
         private func send(_ touch: UITouch, action: Int32) {
-            guard bounds.width > 0, bounds.height > 0 else { return }
+            guard bounds.width > 0, bounds.height > 0 else {
+                return
+            }
             let point = touch.location(in: self)
             let x = Int32(max(0, min(359, point.x * 360 / bounds.width)))
             let y = Int32(max(0, min(639, point.y * 640 / bounds.height)))
             GuestInput.send(action, x, y)
         }
         override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
-            guard activeTouch == nil, let touch = touches.first else { return }
+            guard activeTouch == nil, let touch = touches.first else {
+                return
+            }
             activeTouch = touch
             send(touch, action: Int32(NCE_INPUT_DOWN))
         }
         override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
-            guard let touch = activeTouch, touches.contains(touch) else { return }
+            guard let touch = activeTouch, touches.contains(touch) else {
+                return
+            }
             send(touch, action: Int32(NCE_INPUT_MOVE))
         }
         override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
-            guard let touch = activeTouch, touches.contains(touch) else { return }
+            guard let touch = activeTouch, touches.contains(touch) else {
+                return
+            }
             send(touch, action: Int32(NCE_INPUT_UP))
             activeTouch = nil
         }
@@ -270,14 +349,14 @@ struct GuestMetalDisplay: UIViewRepresentable {
 @main
 struct NativeLinuxApp: App {
     @StateObject private var model = ProbeModel()
+    @State private var showDetails = false
     var body: some Scene {
         WindowGroup {
             NavigationStack {
                 VStack(spacing: 0) {
                     GuestMetalDisplay(metalLayer: model.metalLayer)
                         .aspectRatio(360.0 / 640.0, contentMode: .fit)
-                        .frame(height: 240)
-                        .frame(maxWidth: .infinity)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
                         .background(.black)
                     HStack {
                         Button("返回") { GuestInput.send(Int32(NCE_INPUT_KEY), 158) }
@@ -285,55 +364,80 @@ struct NativeLinuxApp: App {
                         Button("主页") { GuestInput.send(Int32(NCE_INPUT_KEY), 102) }
                         Spacer()
                         Button("最近应用") { GuestInput.send(Int32(NCE_INPUT_KEY), 580) }
-                    }.padding(.horizontal).padding(.vertical, 8)
-                    List {
-                        Section("N4 · Android 图形") {
-                            Text(Bundle.main.object(forInfoDictionaryKey: "NCEBuildID") as? String ?? "N4")
-                                .font(.caption).foregroundStyle(.secondary)
+                    }
+                    .padding()
+                    .disabled(!model.desktopReady || model.stopping)
+                    if !model.desktopReady || model.stopping {
+                        VStack(spacing: 12) {
                             Text(model.status).font(.headline).accessibilityIdentifier("probe-status")
-                            Text("测试 GPU 绘图、Android 运行库与系统服务。请保持应用在前台。")
-                                .foregroundStyle(.secondary)
-                            if model.busy { ProgressView() }
-                        }
-                        Section {
-                            Button("启用内置 JIT 并测试") { model.builtIn() }
-                            Button("通过 StikDebug 启用并测试") { model.external() }
-                            if nce_debugger_attached() {
-                                Button("使用已连接的 JIT 测试") { model.runAttached() }
+                            if model.busy {
+                                ProgressView()
                             }
-                            Button(model.paired ? "更换配对文件" : "导入配对文件") { model.importing = true }
-                        }.disabled(model.busy || model.didRun)
-                        if model.hasGPUImage {
-                            Section("GPU 图片") {
-                                ShareLink("导出 GPU 图片", item: model.gpuURL)
+                            if !model.busy && !model.didRun {
+                                Button("启动 Android") { model.builtIn() }
+                                    .buttonStyle(.borderedProminent)
+                                Button("连接与日志") { showDetails = true }
                             }
-                        }
-                        if model.didRun && !model.busy {
-                            Section { Text("再次测试前，请从多任务界面关闭 Husk 后重新打开。") }
-                        }
-                        if let graphics = model.graphics {
-                            Section("Android 绘图") {
-                                Image(uiImage: graphics).resizable().interpolation(.none)
-                                    .scaledToFit().frame(maxWidth: 384)
-                                ShareLink("导出图片", item: model.graphicsURL)
-                            }
-                        }
-                        if !model.logLines.isEmpty {
-                            Section("日志") {
-                                ShareLink("导出测试日志", item: model.logURL)
-                                Text("显示最近 80 行，导出可查看完整日志。")
+                            if model.didRun && !model.busy {
+                                Text("重新启动前，请从多任务界面关闭 Husk 后再打开。")
                                     .font(.caption).foregroundStyle(.secondary)
-                                ForEach(model.logLines) { line in
-                                    Text(line.text).font(.system(.caption, design: .monospaced))
-                                        .lineLimit(4)
+                            }
+                        }.padding()
+                    }
+                }
+                .navigationTitle("Husk")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Menu {
+                            Button("连接与日志") { showDetails = true }
+                            if model.busy && model.didRun {
+                                Button("停止 Android", role: .destructive) { model.stop() }
+                                    .disabled(model.stopping)
+                            }
+                        } label: { Image(systemName: "ellipsis.circle") }
+                    }
+                }
+                .sheet(isPresented: $showDetails) {
+                    NavigationStack {
+                        List {
+                            Section {
+                                Text(model.status).font(.headline)
+                                Text(Bundle.main.object(forInfoDictionaryKey: "NCEBuildID") as? String ?? "NCE")
+                                    .font(.caption).foregroundStyle(.secondary)
+                            }
+                            Section("连接") {
+                                Button("启用内置 JIT 并启动") { model.builtIn()
+                                    showDetails = false
+                                }
+                                Button("通过 StikDebug 启动") { model.external()
+                                    showDetails = false
+                                }
+                                if nce_debugger_attached() {
+                                    Button("使用已连接的 JIT 启动") { model.runAttached()
+                                        showDetails = false
+                                    }
+                                }
+                                Button(model.paired ? "更换配对文件" : "导入配对文件") { model.importing = true }
+                            }.disabled(model.busy || model.didRun)
+                            if !model.logLines.isEmpty {
+                                Section("日志") {
+                                    ShareLink("导出日志", item: model.logURL)
+                                    Text("显示最近 80 行，导出可查看完整日志。")
+                                        .font(.caption).foregroundStyle(.secondary)
+                                    ForEach(model.logLines) { line in
+                                        Text(line.text).font(.system(.caption, design: .monospaced)).lineLimit(4)
+                                    }
                                 }
                             }
                         }
+                        .navigationTitle("连接与日志")
+                        .navigationBarTitleDisplayMode(.inline)
+                        .toolbar { ToolbarItem(placement: .confirmationAction) { Button("完成") { showDetails = false } } }
+                        .fileImporter(isPresented: $model.importing, allowedContentTypes: [.data], allowsMultipleSelection: false) {
+                            model.importPairing($0)
+                        }
                     }
-                }
-                .navigationTitle("Husk NCE")
-                .fileImporter(isPresented: $model.importing, allowedContentTypes: [.data], allowsMultipleSelection: false) {
-                    model.importPairing($0)
                 }
             }
         }

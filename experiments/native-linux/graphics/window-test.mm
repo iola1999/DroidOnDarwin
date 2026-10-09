@@ -4,7 +4,33 @@
 #import <Metal/Metal.h>
 #include "host-graphics.h"
 #include "../input.h"
+#include "../session.h"
 extern "C" int nce_lkl_run(const char *path);
+
+@interface NceWindowDelegate : NSObject <NSWindowDelegate>
+@property(nonatomic) BOOL stopping;
+@end
+
+@implementation NceWindowDelegate
+- (BOOL)windowShouldClose:(NSWindow *)window
+{
+    if (!getenv("NCE_DESKTOP"))
+        return YES;
+    if (self.stopping)
+        return NO;
+    self.stopping = YES;
+    window.title = @"Husk NCE · 正在停止 Android";
+    dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), ^{
+      int result = nce_session_request_stop();
+      if (result)
+          dispatch_async(dispatch_get_main_queue(), ^{
+            self.stopping = NO;
+            window.title = @"Husk NCE · 启动准备中，请稍后关闭";
+          });
+    });
+    return NO;
+}
+@end
 
 @interface NceInputView : NSView
 @property(nonatomic) dispatch_queue_t inputQueue;
@@ -57,6 +83,9 @@ int main(int argc, char **argv)
                                                          backing:NSBackingStoreBuffered
                                                            defer:NO];
         window.title = @"Husk NCE · Android GPU";
+        // NSWindow does not retain its delegate; keep it through the event loop.
+        __attribute__((objc_precise_lifetime)) NceWindowDelegate *delegate = [NceWindowDelegate new];
+        window.delegate = delegate;
         NceInputView *view = [[NceInputView alloc] initWithFrame:NSMakeRect(0, 40, 360, 640)];
         view.inputQueue = dispatch_queue_create("app.husk.android-input", DISPATCH_QUEUE_SERIAL);
         [window.contentView addSubview:view];
@@ -84,7 +113,8 @@ int main(int argc, char **argv)
           int result = nce_lkl_run(path);
           fflush(stdout);
           fflush(stderr);
-          dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 30 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
+          int delay = getenv("NCE_DESKTOP") ? 0 : 30;
+          dispatch_after(dispatch_time(DISPATCH_TIME_NOW, delay * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
             exit(result);
           });
         });

@@ -22,6 +22,10 @@ actor ProbeLogReader {
     private var phase: String?
     static let lineLimit = 80
     static let phaseLabels = [
+        "android_desktop_running": "Android 正在运行",
+        "android_desktop_stopped": "Android 已停止",
+        "android_system_server_boot": "正在启动 Android 系统",
+        "android_activity_service_registered": "正在启动 Android 桌面",
         "native_graphics_start": "正在测试 Metal 图形",
         "linux_shutdown": "正在结束测试",
         "android_zygote_launch": "正在检查 Android 进程启动",
@@ -58,8 +62,12 @@ actor ProbeLogReader {
         let size = (attributes[.size] as? NSNumber)?.uint64Value ?? 0
         let identity = (attributes[.systemFileNumber] as? NSNumber)?.uint64Value
         let date = attributes[.modificationDate] as? Date
-        if identity != fileID || size < offset || (size == offset && date != modified) { reset() }
-        guard size != offset || fileID == nil else { return nil }
+        if identity != fileID || size < offset || (size == offset && date != modified) {
+            reset()
+        }
+        guard size != offset || fileID == nil else {
+            return nil
+        }
         fileID = identity
         modified = date
         let file = try FileHandle(forReadingFrom: url)
@@ -68,7 +76,9 @@ actor ProbeLogReader {
         // Bound each read and stop at the captured size even while the guest writes.
         while offset < size {
             let data = try file.read(upToCount: Int(min(size - offset, 65536))) ?? Data()
-            if data.isEmpty { break }
+            if data.isEmpty {
+                break
+            }
             offset += UInt64(data.count)
             pending.append(data)
             while let newline = pending.firstIndex(of: 10) {
@@ -76,15 +86,21 @@ actor ProbeLogReader {
                 pending.removeSubrange(...newline)
                 if line.hasPrefix("{\"phase\":") {
                     let value = try? JSONSerialization.jsonObject(with: Data(line.utf8)) as? [String: Any]
-                    if let key = value?["phase"] as? String, Self.phaseLabels[key] != nil { phase = key }
+                    if let key = value?["phase"] as? String, Self.phaseLabels[key] != nil {
+                        phase = key
+                    }
                 }
                 let preview = line.count > 512 ? String(line.prefix(512)) + "…" : line
                 lines.append(ProbeLogLine(id: nextLine, text: preview))
                 nextLine += 1
-                if lines.count > Self.lineLimit { lines.removeFirst(lines.count - Self.lineLimit) }
+                if lines.count > Self.lineLimit {
+                    lines.removeFirst(lines.count - Self.lineLimit)
+                }
             }
             // A malformed line must not grow the preview buffer indefinitely.
-            if pending.count > 4096 { pending = Data(pending.suffix(4096)) }
+            if pending.count > 4096 {
+                pending = Data(pending.suffix(4096))
+            }
         }
         return ProbeLogSnapshot(lines: lines, phase: phase)
     }

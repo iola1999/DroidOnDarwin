@@ -9,6 +9,7 @@
 #include <fcntl.h>
 #include <initializer_list>
 #include <linux/android/binderfs.h>
+#include <linux/pfkeyv2.h>
 #include <poll.h>
 #include <sched.h>
 #include <signal.h>
@@ -208,6 +209,14 @@ static void unix_sockets()
     puts("{\"test\":\"linux_unix_socket_credentials_fd\",\"passed\":true}");
 }
 
+static void network_stats_rcu_socket()
+{
+    // Android BpfUtils closes PF_KEY sockets to wait for the kernel RCU grace period.
+    int fd = socket(AF_KEY, SOCK_RAW | SOCK_CLOEXEC, PF_KEY_V2);
+    CHECK(fd >= 0 && close(fd) == 0);
+    puts("{\"test\":\"android_network_stats_rcu_socket\",\"passed\":true}");
+}
+
 struct Payload {
     int8_t bytes[65536];
     int32_t size;
@@ -364,6 +373,7 @@ int main(int argc, char **argv)
     alarm(20);
     mount_namespace_proc();
     unix_sockets();
+    network_stats_rcu_socket();
     load_service_policy();
     int properties_ready[2];
     CHECK(pipe(properties_ready) == 0);

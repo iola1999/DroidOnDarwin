@@ -187,6 +187,9 @@ void nce_framework_test()
         {"ro.build.version.all_codenames", "REL"},
         {"ro.product.model", "NCE prototype"},
         {"ro.build.type", "userdebug"},
+        // This prototype has no ART boot image; retain bounded Android startup
+        // timeouts while class verification is measured and optimized.
+        {"ro.hw_timeout_multiplier", "3"},
         {"ro.treble.enabled", "true"},
         {"sys.use_memfd", "true"},
         {"dalvik.vm.heapstartsize", "16m"},
@@ -361,6 +364,22 @@ static void stop_process_group(pid_t leader)
     CHECK(false);
 }
 
+static void shutdown_framework()
+{
+    pid_t child = fork();
+    CHECK(child >= 0);
+    if (!child) {
+        alarm(30);
+        runtime_environment();
+        execl("/system/bin/app_process64", "app_process64", "/system/bin", "NceShutdown", nullptr);
+        _exit(108);
+    }
+    int status;
+    CHECK(waitpid(child, &status, 0) == child);
+    if (status)
+        dprintf(2, "Android framework shutdown status=%d; continuing process cleanup and filesystem sync\n", status);
+}
+
 pid_t nce_start_system_service(const char *path, const char *name, uid_t uid,
                                std::initializer_list<const char *> arguments)
 {
@@ -484,6 +503,7 @@ void nce_zygote_test()
             uid_t owner;
         } directories[] = {
             {"/mnt", 0755, 0},
+            {"/mnt/expand", 0771, 1000},
             {"/mnt/user", 0755, 0},
             {"/mnt/user/0", 0755, 0},
             {"/storage", 0755, 0},
@@ -658,6 +678,8 @@ void nce_zygote_test()
             usleep(1000000);
         }
         CHECK(booted || stopped);
+        if (booted)
+            shutdown_framework();
         stop_process_group(zygote);
         AIBinder_decStrong(artd_reference);
         CHECK(__system_property_set("ctl.stop", "idmap2d") == 0);

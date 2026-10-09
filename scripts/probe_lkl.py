@@ -178,7 +178,8 @@ def main():
                         "NETFILTER_XT_MATCH_CONNTRACK", "NETFILTER_XT_TARGET_NFLOG",
                         "NETFILTER_XT_TARGET_TCPMSS", "NETFILTER_XT_TARGET_CT",
                         "NETFILTER_XT_TARGET_MASQUERADE"]
-            options += ["NETFILTER_XT_MATCH_U32", "NETFILTER_XT_MATCH_STATE", "NETFILTER_XT_MATCH_TCPMSS"]
+            options += ["NETFILTER_XT_MATCH_U32", "NETFILTER_XT_MATCH_STATE", "NETFILTER_XT_MATCH_TCPMSS",
+                        "NET_KEY", "IP_MROUTE", "IPV6_MROUTE"]
         switches = [arg for name in options for arg in ("-e", name)]
         if PROCESS:
             switches += ["--set-str", "LSM", "selinux"]
@@ -319,7 +320,7 @@ def main():
     sources = [*inputs, EXPERIMENT / "lkl-bridge.c", EXPERIMENT / "nce.h", EXPERIMENT / "guest-registers.h", EXPERIMENT / "guest.S", Path(__file__).resolve()]
     if PROCESS:
         manifest["dispatch_results"] = dispatch_results
-        sources += [EXPERIMENT / "memory.h", EXPERIMENT / "layout.h", EXPERIMENT / "execute-check.h", Path(__file__).with_name("lkl_nce_patch.py"),
+        sources += [EXPERIMENT / "memory.h", EXPERIMENT / "layout.h", EXPERIMENT / "execute-check.h", EXPERIMENT / "input.h", EXPERIMENT / "session.h", Path(__file__).with_name("lkl_nce_patch.py"),
                     *sorted(EXPERIMENT.glob("lkl-*.h")),
                     *sorted(EXPERIMENT.glob("lkl-nce-*.c")), EXPERIMENT / "exec-guest.S", EXPERIMENT / "programs.h",
                     Path(__file__).with_name("build_nce_userspace.py"), EXPERIMENT / "dispatch-test.c", EXPERIMENT / "host-context-test.c",

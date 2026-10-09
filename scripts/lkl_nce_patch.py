@@ -14,6 +14,10 @@ def apply(source: Path, experiment: Path):
         path.write_text(text.replace(before, after))
 
     arch = "arch/lkl/"
+    # Host timer IRQs remain pending while a Linux thread owns the CPU.
+    # Poll them at cooperative reschedule points before testing NEED_RESCHED.
+    edit("kernel/sched/core.c", "int __sched __cond_resched(void)\n{",
+         "int __sched __cond_resched(void)\n{\n#ifdef CONFIG_LKL\n\tcpu_relax();\n#endif")
     # A busy guest must still admit host input and log reads. The idle host task
     # supplies the existing context-switch boundary for handing off the CPU.
     edit(arch + "include/asm/cpu.h", "void lkl_cpu_put(void);",

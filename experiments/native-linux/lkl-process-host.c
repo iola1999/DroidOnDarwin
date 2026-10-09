@@ -1231,6 +1231,15 @@ void nce_process_tests(long (*host_syscall)(long, long *), long (*guest_syscall)
     REQUIRE(strstr(benchmark, "linux_ext4_persistence"));
     fputs(benchmark, stdout);
     mount_android_data(host_syscall);
+    REQUIRE(nce_session_request_stop() == -19);
+    nce_session_set_syscall(host_syscall);
+    REQUIRE(nce_session_request_stop() == 0 && nce_session_request_stop() == 0);
+    nce_session_set_syscall(NULL);
+    REQUIRE(nce_session_request_stop() == -19);
+    REQUIRE(get_file(host_syscall, "/data/nce/session-stop", benchmark, sizeof(benchmark)) == 0);
+    long stop_args[6] = {-100, (long)"/data/nce/session-stop", 0};
+    REQUIRE(host_syscall(35, stop_args) == 0);
+    puts("{\"test\":\"linux_session_stop_lifecycle\",\"passed\":true}");
     uint32_t host_poll_state[4] = {0};
     put_file(host_syscall, "/data/nce/host-scheduling", host_poll_state, sizeof(host_poll_state));
     struct HostPoll host_poll = {.call = host_syscall};

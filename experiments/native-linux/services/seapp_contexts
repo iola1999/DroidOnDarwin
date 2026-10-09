@@ -1,3 +1,4 @@
 user=system seinfo=platform domain=nce_t type=nce_t levelFrom=none
 isSystemServer=true domain=system_server type=nce_t
 user=_app domain=nce_t type=nce_t levelFrom=none
+user=network_stack seinfo=network_stack domain=nce_t type=nce_t levelFrom=none

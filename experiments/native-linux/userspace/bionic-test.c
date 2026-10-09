@@ -74,6 +74,7 @@ static void *worker(void *pointer)
 void file_tests(const char *libc);
 void signal_tests(const char *libc);
 void seccomp_tests(void);
+void proc_exit_tests(void);
 
 static void allocator_class_growth(void)
 {
@@ -122,6 +123,7 @@ int main(void)
         return 3;
     allocator_class_growth();
     many_threads();
+    proc_exit_tests();
     printf("{\"test\":\"android_bionic_threads_allocator_tls\",\"passed\":true,\"page_size\":%ld}\n",
            sysconf(_SC_PAGESIZE));
     return 0;
