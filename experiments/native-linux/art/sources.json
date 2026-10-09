@@ -62,6 +62,12 @@
       "repo": "platform/external/lzma",
       "revision": "c1bc713526e9740aec88f0f18e0bca0b0c54f1f9",
       "sha256": "222558ca5e5180e09bfed41fde2e988735b5dff0221badb8ab7d0babae605a0d"
+    },
+    {
+      "name": "vixl",
+      "repo": "platform/external/vixl",
+      "revision": "e685e67c8f41596dad341b086a649e9f4a7d6062",
+      "sha256": "d6ff6bec242705e66ad8e0fd8e99b71c21ee5f2c8f6cf8d92382b41ed538ae0f"
     }
   ],
   "headers": [

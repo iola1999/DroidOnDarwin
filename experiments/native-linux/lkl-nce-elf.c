@@ -5,7 +5,18 @@
 #include <linux/mman.h>
 #include <linux/slab.h>
 #include <linux/syscalls.h>
+#include <linux/security.h>
+#include <linux/shmem_fs.h>
+#include <linux/userfaultfd_k.h>
 #include <asm/host_ops.h>
+#include <asm/nce-layout.h>
+
+static bool overlaps_dynamic(unsigned long addr, unsigned long length)
+{
+    unsigned long base = nce_user_base + NCE_EXEC_OFFSET;
+    return length && addr < base + NCE_EXEC_SIZE &&
+           (addr >= base || length > base - addr);
+}
 
 unsigned long nce_elf_file_layout(struct file *file, const struct elfhdr *header,
                                  const struct elf_phdr *phdrs)
@@ -63,7 +74,7 @@ long nce_reserve_elf(long *params)
                    MAP_PRIVATE | MAP_ANONYMOUS | MAP_FIXED_NOREPLACE, 0);
 }
 
-static int populate_code(unsigned long address, unsigned long length)
+int nce_populate_code(unsigned long address, unsigned long length)
 {
     unsigned long end = PAGE_ALIGN(address + length);
     while (address < end) {
@@ -76,6 +87,81 @@ static int populate_code(unsigned long address, unsigned long length)
     return 0;
 }
 
+/* The fixed host executable window survives debugger detach. Linux still
+ * owns allocation and page lifetime; producers write a separate shared alias. */
+long nce_map_code(long *params)
+{
+    unsigned long length = params[1], offset = params[2], result, populate;
+    struct fd fd;
+    struct file *file;
+    struct mm_struct *mm = current->mm;
+    LIST_HEAD(uf);
+    struct vm_unmapped_area_info info = {
+        /* The first page holds the nearby host register-restore branch. */
+        .low_limit = nce_user_base + NCE_EXEC_OFFSET + PAGE_SIZE,
+        .high_limit = nce_user_base + NCE_EXEC_OFFSET + NCE_EXEC_SIZE,
+    };
+    if (!length || length > NCE_EXEC_SIZE || offset_in_page(offset) ||
+        offset > LONG_MAX - PAGE_ALIGN(length)) return -EINVAL;
+    length = PAGE_ALIGN(length);
+    info.length = length;
+    fd = fdget(params[0]);
+    if (fd_empty(fd)) return -EBADF;
+    file = fd_file(fd);
+    if (!shmem_file(file) || offset + length > i_size_read(file_inode(file))) {
+        result = -EINVAL;
+        goto out;
+    }
+    result = security_mmap_file(file, PROT_READ | PROT_EXEC, MAP_SHARED);
+    if (result) goto out;
+    if (mmap_write_lock_killable(mm)) { result = -EINTR; goto out; }
+    result = vm_unmapped_area(&info);
+    if (!IS_ERR_VALUE(result))
+        result = do_mmap(file, result, length, PROT_READ | PROT_EXEC,
+                         MAP_SHARED | MAP_FIXED_NOREPLACE, 0, offset >> PAGE_SHIFT,
+                         &populate, &uf);
+    mmap_write_unlock(mm);
+    userfaultfd_unmap_complete(mm, &uf);
+    if (!IS_ERR_VALUE(result)) {
+        int error = nce_populate_code(result, length);
+        if (error) { vm_munmap(result, length); result = error; }
+    }
+out:
+    fdput(fd);
+    return result;
+}
+
+/* Keep ordinary VM operations from replacing prepared host entries or
+ * installing executable pages outside the registered executable windows. */
+long nce_check_memory_syscall(long number, long *params)
+{
+    unsigned long start = params[0], length = PAGE_ALIGN(params[1]);
+    struct vm_area_struct *vma;
+    int result = 0;
+    if (!length && number == 216) length = PAGE_SIZE;
+    if (!length) return 0;
+    if (start + length < start) return -EINVAL;
+    if (number == 216) {
+        if ((params[3] & MREMAP_FIXED) && overlaps_dynamic(params[4], params[2])) return -EACCES;
+        if (overlaps_dynamic(start, length)) return -EACCES;
+    } else {
+        if ((params[2] & (PROT_WRITE | PROT_EXEC)) == (PROT_WRITE | PROT_EXEC)) return -EACCES;
+        if (overlaps_dynamic(start, length) && params[2] && params[2] != (PROT_READ | PROT_EXEC)) return -EACCES;
+    }
+    mmap_read_lock(current->mm);
+    VMA_ITERATOR(iter, current->mm, start);
+    for_each_vma_range(iter, vma, start + length) {
+        if (number == 216 ? (vma->vm_flags & VM_EXEC) :
+            ((params[2] & PROT_EXEC) && !(vma->vm_flags & VM_EXEC) &&
+             !overlaps_dynamic(vma->vm_start, vma->vm_end - vma->vm_start))) {
+            result = -EACCES;
+            break;
+        }
+    }
+    mmap_read_unlock(current->mm);
+    return result;
+}
+
 SYSCALL_DEFINE6(nce_mmap, unsigned long, addr, unsigned long, len,
                unsigned long, prot, unsigned long, flags, unsigned long, fd,
                unsigned long, offset)
@@ -84,6 +170,7 @@ SYSCALL_DEFINE6(nce_mmap, unsigned long, addr, unsigned long, len,
     long result;
     /* AArch64 mmap takes a byte offset; LKL's generic wrapper used pages. */
     if (offset & ~PAGE_MASK) return -EINVAL;
+    if ((flags & (MAP_FIXED | MAP_FIXED_NOREPLACE)) && overlaps_dynamic(addr, len)) return -EACCES;
     if (!(flags & MAP_ANONYMOUS)) {
         struct fd file = fdget(fd);
         if (fd_empty(file)) return -EBADF;
@@ -100,7 +187,7 @@ SYSCALL_DEFINE6(nce_mmap, unsigned long, addr, unsigned long, len,
     }
     result = ksys_mmap_pgoff(addr, len, prot, flags, fd, offset >> PAGE_SHIFT);
     if (!IS_ERR_VALUE(result) && (prot & PROT_EXEC)) {
-        int error = populate_code(result, len);
+        int error = nce_populate_code(result, len);
         if (error) { vm_munmap(result, len); return error; }
     }
     return result;

@@ -51,7 +51,7 @@ final class ProbeModel: ObservableObject {
             }
         } else if busy && didRun {
             let seconds = Int(Date().timeIntervalSince(startedAt))
-            if log.contains("\"phase\":\"android_art_load\"") { status = "正在运行 Java 测试（\(seconds) 秒）" }
+            if log.contains("\"phase\":\"android_art_load\"") { status = "正在运行 Java 与编译执行测试（\(seconds) 秒）" }
             else if log.contains("\"phase\":\"android_art_reference_heap\"") { status = "正在检查 Android 对象内存（\(seconds) 秒）" }
             else if log.contains("\"phase\":\"android_bionic_dynamic\"") { status = "正在检查 Android 运行库（\(seconds) 秒）" }
             else if log.contains("\"phase\":\"linux_binder_program\"") { status = "正在检查 Binder 进程通信（\(seconds) 秒）" }
@@ -175,7 +175,7 @@ struct NativeLinuxApp: App {
                         Text(Bundle.main.object(forInfoDictionaryKey: "NCEBuildID") as? String ?? "N3")
                             .font(.caption).foregroundStyle(.secondary)
                         Text(model.status).font(.headline).accessibilityIdentifier("probe-status")
-                        Text("运行 Android 运行库、Binder 和 Java 测试。请保持应用在前台。")
+                        Text("运行 Android 运行库、Binder、Java 与编译执行测试。请保持应用在前台。")
                             .foregroundStyle(.secondary)
                         if model.busy { ProgressView() }
                     }

@@ -356,7 +356,7 @@ def build(out, llvm):
         'unsigned exercise_large_text(unsigned x) { for (unsigned i=0;i<4096;++i) x=functions[i](x); return x; }\n')
     run([llvm / 'clang', '--target=aarch64-linux-musl', '-ffixed-x18', '-mno-outline-atomics',
          '-fPIE', '-O2', '-c', large, '-o', out / 'large-text.o'])
-    for unit in ('mm-tests', 'signal-tests'):
+    for unit in ('mm-tests', 'signal-tests', 'code-tests'):
         run([llvm / 'clang', '--target=aarch64-linux-musl', '-ffixed-x18', '-mno-outline-atomics',
              '-fPIE', '-O2', '-g', '-Wall', '-Wextra', '-Werror', '-nostdinc', '-isystem', libc / 'include', '-isystem', resource,
              '-c', EXP / f'userspace/{unit}.c', '-o', out / f'{unit}.o'])
@@ -370,7 +370,7 @@ def build(out, llvm):
         run([shutil.which('ld.lld'), '-pie', '--no-dynamic-linker', '-z', 'max-page-size=16384',
              '-z', 'common-page-size=16384', libc / 'lib/rcrt1.o', libc / 'lib/crti.o',
              out / f'{name}.o', *([out / 'large-text.o'] if name == 'worker' else []),
-             *([out / 'mm-tests.o', out / 'signal-tests.o', out / 'signal-registers.o'] if name == 'mm-bench' else []),
+             *([out / 'mm-tests.o', out / 'signal-tests.o', out / 'signal-registers.o', out / 'code-tests.o'] if name == 'mm-bench' else []),
              libc / 'lib/libc.a', runtime, libc / 'lib/crtn.o', '-o', out / f'{name}.elf'])
         programs.append(('/init-user' if name == 'init' else '/' + name, out / f'{name}.elf'))
     programs.append(('/bin/sh', dash(out, llvm, libc, runtime, resource)))

@@ -141,7 +141,7 @@ def main():
         options = ["64BIT", "EXPERT", "PROC_FS", "SYSFS", "FUTEX", "EPOLL", "SIGNALFD", "TIMERFD",
                    "LKL_HOST_MEMCPY", "LKL_HOST_MEMSET", "LKL_HOST_MEMMOVE"]
         if PROCESS:
-            options += ["MMU", "PRINTK", "NAMESPACES", "PID_NS", "POSIX_TIMERS", "ANDROID_BINDER_IPC", "ANDROID_BINDERFS"]
+            options += ["MMU", "PRINTK", "NAMESPACES", "PID_NS", "POSIX_TIMERS", "ANDROID_BINDER_IPC", "ANDROID_BINDERFS", "MEMFD_CREATE", "TMPFS"]
         switches = [arg for name in options for arg in ("-e", name)]
         switches += [arg for name in ("KALLSYMS", "BLOCK", "DEBUG_INFO", "SLUB_DEBUG") for arg in ("-d", name)]
         run([SOURCE / "scripts/config", "--file", BUILD / ".config", *switches], env=env)
@@ -214,7 +214,7 @@ def main():
                     *sorted((EXPERIMENT / "userspace").glob("*"))]
         run(["python3", ROOT / "scripts/test_nce_userspace.py"])
         sources.append(ROOT / "scripts/test_nce_userspace.py")
-        manifest["stage"] = "Android Bionic, Binder and ART Java workload"
+        manifest["stage"] = "Android Bionic, Binder, ART Java and ARM64 JIT workloads"
         manifest["userspace_libraries"] = {"musl": "1.2.5", "compiler-rt": "20.1.8", "dash": "0.5.12"}
         manifest["generated_sha256"] = {name: hashlib.sha256((OUT / name).read_bytes()).hexdigest()
                                         for name in ["program-images.h", "user-scripts.h", "lkl-image.h", "lkl-host-ops.h", "guest-image.h",

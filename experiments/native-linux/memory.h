@@ -6,6 +6,8 @@
  * Slices are page aligned and remain valid until nce_memory_release(). */
 int nce_memory_prepare(void);
 NceCode nce_memory_take(size_t size);
+/* Fixed executable window for Linux file-backed dynamic code. */
+NceCode nce_memory_dynamic_code(void);
 /* The surrounding Linux address range follows layout.h. */
 uintptr_t nce_memory_user_base(void);
 /* Replace an ordinary data mapping and apply POSIX protection flags. Logs

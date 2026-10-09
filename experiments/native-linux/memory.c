@@ -20,7 +20,7 @@ extern int nce_wait_debugger_detach(unsigned timeout_ms);
 #define RESERVED_BYTES (NCE_CODE_POOL_SIZE + SPACE_BYTES)
 #define REQUIRE(c) do { if (!(c)) { fprintf(stderr, "memory failure line %d: %s\n", __LINE__, #c); abort(); } } while (0)
 static unsigned char *reservation;
-static NceCode pool;
+static NceCode pool, dynamic_code;
 static size_t used;
 
 NceCode nce_memory_take(size_t size)
@@ -33,6 +33,7 @@ NceCode nce_memory_take(size_t size)
 }
 
 uintptr_t nce_memory_user_base(void) { return (uintptr_t)reservation + NCE_CODE_POOL_SIZE; }
+NceCode nce_memory_dynamic_code(void) { return dynamic_code; }
 
 int nce_memory_remap(void *target, void *source, size_t size, int protection)
 {
@@ -82,10 +83,10 @@ static int verify_memory(void)
     uint32_t first[] = {0x52800540, 0xd65f03c0}; /* mov w0,42; ret */
     uint32_t second[] = {0x52800560, 0xd65f03c0}; /* mov w0,43; ret */
     unsigned range = 0;
-    for (size_t program = 0; program <= nce_program_count; ++program) {
-        size_t count = program ? nce_programs[program - 1].segment_count : 1;
+    for (size_t program = 0; program <= nce_program_count + 1; ++program) {
+        size_t count = program && program <= nce_program_count ? nce_programs[program - 1].segment_count : 1;
         for (size_t segment = 0; segment < count; ++segment, ++range) {
-            NceCode target = program ? nce_programs[program - 1].segments[segment].code : pages;
+            NceCode target = !program ? pages : program > nce_program_count ? dynamic_code : nce_programs[program - 1].segments[segment].code;
             for (unsigned i = 0; i < 8; ++i) {
                 memcpy(target.rw, i % 2 ? second : first, sizeof(first));
                 nce_sync_code(target);
@@ -129,7 +130,7 @@ done:
 int nce_memory_prepare(void)
 {
     REQUIRE(!reservation);
-    size_t prepared = NCE_CODE_POOL_SIZE;
+    size_t prepared = NCE_CODE_POOL_SIZE + NCE_EXEC_SIZE;
     for (size_t i = 0; i < nce_program_count; ++i)
         for (size_t j = 0; j < nce_programs[i].segment_count; ++j) prepared += nce_programs[i].segments[j].size;
     printf("{\"phase\":\"prepare_jit_pool\",\"reserved_bytes\":%lu,\"prepared_code_bytes\":%zu}\n",
@@ -146,7 +147,8 @@ int nce_memory_prepare(void)
     if (prefix) REQUIRE(munmap(raw, prefix) == 0);
     REQUIRE(munmap(reservation + RESERVED_BYTES, alignment - prefix) == 0);
     pool = prepare_code(reservation, NCE_CODE_POOL_SIZE);
-    int valid = pool.rw != NULL;
+    dynamic_code = prepare_code((void *)(nce_memory_user_base() + NCE_EXEC_OFFSET), NCE_EXEC_SIZE);
+    int valid = pool.rw != NULL && dynamic_code.rw != NULL;
     for (size_t i = 0; valid && i < nce_program_count; ++i) {
         NceProgram *p = &nce_programs[i];
         p->base = nce_memory_user_base() + p->offset;
@@ -212,10 +214,17 @@ int nce_memory_release(void)
             }
             p->stubs = (NceCode){0};
         }
+        uintptr_t dynamic_start = nce_memory_user_base() + NCE_EXEC_OFFSET;
+        REQUIRE(cursor <= dynamic_start);
+        if (cursor < dynamic_start) result |= release_range((void *)cursor, dynamic_start - cursor, 0);
+        result |= release_range(dynamic_code.rw, dynamic_code.size, 1);
+        result |= release_range((void *)dynamic_start, NCE_EXEC_SIZE, dynamic_code.rx != NULL);
+        cursor = dynamic_start + NCE_EXEC_SIZE;
         result |= release_range((void *)cursor, (uintptr_t)reservation + RESERVED_BYTES - cursor, 0);
     }
     reservation = NULL;
     pool = (NceCode){0};
+    dynamic_code = (NceCode){0};
     used = 0;
     return result;
 }

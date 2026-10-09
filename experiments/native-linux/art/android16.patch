@@ -1,9 +1,614 @@
+--- a/compiler/jit/jit_compiler.cc
++++ b/compiler/jit/jit_compiler.cc
+@@ -74,7 +74,11 @@
+     compiler_options_->SetDebuggable(runtime->IsJavaDebuggable());
+   }
+
++#ifdef ART_NCE
++  compiler_options_->implicit_null_checks_ = false;
++#else
+   compiler_options_->implicit_null_checks_ = runtime->GetImplicitNullChecks();
++#endif
+   compiler_options_->implicit_so_checks_ = runtime->GetImplicitStackOverflowChecks();
+   compiler_options_->implicit_suspend_checks_ = runtime->GetImplicitSuspendChecks();
+
+@@ -175,6 +179,10 @@
+
+ bool JitCompiler::CompileMethod(
+     Thread* self, JitMemoryRegion* region, ArtMethod* method, CompilationKind compilation_kind) {
++#ifdef ART_NCE
++  // Native stubs and OSR have separate reference conversion paths.
++  if (method->IsNative() || compilation_kind == CompilationKind::kOsr) return false;
++#endif
+   SCOPED_TRACE << "JIT compiling "
+                << method->PrettyMethod()
+                << " (kind=" << compilation_kind << ")"
+--- a/compiler/optimizing/code_generator_arm64.cc
++++ b/compiler/optimizing/code_generator_arm64.cc
+@@ -95,6 +95,18 @@
+ using helpers::VIXLRegCodeFromART;
+ using helpers::WRegisterFrom;
+ using helpers::XRegisterFrom;
++
++#ifdef ART_NCE
++// Registers and stack maps retain compressed references. Only the address
++// used by a heap access is expanded to the native pointer.
++static Register NceHeapAddress(MacroAssembler* masm, UseScratchRegisterScope* temps,
++                               Register reference) {
++  Register address = temps->AcquireX();
++  masm->Mov(address, nce_art_reference_base);
++  masm->Add(address, address, Operand(reference.W(), UXTW));
++  return address;
++}
++#endif
+
+ // TODO(mythria): Expand SystemRegister in vixl to include this value.
+ uint16_t SYS_CNTVCT_EL0 = SystemRegisterEncoder<1, 3, 14, 0, 2>::value;
+@@ -1630,7 +1642,13 @@
+   // Load the address of the card table into `card`.
+   __ Ldr(card, MemOperand(tr, Thread::CardTableOffset<kArm64PointerSize>().Int32Value()));
+   // Calculate the offset (in the card table) of the card corresponding to `object`.
++#ifdef ART_NCE
++  __ Mov(temp.X(), nce_art_reference_base);
++  __ Add(temp.X(), temp.X(), Operand(object.W(), UXTW));
++  __ Lsr(temp.X(), temp.X(), gc::accounting::CardTable::kCardShift);
++#else
+   __ Lsr(temp, object, gc::accounting::CardTable::kCardShift);
++#endif
+   // Write the `art::gc::accounting::CardTable::kCardDirty` value into the
+   // `object`'s card.
+   //
+@@ -1655,7 +1673,13 @@
+   // Load the address of the card table into `card`.
+   __ Ldr(card, MemOperand(tr, Thread::CardTableOffset<kArm64PointerSize>().Int32Value()));
+   // Calculate the offset (in the card table) of the card corresponding to `object`.
++#ifdef ART_NCE
++  __ Mov(temp.X(), nce_art_reference_base);
++  __ Add(temp.X(), temp.X(), Operand(object.W(), UXTW));
++  __ Lsr(temp.X(), temp.X(), gc::accounting::CardTable::kCardShift);
++#else
+   __ Lsr(temp, object, gc::accounting::CardTable::kCardShift);
++#endif
+   // assert (!clean || !self->is_gc_marking)
+   __ Ldrb(temp, MemOperand(card, temp.X()));
+   static_assert(gc::accounting::CardTable::kCardClean == 0);
+@@ -2357,8 +2381,16 @@
+   uint32_t offset = field_info.GetFieldOffset().Uint32Value();
+   DCHECK_EQ(DataType::Size(field_info.GetFieldType()), DataType::Size(instruction->GetType()));
+   DataType::Type load_type = instruction->GetType();
++#ifdef ART_NCE
++  CHECK(!codegen_->EmitReadBarrier());
++  UseScratchRegisterScope temps(GetVIXLAssembler());
++  Register address = NceHeapAddress(GetVIXLAssembler(), &temps,
++                                    InputRegisterAt(instruction, receiver_input));
++  MemOperand field(address, field_info.GetFieldOffset().SizeValue());
++#else
+   MemOperand field =
+       HeapOperand(InputRegisterAt(instruction, receiver_input), field_info.GetFieldOffset());
++#endif
+
+   if (load_type == DataType::Type::kReference && codegen_->EmitBakerReadBarrier()) {
+     // Object FieldGet with Baker's read barrier case.
+@@ -2440,13 +2472,19 @@
+       source = temp;
+     }
+
++#ifdef ART_NCE
++    Register address = NceHeapAddress(GetVIXLAssembler(), &temps, obj);
++    MemOperand destination(address, offset.SizeValue());
++#else
++    MemOperand destination = HeapOperand(obj, offset);
++#endif
+     if (field_info.IsVolatile()) {
+       codegen_->StoreRelease(
+-          instruction, field_type, source, HeapOperand(obj, offset), /* needs_null_check= */ true);
++          instruction, field_type, source, destination, /* needs_null_check= */ true);
+     } else {
+       // Ensure that between store and MaybeRecordImplicitNullCheck there are no pools emitted.
+       EmissionCheckScope guard(GetVIXLAssembler(), kMaxMacroInstructionSizeInBytes);
+-      codegen_->Store(field_type, source, HeapOperand(obj, offset));
++      codegen_->Store(field_type, source, destination);
+       codegen_->MaybeRecordImplicitNullCheck(instruction);
+     }
+   }
+@@ -2869,6 +2907,18 @@
+   MacroAssembler* masm = GetVIXLAssembler();
+   UseScratchRegisterScope temps(masm);
+
++#ifdef ART_NCE
++  if (!maybe_compressed_char_at) {
++    CHECK(!codegen_->EmitReadBarrier());
++    Register address = NceHeapAddress(masm, &temps, obj);
++    if (!instruction->GetArray()->IsIntermediateAddress()) __ Add(address, address, offset);
++    MemOperand source = index.IsConstant()
++        ? MemOperand(address, Int64FromLocation(index) << DataType::SizeShift(type))
++        : MemOperand(address, XRegisterFrom(index), LSL, DataType::SizeShift(type));
++    codegen_->Load(type, OutputCPURegister(instruction), source);
++    return;
++  }
++#endif
+   // The non-Baker read barrier instrumentation of object ArrayGet instructions
+   // does not support the HIntermediateAddress instruction.
+   DCHECK(!((type == DataType::Type::kReference) &&
+@@ -2997,12 +3047,18 @@
+ void InstructionCodeGeneratorARM64::VisitArrayLength(HArrayLength* instruction) {
+   uint32_t offset = CodeGenerator::GetArrayLengthOffset(instruction);
+   vixl::aarch64::Register out = OutputRegister(instruction);
++#ifdef ART_NCE
++  UseScratchRegisterScope temps(GetVIXLAssembler());
++  Register address = NceHeapAddress(GetVIXLAssembler(), &temps, InputRegisterAt(instruction, 0));
++  __ Ldr(out, MemOperand(address, offset));
++#else
+   {
+     // Ensure that between load and MaybeRecordImplicitNullCheck there are no pools emitted.
+     EmissionCheckScope guard(GetVIXLAssembler(), kMaxMacroInstructionSizeInBytes);
+     __ Ldr(out, HeapOperand(InputRegisterAt(instruction, 0), offset));
+     codegen_->MaybeRecordImplicitNullCheck(instruction);
+   }
++#endif
+   // Mask out compression flag from String's array length.
+   if (mirror::kUseStringCompression && instruction->IsStringLength()) {
+     __ Lsr(out.W(), out.W(), 1u);
+@@ -3044,6 +3100,18 @@
+   MemOperand destination = HeapOperand(array);
+   MacroAssembler* masm = GetVIXLAssembler();
+
++#ifdef ART_NCE
++  if (value_type != DataType::Type::kReference) {
++    UseScratchRegisterScope temps(masm);
++    Register address = NceHeapAddress(masm, &temps, array);
++    if (!instruction->GetArray()->IsIntermediateAddress()) __ Add(address, address, offset);
++    destination = index.IsConstant()
++        ? MemOperand(address, Int64FromLocation(index) << DataType::SizeShift(value_type))
++        : MemOperand(address, XRegisterFrom(index), LSL, DataType::SizeShift(value_type));
++    codegen_->Store(value_type, source, destination);
++    return;
++  }
++#endif
+   if (!needs_write_barrier) {
+     if (codegen_->ShouldCheckGCCard(value_type, instruction->GetValue(), write_barrier_kind)) {
+       codegen_->CheckGCCardIsValid(array);
+@@ -5180,10 +5248,18 @@
+
+   {
+     // Ensure that between load and MaybeRecordImplicitNullCheck there are no pools emitted.
++#ifndef ART_NCE
+     EmissionCheckScope guard(GetVIXLAssembler(), kMaxMacroInstructionSizeInBytes);
++#endif
+     // /* HeapReference<Class> */ temp = receiver->klass_
++#ifdef ART_NCE
++    UseScratchRegisterScope temps(GetVIXLAssembler());
++    Register address = NceHeapAddress(GetVIXLAssembler(), &temps, receiver.W());
++    __ Ldr(temp.W(), MemOperand(address, class_offset.Int32Value()));
++#else
+     __ Ldr(temp.W(), HeapOperandFrom(LocationFrom(receiver), class_offset));
+     MaybeRecordImplicitNullCheck(invoke);
++#endif
+   }
+   // Instead of simply (possibly) unpoisoning `temp` here, we should
+   // emit a read barrier for the previous class reference load.
+@@ -5198,7 +5274,15 @@
+   MaybeGenerateInlineCacheCheck(invoke, temp);
+
+   // temp = temp->GetMethodAt(method_offset);
++#ifdef ART_NCE
++  {
++    UseScratchRegisterScope temps(GetVIXLAssembler());
++    Register address = NceHeapAddress(GetVIXLAssembler(), &temps, temp.W());
++    __ Ldr(temp, MemOperand(address, method_offset));
++  }
++#else
+   __ Ldr(temp, MemOperand(temp, method_offset));
++#endif
+   // lr = temp->GetEntryPoint();
+   __ Ldr(lr, MemOperand(temp, entry_point.SizeValue()));
+   {
+@@ -5825,7 +5909,12 @@
+       break;
+     }
+     case HLoadClass::LoadKind::kJitTableAddress: {
+-      __ Ldr(out, codegen_->DeduplicateJitClassLiteral(cls->GetDexFile(),
++#ifdef ART_NCE
++      Register root_address = out.X();
++#else
++      Register root_address = out;
++#endif
++      __ Ldr(root_address, codegen_->DeduplicateJitClassLiteral(cls->GetDexFile(),
+                                                        cls->GetTypeIndex(),
+                                                        cls->GetClass()));
+       codegen_->GenerateGcRootFieldLoad(cls,
+@@ -5919,7 +6008,12 @@
+       return;
+     }
+     case HLoadMethodType::LoadKind::kJitTableAddress: {
+-      __ Ldr(out, codegen_->DeduplicateJitMethodTypeLiteral(load->GetDexFile(),
++#ifdef ART_NCE
++      Register root_address = out.X();
++#else
++      Register root_address = out;
++#endif
++      __ Ldr(root_address, codegen_->DeduplicateJitMethodTypeLiteral(load->GetDexFile(),
+                                                             load->GetProtoIndex(),
+                                                             load->GetMethodType()));
+       codegen_->GenerateGcRootFieldLoad(load,
+@@ -6056,7 +6150,12 @@
+       return;
+     }
+     case HLoadString::LoadKind::kJitTableAddress: {
+-      __ Ldr(out, codegen_->DeduplicateJitStringLiteral(load->GetDexFile(),
++#ifdef ART_NCE
++      Register root_address = out.X();
++#else
++      Register root_address = out;
++#endif
++      __ Ldr(root_address, codegen_->DeduplicateJitStringLiteral(load->GetDexFile(),
+                                                         load->GetStringIndex(),
+                                                         load->GetString()));
+       codegen_->GenerateGcRootFieldLoad(load,
+@@ -6196,7 +6295,22 @@
+ void InstructionCodeGeneratorARM64::VisitNewArray(HNewArray* instruction) {
+   // Note: if heap poisoning is enabled, the entry point takes care of poisoning the reference.
+   QuickEntrypointEnum entrypoint = CodeGenerator::GetArrayAllocationEntrypoint(instruction);
++#ifdef ART_NCE
++  {
++    UseScratchRegisterScope temps(GetVIXLAssembler());
++    Register klass = NceHeapAddress(GetVIXLAssembler(), &temps, w0);
++    __ Mov(x0, klass);
++  }
++#endif
+   codegen_->InvokeRuntime(entrypoint, instruction);
++#ifdef ART_NCE
++  {
++    UseScratchRegisterScope temps(GetVIXLAssembler());
++    Register base = temps.AcquireX();
++    __ Mov(base, nce_art_reference_base);
++    __ Sub(x0, x0, base);
++  }
++#endif
+   CheckEntrypointTypes<kQuickAllocArrayResolved, void*, mirror::Class*, int32_t>();
+   codegen_->MaybeGenerateMarkingRegisterCheck(/* code= */ __LINE__);
+ }
+@@ -6210,7 +6324,22 @@
+ }
+
+ void InstructionCodeGeneratorARM64::VisitNewInstance(HNewInstance* instruction) {
++#ifdef ART_NCE
++  {
++    UseScratchRegisterScope temps(GetVIXLAssembler());
++    Register klass = NceHeapAddress(GetVIXLAssembler(), &temps, w0);
++    __ Mov(x0, klass);
++  }
++#endif
+   codegen_->InvokeRuntime(instruction->GetEntrypoint(), instruction);
++#ifdef ART_NCE
++  {
++    UseScratchRegisterScope temps(GetVIXLAssembler());
++    Register base = temps.AcquireX();
++    __ Mov(base, nce_art_reference_base);
++    __ Sub(x0, x0, base);
++  }
++#endif
+   CheckEntrypointTypes<kQuickAllocObjectWithChecks, void*, mirror::Class*>();
+   codegen_->MaybeGenerateMarkingRegisterCheck(/* code= */ __LINE__);
+ }
+@@ -7383,7 +7512,18 @@
+     /*out*/ Register* scratch) {
+   LocationSummary* locations = instruction->GetLocations();
+   Register base = InputRegisterAt(instruction, 0);
+-
++#ifdef ART_NCE
++  *scratch = NceHeapAddress(GetVIXLAssembler(), temps_scope, base);
++  if (instruction->InputAt(1)->IsIntermediateAddressIndex())
++    return MemOperand(*scratch, InputRegisterAt(instruction, 1).X());
++  Location index = locations->InAt(1);
++  uint32_t offset = is_string_char_at ? mirror::String::ValueOffset().Uint32Value()
++                                    : mirror::Array::DataOffset(size).Uint32Value();
++  size_t shift = ComponentSizeShiftWidth(size);
++  if (index.IsConstant()) return MemOperand(*scratch, offset + (Int64FromLocation(index) << shift));
++  __ Add(*scratch, *scratch, Operand(XRegisterFrom(index), LSL, shift));
++  return MemOperand(*scratch, offset);
++#else
+   if (instruction->InputAt(1)->IsIntermediateAddressIndex()) {
+     DCHECK(!is_string_char_at);
+     return MemOperand(base.X(), InputRegisterAt(instruction, 1).X());
+@@ -7406,6 +7546,7 @@
+     __ Add(*scratch, base, Operand(WRegisterFrom(index), LSL, shift));
+     return HeapOperand(*scratch, offset);
+   }
++#endif
+ }
+
+ SVEMemOperand InstructionCodeGeneratorARM64::VecSVEAddress(
+--- a/compiler/optimizing/code_generator_arm64.h
++++ b/compiler/optimizing/code_generator_arm64.h
+@@ -930,19 +930,19 @@
+   vixl::aarch64::Literal<uint32_t>* DeduplicateBootImageAddressLiteral(uint64_t address) {
+     return jit_patches_.DeduplicateBootImageAddressLiteral(address);
+   }
+-  vixl::aarch64::Literal<uint32_t>* DeduplicateJitStringLiteral(const DexFile& dex_file,
++  vixl::aarch64::Literal<JitRootAddress>* DeduplicateJitStringLiteral(const DexFile& dex_file,
+                                                                 dex::StringIndex string_index,
+                                                                 Handle<mirror::String> handle) {
+     return jit_patches_.DeduplicateJitStringLiteral(
+         dex_file, string_index, handle, GetCodeGenerationData());
+   }
+-  vixl::aarch64::Literal<uint32_t>* DeduplicateJitClassLiteral(const DexFile& dex_file,
++  vixl::aarch64::Literal<JitRootAddress>* DeduplicateJitClassLiteral(const DexFile& dex_file,
+                                                                dex::TypeIndex class_index,
+                                                                Handle<mirror::Class> handle) {
+     return jit_patches_.DeduplicateJitClassLiteral(
+         dex_file, class_index, handle, GetCodeGenerationData());
+   }
+-  vixl::aarch64::Literal<uint32_t>* DeduplicateJitMethodTypeLiteral(
++  vixl::aarch64::Literal<JitRootAddress>* DeduplicateJitMethodTypeLiteral(
+       const DexFile& dex_file,
+       dex::ProtoIndex proto_index,
+       Handle<mirror::MethodType> handle) {
+--- a/compiler/optimizing/jit_patches_arm64.cc
++++ b/compiler/optimizing/jit_patches_arm64.cc
+@@ -42,13 +42,14 @@
+
+ static void PatchJitRootUse(uint8_t* code,
+                             const uint8_t* roots_data,
+-                            vixl::aarch64::Literal<uint32_t>* literal,
++                            vixl::aarch64::Literal<JitRootAddress>* literal,
+                             uint64_t index_in_table) {
+   uint32_t literal_offset = literal->GetOffset();
+   uintptr_t address =
+       reinterpret_cast<uintptr_t>(roots_data) + index_in_table * sizeof(GcRoot<mirror::Object>);
+   uint8_t* data = code + literal_offset;
+-  reinterpret_cast<uint32_t*>(data)[0] = dchecked_integral_cast<uint32_t>(address);
++  JitRootAddress value = dchecked_integral_cast<JitRootAddress>(address);
++  memcpy(data, &value, sizeof(value));
+ }
+
+ void JitPatchesARM64::EmitJitRootPatches(
+@@ -57,19 +58,19 @@
+     const CodeGenerationData& code_generation_data) const {
+   for (const auto& entry : jit_string_patches_) {
+     const StringReference& string_reference = entry.first;
+-    vixl::aarch64::Literal<uint32_t>* table_entry_literal = entry.second;
++    vixl::aarch64::Literal<JitRootAddress>* table_entry_literal = entry.second;
+     uint64_t index_in_table = code_generation_data.GetJitStringRootIndex(string_reference);
+     PatchJitRootUse(code, roots_data, table_entry_literal, index_in_table);
+   }
+   for (const auto& entry : jit_class_patches_) {
+     const TypeReference& type_reference = entry.first;
+-    vixl::aarch64::Literal<uint32_t>* table_entry_literal = entry.second;
++    vixl::aarch64::Literal<JitRootAddress>* table_entry_literal = entry.second;
+     uint64_t index_in_table = code_generation_data.GetJitClassRootIndex(type_reference);
+     PatchJitRootUse(code, roots_data, table_entry_literal, index_in_table);
+   }
+   for (const auto& entry : jit_method_type_patches_) {
+     const ProtoReference& proto_reference = entry.first;
+-    vixl::aarch64::Literal<uint32_t>* table_entry_literal = entry.second;
++    vixl::aarch64::Literal<JitRootAddress>* table_entry_literal = entry.second;
+     uint64_t index_in_table = code_generation_data.GetJitMethodTypeRootIndex(proto_reference);
+     PatchJitRootUse(code, roots_data, table_entry_literal, index_in_table);
+   }
+@@ -80,7 +81,7 @@
+   return DeduplicateUint32Literal(dchecked_integral_cast<uint32_t>(address));
+ }
+
+-vixl::aarch64::Literal<uint32_t>* JitPatchesARM64::DeduplicateJitStringLiteral(
++vixl::aarch64::Literal<JitRootAddress>* JitPatchesARM64::DeduplicateJitStringLiteral(
+     const DexFile& dex_file,
+     dex::StringIndex string_index,
+     Handle<mirror::String> handle,
+@@ -89,11 +90,11 @@
+   return jit_string_patches_.GetOrCreate(
+       StringReference(&dex_file, string_index),
+       [this]() {
+-        return GetVIXLAssembler()->CreateLiteralDestroyedWithPool<uint32_t>(/* value= */ 0u);
++        return GetVIXLAssembler()->CreateLiteralDestroyedWithPool<JitRootAddress>(/* value= */ 0u);
+       });
+ }
+
+-vixl::aarch64::Literal<uint32_t>* JitPatchesARM64::DeduplicateJitClassLiteral(
++vixl::aarch64::Literal<JitRootAddress>* JitPatchesARM64::DeduplicateJitClassLiteral(
+     const DexFile& dex_file,
+     dex::TypeIndex type_index,
+     Handle<mirror::Class> handle,
+@@ -102,11 +103,11 @@
+   return jit_class_patches_.GetOrCreate(
+       TypeReference(&dex_file, type_index),
+       [this]() {
+-        return GetVIXLAssembler()->CreateLiteralDestroyedWithPool<uint32_t>(/* value= */ 0u);
++        return GetVIXLAssembler()->CreateLiteralDestroyedWithPool<JitRootAddress>(/* value= */ 0u);
+       });
+ }
+
+-vixl::aarch64::Literal<uint32_t>* JitPatchesARM64::DeduplicateJitMethodTypeLiteral(
++vixl::aarch64::Literal<JitRootAddress>* JitPatchesARM64::DeduplicateJitMethodTypeLiteral(
+     const DexFile& dex_file,
+     dex::ProtoIndex proto_index,
+     Handle<mirror::MethodType> handle,
+@@ -115,7 +116,7 @@
+   return jit_method_type_patches_.GetOrCreate(
+       ProtoReference(&dex_file, proto_index),
+       [this]() {
+-        return GetVIXLAssembler()->CreateLiteralDestroyedWithPool<uint32_t>(/* value= */ 0u);
++        return GetVIXLAssembler()->CreateLiteralDestroyedWithPool<JitRootAddress>(/* value= */ 0u);
+       });
+ }
+
+--- a/compiler/optimizing/jit_patches_arm64.h
++++ b/compiler/optimizing/jit_patches_arm64.h
+@@ -43,6 +43,13 @@
+
+ namespace arm64 {
+
++#ifdef ART_NCE
++// Root-table addresses are native pointers; table entries remain compressed references.
++using JitRootAddress = uint64_t;
++#else
++using JitRootAddress = uint32_t;
++#endif
++
+ /**
+  * Helper for emitting string or class literals into JIT generated code,
+  * which can be shared between different compilers.
+@@ -66,29 +73,29 @@
+   using Uint64ToLiteralMap = ArenaSafeMap<uint64_t, vixl::aarch64::Literal<uint64_t>*>;
+   using Uint32ToLiteralMap = ArenaSafeMap<uint32_t, vixl::aarch64::Literal<uint32_t>*>;
+   using StringToLiteralMap = ArenaSafeMap<StringReference,
+-                                          vixl::aarch64::Literal<uint32_t>*,
++                                          vixl::aarch64::Literal<JitRootAddress>*,
+                                           StringReferenceValueComparator>;
+   using TypeToLiteralMap = ArenaSafeMap<TypeReference,
+-                                        vixl::aarch64::Literal<uint32_t>*,
++                                        vixl::aarch64::Literal<JitRootAddress>*,
+                                         TypeReferenceValueComparator>;
+   using ProtoToLiteralMap = ArenaSafeMap<ProtoReference,
+-                                         vixl::aarch64::Literal<uint32_t>*,
++                                         vixl::aarch64::Literal<JitRootAddress>*,
+                                          ProtoReferenceValueComparator>;
+
+   vixl::aarch64::Literal<uint32_t>* DeduplicateUint32Literal(uint32_t value);
+   vixl::aarch64::Literal<uint64_t>* DeduplicateUint64Literal(uint64_t value);
+   vixl::aarch64::Literal<uint32_t>* DeduplicateBootImageAddressLiteral(uint64_t address);
+-  vixl::aarch64::Literal<uint32_t>* DeduplicateJitStringLiteral(
++  vixl::aarch64::Literal<JitRootAddress>* DeduplicateJitStringLiteral(
+       const DexFile& dex_file,
+       dex::StringIndex string_index,
+       Handle<mirror::String> handle,
+       CodeGenerationData* code_generation_data);
+-  vixl::aarch64::Literal<uint32_t>* DeduplicateJitClassLiteral(
++  vixl::aarch64::Literal<JitRootAddress>* DeduplicateJitClassLiteral(
+       const DexFile& dex_file,
+       dex::TypeIndex type_index,
+       Handle<mirror::Class> handle,
+       CodeGenerationData* code_generation_data);
+-  vixl::aarch64::Literal<uint32_t>* DeduplicateJitMethodTypeLiteral(
++  vixl::aarch64::Literal<JitRootAddress>* DeduplicateJitMethodTypeLiteral(
+       const DexFile& dex_file,
+       dex::ProtoIndex proto_index,
+       Handle<mirror::MethodType> handle,
+--- a/compiler/optimizing/optimizing_compiler.cc
++++ b/compiler/optimizing/optimizing_compiler.cc
+@@ -774,10 +774,73 @@
+   bool GraphRejected() const { return has_unsupported_instructions_; }
+
+  private:
+-  void VisitInstruction(HInstruction*) override {
+-    // Currently we don't support compiling methods unless they were annotated with $compile$.
+-    RejectGraph();
+-  }
++  void VisitInstruction(HInstruction*) override { RejectGraph(); }
++#ifdef ART_NCE
++  // Admit only code generation paths adapted to the high-address heap.
++  // Unknown instructions retain interpreter execution, including after inlining.
++#define NCE_ALLOW(name) void Visit##name(H##name*) override {}
++  NCE_ALLOW(BinaryOperation)
++  NCE_ALLOW(DataProcWithShifterOp)
++  NCE_ALLOW(MultiplyAccumulate)
++  NCE_ALLOW(UnaryOperation)
++  NCE_ALLOW(Condition)
++  NCE_ALLOW(Constant)
++  NCE_ALLOW(Phi)
++  NCE_ALLOW(ParallelMove)
++  NCE_ALLOW(ParameterValue)
++  NCE_ALLOW(CurrentMethod)
++  NCE_ALLOW(NullConstant)
++  NCE_ALLOW(NullCheck)
++  NCE_ALLOW(BoundsCheck)
++  NCE_ALLOW(DivZeroCheck)
++  NCE_ALLOW(Select)
++  NCE_ALLOW(TypeConversion)
++  NCE_ALLOW(Return)
++  NCE_ALLOW(ReturnVoid)
++  NCE_ALLOW(Goto)
++  NCE_ALLOW(If)
++  NCE_ALLOW(Exit)
++  NCE_ALLOW(Nop)
++  NCE_ALLOW(SuspendCheck)
++  NCE_ALLOW(PackedSwitch)
++  NCE_ALLOW(MemoryBarrier)
++  NCE_ALLOW(InstanceFieldGet)
++  NCE_ALLOW(InstanceFieldSet)
++  NCE_ALLOW(NewInstance)
++  NCE_ALLOW(NewArray)
++  NCE_ALLOW(ConstructorFence)
++  NCE_ALLOW(ArrayLength)
++  NCE_ALLOW(IntermediateAddress)
++  NCE_ALLOW(IntermediateAddressIndex)
++  NCE_ALLOW(VecReplicateScalar)
++  NCE_ALLOW(VecExtractScalar)
++  NCE_ALLOW(VecReduce)
++  NCE_ALLOW(VecAdd)
++  NCE_ALLOW(VecMul)
++  NCE_ALLOW(VecStore)
++#undef NCE_ALLOW
++  void VisitLoadClass(HLoadClass* load) override {
++    if (load->MustGenerateClinitCheck() ||
++        (load->GetLoadKind() != HLoadClass::LoadKind::kJitTableAddress &&
++         load->GetLoadKind() != HLoadClass::LoadKind::kReferrersClass)) RejectGraph();
++  }
++  void VisitInvokeVirtual(HInvokeVirtual* call) override {
++    if (call->IsIntrinsic()) RejectGraph();
++  }
++  void VisitArrayGet(HArrayGet* access) override {
++    if (access->IsStringCharAt()) RejectGraph();
++  }
++  void VisitArraySet(HArraySet* access) override {
++    if (access->GetComponentType() == DataType::Type::kReference) RejectGraph();
++  }
++  void VisitVecLoad(HVecLoad* access) override {
++    if (access->IsStringCharAt()) RejectGraph();
++  }
++  void VisitInvokeStaticOrDirect(HInvokeStaticOrDirect* call) override {
++    if (call->IsIntrinsic() || call->GetMethodLoadKind() == MethodLoadKind::kStringInit ||
++        call->GetMethodLoadKind() == MethodLoadKind::kRuntimeCall) RejectGraph();
++  }
++#endif
+   void RejectGraph() {
+     has_unsupported_instructions_ = true;
+   }
+@@ -793,9 +856,11 @@
+ //
+ // TODO(Simulator): compile and simulate all the methods as in regular host mode.
+ bool ShouldMethodBeCompiled(HGraph* graph, const std::string& method_name) {
++#ifndef ART_NCE
+   if (method_name.find("$compile$") != std::string::npos) {
+     return true;
+   }
++#endif
+
+   CompilationFilterForRestrictedMode filter_visitor(graph);
+   filter_visitor.VisitReversePostOrder();
+@@ -1010,6 +1075,12 @@
+   // TODO(Simulator): support and compile all methods.
+   std::string method_name = dex_file.PrettyMethod(method_idx);
+   if (!ShouldMethodBeCompiled(graph, method_name)) {
++#ifdef ART_NCE
++    if (method != nullptr) {
++      ScopedObjectAccess soa(Thread::Current());
++      method->SetDontCompile();
++    }
++#endif
+     return nullptr;
+   }
+ #endif  // ART_USE_RESTRICTED_MODE
+@@ -1461,7 +1532,12 @@
+   {
+     // Go to native so that we don't block GC during compilation.
+     ScopedThreadSuspension sts(self, ThreadState::kNative);
+-    if (com::android::art::flags::fast_baseline_compiler() &&
++    if (
++#ifndef ART_NCE
++        com::android::art::flags::fast_baseline_compiler() &&
++#else
++        false &&
++#endif
+         compilation_kind == CompilationKind::kBaseline &&
+         !compiler_options.GetDebuggable()) {
+       fast_compiler = FastCompiler::Compile(method,
 --- a/libartbase/base/logging.cc
 +++ b/libartbase/base/logging.cc
 @@ -79,7 +79,7 @@
      gCmdLine.reset(new std::string("<unset>"));
    }
- 
+
 -#ifdef ART_TARGET_ANDROID
 +#if defined(ART_TARGET_ANDROID) && !defined(ART_NCE)
    // android::base::LogdLogger breaks messages up into line delimited 4K chunks, since that is the
@@ -13,10 +618,10 @@
 +++ b/libartbase/base/mem_map.cc
 @@ -15,6 +15,7 @@
   */
- 
+
  #include "mem_map.h"
 +#include "reference_heap.h"
- 
+
  #include <inttypes.h>
  #include <stdlib.h>
 @@ -1181,6 +1182,7 @@
@@ -27,53 +632,168 @@
  #ifdef __LP64__
    // When requesting low_4g memory and having an expectation, the requested range should fit into
    // 4GB.
+--- a/libartbase/base/mem_map.h
++++ b/libartbase/base/mem_map.h
+@@ -66,6 +66,10 @@
+
+   // Creates an invalid mapping.
+   MemMap() {}
++#ifdef ART_NCE
++  static MemMap MapNceCode(int fd, size_t size, off_t offset, const char* name,
++                           std::string* error_msg);
++#endif
+
+   // Creates an invalid mapping. Used when we want to be more explicit than MemMap().
+   static MemMap Invalid() {
 --- a/libartbase/base/mem_map_unix.cc
 +++ b/libartbase/base/mem_map_unix.cc
-@@ -15,13 +15,14 @@
+@@ -15,13 +15,27 @@
   */
- 
+
  #include "mem_map.h"
 +#include "reference_heap.h"
- 
++#include "layout.h"
++#include <unistd.h>
+
  #include "mman.h"
- 
+
  namespace art {
- 
+
++MemMap MemMap::MapNceCode(int fd, size_t size, off_t offset, const char* name,
++                         std::string* error_msg) {
++  void* address = reinterpret_cast<void*>(syscall(NCE_SYS_MAP_CODE, fd, size, offset));
++  if (address == MAP_FAILED) {
++    *error_msg = std::string("NCE executable mapping: ") + strerror(errno);
++    return Invalid();
++  }
++  return MemMap(name, static_cast<uint8_t*>(address), size, address, size,
++                PROT_READ | PROT_EXEC, false);
++}
++
  void MemMap::TargetMMapInit() {
 -  // no-op for unix
 +  CHECK_EQ(nce_art_heap_init(), 0) << "NCE reference heap reservation failed";
  }
- 
+
  void* MemMap::TargetMMap(void* start, size_t len, int prot, int flags, int fd, off_t fd_off) {
-@@ -29,6 +30,7 @@
+@@ -29,6 +43,7 @@
  }
- 
+
  int MemMap::TargetMUnmap(void* start, size_t len) {
 +  if (nce_art_heap_contains(start, len)) return nce_art_heap_unmap(start, len);
    return munmap(start, len);
  }
- 
+
+--- a/runtime/arch/arm64/quick_entrypoints_arm64.S
++++ b/runtime/arch/arm64/quick_entrypoints_arm64.S
+@@ -1206,7 +1206,11 @@
+
+ .macro RETURN_OR_DEOPT_IF_RESULT_IS_NON_NULL_OR_DELIVER
+     CFI_REMEMBER_STATE
++#ifdef ART_NCE
++    cbz x0, 1f
++#else
+     cbz w0, 1f                       // result zero branch over
++#endif
+     DEOPT_OR_RETURN x1, /*is_ref=*/1 // check for deopt or return
+ 1:
+     CFI_RESTORE_STATE_AND_DEF_CFA sp, 0
+@@ -1314,6 +1318,12 @@
+ #if ROSALLOC_SLOT_NEXT_OFFSET != MIRROR_OBJECT_CLASS_OFFSET
+ #error "Class pointer needs to overwrite next pointer."
+ #endif
++#ifdef ART_NCE
++    adrp   x5, :got:nce_art_reference_base
++    ldr    x5, [x5, :got_lo12:nce_art_reference_base]
++    ldr    x5, [x5]
++    sub    x0, x0, x5
++#endif
+     POISON_HEAP_REF w0
+     str    w0, [x3, #MIRROR_OBJECT_CLASS_OFFSET]
+                                                               // Push the new object onto the thread
+@@ -1321,7 +1331,12 @@
+                                                               // increment the thread local
+                                                               // allocation stack top.
+     ldr    x1, [xSELF, #THREAD_LOCAL_ALLOC_STACK_TOP_OFFSET]
++#ifdef ART_NCE
++    sub    x5, x3, x5
++    str    w5, [x1], #COMPRESSED_REFERENCE_SIZE
++#else
+     str    w3, [x1], #COMPRESSED_REFERENCE_SIZE               // (Increment x1 as a side effect.)
++#endif
+     str    x1, [xSELF, #THREAD_LOCAL_ALLOC_STACK_TOP_OFFSET]
+                                                               // Decrement the size of the free list
+
+--- a/runtime/art_method.cc
++++ b/runtime/art_method.cc
+@@ -39,6 +39,7 @@
+ #include "hidden_api.h"
+ #include "interpreter/interpreter.h"
+ #include "intrinsics_enum.h"
++#include "jvalue-inl.h"
+ #include "jit/jit.h"
+ #include "jit/jit_code_cache.h"
+ #include "jit/profiling_info.h"
+@@ -423,6 +424,12 @@
+       } else {
+         (*art_quick_invoke_static_stub)(this, args, args_size, self, result, shorty);
+       }
++#ifdef ART_NCE
++      // Quick code returns encoded references; JValue in the C++ runtime holds pointers.
++      if (result != nullptr && shorty[0] == 'L' && !self->IsExceptionPending()) {
++        result->SetL(nce_art_reference_cast<mirror::Object*>(static_cast<uint32_t>(result->GetJ())));
++      }
++#endif
+       if (UNLIKELY(self->GetException() == Thread::GetDeoptimizationException())) {
+         // Unusual case where we were running generated code and an
+         // exception was thrown to force the activations to be removed from the
 --- a/runtime/class_table-inl.h
 +++ b/runtime/class_table-inl.h
 @@ -214,12 +214,12 @@
  }
- 
+
  inline ObjPtr<mirror::Class> ClassTable::TableSlot::ExtractPtr(uint32_t data) {
 -  return reinterpret_cast<mirror::Class*>(data & ~kHashMask);
 +  return nce_art_reference_cast<mirror::Class*>(data & ~kHashMask);
  }
- 
+
  inline uint32_t ClassTable::TableSlot::Encode(ObjPtr<mirror::Class> klass, uint32_t hash_bits) {
    DCHECK_LE(hash_bits, kHashMask);
 -  return reinterpret_cast<uintptr_t>(klass.Ptr()) | hash_bits;
 +  return nce_art_encode_reference(klass.Ptr()) | hash_bits;
  }
- 
+
  inline ClassTable::TableSlot::TableSlot(ObjPtr<mirror::Class> klass, uint32_t descriptor_hash)
+--- a/runtime/entrypoints/quick/quick_trampoline_entrypoints.cc
++++ b/runtime/entrypoints/quick/quick_trampoline_entrypoints.cc
+@@ -752,6 +752,9 @@
+ }
+
+ static int64_t NanBoxResultIfNeeded(int64_t result, char result_shorty) {
++#ifdef ART_NCE
++  if (result_shorty == 'L') return nce_art_encode_reference(reinterpret_cast<void*>(result));
++#endif
+   return (QuickArgumentVisitor::NaNBoxing() && result_shorty == 'F')
+       ? result | UINT64_C(0xffffffff00000000)
+       : result;
+@@ -2171,7 +2174,12 @@
+   uint32_t* sp32 = reinterpret_cast<uint32_t*>(sp);
+   ArtMethod* called = *sp;
+   uint32_t cookie = *(sp32 - 1);
+-  return GenericJniMethodEnd(self, cookie, result, result_f, called);
++  uint64_t value = GenericJniMethodEnd(self, cookie, result, result_f, called);
++#ifdef ART_NCE
++  // GenericJniMethodEnd has reacquired the mutator lock and decoded the JNI handle.
++  if (called->GetShorty()[0] == 'L') return nce_art_encode_reference(reinterpret_cast<void*>(value));
++#endif
++  return value;
+ }
+
+ // We use TwoWordReturn to optimize scalar returns. We use the hi value for code, and the lo value
 --- a/runtime/gc/collector/mark_compact.cc
 +++ b/runtime/gc/collector/mark_compact.cc
 @@ -61,7 +61,9 @@
- 
+
  #ifdef ART_TARGET_ANDROID
  #include "android-modules-utils/sdk_level.h"
 +#ifdef ART_USE_READ_BARRIER
@@ -81,7 +801,7 @@
 +#endif
  #include "com_android_art_flags.h"
  #endif
- 
+
 --- a/runtime/gc/heap.cc
 +++ b/runtime/gc/heap.cc
 @@ -728,7 +728,7 @@
@@ -110,7 +830,7 @@
 +  mark_bitmap_ = accounting::LargeObjectBitmap::Create("large marked objects", begin, capacity);
    CHECK(mark_bitmap_.IsValid());
  }
- 
+
 --- a/runtime/handle_scope-inl.h
 +++ b/runtime/handle_scope-inl.h
 @@ -41,7 +41,7 @@
@@ -125,13 +845,13 @@
 --- a/runtime/interpreter/interpreter.cc
 +++ b/runtime/interpreter/interpreter.cc
 @@ -40,7 +40,7 @@
- 
+
  ALWAYS_INLINE static ObjPtr<mirror::Object> ObjArg(uint32_t arg)
      REQUIRES_SHARED(Locks::mutator_lock_) {
 -  return reinterpret_cast<mirror::Object*>(arg);
 +  return nce_art_reference_cast<mirror::Object*>(arg);
  }
- 
+
  static void InterpreterJni(Thread* self,
 --- a/runtime/interpreter/interpreter_common.cc
 +++ b/runtime/interpreter/interpreter_common.cc
@@ -161,12 +881,12 @@
 +++ b/runtime/interpreter/unstarted_runtime.cc
 @@ -643,7 +643,7 @@
    }
- 
+
    uint32_t args[1];
 -  args[0] = reinterpret_cast32<uint32_t>(h_array.Get());
 +  args[0] = nce_art_reference_cast<uint32_t>(h_array.Get());
    EnterInterpreterFromInvoke(self, constructor, h_obj.Get(), args, nullptr);
- 
+
    if (self->IsExceptionPending()) {
 @@ -1928,7 +1928,7 @@
      JValue* result) {
@@ -214,7 +934,7 @@
 +  auto h_dimensions(hs.NewHandle(nce_art_reference_cast<mirror::IntArray*>(args[1])->AsIntArray()));
    result->SetL(mirror::Array::CreateMultiArray(self, h_class, h_dimensions));
  }
- 
+
 @@ -2116,7 +2116,7 @@
      ThrowNegativeArraySizeException(length);
      return;
@@ -276,6 +996,84 @@
    if (component == nullptr) {
      AbortTransactionOrFail(self, "Unsafe.getArrayIndexScaleForComponentType with null component.");
      return;
+--- a/runtime/jit/jit_memory_region.cc
++++ b/runtime/jit/jit_memory_region.cc
+@@ -15,6 +15,7 @@
+  */
+
+ #include "jit_memory_region.h"
++#include "layout.h"
+
+ #include <fcntl.h>
+ #include <unistd.h>
+@@ -192,6 +193,15 @@
+     // We could do PC-relative addressing to avoid this problem, but that
+     // would require reserving code and data area before submitting, which
+     // means more windows for the code memory to be RWX.
++#ifdef ART_NCE
++    // Stack-map offsets in method headers require metadata below executable code.
++    exec_pages = MemMap::MapNceCode(mem_fd.get(), exec_capacity, data_capacity,
++                                    exec_cache_name.c_str(), &error_str);
++    if (!exec_pages.IsValid()) { *error_msg = error_str; return false; }
++    data_pages = MemMap::MapFileAtAddress(exec_pages.Begin() - NCE_EXEC_SIZE,
++        data_capacity, kProtR, MAP_SHARED | MAP_FIXED_NOREPLACE, mem_fd.get(), 0,
++        false, data_cache_name.c_str(), false, nullptr, &error_str);
++#else
+     data_pages = MemMap::MapFile(
+         data_capacity + exec_capacity,
+         kProtR,
+@@ -201,6 +211,7 @@
+         /* low_4gb= */ true,
+         data_cache_name.c_str(),
+         &error_str);
++#endif
+   } else {
+     // Single view of JIT code cache case. Create an initial mapping of data pages large enough
+     // for data and JIT code pages. The mappings will look like:
+@@ -232,7 +243,7 @@
+     return false;
+   }
+
+-  if (exec_capacity > 0) {
++  if (exec_capacity > 0 && !exec_pages.IsValid()) {
+     uint8_t* const divider = data_pages.Begin() + data_capacity;
+     // Set initial permission for executable view to catch any SELinux permission problems early
+     // (for processes that cannot map WX pages). Otherwise, this region does not need to be
+@@ -398,9 +409,12 @@
+   // https://android.googlesource.com/kernel/msm/+/3fbe6bc28a6b9939d0650f2f17eb5216c719950c
+   //
+   bool cache_flush_success = true;
++#ifdef ART_NCE
++  cache_flush_success = syscall(NCE_SYS_PUBLISH_CODE, x_memory, total_size) == 0;
++#else
+   if (HasDualCodeMapping()) {
+     // Flush d-cache for the non-executable mapping.
+-    cache_flush_success = FlushCpuCaches(w_memory, w_memory + total_size);
++    cache_flush_success = cache_flush_success && FlushCpuCaches(w_memory, w_memory + total_size);
+   }
+
+   // Invalidate i-cache for the executable mapping.
+@@ -408,6 +422,7 @@
+     cache_flush_success = FlushCpuCaches(x_memory, x_memory + total_size);
+   }
+
++#endif
+   // If flushing the cache has failed, reject the allocation because we can't guarantee
+   // correctness of the instructions present in the processor caches.
+   if (!cache_flush_success) {
+@@ -456,10 +471,12 @@
+   memcpy(stack_map_data, stack_map.data(), stack_map.size());
+   // Flush data cache, as compiled code references literals in it.
+   // TODO(oth): establish whether this is necessary.
++#ifndef ART_NCE
+   if (UNLIKELY(!FlushCpuCaches(roots_data, roots_data + root_table_size + stack_map.size()))) {
+     VLOG(jit) << "Failed to flush data in CommitData";
+     return false;
+   }
++#endif
+   return true;
+ }
+
 --- a/runtime/jni/local_reference_table.cc
 +++ b/runtime/jni/local_reference_table.cc
 @@ -509,7 +509,7 @@
@@ -284,7 +1082,7 @@
      constexpr uint32_t kDeadLocalValue = 0xdead10c0;
 -    entry->SetReference(reinterpret_cast32<mirror::Object*>(kDeadLocalValue));
 +    entry->SetReference(nce_art_reference_cast<mirror::Object*>(kDeadLocalValue));
- 
+
      // TODO: Maybe we should not prune free entries from the top of the segment
      // because it has quadratic worst-case complexity. We could still prune while
 @@ -554,7 +554,7 @@
@@ -309,7 +1107,7 @@
 +++ b/runtime/metrics/statsd.h
 @@ -27,7 +27,7 @@
  class MetricsBackend;
- 
+
  // Statsd is only supported on Android
 -#ifdef __ANDROID__
 +#if defined(__ANDROID__) && !defined(ART_NCE)
@@ -320,11 +1118,11 @@
 +++ b/runtime/mirror/object_reference.h
 @@ -18,6 +18,7 @@
  #define ART_RUNTIME_MIRROR_OBJECT_REFERENCE_H_
- 
+
  #include <array>
 +#include "reference_heap.h"
  #include <string_view>
- 
+
  #include "base/atomic.h"
 @@ -97,14 +98,14 @@
   public:
@@ -334,14 +1132,14 @@
 +    uint32_t as_bits = nce_art_reference_cast<uint32_t>(mirror_ptr);
      return kPoisonReferences ? -as_bits : as_bits;
    }
- 
+
    // Uncompress an encoded reference from its bit representation.
    static MirrorType* Decompress(uint32_t ref) {
      uint32_t as_bits = kPoisonReferences ? -ref : ref;
 -    return reinterpret_cast32<MirrorType*>(as_bits);
 +    return nce_art_reference_cast<MirrorType*>(as_bits);
    }
- 
+
    // Convert an ObjPtr to a compressed reference.
 --- a/runtime/monitor.cc
 +++ b/runtime/monitor.cc
@@ -386,9 +1184,9 @@
  #include "com_android_apex.h"
  namespace apex = com::android::apex;
 +#endif
- 
+
  #endif
- 
+
 @@ -1489,7 +1491,7 @@
    if (!kIsTargetBuild || !OS::FileExists(kApexFileName)) {
      return empty_apex_versions;
@@ -407,7 +1205,7 @@
 -    return reinterpret_cast<mirror::Class*>(0xebadbeef);
 +    return nce_art_reference_cast<mirror::Class*>(UINT32_C(0xebadbeef));
    }
- 
+
    // Create a normal LinearAlloc or low 4gb version if we are 64 bit AOT compiler.
 --- a/runtime/stack.cc
 +++ b/runtime/stack.cc
@@ -462,6 +1260,29 @@
          if (str != nullptr) {
            length += str->GetLength();
            compressible = compressible && str->IsCompressed();
+--- a/runtime/thread.cc
++++ b/runtime/thread.cc
+@@ -4364,9 +4364,20 @@
+             LOG(FATAL) << "Found an unsaved callee-save register " << i << " (null GPRAddress) "
+                        << "set in register_mask=" << register_mask << " at " << DescribeLocation();
+           }
++#ifdef ART_NCE
++          // Compiled ARM64 keeps object references compressed in registers.
++          uintptr_t* saved = reinterpret_cast<uintptr_t*>(ref_addr);
++          mirror::Object* reference = nce_art_reference_cast<mirror::Object*>(
++              static_cast<uint32_t>(*saved));
++          if (reference != nullptr) {
++            vreg_info.VisitRegister(&reference, i, this);
++            *saved = nce_art_encode_reference(reference);
++          }
++#else
+           if (*ref_addr != nullptr) {
+             vreg_info.VisitRegister(ref_addr, i, this);
+           }
++#endif
+         }
+       }
+     } else if (!m->IsRuntimeMethod() && m->IsProxyMethod()) {
 --- a/runtime/thread.h
 +++ b/runtime/thread.h
 @@ -1341,7 +1341,7 @@
@@ -471,5 +1292,5 @@
 -    return reinterpret_cast<mirror::Throwable*>(0x100);
 +    return nce_art_reference_cast<mirror::Throwable*>(UINT32_C(0x100));
    }
- 
+
    // Currently deoptimization invokes verifier which can trigger class loading

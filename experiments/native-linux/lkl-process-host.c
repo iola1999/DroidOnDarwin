@@ -80,6 +80,11 @@ static void *shmem_map(void *address, unsigned long offset, unsigned long size, 
                 else if (lo > start && lo < stop) stop = lo;
             }
         }
+        NceCode dynamic = nce_memory_dynamic_code();
+        uintptr_t dynamic_start = (uintptr_t)dynamic.rx;
+        int in_dynamic = start >= dynamic_start && start < dynamic_start + dynamic.size;
+        if (in_dynamic && stop > dynamic_start + dynamic.size) stop = dynamic_start + dynamic.size;
+        else if (start < dynamic_start && stop > dynamic_start) stop = dynamic_start;
         size_t length = stop - start;
         if (segment) {
             size_t position = start - (uintptr_t)segment->code.rx;
@@ -87,6 +92,14 @@ static void *shmem_map(void *address, unsigned long offset, unsigned long size, 
             if (prot & LKL_PROT_EXEC)
                 REQUIRE(nce_program_patch_range(program, segment, position, length, &active) == 0);
             nce_sync_code((NceCode){segment->code.rw + position, (void *)start, length});
+            ++code_copies;
+            code_copy_bytes += length;
+        } else if (in_dynamic) {
+            REQUIRE(!(prot & LKL_PROT_WRITE));
+            unsigned char *target = dynamic.rw + start - dynamic_start;
+            if (prot & LKL_PROT_EXEC) memcpy(target, ram + offset, length);
+            else memset(target, 0, length);
+            nce_sync_code((NceCode){target, (void *)start, length});
             ++code_copies;
             code_copy_bytes += length;
         } else {
@@ -119,6 +132,16 @@ static int protect_none(void *address, unsigned long size)
             nce_sync_code((NceCode){s->code.rw + first, s->code.rx + first, stop - first});
             cursor = lo + stop;
         }
+    }
+    NceCode dynamic = nce_memory_dynamic_code();
+    uintptr_t lo = (uintptr_t)dynamic.rx, hi = lo + dynamic.size;
+    if (hi > start && lo < end) {
+        if (cursor < lo && mprotect((void *)cursor, lo - cursor, PROT_NONE)) return -1;
+        size_t first = start > lo ? start - lo : 0;
+        size_t stop = end < hi ? end - lo : dynamic.size;
+        memset(dynamic.rw + first, 0, stop - first);
+        nce_sync_code((NceCode){dynamic.rw + first, dynamic.rx + first, stop - first});
+        cursor = lo + stop;
     }
     return cursor < end ? mprotect((void *)cursor, end - cursor, PROT_NONE) : 0;
 }
@@ -153,6 +176,8 @@ static void restore_signal_state(NceState *s, ucontext_t *u)
 
 static int guest_pc(uintptr_t pc)
 {
+    NceCode dynamic = nce_memory_dynamic_code();
+    if (pc >= (uintptr_t)dynamic.rx + PAGE && pc < (uintptr_t)dynamic.rx + dynamic.size) return 1;
     if (pc >= (uintptr_t)code.rx && pc < (uintptr_t)code.rx + sizeof(guest_image)) return 1;
     for (size_t i = 0; i < nce_program_count; ++i)
         for (size_t j = 0; j < nce_programs[i].segment_count; ++j) {
@@ -176,6 +201,17 @@ static int syscall_stub(uintptr_t pc)
         if (p->stubs.rx && pc >= begin && pc < begin + p->patch_count * 80 && !((pc - begin) % 80)) return 1;
     }
     return 0;
+}
+
+static void prepare_resume(NceState *state)
+{
+    NceCode resume = event_resume;
+    NceCode dynamic = nce_memory_dynamic_code();
+    if (state->regs.pc >= (uintptr_t)dynamic.rx && state->regs.pc < (uintptr_t)dynamic.rx + dynamic.size)
+        resume = (NceCode){dynamic.rw, dynamic.rx, 16};
+    REQUIRE(nce_write_entry(resume, state->regs.pc) == 0);
+    nce_sync_code(resume);
+    state->resume = (uintptr_t)resume.rx;
 }
 
 static NceState *handle_event(NceState *state)
@@ -206,9 +242,7 @@ static NceState *handle_event(NceState *state)
         if (p->stack_unmapped && state->regs.x[8] == 93) ++stackless_exits;
         nce_dispatch(state);
     }
-    REQUIRE(nce_write_entry(event_resume, state->regs.pc) == 0);
-    nce_sync_code(event_resume);
-    state->resume = (uintptr_t)event_resume.rx;
+    prepare_resume(state);
     return state;
 }
 
@@ -322,9 +356,7 @@ static int guest_memory(NceState *state, uintptr_t address, void *buffer, size_t
 fault:
     state->regs.pc -= 4;
     user_fault(bad, 0);
-    REQUIRE(nce_write_entry(event_resume, state->regs.pc) == 0);
-    nce_sync_code(event_resume);
-    state->resume = (uintptr_t)event_resume.rx;
+    prepare_resume(state);
     return -1;
 }
 static void syscall_from_guest(NceState *state)
@@ -340,9 +372,7 @@ static void syscall_from_guest(NceState *state)
         state->regs.sp - (uintptr_t)args[0] < (uintptr_t)args[1]) ((Process *)state)->stack_unmapped = 1;
     user_return(number, result, args[0]);
     if (state->regs.pc != continuation) {
-        REQUIRE(nce_write_entry(event_resume, state->regs.pc) == 0);
-        nce_sync_code(event_resume);
-        state->resume = (uintptr_t)event_resume.rx;
+        prepare_resume(state);
     }
 }
 static void user_run(void *opaque)
@@ -703,6 +733,11 @@ void nce_process_tests(long (*host_syscall)(long, long *), long (*guest_syscall)
     REQUIRE(get_file(host_syscall, "/stdout", benchmark, sizeof(benchmark)) > 0);
     REQUIRE(strstr(benchmark, "android_art_library_loaded"));
     REQUIRE(strstr(benchmark, "android_art_java_workload"));
+    REQUIRE(strstr(benchmark, "android_art_jit_arithmetic"));
+    REQUIRE(strstr(benchmark, "android_art_jit_objects"));
+    REQUIRE(strstr(benchmark, "android_art_jit_calls"));
+    REQUIRE(strstr(benchmark, "android_art_jit_allocations"));
+    REQUIRE(strstr(benchmark, "android_art_jit_automatic"));
     REQUIRE(strstr(benchmark, "android_art_vm_destroyed"));
     fputs(benchmark, stdout);
     check_program_files(host_syscall);

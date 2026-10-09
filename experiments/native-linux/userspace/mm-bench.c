@@ -120,7 +120,8 @@ static void benchmark(size_t bytes, unsigned shared_percent, int all, int thread
 
 int main(void)
 {
-    extern void memory_tests(void), signal_tests(void);
+    extern void memory_tests(void), signal_tests(void), code_tests(void);
+    code_tests();
     signal_tests();
     memory_tests();
     for (size_t bytes = 2 * 1024 * 1024; bytes <= 16 * 1024 * 1024; bytes *= 2) {

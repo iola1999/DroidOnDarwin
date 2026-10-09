@@ -83,6 +83,36 @@ static void map_view(unsigned long addr, unsigned long size, unsigned long value
                               size, prot) != (void *)addr);
 }
 
+/* Publish copies current Linux pages even when their PTEs have not changed.
+ * The caller must serialize writers and execution of the affected code. */
+long nce_publish_code(long *params)
+{
+    extern int nce_populate_code(unsigned long address, unsigned long length);
+    unsigned long start = params[0], length = params[1];
+    unsigned long base = USER_BASE + NCE_EXEC_OFFSET, end;
+    struct mm_struct *mm = current->mm;
+    if (!length || start < base + PAGE_SIZE || start >= base + NCE_EXEC_SIZE ||
+        length > base + NCE_EXEC_SIZE - start) return -EINVAL;
+    end = PAGE_ALIGN(start + length);
+    start &= PAGE_MASK;
+    int error = nce_populate_code(start, end - start);
+    if (error) return error;
+    mmap_read_lock(mm);
+    for (unsigned long addr = start; addr < end; addr += PAGE_SIZE) {
+        struct vm_area_struct *vma = find_vma(mm, addr);
+        unsigned long value = view(lookup(mm, addr));
+        if (!vma || vma->vm_start > addr || !(vma->vm_flags & VM_EXEC) ||
+            (vma->vm_flags & VM_WRITE) || !(value & _PAGE_EXEC)) {
+            mmap_read_unlock(mm);
+            return -EFAULT;
+        }
+    }
+    for (unsigned long addr = start; addr < end; addr += PAGE_SIZE)
+        map_view(addr, PAGE_SIZE, view(lookup(mm, addr)));
+    mmap_read_unlock(mm);
+    return 0;
+}
+
 static void apply_chunk(unsigned long first, unsigned long count)
 {
     unsigned long end = first + count;

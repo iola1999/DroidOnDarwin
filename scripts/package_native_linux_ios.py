@@ -14,7 +14,7 @@ ROOT = Path(__file__).resolve().parents[1]
 EXP = ROOT / 'experiments/native-linux'
 INPUT = ROOT / 'work/native-linux-nce/processes'
 OUT = ROOT / 'work/native-linux-nce/ios'
-REVISION = 'N3-A1'
+REVISION = 'N3-J1'
 
 
 def run(args, **kwargs):
@@ -62,7 +62,7 @@ def main():
                 UISupportedInterfaceOrientations=['UIInterfaceOrientationPortrait',
                     'UIInterfaceOrientationPortraitUpsideDown',
                     'UIInterfaceOrientationLandscapeLeft', 'UIInterfaceOrientationLandscapeRight'],
-                CFBundleShortVersionString='0.10.0', CFBundleVersion='70')
+                CFBundleShortVersionString='0.11.0', CFBundleVersion='71')
     plist(OUT / 'Info.plist', info)
     helper_info = plistlib.loads((ROOT / 'src/app/HuskJITHelper/Info.plist').read_bytes())
     for key in ['CFBundleShortVersionString', 'CFBundleVersion']:
@@ -90,7 +90,8 @@ def main():
                     'bionic-source/linker/NOTICE', 'scudo/LICENSE.TXT',
                     'libunwind-20.1.8.src/LICENSE.TXT', 'fmt/LICENSE', 'dlmalloc/NOTICE',
                     'libnativehelper/NOTICE', 'cpu_features/LICENSE', 'tinyxml2/LICENSE.txt',
-                    'lz4/lib/LICENSE', 'lzma/NOTICE', 'libbase/NOTICE', 'liblog/liblog/NOTICE']
+                    'lz4/lib/LICENSE', 'lzma/NOTICE', 'libbase/NOTICE', 'liblog/liblog/NOTICE',
+                    'vixl/LICENCE']
     notices.write_bytes(b''.join(f'\n===== {name} =====\n'.encode() + (android / name).read_bytes()
                                 for name in notice_paths))
     sources += [{'path': str(notices), 'buildPhase': 'resources'},

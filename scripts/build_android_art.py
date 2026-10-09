@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""构建使用高地址对象堆的 Android 16 ART 解释执行版本。"""
+"""构建使用高地址对象堆的 Android 16 ART 与 ARM64 JIT。"""
 import base64
 import concurrent.futures
 import functools
@@ -58,10 +58,11 @@ def build():
     OUT.mkdir(exist_ok=True)
     config = TOOL / 'sysroot/usr/include/c++/v1/__config_site'
     inputs = {str(path.relative_to(ROOT)): sha(path) for path in [PATCHES / name for name in ('android16.patch', 'reference_heap.h',
-                  'reference_heap.c', 'interpreter_only.cc', 'sources.json')]
+                  'reference_heap.c', 'jit_control.cc', 'sources.json')]
               if path.is_file()}
     inputs.update(ndk_libcxx_config=sha(config), libc=sha(libc),
-                  runtime=sha(WORK / 'android36-runtime.json'), builder=sha(Path(__file__)))
+                  runtime=sha(WORK / 'android36-runtime.json'), builder=sha(Path(__file__)),
+                  layout=sha(ROOT / 'experiments/native-linux/layout.h'))
     fingerprint = hashlib.sha256(json.dumps(inputs, sort_keys=True).encode()).hexdigest()
     manifest = OUT / 'manifest.json'
     if manifest.exists():
@@ -84,11 +85,12 @@ def build():
                   'libnativehelper/include_platform', 'libnativehelper/include_platform_header_only',
                   'cpu_features/include', 'tinyxml2', 'unwinding/libunwindstack/include',
                   'modules-utils/build/include', 'lz4/lib', 'lzma/C', 'perfetto-heap')]
-    includes += [OUT, PATCHES]
+    includes += [OUT, PATCHES, WORK / 'vixl/src', art / 'disassembler', ROOT / 'experiments/native-linux']
     flags = ['--target=aarch64-linux-android10000', '-fPIC', '-ftrivial-auto-var-init=zero', '-ffixed-x18', '-mno-outline-atomics',
              '-O2', '-DNDEBUG', '-DART_TARGET', '-DART_TARGET_ANDROID', '-DART_DEFAULT_GC_TYPE_IS_MS',
              '-DART_USE_RESTRICTED_MODE=1', '-DART_PAGE_SIZE_AGNOSTIC=1', '-DBUILDING_LIBART',
-             '-DART_NCE', '-DUSE_D8_DESUGAR=1', '-DFMT_HEADER_ONLY', '-DART_FRAME_SIZE_LIMIT=1744',
+             '-DART_NCE', '-DART_ENABLE_CODEGEN_arm64', '-DVIXL_INCLUDE_TARGET_A64',
+             '-DVIXL_GENERATE_SIMULATOR_INSTRUCTIONS_VALUE=0', '-DVIXL_CODE_BUFFER_MALLOC', '-DUSE_D8_DESUGAR=1', '-DFMT_HEADER_ONLY', '-DART_FRAME_SIZE_LIMIT=1744',
              '-DART_BASE_ADDRESS=0x70000000', '-DART_BASE_ADDRESS_MIN_DELTA=(-0x1000000)',
              '-DART_BASE_ADDRESS_MAX_DELTA=0x1000000', '-include', str(platform_config),
              *[f'-DART_STACK_OVERFLOW_GAP_{arch}=8192' for arch in ('arm', 'arm64', 'x86', 'x86_64', 'riscv64')],
@@ -103,16 +105,13 @@ def build():
     (OUT / 'asm_defines.h').write_bytes(subprocess.check_output(['python3',
         art / 'tools/cpp-define-generator/make_header.py', OUT / 'asm_defines.s']))
     for directory, module in [('runtime', 'art_operator_srcs'),
-                               ('libartbase', 'art_libartbase_operator_srcs')]:
+                               ('libartbase', 'art_libartbase_operator_srcs'),
+                               ('compiler', 'art_compiler_operator_srcs')]:
         (OUT / (directory + '-operators.cc')).write_bytes(subprocess.check_output(['python3',
             art / 'tools/generate_operator_out.py', art / directory,
             *source_list(art / directory, module)]))
     subprocess.run(['python3', art / 'runtime/interpreter/mterp/gen_mterp.py', OUT / 'mterp_arm64ng.S',
                     *sorted((art / 'runtime/interpreter/mterp/arm64ng').glob('*.S'))], check=True)
-    intrinsics = (art / 'compiler/optimizing/intrinsics.cc').read_text()
-    (OUT / 'intrinsics-output.cc').write_text(intrinsics[:intrinsics.index('#include')] +
-        '#include <ostream>\n#include "intrinsics_enum.h"\nnamespace art {\n' +
-        intrinsics[intrinsics.index('std::ostream& operator<<'):intrinsics.index('\nstatic ObjPtr')] + '\n}\n')
     base = source_list(art / 'libartbase', 'libartbase_defaults') + [
         art / 'libartbase/base/globals_unix.cc', art / 'libartbase/base/mem_map_unix.cc',
         OUT / 'libartbase-operators.cc', WORK / 'tinyxml2/tinyxml2.cpp', PATCHES / 'reference_heap.c']
@@ -124,9 +123,17 @@ def build():
     runtime += [art / 'runtime' / name for name in ('monitor_android.cc', 'runtime_android.cc', 'thread_android.cc')]
     runtime += source_list(art / 'libelffile', 'libelffile-defaults')
     runtime += [art / 'odrefresh/odr_statslog_host.cc', OUT / 'runtime-operators.cc',
-                OUT / 'mterp_arm64ng.S', OUT / 'intrinsics-output.cc', PATCHES / 'interpreter_only.cc']
+                OUT / 'mterp_arm64ng.S', OUT / 'compiler-operators.cc', PATCHES / 'jit_control.cc']
     runtime += [WORK / 'cpu_features/src' / (name + '.c') for name in
                 ('filesystem', 'stack_line_reader', 'string_view', 'hwcaps', 'impl_aarch64_linux_or_android')]
+    runtime += source_list(art / 'compiler', 'libart-compiler-defaults')
+    runtime += [art / 'compiler/optimizing' / name for name in
+                ('instruction_simplifier_shared.cc', 'nodes_shared.cc')]
+    compiler_bp = (art / 'compiler/Android.bp').read_text().split('name: "libart-compiler-defaults"', 1)[1]
+    arm64 = compiler_bp[compiler_bp.index('arm64: {'):]
+    runtime += [art / 'compiler' / name for name in re.findall(r'"([^"\n]+)"',
+                  re.search(r'\bsrcs:\s*\[(.*?)\]', arm64, re.S)[1])]
+    runtime += sorted((WORK / 'vixl/src').glob('*.cc')) + sorted((WORK / 'vixl/src/aarch64').glob('*.cc'))
     objects = OUT / 'objects'
     objects.mkdir(exist_ok=True)
 
@@ -185,7 +192,7 @@ def build():
          'libunwindstack.so', 'liblz4.so', 'liblzma.so', 'heapprofd_client_api.so'])
     files = {name: sha(OUT / name) for name in ('libart.so', 'libartbase.so')}
     manifest.write_text(json.dumps(dict(build_inputs=fingerprint, inputs=inputs, files=files,
-        art_flags={name: False for name in names}, execution='restricted-interpreter',
+        art_flags={name: False for name in names}, execution='restricted-arm64-jit',
         compressed_references='offset-in-high-4GiB-arena'), indent=2) + '\n')
     return {name: OUT / name for name in files}
 

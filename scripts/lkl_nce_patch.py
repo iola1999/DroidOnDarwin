@@ -84,6 +84,8 @@ def apply(source: Path, experiment: Path):
     edit(arch + "kernel/syscalls.c", "ret = run_syscall(no, params);", "ret = nce_run_syscall(no, params);")
     edit(arch + "kernel/syscalls.c", "extern long nce_launch(long *params);", "extern long nce_launch(long *params);\nextern long nce_reserve_elf(long *params);")
     edit(arch + "kernel/syscalls.c", "\tif (no == 246)", "\tif (no == 245)\n\t\treturn nce_reserve_elf(params);\n\tif (no == 246)")
+    edit(arch + "kernel/syscalls.c", "extern long nce_reserve_elf(long *params);", "extern long nce_reserve_elf(long *params);\nextern long nce_map_code(long *params);\nextern long nce_publish_code(long *params);\nextern long nce_check_memory_syscall(long no, long *params);")
+    edit(arch + "kernel/syscalls.c", "\tif (no == 245)", "\tif (no == 243) return nce_map_code(params);\n\tif (no == 244) return nce_publish_code(params);\n\tif (no == 226 || no == 216) {\n\t\tlong error = nce_check_memory_syscall(no, params);\n\t\tif (error) return error;\n\t}\n\tif (no == 245)")
     edit(arch + "kernel/syscalls.c", "\tkernel_sigaction(SIGCHLD, SIG_IGN);", "#ifndef CONFIG_MMU\n\tkernel_sigaction(SIGCHLD, SIG_IGN);\n#endif")
     edit(arch + "kernel/setup.c", "if (strcmp(\"/init\", bprm->filename) != 0)\n\t\treturn -EINVAL;", "if (strcmp(\"/init\", bprm->filename) != 0)\n\t\treturn -ENOEXEC;")
     edit(arch + "kernel/setup.c", "\tinit_pid_ns.child_reaper = 0;", "#ifndef CONFIG_MMU\n\tinit_pid_ns.child_reaper = 0;\n#endif")
