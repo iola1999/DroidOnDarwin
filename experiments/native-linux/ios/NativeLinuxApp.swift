@@ -12,11 +12,18 @@ enum HuskLog {
 @MainActor
 final class ProbeModel: ObservableObject {
     @Published var status = "准备测试"
-    @Published var log = ""
-    @Published var busy = false
+    @Published var logLines: [ProbeLogLine] = []
+    @Published var busy = false {
+        didSet {
+            if !busy { polling?.invalidate(); polling = nil }
+        }
+    }
     @Published var didRun = false
     @Published var importing = false
     @Published var graphics: UIImage?
+    private let logReader = ProbeLogReader()
+    private var phase: String?
+    private var refreshing = false
     private var waiting = false
     private var attachDeadline = Date.distantPast
     private var polling: Timer?
@@ -28,18 +35,23 @@ final class ProbeModel: ObservableObject {
 
     init() {
         husk_ios_jit_install_trap_handler()
-        refresh()
-        if !log.isEmpty { status = "已保留上次日志" }
-        polling = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { [weak self] _ in
-            Task { @MainActor in self?.tick() }
+        Task {
+            await refresh()
+            if !busy && !didRun && !logLines.isEmpty { status = "已保留上次日志" }
         }
     }
 
-    private func refresh() {
-        if let text = try? String(contentsOf: logURL, encoding: .utf8) { log = text }
+    private func refresh() async {
+        if let snapshot = try? await logReader.read(from: logURL) {
+            if snapshot.lines != logLines { logLines = snapshot.lines }
+            phase = snapshot.phase
+        }
     }
-    private func tick() {
-        refresh()
+    private func tick() async {
+        guard busy && !refreshing else { return }
+        refreshing = true
+        defer { refreshing = false }
+        await refresh()
         if waiting {
             if UIApplication.shared.applicationState == .active && nce_debugger_attached() {
                 waiting = false
@@ -53,31 +65,21 @@ final class ProbeModel: ObservableObject {
             }
         } else if busy && didRun {
             let seconds = Int(Date().timeIntervalSince(startedAt))
-            if log.contains("\"phase\":\"linux_shutdown\"") { status = "正在结束测试（\(seconds) 秒）" }
-            else if log.contains("\"phase\":\"android_zygote_launch\"") { status = "正在检查 Android 进程启动（\(seconds) 秒）" }
-            else if log.contains("\"phase\":\"android_framework_launch\"") { status = "正在检查 Android 系统框架（\(seconds) 秒）" }
-            else if log.contains("\"phase\":\"android_platform_services\"") { status = "正在检查 Android 系统服务（\(seconds) 秒）" }
-            else if log.contains("\"phase\":\"android_art_inlining\"") { status = "正在检查 Java 方法内联（\(seconds) 秒）" }
-            else if log.contains("\"phase\":\"android_art_load\"") { status = "正在运行 Java 与编译执行测试（\(seconds) 秒）" }
-            else if log.contains("\"phase\":\"android_art_reference_heap\"") { status = "正在检查 Android 对象内存（\(seconds) 秒）" }
-            else if log.contains("\"phase\":\"android_bionic_dynamic\"") { status = "正在检查 Android 运行库（\(seconds) 秒）" }
-            else if log.contains("\"phase\":\"linux_binder_program\"") { status = "正在检查 Binder 进程通信（\(seconds) 秒）" }
-            else if log.contains("\"phase\":\"linux_storage_program\"") { status = "正在检查文件存储（\(seconds) 秒）" }
-            else if log.contains("\"phase\":\"linux_dynamic_program\"") { status = "正在检查动态库和线程（\(seconds) 秒）" }
-            else if log.contains("\"phase\":\"linux_dash_shell\"") { status = "正在运行 shell 脚本（\(seconds) 秒）" }
-            else if log.contains("\"phase\":\"linux_mm_benchmark\"") { status = "正在检查信号与内存（\(seconds) 秒）" }
-            else if log.contains("\"phase\":\"linux_userspace_tests\"") { status = "正在测试 C 程序和线程（\(seconds) 秒）" }
-            else if log.contains("\"phase\":\"linux_process_tests\"") { status = "正在测试 Linux 进程（\(seconds) 秒）" }
-            else if log.contains("\"phase\":\"linux_init\"") { status = "正在启动 Linux 内核（\(seconds) 秒）" }
-            else if log.contains("\"phase\":\"check_fixed_code_and_data_remap\"") { status = "正在检查代码执行和数据映射（\(seconds) 秒）" }
-            else if log.contains("\"phase\":\"wait_debugger_detach\"") { status = "正在等待 JIT 助手断开（\(seconds) 秒）" }
-            else { status = "正在准备 JIT 代码区域（\(seconds) 秒）" }
+            let label = phase.flatMap { ProbeLogReader.phaseLabels[$0] } ?? "正在准备 JIT 代码区域"
+            let nextStatus = "\(label)（\(seconds) 秒）"
+            if status != nextStatus { status = nextStatus }
         }
     }
     private func beginAttempt() -> Bool {
         guard !busy && !didRun else { return false }
         guard nce_open_log(logURL.path) == 0 else { status = "日志文件无法写入"; return false }
         busy = true
+        logLines = []
+        phase = nil
+        Task { await logReader.reset(); await refresh() }
+        polling = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { [weak self] _ in
+            Task { @MainActor in await self?.tick() }
+        }
         UIApplication.shared.isIdleTimerDisabled = true
         startedAt = Date()
         let build = Bundle.main.object(forInfoDictionaryKey: "NCEBuildID") as? String ?? "unknown"
@@ -187,7 +189,7 @@ final class ProbeModel: ObservableObject {
                 self.busy = false
                 UIApplication.shared.isIdleTimerDisabled = false
                 self.status = result == 0 ? "全部测试通过" : "测试失败，请导出日志"
-                self.refresh()
+                Task { await self.refresh() }
                 self.graphics = result == 0 ? UIImage(contentsOfFile: self.graphicsURL.path) : nil
             }
         }
@@ -234,11 +236,15 @@ struct NativeLinuxApp: App {
                             ShareLink("导出图片", item: model.graphicsURL)
                         }
                     }
-                    if !model.log.isEmpty {
+                    if !model.logLines.isEmpty {
                         Section("日志") {
                             ShareLink("导出测试日志", item: model.logURL)
-                            Text(model.log).font(.system(.caption, design: .monospaced))
-                                .textSelection(.enabled)
+                            Text("显示最近 80 行，导出可查看完整日志。")
+                                .font(.caption).foregroundStyle(.secondary)
+                            ForEach(model.logLines) { line in
+                                Text(line.text).font(.system(.caption, design: .monospaced))
+                                    .lineLimit(4)
+                            }
                         }
                     }
                 }

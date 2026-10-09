@@ -1,4 +1,4 @@
-# N3-S5 原生 Linux 与 Android 合并测试
+# N3-S6 原生 Linux 与 Android 合并测试
 
 日期：2026-10-09。适用设备：当前 iPhone 17 / iOS 27.2。
 
@@ -9,14 +9,14 @@
 ## 安装包
 
 ```text
-/Users/fan/project/app/husk_hyos/work/native-linux-nce/ios/Husk-NativeLinux-N3-S5.ipa
+/Users/fan/project/app/husk_hyos/work/native-linux-nce/ios/Husk-NativeLinux-N3-S6.ipa
 ```
 
-版本 `0.11.1 (76)`，构建编号 `N3-S5-iOS-20261009-213113`，大小 319.22 MiB。
+版本 `0.11.1 (77)`，构建编号 `N3-S6-iOS-20261009-214350`，大小 319.23 MiB。
 SHA-256：
 
 ```text
-f13d8222563b5b1e09f1dce11a234528a7cbc4fef7a1905ceeac620ba44450d3
+8284155c93080425eb756ff2e9e42f4a2c893c31746bb45a421d83574d6a0841
 ```
 
 CLI/GCD 回归、ELF 检查、iOS 构建、归档与签名完整性检查均已通过。
@@ -24,19 +24,22 @@ CLI/GCD 回归、ELF 检查、iOS 构建、归档与签名完整性检查均已�
 N3-S3 在手机上申请约 16.58 GiB 连续虚拟地址失败。此包将总预留缩至约
 4.58 GiB，并调整 Scudo、ART 对象堆及 CFI 检查表。N3-S4 手机已通过预留，
 但 JIT 准备工具截断高地址，执行时卡住。N3-S5 修复完整地址传递、每页回复
-检查和异常退出，10 组协议回归通过；手机执行待确认。
+检查和异常退出。S5 已在手机上完成全部 97 个不同名称的测试，最终结果为
+`passed`。S6 调整日志界面：后台增量读取、只显示最近 80 行、结束后停止刷新。
+日志读取的 5 组回归及 iOS 构建通过，S6 界面表现待手机确认。
 
 ## 操作
 
 1. 在 iLoader 中导入 IPA，沿用当前账号覆盖安装，保留 JIT Helper 扩展。
-2. 在手机上连接 LocalDevVPN，打开 Husk NCE，确认构建编号以 N3-S5 开头。
+2. 在手机上连接 LocalDevVPN，打开 Husk NCE，确认构建编号以 N3-S6 开头。
 3. 点“启用内置 JIT 并测试”，保持应用在前台，等待“全部测试通过”。
 4. 导出日志，并保留 Android 绘图结果。
 
 应用测试期间会禁用自动锁屏。若闪退，重新打开后先导出上次日志；再次启动
 测试会覆盖日志。日志文件继续使用 `native-linux-n2-ios.log` 这一名称。
 辅助进程的详细记录位于其独立容器 `Documents/husk-jit-helper.log`，可通过
-已连接的 Mac 直接读取。JIT 准备逐页检查回复，初次准备耗时待测。
+已连接的 Mac 直接读取。S5 本次从首次 JIT 探测到调试器断开约 15.4 秒。
+S6 覆盖安装后可直接滚动保留的日志，检查界面表现；完整日志仍通过导出查看。
 ART 单进程检查设有 90 秒期限，Framework 与基础服务阶段设有 60 秒期限。
 若长时间停在同一阶段，保留日志即可，无需反复运行。
 
@@ -67,7 +70,9 @@ Linux 用户态压力检查固定为 3 轮，包含 24 次命令与 168 个 pthr
 
 Mac 的 CLI 与 GCD 入口分别通过 97 和 98 个命名测试，另有 15 项 ELF 检查。
 GCD 多出继承信号屏蔽状态的回归。实际结果及全部构建输入校验值保存在
-`work/native-linux-nce/processes/lkl-summary.json`，手机结果仍待确认。
+`work/native-linux-nce/processes/lkl-summary.json`。S5 真机通过相同的 97 个
+测试名称；真机结果与日志校验值见
+`experiments/native-linux/results-ios-n3-s5.json`。
 
 单独的 system_server 检查已推进到 DisplayManager，当前等待 SurfaceFlinger。
 PackageManager、系统窗口合成、桌面与持续交互尚未完成。该检查通过环境变量

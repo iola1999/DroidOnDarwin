@@ -14,7 +14,7 @@ ROOT = Path(__file__).resolve().parents[1]
 EXP = ROOT / 'experiments/native-linux'
 INPUT = ROOT / 'work/native-linux-nce/processes'
 OUT = ROOT / 'work/native-linux-nce/ios'
-REVISION = 'N3-S5'
+REVISION = 'N3-S6'
 
 
 def run(args, **kwargs):
@@ -54,6 +54,10 @@ def main():
     with (OUT / 'execute-test.log').open('w') as log:
         run([OUT / 'execute-test'], stdout=log)
     run(['node', ROOT / 'tests/ios-jit/script-test.cjs'])
+    run(['xcrun', 'swiftc', '-O', EXP / 'ios/ProbeLogReader.swift',
+         ROOT / 'tests/ios-jit/LogReaderTests.swift', '-o', OUT / 'log-reader-test'])
+    with (OUT / 'log-reader-test.log').open('w') as log:
+        run([OUT / 'log-reader-test'], stdout=log)
     build_id = REVISION + '-iOS-' + time.strftime('%Y%m%d-%H%M%S')
     info = plistlib.loads((ROOT / 'src/app/Husk/Info.plist').read_bytes())
     for key in ['CFBundleIcons', 'CFBundleIcons~ipad', 'HuskPerformanceBuild']:
@@ -63,7 +67,7 @@ def main():
                 UISupportedInterfaceOrientations=['UIInterfaceOrientationPortrait',
                     'UIInterfaceOrientationPortraitUpsideDown',
                     'UIInterfaceOrientationLandscapeLeft', 'UIInterfaceOrientationLandscapeRight'],
-                CFBundleShortVersionString='0.11.1', CFBundleVersion='76')
+                CFBundleShortVersionString='0.11.1', CFBundleVersion='77')
     plist(OUT / 'Info.plist', info)
     helper_info = plistlib.loads((ROOT / 'src/app/HuskJITHelper/Info.plist').read_bytes())
     for key in ['CFBundleShortVersionString', 'CFBundleVersion']:
@@ -74,7 +78,7 @@ def main():
     plist(OUT / 'Husk.entitlements', {'get-task-allow': True})
     sources = [{'path': str(EXP / name)} for name in
                ['lkl-main.c', 'lkl-host.c', 'lkl-process-host.c', 'programs.c', 'memory.c', 'execute-check.c', 'compute.c', 'nce.c', 'entry.S',
-                'ios/Bridge.c', 'ios/NativeLinuxApp.swift']]
+                'ios/Bridge.c', 'ios/NativeLinuxApp.swift', 'ios/ProbeLogReader.swift']]
     sources += [{'path': str(EXP / 'guest.S'), 'compilerFlags': ['-DNATIVE']}]
     sources += [{'path': str(INPUT / 'payload.S')}]
     sources += [{'path': str(ROOT / name)} for name in
