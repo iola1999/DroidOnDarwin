@@ -86,6 +86,15 @@ static int test_jit(JNIEnv *env, jclass workload, void *library)
         {"$compile$virtual", "(LNceWorkload$Value;)I"},
         {"$compile$interfaceCollision", "(LNceWorkload$CollisionReader;)I"},
         {"$compile$patternRoundTrip", "(LNceWorkload$PatternBox;Ljava/lang/Object;)Ljava/lang/Object;"},
+        {"$compile$coldReference", "()Ljava/lang/Object;"},
+        {"$compile$coldIncrement", "()I"},
+        {"$compile$brokenClass", "()I"},
+        {"$compile$stringHash", "(Ljava/lang/String;)I"},
+        {"$compile$stringAt", "(Ljava/lang/String;I)C"},
+        {"$compile$stringAtOne", "(Ljava/lang/String;)C"},
+        {"$compile$stringLiteral", "()Ljava/lang/String;"},
+        {"$compile$stringEquals", "(Ljava/lang/String;Ljava/lang/Object;)Z"},
+        {"$compile$combined", "([Ljava/lang/String;[Ljava/lang/Object;LNceWorkload$Reader;I)J"},
         {"$compile$referenceStore", "([Ljava/lang/Object;ILjava/lang/Object;)Ljava/lang/Object;"},
         {"$compile$typedStore", "([LNceWorkload$Node;ILNceWorkload$Node;)V"},
         {"$compile$clearStore", "([Ljava/lang/Object;I)V"},
@@ -162,6 +171,12 @@ static int test_jit(JNIEnv *env, jclass workload, void *library)
     fflush(stdout);
     (*env)->CallStaticVoidMethod(env, workload, runtime_features);
     if ((*env)->ExceptionCheck(env)) { (*env)->ExceptionDescribe(env); return 40; }
+    jmethodID strings = (*env)->GetStaticMethodID(env, workload, "compiledStringsAndClasses", "()V");
+    if (!strings) return 48;
+    puts("{\"phase\":\"android_art_jit_strings_classes\"}");
+    fflush(stdout);
+    (*env)->CallStaticVoidMethod(env, workload, strings);
+    if ((*env)->ExceptionCheck(env)) { (*env)->ExceptionDescribe(env); return 49; }
     jmethodID unsupported = (*env)->GetStaticMethodID(env, workload, "$compile$unsupportedCast",
                                                      "(Ljava/lang/Object;)Ljava/lang/Object;");
     if (!unsupported || compile(env, unsupported)) return 31;

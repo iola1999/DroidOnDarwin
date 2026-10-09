@@ -158,6 +158,98 @@ public final class NceWorkload {
         System.out.println("{\"test\":\"android_art_jit_patterns\",\"passed\":true,\"installed_patterns\":11}");
     }
 
+    private static int successfulInitializations;
+    private static int failedInitializations;
+    private static int initializeCold() { successfulInitializations++; return 83; }
+    private static int initializeBroken() {
+        failedInitializations++;
+        throw new IllegalStateException("class-init-test");
+    }
+    private static final class ColdState {
+        static int value = initializeCold();
+        static Object reference = new Node(value);
+    }
+    private static final class BrokenState { static int value = initializeBroken(); }
+    public static Object $compile$coldReference() { return ColdState.reference; }
+    public static int $compile$coldIncrement() { return ++ColdState.value; }
+    public static int $compile$brokenClass() { return BrokenState.value; }
+
+    public static int $compile$stringHash(String value) {
+        int hash = 0;
+        for (int i = 0; i < value.length(); i++) hash = hash * 31 + value.charAt(i);
+        return hash;
+    }
+    public static char $compile$stringAt(String value, int index) { return value.charAt(index); }
+    public static char $compile$stringAtOne(String value) { return value.charAt(1); }
+    public static String $compile$stringLiteral() { return "native-linux-jit"; }
+    public static boolean $compile$stringEquals(String first, Object second) {
+        return first.equals(second);
+    }
+    public static long $compile$combined(String[] keys, Object[] slots, Reader reader, int rounds) {
+        long checksum = 0;
+        for (int r = 0; r < rounds; r++) {
+            int i = r & (keys.length - 1);
+            String key = keys[i];
+            slots[i] = key;
+            checksum += $compile$stringHash(key) + reader.read();
+        }
+        return checksum;
+    }
+
+    public static void compiledStringsAndClasses() throws Exception {
+        check(successfulInitializations == 0 && failedInitializations == 0,
+                "compilation preserves uninitialized classes");
+        Object cold = $compile$coldReference();
+        check(cold instanceof Node && ((Node)cold).value == 83, "first initialization object result");
+        check($compile$coldIncrement() == 84 && $compile$coldIncrement() == 85
+                && successfulInitializations == 1, "static state initializes once");
+        System.gc();
+        check($compile$coldReference() == cold, "static reference survives GC");
+        int initializationErrors = 0;
+        try { $compile$brokenClass(); }
+        catch (ExceptionInInitializerError expected) { initializationErrors++; }
+        try { $compile$brokenClass(); }
+        catch (NoClassDefFoundError expected) { initializationErrors++; }
+        check(initializationErrors == 2 && failedInitializations == 1, "failed initialization state");
+        String ascii = new String(new char[]{'n', 'a', 't', 'i', 'v', 'e'});
+        String unicode = new String(new char[]{0x5b89, 0x5353, 0x20ac, 0xd83d, 0xde80});
+        String mixed = new String(new char[]{0, 127, 255, 256});
+        String[] keys = {ascii, unicode, mixed, "", "native-linux-jit", "linux", "jni", "gc"};
+        for (String key : keys) check($compile$stringHash(key) == key.hashCode(), "string hash");
+        check($compile$stringAt(ascii, 1) == 'a' && $compile$stringAtOne(ascii) == 'a',
+                "compressed character access");
+        check($compile$stringAt(unicode, 3) == 0xd83d && $compile$stringAtOne(unicode) == 0x5353,
+                "UTF-16 character access");
+        check($compile$stringAt(mixed, 0) == 0 && $compile$stringAt(mixed, 2) == 255,
+                "zero and non-ASCII character access");
+        check($compile$stringLiteral() == "native-linux-jit", "JIT string root identity");
+        check($compile$stringEquals(ascii, new String(ascii))
+                && !$compile$stringEquals(ascii, unicode) && !$compile$stringEquals(ascii, null),
+                "recognized intrinsic executes through its regular method call");
+        int exceptions = 0;
+        try { $compile$stringAt(null, 0); }
+        catch (NullPointerException expected) { exceptions++; }
+        try { $compile$stringAt(unicode, unicode.length()); }
+        catch (StringIndexOutOfBoundsException expected) { exceptions++; }
+        try { $compile$stringAt(ascii, -1); }
+        catch (StringIndexOutOfBoundsException expected) { exceptions++; }
+        Object[] slots = new Object[keys.length];
+        long expected = 0;
+        for (int r = 0; r < 100000; r++) expected += keys[r & 7].hashCode() + 17;
+        Thread collector = new Thread(() -> {
+            for (int i = 0; i < 8; i++) System.gc();
+        }, "nce-jit-combined-gc");
+        collector.start();
+        check($compile$combined(keys, slots, new FirstValue(), 100000) == expected,
+                "combined compiled workload checksum");
+        collector.join();
+        for (int i = 0; i < keys.length; i++) check(slots[i] == keys[i], "combined stored references");
+        check(exceptions == 3, "compiled string exceptions");
+        System.out.println("{\"test\":\"android_art_jit_strings_classes\",\"passed\":true,"
+                + "\"strings\":8,\"combined_iterations\":100000,\"gc_requests\":8,"
+                + "\"initialization_errors\":2,\"string_exceptions\":3}");
+    }
+
     public static Object $compile$referenceStore(Object[] array, int index, Object value) {
         array[index] = value;
         return array[index];

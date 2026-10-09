@@ -25,7 +25,7 @@
                 << " (kind=" << compilation_kind << ")"
 --- a/compiler/optimizing/code_generator_arm64.cc
 +++ b/compiler/optimizing/code_generator_arm64.cc
-@@ -96,6 +96,28 @@
+@@ -96,6 +96,38 @@
  using helpers::WRegisterFrom;
  using helpers::XRegisterFrom;
 
@@ -49,12 +49,39 @@
 +  masm->Mov(reference.X(), address);
 +  masm->Bind(&done);
 +}
++
++static void NceQuickReference(MacroAssembler* masm, Register reference) {
++  vixl::aarch64::Label done;
++  masm->Cbz(reference.X(), &done);
++  UseScratchRegisterScope temps(masm);
++  Register base = temps.AcquireX();
++  masm->Mov(base, nce_art_reference_base);
++  masm->Sub(reference.X(), reference.X(), base);
++  masm->Bind(&done);
++}
 +#endif
 +
  // TODO(mythria): Expand SystemRegister in vixl to include this value.
  uint16_t SYS_CNTVCT_EL0 = SystemRegisterEncoder<1, 3, 14, 0, 2>::value;
 
-@@ -575,6 +597,10 @@
+@@ -350,10 +382,16 @@
+                                   cls_->GetType());
+     }
+     if (must_do_clinit) {
++#ifdef ART_NCE
++      if (!must_resolve_type) NceRuntimeReference(arm64_codegen->GetVIXLAssembler(), x0);
++#endif
+       arm64_codegen->InvokeRuntime(kQuickInitializeStaticStorage, instruction_, this);
+       CheckEntrypointTypes<kQuickInitializeStaticStorage, void*, mirror::Class*>();
+     }
+
++#ifdef ART_NCE
++    NceQuickReference(arm64_codegen->GetVIXLAssembler(), x0);
++#endif
+     // Move the class to the desired location.
+     if (out.IsValid()) {
+       DCHECK(out.IsRegister() && !locations->GetLiveRegisters()->ContainsCoreRegister(out.reg()));
+@@ -575,6 +613,10 @@
      codegen->GetMoveResolver()->EmitNativeCode(&parallel_move);
 
      CodeGeneratorARM64* arm64_codegen = down_cast<CodeGeneratorARM64*>(codegen);
@@ -65,7 +92,33 @@
      arm64_codegen->InvokeRuntime(kQuickAputObject, instruction_, this);
      CheckEntrypointTypes<kQuickAputObject, void, mirror::Array*, int32_t, mirror::Object*>();
      RestoreLiveRegisters(codegen, locations);
-@@ -1630,7 +1656,13 @@
+@@ -1433,7 +1475,13 @@
+     // We don't emit a read barrier here to save on code size. We rely on the
+     // resolution trampoline to do a suspend check before re-entering this code.
+     __ Ldr(temp1, MemOperand(kArtMethodRegister, ArtMethod::DeclaringClassOffset().Int32Value()));
++#ifdef ART_NCE
++    __ Mov(temp2.X(), nce_art_reference_base);
++    __ Add(temp1.X(), temp2.X(), Operand(temp1.W(), UXTW));
++    __ Ldrb(temp2, MemOperand(temp1.X(), kClassStatusByteOffset));
++#else
+     __ Ldrb(temp2, HeapOperand(temp1, kClassStatusByteOffset));
++#endif
+     __ Cmp(temp2, kShiftedVisiblyInitializedValue);
+     __ B(hs, &frame_entry_label_);
+
+@@ -1447,7 +1495,11 @@
+     __ Cmp(temp2, kShiftedInitializingValue);
+     __ B(lo, &resolution);
+
++#ifdef ART_NCE
++    __ Ldr(temp1, MemOperand(temp1.X(), mirror::Class::ClinitThreadIdOffset().Int32Value()));
++#else
+     __ Ldr(temp1, HeapOperand(temp1, mirror::Class::ClinitThreadIdOffset().Int32Value()));
++#endif
+     __ Ldr(temp2, MemOperand(tr, Thread::TidOffset<kArm64PointerSize>().Int32Value()));
+     __ Cmp(temp1, temp2);
+     __ B(eq, &frame_entry_label_);
+@@ -1630,7 +1682,13 @@
    // Load the address of the card table into `card`.
    __ Ldr(card, MemOperand(tr, Thread::CardTableOffset<kArm64PointerSize>().Int32Value()));
    // Calculate the offset (in the card table) of the card corresponding to `object`.
@@ -79,7 +132,7 @@
    // Write the `art::gc::accounting::CardTable::kCardDirty` value into the
    // `object`'s card.
    //
-@@ -1655,7 +1687,13 @@
+@@ -1655,7 +1713,13 @@
    // Load the address of the card table into `card`.
    __ Ldr(card, MemOperand(tr, Thread::CardTableOffset<kArm64PointerSize>().Int32Value()));
    // Calculate the offset (in the card table) of the card corresponding to `object`.
@@ -93,7 +146,20 @@
    // assert (!clean || !self->is_gc_marking)
    __ Ldrb(temp, MemOperand(card, temp.X()));
    static_assert(gc::accounting::CardTable::kCardClean == 0);
-@@ -2357,8 +2395,16 @@
+@@ -2178,7 +2242,12 @@
+   // size, load only the high byte of the field and compare with 0xf0.
+   // Note: The same code size could be achieved with LDR+MNV(asr #24)+CBNZ but benchmarks
+   // show that this pattern is slower (tested on little cores).
++#ifdef ART_NCE
++  Register address = NceHeapAddress(GetVIXLAssembler(), &temps, class_reg);
++  __ Ldrb(temp, MemOperand(address, kClassStatusByteOffset));
++#else
+   __ Ldrb(temp, HeapOperand(class_reg, kClassStatusByteOffset));
++#endif
+   __ Cmp(temp, kShiftedVisiblyInitializedValue);
+   __ B(lo, slow_path->GetEntryLabel());
+   __ Bind(slow_path->GetExitLabel());
+@@ -2357,8 +2426,16 @@
    uint32_t offset = field_info.GetFieldOffset().Uint32Value();
    DCHECK_EQ(DataType::Size(field_info.GetFieldType()), DataType::Size(instruction->GetType()));
    DataType::Type load_type = instruction->GetType();
@@ -110,7 +176,7 @@
 
    if (load_type == DataType::Type::kReference && codegen_->EmitBakerReadBarrier()) {
      // Object FieldGet with Baker's read barrier case.
-@@ -2440,13 +2486,19 @@
+@@ -2440,13 +2517,19 @@
        source = temp;
      }
 
@@ -132,26 +198,51 @@
        codegen_->MaybeRecordImplicitNullCheck(instruction);
      }
    }
-@@ -2869,6 +2921,18 @@
+@@ -2869,6 +2952,35 @@
    MacroAssembler* masm = GetVIXLAssembler();
    UseScratchRegisterScope temps(masm);
 
 +#ifdef ART_NCE
-+  if (!maybe_compressed_char_at) {
-+    CHECK(!codegen_->EmitReadBarrier());
-+    Register address = NceHeapAddress(masm, &temps, obj);
++  CHECK(!codegen_->EmitReadBarrier());
++  Register address = NceHeapAddress(masm, &temps, obj);
++  if (maybe_compressed_char_at) {
++    Register length = temps.AcquireW();
++    int64_t count_offset = mirror::String::CountOffset().Uint32Value();
++    if (instruction->GetArray()->IsIntermediateAddress()) count_offset -= offset;
++    __ Ldr(length, MemOperand(address, count_offset));
++    if (!instruction->GetArray()->IsIntermediateAddress()) __ Add(address, address, offset);
++    vixl::aarch64::Label uncompressed, done;
++    __ Tbnz(length, 0, &uncompressed);
++    __ Ldrb(OutputRegister(instruction), index.IsConstant()
++        ? MemOperand(address, Int64FromLocation(index))
++        : MemOperand(address, XRegisterFrom(index), LSL, 0));
++    __ B(&done);
++    __ Bind(&uncompressed);
++    __ Ldrh(OutputRegister(instruction), index.IsConstant()
++        ? MemOperand(address, Int64FromLocation(index) << 1)
++        : MemOperand(address, XRegisterFrom(index), LSL, 1));
++    __ Bind(&done);
++  } else {
 +    if (!instruction->GetArray()->IsIntermediateAddress()) __ Add(address, address, offset);
 +    MemOperand source = index.IsConstant()
 +        ? MemOperand(address, Int64FromLocation(index) << DataType::SizeShift(type))
 +        : MemOperand(address, XRegisterFrom(index), LSL, DataType::SizeShift(type));
 +    codegen_->Load(type, OutputCPURegister(instruction), source);
-+    return;
 +  }
-+#endif
++  return;
++#else
    // The non-Baker read barrier instrumentation of object ArrayGet instructions
    // does not support the HIntermediateAddress instruction.
    DCHECK(!((type == DataType::Type::kReference) &&
-@@ -2997,12 +3061,18 @@
+@@ -2986,6 +3098,7 @@
+       }
+     }
+   }
++#endif
+ }
+
+ void LocationsBuilderARM64::VisitArrayLength(HArrayLength* instruction) {
+@@ -2997,12 +3110,18 @@
  void InstructionCodeGeneratorARM64::VisitArrayLength(HArrayLength* instruction) {
    uint32_t offset = CodeGenerator::GetArrayLengthOffset(instruction);
    vixl::aarch64::Register out = OutputRegister(instruction);
@@ -170,26 +261,7 @@
    // Mask out compression flag from String's array length.
    if (mirror::kUseStringCompression && instruction->IsStringLength()) {
      __ Lsr(out.W(), out.W(), 1u);
-@@ -3044,6 +3114,18 @@
-   MemOperand destination = HeapOperand(array);
-   MacroAssembler* masm = GetVIXLAssembler();
-
-+#ifdef ART_NCE
-+  if (value_type != DataType::Type::kReference) {
-+    UseScratchRegisterScope temps(masm);
-+    Register address = NceHeapAddress(masm, &temps, array);
-+    if (!instruction->GetArray()->IsIntermediateAddress()) __ Add(address, address, offset);
-+    destination = index.IsConstant()
-+        ? MemOperand(address, Int64FromLocation(index) << DataType::SizeShift(value_type))
-+        : MemOperand(address, XRegisterFrom(index), LSL, DataType::SizeShift(value_type));
-+    codegen_->Store(value_type, source, destination);
-+    return;
-+  }
-+#endif
-   if (!needs_write_barrier) {
-     if (codegen_->ShouldCheckGCCard(value_type, instruction->GetValue(), write_barrier_kind)) {
-       codegen_->CheckGCCardIsValid(array);
-@@ -3051,6 +3133,13 @@
+@@ -3051,6 +3170,13 @@
 
      DCHECK(!needs_type_check);
      UseScratchRegisterScope temps(masm);
@@ -203,7 +275,7 @@
      if (index.IsConstant()) {
        offset += Int64FromLocation(index) << DataType::SizeShift(value_type);
        destination = HeapOperand(array, offset);
-@@ -3074,6 +3163,7 @@
+@@ -3074,6 +3200,7 @@
                                  DataType::SizeShift(value_type));
      }
 
@@ -211,7 +283,7 @@
      if (kPoisonHeapReferences && value_type == DataType::Type::kReference) {
        DCHECK(value.IsW());
        Register temp_src = temps.AcquireW();
-@@ -3130,6 +3220,17 @@
+@@ -3130,6 +3257,17 @@
          // false negative, in which case we would take the ArraySet
          // slow path.
 
@@ -229,7 +301,7 @@
          // /* HeapReference<Class> */ temp = array->klass_
          {
            // Ensure that between load and MaybeRecordImplicitNullCheck there are no pools emitted.
-@@ -3145,6 +3246,7 @@
+@@ -3145,6 +3283,7 @@
          __ Ldr(temp2, HeapOperand(Register(value), class_offset));
          // If heap poisoning is enabled, no need to unpoison `temp`
          // nor `temp2`, as we are comparing two poisoned references.
@@ -237,7 +309,7 @@
          __ Cmp(temp, temp2);
 
          if (instruction->StaticTypeOfArrayIsObjectArray()) {
-@@ -3155,7 +3257,13 @@
+@@ -3155,7 +3294,13 @@
            GetAssembler()->MaybeUnpoisonHeapReference(temp);
 
            // /* HeapReference<Class> */ temp = temp->super_class_
@@ -251,7 +323,7 @@
            // If heap poisoning is enabled, no need to unpoison
            // `temp`, as we are comparing against null below.
            __ Cbnz(temp, slow_path->GetEntryLabel());
-@@ -3191,6 +3299,13 @@
+@@ -3191,6 +3336,13 @@
        source = temp_source;
      }
 
@@ -265,7 +337,7 @@
      if (index.IsConstant()) {
        offset += Int64FromLocation(index) << DataType::SizeShift(value_type);
        destination = HeapOperand(array, offset);
-@@ -3203,6 +3318,7 @@
+@@ -3203,6 +3355,7 @@
                                  DataType::SizeShift(value_type));
      }
 
@@ -273,7 +345,7 @@
      {
        // Ensure that between store and MaybeRecordImplicitNullCheck there are no pools emitted.
        EmissionCheckScope guard(GetVIXLAssembler(), kMaxMacroInstructionSizeInBytes);
-@@ -4865,6 +4981,16 @@
+@@ -4865,6 +5018,16 @@
    Offset class_offset = mirror::Object::ClassOffset();
    Offset entry_point = ArtMethod::EntryPointFromQuickCompiledCodeOffset(kArm64PointerSize);
 
@@ -290,7 +362,7 @@
    // Ensure that between load and MaybeRecordImplicitNullCheck there are no pools emitted.
    if (receiver.IsStackSlot()) {
      __ Ldr(temp.W(), StackOperandFrom(receiver));
-@@ -4880,6 +5006,8 @@
+@@ -4880,6 +5043,8 @@
      __ Ldr(temp.W(), HeapOperandFrom(receiver, class_offset));
      codegen_->MaybeRecordImplicitNullCheck(invoke);
    }
@@ -299,7 +371,7 @@
 
    // Instead of simply (possibly) unpoisoning `temp` here, we should
    // emit a read barrier for the previous class reference load.
-@@ -4914,8 +5042,15 @@
+@@ -4914,8 +5079,15 @@
          invoke->GetHiddenArgumentLoadKind(), Location::RegisterLocation(ip1.GetCode()), invoke);
    }
 
@@ -315,7 +387,7 @@
    uint32_t method_offset = static_cast<uint32_t>(ImTable::OffsetOfElement(
        invoke->GetImtIndex(), kArm64PointerSize));
    // temp = temp->GetImtEntryAt(method_offset);
-@@ -5180,10 +5315,18 @@
+@@ -5180,10 +5352,18 @@
 
    {
      // Ensure that between load and MaybeRecordImplicitNullCheck there are no pools emitted.
@@ -334,7 +406,7 @@
    }
    // Instead of simply (possibly) unpoisoning `temp` here, we should
    // emit a read barrier for the previous class reference load.
-@@ -5198,7 +5341,15 @@
+@@ -5198,7 +5378,15 @@
    MaybeGenerateInlineCacheCheck(invoke, temp);
 
    // temp = temp->GetMethodAt(method_offset);
@@ -350,7 +422,17 @@
    // lr = temp->GetEntryPoint();
    __ Ldr(lr, MemOperand(temp, entry_point.SizeValue()));
    {
-@@ -5825,7 +5976,12 @@
+@@ -5735,6 +5923,9 @@
+   HLoadClass::LoadKind load_kind = cls->GetLoadKind();
+   if (load_kind == HLoadClass::LoadKind::kRuntimeCall) {
+     codegen_->GenerateLoadClassRuntimeCall(cls);
++#ifdef ART_NCE
++    NceQuickReference(GetVIXLAssembler(), x0);
++#endif
+     codegen_->MaybeGenerateMarkingRegisterCheck(/* code= */ __LINE__);
+     return;
+   }
+@@ -5825,7 +6016,12 @@
        break;
      }
      case HLoadClass::LoadKind::kJitTableAddress: {
@@ -364,7 +446,7 @@
                                                         cls->GetTypeIndex(),
                                                         cls->GetClass()));
        codegen_->GenerateGcRootFieldLoad(cls,
-@@ -5919,7 +6075,12 @@
+@@ -5919,7 +6115,12 @@
        return;
      }
      case HLoadMethodType::LoadKind::kJitTableAddress: {
@@ -378,7 +460,7 @@
                                                              load->GetProtoIndex(),
                                                              load->GetMethodType()));
        codegen_->GenerateGcRootFieldLoad(load,
-@@ -5948,7 +6109,16 @@
+@@ -5948,7 +6149,16 @@
  }
 
  void InstructionCodeGeneratorARM64::VisitLoadException(HLoadException* instruction) {
@@ -395,7 +477,7 @@
  }
 
  void LocationsBuilderARM64::VisitClearException(HClearException* clear) {
-@@ -5956,7 +6126,11 @@
+@@ -5956,7 +6166,11 @@
  }
 
  void InstructionCodeGeneratorARM64::VisitClearException([[maybe_unused]] HClearException* clear) {
@@ -407,7 +489,7 @@
  }
 
  HLoadString::LoadKind CodeGeneratorARM64::GetSupportedLoadStringKind(
-@@ -6056,7 +6230,12 @@
+@@ -6056,7 +6270,12 @@
        return;
      }
      case HLoadString::LoadKind::kJitTableAddress: {
@@ -421,7 +503,17 @@
                                                          load->GetStringIndex(),
                                                          load->GetString()));
        codegen_->GenerateGcRootFieldLoad(load,
-@@ -6096,6 +6275,9 @@
+@@ -6075,6 +6294,9 @@
+   DCHECK_EQ(calling_convention.GetRegisterAt(0).GetCode(), out.GetCode());
+   __ Mov(calling_convention.GetRegisterAt(0).W(), load->GetStringIndex().index_);
+   codegen_->InvokeRuntime(kQuickResolveString, load);
++#ifdef ART_NCE
++  NceQuickReference(GetVIXLAssembler(), x0);
++#endif
+   CheckEntrypointTypes<kQuickResolveString, void*, uint32_t>();
+   codegen_->MaybeGenerateMarkingRegisterCheck(/* code= */ __LINE__);
+ }
+@@ -6096,6 +6318,9 @@
  }
 
  void InstructionCodeGeneratorARM64::VisitMonitorOperation(HMonitorOperation* instruction) {
@@ -431,7 +523,7 @@
    codegen_->InvokeRuntime(instruction->IsEnter() ? kQuickLockObject : kQuickUnlockObject,
                            instruction);
    if (instruction->IsEnter()) {
-@@ -6196,7 +6378,22 @@
+@@ -6196,7 +6421,22 @@
  void InstructionCodeGeneratorARM64::VisitNewArray(HNewArray* instruction) {
    // Note: if heap poisoning is enabled, the entry point takes care of poisoning the reference.
    QuickEntrypointEnum entrypoint = CodeGenerator::GetArrayAllocationEntrypoint(instruction);
@@ -454,7 +546,7 @@
    CheckEntrypointTypes<kQuickAllocArrayResolved, void*, mirror::Class*, int32_t>();
    codegen_->MaybeGenerateMarkingRegisterCheck(/* code= */ __LINE__);
  }
-@@ -6210,7 +6407,22 @@
+@@ -6210,7 +6450,22 @@
  }
 
  void InstructionCodeGeneratorARM64::VisitNewInstance(HNewInstance* instruction) {
@@ -477,7 +569,7 @@
    CheckEntrypointTypes<kQuickAllocObjectWithChecks, void*, mirror::Class*>();
    codegen_->MaybeGenerateMarkingRegisterCheck(/* code= */ __LINE__);
  }
-@@ -6740,6 +6952,9 @@
+@@ -6740,6 +6995,9 @@
  }
 
  void InstructionCodeGeneratorARM64::VisitThrow(HThrow* instruction) {
@@ -487,7 +579,7 @@
    codegen_->InvokeRuntime(kQuickDeliverException, instruction);
    CheckEntrypointTypes<kQuickDeliverException, void, mirror::Object*>();
  }
-@@ -7383,7 +7598,18 @@
+@@ -7383,7 +7641,18 @@
      /*out*/ Register* scratch) {
    LocationSummary* locations = instruction->GetLocations();
    Register base = InputRegisterAt(instruction, 0);
@@ -507,7 +599,7 @@
    if (instruction->InputAt(1)->IsIntermediateAddressIndex()) {
      DCHECK(!is_string_char_at);
      return MemOperand(base.X(), InputRegisterAt(instruction, 1).X());
-@@ -7406,6 +7632,7 @@
+@@ -7406,6 +7675,7 @@
      __ Add(*scratch, base, Operand(WRegisterFrom(index), LSL, shift));
      return HeapOperand(*scratch, offset);
    }
@@ -682,7 +774,7 @@
        Handle<mirror::MethodType> handle,
 --- a/compiler/optimizing/optimizing_compiler.cc
 +++ b/compiler/optimizing/optimizing_compiler.cc
-@@ -774,10 +774,79 @@
+@@ -774,10 +774,82 @@
    bool GraphRejected() const { return has_unsupported_instructions_; }
 
   private:
@@ -735,6 +827,8 @@
 +  NCE_ALLOW(StaticFieldSet)
 +  NCE_ALLOW(ArraySet)
 +  NCE_ALLOW(ArrayLength)
++  NCE_ALLOW(ArrayGet)
++  NCE_ALLOW(ClinitCheck)
 +  NCE_ALLOW(IntermediateAddress)
 +  NCE_ALLOW(IntermediateAddressIndex)
 +  NCE_ALLOW(VecReplicateScalar)
@@ -745,28 +839,29 @@
 +  NCE_ALLOW(VecStore)
 +#undef NCE_ALLOW
 +  void VisitLoadClass(HLoadClass* load) override {
-+    if (load->MustGenerateClinitCheck() ||
-+        (load->GetLoadKind() != HLoadClass::LoadKind::kJitTableAddress &&
-+         load->GetLoadKind() != HLoadClass::LoadKind::kReferrersClass)) RejectGraph();
++    if (load->GetLoadKind() != HLoadClass::LoadKind::kJitTableAddress &&
++        load->GetLoadKind() != HLoadClass::LoadKind::kReferrersClass &&
++        load->GetLoadKind() != HLoadClass::LoadKind::kRuntimeCall) RejectGraph();
 +  }
 +  void VisitInvokeVirtual(HInvokeVirtual* call) override {
-+    if (call->IsIntrinsic()) RejectGraph();
++    if (call->GetLocations()->Intrinsified()) RejectGraph();
 +  }
-+  void VisitArrayGet(HArrayGet* access) override {
-+    if (access->IsStringCharAt()) RejectGraph();
++  void VisitLoadString(HLoadString* load) override {
++    if (load->GetLoadKind() != HLoadString::LoadKind::kJitTableAddress &&
++        load->GetLoadKind() != HLoadString::LoadKind::kRuntimeCall) RejectGraph();
 +  }
 +  void VisitVecLoad(HVecLoad* access) override {
 +    if (access->IsStringCharAt()) RejectGraph();
 +  }
 +  void VisitInvokeStaticOrDirect(HInvokeStaticOrDirect* call) override {
-+    if (call->IsIntrinsic() || call->GetMethodLoadKind() == MethodLoadKind::kStringInit ||
++    if (call->GetLocations()->Intrinsified() || call->GetMethodLoadKind() == MethodLoadKind::kStringInit ||
 +        call->GetMethodLoadKind() == MethodLoadKind::kRuntimeCall) RejectGraph();
 +  }
 +#endif
    void RejectGraph() {
      has_unsupported_instructions_ = true;
    }
-@@ -793,9 +862,11 @@
+@@ -793,9 +865,11 @@
  //
  // TODO(Simulator): compile and simulate all the methods as in regular host mode.
  bool ShouldMethodBeCompiled(HGraph* graph, const std::string& method_name) {
@@ -778,7 +873,7 @@
 
    CompilationFilterForRestrictedMode filter_visitor(graph);
    filter_visitor.VisitReversePostOrder();
-@@ -1010,6 +1081,12 @@
+@@ -1010,6 +1084,12 @@
    // TODO(Simulator): support and compile all methods.
    std::string method_name = dex_file.PrettyMethod(method_idx);
    if (!ShouldMethodBeCompiled(graph, method_name)) {
@@ -791,7 +886,7 @@
      return nullptr;
    }
  #endif  // ART_USE_RESTRICTED_MODE
-@@ -1461,7 +1538,12 @@
+@@ -1461,7 +1541,12 @@
    {
      // Go to native so that we don't block GC during compilation.
      ScopedThreadSuspension sts(self, ThreadState::kNative);
@@ -956,7 +1051,19 @@
      POISON_HEAP_REF w2
      str w2, [x3, x1, lsl #2]                           // Heap reference = 32b.
      ldr x3, [xSELF, #THREAD_CARD_TABLE_OFFSET]
-@@ -1206,7 +1239,11 @@
+@@ -1192,7 +1225,11 @@
+     SETUP_SAVE_EVERYTHING_FRAME \runtime_method_offset       // save everything for stack crawl
+     mov   x1, xSELF                   // pass Thread::Current
+     CALL_SYMBOL \entrypoint           // (int32_t index, Thread* self)
++#ifdef ART_NCE
++    cbz   x0, 1f
++#else
+     cbz   w0, 1f                      // If result is null, deliver the OOME.
++#endif
+     DEOPT_OR_RESTORE_SAVE_EVERYTHING_FRAME_AND_RETURN_X0 x1, /* is_ref= */ 1
+ 1:
+     DELIVER_PENDING_EXCEPTION_FRAME_READY
+@@ -1206,7 +1243,11 @@
 
  .macro RETURN_OR_DEOPT_IF_RESULT_IS_NON_NULL_OR_DELIVER
      CFI_REMEMBER_STATE
@@ -968,7 +1075,7 @@
      DEOPT_OR_RETURN x1, /*is_ref=*/1 // check for deopt or return
  1:
      CFI_RESTORE_STATE_AND_DEF_CFA sp, 0
-@@ -1314,6 +1351,12 @@
+@@ -1314,6 +1355,12 @@
  #if ROSALLOC_SLOT_NEXT_OFFSET != MIRROR_OBJECT_CLASS_OFFSET
  #error "Class pointer needs to overwrite next pointer."
  #endif
@@ -981,7 +1088,7 @@
      POISON_HEAP_REF w0
      str    w0, [x3, #MIRROR_OBJECT_CLASS_OFFSET]
                                                                // Push the new object onto the thread
-@@ -1321,7 +1364,12 @@
+@@ -1321,7 +1368,12 @@
                                                                // increment the thread local
                                                                // allocation stack top.
      ldr    x1, [xSELF, #THREAD_LOCAL_ALLOC_STACK_TOP_OFFSET]
@@ -994,6 +1101,21 @@
      str    x1, [xSELF, #THREAD_LOCAL_ALLOC_STACK_TOP_OFFSET]
                                                                // Decrement the size of the free list
 
+@@ -1691,6 +1743,14 @@
+
+ ENTRY art_quick_resolution_trampoline
+     SETUP_SAVE_REFS_AND_ARGS_FRAME
++#ifdef ART_NCE
++    cbz w1, 9f
++    adrp xIP0, :got:nce_art_reference_base
++    ldr xIP0, [xIP0, :got_lo12:nce_art_reference_base]
++    ldr xIP0, [xIP0]
++    add x1, xIP0, w1, uxtw
++9:
++#endif
+     mov x2, xSELF
+     mov x3, sp
+     CALL_SYMBOL artQuickResolutionTrampoline  // (called, receiver, Thread*, SP)
 --- a/runtime/art_method.cc
 +++ b/runtime/art_method.cc
 @@ -39,6 +39,7 @@
