@@ -80,7 +80,7 @@ void nce_framework_test()
         {"dalvik.vm.usejit", "true"}, {"dalvik.vm.jitmaxsize", "32m"},
         {"dalvik.vm.jitthreshold", "65535"}, {"dalvik.vm.gctype", "MS"},
         {"dalvik.vm.boot-image", "/data/no-boot-image.art"},
-        {"dalvik.vm.extra-opts", "-Xnoimage-dex2oat -Xcompiler-option --inline-max-code-units=0"},
+        {"dalvik.vm.extra-opts", "-Xnoimage-dex2oat"},
     };
     for (const auto &entry : properties) CHECK(__system_property_set(entry[0], entry[1]) == 0);
     derive_classpath();

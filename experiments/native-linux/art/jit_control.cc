@@ -1,6 +1,8 @@
 /* SPDX-License-Identifier: Apache-2.0 */
 #include "art_method-inl.h"
 #include "class_linker.h"
+#include "oat/oat_quick_method_header.h"
+#include "oat/stack_map.h"
 #include "jit/jit.h"
 #include "jit/jit_code_cache.h"
 #include "jit/small_pattern_matcher.h"
@@ -64,4 +66,20 @@ extern "C" JNIEXPORT bool nce_art_compile_pattern(JNIEnv* env, jmethodID id)
                          method->PrettyMethod().c_str(), installed, method->StillNeedsClinitCheck(),
                          method->IsCompilable());
     return matched;
+}
+
+extern "C" JNIEXPORT int nce_art_inlined_frames(JNIEnv* env, jmethodID id)
+{
+    art::ScopedObjectAccess soa(env);
+    art::ArtMethod* method = art::jni::DecodeArtMethod(id);
+    const void* entry = method->GetEntryPointFromQuickCompiledCode();
+    art::jit::Jit* jit = art::Runtime::Current()->GetJit();
+    if (!jit || !jit->GetCodeCache()->ContainsPc(entry)) return -1;
+    art::CodeInfo info(art::OatQuickMethodHeader::FromEntryPoint(entry));
+    size_t depth = 0;
+    for (uint32_t i = 0; i < info.GetNumberOfStackMaps(); ++i) {
+        size_t current = info.GetInlineInfosOf(info.GetStackMapAt(i)).size();
+        if (current > depth) depth = current;
+    }
+    return static_cast<int>(depth);
 }

@@ -856,7 +856,7 @@ void nce_process_tests(long (*host_syscall)(long, long *), long (*guest_syscall)
     for (size_t i = 0; i < sizeof(art_assets) / sizeof(art_assets[0]); ++i)
         put_file(host_syscall, art_assets[i].path, art_assets[i].data, art_assets[i].size);
     put_file(host_syscall, "/data/dalvik-cache/arm64/.keep", "", 0);
-    run_program(host_syscall, "/system/bin/art-test", NULL);
+    run_program(host_syscall, "/system/bin/art-test", "");
     REQUIRE(get_file(host_syscall, "/stdout", benchmark, sizeof(benchmark)) > 0);
     REQUIRE(strstr(benchmark, "android_art_library_loaded"));
     REQUIRE(strstr(benchmark, "android_art_java_workload"));
@@ -873,6 +873,14 @@ void nce_process_tests(long (*host_syscall)(long, long *), long (*guest_syscall)
     REQUIRE(strstr(benchmark, "android_art_intrinsics_benchmark"));
     REQUIRE(strstr(benchmark, "android_art_vm_destroyed"));
     fputs(benchmark, stdout);
+    puts("{\"phase\":\"android_art_inlining\"}");
+    for (unsigned enabled = 0; enabled < 2; ++enabled) {
+        run_program(host_syscall, "/system/bin/art-test", enabled ? "inline:32\n" : "inline:0\n");
+        REQUIRE(get_file(host_syscall, "/stdout", benchmark, sizeof(benchmark)) > 0);
+        REQUIRE(strstr(benchmark, "android_art_jit_inlining"));
+        REQUIRE(strstr(benchmark, "android_art_vm_destroyed"));
+        fputs(benchmark, stdout);
+    }
     memory_report(host_syscall, "after_art");
     if (getenv("NCE_SYSTEM_SERVER_PROBE")) put_file(host_syscall, "/data/nce/system-server-probe", "", 0);
     puts("{\"phase\":\"android_platform_services\"}");

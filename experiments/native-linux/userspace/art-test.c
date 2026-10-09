@@ -6,6 +6,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <time.h>
 #include <unistd.h>
 #include <android/log.h>
@@ -29,6 +30,60 @@ static jobject native_identity(JNIEnv *env, jclass klass, jobject value)
 {
     (void)klass;
     return (*env)->NewLocalRef(env, value);
+}
+
+static int test_inlining(JNIEnv *env, void *library, bool enabled)
+{
+    bool (*compile)(JNIEnv *, jmethodID) = dlsym(library, "nce_art_compile_method");
+    void (*keep_interpreted)(JNIEnv *, jmethodID) = dlsym(library, "nce_art_keep_interpreted");
+    int (*inlined_frames)(JNIEnv *, jmethodID) = dlsym(library, "nce_art_inlined_frames");
+    jclass klass = (*env)->FindClass(env, "NceInlining");
+    if (!klass || !compile || !keep_interpreted || !inlined_frames) return 70;
+    const char *methods[][2] = {
+        {"leaf", "(LNceInlining$Node;)I"}, {"middle", "([LNceInlining$Node;I)I"},
+        {"preserve", "(LNceInlining$Node;)LNceInlining$Node;"},
+        {"$compile$gc", "(LNceInlining$Node;)LNceInlining$Node;"},
+        {"$compile$run", "([LNceInlining$Node;I)J"},
+    };
+    for (unsigned i = 0; i < sizeof(methods) / sizeof(methods[0]); ++i) {
+        jmethodID method = (*env)->GetStaticMethodID(env, klass, methods[i][0], methods[i][1]);
+        if (!method || !compile(env, method)) {
+            fprintf(stderr, "ART could not compile inlining test %s\n", methods[i][0]);
+            return 71;
+        }
+    }
+    jmethodID run = (*env)->GetStaticMethodID(env, klass, "$compile$run", "([LNceInlining$Node;I)J");
+    int depth = inlined_frames(env, run);
+    if (enabled ? depth < 2 : depth != 0) {
+        fprintf(stderr, "ART inlining enabled=%d observed_depth=%d\n", enabled, depth);
+        return 72;
+    }
+    jmethodID check = (*env)->GetStaticMethodID(env, klass, "checkResults", "()V");
+    if (!check) return 73;
+    keep_interpreted(env, check);
+    (*env)->CallStaticVoidMethod(env, klass, check);
+    if ((*env)->ExceptionCheck(env)) { (*env)->ExceptionDescribe(env); return 74; }
+    jmethodID fixture = (*env)->GetStaticMethodID(env, klass, "fixture", "()[LNceInlining$Node;");
+    if (!fixture) return 75;
+    double best_ms = 1e30;
+    const jint rounds = 1000000;
+    jlong expected = 0;
+    for (int i = 0; i < 8; ++i) expected += (jlong)(rounds / 8) * i + (jlong)(rounds / 8) * (rounds / 8 + 1) / 2;
+    for (int i = 0; i < 3; ++i) {
+        jobject nodes = (*env)->CallStaticObjectMethod(env, klass, fixture);
+        if (!nodes || (*env)->ExceptionCheck(env)) return 76;
+        double begin = now_ms();
+        jlong actual = (*env)->CallStaticLongMethod(env, klass, run, nodes, rounds);
+        double elapsed = now_ms() - begin;
+        if (elapsed < best_ms) best_ms = elapsed;
+        if ((*env)->ExceptionCheck(env) || actual != expected) return 77;
+        (*env)->DeleteLocalRef(env, nodes);
+    }
+    printf("{\"test\":\"android_art_jit_inlining\",\"passed\":true,\"enabled\":%s,"
+           "\"inline_depth\":%d,\"gc_requests\":16,\"exception_frames\":3,"
+           "\"iterations\":1000000,\"elapsed_ms\":%.3f,\"checksum\":%lld}\n",
+           enabled ? "true" : "false", depth, best_ms, (long long)expected);
+    return 0;
 }
 
 static int test_intrinsics(JNIEnv *env, void *library)
@@ -273,6 +328,9 @@ static int test_jit(JNIEnv *env, jclass workload, void *library)
 
 int main(void)
 {
+    char mode[32] = {};
+    bool inlining_test = fgets(mode, sizeof(mode), stdin) && !strncmp(mode, "inline:", 7);
+    bool inlining_enabled = inlining_test && atoi(mode + 7) != 0;
     if (signal(SIGALRM, deadline) == SIG_ERR) return 11;
     alarm(90);
     void *library = dlopen("libart.so", RTLD_NOW);
@@ -302,7 +360,7 @@ int main(void)
         {.optionString = "-Xjitmaxsize:32m"},
         {.optionString = "-Xjitthreshold:65535"},
         {.optionString = "-Xcompiler-option"},
-        {.optionString = "--inline-max-code-units=0"},
+        {.optionString = inlining_enabled ? "--inline-max-code-units=32" : "--inline-max-code-units=0"},
         {.optionString = "-Xnoimage-dex2oat"},
         {.optionString = "-Ximage:/data/no-boot-image.art"},
         {.optionString = "-Xms8m"},
@@ -324,6 +382,10 @@ int main(void)
     puts("{\"phase\":\"android_art_create_vm\"}");
     fflush(stdout);
     if (create(&vm, (void **)&env, &args) != JNI_OK || !vm || !env) return 5;
+    if (inlining_test) {
+        int result = test_inlining(env, library, inlining_enabled);
+        if (result) return result;
+    } else {
     puts("{\"phase\":\"android_art_java_workload\"}");
     fflush(stdout);
     jclass workload = (*env)->FindClass(env, "NceWorkload");
@@ -333,6 +395,7 @@ int main(void)
     if (!main_method) return 7;
     int jit_result = test_jit(env, workload, library);
     if (jit_result) return jit_result;
+    }
     if ((*vm)->DestroyJavaVM(vm) != JNI_OK) return 8;
     alarm(0);
     if (clock_gettime(CLOCK_MONOTONIC, &end) != 0) return 12;
