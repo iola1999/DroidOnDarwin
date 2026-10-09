@@ -901,6 +901,7 @@ void nce_process_tests(long (*host_syscall)(long, long *), long (*guest_syscall)
     REQUIRE(strstr(benchmark, "android_aconfig_storage"));
     REQUIRE(strstr(benchmark, "android_framework_file_observer"));
     REQUIRE(strstr(benchmark, "android_system_suspend_wakelocks"));
+    REQUIRE(strstr(benchmark, "android_installd_app_data"));
     REQUIRE(strstr(benchmark, "android_apex_registry"));
     REQUIRE(strstr(benchmark, getenv("NCE_SYSTEM_SERVER_PROBE") ?
                    "android_system_server_services" : "android_zygote_command_server"));

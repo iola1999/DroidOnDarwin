@@ -217,7 +217,7 @@ void nce_zygote_test()
             {"/storage", 0755, 0}, {"/data/system", 0775, 1000},
             {"/data/system/users", 0775, 1000}, {"/data/system/users/0", 0700, 1000},
             {"/data/system_de", 0770, 1000}, {"/data/system_de/0", 0770, 1000},
-            {"/data/misc", 01771, 1000}, {"/data/resource-cache", 0771, 1000},
+            {"/data/resource-cache", 0771, 1000},
             {"/data/anr", 0775, 1000},
         };
         for (const auto &directory : directories) {

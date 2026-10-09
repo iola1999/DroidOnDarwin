@@ -1,0 +1,11 @@
+{
+  "repository": "https://android.googlesource.com/platform/frameworks/native",
+  "revision": "2827a4a16b0340ecd07c2d5a6c89991799b362bb",
+  "files": {
+    "android/os/CreateAppDataArgs.aidl": "395f48daec3b728c2b7b9949ed0dc1d5de34192971475fb2b2eba348d7cb9819",
+    "android/os/CreateAppDataResult.aidl": "131dcd1af2b29d48490033b494432cda834d9b98ebdf199c82406cb948a8cd07",
+    "android/os/IInstalld.aidl": "a29f74f099ba5aa224a901c3f236e60a17d6d4c3c7999694f9e090bb7fcf8784",
+    "android/os/ReconcileSdkDataArgs.aidl": "85b1a6ca20cd53b156b44aaa1444aa54bf02679e50017b48c2d06705b64f3bfe",
+    "android/os/storage/CrateMetadata.aidl": "292d89d237a5292d25399d722b13177a9263c5e21d5e39ca86ffa12d14be09da"
+  }
+}

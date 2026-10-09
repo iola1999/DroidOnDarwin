@@ -84,7 +84,7 @@ def android_dependencies(llvm, replacements):
     pending = ['libart.so', 'libjavacore.so', 'libopenjdk.so', 'libicu_jni.so',
                'libstats_jni.so', 'libjavacrypto.so', 'libartpalette-system.so', 'libbinder_ndk.so', 'libandroid.so',
                'libprocessgroup_setup.so', 'libframework-connectivity-tiramisu-jni.so', 'libandroid_servers.so']
-    for name in ('servicemanager', 'app_process64', 'aconfigd-system', 'hw/android.system.suspend-service'):
+    for name in ('servicemanager', 'app_process64', 'aconfigd-system', 'installd', 'hw/android.system.suspend-service'):
         pending += re.findall(r'Shared library: \[(.*?)\]',
                               subprocess.check_output([llvm / 'llvm-readelf', '-d', root / 'bin' / name], text=True))
     pending += re.findall(r'Shared library: \[(.*?)\]', subprocess.check_output(
@@ -114,7 +114,7 @@ def android_service_interfaces(out):
         shutil.rmtree(generated)
     generated.mkdir()
     aidl = Path('/opt/homebrew/share/android-commandlinetools/build-tools/36.0.0/aidl')
-    for kind in ('apex', 'suspend'):
+    for kind in ('apex', 'suspend', 'installd'):
         directory = EXP / 'services' / kind
         origin = json.loads((directory / 'sources.json').read_text())
         for name, expected in origin['files'].items():
@@ -212,6 +212,7 @@ def android_data(out):
         files.append((guest, source))
     files += [('/system/etc/selinux/plat_service_contexts', EXP / 'services/service_contexts')]
     files += [('/system/etc/selinux/plat_seapp_contexts', EXP / 'services/seapp_contexts')]
+    files += [('/system/etc/selinux/plat_file_contexts', EXP / 'services/file_contexts')]
     files += [(f'/system/etc/{name}.json', EXP / 'services' / f'{name}.json')
               for name in ('cgroups', 'task_profiles')]
     files += [('/apex/com.android.i18n/etc/icu/icudt76l.dat', root / 'com.android.i18n/etc/icu/icudt76l.dat')]
@@ -618,6 +619,7 @@ def build(out, llvm):
     programs.append(('/system/bin/secilc', WORK / 'android/android36/bin/secilc'))
     programs.append(('/system/bin/servicemanager', WORK / 'android/android36/bin/servicemanager'))
     programs.append(('/system/bin/aconfigd-system', WORK / 'android/android36/bin/aconfigd-system'))
+    programs.append(('/system/bin/installd', WORK / 'android/android36/bin/installd'))
     programs.append(('/system/bin/hw/android.system.suspend-service', WORK / 'android/android36/bin/hw/android.system.suspend-service'))
     programs.append(('/system/bin/app_process64', WORK / 'android/android36/bin/app_process64'))
     programs.append(('/system/bin/derive_classpath', WORK / 'android/android36/com.android.sdkext/bin/derive_classpath'))
@@ -634,7 +636,8 @@ def build(out, llvm):
          '-Wl,-z,max-page-size=16384,-z,common-page-size=16384',
          EXP / 'userspace/android-services-test.cpp', EXP / 'userspace/property-service.cpp',
          EXP / 'userspace/framework-test.cpp', EXP / 'userspace/crypto-tests.cpp',
-         EXP / 'userspace/apex-service.cpp', EXP / 'userspace/suspend-test.cpp', *sorted(apex_generated.rglob('*.cpp')),
+         EXP / 'userspace/apex-service.cpp', EXP / 'userspace/suspend-test.cpp', EXP / 'userspace/installd-test.cpp',
+         *sorted(apex_generated.rglob('*.cpp')),
          WORK / 'android/android36/lib64/libc++.so',
          '-I', WORK / 'android/boringssl/src/include', crypto['libcrypto.so'], '-ldl',
          WORK / 'android/android36/lib64/libbinder_ndk.so',

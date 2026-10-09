@@ -1,7 +1,7 @@
 # 原生 Linux + NCE：Android 用户态阶段
 
 更新日期：2026-10-09。ART ARM64 JIT、原版 app_process/Framework、Canvas、
-ext4 系统盘与数据盘、Zygote、cgroup、seccomp、APEX 查询与 aconfig 初始化
+ext4 系统盘与数据盘、Zygote、cgroup、seccomp、APEX 查询、aconfig 初始化及 installd
 已完成本机回归。性能实现包括 Linux 空闲 RAM 归还、代码页按需恢复、CPU
 指令扩展、ART intrinsic 与方法内联。原版 system_server 已推进到显示服务
 初始化；完整系统服务和桌面尚未启动。最新合并包与检查范围见
@@ -1003,8 +1003,9 @@ SystemSuspend 的 AIDL 生成共用构建函数；接口源码按各自固定提
 1. 提供 SurfaceFlinger 所需的显示、缓冲区分配与合成接口，先在同一进程内
    完成可检查的离屏显示，再把输出交给 iOS。当前 Canvas PNG 检查覆盖软件
    绘图；系统窗口合成仍需实现。
-2. 接入原版 installd 及应用数据目录，继续推进 PackageManager。当前固定
-   模块登记已有原始 APEX APK 元数据，模块安装和更新生命周期仍待实现。
+2. 在已接入的原版 installd 上继续推进 PackageManager，并把应用数据目录
+   接入持久存储。当前固定模块登记已有原始 APEX APK 元数据，模块安装和
+   更新生命周期仍待实现。
 3. 对完整 system_server 启动记录 Linux RAM、ART heap、文件缓存与宿主
    footprint，处理显示初始化阶段的内存分配失败。随后评估启动镜像和编译
    缓存，以减少重复类加载与解释执行。
@@ -1038,3 +1039,37 @@ libstatslog_surfaceflinger。installd 有 15 个直接依赖，当前缺 liblogw
 协议仍需实际启动验证。SDK 的 init 配置分别要求 SurfaceFlinger 以 system
 用户及 graphics/drmrpc/readproc 组运行，installd 以客体 root 运行并调整
 应用目录权限。后续先按这些真实输入完成集成，再根据运行结果补齐接口。
+
+## 原版 installd 与应用数据目录（2026-10-09 晚间续）
+
+已接入 SDK 原版 installd 和 liblogwrap，并使用 frameworks/native 提交
+`2827a4a16b0340ecd07c2d5a6c89991799b362bb` 的完整 IInstalld AIDL 生成客户端。
+服务以客体 root 运行；单独 exec 的 system UID 1000 客户端通过 Binder
+创建两个应用的 CE/DE 数据目录。检查涵盖目录 UID/GID、0700 权限、缓存
+组及 02771 权限、SELinux 标签、有效 inode 返回和路径越界拒绝。
+
+应用 UID 10001 可写自己的文件，访问另一应用目录返回 EACCES；调用
+installd 的管理方法收到 EX_SECURITY。随后依次检查仅清理 cache、清理
+全部数据、删除两组目录，验证 code_cache 与普通文件在各阶段的保留和
+删除结果。测试结束后 installd 继续运行，供原版 system_server 使用。
+
+CE/DE 当前按 Android 的两类目录布局运行，数据位于原型的临时文件系统。
+本轮没有实现文件加密。SELinux 继续使用原型 nce_t 类型；应用间目录访问
+拒绝来自 Linux UID/DAC 检查，完整 Android 安全策略仍需实现。
+
+首次 CLI/GCD 回归分别通过 95/96 个命名测试，15 项 ELF 检查和 iOS 目标
+编译通过。日志为 `work/native-linux-nce/installd-probe.log`。独立集成运行中
+SystemServer 的 StartInstaller 在 27 ms 内返回，随后仍等待 SurfaceFlinger；
+完整启动未完成。日志为 `work/native-linux-nce/processes/system-server-installd.log`。
+最新已交付 N3-S3 IPA 保持原构建内容；这些后续改动留待下一次合并打包。
+
+复杂度审查保留原版 installd 的目录管理和参数检查，客户端共用已有 AIDL
+生成流程。应用文件操作由服务执行，原型新增代码负责启动条件与回归检查。
+`/data/misc` 的权限统一在 installd 启动前设置，Zygote 准备过程不再重复设置。
+调整后的完整回归再次通过，记录为 `work/native-linux-nce/installd-final-probe.log`；
+构建输入校验值与当前源码一致。
+
+显示源码检查确认 SurfaceFlinger 先创建 RenderEngine，再连接 Composer HAL，
+并要求实际默认显示。后续需要同时完成 EGL/GLES、缓冲区分配及 Composer
+接口。此前 G1 的 gfxstream/ANGLE Metal 源码可供复用；NCE 仍需实现客体
+图形请求到同一应用内宿主图形库的传输，以及窗口缓冲区与同步接口。

@@ -8,7 +8,8 @@
 Bionic 动态链接、ART ARM64 JIT、Framework/Canvas、ext4 系统盘和数据盘、
 Android servicemanager、属性服务及 Zygote 派生均已通过本机 CLI/GCD 回归。
 2026-10-09 又加入空闲 RAM 归还、代码页按需恢复、CPU 指令扩展、ART 字符串
-和数值 intrinsic、方法内联，以及完整 Framework 类路径。原版 system_server
+和数值 intrinsic、方法内联，以及完整 Framework 类路径。晚间又接入原版
+installd，完成应用数据目录、访问权限、清理与删除检查。原版 system_server
 已完成 ActivityManager、PowerManager 等初始化并进入显示服务启动，完整
 系统服务和桌面仍待实现。具体失败位置和检查
 结果持续记录在上述阶段文档中。

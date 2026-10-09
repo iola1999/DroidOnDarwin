@@ -38,6 +38,8 @@ void nce_crypto_tests();
 void nce_apex_service(int ready);
 void nce_apex_test();
 pid_t nce_suspend_start();
+pid_t nce_installd_start(const char *executable);
+void nce_installd_client(const char *stage);
 
 static void check_proc_identity()
 {
@@ -303,6 +305,7 @@ int main(int argc, char **argv)
     if (argc == 3 && !strcmp(argv[1], "server")) { server(atoi(argv[2])); return 1; }
     if (argc == 3 && !strcmp(argv[1], "properties")) { nce_property_service(atoi(argv[2])); return 1; }
     if (argc == 3 && !strcmp(argv[1], "apex")) { nce_apex_service(atoi(argv[2])); return 1; }
+    if (argc == 3 && !strcmp(argv[1], "installd-test")) { nce_installd_client(argv[2]); return 0; }
     alarm(20);
     mount_namespace_proc();
     unix_sockets();
@@ -419,6 +422,7 @@ int main(int argc, char **argv)
     puts("{\"phase\":\"android_framework_launch\"}");
     nce_framework_test();
     pid_t suspend = nce_suspend_start();
+    pid_t installd = nce_installd_start(argv[0]);
     puts("{\"phase\":\"android_zygote_launch\"}");
     nce_zygote_test();
     alarm(20);
@@ -438,6 +442,7 @@ int main(int argc, char **argv)
     AIBinder_DeathRecipient_delete(recipient);
     AIBinder_decStrong(binder);
     CHECK(kill(suspend, SIGTERM) == 0 && waitpid(suspend, &status, 0) == suspend);
+    CHECK(kill(installd, SIGTERM) == 0 && waitpid(installd, &status, 0) == installd);
     CHECK(kill(apex, SIGTERM) == 0 && waitpid(apex, &status, 0) == apex);
     CHECK(kill(manager, SIGTERM) == 0);
     CHECK(waitpid(manager, &status, 0) == manager && WIFSIGNALED(status) && WTERMSIG(status) == SIGTERM);
