@@ -30,7 +30,8 @@ static void *worker(void *argument)
         unsigned char *area = map_pages(NULL, 3, 0);
         assert(area != MAP_FAILED);
         memset(area, pattern, 3 * page_size);
-        for (size_t i = 0; i < 3 * page_size; ++i) assert(area[i] == pattern);
+        for (size_t i = 0; i < 3 * page_size; ++i)
+            assert(area[i] == pattern);
         assert(nce_art_decode_reference(nce_art_encode_reference(area)) == area);
         assert(nce_art_heap_unmap(area, 3 * page_size) == 0);
     }
@@ -86,8 +87,10 @@ int main(void)
     assert(map_pages(region, 1, MAP_FIXED_NOREPLACE) == region);
     assert(nce_art_heap_unmap(region, page_size) == 0);
     pthread_t threads[4];
-    for (uintptr_t i = 0; i < 4; ++i) assert(pthread_create(&threads[i], NULL, worker, (void *)(i + 1)) == 0);
-    for (unsigned i = 0; i < 4; ++i) assert(pthread_join(threads[i], NULL) == 0);
+    for (uintptr_t i = 0; i < 4; ++i)
+        assert(pthread_create(&threads[i], NULL, worker, (void *)(i + 1)) == 0);
+    for (unsigned i = 0; i < 4; ++i)
+        assert(pthread_join(threads[i], NULL) == 0);
     puts("{\"test\":\"art_high_reference_heap\",\"passed\":true}");
     return 0;
 }

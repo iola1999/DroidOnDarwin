@@ -14,70 +14,156 @@
 
 #include "husk-tl-bionic.h"
 
-static jvalue vl(void *p) { jvalue v; v.j = 0; v.l = p; return v; }
-static jvalue vi(int i) { jvalue v; v.j = 0; v.i = i; return v; }
-static jvalue vj(int64_t j) { jvalue v; v.j = j; return v; }
-static jvalue vz(int z) { jvalue v; v.j = 0; v.z = z != 0; return v; }
-static jvalue vf(float f) { jvalue v; v.j = 0; v.f = f; return v; }
-static const char *S(const jobj *o) { const char *s = tl_jni_string(o); return s ? s : ""; }
+static jvalue vl(void *p)
+{
+    jvalue v;
+    v.j = 0;
+    v.l = p;
+    return v;
+}
+static jvalue vi(int i)
+{
+    jvalue v;
+    v.j = 0;
+    v.i = i;
+    return v;
+}
+static jvalue vj(int64_t j)
+{
+    jvalue v;
+    v.j = j;
+    return v;
+}
+static jvalue vz(int z)
+{
+    jvalue v;
+    v.j = 0;
+    v.z = z != 0;
+    return v;
+}
+static jvalue vf(float f)
+{
+    jvalue v;
+    v.j = 0;
+    v.f = f;
+    return v;
+}
+static const char *S(const jobj *o)
+{
+    const char *s = tl_jni_string(o);
+    return s ? s : "";
+}
 
 #define CLS "com/epicgames/ue4/GameActivity"
 
-static struct { char pkg[160], data[512], ext[700], apk[1024]; jobj *activity; } U;
+static struct {
+    char pkg[160], data[512], ext[700], apk[1024];
+    jobj *activity;
+} U;
 
 /*
  * <meta-data> of the manifest, which the engine reads through GetMetaData*: the project's settings as the packager recorded them.
  * These are ARK's, and only the fallback: the game's own manifest is read first (tl_hle_manifest_meta).
  */
-static const struct { const char *key, *value; } k_meta[] = {
-    { "com.epicgames.ue4.GameActivity.EngineVersion", "4.26.2" }, { "com.epicgames.ue4.GameActivity.EngineBranch", "++UE4+Release-4.26" },
-    { "com.epicgames.ue4.GameActivity.ProjectVersion", "1.0.0.0" }, { "com.epicgames.ue4.GameActivity.DepthBufferPreference", "24" },
-    { "com.epicgames.ue4.GameActivity.bPackageDataInsideApk", "false" }, { "com.epicgames.ue4.GameActivity.bVerifyOBBOnStartUp", "false" },
-    { "com.epicgames.ue4.GameActivity.bShouldHideUI", "true" }, { "com.epicgames.ue4.GameActivity.ProjectName", "ShooterGame" },
-    { "com.epicgames.ue4.GameActivity.AppType", "" }, { "com.epicgames.ue4.GameActivity.bHasOBBFiles", "false" },
-    { "com.epicgames.ue4.GameActivity.BuildConfiguration", "Shipping" }, { "com.epicgames.ue4.GameActivity.CookedFlavors", "ASTC" },
-    { "com.epicgames.ue4.GameActivity.bValidateTextureFormats", "true" }, { "com.epicgames.ue4.GameActivity.bUseExternalFilesDir", "true" },
-    { "com.epicgames.ue4.GameActivity.bPublicLogFiles", "true" }, { "com.epicgames.ue4.GameActivity.bUseDisplayCutout", "false" },
-    { "com.epicgames.ue4.GameActivity.bAllowIMU", "true" }, { "com.epicgames.ue4.GameActivity.bSupportsVulkan", "false" },
-    { "com.epicgames.ue4.GameActivity.StartupPermissions", "" },
+static const struct {
+    const char *key, *value;
+} k_meta[] = {
+    {"com.epicgames.ue4.GameActivity.EngineVersion", "4.26.2"},
+    {"com.epicgames.ue4.GameActivity.EngineBranch", "++UE4+Release-4.26"},
+    {"com.epicgames.ue4.GameActivity.ProjectVersion", "1.0.0.0"},
+    {"com.epicgames.ue4.GameActivity.DepthBufferPreference", "24"},
+    {"com.epicgames.ue4.GameActivity.bPackageDataInsideApk", "false"},
+    {"com.epicgames.ue4.GameActivity.bVerifyOBBOnStartUp", "false"},
+    {"com.epicgames.ue4.GameActivity.bShouldHideUI", "true"},
+    {"com.epicgames.ue4.GameActivity.ProjectName", "ShooterGame"},
+    {"com.epicgames.ue4.GameActivity.AppType", ""},
+    {"com.epicgames.ue4.GameActivity.bHasOBBFiles", "false"},
+    {"com.epicgames.ue4.GameActivity.BuildConfiguration", "Shipping"},
+    {"com.epicgames.ue4.GameActivity.CookedFlavors", "ASTC"},
+    {"com.epicgames.ue4.GameActivity.bValidateTextureFormats", "true"},
+    {"com.epicgames.ue4.GameActivity.bUseExternalFilesDir", "true"},
+    {"com.epicgames.ue4.GameActivity.bPublicLogFiles", "true"},
+    {"com.epicgames.ue4.GameActivity.bUseDisplayCutout", "false"},
+    {"com.epicgames.ue4.GameActivity.bAllowIMU", "true"},
+    {"com.epicgames.ue4.GameActivity.bSupportsVulkan", "false"},
+    {"com.epicgames.ue4.GameActivity.StartupPermissions", ""},
 };
 const char *tl_hle_manifest_meta(const char *key);
 const char *tl_ue4_meta(const char *key)
 {
     /* Not in the manifest: GameActivity computes it from the display's metrics. x dpi, y dpi. */
-    if (!strcmp(key, "ue4.displaymetrics.dpi")) return "440.0,440.0";
+    if (!strcmp(key, "ue4.displaymetrics.dpi"))
+        return "440.0,440.0";
     /* Likewise AudioManager's answers (PROPERTY_OUTPUT_FRAMES_PER_BUFFER, PROPERTY_OUTPUT_SAMPLE_RATE) and the display's refresh rate. A zero buffer size is not an
      * answer the engine can survive: it rounds its callback buffer up to a multiple of it, and a multiple of zero is never reached. */
-    if (!strcmp(key, "audiomanager.framesPerBuffer")) return "256";
-    if (!strcmp(key, "audiomanager.optimalSampleRate")) return "48000";
-    if (!strcmp(key, "ue4.display.getRefreshRate")) return "60";
+    if (!strcmp(key, "audiomanager.framesPerBuffer"))
+        return "256";
+    if (!strcmp(key, "audiomanager.optimalSampleRate"))
+        return "48000";
+    if (!strcmp(key, "ue4.display.getRefreshRate"))
+        return "60";
     /* A setting forced from the environment ("key=value;key=value", keys without the com.epicgames.ue4.GameActivity. prefix), for trying things. */
     const char *force = getenv("TL_UE4_META");
     if (force) {
-        static char buf[160]; size_t pl = strlen("com.epicgames.ue4.GameActivity.");
+        static char buf[160];
+        size_t pl = strlen("com.epicgames.ue4.GameActivity.");
         if (!strncmp(key, "com.epicgames.ue4.GameActivity.", pl)) {
-            for (const char *p = force; *p; ) {
-                const char *eq = strchr(p, '='), *end = strchr(p, ';'); if (!end) end = p + strlen(p);
-                if (eq && eq < end && (size_t)(eq - p) == strlen(key + pl) && !strncmp(p, key + pl, eq - p)) { snprintf(buf, sizeof(buf), "%.*s", (int)(end - eq - 1), eq + 1); return buf; }
+            for (const char *p = force; *p;) {
+                const char *eq = strchr(p, '='), *end = strchr(p, ';');
+                if (!end)
+                    end = p + strlen(p);
+                if (eq && eq < end && (size_t)(eq - p) == strlen(key + pl) && !strncmp(p, key + pl, eq - p)) {
+                    snprintf(buf, sizeof(buf), "%.*s", (int)(end - eq - 1), eq + 1);
+                    return buf;
+                }
                 p = *end ? end + 1 : end;
             }
         }
     }
     const char *m = tl_hle_manifest_meta(key);
-    if (m) return m;
-    for (size_t i = 0; i < sizeof(k_meta) / sizeof(k_meta[0]); i++) if (!strcmp(key, k_meta[i].key)) return k_meta[i].value;
+    if (m)
+        return m;
+    for (size_t i = 0; i < sizeof(k_meta) / sizeof(k_meta[0]); i++)
+        if (!strcmp(key, k_meta[i].key))
+            return k_meta[i].value;
     return NULL;
 }
 #define meta tl_ue4_meta
-static void GA_hasMeta(tl_jcall *c) { c->ret = vz(meta(S(c->args[0].l)) != NULL); }
-static void GA_metaString(tl_jcall *c) { const char *v = meta(S(c->args[0].l)); c->ret = vl(v ? tl_jni_new_string(v) : NULL); }
-static void GA_metaBool(tl_jcall *c) { const char *v = meta(S(c->args[0].l)); c->ret = vz(v && !strcmp(v, "true")); }
-static void GA_metaInt(tl_jcall *c) { const char *v = meta(S(c->args[0].l)); c->ret = vi(v ? atoi(v) : 0); }
-static void GA_metaLong(tl_jcall *c) { const char *v = meta(S(c->args[0].l)); c->ret = vj(v ? atoll(v) : 0); }
-static void GA_metaFloat(tl_jcall *c) { const char *v = meta(S(c->args[0].l)); c->ret = vf(v ? (float)atof(v) : 0); }
+static void GA_hasMeta(tl_jcall *c)
+{
+    c->ret = vz(meta(S(c->args[0].l)) != NULL);
+}
+static void GA_metaString(tl_jcall *c)
+{
+    const char *v = meta(S(c->args[0].l));
+    c->ret = vl(v ? tl_jni_new_string(v) : NULL);
+}
+static void GA_metaBool(tl_jcall *c)
+{
+    const char *v = meta(S(c->args[0].l));
+    c->ret = vz(v && !strcmp(v, "true"));
+}
+static void GA_metaInt(tl_jcall *c)
+{
+    const char *v = meta(S(c->args[0].l));
+    c->ret = vi(v ? atoi(v) : 0);
+}
+static void GA_metaLong(tl_jcall *c)
+{
+    const char *v = meta(S(c->args[0].l));
+    c->ret = vj(v ? atoll(v) : 0);
+}
+static void GA_metaFloat(tl_jcall *c)
+{
+    const char *v = meta(S(c->args[0].l));
+    c->ret = vf(v ? (float)atof(v) : 0);
+}
 
 jobj *tl_hle_assets(void);
-static void GA_assetManager(tl_jcall *c) { c->ret = vl(tl_jni_ref(tl_hle_assets())); }
+static void GA_assetManager(tl_jcall *c)
+{
+    c->ret = vl(tl_jni_ref(tl_hle_assets()));
+}
 
 /*
  * ClassLoader.findClass / loadClass, which native code uses (through the activity's loader, as FindClass sees only the system's) to reach the game's own
@@ -86,10 +172,16 @@ static void GA_assetManager(tl_jcall *c) { c->ret = vl(tl_jni_ref(tl_hle_assets(
 bool tl_dexidx_has_class(const char *name);
 static void CL_findClass(tl_jcall *c)
 {
-    char name[300]; snprintf(name, sizeof(name), "%s", S(c->args[0].l));
-    for (char *p = name; *p; p++) if (*p == '.') *p = '/';
+    char name[300];
+    snprintf(name, sizeof(name), "%s", S(c->args[0].l));
+    for (char *p = name; *p; p++)
+        if (*p == '.')
+            *p = '/';
     bool framework = !strncmp(name, "android/", 8) || !strncmp(name, "java/", 5) || !strncmp(name, "javax/", 6) || !strncmp(name, "dalvik/", 7);
-    if (framework || tl_dexidx_has_class(name)) { c->ret = vl(tl_jni_class_object(name)); return; }
+    if (framework || tl_dexidx_has_class(name)) {
+        c->ret = vl(tl_jni_class_object(name));
+        return;
+    }
     tl_log_line("ue4: ClassLoader could not find %s", name);
     tl_jni_throw("java/lang/ClassNotFoundException", name);
     c->ret = vl(NULL);
@@ -107,16 +199,20 @@ static void GA_forceQuit(tl_jcall *c)
     tl_log_line("ue4: the engine asked to quit (AndroidThunkJava_ForceQuit). Called from:");
     void **fp = __builtin_frame_address(0);
     for (int i = 0; fp && i < 28; i++) {
-        if (((uintptr_t)fp & 7) || (uintptr_t)fp < 0x100000) break;
+        if (((uintptr_t)fp & 7) || (uintptr_t)fp < 0x100000)
+            break;
         void *lr = fp[1];
-        const char *lib = NULL; const void *sym = NULL;
+        const char *lib = NULL;
+        const void *sym = NULL;
         const char *name = tl_ld_symbol_at(lr, &lib, &sym);
         tl_log_line("ue4:   %p  %s  %s+%#lx", lr, lib ? lib : "?", name ? name : "?", sym ? (unsigned long)((const char *)lr - (const char *)sym) : 0ul);
         void **next = fp[0];
-        if (next <= fp) break;
+        if (next <= fp)
+            break;
         fp = next;
     }
-    for (;;) sleep(1000);
+    for (;;)
+        sleep(1000);
 }
 
 /*
@@ -128,57 +224,141 @@ static void GA_initHMDs(tl_jcall *c)
     (void)c;
     tl_lib *lib = tl_ld_find_lib("libUE4.so");
     void (*fn)(void *, void *) = lib ? (void (*)(void *, void *))tl_ld_sym(lib, "Java_com_epicgames_ue4_GameActivity_nativeInitHMDs") : NULL;
-    if (fn) fn(tl_jni_env(), U.activity);
-    else tl_log_line("ue4: nativeInitHMDs is not provided by libUE4");
+    if (fn)
+        fn(tl_jni_env(), U.activity);
+    else
+        tl_log_line("ue4: nativeInitHMDs is not provided by libUE4");
 }
 
 /* com.epicgames.mobile.eossdk.EOSSDK: the statics Epic Online Services' native library calls while it starts */
 #define EOS "com/epicgames/mobile/eossdk/EOSSDK"
-static void EOS_void(tl_jcall *c) { (void)c; }
-static void EOS_context(tl_jcall *c) { c->ret = vl(U.activity ? tl_jni_ref(U.activity) : NULL); }
-static void EOS_osVersion(tl_jcall *c) { c->ret = vl(tl_jni_new_string("14")); }
-static void EOS_market(tl_jcall *c) { c->ret = vl(tl_jni_new_string("US")); }
-static void EOS_nullString(tl_jcall *c) { c->ret.l = NULL; }
-static void EOS_true(tl_jcall *c) { c->ret = vz(1); }
-static void EOS_orientation(tl_jcall *c) { c->ret = vi(1); }
-static void EOS_zeroLong(tl_jcall *c) { c->ret = vj(0); }
+static void EOS_void(tl_jcall *c)
+{
+    (void)c;
+}
+static void EOS_context(tl_jcall *c)
+{
+    c->ret = vl(U.activity ? tl_jni_ref(U.activity) : NULL);
+}
+static void EOS_osVersion(tl_jcall *c)
+{
+    c->ret = vl(tl_jni_new_string("14"));
+}
+static void EOS_market(tl_jcall *c)
+{
+    c->ret = vl(tl_jni_new_string("US"));
+}
+static void EOS_nullString(tl_jcall *c)
+{
+    c->ret.l = NULL;
+}
+static void EOS_true(tl_jcall *c)
+{
+    c->ret = vz(1);
+}
+static void EOS_orientation(tl_jcall *c)
+{
+    c->ret = vi(1);
+}
+static void EOS_zeroLong(tl_jcall *c)
+{
+    c->ret = vj(0);
+}
 
 /* android.app.ActivityThread, which native code reaches through the hidden API to find the application's Context */
 static void AT_current(tl_jcall *c)
 {
     static jobj *thread;
-    if (!thread) thread = tl_jni_new_object(tl_jni_class("android/app/ActivityThread"));
+    if (!thread)
+        thread = tl_jni_new_object(tl_jni_class("android/app/ActivityThread"));
     c->ret = vl(tl_jni_ref(thread));
 }
 
-static void GA_get(tl_jcall *c) { c->ret = vl(U.activity ? tl_jni_ref(U.activity) : NULL); }
-static void GA_packageName(tl_jcall *c) { c->ret = vl(tl_jni_new_string(U.pkg)); }
-static void GA_false(tl_jcall *c) { c->ret = vz(0); }
-static void GA_true(tl_jcall *c) { c->ret = vz(1); }
-static void GA_zero(tl_jcall *c) { c->ret = vi(0); }
-static void GA_nullObj(tl_jcall *c) { c->ret.l = NULL; }
-static void GA_emptyString(tl_jcall *c) { c->ret = vl(tl_jni_new_string("")); }
-static void GA_commandLine(tl_jcall *c) { c->ret = vl(tl_jni_new_string(getenv("TL_UE4_CMDLINE") ? getenv("TL_UE4_CMDLINE") : "")); }
-static void GA_fontDir(tl_jcall *c) { c->ret = vl(tl_jni_new_string("/system/fonts/")); }
+static void GA_get(tl_jcall *c)
+{
+    c->ret = vl(U.activity ? tl_jni_ref(U.activity) : NULL);
+}
+static void GA_packageName(tl_jcall *c)
+{
+    c->ret = vl(tl_jni_new_string(U.pkg));
+}
+static void GA_false(tl_jcall *c)
+{
+    c->ret = vz(0);
+}
+static void GA_true(tl_jcall *c)
+{
+    c->ret = vz(1);
+}
+static void GA_zero(tl_jcall *c)
+{
+    c->ret = vi(0);
+}
+static void GA_nullObj(tl_jcall *c)
+{
+    c->ret.l = NULL;
+}
+static void GA_emptyString(tl_jcall *c)
+{
+    c->ret = vl(tl_jni_new_string(""));
+}
+static void GA_commandLine(tl_jcall *c)
+{
+    c->ret = vl(tl_jni_new_string(getenv("TL_UE4_CMDLINE") ? getenv("TL_UE4_CMDLINE") : ""));
+}
+static void GA_fontDir(tl_jcall *c)
+{
+    c->ret = vl(tl_jni_new_string("/system/fonts/"));
+}
 const char *tl_hle_android_id(void);
-static void GA_androidId(tl_jcall *c) { c->ret = vl(tl_jni_new_string(tl_hle_android_id())); }
-static void GA_refresh(tl_jcall *c) { c->ret = vi(60); }
-static void GA_refreshRates(tl_jcall *c) { jobj *a = tl_jni_new_prim_array('I', 1); ((int *)a->arr.data)[0] = 60; c->ret = vl(a); }
-static void GA_orientation(tl_jcall *c) { c->ret = vi(1); }                    /* landscape */
-static void GA_netType(tl_jcall *c) { c->ret = vi(1); }                        /* Wi-Fi */
-static void GA_netTime(tl_jcall *c) { c->ret = vj(0); }
+static void GA_androidId(tl_jcall *c)
+{
+    c->ret = vl(tl_jni_new_string(tl_hle_android_id()));
+}
+static void GA_refresh(tl_jcall *c)
+{
+    c->ret = vi(60);
+}
+static void GA_refreshRates(tl_jcall *c)
+{
+    jobj *a = tl_jni_new_prim_array('I', 1);
+    ((int *)a->arr.data)[0] = 60;
+    c->ret = vl(a);
+}
+static void GA_orientation(tl_jcall *c)
+{
+    c->ret = vi(1);
+} /* landscape */
+static void GA_netType(tl_jcall *c)
+{
+    c->ret = vi(1);
+} /* Wi-Fi */
+static void GA_netTime(tl_jcall *c)
+{
+    c->ret = vj(0);
+}
 extern bool tl_pad_connected(int slot);
-static void GA_gamepad(tl_jcall *c) { c->ret = vz(tl_pad_connected(0)); }
-static void GA_listInputDevices(tl_jcall *c) { c->ret = vl(tl_jni_new_string("")); }
-static void GA_isOBBInAPK(tl_jcall *c) { c->ret = vz(0); }
-static void GA_boolObj(tl_jcall *c)                                            /* java.lang.Boolean true */
+static void GA_gamepad(tl_jcall *c)
+{
+    c->ret = vz(tl_pad_connected(0));
+}
+static void GA_listInputDevices(tl_jcall *c)
+{
+    c->ret = vl(tl_jni_new_string(""));
+}
+static void GA_isOBBInAPK(tl_jcall *c)
+{
+    c->ret = vz(0);
+}
+static void GA_boolObj(tl_jcall *c) /* java.lang.Boolean true */
 {
     jobj *b = tl_jni_new_object(tl_jni_class("java/lang/Boolean"));
-    jvalue v = vz(1); tl_jni_set_field(b, "value", "Z", v);
+    jvalue v = vz(1);
+    tl_jni_set_field(b, "value", "Z", v);
     c->ret = vl(b);
 }
 
-#define M_(c, n, s, f) { c, n, s, f }
+#define M_(c, n, s, f) {c, n, s, f}
 static const tl_jhle k_hle[] = {
     M_(CLS, "AndroidThunkJava_HasMetaDataKey", "(Ljava/lang/String;)Z", GA_hasMeta),
     M_(CLS, "AndroidThunkJava_GetMetaDataString", "(Ljava/lang/String;)Ljava/lang/String;", GA_metaString),
@@ -234,8 +414,7 @@ static const tl_jhle k_hle[] = {
     M_(CLS, "AndroidThunkJava_IapIsAllowedToMakePurchases", "()Z", GA_false),
     M_(CLS, "AndroidThunkJava_GooglePAD_Available", "()Z", GA_false),
     M_(CLS, "AndroidThunkJava_IsAllowedRemoteNotifications", "()Z", GA_false),
-    { NULL, NULL, NULL, NULL }
-};
+    {NULL, NULL, NULL, NULL}};
 
 void tl_ue4_hle_install(const char *pkg, const char *apk, const char *data, const char *ext_files)
 {
@@ -249,11 +428,16 @@ void tl_ue4_hle_install(const char *pkg, const char *apk, const char *data, cons
     tl_jni_declare("java/lang/Boolean", "java/lang/Object");
     tl_jni_register_hle(k_hle);
     /* The enum constants EOS reads off EOSOverlay.BrowserStatus: with no class initialiser to run they would be null, which it takes as a broken SDK. */
-    static const char *const status[] = { "BEGIN_LOAD", "CLOSED", "CRASHED", "END_LOAD", "LOAD_ERROR" };
+    static const char *const status[] = {"BEGIN_LOAD", "CLOSED", "CRASHED", "END_LOAD", "LOAD_ERROR"};
     for (size_t i = 0; i < sizeof(status) / sizeof(status[0]); i++) {
-        jvalue v; v.j = 0; v.l = tl_jni_new_object(tl_jni_class("com/epicgames/mobile/eossdk/EOSOverlay$BrowserStatus"));
+        jvalue v;
+        v.j = 0;
+        v.l = tl_jni_new_object(tl_jni_class("com/epicgames/mobile/eossdk/EOSOverlay$BrowserStatus"));
         tl_jni_set_static("com/epicgames/mobile/eossdk/EOSOverlay$BrowserStatus", status[i], "Lcom/epicgames/mobile/eossdk/EOSOverlay$BrowserStatus;", v);
     }
 }
 
-void tl_ue4_set_activity(jobj *activity) { U.activity = activity; }
+void tl_ue4_set_activity(jobj *activity)
+{
+    U.activity = activity;
+}

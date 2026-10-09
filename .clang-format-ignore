@@ -1,0 +1,8 @@
+work/**
+build/**
+.build/**
+third_party/**
+src/app/Frameworks/**
+src/app/Husk/fishhook.*
+experiments/native-linux/graphics/protocol/**
+patches/**

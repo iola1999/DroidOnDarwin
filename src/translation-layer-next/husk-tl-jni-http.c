@@ -18,26 +18,71 @@
 #include "husk-tl-bionic.h"
 #include "husk-tl-http.h"
 
-static jvalue vl(void *p) { jvalue v; v.j = 0; v.l = p; return v; }
-static jvalue vi(int i) { jvalue v; v.j = 0; v.i = i; return v; }
-static jvalue vz(int z) { jvalue v; v.j = 0; v.z = z != 0; return v; }
-static void Noop(tl_jcall *c) { (void)c; }
-static const char *S(const jobj *o) { const char *s = tl_jni_string(o); return s ? s : ""; }
+static jvalue vl(void *p)
+{
+    jvalue v;
+    v.j = 0;
+    v.l = p;
+    return v;
+}
+static jvalue vi(int i)
+{
+    jvalue v;
+    v.j = 0;
+    v.i = i;
+    return v;
+}
+static jvalue vz(int z)
+{
+    jvalue v;
+    v.j = 0;
+    v.z = z != 0;
+    return v;
+}
+static void Noop(tl_jcall *c)
+{
+    (void)c;
+}
+static const char *S(const jobj *o)
+{
+    const char *s = tl_jni_string(o);
+    return s ? s : "";
+}
 
 /* ------------------------------------------------------------------ HashMap */
 
-typedef struct { jobj **k, **v; int n, cap; } hmap;
-static hmap *HM(jobj *o) { if (!o->native) o->native = calloc(1, sizeof(hmap)); return o->native; }
+typedef struct {
+    jobj **k, **v;
+    int n, cap;
+} hmap;
+static hmap *HM(jobj *o)
+{
+    if (!o->native)
+        o->native = calloc(1, sizeof(hmap));
+    return o->native;
+}
 
-static void Map_init(tl_jcall *c) { (void)HM(c->self); }
+static void Map_init(tl_jcall *c)
+{
+    (void)HM(c->self);
+}
 static void Map_put(tl_jcall *c)
 {
     hmap *m = HM(c->self);
     const char *key = S(c->args[0].l);
     for (int i = 0; i < m->n; i++) {
-        if (!strcmp(S(m->k[i]), key)) { jobj *old = m->v[i]; m->v[i] = c->args[1].l ? tl_jni_ref(c->args[1].l) : NULL; c->ret = vl(old); return; }
+        if (!strcmp(S(m->k[i]), key)) {
+            jobj *old = m->v[i];
+            m->v[i] = c->args[1].l ? tl_jni_ref(c->args[1].l) : NULL;
+            c->ret = vl(old);
+            return;
+        }
     }
-    if (m->n == m->cap) { m->cap = m->cap ? m->cap * 2 : 8; m->k = realloc(m->k, (size_t)m->cap * sizeof(jobj *)); m->v = realloc(m->v, (size_t)m->cap * sizeof(jobj *)); }
+    if (m->n == m->cap) {
+        m->cap = m->cap ? m->cap * 2 : 8;
+        m->k = realloc(m->k, (size_t)m->cap * sizeof(jobj *));
+        m->v = realloc(m->v, (size_t)m->cap * sizeof(jobj *));
+    }
     m->k[m->n] = c->args[0].l ? tl_jni_ref(c->args[0].l) : NULL;
     m->v[m->n] = c->args[1].l ? tl_jni_ref(c->args[1].l) : NULL;
     m->n++;
@@ -47,26 +92,55 @@ static void Map_get(tl_jcall *c)
 {
     hmap *m = HM(c->self);
     const char *key = S(c->args[0].l);
-    for (int i = 0; i < m->n; i++) if (!strcmp(S(m->k[i]), key)) { c->ret = vl(m->v[i] ? tl_jni_ref(m->v[i]) : NULL); return; }
+    for (int i = 0; i < m->n; i++)
+        if (!strcmp(S(m->k[i]), key)) {
+            c->ret = vl(m->v[i] ? tl_jni_ref(m->v[i]) : NULL);
+            return;
+        }
     c->ret = vl(NULL);
 }
 static void Map_containsKey(tl_jcall *c)
 {
     hmap *m = HM(c->self);
     const char *key = S(c->args[0].l);
-    for (int i = 0; i < m->n; i++) if (!strcmp(S(m->k[i]), key)) { c->ret = vz(1); return; }
+    for (int i = 0; i < m->n; i++)
+        if (!strcmp(S(m->k[i]), key)) {
+            c->ret = vz(1);
+            return;
+        }
     c->ret = vz(0);
 }
-static void Map_size(tl_jcall *c) { c->ret = vi(HM(c->self)->n); }
-static void Map_isEmpty(tl_jcall *c) { c->ret = vz(HM(c->self)->n == 0); }
-static void Map_entrySet(tl_jcall *c) { c->ret = vl(tl_jni_new_object(tl_jni_class("java/util/HashSet"))); }
+static void Map_size(tl_jcall *c)
+{
+    c->ret = vi(HM(c->self)->n);
+}
+static void Map_isEmpty(tl_jcall *c)
+{
+    c->ret = vz(HM(c->self)->n == 0);
+}
+static void Map_entrySet(tl_jcall *c)
+{
+    c->ret = vl(tl_jni_new_object(tl_jni_class("java/util/HashSet")));
+}
 
 /* ------------------------------------------------------------ UnityWebRequest */
 
 #define CLS "com/unity3d/player/UnityWebRequest"
 
-typedef struct { int64_t ptr; char *url, *method; jobj *headers; int timeout_ms; int64_t upload_len; bool expect, chunked; } uwr;
-static uwr *U(jobj *o) { if (!o->native) o->native = calloc(1, sizeof(uwr)); return o->native; }
+typedef struct {
+    int64_t ptr;
+    char *url, *method;
+    jobj *headers;
+    int timeout_ms;
+    int64_t upload_len;
+    bool expect, chunked;
+} uwr;
+static uwr *U(jobj *o)
+{
+    if (!o->native)
+        o->native = calloc(1, sizeof(uwr));
+    return o->native;
+}
 
 static void UWR_init(tl_jcall *c)
 {
@@ -81,7 +155,9 @@ static void UWR_init(tl_jcall *c)
 static void UWR_setup(tl_jcall *c)
 {
     uwr *u = U(c->self);
-    u->upload_len = c->args[0].j; u->expect = c->args[1].z; u->chunked = c->args[2].z;
+    u->upload_len = c->args[0].j;
+    u->expect = c->args[1].z;
+    u->chunked = c->args[2].z;
 }
 
 typedef int (*upload_fn)(void *env, void *cls, int64_t ptr, void *buf);
@@ -93,7 +169,10 @@ typedef void (*error_fn)(void *env, void *cls, int64_t ptr, int code, void *msg)
 static jobj *direct_buffer(void *mem, int64_t cap)
 {
     jobj *o = tl_jni_new_object(tl_jni_class("java/nio/DirectByteBuffer"));
-    jvalue a, n; a.j = 0; a.l = mem; n.j = cap;
+    jvalue a, n;
+    a.j = 0;
+    a.l = mem;
+    n.j = cap;
     tl_jni_set_field(o, "address", "J", a);
     tl_jni_set_field(o, "capacity", "J", n);
     return o;
@@ -109,16 +188,19 @@ static void UWR_run(tl_jcall *c)
     int_fn length = tl_jni_native(CLS, "contentLengthCallback", "(JI)V");
     int_fn status = tl_jni_native(CLS, "responseCodeCallback", "(JI)V");
     error_fn error = tl_jni_native(CLS, "errorCallback", "(JILjava/lang/String;)V");
-    if (!upload || !download || !header || !length || !status || !error) return;
+    if (!upload || !download || !header || !length || !status || !error)
+        return;
 
     /* the request body, if any: the engine says how much with a null buffer, then hands it over in pieces */
     const size_t CHUNK = 128 * 1024;
-    uint8_t *chunk = malloc(CHUNK), *body = NULL; size_t body_len = 0;
+    uint8_t *chunk = malloc(CHUNK), *body = NULL;
+    size_t body_len = 0;
     jobj *buf = direct_buffer(chunk, (int64_t)CHUNK);
     if (upload(env, cls, u->ptr, NULL) > 0) {
         for (;;) {
             int n = upload(env, cls, u->ptr, buf);
-            if (n <= 0) break;
+            if (n <= 0)
+                break;
             body = realloc(body, body_len + (size_t)n);
             memcpy(body + body_len, chunk, (size_t)n);
             body_len += (size_t)n;
@@ -129,10 +211,12 @@ static void UWR_run(tl_jcall *c)
     hmap *hm = u->headers ? HM(u->headers) : NULL;
     int nh = hm ? hm->n : 0;
     const char **names = calloc((size_t)nh + 1, sizeof(char *)), **values = calloc((size_t)nh + 1, sizeof(char *));
-    for (int i = 0; i < nh; i++) { names[i] = S(hm->k[i]); values[i] = S(hm->v[i]); }
+    for (int i = 0; i < nh; i++) {
+        names[i] = S(hm->k[i]);
+        values[i] = S(hm->v[i]);
+    }
 
-    tl_http_request rq = { .url = u->url, .method = u->method, .nheaders = nh, .header_names = names, .header_values = values,
-                           .body = body, .body_len = body_len, .timeout_ms = u->timeout_ms };
+    tl_http_request rq = {.url = u->url, .method = u->method, .nheaders = nh, .header_names = names, .header_values = values, .body = body, .body_len = body_len, .timeout_ms = u->timeout_ms};
     tl_http_response rs;
     tl_log_line("http: %s %s (%zu bytes sent)", u->method, u->url, body_len);
     if (!tl_http_perform(&rq, &rs)) {
@@ -142,52 +226,61 @@ static void UWR_run(tl_jcall *c)
         long content_length = -1;
         for (int i = 0; i < rs.nheaders; i++) {
             header(env, cls, u->ptr, tl_jni_new_string(rs.header_names[i]), tl_jni_new_string(rs.header_values[i]));
-            if (!strcasecmp(rs.header_names[i], "content-length")) content_length = atol(rs.header_values[i]);
+            if (!strcasecmp(rs.header_names[i], "content-length"))
+                content_length = atol(rs.header_values[i]);
         }
         length(env, cls, u->ptr, (int)(content_length >= 0 ? content_length : (long)rs.body_len));
         status(env, cls, u->ptr, rs.status);
         for (size_t off = 0; off < rs.body_len;) {
             size_t n = rs.body_len - off < CHUNK ? rs.body_len - off : CHUNK;
             memcpy(chunk, rs.body + off, n);
-            if (!download(env, cls, u->ptr, buf, (int)n)) break;
+            if (!download(env, cls, u->ptr, buf, (int)n))
+                break;
             off += n;
         }
         tl_log_line("http: %s -> %d (%zu bytes)", u->url, rs.status, rs.body_len);
         tl_http_response_free(&rs);
     }
-    free(names); free(values); free(body);
+    free(names);
+    free(values);
+    free(body);
     /* chunk stays: the buffer object may still be referenced by the engine */
 }
 
-#define M_(c, n, s, f) { c, n, s, f }
+#define M_(c, n, s, f) {c, n, s, f}
 static const tl_jhle k_hle[] = {
-    M_("java/util/HashMap", "<init>", "()V", Map_init), M_("java/util/HashMap", "<init>", "(I)V", Map_init),
-    M_("java/util/HashMap", "put", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", Map_put),
-    M_("java/util/HashMap", "get", "(Ljava/lang/Object;)Ljava/lang/Object;", Map_get),
-    M_("java/util/HashMap", "containsKey", "(Ljava/lang/Object;)Z", Map_containsKey),
-    M_("java/util/HashMap", "size", "()I", Map_size), M_("java/util/HashMap", "isEmpty", "()Z", Map_isEmpty),
-    M_("java/util/HashMap", "entrySet", "()Ljava/util/Set;", Map_entrySet),
-    M_("java/util/Map", "put", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", Map_put),
-    M_("java/util/Map", "get", "(Ljava/lang/Object;)Ljava/lang/Object;", Map_get),
-    M_("java/util/Map", "containsKey", "(Ljava/lang/Object;)Z", Map_containsKey),
-    M_("java/util/Map", "size", "()I", Map_size), M_("java/util/Map", "isEmpty", "()Z", Map_isEmpty),
-    M_("java/util/Map", "entrySet", "()Ljava/util/Set;", Map_entrySet),
-    M_(CLS, "<init>", "(JLjava/lang/String;Ljava/util/Map;Ljava/lang/String;ZI)V", UWR_init),
-    M_(CLS, "setupTransferSettings", "(JZZ)V", UWR_setup),
-    M_(CLS, "run", "()V", UWR_run),
-    M_(CLS, "clearCookieCache", "(Ljava/lang/String;Ljava/lang/String;)V", Noop),
-    { NULL, NULL, NULL, NULL }
-};
+    M_("java/util/HashMap", "<init>", "()V", Map_init), M_("java/util/HashMap", "<init>", "(I)V", Map_init), M_("java/util/HashMap", "put", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", Map_put), M_("java/util/HashMap", "get", "(Ljava/lang/Object;)Ljava/lang/Object;", Map_get), M_("java/util/HashMap", "containsKey", "(Ljava/lang/Object;)Z", Map_containsKey), M_("java/util/HashMap", "size", "()I", Map_size), M_("java/util/HashMap", "isEmpty", "()Z", Map_isEmpty), M_("java/util/HashMap", "entrySet", "()Ljava/util/Set;", Map_entrySet), M_("java/util/Map", "put", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", Map_put), M_("java/util/Map", "get", "(Ljava/lang/Object;)Ljava/lang/Object;", Map_get), M_("java/util/Map", "containsKey", "(Ljava/lang/Object;)Z", Map_containsKey), M_("java/util/Map", "size", "()I", Map_size), M_("java/util/Map", "isEmpty", "()Z", Map_isEmpty), M_("java/util/Map", "entrySet", "()Ljava/util/Set;", Map_entrySet), M_(CLS, "<init>", "(JLjava/lang/String;Ljava/util/Map;Ljava/lang/String;ZI)V", UWR_init), M_(CLS, "setupTransferSettings", "(JZZ)V", UWR_setup), M_(CLS, "run", "()V", UWR_run), M_(CLS, "clearCookieCache", "(Ljava/lang/String;Ljava/lang/String;)V", Noop), {NULL, NULL, NULL, NULL}};
 
 /* ------------------------------------------------------------ connectivity */
 
-static void CM_activeNetworkInfo(tl_jcall *c) { c->ret = vl(tl_jni_new_object(tl_jni_class("android/net/NetworkInfo"))); }
-static void CM_activeNetwork(tl_jcall *c) { c->ret = vl(tl_jni_new_object(tl_jni_class("android/net/Network"))); }
-static void CM_capabilities(tl_jcall *c) { c->ret = vl(tl_jni_new_object(tl_jni_class("android/net/NetworkCapabilities"))); }
-static void True_(tl_jcall *c) { c->ret = vz(1); }
-static void NI_type(tl_jcall *c) { c->ret = vi(1); }                          /* TYPE_WIFI */
-static void NI_typeName(tl_jcall *c) { c->ret = vl(tl_jni_new_string("WIFI")); }
-static void NI_subtype(tl_jcall *c) { c->ret = vi(0); }
+static void CM_activeNetworkInfo(tl_jcall *c)
+{
+    c->ret = vl(tl_jni_new_object(tl_jni_class("android/net/NetworkInfo")));
+}
+static void CM_activeNetwork(tl_jcall *c)
+{
+    c->ret = vl(tl_jni_new_object(tl_jni_class("android/net/Network")));
+}
+static void CM_capabilities(tl_jcall *c)
+{
+    c->ret = vl(tl_jni_new_object(tl_jni_class("android/net/NetworkCapabilities")));
+}
+static void True_(tl_jcall *c)
+{
+    c->ret = vz(1);
+}
+static void NI_type(tl_jcall *c)
+{
+    c->ret = vi(1);
+} /* TYPE_WIFI */
+static void NI_typeName(tl_jcall *c)
+{
+    c->ret = vl(tl_jni_new_string("WIFI"));
+}
+static void NI_subtype(tl_jcall *c)
+{
+    c->ret = vi(0);
+}
 
 /* The phone has its network, as far as a game asking Android about it can tell: one active connection, over Wi-Fi, that is up. */
 static const tl_jhle k_net[] = {
@@ -195,13 +288,15 @@ static const tl_jhle k_net[] = {
     M_("android/net/ConnectivityManager", "getNetworkInfo", "(I)Landroid/net/NetworkInfo;", CM_activeNetworkInfo),
     M_("android/net/ConnectivityManager", "getActiveNetwork", "()Landroid/net/Network;", CM_activeNetwork),
     M_("android/net/ConnectivityManager", "getNetworkCapabilities", "(Landroid/net/Network;)Landroid/net/NetworkCapabilities;", CM_capabilities),
-    M_("android/net/NetworkInfo", "isConnected", "()Z", True_), M_("android/net/NetworkInfo", "isConnectedOrConnecting", "()Z", True_),
-    M_("android/net/NetworkInfo", "isAvailable", "()Z", True_), M_("android/net/NetworkInfo", "getType", "()I", NI_type),
-    M_("android/net/NetworkInfo", "getTypeName", "()Ljava/lang/String;", NI_typeName), M_("android/net/NetworkInfo", "getSubtype", "()I", NI_subtype),
-    M_("android/net/NetworkCapabilities", "hasCapability", "(I)Z", True_), M_("android/net/NetworkCapabilities", "hasTransport", "(I)Z", True_),
-    { NULL, NULL, NULL, NULL }
-};
-
+    M_("android/net/NetworkInfo", "isConnected", "()Z", True_),
+    M_("android/net/NetworkInfo", "isConnectedOrConnecting", "()Z", True_),
+    M_("android/net/NetworkInfo", "isAvailable", "()Z", True_),
+    M_("android/net/NetworkInfo", "getType", "()I", NI_type),
+    M_("android/net/NetworkInfo", "getTypeName", "()Ljava/lang/String;", NI_typeName),
+    M_("android/net/NetworkInfo", "getSubtype", "()I", NI_subtype),
+    M_("android/net/NetworkCapabilities", "hasCapability", "(I)Z", True_),
+    M_("android/net/NetworkCapabilities", "hasTransport", "(I)Z", True_),
+    {NULL, NULL, NULL, NULL}};
 
 /* ------------------------------------------------- Xbox's HttpClientRequest */
 
@@ -217,37 +312,71 @@ static const tl_jhle k_net[] = {
 
 #define XREQ "com/xbox/httpclient/HttpClientRequest"
 #define XRES "com/xbox/httpclient/HttpClientResponse"
-#define XIN  "com/xbox/httpclient/HttpClientRequestBody$NativeInputStream"
+#define XIN "com/xbox/httpclient/HttpClientRequestBody$NativeInputStream"
 #define XOUT "com/xbox/httpclient/HttpClientResponse$NativeOutputStream"
 
 static void *x_native(const char *cls, const char *name, const char *sig, const char *mangled)
 {
     void *fn = tl_jni_native(cls, name, sig);
-    if (!fn) { tl_lib *lib = tl_ld_find_lib("libHttpClient.Android.so"); if (lib) fn = tl_ld_sym(lib, mangled); }
-    if (!fn) tl_log_line("http: native %s.%s%s is not provided by libHttpClient", cls, name, sig);
+    if (!fn) {
+        tl_lib *lib = tl_ld_find_lib("libHttpClient.Android.so");
+        if (lib)
+            fn = tl_ld_sym(lib, mangled);
+    }
+    if (!fn)
+        tl_log_line("http: native %s.%s%s is not provided by libHttpClient", cls, name, sig);
     return fn;
 }
 
-typedef struct { char *url, *method, *ctype; char **hn, **hv; int nh, cap; int64_t call, clen; } xreq;
-typedef struct { int64_t call; tl_http_response rs; } xres;
+typedef struct {
+    char *url, *method, *ctype;
+    char **hn, **hv;
+    int nh, cap;
+    int64_t call, clen;
+} xreq;
+typedef struct {
+    int64_t call;
+    tl_http_response rs;
+} xres;
 
-static xreq *XQ(jobj *o) { if (!o->native) o->native = calloc(1, sizeof(xreq)); return o->native; }
+static xreq *XQ(jobj *o)
+{
+    if (!o->native)
+        o->native = calloc(1, sizeof(xreq));
+    return o->native;
+}
 
-static void XReq_init(tl_jcall *c) { (void)XQ(c->self); }
-static void XReq_url(tl_jcall *c) { xreq *q = XQ(c->self); free(q->url); q->url = strdup(S(c->args[0].l)); }
+static void XReq_init(tl_jcall *c)
+{
+    (void)XQ(c->self);
+}
+static void XReq_url(tl_jcall *c)
+{
+    xreq *q = XQ(c->self);
+    free(q->url);
+    q->url = strdup(S(c->args[0].l));
+}
 static void XReq_header(tl_jcall *c)
 {
     xreq *q = XQ(c->self);
-    if (q->nh == q->cap) { q->cap = q->cap ? q->cap * 2 : 8; q->hn = realloc(q->hn, (size_t)q->cap * sizeof(char *)); q->hv = realloc(q->hv, (size_t)q->cap * sizeof(char *)); }
-    q->hn[q->nh] = strdup(S(c->args[0].l)); q->hv[q->nh] = strdup(S(c->args[1].l)); q->nh++;
+    if (q->nh == q->cap) {
+        q->cap = q->cap ? q->cap * 2 : 8;
+        q->hn = realloc(q->hn, (size_t)q->cap * sizeof(char *));
+        q->hv = realloc(q->hv, (size_t)q->cap * sizeof(char *));
+    }
+    q->hn[q->nh] = strdup(S(c->args[0].l));
+    q->hv[q->nh] = strdup(S(c->args[1].l));
+    q->nh++;
 }
 static void XReq_methodAndBody(tl_jcall *c)
 {
     /* (String method, long call, String contentType, long contentLength) */
     xreq *q = XQ(c->self);
-    free(q->method); q->method = strdup(S(c->args[0].l));
+    free(q->method);
+    q->method = strdup(S(c->args[0].l));
     q->call = c->args[1].j;
-    free(q->ctype); q->ctype = c->args[2].l ? strdup(S(c->args[2].l)) : NULL;
+    free(q->ctype);
+    q->ctype = c->args[2].l ? strdup(S(c->args[2].l)) : NULL;
     q->clen = c->args[3].j;
 }
 
@@ -261,10 +390,12 @@ static void XReq_do(tl_jcall *c)
     typedef int (*read_fn)(void *env, void *stream, int64_t call, int64_t offset, void *buf, int64_t buf_off, int64_t len);
     done_fn done = x_native(XREQ, "OnRequestCompleted", "(JLcom/xbox/httpclient/HttpClientResponse;)V", "Java_com_xbox_httpclient_HttpClientRequest_OnRequestCompleted");
     fail_fn fail = x_native(XREQ, "OnRequestFailed", "(JLjava/lang/String;Ljava/lang/String;Ljava/lang/String;Z)V", "Java_com_xbox_httpclient_HttpClientRequest_OnRequestFailed");
-    if (!done || !fail) return;
+    if (!done || !fail)
+        return;
 
     /* the body, which the library holds and hands over in pieces on request */
-    uint8_t *body = NULL; size_t body_len = 0;
+    uint8_t *body = NULL;
+    size_t body_len = 0;
     if (q->clen > 0) {
         read_fn rd = x_native(XIN, "nativeRead", "(JJ[BJJ)I", "Java_com_xbox_httpclient_HttpClientRequestBody_00024NativeInputStream_nativeRead");
         if (rd) {
@@ -273,49 +404,76 @@ static void XReq_do(tl_jcall *c)
             jobj *stream = tl_jni_new_object(tl_jni_class(XIN));
             for (;;) {
                 int n = rd(env, stream, call, (int64_t)body_len, buf, 0, CH);
-                if (n <= 0) break;
+                if (n <= 0)
+                    break;
                 body = realloc(body, body_len + (size_t)n);
                 memcpy(body + body_len, buf->arr.data, (size_t)n);
                 body_len += (size_t)n;
             }
-            tl_jni_unref(buf); tl_jni_unref(stream);
+            tl_jni_unref(buf);
+            tl_jni_unref(stream);
         }
     }
 
-    tl_http_request rq = { .url = q->url, .method = q->method, .nheaders = q->nh, .header_names = (const char *const *)q->hn,
-                           .header_values = (const char *const *)q->hv, .body = body, .body_len = body_len, .timeout_ms = 60000, .follow_redirects = true };
+    tl_http_request rq = {.url = q->url, .method = q->method, .nheaders = q->nh, .header_names = (const char *const *)q->hn, .header_values = (const char *const *)q->hv, .body = body, .body_len = body_len, .timeout_ms = 60000, .follow_redirects = true};
     xres *res = calloc(1, sizeof(*res));
     res->call = call;
     tl_log_line("http: %s %s (%zu bytes sent)", q->method ? q->method : "GET", q->url ? q->url : "", body_len);
     if (!tl_http_perform(&rq, &res->rs)) {
         tl_log_line("http: %s failed: %s", q->url ? q->url : "", res->rs.message);
-        const char *cls = res->rs.error == TL_HTTP_UNKNOWN_HOST ? "java.net.UnknownHostException" : res->rs.error == TL_HTTP_TIMEOUT ? "java.net.SocketTimeoutException"
-                        : (res->rs.error == TL_HTTP_SSL || res->rs.error == TL_HTTP_SSL_UNTRUSTED) ? "javax.net.ssl.SSLHandshakeException" : "java.io.IOException";
+        const char *cls = res->rs.error == TL_HTTP_UNKNOWN_HOST ? "java.net.UnknownHostException" : res->rs.error == TL_HTTP_TIMEOUT                                       ? "java.net.SocketTimeoutException"
+                                                                                                : (res->rs.error == TL_HTTP_SSL || res->rs.error == TL_HTTP_SSL_UNTRUSTED) ? "javax.net.ssl.SSLHandshakeException"
+                                                                                                                                                                           : "java.io.IOException";
         jobj *a = tl_jni_new_string(cls), *b = tl_jni_new_string(res->rs.message), *n = tl_jni_new_string("Has active network: true");
         fail(env, self, call, a, b, n, res->rs.error == TL_HTTP_UNKNOWN_HOST);
-        tl_jni_unref(a); tl_jni_unref(b); tl_jni_unref(n);
-        tl_http_response_free(&res->rs); free(res);
+        tl_jni_unref(a);
+        tl_jni_unref(b);
+        tl_jni_unref(n);
+        tl_http_response_free(&res->rs);
+        free(res);
     } else {
         tl_log_line("http: %s -> %d (%zu bytes)", q->url ? q->url : "", res->rs.status, res->rs.body_len);
         jobj *r = tl_jni_new_object(tl_jni_class(XRES));
         r->native = res;
-        done(env, self, call, r);                 /* the library reads the response back, through the methods below */
+        done(env, self, call, r); /* the library reads the response back, through the methods below */
         tl_jni_unref(r);
     }
     free(body);
 }
 
-static xres *XR(const tl_jcall *c) { return c->self ? c->self->native : NULL; }
-static void XRes_code(tl_jcall *c) { const xres *r = XR(c); c->ret = vi(r ? r->rs.status : 0); }
-static void XRes_numHeaders(tl_jcall *c) { const xres *r = XR(c); c->ret = vi(r && r->rs.nheaders > 1 ? r->rs.nheaders - 1 : 0); }   /* the first is the status line */
-static void XRes_headerName(tl_jcall *c) { const xres *r = XR(c); int i = c->args[0].i + 1; c->ret = vl(r && i > 0 && i < r->rs.nheaders ? tl_jni_new_string(r->rs.header_names[i]) : NULL); }
-static void XRes_headerValue(tl_jcall *c) { const xres *r = XR(c); int i = c->args[0].i + 1; c->ret = vl(r && i > 0 && i < r->rs.nheaders ? tl_jni_new_string(r->rs.header_values[i]) : NULL); }
+static xres *XR(const tl_jcall *c)
+{
+    return c->self ? c->self->native : NULL;
+}
+static void XRes_code(tl_jcall *c)
+{
+    const xres *r = XR(c);
+    c->ret = vi(r ? r->rs.status : 0);
+}
+static void XRes_numHeaders(tl_jcall *c)
+{
+    const xres *r = XR(c);
+    c->ret = vi(r && r->rs.nheaders > 1 ? r->rs.nheaders - 1 : 0);
+} /* the first is the status line */
+static void XRes_headerName(tl_jcall *c)
+{
+    const xres *r = XR(c);
+    int i = c->args[0].i + 1;
+    c->ret = vl(r && i > 0 && i < r->rs.nheaders ? tl_jni_new_string(r->rs.header_names[i]) : NULL);
+}
+static void XRes_headerValue(tl_jcall *c)
+{
+    const xres *r = XR(c);
+    int i = c->args[0].i + 1;
+    c->ret = vl(r && i > 0 && i < r->rs.nheaders ? tl_jni_new_string(r->rs.header_values[i]) : NULL);
+}
 static void XRes_body(tl_jcall *c)
 {
     xres *r = XR(c);
     typedef void (*write_fn)(void *env, void *stream, int64_t call, void *bytes, int off, int len);
     write_fn wr = x_native(XOUT, "nativeWrite", "(J[BII)V", "Java_com_xbox_httpclient_HttpClientResponse_00024NativeOutputStream_nativeWrite");
-    if (!r || !wr) return;
+    if (!r || !wr)
+        return;
     void *env = tl_jni_env();
     jobj *stream = tl_jni_new_object(tl_jni_class(XOUT));
     const size_t CH = 64 * 1024;
@@ -326,28 +484,26 @@ static void XRes_body(tl_jcall *c)
         wr(env, stream, r->call, buf, 0, (int)n);
         off += n;
     }
-    tl_jni_unref(buf); tl_jni_unref(stream);
-    free(r->rs.body); r->rs.body = NULL; r->rs.body_len = 0;
+    tl_jni_unref(buf);
+    tl_jni_unref(stream);
+    free(r->rs.body);
+    r->rs.body = NULL;
+    r->rs.body_len = 0;
 }
 
 static const tl_jhle k_xbox[] = {
-    M_(XREQ, "<init>", "(Landroid/content/Context;)V", XReq_init), M_(XREQ, "setHttpUrl", "(Ljava/lang/String;)V", XReq_url),
-    M_(XREQ, "setHttpHeader", "(Ljava/lang/String;Ljava/lang/String;)V", XReq_header),
-    M_(XREQ, "setHttpMethodAndBody", "(Ljava/lang/String;JLjava/lang/String;J)V", XReq_methodAndBody), M_(XREQ, "doRequestAsync", "(J)V", XReq_do),
-    M_(XRES, "getResponseCode", "()I", XRes_code), M_(XRES, "getNumHeaders", "()I", XRes_numHeaders),
-    M_(XRES, "getHeaderNameAtIndex", "(I)Ljava/lang/String;", XRes_headerName), M_(XRES, "getHeaderValueAtIndex", "(I)Ljava/lang/String;", XRes_headerValue),
-    M_(XRES, "getResponseBodyBytes", "()V", XRes_body),
-    M_("com/xbox/httpclient/NetworkObserver", "Initialize", "(Landroid/content/Context;)V", Noop), M_("com/xbox/httpclient/NetworkObserver", "Cleanup", "(Landroid/content/Context;)V", Noop),
-    { NULL, NULL, NULL, NULL }
-};
+    M_(XREQ, "<init>", "(Landroid/content/Context;)V", XReq_init), M_(XREQ, "setHttpUrl", "(Ljava/lang/String;)V", XReq_url), M_(XREQ, "setHttpHeader", "(Ljava/lang/String;Ljava/lang/String;)V", XReq_header), M_(XREQ, "setHttpMethodAndBody", "(Ljava/lang/String;JLjava/lang/String;J)V", XReq_methodAndBody), M_(XREQ, "doRequestAsync", "(J)V", XReq_do), M_(XRES, "getResponseCode", "()I", XRes_code), M_(XRES, "getNumHeaders", "()I", XRes_numHeaders), M_(XRES, "getHeaderNameAtIndex", "(I)Ljava/lang/String;", XRes_headerName), M_(XRES, "getHeaderValueAtIndex", "(I)Ljava/lang/String;", XRes_headerValue), M_(XRES, "getResponseBodyBytes", "()V", XRes_body), M_("com/xbox/httpclient/NetworkObserver", "Initialize", "(Landroid/content/Context;)V", Noop), M_("com/xbox/httpclient/NetworkObserver", "Cleanup", "(Landroid/content/Context;)V", Noop), {NULL, NULL, NULL, NULL}};
 
 void tl_http_install(void)
 {
-    tl_jni_declare("android/net/NetworkInfo", "java/lang/Object"); tl_jni_declare("android/net/Network", "java/lang/Object");
+    tl_jni_declare("android/net/NetworkInfo", "java/lang/Object");
+    tl_jni_declare("android/net/Network", "java/lang/Object");
     tl_jni_declare("android/net/NetworkCapabilities", "java/lang/Object");
     tl_jni_register_hle(k_net);
-    tl_jni_declare("com/xbox/httpclient/HttpClientRequest", "java/lang/Object"); tl_jni_declare("com/xbox/httpclient/HttpClientResponse", "java/lang/Object");
-    tl_jni_declare("com/xbox/httpclient/HttpClientRequestBody$NativeInputStream", "java/lang/Object"); tl_jni_declare("com/xbox/httpclient/HttpClientResponse$NativeOutputStream", "java/lang/Object");
+    tl_jni_declare("com/xbox/httpclient/HttpClientRequest", "java/lang/Object");
+    tl_jni_declare("com/xbox/httpclient/HttpClientResponse", "java/lang/Object");
+    tl_jni_declare("com/xbox/httpclient/HttpClientRequestBody$NativeInputStream", "java/lang/Object");
+    tl_jni_declare("com/xbox/httpclient/HttpClientResponse$NativeOutputStream", "java/lang/Object");
     tl_jni_declare("com/xbox/httpclient/NetworkObserver", "java/lang/Object");
     tl_jni_register_hle(k_xbox);
     tl_jni_declare("java/util/HashMap", "java/lang/Object");

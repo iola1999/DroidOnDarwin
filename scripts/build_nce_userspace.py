@@ -15,6 +15,7 @@ import tarfile
 import tempfile
 import urllib.request
 import zipfile
+import xml.etree.ElementTree as ET
 from prepare_android_runtime import main as prepare_android_runtime
 from build_android_linker import build as build_android_linker
 from build_android_libc import build as build_android_libc
@@ -369,11 +370,13 @@ def android_data(out):
         jar.writestr(zipfile.ZipInfo('classes.dex'), (framework_classes / 'classes.dex').read_bytes())
     files += [('/system/framework/nce-framework.jar', framework_jar)]
     files += [('/system/framework/framework-res.apk', root / 'framework/framework-res.apk')]
+    files += [('/system/etc/event-log-tags', root / 'etc/event-log-tags')]
     desktop_apps = (
         'system/priv-app/GooglePackageInstaller/GooglePackageInstaller.apk',
         'system/priv-app/SettingsProvider/SettingsProvider.apk',
         'system/priv-app/IntentResolver/IntentResolver.apk',
         'system/priv-app/InputDevices/InputDevices.apk',
+        'system/priv-app/FusedLocation/FusedLocation.apk',
         'system/priv-app/Shell/Shell.apk',
         'system/priv-app/NetworkStackGoogle/NetworkStackGoogle.apk',
         'system/priv-app/DocumentsUIGoogle/DocumentsUIGoogle.apk',
@@ -409,6 +412,9 @@ def android_data(out):
     for partition in ('system_ext', 'product'):
         for source in sorted((DESKTOP / partition / 'etc/permissions').glob('privapp-permissions*.xml')):
             files.append(('/' + str(source.relative_to(DESKTOP)), source))
+    for name in ('com.android.systemui.xml', 'androidx.window.extensions.xml', 'androidx.window.sidecar.xml'):
+        source = DESKTOP / 'system_ext/etc/permissions' / name
+        files.append(('/' + str(source.relative_to(DESKTOP)), source))
 
     files += [('/system/etc/vintf/' + name, root / 'etc/vintf' / name)
               for name in ('manifest.xml', 'manifest/android.system.suspend-service.xml',
@@ -423,6 +429,23 @@ def android_data(out):
             for path in sorted((module / 'etc' / directory).rglob('*')):
                 if path.is_file():
                     files.append(('/apex/' + str(path.relative_to(root)), path))
+
+    # App uses-library declarations are independent of the boot/server classpaths.
+    registered = {guest for guest, _ in files}
+    for guest, source in tuple(files):
+        if '/etc/permissions/' not in guest or not guest.endswith('.xml'):
+            continue
+        for library in ET.parse(source).getroot().iter('library'):
+            path = library.get('file', '')
+            if not path.endswith('.jar') or path in registered:
+                continue
+            if not path.startswith(('/system/', '/apex/', '/system_ext/', '/product/')) or '..' in Path(path).parts:
+                raise RuntimeError('Unexpected shared Java library: ' + path)
+            origin = root / path.split('/', 2)[2] if path.startswith(('/system/', '/apex/')) else DESKTOP / path[1:]
+            if not origin.is_file():
+                raise RuntimeError('Missing shared Java library: ' + path)
+            files.append((path, origin))
+            registered.add(path)
 
     config_names = ('package.map', 'flag.map', 'flag.val', 'flag.info')
     files += [(f'/system/etc/aconfig/{name}', root / 'etc/aconfig' / name) for name in config_names]
@@ -874,7 +897,7 @@ def build(out, llvm):
              '-c', EXP / f'userspace/{unit}.c', '-o', out / f'{unit}.o'])
     run([llvm / 'clang', '--target=aarch64-linux-musl', '-c', EXP / 'userspace/signal-registers.S',
          '-o', out / 'signal-registers.o'])
-    for name in ('init', 'worker', 'mm-bench', 'binder-test', 'storage-test', 'reclaim-test'):
+    for name in ('init', 'worker', 'mm-bench', 'binder-test', 'storage-test', 'reclaim-test', 'host-poll-test'):
         run([llvm / 'clang', '--target=aarch64-linux-musl', '-ffixed-x18', '-mno-outline-atomics',
              '-fPIE', '-O2', '-g', '-Wall', '-Wextra', '-Werror', '-nostdinc', '-isystem', libc / 'include', '-isystem', resource,
              '-isystem', out / 'linux-uapi/include',

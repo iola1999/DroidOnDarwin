@@ -9,6 +9,7 @@
 #include "graphics/host-graphics.h"
 #endif
 #include "input.h"
+#include "session.h"
 #include "user-scripts.h"
 #include <mach/mach.h>
 #include <CommonCrypto/CommonDigest.h>
@@ -25,7 +26,13 @@
 #include <unistd.h>
 #include <time.h>
 
-#define REQUIRE(c) do { if (!(c)) { fprintf(stderr, "N2 failure %s:%d: %s\n", __FILE__, __LINE__, #c); abort(); } } while (0)
+#define REQUIRE(c)                                                             \
+    do {                                                                       \
+        if (!(c)) {                                                            \
+            fprintf(stderr, "N2 failure %s:%d: %s\n", __FILE__, __LINE__, #c); \
+            abort();                                                           \
+        }                                                                      \
+    } while (0)
 static uintptr_t user_base;
 #define USER_BASE user_base
 #define USER_SIZE NCE_USER_SIZE
@@ -113,7 +120,8 @@ static void restore_code(NceProgram *program, NceSegment *segment, size_t positi
         }
         memcpy(segment->source_cache + offset, page, PAGE);
         memcpy(segment->code.rw + offset, page, PAGE);
-        if (program && mode == 2) REQUIRE(nce_program_patch_range(program, segment, offset, PAGE) == 0);
+        if (program && mode == 2)
+            REQUIRE(nce_program_patch_range(program, segment, offset, PAGE) == 0);
         nce_sync_code((NceCode){segment->code.rw + offset, segment->code.rx + offset, PAGE});
         segment->cache_prot[index] = mode;
         ++code_copies;
@@ -136,15 +144,21 @@ static void *shmem_map(void *address, unsigned long offset, unsigned long size, 
             for (size_t j = 0; j < p->segment_count; ++j) {
                 NceSegment *s = &p->segments[j];
                 uintptr_t lo = (uintptr_t)s->code.rx, hi = lo + s->size;
-                if (start >= lo && start < hi) { program = p; segment = s; stop = hi < stop ? hi : stop; }
-                else if (lo > start && lo < stop) stop = lo;
+                if (start >= lo && start < hi) {
+                    program = p;
+                    segment = s;
+                    stop = hi < stop ? hi : stop;
+                } else if (lo > start && lo < stop)
+                    stop = lo;
             }
         }
         NceCode dynamic = nce_memory_dynamic_code();
         uintptr_t dynamic_start = (uintptr_t)dynamic.rx;
         int in_dynamic = start >= dynamic_start && start < dynamic_start + dynamic.size;
-        if (in_dynamic && stop > dynamic_start + dynamic.size) stop = dynamic_start + dynamic.size;
-        else if (start < dynamic_start && stop > dynamic_start) stop = dynamic_start;
+        if (in_dynamic && stop > dynamic_start + dynamic.size)
+            stop = dynamic_start + dynamic.size;
+        else if (start < dynamic_start && stop > dynamic_start)
+            stop = dynamic_start;
         size_t length = stop - start;
         if (segment) {
             size_t position = start - (uintptr_t)segment->code.rx;
@@ -169,8 +183,10 @@ static void *shmem_map(void *address, unsigned long offset, unsigned long size, 
                 continue;
             }
             unsigned char *target = dynamic.rw + start - dynamic_start;
-            if (prot & LKL_PROT_EXEC) memcpy(target, ram + offset, length);
-            else memset(target, 0, length);
+            if (prot & LKL_PROT_EXEC)
+                memcpy(target, ram + offset, length);
+            else
+                memset(target, 0, length);
             nce_sync_code((NceCode){target, (void *)start, length});
             ++code_copies;
             code_copy_bytes += length;
@@ -196,13 +212,16 @@ static int protect_none(void *address, unsigned long size)
         for (size_t j = 0; j < p->segment_count; ++j) {
             NceSegment *s = &p->segments[j];
             uintptr_t lo = (uintptr_t)s->code.rx, hi = lo + s->size;
-            if (hi <= start || lo >= end) continue;
+            if (hi <= start || lo >= end)
+                continue;
             if (cursor < lo && mmap((void *)cursor, lo - cursor, PROT_NONE,
-                                   MAP_ANON | MAP_PRIVATE | MAP_FIXED, -1, 0) == MAP_FAILED) return -1;
+                                    MAP_ANON | MAP_PRIVATE | MAP_FIXED, -1, 0) == MAP_FAILED)
+                return -1;
             size_t first = start > lo ? start - lo : 0;
             size_t stop = end < hi ? end - lo : s->size;
             if (nce_memory_code_protection()) {
-                if (mprotect(s->code.rx + first, stop - first, PROT_NONE)) return -1;
+                if (mprotect(s->code.rx + first, stop - first, PROT_NONE))
+                    return -1;
             } else {
                 memset(s->code.rw + first, 0, stop - first);
                 nce_sync_code((NceCode){s->code.rw + first, s->code.rx + first, stop - first});
@@ -213,7 +232,8 @@ static int protect_none(void *address, unsigned long size)
         uintptr_t lo = (uintptr_t)p->stubs.rx, hi = lo + p->stubs.size;
         if (hi > start && lo < end) {
             if (cursor < lo && mmap((void *)cursor, lo - cursor, PROT_NONE,
-                                   MAP_ANON | MAP_PRIVATE | MAP_FIXED, -1, 0) == MAP_FAILED) return -1;
+                                    MAP_ANON | MAP_PRIVATE | MAP_FIXED, -1, 0) == MAP_FAILED)
+                return -1;
             cursor = hi < end ? hi : end;
         }
     }
@@ -221,14 +241,18 @@ static int protect_none(void *address, unsigned long size)
     uintptr_t lo = (uintptr_t)dynamic.rx, hi = lo + dynamic.size;
     if (hi > start && lo < end) {
         if (cursor < lo && mmap((void *)cursor, lo - cursor, PROT_NONE,
-                               MAP_ANON | MAP_PRIVATE | MAP_FIXED, -1, 0) == MAP_FAILED) return -1;
+                                MAP_ANON | MAP_PRIVATE | MAP_FIXED, -1, 0) == MAP_FAILED)
+            return -1;
         size_t first = start > lo ? start - lo : 0;
         size_t stop = end < hi ? end - lo : dynamic.size;
         /* The first dynamic page contains the host's resume branch. */
-        if (first < PAGE) first = PAGE;
-        if (stop < first) stop = first;
+        if (first < PAGE)
+            first = PAGE;
+        if (stop < first)
+            stop = first;
         if (nce_memory_code_protection()) {
-            if (stop > first && mprotect(dynamic.rx + first, stop - first, PROT_NONE)) return -1;
+            if (stop > first && mprotect(dynamic.rx + first, stop - first, PROT_NONE))
+                return -1;
         } else {
             memset(dynamic.rw + first, 0, stop - first);
             nce_sync_code((NceCode){dynamic.rw + first, dynamic.rx + first, stop - first});
@@ -236,7 +260,8 @@ static int protect_none(void *address, unsigned long size)
         cursor = lo + stop;
     }
     if (cursor < end && mmap((void *)cursor, end - cursor, PROT_NONE,
-                            MAP_ANON | MAP_PRIVATE | MAP_FIXED, -1, 0) == MAP_FAILED) return -1;
+                             MAP_ANON | MAP_PRIVATE | MAP_FIXED, -1, 0) == MAP_FAILED)
+        return -1;
     return 0;
 }
 
@@ -271,12 +296,15 @@ static void restore_signal_state(NceState *s, ucontext_t *u)
 static int guest_pc(uintptr_t pc)
 {
     NceCode dynamic = nce_memory_dynamic_code();
-    if (pc >= (uintptr_t)dynamic.rx + PAGE && pc < (uintptr_t)dynamic.rx + dynamic.size) return 1;
-    if (pc >= (uintptr_t)code.rx && pc < (uintptr_t)code.rx + sizeof(guest_image)) return 1;
+    if (pc >= (uintptr_t)dynamic.rx + PAGE && pc < (uintptr_t)dynamic.rx + dynamic.size)
+        return 1;
+    if (pc >= (uintptr_t)code.rx && pc < (uintptr_t)code.rx + sizeof(guest_image))
+        return 1;
     for (size_t i = 0; i < nce_program_count; ++i)
         for (size_t j = 0; j < nce_programs[i].segment_count; ++j) {
             NceCode c = nce_programs[i].segments[j].code;
-            if (pc >= (uintptr_t)c.rx && pc < (uintptr_t)c.rx + c.size) return 1;
+            if (pc >= (uintptr_t)c.rx && pc < (uintptr_t)c.rx + c.size)
+                return 1;
         }
     return 0;
 }
@@ -287,12 +315,14 @@ static int syscall_stub(uintptr_t pc)
     if (code.rx && pc >= fixture && pc + 80 <= (uintptr_t)code.rx + code.size && (pc - fixture) % 80 == 0) {
         uintptr_t gate;
         memcpy(&gate, (void *)(pc + 72), sizeof(gate));
-        if (gate == (uintptr_t)nce_gate) return 1;
+        if (gate == (uintptr_t)nce_gate)
+            return 1;
     }
     for (size_t i = 0; i < nce_program_count; ++i) {
         NceProgram *p = &nce_programs[i];
         uintptr_t begin = (uintptr_t)p->stubs.rx + 16;
-        if (p->stubs.rx && pc >= begin && pc < begin + p->patch_count * 80 && !((pc - begin) % 80)) return 1;
+        if (p->stubs.rx && pc >= begin && pc < begin + p->patch_count * 80 && !((pc - begin) % 80))
+            return 1;
     }
     return 0;
 }
@@ -320,23 +350,28 @@ static NceState *handle_event(NceState *state)
 {
     Process *p = (void *)state;
     if (p->event_kind == 1) {
-        if (!deferred_faults) puts("{\"phase\":\"guest_fault_on_host_stack\"}");
+        if (!deferred_faults)
+            puts("{\"phase\":\"guest_fault_on_host_stack\"}");
         int result = page_fault(p->fault_address, p->fault_execute ? NCE_FAULT_EXEC : p->fault_write);
         if (result && (trace || fault_trace || p->fault_illegal)) {
             fprintf(stderr, "guest fault pc=%lx address=%lx write=%d illegal=%d result=%d instruction=%08x trapped=%08x\n",
                     state->regs.pc, p->fault_address, p->fault_write, p->fault_illegal, result,
                     p->fault_illegal ? *(const uint32_t *)state->regs.pc : 0, p->fault_instruction);
-            if (fault_trace) fprintf(stderr, "fault registers x0=%lx x1=%lx x8=%lx x19=%lx sp=%lx\n",
-                                     state->regs.x[0], state->regs.x[1], state->regs.x[8], state->regs.x[19], state->regs.sp);
+            if (fault_trace)
+                fprintf(stderr, "fault registers x0=%lx x1=%lx x8=%lx x19=%lx sp=%lx\n",
+                        state->regs.x[0], state->regs.x[1], state->regs.x[8], state->regs.x[19], state->regs.sp);
             for (size_t i = 0; i < nce_program_count; ++i) {
                 NceProgram *program = &nce_programs[i];
                 if (state->regs.pc >= program->base && state->regs.pc - program->base < program->span)
                     fprintf(stderr, "guest program=%s offset=%lx\n", program->path, state->regs.pc - program->base);
             }
         }
-        if (result) user_fault(p->fault_address, p->fault_illegal && result == -8);
-        else user_return(-1, 0, 0);
-        ++faults; ++deferred_faults;
+        if (result)
+            user_fault(p->fault_address, p->fault_illegal && result == -8);
+        else
+            user_return(-1, 0, 0);
+        ++faults;
+        ++deferred_faults;
     } else if (p->event_kind == 2) {
         user_preempt();
         ++preemptions;
@@ -354,7 +389,8 @@ static NceState *handle_event(NceState *state)
         user_fault(state->regs.pc, 2);
     } else {
         ++stack_calls;
-        if (p->stack_unmapped && state->regs.x[8] == 93) ++stackless_exits;
+        if (p->stack_unmapped && state->regs.x[8] == 93)
+            ++stackless_exits;
         nce_dispatch(state);
     }
     prepare_resume(state);
@@ -389,7 +425,9 @@ static void fault(int signal, siginfo_t *info, void *opaque)
                 logged_redirect = 1;
             }
             capture_state(&p->state, u);
-            p->event_kind = signal == SIGUSR2 ? 2 : signal == SIGTRAP ? 4 : stub ? 3 : 1;
+            p->event_kind = signal == SIGUSR2 ? 2 : signal == SIGTRAP ? 4
+                                                : stub                ? 3
+                                                                      : 1;
             p->fault_address = address;
             p->fault_write = is_write;
             p->fault_illegal = signal == SIGILL;
@@ -407,7 +445,8 @@ static void fault(int signal, siginfo_t *info, void *opaque)
             return;
         }
     }
-    if (signal == SIGUSR2) return;
+    if (signal == SIGUSR2)
+        return;
     fprintf(stderr, "N2 fatal signal=%d address=%p pc=%lx esr=%x active=%p\n",
             signal, info->si_addr, pc, u->uc_mcontext->__es.__esr, (void *)active);
     _Exit(128 + signal);
@@ -424,7 +463,8 @@ static void user_switch(void *state)
 void nce_process_thread_exit(void)
 {
     REQUIRE(pthread_mutex_lock(&target_mutex) == 0);
-    if (target_thread == pthread_self()) target_thread = NULL;
+    if (target_thread == pthread_self())
+        target_thread = NULL;
     REQUIRE(pthread_mutex_unlock(&target_mutex) == 0);
     this_process = NULL;
 }
@@ -436,7 +476,8 @@ static void *preempt_timer(void *unused)
         struct timespec interval = {.tv_nsec = 2000000};
         nanosleep(&interval, NULL);
         REQUIRE(pthread_mutex_lock(&target_mutex) == 0);
-        if (target_thread) pthread_kill(target_thread, SIGUSR2);
+        if (target_thread)
+            pthread_kill(target_thread, SIGUSR2);
         REQUIRE(pthread_mutex_unlock(&target_mutex) == 0);
     }
     return NULL;
@@ -445,11 +486,14 @@ static void *preempt_timer(void *unused)
 static void *user_clone(void *parent, unsigned long sp, unsigned long tls, unsigned long flags)
 {
     NceState *state = calloc(1, sizeof(Process));
-    if (!state) return NULL;
+    if (!state)
+        return NULL;
     *state = *(NceState *)parent;
     state->regs.x[0] = 0;
-    if (sp) state->regs.sp = sp;
-    if (flags & 0x80000) state->tls = tls;
+    if (sp)
+        state->regs.sp = sp;
+    if (flags & 0x80000)
+        state->tls = tls;
     ++allocated;
     return state;
 }
@@ -463,17 +507,22 @@ static void user_free(void *state)
 static int guest_memory(NceState *state, uintptr_t address, void *buffer, size_t size, int write)
 {
     uintptr_t bad = address;
-    if (address < USER_BASE || address >= USER_BASE + USER_SIZE || size > USER_BASE + USER_SIZE - address) goto fault;
+    if (address < USER_BASE || address >= USER_BASE + USER_SIZE || size > USER_BASE + USER_SIZE - address)
+        goto fault;
     for (uintptr_t p = address; p < address + size; p = (p & ~(PAGE - 1)) + PAGE) {
         bad = p;
-        if (page_fault(p, write)) goto fault;
+        if (page_fault(p, write))
+            goto fault;
     }
-    if (write) memcpy((void *)address, buffer, size);
-    else memcpy(buffer, (void *)address, size);
+    if (write)
+        memcpy((void *)address, buffer, size);
+    else
+        memcpy(buffer, (void *)address, size);
     return 0;
 fault:
-    if (fault_trace) fprintf(stderr, "operand fault pc=%lx address=%lx size=%zu write=%d x0=%lx x8=%lx\n",
-                             state->regs.pc - 4, bad, size, write, state->regs.x[0], state->regs.x[8]);
+    if (fault_trace)
+        fprintf(stderr, "operand fault pc=%lx address=%lx size=%zu write=%d x0=%lx x8=%lx\n",
+                state->regs.pc - 4, bad, size, write, state->regs.x[0], state->regs.x[8]);
     state->regs.pc -= 4;
     user_fault(bad, 0);
     prepare_resume(state);
@@ -482,14 +531,17 @@ fault:
 static void syscall_from_guest(NceState *state)
 {
     long args[6];
-    for (unsigned i = 0; i < 6; ++i) args[i] = state->regs.x[i];
+    for (unsigned i = 0; i < 6; ++i)
+        args[i] = state->regs.x[i];
     long number = state->regs.x[8];
     uintptr_t continuation = state->regs.pc;
     long result = run_syscall(number, args);
-    if (trace) fprintf(stderr, "guest syscall=%ld pc=%lx args=%lx,%lx,%lx,%lx,%lx,%lx result=%lx\n",
-                       number, continuation, args[0], args[1], args[2], args[3], args[4], args[5], result);
+    if (trace)
+        fprintf(stderr, "guest syscall=%ld pc=%lx args=%lx,%lx,%lx,%lx,%lx,%lx result=%lx\n",
+                number, continuation, args[0], args[1], args[2], args[3], args[4], args[5], result);
     if (number == 215 && result == 0 && state->regs.sp >= (uintptr_t)args[0] &&
-        state->regs.sp - (uintptr_t)args[0] < (uintptr_t)args[1]) ((Process *)state)->stack_unmapped = 1;
+        state->regs.sp - (uintptr_t)args[0] < (uintptr_t)args[1])
+        ((Process *)state)->stack_unmapped = 1;
     user_return(number, result, args[0]);
     if (state->regs.pc != continuation) {
         prepare_resume(state);
@@ -515,7 +567,8 @@ static void user_run(void *opaque)
     sigaddset(&preempt_mask, SIGUSR2);
     REQUIRE(pthread_sigmask(SIG_UNBLOCK, &preempt_mask, &inherited_mask) == 0);
     if (sigismember(&inherited_mask, SIGUSR2)) {
-        if (!inherited_preempt_blocks) puts("{\"phase\":\"unblocked_inherited_preemption_signal\"}");
+        if (!inherited_preempt_blocks)
+            puts("{\"phase\":\"unblocked_inherited_preemption_signal\"}");
         ++inherited_preempt_blocks;
     }
     if (!state->regs.sp) {
@@ -531,11 +584,14 @@ static void user_run(void *opaque)
         char *env = path + 64;
         strcpy(path, process->exec_path);
         strcpy(env, "NCE_TEST=userspace");
-        stack[0] = (uintptr_t)path; stack[1] = 0;
-        stack[2] = (uintptr_t)env; stack[3] = 0;
+        stack[0] = (uintptr_t)path;
+        stack[1] = 0;
+        stack[2] = (uintptr_t)env;
+        stack[3] = 0;
         long args[6] = {(long)path, (long)stack, (long)(stack + 2)};
         long result = run_syscall(221, args);
-        if (result) fprintf(stderr, "exec %s failed: %ld\n", process->exec_path, result);
+        if (result)
+            fprintf(stderr, "exec %s failed: %ld\n", process->exec_path, result);
         REQUIRE(result == 0);
     }
     nce_enter(state);
@@ -603,7 +659,8 @@ static void put_file(long (*call)(long, long *), const char *path, const void *d
     REQUIRE(strlen(path) < sizeof(parent));
     strcpy(parent, path);
     for (char *slash = parent + 1; *slash; ++slash) {
-        if (*slash != '/') continue;
+        if (*slash != '/')
+            continue;
         *slash = 0;
         long mkdir_args[6] = {-100, (long)parent, 0755};
         long result = call(34, mkdir_args);
@@ -613,7 +670,9 @@ static void put_file(long (*call)(long, long *), const char *path, const void *d
     long args[6] = {-100, (long)path, 0x242, 0700};
     long fd = call(56, args);
     REQUIRE(fd >= 0);
-    args[0] = fd; args[1] = (long)data; args[2] = size;
+    args[0] = fd;
+    args[1] = (long)data;
+    args[2] = size;
     long written = call(64, args);
     if (written != (long)size)
         fprintf(stderr, "write guest file %s: wrote=%ld expected=%zu\n", path, written, size);
@@ -625,11 +684,15 @@ static long get_file(long (*call)(long, long *), const char *path, char *buffer,
 {
     long args[6] = {-100, (long)path, 0};
     long fd = call(56, args);
-    if (fd < 0) return fd;
-    args[0] = fd; args[1] = (long)buffer; args[2] = size - 1;
+    if (fd < 0)
+        return fd;
+    args[0] = fd;
+    args[1] = (long)buffer;
+    args[2] = size - 1;
     long count = call(63, args);
     REQUIRE(call(57, args) == 0);
-    if (count >= 0) buffer[count] = 0;
+    if (count >= 0)
+        buffer[count] = 0;
     return count;
 }
 
@@ -643,19 +706,30 @@ static void mount_system(long (*call)(long, long *))
     REQUIRE(call(33, args) == 0);
     const char *directories[] = {"/system-image", "/apex", "/system_ext", "/product", "/vendor"};
     for (unsigned i = 0; i < sizeof(directories) / sizeof(*directories); ++i) {
-        args[0] = -100; args[1] = (long)directories[i]; args[2] = 0755;
+        args[0] = -100;
+        args[1] = (long)directories[i];
+        args[2] = 0755;
         REQUIRE(call(34, args) == 0);
     }
-    args[0] = (long)"/dev/ncesystem"; args[1] = (long)"/system-image";
-    args[2] = (long)"ext4"; args[3] = 1; args[4] = 0;
+    args[0] = (long)"/dev/ncesystem";
+    args[1] = (long)"/system-image";
+    args[2] = (long)"ext4";
+    args[3] = 1;
+    args[4] = 0;
     REQUIRE(call(40, args) == 0);
     const char *sources[] = {"/system-image/system", "/system-image/apex", "/system-image/system_ext", "/system-image/product", "/system-image/vendor"};
     const char *targets[] = {"/system", "/apex", "/system_ext", "/product", "/vendor"};
     for (unsigned i = 0; i < sizeof(sources) / sizeof(*sources); ++i) {
-        args[0] = (long)sources[i]; args[1] = (long)targets[i]; args[2] = 0; args[3] = 4096;
+        args[0] = (long)sources[i];
+        args[1] = (long)targets[i];
+        args[2] = 0;
+        args[3] = 4096;
         REQUIRE(call(40, args) == 0);
     }
-    args[0] = -100; args[1] = (long)"/system/write-test"; args[2] = 0x241; args[3] = 0600;
+    args[0] = -100;
+    args[1] = (long)"/system/write-test";
+    args[2] = 0x241;
+    args[3] = 0600;
     REQUIRE(call(56, args) == -30);
     puts("{\"test\":\"android_system_image_readonly\",\"passed\":true}");
 }
@@ -674,9 +748,10 @@ static void memory_report(long (*call)(long, long *), const char *phase)
     struct task_vm_info vm;
     mach_msg_type_number_t count = TASK_VM_INFO_COUNT;
     REQUIRE(task_info(mach_task_self(), TASK_VM_INFO, (task_info_t)&vm, &count) == KERN_SUCCESS);
-    printf("{\"memory\":\"%s\",\"linux_available_kib\":%lu,\"linux_shmem_kib\":%lu,"
-           "\"host_peak_rss_bytes\":%ld,\"host_footprint_bytes\":%llu,\"reclaimed_bytes\":%lu,\"reclaimed_ranges\":%lu}\n",
-           phase, available, shmem, usage.ru_maxrss, vm.phys_footprint, reclaimed_bytes, reclaimed_ranges);
+    printf(
+        "{\"memory\":\"%s\",\"linux_available_kib\":%lu,\"linux_shmem_kib\":%lu,"
+        "\"host_peak_rss_bytes\":%ld,\"host_footprint_bytes\":%llu,\"reclaimed_bytes\":%lu,\"reclaimed_ranges\":%lu}\n",
+        phase, available, shmem, usage.ru_maxrss, vm.phys_footprint, reclaimed_bytes, reclaimed_ranges);
 }
 
 static void mount_android_data(long (*call)(long, long *))
@@ -684,19 +759,29 @@ static void mount_android_data(long (*call)(long, long *))
     long args[6] = {-100, (long)"/data", 0771};
     long result = call(34, args);
     REQUIRE(result == 0 || result == -17);
-    args[0] = (long)"/dev/ncedisk0"; args[1] = (long)"/data";
-    args[2] = (long)"ext4"; args[3] = 1024; args[4] = 0;
+    args[0] = (long)"/dev/ncedisk0";
+    args[1] = (long)"/data";
+    args[2] = (long)"ext4";
+    args[3] = 1024;
+    args[4] = 0;
     REQUIRE(call(40, args) == 0);
-    args[0] = -100; args[1] = (long)"/data"; args[2] = 1000; args[3] = 1000;
+    args[0] = -100;
+    args[1] = (long)"/data";
+    args[2] = 1000;
+    args[3] = 1000;
     REQUIRE(call(54, args) == 0);
     args[2] = 0771;
     REQUIRE(call(53, args) == 0);
-    args[1] = (long)"/data/nce"; args[2] = 0755;
+    args[1] = (long)"/data/nce";
+    args[2] = 0755;
     result = call(34, args);
     REQUIRE(result == 0 || result == -17);
     // Probe flags and generated fixtures start fresh; Android app data persists.
-    args[0] = (long)"tmpfs"; args[1] = (long)"/data/nce";
-    args[2] = (long)"tmpfs"; args[3] = 0; args[4] = (long)"mode=0755";
+    args[0] = (long)"tmpfs";
+    args[1] = (long)"/data/nce";
+    args[2] = (long)"tmpfs";
+    args[3] = 0;
+    args[4] = (long)"mode=0755";
     REQUIRE(call(40, args) == 0);
     puts("{\"test\":\"android_data_ext4_mounted\",\"passed\":true}");
 }
@@ -705,11 +790,15 @@ static void dump_file(long (*call)(long, long *), const char *path)
 {
     long args[6] = {-100, (long)path, 0};
     long fd = call(56, args);
-    if (fd < 0) return;
+    if (fd < 0)
+        return;
     char buffer[4096];
     long count;
-    args[0] = fd; args[1] = (long)buffer; args[2] = sizeof(buffer);
-    while ((count = call(63, args)) > 0) fwrite(buffer, 1, count, stderr);
+    args[0] = fd;
+    args[1] = (long)buffer;
+    args[2] = sizeof(buffer);
+    while ((count = call(63, args)) > 0)
+        fwrite(buffer, 1, count, stderr);
     REQUIRE(call(57, args) == 0);
 }
 
@@ -721,7 +810,7 @@ struct LogPump {
 static void *stream_guest_log(void *opaque)
 {
     struct LogPump *pump = opaque;
-    char buffer[4096];
+    char buffer[65536];
     long offset = 0;
     for (;;) {
         long args[6] = {2, (long)buffer, sizeof(buffer), offset};
@@ -733,22 +822,26 @@ static void *stream_guest_log(void *opaque)
             offset += count;
             continue;
         }
-        if (atomic_load(&pump->stopping)) return NULL;
-        struct timespec delay = {.tv_nsec = 100000000};
+        if (atomic_load(&pump->stopping))
+            return NULL;
+        struct timespec delay = {.tv_sec = 1};
         nanosleep(&delay, NULL);
     }
 }
 
 static void run_program(long (*call)(long, long *), const char *path, const char *input)
 {
-    if (input) put_file(call, "/stdin", input, strlen(input));
+    if (input)
+        put_file(call, "/stdin", input, strlen(input));
     const char *streams[] = {"/stdin", "/stdout", "/stderr"};
     for (long fd = 0; fd < 3; ++fd) {
         long args[6] = {-100, (long)streams[fd], fd ? 0x242 : 0x40, 0600};
         long opened = call(56, args);
         REQUIRE(opened >= 0);
         if (opened != fd) {
-            args[0] = opened; args[1] = fd; args[2] = 0;
+            args[0] = opened;
+            args[1] = fd;
+            args[2] = 0;
             REQUIRE(call(24, args) == fd);
             REQUIRE(call(57, args) == 0);
         }
@@ -761,17 +854,23 @@ static void run_program(long (*call)(long, long *), const char *path, const char
     struct LogPump pump = {.call = call, .stopping = 0};
     bool live_log = !strcmp(path, "/system/bin/android-services-test");
     pthread_t log_thread;
-    if (live_log) REQUIRE(pthread_create(&log_thread, NULL, stream_guest_log, &pump) == 0);
+    if (live_log)
+        REQUIRE(pthread_create(&log_thread, NULL, stream_guest_log, &pump) == 0);
+    if (live_log && getenv("NCE_DESKTOP")) nce_session_set_syscall(call);
     long args[6] = {(long)process, 1};
     long pid = call(246, args);
     REQUIRE(pid > 0);
     int status = -1;
-    args[0] = pid; args[1] = (long)&status; args[2] = 0;
+    args[0] = pid;
+    args[1] = (long)&status;
+    args[2] = 0;
     long waited = call(260, args);
     if (live_log) {
+        nce_session_set_syscall(NULL);
         atomic_store(&pump.stopping, 1);
         REQUIRE(pthread_join(log_thread, NULL) == 0);
-    } else dump_file(call, "/stderr");
+    } else
+        dump_file(call, "/stderr");
     if (status) {
         dump_file(call, "/stdout");
         dump_file(call, "/proc/meminfo");
@@ -779,10 +878,14 @@ static void run_program(long (*call)(long, long *), const char *path, const char
         char messages[16384];
         long logs[6] = {3, (long)messages, sizeof(messages)};
         long bytes = call(116, logs);
-        if (bytes > 0) fwrite(messages, 1, bytes, stderr);
+        if (bytes > 0)
+            fwrite(messages, 1, bytes, stderr);
     }
     REQUIRE(waited == pid && status == 0);
-    for (long fd = 0; fd < 3; ++fd) { args[0] = fd; REQUIRE(call(57, args) == 0); }
+    for (long fd = 0; fd < 3; ++fd) {
+        args[0] = fd;
+        REQUIRE(call(57, args) == 0);
+    }
 }
 
 static void check_program_files(long (*call)(long, long *))
@@ -795,7 +898,10 @@ static void check_program_files(long (*call)(long, long *))
             long args[6] = {-100, (long)p->container, 0};
             long fd = call(56, args);
             REQUIRE(fd >= 0);
-            args[0] = fd; args[1] = (long)bytes; args[2] = p->size; args[3] = p->source_offset;
+            args[0] = fd;
+            args[1] = (long)bytes;
+            args[2] = p->size;
+            args[3] = p->source_offset;
             REQUIRE(call(67, args) == (long)p->size && call(57, args) == 0);
         } else {
             REQUIRE(get_file(call, p->container, (void *)bytes, p->size + 1) == (long)p->size);
@@ -817,10 +923,14 @@ static void reclaim_file_cache(long (*call)(long, long *))
     REQUIRE(line && sscanf(line, "Cached: %lu", &before) == 1);
     long args[6] = {0};
     REQUIRE(call(81, args) == 0);
-    args[0] = -100; args[1] = (long)"/proc/sys/vm/drop_caches"; args[2] = 1;
+    args[0] = -100;
+    args[1] = (long)"/proc/sys/vm/drop_caches";
+    args[2] = 1;
     long fd = call(56, args);
     REQUIRE(fd >= 0);
-    args[0] = fd; args[1] = (long)"3\n"; args[2] = 2;
+    args[0] = fd;
+    args[1] = (long)"3\n";
+    args[2] = 2;
     REQUIRE(call(64, args) == 2 && call(57, args) == 0);
     REQUIRE(get_file(call, "/proc/meminfo", info, sizeof(info)) > 0);
     line = strstr(info, "Cached:");
@@ -837,8 +947,9 @@ static void userspace_tests(long (*call)(long, long *))
     unsigned long previous_preemptions = preemptions;
     REQUIRE(clock_gettime(CLOCK_MONOTONIC_RAW, &begin) == 0);
     put_file(call, "/unregistered-elf", nce_programs[2].file, nce_programs[2].size);
-    const char *script = "/worker check\n/worker check\n/worker check\n/worker check\n"
-                         "/worker check\n/worker check\n/worker check\n/worker check\n";
+    const char *script =
+        "/worker check\n/worker check\n/worker check\n/worker check\n"
+        "/worker check\n/worker check\n/worker check\n/worker check\n";
     put_file(call, "/boot.script", script, strlen(script));
     puts("{\"phase\":\"linux_userspace_tests\"}");
     run_program(call, "/init-user", NULL);
@@ -876,8 +987,13 @@ static void host_input_test(long (*call)(long, long *))
     long args[6] = {1, 2 | 0x80000};
     long fd = call(198, args);
     REQUIRE(fd >= 0);
-    struct { uint16_t family; char path[108]; } address = {1, "/dev/nce-input"};
-    args[0] = fd; args[1] = (long)&address; args[2] = sizeof(address);
+    struct {
+        uint16_t family;
+        char path[108];
+    } address = {1, "/dev/nce-input"};
+    args[0] = fd;
+    args[1] = (long)&address;
+    args[2] = sizeof(address);
     REQUIRE(call(200, args) == 0);
     nce_host_input_start(call);
     pthread_t thread;
@@ -885,7 +1001,10 @@ static void host_input_test(long (*call)(long, long *))
     REQUIRE(pthread_join(thread, NULL) == 0);
     const NceInputCommand expected[] = {{NCE_INPUT_DOWN, 359, 639}, {NCE_INPUT_KEY, 158, 0}};
     NceInputCommand command;
-    args[0] = fd; args[1] = (long)&command; args[2] = sizeof(command); args[3] = 0x40;
+    args[0] = fd;
+    args[1] = (long)&command;
+    args[2] = sizeof(command);
+    args[3] = 0x40;
     for (unsigned i = 0; i < 2; ++i) {
         REQUIRE(call(207, args) == sizeof(command));
         REQUIRE(memcmp(&command, &expected[i], sizeof(command)) == 0);
@@ -895,9 +1014,52 @@ static void host_input_test(long (*call)(long, long *))
     REQUIRE(nce_host_input_send(NCE_INPUT_UP, 359, 639) == -19);
     args[0] = fd;
     REQUIRE(call(57, args) == 0);
-    args[0] = -100; args[1] = (long)address.path; args[2] = 0;
+    args[0] = -100;
+    args[1] = (long)address.path;
+    args[2] = 0;
     REQUIRE(call(35, args) == 0);
     puts("{\"test\":\"linux_host_input_thread_protocol\",\"passed\":true}");
+}
+
+struct HostPoll {
+    long (*call)(long, long *);
+    long fd;
+    double elapsed_ms;
+};
+
+static void *poll_busy_guest(void *opaque)
+{
+    struct HostPoll *probe = opaque;
+    uint32_t state[4] = {0};
+    long args[6] = {0};
+    long fd = probe->fd;
+    struct timespec start, end;
+    REQUIRE(clock_gettime(CLOCK_MONOTONIC_RAW, &start) == 0);
+    for (uint32_t round = 0; round < 32; ++round) {
+        do {
+            args[0] = fd;
+            args[1] = (long)state;
+            args[2] = sizeof(state);
+            args[3] = 0;
+            REQUIRE(probe->call(67, args) == sizeof(state));
+            REQUIRE(clock_gettime(CLOCK_MONOTONIC_RAW, &end) == 0);
+            probe->elapsed_ms = (end.tv_sec - start.tv_sec) * 1000.0 + (end.tv_nsec - start.tv_nsec) / 1e6;
+            REQUIRE(probe->elapsed_ms < 2000);
+            if (!state[0] || state[2] != round) {
+                struct timespec delay = {.tv_nsec = 1000000};
+                nanosleep(&delay, NULL);
+            }
+        } while (!state[0] || state[2] != round);
+        uint32_t request = round + 1;
+        args[0] = fd;
+        args[1] = (long)&request;
+        args[2] = sizeof(request);
+        args[3] = 4;
+        REQUIRE(probe->call(68, args) == sizeof(request));
+    }
+    args[0] = fd;
+    REQUIRE(probe->call(57, args) == 0);
+    return NULL;
 }
 
 void nce_process_tests(long (*host_syscall)(long, long *), long (*guest_syscall)(long, long *),
@@ -921,30 +1083,48 @@ void nce_process_tests(long (*host_syscall)(long, long *), long (*guest_syscall)
     }
     long mount_args[6] = {(long)"proc", (long)"/proc", (long)"proc", 0, 0};
     REQUIRE(host_syscall(40, mount_args) == 0);
-    mount_args[0] = (long)"sysfs"; mount_args[1] = (long)"/sys"; mount_args[2] = (long)"sysfs";
+    mount_args[0] = (long)"sysfs";
+    mount_args[1] = (long)"/sys";
+    mount_args[2] = (long)"sysfs";
     REQUIRE(host_syscall(40, mount_args) == 0);
-    mount_args[0] = (long)"selinuxfs"; mount_args[1] = (long)"/sys/fs/selinux"; mount_args[2] = (long)"selinuxfs";
+    mount_args[0] = (long)"selinuxfs";
+    mount_args[1] = (long)"/sys/fs/selinux";
+    mount_args[2] = (long)"selinuxfs";
     REQUIRE(host_syscall(40, mount_args) == 0);
     long link_args[6] = {(long)"/system/bin/linker64", -100, (long)"/system/bin/bootstrap/linker64"};
     REQUIRE(host_syscall(36, link_args) == 0);
     long null_args[6] = {-100, (long)"/dev/null", 0020666, 259};
     REQUIRE(host_syscall(33, null_args) == 0);
-    null_args[1] = (long)"/dev/kmsg"; null_args[3] = 267;
+    null_args[1] = (long)"/dev/kmsg";
+    null_args[3] = 267;
     REQUIRE(host_syscall(33, null_args) == 0);
-    null_args[1] = (long)"/dev/random"; null_args[3] = 264;
+    null_args[1] = (long)"/dev/random";
+    null_args[3] = 264;
     REQUIRE(host_syscall(33, null_args) == 0);
-    null_args[1] = (long)"/dev/urandom"; null_args[3] = 265;
+    null_args[1] = (long)"/dev/urandom";
+    null_args[3] = 265;
     REQUIRE(host_syscall(33, null_args) == 0);
-    struct { int entropy_bits, bytes; unsigned char data[32]; } entropy = {256, 32, {0}};
+    for (const char **path = (const char *[]){"/dev/null", "/dev/random", "/dev/urandom", NULL}; *path; ++path) {
+        long mode_args[6] = {-100, (long)*path, 0666};
+        REQUIRE(host_syscall(53, mode_args) == 0);
+    }
+    struct {
+        int entropy_bits, bytes;
+        unsigned char data[32];
+    } entropy = {256, 32, {0}};
     arc4random_buf(entropy.data, sizeof(entropy.data));
     long random_args[6] = {-100, (long)"/dev/random", 2};
     long random_fd = host_syscall(56, random_args);
     REQUIRE(random_fd >= 0);
-    random_args[0] = random_fd; random_args[1] = 0x40085203; random_args[2] = (long)&entropy;
+    random_args[0] = random_fd;
+    random_args[1] = 0x40085203;
+    random_args[2] = (long)&entropy;
     REQUIRE(host_syscall(29, random_args) == 0);
     REQUIRE(host_syscall(57, random_args) == 0);
     memset(entropy.data, 0, sizeof(entropy.data));
-    random_args[0] = (long)entropy.data; random_args[1] = sizeof(entropy.data); random_args[2] = 1;
+    random_args[0] = (long)entropy.data;
+    random_args[1] = sizeof(entropy.data);
+    random_args[2] = 1;
     REQUIRE(host_syscall(278, random_args) == sizeof(entropy.data));
     puts("{\"test\":\"linux_random_initialized\",\"passed\":true}");
     mount_system(host_syscall);
@@ -979,9 +1159,13 @@ void nce_process_tests(long (*host_syscall)(long, long *), long (*guest_syscall)
         long pid = host_syscall(246, args);
         REQUIRE(pid > 0);
         int status = -1;
-        args[0] = pid; args[1] = (long)&status; args[2] = 0; args[3] = 0;
+        args[0] = pid;
+        args[1] = (long)&status;
+        args[2] = 0;
+        args[3] = 0;
         long waited = host_syscall(260, args);
-        if (status) fprintf(stderr, "round=%u pid=%ld waited=%ld status=%d\n", round, pid, waited, status);
+        if (status)
+            fprintf(stderr, "round=%u pid=%ld waited=%ld status=%d\n", round, pid, waited, status);
         REQUIRE(waited == pid && status == 0);
     }
     REQUIRE(clock_gettime(CLOCK_MONOTONIC_RAW, &end) == 0);
@@ -990,12 +1174,16 @@ void nce_process_tests(long (*host_syscall)(long, long *), long (*guest_syscall)
     printf("{\"test\":\"linux_nce_fork_cow_shared_futex_pipe_exec_wait\",\"passed\":true,\"rounds\":%u,\"faults\":%lu,\"elapsed_ms\":%.3f}\n", rounds, faults, elapsed_ms);
     REQUIRE(faults >= rounds);
     puts("{\"test\":\"linux_exec_then_fork_cow_wait\",\"passed\":true}");
-    file_args[0] = -100; file_args[1] = (long)"/nce-exec"; file_args[2] = 0;
+    file_args[0] = -100;
+    file_args[1] = (long)"/nce-exec";
+    file_args[2] = 0;
     fd = host_syscall(56, file_args);
     REQUIRE(fd >= 0);
     unsigned char *original = malloc(exec_size);
     REQUIRE(original);
-    file_args[0] = fd; file_args[1] = (long)original; file_args[2] = exec_size;
+    file_args[0] = fd;
+    file_args[1] = (long)original;
+    file_args[2] = exec_size;
     REQUIRE(host_syscall(63, file_args) == (long)exec_size);
     REQUIRE(memcmp(original, exec_elf, exec_size) == 0);
     free(original);
@@ -1042,6 +1230,25 @@ void nce_process_tests(long (*host_syscall)(long, long *), long (*guest_syscall)
     REQUIRE(strstr(benchmark, "linux_ext4_persistence"));
     fputs(benchmark, stdout);
     mount_android_data(host_syscall);
+    uint32_t host_poll_state[4] = {0};
+    put_file(host_syscall, "/data/nce/host-scheduling", host_poll_state, sizeof(host_poll_state));
+    struct HostPoll host_poll = {.call = host_syscall};
+    long poll_args[6] = {-100, (long)"/data/nce/host-scheduling", 2};
+    long poll_file = host_syscall(56, poll_args);
+    REQUIRE(poll_file >= 0);
+    poll_args[0] = poll_file;
+    poll_args[1] = 1030;
+    poll_args[2] = 16;
+    host_poll.fd = host_syscall(25, poll_args);
+    REQUIRE(host_poll.fd >= 16 && host_syscall(57, poll_args) == 0);
+    pthread_t host_poll_thread;
+    REQUIRE(pthread_create(&host_poll_thread, NULL, poll_busy_guest, &host_poll) == 0);
+    run_program(host_syscall, "/host-poll-test", NULL);
+    REQUIRE(pthread_join(host_poll_thread, NULL) == 0);
+    REQUIRE(get_file(host_syscall, "/stdout", benchmark, sizeof(benchmark)) > 0);
+    REQUIRE(strstr(benchmark, "linux_busy_guest_host_requests"));
+    fputs(benchmark, stdout);
+    printf("{\"benchmark\":\"linux_busy_guest_host_requests\",\"elapsed_ms\":%.3f}\n", host_poll.elapsed_ms);
     puts("{\"phase\":\"linux_binder_program\"}");
     run_program(host_syscall, "/binder-test", NULL);
     REQUIRE(get_file(host_syscall, "/stdout", benchmark, sizeof(benchmark)) > 0);
@@ -1121,7 +1328,9 @@ void nce_process_tests(long (*host_syscall)(long, long *), long (*guest_syscall)
         fputs(benchmark, stdout);
     }
     memory_report(host_syscall, "after_art");
-    if (getenv("NCE_SYSTEM_SERVER_PROBE")) put_file(host_syscall, "/data/nce/system-server-probe", "", 0);
+    if (getenv("NCE_DESKTOP")) put_file(host_syscall, "/data/nce/desktop-session", "", 0);
+    if (getenv("NCE_SYSTEM_SERVER_PROBE") || getenv("NCE_DESKTOP"))
+        put_file(host_syscall, "/data/nce/system-server-probe", "", 0);
     puts("{\"phase\":\"android_platform_services\"}");
     nce_host_input_start(host_syscall);
     run_program(host_syscall, "/system/bin/android-services-test", NULL);
@@ -1134,9 +1343,8 @@ void nce_process_tests(long (*host_syscall)(long, long *), long (*guest_syscall)
     REQUIRE(strstr(benchmark, "android_system_suspend_wakelocks"));
     REQUIRE(strstr(benchmark, "android_installd_app_data"));
     REQUIRE(strstr(benchmark, "android_apex_registry"));
-    REQUIRE(strstr(benchmark, getenv("NCE_SYSTEM_SERVER_PROBE") ?
-                   "android_system_server_services" : "android_zygote_command_server"));
-    if (getenv("NCE_SYSTEM_SERVER_PROBE")) {
+    REQUIRE(strstr(benchmark, (getenv("NCE_SYSTEM_SERVER_PROBE") || getenv("NCE_DESKTOP")) ? "android_system_process_groups_stopped" : "android_zygote_command_server"));
+    if (getenv("NCE_SYSTEM_SERVER_PROBE") && !getenv("NCE_DESKTOP")) {
         REQUIRE(strstr(benchmark, "android_system_boot_completed"));
         REQUIRE(strstr(benchmark, "android_desktop_launch_commands"));
         REQUIRE(strstr(benchmark, "android_system_process_groups_stopped"));
@@ -1157,7 +1365,7 @@ void nce_process_tests(long (*host_syscall)(long, long *), long (*guest_syscall)
         FILE *graphics = fopen(graphics_path, "wb");
         REQUIRE(graphics && fwrite(benchmark, 1, bytes, graphics) == (size_t)bytes);
         REQUIRE(fclose(graphics) == 0);
-        if (getenv("NCE_SYSTEM_SERVER_PROBE")) {
+        if (getenv("NCE_SYSTEM_SERVER_PROBE") && !getenv("NCE_DESKTOP")) {
             const char *names[] = {"launcher", "clock", "files"};
             size_t capacity = 2 * 1024 * 1024;
             char *pixels = malloc(capacity);
@@ -1179,10 +1387,13 @@ void nce_process_tests(long (*host_syscall)(long, long *), long (*guest_syscall)
     long reclaim_args[6] = {-100, (long)"/proc/sys/vm/drop_caches", 1};
     long reclaim_fd = host_syscall(56, reclaim_args);
     REQUIRE(reclaim_fd >= 0);
-    reclaim_args[0] = reclaim_fd; reclaim_args[1] = (long)"3\n"; reclaim_args[2] = 2;
+    reclaim_args[0] = reclaim_fd;
+    reclaim_args[1] = (long)"3\n";
+    reclaim_args[2] = 2;
     REQUIRE(host_syscall(64, reclaim_args) == 2 && host_syscall(57, reclaim_args) == 0);
     struct timespec reclaim_delay = {3, 0};
-    reclaim_args[0] = (long)&reclaim_delay; reclaim_args[1] = 0;
+    reclaim_args[0] = (long)&reclaim_delay;
+    reclaim_args[1] = 0;
     REQUIRE(host_syscall(101, reclaim_args) == 0 && reclaimed_ranges > 0);
     memory_report(host_syscall, "after_host_reclaim");
     run_program(host_syscall, "/reclaim-test", NULL);
@@ -1195,10 +1406,13 @@ void nce_process_tests(long (*host_syscall)(long, long *), long (*guest_syscall)
     REQUIRE(log_size > 0);
     char *messages = calloc(1, log_size + 1);
     REQUIRE(messages);
-    log_args[0] = 3; log_args[1] = (long)messages; log_args[2] = log_size;
+    log_args[0] = 3;
+    log_args[1] = (long)messages;
+    log_args[2] = log_size;
     REQUIRE(host_syscall(116, log_args) >= 0);
     int warnings = strstr(messages, "WARNING:") || strstr(messages, "BUG:") || strstr(messages, "Bad page");
-    if (warnings) fputs(messages, stderr);
+    if (warnings)
+        fputs(messages, stderr);
     free(messages);
     REQUIRE(!warnings);
     puts("{\"test\":\"linux_kernel_warnings\",\"passed\":true}");
@@ -1213,7 +1427,8 @@ void nce_process_cleanup(void)
     REQUIRE(sigaction(SIGILL, &old_ill, NULL) == 0);
     REQUIRE(sigaction(SIGTRAP, &old_trap, NULL) == 0);
     REQUIRE(munmap(ram, ram_size) == 0);
-    if (dynamic_cache.source_cache) REQUIRE(munmap(dynamic_cache.source_cache, dynamic_cache.size) == 0);
+    if (dynamic_cache.source_cache)
+        REQUIRE(munmap(dynamic_cache.source_cache, dynamic_cache.size) == 0);
     free(dynamic_cache.cache_prot);
     dynamic_cache = (NceSegment){0};
     /* The virtual address reservation and code belong to memory.c. */

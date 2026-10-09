@@ -20,7 +20,7 @@ These are patches against QEMU, pixman and libslirp, so they carry those
 projects' licences rather than UTM's own Apache-2.0 — the QEMU patch is
 GPL-2.0. This distinction matters: UTM's *application* code is Apache-2.0, which
 is incompatible with GPLv2 and must not be copied into Husk. See
-`.agents/notes/implemented/process/2026-09-11-许可与分发.md`.
+[the licensing record](../.agents/notes/implemented/process/2026-09-11-许可与分发.md).
 
 UTM's build script (`scripts/build_dependencies.sh`), which Husk's
 `scripts/build_ios.sh` borrows its toolchain setup from, is ISC-licensed

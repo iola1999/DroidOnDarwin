@@ -12,7 +12,7 @@
 
 #include <stdbool.h>
 
-#include "husk-tl-gameactivity.h"          /* tl_ga_config: the same description of the game and its surface */
+#include "husk-tl-gameactivity.h" /* tl_ga_config: the same description of the game and its surface */
 
 #ifdef __cplusplus
 extern "C" {

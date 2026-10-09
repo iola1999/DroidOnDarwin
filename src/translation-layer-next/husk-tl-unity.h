@@ -18,13 +18,13 @@ extern "C" {
 
 typedef struct tl_unity_config {
     const char *apk_path;
-    const char *data_dir;        /* writable app data directory */
-    const char *package_name;    /* e.g. com.kiloo.subwaysurf */
-    int width, height;           /* screen size in pixels */
-    void *metal_layer;           /* CAMetalLayer to present into, or NULL (offscreen/host) */
-    const char *angle_egl;       /* path to ANGLE's libEGL (or the single ANGLE dylib on the phone) */
-    const char *angle_gles;      /* path to ANGLE's libGLESv2, or NULL */
-    const char *frame_dir;       /* host tests: write frames here instead of presenting */
+    const char *data_dir; /* writable app data directory */
+    const char *package_name; /* e.g. com.kiloo.subwaysurf */
+    int width, height; /* screen size in pixels */
+    void *metal_layer; /* CAMetalLayer to present into, or NULL (offscreen/host) */
+    const char *angle_egl; /* path to ANGLE's libEGL (or the single ANGLE dylib on the phone) */
+    const char *angle_gles; /* path to ANGLE's libGLESv2, or NULL */
+    const char *frame_dir; /* host tests: write frames here instead of presenting */
     int frame_every;
 } tl_unity_config;
 
@@ -46,7 +46,9 @@ void tl_unity_register_pad_sink(void);
 void tl_unity_touch(int phase, int id, float x, float y);
 
 /* How the last stretch went: frames per second, and the mean and worst time inside one nativeRender call. Resets what it measured. */
-typedef struct tl_unity_perf { double fps, mean_ms, max_ms; } tl_unity_perf;
+typedef struct tl_unity_perf {
+    double fps, mean_ms, max_ms;
+} tl_unity_perf;
 void tl_unity_perf_snapshot(tl_unity_perf *out);
 
 /* Pause the engine the way UnityPlayer.onPause does (and resume it). Safe from any thread. */

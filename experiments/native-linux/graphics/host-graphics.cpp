@@ -10,7 +10,13 @@
 #include <vector>
 
 using Channel = gfxstream::RenderChannel;
-#define CHECK(c) do { if (!(c)) { std::fprintf(stderr, "host-graphics:%d: %s\n", __LINE__, #c); std::abort(); } } while (0)
+#define CHECK(c) \
+    do { \
+        if (!(c)) { \
+            std::fprintf(stderr, "host-graphics:%d: %s\n", __LINE__, #c); \
+            std::abort(); \
+        } \
+    } while (0)
 static long (*linux_call)(long, long *);
 static gfxstream::RenderLibPtr library;
 static gfxstream::RendererPtr renderer;
@@ -39,17 +45,20 @@ struct Connection {
     std::thread reader;
     std::atomic<bool> done{false};
 
-    explicit Connection(long socket) : fd(socket) {
+    explicit Connection(long socket) : fd(socket)
+    {
         ++opened;
         reader = std::thread([this] { run(); });
     }
-    ~Connection() {
+    ~Connection()
+    {
         call(210, fd, 2);
         reader.join();
         CHECK(call(57, fd) == 0);
         ++closed;
     }
-    void output() {
+    void output()
+    {
         Channel::Buffer packet;
         for (;;) {
             auto result = channel->tryRead(&packet);
@@ -57,55 +66,70 @@ struct Connection {
                 channel->waitUntilReadable();
                 continue;
             }
-            if (result != Channel::IoResult::Ok) break;
+            if (result != Channel::IoResult::Ok)
+                break;
             size_t offset = 0;
             while (offset < packet.size()) {
                 long count = call(64, fd, (long)(packet.data() + offset), packet.size() - offset);
-                if (count == -4) continue;
-                if (count <= 0) return;
+                if (count == -4)
+                    continue;
+                if (count <= 0)
+                    return;
                 offset += count;
             }
         }
     }
-    bool transfer(void *data, size_t length, bool write) {
+    bool transfer(void *data, size_t length, bool write)
+    {
         size_t offset = 0;
         while (offset < length) {
             long count = call(write ? 64 : 63, fd, (long)((char *)data + offset), length - offset);
-            if (count == -4) continue;
-            if (count <= 0) return false;
+            if (count == -4)
+                continue;
+            if (count <= 0)
+                return false;
             offset += count;
         }
         return true;
     }
-    bool connect() {
+    bool connect()
+    {
         char service[128] = {};
-        if (!transfer(service, 4, false)) return false;
+        if (!transfer(service, 4, false))
+            return false;
         bool raw = !memcmp(service, "\0\0\0\0", 4);
         if (!raw) {
             size_t size = 4;
             while (size < sizeof(service) && service[size - 1]) {
-                if (!transfer(service + size, 1, false)) return false;
+                if (!transfer(service + size, 1, false))
+                    return false;
                 ++size;
             }
-            if (service[size - 1]) return false;
+            if (service[size - 1])
+                return false;
             if (!strcmp(service, "pipe:refcount")) {
                 uint32_t handle;
-                if (!transfer(&handle, sizeof(handle), false)) return false;
+                if (!transfer(&handle, sizeof(handle), false))
+                    return false;
                 char byte;
                 long count;
-                do { count = call(63, fd, (long)&byte, 1); } while (count == -4);
+                do {
+                    count = call(63, fd, (long)&byte, 1);
+                } while (count == -4);
                 library->getOnLastColorBufferRef()(handle);
                 return false;
             }
             if (!strcmp(service, "pipe:GLProcessPipe")) {
                 int confirmation;
-                if (!transfer(&confirmation, sizeof(confirmation), false) || confirmation != 100) return false;
+                if (!transfer(&confirmation, sizeof(confirmation), false) || confirmation != 100)
+                    return false;
                 uint64_t id = next_process.fetch_add(1);
                 renderer->onGuestGraphicsProcessCreate(id);
                 if (transfer(&id, sizeof(id), true)) {
                     char byte;
                     /* The descriptor lifetime owns this guest process's GL resources. */
-                    while (call(63, fd, (long)&byte, 1) == -4) {}
+                    while (call(63, fd, (long)&byte, 1) == -4) {
+                    }
                 }
                 renderer->cleanupProcGLObjects(id);
                 return false;
@@ -125,20 +149,28 @@ struct Connection {
         }
         return true;
     }
-    void run() {
-        if (!connect()) { call(210, fd, 2); done.store(true); return; }
+    void run()
+    {
+        if (!connect()) {
+            call(210, fd, 2);
+            done.store(true);
+            return;
+        }
         std::thread writer([this] { output(); call(210, fd, 2); });
         for (;;) {
             Channel::Buffer packet;
             packet.resize(65536);
             long count = call(63, fd, (long)packet.data(), packet.size());
-            if (count == -4) continue;
-            if (count <= 0) break;
+            if (count == -4)
+                continue;
+            if (count <= 0)
+                break;
             packet.resize(count);
             Channel::IoResult result;
             while ((result = channel->tryWrite(std::move(packet))) == Channel::IoResult::TryAgain)
                 channel->waitUntilWritable();
-            if (result != Channel::IoResult::Ok) break;
+            if (result != Channel::IoResult::Ok)
+                break;
         }
         channel->stop();
         call(210, fd, 2);
@@ -170,7 +202,10 @@ int nce_graphics_start(long (*linux_syscall)(long, long *))
         std::puts("{\"test\":\"native_metal_display_created\",\"passed\":true}");
     }
     /* Linux sockaddr_un has a 16-bit family; Darwin's layout also has a length byte. */
-    struct { unsigned short family; char path[108]; } address = {1, "/dev/nce-render"};
+    struct {
+        unsigned short family;
+        char path[108];
+    } address = {1, "/dev/nce-render"};
     listener = call(198, 1, 1 | 0x80000, 0);
     CHECK(listener >= 0);
     /* The launcher replaces descriptors 0..2 for each guest program. */
@@ -185,20 +220,31 @@ int nce_graphics_start(long (*linux_syscall)(long, long *))
     accept_thread = std::thread([] {
         std::vector<std::unique_ptr<Connection>> connections;
         while (!stopping.load()) {
-            struct { int fd; short events, revents; } pollfd = {(int)listener, 1, 0};
-            struct { long seconds, nanoseconds; } interval = {0, 100000000};
+            struct {
+                int fd;
+                short events, revents;
+            } pollfd = {(int)listener, 1, 0};
+            struct {
+                long seconds, nanoseconds;
+            } interval = {0, 100000000};
             long ready = call(73, (long)&pollfd, 1, (long)&interval, 0);
-            if (ready == -4) continue;
+            if (ready == -4)
+                continue;
             CHECK(ready >= 0);
-            if (stopping.load()) break;
+            if (stopping.load())
+                break;
             if (ready && (pollfd.revents & 1)) {
                 long fd = call(242, listener, 0, 0, 0x80000);
-                if (fd >= 0) connections.push_back(std::make_unique<Connection>(fd));
-                else CHECK(fd == -4 || stopping.load());
+                if (fd >= 0)
+                    connections.push_back(std::make_unique<Connection>(fd));
+                else
+                    CHECK(fd == -4 || stopping.load());
             }
             for (auto it = connections.begin(); it != connections.end();) {
-                if ((*it)->done.load()) it = connections.erase(it);
-                else ++it;
+                if ((*it)->done.load())
+                    it = connections.erase(it);
+                else
+                    ++it;
             }
         }
     });

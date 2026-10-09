@@ -15,7 +15,13 @@
 #include <ucontext.h>
 #include <unistd.h>
 
-#define CHECK(c) do { if (!(c)) { dprintf(2, "signal-tests:%d errno=%d\n", __LINE__, errno); _exit(__LINE__); } } while (0)
+#define CHECK(c) \
+    do { \
+        if (!(c)) { \
+            dprintf(2, "signal-tests:%d errno=%d\n", __LINE__, errno); \
+            _exit(__LINE__); \
+        } \
+    } while (0)
 static volatile sig_atomic_t received, nested, faulted, alarmed;
 static unsigned char *alternate, *guard;
 static int bad_frame;
@@ -35,12 +41,18 @@ static void handler(int signal, siginfo_t *info, void *context)
         sigset_t mask;
         CHECK(sigprocmask(SIG_SETMASK, NULL, &mask) == 0 && sigismember(&mask, SIGUSR1));
         ++received;
-        if (bad_frame == 1) uc->uc_mcontext.pc |= 1;
-        else if (bad_frame == 2) fp->head.magic = 0;
-        else if (bad_frame == 3) ((struct _aarch64_ctx *)(fp + 1))->size = 16;
-        else if (bad_frame == 4) uc->uc_mcontext.sp |= 1;
-        else CHECK(raise(SIGUSR2) == 0);
-    } else if (signal == SIGUSR2) ++nested;
+        if (bad_frame == 1)
+            uc->uc_mcontext.pc |= 1;
+        else if (bad_frame == 2)
+            fp->head.magic = 0;
+        else if (bad_frame == 3)
+            ((struct _aarch64_ctx *)(fp + 1))->size = 16;
+        else if (bad_frame == 4)
+            uc->uc_mcontext.sp |= 1;
+        else
+            CHECK(raise(SIGUSR2) == 0);
+    } else if (signal == SIGUSR2)
+        ++nested;
     else if (signal == SIGSEGV) {
         CHECK(info->si_addr == guard && info->si_code == SEGV_ACCERR);
         CHECK(mprotect(guard, 16384, PROT_READ | PROT_WRITE) == 0);
@@ -49,7 +61,8 @@ static void handler(int signal, siginfo_t *info, void *context)
         CHECK(info->si_code == ILL_ILLOPC && (uintptr_t)info->si_addr == uc->uc_mcontext.pc);
         uc->uc_mcontext.pc += 4;
         ++faulted;
-    } else CHECK(0);
+    } else
+        CHECK(0);
 }
 
 static void install(int signal, int flags)
@@ -59,7 +72,9 @@ static void install(int signal, int flags)
     CHECK(sigaction(signal, &action, NULL) == 0);
 }
 
-struct send_request { int write_fd, delay; };
+struct send_request {
+    int write_fd, delay;
+};
 static void *send_signal(void *opaque)
 {
     struct send_request *request = opaque;
@@ -84,8 +99,10 @@ static void interrupted_read(int restart)
     CHECK(pthread_create(&sender, NULL, send_signal, &request) == 0);
     char byte;
     ssize_t count = read(pipefd[0], &byte, 1);
-    if (restart) CHECK(count == 1 && byte == 's');
-    else CHECK(count == -1 && errno == EINTR);
+    if (restart)
+        CHECK(count == 1 && byte == 's');
+    else
+        CHECK(count == -1 && errno == EINTR);
     CHECK(pthread_join(sender, NULL) == 0);
     CHECK(close(pipefd[0]) == 0 && close(pipefd[1]) == 0);
 }
@@ -113,7 +130,8 @@ void signal_tests(const char *libc)
     CHECK(alternate != MAP_FAILED);
     stack_t stack = {.ss_sp = alternate, .ss_size = 65536};
     CHECK(sigaltstack(&stack, NULL) == 0);
-    install(SIGUSR1, 0); install(SIGUSR2, 0);
+    install(SIGUSR1, 0);
+    install(SIGUSR2, 0);
     CHECK(raise(SIGUSR1) == 0 && received == 1 && nested == 1);
     sigset_t mask, pending;
     CHECK(sigemptyset(&mask) == 0 && sigaddset(&mask, SIGUSR1) == 0);
@@ -131,7 +149,8 @@ void signal_tests(const char *libc)
     CHECK(signal_register_test(getpid()) == 0);
     puts("{\"test\":\"linux_signal_register_restore\",\"passed\":true}");
 
-    interrupted_read(0); interrupted_read(1);
+    interrupted_read(0);
+    interrupted_read(1);
     install(SIGUSR1, 0);
     struct send_request request = {.write_fd = -1, .delay = 3};
     pthread_t sender;
@@ -148,7 +167,8 @@ void signal_tests(const char *libc)
 
     guard = mmap(NULL, 16384, PROT_NONE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
     CHECK(guard != MAP_FAILED);
-    install(SIGSEGV, 0); install(SIGILL, 0);
+    install(SIGSEGV, 0);
+    install(SIGILL, 0);
     *(volatile unsigned char *)guard = 42;
     CHECK(guard[0] == 42 && faulted == 1);
     __asm__ volatile(".inst 0");
@@ -171,7 +191,8 @@ void signal_tests(const char *libc)
     pid_t child = fork();
     CHECK(child >= 0);
     if (!child) {
-        for (;;) __asm__ volatile("" ::: "memory");
+        for (;;)
+            __asm__ volatile("" ::: "memory");
     }
     CHECK(kill(child, SIGSTOP) == 0);
     CHECK(waitpid(child, &status, WUNTRACED) == child && WIFSTOPPED(status));
@@ -195,7 +216,8 @@ void signal_tests(const char *libc)
     CHECK(signal(SIGALRM, tick) != SIG_ERR);
     struct itimerval timer = {.it_value.tv_usec = 5000};
     CHECK(setitimer(ITIMER_REAL, &timer, NULL) == 0);
-    while (!alarmed) __asm__ volatile("" ::: "memory");
+    while (!alarmed)
+        __asm__ volatile("" ::: "memory");
     puts("{\"test\":\"linux_signal_timer_preemption\",\"passed\":true}");
     const int signals[] = {SIGUSR1, SIGUSR2, SIGSEGV, SIGILL, SIGALRM};
     for (unsigned i = 0; i < sizeof(signals) / sizeof(signals[0]); ++i)

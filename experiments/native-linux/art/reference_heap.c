@@ -26,7 +26,10 @@ void nce_art_invalid_reference(const void *pointer)
     abort();
 }
 
-static int used(size_t page) { return (occupied[page / 8] >> (page % 8)) & 1; }
+static int used(size_t page)
+{
+    return (occupied[page / 8] >> (page % 8)) & 1;
+}
 static void set_used(size_t page, int value)
 {
     unsigned mask = 1u << (page % 8);
@@ -79,7 +82,10 @@ void *nce_art_heap_map(void *address, size_t length, int prot, int flags, int fd
         size_t consecutive = 0, page;
         for (page = 1; page < HEAP_SIZE / page_size; ++page) {
             consecutive = used(page) ? 0 : consecutive + 1;
-            if (consecutive == count) { first = page + 1 - count; break; }
+            if (consecutive == count) {
+                first = page + 1 - count;
+                break;
+            }
         }
         if (page == HEAP_SIZE / page_size) {
             pthread_mutex_unlock(&heap_lock);
@@ -99,7 +105,8 @@ void *nce_art_heap_map(void *address, size_t length, int prot, int flags, int fd
     void *result = mmap((void *)(nce_art_reference_base + first * page_size), length,
                         prot, (flags & ~MAP_FIXED_NOREPLACE) | MAP_FIXED, fd, offset);
     if (result != MAP_FAILED) {
-        for (size_t page = first; page < first + count; ++page) set_used(page, 1);
+        for (size_t page = first; page < first + count; ++page)
+            set_used(page, 1);
     }
     pthread_mutex_unlock(&heap_lock);
     return result;
@@ -117,7 +124,8 @@ int nce_art_heap_unmap(void *address, size_t length)
     void *result = mmap(address, length, PROT_NONE, MAP_FIXED | MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
     if (result != MAP_FAILED) {
         size_t first = ((uintptr_t)address - nce_art_reference_base) / page_size;
-        for (size_t page = first; page < first + length / page_size; ++page) set_used(page, 0);
+        for (size_t page = first; page < first + length / page_size; ++page)
+            set_used(page, 0);
     }
     pthread_mutex_unlock(&heap_lock);
     return result == MAP_FAILED ? -1 : 0;

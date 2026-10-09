@@ -20,13 +20,13 @@ extern "C" {
 
 typedef struct tl_ga_config {
     const char *apk_path;
-    const char *data_dir;        /* writable app data directory */
-    const char *package_name;    /* com.mojang.minecraftpe */
-    int width, height;           /* surface size in pixels (a landscape game: width > height) */
-    void *metal_layer;           /* CAMetalLayer to present into, or NULL (offscreen/host) */
-    const char *angle_egl;       /* path to ANGLE's libEGL (or the single ANGLE dylib on the phone) */
-    const char *angle_gles;      /* path to ANGLE's libGLESv2, or NULL */
-    const char *frame_dir;       /* host tests: write frames here instead of presenting */
+    const char *data_dir; /* writable app data directory */
+    const char *package_name; /* com.mojang.minecraftpe */
+    int width, height; /* surface size in pixels (a landscape game: width > height) */
+    void *metal_layer; /* CAMetalLayer to present into, or NULL (offscreen/host) */
+    const char *angle_egl; /* path to ANGLE's libEGL (or the single ANGLE dylib on the phone) */
+    const char *angle_gles; /* path to ANGLE's libGLESv2, or NULL */
+    const char *frame_dir; /* host tests: write frames here instead of presenting */
     int frame_every;
 } tl_ga_config;
 

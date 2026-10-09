@@ -26,12 +26,14 @@ static void caught(int signal, siginfo_t *info, void *opaque)
         siglongjmp(check.resume, 1);
     }
     for (unsigned i = 0; i < 3; ++i) {
-        if (signals[i] != signal) continue;
+        if (signals[i] != signal)
+            continue;
         if (previous[i].sa_flags & SA_SIGINFO) {
             previous[i].sa_sigaction(signal, info, opaque);
             return;
         }
-        if (previous[i].sa_handler == SIG_IGN) return;
+        if (previous[i].sa_handler == SIG_IGN)
+            return;
         if (previous[i].sa_handler != SIG_DFL) {
             previous[i].sa_handler(signal);
             return;
@@ -45,12 +47,14 @@ static void caught(int signal, siginfo_t *info, void *opaque)
 int nce_check_execute(NceCode code, int expected)
 {
     sigset_t mask;
-    if (pthread_sigmask(SIG_BLOCK, NULL, &mask)) return -1;
+    if (pthread_sigmask(SIG_BLOCK, NULL, &mask))
+        return -1;
     struct sigaction action = {.sa_sigaction = caught, .sa_flags = SA_SIGINFO};
     sigemptyset(&action.sa_mask);
     unsigned installed = 0;
     for (; installed < 3; ++installed)
-        if (sigaction(signals[installed], &action, &previous[installed])) break;
+        if (sigaction(signals[installed], &action, &previous[installed]))
+            break;
     volatile int result = -1;
     check.start = (uintptr_t)code.rx;
     check.end = check.start + code.size;
@@ -63,8 +67,10 @@ int nce_check_execute(NceCode code, int expected)
         result = call() == expected ? 0 : -1;
     }
     check.running = 0;
-    for (unsigned i = 0; i < installed; ++i) sigaction(signals[i], &previous[i], NULL);
-    if (pthread_sigmask(SIG_SETMASK, &mask, NULL)) result = -1;
+    for (unsigned i = 0; i < installed; ++i)
+        sigaction(signals[i], &previous[i], NULL);
+    if (pthread_sigmask(SIG_SETMASK, &mask, NULL))
+        result = -1;
     if (check.signal)
         printf("{\"result\":\"failed\",\"reason\":\"execute_fault\",\"signal\":%d,\"pc\":\"0x%lx\",\"address\":\"0x%lx\"}\n",
                check.signal, (unsigned long)check.pc, (unsigned long)check.address);

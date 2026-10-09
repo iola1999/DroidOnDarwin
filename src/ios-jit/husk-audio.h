@@ -16,7 +16,7 @@
  * from the iOS side: the render callback can assume interleaved 16-bit stereo
  * at 48 kHz and never negotiate.
  */
-#define HUSK_AUDIO_RATE     48000
+#define HUSK_AUDIO_RATE 48000
 #define HUSK_AUDIO_CHANNELS 2
 
 /*

@@ -16,10 +16,15 @@
 #include <string.h>
 #include "husk-tl-blit.h"
 
-enum { W = 128, H = 96 };
+enum { W = 128,
+       H = 96 };
 
 static uint32_t rng = 12345;
-static uint32_t rnd(void) { rng = rng * 1664525u + 1013904223u; return rng >> 8; }
+static uint32_t rnd(void)
+{
+    rng = rng * 1664525u + 1013904223u;
+    return rng >> 8;
+}
 
 /* A premultiplied sprite with a mix of opaque, transparent and translucent pixels. */
 static void make_sprite(uint32_t *px, int w, int h, int translucent)
@@ -37,7 +42,8 @@ static int max_channel_diff(const uint32_t *a, const uint32_t *b, int n)
     for (int i = 0; i < n; i++)
         for (int c = 0; c < 32; c += 8) {
             int d = abs((int)((a[i] >> c) & 255) - (int)((b[i] >> c) & 255));
-            if (d > worst) worst = d;
+            if (d > worst)
+                worst = d;
         }
     return worst;
 }
@@ -63,16 +69,26 @@ static void cg_draw(uint32_t *fb, const uint32_t *sprite, int sw, int sh,
     CGContextScaleCTM(c, 1, -1);
     CGContextDrawImage(c, CGRectMake(0, 0, dw, dh), img);
     CGContextRestoreGState(c);
-    CGImageRelease(img); CGContextRelease(sc); CGContextRelease(c); CGColorSpaceRelease(cs);
+    CGImageRelease(img);
+    CGContextRelease(sc);
+    CGContextRelease(c);
+    CGColorSpaceRelease(cs);
 }
 
 static int failures = 0;
-#define CHECK(cond, ...) do { if (!(cond)) { printf("  FAIL: " __VA_ARGS__); printf("\n"); failures++; } } while (0)
+#define CHECK(cond, ...) \
+    do { \
+        if (!(cond)) { \
+            printf("  FAIL: " __VA_ARGS__); \
+            printf("\n"); \
+            failures++; \
+        } \
+    } while (0)
 
 int main(void)
 {
     static uint32_t fb_a[W * H], fb_b[W * H], sprite[64 * 48];
-    tl_blit_target t = { fb_b, W, H, W };
+    tl_blit_target t = {fb_b, W, H, W};
 
     /* 1. Whole-pixel draws agree with CoreGraphics. */
     printf("1. whole-pixel draws vs CoreGraphics\n");
@@ -84,7 +100,8 @@ int main(void)
         make_sprite(sprite, sw, sh, translucent);
         int alpha = (trial % 5 == 0) ? 255 : 30 + rnd() % 226;
         /* The same opaque backdrop under both, so blending has something to blend with. */
-        for (int i = 0; i < W * H; i++) fb_a[i] = fb_b[i] = 0xFF000000u | (rnd() & 0xFFFFFF);
+        for (int i = 0; i < W * H; i++)
+            fb_a[i] = fb_b[i] = 0xFF000000u | (rnd() & 0xFFFFFF);
         /* Integer scale up or 1:1 keeps nearest-neighbour unambiguous. */
         int k = 1 + rnd() % 3;
         int dw = sw * k, dh = sh * k;
@@ -96,8 +113,12 @@ int main(void)
                      0, 0, (float)sw, (float)sh, (float)dx, (float)dy, (float)(dx + dw), (float)(dy + dh), alpha);
         int d = max_channel_diff(fb_a, fb_b, W * H);
         /* Both sides actually drew: otherwise "they agree" would mean nothing. */
-        for (int i = 0; i < W * H; i++) { changed_cg += fb_a[i] != before[i]; changed_blit += fb_b[i] != before[i]; }
-        if (d > worst_overall) worst_overall = d;
+        for (int i = 0; i < W * H; i++) {
+            changed_cg += fb_a[i] != before[i];
+            changed_blit += fb_b[i] != before[i];
+        }
+        if (d > worst_overall)
+            worst_overall = d;
         CHECK(d <= 2, "trial %d: %dx%d sprite x%d at (%d,%d) alpha %d%s differs by %d", trial, sw, sh, k, dx, dy,
               alpha, translucent ? " translucent" : "", d);
     }
@@ -110,15 +131,18 @@ int main(void)
     printf("2. adjacent fractional tiles are seamless\n");
     {
         uint32_t tile[50 * 20];
-        for (int i = 0; i < 50 * 20; i++) tile[i] = 0xFF0000FFu;       /* opaque red */
-        for (int i = 0; i < W * H; i++) fb_b[i] = 0xFF00FF00u;         /* green behind */
+        for (int i = 0; i < 50 * 20; i++)
+            tile[i] = 0xFF0000FFu; /* opaque red */
+        for (int i = 0; i < W * H; i++)
+            fb_b[i] = 0xFF00FF00u; /* green behind */
         float edge = 40.75f;
         tl_blit_draw(&t, tile, 50, 20, true, 0, 0, 50, 20, edge - 50.0f, 10, edge, 30, 255);
         tl_blit_draw(&t, tile, 50, 20, true, 0, 0, 50, 20, edge, 10, edge + 50.0f, 30, 255);
         int gaps = 0;
         for (int y = 10; y < 30; y++)
             for (int x = 0; x < 91; x++)
-                if (fb_b[y * W + x] != 0xFF0000FFu) gaps++;
+                if (fb_b[y * W + x] != 0xFF0000FFu)
+                    gaps++;
         CHECK(gaps == 0, "%d background pixels showed through where tiles meet", gaps);
         printf("   background pixels visible between the tiles: %d\n", gaps);
     }
@@ -128,18 +152,22 @@ int main(void)
     {
         uint32_t px[8 * 8];
         make_sprite(px, 8, 8, 0);
-        for (int i = 0; i < W * H; i++) fb_b[i] = 0;
+        for (int i = 0; i < W * H; i++)
+            fb_b[i] = 0;
         tl_blit_draw(&t, px, 8, 8, true, 0, 0, 8, 8, -1000, -1000, -900, -900, 255);
         tl_blit_draw(&t, px, 8, 8, true, 0, 0, 8, 8, W + 5, H + 5, W + 50, H + 50, 255);
-        tl_blit_draw(&t, px, 8, 8, true, 0, 0, 8, 8, 10, 10, 10, 20, 255);        /* zero width */
-        tl_blit_draw(&t, px, 8, 8, true, 0, 0, 8, 8, 20, 20, 10, 10, 255);        /* inverted */
-        tl_blit_draw(&t, px, 8, 8, true, 0, 0, 0, 0, 10, 10, 20, 20, 255);        /* empty source */
-        tl_blit_draw(&t, px, 8, 8, true, 0, 0, 8, 8, 10, 10, 20, 20, 0);          /* alpha 0 */
-        tl_blit_draw(&t, px, 8, 8, true, -50, -50, 500, 500, 0, 0, 9, 9, 255);    /* source rect past the image */
-        int touched = 0; for (int i = 0; i < W * H; i++) if (fb_b[i]) touched++;
+        tl_blit_draw(&t, px, 8, 8, true, 0, 0, 8, 8, 10, 10, 10, 20, 255); /* zero width */
+        tl_blit_draw(&t, px, 8, 8, true, 0, 0, 8, 8, 20, 20, 10, 10, 255); /* inverted */
+        tl_blit_draw(&t, px, 8, 8, true, 0, 0, 0, 0, 10, 10, 20, 20, 255); /* empty source */
+        tl_blit_draw(&t, px, 8, 8, true, 0, 0, 8, 8, 10, 10, 20, 20, 0); /* alpha 0 */
+        tl_blit_draw(&t, px, 8, 8, true, -50, -50, 500, 500, 0, 0, 9, 9, 255); /* source rect past the image */
+        int touched = 0;
+        for (int i = 0; i < W * H; i++)
+            if (fb_b[i])
+                touched++;
         CHECK(touched > 0 && touched <= 9 * 9, "unexpected pixel count %d after degenerate draws", touched);
         printf("   no crash; %d pixels drawn by the one legitimate call\n", touched);
-        tl_blit_draw(&t, px, 8, 8, true, 0, 0, 8, 8, -4, -4, 4, 4, 255);          /* half off the corner */
+        tl_blit_draw(&t, px, 8, 8, true, 0, 0, 8, 8, -4, -4, 4, 4, 255); /* half off the corner */
         tl_blit_draw(&t, px, 8, 8, true, 0, 0, 8, 8, W - 4, H - 4, W + 4, H + 4, 255);
     }
 
@@ -148,21 +176,25 @@ int main(void)
     {
         int worst = 0;
         for (int trial = 0; trial < 100; trial++) {
-            for (int i = 0; i < W * H; i++) fb_a[i] = fb_b[i] = 0xFF000000u | (rnd() & 0xFFFFFF);
+            for (int i = 0; i < W * H; i++)
+                fb_a[i] = fb_b[i] = 0xFF000000u | (rnd() & 0xFFFFFF);
             uint32_t argb = ((rnd() % 256) << 24) | (rnd() & 0xFFFFFF);
             int x = rnd() % W, y = rnd() % H, w = 1 + rnd() % (W - x), h = 1 + rnd() % (H - y);
             CGColorSpaceRef cs = CGColorSpaceCreateDeviceRGB();
             CGContextRef c = CGBitmapContextCreate(fb_a, W, H, 8, W * 4, cs,
                                                    kCGImageAlphaPremultipliedLast | kCGBitmapByteOrder32Big);
             CGContextSetShouldAntialias(c, false);
-            CGContextTranslateCTM(c, 0, H); CGContextScaleCTM(c, 1, -1);
+            CGContextTranslateCTM(c, 0, H);
+            CGContextScaleCTM(c, 1, -1);
             CGContextSetRGBFillColor(c, ((argb >> 16) & 255) / 255.0, ((argb >> 8) & 255) / 255.0,
                                      (argb & 255) / 255.0, (argb >> 24) / 255.0);
             CGContextFillRect(c, CGRectMake(x, y, w, h));
-            CGContextRelease(c); CGColorSpaceRelease(cs);
+            CGContextRelease(c);
+            CGColorSpaceRelease(cs);
             tl_blit_fill(&t, (float)x, (float)y, (float)(x + w), (float)(y + h), argb);
             int d = max_channel_diff(fb_a, fb_b, W * H);
-            if (d > worst) worst = d;
+            if (d > worst)
+                worst = d;
             CHECK(d <= 2, "fill trial %d (0x%08x at %d,%d %dx%d) differs by %d", trial, argb, x, y, w, h, d);
         }
         printf("   worst channel difference across 100 fills: %d\n", worst);

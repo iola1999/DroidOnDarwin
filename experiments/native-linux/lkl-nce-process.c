@@ -16,8 +16,10 @@ static int user_start(void *state)
 
 long nce_launch(long *params)
 {
-    if (current->thread.nce_state) return -ENOSYS;
-    if (params[1] & ~1L) return -EINVAL;
+    if (current->thread.nce_state)
+        return -ENOSYS;
+    if (params[1] & ~1L)
+        return -EINVAL;
     struct kernel_clone_args args = {
         .flags = params[1] ? CLONE_NEWPID : 0,
         .exit_signal = SIGCHLD,
@@ -32,8 +34,10 @@ void start_thread(struct pt_regs *regs, unsigned long entry, unsigned long stack
     struct vm_area_struct *vma;
     VMA_ITERATOR(iter, current->mm, 0);
     mmap_read_lock(current->mm);
-    for_each_vma(iter, vma) {
-        if (!(vma->vm_flags & VM_EXEC)) continue;
+    for_each_vma(iter, vma)
+    {
+        if (!(vma->vm_flags & VM_EXEC))
+            continue;
         for (unsigned long address = vma->vm_start; address < vma->vm_end; address += PAGE_SIZE) {
             struct page *page;
             long count = get_user_pages(address, 1, 0, &page);

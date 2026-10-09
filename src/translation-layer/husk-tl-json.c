@@ -75,10 +75,22 @@ static void close_(tl_json *j, char c)
     }
 }
 
-void tl_json_begin_object(tl_json *j) { open_(j, '{'); }
-void tl_json_end_object(tl_json *j)   { close_(j, '}'); }
-void tl_json_begin_array(tl_json *j)  { open_(j, '['); }
-void tl_json_end_array(tl_json *j)    { close_(j, ']'); }
+void tl_json_begin_object(tl_json *j)
+{
+    open_(j, '{');
+}
+void tl_json_end_object(tl_json *j)
+{
+    close_(j, '}');
+}
+void tl_json_begin_array(tl_json *j)
+{
+    open_(j, '[');
+}
+void tl_json_end_array(tl_json *j)
+{
+    close_(j, ']');
+}
 
 /* Length of the valid UTF-8 sequence at `s`, or 0 if it is not one. */
 static size_t utf8_len(const unsigned char *s)
@@ -90,11 +102,17 @@ static size_t utf8_len(const unsigned char *s)
     if (c < 0x80) {
         return 1;
     } else if ((c & 0xE0) == 0xC0) {
-        n = 2; cp = c & 0x1F; min = 0x80;
+        n = 2;
+        cp = c & 0x1F;
+        min = 0x80;
     } else if ((c & 0xF0) == 0xE0) {
-        n = 3; cp = c & 0x0F; min = 0x800;
+        n = 3;
+        cp = c & 0x0F;
+        min = 0x800;
     } else if ((c & 0xF8) == 0xF0) {
-        n = 4; cp = c & 0x07; min = 0x10000;
+        n = 4;
+        cp = c & 0x07;
+        min = 0x10000;
     } else {
         return 0;
     }
@@ -122,7 +140,7 @@ static void quoted(tl_json *j, const char *s)
     while (*p) {
         unsigned char c = *p;
         if (c == '"' || c == '\\') {
-            char esc[2] = { '\\', (char)c };
+            char esc[2] = {'\\', (char)c};
             put(j, esc, 2);
             p++;
         } else if (c < 0x20) {

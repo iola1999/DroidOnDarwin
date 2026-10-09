@@ -11,9 +11,11 @@ EglOS::Engine *EglOS::Engine::createHostInstance()
 bool huskGfxstreamWindowSize(void *window, unsigned *width, unsigned *height)
 {
     id object = (__bridge id)window;
-    if (![object isKindOfClass:[CAMetalLayer class]]) return false;
+    if (![object isKindOfClass:[CAMetalLayer class]])
+        return false;
     CGSize size = ((CAMetalLayer *)object).drawableSize;
-    if (size.width <= 0 || size.height <= 0) return false;
+    if (size.width <= 0 || size.height <= 0)
+        return false;
     *width = (unsigned)size.width;
     *height = (unsigned)size.height;
     return true;

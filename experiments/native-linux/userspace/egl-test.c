@@ -6,7 +6,13 @@
 #include <string.h>
 #include <unistd.h>
 
-#define CHECK(c) do { if (!(c)) { fprintf(stderr, "egl-test:%d: %s EGL=%x GL=%x\n", __LINE__, #c, eglGetError(), glGetError()); exit(1); } } while (0)
+#define CHECK(c) \
+    do { \
+        if (!(c)) { \
+            fprintf(stderr, "egl-test:%d: %s EGL=%x GL=%x\n", __LINE__, #c, eglGetError(), glGetError()); \
+            exit(1); \
+        } \
+    } while (0)
 
 static GLuint shader(GLenum type, const char *source)
 {
@@ -70,11 +76,12 @@ int main(int argc, char **argv)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     GLuint vertex = shader(GL_VERTEX_SHADER,
-        "attribute vec2 position; varying vec2 uv; void main(){uv=position*0.5+0.5;gl_Position=vec4(position,0,1);}");
+                           "attribute vec2 position; varying vec2 uv; void main(){uv=position*0.5+0.5;gl_Position=vec4(position,0,1);}");
     GLuint fragment = shader(GL_FRAGMENT_SHADER,
-        "precision mediump float; varying vec2 uv; uniform sampler2D image; void main(){gl_FragColor=texture2D(image,uv);}");
+                             "precision mediump float; varying vec2 uv; uniform sampler2D image; void main(){gl_FragColor=texture2D(image,uv);}");
     GLuint program = glCreateProgram();
-    glAttachShader(program, vertex); glAttachShader(program, fragment);
+    glAttachShader(program, vertex);
+    glAttachShader(program, fragment);
     glBindAttribLocation(program, 0, "position");
     glLinkProgram(program);
     GLint linked;
@@ -84,7 +91,8 @@ int main(int argc, char **argv)
     glUniform1i(glGetUniformLocation(program, "image"), 0);
     const float vertices[] = {-1, -1, 1, -1, -1, 1, 1, 1};
     GLuint buffer;
-    glGenBuffers(1, &buffer); glBindBuffer(GL_ARRAY_BUFFER, buffer);
+    glGenBuffers(1, &buffer);
+    glBindBuffer(GL_ARRAY_BUFFER, buffer);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, NULL);
     glEnableVertexAttribArray(0);
@@ -92,15 +100,17 @@ int main(int argc, char **argv)
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
     glReadPixels(0, 0, 64, 64, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
     CHECK(glGetError() == GL_NO_ERROR);
-    for (int y = 0; y < 64; ++y) for (int x = 0; x < 64; ++x)
-        CHECK(!memcmp(pixels + (y * 64 + x) * 4, texels + ((y / 32) * 2 + x / 32) * 4, 4));
+    for (int y = 0; y < 64; ++y)
+        for (int x = 0; x < 64; ++x)
+            CHECK(!memcmp(pixels + (y * 64 + x) * 4, texels + ((y / 32) * 2 + x / 32) * 4, 4));
     puts("{\"test\":\"android_sdk_gles_shader_texture\",\"passed\":true,\"pixels\":4096}");
     glFinish();
     EGLContext shared = eglCreateContext(display, config, context, context_attrs);
     CHECK(shared != EGL_NO_CONTEXT && eglMakeCurrent(display, surface, surface, shared));
     CHECK(glIsTexture(texture));
     GLuint framebuffer;
-    glGenFramebuffers(1, &framebuffer); glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+    glGenFramebuffers(1, &framebuffer);
+    glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture, 0);
     CHECK(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE);
     unsigned char shared_pixels[16];
@@ -108,8 +118,11 @@ int main(int argc, char **argv)
     CHECK(glGetError() == GL_NO_ERROR && !memcmp(texels, shared_pixels, sizeof(texels)));
     glDeleteFramebuffers(1, &framebuffer);
     CHECK(eglMakeCurrent(display, surface, surface, context) && eglDestroyContext(display, shared));
-    glDeleteBuffers(1, &buffer); glDeleteTextures(1, &texture);
-    glDeleteProgram(program); glDeleteShader(vertex); glDeleteShader(fragment);
+    glDeleteBuffers(1, &buffer);
+    glDeleteTextures(1, &texture);
+    glDeleteProgram(program);
+    glDeleteShader(vertex);
+    glDeleteShader(fragment);
     CHECK(glGetError() == GL_NO_ERROR);
     puts("{\"test\":\"android_sdk_egl_shared_texture\",\"passed\":true}");
     CHECK(eglMakeCurrent(display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT));

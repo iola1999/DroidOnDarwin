@@ -12,14 +12,23 @@
 
 using namespace aidl::android::apex;
 using ndk::ScopedAStatus;
-#define CHECK(c) do { if (!(c)) { dprintf(2, "apex-service:%d errno=%d: %s\n", __LINE__, errno, #c); _exit(110); } } while (0)
+#define CHECK(c) \
+    do { \
+        if (!(c)) { \
+            dprintf(2, "apex-service:%d errno=%d: %s\n", __LINE__, errno, #c); \
+            _exit(110); \
+        } \
+    } while (0)
 
 /* The system image contains a fixed module set. Generated AIDL defaults return
  * UNKNOWN_TRANSACTION for installation and rollback operations. */
-class ApexRegistry final : public IApexServiceDefault {
+class ApexRegistry final : public IApexServiceDefault
+{
     std::vector<ApexInfo> modules_;
-public:
-    ApexRegistry() {
+
+   public:
+    ApexRegistry()
+    {
         for (const auto &seed : apex_modules) {
             ApexInfo info;
             info.moduleName = seed.name;
@@ -37,18 +46,22 @@ public:
             modules_.push_back(std::move(info));
         }
     }
-    ScopedAStatus getActivePackages(std::vector<ApexInfo> *result) override {
+    ScopedAStatus getActivePackages(std::vector<ApexInfo> *result) override
+    {
         *result = modules_;
         return ScopedAStatus::ok();
     }
-    ScopedAStatus getAllPackages(std::vector<ApexInfo> *result) override {
+    ScopedAStatus getAllPackages(std::vector<ApexInfo> *result) override
+    {
         return getActivePackages(result);
     }
-    ScopedAStatus getSessions(std::vector<ApexSessionInfo> *result) override {
+    ScopedAStatus getSessions(std::vector<ApexSessionInfo> *result) override
+    {
         result->clear();
         return ScopedAStatus::ok();
     }
-    ScopedAStatus getStagedSessionInfo(int32_t id, ApexSessionInfo *result) override {
+    ScopedAStatus getStagedSessionInfo(int32_t id, ApexSessionInfo *result) override
+    {
         result->sessionId = id;
         result->isUnknown = true;
         return ScopedAStatus::ok();

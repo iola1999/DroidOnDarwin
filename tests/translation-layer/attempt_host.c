@@ -77,7 +77,7 @@ int main(int argc, char **argv)
         return 2;
     }
     while (!husk_tl_attempt_done(NULL)) {
-        struct timespec t = { 0, 100 * 1000000 };
+        struct timespec t = {0, 100 * 1000000};
         nanosleep(&t, NULL);
     }
     int code = 0;
@@ -87,7 +87,8 @@ int main(int argc, char **argv)
     fputs(log, stdout);
     free(log);
     printf("\nframes: %d, exit: %d\n", husk_tl_attempt_frames(), code);
-    printf("%s\n", code == 2 ? "== DREW ==" : code == 1 ? "== LOADED ==" : "== REFUSED ==");
+    printf("%s\n", code == 2 ? "== DREW ==" : code == 1 ? "== LOADED =="
+                                                        : "== REFUSED ==");
     husk_tl_attempt_reset();
     return code;
 }

@@ -26,26 +26,28 @@ static double husk_dpy_now_ms(void)
     struct timeval tv;
     gettimeofday(&tv, NULL);
     double t = tv.tv_sec * 1000.0 + tv.tv_usec / 1000.0;
-    if (base == 0) { base = t; }
+    if (base == 0) {
+        base = t;
+    }
     return t - base;
 }
 
-#define HUSK_DLOG(fmt, ...)                                                    \
-    do {                                                                       \
-        os_log(OS_LOG_DEFAULT, "[husk-dpy] " fmt, ##__VA_ARGS__);              \
-        fprintf(stderr, "[%9.2fms][husk-dpy] " fmt "\n",                       \
-                husk_dpy_now_ms(), ##__VA_ARGS__);                             \
-        fflush(stderr);                                                        \
+#define HUSK_DLOG(fmt, ...) \
+    do { \
+        os_log(OS_LOG_DEFAULT, "[husk-dpy] " fmt, ##__VA_ARGS__); \
+        fprintf(stderr, "[%9.2fms][husk-dpy] " fmt "\n", \
+                husk_dpy_now_ms(), ##__VA_ARGS__); \
+        fflush(stderr); \
     } while (0)
 
 typedef struct HuskDisplayState {
     DisplayChangeListener dcl;
-    QemuMutex             lock;
+    QemuMutex lock;
 
     DisplaySurface *surface;
-    uint64_t        generation;
-    uint64_t        sequence;
-    bool            inited;
+    uint64_t generation;
+    uint64_t sequence;
+    bool inited;
 } HuskDisplayState;
 
 static HuskDisplayState husk;
@@ -124,10 +126,10 @@ static void husk_dpy_refresh(DisplayChangeListener *dcl)
 }
 
 static const DisplayChangeListenerOps husk_dcl_ops = {
-    .dpy_name             = "husk",
-    .dpy_refresh          = husk_dpy_refresh,
-    .dpy_gfx_update       = husk_dpy_gfx_update,
-    .dpy_gfx_switch       = husk_dpy_gfx_switch,
+    .dpy_name = "husk",
+    .dpy_refresh = husk_dpy_refresh,
+    .dpy_gfx_update = husk_dpy_gfx_update,
+    .dpy_gfx_switch = husk_dpy_gfx_switch,
     .dpy_gfx_check_format = husk_dpy_gfx_check_format,
 };
 
@@ -150,9 +152,10 @@ void husk_display_init(void)
          * QEMU still creates a console for the graphics device, but if the device
          * is missing or named differently there is nothing to attach to, and every
          * later symptom is just "black screen". */
-        HUSK_DLOG("init: FATAL -- qemu_console_lookup_by_index(0) returned NULL. "
-                  "No graphics console exists; check that -device virtio-gpu-pci "
-                  "is on the command line.");
+        HUSK_DLOG(
+            "init: FATAL -- qemu_console_lookup_by_index(0) returned NULL. "
+            "No graphics console exists; check that -device virtio-gpu-pci "
+            "is on the command line.");
         return;
     }
     HUSK_DLOG("init: console[0]=%p graphic=%d",
@@ -173,13 +176,13 @@ bool husk_display_lock_frame(HuskFrameInfo *out)
         qemu_mutex_unlock(&husk.lock);
         return false;
     }
-    out->pixels     = surface_data(husk.surface);
-    out->width      = surface_width(husk.surface);
-    out->height     = surface_height(husk.surface);
-    out->stride     = surface_stride(husk.surface);
-    out->bpp        = surface_bits_per_pixel(husk.surface);
+    out->pixels = surface_data(husk.surface);
+    out->width = surface_width(husk.surface);
+    out->height = surface_height(husk.surface);
+    out->stride = surface_stride(husk.surface);
+    out->bpp = surface_bits_per_pixel(husk.surface);
     out->generation = husk.generation;
-    out->sequence   = qatomic_read(&husk.sequence);
+    out->sequence = qatomic_read(&husk.sequence);
 
     if (out->pixels == NULL || out->width <= 0 || out->height <= 0) {
         qemu_mutex_unlock(&husk.lock);
@@ -278,8 +281,12 @@ void husk_display_guest_size(int32_t *width, int32_t *height)
     if (!held) {
         bql_unlock();
     }
-    if (width)  { *width  = w; }
-    if (height) { *height = h; }
+    if (width) {
+        *width = w;
+    }
+    if (height) {
+        *height = h;
+    }
 }
 
 void husk_display_set_ui_size(int32_t width, int32_t height)
@@ -336,8 +343,16 @@ void husk_display_send_pointer(int32_t x, int32_t y, bool button_down)
     uint64_t ev = ++pointer_events;
 
     if (con && w > 0 && h > 0) {
-        if (x < 0) { x = 0; } else if (x >= w) { x = w - 1; }
-        if (y < 0) { y = 0; } else if (y >= h) { y = h - 1; }
+        if (x < 0) {
+            x = 0;
+        } else if (x >= w) {
+            x = w - 1;
+        }
+        if (y < 0) {
+            y = 0;
+        } else if (y >= h) {
+            y = h - 1;
+        }
         qemu_input_queue_abs(con, INPUT_AXIS_X, x, 0, w);
         qemu_input_queue_abs(con, INPUT_AXIS_Y, y, 0, h);
         qemu_input_queue_btn(con, INPUT_BUTTON_LEFT, button_down);

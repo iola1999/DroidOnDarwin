@@ -16,10 +16,20 @@
 #include <unistd.h>
 
 #define PAGE NCE_PAGE_SIZE
-#define CHECK(c) do { if (!(c)) { dprintf(2, "code-tests:%d errno=%d\n", __LINE__, errno); _exit(96); } } while (0)
+#define CHECK(c) \
+    do { \
+        if (!(c)) { \
+            dprintf(2, "code-tests:%d errno=%d\n", __LINE__, errno); \
+            _exit(96); \
+        } \
+    } while (0)
 typedef uint64_t (*Code)(uint64_t);
 static volatile sig_atomic_t ticks;
-static void tick(int number) { (void)number; ++ticks; }
+static void tick(int number)
+{
+    (void)number;
+    ++ticks;
+}
 
 static void constant(uint32_t *rw, unsigned value)
 {
@@ -32,8 +42,10 @@ static void expect_fault(Code code, int write_access, int expected)
     pid_t child = fork();
     CHECK(child >= 0);
     if (!child) {
-        if (write_access) *(volatile uint32_t *)code = 0;
-        else code(0);
+        if (write_access)
+            *(volatile uint32_t *)code = 0;
+        else
+            code(0);
         _exit(99);
     }
     int status;
@@ -55,7 +67,8 @@ static void reserved_stubs(void)
             end = phdrs[i].p_vaddr + phdrs[i].p_memsz;
     void *reserved = (void *)(base + ((end + PAGE - 1) & -PAGE));
     CHECK(mmap(reserved, PAGE, PROT_READ | PROT_WRITE,
-               MAP_PRIVATE | MAP_ANONYMOUS | MAP_FIXED, -1, 0) == MAP_FAILED && errno == EACCES);
+               MAP_PRIVATE | MAP_ANONYMOUS | MAP_FIXED, -1, 0) == MAP_FAILED &&
+          errno == EACCES);
     CHECK(mprotect(reserved, PAGE, PROT_NONE) == -1 && errno == EACCES);
     void *data = mmap(NULL, PAGE, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
     CHECK(data != MAP_FAILED);
@@ -116,7 +129,8 @@ void code_tests(void)
         uint32_t value[] = {0x52800b20, 0xd65f03c0}; /* mov w0, 89; ret */
         CHECK(pwrite(replacement, value, sizeof(value), 0) == sizeof(value));
         Code other = (Code)syscall(NCE_SYS_MAP_CODE, replacement, PAGE, 0);
-        if (other != second) dprintf(2, "dynamic replacement=%p expected=%p errno=%d\n", (void *)other, (void *)second, errno);
+        if (other != second)
+            dprintf(2, "dynamic replacement=%p expected=%p errno=%d\n", (void *)other, (void *)second, errno);
         CHECK(other == second && other(0) == 89);
         _exit(0);
     }

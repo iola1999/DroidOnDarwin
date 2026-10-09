@@ -9,8 +9,7 @@ static const uint32_t round_constants[64] = {
     0x27b70a85, 0x2e1b2138, 0x4d2c6dfc, 0x53380d13, 0x650a7354, 0x766a0abb, 0x81c2c92e, 0x92722c85,
     0xa2bfe8a1, 0xa81a664b, 0xc24b8b70, 0xc76c51a3, 0xd192e819, 0xd6990624, 0xf40e3585, 0x106aa070,
     0x19a4c116, 0x1e376c08, 0x2748774c, 0x34b0bcb5, 0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3,
-    0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2
-};
+    0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2};
 
 static void compress(uint32x4_t *state0, uint32x4_t *state1, uint32x4_t message[4])
 {
@@ -24,7 +23,7 @@ static void compress(uint32x4_t *state0, uint32x4_t *state1, uint32x4_t message[
         if (round < 12) {
             message[slot] = vsha256su0q_u32(message[slot], message[(slot + 1) & 3]);
             message[slot] = vsha256su1q_u32(message[slot], message[(slot + 2) & 3],
-                                          message[(slot + 3) & 3]);
+                                            message[(slot + 3) & 3]);
         }
     }
     *state0 = vaddq_u32(*state0, a);
@@ -38,12 +37,11 @@ void husk_sha256_blocks(unsigned count, unsigned digest[8])
     uint32x4_t state1 = {0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19};
     for (unsigned i = 0; i < count; ++i) {
         uint32x4_t msg[4] = {vdupq_n_u32(0x61616161), vdupq_n_u32(0x61616161),
-                            vdupq_n_u32(0x61616161), vdupq_n_u32(0x61616161)};
+                             vdupq_n_u32(0x61616161), vdupq_n_u32(0x61616161)};
         compress(&state0, &state1, msg);
     }
     uint64_t bits = (uint64_t)count * 512;
-    uint32x4_t padding[4] = {{0x80000000, 0, 0, 0}, {0}, {0},
-                             {0, 0, (uint32_t)(bits >> 32), (uint32_t)bits}};
+    uint32x4_t padding[4] = {{0x80000000, 0, 0, 0}, {0}, {0}, {0, 0, (uint32_t)(bits >> 32), (uint32_t)bits}};
     compress(&state0, &state1, padding);
     vst1q_u32(digest, state0);
     vst1q_u32(digest + 4, state1);

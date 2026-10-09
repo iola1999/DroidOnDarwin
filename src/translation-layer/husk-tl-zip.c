@@ -21,14 +21,14 @@
 #include <unistd.h>
 #include <zlib.h>
 
-#define SIG_LOCAL       0x04034b50u
-#define SIG_CENTRAL     0x02014b50u
-#define SIG_END         0x06054b50u
-#define SIG_END64       0x06064b50u
-#define SIG_END64_LOC   0x07064b50u
+#define SIG_LOCAL 0x04034b50u
+#define SIG_CENTRAL 0x02014b50u
+#define SIG_END 0x06054b50u
+#define SIG_END64 0x06064b50u
+#define SIG_END64_LOC 0x07064b50u
 
 /* An APK with more files than this is not an APK. */
-#define MAX_ENTRIES     (1u << 20)
+#define MAX_ENTRIES (1u << 20)
 
 static void fail(char *err, size_t errlen, const char *fmt, ...)
 {
@@ -41,13 +41,18 @@ static void fail(char *err, size_t errlen, const char *fmt, ...)
     va_end(ap);
 }
 
-static uint16_t rd16(const uint8_t *p) { return (uint16_t)(p[0] | (p[1] << 8)); }
+static uint16_t rd16(const uint8_t *p)
+{
+    return (uint16_t)(p[0] | (p[1] << 8));
+}
 static uint32_t rd32(const uint8_t *p)
 {
-    return (uint32_t)p[0] | ((uint32_t)p[1] << 8) | ((uint32_t)p[2] << 16)
-         | ((uint32_t)p[3] << 24);
+    return (uint32_t)p[0] | ((uint32_t)p[1] << 8) | ((uint32_t)p[2] << 16) | ((uint32_t)p[3] << 24);
 }
-static uint64_t rd64(const uint8_t *p) { return rd32(p) | ((uint64_t)rd32(p + 4) << 32); }
+static uint64_t rd64(const uint8_t *p)
+{
+    return rd32(p) | ((uint64_t)rd32(p + 4) << 32);
+}
 
 /* [off, off+len) lies inside the file. */
 static bool in_file(const tl_zip *z, uint64_t off, uint64_t len)
@@ -90,15 +95,20 @@ static bool apply_zip64_extra(const uint8_t *extra, uint16_t len, tl_zip_entry *
             const uint8_t *f = extra + pos + 4;
             uint16_t used = 0;
             if (need_usize) {
-                if (used + 8 > size) return false;
-                e->usize = rd64(f + used); used += 8;
+                if (used + 8 > size)
+                    return false;
+                e->usize = rd64(f + used);
+                used += 8;
             }
             if (need_csize) {
-                if (used + 8 > size) return false;
-                e->csize = rd64(f + used); used += 8;
+                if (used + 8 > size)
+                    return false;
+                e->csize = rd64(f + used);
+                used += 8;
             }
             if (need_offset) {
-                if (used + 8 > size) return false;
+                if (used + 8 > size)
+                    return false;
                 e->local_offset = rd64(f + used);
             }
             return true;

@@ -26,7 +26,8 @@ static void nce_submit_bio(struct bio *bio)
         bio_endio(bio);
         return;
     }
-    bio_for_each_segment(vector, bio, iter) {
+    bio_for_each_segment(vector, bio, iter)
+    {
         void *buffer = bvec_kmap_local(&vector);
         error = lkl_ops->disk_io(index, operation == REQ_OP_WRITE, offset, buffer, vector.bv_len);
         kunmap_local(buffer);
@@ -63,10 +64,17 @@ static int __init nce_block_init(void)
     for (unsigned int index = 0; index < ARRAY_SIZE(nce_disks); ++index) {
         u64 bytes = lkl_ops->disk_size(index);
         struct gendisk *disk;
-        if (!bytes) continue;
-        if (bytes & 511) { error = -EINVAL; goto fail; }
+        if (!bytes)
+            continue;
+        if (bytes & 511) {
+            error = -EINVAL;
+            goto fail;
+        }
         disk = blk_alloc_disk(&limits, NUMA_NO_NODE);
-        if (IS_ERR(disk)) { error = PTR_ERR(disk); goto fail; }
+        if (IS_ERR(disk)) {
+            error = PTR_ERR(disk);
+            goto fail;
+        }
         disk->major = nce_major;
         disk->first_minor = index;
         disk->minors = 1;
@@ -77,13 +85,17 @@ static int __init nce_block_init(void)
         set_capacity(disk, bytes >> SECTOR_SHIFT);
         set_disk_ro(disk, index == 1);
         error = add_disk(disk);
-        if (error) { put_disk(disk); goto fail; }
+        if (error) {
+            put_disk(disk);
+            goto fail;
+        }
         nce_disks[index] = disk;
     }
     return 0;
 fail:
     for (unsigned int index = 0; index < ARRAY_SIZE(nce_disks); ++index) {
-        if (!nce_disks[index]) continue;
+        if (!nce_disks[index])
+            continue;
         del_gendisk(nce_disks[index]);
         put_disk(nce_disks[index]);
         nce_disks[index] = NULL;

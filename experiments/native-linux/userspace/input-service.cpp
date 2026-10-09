@@ -14,7 +14,13 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
-#define CHECK(c) do { if (!(c)) { dprintf(2, "input-service:%d errno=%d: %s\n", __LINE__, errno, #c); _exit(117); } } while (0)
+#define CHECK(c) \
+    do { \
+        if (!(c)) { \
+            dprintf(2, "input-service:%d errno=%d: %s\n", __LINE__, errno, #c); \
+            _exit(117); \
+        } \
+    } while (0)
 static char event_path[128];
 static pid_t input_process = -1;
 
@@ -40,7 +46,8 @@ static void touch(int fd, int action, int x, int y)
 {
     emit(fd, EV_ABS, ABS_X, x);
     emit(fd, EV_ABS, ABS_Y, y);
-    if (action != NCE_INPUT_MOVE) emit(fd, EV_KEY, BTN_TOUCH, action == NCE_INPUT_DOWN);
+    if (action != NCE_INPUT_MOVE)
+        emit(fd, EV_KEY, BTN_TOUCH, action == NCE_INPUT_DOWN);
     emit(fd, EV_SYN, SYN_REPORT, 0);
 }
 
@@ -68,9 +75,12 @@ static void verify_events(int fd)
         CHECK(bytes % sizeof(input_event) == 0);
         for (unsigned i = 0; i < bytes / sizeof(input_event); ++i) {
             const auto &event = events[i];
-            if (event.type == EV_SYN && event.code == SYN_REPORT) ++frames;
-            if (event.type == EV_ABS && event.code == ABS_X) x = event.value;
-            if (event.type == EV_ABS && event.code == ABS_Y) y = event.value;
+            if (event.type == EV_SYN && event.code == SYN_REPORT)
+                ++frames;
+            if (event.type == EV_ABS && event.code == ABS_X)
+                x = event.value;
+            if (event.type == EV_ABS && event.code == ABS_Y)
+                y = event.value;
             if (event.type == EV_KEY && event.code == BTN_TOUCH) {
                 CHECK(touches < 2 && event.value == (touches == 0));
                 ++touches;
@@ -96,7 +106,8 @@ void nce_input_start()
     CHECK(ioctl(fd, UI_SET_EVBIT, EV_KEY) == 0);
     CHECK(ioctl(fd, UI_SET_EVBIT, EV_ABS) == 0);
     const int keys[] = {BTN_TOUCH, KEY_HOME, KEY_BACK, KEY_APPSELECT};
-    for (int code : keys) CHECK(ioctl(fd, UI_SET_KEYBIT, code) == 0);
+    for (int code : keys)
+        CHECK(ioctl(fd, UI_SET_KEYBIT, code) == 0);
     CHECK(ioctl(fd, UI_SET_PROPBIT, INPUT_PROP_DIRECT) == 0);
     for (unsigned axis = 0; axis < 2; ++axis) {
         int code = axis ? ABS_Y : ABS_X;
@@ -118,7 +129,8 @@ void nce_input_start()
     DIR *directory = opendir(path);
     CHECK(directory);
     while (dirent *entry = readdir(directory)) {
-        if (strncmp(entry->d_name, "event", 5)) continue;
+        if (strncmp(entry->d_name, "event", 5))
+            continue;
         CHECK(!event_path[0]);
         CHECK(snprintf(event_path, sizeof(event_path), "/dev/input/%s", entry->d_name) < static_cast<int>(sizeof(event_path)));
         char description[256];
@@ -141,17 +153,22 @@ void nce_input_start()
         for (;;) {
             NceInputCommand command;
             ssize_t count = recv(listener, &command, sizeof(command), MSG_TRUNC);
-            if (count < 0 && errno == EINTR) continue;
+            if (count < 0 && errno == EINTR)
+                continue;
             CHECK(count >= 0);
-            if (count != sizeof(command)) continue;
+            if (count != sizeof(command))
+                continue;
             int action = command.action, x = command.x, y = command.y;
             if (action >= NCE_INPUT_DOWN && action <= NCE_INPUT_UP) {
-                if (x < 0 || x >= 360 || y < 0 || y >= 640) continue;
-                if ((action == NCE_INPUT_DOWN && pressed) || (action != NCE_INPUT_DOWN && !pressed)) continue;
+                if (x < 0 || x >= 360 || y < 0 || y >= 640)
+                    continue;
+                if ((action == NCE_INPUT_DOWN && pressed) || (action != NCE_INPUT_DOWN && !pressed))
+                    continue;
                 touch(fd, action, x, y);
                 pressed = action != NCE_INPUT_UP;
             } else if (action == NCE_INPUT_KEY) {
-                if (x == KEY_HOME || x == KEY_BACK || x == KEY_APPSELECT) key(fd, x);
+                if (x == KEY_HOME || x == KEY_BACK || x == KEY_APPSELECT)
+                    key(fd, x);
             }
         }
     }

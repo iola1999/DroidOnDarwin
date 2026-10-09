@@ -20,12 +20,18 @@ static inline unsigned long nce_clear_user(void __user *to, unsigned long size)
 }
 #define __clear_user nce_clear_user
 /* Kernel nofault accesses retain LKL's trusted-pointer contract. */
-#define __get_kernel_nofault(dst, src, type, err_label) do { \
-    memcpy(dst, src, sizeof(type)); if (0) goto err_label; \
-} while (0)
-#define __put_kernel_nofault(dst, src, type, err_label) do { \
-    memcpy(dst, src, sizeof(type)); if (0) goto err_label; \
-} while (0)
+#define __get_kernel_nofault(dst, src, type, err_label) \
+    do { \
+        memcpy(dst, src, sizeof(type)); \
+        if (0) \
+            goto err_label; \
+    } while (0)
+#define __put_kernel_nofault(dst, src, type, err_label) \
+    do { \
+        memcpy(dst, src, sizeof(type)); \
+        if (0) \
+            goto err_label; \
+    } while (0)
 #endif
 #include <asm-generic/uaccess.h>
 #endif

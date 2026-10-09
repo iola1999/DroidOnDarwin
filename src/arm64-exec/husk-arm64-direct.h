@@ -17,4 +17,4 @@ struct HuskArm64CacheStats {
 HuskArm64CacheStats husk_direct_cache_stats(const HuskArm64Direct *);
 void husk_direct_destroy(HuskArm64Direct *);
 HuskArm64Exit husk_direct_run(HuskArm64Direct *, HuskArm64State *, uint64_t,
-                            const void *, HuskArm64Memory, uint64_t);
+                              const void *, HuskArm64Memory, uint64_t);

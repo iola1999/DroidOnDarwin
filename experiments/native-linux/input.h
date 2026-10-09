@@ -2,8 +2,13 @@
 #pragma once
 #include <stdint.h>
 
-enum { NCE_INPUT_DOWN, NCE_INPUT_MOVE, NCE_INPUT_UP, NCE_INPUT_KEY };
-typedef struct { int32_t action, x, y; } NceInputCommand;
+enum { NCE_INPUT_DOWN,
+       NCE_INPUT_MOVE,
+       NCE_INPUT_UP,
+       NCE_INPUT_KEY };
+typedef struct {
+    int32_t action, x, y;
+} NceInputCommand;
 
 #ifdef __cplusplus
 extern "C" {

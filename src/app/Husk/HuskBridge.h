@@ -17,9 +17,9 @@
 /* Mirrors HuskFrameInfo in husk-display.h. */
 typedef struct HuskFrameInfo {
     const void *pixels;
-    int32_t  width;
-    int32_t  height;
-    int32_t  stride;
+    int32_t width;
+    int32_t height;
+    int32_t stride;
     uint32_t bpp;
     uint64_t generation;
     uint64_t sequence;
@@ -31,13 +31,13 @@ void qemu_main_loop(void);
 void qemu_cleanup(void);
 
 /* --- Husk's display/input bridge --- */
-void     husk_display_init(void);
-bool     husk_display_lock_frame(HuskFrameInfo *out);
-void     husk_display_unlock_frame(void);
+void husk_display_init(void);
+bool husk_display_lock_frame(HuskFrameInfo *out);
+void husk_display_unlock_frame(void);
 uint64_t husk_display_sequence(void);
-void     husk_display_send_pointer(int32_t x, int32_t y, bool button_down);
-bool     husk_display_send_key(const char *qcode_name, bool down);
-void     husk_display_request_update(void);
+void husk_display_send_pointer(int32_t x, int32_t y, bool button_down);
+bool husk_display_send_key(const char *qcode_name, bool down);
+void husk_display_request_update(void);
 
 /* --- Husk's JIT substrate --- */
 void husk_ios_jit_install_trap_handler(void);
@@ -58,23 +58,23 @@ size_t husk_ios_available_memory(void);
    fall back to husk_display_init(). */
 /* Must be called BEFORE qemu_init(): sets display_opengl so virtio-gpu-gl can
    realize, since devices are created inside qemu_init(). */
-bool     husk_display_gl_early(void);
+bool husk_display_gl_early(void);
 /* MAIN THREAD: ANGLE sets up a CAMetalLayer here, and CALayer is not thread-safe. */
-bool     husk_display_gl_create(void *native_layer, int32_t width, int32_t height);
+bool husk_display_gl_create(void *native_layer, int32_t width, int32_t height);
 /* QEMU thread: make the context current and register the listener. */
 /* Is GL usable here? Registers nothing. */
-bool     husk_display_gl_probe(void);
-bool     husk_display_gl_bind(void);
+bool husk_display_gl_probe(void);
+bool husk_display_gl_bind(void);
 uint64_t husk_display_gl_frames(void);
-void     husk_display_set_ui_size(int32_t width, int32_t height);
-void     husk_display_guest_size(int32_t *width, int32_t *height);
+void husk_display_set_ui_size(int32_t width, int32_t height);
+void husk_display_guest_size(int32_t *width, int32_t *height);
 
 /* Audio, from husk-audio.c. The format is fixed there and mirrored here so the
  * render callback never has to negotiate one. */
-#define HUSK_AUDIO_RATE     48000
+#define HUSK_AUDIO_RATE 48000
 #define HUSK_AUDIO_CHANNELS 2
-int32_t  husk_audio_pull(int16_t *dst, int32_t frames);
-bool     husk_audio_active(void);
+int32_t husk_audio_pull(int16_t *dst, int32_t frames);
+bool husk_audio_active(void);
 uint64_t husk_audio_frames_in(void);
 uint64_t husk_audio_underruns(void);
 
@@ -85,7 +85,7 @@ uint64_t husk_audio_underruns(void);
  * for the duration of the call. */
 typedef void (*husk_metal_present_fn)(void *texture, int32_t flip,
                                       int32_t width, int32_t height);
-void     husk_display_gl_set_metal_presenter(husk_metal_present_fn fn);
+void husk_display_gl_set_metal_presenter(husk_metal_present_fn fn);
 
 /* --- Husk's machine snapshots --- */
 /* Restore the saved machine, if one exists. Call straight after qemu_init() and

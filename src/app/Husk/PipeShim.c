@@ -17,8 +17,7 @@
  * Using fishhook at process startup, we patch the GOT in all loaded images
  * (including libqemu-aarch64-softmmu.dylib) to point pipe2 to this implementation.
  */
-__attribute__((visibility("default")))
-int pipe2(int fds[2], int flags)
+__attribute__((visibility("default"))) int pipe2(int fds[2], int flags)
 {
     if (!fds) {
         errno = EFAULT;
@@ -53,12 +52,10 @@ int pipe2(int fds[2], int flags)
     return 0;
 }
 
-__attribute__((constructor(101)))
-static void husk_install_pipe_shim(void)
+__attribute__((constructor(101))) static void husk_install_pipe_shim(void)
 {
     struct rebinding rebindings[] = {
-        {"pipe2", (void *)pipe2, NULL}
-    };
+        {"pipe2", (void *)pipe2, NULL}};
     rebind_symbols(rebindings, 1);
     fprintf(stderr, "[pipe2-shim] pipe2 rebind hook installed\n");
 }

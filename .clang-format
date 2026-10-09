@@ -1,0 +1,25 @@
+BasedOnStyle: Google
+IndentWidth: 4
+ColumnLimit: 0
+PointerAlignment: Right
+DerivePointerAlignment: false
+BreakBeforeBraces: Linux
+AllowShortBlocksOnASingleLine: Never
+AllowShortFunctionsOnASingleLine: Empty
+AllowShortIfStatementsOnASingleLine: Never
+AllowShortLoopsOnASingleLine: false
+SortIncludes: Never
+SortUsingDeclarations: Never
+AlignTrailingComments: Never
+AlignEscapedNewlines: DontAlign
+StatementMacros:
+  - KEY
+  - X
+  - PCB
+  - BLRCB
+  - PROBE
+  - CALL_SLOTS
+  - FIELD_SLOTS
+  - ARRAY_SLOTS
+ReflowComments: false
+BreakStringLiterals: false

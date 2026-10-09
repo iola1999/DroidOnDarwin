@@ -29,4 +29,7 @@ void lkl_bug(const char *format, ...)
     __builtin_va_end(args);
     lkl_ops->panic();
 }
-int nce_lkl_start(void) { return lkl_start_kernel("mem=%luM loglevel=4", NCE_RAM_SIZE / (1024 * 1024)); }
+int nce_lkl_start(void)
+{
+    return lkl_start_kernel("mem=%luM loglevel=4", NCE_RAM_SIZE / (1024 * 1024));
+}

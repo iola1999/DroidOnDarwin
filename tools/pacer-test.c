@@ -14,7 +14,8 @@
 static void busy_ms(double ms)
 {
     uint64_t end = tl_dex_now_ns() + (uint64_t)(ms * 1e6);
-    while (tl_dex_now_ns() < end) { }
+    while (tl_dex_now_ns() < end) {
+    }
 }
 
 /* Run `frames` frames of `work_ms` each; return the achieved rate. If a stall is
@@ -33,32 +34,45 @@ static double run(const char *label, int frames, double work_ms, int stall_at, d
         uint64_t now = tl_dex_now_ns();
         if (stall_at >= 0 && f > stall_at && f < stall_at + 10) {
             double gap = (double)(now - prev) / 1e6;
-            if (gap < min_gap) min_gap = gap;
+            if (gap < min_gap)
+                min_gap = gap;
         }
         prev = now;
     }
     double secs = (double)(tl_dex_now_ns() - t0) / 1e9;
     double fps = frames / secs;
     printf("  %-34s %6.2f fps\n", label, fps);
-    if (min_after_stall) *min_after_stall = min_gap;
+    if (min_after_stall)
+        *min_after_stall = min_gap;
     return fps;
 }
 
 static int failures = 0;
-#define CHECK(cond, ...) do { if (!(cond)) { printf("  FAIL: " __VA_ARGS__); printf("\n"); failures++; } } while (0)
+#define CHECK(cond, ...) \
+    do { \
+        if (!(cond)) { \
+            printf("  FAIL: " __VA_ARGS__); \
+            printf("\n"); \
+            failures++; \
+        } \
+    } while (0)
 
 int main(void)
 {
     printf("pacer, 60 Hz target\n");
-    double a = run("1 ms of work a frame",           120, 1.0, -1, 0, NULL);
-    double b = run("5 ms of work a frame",           120, 5.0, -1, 0, NULL);
-    double c = run("12 ms of work a frame",          120, 12.0, -1, 0, NULL);
+    double a = run("1 ms of work a frame", 120, 1.0, -1, 0, NULL);
+    double b = run("5 ms of work a frame", 120, 5.0, -1, 0, NULL);
+    double c = run("12 ms of work a frame", 120, 12.0, -1, 0, NULL);
     double d = run("25 ms of work a frame (too much)", 40, 25.0, -1, 0, NULL);
 
     /* The old behaviour -- sleep a whole frame after the work -- for contrast. */
     {
         uint64_t t0 = tl_dex_now_ns();
-        for (int f = 0; f < 60; f++) { busy_ms(5.0); struct timespec ts = {0, 16666667}; nanosleep(&ts, NULL); }
+        for (int f = 0; f < 60; f++) {
+            busy_ms(5.0);
+            struct timespec ts = {0, 16666667};
+            nanosleep(&ts, NULL);
+        }
         double fps = 60 / ((double)(tl_dex_now_ns() - t0) / 1e9);
         printf("  %-34s %6.2f fps   <- what 5 ms cost before\n", "5 ms, sleep after work", fps);
     }

@@ -31,39 +31,39 @@
  * against its chunk's end first.
  */
 
-#define RES_TABLE        0x0002
-#define RES_STRING_POOL  0x0001
-#define RES_PACKAGE      0x0200
-#define RES_TYPE         0x0201
+#define RES_TABLE 0x0002
+#define RES_STRING_POOL 0x0001
+#define RES_PACKAGE 0x0200
+#define RES_TYPE 0x0201
 
-#define TYPE_STRING      0x03
+#define TYPE_STRING 0x03
 
-#define MAX_PACKAGES     8
-#define NO_ENTRY16       0xFFFFu
-#define NO_ENTRY32       0xFFFFFFFFu
+#define MAX_PACKAGES 8
+#define NO_ENTRY16 0xFFFFu
+#define NO_ENTRY32 0xFFFFFFFFu
 
 typedef struct {
     const uint8_t *d;
     size_t n;
-    size_t end;          /* one past the pool chunk */
+    size_t end; /* one past the pool chunk */
     uint32_t count;
     int utf8;
-    size_t index_off;    /* the offset table */
-    size_t data_off;     /* the string bytes */
-    char **cache;        /* UTF-16 pools only: each string, decoded on demand */
+    size_t index_off; /* the offset table */
+    size_t data_off; /* the string bytes */
+    char **cache; /* UTF-16 pools only: each string, decoded on demand */
 } res_pool;
 
 typedef struct {
-    uint32_t id;         /* 0x7f for an app's own */
+    uint32_t id; /* 0x7f for an app's own */
     res_pool types;
     res_pool keys;
 } res_package;
 
 typedef struct {
     int pkg;
-    uint8_t type_id;     /* 1-based */
+    uint8_t type_id; /* 1-based */
     uint16_t density;
-    uint32_t locale;     /* language and country, packed; 0 is the default */
+    uint32_t locale; /* language and country, packed; 0 is the default */
     size_t off;
     size_t end;
 } res_chunk;
@@ -83,7 +83,7 @@ typedef struct {
     uint32_t key;
     uint8_t data_type;
     uint32_t data;
-    int complex;         /* a style or an array: no single value */
+    int complex; /* a style or an array: no single value */
 } res_entry;
 
 /* ------------------------------------------------------------- primitives */
@@ -95,13 +95,15 @@ static uint8_t rd8(const uint8_t *d, size_t n, size_t i)
 
 static uint16_t rd16(const uint8_t *d, size_t n, size_t i)
 {
-    if (i + 1 >= n) return 0;
+    if (i + 1 >= n)
+        return 0;
     return (uint16_t)(d[i] | (d[i + 1] << 8));
 }
 
 static uint32_t rd32(const uint8_t *d, size_t n, size_t i)
 {
-    if (i + 3 >= n) return 0;
+    if (i + 3 >= n)
+        return 0;
     return (uint32_t)d[i] | ((uint32_t)d[i + 1] << 8) |
            ((uint32_t)d[i + 2] << 16) | ((uint32_t)d[i + 3] << 24);
 }
@@ -111,7 +113,8 @@ static uint32_t rd32(const uint8_t *d, size_t n, size_t i)
 static int pool_init(res_pool *p, const uint8_t *d, size_t n, size_t chunk)
 {
     memset(p, 0, sizeof(*p));
-    if (chunk >= n || chunk + 28 > n || rd16(d, n, chunk) != RES_STRING_POOL) return 0;
+    if (chunk >= n || chunk + 28 > n || rd16(d, n, chunk) != RES_STRING_POOL)
+        return 0;
 
     size_t header = rd16(d, n, chunk + 2);
     size_t size = rd32(d, n, chunk + 4);
@@ -121,8 +124,10 @@ static int pool_init(res_pool *p, const uint8_t *d, size_t n, size_t chunk)
 
     /* A real pool is never anywhere near a million strings; a count that large
      * is a corrupt header, and trusting it is an allocation of the same size. */
-    if (header < 28 || size < header || chunk + size > n || count > 1000000) return 0;
-    if (header + (size_t)count * 4 > size || strings > size) return 0;
+    if (header < 28 || size < header || chunk + size > n || count > 1000000)
+        return 0;
+    if (header + (size_t)count * 4 > size || strings > size)
+        return 0;
 
     p->d = d;
     p->n = n;
@@ -133,7 +138,10 @@ static int pool_init(res_pool *p, const uint8_t *d, size_t n, size_t chunk)
     p->data_off = chunk + strings;
     if (!p->utf8 && count) {
         p->cache = calloc(count, sizeof(char *));
-        if (!p->cache) { memset(p, 0, sizeof(*p)); return 0; }
+        if (!p->cache) {
+            memset(p, 0, sizeof(*p));
+            return 0;
+        }
     }
     return 1;
 }
@@ -141,7 +149,8 @@ static int pool_init(res_pool *p, const uint8_t *d, size_t n, size_t chunk)
 static void pool_free(res_pool *p)
 {
     if (p->cache) {
-        for (uint32_t i = 0; i < p->count; i++) free(p->cache[i]);
+        for (uint32_t i = 0; i < p->count; i++)
+            free(p->cache[i]);
         free(p->cache);
     }
     memset(p, 0, sizeof(*p));
@@ -150,7 +159,10 @@ static void pool_free(res_pool *p)
 /* One code point to UTF-8; returns bytes written. */
 static size_t utf8_put(char *out, uint32_t cp)
 {
-    if (cp < 0x80) { out[0] = (char)cp; return 1; }
+    if (cp < 0x80) {
+        out[0] = (char)cp;
+        return 1;
+    }
     if (cp < 0x800) {
         out[0] = (char)(0xC0 | (cp >> 6));
         out[1] = (char)(0x80 | (cp & 0x3F));
@@ -172,42 +184,53 @@ static size_t utf8_put(char *out, uint32_t cp)
 /* The string at `idx`, as NUL-terminated UTF-8, or NULL. Owned by the pool. */
 static const char *pool_get(res_pool *p, uint32_t idx)
 {
-    if (!p->d || idx >= p->count) return NULL;
+    if (!p->d || idx >= p->count)
+        return NULL;
 
     size_t off = p->data_off + rd32(p->d, p->n, p->index_off + (size_t)idx * 4);
-    if (off >= p->end) return NULL;
+    if (off >= p->end)
+        return NULL;
 
     if (p->utf8) {
         /* Two lengths, each one byte or two: the length in UTF-16 units, which
          * is of no use here, then the length in bytes. */
         size_t q = off;
-        if (p->d[q++] & 0x80) q++;
-        if (q >= p->end) return NULL;
+        if (p->d[q++] & 0x80)
+            q++;
+        if (q >= p->end)
+            return NULL;
         size_t bytes = p->d[q++];
         if (bytes & 0x80) {
-            if (q >= p->end) return NULL;
+            if (q >= p->end)
+                return NULL;
             bytes = ((bytes & 0x7F) << 8) | p->d[q++];
         }
         /* Room for the terminator, and the terminator actually there. */
-        if (q + bytes >= p->end || p->d[q + bytes] != 0) return NULL;
+        if (q + bytes >= p->end || p->d[q + bytes] != 0)
+            return NULL;
         return (const char *)p->d + q;
     }
 
-    if (p->cache[idx]) return p->cache[idx];
+    if (p->cache[idx])
+        return p->cache[idx];
 
     size_t q = off;
-    if (q + 2 > p->end) return NULL;
+    if (q + 2 > p->end)
+        return NULL;
     size_t len = rd16(p->d, p->n, q);
     q += 2;
     if (len & 0x8000) {
-        if (q + 2 > p->end) return NULL;
+        if (q + 2 > p->end)
+            return NULL;
         len = ((len & 0x7FFF) << 16) | rd16(p->d, p->n, q);
         q += 2;
     }
-    if (q + len * 2 > p->end) return NULL;
+    if (q + len * 2 > p->end)
+        return NULL;
 
     char *out = malloc(len * 4 + 1);
-    if (!out) return NULL;
+    if (!out)
+        return NULL;
     size_t w = 0;
     for (size_t i = 0; i < len; i++) {
         uint32_t u = rd16(p->d, p->n, q + i * 2);
@@ -232,7 +255,8 @@ static int add_chunk(tl_res *r, int pkg, size_t off, size_t size)
     if (r->nchunks == r->cap) {
         int cap = r->cap ? r->cap * 2 : 64;
         res_chunk *grown = realloc(r->chunks, (size_t)cap * sizeof(*grown));
-        if (!grown) return 0;
+        if (!grown)
+            return 0;
         r->chunks = grown;
         r->cap = cap;
     }
@@ -254,12 +278,14 @@ static int add_chunk(tl_res *r, int pkg, size_t off, size_t size)
 
 static void scan_package(tl_res *r, size_t p, size_t size)
 {
-    if (r->npkgs >= MAX_PACKAGES) return;
+    if (r->npkgs >= MAX_PACKAGES)
+        return;
 
     /* 288 bytes with typeIdOffset, 284 in tables that predate it. The two pool
      * offsets sit at the same place in both. */
     size_t header = rd16(r->d, r->n, p + 2);
-    if (header < 284 || header > size) return;
+    if (header < 284 || header > size)
+        return;
 
     int pi = r->npkgs;
     res_package *pk = &r->pkgs[pi];
@@ -268,48 +294,63 @@ static void scan_package(tl_res *r, size_t p, size_t size)
 
     size_t ts = rd32(r->d, r->n, p + 268);
     size_t ks = rd32(r->d, r->n, p + 276);
-    if (ts && ts < size) pool_init(&pk->types, r->d, r->n, p + ts);
-    if (ks && ks < size) pool_init(&pk->keys, r->d, r->n, p + ks);
+    if (ts && ts < size)
+        pool_init(&pk->types, r->d, r->n, p + ts);
+    if (ks && ks < size)
+        pool_init(&pk->keys, r->d, r->n, p + ks);
     r->npkgs++;
 
     size_t q = p + header;
     while (q + 8 <= p + size) {
         uint16_t type = rd16(r->d, r->n, q);
         size_t csz = rd32(r->d, r->n, q + 4);
-        if (csz < 8 || q + csz > p + size) break;
-        if (type == RES_TYPE && !add_chunk(r, pi, q, csz)) break;
+        if (csz < 8 || q + csz > p + size)
+            break;
+        if (type == RES_TYPE && !add_chunk(r, pi, q, csz))
+            break;
         q += csz;
     }
 }
 
 tl_res *tl_res_create(const uint8_t *data, size_t len)
 {
-    if (!data || len < 16 || rd16(data, len, 0) != RES_TABLE) return NULL;
+    if (!data || len < 16 || rd16(data, len, 0) != RES_TABLE)
+        return NULL;
 
     tl_res *r = calloc(1, sizeof(*r));
-    if (!r) return NULL;
+    if (!r)
+        return NULL;
     r->d = data;
     r->n = len;
 
     size_t p = rd16(data, len, 2);
-    if (!pool_init(&r->values, data, len, p)) { free(r); return NULL; }
+    if (!pool_init(&r->values, data, len, p)) {
+        free(r);
+        return NULL;
+    }
     p += rd32(data, len, p + 4);
 
     while (p + 8 <= len) {
         uint16_t type = rd16(data, len, p);
         size_t size = rd32(data, len, p + 4);
-        if (size < 8 || p + size > len) break;
-        if (type == RES_PACKAGE) scan_package(r, p, size);
+        if (size < 8 || p + size > len)
+            break;
+        if (type == RES_PACKAGE)
+            scan_package(r, p, size);
         p += size;
     }
 
-    if (r->nchunks == 0) { tl_res_destroy(r); return NULL; }
+    if (r->nchunks == 0) {
+        tl_res_destroy(r);
+        return NULL;
+    }
     return r;
 }
 
 void tl_res_destroy(tl_res *r)
 {
-    if (!r) return;
+    if (!r)
+        return;
     pool_free(&r->values);
     for (int i = 0; i < r->npkgs; i++) {
         pool_free(&r->pkgs[i].types);
@@ -350,29 +391,41 @@ static int chunk_entry(const tl_res *r, const res_chunk *c, uint32_t index, res_
         int found = 0;
         for (uint32_t i = 0; i < count; i++) {
             size_t q = p + header + (size_t)i * 4;
-            if (q + 4 > c->end) return 0;
-            if (rd16(d, n, q) == index) { entry_off = (size_t)rd16(d, n, q + 2) * 4; found = 1; break; }
+            if (q + 4 > c->end)
+                return 0;
+            if (rd16(d, n, q) == index) {
+                entry_off = (size_t)rd16(d, n, q + 2) * 4;
+                found = 1;
+                break;
+            }
         }
-        if (!found) return 0;
+        if (!found)
+            return 0;
     } else {
-        if (index >= count) return 0;
+        if (index >= count)
+            return 0;
         if (off16) {
             size_t q = p + header + (size_t)index * 2;
-            if (q + 2 > c->end) return 0;
+            if (q + 2 > c->end)
+                return 0;
             uint16_t raw = rd16(d, n, q);
-            if (raw == NO_ENTRY16) return 0;
+            if (raw == NO_ENTRY16)
+                return 0;
             entry_off = (size_t)raw * 4;
         } else {
             size_t q = p + header + (size_t)index * 4;
-            if (q + 4 > c->end) return 0;
+            if (q + 4 > c->end)
+                return 0;
             uint32_t raw = rd32(d, n, q);
-            if (raw == NO_ENTRY32) return 0;
+            if (raw == NO_ENTRY32)
+                return 0;
             entry_off = raw;
         }
     }
 
     size_t e = p + estart + entry_off;
-    if (e + 8 > c->end) return 0;
+    if (e + 8 > c->end)
+        return 0;
 
     uint16_t eflags = rd16(d, n, e + 2);
     memset(out, 0, sizeof(*out));
@@ -387,13 +440,14 @@ static int chunk_entry(const tl_res *r, const res_chunk *c, uint32_t index, res_
     }
 
     out->key = rd32(d, n, e + 4);
-    if (eflags & 0x0001) {          /* complex: a style, an array, a plural */
+    if (eflags & 0x0001) { /* complex: a style, an array, a plural */
         out->complex = 1;
         return 1;
     }
 
     size_t v = e + rd16(d, n, e);
-    if (v + 8 > c->end) return 0;
+    if (v + 8 > c->end)
+        return 0;
     out->data_type = rd8(d, n, v + 3);
     out->data = rd32(d, n, v + 4);
     return 1;
@@ -409,31 +463,36 @@ static int name_eq(const char *a, const char *b)
     for (; *a && *b; a++, b++) {
         char x = (*a == '-' || *a == '.') ? '_' : *a;
         char y = (*b == '-' || *b == '.') ? '_' : *b;
-        if (x != y) return 0;
+        if (x != y)
+            return 0;
     }
     return *a == *b;
 }
 
 uint32_t tl_res_find(const tl_res *r, const char *type, const char *name)
 {
-    if (!r || !name || !*name) return 0;
+    if (!r || !name || !*name)
+        return 0;
 
     /* getIdentifier takes "entry", "type/entry" or "package:type/entry", and
      * the type inside the name beats the one passed beside it. */
     char tbuf[64];
     const char *colon = strchr(name, ':');
     const char *slash = strchr(name, '/');
-    if (colon && (!slash || colon < slash)) name = colon + 1;
+    if (colon && (!slash || colon < slash))
+        name = colon + 1;
     slash = strchr(name, '/');
     if (slash) {
         size_t tl = (size_t)(slash - name);
-        if (tl == 0 || tl >= sizeof(tbuf)) return 0;
+        if (tl == 0 || tl >= sizeof(tbuf))
+            return 0;
         memcpy(tbuf, name, tl);
         tbuf[tl] = 0;
         type = tbuf;
         name = slash + 1;
     }
-    if (!type || !*type || !*name) return 0;
+    if (!type || !*type || !*name)
+        return 0;
 
     for (int pi = 0; pi < r->npkgs; pi++) {
         res_package *pk = (res_package *)&r->pkgs[pi];
@@ -442,13 +501,18 @@ uint32_t tl_res_find(const tl_res *r, const char *type, const char *name)
         uint32_t type_id = 0;
         for (uint32_t t = 0; t < pk->types.count && t < 255; t++) {
             const char *tn = pool_get(&pk->types, t);
-            if (tn && !strcmp(tn, type)) { type_id = t + 1; break; }
+            if (tn && !strcmp(tn, type)) {
+                type_id = t + 1;
+                break;
+            }
         }
-        if (!type_id) continue;
+        if (!type_id)
+            continue;
 
         for (int ci = 0; ci < r->nchunks; ci++) {
             const res_chunk *c = &r->chunks[ci];
-            if (c->pkg != pi || c->type_id != type_id) continue;
+            if (c->pkg != pi || c->type_id != type_id)
+                continue;
 
             uint32_t count = rd32(r->d, r->n, c->off + 12);
             for (uint32_t i = 0; i < count; i++) {
@@ -457,12 +521,14 @@ uint32_t tl_res_find(const tl_res *r, const char *type, const char *name)
                 uint32_t index = i;
                 if (rd8(r->d, r->n, c->off + 9) & 0x01) {
                     size_t q = c->off + rd16(r->d, r->n, c->off + 2) + (size_t)i * 4;
-                    if (q + 4 > c->end) break;
+                    if (q + 4 > c->end)
+                        break;
                     index = rd16(r->d, r->n, q);
                 }
 
                 res_entry e;
-                if (!chunk_entry(r, c, index, &e)) continue;
+                if (!chunk_entry(r, c, index, &e))
+                    continue;
                 const char *key = pool_get(&pk->keys, e.key);
                 if (key && name_eq(key, name)) {
                     return (pk->id << 24) | ((uint32_t)type_id << 16) | index;
@@ -489,15 +555,17 @@ static void for_each_entry(const tl_res *r, uint32_t id, entry_visit visit, void
 
     for (int ci = 0; ci < r->nchunks; ci++) {
         const res_chunk *c = &r->chunks[ci];
-        if (c->type_id != type_id || r->pkgs[c->pkg].id != pkg_id) continue;
+        if (c->type_id != type_id || r->pkgs[c->pkg].id != pkg_id)
+            continue;
         res_entry e;
-        if (chunk_entry(r, c, index, &e) && visit(r, c, &e, ctx)) return;
+        if (chunk_entry(r, c, index, &e) && visit(r, c, &e, ctx))
+            return;
     }
 }
 
 typedef struct {
-    int want;                /* the density being asked for */
-    int have;                /* whether anything has been picked */
+    int want; /* the density being asked for */
+    int have; /* whether anything has been picked */
     int best_density;
     const char *best;
     res_pool *values;
@@ -507,8 +575,10 @@ typedef struct {
  * the slot an XML drawable is filed under. Neither competes with a real size. */
 static int effective_density(uint16_t d)
 {
-    if (d == 0) return 160;
-    if (d == 0xFFFE) return 1;
+    if (d == 0)
+        return 160;
+    if (d == 0xFFFE)
+        return 1;
     return d;
 }
 
@@ -516,9 +586,11 @@ static int pick_file(const tl_res *r, const res_chunk *c, const res_entry *e, vo
 {
     (void)r;
     file_pick *f = vctx;
-    if (e->complex || e->data_type != TYPE_STRING) return 0;
+    if (e->complex || e->data_type != TYPE_STRING)
+        return 0;
     const char *path = pool_get(f->values, e->data);
-    if (!path || (strncmp(path, "res/", 4) && strncmp(path, "assets/", 7))) return 0;
+    if (!path || (strncmp(path, "res/", 4) && strncmp(path, "assets/", 7)))
+        return 0;
 
     int dens = effective_density(c->density);
     int better;
@@ -529,11 +601,11 @@ static int pick_file(const tl_res *r, const res_chunk *c, const res_entry *e, vo
     } else if (f->best_density == f->want) {
         better = 0;
     } else if (dens > f->want && f->best_density < f->want) {
-        better = 1;                                  /* scale down, not up */
+        better = 1; /* scale down, not up */
     } else if (dens > f->want && f->best_density > f->want) {
-        better = dens < f->best_density;             /* the nearest above */
+        better = dens < f->best_density; /* the nearest above */
     } else if (dens < f->want && f->best_density < f->want) {
-        better = dens > f->best_density;             /* the nearest below */
+        better = dens > f->best_density; /* the nearest below */
     } else {
         better = 0;
     }
@@ -548,9 +620,10 @@ static int pick_file(const tl_res *r, const res_chunk *c, const res_entry *e, vo
 
 const char *tl_res_file(const tl_res *r, uint32_t id, int density_dpi)
 {
-    if (!r || !id) return NULL;
-    file_pick f = { .want = density_dpi > 0 ? density_dpi : 160,
-                    .values = (res_pool *)&r->values };
+    if (!r || !id)
+        return NULL;
+    file_pick f = {.want = density_dpi > 0 ? density_dpi : 160,
+                   .values = (res_pool *)&r->values};
     for_each_entry(r, id, pick_file, &f);
     return f.best;
 }
@@ -565,9 +638,11 @@ static int pick_string(const tl_res *r, const res_chunk *c, const res_entry *e, 
 {
     (void)r;
     string_pick *s = vctx;
-    if (e->complex || e->data_type != TYPE_STRING) return 0;
+    if (e->complex || e->data_type != TYPE_STRING)
+        return 0;
     const char *v = pool_get(s->values, e->data);
-    if (!v) return 0;
+    if (!v)
+        return 0;
     int is_default = (c->locale == 0);
     if (!s->best || (is_default && !s->best_is_default)) {
         s->best = v;
@@ -578,8 +653,9 @@ static int pick_string(const tl_res *r, const res_chunk *c, const res_entry *e, 
 
 const char *tl_res_string(const tl_res *r, uint32_t id)
 {
-    if (!r || !id) return NULL;
-    string_pick s = { .values = (res_pool *)&r->values };
+    if (!r || !id)
+        return NULL;
+    string_pick s = {.values = (res_pool *)&r->values};
     for_each_entry(r, id, pick_string, &s);
     return s.best;
 }

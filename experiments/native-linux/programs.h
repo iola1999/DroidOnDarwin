@@ -8,7 +8,10 @@ typedef struct {
     unsigned char *source_cache, *cache_prot;
 } NceSegment;
 
-typedef struct { size_t address; uint32_t instruction; } NcePatch;
+typedef struct {
+    size_t address;
+    uint32_t instruction;
+} NcePatch;
 
 /* Generated from the bundled ELF files before executable addresses are
  * authorized. Linux still owns file loading, relocations and process pages. */

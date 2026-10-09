@@ -13,7 +13,9 @@
 #include <sys/mman.h>
 #include <unistd.h>
 
-enum { GUEST_PAGE = 4096, HOST_PAGE = 16384, ENTRIES = 512 };
+enum { GUEST_PAGE = 4096,
+       HOST_PAGE = 16384,
+       ENTRIES = 512 };
 #define PFN_MASK ((UINT64_C(1) << 55) - 1)
 
 struct counts {
@@ -33,13 +35,17 @@ int main(int argc, char **argv)
     errno = 0;
     bool sample = !strcmp(argv[1], "--allocation-sample");
     long pid = sample ? getpid() : strtol(argv[1], &end, 10);
-    if (errno || (!sample && *end) || pid <= 0 || pid > INT32_MAX) return 2;
+    if (errno || (!sample && *end) || pid <= 0 || pid > INT32_MAX)
+        return 2;
     size_t sample_bytes = sample ? 16 * 1024 * 1024 : 0;
     void *allocation = NULL;
     if (sample) {
         allocation = mmap(NULL, sample_bytes, PROT_READ | PROT_WRITE,
                           MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
-        if (allocation == MAP_FAILED) { perror("mmap sample"); return 1; }
+        if (allocation == MAP_FAILED) {
+            perror("mmap sample");
+            return 1;
+        }
         for (size_t i = 0; i < sample_bytes; i += GUEST_PAGE)
             ((volatile unsigned char *)allocation)[i] = 1;
     }
@@ -50,8 +56,10 @@ int main(int argc, char **argv)
     int pagemap = open(path, O_RDONLY | O_CLOEXEC);
     if (!maps || pagemap < 0) {
         perror("open proc maps/pagemap");
-        if (maps) fclose(maps);
-        if (pagemap >= 0) close(pagemap);
+        if (maps)
+            fclose(maps);
+        if (pagemap >= 0)
+            close(pagemap);
         return 1;
     }
     struct counts c = {.minimum = UINT64_MAX};
@@ -66,9 +74,12 @@ int main(int argc, char **argv)
             result = 1;
             break;
         }
-        if (mode[0] != 'r') continue;
-        if (low < c.minimum) c.minimum = low;
-        if (high > c.maximum) c.maximum = high;
+        if (mode[0] != 'r')
+            continue;
+        if (low < c.minimum)
+            c.minimum = low;
+        if (high > c.maximum)
+            c.maximum = high;
         c.virtual_pages += (high - low) / GUEST_PAGE;
         uint64_t start = (low + HOST_PAGE - 1) & ~(uint64_t)(HOST_PAGE - 1);
         uint64_t finish = high & ~(uint64_t)(HOST_PAGE - 1);
@@ -80,11 +91,13 @@ int main(int argc, char **argv)
         while (start < finish) {
             uint64_t entries[ENTRIES];
             size_t count = (finish - start) / GUEST_PAGE;
-            if (count > ENTRIES) count = ENTRIES;
+            if (count > ENTRIES)
+                count = ENTRIES;
             size_t bytes = count * sizeof(uint64_t);
             ssize_t got;
-            do { got = pread(pagemap, entries, bytes, (off_t)(start / GUEST_PAGE * 8)); }
-            while (got < 0 && errno == EINTR);
+            do {
+                got = pread(pagemap, entries, bytes, (off_t)(start / GUEST_PAGE * 8));
+            } while (got < 0 && errno == EINTR);
             if (got != (ssize_t)bytes) {
                 fprintf(stderr, "pagemap short read for pid %ld at 0x%" PRIx64 "\n", pid, start);
                 result = 1;
@@ -103,23 +116,29 @@ int main(int argc, char **argv)
                     contiguous &= pfn == first + j;
                 }
                 c.full_groups += present;
-                if (!present || !visible || !contiguous) continue;
+                if (!present || !visible || !contiguous)
+                    continue;
                 ++c.contiguous_groups;
-                if (first & 3) continue;
+                if (first & 3)
+                    continue;
                 ++c.aligned_groups;
                 c.writable_groups += mode[1] == 'w';
                 c.executable_groups += mode[2] == 'x';
             }
             start += count * GUEST_PAGE;
         }
-        if (result) break;
+        if (result)
+            break;
     }
-    if (ferror(maps)) result = 1;
+    if (ferror(maps))
+        result = 1;
     free(line);
     fclose(maps);
     close(pagemap);
-    if (result) return result;
-    if (c.minimum == UINT64_MAX) c.minimum = 0;
+    if (result)
+        return result;
+    if (c.minimum == UINT64_MAX)
+        c.minimum = 0;
     printf("{\"pid\":%ld,\"page_bytes\":4096,\"allocation_sample_bytes\":%zu,\"readable_virtual_pages\":%" PRIu64
            ",\"sampled_present_pages\":%" PRIu64 ",\"hidden_pfns\":%" PRIu64
            ",\"vma_edge_pages_skipped\":%" PRIu64 ",\"fully_present_16k_groups\":%" PRIu64
@@ -133,6 +152,7 @@ int main(int argc, char **argv)
            c.present_pages ? 4.0 * c.aligned_groups / c.present_pages : 0.0);
     /* Linux can hide PFNs without returning an error. Refuse to report that
      * case as measured physical fragmentation. */
-    if (sample) munmap(allocation, sample_bytes);
+    if (sample)
+        munmap(allocation, sample_bytes);
     return c.hidden_pfns ? 3 : 0;
 }

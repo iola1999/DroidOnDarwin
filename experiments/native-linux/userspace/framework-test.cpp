@@ -20,12 +20,19 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
-#define CHECK(c) do { if (!(c)) { dprintf(2, "framework-test:%d errno=%d: %s\n", __LINE__, errno, #c); _exit(109); } } while (0)
+#define CHECK(c)                                                                 \
+    do {                                                                         \
+        if (!(c)) {                                                              \
+            dprintf(2, "framework-test:%d errno=%d: %s\n", __LINE__, errno, #c); \
+            _exit(109);                                                          \
+        }                                                                        \
+    } while (0)
 
 static void runtime_environment()
 {
     const char *environment[][2] = {
-        {"ANDROID_ROOT", "/system"}, {"ANDROID_DATA", "/data"},
+        {"ANDROID_ROOT", "/system"},
+        {"ANDROID_DATA", "/data"},
         {"ANDROID_ART_ROOT", "/apex/com.android.art"},
         {"ANDROID_I18N_ROOT", "/apex/com.android.i18n"},
         {"ANDROID_TZDATA_ROOT", "/apex/com.android.tzdata"},
@@ -33,7 +40,8 @@ static void runtime_environment()
         {"CLASSPATH", "/system/framework/nce-framework.jar"},
         {"LD_PRELOAD", "/system/lib64/libnce-framework-log.so"},
     };
-    for (const auto &entry : environment) CHECK(setenv(entry[0], entry[1], 1) == 0);
+    for (const auto &entry : environment)
+        CHECK(setenv(entry[0], entry[1], 1) == 0);
     if (access("/data/nce/graphics", F_OK) == 0) {
         CHECK(setenv("LD_PRELOAD", "/system/lib64/libnce-qemupipe.so:/system/lib64/libnce-framework-log.so", 1) == 0);
         CHECK(setenv("LD_LIBRARY_PATH", "/system/lib64:/vendor/lib64:/vendor/lib64/egl:/vendor/lib64/hw", 1) == 0);
@@ -77,14 +85,16 @@ static void compare_files(const char *source, const char *generated)
 {
     int first = open(source, O_RDONLY | O_CLOEXEC);
     int second = open(generated, O_RDONLY | O_CLOEXEC);
-    if (first < 0 || second < 0) dprintf(2, "aconfig files: %s -> %s\n", source, generated);
+    if (first < 0 || second < 0)
+        dprintf(2, "aconfig files: %s -> %s\n", source, generated);
     CHECK(first >= 0 && second >= 0);
     char left[4096], right[4096];
     for (;;) {
         ssize_t count = read(first, left, sizeof(left));
         CHECK(count >= 0 && read(second, right, sizeof(right)) == count);
         CHECK(!memcmp(left, right, count));
-        if (!count) break;
+        if (!count)
+            break;
     }
     CHECK(close(first) == 0 && close(second) == 0);
 }
@@ -94,10 +104,12 @@ static bool check_aconfig_container(const char *container, const char *source)
     char from[512], to[512];
     struct stat info;
     snprintf(from, sizeof(from), "%s/flag.val", source);
-    if (stat(from, &info) || !info.st_size) return false;
+    if (stat(from, &info) || !info.st_size)
+        return false;
     const char *files[][2] = {{"package.map", "maps/%s.package.map"},
-                             {"flag.map", "maps/%s.flag.map"},
-                             {"flag.val", "boot/%s.val"}, {"flag.info", "boot/%s.info"}};
+                              {"flag.map", "maps/%s.flag.map"},
+                              {"flag.val", "boot/%s.val"},
+                              {"flag.info", "boot/%s.info"}};
     for (const auto &file : files) {
         snprintf(from, sizeof(from), "%s/%s", source, file[0]);
         char relative[256];
@@ -133,7 +145,8 @@ static void initialize_aconfig()
             }
             int status;
             CHECK(waitpid(child, &status, 0) == child);
-            if (status) dprintf(2, "aconfigd %s %s status=%d\n", command[0], command[1], status);
+            if (status)
+                dprintf(2, "aconfigd %s %s status=%d\n", command[0], command[1], status);
             CHECK(status == 0);
         }
         containers = 0;
@@ -146,10 +159,12 @@ static void initialize_aconfig()
         DIR *directory = opendir("/apex");
         CHECK(directory);
         while (dirent *entry = readdir(directory)) {
-            if (strncmp(entry->d_name, "com.android.", 12)) continue;
+            if (strncmp(entry->d_name, "com.android.", 12))
+                continue;
             char source[512];
             snprintf(source, sizeof(source), "/apex/%s/etc", entry->d_name);
-            if (check_aconfig_container(entry->d_name, source)) ++containers;
+            if (check_aconfig_container(entry->d_name, source))
+                ++containers;
         }
         CHECK(closedir(directory) == 0 && containers > 1);
     }
@@ -160,26 +175,36 @@ void nce_framework_test()
 {
     CHECK(symlink("/system/etc", "/etc") == 0);
     const char *properties[][2] = {
-        {"ro.product.cpu.abilist64", "arm64-v8a"}, {"ro.product.cpu.abilist", "arm64-v8a"},
-        {"ro.product.cpu.abi", "arm64-v8a"}, {"ro.build.version.sdk", "36"},
-        {"ro.build.version.sdk_full", "36.0"}, {"ro.build.version.release", "16"},
-        {"ro.build.version.release_or_codename", "16"}, {"ro.build.version.codename", "REL"},
-        {"ro.build.version.all_codenames", "REL"}, {"ro.product.model", "NCE prototype"},
+        {"ro.product.cpu.abilist64", "arm64-v8a"},
+        {"ro.product.cpu.abilist", "arm64-v8a"},
+        {"ro.product.cpu.abi", "arm64-v8a"},
+        {"ro.build.version.sdk", "36"},
+        {"ro.build.version.sdk_full", "36.0"},
+        {"ro.build.version.release", "16"},
+        {"ro.build.version.release_or_codename", "16"},
+        {"ro.build.version.codename", "REL"},
+        {"ro.build.version.all_codenames", "REL"},
+        {"ro.product.model", "NCE prototype"},
         {"ro.build.type", "userdebug"},
-        {"ro.treble.enabled", "true"}, {"sys.use_memfd", "true"},
-        {"dalvik.vm.heapstartsize", "16m"}, {"dalvik.vm.heapsize", "128m"},
+        {"ro.treble.enabled", "true"},
+        {"sys.use_memfd", "true"},
+        {"dalvik.vm.heapstartsize", "16m"},
+        {"dalvik.vm.heapsize", "128m"},
         {"dalvik.vm.jdwp-provider", "none"},
-        {"dalvik.vm.usejit", "true"}, {"dalvik.vm.jitmaxsize", "32m"},
-        {"dalvik.vm.jitthreshold", "65535"}, {"dalvik.vm.gctype", "MS"},
+        {"dalvik.vm.usejit", "true"},
+        {"dalvik.vm.jitmaxsize", "32m"},
+        {"dalvik.vm.jitthreshold", "65535"},
+        {"dalvik.vm.gctype", "MS"},
         {"dalvik.vm.boot-image", "/data/no-boot-image.art"},
         {"dalvik.vm.extra-opts", "-Xnoimage-dex2oat"},
     };
-    for (const auto &entry : properties) CHECK(__system_property_set(entry[0], entry[1]) == 0);
+    for (const auto &entry : properties)
+        CHECK(__system_property_set(entry[0], entry[1]) == 0);
     // APK execution uses the prepared ART JIT. Keep installation verification
     // separate from dex2oat code generation, whose output is not prepared yet.
     const char *dexopt_reasons[] = {"ab-ota", "bg-dexopt", "boot-after-mainline-update", "boot-after-ota",
-        "cmdline", "first-boot", "inactive", "install", "install-bulk", "install-bulk-downgraded",
-        "install-bulk-secondary", "install-bulk-secondary-downgraded", "install-fast", "post-boot", "shared"};
+                                    "cmdline", "first-boot", "inactive", "install", "install-bulk", "install-bulk-downgraded",
+                                    "install-bulk-secondary", "install-bulk-secondary-downgraded", "install-fast", "post-boot", "shared"};
     for (const char *reason : dexopt_reasons) {
         char key[96];
         snprintf(key, sizeof(key), "pm.dexopt.%s", reason);
@@ -200,7 +225,8 @@ void nce_framework_test()
     }
     int status;
     CHECK(waitpid(child, &status, 0) == child);
-    if (status) dprintf(2, "framework-test child=%d status=%d\n", child, status);
+    if (status)
+        dprintf(2, "framework-test child=%d status=%d\n", child, status);
     CHECK(WIFEXITED(status) && WEXITSTATUS(status) == 0);
 }
 
@@ -218,7 +244,8 @@ static int control_socket(const char *name, int type = SOCK_STREAM, gid_t group 
         int passcred = 1;
         CHECK(setsockopt(fd, SOL_SOCKET, SO_PASSCRED, &passcred, sizeof(passcred)) == 0);
     }
-    if (type != SOCK_DGRAM) CHECK(listen(fd, 8) == 0);
+    if (type != SOCK_DGRAM)
+        CHECK(listen(fd, 8) == 0);
     return fd;
 }
 
@@ -240,7 +267,8 @@ static void surface_check(const char *package = nullptr, const char *png = nullp
     }
     int status;
     CHECK(waitpid(child, &status, 0) == child);
-    if (status) dprintf(2, "surface-test child=%d status=%d\n", child, status);
+    if (status)
+        dprintf(2, "surface-test child=%d status=%d\n", child, status);
     CHECK(WIFEXITED(status) && WEXITSTATUS(status) == 0);
 }
 
@@ -253,7 +281,8 @@ static void receive_bytes(int fd, void *buffer, size_t size)
 {
     while (size) {
         ssize_t count = read(fd, buffer, size);
-        if (count < 0 && errno == EINTR) continue;
+        if (count < 0 && errno == EINTR)
+            continue;
         CHECK(count > 0);
         buffer = static_cast<char *>(buffer) + count;
         size -= count;
@@ -265,7 +294,8 @@ static void wait_system_service(pid_t child, const char *name)
     for (unsigned i = 0; i < 100; ++i) {
         int status;
         pid_t exited = waitpid(child, &status, WNOHANG);
-        if (exited == child) dprintf(2, "service %s pid=%d exited status=%d\n", name, child, status);
+        if (exited == child)
+            dprintf(2, "service %s pid=%d exited status=%d\n", name, child, status);
         CHECK(exited == 0);
         AIBinder *service = AServiceManager_checkService(name);
         if (service) {
@@ -291,7 +321,8 @@ static void android_command(std::initializer_list<const char *> arguments,
         char *argv[24] = {const_cast<char *>("cmd")};
         CHECK(arguments.size() < 23);
         unsigned index = 1;
-        for (const char *argument : arguments) argv[index++] = const_cast<char *>(argument);
+        for (const char *argument : arguments)
+            argv[index++] = const_cast<char *>(argument);
         execv("/system/bin/cmd", argv);
         _exit(108);
     }
@@ -301,7 +332,8 @@ static void android_command(std::initializer_list<const char *> arguments,
     ssize_t count = pread(output, text, sizeof(text) - 1, 0);
     CHECK(count >= 0 && count < static_cast<ssize_t>(sizeof(text) - 1) && close(output) == 0);
     dprintf(2, "Android cmd");
-    for (const char *argument : arguments) dprintf(2, " %s", argument);
+    for (const char *argument : arguments)
+        dprintf(2, " %s", argument);
     dprintf(2, " status=%d\n%s", status, text);
     CHECK(status == 0 && (!expected || strstr(text, expected)));
 }
@@ -313,13 +345,15 @@ static void stop_process_group(pid_t leader)
     for (unsigned attempt = 0; attempt < 100; ++attempt) {
         int status;
         pid_t child;
-        while ((child = waitpid(-leader, &status, WNOHANG)) > 0) {}
+        while ((child = waitpid(-leader, &status, WNOHANG)) > 0) {
+        }
         CHECK(child == 0 || errno == ECHILD);
         if (kill(-leader, 0) == -1) {
             CHECK(errno == ESRCH);
             return;
         }
-        if (attempt == 50) CHECK(kill(-leader, SIGKILL) == 0 || errno == ESRCH);
+        if (attempt == 50)
+            CHECK(kill(-leader, SIGKILL) == 0 || errno == ESRCH);
         usleep(10000);
     }
     dprintf(2, "process group %d did not stop\n", leader);
@@ -338,11 +372,13 @@ pid_t nce_start_system_service(const char *path, const char *name, uid_t uid,
         char *argv[16] = {const_cast<char *>(path)};
         CHECK(arguments.size() < 15);
         unsigned index = 1;
-        for (const char *argument : arguments) argv[index++] = const_cast<char *>(argument);
+        for (const char *argument : arguments)
+            argv[index++] = const_cast<char *>(argument);
         execv(path, argv);
         _exit(108);
     }
-    if (name) wait_system_service(child, name);
+    if (name)
+        wait_system_service(child, name);
     return child;
 }
 
@@ -355,7 +391,7 @@ static pid_t start_socket_service(const char *path, const char *service,
     unsigned count = 0;
     for (const char *name : names)
         descriptors[count++] = control_socket(name, type,
-            !strcmp(name, "dnsproxyd") || !strcmp(name, "fwmarkd") ? 3003 : (uid ? uid : 1000), uid, mode);
+                                              !strcmp(name, "dnsproxyd") || !strcmp(name, "fwmarkd") ? 3003 : (uid ? uid : 1000), uid, mode);
     pid_t child = fork();
     CHECK(child >= 0);
     if (!child) {
@@ -372,31 +408,39 @@ static pid_t start_socket_service(const char *path, const char *service,
         execl(path, path, nullptr);
         _exit(108);
     }
-    for (unsigned i = 0; i < count; ++i) CHECK(close(descriptors[i]) == 0);
-    if (service) wait_system_service(child, service);
+    for (unsigned i = 0; i < count; ++i)
+        CHECK(close(descriptors[i]) == 0);
+    if (service)
+        wait_system_service(child, service);
     return child;
 }
 
 static void dump_threads()
 {
     DIR *processes = opendir("/proc");
-    if (!processes) return;
+    if (!processes)
+        return;
     while (dirent *process = readdir(processes)) {
-        if (process->d_name[0] < '1' || process->d_name[0] > '9') continue;
+        if (process->d_name[0] < '1' || process->d_name[0] > '9')
+            continue;
         char directory[512];
         snprintf(directory, sizeof(directory), "/proc/%s/task", process->d_name);
         DIR *threads = opendir(directory);
-        if (!threads) continue;
+        if (!threads)
+            continue;
         while (dirent *thread = readdir(threads)) {
-            if (thread->d_name[0] < '1' || thread->d_name[0] > '9') continue;
+            if (thread->d_name[0] < '1' || thread->d_name[0] > '9')
+                continue;
             for (const char *name : {"stat", "wchan", "syscall"}) {
                 char path[1024], content[2048];
                 snprintf(path, sizeof(path), "%s/%s/%s", directory, thread->d_name, name);
                 int fd = open(path, O_RDONLY | O_CLOEXEC);
-                if (fd < 0) continue;
+                if (fd < 0)
+                    continue;
                 ssize_t size = read(fd, content, sizeof(content) - 1);
                 close(fd);
-                if (size <= 0) continue;
+                if (size <= 0)
+                    continue;
                 content[size] = 0;
                 dprintf(2, "%s: %s\n", path, content);
             }
@@ -433,23 +477,38 @@ void nce_zygote_test()
     if (system_server) {
         int kernel_log = open("/proc/sys/kernel/printk_devkmsg", O_WRONLY | O_CLOEXEC);
         CHECK(kernel_log >= 0 && write(kernel_log, "on\n", 3) == 3 && close(kernel_log) == 0);
-        const struct { const char *path; mode_t mode; uid_t owner; } directories[] = {
-            {"/mnt", 0755, 0}, {"/mnt/user", 0755, 0}, {"/mnt/user/0", 0755, 0},
-            {"/storage", 0755, 0}, {"/data/system", 0775, 1000},
-            {"/data/system/users", 0775, 1000}, {"/data/system/users/0", 0700, 1000},
-            {"/data/system_de", 0770, 1000}, {"/data/system_de/0", 0770, 1000},
+        const struct {
+            const char *path;
+            mode_t mode;
+            uid_t owner;
+        } directories[] = {
+            {"/mnt", 0755, 0},
+            {"/mnt/user", 0755, 0},
+            {"/mnt/user/0", 0755, 0},
+            {"/storage", 0755, 0},
+            {"/data/system", 0775, 1000},
+            {"/data/system/users", 0775, 1000},
+            {"/data/system/users/0", 0700, 1000},
+            {"/data/system_de", 0770, 1000},
+            {"/data/system_de/0", 0770, 1000},
             {"/data/app", 0771, 1000},
             {"/data/system_ce", 0770, 1000},
             {"/data/resource-cache", 0771, 1000},
             {"/data/anr", 0775, 1000},
-            {"/data/misc/vold", 0700, 0}, {"/metadata/vold", 0700, 0},
+            {"/data/misc/vold", 0700, 0},
+            {"/metadata/vold", 0700, 0},
             {"/data/misc/storaged", 0700, 0},
             {"/data/misc/net", 0750, 0},
-            {"/data/misc/audioserver", 0700, 1041}, {"/dev/socket/audioserver", 0775, 1041},
-            {"/data/misc/media", 0770, 1013}, {"/data/misc/gatekeeper", 0700, 1000},
-            {"/data/misc/stats-active-metric", 0770, 1066}, {"/data/misc/stats-data", 0770, 1066},
-            {"/data/misc/stats-data/restricted-data", 0770, 1066}, {"/data/misc/stats-metadata", 0770, 1066},
-            {"/data/misc/stats-service", 0770, 1066}, {"/data/misc/train-info", 0770, 1066},
+            {"/data/misc/audioserver", 0700, 1041},
+            {"/dev/socket/audioserver", 0775, 1041},
+            {"/data/misc/media", 0770, 1013},
+            {"/data/misc/gatekeeper", 0700, 1000},
+            {"/data/misc/stats-active-metric", 0770, 1066},
+            {"/data/misc/stats-data", 0770, 1066},
+            {"/data/misc/stats-data/restricted-data", 0770, 1066},
+            {"/data/misc/stats-metadata", 0770, 1066},
+            {"/data/misc/stats-service", 0770, 1066},
+            {"/data/misc/train-info", 0770, 1066},
         };
         for (const auto &directory : directories) {
             CHECK(mkdir(directory.path, directory.mode) == 0 || errno == EEXIST);
@@ -461,11 +520,11 @@ void nce_zygote_test()
         CHECK(__system_property_set("ro.boot.hardware", "nce") == 0);
         CHECK(__system_property_set("ro.crypto.state", "unencrypted") == 0);
         health = nce_start_system_service("/vendor/bin/hw/android.hardware.health-service.example",
-                                      "android.hardware.health.IHealth/default", 1000, {});
+                                          "android.hardware.health.IHealth/default", 1000, {});
         // vold requires the helper process contexts supplied by Android init.
         vold = nce_start_system_service("/system/bin/vold", "vold", 0,
-            {"--blkid_context=u:r:nce_t:s0", "--blkid_untrusted_context=u:r:nce_t:s0",
-             "--fsck_context=u:r:nce_t:s0", "--fsck_untrusted_context=u:r:nce_t:s0"});
+                                        {"--blkid_context=u:r:nce_t:s0", "--blkid_untrusted_context=u:r:nce_t:s0",
+                                         "--fsck_context=u:r:nce_t:s0", "--fsck_untrusted_context=u:r:nce_t:s0"});
         storaged = nce_start_system_service("/system/bin/storaged", "storaged", 0, {});
         artd = nce_start_system_service("/apex/com.android.art/bin/artd", "artd", 0, {});
         // Keep this lazy service alive until the Android session is stopped.
@@ -489,7 +548,8 @@ void nce_zygote_test()
         }
         int status;
         CHECK(waitpid(loader, &status, 0) == loader);
-        if (status) dprintf(2, "network BPF loader status=%d\n", status);
+        if (status)
+            dprintf(2, "network BPF loader status=%d\n", status);
         CHECK(status == 0);
         puts("{\"test\":\"android_network_bpf_loaded\",\"passed\":true}");
         netd = start_socket_service("/system/bin/netd", "netd", {"dnsproxyd", "mdns", "fwmarkd"}, SOCK_STREAM);
@@ -501,8 +561,8 @@ void nce_zygote_test()
         gatekeeper_hal = nce_start_system_service("/vendor/bin/hw/android.hardware.gatekeeper-service.nonsecure",
                                                   "android.hardware.gatekeeper.IGatekeeper/default", 1000, {});
         gatekeeper = nce_start_system_service("/system/bin/gatekeeperd",
-                                             "android.service.gatekeeper.IGateKeeperService", 1000,
-                                             {"/data/misc/gatekeeper"});
+                                              "android.service.gatekeeper.IGateKeeperService", 1000,
+                                              {"/data/misc/gatekeeper"});
         // AudioPolicy initialization waits for ActivityManager from system_server.
         audio = nce_start_system_service("/system/bin/audioserver", nullptr, 1041, {});
         media = nce_start_system_service("/system/bin/mediaserver", nullptr, 1013, {});
@@ -536,27 +596,35 @@ void nce_zygote_test()
     if (system_server) {
         puts("{\"phase\":\"android_system_server_boot\"}");
         bool activity_reported = false, services_reported = false;
-        for (unsigned i = 0; i < 2400; ++i) {
+        for (unsigned i = 0; i < 240; ++i) {
             int status;
             CHECK(waitpid(zygote, &status, WNOHANG) == 0);
             for (pid_t service : {audio, audio_hal, metrics, allocator, stats, media}) {
                 pid_t exited = waitpid(service, &status, WNOHANG);
-                if (exited == service) dprintf(2, "Android daemon pid=%d exited status=%d\n", service, status);
+                if (exited == service)
+                    dprintf(2, "Android daemon pid=%d exited status=%d\n", service, status);
                 CHECK(exited == 0);
             }
-            AIBinder *activity = AServiceManager_checkService("activity");
-            AIBinder *package = AServiceManager_checkService("package");
-            AIBinder *window = AServiceManager_checkService("window");
-            AIBinder *input = AServiceManager_checkService("input");
-            bool ready = activity && package && window && input;
-            if (activity && !activity_reported) {
-                puts("{\"phase\":\"android_activity_service_registered\"}");
-                activity_reported = true;
+            bool ready = services_reported;
+            if (!ready) {
+                AIBinder *activity = AServiceManager_checkService("activity");
+                AIBinder *package = AServiceManager_checkService("package");
+                AIBinder *window = AServiceManager_checkService("window");
+                AIBinder *input = AServiceManager_checkService("input");
+                ready = activity && package && window && input;
+                if (activity && !activity_reported) {
+                    puts("{\"phase\":\"android_activity_service_registered\"}");
+                    activity_reported = true;
+                }
+                if (activity)
+                    AIBinder_decStrong(activity);
+                if (package)
+                    AIBinder_decStrong(package);
+                if (window)
+                    AIBinder_decStrong(window);
+                if (input)
+                    AIBinder_decStrong(input);
             }
-            if (activity) AIBinder_decStrong(activity);
-            if (package) AIBinder_decStrong(package);
-            if (window) AIBinder_decStrong(window);
-            if (input) AIBinder_decStrong(input);
             if (ready && !services_reported) {
                 puts("{\"test\":\"android_system_server_services\",\"passed\":true}");
                 services_reported = true;
@@ -571,13 +639,16 @@ void nce_zygote_test()
                 wait_system_service(audio, "media.audio_flinger");
                 wait_system_service(audio, "media.audio_policy");
                 android_command({"activity", "start-activity", "-W", "-a", "android.intent.action.MAIN",
-                                 "-c", "android.intent.category.HOME"}, "Status: ok");
+                                 "-c", "android.intent.category.HOME"},
+                                "Status: ok");
                 surface_check("com.google.android.apps.nexuslauncher", "/data/nce/desktop-launcher.png");
                 android_command({"activity", "start-activity", "-W", "-n",
-                                 "com.google.android.deskclock/com.android.deskclock.DeskClock"}, "Status: ok");
+                                 "com.google.android.deskclock/com.android.deskclock.DeskClock"},
+                                "Status: ok");
                 surface_check("com.google.android.deskclock", "/data/nce/desktop-clock.png");
                 android_command({"activity", "start-activity", "-W", "-n",
-                                 "com.google.android.documentsui/com.android.documentsui.files.FilesActivity"}, "Status: ok");
+                                 "com.google.android.documentsui/com.android.documentsui.files.FilesActivity"},
+                                "Status: ok");
                 surface_check("com.google.android.documentsui", "/data/nce/desktop-files.png");
                 puts("{\"test\":\"android_desktop_launch_commands\",\"passed\":true,\"applications\":2}");
                 stop_process_group(zygote);
@@ -595,7 +666,7 @@ void nce_zygote_test()
                 puts("{\"test\":\"android_system_process_groups_stopped\",\"passed\":true}");
                 return;
             }
-            usleep(100000);
+            usleep(1000000);
         }
         dprintf(2, "Android did not complete boot within the 240 second polling window\n");
         CHECK(false);
@@ -621,14 +692,17 @@ void nce_zygote_test()
             char response[64] = {};
             CHECK(length > 0 && length < sizeof(response));
             receive_bytes(client, response, length);
-            if (round == 1) CHECK(atoi(response) == zygote);
-            else CHECK(strcmp(response, "arm64-v8a") == 0);
+            if (round == 1)
+                CHECK(atoi(response) == zygote);
+            else
+                CHECK(strcmp(response, "arm64-v8a") == 0);
         }
         for (unsigned round = 0; round < 2; ++round) {
             char request[512];
             int bytes = snprintf(request, sizeof(request),
-                "8\n--runtime-args\n--setuid=1000\n--setgid=1000\n--target-sdk-version=36\n"
-                "--nice-name=nce-zygote-child\n--seinfo=platform\nNceZygoteChild\n%u\n", round);
+                                 "8\n--runtime-args\n--setuid=1000\n--setgid=1000\n--target-sdk-version=36\n"
+                                 "--nice-name=nce-zygote-child\n--seinfo=platform\nNceZygoteChild\n%u\n",
+                                 round);
             CHECK(bytes > 0 && bytes < static_cast<int>(sizeof(request)));
             CHECK(write(client, request, bytes) == bytes);
             uint32_t pid;
@@ -642,7 +716,8 @@ void nce_zygote_test()
             int output = -1;
             for (unsigned attempt = 0; attempt < 500; ++attempt) {
                 output = open(path, O_RDONLY | O_CLOEXEC);
-                if (output >= 0) break;
+                if (output >= 0)
+                    break;
                 CHECK(errno == ENOENT);
                 usleep(10000);
             }
@@ -658,7 +733,8 @@ void nce_zygote_test()
     }
     int requested;
     CHECK(waitpid(requester, &requested, 0) == requester);
-    if (requested) dump_threads();
+    if (requested)
+        dump_threads();
     CHECK(requested == 0);
     CHECK(kill(zygote, SIGTERM) == 0);
     int status;

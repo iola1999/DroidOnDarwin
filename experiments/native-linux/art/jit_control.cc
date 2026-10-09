@@ -11,7 +11,7 @@
 
 /* The regression invokes compilation synchronously so that success requires
  * an installed JIT entrypoint, independent of background hotness sampling. */
-extern "C" JNIEXPORT bool nce_art_compile_method(JNIEnv* env, jmethodID id)
+extern "C" JNIEXPORT bool nce_art_compile_method(JNIEnv *env, jmethodID id)
 {
     art::ScopedObjectAccess soa(env);
     // JNI lookup may leave a newly initialized class behind its resolution entrypoint.
@@ -21,33 +21,36 @@ extern "C" JNIEXPORT bool nce_art_compile_method(JNIEnv* env, jmethodID id)
         art::Runtime::Current()->GetClassLinker()->MakeInitializedClassesVisiblyInitialized(
             soa.Self(), true);
     }
-    art::ArtMethod* method = art::jni::DecodeArtMethod(id);
-    art::jit::Jit* jit = art::Runtime::Current()->GetJit();
-    if (!jit || !method) return false;
+    art::ArtMethod *method = art::jni::DecodeArtMethod(id);
+    art::jit::Jit *jit = art::Runtime::Current()->GetJit();
+    if (!jit || !method)
+        return false;
     const bool intrinsic = method->IsIntrinsic();
     const auto identity = intrinsic ? method->GetIntrinsic() : art::Intrinsics::kNone;
     const bool compiled = jit->CompileMethod(method, soa.Self(), art::CompilationKind::kOptimized, false);
     // Rejection must preserve intrinsic dispatch for later callers and inlining.
-    if (intrinsic) CHECK(method->IsIntrinsic() && method->GetIntrinsic() == identity);
+    if (intrinsic)
+        CHECK(method->IsIntrinsic() && method->GetIntrinsic() == identity);
     return compiled && jit->GetCodeCache()->ContainsPc(method->GetEntryPointFromQuickCompiledCode());
 }
 
-extern "C" JNIEXPORT void nce_art_keep_interpreted(JNIEnv* env, jmethodID id)
+extern "C" JNIEXPORT void nce_art_keep_interpreted(JNIEnv *env, jmethodID id)
 {
     art::ScopedObjectAccess soa(env);
     art::jni::DecodeArtMethod(id)->SetDontCompile();
 }
 
-extern "C" JNIEXPORT bool nce_art_wait_for_compilation(JNIEnv* env, jmethodID id)
+extern "C" JNIEXPORT bool nce_art_wait_for_compilation(JNIEnv *env, jmethodID id)
 {
     art::ScopedObjectAccess soa(env);
-    art::jit::Jit* jit = art::Runtime::Current()->GetJit();
-    if (!jit) return false;
+    art::jit::Jit *jit = art::Runtime::Current()->GetJit();
+    if (!jit)
+        return false;
     jit->WaitForCompilationToFinish(soa.Self());
     return jit->GetCodeCache()->ContainsPc(art::jni::DecodeArtMethod(id)->GetEntryPointFromQuickCompiledCode());
 }
 
-extern "C" JNIEXPORT bool nce_art_compile_pattern(JNIEnv* env, jmethodID id)
+extern "C" JNIEXPORT bool nce_art_compile_pattern(JNIEnv *env, jmethodID id)
 {
     art::ScopedObjectAccess soa(env);
     // Static pattern entrypoints require the class initialization checkpoint.
@@ -56,34 +59,38 @@ extern "C" JNIEXPORT bool nce_art_compile_pattern(JNIEnv* env, jmethodID id)
         art::Runtime::Current()->GetClassLinker()->MakeInitializedClassesVisiblyInitialized(
             soa.Self(), true);
     }
-    art::ArtMethod* method = art::jni::DecodeArtMethod(id);
-    art::jit::Jit* jit = art::Runtime::Current()->GetJit();
-    if (!jit || !method) return false;
-    const void* expected = art::jit::SmallPatternMatcher::TryMatch(method);
+    art::ArtMethod *method = art::jni::DecodeArtMethod(id);
+    art::jit::Jit *jit = art::Runtime::Current()->GetJit();
+    if (!jit || !method)
+        return false;
+    const void *expected = art::jit::SmallPatternMatcher::TryMatch(method);
     if (!expected) {
         fprintf(stderr, "ART pattern did not match %s\n", method->PrettyMethod().c_str());
         return false;
     }
     bool installed = jit->TryPatternMatch(method, art::CompilationKind::kBaseline);
     bool matched = method->GetEntryPointFromQuickCompiledCode() == expected;
-    if (!matched) fprintf(stderr, "ART pattern was not installed %s installed=%d clinit=%d compilable=%d\n",
-                         method->PrettyMethod().c_str(), installed, method->StillNeedsClinitCheck(),
-                         method->IsCompilable());
+    if (!matched)
+        fprintf(stderr, "ART pattern was not installed %s installed=%d clinit=%d compilable=%d\n",
+                method->PrettyMethod().c_str(), installed, method->StillNeedsClinitCheck(),
+                method->IsCompilable());
     return matched;
 }
 
-extern "C" JNIEXPORT int nce_art_inlined_frames(JNIEnv* env, jmethodID id)
+extern "C" JNIEXPORT int nce_art_inlined_frames(JNIEnv *env, jmethodID id)
 {
     art::ScopedObjectAccess soa(env);
-    art::ArtMethod* method = art::jni::DecodeArtMethod(id);
-    const void* entry = method->GetEntryPointFromQuickCompiledCode();
-    art::jit::Jit* jit = art::Runtime::Current()->GetJit();
-    if (!jit || !jit->GetCodeCache()->ContainsPc(entry)) return -1;
+    art::ArtMethod *method = art::jni::DecodeArtMethod(id);
+    const void *entry = method->GetEntryPointFromQuickCompiledCode();
+    art::jit::Jit *jit = art::Runtime::Current()->GetJit();
+    if (!jit || !jit->GetCodeCache()->ContainsPc(entry))
+        return -1;
     art::CodeInfo info(art::OatQuickMethodHeader::FromEntryPoint(entry));
     size_t depth = 0;
     for (uint32_t i = 0; i < info.GetNumberOfStackMaps(); ++i) {
         size_t current = info.GetInlineInfosOf(info.GetStackMapAt(i)).size();
-        if (current > depth) depth = current;
+        if (current > depth)
+            depth = current;
     }
     return static_cast<int>(depth);
 }

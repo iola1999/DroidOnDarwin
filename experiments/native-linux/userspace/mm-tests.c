@@ -15,7 +15,13 @@
 #include <unistd.h>
 
 #define PAGE 16384
-#define CHECK(c) do { if (!(c)) { dprintf(2, "mm-tests:%d errno=%d\n", __LINE__, errno); _exit(__LINE__); } } while (0)
+#define CHECK(c) \
+    do { \
+        if (!(c)) { \
+            dprintf(2, "mm-tests:%d errno=%d\n", __LINE__, errno); \
+            _exit(__LINE__); \
+        } \
+    } while (0)
 
 __attribute__((noinline)) static unsigned grow_stack(unsigned depth)
 {
@@ -35,7 +41,8 @@ void memory_tests(void)
     /* Raw brk changes precede libc's first allocation so its arena stays intact. */
     unsigned char *heap = (void *)syscall(SYS_brk, 0);
     CHECK((void *)syscall(SYS_brk, heap + 8 * PAGE) == heap + 8 * PAGE);
-    for (unsigned i = 0; i < 8; ++i) heap[i * PAGE] = i + 1;
+    for (unsigned i = 0; i < 8; ++i)
+        heap[i * PAGE] = i + 1;
     pid_t heap_child = fork();
     CHECK(heap_child >= 0);
     if (!heap_child) {
@@ -47,7 +54,8 @@ void memory_tests(void)
     }
     int heap_status;
     CHECK(waitpid(heap_child, &heap_status, 0) == heap_child && heap_status == 0);
-    for (unsigned i = 0; i < 8; ++i) CHECK(heap[i * PAGE] == i + 1);
+    for (unsigned i = 0; i < 8; ++i)
+        CHECK(heap[i * PAGE] == i + 1);
     CHECK((void *)syscall(SYS_brk, heap) == heap);
     puts("{\"test\":\"linux_brk_growth_cow\",\"passed\":true}");
     file_tests("musl");
@@ -110,7 +118,8 @@ void memory_tests(void)
     }
     int sparse_status;
     CHECK(waitpid(sparse_child, &sparse_status, 0) == sparse_child && sparse_status == 0);
-    for (unsigned i = 0; i < 3; ++i) CHECK(sparse[offsets[i]] == 17 + i);
+    for (unsigned i = 0; i < 3; ++i)
+        CHECK(sparse[offsets[i]] == 17 + i);
     CHECK(munmap(sparse, reserve) == 0);
     printf("{\"test\":\"linux_sparse_reservation_cow\",\"passed\":true,\"reserved_bytes\":%zu}\n", reserve);
 
@@ -155,7 +164,8 @@ void memory_tests(void)
     pid_t child = fork();
     CHECK(child >= 0);
     if (!child) {
-        close(to_child[1]); close(to_parent[0]);
+        close(to_child[1]);
+        close(to_parent[0]);
         char value;
         for (unsigned i = 1; i <= 64; ++i) {
             CHECK(read(to_child[0], &value, 1) == 1);
@@ -177,7 +187,8 @@ void memory_tests(void)
         }
         _exit(0);
     }
-    close(to_child[0]); close(to_parent[1]);
+    close(to_child[0]);
+    close(to_parent[1]);
     char value = 1;
     for (unsigned i = 1; i <= 64; ++i) {
         shared[0] = (unsigned char)i;

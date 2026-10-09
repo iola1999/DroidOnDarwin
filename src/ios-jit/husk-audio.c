@@ -33,7 +33,7 @@
  * never arises and neither index needs a lock.
  */
 #define HUSK_RING_FRAMES 16384
-#define HUSK_RING_MASK   (HUSK_RING_FRAMES - 1)
+#define HUSK_RING_MASK (HUSK_RING_FRAMES - 1)
 
 typedef struct HuskVoiceOut {
     HWVoiceOut hw;
@@ -55,10 +55,10 @@ typedef struct HuskVoiceIn {
 } HuskVoiceIn;
 
 static struct {
-    int16_t  ring[HUSK_RING_FRAMES * HUSK_AUDIO_CHANNELS];
-    uint32_t write_pos;   /* frames written by QEMU, free-running */
-    uint32_t read_pos;    /* frames taken by the app, free-running */
-    bool     running;
+    int16_t ring[HUSK_RING_FRAMES * HUSK_AUDIO_CHANNELS];
+    uint32_t write_pos; /* frames written by QEMU, free-running */
+    uint32_t read_pos; /* frames taken by the app, free-running */
+    bool running;
     uint64_t frames_in;
     uint64_t underruns;
 } husk_audio;
@@ -77,9 +77,9 @@ static int husk_init_out(HWVoiceOut *hw, struct audsettings *as, void *opaque)
      * QEMU rather than a bug in the audio thread.
      */
     struct audsettings ours = {
-        .freq       = HUSK_AUDIO_RATE,
-        .nchannels  = HUSK_AUDIO_CHANNELS,
-        .fmt        = AUDIO_FORMAT_S16,
+        .freq = HUSK_AUDIO_RATE,
+        .nchannels = HUSK_AUDIO_CHANNELS,
+        .fmt = AUDIO_FORMAT_S16,
         .endianness = 0,
     };
 
@@ -98,8 +98,9 @@ static int husk_init_out(HWVoiceOut *hw, struct audsettings *as, void *opaque)
      * The ring positions have to reset; the diagnostics must not.
      */
 
-    fprintf(stderr, "[husk-audio] output voice: guest asked for %d Hz x%d, "
-                    "taking it at %d Hz x%d s16\n",
+    fprintf(stderr,
+            "[husk-audio] output voice: guest asked for %d Hz x%d, "
+            "taking it at %d Hz x%d s16\n",
             as->freq, as->nchannels, HUSK_AUDIO_RATE, HUSK_AUDIO_CHANNELS);
     fflush(stderr);
     return 0;
@@ -188,7 +189,10 @@ static int husk_init_in(HWVoiceIn *hw, struct audsettings *as, void *opaque)
     return 0;
 }
 
-static void husk_fini_in(HWVoiceIn *hw) { (void)hw; }
+static void husk_fini_in(HWVoiceIn *hw)
+{
+    (void)hw;
+}
 
 static size_t husk_read(HWVoiceIn *hw, void *buf, size_t size)
 {
@@ -241,15 +245,22 @@ bool husk_audio_active(void)
     return qatomic_read(&husk_audio.running);
 }
 
-uint64_t husk_audio_frames_in(void) { return husk_audio.frames_in; }
-uint64_t husk_audio_underruns(void) { return husk_audio.underruns; }
+uint64_t husk_audio_frames_in(void)
+{
+    return husk_audio.frames_in;
+}
+uint64_t husk_audio_underruns(void)
+{
+    return husk_audio.underruns;
+}
 
 /* ----------------------------------------------------------- registration */
 
 static void *husk_audio_init(Audiodev *dev, Error **errp)
 {
-    fprintf(stderr, "[husk-audio] backend ready (%d Hz, %d channels, "
-                    "%d frame ring)\n",
+    fprintf(stderr,
+            "[husk-audio] backend ready (%d Hz, %d channels, "
+            "%d frame ring)\n",
             HUSK_AUDIO_RATE, HUSK_AUDIO_CHANNELS, HUSK_RING_FRAMES);
     fflush(stderr);
     return &husk_audio;
@@ -261,29 +272,29 @@ static void husk_audio_fini(void *opaque)
 }
 
 static struct audio_pcm_ops husk_pcm_ops = {
-    .init_out         = husk_init_out,
-    .fini_out         = husk_fini_out,
-    .write            = husk_write,
-    .buffer_get_free  = audio_generic_buffer_get_free,
-    .run_buffer_out   = audio_generic_run_buffer_out,
-    .enable_out       = husk_enable_out,
+    .init_out = husk_init_out,
+    .fini_out = husk_fini_out,
+    .write = husk_write,
+    .buffer_get_free = audio_generic_buffer_get_free,
+    .run_buffer_out = audio_generic_run_buffer_out,
+    .enable_out = husk_enable_out,
 
-    .init_in          = husk_init_in,
-    .fini_in          = husk_fini_in,
-    .read             = husk_read,
-    .enable_in        = husk_enable_in,
+    .init_in = husk_init_in,
+    .fini_in = husk_fini_in,
+    .read = husk_read,
+    .enable_in = husk_enable_in,
 };
 
 static struct audio_driver husk_audio_driver = {
-    .name           = "husk",
-    .descr          = "Husk iOS audio",
-    .init           = husk_audio_init,
-    .fini           = husk_audio_fini,
-    .pcm_ops        = &husk_pcm_ops,
+    .name = "husk",
+    .descr = "Husk iOS audio",
+    .init = husk_audio_init,
+    .fini = husk_audio_fini,
+    .pcm_ops = &husk_pcm_ops,
     .max_voices_out = 1,
-    .max_voices_in  = 1,
+    .max_voices_in = 1,
     .voice_size_out = sizeof(HuskVoiceOut),
-    .voice_size_in  = sizeof(HuskVoiceIn),
+    .voice_size_in = sizeof(HuskVoiceIn),
 };
 
 static void register_audio_husk(void)

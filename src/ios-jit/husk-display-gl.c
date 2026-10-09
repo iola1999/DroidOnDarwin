@@ -30,13 +30,13 @@
 
 static DisplayGLCtx husk_gl_ctx;
 static QemuGLShader *husk_gls;
-static EGLSurface    husk_surface = EGL_NO_SURFACE;
-static EGLContext    husk_context = EGL_NO_CONTEXT;
+static EGLSurface husk_surface = EGL_NO_SURFACE;
+static EGLContext husk_context = EGL_NO_CONTEXT;
 
-static egl_fb husk_guest_fb;   /* what the guest drew */
-static egl_fb husk_window_fb;  /* the layer we present to */
+static egl_fb husk_guest_fb; /* what the guest drew */
+static egl_fb husk_window_fb; /* the layer we present to */
 
-static int  husk_win_w, husk_win_h;
+static int husk_win_w, husk_win_h;
 static bool husk_have_scanout;
 static bool husk_flip;
 static uint64_t husk_gl_frames;
@@ -44,7 +44,7 @@ static uint64_t husk_gl_frames;
 /* The current scanout's Metal texture, when virgl offers one, and the app-side
  * hook that can draw it. See husk_display_gl_set_metal_presenter(). */
 static void *husk_metal_tex;
-static int   husk_metal_w, husk_metal_h;
+static int husk_metal_w, husk_metal_h;
 static husk_metal_present_fn husk_metal_present;
 
 void husk_display_gl_set_metal_presenter(husk_metal_present_fn fn)
@@ -73,9 +73,9 @@ static bool husk_gl_ctx_is_compatible_dcl(DisplayGLCtx *dgc,
 
 static const DisplayGLCtxOps husk_gl_ctx_ops = {
     .dpy_gl_ctx_is_compatible_dcl = husk_gl_ctx_is_compatible_dcl,
-    .dpy_gl_ctx_create        = qemu_egl_create_context,
-    .dpy_gl_ctx_destroy       = qemu_egl_destroy_context,
-    .dpy_gl_ctx_make_current  = qemu_egl_make_context_current,
+    .dpy_gl_ctx_create = qemu_egl_create_context,
+    .dpy_gl_ctx_destroy = qemu_egl_destroy_context,
+    .dpy_gl_ctx_make_current = qemu_egl_make_context_current,
 };
 
 static void husk_gl_scanout_disable(DisplayChangeListener *dcl)
@@ -118,21 +118,24 @@ static void husk_gl_scanout_texture(DisplayChangeListener *dcl,
     /* Only when the shape or the handle kind changes. Android re-sets the
      * scanout constantly -- 655 times in one session -- and each of these is a
      * formatted write to stderr while the BQL is held. */
-    static uint32_t last_w, last_h; static int last_native = -1;
-    if (backing_width != last_w || backing_height != last_h
-        || (int)native.type != last_native) {
-        last_w = backing_width; last_h = backing_height;
+    static uint32_t last_w, last_h;
+    static int last_native = -1;
+    if (backing_width != last_w || backing_height != last_h || (int)native.type != last_native) {
+        last_w = backing_width;
+        last_h = backing_height;
         last_native = (int)native.type;
-    fprintf(stderr, "[husk-gl] scanout_texture: id=%u %ux%u y0top=%d "
-                    "native=%s handle=%p\n",
-            backing_id, backing_width, backing_height, backing_y_0_top ? 1 : 0,
-            native.type == SCANOUT_TEXTURE_NATIVE_TYPE_METAL ? "METAL" :
-            native.type == SCANOUT_TEXTURE_NATIVE_TYPE_D3D   ? "D3D"   : "none",
-            native.handle);
+        fprintf(stderr,
+                "[husk-gl] scanout_texture: id=%u %ux%u y0top=%d "
+                "native=%s handle=%p\n",
+                backing_id, backing_width, backing_height, backing_y_0_top ? 1 : 0,
+                native.type == SCANOUT_TEXTURE_NATIVE_TYPE_METAL ? "METAL" : native.type == SCANOUT_TEXTURE_NATIVE_TYPE_D3D ? "D3D"
+                                                                                                                            : "none",
+                native.handle);
     }
     husk_flip = backing_y_0_top;
     husk_metal_tex = native.type == SCANOUT_TEXTURE_NATIVE_TYPE_METAL
-                   ? native.handle : NULL;
+                         ? native.handle
+                         : NULL;
     husk_metal_w = backing_width;
     husk_metal_h = backing_height;
     egl_fb_setup_for_tex(&husk_guest_fb, backing_width, backing_height,
@@ -296,8 +299,9 @@ static void husk_gl_update(DisplayChangeListener *dcl,
         GLenum err = glGetError();
         if (err != last_err) {
             last_err = err;
-            fprintf(stderr, "[husk-gl] blit error state changed to 0x%x "
-                            "at frame %llu (guest %dx%d fb=%u -> window %dx%d)\n",
+            fprintf(stderr,
+                    "[husk-gl] blit error state changed to 0x%x "
+                    "at frame %llu (guest %dx%d fb=%u -> window %dx%d)\n",
                     err, (unsigned long long)husk_gl_frames,
                     husk_guest_fb.width, husk_guest_fb.height,
                     husk_guest_fb.framebuffer, husk_win_w, husk_win_h);
@@ -314,9 +318,7 @@ static void husk_gl_update(DisplayChangeListener *dcl,
      * completely, so the only thumbnails in the log were the two from before
      * anything had been drawn. Early and often, then rarely.
      */
-    sample = husk_gl_frames == 1 || husk_gl_frames == 30
-          || husk_gl_frames == 120 || husk_gl_frames == 300
-          || (husk_gl_frames % 600) == 0;
+    sample = husk_gl_frames == 1 || husk_gl_frames == 30 || husk_gl_frames == 120 || husk_gl_frames == 300 || (husk_gl_frames % 600) == 0;
     if (sample) {
         husk_gl_sample();
     }
@@ -346,8 +348,9 @@ static void husk_gl_update(DisplayChangeListener *dcl,
     if (eglSwapBuffers(qemu_egl_display, husk_surface) != EGL_TRUE) {
         static uint64_t complained;
         if (complained++ % 600 == 0) {
-            fprintf(stderr, "[husk-gl] eglSwapBuffers failed: 0x%x "
-                            "(%llu frames drawn, none presented)\n",
+            fprintf(stderr,
+                    "[husk-gl] eglSwapBuffers failed: 0x%x "
+                    "(%llu frames drawn, none presented)\n",
                     eglGetError(), (unsigned long long)husk_gl_frames);
         }
         return;
@@ -361,11 +364,11 @@ static void husk_gl_refresh(DisplayChangeListener *dcl)
 }
 
 static const DisplayChangeListenerOps husk_gl_dcl_ops = {
-    .dpy_name                = "husk-gl",
-    .dpy_refresh             = husk_gl_refresh,
-    .dpy_gl_scanout_disable  = husk_gl_scanout_disable,
-    .dpy_gl_scanout_texture  = husk_gl_scanout_texture,
-    .dpy_gl_update           = husk_gl_update,
+    .dpy_name = "husk-gl",
+    .dpy_refresh = husk_gl_refresh,
+    .dpy_gl_scanout_disable = husk_gl_scanout_disable,
+    .dpy_gl_scanout_texture = husk_gl_scanout_texture,
+    .dpy_gl_update = husk_gl_update,
 };
 
 static DisplayChangeListener husk_gl_dcl = {
@@ -473,8 +476,10 @@ bool husk_display_gl_create(void *native_layer, int width, int height)
         EGLint sw = -1, sh = -1;
         eglQuerySurface(qemu_egl_display, husk_surface, EGL_WIDTH, &sw);
         eglQuerySurface(qemu_egl_display, husk_surface, EGL_HEIGHT, &sh);
-        fprintf(stderr, "[husk-gl] create: ANGLE reports the surface is %dx%d "
-                        "(we asked for %dx%d)\n", sw, sh, width, height);
+        fprintf(stderr,
+                "[husk-gl] create: ANGLE reports the surface is %dx%d "
+                "(we asked for %dx%d)\n",
+                sw, sh, width, height);
     }
 
     /* qemu_egl_init_ctx() left the context current here. Release it so the
@@ -601,24 +606,54 @@ bool husk_display_gl_bind(void)
      */
     {
         static const char *const needed[] = {
-            "glCreateShader", "glShaderSource", "glCompileShader",
-            "glGetShaderiv", "glGetShaderInfoLog", "glCreateProgram",
-            "glAttachShader", "glLinkProgram", "glGetProgramiv",
-            "glGetProgramInfoLog", "glDeleteShader", "glUseProgram",
-            "glGenVertexArrays", "glBindVertexArray", "glGenBuffers",
-            "glBindBuffer", "glBufferData", "glVertexAttribPointer",
-            "glEnableVertexAttribArray", "glGetAttribLocation",
-            "glGetUniformLocation", "glUniform1i", "glActiveTexture",
-            "glBindTexture", "glDrawArrays", "glViewport", "glClear",
+            "glCreateShader",
+            "glShaderSource",
+            "glCompileShader",
+            "glGetShaderiv",
+            "glGetShaderInfoLog",
+            "glCreateProgram",
+            "glAttachShader",
+            "glLinkProgram",
+            "glGetProgramiv",
+            "glGetProgramInfoLog",
+            "glDeleteShader",
+            "glUseProgram",
+            "glGenVertexArrays",
+            "glBindVertexArray",
+            "glGenBuffers",
+            "glBindBuffer",
+            "glBufferData",
+            "glVertexAttribPointer",
+            "glEnableVertexAttribArray",
+            "glGetAttribLocation",
+            "glGetUniformLocation",
+            "glUniform1i",
+            "glActiveTexture",
+            "glBindTexture",
+            "glDrawArrays",
+            "glViewport",
+            "glClear",
             "glClearColor",
             /* egl_fb_setup_for_tex() and egl_texture_blit() reach for these,
              * and the first list forgot all of them. */
-            "glGenFramebuffers", "glBindFramebuffer", "glFramebufferTexture2D",
-            "glDeleteFramebuffers", "glDeleteTextures", "glGenTextures",
-            "glTexParameteri", "glTexImage2D", "glBlitFramebuffer",
-            "glCheckFramebufferStatus", "glDisable", "glGetError",
-            "glReadPixels", "glColorMask", "glGetIntegerv",
-            "glBlitFramebuffer", "glTexParameteri", "glBindTexture",
+            "glGenFramebuffers",
+            "glBindFramebuffer",
+            "glFramebufferTexture2D",
+            "glDeleteFramebuffers",
+            "glDeleteTextures",
+            "glGenTextures",
+            "glTexParameteri",
+            "glTexImage2D",
+            "glBlitFramebuffer",
+            "glCheckFramebufferStatus",
+            "glDisable",
+            "glGetError",
+            "glReadPixels",
+            "glColorMask",
+            "glGetIntegerv",
+            "glBlitFramebuffer",
+            "glTexParameteri",
+            "glBindTexture",
         };
         bool missing = false;
         for (size_t i = 0; i < ARRAY_SIZE(needed); i++) {
@@ -628,8 +663,9 @@ bool husk_display_gl_bind(void)
             }
         }
         if (missing) {
-            fprintf(stderr, "[husk-gl] GL is incomplete; using the software "
-                            "display rather than crashing in the shader\n");
+            fprintf(stderr,
+                    "[husk-gl] GL is incomplete; using the software "
+                    "display rather than crashing in the shader\n");
             return false;
         }
         fprintf(stderr, "[husk-gl] all %zu shader entry points resolve\n",

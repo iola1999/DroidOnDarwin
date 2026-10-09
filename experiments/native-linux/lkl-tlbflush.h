@@ -10,7 +10,7 @@ static inline void flush_tlb_mm(struct mm_struct *mm)
     nce_flush_range(mm, nce_user_base, TASK_SIZE);
 }
 static inline void flush_tlb_range(struct vm_area_struct *vma,
-                                  unsigned long start, unsigned long end)
+                                   unsigned long start, unsigned long end)
 {
     nce_flush_range(vma->vm_mm, start, end);
 }

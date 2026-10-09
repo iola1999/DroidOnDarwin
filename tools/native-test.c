@@ -26,31 +26,41 @@
 
 void tl_log_line(const char *fmt, ...)
 {
-    va_list ap; va_start(ap, fmt);
-    vfprintf(stderr, fmt, ap); fputc('\n', stderr);
+    va_list ap;
+    va_start(ap, fmt);
+    vfprintf(stderr, fmt, ap);
+    fputc('\n', stderr);
     va_end(ap);
 }
 
 #ifdef NATIVE_TEST_STUB_BIONIC
-void *tl_bionic_find(const char *name) { (void)name; return NULL; }
+void *tl_bionic_find(const char *name)
+{
+    (void)name;
+    return NULL;
+}
 bool tl_bionic_is_system_lib(const char *s)
 {
-    static const char *sys[] = { "liblog.so", "libm.so", "libdl.so", "libc.so", "libGLESv3.so", "libGLESv2.so",
-        "libEGL.so", "libandroid.so", "libz.so", "libmediandk.so", "libvulkan.so", "libOpenSLES.so", NULL };
-    for (int i = 0; sys[i]; i++) if (!strcmp(sys[i], s)) return true;
+    static const char *sys[] = {"liblog.so", "libm.so", "libdl.so", "libc.so", "libGLESv3.so", "libGLESv2.so",
+                                "libEGL.so", "libandroid.so", "libz.so", "libmediandk.so", "libvulkan.so", "libOpenSLES.so", NULL};
+    for (int i = 0; sys[i]; i++)
+        if (!strcmp(sys[i], s))
+            return true;
     return false;
 }
 #endif
-
 
 /* A crash in guest code, described in guest terms: library, function, offset, and which
  * view of the executable region a faulting address was in. */
 static void describe(const char *label, const void *addr)
 {
-    const char *lib = NULL; const void *sa = NULL;
+    const char *lib = NULL;
+    const void *sa = NULL;
     const char *sym = tl_ld_symbol_at(addr, &lib, &sa);
-    if (lib) fprintf(stderr, "  %-6s %p  %s  %s+%#lx\n", label, addr, lib, sym ? sym : "?", sa ? (unsigned long)((const char *)addr - (const char *)sa) : 0ul);
-    else fprintf(stderr, "  %-6s %p\n", label, addr);
+    if (lib)
+        fprintf(stderr, "  %-6s %p  %s  %s+%#lx\n", label, addr, lib, sym ? sym : "?", sa ? (unsigned long)((const char *)addr - (const char *)sa) : 0ul);
+    else
+        fprintf(stderr, "  %-6s %p\n", label, addr);
 }
 
 static void on_crash(int sig, siginfo_t *info, void *uctx)
@@ -63,9 +73,10 @@ static void on_crash(int sig, siginfo_t *info, void *uctx)
     if (info->si_addr) {
         tl_lib *L = tl_ld_lib_of(info->si_addr);
         const char *view = "outside the guest region";
-        if (L) view = tl_xmem_contains(info->si_addr) ? "inside a guest image" : "?";
+        if (L)
+            view = tl_xmem_contains(info->si_addr) ? "inside a guest image" : "?";
         fprintf(stderr, "  fault  %p is %s%s\n", info->si_addr, view,
-                (L && (const uint8_t *)info->si_addr >= (const uint8_t *)tl_ld_sym(L, "") ) ? "" : "");
+                (L && (const uint8_t *)info->si_addr >= (const uint8_t *)tl_ld_sym(L, "")) ? "" : "");
         describe("fault", info->si_addr);
     }
     uint64_t *fp = (uint64_t *)ss->__fp;
@@ -82,7 +93,7 @@ static void on_crash(int sig, siginfo_t *info, void *uctx)
 static void install_crash_handler(void)
 {
     static uint8_t altstack[65536];
-    stack_t ss = { .ss_sp = altstack, .ss_size = sizeof(altstack), .ss_flags = 0 };
+    stack_t ss = {.ss_sp = altstack, .ss_size = sizeof(altstack), .ss_flags = 0};
     sigaltstack(&ss, NULL);
     struct sigaction sa;
     memset(&sa, 0, sizeof(sa));
@@ -99,33 +110,49 @@ static void install_crash_handler(void)
 int main(int argc, char **argv)
 {
     install_crash_handler();
-    if (argc < 2) { fprintf(stderr, "usage: %s <apk> [lib.so ...]\n", argv[0]); return 2; }
+    if (argc < 2) {
+        fprintf(stderr, "usage: %s <apk> [lib.so ...]\n", argv[0]);
+        return 2;
+    }
     const char *v = getenv("TL_VERBOSE");
     tl_ld_set_verbosity(v ? atoi(v) : 1);
-    if (!tl_ld_add_apk(argv[1])) return 1;
+    if (!tl_ld_add_apk(argv[1]))
+        return 1;
 
-    tl_zip z; char err[160];
-    if (!tl_zip_open(&z, argv[1], err, sizeof(err))) { fprintf(stderr, "%s\n", err); return 1; }
-    const char *names[64]; int n = 0;
+    tl_zip z;
+    char err[160];
+    if (!tl_zip_open(&z, argv[1], err, sizeof(err))) {
+        fprintf(stderr, "%s\n", err);
+        return 1;
+    }
+    const char *names[64];
+    int n = 0;
     static char store[64][96];
     if (argc > 2) {
-        for (int i = 2; i < argc && n < 64; i++) names[n++] = argv[i];
+        for (int i = 2; i < argc && n < 64; i++)
+            names[n++] = argv[i];
     } else {
         for (size_t i = 0; i < z.count && n < 64; i++) {
             const char *p = z.entries[i].name;
             if (!strncmp(p, "lib/arm64-v8a/", 14) && strstr(p, ".so")) {
                 snprintf(store[n], sizeof(store[n]), "%s", p + 14);
-                names[n] = store[n]; n++;
+                names[n] = store[n];
+                n++;
             }
         }
     }
     if (getenv("TL_SKIP")) {
-        char *skip = strdup(getenv("TL_SKIP")); int k = 0;
+        char *skip = strdup(getenv("TL_SKIP"));
+        int k = 0;
         for (int i = 0; i < n; i++) {
             bool drop = false;
-            for (char *save = skip, *tok; (tok = strsep(&save, ",")) != NULL;) if (!strcmp(tok, names[i])) drop = true;
-            free(skip); skip = strdup(getenv("TL_SKIP"));
-            if (!drop) names[k++] = names[i];
+            for (char *save = skip, *tok; (tok = strsep(&save, ",")) != NULL;)
+                if (!strcmp(tok, names[i]))
+                    drop = true;
+            free(skip);
+            skip = strdup(getenv("TL_SKIP"));
+            if (!drop)
+                names[k++] = names[i];
         }
         free(skip);
         n = k;
@@ -135,7 +162,10 @@ int main(int argc, char **argv)
     clock_gettime(CLOCK_MONOTONIC, &t0);
     for (int i = 0; i < n; i++) {
         tl_lib *L = tl_ld_load(names[i]);
-        if (!L) { fprintf(stderr, "FAILED to load %s\n", names[i]); failed++; }
+        if (!L) {
+            fprintf(stderr, "FAILED to load %s\n", names[i]);
+            failed++;
+        }
     }
     clock_gettime(CLOCK_MONOTONIC, &t1);
     fprintf(stderr, "loaded %d libraries in %.2fs; region %zu MiB used; %zu unresolved imports\n",
@@ -144,7 +174,8 @@ int main(int argc, char **argv)
     if (getenv("TL_INIT")) {
         for (int i = 0; i < n; i++) {
             tl_lib *L = tl_ld_find_lib(names[i]);
-            if (L) tl_ld_init(L);
+            if (L)
+                tl_ld_init(L);
         }
     }
     return failed ? 1 : 0;

@@ -8,7 +8,13 @@
 #include <unistd.h>
 
 using namespace aidl::android::system::suspend;
-#define CHECK(c) do { if (!(c)) { dprintf(2, "suspend-test:%d errno=%d: %s\n", __LINE__, errno, #c); _exit(112); } } while (0)
+#define CHECK(c) \
+    do { \
+        if (!(c)) { \
+            dprintf(2, "suspend-test:%d errno=%d: %s\n", __LINE__, errno, #c); \
+            _exit(112); \
+        } \
+    } while (0)
 
 pid_t nce_suspend_start()
 {
@@ -26,7 +32,8 @@ pid_t nce_suspend_start()
         CHECK(waitpid(child, &status, WNOHANG) == 0);
         ndk::SpAIBinder binder(AServiceManager_checkService("android.system.suspend.ISystemSuspend/default"));
         service = ISystemSuspend::fromBinder(binder);
-        if (!service) usleep(10000);
+        if (!service)
+            usleep(10000);
     }
     CHECK(service && service->isRemote());
     std::shared_ptr<IWakeLock> first, second;

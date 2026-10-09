@@ -13,7 +13,13 @@
 #include <sys/xattr.h>
 #include <unistd.h>
 
-#define CHECK(c) do { if (!(c)) { dprintf(2, "storage:%d errno=%d: %s\n", __LINE__, errno, #c); _exit(100); } } while (0)
+#define CHECK(c) \
+    do { \
+        if (!(c)) { \
+            dprintf(2, "storage:%d errno=%d: %s\n", __LINE__, errno, #c); \
+            _exit(100); \
+        } \
+    } while (0)
 #define LENGTH (1024 * 1024)
 static unsigned char expected[LENGTH];
 static unsigned char actual[LENGTH];
@@ -59,7 +65,8 @@ int main(void)
     CHECK(ftruncate(fd, LENGTH + 16384) == 0);
     memset(actual, 1, 16384);
     CHECK(pread(fd, actual, 16384, LENGTH) == 16384);
-    for (size_t i = 0; i < 16384; ++i) CHECK(actual[i] == 0);
+    for (size_t i = 0; i < 16384; ++i)
+        CHECK(actual[i] == 0);
     CHECK(ftruncate(fd, LENGTH) == 0 && fsync(fd) == 0 && close(fd) == 0);
     CHECK(rename("/storage/staging", "/storage/payload") == 0);
     CHECK(link("/storage/payload", "/storage/alias") == 0);

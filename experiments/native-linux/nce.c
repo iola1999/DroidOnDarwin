@@ -15,8 +15,10 @@ extern const unsigned char nce_stub[], nce_stub_end[];
 static int x18_instruction(uint32_t word)
 {
     unsigned rd = word & 31, rn = (word >> 5) & 31, rm = (word >> 16) & 31;
-    if ((word & 0x7fe0fc00) == 0x2a000000 && (rd == 18 || rn == 18 || rm == 18)) return 1;
-    if (word == 0x92403643 || word == 0x9272c652) return 1;
+    if ((word & 0x7fe0fc00) == 0x2a000000 && (rd == 18 || rn == 18 || rm == 18))
+        return 1;
+    if (word == 0x92403643 || word == 0x9272c652)
+        return 1;
     return (word & 0xff800000) == 0xa9000000 && (rd == 18 || ((word >> 10) & 31) == 18);
 }
 
@@ -37,7 +39,8 @@ void nce_sync_code(NceCode code)
 
 int nce_write_entry(NceCode stub, uintptr_t entry)
 {
-    if (stub.size < 16 || (entry & 3)) return -1;
+    if (stub.size < 16 || (entry & 3))
+        return -1;
     uint32_t *words = (void *)stub.rw;
     words[0] = 0xa8c147f0;
     return nce_write_branch(&words[1], (uintptr_t)stub.rx + 4, entry);
@@ -46,7 +49,8 @@ int nce_write_entry(NceCode stub, uintptr_t entry)
 int nce_write_patch(uint32_t *write_address, uintptr_t execute_address,
                     NceCode stub, NceState **active, uint32_t instruction)
 {
-    if (stub.size < 80 || nce_stub_end - nce_stub != 80) return -1;
+    if (stub.size < 80 || nce_stub_end - nce_stub != 80)
+        return -1;
     memcpy(stub.rw, nce_stub, 80);
     uint64_t context = (uintptr_t)active;
     uint64_t resume = (uintptr_t)stub.rx + 40;
@@ -55,7 +59,8 @@ int nce_write_patch(uint32_t *write_address, uintptr_t execute_address,
     memcpy(stub.rw + 56, &resume, 8);
     memcpy(stub.rw + 64, &instruction, 4);
     memcpy(stub.rw + 72, &gate, 8);
-    if (nce_write_branch((void *)(stub.rw + 44), (uintptr_t)stub.rx + 44, execute_address + 4)) return -1;
+    if (nce_write_branch((void *)(stub.rw + 44), (uintptr_t)stub.rx + 44, execute_address + 4))
+        return -1;
     return nce_write_branch(write_address, execute_address, (uintptr_t)stub.rx);
 }
 
@@ -69,7 +74,8 @@ int nce_prepare_shared(NceCode code, NceState *s, NceState **active,
     memcpy(code.rw, bytes, size);
     /* Entry and syscall returns restore x16/x17 after leaving the common gate. */
     if (nce_write_entry((NceCode){code.rw + cursor, code.rx + cursor, 16},
-                        (uintptr_t)code.rx + entry)) return -1;
+                        (uintptr_t)code.rx + entry))
+        return -1;
     s->resume = (uintptr_t)code.rx + cursor;
     s->regs.pc = (uintptr_t)code.rx + entry;
     cursor += 16;
@@ -79,10 +85,13 @@ int nce_prepare_shared(NceCode code, NceState *s, NceState **active,
         int svc = (word & 0xffe0001f) == 0xd4000001;
         int tls = (word & 0xffffffe0) == 0xd53bd040 ||
                   (word & 0xffffffe0) == 0xd51bd040;
-        if (!svc && !tls && !x18_instruction(word)) continue;
-        if (cursor + 80 > code.size) return -1;
+        if (!svc && !tls && !x18_instruction(word))
+            continue;
+        if (cursor + 80 > code.size)
+            return -1;
         if (nce_write_patch((void *)(code.rw + pos), (uintptr_t)code.rx + pos,
-                            (NceCode){code.rw + cursor, code.rx + cursor, 80}, active, word)) return -1;
+                            (NceCode){code.rw + cursor, code.rx + cursor, 80}, active, word))
+            return -1;
         cursor += 80;
     }
     nce_sync_code(code);
@@ -104,7 +113,8 @@ NceState *nce_dispatch(NceState *s)
     uint32_t word = s->instruction;
     unsigned reg = word & 31;
     if ((word & 0xffffffe0) == 0xd53bd040) {
-        if (reg != 31) s->regs.x[reg] = s->tls;
+        if (reg != 31)
+            s->regs.x[reg] = s->tls;
         ++s->tls_accesses;
     } else if ((word & 0xffffffe0) == 0xd51bd040) {
         s->tls = reg == 31 ? 0 : s->regs.x[reg];
@@ -114,7 +124,8 @@ NceState *nce_dispatch(NceState *s)
         unsigned left = (word >> 5) & 31;
         uint64_t value = source == 31 ? 0 : s->regs.x[source];
         value |= left == 31 ? 0 : s->regs.x[left];
-        if (reg != 31) s->regs.x[reg] = word & 0x80000000u ? value : (uint32_t)value;
+        if (reg != 31)
+            s->regs.x[reg] = word & 0x80000000u ? value : (uint32_t)value;
     } else if (word == 0x92403643) {
         s->regs.x[3] = s->regs.x[18] & 0x3fff;
     } else if (word == 0x9272c652) {
@@ -126,8 +137,10 @@ NceState *nce_dispatch(NceState *s)
         int write = !(word & (1u << 22));
         uint64_t values[2] = {reg == 31 ? 0 : s->regs.x[reg], second == 31 ? 0 : s->regs.x[second]};
         if (!s->memory(s, address, values, sizeof(values), write) && !write) {
-            if (reg != 31) s->regs.x[reg] = values[0];
-            if (second != 31) s->regs.x[second] = values[1];
+            if (reg != 31)
+                s->regs.x[reg] = values[0];
+            if (second != 31)
+                s->regs.x[second] = values[1];
         }
     } else {
         ++s->calls;
@@ -136,4 +149,7 @@ NceState *nce_dispatch(NceState *s)
     return s;
 }
 
-NceState *nce_event_dispatch(NceState *s) { return s->event(s); }
+NceState *nce_event_dispatch(NceState *s)
+{
+    return s->event(s);
+}

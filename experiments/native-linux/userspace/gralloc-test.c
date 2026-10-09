@@ -13,7 +13,13 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
-#define CHECK(c) do { if (!(c)) { fprintf(stderr, "gralloc-test:%d: %s errno=%d EGL=%x GL=%x\n", __LINE__, #c, errno, eglGetError(), glGetError()); exit(1); } } while (0)
+#define CHECK(c) \
+    do { \
+        if (!(c)) { \
+            fprintf(stderr, "gralloc-test:%d: %s errno=%d EGL=%x GL=%x\n", __LINE__, #c, errno, eglGetError(), glGetError()); \
+            exit(1); \
+        } \
+    } while (0)
 
 static void check_cpu(AHardwareBuffer *buffer, unsigned char red, unsigned char green)
 {
@@ -56,10 +62,7 @@ int main(int argc, char **argv)
         _exit(101);
     }
     /* AHardwareBuffer waits for the declared allocator service. */
-    AHardwareBuffer_Desc description = {.width = 37, .height = 23, .layers = 1,
-        .format = AHARDWAREBUFFER_FORMAT_R8G8B8A8_UNORM,
-        .usage = AHARDWAREBUFFER_USAGE_CPU_READ_OFTEN | AHARDWAREBUFFER_USAGE_CPU_WRITE_OFTEN |
-                 AHARDWAREBUFFER_USAGE_GPU_SAMPLED_IMAGE | AHARDWAREBUFFER_USAGE_GPU_COLOR_OUTPUT};
+    AHardwareBuffer_Desc description = {.width = 37, .height = 23, .layers = 1, .format = AHARDWAREBUFFER_FORMAT_R8G8B8A8_UNORM, .usage = AHARDWAREBUFFER_USAGE_CPU_READ_OFTEN | AHARDWAREBUFFER_USAGE_CPU_WRITE_OFTEN | AHARDWAREBUFFER_USAGE_GPU_SAMPLED_IMAGE | AHARDWAREBUFFER_USAGE_GPU_COLOR_OUTPUT};
     AHardwareBuffer *buffer;
     CHECK(AHardwareBuffer_allocate(&description, &buffer) == 0);
     AHardwareBuffer_describe(buffer, &description);
@@ -69,7 +72,10 @@ int main(int argc, char **argv)
     for (unsigned y = 0; y < description.height; ++y)
         for (unsigned x = 0; x < description.width; ++x) {
             unsigned char *pixel = pixels + (y * description.stride + x) * 4;
-            pixel[0] = 255; pixel[1] = 0; pixel[2] = 0; pixel[3] = 255;
+            pixel[0] = 255;
+            pixel[1] = 0;
+            pixel[2] = 0;
+            pixel[3] = 255;
         }
     CHECK(AHardwareBuffer_unlock(buffer, NULL) == 0);
     EGLDisplay display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
@@ -93,9 +99,11 @@ int main(int argc, char **argv)
     EGLImageKHR image = create_image(display, EGL_NO_CONTEXT, EGL_NATIVE_BUFFER_ANDROID, native_buffer(buffer), image_attrs);
     CHECK(image != EGL_NO_IMAGE_KHR);
     GLuint texture, framebuffer;
-    glGenTextures(1, &texture); glBindTexture(GL_TEXTURE_2D, texture);
+    glGenTextures(1, &texture);
+    glBindTexture(GL_TEXTURE_2D, texture);
     target_image(GL_TEXTURE_2D, image);
-    glGenFramebuffers(1, &framebuffer); glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+    glGenFramebuffers(1, &framebuffer);
+    glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture, 0);
     CHECK(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE);
     unsigned char readback[37 * 23 * 4];
@@ -103,10 +111,13 @@ int main(int argc, char **argv)
     CHECK(glGetError() == GL_NO_ERROR);
     for (unsigned i = 0; i < 37 * 23; ++i)
         CHECK(readback[i * 4] == 255 && readback[i * 4 + 1] == 0 && readback[i * 4 + 2] == 0 && readback[i * 4 + 3] == 255);
-    glClearColor(0, 1, 0, 1); glClear(GL_COLOR_BUFFER_BIT); glFinish();
+    glClearColor(0, 1, 0, 1);
+    glClear(GL_COLOR_BUFFER_BIT);
+    glFinish();
     CHECK(glGetError() == GL_NO_ERROR);
     check_cpu(buffer, 0, 255);
-    glDeleteFramebuffers(1, &framebuffer); glDeleteTextures(1, &texture);
+    glDeleteFramebuffers(1, &framebuffer);
+    glDeleteTextures(1, &texture);
     CHECK(destroy_image(display, image));
     CHECK(eglMakeCurrent(display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT));
     CHECK(eglDestroyContext(display, context) && eglDestroySurface(display, surface));
@@ -119,7 +130,8 @@ int main(int argc, char **argv)
     CHECK(receiver >= 0);
     if (!receiver) {
         close(sockets[0]);
-        char descriptor[20]; snprintf(descriptor, sizeof(descriptor), "%d", sockets[1]);
+        char descriptor[20];
+        snprintf(descriptor, sizeof(descriptor), "%d", sockets[1]);
         execl("/system/bin/gralloc-test", "gralloc-test", "receive", descriptor, NULL);
         _exit(102);
     }

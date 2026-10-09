@@ -11,7 +11,13 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
-#define CHECK(c) do { if (!(c)) { dprintf(2, "file-tests:%d errno=%d: %s\n", __LINE__, errno, #c); _exit(111); } } while (0)
+#define CHECK(c) \
+    do { \
+        if (!(c)) { \
+            dprintf(2, "file-tests:%d errno=%d: %s\n", __LINE__, errno, #c); \
+            _exit(111); \
+        } \
+    } while (0)
 void file_tests(const char *libc)
 {
     CHECK(mkdir("/open-flags", 0700) == 0);
@@ -39,8 +45,10 @@ void file_tests(const char *libc)
     unsigned seen = 0;
     struct dirent *entry;
     while ((entry = readdir(entries))) {
-        if (!strcmp(entry->d_name, "data")) seen |= 1;
-        if (!strcmp(entry->d_name, "link")) seen |= 2;
+        if (!strcmp(entry->d_name, "data"))
+            seen |= 1;
+        if (!strcmp(entry->d_name, "link"))
+            seen |= 2;
     }
     CHECK(seen == 3 && closedir(entries) == 0);
     CHECK(symlink("/bin/sh", "/open-flags/shell") == 0);

@@ -67,10 +67,14 @@ static void result(tl_json *j, const char *id, const char *title, const char *st
     fprintf(stderr, "[husk-tl] check %s: %s -- %s\n", id, status, detail);
 
     tl_json_begin_object(j);
-    tl_json_key(j, "id");       tl_json_string(j, id);
-    tl_json_key(j, "title");    tl_json_string(j, title);
-    tl_json_key(j, "status");   tl_json_string(j, status);
-    tl_json_key(j, "detail");   tl_json_string(j, detail);
+    tl_json_key(j, "id");
+    tl_json_string(j, id);
+    tl_json_key(j, "title");
+    tl_json_string(j, title);
+    tl_json_key(j, "status");
+    tl_json_string(j, status);
+    tl_json_key(j, "detail");
+    tl_json_string(j, detail);
     tl_json_end_object(j);
 }
 
@@ -86,7 +90,7 @@ static void starting(const char *id)
 static void pause_briefly(unsigned i)
 {
     if (i % 3 == 0) {
-        struct timespec ts = { 0, 200 * 1000 };
+        struct timespec ts = {0, 200 * 1000};
         nanosleep(&ts, NULL);
     } else {
         sched_yield();
@@ -98,8 +102,8 @@ static void pause_briefly(unsigned i)
 
 #if defined(__aarch64__)
 
-#define TPIDR_THREADS   4
-#define TPIDR_ROUNDS    150
+#define TPIDR_THREADS 4
+#define TPIDR_ROUNDS 150
 
 static inline uint64_t tpidr_get(void)
 {
@@ -115,11 +119,11 @@ static inline void tpidr_set(uint64_t v)
 
 typedef struct tpidr_run {
     uint64_t initial;
-    uint64_t block[8];      /* what it points at while it is ours */
-    bool     wrote;
+    uint64_t block[8]; /* what it points at while it is ours */
+    bool wrote;
     uint32_t rounds;
     uint32_t lost;
-    uint64_t seen;          /* the first value that was not ours */
+    uint64_t seen; /* the first value that was not ours */
 } tpidr_run;
 
 /* Point the register at a block of our own -- never left dangling, in case
@@ -141,11 +145,14 @@ static void *tpidr_worker(void *arg)
         uint64_t v = tpidr_get();
         t->rounds++;
         if (v != want) {
-            if (t->lost++ == 0) t->seen = v;
-            if (t->wrote) tpidr_set(want);      /* so later rounds measure afresh */
+            if (t->lost++ == 0)
+                t->seen = v;
+            if (t->wrote)
+                tpidr_set(want); /* so later rounds measure afresh */
         }
     }
-    if (t->wrote) tpidr_set(t->initial);
+    if (t->wrote)
+        tpidr_set(t->initial);
     return NULL;
 }
 
@@ -180,7 +187,7 @@ static bool tpidr_in_signal(uint64_t want, uint64_t *in_handler, uint64_t *after
     tpidr_set(want);
     pthread_kill(pthread_self(), SIGWINCH);
     for (int i = 0; i < 100 && !g_sig_seen; i++) {
-        struct timespec ts = { 0, 1000 * 1000 };
+        struct timespec ts = {0, 1000 * 1000};
         nanosleep(&ts, NULL);
     }
     *after = tpidr_get();
@@ -221,8 +228,10 @@ static void check_tpidr(tl_json *j)
     uint64_t in_use = here, seen = 0;
     for (int i = 0; i < started; i++) {
         rounds += runs[i].rounds;
-        if (runs[i].initial && !in_use) in_use = runs[i].initial;
-        if (runs[i].lost && !lost) seen = runs[i].seen;
+        if (runs[i].initial && !in_use)
+            in_use = runs[i].initial;
+        if (runs[i].lost && !lost)
+            seen = runs[i].seen;
         lost += runs[i].lost;
     }
 
@@ -243,12 +252,13 @@ static void check_tpidr(tl_json *j)
         return;
     }
 
-    uint64_t block[8] = { 0 };
+    uint64_t block[8] = {0};
     uint64_t want = (uint64_t)(uintptr_t)block, in_handler = 0, after = 0;
     if (!tpidr_in_signal(want, &in_handler, &after)) {
         result(j, "tpidr", title, "pass",
                "Free, and kept across %u context switches on %d threads. (No signal "
-               "arrived to check it inside a handler.)", rounds, started);
+               "arrived to check it inside a handler.)",
+               rounds, started);
     } else if (in_handler != want || after != want) {
         result(j, "tpidr", title, "warn",
                "Kept across %u context switches, but inside a signal handler it read "
@@ -259,7 +269,8 @@ static void check_tpidr(tl_json *j)
         result(j, "tpidr", title, "pass",
                "Free, and ours: kept across %u context switches on %d threads and "
                "into a signal handler. Android code can read its stack guard from it "
-               "as it is.", rounds, started);
+               "as it is.",
+               rounds, started);
     }
 }
 
@@ -290,7 +301,8 @@ static uint32_t x18_run(uint32_t rounds, uint64_t *seen)
         pause_briefly(i);
         __asm__ volatile("mov %0, x18" : "=r"(v));
         if (v != canary) {
-            if (lost++ == 0) *seen = v;
+            if (lost++ == 0)
+                *seen = v;
             __asm__ volatile("mov x18, %0" : : "r"(canary));
         }
     }
@@ -308,13 +320,15 @@ static void check_x18(tl_json *j)
     if (lost == 0) {
         result(j, "x18", title, "pass",
                "Kept across %u context switches. Libraries that keep values in x18 -- "
-               "shadow call stacks, some older builds -- can run.", rounds);
+               "shadow call stacks, some older builds -- can run.",
+               rounds);
     } else {
         result(j, "x18", title, "fail",
                "Changed by the system: read 0x%llx after a switch (%u of %u). Code from "
                "current Android compilers never uses x18, but a library built with "
                "shadow call stacks, or an old one that treats x18 as scratch, would "
-               "fail at random.", (unsigned long long)seen, lost, rounds);
+               "fail at random.",
+               (unsigned long long)seen, lost, rounds);
     }
 }
 
@@ -336,7 +350,7 @@ static void check_x18(tl_json *j)
 /* pthread_jit_write_protect_np is marked unavailable in the iOS SDK, but
  * libsystem exports it; looked up at run time so nothing links against it. */
 typedef void (*write_protect_fn)(int);
-typedef int  (*write_protect_supported_fn)(void);
+typedef int (*write_protect_supported_fn)(void);
 static write_protect_fn g_write_protect;
 
 static void jit_prepare(void)
@@ -350,10 +364,14 @@ static void jit_prepare(void)
 
 static void jit_writable(bool on)
 {
-    if (g_write_protect) g_write_protect(on ? 0 : 1);
+    if (g_write_protect)
+        g_write_protect(on ? 0 : 1);
 }
 
-static void flush_icache(void *p, size_t n) { sys_icache_invalidate(p, n); }
+static void flush_icache(void *p, size_t n)
+{
+    sys_icache_invalidate(p, n);
+}
 
 static bool page_executable(void *p)
 {
@@ -373,9 +391,19 @@ static bool page_executable(void *p)
 #define JIT_FLAGS (MAP_PRIVATE | MAP_ANON | MAP_JIT)
 #else
 static void jit_prepare(void) {}
-static void jit_writable(bool on) { (void)on; }
-static void flush_icache(void *p, size_t n) { __builtin___clear_cache((char *)p, (char *)p + n); }
-static bool page_executable(void *p) { (void)p; return true; }
+static void jit_writable(bool on)
+{
+    (void)on;
+}
+static void flush_icache(void *p, size_t n)
+{
+    __builtin___clear_cache((char *)p, (char *)p + n);
+}
+static bool page_executable(void *p)
+{
+    (void)p;
+    return true;
+}
 #define JIT_FLAGS (MAP_PRIVATE | MAP_ANON)
 #endif
 
@@ -392,8 +420,9 @@ static void guard_handler(int sig)
     /* Not ours: a fault on another thread inside the window. Put back whoever
      * handled it before and return; the instruction faults again and reaches
      * them, as it would have without us. */
-    const struct sigaction *prev = sig == SIGBUS ? &g_prev_bus
-                                 : sig == SIGSEGV ? &g_prev_segv : &g_prev_ill;
+    const struct sigaction *prev = sig == SIGBUS    ? &g_prev_bus
+                                   : sig == SIGSEGV ? &g_prev_segv
+                                                    : &g_prev_ill;
     sigaction(sig, prev, NULL);
 }
 
@@ -421,8 +450,7 @@ static void guard_disarm(void)
 /* adrp x1, target -- the way compiled code finds its own data. */
 static uint32_t adrp_x1(const void *pc, const void *target)
 {
-    int64_t delta = (int64_t)(((uintptr_t)target & ~(uintptr_t)0xFFF)
-                            - ((uintptr_t)pc & ~(uintptr_t)0xFFF)) >> 12;
+    int64_t delta = (int64_t)(((uintptr_t)target & ~(uintptr_t)0xFFF) - ((uintptr_t)pc & ~(uintptr_t)0xFFF)) >> 12;
     uint32_t imm = (uint32_t)delta & 0x1FFFFF;
     return 0x90000000u | ((imm & 3u) << 29) | ((imm >> 2) << 5) | 1u;
 }
@@ -434,13 +462,13 @@ static uint32_t adrp_x1(const void *pc, const void *target)
 static void counter_fn(uint32_t code[5], const void *pc, const void *data)
 {
     code[0] = adrp_x1(pc, data);
-    code[1] = 0xF9400020u;      /* ldr x0, [x1]      */
-    code[2] = 0x91000400u;      /* add x0, x0, #1    */
-    code[3] = 0xF9000020u;      /* str x0, [x1]      */
-    code[4] = 0xD65F03C0u;      /* ret               */
+    code[1] = 0xF9400020u; /* ldr x0, [x1]      */
+    code[2] = 0x91000400u; /* add x0, x0, #1    */
+    code[3] = 0xF9000020u; /* str x0, [x1]      */
+    code[4] = 0xD65F03C0u; /* ret               */
 }
 
-static const uint32_t kReturn7[2] = { 0x528000E0u, 0xD65F03C0u };   /* mov w0, #7; ret */
+static const uint32_t kReturn7[2] = {0x528000E0u, 0xD65F03C0u}; /* mov w0, #7; ret */
 
 /*
  * Variant A: take executable memory, then replace one page in the middle of
@@ -473,10 +501,13 @@ static void check_carve(tl_json *j, size_t page)
         void *d = mmap(data, page, PROT_READ | PROT_WRITE,
                        MAP_FIXED | MAP_PRIVATE | MAP_ANON, -1, 0);
         if (d != data) {
-            snprintf(why, sizeof(why), "The kernel would not replace a page inside the "
-                     "JIT mapping (%s).", d == MAP_FAILED ? strerror(errno) : "moved");
+            snprintf(why, sizeof(why),
+                     "The kernel would not replace a page inside the "
+                     "JIT mapping (%s).",
+                     d == MAP_FAILED ? strerror(errno) : "moved");
         } else if (!page_executable(r) || !page_executable(tail)) {
-            snprintf(why, sizeof(why), "Replacing one page took execute permission away "
+            snprintf(why, sizeof(why),
+                     "Replacing one page took execute permission away "
                      "from the pages either side of it.");
         } else {
             *(volatile uint64_t *)data = 41;
@@ -485,8 +516,10 @@ static void check_carve(tl_json *j, size_t page)
             if (got == 42 && *(volatile uint64_t *)data == 42 && seven == 7) {
                 status = "pass";
             } else {
-                snprintf(why, sizeof(why), "The code ran but got the wrong answer "
-                         "(%llu, %d).", (unsigned long long)got, seven);
+                snprintf(why, sizeof(why),
+                         "The code ran but got the wrong answer "
+                         "(%llu, %d).",
+                         (unsigned long long)got, seven);
             }
         }
     } else {
@@ -526,8 +559,10 @@ static void check_place(tl_json *j, size_t page)
 
     void *c = mmap(r, page, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_FIXED | JIT_FLAGS, -1, 0);
     if (c != r) {
-        snprintf(why, sizeof(why), "The kernel would not map executable memory at a "
-                 "chosen address (%s).", c == MAP_FAILED ? strerror(errno) : "moved");
+        snprintf(why, sizeof(why),
+                 "The kernel would not map executable memory at a "
+                 "chosen address (%s).",
+                 c == MAP_FAILED ? strerror(errno) : "moved");
     } else {
         guard_arm();
         if (sigsetjmp(g_guard_jump, 1) == 0) {
@@ -581,7 +616,7 @@ static void check_dualmap(tl_json *j, size_t page, tl_dual_mapping *stik)
     uint8_t *rw = stik->rw_addr + test_off;
     uint8_t *rx = stik->rx_addr + test_off;
 
-    uint32_t code[2] = { 0x52800540u, 0xD65F03C0u }; /* movz w0, #42; ret */
+    uint32_t code[2] = {0x52800540u, 0xD65F03C0u}; /* movz w0, #42; ret */
     memcpy(rw, code, sizeof(code));
     sys_icache_invalidate(rx, sizeof(code));
 
@@ -620,8 +655,9 @@ static void check_memory(tl_json *j, bool may_execute, size_t page)
         check_carve(j, page);
         check_place(j, page);
     } else {
-        const char *why = "Skipped on TXM devices (A17 Pro and newer) or where unprivileged "
-                          "MAP_JIT is blocked. StikDebug dual mapping is used instead.";
+        const char *why =
+            "Skipped on TXM devices (A17 Pro and newer) or where unprivileged "
+            "MAP_JIT is blocked. StikDebug dual mapping is used instead.";
         result(j, "carve", "Code beside data, carved from JIT memory", "skip", "%s", why);
         result(j, "place", "Code placed in front of data", "skip", "%s", why);
     }
@@ -652,7 +688,8 @@ char *husk_tl_run_checks(bool may_execute)
     result(&j, "page", "Page size", "info",
            "%ld bytes.%s", page,
            page > 4096 ? " Libraries built for 4 KiB pages are laid out afresh for it; "
-                         "each app's report says whether that works." : "");
+                         "each app's report says whether that works."
+                       : "");
 
     check_tpidr(&j);
     check_x18(&j);

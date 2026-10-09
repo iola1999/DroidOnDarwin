@@ -9,8 +9,14 @@ int main(void)
         uint32_t w = (uint32_t)strtoul(line, NULL, 16);
         bool known;
         bool uses = a64_uses_gpr(w, 18, &known);
-        if (!known) { printf("UNKNOWN %08x\n", w); continue; }
-        if (!uses) { printf("- %08x\n", w); continue; }
+        if (!known) {
+            printf("UNKNOWN %08x\n", w);
+            continue;
+        }
+        if (!uses) {
+            printf("- %08x\n", w);
+            continue;
+        }
         printf("%08x %08x\n", w, a64_subst_gpr(w, 18, 9));
     }
     return 0;

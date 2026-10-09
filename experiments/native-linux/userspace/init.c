@@ -10,11 +10,20 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
-#define CHECK(c) do { if (!(c)) { dprintf(2, "init:%d errno=%d\n", __LINE__, errno); return __LINE__; } } while (0)
+#define CHECK(c) \
+    do { \
+        if (!(c)) { \
+            dprintf(2, "init:%d errno=%d\n", __LINE__, errno); \
+            return __LINE__; \
+        } \
+    } while (0)
 
 static volatile unsigned initialized = 0x19761234;
 static volatile unsigned char bss[65536];
-static unsigned transform(unsigned x) { return (x * 17) ^ 0x73524102; }
+static unsigned transform(unsigned x)
+{
+    return (x * 17) ^ 0x73524102;
+}
 static unsigned (*volatile indirect)(unsigned) = transform;
 
 int main(int argc, char **argv)
@@ -41,16 +50,19 @@ int main(int argc, char **argv)
     while (getline(&line, &capacity, script) > 0) {
         char *args[8];
         int n = 0;
-        for (char *word = strtok(line, " \t\r\n"); word && n < 7; word = strtok(NULL, " \t\r\n")) args[n++] = word;
+        for (char *word = strtok(line, " \t\r\n"); word && n < 7; word = strtok(NULL, " \t\r\n"))
+            args[n++] = word;
         args[n] = NULL;
-        if (!n) continue;
+        if (!n)
+            continue;
         int fds[2];
         CHECK(pipe(fds) == 0);
         pid_t child = fork();
         CHECK(child >= 0);
         if (!child) {
             close(fds[0]);
-            if (dup2(fds[1], 1) < 0) _exit(91);
+            if (dup2(fds[1], 1) < 0)
+                _exit(91);
             close(fds[1]);
             execv(args[0], args);
             _exit(92);

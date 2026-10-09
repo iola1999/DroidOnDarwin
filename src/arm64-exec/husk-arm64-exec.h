@@ -16,11 +16,17 @@ typedef struct HuskArm64Exec HuskArm64Exec;
  * x2=length, x3=operation; HLT #0x484d returns status in x8 (0=done, 1=refused).
  * Refusal preserves RAM and all argument registers. Matching QEMU is required. */
 #define HUSK_BULK_INSN UINT32_C(0xd44909a0)
-enum { HUSK_BULK_COPY, HUSK_BULK_MOVE, HUSK_BULK_SET, HUSK_BULK_LIMIT = 65536 };
+enum { HUSK_BULK_COPY,
+       HUSK_BULK_MOVE,
+       HUSK_BULK_SET,
+       HUSK_BULK_LIMIT = 65536 };
 
-enum { HUSK_BTYPE_SHIFT = 4, HUSK_BTYPE_MASK = 3U << HUSK_BTYPE_SHIFT,
-       HUSK_MOPS_ALLOWED = 1U << 7, HUSK_AES = 1U << 8,
-       HUSK_SHA1 = 1U << 9, HUSK_SHA256 = 1U << 10,
+enum { HUSK_BTYPE_SHIFT = 4,
+       HUSK_BTYPE_MASK = 3U << HUSK_BTYPE_SHIFT,
+       HUSK_MOPS_ALLOWED = 1U << 7,
+       HUSK_AES = 1U << 8,
+       HUSK_SHA1 = 1U << 9,
+       HUSK_SHA256 = 1U << 10,
        HUSK_PAUTH_HINTS_NOP = 1U << 11 };
 
 typedef struct {
@@ -83,12 +89,16 @@ typedef struct {
     uint64_t key_lo, key_hi, mask;
     uint32_t enabled, reserved;
 } HuskArm64PauthKey;
-typedef struct { HuskArm64PauthKey keys[4]; } HuskArm64Pauth;
+typedef struct {
+    HuskArm64PauthKey keys[4];
+} HuskArm64Pauth;
 
 /* Optional EL1 reads. The owner permits these only with SP_EL1 selected and
  * without fine-grained or nested-virtualization traps. Writes end the slice,
  * so values stay unchanged until run() returns. */
-typedef struct { uint64_t tpidr_el1, sp_el0, daif; } HuskArm64KernelReads;
+typedef struct {
+    uint64_t tpidr_el1, sp_el0, daif;
+} HuskArm64KernelReads;
 
 typedef struct {
     void *opaque;
@@ -144,8 +154,8 @@ static inline bool husk_arm64_mops_sequence(const uint32_t code[3])
     uint32_t stage = set ? 0x4000 : 0x400000;
     unsigned rd = word & 31, rn = (word >> 5) & 31, rs = (word >> 16) & 31;
     return husk_arm64_mops_prologue(word) && code[1] == (word | stage) &&
-        code[2] == (word | (stage * 2)) && rd != rn && rd != rs && rn != rs &&
-        rd != 31 && rn != 31 && (set || rs != 31);
+           code[2] == (word | (stage * 2)) && rd != rn && rd != rs && rn != rs &&
+           rd != 31 && rn != 31 && (set || rs != 31);
 }
 
 /* The owner checks FEAT_MOPS, execution controls and disabled MTE, and supplies
@@ -184,8 +194,8 @@ void husk_arm64_destroy(HuskArm64Exec *context);
  * Unsupported FPCR modes return FALLBACK before changing guest state.
  */
 HuskArm64Exit husk_arm64_run(HuskArm64Exec *context, HuskArm64State *state,
-                           uint64_t page_address, const void *page_bytes,
-                           HuskArm64Memory memory, uint64_t budget);
+                             uint64_t page_address, const void *page_bytes,
+                             HuskArm64Memory memory, uint64_t budget);
 
 #ifdef __cplusplus
 }

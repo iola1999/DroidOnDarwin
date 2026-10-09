@@ -13,9 +13,9 @@
 
 /* DEX file header format */
 typedef struct {
-    uint8_t  magic[8];
+    uint8_t magic[8];
     uint32_t checksum;
-    uint8_t  signature[20];
+    uint8_t signature[20];
     uint32_t file_size;
     uint32_t header_size;
     uint32_t endian_tag;
@@ -44,15 +44,15 @@ struct tl_dex_file {
     const dex_header *hdr;
     const uint32_t *string_ids;
     const uint32_t *type_ids;
-    const uint8_t  *proto_ids;
-    const uint8_t  *field_ids;
-    const uint8_t  *method_ids;
-    const uint8_t  *class_defs;
+    const uint8_t *proto_ids;
+    const uint8_t *field_ids;
+    const uint8_t *method_ids;
+    const uint8_t *class_defs;
 
     /* Resolution caches */
-    tl_dex_field  **resolved_fields;
+    tl_dex_field **resolved_fields;
     tl_dex_method **resolved_methods;
-    tl_dex_class  **resolved_types;
+    tl_dex_class **resolved_types;
 };
 
 /* LEB128 decoders */
@@ -64,7 +64,8 @@ static uint32_t read_uleb128(const uint8_t **p)
         uint8_t b = *(*p)++;
         val |= (uint32_t)(b & 0x7f) << shift;
         shift += 7;
-        if (!(b & 0x80)) break;
+        if (!(b & 0x80))
+            break;
     }
     return val;
 }
@@ -87,9 +88,11 @@ __attribute__((unused)) static int32_t read_sleb128(const uint8_t **p)
 
 static const char *dex_get_string(const tl_dex_file *dex, uint32_t idx)
 {
-    if (!dex || idx >= dex->hdr->string_ids_size) return "";
+    if (!dex || idx >= dex->hdr->string_ids_size)
+        return "";
     uint32_t off = dex->string_ids[idx];
-    if (off >= dex->size) return "";
+    if (off >= dex->size)
+        return "";
     const uint8_t *p = dex->data + off;
     (void)read_uleb128(&p); /* skip utf16_size */
     return (const char *)p;
@@ -97,7 +100,8 @@ static const char *dex_get_string(const tl_dex_file *dex, uint32_t idx)
 
 static const char *dex_get_type(const tl_dex_file *dex, uint32_t idx)
 {
-    if (!dex || idx >= dex->hdr->type_ids_size) return "";
+    if (!dex || idx >= dex->hdr->type_ids_size)
+        return "";
     uint32_t str_idx = dex->type_ids[idx];
     return dex_get_string(dex, str_idx);
 }
@@ -105,26 +109,33 @@ static const char *dex_get_type(const tl_dex_file *dex, uint32_t idx)
 static void dex_get_field_info(const tl_dex_file *dex, uint32_t idx,
                                const char **class_desc, const char **name, const char **type_desc)
 {
-    if (!dex || idx >= dex->hdr->field_ids_size) return;
+    if (!dex || idx >= dex->hdr->field_ids_size)
+        return;
     const uint8_t *f = dex->field_ids + idx * 8;
     uint16_t c_idx = (uint16_t)f[0] | ((uint16_t)f[1] << 8);
     uint16_t t_idx = (uint16_t)f[2] | ((uint16_t)f[3] << 8);
     uint32_t n_idx = (uint32_t)f[4] | ((uint32_t)f[5] << 8) | ((uint32_t)f[6] << 16) | ((uint32_t)f[7] << 24);
-    if (class_desc) *class_desc = dex_get_type(dex, c_idx);
-    if (type_desc)  *type_desc  = dex_get_type(dex, t_idx);
-    if (name)       *name       = dex_get_string(dex, n_idx);
+    if (class_desc)
+        *class_desc = dex_get_type(dex, c_idx);
+    if (type_desc)
+        *type_desc = dex_get_type(dex, t_idx);
+    if (name)
+        *name = dex_get_string(dex, n_idx);
 }
 
 static void dex_get_method_info(const tl_dex_file *dex, uint32_t idx,
                                 const char **class_desc, const char **name, const char **shorty)
 {
-    if (!dex || idx >= dex->hdr->method_ids_size) return;
+    if (!dex || idx >= dex->hdr->method_ids_size)
+        return;
     const uint8_t *m = dex->method_ids + idx * 8;
     uint16_t c_idx = (uint16_t)m[0] | ((uint16_t)m[1] << 8);
     uint16_t p_idx = (uint16_t)m[2] | ((uint16_t)m[3] << 8);
     uint32_t n_idx = (uint32_t)m[4] | ((uint32_t)m[5] << 8) | ((uint32_t)m[6] << 16) | ((uint32_t)m[7] << 24);
-    if (class_desc) *class_desc = dex_get_type(dex, c_idx);
-    if (name)       *name       = dex_get_string(dex, n_idx);
+    if (class_desc)
+        *class_desc = dex_get_type(dex, c_idx);
+    if (name)
+        *name = dex_get_string(dex, n_idx);
     if (shorty) {
         const uint8_t *pr = dex->proto_ids + p_idx * 12;
         uint32_t s_idx = (uint32_t)pr[0] | ((uint32_t)pr[1] << 8) | ((uint32_t)pr[2] << 16) | ((uint32_t)pr[3] << 24);
@@ -137,7 +148,8 @@ static void dex_get_method_info(const tl_dex_file *dex, uint32_t idx,
 tl_dex_context *tl_dex_context_create(const char *apk_path, uint32_t *fb, int width, int height)
 {
     tl_dex_context *ctx = calloc(1, sizeof(*ctx));
-    if (!ctx) return NULL;
+    if (!ctx)
+        return NULL;
     pthread_mutex_init(&ctx->input_lock, NULL);
     tl_dex_seed(ctx, ((uint64_t)arc4random() << 32) | arc4random());
     ctx->apk_path = apk_path ? strdup(apk_path) : NULL;
@@ -152,7 +164,8 @@ tl_dex_context *tl_dex_context_create(const char *apk_path, uint32_t *fb, int wi
 
 void tl_dex_context_destroy(tl_dex_context *ctx)
 {
-    if (!ctx) return;
+    if (!ctx)
+        return;
     pthread_mutex_destroy(&ctx->input_lock);
     while (ctx->tasks) {
         tl_dex_task *t = ctx->tasks;
@@ -186,7 +199,8 @@ void tl_dex_context_destroy(tl_dex_context *ctx)
 static inline uint32_t class_hash_str(const char *s)
 {
     uint32_t h = 5381;
-    while (*s) h = ((h << 5) + h) + (uint8_t)(*s++);
+    while (*s)
+        h = ((h << 5) + h) + (uint8_t)(*s++);
     return h;
 }
 
@@ -207,7 +221,8 @@ static void context_add_class(tl_dex_context *ctx, tl_dex_class *clazz)
 
 tl_dex_class *tl_dex_find_class(tl_dex_context *ctx, const char *descriptor)
 {
-    if (!ctx || !descriptor) return NULL;
+    if (!ctx || !descriptor)
+        return NULL;
     uint32_t h = class_hash_str(descriptor) % TL_DEX_CLASS_HASH_SIZE;
     for (tl_dex_class *c = ctx->class_hash[h]; c; c = c->next_hash) {
         if (!strcmp(c->descriptor, descriptor)) {
@@ -219,7 +234,8 @@ tl_dex_class *tl_dex_find_class(tl_dex_context *ctx, const char *descriptor)
 
 tl_dex_method *tl_dex_find_method(tl_dex_class *clazz, const char *name, const char *shorty)
 {
-    if (!clazz || !name) return NULL;
+    if (!clazz || !name)
+        return NULL;
     for (int i = 0; i < clazz->num_methods; i++) {
         if (!strcmp(clazz->methods[i].name, name)) {
             if (!shorty || !strcmp(clazz->methods[i].shorty, shorty)) {
@@ -235,7 +251,8 @@ tl_dex_method *tl_dex_find_method(tl_dex_class *clazz, const char *name, const c
 
 tl_dex_field *tl_dex_find_field(tl_dex_class *clazz, const char *name, const char *type)
 {
-    if (!clazz || !name) return NULL;
+    if (!clazz || !name)
+        return NULL;
     for (int i = 0; i < clazz->num_fields; i++) {
         if (!strcmp(clazz->fields[i].name, name)) {
             if (!type || !strcmp(clazz->fields[i].type, type)) {
@@ -261,7 +278,8 @@ tl_dex_field *tl_dex_find_field(tl_dex_class *clazz, const char *name, const cha
  */
 static int framework_instance_slots(const char *descriptor)
 {
-    if (descriptor && !strcmp(descriptor, "Ljava/lang/Enum;")) return 2;
+    if (descriptor && !strcmp(descriptor, "Ljava/lang/Enum;"))
+        return 2;
     return 0;
 }
 
@@ -275,7 +293,8 @@ static int framework_instance_slots(const char *descriptor)
  */
 static void dex_link_class(tl_dex_class *c)
 {
-    if (!c || c->linked) return;
+    if (!c || c->linked)
+        return;
     c->linked = true;
 
     int base = 0;
@@ -300,7 +319,8 @@ static void dex_log(const char *fmt, ...);
  * write, and a loop would otherwise say it every pass. */
 static void dex_note_unresolved_field(tl_dex_field *f, const char *what)
 {
-    if (!f || f->unresolved_logged) return;
+    if (!f || f->unresolved_logged)
+        return;
     f->unresolved_logged = true;
     dex_log("tl: unresolved field %s %s->%s %s", what, f->owner ? f->owner : "?",
             f->name, f->type);
@@ -310,8 +330,10 @@ static void dex_note_unresolved_field(tl_dex_field *f, const char *what)
 
 static tl_dex_field *dex_resolve_field(tl_dex_context *ctx, tl_dex_file *dex, uint32_t idx)
 {
-    if (!dex || idx >= dex->hdr->field_ids_size) return NULL;
-    if (dex->resolved_fields[idx]) return dex->resolved_fields[idx];
+    if (!dex || idx >= dex->hdr->field_ids_size)
+        return NULL;
+    if (dex->resolved_fields[idx])
+        return dex->resolved_fields[idx];
 
     const char *class_desc = NULL, *fname = NULL, *ftype = NULL;
     dex_get_field_info(dex, idx, &class_desc, &fname, &ftype);
@@ -351,18 +373,20 @@ static tl_dex_native_func dex_lookup_shim(const char *class_desc, tl_dex_class *
                                           const char *mname, const char *shorty)
 {
     tl_dex_native_func fn = tl_framework_lookup(class_desc, mname, shorty);
-    if (fn) return fn;
+    if (fn)
+        return fn;
 
     /* Arrays answer clone() themselves; the class in the call is "[L...;". */
     if (class_desc && class_desc[0] == '[' && !strcmp(mname, "clone")) {
         return tl_framework_lookup("[", "clone", shorty);
     }
 
-    int depth = 0;   /* bounded: a malformed hierarchy can loop */
+    int depth = 0; /* bounded: a malformed hierarchy can loop */
     for (tl_dex_class *k = c; k && depth < 64; k = k->super_class, depth++) {
         if (k->super_descriptor) {
             fn = tl_framework_lookup(k->super_descriptor, mname, shorty);
-            if (fn) return fn;
+            if (fn)
+                return fn;
         }
     }
     return NULL;
@@ -370,8 +394,10 @@ static tl_dex_native_func dex_lookup_shim(const char *class_desc, tl_dex_class *
 
 static tl_dex_method *dex_resolve_method(tl_dex_context *ctx, tl_dex_file *dex, uint32_t idx)
 {
-    if (!dex || idx >= dex->hdr->method_ids_size) return NULL;
-    if (dex->resolved_methods[idx]) return dex->resolved_methods[idx];
+    if (!dex || idx >= dex->hdr->method_ids_size)
+        return NULL;
+    if (dex->resolved_methods[idx])
+        return dex->resolved_methods[idx];
 
     const char *class_desc = NULL, *mname = NULL, *shorty = NULL;
     dex_get_method_info(dex, idx, &class_desc, &mname, &shorty);
@@ -396,25 +422,28 @@ static tl_dex_method *dex_resolve_method(tl_dex_context *ctx, tl_dex_file *dex, 
 
 static tl_dex_file *parse_dex_buffer(tl_dex_context *ctx, uint8_t *data, size_t size)
 {
-    if (size < sizeof(dex_header)) return NULL;
-    if (memcmp(data, "dex\n", 4) != 0) return NULL;
+    if (size < sizeof(dex_header))
+        return NULL;
+    if (memcmp(data, "dex\n", 4) != 0)
+        return NULL;
 
     const dex_header *hdr = (const dex_header *)data;
     tl_dex_file *dex = calloc(1, sizeof(*dex));
-    if (!dex) return NULL;
+    if (!dex)
+        return NULL;
     dex->data = data;
     dex->size = size;
     dex->hdr = hdr;
     dex->string_ids = (const uint32_t *)(data + hdr->string_ids_off);
-    dex->type_ids   = (const uint32_t *)(data + hdr->type_ids_off);
-    dex->proto_ids  = data + hdr->proto_ids_off;
-    dex->field_ids  = data + hdr->field_ids_off;
+    dex->type_ids = (const uint32_t *)(data + hdr->type_ids_off);
+    dex->proto_ids = data + hdr->proto_ids_off;
+    dex->field_ids = data + hdr->field_ids_off;
     dex->method_ids = data + hdr->method_ids_off;
     dex->class_defs = data + hdr->class_defs_off;
 
-    dex->resolved_fields  = calloc(hdr->field_ids_size, sizeof(void *));
+    dex->resolved_fields = calloc(hdr->field_ids_size, sizeof(void *));
     dex->resolved_methods = calloc(hdr->method_ids_size, sizeof(void *));
-    dex->resolved_types   = calloc(hdr->type_ids_size, sizeof(void *));
+    dex->resolved_types = calloc(hdr->type_ids_size, sizeof(void *));
 
     for (uint32_t i = 0; i < hdr->class_defs_size; i++) {
         const uint8_t *cd = dex->class_defs + i * 32;
@@ -432,10 +461,10 @@ static tl_dex_file *parse_dex_buffer(tl_dex_context *ctx, uint8_t *data, size_t 
 
         if (class_data_off != 0 && class_data_off < size) {
             const uint8_t *p = dex->data + class_data_off;
-            uint32_t static_fields_count   = read_uleb128(&p);
+            uint32_t static_fields_count = read_uleb128(&p);
             uint32_t instance_fields_count = read_uleb128(&p);
-            uint32_t direct_methods_count   = read_uleb128(&p);
-            uint32_t virtual_methods_count  = read_uleb128(&p);
+            uint32_t direct_methods_count = read_uleb128(&p);
+            uint32_t virtual_methods_count = read_uleb128(&p);
 
             c->num_fields = static_fields_count + instance_fields_count;
             c->num_static_fields = static_fields_count;
@@ -454,9 +483,9 @@ static tl_dex_file *parse_dex_buffer(tl_dex_context *ctx, uint8_t *data, size_t 
                 const char *fname = NULL, *ftype = NULL;
                 dex_get_field_info(dex, fid, NULL, &fname, &ftype);
                 c->fields[f] = (tl_dex_field){
-                    .clazz = c, .name = fname, .type = ftype, .access_flags = flags, .is_static = true, .slot = f
-                };
-                if (fid < hdr->field_ids_size) dex->resolved_fields[fid] = &c->fields[f];
+                    .clazz = c, .name = fname, .type = ftype, .access_flags = flags, .is_static = true, .slot = f};
+                if (fid < hdr->field_ids_size)
+                    dex->resolved_fields[fid] = &c->fields[f];
             }
             fid = 0;
             for (uint32_t f = 0; f < instance_fields_count; f++) {
@@ -465,9 +494,9 @@ static tl_dex_file *parse_dex_buffer(tl_dex_context *ctx, uint8_t *data, size_t 
                 const char *fname = NULL, *ftype = NULL;
                 dex_get_field_info(dex, fid, NULL, &fname, &ftype);
                 c->fields[static_fields_count + f] = (tl_dex_field){
-                    .clazz = c, .name = fname, .type = ftype, .access_flags = flags, .is_static = false, .slot = f
-                };
-                if (fid < hdr->field_ids_size) dex->resolved_fields[fid] = &c->fields[static_fields_count + f];
+                    .clazz = c, .name = fname, .type = ftype, .access_flags = flags, .is_static = false, .slot = f};
+                if (fid < hdr->field_ids_size)
+                    dex->resolved_fields[fid] = &c->fields[static_fields_count + f];
             }
 
             c->num_methods = direct_methods_count + virtual_methods_count;
@@ -490,12 +519,13 @@ static tl_dex_file *parse_dex_buffer(tl_dex_context *ctx, uint8_t *data, size_t 
                 if (code_off != 0 && code_off + 16 <= size) {
                     const uint8_t *cp = dex->data + code_off;
                     meth->registers_size = (uint16_t)cp[0] | ((uint16_t)cp[1] << 8);
-                    meth->ins_size       = (uint16_t)cp[2] | ((uint16_t)cp[3] << 8);
-                    meth->outs_size      = (uint16_t)cp[4] | ((uint16_t)cp[5] << 8);
-                    meth->insns_size     = (uint32_t)cp[12] | ((uint32_t)cp[13] << 8) | ((uint32_t)cp[14] << 16) | ((uint32_t)cp[15] << 24);
-                    meth->insns          = (const uint16_t *)(cp + 16);
+                    meth->ins_size = (uint16_t)cp[2] | ((uint16_t)cp[3] << 8);
+                    meth->outs_size = (uint16_t)cp[4] | ((uint16_t)cp[5] << 8);
+                    meth->insns_size = (uint32_t)cp[12] | ((uint32_t)cp[13] << 8) | ((uint32_t)cp[14] << 16) | ((uint32_t)cp[15] << 24);
+                    meth->insns = (const uint16_t *)(cp + 16);
                 }
-                if (mid < hdr->method_ids_size) dex->resolved_methods[mid] = meth;
+                if (mid < hdr->method_ids_size)
+                    dex->resolved_methods[mid] = meth;
             }
             mid = 0;
             for (uint32_t m = 0; m < virtual_methods_count; m++) {
@@ -513,12 +543,13 @@ static tl_dex_file *parse_dex_buffer(tl_dex_context *ctx, uint8_t *data, size_t 
                 if (code_off != 0 && code_off + 16 <= size) {
                     const uint8_t *cp = dex->data + code_off;
                     meth->registers_size = (uint16_t)cp[0] | ((uint16_t)cp[1] << 8);
-                    meth->ins_size       = (uint16_t)cp[2] | ((uint16_t)cp[3] << 8);
-                    meth->outs_size      = (uint16_t)cp[4] | ((uint16_t)cp[5] << 8);
-                    meth->insns_size     = (uint32_t)cp[12] | ((uint32_t)cp[13] << 8) | ((uint32_t)cp[14] << 16) | ((uint32_t)cp[15] << 24);
-                    meth->insns          = (const uint16_t *)(cp + 16);
+                    meth->ins_size = (uint16_t)cp[2] | ((uint16_t)cp[3] << 8);
+                    meth->outs_size = (uint16_t)cp[4] | ((uint16_t)cp[5] << 8);
+                    meth->insns_size = (uint32_t)cp[12] | ((uint32_t)cp[13] << 8) | ((uint32_t)cp[14] << 16) | ((uint32_t)cp[15] << 24);
+                    meth->insns = (const uint16_t *)(cp + 16);
                 }
-                if (mid < hdr->method_ids_size) dex->resolved_methods[mid] = meth;
+                if (mid < hdr->method_ids_size)
+                    dex->resolved_methods[mid] = meth;
             }
         }
         context_add_class(ctx, c);
@@ -572,7 +603,8 @@ bool tl_dex_load_apk(tl_dex_context *ctx, const char *apk_path)
                         free(buf);
                     }
                 }
-                if (owned) free((void *)data_ptr);
+                if (owned)
+                    free((void *)data_ptr);
             }
         }
     }
@@ -604,7 +636,8 @@ tl_dex_object *tl_dex_alloc_object(tl_dex_class *clazz)
     obj->clazz = clazz;
     /* The whole inherited layout, not just this class's own fields. */
     int nfields = clazz ? clazz->instance_size : 16;
-    if (nfields < 16) nfields = 16;
+    if (nfields < 16)
+        nfields = 16;
     obj->fields = calloc(nfields, sizeof(tl_dex_val));
     obj->nfields = (uint32_t)nfields;
     return obj;
@@ -644,46 +677,153 @@ tl_dex_object *tl_dex_alloc_string(tl_dex_context *ctx, const char *utf8)
  * interpreter has no exceptions yet, and zero is the least surprising thing to
  * carry on with.
  */
-static inline int32_t i_add(int32_t a, int32_t b) { return (int32_t)((uint32_t)a + (uint32_t)b); }
-static inline int32_t i_sub(int32_t a, int32_t b) { return (int32_t)((uint32_t)a - (uint32_t)b); }
-static inline int32_t i_mul(int32_t a, int32_t b) { return (int32_t)((uint32_t)a * (uint32_t)b); }
+static inline int32_t i_add(int32_t a, int32_t b)
+{
+    return (int32_t)((uint32_t)a + (uint32_t)b);
+}
+static inline int32_t i_sub(int32_t a, int32_t b)
+{
+    return (int32_t)((uint32_t)a - (uint32_t)b);
+}
+static inline int32_t i_mul(int32_t a, int32_t b)
+{
+    return (int32_t)((uint32_t)a * (uint32_t)b);
+}
 static inline int32_t i_div(int32_t a, int32_t b)
-{ if (b == 0) return 0; if (a == INT32_MIN && b == -1) return INT32_MIN; return a / b; }
+{
+    if (b == 0)
+        return 0;
+    if (a == INT32_MIN && b == -1)
+        return INT32_MIN;
+    return a / b;
+}
 static inline int32_t i_rem(int32_t a, int32_t b)
-{ if (b == 0 || b == -1) return 0; return a % b; }
-static inline int32_t i_and(int32_t a, int32_t b) { return a & b; }
-static inline int32_t i_or (int32_t a, int32_t b) { return a | b; }
-static inline int32_t i_xor(int32_t a, int32_t b) { return a ^ b; }
-static inline int32_t i_shl(int32_t a, int32_t b) { return (int32_t)((uint32_t)a << (b & 31)); }
-static inline int32_t i_shr(int32_t a, int32_t b) { return a >> (b & 31); }
-static inline int32_t i_ushr(int32_t a, int32_t b) { return (int32_t)((uint32_t)a >> (b & 31)); }
-static inline int32_t i_rsub(int32_t a, int32_t b) { return i_sub(b, a); }
+{
+    if (b == 0 || b == -1)
+        return 0;
+    return a % b;
+}
+static inline int32_t i_and(int32_t a, int32_t b)
+{
+    return a & b;
+}
+static inline int32_t i_or(int32_t a, int32_t b)
+{
+    return a | b;
+}
+static inline int32_t i_xor(int32_t a, int32_t b)
+{
+    return a ^ b;
+}
+static inline int32_t i_shl(int32_t a, int32_t b)
+{
+    return (int32_t)((uint32_t)a << (b & 31));
+}
+static inline int32_t i_shr(int32_t a, int32_t b)
+{
+    return a >> (b & 31);
+}
+static inline int32_t i_ushr(int32_t a, int32_t b)
+{
+    return (int32_t)((uint32_t)a >> (b & 31));
+}
+static inline int32_t i_rsub(int32_t a, int32_t b)
+{
+    return i_sub(b, a);
+}
 
-static inline int64_t l_add(int64_t a, int64_t b) { return (int64_t)((uint64_t)a + (uint64_t)b); }
-static inline int64_t l_sub(int64_t a, int64_t b) { return (int64_t)((uint64_t)a - (uint64_t)b); }
-static inline int64_t l_mul(int64_t a, int64_t b) { return (int64_t)((uint64_t)a * (uint64_t)b); }
+static inline int64_t l_add(int64_t a, int64_t b)
+{
+    return (int64_t)((uint64_t)a + (uint64_t)b);
+}
+static inline int64_t l_sub(int64_t a, int64_t b)
+{
+    return (int64_t)((uint64_t)a - (uint64_t)b);
+}
+static inline int64_t l_mul(int64_t a, int64_t b)
+{
+    return (int64_t)((uint64_t)a * (uint64_t)b);
+}
 static inline int64_t l_div(int64_t a, int64_t b)
-{ if (b == 0) return 0; if (a == INT64_MIN && b == -1) return INT64_MIN; return a / b; }
+{
+    if (b == 0)
+        return 0;
+    if (a == INT64_MIN && b == -1)
+        return INT64_MIN;
+    return a / b;
+}
 static inline int64_t l_rem(int64_t a, int64_t b)
-{ if (b == 0 || b == -1) return 0; return a % b; }
-static inline int64_t l_and(int64_t a, int64_t b) { return a & b; }
-static inline int64_t l_or (int64_t a, int64_t b) { return a | b; }
-static inline int64_t l_xor(int64_t a, int64_t b) { return a ^ b; }
+{
+    if (b == 0 || b == -1)
+        return 0;
+    return a % b;
+}
+static inline int64_t l_and(int64_t a, int64_t b)
+{
+    return a & b;
+}
+static inline int64_t l_or(int64_t a, int64_t b)
+{
+    return a | b;
+}
+static inline int64_t l_xor(int64_t a, int64_t b)
+{
+    return a ^ b;
+}
 /* The shift count of a long shift is an INT register, not a wide one. */
-static inline int64_t l_shl(int64_t a, int32_t b) { return (int64_t)((uint64_t)a << (b & 63)); }
-static inline int64_t l_shr(int64_t a, int32_t b) { return a >> (b & 63); }
-static inline int64_t l_ushr(int64_t a, int32_t b) { return (int64_t)((uint64_t)a >> (b & 63)); }
+static inline int64_t l_shl(int64_t a, int32_t b)
+{
+    return (int64_t)((uint64_t)a << (b & 63));
+}
+static inline int64_t l_shr(int64_t a, int32_t b)
+{
+    return a >> (b & 63);
+}
+static inline int64_t l_ushr(int64_t a, int32_t b)
+{
+    return (int64_t)((uint64_t)a >> (b & 63));
+}
 
-static inline float  f_add(float a, float b) { return a + b; }
-static inline float  f_sub(float a, float b) { return a - b; }
-static inline float  f_mul(float a, float b) { return a * b; }
-static inline float  f_div(float a, float b) { return a / b; }
-static inline float  f_rem(float a, float b) { return fmodf(a, b); }
-static inline double d_add(double a, double b) { return a + b; }
-static inline double d_sub(double a, double b) { return a - b; }
-static inline double d_mul(double a, double b) { return a * b; }
-static inline double d_div(double a, double b) { return a / b; }
-static inline double d_rem(double a, double b) { return fmod(a, b); }
+static inline float f_add(float a, float b)
+{
+    return a + b;
+}
+static inline float f_sub(float a, float b)
+{
+    return a - b;
+}
+static inline float f_mul(float a, float b)
+{
+    return a * b;
+}
+static inline float f_div(float a, float b)
+{
+    return a / b;
+}
+static inline float f_rem(float a, float b)
+{
+    return fmodf(a, b);
+}
+static inline double d_add(double a, double b)
+{
+    return a + b;
+}
+static inline double d_sub(double a, double b)
+{
+    return a - b;
+}
+static inline double d_mul(double a, double b)
+{
+    return a * b;
+}
+static inline double d_div(double a, double b)
+{
+    return a / b;
+}
+static inline double d_rem(double a, double b)
+{
+    return fmod(a, b);
+}
 
 /*
  * Register writes replace the whole 64-bit slot.
@@ -694,27 +834,53 @@ static inline double d_rem(double a, double b) { return fmod(a, b); }
  * perfectly good Bitmap call came to be made on the address 0x800000003. A write
  * that sets all of the slot cannot leave anything behind.
  */
-static inline void put_i(tl_dex_val *r, int32_t x)  { r->raw64 = (uint32_t)x; }
-static inline void put_j(tl_dex_val *r, int64_t x)  { r->j = x; }
-static inline void put_f(tl_dex_val *r, float x)    { uint32_t u; memcpy(&u, &x, 4); r->raw64 = u; }
-static inline void put_d(tl_dex_val *r, double x)   { r->d = x; }
+static inline void put_i(tl_dex_val *r, int32_t x)
+{
+    r->raw64 = (uint32_t)x;
+}
+static inline void put_j(tl_dex_val *r, int64_t x)
+{
+    r->j = x;
+}
+static inline void put_f(tl_dex_val *r, float x)
+{
+    uint32_t u;
+    memcpy(&u, &x, 4);
+    r->raw64 = u;
+}
+static inline void put_d(tl_dex_val *r, double x)
+{
+    r->d = x;
+}
 
 /* Bytes per element of an array, from the array's own descriptor ("[I",
  * "[[Lfoo;", "[Ljava/lang/String;"): the type decides it, not the allocator. */
 static uint32_t dex_array_elem_size(const char *array_desc)
 {
-    if (!array_desc || array_desc[0] != '[') return 8;
+    if (!array_desc || array_desc[0] != '[')
+        return 8;
     switch (array_desc[1]) {
-        case 'Z': case 'B': return 1;
-        case 'S': case 'C': return 2;
-        case 'I': case 'F': return 4;
-        default:            return 8;      /* J, D, and every reference */
+        case 'Z':
+        case 'B':
+            return 1;
+        case 'S':
+        case 'C':
+            return 2;
+        case 'I':
+        case 'F':
+            return 4;
+        default:
+            return 8; /* J, D, and every reference */
     }
 }
 
 /* Say once, not every time: a loop that goes out of range does so every pass. */
 #define TL_LOG_FEW(counter, limit, ...) \
-    do { static int counter; if (counter++ < (limit)) dex_log(__VA_ARGS__); } while (0)
+    do { \
+        static int counter; \
+        if (counter++ < (limit)) \
+            dex_log(__VA_ARGS__); \
+    } while (0)
 
 /* ----------------------------------------------------- Dalvik Interpreter */
 
@@ -774,7 +940,8 @@ static void dex_ensure_class_initialized(tl_dex_context *ctx, tl_dex_class *claz
 bool tl_dex_invoke(tl_dex_context *ctx, tl_dex_method *method, tl_dex_val *args, int nargs, tl_dex_val *ret)
 {
     if (!method) {
-        if (ret) ret->raw64 = 0;
+        if (ret)
+            ret->raw64 = 0;
         return false;
     }
 
@@ -810,13 +977,15 @@ bool tl_dex_invoke(tl_dex_context *ctx, tl_dex_method *method, tl_dex_val *args,
                     method->name, method->shorty ? " " : "",
                     method->shorty ? method->shorty : "");
         }
-        if (ret) ret->raw64 = 0;
+        if (ret)
+            ret->raw64 = 0;
         return true;
     }
 
     tl_dex_file *dex = method->clazz->dex;
     uint16_t reg_count = method->registers_size;
-    if (reg_count < method->ins_size) reg_count = method->ins_size;
+    if (reg_count < method->ins_size)
+        reg_count = method->ins_size;
     tl_dex_val *v = calloc(reg_count + 8, sizeof(tl_dex_val));
 
     /* Map incoming parameters to the upper registers [reg_count - ins_size .. reg_count - 1] */
@@ -830,8 +999,8 @@ bool tl_dex_invoke(tl_dex_context *ctx, tl_dex_method *method, tl_dex_val *args,
     uint32_t pc = 0;
     bool success = true;
 #ifdef TL_DEX_TRACE
-    int trace_dest = -1;          /* the register the previous instruction wrote */
-    int trace_prev_op = -1;       /* ... and what that instruction was */
+    int trace_dest = -1; /* the register the previous instruction wrote */
+    int trace_prev_op = -1; /* ... and what that instruction was */
 #endif
 
     while (pc < method->insns_size) {
@@ -842,7 +1011,8 @@ bool tl_dex_invoke(tl_dex_context *ctx, tl_dex_method *method, tl_dex_val *args,
         if (ctx->trace && trace_dest >= 0) {
             /* The previous instruction's result, as every type it might be: the
              * instruction says which register it wrote, never what is in it. */
-            float tf; memcpy(&tf, &v[trace_dest].raw64, 4);
+            float tf;
+            memcpy(&tf, &v[trace_dest].raw64, 4);
             if (trace_prev_op == 0x1a || trace_prev_op == 0x1b) {
                 /* A string constant: show the string, which is the whole point of it. */
                 const char *str = tl_dex_string(v[trace_dest].l);
@@ -877,14 +1047,15 @@ bool tl_dex_invoke(tl_dex_context *ctx, tl_dex_method *method, tl_dex_val *args,
             char what[200] = "";
             if (opcode >= 0x52 && opcode <= 0x6d) {
                 tl_dex_field *tf = dex_resolve_field(ctx, dex, insns[pc + 1]);
-                if (tf) snprintf(what, sizeof(what), " field %s %s slot=%u",
-                                 tf->name, tf->type, tf->slot);
+                if (tf)
+                    snprintf(what, sizeof(what), " field %s %s slot=%u",
+                             tf->name, tf->type, tf->slot);
             } else if ((opcode >= 0x6e && opcode <= 0x72) || (opcode >= 0x74 && opcode <= 0x78)) {
                 tl_dex_method *tm = dex_resolve_method(ctx, dex, insns[pc + 1]);
-                if (tm) snprintf(what, sizeof(what), " call %s->%s%s",
-                                 tm->clazz ? tm->clazz->descriptor : (tm->owner ? tm->owner : "?"),
-                                 tm->name, tm->native_func ? " [shim]" :
-                                 (tm->insns ? "" : " [UNIMPLEMENTED]"));
+                if (tm)
+                    snprintf(what, sizeof(what), " call %s->%s%s",
+                             tm->clazz ? tm->clazz->descriptor : (tm->owner ? tm->owner : "?"),
+                             tm->name, tm->native_func ? " [shim]" : (tm->insns ? "" : " [UNIMPLEMENTED]"));
             }
             /* Branches and compares: show what they compared, as raw bits and as
              * the float those bits would be, because the instruction alone says
@@ -892,10 +1063,19 @@ bool tl_dex_invoke(tl_dex_context *ctx, tl_dex_method *method, tl_dex_val *args,
             if ((opcode >= 0x32 && opcode <= 0x37) || (opcode >= 0x38 && opcode <= 0x3d) ||
                 (opcode >= 0x2d && opcode <= 0x31)) {
                 uint32_t ra, rb;
-                if (opcode >= 0x38 && opcode <= 0x3d)      { ra = op_b; rb = op_b; }
-                else if (opcode >= 0x32 && opcode <= 0x37) { ra = op_b & 0x0f; rb = (op_b >> 4) & 0x0f; }
-                else { ra = insns[pc + 1] & 0xff; rb = (insns[pc + 1] >> 8) & 0xff; }
-                float fa, fb; memcpy(&fa, &v[ra].raw64, 4); memcpy(&fb, &v[rb].raw64, 4);
+                if (opcode >= 0x38 && opcode <= 0x3d) {
+                    ra = op_b;
+                    rb = op_b;
+                } else if (opcode >= 0x32 && opcode <= 0x37) {
+                    ra = op_b & 0x0f;
+                    rb = (op_b >> 4) & 0x0f;
+                } else {
+                    ra = insns[pc + 1] & 0xff;
+                    rb = (insns[pc + 1] >> 8) & 0xff;
+                }
+                float fa, fb;
+                memcpy(&fa, &v[ra].raw64, 4);
+                memcpy(&fb, &v[rb].raw64, 4);
                 snprintf(what, sizeof(what), " cmp v%u=0x%llx(%g) v%u=0x%llx(%g)",
                          ra, (unsigned long long)v[ra].raw64, (double)fa,
                          rb, (unsigned long long)v[rb].raw64, (double)fb);
@@ -959,7 +1139,8 @@ bool tl_dex_invoke(tl_dex_context *ctx, tl_dex_method *method, tl_dex_val *args,
 
             case 0x0f: /* return vAA */
             case 0x11: /* return-object vAA */
-                if (ret) *ret = v[op_b];
+                if (ret)
+                    *ret = v[op_b];
                 goto done;
 
             case 0x10: /* return-wide vAA */
@@ -1062,8 +1243,10 @@ bool tl_dex_invoke(tl_dex_context *ctx, tl_dex_method *method, tl_dex_val *args,
             case 0x21: { /* array-length vA, vB */
                 uint8_t a = op_b & 0x0f;
                 uint8_t b = (op_b >> 4) & 0x0f;
-                { tl_dex_object *arr = tl_dex_array(v[b].l);
-                  put_i(&v[a], arr ? (int32_t)arr->array.length : 0); }
+                {
+                    tl_dex_object *arr = tl_dex_array(v[b].l);
+                    put_i(&v[a], arr ? (int32_t)arr->array.length : 0);
+                }
                 pc += 1;
                 break;
             }
@@ -1119,7 +1302,8 @@ bool tl_dex_invoke(tl_dex_context *ctx, tl_dex_method *method, tl_dex_val *args,
                 break;
             }
 
-            case 0x24: case 0x25: { /* filled-new-array, filled-new-array/range */
+            case 0x24:
+            case 0x25: { /* filled-new-array, filled-new-array/range */
                 /* Builds the array and leaves it for the move-result-object that
                  * follows, as an invoke does. With no implementation the result
                  * register kept whatever it held. */
@@ -1129,9 +1313,12 @@ bool tl_dex_invoke(tl_dex_context *ctx, tl_dex_method *method, tl_dex_val *args,
                 if (opcode == 0x24) {
                     uint16_t arg_regs = insns[pc + 2];
                     count = (op_b >> 4) & 0x0f;
-                    if (count > 5) count = 5;
-                    reg[0] = arg_regs & 0x0f;         reg[1] = (arg_regs >> 4) & 0x0f;
-                    reg[2] = (arg_regs >> 8) & 0x0f;  reg[3] = (arg_regs >> 12) & 0x0f;
+                    if (count > 5)
+                        count = 5;
+                    reg[0] = arg_regs & 0x0f;
+                    reg[1] = (arg_regs >> 4) & 0x0f;
+                    reg[2] = (arg_regs >> 8) & 0x0f;
+                    reg[3] = (arg_regs >> 12) & 0x0f;
                     reg[4] = op_b & 0x0f;
                 } else {
                     count = op_b;
@@ -1143,10 +1330,17 @@ bool tl_dex_invoke(tl_dex_context *ctx, tl_dex_method *method, tl_dex_val *args,
                     for (uint32_t i = 0; i < count; i++) {
                         const tl_dex_val src = v[opcode == 0x24 ? reg[i] : first + i];
                         uint8_t *at = (uint8_t *)arr->array.elements + (size_t)i * es;
-                        if (es == 1)      { at[0] = (uint8_t)src.i; }
-                        else if (es == 2) { uint16_t u = (uint16_t)src.i; memcpy(at, &u, 2); }
-                        else if (es == 4) { uint32_t u = src.raw32; memcpy(at, &u, 4); }
-                        else              { memcpy(at, &src.raw64, 8); }
+                        if (es == 1) {
+                            at[0] = (uint8_t)src.i;
+                        } else if (es == 2) {
+                            uint16_t u = (uint16_t)src.i;
+                            memcpy(at, &u, 2);
+                        } else if (es == 4) {
+                            uint32_t u = src.raw32;
+                            memcpy(at, &u, 4);
+                        } else {
+                            memcpy(at, &src.raw64, 8);
+                        }
                     }
                 }
                 last_result.raw64 = 0;
@@ -1230,10 +1424,14 @@ bool tl_dex_invoke(tl_dex_context *ctx, tl_dex_method *method, tl_dex_val *args,
                 uint8_t c = (regs >> 8) & 0xff;
                 float fb = v[b].f;
                 float fc = v[c].f;
-                if (isnan(fb) || isnan(fc)) put_i(&v[op_b], (opcode == 0x2d) ? -1 : 1);
-                else if (fb > fc) put_i(&v[op_b], 1);
-                else if (fb < fc) put_i(&v[op_b], -1);
-                else put_i(&v[op_b], 0);
+                if (isnan(fb) || isnan(fc))
+                    put_i(&v[op_b], (opcode == 0x2d) ? -1 : 1);
+                else if (fb > fc)
+                    put_i(&v[op_b], 1);
+                else if (fb < fc)
+                    put_i(&v[op_b], -1);
+                else
+                    put_i(&v[op_b], 0);
                 pc += 2;
                 break;
             }
@@ -1245,10 +1443,14 @@ bool tl_dex_invoke(tl_dex_context *ctx, tl_dex_method *method, tl_dex_val *args,
                 uint8_t c = (regs >> 8) & 0xff;
                 double db = v[b].d;
                 double dc = v[c].d;
-                if (isnan(db) || isnan(dc)) put_i(&v[op_b], (opcode == 0x2f) ? -1 : 1);
-                else if (db > dc) put_i(&v[op_b], 1);
-                else if (db < dc) put_i(&v[op_b], -1);
-                else put_i(&v[op_b], 0);
+                if (isnan(db) || isnan(dc))
+                    put_i(&v[op_b], (opcode == 0x2f) ? -1 : 1);
+                else if (db > dc)
+                    put_i(&v[op_b], 1);
+                else if (db < dc)
+                    put_i(&v[op_b], -1);
+                else
+                    put_i(&v[op_b], 0);
                 pc += 2;
                 break;
             }
@@ -1259,9 +1461,12 @@ bool tl_dex_invoke(tl_dex_context *ctx, tl_dex_method *method, tl_dex_val *args,
                 uint8_t c = (regs >> 8) & 0xff;
                 int64_t jb = v[b].j;
                 int64_t jc = v[c].j;
-                if (jb > jc) put_i(&v[op_b], 1);
-                else if (jb < jc) put_i(&v[op_b], -1);
-                else put_i(&v[op_b], 0);
+                if (jb > jc)
+                    put_i(&v[op_b], 1);
+                else if (jb < jc)
+                    put_i(&v[op_b], -1);
+                else
+                    put_i(&v[op_b], 0);
                 pc += 2;
                 break;
             }
@@ -1276,14 +1481,22 @@ bool tl_dex_invoke(tl_dex_context *ctx, tl_dex_method *method, tl_dex_val *args,
                 uint8_t b = (op_b >> 4) & 0x0f;
                 int16_t target = (int16_t)insns[pc + 1];
                 bool take = false;
-                if (opcode == 0x32) take = (v[a].i == v[b].i);
-                else if (opcode == 0x33) take = (v[a].i != v[b].i);
-                else if (opcode == 0x34) take = (v[a].i < v[b].i);
-                else if (opcode == 0x35) take = (v[a].i >= v[b].i);
-                else if (opcode == 0x36) take = (v[a].i > v[b].i);
-                else if (opcode == 0x37) take = (v[a].i <= v[b].i);
-                if (take) pc += target;
-                else pc += 2;
+                if (opcode == 0x32)
+                    take = (v[a].i == v[b].i);
+                else if (opcode == 0x33)
+                    take = (v[a].i != v[b].i);
+                else if (opcode == 0x34)
+                    take = (v[a].i < v[b].i);
+                else if (opcode == 0x35)
+                    take = (v[a].i >= v[b].i);
+                else if (opcode == 0x36)
+                    take = (v[a].i > v[b].i);
+                else if (opcode == 0x37)
+                    take = (v[a].i <= v[b].i);
+                if (take)
+                    pc += target;
+                else
+                    pc += 2;
                 break;
             }
 
@@ -1295,14 +1508,22 @@ bool tl_dex_invoke(tl_dex_context *ctx, tl_dex_method *method, tl_dex_val *args,
             case 0x3d: { /* if-lez vAA, +BBBB */
                 int16_t target = (int16_t)insns[pc + 1];
                 bool take = false;
-                if (opcode == 0x38) take = (v[op_b].i == 0);
-                else if (opcode == 0x39) take = (v[op_b].i != 0);
-                else if (opcode == 0x3a) take = (v[op_b].i < 0);
-                else if (opcode == 0x3b) take = (v[op_b].i >= 0);
-                else if (opcode == 0x3c) take = (v[op_b].i > 0);
-                else if (opcode == 0x3d) take = (v[op_b].i <= 0);
-                if (take) pc += target;
-                else pc += 2;
+                if (opcode == 0x38)
+                    take = (v[op_b].i == 0);
+                else if (opcode == 0x39)
+                    take = (v[op_b].i != 0);
+                else if (opcode == 0x3a)
+                    take = (v[op_b].i < 0);
+                else if (opcode == 0x3b)
+                    take = (v[op_b].i >= 0);
+                else if (opcode == 0x3c)
+                    take = (v[op_b].i > 0);
+                else if (opcode == 0x3d)
+                    take = (v[op_b].i <= 0);
+                if (take)
+                    pc += target;
+                else
+                    pc += 2;
                 break;
             }
 
@@ -1320,8 +1541,14 @@ bool tl_dex_invoke(tl_dex_context *ctx, tl_dex_method *method, tl_dex_val *args,
              * was out of range, the "element" was the array, and getWidth() was
              * then called on it.
              */
-            case 0x44: case 0x45: case 0x46: case 0x47: case 0x48: case 0x49: case 0x4a: {
-                static const uint8_t stride[7] = { 4, 8, 8, 1, 1, 2, 2 };
+            case 0x44:
+            case 0x45:
+            case 0x46:
+            case 0x47:
+            case 0x48:
+            case 0x49:
+            case 0x4a: {
+                static const uint8_t stride[7] = {4, 8, 8, 1, 1, 2, 2};
                 uint16_t regs = insns[pc + 1];
                 tl_dex_object *arr = tl_dex_array(v[regs & 0xff].l);
                 int32_t idx = v[(regs >> 8) & 0xff].i;
@@ -1331,12 +1558,34 @@ bool tl_dex_invoke(tl_dex_context *ctx, tl_dex_method *method, tl_dex_val *args,
                     arr->array.elem_size == es) {
                     const uint8_t *at = (const uint8_t *)arr->array.elements + (size_t)idx * es;
                     switch (opcode) {
-                        case 0x44: { uint32_t u; memcpy(&u, at, 4); dst->raw64 = u; break; }
-                        case 0x45: case 0x46: memcpy(&dst->raw64, at, 8); break;
-                        case 0x47: dst->raw64 = at[0]; break;
-                        case 0x48: dst->raw64 = (uint32_t)(int32_t)(int8_t)at[0]; break;
-                        case 0x49: { uint16_t u; memcpy(&u, at, 2); dst->raw64 = u; break; }
-                        default:   { int16_t sv; memcpy(&sv, at, 2); dst->raw64 = (uint32_t)(int32_t)sv; break; }
+                        case 0x44: {
+                            uint32_t u;
+                            memcpy(&u, at, 4);
+                            dst->raw64 = u;
+                            break;
+                        }
+                        case 0x45:
+                        case 0x46:
+                            memcpy(&dst->raw64, at, 8);
+                            break;
+                        case 0x47:
+                            dst->raw64 = at[0];
+                            break;
+                        case 0x48:
+                            dst->raw64 = (uint32_t)(int32_t)(int8_t)at[0];
+                            break;
+                        case 0x49: {
+                            uint16_t u;
+                            memcpy(&u, at, 2);
+                            dst->raw64 = u;
+                            break;
+                        }
+                        default: {
+                            int16_t sv;
+                            memcpy(&sv, at, 2);
+                            dst->raw64 = (uint32_t)(int32_t)sv;
+                            break;
+                        }
                     }
                 } else {
                     dst->raw64 = 0;
@@ -1349,8 +1598,14 @@ bool tl_dex_invoke(tl_dex_context *ctx, tl_dex_method *method, tl_dex_val *args,
                 break;
             }
 
-            case 0x4b: case 0x4c: case 0x4d: case 0x4e: case 0x4f: case 0x50: case 0x51: {
-                static const uint8_t stride[7] = { 4, 8, 8, 1, 1, 2, 2 };
+            case 0x4b:
+            case 0x4c:
+            case 0x4d:
+            case 0x4e:
+            case 0x4f:
+            case 0x50:
+            case 0x51: {
+                static const uint8_t stride[7] = {4, 8, 8, 1, 1, 2, 2};
                 uint16_t regs = insns[pc + 1];
                 tl_dex_object *arr = tl_dex_array(v[regs & 0xff].l);
                 int32_t idx = v[(regs >> 8) & 0xff].i;
@@ -1360,10 +1615,24 @@ bool tl_dex_invoke(tl_dex_context *ctx, tl_dex_method *method, tl_dex_val *args,
                     arr->array.elem_size == es) {
                     uint8_t *at = (uint8_t *)arr->array.elements + (size_t)idx * es;
                     switch (opcode) {
-                        case 0x4b: { uint32_t u = val.raw32; memcpy(at, &u, 4); break; }
-                        case 0x4c: case 0x4d: memcpy(at, &val.raw64, 8); break;
-                        case 0x4e: case 0x4f: at[0] = (uint8_t)val.i; break;
-                        default:   { uint16_t u = (uint16_t)val.i; memcpy(at, &u, 2); break; }
+                        case 0x4b: {
+                            uint32_t u = val.raw32;
+                            memcpy(at, &u, 4);
+                            break;
+                        }
+                        case 0x4c:
+                        case 0x4d:
+                            memcpy(at, &val.raw64, 8);
+                            break;
+                        case 0x4e:
+                        case 0x4f:
+                            at[0] = (uint8_t)val.i;
+                            break;
+                        default: {
+                            uint16_t u = (uint16_t)val.i;
+                            memcpy(at, &u, 2);
+                            break;
+                        }
                     }
                 } else {
                     TL_LOG_FEW(aput_bad, 24, "tl: array write failed in %s.%s pc=%u (array=%s idx=%d len=%d elem=%u want=%u)",
@@ -1388,8 +1657,10 @@ bool tl_dex_invoke(tl_dex_context *ctx, tl_dex_method *method, tl_dex_val *args,
                 tl_dex_object *obj = v[b].l;
                 if (obj && f && f->slot == UINT32_MAX) {
                     /* Not a field of an app class: a framework object's own. */
-                    tl_dex_val out; out.raw64 = 0;
-                    if (!tl_framework_field_get(ctx, obj, f, &out)) dex_note_unresolved_field(f, "read");
+                    tl_dex_val out;
+                    out.raw64 = 0;
+                    if (!tl_framework_field_get(ctx, obj, f, &out))
+                        dex_note_unresolved_field(f, "read");
                     v[a] = out;
                 } else if (obj && obj->nfields && f && f->slot < obj->nfields) {
                     v[a] = obj->fields[f->slot];
@@ -1412,7 +1683,8 @@ bool tl_dex_invoke(tl_dex_context *ctx, tl_dex_method *method, tl_dex_val *args,
                 tl_dex_field *f = dex_resolve_field(ctx, dex, insns[pc + 1]);
                 tl_dex_object *obj = v[b].l;
                 if (obj && f && f->slot == UINT32_MAX) {
-                    if (!tl_framework_field_set(ctx, obj, f, v[a])) dex_note_unresolved_field(f, "write");
+                    if (!tl_framework_field_set(ctx, obj, f, v[a]))
+                        dex_note_unresolved_field(f, "write");
                 } else if (obj && obj->nfields && f && f->slot < obj->nfields) {
                     obj->fields[f->slot] = v[a];
 #ifdef TL_DEX_TRACE
@@ -1434,13 +1706,16 @@ bool tl_dex_invoke(tl_dex_context *ctx, tl_dex_method *method, tl_dex_val *args,
             case 0x65: /* sget-char */
             case 0x66: { /* sget-short */
                 tl_dex_field *f = dex_resolve_field(ctx, dex, insns[pc + 1]);
-                if (f) dex_ensure_class_initialized(ctx, f->clazz);
+                if (f)
+                    dex_ensure_class_initialized(ctx, f->clazz);
                 if (f && f->slot == UINT32_MAX) {
-                    tl_dex_val out; out.raw64 = 0;
-                    if (!tl_framework_static_get(ctx, f, &out)) dex_note_unresolved_field(f, "static read");
+                    tl_dex_val out;
+                    out.raw64 = 0;
+                    if (!tl_framework_static_get(ctx, f, &out))
+                        dex_note_unresolved_field(f, "static read");
                     v[op_b] = out;
                 } else if (f && f->clazz && f->clazz->static_values &&
-                    f->slot < (uint32_t)f->clazz->num_static_fields) {
+                           f->slot < (uint32_t)f->clazz->num_static_fields) {
                     v[op_b] = f->clazz->static_values[f->slot];
                 } else {
                     v[op_b].raw64 = 0;
@@ -1457,7 +1732,8 @@ bool tl_dex_invoke(tl_dex_context *ctx, tl_dex_method *method, tl_dex_val *args,
             case 0x6c: /* sput-char */
             case 0x6d: { /* sput-short */
                 tl_dex_field *f = dex_resolve_field(ctx, dex, insns[pc + 1]);
-                if (f) dex_ensure_class_initialized(ctx, f->clazz);
+                if (f)
+                    dex_ensure_class_initialized(ctx, f->clazz);
                 if (f && f->clazz && f->clazz->static_values &&
                     f->slot < (uint32_t)f->clazz->num_static_fields) {
                     f->clazz->static_values[f->slot] = v[op_b];
@@ -1530,7 +1806,7 @@ bool tl_dex_invoke(tl_dex_context *ctx, tl_dex_method *method, tl_dex_val *args,
                 for (int i = 0; i < count; i++) {
                     call_args[i] = v[first_reg + i];
                 }
-                last_result.raw64 = 0;   /* see the non-range form above */
+                last_result.raw64 = 0; /* see the non-range form above */
                 tl_dex_invoke(ctx, target, call_args, count, &last_result);
                 free(call_args);
                 pc += 3;
@@ -1538,116 +1814,556 @@ bool tl_dex_invoke(tl_dex_context *ctx, tl_dex_method *method, tl_dex_val *args,
             }
 
             /* Unary arithmetic & Conversions */
-            case 0x7b: /* neg-int */    put_i(&v[op_b & 0x0f], -v[(op_b >> 4) & 0x0f].i); pc += 1; break;
-            case 0x7c: /* not-int */    put_i(&v[op_b & 0x0f], ~v[(op_b >> 4) & 0x0f].i); pc += 1; break;
-            case 0x7d: /* neg-long */   v[op_b & 0x0f].j = -v[(op_b >> 4) & 0x0f].j; pc += 1; break;
-            case 0x7e: /* not-long */   v[op_b & 0x0f].j = ~v[(op_b >> 4) & 0x0f].j; pc += 1; break;
-            case 0x7f: /* neg-float */  put_f(&v[op_b & 0x0f], -v[(op_b >> 4) & 0x0f].f); pc += 1; break;
-            case 0x80: /* neg-double */ v[op_b & 0x0f].d = -v[(op_b >> 4) & 0x0f].d; pc += 1; break;
-            case 0x81: /* int-to-long */   v[op_b & 0x0f].j = v[(op_b >> 4) & 0x0f].i; pc += 1; break;
-            case 0x82: /* int-to-float */  put_f(&v[op_b & 0x0f], (float)v[(op_b >> 4) & 0x0f].i); pc += 1; break;
-            case 0x83: /* int-to-double */ v[op_b & 0x0f].d = (double)v[(op_b >> 4) & 0x0f].i; pc += 1; break;
-            case 0x84: /* long-to-int */   put_i(&v[op_b & 0x0f], (int32_t)v[(op_b >> 4) & 0x0f].j); pc += 1; break;
-            case 0x85: /* long-to-float */ put_f(&v[op_b & 0x0f], (float)v[(op_b >> 4) & 0x0f].j); pc += 1; break;
-            case 0x86: /* long-to-double */v[op_b & 0x0f].d = (double)v[(op_b >> 4) & 0x0f].j; pc += 1; break;
-            case 0x87: /* float-to-int */  put_i(&v[op_b & 0x0f], (int32_t)v[(op_b >> 4) & 0x0f].f); pc += 1; break;
-            case 0x88: /* float-to-long */ v[op_b & 0x0f].j = (int64_t)v[(op_b >> 4) & 0x0f].f; pc += 1; break;
-            case 0x89: /* float-to-double */v[op_b & 0x0f].d = (double)v[(op_b >> 4) & 0x0f].f; pc += 1; break;
-            case 0x8a: /* double-to-int */ put_i(&v[op_b & 0x0f], (int32_t)v[(op_b >> 4) & 0x0f].d); pc += 1; break;
-            case 0x8b: /* double-to-long */v[op_b & 0x0f].j = (int64_t)v[(op_b >> 4) & 0x0f].d; pc += 1; break;
-            case 0x8c: /* double-to-float */put_f(&v[op_b & 0x0f], (float)v[(op_b >> 4) & 0x0f].d); pc += 1; break;
-            case 0x8d: /* int-to-byte */  put_i(&v[op_b & 0x0f], (int8_t)v[(op_b >> 4) & 0x0f].i);   pc += 1; break;
-            case 0x8e: /* int-to-char */  put_i(&v[op_b & 0x0f], (uint16_t)v[(op_b >> 4) & 0x0f].i); pc += 1; break;
-            case 0x8f: /* int-to-short */ put_i(&v[op_b & 0x0f], (int16_t)v[(op_b >> 4) & 0x0f].i);  pc += 1; break;
+            case 0x7b: /* neg-int */
+                put_i(&v[op_b & 0x0f], -v[(op_b >> 4) & 0x0f].i);
+                pc += 1;
+                break;
+            case 0x7c: /* not-int */
+                put_i(&v[op_b & 0x0f], ~v[(op_b >> 4) & 0x0f].i);
+                pc += 1;
+                break;
+            case 0x7d: /* neg-long */
+                v[op_b & 0x0f].j = -v[(op_b >> 4) & 0x0f].j;
+                pc += 1;
+                break;
+            case 0x7e: /* not-long */
+                v[op_b & 0x0f].j = ~v[(op_b >> 4) & 0x0f].j;
+                pc += 1;
+                break;
+            case 0x7f: /* neg-float */
+                put_f(&v[op_b & 0x0f], -v[(op_b >> 4) & 0x0f].f);
+                pc += 1;
+                break;
+            case 0x80: /* neg-double */
+                v[op_b & 0x0f].d = -v[(op_b >> 4) & 0x0f].d;
+                pc += 1;
+                break;
+            case 0x81: /* int-to-long */
+                v[op_b & 0x0f].j = v[(op_b >> 4) & 0x0f].i;
+                pc += 1;
+                break;
+            case 0x82: /* int-to-float */
+                put_f(&v[op_b & 0x0f], (float)v[(op_b >> 4) & 0x0f].i);
+                pc += 1;
+                break;
+            case 0x83: /* int-to-double */
+                v[op_b & 0x0f].d = (double)v[(op_b >> 4) & 0x0f].i;
+                pc += 1;
+                break;
+            case 0x84: /* long-to-int */
+                put_i(&v[op_b & 0x0f], (int32_t)v[(op_b >> 4) & 0x0f].j);
+                pc += 1;
+                break;
+            case 0x85: /* long-to-float */
+                put_f(&v[op_b & 0x0f], (float)v[(op_b >> 4) & 0x0f].j);
+                pc += 1;
+                break;
+            case 0x86: /* long-to-double */
+                v[op_b & 0x0f].d = (double)v[(op_b >> 4) & 0x0f].j;
+                pc += 1;
+                break;
+            case 0x87: /* float-to-int */
+                put_i(&v[op_b & 0x0f], (int32_t)v[(op_b >> 4) & 0x0f].f);
+                pc += 1;
+                break;
+            case 0x88: /* float-to-long */
+                v[op_b & 0x0f].j = (int64_t)v[(op_b >> 4) & 0x0f].f;
+                pc += 1;
+                break;
+            case 0x89: /* float-to-double */
+                v[op_b & 0x0f].d = (double)v[(op_b >> 4) & 0x0f].f;
+                pc += 1;
+                break;
+            case 0x8a: /* double-to-int */
+                put_i(&v[op_b & 0x0f], (int32_t)v[(op_b >> 4) & 0x0f].d);
+                pc += 1;
+                break;
+            case 0x8b: /* double-to-long */
+                v[op_b & 0x0f].j = (int64_t)v[(op_b >> 4) & 0x0f].d;
+                pc += 1;
+                break;
+            case 0x8c: /* double-to-float */
+                put_f(&v[op_b & 0x0f], (float)v[(op_b >> 4) & 0x0f].d);
+                pc += 1;
+                break;
+            case 0x8d: /* int-to-byte */
+                put_i(&v[op_b & 0x0f], (int8_t)v[(op_b >> 4) & 0x0f].i);
+                pc += 1;
+                break;
+            case 0x8e: /* int-to-char */
+                put_i(&v[op_b & 0x0f], (uint16_t)v[(op_b >> 4) & 0x0f].i);
+                pc += 1;
+                break;
+            case 0x8f: /* int-to-short */
+                put_i(&v[op_b & 0x0f], (int16_t)v[(op_b >> 4) & 0x0f].i);
+                pc += 1;
+                break;
 
             /* ---- Binary arithmetic: generated, one case per opcode ---- */
-            case 0x90: { uint16_t r_ = insns[pc + 1]; put_i(&v[op_b], i_add(v[r_ & 0xff].i, v[(r_ >> 8) & 0xff].i)); pc += 2; break; }
-            case 0x91: { uint16_t r_ = insns[pc + 1]; put_i(&v[op_b], i_sub(v[r_ & 0xff].i, v[(r_ >> 8) & 0xff].i)); pc += 2; break; }
-            case 0x92: { uint16_t r_ = insns[pc + 1]; put_i(&v[op_b], i_mul(v[r_ & 0xff].i, v[(r_ >> 8) & 0xff].i)); pc += 2; break; }
-            case 0x93: { uint16_t r_ = insns[pc + 1]; put_i(&v[op_b], i_div(v[r_ & 0xff].i, v[(r_ >> 8) & 0xff].i)); pc += 2; break; }
-            case 0x94: { uint16_t r_ = insns[pc + 1]; put_i(&v[op_b], i_rem(v[r_ & 0xff].i, v[(r_ >> 8) & 0xff].i)); pc += 2; break; }
-            case 0x95: { uint16_t r_ = insns[pc + 1]; put_i(&v[op_b], i_and(v[r_ & 0xff].i, v[(r_ >> 8) & 0xff].i)); pc += 2; break; }
-            case 0x96: { uint16_t r_ = insns[pc + 1]; put_i(&v[op_b], i_or(v[r_ & 0xff].i, v[(r_ >> 8) & 0xff].i)); pc += 2; break; }
-            case 0x97: { uint16_t r_ = insns[pc + 1]; put_i(&v[op_b], i_xor(v[r_ & 0xff].i, v[(r_ >> 8) & 0xff].i)); pc += 2; break; }
-            case 0x98: { uint16_t r_ = insns[pc + 1]; put_i(&v[op_b], i_shl(v[r_ & 0xff].i, v[(r_ >> 8) & 0xff].i)); pc += 2; break; }
-            case 0x99: { uint16_t r_ = insns[pc + 1]; put_i(&v[op_b], i_shr(v[r_ & 0xff].i, v[(r_ >> 8) & 0xff].i)); pc += 2; break; }
-            case 0x9a: { uint16_t r_ = insns[pc + 1]; put_i(&v[op_b], i_ushr(v[r_ & 0xff].i, v[(r_ >> 8) & 0xff].i)); pc += 2; break; }
-            case 0x9b: { uint16_t r_ = insns[pc + 1]; put_j(&v[op_b], l_add(v[r_ & 0xff].j, v[(r_ >> 8) & 0xff].j)); pc += 2; break; }
-            case 0x9c: { uint16_t r_ = insns[pc + 1]; put_j(&v[op_b], l_sub(v[r_ & 0xff].j, v[(r_ >> 8) & 0xff].j)); pc += 2; break; }
-            case 0x9d: { uint16_t r_ = insns[pc + 1]; put_j(&v[op_b], l_mul(v[r_ & 0xff].j, v[(r_ >> 8) & 0xff].j)); pc += 2; break; }
-            case 0x9e: { uint16_t r_ = insns[pc + 1]; put_j(&v[op_b], l_div(v[r_ & 0xff].j, v[(r_ >> 8) & 0xff].j)); pc += 2; break; }
-            case 0x9f: { uint16_t r_ = insns[pc + 1]; put_j(&v[op_b], l_rem(v[r_ & 0xff].j, v[(r_ >> 8) & 0xff].j)); pc += 2; break; }
-            case 0xa0: { uint16_t r_ = insns[pc + 1]; put_j(&v[op_b], l_and(v[r_ & 0xff].j, v[(r_ >> 8) & 0xff].j)); pc += 2; break; }
-            case 0xa1: { uint16_t r_ = insns[pc + 1]; put_j(&v[op_b], l_or(v[r_ & 0xff].j, v[(r_ >> 8) & 0xff].j)); pc += 2; break; }
-            case 0xa2: { uint16_t r_ = insns[pc + 1]; put_j(&v[op_b], l_xor(v[r_ & 0xff].j, v[(r_ >> 8) & 0xff].j)); pc += 2; break; }
-            case 0xa3: { uint16_t r_ = insns[pc + 1]; put_j(&v[op_b], l_shl(v[r_ & 0xff].j, v[(r_ >> 8) & 0xff].i)); pc += 2; break; }
-            case 0xa4: { uint16_t r_ = insns[pc + 1]; put_j(&v[op_b], l_shr(v[r_ & 0xff].j, v[(r_ >> 8) & 0xff].i)); pc += 2; break; }
-            case 0xa5: { uint16_t r_ = insns[pc + 1]; put_j(&v[op_b], l_ushr(v[r_ & 0xff].j, v[(r_ >> 8) & 0xff].i)); pc += 2; break; }
-            case 0xa6: { uint16_t r_ = insns[pc + 1]; put_f(&v[op_b], f_add(v[r_ & 0xff].f, v[(r_ >> 8) & 0xff].f)); pc += 2; break; }
-            case 0xa7: { uint16_t r_ = insns[pc + 1]; put_f(&v[op_b], f_sub(v[r_ & 0xff].f, v[(r_ >> 8) & 0xff].f)); pc += 2; break; }
-            case 0xa8: { uint16_t r_ = insns[pc + 1]; put_f(&v[op_b], f_mul(v[r_ & 0xff].f, v[(r_ >> 8) & 0xff].f)); pc += 2; break; }
-            case 0xa9: { uint16_t r_ = insns[pc + 1]; put_f(&v[op_b], f_div(v[r_ & 0xff].f, v[(r_ >> 8) & 0xff].f)); pc += 2; break; }
-            case 0xaa: { uint16_t r_ = insns[pc + 1]; put_f(&v[op_b], f_rem(v[r_ & 0xff].f, v[(r_ >> 8) & 0xff].f)); pc += 2; break; }
-            case 0xab: { uint16_t r_ = insns[pc + 1]; put_d(&v[op_b], d_add(v[r_ & 0xff].d, v[(r_ >> 8) & 0xff].d)); pc += 2; break; }
-            case 0xac: { uint16_t r_ = insns[pc + 1]; put_d(&v[op_b], d_sub(v[r_ & 0xff].d, v[(r_ >> 8) & 0xff].d)); pc += 2; break; }
-            case 0xad: { uint16_t r_ = insns[pc + 1]; put_d(&v[op_b], d_mul(v[r_ & 0xff].d, v[(r_ >> 8) & 0xff].d)); pc += 2; break; }
-            case 0xae: { uint16_t r_ = insns[pc + 1]; put_d(&v[op_b], d_div(v[r_ & 0xff].d, v[(r_ >> 8) & 0xff].d)); pc += 2; break; }
-            case 0xaf: { uint16_t r_ = insns[pc + 1]; put_d(&v[op_b], d_rem(v[r_ & 0xff].d, v[(r_ >> 8) & 0xff].d)); pc += 2; break; }
+            case 0x90: {
+                uint16_t r_ = insns[pc + 1];
+                put_i(&v[op_b], i_add(v[r_ & 0xff].i, v[(r_ >> 8) & 0xff].i));
+                pc += 2;
+                break;
+            }
+            case 0x91: {
+                uint16_t r_ = insns[pc + 1];
+                put_i(&v[op_b], i_sub(v[r_ & 0xff].i, v[(r_ >> 8) & 0xff].i));
+                pc += 2;
+                break;
+            }
+            case 0x92: {
+                uint16_t r_ = insns[pc + 1];
+                put_i(&v[op_b], i_mul(v[r_ & 0xff].i, v[(r_ >> 8) & 0xff].i));
+                pc += 2;
+                break;
+            }
+            case 0x93: {
+                uint16_t r_ = insns[pc + 1];
+                put_i(&v[op_b], i_div(v[r_ & 0xff].i, v[(r_ >> 8) & 0xff].i));
+                pc += 2;
+                break;
+            }
+            case 0x94: {
+                uint16_t r_ = insns[pc + 1];
+                put_i(&v[op_b], i_rem(v[r_ & 0xff].i, v[(r_ >> 8) & 0xff].i));
+                pc += 2;
+                break;
+            }
+            case 0x95: {
+                uint16_t r_ = insns[pc + 1];
+                put_i(&v[op_b], i_and(v[r_ & 0xff].i, v[(r_ >> 8) & 0xff].i));
+                pc += 2;
+                break;
+            }
+            case 0x96: {
+                uint16_t r_ = insns[pc + 1];
+                put_i(&v[op_b], i_or(v[r_ & 0xff].i, v[(r_ >> 8) & 0xff].i));
+                pc += 2;
+                break;
+            }
+            case 0x97: {
+                uint16_t r_ = insns[pc + 1];
+                put_i(&v[op_b], i_xor(v[r_ & 0xff].i, v[(r_ >> 8) & 0xff].i));
+                pc += 2;
+                break;
+            }
+            case 0x98: {
+                uint16_t r_ = insns[pc + 1];
+                put_i(&v[op_b], i_shl(v[r_ & 0xff].i, v[(r_ >> 8) & 0xff].i));
+                pc += 2;
+                break;
+            }
+            case 0x99: {
+                uint16_t r_ = insns[pc + 1];
+                put_i(&v[op_b], i_shr(v[r_ & 0xff].i, v[(r_ >> 8) & 0xff].i));
+                pc += 2;
+                break;
+            }
+            case 0x9a: {
+                uint16_t r_ = insns[pc + 1];
+                put_i(&v[op_b], i_ushr(v[r_ & 0xff].i, v[(r_ >> 8) & 0xff].i));
+                pc += 2;
+                break;
+            }
+            case 0x9b: {
+                uint16_t r_ = insns[pc + 1];
+                put_j(&v[op_b], l_add(v[r_ & 0xff].j, v[(r_ >> 8) & 0xff].j));
+                pc += 2;
+                break;
+            }
+            case 0x9c: {
+                uint16_t r_ = insns[pc + 1];
+                put_j(&v[op_b], l_sub(v[r_ & 0xff].j, v[(r_ >> 8) & 0xff].j));
+                pc += 2;
+                break;
+            }
+            case 0x9d: {
+                uint16_t r_ = insns[pc + 1];
+                put_j(&v[op_b], l_mul(v[r_ & 0xff].j, v[(r_ >> 8) & 0xff].j));
+                pc += 2;
+                break;
+            }
+            case 0x9e: {
+                uint16_t r_ = insns[pc + 1];
+                put_j(&v[op_b], l_div(v[r_ & 0xff].j, v[(r_ >> 8) & 0xff].j));
+                pc += 2;
+                break;
+            }
+            case 0x9f: {
+                uint16_t r_ = insns[pc + 1];
+                put_j(&v[op_b], l_rem(v[r_ & 0xff].j, v[(r_ >> 8) & 0xff].j));
+                pc += 2;
+                break;
+            }
+            case 0xa0: {
+                uint16_t r_ = insns[pc + 1];
+                put_j(&v[op_b], l_and(v[r_ & 0xff].j, v[(r_ >> 8) & 0xff].j));
+                pc += 2;
+                break;
+            }
+            case 0xa1: {
+                uint16_t r_ = insns[pc + 1];
+                put_j(&v[op_b], l_or(v[r_ & 0xff].j, v[(r_ >> 8) & 0xff].j));
+                pc += 2;
+                break;
+            }
+            case 0xa2: {
+                uint16_t r_ = insns[pc + 1];
+                put_j(&v[op_b], l_xor(v[r_ & 0xff].j, v[(r_ >> 8) & 0xff].j));
+                pc += 2;
+                break;
+            }
+            case 0xa3: {
+                uint16_t r_ = insns[pc + 1];
+                put_j(&v[op_b], l_shl(v[r_ & 0xff].j, v[(r_ >> 8) & 0xff].i));
+                pc += 2;
+                break;
+            }
+            case 0xa4: {
+                uint16_t r_ = insns[pc + 1];
+                put_j(&v[op_b], l_shr(v[r_ & 0xff].j, v[(r_ >> 8) & 0xff].i));
+                pc += 2;
+                break;
+            }
+            case 0xa5: {
+                uint16_t r_ = insns[pc + 1];
+                put_j(&v[op_b], l_ushr(v[r_ & 0xff].j, v[(r_ >> 8) & 0xff].i));
+                pc += 2;
+                break;
+            }
+            case 0xa6: {
+                uint16_t r_ = insns[pc + 1];
+                put_f(&v[op_b], f_add(v[r_ & 0xff].f, v[(r_ >> 8) & 0xff].f));
+                pc += 2;
+                break;
+            }
+            case 0xa7: {
+                uint16_t r_ = insns[pc + 1];
+                put_f(&v[op_b], f_sub(v[r_ & 0xff].f, v[(r_ >> 8) & 0xff].f));
+                pc += 2;
+                break;
+            }
+            case 0xa8: {
+                uint16_t r_ = insns[pc + 1];
+                put_f(&v[op_b], f_mul(v[r_ & 0xff].f, v[(r_ >> 8) & 0xff].f));
+                pc += 2;
+                break;
+            }
+            case 0xa9: {
+                uint16_t r_ = insns[pc + 1];
+                put_f(&v[op_b], f_div(v[r_ & 0xff].f, v[(r_ >> 8) & 0xff].f));
+                pc += 2;
+                break;
+            }
+            case 0xaa: {
+                uint16_t r_ = insns[pc + 1];
+                put_f(&v[op_b], f_rem(v[r_ & 0xff].f, v[(r_ >> 8) & 0xff].f));
+                pc += 2;
+                break;
+            }
+            case 0xab: {
+                uint16_t r_ = insns[pc + 1];
+                put_d(&v[op_b], d_add(v[r_ & 0xff].d, v[(r_ >> 8) & 0xff].d));
+                pc += 2;
+                break;
+            }
+            case 0xac: {
+                uint16_t r_ = insns[pc + 1];
+                put_d(&v[op_b], d_sub(v[r_ & 0xff].d, v[(r_ >> 8) & 0xff].d));
+                pc += 2;
+                break;
+            }
+            case 0xad: {
+                uint16_t r_ = insns[pc + 1];
+                put_d(&v[op_b], d_mul(v[r_ & 0xff].d, v[(r_ >> 8) & 0xff].d));
+                pc += 2;
+                break;
+            }
+            case 0xae: {
+                uint16_t r_ = insns[pc + 1];
+                put_d(&v[op_b], d_div(v[r_ & 0xff].d, v[(r_ >> 8) & 0xff].d));
+                pc += 2;
+                break;
+            }
+            case 0xaf: {
+                uint16_t r_ = insns[pc + 1];
+                put_d(&v[op_b], d_rem(v[r_ & 0xff].d, v[(r_ >> 8) & 0xff].d));
+                pc += 2;
+                break;
+            }
 
             /* ---- /2addr forms ---- */
-            case 0xb0: { tl_dex_val *d_ = &v[op_b & 0x0f]; put_i(d_, i_add(d_->i, v[(op_b >> 4) & 0x0f].i)); pc += 1; break; }
-            case 0xb1: { tl_dex_val *d_ = &v[op_b & 0x0f]; put_i(d_, i_sub(d_->i, v[(op_b >> 4) & 0x0f].i)); pc += 1; break; }
-            case 0xb2: { tl_dex_val *d_ = &v[op_b & 0x0f]; put_i(d_, i_mul(d_->i, v[(op_b >> 4) & 0x0f].i)); pc += 1; break; }
-            case 0xb3: { tl_dex_val *d_ = &v[op_b & 0x0f]; put_i(d_, i_div(d_->i, v[(op_b >> 4) & 0x0f].i)); pc += 1; break; }
-            case 0xb4: { tl_dex_val *d_ = &v[op_b & 0x0f]; put_i(d_, i_rem(d_->i, v[(op_b >> 4) & 0x0f].i)); pc += 1; break; }
-            case 0xb5: { tl_dex_val *d_ = &v[op_b & 0x0f]; put_i(d_, i_and(d_->i, v[(op_b >> 4) & 0x0f].i)); pc += 1; break; }
-            case 0xb6: { tl_dex_val *d_ = &v[op_b & 0x0f]; put_i(d_, i_or(d_->i, v[(op_b >> 4) & 0x0f].i)); pc += 1; break; }
-            case 0xb7: { tl_dex_val *d_ = &v[op_b & 0x0f]; put_i(d_, i_xor(d_->i, v[(op_b >> 4) & 0x0f].i)); pc += 1; break; }
-            case 0xb8: { tl_dex_val *d_ = &v[op_b & 0x0f]; put_i(d_, i_shl(d_->i, v[(op_b >> 4) & 0x0f].i)); pc += 1; break; }
-            case 0xb9: { tl_dex_val *d_ = &v[op_b & 0x0f]; put_i(d_, i_shr(d_->i, v[(op_b >> 4) & 0x0f].i)); pc += 1; break; }
-            case 0xba: { tl_dex_val *d_ = &v[op_b & 0x0f]; put_i(d_, i_ushr(d_->i, v[(op_b >> 4) & 0x0f].i)); pc += 1; break; }
-            case 0xbb: { tl_dex_val *d_ = &v[op_b & 0x0f]; put_j(d_, l_add(d_->j, v[(op_b >> 4) & 0x0f].j)); pc += 1; break; }
-            case 0xbc: { tl_dex_val *d_ = &v[op_b & 0x0f]; put_j(d_, l_sub(d_->j, v[(op_b >> 4) & 0x0f].j)); pc += 1; break; }
-            case 0xbd: { tl_dex_val *d_ = &v[op_b & 0x0f]; put_j(d_, l_mul(d_->j, v[(op_b >> 4) & 0x0f].j)); pc += 1; break; }
-            case 0xbe: { tl_dex_val *d_ = &v[op_b & 0x0f]; put_j(d_, l_div(d_->j, v[(op_b >> 4) & 0x0f].j)); pc += 1; break; }
-            case 0xbf: { tl_dex_val *d_ = &v[op_b & 0x0f]; put_j(d_, l_rem(d_->j, v[(op_b >> 4) & 0x0f].j)); pc += 1; break; }
-            case 0xc0: { tl_dex_val *d_ = &v[op_b & 0x0f]; put_j(d_, l_and(d_->j, v[(op_b >> 4) & 0x0f].j)); pc += 1; break; }
-            case 0xc1: { tl_dex_val *d_ = &v[op_b & 0x0f]; put_j(d_, l_or(d_->j, v[(op_b >> 4) & 0x0f].j)); pc += 1; break; }
-            case 0xc2: { tl_dex_val *d_ = &v[op_b & 0x0f]; put_j(d_, l_xor(d_->j, v[(op_b >> 4) & 0x0f].j)); pc += 1; break; }
-            case 0xc3: { tl_dex_val *d_ = &v[op_b & 0x0f]; put_j(d_, l_shl(d_->j, v[(op_b >> 4) & 0x0f].i)); pc += 1; break; }
-            case 0xc4: { tl_dex_val *d_ = &v[op_b & 0x0f]; put_j(d_, l_shr(d_->j, v[(op_b >> 4) & 0x0f].i)); pc += 1; break; }
-            case 0xc5: { tl_dex_val *d_ = &v[op_b & 0x0f]; put_j(d_, l_ushr(d_->j, v[(op_b >> 4) & 0x0f].i)); pc += 1; break; }
-            case 0xc6: { tl_dex_val *d_ = &v[op_b & 0x0f]; put_f(d_, f_add(d_->f, v[(op_b >> 4) & 0x0f].f)); pc += 1; break; }
-            case 0xc7: { tl_dex_val *d_ = &v[op_b & 0x0f]; put_f(d_, f_sub(d_->f, v[(op_b >> 4) & 0x0f].f)); pc += 1; break; }
-            case 0xc8: { tl_dex_val *d_ = &v[op_b & 0x0f]; put_f(d_, f_mul(d_->f, v[(op_b >> 4) & 0x0f].f)); pc += 1; break; }
-            case 0xc9: { tl_dex_val *d_ = &v[op_b & 0x0f]; put_f(d_, f_div(d_->f, v[(op_b >> 4) & 0x0f].f)); pc += 1; break; }
-            case 0xca: { tl_dex_val *d_ = &v[op_b & 0x0f]; put_f(d_, f_rem(d_->f, v[(op_b >> 4) & 0x0f].f)); pc += 1; break; }
-            case 0xcb: { tl_dex_val *d_ = &v[op_b & 0x0f]; put_d(d_, d_add(d_->d, v[(op_b >> 4) & 0x0f].d)); pc += 1; break; }
-            case 0xcc: { tl_dex_val *d_ = &v[op_b & 0x0f]; put_d(d_, d_sub(d_->d, v[(op_b >> 4) & 0x0f].d)); pc += 1; break; }
-            case 0xcd: { tl_dex_val *d_ = &v[op_b & 0x0f]; put_d(d_, d_mul(d_->d, v[(op_b >> 4) & 0x0f].d)); pc += 1; break; }
-            case 0xce: { tl_dex_val *d_ = &v[op_b & 0x0f]; put_d(d_, d_div(d_->d, v[(op_b >> 4) & 0x0f].d)); pc += 1; break; }
-            case 0xcf: { tl_dex_val *d_ = &v[op_b & 0x0f]; put_d(d_, d_rem(d_->d, v[(op_b >> 4) & 0x0f].d)); pc += 1; break; }
+            case 0xb0: {
+                tl_dex_val *d_ = &v[op_b & 0x0f];
+                put_i(d_, i_add(d_->i, v[(op_b >> 4) & 0x0f].i));
+                pc += 1;
+                break;
+            }
+            case 0xb1: {
+                tl_dex_val *d_ = &v[op_b & 0x0f];
+                put_i(d_, i_sub(d_->i, v[(op_b >> 4) & 0x0f].i));
+                pc += 1;
+                break;
+            }
+            case 0xb2: {
+                tl_dex_val *d_ = &v[op_b & 0x0f];
+                put_i(d_, i_mul(d_->i, v[(op_b >> 4) & 0x0f].i));
+                pc += 1;
+                break;
+            }
+            case 0xb3: {
+                tl_dex_val *d_ = &v[op_b & 0x0f];
+                put_i(d_, i_div(d_->i, v[(op_b >> 4) & 0x0f].i));
+                pc += 1;
+                break;
+            }
+            case 0xb4: {
+                tl_dex_val *d_ = &v[op_b & 0x0f];
+                put_i(d_, i_rem(d_->i, v[(op_b >> 4) & 0x0f].i));
+                pc += 1;
+                break;
+            }
+            case 0xb5: {
+                tl_dex_val *d_ = &v[op_b & 0x0f];
+                put_i(d_, i_and(d_->i, v[(op_b >> 4) & 0x0f].i));
+                pc += 1;
+                break;
+            }
+            case 0xb6: {
+                tl_dex_val *d_ = &v[op_b & 0x0f];
+                put_i(d_, i_or(d_->i, v[(op_b >> 4) & 0x0f].i));
+                pc += 1;
+                break;
+            }
+            case 0xb7: {
+                tl_dex_val *d_ = &v[op_b & 0x0f];
+                put_i(d_, i_xor(d_->i, v[(op_b >> 4) & 0x0f].i));
+                pc += 1;
+                break;
+            }
+            case 0xb8: {
+                tl_dex_val *d_ = &v[op_b & 0x0f];
+                put_i(d_, i_shl(d_->i, v[(op_b >> 4) & 0x0f].i));
+                pc += 1;
+                break;
+            }
+            case 0xb9: {
+                tl_dex_val *d_ = &v[op_b & 0x0f];
+                put_i(d_, i_shr(d_->i, v[(op_b >> 4) & 0x0f].i));
+                pc += 1;
+                break;
+            }
+            case 0xba: {
+                tl_dex_val *d_ = &v[op_b & 0x0f];
+                put_i(d_, i_ushr(d_->i, v[(op_b >> 4) & 0x0f].i));
+                pc += 1;
+                break;
+            }
+            case 0xbb: {
+                tl_dex_val *d_ = &v[op_b & 0x0f];
+                put_j(d_, l_add(d_->j, v[(op_b >> 4) & 0x0f].j));
+                pc += 1;
+                break;
+            }
+            case 0xbc: {
+                tl_dex_val *d_ = &v[op_b & 0x0f];
+                put_j(d_, l_sub(d_->j, v[(op_b >> 4) & 0x0f].j));
+                pc += 1;
+                break;
+            }
+            case 0xbd: {
+                tl_dex_val *d_ = &v[op_b & 0x0f];
+                put_j(d_, l_mul(d_->j, v[(op_b >> 4) & 0x0f].j));
+                pc += 1;
+                break;
+            }
+            case 0xbe: {
+                tl_dex_val *d_ = &v[op_b & 0x0f];
+                put_j(d_, l_div(d_->j, v[(op_b >> 4) & 0x0f].j));
+                pc += 1;
+                break;
+            }
+            case 0xbf: {
+                tl_dex_val *d_ = &v[op_b & 0x0f];
+                put_j(d_, l_rem(d_->j, v[(op_b >> 4) & 0x0f].j));
+                pc += 1;
+                break;
+            }
+            case 0xc0: {
+                tl_dex_val *d_ = &v[op_b & 0x0f];
+                put_j(d_, l_and(d_->j, v[(op_b >> 4) & 0x0f].j));
+                pc += 1;
+                break;
+            }
+            case 0xc1: {
+                tl_dex_val *d_ = &v[op_b & 0x0f];
+                put_j(d_, l_or(d_->j, v[(op_b >> 4) & 0x0f].j));
+                pc += 1;
+                break;
+            }
+            case 0xc2: {
+                tl_dex_val *d_ = &v[op_b & 0x0f];
+                put_j(d_, l_xor(d_->j, v[(op_b >> 4) & 0x0f].j));
+                pc += 1;
+                break;
+            }
+            case 0xc3: {
+                tl_dex_val *d_ = &v[op_b & 0x0f];
+                put_j(d_, l_shl(d_->j, v[(op_b >> 4) & 0x0f].i));
+                pc += 1;
+                break;
+            }
+            case 0xc4: {
+                tl_dex_val *d_ = &v[op_b & 0x0f];
+                put_j(d_, l_shr(d_->j, v[(op_b >> 4) & 0x0f].i));
+                pc += 1;
+                break;
+            }
+            case 0xc5: {
+                tl_dex_val *d_ = &v[op_b & 0x0f];
+                put_j(d_, l_ushr(d_->j, v[(op_b >> 4) & 0x0f].i));
+                pc += 1;
+                break;
+            }
+            case 0xc6: {
+                tl_dex_val *d_ = &v[op_b & 0x0f];
+                put_f(d_, f_add(d_->f, v[(op_b >> 4) & 0x0f].f));
+                pc += 1;
+                break;
+            }
+            case 0xc7: {
+                tl_dex_val *d_ = &v[op_b & 0x0f];
+                put_f(d_, f_sub(d_->f, v[(op_b >> 4) & 0x0f].f));
+                pc += 1;
+                break;
+            }
+            case 0xc8: {
+                tl_dex_val *d_ = &v[op_b & 0x0f];
+                put_f(d_, f_mul(d_->f, v[(op_b >> 4) & 0x0f].f));
+                pc += 1;
+                break;
+            }
+            case 0xc9: {
+                tl_dex_val *d_ = &v[op_b & 0x0f];
+                put_f(d_, f_div(d_->f, v[(op_b >> 4) & 0x0f].f));
+                pc += 1;
+                break;
+            }
+            case 0xca: {
+                tl_dex_val *d_ = &v[op_b & 0x0f];
+                put_f(d_, f_rem(d_->f, v[(op_b >> 4) & 0x0f].f));
+                pc += 1;
+                break;
+            }
+            case 0xcb: {
+                tl_dex_val *d_ = &v[op_b & 0x0f];
+                put_d(d_, d_add(d_->d, v[(op_b >> 4) & 0x0f].d));
+                pc += 1;
+                break;
+            }
+            case 0xcc: {
+                tl_dex_val *d_ = &v[op_b & 0x0f];
+                put_d(d_, d_sub(d_->d, v[(op_b >> 4) & 0x0f].d));
+                pc += 1;
+                break;
+            }
+            case 0xcd: {
+                tl_dex_val *d_ = &v[op_b & 0x0f];
+                put_d(d_, d_mul(d_->d, v[(op_b >> 4) & 0x0f].d));
+                pc += 1;
+                break;
+            }
+            case 0xce: {
+                tl_dex_val *d_ = &v[op_b & 0x0f];
+                put_d(d_, d_div(d_->d, v[(op_b >> 4) & 0x0f].d));
+                pc += 1;
+                break;
+            }
+            case 0xcf: {
+                tl_dex_val *d_ = &v[op_b & 0x0f];
+                put_d(d_, d_rem(d_->d, v[(op_b >> 4) & 0x0f].d));
+                pc += 1;
+                break;
+            }
 
             /* ---- literal forms ---- */
-            case 0xd0: put_i(&v[op_b & 0x0f], i_add(v[(op_b >> 4) & 0x0f].i, (int16_t)insns[pc + 1])); pc += 2; break;
-            case 0xd1: put_i(&v[op_b & 0x0f], i_rsub(v[(op_b >> 4) & 0x0f].i, (int16_t)insns[pc + 1])); pc += 2; break;
-            case 0xd2: put_i(&v[op_b & 0x0f], i_mul(v[(op_b >> 4) & 0x0f].i, (int16_t)insns[pc + 1])); pc += 2; break;
-            case 0xd3: put_i(&v[op_b & 0x0f], i_div(v[(op_b >> 4) & 0x0f].i, (int16_t)insns[pc + 1])); pc += 2; break;
-            case 0xd4: put_i(&v[op_b & 0x0f], i_rem(v[(op_b >> 4) & 0x0f].i, (int16_t)insns[pc + 1])); pc += 2; break;
-            case 0xd5: put_i(&v[op_b & 0x0f], i_and(v[(op_b >> 4) & 0x0f].i, (int16_t)insns[pc + 1])); pc += 2; break;
-            case 0xd6: put_i(&v[op_b & 0x0f], i_or(v[(op_b >> 4) & 0x0f].i, (int16_t)insns[pc + 1])); pc += 2; break;
-            case 0xd7: put_i(&v[op_b & 0x0f], i_xor(v[(op_b >> 4) & 0x0f].i, (int16_t)insns[pc + 1])); pc += 2; break;
-            case 0xd8: put_i(&v[op_b], i_add(v[insns[pc + 1] & 0xff].i, (int8_t)(insns[pc + 1] >> 8))); pc += 2; break;
-            case 0xd9: put_i(&v[op_b], i_rsub(v[insns[pc + 1] & 0xff].i, (int8_t)(insns[pc + 1] >> 8))); pc += 2; break;
-            case 0xda: put_i(&v[op_b], i_mul(v[insns[pc + 1] & 0xff].i, (int8_t)(insns[pc + 1] >> 8))); pc += 2; break;
-            case 0xdb: put_i(&v[op_b], i_div(v[insns[pc + 1] & 0xff].i, (int8_t)(insns[pc + 1] >> 8))); pc += 2; break;
-            case 0xdc: put_i(&v[op_b], i_rem(v[insns[pc + 1] & 0xff].i, (int8_t)(insns[pc + 1] >> 8))); pc += 2; break;
-            case 0xdd: put_i(&v[op_b], i_and(v[insns[pc + 1] & 0xff].i, (int8_t)(insns[pc + 1] >> 8))); pc += 2; break;
-            case 0xde: put_i(&v[op_b], i_or(v[insns[pc + 1] & 0xff].i, (int8_t)(insns[pc + 1] >> 8))); pc += 2; break;
-            case 0xdf: put_i(&v[op_b], i_xor(v[insns[pc + 1] & 0xff].i, (int8_t)(insns[pc + 1] >> 8))); pc += 2; break;
-            case 0xe0: put_i(&v[op_b], i_shl(v[insns[pc + 1] & 0xff].i, (int8_t)(insns[pc + 1] >> 8))); pc += 2; break;
-            case 0xe1: put_i(&v[op_b], i_shr(v[insns[pc + 1] & 0xff].i, (int8_t)(insns[pc + 1] >> 8))); pc += 2; break;
-            case 0xe2: put_i(&v[op_b], i_ushr(v[insns[pc + 1] & 0xff].i, (int8_t)(insns[pc + 1] >> 8))); pc += 2; break;
+            case 0xd0:
+                put_i(&v[op_b & 0x0f], i_add(v[(op_b >> 4) & 0x0f].i, (int16_t)insns[pc + 1]));
+                pc += 2;
+                break;
+            case 0xd1:
+                put_i(&v[op_b & 0x0f], i_rsub(v[(op_b >> 4) & 0x0f].i, (int16_t)insns[pc + 1]));
+                pc += 2;
+                break;
+            case 0xd2:
+                put_i(&v[op_b & 0x0f], i_mul(v[(op_b >> 4) & 0x0f].i, (int16_t)insns[pc + 1]));
+                pc += 2;
+                break;
+            case 0xd3:
+                put_i(&v[op_b & 0x0f], i_div(v[(op_b >> 4) & 0x0f].i, (int16_t)insns[pc + 1]));
+                pc += 2;
+                break;
+            case 0xd4:
+                put_i(&v[op_b & 0x0f], i_rem(v[(op_b >> 4) & 0x0f].i, (int16_t)insns[pc + 1]));
+                pc += 2;
+                break;
+            case 0xd5:
+                put_i(&v[op_b & 0x0f], i_and(v[(op_b >> 4) & 0x0f].i, (int16_t)insns[pc + 1]));
+                pc += 2;
+                break;
+            case 0xd6:
+                put_i(&v[op_b & 0x0f], i_or(v[(op_b >> 4) & 0x0f].i, (int16_t)insns[pc + 1]));
+                pc += 2;
+                break;
+            case 0xd7:
+                put_i(&v[op_b & 0x0f], i_xor(v[(op_b >> 4) & 0x0f].i, (int16_t)insns[pc + 1]));
+                pc += 2;
+                break;
+            case 0xd8:
+                put_i(&v[op_b], i_add(v[insns[pc + 1] & 0xff].i, (int8_t)(insns[pc + 1] >> 8)));
+                pc += 2;
+                break;
+            case 0xd9:
+                put_i(&v[op_b], i_rsub(v[insns[pc + 1] & 0xff].i, (int8_t)(insns[pc + 1] >> 8)));
+                pc += 2;
+                break;
+            case 0xda:
+                put_i(&v[op_b], i_mul(v[insns[pc + 1] & 0xff].i, (int8_t)(insns[pc + 1] >> 8)));
+                pc += 2;
+                break;
+            case 0xdb:
+                put_i(&v[op_b], i_div(v[insns[pc + 1] & 0xff].i, (int8_t)(insns[pc + 1] >> 8)));
+                pc += 2;
+                break;
+            case 0xdc:
+                put_i(&v[op_b], i_rem(v[insns[pc + 1] & 0xff].i, (int8_t)(insns[pc + 1] >> 8)));
+                pc += 2;
+                break;
+            case 0xdd:
+                put_i(&v[op_b], i_and(v[insns[pc + 1] & 0xff].i, (int8_t)(insns[pc + 1] >> 8)));
+                pc += 2;
+                break;
+            case 0xde:
+                put_i(&v[op_b], i_or(v[insns[pc + 1] & 0xff].i, (int8_t)(insns[pc + 1] >> 8)));
+                pc += 2;
+                break;
+            case 0xdf:
+                put_i(&v[op_b], i_xor(v[insns[pc + 1] & 0xff].i, (int8_t)(insns[pc + 1] >> 8)));
+                pc += 2;
+                break;
+            case 0xe0:
+                put_i(&v[op_b], i_shl(v[insns[pc + 1] & 0xff].i, (int8_t)(insns[pc + 1] >> 8)));
+                pc += 2;
+                break;
+            case 0xe1:
+                put_i(&v[op_b], i_shr(v[insns[pc + 1] & 0xff].i, (int8_t)(insns[pc + 1] >> 8)));
+                pc += 2;
+                break;
+            case 0xe2:
+                put_i(&v[op_b], i_ushr(v[insns[pc + 1] & 0xff].i, (int8_t)(insns[pc + 1] >> 8)));
+                pc += 2;
+                break;
 
             default: {
                 /*
@@ -1660,7 +2376,7 @@ bool tl_dex_invoke(tl_dex_context *ctx, tl_dex_method *method, tl_dex_val *args,
                  * word. Stop instead, and say which opcode and where: the call
                  * ends, and the log names exactly what to implement next.
                  */
-                static uint32_t reported[8];       /* one bit per opcode value */
+                static uint32_t reported[8]; /* one bit per opcode value */
                 uint32_t bit = 1u << (opcode & 31), word = (opcode >> 5) & 7;
                 if (!(reported[word] & bit)) {
                     reported[word] |= bit;
@@ -1703,13 +2419,15 @@ bool tl_pacer_wait(tl_pacer *p)
         return false;
     }
     /* Late. Far enough behind and the schedule is abandoned rather than chased. */
-    if (after > deadline + 4 * p->frame_ns) p->next = after + p->frame_ns;
+    if (after > deadline + 4 * p->frame_ns)
+        p->next = after + p->frame_ns;
     return true;
 }
 
 void tl_dex_seed(tl_dex_context *ctx, uint64_t seed)
 {
-    if (!ctx) return;
+    if (!ctx)
+        return;
     /* xorshift cannot start at zero. */
     ctx->rng = seed ? seed : 0x9E3779B97F4A7C15ull;
 }
@@ -1718,9 +2436,12 @@ void tl_dex_seed(tl_dex_context *ctx, uint64_t seed)
 double tl_dex_random(tl_dex_context *ctx)
 {
     uint64_t x = ctx ? ctx->rng : 0x9E3779B97F4A7C15ull;
-    x ^= x >> 12; x ^= x << 25; x ^= x >> 27;
-    if (ctx) ctx->rng = x;
-    return (double)((x * 0x2545F4914F6CDD1Dull) >> 11) / 9007199254740992.0;   /* 2^53 */
+    x ^= x >> 12;
+    x ^= x << 25;
+    x ^= x >> 27;
+    if (ctx)
+        ctx->rng = x;
+    return (double)((x * 0x2545F4914F6CDD1Dull) >> 11) / 9007199254740992.0; /* 2^53 */
 }
 
 uint64_t tl_dex_now_ns(void)
@@ -1730,23 +2451,27 @@ uint64_t tl_dex_now_ns(void)
 
 void tl_dex_post_delayed(tl_dex_context *ctx, tl_dex_object *runnable, uint64_t delay_ms)
 {
-    if (!ctx || !runnable) return;
+    if (!ctx || !runnable)
+        return;
     tl_dex_task *t = calloc(1, sizeof(*t));
-    if (!t) return;
+    if (!t)
+        return;
     t->runnable = runnable;
     t->due_nanos = ctx->clock_nanos + delay_ms * 1000000ull;
 
     /* Sorted by due time, and after anything already due at the same moment:
      * two posts for the same instant run in the order they were made. */
     tl_dex_task **at = &ctx->tasks;
-    while (*at && (*at)->due_nanos <= t->due_nanos) at = &(*at)->next;
+    while (*at && (*at)->due_nanos <= t->due_nanos)
+        at = &(*at)->next;
     t->next = *at;
     *at = t;
 }
 
 void tl_dex_remove_callbacks(tl_dex_context *ctx, tl_dex_object *runnable)
 {
-    if (!ctx) return;
+    if (!ctx)
+        return;
     tl_dex_task **at = &ctx->tasks;
     while (*at) {
         if (!runnable || (*at)->runnable == runnable) {
@@ -1793,10 +2518,12 @@ static void dex_run_due_tasks(tl_dex_context *ctx)
 
 void tl_dex_tick_frame(tl_dex_context *ctx, uint64_t frame_time_nanos)
 {
-    if (!ctx) return;
+    if (!ctx)
+        return;
 
     /* Never backwards: code that measures an interval would see it as negative. */
-    if (frame_time_nanos > ctx->clock_nanos) ctx->clock_nanos = frame_time_nanos;
+    if (frame_time_nanos > ctx->clock_nanos)
+        ctx->clock_nanos = frame_time_nanos;
 
     uint64_t t_start = tl_dex_now_ns();
 
@@ -1830,21 +2557,27 @@ void tl_dex_tick_frame(tl_dex_context *ctx, uint64_t frame_time_nanos)
 /* Deliver one touch to the app. Only ever called from the pump thread. */
 static void dex_deliver_touch(tl_dex_context *ctx, int action, float x, float y)
 {
-    if (!ctx->current_view) return;
+    if (!ctx->current_view)
+        return;
 
     tl_dex_class *c_me = tl_dex_find_class(ctx, "Landroid/view/MotionEvent;");
     tl_dex_object *ev = tl_dex_alloc_object(c_me);
     if (ev && ev->fields) {
-        ev->fields[0].raw64 = 0; ev->fields[0].f = x;
-        ev->fields[1].raw64 = 0; ev->fields[1].f = y;
-        ev->fields[2].raw64 = 0; ev->fields[2].i = action;
+        ev->fields[0].raw64 = 0;
+        ev->fields[0].f = x;
+        ev->fields[1].raw64 = 0;
+        ev->fields[1].f = y;
+        ev->fields[2].raw64 = 0;
+        ev->fields[2].i = action;
     }
 
     tl_dex_method *onTouch = tl_dex_find_method(ctx->current_view->clazz, "onTouchEvent", "ZL");
     if (onTouch) {
         tl_dex_val args[2];
-        args[0].raw64 = 0; args[0].l = ctx->current_view;
-        args[1].raw64 = 0; args[1].l = ev;
+        args[0].raw64 = 0;
+        args[0].l = ctx->current_view;
+        args[1].raw64 = 0;
+        args[1].l = ev;
         tl_dex_invoke(ctx, onTouch, args, 2, NULL);
     }
 }
@@ -1857,7 +2590,8 @@ static void dex_deliver_touch(tl_dex_context *ctx, int action, float x, float y)
  */
 void tl_dex_send_touch(tl_dex_context *ctx, int action, float x, float y)
 {
-    if (!ctx) return;
+    if (!ctx)
+        return;
     pthread_mutex_lock(&ctx->input_lock);
     int next = (ctx->input_tail + 1) % 64;
     if (next != ctx->input_head) {
@@ -1875,7 +2609,8 @@ void tl_dex_send_touch(tl_dex_context *ctx, int action, float x, float y)
 static void dex_drain_input(tl_dex_context *ctx)
 {
     for (;;) {
-        int action; float x, y;
+        int action;
+        float x, y;
         pthread_mutex_lock(&ctx->input_lock);
         if (ctx->input_head == ctx->input_tail) {
             pthread_mutex_unlock(&ctx->input_lock);

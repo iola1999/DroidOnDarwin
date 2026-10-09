@@ -36,7 +36,7 @@ typedef struct tl_res tl_res;
  * buffer is not a resource table.
  */
 tl_res *tl_res_create(const uint8_t *data, size_t len);
-void    tl_res_destroy(tl_res *r);
+void tl_res_destroy(tl_res *r);
 
 /*
  * The id of the resource called `name` of kind `type` ("drawable", "string",

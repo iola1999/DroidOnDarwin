@@ -12,19 +12,25 @@
 #include <cstring>
 #include <vector>
 
-static void require(bool ok, const char *operation) {
-    if (!ok) { std::fprintf(stderr, "FAIL: %s\n", operation); std::exit(1); }
+static void require(bool ok, const char *operation)
+{
+    if (!ok) {
+        std::fprintf(stderr, "FAIL: %s\n", operation);
+        std::exit(1);
+    }
 }
 
 static rutabaga *renderer;
 static std::array<unsigned char, 1024 * 1024> backing;
 static std::atomic<uint64_t> fenceSeen;
 
-static void fenceCallback(uint64_t, const rutabaga_fence *fence) {
+static void fenceCallback(uint64_t, const rutabaga_fence *fence)
+{
     fenceSeen.store(fence->fence_id);
 }
 
-static void transfer(void *data, size_t length, bool read) {
+static void transfer(void *data, size_t length, bool read)
+{
     require(length <= backing.size(), "transfer size");
     rutabaga_transfer transfer{};
     transfer.w = length;
@@ -40,25 +46,29 @@ static void transfer(void *data, size_t length, bool read) {
     }
 }
 
-static void command(uint32_t opcode, std::initializer_list<uint32_t> args) {
+static void command(uint32_t opcode, std::initializer_list<uint32_t> args)
+{
     std::vector<uint32_t> words{opcode, uint32_t(8 + args.size() * 4)};
     words.insert(words.end(), args);
     transfer(words.data(), words.size() * 4, false);
 }
 
-static uint32_t response() {
+static uint32_t response()
+{
     uint32_t result = 0;
     transfer(&result, sizeof(result), true);
     return result;
 }
 
-static uint32_t bits(float value) {
+static uint32_t bits(float value)
+{
     uint32_t result;
     std::memcpy(&result, &value, sizeof(result));
     return result;
 }
 
-int main() {
+int main()
+{
     rutabaga_builder builder{};
     builder.capset_mask = uint64_t(1) << RUTABAGA_CAPSET_GFXSTREAM_GLES;
     builder.wsi = RUTABAGA_WSI_SURFACELESS;
@@ -84,8 +94,8 @@ int main() {
     // GLES 2, RGBA8 and pbuffer support. Wire pointer fields carry byte lengths.
     const uint32_t attributeBytes = 13 * 4;
     command(OP_rcChooseConfig, {attributeBytes, EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT,
-        EGL_SURFACE_TYPE, EGL_PBUFFER_BIT, EGL_RED_SIZE, 8, EGL_GREEN_SIZE, 8,
-        EGL_BLUE_SIZE, 8, EGL_ALPHA_SIZE, 8, EGL_NONE, attributeBytes, 4, 1});
+                                EGL_SURFACE_TYPE, EGL_PBUFFER_BIT, EGL_RED_SIZE, 8, EGL_GREEN_SIZE, 8,
+                                EGL_BLUE_SIZE, 8, EGL_ALPHA_SIZE, 8, EGL_NONE, attributeBytes, 4, 1});
     uint32_t chosen[2]{};
     transfer(chosen, sizeof(chosen), true);
     require(chosen[1] > 0, "choose EGL config");
@@ -118,7 +128,8 @@ int main() {
             const unsigned char *pixel = &pixels[(y * width + x) * 4];
             const bool left = x < width / 2;
             require(pixel[0] == (left ? 0 : 255) && pixel[1] == (left ? 255 : 0) &&
-                    pixel[2] == 0 && pixel[3] == 255, "rendered pixel");
+                        pixel[2] == 0 && pixel[3] == 255,
+                    "rendered pixel");
         }
     }
     command(OP_glGetError, {});

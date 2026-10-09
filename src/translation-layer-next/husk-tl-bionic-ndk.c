@@ -29,12 +29,29 @@
  * to a pipe. Unity's main thread polls it between frames. This one has the wake pipe
  * and nothing else registered on it: no file descriptors, no callbacks.
  */
-typedef struct looper_fd { int fd, ident, events; void *callback, *data; struct looper_fd *next; } looper_fd;
-typedef struct tl_looper { int wake[2]; atomic_int refs; pthread_t thread; struct tl_looper *next; pthread_mutex_t mu; looper_fd *fds; } tl_looper;
+typedef struct looper_fd {
+    int fd, ident, events;
+    void *callback, *data;
+    struct looper_fd *next;
+} looper_fd;
+typedef struct tl_looper {
+    int wake[2];
+    atomic_int refs;
+    pthread_t thread;
+    struct tl_looper *next;
+    pthread_mutex_t mu;
+    looper_fd *fds;
+} tl_looper;
 static __thread tl_looper *t_looper;
 
-enum { ALOOPER_POLL_WAKE = -1, ALOOPER_POLL_CALLBACK = -2, ALOOPER_POLL_TIMEOUT = -3, ALOOPER_POLL_ERROR = -4 };
-enum { ALOOPER_EVENT_INPUT = 1, ALOOPER_EVENT_OUTPUT = 2, ALOOPER_EVENT_ERROR = 4, ALOOPER_EVENT_HANGUP = 8 };
+enum { ALOOPER_POLL_WAKE = -1,
+       ALOOPER_POLL_CALLBACK = -2,
+       ALOOPER_POLL_TIMEOUT = -3,
+       ALOOPER_POLL_ERROR = -4 };
+enum { ALOOPER_EVENT_INPUT = 1,
+       ALOOPER_EVENT_OUTPUT = 2,
+       ALOOPER_EVENT_ERROR = 4,
+       ALOOPER_EVENT_HANGUP = 8 };
 
 static tl_looper *looper_make(void)
 {
@@ -48,13 +65,30 @@ static tl_looper *looper_make(void)
     l->thread = pthread_self();
     return l;
 }
-static void *b_ALooper_prepare(int opts) { (void)opts; if (!t_looper) t_looper = looper_make(); return t_looper; }
-static void *b_ALooper_forThread(void) { return t_looper; }
-static void b_ALooper_acquire(tl_looper *l) { if (l) atomic_fetch_add(&l->refs, 1); }
-static void b_ALooper_release(tl_looper *l) { (void)l; }
+static void *b_ALooper_prepare(int opts)
+{
+    (void)opts;
+    if (!t_looper)
+        t_looper = looper_make();
+    return t_looper;
+}
+static void *b_ALooper_forThread(void)
+{
+    return t_looper;
+}
+static void b_ALooper_acquire(tl_looper *l)
+{
+    if (l)
+        atomic_fetch_add(&l->refs, 1);
+}
+static void b_ALooper_release(tl_looper *l)
+{
+    (void)l;
+}
 static void b_ALooper_wake(tl_looper *l)
 {
-    if (!l) return;
+    if (!l)
+        return;
     char c = 1;
     (void)!write(l->wake[1], &c, 1);
 }
@@ -62,23 +96,40 @@ static void b_ALooper_wake(tl_looper *l)
 /* A file descriptor the looper watches: with a callback it is called from the polling thread; without one, its ident is returned. */
 static int b_ALooper_addFd(tl_looper *l, int fd, int ident, int events, void *callback, void *data)
 {
-    if (!l || fd < 0) return -1;
+    if (!l || fd < 0)
+        return -1;
     pthread_mutex_lock(&l->mu);
     looper_fd *f = l->fds;
-    while (f && f->fd != fd) f = f->next;
-    if (!f) { f = calloc(1, sizeof(*f)); f->next = l->fds; l->fds = f; }
-    f->fd = fd; f->ident = ident; f->events = events; f->callback = callback; f->data = data;
+    while (f && f->fd != fd)
+        f = f->next;
+    if (!f) {
+        f = calloc(1, sizeof(*f));
+        f->next = l->fds;
+        l->fds = f;
+    }
+    f->fd = fd;
+    f->ident = ident;
+    f->events = events;
+    f->callback = callback;
+    f->data = data;
     pthread_mutex_unlock(&l->mu);
     b_ALooper_wake(l);
     return 1;
 }
 static int b_ALooper_removeFd(tl_looper *l, int fd)
 {
-    if (!l) return -1;
+    if (!l)
+        return -1;
     int found = 0;
     pthread_mutex_lock(&l->mu);
     for (looper_fd **pp = &l->fds; *pp; pp = &(*pp)->next)
-        if ((*pp)->fd == fd) { looper_fd *dead = *pp; *pp = dead->next; free(dead); found = 1; break; }
+        if ((*pp)->fd == fd) {
+            looper_fd *dead = *pp;
+            *pp = dead->next;
+            free(dead);
+            found = 1;
+            break;
+        }
     pthread_mutex_unlock(&l->mu);
     return found;
 }
@@ -86,38 +137,52 @@ static int b_ALooper_removeFd(tl_looper *l, int fd)
 static int b_ALooper_pollOnce(int timeout_ms, int *out_fd, int *out_events, void **out_data)
 {
     tl_looper *l = t_looper;
-    if (out_fd) *out_fd = -1;
-    if (out_events) *out_events = 0;
-    if (out_data) *out_data = NULL;
-    if (!l) return ALOOPER_POLL_ERROR;
+    if (out_fd)
+        *out_fd = -1;
+    if (out_events)
+        *out_events = 0;
+    if (out_data)
+        *out_data = NULL;
+    if (!l)
+        return ALOOPER_POLL_ERROR;
     struct pollfd pfds[32];
     looper_fd snap[31];
     int n = 0;
-    pfds[n++] = (struct pollfd){ l->wake[0], POLLIN, 0 };
+    pfds[n++] = (struct pollfd){l->wake[0], POLLIN, 0};
     pthread_mutex_lock(&l->mu);
     for (looper_fd *f = l->fds; f && n < 32; f = f->next) {
         short ev = (short)(((f->events & ALOOPER_EVENT_INPUT) ? POLLIN : 0) | ((f->events & ALOOPER_EVENT_OUTPUT) ? POLLOUT : 0));
         snap[n - 1] = *f;
-        pfds[n++] = (struct pollfd){ f->fd, ev, 0 };
+        pfds[n++] = (struct pollfd){f->fd, ev, 0};
     }
     pthread_mutex_unlock(&l->mu);
     int r = poll(pfds, (nfds_t)n, timeout_ms);
-    if (r < 0) return ALOOPER_POLL_ERROR;
-    if (r == 0) return ALOOPER_POLL_TIMEOUT;
-    if (pfds[0].revents & POLLIN) { char buf[64]; while (read(l->wake[0], buf, sizeof(buf)) > 0) {} }
+    if (r < 0)
+        return ALOOPER_POLL_ERROR;
+    if (r == 0)
+        return ALOOPER_POLL_TIMEOUT;
+    if (pfds[0].revents & POLLIN) {
+        char buf[64];
+        while (read(l->wake[0], buf, sizeof(buf)) > 0) {
+        }
+    }
     for (int i = 1; i < n; i++) {
-        if (!pfds[i].revents) continue;
+        if (!pfds[i].revents)
+            continue;
         looper_fd *f = &snap[i - 1];
-        int ev = ((pfds[i].revents & POLLIN) ? ALOOPER_EVENT_INPUT : 0) | ((pfds[i].revents & POLLOUT) ? ALOOPER_EVENT_OUTPUT : 0)
-               | ((pfds[i].revents & POLLERR) ? ALOOPER_EVENT_ERROR : 0) | ((pfds[i].revents & POLLHUP) ? ALOOPER_EVENT_HANGUP : 0);
+        int ev = ((pfds[i].revents & POLLIN) ? ALOOPER_EVENT_INPUT : 0) | ((pfds[i].revents & POLLOUT) ? ALOOPER_EVENT_OUTPUT : 0) | ((pfds[i].revents & POLLERR) ? ALOOPER_EVENT_ERROR : 0) | ((pfds[i].revents & POLLHUP) ? ALOOPER_EVENT_HANGUP : 0);
         if (f->callback) {
             int keep = ((int (*)(int, int, void *))f->callback)(f->fd, ev, f->data);
-            if (!keep) b_ALooper_removeFd(l, f->fd);
+            if (!keep)
+                b_ALooper_removeFd(l, f->fd);
             return ALOOPER_POLL_CALLBACK;
         }
-        if (out_fd) *out_fd = f->fd;
-        if (out_events) *out_events = ev;
-        if (out_data) *out_data = f->data;
+        if (out_fd)
+            *out_fd = f->fd;
+        if (out_events)
+            *out_events = ev;
+        if (out_data)
+            *out_data = f->data;
         return f->ident;
     }
     return ALOOPER_POLL_WAKE;
@@ -126,7 +191,8 @@ static int b_ALooper_pollAll(int timeout_ms, int *out_fd, int *out_events, void 
 {
     for (;;) {
         int r = b_ALooper_pollOnce(timeout_ms, out_fd, out_events, out_data);
-        if (r != ALOOPER_POLL_CALLBACK) return r;
+        if (r != ALOOPER_POLL_CALLBACK)
+            return r;
         timeout_ms = 0;
     }
 }
@@ -134,73 +200,155 @@ static int b_ALooper_pollAll(int timeout_ms, int *out_fd, int *out_events, void 
 /* ----------------------------------------------------------- configuration */
 
 /* AConfiguration: an English, landscape, phone-sized device. */
-typedef struct { char language[2], country[2]; int orientation, density, screen_long, screen_size, ui_mode_type, ui_mode_night; } tl_aconfig;
+typedef struct {
+    char language[2], country[2];
+    int orientation, density, screen_long, screen_size, ui_mode_type, ui_mode_night;
+} tl_aconfig;
 static tl_aconfig *b_AConfiguration_new(void)
 {
     tl_aconfig *c = calloc(1, sizeof(*c));
-    memcpy(c->language, "en", 2); memcpy(c->country, "US", 2);
-    c->orientation = 2; c->density = 480; c->screen_long = 2; c->screen_size = 2;
+    memcpy(c->language, "en", 2);
+    memcpy(c->country, "US", 2);
+    c->orientation = 2;
+    c->density = 480;
+    c->screen_long = 2;
+    c->screen_size = 2;
     return c;
 }
-static void b_AConfiguration_delete(tl_aconfig *c) { free(c); }
-static void b_AConfiguration_fromAssetManager(tl_aconfig *c, void *mgr) { (void)c; (void)mgr; }
-static void b_AConfiguration_getLanguage(tl_aconfig *c, char *out) { out[0] = c->language[0]; out[1] = c->language[1]; }
-static void b_AConfiguration_getCountry(tl_aconfig *c, char *out) { out[0] = c->country[0]; out[1] = c->country[1]; }
-static int b_AConfiguration_getOrientation(tl_aconfig *c) { return c->orientation; }
-static int b_AConfiguration_getDensity(tl_aconfig *c) { return c->density; }
-static int b_AConfiguration_getScreenLong(tl_aconfig *c) { return c->screen_long; }
-static int b_AConfiguration_getScreenSize(tl_aconfig *c) { return c->screen_size; }
-static int b_AConfiguration_getUiModeType(tl_aconfig *c) { return c->ui_mode_type; }
-static int b_AConfiguration_getUiModeNight(tl_aconfig *c) { return c->ui_mode_night; }
-static int b_AConfiguration_getKeyboard(tl_aconfig *c) { (void)c; return 1; }
-static int b_AConfiguration_getNavigation(tl_aconfig *c) { (void)c; return 1; }
-static int b_AConfiguration_getTouchscreen(tl_aconfig *c) { (void)c; return 3; }
-static int b_AConfiguration_getSdkVersion(tl_aconfig *c) { (void)c; return 34; }
+static void b_AConfiguration_delete(tl_aconfig *c)
+{
+    free(c);
+}
+static void b_AConfiguration_fromAssetManager(tl_aconfig *c, void *mgr)
+{
+    (void)c;
+    (void)mgr;
+}
+static void b_AConfiguration_getLanguage(tl_aconfig *c, char *out)
+{
+    out[0] = c->language[0];
+    out[1] = c->language[1];
+}
+static void b_AConfiguration_getCountry(tl_aconfig *c, char *out)
+{
+    out[0] = c->country[0];
+    out[1] = c->country[1];
+}
+static int b_AConfiguration_getOrientation(tl_aconfig *c)
+{
+    return c->orientation;
+}
+static int b_AConfiguration_getDensity(tl_aconfig *c)
+{
+    return c->density;
+}
+static int b_AConfiguration_getScreenLong(tl_aconfig *c)
+{
+    return c->screen_long;
+}
+static int b_AConfiguration_getScreenSize(tl_aconfig *c)
+{
+    return c->screen_size;
+}
+static int b_AConfiguration_getUiModeType(tl_aconfig *c)
+{
+    return c->ui_mode_type;
+}
+static int b_AConfiguration_getUiModeNight(tl_aconfig *c)
+{
+    return c->ui_mode_night;
+}
+static int b_AConfiguration_getKeyboard(tl_aconfig *c)
+{
+    (void)c;
+    return 1;
+}
+static int b_AConfiguration_getNavigation(tl_aconfig *c)
+{
+    (void)c;
+    return 1;
+}
+static int b_AConfiguration_getTouchscreen(tl_aconfig *c)
+{
+    (void)c;
+    return 3;
+}
+static int b_AConfiguration_getSdkVersion(tl_aconfig *c)
+{
+    (void)c;
+    return 34;
+}
 
 /* ---------------------------------------------------------------- assets */
 
-typedef struct { const uint8_t *data; size_t len; size_t pos; uint8_t *owned; } tl_asset;
+typedef struct {
+    const uint8_t *data;
+    size_t len;
+    size_t pos;
+    uint8_t *owned;
+} tl_asset;
 
-static void *b_AAssetManager_fromJava(void *env, void *obj) { (void)env; (void)obj; static int mgr; return &mgr; }
+static void *b_AAssetManager_fromJava(void *env, void *obj)
+{
+    (void)env;
+    (void)obj;
+    static int mgr;
+    return &mgr;
+}
 
 static void *b_AAssetManager_open(void *mgr, const char *name, int mode)
 {
-    (void)mgr; (void)mode;
+    (void)mgr;
+    (void)mode;
     char path[1024];
     snprintf(path, sizeof(path), "assets/%s", name);
     static int trace = -1;
-    if (trace < 0) trace = getenv("TL_FILE_TRACE") != NULL;
-    if (trace) tl_log_line("assets: open %s", name);
+    if (trace < 0)
+        trace = getenv("TL_FILE_TRACE") != NULL;
+    if (trace)
+        tl_log_line("assets: open %s", name);
     /* TL_ASSET_DIR: a file of that name under this directory stands in for the one in the APK (to change a game's config while debugging) */
     if (getenv("TL_ASSET_DIR")) {
         char alt[1100];
         snprintf(alt, sizeof(alt), "%s/%s", getenv("TL_ASSET_DIR"), name);
         FILE *fp = fopen(alt, "rb");
         if (fp) {
-            fseek(fp, 0, SEEK_END); long n = ftell(fp); fseek(fp, 0, SEEK_SET);
+            fseek(fp, 0, SEEK_END);
+            long n = ftell(fp);
+            fseek(fp, 0, SEEK_SET);
             uint8_t *buf = malloc((size_t)n + 1);
             if (buf && fread(buf, 1, (size_t)n, fp) == (size_t)n) {
                 fclose(fp);
                 tl_asset *a = calloc(1, sizeof(*a));
-                a->data = buf; a->len = (size_t)n; a->owned = buf;
+                a->data = buf;
+                a->len = (size_t)n;
+                a->owned = buf;
                 return a;
             }
-            free(buf); fclose(fp);
+            free(buf);
+            fclose(fp);
         }
     }
     for (int i = 0;; i++) {
         const tl_zip *z = tl_ld_apk_at(i);
-        if (!z) break;
+        if (!z)
+            break;
         const tl_zip_entry *e = tl_zip_find(z, path);
-        if (!e) continue;
-        const uint8_t *data; size_t n; bool owned; char err[160];
+        if (!e)
+            continue;
+        const uint8_t *data;
+        size_t n;
+        bool owned;
+        char err[160];
         if (!tl_zip_data(z, e, (size_t)2 << 30, &data, &n, &owned, err, sizeof(err))) {
             tl_log_line("assets: %s: %s", name, err);
             return NULL;
         }
         tl_asset *a = calloc(1, sizeof(*a));
-        a->data = data; a->len = n;
-        if (owned) a->owned = (uint8_t *)data;
+        a->data = data;
+        a->len = n;
+        if (owned)
+            a->owned = (uint8_t *)data;
         return a;
     }
     return NULL;
@@ -213,34 +361,73 @@ static void *b_AAssetManager_open(void *mgr, const char *name, int mode)
  */
 extern void (*tl_cocos_audio_hook)(const int16_t *samples, int frames, int channels, int rate);
 
-enum { AA_OK = 0, AA_UNAVAILABLE = -899, AA_FORMAT_I16 = 1, AA_STATE_OPEN = 2, AA_STATE_STARTED = 4, AA_STATE_STOPPED = 10, AA_STATE_CLOSED = 12 };
+enum { AA_OK = 0,
+       AA_UNAVAILABLE = -899,
+       AA_FORMAT_I16 = 1,
+       AA_STATE_OPEN = 2,
+       AA_STATE_STARTED = 4,
+       AA_STATE_STOPPED = 10,
+       AA_STATE_CLOSED = 12 };
 #define AA_RATE 48000
 #define AA_CHANNELS 2
 #define AA_BURST 1024
 
 typedef int (*aa_data_cb)(void *stream, void *user, void *data, int frames);
-typedef struct aa_builder { aa_data_cb cb; void *user; int direction; } aa_builder;
+typedef struct aa_builder {
+    aa_data_cb cb;
+    void *user;
+    int direction;
+} aa_builder;
 typedef struct aa_stream {
-    aa_data_cb cb; void *user;
+    aa_data_cb cb;
+    void *user;
     atomic_int state, buffer_size;
     atomic_bool run;
     pthread_t thread;
     bool thread_started;
 } aa_stream;
 
-static int b_AAudio_createStreamBuilder(void **builder) { aa_builder *b = calloc(1, sizeof(*b)); *builder = b; return b ? AA_OK : AA_UNAVAILABLE; }
-static int b_AAudioStreamBuilder_delete(aa_builder *b) { free(b); return AA_OK; }
-static void b_AAudioStreamBuilder_setDataCallback(aa_builder *b, aa_data_cb cb, void *user) { b->cb = cb; b->user = user; }
-static void b_AAudioStreamBuilder_setDirection(aa_builder *b, int d) { b->direction = d; }
-static void b_AAudioStreamBuilder_ignore(aa_builder *b, int v) { (void)b; (void)v; }
-static void b_AAudioStreamBuilder_setErrorCallback(aa_builder *b, void *cb, void *user) { (void)b; (void)cb; (void)user; }
+static int b_AAudio_createStreamBuilder(void **builder)
+{
+    aa_builder *b = calloc(1, sizeof(*b));
+    *builder = b;
+    return b ? AA_OK : AA_UNAVAILABLE;
+}
+static int b_AAudioStreamBuilder_delete(aa_builder *b)
+{
+    free(b);
+    return AA_OK;
+}
+static void b_AAudioStreamBuilder_setDataCallback(aa_builder *b, aa_data_cb cb, void *user)
+{
+    b->cb = cb;
+    b->user = user;
+}
+static void b_AAudioStreamBuilder_setDirection(aa_builder *b, int d)
+{
+    b->direction = d;
+}
+static void b_AAudioStreamBuilder_ignore(aa_builder *b, int v)
+{
+    (void)b;
+    (void)v;
+}
+static void b_AAudioStreamBuilder_setErrorCallback(aa_builder *b, void *cb, void *user)
+{
+    (void)b;
+    (void)cb;
+    (void)user;
+}
 
 static int b_AAudioStreamBuilder_openStream(aa_builder *b, aa_stream **out)
 {
-    if (b->direction != 0 || !b->cb) return AA_UNAVAILABLE;           /* output with a data callback only */
+    if (b->direction != 0 || !b->cb)
+        return AA_UNAVAILABLE; /* output with a data callback only */
     aa_stream *s = calloc(1, sizeof(*s));
-    s->cb = b->cb; s->user = b->user;
-    atomic_store(&s->state, AA_STATE_OPEN); atomic_store(&s->buffer_size, AA_BURST * 2);
+    s->cb = b->cb;
+    s->user = b->user;
+    atomic_store(&s->state, AA_STATE_OPEN);
+    atomic_store(&s->buffer_size, AA_BURST * 2);
     *out = s;
     tl_log_line("aaudio: stream opened (%d Hz, %d channels, burst %d)", AA_RATE, AA_CHANNELS, AA_BURST);
     return AA_OK;
@@ -254,11 +441,27 @@ static void *aa_pump(void *arg)
     while (atomic_load(&s->run)) {
         memset(buf, 0, (size_t)AA_BURST * AA_CHANNELS * sizeof(int16_t));
         int r = s->cb(s, s->user, buf, AA_BURST);
-        if (!atomic_load(&s->run)) break;
-        { static bool said; if (!said) { for (int i = 0; i < AA_BURST * AA_CHANNELS; i++) if (buf[i]) { said = true; tl_log_line("aaudio: the game's first non-silent burst (sample %d = %d)", i, buf[i]); break; } } }
-        if (tl_cocos_audio_hook) tl_cocos_audio_hook(buf, AA_BURST, AA_CHANNELS, AA_RATE);
-        else { struct timespec ts = { 0, (long)((double)AA_BURST * 1e9 / AA_RATE) }; nanosleep(&ts, NULL); }
-        if (r != 0) break;
+        if (!atomic_load(&s->run))
+            break;
+        {
+            static bool said;
+            if (!said) {
+                for (int i = 0; i < AA_BURST * AA_CHANNELS; i++)
+                    if (buf[i]) {
+                        said = true;
+                        tl_log_line("aaudio: the game's first non-silent burst (sample %d = %d)", i, buf[i]);
+                        break;
+                    }
+            }
+        }
+        if (tl_cocos_audio_hook)
+            tl_cocos_audio_hook(buf, AA_BURST, AA_CHANNELS, AA_RATE);
+        else {
+            struct timespec ts = {0, (long)((double)AA_BURST * 1e9 / AA_RATE)};
+            nanosleep(&ts, NULL);
+        }
+        if (r != 0)
+            break;
     }
     free(buf);
     return NULL;
@@ -266,81 +469,189 @@ static void *aa_pump(void *arg)
 
 static int b_AAudioStream_requestStart(aa_stream *s)
 {
-    if (atomic_exchange(&s->run, true)) return AA_OK;
+    if (atomic_exchange(&s->run, true))
+        return AA_OK;
     atomic_store(&s->state, AA_STATE_STARTED);
-    pthread_attr_t a; pthread_attr_init(&a); pthread_attr_setstacksize(&a, 1u << 20);
+    pthread_attr_t a;
+    pthread_attr_init(&a);
+    pthread_attr_setstacksize(&a, 1u << 20);
     s->thread_started = pthread_create(&s->thread, &a, aa_pump, s) == 0;
     pthread_attr_destroy(&a);
     return AA_OK;
 }
 static int aa_stop(aa_stream *s, int state)
 {
-    if (atomic_exchange(&s->run, false) && s->thread_started) { pthread_join(s->thread, NULL); s->thread_started = false; }
+    if (atomic_exchange(&s->run, false) && s->thread_started) {
+        pthread_join(s->thread, NULL);
+        s->thread_started = false;
+    }
     atomic_store(&s->state, state);
     return AA_OK;
 }
-static int b_AAudioStream_requestStop(aa_stream *s) { return aa_stop(s, AA_STATE_STOPPED); }
-static int b_AAudioStream_close(aa_stream *s) { aa_stop(s, AA_STATE_CLOSED); free(s); return AA_OK; }
-static int b_AAudioStream_getSampleRate(aa_stream *s) { (void)s; return AA_RATE; }
-static int b_AAudioStream_getChannelCount(aa_stream *s) { (void)s; return AA_CHANNELS; }
-static int b_AAudioStream_getFormat(aa_stream *s) { (void)s; return AA_FORMAT_I16; }
-static int b_AAudioStream_getDeviceId(aa_stream *s) { (void)s; return 0; }
-static int b_AAudioStream_getFramesPerBurst(aa_stream *s) { (void)s; return AA_BURST; }
-static int b_AAudioStream_getBufferCapacityInFrames(aa_stream *s) { (void)s; return AA_BURST * 8; }
-static int b_AAudioStream_getBufferSizeInFrames(aa_stream *s) { return atomic_load(&s->buffer_size); }
-static int b_AAudioStream_setBufferSizeInFrames(aa_stream *s, int n) { atomic_store(&s->buffer_size, n); return n; }
-static int b_AAudioStream_getXRunCount(aa_stream *s) { (void)s; return 0; }
-static int b_AAudioStream_getState(aa_stream *s) { return atomic_load(&s->state); }
-static int b_AAudioStream_read(aa_stream *s, void *buf, int frames, long timeout) { (void)s; (void)buf; (void)frames; (void)timeout; return AA_UNAVAILABLE; }
-static const char *b_AAudio_convertResultToText(int r) { (void)r; return "AAudio is not available"; }
+static int b_AAudioStream_requestStop(aa_stream *s)
+{
+    return aa_stop(s, AA_STATE_STOPPED);
+}
+static int b_AAudioStream_close(aa_stream *s)
+{
+    aa_stop(s, AA_STATE_CLOSED);
+    free(s);
+    return AA_OK;
+}
+static int b_AAudioStream_getSampleRate(aa_stream *s)
+{
+    (void)s;
+    return AA_RATE;
+}
+static int b_AAudioStream_getChannelCount(aa_stream *s)
+{
+    (void)s;
+    return AA_CHANNELS;
+}
+static int b_AAudioStream_getFormat(aa_stream *s)
+{
+    (void)s;
+    return AA_FORMAT_I16;
+}
+static int b_AAudioStream_getDeviceId(aa_stream *s)
+{
+    (void)s;
+    return 0;
+}
+static int b_AAudioStream_getFramesPerBurst(aa_stream *s)
+{
+    (void)s;
+    return AA_BURST;
+}
+static int b_AAudioStream_getBufferCapacityInFrames(aa_stream *s)
+{
+    (void)s;
+    return AA_BURST * 8;
+}
+static int b_AAudioStream_getBufferSizeInFrames(aa_stream *s)
+{
+    return atomic_load(&s->buffer_size);
+}
+static int b_AAudioStream_setBufferSizeInFrames(aa_stream *s, int n)
+{
+    atomic_store(&s->buffer_size, n);
+    return n;
+}
+static int b_AAudioStream_getXRunCount(aa_stream *s)
+{
+    (void)s;
+    return 0;
+}
+static int b_AAudioStream_getState(aa_stream *s)
+{
+    return atomic_load(&s->state);
+}
+static int b_AAudioStream_read(aa_stream *s, void *buf, int frames, long timeout)
+{
+    (void)s;
+    (void)buf;
+    (void)frames;
+    (void)timeout;
+    return AA_UNAVAILABLE;
+}
+static const char *b_AAudio_convertResultToText(int r)
+{
+    (void)r;
+    return "AAudio is not available";
+}
 
 /* AAssetDir: the files directly under an asset directory, across the APKs */
-typedef struct { char **names; size_t n, pos; } tl_assetdir;
+typedef struct {
+    char **names;
+    size_t n, pos;
+} tl_assetdir;
 static void *b_AAssetManager_openDir(void *mgr, const char *dir)
 {
     (void)mgr;
-    if (getenv("TL_FILE_TRACE")) tl_log_line("assets: openDir %s", dir);
+    if (getenv("TL_FILE_TRACE"))
+        tl_log_line("assets: openDir %s", dir);
     char prefix[1024];
     size_t pl = (size_t)snprintf(prefix, sizeof(prefix), "assets/%s%s", dir, dir[0] && dir[strlen(dir) - 1] != '/' ? "/" : "");
     tl_assetdir *d = calloc(1, sizeof(*d));
     size_t cap = 0;
     for (int i = 0;; i++) {
         const tl_zip *z = tl_ld_apk_at(i);
-        if (!z) break;
+        if (!z)
+            break;
         for (size_t k = 0; k < z->count; k++) {
             const char *name = z->entries[k].name;
-            if (strncmp(name, prefix, pl) != 0 || !name[pl] || strchr(name + pl, '/')) continue;
-            if (d->n == cap) { cap = cap ? cap * 2 : 64; d->names = realloc(d->names, cap * sizeof(char *)); }
+            if (strncmp(name, prefix, pl) != 0 || !name[pl] || strchr(name + pl, '/'))
+                continue;
+            if (d->n == cap) {
+                cap = cap ? cap * 2 : 64;
+                d->names = realloc(d->names, cap * sizeof(char *));
+            }
             d->names[d->n++] = strdup(name + pl);
         }
     }
     return d;
 }
-static const char *b_AAssetDir_getNextFileName(tl_assetdir *d) { return d && d->pos < d->n ? d->names[d->pos++] : NULL; }
-static void b_AAssetDir_close(tl_assetdir *d) { if (!d) return; for (size_t i = 0; i < d->n; i++) free(d->names[i]); free(d->names); free(d); }
-static unsigned long b_deflateBound(void *strm, unsigned long n) { (void)strm; return n + (n >> 12) + (n >> 14) + (n >> 25) + 13; }
+static const char *b_AAssetDir_getNextFileName(tl_assetdir *d)
+{
+    return d && d->pos < d->n ? d->names[d->pos++] : NULL;
+}
+static void b_AAssetDir_close(tl_assetdir *d)
+{
+    if (!d)
+        return;
+    for (size_t i = 0; i < d->n; i++)
+        free(d->names[i]);
+    free(d->names);
+    free(d);
+}
+static unsigned long b_deflateBound(void *strm, unsigned long n)
+{
+    (void)strm;
+    return n + (n >> 12) + (n >> 14) + (n >> 25) + 13;
+}
 
-static void b_AAsset_close(tl_asset *a) { if (a) { free(a->owned); free(a); } }
+static void b_AAsset_close(tl_asset *a)
+{
+    if (a) {
+        free(a->owned);
+        free(a);
+    }
+}
 static int b_AAsset_read(tl_asset *a, void *buf, size_t n)
 {
     size_t left = a->len - a->pos;
-    if (n > left) n = left;
+    if (n > left)
+        n = left;
     memcpy(buf, a->data + a->pos, n);
     a->pos += n;
     return (int)n;
 }
-static long b_AAsset_getLength(tl_asset *a) { return (long)a->len; }
-static long b_AAsset_getRemainingLength(tl_asset *a) { return (long)(a->len - a->pos); }
-static const void *b_AAsset_getBuffer(tl_asset *a) { return a->data; }
+static long b_AAsset_getLength(tl_asset *a)
+{
+    return (long)a->len;
+}
+static long b_AAsset_getRemainingLength(tl_asset *a)
+{
+    return (long)(a->len - a->pos);
+}
+static const void *b_AAsset_getBuffer(tl_asset *a)
+{
+    return a->data;
+}
 static long b_AAsset_seek(tl_asset *a, long off, int whence)
 {
-    long base = whence == 0 ? 0 : whence == 1 ? (long)a->pos : (long)a->len;
+    long base = whence == 0 ? 0 : whence == 1 ? (long)a->pos
+                                              : (long)a->len;
     long np = base + off;
-    if (np < 0 || (size_t)np > a->len) return -1;
+    if (np < 0 || (size_t)np > a->len)
+        return -1;
     a->pos = (size_t)np;
     return np;
 }
-static int b_AAsset_isAllocated(tl_asset *a) { return a->owned != NULL; }
+static int b_AAsset_isAllocated(tl_asset *a)
+{
+    return a->owned != NULL;
+}
 
 /* ---------------------------------------------------------------- windows */
 
@@ -349,10 +660,12 @@ static int b_AAsset_isAllocated(tl_asset *a) { return a->owned != NULL; }
  * below read. A touch from the host is queued and a byte written to a pipe the looper watches, which is how the real queue wakes the thread that owns it.
  */
 typedef struct tl_ievent {
-    int type;                                   /* AINPUT_EVENT_TYPE_KEY 1, _MOTION 2 */
+    int type; /* AINPUT_EVENT_TYPE_KEY 1, _MOTION 2 */
     int source, device, action, meta, flags, keycode, button_state, nptr;
-    int pid[10]; float px[10], py[10];
-    float axis[48]; bool has_axes;                /* a joystick event: every axis by Android's axis number */
+    int pid[10];
+    float px[10], py[10];
+    float axis[48];
+    bool has_axes; /* a joystick event: every axis by Android's axis number */
     int64_t time;
     struct tl_ievent *next;
 } tl_ievent;
@@ -361,50 +674,97 @@ static struct {
     bool ready, attached;
     pthread_mutex_t mu;
     tl_ievent *head, *tail;
-    int nptr, pid[10]; float px[10], py[10];    /* the fingers down now, to say who else is touching when one changes */
-} IQ = { .rd = -1, .wr = -1, .mu = PTHREAD_MUTEX_INITIALIZER };
+    int nptr, pid[10];
+    float px[10], py[10]; /* the fingers down now, to say who else is touching when one changes */
+} IQ = {.rd = -1, .wr = -1, .mu = PTHREAD_MUTEX_INITIALIZER};
 
 static void iq_init(void)
 {
-    if (IQ.ready) return;
+    if (IQ.ready)
+        return;
     int fds[2];
-    if (pipe(fds) != 0) return;
-    fcntl(fds[0], F_SETFL, O_NONBLOCK); fcntl(fds[1], F_SETFL, O_NONBLOCK);
-    IQ.rd = fds[0]; IQ.wr = fds[1]; IQ.ready = true;
+    if (pipe(fds) != 0)
+        return;
+    fcntl(fds[0], F_SETFL, O_NONBLOCK);
+    fcntl(fds[1], F_SETFL, O_NONBLOCK);
+    IQ.rd = fds[0];
+    IQ.wr = fds[1];
+    IQ.ready = true;
 }
 static void iq_push(tl_ievent *e)
 {
     pthread_mutex_lock(&IQ.mu);
-    if (IQ.tail) IQ.tail->next = e; else IQ.head = e;
+    if (IQ.tail)
+        IQ.tail->next = e;
+    else
+        IQ.head = e;
     IQ.tail = e;
     pthread_mutex_unlock(&IQ.mu);
-    char c = 1; (void)!write(IQ.wr, &c, 1);
+    char c = 1;
+    (void)!write(IQ.wr, &c, 1);
 }
 /* A touch in surface pixels: phase 0 down, 1 move, 2 up, 3 cancel -- the same words the other engines are given. Safe from any thread. */
 void tl_inq_touch(int phase, int id, float x, float y)
 {
     iq_init();
-    if (!IQ.ready || !IQ.attached) return;
+    if (!IQ.ready || !IQ.attached)
+        return;
     pthread_mutex_lock(&IQ.mu);
     int idx = -1;
-    for (int i = 0; i < IQ.nptr; i++) if (IQ.pid[i] == id) idx = i;
+    for (int i = 0; i < IQ.nptr; i++)
+        if (IQ.pid[i] == id)
+            idx = i;
     int action;
     if (phase == 0) {
-        if (idx < 0 && IQ.nptr < 10) { idx = IQ.nptr++; IQ.pid[idx] = id; }
-        if (idx < 0) { pthread_mutex_unlock(&IQ.mu); return; }
-        IQ.px[idx] = x; IQ.py[idx] = y;
+        if (idx < 0 && IQ.nptr < 10) {
+            idx = IQ.nptr++;
+            IQ.pid[idx] = id;
+        }
+        if (idx < 0) {
+            pthread_mutex_unlock(&IQ.mu);
+            return;
+        }
+        IQ.px[idx] = x;
+        IQ.py[idx] = y;
         action = IQ.nptr == 1 ? 0 /* DOWN */ : (5 /* POINTER_DOWN */ | (idx << 8));
-    } else if (idx < 0) { pthread_mutex_unlock(&IQ.mu); return; }
-    else if (phase == 1) { IQ.px[idx] = x; IQ.py[idx] = y; action = 2; }
-    else if (phase == 2) { IQ.px[idx] = x; IQ.py[idx] = y; action = IQ.nptr == 1 ? 1 /* UP */ : (6 /* POINTER_UP */ | (idx << 8)); }
-    else action = 3;
+    } else if (idx < 0) {
+        pthread_mutex_unlock(&IQ.mu);
+        return;
+    } else if (phase == 1) {
+        IQ.px[idx] = x;
+        IQ.py[idx] = y;
+        action = 2;
+    } else if (phase == 2) {
+        IQ.px[idx] = x;
+        IQ.py[idx] = y;
+        action = IQ.nptr == 1 ? 1 /* UP */ : (6 /* POINTER_UP */ | (idx << 8));
+    } else
+        action = 3;
     tl_ievent *e = calloc(1, sizeof(*e));
-    e->type = 2; e->source = 0x1002 /* touchscreen */; e->device = 1; e->action = action; e->nptr = IQ.nptr;
-    for (int i = 0; i < IQ.nptr; i++) { e->pid[i] = IQ.pid[i]; e->px[i] = IQ.px[i]; e->py[i] = IQ.py[i]; }
-    struct timespec ts; clock_gettime(CLOCK_MONOTONIC, &ts); e->time = (int64_t)ts.tv_sec * 1000000000ll + ts.tv_nsec;
-    if (phase == 2 || phase == 3) {                       /* the finger leaves the list after the event that says so */
-        if (phase == 3) IQ.nptr = 0;
-        else { for (int i = idx; i + 1 < IQ.nptr; i++) { IQ.pid[i] = IQ.pid[i + 1]; IQ.px[i] = IQ.px[i + 1]; IQ.py[i] = IQ.py[i + 1]; } IQ.nptr--; }
+    e->type = 2;
+    e->source = 0x1002 /* touchscreen */;
+    e->device = 1;
+    e->action = action;
+    e->nptr = IQ.nptr;
+    for (int i = 0; i < IQ.nptr; i++) {
+        e->pid[i] = IQ.pid[i];
+        e->px[i] = IQ.px[i];
+        e->py[i] = IQ.py[i];
+    }
+    struct timespec ts;
+    clock_gettime(CLOCK_MONOTONIC, &ts);
+    e->time = (int64_t)ts.tv_sec * 1000000000ll + ts.tv_nsec;
+    if (phase == 2 || phase == 3) { /* the finger leaves the list after the event that says so */
+        if (phase == 3)
+            IQ.nptr = 0;
+        else {
+            for (int i = idx; i + 1 < IQ.nptr; i++) {
+                IQ.pid[i] = IQ.pid[i + 1];
+                IQ.px[i] = IQ.px[i + 1];
+                IQ.py[i] = IQ.py[i + 1];
+            }
+            IQ.nptr--;
+        }
     }
     pthread_mutex_unlock(&IQ.mu);
     iq_push(e);
@@ -414,21 +774,37 @@ void tl_inq_touch(int phase, int id, float x, float y)
 void tl_inq_key(int device, int source, int action, int keycode)
 {
     iq_init();
-    if (!IQ.ready || !IQ.attached) return;
+    if (!IQ.ready || !IQ.attached)
+        return;
     tl_ievent *e = calloc(1, sizeof(*e));
-    e->type = 1; e->source = source; e->device = device; e->action = action; e->keycode = keycode;
-    struct timespec ts; clock_gettime(CLOCK_MONOTONIC, &ts); e->time = (int64_t)ts.tv_sec * 1000000000ll + ts.tv_nsec;
+    e->type = 1;
+    e->source = source;
+    e->device = device;
+    e->action = action;
+    e->keycode = keycode;
+    struct timespec ts;
+    clock_gettime(CLOCK_MONOTONIC, &ts);
+    e->time = (int64_t)ts.tv_sec * 1000000000ll + ts.tv_nsec;
     iq_push(e);
 }
 void tl_inq_axes(int device, const float *axes48)
 {
     iq_init();
-    if (!IQ.ready || !IQ.attached) return;
+    if (!IQ.ready || !IQ.attached)
+        return;
     tl_ievent *e = calloc(1, sizeof(*e));
-    e->type = 2; e->source = 0x01000010 /* joystick */; e->device = device; e->action = 2 /* MOVE */; e->nptr = 1; e->has_axes = true;
+    e->type = 2;
+    e->source = 0x01000010 /* joystick */;
+    e->device = device;
+    e->action = 2 /* MOVE */;
+    e->nptr = 1;
+    e->has_axes = true;
     memcpy(e->axis, axes48, sizeof(e->axis));
-    e->px[0] = e->axis[0]; e->py[0] = e->axis[1];
-    struct timespec ts; clock_gettime(CLOCK_MONOTONIC, &ts); e->time = (int64_t)ts.tv_sec * 1000000000ll + ts.tv_nsec;
+    e->px[0] = e->axis[0];
+    e->py[0] = e->axis[1];
+    struct timespec ts;
+    clock_gettime(CLOCK_MONOTONIC, &ts);
+    e->time = (int64_t)ts.tv_sec * 1000000000ll + ts.tv_nsec;
     iq_push(e);
 }
 
@@ -436,125 +812,387 @@ static void b_AInputQueue_attachLooper(void *q, void *looper, int ident, void *c
 {
     (void)q;
     iq_init();
-    if (!IQ.ready || !looper) return;
-    IQ.ident = ident; IQ.attached = true;
+    if (!IQ.ready || !looper)
+        return;
+    IQ.ident = ident;
+    IQ.attached = true;
     b_ALooper_addFd(looper, IQ.rd, ident, ALOOPER_EVENT_INPUT, cb, data);
 }
-static void b_AInputQueue_detachLooper(void *q) { (void)q; IQ.attached = false; if (t_looper && IQ.ready) b_ALooper_removeFd(t_looper, IQ.rd); }
-static int32_t b_AInputQueue_hasEvents(void *q) { (void)q; return IQ.head != NULL; }
+static void b_AInputQueue_detachLooper(void *q)
+{
+    (void)q;
+    IQ.attached = false;
+    if (t_looper && IQ.ready)
+        b_ALooper_removeFd(t_looper, IQ.rd);
+}
+static int32_t b_AInputQueue_hasEvents(void *q)
+{
+    (void)q;
+    return IQ.head != NULL;
+}
 static int32_t b_AInputQueue_getEvent(void *q, void **ev)
 {
     (void)q;
     pthread_mutex_lock(&IQ.mu);
     tl_ievent *e = IQ.head;
-    if (e) { IQ.head = e->next; if (!IQ.head) IQ.tail = NULL; }
+    if (e) {
+        IQ.head = e->next;
+        if (!IQ.head)
+            IQ.tail = NULL;
+    }
     pthread_mutex_unlock(&IQ.mu);
-    if (ev) *ev = e;
-    if (e && IQ.ready) { char c; (void)!read(IQ.rd, &c, 1); }
+    if (ev)
+        *ev = e;
+    if (e && IQ.ready) {
+        char c;
+        (void)!read(IQ.rd, &c, 1);
+    }
     return e ? 0 : -1;
 }
-static int32_t b_AInputQueue_preDispatchEvent(void *q, void *ev) { (void)q; (void)ev; return 0; }
-static void b_AInputQueue_finishEvent(void *q, void *ev, int handled) { (void)q; (void)handled; free(ev); }
-
-static int32_t b_AInputEvent_getType(const tl_ievent *e) { return e->type; }
-static int32_t b_AInputEvent_getSource(const tl_ievent *e) { return e->source; }
-static int32_t b_AInputEvent_getDeviceId(const tl_ievent *e) { return e->device; }
-static int32_t b_AMotionEvent_getAction(const tl_ievent *e) { return e->action; }
-static int32_t b_AMotionEvent_getFlags(const tl_ievent *e) { return e->flags; }
-static int32_t b_AMotionEvent_getMetaState(const tl_ievent *e) { return e->meta; }
-static int32_t b_AMotionEvent_getButtonState(const tl_ievent *e) { return e->button_state; }
-static int32_t b_AMotionEvent_getEdgeFlags(const tl_ievent *e) { (void)e; return 0; }
-static int64_t b_AMotionEvent_getEventTime(const tl_ievent *e) { return e->time; }
-static int64_t b_AMotionEvent_getDownTime(const tl_ievent *e) { return e->time; }
-static size_t b_AMotionEvent_getPointerCount(const tl_ievent *e) { return (size_t)e->nptr; }
-static int32_t b_AMotionEvent_getPointerId(const tl_ievent *e, size_t i) { return i < (size_t)e->nptr ? e->pid[i] : 0; }
-static float b_AMotionEvent_getX(const tl_ievent *e, size_t i) { return i < (size_t)e->nptr ? e->px[i] : 0.0f; }
-static float b_AMotionEvent_getY(const tl_ievent *e, size_t i) { return i < (size_t)e->nptr ? e->py[i] : 0.0f; }
-static float b_AMotionEvent_getPressure(const tl_ievent *e, size_t i) { (void)e; (void)i; return 1.0f; }
-static float b_AMotionEvent_getSize(const tl_ievent *e, size_t i) { (void)e; (void)i; return 0.1f; }
-static size_t b_AMotionEvent_getHistorySize(const tl_ievent *e) { (void)e; return 0; }
-static float b_AMotionEvent_getAxisValue(const tl_ievent *e, int32_t axis, size_t i)
+static int32_t b_AInputQueue_preDispatchEvent(void *q, void *ev)
 {
-    if (e->has_axes && axis >= 0 && axis < 48) return e->axis[axis];
-    if (axis == 0) return b_AMotionEvent_getX(e, i);
-    if (axis == 1) return b_AMotionEvent_getY(e, i);
-    return 0.0f;
-}
-static int32_t b_AKeyEvent_getAction(const tl_ievent *e) { return e->action; }
-static int32_t b_AKeyEvent_getKeyCode(const tl_ievent *e) { return e->keycode; }
-static int32_t b_AKeyEvent_getFlags(const tl_ievent *e) { return e->flags; }
-static int32_t b_AKeyEvent_getMetaState(const tl_ievent *e) { return e->meta; }
-static int32_t b_AKeyEvent_getRepeatCount(const tl_ievent *e) { (void)e; return 0; }
-static int32_t b_AKeyEvent_getScanCode(const tl_ievent *e) { (void)e; return 0; }
-static void b_ANativeActivity_noop(void *a) { (void)a; }
-static void b_ANativeActivity_flags(void *a, uint32_t add, uint32_t remove) { (void)a; (void)add; (void)remove; }
-static void b_ANativeActivity_input(void *a, uint32_t flags) { (void)a; (void)flags; }
-
-
-typedef struct tl_nwindow { atomic_int refs; int width, height, format; void *layer; } tl_nwindow;
-static tl_nwindow g_window = { 1, 1080, 2400, 1, NULL };
-
-void tl_nwindow_configure(int w, int h, void *layer) { g_window.width = w; g_window.height = h; g_window.layer = layer; }
-void *tl_nwindow_get(void) { atomic_fetch_add(&g_window.refs, 1); return &g_window; }
-void *tl_nwindow_native(void *window) { return window ? ((tl_nwindow *)window)->layer : NULL; }
-int tl_nwindow_width(void *window) { return window ? ((tl_nwindow *)window)->width : 0; }
-int tl_nwindow_height(void *window) { return window ? ((tl_nwindow *)window)->height : 0; }
-
-static void *b_ANativeWindow_fromSurface(void *env, void *surface) { (void)env; (void)surface; atomic_fetch_add(&g_window.refs, 1); return &g_window; }
-static void b_ANativeWindow_acquire(tl_nwindow *w) { if (w) atomic_fetch_add(&w->refs, 1); }
-static void b_ANativeWindow_release(tl_nwindow *w) { if (w) atomic_fetch_sub(&w->refs, 1); }
-static int b_ANativeWindow_getWidth(tl_nwindow *w) { return w ? w->width : 0; }
-static int b_ANativeWindow_getHeight(tl_nwindow *w) { return w ? w->height : 0; }
-static int b_ANativeWindow_getFormat(tl_nwindow *w) { return w ? w->format : 0; }
-static int b_ANativeWindow_setBuffersGeometry(tl_nwindow *w, int width, int height, int format)
-{
-    (void)width; (void)height; (void)format; (void)w;
+    (void)q;
+    (void)ev;
     return 0;
 }
-static void *b_ANativeWindow_toSurface(void *env, void *w) { (void)env; (void)w; return NULL; }
+static void b_AInputQueue_finishEvent(void *q, void *ev, int handled)
+{
+    (void)q;
+    (void)handled;
+    free(ev);
+}
+
+static int32_t b_AInputEvent_getType(const tl_ievent *e)
+{
+    return e->type;
+}
+static int32_t b_AInputEvent_getSource(const tl_ievent *e)
+{
+    return e->source;
+}
+static int32_t b_AInputEvent_getDeviceId(const tl_ievent *e)
+{
+    return e->device;
+}
+static int32_t b_AMotionEvent_getAction(const tl_ievent *e)
+{
+    return e->action;
+}
+static int32_t b_AMotionEvent_getFlags(const tl_ievent *e)
+{
+    return e->flags;
+}
+static int32_t b_AMotionEvent_getMetaState(const tl_ievent *e)
+{
+    return e->meta;
+}
+static int32_t b_AMotionEvent_getButtonState(const tl_ievent *e)
+{
+    return e->button_state;
+}
+static int32_t b_AMotionEvent_getEdgeFlags(const tl_ievent *e)
+{
+    (void)e;
+    return 0;
+}
+static int64_t b_AMotionEvent_getEventTime(const tl_ievent *e)
+{
+    return e->time;
+}
+static int64_t b_AMotionEvent_getDownTime(const tl_ievent *e)
+{
+    return e->time;
+}
+static size_t b_AMotionEvent_getPointerCount(const tl_ievent *e)
+{
+    return (size_t)e->nptr;
+}
+static int32_t b_AMotionEvent_getPointerId(const tl_ievent *e, size_t i)
+{
+    return i < (size_t)e->nptr ? e->pid[i] : 0;
+}
+static float b_AMotionEvent_getX(const tl_ievent *e, size_t i)
+{
+    return i < (size_t)e->nptr ? e->px[i] : 0.0f;
+}
+static float b_AMotionEvent_getY(const tl_ievent *e, size_t i)
+{
+    return i < (size_t)e->nptr ? e->py[i] : 0.0f;
+}
+static float b_AMotionEvent_getPressure(const tl_ievent *e, size_t i)
+{
+    (void)e;
+    (void)i;
+    return 1.0f;
+}
+static float b_AMotionEvent_getSize(const tl_ievent *e, size_t i)
+{
+    (void)e;
+    (void)i;
+    return 0.1f;
+}
+static size_t b_AMotionEvent_getHistorySize(const tl_ievent *e)
+{
+    (void)e;
+    return 0;
+}
+static float b_AMotionEvent_getAxisValue(const tl_ievent *e, int32_t axis, size_t i)
+{
+    if (e->has_axes && axis >= 0 && axis < 48)
+        return e->axis[axis];
+    if (axis == 0)
+        return b_AMotionEvent_getX(e, i);
+    if (axis == 1)
+        return b_AMotionEvent_getY(e, i);
+    return 0.0f;
+}
+static int32_t b_AKeyEvent_getAction(const tl_ievent *e)
+{
+    return e->action;
+}
+static int32_t b_AKeyEvent_getKeyCode(const tl_ievent *e)
+{
+    return e->keycode;
+}
+static int32_t b_AKeyEvent_getFlags(const tl_ievent *e)
+{
+    return e->flags;
+}
+static int32_t b_AKeyEvent_getMetaState(const tl_ievent *e)
+{
+    return e->meta;
+}
+static int32_t b_AKeyEvent_getRepeatCount(const tl_ievent *e)
+{
+    (void)e;
+    return 0;
+}
+static int32_t b_AKeyEvent_getScanCode(const tl_ievent *e)
+{
+    (void)e;
+    return 0;
+}
+static void b_ANativeActivity_noop(void *a)
+{
+    (void)a;
+}
+static void b_ANativeActivity_flags(void *a, uint32_t add, uint32_t remove)
+{
+    (void)a;
+    (void)add;
+    (void)remove;
+}
+static void b_ANativeActivity_input(void *a, uint32_t flags)
+{
+    (void)a;
+    (void)flags;
+}
+
+typedef struct tl_nwindow {
+    atomic_int refs;
+    int width, height, format;
+    void *layer;
+} tl_nwindow;
+static tl_nwindow g_window = {1, 1080, 2400, 1, NULL};
+
+void tl_nwindow_configure(int w, int h, void *layer)
+{
+    g_window.width = w;
+    g_window.height = h;
+    g_window.layer = layer;
+}
+void *tl_nwindow_get(void)
+{
+    atomic_fetch_add(&g_window.refs, 1);
+    return &g_window;
+}
+void *tl_nwindow_native(void *window)
+{
+    return window ? ((tl_nwindow *)window)->layer : NULL;
+}
+int tl_nwindow_width(void *window)
+{
+    return window ? ((tl_nwindow *)window)->width : 0;
+}
+int tl_nwindow_height(void *window)
+{
+    return window ? ((tl_nwindow *)window)->height : 0;
+}
+
+static void *b_ANativeWindow_fromSurface(void *env, void *surface)
+{
+    (void)env;
+    (void)surface;
+    atomic_fetch_add(&g_window.refs, 1);
+    return &g_window;
+}
+static void b_ANativeWindow_acquire(tl_nwindow *w)
+{
+    if (w)
+        atomic_fetch_add(&w->refs, 1);
+}
+static void b_ANativeWindow_release(tl_nwindow *w)
+{
+    if (w)
+        atomic_fetch_sub(&w->refs, 1);
+}
+static int b_ANativeWindow_getWidth(tl_nwindow *w)
+{
+    return w ? w->width : 0;
+}
+static int b_ANativeWindow_getHeight(tl_nwindow *w)
+{
+    return w ? w->height : 0;
+}
+static int b_ANativeWindow_getFormat(tl_nwindow *w)
+{
+    return w ? w->format : 0;
+}
+static int b_ANativeWindow_setBuffersGeometry(tl_nwindow *w, int width, int height, int format)
+{
+    (void)width;
+    (void)height;
+    (void)format;
+    (void)w;
+    return 0;
+}
+static void *b_ANativeWindow_toSurface(void *env, void *w)
+{
+    (void)env;
+    (void)w;
+    return NULL;
+}
 
 /* ---------------------------------------------------------------- sensors */
 
-static void *b_ASensorManager_getInstance(void) { static int m; return &m; }
-static void *b_ASensorManager_getDefaultSensor(void *m, int type) { (void)m; (void)type; return NULL; }
-static int b_ASensorManager_getSensorList(void *m, const void ***list) { (void)m; if (list) *list = NULL; return 0; }
+static void *b_ASensorManager_getInstance(void)
+{
+    static int m;
+    return &m;
+}
+static void *b_ASensorManager_getDefaultSensor(void *m, int type)
+{
+    (void)m;
+    (void)type;
+    return NULL;
+}
+static int b_ASensorManager_getSensorList(void *m, const void ***list)
+{
+    (void)m;
+    if (list)
+        *list = NULL;
+    return 0;
+}
 static void *b_ASensorManager_createEventQueue(void *m, void *looper, int ident, void *cb, void *data)
 {
-    (void)m; (void)looper; (void)ident; (void)cb; (void)data;
-    static int q; return &q;
+    (void)m;
+    (void)looper;
+    (void)ident;
+    (void)cb;
+    (void)data;
+    static int q;
+    return &q;
 }
-static int b_ASensorManager_destroyEventQueue(void *m, void *q) { (void)m; (void)q; return 0; }
-static int b_ASensorEventQueue_enableSensor(void *q, void *s) { (void)q; (void)s; return -1; }
-static int b_ASensorEventQueue_disableSensor(void *q, void *s) { (void)q; (void)s; return -1; }
-static int b_ASensorEventQueue_setEventRate(void *q, void *s, int us) { (void)q; (void)s; (void)us; return -1; }
-static int b_ASensorEventQueue_hasEvents(void *q) { (void)q; return 0; }
-static long b_ASensorEventQueue_getEvents(void *q, void *ev, size_t n) { (void)q; (void)ev; (void)n; return 0; }
-static const char *b_ASensor_getName(void *s) { (void)s; return ""; }
-static const char *b_ASensor_getVendor(void *s) { (void)s; return ""; }
-static int b_ASensor_getType(void *s) { (void)s; return 0; }
-static float b_ASensor_getResolution(void *s) { (void)s; return 0.f; }
-static int b_ASensor_getMinDelay(void *s) { (void)s; return 0; }
+static int b_ASensorManager_destroyEventQueue(void *m, void *q)
+{
+    (void)m;
+    (void)q;
+    return 0;
+}
+static int b_ASensorEventQueue_enableSensor(void *q, void *s)
+{
+    (void)q;
+    (void)s;
+    return -1;
+}
+static int b_ASensorEventQueue_disableSensor(void *q, void *s)
+{
+    (void)q;
+    (void)s;
+    return -1;
+}
+static int b_ASensorEventQueue_setEventRate(void *q, void *s, int us)
+{
+    (void)q;
+    (void)s;
+    (void)us;
+    return -1;
+}
+static int b_ASensorEventQueue_hasEvents(void *q)
+{
+    (void)q;
+    return 0;
+}
+static long b_ASensorEventQueue_getEvents(void *q, void *ev, size_t n)
+{
+    (void)q;
+    (void)ev;
+    (void)n;
+    return 0;
+}
+static const char *b_ASensor_getName(void *s)
+{
+    (void)s;
+    return "";
+}
+static const char *b_ASensor_getVendor(void *s)
+{
+    (void)s;
+    return "";
+}
+static int b_ASensor_getType(void *s)
+{
+    (void)s;
+    return 0;
+}
+static float b_ASensor_getResolution(void *s)
+{
+    (void)s;
+    return 0.f;
+}
+static int b_ASensor_getMinDelay(void *s)
+{
+    (void)s;
+    return 0;
+}
 
 /* ------------------------------------------------------------ media (none) */
 
 #define MEDIA_ERR (-10000)
-static void *b_media_null(void) { tl_note_once("libmediandk: media decoding is not provided (returning NULL)"); return NULL; }
-static int b_media_err(void) { return MEDIA_ERR; }
-static int b_media_zero(void) { return 0; }
+static void *b_media_null(void)
+{
+    tl_note_once("libmediandk: media decoding is not provided (returning NULL)");
+    return NULL;
+}
+static int b_media_err(void)
+{
+    return MEDIA_ERR;
+}
+static int b_media_zero(void)
+{
+    return 0;
+}
 
 #define KEY(sym, text) static const char *g_##sym = text;
-KEY(AMEDIAFORMAT_KEY_CHANNEL_COUNT, "channel-count") KEY(AMEDIAFORMAT_KEY_COLOR_FORMAT, "color-format")
-KEY(AMEDIAFORMAT_KEY_COLOR_RANGE, "color-range") KEY(AMEDIAFORMAT_KEY_COLOR_STANDARD, "color-standard")
-KEY(AMEDIAFORMAT_KEY_DURATION, "durationUs") KEY(AMEDIAFORMAT_KEY_ENCODER_DELAY, "encoder-delay")
-KEY(AMEDIAFORMAT_KEY_FRAME_RATE, "frame-rate") KEY(AMEDIAFORMAT_KEY_HEIGHT, "height")
-KEY(AMEDIAFORMAT_KEY_LANGUAGE, "language") KEY(AMEDIAFORMAT_KEY_MIME, "mime")
-KEY(AMEDIAFORMAT_KEY_ROTATION, "rotation-degrees") KEY(AMEDIAFORMAT_KEY_SAMPLE_RATE, "sample-rate")
-KEY(AMEDIAFORMAT_KEY_SLICE_HEIGHT, "slice-height") KEY(AMEDIAFORMAT_KEY_STRIDE, "stride")
+KEY(AMEDIAFORMAT_KEY_CHANNEL_COUNT, "channel-count")
+KEY(AMEDIAFORMAT_KEY_COLOR_FORMAT, "color-format")
+KEY(AMEDIAFORMAT_KEY_COLOR_RANGE, "color-range")
+KEY(AMEDIAFORMAT_KEY_COLOR_STANDARD, "color-standard")
+KEY(AMEDIAFORMAT_KEY_DURATION, "durationUs")
+KEY(AMEDIAFORMAT_KEY_ENCODER_DELAY, "encoder-delay")
+KEY(AMEDIAFORMAT_KEY_FRAME_RATE, "frame-rate")
+KEY(AMEDIAFORMAT_KEY_HEIGHT, "height")
+KEY(AMEDIAFORMAT_KEY_LANGUAGE, "language")
+KEY(AMEDIAFORMAT_KEY_MIME, "mime")
+KEY(AMEDIAFORMAT_KEY_ROTATION, "rotation-degrees")
+KEY(AMEDIAFORMAT_KEY_SAMPLE_RATE, "sample-rate")
+KEY(AMEDIAFORMAT_KEY_SLICE_HEIGHT, "slice-height")
+KEY(AMEDIAFORMAT_KEY_STRIDE, "stride")
 KEY(AMEDIAFORMAT_KEY_WIDTH, "width")
 
-#define MEDIA_NULL(n)  TL_WRAP(n, b_media_null)
-#define MEDIA_ERRF(n)  TL_WRAP(n, b_media_err)
-#define MEDIA_DATA(n)  TL_DATA(#n, &g_##n)
+#define MEDIA_NULL(n) TL_WRAP(n, b_media_null)
+#define MEDIA_ERRF(n) TL_WRAP(n, b_media_err)
+#define MEDIA_DATA(n) TL_DATA(#n, &g_##n)
 
 const tl_bionic_entry tl_tab_ndk[] = {
     /* zlib */
@@ -644,5 +1282,4 @@ const tl_bionic_entry tl_tab_ndk[] = {
     MEDIA_DATA(AMEDIAFORMAT_KEY_FRAME_RATE), MEDIA_DATA(AMEDIAFORMAT_KEY_HEIGHT), MEDIA_DATA(AMEDIAFORMAT_KEY_LANGUAGE),
     MEDIA_DATA(AMEDIAFORMAT_KEY_MIME), MEDIA_DATA(AMEDIAFORMAT_KEY_ROTATION), MEDIA_DATA(AMEDIAFORMAT_KEY_SAMPLE_RATE),
     MEDIA_DATA(AMEDIAFORMAT_KEY_SLICE_HEIGHT), MEDIA_DATA(AMEDIAFORMAT_KEY_STRIDE), MEDIA_DATA(AMEDIAFORMAT_KEY_WIDTH),
-    TL_END
-};
+    TL_END};

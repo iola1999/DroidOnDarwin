@@ -6,7 +6,13 @@
 #include <sys/mman.h>
 #include <time.h>
 
-#define REQUIRE(c) do { if (!(c)) { fprintf(stderr, "compute failure: %s\n", #c); abort(); } } while (0)
+#define REQUIRE(c) \
+    do { \
+        if (!(c)) { \
+            fprintf(stderr, "compute failure: %s\n", #c); \
+            abort(); \
+        } \
+    } while (0)
 extern uint64_t native_work(uint64_t, uint64_t *, uint64_t);
 static uint64_t now(void)
 {
@@ -32,7 +38,8 @@ void nce_compute_benchmark(void)
         const uint64_t iterations = 4000000;
         NceState state = {.regs.sp = (uintptr_t)stack + 65536, .syscall = finish};
         REQUIRE(nce_prepare(code, &state, guest_image, sizeof(guest_image), GUEST_WORK) == 0);
-        state.regs.x[0] = iterations; state.regs.x[1] = (uintptr_t)&guest_data;
+        state.regs.x[0] = iterations;
+        state.regs.x[1] = (uintptr_t)&guest_data;
         uint64_t begin = now();
         uint64_t expected = native_work(iterations, &native_data, 0);
         uint64_t direct_ns = now() - begin;

@@ -11,7 +11,13 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
-#define CHECK(c) do { if (!(c)) { dprintf(2, "display-service:%d errno=%d: %s\n", __LINE__, errno, #c); _exit(115); } } while (0)
+#define CHECK(c) \
+    do { \
+        if (!(c)) { \
+            dprintf(2, "display-service:%d errno=%d: %s\n", __LINE__, errno, #c); \
+            _exit(115); \
+        } \
+    } while (0)
 
 static pid_t allocator, composer, surfaceflinger;
 

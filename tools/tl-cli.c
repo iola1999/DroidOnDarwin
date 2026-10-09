@@ -10,7 +10,7 @@
 typedef struct {
     uint8_t *rw_addr;
     uint8_t *rx_addr;
-    size_t   size;
+    size_t size;
 } tl_dual_mapping;
 
 static tl_dual_mapping g_cli_dual = {0};
@@ -73,7 +73,7 @@ int main(int argc, char **argv)
                (long long)(g_cli_dual.rw_addr - g_cli_dual.rx_addr));
     }
 
-    const char *apks[] = { apk_path };
+    const char *apks[] = {apk_path};
     printf("=== Starting Husk Translation Layer Attempt ===\n");
     printf("Target APK: %s\n", apk_path);
 

@@ -69,9 +69,9 @@ char *husk_tl_run_checks(bool may_execute);
  * husk_tl_attempt_stop() asks for an early end, and husk_tl_attempt_reset()
  * frees everything after a finished run.
  */
-int  husk_tl_attempt_start(const char *const *apks, int count, int seconds);
+int husk_tl_attempt_start(const char *const *apks, int count, int seconds);
 bool husk_tl_attempt_done(int *exit_code);
-int  husk_tl_attempt_frames(void);
+int husk_tl_attempt_frames(void);
 char *husk_tl_attempt_log(void);
 void husk_tl_attempt_stop(void);
 void husk_tl_attempt_reset(void);
@@ -94,12 +94,12 @@ void husk_tl_frame_release(int token);
 
 /* How the last couple of seconds went, from the frame pump's own counters. */
 typedef struct husk_tl_perf {
-    double fps;        /* frames the guest produced per second */
-    double logic_ms;   /* mean per frame: input, deferred tasks, the app's doFrame */
-    double render_ms;  /* mean per frame: the app's onDraw, draw calls included */
-    double draw_ms;    /* of which, inside the canvas draw calls */
-    double draws;      /* mean canvas draw calls per frame */
-    double late_pct;   /* percent of frames that missed their deadline */
+    double fps; /* frames the guest produced per second */
+    double logic_ms; /* mean per frame: input, deferred tasks, the app's doFrame */
+    double render_ms; /* mean per frame: the app's onDraw, draw calls included */
+    double draw_ms; /* of which, inside the canvas draw calls */
+    double draws; /* mean canvas draw calls per frame */
+    double late_pct; /* percent of frames that missed their deadline */
 } husk_tl_perf;
 void husk_tl_perf_snapshot(husk_tl_perf *out);
 

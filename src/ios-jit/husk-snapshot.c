@@ -56,7 +56,7 @@
  */
 static strList husk_snapshot_devices = {
     .value = (char *)HUSK_VMSTATE_NODE,
-    .next  = NULL,
+    .next = NULL,
 };
 
 /*

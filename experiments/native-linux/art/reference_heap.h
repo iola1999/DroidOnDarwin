@@ -23,7 +23,8 @@ __attribute__((noreturn)) void nce_art_invalid_reference(const void *pointer);
 /* 零保留为空引用；越界指针必须在截断前终止。 */
 static inline uint32_t nce_art_encode_reference(const void *pointer)
 {
-    if (!pointer) return 0;
+    if (!pointer)
+        return 0;
     uintptr_t offset = (uintptr_t)pointer - nce_art_reference_base;
     if (!nce_art_reference_base || !offset || offset > UINT32_MAX)
         nce_art_invalid_reference(pointer);

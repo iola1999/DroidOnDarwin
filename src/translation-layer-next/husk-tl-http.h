@@ -21,22 +21,30 @@ typedef struct tl_http_request {
     const char *url, *method;
     int nheaders;
     const char *const *header_names, *const *header_values;
-    const uint8_t *body; size_t body_len;
-    int timeout_ms;                       /* 0: no limit of its own */
-    bool follow_redirects;                /* follow up to 10 redirects, as OkHttp does; otherwise the 3xx itself is the answer */
+    const uint8_t *body;
+    size_t body_len;
+    int timeout_ms; /* 0: no limit of its own */
+    bool follow_redirects; /* follow up to 10 redirects, as OkHttp does; otherwise the 3xx itself is the answer */
 } tl_http_request;
 
 /* What went wrong, in the terms Unity's UnityWebRequest uses. */
-enum { TL_HTTP_OK = 0, TL_HTTP_SDK = 2, TL_HTTP_MALFORMED_URL = 5, TL_HTTP_UNKNOWN_HOST = 7, TL_HTTP_READ = 12, TL_HTTP_TIMEOUT = 14,
-       TL_HTTP_SSL = 16, TL_HTTP_SSL_UNTRUSTED = 25 };
+enum { TL_HTTP_OK = 0,
+       TL_HTTP_SDK = 2,
+       TL_HTTP_MALFORMED_URL = 5,
+       TL_HTTP_UNKNOWN_HOST = 7,
+       TL_HTTP_READ = 12,
+       TL_HTTP_TIMEOUT = 14,
+       TL_HTTP_SSL = 16,
+       TL_HTTP_SSL_UNTRUSTED = 25 };
 
 typedef struct tl_http_response {
-    int error;                            /* TL_HTTP_OK, or one of the above */
+    int error; /* TL_HTTP_OK, or one of the above */
     char message[256];
     int status;
     int nheaders;
     char **header_names, **header_values; /* the first is "Status": the status line */
-    uint8_t *body; size_t body_len;
+    uint8_t *body;
+    size_t body_len;
 } tl_http_response;
 
 bool tl_http_perform(const tl_http_request *req, tl_http_response *out);

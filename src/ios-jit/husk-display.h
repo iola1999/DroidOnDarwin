@@ -29,12 +29,12 @@ extern "C" {
 
 typedef struct HuskFrameInfo {
     const void *pixels;
-    int32_t  width;
-    int32_t  height;
-    int32_t  stride;      /* bytes per row */
-    uint32_t bpp;         /* bits per pixel; 32 in every case we care about */
-    uint64_t generation;  /* bumps whenever the surface is replaced (resize) */
-    uint64_t sequence;    /* bumps on every guest draw */
+    int32_t width;
+    int32_t height;
+    int32_t stride; /* bytes per row */
+    uint32_t bpp; /* bits per pixel; 32 in every case we care about */
+    uint64_t generation; /* bumps whenever the surface is replaced (resize) */
+    uint64_t sequence; /* bumps on every guest draw */
 } HuskFrameInfo;
 
 /*

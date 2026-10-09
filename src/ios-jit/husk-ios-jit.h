@@ -57,9 +57,9 @@ extern "C" {
 #define HUSK_EXPORT __attribute__((visibility("default")))
 
 typedef struct HuskDualMapping {
-    uint8_t *rw_addr;   /* writable alias  -- emit code here            */
-    uint8_t *rx_addr;   /* executable alias -- branch here              */
-    size_t   size;
+    uint8_t *rw_addr; /* writable alias  -- emit code here            */
+    uint8_t *rx_addr; /* executable alias -- branch here              */
+    size_t size;
 } HuskDualMapping;
 
 /*

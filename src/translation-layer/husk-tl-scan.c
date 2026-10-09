@@ -17,11 +17,18 @@
 #include <string.h>
 
 /* No native library is anywhere near this; a bigger entry is not one. */
-#define LIB_LIMIT       ((size_t)1 << 31)
-#define HUGE_LIB        ((size_t)192 << 20)
+#define LIB_LIMIT ((size_t)1 << 31)
+#define HUGE_LIB ((size_t)192 << 20)
 
 static const char *const kAbis[] = {
-    "arm64-v8a", "armeabi-v7a", "armeabi", "x86_64", "x86", "riscv64", "mips64", "mips",
+    "arm64-v8a",
+    "armeabi-v7a",
+    "armeabi",
+    "x86_64",
+    "x86",
+    "riscv64",
+    "mips64",
+    "mips",
 };
 #define NABIS (sizeof(kAbis) / sizeof(kAbis[0]))
 #define ABI_ARM64 0
@@ -42,8 +49,7 @@ static int lib_abi(const char *path, const char **file)
         return -1;
     }
     for (size_t i = 0; i < NABIS; i++) {
-        if ((size_t)(slash - abi) == strlen(kAbis[i])
-            && strncmp(abi, kAbis[i], (size_t)(slash - abi)) == 0) {
+        if ((size_t)(slash - abi) == strlen(kAbis[i]) && strncmp(abi, kAbis[i], (size_t)(slash - abi)) == 0) {
             *file = slash + 1;
             return (int)i;
         }
@@ -70,50 +76,82 @@ typedef struct engine_scan {
 
 static void note_engine(engine_scan *s, const char *f)
 {
-    if (!strcmp(f, "libil2cpp.so")) s->il2cpp = true;
-    else if (!strcmp(f, "libunity.so")) s->unity = true;
-    else if (!strcmp(f, "libmonobdwgc-2.0.so") || !strcmp(f, "libmono.so")) s->mono_unity = true;
-    else if (!strcmp(f, "libflutter.so")) s->flutter = true;
-    else if (!strcmp(f, "libreactnativejni.so") || !strcmp(f, "libhermes.so")) s->react = true;
-    else if (!strcmp(f, "libmonosgen-2.0.so") || !strcmp(f, "libmonodroid.so")) s->dotnet = true;
-    else if (!strcmp(f, "libgodot_android.so")) s->godot = true;
-    else if (!strcmp(f, "libUE4.so") || !strcmp(f, "libUnreal.so")) s->unreal = true;
-    else if (!strncmp(f, "libcocos", 8)) s->cocos = true;
-    else if (!strcmp(f, "libgdx.so")) s->gdx = true;
-    else if (!strcmp(f, "libminecraftpe.so")) s->minecraft = true;
-    else if (!strcmp(f, "libSDL3.so")) s->sdl = true;
-    else if (!strcmp(f, "libSDL2.so")) s->sdl2 = true;
-    else if (!strcmp(f, "libmain.so")) s->mainlib = true;
-    else if (!strcmp(f, "libGame.so")) s->rockstar_game = true;
-    else if (!strcmp(f, "libopenal.so")) s->openal = true;
-    else if (!strcmp(f, "libVendor_mpg123.so")) s->mpg123 = true;
+    if (!strcmp(f, "libil2cpp.so"))
+        s->il2cpp = true;
+    else if (!strcmp(f, "libunity.so"))
+        s->unity = true;
+    else if (!strcmp(f, "libmonobdwgc-2.0.so") || !strcmp(f, "libmono.so"))
+        s->mono_unity = true;
+    else if (!strcmp(f, "libflutter.so"))
+        s->flutter = true;
+    else if (!strcmp(f, "libreactnativejni.so") || !strcmp(f, "libhermes.so"))
+        s->react = true;
+    else if (!strcmp(f, "libmonosgen-2.0.so") || !strcmp(f, "libmonodroid.so"))
+        s->dotnet = true;
+    else if (!strcmp(f, "libgodot_android.so"))
+        s->godot = true;
+    else if (!strcmp(f, "libUE4.so") || !strcmp(f, "libUnreal.so"))
+        s->unreal = true;
+    else if (!strncmp(f, "libcocos", 8))
+        s->cocos = true;
+    else if (!strcmp(f, "libgdx.so"))
+        s->gdx = true;
+    else if (!strcmp(f, "libminecraftpe.so"))
+        s->minecraft = true;
+    else if (!strcmp(f, "libSDL3.so"))
+        s->sdl = true;
+    else if (!strcmp(f, "libSDL2.so"))
+        s->sdl2 = true;
+    else if (!strcmp(f, "libmain.so"))
+        s->mainlib = true;
+    else if (!strcmp(f, "libGame.so"))
+        s->rockstar_game = true;
+    else if (!strcmp(f, "libopenal.so"))
+        s->openal = true;
+    else if (!strcmp(f, "libVendor_mpg123.so"))
+        s->mpg123 = true;
 }
 
 static const char *engine_name(const engine_scan *s)
 {
     /* Rockstar's GTA port: libGame with its own OpenAL and mpg123 (a Flutter shell around it would otherwise make it look like a Flutter app). */
-    if (s->rockstar_game && s->openal && s->mpg123) return "Rockstar";
-    if (s->il2cpp) return "Unity (IL2CPP)";
-    if (s->unity) return s->mono_unity ? "Unity (Mono)" : "Unity";
-    if (s->flutter) return "Flutter";
-    if (s->react) return "React Native";
-    if (s->dotnet) return ".NET / Xamarin";
-    if (s->godot) return "Godot";
-    if (s->unreal) return "Unreal Engine";
-    if (s->cocos) return "Cocos";
-    if (s->minecraft) return "Minecraft";
+    if (s->rockstar_game && s->openal && s->mpg123)
+        return "Rockstar";
+    if (s->il2cpp)
+        return "Unity (IL2CPP)";
+    if (s->unity)
+        return s->mono_unity ? "Unity (Mono)" : "Unity";
+    if (s->flutter)
+        return "Flutter";
+    if (s->react)
+        return "React Native";
+    if (s->dotnet)
+        return ".NET / Xamarin";
+    if (s->godot)
+        return "Godot";
+    if (s->unreal)
+        return "Unreal Engine";
+    if (s->cocos)
+        return "Cocos";
+    if (s->minecraft)
+        return "Minecraft";
     /* SDL 2 is told by the pair its Java shell always loads: libSDL2 and the game's own libmain (SDL 3 games ship libSDL3 alone, as it is the only SDL there). */
-    if (s->sdl || (s->sdl2 && s->mainlib) || s->sdl_symbols) return "SDL";
-    if (s->gdx) return "libGDX";
+    if (s->sdl || (s->sdl2 && s->mainlib) || s->sdl_symbols)
+        return "SDL";
+    if (s->gdx)
+        return "libGDX";
     /* A game that is only a NativeActivity library of its own (sokol, android_native_app_glue): the runtime drives the activity itself. */
-    if (s->native_activity) return "NativeActivity";
+    if (s->native_activity)
+        return "NativeActivity";
     return NULL;
 }
 
 static const char *lib_status(const tl_elf_report *r)
 {
-    if (!r->ok || r->relocs_unsupported) return "blocked";
-    if (r->pages_conflict || r->svc || r->textrel || r->tpidr_writes) return "work";
+    if (!r->ok || r->relocs_unsupported)
+        return "blocked";
+    if (r->pages_conflict || r->svc || r->textrel || r->tpidr_writes)
+        return "work";
     return "ok";
 }
 
@@ -136,17 +174,21 @@ static void write_notes(tl_json *j, const tl_elf_report *r)
         tl_json_string(j, r->error);
     } else {
         if (r->pages_conflict) {
-            note(j, "%u page%s would have to be executable and writable at once: it was "
-                    "built for 4 KiB pages, so code and data share 16 KiB ones. Needs write "
-                    "emulation in the loader, or a build with 16 KiB alignment.",
+            note(j,
+                 "%u page%s would have to be executable and writable at once: it was "
+                 "built for 4 KiB pages, so code and data share 16 KiB ones. Needs write "
+                 "emulation in the loader, or a build with 16 KiB alignment.",
                  r->pages_conflict, r->pages_conflict == 1 ? "" : "s");
         } else if (r->max_align < 16384) {
-            tl_json_string(j, "Built for 4 KiB pages, but no 16 KiB page mixes code with "
-                              "writable data, so it still maps.");
+            tl_json_string(j,
+                           "Built for 4 KiB pages, but no 16 KiB page mixes code with "
+                           "writable data, so it still maps.");
         }
         if (r->svc) {
-            note(j, "Makes %u direct Linux system call%s, which iOS would not understand; "
-                    "each needs patching at load time.", r->svc, r->svc == 1 ? "" : "s");
+            note(j,
+                 "Makes %u direct Linux system call%s, which iOS would not understand; "
+                 "each needs patching at load time.",
+                 r->svc, r->svc == 1 ? "" : "s");
         }
         if (r->tpidr_writes) {
             note(j, "Sets the thread register itself in %u place%s.", r->tpidr_writes,
@@ -168,31 +210,54 @@ static void write_library(tl_json *j, const char *apk, int abi, const char *file
                           const tl_zip_entry *e, const tl_elf_report *r)
 {
     tl_json_begin_object(j);
-    tl_json_key(j, "name");         tl_json_string(j, file);
-    tl_json_key(j, "abi");          tl_json_string(j, kAbis[abi]);
-    tl_json_key(j, "apk");          tl_json_string(j, apk);
-    tl_json_key(j, "bytes");        tl_json_int(j, (long long)e->usize);
-    tl_json_key(j, "compressed");   tl_json_bool(j, e->method != 0);
-    tl_json_key(j, "status");       tl_json_string(j, lib_status(r));
+    tl_json_key(j, "name");
+    tl_json_string(j, file);
+    tl_json_key(j, "abi");
+    tl_json_string(j, kAbis[abi]);
+    tl_json_key(j, "apk");
+    tl_json_string(j, apk);
+    tl_json_key(j, "bytes");
+    tl_json_int(j, (long long)e->usize);
+    tl_json_key(j, "compressed");
+    tl_json_bool(j, e->method != 0);
+    tl_json_key(j, "status");
+    tl_json_string(j, lib_status(r));
     write_notes(j, r);
     if (r->ok) {
-        tl_json_key(j, "maxAlign");         tl_json_int(j, (long long)r->max_align);
-        tl_json_key(j, "pages");            tl_json_int(j, r->pages);
-        tl_json_key(j, "execPages");        tl_json_int(j, r->pages_exec);
-        tl_json_key(j, "writePages");       tl_json_int(j, r->pages_write);
-        tl_json_key(j, "conflictPages");    tl_json_int(j, r->pages_conflict);
-        tl_json_key(j, "layout");           tl_json_string(j, r->layout);
-        tl_json_key(j, "svc");              tl_json_int(j, r->svc);
-        tl_json_key(j, "tpidrReads");       tl_json_int(j, r->tpidr_reads);
-        tl_json_key(j, "tpidrWrites");      tl_json_int(j, r->tpidr_writes);
-        tl_json_key(j, "tls");              tl_json_bool(j, r->has_tls);
-        tl_json_key(j, "textrel");          tl_json_bool(j, r->textrel);
-        tl_json_key(j, "relocations");      tl_json_int(j, r->relocs);
-        tl_json_key(j, "tlsRelocations");   tl_json_int(j, r->relocs_tls);
-        tl_json_key(j, "unsupportedRelocations"); tl_json_int(j, r->relocs_unsupported);
-        tl_json_key(j, "packing");          tl_json_string(j, r->packing);
-        tl_json_key(j, "imports");          tl_json_int(j, r->imports);
-        tl_json_key(j, "soname");           tl_json_string(j, r->soname[0] ? r->soname : NULL);
+        tl_json_key(j, "maxAlign");
+        tl_json_int(j, (long long)r->max_align);
+        tl_json_key(j, "pages");
+        tl_json_int(j, r->pages);
+        tl_json_key(j, "execPages");
+        tl_json_int(j, r->pages_exec);
+        tl_json_key(j, "writePages");
+        tl_json_int(j, r->pages_write);
+        tl_json_key(j, "conflictPages");
+        tl_json_int(j, r->pages_conflict);
+        tl_json_key(j, "layout");
+        tl_json_string(j, r->layout);
+        tl_json_key(j, "svc");
+        tl_json_int(j, r->svc);
+        tl_json_key(j, "tpidrReads");
+        tl_json_int(j, r->tpidr_reads);
+        tl_json_key(j, "tpidrWrites");
+        tl_json_int(j, r->tpidr_writes);
+        tl_json_key(j, "tls");
+        tl_json_bool(j, r->has_tls);
+        tl_json_key(j, "textrel");
+        tl_json_bool(j, r->textrel);
+        tl_json_key(j, "relocations");
+        tl_json_int(j, r->relocs);
+        tl_json_key(j, "tlsRelocations");
+        tl_json_int(j, r->relocs_tls);
+        tl_json_key(j, "unsupportedRelocations");
+        tl_json_int(j, r->relocs_unsupported);
+        tl_json_key(j, "packing");
+        tl_json_string(j, r->packing);
+        tl_json_key(j, "imports");
+        tl_json_int(j, r->imports);
+        tl_json_key(j, "soname");
+        tl_json_string(j, r->soname[0] ? r->soname : NULL);
         tl_json_key(j, "needed");
         tl_json_begin_array(j);
         for (int i = 0; i < r->needed_count; i++) {
@@ -207,13 +272,14 @@ static void write_library(tl_json *j, const char *apk, int abi, const char *file
  * to provide it. Kept as a small set of names. */
 typedef struct nameset {
     char names[96][64];
-    int  count;
+    int count;
 } nameset;
 
 static void nameset_add(nameset *s, const char *name)
 {
     for (int i = 0; i < s->count; i++) {
-        if (!strcmp(s->names[i], name)) return;
+        if (!strcmp(s->names[i], name))
+            return;
     }
     if (s->count < (int)(sizeof(s->names) / sizeof(s->names[0]))) {
         snprintf(s->names[s->count++], sizeof(s->names[0]), "%s", name);
@@ -223,7 +289,8 @@ static void nameset_add(nameset *s, const char *name)
 static bool nameset_has(const nameset *s, const char *name)
 {
     for (int i = 0; i < s->count; i++) {
-        if (!strcmp(s->names[i], name)) return true;
+        if (!strcmp(s->names[i], name))
+            return true;
     }
     return false;
 }
@@ -240,7 +307,7 @@ char *husk_tl_scan(const char *const *paths, int count)
     tl_json_init(&j);
     tl_json_begin_object(&j);
 
-    bool abis[NABIS] = { false };
+    bool abis[NABIS] = {false};
     long long dex_count = 0, dex_bytes = 0;
     bool manifest = false;
     int arm64_libs = 0, arm64_trouble = 0;
@@ -297,7 +364,8 @@ char *husk_tl_scan(const char *const *paths, int count)
                 rep->packing = "none";
             } else if (tl_zip_data(&z, e, LIB_LIMIT, &data, &len, &owned, derr, sizeof(derr))) {
                 tl_elf_analyze(data, len, rep);
-                if (owned) free((void *)data);
+                if (owned)
+                    free((void *)data);
             } else {
                 memset(rep, 0, sizeof(*rep));
                 rep->packing = "none";
@@ -306,8 +374,10 @@ char *husk_tl_scan(const char *const *paths, int count)
             for (int n = 0; n < rep->needed_count; n++) {
                 nameset_add(needed, rep->needed[n]);
             }
-            if (rep->exports_sdl_main) eng.sdl_symbols = true;
-            if (rep->exports_native_activity) eng.native_activity = true;
+            if (rep->exports_sdl_main)
+                eng.sdl_symbols = true;
+            if (rep->exports_native_activity)
+                eng.native_activity = true;
             arm64_libs++;
             if (strcmp(lib_status(rep), "ok") != 0) {
                 arm64_trouble++;
@@ -333,48 +403,65 @@ char *husk_tl_scan(const char *const *paths, int count)
         snprintf(summary, sizeof(summary), "This is not an app: it has no manifest and no code.");
     } else if (!any_native) {
         verdict = "java";
-        snprintf(summary, sizeof(summary), "No native code. Only the Java side of the "
+        snprintf(summary, sizeof(summary),
+                 "No native code. Only the Java side of the "
                  "translation layer is needed to run it.");
     } else if (abis[ABI_ARM64] && arm64_trouble > 0 && engine_name(&eng) && !strncmp(engine_name(&eng), "Unity", 5)) {
         /* The native runtime (src/translation-layer-next) handles what the per-library check flags. */
         verdict = "native";
-        snprintf(summary, sizeof(summary), "A Unity game: Husk's native runtime loads its %d arm64 libraries itself, "
-                 "including the %d that use tricks the older loader could not handle.", arm64_libs, arm64_trouble);
+        snprintf(summary, sizeof(summary),
+                 "A Unity game: Husk's native runtime loads its %d arm64 libraries itself, "
+                 "including the %d that use tricks the older loader could not handle.",
+                 arm64_libs, arm64_trouble);
     } else if (abis[ABI_ARM64] && arm64_trouble == 0) {
         verdict = "native";
-        snprintf(summary, sizeof(summary), "arm64 native code, and every library maps "
+        snprintf(summary, sizeof(summary),
+                 "arm64 native code, and every library maps "
                  "cleanly onto 16 KiB pages.");
     } else if (abis[ABI_ARM64]) {
         verdict = "nativeWithWork";
-        snprintf(summary, sizeof(summary), "arm64 native code, but %d of %d librar%s "
-                 "need%s extra work from the loader.", arm64_trouble, arm64_libs,
+        snprintf(summary, sizeof(summary),
+                 "arm64 native code, but %d of %d librar%s "
+                 "need%s extra work from the loader.",
+                 arm64_trouble, arm64_libs,
                  arm64_libs == 1 ? "y" : "ies", arm64_trouble == 1 ? "s" : "");
     } else {
         verdict = "noArm64";
         bool arm32 = abis[1] || abis[2], x86 = abis[3] || abis[4];
         if (arm32 && !x86) {
-            snprintf(summary, sizeof(summary), "Native code for 32-bit ARM only. iPhones "
+            snprintf(summary, sizeof(summary),
+                     "Native code for 32-bit ARM only. iPhones "
                      "cannot run 32-bit ARM code at all, so this would need a CPU emulator.");
         } else if (x86 && !arm32) {
-            snprintf(summary, sizeof(summary), "Native code for x86 only, which would "
+            snprintf(summary, sizeof(summary),
+                     "Native code for x86 only, which would "
                      "need an x86 translator such as FEXCore.");
         } else {
             snprintf(summary, sizeof(summary), "Native code, but none of it for arm64.");
         }
     }
 
-    tl_json_key(&j, "ok");          tl_json_bool(&j, !error[0]);
-    tl_json_key(&j, "error");       tl_json_string(&j, error[0] ? error : NULL);
-    tl_json_key(&j, "verdict");     tl_json_string(&j, verdict);
-    tl_json_key(&j, "summary");     tl_json_string(&j, summary);
-    tl_json_key(&j, "engine");      tl_json_string(&j, engine_name(&eng));
-    tl_json_key(&j, "hasManifest"); tl_json_bool(&j, manifest);
-    tl_json_key(&j, "dexCount");    tl_json_int(&j, dex_count);
-    tl_json_key(&j, "dexBytes");    tl_json_int(&j, dex_bytes);
+    tl_json_key(&j, "ok");
+    tl_json_bool(&j, !error[0]);
+    tl_json_key(&j, "error");
+    tl_json_string(&j, error[0] ? error : NULL);
+    tl_json_key(&j, "verdict");
+    tl_json_string(&j, verdict);
+    tl_json_key(&j, "summary");
+    tl_json_string(&j, summary);
+    tl_json_key(&j, "engine");
+    tl_json_string(&j, engine_name(&eng));
+    tl_json_key(&j, "hasManifest");
+    tl_json_bool(&j, manifest);
+    tl_json_key(&j, "dexCount");
+    tl_json_int(&j, dex_count);
+    tl_json_key(&j, "dexBytes");
+    tl_json_int(&j, dex_bytes);
     tl_json_key(&j, "abis");
     tl_json_begin_array(&j);
     for (size_t i = 0; i < NABIS; i++) {
-        if (abis[i]) tl_json_string(&j, kAbis[i]);
+        if (abis[i])
+            tl_json_string(&j, kAbis[i]);
     }
     tl_json_end_array(&j);
     /* What the app's own libraries link against that it does not ship. */
@@ -382,7 +469,8 @@ char *husk_tl_scan(const char *const *paths, int count)
     tl_json_begin_array(&j);
     if (needed && own) {
         for (int i = 0; i < needed->count; i++) {
-            if (!nameset_has(own, needed->names[i])) tl_json_string(&j, needed->names[i]);
+            if (!nameset_has(own, needed->names[i]))
+                tl_json_string(&j, needed->names[i]);
         }
     }
     tl_json_end_array(&j);

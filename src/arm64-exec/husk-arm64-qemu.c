@@ -31,8 +31,14 @@ typedef struct {
     uint64_t system_operations;
     unsigned profile_phase;
     int64_t profile_last, profile_report, profile_ns[4];
-    struct { uint64_t page; unsigned entries; } warm_pages[1024];
-    struct { uintptr_t source; unsigned visits; } hot_pages[16384];
+    struct {
+        uint64_t page;
+        unsigned entries;
+    } warm_pages[1024];
+    struct {
+        uintptr_t source;
+        unsigned visits;
+    } hot_pages[16384];
     unsigned hot_threshold;
     bool cold_handoff;
     uint64_t cold_handoffs;
@@ -40,7 +46,8 @@ typedef struct {
 
 static bool husk_hot_code(HuskArm64Qemu *ctx, const void *host)
 {
-    if (!ctx->hot_threshold) return true;
+    if (!ctx->hot_threshold)
+        return true;
     uintptr_t source = (uintptr_t)host;
     unsigned slot = ((source >> 12) ^ (source >> 26)) & (ARRAY_SIZE(ctx->hot_pages) - 1);
     if (ctx->hot_pages[slot].source != source) {
@@ -61,11 +68,14 @@ static bool husk_hot_code(HuskArm64Qemu *ctx, const void *host)
  * waits and host scheduling; Direct includes compilation and its callbacks. */
 static void husk_profile_phase(HuskArm64Qemu *ctx, unsigned phase)
 {
-    if (!ctx->profile) return;
+    if (!ctx->profile)
+        return;
     struct timespec time;
-    if (clock_gettime(CLOCK_THREAD_CPUTIME_ID, &time)) return;
+    if (clock_gettime(CLOCK_THREAD_CPUTIME_ID, &time))
+        return;
     int64_t now = (int64_t)time.tv_sec * 1000000000 + time.tv_nsec;
-    if (ctx->profile_last) ctx->profile_ns[ctx->profile_phase] += now - ctx->profile_last;
+    if (ctx->profile_last)
+        ctx->profile_ns[ctx->profile_phase] += now - ctx->profile_last;
     ctx->profile_last = now;
     ctx->profile_phase = phase;
     if (now - ctx->profile_report > 5000000000LL) {
@@ -86,7 +96,8 @@ bool arm_husk_dispatch(CPUState *cs)
 {
     ARMCPU *cpu = ARM_CPU(cs);
     HuskArm64Qemu *ctx = cpu->husk_exec;
-    if (!ctx || !ctx->poll_dispatch) return false;
+    if (!ctx || !ctx->poll_dispatch)
+        return false;
     unsigned el = arm_current_el(&cpu->env);
     bool changed = ctx->last_el != el;
     ctx->last_el = el;
@@ -95,7 +106,8 @@ bool arm_husk_dispatch(CPUState *cs)
     }
     /* TCG's indirect chaining can bypass cpu_exec_loop for an entire user
      * workload. Poll there in batches, and on a return from kernel execution. */
-    if (!changed && (++ctx->dispatch_polls & 63)) return false;
+    if (!changed && (++ctx->dispatch_polls & 63))
+        return false;
     return qemu_clock_get_ns(QEMU_CLOCK_REALTIME) >= ctx->resume_after_ns[el != 0];
 }
 
@@ -114,17 +126,34 @@ static bool husk_tcg_bridge(uint32_t insn, unsigned el)
     /* Keep QEMU's PAUTH, BTI and system-register semantics. These short
      * sequences otherwise stop Direct at nearly every function boundary. */
     switch (insn) {
-    case 0xd503211f: case 0xd503215f: case 0xd503219f: case 0xd50321df:
-    case 0xd503231f: case 0xd503233f: case 0xd503235f: case 0xd503237f:
-    case 0xd503239f: case 0xd50323bf: case 0xd50323df: case 0xd50323ff:
-    case 0xd503241f: case 0xd503245f: case 0xd503249f: case 0xd50324df:
-    case 0xd65f0bff: case 0xd65f0fff: return true;
+        case 0xd503211f:
+        case 0xd503215f:
+        case 0xd503219f:
+        case 0xd50321df:
+        case 0xd503231f:
+        case 0xd503233f:
+        case 0xd503235f:
+        case 0xd503237f:
+        case 0xd503239f:
+        case 0xd50323bf:
+        case 0xd50323df:
+        case 0xd50323ff:
+        case 0xd503241f:
+        case 0xd503245f:
+        case 0xd503249f:
+        case 0xd50324df:
+        case 0xd65f0bff:
+        case 0xd65f0fff:
+            return true;
     }
     switch (insn & 0xffffffe0) {
-    case 0xd53be000: case 0xd53be020: case 0xd53be040:
-    case 0xd53be0a0: case 0xd53be0c0:
-        // QEMU retains counter frequency, offsets, virtual time and trap checks.
-        return true;
+        case 0xd53be000:
+        case 0xd53be020:
+        case 0xd53be040:
+        case 0xd53be0a0:
+        case 0xd53be0c0:
+            // QEMU retains counter frequency, offsets, virtual time and trap checks.
+            return true;
     }
     uint32_t branch = insn & 0xfffffc1f;
     return branch == 0xd61f0000 || branch == 0xd63f0000 ||
@@ -134,7 +163,7 @@ static bool husk_tcg_bridge(uint32_t insn, unsigned el)
 static void husk_one_tcg(CPUState *cs)
 {
     cs->cflags_next_tb = (curr_cflags(cs) & ~CF_COUNT_MASK) |
-                        1 | CF_NO_GOTO_TB | CF_NO_GOTO_PTR;
+                         1 | CF_NO_GOTO_TB | CF_NO_GOTO_PTR;
 }
 
 static bool husk_kernel_system(HuskArm64Qemu *ctx, uint32_t insn)
@@ -147,29 +176,36 @@ static bool husk_kernel_system(HuskArm64Qemu *ctx, uint32_t insn)
      * Return to the CPU loop after every operation so pending interrupts and
      * changed MMU/PAC controls are checked before the next native slice. */
     if ((insn & 0xfffff0df) == 0xd50340df) {
-        if (insn & 32) helper_msr_i_daifclear(env, (insn >> 8) & 15);
-        else helper_msr_i_daifset(env, (insn >> 8) & 15);
+        if (insn & 32)
+            helper_msr_i_daifclear(env, (insn >> 8) & 15);
+        else
+            helper_msr_i_daifset(env, (insn >> 8) & 15);
     } else {
-        if ((insn & 0xffd00000) != 0xd5100000) return false;
+        if ((insn & 0xffd00000) != 0xd5100000)
+            return false;
         unsigned crn = (insn >> 12) & 15;
-        if (crn == 11 || crn == 15) return false; // TIDCP has additional priority rules.
+        if (crn == 11 || crn == 15)
+            return false;  // TIDCP has additional priority rules.
         bool read = insn & (1U << 21);
         uint32_t key = ENCODE_AA64_CP_REG(CP_REG_ARM64_SYSREG_CP,
-            crn, (insn >> 8) & 15, (insn >> 19) & 3, (insn >> 16) & 7, (insn >> 5) & 7);
+                                          crn, (insn >> 8) & 15, (insn >> 19) & 3, (insn >> 16) & 7, (insn >> 5) & 7);
         const ARMCPRegInfo *ri = get_arm_cp_reginfo(env_archcpu(env)->cp_regs, key);
-        if (!ri || (ri->type & (ARM_CP_SPECIAL_MASK | ARM_CP_FPU | ARM_CP_SVE | ARM_CP_SME |
-                               ARM_CP_RAISES_EXC | ARM_CP_NEWEL)) ||
+        if (!ri || (ri->type & (ARM_CP_SPECIAL_MASK | ARM_CP_FPU | ARM_CP_SVE | ARM_CP_SME | ARM_CP_RAISES_EXC | ARM_CP_NEWEL)) ||
             !cp_access_ok(1, ri, read) ||
-            (ri->accessfn && ri->accessfn(env, ri, read) != CP_ACCESS_OK)) return false;
+            (ri->accessfn && ri->accessfn(env, ri, read) != CP_ACCESS_OK))
+            return false;
         unsigned reg = insn & 31;
         if (read) {
-            uint64_t value = ri->type & ARM_CP_CONST ? ri->resetvalue :
-                ri->readfn ? ri->readfn(env, ri) : *(uint64_t *)((char *)env + ri->fieldoffset);
-            if (reg != 31) env->xregs[reg] = value;
+            uint64_t value = ri->type & ARM_CP_CONST ? ri->resetvalue : ri->readfn ? ri->readfn(env, ri)
+                                                                                   : *(uint64_t *)((char *)env + ri->fieldoffset);
+            if (reg != 31)
+                env->xregs[reg] = value;
         } else if (!(ri->type & ARM_CP_CONST)) {
             uint64_t value = reg == 31 ? 0 : env->xregs[reg];
-            if (ri->writefn) ri->writefn(env, ri, value);
-            else *(uint64_t *)((char *)env + ri->fieldoffset) = value;
+            if (ri->writefn)
+                ri->writefn(env, ri, value);
+            else
+                *(uint64_t *)((char *)env + ri->fieldoffset) = value;
             arm_rebuild_hflags(env);
         }
     }
@@ -190,8 +226,8 @@ static bool husk_memory(HuskArm64Qemu *ctx, uint64_t addr, void *buffer,
         return false;
     }
     int flags = probe_access_flags(ctx->env, addr, size,
-                                  write ? MMU_DATA_STORE : MMU_DATA_LOAD,
-                                  arm_env_mmu_index(ctx->env), true, &host, 0);
+                                   write ? MMU_DATA_STORE : MMU_DATA_LOAD,
+                                   arm_env_mmu_index(ctx->env), true, &host, 0);
     if (flags || !host) {
         return false;
     }
@@ -224,8 +260,8 @@ static void *husk_map_page(void *opaque, uint64_t page, bool write)
     HuskArm64Qemu *ctx = opaque;
     void *host;
     int flags = probe_access_flags(ctx->env, page, 4096,
-                                  write ? MMU_DATA_STORE : MMU_DATA_LOAD,
-                                  arm_env_mmu_index(ctx->env), true, &host, 0);
+                                   write ? MMU_DATA_STORE : MMU_DATA_LOAD,
+                                   arm_env_mmu_index(ctx->env), true, &host, 0);
     if (flags || !host) {
         return NULL;
     }
@@ -233,7 +269,8 @@ static void *husk_map_page(void *opaque, uint64_t page, bool write)
         uintptr_t first = (uintptr_t)host;
         for (unsigned i = 0; i < ctx->code_count; ++i) {
             uintptr_t code = (uintptr_t)ctx->code_hosts[i];
-            if (first < code + 4096 && first + 4096 > code) return NULL;
+            if (first < code + 4096 && first + 4096 > code)
+                return NULL;
         }
     }
     return host;
@@ -254,14 +291,14 @@ static void *husk_bulk_tcg_page(void *opaque, uint64_t page, bool write)
     CPUARMState *env = opaque;
     void *host = NULL;
     int flags = probe_access_flags(env, page, 4096,
-                                  write ? MMU_DATA_STORE : MMU_DATA_LOAD,
-                                  arm_env_mmu_index(env), true, &host, 0);
+                                   write ? MMU_DATA_STORE : MMU_DATA_LOAD,
+                                   arm_env_mmu_index(env), true, &host, 0);
     return flags ? NULL : host;
 }
 
 void HELPER(husk_bulk)(CPUARMState *env)
 {
-    HuskArm64Memory memory = { .opaque = env, .map_page = husk_bulk_tcg_page };
+    HuskArm64Memory memory = {.opaque = env, .map_page = husk_bulk_tcg_page};
     env->xregs[8] = 1;
     if (husk_bulk_enabled() && arm_current_el(env) == 0 &&
         env->xregs[3] <= HUSK_BULK_SET &&
@@ -275,16 +312,19 @@ static const void *husk_map_code(void *opaque, uint64_t page)
     HuskArm64Qemu *ctx = opaque;
     void *host;
     int flags = probe_access_flags(ctx->env, page, 4096, MMU_INST_FETCH,
-                                  arm_env_mmu_index(ctx->env), true, &host, 0);
-    if (flags || !host) return NULL;
+                                   arm_env_mmu_index(ctx->env), true, &host, 0);
+    if (flags || !host)
+        return NULL;
     for (unsigned i = 0; i < ctx->code_count; ++i) {
-        if (ctx->code_hosts[i] == host) return host;
+        if (ctx->code_hosts[i] == host)
+            return host;
     }
     if (!husk_hot_code(ctx, host)) {
         ctx->cold_handoff = true;
         return NULL;
     }
-    if (ctx->code_count == ARRAY_SIZE(ctx->code_hosts)) return NULL;
+    if (ctx->code_count == ARRAY_SIZE(ctx->code_hosts))
+        return NULL;
     ctx->code_hosts[ctx->code_count++] = host;
     return host;
 }
@@ -317,7 +357,7 @@ static bool husk_mops_allowed(CPUARMState *env)
         enabled = !setting || strcmp(setting, "0");
     }
     return enabled && arm_husk_mops_allowed(env) &&
-        !EX_TBFLAG_A64(env->hflags, MTE_ACTIVE);
+           !EX_TBFLAG_A64(env->hflags, MTE_ACTIVE);
 }
 
 static bool husk_pauth_parameters(CPUARMState *env, HuskArm64Pauth *parameters)
@@ -349,7 +389,8 @@ static bool husk_pauth_parameters(CPUARMState *env, HuskArm64Pauth *parameters)
     for (unsigned upper = 0; upper < 2; ++upper) {
         ARMVAParameters va = aa64_va_parameters(env, (uint64_t)upper << 55, mmu, false, false);
         unsigned bottom = 64 - va.tsz, top = 64 - 8 * va.tbi;
-        if (bottom >= 55 || bottom >= top) return false;
+        if (bottom >= 55 || bottom >= top)
+            return false;
         uint64_t mask = MAKE_64BIT_MASK(bottom, top - bottom);
         parameters->keys[upper * 2] = (HuskArm64PauthKey){
             env->keys.apia.lo, env->keys.apia.hi, mask, !!(sctlr & SCTLR_EnIA), 0};
@@ -367,35 +408,41 @@ static HuskArm64Assist husk_assist(void *opaque, HuskArm64State *state, uint32_t
     uint64_t modifier = 0;
     uint32_t branch = insn & 0xfffffc1f;
     switch (insn & 0xffffffe0) {
-    case 0xd53be000: case 0xd53be020: case 0xd53be040:
-    case 0xd53be0a0: case 0xd53be0c0: {
-        /* Counter reads preserve mappings. Use QEMU's permission and virtual
+        case 0xd53be000:
+        case 0xd53be020:
+        case 0xd53be040:
+        case 0xd53be0a0:
+        case 0xd53be0c0: {
+            /* Counter reads preserve mappings. Use QEMU's permission and virtual
          * clock callbacks; unsupported/trapping contexts still execute in TCG. */
-        if (!ctx->system_reads || EX_TBFLAG_ANY(env->hflags, FGT_ACTIVE) ||
-            EX_TBFLAG_A64(env->hflags, NV)) return HUSK_ASSIST_DECLINED;
-        uint32_t key = ENCODE_AA64_CP_REG(CP_REG_ARM64_SYSREG_CP,
-            (insn >> 12) & 15, (insn >> 8) & 15, (insn >> 19) & 3,
-            (insn >> 16) & 7, (insn >> 5) & 7);
-        const ARMCPRegInfo *ri = get_arm_cp_reginfo(env_archcpu(env)->cp_regs, key);
-        if (!ri || !cp_access_ok(arm_current_el(env), ri, true) ||
-            (ri->accessfn && ri->accessfn(env, ri, true) != CP_ACCESS_OK))
-            return HUSK_ASSIST_DECLINED;
-        uint64_t value = ri->readfn ? ri->readfn(env, ri) :
-            *(uint64_t *)((char *)env + ri->fieldoffset);
-        if ((insn & 31) != 31) state->x[insn & 31] = value;
-        state->pc += 4;
-        return HUSK_ASSIST_CONTINUE;
-    }
+            if (!ctx->system_reads || EX_TBFLAG_ANY(env->hflags, FGT_ACTIVE) ||
+                EX_TBFLAG_A64(env->hflags, NV))
+                return HUSK_ASSIST_DECLINED;
+            uint32_t key = ENCODE_AA64_CP_REG(CP_REG_ARM64_SYSREG_CP,
+                                              (insn >> 12) & 15, (insn >> 8) & 15, (insn >> 19) & 3,
+                                              (insn >> 16) & 7, (insn >> 5) & 7);
+            const ARMCPRegInfo *ri = get_arm_cp_reginfo(env_archcpu(env)->cp_regs, key);
+            if (!ri || !cp_access_ok(arm_current_el(env), ri, true) ||
+                (ri->accessfn && ri->accessfn(env, ri, true) != CP_ACCESS_OK))
+                return HUSK_ASSIST_DECLINED;
+            uint64_t value = ri->readfn ? ri->readfn(env, ri) : *(uint64_t *)((char *)env + ri->fieldoffset);
+            if ((insn & 31) != 31)
+                state->x[insn & 31] = value;
+            state->pc += 4;
+            return HUSK_ASSIST_CONTINUE;
+        }
     }
     if (husk_arm64_mops_prologue(insn)) {
         if (!husk_mops_allowed(env) || (state->pc & 4095) > 4084)
             return HUSK_ASSIST_DECLINED;
         const uint8_t *page = husk_map_code(ctx, state->pc & ~UINT64_C(4095));
-        if (!page) return HUSK_ASSIST_DECLINED;
+        if (!page)
+            return HUSK_ASSIST_DECLINED;
         const uint8_t *code = page + (state->pc & 4095);
         uint32_t words[3] = {ldl_le_p(code), ldl_le_p(code + 4), ldl_le_p(code + 8)};
-        HuskArm64Memory memory = { .opaque = ctx, .map_page = husk_map_page };
-        if (!husk_arm64_mops(state, words, memory)) return HUSK_ASSIST_DECLINED;
+        HuskArm64Memory memory = {.opaque = ctx, .map_page = husk_map_page};
+        if (!husk_arm64_mops(state, words, memory))
+            return HUSK_ASSIST_DECLINED;
         if (!ctx->mops_started) {
             fprintf(stderr, "[husk-arm64] MOPS sequence assist active\n");
             ctx->mops_started = true;
@@ -403,7 +450,7 @@ static HuskArm64Assist husk_assist(void *opaque, HuskArm64State *state, uint32_t
         return HUSK_ASSIST_CONTINUE;
     }
     if (insn == HUSK_BULK_INSN) {
-        HuskArm64Memory memory = { .opaque = ctx, .map_page = husk_map_page };
+        HuskArm64Memory memory = {.opaque = ctx, .map_page = husk_map_page};
         state->x[8] = 1;
         if (husk_bulk_enabled() && arm_current_el(env) == 0 && state->x[3] <= HUSK_BULK_SET &&
             husk_arm64_bulk(state->x[0], state->x[1], state->x[2], state->x[3], memory))
@@ -417,43 +464,51 @@ static HuskArm64Assist husk_assist(void *opaque, HuskArm64State *state, uint32_t
         state->access_flags = (state->access_flags & ~HUSK_BTYPE_MASK) | (env->btype << HUSK_BTYPE_SHIFT);
         state->pc = env->pc;
         state->x[30] = env->xregs[30];
-        if (!ctx->chain_assist) return HUSK_ASSIST_BRANCH;
+        if (!ctx->chain_assist)
+            return HUSK_ASSIST_BRANCH;
         bool cache_call = branch == 0xd63f0000;
         bool cache_jump = branch == 0xd61f0000 && ((insn >> 5) & 31) != 31;
-        if (!env->btype) return cache_call ? HUSK_ASSIST_CHAIN_CALL :
-            cache_jump ? HUSK_ASSIST_CHAIN_JUMP : HUSK_ASSIST_CHAIN;
+        if (!env->btype)
+            return cache_call ? HUSK_ASSIST_CHAIN_CALL : cache_jump ? HUSK_ASSIST_CHAIN_JUMP
+                                                                    : HUSK_ASSIST_CHAIN;
         /* Validate BTI before Direct executes the first instruction. BTYPE
          * stays pending until that instruction completes successfully. */
         void *host = NULL;
         int flags = probe_access_flags(env, state->pc, 4, MMU_INST_FETCH,
-                                      arm_env_mmu_index(env), true, &host, 0);
-        if (flags || !host || (state->pc & 3)) return HUSK_ASSIST_BRANCH;
+                                       arm_env_mmu_index(env), true, &host, 0);
+        if (flags || !host || (state->pc & 3))
+            return HUSK_ASSIST_BRANCH;
         uint32_t landing = ldl_le_p(host);
         arm_husk_bti_check(env, landing);
         switch (landing) {
-        case 0xd503241f: case 0xd503245f: case 0xd503249f: case 0xd50324df:
-            break;
-        case 0xd503233f: case 0xd503237f:
-            if (ctx->landing && ctx->pauth_landing)
-                return cache_call ? HUSK_ASSIST_CHAIN_LANDING_CALL :
-                    cache_jump ? HUSK_ASSIST_CHAIN_LANDING_JUMP : HUSK_ASSIST_CHAIN;
-            cache_call = false;
-            cache_jump = false;
-            if (EX_TBFLAG_A64(env->hflags, PAUTH_ACTIVE)) {
-                state->x[30] = arm_husk_pauth(env, state->x[30], state->sp,
-                                             landing == 0xd503237f);
-            }
-            break;
-        default:
-            if (ctx->landing && husk_arm64_landing_supported(landing))
-                return cache_call ? HUSK_ASSIST_CHAIN_LANDING_CALL :
-                    cache_jump ? HUSK_ASSIST_CHAIN_LANDING_JUMP : HUSK_ASSIST_CHAIN;
-            return HUSK_ASSIST_BRANCH;
+            case 0xd503241f:
+            case 0xd503245f:
+            case 0xd503249f:
+            case 0xd50324df:
+                break;
+            case 0xd503233f:
+            case 0xd503237f:
+                if (ctx->landing && ctx->pauth_landing)
+                    return cache_call ? HUSK_ASSIST_CHAIN_LANDING_CALL : cache_jump ? HUSK_ASSIST_CHAIN_LANDING_JUMP
+                                                                                    : HUSK_ASSIST_CHAIN;
+                cache_call = false;
+                cache_jump = false;
+                if (EX_TBFLAG_A64(env->hflags, PAUTH_ACTIVE)) {
+                    state->x[30] = arm_husk_pauth(env, state->x[30], state->sp,
+                                                  landing == 0xd503237f);
+                }
+                break;
+            default:
+                if (ctx->landing && husk_arm64_landing_supported(landing))
+                    return cache_call ? HUSK_ASSIST_CHAIN_LANDING_CALL : cache_jump ? HUSK_ASSIST_CHAIN_LANDING_JUMP
+                                                                                    : HUSK_ASSIST_CHAIN;
+                return HUSK_ASSIST_BRANCH;
         }
         state->pc += 4;
         env->btype = 0;
         state->access_flags &= ~HUSK_BTYPE_MASK;
-        return cache_call ? HUSK_ASSIST_CHAIN_CALL : cache_jump ? HUSK_ASSIST_CHAIN_JUMP : HUSK_ASSIST_CHAIN;
+        return cache_call ? HUSK_ASSIST_CHAIN_CALL : cache_jump ? HUSK_ASSIST_CHAIN_JUMP
+                                                                : HUSK_ASSIST_CHAIN;
     }
     if ((insn & 0xfffff0ff) == 0xd50330bf || (insn & 0xfffff0ff) == 0xd503309f) {
         smp_mb();
@@ -463,22 +518,36 @@ static HuskArm64Assist husk_assist(void *opaque, HuskArm64State *state, uint32_t
     /* Entry and indirect-branch landing checks run before this callback.
      * A BTI hint within an executing block has no further side effects. */
     switch (insn) {
-    case 0xd503241f: case 0xd503245f: case 0xd503249f: case 0xd50324df:
-        state->pc += 4;
-        return HUSK_ASSIST_CONTINUE;
-    case 0xd50320ff: operation = 4; break; // XPACLRI
-    case 0xd503211f: case 0xd503215f: case 0xd503219f: case 0xd50321df:
-        reg = 17;
-        modifier = state->x[16];
-        operation = (insn >> 6) & 3;
-        break;
-    case 0xd503231f: case 0xd503233f: case 0xd503235f: case 0xd503237f:
-    case 0xd503239f: case 0xd50323bf: case 0xd50323df: case 0xd50323ff:
-        modifier = (insn & 32) ? state->sp : 0;
-        operation = (insn >> 6) & 3;
-        break;
-    default:
-        return HUSK_ASSIST_DECLINED;
+        case 0xd503241f:
+        case 0xd503245f:
+        case 0xd503249f:
+        case 0xd50324df:
+            state->pc += 4;
+            return HUSK_ASSIST_CONTINUE;
+        case 0xd50320ff:
+            operation = 4;
+            break;  // XPACLRI
+        case 0xd503211f:
+        case 0xd503215f:
+        case 0xd503219f:
+        case 0xd50321df:
+            reg = 17;
+            modifier = state->x[16];
+            operation = (insn >> 6) & 3;
+            break;
+        case 0xd503231f:
+        case 0xd503233f:
+        case 0xd503235f:
+        case 0xd503237f:
+        case 0xd503239f:
+        case 0xd50323bf:
+        case 0xd50323df:
+        case 0xd50323ff:
+            modifier = (insn & 32) ? state->sp : 0;
+            operation = (insn >> 6) & 3;
+            break;
+        default:
+            return HUSK_ASSIST_DECLINED;
     }
     if (EX_TBFLAG_A64(env->hflags, PAUTH_ACTIVE)) {
         if (!ctx->assisted_pauth) {
@@ -565,39 +634,46 @@ int arm_husk_exec_user(CPUState *cs)
     uint64_t page = env->pc & ~UINT64_C(4095);
     void *code_host;
     int flags = probe_access_flags(env, page, 4096, MMU_INST_FETCH,
-                                  arm_env_mmu_index(env), true, &code_host, 0);
+                                   arm_env_mmu_index(env), true, &code_host, 0);
     if (flags || !code_host) {
         return 0;
     }
     uint32_t insn = ldl_le_p((uint8_t *)code_host + env->pc - page);
     if (ctx && el == 1) {
         ctx->env = env;
-        if (husk_kernel_system(ctx, insn)) return 1;
+        if (husk_kernel_system(ctx, insn))
+            return 1;
     }
     if (!husk_arm64_supported(insn)) {
-        if (direct && bridge && ctx && husk_tcg_bridge(insn, el)) husk_one_tcg(cs);
+        if (direct && bridge && ctx && husk_tcg_bridge(insn, el))
+            husk_one_tcg(cs);
         return 0;
     }
     if (direct && env->btype) {
         arm_husk_bti_check(env, insn);
         switch (insn) {
-        case 0xd503241f: case 0xd503245f: case 0xd503249f: case 0xd50324df:
-            break;
-        case 0xd503233f: case 0xd503237f:
-            if (landing && pauth_landing) goto landing_ready;
-            if (EX_TBFLAG_A64(env->hflags, PAUTH_ACTIVE)) {
-                env->xregs[30] = arm_husk_pauth(env, env->xregs[30], env->xregs[31],
-                                               insn == 0xd503237f);
-            }
-            break;
-        default:
-            /* Unsupported landing instructions retain BTYPE and run in TCG.
+            case 0xd503241f:
+            case 0xd503245f:
+            case 0xd503249f:
+            case 0xd50324df:
+                break;
+            case 0xd503233f:
+            case 0xd503237f:
+                if (landing && pauth_landing)
+                    goto landing_ready;
+                if (EX_TBFLAG_A64(env->hflags, PAUTH_ACTIVE)) {
+                    env->xregs[30] = arm_husk_pauth(env, env->xregs[30], env->xregs[31],
+                                                    insn == 0xd503237f);
+                }
+                break;
+            default:
+                /* Unsupported landing instructions retain BTYPE and run in TCG.
              * Supported instructions export it if execution faults. */
-            if (!landing || !husk_arm64_landing_supported(insn)) {
-                husk_one_tcg(cs);
-                return 0;
-            }
-            goto landing_ready;
+                if (!landing || !husk_arm64_landing_supported(insn)) {
+                    husk_one_tcg(cs);
+                    return 0;
+                }
+                goto landing_ready;
         }
         env->pc += 4;
         env->btype = 0;
@@ -641,7 +717,8 @@ landing_ready:
         }
     }
     if (direct && ctx->hot_threshold) {
-        if (!husk_hot_code(ctx, code_host)) return 0;
+        if (!husk_hot_code(ctx, code_host))
+            return 0;
     } else if (direct) {
         unsigned index = ((page >> 12) ^ (page >> 24)) & 1023;
         if (ctx->warm_pages[index].page != page) {
@@ -672,23 +749,7 @@ landing_ready:
     ctx->code_hosts[0] = code_host;
     ctx->code_count = 1;
     ctx->cold_handoff = false;
-    HuskArm64State state = { .sp = env->xregs[31], .pc = env->pc,
-                             .nzcv = pstate_read(env) & PSTATE_NZCV,
-                             .fpcr = vfp_get_fpcr(env), .fpsr = vfp_get_fpsr(env),
-                             .access_flags = !EX_TBFLAG_ANY(env->hflags, ALIGN_MEM) |
-                                 (EX_TBFLAG_ANY(env->hflags, FPEXC_EL) ? 2 : 0) |
-                                 (cpu_isar_feature(aa64_atomics, cpu) ? 4 : 0) |
-                                 (cpu_isar_feature(aa64_crc32, cpu) ? 64 : 0) |
-                                 (cpu_isar_feature(aa64_aes, cpu) ? HUSK_AES : 0) |
-                                 (cpu_isar_feature(aa64_sha1, cpu) ? HUSK_SHA1 : 0) |
-                                 (cpu_isar_feature(aa64_sha256, cpu) ? HUSK_SHA256 : 0) |
-                                 (!EX_TBFLAG_A64(env->hflags, PAUTH_ACTIVE) ? HUSK_PAUTH_HINTS_NOP : 0) |
-                                 (husk_mops_allowed(env) ? HUSK_MOPS_ALLOWED : 0) |
-                                 ((el == 0 && (EX_TBFLAG_A64(env->hflags, TBID) & 1)) ? 8 : 0) |
-                                 (env->btype << HUSK_BTYPE_SHIFT),
-                             .tpidr_el0 = env->cp15.tpidr_el[0],
-                             .exclusive_address = env->exclusive_addr,
-                             .exclusive_value = env->exclusive_val };
+    HuskArm64State state = {.sp = env->xregs[31], .pc = env->pc, .nzcv = pstate_read(env) & PSTATE_NZCV, .fpcr = vfp_get_fpcr(env), .fpsr = vfp_get_fpsr(env), .access_flags = !EX_TBFLAG_ANY(env->hflags, ALIGN_MEM) | (EX_TBFLAG_ANY(env->hflags, FPEXC_EL) ? 2 : 0) | (cpu_isar_feature(aa64_atomics, cpu) ? 4 : 0) | (cpu_isar_feature(aa64_crc32, cpu) ? 64 : 0) | (cpu_isar_feature(aa64_aes, cpu) ? HUSK_AES : 0) | (cpu_isar_feature(aa64_sha1, cpu) ? HUSK_SHA1 : 0) | (cpu_isar_feature(aa64_sha256, cpu) ? HUSK_SHA256 : 0) | (!EX_TBFLAG_A64(env->hflags, PAUTH_ACTIVE) ? HUSK_PAUTH_HINTS_NOP : 0) | (husk_mops_allowed(env) ? HUSK_MOPS_ALLOWED : 0) | ((el == 0 && (EX_TBFLAG_A64(env->hflags, TBID) & 1)) ? 8 : 0) | (env->btype << HUSK_BTYPE_SHIFT), .tpidr_el0 = env->cp15.tpidr_el[0], .exclusive_address = env->exclusive_addr, .exclusive_value = env->exclusive_val};
     memcpy(state.x, env->xregs, sizeof(state.x));
     for (unsigned i = 0; i < 32; ++i) {
         memcpy(state.v[i], aa64_vfp_qreg(env, i), sizeof(state.v[i]));
@@ -708,27 +769,28 @@ landing_ready:
     HuskArm64Pauth pauth;
     HuskArm64KernelReads kernel_reads = {env->cp15.tpidr_el[1], env->sp_el[0], env->daif};
     bool native_kernel_reads = direct && ctx->system_reads && el == 1 &&
-        (env->pstate & PSTATE_SP) && !EX_TBFLAG_ANY(env->hflags, FGT_ACTIVE) &&
-        !EX_TBFLAG_A64(env->hflags, NV);
+                               (env->pstate & PSTATE_SP) && !EX_TBFLAG_ANY(env->hflags, FGT_ACTIVE) &&
+                               !EX_TBFLAG_A64(env->hflags, NV);
     bool native_pauth = direct && husk_pauth_parameters(env, &pauth);
     if (native_pauth && !ctx->native_pauth_started) {
         fprintf(stderr, "[husk-arm64] native implementation-defined PAUTH active\n");
         ctx->native_pauth_started = true;
     }
     HuskArm64Exit result = husk_arm64_run(ctx->engine, &state, page, code_host,
-                                        (HuskArm64Memory){ctx, husk_read, husk_write, husk_map_page,
-                                                         ctx->assist ? husk_assist : NULL,
-                                                         direct ? husk_map_code : NULL, epoch,
-                                                         native_pauth ? &pauth : NULL,
-                                                         native_kernel_reads ? &kernel_reads : NULL,
-                                                         ctx->code_versions ? husk_code_version : NULL},
-                                        slice_budget);
+                                          (HuskArm64Memory){ctx, husk_read, husk_write, husk_map_page,
+                                                            ctx->assist ? husk_assist : NULL,
+                                                            direct ? husk_map_code : NULL, epoch,
+                                                            native_pauth ? &pauth : NULL,
+                                                            native_kernel_reads ? &kernel_reads : NULL,
+                                                            ctx->code_versions ? husk_code_version : NULL},
+                                          slice_budget);
     husk_profile_phase(ctx, el != 0);
     if (result == HUSK_ARM64_ERROR) {
         error_report("Husk ARM64 execution failed at guest PC 0x%" PRIx64, env->pc);
         exit(EXIT_FAILURE);
     }
-    if (result == HUSK_ARM64_BRANCH) state.pc = arm_husk_branch_pc(env, state.pc);
+    if (result == HUSK_ARM64_BRANCH)
+        state.pc = arm_husk_branch_pc(env, state.pc);
     husk_export_state(env, &state);
     if (result == HUSK_ARM64_BRANCH && ctx->cold_handoff) {
         ++ctx->cold_handoffs;

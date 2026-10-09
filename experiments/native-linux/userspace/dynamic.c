@@ -11,7 +11,13 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
-#define CHECK(c) do { if (!(c)) { dprintf(2, "dynamic:%d errno=%d\n", __LINE__, errno); _exit(__LINE__); } } while (0)
+#define CHECK(c) \
+    do { \
+        if (!(c)) { \
+            dprintf(2, "dynamic:%d errno=%d\n", __LINE__, errno); \
+            _exit(__LINE__); \
+        } \
+    } while (0)
 int dependency_add(int);
 int dependency_ready(void);
 static _Thread_local int main_tls = 41;
@@ -26,7 +32,11 @@ static int count_image(struct dl_phdr_info *info, size_t size, void *unused)
     ++images;
     return 0;
 }
-static void signal_handler(int signal) { CHECK(signal == SIGUSR1); caught = 1; }
+static void signal_handler(int signal)
+{
+    CHECK(signal == SIGUSR1);
+    caught = 1;
+}
 static void *thread(void *opaque)
 {
     int id = (int)(intptr_t)opaque;
@@ -45,7 +55,8 @@ int main(void)
 {
     CHECK(dependency_ready() == 19 && dependency_add(2) == 9);
     void *library = dlopen("/lib/plugin.so", RTLD_NOW | RTLD_LOCAL);
-    if (!library) dprintf(2, "dlopen: %s\n", dlerror());
+    if (!library)
+        dprintf(2, "dlopen: %s\n", dlerror());
     CHECK(library);
     plugin_add = dlsym(library, "plugin_add");
     CHECK(plugin_add && plugin_add(3) == 103);
@@ -54,7 +65,8 @@ int main(void)
     puts("{\"test\":\"linux_dynamic_link_dlopen_constructors\",\"passed\":true}");
 
     pthread_t threads[8];
-    for (int i = 0; i < 8; ++i) CHECK(pthread_create(&threads[i], NULL, thread, (void *)(intptr_t)(i + 1)) == 0);
+    for (int i = 0; i < 8; ++i)
+        CHECK(pthread_create(&threads[i], NULL, thread, (void *)(intptr_t)(i + 1)) == 0);
     for (int i = 0; i < 8; ++i) {
         void *result;
         CHECK(pthread_join(threads[i], &result) == 0 && (intptr_t)result == i + 1);

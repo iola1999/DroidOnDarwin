@@ -20,10 +20,10 @@ typedef struct tl_dex_object tl_dex_object;
 typedef struct tl_dex_context tl_dex_context;
 
 typedef union {
-    int32_t  i;
-    int64_t  j;
-    float    f;
-    double   d;
+    int32_t i;
+    int64_t j;
+    float f;
+    double d;
     tl_dex_object *l;
     uint32_t raw32;
     uint64_t raw64;
@@ -32,7 +32,7 @@ typedef union {
 /* Slots java.lang.Enum reserves at the front of every enum object's field
  * table: its name (a String) and its ordinal (an int). The enum's own fields
  * follow them. See dex_link_class(). */
-#define TL_ENUM_SLOT_NAME    0
+#define TL_ENUM_SLOT_NAME 0
 #define TL_ENUM_SLOT_ORDINAL 1
 
 struct tl_dex_field {
@@ -41,7 +41,7 @@ struct tl_dex_field {
     const char *type;
     uint32_t access_flags;
     bool is_static;
-    uint32_t slot;          /* offset in object or static table */
+    uint32_t slot; /* offset in object or static table */
     /* Set for a field of a class this layer does not load -- android.graphics.
      * Rect.top, Build.VERSION.SDK_INT. `owner` is the class the access named;
      * the framework answers these itself (see tl_framework_field_get), and
@@ -75,7 +75,7 @@ struct tl_dex_method {
 struct tl_dex_class {
     tl_dex_context *ctx;
     tl_dex_file *dex;
-    const char *descriptor;     /* e.g. "Lcom/flappybird/recreation/c;" */
+    const char *descriptor; /* e.g. "Lcom/flappybird/recreation/c;" */
     const char *super_descriptor;
     tl_dex_class *super_class;
     uint32_t access_flags;
@@ -127,15 +127,15 @@ struct tl_dex_class {
  * for anything of the wrong kind, so a shim given the wrong thing gets "nothing"
  * and not somebody else's memory.
  */
-#define TL_KIND_MASK    0x7u
-#define TL_KIND_OBJECT  0u     /* fields[], nfields slots of it */
-#define TL_KIND_ARRAY   1u     /* array.length / elem_size / elements */
-#define TL_KIND_STRING  2u     /* str_utf8 */
-#define TL_KIND_NATIVE  3u     /* native_ptr */
+#define TL_KIND_MASK 0x7u
+#define TL_KIND_OBJECT 0u /* fields[], nfields slots of it */
+#define TL_KIND_ARRAY 1u /* array.length / elem_size / elements */
+#define TL_KIND_STRING 2u /* str_utf8 */
+#define TL_KIND_NATIVE 3u /* native_ptr */
 
 struct tl_dex_object {
     tl_dex_class *clazz;
-    uint32_t flags;            /* low bits: the kind */
+    uint32_t flags; /* low bits: the kind */
     /* Slots in `fields`, or zero when the union below holds something else.
      * Every field access checks against this: the slot comes from the bytecode,
      * and a wrong one must read as null rather than as somebody else's memory. */
@@ -189,10 +189,10 @@ struct tl_dex_context {
     /* Where a frame's time goes. See tl_dex_perf. */
     struct tl_dex_perf {
         uint64_t frames;
-        uint64_t ns_logic;    /* input, deferred tasks, and the app's own doFrame */
-        uint64_t ns_render;   /* the app's onDraw, everything it calls included */
-        uint64_t ns_draw;     /* of that, time inside the canvas draw calls */
-        uint64_t draws;       /* how many of those there were */
+        uint64_t ns_logic; /* input, deferred tasks, and the app's own doFrame */
+        uint64_t ns_render; /* the app's onDraw, everything it calls included */
+        uint64_t ns_draw; /* of that, time inside the canvas draw calls */
+        uint64_t draws; /* how many of those there were */
     } perf;
 
     /*
@@ -244,7 +244,10 @@ struct tl_dex_context {
      * the order Choreographer uses.
      */
     pthread_mutex_t input_lock;
-    struct { int action; float x, y; } input[64];
+    struct {
+        int action;
+        float x, y;
+    } input[64];
     int input_head, input_tail;
 
     /* Total frames delivered */
@@ -297,7 +300,7 @@ uint64_t tl_dex_now_ns(void);
  */
 typedef struct tl_pacer {
     uint64_t frame_ns;
-    uint64_t next;          /* the deadline of the frame in progress */
+    uint64_t next; /* the deadline of the frame in progress */
     uint32_t tb_numer, tb_denom;
 } tl_pacer;
 
@@ -344,7 +347,8 @@ tl_dex_object *tl_dex_alloc_object(tl_dex_class *clazz);
  */
 static inline void tl_dex_set_native(tl_dex_object *obj, void *ptr)
 {
-    if (!obj) return;
+    if (!obj)
+        return;
     if (obj->nfields) {
         free(obj->fields);
         obj->nfields = 0;
@@ -361,7 +365,8 @@ static inline void tl_dex_set_native(tl_dex_object *obj, void *ptr)
  */
 static inline void tl_dex_set_string(tl_dex_object *obj, char *str)
 {
-    if (!obj) return;
+    if (!obj)
+        return;
     if (obj->nfields) {
         free(obj->fields);
         obj->nfields = 0;

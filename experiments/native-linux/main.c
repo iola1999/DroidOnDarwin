@@ -8,7 +8,8 @@ int main(void)
 {
     const size_t size = 65536;
     void *rw = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_ANON | MAP_PRIVATE, -1, 0);
-    if (rw == MAP_FAILED) return 1;
+    if (rw == MAP_FAILED)
+        return 1;
     vm_address_t rx = 0;
     vm_prot_t current, maximum;
     if (vm_remap(mach_task_self(), &rx, size, 0, VM_FLAGS_ANYWHERE,

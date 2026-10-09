@@ -100,7 +100,7 @@ def main():
     # for archive integrity; get-task-allow is needed by the in-app JIT helper.
     plist(OUT / 'Husk.entitlements', {'get-task-allow': True})
     sources = [{'path': str(EXP / name)} for name in
-               ['lkl-main.c', 'lkl-host.c', 'lkl-process-host.c', 'programs.c', 'memory.c', 'execute-check.c', 'compute.c', 'input.c', 'nce.c', 'entry.S',
+               ['lkl-main.c', 'lkl-host.c', 'lkl-process-host.c', 'programs.c', 'memory.c', 'execute-check.c', 'compute.c', 'input.c', 'session.c', 'nce.c', 'entry.S',
                 'ios/Bridge.c', 'ios/NativeLinuxApp.swift', 'ios/ProbeLogReader.swift', 'graphics/host-graphics.cpp']]
     sources += [{'path': str(EXP / 'guest.S'), 'compilerFlags': ['-DNATIVE']}]
     sources += [{'path': str(INPUT / 'payload.S')}]

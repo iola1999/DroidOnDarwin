@@ -12,20 +12,25 @@ HuskArm64Fastmem::HuskArm64Fastmem()
 {
     profile = std::getenv("HUSK_ARM64_STATS") != nullptr;
     host_page = static_cast<size_t>(getpagesize());
-    if (host_page != 4096 && host_page != 16384) return;
+    if (host_page != 4096 && host_page != 16384)
+        return;
     void *reservation = mmap(nullptr, segment_size, PROT_NONE,
                              MAP_PRIVATE | MAP_ANON, -1, 0);
-    if (reservation == MAP_FAILED) return;
+    if (reservation == MAP_FAILED)
+        return;
     guard = reinterpret_cast<uintptr_t>(reservation);
-    for (auto &window : windows) window.bases.fill(guard);
+    for (auto &window : windows)
+        window.bases.fill(guard);
 }
 
 HuskArm64Fastmem::~HuskArm64Fastmem()
 {
-    if (!guard) return;
+    if (!guard)
+        return;
     for (auto &window : windows)
         for (uintptr_t base : window.bases)
-            if (base != guard) munmap(reinterpret_cast<void *>(base), segment_size);
+            if (base != guard)
+                munmap(reinterpret_cast<void *>(base), segment_size);
     munmap(reinterpret_cast<void *>(guard), segment_size);
 }
 
@@ -48,16 +53,25 @@ bool HuskArm64Fastmem::map_validated(uint64_t address, bool write, HuskArm64Memo
     uint64_t tag = ignore_top_byte ? address & UINT64_C(0xff00000000000000) : 0;
     address &= ~tag;
     uint64_t original_page = address & ~(uint64_t(host_page) - 1);
-    if (!guard || !memory.map_page || !compact_address(address, false)) return false;
+    if (!guard || !memory.map_page || !compact_address(address, false))
+        return false;
     uint64_t page = address & ~(uint64_t(host_page) - 1);
     uintptr_t physical = 0;
     rejection = "mmu";
     for (size_t offset = 0; offset < host_page; offset += 4096) {
         auto host = reinterpret_cast<uintptr_t>(memory.map_page(memory.opaque, (original_page + offset) | tag, write));
-        if (!host) return false;
-        if (!offset) physical = host;
-        if (physical & (host_page - 1)) { rejection = "alignment"; return false; }
-        if (host != physical + offset) { rejection = "fragmented"; return false; }
+        if (!host)
+            return false;
+        if (!offset)
+            physical = host;
+        if (physical & (host_page - 1)) {
+            rejection = "alignment";
+            return false;
+        }
+        if (host != physical + offset) {
+            rejection = "fragmented";
+            return false;
+        }
     }
     auto &window = windows[write];
     if (std::any_of(window.mapped.begin(), window.mapped.end(),
@@ -70,7 +84,10 @@ bool HuskArm64Fastmem::map_validated(uint64_t address, bool write, HuskArm64Memo
     if (base == guard) {
         void *reservation = mmap(nullptr, segment_size, PROT_NONE,
                                  MAP_PRIVATE | MAP_ANON, -1, 0);
-        if (reservation == MAP_FAILED) { rejection = "reservation"; return false; }
+        if (reservation == MAP_FAILED) {
+            rejection = "reservation";
+            return false;
+        }
         base = reinterpret_cast<uintptr_t>(reservation);
     }
     vm_address_t target = base + (page & (segment_size - 1));
@@ -80,8 +97,8 @@ bool HuskArm64Fastmem::map_validated(uint64_t address, bool write, HuskArm64Memo
      * cannot leave an untracked writable mapping. */
     window.mapped.push_back({page, physical});
     kern_return_t result = vm_remap(mach_task_self(), &actual, host_page, 0,
-        VM_FLAGS_FIXED | VM_FLAGS_OVERWRITE, mach_task_self(), physical, false,
-        &current, &maximum, VM_INHERIT_NONE);
+                                    VM_FLAGS_FIXED | VM_FLAGS_OVERWRITE, mach_task_self(), physical, false,
+                                    &current, &maximum, VM_INHERIT_NONE);
     if (result != KERN_SUCCESS) {
         rejection = "remap";
         window.mapped.pop_back();
@@ -97,7 +114,8 @@ bool HuskArm64Fastmem::map_validated(uint64_t address, bool write, HuskArm64Memo
 void HuskArm64Fastmem::reset()
 {
     for (auto &window : windows) {
-        for (auto page : window.mapped) revoke(window, page.guest);
+        for (auto page : window.mapped)
+            revoke(window, page.guest);
         window.mapped.clear();
     }
 }

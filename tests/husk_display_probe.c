@@ -25,22 +25,22 @@
 
 typedef struct HuskFrameInfo {
     const void *pixels;
-    int32_t  width, height, stride;
+    int32_t width, height, stride;
     uint32_t bpp;
     uint64_t generation, sequence;
 } HuskFrameInfo;
 
-static void     (*p_qemu_init)(int, char **);
-static void     (*p_qemu_main_loop)(void);
-static void     (*p_husk_display_init)(void);
-static bool     (*p_husk_display_lock_frame)(HuskFrameInfo *);
-static void     (*p_husk_display_unlock_frame)(void);
+static void (*p_qemu_init)(int, char **);
+static void (*p_qemu_main_loop)(void);
+static void (*p_husk_display_init)(void);
+static bool (*p_husk_display_lock_frame)(HuskFrameInfo *);
+static void (*p_husk_display_unlock_frame)(void);
 static uint64_t (*p_husk_display_sequence)(void);
-static void     (*p_husk_display_request_update)(void);
-static void     (*p_husk_display_send_pointer)(int32_t, int32_t, bool);
+static void (*p_husk_display_request_update)(void);
+static void (*p_husk_display_send_pointer)(int32_t, int32_t, bool);
 
 static char **g_argv;
-static int    g_argc;
+static int g_argc;
 
 static void *qemu_thread(void *unused)
 {
@@ -69,11 +69,18 @@ int main(int argc, char **argv)
     int seconds = atoi(argv[2]);
 
     void *h = dlopen(libpath, RTLD_NOW | RTLD_LOCAL);
-    if (!h) { fprintf(stderr, "[probe] dlopen failed: %s\n", dlerror()); return 1; }
+    if (!h) {
+        fprintf(stderr, "[probe] dlopen failed: %s\n", dlerror());
+        return 1;
+    }
 
-#define SYM(v, n) do { \
+#define SYM(v, n) \
+    do { \
         *(void **)(&v) = dlsym(h, n); \
-        if (!v) { fprintf(stderr, "[probe] missing symbol %s\n", n); return 1; } \
+        if (!v) { \
+            fprintf(stderr, "[probe] missing symbol %s\n", n); \
+            return 1; \
+        } \
     } while (0)
     SYM(p_qemu_init, "qemu_init");
     SYM(p_qemu_main_loop, "qemu_main_loop");
@@ -104,7 +111,8 @@ int main(int argc, char **argv)
 
     for (int i = 0; i < seconds * 10; i++) {
         usleep(100 * 1000);
-        if (!p_husk_display_init) break;
+        if (!p_husk_display_init)
+            break;
 
         HuskFrameInfo info;
         memset(&info, 0, sizeof(info));
@@ -116,8 +124,12 @@ int main(int argc, char **argv)
                 fflush(stdout);
             }
             saw_surface = true;
-            w = info.width; h2 = info.height; stride = info.stride; bpp = info.bpp;
-            if (info.sequence > max_seq) max_seq = info.sequence;
+            w = info.width;
+            h2 = info.height;
+            stride = info.stride;
+            bpp = info.bpp;
+            if (info.sequence > max_seq)
+                max_seq = info.sequence;
             p_husk_display_unlock_frame();
         }
         p_husk_display_request_update();

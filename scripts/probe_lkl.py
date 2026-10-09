@@ -201,7 +201,7 @@ def main():
     flags = ["-O2", "-g", "-Wall", "-Wextra", "-Werror", "-I", OUT, "-I", EXPERIMENT]
     if PROCESS:
         flags += ["-DNCE_PROCESS"]
-        inputs += [EXPERIMENT / "lkl-process-host.c", EXPERIMENT / "programs.c", EXPERIMENT / "memory.c", EXPERIMENT / "execute-check.c", EXPERIMENT / "compute.c", EXPERIMENT / "input.c"]
+        inputs += [EXPERIMENT / "lkl-process-host.c", EXPERIMENT / "programs.c", EXPERIMENT / "memory.c", EXPERIMENT / "execute-check.c", EXPERIMENT / "compute.c", EXPERIMENT / "input.c", EXPERIMENT / "session.c"]
         run([clang, *flags, "-isysroot", sdk, "-DNATIVE", "-c", EXPERIMENT / "guest.S", "-o", OUT / "native.o"])
     payload = [OUT / "payload.S"] if PROCESS else []
     graphics_link = []

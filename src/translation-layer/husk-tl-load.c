@@ -55,14 +55,14 @@
 
 /* The shim's surface, in husk-tl-shim.c. */
 void *tl_shim_find(const char *name);
-bool  tl_shim_supplies(const char *soname);
+bool tl_shim_supplies(const char *soname);
 void *tl_shim_vm(void);
 void *tl_shim_env(void);
 void *tl_shim_activity_class(void);
 void *tl_shim_new_input_queue(void);
 void *tl_shim_new_asset_manager(void);
-void  tl_shim_free(void *p);
-void  tl_shim_bind_run(void *activity, void *window);
+void tl_shim_free(void *p);
+void tl_shim_bind_run(void *activity, void *window);
 typedef struct tl_window tl_window;
 tl_window *tl_window_create(int width, int height);
 void tl_window_acquire(tl_window *w);
@@ -73,65 +73,65 @@ void tl_window_release(tl_window *w);
 #define TL_PAGE 16384u
 
 /* AArch64 relocation types -- the same table husk-tl-elf.c counts with. */
-#define R_AARCH64_NONE          0
-#define R_AARCH64_ABS64         257
-#define R_AARCH64_GLOB_DAT      1025
-#define R_AARCH64_JUMP_SLOT     1026
-#define R_AARCH64_RELATIVE      1027
-#define R_AARCH64_IRELATIVE     1032
-#define R_AARCH64_TLS_DTPMOD64  1028
-#define R_AARCH64_TLS_TPREL64   1030
-#define R_AARCH64_TLSDESC       1031
+#define R_AARCH64_NONE 0
+#define R_AARCH64_ABS64 257
+#define R_AARCH64_GLOB_DAT 1025
+#define R_AARCH64_JUMP_SLOT 1026
+#define R_AARCH64_RELATIVE 1027
+#define R_AARCH64_IRELATIVE 1032
+#define R_AARCH64_TLS_DTPMOD64 1028
+#define R_AARCH64_TLS_TPREL64 1030
+#define R_AARCH64_TLSDESC 1031
 
-#define DT_NULL         0
-#define DT_NEEDED       1
-#define DT_STRTAB       5
-#define DT_SYMTAB       6
-#define DT_RELA         7
-#define DT_RELASZ       8
-#define DT_HASH         4
-#define DT_STRSZ        10
-#define DT_SYMENT       11
-#define DT_INIT         12
-#define DT_FINI         13
-#define DT_SONAME       14
-#define DT_INIT_ARRAY   25
-#define DT_FINI_ARRAY   26
+#define DT_NULL 0
+#define DT_NEEDED 1
+#define DT_STRTAB 5
+#define DT_SYMTAB 6
+#define DT_RELA 7
+#define DT_RELASZ 8
+#define DT_HASH 4
+#define DT_STRSZ 10
+#define DT_SYMENT 11
+#define DT_INIT 12
+#define DT_FINI 13
+#define DT_SONAME 14
+#define DT_INIT_ARRAY 25
+#define DT_FINI_ARRAY 26
 #define DT_INIT_ARRAYSZ 27
 #define DT_FINI_ARRAYSZ 28
-#define DT_FLAGS        30
-#define DT_JMPREL       23
-#define DT_PLTRELSZ     2
-#define DT_GNU_HASH     0x6ffffef5
-#define DT_VERSYM       0x6ffffff0
+#define DT_FLAGS 30
+#define DT_JMPREL 23
+#define DT_PLTRELSZ 2
+#define DT_GNU_HASH 0x6ffffef5
+#define DT_VERSYM 0x6ffffff0
 #define DT_ANDROID_RELA 0x60000011
 #define DT_ANDROID_RELASZ 0x60000012
-#define DT_RELR         36
-#define DT_RELRSZ       35
+#define DT_RELR 36
+#define DT_RELRSZ 35
 #define DT_ANDROID_RELR 0x6fffe000
 #define DT_ANDROID_RELRSZ 0x6fffe001
-#define DF_TEXTREL      4u
+#define DF_TEXTREL 4u
 
-#define PT_LOAD     1
-#define PT_DYNAMIC  2
-#define PT_TLS      7
+#define PT_LOAD 1
+#define PT_DYNAMIC 2
+#define PT_TLS 7
 #define PT_GNU_RELRO 0x6474e552
 #define PF_X 1
 #define PF_W 2
 #define PF_R 4
 
-#define STB_WEAK   2
-#define SHN_UNDEF  0
+#define STB_WEAK 2
+#define SHN_UNDEF 0
 
-#define EM_AARCH64  183
+#define EM_AARCH64 183
 
-#define ELF64_R_SYM(i)  ((i) >> 32)
+#define ELF64_R_SYM(i) ((i) >> 32)
 #define ELF64_R_TYPE(i) ((i) & 0xffffffffu)
 
 /* ELF64 fixed-size pieces, laid out explicitly: the loader reads files
  * written by other toolchains and cannot lean on the host's <elf.h>. */
 typedef struct {
-    uint8_t  e_ident[16];
+    uint8_t e_ident[16];
     uint16_t e_type;
     uint16_t e_machine;
     uint32_t e_version;
@@ -155,15 +155,15 @@ typedef struct {
 _Static_assert(sizeof(tl_phdr) == 56, "tl_phdr must be 56 bytes");
 
 typedef struct {
-    int64_t  d_tag;
+    int64_t d_tag;
     uint64_t d_val;
 } tl_dyn;
 _Static_assert(sizeof(tl_dyn) == 16, "tl_dyn must be 16 bytes");
 
 typedef struct {
     uint32_t st_name;
-    uint8_t  st_info;
-    uint8_t  st_other;
+    uint8_t st_info;
+    uint8_t st_other;
     uint16_t st_shndx;
     uint64_t st_value;
     uint64_t st_size;
@@ -173,7 +173,7 @@ _Static_assert(sizeof(tl_sym) == 24, "tl_sym must be 24 bytes");
 typedef struct {
     uint64_t r_offset;
     uint64_t r_info;
-    int64_t  r_addend;
+    int64_t r_addend;
 } tl_rela;
 _Static_assert(sizeof(tl_rela) == 24, "tl_rela must be 24 bytes");
 
@@ -183,7 +183,9 @@ typedef struct tl_window tl_window;
 typedef struct tl_input_queue tl_input_queue;
 typedef struct tl_asset_manager tl_asset_manager;
 typedef struct tl_activity tl_activity;
-typedef struct { int32_t left, top, right, bottom; } tl_rect;
+typedef struct {
+    int32_t left, top, right, bottom;
+} tl_rect;
 
 typedef struct tl_activity_callbacks {
     void (*onStart)(tl_activity *);
@@ -206,13 +208,13 @@ typedef struct tl_activity_callbacks {
 
 struct tl_activity {
     tl_activity_callbacks *callbacks;
-    void   *vm;
-    void   *env;
-    void   *clazz;
+    void *vm;
+    void *env;
+    void *clazz;
     const char *internalDataPath;
     const char *externalDataPath;
     int32_t sdkVersion;
-    void   *instance;
+    void *instance;
     tl_asset_manager *assetManager;
     const char *obbPath;
 };
@@ -225,9 +227,9 @@ struct tl_activity {
 #define TL_LOG_CHUNK (1u << 16)
 
 typedef struct {
-    char  *buf;
+    char *buf;
     size_t len, cap;
-    bool   failed;
+    bool failed;
 } tl_logbuf;
 
 static pthread_mutex_t g_log_mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -262,30 +264,32 @@ void tl_log_line(const char *fmt, ...);
 /* --------------------------------------------------------------- the run */
 
 typedef struct {
-    char      name[96];
-    uint8_t  *file;          /* the whole .so, kept for the file-relative reads */
-    size_t    file_len;
-    uint8_t  *base;          /* where it was mapped (executable view) */
-    uint8_t  *base_rw;       /* writable mirror for dual mapping, or base if MAP_JIT */
-    bool      is_stikdebug;
-    size_t    npages;
-    uint8_t  *page_flags;
-    uint64_t  base_vaddr;
-    const tl_sym *symtab; uint64_t syment;
-    const uint8_t *strtab; uint64_t strsz;
+    char name[96];
+    uint8_t *file; /* the whole .so, kept for the file-relative reads */
+    size_t file_len;
+    uint8_t *base; /* where it was mapped (executable view) */
+    uint8_t *base_rw; /* writable mirror for dual mapping, or base if MAP_JIT */
+    bool is_stikdebug;
+    size_t npages;
+    uint8_t *page_flags;
+    uint64_t base_vaddr;
+    const tl_sym *symtab;
+    uint64_t syment;
+    const uint8_t *strtab;
+    uint64_t strsz;
     uint64_t gnu_hash;
     uint64_t init, fini, init_array, init_arraysz;
 } tl_lib;
 
 typedef struct {
-    bool      active;
-    bool      finished;
-    int       exit_code;       /* 0 refused, 1 loaded, 2 drew */
+    bool active;
+    bool finished;
+    int exit_code; /* 0 refused, 1 loaded, 2 drew */
     pthread_t thread;
     tl_logbuf log;
 
-    tl_lib    libs[8];
-    int       nlibs;
+    tl_lib libs[8];
+    int nlibs;
 
     /* what the guest was given */
     tl_window *window;
@@ -333,7 +337,10 @@ void tl_log_line(const char *fmt, ...)
     line[w + 1] = '\0';
     fputs(line, stderr);
     /* A file written line by line with write(2): what a process killed without warning still leaves behind. */
-    if (tl_log_sink_fd >= 0) { ssize_t ignored = write(tl_log_sink_fd, line, strlen(line)); (void)ignored; }
+    if (tl_log_sink_fd >= 0) {
+        ssize_t ignored = write(tl_log_sink_fd, line, strlen(line));
+        (void)ignored;
+    }
     pthread_mutex_lock(&g_log_mutex);
     tl_log_put(&g_run.log, line, (size_t)w + 1);
     pthread_mutex_unlock(&g_log_mutex);
@@ -363,16 +370,16 @@ void tl_log_line(const char *fmt, ...)
 
 typedef struct {
     uint8_t *px;
-    size_t   cap;
-    int      pins;         /* readers holding it, or 1 while it is being written */
+    size_t cap;
+    int pins; /* readers holding it, or 1 while it is being written */
 } tl_frame_slot;
 
 static pthread_mutex_t g_slot_lock = PTHREAD_MUTEX_INITIALIZER;
-static tl_frame_slot   g_slots[TL_FRAME_SLOTS];
-static int             g_front = -1;        /* newest finished slot, or none */
-static uint64_t        g_generation;
-static int             g_front_w, g_front_h, g_front_stride;
-static uint64_t        g_dropped;           /* frames with no free slot: should stay zero */
+static tl_frame_slot g_slots[TL_FRAME_SLOTS];
+static int g_front = -1; /* newest finished slot, or none */
+static uint64_t g_generation;
+static int g_front_w, g_front_h, g_front_stride;
+static uint64_t g_dropped; /* frames with no free slot: should stay zero */
 
 /* A new attempt starts with nothing on offer. Slots in use stay allocated. */
 static void slots_invalidate(void)
@@ -444,11 +451,16 @@ uint64_t husk_tl_frame_acquire(const uint8_t **pixels, int *width, int *height,
     pthread_mutex_lock(&g_slot_lock);
     if (g_front >= 0 && g_slots[g_front].px) {
         g_slots[g_front].pins++;
-        if (pixels) *pixels = g_slots[g_front].px;
-        if (width)  *width = g_front_w;
-        if (height) *height = g_front_h;
-        if (stride_pixels) *stride_pixels = g_front_stride;
-        if (token)  *token = g_front;
+        if (pixels)
+            *pixels = g_slots[g_front].px;
+        if (width)
+            *width = g_front_w;
+        if (height)
+            *height = g_front_h;
+        if (stride_pixels)
+            *stride_pixels = g_front_stride;
+        if (token)
+            *token = g_front;
         gen = g_generation;
     }
     pthread_mutex_unlock(&g_slot_lock);
@@ -457,9 +469,11 @@ uint64_t husk_tl_frame_acquire(const uint8_t **pixels, int *width, int *height,
 
 void husk_tl_frame_release(int token)
 {
-    if (token < 0 || token >= TL_FRAME_SLOTS) return;
+    if (token < 0 || token >= TL_FRAME_SLOTS)
+        return;
     pthread_mutex_lock(&g_slot_lock);
-    if (g_slots[token].pins > 0) g_slots[token].pins--;
+    if (g_slots[token].pins > 0)
+        g_slots[token].pins--;
     pthread_mutex_unlock(&g_slot_lock);
 }
 
@@ -468,7 +482,8 @@ static husk_tl_perf g_perf;
 
 void husk_tl_perf_snapshot(husk_tl_perf *out)
 {
-    if (!out) return;
+    if (!out)
+        return;
     pthread_mutex_lock(&g_slot_lock);
     *out = g_perf;
     pthread_mutex_unlock(&g_slot_lock);
@@ -487,17 +502,27 @@ static wp_fn g_wp;
 static void jit_init(void)
 {
     int (*supported)(void) = (int (*)(void))dlsym(RTLD_DEFAULT,
-        "pthread_jit_write_protect_supported_np");
+                                                  "pthread_jit_write_protect_supported_np");
     if (supported && supported()) {
         g_wp = (wp_fn)dlsym(RTLD_DEFAULT, "pthread_jit_write_protect_np");
     }
 }
 /* on == true: pages writable, execution unsafe. on == false: executable. */
-static void jit_writable(bool on) { if (g_wp) g_wp(on ? 0 : 1); }
-static void jit_icache(void *p, size_t n) { sys_icache_invalidate(p, n); }
+static void jit_writable(bool on)
+{
+    if (g_wp)
+        g_wp(on ? 0 : 1);
+}
+static void jit_icache(void *p, size_t n)
+{
+    sys_icache_invalidate(p, n);
+}
 #else
 static void jit_init(void) {}
-static void jit_writable(bool on) { (void)on; }
+static void jit_writable(bool on)
+{
+    (void)on;
+}
 static void jit_icache(void *p, size_t n)
 {
     __builtin___clear_cache((char *)p, (char *)p + (ptrdiff_t)n);
@@ -508,20 +533,25 @@ static size_t g_prewarmed_used = 0;
 
 static bool is_valid_dual_mapping(const tl_dual_mapping *m)
 {
-    if (!m || !m->rw_addr || !m->rx_addr) return false;
+    if (!m || !m->rw_addr || !m->rx_addr)
+        return false;
     /* Must be 16 KiB page-aligned on iOS. */
-    if (((uintptr_t)m->rw_addr & 0x3FFFull) != 0) return false;
-    if (((uintptr_t)m->rx_addr & 0x3FFFull) != 0) return false;
-    if (m->size < 1024 * 1024 || (m->size & 0x3FFFull) != 0) return false;
+    if (((uintptr_t)m->rw_addr & 0x3FFFull) != 0)
+        return false;
+    if (((uintptr_t)m->rx_addr & 0x3FFFull) != 0)
+        return false;
+    if (m->size < 1024 * 1024 || (m->size & 0x3FFFull) != 0)
+        return false;
     return true;
 }
 
 tl_dual_mapping *tl_find_stikdebug_prewarmed(void)
 {
-    tl_dual_mapping *(*get_fn)(void) = (tl_dual_mapping *(*)(void))dlsym(RTLD_DEFAULT, "husk_ios_jit_get_mapping");
+    tl_dual_mapping *(*get_fn)(void) = (tl_dual_mapping * (*)(void)) dlsym(RTLD_DEFAULT, "husk_ios_jit_get_mapping");
     if (get_fn) {
         tl_dual_mapping *m = get_fn();
-        if (is_valid_dual_mapping(m)) return m;
+        if (is_valid_dual_mapping(m))
+            return m;
     }
 
     /* Ensure prewarm has been called in case this attempt ran before QEMU. */
@@ -531,7 +561,8 @@ tl_dual_mapping *tl_find_stikdebug_prewarmed(void)
     }
 
     void *fn = dlsym(RTLD_DEFAULT, "husk_ios_jit_prewarm");
-    if (!fn) return NULL;
+    if (!fn)
+        return NULL;
 
     /* 1. Try static offset in libqemu-aarch64-softmmu.dylib (_husk_prewarmed is at 0x1ce6920, prewarm at 0x35d788) */
     tl_dual_mapping *m = (tl_dual_mapping *)((uintptr_t)fn + 0x1989198);
@@ -552,7 +583,8 @@ tl_dual_mapping *tl_find_stikdebug_prewarmed(void)
                     uint64_t immlo = (insn >> 29) & 3u;
                     uint64_t immhi = (insn >> 5) & 0x7FFFFu;
                     int64_t imm = (int64_t)((immhi << 2) | immlo);
-                    if (imm & 0x100000) imm -= 0x200000;
+                    if (imm & 0x100000)
+                        imm -= 0x200000;
                     uintptr_t pc = (uintptr_t)&p[i];
                     uintptr_t page = (pc & ~0xFFFull) + (imm << 12);
                     uint64_t pimm = ((next >> 10) & 0xFFFu) << 3;
@@ -571,15 +603,18 @@ tl_dual_mapping *tl_find_stikdebug_prewarmed(void)
 
 static uint32_t ld32(const uint8_t *p)
 {
-    return (uint32_t)p[0] | ((uint32_t)p[1] << 8) | ((uint32_t)p[2] << 16)
-         | ((uint32_t)p[3] << 24);
+    return (uint32_t)p[0] | ((uint32_t)p[1] << 8) | ((uint32_t)p[2] << 16) | ((uint32_t)p[3] << 24);
 }
-static uint64_t ld64(const uint8_t *p) { return ld32(p) | ((uint64_t)ld32(p + 4) << 32); }
+static uint64_t ld64(const uint8_t *p)
+{
+    return ld32(p) | ((uint64_t)ld32(p + 4) << 32);
+}
 
 typedef struct {
     const uint8_t *d;
     size_t n;
-    uint64_t lv[16], lo[16], lf[16]; int nloads;
+    uint64_t lv[16], lo[16], lf[16];
+    int nloads;
     uint64_t dyn_vaddr, dyn_filesz;
 } lex;
 
@@ -605,7 +640,8 @@ typedef struct {
     uint64_t rela, relasz, jmprel, pltrelsz;
     uint64_t packed_rela, packed_relasz, relr, relrsz;
     uint64_t init, fini, init_array, init_arraysz;
-    uint64_t needed[24]; int nneeded;
+    uint64_t needed[24];
+    int nneeded;
     bool textrel;
 } ldyn;
 
@@ -613,8 +649,7 @@ static bool lex_dynamic(lex *e, ldyn *d)
 {
     memset(d, 0, sizeof(*d));
     uint64_t off;
-    if (e->dyn_filesz < sizeof(tl_dyn) || e->dyn_filesz % sizeof(tl_dyn) != 0
-        || !lex_seg(e, e->dyn_vaddr, e->dyn_filesz, &off)) {
+    if (e->dyn_filesz < sizeof(tl_dyn) || e->dyn_filesz % sizeof(tl_dyn) != 0 || !lex_seg(e, e->dyn_vaddr, e->dyn_filesz, &off)) {
         return false;
     }
     const uint8_t *p = e->d + off;
@@ -623,27 +658,68 @@ static bool lex_dynamic(lex *e, ldyn *d)
         int64_t tag = (int64_t)ld64(p + i * sizeof(tl_dyn));
         uint64_t val = ld64(p + i * sizeof(tl_dyn) + 8);
         switch (tag) {
-        case DT_NULL: return true;
-        case DT_NEEDED: if (d->nneeded < 24) d->needed[d->nneeded++] = val; break;
-        case DT_STRTAB: d->strtab = val; break;
-        case DT_STRSZ: d->strsz = val; break;
-        case DT_SYMTAB: d->symtab = val; break;
-        case DT_SYMENT: d->syment = val; break;
-        case DT_GNU_HASH: d->gnu_hash = val; break;
-        case DT_RELA: d->rela = val; break;
-        case DT_RELASZ: d->relasz = val; break;
-        case DT_JMPREL: d->jmprel = val; break;
-        case DT_PLTRELSZ: d->pltrelsz = val; break;
-        case DT_INIT: d->init = val; break;
-        case DT_FINI: d->fini = val; break;
-        case DT_INIT_ARRAY: d->init_array = val; break;
-        case DT_INIT_ARRAYSZ: d->init_arraysz = val; break;
-        case DT_FLAGS: d->textrel = (val & DF_TEXTREL) != 0; break;
-        case DT_ANDROID_RELA: d->packed_rela = val; break;
-        case DT_ANDROID_RELASZ: d->packed_relasz = val; break;
-        case DT_RELR: d->relr = val; break;
-        case DT_RELRSZ: d->relrsz = val; break;
-        default: break;
+            case DT_NULL:
+                return true;
+            case DT_NEEDED:
+                if (d->nneeded < 24)
+                    d->needed[d->nneeded++] = val;
+                break;
+            case DT_STRTAB:
+                d->strtab = val;
+                break;
+            case DT_STRSZ:
+                d->strsz = val;
+                break;
+            case DT_SYMTAB:
+                d->symtab = val;
+                break;
+            case DT_SYMENT:
+                d->syment = val;
+                break;
+            case DT_GNU_HASH:
+                d->gnu_hash = val;
+                break;
+            case DT_RELA:
+                d->rela = val;
+                break;
+            case DT_RELASZ:
+                d->relasz = val;
+                break;
+            case DT_JMPREL:
+                d->jmprel = val;
+                break;
+            case DT_PLTRELSZ:
+                d->pltrelsz = val;
+                break;
+            case DT_INIT:
+                d->init = val;
+                break;
+            case DT_FINI:
+                d->fini = val;
+                break;
+            case DT_INIT_ARRAY:
+                d->init_array = val;
+                break;
+            case DT_INIT_ARRAYSZ:
+                d->init_arraysz = val;
+                break;
+            case DT_FLAGS:
+                d->textrel = (val & DF_TEXTREL) != 0;
+                break;
+            case DT_ANDROID_RELA:
+                d->packed_rela = val;
+                break;
+            case DT_ANDROID_RELASZ:
+                d->packed_relasz = val;
+                break;
+            case DT_RELR:
+                d->relr = val;
+                break;
+            case DT_RELRSZ:
+                d->relrsz = val;
+                break;
+            default:
+                break;
         }
     }
     return true;
@@ -704,7 +780,8 @@ static void *lib_lookup(const tl_lib *L, const char *name)
         for (size_t i = 1; i < 8192; i++) {
             const tl_sym *s = &L->symtab[i];
             uint32_t name_off = ld32((const uint8_t *)&s->st_name);
-            if (name_off == 0 || name_off >= L->strsz) break;
+            if (name_off == 0 || name_off >= L->strsz)
+                break;
             const char *sn = (const char *)L->strtab + name_off;
             if (!strcmp(sn, name) && s->st_value != 0) {
                 uint64_t target_off = s->st_value - L->base_vaddr;
@@ -780,7 +857,11 @@ static void *resolve(const char *name, bool *weak)
 
 /* ------------------------------------------------------- relocation  */
 
-typedef struct { const uint8_t *p; const uint8_t *end; bool bad; } sleb_r;
+typedef struct {
+    const uint8_t *p;
+    const uint8_t *end;
+    bool bad;
+} sleb_r;
 static int64_t rd_sleb(sleb_r *s)
 {
     uint64_t v = 0;
@@ -810,26 +891,13 @@ static bool reloc_one(uint64_t off_in_image, uint32_t type, uint32_t symidx,
     uint64_t offset = off_in_image - L->base_vaddr;
     size_t page_idx = (size_t)(offset / TL_PAGE);
     uint8_t *place = (page_idx < L->npages && (L->page_flags[page_idx] & TL_PAGE_CARVED))
-                   ? (L->base + offset)
-                   : (L->base_rw ? L->base_rw + offset : L->base + offset);
+                         ? (L->base + offset)
+                         : (L->base_rw ? L->base_rw + offset : L->base + offset);
 
     switch (type) {
-    case R_AARCH64_NONE:
-        return true;
-    case R_AARCH64_RELATIVE: {
-        uint64_t target_off = (uint64_t)addend - L->base_vaddr;
-        size_t target_p = (size_t)(target_off / TL_PAGE);
-        if (L->is_stikdebug && target_p < L->npages && (L->page_flags[target_p] & TL_PAGE_W)) {
-            *(uint64_t *)place = (uint64_t)L->base_rw + target_off;
-        } else {
-            *(uint64_t *)place = (uint64_t)L->base + target_off;
-        }
-        return true;
-    }
-    case R_AARCH64_ABS64:
-    case R_AARCH64_GLOB_DAT:
-    case R_AARCH64_JUMP_SLOT: {
-        if (symidx == 0) {
+        case R_AARCH64_NONE:
+            return true;
+        case R_AARCH64_RELATIVE: {
             uint64_t target_off = (uint64_t)addend - L->base_vaddr;
             size_t target_p = (size_t)(target_off / TL_PAGE);
             if (L->is_stikdebug && target_p < L->npages && (L->page_flags[target_p] & TL_PAGE_W)) {
@@ -839,47 +907,61 @@ static bool reloc_one(uint64_t off_in_image, uint32_t type, uint32_t symidx,
             }
             return true;
         }
-        const tl_sym *s = &L->symtab[symidx];
-        uint32_t bind = s->st_info >> 4;
-        bool undef = s->st_shndx == SHN_UNDEF;
-        if (undef) {
-            const char *sname = (const char *)L->strtab
-                              + ld32((const uint8_t *)&s->st_name);
-            bool weak = bind == STB_WEAK;
-            void *addr = resolve(sname, &weak);
-            if (!addr) {
-                if (!weak) {
-                    tl_log_line("reloc: unresolved import %s in %s -- refusing",
-                                sname, L->name);
-                    return false;
+        case R_AARCH64_ABS64:
+        case R_AARCH64_GLOB_DAT:
+        case R_AARCH64_JUMP_SLOT: {
+            if (symidx == 0) {
+                uint64_t target_off = (uint64_t)addend - L->base_vaddr;
+                size_t target_p = (size_t)(target_off / TL_PAGE);
+                if (L->is_stikdebug && target_p < L->npages && (L->page_flags[target_p] & TL_PAGE_W)) {
+                    *(uint64_t *)place = (uint64_t)L->base_rw + target_off;
+                } else {
+                    *(uint64_t *)place = (uint64_t)L->base + target_off;
                 }
-                *(uint64_t *)place = 0;      /* a weak undefined stays NULL */
                 return true;
             }
-            *(uint64_t *)place = (uint64_t)addr;
+            const tl_sym *s = &L->symtab[symidx];
+            uint32_t bind = s->st_info >> 4;
+            bool undef = s->st_shndx == SHN_UNDEF;
+            if (undef) {
+                const char *sname = (const char *)L->strtab + ld32((const uint8_t *)&s->st_name);
+                bool weak = bind == STB_WEAK;
+                void *addr = resolve(sname, &weak);
+                if (!addr) {
+                    if (!weak) {
+                        tl_log_line("reloc: unresolved import %s in %s -- refusing",
+                                    sname, L->name);
+                        return false;
+                    }
+                    *(uint64_t *)place = 0; /* a weak undefined stays NULL */
+                    return true;
+                }
+                *(uint64_t *)place = (uint64_t)addr;
+                return true;
+            }
+            uint64_t target_off = s->st_value + (uint64_t)addend - L->base_vaddr;
+            size_t target_p = (size_t)(target_off / TL_PAGE);
+            if (L->is_stikdebug && target_p < L->npages && (L->page_flags[target_p] & TL_PAGE_W)) {
+                *(uint64_t *)place = (uint64_t)L->base_rw + target_off;
+            } else {
+                *(uint64_t *)place = (uint64_t)L->base + target_off;
+            }
             return true;
         }
-        uint64_t target_off = s->st_value + (uint64_t)addend - L->base_vaddr;
-        size_t target_p = (size_t)(target_off / TL_PAGE);
-        if (L->is_stikdebug && target_p < L->npages && (L->page_flags[target_p] & TL_PAGE_W)) {
-            *(uint64_t *)place = (uint64_t)L->base_rw + target_off;
-        } else {
-            *(uint64_t *)place = (uint64_t)L->base + target_off;
-        }
-        return true;
-    }
-    case R_AARCH64_IRELATIVE:
-        tl_log_line("reloc: IRELATIVE (ifunc) in %s -- the attempt does not "
-                    "run resolvers, refusing", L->name);
-        return false;
-    case R_AARCH64_TLS_DTPMOD64:
-    case R_AARCH64_TLS_TPREL64:
-    case R_AARCH64_TLSDESC:
-        tl_log_line("reloc: TLS relocation in %s -- no TLS here, refusing", L->name);
-        return false;
-    default:
-        tl_log_line("reloc: unsupported type %u in %s", type, L->name);
-        return false;
+        case R_AARCH64_IRELATIVE:
+            tl_log_line(
+                "reloc: IRELATIVE (ifunc) in %s -- the attempt does not "
+                "run resolvers, refusing",
+                L->name);
+            return false;
+        case R_AARCH64_TLS_DTPMOD64:
+        case R_AARCH64_TLS_TPREL64:
+        case R_AARCH64_TLSDESC:
+            tl_log_line("reloc: TLS relocation in %s -- no TLS here, refusing", L->name);
+            return false;
+        default:
+            tl_log_line("reloc: unsupported type %u in %s", type, L->name);
+            return false;
     }
 }
 
@@ -896,8 +978,8 @@ static bool apply_relocations(tl_lib *L, lex *e, const ldyn *d)
         size_t n = (size_t)(d->relasz / sizeof(tl_rela));
         for (size_t i = 0; i < n; i++) {
             uint64_t r_offset = ld64(e->d + off + i * sizeof(tl_rela));
-            uint64_t r_info   = ld64(e->d + off + i * sizeof(tl_rela) + 8);
-            int64_t  r_addend = (int64_t)ld64(e->d + off + i * sizeof(tl_rela) + 16);
+            uint64_t r_info = ld64(e->d + off + i * sizeof(tl_rela) + 8);
+            int64_t r_addend = (int64_t)ld64(e->d + off + i * sizeof(tl_rela) + 16);
             if (!reloc_one(r_offset, ELF64_R_TYPE(r_info), (uint32_t)ELF64_R_SYM(r_info),
                            r_addend, L)) {
                 return false;
@@ -913,8 +995,8 @@ static bool apply_relocations(tl_lib *L, lex *e, const ldyn *d)
         }
         for (size_t i = 0; i < d->pltrelsz / sizeof(tl_rela); i++) {
             uint64_t r_offset = ld64(e->d + off + i * sizeof(tl_rela));
-            uint64_t r_info   = ld64(e->d + off + i * sizeof(tl_rela) + 8);
-            int64_t  r_addend = (int64_t)ld64(e->d + off + i * sizeof(tl_rela) + 16);
+            uint64_t r_info = ld64(e->d + off + i * sizeof(tl_rela) + 8);
+            int64_t r_addend = (int64_t)ld64(e->d + off + i * sizeof(tl_rela) + 16);
             if (!reloc_one(r_offset, ELF64_R_TYPE(r_info), (uint32_t)ELF64_R_SYM(r_info),
                            r_addend, L)) {
                 return false;
@@ -932,7 +1014,7 @@ static bool apply_relocations(tl_lib *L, lex *e, const ldyn *d)
             tl_log_line("reloc: packed table lacks the APS2 magic");
             return false;
         }
-        sleb_r s = { e->d + off + 4, e->d + off + d->packed_relasz, false };
+        sleb_r s = {e->d + off + 4, e->d + off + d->packed_relasz, false};
         int64_t count = rd_sleb(&s);
         int64_t relof = rd_sleb(&s);
         if (s.bad || count < 0) {
@@ -996,8 +1078,8 @@ static bool apply_relocations(tl_lib *L, lex *e, const ldyn *d)
                 uint64_t offset = word - L->base_vaddr;
                 size_t p = (size_t)(offset / TL_PAGE);
                 uint8_t *target = (p < L->npages && (L->page_flags[p] & TL_PAGE_CARVED))
-                                ? (L->base + offset)
-                                : (L->base_rw ? L->base_rw + offset : L->base + offset);
+                                      ? (L->base + offset)
+                                      : (L->base_rw ? L->base_rw + offset : L->base + offset);
                 *(uint64_t *)target = (uint64_t)L->base + word;
                 addr = word + 8;
                 done++;
@@ -1008,8 +1090,8 @@ static bool apply_relocations(tl_lib *L, lex *e, const ldyn *d)
                         uint64_t offset = a - L->base_vaddr;
                         size_t p = (size_t)(offset / TL_PAGE);
                         uint8_t *target = (p < L->npages && (L->page_flags[p] & TL_PAGE_CARVED))
-                                        ? (L->base + offset)
-                                        : (L->base_rw ? L->base_rw + offset : L->base + offset);
+                                              ? (L->base + offset)
+                                              : (L->base_rw ? L->base_rw + offset : L->base + offset);
                         *(uint64_t *)target = (uint64_t)L->base + a;
                         done++;
                     }
@@ -1091,13 +1173,15 @@ static bool extract_lib(const char *apk, const char *libname,
     }
     uint8_t *copy = malloc(len ? len : 1);
     if (!copy) {
-        if (owned) free((void *)bytes);
+        if (owned)
+            free((void *)bytes);
         tl_zip_close(&z);
         snprintf(err, errlen, "out of memory");
         return false;
     }
     memcpy(copy, bytes, len);
-    if (owned) free((void *)bytes);
+    if (owned)
+        free((void *)bytes);
     tl_zip_close(&z);
     *out = copy;
     *outlen = len;
@@ -1109,8 +1193,7 @@ static uint64_t g_bionic_tcb[512] __attribute__((aligned(4096)));
 
 static uint32_t encode_adrp(uint32_t rt, const void *pc, const void *target)
 {
-    int64_t delta = (int64_t)(((uintptr_t)target & ~(uintptr_t)0xFFF)
-                            - ((uintptr_t)pc & ~(uintptr_t)0xFFF)) >> 12;
+    int64_t delta = (int64_t)(((uintptr_t)target & ~(uintptr_t)0xFFF) - ((uintptr_t)pc & ~(uintptr_t)0xFFF)) >> 12;
     uint32_t imm = (uint32_t)delta & 0x1FFFFF;
     return 0x90000000u | ((imm & 3u) << 29) | ((imm >> 2) << 5) | (rt & 0x1Fu);
 }
@@ -1144,7 +1227,8 @@ static void patch_guest_code(uint8_t *code_rw, const uint8_t *code_rx, size_t le
             uint32_t immlo = (insn >> 29) & 3u;
             uint32_t immhi = (insn >> 5) & 0x7FFFFu;
             int64_t imm = (int64_t)((immhi << 2) | immlo);
-            if (imm & 0x100000) imm -= 0x200000;
+            if (imm & 0x100000)
+                imm -= 0x200000;
 
             const uint8_t *pc = code_rx + off;
             uintptr_t target_page = ((uintptr_t)pc & ~0xFFFull) + (imm << 12);
@@ -1174,8 +1258,13 @@ static void patch_guest_code(uint8_t *code_rw, const uint8_t *code_rx, size_t le
                              const uint8_t *page_flags, size_t npages,
                              bool is_stikdebug, ptrdiff_t delta_rw_rx)
 {
-    (void)code_rw; (void)code_rx; (void)len; (void)page_flags; (void)npages;
-    (void)is_stikdebug; (void)delta_rw_rx;
+    (void)code_rw;
+    (void)code_rx;
+    (void)len;
+    (void)page_flags;
+    (void)npages;
+    (void)is_stikdebug;
+    (void)delta_rw_rx;
 }
 #endif
 
@@ -1187,7 +1276,10 @@ static bool load_library(const char *name, const uint8_t *file, size_t flen)
         tl_log_line("load: too many libraries, refusing %s", name);
         return false;
     }
-    if (flen < sizeof(tl_ehdr) || memcmp(file, "\x7f""ELF", 4) != 0) {
+    if (flen < sizeof(tl_ehdr) || memcmp(file,
+                                         "\x7f"
+                                         "ELF",
+                                         4) != 0) {
         tl_log_line("load: %s is not an ELF file", name);
         return false;
     }
@@ -1200,16 +1292,17 @@ static bool load_library(const char *name, const uint8_t *file, size_t flen)
         tl_log_line("load: %s is not arm64 (machine %u)", name, eh->e_machine);
         return false;
     }
-    if (eh->e_phentsize < sizeof(tl_phdr)
-        || (size_t)eh->e_phoff + (size_t)eh->e_phnum * eh->e_phentsize > flen) {
+    if (eh->e_phentsize < sizeof(tl_phdr) || (size_t)eh->e_phoff + (size_t)eh->e_phnum * eh->e_phentsize > flen) {
         tl_log_line("load: %s has a program header table off the end", name);
         return false;
     }
 
     lex e;
     memset(&e, 0, sizeof(e));
-    e.d = file; e.n = flen;
-    const tl_phdr *loads[16]; int nloads = 0;
+    e.d = file;
+    e.n = flen;
+    const tl_phdr *loads[16];
+    int nloads = 0;
     bool has_relro = false, has_tls = false;
     tl_segment relro = {0};
     for (int i = 0; i < eh->e_phnum; i++) {
@@ -1217,9 +1310,9 @@ static bool load_library(const char *name, const uint8_t *file, size_t flen)
         uint32_t type = ld32(ph);
         if (type == PT_LOAD && nloads < 16) {
             loads[nloads++] = (const tl_phdr *)ph;
-            e.lv[e.nloads] = ld64(ph + 16);              /* p_vaddr */
-            e.lo[e.nloads] = ld64(ph + 8);               /* p_offset */
-            e.lf[e.nloads] = ld64(ph + 32);              /* p_filesz */
+            e.lv[e.nloads] = ld64(ph + 16); /* p_vaddr */
+            e.lo[e.nloads] = ld64(ph + 8); /* p_offset */
+            e.lf[e.nloads] = ld64(ph + 32); /* p_filesz */
             e.nloads++;
         } else if (type == PT_GNU_RELRO) {
             has_relro = true;
@@ -1237,8 +1330,10 @@ static bool load_library(const char *name, const uint8_t *file, size_t flen)
         return false;
     }
     if (has_tls) {
-        tl_log_line("load: %s uses TLS, which the attempt does not implement "
-                    "-- refusing", name);
+        tl_log_line(
+            "load: %s uses TLS, which the attempt does not implement "
+            "-- refusing",
+            name);
         return false;
     }
 
@@ -1254,7 +1349,7 @@ static bool load_library(const char *name, const uint8_t *file, size_t flen)
     size_t npages = tl_page_plan(segs, (size_t)nloads,
                                  has_relro ? &relro : NULL, TL_PAGE, NULL, 0,
                                  &base_vaddr);
-    if (npages == 0 || npages > 16384) {   /* 256 MiB is past an attempt */
+    if (npages == 0 || npages > 16384) { /* 256 MiB is past an attempt */
         tl_log_line("load: %s does not fit the attempt's page budget", name);
         return false;
     }
@@ -1296,9 +1391,10 @@ static bool load_library(const char *name, const uint8_t *file, size_t flen)
                     PROT_READ | PROT_WRITE | PROT_EXEC,
                     MAP_PRIVATE | MAP_ANON | MAP_JIT, -1, 0);
         if (base == MAP_FAILED) {
-            tl_log_line("load: JIT allocation failed (MAP_JIT %s, StikDebug %s); "
-                        "executable memory is the one thing this cannot run without",
-                        strerror(errno), stik ? "exhausted" : "not answering");
+            tl_log_line(
+                "load: JIT allocation failed (MAP_JIT %s, StikDebug %s); "
+                "executable memory is the one thing this cannot run without",
+                strerror(errno), stik ? "exhausted" : "not answering");
             free(flags);
             return false;
         }
@@ -1330,7 +1426,8 @@ static bool load_library(const char *name, const uint8_t *file, size_t flen)
     } else {
         size_t nwrite = 0;
         for (size_t i = 0; i < npages; i++) {
-            if (flags[i] & TL_PAGE_W) nwrite++;
+            if (flags[i] & TL_PAGE_W)
+                nwrite++;
         }
         tl_log_line("load: using StikDebug dual-mapped RW alias for %zu writable page(s) (no carving needed)", nwrite);
     }
@@ -1351,15 +1448,15 @@ static bool load_library(const char *name, const uint8_t *file, size_t flen)
         uint64_t seg_off = v - base_vaddr;
         size_t start_page = (size_t)(seg_off / TL_PAGE);
         uint8_t *dst = (flags[start_page] & TL_PAGE_CARVED)
-                     ? (base + seg_off)
-                     : (base_rw + seg_off);
+                           ? (base + seg_off)
+                           : (base_rw + seg_off);
         memcpy(dst, file + fo, fs);
         if (ms > fs) {
             memset(dst + fs, 0, (size_t)(ms - fs));
         }
     }
     if (!ok) {
-        unmap_lib(&(tl_lib){ .base = base, .npages = npages, .page_flags = flags, .is_stikdebug = is_stikdebug });
+        unmap_lib(&(tl_lib){.base = base, .npages = npages, .page_flags = flags, .is_stikdebug = is_stikdebug});
         return false;
     }
     patch_guest_code(base_rw, base, npages * TL_PAGE, flags, npages,
@@ -1369,13 +1466,15 @@ static bool load_library(const char *name, const uint8_t *file, size_t flen)
     ldyn d;
     if (!lex_dynamic(&e, &d)) {
         tl_log_line("load: %s has an unreadable dynamic table", name);
-        unmap_lib(&(tl_lib){ .base = base, .npages = npages, .page_flags = flags, .is_stikdebug = is_stikdebug });
+        unmap_lib(&(tl_lib){.base = base, .npages = npages, .page_flags = flags, .is_stikdebug = is_stikdebug});
         return false;
     }
     if (d.textrel) {
-        tl_log_line("load: %s needs TEXTREL (code patched in place), which "
-                    "W^X pages forbid -- refusing", name);
-        unmap_lib(&(tl_lib){ .base = base, .npages = npages, .page_flags = flags, .is_stikdebug = is_stikdebug });
+        tl_log_line(
+            "load: %s needs TEXTREL (code patched in place), which "
+            "W^X pages forbid -- refusing",
+            name);
+        unmap_lib(&(tl_lib){.base = base, .npages = npages, .page_flags = flags, .is_stikdebug = is_stikdebug});
         return false;
     }
 
@@ -1385,7 +1484,7 @@ static bool load_library(const char *name, const uint8_t *file, size_t flen)
     uint64_t sym_off = 0, str_off = 0;
     if (!d.symtab || !d.strtab || !lex_seg(&e, d.strtab, d.strsz, &str_off)) {
         tl_log_line("load: %s has an unreadable string table", name);
-        unmap_lib(&(tl_lib){ .base = base, .npages = npages, .page_flags = flags, .is_stikdebug = is_stikdebug });
+        unmap_lib(&(tl_lib){.base = base, .npages = npages, .page_flags = flags, .is_stikdebug = is_stikdebug});
         return false;
     }
     if (!lex_seg(&e, d.symtab, sizeof(tl_sym), &sym_off)) {
@@ -1406,7 +1505,7 @@ static bool load_library(const char *name, const uint8_t *file, size_t flen)
     L->syment = d.syment ? d.syment : sizeof(tl_sym);
     L->strtab = file + str_off;
     L->strsz = d.strsz;
-    L->gnu_hash = d.gnu_hash ? 0 : 0;      /* fixed up below, file-relative */
+    L->gnu_hash = d.gnu_hash ? 0 : 0; /* fixed up below, file-relative */
     L->init = d.init;
     L->fini = d.fini;
     L->init_array = d.init_array;
@@ -1452,9 +1551,10 @@ static bool load_library(const char *name, const uint8_t *file, size_t flen)
             }
         }
         if (!have && !tl_shim_supplies(need)) {
-            tl_log_line("dep: %s needs %s, which is not in the attempt's set "
-                        "-- its imports will resolve only if the shim covers them",
-                        name, need);
+            tl_log_line(
+                "dep: %s needs %s, which is not in the attempt's set "
+                "-- its imports will resolve only if the shim covers them",
+                name, need);
         }
     }
 
@@ -1476,8 +1576,8 @@ static bool load_library(const char *name, const uint8_t *file, size_t flen)
                 uint64_t offset = slot - base_vaddr;
                 size_t p = (size_t)(offset / TL_PAGE);
                 uint8_t *src = (p < L->npages && (L->page_flags[p] & TL_PAGE_CARVED))
-                             ? (base + offset)
-                             : (base_rw ? base_rw + offset : base + offset);
+                                   ? (base + offset)
+                                   : (base_rw ? base_rw + offset : base + offset);
                 uint64_t fn_addr = *(uint64_t *)src;
                 if (fn_addr) {
                     void (*fn)(void) = (void (*)(void))fn_addr;
@@ -1498,8 +1598,7 @@ static bool load_library(const char *name, const uint8_t *file, size_t flen)
 static int pick_primary(char names[][96], int n)
 {
     for (int i = 0; i < n; i++) {
-        if (!strcmp(names[i], "libmain.so") || !strcmp(names[i], "libgame.so")
-            || strstr(names[i], "activity") || strstr(names[i], "native")) {
+        if (!strcmp(names[i], "libmain.so") || !strcmp(names[i], "libgame.so") || strstr(names[i], "activity") || strstr(names[i], "native")) {
             return i;
         }
     }
@@ -1529,18 +1628,20 @@ static void *attempt_thread(void *arg)
     jit_init();
     jit_writable(false);
 
-    if (seconds > 0) tl_log_line("=== lifecycle begins, %d second budget ===", seconds);
-    else tl_log_line("=== lifecycle begins, no time limit ===");
+    if (seconds > 0)
+        tl_log_line("=== lifecycle begins, %d second budget ===", seconds);
+    else
+        tl_log_line("=== lifecycle begins, no time limit ===");
 
     /* The entry point, on the thread that owns the toggle:
      * void ANativeActivity_onCreate(ANativeActivity*, void* savedState,
      *                               size_t savedStateSize). */
     if (g_run.on_create) {
         g_run.on_create(&g_run.activity, NULL, 0);
-        if (!g_run.activity.callbacks->onNativeWindowCreated
-            && !g_run.activity.callbacks->onSurfaceChanged) {
-            tl_log_line("attempt: onCreate ran but registered no window "
-                        "callbacks -- nothing will draw through them");
+        if (!g_run.activity.callbacks->onNativeWindowCreated && !g_run.activity.callbacks->onSurfaceChanged) {
+            tl_log_line(
+                "attempt: onCreate ran but registered no window "
+                "callbacks -- nothing will draw through them");
         }
     }
 
@@ -1579,7 +1680,7 @@ static void *attempt_thread(void *arg)
         tl_pacer pacer;
         tl_pacer_start(&pacer, frame_ns);
 
-        uint64_t game_ns = 1000000000ull;           /* where the app's clock starts */
+        uint64_t game_ns = 1000000000ull; /* where the app's clock starts */
         uint64_t last = tl_dex_now_ns();
 
         /* The last window's worth of counters, for the once-in-two-seconds line. */
@@ -1590,8 +1691,7 @@ static void *attempt_thread(void *arg)
         while (!g_run.stop_requested) {
             struct timespec now_ts;
             clock_gettime(CLOCK_MONOTONIC, &now_ts);
-            long elapsed = (now_ts.tv_sec - start.tv_sec) * 1000
-                         + (now_ts.tv_nsec - start.tv_nsec) / 1000000;
+            long elapsed = (now_ts.tv_sec - start.tv_sec) * 1000 + (now_ts.tv_nsec - start.tv_nsec) / 1000000;
             if (seconds > 0 && elapsed > budget_ms) {
                 tl_log_line("run: %d second budget reached after %llu frame(s)",
                             seconds, (unsigned long long)g_run.frames);
@@ -1601,7 +1701,8 @@ static void *attempt_thread(void *arg)
             uint64_t now = tl_dex_now_ns();
             uint64_t step = now - last;
             last = now;
-            if (step > max_step_ns) step = max_step_ns;
+            if (step > max_step_ns)
+                step = max_step_ns;
             game_ns += step;
 
             tl_dex_tick_frame(dx, game_ns);
@@ -1609,19 +1710,20 @@ static void *attempt_thread(void *arg)
             win_frames++;
 
             /* Sleep for what is left of this frame's time. */
-            if (tl_pacer_wait(&pacer)) win_late++;
+            if (tl_pacer_wait(&pacer))
+                win_late++;
             uint64_t after = tl_dex_now_ns();
 
             if (after - win_start >= 2000000000ull && win_frames > 0) {
                 double secs = (double)(after - win_start) / 1e9;
                 double n = (double)win_frames;
                 husk_tl_perf pf;
-                pf.fps       = n / secs;
-                pf.logic_ms  = (double)(dx->perf.ns_logic  - p0.ns_logic)  / n / 1e6;
+                pf.fps = n / secs;
+                pf.logic_ms = (double)(dx->perf.ns_logic - p0.ns_logic) / n / 1e6;
                 pf.render_ms = (double)(dx->perf.ns_render - p0.ns_render) / n / 1e6;
-                pf.draw_ms   = (double)(dx->perf.ns_draw   - p0.ns_draw)   / n / 1e6;
-                pf.draws     = (double)(dx->perf.draws     - p0.draws)     / n;
-                pf.late_pct  = 100.0 * win_late / n;
+                pf.draw_ms = (double)(dx->perf.ns_draw - p0.ns_draw) / n / 1e6;
+                pf.draws = (double)(dx->perf.draws - p0.draws) / n;
+                pf.late_pct = 100.0 * win_late / n;
                 pthread_mutex_lock(&g_slot_lock);
                 g_perf = pf;
                 pthread_mutex_unlock(&g_slot_lock);
@@ -1666,14 +1768,13 @@ static void *attempt_thread(void *arg)
     while (!g_run.stop_requested) {
         struct timespec now;
         clock_gettime(CLOCK_MONOTONIC, &now);
-        long elapsed = (now.tv_sec - start.tv_sec) * 1000
-                     + (now.tv_nsec - start.tv_nsec) / 1000000;
+        long elapsed = (now.tv_sec - start.tv_sec) * 1000 + (now.tv_nsec - start.tv_nsec) / 1000000;
         if (seconds > 0 && elapsed > budget_ms) {
             tl_log_line("run: %d second budget reached after %llu frame(s)",
                         seconds, (unsigned long long)g_run.frames);
             break;
         }
-        struct timespec tick = { 0, 100 * 1000000 };
+        struct timespec tick = {0, 100 * 1000000};
         nanosleep(&tick, NULL);
     }
 
@@ -1705,7 +1806,7 @@ int husk_tl_attempt_start(const char *const *apks, int count, int seconds)
     pthread_mutex_lock(&g_log_mutex);
     if (g_run.active && !g_run.finished) {
         pthread_mutex_unlock(&g_log_mutex);
-        return -1;                    /* one attempt at a time */
+        return -1; /* one attempt at a time */
     }
     pthread_mutex_unlock(&g_log_mutex);
 
@@ -1745,7 +1846,8 @@ int husk_tl_attempt_start(const char *const *apks, int count, int seconds)
 
     /* Load order: the primary first, then its helpers, so the primary's
      * relocations see the helpers' exports. */
-    uint8_t *bytes = NULL; size_t blen = 0;
+    uint8_t *bytes = NULL;
+    size_t blen = 0;
     if (!extract_lib(apk_of[primary], names[primary], &bytes, &blen,
                      err, sizeof(err))) {
         tl_log_line("attempt: %s", err);
@@ -1765,7 +1867,8 @@ int husk_tl_attempt_start(const char *const *apks, int count, int seconds)
         if (i == primary) {
             continue;
         }
-        uint8_t *b = NULL; size_t l = 0;
+        uint8_t *b = NULL;
+        size_t l = 0;
         if (extract_lib(apk_of[i], names[i], &b, &l, err, sizeof(err))) {
             if (load_library(names[i], b, l)) {
                 g_run.libs[g_run.nlibs - 1].file = b;
@@ -1890,8 +1993,10 @@ start_dex:
 
         tl_dex_field *fi = tl_dex_find_field(c_class, "i", "I");
         tl_dex_field *fj = tl_dex_find_field(c_class, "j", "I");
-        if (fi && view_obj->fields) view_obj->fields[fi->slot].i = 0;
-        if (fj && view_obj->fields) view_obj->fields[fj->slot].i = 0;
+        if (fi && view_obj->fields)
+            view_obj->fields[fi->slot].i = 0;
+        if (fj && view_obj->fields)
+            view_obj->fields[fj->slot].i = 0;
 
         tl_dex_method *size_m = tl_dex_find_method(c_class, "onSizeChanged", "VIIII");
         if (size_m) {
@@ -1975,7 +2080,7 @@ void husk_tl_attempt_reset(void)
         tl_loader_request_stop();
         /* Give the lifecycle thread a moment to notice. */
         for (int i = 0; i < 20 && !g_run.finished; i++) {
-            struct timespec t = { 0, 50 * 1000000 };
+            struct timespec t = {0, 50 * 1000000};
             nanosleep(&t, NULL);
         }
     }

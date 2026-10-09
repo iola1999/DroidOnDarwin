@@ -14,7 +14,13 @@
 #include <ucontext.h>
 #include <unistd.h>
 
-#define CHECK(c) do { if (!(c)) { dprintf(2, "seccomp-tests:%d errno=%d: %s\n", __LINE__, errno, #c); _exit(111); } } while (0)
+#define CHECK(c) \
+    do { \
+        if (!(c)) { \
+            dprintf(2, "seccomp-tests:%d errno=%d: %s\n", __LINE__, errno, #c); \
+            _exit(111); \
+        } \
+    } while (0)
 static volatile sig_atomic_t trapped;
 static void trap_handler(int signal, siginfo_t *info, void *context)
 {
@@ -56,7 +62,9 @@ static void denied(void)
     CHECK(syscall(SYS_getpid) > 0);
 }
 
-struct thread_request { int read_fd, write_fd; };
+struct thread_request {
+    int read_fd, write_fd;
+};
 static void *synchronized_thread(void *opaque)
 {
     struct thread_request *request = opaque;
@@ -76,7 +84,10 @@ void seccomp_tests(void)
         denied();
         pid_t inherited = fork();
         CHECK(inherited >= 0);
-        if (!inherited) { denied(); _exit(0); }
+        if (!inherited) {
+            denied();
+            _exit(0);
+        }
         wait_success(inherited);
         filter(SECCOMP_RET_ERRNO | E2BIG, 10000, 0);
         CHECK(syscall(10000) == -1 && errno == E2BIG);

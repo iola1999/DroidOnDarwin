@@ -10,10 +10,12 @@ static int report_free_pages(struct page_reporting_dev_info *device,
     struct scatterlist *entry;
     unsigned int index;
     /* page_reporting isolates these buddy blocks until the callback returns. */
-    for_each_sg(pages, entry, count, index) {
+    for_each_sg(pages, entry, count, index)
+    {
         unsigned long offset = (unsigned long)sg_virt(entry) - memory_start;
         int error = lkl_ops->shmem_reclaim(offset, entry->length);
-        if (error) return error;
+        if (error)
+            return error;
     }
     return 0;
 }

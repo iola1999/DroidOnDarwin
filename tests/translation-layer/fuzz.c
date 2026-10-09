@@ -27,7 +27,7 @@ int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
         return 0;
     }
     if (write(fd, data, size) == (ssize_t)size) {
-        const char *paths[] = { path };
+        const char *paths[] = {path};
         husk_tl_free(husk_tl_scan(paths, 1));
         size_t len;
         husk_tl_free(husk_tl_read_entry(path, "lib/arm64-v8a/libgood.so", 1 << 24, &len));

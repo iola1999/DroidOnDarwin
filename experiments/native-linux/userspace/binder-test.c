@@ -15,12 +15,26 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
-#define CHECK(c) do { if (!(c)) { dprintf(2, "binder:%d pid=%d errno=%d: %s\n", __LINE__, getpid(), errno, #c); _exit(100); } } while (0)
+#define CHECK(c) \
+    do { \
+        if (!(c)) { \
+            dprintf(2, "binder:%d pid=%d errno=%d: %s\n", __LINE__, getpid(), errno, #c); \
+            _exit(100); \
+        } \
+    } while (0)
 #define MAPPING_SIZE (1024 * 1024)
 #define ROUNDS 32
-struct endpoint { int fd; unsigned char *mapping; };
-struct message { uint32_t sequence, length; unsigned char bytes[65536]; };
-struct reply { uint32_t sequence, length, sum; };
+struct endpoint {
+    int fd;
+    unsigned char *mapping;
+};
+struct message {
+    uint32_t sequence, length;
+    unsigned char bytes[65536];
+};
+struct reply {
+    uint32_t sequence, length, sum;
+};
 
 static struct endpoint endpoint(void)
 {
@@ -43,7 +57,8 @@ static void command(int fd, uint32_t command, const void *data, size_t size)
     unsigned char buffer[4 + sizeof(struct binder_transaction_data)];
     CHECK(size <= sizeof(buffer) - 4);
     memcpy(buffer, &command, 4);
-    if (size) memcpy(buffer + 4, data, size);
+    if (size)
+        memcpy(buffer + 4, data, size);
     struct binder_write_read wr = {.write_buffer = (uintptr_t)buffer, .write_size = size + 4};
     CHECK(ioctl(fd, BINDER_WRITE_READ, &wr) == 0 && wr.write_consumed == wr.write_size);
 }
@@ -74,10 +89,12 @@ static uint32_t receive(struct endpoint e, struct binder_transaction_data *trans
                 CHECK(ioctl(e.fd, BINDER_GET_EXTENDED_ERROR, &error) == 0);
                 dprintf(2, "binder reply code=%x command=%x error=%d\n", code, error.command, error.param);
                 event = code;
-            } else CHECK(code == BR_NOOP || code == BR_TRANSACTION_COMPLETE || code == BR_SPAWN_LOOPER);
+            } else
+                CHECK(code == BR_NOOP || code == BR_TRANSACTION_COMPLETE || code == BR_SPAWN_LOOPER);
             offset += size;
         }
-        if (event) return event;
+        if (event)
+            return event;
     }
 }
 static void release_buffer(struct endpoint e, struct binder_transaction_data *t)
@@ -132,7 +149,10 @@ int main(void)
     CHECK(pipe(ready) == 0);
     pid_t client = getpid(), child = fork();
     CHECK(child >= 0);
-    if (!child) { close(ready[0]); server(ready[1], client); }
+    if (!child) {
+        close(ready[0]);
+        server(ready[1], client);
+    }
     CHECK(close(ready[1]) == 0);
     char value;
     CHECK(read(ready[0], &value, 1) == 1 && close(ready[0]) == 0);
@@ -144,7 +164,8 @@ int main(void)
         message->sequence = round;
         message->length = sizes[round % 4];
         unsigned sum = 0;
-        for (unsigned i = 0; i < message->length; ++i) sum += message->bytes[i] = (unsigned char)(round * 7 + i);
+        for (unsigned i = 0; i < message->length; ++i)
+            sum += message->bytes[i] = (unsigned char)(round * 7 + i);
         struct binder_transaction_data t = {.code = 1, .data_size = 8 + message->length, .data.ptr.buffer = (uintptr_t)message};
         command(e.fd, BC_TRANSACTION, &t, sizeof(t));
         CHECK(receive(e, &t) == BR_REPLY && t.data_size == sizeof(struct reply));
@@ -158,8 +179,7 @@ int main(void)
     CHECK(transferred >= 0);
     struct binder_fd_object object = {.hdr.type = BINDER_TYPE_FD, .fd = transferred};
     binder_size_t offset = 0;
-    struct binder_transaction_data t = {.code = 2, .data_size = sizeof(object), .offsets_size = sizeof(offset),
-        .data.ptr = {.buffer = (uintptr_t)&object, .offsets = (uintptr_t)&offset}};
+    struct binder_transaction_data t = {.code = 2, .data_size = sizeof(object), .offsets_size = sizeof(offset), .data.ptr = {.buffer = (uintptr_t)&object, .offsets = (uintptr_t)&offset}};
     command(e.fd, BC_TRANSACTION, &t, sizeof(t));
     CHECK(receive(e, &t) == BR_REPLY && t.data_size == sizeof(struct reply));
     CHECK(((struct reply *)(uintptr_t)t.data.ptr.buffer)->sequence == ROUNDS);

@@ -10,9 +10,13 @@
 #include <memory>
 #include <pthread.h>
 
-#define CHECK(condition) do { if (!(condition)) { \
-    std::fprintf(stderr, "%s:%d: %s\n", __FILE__, __LINE__, #condition); \
-    std::abort(); } } while (0)
+#define CHECK(condition) \
+    do { \
+        if (!(condition)) { \
+            std::fprintf(stderr, "%s:%d: %s\n", __FILE__, __LINE__, #condition); \
+            std::abort(); \
+        } \
+    } while (0)
 
 struct Memory {
     std::array<uint8_t, 4096> ram{};
@@ -24,10 +28,13 @@ struct Memory {
     unsigned writes = 0;
     uint8_t *Locate(uint64_t a, size_t n)
     {
-        if (tagged) a &= UINT64_C(0x00ffffffffffffff);
+        if (tagged)
+            a &= UINT64_C(0x00ffffffffffffff);
         uint64_t page = a & ~UINT64_C(4095);
-        if (n > 4096 || (a & 4095) > 4096 - n) return nullptr;
-        auto *base = page == 0x20000 ? ram.data() : page == 0x120000 ? collision_ram.data() : nullptr;
+        if (n > 4096 || (a & 4095) > 4096 - n)
+            return nullptr;
+        auto *base = page == 0x20000 ? ram.data() : page == 0x120000 ? collision_ram.data()
+                                                                     : nullptr;
         return base ? base + (a & 4095) : nullptr;
     }
     static bool Read(void *opaque, uint64_t a, void *out, size_t n)
@@ -35,7 +42,8 @@ struct Memory {
         auto &m = *static_cast<Memory *>(opaque);
         m.reads++;
         auto *host = m.Locate(a, n);
-        if (!host) return false;
+        if (!host)
+            return false;
         std::memcpy(out, host, n);
         return true;
     }
@@ -44,14 +52,16 @@ struct Memory {
         auto &m = *static_cast<Memory *>(opaque);
         m.writes++;
         auto *host = m.Locate(a, n);
-        if (!m.writable || !host) return false;
+        if (!m.writable || !host)
+            return false;
         std::memcpy(host, in, n);
         return true;
     }
     static void *Map(void *opaque, uint64_t page, bool write)
     {
         auto &m = *static_cast<Memory *>(opaque);
-        if (m.jit_write_on_map) pthread_jit_write_protect_np(0);
+        if (m.jit_write_on_map)
+            pthread_jit_write_protect_np(0);
         return !write || m.writable ? m.Locate(page, 4096) : nullptr;
     }
 };
@@ -131,14 +141,14 @@ int main()
     CHECK(state.pc == 0x10004 && state.x[0] == 0xabcdef && state.x[1] == 0x20ffc);
 
     // The next entry observes changed code and changed backing memory.
-    program({0xd2800020, 0xd4000001}); // mov x0,1; svc 0
+    program({0xd2800020, 0xd4000001});  // mov x0,1; svc 0
     CHECK(run() == HUSK_ARM64_FALLBACK && state.x[0] == 1);
-    code[0] = 0xd2800040; // mov x0,2
+    code[0] = 0xd2800040;  // mov x0,2
     state.pc = 0x10000;
     CHECK(run() == HUSK_ARM64_FALLBACK && state.x[0] == 2);
     // Revisit pages after intervening code, including changes made while absent.
     std::array<uint32_t, 1024> second{};
-    second[0] = 0xd2800060; // mov x0,3
+    second[0] = 0xd2800060;  // mov x0,3
     second[1] = 0xd4000001;
     for (unsigned i = 0; i < 2048; ++i) {
         state.pc = 0x11000 + uint64_t(i) * 4096;
@@ -155,7 +165,7 @@ int main()
     memory_program();
     CHECK(run() == HUSK_ARM64_FALLBACK && state.x[0] == 99);
 
-    program({0x91000400, 0x17ffffff}); // add x0,x0,1; b -4
+    program({0x91000400, 0x17ffffff});  // add x0,x0,1; b -4
     CHECK(run(1000) == HUSK_ARM64_BUDGET);
     CHECK(state.x[0] >= 500 && state.x[0] <= 501);
 
@@ -180,12 +190,12 @@ int main()
         // A later entry can branch into an already compiled region on the same
         // page. Its conditional target must bind to that region's actual code.
         program({0x91000400, 0xd4000001});
-        code[32] = 0xb4000001 | ((unsigned(-32) & 0x7ffff) << 5); // cbz x1,-128
+        code[32] = 0xb4000001 | ((unsigned(-32) & 0x7ffff) << 5);  // cbz x1,-128
         code[33] = 0xd4000001;
         CHECK(run() == HUSK_ARM64_FALLBACK && state.x[0] == 1);
         state.pc = 0x10080;
         CHECK(run() == HUSK_ARM64_FALLBACK && state.x[0] == 2 && state.pc == 0x10004);
-        code[0] = 0x91000800; // add x0,x0,2 after both entries were cached
+        code[0] = 0x91000800;  // add x0,x0,2 after both entries were cached
         state.pc = 0x10080;
         CHECK(run() == HUSK_ARM64_FALLBACK && state.x[0] == 4);
 
@@ -226,7 +236,7 @@ int main()
 
     // A long guest TBZ must still branch when the generated page exceeds 32 KiB.
     code.fill(0xf9400020);
-    code[0] = 0x36000000 | (1000U << 5); // tbz x0,0,+4000
+    code[0] = 0x36000000 | (1000U << 5);  // tbz x0,0,+4000
     code[1000] = 0xd4000001;
     state = {};
     state.pc = 0x10000;
@@ -236,7 +246,7 @@ int main()
     CHECK(run() == HUSK_ARM64_FALLBACK && state.pc == 0x10004);
     CHECK(state.x[0] == 1 && state.x[30] == 0x10004);
 
-    program({0x14000400}); // b to the next code page
+    program({0x14000400});  // b to the next code page
     CHECK(run() == (direct ? HUSK_ARM64_BRANCH : HUSK_ARM64_FALLBACK) && state.pc == 0x11000);
     for (uint32_t unsupported : {0xd4000001U, 0xc87f7c20U,
                                  0xc8227c20U,
@@ -246,14 +256,15 @@ int main()
         CHECK(run() == HUSK_ARM64_FALLBACK && state.pc == 0x10000);
     }
     // CRC code must be rechecked when the owner changes guest feature exposure.
-    program({0x1ac24020, 0xd4000001}); // crc32b w0,w1,w2
+    program({0x1ac24020, 0xd4000001});  // crc32b w0,w1,w2
     CHECK(run() == HUSK_ARM64_FALLBACK && state.pc == 0x10000);
     state.access_flags = 64;
     CHECK(run() == HUSK_ARM64_FALLBACK && state.pc == 0x10004 && state.x[0] == 0);
-    state.pc = 0x10000; state.access_flags = 0;
+    state.pc = 0x10000;
+    state.access_flags = 0;
     CHECK(run() == HUSK_ARM64_FALLBACK && state.pc == 0x10000);
     if (direct) {
-        program({0xf9400020, 0xd4000001}); // ldr x0,[x1]; svc 0
+        program({0xf9400020, 0xd4000001});  // ldr x0,[x1]; svc 0
         state.x[1] = 0x20000;
         memory.ram.fill(0);
         memory.ram[0] = 42;
@@ -278,10 +289,10 @@ int main()
             state.access_flags = 0;
             CHECK(run() == HUSK_ARM64_FALLBACK && state.pc == 0x10008);
         }
-        program({0xd503201f, 0xd65f0000}); // nop; ret x0 to a non-leader within this page
+        program({0xd503201f, 0xd65f0000});  // nop; ret x0 to a non-leader within this page
         state.x[0] = 0x10004;
         CHECK(run(20) == HUSK_ARM64_BUDGET && state.pc == 0x10004);
-        program({0xf8408420, 0xd4000001}); // ldr x0,[x1],8
+        program({0xf8408420, 0xd4000001});  // ldr x0,[x1],8
         state.x[0] = 17;
         state.x[1] = UINT64_C(0xb400000000020000);
         CHECK(run() == HUSK_ARM64_FALLBACK && state.pc == 0x10000 && state.x[0] == 17);
@@ -299,9 +310,10 @@ int main()
         state.pc = 0x10000;
         CHECK(run() == HUSK_ARM64_FALLBACK && state.pc == 0x10000);
 
-        program({0xad400440, 0xd4000001}); // ldp q0,q1,[x2]
+        program({0xad400440, 0xd4000001});  // ldp q0,q1,[x2]
         state.x[2] = 0x20003;
-        for (unsigned i = 0; i < 32; ++i) memory.ram[i + 3] = i + 17;
+        for (unsigned i = 0; i < 32; ++i)
+            memory.ram[i + 3] = i + 17;
         CHECK(run() == HUSK_ARM64_FALLBACK && state.pc == 0x10000);
         state.access_flags = 1;
         CHECK(run() == HUSK_ARM64_FALLBACK && state.pc == 0x10004);
@@ -321,14 +333,17 @@ int main()
         CHECK(run() == HUSK_ARM64_FALLBACK && state.pc == 0x10010);
         CHECK(state.x[16] == state.tpidr_el0 && state.x[18] == state.nzcv && state.x[1] == state.fpcr);
         // Vector faults preserve both registers, NZCV, FPSR and writeback.
-        program({0xacc10440, 0xd4000001}); // ldp q0,q1,[x2],32
+        program({0xacc10440, 0xd4000001});  // ldp q0,q1,[x2],32
         state.x[2] = 0x20ff0;
         state.nzcv = 0xa0000000;
         state.fpsr = 0x08000000;
-        for (auto &v : state.v) { v[0] = 17; v[1] = 23; }
+        for (auto &v : state.v) {
+            v[0] = 17;
+            v[1] = 23;
+        }
         auto before_state = state;
         CHECK(run() == HUSK_ARM64_FALLBACK && !std::memcmp(&state, &before_state, sizeof(state)));
-        program({0xad810440, 0xd4000001}); // stp q0,q1,[x2,32]!
+        program({0xad810440, 0xd4000001});  // stp q0,q1,[x2,32]!
         state.x[2] = 0x20000;
         memory.writable = false;
         auto before_memory = memory.ram;
@@ -336,20 +351,20 @@ int main()
         CHECK(run() == HUSK_ARM64_FALLBACK && !std::memcmp(&state, &before_state, sizeof(state)));
         CHECK(memory.ram == before_memory);
         memory.writable = true;
-        program({0x1e202800, 0xd4000001}); // fadd s0,s0,s0
-        state.fpcr = 1U << 8; // Guest exception traps stay with QEMU.
+        program({0x1e202800, 0xd4000001});  // fadd s0,s0,s0
+        state.fpcr = 1U << 8;  // Guest exception traps stay with QEMU.
         before_state = state;
         CHECK(run() == HUSK_ARM64_FALLBACK && !std::memcmp(&state, &before_state, sizeof(state)));
 
         // A pair crossing into an unmapped page must leave QEMU the whole access.
-        program({0xa8c10440, 0xd4000001}); // ldp x0,x1,[x2],16
+        program({0xa8c10440, 0xd4000001});  // ldp x0,x1,[x2],16
         state.x[0] = 17;
         state.x[1] = 23;
         state.x[2] = 0x20ff8;
         state.nzcv = 0xa0000000;
         CHECK(run() == HUSK_ARM64_FALLBACK && state.pc == 0x10000);
         CHECK(state.x[0] == 17 && state.x[1] == 23 && state.x[2] == 0x20ff8 && state.nzcv == 0xa0000000);
-        program({0xa9810440, 0xd4000001}); // stp x0,x1,[x2,16]!
+        program({0xa9810440, 0xd4000001});  // stp x0,x1,[x2,16]!
         memory.writable = false;
         auto before = memory.ram;
         state.x[2] = 0x20000;

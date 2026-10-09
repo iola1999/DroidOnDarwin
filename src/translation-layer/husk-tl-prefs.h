@@ -40,11 +40,11 @@ bool tl_prefs_attach(tl_prefs *p, const char *path);
 /* Write to the attached file, atomically. A no-op returning true with no path. */
 bool tl_prefs_save(const tl_prefs *p);
 
-bool    tl_prefs_contains(const tl_prefs *p, const char *key);
+bool tl_prefs_contains(const tl_prefs *p, const char *key);
 int32_t tl_prefs_get_int(const tl_prefs *p, const char *key, int32_t def);
 int64_t tl_prefs_get_long(const tl_prefs *p, const char *key, int64_t def);
-float   tl_prefs_get_float(const tl_prefs *p, const char *key, float def);
-bool    tl_prefs_get_bool(const tl_prefs *p, const char *key, bool def);
+float tl_prefs_get_float(const tl_prefs *p, const char *key, float def);
+bool tl_prefs_get_bool(const tl_prefs *p, const char *key, bool def);
 /* The stored string, or `def`. Owned by the store; valid until that key changes. */
 const char *tl_prefs_get_string(const tl_prefs *p, const char *key, const char *def);
 
@@ -52,7 +52,7 @@ void tl_prefs_put_int(tl_prefs *p, const char *key, int32_t v);
 void tl_prefs_put_long(tl_prefs *p, const char *key, int64_t v);
 void tl_prefs_put_float(tl_prefs *p, const char *key, float v);
 void tl_prefs_put_bool(tl_prefs *p, const char *key, bool v);
-void tl_prefs_put_string(tl_prefs *p, const char *key, const char *v);   /* copied; NULL removes */
+void tl_prefs_put_string(tl_prefs *p, const char *key, const char *v); /* copied; NULL removes */
 
 void tl_prefs_remove(tl_prefs *p, const char *key);
 void tl_prefs_clear(tl_prefs *p);

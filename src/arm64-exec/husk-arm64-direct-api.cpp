@@ -5,7 +5,10 @@
 #include <exception>
 
 /* The iOS archive contains the direct backend; Dynarmic remains a Mac comparator. */
-bool husk_arm64_supported(uint32_t instruction) { return husk_direct_supported(instruction); }
+bool husk_arm64_supported(uint32_t instruction)
+{
+    return husk_direct_supported(instruction);
+}
 
 HuskArm64Exec *husk_arm64_create()
 {
@@ -13,8 +16,11 @@ HuskArm64Exec *husk_arm64_create()
     try {
         ctx = husk_direct_create();
         std::array<uint32_t, 1024> code{};
-        code[0] = 0xd2800001; code[1] = 0x8b000021;
-        code[2] = 0xf1000400; code[3] = 0x54ffffc1; code[4] = 0xd4000001;
+        code[0] = 0xd2800001;
+        code[1] = 0x8b000021;
+        code[2] = 0xf1000400;
+        code[3] = 0x54ffffc1;
+        code[4] = 0xd4000001;
         HuskArm64State state{};
         state.x[0] = 100;
         state.pc = 0x10000;
@@ -39,7 +45,7 @@ void husk_arm64_destroy(HuskArm64Exec *ctx)
 }
 
 HuskArm64Exit husk_arm64_run(HuskArm64Exec *ctx, HuskArm64State *state, uint64_t page,
-                           const void *bytes, HuskArm64Memory memory, uint64_t budget)
+                             const void *bytes, HuskArm64Memory memory, uint64_t budget)
 {
     if (!ctx || !state || !bytes || !budget || (page & 4095) || page > UINT64_MAX - 4095)
         return HUSK_ARM64_ERROR;

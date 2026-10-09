@@ -23,13 +23,27 @@ extern "C" {
 #define TL_PADS 4
 
 /* The bits of tl_pad_state.buttons. */
-enum { TL_PAD_A, TL_PAD_B, TL_PAD_X, TL_PAD_Y, TL_PAD_L1, TL_PAD_R1, TL_PAD_THUMBL, TL_PAD_THUMBR, TL_PAD_START, TL_PAD_SELECT, TL_PAD_MODE,
-       TL_PAD_DPAD_UP, TL_PAD_DPAD_DOWN, TL_PAD_DPAD_LEFT, TL_PAD_DPAD_RIGHT, TL_PAD_BUTTONS };
+enum { TL_PAD_A,
+       TL_PAD_B,
+       TL_PAD_X,
+       TL_PAD_Y,
+       TL_PAD_L1,
+       TL_PAD_R1,
+       TL_PAD_THUMBL,
+       TL_PAD_THUMBR,
+       TL_PAD_START,
+       TL_PAD_SELECT,
+       TL_PAD_MODE,
+       TL_PAD_DPAD_UP,
+       TL_PAD_DPAD_DOWN,
+       TL_PAD_DPAD_LEFT,
+       TL_PAD_DPAD_RIGHT,
+       TL_PAD_BUTTONS };
 
 typedef struct tl_pad_state {
-    uint32_t buttons;                    /* 1 << TL_PAD_* */
-    float lx, ly, rx, ry;                /* -1..1; y is positive downwards, as Android reports it */
-    float lt, rt;                        /* 0..1 */
+    uint32_t buttons; /* 1 << TL_PAD_* */
+    float lx, ly, rx, ry; /* -1..1; y is positive downwards, as Android reports it */
+    float lt, rt; /* 0..1 */
 } tl_pad_state;
 
 /* Where the events go: the engine that is running. Each gets its own reference to the event and releases it. */
@@ -41,12 +55,12 @@ typedef struct tl_pad_sink {
 void tl_pad_set_sink(const tl_pad_sink *sink);
 void tl_pad_connect(int slot, const char *name);
 void tl_pad_disconnect(int slot);
-void tl_pad_update(int slot, const tl_pad_state *state);        /* any thread; unchanged state sends nothing */
+void tl_pad_update(int slot, const tl_pad_state *state); /* any thread; unchanged state sends nothing */
 bool tl_pad_connected(int slot);
 
 /* the objects in husk-tl-jni-input.c */
 jobj *tl_input_key_event(int action, int keycode, int device, int source, int repeat, int64_t down_ms, int64_t event_ms);
-bool tl_input_event_axes(const jobj *ev, float *out48);        /* the axes of a joystick event, by Android axis number; false if it is not one */
+bool tl_input_event_axes(const jobj *ev, float *out48); /* the axes of a joystick event, by Android axis number; false if it is not one */
 jobj *tl_input_joystick_event(int device, int source, int64_t down_ms, int64_t event_ms, const float *axes);
 
 #ifdef __cplusplus

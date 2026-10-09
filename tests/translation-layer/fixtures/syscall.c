@@ -4,7 +4,7 @@
  * function also reads its stack guard from TPIDR_EL0 the Android way. */
 long raw_getpid(void)
 {
-    register long x8 __asm__("x8") = 172;   /* __NR_getpid */
+    register long x8 __asm__("x8") = 172; /* __NR_getpid */
     register long x0 __asm__("x0");
     __asm__ volatile("svc #0" : "=r"(x0) : "r"(x8) : "memory");
     return x0;
@@ -19,6 +19,9 @@ int sum(const char *s)
 {
     char buf[32];
     int n = 0;
-    for (int i = 0; i < 31 && s[i]; i++) { buf[i] = s[i]; n += buf[i]; }
+    for (int i = 0; i < 31 && s[i]; i++) {
+        buf[i] = s[i];
+        n += buf[i];
+    }
     return n;
 }

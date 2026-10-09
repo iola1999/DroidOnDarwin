@@ -12,7 +12,10 @@
 int main(void)
 {
     int fd = open("/dev/dri/renderD128", O_RDWR | O_CLOEXEC);
-    if (fd < 0) { perror("husk-gfxstream: render node"); return 1; }
+    if (fd < 0) {
+        perror("husk-gfxstream: render node");
+        return 1;
+    }
     uint64_t ids = 0;
     struct drm_virtgpu_getparam query = {
         .param = VIRTGPU_PARAM_SUPPORTED_CAPSET_IDs,
@@ -20,7 +23,8 @@ int main(void)
     };
     int status = ioctl(fd, DRM_IOCTL_VIRTGPU_GETPARAM, &query);
     close(fd);
-    if (status || !(ids & (1u << 8))) return 0;
+    if (status || !(ids & (1u << 8)))
+        return 0;
     const char *settings[][2] = {
         {"ro.hardware.egl", "emulation"},
         {"ro.boot.hardware.gltransport", "virtio-gpu-pipe"},

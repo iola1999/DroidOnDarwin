@@ -13,13 +13,20 @@
 #include <unistd.h>
 
 using namespace aidl::android::os;
-#define CHECK(c) do { if (!(c)) { dprintf(2, "installd-test:%d uid=%d errno=%d: %s\n", __LINE__, getuid(), errno, #c); _exit(114); } } while (0)
+#define CHECK(c) \
+    do { \
+        if (!(c)) { \
+            dprintf(2, "installd-test:%d uid=%d errno=%d: %s\n", __LINE__, getuid(), errno, #c); \
+            _exit(114); \
+        } \
+    } while (0)
 static constexpr int kStorage = IInstalld::FLAG_STORAGE_CE | IInstalld::FLAG_STORAGE_DE;
 static const char *kPackages[] = {"org.nce.first", "org.nce.second"};
 
 static void check_status(const ndk::ScopedAStatus &status)
 {
-    if (!status.isOk()) dprintf(2, "installd: %s\n", status.getDescription().c_str());
+    if (!status.isOk())
+        dprintf(2, "installd: %s\n", status.getDescription().c_str());
     CHECK(status.isOk());
 }
 
@@ -48,14 +55,19 @@ void nce_installd_client(const char *stage)
         std::vector<CreateAppDataArgs> args(2);
         for (unsigned i = 0; i < args.size(); ++i) {
             args[i].packageName = kPackages[i];
-            args[i].userId = 0; args[i].flags = kStorage; args[i].appId = 10001 + i;
-            args[i].previousAppId = -1; args[i].seInfo = "default"; args[i].targetSdkVersion = 36;
+            args[i].userId = 0;
+            args[i].flags = kStorage;
+            args[i].appId = 10001 + i;
+            args[i].previousAppId = -1;
+            args[i].seInfo = "default";
+            args[i].targetSdkVersion = 36;
         }
         std::vector<CreateAppDataResult> results;
         check_status(service->createAppDataBatched(args, &results));
         CHECK(results.size() == args.size());
         for (const auto &result : results) {
-            if (result.exceptionCode) dprintf(2, "createAppData: %s\n", result.exceptionMessage.c_str());
+            if (result.exceptionCode)
+                dprintf(2, "createAppData: %s\n", result.exceptionMessage.c_str());
             CHECK(result.exceptionCode == 0 && result.ceDataInode > 0 && result.deDataInode > 0);
         }
         CreateAppDataResult invalid;
@@ -65,7 +77,7 @@ void nce_installd_client(const char *stage)
         CHECK(service->createUserData(std::string("../escape"), 0, 0, kStorage).getExceptionCode() == EX_ILLEGAL_ARGUMENT);
     } else if (!strcmp(stage, "cache")) {
         check_status(service->clearAppData(std::nullopt, kPackages[0], 0,
-                                          kStorage | IInstalld::FLAG_CLEAR_CACHE_ONLY, 0));
+                                           kStorage | IInstalld::FLAG_CLEAR_CACHE_ONLY, 0));
     } else if (!strcmp(stage, "clear")) {
         check_status(service->clearAppData(std::nullopt, kPackages[0], 0, kStorage, 0));
     } else {
@@ -91,12 +103,22 @@ static void client(const char *executable, const char *stage, uid_t uid = 1000)
 
 pid_t nce_installd_start(const char *executable)
 {
-    const struct { const char *path; mode_t mode; uid_t uid; gid_t gid; } directories[] = {
-        {"/data/misc", 01771, 1000, 9998}, {"/data/misc/user", 0755, 0, 0},
-        {"/data/misc/installd", 0700, 0, 0}, {"/data/user", 0711, 1000, 1000},
-        {"/data/user/0", 0771, 1000, 1000}, {"/data/user_de", 0711, 1000, 1000},
-        {"/data/user_de/0", 0771, 1000, 1000}, {"/data/misc/profiles", 0771, 1000, 1000},
-        {"/data/misc/profiles/cur", 0771, 1000, 1000}, {"/data/misc/profiles/cur/0", 0771, 1000, 1000},
+    const struct {
+        const char *path;
+        mode_t mode;
+        uid_t uid;
+        gid_t gid;
+    } directories[] = {
+        {"/data/misc", 01771, 1000, 9998},
+        {"/data/misc/user", 0755, 0, 0},
+        {"/data/misc/installd", 0700, 0, 0},
+        {"/data/user", 0711, 1000, 1000},
+        {"/data/user/0", 0771, 1000, 1000},
+        {"/data/user_de", 0711, 1000, 1000},
+        {"/data/user_de/0", 0771, 1000, 1000},
+        {"/data/misc/profiles", 0771, 1000, 1000},
+        {"/data/misc/profiles/cur", 0771, 1000, 1000},
+        {"/data/misc/profiles/cur/0", 0771, 1000, 1000},
         {"/data/misc/profiles/ref", 0771, 1000, 1000},
     };
     for (const auto &directory : directories) {
@@ -117,7 +139,8 @@ pid_t nce_installd_start(const char *executable)
         int status;
         CHECK(waitpid(child, &status, WNOHANG) == 0);
         service = ndk::SpAIBinder(AServiceManager_checkService("installd"));
-        if (!service.get()) usleep(10000);
+        if (!service.get())
+            usleep(10000);
     }
     CHECK(service.get() && AIBinder_ping(service.get()) == STATUS_OK);
     client(executable, "create");

@@ -27,11 +27,11 @@ extern "C" {
 
 /* AAPCS64's va_list, byte for byte. */
 typedef struct tl_va_list {
-    void *stack;       /* next stack argument */
-    void *gr_top;      /* end of the general-register save area */
-    void *vr_top;      /* end of the FP/SIMD register save area */
-    int   gr_offs;     /* negative offset from gr_top of the next general argument */
-    int   vr_offs;     /* negative offset from vr_top of the next FP argument */
+    void *stack; /* next stack argument */
+    void *gr_top; /* end of the general-register save area */
+    void *vr_top; /* end of the FP/SIMD register save area */
+    int gr_offs; /* negative offset from gr_top of the next general argument */
+    int vr_offs; /* negative offset from vr_top of the next FP argument */
 } tl_va_list;
 
 /* What a stub saves: x0-x7, v0-v7 (16 bytes each), and the caller's stack pointer. */
@@ -83,9 +83,12 @@ static inline double tl_va_arg_f64(tl_va_list *ap)
  * its address for the symbol table.
  */
 #define TL_VA_STUB(sym, impl) \
-    __asm__(".text\n.p2align 2\n.globl _" #sym "\n_" #sym ":\n" \
-            "  adrp x16, _" #impl "@PAGE\n" \
-            "  add  x16, x16, _" #impl "@PAGEOFF\n" \
+    __asm__(".text\n.p2align 2\n.globl _" #sym "\n_" #sym \
+            ":\n" \
+            "  adrp x16, _" #impl \
+            "@PAGE\n" \
+            "  add  x16, x16, _" #impl \
+            "@PAGEOFF\n" \
             "  b    _tl_va_common\n")
 
 void tl_va_common(void);

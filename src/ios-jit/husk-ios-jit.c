@@ -16,7 +16,7 @@
 
 #include <errno.h>
 #include <mach/mach.h>
-#include <mach/vm_map.h>        /* vm_remap/vm_protect: mach_vm.h is absent from the iOS SDK */
+#include <mach/vm_map.h> /* vm_remap/vm_protect: mach_vm.h is absent from the iOS SDK */
 #include <os/log.h>
 #include <os/proc.h>
 #include <setjmp.h>
@@ -29,15 +29,14 @@
 #include <mach/task.h>
 #include <mach/task_info.h>
 #include <libkern/OSCacheControl.h>
-#include <sys/ucontext.h>   /* not <ucontext.h>: that one #errors without _XOPEN_SOURCE */
+#include <sys/ucontext.h> /* not <ucontext.h>: that one #errors without _XOPEN_SOURCE */
 #include <unistd.h>
 #include <fcntl.h>
 
 /*
  * Provide pipe2 for iOS systems where libc does not export it.
  */
-__attribute__((visibility("default")))
-int pipe2(int fds[2], int flags)
+__attribute__((visibility("default"))) int pipe2(int fds[2], int flags)
 {
     if (!fds) {
         errno = EFAULT;
@@ -91,16 +90,18 @@ static double husk_now_ms(void)
     struct timeval tv;
     gettimeofday(&tv, NULL);
     double t = tv.tv_sec * 1000.0 + tv.tv_usec / 1000.0;
-    if (base == 0) { base = t; }
+    if (base == 0) {
+        base = t;
+    }
     return t - base;
 }
 
-#define HUSK_LOG(fmt, ...)                                                     \
-    do {                                                                       \
-        os_log(OS_LOG_DEFAULT, "[husk-jit] " fmt, ##__VA_ARGS__);              \
-        fprintf(stderr, "[%9.2fms][husk-jit] " fmt "\n",                       \
-                husk_now_ms(), ##__VA_ARGS__);                                 \
-        fflush(stderr);                                                        \
+#define HUSK_LOG(fmt, ...) \
+    do { \
+        os_log(OS_LOG_DEFAULT, "[husk-jit] " fmt, ##__VA_ARGS__); \
+        fprintf(stderr, "[%9.2fms][husk-jit] " fmt "\n", \
+                husk_now_ms(), ##__VA_ARGS__); \
+        fflush(stderr); \
     } while (0)
 
 /* ------------------------------------------------------------------ symbols */
@@ -111,8 +112,8 @@ static double husk_now_ms(void)
  * rejected by AMFI at launch on sideloaded builds. See husk-brk.S for the
  * verification that our encoding matches theirs exactly.
  */
-extern void    *husk_brk_get_jit_mapping(void *addr, size_t len);
-extern void     husk_brk_jit_detach(void);
+extern void *husk_brk_get_jit_mapping(void *addr, size_t len);
+extern void husk_brk_jit_detach(void);
 extern uint64_t husk_brk_probe(void);
 
 /*
@@ -132,10 +133,10 @@ extern uint64_t husk_brk_probe(void);
  * absent, our own SIGTRAP handler steps over the brk and sets x0 to exactly 0.
  * So any non-zero answer means something serviced the trap.
  */
-#define HUSK_PROBE_MAGIC    0xE0000069ull
+#define HUSK_PROBE_MAGIC 0xE0000069ull
 #define HUSK_PROBE_MAGIC_LE 0x690000E0ull
 
-static atomic_bool           g_jit_available;
+static atomic_bool g_jit_available;
 static atomic_uint_least64_t g_alloc_counter;
 
 /* ------------------------------------------------------- unserviced-trap guard */
@@ -199,8 +200,7 @@ void husk_ios_jit_log_footprint(const char *tag)
 {
     task_vm_info_data_t info;
     mach_msg_type_number_t count = TASK_VM_INFO_COUNT;
-    if (task_info(mach_task_self(), TASK_VM_INFO, (task_info_t)&info, &count)
-        != KERN_SUCCESS) {
+    if (task_info(mach_task_self(), TASK_VM_INFO, (task_info_t)&info, &count) != KERN_SUCCESS) {
         HUSK_LOG("footprint[%s]: task_info failed", tag ? tag : "");
         return;
     }
@@ -214,12 +214,13 @@ void husk_ios_jit_log_footprint(const char *tag)
      */
     size_t avail = os_proc_available_memory();
 
-    HUSK_LOG("footprint[%s]: phys=%.1f MiB  resident=%.1f MiB  "
-             "available-before-jetsam=%.1f MiB",
-             tag ? tag : "",
-             info.phys_footprint / (1024.0 * 1024.0),
-             info.resident_size  / (1024.0 * 1024.0),
-             avail / (1024.0 * 1024.0));
+    HUSK_LOG(
+        "footprint[%s]: phys=%.1f MiB  resident=%.1f MiB  "
+        "available-before-jetsam=%.1f MiB",
+        tag ? tag : "",
+        info.phys_footprint / (1024.0 * 1024.0),
+        info.resident_size / (1024.0 * 1024.0),
+        avail / (1024.0 * 1024.0));
 }
 
 size_t husk_ios_available_memory(void)
@@ -241,7 +242,7 @@ size_t husk_ios_available_memory(void)
 static bool husk_jit_selftest(const HuskDualMapping *m, bool execute)
 {
     /* movz w0, #42  ;  ret */
-    static const uint32_t kCode[2] = { 0x52800540u, 0xD65F03C0u };
+    static const uint32_t kCode[2] = {0x52800540u, 0xD65F03C0u};
 
     if (m->rw_addr == NULL || m->rx_addr == NULL) {
         return false;
@@ -259,10 +260,11 @@ static bool husk_jit_selftest(const HuskDualMapping *m, bool execute)
     uint32_t readback[2];
     memcpy(readback, m->rx_addr, sizeof(readback));
     if (readback[0] != kCode[0] || readback[1] != kCode[1]) {
-        HUSK_LOG("selftest: FAIL -- RX alias does not reflect RW writes "
-                 "(read 0x%08x 0x%08x, expected 0x%08x 0x%08x). The two mappings "
-                 "are not backed by the same pages.",
-                 readback[0], readback[1], kCode[0], kCode[1]);
+        HUSK_LOG(
+            "selftest: FAIL -- RX alias does not reflect RW writes "
+            "(read 0x%08x 0x%08x, expected 0x%08x 0x%08x). The two mappings "
+            "are not backed by the same pages.",
+            readback[0], readback[1], kCode[0], kCode[1]);
         return false;
     }
     HUSK_LOG("selftest: RX alias reflects RW writes (0x%08x 0x%08x) -- aliasing OK",
@@ -282,8 +284,9 @@ static bool husk_jit_selftest(const HuskDualMapping *m, bool execute)
                  result);
         return false;
     }
-    HUSK_LOG("selftest: PASS -- executed generated code from the RX alias, got 42. "
-             "JIT is genuinely live.");
+    HUSK_LOG(
+        "selftest: PASS -- executed generated code from the RX alias, got 42. "
+        "JIT is genuinely live.");
     return true;
 }
 
@@ -318,7 +321,8 @@ HUSK_EXPORT bool husk_ios_jit_prewarm(size_t bytes)
         return husk_prewarmed.rw_addr != NULL;
     }
     husk_prewarm_done = true;
-    if (bytes > SIZE_MAX - HUSK_EL0_JIT_BYTES || bytes % 16384) return false;
+    if (bytes > SIZE_MAX - HUSK_EL0_JIT_BYTES || bytes % 16384)
+        return false;
     husk_tcg_capacity = bytes;
     husk_prewarmed = husk_ios_jit_allocate_real(NULL, bytes + HUSK_EL0_JIT_BYTES);
     fprintf(stderr, "[husk-jit] prewarm %s: TCG=%zu EL0=%u bytes\n",
@@ -348,7 +352,7 @@ HuskDualMapping husk_ios_jit_allocate(size_t bytes)
      */
     if (husk_prewarm_done) {
         fprintf(stderr, "[husk-jit] prewarm failed earlier; not trapping again\n");
-        HuskDualMapping none = { NULL, NULL, 0 };
+        HuskDualMapping none = {NULL, NULL, 0};
         return none;
     }
     return husk_ios_jit_allocate_real(NULL, bytes);
@@ -356,9 +360,10 @@ HuskDualMapping husk_ios_jit_allocate(size_t bytes)
 
 HuskDualMapping husk_ios_jit_acquire_el0(size_t bytes)
 {
-    HuskDualMapping none = { NULL, NULL, 0 };
+    HuskDualMapping none = {NULL, NULL, 0};
     if (!husk_prewarmed.rw_addr || !bytes || bytes > HUSK_EL0_JIT_BYTES ||
-        atomic_exchange(&husk_el0_claimed, true)) return none;
+        atomic_exchange(&husk_el0_claimed, true))
+        return none;
     HuskDualMapping region = {
         husk_prewarmed.rw_addr + husk_tcg_capacity,
         husk_prewarmed.rx_addr + husk_tcg_capacity,
@@ -374,14 +379,14 @@ void husk_ios_jit_release_el0(HuskDualMapping *region)
     if (region && husk_prewarmed.rw_addr &&
         region->rw_addr == husk_prewarmed.rw_addr + husk_tcg_capacity &&
         region->rx_addr == husk_prewarmed.rx_addr + husk_tcg_capacity) {
-        *region = (HuskDualMapping){ NULL, NULL, 0 };
+        *region = (HuskDualMapping){NULL, NULL, 0};
         atomic_store(&husk_el0_claimed, false);
     }
 }
 
 static HuskDualMapping husk_ios_jit_allocate_real(void *requested, size_t bytes)
 {
-    HuskDualMapping region = { NULL, NULL, 0 };
+    HuskDualMapping region = {NULL, NULL, 0};
     uint64_t n = atomic_fetch_add(&g_alloc_counter, 1) + 1;
 
     /* Cheap attach probe: brk #0x69 is answered with a constant when StikDebug
@@ -392,10 +397,11 @@ static HuskDualMapping husk_ios_jit_allocate_real(void *requested, size_t bytes)
     uint64_t probe = husk_brk_probe();
     g_expecting_jit_trap = false;
     if (probe == 0) {
-        HUSK_LOG("#%llu: StikDebug is NOT servicing traps -- probe returned 0, which "
-                 "is our own SIGTRAP handler stepping over an unanswered brk. "
-                 "Cannot allocate %zu bytes.",
-                 (unsigned long long)n, bytes);
+        HUSK_LOG(
+            "#%llu: StikDebug is NOT servicing traps -- probe returned 0, which "
+            "is our own SIGTRAP handler stepping over an unanswered brk. "
+            "Cannot allocate %zu bytes.",
+            (unsigned long long)n, bytes);
         return region;
     }
 
@@ -408,9 +414,10 @@ static HuskDualMapping husk_ios_jit_allocate_real(void *requested, size_t bytes)
         /* Serviced, but by something that answers differently. Proceed -- the
          * allocation itself is the real test -- and record the value so an
          * unfamiliar StikDebug build is identifiable from the log alone. */
-        HUSK_LOG("#%llu: trap was serviced but the answer is unrecognised (0x%llx). "
-                 "Continuing anyway; the allocation below is the real test.",
-                 (unsigned long long)n, (unsigned long long)probe);
+        HUSK_LOG(
+            "#%llu: trap was serviced but the answer is unrecognised (0x%llx). "
+            "Continuing anyway; the allocation below is the real test.",
+            (unsigned long long)n, (unsigned long long)probe);
     }
 
     /* A caller-provided RX range is prepared in place by the same script.
@@ -418,10 +425,11 @@ static HuskDualMapping husk_ios_jit_allocate_real(void *requested, size_t bytes)
     enum { kMaxAttempts = 3 };
     void *rx = NULL;
     for (int attempt = 1; attempt <= kMaxAttempts; attempt++) {
-        HUSK_LOG("#%llu: requesting execute-capable region, size=%zu (%.1f MiB), "
-                 "attempt %d/%d",
-                 (unsigned long long)n, bytes, (double)bytes / (1024.0 * 1024.0),
-                 attempt, kMaxAttempts);
+        HUSK_LOG(
+            "#%llu: requesting execute-capable region, size=%zu (%.1f MiB), "
+            "attempt %d/%d",
+            (unsigned long long)n, bytes, (double)bytes / (1024.0 * 1024.0),
+            attempt, kMaxAttempts);
 
         g_expecting_jit_trap = true;
         rx = husk_brk_get_jit_mapping(requested, bytes);
@@ -437,9 +445,10 @@ static HuskDualMapping husk_ios_jit_allocate_real(void *requested, size_t bytes)
     }
 
     if (rx == NULL || (requested && rx != requested)) {
-        HUSK_LOG("#%llu: FAILED after %d attempts. StikDebug must be attached with "
-                 "the Universal JIT script BEFORE the guest is started.",
-                 (unsigned long long)n, kMaxAttempts);
+        HUSK_LOG(
+            "#%llu: FAILED after %d attempts. StikDebug must be attached with "
+            "the Universal JIT script BEFORE the guest is started.",
+            (unsigned long long)n, kMaxAttempts);
         return region;
     }
 
@@ -470,7 +479,7 @@ static HuskDualMapping husk_ios_jit_allocate_real(void *requested, size_t bytes)
 
     region.rw_addr = (uint8_t *)rw;
     region.rx_addr = (uint8_t *)rx;
-    region.size    = bytes;
+    region.size = bytes;
     atomic_store(&g_jit_available, true);
 
     HUSK_LOG("#%llu: dual mapping established: rw=%p rx=%p size=%zu diff=%+lld",
@@ -479,10 +488,11 @@ static HuskDualMapping husk_ios_jit_allocate_real(void *requested, size_t bytes)
     husk_ios_jit_log_footprint("after-jit-alloc");
 
     if (!husk_jit_selftest(&region, requested == NULL)) {
-        HUSK_LOG("#%llu: SELFTEST FAILED -- the region is not usable as JIT memory. "
-                 "Refusing to hand it to TCG; QEMU would crash on its first "
-                 "generated block instead of failing here.",
-                 (unsigned long long)n);
+        HUSK_LOG(
+            "#%llu: SELFTEST FAILED -- the region is not usable as JIT memory. "
+            "Refusing to hand it to TCG; QEMU would crash on its first "
+            "generated block instead of failing here.",
+            (unsigned long long)n);
         husk_ios_jit_release(&region);
         return region;
     }
@@ -498,7 +508,7 @@ void husk_ios_jit_release(HuskDualMapping *m)
     /* Prewarm owns both partitions for the process lifetime. */
     if (m->rw_addr && m->rw_addr == husk_prewarmed.rw_addr &&
         m->rx_addr == husk_prewarmed.rx_addr && m->size <= husk_tcg_capacity) {
-        *m = (HuskDualMapping){ NULL, NULL, 0 };
+        *m = (HuskDualMapping){NULL, NULL, 0};
         return;
     }
     if (m->rw_addr != NULL) {
@@ -590,30 +600,32 @@ static void husk_probe_handler(int sig)
  */
 bool husk_ios_jit_mapjit_works(void)
 {
-    static atomic_int cached;   /* 0 unknown, 1 yes, -1 no */
+    static atomic_int cached; /* 0 unknown, 1 yes, -1 no */
     int known = atomic_load(&cached);
     if (known != 0) {
         return known > 0;
     }
 
     /* movz w0, #0x1234  ;  ret */
-    static const uint32_t kCode[2] = { 0x52824680u, 0xD65F03C0u };
-    const size_t len = 16 * 1024;   /* one iOS page */
+    static const uint32_t kCode[2] = {0x52824680u, 0xD65F03C0u};
+    const size_t len = 16 * 1024; /* one iOS page */
     bool ok = false;
 
     void *p = mmap(NULL, len, PROT_READ | PROT_WRITE | PROT_EXEC,
                    MAP_PRIVATE | MAP_ANON | MAP_JIT, -1, 0);
     if (p == MAP_FAILED) {
-        HUSK_LOG("MAP_JIT probe: mmap refused (%s) -- no executable memory this "
-                 "way; a trap servicer is the only route on this device",
-                 strerror(errno));
+        HUSK_LOG(
+            "MAP_JIT probe: mmap refused (%s) -- no executable memory this "
+            "way; a trap servicer is the only route on this device",
+            strerror(errno));
         atomic_store(&cached, -1);
         return false;
     }
 
     if (!husk_page_is_executable(p)) {
-        HUSK_LOG("MAP_JIT probe: the mapping came back without execute permission "
-                 "-- a trap servicer is the only route on this device");
+        HUSK_LOG(
+            "MAP_JIT probe: the mapping came back without execute permission "
+            "-- a trap servicer is the only route on this device");
         munmap(p, len);
         atomic_store(&cached, -1);
         return false;
@@ -633,16 +645,21 @@ bool husk_ios_jit_mapjit_works(void)
         // otherwise; on one without, it is plain RWX and these are no-ops.
         // The guard covers the write as well as the call, so a page that
         // refuses either fails the probe rather than the process.
-        if (jit_write_protect_supported()) { jit_write_protect(0); }
+        if (jit_write_protect_supported()) {
+            jit_write_protect(0);
+        }
         memcpy(p, kCode, sizeof(kCode));
-        if (jit_write_protect_supported()) { jit_write_protect(1); }
+        if (jit_write_protect_supported()) {
+            jit_write_protect(1);
+        }
         sys_icache_invalidate(p, sizeof(kCode));
 
         int (*fn)(void) = (int (*)(void))p;
         ok = (fn() == 0x1234);
     } else {
-        HUSK_LOG("MAP_JIT probe: faulted while executing the page -- the mapping "
-                 "was granted but is not executable");
+        HUSK_LOG(
+            "MAP_JIT probe: faulted while executing the page -- the mapping "
+            "was granted but is not executable");
     }
     g_probe_running = 0;
 
@@ -652,9 +669,9 @@ bool husk_ios_jit_mapjit_works(void)
     munmap(p, len);
 
     HUSK_LOG("MAP_JIT probe: %s", ok
-             ? "PASS -- this process can execute memory it wrote, so QEMU can "
-               "run on MAP_JIT even without a trap servicer"
-             : "FAIL -- MAP_JIT memory is not executable here");
+                                      ? "PASS -- this process can execute memory it wrote, so QEMU can "
+                                        "run on MAP_JIT even without a trap servicer"
+                                      : "FAIL -- MAP_JIT memory is not executable here");
     atomic_store(&cached, ok ? 1 : -1);
     return ok;
 }
@@ -668,22 +685,47 @@ static HuskDualMapping husk_ios_jit_allocate_real(void *requested, size_t bytes)
 {
     (void)requested;
     (void)bytes;
-    HuskDualMapping m = { NULL, NULL, 0 };
+    HuskDualMapping m = {NULL, NULL, 0};
     return m;
 }
 HuskDualMapping husk_ios_jit_allocate(size_t bytes)
 {
     return husk_ios_jit_allocate_real(NULL, bytes);
 }
-bool husk_ios_jit_prewarm(size_t bytes) { (void)bytes; return false; }
-HuskDualMapping husk_ios_jit_acquire_el0(size_t bytes) { return husk_ios_jit_allocate_real(NULL, bytes); }
-void husk_ios_jit_release_el0(HuskDualMapping *m) { (void)m; }
-void husk_ios_jit_release(HuskDualMapping *m) { (void)m; }
+bool husk_ios_jit_prewarm(size_t bytes)
+{
+    (void)bytes;
+    return false;
+}
+HuskDualMapping husk_ios_jit_acquire_el0(size_t bytes)
+{
+    return husk_ios_jit_allocate_real(NULL, bytes);
+}
+void husk_ios_jit_release_el0(HuskDualMapping *m)
+{
+    (void)m;
+}
+void husk_ios_jit_release(HuskDualMapping *m)
+{
+    (void)m;
+}
 void husk_ios_jit_detach(void) {}
-bool husk_ios_jit_is_available(void) { return false; }
-bool husk_ios_jit_mapjit_works(void) { return false; }
-void husk_ios_jit_log_footprint(const char *tag) { (void)tag; }
-size_t husk_ios_available_memory(void) { return 0; }
+bool husk_ios_jit_is_available(void)
+{
+    return false;
+}
+bool husk_ios_jit_mapjit_works(void)
+{
+    return false;
+}
+void husk_ios_jit_log_footprint(const char *tag)
+{
+    (void)tag;
+}
+size_t husk_ios_available_memory(void)
+{
+    return 0;
+}
 
 #endif
 

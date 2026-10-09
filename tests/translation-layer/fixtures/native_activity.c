@@ -77,7 +77,10 @@ static void draw_frame(void)
     if (!w) {
         return;
     }
-    struct { void *bits; int width, height, stride, format; } buf;
+    struct {
+        void *bits;
+        int width, height, stride, format;
+    } buf;
     if (ANativeWindow_lock(w, &buf, 0) != 0) {
         return;
     }
@@ -106,7 +109,7 @@ static void *render_thread(void *arg)
     LOG("render thread up");
     while (running) {
         draw_frame();
-        usleep(100000);          /* ~10 fps: slow enough to watch */
+        usleep(100000); /* ~10 fps: slow enough to watch */
     }
     LOG("render thread done");
     return 0;
@@ -114,10 +117,26 @@ static void *render_thread(void *arg)
 
 /* --- the lifecycle ---------------------------------------------------- */
 
-static void onStart(an_activity *a)   { (void)a; LOG("onStart"); }
-static void onResume(an_activity *a)  { (void)a; LOG("onResume"); }
-static void onPause(an_activity *a)   { (void)a; LOG("onPause"); }
-static void onStop(an_activity *a)    { (void)a; LOG("onStop"); }
+static void onStart(an_activity *a)
+{
+    (void)a;
+    LOG("onStart");
+}
+static void onResume(an_activity *a)
+{
+    (void)a;
+    LOG("onResume");
+}
+static void onPause(an_activity *a)
+{
+    (void)a;
+    LOG("onPause");
+}
+static void onStop(an_activity *a)
+{
+    (void)a;
+    LOG("onStop");
+}
 
 static void onDestroy(an_activity *a)
 {
@@ -136,32 +155,47 @@ static void onNativeWindowCreated(an_activity *a, an_window *w)
 
 static void onNativeWindowDestroyed(an_activity *a, an_window *w)
 {
-    (void)a; (void)w;
+    (void)a;
+    (void)w;
     LOG("onNativeWindowDestroyed");
     win = 0;
 }
 
 static void onSurfaceChanged(an_activity *a, an_window *w, int format)
 {
-    (void)a; (void)format;
+    (void)a;
+    (void)format;
     LOG("onSurfaceChanged %dx%d", ANativeWindow_getWidth(w),
         ANativeWindow_getHeight(w));
     win = w;
 }
 
 static an_callbacks cbs = {
-    onStart, onResume, 0, onPause, onStop, onDestroy, 0,
-    onNativeWindowCreated, 0, 0, 0, 0, onSurfaceChanged, 0, 0,
+    onStart,
+    onResume,
+    0,
+    onPause,
+    onStop,
+    onDestroy,
+    0,
+    onNativeWindowCreated,
+    0,
+    0,
+    0,
+    0,
+    onSurfaceChanged,
+    0,
+    0,
     onNativeWindowDestroyed,
 };
 
 /* --- the entry the loader looks for ----------------------------------- */
 
-__attribute__((visibility("default")))
-void ANativeActivity_onCreate(an_activity *activity, void *savedState,
-                              unsigned long savedStateSize)
+__attribute__((visibility("default"))) void ANativeActivity_onCreate(an_activity *activity, void *savedState,
+                                                                     unsigned long savedStateSize)
 {
-    (void)savedState; (void)savedStateSize;
+    (void)savedState;
+    (void)savedStateSize;
     LOG("onCreate: guest is alive, sdk %d, data %s", activity->sdkVersion,
         activity->internalDataPath);
     activity->callbacks = &cbs;

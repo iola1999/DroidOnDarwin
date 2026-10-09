@@ -13,7 +13,7 @@
 
 #include <stdbool.h>
 
-#include "husk-tl-gameactivity.h"          /* tl_ga_config: the same description of the game and its surface */
+#include "husk-tl-gameactivity.h" /* tl_ga_config: the same description of the game and its surface */
 
 #ifdef __cplusplus
 extern "C" {
@@ -26,7 +26,7 @@ bool tl_na_start(const tl_ga_config *cfg);
 bool tl_na_run(void);
 
 unsigned long tl_na_frames(void);
-void tl_na_touch(int phase, int id, float x, float y);       /* surface pixels, y down; phase 0 down, 1 move, 2 up, 3 cancel */
+void tl_na_touch(int phase, int id, float x, float y); /* surface pixels, y down; phase 0 down, 1 move, 2 up, 3 cancel */
 void tl_na_set_paused(bool paused);
 
 /* Where a package's OBB goes: tell the file system the OBB `name` is `size` bytes at `offset` in `host_file` (an APK that carries it). */

@@ -20,7 +20,8 @@ int main(void)
         start = ns();
         memory_loop(&value, MEMORY_ITERATIONS);
         unsigned long memory_ns = ns() - start;
-        if (sum != 5000000050000000UL || value != MEMORY_ITERATIONS) return 1;
+        if (sum != 5000000050000000UL || value != MEMORY_ITERATIONS)
+            return 1;
         printf("{\"sample\":%d,\"integer_ns\":%lu,\"memory_ns\":%lu}\n",
                sample, integer_ns, memory_ns);
     }

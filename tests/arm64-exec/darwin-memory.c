@@ -18,7 +18,13 @@
 
 #include "benchmarks.h"
 
-#define CHECK(x) do { if (!(x)) { fprintf(stderr, "failed line %d\n", __LINE__); exit(1); } } while (0)
+#define CHECK(x) \
+    do { \
+        if (!(x)) { \
+            fprintf(stderr, "failed line %d\n", __LINE__); \
+            exit(1); \
+        } \
+    } while (0)
 
 static uint64_t ns(void)
 {
@@ -35,7 +41,7 @@ static vm_prot_t protection(vm_address_t address)
     vm_region_submap_info_data_64_t info;
     mach_msg_type_number_t count = VM_REGION_SUBMAP_INFO_COUNT_64;
     CHECK(vm_region_recurse_64(mach_task_self(), &start, &size, &depth,
-          (vm_region_recurse_info_t)&info, &count) == KERN_SUCCESS);
+                               (vm_region_recurse_info_t)&info, &count) == KERN_SUCCESS);
     CHECK(start <= address && address - start < size);
     return info.protection;
 }
@@ -46,8 +52,8 @@ static void map_at(vm_address_t destination, vm_address_t source,
     vm_address_t actual = destination;
     vm_prot_t current, maximum;
     CHECK(vm_remap(mach_task_self(), &actual, size, 0,
-          VM_FLAGS_FIXED | VM_FLAGS_OVERWRITE, mach_task_self(), source,
-          copy, &current, &maximum, VM_INHERIT_NONE) == KERN_SUCCESS);
+                   VM_FLAGS_FIXED | VM_FLAGS_OVERWRITE, mach_task_self(), source,
+                   copy, &current, &maximum, VM_INHERIT_NONE) == KERN_SUCCESS);
     CHECK(actual == destination && (maximum & permissions) == permissions);
     CHECK(vm_protect(mach_task_self(), actual, size, false, permissions) == KERN_SUCCESS);
 }
@@ -60,7 +66,8 @@ static void fault_handler(int signal_number, siginfo_t *info, void *context)
 {
     (void)info;
     (void)context;
-    if (!expecting_fault) _Exit(128 + signal_number);
+    if (!expecting_fault)
+        _Exit(128 + signal_number);
     fault_signal = signal_number;
     siglongjmp(fault_return, 1);
 }
@@ -70,8 +77,10 @@ static void expect_fault(vm_address_t address, bool write)
     fault_signal = 0;
     expecting_fault = 1;
     if (sigsetjmp(fault_return, 1) == 0) {
-        if (write) *(volatile uint64_t *)address = 99;
-        else (void)*(volatile uint64_t *)address;
+        if (write)
+            *(volatile uint64_t *)address = 99;
+        else
+            (void)*(volatile uint64_t *)address;
     }
     expecting_fault = 0;
     CHECK(fault_signal == SIGBUS || fault_signal == SIGSEGV);
@@ -91,7 +100,8 @@ int main(void)
         size_t size = UINT64_C(1) << bits[i];
         void *reservation = mmap(NULL, size, PROT_NONE, MAP_PRIVATE | MAP_ANON, -1, 0);
         printf("reserve_bits=%u success=%d\n", bits[i], reservation != MAP_FAILED);
-        if (reservation != MAP_FAILED) CHECK(munmap(reservation, size) == 0);
+        if (reservation != MAP_FAILED)
+            CHECK(munmap(reservation, size) == 0);
     }
 
     void *ram = mmap(NULL, page * 2, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANON, -1, 0);
@@ -125,7 +135,7 @@ int main(void)
                protection(first), protection(first + 4096), protection(first + page - 1));
         CHECK(!(protection(first + 4096) & VM_PROT_WRITE));
         CHECK(vm_protect(mach_task_self(), first, page, false,
-                        VM_PROT_READ | VM_PROT_WRITE) == KERN_SUCCESS);
+                         VM_PROT_READ | VM_PROT_WRITE) == KERN_SUCCESS);
     }
 
     uint64_t started = ns();

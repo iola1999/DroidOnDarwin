@@ -27,11 +27,21 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
-#define CHECK(c) do { if (!(c)) { dprintf(2, "android-services:%d pid=%d errno=%d: %s\n", __LINE__, getpid(), errno, #c); _exit(100); } } while (0)
+#define CHECK(c) \
+    do { \
+        if (!(c)) { \
+            dprintf(2, "android-services:%d pid=%d errno=%d: %s\n", __LINE__, getpid(), errno, #c); \
+            _exit(100); \
+        } \
+    } while (0)
 static constexpr unsigned kRounds = 32;
 static constexpr const char *kService = "nce.test";
 static bool died;
-static void deadline(int) { dprintf(2, "android-services deadline exceeded\n"); _exit(124); }
+static void deadline(int)
+{
+    dprintf(2, "android-services deadline exceeded\n");
+    _exit(124);
+}
 void nce_property_service(int ready);
 void nce_display_start();
 void nce_display_stop();
@@ -71,7 +81,10 @@ static void mount_namespace_proc()
     check_proc_identity();
     pid_t child = fork();
     CHECK(child >= 0);
-    if (!child) { check_proc_identity(); _exit(0); }
+    if (!child) {
+        check_proc_identity();
+        _exit(0);
+    }
     int status;
     CHECK(waitpid(child, &status, 0) == child && status == 0);
     puts("{\"test\":\"android_proc_pid_namespace\",\"passed\":true}");
@@ -81,7 +94,8 @@ static void wait_success(pid_t child)
 {
     int status;
     CHECK(waitpid(child, &status, 0) == child);
-    if (status) dprintf(2, "android-services child=%d status=%d\n", child, status);
+    if (status)
+        dprintf(2, "android-services child=%d status=%d\n", child, status);
     CHECK(WIFEXITED(status) && WEXITSTATUS(status) == 0);
 }
 
@@ -118,7 +132,8 @@ static void load_service_policy()
     CHECK(permissions);
     unsigned permission_count = 0;
     for (dirent *entry; (entry = readdir(permissions));) {
-        if (!strcmp(entry->d_name, ".") || !strcmp(entry->d_name, "..")) continue;
+        if (!strcmp(entry->d_name, ".") || !strcmp(entry->d_name, ".."))
+            continue;
         int permission = openat(dirfd(permissions), entry->d_name, O_RDONLY | O_CLOEXEC);
         CHECK(permission >= 0);
         memset(text, 0, sizeof(text));
@@ -147,14 +162,18 @@ static void unix_sockets()
         iovec vector = {&byte, 1};
         alignas(cmsghdr) char control[CMSG_SPACE(sizeof(int))] = {};
         msghdr message = {};
-        message.msg_iov = &vector; message.msg_iovlen = 1;
-        message.msg_control = control; message.msg_controllen = sizeof(control);
+        message.msg_iov = &vector;
+        message.msg_iovlen = 1;
+        message.msg_control = control;
+        message.msg_controllen = sizeof(control);
         cmsghdr *header = CMSG_FIRSTHDR(&message);
-        header->cmsg_level = SOL_SOCKET; header->cmsg_type = SCM_RIGHTS;
+        header->cmsg_level = SOL_SOCKET;
+        header->cmsg_type = SCM_RIGHTS;
         header->cmsg_len = CMSG_LEN(sizeof(fd));
         memcpy(CMSG_DATA(header), &fd, sizeof(fd));
         CHECK(sendmsg(sockets[1], &message, 0) == 1);
-        close(fd); close(sockets[1]);
+        close(fd);
+        close(sockets[1]);
         _exit(0);
     }
     close(sockets[1]);
@@ -162,20 +181,24 @@ static void unix_sockets()
     iovec vector = {&byte, 1};
     alignas(cmsghdr) char control[CMSG_SPACE(sizeof(int)) + CMSG_SPACE(sizeof(ucred))] = {};
     msghdr message = {};
-    message.msg_iov = &vector; message.msg_iovlen = 1;
-    message.msg_control = control; message.msg_controllen = sizeof(control);
+    message.msg_iov = &vector;
+    message.msg_iovlen = 1;
+    message.msg_control = control;
+    message.msg_controllen = sizeof(control);
     CHECK(recvmsg(sockets[0], &message, MSG_CMSG_CLOEXEC) == 1 && byte == 'x' && !(message.msg_flags & (MSG_TRUNC | MSG_CTRUNC)));
     int received = -1;
     bool credentials = false;
     for (cmsghdr *h = CMSG_FIRSTHDR(&message); h; h = CMSG_NXTHDR(&message, h)) {
         CHECK(h->cmsg_level == SOL_SOCKET);
-        if (h->cmsg_type == SCM_RIGHTS) memcpy(&received, CMSG_DATA(h), sizeof(received));
+        if (h->cmsg_type == SCM_RIGHTS)
+            memcpy(&received, CMSG_DATA(h), sizeof(received));
         else if (h->cmsg_type == SCM_CREDENTIALS) {
             ucred value;
             memcpy(&value, CMSG_DATA(h), sizeof(value));
             CHECK(value.pid == child && value.uid == getuid() && value.gid == getgid());
             credentials = true;
-        } else CHECK(false);
+        } else
+            CHECK(false);
     }
     char data[8] = {};
     CHECK(received >= 0 && credentials && fcntl(received, F_GETFD) == FD_CLOEXEC);
@@ -185,16 +208,23 @@ static void unix_sockets()
     puts("{\"test\":\"linux_unix_socket_credentials_fd\",\"passed\":true}");
 }
 
-struct Payload { int8_t bytes[65536]; int32_t size; };
+struct Payload {
+    int8_t bytes[65536];
+    int32_t size;
+};
 static bool allocate_bytes(void *opaque, int32_t length, int8_t **buffer)
 {
     auto *payload = static_cast<Payload *>(opaque);
-    if (length < 0 || length > static_cast<int32_t>(sizeof(payload->bytes))) return false;
+    if (length < 0 || length > static_cast<int32_t>(sizeof(payload->bytes)))
+        return false;
     payload->size = length;
     *buffer = payload->bytes;
     return true;
 }
-static void *on_create(void *value) { return value; }
+static void *on_create(void *value)
+{
+    return value;
+}
 static void on_destroy(void *) {}
 static binder_status_t on_transact(AIBinder *, transaction_code_t code, const AParcel *in, AParcel *out)
 {
@@ -241,7 +271,10 @@ static void server(int ready)
     ABinderProcess_joinThreadPool();
     CHECK(false);
 }
-static void binder_died(void *) { died = true; }
+static void binder_died(void *)
+{
+    died = true;
+}
 
 static uint32_t property_request(uint32_t command, const char *name, uint32_t name_size,
                                  const char *value, uint32_t value_size)
@@ -252,11 +285,10 @@ static uint32_t property_request(uint32_t command, const char *name, uint32_t na
     address.sun_family = AF_UNIX;
     strcpy(address.sun_path, "/dev/socket/property_service");
     CHECK(connect(connection, reinterpret_cast<sockaddr *>(&address), sizeof(address)) == 0);
-    iovec vectors[] = {{&command, sizeof(command)}, {&name_size, sizeof(name_size)},
-                      {const_cast<char *>(name), name_size}, {&value_size, sizeof(value_size)},
-                      {const_cast<char *>(value), value_size}};
+    iovec vectors[] = {{&command, sizeof(command)}, {&name_size, sizeof(name_size)}, {const_cast<char *>(name), name_size}, {&value_size, sizeof(value_size)}, {const_cast<char *>(value), value_size}};
     msghdr message = {};
-    message.msg_iov = vectors; message.msg_iovlen = 5;
+    message.msg_iov = vectors;
+    message.msg_iovlen = 5;
     CHECK(sendmsg(connection, &message, MSG_NOSIGNAL) == 12 + name_size + value_size);
     uint32_t result;
     CHECK(recv(connection, &result, sizeof(result), MSG_WAITALL) == sizeof(result));
@@ -269,9 +301,11 @@ static void property_boundaries()
     CHECK(property_request(0, "", 0, "", 0) == PROP_ERROR_INVALID_CMD);
     CHECK(property_request(PROP_MSG_SETPROP2, ".bad", 4, "x", 1) == PROP_ERROR_INVALID_NAME);
     CHECK(property_request(PROP_MSG_SETPROP2, "a\0b", 3, "x", 1) == PROP_ERROR_READ_DATA);
-    char name[256]; memset(name, 'a', sizeof(name));
+    char name[256];
+    memset(name, 'a', sizeof(name));
     CHECK(property_request(PROP_MSG_SETPROP2, name, sizeof(name), "x", 1) == PROP_ERROR_READ_DATA);
-    char value[PROP_VALUE_MAX]; memset(value, 'x', sizeof(value));
+    char value[PROP_VALUE_MAX];
+    memset(value, 'x', sizeof(value));
     CHECK(property_request(PROP_MSG_SETPROP2, "nce.mutable", 11, value, sizeof(value)) == PROP_ERROR_INVALID_VALUE);
     CHECK(property_request(PROP_MSG_SETPROP2, "ctl.start", 9, "x", 1) == PROP_ERROR_HANDLE_CONTROL_MESSAGE);
     for (uid_t uid : {1000u, 10000u}) {
@@ -311,10 +345,22 @@ int main(int argc, char **argv)
 {
     CHECK(signal(SIGALRM, deadline) != SIG_ERR);
     setvbuf(stdout, nullptr, _IONBF, 0);
-    if (argc == 3 && !strcmp(argv[1], "server")) { server(atoi(argv[2])); return 1; }
-    if (argc == 3 && !strcmp(argv[1], "properties")) { nce_property_service(atoi(argv[2])); return 1; }
-    if (argc == 3 && !strcmp(argv[1], "apex")) { nce_apex_service(atoi(argv[2])); return 1; }
-    if (argc == 3 && !strcmp(argv[1], "installd-test")) { nce_installd_client(argv[2]); return 0; }
+    if (argc == 3 && !strcmp(argv[1], "server")) {
+        server(atoi(argv[2]));
+        return 1;
+    }
+    if (argc == 3 && !strcmp(argv[1], "properties")) {
+        nce_property_service(atoi(argv[2]));
+        return 1;
+    }
+    if (argc == 3 && !strcmp(argv[1], "apex")) {
+        nce_apex_service(atoi(argv[2]));
+        return 1;
+    }
+    if (argc == 3 && !strcmp(argv[1], "installd-test")) {
+        nce_installd_client(argv[2]);
+        return 0;
+    }
     alarm(20);
     mount_namespace_proc();
     unix_sockets();
@@ -325,8 +371,10 @@ int main(int argc, char **argv)
     CHECK(properties >= 0);
     if (!properties) {
         close(properties_ready[0]);
-        char descriptor[24]; snprintf(descriptor, sizeof(descriptor), "%d", properties_ready[1]);
-        execl(argv[0], argv[0], "properties", descriptor, nullptr); _exit(103);
+        char descriptor[24];
+        snprintf(descriptor, sizeof(descriptor), "%d", properties_ready[1]);
+        execl(argv[0], argv[0], "properties", descriptor, nullptr);
+        _exit(103);
     }
     close(properties_ready[1]);
     char properties_byte;
@@ -362,29 +410,39 @@ int main(int argc, char **argv)
     CHECK(symlink("/binderfs/nce-hardware", "/dev/hwbinder") == 0);
     pid_t manager = fork();
     CHECK(manager >= 0);
-    if (!manager) { execl("/system/bin/servicemanager", "servicemanager", nullptr); _exit(101); }
+    if (!manager) {
+        execl("/system/bin/servicemanager", "servicemanager", nullptr);
+        _exit(101);
+    }
     int ready[2];
     CHECK(pipe(ready) == 0);
     pid_t service = fork();
     CHECK(service >= 0);
     if (!service) {
         close(ready[0]);
-        char descriptor[24]; snprintf(descriptor, sizeof(descriptor), "%d", ready[1]);
-        execl(argv[0], argv[0], "server", descriptor, nullptr); _exit(102);
+        char descriptor[24];
+        snprintf(descriptor, sizeof(descriptor), "%d", ready[1]);
+        execl(argv[0], argv[0], "server", descriptor, nullptr);
+        _exit(102);
     }
     close(ready[1]);
     char value;
     ssize_t received = read(ready[0], &value, 1);
-    if (received != 1) { int status; CHECK(waitpid(service, &status, 0) == service); dprintf(2, "service failed status=%d\n", status); }
+    if (received != 1) {
+        int status;
+        CHECK(waitpid(service, &status, 0) == service);
+        dprintf(2, "service failed status=%d\n", status);
+    }
     CHECK(received == 1 && value == 'r' && close(ready[0]) == 0);
     puts("{\"test\":\"android_platform_servicemanager_registration\",\"passed\":true}");
     pid_t hwmanager = nce_start_system_service("/system_ext/bin/hwservicemanager", nullptr, 1000, {});
-    for (unsigned i = 0; ; ++i) {
+    for (unsigned i = 0;; ++i) {
         int status;
         CHECK(i < 100 && waitpid(hwmanager, &status, WNOHANG) == 0);
         char ready[PROP_VALUE_MAX] = {};
         __system_property_get("hwservicemanager.ready", ready);
-        if (!strcmp(ready, "true")) break;
+        if (!strcmp(ready, "true"))
+            break;
         usleep(100000);
     }
     if (access("/data/nce/graphics", F_OK) == 0) {
@@ -403,8 +461,10 @@ int main(int argc, char **argv)
     CHECK(apex >= 0);
     if (!apex) {
         close(apex_ready[0]);
-        char descriptor[24]; snprintf(descriptor, sizeof(descriptor), "%d", apex_ready[1]);
-        execl(argv[0], argv[0], "apex", descriptor, nullptr); _exit(111);
+        char descriptor[24];
+        snprintf(descriptor, sizeof(descriptor), "%d", apex_ready[1]);
+        execl(argv[0], argv[0], "apex", descriptor, nullptr);
+        _exit(111);
     }
     close(apex_ready[1]);
     CHECK(read(apex_ready[0], &value, 1) == 1 && value == 'r' && close(apex_ready[0]) == 0);
@@ -453,16 +513,19 @@ int main(int argc, char **argv)
     puts("{\"phase\":\"android_framework_launch\"}");
     nce_framework_test();
     pid_t power = nce_start_system_service("/vendor/bin/hw/android.hardware.power-service.example",
-                                         "android.hardware.power.IPower/default", 9999);
+                                           "android.hardware.power.IPower/default", 9999);
     pid_t power_stats = nce_start_system_service("/vendor/bin/hw/android.hardware.power.stats-service.example",
-                                               "android.hardware.power.stats.IPowerStats/default");
-    if (access("/data/nce/graphics", F_OK) == 0) nce_display_start();
+                                                 "android.hardware.power.stats.IPowerStats/default");
+    if (access("/data/nce/graphics", F_OK) == 0)
+        nce_display_start();
     pid_t suspend = nce_suspend_start();
     pid_t installd = nce_installd_start(argv[0]);
-    if (access("/data/nce/graphics", F_OK) == 0) nce_surface_test();
+    if (access("/data/nce/graphics", F_OK) == 0)
+        nce_surface_test();
     puts("{\"phase\":\"android_zygote_launch\"}");
     nce_zygote_test();
-    if (access("/data/nce/graphics", F_OK) == 0) nce_display_stop();
+    if (access("/data/nce/graphics", F_OK) == 0)
+        nce_display_stop();
     nce_input_stop();
     alarm(20);
     int binder_fd;

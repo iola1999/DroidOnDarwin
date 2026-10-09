@@ -36,7 +36,7 @@ extern "C" {
 typedef struct tl_blit_target {
     uint32_t *pixels;
     int width, height;
-    int stride;                 /* in pixels, not bytes */
+    int stride; /* in pixels, not bytes */
 } tl_blit_target;
 
 /*

@@ -57,11 +57,16 @@ static void save_png(const uint32_t *fb, int width, int height, const char *path
         CGImageDestinationAddImage(dest, img, NULL);
         CGImageDestinationFinalize(dest);
     }
-    if (dest) CFRelease(dest);
-    if (url) CFRelease(url);
-    if (str) CFRelease(str);
-    if (img) CGImageRelease(img);
-    if (c) CGContextRelease(c);
+    if (dest)
+        CFRelease(dest);
+    if (url)
+        CFRelease(url);
+    if (str)
+        CFRelease(str);
+    if (img)
+        CGImageRelease(img);
+    if (c)
+        CGContextRelease(c);
     CGColorSpaceRelease(cs);
 }
 
@@ -106,12 +111,18 @@ static void *hammer(void *arg)
 /* The pipes drawn in the frame just ticked: 97x937 sprites, top and bottom. */
 #define PIPE_W 97
 #define PIPE_H 937
-static struct { float x, y; } g_pipes[32];
+static struct {
+    float x, y;
+} g_pipes[32];
 static int g_npipes;
 static void observe_draw(void *user, int w, int h, float x, float y)
 {
     (void)user;
-    if (w == PIPE_W && h == PIPE_H && g_npipes < 32) { g_pipes[g_npipes].x = x; g_pipes[g_npipes].y = y; g_npipes++; }
+    if (w == PIPE_W && h == PIPE_H && g_npipes < 32) {
+        g_pipes[g_npipes].x = x;
+        g_pipes[g_npipes].y = y;
+        g_npipes++;
+    }
 }
 
 /*
@@ -136,25 +147,42 @@ static void track_pipe_drift(void)
             bool same_kind = (g_prev_y[j] < 0) == (g_pipes[i].y < 0);
             if (same_kind && dx > 0.2f && dx < 15.0f) {
                 float dy = fabsf(g_prev_y[j] - g_pipes[i].y);
-                if (dy > 0.5f) { g_wobbles++; if (dy > g_max_wobble) g_max_wobble = dy; }
+                if (dy > 0.5f) {
+                    g_wobbles++;
+                    if (dy > g_max_wobble)
+                        g_max_wobble = dy;
+                }
                 break;
             }
         }
     }
     g_prev_n = g_npipes;
-    for (int i = 0; i < g_npipes; i++) { g_prev_x[i] = g_pipes[i].x; g_prev_y[i] = g_pipes[i].y; }
+    for (int i = 0; i < g_npipes; i++) {
+        g_prev_x[i] = g_pipes[i].x;
+        g_prev_y[i] = g_pipes[i].y;
+    }
 }
 
 static bool next_gap_centre(float bird_left, float *centre)
 {
     float best_x = 1e9f, top = 0, bottom = 0;
     for (int i = 0; i < g_npipes; i++) {
-        if (g_pipes[i].x + PIPE_W <= bird_left) continue;           /* already behind it */
-        if (g_pipes[i].x > best_x + 0.5f) continue;
-        if (g_pipes[i].x < best_x - 0.5f) { best_x = g_pipes[i].x; top = -1e9f; bottom = 1e9f; }
-        if (g_pipes[i].y < 0) top = g_pipes[i].y + PIPE_H; else bottom = g_pipes[i].y;
+        if (g_pipes[i].x + PIPE_W <= bird_left)
+            continue; /* already behind it */
+        if (g_pipes[i].x > best_x + 0.5f)
+            continue;
+        if (g_pipes[i].x < best_x - 0.5f) {
+            best_x = g_pipes[i].x;
+            top = -1e9f;
+            bottom = 1e9f;
+        }
+        if (g_pipes[i].y < 0)
+            top = g_pipes[i].y + PIPE_H;
+        else
+            bottom = g_pipes[i].y;
     }
-    if (best_x > 1e8f || top < -1e8f || bottom > 1e8f) return false;
+    if (best_x > 1e8f || top < -1e8f || bottom > 1e8f)
+        return false;
     *centre = (top + bottom) / 2;
     return true;
 }
@@ -164,14 +192,16 @@ static float g_touch_x = 270.0f, g_touch_y = 480.0f;
 static void pick_touch(tl_dex_class *c_class, tl_dex_object *view_obj, int which,
                        float *x, float *y)
 {
-    static const char *names[3] = { "aj", "ak", "al" };
+    static const char *names[3] = {"aj", "ak", "al"};
     float boxes[3][4] = {{0}};
     int n = 0;
     for (int i = 0; i < 3; i++) {
         tl_dex_field *bf = tl_dex_find_field(c_class, names[i], "Landroid/graphics/Rect;");
-        if (!bf || bf->slot >= view_obj->nfields) continue;
+        if (!bf || bf->slot >= view_obj->nfields)
+            continue;
         tl_dex_object *r = view_obj->fields[bf->slot].l;
-        if (!r || r->nfields != 0 || !r->native_ptr) continue;   /* not a native Rect */
+        if (!r || r->nfields != 0 || !r->native_ptr)
+            continue; /* not a native Rect */
         memcpy(boxes[n], r->native_ptr, sizeof(float) * 4);
         printf("  button %s: left=%.0f top=%.0f right=%.0f bottom=%.0f\n", names[i],
                boxes[n][0], boxes[n][1], boxes[n][2], boxes[n][3]);
@@ -214,8 +244,10 @@ int main(int argc, char **argv)
     /* TL_SEED=n replays a run -- the same pipes -- and TL_CG=1 draws through
      * CoreGraphics only, so the two renderers can be compared on the same game. */
     ctx->draw_observer = observe_draw;
-    if (getenv("TL_SEED")) tl_dex_seed(ctx, (uint64_t)strtoull(getenv("TL_SEED"), NULL, 10));
-    if (getenv("TL_CG")) ctx->use_cg_only = 1;
+    if (getenv("TL_SEED"))
+        tl_dex_seed(ctx, (uint64_t)strtoull(getenv("TL_SEED"), NULL, 10));
+    if (getenv("TL_CG"))
+        ctx->use_cg_only = 1;
     printf("Total classes loaded: %d\n", ctx->num_classes);
 
     /* Look up Flappy Bird View class 'c' */
@@ -240,7 +272,7 @@ int main(int argc, char **argv)
         tl_dex_val args[2];
         args[0].l = view_obj;
         args[1].l = ctx->current_activity;
-        ctx->trace = getenv("TL_TRACE_INIT") != NULL;     /* the constructor reads the saved settings */
+        ctx->trace = getenv("TL_TRACE_INIT") != NULL; /* the constructor reads the saved settings */
         tl_dex_invoke(ctx, init_m, args, 2, NULL);
         ctx->trace = 0;
         printf("c.<init> completed successfully!\n");
@@ -249,8 +281,10 @@ int main(int argc, char **argv)
     /* Initialize Window insets (top and bottom bars) so layout 'e' proceeds */
     tl_dex_field *fi = tl_dex_find_field(c_class, "i", "I");
     tl_dex_field *fj = tl_dex_find_field(c_class, "j", "I");
-    if (fi && view_obj->fields) view_obj->fields[fi->slot].i = 0;
-    if (fj && view_obj->fields) view_obj->fields[fj->slot].i = 0;
+    if (fi && view_obj->fields)
+        view_obj->fields[fi->slot].i = 0;
+    if (fj && view_obj->fields)
+        view_obj->fields[fj->slot].i = 0;
 
     /* 2. Call c.onSizeChanged(540, 960, 0, 0) */
     tl_dex_method *size_m = tl_dex_find_method(c_class, "onSizeChanged", "VIIII");
@@ -262,7 +296,7 @@ int main(int argc, char **argv)
         args[2].i = height;
         args[3].i = 0;
         args[4].i = 0;
-        ctx->trace = getenv("TL_TRACE_SETUP") != NULL;   /* layout is where rects get their values */
+        ctx->trace = getenv("TL_TRACE_SETUP") != NULL; /* layout is where rects get their values */
         tl_dex_invoke(ctx, size_m, args, 5, NULL);
         ctx->trace = 0;
         printf("c.onSizeChanged completed!\n");
@@ -279,7 +313,9 @@ int main(int argc, char **argv)
     }
 
     int nz = 0;
-    for (int i = 0; i < width * height; i++) if (fb[i]) nz++;
+    for (int i = 0; i < width * height; i++)
+        if (fb[i])
+            nz++;
     printf("After c.b(): non-zero pixels = %d\n", nz);
 
     /* Dump every array-typed field of the view and what its elements are.
@@ -291,11 +327,16 @@ int main(int argc, char **argv)
         for (tl_dex_class *k = c_class; k; k = k->super_class) {
             for (int i = 0; i < k->num_fields; i++) {
                 tl_dex_field *fl = &k->fields[i];
-                if (fl->is_static || !fl->type || fl->type[0] != '[') continue;
-                if (fl->slot >= view_obj->nfields) continue;
+                if (fl->is_static || !fl->type || fl->type[0] != '[')
+                    continue;
+                if (fl->slot >= view_obj->nfields)
+                    continue;
                 tl_dex_object *a = view_obj->fields[fl->slot].l;
                 printf("  slot %2u %-6s %-34s ", fl->slot, fl->name, fl->type);
-                if (!a) { printf("null\n"); continue; }
+                if (!a) {
+                    printf("null\n");
+                    continue;
+                }
                 printf("array len=%u elem=%u:", a->array.length, a->array.elem_size);
                 if (fl->type[1] == 'L' || fl->type[1] == '[') {
                     for (uint32_t e = 0; e < a->array.length && e < 6; e++) {
@@ -333,7 +374,8 @@ int main(int argc, char **argv)
     /* TL_FRAMES=N runs longer; past the Get Ready screen (about frame 90) the
      * harness flaps every TL_FLAP_EVERY frames, so a longer run is actual
      * gameplay -- pipes, scoring -- and not a bird falling on the title. */
-    enum { TOUCH_DOWN = 30, TOUCH_UP = 31 };
+    enum { TOUCH_DOWN = 30,
+           TOUCH_UP = 31 };
     const int FRAMES = getenv("TL_FRAMES") ? atoi(getenv("TL_FRAMES")) : 90;
     const int FLAP_EVERY = getenv("TL_FLAP_EVERY") ? atoi(getenv("TL_FLAP_EVERY")) : 22;
     const bool autopilot = getenv("TL_AUTOPILOT") != NULL;
@@ -357,7 +399,9 @@ int main(int argc, char **argv)
     int white_run = 0, longest_white = 0, first_white = -1;
     /* Per-state cost of a frame, from the layer's own counters. The harness
      * runs unthrottled, so this is what a frame costs, not how fast it was shown. */
-    struct { uint64_t n, logic, render, draw, draws; } cost[8] = {{0}};
+    struct {
+        uint64_t n, logic, render, draw, draws;
+    } cost[8] = {{0}};
     uint64_t nanos = 1000000000ULL;
     for (int f = 0; f < FRAMES; f++) {
         nanos += 16666666ULL; /* ~60 fps */
@@ -365,13 +409,16 @@ int main(int argc, char **argv)
          * (needs a -DTL_DEX_TRACE build). TL_PROGRESS=1 names each frame as it
          * starts, so a crash can be placed. */
         const char *tf = getenv("TL_TRACE_FRAME");
-        if (getenv("TL_PROGRESS")) { fprintf(stderr, "[frame %d]\n", f); }
+        if (getenv("TL_PROGRESS")) {
+            fprintf(stderr, "[frame %d]\n", f);
+        }
         /* TL_TRACE_FRAME=N, or a range N-M. */
         ctx->trace = 0;
         if (tf) {
             int lo = atoi(tf), hi = lo;
             const char *dash = strchr(tf, '-');
-            if (dash) hi = atoi(dash + 1);
+            if (dash)
+                hi = atoi(dash + 1);
             ctx->trace = (f >= lo && f <= hi);
         }
         g_npipes = 0;
@@ -379,23 +426,26 @@ int main(int argc, char **argv)
         int state_before = 7;
         if (state_field && view_obj->nfields > state_field->slot) {
             tl_dex_object *st0 = view_obj->fields[state_field->slot].l;
-            if (st0 && st0->nfields > TL_ENUM_SLOT_ORDINAL) state_before = st0->fields[TL_ENUM_SLOT_ORDINAL].i & 7;
+            if (st0 && st0->nfields > TL_ENUM_SLOT_ORDINAL)
+                state_before = st0->fields[TL_ENUM_SLOT_ORDINAL].i & 7;
         }
         tl_dex_tick_frame(ctx, nanos);
         track_pipe_drift();
         cost[state_before].n++;
-        cost[state_before].logic  += ctx->perf.ns_logic  - before.ns_logic;
+        cost[state_before].logic += ctx->perf.ns_logic - before.ns_logic;
         cost[state_before].render += ctx->perf.ns_render - before.ns_render;
-        cost[state_before].draw   += ctx->perf.ns_draw   - before.ns_draw;
-        cost[state_before].draws  += ctx->perf.draws     - before.draws;
+        cost[state_before].draw += ctx->perf.ns_draw - before.ns_draw;
+        cost[state_before].draws += ctx->perf.draws - before.draws;
         /* Left on through the touch below: the input handler is as much a part
          * of the frame as the tick, and it is what usually needs tracing. It is
          * switched off at the top of the next iteration. */
         hashes[f] = frame_hash(fb, (size_t)width * height);
         if (fb[0] == 0xffffffffu) {
             went_white = true;
-            if (first_white < 0) first_white = f;
-            if (++white_run > longest_white) longest_white = white_run;
+            if (first_white < 0)
+                first_white = f;
+            if (++white_run > longest_white)
+                longest_white = white_run;
         } else {
             white_run = 0;
         }
@@ -415,11 +465,14 @@ int main(int argc, char **argv)
             (f >= 120 && f % save_every == 0)) {
             snprintf(path, sizeof(path), "%s/flappy_frame_%03d.png", outdir, f);
             save_png(fb, width, height, path);
-            if (getenv("TL_DUMP_RAW")) {     /* the exact bytes, for diffing two runs */
+            if (getenv("TL_DUMP_RAW")) { /* the exact bytes, for diffing two runs */
                 char rawpath[1024];
                 snprintf(rawpath, sizeof(rawpath), "%s/flappy_frame_%03d.raw", outdir, f);
                 FILE *rf = fopen(rawpath, "wb");
-                if (rf) { fwrite(fb, 4, (size_t)width * height, rf); fclose(rf); }
+                if (rf) {
+                    fwrite(fb, 4, (size_t)width * height, rf);
+                    fclose(rf);
+                }
             }
             printf("Frame %2d: hash=%016llx fb[0]=0x%08x  -> %s\n", f,
                    (unsigned long long)hashes[f], fb[0], path);
@@ -430,7 +483,8 @@ int main(int argc, char **argv)
             const char *which = getenv("TL_BUTTON");
             pick_touch(c_class, view_obj, which ? atoi(which) : 0, &touch_x, &touch_y);
             printf("Frame %d: touch down at (%.0f, %.0f)\n", f, touch_x, touch_y);
-            g_touch_x = touch_x; g_touch_y = touch_y;
+            g_touch_x = touch_x;
+            g_touch_y = touch_y;
             ctx->trace = getenv("TL_TRACE_TOUCH") != NULL;
             tl_dex_send_touch(ctx, 0 /* ACTION_DOWN */, g_touch_x, g_touch_y);
             ctx->trace = 0;
@@ -448,14 +502,27 @@ int main(int argc, char **argv)
             /* Aim a little below the gap's centre: after a flap the bird keeps
              * rising for several frames, so the line it flaps at is not where
              * it ends up. */
-            if (getenv("TL_SEEK") && next_gap_centre(150.0f, &gap_y)) line = gap_y + 18.0f;
-            if (!started && f >= 96) { started = 1; flapping = 0; last_flap = f;
-                tl_dex_send_touch(ctx, 0, 270.0f, 480.0f); flapping = 1; flaps++; goto after_touch; }
-            if (bird_y && bird_y->slot < view_obj->nfields) y = view_obj->fields[bird_y->slot].f;
-            if (flapping) { tl_dex_send_touch(ctx, 1, 270.0f, 480.0f); flapping = 0; }
-            else if (y > line && f - last_flap > 14) {
+            if (getenv("TL_SEEK") && next_gap_centre(150.0f, &gap_y))
+                line = gap_y + 18.0f;
+            if (!started && f >= 96) {
+                started = 1;
+                flapping = 0;
+                last_flap = f;
                 tl_dex_send_touch(ctx, 0, 270.0f, 480.0f);
-                flapping = 1; last_flap = f; flaps++;
+                flapping = 1;
+                flaps++;
+                goto after_touch;
+            }
+            if (bird_y && bird_y->slot < view_obj->nfields)
+                y = view_obj->fields[bird_y->slot].f;
+            if (flapping) {
+                tl_dex_send_touch(ctx, 1, 270.0f, 480.0f);
+                flapping = 0;
+            } else if (y > line && f - last_flap > 14) {
+                tl_dex_send_touch(ctx, 0, 270.0f, 480.0f);
+                flapping = 1;
+                last_flap = f;
+                flaps++;
             }
         } else if (!autopilot && f > 95 && f % FLAP_EVERY == 0) {
             /* A flap: down, and up on the next frame. */
@@ -465,16 +532,26 @@ int main(int argc, char **argv)
         } else if (f == TOUCH_UP) {
             tl_dex_send_touch(ctx, 1 /* ACTION_UP */, g_touch_x, g_touch_y);
         }
-        after_touch: ;
+    after_touch:;
     }
 
     /* Distinct pictures before and after the touch. */
     int distinct_before = 0, distinct_after = 0;
     for (int i = 0; i < FRAMES; i++) {
-        if (i < TOUCH_DOWN + 6) { /* fallthrough: counted below */ }
+        if (i < TOUCH_DOWN + 6) { /* fallthrough: counted below */
+        }
         bool seen = false;
-        for (int j = 0; j < i; j++) if (hashes[j] == hashes[i]) { seen = true; break; }
-        if (!seen) { if (i < TOUCH_DOWN) distinct_before++; else distinct_after++; }
+        for (int j = 0; j < i; j++)
+            if (hashes[j] == hashes[i]) {
+                seen = true;
+                break;
+            }
+        if (!seen) {
+            if (i < TOUCH_DOWN)
+                distinct_before++;
+            else
+                distinct_after++;
+        }
     }
     bool responded = FRAMES > TOUCH_DOWN + 5 && hashes[TOUCH_DOWN + 5] != hashes[TOUCH_DOWN - 1];
 
@@ -483,16 +560,18 @@ int main(int argc, char **argv)
     printf("white frames:            %s (first at %d, longest run %d)\n",
            went_white ? "yes" : "none", first_white, longest_white);
     printf("changed after the touch: %s\n", responded ? "yes" : "NO");
-    if (autopilot) printf("autopilot flaps:         %d\n", flaps);
+    if (autopilot)
+        printf("autopilot flaps:         %d\n", flaps);
 
     snprintf(path, sizeof(path), "%s/flappy_bird_frame.png", outdir);
     save_png(fb, width, height, path);
 
-    static const char *state_names[8] = { "title", "fading", "get ready", "starting", "playing", "game over", "?", "?" };
+    static const char *state_names[8] = {"title", "fading", "get ready", "starting", "playing", "game over", "?", "?"};
     printf("\nframe cost by game state (ms per frame; render includes the draw calls)\n");
     printf("  %-10s %6s %8s %8s %8s %10s\n", "state", "frames", "logic", "render", "of which draw", "draws/frame");
     for (int i = 0; i < 8; i++) {
-        if (!cost[i].n) continue;
+        if (!cost[i].n)
+            continue;
         double n = (double)cost[i].n;
         printf("  %-10s %6.0f %8.3f %8.3f %8.3f %10.1f\n", state_names[i], n,
                cost[i].logic / n / 1e6, cost[i].render / n / 1e6, cost[i].draw / n / 1e6,
@@ -504,7 +583,8 @@ int main(int argc, char **argv)
      * first frame start the game early and kill the bird at arbitrary moments,
      * so the gameplay criteria below would fail for the right reasons. What it
      * is judged on is surviving, and a sanitizer saying nothing. */
-    if (hammering) goto verdict;
+    if (hammering)
+        goto verdict;
     if (went_white && first_white < 90) {
         printf("FAIL: the screen went white at frame %d, before the game began\n", first_white);
         failures++;
@@ -517,7 +597,10 @@ int main(int argc, char **argv)
         printf("FAIL: the game drew almost nothing different across %d frames -- it is not running\n", FRAMES);
         failures++;
     }
-    if (!responded) { printf("FAIL: the touch changed nothing\n"); failures++; }
+    if (!responded) {
+        printf("FAIL: the touch changed nothing\n");
+        failures++;
+    }
 
     /*
      * Two things the game once got wrong because a preference read back as zero.
@@ -546,13 +629,17 @@ int main(int argc, char **argv)
     }
 verdict:
 
-    if (hammering) { atomic_store(&g_hammer_stop, 1); pthread_join(hammer_thread, NULL); }
-    if (getenv("TL_DUMP_INTS")) {     /* every int field of the view, to find a value by its number */
+    if (hammering) {
+        atomic_store(&g_hammer_stop, 1);
+        pthread_join(hammer_thread, NULL);
+    }
+    if (getenv("TL_DUMP_INTS")) { /* every int field of the view, to find a value by its number */
         printf("int fields of the view at the end:");
         for (tl_dex_class *k = c_class; k; k = k->super_class)
             for (int i = 0; i < k->num_fields; i++) {
                 tl_dex_field *fl = &k->fields[i];
-                if (fl->is_static || !fl->type || strcmp(fl->type, "I") || fl->slot >= view_obj->nfields) continue;
+                if (fl->is_static || !fl->type || strcmp(fl->type, "I") || fl->slot >= view_obj->nfields)
+                    continue;
                 printf(" %s=%d", fl->name, view_obj->fields[fl->slot].i);
             }
         printf("\n");

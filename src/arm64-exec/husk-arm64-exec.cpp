@@ -19,51 +19,61 @@ using Dynarmic::HaltReason;
 
 static bool dynarmic_supported(uint32_t insn)
 {
-    if (husk_arm64_mops_prologue(insn)) return false;
+    if (husk_arm64_mops_prologue(insn))
+        return false;
     // Exclusive state belongs to QEMU; this reference backend has its own monitor.
     if ((insn & 0x3f800000) == 0x08000000 ||
-        (insn & 0xfffff0ff) == 0xd503305f) return false;
+        (insn & 0xfffff0ff) == 0xd503305f)
+        return false;
     // This reference backend does not specialize its cache by guest FEAT_LSE.
     if ((insn & 0x3fa07c00) == 0x08a07c00 ||
-        ((insn & 0x3f200c00) == 0x38200000 && ((insn >> 12) & 15) <= 8)) return false;
-    if (husk_direct_supported(insn)) return true;
+        ((insn & 0x3f200c00) == 0x38200000 && ((insn >> 12) & 15) <= 8))
+        return false;
+    if (husk_direct_supported(insn))
+        return true;
     /* Admit baseline ARMv8 integer classes; optional ISA features stay with QEMU. */
-    if ((insn & 0x1f000000) == 0x10000000) { // ADR / ADRP
+    if ((insn & 0x1f000000) == 0x10000000) {  // ADR / ADRP
         return true;
     }
     switch (insn & 0x1f800000) {
-    case 0x11000000: // Add/subtract immediate
-    case 0x12000000: // Logical immediate
-    case 0x12800000: // Move wide
-    case 0x13000000: // Bitfield
-    case 0x13800000: // Extract
-        return true;
+        case 0x11000000:  // Add/subtract immediate
+        case 0x12000000:  // Logical immediate
+        case 0x12800000:  // Move wide
+        case 0x13000000:  // Bitfield
+        case 0x13800000:  // Extract
+            return true;
     }
-    if ((insn & 0x1f000000) == 0x0a000000 || // Logical shifted register
-        (insn & 0x1f200000) == 0x0b000000 || // Add/subtract shifted register
-        (insn & 0x1fe00000) == 0x0b200000 || // Add/subtract extended register
-        (insn & 0x1fe0fc00) == 0x1a000000 || // Add/subtract with carry
-        (insn & 0x3fe00410) == 0x3a400000 || // Conditional compare
-        (insn & 0x3fe00800) == 0x1a800000 || // Conditional select
-        (insn & 0x7fe00000) == 0x1b000000) { // Multiply-add/subtract
+    if ((insn & 0x1f000000) == 0x0a000000 ||  // Logical shifted register
+        (insn & 0x1f200000) == 0x0b000000 ||  // Add/subtract shifted register
+        (insn & 0x1fe00000) == 0x0b200000 ||  // Add/subtract extended register
+        (insn & 0x1fe0fc00) == 0x1a000000 ||  // Add/subtract with carry
+        (insn & 0x3fe00410) == 0x3a400000 ||  // Conditional compare
+        (insn & 0x3fe00800) == 0x1a800000 ||  // Conditional select
+        (insn & 0x7fe00000) == 0x1b000000) {  // Multiply-add/subtract
         return true;
     }
     switch (insn & 0x7fe0fc00) {
-    case 0x1ac00800: case 0x1ac00c00: // UDIV / SDIV
-    case 0x1ac02000: case 0x1ac02400: // LSLV / LSRV
-    case 0x1ac02800: case 0x1ac02c00: // ASRV / RORV
-        return true;
+        case 0x1ac00800:
+        case 0x1ac00c00:  // UDIV / SDIV
+        case 0x1ac02000:
+        case 0x1ac02400:  // LSLV / LSRV
+        case 0x1ac02800:
+        case 0x1ac02c00:  // ASRV / RORV
+            return true;
     }
     switch (insn & 0x7ffffc00) {
-    case 0x5ac00000: case 0x5ac00400: case 0x5ac00800: // RBIT / REV16 / REV32
-    case 0x5ac01000: case 0x5ac01400: // CLZ / CLS
-        return true;
+        case 0x5ac00000:
+        case 0x5ac00400:
+        case 0x5ac00800:  // RBIT / REV16 / REV32
+        case 0x5ac01000:
+        case 0x5ac01400:  // CLZ / CLS
+            return true;
     }
-    if ((insn & 0xfffffc00) == 0xdac00c00 || // REV64
-        (insn & 0xffe00000) == 0x9b200000 || // Signed multiply long
-        (insn & 0xffe00000) == 0x9ba00000 || // Unsigned multiply long
-        (insn & 0xffe0fc00) == 0x9b407c00 || // SMULH
-        (insn & 0xffe0fc00) == 0x9bc07c00) { // UMULH
+    if ((insn & 0xfffffc00) == 0xdac00c00 ||  // REV64
+        (insn & 0xffe00000) == 0x9b200000 ||  // Signed multiply long
+        (insn & 0xffe00000) == 0x9ba00000 ||  // Unsigned multiply long
+        (insn & 0xffe0fc00) == 0x9b407c00 ||  // SMULH
+        (insn & 0xffe0fc00) == 0x9bc07c00) {  // UMULH
         return true;
     }
     if ((insn & 0x7c000000) == 0x14000000 ||
@@ -76,13 +86,15 @@ static bool dynarmic_supported(uint32_t insn)
     if (branch == 0xd61f0000 || branch == 0xd63f0000 || branch == 0xd65f0000) {
         return true;
     }
-    if ((insn & 0x3e000000) == 0x28000000 && husk_direct_supported(insn)) return true;
+    if ((insn & 0x3e000000) == 0x28000000 && husk_direct_supported(insn))
+        return true;
     /* Scalar loads/stores admitted by the checked memory callbacks. */
     if ((insn & 0x04000000) == 0 && ((insn >> 22) & 3) <= 1) {
         if ((insn & 0x3b000000) == 0x39000000) {
             return true;
         }
-        if ((insn & 0x3b200c00) == 0x38200800 && (insn & (1U << 14))) return true;
+        if ((insn & 0x3b200c00) == 0x38200800 && (insn & (1U << 14)))
+            return true;
         if ((insn & 0x3b200000) == 0x38000000 && ((insn >> 10) & 3) != 2) {
             return true;
         }
@@ -96,8 +108,7 @@ bool husk_arm64_supported(uint32_t insn)
         const char *backend = std::getenv("HUSK_ARM64_BACKEND");
         return backend && !std::strcmp(backend, "direct");
     }();
-    return direct ?
-        husk_direct_supported(insn) : dynarmic_supported(insn);
+    return direct ? husk_direct_supported(insn) : dynarmic_supported(insn);
 }
 
 struct HuskArm64Exec final : Dynarmic::A64::UserCallbacks {
@@ -167,11 +178,13 @@ struct HuskArm64Exec final : Dynarmic::A64::UserCallbacks {
         }
         uint32_t insn;
         std::memcpy(&insn, code.data() + address - page, sizeof(insn));
-        if (!crc_enabled && (insn & 0x7fe0e000) == 0x1ac04000) return std::nullopt;
+        if (!crc_enabled && (insn & 0x7fe0e000) == 0x1ac04000)
+            return std::nullopt;
         return dynarmic_supported(insn) ? std::optional{insn} : std::nullopt;
     }
 
-    template<class T> T Read(uint64_t address)
+    template <class T>
+    T Read(uint64_t address)
     {
         T value{};
         if (!memory.read(memory.opaque, address, &value, sizeof(value))) {
@@ -183,10 +196,11 @@ struct HuskArm64Exec final : Dynarmic::A64::UserCallbacks {
         return value;
     }
 
-    template<class T> void Write(uint64_t address, T value)
+    template <class T>
+    void Write(uint64_t address, T value)
     {
         const bool overlaps_code = address <= page + code.size() - 1 &&
-            (address >= page || page - address < sizeof(value));
+                                   (address >= page || page - address < sizeof(value));
         if (overlaps_code || !memory.write(memory.opaque, address, &value, sizeof(value))) {
             fallback = true;
             jit->HaltExecution(HaltReason::MemoryAbort);
@@ -195,16 +209,46 @@ struct HuskArm64Exec final : Dynarmic::A64::UserCallbacks {
         }
     }
 
-    uint8_t MemoryRead8(uint64_t a) override { return Read<uint8_t>(a); }
-    uint16_t MemoryRead16(uint64_t a) override { return Read<uint16_t>(a); }
-    uint32_t MemoryRead32(uint64_t a) override { return Read<uint32_t>(a); }
-    uint64_t MemoryRead64(uint64_t a) override { return Read<uint64_t>(a); }
-    Vector MemoryRead128(uint64_t a) override { return Read<Vector>(a); }
-    void MemoryWrite8(uint64_t a, uint8_t v) override { Write(a, v); }
-    void MemoryWrite16(uint64_t a, uint16_t v) override { Write(a, v); }
-    void MemoryWrite32(uint64_t a, uint32_t v) override { Write(a, v); }
-    void MemoryWrite64(uint64_t a, uint64_t v) override { Write(a, v); }
-    void MemoryWrite128(uint64_t a, Vector v) override { Write(a, v); }
+    uint8_t MemoryRead8(uint64_t a) override
+    {
+        return Read<uint8_t>(a);
+    }
+    uint16_t MemoryRead16(uint64_t a) override
+    {
+        return Read<uint16_t>(a);
+    }
+    uint32_t MemoryRead32(uint64_t a) override
+    {
+        return Read<uint32_t>(a);
+    }
+    uint64_t MemoryRead64(uint64_t a) override
+    {
+        return Read<uint64_t>(a);
+    }
+    Vector MemoryRead128(uint64_t a) override
+    {
+        return Read<Vector>(a);
+    }
+    void MemoryWrite8(uint64_t a, uint8_t v) override
+    {
+        Write(a, v);
+    }
+    void MemoryWrite16(uint64_t a, uint16_t v) override
+    {
+        Write(a, v);
+    }
+    void MemoryWrite32(uint64_t a, uint32_t v) override
+    {
+        Write(a, v);
+    }
+    void MemoryWrite64(uint64_t a, uint64_t v) override
+    {
+        Write(a, v);
+    }
+    void MemoryWrite128(uint64_t a, Vector v) override
+    {
+        Write(a, v);
+    }
 
     void Stop(uint64_t pc)
     {
@@ -212,12 +256,30 @@ struct HuskArm64Exec final : Dynarmic::A64::UserCallbacks {
         fallback_pc = pc;
         jit->HaltExecution();
     }
-    void InterpreterFallback(uint64_t pc, size_t) override { Stop(pc); }
-    void ExceptionRaised(uint64_t pc, Dynarmic::A64::Exception) override { Stop(pc); }
-    void CallSVC(uint32_t) override { Stop(jit->GetPC() - 4); }
-    void AddTicks(uint64_t count) override { ticks -= std::min(count, ticks); }
-    uint64_t GetTicksRemaining() override { return ticks; }
-    uint64_t GetCNTPCT() override { return 0; }
+    void InterpreterFallback(uint64_t pc, size_t) override
+    {
+        Stop(pc);
+    }
+    void ExceptionRaised(uint64_t pc, Dynarmic::A64::Exception) override
+    {
+        Stop(pc);
+    }
+    void CallSVC(uint32_t) override
+    {
+        Stop(jit->GetPC() - 4);
+    }
+    void AddTicks(uint64_t count) override
+    {
+        ticks -= std::min(count, ticks);
+    }
+    uint64_t GetTicksRemaining() override
+    {
+        return ticks;
+    }
+    uint64_t GetCNTPCT() override
+    {
+        return 0;
+    }
 };
 
 HuskArm64Exec *husk_arm64_create(void)
@@ -232,19 +294,24 @@ HuskArm64Exec *husk_arm64_create(void)
     }
 }
 
-void husk_arm64_destroy(HuskArm64Exec *context) { delete context; }
+void husk_arm64_destroy(HuskArm64Exec *context)
+{
+    delete context;
+}
 
 HuskArm64Exit husk_arm64_run(HuskArm64Exec *ctx, HuskArm64State *state,
-                           uint64_t page, const void *bytes,
-                           HuskArm64Memory memory, uint64_t budget)
+                             uint64_t page, const void *bytes,
+                             HuskArm64Memory memory, uint64_t budget)
 {
     if (!ctx || !state || !bytes || !memory.read || !memory.write || !budget ||
         (page & 4095) || page > UINT64_MAX - 4095) {
         return HUSK_ARM64_ERROR;
     }
     try {
-        if (ctx->direct) return husk_direct_run(ctx->direct.get(), state, page, bytes, memory, budget);
-        if ((state->fpcr & ~HUSK_FPCR_MASK) || (state->access_flags & 2)) return HUSK_ARM64_FALLBACK;
+        if (ctx->direct)
+            return husk_direct_run(ctx->direct.get(), state, page, bytes, memory, budget);
+        if ((state->fpcr & ~HUSK_FPCR_MASK) || (state->access_flags & 2))
+            return HUSK_ARM64_FALLBACK;
         bool crc = state->access_flags & 64;
         if (ctx->page != page || ctx->crc_enabled != crc || std::memcmp(ctx->code.data(), bytes, 4096)) {
             ctx->jit->ClearCache();

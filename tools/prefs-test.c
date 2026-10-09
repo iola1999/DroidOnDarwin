@@ -9,7 +9,14 @@
 #include "husk-tl-prefs.h"
 
 static int failures = 0;
-#define CHECK(cond, ...) do { if (!(cond)) { printf("  FAIL: " __VA_ARGS__); printf("\n"); failures++; } } while (0)
+#define CHECK(cond, ...) \
+    do { \
+        if (!(cond)) { \
+            printf("  FAIL: " __VA_ARGS__); \
+            printf("\n"); \
+            failures++; \
+        } \
+    } while (0)
 
 int main(void)
 {
@@ -43,7 +50,8 @@ int main(void)
 
     printf("5. the file round trip, including awkward values\n");
     char path[] = "/tmp/husk-prefs-test-XXXXXX";
-    int fd = mkstemp(path); close(fd);
+    int fd = mkstemp(path);
+    close(fd);
     tl_prefs_clear(p);
     tl_prefs_attach(p, path);
     tl_prefs_put_int(p, "i", -2147483647);
@@ -70,10 +78,14 @@ int main(void)
     printf("6. a missing or damaged file is not fatal\n");
     tl_prefs *r = tl_prefs_create();
     CHECK(tl_prefs_attach(r, "/tmp/husk-prefs-does-not-exist"), "a missing file should be fine");
-    FILE *bad = fopen(path, "w"); fputs("this is not a prefs file\n", bad); fclose(bad);
+    FILE *bad = fopen(path, "w");
+    fputs("this is not a prefs file\n", bad);
+    fclose(bad);
     tl_prefs *s = tl_prefs_create();
     CHECK(!tl_prefs_attach(s, path) && tl_prefs_count(s) == 0, "a foreign file should be refused, not half-read");
-    tl_prefs_destroy(q); tl_prefs_destroy(r); tl_prefs_destroy(s);
+    tl_prefs_destroy(q);
+    tl_prefs_destroy(r);
+    tl_prefs_destroy(s);
     unlink(path);
 
     printf(failures ? "=== prefs test FAILED (%d) ===\n" : "=== prefs test passed ===\n", failures);

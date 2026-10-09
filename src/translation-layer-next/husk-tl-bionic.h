@@ -32,10 +32,10 @@ typedef struct tl_bionic_entry {
     void *addr;
 } tl_bionic_entry;
 
-#define TL_DIRECT(fn)       { #fn, (void *)(fn) }
-#define TL_WRAP(name, impl) { name, (void *)(impl) }
-#define TL_DATA(name, ptr)  { name, (void *)(ptr) }
-#define TL_END              { NULL, NULL }
+#define TL_DIRECT(fn) {#fn, (void *)(fn)}
+#define TL_WRAP(name, impl) {name, (void *)(impl)}
+#define TL_DATA(name, ptr) {name, (void *)(ptr)}
+#define TL_END {NULL, NULL}
 
 /* The tables, one per file. Each ends with TL_END. */
 extern const tl_bionic_entry tl_tab_core[];
@@ -49,14 +49,14 @@ extern const tl_bionic_entry tl_tab_ndk[];
 extern const tl_bionic_entry tl_tab_egl[];
 extern const tl_bionic_entry tl_tab_cxx[];
 extern const tl_bionic_entry tl_tab_opensles[];
-void *tl_egl_resolve(const char *name);   /* husk-tl-egl.c: GLES by name, through ANGLE */
-void *tl_vk_resolve(const char *name);    /* husk-tl-vulkan.m: Vulkan by name, through MoltenVK */
-bool tl_vk_available(void);                /* a MoltenVK was configured, so libvulkan.so can be opened */
+void *tl_egl_resolve(const char *name); /* husk-tl-egl.c: GLES by name, through ANGLE */
+void *tl_vk_resolve(const char *name); /* husk-tl-vulkan.m: Vulkan by name, through MoltenVK */
+bool tl_vk_available(void); /* a MoltenVK was configured, so libvulkan.so can be opened */
 
-extern void (*tl_guest_exit_hook)(int status);   /* set by an app host: exit() from guest code calls it instead of exiting */
+extern void (*tl_guest_exit_hook)(int status); /* set by an app host: exit() from guest code calls it instead of exiting */
 
 void *tl_bionic_find(const char *name);
-bool  tl_bionic_is_system_lib(const char *soname);
+bool tl_bionic_is_system_lib(const char *soname);
 
 /* ----------------------------------------------------------------- errno */
 
@@ -67,13 +67,17 @@ bool  tl_bionic_is_system_lib(const char *soname);
  * set -- translated -- only when it set something, so success leaves the guest's
  * errno alone.
  */
-int  tl_errno_to_guest(int darwin_errno);
-int  tl_errno_from_guest(int guest_errno);
+int tl_errno_to_guest(int darwin_errno);
+int tl_errno_from_guest(int guest_errno);
 int *tl_guest_errno_ptr(void);
 void tl_set_guest_errno(int guest_errno);
 
-#define TL_ERRNO_BEGIN()  (errno = 0)
-#define TL_ERRNO_END()    do { if (errno) tl_set_guest_errno(tl_errno_to_guest(errno)); } while (0)
+#define TL_ERRNO_BEGIN() (errno = 0)
+#define TL_ERRNO_END() \
+    do { \
+        if (errno) \
+            tl_set_guest_errno(tl_errno_to_guest(errno)); \
+    } while (0)
 
 /* Signal numbers: Linux <-> Darwin. 0 and negative on no equivalent. */
 int tl_signal_to_darwin(int linux_sig);

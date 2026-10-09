@@ -11,7 +11,13 @@
 #include <sys/file.h>
 
 extern struct lkl_host_operations nce_lkl_host;
-#define CHECK(c) do { if (!(c)) { fprintf(stderr, "host-context:%d\n", __LINE__); exit(1); } } while (0)
+#define CHECK(c) \
+    do { \
+        if (!(c)) { \
+            fprintf(stderr, "host-context:%d\n", __LINE__); \
+            exit(1); \
+        } \
+    } while (0)
 static struct lkl_jmp_buf context;
 static int jumped;
 extern int nce_disk_open(unsigned index, const char *path);

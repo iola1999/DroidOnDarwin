@@ -17,18 +17,60 @@
 
 void (*tl_cocos_audio_hook)(const int16_t *samples, int frames, int channels, int rate);
 
-static jvalue vl(void *p) { jvalue v; v.j = 0; v.l = p; return v; }
-static jvalue vi(int i) { jvalue v; v.j = 0; v.i = i; return v; }
-static jvalue vz(int z) { jvalue v; v.j = 0; v.z = z != 0; return v; }
-static void Noop(tl_jcall *c) { (void)c; }
-static void RetTrue(tl_jcall *c) { c->ret = vz(1); }
-static void RetFalse(tl_jcall *c) { c->ret = vz(0); }
+static jvalue vl(void *p)
+{
+    jvalue v;
+    v.j = 0;
+    v.l = p;
+    return v;
+}
+static jvalue vi(int i)
+{
+    jvalue v;
+    v.j = 0;
+    v.i = i;
+    return v;
+}
+static jvalue vz(int z)
+{
+    jvalue v;
+    v.j = 0;
+    v.z = z != 0;
+    return v;
+}
+static void Noop(tl_jcall *c)
+{
+    (void)c;
+}
+static void RetTrue(tl_jcall *c)
+{
+    c->ret = vz(1);
+}
+static void RetFalse(tl_jcall *c)
+{
+    c->ret = vz(0);
+}
 
-static void FMOD_sampleRate(tl_jcall *c) { c->ret = vi(48000); }
-static void FMOD_blockSize(tl_jcall *c) { c->ret = vi(1024); }
-static void FMOD_fd(tl_jcall *c) { c->ret = vi(-1); }
-static void FMOD_assets(tl_jcall *c) { c->ret = vl(tl_jni_new_object(tl_jni_class("android/content/res/AssetManager"))); }
-static void FMOD_audioDevices(tl_jcall *c) { c->ret = vl(tl_jni_new_obj_array(tl_jni_class("android/media/AudioDeviceInfo"), 0)); }
+static void FMOD_sampleRate(tl_jcall *c)
+{
+    c->ret = vi(48000);
+}
+static void FMOD_blockSize(tl_jcall *c)
+{
+    c->ret = vi(1024);
+}
+static void FMOD_fd(tl_jcall *c)
+{
+    c->ret = vi(-1);
+}
+static void FMOD_assets(tl_jcall *c)
+{
+    c->ret = vl(tl_jni_new_object(tl_jni_class("android/content/res/AssetManager")));
+}
+static void FMOD_audioDevices(tl_jcall *c)
+{
+    c->ret = vl(tl_jni_new_obj_array(tl_jni_class("android/media/AudioDeviceInfo"), 0));
+}
 
 static void Audio_init(tl_jcall *c)
 {
@@ -42,42 +84,57 @@ static void Audio_init(tl_jcall *c)
 static void Audio_write(tl_jcall *c)
 {
     jobj *arr = c->args[0].l;
-    int n = c->args[1].i;                                    /* samples (not frames) */
+    int n = c->args[1].i; /* samples (not frames) */
     int ch = tl_jni_get_field(c->self, "channels", "I").i, rate = tl_jni_get_field(c->self, "rate", "I").i;
-    if (ch <= 0) ch = 2;
-    if (rate <= 0) rate = 48000;
-    if (!arr || arr->kind != TL_K_PRIM_ARRAY || n <= 0) return;
-    if ((uint32_t)n > arr->arr.len) n = (int)arr->arr.len;
+    if (ch <= 0)
+        ch = 2;
+    if (rate <= 0)
+        rate = 48000;
+    if (!arr || arr->kind != TL_K_PRIM_ARRAY || n <= 0)
+        return;
+    if ((uint32_t)n > arr->arr.len)
+        n = (int)arr->arr.len;
     if (tl_cocos_audio_hook) {
-        tl_cocos_audio_hook((const int16_t *)arr->arr.data, n / ch, ch, rate);     /* the hook blocks until it has room */
+        tl_cocos_audio_hook((const int16_t *)arr->arr.data, n / ch, ch, rate); /* the hook blocks until it has room */
     } else {
-        struct timespec ts = { 0, (long)((double)(n / ch) * 1e9 / rate) };
+        struct timespec ts = {0, (long)((double)(n / ch) * 1e9 / rate)};
         nanosleep(&ts, NULL);
     }
 }
 
-static const struct { const char *name, *super; } k_classes[] = {
-    { "org/fmod/FMOD", "java/lang/Object" }, { "org/fmod/AudioDevice", "java/lang/Object" }, { "org/fmod/MediaCodec", "java/lang/Object" },
-    { "android/media/AudioDeviceInfo", "java/lang/Object" },
+static const struct {
+    const char *name, *super;
+} k_classes[] = {
+    {"org/fmod/FMOD", "java/lang/Object"},
+    {"org/fmod/AudioDevice", "java/lang/Object"},
+    {"org/fmod/MediaCodec", "java/lang/Object"},
+    {"android/media/AudioDeviceInfo", "java/lang/Object"},
 };
 
-#define M(c, n, s, f) { c, n, s, f }
+#define M(c, n, s, f) {c, n, s, f}
 static const tl_jhle k_hle[] = {
     M("org/fmod/FMOD", "checkInit", "()Z", RetTrue),
-    M("org/fmod/FMOD", "getOutputSampleRate", "()I", FMOD_sampleRate), M("org/fmod/FMOD", "getOutputBlockSize", "()I", FMOD_blockSize),
-    M("org/fmod/FMOD", "supportsLowLatency", "()Z", RetFalse), M("org/fmod/FMOD", "supportsAAudio", "()Z", RetFalse),
-    M("org/fmod/FMOD", "lowLatencyFlag", "()Z", RetFalse), M("org/fmod/FMOD", "proAudioFlag", "()Z", RetFalse),
-    M("org/fmod/FMOD", "isBluetoothOn", "()Z", RetFalse), M("org/fmod/FMOD", "fileDescriptorFromUri", "(Ljava/lang/String;)I", FMOD_fd),
+    M("org/fmod/FMOD", "getOutputSampleRate", "()I", FMOD_sampleRate),
+    M("org/fmod/FMOD", "getOutputBlockSize", "()I", FMOD_blockSize),
+    M("org/fmod/FMOD", "supportsLowLatency", "()Z", RetFalse),
+    M("org/fmod/FMOD", "supportsAAudio", "()Z", RetFalse),
+    M("org/fmod/FMOD", "lowLatencyFlag", "()Z", RetFalse),
+    M("org/fmod/FMOD", "proAudioFlag", "()Z", RetFalse),
+    M("org/fmod/FMOD", "isBluetoothOn", "()Z", RetFalse),
+    M("org/fmod/FMOD", "fileDescriptorFromUri", "(Ljava/lang/String;)I", FMOD_fd),
     M("org/fmod/FMOD", "getAssetManager", "()Landroid/content/res/AssetManager;", FMOD_assets),
     M("org/fmod/FMOD", "getAudioDevices", "(I)[Landroid/media/AudioDeviceInfo;", FMOD_audioDevices),
-    M("org/fmod/AudioDevice", "<init>", "()V", Noop), M("org/fmod/AudioDevice", "init", "(IIII)Z", Audio_init),
-    M("org/fmod/AudioDevice", "write", "([SI)V", Audio_write), M("org/fmod/AudioDevice", "close", "()V", Noop),
-    M("org/fmod/MediaCodec", "<init>", "()V", Noop), M("org/fmod/MediaCodec", "init", "(J)Z", RetFalse),
-    { NULL, NULL, NULL, NULL }
-};
+    M("org/fmod/AudioDevice", "<init>", "()V", Noop),
+    M("org/fmod/AudioDevice", "init", "(IIII)Z", Audio_init),
+    M("org/fmod/AudioDevice", "write", "([SI)V", Audio_write),
+    M("org/fmod/AudioDevice", "close", "()V", Noop),
+    M("org/fmod/MediaCodec", "<init>", "()V", Noop),
+    M("org/fmod/MediaCodec", "init", "(J)Z", RetFalse),
+    {NULL, NULL, NULL, NULL}};
 
 void tl_fmod_install(void)
 {
-    for (size_t i = 0; i < sizeof(k_classes) / sizeof(k_classes[0]); i++) tl_jni_declare(k_classes[i].name, k_classes[i].super);
+    for (size_t i = 0; i < sizeof(k_classes) / sizeof(k_classes[0]); i++)
+        tl_jni_declare(k_classes[i].name, k_classes[i].super);
     tl_jni_register_hle(k_hle);
 }

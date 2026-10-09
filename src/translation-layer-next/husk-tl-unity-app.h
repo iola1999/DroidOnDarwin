@@ -16,7 +16,11 @@
 extern "C" {
 #endif
 
-enum { HUSK_UNITY_IDLE = 0, HUSK_UNITY_STARTING = 1, HUSK_UNITY_RUNNING = 2, HUSK_UNITY_FAILED = 3, HUSK_UNITY_ENDED = 4 };
+enum { HUSK_UNITY_IDLE = 0,
+       HUSK_UNITY_STARTING = 1,
+       HUSK_UNITY_RUNNING = 2,
+       HUSK_UNITY_FAILED = 3,
+       HUSK_UNITY_ENDED = 4 };
 
 /*
  * Start the game in `apk`. `metal_layer` is the CAMetalLayer it draws into, `width`/`height` its
@@ -65,7 +69,7 @@ void husk_cocos_set_keyboard_handler(void (*handler)(int action));
 void husk_cocos_insert_text(const char *utf8);
 void husk_cocos_delete_backward(void);
 void husk_cocos_key_down(int keycode);
-void husk_cocos_request_text(void (*cb)(const char *utf8));    /* what the game's text field holds now; cb runs on the GL thread */
+void husk_cocos_request_text(void (*cb)(const char *utf8)); /* what the game's text field holds now; cb runs on the GL thread */
 
 /* A link the game wants opened (terms of use, social buttons). The handler runs on the game's GL thread. */
 void husk_cocos_set_open_url_handler(void (*handler)(const char *url));
@@ -83,11 +87,13 @@ void husk_gamepad_update(int slot, unsigned buttons, float lx, float ly, float r
 /* The APK of the game started this session, or NULL. An engine cannot be loaded twice, nor two games at once. */
 const char *husk_native_loaded_apk(void);
 
-int  husk_unity_state(void);
+int husk_unity_state(void);
 unsigned long husk_unity_frames(void);
-typedef struct husk_unity_perf { double fps, mean_ms, max_ms; } husk_unity_perf;
-void husk_unity_perf_snapshot(husk_unity_perf *out);          /* since the last call */
-void husk_unity_touch(int phase, int id, float x, float y);   /* phase 0 down, 1 move, 2 up, 3 cancel */
+typedef struct husk_unity_perf {
+    double fps, mean_ms, max_ms;
+} husk_unity_perf;
+void husk_unity_perf_snapshot(husk_unity_perf *out); /* since the last call */
+void husk_unity_touch(int phase, int id, float x, float y); /* phase 0 down, 1 move, 2 up, 3 cancel */
 void husk_unity_set_paused(bool paused);
 
 /* The app's package name from its manifest into `out`; false if it cannot be read. */

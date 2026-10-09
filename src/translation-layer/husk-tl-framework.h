@@ -10,7 +10,7 @@ extern "C" {
 
 /* Native function handler type */
 typedef bool (*tl_dex_native_func)(tl_dex_context *ctx, tl_dex_object *this_obj,
-                                  tl_dex_val *args, int nargs, tl_dex_val *ret);
+                                   tl_dex_val *args, int nargs, tl_dex_val *ret);
 
 /* Look up a built-in / native framework method */
 tl_dex_native_func tl_framework_lookup(const char *class_desc, const char *method_name, const char *shorty);

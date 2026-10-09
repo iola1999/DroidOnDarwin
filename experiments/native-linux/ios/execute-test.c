@@ -10,7 +10,10 @@
 #include <sys/mman.h>
 #include <unistd.h>
 
-static void original_handler(int signal) { (void)signal; }
+static void original_handler(int signal)
+{
+    (void)signal;
+}
 
 int main(void)
 {
@@ -29,7 +32,8 @@ int main(void)
     sys_icache_invalidate((void *)rx, size);
     NceCode code = {rw, (void *)rx, size};
     const int signals[] = {SIGBUS, SIGSEGV, SIGILL};
-    for (unsigned i = 0; i < 3; ++i) assert(signal(signals[i], original_handler) != SIG_ERR);
+    for (unsigned i = 0; i < 3; ++i)
+        assert(signal(signals[i], original_handler) != SIG_ERR);
     assert(nce_check_execute(code, 42) == 0);
     assert(nce_check_execute(code, 43) == -1);
     memset(rw, 0, sizeof(words)); /* UDF faults inside the checked range. */

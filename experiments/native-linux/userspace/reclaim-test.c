@@ -7,7 +7,13 @@
 #include <time.h>
 #include <unistd.h>
 
-#define CHECK(c) do { if (!(c)) { dprintf(2, "reclaim-test:%d errno=%d\n", __LINE__, errno); _exit(113); } } while (0)
+#define CHECK(c) \
+    do { \
+        if (!(c)) { \
+            dprintf(2, "reclaim-test:%d errno=%d\n", __LINE__, errno); \
+            _exit(113); \
+        } \
+    } while (0)
 int main(void)
 {
     const size_t size = 64 * 1024 * 1024, page = 16384;
@@ -21,7 +27,8 @@ int main(void)
             CHECK(data[offset] == 0);
             data[offset] = 0x60 + round;
         }
-        for (size_t offset = 0; offset < size; offset += page) CHECK(data[offset] == 0x60 + round);
+        for (size_t offset = 0; offset < size; offset += page)
+            CHECK(data[offset] == 0x60 + round);
         CHECK(munmap(data, size) == 0);
         struct timespec delay = {3, 0};
         CHECK(nanosleep(&delay, NULL) == 0);

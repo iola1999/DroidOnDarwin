@@ -16,7 +16,8 @@ typedef int __s32;
 #undef OP_last
 #include "gles2_opcodes.h"
 
-static s64 syscall(u64 n, u64 a, u64 b, u64 c, u64 d, u64 e, u64 f) {
+static s64 syscall(u64 n, u64 a, u64 b, u64 c, u64 d, u64 e, u64 f)
+{
     register u64 x8 __asm__("x8") = n;
     register u64 x0 __asm__("x0") = a;
     register u64 x1 __asm__("x1") = b;
@@ -25,32 +26,45 @@ static s64 syscall(u64 n, u64 a, u64 b, u64 c, u64 d, u64 e, u64 f) {
     register u64 x4 __asm__("x4") = e;
     register u64 x5 __asm__("x5") = f;
     __asm__ volatile("svc 0" : "+r"(x0) : "r"(x8), "r"(x1), "r"(x2), "r"(x3),
-                     "r"(x4), "r"(x5) : "memory", "cc");
+                                          "r"(x4), "r"(x5) : "memory", "cc");
     return x0;
 }
-static void print(const char *s) {
+static void print(const char *s)
+{
     u64 n = 0;
-    while (s[n]) ++n;
+    while (s[n])
+        ++n;
     syscall(64, 1, (u64)s, n, 0, 0, 0);
 }
-__attribute__((noreturn)) static void finish(int ok) {
+__attribute__((noreturn)) static void finish(int ok)
+{
     print(ok ? "HUSK-GFXSTREAM PASS\n" : "HUSK-GFXSTREAM FAIL\n");
     syscall(142, 0xfee1dead, 672274793, 0x4321fedc, 0, 0, 0);
-    for (;;) syscall(124, 0, 0, 0, 0, 0, 0);
+    for (;;)
+        syscall(124, 0, 0, 0, 0, 0, 0);
 }
-static void check(int ok, const char *step) {
-    if (!ok) { print(step); print("\n"); finish(0); }
+static void check(int ok, const char *step)
+{
+    if (!ok) {
+        print(step);
+        print("\n");
+        finish(0);
+    }
 }
 static int fd;
 static u32 handle;
 static unsigned char *memory;
-static void ioctl(u64 request, void *arg) {
+static void ioctl(u64 request, void *arg)
+{
     check(syscall(29, fd, request, (u64)arg, 0, 0, 0) == 0, "DRM ioctl");
 }
-static void transfer(void *bytes, u32 size, int read) {
+static void transfer(void *bytes, u32 size, int read)
+{
     struct drm_virtgpu_3d_wait wait = {handle, 0};
     ioctl(DRM_IOCTL_VIRTGPU_WAIT, &wait);
-    if (!read) for (u32 i = 0; i < size; ++i) memory[i] = ((unsigned char *)bytes)[i];
+    if (!read)
+        for (u32 i = 0; i < size; ++i)
+            memory[i] = ((unsigned char *)bytes)[i];
     struct drm_virtgpu_3d_transfer_to_host transfer = {0};
     transfer.bo_handle = handle;
     transfer.box.w = size;
@@ -58,14 +72,26 @@ static void transfer(void *bytes, u32 size, int read) {
     ioctl(read ? DRM_IOCTL_VIRTGPU_TRANSFER_FROM_HOST : DRM_IOCTL_VIRTGPU_TRANSFER_TO_HOST,
           &transfer);
     ioctl(DRM_IOCTL_VIRTGPU_WAIT, &wait);
-    if (read) for (u32 i = 0; i < size; ++i) ((unsigned char *)bytes)[i] = memory[i];
+    if (read)
+        for (u32 i = 0; i < size; ++i)
+            ((unsigned char *)bytes)[i] = memory[i];
 }
-#define COMMAND(op, ...) do { u32 words[] = {op, 0, ##__VA_ARGS__}; \
-    words[1] = sizeof(words); transfer(words, sizeof(words), 0); } while (0)
-static u32 response(void) { u32 value; transfer(&value, 4, 1); return value; }
+#define COMMAND(op, ...) \
+    do { \
+        u32 words[] = {op, 0, ##__VA_ARGS__}; \
+        words[1] = sizeof(words); \
+        transfer(words, sizeof(words), 0); \
+    } while (0)
+static u32 response(void)
+{
+    u32 value;
+    transfer(&value, 4, 1);
+    return value;
+}
 
-static void run(void) {
-    fd = syscall(56, -100, (u64)"/dev/dri/renderD128", 2, 0, 0, 0);
+static void run(void)
+{
+    fd = syscall(56, -100, (u64) "/dev/dri/renderD128", 2, 0, 0, 0);
     check(fd >= 0, "open DRM render node");
     struct drm_virtgpu_resource_create resource = {0};
     resource.target = 0;
@@ -105,7 +131,8 @@ static void run(void) {
     transfer(renderer, 256, 1);
     check(response() > 0, "renderer name");
     renderer[255] = 0;
-    print(renderer); print("\n");
+    print(renderer);
+    print("\n");
     COMMAND(OP_glClearColor, 0x3f800000, 0, 0, 0x3f800000);
     COMMAND(OP_glClear, 0x4000);
     COMMAND(OP_glEnable, 0x0c11);
@@ -115,15 +142,20 @@ static void run(void) {
     COMMAND(OP_glReadPixels, 0, 0, 64, 96, 0x1908, 0x1401, 64 * 96 * 4);
     static unsigned char pixels[64 * 96 * 4];
     transfer(pixels, sizeof(pixels), 1);
-    for (u32 y = 0; y < 96; ++y) for (u32 x = 0; x < 64; ++x) {
-        unsigned char *p = &pixels[(y * 64 + x) * 4];
-        check(p[0] == (x < 32 ? 0 : 255) && p[1] == (x < 32 ? 255 : 0) &&
-              p[2] == 0 && p[3] == 255, "rendered pixels");
-    }
+    for (u32 y = 0; y < 96; ++y)
+        for (u32 x = 0; x < 64; ++x) {
+            unsigned char *p = &pixels[(y * 64 + x) * 4];
+            check(p[0] == (x < 32 ? 0 : 255) && p[1] == (x < 32 ? 255 : 0) &&
+                      p[2] == 0 && p[3] == 255,
+                  "rendered pixels");
+        }
     COMMAND(OP_glGetError);
     check(response() == 0, "GL error");
     syscall(57, fd, 0, 0, 0, 0, 0);
     finish(1);
 }
 
-void _start(void) { run(); }
+void _start(void)
+{
+    run();
+}
