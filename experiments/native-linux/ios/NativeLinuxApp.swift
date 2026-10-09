@@ -16,7 +16,6 @@ final class ProbeModel: ObservableObject {
     @Published var busy = false
     @Published var didRun = false
     @Published var importing = false
-    @Published var baseline = false
     private var waiting = false
     private var attachDeadline = Date.distantPast
     private var polling: Timer?
@@ -52,7 +51,9 @@ final class ProbeModel: ObservableObject {
             }
         } else if busy && didRun {
             let seconds = Int(Date().timeIntervalSince(startedAt))
-            if log.contains("\"phase\":\"linux_mm_benchmark\"") { status = "正在测量进程通信（\(seconds) 秒）" }
+            if log.contains("\"phase\":\"linux_dynamic_program\"") { status = "正在检查动态库和线程（\(seconds) 秒）" }
+            else if log.contains("\"phase\":\"linux_dash_shell\"") { status = "正在运行 shell 脚本（\(seconds) 秒）" }
+            else if log.contains("\"phase\":\"linux_mm_benchmark\"") { status = "正在检查信号与内存（\(seconds) 秒）" }
             else if log.contains("\"phase\":\"linux_userspace_tests\"") { status = "正在测试 C 程序和线程（\(seconds) 秒）" }
             else if log.contains("\"phase\":\"linux_process_tests\"") { status = "正在测试 Linux 进程（\(seconds) 秒）" }
             else if log.contains("\"phase\":\"linux_init\"") { status = "正在启动 Linux 内核（\(seconds) 秒）" }
@@ -135,7 +136,7 @@ final class ProbeModel: ObservableObject {
             return
         }
         didRun = true
-        setenv("NCE_MM_MODE", baseline ? "full" : "lazy", 1)
+        setenv("NCE_MM_MODE", "lazy", 1)
         startedAt = Date()
         status = "正在准备 JIT 内存"
         // The guest switches stacks and pthreads. Keep the Swift UI on its own queue.
@@ -165,19 +166,15 @@ struct NativeLinuxApp: App {
         WindowGroup {
             NavigationStack {
                 List {
-                    Section("N2c · 内存与进程通信") {
+                    Section("N2e · Linux 动态程序") {
                         Text(Bundle.main.object(forInfoDictionaryKey: "NCEBuildID") as? String ?? "N2")
                             .font(.caption).foregroundStyle(.secondary)
                         Text(model.status).font(.headline).accessibilityIdentifier("probe-status")
-                        Text("检查内存读写，测量不同工作集下的进程通信耗时。测试时请保持应用在前台。")
+                        Text("检查 Linux 信号、动态库、线程与 shell 脚本。运行时请保持应用在前台。")
                             .foregroundStyle(.secondary)
                         if model.busy { ProgressView() }
                     }
                     Section {
-                        Picker("映射实现", selection: $model.baseline) {
-                            Text("优化版").tag(false)
-                            Text("基线版").tag(true)
-                        }
                         Button("启用内置 JIT 并测试") { model.builtIn() }
                         Button("通过 StikDebug 启用并测试") { model.external() }
                         if nce_debugger_attached() {

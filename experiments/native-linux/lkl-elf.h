@@ -4,6 +4,11 @@
 #ifdef CONFIG_MMU
 #include <asm/host_ops.h>
 #define NCE_ELF_LAYOUT(path, header, phdrs) lkl_ops->user_elf(path, header, phdrs)
+struct file;
+struct elf64_hdr;
+struct elf64_phdr;
+unsigned long nce_elf_file_layout(struct file *, const struct elf64_hdr *, const struct elf64_phdr *);
+#define NCE_ELF_INTERP_LAYOUT(file, header, phdrs) nce_elf_file_layout(file, header, phdrs)
 #endif
 #define elf_check_arch(x) ((x)->e_machine == EM_AARCH64)
 #define ELF_CLASS ELFCLASS64

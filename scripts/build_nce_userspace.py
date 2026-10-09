@@ -15,6 +15,8 @@ ROOT = Path(__file__).resolve().parents[1]
 EXP = ROOT / 'experiments/native-linux'
 WORK = ROOT / 'work/native-linux-nce'
 PAGE = 16384
+PROGRAM_SLOT = 2 * 1024 * 1024
+INTERPRETER = '/lib/ld-musl-aarch64.so.1'
 MUSL_SHA = 'a9a118bbe84d8764da0ea0d28b3ab3fae8477fc7e4085d90102b8596fc7c75e4'
 RT_SHA = '15277402f6fd63397c0917a5c7171cda82d16d226094b828c1ed0f58f73b9c69'
 DASH_SHA = '6a474ac46e8b0b32916c4c60df694c82058d3297d8b385b74508030ca4a8f28a'
@@ -38,17 +40,18 @@ def musl(llvm):
     build.mkdir(exist_ok=True)
     target = [llvm / 'clang', '--target=aarch64-linux-musl', '-ffixed-x18', '-mno-outline-atomics']
     with (build / 'build.log').open('w') as log:
-        if not (build / 'config.mak').exists():
-            run([source / 'configure', '--target=aarch64-linux-musl', '--disable-shared',
+        if not (build / 'install/lib/libc.so').exists():
+            run([source / 'configure', '--target=aarch64-linux-musl', '--enable-shared',
                  '--prefix=' + str(build / 'install'), '--syslibdir=' + str(build / 'install/lib'),
                  'CC=' + shlex.join(map(str, target)), 'AR=' + str(llvm / 'llvm-ar'),
-                 'RANLIB=' + str(llvm / 'llvm-ranlib'), 'CFLAGS=-O2 -fPIC', 'LIBCC='],
+                 'RANLIB=' + str(llvm / 'llvm-ranlib'), 'CFLAGS=-O2 -fPIC',
+                 'LDFLAGS=-fuse-ld=lld -Wl,-z,max-page-size=16384,-z,common-page-size=16384', 'LIBCC='],
                 cwd=build, stdout=log, stderr=subprocess.STDOUT)
         run(['gmake', '-j8', 'install'], cwd=build, stdout=log, stderr=subprocess.STDOUT)
     return build / 'install'
 
 
-def inspect(path):
+def inspect(path, shared=False):
     data = path.read_bytes()
     if len(data) < 64 or data[:7] != b'\x7fELF\x02\x01\x01' or struct.unpack_from('<HH', data, 16) != (3, 183):
         raise RuntimeError(f'{path}: requires AArch64 ET_DYN')
@@ -62,13 +65,17 @@ def inspect(path):
     loads = [p for p in phdrs if p[0] == 1]
     if loads != sorted(loads, key=lambda p: p[3]):
         raise RuntimeError(f'{path}: load segments are out of address order')
-    if any(p[0] == 3 for p in phdrs):
-        raise RuntimeError(f'{path}: interpreter loading is not implemented yet')
+    interpreters = [p for p in phdrs if p[0] == 3]
+    if len(interpreters) > 1:
+        raise RuntimeError(f'{path}: multiple ELF interpreters')
+    for p in interpreters:
+        if p[2] + p[5] > len(data) or data[p[2]:p[2] + p[5]] != INTERPRETER.encode() + b'\0':
+            raise RuntimeError(f'{path}: unsupported ELF interpreter')
     segments = []
     for _, flags, offset, va, _, filesz, memsz, align in loads:
         if align > PAGE or (va - offset) % PAGE or filesz > memsz or offset + filesz > len(data):
             raise RuntimeError(f'{path}: unsupported segment layout')
-        if va + memsz > 4 * 1024 * 1024:
+        if va + memsz > PROGRAM_SLOT:
             raise RuntimeError(f'{path}: exceeds the current per-program range')
         if flags & 1 and memsz:
             if flags & 2:
@@ -79,7 +86,7 @@ def inspect(path):
             segments.append((lo, hi - lo))
     if any(a + size > b for (a, size), (b, _) in zip(segments, segments[1:])):
         raise RuntimeError(f'{path}: executable segments share a host page')
-    if not segments or not any(p[1] & 1 and p[3] <= entry < p[3] + p[5] for p in loads):
+    if not segments or not (shared and entry == 0) and not any(p[1] & 1 and p[3] <= entry < p[3] + p[5] for p in loads):
         raise RuntimeError(f'{path}: missing executable entry')
     sections = [struct.unpack_from('<IIQQQQIIQQ', data, shoff + i * shentsize) for i in range(shnum)]
     mappings = {}
@@ -108,6 +115,9 @@ def inspect(path):
                    sec[4] - p[2] == sec[3] - p[3] for p in loads):
             raise RuntimeError(f'{path}: executable section is outside its file segment')
         markers = sorted(mappings.get(index, []))
+        # LLD's AArch64 PLT carries SHF_AARCH64_PURECODE instead of $x symbols.
+        if not markers and sec[2] & 0x20000000:
+            markers = [(sec[3], 'x')]
         if not markers or markers[0][0] != sec[3]:
             raise RuntimeError(f'{path}: executable section lacks mapping symbols')
         for i, (begin, kind) in enumerate(markers):
@@ -138,11 +148,11 @@ def compiler_runtime(llvm, libc):
     build = WORK / 'compiler-rt-build'
     build.mkdir(exist_ok=True)
     library = build / 'libbuiltins.a'
-    if not library.exists():
+    if not library.exists() or not (build / 'muldc3.o').exists():
         builtins = source / 'lib/builtins'
         cmake = (builtins / 'CMakeLists.txt').read_text()
         files = re.search(r'set\(GENERIC_TF_SOURCES\s+(.*?)\)', cmake, re.S)[1].split()
-        files += ['clzti2.c', 'ctzti2.c', 'udivti3.c', 'udivmodti4.c', 'divti3.c', 'modti3.c', 'umodti3.c', 'aarch64/fp_mode.c']
+        files += ['clzti2.c', 'ctzti2.c', 'udivti3.c', 'udivmodti4.c', 'divti3.c', 'modti3.c', 'umodti3.c', 'muldc3.c', 'mulsc3.c', 'aarch64/fp_mode.c']
         objects = []
         for name in files:
             obj = build / (Path(name).stem + '.o')
@@ -169,9 +179,9 @@ def dash(out, llvm, libc, runtime, resource):
     cc = build / 'target-cc'
     flags = [str(llvm / 'clang'), '--target=aarch64-linux-musl', '-ffixed-x18', '-mno-outline-atomics',
              '-nostdinc', '-isystem', str(libc / 'include'), '-isystem', str(resource), '-fPIE']
-    link = ['-nostdlib', '-fuse-ld=lld', '-Wl,-pie,--no-dynamic-linker,-z,max-page-size=16384,-z,common-page-size=16384',
-            str(libc / 'lib/rcrt1.o'), str(libc / 'lib/crti.o')]
-    libraries = [str(libc / 'lib/libc.a'), str(runtime), str(libc / 'lib/crtn.o')]
+    link = ['-nostdlib', '-fuse-ld=lld', '-Wl,-pie,-dynamic-linker,' + INTERPRETER + ',-z,max-page-size=16384,-z,common-page-size=16384',
+            str(libc / 'lib/Scrt1.o'), str(libc / 'lib/crti.o')]
+    libraries = ['-L' + str(libc / 'lib'), '-lc', str(runtime), str(libc / 'lib/crtn.o')]
     cc.write_text('#!/usr/bin/env python3\nimport os,sys\n'
                   f'flags={json.dumps(flags)}\nargs=sys.argv[1:]\n'
                   f'if not any(a in args for a in ("-c","-S","-E")) and any(a.endswith((".c",".o")) for a in args):\n'
@@ -195,6 +205,8 @@ def dash(out, llvm, libc, runtime, resource):
         generated = build / 'src/mksignames-target.c'
         generated.write_text(generator.replace('#include <signal.h>', header, 1))
         run(['cc', '-Wno-deprecated-non-prototype', generated, '-o', build / 'src/mksignames'], stdout=log, stderr=subprocess.STDOUT)
+        # The wrapper is a build input that make's generated rules do not track.
+        (build / 'src/dash').unlink(missing_ok=True)
         run(['gmake', '-j8'], cwd=build, stdout=log, stderr=subprocess.STDOUT)
     shutil.copyfile(build / 'src/dash', out / 'dash.elf')
     return out / 'dash.elf'
@@ -203,6 +215,9 @@ def dash(out, llvm, libc, runtime, resource):
 def build(out, llvm):
     libc = musl(llvm)
     runtime = compiler_runtime(llvm, libc)
+    with (WORK / 'musl-build/shared-build.log').open('w') as log:
+        run(['gmake', '-j8', '-W', 'obj/ldso/dynlink.lo', 'LIBCC=' + str(runtime), 'install'],
+            cwd=WORK / 'musl-build', stdout=log, stderr=subprocess.STDOUT)
     resource = Path(subprocess.check_output([llvm / 'clang', '-print-resource-dir'], text=True).strip()) / 'include'
     run([llvm / 'clang', '--target=aarch64-linux-gnu', '-c', EXP / 'exec-guest.S', '-o', out / 'exec-guest.o'])
     run([shutil.which('ld.lld'), '-pie', '--no-dynamic-linker', '--entry=_start', '-Ttext=0x10000',
@@ -235,11 +250,23 @@ def build(out, llvm):
              libc / 'lib/libc.a', runtime, libc / 'lib/crtn.o', '-o', out / f'{name}.elf'])
         programs.append(('/init-user' if name == 'init' else '/' + name, out / f'{name}.elf'))
     programs.append(('/bin/sh', dash(out, llvm, libc, runtime, resource)))
-    if len(programs) > 7:
-        raise RuntimeError('Program slots overlap the initial exec stack')
+    shutil.copyfile(libc / 'lib/libc.so', out / 'libc.so')
+    programs.append((INTERPRETER, out / 'libc.so'))
+    for name in ('dependency', 'plugin', 'dynamic'):
+        run([llvm / 'clang', '--target=aarch64-linux-musl', '-ffixed-x18', '-mno-outline-atomics',
+             '-fPIC', '-O2', '-g', '-Wall', '-Wextra', '-Werror', '-nostdinc', '-isystem', libc / 'include', '-isystem', resource,
+             '-c', EXP / f'userspace/{name}.c', '-o', out / f'{name}.o'])
+        options = ['-pie', '-dynamic-linker', INTERPRETER, libc / 'lib/Scrt1.o', libc / 'lib/crti.o'] if name == 'dynamic' else ['-shared', '-soname', name + '.so']
+        file = out / (name + ('.elf' if name == 'dynamic' else '.so'))
+        run([shutil.which('ld.lld'), *options, '-z', 'max-page-size=16384', '-z', 'common-page-size=16384',
+             out / f'{name}.o', *([out / 'dependency.so', '-rpath', '/lib'] if name == 'dynamic' else []),
+             '-L' + str(libc / 'lib'), '-lc', runtime, libc / 'lib/crtn.o', '-o', file])
+        programs.append(('/dynamic' if name == 'dynamic' else '/lib/' + name + '.so', file))
+    if len(programs) * PROGRAM_SLOT > 32 * 1024 * 1024:
+        raise RuntimeError('Program slots overlap the mmap area')
     header, entries = [], []
     for i, (name, path) in enumerate(programs):
-        elf = inspect(path)
+        elf = inspect(path, shared=name.endswith('.so'))
         if name == '/worker' and sum(size for _, size in elf['segments']) <= 65536:
             raise RuntimeError('Large-text fixture did not exceed 64 KiB')
         dis = subprocess.check_output([llvm / 'llvm-objdump', '-d', path], text=True)
@@ -250,7 +277,7 @@ def build(out, llvm):
             f'{{.offset={lo},.size={size}}}' for lo, size in elf['segments']) + '};')
         header.append(f'static const NcePatch patches_{i}[] = {{' + ','.join(
             f'{{{va},{word}}}' for va, word in elf['patches']) + '};')
-        entries.append(f'{{.path="{name}",.file=image_{i},.size=sizeof(image_{i}),.offset={i*4*1024*1024},'
+        entries.append(f'{{.path="{name}",.file=image_{i},.size=sizeof(image_{i}),.offset={i*PROGRAM_SLOT},'
                        f'.entry={elf["entry"]},.phoff={elf["phoff"]},.phsize={elf["phsize"]},'
                        f'.segments=segments_{i},.segment_count={len(elf["segments"])},'
                        f'.patches=patches_{i},.patch_count={len(elf["patches"])}}}')

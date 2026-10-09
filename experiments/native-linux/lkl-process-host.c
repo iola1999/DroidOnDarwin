@@ -65,27 +65,39 @@ static void *shmem_map(void *address, unsigned long offset, unsigned long size, 
 {
     uintptr_t start = (uintptr_t)address;
     REQUIRE(!(offset % PAGE) && !(size % PAGE) && offset <= ram_size && size <= ram_size - offset);
-    for (size_t i = 0; i < nce_program_count; ++i) {
-        NceProgram *p = &nce_programs[i];
-        for (size_t j = 0; j < p->segment_count; ++j) {
-            NceSegment *s = &p->segments[j];
-            uintptr_t code_start = (uintptr_t)s->code.rx;
-            if (start < code_start || start >= code_start + s->size) continue;
-            REQUIRE(size <= code_start + s->size - start);
-            size_t position = start - code_start;
-            memcpy(s->code.rw + position, ram + offset, size);
-            for (size_t k = 0; k < size; k += PAGE) s->backing[(position + k) / PAGE] = offset + k;
-            nce_sync_code((NceCode){s->code.rw + position, s->code.rx + position, size});
-            ++code_copies;
-            code_copy_bytes += size;
-            return address;
+    uintptr_t end = start + size;
+    while (start < end) {
+        uintptr_t stop = end;
+        NceProgram *program = NULL;
+        NceSegment *segment = NULL;
+        for (size_t i = 0; i < nce_program_count; ++i) {
+            NceProgram *p = &nce_programs[i];
+            for (size_t j = 0; j < p->segment_count; ++j) {
+                NceSegment *s = &p->segments[j];
+                uintptr_t lo = (uintptr_t)s->code.rx, hi = lo + s->size;
+                if (start >= lo && start < hi) { program = p; segment = s; stop = hi < stop ? hi : stop; }
+                else if (lo > start && lo < stop) stop = lo;
+            }
         }
+        size_t length = stop - start;
+        if (segment) {
+            size_t position = start - (uintptr_t)segment->code.rx;
+            memcpy(segment->code.rw + position, ram + offset, length);
+            if (prot & LKL_PROT_EXEC)
+                REQUIRE(nce_program_patch_range(program, segment, position, length, &active) == 0);
+            nce_sync_code((NceCode){segment->code.rw + position, (void *)start, length});
+            ++code_copies;
+            code_copy_bytes += length;
+        } else {
+            REQUIRE(!(prot & LKL_PROT_EXEC));
+            int host_prot = ((prot & LKL_PROT_READ) ? PROT_READ : 0) | ((prot & LKL_PROT_WRITE) ? PROT_WRITE : 0);
+            REQUIRE(nce_memory_remap((void *)start, ram + offset, length, host_prot) == 0);
+            ++data_maps;
+            data_map_bytes += length;
+        }
+        start = stop;
+        offset += length;
     }
-    REQUIRE(!(prot & LKL_PROT_EXEC));
-    int host_prot = ((prot & LKL_PROT_READ) ? PROT_READ : 0) | ((prot & LKL_PROT_WRITE) ? PROT_WRITE : 0);
-    REQUIRE(nce_memory_remap(address, ram + offset, size, host_prot) == 0);
-    ++data_maps;
-    data_map_bytes += size;
     return address;
 }
 static int protect_none(void *address, unsigned long size)
@@ -103,7 +115,6 @@ static int protect_none(void *address, unsigned long size)
             size_t first = start > lo ? start - lo : 0;
             size_t stop = end < hi ? end - lo : s->size;
             memset(s->code.rw + first, 0, stop - first);
-            for (size_t k = first; k < stop; k += PAGE) s->backing[k / PAGE] = ~0UL;
             nce_sync_code((NceCode){s->code.rw + first, s->code.rx + first, stop - first});
             cursor = lo + stop;
         }
@@ -170,8 +181,8 @@ static NceState *handle_event(NceState *state)
     Process *p = (void *)state;
     if (p->event_kind == 1) {
         if (!deferred_faults) puts("{\"phase\":\"guest_fault_on_host_stack\"}");
-        if (p->fault_illegal || page_fault(p->fault_address, p->fault_write))
-            user_fault(p->fault_address, p->fault_illegal);
+        int result = page_fault(p->fault_address, p->fault_illegal ? NCE_FAULT_EXEC : p->fault_write);
+        if (result) user_fault(p->fault_address, p->fault_illegal && result == -8);
         else user_return(-1, 0, 0);
         ++faults; ++deferred_faults;
     } else if (p->event_kind == 2) {
@@ -325,7 +336,7 @@ static void user_run(void *opaque)
         ++inherited_preempt_blocks;
     }
     if (!state->regs.sp) {
-        long args[6] = {USER_BASE + NCE_MMAP_OFFSET - 65536, 65536, 3, 0x32, -1, 0};
+        long args[6] = {USER_BASE + USER_SIZE - 65536, 65536, 3, 0x32, -1, 0};
         REQUIRE(run_syscall(222, args) == args[0]);
         state->regs.sp = args[0] + args[1];
     }
@@ -357,29 +368,16 @@ static void user_exec(void *opaque, unsigned long entry, unsigned long stack)
     memset(state->regs.vector, 0, sizeof(state->regs.vector));
     state->regs.sp = stack;
     state->tls = state->regs.nzcv = state->regs.fpcr = state->regs.fpsr = 0;
-    REQUIRE(nce_program_patch(program, state, &active) == 0);
-    for (size_t j = 0; j < program->segment_count; ++j) {
-        NceSegment *s = &program->segments[j];
-        for (size_t i = 0; i < s->size; i += PAGE) {
-            REQUIRE(s->backing[i / PAGE] < ram_size);
-            memcpy(ram + s->backing[i / PAGE], s->code.rw + i, PAGE);
-        }
-    }
+    state->regs.pc = entry;
+    state->resume = (uintptr_t)program->stubs.rx;
 }
 
 unsigned long nce_process_setup(void)
 {
     REQUIRE(getpagesize() == PAGE);
     user_base = nce_memory_user_base();
-    for (size_t i = 0; i < nce_program_count; ++i) {
-        NceProgram *p = &nce_programs[i];
-        for (size_t j = 0; j < p->segment_count; ++j) {
-            NceSegment *s = &p->segments[j];
-            s->backing = malloc(s->size / PAGE * sizeof(*s->backing));
-            REQUIRE(s->backing);
-            memset(s->backing, 0xff, s->size / PAGE * sizeof(*s->backing));
-        }
-    }
+    for (size_t i = 0; i < nce_program_count; ++i)
+        REQUIRE(nce_program_prepare(&nce_programs[i]) == 0);
     REQUIRE(protect_none((void *)user_base, NCE_USER_SIZE + NCE_RAM_SIZE + NCE_VMALLOC_SIZE) == 0);
     nce_lkl_host.shmem_init = shmem_init;
     nce_lkl_host.shmem_mmap = shmem_map;
@@ -454,6 +452,18 @@ static void run_program(long (*call)(long, long *), const char *path, const char
     for (long fd = 0; fd < 3; ++fd) { args[0] = fd; REQUIRE(call(57, args) == 0); }
 }
 
+static void check_program_files(long (*call)(long, long *))
+{
+    for (size_t i = 1; i < nce_program_count; ++i) {
+        NceProgram *p = &nce_programs[i];
+        unsigned char *bytes = malloc(p->size + 1);
+        REQUIRE(bytes);
+        REQUIRE(get_file(call, p->path, (void *)bytes, p->size + 1) == (long)p->size);
+        REQUIRE(!memcmp(bytes, p->file, p->size));
+        free(bytes);
+    }
+}
+
 static void userspace_tests(long (*call)(long, long *))
 {
     struct timespec begin, end;
@@ -472,14 +482,7 @@ static void userspace_tests(long (*call)(long, long *))
     REQUIRE(get_file(call, "/userspace.result", buffer, sizeof(buffer)) > 0);
     REQUIRE(strstr(buffer, "init pid=1 commands=8 libc=musl passed"));
     fprintf(stderr, "%s", buffer);
-    for (size_t i = 1; i < nce_program_count; ++i) {
-        NceProgram *p = &nce_programs[i];
-        unsigned char *bytes = malloc(p->size + 1);
-        REQUIRE(bytes);
-        REQUIRE(get_file(call, p->path, (void *)bytes, p->size + 1) == (long)p->size);
-        REQUIRE(!memcmp(bytes, p->file, p->size));
-        free(bytes);
-    }
+    check_program_files(call);
     puts("{\"test\":\"linux_musl_static_pie_processes\",\"passed\":true,\"commands\":8,\"cow_bytes_per_command\":2097152}");
     puts("{\"test\":\"linux_compiled_elf_files_unchanged\",\"passed\":true}");
     REQUIRE(preemptions > previous_preemptions && deferred_faults > 0 && stackless_exits - previous_stackless == 8);
@@ -502,6 +505,8 @@ void nce_process_tests(long (*host_syscall)(long, long *), long (*guest_syscall)
     user_return = return_to_user;
     user_fault = signal_fault;
     long mkdir_args[6] = {-100, (long)"/bin", 0755};
+    REQUIRE(host_syscall(34, mkdir_args) == 0);
+    mkdir_args[1] = (long)"/lib";
     REQUIRE(host_syscall(34, mkdir_args) == 0);
     long null_args[6] = {-100, (long)"/dev/null", 0020666, 259};
     REQUIRE(host_syscall(33, null_args) == 0);
@@ -583,6 +588,13 @@ void nce_process_tests(long (*host_syscall)(long, long *), long (*guest_syscall)
     REQUIRE(get_file(host_syscall, "/stdout", benchmark, sizeof(benchmark)) > 0);
     REQUIRE(strstr(benchmark, "linux_dash_shell_suite"));
     fputs(benchmark, stdout);
+    puts("{\"phase\":\"linux_dynamic_program\"}");
+    run_program(host_syscall, "/dynamic", NULL);
+    REQUIRE(get_file(host_syscall, "/stdout", benchmark, sizeof(benchmark)) > 0);
+    REQUIRE(strstr(benchmark, "linux_dynamic_fork_signal"));
+    fputs(benchmark, stdout);
+    check_program_files(host_syscall);
+    puts("{\"test\":\"linux_dynamic_elf_files_unchanged\",\"passed\":true}");
 }
 void nce_process_cleanup(void)
 {
@@ -593,11 +605,6 @@ void nce_process_cleanup(void)
     REQUIRE(sigaction(SIGBUS, &old_bus, NULL) == 0);
     REQUIRE(sigaction(SIGILL, &old_ill, NULL) == 0);
     REQUIRE(munmap(ram, ram_size) == 0);
-    for (size_t i = 0; i < nce_program_count; ++i)
-        for (size_t j = 0; j < nce_programs[i].segment_count; ++j) {
-            free(nce_programs[i].segments[j].backing);
-            nce_programs[i].segments[j].backing = NULL;
-        }
     /* The virtual address reservation and code belong to memory.c. */
     printf("{\"test\":\"fixed_linux_code_view\",\"copies\":%lu,\"passed\":true}\n", code_copies);
     printf("{\"test\":\"linux_host_mapping_totals\",\"data_maps\":%lu,\"data_bytes\":%lu,\"code_copy_bytes\":%lu,\"revocations\":%lu}\n",

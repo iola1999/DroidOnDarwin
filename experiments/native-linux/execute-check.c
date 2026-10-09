@@ -2,6 +2,7 @@
 #include "execute-check.h"
 #include <setjmp.h>
 #include <signal.h>
+#include <pthread.h>
 #include <stdio.h>
 #include <sys/ucontext.h>
 
@@ -43,6 +44,8 @@ static void caught(int signal, siginfo_t *info, void *opaque)
 
 int nce_check_execute(NceCode code, int expected)
 {
+    sigset_t mask;
+    if (pthread_sigmask(SIG_BLOCK, NULL, &mask)) return -1;
     struct sigaction action = {.sa_sigaction = caught, .sa_flags = SA_SIGINFO};
     sigemptyset(&action.sa_mask);
     unsigned installed = 0;
@@ -52,13 +55,16 @@ int nce_check_execute(NceCode code, int expected)
     check.start = (uintptr_t)code.rx;
     check.end = check.start + code.size;
     check.signal = 0;
-    if (installed == 3 && sigsetjmp(check.resume, 1) == 0) {
+    /* Restore only this thread's mask; Darwin siglongjmp with savemask=1
+     * uses process-wide sigprocmask and can change unrelated UI threads. */
+    if (installed == 3 && sigsetjmp(check.resume, 0) == 0) {
         check.running = 1;
         int (*call)(void) = (void *)code.rx;
         result = call() == expected ? 0 : -1;
     }
     check.running = 0;
     for (unsigned i = 0; i < installed; ++i) sigaction(signals[i], &previous[i], NULL);
+    if (pthread_sigmask(SIG_SETMASK, &mask, NULL)) result = -1;
     if (check.signal)
         printf("{\"result\":\"failed\",\"reason\":\"execute_fault\",\"signal\":%d,\"pc\":\"0x%lx\",\"address\":\"0x%lx\"}\n",
                check.signal, (unsigned long)check.pc, (unsigned long)check.address);

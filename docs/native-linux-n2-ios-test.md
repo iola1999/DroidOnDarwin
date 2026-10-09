@@ -1,74 +1,85 @@
-# N2-C1 原生 Linux + NCE 手机测试
+# N2-E1 原生 Linux + NCE 手机测试
 
 日期：2026-10-09。适用设备：当前的 iPhone 17 / iOS 27.2。
-实现、性能对照与后续安排见 [N2c 实现记录](native-linux-n2c-progress.md)。
+本包合并 Linux 信号与动态链接用户态，实现和检查记录见
+[N2d](native-linux-n2d-progress.md) 与 [N2e](native-linux-n2e-progress.md)。
 
 ## 安装包
 
 ```text
-/Users/fan/project/app/husk_hyos/work/native-linux-nce/ios/Husk-NativeLinux-N2-C1.ipa
+/Users/fan/project/app/husk_hyos/work/native-linux-nce/ios/Husk-NativeLinux-N2-E1.ipa
 ```
 
-构建编号 `N2-C1-iOS-20261009-034855`，版本 `0.9.1 (41)`，包大小 14.50 MiB。
+构建编号 `N2-E1-iOS-20261009-093002`，版本 `0.9.1 (61)`，包大小 15.18 MiB。
 SHA-256：
 
 ```text
-24932182c628b83e664421a831c4e34efb3b454135785277ce94bbde5e2eccb2
+365b7a0f6ded960b899b8b8711649801d89233fed63955ea93caec1996045074
 ```
 
 应用使用 `com.husk.app`，通过 iLoader 沿用当前账号覆盖安装后显示为 Husk NCE。
-手机中的配对文件沿用原有路径。运行内容为 Linux 6.12 与 musl 编译的 ARM64
-程序；HyperOS 用户界面尚未接入。运行过程全部在 iPhone 内完成。
+手机中的配对文件沿用原有路径。运行内容为 Linux 6.12、musl 动态链接器、
+dash shell 和 ARM64 测试程序；HyperOS 用户界面尚未接入。
+运行过程全部在 iPhone 内完成。
 
 ## 操作
 
 1. 在 iLoader 中导入这个 IPA，沿用原来安装 Husk 的账号，保留 JIT Helper 扩展。
 2. 打开手机上的 LocalDevVPN 并连接，然后打开 Husk NCE。
-3. 确认构建编号为 `N2-C1-iOS-20261009-034855`，保持默认的“优化版”，点
-   “启用内置 JIT 并测试”。应用复用已有配对文件。
-4. 保持 Husk 在前台，等待“全部测试通过”，导出日志。测试包含内存检查、
-   28 个进程通信场景，以及原有进程、线程和 JIT 检查。运行时禁用自动锁屏，
-   完成后恢复。
-5. 若要取得手机上的速度对照，先保存上述日志，再从多任务界面关闭 Husk，
-   重新打开并选择“基线版”，运行同一组测试后另存日志。两轮都使用这个包。
+3. 确认构建编号为 `N2-E1-iOS-20261009-093002`，点“启用内置 JIT 并测试”。
+   应用复用已有配对文件，使用默认映射策略。
+4. 保持 Husk 在前台，等待“全部测试通过”，导出日志。一次运行包括原有检查、
+   Linux 信号、动态 dash 和动态库测试。运行时禁用自动锁屏，完成后恢复。
 
 若应用退回桌面，重新打开后直接导出上次日志。再次运行会覆盖本轮日志。
-若进入“正在测试 C 程序和线程”或“正在测量进程通信”后超过 60 秒没有完成，
-先导出日志再关闭应用。60 秒是本轮停止等待条件，设备正常耗时尚待确认。
+若进入 Linux 测试后超过 60 秒没有完成，先导出日志再关闭应用。
+60 秒是本轮停止等待条件，设备正常耗时尚待确认。
 
 ## 本轮需要确认什么
 
-N2-B2 已在手机通过全部线程与抢占检查，16 轮 C 用户态累计 742.691 ms。
-N2-C1 修改了映射保留、合并、按需恢复及 Linux 用户内存复制路径；Mac 已经
-完成三次交替对照和 256 轮压力测试。现在集中确认新路径在 iOS 上的权限、
-缺页恢复、资源释放和耗时。Linux 信号、动态链接与 Android 仍按阶段记录
-继续开发。
-
-日志检查项：
+C1 的优化版与基准版都已在手机通过。N2-E1 增加 Linux 信号帧、异常返回、
+系统调用重启、共享库加载及动态 TLS；预先准备的代码范围从五个增加到十个。
+此次集中检查 iOS 上固定执行地址更新、缺页后恢复和信号上下文返回。
+Mac 上这些流程已经通过，设备的代码签名与 JIT 条件需要实际确认。
 
 | 日志项目 | 验证内容 |
 | --- | --- |
-| `prepare_jit_pool` | 保留 208 MiB 虚拟地址，准备 16 MiB 主代码池和合计 272 KiB 的四个程序执行区 |
+| `prepare_jit_pool` | 保留 208 MiB 虚拟地址，准备 16 MiB 主代码池和合计 800 KiB 的九个 ELF 执行区 |
 | `debugger_detached` | JIT 助手已断开 |
-| `prepared_fixed_address_code_updates` | 五个代码范围各执行八次更新 |
+| `prepared_fixed_address_code_updates` | 十个代码范围各执行八次更新 |
 | `data_fixed_remap_after_detach` / `linux_ram_remap` | 代码区两侧的数据切换，64 MiB Linux RAM 映射与共享写入 |
-| `linux_mapping_policy` | 优化版为 `lazy`，基线版为 `full` |
+| `linux_mapping_policy` | 默认策略为 `lazy` |
 | `native_linux_boot` / `linux_uname` | 原生启动 Linux 6.12 |
-| `linux_nce_fork_cow_shared_futex_pipe_exec_wait` | 原有 32 轮受控进程检查 |
+| `linux_signal_*` | 信号屏蔽、备用栈、寄存器、EINTR/重启、异常恢复、帧校验和定时抢占 |
+| `linux_pthread_cancel_signal` | 阻塞 pthread 取消 |
+| `linux_nce_fork_cow_shared_futex_pipe_exec_wait` | 原有 32 轮进程检查 |
 | `linux_userspace_stress` | 16 轮、128 次命令、896 个 pthread 线程完成 |
-| `linux_user_memory_boundaries` | 错误指针、权限、跨页读写，以及 64 轮共享、COW 与地址复用 |
-| `linux_mm_exchange` | 每个工作集、共享比例与访问范围下的请求回复耗时，单位为 ns |
-| `linux_mm_exchange_integrity` | 28 个场景及数据一致性检查通过 |
-| `linux_mm_host_operations` | 内存检查与通信阶段的数据映射次数、代码复制量和撤销次数 |
-| `linux_nce_context_lifetime` | 分配与释放各 1,294 个 NCE 上下文 |
-| `linux_guest_events` | 抢占、缺页和栈恢复次数 |
-| `guest_preemption_signal_mask` | 解除继承信号屏蔽的线程数 |
+| `linux_user_memory_boundaries` | 指针、权限、跨页访问和文件偏移，以及 64 轮共享、COW 与地址复用 |
+| `linux_mm_exchange_integrity` | 28 个通信场景及数据一致性检查通过 |
+| `linux_dash_shell_suite` | 动态 dash 管道、重定向、exec、trap 和后台 wait |
+| `linux_dynamic_link_dlopen_constructors` | 依赖库、插件、构造函数、符号查找与缺失符号 |
+| `linux_dynamic_tls_threads` | 动态主程序和共享库在 8 个 pthread 中的 TLS 独立性 |
+| `linux_dynamic_fork_signal` | 动态程序 fork、wait 和信号返回 |
+| `linux_dynamic_elf_files_unchanged` | ELF 文件内容保持原样 |
+| `linux_nce_context_lifetime` | 分配与释放各 1,334 个 NCE 上下文 |
+| `linux_guest_events` / `guest_preemption_signal_mask` | 抢占、缺页与继承屏蔽的处理次数 |
 | `after_userspace` | 每轮结束时的应用物理占用与常驻内存峰值 |
 | `result: passed` | 检查及内核关闭完成 |
 
-本包通过两种 Mac 入口的默认策略回归、三种策略的重复对照、8 项 ELF 单测、
-5 项调试器断开检查和执行异常恢复检查。iOS Release 构建、应用及扩展签名、
-IPA 完整性检查通过；使用临时签名，由 iLoader 重签。设备执行待确认。
+本包已通过主线程与 GCD 入口的默认策略回归、`full` / `diff` 功能回归、
+10 项 ELF 单测、宿主上下文信号检查、5 项调试器断开检查和执行异常恢复
+检查。iOS Release 构建、应用及扩展签名、IPA 完整性检查通过；使用临时
+签名，由 iLoader 重签。设备执行待确认。shell 测试自动执行内置脚本，
+当前界面尚未提供交互终端。
+
+## C1 手机结果
+
+日志 `(4)` 为优化版、`(5)` 为基准版，两次均完成全部检查，1,294 个 NCE
+上下文全部释放。16 MiB 稀疏访问通信快约 77–103 倍，全私有页面密集访问
+快约 2.04 倍，全部共享页面密集访问快约 56 倍。原有 C 用户态 16 轮总耗时
+分别为 714.700 ms 和 736.275 ms，差约 3%。两种策略各运行一次，温度和
+调度条件未控制，完整 Android 的交互性能仍未测量。详细记录见
+[N2c 进展](native-linux-n2c-progress.md)。
 
 ## B2 手机结果
 

@@ -5,7 +5,6 @@
 typedef struct {
     size_t offset, size;
     NceCode code;
-    unsigned long *backing;
 } NceSegment;
 
 typedef struct { size_t address; uint32_t instruction; } NcePatch;
@@ -28,4 +27,6 @@ extern NceProgram nce_programs[];
 extern const size_t nce_program_count;
 NceProgram *nce_program_entry(uintptr_t entry);
 unsigned long nce_program_layout(const char *path, const void *header, const void *phdrs);
-int nce_program_patch(NceProgram *program, NceState *state, NceState **active);
+int nce_program_prepare(NceProgram *program);
+int nce_program_patch_range(NceProgram *program, NceSegment *segment,
+                            size_t offset, size_t size, NceState **active);

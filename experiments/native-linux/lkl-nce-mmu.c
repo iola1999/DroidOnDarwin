@@ -146,21 +146,26 @@ void nce_switch_mm(struct mm_struct *next)
 
 /* Called only for a fault in the controlled guest window while the Linux CPU
  * is owned by the faulting pthread. Invalid mappings return an error. */
-int nce_page_fault(unsigned long address, int write)
+int nce_page_fault(unsigned long address, int access)
 {
     struct mm_struct *mm = current->mm;
     struct vm_area_struct *vma;
     vm_fault_t result;
+    bool write = access == 1, execute = access == NCE_FAULT_EXEC;
     if (!mm || address < USER_BASE || address >= TASK_SIZE) return -EFAULT;
     mmap_read_lock(mm);
     vma = find_vma(mm, address);
-    if (!vma || address < vma->vm_start || !(vma->vm_flags & (write ? VM_WRITE : VM_READ))) {
+    if (!vma || address < vma->vm_start || !(vma->vm_flags & (execute ? VM_EXEC : write ? VM_WRITE : VM_READ))) {
         mmap_read_unlock(mm);
         return -EFAULT;
     }
     unsigned long prior = view(lookup(mm, address));
+    /* Fork can omit file-backed text PTEs. Prepared host code is cleared to
+     * UDF until Linux installs that page; an already present page is a real
+     * illegal instruction and must reach the Linux signal handler. */
+    if (execute && prior) { mmap_read_unlock(mm); return -ENOEXEC; }
     bool reused = prior && (!write || (prior & _PAGE_RW));
-    result = handle_mm_fault(vma, address, write ? FAULT_FLAG_WRITE : 0, NULL);
+    result = handle_mm_fault(vma, address, execute ? FAULT_FLAG_INSTRUCTION : write ? FAULT_FLAG_WRITE : 0, NULL);
     if (!(result & VM_FAULT_ERROR) && mapping_mode == NCE_MM_LAZY) {
         unsigned long first = address & PAGE_MASK;
         unsigned long value = view(lookup(mm, first));

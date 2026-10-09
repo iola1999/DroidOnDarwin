@@ -1,0 +1,936 @@
+{
+  "build": "N2-E1-iOS-20261009-093002",
+  "ipa": "/Users/fan/project/app/husk_hyos/work/native-linux-nce/ios/Husk-NativeLinux-N2-E1.ipa",
+  "bytes": 15915377,
+  "sha256": "365b7a0f6ded960b899b8b8711649801d89233fed63955ea93caec1996045074",
+  "kernel_sha256": "e529a23dcf9eeb8ab5b7d719b6ceb4a039543a806809a5f86c1198d888d94c1b",
+  "generated_sha256": {
+    "program-images.h": "07bf1f01487cf832a6ba8d44255611ac541b66ce857080762562a71d12af7c73",
+    "user-scripts.h": "593c20bb09f3c435a29a2c37bbc7b05180dff3bb167eea087a3fd67098a623c0",
+    "lkl-image.h": "f262bc9c6ae21dec9821127dc3efbfafe314ae94e8e4ff59363ee6b84cece23e",
+    "lkl-host-ops.h": "3fd5ecc4dbe336887fedfa052b33e5120e5431134a7c9dbc95e7e32fdf582092",
+    "guest-image.h": "ecb4c21664e7f8926d8afe067d25f587bf907db5bf0d2354b6c14b5cd3e9c420",
+    "exec-guest.elf": "2653f70b168f2c2b58e048b5fe81137ebf36d6a8e6e13a37f4d579b02f6c3e9d",
+    "init.elf": "a89415a9e6f11da6d3e2ab96b050a141d75142ce166a32cd57c5382906be8a7a",
+    "worker.elf": "e35ea697d20b8c7193029adb5f0aa9b924446e5384fdb731a918f3a004bb2610",
+    "mm-bench.elf": "eeeeedfdef72fc15e17db5df762fe36ca0b6603eed1c8a2f37e5939b5e2edfe5",
+    "dash.elf": "ffe90f94a6b8387bf8b0e8b575b484ef9835245bad6be77548f8d61dbac03253",
+    "libc.so": "5198895e4b82cec0a529cc5202e485edb5836844f9d2c0004e96c94346115ce7",
+    "dependency.so": "e7657c74b4eb576cde12167e217a7437b79f94b5cfd91db4af5442d2c3d0dec9",
+    "plugin.so": "49adab4d79cfac9a842ade493623fcf191044cfa542d225b363105b40ad33a3c",
+    "dynamic.elf": "889ac8e54aa5054285bacbeeddc9b0af184a628915673fbd2cc0035267d61466"
+  },
+  "device_execution": "pending",
+  "source_sha256": {
+    "scripts/package_native_linux_ios.py": "e1c8432cc6b3a57bed424c11e626900a9bf9e372e3065a7aab02710b7dd7aca7",
+    "src/ios-jit/husk-ios-jit.h": "194fe09c2986b87873df2a267877c57089c759f82f7585eba88e3917b6ff1360",
+    "experiments/native-linux/ios/Bridge.c": "69d7e6d5a39524737112afecce2d485b8b5b7cf970dfcc42a826e43c4198e834",
+    "experiments/native-linux/ios/Bridge.h": "27766321402d5024558e46e2e98111f9a6b1363c6ad65bf1e786c396050e0468",
+    "experiments/native-linux/ios/NativeLinuxApp.swift": "813a08c05853e72b854eb172fdf9371d25a18f4d4a2c081c2448084416761e47",
+    "experiments/native-linux/ios/detach-test.c": "2424d3f5035cefe26812557333a2eb1ad5670454aa8bfe31b7f456a80c2bf9e6",
+    "experiments/native-linux/ios/execute-test.c": "4c90fc839c88a1f51d355a87ef29b2ff855afd50099638023c37b8674eff6cb6",
+    "experiments/native-linux/lkl-main.c": "b9f42b6013a27cfdcca298ab55e40f9428c9068ead610da24233aff05b66ac26",
+    "experiments/native-linux/lkl-host.c": "6d78636ed58c95a21462537ef6027bc7f26565ee12cea5698951397f12da80fa",
+    "experiments/native-linux/lkl-process-host.c": "102b8edb27537624056d9b379163d187704a65836279346427bb03af0bd9ee9e",
+    "experiments/native-linux/programs.c": "a8237ada032a4b307dd5f6e566c0b3e62616b246945a13c9ea62e8131d5d1af8",
+    "experiments/native-linux/memory.c": "922829a9d0cfdc843ed6e05e5a58a05b7537fad83e651220d4a0a9779d22a208",
+    "experiments/native-linux/execute-check.c": "e2aaa1d3a93cd1557b40729bf00ad66207fc5bf540f09476615c418285b0721f",
+    "experiments/native-linux/compute.c": "474ab1cef2169092d9f7751595238a471c22ac29464baea5f933c883fbe5423d",
+    "experiments/native-linux/nce.c": "0d730898c0b856fbcf0e827519521c11edc49a859a3f39d28a73ea772216d663",
+    "experiments/native-linux/entry.S": "0133eb524e45bebb880c0c2b299b610023856f97bd5cc52f812850f06bd56cc7",
+    "experiments/native-linux/guest.S": "6e6c2ad54238e847546f96b4614ec1e280bb4ec6ded63db858756fea753ab496",
+    "src/ios-jit/husk-ios-jit.c": "c6193440f47743f39b12ef978d050e23e42eb9871ac184fd70474df08f71523b",
+    "src/ios-jit/husk-brk.S": "d11df097d81a01886c9d247f8a0297b1dab8f4d68a955a6a701e14662103c069",
+    "src/app/Husk/JITBuiltIn.swift": "7fff006c794c31f0d22e02d8fd0f56a48b42aa860285910bc3df63d3dae12b6d",
+    "src/app/Husk/JITPairingFileStore.swift": "bca19d0e402cd5dd44a7dd11aad25e11121f1bb9cd5e89fabce9c8fac685f1fc",
+    "src/app/HuskJITHelper/HuskJITMessages.swift": "d0d5f4ba159d7640f4ee637cecd703506ae9eb807a2d41dd99ac1e90f6761132",
+    "work/native-linux-nce/processes/lkl-image.bin": "e529a23dcf9eeb8ab5b7d719b6ceb4a039543a806809a5f86c1198d888d94c1b",
+    "src/app/Husk/Resources/husk-jit.js": "fffd376fcbab381e303ac2034eab246047868301271c119b38c9b44d9f011c35",
+    "work/native-linux-nce/musl-1.2.5/COPYRIGHT": "f9bc4423732350eb0b3f7ed7e91d530298476f8fec0c6c427a1c04ade22655af",
+    "work/native-linux-nce/dash-0.5.12/COPYING": "254a7894923ff62e69184a991dcbccae97edee58a1105e8efbe78caf10595d72",
+    "work/native-linux-nce/compiler-rt-20.1.8.src/LICENSE.TXT": "1a8f1058753f1ba890de984e48f0242a3a5c29a6a8f2ed9fd813f36985387e8d"
+  },
+  "mac_validation_checks": [
+    {
+      "test": "prepared_fixed_address_code_updates",
+      "passed": true,
+      "ranges": 10,
+      "updates_per_range": 8
+    },
+    {
+      "test": "data_fixed_remap_after_detach",
+      "passed": true,
+      "targets": 2,
+      "switches_per_target": 8
+    },
+    {
+      "test": "linux_ram_remap",
+      "passed": true,
+      "bytes": 67108864
+    },
+    {
+      "test": "native_linux_boot",
+      "passed": true,
+      "ms": 22.295
+    },
+    {
+      "test": "linux_uname",
+      "sysname": "Linux",
+      "release": "6.12.0"
+    },
+    {
+      "test": "linux_nce_fork_cow_shared_futex_pipe_exec_wait",
+      "passed": true,
+      "rounds": 32,
+      "faults": 285,
+      "elapsed_ms": 26.174
+    },
+    {
+      "test": "linux_exec_then_fork_cow_wait",
+      "passed": true
+    },
+    {
+      "test": "linux_exec_file_unchanged",
+      "passed": true
+    },
+    {
+      "test": "linux_syscall_bounds",
+      "passed": true
+    },
+    {
+      "test": "linux_musl_static_pie_processes",
+      "passed": true,
+      "commands": 8,
+      "cow_bytes_per_command": 2097152
+    },
+    {
+      "test": "linux_compiled_elf_files_unchanged",
+      "passed": true
+    },
+    {
+      "test": "linux_musl_threads_preemption",
+      "passed": true,
+      "threads": 56,
+      "stackless_exits": 8,
+      "elapsed_ms": 68.124
+    },
+    {
+      "test": "linux_musl_static_pie_processes",
+      "passed": true,
+      "commands": 8,
+      "cow_bytes_per_command": 2097152
+    },
+    {
+      "test": "linux_compiled_elf_files_unchanged",
+      "passed": true
+    },
+    {
+      "test": "linux_musl_threads_preemption",
+      "passed": true,
+      "threads": 56,
+      "stackless_exits": 8,
+      "elapsed_ms": 67.448
+    },
+    {
+      "test": "linux_musl_static_pie_processes",
+      "passed": true,
+      "commands": 8,
+      "cow_bytes_per_command": 2097152
+    },
+    {
+      "test": "linux_compiled_elf_files_unchanged",
+      "passed": true
+    },
+    {
+      "test": "linux_musl_threads_preemption",
+      "passed": true,
+      "threads": 56,
+      "stackless_exits": 8,
+      "elapsed_ms": 65.067
+    },
+    {
+      "test": "linux_musl_static_pie_processes",
+      "passed": true,
+      "commands": 8,
+      "cow_bytes_per_command": 2097152
+    },
+    {
+      "test": "linux_compiled_elf_files_unchanged",
+      "passed": true
+    },
+    {
+      "test": "linux_musl_threads_preemption",
+      "passed": true,
+      "threads": 56,
+      "stackless_exits": 8,
+      "elapsed_ms": 73.946
+    },
+    {
+      "test": "linux_musl_static_pie_processes",
+      "passed": true,
+      "commands": 8,
+      "cow_bytes_per_command": 2097152
+    },
+    {
+      "test": "linux_compiled_elf_files_unchanged",
+      "passed": true
+    },
+    {
+      "test": "linux_musl_threads_preemption",
+      "passed": true,
+      "threads": 56,
+      "stackless_exits": 8,
+      "elapsed_ms": 69.053
+    },
+    {
+      "test": "linux_musl_static_pie_processes",
+      "passed": true,
+      "commands": 8,
+      "cow_bytes_per_command": 2097152
+    },
+    {
+      "test": "linux_compiled_elf_files_unchanged",
+      "passed": true
+    },
+    {
+      "test": "linux_musl_threads_preemption",
+      "passed": true,
+      "threads": 56,
+      "stackless_exits": 8,
+      "elapsed_ms": 64.234
+    },
+    {
+      "test": "linux_musl_static_pie_processes",
+      "passed": true,
+      "commands": 8,
+      "cow_bytes_per_command": 2097152
+    },
+    {
+      "test": "linux_compiled_elf_files_unchanged",
+      "passed": true
+    },
+    {
+      "test": "linux_musl_threads_preemption",
+      "passed": true,
+      "threads": 56,
+      "stackless_exits": 8,
+      "elapsed_ms": 64.946
+    },
+    {
+      "test": "linux_musl_static_pie_processes",
+      "passed": true,
+      "commands": 8,
+      "cow_bytes_per_command": 2097152
+    },
+    {
+      "test": "linux_compiled_elf_files_unchanged",
+      "passed": true
+    },
+    {
+      "test": "linux_musl_threads_preemption",
+      "passed": true,
+      "threads": 56,
+      "stackless_exits": 8,
+      "elapsed_ms": 65.083
+    },
+    {
+      "test": "linux_musl_static_pie_processes",
+      "passed": true,
+      "commands": 8,
+      "cow_bytes_per_command": 2097152
+    },
+    {
+      "test": "linux_compiled_elf_files_unchanged",
+      "passed": true
+    },
+    {
+      "test": "linux_musl_threads_preemption",
+      "passed": true,
+      "threads": 56,
+      "stackless_exits": 8,
+      "elapsed_ms": 63.997
+    },
+    {
+      "test": "linux_musl_static_pie_processes",
+      "passed": true,
+      "commands": 8,
+      "cow_bytes_per_command": 2097152
+    },
+    {
+      "test": "linux_compiled_elf_files_unchanged",
+      "passed": true
+    },
+    {
+      "test": "linux_musl_threads_preemption",
+      "passed": true,
+      "threads": 56,
+      "stackless_exits": 8,
+      "elapsed_ms": 65.652
+    },
+    {
+      "test": "linux_musl_static_pie_processes",
+      "passed": true,
+      "commands": 8,
+      "cow_bytes_per_command": 2097152
+    },
+    {
+      "test": "linux_compiled_elf_files_unchanged",
+      "passed": true
+    },
+    {
+      "test": "linux_musl_threads_preemption",
+      "passed": true,
+      "threads": 56,
+      "stackless_exits": 8,
+      "elapsed_ms": 67.671
+    },
+    {
+      "test": "linux_musl_static_pie_processes",
+      "passed": true,
+      "commands": 8,
+      "cow_bytes_per_command": 2097152
+    },
+    {
+      "test": "linux_compiled_elf_files_unchanged",
+      "passed": true
+    },
+    {
+      "test": "linux_musl_threads_preemption",
+      "passed": true,
+      "threads": 56,
+      "stackless_exits": 8,
+      "elapsed_ms": 65.702
+    },
+    {
+      "test": "linux_musl_static_pie_processes",
+      "passed": true,
+      "commands": 8,
+      "cow_bytes_per_command": 2097152
+    },
+    {
+      "test": "linux_compiled_elf_files_unchanged",
+      "passed": true
+    },
+    {
+      "test": "linux_musl_threads_preemption",
+      "passed": true,
+      "threads": 56,
+      "stackless_exits": 8,
+      "elapsed_ms": 66.293
+    },
+    {
+      "test": "linux_musl_static_pie_processes",
+      "passed": true,
+      "commands": 8,
+      "cow_bytes_per_command": 2097152
+    },
+    {
+      "test": "linux_compiled_elf_files_unchanged",
+      "passed": true
+    },
+    {
+      "test": "linux_musl_threads_preemption",
+      "passed": true,
+      "threads": 56,
+      "stackless_exits": 8,
+      "elapsed_ms": 65.665
+    },
+    {
+      "test": "linux_musl_static_pie_processes",
+      "passed": true,
+      "commands": 8,
+      "cow_bytes_per_command": 2097152
+    },
+    {
+      "test": "linux_compiled_elf_files_unchanged",
+      "passed": true
+    },
+    {
+      "test": "linux_musl_threads_preemption",
+      "passed": true,
+      "threads": 56,
+      "stackless_exits": 8,
+      "elapsed_ms": 64.868
+    },
+    {
+      "test": "linux_musl_static_pie_processes",
+      "passed": true,
+      "commands": 8,
+      "cow_bytes_per_command": 2097152
+    },
+    {
+      "test": "linux_compiled_elf_files_unchanged",
+      "passed": true
+    },
+    {
+      "test": "linux_musl_threads_preemption",
+      "passed": true,
+      "threads": 56,
+      "stackless_exits": 8,
+      "elapsed_ms": 64.55
+    },
+    {
+      "test": "linux_userspace_stress",
+      "passed": true,
+      "rounds": 16,
+      "commands": 128,
+      "threads": 896
+    },
+    {
+      "test": "linux_signal_mask_altstack_nested",
+      "passed": true
+    },
+    {
+      "test": "linux_signal_register_restore",
+      "passed": true
+    },
+    {
+      "test": "linux_signal_eintr_restart",
+      "passed": true
+    },
+    {
+      "test": "linux_signal_fault_recovery",
+      "passed": true
+    },
+    {
+      "test": "linux_signal_frame_validation_stop_exit",
+      "passed": true
+    },
+    {
+      "test": "linux_pthread_cancel_signal",
+      "passed": true
+    },
+    {
+      "test": "linux_signal_timer_preemption",
+      "passed": true
+    },
+    {
+      "test": "linux_mmap_byte_offset",
+      "passed": true
+    },
+    {
+      "test": "linux_user_memory_boundaries",
+      "passed": true,
+      "reuse_rounds": 64
+    },
+    {
+      "test": "linux_mm_exchange_integrity",
+      "passed": true,
+      "cases": 28
+    },
+    {
+      "test": "linux_mm_host_operations",
+      "data_maps": 358455,
+      "code_copy_bytes": 2965504,
+      "revocations": 26353
+    },
+    {
+      "test": "linux_dash_pipeline_redirection",
+      "passed": true
+    },
+    {
+      "test": "linux_dash_fork_exec_environment",
+      "passed": true
+    },
+    {
+      "test": "linux_dash_trap_background_wait",
+      "passed": true
+    },
+    {
+      "test": "linux_dash_shell_suite",
+      "passed": true
+    },
+    {
+      "test": "linux_dynamic_link_dlopen_constructors",
+      "passed": true
+    },
+    {
+      "test": "linux_dynamic_tls_threads",
+      "passed": true
+    },
+    {
+      "test": "linux_dynamic_fork_signal",
+      "passed": true
+    },
+    {
+      "test": "linux_dynamic_elf_files_unchanged",
+      "passed": true
+    },
+    {
+      "test": "fixed_linux_code_view",
+      "copies": 4191,
+      "passed": true
+    },
+    {
+      "test": "linux_host_mapping_totals",
+      "data_maps": 425320,
+      "data_bytes": 14936719360,
+      "code_copy_bytes": 78626816,
+      "revocations": 83380
+    },
+    {
+      "test": "linux_nce_context_lifetime",
+      "allocated": 1334,
+      "freed": 1334
+    },
+    {
+      "test": "linux_guest_events",
+      "preemptions": 272,
+      "deferred_faults": 80082,
+      "stack_resumes": 22358,
+      "stack_calls": 3061
+    },
+    {
+      "test": "guest_preemption_signal_mask",
+      "inherited_blocked_threads": 0,
+      "passed": true
+    },
+    {
+      "result": "passed"
+    }
+  ],
+  "dispatch_validation_checks": [
+    {
+      "test": "dispatch_signal_mask",
+      "sigusr2_blocked": 1
+    },
+    {
+      "test": "prepared_fixed_address_code_updates",
+      "passed": true,
+      "ranges": 10,
+      "updates_per_range": 8
+    },
+    {
+      "test": "data_fixed_remap_after_detach",
+      "passed": true,
+      "targets": 2,
+      "switches_per_target": 8
+    },
+    {
+      "test": "linux_ram_remap",
+      "passed": true,
+      "bytes": 67108864
+    },
+    {
+      "test": "native_linux_boot",
+      "passed": true,
+      "ms": 17.483
+    },
+    {
+      "test": "linux_uname",
+      "sysname": "Linux",
+      "release": "6.12.0"
+    },
+    {
+      "test": "linux_nce_fork_cow_shared_futex_pipe_exec_wait",
+      "passed": true,
+      "rounds": 32,
+      "faults": 288,
+      "elapsed_ms": 28.304
+    },
+    {
+      "test": "linux_exec_then_fork_cow_wait",
+      "passed": true
+    },
+    {
+      "test": "linux_exec_file_unchanged",
+      "passed": true
+    },
+    {
+      "test": "linux_syscall_bounds",
+      "passed": true
+    },
+    {
+      "test": "linux_musl_static_pie_processes",
+      "passed": true,
+      "commands": 8,
+      "cow_bytes_per_command": 2097152
+    },
+    {
+      "test": "linux_compiled_elf_files_unchanged",
+      "passed": true
+    },
+    {
+      "test": "linux_musl_threads_preemption",
+      "passed": true,
+      "threads": 56,
+      "stackless_exits": 8,
+      "elapsed_ms": 74.275
+    },
+    {
+      "test": "linux_musl_static_pie_processes",
+      "passed": true,
+      "commands": 8,
+      "cow_bytes_per_command": 2097152
+    },
+    {
+      "test": "linux_compiled_elf_files_unchanged",
+      "passed": true
+    },
+    {
+      "test": "linux_musl_threads_preemption",
+      "passed": true,
+      "threads": 56,
+      "stackless_exits": 8,
+      "elapsed_ms": 70.151
+    },
+    {
+      "test": "linux_musl_static_pie_processes",
+      "passed": true,
+      "commands": 8,
+      "cow_bytes_per_command": 2097152
+    },
+    {
+      "test": "linux_compiled_elf_files_unchanged",
+      "passed": true
+    },
+    {
+      "test": "linux_musl_threads_preemption",
+      "passed": true,
+      "threads": 56,
+      "stackless_exits": 8,
+      "elapsed_ms": 68.655
+    },
+    {
+      "test": "linux_musl_static_pie_processes",
+      "passed": true,
+      "commands": 8,
+      "cow_bytes_per_command": 2097152
+    },
+    {
+      "test": "linux_compiled_elf_files_unchanged",
+      "passed": true
+    },
+    {
+      "test": "linux_musl_threads_preemption",
+      "passed": true,
+      "threads": 56,
+      "stackless_exits": 8,
+      "elapsed_ms": 68.363
+    },
+    {
+      "test": "linux_musl_static_pie_processes",
+      "passed": true,
+      "commands": 8,
+      "cow_bytes_per_command": 2097152
+    },
+    {
+      "test": "linux_compiled_elf_files_unchanged",
+      "passed": true
+    },
+    {
+      "test": "linux_musl_threads_preemption",
+      "passed": true,
+      "threads": 56,
+      "stackless_exits": 8,
+      "elapsed_ms": 68.032
+    },
+    {
+      "test": "linux_musl_static_pie_processes",
+      "passed": true,
+      "commands": 8,
+      "cow_bytes_per_command": 2097152
+    },
+    {
+      "test": "linux_compiled_elf_files_unchanged",
+      "passed": true
+    },
+    {
+      "test": "linux_musl_threads_preemption",
+      "passed": true,
+      "threads": 56,
+      "stackless_exits": 8,
+      "elapsed_ms": 67.605
+    },
+    {
+      "test": "linux_musl_static_pie_processes",
+      "passed": true,
+      "commands": 8,
+      "cow_bytes_per_command": 2097152
+    },
+    {
+      "test": "linux_compiled_elf_files_unchanged",
+      "passed": true
+    },
+    {
+      "test": "linux_musl_threads_preemption",
+      "passed": true,
+      "threads": 56,
+      "stackless_exits": 8,
+      "elapsed_ms": 67.283
+    },
+    {
+      "test": "linux_musl_static_pie_processes",
+      "passed": true,
+      "commands": 8,
+      "cow_bytes_per_command": 2097152
+    },
+    {
+      "test": "linux_compiled_elf_files_unchanged",
+      "passed": true
+    },
+    {
+      "test": "linux_musl_threads_preemption",
+      "passed": true,
+      "threads": 56,
+      "stackless_exits": 8,
+      "elapsed_ms": 68.679
+    },
+    {
+      "test": "linux_musl_static_pie_processes",
+      "passed": true,
+      "commands": 8,
+      "cow_bytes_per_command": 2097152
+    },
+    {
+      "test": "linux_compiled_elf_files_unchanged",
+      "passed": true
+    },
+    {
+      "test": "linux_musl_threads_preemption",
+      "passed": true,
+      "threads": 56,
+      "stackless_exits": 8,
+      "elapsed_ms": 65.983
+    },
+    {
+      "test": "linux_musl_static_pie_processes",
+      "passed": true,
+      "commands": 8,
+      "cow_bytes_per_command": 2097152
+    },
+    {
+      "test": "linux_compiled_elf_files_unchanged",
+      "passed": true
+    },
+    {
+      "test": "linux_musl_threads_preemption",
+      "passed": true,
+      "threads": 56,
+      "stackless_exits": 8,
+      "elapsed_ms": 66.955
+    },
+    {
+      "test": "linux_musl_static_pie_processes",
+      "passed": true,
+      "commands": 8,
+      "cow_bytes_per_command": 2097152
+    },
+    {
+      "test": "linux_compiled_elf_files_unchanged",
+      "passed": true
+    },
+    {
+      "test": "linux_musl_threads_preemption",
+      "passed": true,
+      "threads": 56,
+      "stackless_exits": 8,
+      "elapsed_ms": 65.438
+    },
+    {
+      "test": "linux_musl_static_pie_processes",
+      "passed": true,
+      "commands": 8,
+      "cow_bytes_per_command": 2097152
+    },
+    {
+      "test": "linux_compiled_elf_files_unchanged",
+      "passed": true
+    },
+    {
+      "test": "linux_musl_threads_preemption",
+      "passed": true,
+      "threads": 56,
+      "stackless_exits": 8,
+      "elapsed_ms": 66.229
+    },
+    {
+      "test": "linux_musl_static_pie_processes",
+      "passed": true,
+      "commands": 8,
+      "cow_bytes_per_command": 2097152
+    },
+    {
+      "test": "linux_compiled_elf_files_unchanged",
+      "passed": true
+    },
+    {
+      "test": "linux_musl_threads_preemption",
+      "passed": true,
+      "threads": 56,
+      "stackless_exits": 8,
+      "elapsed_ms": 80.719
+    },
+    {
+      "test": "linux_musl_static_pie_processes",
+      "passed": true,
+      "commands": 8,
+      "cow_bytes_per_command": 2097152
+    },
+    {
+      "test": "linux_compiled_elf_files_unchanged",
+      "passed": true
+    },
+    {
+      "test": "linux_musl_threads_preemption",
+      "passed": true,
+      "threads": 56,
+      "stackless_exits": 8,
+      "elapsed_ms": 65.261
+    },
+    {
+      "test": "linux_musl_static_pie_processes",
+      "passed": true,
+      "commands": 8,
+      "cow_bytes_per_command": 2097152
+    },
+    {
+      "test": "linux_compiled_elf_files_unchanged",
+      "passed": true
+    },
+    {
+      "test": "linux_musl_threads_preemption",
+      "passed": true,
+      "threads": 56,
+      "stackless_exits": 8,
+      "elapsed_ms": 68.231
+    },
+    {
+      "test": "linux_musl_static_pie_processes",
+      "passed": true,
+      "commands": 8,
+      "cow_bytes_per_command": 2097152
+    },
+    {
+      "test": "linux_compiled_elf_files_unchanged",
+      "passed": true
+    },
+    {
+      "test": "linux_musl_threads_preemption",
+      "passed": true,
+      "threads": 56,
+      "stackless_exits": 8,
+      "elapsed_ms": 66.78
+    },
+    {
+      "test": "linux_userspace_stress",
+      "passed": true,
+      "rounds": 16,
+      "commands": 128,
+      "threads": 896
+    },
+    {
+      "test": "linux_signal_mask_altstack_nested",
+      "passed": true
+    },
+    {
+      "test": "linux_signal_register_restore",
+      "passed": true
+    },
+    {
+      "test": "linux_signal_eintr_restart",
+      "passed": true
+    },
+    {
+      "test": "linux_signal_fault_recovery",
+      "passed": true
+    },
+    {
+      "test": "linux_signal_frame_validation_stop_exit",
+      "passed": true
+    },
+    {
+      "test": "linux_pthread_cancel_signal",
+      "passed": true
+    },
+    {
+      "test": "linux_signal_timer_preemption",
+      "passed": true
+    },
+    {
+      "test": "linux_mmap_byte_offset",
+      "passed": true
+    },
+    {
+      "test": "linux_user_memory_boundaries",
+      "passed": true,
+      "reuse_rounds": 64
+    },
+    {
+      "test": "linux_mm_exchange_integrity",
+      "passed": true,
+      "cases": 28
+    },
+    {
+      "test": "linux_mm_host_operations",
+      "data_maps": 357740,
+      "code_copy_bytes": 3014656,
+      "revocations": 25853
+    },
+    {
+      "test": "linux_dash_pipeline_redirection",
+      "passed": true
+    },
+    {
+      "test": "linux_dash_fork_exec_environment",
+      "passed": true
+    },
+    {
+      "test": "linux_dash_trap_background_wait",
+      "passed": true
+    },
+    {
+      "test": "linux_dash_shell_suite",
+      "passed": true
+    },
+    {
+      "test": "linux_dynamic_link_dlopen_constructors",
+      "passed": true
+    },
+    {
+      "test": "linux_dynamic_tls_threads",
+      "passed": true
+    },
+    {
+      "test": "linux_dynamic_fork_signal",
+      "passed": true
+    },
+    {
+      "test": "linux_dynamic_elf_files_unchanged",
+      "passed": true
+    },
+    {
+      "test": "fixed_linux_code_view",
+      "copies": 4199,
+      "passed": true
+    },
+    {
+      "test": "linux_host_mapping_totals",
+      "data_maps": 424303,
+      "data_bytes": 14988427264,
+      "code_copy_bytes": 78757888,
+      "revocations": 82730
+    },
+    {
+      "test": "linux_nce_context_lifetime",
+      "allocated": 1334,
+      "freed": 1334
+    },
+    {
+      "test": "linux_guest_events",
+      "preemptions": 281,
+      "deferred_faults": 79595,
+      "stack_resumes": 22083,
+      "stack_calls": 3065
+    },
+    {
+      "test": "guest_preemption_signal_mask",
+      "inherited_blocked_threads": 51,
+      "passed": true
+    },
+    {
+      "result": "passed"
+    }
+  ],
+  "build_results": "results-n2e-build.json"
+}

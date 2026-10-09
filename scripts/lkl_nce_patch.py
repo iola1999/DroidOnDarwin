@@ -55,8 +55,12 @@ def apply(source: Path, experiment: Path):
     edit(arch + "include/uapi/asm/host_ops.h", "\tstruct lkl_dev_pci_ops *pci_ops;", "\tstruct lkl_dev_pci_ops *pci_ops;\n\n\t/* N2 controlled userspace. The Linux CPU owns the active context. */\n\tvoid *(*user_clone)(void *parent, unsigned long sp, unsigned long tls, unsigned long flags);\n\tvoid (*user_free)(void *state);\n\tvoid (*user_switch)(void *state);\n\tvoid (*user_run)(void *state);\n\tvoid (*user_exec)(void *state, unsigned long entry, unsigned long stack);\n")
     edit(arch + "include/uapi/asm/host_ops.h", "\tvoid (*user_exec)(void *state, unsigned long entry, unsigned long stack);", "\tvoid (*user_exec)(void *state, unsigned long entry, unsigned long stack);\n\tunsigned long (*user_elf)(const char *path, const void *header, const void *phdrs);")
     edit("fs/binfmt_elf.c", "unsigned long load_bias = 0, phdr_addr = 0;", "unsigned long load_bias = 0, phdr_addr = 0;\n#ifdef NCE_ELF_LAYOUT\n\tunsigned long nce_bias;\n#endif")
-    edit("fs/binfmt_elf.c", "\t/* Flush all traces of the currently running executable */", "#ifdef NCE_ELF_LAYOUT\n\tnce_bias = interpreter ? 0 : NCE_ELF_LAYOUT(bprm->filename, elf_ex, elf_phdata);\n\tif (!nce_bias) {\n\t\tretval = -ENOEXEC;\n\t\tgoto out_free_dentry;\n\t}\n#endif\n\t/* Flush all traces of the currently running executable */")
+    if "\tnce_bias =" not in (source / "fs/binfmt_elf.c").read_text():
+        edit("fs/binfmt_elf.c", "\t/* Flush all traces of the currently running executable */", "#ifdef NCE_ELF_LAYOUT\n\tnce_bias = interpreter ? 0 : NCE_ELF_LAYOUT(bprm->filename, elf_ex, elf_phdata);\n\tif (!nce_bias) {\n\t\tretval = -ENOEXEC;\n\t\tgoto out_free_dentry;\n\t}\n#endif\n\t/* Flush all traces of the currently running executable */")
     edit("fs/binfmt_elf.c", "\t\t\tload_bias = ELF_PAGESTART(load_bias - vaddr);", "#ifdef NCE_ELF_LAYOUT\n\t\t\tload_bias = nce_bias;\n\t\t\telf_flags |= MAP_FIXED_NOREPLACE;\n#endif\n\t\t\tload_bias = ELF_PAGESTART(load_bias - vaddr);")
+    edit("fs/binfmt_elf.c", "nce_bias = interpreter ? 0 : NCE_ELF_LAYOUT(bprm->filename, elf_ex, elf_phdata);", "nce_bias = NCE_ELF_LAYOUT(bprm->filename, elf_ex, elf_phdata);")
+    edit("fs/binfmt_elf.c", "if (!nce_bias) {", "if (!nce_bias || (interpreter && !NCE_ELF_INTERP_LAYOUT(interpreter, interp_elf_ex, interp_elf_phdata))) {")
+    edit("fs/binfmt_elf.c", "\t\t\tmap_addr = elf_load(interpreter, load_addr + vaddr,", "#ifdef NCE_ELF_INTERP_LAYOUT\n\t\t\tif (!load_addr_set) {\n\t\t\t\tload_addr = NCE_ELF_INTERP_LAYOUT(interpreter, interp_elf_ex, interp_elf_phdata);\n\t\t\t\tif (!load_addr) return -ENOEXEC;\n\t\t\t\telf_type |= MAP_FIXED_NOREPLACE;\n\t\t\t}\n#endif\n\t\t\tmap_addr = elf_load(interpreter, load_addr + vaddr,")
     edit(arch + "kernel/threads.c", "\tti->flags = org_ti->flags;", "\tp->thread.nce_state = NULL;\n\tti->flags = org_ti->flags;")
     edit(arch + "kernel/threads.c", "\tkill_thread(ti);\n\tkfree(ti);", "\tkill_thread(ti);\n#ifdef CONFIG_MMU\n\tif (tsk->thread.nce_state)\n\t\tlkl_ops->user_free(tsk->thread.nce_state);\n#endif\n\tkfree(ti);")
     edit(arch + "kernel/threads.c", "\tlkl_ops->sem_up(_next->sched_sem);", "#ifdef CONFIG_MMU\n\tif (lkl_ops->user_switch)\n\t\tlkl_ops->user_switch(next->thread.nce_state);\n#endif\n\tlkl_ops->sem_up(_next->sched_sem);")
@@ -65,6 +69,7 @@ def apply(source: Path, experiment: Path):
     edit(arch + "kernel/threads.c", "\ttba = kmalloc(sizeof(*tba), GFP_KERNEL);", "\tclear_ti_thread_flag(ti, TIF_HOST_THREAD);\n#ifdef CONFIG_MMU\n\tif (!esp) {\n\t\tif (!current->thread.nce_state || !lkl_ops->user_clone)\n\t\t\treturn -EINVAL;\n\t\tp->thread.nce_state = lkl_ops->user_clone(current->thread.nce_state,\n\t\t\targs->stack, args->tls, args->flags);\n\t\tif (!p->thread.nce_state)\n\t\t\treturn -ENOMEM;\n\t\tesp = (unsigned long)user_bootstrap;\n\t}\n#endif\n\ttba = kmalloc(sizeof(*tba), GFP_KERNEL);")
     edit(arch + "include/asm/syscalls.h", "#define sys_clone sys_ni_syscall", "#ifndef CONFIG_MMU\n#define sys_clone sys_ni_syscall\n#endif")
     edit(arch + "include/asm/syscalls.h", "#define sys_rt_sigreturn sys_ni_syscall", "#ifndef CONFIG_MMU\n#define sys_rt_sigreturn sys_ni_syscall\n#endif")
+    edit(arch + "include/asm/syscalls.h", "#define sys_mmap sys_mmap_pgoff", "#ifdef CONFIG_MMU\nasmlinkage long sys_nce_mmap(unsigned long, unsigned long, unsigned long, unsigned long, unsigned long, unsigned long);\n#define sys_mmap sys_nce_mmap\n#else\n#define sys_mmap sys_mmap_pgoff\n#endif")
     edit(arch + "include/uapi/asm/unistd.h", "#define __ARCH_WANT_SYSCALL_NO_AT", "#ifdef CONFIG_MMU\n#define __ARCH_WANT_SYS_CLONE\n#endif\n#define __ARCH_WANT_SYSCALL_NO_AT")
     edit(arch + "kernel/syscalls.c", "static long run_syscall(long no, long *params)", "#ifdef CONFIG_MMU\nextern long nce_launch(long *params);\n#endif\nlong nce_run_syscall(long no, long *params)")
     edit(arch + "kernel/syscalls.c", "\tsyscall_handler_t handler = (syscall_handler_t)syscall_table[no];\n\n\tif (no < 0 || no >= __NR_syscalls)\n\t\treturn -ENOSYS;", "\tsyscall_handler_t handler;\n\tif (no < 0 || no >= __NR_syscalls)\n\t\treturn -ENOSYS;\n#ifdef CONFIG_MMU\n\tif (no == 246)\n\t\treturn nce_launch(params);\n#endif\n\thandler = (syscall_handler_t)syscall_table[no];")
@@ -75,12 +80,14 @@ def apply(source: Path, experiment: Path):
     edit(arch + "mm/Makefile", "obj-$(CONFIG_MMU) += mmu_mem.o", "obj-$(CONFIG_MMU) += mmu_mem.o nce_mmu.o")
     edit(arch + "kernel/Makefile", "\tsyscalls_32.o cpu.o init.o stacktrace.o", "\tsyscalls_32.o cpu.o init.o stacktrace.o\nobj-$(CONFIG_MMU) += nce_process.o")
     edit(arch + "kernel/Makefile", "obj-$(CONFIG_MMU) += nce_process.o", "obj-$(CONFIG_MMU) += nce_process.o nce_signal.o")
+    edit(arch + "kernel/Makefile", "nce_process.o nce_signal.o", "nce_process.o nce_signal.o nce_elf.o")
     for local, destination in (("layout.h", "include/asm/nce-layout.h"),
                                ("guest-registers.h", "include/asm/guest-registers.h"),
                                ("lkl-signal.h", "include/asm/signal.h"),
                                ("lkl-nce-mmu.c", "mm/nce_mmu.c"),
                                ("lkl-nce-process.c", "kernel/nce_process.c"),
                                ("lkl-nce-signal.c", "kernel/nce_signal.c"),
+                               ("lkl-nce-elf.c", "kernel/nce_elf.c"),
                                ("lkl-mmu-context.h", "include/asm/mmu_context.h"),
                                ("lkl-mmu.h", "include/asm/mmu.h"),
                                ("lkl-uaccess.h", "include/asm/uaccess.h"),

@@ -21,21 +21,22 @@ unsigned long nce_program_layout(const char *path, const void *header, const voi
     return 0;
 }
 
-int nce_program_patch(NceProgram *p, NceState *state, NceState **active)
+int nce_program_prepare(NceProgram *p)
 {
     if (!p->stubs.rw) p->stubs = nce_memory_take(16 + 80 * p->patch_count);
     if (nce_write_entry(p->stubs, p->base + p->entry)) return -1;
-    state->regs.pc = p->base + p->entry;
-    state->resume = (uintptr_t)p->stubs.rx;
+    nce_sync_code(p->stubs);
+    return 0;
+}
+
+int nce_program_patch_range(NceProgram *p, NceSegment *segment,
+                            size_t offset, size_t size, NceState **active)
+{
+    size_t begin = segment->offset + offset, end = begin + size;
     for (size_t i = 0; i < p->patch_count; ++i) {
         const NcePatch *patch = &p->patches[i];
-        unsigned char *write = NULL;
-        for (size_t j = 0; j < p->segment_count; ++j) {
-            NceSegment *s = &p->segments[j];
-            if (patch->address >= s->offset && patch->address - s->offset <= s->size - 4)
-                write = s->code.rw + patch->address - s->offset;
-        }
-        if (!write) return -1;
+        if (patch->address < begin || patch->address >= end) continue;
+        unsigned char *write = segment->code.rw + patch->address - segment->offset;
         uint32_t original;
         memcpy(&original, write, 4);
         if (original != patch->instruction) return -1;
@@ -44,6 +45,5 @@ int nce_program_patch(NceProgram *p, NceState *state, NceState **active)
         if (nce_write_patch((void *)write, p->base + patch->address, stub, active, original)) return -1;
     }
     nce_sync_code(p->stubs);
-    for (size_t i = 0; i < p->segment_count; ++i) nce_sync_code(p->segments[i].code);
     return 0;
 }

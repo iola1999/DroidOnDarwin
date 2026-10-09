@@ -14,7 +14,7 @@ ROOT = Path(__file__).resolve().parents[1]
 EXP = ROOT / 'experiments/native-linux'
 INPUT = ROOT / 'work/native-linux-nce/processes'
 OUT = ROOT / 'work/native-linux-nce/ios'
-REVISION = 'N2-C1'
+REVISION = 'N2-E1'
 
 
 def run(args, **kwargs):
@@ -62,7 +62,7 @@ def main():
                 UISupportedInterfaceOrientations=['UIInterfaceOrientationPortrait',
                     'UIInterfaceOrientationPortraitUpsideDown',
                     'UIInterfaceOrientationLandscapeLeft', 'UIInterfaceOrientationLandscapeRight'],
-                CFBundleShortVersionString='0.9.1', CFBundleVersion='41')
+                CFBundleShortVersionString='0.9.1', CFBundleVersion='61')
     plist(OUT / 'Info.plist', info)
     helper_info = plistlib.loads((ROOT / 'src/app/HuskJITHelper/Info.plist').read_bytes())
     for key in ['CFBundleShortVersionString', 'CFBundleVersion']:
@@ -82,6 +82,7 @@ def main():
     sources += [{'path': str(path), 'buildPhase': 'resources'} for path in
                 [INPUT / 'lkl-image.bin', ROOT / 'src/app/Husk/Resources/husk-jit.js',
                  ROOT / 'work/native-linux-nce/musl-1.2.5/COPYRIGHT',
+                 ROOT / 'work/native-linux-nce/dash-0.5.12/COPYING',
                  ROOT / 'work/native-linux-nce/compiler-rt-20.1.8.src/LICENSE.TXT']]
     framework = ROOT / 'src/app/Frameworks/StikJIT.xcframework'
     spec = {

@@ -39,6 +39,14 @@ void memory_tests(void)
     CHECK(write(fd, data, 1) == 1);
     CHECK(mprotect(data, PAGE, PROT_READ | PROT_WRITE) == 0);
     CHECK(mprotect(data + PAGE, PAGE, PROT_READ | PROT_WRITE) == 0);
+    CHECK(ftruncate(fd, 2 * PAGE) == 0);
+    unsigned char marker = 0x6b;
+    CHECK(pwrite(fd, &marker, 1, PAGE) == 1);
+    unsigned char *second = mmap(NULL, PAGE, PROT_READ, MAP_PRIVATE, fd, PAGE);
+    CHECK(second != MAP_FAILED && second[0] == marker && second[1] == 0);
+    CHECK(munmap(second, PAGE) == 0);
+    CHECK(mmap(NULL, PAGE, PROT_READ, MAP_PRIVATE, fd, PAGE + 1) == MAP_FAILED && errno == EINVAL);
+    puts("{\"test\":\"linux_mmap_byte_offset\",\"passed\":true}");
 
     int to_child[2], to_parent[2];
     CHECK(pipe(to_child) == 0 && pipe(to_parent) == 0);

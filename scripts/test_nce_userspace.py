@@ -79,14 +79,35 @@ class ElfLayoutTests(unittest.TestCase):
         struct.pack_into('<Q', self.data, 24, rx[3] + rx[5])
         self.check_rejected('missing executable entry')
 
-    def test_interpreter_needs_its_own_loader(self):
+    def test_unregistered_interpreter(self):
         off, _ = next((off, p) for off, p in self.headers if p[0] == 0x6474e551)
         struct.pack_into('<I', self.data, off, 3)
-        self.check_rejected('interpreter loading')
+        self.check_rejected('ELF interpreter')
 
     def test_truncated_section_table(self):
         self.data = self.data[:-1]
         self.check_rejected('truncated ELF tables')
+
+    def test_dynamic_program_and_shared_library(self):
+        for name in ('dash.elf', 'dynamic.elf', 'libc.so'):
+            self.assertGreater(len(inspect(WORK / 'processes' / name)['segments']), 0)
+        self.assertEqual(inspect(WORK / 'processes/plugin.so', shared=True)['entry'], 0)
+        with self.assertRaisesRegex(RuntimeError, 'missing executable entry'):
+            inspect(WORK / 'processes/plugin.so')
+
+    def test_linker_purecode_flag_is_required_without_symbols(self):
+        self.data = bytearray((WORK / 'processes/dash.elf').read_bytes())
+        shoff, = struct.unpack_from('<Q', self.data, 40)
+        count, = struct.unpack_from('<H', self.data, 60)
+        changed = False
+        for i in range(count):
+            off = shoff + i * 64
+            flags, = struct.unpack_from('<Q', self.data, off + 8)
+            if flags & 0x20000000:
+                struct.pack_into('<Q', self.data, off + 8, flags & ~0x20000000)
+                changed = True
+        self.assertTrue(changed)
+        self.check_rejected('lacks mapping symbols')
 
 
 if __name__ == '__main__':

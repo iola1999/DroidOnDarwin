@@ -10,4 +10,5 @@
 #define NCE_MM_DIFF 0
 #define NCE_MM_FULL 1
 #define NCE_MM_LAZY 2
+#define NCE_FAULT_EXEC 2
 #endif

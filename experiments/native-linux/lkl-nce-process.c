@@ -35,11 +35,11 @@ void start_thread(struct pt_regs *regs, unsigned long entry, unsigned long stack
         if (!(vma->vm_flags & VM_EXEC)) continue;
         for (unsigned long address = vma->vm_start; address < vma->vm_end; address += PAGE_SIZE) {
             struct page *page;
-            long count = get_user_pages(address, 1, FOLL_WRITE | FOLL_FORCE, &page);
+            long count = get_user_pages(address, 1, 0, &page);
             BUG_ON(count != 1);
             put_page(page);
         }
     }
-    /* Private pages retain rewritten instructions across process switches. */
+    /* Populate prepared executable ranges before the first user instruction. */
     lkl_ops->user_exec(current->thread.nce_state, entry, stack);
 }
