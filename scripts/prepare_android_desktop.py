@@ -14,7 +14,7 @@ DIRECTORIES = {
     'system': ('app', 'priv-app'),
     'system_ext': ('app', 'priv-app', 'lib64', 'framework', 'etc'),
     'product': ('app', 'priv-app', 'lib64', 'framework', 'etc', 'overlay'),
-    'vendor': ('bin', 'lib64', 'etc'),
+    'vendor': ('bin', 'lib64', 'etc', 'apex'),
 }
 
 
@@ -64,6 +64,35 @@ def prepare():
         path.unlink()
     print(f'Verified {len(files)} desktop inputs; intermediate images removed', flush=True)
     return result
+
+
+def prepare_vendor_module(name):
+    """提取已校验 SDK 中的 vendor HAL APEX，保存源归档与文件哈希。"""
+    source = OUT / 'vendor/apex' / (name + '.apex')
+    target = OUT / 'vendor-apex' / name
+    target.mkdir(parents=True, exist_ok=True)
+    manifest = target / 'extract-manifest.json'
+    source_hash = digest(source)
+    if manifest.exists():
+        previous = json.loads(manifest.read_text())
+        if previous['source_sha256'] == source_hash and all(
+                (target / path).is_file() and digest(target / path) == sha
+                for path, sha in previous['files'].items()):
+            return target
+    image = target / 'payload.tmp.img'
+    with zipfile.ZipFile(source) as package:
+        image.write_bytes(package.read('apex_payload.img'))
+    try:
+        subprocess.run([DEBUGFS, '-R', f'rdump / {target}', image],
+                       stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True, timeout=120)
+    finally:
+        image.unlink()
+    files = {str(p.relative_to(target)): digest(p) for p in sorted(target.rglob('*'))
+             if p.is_file() and p != manifest and not p.is_symlink()}
+    if not (target / 'apex_manifest.pb').is_file():
+        raise RuntimeError('Vendor APEX extraction failed: ' + name)
+    manifest.write_text(json.dumps(dict(source_sha256=source_hash, files=files), indent=2) + '\n')
+    return target
 
 
 if __name__ == '__main__':

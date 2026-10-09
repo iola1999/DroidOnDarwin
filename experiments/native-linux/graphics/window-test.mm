@@ -3,7 +3,31 @@
 #import <QuartzCore/CAMetalLayer.h>
 #import <Metal/Metal.h>
 #include "host-graphics.h"
+#include "../input.h"
 extern "C" int nce_lkl_run(const char *path);
+
+@interface NceInputView : NSView
+@property(nonatomic) dispatch_queue_t inputQueue;
+@end
+
+@implementation NceInputView
+- (BOOL)acceptsFirstResponder { return YES; }
+- (void)sendPointer:(NSEvent *)event action:(int)action
+{
+    NSPoint point = [self convertPoint:event.locationInWindow fromView:nil];
+    int x = MAX(0, MIN(359, (int)(point.x * 360 / self.bounds.size.width)));
+    int y = MAX(0, MIN(639, (int)((self.bounds.size.height - point.y) * 640 / self.bounds.size.height)));
+    dispatch_async(self.inputQueue, ^{ nce_host_input_send(action, x, y); });
+}
+- (void)mouseDown:(NSEvent *)event { [self sendPointer:event action:NCE_INPUT_DOWN]; }
+- (void)mouseDragged:(NSEvent *)event { [self sendPointer:event action:NCE_INPUT_MOVE]; }
+- (void)mouseUp:(NSEvent *)event { [self sendPointer:event action:NCE_INPUT_UP]; }
+- (void)navigate:(NSButton *)sender
+{
+    int code = (int)sender.tag;
+    dispatch_async(self.inputQueue, ^{ nce_host_input_send(NCE_INPUT_KEY, code, 0); });
+}
+@end
 
 int main(int argc, char **argv)
 {
@@ -11,11 +35,21 @@ int main(int argc, char **argv)
     @autoreleasepool {
         NSApplication *app = NSApplication.sharedApplication;
         [app setActivationPolicy:NSApplicationActivationPolicyRegular];
-        NSWindow *window = [[NSWindow alloc] initWithContentRect:NSMakeRect(80, 80, 360, 640)
+        NSWindow *window = [[NSWindow alloc] initWithContentRect:NSMakeRect(80, 80, 360, 680)
             styleMask:NSWindowStyleMaskTitled | NSWindowStyleMaskClosable
             backing:NSBackingStoreBuffered defer:NO];
         window.title = @"Husk NCE · Android GPU";
-        NSView *view = window.contentView;
+        NceInputView *view = [[NceInputView alloc] initWithFrame:NSMakeRect(0, 40, 360, 640)];
+        view.inputQueue = dispatch_queue_create("app.husk.android-input", DISPATCH_QUEUE_SERIAL);
+        [window.contentView addSubview:view];
+        NSArray<NSString *> *titles = @[@"返回", @"主页", @"最近应用"];
+        const int keys[] = {158, 102, 580};
+        for (unsigned i = 0; i < 3; ++i) {
+            NSButton *button = [NSButton buttonWithTitle:titles[i] target:view action:@selector(navigate:)];
+            button.frame = NSMakeRect(i * 120, 0, 120, 40);
+            button.tag = keys[i];
+            [window.contentView addSubview:button];
+        }
         view.wantsLayer = YES;
         CAMetalLayer *layer = [CAMetalLayer layer];
         layer.device = MTLCreateSystemDefaultDevice();

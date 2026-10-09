@@ -20,8 +20,9 @@ from build_android_libc import build as build_android_libc
 from build_android_art import build as build_android_art
 from build_android_crypto import build as build_android_crypto
 from prepare_android_modules import prepare as prepare_android_modules, OUT as MODULES
-from prepare_android_desktop import prepare as prepare_android_desktop, OUT as DESKTOP
+from prepare_android_desktop import prepare as prepare_android_desktop, prepare_vendor_module, OUT as DESKTOP
 from build_android_gralloc import build as build_android_gralloc
+from build_android_network import build as build_android_network
 
 ROOT = Path(__file__).resolve().parents[1]
 EXP = ROOT / 'experiments/native-linux'
@@ -79,16 +80,21 @@ def android_dependencies(llvm, replacements):
                       'com.android.i18n/lib64', 'com.android.os.statsd/lib64'):
         for path in (root / directory).glob('*.so'):
             if path.is_file(): files[path.name] = path
-    for module in ('com.android.tethering', 'com.android.adbd', 'com.android.conscrypt'):
+    for module in ('com.android.tethering', 'com.android.adbd', 'com.android.conscrypt', 'com.android.resolv'):
         for path in (root / module / 'lib64').glob('*.so'):
             if path.is_file(): files.setdefault(path.name, path)
     files.update(replacements)
     pending = ['libart.so', 'libjavacore.so', 'libopenjdk.so', 'libicu_jni.so',
                'libstats_jni.so', 'libjavacrypto.so', 'libartpalette-system.so', 'libbinder_ndk.so', 'libandroid.so',
-               'libprocessgroup_setup.so', 'libframework-connectivity-tiramisu-jni.so', 'libandroid_servers.so']
-    for name in ('servicemanager', 'app_process64', 'aconfigd-system', 'installd', 'hw/android.system.suspend-service'):
+               'libprocessgroup_setup.so', 'libframework-connectivity-tiramisu-jni.so', 'libandroid_servers.so',
+               'libalarm_jni.so', 'libbpf.so']
+    for name in ('servicemanager', 'app_process64', 'aconfigd-system', 'installd', 'idmap2', 'idmap2d',
+                 'vold', 'storaged', 'cmd', 'dumpsys', 'netd', 'lmkd', 'bpfloader',
+                 'iptables', 'hw/android.system.suspend-service'):
         pending += re.findall(r'Shared library: \[(.*?)\]',
                               subprocess.check_output([llvm / 'llvm-readelf', '-d', root / 'bin' / name], text=True))
+    pending += re.findall(r'Shared library: \[(.*?)\]', subprocess.check_output(
+        [llvm / 'llvm-readelf', '-d', root / 'com.android.art/bin/artd'], text=True))
     pending += re.findall(r'Shared library: \[(.*?)\]', subprocess.check_output(
         [llvm / 'llvm-readelf', '-d', root / 'com.android.sdkext/bin/derive_classpath'], text=True))
     result = {}
@@ -106,6 +112,7 @@ def android_dependencies(llvm, replacements):
 
 def android_graphics_dependencies(llvm, programs):
     prepare_android_desktop()
+    power = prepare_vendor_module('com.android.hardware.power')
     system = WORK / 'android/android36/lib64'
     vendor = DESKTOP / 'vendor/lib64'
     provided = {Path(guest).name for guest, _ in programs if guest.endswith('.so')}
@@ -121,12 +128,18 @@ def android_graphics_dependencies(llvm, programs):
                 (mapper.name, '/vendor/lib64/hw/' + mapper.name),
                 (composer.name, '/vendor/bin/hw/' + composer.name),
                 (surfaceflinger.name, '/system/bin/' + surfaceflinger.name)]
+    health = DESKTOP / 'vendor/bin/hw/android.hardware.health-service.example'
+    replacements[health.name] = health
+    pending.append((health.name, '/vendor/bin/hw/' + health.name))
+    for name in ('android.hardware.power-service.example', 'android.hardware.power.stats-service.example'):
+        replacements[name] = power / 'bin/hw' / name
+        pending.append((name, '/vendor/bin/hw/' + name))
     result = []
     while pending:
         name, guest = pending.pop()
         if name in provided:
             continue
-        path = replacements.get(name) or next((base / name for base in (system, vendor, vendor / 'egl') if (base / name).is_file()), None)
+        path = replacements.get(name) or next((base / name for base in (system, vendor, vendor / 'egl', power / 'lib64') if (base / name).is_file()), None)
         if path is None:
             raise RuntimeError('Missing graphics dependency: ' + name)
         provided.add(name)
@@ -245,12 +258,43 @@ def android_data(out):
         if not source.is_file():
             raise RuntimeError('Missing classpath resource: ' + guest)
         files.append((guest, source))
-    files += [('/system/etc/selinux/plat_service_contexts', EXP / 'services/service_contexts')]
+    # Reuse the pinned platform names with the prototype's service policy.
+    # Unknown names keep the denied label; the SDK wildcard is not imported.
+    service_names = set()
+    for source in (root / 'etc/selinux/plat_service_contexts',
+                   DESKTOP / 'vendor/etc/selinux/vendor_service_contexts'):
+        for line in source.read_text().splitlines():
+            fields = line.partition('#')[0].split()
+            if fields and fields[0] != '*':
+                if len(fields) != 2:
+                    raise RuntimeError(f'Invalid service context: {source}: {line}')
+                service_names.add(fields[0])
+    contexts = {name: 'u:object_r:nce_service:s0' for name in service_names}
+    for line in (EXP / 'services/service_contexts').read_text().splitlines():
+        name, context = line.split()
+        contexts[name] = context
+    context_file = out / 'plat_service_contexts'
+    context_file.write_text(''.join(f'{name} {context}\n' for name, context in sorted(contexts.items())))
+    files += [('/system/etc/selinux/plat_service_contexts', context_file)]
     fragment = 'vendor/etc/vintf/manifest/android.hardware.graphics.gralloc.ranchu.xml'
     files.append(('/' + fragment, DESKTOP / fragment))
+    fragment = 'vendor/etc/vintf/manifest/android.hardware.health-service.example.xml'
+    files.append(('/' + fragment, DESKTOP / fragment))
     files.append(('/vendor/etc/vintf/manifest.xml', EXP / 'services/vendor-manifest.xml'))
+    power = prepare_vendor_module('com.android.hardware.power')
+    files += [('/vendor/etc/vintf/manifest/' + path.name, path)
+              for path in sorted((power / 'etc/vintf').glob('*.xml'))]
     files += [('/system/etc/selinux/plat_seapp_contexts', EXP / 'services/seapp_contexts')]
+    files += [('/system/etc/selinux/plat_mac_permissions.xml', root / 'etc/selinux/plat_mac_permissions.xml')]
     files += [('/system/etc/selinux/plat_file_contexts', EXP / 'services/file_contexts')]
+    files += [('/system/usr/keylayout/NCE_Touch.kl', EXP / 'services/NCE_Touch.kl'),
+              ('/system/usr/idc/NCE_Touch.idc', EXP / 'services/NCE_Touch.idc')]
+    files += [('/system/' + str(path.relative_to(root)), path)
+              for path in sorted((root / 'usr').rglob('*')) if path.is_file()]
+    files += [('/vendor/etc/fstab.nce', EXP / 'services/fstab.nce')]
+    files += [('/system/etc/init/netbpfload.rc', root / 'etc/init/netbpfload.rc')]
+    files += [('/apex/' + str(path.relative_to(root)), path)
+              for path in sorted((root / 'com.android.tethering/etc/bpf').rglob('*')) if path.is_file()]
     files += [(f'/system/etc/{name}.json', EXP / 'services' / f'{name}.json')
               for name in ('cgroups', 'task_profiles')]
     files += [('/apex/com.android.i18n/etc/icu/icudt76l.dat', root / 'com.android.i18n/etc/icu/icudt76l.dat')]
@@ -270,8 +314,46 @@ def android_data(out):
         jar.writestr(zipfile.ZipInfo('classes.dex'), (framework_classes / 'classes.dex').read_bytes())
     files += [('/system/framework/nce-framework.jar', framework_jar)]
     files += [('/system/framework/framework-res.apk', root / 'framework/framework-res.apk')]
+    desktop_apps = (
+        'system/priv-app/GooglePackageInstaller/GooglePackageInstaller.apk',
+        'system/priv-app/SettingsProvider/SettingsProvider.apk',
+        'system/priv-app/IntentResolver/IntentResolver.apk',
+        'system/priv-app/InputDevices/InputDevices.apk',
+        'system/priv-app/Shell/Shell.apk',
+        'system/priv-app/DocumentsUIGoogle/DocumentsUIGoogle.apk',
+        'system/priv-app/DownloadProvider/DownloadProvider.apk',
+        'system/priv-app/DownloadProviderUi/DownloadProviderUi.apk',
+        'system/priv-app/ExternalStorageProvider/ExternalStorageProvider.apk',
+        'system/app/KeyChain/KeyChain.apk',
+        'system/app/GoogleExtShared/GoogleExtShared.apk',
+        'system_ext/priv-app/SystemUIGoogle/SystemUIGoogle.apk',
+        'system_ext/priv-app/NexusLauncherRelease/NexusLauncherRelease.apk',
+        'product/app/PrebuiltDeskClockGoogle/PrebuiltDeskClockGoogle.apk',
+    )
+    for name in desktop_apps:
+        source = DESKTOP / name
+        if not source.is_file():
+            raise RuntimeError('Missing desktop APK: ' + name)
+        files.append(('/' + name, source))
+    for module in ('com.android.permission', 'com.android.configinfrastructure',
+                   'com.android.tethering', 'com.android.extservices'):
+        for directory in ('app', 'priv-app'):
+            for source in sorted((root / module / directory).rglob('*.apk')):
+                files.append(('/apex/' + str(source.relative_to(root)), source))
+    for source in sorted((root / 'com.android.adservices/app').rglob('SdkSandboxGoogle.apk')):
+        files.append(('/apex/' + str(source.relative_to(root)), source))
+    for name in ('GoogleConfigOverlay.apk', 'RanchuCommonOverlay.apk',
+                 'framework-res__sdk_gphone16k_arm64__auto_generated_rro_product.apk',
+                 'framework-res__emulator__auto_generated_characteristics_rro.apk'):
+        source = DESKTOP / 'product/overlay' / name
+        files.append(('/product/overlay/' + name, source))
+    for partition in ('system_ext', 'product'):
+        for source in sorted((DESKTOP / partition / 'etc/permissions').glob('privapp-permissions*.xml')):
+            files.append(('/' + str(source.relative_to(DESKTOP)), source))
+
     files += [('/system/etc/vintf/' + name, root / 'etc/vintf' / name)
-              for name in ('manifest.xml', 'manifest/android.system.suspend-service.xml')]
+              for name in ('manifest.xml', 'manifest/android.system.suspend-service.xml',
+                           'manifest/android.system.net.netd-service.xml')]
     for directory in ('permissions', 'sysconfig', 'compatconfig'):
         for path in sorted((root / 'etc' / directory).rglob('*')):
             if path.is_file():
@@ -685,6 +767,11 @@ def build(out, llvm):
     programs.append(('/system/bin/servicemanager', WORK / 'android/android36/bin/servicemanager'))
     programs.append(('/system/bin/aconfigd-system', WORK / 'android/android36/bin/aconfigd-system'))
     programs.append(('/system/bin/installd', WORK / 'android/android36/bin/installd'))
+    for name in ('idmap2', 'idmap2d', 'vold', 'storaged', 'cmd', 'dumpsys', 'netd', 'lmkd',
+                 'bpfloader', 'iptables'):
+        programs.append(('/system/bin/' + name, WORK / 'android/android36/bin' / name))
+    programs.append(('/apex/com.android.art/bin/artd', WORK / 'android/android36/com.android.art/bin/artd'))
+    programs.append(('/apex/com.android.tethering/bin/netbpfload', build_android_network()))
     programs.append(('/system/bin/hw/android.system.suspend-service', WORK / 'android/android36/bin/hw/android.system.suspend-service'))
     programs.append(('/system/bin/app_process64', WORK / 'android/android36/bin/app_process64'))
     programs.append(('/system/bin/derive_classpath', WORK / 'android/android36/com.android.sdkext/bin/derive_classpath'))
@@ -701,6 +788,7 @@ def build(out, llvm):
          '-Wl,-z,max-page-size=16384,-z,common-page-size=16384',
          EXP / 'userspace/android-services-test.cpp', EXP / 'userspace/property-service.cpp',
          EXP / 'userspace/display-service-test.cpp',
+         EXP / 'userspace/input-service.cpp',
          EXP / 'userspace/framework-test.cpp', EXP / 'userspace/crypto-tests.cpp',
          EXP / 'userspace/apex-service.cpp', EXP / 'userspace/suspend-test.cpp', EXP / 'userspace/installd-test.cpp',
          *sorted(apex_generated.rglob('*.cpp')),

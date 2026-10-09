@@ -158,6 +158,55 @@
         "CpuRtApp",
         "TimerSlackNormal"
       ]
+    },
+    {
+      "Name": "CPUSET_SP_FOREGROUND",
+      "Profiles": [
+        "CpuForeground",
+        "TimerSlackNormal"
+      ]
+    },
+    {
+      "Name": "CPUSET_SP_BACKGROUND",
+      "Profiles": [
+        "CpuBackground",
+        "TimerSlackNormal"
+      ]
+    },
+    {
+      "Name": "CPUSET_SP_FOREGROUND_WINDOW",
+      "Profiles": [
+        "CpuForegroundWindow",
+        "TimerSlackNormal"
+      ]
+    },
+    {
+      "Name": "CPUSET_SP_TOP_APP",
+      "Profiles": [
+        "CpuTopApp",
+        "TimerSlackNormal"
+      ]
+    },
+    {
+      "Name": "CPUSET_SP_SYSTEM",
+      "Profiles": [
+        "CpuSystem",
+        "TimerSlackNormal"
+      ]
+    },
+    {
+      "Name": "CPUSET_SP_COMPUTE",
+      "Profiles": [
+        "CpuCompute",
+        "TimerSlackNormal"
+      ]
+    },
+    {
+      "Name": "CPUSET_SP_RT_APP",
+      "Profiles": [
+        "CpuRtApp",
+        "TimerSlackNormal"
+      ]
     }
   ]
 }

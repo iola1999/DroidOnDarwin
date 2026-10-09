@@ -10,6 +10,8 @@
 #include <signal.h>
 #include <string.h>
 #include <sys/socket.h>
+#include <sys/resource.h>
+#include <sys/mount.h>
 #include <sys/stat.h>
 #include <sys/un.h>
 #include <stdio.h>
@@ -163,6 +165,7 @@ void nce_framework_test()
         {"ro.build.version.sdk_full", "36.0"}, {"ro.build.version.release", "16"},
         {"ro.build.version.release_or_codename", "16"}, {"ro.build.version.codename", "REL"},
         {"ro.build.version.all_codenames", "REL"}, {"ro.product.model", "NCE prototype"},
+        {"ro.build.type", "userdebug"},
         {"ro.treble.enabled", "true"}, {"sys.use_memfd", "true"},
         {"dalvik.vm.heapstartsize", "16m"}, {"dalvik.vm.heapsize", "128m"},
         {"dalvik.vm.jdwp-provider", "none"},
@@ -172,6 +175,19 @@ void nce_framework_test()
         {"dalvik.vm.extra-opts", "-Xnoimage-dex2oat"},
     };
     for (const auto &entry : properties) CHECK(__system_property_set(entry[0], entry[1]) == 0);
+    // APK execution uses the prepared ART JIT. Keep installation verification
+    // separate from dex2oat code generation, whose output is not prepared yet.
+    const char *dexopt_reasons[] = {"ab-ota", "bg-dexopt", "boot-after-mainline-update", "boot-after-ota",
+        "cmdline", "first-boot", "inactive", "install", "install-bulk", "install-bulk-downgraded",
+        "install-bulk-secondary", "install-bulk-secondary-downgraded", "install-fast", "post-boot", "shared"};
+    for (const char *reason : dexopt_reasons) {
+        char key[96];
+        snprintf(key, sizeof(key), "pm.dexopt.%s", reason);
+        CHECK(__system_property_set(key, "verify") == 0);
+    }
+    CHECK(__system_property_set("config.disable_otadexopt", "true") == 0);
+    CHECK(__system_property_set("dalvik.vm.disable-art-service-dexopt", "true") == 0);
+    CHECK(__system_property_set("pm.dexopt.disable_bg_dexopt", "true") == 0);
     initialize_aconfig();
     derive_classpath();
     pid_t child = fork();
@@ -188,15 +204,19 @@ void nce_framework_test()
     CHECK(WIFEXITED(status) && WEXITSTATUS(status) == 0);
 }
 
-static int control_socket(const char *name)
+static int control_socket(const char *name, int type = SOCK_STREAM, gid_t group = 1000)
 {
-    int fd = socket(AF_UNIX, SOCK_STREAM, 0);
+    int fd = socket(AF_UNIX, type, 0);
     CHECK(fd >= 0);
     sockaddr_un address = {};
     address.sun_family = AF_UNIX;
     CHECK(snprintf(address.sun_path, sizeof(address.sun_path), "/dev/socket/%s", name) > 0);
     CHECK(bind(fd, reinterpret_cast<sockaddr *>(&address), sizeof(address)) == 0);
-    CHECK(chown(address.sun_path, 0, 1000) == 0 && chmod(address.sun_path, 0660) == 0);
+    CHECK(chown(address.sun_path, 0, group) == 0 && chmod(address.sun_path, 0660) == 0);
+    if (type == SOCK_SEQPACKET) {
+        int passcred = 1;
+        CHECK(setsockopt(fd, SOL_SOCKET, SO_PASSCRED, &passcred, sizeof(passcred)) == 0);
+    }
     CHECK(listen(fd, 8) == 0);
     return fd;
 }
@@ -234,6 +254,69 @@ static void receive_bytes(int fd, void *buffer, size_t size)
     }
 }
 
+static void wait_system_service(pid_t child, const char *name)
+{
+    for (unsigned i = 0; i < 100; ++i) {
+        int status;
+        CHECK(waitpid(child, &status, WNOHANG) == 0);
+        AIBinder *service = AServiceManager_checkService(name);
+        if (service) {
+            AIBinder_decStrong(service);
+            return;
+        }
+        usleep(100000);
+    }
+    dprintf(2, "pid=%d did not publish %s\n", child, name);
+    CHECK(false);
+}
+
+pid_t nce_start_system_service(const char *path, const char *name, uid_t uid,
+                               std::initializer_list<const char *> arguments)
+{
+    pid_t child = fork();
+    CHECK(child >= 0);
+    if (!child) {
+        runtime_environment();
+        CHECK(setgid(uid == 0 ? 0 : 1000) == 0 && setuid(uid) == 0);
+        char *argv[16] = {const_cast<char *>(path)};
+        CHECK(arguments.size() < 15);
+        unsigned index = 1;
+        for (const char *argument : arguments) argv[index++] = const_cast<char *>(argument);
+        execv(path, argv);
+        _exit(108);
+    }
+    wait_system_service(child, name);
+    return child;
+}
+
+static pid_t start_socket_service(const char *path, const char *service,
+                                  std::initializer_list<const char *> names, int type)
+{
+    int descriptors[8];
+    CHECK(names.size() <= 8);
+    unsigned count = 0;
+    for (const char *name : names)
+        descriptors[count++] = control_socket(name, type,
+            !strcmp(name, "dnsproxyd") || !strcmp(name, "fwmarkd") ? 3003 : 1000);
+    pid_t child = fork();
+    CHECK(child >= 0);
+    if (!child) {
+        runtime_environment();
+        unsigned i = 0;
+        for (const char *name : names) {
+            char key[64], value[24];
+            snprintf(key, sizeof(key), "ANDROID_SOCKET_%s", name);
+            snprintf(value, sizeof(value), "%d", descriptors[i++]);
+            CHECK(setenv(key, value, 1) == 0);
+        }
+        execl(path, path, nullptr);
+        _exit(108);
+    }
+    for (unsigned i = 0; i < count; ++i) CHECK(close(descriptors[i]) == 0);
+    if (service) wait_system_service(child, service);
+    return child;
+}
+
 static void dump_threads()
 {
     DIR *processes = opendir("/proc");
@@ -266,21 +349,7 @@ static void dump_threads()
 void nce_zygote_test()
 {
     bool system_server = access("/data/nce/system-server-probe", F_OK) == 0;
-    if (system_server) {
-        const struct { const char *path; mode_t mode; uid_t owner; } directories[] = {
-            {"/mnt", 0755, 0}, {"/mnt/user", 0755, 0}, {"/mnt/user/0", 0755, 0},
-            {"/storage", 0755, 0}, {"/data/system", 0775, 1000},
-            {"/data/system/users", 0775, 1000}, {"/data/system/users/0", 0700, 1000},
-            {"/data/system_de", 0770, 1000}, {"/data/system_de/0", 0770, 1000},
-            {"/data/resource-cache", 0771, 1000},
-            {"/data/anr", 0775, 1000},
-        };
-        for (const auto &directory : directories) {
-            CHECK(mkdir(directory.path, directory.mode) == 0 || errno == EEXIST);
-            CHECK(chmod(directory.path, directory.mode) == 0);
-            CHECK(chown(directory.path, directory.owner, directory.owner) == 0);
-        }
-    }
+    pid_t idmap = -1, health = -1, vold = -1, storaged = -1, artd = -1, netd = -1, lmkd = -1;
     void *setup = dlopen("libprocessgroup_setup.so", RTLD_NOW);
     CHECK(setup);
     auto initialize = reinterpret_cast<bool (*)()>(dlsym(setup, "_Z11CgroupSetupv"));
@@ -297,6 +366,58 @@ void nce_zygote_test()
             snprintf(path, sizeof(path), "%s/%s", directory, file);
             CHECK(chown(path, 1000, 1000) == 0 && chmod(path, 0664) == 0);
         }
+    }
+    if (system_server) {
+        int kernel_log = open("/proc/sys/kernel/printk_devkmsg", O_WRONLY | O_CLOEXEC);
+        CHECK(kernel_log >= 0 && write(kernel_log, "on\n", 3) == 3 && close(kernel_log) == 0);
+        const struct { const char *path; mode_t mode; uid_t owner; } directories[] = {
+            {"/mnt", 0755, 0}, {"/mnt/user", 0755, 0}, {"/mnt/user/0", 0755, 0},
+            {"/storage", 0755, 0}, {"/data/system", 0775, 1000},
+            {"/data/system/users", 0775, 1000}, {"/data/system/users/0", 0700, 1000},
+            {"/data/system_de", 0770, 1000}, {"/data/system_de/0", 0770, 1000},
+            {"/data/app", 0771, 1000},
+            {"/data/system_ce", 0770, 1000},
+            {"/data/resource-cache", 0771, 1000},
+            {"/data/anr", 0775, 1000},
+            {"/data/misc/vold", 0700, 0}, {"/metadata/vold", 0700, 0},
+            {"/data/misc/storaged", 0700, 0},
+            {"/data/misc/net", 0750, 0},
+        };
+        for (const auto &directory : directories) {
+            CHECK(mkdir(directory.path, directory.mode) == 0 || errno == EEXIST);
+            CHECK(chmod(directory.path, directory.mode) == 0);
+            CHECK(chown(directory.path, directory.owner, directory.owner) == 0);
+        }
+        CHECK(__system_property_set("ro.boot.fake_battery", "1") == 0);
+        CHECK(__system_property_set("ro.hardware", "nce") == 0);
+        CHECK(__system_property_set("ro.boot.hardware", "nce") == 0);
+        CHECK(__system_property_set("ro.crypto.state", "unencrypted") == 0);
+        idmap = nce_start_system_service("/system/bin/idmap2d", "idmap", 1000, {});
+        health = nce_start_system_service("/vendor/bin/hw/android.hardware.health-service.example",
+                                      "android.hardware.health.IHealth/default", 1000, {});
+        // vold requires the helper process contexts supplied by Android init.
+        vold = nce_start_system_service("/system/bin/vold", "vold", 0,
+            {"--blkid_context=u:r:nce_t:s0", "--blkid_untrusted_context=u:r:nce_t:s0",
+             "--fsck_context=u:r:nce_t:s0", "--fsck_untrusted_context=u:r:nce_t:s0"});
+        storaged = nce_start_system_service("/system/bin/storaged", "storaged", 0, {});
+        artd = nce_start_system_service("/apex/com.android.art/bin/artd", "artd", 0, {});
+        CHECK(mount("bpf", "/sys/fs/bpf", "bpf", 0, nullptr) == 0);
+        rlimit locked = {1024 * 1024 * 1024, 1024 * 1024 * 1024};
+        CHECK(setrlimit(RLIMIT_MEMLOCK, &locked) == 0);
+        pid_t loader = fork();
+        CHECK(loader >= 0);
+        if (!loader) {
+            runtime_environment();
+            execl("/apex/com.android.tethering/bin/netbpfload", "netbpfload", nullptr);
+            _exit(108);
+        }
+        int status;
+        CHECK(waitpid(loader, &status, 0) == loader);
+        if (status) dprintf(2, "network BPF loader status=%d\n", status);
+        CHECK(status == 0);
+        puts("{\"test\":\"android_network_bpf_loaded\",\"passed\":true}");
+        netd = start_socket_service("/system/bin/netd", "netd", {"dnsproxyd", "mdns", "fwmarkd"}, SOCK_STREAM);
+        lmkd = start_socket_service("/system/bin/lmkd", nullptr, {"lmkd"}, SOCK_SEQPACKET);
     }
     CHECK(mkdir("/data/nce/zygote", 0777) == 0 && chmod("/data/nce/zygote", 0777) == 0);
     int command = control_socket("zygote");
@@ -326,28 +447,45 @@ void nce_zygote_test()
     CHECK(close(command) == 0 && close(usap) == 0);
     if (system_server) {
         puts("{\"phase\":\"android_system_server_boot\"}");
-        bool activity_reported = false;
-        for (unsigned i = 0; i < 400; ++i) {
+        bool activity_reported = false, services_reported = false;
+        for (unsigned i = 0; i < 2400; ++i) {
             int status;
             CHECK(waitpid(zygote, &status, WNOHANG) == 0);
             AIBinder *activity = AServiceManager_checkService("activity");
             AIBinder *package = AServiceManager_checkService("package");
-            bool ready = activity && package;
+            AIBinder *window = AServiceManager_checkService("window");
+            AIBinder *input = AServiceManager_checkService("input");
+            bool ready = activity && package && window && input;
             if (activity && !activity_reported) {
                 puts("{\"phase\":\"android_activity_service_registered\"}");
                 activity_reported = true;
             }
             if (activity) AIBinder_decStrong(activity);
             if (package) AIBinder_decStrong(package);
-            if (ready) {
+            if (window) AIBinder_decStrong(window);
+            if (input) AIBinder_decStrong(input);
+            if (ready && !services_reported) {
                 puts("{\"test\":\"android_system_server_services\",\"passed\":true}");
+                services_reported = true;
+            }
+            char completed[PROP_VALUE_MAX] = {};
+            __system_property_get("sys.boot_completed", completed);
+            if (ready && !strcmp(completed, "1")) {
+                puts("{\"test\":\"android_system_boot_completed\",\"passed\":true}");
                 CHECK(kill(zygote, SIGTERM) == 0 && waitpid(zygote, &status, 0) == zygote);
+                for (pid_t service : {idmap, health, vold, storaged, artd, netd, lmkd})
+                    CHECK(kill(service, SIGTERM) == 0 && waitpid(service, &status, 0) == service);
+                for (const char *socket : {"dnsproxyd", "mdns", "fwmarkd", "lmkd"}) {
+                    char path[64];
+                    snprintf(path, sizeof(path), "/dev/socket/%s", socket);
+                    CHECK(unlink(path) == 0);
+                }
                 CHECK(unlink("/dev/socket/zygote") == 0 && unlink("/dev/socket/usap_pool_primary") == 0);
                 return;
             }
             usleep(100000);
         }
-        dprintf(2, "system_server did not publish activity and package services within 40 seconds\n");
+        dprintf(2, "Android did not complete boot within the 240 second polling window\n");
         CHECK(false);
     }
     pid_t requester = fork();

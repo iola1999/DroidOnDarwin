@@ -21,8 +21,9 @@ Metal 使用 Apple A19 GPU，360×640 的 120 帧提交共 2037.544 ms。当前 
 缓冲区分配、Composer 与 SurfaceFlinger 集成，已检查普通 Surface 的三组
 绘图和合成像素。新增部分尚待后续整包手机测试。
 
-原版 system_server 已进入 DisplayManager 初始化，正在等待 SurfaceFlinger。
-原版 installd 的应用目录管理检查已通过，应用目录目前位于临时文件系统。
+原版 system_server 已完成默认显示、PackageManager、WindowManager 和
+InputManager 初始化，发布 `activity`、`package`、`window` 和 `input` 服务。
+原版 installd 的应用目录管理检查已在持久 ext4 数据盘上通过。
 全系统启动时间、交互延迟、持续发热与原始 QEMU 方案的差异仍待测量。
 
 ## 实施顺序
@@ -107,3 +108,107 @@ CLI/GCD/可见窗口分别通过 104/104/105 个命名测试；可见窗口也�
 复杂度检查：使用 Android 原有窗口、截图和缓冲区接口；未增加宿主截图协议。
 该检查同时覆盖图形更新、跨进程合成和进程退出，与直接 EGL 清屏检查的范围
 不同。调试时加入可选 `NCE_FAULT_TRACE`，只输出失败的客体访存位置与寄存器。
+
+### 系统服务与 APK 扫描
+
+`system_server` 已通过默认显示初始化，PackageManager 完成一轮 47 个系统包
+扫描，其中包括已加入系统盘的安装器、权限控制器、设置存储、SystemUI、
+Launcher、文件和时钟应用。ART 的受限编译拒绝路径曾对 intrinsic 方法设置
+`SetDontCompile`，该标志与 intrinsic 编号共用位，导致后续内联识别错误的
+操作。现保留 intrinsic 方法的编号，新增两次重复编译和结果检查，检查已通过。
+PackageManager 随后完成应用数据整理和设置写入。加入同版 ExtServices、
+ExtShared、SDK Sandbox 与 Framework 资源覆盖 APK 后，`activity` 和
+`package` 已注册。后续显示线程因缺少 `CPUSET_SP_TOP_APP` 配置而退出。
+现补充对应调度配置，并将启动检查推进到 `window` 和 `input` 注册。
+桌面尚未启动，早期服务注册检查通过后出现的异常继续按启动失败处理。
+
+服务名称从固定 SDK 的平台及 vendor 清单生成，继续使用原型已有的
+`nce_service` 类型；未知名称使用 `nce_denied`，回归检查同时尝试注册明确
+拒绝和未知名称。新增 APK 采用同版 SDK 原始内容。各 dexopt 场景配置为
+`verify`，当前又启用 ART 的 `dalvik.vm.disable-art-service-dexopt` 和
+`pm.dexopt.disable_bg_dexopt`，跳过安装预编译及后台优化作业。
+代码执行继续使用当前 ART JIT；安装时生成的 AOT 代码尚未接入 NCE。
+
+SDK 的 `idmap2`、`idmap2d` 与 Health AIDL 服务正在接入。Health 服务使用
+原实现的 `ro.boot.fake_battery` 配置提供虚拟设备电池状态，手机实际电量尚未
+接入。调度组配置继续使用现有 CPU cgroup；原型只有一个 Linux CPU，CPUSET
+配置目前按相应的 CPU 调度组处理。服务启动时间和失败位置继续通过原版
+SystemServer 日志检查。
+
+### 线程预留与系统输入
+
+系统已越过 OverlayManager、SensorService 和 BatteryService，进入
+SettingsProvider 加载。Bionic 此时报告影子调用栈地址分配失败。源码为每个
+线程预留 16 MiB，影子调用栈实际为 16 KiB；当前客体地址范围为 4 GiB。
+已将保护区域预留缩至 1 MiB，并同时重编译 `pthread_create` 和
+`pthread_exit`，保留 16 KiB 栈及末尾保护页。区域内地址随机化范围随之缩小。
+新增 128 个线程同时存活、setjmp/longjmp 和总地址预留检查；本机已通过，
+这组线程增加的地址预留为 133120 KiB。随后系统已启动 SettingsProvider。
+
+输入服务通过 Linux `uinput` 创建触摸设备，键位表提供主页、返回和应用切换。
+原始事件检查覆盖按下、移动、抬起与主页键，本机检查得到预期的 5 个事件帧。
+Mac 鼠标、iPhone 单指触摸及导航按钮通过串行队列发送 Linux socket 消息，
+再由输入服务写入 `uinput`。Android 输入分发和实际应用响应仍待验证。
+
+### Power HAL 依赖
+
+SettingsProvider 启动后，HintManagerService 读取空的 `SupportInfo` 导致
+system_server 退出。固定 SDK 将 Power HAL 放在 vendor APEX 中，现已
+提取 `com.android.hardware.power.apex`，纳入原版 Power、PowerStats 服务、
+AIDL 库及 VINTF 清单。HintManagerService 已启动，随后按日志补入
+AlarmManager 所需的原版 `libalarm_jni.so`。
+
+### 持久数据与输入检查
+
+数据盘容量设置为 512 MiB，首次运行从 ext4 种子创建 `android-data.img`，
+后续运行继续使用该文件。Android 的 `/data` 挂载数据盘；`/data/nce` 使用
+临时文件系统保存测试标志和输出。已有 ext4 跨进程重启检查继续运行。
+挂载检查已通过；installd 首轮因 ext4 未启用 SELinux 标签支持而失败。
+加入 `EXT4_FS_SECURITY` 和对应文件系统标签规则后，应用目录、权限、标签、
+清理和删除检查通过。真实 APK 写入数据并跨宿主重启保留仍待验证。
+
+宿主输入回归由独立线程发送触摸和导航消息，再从实际 Linux socket 读取并
+比较内容，同时检查非法坐标、非法按键和停止后的调用结果，已通过。
+Mac 输入窗口通过编译检查，iPhone 输入界面通过 Swift 语法检查；完整 iOS
+构建与桌面交互将在后续集成验证中完成。
+
+### 完整系统启动
+
+WindowManager 和 InputManager 已初始化，InputReader 已识别 `NCE Touch`。
+正在加入固定 SDK 的 vold、storaged、artd 和原版键盘字符表。Power HAL 必须
+在 SurfaceFlinger 前启动，后者的截图流程会等待 Power HAL；调整顺序后，
+Surface 合成像素检查已恢复通过。vold 需要 init 配置中的四个辅助进程上下文
+参数，现按原型策略传入 `nce_t`，继续验证启动。
+
+启动检查已提高到 `sys.boot_completed=1`。仅发布四个 Binder 服务时记录局部
+结果，继续等待系统启动完成。宿主通过独立线程读取 Android 日志文件，运行中
+即可看到后续服务的状态。停止 Zygote 后回收 system_server 和应用进程的流程
+仍待完善，桌面运行入口及实际应用交互也尚未完成。
+
+### 网络服务与映射查找
+
+vold、storaged 和 artd 已发布服务。系统继续进入 NetworkManagementService，
+因等待 netd 停在该处。正在接入原版 netd、DNS resolver APEX 和 lmkd，Linux
+配置加入 BPF 系统调用、cgroup BPF、网络过滤、流量分类与 PSI 内存压力接口。
+网络 BPF 加载器沿用 Android 16 原版源码及固定 SDK 的 BPF 对象；源码和头文件
+校验值保存在 `experiments/native-linux/services/network-sources.json`。
+
+LKL 当前使用内核 BPF 解释器，加载器对原型跳过 BPF JIT 配置和 JIT 代码长度
+要求。内核程序校验、映射创建、挂接和失败返回继续执行。首个网络程序已通过
+内核校验并加载为解释执行代码，正在继续检查全部网络对象和 netd 启动。
+
+宿主采样发现，内存映射频繁遍历全部程序和共享库。现利用生成布局的地址顺序
+二分查找相关程序，并仅遍历涉及的范围；代码权限、原始字节比较与跳转区域
+保护继续保留。523 个程序的范围检查、28 组内存交换检查、跳转区域保护和
+Surface 三组合成像素检查已通过。桌面交互速度尚待完整启动后测量。
+
+复杂度审查：复用 Linux BPF 解释器及 Android 原始网络协议，未增加网络服务
+替代实现。服务启动等待函数由 Power、Health、存储和网络服务共享；输入协议
+只保留触摸与三个系统按键。映射查找直接使用既有程序数组，无额外地址缓存。
+删除这些实现分别会恢复系统启动等待、输入缺失或全部程序遍历，均有实际调用。
+整套桌面回归仍未通过，局部结果见
+`experiments/native-linux/results-macos-desktop-services-progress.json`。
+
+后续网络程序校验报告 `misaligned packet access`。NCE 的 LKL MMU 端口固定使用
+ARM64，现按该执行架构声明 `HAVE_EFFICIENT_UNALIGNED_ACCESS`；程序继续经过
+原有内核校验。该项与 `NET_SCHED`、流量分类配置正在一起复测。

@@ -2,6 +2,7 @@
 #ifndef NCE_IOS_BRIDGE_H
 #define NCE_IOS_BRIDGE_H
 #include <stdbool.h>
+#include "../input.h"
 int nce_lkl_run(const char *image_path);
 int nce_open_log(const char *path);
 void nce_log(const char *message);

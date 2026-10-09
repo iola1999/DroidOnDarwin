@@ -18,6 +18,10 @@ def apply(source: Path, experiment: Path):
          "depends on !SMP && !COREDUMP && !UPROBES")
     edit(arch + "Kconfig", "\tselect GENERIC_ATOMIC64",
          "\tselect HAVE_ARCH_SECCOMP_FILTER if MMU\n\tselect GENERIC_ATOMIC64")
+    # This MMU port executes on AArch64. BPF packet access may use its
+    # unaligned loads, as in the native arm64 kernel configuration.
+    edit(arch + "Kconfig", "\tselect GENERIC_HWEIGHT",
+         "\tselect HAVE_EFFICIENT_UNALIGNED_ACCESS if MMU\n\tselect GENERIC_HWEIGHT")
     edit(arch + "include/asm/Kbuild", "generic-y += seccomp.h", "# seccomp.h uses the AArch64 syscall ABI")
     edit(arch + "include/asm/thread_info.h", "#define TIF_NOTIFY_SIGNAL\t\t9",
          "#define TIF_NOTIFY_SIGNAL\t\t9\n#define TIF_SECCOMP\t\t\t10")

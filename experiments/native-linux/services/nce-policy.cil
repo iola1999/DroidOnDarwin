@@ -26,5 +26,6 @@
 (allow nce_process nce_t (service_manager (list)))
 (allow nce_all nce_t (filesystem (associate)))
 (fsuse trans tmpfs (u object_r nce_t ((s0) (s0))))
+(fsuse xattr ext4 (u object_r nce_t ((s0) (s0))))
 (fsuse task sockfs (u object_r nce_t ((s0) (s0))))
 (fsuse task pipefs (u object_r nce_t ((s0) (s0))))

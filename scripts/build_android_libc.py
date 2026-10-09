@@ -38,6 +38,12 @@ def build():
         if previous['build_inputs'] == fingerprint and previous['sha256'] == sha(binary):
             return binary
     bionic = WORK / 'bionic-source/libc'
+    # Keep the 16 KiB SCS and its guard page while fitting many threads in the
+    # guest's 4 GiB address window. pthread_create and pthread_exit must agree.
+    scs_config = out / 'nce-scs.h'
+    scs_config.write_text(f'#include "{bionic / "private/bionic_constants.h"}"\n'
+                          '#undef SCS_GUARD_REGION_SIZE\n'
+                          '#define SCS_GUARD_REGION_SIZE (1024 * 1024)\n')
     scudo = WORK / 'scudo'
     configuration = (scudo / 'config/custom_scudo_config.h').read_text()
     selector = 'typedef AndroidNormalConfig Config;'
@@ -72,7 +78,8 @@ typedef NceConfig Config;''')
                    'string_utils', 'timing', 'crc32_hw', 'wrappers_c_bionic']
     shared_names = ['libc_init_dynamic', 'android_mallopt', 'gwp_asan_wrappers', 'heap_tagging',
                     'malloc_common', 'malloc_common_dynamic', 'android_profiling_dynamic',
-                    'malloc_heapprofd', 'malloc_limit', 'ndk_cruft', 'ndk_cruft_data', 'NetdClient']
+                    'malloc_heapprofd', 'malloc_limit', 'ndk_cruft', 'ndk_cruft_data', 'NetdClient',
+                    'pthread_create', 'pthread_exit']
     units = [scudo / 'standalone' / (name + '.cpp') for name in scudo_names]
     units += [bionic / 'bionic' / (name + '.cpp') for name in shared_names]
     units += [bionic / 'arch-common/bionic/crtbegin_so.c', bionic / 'arch-common/bionic/crtend_so.S']
@@ -82,6 +89,8 @@ typedef NceConfig Config;''')
         obj = out / (str(source.relative_to(WORK)).replace('/', '_') + '.o')
         cpp = source.suffix == '.cpp'
         extra = ['-std=gnu++20', '-fno-exceptions', '-fno-rtti'] if cpp else []
+        if source.stem in ('pthread_create', 'pthread_exit'):
+            extra += ['-include', str(scs_config)]
         result = subprocess.run([TOOL / 'bin' / ('clang++' if cpp else 'clang'), *flags, *extra,
                                  '-c', source, '-o', obj], capture_output=True, text=True, timeout=120)
         if result.returncode:
@@ -125,6 +134,7 @@ typedef NceConfig Config;''')
     manifest.write_text(json.dumps(dict(build_inputs=fingerprint, sha256=sha(binary),
                                        inputs=inputs, scudo_disable_tbi=True,
                                        scudo_region_bytes=1 << 25,
+                                       scs_guard_region_bytes=1 << 20,
                                        scudo_contiguous_regions=False), indent=2) + '\n')
     return binary
 

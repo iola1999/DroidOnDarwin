@@ -21,20 +21,29 @@ unsigned long nce_program_layout(const char *path, const void *header, const voi
     return 0;
 }
 
+size_t nce_program_index(uintptr_t address)
+{
+    size_t lo = 0, hi = nce_program_count;
+    while (lo < hi) {
+        size_t mid = lo + (hi - lo) / 2;
+        NceProgram *p = &nce_programs[mid];
+        if (p->base + p->span + p->stub_size <= address) lo = mid + 1;
+        else hi = mid;
+    }
+    return lo;
+}
+
 int nce_program_reserved(unsigned long address, unsigned long length)
 {
     if (!length) return 0;
     if (address + length < address) return 1;
-    for (size_t i = 0; i < nce_program_count; ++i) {
-        NceProgram *p = &nce_programs[i];
-        uintptr_t begin = p->base + p->span;
-        if (address < begin + p->stub_size && address + length > begin) return 1;
-    }
-    return 0;
+    size_t i = nce_program_index(address);
+    return i < nce_program_count && address + length > nce_programs[i].base + nce_programs[i].span;
 }
 
 int nce_program_prepare(NceProgram *p, NceState **active)
 {
+    if (p > nce_programs && p->base < p[-1].base + p[-1].span + p[-1].stub_size) return -1;
     if (!p->stubs.rw) return -1;
     if (nce_write_entry(p->stubs, p->base + p->entry)) return -1;
     /* Stub addresses and the active-context pointer remain fixed across mms. */

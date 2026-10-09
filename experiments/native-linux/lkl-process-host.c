@@ -8,6 +8,7 @@
 #ifdef NCE_GRAPHICS
 #include "graphics/host-graphics.h"
 #endif
+#include "input.h"
 #include "user-scripts.h"
 #include <mach/mach.h>
 #include <CommonCrypto/CommonDigest.h>
@@ -15,6 +16,7 @@
 #include <signal.h>
 #include <pthread.h>
 #include <stdatomic.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -129,7 +131,7 @@ static void *shmem_map(void *address, unsigned long offset, unsigned long size, 
         uintptr_t stop = end;
         NceProgram *program = NULL;
         NceSegment *segment = NULL;
-        for (size_t i = 0; i < nce_program_count; ++i) {
+        for (size_t i = nce_program_index(start); i < nce_program_count && nce_programs[i].base < stop; ++i) {
             NceProgram *p = &nce_programs[i];
             for (size_t j = 0; j < p->segment_count; ++j) {
                 NceSegment *s = &p->segments[j];
@@ -189,7 +191,7 @@ static int protect_none(void *address, unsigned long size)
     ++revocations;
     uintptr_t start = (uintptr_t)address, end = start + size;
     uintptr_t cursor = start;
-    for (size_t i = 0; i < nce_program_count; ++i) {
+    for (size_t i = nce_program_index(start); i < nce_program_count && nce_programs[i].base < end; ++i) {
         NceProgram *p = &nce_programs[i];
         for (size_t j = 0; j < p->segment_count; ++j) {
             NceSegment *s = &p->segments[j];
@@ -550,8 +552,17 @@ unsigned long nce_process_setup(void)
     fault_trace = getenv("NCE_FAULT_TRACE") != NULL;
     user_base = nce_memory_user_base();
     dynamic_cache = (NceSegment){.size = NCE_EXEC_SIZE, .code = nce_memory_dynamic_code()};
-    for (size_t i = 0; i < nce_program_count; ++i)
+    for (size_t i = 0; i < nce_program_count; ++i) {
         REQUIRE(nce_program_prepare(&nce_programs[i], &active) == 0);
+        NceProgram *p = &nce_programs[i];
+        uintptr_t stub = p->base + p->span, end = stub + p->stub_size;
+        REQUIRE(nce_program_index(p->base) == i && nce_program_index(end) == i + 1);
+        REQUIRE(!nce_program_reserved(p->base, p->span));
+        REQUIRE(nce_program_reserved(stub - 1, 2) && nce_program_reserved(end - 1, 1));
+        REQUIRE(!nce_program_reserved(end, 1) && !nce_program_reserved(stub, 0));
+    }
+    REQUIRE(nce_program_reserved(ULONG_MAX, 2));
+    printf("{\"test\":\"native_program_range_index\",\"passed\":true,\"programs\":%zu}\n", nce_program_count);
     REQUIRE(protect_none((void *)user_base, NCE_USER_SIZE + NCE_RAM_SIZE + NCE_VMALLOC_SIZE) == 0);
     nce_lkl_host.shmem_init = shmem_init;
     nce_lkl_host.shmem_reclaim = shmem_reclaim;
@@ -657,6 +668,28 @@ static void memory_report(long (*call)(long, long *), const char *phase)
            phase, available, shmem, usage.ru_maxrss, vm.phys_footprint, reclaimed_bytes, reclaimed_ranges);
 }
 
+static void mount_android_data(long (*call)(long, long *))
+{
+    long args[6] = {-100, (long)"/data", 0771};
+    long result = call(34, args);
+    REQUIRE(result == 0 || result == -17);
+    args[0] = (long)"/dev/ncedisk0"; args[1] = (long)"/data";
+    args[2] = (long)"ext4"; args[3] = 1024; args[4] = 0;
+    REQUIRE(call(40, args) == 0);
+    args[0] = -100; args[1] = (long)"/data"; args[2] = 1000; args[3] = 1000;
+    REQUIRE(call(54, args) == 0);
+    args[2] = 0771;
+    REQUIRE(call(53, args) == 0);
+    args[1] = (long)"/data/nce"; args[2] = 0755;
+    result = call(34, args);
+    REQUIRE(result == 0 || result == -17);
+    // Probe flags and generated fixtures start fresh; Android app data persists.
+    args[0] = (long)"tmpfs"; args[1] = (long)"/data/nce";
+    args[2] = (long)"tmpfs"; args[3] = 0; args[4] = (long)"mode=0755";
+    REQUIRE(call(40, args) == 0);
+    puts("{\"test\":\"android_data_ext4_mounted\",\"passed\":true}");
+}
+
 static void dump_file(long (*call)(long, long *), const char *path)
 {
     long args[6] = {-100, (long)path, 0};
@@ -667,6 +700,31 @@ static void dump_file(long (*call)(long, long *), const char *path)
     args[0] = fd; args[1] = (long)buffer; args[2] = sizeof(buffer);
     while ((count = call(63, args)) > 0) fwrite(buffer, 1, count, stderr);
     REQUIRE(call(57, args) == 0);
+}
+
+struct LogPump {
+    long (*call)(long, long *);
+    atomic_int stopping;
+};
+
+static void *stream_guest_log(void *opaque)
+{
+    struct LogPump *pump = opaque;
+    char buffer[4096];
+    long offset = 0;
+    for (;;) {
+        long args[6] = {2, (long)buffer, sizeof(buffer), offset};
+        long count = pump->call(67, args);
+        REQUIRE(count >= 0);
+        if (count) {
+            REQUIRE(fwrite(buffer, 1, count, stderr) == (size_t)count);
+            offset += count;
+            continue;
+        }
+        if (atomic_load(&pump->stopping)) return NULL;
+        struct timespec delay = {.tv_nsec = 100000000};
+        nanosleep(&delay, NULL);
+    }
 }
 
 static void run_program(long (*call)(long, long *), const char *path, const char *input)
@@ -688,13 +746,20 @@ static void run_program(long (*call)(long, long *), const char *path, const char
     ++allocated;
     process->state.syscall = syscall_from_guest;
     process->exec_path = path;
+    struct LogPump pump = {.call = call, .stopping = 0};
+    bool live_log = !strcmp(path, "/system/bin/android-services-test");
+    pthread_t log_thread;
+    if (live_log) REQUIRE(pthread_create(&log_thread, NULL, stream_guest_log, &pump) == 0);
     long args[6] = {(long)process, 1};
     long pid = call(246, args);
     REQUIRE(pid > 0);
     int status = -1;
     args[0] = pid; args[1] = (long)&status; args[2] = 0;
     long waited = call(260, args);
-    dump_file(call, "/stderr");
+    if (live_log) {
+        atomic_store(&pump.stopping, 1);
+        REQUIRE(pthread_join(log_thread, NULL) == 0);
+    } else dump_file(call, "/stderr");
     if (status) {
         dump_file(call, "/stdout");
         dump_file(call, "/proc/meminfo");
@@ -775,6 +840,46 @@ static void userspace_tests(long (*call)(long, long *))
     }
 }
 
+static void *send_input_from_host_thread(void *unused)
+{
+    (void)unused;
+    REQUIRE(nce_host_input_send(NCE_INPUT_DOWN, 359, 639) == 0);
+    REQUIRE(nce_host_input_send(NCE_INPUT_KEY, 158, 0) == 0);
+    REQUIRE(nce_host_input_send(NCE_INPUT_MOVE, 360, 0) == -22);
+    REQUIRE(nce_host_input_send(NCE_INPUT_KEY, 999, 0) == -22);
+    return NULL;
+}
+
+static void host_input_test(long (*call)(long, long *))
+{
+    REQUIRE(nce_host_input_send(NCE_INPUT_DOWN, 0, 0) == -19);
+    long args[6] = {1, 2 | 0x80000};
+    long fd = call(198, args);
+    REQUIRE(fd >= 0);
+    struct { uint16_t family; char path[108]; } address = {1, "/dev/nce-input"};
+    args[0] = fd; args[1] = (long)&address; args[2] = sizeof(address);
+    REQUIRE(call(200, args) == 0);
+    nce_host_input_start(call);
+    pthread_t thread;
+    REQUIRE(pthread_create(&thread, NULL, send_input_from_host_thread, NULL) == 0);
+    REQUIRE(pthread_join(thread, NULL) == 0);
+    const NceInputCommand expected[] = {{NCE_INPUT_DOWN, 359, 639}, {NCE_INPUT_KEY, 158, 0}};
+    NceInputCommand command;
+    args[0] = fd; args[1] = (long)&command; args[2] = sizeof(command); args[3] = 0x40;
+    for (unsigned i = 0; i < 2; ++i) {
+        REQUIRE(call(207, args) == sizeof(command));
+        REQUIRE(memcmp(&command, &expected[i], sizeof(command)) == 0);
+    }
+    REQUIRE(call(207, args) == -11);
+    nce_host_input_stop();
+    REQUIRE(nce_host_input_send(NCE_INPUT_UP, 359, 639) == -19);
+    args[0] = fd;
+    REQUIRE(call(57, args) == 0);
+    args[0] = -100; args[1] = (long)address.path; args[2] = 0;
+    REQUIRE(call(35, args) == 0);
+    puts("{\"test\":\"linux_host_input_thread_protocol\",\"passed\":true}");
+}
+
 void nce_process_tests(long (*host_syscall)(long, long *), long (*guest_syscall)(long, long *),
                        int (*handle_fault)(unsigned long, int),
                        void (*return_to_user)(long, long, unsigned long), void (*signal_fault)(unsigned long, int),
@@ -823,6 +928,7 @@ void nce_process_tests(long (*host_syscall)(long, long *), long (*guest_syscall)
     REQUIRE(host_syscall(278, random_args) == sizeof(entropy.data));
     puts("{\"test\":\"linux_random_initialized\",\"passed\":true}");
     mount_system(host_syscall);
+    host_input_test(host_syscall);
     memory_report(host_syscall, "system_mounted");
     code = nce_memory_take(65536);
     puts("{\"phase\":\"linux_process_tests\"}");
@@ -915,6 +1021,7 @@ void nce_process_tests(long (*host_syscall)(long, long *), long (*guest_syscall)
     REQUIRE(get_file(host_syscall, "/stdout", benchmark, sizeof(benchmark)) > 0);
     REQUIRE(strstr(benchmark, "linux_ext4_persistence"));
     fputs(benchmark, stdout);
+    mount_android_data(host_syscall);
     puts("{\"phase\":\"linux_binder_program\"}");
     run_program(host_syscall, "/binder-test", NULL);
     REQUIRE(get_file(host_syscall, "/stdout", benchmark, sizeof(benchmark)) > 0);
@@ -992,7 +1099,9 @@ void nce_process_tests(long (*host_syscall)(long, long *), long (*guest_syscall)
     memory_report(host_syscall, "after_art");
     if (getenv("NCE_SYSTEM_SERVER_PROBE")) put_file(host_syscall, "/data/nce/system-server-probe", "", 0);
     puts("{\"phase\":\"android_platform_services\"}");
+    nce_host_input_start(host_syscall);
     run_program(host_syscall, "/system/bin/android-services-test", NULL);
+    nce_host_input_stop();
     REQUIRE(get_file(host_syscall, "/stdout", benchmark, sizeof(benchmark)) > 0);
     REQUIRE(strstr(benchmark, "android_platform_binder_cleanup"));
     REQUIRE(strstr(benchmark, "android_framework_runtime"));

@@ -1,0 +1,37 @@
+{
+  "date": "2026-10-10",
+  "complete_android_boot": false,
+  "remaining_failure": "Network BPF loader exited with status 2; verifier diagnostics pending",
+  "checks": [
+    {
+      "test": "native_program_range_index",
+      "passed": true,
+      "programs": 523
+    },
+    {
+      "test": "linux_reserved_branch_stubs",
+      "passed": true
+    },
+    {
+      "test": "linux_mm_exchange_integrity",
+      "passed": true,
+      "cases": 28
+    },
+    {
+      "test": "android_data_ext4_mounted",
+      "passed": true
+    },
+    {
+      "test": "android_installd_app_data",
+      "passed": true,
+      "packages": 2,
+      "storage_types": 2,
+      "caller_uid": 1000
+    },
+    {
+      "test": "android_surfaceflinger_composed_pixels",
+      "passed": true,
+      "frames": 3
+    }
+  ]
+}

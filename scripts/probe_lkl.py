@@ -163,7 +163,13 @@ def main():
             options += ["MMU", "PRINTK", "NAMESPACES", "PID_NS", "POSIX_TIMERS", "ANDROID_BINDER_IPC", "ANDROID_BINDERFS", "MEMFD_CREATE", "TMPFS", "TMPFS_XATTR",
                         "NET", "UNIX", "INET", "AUDIT", "SECURITY", "SECURITY_NETWORK",
                         "SECURITY_SELINUX", "SECURITY_SELINUX_DEVELOP"]
-            options += ["BLOCK", "EXT4_FS", "CGROUPS", "MEMCG", "CGROUP_CPUACCT", "CGROUP_SCHED", "FAIR_GROUP_SCHED", "SECCOMP", "SECCOMP_FILTER", "PAGE_REPORTING", "INOTIFY_USER"]
+            options += ["BLOCK", "EXT4_FS", "EXT4_FS_SECURITY", "CGROUPS", "MEMCG", "CGROUP_CPUACCT", "CGROUP_SCHED", "FAIR_GROUP_SCHED", "SECCOMP", "SECCOMP_FILTER", "PAGE_REPORTING", "INOTIFY_USER"]
+            options += ["INPUT", "INPUT_EVDEV", "INPUT_MISC", "INPUT_UINPUT"]
+            options += ["PSI", "BPF_SYSCALL", "CGROUP_BPF", "NETFILTER", "NETFILTER_ADVANCED",
+                        "NETFILTER_NETLINK_LOG", "IP_ADVANCED_ROUTER", "IP_MULTIPLE_TABLES",
+                        "IPV6_MULTIPLE_TABLES", "NET_SCHED", "NET_CLS_ACT", "NET_CLS_CGROUP", "NET_CLS_BPF", "NET_ACT_BPF",
+                        "NET_SCH_INGRESS", "NETFILTER_XTABLES", "IP_NF_IPTABLES", "IP_NF_FILTER",
+                        "IP_NF_MANGLE", "IP6_NF_IPTABLES", "IP6_NF_FILTER", "IP6_NF_MANGLE"]
         switches = [arg for name in options for arg in ("-e", name)]
         if PROCESS:
             switches += ["--set-str", "LSM", "selinux"]
@@ -186,7 +192,7 @@ def main():
     flags = ["-O2", "-g", "-Wall", "-Wextra", "-Werror", "-I", OUT, "-I", EXPERIMENT]
     if PROCESS:
         flags += ["-DNCE_PROCESS"]
-        inputs += [EXPERIMENT / "lkl-process-host.c", EXPERIMENT / "programs.c", EXPERIMENT / "memory.c", EXPERIMENT / "execute-check.c", EXPERIMENT / "compute.c"]
+        inputs += [EXPERIMENT / "lkl-process-host.c", EXPERIMENT / "programs.c", EXPERIMENT / "memory.c", EXPERIMENT / "execute-check.c", EXPERIMENT / "compute.c", EXPERIMENT / "input.c"]
         run([clang, *flags, "-isysroot", sdk, "-DNATIVE", "-c", EXPERIMENT / "guest.S", "-o", OUT / "native.o"])
     payload = [OUT / "payload.S"] if PROCESS else []
     graphics_link = []
@@ -221,14 +227,16 @@ def main():
     run([clang, *flags, "-isysroot", sdk, *inputs, *payload, *([OUT / "native.o"] if PROCESS else []),
          *graphics_link, "-o", OUT / "lkl-probe"])
     if PROCESS:
-        seed = OUT / "storage-seed.img"
-        with seed.open("wb") as image:
-            image.truncate(64 * 1024 * 1024)
-        run(["/opt/homebrew/opt/e2fsprogs/sbin/mke2fs", "-F", "-q", "-t", "ext4", "-b", "4096",
-             "-E", "lazy_itable_init=0,lazy_journal_init=0", seed])
-        shutil.copyfile(seed, OUT / "storage-test.img")
+        seed = OUT / "android-data-seed.img"
+        if not seed.exists():
+            with seed.open("wb") as image:
+                image.truncate(512 * 1024 * 1024)
+            run(["/opt/homebrew/opt/e2fsprogs/sbin/mke2fs", "-F", "-q", "-t", "ext4", "-b", "4096",
+                 "-E", "lazy_itable_init=0,lazy_journal_init=0", seed])
+        if not (OUT / "android-data.img").exists():
+            run(["cp", "-c", seed, OUT / "android-data.img"])
     with (OUT / "lkl-results.jsonl").open("w") as output, (OUT / "lkl-console.log").open("w") as log:
-        probe_env = {**os.environ, "NCE_GPU_OUTPUT": str(OUT / "gpu.bmp"), "NCE_GRAPHICS_OUTPUT": str(OUT / "framework.png"), "NCE_STORAGE_IMAGE": str(OUT / "storage-test.img"), "NCE_SYSTEM_IMAGE": str(OUT / "system.img")} if PROCESS else os.environ
+        probe_env = {**os.environ, "NCE_GPU_OUTPUT": str(OUT / "gpu.bmp"), "NCE_GRAPHICS_OUTPUT": str(OUT / "framework.png"), "NCE_STORAGE_IMAGE": str(OUT / "android-data.img"), "NCE_SYSTEM_IMAGE": str(OUT / "system.img")} if PROCESS else os.environ
         run([OUT / "lkl-probe", OUT / "lkl-image.bin"], stdout=output, stderr=log, env={**probe_env, **graphics_env})
     results = [json.loads(line) for line in (OUT / "lkl-results.jsonl").read_text().splitlines()]
     if results[-1].get("result") != "passed":
@@ -251,8 +259,8 @@ def main():
              EXPERIMENT / "dispatch-test.c", *graphics_link, "-o", OUT / "dispatch-probe"])
         with (OUT / "dispatch-results.jsonl").open("w") as output, (OUT / "dispatch-console.log").open("w") as log:
             subprocess.run([OUT / "dispatch-probe", OUT / "lkl-image.bin"], check=True,
-                           timeout=120, stdout=output, stderr=log,
-                           env={**os.environ, **graphics_env, "NCE_GPU_OUTPUT": str(OUT / "dispatch-gpu.bmp"), "NCE_GRAPHICS_OUTPUT": str(OUT / "dispatch-framework.png"), "NCE_STORAGE_IMAGE": str(OUT / "storage-test.img"), "NCE_SYSTEM_IMAGE": str(OUT / "system.img")})
+                           timeout=300, stdout=output, stderr=log,
+                           env={**os.environ, **graphics_env, "NCE_GPU_OUTPUT": str(OUT / "dispatch-gpu.bmp"), "NCE_GRAPHICS_OUTPUT": str(OUT / "dispatch-framework.png"), "NCE_STORAGE_IMAGE": str(OUT / "android-data.img"), "NCE_SYSTEM_IMAGE": str(OUT / "system.img")})
         dispatch_results = [json.loads(line) for line in (OUT / "dispatch-results.jsonl").read_text().splitlines()]
         if dispatch_results[-1].get("result") != "passed":
             raise SystemExit("GCD probe did not complete")

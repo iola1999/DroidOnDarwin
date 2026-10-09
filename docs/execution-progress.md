@@ -10,9 +10,10 @@ Android servicemanager、属性服务及 Zygote 派生均已通过本机 CLI/GCD
 2026-10-09 又加入空闲 RAM 归还、代码页按需恢复、CPU 指令扩展、ART 字符串
 和数值 intrinsic、方法内联，以及完整 Framework 类路径。晚间又接入原版
 installd，完成应用数据目录、访问权限、清理与删除检查。原版 system_server
-已完成 ActivityManager、PowerManager 等初始化并进入显示服务启动，完整
-系统服务和桌面仍待实现。具体失败位置和检查
-结果持续记录在上述阶段文档中。
+已完成默认显示、PackageManager、WindowManager 和 InputManager 初始化，
+发布 `activity`、`package`、`window` 和 `input` 服务。持久 ext4 数据盘上的
+installd 应用目录检查已通过，正在接入完整启动所需的存储服务。桌面仍待实现，
+具体失败位置和检查结果记录在桌面实施计划中。
 
 早期 N2 进程原型已通过 iPhone 17 / iOS 27.2 检查。用户返回后测试 N3-S3，
 在约 16.58 GiB 连续虚拟地址预留处失败，Linux 尚未启动。当前将总预留缩至

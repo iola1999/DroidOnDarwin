@@ -19,6 +19,7 @@
 #include <sys/ioctl.h>
 #include <sys/mman.h>
 #include <sys/mount.h>
+#include <sys/resource.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/system_properties.h>
@@ -37,11 +38,15 @@ void nce_display_stop();
 void nce_framework_test();
 void nce_surface_test();
 void nce_zygote_test();
+void nce_input_start();
+void nce_input_stop();
 void nce_crypto_tests();
 void nce_apex_service(int ready);
 void nce_apex_test();
 pid_t nce_suspend_start();
 pid_t nce_installd_start(const char *executable);
+pid_t nce_start_system_service(const char *path, const char *name, uid_t uid = 1000,
+                               std::initializer_list<const char *> arguments = {});
 void nce_installd_client(const char *stage);
 
 static void check_proc_identity()
@@ -228,6 +233,7 @@ static void server(int ready)
     AIBinder *binder = AIBinder_new(binder_class(), nullptr);
     CHECK(binder);
     CHECK(AServiceManager_addService(binder, "nce.denied") == EX_SECURITY);
+    CHECK(AServiceManager_addService(binder, "nce.unknown.service") == EX_SECURITY);
     binder_exception_t result = AServiceManager_addService(binder, kService);
     dprintf(2, "android-services addService=%d\n", result);
     CHECK(result == EX_NONE);
@@ -430,17 +436,25 @@ int main(int argc, char **argv)
     CHECK(pread(transferred, data, 15, 0) == 15 && !strcmp(data, "platform-binder"));
     CHECK(close(transferred) == 0);
     puts("{\"test\":\"android_platform_binder_fd_transfer\",\"passed\":true}");
-    alarm(60);
+    alarm(access("/data/nce/system-server-probe", F_OK) == 0 ? 280 : 60);
+    rlimit nice_limit = {40, 40};
+    CHECK(setrlimit(RLIMIT_NICE, &nice_limit) == 0);
+    nce_input_start();
     nce_crypto_tests();
     puts("{\"phase\":\"android_framework_launch\"}");
     nce_framework_test();
+    pid_t power = nce_start_system_service("/vendor/bin/hw/android.hardware.power-service.example",
+                                         "android.hardware.power.IPower/default", 9999);
+    pid_t power_stats = nce_start_system_service("/vendor/bin/hw/android.hardware.power.stats-service.example",
+                                               "android.hardware.power.stats.IPowerStats/default");
     if (access("/data/nce/graphics", F_OK) == 0) nce_display_start();
     pid_t suspend = nce_suspend_start();
     pid_t installd = nce_installd_start(argv[0]);
+    if (access("/data/nce/graphics", F_OK) == 0) nce_surface_test();
     puts("{\"phase\":\"android_zygote_launch\"}");
     nce_zygote_test();
-    if (access("/data/nce/graphics", F_OK) == 0) nce_surface_test();
     if (access("/data/nce/graphics", F_OK) == 0) nce_display_stop();
+    nce_input_stop();
     alarm(20);
     int binder_fd;
     CHECK(ABinderProcess_setupPolling(&binder_fd) == STATUS_OK && binder_fd >= 0);
@@ -448,6 +462,8 @@ int main(int argc, char **argv)
     CHECK(recipient && AIBinder_linkToDeath(binder, recipient, nullptr) == STATUS_OK);
     CHECK(kill(service, SIGTERM) == 0);
     int status;
+    for (pid_t daemon : {power, power_stats})
+        CHECK(kill(daemon, SIGTERM) == 0 && waitpid(daemon, &status, 0) == daemon);
     CHECK(waitpid(service, &status, 0) == service && WIFSIGNALED(status) && WTERMSIG(status) == SIGTERM);
     while (!died) {
         pollfd fd = {binder_fd, POLLIN, 0};

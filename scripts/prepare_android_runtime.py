@@ -19,6 +19,7 @@ APEX = ('com.android.devicelock.apex', 'com.android.i18n.apex', 'com.android.run
         'com.google.android.appsearch.capex', 'com.google.android.art.capex', 'com.google.android.bt.apex',
         'com.google.android.cellbroadcast.capex', 'com.google.android.configinfrastructure.capex',
         'com.google.android.conscrypt.capex', 'com.google.android.crashrecovery.capex',
+        'com.google.android.extservices.capex', 'com.google.android.resolv.capex',
         'com.google.android.healthfitness.apex', 'com.google.android.ipsec.capex',
         'com.google.android.media.capex', 'com.google.android.mediaprovider.capex',
         'com.google.android.nfcservices.capex', 'com.google.android.ondevicepersonalization.capex',
@@ -27,7 +28,7 @@ APEX = ('com.android.devicelock.apex', 'com.android.i18n.apex', 'com.android.run
         'com.google.android.sdkext.apex', 'com.google.android.tethering.capex',
         'com.google.android.tzdata6.apex', 'com.google.android.uwb.capex', 'com.google.android.wifi.capex')
 DEBUGFS = '/opt/homebrew/opt/e2fsprogs/sbin/debugfs'
-SYSTEM_DIRECTORIES = ('lib64', 'etc', 'bin', 'framework', 'fonts')
+SYSTEM_DIRECTORIES = ('lib64', 'etc', 'bin', 'framework', 'fonts', 'usr')
 
 
 def digest(path, algorithm='sha256'):

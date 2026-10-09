@@ -1,0 +1,59 @@
+{
+  "files": [
+    {
+      "path": "bpf/headers/include/bpf/BpfUtils.h",
+      "url": "https://android.googlesource.com/platform/packages/modules/Connectivity/+/refs/tags/android-16.0.0_r1/bpf/headers/include/bpf/BpfUtils.h?format=TEXT",
+      "sha256": "8b6d4156a845d321cf5b4a17b1ac983f6ca92a4919570a2b98b3c4ccc4d0ca19"
+    },
+    {
+      "path": "bpf/headers/include/bpf/KernelUtils.h",
+      "url": "https://android.googlesource.com/platform/packages/modules/Connectivity/+/refs/tags/android-16.0.0_r1/bpf/headers/include/bpf/KernelUtils.h?format=TEXT",
+      "sha256": "8485a4d1afa39264b09dea6efe8fbf13de446bdd409ab207d8c959397027b8f0"
+    },
+    {
+      "path": "bpf/headers/include/bpf_map_def.h",
+      "url": "https://android.googlesource.com/platform/packages/modules/Connectivity/+/refs/tags/android-16.0.0_r1/bpf/headers/include/bpf_map_def.h?format=TEXT",
+      "sha256": "c333b89f6fa6d640cc3fc4397b2f8a6db0339e6abc22aaae04d4d6addf71668a"
+    },
+    {
+      "path": "bpf/loader/NetBpfLoad.cpp",
+      "url": "https://android.googlesource.com/platform/packages/modules/Connectivity/+/refs/tags/android-16.0.0_r1/bpf/loader/NetBpfLoad.cpp?format=TEXT",
+      "sha256": "03d6adf9bf499cc23ef170dafa23a86c8a5ecb1e2c182dea940c0cdfba650254"
+    },
+    {
+      "path": "bpf/syscall_wrappers/include/BpfSyscallWrappers.h",
+      "url": "https://android.googlesource.com/platform/packages/modules/Connectivity/+/refs/tags/android-16.0.0_r1/bpf/syscall_wrappers/include/BpfSyscallWrappers.h?format=TEXT",
+      "sha256": "7b5917f302fd30011541d5c51c31cc87b668cdb93a5db76bec64b7b353a3e8ce"
+    },
+    {
+      "path": "libbpf/bpf/bpf.h",
+      "url": "https://android.googlesource.com/platform/external/libbpf/+/refs/tags/android-16.0.0_r1/src/bpf.h?format=TEXT",
+      "sha256": "0535f5f4d6ba6464040a66f835b57d54caa361646351c94730f8630cc78ece03"
+    },
+    {
+      "path": "libbpf/bpf/btf.h",
+      "url": "https://android.googlesource.com/platform/external/libbpf/+/refs/tags/android-16.0.0_r1/src/btf.h?format=TEXT",
+      "sha256": "e28e5bca81a5d782e27088da750712c747acb9ab1764bd944bf3e7fc15d4b503"
+    },
+    {
+      "path": "libbpf/bpf/libbpf.h",
+      "url": "https://android.googlesource.com/platform/external/libbpf/+/refs/tags/android-16.0.0_r1/src/libbpf.h?format=TEXT",
+      "sha256": "3f9b47dfe559a32372f720230bdf72bd5b736189ac9022660d0a41aca2c4c687"
+    },
+    {
+      "path": "libbpf/bpf/libbpf_common.h",
+      "url": "https://android.googlesource.com/platform/external/libbpf/+/refs/tags/android-16.0.0_r1/src/libbpf_common.h?format=TEXT",
+      "sha256": "d58d7044c3e30f322614da76e3832c5b31e61469d31c29c53ee8abf736664414"
+    },
+    {
+      "path": "libbpf/bpf/libbpf_legacy.h",
+      "url": "https://android.googlesource.com/platform/external/libbpf/+/refs/tags/android-16.0.0_r1/src/libbpf_legacy.h?format=TEXT",
+      "sha256": "4b09b8535b0eb9da94e8eafba8edcb2abc742bb07dd870bd216c3eea955a18d8"
+    },
+    {
+      "path": "libbpf/bpf/libbpf_version.h",
+      "url": "https://android.googlesource.com/platform/external/libbpf/+/refs/tags/android-16.0.0_r1/src/libbpf_version.h?format=TEXT",
+      "sha256": "5bddef31f66a9be5643442b9bfd3838199b654d0a8700b9c546449c11f38e702"
+    }
+  ]
+}

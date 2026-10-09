@@ -100,7 +100,7 @@ def main():
     # for archive integrity; get-task-allow is needed by the in-app JIT helper.
     plist(OUT / 'Husk.entitlements', {'get-task-allow': True})
     sources = [{'path': str(EXP / name)} for name in
-               ['lkl-main.c', 'lkl-host.c', 'lkl-process-host.c', 'programs.c', 'memory.c', 'execute-check.c', 'compute.c', 'nce.c', 'entry.S',
+               ['lkl-main.c', 'lkl-host.c', 'lkl-process-host.c', 'programs.c', 'memory.c', 'execute-check.c', 'compute.c', 'input.c', 'nce.c', 'entry.S',
                 'ios/Bridge.c', 'ios/NativeLinuxApp.swift', 'ios/ProbeLogReader.swift', 'graphics/host-graphics.cpp']]
     sources += [{'path': str(EXP / 'guest.S'), 'compilerFlags': ['-DNATIVE']}]
     sources += [{'path': str(INPUT / 'payload.S')}]
@@ -109,7 +109,7 @@ def main():
                  'src/app/Husk/JITBuiltIn.swift', 'src/app/Husk/JITPairingFileStore.swift',
                  'src/app/HuskJITHelper/HuskJITMessages.swift', 'src/app/Husk/Assets.xcassets']]
     sources += [{'path': str(path), 'buildPhase': 'resources'} for path in
-                [INPUT / 'lkl-image.bin', INPUT / 'storage-seed.img', INPUT / 'system.img', ROOT / 'src/app/Husk/Resources/husk-jit.js',
+                [INPUT / 'lkl-image.bin', INPUT / 'android-data-seed.img', INPUT / 'system.img', ROOT / 'src/app/Husk/Resources/husk-jit.js',
                  ROOT / 'work/native-linux-nce/musl-1.2.5/COPYRIGHT',
                  ROOT / 'work/native-linux-nce/dash-0.5.12/COPYING',
                  ROOT / 'work/native-linux-nce/compiler-rt-20.1.8.src/LICENSE.TXT']]
