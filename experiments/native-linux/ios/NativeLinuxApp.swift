@@ -53,8 +53,11 @@ final class ProbeModel: ObservableObject {
             }
         } else if busy && didRun {
             let seconds = Int(Date().timeIntervalSince(startedAt))
-            if log.contains("\"phase\":\"android_framework_launch\"") { status = "正在检查 Android 系统框架（\(seconds) 秒）" }
+            if log.contains("\"phase\":\"linux_shutdown\"") { status = "正在结束测试（\(seconds) 秒）" }
+            else if log.contains("\"phase\":\"android_zygote_launch\"") { status = "正在检查 Android 进程启动（\(seconds) 秒）" }
+            else if log.contains("\"phase\":\"android_framework_launch\"") { status = "正在检查 Android 系统框架（\(seconds) 秒）" }
             else if log.contains("\"phase\":\"android_platform_services\"") { status = "正在检查 Android 系统服务（\(seconds) 秒）" }
+            else if log.contains("\"phase\":\"android_art_inlining\"") { status = "正在检查 Java 方法内联（\(seconds) 秒）" }
             else if log.contains("\"phase\":\"android_art_load\"") { status = "正在运行 Java 与编译执行测试（\(seconds) 秒）" }
             else if log.contains("\"phase\":\"android_art_reference_heap\"") { status = "正在检查 Android 对象内存（\(seconds) 秒）" }
             else if log.contains("\"phase\":\"android_bionic_dynamic\"") { status = "正在检查 Android 运行库（\(seconds) 秒）" }
@@ -78,7 +81,7 @@ final class ProbeModel: ObservableObject {
         UIApplication.shared.isIdleTimerDisabled = true
         startedAt = Date()
         let build = Bundle.main.object(forInfoDictionaryKey: "NCEBuildID") as? String ?? "unknown"
-        HuskLog.log("probe", "N2 iOS; build=\(build); iOS=\(UIDevice.current.systemVersion); pid=\(getpid())")
+        HuskLog.log("probe", "N3 iOS; build=\(build); iOS=\(UIDevice.current.systemVersion); pid=\(getpid())")
         return true
     }
     private func script() -> Data? {

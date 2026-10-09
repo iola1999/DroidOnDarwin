@@ -36,3 +36,9 @@ window u:object_r:nce_service:s0
 SurfaceFlinger u:object_r:nce_service:s0
 android.hardware.power.stats.IPowerStats/default u:object_r:nce_service:s0
 android.hardware.memtrack.IMemtrack/default u:object_r:nce_service:s0
+suspend_control u:object_r:nce_service:s0
+suspend_control_internal u:object_r:nce_service:s0
+android.system.suspend.ISystemSuspend/default u:object_r:nce_service:s0
+android.hardware.power.IPower/default u:object_r:nce_service:s0
+SurfaceFlingerAIDL u:object_r:nce_service:s0
+android.hardware.light.ILights/default u:object_r:nce_service:s0

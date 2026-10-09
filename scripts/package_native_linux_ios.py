@@ -14,7 +14,7 @@ ROOT = Path(__file__).resolve().parents[1]
 EXP = ROOT / 'experiments/native-linux'
 INPUT = ROOT / 'work/native-linux-nce/processes'
 OUT = ROOT / 'work/native-linux-nce/ios'
-REVISION = 'N3-S2'
+REVISION = 'N3-S3'
 
 
 def run(args, **kwargs):
@@ -62,7 +62,7 @@ def main():
                 UISupportedInterfaceOrientations=['UIInterfaceOrientationPortrait',
                     'UIInterfaceOrientationPortraitUpsideDown',
                     'UIInterfaceOrientationLandscapeLeft', 'UIInterfaceOrientationLandscapeRight'],
-                CFBundleShortVersionString='0.11.0', CFBundleVersion='73')
+                CFBundleShortVersionString='0.11.0', CFBundleVersion='74')
     plist(OUT / 'Info.plist', info)
     helper_info = plistlib.loads((ROOT / 'src/app/HuskJITHelper/Info.plist').read_bytes())
     for key in ['CFBundleShortVersionString', 'CFBundleVersion']:

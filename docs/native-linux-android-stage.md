@@ -1,9 +1,11 @@
 # 原生 Linux + NCE：Android 用户态阶段
 
 更新日期：2026-10-09。ART ARM64 JIT、原版 app_process/Framework、Canvas、
-ext4 系统盘与数据盘、Zygote 派生、cgroup、seccomp 已完成本机 CLI/GCD 回归。
-后续加入 Linux 空闲 RAM 归还宿主、JIT 页面按需填充、ELF 邻近跳转区与 CPU
-指令扩展传递。当前正在推进原版 system_server；完整系统服务和桌面尚未启动。
+ext4 系统盘与数据盘、Zygote、cgroup、seccomp、APEX 查询与 aconfig 初始化
+已完成本机回归。性能实现包括 Linux 空闲 RAM 归还、代码页按需恢复、CPU
+指令扩展、ART intrinsic 与方法内联。原版 system_server 已推进到显示服务
+初始化；完整系统服务和桌面尚未启动。最新合并包与检查范围见
+[手机测试说明](native-linux-n3-ios-test.md)。
 用户外出期间继续本机开发，手机执行结果保留为待确认。
 
 ## 阶段验收与验证安排
@@ -973,3 +975,66 @@ ARM64 代理入口把压缩的 receiver 直接传给 C++。现仅转换传入 C+
 内核启用 inotify。Framework 回归使用真实 FileObserver 监听文件关闭写入
 事件，检查通知后停止监听并删除文件。Android 的共享监听线程在停止单个
 监听后继续存活；独立测试进程在全部检查和资源清理完成后调用 System.exit。
+
+## 原版 SystemSuspend 与显示服务启动（2026-10-09）
+
+原版 SystemSuspend 已针对虚拟设备处理缺少 `/sys/power/wakeup_count` 与
+`/sys/power/state` 的情况：使用阻塞 socket 保留休眠线程，同时继续管理
+唤醒锁与统计。实现见 system/hardware/interfaces 提交
+`f3d42be8ff32eb4ff00873bf2762d13c013d314a` 的 `suspend/1.0/default/main.cpp`。
+本轮使用 SDK 原始服务二进制、原始 VINTF 声明及其动态依赖，按 UID 1000
+启动。客户端由同一接口源码生成，检查跨进程获取三次唤醒锁、重复 release、
+释放 Binder 引用和后续请求。硬件休眠由宿主系统管理。
+
+接入后，原版 system_server 完成 ActivityManager、PowerManager、ThermalManager、
+RecoverySystem 初始化并进入 DisplayManager。日志为
+`work/native-linux-nce/system-server-display.log`。当前缺少 SurfaceFlinger，
+尚未完成默认显示建立和 PackageManager 启动。该次失败退出期间还出现约
+10 MB 分配失败，完整系统的内存需求与映射状态需要单独测量。宿主失败日志
+现同时记录 Linux meminfo，供后续区分实际内存不足与其他执行问题。
+
+这轮复用了 Android 的虚拟设备处理分支，未另写唤醒锁状态机。APEX 与
+SystemSuspend 的 AIDL 生成共用构建函数；接口源码按各自固定提交与文件
+校验值管理。系统服务启动检查继续通过 `NCE_SYSTEM_SERVER_PROBE=1` 单独运行，
+常规回归验证当前已实现的 Linux、ART、Framework、Zygote 和基础服务。
+
+## 下一阶段实施顺序
+
+1. 提供 SurfaceFlinger 所需的显示、缓冲区分配与合成接口，先在同一进程内
+   完成可检查的离屏显示，再把输出交给 iOS。当前 Canvas PNG 检查覆盖软件
+   绘图；系统窗口合成仍需实现。
+2. 接入原版 installd 及应用数据目录，继续推进 PackageManager。当前固定
+   模块登记已有原始 APEX APK 元数据，模块安装和更新生命周期仍待实现。
+3. 对完整 system_server 启动记录 Linux RAM、ART heap、文件缓存与宿主
+   footprint，处理显示初始化阶段的内存分配失败。随后评估启动镜像和编译
+   缓存，以减少重复类加载与解释执行。
+4. 原生执行的多核调度、完整应用安全策略、持续交互与发热继续列为整机阶段
+   工作。现阶段性能数字来自局部负载，手机上的最终收益仍需合并测试确认。
+
+## 当日合并验证（2026-10-09 晚间）
+
+N3-S3 合并包汇总本日的原生 Linux、ART、Framework 与基础系统服务实现。
+CLI/GCD 分别通过 94/95 个命名测试，15 项 ELF 检查通过。GCD 额外检查
+继承的抢占信号屏蔽状态。完整负载在本机的峰值 RSS 约 686–687 MB，最后一次
+空闲页回收后 footprint 约 318–320 MB；此数字覆盖当前回归，手机运行仍待确认。
+详细操作见 [N3-S3 手机测试说明](native-linux-n3-ios-test.md)。
+
+最新的独立 system_server 检查在 40 秒期限内未发布 activity 与 package，
+日志停在等待 SurfaceFlinger。失败时 Linux MemAvailable 为 432,208 KiB。
+这次运行未复现此前显示初始化失败退出时的分配错误。原始结果保存在
+`work/native-linux-nce/processes/system-server-final.log`，后续继续检查显示
+服务和实际内存状态。
+
+构建检查还加入 AIDL 输出目录重建，防止已移除接口的旧生成文件继续参与
+链接。验证时放入含编译错误的过期生成文件，再执行完整构建和回归。
+
+
+### 后续程序依赖检查
+
+同一 SDK 的 surfaceflinger 有 47 个直接共享库依赖，其中 7 个尚未进入当前
+ELF 清单：ADPF 会话接口、Composer 2.1–2.4、android.os flags 与
+libstatslog_surfaceflinger。installd 有 15 个直接依赖，当前缺 liblogwrap。
+这份检查只覆盖 ELF DT_NEEDED；显示 HAL、EGL 驱动、运行目录、权限和服务
+协议仍需实际启动验证。SDK 的 init 配置分别要求 SurfaceFlinger 以 system
+用户及 graphics/drmrpc/readproc 组运行，installd 以客体 root 运行并调整
+应用目录权限。后续先按这些真实输入完成集成，再根据运行结果补齐接口。

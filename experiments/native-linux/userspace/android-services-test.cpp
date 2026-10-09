@@ -37,6 +37,7 @@ void nce_zygote_test();
 void nce_crypto_tests();
 void nce_apex_service(int ready);
 void nce_apex_test();
+pid_t nce_suspend_start();
 
 static void check_proc_identity()
 {
@@ -417,6 +418,7 @@ int main(int argc, char **argv)
     nce_crypto_tests();
     puts("{\"phase\":\"android_framework_launch\"}");
     nce_framework_test();
+    pid_t suspend = nce_suspend_start();
     puts("{\"phase\":\"android_zygote_launch\"}");
     nce_zygote_test();
     alarm(20);
@@ -435,6 +437,7 @@ int main(int argc, char **argv)
     CHECK(!AIBinder_isAlive(binder));
     AIBinder_DeathRecipient_delete(recipient);
     AIBinder_decStrong(binder);
+    CHECK(kill(suspend, SIGTERM) == 0 && waitpid(suspend, &status, 0) == suspend);
     CHECK(kill(apex, SIGTERM) == 0 && waitpid(apex, &status, 0) == apex);
     CHECK(kill(manager, SIGTERM) == 0);
     CHECK(waitpid(manager, &status, 0) == manager && WIFSIGNALED(status) && WTERMSIG(status) == SIGTERM);

@@ -84,7 +84,7 @@ def android_dependencies(llvm, replacements):
     pending = ['libart.so', 'libjavacore.so', 'libopenjdk.so', 'libicu_jni.so',
                'libstats_jni.so', 'libjavacrypto.so', 'libartpalette-system.so', 'libbinder_ndk.so', 'libandroid.so',
                'libprocessgroup_setup.so', 'libframework-connectivity-tiramisu-jni.so', 'libandroid_servers.so']
-    for name in ('servicemanager', 'app_process64', 'aconfigd-system'):
+    for name in ('servicemanager', 'app_process64', 'aconfigd-system', 'hw/android.system.suspend-service'):
         pending += re.findall(r'Shared library: \[(.*?)\]',
                               subprocess.check_output([llvm / 'llvm-readelf', '-d', root / 'bin' / name], text=True))
     pending += re.findall(r'Shared library: \[(.*?)\]', subprocess.check_output(
@@ -102,24 +102,28 @@ def android_dependencies(llvm, replacements):
         pending += re.findall(r'Shared library: \[(.*?)\]', dynamic)
     return [('/system/lib64/' + name, path) for name, path in sorted(result.items())]
 
-def apex_sources(out):
-    directory = EXP / 'services/apex'
-    origin = json.loads((directory / 'sources.json').read_text())
-    for name, expected in origin['files'].items():
-        if hashlib.sha256((directory / name).read_bytes()).hexdigest() != expected:
-            raise RuntimeError('APEX interface source checksum mismatch: ' + name)
+def android_service_interfaces(out):
     modules = prepare_android_modules()['modules']
     lines = ['static const struct { const char *name, *version_name; long long version, archive_size; } apex_modules[] = {']
     for module in modules:
         lines.append('{%s,%s,%d,%d},' % (json.dumps(module['name']), json.dumps(module['version_name']),
                      module['version'], (MODULES / module['archive']).stat().st_size))
     (out / 'apex-modules.h').write_text('\n'.join(lines + ['};']) + '\n')
-    generated = out / 'apex-aidl'
-    generated.mkdir(exist_ok=True)
+    generated = out / 'android-aidl'
+    if generated.exists():
+        shutil.rmtree(generated)
+    generated.mkdir()
     aidl = Path('/opt/homebrew/share/android-commandlinetools/build-tools/36.0.0/aidl')
-    for source in sorted((directory / 'android/apex').glob('*.aidl')):
-        run([aidl, '--lang=ndk', '--structured', '--min_sdk_version=35', '-I' + str(directory),
-             '--out=' + str(generated), '--header_out=' + str(generated), source])
+    for kind in ('apex', 'suspend'):
+        directory = EXP / 'services' / kind
+        origin = json.loads((directory / 'sources.json').read_text())
+        for name, expected in origin['files'].items():
+            if hashlib.sha256((directory / name).read_bytes()).hexdigest() != expected:
+                raise RuntimeError('Android interface source checksum mismatch: ' + name)
+        for source in sorted(directory.rglob('*.aidl')):
+            run([aidl, '--lang=ndk', '--structured', '--min_sdk_version=35',
+                 *(['--stability=vintf'] if kind == 'suspend' else []), '-I' + str(directory),
+                 '--out=' + str(generated), '--header_out=' + str(generated), source])
     return generated
 
 
@@ -226,6 +230,8 @@ def android_data(out):
         jar.writestr(zipfile.ZipInfo('classes.dex'), (framework_classes / 'classes.dex').read_bytes())
     files += [('/system/framework/nce-framework.jar', framework_jar)]
     files += [('/system/framework/framework-res.apk', root / 'framework/framework-res.apk')]
+    files += [('/system/etc/vintf/' + name, root / 'etc/vintf' / name)
+              for name in ('manifest.xml', 'manifest/android.system.suspend-service.xml')]
     for directory in ('permissions', 'sysconfig', 'compatconfig'):
         for path in sorted((root / 'etc' / directory).rglob('*')):
             if path.is_file():
@@ -612,6 +618,7 @@ def build(out, llvm):
     programs.append(('/system/bin/secilc', WORK / 'android/android36/bin/secilc'))
     programs.append(('/system/bin/servicemanager', WORK / 'android/android36/bin/servicemanager'))
     programs.append(('/system/bin/aconfigd-system', WORK / 'android/android36/bin/aconfigd-system'))
+    programs.append(('/system/bin/hw/android.system.suspend-service', WORK / 'android/android36/bin/hw/android.system.suspend-service'))
     programs.append(('/system/bin/app_process64', WORK / 'android/android36/bin/app_process64'))
     programs.append(('/system/bin/derive_classpath', WORK / 'android/android36/com.android.sdkext/bin/derive_classpath'))
     run([ndk / 'toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android35-clang',
@@ -619,7 +626,7 @@ def build(out, llvm):
          '-Wl,-z,max-page-size=16384,-z,common-page-size=16384',
          EXP / 'services/framework-log.c', '-llog', '-ldl', '-o', out / 'libnce-framework-log.so'])
     programs.append(('/system/lib64/libnce-framework-log.so', out / 'libnce-framework-log.so'))
-    apex_generated = apex_sources(out)
+    apex_generated = android_service_interfaces(out)
     run([ndk / 'toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android35-clang++',
          '-ffixed-x18', '-mno-outline-atomics', '-g', '-O2', '-Wall', '-Wextra', '-Werror',
          '-std=c++17', '-nostdlib++', '-include', WORK / 'android/art-build/platform-libcxx-config.h',
@@ -627,7 +634,7 @@ def build(out, llvm):
          '-Wl,-z,max-page-size=16384,-z,common-page-size=16384',
          EXP / 'userspace/android-services-test.cpp', EXP / 'userspace/property-service.cpp',
          EXP / 'userspace/framework-test.cpp', EXP / 'userspace/crypto-tests.cpp',
-         EXP / 'userspace/apex-service.cpp', *sorted(apex_generated.rglob('*.cpp')),
+         EXP / 'userspace/apex-service.cpp', EXP / 'userspace/suspend-test.cpp', *sorted(apex_generated.rglob('*.cpp')),
          WORK / 'android/android36/lib64/libc++.so',
          '-I', WORK / 'android/boringssl/src/include', crypto['libcrypto.so'], '-ldl',
          WORK / 'android/android36/lib64/libbinder_ndk.so',

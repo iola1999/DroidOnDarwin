@@ -624,6 +624,7 @@ static void run_program(long (*call)(long, long *), const char *path, const char
     dump_file(call, "/stderr");
     if (status) {
         dump_file(call, "/stdout");
+        dump_file(call, "/proc/meminfo");
         fprintf(stderr, "userspace pid=%ld waited=%ld status=%d\n", pid, waited, status);
         char messages[16384];
         long logs[6] = {3, (long)messages, sizeof(messages)};
@@ -899,6 +900,7 @@ void nce_process_tests(long (*host_syscall)(long, long *), long (*guest_syscall)
     REQUIRE(strstr(benchmark, "android_framework_runtime"));
     REQUIRE(strstr(benchmark, "android_aconfig_storage"));
     REQUIRE(strstr(benchmark, "android_framework_file_observer"));
+    REQUIRE(strstr(benchmark, "android_system_suspend_wakelocks"));
     REQUIRE(strstr(benchmark, "android_apex_registry"));
     REQUIRE(strstr(benchmark, getenv("NCE_SYSTEM_SERVER_PROBE") ?
                    "android_system_server_services" : "android_zygote_command_server"));

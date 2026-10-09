@@ -1,68 +1,73 @@
-# N3-J1 原生 Linux + ART JIT 手机测试
+# N3-S3 原生 Linux 与 Android 合并测试
 
 日期：2026-10-09。适用设备：当前 iPhone 17 / iOS 27.2。
 
-本包包含真实 Bionic、Android 动态链接器、Linux Binder 和 ART ARM64 JIT。
-运行所需内核、共享库、编译器与 Java 文件均随包提供，全部在 iPhone 内执行。
+本包包含 Linux 6.12 LKL、Bionic、ART ARM64 JIT、Android Framework 和基础
+系统服务。内核、程序和只读系统盘随包提供，运行全部在 iPhone 内完成。
+当前界面用于执行合并回归并显示 Canvas 绘图结果，完整 Android 桌面仍待实现。
 
 ## 安装包
 
 ```text
-/Users/fan/project/app/husk_hyos/work/native-linux-nce/ios/Husk-NativeLinux-N3-J1.ipa
+/Users/fan/project/app/husk_hyos/work/native-linux-nce/ios/Husk-NativeLinux-N3-S3.ipa
 ```
 
-构建编号 `N3-J1-iOS-20261009-134627`，版本 `0.11.0 (71)`，大小 41.86 MiB。
+版本 `0.11.0 (74)`，构建编号 `N3-S3-iOS-20261009-195329`，大小 318.73 MiB。
 SHA-256：
 
 ```text
-66330c7d1943fa8eb862d433ab38d109dfe3eeafe08bac4d8d45f7149ff2510d
+8f598a7eed1a44204bab8169e6dbd8afa7d175155fbfb94fc28d70d078df8163
 ```
 
-本包已完成本地回归、iOS 构建、归档和签名完整性检查，手机执行待确认。
-用户外出期间保留此包，具备侧载条件后再做一次合并测试。
+CLI/GCD 回归、ELF 检查、iOS 构建、归档与签名完整性检查均已通过。
+完整构建记录保存在同目录的 `package.json`。
+本轮手机执行待确认，具备侧载条件后集中测试一次即可。
 
 ## 操作
 
 1. 在 iLoader 中导入 IPA，沿用当前账号覆盖安装，保留 JIT Helper 扩展。
-2. 在手机上连接 LocalDevVPN，打开 Husk NCE，确认构建编号。
+2. 在手机上连接 LocalDevVPN，打开 Husk NCE，确认构建编号以 N3-S3 开头。
 3. 点“启用内置 JIT 并测试”，保持应用在前台，等待“全部测试通过”。
-4. 导出日志。本次只需运行合并包一次。
+4. 导出日志，并保留 Android 绘图结果。
 
-应用测试期间会禁用自动锁屏。若退回桌面，重新打开后直接导出上次日志；
-再次启动测试会覆盖日志。若 Java 测试状态持续超过 120 秒，导出日志后关闭
-应用。Java 启动程序设有 90 秒期限，正常收到定时信号时会记录超时并退出。
+应用测试期间会禁用自动锁屏。若闪退，重新打开后先导出上次日志；再次启动
+测试会覆盖日志。日志文件继续使用 `native-linux-n2-ios.log` 这一名称。
+ART 单进程检查设有 90 秒期限，Framework 与基础服务阶段设有 60 秒期限。
+若长时间停在同一阶段，保留日志即可，无需反复运行。
 
-## 本轮检查
+## 覆盖范围
 
-Mac 的 CLI 与 GCD 入口均已通过同一组回归。本次手机测试重点确认动态执行区
-在 JIT 助手断开后仍能更新并执行，以及编译代码的 GC、异常和调用行为。
-
-| 日志项目 | 成功条件 |
+| 检查 | 本包包含的行为 |
 | --- | --- |
-| `prepared_fixed_address_code_updates` | 含新增动态执行区在内的代码范围，各完成 8 次更新和执行 |
-| `linux_dynamic_code` | memfd 代码映射、128 次更新、fork、信号返回、权限拒绝与释放检查通过 |
-| `android_bionic_threads_allocator_tls` | Android 动态链接、线程、分配器和 TLS 正常 |
-| `linux_binder_cross_process_roundtrip` | 两个 Linux 进程完成 32 次往返，最大负载 65,536 字节 |
-| `android_art_java_workload` | 分配、弱引用回收、存活循环对象、线程和异常通过 |
-| `android_art_jit_arithmetic` | 解释/JIT 均得到同一独立校验值，记录两百万次循环耗时 |
-| `android_art_jit_objects` | 数组更新、对象字段读写、GC 和两类异常通过 |
-| `android_art_jit_calls` | 编译代码、解释器与 JNI 的对象及空引用返回正确 |
-| `android_art_jit_allocations` | 对象/数组分配、虚方法调用与异常通过 |
-| `android_art_jit_automatic` | 普通热点方法自动编译，不支持的方法仍可解释执行 |
-| `linux_nce_context_lifetime` | 上下文分配与释放数量相同 |
-| `result: passed` | 包括既有 Linux、动态库和 shell 回归在内的整轮结束 |
+| JIT 准备与更新 | 助手断开后更新固定地址代码；mmap/mprotect、fork、信号与动态执行权限 |
+| Linux 进程和存储 | COW、线程、抢占、PID namespace、shell、ext4 持久数据与只读系统盘 |
+| Bionic 与 Binder | 动态链接、TLS、分配器、跨进程事务、文件描述符传递和服务退出通知 |
+| ART 对象和调用 | 分配与 GC、数组、接口调用、同步、类型转换、异常、解释/JIT/JNI 调用 |
+| ART 新执行路径 | 字符串及数值 intrinsic、方法内联、内联异常栈、Java 动态代理和注解 |
+| Framework | Parcel、Looper、SharedMemory、JCA、Canvas/PNG、FileObserver 通知与清理 |
+| 系统基础服务 | 属性权限、28 个 APEX 模块查询、26 组 aconfig 两次初始化、SystemSuspend 唤醒锁 |
+| Zygote | 原版命令协议、派生两个 Java 进程、UID、seccomp、cgroup、GC 与线程 |
+| 内存与退出 | 空闲 RAM 归还、64 MiB 页面再次分配、上下文释放和内核异常检查 |
 
-Linux 用户态压力检查固定为 3 轮，共 24 次命令、168 个 pthread。测试使用
-16 GiB 稀疏客体地址窗口与 256 MiB Linux RAM，虚拟地址按需提交物理页。
-新增动态执行区为 32 MiB；ART 代码缓存上限为 32 MiB，代码和元数据各占一半。
+最终成功日志必须出现 `"result":"passed"`。Framework 图片由 Android Canvas
+绘制，通过 PNG 解码检查后交给 iOS 显示。
 
-## 结果边界
+使用 16 GiB 稀疏客体地址窗口、512 MiB Linux RAM、512 MiB 静态 ELF 地址
+范围和 64 MiB 动态执行区。虚拟地址按需提交物理页。ART 对象堆使用
+MarkSweep/RosAlloc，每个 ART 实例的代码缓存上限为 32 MiB。
+Linux 用户态压力检查固定为 3 轮，包含 24 次命令与 168 个 pthread。
 
-当前使用 MarkSweep/RosAlloc。ARM64 JIT 按指令支持范围编译，尚未适配的方法
-继续解释执行。完整 HyperOS 界面、系统服务、图形显示和持续交互尚未接入。
+## 结果与边界
 
-本机最终一轮整数微基准：CLI 解释/JIT 为 160.917/2.642 ms，GCD 为
-156.771/2.648 ms，约 59–61 倍。该结果只适用于这段计算负载；手机和完整
-Android 的性能仍需实测。
+Mac 的 CLI 与 GCD 入口分别通过 94 和 95 个命名测试，另有 15 项 ELF 检查。
+GCD 多出继承信号屏蔽状态的回归。实际结果及全部构建输入校验值保存在
+`work/native-linux-nce/processes/lkl-summary.json`，手机结果仍待确认。
 
-实现、进展和后续方向见 [Android 用户态阶段记录](native-linux-android-stage.md)。
+单独的 system_server 检查已推进到 DisplayManager，当前等待 SurfaceFlinger。
+PackageManager、系统窗口合成、桌面与持续交互尚未完成。该检查通过环境变量
+`NCE_SYSTEM_SERVER_PROBE=1` 在 Mac 单独运行，手机合并包执行上表的已实现项目。
+
+本轮本机局部对照包含 AES-GCM 指令扩展、ART 解释/JIT、关闭/启用方法内联。
+这些结果用于检查对应实现；完整 Android 的启动速度、交互和发热需要在
+系统功能完成后测量。实现记录与后续工作见
+[Android 用户态阶段记录](native-linux-android-stage.md)。

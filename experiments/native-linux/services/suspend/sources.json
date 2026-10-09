@@ -1,0 +1,9 @@
+{
+  "repository": "https://android.googlesource.com/platform/system/hardware/interfaces",
+  "revision": "f3d42be8ff32eb4ff00873bf2762d13c013d314a",
+  "files": {
+    "android/system/suspend/ISystemSuspend.aidl": "4ef9b85fbdf5fb18fc9e7cc50d184a2d9aa003b624ddcc12d128477b63e6062d",
+    "android/system/suspend/IWakeLock.aidl": "663fb611a9b421168ed9d74b96a4fc67d16ed7c371fd5e39f2ab199f1575716c",
+    "android/system/suspend/WakeLockType.aidl": "fcd5e48f11ad311cd10dcae0689d6f64ae5db74b07357b23edad14015ad8f019"
+  }
+}
