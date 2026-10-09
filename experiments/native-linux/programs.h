@@ -5,6 +5,7 @@
 typedef struct {
     size_t offset, size;
     NceCode code;
+    unsigned char *source_cache, *cache_prot;
 } NceSegment;
 
 typedef struct { size_t address; uint32_t instruction; } NcePatch;

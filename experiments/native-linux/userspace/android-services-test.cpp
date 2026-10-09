@@ -32,6 +32,8 @@ static constexpr const char *kService = "nce.test";
 static bool died;
 static void deadline(int) { dprintf(2, "android-services deadline exceeded\n"); _exit(124); }
 void nce_property_service(int ready);
+void nce_display_start();
+void nce_display_stop();
 void nce_framework_test();
 void nce_zygote_test();
 void nce_crypto_tests();
@@ -431,10 +433,12 @@ int main(int argc, char **argv)
     nce_crypto_tests();
     puts("{\"phase\":\"android_framework_launch\"}");
     nce_framework_test();
+    if (access("/data/nce/graphics", F_OK) == 0) nce_display_start();
     pid_t suspend = nce_suspend_start();
     pid_t installd = nce_installd_start(argv[0]);
     puts("{\"phase\":\"android_zygote_launch\"}");
     nce_zygote_test();
+    if (access("/data/nce/graphics", F_OK) == 0) nce_display_stop();
     alarm(20);
     int binder_fd;
     CHECK(ABinderProcess_setupPolling(&binder_fd) == STATUS_OK && binder_fd >= 0);

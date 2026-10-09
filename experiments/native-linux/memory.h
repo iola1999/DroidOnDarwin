@@ -13,4 +13,6 @@ uintptr_t nce_memory_user_base(void);
 /* Replace an ordinary data mapping and apply POSIX protection flags. Logs
  * the Mach error or errno and returns -1 on failure. */
 int nce_memory_remap(void *target, void *source, size_t size, int protection);
+/* True only after prepared code survives permission removal and restoration. */
+int nce_memory_code_protection(void);
 int nce_memory_release(void);

@@ -32,6 +32,10 @@ static void runtime_environment()
         {"LD_PRELOAD", "/system/lib64/libnce-framework-log.so"},
     };
     for (const auto &entry : environment) CHECK(setenv(entry[0], entry[1], 1) == 0);
+    if (access("/data/nce/graphics", F_OK) == 0) {
+        CHECK(setenv("LD_PRELOAD", "/system/lib64/libnce-qemupipe.so:/system/lib64/libnce-framework-log.so", 1) == 0);
+        CHECK(setenv("LD_LIBRARY_PATH", "/system/lib64:/vendor/lib64:/vendor/lib64/egl:/vendor/lib64/hw", 1) == 0);
+    }
 }
 
 static void derive_classpath()
@@ -152,6 +156,7 @@ static void initialize_aconfig()
 
 void nce_framework_test()
 {
+    CHECK(symlink("/system/etc", "/etc") == 0);
     const char *properties[][2] = {
         {"ro.product.cpu.abilist64", "arm64-v8a"}, {"ro.product.cpu.abilist", "arm64-v8a"},
         {"ro.product.cpu.abi", "arm64-v8a"}, {"ro.build.version.sdk", "36"},
@@ -207,10 +212,38 @@ static void receive_bytes(int fd, void *buffer, size_t size)
     }
 }
 
+static void dump_threads()
+{
+    DIR *processes = opendir("/proc");
+    if (!processes) return;
+    while (dirent *process = readdir(processes)) {
+        if (process->d_name[0] < '1' || process->d_name[0] > '9') continue;
+        char directory[512];
+        snprintf(directory, sizeof(directory), "/proc/%s/task", process->d_name);
+        DIR *threads = opendir(directory);
+        if (!threads) continue;
+        while (dirent *thread = readdir(threads)) {
+            if (thread->d_name[0] < '1' || thread->d_name[0] > '9') continue;
+            for (const char *name : {"stat", "wchan", "syscall"}) {
+                char path[1024], content[2048];
+                snprintf(path, sizeof(path), "%s/%s/%s", directory, thread->d_name, name);
+                int fd = open(path, O_RDONLY | O_CLOEXEC);
+                if (fd < 0) continue;
+                ssize_t size = read(fd, content, sizeof(content) - 1);
+                close(fd);
+                if (size <= 0) continue;
+                content[size] = 0;
+                dprintf(2, "%s: %s\n", path, content);
+            }
+        }
+        closedir(threads);
+    }
+    closedir(processes);
+}
+
 void nce_zygote_test()
 {
     bool system_server = access("/data/nce/system-server-probe", F_OK) == 0;
-    CHECK(symlink("/system/etc", "/etc") == 0);
     if (system_server) {
         const struct { const char *path; mode_t mode; uid_t owner; } directories[] = {
             {"/mnt", 0755, 0}, {"/mnt/user", 0755, 0}, {"/mnt/user/0", 0755, 0},
@@ -352,7 +385,9 @@ void nce_zygote_test()
         _exit(0);
     }
     int requested;
-    CHECK(waitpid(requester, &requested, 0) == requester && requested == 0);
+    CHECK(waitpid(requester, &requested, 0) == requester);
+    if (requested) dump_threads();
+    CHECK(requested == 0);
     CHECK(kill(zygote, SIGTERM) == 0);
     int status;
     CHECK(waitpid(zygote, &status, 0) == zygote && WIFSIGNALED(status) && WTERMSIG(status) == SIGTERM);

@@ -178,6 +178,7 @@ int nce_graphics_start(long (*linux_syscall)(long, long *))
     CHECK(reserved >= 16 && call(57, listener) == 0);
     listener = reserved;
     CHECK(listener >= 0 && call(200, listener, (long)&address, sizeof(address)) == 0);
+    CHECK(call(53, -100, (long)address.path, 0666) == 0);
     CHECK(call(201, listener, 16) == 0);
     stopping.store(false);
     opened = closed = 0;

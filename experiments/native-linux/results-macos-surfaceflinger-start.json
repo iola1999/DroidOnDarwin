@@ -1,0 +1,116 @@
+{
+  "cli": {
+    "named_tests": 103,
+    "results": [
+      {
+        "test": "prepared_code_permission_restore",
+        "passed": true,
+        "available": true
+      },
+      {
+        "test": "android_surfaceflinger_registered",
+        "passed": true
+      },
+      {
+        "test": "android_zygote_command_server",
+        "queries": 3,
+        "passed": true
+      },
+      {
+        "test": "android_zygote_java_children",
+        "children": 2,
+        "passed": true
+      },
+      {
+        "test": "linux_retained_code_bytes",
+        "bytes": 10104766464
+      },
+      {
+        "test": "linux_host_mapping_totals",
+        "data_maps": 1411119,
+        "data_bytes": 30749704192,
+        "code_copy_bytes": 81608704,
+        "revocations": 412360
+      }
+    ],
+    "result": {
+      "result": "passed"
+    }
+  },
+  "dispatch": {
+    "named_tests": 103,
+    "results": [
+      {
+        "test": "prepared_code_permission_restore",
+        "passed": true,
+        "available": true
+      },
+      {
+        "test": "android_surfaceflinger_registered",
+        "passed": true
+      },
+      {
+        "test": "android_zygote_command_server",
+        "queries": 3,
+        "passed": true
+      },
+      {
+        "test": "android_zygote_java_children",
+        "children": 2,
+        "passed": true
+      },
+      {
+        "test": "linux_retained_code_bytes",
+        "bytes": 10207559680
+      },
+      {
+        "test": "linux_host_mapping_totals",
+        "data_maps": 1423083,
+        "data_bytes": 31103516672,
+        "code_copy_bytes": 81608704,
+        "revocations": 409916
+      }
+    ],
+    "result": {
+      "result": "passed"
+    }
+  },
+  "window": {
+    "named_tests": 104,
+    "results": [
+      {
+        "test": "prepared_code_permission_restore",
+        "passed": true,
+        "available": true
+      },
+      {
+        "test": "android_surfaceflinger_registered",
+        "passed": true
+      },
+      {
+        "test": "android_zygote_command_server",
+        "queries": 3,
+        "passed": true
+      },
+      {
+        "test": "android_zygote_java_children",
+        "children": 2,
+        "passed": true
+      },
+      {
+        "test": "linux_retained_code_bytes",
+        "bytes": 9025323008
+      },
+      {
+        "test": "linux_host_mapping_totals",
+        "data_maps": 1404372,
+        "data_bytes": 30316167168,
+        "code_copy_bytes": 81608704,
+        "revocations": 390014
+      }
+    ],
+    "result": {
+      "result": "passed"
+    }
+  }
+}

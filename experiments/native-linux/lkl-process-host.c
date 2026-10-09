@@ -36,7 +36,7 @@ typedef struct {
     pthread_t thread;
     uintptr_t fault_address;
     uint32_t fault_instruction;
-    int event_kind, fault_write, fault_illegal, stack_unmapped;
+    int event_kind, fault_write, fault_illegal, fault_execute, stack_unmapped;
 } Process;
 static _Thread_local Process *this_process;
 static pthread_mutex_t target_mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -52,6 +52,8 @@ static NceState *active;
 static NceCode code;
 static unsigned char *ram;
 static unsigned long code_copies, code_copy_bytes, data_maps, data_map_bytes, revocations;
+static unsigned long code_reused_bytes;
+static NceSegment dynamic_cache;
 static size_t ram_size;
 static unsigned long reclaimed_ranges, reclaimed_bytes;
 static long (*run_syscall)(long, long *);
@@ -83,6 +85,40 @@ static int shmem_reclaim(unsigned long offset, unsigned long size)
     reclaimed_bytes += size;
     return 0;
 }
+static void restore_code(NceProgram *program, NceSegment *segment, size_t position,
+                         const unsigned char *source, size_t length, enum lkl_prot prot)
+{
+    /* Darwin's cache operation needs an accessible RX address. No guest
+     * executes concurrently while the single Linux CPU restores this view. */
+    REQUIRE(mprotect(segment->code.rx + position, length,
+                     PROT_READ | (prot & LKL_PROT_EXEC ? PROT_EXEC : 0)) == 0);
+    if (!segment->source_cache) {
+        segment->source_cache = mmap(NULL, segment->size, PROT_READ | PROT_WRITE,
+                                     MAP_ANON | MAP_PRIVATE, -1, 0);
+        segment->cache_prot = calloc(segment->size / PAGE, 1);
+        REQUIRE(segment->source_cache != MAP_FAILED && segment->cache_prot);
+    }
+    unsigned char mode = prot & LKL_PROT_EXEC ? 2 : 1;
+    for (size_t offset = position; offset < position + length; offset += PAGE) {
+        size_t index = offset / PAGE;
+        const unsigned char *page = source + offset - position;
+        /* Compare original bytes as well as permissions. Linux can reuse a
+         * physical page or change a JIT backing file without changing its PTE. */
+        if (segment->cache_prot[index] == mode &&
+            !memcmp(segment->source_cache + offset, page, PAGE)) {
+            code_reused_bytes += PAGE;
+            continue;
+        }
+        memcpy(segment->source_cache + offset, page, PAGE);
+        memcpy(segment->code.rw + offset, page, PAGE);
+        if (program && mode == 2) REQUIRE(nce_program_patch_range(program, segment, offset, PAGE) == 0);
+        nce_sync_code((NceCode){segment->code.rw + offset, segment->code.rx + offset, PAGE});
+        segment->cache_prot[index] = mode;
+        ++code_copies;
+        code_copy_bytes += PAGE;
+    }
+}
+
 static void *shmem_map(void *address, unsigned long offset, unsigned long size, enum lkl_prot prot)
 {
     uintptr_t start = (uintptr_t)address;
@@ -110,6 +146,12 @@ static void *shmem_map(void *address, unsigned long offset, unsigned long size, 
         size_t length = stop - start;
         if (segment) {
             size_t position = start - (uintptr_t)segment->code.rx;
+            if (nce_memory_code_protection()) {
+                restore_code(program, segment, position, ram + offset, length, prot);
+                start = stop;
+                offset += length;
+                continue;
+            }
             memcpy(segment->code.rw + position, ram + offset, length);
             if (prot & LKL_PROT_EXEC)
                 REQUIRE(nce_program_patch_range(program, segment, position, length) == 0);
@@ -118,6 +160,12 @@ static void *shmem_map(void *address, unsigned long offset, unsigned long size, 
             code_copy_bytes += length;
         } else if (in_dynamic) {
             REQUIRE(!(prot & LKL_PROT_WRITE));
+            if (nce_memory_code_protection()) {
+                restore_code(NULL, &dynamic_cache, start - dynamic_start, ram + offset, length, prot);
+                start = stop;
+                offset += length;
+                continue;
+            }
             unsigned char *target = dynamic.rw + start - dynamic_start;
             if (prot & LKL_PROT_EXEC) memcpy(target, ram + offset, length);
             else memset(target, 0, length);
@@ -151,8 +199,12 @@ static int protect_none(void *address, unsigned long size)
                                    MAP_ANON | MAP_PRIVATE | MAP_FIXED, -1, 0) == MAP_FAILED) return -1;
             size_t first = start > lo ? start - lo : 0;
             size_t stop = end < hi ? end - lo : s->size;
-            memset(s->code.rw + first, 0, stop - first);
-            nce_sync_code((NceCode){s->code.rw + first, s->code.rx + first, stop - first});
+            if (nce_memory_code_protection()) {
+                if (mprotect(s->code.rx + first, stop - first, PROT_NONE)) return -1;
+            } else {
+                memset(s->code.rw + first, 0, stop - first);
+                nce_sync_code((NceCode){s->code.rw + first, s->code.rx + first, stop - first});
+            }
             cursor = lo + stop;
         }
         /* Branch stubs belong to the host and survive guest address-space changes. */
@@ -170,8 +222,15 @@ static int protect_none(void *address, unsigned long size)
                                MAP_ANON | MAP_PRIVATE | MAP_FIXED, -1, 0) == MAP_FAILED) return -1;
         size_t first = start > lo ? start - lo : 0;
         size_t stop = end < hi ? end - lo : dynamic.size;
-        memset(dynamic.rw + first, 0, stop - first);
-        nce_sync_code((NceCode){dynamic.rw + first, dynamic.rx + first, stop - first});
+        /* The first dynamic page contains the host's resume branch. */
+        if (first < PAGE) first = PAGE;
+        if (stop < first) stop = first;
+        if (nce_memory_code_protection()) {
+            if (stop > first && mprotect(dynamic.rx + first, stop - first, PROT_NONE)) return -1;
+        } else {
+            memset(dynamic.rw + first, 0, stop - first);
+            nce_sync_code((NceCode){dynamic.rw + first, dynamic.rx + first, stop - first});
+        }
         cursor = lo + stop;
     }
     if (cursor < end && mmap((void *)cursor, end - cursor, PROT_NONE,
@@ -260,7 +319,7 @@ static NceState *handle_event(NceState *state)
     Process *p = (void *)state;
     if (p->event_kind == 1) {
         if (!deferred_faults) puts("{\"phase\":\"guest_fault_on_host_stack\"}");
-        int result = page_fault(p->fault_address, p->fault_illegal ? NCE_FAULT_EXEC : p->fault_write);
+        int result = page_fault(p->fault_address, p->fault_execute ? NCE_FAULT_EXEC : p->fault_write);
         if (result && (trace || p->fault_illegal)) {
             fprintf(stderr, "guest fault pc=%lx address=%lx write=%d illegal=%d result=%d instruction=%08x trapped=%08x\n",
                     state->regs.pc, p->fault_address, p->fault_write, p->fault_illegal, result,
@@ -320,6 +379,8 @@ static void fault(int signal, siginfo_t *info, void *opaque)
             p->fault_address = address;
             p->fault_write = is_write;
             p->fault_illegal = signal == SIGILL;
+            unsigned exception_class = u->uc_mcontext->__es.__esr >> 26;
+            p->fault_execute = p->fault_illegal || exception_class == 0x20 || exception_class == 0x21;
             p->fault_instruction = signal == SIGILL ? *(const uint32_t *)pc : 0;
             if (stub) {
                 p->state.resume = pc + 40;
@@ -483,6 +544,7 @@ unsigned long nce_process_setup(void)
     REQUIRE(getpagesize() == PAGE);
     trace = getenv("NCE_TRACE") != NULL;
     user_base = nce_memory_user_base();
+    dynamic_cache = (NceSegment){.size = NCE_EXEC_SIZE, .code = nce_memory_dynamic_code()};
     for (size_t i = 0; i < nce_program_count; ++i)
         REQUIRE(nce_program_prepare(&nce_programs[i], &active) == 0);
     REQUIRE(protect_none((void *)user_base, NCE_USER_SIZE + NCE_RAM_SIZE + NCE_VMALLOC_SIZE) == 0);
@@ -992,8 +1054,12 @@ void nce_process_cleanup(void)
     REQUIRE(sigaction(SIGILL, &old_ill, NULL) == 0);
     REQUIRE(sigaction(SIGTRAP, &old_trap, NULL) == 0);
     REQUIRE(munmap(ram, ram_size) == 0);
+    if (dynamic_cache.source_cache) REQUIRE(munmap(dynamic_cache.source_cache, dynamic_cache.size) == 0);
+    free(dynamic_cache.cache_prot);
+    dynamic_cache = (NceSegment){0};
     /* The virtual address reservation and code belong to memory.c. */
     printf("{\"test\":\"fixed_linux_code_view\",\"copies\":%lu,\"passed\":true}\n", code_copies);
+    printf("{\"test\":\"linux_retained_code_bytes\",\"bytes\":%lu}\n", code_reused_bytes);
     printf("{\"test\":\"linux_host_mapping_totals\",\"data_maps\":%lu,\"data_bytes\":%lu,\"code_copy_bytes\":%lu,\"revocations\":%lu}\n",
            data_maps, data_map_bytes, code_copy_bytes, revocations);
     printf("{\"test\":\"linux_nce_context_lifetime\",\"allocated\":%lu,\"freed\":%lu}\n", allocated, freed);

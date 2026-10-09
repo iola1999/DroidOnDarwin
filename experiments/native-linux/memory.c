@@ -22,6 +22,7 @@ extern int nce_wait_debugger_detach(unsigned timeout_ms);
 static unsigned char *reservation;
 static NceCode pool, dynamic_code;
 static size_t used;
+static int code_protection;
 
 NceCode nce_memory_take(size_t size)
 {
@@ -34,6 +35,7 @@ NceCode nce_memory_take(size_t size)
 
 uintptr_t nce_memory_user_base(void) { return (uintptr_t)reservation + NCE_CODE_POOL_SIZE; }
 NceCode nce_memory_dynamic_code(void) { return dynamic_code; }
+int nce_memory_code_protection(void) { return code_protection; }
 
 int nce_memory_remap(void *target, void *source, size_t size, int protection)
 {
@@ -96,6 +98,25 @@ static int verify_memory(void)
         }
     }
     printf("{\"test\":\"prepared_fixed_address_code_updates\",\"passed\":true,\"ranges\":%u,\"updates_per_range\":8}\n", range);
+
+    /* Probe a private pool page: a rejected restoration cannot damage a guest
+     * program's prepared range. Copy-based revocation remains available. */
+    NceCode protection_probe = {pages.rw + PAGE, pages.rx + PAGE, PAGE};
+    code_protection = 1;
+    for (unsigned i = 0; i < 8; ++i) {
+        if (mprotect(protection_probe.rx, PAGE, PROT_NONE) ||
+            mprotect(protection_probe.rx, PAGE, PROT_READ | PROT_EXEC)) {
+            code_protection = 0;
+            break;
+        }
+        memcpy(protection_probe.rw, i % 2 ? second : first, sizeof(first));
+        nce_sync_code((NceCode){protection_probe.rw, protection_probe.rx, sizeof(first)});
+        if (nce_check_execute(protection_probe, 42 + (int)(i % 2))) return -1;
+    }
+    const char *force_copy = getenv("NCE_CODE_COPY");
+    if (force_copy && !strcmp(force_copy, "1")) code_protection = 0;
+    printf("{\"test\":\"prepared_code_permission_restore\",\"passed\":true,\"available\":%s}\n",
+           code_protection ? "true" : "false");
 
     unsigned char *backing = mmap(NULL, NCE_RAM_SIZE, PROT_READ | PROT_WRITE, MAP_ANON | MAP_PRIVATE, -1, 0);
     if (backing == MAP_FAILED) return -1;
@@ -224,6 +245,9 @@ int nce_memory_release(void)
                 REQUIRE(begin >= cursor);
                 if (begin > cursor) result |= release_range((void *)cursor, begin - cursor, 0);
                 result |= release_range(s->code.rw, s->size, 1);
+                if (s->source_cache) REQUIRE(munmap(s->source_cache, s->size) == 0);
+                free(s->cache_prot);
+                s->source_cache = s->cache_prot = NULL;
                 result |= release_range((void *)begin, s->size, s->code.rx != NULL);
                 cursor = begin + s->size;
                 s->code = (NceCode){0};

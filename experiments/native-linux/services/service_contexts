@@ -44,3 +44,4 @@ SurfaceFlingerAIDL u:object_r:nce_service:s0
 android.hardware.light.ILights/default u:object_r:nce_service:s0
 android.hardware.graphics.allocator.IAllocator/default u:object_r:nce_service:s0
 mapper/ranchu u:object_r:nce_service:s0
+android.hardware.graphics.composer3.IComposer/default u:object_r:nce_service:s0

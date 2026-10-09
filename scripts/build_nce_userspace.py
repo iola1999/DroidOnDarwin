@@ -114,8 +114,13 @@ def android_graphics_dependencies(llvm, programs):
         'libEGL_emulation.so', 'libGLESv1_CM_emulation.so', 'libGLESv2_emulation.so')]
     allocator, mapper = build_android_gralloc()
     replacements = {allocator.name: allocator, mapper.name: mapper}
+    composer = DESKTOP / 'vendor/bin/hw/android.hardware.graphics.composer3-service.ranchu'
+    surfaceflinger = WORK / 'android/android36/bin/surfaceflinger'
+    replacements.update({composer.name: composer, surfaceflinger.name: surfaceflinger})
     pending += [(allocator.name, '/vendor/bin/hw/' + allocator.name),
-                (mapper.name, '/vendor/lib64/hw/' + mapper.name)]
+                (mapper.name, '/vendor/lib64/hw/' + mapper.name),
+                (composer.name, '/vendor/bin/hw/' + composer.name),
+                (surfaceflinger.name, '/system/bin/' + surfaceflinger.name)]
     result = []
     while pending:
         name, guest = pending.pop()
@@ -694,6 +699,7 @@ def build(out, llvm):
          '-I', apex_generated, '-I', out, '-I', android_service_headers(),
          '-Wl,-z,max-page-size=16384,-z,common-page-size=16384',
          EXP / 'userspace/android-services-test.cpp', EXP / 'userspace/property-service.cpp',
+         EXP / 'userspace/display-service-test.cpp',
          EXP / 'userspace/framework-test.cpp', EXP / 'userspace/crypto-tests.cpp',
          EXP / 'userspace/apex-service.cpp', EXP / 'userspace/suspend-test.cpp', EXP / 'userspace/installd-test.cpp',
          *sorted(apex_generated.rglob('*.cpp')),

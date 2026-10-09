@@ -68,3 +68,23 @@ Metal 使用 Apple A19 GPU，360×640 的 120 帧提交共 2037.544 ms。当前 
 - 复杂度检查：复用 SDK EGL/GLES 和上游 gralloc 的格式、元数据及 Binder
   实现；memfd 改动后删除 mapper 中已无调用的物理地址转换状态与辅助函数。
   标准驱动检查、共享缓冲区检查和底层协议检查覆盖不同的接口，继续保留。
+
+### Composer 与 SurfaceFlinger 联调
+
+原版 Composer3 和 SurfaceFlinger 已完成显示初始化，发布 `SurfaceFlinger`
+及 `SurfaceFlingerAIDL` 服务。显示配置为 360×640、160 dpi；Skia GL 经
+gfxstream 和 ANGLE Metal 初始化成功。图形 socket 已允许 Android 服务 UID
+访问，Framework 子进程继承相同的 EGL 驱动路径。
+
+显示服务运行后，Zygote 曾超过原有 20 秒测试期限；临时使用 1 Hz 后恢复通过。
+宿主采样显示代码复制、清零和指令缓存刷新占用较多时间。已加入代码权限切换
+检查：系统允许撤销、恢复已准备代码页的权限时，保留代码内容，并逐页比较
+Linux 原始字节。内容与权限相同的页面直接恢复访问，发生变化的页面重新复制、
+改写及刷新缓存。系统拒绝权限切换时继续使用复制路径。
+
+恢复 60 Hz 后，CLI/GCD/可见窗口分别通过 103/103/104 个命名测试，包含
+SurfaceFlinger 注册、Zygote 请求和 Java 子进程。CLI 本轮复用代码内容
+10,104,766,464 字节，实际复制 81,608,704 字节。原有动态代码检查继续覆盖
+128 次内容更新、同址替换、fork、执行权限与信号。手机上的权限切换结果仍待
+下一次整包测试。尚未验证 SurfaceFlinger 实际窗口像素，系统桌面和应用交互
+继续列为后续验收项。
