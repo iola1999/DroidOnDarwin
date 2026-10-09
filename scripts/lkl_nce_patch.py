@@ -25,6 +25,10 @@ def apply(source: Path, experiment: Path):
          "\tconst char *virtio_devices;\n\tunsigned long long (*disk_size)(unsigned int index);\n"
          "\t/* operation: 0 read, 1 write, 2 flush; offset and length are bytes. */\n"
          "\tint (*disk_io)(unsigned int index, unsigned int operation, unsigned long long offset, void *buffer, unsigned long length);")
+    edit(arch + "include/uapi/asm/host_ops.h",
+         "\tint (*disk_io)(unsigned int index, unsigned int operation, unsigned long long offset, void *buffer, unsigned long length);",
+         "\tint (*disk_io)(unsigned int index, unsigned int operation, unsigned long long offset, void *buffer, unsigned long length);\n"
+         "\tint (*shmem_reclaim)(unsigned long offset, unsigned long length);")
     edit("include/linux/shmem_fs.h", "\tunsigned int\t\tseals;\t\t/* shmem seals */",
          "\tunsigned int\t\tseals;\t\t/* shmem seals */\n\tbool nce_memfd;")
     edit("mm/memfd.c", "\tfile->f_mode |= FMODE_LSEEK | FMODE_PREAD | FMODE_PWRITE;",
@@ -128,6 +132,8 @@ def apply(source: Path, experiment: Path):
     edit(arch + "kernel/Makefile", "nce_process.o nce_signal.o", "nce_process.o nce_signal.o nce_elf.o")
     edit(arch + "kernel/Makefile", "nce_process.o nce_signal.o nce_elf.o",
          "nce_process.o nce_signal.o nce_elf.o\nobj-$(CONFIG_BLOCK) += nce_block.o")
+    edit(arch + "kernel/Makefile", "obj-$(CONFIG_BLOCK) += nce_block.o",
+         "obj-$(CONFIG_BLOCK) += nce_block.o\nobj-$(CONFIG_PAGE_REPORTING) += nce_reclaim.o")
     for local, destination in (("layout.h", "include/asm/nce-layout.h"),
                                ("lkl-syscall.h", "include/asm/syscall.h"),
                                ("lkl-seccomp.h", "include/asm/seccomp.h"),
@@ -138,6 +144,7 @@ def apply(source: Path, experiment: Path):
                                ("lkl-nce-signal.c", "kernel/nce_signal.c"),
                                ("lkl-nce-elf.c", "kernel/nce_elf.c"),
                                ("lkl-nce-block.c", "kernel/nce_block.c"),
+                               ("lkl-nce-reclaim.c", "kernel/nce_reclaim.c"),
                                ("lkl-mmu-context.h", "include/asm/mmu_context.h"),
                                ("lkl-mmu.h", "include/asm/mmu.h"),
                                ("lkl-uaccess.h", "include/asm/uaccess.h"),

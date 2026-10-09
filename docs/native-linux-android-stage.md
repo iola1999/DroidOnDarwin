@@ -777,3 +777,23 @@ RSS 为 634,667,008 字节。代码缓存目前提前填充全部可执行页，
 `work/native-linux-nce/zygote-security-probe.log`。复杂度审查保留原版 Zygote、
 libprocessgroup 与 BPF 解释器，只增加实际消费的架构入口和原型配置；尚未
 建立 Android 应用间完整的安全策略，system_server 与系统桌面仍待实现。
+
+## 宿主 RAM 回收（2026-10-09）
+
+接入 Linux page reporting。内核先从 buddy allocator 暂时移出空闲块，宿主
+替换 RAM 的存储映射与 Linux 直接映射，完成后由内核把页放回空闲列表。
+最小块为 256 KiB；页选择、隔离、批处理和重复上报标记均复用 Linux 实现。
+客体数据映射失效时同时释放宿主别名，避免旧别名继续持有已释放的物理页。
+可执行映射保留既有的固定地址处理。
+
+CLI 完成 Framework/Zygote 后的宿主 footprint 为 607,978,696 字节。清理文件
+缓存并等待页上报后降至 297,665,640 字节，减少约 296 MiB。GCD 对应结果为
+609,862,880 → 298,550,448 字节。峰值 RSS 仍约 635 MB；当前变化解决了释放后
+的内存归还，启动阶段的峰值还需要继续优化。日志中的 reclaimed_bytes 为
+累计处理字节数，同一范围再次分配、释放后会重复计入。
+
+回收后再次执行两轮 64 MiB 分配、写入、释放与等待，检查新匿名页补零，另保留
+一个存活页并逐轮校验其内容。CLI、GCD、iOS 编译、3 轮进程压力回归与 14 项
+ELF/构建检查通过。日志为 `work/native-linux-nce/memory-reclaim-probe.log`。
+本机单独实验中 madvise 返回成功但没有降低共享 RAM 的占用，因此实现采用了
+已验证的映射替换。手机上的物理内存统计仍待后续集中验证。

@@ -149,7 +149,7 @@ def main():
             options += ["MMU", "PRINTK", "NAMESPACES", "PID_NS", "POSIX_TIMERS", "ANDROID_BINDER_IPC", "ANDROID_BINDERFS", "MEMFD_CREATE", "TMPFS", "TMPFS_XATTR",
                         "NET", "UNIX", "INET", "AUDIT", "SECURITY", "SECURITY_NETWORK",
                         "SECURITY_SELINUX", "SECURITY_SELINUX_DEVELOP"]
-            options += ["BLOCK", "EXT4_FS", "CGROUPS", "MEMCG", "CGROUP_CPUACCT", "SECCOMP", "SECCOMP_FILTER"]
+            options += ["BLOCK", "EXT4_FS", "CGROUPS", "MEMCG", "CGROUP_CPUACCT", "SECCOMP", "SECCOMP_FILTER", "PAGE_REPORTING"]
         switches = [arg for name in options for arg in ("-e", name)]
         if PROCESS:
             switches += ["--set-str", "LSM", "selinux"]

@@ -49,6 +49,7 @@ static NceCode code;
 static unsigned char *ram;
 static unsigned long code_copies, code_copy_bytes, data_maps, data_map_bytes, revocations;
 static size_t ram_size;
+static unsigned long reclaimed_ranges, reclaimed_bytes;
 static long (*run_syscall)(long, long *);
 static int (*page_fault)(unsigned long, int);
 static void (*user_return)(long, long, unsigned long);
@@ -64,6 +65,19 @@ static void shmem_init(unsigned long size)
     REQUIRE(size == NCE_RAM_SIZE);
     ram = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_ANON | MAP_PRIVATE, -1, 0);
     REQUIRE(ram != MAP_FAILED);
+}
+static int shmem_reclaim(unsigned long offset, unsigned long size)
+{
+    REQUIRE(!(offset % PAGE) && !(size % PAGE) && offset <= ram_size && size <= ram_size - offset);
+    /* Anonymous memory has both the RAM backing and the Linux direct-map alias.
+     * Replace both views while Linux keeps the free pages isolated. */
+    REQUIRE(mmap(ram + offset, size, PROT_READ | PROT_WRITE,
+                 MAP_ANON | MAP_PRIVATE | MAP_FIXED, -1, 0) == ram + offset);
+    REQUIRE(nce_memory_remap((void *)(USER_BASE + USER_SIZE + offset), ram + offset,
+                             size, PROT_READ | PROT_WRITE) == 0);
+    ++reclaimed_ranges;
+    reclaimed_bytes += size;
+    return 0;
 }
 static void *shmem_map(void *address, unsigned long offset, unsigned long size, enum lkl_prot prot)
 {
@@ -128,7 +142,8 @@ static int protect_none(void *address, unsigned long size)
             NceSegment *s = &p->segments[j];
             uintptr_t lo = (uintptr_t)s->code.rx, hi = lo + s->size;
             if (hi <= start || lo >= end) continue;
-            if (cursor < lo && mprotect((void *)cursor, lo - cursor, PROT_NONE)) return -1;
+            if (cursor < lo && mmap((void *)cursor, lo - cursor, PROT_NONE,
+                                   MAP_ANON | MAP_PRIVATE | MAP_FIXED, -1, 0) == MAP_FAILED) return -1;
             size_t first = start > lo ? start - lo : 0;
             size_t stop = end < hi ? end - lo : s->size;
             memset(s->code.rw + first, 0, stop - first);
@@ -139,14 +154,17 @@ static int protect_none(void *address, unsigned long size)
     NceCode dynamic = nce_memory_dynamic_code();
     uintptr_t lo = (uintptr_t)dynamic.rx, hi = lo + dynamic.size;
     if (hi > start && lo < end) {
-        if (cursor < lo && mprotect((void *)cursor, lo - cursor, PROT_NONE)) return -1;
+        if (cursor < lo && mmap((void *)cursor, lo - cursor, PROT_NONE,
+                               MAP_ANON | MAP_PRIVATE | MAP_FIXED, -1, 0) == MAP_FAILED) return -1;
         size_t first = start > lo ? start - lo : 0;
         size_t stop = end < hi ? end - lo : dynamic.size;
         memset(dynamic.rw + first, 0, stop - first);
         nce_sync_code((NceCode){dynamic.rw + first, dynamic.rx + first, stop - first});
         cursor = lo + stop;
     }
-    return cursor < end ? mprotect((void *)cursor, end - cursor, PROT_NONE) : 0;
+    if (cursor < end && mmap((void *)cursor, end - cursor, PROT_NONE,
+                            MAP_ANON | MAP_PRIVATE | MAP_FIXED, -1, 0) == MAP_FAILED) return -1;
+    return 0;
 }
 
 static void capture_state(NceState *s, ucontext_t *u)
@@ -445,6 +463,7 @@ unsigned long nce_process_setup(void)
         REQUIRE(nce_program_prepare(&nce_programs[i]) == 0);
     REQUIRE(protect_none((void *)user_base, NCE_USER_SIZE + NCE_RAM_SIZE + NCE_VMALLOC_SIZE) == 0);
     nce_lkl_host.shmem_init = shmem_init;
+    nce_lkl_host.shmem_reclaim = shmem_reclaim;
     nce_lkl_host.shmem_mmap = shmem_map;
     nce_lkl_host.munmap = protect_none;
     nce_lkl_host.user_clone = user_clone;
@@ -537,8 +556,12 @@ static void memory_report(long (*call)(long, long *), const char *phase)
     REQUIRE(line && sscanf(line, "Shmem: %lu", &shmem) == 1);
     struct rusage usage;
     REQUIRE(getrusage(RUSAGE_SELF, &usage) == 0);
+    struct task_vm_info vm;
+    mach_msg_type_number_t count = TASK_VM_INFO_COUNT;
+    REQUIRE(task_info(mach_task_self(), TASK_VM_INFO, (task_info_t)&vm, &count) == KERN_SUCCESS);
     printf("{\"memory\":\"%s\",\"linux_available_kib\":%lu,\"linux_shmem_kib\":%lu,"
-           "\"host_peak_rss_bytes\":%ld}\n", phase, available, shmem, usage.ru_maxrss);
+           "\"host_peak_rss_bytes\":%ld,\"host_footprint_bytes\":%llu,\"reclaimed_bytes\":%lu,\"reclaimed_ranges\":%lu}\n",
+           phase, available, shmem, usage.ru_maxrss, vm.phys_footprint, reclaimed_bytes, reclaimed_ranges);
 }
 
 static void dump_file(long (*call)(long, long *), const char *path)
@@ -850,6 +873,19 @@ void nce_process_tests(long (*host_syscall)(long, long *), long (*guest_syscall)
     }
     check_program_files(host_syscall);
     reclaim_file_cache(host_syscall);
+    long reclaim_args[6] = {-100, (long)"/proc/sys/vm/drop_caches", 1};
+    long reclaim_fd = host_syscall(56, reclaim_args);
+    REQUIRE(reclaim_fd >= 0);
+    reclaim_args[0] = reclaim_fd; reclaim_args[1] = (long)"3\n"; reclaim_args[2] = 2;
+    REQUIRE(host_syscall(64, reclaim_args) == 2 && host_syscall(57, reclaim_args) == 0);
+    struct timespec reclaim_delay = {3, 0};
+    reclaim_args[0] = (long)&reclaim_delay; reclaim_args[1] = 0;
+    REQUIRE(host_syscall(101, reclaim_args) == 0 && reclaimed_ranges > 0);
+    memory_report(host_syscall, "after_host_reclaim");
+    run_program(host_syscall, "/reclaim-test", NULL);
+    REQUIRE(get_file(host_syscall, "/stdout", benchmark, sizeof(benchmark)) > 0);
+    REQUIRE(strstr(benchmark, "linux_reclaimed_ram_reuse"));
+    fputs(benchmark, stdout);
     puts("{\"test\":\"linux_dynamic_elf_files_unchanged\",\"passed\":true}");
     long log_args[6] = {10};
     long log_size = host_syscall(116, log_args);
