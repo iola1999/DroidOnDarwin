@@ -20,6 +20,8 @@ from build_android_libc import build as build_android_libc
 from build_android_art import build as build_android_art
 from build_android_crypto import build as build_android_crypto
 from prepare_android_modules import prepare as prepare_android_modules, OUT as MODULES
+from prepare_android_desktop import prepare as prepare_android_desktop, OUT as DESKTOP
+from build_android_gralloc import build as build_android_gralloc
 
 ROOT = Path(__file__).resolve().parents[1]
 EXP = ROOT / 'experiments/native-linux'
@@ -101,6 +103,34 @@ def android_dependencies(llvm, replacements):
         dynamic = subprocess.check_output([llvm / 'llvm-readelf', '-d', path], text=True)
         pending += re.findall(r'Shared library: \[(.*?)\]', dynamic)
     return [('/system/lib64/' + name, path) for name, path in sorted(result.items())]
+
+def android_graphics_dependencies(llvm, programs):
+    prepare_android_desktop()
+    system = WORK / 'android/android36/lib64'
+    vendor = DESKTOP / 'vendor/lib64'
+    provided = {Path(guest).name for guest, _ in programs if guest.endswith('.so')}
+    pending = [('libEGL.so', '/system/lib64/libEGL.so'), ('libGLESv2.so', '/system/lib64/libGLESv2.so')]
+    pending += [(name, '/vendor/lib64/egl/' + name) for name in (
+        'libEGL_emulation.so', 'libGLESv1_CM_emulation.so', 'libGLESv2_emulation.so')]
+    allocator, mapper = build_android_gralloc()
+    replacements = {allocator.name: allocator, mapper.name: mapper}
+    pending += [(allocator.name, '/vendor/bin/hw/' + allocator.name),
+                (mapper.name, '/vendor/lib64/hw/' + mapper.name)]
+    result = []
+    while pending:
+        name, guest = pending.pop()
+        if name in provided:
+            continue
+        path = replacements.get(name) or next((base / name for base in (system, vendor, vendor / 'egl') if (base / name).is_file()), None)
+        if path is None:
+            raise RuntimeError('Missing graphics dependency: ' + name)
+        provided.add(name)
+        result.append((guest, path))
+        for dependency in re.findall(r'Shared library: \[(.*?)\]',
+                subprocess.check_output([llvm / 'llvm-readelf', '-d', path], text=True)):
+            pending.append((dependency, '/system/lib64/' + dependency))
+    return result
+
 
 def android_service_interfaces(out):
     modules = prepare_android_modules()['modules']
@@ -211,6 +241,9 @@ def android_data(out):
             raise RuntimeError('Missing classpath resource: ' + guest)
         files.append((guest, source))
     files += [('/system/etc/selinux/plat_service_contexts', EXP / 'services/service_contexts')]
+    fragment = 'vendor/etc/vintf/manifest/android.hardware.graphics.gralloc.ranchu.xml'
+    files.append(('/' + fragment, DESKTOP / fragment))
+    files.append(('/vendor/etc/vintf/manifest.xml', EXP / 'services/vendor-manifest.xml'))
     files += [('/system/etc/selinux/plat_seapp_contexts', EXP / 'services/seapp_contexts')]
     files += [('/system/etc/selinux/plat_file_contexts', EXP / 'services/file_contexts')]
     files += [(f'/system/etc/{name}.json', EXP / 'services' / f'{name}.json')
@@ -591,6 +624,8 @@ def build(out, llvm):
     crypto = build_android_crypto()
     replacements = {**build_android_art(), **crypto}
     programs += android_dependencies(llvm, replacements)
+    android_service_headers()
+    programs += android_graphics_dependencies(llvm, programs)
     module = 'com.android.configinfrastructure'
     module_root = WORK / 'android/android36' / module
     programs.append((f'/apex/{module}/bin/aconfigd-mainline', module_root / 'bin/aconfigd-mainline'))
@@ -625,6 +660,21 @@ def build(out, llvm):
          '-I', protocol, '-Wl,-z,max-page-size=16384,-z,common-page-size=16384',
          EXP / 'userspace/gpu-test.c', '-o', out / 'gpu-test.elf'])
     programs.append(('/system/bin/gpu-test', out / 'gpu-test.elf'))
+    run([ndk / 'toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android35-clang',
+         '-shared', '-fPIC', '-ffixed-x18', '-O2', '-Wall', '-Wextra', '-Werror',
+         '-Wl,-z,max-page-size=16384,-z,common-page-size=16384',
+         EXP / 'graphics/guest-pipe.c', '-o', out / 'libnce-qemupipe.so'])
+    programs.append(('/system/lib64/libnce-qemupipe.so', out / 'libnce-qemupipe.so'))
+    run([ndk / 'toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android35-clang',
+         '-ffixed-x18', '-mno-outline-atomics', '-g', '-O2', '-Wall', '-Wextra', '-Werror',
+         '-Wl,-z,max-page-size=16384,-z,common-page-size=16384',
+         EXP / 'userspace/egl-test.c', '-lEGL', '-lGLESv2', '-o', out / 'egl-test.elf'])
+    programs.append(('/system/bin/egl-test', out / 'egl-test.elf'))
+    run([ndk / 'toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android35-clang',
+         '-ffixed-x18', '-mno-outline-atomics', '-O2', '-g', '-Wall', '-Wextra', '-Werror',
+         '-Wl,-z,max-page-size=16384,-z,common-page-size=16384',
+         EXP / 'userspace/gralloc-test.c', '-landroid', '-lEGL', '-lGLESv2', '-o', out / 'gralloc-test.elf'])
+    programs.append(('/system/bin/gralloc-test', out / 'gralloc-test.elf'))
     programs.append(('/system/bin/secilc', WORK / 'android/android36/bin/secilc'))
     programs.append(('/system/bin/servicemanager', WORK / 'android/android36/bin/servicemanager'))
     programs.append(('/system/bin/aconfigd-system', WORK / 'android/android36/bin/aconfigd-system'))
@@ -681,7 +731,7 @@ def build(out, llvm):
         if cached and cached['sha256'] == digest:
             elf = dict(cached['layout'], data=data)
         else:
-            elf = inspect(path, shared=name.endswith('.so'), function_symbols=name.startswith(('/system/', '/apex/')) or name in ('/bionic-test', '/art-test', '/art-heap-test'))
+            elf = inspect(path, shared=name.endswith('.so'), function_symbols=name.startswith(('/system/', '/vendor/', '/apex/')) or name in ('/bionic-test', '/art-test', '/art-heap-test'))
             dis = elf_disassembly(llvm, path, elf)
             check_x18_disassembly(path, elf, dis)
             cache['files'][name] = {'sha256': digest, 'layout': {k: v for k, v in elf.items() if k != 'data'}}
@@ -697,7 +747,7 @@ def build(out, llvm):
         if name == '/worker' and sum(size for _, size in elf['segments']) <= 65536:
             raise RuntimeError('Large-text fixture did not exceed 64 KiB')
         position = len(payload)
-        system_image = name.startswith(('/system/', '/apex/'))
+        system_image = name.startswith(('/system/', '/vendor/', '/apex/'))
         if system_image:
             system_files.append((name, path))
         payload.extend(elf['data'][:elf['phoff'] + elf['phsize']] if system_image else elf['data'])

@@ -50,6 +50,11 @@
       "name": "binder_stability.h",
       "url": "https://android.googlesource.com/platform/frameworks/native/+/2827a4a16b0340ecd07c2d5a6c89991799b362bb/libs/binder/ndk/include_platform/android/binder_stability.h?format=TEXT",
       "sha256": "f62817c8812f73e006675cd3b9ba0293cfa1a36c14cfbe5ea8d38c9f27c0882a"
+    },
+    {
+      "name": "binder_shell.h",
+      "url": "https://android.googlesource.com/platform/frameworks/native/+/2827a4a16b0340ecd07c2d5a6c89991799b362bb/libs/binder/ndk/include_platform/android/binder_shell.h?format=TEXT",
+      "sha256": "9ad33163a5849625869264748224c425980b96581346de55602f8b89733d8821"
     }
   ],
   "property_service": {

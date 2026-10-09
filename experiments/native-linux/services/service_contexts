@@ -42,3 +42,5 @@ android.system.suspend.ISystemSuspend/default u:object_r:nce_service:s0
 android.hardware.power.IPower/default u:object_r:nce_service:s0
 SurfaceFlingerAIDL u:object_r:nce_service:s0
 android.hardware.light.ILights/default u:object_r:nce_service:s0
+android.hardware.graphics.allocator.IAllocator/default u:object_r:nce_service:s0
+mapper/ranchu u:object_r:nce_service:s0

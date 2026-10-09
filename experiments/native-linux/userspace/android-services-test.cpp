@@ -369,6 +369,16 @@ int main(int argc, char **argv)
     if (received != 1) { int status; CHECK(waitpid(service, &status, 0) == service); dprintf(2, "service failed status=%d\n", status); }
     CHECK(received == 1 && value == 'r' && close(ready[0]) == 0);
     puts("{\"test\":\"android_platform_servicemanager_registration\",\"passed\":true}");
+    if (access("/data/nce/graphics", F_OK) == 0) {
+        CHECK(__system_property_set("ro.hardware.gralloc", "ranchu") == 0);
+        pid_t graphics = fork();
+        CHECK(graphics >= 0);
+        if (!graphics) {
+            execl("/system/bin/gralloc-test", "gralloc-test", nullptr);
+            _exit(114);
+        }
+        wait_success(graphics);
+    }
     int apex_ready[2];
     CHECK(pipe(apex_ready) == 0);
     pid_t apex = fork();

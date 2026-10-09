@@ -1,0 +1,116 @@
+{
+  "cli": {
+    "named_tests": 101,
+    "graphics_tests": [
+      {
+        "test": "android_sdk_gles_shader_texture",
+        "passed": true,
+        "pixels": 4096
+      },
+      {
+        "test": "android_sdk_egl_shared_texture",
+        "passed": true
+      },
+      {
+        "test": "android_sdk_egl_driver_pixels",
+        "passed": true,
+        "pixels": 4096
+      },
+      {
+        "test": "native_graphics_channels_released",
+        "passed": true,
+        "opened": 18,
+        "closed": 18
+      },
+      {
+        "test": "android_gralloc_process_transfer",
+        "passed": true
+      },
+      {
+        "test": "android_gralloc_cpu_gpu_roundtrip",
+        "passed": true,
+        "width": 37,
+        "height": 23
+      }
+    ],
+    "result": {
+      "result": "passed"
+    }
+  },
+  "dispatch": {
+    "named_tests": 101,
+    "graphics_tests": [
+      {
+        "test": "android_sdk_gles_shader_texture",
+        "passed": true,
+        "pixels": 4096
+      },
+      {
+        "test": "android_sdk_egl_shared_texture",
+        "passed": true
+      },
+      {
+        "test": "android_sdk_egl_driver_pixels",
+        "passed": true,
+        "pixels": 4096
+      },
+      {
+        "test": "native_graphics_channels_released",
+        "passed": true,
+        "opened": 18,
+        "closed": 18
+      },
+      {
+        "test": "android_gralloc_process_transfer",
+        "passed": true
+      },
+      {
+        "test": "android_gralloc_cpu_gpu_roundtrip",
+        "passed": true,
+        "width": 37,
+        "height": 23
+      }
+    ],
+    "result": {
+      "result": "passed"
+    }
+  },
+  "window": {
+    "named_tests": 102,
+    "graphics_tests": [
+      {
+        "test": "android_sdk_gles_shader_texture",
+        "passed": true,
+        "pixels": 4096
+      },
+      {
+        "test": "android_sdk_egl_shared_texture",
+        "passed": true
+      },
+      {
+        "test": "android_sdk_egl_driver_pixels",
+        "passed": true,
+        "pixels": 4096
+      },
+      {
+        "test": "native_graphics_channels_released",
+        "passed": true,
+        "opened": 18,
+        "closed": 18
+      },
+      {
+        "test": "android_gralloc_process_transfer",
+        "passed": true
+      },
+      {
+        "test": "android_gralloc_cpu_gpu_roundtrip",
+        "passed": true,
+        "width": 37,
+        "height": 23
+      }
+    ],
+    "result": {
+      "result": "passed"
+    }
+  }
+}

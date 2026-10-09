@@ -1,0 +1,74 @@
+{
+  "archives": [
+    {
+      "name": "common-interfaces",
+      "repo": "platform/hardware/interfaces",
+      "revision": "5688f7eb1e117ed26e642a695de300b7683acb87",
+      "path": "common",
+      "tree_sha256": "482f44548cb9fcc68433a1524021f48260cc2c9aca14aacc5c4515e6e42ca9c7"
+    },
+    {
+      "name": "gfxstream-guest",
+      "repo": "platform/hardware/google/gfxstream",
+      "revision": "fc0dca02291e1d5ba1d2dad1d0b58b4f2ef255d0",
+      "path": "guest",
+      "tree_sha256": "15d7886bf67819a40a0c25740ba23b0abaf50e4dda8fb25e822b273eb93e44e7"
+    },
+    {
+      "name": "goldfish-debug",
+      "repo": "device/generic/goldfish",
+      "revision": "40f1fffd800a519f942320f2c265bb7abfa5681f",
+      "path": "libdebug",
+      "tree_sha256": "8f516cc252a584abe810422f81524c19a1a52e6341e841c7fd9cacf6fcd2da5d"
+    },
+    {
+      "name": "goldfish-hals",
+      "repo": "device/generic/goldfish",
+      "revision": "40f1fffd800a519f942320f2c265bb7abfa5681f",
+      "path": "hals",
+      "tree_sha256": "45dc1ebd89c4669234cee24bf544e9725df35071915170b36316eae1bce86f38"
+    },
+    {
+      "name": "graphics-interfaces",
+      "repo": "platform/hardware/interfaces",
+      "revision": "5688f7eb1e117ed26e642a695de300b7683acb87",
+      "path": "graphics",
+      "tree_sha256": "2cfe80de4e9ed3db5d1f4f22e91182189699f1be401bf0df68195f33c32c3920"
+    },
+    {
+      "name": "mesa-android",
+      "repo": "platform/external/mesa3d",
+      "revision": "1ab807486dbc8cd2a1bb6c10d2ebebc5e545faca",
+      "path": "src/gfxstream/guest/android",
+      "tree_sha256": "b4d7922084479dee67e9b05329fd6173beecaca18da27a7fd6eabca89fee919a"
+    },
+    {
+      "name": "mesa-iostream",
+      "repo": "platform/external/mesa3d",
+      "revision": "1ab807486dbc8cd2a1bb6c10d2ebebc5e545faca",
+      "path": "src/gfxstream/guest/iostream",
+      "tree_sha256": "6288f3e9cddfd79b7c8b2bcfbca0e906291f5bd25d9b7be45a151804fb53b4b3"
+    },
+    {
+      "name": "mesa-platform",
+      "repo": "platform/external/mesa3d",
+      "revision": "1ab807486dbc8cd2a1bb6c10d2ebebc5e545faca",
+      "path": "src/gfxstream/guest/platform",
+      "tree_sha256": "e69273fc92b2377fe42bed0e805c13aaf575755e698e8dd69432d35aaf44ed46"
+    },
+    {
+      "name": "cutils-include",
+      "repo": "platform/system/core",
+      "revision": "68be0c2c0006a0740d0b1809abe4717308f90d15",
+      "path": "libcutils/include",
+      "tree_sha256": "7938aa22890b2ce17ca3d4b8229f64018e5ecb783db621719469ac042694b620"
+    },
+    {
+      "name": "sync-include",
+      "repo": "platform/system/core",
+      "revision": "68be0c2c0006a0740d0b1809abe4717308f90d15",
+      "path": "libsync/include",
+      "tree_sha256": "a3e7e9e233474eb42c520cb55ca33a0c84e4cc3991382066ce3d17e6bbb38334"
+    }
+  ]
+}

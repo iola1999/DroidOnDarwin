@@ -145,6 +145,12 @@ static void draw_scene(u32 surface)
     COMMAND(OP_glViewport, 0, 0, NCE_GPU_WIDTH, NCE_GPU_HEIGHT);
     COMMAND(OP_rcCreateColorBuffer, NCE_GPU_WIDTH, NCE_GPU_HEIGHT, 0x1908);
     u32 color_buffer = response(); CHECK(color_buffer);
+    int reference = socket(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC, 0);
+    CHECK(reference >= 0);
+    struct sockaddr_un reference_address = {.sun_family = AF_UNIX, .sun_path = "/dev/nce-render"};
+    CHECK(connect(reference, (struct sockaddr *)&reference_address, sizeof(reference_address)) == 0);
+    write_all(reference, "pipe:refcount", sizeof("pipe:refcount"));
+    write_all(reference, &color_buffer, sizeof(color_buffer));
     COMMAND(OP_rcSetWindowColorBuffer, surface, color_buffer);
     double started = milliseconds();
     const u32 frames = 120;
@@ -188,6 +194,8 @@ static void draw_scene(u32 surface)
     COMMAND(OP_glDeleteShader, vertex); COMMAND(OP_glDeleteShader, fragment);
     COMMAND(OP_rcSetWindowColorBuffer, surface, 0);
     COMMAND(OP_rcCloseColorBuffer, color_buffer);
+    COMMAND(OP_glFinishRoundTrip); (void)response();
+    CHECK(close(reference) == 0);
     printf("{\"test\":\"linux_native_gles_shader_frames\",\"passed\":true,\"width\":%u,\"height\":%u,\"frames\":%u,\"draw_and_post_ms\":%.3f,\"ms_per_frame\":%.3f}\n",
            NCE_GPU_WIDTH, NCE_GPU_HEIGHT, frames, elapsed, elapsed / frames);
 }

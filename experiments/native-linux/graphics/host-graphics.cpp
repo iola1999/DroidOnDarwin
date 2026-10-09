@@ -18,6 +18,7 @@ static long listener = -1;
 static std::atomic<bool> stopping;
 static std::thread accept_thread;
 static unsigned opened, closed;
+static std::atomic<uint64_t> next_process{1};
 static void *display_window;
 
 void nce_graphics_set_window(void *layer)
@@ -38,13 +39,11 @@ struct Connection {
     std::thread reader;
     std::atomic<bool> done{false};
 
-    explicit Connection(long socket) : fd(socket), channel(renderer->createRenderChannel()) {
-        CHECK(channel);
+    explicit Connection(long socket) : fd(socket) {
         ++opened;
         reader = std::thread([this] { run(); });
     }
     ~Connection() {
-        channel->stop();
         call(210, fd, 2);
         reader.join();
         CHECK(call(57, fd) == 0);
@@ -68,7 +67,66 @@ struct Connection {
             }
         }
     }
+    bool transfer(void *data, size_t length, bool write) {
+        size_t offset = 0;
+        while (offset < length) {
+            long count = call(write ? 64 : 63, fd, (long)((char *)data + offset), length - offset);
+            if (count == -4) continue;
+            if (count <= 0) return false;
+            offset += count;
+        }
+        return true;
+    }
+    bool connect() {
+        char service[128] = {};
+        if (!transfer(service, 4, false)) return false;
+        bool raw = !memcmp(service, "\0\0\0\0", 4);
+        if (!raw) {
+            size_t size = 4;
+            while (size < sizeof(service) && service[size - 1]) {
+                if (!transfer(service + size, 1, false)) return false;
+                ++size;
+            }
+            if (service[size - 1]) return false;
+            if (!strcmp(service, "pipe:refcount")) {
+                uint32_t handle;
+                if (!transfer(&handle, sizeof(handle), false)) return false;
+                char byte;
+                long count;
+                do { count = call(63, fd, (long)&byte, 1); } while (count == -4);
+                library->getOnLastColorBufferRef()(handle);
+                return false;
+            }
+            if (!strcmp(service, "pipe:GLProcessPipe")) {
+                int confirmation;
+                if (!transfer(&confirmation, sizeof(confirmation), false) || confirmation != 100) return false;
+                uint64_t id = next_process.fetch_add(1);
+                renderer->onGuestGraphicsProcessCreate(id);
+                if (transfer(&id, sizeof(id), true)) {
+                    char byte;
+                    /* The descriptor lifetime owns this guest process's GL resources. */
+                    while (call(63, fd, (long)&byte, 1) == -4) {}
+                }
+                renderer->cleanupProcGLObjects(id);
+                return false;
+            }
+            if (strcmp(service, "pipe:opengles")) {
+                std::fprintf(stderr, "Unsupported graphics pipe: %s\n", service);
+                return false;
+            }
+        }
+        channel = renderer->createRenderChannel();
+        CHECK(channel);
+        if (raw) {
+            Channel::Buffer flags;
+            flags.resize(4);
+            memset(flags.data(), 0, 4);
+            CHECK(channel->tryWrite(std::move(flags)) == Channel::IoResult::Ok);
+        }
+        return true;
+    }
     void run() {
+        if (!connect()) { call(210, fd, 2); done.store(true); return; }
         std::thread writer([this] { output(); call(210, fd, 2); });
         for (;;) {
             Channel::Buffer packet;
@@ -103,6 +161,7 @@ int nce_graphics_start(long (*linux_syscall)(long, long *))
     gfxstream::host::FeatureSet features;
     features.Surfaceless.setEnabled(true);
     features.EglOnEgl.setEnabled(true);
+    features.RefCountPipe.setEnabled(true);
     renderer = library->initRenderer(NCE_GPU_WIDTH, NCE_GPU_HEIGHT, features, display_window != nullptr);
     CHECK(renderer);
     if (display_window) {

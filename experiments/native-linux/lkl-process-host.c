@@ -866,7 +866,11 @@ void nce_process_tests(long (*host_syscall)(long, long *), long (*guest_syscall)
     REQUIRE(strstr(benchmark, "linux_native_gles_metal"));
     REQUIRE(strstr(benchmark, "linux_native_gles_shader_frames"));
     fputs(benchmark, stdout);
-    nce_graphics_stop();
+    run_program(host_syscall, "/system/bin/egl-test", NULL);
+    REQUIRE(get_file(host_syscall, "/stdout", benchmark, sizeof(benchmark)) > 0);
+    REQUIRE(strstr(benchmark, "android_sdk_egl_driver_pixels"));
+    fputs(benchmark, stdout);
+    put_file(host_syscall, "/data/nce/graphics", "1", 1);
     const char *gpu_output = getenv("NCE_GPU_OUTPUT");
     if (gpu_output) {
         size_t capacity = NCE_GPU_WIDTH * NCE_GPU_HEIGHT * 4 + 55;
@@ -933,6 +937,10 @@ void nce_process_tests(long (*host_syscall)(long, long *), long (*guest_syscall)
     REQUIRE(strstr(benchmark, getenv("NCE_SYSTEM_SERVER_PROBE") ?
                    "android_system_server_services" : "android_zygote_command_server"));
     REQUIRE(strstr(benchmark, "android_framework_graphics\",\"passed\":true"));
+#ifdef NCE_GRAPHICS
+    REQUIRE(strstr(benchmark, "android_gralloc_cpu_gpu_roundtrip\",\"passed\":true"));
+    nce_graphics_stop();
+#endif
     REQUIRE(strstr(benchmark, "android_crypto"));
     fputs(benchmark, stdout);
     memory_report(host_syscall, "after_framework");

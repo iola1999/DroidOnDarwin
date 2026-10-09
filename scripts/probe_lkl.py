@@ -305,9 +305,11 @@ def main():
                     *sorted(EXPERIMENT.glob("lkl-*.h")),
                     *sorted(EXPERIMENT.glob("lkl-nce-*.c")), EXPERIMENT / "exec-guest.S", EXPERIMENT / "programs.h",
                     Path(__file__).with_name("build_nce_userspace.py"), EXPERIMENT / "dispatch-test.c", EXPERIMENT / "host-context-test.c",
-                    Path(__file__).with_name("prepare_android_runtime.py"), Path(__file__).with_name("prepare_android_modules.py"), Path(__file__).with_name("build_android_linker.py"),
+                    Path(__file__).with_name("prepare_android_runtime.py"), Path(__file__).with_name("prepare_android_modules.py"),
+                    Path(__file__).with_name("prepare_android_desktop.py"), Path(__file__).with_name("build_android_linker.py"),
                     Path(__file__).with_name("build_android_libc.py"), Path(__file__).with_name("build_android_art.py"),
-                    Path(__file__).with_name("build_android_crypto.py"),
+                    Path(__file__).with_name("build_android_crypto.py"), Path(__file__).with_name("build_android_gralloc.py"),
+                    ROOT / "patches/nce-gralloc-memfd.patch",
                     EXPERIMENT / "android-sources.json", *sorted((EXPERIMENT / "art").glob("*")),
                     *sorted((EXPERIMENT / "userspace").glob("*")), *sorted(p for p in (EXPERIMENT / "services").rglob("*") if p.is_file()),
                     *sorted(p for p in (EXPERIMENT / "graphics").rglob("*") if p.is_file())]
@@ -318,7 +320,7 @@ def main():
         manifest["generated_sha256"] = {name: hashlib.sha256((OUT / name).read_bytes()).hexdigest()
                                         for name in ["system.img", "storage-seed.img", "storage-test.elf", "program-images.h", "user-scripts.h", "payload.S", "payload.bin", "lkl-image.h", "lkl-host-ops.h", "guest-image.h",
                                                      "exec-guest.elf", "sigreturn.elf", "init.elf", "worker.elf", "mm-bench.elf", "dash.elf",
-                                                     "libc.so", "dependency.so", "plugin.so", "dynamic.elf", "binder-test.elf", "gpu-test.elf", "bionic-test.elf", "art-test.elf", "art-heap-test.elf", "android-services-test.elf"]}
+                                                     "libc.so", "dependency.so", "plugin.so", "dynamic.elf", "binder-test.elf", "gpu-test.elf", "egl-test.elf", "gralloc-test.elf", "libnce-qemupipe.so", "bionic-test.elf", "art-test.elf", "art-heap-test.elf", "android-services-test.elf"]}
         android = ROOT / "work/native-linux-nce/android"
         manifest["android_builds"] = {name: json.loads((android / name / "manifest.json").read_text())
                                       for name in ("linker-build", "libc-build", "art-build", "crypto-build")}
@@ -326,6 +328,9 @@ def main():
             (android / "android36-runtime.json").read_bytes()).hexdigest()
         manifest["android_modules_manifest_sha256"] = hashlib.sha256(
             (android / "android36-modules/manifest.json").read_bytes()).hexdigest()
+        manifest["android_desktop_manifest_sha256"] = hashlib.sha256(
+            (android / "android36-desktop/manifest.json").read_bytes()).hexdigest()
+        manifest["android_gralloc_build"] = json.loads((ROOT / "work/native-linux-nce/gralloc-build/manifest.json").read_text())
     changed = [str(p.relative_to(ROOT)) for p in sources if p.stat().st_mtime_ns > started_ns]
     if changed:
         raise SystemExit("Build inputs changed during validation; rerun: " + ", ".join(changed))
