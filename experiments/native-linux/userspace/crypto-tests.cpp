@@ -3,6 +3,9 @@
 #include <openssl/crypto.h>
 #include <openssl/sha.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <sys/auxv.h>
+#include <time.h>
 #include <string.h>
 #include <unistd.h>
 
@@ -36,6 +39,26 @@ void nce_crypto_tests()
     sealed[sizeof(sealed) - 1] ^= 1;
     CHECK(EVP_AEAD_CTX_open(ctx, opened, &opened_size, sizeof(opened), nonce, sizeof(nonce),
                           sealed, sealed_size, nullptr, 0) == 0);
+    const size_t bytes = 1024 * 1024;
+    unsigned char *input = static_cast<unsigned char *>(calloc(bytes, 1));
+    unsigned char *output = static_cast<unsigned char *>(malloc(bytes + 16));
+    unsigned char *roundtrip = static_cast<unsigned char *>(malloc(bytes));
+    CHECK(input && output && roundtrip);
+    timespec start, finish;
+    CHECK(clock_gettime(CLOCK_MONOTONIC, &start) == 0);
+    for (unsigned i = 0; i < 64; ++i) {
+        nonce[0] = i;
+        CHECK(EVP_AEAD_CTX_seal(ctx, output, &sealed_size, bytes + 16, nonce, sizeof(nonce),
+                              input, bytes, nullptr, 0) == 1 && sealed_size == bytes + 16);
+    }
+    CHECK(clock_gettime(CLOCK_MONOTONIC, &finish) == 0);
+    CHECK(EVP_AEAD_CTX_open(ctx, roundtrip, &opened_size, bytes, nonce, sizeof(nonce),
+                          output, sealed_size, nullptr, 0) == 1);
+    CHECK(opened_size == bytes && !memcmp(input, roundtrip, bytes));
+    double elapsed = (finish.tv_sec - start.tv_sec) * 1000.0 + (finish.tv_nsec - start.tv_nsec) / 1e6;
+    printf("{\"benchmark\":\"android_aes_gcm\",\"hwcap\":%lu,\"bytes\":%zu,\"elapsed_ms\":%.3f}\n",
+           getauxval(AT_HWCAP), bytes * 64, elapsed);
+    free(roundtrip); free(output); free(input);
     EVP_AEAD_CTX_free(ctx);
     puts("{\"test\":\"android_crypto\",\"passed\":true,\"fips\":false,\"known_answers\":true,\"reject_bad_tag\":true}");
 }

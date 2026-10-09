@@ -16,6 +16,7 @@ void nce_compute_benchmark(void);
 #include <stdlib.h>
 #include <string.h>
 #include <sys/mman.h>
+#include <sys/sysctl.h>
 #include <time.h>
 
 #define REQUIRE(c) do { if (!(c)) { fprintf(stderr, "FAIL %s:%d: %s\n", __FILE__, __LINE__, #c); abort(); } } while (0)
@@ -125,6 +126,30 @@ void nce_process_tests(long (*)(long, long *), long (*)(long, long *), int (*)(u
                        void (*)(long, long, unsigned long), void (*)(unsigned long, int), void (*)(void));
 #endif
 
+#ifdef NCE_PROCESS
+static unsigned long host_hwcap(void)
+{
+    /* FP and ASIMD use the register state already saved by the NCE entry code.
+     * Advertise optional instructions only when Darwin reports support. */
+    unsigned long result = 3;
+    const struct { const char *name; unsigned bit; } features[] = {
+        {"AES", 3}, {"PMULL", 4}, {"SHA1", 5}, {"SHA256", 6}, {"CRC32", 7}, {"LSE", 8},
+    };
+    if (!getenv("NCE_DISABLE_CPU_EXTENSIONS")) {
+        for (size_t i = 0; i < sizeof(features) / sizeof(features[0]); ++i) {
+            char key[80];
+            snprintf(key, sizeof(key), "hw.optional.arm.FEAT_%s", features[i].name);
+            int available = 0;
+            size_t size = sizeof(available);
+            if (sysctlbyname(key, &available, &size, NULL, 0) == 0 && available == 1)
+                result |= 1UL << features[i].bit;
+        }
+    }
+    printf("{\"cpu\":\"aarch64\",\"hwcap\":%lu}\n", result);
+    return result;
+}
+#endif
+
 int nce_lkl_run(const char *image_path)
 {
     setvbuf(stdout, NULL, _IOLBF, 0);
@@ -156,7 +181,7 @@ int nce_lkl_run(const char *image_path)
     void (*cleanup)(void) = (void *)(kernel.rx + LKL_CLEANUP);
     kernel_syscall = (void *)(kernel.rx + LKL_SYSCALL);
     #ifdef NCE_PROCESS
-    void (*set_layout)(unsigned long, unsigned long, unsigned long *) = (void *)(kernel.rx + NCE_SET_LAYOUT);
+    void (*set_layout)(unsigned long, unsigned long, unsigned long *, unsigned long) = (void *)(kernel.rx + NCE_SET_LAYOUT);
     unsigned long *views = calloc(2 * NCE_USER_SIZE / NCE_PAGE_SIZE, sizeof(*views));
     REQUIRE(views);
     const char *mode = getenv("NCE_MM_MODE");
@@ -164,7 +189,7 @@ int nce_lkl_run(const char *image_path)
     REQUIRE(!strcmp(mode, "full") || !strcmp(mode, "diff") || !strcmp(mode, "lazy"));
     unsigned long mapping_mode = !strcmp(mode, "full") ? NCE_MM_FULL : !strcmp(mode, "diff") ? NCE_MM_DIFF : NCE_MM_LAZY;
     printf("{\"phase\":\"linux_mapping_policy\",\"mode\":\"%s\"}\n", mode);
-    set_layout(nce_process_setup(), mapping_mode, views);
+    set_layout(nce_process_setup(), mapping_mode, views, host_hwcap());
     #endif
     puts("{\"phase\":\"linux_init\"}");
     REQUIRE(nce_disk_open(0, getenv("NCE_STORAGE_IMAGE")) == 0);

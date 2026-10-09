@@ -6,15 +6,16 @@
 #include <asm/host_ops.h>
 #include <asm/nce-layout.h>
 
-unsigned long nce_user_base, nce_task_size, nce_memory_start;
+unsigned long nce_user_base, nce_task_size, nce_memory_start, nce_elf_hwcap;
 static unsigned long mapping_mode;
 static unsigned long *installed, *desired;
 #define VIEW_CHUNK_PAGES 64
 #define VIEW_CHUNKS (NCE_USER_SIZE / PAGE_SIZE / VIEW_CHUNK_PAGES)
 static DECLARE_BITMAP(view_chunks, VIEW_CHUNKS);
 
-void nce_set_layout(unsigned long base, unsigned long mode, unsigned long *views)
+void nce_set_layout(unsigned long base, unsigned long mode, unsigned long *views, unsigned long hwcap)
 {
+    nce_elf_hwcap = hwcap;
     mapping_mode = mode;
     nce_user_base = base;
     nce_task_size = base + NCE_USER_SIZE;

@@ -21,7 +21,12 @@ unsigned long nce_elf_file_layout(struct file *, const struct elf64_hdr *, const
 #define ELF_ARCH EM_AARCH64
 #define ELF_EXEC_PAGESIZE PAGE_SIZE
 #define ELF_PLATFORM "aarch64"
+#ifdef CONFIG_MMU
+extern unsigned long nce_elf_hwcap;
+#define ELF_HWCAP nce_elf_hwcap
+#else
 #define ELF_HWCAP 0L
+#endif
 #define ELF_ET_DYN_BASE nce_user_base
 #define elf_gregset_t long
 #define elf_fpregset_t double

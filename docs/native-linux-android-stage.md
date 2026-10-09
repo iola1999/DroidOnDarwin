@@ -824,3 +824,19 @@ mremap 覆盖该范围。回归增加实际覆盖请求，并将动态链接测�
 CLI、GCD、3 轮进程压力、14 项 ELF 检查与 iOS 目标编译通过，日志为
 `work/native-linux-nce/elf-stubs-probe.log`。布局信息继续由原 ELF 清单保存，
 宿主和 Linux 通过一个范围检查回调共享保留区判断。
+
+## CPU 指令扩展传递（2026-10-09）
+
+Linux 的 AT_HWCAP 现由宿主实际支持的指令扩展生成。FP/ASIMD 使用已有的
+寄存器保存与恢复；AES、PMULL、SHA1、SHA256、CRC32、LSE 分别查询 Darwin
+sysctl，查询失败时保留关闭状态。需要额外寄存器状态或 Linux 控制接口的
+扩展仍未加入。
+
+AES-GCM 增加 64 MiB 加密计时和解密校验，原有已知答案、错误认证标签检查
+继续执行。同一构建在本机关闭可选扩展时为 184.358 ms，启用后首次测得
+8.859 ms。此项约为 20.8 倍；该数字只描述本机 AES-GCM 测试，尚无手机整体
+性能结果。对照命令使用 `NCE_DISABLE_CPU_EXTENSIONS=1`。
+
+默认指令扩展配置完成 CLI、GCD、3 轮进程压力、14 项 ELF 检查和 iOS 目标
+编译。日志为 `work/native-linux-nce/cpu-features-probe.log`；关闭扩展的完整
+CLI 回归记录在 `work/native-linux-nce/cpu-baseline-results.jsonl`。
