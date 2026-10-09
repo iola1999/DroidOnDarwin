@@ -729,6 +729,7 @@ static void *stream_guest_log(void *opaque)
         REQUIRE(count >= 0);
         if (count) {
             REQUIRE(fwrite(buffer, 1, count, stderr) == (size_t)count);
+            REQUIRE(fflush(stderr) == 0);
             offset += count;
             continue;
         }
@@ -1135,6 +1136,11 @@ void nce_process_tests(long (*host_syscall)(long, long *), long (*guest_syscall)
     REQUIRE(strstr(benchmark, "android_apex_registry"));
     REQUIRE(strstr(benchmark, getenv("NCE_SYSTEM_SERVER_PROBE") ?
                    "android_system_server_services" : "android_zygote_command_server"));
+    if (getenv("NCE_SYSTEM_SERVER_PROBE")) {
+        REQUIRE(strstr(benchmark, "android_system_boot_completed"));
+        REQUIRE(strstr(benchmark, "android_desktop_launch_commands"));
+        REQUIRE(strstr(benchmark, "android_system_process_groups_stopped"));
+    }
     REQUIRE(strstr(benchmark, "android_framework_graphics\",\"passed\":true"));
 #ifdef NCE_GRAPHICS
     REQUIRE(strstr(benchmark, "android_gralloc_cpu_gpu_roundtrip\",\"passed\":true"));
@@ -1151,6 +1157,22 @@ void nce_process_tests(long (*host_syscall)(long, long *), long (*guest_syscall)
         FILE *graphics = fopen(graphics_path, "wb");
         REQUIRE(graphics && fwrite(benchmark, 1, bytes, graphics) == (size_t)bytes);
         REQUIRE(fclose(graphics) == 0);
+        if (getenv("NCE_SYSTEM_SERVER_PROBE")) {
+            const char *names[] = {"launcher", "clock", "files"};
+            size_t capacity = 2 * 1024 * 1024;
+            char *pixels = malloc(capacity);
+            REQUIRE(pixels);
+            for (unsigned i = 0; i < 3; ++i) {
+                char guest[128], host[1024];
+                snprintf(guest, sizeof(guest), "/data/nce/desktop-%s.png", names[i]);
+                REQUIRE(snprintf(host, sizeof(host), "%s.%s.png", graphics_path, names[i]) < (int)sizeof(host));
+                long size = get_file(host_syscall, guest, pixels, capacity);
+                REQUIRE(size > 8 && size < (long)capacity - 1 && !memcmp(pixels, "\x89PNG\r\n\x1a\n", 8));
+                FILE *image = fopen(host, "wb");
+                REQUIRE(image && fwrite(pixels, 1, size, image) == (size_t)size && fclose(image) == 0);
+            }
+            free(pixels);
+        }
     }
     check_program_files(host_syscall);
     reclaim_file_cache(host_syscall);

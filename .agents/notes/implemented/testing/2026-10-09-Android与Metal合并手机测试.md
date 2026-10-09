@@ -1,4 +1,16 @@
-# N4-G1 原生 Linux、Android 与 Metal 合并测试
+# 决策记录: Android 与 Metal 合并手机测试
+
+状态: implemented
+
+## 问题
+
+提供 N4-G1 合并包的安装、回归范围与结果说明。
+
+## 决策
+
+保留实际构建、签名及设备结果；后续交付时按新包内容同步维护。
+
+### 原有记录：N4-G1 原生 Linux、Android 与 Metal 合并测试
 
 日期：2026-10-09。适用设备：当前 iPhone 17 / iOS 27.2。
 
@@ -7,7 +19,7 @@
 当前界面显示 Metal GPU 画面，并执行已有 Canvas、ART 和系统服务回归。
 完整 Android 桌面仍待实现。
 
-## 安装包
+### 安装包
 
 ```text
 /Users/fan/project/app/husk_hyos/work/native-linux-nce/ios/Husk-NativeLinux-N4-G1.ipa
@@ -22,8 +34,8 @@ e4d5846d46bfd12df38aa6d38e79d485be258987d22eead7424b68b11bb2e644
 
 CLI/GCD/可见窗口回归、ELF 检查、iOS 构建、归档与签名完整性检查均已通过。
 完整构建记录保存在同目录的 `package.json`。本轮真机已通过全部 102 个
-命名测试，最终结果为 `passed`；见 [真机结果](../experiments/native-linux/results-ios-n4-g1.json)。
-本机测试摘要见 [N4-G1 结果](../experiments/native-linux/results-macos-n4-g1.json)。
+命名测试，最终结果为 `passed`；见 [真机结果](../../../../experiments/native-linux/results-ios-n4-g1.json)。
+本机测试摘要见 [N4-G1 结果](../../../../experiments/native-linux/results-macos-n4-g1.json)。
 N3-S3 在手机上申请约 16.58 GiB 连续虚拟地址失败。此包将总预留缩至约
 4.58 GiB，并调整 Scudo、ART 对象堆及 CFI 检查表。N3-S4 手机已通过预留，
 但 JIT 准备工具截断高地址，执行时卡住。N3-S5 修复完整地址传递、每页回复
@@ -31,7 +43,7 @@ N3-S3 在手机上申请约 16.58 GiB 连续虚拟地址失败。此包将总预
 `passed`。S6 调整日志界面：后台增量读取、只显示最近 80 行、结束后停止刷新。
 日志读取的 5 组回归及 iOS 构建通过，用户已确认 S6 页面滚动恢复流畅。
 
-## 操作
+### 操作
 
 1. 在 iLoader 中导入 IPA，沿用当前账号覆盖安装，保留 JIT Helper 扩展。
 2. 在手机上连接 LocalDevVPN，打开 Husk NCE，确认构建编号以 N4-G1 开头。
@@ -48,7 +60,7 @@ N4-G1 沿用 S6 的增量日志预览。GPU 视图固定在列表上方，滚动
 ART 单进程检查设有 90 秒期限，Framework 与基础服务阶段设有 60 秒期限。
 若长时间停在同一阶段，保留日志即可，无需反复运行。
 
-## 覆盖范围
+### 覆盖范围
 
 | 检查 | 本包包含的行为 |
 | --- | --- |
@@ -83,7 +95,7 @@ MarkSweep/RosAlloc，堆地址预留上限为 1 GiB，每个 ART 实例的代码
 CFI 检查表占约 8 MiB，覆盖 1 TiB 以下的宿主地址；启动前校验客体范围。
 Linux 用户态压力检查固定为 3 轮，包含 24 次命令与 168 个 pthread。
 
-## 结果与边界
+### 结果与边界
 
 Mac 的 CLI、GCD 与可见窗口分别通过 101、102、102 个命名测试，另有
 15 项 ELF 检查。宿主渲染器还通过 202 个上下文、100 组并发颜色检查。
@@ -103,4 +115,12 @@ allocator/mapper 与 Composer 尚未接入。Mac 简单三角形的耗时只能�
 已有本机局部对照包含 AES-GCM 指令扩展、ART 解释/JIT、关闭/启用方法内联。
 这些结果用于检查对应实现；完整 Android 的启动速度、交互和发热需要在
 系统功能完成后测量。实现记录与后续工作见
-[Android 用户态阶段记录](native-linux-android-stage.md)。
+[Android 用户态阶段记录](../architecture/2026-10-09-Android用户态与Metal阶段记录.md)。
+
+## 曾考虑的替代方案
+
+通过合并产物集中检查运行时和图形，避免单独模块反复占用用户测试时间。
+
+## 影响
+
+通过底层与图形回归后，完整桌面、应用和持续运行仍按方案 A 单独验收。

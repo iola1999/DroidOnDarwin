@@ -204,7 +204,8 @@ void nce_framework_test()
     CHECK(WIFEXITED(status) && WEXITSTATUS(status) == 0);
 }
 
-static int control_socket(const char *name, int type = SOCK_STREAM, gid_t group = 1000)
+static int control_socket(const char *name, int type = SOCK_STREAM, gid_t group = 1000,
+                          uid_t owner = 0, mode_t mode = 0660)
 {
     int fd = socket(AF_UNIX, type, 0);
     CHECK(fd >= 0);
@@ -212,16 +213,16 @@ static int control_socket(const char *name, int type = SOCK_STREAM, gid_t group 
     address.sun_family = AF_UNIX;
     CHECK(snprintf(address.sun_path, sizeof(address.sun_path), "/dev/socket/%s", name) > 0);
     CHECK(bind(fd, reinterpret_cast<sockaddr *>(&address), sizeof(address)) == 0);
-    CHECK(chown(address.sun_path, 0, group) == 0 && chmod(address.sun_path, 0660) == 0);
-    if (type == SOCK_SEQPACKET) {
+    CHECK(chown(address.sun_path, owner, group) == 0 && chmod(address.sun_path, mode) == 0);
+    if (type == SOCK_SEQPACKET || type == SOCK_DGRAM) {
         int passcred = 1;
         CHECK(setsockopt(fd, SOL_SOCKET, SO_PASSCRED, &passcred, sizeof(passcred)) == 0);
     }
-    CHECK(listen(fd, 8) == 0);
+    if (type != SOCK_DGRAM) CHECK(listen(fd, 8) == 0);
     return fd;
 }
 
-void nce_surface_test()
+static void surface_check(const char *package = nullptr, const char *png = nullptr)
 {
     pid_t child = fork();
     CHECK(child >= 0);
@@ -234,13 +235,18 @@ void nce_surface_test()
         CHECK(snprintf(classpath, sizeof(classpath), "/system/framework/nce-framework.jar:%s", getenv("SYSTEMSERVERCLASSPATH")) < static_cast<int>(sizeof(classpath)));
         CHECK(setenv("CLASSPATH", classpath, 1) == 0);
         execl("/system/bin/app_process64", "app_process64", "-Djava.library.path=/system/lib64",
-              "/system/bin", "NceSurface", nullptr);
+              "/system/bin", "NceSurface", package, png, nullptr);
         _exit(108);
     }
     int status;
     CHECK(waitpid(child, &status, 0) == child);
     if (status) dprintf(2, "surface-test child=%d status=%d\n", child, status);
     CHECK(WIFEXITED(status) && WEXITSTATUS(status) == 0);
+}
+
+void nce_surface_test()
+{
+    surface_check();
 }
 
 static void receive_bytes(int fd, void *buffer, size_t size)
@@ -270,6 +276,34 @@ static void wait_system_service(pid_t child, const char *name)
     }
     dprintf(2, "pid=%d did not publish %s\n", child, name);
     CHECK(false);
+}
+
+static void android_command(std::initializer_list<const char *> arguments,
+                            const char *expected = nullptr)
+{
+    int output = open("/data/nce/command-output", O_RDWR | O_CREAT | O_TRUNC | O_CLOEXEC, 0600);
+    CHECK(output >= 0);
+    pid_t child = fork();
+    CHECK(child >= 0);
+    if (!child) {
+        runtime_environment();
+        CHECK(dup2(output, STDOUT_FILENO) == STDOUT_FILENO && close(output) == 0);
+        char *argv[24] = {const_cast<char *>("cmd")};
+        CHECK(arguments.size() < 23);
+        unsigned index = 1;
+        for (const char *argument : arguments) argv[index++] = const_cast<char *>(argument);
+        execv("/system/bin/cmd", argv);
+        _exit(108);
+    }
+    int status;
+    CHECK(waitpid(child, &status, 0) == child);
+    char text[8192] = {};
+    ssize_t count = pread(output, text, sizeof(text) - 1, 0);
+    CHECK(count >= 0 && count < static_cast<ssize_t>(sizeof(text) - 1) && close(output) == 0);
+    dprintf(2, "Android cmd");
+    for (const char *argument : arguments) dprintf(2, " %s", argument);
+    dprintf(2, " status=%d\n%s", status, text);
+    CHECK(status == 0 && (!expected || strstr(text, expected)));
 }
 
 static void stop_process_group(pid_t leader)
@@ -313,14 +347,15 @@ pid_t nce_start_system_service(const char *path, const char *name, uid_t uid,
 }
 
 static pid_t start_socket_service(const char *path, const char *service,
-                                  std::initializer_list<const char *> names, int type)
+                                  std::initializer_list<const char *> names, int type,
+                                  uid_t uid = 0, mode_t mode = 0660)
 {
     int descriptors[8];
     CHECK(names.size() <= 8);
     unsigned count = 0;
     for (const char *name : names)
         descriptors[count++] = control_socket(name, type,
-            !strcmp(name, "dnsproxyd") || !strcmp(name, "fwmarkd") ? 3003 : 1000);
+            !strcmp(name, "dnsproxyd") || !strcmp(name, "fwmarkd") ? 3003 : (uid ? uid : 1000), uid, mode);
     pid_t child = fork();
     CHECK(child >= 0);
     if (!child) {
@@ -333,6 +368,7 @@ static pid_t start_socket_service(const char *path, const char *service,
             snprintf(value, sizeof(value), "%d", descriptors[i++]);
             CHECK(setenv(key, value, 1) == 0);
         }
+        CHECK(setgid(uid) == 0 && setuid(uid) == 0);
         execl(path, path, nullptr);
         _exit(108);
     }
@@ -373,8 +409,9 @@ static void dump_threads()
 void nce_zygote_test()
 {
     bool system_server = access("/data/nce/system-server-probe", F_OK) == 0;
-    pid_t idmap = -1, health = -1, vold = -1, storaged = -1, artd = -1, netd = -1, lmkd = -1;
-    pid_t audio = -1, metrics = -1, audio_hal = -1, allocator = -1;
+    pid_t health = -1, vold = -1, storaged = -1, artd = -1, netd = -1, lmkd = -1;
+    pid_t audio = -1, metrics = -1, audio_hal = -1, allocator = -1, media = -1;
+    pid_t gatekeeper = -1, gatekeeper_hal = -1, stats = -1;
     AIBinder *artd_reference = nullptr;
     void *setup = dlopen("libprocessgroup_setup.so", RTLD_NOW);
     CHECK(setup);
@@ -409,7 +446,10 @@ void nce_zygote_test()
             {"/data/misc/storaged", 0700, 0},
             {"/data/misc/net", 0750, 0},
             {"/data/misc/audioserver", 0700, 1041}, {"/dev/socket/audioserver", 0775, 1041},
-            {"/data/misc/media", 0770, 1013},
+            {"/data/misc/media", 0770, 1013}, {"/data/misc/gatekeeper", 0700, 1000},
+            {"/data/misc/stats-active-metric", 0770, 1066}, {"/data/misc/stats-data", 0770, 1066},
+            {"/data/misc/stats-data/restricted-data", 0770, 1066}, {"/data/misc/stats-metadata", 0770, 1066},
+            {"/data/misc/stats-service", 0770, 1066}, {"/data/misc/train-info", 0770, 1066},
         };
         for (const auto &directory : directories) {
             CHECK(mkdir(directory.path, directory.mode) == 0 || errno == EEXIST);
@@ -420,7 +460,6 @@ void nce_zygote_test()
         CHECK(__system_property_set("ro.hardware", "nce") == 0);
         CHECK(__system_property_set("ro.boot.hardware", "nce") == 0);
         CHECK(__system_property_set("ro.crypto.state", "unencrypted") == 0);
-        idmap = nce_start_system_service("/system/bin/idmap2d", "idmap", 1000, {});
         health = nce_start_system_service("/vendor/bin/hw/android.hardware.health-service.example",
                                       "android.hardware.health.IHealth/default", 1000, {});
         // vold requires the helper process contexts supplied by Android init.
@@ -458,8 +497,15 @@ void nce_zygote_test()
         allocator = nce_start_system_service("/system_ext/bin/hw/android.hidl.allocator@1.0-service", nullptr, 1000, {});
         audio_hal = nce_start_system_service("/vendor/bin/hw/android.hardware.audio.service", nullptr, 1041, {});
         metrics = nce_start_system_service("/system/bin/mediametrics", "media.metrics", 1013, {});
-        audio = nce_start_system_service("/system/bin/audioserver", "media.audio_flinger", 1041, {});
-        wait_system_service(audio, "media.audio_policy");
+        stats = start_socket_service("/apex/com.android.os.statsd/bin/statsd", "stats", {"statsdw"}, SOCK_DGRAM, 1066, 0222);
+        gatekeeper_hal = nce_start_system_service("/vendor/bin/hw/android.hardware.gatekeeper-service.nonsecure",
+                                                  "android.hardware.gatekeeper.IGatekeeper/default", 1000, {});
+        gatekeeper = nce_start_system_service("/system/bin/gatekeeperd",
+                                             "android.service.gatekeeper.IGateKeeperService", 1000,
+                                             {"/data/misc/gatekeeper"});
+        // AudioPolicy initialization waits for ActivityManager from system_server.
+        audio = nce_start_system_service("/system/bin/audioserver", nullptr, 1041, {});
+        media = nce_start_system_service("/system/bin/mediaserver", nullptr, 1013, {});
     }
     CHECK(mkdir("/data/nce/zygote", 0777) == 0 && chmod("/data/nce/zygote", 0777) == 0);
     int command = control_socket("zygote");
@@ -493,6 +539,11 @@ void nce_zygote_test()
         for (unsigned i = 0; i < 2400; ++i) {
             int status;
             CHECK(waitpid(zygote, &status, WNOHANG) == 0);
+            for (pid_t service : {audio, audio_hal, metrics, allocator, stats, media}) {
+                pid_t exited = waitpid(service, &status, WNOHANG);
+                if (exited == service) dprintf(2, "Android daemon pid=%d exited status=%d\n", service, status);
+                CHECK(exited == 0);
+            }
             AIBinder *activity = AServiceManager_checkService("activity");
             AIBinder *package = AServiceManager_checkService("package");
             AIBinder *window = AServiceManager_checkService("window");
@@ -509,16 +560,32 @@ void nce_zygote_test()
             if (ready && !services_reported) {
                 puts("{\"test\":\"android_system_server_services\",\"passed\":true}");
                 services_reported = true;
+                // This image starts directly into the desktop without a setup wizard.
+                android_command({"settings", "put", "global", "device_provisioned", "1"});
+                android_command({"settings", "put", "secure", "user_setup_complete", "1"});
             }
             char completed[PROP_VALUE_MAX] = {};
             __system_property_get("sys.boot_completed", completed);
             if (ready && !strcmp(completed, "1")) {
                 puts("{\"test\":\"android_system_boot_completed\",\"passed\":true}");
+                wait_system_service(audio, "media.audio_flinger");
+                wait_system_service(audio, "media.audio_policy");
+                android_command({"activity", "start-activity", "-W", "-a", "android.intent.action.MAIN",
+                                 "-c", "android.intent.category.HOME"}, "Status: ok");
+                surface_check("com.google.android.apps.nexuslauncher", "/data/nce/desktop-launcher.png");
+                android_command({"activity", "start-activity", "-W", "-n",
+                                 "com.google.android.deskclock/com.android.deskclock.DeskClock"}, "Status: ok");
+                surface_check("com.google.android.deskclock", "/data/nce/desktop-clock.png");
+                android_command({"activity", "start-activity", "-W", "-n",
+                                 "com.google.android.documentsui/com.android.documentsui.files.FilesActivity"}, "Status: ok");
+                surface_check("com.google.android.documentsui", "/data/nce/desktop-files.png");
+                puts("{\"test\":\"android_desktop_launch_commands\",\"passed\":true,\"applications\":2}");
                 stop_process_group(zygote);
                 AIBinder_decStrong(artd_reference);
-                for (pid_t service : {idmap, health, vold, storaged, artd, netd, lmkd, audio, metrics, audio_hal, allocator})
+                CHECK(__system_property_set("ctl.stop", "idmap2d") == 0);
+                for (pid_t service : {health, vold, storaged, artd, netd, lmkd, audio, metrics, audio_hal, allocator, gatekeeper, gatekeeper_hal, stats, media})
                     stop_process_group(service);
-                for (const char *socket : {"dnsproxyd", "mdns", "fwmarkd", "lmkd"}) {
+                for (const char *socket : {"dnsproxyd", "mdns", "fwmarkd", "lmkd", "statsdw"}) {
                     char path[64];
                     snprintf(path, sizeof(path), "/dev/socket/%s", socket);
                     CHECK(unlink(path) == 0);

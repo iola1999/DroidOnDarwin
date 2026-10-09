@@ -1,5 +1,8 @@
 # Husk
 
+开发前阅读 [AGENTS.md](AGENTS.md) 和[改动记录约定](.agents/notes/README.md)。
+当前完整系统开发进展见[轮次工作记录](.agents/notes/implemented/process/2026-10-07-轮次工作记录.md)。
+
 <p align="center">
   <a href="https://trendshift.io/repositories/233057?utm_source=trendshift-badge&amp;utm_medium=badge&amp;utm_campaign=badge-trendshift-233057" target="_blank" rel="noopener noreferrer">
     <img src="https://trendshift.io/api/badge/trendshift/repositories/233057/daily?language=Swift" alt="Leviidev/Husk | Trendshift" width="250" height="55"/>
@@ -17,7 +20,7 @@ Drop in an APK, tap it, and the Android app opens full-screen.
 Husk needs JIT, which on iOS takes an attached debugger. Use StikDebug, or
 Husk's built-in StikJIT helper (iOS 26+), which on iOS 27 can pair with your
 iPhone from Settings with no computer. The app walks you through it; see
-[docs/06-built-in-jit.md](docs/06-built-in-jit.md).
+[.agents/notes/implemented/process/2026-10-05-内置JIT与设备配对.md](.agents/notes/implemented/process/2026-10-05-内置JIT与设备配对.md).
 
 ## Builds
 
@@ -32,4 +35,4 @@ takes a couple of hours; after that they are cached.
 GPL-2.0-or-later. Husk links QEMU, which is GPLv2, so the shipped binary is a
 combined GPLv2 work and the full source is public. It cannot go on the App
 Store — both because of that and because it needs `get-task-allow` plus a
-debugger attaching at runtime. See [docs/01-licensing.md](docs/01-licensing.md).
+debugger attaching at runtime. See [.agents/notes/implemented/process/2026-09-11-许可与分发.md](.agents/notes/implemented/process/2026-09-11-许可与分发.md).

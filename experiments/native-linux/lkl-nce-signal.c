@@ -6,6 +6,8 @@
 #include <linux/uaccess.h>
 #include <asm/sigcontext.h>
 #include <asm/ucontext.h>
+#include <asm/cpu.h>
+#include <asm/syscalls.h>
 
 struct nce_sigframe {
     siginfo_t info;
@@ -141,6 +143,7 @@ void nce_user_fault(unsigned long address, int kind)
  * syscall. The saved x8 still belongs to the interrupted guest instruction. */
 void nce_user_preempt(void)
 {
+    if (lkl_cpu_has_waiters()) wakeup_idle_host_task();
     sys_sched_yield();
     nce_user_return(-1, 0, 0);
 }

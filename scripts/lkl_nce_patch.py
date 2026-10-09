@@ -14,6 +14,25 @@ def apply(source: Path, experiment: Path):
         path.write_text(text.replace(before, after))
 
     arch = "arch/lkl/"
+    # A busy guest must still admit host input and log reads. The idle host task
+    # supplies the existing context-switch boundary for handing off the CPU.
+    edit(arch + "include/asm/cpu.h", "void lkl_cpu_put(void);",
+         "void lkl_cpu_put(void);\nvoid lkl_cpu_put_idle(void);\nbool lkl_cpu_has_waiters(void);")
+    edit(arch + "kernel/cpu.c", "void lkl_cpu_put(void)\n{",
+         "static void cpu_put(bool idle_handoff)\n{")
+    edit(arch + "kernel/cpu.c", "!single_task_running() && cpu.count == 1)",
+         "!single_task_running() && cpu.count == 1 && !(idle_handoff && cpu.sleepers))")
+    edit(arch + "kernel/cpu.c", "int lkl_cpu_try_run_irq(int irq)",
+         "void lkl_cpu_put(void) { cpu_put(false); }\n"
+         "void lkl_cpu_put_idle(void) { cpu_put(true); }\n\n"
+         "bool lkl_cpu_has_waiters(void)\n{\n\tbool waiting;\n"
+         "\tlkl_ops->mutex_lock(cpu.lock);\n\twaiting = cpu.sleepers != 0;\n"
+         "\tlkl_ops->mutex_unlock(cpu.lock);\n\treturn waiting;\n}\n\n"
+         "int lkl_cpu_try_run_irq(int irq)")
+    edit(arch + "kernel/syscalls.c", "if (!need_resched() && idle_host_task)",
+         "if ((!need_resched() || lkl_cpu_has_waiters()) && idle_host_task)")
+    edit(arch + "kernel/syscalls.c", "\t\tlkl_cpu_put();\n\t\tlkl_ops->sem_down(ti->sched_sem);",
+         "\t\tlkl_cpu_put_idle();\n\t\tlkl_ops->sem_down(ti->sched_sem);")
     edit(arch + "Kconfig", "depends on !SMP && !COREDUMP && !SECCOMP && !UPROBES",
          "depends on !SMP && !COREDUMP && !UPROBES")
     edit(arch + "Kconfig", "\tselect GENERIC_ATOMIC64",

@@ -2,6 +2,7 @@
 """编译内置 Linux 程序，按 ELF 段与 AArch64 映射符号生成执行布局。"""
 import base64
 import hashlib
+import inspect as python_inspect
 import json
 import lzma
 from pathlib import Path
@@ -87,16 +88,18 @@ def android_dependencies(llvm, replacements, embedded=()):
     pending = ['libart.so', 'libjavacore.so', 'libopenjdk.so', 'libicu_jni.so',
                'libstats_jni.so', 'libjavacrypto.so', 'libartpalette-system.so', 'libbinder_ndk.so', 'libandroid.so',
                'libprocessgroup_setup.so', 'libframework-connectivity-tiramisu-jni.so', 'libandroid_servers.so',
-               'libalarm_jni.so', 'libbpf.so', 'libservice-connectivity.so',
+               'libalarm_jni.so', 'libbpf.so', 'libservice-connectivity.so', 'libmedia_jni.so', 'libsoundpool.so',
                'libframework-connectivity-jni.so',
                'libandroid_net_connectivity_com_android_net_module_util_jni.so']
     for name in ('servicemanager', 'app_process64', 'aconfigd-system', 'installd', 'idmap2', 'idmap2d',
                  'vold', 'storaged', 'cmd', 'dumpsys', 'netd', 'lmkd', 'bpfloader',
-                 'iptables', 'audioserver', 'mediametrics', 'hw/android.system.suspend-service'):
+                 'iptables', 'audioserver', 'mediaserver', 'mediametrics', 'gatekeeperd', 'hw/android.system.suspend-service'):
         pending += re.findall(r'Shared library: \[(.*?)\]',
                               subprocess.check_output([llvm / 'llvm-readelf', '-d', root / 'bin' / name], text=True))
     pending += re.findall(r'Shared library: \[(.*?)\]', subprocess.check_output(
         [llvm / 'llvm-readelf', '-d', root / 'com.android.art/bin/artd'], text=True))
+    pending += re.findall(r'Shared library: \[(.*?)\]', subprocess.check_output(
+        [llvm / 'llvm-readelf', '-d', root / 'com.android.os.statsd/bin/statsd'], text=True))
     pending += re.findall(r'Shared library: \[(.*?)\]', subprocess.check_output(
         [llvm / 'llvm-readelf', '-d', root / 'com.android.tethering/bin/for-system/clatd'], text=True))
     pending += re.findall(r'Shared library: \[(.*?)\]', subprocess.check_output(
@@ -121,6 +124,7 @@ def android_dependencies(llvm, replacements, embedded=()):
 
 def android_graphics_dependencies(llvm, programs):
     power = prepare_vendor_module('com.android.hardware.power')
+    gatekeeper = prepare_vendor_module('com.android.hardware.gatekeeper.nonsecure')
     system = WORK / 'android/android36/lib64'
     vendor = DESKTOP / 'vendor/lib64'
     provided = {Path(guest).name for guest, _ in programs if guest.endswith('.so')}
@@ -146,11 +150,15 @@ def android_graphics_dependencies(llvm, programs):
         binary = DESKTOP / 'system_ext/bin' / name
         replacements[binary.name] = binary
         pending.append((binary.name, '/system_ext/bin/' + name))
+    gatekeeper_binary = gatekeeper / 'bin/hw/android.hardware.gatekeeper-service.nonsecure'
+    replacements[gatekeeper_binary.name] = gatekeeper_binary
+    pending.append((gatekeeper_binary.name, '/vendor/bin/hw/' + gatekeeper_binary.name))
     audio = DESKTOP / 'vendor/bin/hw/android.hardware.audio.service'
     replacements[audio.name] = audio
     pending.append((audio.name, '/vendor/bin/hw/' + audio.name))
     for name in ('android.hardware.audio@7.1-impl.ranchu.so',
-                 'android.hardware.audio.effect@7.0-impl.so', 'audio.primary.default.so',
+                 'android.hardware.audio.effect@7.0-impl.so',
+                 'android.hardware.audio.legacy@7.1-impl.ranchu.so', 'audio.primary.default.so',
                  'audio.r_submix.default.so'):
         replacements[name] = vendor / 'hw' / name
         pending.append((name, '/vendor/lib64/hw/' + name))
@@ -160,7 +168,7 @@ def android_graphics_dependencies(llvm, programs):
         name, guest = pending.pop()
         if name in provided:
             continue
-        path = replacements.get(name) or next((base / name for base in (system, vendor, vendor / 'egl', DESKTOP / 'system_ext/lib64', power / 'lib64') if (base / name).is_file()), None)
+        path = replacements.get(name) or next((base / name for base in (system, vendor, vendor / 'egl', DESKTOP / 'system_ext/lib64', power / 'lib64', gatekeeper / 'lib64') if (base / name).is_file()), None)
         if path is None:
             raise RuntimeError('Missing graphics dependency: ' + name)
         provided.add(name)
@@ -310,6 +318,9 @@ def android_data(out):
     power = prepare_vendor_module('com.android.hardware.power')
     files += [('/vendor/etc/vintf/manifest/' + path.name, path)
               for path in sorted((power / 'etc/vintf').glob('*.xml'))]
+    gatekeeper = prepare_vendor_module('com.android.hardware.gatekeeper.nonsecure')
+    files += [('/vendor/etc/vintf/manifest/' + path.name, path)
+              for path in sorted((gatekeeper / 'etc/vintf').glob('*.xml'))]
     hardware_names = set()
     for source in (root / 'etc/selinux/plat_hwservice_contexts',
                    DESKTOP / 'vendor/etc/selinux/vendor_hwservice_contexts'):
@@ -374,6 +385,7 @@ def android_data(out):
         'system_ext/priv-app/SystemUIGoogle/SystemUIGoogle.apk',
         'system_ext/priv-app/NexusLauncherRelease/NexusLauncherRelease.apk',
         'product/app/PrebuiltDeskClockGoogle/PrebuiltDeskClockGoogle.apk',
+        'product/app/ModuleMetadataGoogle/ModuleMetadataGoogle.apk',
     )
     for name in desktop_apps:
         source = DESKTOP / name
@@ -381,13 +393,15 @@ def android_data(out):
             raise RuntimeError('Missing desktop APK: ' + name)
         files.append(('/' + name, source))
     for module in ('com.android.permission', 'com.android.configinfrastructure',
-                   'com.android.tethering', 'com.android.extservices'):
+                   'com.android.tethering', 'com.android.extservices', 'com.android.devicelock',
+                   'com.android.healthfitness', 'com.android.appsearch', 'com.android.mediaprovider'):
         for directory in ('app', 'priv-app'):
             for source in sorted((root / module / directory).rglob('*.apk')):
                 files.append(('/apex/' + str(source.relative_to(root)), source))
     for source in sorted((root / 'com.android.adservices/app').rglob('SdkSandboxGoogle.apk')):
         files.append(('/apex/' + str(source.relative_to(root)), source))
-    for name in ('GoogleConfigOverlay.apk', 'RanchuCommonOverlay.apk',
+    for name in ('GoogleConfigOverlay.apk', 'PixelConfigOverlayCommon.apk', 'RanchuCommonOverlay.apk',
+                 'SystemUIGoogle__sdk_gphone16k_arm64__auto_generated_rro_product.apk',
                  'framework-res__sdk_gphone16k_arm64__auto_generated_rro_product.apk',
                  'framework-res__emulator__auto_generated_characteristics_rro.apk'):
         source = DESKTOP / 'product/overlay' / name
@@ -965,9 +979,10 @@ def build(out, llvm):
     programs.append(('/system/bin/aconfigd-system', WORK / 'android/android36/bin/aconfigd-system'))
     programs.append(('/system/bin/installd', WORK / 'android/android36/bin/installd'))
     for name in ('idmap2', 'idmap2d', 'vold', 'storaged', 'cmd', 'dumpsys', 'netd', 'lmkd',
-                 'bpfloader', 'iptables', 'audioserver', 'mediametrics'):
+                 'bpfloader', 'iptables', 'audioserver', 'mediaserver', 'mediametrics', 'gatekeeperd'):
         programs.append(('/system/bin/' + name, WORK / 'android/android36/bin' / name))
     programs.append(('/apex/com.android.art/bin/artd', WORK / 'android/android36/com.android.art/bin/artd'))
+    programs.append(('/apex/com.android.os.statsd/bin/statsd', WORK / 'android/android36/com.android.os.statsd/bin/statsd'))
     programs.append(('/apex/com.android.tethering/bin/netbpfload', build_android_network()))
     programs.append(('/apex/com.android.tethering/bin/for-system/clatd',
                      WORK / 'android/android36/com.android.tethering/bin/for-system/clatd'))
@@ -1012,7 +1027,11 @@ def build(out, llvm):
     payload = bytearray()
     system_files = []
     cache_path = out / 'elf-inspection-cache.json'
-    inspector = hashlib.sha256(Path(__file__).read_bytes() + subprocess.check_output(
+    inspector_source = '\n'.join(python_inspect.getsource(function) for function in
+        (inspect, x18_instruction, direct_branch, extend_function_ranges, elf_disassembly, check_x18_disassembly))
+    inspector_source += repr((PAGE, PROGRAM_LIMIT, MAX_ALIGNMENT, INTERPRETER,
+                              ANDROID_INTERPRETER, ANDROID_BOOTSTRAP_INTERPRETER))
+    inspector = hashlib.sha256(inspector_source.encode() + subprocess.check_output(
         [llvm / 'llvm-objdump', '--version'])).hexdigest()
     cache = json.loads(cache_path.read_text()) if cache_path.exists() else {}
     if cache.get('inspector') != inspector:

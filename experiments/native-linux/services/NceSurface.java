@@ -4,12 +4,14 @@ import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Rect;
+import android.content.ComponentName;
 import android.os.IBinder;
 import android.hardware.HardwareBuffer;
 import android.os.SystemClock;
 import android.view.Surface;
 import android.view.SurfaceControl;
 import java.io.FileOutputStream;
+import java.util.HashSet;
 
 public final class NceSurface {
     private static Bitmap capture(IBinder display) throws Exception {
@@ -36,6 +38,38 @@ public final class NceSurface {
         long[] displays = (long[]) displayControl.getDeclaredMethod("getPhysicalDisplayIds").invoke(null);
         if (displays.length != 1) throw new AssertionError("physical displays=" + displays.length);
         IBinder display = (IBinder) displayControl.getDeclaredMethod("getPhysicalDisplayToken", long.class).invoke(null, displays[0]);
+        if (args.length == 2) {
+            Class<?> manager = Class.forName("android.app.ActivityTaskManager");
+            Object service = manager.getMethod("getService").invoke(null);
+            Class<?> contract = Class.forName("android.app.IActivityTaskManager");
+            for (int attempt = 0; attempt < 40; ++attempt) {
+                SystemClock.sleep(250);
+                Object task = contract.getMethod("getFocusedRootTaskInfo").invoke(service);
+                if (task == null) continue;
+                ComponentName top = (ComponentName) task.getClass().getField("topActivity").get(task);
+                boolean visible = task.getClass().getField("isVisible").getBoolean(task);
+                if (top == null || !visible || !args[0].equals(top.getPackageName())) continue;
+                Bitmap pixels = capture(display);
+                try {
+                    HashSet<Integer> colors = new HashSet<>();
+                    for (int y = 40; y < pixels.getHeight() - 40; y += 8)
+                        for (int x = 8; x < pixels.getWidth() - 8; x += 8)
+                            colors.add(pixels.getPixel(x, y));
+                    if (colors.size() < 8) continue;
+                    try (FileOutputStream output = new FileOutputStream(args[1])) {
+                        if (!pixels.compress(Bitmap.CompressFormat.PNG, 100, output))
+                            throw new AssertionError("desktop capture PNG failed");
+                    }
+                    System.out.println("{\"test\":\"android_desktop_visible_activity\",\"passed\":true,\"package\":\""
+                        + args[0] + "\",\"sampled_colors\":" + colors.size() + "}");
+                    return;
+                } finally {
+                    pixels.recycle();
+                }
+            }
+            throw new AssertionError("visible desktop activity timed out: " + args[0]);
+        }
+        if (args.length != 0) throw new IllegalArgumentException("expected package and PNG path");
         SurfaceControl.class.getDeclaredMethod("setDisplayPowerMode", IBinder.class, int.class).invoke(null, display, 2);
         SurfaceControl control = new SurfaceControl.Builder().setName("NCE SurfaceFlinger check")
             .setBufferSize(360, 640).setOpaque(true).build();

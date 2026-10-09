@@ -13,11 +13,41 @@
 #include <sys/stat.h>
 #include <sys/system_properties.h>
 #include <sys/un.h>
+#include <sys/wait.h>
 #include <unistd.h>
 
 #define CHECK(c) do { if (!(c)) { dprintf(2, "property-service:%d errno=%d: %s\n", __LINE__, errno, #c); _exit(110); } } while (0)
 static int (*add_property)(const char *, unsigned, const char *, unsigned);
 static int (*update_property)(prop_info *, const char *, unsigned);
+static pid_t idmap_pid;
+
+static uint32_t idmap_control(const char *operation)
+{
+    int status;
+    if (idmap_pid && waitpid(idmap_pid, &status, WNOHANG) == idmap_pid) idmap_pid = 0;
+    if (!strcmp(operation, "start")) {
+        if (idmap_pid) return PROP_SUCCESS;
+        pid_t child = fork();
+        if (child < 0) return PROP_ERROR_HANDLE_CONTROL_MESSAGE;
+        if (!child) {
+            CHECK(setenv("LD_PRELOAD", "/system/lib64/libnce-framework-log.so", 1) == 0);
+            CHECK(setgid(1000) == 0 && setuid(1000) == 0);
+            execl("/system/bin/idmap2d", "idmap2d", nullptr);
+            _exit(108);
+        }
+        idmap_pid = child;
+        return PROP_SUCCESS;
+    }
+    if (!strcmp(operation, "stop")) {
+        if (idmap_pid) {
+            CHECK(kill(idmap_pid, SIGTERM) == 0 || errno == ESRCH);
+            CHECK(waitpid(idmap_pid, &status, 0) == idmap_pid);
+            idmap_pid = 0;
+        }
+        return PROP_SUCCESS;
+    }
+    return PROP_ERROR_HANDLE_CONTROL_MESSAGE;
+}
 
 static bool receive(int socket, void *buffer, size_t size)
 {
@@ -44,7 +74,8 @@ static uint32_t set_property(const char *name, const char *value)
     if (!length || name[0] == '.' || name[length - 1] == '.' || strstr(name, "..")) return PROP_ERROR_INVALID_NAME;
     for (size_t i = 0; i < length; ++i)
         if (!(isalnum(static_cast<unsigned char>(name[i])) || strchr("_.-:@", name[i]))) return PROP_ERROR_INVALID_NAME;
-    if (!strncmp(name, "ctl.", 4)) return PROP_ERROR_HANDLE_CONTROL_MESSAGE;
+    if (!strncmp(name, "ctl.", 4))
+        return !strcmp(value, "idmap2d") ? idmap_control(name + 4) : PROP_ERROR_HANDLE_CONTROL_MESSAGE;
     bool readonly = !strncmp(name, "ro.", 3);
     if (!readonly && size >= PROP_VALUE_MAX) return PROP_ERROR_INVALID_VALUE;
     const prop_info *property = __system_property_find(name);

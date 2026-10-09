@@ -1,7 +1,7 @@
 {
   "date": "2026-10-10",
   "complete_android_boot": false,
-  "remaining_failure": "Audio HAL/HIDL startup and APK embedded native loading under validation; complete desktop boot pending",
+  "remaining_failure": "DeviceLockService required DeviceLockController APK; module apps and statsd integration under validation; complete boot pending",
   "checks": [
     {
       "test": "native_program_range_index",
@@ -67,7 +67,11 @@
     "StorageManagerService initialized",
     "artd retained by a Binder reference",
     "ClatCoordinator executable and BPF labels validated",
-    "NetworkStatsService initialized; system_server entered AudioService"
+    "NetworkStatsService and AudioService initialized",
+    "HIDL audio and effect factories registered",
+    "AudioFlinger and AudioPolicy initialized",
+    "Software Gatekeeper HAL and gatekeeperd registered",
+    "SystemServer PHASE_DEVICE_SPECIFIC_SERVICES_READY completed"
   ],
   "python_elf_tests": 21
 }
