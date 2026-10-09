@@ -14,6 +14,12 @@ def apply(source: Path, experiment: Path):
         path.write_text(text.replace(before, after))
 
     arch = "arch/lkl/"
+    edit(arch + "include/asm/Kbuild", "generic-y += signal.h", "# signal.h uses the AArch64 userspace ABI")
+    for name in ("signal.h", "sigcontext.h", "ucontext.h", "sve_context.h"):
+        target = source / arch / "include/uapi/asm" / name
+        content = (source / "arch/arm64/include/uapi/asm" / name).read_bytes()
+        if not target.exists() or target.read_bytes() != content:
+            target.write_bytes(content)
     edit(arch + "Kconfig", "\tselect UACCESS_MEMCPY", "\tselect UACCESS_MEMCPY if !MMU")
     edit(arch + "include/asm/page.h", "#include <asm/page-mmu.h>", "#include <asm/page-mmu.h>\n#define VM_DATA_DEFAULT_FLAGS VM_DATA_FLAGS_NON_EXEC")
     edit(arch + "include/asm/page-mmu.h", "#define PAGE_SHIFT\t12", "#define PAGE_SHIFT\t14")
@@ -31,6 +37,11 @@ def apply(source: Path, experiment: Path):
     edit(pg, "munmap_page_for_pte(addr, xp);", "munmap_page_for_pte(mm, addr, xp);")
     edit(pg, "mmap_pages_for_ptes(addr, nr, pte);", "mmap_pages_for_ptes(mm, addr, nr, pte);")
     edit(arch + "include/asm/processor.h", "struct thread_struct { };", "struct thread_struct { void *nce_state; };")
+    edit(arch + "include/asm/processor.h", "#define task_pt_regs(tsk) (struct pt_regs *)(NULL)", "#ifdef CONFIG_MMU\n#define task_pt_regs(tsk) ((struct pt_regs *)(tsk)->thread.nce_state)\n#else\n#define task_pt_regs(tsk) (struct pt_regs *)(NULL)\n#endif")
+    ptrace = arch + "include/asm/ptrace.h"
+    edit(ptrace, "#include <linux/errno.h>", "#include <linux/errno.h>\n#include <asm/guest-registers.h>")
+    edit(ptrace, "#define user_stack_pointer(regs) 0", "#define user_stack_pointer(regs) ((regs) ? (regs)->sp : 0)")
+    edit(ptrace, "#define instruction_pointer(regs) 0", "#define instruction_pointer(regs) ((regs) ? (regs)->pc : 0)")
     edit(arch + "include/asm/processor.h", "static inline void start_thread(struct pt_regs *regs, unsigned long entry,\n\t\t\t unsigned long stack) {}", "void start_thread(struct pt_regs *regs, unsigned long entry, unsigned long stack);")
     edit(arch + "include/asm/processor.h", "#define TASK_SIZE ((unsigned long)-1)", "#ifdef CONFIG_MMU\nextern unsigned long nce_user_base, nce_task_size, nce_memory_start;\n#define TASK_SIZE nce_task_size\n#else\n#define TASK_SIZE ((unsigned long)-1)\n#endif")
     edit(arch + "include/asm/processor.h", "(CONFIG_LKL_MEMORY_START - 16 * PAGE_SIZE)", "(TASK_SIZE - 16 * PAGE_SIZE)")
@@ -53,6 +64,7 @@ def apply(source: Path, experiment: Path):
     edit(arch + "kernel/threads.c", "if (!test_ti_thread_flag(ti, TIF_HOST_THREAD)) {", "if (!test_ti_thread_flag(ti, TIF_HOST_THREAD) && ti->tid) {")
     edit(arch + "kernel/threads.c", "\ttba = kmalloc(sizeof(*tba), GFP_KERNEL);", "\tclear_ti_thread_flag(ti, TIF_HOST_THREAD);\n#ifdef CONFIG_MMU\n\tif (!esp) {\n\t\tif (!current->thread.nce_state || !lkl_ops->user_clone)\n\t\t\treturn -EINVAL;\n\t\tp->thread.nce_state = lkl_ops->user_clone(current->thread.nce_state,\n\t\t\targs->stack, args->tls, args->flags);\n\t\tif (!p->thread.nce_state)\n\t\t\treturn -ENOMEM;\n\t\tesp = (unsigned long)user_bootstrap;\n\t}\n#endif\n\ttba = kmalloc(sizeof(*tba), GFP_KERNEL);")
     edit(arch + "include/asm/syscalls.h", "#define sys_clone sys_ni_syscall", "#ifndef CONFIG_MMU\n#define sys_clone sys_ni_syscall\n#endif")
+    edit(arch + "include/asm/syscalls.h", "#define sys_rt_sigreturn sys_ni_syscall", "#ifndef CONFIG_MMU\n#define sys_rt_sigreturn sys_ni_syscall\n#endif")
     edit(arch + "include/uapi/asm/unistd.h", "#define __ARCH_WANT_SYSCALL_NO_AT", "#ifdef CONFIG_MMU\n#define __ARCH_WANT_SYS_CLONE\n#endif\n#define __ARCH_WANT_SYSCALL_NO_AT")
     edit(arch + "kernel/syscalls.c", "static long run_syscall(long no, long *params)", "#ifdef CONFIG_MMU\nextern long nce_launch(long *params);\n#endif\nlong nce_run_syscall(long no, long *params)")
     edit(arch + "kernel/syscalls.c", "\tsyscall_handler_t handler = (syscall_handler_t)syscall_table[no];\n\n\tif (no < 0 || no >= __NR_syscalls)\n\t\treturn -ENOSYS;", "\tsyscall_handler_t handler;\n\tif (no < 0 || no >= __NR_syscalls)\n\t\treturn -ENOSYS;\n#ifdef CONFIG_MMU\n\tif (no == 246)\n\t\treturn nce_launch(params);\n#endif\n\thandler = (syscall_handler_t)syscall_table[no];")
@@ -62,9 +74,13 @@ def apply(source: Path, experiment: Path):
     edit(arch + "kernel/setup.c", "\tinit_pid_ns.child_reaper = 0;", "#ifndef CONFIG_MMU\n\tinit_pid_ns.child_reaper = 0;\n#endif")
     edit(arch + "mm/Makefile", "obj-$(CONFIG_MMU) += mmu_mem.o", "obj-$(CONFIG_MMU) += mmu_mem.o nce_mmu.o")
     edit(arch + "kernel/Makefile", "\tsyscalls_32.o cpu.o init.o stacktrace.o", "\tsyscalls_32.o cpu.o init.o stacktrace.o\nobj-$(CONFIG_MMU) += nce_process.o")
+    edit(arch + "kernel/Makefile", "obj-$(CONFIG_MMU) += nce_process.o", "obj-$(CONFIG_MMU) += nce_process.o nce_signal.o")
     for local, destination in (("layout.h", "include/asm/nce-layout.h"),
+                               ("guest-registers.h", "include/asm/guest-registers.h"),
+                               ("lkl-signal.h", "include/asm/signal.h"),
                                ("lkl-nce-mmu.c", "mm/nce_mmu.c"),
                                ("lkl-nce-process.c", "kernel/nce_process.c"),
+                               ("lkl-nce-signal.c", "kernel/nce_signal.c"),
                                ("lkl-mmu-context.h", "include/asm/mmu_context.h"),
                                ("lkl-mmu.h", "include/asm/mmu.h"),
                                ("lkl-uaccess.h", "include/asm/uaccess.h"),

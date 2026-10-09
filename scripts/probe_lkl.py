@@ -59,7 +59,7 @@ def package_elf(path):
     strings = data[strings[4]:strings[4] + strings[5]]
     required = {"lkl_init", "lkl_syscall", "lkl_sys_halt", "lkl_cleanup", "nce_lkl_start"}
     if PROCESS:
-        required |= {"nce_run_syscall", "nce_page_fault", "nce_set_layout"}
+        required |= {"nce_run_syscall", "nce_page_fault", "nce_set_layout", "nce_user_return", "nce_user_fault"}
     for pos in range(symtab[4], symtab[4] + symtab[5], symtab[9]):
         index, _, _, _, value, _ = struct.unpack_from("<IBBHQQ", data, pos)
         name = strings[index:strings.index(b"\0", index)].decode()
@@ -139,7 +139,7 @@ def main():
         options = ["64BIT", "EXPERT", "PROC_FS", "SYSFS", "FUTEX", "EPOLL", "SIGNALFD", "TIMERFD",
                    "LKL_HOST_MEMCPY", "LKL_HOST_MEMSET", "LKL_HOST_MEMMOVE"]
         if PROCESS:
-            options += ["MMU", "PRINTK", "NAMESPACES", "PID_NS"]
+            options += ["MMU", "PRINTK", "NAMESPACES", "PID_NS", "POSIX_TIMERS"]
         switches = [arg for name in options for arg in ("-e", name)]
         switches += [arg for name in ("KALLSYMS", "BLOCK", "DEBUG_INFO", "SLUB_DEBUG") for arg in ("-d", name)]
         run([SOURCE / "scripts/config", "--file", BUILD / ".config", *switches], env=env)
@@ -148,7 +148,7 @@ def main():
     shutil.copyfile(SOURCE / "arch/lkl/include/uapi/asm/host_ops.h", OUT / "lkl-host-ops.h")
     run([*target, "-fPIC", "-fno-stack-protector", "-O2", "-I", OUT,
          "-c", EXPERIMENT / "lkl-bridge.c", "-o", OUT / "lkl-bridge.o"])
-    exports = ["--globalize-symbol=nce_run_syscall", "--globalize-symbol=nce_page_fault", "--globalize-symbol=nce_set_layout"] if PROCESS else []
+    exports = ["--globalize-symbol=nce_run_syscall", "--globalize-symbol=nce_page_fault", "--globalize-symbol=nce_set_layout", "--globalize-symbol=nce_user_return", "--globalize-symbol=nce_user_fault"] if PROCESS else []
     run([llvm / "llvm-objcopy", "--globalize-symbol=vsnprintf", "--globalize-symbol=lkl_ops", *exports,
          BUILD / "lkl.o", OUT / "lkl-exports.o"])
     run(["ld.lld", "-shared", "-Bsymbolic", "--no-undefined", "-z", "max-page-size=16384",
@@ -176,6 +176,10 @@ def main():
         raise SystemExit("LKL probe did not complete")
     dispatch_results = None
     if PROCESS:
+        run([clang, "-O2", "-Wall", "-Wextra", "-Werror", "-isysroot", sdk, "-I", OUT,
+             EXPERIMENT / "host-context-test.c", EXPERIMENT / "lkl-host.c",
+             "-o", OUT / "host-context-test"])
+        run([OUT / "host-context-test"])
         run([clang, *flags, "-DNCE_IOS_APP", "-isysroot", sdk, *inputs, OUT / "native.o",
              EXPERIMENT / "dispatch-test.c", "-o", OUT / "dispatch-probe"])
         with (OUT / "dispatch-results.jsonl").open("w") as output, (OUT / "dispatch-console.log").open("w") as log:
@@ -190,21 +194,21 @@ def main():
                 "ios_status": "this build compiled for iOS; device execution pending",
                 "config_sha256": hashlib.sha256((BUILD / ".config").read_bytes()).hexdigest(),
                 "kernel_sha256": hashlib.sha256((OUT / "lkl-image.bin").read_bytes()).hexdigest()}
-    sources = [*inputs, EXPERIMENT / "lkl-bridge.c", EXPERIMENT / "nce.h", EXPERIMENT / "guest.S", Path(__file__).resolve()]
+    sources = [*inputs, EXPERIMENT / "lkl-bridge.c", EXPERIMENT / "nce.h", EXPERIMENT / "guest-registers.h", EXPERIMENT / "guest.S", Path(__file__).resolve()]
     if PROCESS:
         manifest["dispatch_results"] = dispatch_results
         sources += [EXPERIMENT / "memory.h", EXPERIMENT / "layout.h", EXPERIMENT / "execute-check.h", Path(__file__).with_name("lkl_nce_patch.py"),
                     *sorted(EXPERIMENT.glob("lkl-*.h")),
                     *sorted(EXPERIMENT.glob("lkl-nce-*.c")), EXPERIMENT / "exec-guest.S", EXPERIMENT / "programs.h",
-                    Path(__file__).with_name("build_nce_userspace.py"), EXPERIMENT / "dispatch-test.c",
+                    Path(__file__).with_name("build_nce_userspace.py"), EXPERIMENT / "dispatch-test.c", EXPERIMENT / "host-context-test.c",
                     *sorted((EXPERIMENT / "userspace").glob("*"))]
         run(["python3", ROOT / "scripts/test_nce_userspace.py"])
         sources.append(ROOT / "scripts/test_nce_userspace.py")
-        manifest["stage"] = "N2c process address spaces and checked user memory"
-        manifest["userspace_libraries"] = {"musl": "1.2.5", "compiler-rt": "20.1.8"}
+        manifest["stage"] = "N2d Linux signals and dash shell"
+        manifest["userspace_libraries"] = {"musl": "1.2.5", "compiler-rt": "20.1.8", "dash": "0.5.12"}
         manifest["generated_sha256"] = {name: hashlib.sha256((OUT / name).read_bytes()).hexdigest()
-                                        for name in ["program-images.h", "lkl-image.h", "lkl-host-ops.h", "guest-image.h",
-                                                     "exec-guest.elf", "init.elf", "worker.elf", "mm-bench.elf"]}
+                                        for name in ["program-images.h", "user-scripts.h", "lkl-image.h", "lkl-host-ops.h", "guest-image.h",
+                                                     "exec-guest.elf", "init.elf", "worker.elf", "mm-bench.elf", "dash.elf"]}
     manifest["input_sha256"] = {str(p.relative_to(ROOT)): hashlib.sha256(p.read_bytes()).hexdigest() for p in sources}
     (OUT / "lkl-summary.json").write_text(json.dumps(manifest, indent=2) + "\n")
     print(json.dumps(manifest, indent=2))

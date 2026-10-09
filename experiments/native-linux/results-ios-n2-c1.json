@@ -1,0 +1,2474 @@
+{
+  "runs": [
+    {
+      "file": "/Users/fan/Downloads/Telegram Desktop/native-linux-n2-ios (4).log",
+      "sha256": "253a0774d08e9b2e8ded04782ce9a0507169e09c0acee775f32296381ff94372",
+      "build": "[probe] N2 iOS; build=N2-C1-iOS-20261009-034855; iOS=27.2; pid=32245",
+      "records": [
+        {
+          "phase": "prepare_jit_pool",
+          "reserved_bytes": 218103808,
+          "prepared_code_bytes": 17055744
+        },
+        {
+          "phase": "wait_debugger_detach"
+        },
+        {
+          "phase": "debugger_detached",
+          "elapsed_ms": 1
+        },
+        {
+          "phase": "check_fixed_code_and_data_remap"
+        },
+        {
+          "phase": "execute_original_jit_address",
+          "range": 0,
+          "iteration": 0
+        },
+        {
+          "phase": "execute_original_jit_address",
+          "range": 0,
+          "iteration": 1
+        },
+        {
+          "phase": "execute_original_jit_address",
+          "range": 0,
+          "iteration": 2
+        },
+        {
+          "phase": "execute_original_jit_address",
+          "range": 0,
+          "iteration": 3
+        },
+        {
+          "phase": "execute_original_jit_address",
+          "range": 0,
+          "iteration": 4
+        },
+        {
+          "phase": "execute_original_jit_address",
+          "range": 0,
+          "iteration": 5
+        },
+        {
+          "phase": "execute_original_jit_address",
+          "range": 0,
+          "iteration": 6
+        },
+        {
+          "phase": "execute_original_jit_address",
+          "range": 0,
+          "iteration": 7
+        },
+        {
+          "phase": "execute_original_jit_address",
+          "range": 1,
+          "iteration": 0
+        },
+        {
+          "phase": "execute_original_jit_address",
+          "range": 1,
+          "iteration": 1
+        },
+        {
+          "phase": "execute_original_jit_address",
+          "range": 1,
+          "iteration": 2
+        },
+        {
+          "phase": "execute_original_jit_address",
+          "range": 1,
+          "iteration": 3
+        },
+        {
+          "phase": "execute_original_jit_address",
+          "range": 1,
+          "iteration": 4
+        },
+        {
+          "phase": "execute_original_jit_address",
+          "range": 1,
+          "iteration": 5
+        },
+        {
+          "phase": "execute_original_jit_address",
+          "range": 1,
+          "iteration": 6
+        },
+        {
+          "phase": "execute_original_jit_address",
+          "range": 1,
+          "iteration": 7
+        },
+        {
+          "phase": "execute_original_jit_address",
+          "range": 2,
+          "iteration": 0
+        },
+        {
+          "phase": "execute_original_jit_address",
+          "range": 2,
+          "iteration": 1
+        },
+        {
+          "phase": "execute_original_jit_address",
+          "range": 2,
+          "iteration": 2
+        },
+        {
+          "phase": "execute_original_jit_address",
+          "range": 2,
+          "iteration": 3
+        },
+        {
+          "phase": "execute_original_jit_address",
+          "range": 2,
+          "iteration": 4
+        },
+        {
+          "phase": "execute_original_jit_address",
+          "range": 2,
+          "iteration": 5
+        },
+        {
+          "phase": "execute_original_jit_address",
+          "range": 2,
+          "iteration": 6
+        },
+        {
+          "phase": "execute_original_jit_address",
+          "range": 2,
+          "iteration": 7
+        },
+        {
+          "phase": "execute_original_jit_address",
+          "range": 3,
+          "iteration": 0
+        },
+        {
+          "phase": "execute_original_jit_address",
+          "range": 3,
+          "iteration": 1
+        },
+        {
+          "phase": "execute_original_jit_address",
+          "range": 3,
+          "iteration": 2
+        },
+        {
+          "phase": "execute_original_jit_address",
+          "range": 3,
+          "iteration": 3
+        },
+        {
+          "phase": "execute_original_jit_address",
+          "range": 3,
+          "iteration": 4
+        },
+        {
+          "phase": "execute_original_jit_address",
+          "range": 3,
+          "iteration": 5
+        },
+        {
+          "phase": "execute_original_jit_address",
+          "range": 3,
+          "iteration": 6
+        },
+        {
+          "phase": "execute_original_jit_address",
+          "range": 3,
+          "iteration": 7
+        },
+        {
+          "phase": "execute_original_jit_address",
+          "range": 4,
+          "iteration": 0
+        },
+        {
+          "phase": "execute_original_jit_address",
+          "range": 4,
+          "iteration": 1
+        },
+        {
+          "phase": "execute_original_jit_address",
+          "range": 4,
+          "iteration": 2
+        },
+        {
+          "phase": "execute_original_jit_address",
+          "range": 4,
+          "iteration": 3
+        },
+        {
+          "phase": "execute_original_jit_address",
+          "range": 4,
+          "iteration": 4
+        },
+        {
+          "phase": "execute_original_jit_address",
+          "range": 4,
+          "iteration": 5
+        },
+        {
+          "phase": "execute_original_jit_address",
+          "range": 4,
+          "iteration": 6
+        },
+        {
+          "phase": "execute_original_jit_address",
+          "range": 4,
+          "iteration": 7
+        },
+        {
+          "test": "prepared_fixed_address_code_updates",
+          "passed": true,
+          "ranges": 5,
+          "updates_per_range": 8
+        },
+        {
+          "test": "data_fixed_remap_after_detach",
+          "passed": true,
+          "targets": 2,
+          "switches_per_target": 8
+        },
+        {
+          "phase": "check_linux_ram_remap"
+        },
+        {
+          "test": "linux_ram_remap",
+          "passed": true,
+          "bytes": 67108864
+        },
+        {
+          "bench": "prepared_nce_compute",
+          "sample": 0,
+          "iterations": 4000000,
+          "direct_ns": 15170625,
+          "nce_ns": 9272583
+        },
+        {
+          "bench": "prepared_nce_compute",
+          "sample": 1,
+          "iterations": 4000000,
+          "direct_ns": 7846000,
+          "nce_ns": 7214000
+        },
+        {
+          "bench": "prepared_nce_compute",
+          "sample": 2,
+          "iterations": 4000000,
+          "direct_ns": 6431542,
+          "nce_ns": 5685292
+        },
+        {
+          "bench": "prepared_nce_compute",
+          "sample": 3,
+          "iterations": 4000000,
+          "direct_ns": 5209167,
+          "nce_ns": 4940500
+        },
+        {
+          "bench": "prepared_nce_compute",
+          "sample": 4,
+          "iterations": 4000000,
+          "direct_ns": 4656292,
+          "nce_ns": 4457125
+        },
+        {
+          "phase": "load_linux_image"
+        },
+        {
+          "phase": "linux_mapping_policy",
+          "mode": "lazy"
+        },
+        {
+          "phase": "linux_init"
+        },
+        {
+          "test": "native_linux_boot",
+          "passed": true,
+          "ms": 17.435
+        },
+        {
+          "test": "linux_uname",
+          "sysname": "Linux",
+          "release": "6.12.0"
+        },
+        {
+          "phase": "linux_process_tests"
+        },
+        {
+          "phase": "unblocked_inherited_preemption_signal"
+        },
+        {
+          "phase": "signal_restore_without_guest_stack"
+        },
+        {
+          "phase": "signal_redirect_to_host_entry"
+        },
+        {
+          "phase": "guest_fault_on_host_stack"
+        },
+        {
+          "test": "linux_nce_fork_cow_shared_futex_pipe_exec_wait",
+          "passed": true,
+          "rounds": 32,
+          "faults": 369,
+          "elapsed_ms": 14.184
+        },
+        {
+          "test": "linux_exec_then_fork_cow_wait",
+          "passed": true
+        },
+        {
+          "test": "linux_exec_file_unchanged",
+          "passed": true
+        },
+        {
+          "test": "linux_syscall_bounds",
+          "passed": true
+        },
+        {
+          "phase": "linux_userspace_round",
+          "round": 0
+        },
+        {
+          "phase": "linux_userspace_tests"
+        },
+        {
+          "test": "linux_musl_static_pie_processes",
+          "passed": true,
+          "commands": 8,
+          "cow_bytes_per_command": 2097152
+        },
+        {
+          "test": "linux_compiled_elf_files_unchanged",
+          "passed": true
+        },
+        {
+          "test": "linux_musl_threads_preemption",
+          "passed": true,
+          "threads": 56,
+          "stackless_exits": 8,
+          "elapsed_ms": 45.837
+        },
+        {
+          "memory": "after_userspace",
+          "phys_footprint": 59885600,
+          "resident_peak": 173670400
+        },
+        {
+          "phase": "linux_userspace_round",
+          "round": 1
+        },
+        {
+          "phase": "linux_userspace_tests"
+        },
+        {
+          "test": "linux_musl_static_pie_processes",
+          "passed": true,
+          "commands": 8,
+          "cow_bytes_per_command": 2097152
+        },
+        {
+          "test": "linux_compiled_elf_files_unchanged",
+          "passed": true
+        },
+        {
+          "test": "linux_musl_threads_preemption",
+          "passed": true,
+          "threads": 56,
+          "stackless_exits": 8,
+          "elapsed_ms": 50.538
+        },
+        {
+          "memory": "after_userspace",
+          "phys_footprint": 60000288,
+          "resident_peak": 173670400
+        },
+        {
+          "phase": "linux_userspace_round",
+          "round": 2
+        },
+        {
+          "phase": "linux_userspace_tests"
+        },
+        {
+          "test": "linux_musl_static_pie_processes",
+          "passed": true,
+          "commands": 8,
+          "cow_bytes_per_command": 2097152
+        },
+        {
+          "test": "linux_compiled_elf_files_unchanged",
+          "passed": true
+        },
+        {
+          "test": "linux_musl_threads_preemption",
+          "passed": true,
+          "threads": 56,
+          "stackless_exits": 8,
+          "elapsed_ms": 44.069
+        },
+        {
+          "memory": "after_userspace",
+          "phys_footprint": 60098592,
+          "resident_peak": 173670400
+        },
+        {
+          "phase": "linux_userspace_round",
+          "round": 3
+        },
+        {
+          "phase": "linux_userspace_tests"
+        },
+        {
+          "test": "linux_musl_static_pie_processes",
+          "passed": true,
+          "commands": 8,
+          "cow_bytes_per_command": 2097152
+        },
+        {
+          "test": "linux_compiled_elf_files_unchanged",
+          "passed": true
+        },
+        {
+          "test": "linux_musl_threads_preemption",
+          "passed": true,
+          "threads": 56,
+          "stackless_exits": 8,
+          "elapsed_ms": 44.56
+        },
+        {
+          "memory": "after_userspace",
+          "phys_footprint": 85542968,
+          "resident_peak": 192757760
+        },
+        {
+          "phase": "linux_userspace_round",
+          "round": 4
+        },
+        {
+          "phase": "linux_userspace_tests"
+        },
+        {
+          "test": "linux_musl_static_pie_processes",
+          "passed": true,
+          "commands": 8,
+          "cow_bytes_per_command": 2097152
+        },
+        {
+          "test": "linux_compiled_elf_files_unchanged",
+          "passed": true
+        },
+        {
+          "test": "linux_musl_threads_preemption",
+          "passed": true,
+          "threads": 56,
+          "stackless_exits": 8,
+          "elapsed_ms": 43.726
+        },
+        {
+          "memory": "after_userspace",
+          "phys_footprint": 85559352,
+          "resident_peak": 192757760
+        },
+        {
+          "phase": "linux_userspace_round",
+          "round": 5
+        },
+        {
+          "phase": "linux_userspace_tests"
+        },
+        {
+          "test": "linux_musl_static_pie_processes",
+          "passed": true,
+          "commands": 8,
+          "cow_bytes_per_command": 2097152
+        },
+        {
+          "test": "linux_compiled_elf_files_unchanged",
+          "passed": true
+        },
+        {
+          "test": "linux_musl_threads_preemption",
+          "passed": true,
+          "threads": 56,
+          "stackless_exits": 8,
+          "elapsed_ms": 43.752
+        },
+        {
+          "memory": "after_userspace",
+          "phys_footprint": 85542968,
+          "resident_peak": 192757760
+        },
+        {
+          "phase": "linux_userspace_round",
+          "round": 6
+        },
+        {
+          "phase": "linux_userspace_tests"
+        },
+        {
+          "test": "linux_musl_static_pie_processes",
+          "passed": true,
+          "commands": 8,
+          "cow_bytes_per_command": 2097152
+        },
+        {
+          "test": "linux_compiled_elf_files_unchanged",
+          "passed": true
+        },
+        {
+          "test": "linux_musl_threads_preemption",
+          "passed": true,
+          "threads": 56,
+          "stackless_exits": 8,
+          "elapsed_ms": 43.76
+        },
+        {
+          "memory": "after_userspace",
+          "phys_footprint": 85477432,
+          "resident_peak": 192757760
+        },
+        {
+          "phase": "linux_userspace_round",
+          "round": 7
+        },
+        {
+          "phase": "linux_userspace_tests"
+        },
+        {
+          "test": "linux_musl_static_pie_processes",
+          "passed": true,
+          "commands": 8,
+          "cow_bytes_per_command": 2097152
+        },
+        {
+          "test": "linux_compiled_elf_files_unchanged",
+          "passed": true
+        },
+        {
+          "test": "linux_musl_threads_preemption",
+          "passed": true,
+          "threads": 56,
+          "stackless_exits": 8,
+          "elapsed_ms": 43.827
+        },
+        {
+          "memory": "after_userspace",
+          "phys_footprint": 85493816,
+          "resident_peak": 192757760
+        },
+        {
+          "phase": "linux_userspace_round",
+          "round": 8
+        },
+        {
+          "phase": "linux_userspace_tests"
+        },
+        {
+          "test": "linux_musl_static_pie_processes",
+          "passed": true,
+          "commands": 8,
+          "cow_bytes_per_command": 2097152
+        },
+        {
+          "test": "linux_compiled_elf_files_unchanged",
+          "passed": true
+        },
+        {
+          "test": "linux_musl_threads_preemption",
+          "passed": true,
+          "threads": 56,
+          "stackless_exits": 8,
+          "elapsed_ms": 43.897
+        },
+        {
+          "memory": "after_userspace",
+          "phys_footprint": 85559352,
+          "resident_peak": 192757760
+        },
+        {
+          "phase": "linux_userspace_round",
+          "round": 9
+        },
+        {
+          "phase": "linux_userspace_tests"
+        },
+        {
+          "test": "linux_musl_static_pie_processes",
+          "passed": true,
+          "commands": 8,
+          "cow_bytes_per_command": 2097152
+        },
+        {
+          "test": "linux_compiled_elf_files_unchanged",
+          "passed": true
+        },
+        {
+          "test": "linux_musl_threads_preemption",
+          "passed": true,
+          "threads": 56,
+          "stackless_exits": 8,
+          "elapsed_ms": 43.793
+        },
+        {
+          "memory": "after_userspace",
+          "phys_footprint": 85542968,
+          "resident_peak": 192823296
+        },
+        {
+          "phase": "linux_userspace_round",
+          "round": 10
+        },
+        {
+          "phase": "linux_userspace_tests"
+        },
+        {
+          "test": "linux_musl_static_pie_processes",
+          "passed": true,
+          "commands": 8,
+          "cow_bytes_per_command": 2097152
+        },
+        {
+          "test": "linux_compiled_elf_files_unchanged",
+          "passed": true
+        },
+        {
+          "test": "linux_musl_threads_preemption",
+          "passed": true,
+          "threads": 56,
+          "stackless_exits": 8,
+          "elapsed_ms": 43.331
+        },
+        {
+          "memory": "after_userspace",
+          "phys_footprint": 85559352,
+          "resident_peak": 192823296
+        },
+        {
+          "phase": "linux_userspace_round",
+          "round": 11
+        },
+        {
+          "phase": "linux_userspace_tests"
+        },
+        {
+          "test": "linux_musl_static_pie_processes",
+          "passed": true,
+          "commands": 8,
+          "cow_bytes_per_command": 2097152
+        },
+        {
+          "test": "linux_compiled_elf_files_unchanged",
+          "passed": true
+        },
+        {
+          "test": "linux_musl_threads_preemption",
+          "passed": true,
+          "threads": 56,
+          "stackless_exits": 8,
+          "elapsed_ms": 44.106
+        },
+        {
+          "memory": "after_userspace",
+          "phys_footprint": 85559352,
+          "resident_peak": 192823296
+        },
+        {
+          "phase": "linux_userspace_round",
+          "round": 12
+        },
+        {
+          "phase": "linux_userspace_tests"
+        },
+        {
+          "test": "linux_musl_static_pie_processes",
+          "passed": true,
+          "commands": 8,
+          "cow_bytes_per_command": 2097152
+        },
+        {
+          "test": "linux_compiled_elf_files_unchanged",
+          "passed": true
+        },
+        {
+          "test": "linux_musl_threads_preemption",
+          "passed": true,
+          "threads": 56,
+          "stackless_exits": 8,
+          "elapsed_ms": 43.519
+        },
+        {
+          "memory": "after_userspace",
+          "phys_footprint": 85542968,
+          "resident_peak": 192823296
+        },
+        {
+          "phase": "linux_userspace_round",
+          "round": 13
+        },
+        {
+          "phase": "linux_userspace_tests"
+        },
+        {
+          "test": "linux_musl_static_pie_processes",
+          "passed": true,
+          "commands": 8,
+          "cow_bytes_per_command": 2097152
+        },
+        {
+          "test": "linux_compiled_elf_files_unchanged",
+          "passed": true
+        },
+        {
+          "test": "linux_musl_threads_preemption",
+          "passed": true,
+          "threads": 56,
+          "stackless_exits": 8,
+          "elapsed_ms": 44.081
+        },
+        {
+          "memory": "after_userspace",
+          "phys_footprint": 85559352,
+          "resident_peak": 192823296
+        },
+        {
+          "phase": "linux_userspace_round",
+          "round": 14
+        },
+        {
+          "phase": "linux_userspace_tests"
+        },
+        {
+          "test": "linux_musl_static_pie_processes",
+          "passed": true,
+          "commands": 8,
+          "cow_bytes_per_command": 2097152
+        },
+        {
+          "test": "linux_compiled_elf_files_unchanged",
+          "passed": true
+        },
+        {
+          "test": "linux_musl_threads_preemption",
+          "passed": true,
+          "threads": 56,
+          "stackless_exits": 8,
+          "elapsed_ms": 43.619
+        },
+        {
+          "memory": "after_userspace",
+          "phys_footprint": 86034488,
+          "resident_peak": 193216512
+        },
+        {
+          "phase": "linux_userspace_round",
+          "round": 15
+        },
+        {
+          "phase": "linux_userspace_tests"
+        },
+        {
+          "test": "linux_musl_static_pie_processes",
+          "passed": true,
+          "commands": 8,
+          "cow_bytes_per_command": 2097152
+        },
+        {
+          "test": "linux_compiled_elf_files_unchanged",
+          "passed": true
+        },
+        {
+          "test": "linux_musl_threads_preemption",
+          "passed": true,
+          "threads": 56,
+          "stackless_exits": 8,
+          "elapsed_ms": 48.285
+        },
+        {
+          "memory": "after_userspace",
+          "phys_footprint": 124799032,
+          "resident_peak": 230359040
+        },
+        {
+          "test": "linux_userspace_stress",
+          "passed": true,
+          "rounds": 16,
+          "commands": 128,
+          "threads": 896
+        },
+        {
+          "phase": "linux_mm_benchmark"
+        },
+        {
+          "test": "linux_user_memory_boundaries",
+          "passed": true,
+          "reuse_rounds": 64
+        },
+        {
+          "bench": "linux_mm_exchange",
+          "bytes": 2097152,
+          "shared_percent": 0,
+          "touch_all": 0,
+          "threads": 0,
+          "rounds": 128,
+          "ns_per_roundtrip": 21875
+        },
+        {
+          "bench": "linux_mm_exchange",
+          "bytes": 2097152,
+          "shared_percent": 0,
+          "touch_all": 1,
+          "threads": 0,
+          "rounds": 128,
+          "ns_per_roundtrip": 494953
+        },
+        {
+          "bench": "linux_mm_exchange",
+          "bytes": 2097152,
+          "shared_percent": 50,
+          "touch_all": 0,
+          "threads": 0,
+          "rounds": 128,
+          "ns_per_roundtrip": 21710
+        },
+        {
+          "bench": "linux_mm_exchange",
+          "bytes": 2097152,
+          "shared_percent": 50,
+          "touch_all": 1,
+          "threads": 0,
+          "rounds": 128,
+          "ns_per_roundtrip": 262539
+        },
+        {
+          "bench": "linux_mm_exchange",
+          "bytes": 2097152,
+          "shared_percent": 100,
+          "touch_all": 0,
+          "threads": 0,
+          "rounds": 128,
+          "ns_per_roundtrip": 16109
+        },
+        {
+          "bench": "linux_mm_exchange",
+          "bytes": 2097152,
+          "shared_percent": 100,
+          "touch_all": 1,
+          "threads": 0,
+          "rounds": 128,
+          "ns_per_roundtrip": 24648
+        },
+        {
+          "bench": "linux_mm_exchange",
+          "bytes": 2097152,
+          "shared_percent": 0,
+          "touch_all": 1,
+          "threads": 1,
+          "rounds": 128,
+          "ns_per_roundtrip": 4210
+        },
+        {
+          "bench": "linux_mm_exchange",
+          "bytes": 4194304,
+          "shared_percent": 0,
+          "touch_all": 0,
+          "threads": 0,
+          "rounds": 128,
+          "ns_per_roundtrip": 22546
+        },
+        {
+          "bench": "linux_mm_exchange",
+          "bytes": 4194304,
+          "shared_percent": 0,
+          "touch_all": 1,
+          "threads": 0,
+          "rounds": 128,
+          "ns_per_roundtrip": 771031
+        },
+        {
+          "bench": "linux_mm_exchange",
+          "bytes": 4194304,
+          "shared_percent": 50,
+          "touch_all": 0,
+          "threads": 0,
+          "rounds": 128,
+          "ns_per_roundtrip": 21406
+        },
+        {
+          "bench": "linux_mm_exchange",
+          "bytes": 4194304,
+          "shared_percent": 50,
+          "touch_all": 1,
+          "threads": 0,
+          "rounds": 128,
+          "ns_per_roundtrip": 415453
+        },
+        {
+          "bench": "linux_mm_exchange",
+          "bytes": 4194304,
+          "shared_percent": 100,
+          "touch_all": 0,
+          "threads": 0,
+          "rounds": 128,
+          "ns_per_roundtrip": 15953
+        },
+        {
+          "bench": "linux_mm_exchange",
+          "bytes": 4194304,
+          "shared_percent": 100,
+          "touch_all": 1,
+          "threads": 0,
+          "rounds": 128,
+          "ns_per_roundtrip": 31789
+        },
+        {
+          "bench": "linux_mm_exchange",
+          "bytes": 4194304,
+          "shared_percent": 0,
+          "touch_all": 1,
+          "threads": 1,
+          "rounds": 128,
+          "ns_per_roundtrip": 7539
+        },
+        {
+          "bench": "linux_mm_exchange",
+          "bytes": 8388608,
+          "shared_percent": 0,
+          "touch_all": 0,
+          "threads": 0,
+          "rounds": 128,
+          "ns_per_roundtrip": 22468
+        },
+        {
+          "bench": "linux_mm_exchange",
+          "bytes": 8388608,
+          "shared_percent": 0,
+          "touch_all": 1,
+          "threads": 0,
+          "rounds": 128,
+          "ns_per_roundtrip": 1092945
+        },
+        {
+          "bench": "linux_mm_exchange",
+          "bytes": 8388608,
+          "shared_percent": 50,
+          "touch_all": 0,
+          "threads": 0,
+          "rounds": 128,
+          "ns_per_roundtrip": 23695
+        },
+        {
+          "bench": "linux_mm_exchange",
+          "bytes": 8388608,
+          "shared_percent": 50,
+          "touch_all": 1,
+          "threads": 0,
+          "rounds": 128,
+          "ns_per_roundtrip": 658828
+        },
+        {
+          "bench": "linux_mm_exchange",
+          "bytes": 8388608,
+          "shared_percent": 100,
+          "touch_all": 0,
+          "threads": 0,
+          "rounds": 128,
+          "ns_per_roundtrip": 14914
+        },
+        {
+          "bench": "linux_mm_exchange",
+          "bytes": 8388608,
+          "shared_percent": 100,
+          "touch_all": 1,
+          "threads": 0,
+          "rounds": 128,
+          "ns_per_roundtrip": 44312
+        },
+        {
+          "bench": "linux_mm_exchange",
+          "bytes": 8388608,
+          "shared_percent": 0,
+          "touch_all": 1,
+          "threads": 1,
+          "rounds": 128,
+          "ns_per_roundtrip": 10367
+        },
+        {
+          "bench": "linux_mm_exchange",
+          "bytes": 16777216,
+          "shared_percent": 0,
+          "touch_all": 0,
+          "threads": 0,
+          "rounds": 128,
+          "ns_per_roundtrip": 25820
+        },
+        {
+          "bench": "linux_mm_exchange",
+          "bytes": 16777216,
+          "shared_percent": 0,
+          "touch_all": 1,
+          "threads": 0,
+          "rounds": 128,
+          "ns_per_roundtrip": 1842328
+        },
+        {
+          "bench": "linux_mm_exchange",
+          "bytes": 16777216,
+          "shared_percent": 50,
+          "touch_all": 0,
+          "threads": 0,
+          "rounds": 128,
+          "ns_per_roundtrip": 26609
+        },
+        {
+          "bench": "linux_mm_exchange",
+          "bytes": 16777216,
+          "shared_percent": 50,
+          "touch_all": 1,
+          "threads": 0,
+          "rounds": 128,
+          "ns_per_roundtrip": 1430367
+        },
+        {
+          "bench": "linux_mm_exchange",
+          "bytes": 16777216,
+          "shared_percent": 100,
+          "touch_all": 0,
+          "threads": 0,
+          "rounds": 128,
+          "ns_per_roundtrip": 17078
+        },
+        {
+          "bench": "linux_mm_exchange",
+          "bytes": 16777216,
+          "shared_percent": 100,
+          "touch_all": 1,
+          "threads": 0,
+          "rounds": 128,
+          "ns_per_roundtrip": 66570
+        },
+        {
+          "bench": "linux_mm_exchange",
+          "bytes": 16777216,
+          "shared_percent": 0,
+          "touch_all": 1,
+          "threads": 1,
+          "rounds": 128,
+          "ns_per_roundtrip": 16898
+        },
+        {
+          "test": "linux_mm_exchange_integrity",
+          "passed": true,
+          "cases": 28
+        },
+        {
+          "test": "linux_mm_host_operations",
+          "data_maps": 368459,
+          "code_copy_bytes": 245760,
+          "revocations": 27979
+        },
+        {
+          "phase": "linux_shutdown"
+        },
+        {
+          "test": "fixed_linux_code_view",
+          "copies": 2262,
+          "passed": true
+        },
+        {
+          "test": "linux_host_mapping_totals",
+          "data_maps": 434112,
+          "data_bytes": 14755168256,
+          "code_copy_bytes": 40943616,
+          "revocations": 83815
+        },
+        {
+          "test": "linux_nce_context_lifetime",
+          "allocated": 1294,
+          "freed": 1294
+        },
+        {
+          "test": "linux_guest_events",
+          "preemptions": 263,
+          "deferred_faults": 78594,
+          "stack_resumes": 20706,
+          "stack_calls": 2440
+        },
+        {
+          "test": "guest_preemption_signal_mask",
+          "inherited_blocked_threads": 49,
+          "passed": true
+        },
+        {
+          "result": "passed"
+        }
+      ]
+    },
+    {
+      "file": "/Users/fan/Downloads/Telegram Desktop/native-linux-n2-ios (5).log",
+      "sha256": "9f066e939074e378f09961b7c95750c7c3895d8a355e796f43da8ce6e7e27199",
+      "build": "[probe] N2 iOS; build=N2-C1-iOS-20261009-034855; iOS=27.2; pid=32256",
+      "records": [
+        {
+          "phase": "prepare_jit_pool",
+          "reserved_bytes": 218103808,
+          "prepared_code_bytes": 17055744
+        },
+        {
+          "phase": "wait_debugger_detach"
+        },
+        {
+          "phase": "debugger_detached",
+          "elapsed_ms": 0
+        },
+        {
+          "phase": "check_fixed_code_and_data_remap"
+        },
+        {
+          "phase": "execute_original_jit_address",
+          "range": 0,
+          "iteration": 0
+        },
+        {
+          "phase": "execute_original_jit_address",
+          "range": 0,
+          "iteration": 1
+        },
+        {
+          "phase": "execute_original_jit_address",
+          "range": 0,
+          "iteration": 2
+        },
+        {
+          "phase": "execute_original_jit_address",
+          "range": 0,
+          "iteration": 3
+        },
+        {
+          "phase": "execute_original_jit_address",
+          "range": 0,
+          "iteration": 4
+        },
+        {
+          "phase": "execute_original_jit_address",
+          "range": 0,
+          "iteration": 5
+        },
+        {
+          "phase": "execute_original_jit_address",
+          "range": 0,
+          "iteration": 6
+        },
+        {
+          "phase": "execute_original_jit_address",
+          "range": 0,
+          "iteration": 7
+        },
+        {
+          "phase": "execute_original_jit_address",
+          "range": 1,
+          "iteration": 0
+        },
+        {
+          "phase": "execute_original_jit_address",
+          "range": 1,
+          "iteration": 1
+        },
+        {
+          "phase": "execute_original_jit_address",
+          "range": 1,
+          "iteration": 2
+        },
+        {
+          "phase": "execute_original_jit_address",
+          "range": 1,
+          "iteration": 3
+        },
+        {
+          "phase": "execute_original_jit_address",
+          "range": 1,
+          "iteration": 4
+        },
+        {
+          "phase": "execute_original_jit_address",
+          "range": 1,
+          "iteration": 5
+        },
+        {
+          "phase": "execute_original_jit_address",
+          "range": 1,
+          "iteration": 6
+        },
+        {
+          "phase": "execute_original_jit_address",
+          "range": 1,
+          "iteration": 7
+        },
+        {
+          "phase": "execute_original_jit_address",
+          "range": 2,
+          "iteration": 0
+        },
+        {
+          "phase": "execute_original_jit_address",
+          "range": 2,
+          "iteration": 1
+        },
+        {
+          "phase": "execute_original_jit_address",
+          "range": 2,
+          "iteration": 2
+        },
+        {
+          "phase": "execute_original_jit_address",
+          "range": 2,
+          "iteration": 3
+        },
+        {
+          "phase": "execute_original_jit_address",
+          "range": 2,
+          "iteration": 4
+        },
+        {
+          "phase": "execute_original_jit_address",
+          "range": 2,
+          "iteration": 5
+        },
+        {
+          "phase": "execute_original_jit_address",
+          "range": 2,
+          "iteration": 6
+        },
+        {
+          "phase": "execute_original_jit_address",
+          "range": 2,
+          "iteration": 7
+        },
+        {
+          "phase": "execute_original_jit_address",
+          "range": 3,
+          "iteration": 0
+        },
+        {
+          "phase": "execute_original_jit_address",
+          "range": 3,
+          "iteration": 1
+        },
+        {
+          "phase": "execute_original_jit_address",
+          "range": 3,
+          "iteration": 2
+        },
+        {
+          "phase": "execute_original_jit_address",
+          "range": 3,
+          "iteration": 3
+        },
+        {
+          "phase": "execute_original_jit_address",
+          "range": 3,
+          "iteration": 4
+        },
+        {
+          "phase": "execute_original_jit_address",
+          "range": 3,
+          "iteration": 5
+        },
+        {
+          "phase": "execute_original_jit_address",
+          "range": 3,
+          "iteration": 6
+        },
+        {
+          "phase": "execute_original_jit_address",
+          "range": 3,
+          "iteration": 7
+        },
+        {
+          "phase": "execute_original_jit_address",
+          "range": 4,
+          "iteration": 0
+        },
+        {
+          "phase": "execute_original_jit_address",
+          "range": 4,
+          "iteration": 1
+        },
+        {
+          "phase": "execute_original_jit_address",
+          "range": 4,
+          "iteration": 2
+        },
+        {
+          "phase": "execute_original_jit_address",
+          "range": 4,
+          "iteration": 3
+        },
+        {
+          "phase": "execute_original_jit_address",
+          "range": 4,
+          "iteration": 4
+        },
+        {
+          "phase": "execute_original_jit_address",
+          "range": 4,
+          "iteration": 5
+        },
+        {
+          "phase": "execute_original_jit_address",
+          "range": 4,
+          "iteration": 6
+        },
+        {
+          "phase": "execute_original_jit_address",
+          "range": 4,
+          "iteration": 7
+        },
+        {
+          "test": "prepared_fixed_address_code_updates",
+          "passed": true,
+          "ranges": 5,
+          "updates_per_range": 8
+        },
+        {
+          "test": "data_fixed_remap_after_detach",
+          "passed": true,
+          "targets": 2,
+          "switches_per_target": 8
+        },
+        {
+          "phase": "check_linux_ram_remap"
+        },
+        {
+          "test": "linux_ram_remap",
+          "passed": true,
+          "bytes": 67108864
+        },
+        {
+          "bench": "prepared_nce_compute",
+          "sample": 0,
+          "iterations": 4000000,
+          "direct_ns": 15893375,
+          "nce_ns": 9894750
+        },
+        {
+          "bench": "prepared_nce_compute",
+          "sample": 1,
+          "iterations": 4000000,
+          "direct_ns": 7926375,
+          "nce_ns": 6769209
+        },
+        {
+          "bench": "prepared_nce_compute",
+          "sample": 2,
+          "iterations": 4000000,
+          "direct_ns": 5950125,
+          "nce_ns": 5573875
+        },
+        {
+          "bench": "prepared_nce_compute",
+          "sample": 3,
+          "iterations": 4000000,
+          "direct_ns": 5043458,
+          "nce_ns": 4777583
+        },
+        {
+          "bench": "prepared_nce_compute",
+          "sample": 4,
+          "iterations": 4000000,
+          "direct_ns": 4554334,
+          "nce_ns": 4318000
+        },
+        {
+          "phase": "load_linux_image"
+        },
+        {
+          "phase": "linux_mapping_policy",
+          "mode": "full"
+        },
+        {
+          "phase": "linux_init"
+        },
+        {
+          "test": "native_linux_boot",
+          "passed": true,
+          "ms": 17.344
+        },
+        {
+          "test": "linux_uname",
+          "sysname": "Linux",
+          "release": "6.12.0"
+        },
+        {
+          "phase": "linux_process_tests"
+        },
+        {
+          "phase": "unblocked_inherited_preemption_signal"
+        },
+        {
+          "phase": "signal_restore_without_guest_stack"
+        },
+        {
+          "phase": "signal_redirect_to_host_entry"
+        },
+        {
+          "phase": "guest_fault_on_host_stack"
+        },
+        {
+          "test": "linux_nce_fork_cow_shared_futex_pipe_exec_wait",
+          "passed": true,
+          "rounds": 32,
+          "faults": 256,
+          "elapsed_ms": 26.483
+        },
+        {
+          "test": "linux_exec_then_fork_cow_wait",
+          "passed": true
+        },
+        {
+          "test": "linux_exec_file_unchanged",
+          "passed": true
+        },
+        {
+          "test": "linux_syscall_bounds",
+          "passed": true
+        },
+        {
+          "phase": "linux_userspace_round",
+          "round": 0
+        },
+        {
+          "phase": "linux_userspace_tests"
+        },
+        {
+          "test": "linux_musl_static_pie_processes",
+          "passed": true,
+          "commands": 8,
+          "cow_bytes_per_command": 2097152
+        },
+        {
+          "test": "linux_compiled_elf_files_unchanged",
+          "passed": true
+        },
+        {
+          "test": "linux_musl_threads_preemption",
+          "passed": true,
+          "threads": 56,
+          "stackless_exits": 8,
+          "elapsed_ms": 45.719
+        },
+        {
+          "memory": "after_userspace",
+          "phys_footprint": 61638640,
+          "resident_peak": 200032256
+        },
+        {
+          "phase": "linux_userspace_round",
+          "round": 1
+        },
+        {
+          "phase": "linux_userspace_tests"
+        },
+        {
+          "test": "linux_musl_static_pie_processes",
+          "passed": true,
+          "commands": 8,
+          "cow_bytes_per_command": 2097152
+        },
+        {
+          "test": "linux_compiled_elf_files_unchanged",
+          "passed": true
+        },
+        {
+          "test": "linux_musl_threads_preemption",
+          "passed": true,
+          "threads": 56,
+          "stackless_exits": 8,
+          "elapsed_ms": 53.447
+        },
+        {
+          "memory": "after_userspace",
+          "phys_footprint": 86050824,
+          "resident_peak": 207519744
+        },
+        {
+          "phase": "linux_userspace_round",
+          "round": 2
+        },
+        {
+          "phase": "linux_userspace_tests"
+        },
+        {
+          "test": "linux_musl_static_pie_processes",
+          "passed": true,
+          "commands": 8,
+          "cow_bytes_per_command": 2097152
+        },
+        {
+          "test": "linux_compiled_elf_files_unchanged",
+          "passed": true
+        },
+        {
+          "test": "linux_musl_threads_preemption",
+          "passed": true,
+          "threads": 56,
+          "stackless_exits": 8,
+          "elapsed_ms": 45.161
+        },
+        {
+          "memory": "after_userspace",
+          "phys_footprint": 86034440,
+          "resident_peak": 207585280
+        },
+        {
+          "phase": "linux_userspace_round",
+          "round": 3
+        },
+        {
+          "phase": "linux_userspace_tests"
+        },
+        {
+          "test": "linux_musl_static_pie_processes",
+          "passed": true,
+          "commands": 8,
+          "cow_bytes_per_command": 2097152
+        },
+        {
+          "test": "linux_compiled_elf_files_unchanged",
+          "passed": true
+        },
+        {
+          "test": "linux_musl_threads_preemption",
+          "passed": true,
+          "threads": 56,
+          "stackless_exits": 8,
+          "elapsed_ms": 44.891
+        },
+        {
+          "memory": "after_userspace",
+          "phys_footprint": 86034440,
+          "resident_peak": 207585280
+        },
+        {
+          "phase": "linux_userspace_round",
+          "round": 4
+        },
+        {
+          "phase": "linux_userspace_tests"
+        },
+        {
+          "test": "linux_musl_static_pie_processes",
+          "passed": true,
+          "commands": 8,
+          "cow_bytes_per_command": 2097152
+        },
+        {
+          "test": "linux_compiled_elf_files_unchanged",
+          "passed": true
+        },
+        {
+          "test": "linux_musl_threads_preemption",
+          "passed": true,
+          "threads": 56,
+          "stackless_exits": 8,
+          "elapsed_ms": 46.206
+        },
+        {
+          "memory": "after_userspace",
+          "phys_footprint": 86050824,
+          "resident_peak": 207585280
+        },
+        {
+          "phase": "linux_userspace_round",
+          "round": 5
+        },
+        {
+          "phase": "linux_userspace_tests"
+        },
+        {
+          "test": "linux_musl_static_pie_processes",
+          "passed": true,
+          "commands": 8,
+          "cow_bytes_per_command": 2097152
+        },
+        {
+          "test": "linux_compiled_elf_files_unchanged",
+          "passed": true
+        },
+        {
+          "test": "linux_musl_threads_preemption",
+          "passed": true,
+          "threads": 56,
+          "stackless_exits": 8,
+          "elapsed_ms": 44.831
+        },
+        {
+          "memory": "after_userspace",
+          "phys_footprint": 86050824,
+          "resident_peak": 207585280
+        },
+        {
+          "phase": "linux_userspace_round",
+          "round": 6
+        },
+        {
+          "phase": "linux_userspace_tests"
+        },
+        {
+          "test": "linux_musl_static_pie_processes",
+          "passed": true,
+          "commands": 8,
+          "cow_bytes_per_command": 2097152
+        },
+        {
+          "test": "linux_compiled_elf_files_unchanged",
+          "passed": true
+        },
+        {
+          "test": "linux_musl_threads_preemption",
+          "passed": true,
+          "threads": 56,
+          "stackless_exits": 8,
+          "elapsed_ms": 45.669
+        },
+        {
+          "memory": "after_userspace",
+          "phys_footprint": 86050824,
+          "resident_peak": 207585280
+        },
+        {
+          "phase": "linux_userspace_round",
+          "round": 7
+        },
+        {
+          "phase": "linux_userspace_tests"
+        },
+        {
+          "test": "linux_musl_static_pie_processes",
+          "passed": true,
+          "commands": 8,
+          "cow_bytes_per_command": 2097152
+        },
+        {
+          "test": "linux_compiled_elf_files_unchanged",
+          "passed": true
+        },
+        {
+          "test": "linux_musl_threads_preemption",
+          "passed": true,
+          "threads": 56,
+          "stackless_exits": 8,
+          "elapsed_ms": 45.036
+        },
+        {
+          "memory": "after_userspace",
+          "phys_footprint": 85985288,
+          "resident_peak": 207585280
+        },
+        {
+          "phase": "linux_userspace_round",
+          "round": 8
+        },
+        {
+          "phase": "linux_userspace_tests"
+        },
+        {
+          "test": "linux_musl_static_pie_processes",
+          "passed": true,
+          "commands": 8,
+          "cow_bytes_per_command": 2097152
+        },
+        {
+          "test": "linux_compiled_elf_files_unchanged",
+          "passed": true
+        },
+        {
+          "test": "linux_musl_threads_preemption",
+          "passed": true,
+          "threads": 56,
+          "stackless_exits": 8,
+          "elapsed_ms": 45.127
+        },
+        {
+          "memory": "after_userspace",
+          "phys_footprint": 85968904,
+          "resident_peak": 207585280
+        },
+        {
+          "phase": "linux_userspace_round",
+          "round": 9
+        },
+        {
+          "phase": "linux_userspace_tests"
+        },
+        {
+          "test": "linux_musl_static_pie_processes",
+          "passed": true,
+          "commands": 8,
+          "cow_bytes_per_command": 2097152
+        },
+        {
+          "test": "linux_compiled_elf_files_unchanged",
+          "passed": true
+        },
+        {
+          "test": "linux_musl_threads_preemption",
+          "passed": true,
+          "threads": 56,
+          "stackless_exits": 8,
+          "elapsed_ms": 44.319
+        },
+        {
+          "memory": "after_userspace",
+          "phys_footprint": 85985288,
+          "resident_peak": 207585280
+        },
+        {
+          "phase": "linux_userspace_round",
+          "round": 10
+        },
+        {
+          "phase": "linux_userspace_tests"
+        },
+        {
+          "test": "linux_musl_static_pie_processes",
+          "passed": true,
+          "commands": 8,
+          "cow_bytes_per_command": 2097152
+        },
+        {
+          "test": "linux_compiled_elf_files_unchanged",
+          "passed": true
+        },
+        {
+          "test": "linux_musl_threads_preemption",
+          "passed": true,
+          "threads": 56,
+          "stackless_exits": 8,
+          "elapsed_ms": 44.608
+        },
+        {
+          "memory": "after_userspace",
+          "phys_footprint": 85985288,
+          "resident_peak": 207585280
+        },
+        {
+          "phase": "linux_userspace_round",
+          "round": 11
+        },
+        {
+          "phase": "linux_userspace_tests"
+        },
+        {
+          "test": "linux_musl_static_pie_processes",
+          "passed": true,
+          "commands": 8,
+          "cow_bytes_per_command": 2097152
+        },
+        {
+          "test": "linux_compiled_elf_files_unchanged",
+          "passed": true
+        },
+        {
+          "test": "linux_musl_threads_preemption",
+          "passed": true,
+          "threads": 56,
+          "stackless_exits": 8,
+          "elapsed_ms": 44.688
+        },
+        {
+          "memory": "after_userspace",
+          "phys_footprint": 85985288,
+          "resident_peak": 207585280
+        },
+        {
+          "phase": "linux_userspace_round",
+          "round": 12
+        },
+        {
+          "phase": "linux_userspace_tests"
+        },
+        {
+          "test": "linux_musl_static_pie_processes",
+          "passed": true,
+          "commands": 8,
+          "cow_bytes_per_command": 2097152
+        },
+        {
+          "test": "linux_compiled_elf_files_unchanged",
+          "passed": true
+        },
+        {
+          "test": "linux_musl_threads_preemption",
+          "passed": true,
+          "threads": 56,
+          "stackless_exits": 8,
+          "elapsed_ms": 46.842
+        },
+        {
+          "memory": "after_userspace",
+          "phys_footprint": 86312968,
+          "resident_peak": 207814656
+        },
+        {
+          "phase": "linux_userspace_round",
+          "round": 13
+        },
+        {
+          "phase": "linux_userspace_tests"
+        },
+        {
+          "test": "linux_musl_static_pie_processes",
+          "passed": true,
+          "commands": 8,
+          "cow_bytes_per_command": 2097152
+        },
+        {
+          "test": "linux_compiled_elf_files_unchanged",
+          "passed": true
+        },
+        {
+          "test": "linux_musl_threads_preemption",
+          "passed": true,
+          "threads": 56,
+          "stackless_exits": 8,
+          "elapsed_ms": 48.501
+        },
+        {
+          "memory": "after_userspace",
+          "phys_footprint": 99272736,
+          "resident_peak": 244547584
+        },
+        {
+          "phase": "linux_userspace_round",
+          "round": 14
+        },
+        {
+          "phase": "linux_userspace_tests"
+        },
+        {
+          "test": "linux_musl_static_pie_processes",
+          "passed": true,
+          "commands": 8,
+          "cow_bytes_per_command": 2097152
+        },
+        {
+          "test": "linux_compiled_elf_files_unchanged",
+          "passed": true
+        },
+        {
+          "test": "linux_musl_threads_preemption",
+          "passed": true,
+          "threads": 56,
+          "stackless_exits": 8,
+          "elapsed_ms": 45.745
+        },
+        {
+          "memory": "after_userspace",
+          "phys_footprint": 99289120,
+          "resident_peak": 244547584
+        },
+        {
+          "phase": "linux_userspace_round",
+          "round": 15
+        },
+        {
+          "phase": "linux_userspace_tests"
+        },
+        {
+          "test": "linux_musl_static_pie_processes",
+          "passed": true,
+          "commands": 8,
+          "cow_bytes_per_command": 2097152
+        },
+        {
+          "test": "linux_compiled_elf_files_unchanged",
+          "passed": true
+        },
+        {
+          "test": "linux_musl_threads_preemption",
+          "passed": true,
+          "threads": 56,
+          "stackless_exits": 8,
+          "elapsed_ms": 45.485
+        },
+        {
+          "memory": "after_userspace",
+          "phys_footprint": 99289120,
+          "resident_peak": 244547584
+        },
+        {
+          "test": "linux_userspace_stress",
+          "passed": true,
+          "rounds": 16,
+          "commands": 128,
+          "threads": 896
+        },
+        {
+          "phase": "linux_mm_benchmark"
+        },
+        {
+          "test": "linux_user_memory_boundaries",
+          "passed": true,
+          "reuse_rounds": 64
+        },
+        {
+          "bench": "linux_mm_exchange",
+          "bytes": 2097152,
+          "shared_percent": 0,
+          "touch_all": 0,
+          "threads": 0,
+          "rounds": 128,
+          "ns_per_roundtrip": 338960
+        },
+        {
+          "bench": "linux_mm_exchange",
+          "bytes": 2097152,
+          "shared_percent": 0,
+          "touch_all": 1,
+          "threads": 0,
+          "rounds": 128,
+          "ns_per_roundtrip": 487367
+        },
+        {
+          "bench": "linux_mm_exchange",
+          "bytes": 2097152,
+          "shared_percent": 50,
+          "touch_all": 0,
+          "threads": 0,
+          "rounds": 128,
+          "ns_per_roundtrip": 281335
+        },
+        {
+          "bench": "linux_mm_exchange",
+          "bytes": 2097152,
+          "shared_percent": 50,
+          "touch_all": 1,
+          "threads": 0,
+          "rounds": 128,
+          "ns_per_roundtrip": 476898
+        },
+        {
+          "bench": "linux_mm_exchange",
+          "bytes": 2097152,
+          "shared_percent": 100,
+          "touch_all": 0,
+          "threads": 0,
+          "rounds": 128,
+          "ns_per_roundtrip": 229593
+        },
+        {
+          "bench": "linux_mm_exchange",
+          "bytes": 2097152,
+          "shared_percent": 100,
+          "touch_all": 1,
+          "threads": 0,
+          "rounds": 128,
+          "ns_per_roundtrip": 493218
+        },
+        {
+          "bench": "linux_mm_exchange",
+          "bytes": 2097152,
+          "shared_percent": 0,
+          "touch_all": 1,
+          "threads": 1,
+          "rounds": 128,
+          "ns_per_roundtrip": 7976
+        },
+        {
+          "bench": "linux_mm_exchange",
+          "bytes": 4194304,
+          "shared_percent": 0,
+          "touch_all": 0,
+          "threads": 0,
+          "rounds": 128,
+          "ns_per_roundtrip": 704250
+        },
+        {
+          "bench": "linux_mm_exchange",
+          "bytes": 4194304,
+          "shared_percent": 0,
+          "touch_all": 1,
+          "threads": 0,
+          "rounds": 128,
+          "ns_per_roundtrip": 941000
+        },
+        {
+          "bench": "linux_mm_exchange",
+          "bytes": 4194304,
+          "shared_percent": 50,
+          "touch_all": 0,
+          "threads": 0,
+          "rounds": 128,
+          "ns_per_roundtrip": 480437
+        },
+        {
+          "bench": "linux_mm_exchange",
+          "bytes": 4194304,
+          "shared_percent": 50,
+          "touch_all": 1,
+          "threads": 0,
+          "rounds": 128,
+          "ns_per_roundtrip": 895421
+        },
+        {
+          "bench": "linux_mm_exchange",
+          "bytes": 4194304,
+          "shared_percent": 100,
+          "touch_all": 0,
+          "threads": 0,
+          "rounds": 128,
+          "ns_per_roundtrip": 359726
+        },
+        {
+          "bench": "linux_mm_exchange",
+          "bytes": 4194304,
+          "shared_percent": 100,
+          "touch_all": 1,
+          "threads": 0,
+          "rounds": 128,
+          "ns_per_roundtrip": 947429
+        },
+        {
+          "bench": "linux_mm_exchange",
+          "bytes": 4194304,
+          "shared_percent": 0,
+          "touch_all": 1,
+          "threads": 1,
+          "rounds": 128,
+          "ns_per_roundtrip": 10359
+        },
+        {
+          "bench": "linux_mm_exchange",
+          "bytes": 8388608,
+          "shared_percent": 0,
+          "touch_all": 0,
+          "threads": 0,
+          "rounds": 128,
+          "ns_per_roundtrip": 1263242
+        },
+        {
+          "bench": "linux_mm_exchange",
+          "bytes": 8388608,
+          "shared_percent": 0,
+          "touch_all": 1,
+          "threads": 0,
+          "rounds": 128,
+          "ns_per_roundtrip": 1819203
+        },
+        {
+          "bench": "linux_mm_exchange",
+          "bytes": 8388608,
+          "shared_percent": 50,
+          "touch_all": 0,
+          "threads": 0,
+          "rounds": 128,
+          "ns_per_roundtrip": 1069507
+        },
+        {
+          "bench": "linux_mm_exchange",
+          "bytes": 8388608,
+          "shared_percent": 50,
+          "touch_all": 1,
+          "threads": 0,
+          "rounds": 128,
+          "ns_per_roundtrip": 1849148
+        },
+        {
+          "bench": "linux_mm_exchange",
+          "bytes": 8388608,
+          "shared_percent": 100,
+          "touch_all": 0,
+          "threads": 0,
+          "rounds": 128,
+          "ns_per_roundtrip": 649070
+        },
+        {
+          "bench": "linux_mm_exchange",
+          "bytes": 8388608,
+          "shared_percent": 100,
+          "touch_all": 1,
+          "threads": 0,
+          "rounds": 128,
+          "ns_per_roundtrip": 1944859
+        },
+        {
+          "bench": "linux_mm_exchange",
+          "bytes": 8388608,
+          "shared_percent": 0,
+          "touch_all": 1,
+          "threads": 1,
+          "rounds": 128,
+          "ns_per_roundtrip": 11492
+        },
+        {
+          "bench": "linux_mm_exchange",
+          "bytes": 16777216,
+          "shared_percent": 0,
+          "touch_all": 0,
+          "threads": 0,
+          "rounds": 128,
+          "ns_per_roundtrip": 2666578
+        },
+        {
+          "bench": "linux_mm_exchange",
+          "bytes": 16777216,
+          "shared_percent": 0,
+          "touch_all": 1,
+          "threads": 0,
+          "rounds": 128,
+          "ns_per_roundtrip": 3755406
+        },
+        {
+          "bench": "linux_mm_exchange",
+          "bytes": 16777216,
+          "shared_percent": 50,
+          "touch_all": 0,
+          "threads": 0,
+          "rounds": 128,
+          "ns_per_roundtrip": 2041031
+        },
+        {
+          "bench": "linux_mm_exchange",
+          "bytes": 16777216,
+          "shared_percent": 50,
+          "touch_all": 1,
+          "threads": 0,
+          "rounds": 128,
+          "ns_per_roundtrip": 3765507
+        },
+        {
+          "bench": "linux_mm_exchange",
+          "bytes": 16777216,
+          "shared_percent": 100,
+          "touch_all": 0,
+          "threads": 0,
+          "rounds": 128,
+          "ns_per_roundtrip": 1405671
+        },
+        {
+          "bench": "linux_mm_exchange",
+          "bytes": 16777216,
+          "shared_percent": 100,
+          "touch_all": 1,
+          "threads": 0,
+          "rounds": 128,
+          "ns_per_roundtrip": 3732835
+        },
+        {
+          "bench": "linux_mm_exchange",
+          "bytes": 16777216,
+          "shared_percent": 0,
+          "touch_all": 1,
+          "threads": 1,
+          "rounds": 128,
+          "ns_per_roundtrip": 20671
+        },
+        {
+          "test": "linux_mm_exchange_integrity",
+          "passed": true,
+          "cases": 28
+        },
+        {
+          "test": "linux_mm_host_operations",
+          "data_maps": 2673335,
+          "code_copy_bytes": 311918592,
+          "revocations": 41979
+        },
+        {
+          "phase": "linux_shutdown"
+        },
+        {
+          "test": "fixed_linux_code_view",
+          "copies": 24334,
+          "passed": true
+        },
+        {
+          "test": "linux_host_mapping_totals",
+          "data_maps": 2787875,
+          "data_bytes": 45743636480,
+          "code_copy_bytes": 398688256,
+          "revocations": 119107
+        },
+        {
+          "test": "linux_nce_context_lifetime",
+          "allocated": 1294,
+          "freed": 1294
+        },
+        {
+          "test": "linux_guest_events",
+          "preemptions": 431,
+          "deferred_faults": 62119,
+          "stack_resumes": 20060,
+          "stack_calls": 2440
+        },
+        {
+          "test": "guest_preemption_signal_mask",
+          "inherited_blocked_threads": 49,
+          "passed": true
+        },
+        {
+          "result": "passed"
+        }
+      ]
+    }
+  ],
+  "comparison": [
+    {
+      "bytes": 2097152,
+      "shared_percent": 0,
+      "touch_all": 0,
+      "threads": 0,
+      "optimized_ns": 21875,
+      "baseline_ns": 338960,
+      "speedup": 15.495314285714286
+    },
+    {
+      "bytes": 2097152,
+      "shared_percent": 0,
+      "touch_all": 1,
+      "threads": 0,
+      "optimized_ns": 494953,
+      "baseline_ns": 487367,
+      "speedup": 0.9846732922115837
+    },
+    {
+      "bytes": 2097152,
+      "shared_percent": 50,
+      "touch_all": 0,
+      "threads": 0,
+      "optimized_ns": 21710,
+      "baseline_ns": 281335,
+      "speedup": 12.958774758175956
+    },
+    {
+      "bytes": 2097152,
+      "shared_percent": 50,
+      "touch_all": 1,
+      "threads": 0,
+      "optimized_ns": 262539,
+      "baseline_ns": 476898,
+      "speedup": 1.816484408030807
+    },
+    {
+      "bytes": 2097152,
+      "shared_percent": 100,
+      "touch_all": 0,
+      "threads": 0,
+      "optimized_ns": 16109,
+      "baseline_ns": 229593,
+      "speedup": 14.252467564715376
+    },
+    {
+      "bytes": 2097152,
+      "shared_percent": 100,
+      "touch_all": 1,
+      "threads": 0,
+      "optimized_ns": 24648,
+      "baseline_ns": 493218,
+      "speedup": 20.010467380720545
+    },
+    {
+      "bytes": 2097152,
+      "shared_percent": 0,
+      "touch_all": 1,
+      "threads": 1,
+      "optimized_ns": 4210,
+      "baseline_ns": 7976,
+      "speedup": 1.8945368171021377
+    },
+    {
+      "bytes": 4194304,
+      "shared_percent": 0,
+      "touch_all": 0,
+      "threads": 0,
+      "optimized_ns": 22546,
+      "baseline_ns": 704250,
+      "speedup": 31.236139448239154
+    },
+    {
+      "bytes": 4194304,
+      "shared_percent": 0,
+      "touch_all": 1,
+      "threads": 0,
+      "optimized_ns": 771031,
+      "baseline_ns": 941000,
+      "speedup": 1.2204437953856588
+    },
+    {
+      "bytes": 4194304,
+      "shared_percent": 50,
+      "touch_all": 0,
+      "threads": 0,
+      "optimized_ns": 21406,
+      "baseline_ns": 480437,
+      "speedup": 22.444034382883302
+    },
+    {
+      "bytes": 4194304,
+      "shared_percent": 50,
+      "touch_all": 1,
+      "threads": 0,
+      "optimized_ns": 415453,
+      "baseline_ns": 895421,
+      "speedup": 2.155288323829651
+    },
+    {
+      "bytes": 4194304,
+      "shared_percent": 100,
+      "touch_all": 0,
+      "threads": 0,
+      "optimized_ns": 15953,
+      "baseline_ns": 359726,
+      "speedup": 22.549113019494765
+    },
+    {
+      "bytes": 4194304,
+      "shared_percent": 100,
+      "touch_all": 1,
+      "threads": 0,
+      "optimized_ns": 31789,
+      "baseline_ns": 947429,
+      "speedup": 29.803674226933843
+    },
+    {
+      "bytes": 4194304,
+      "shared_percent": 0,
+      "touch_all": 1,
+      "threads": 1,
+      "optimized_ns": 7539,
+      "baseline_ns": 10359,
+      "speedup": 1.3740549144448866
+    },
+    {
+      "bytes": 8388608,
+      "shared_percent": 0,
+      "touch_all": 0,
+      "threads": 0,
+      "optimized_ns": 22468,
+      "baseline_ns": 1263242,
+      "speedup": 56.2240519850454
+    },
+    {
+      "bytes": 8388608,
+      "shared_percent": 0,
+      "touch_all": 1,
+      "threads": 0,
+      "optimized_ns": 1092945,
+      "baseline_ns": 1819203,
+      "speedup": 1.6644963836240616
+    },
+    {
+      "bytes": 8388608,
+      "shared_percent": 50,
+      "touch_all": 0,
+      "threads": 0,
+      "optimized_ns": 23695,
+      "baseline_ns": 1069507,
+      "speedup": 45.13640008440599
+    },
+    {
+      "bytes": 8388608,
+      "shared_percent": 50,
+      "touch_all": 1,
+      "threads": 0,
+      "optimized_ns": 658828,
+      "baseline_ns": 1849148,
+      "speedup": 2.80672345437656
+    },
+    {
+      "bytes": 8388608,
+      "shared_percent": 100,
+      "touch_all": 0,
+      "threads": 0,
+      "optimized_ns": 14914,
+      "baseline_ns": 649070,
+      "speedup": 43.5208528899021
+    },
+    {
+      "bytes": 8388608,
+      "shared_percent": 100,
+      "touch_all": 1,
+      "threads": 0,
+      "optimized_ns": 44312,
+      "baseline_ns": 1944859,
+      "speedup": 43.89012005777216
+    },
+    {
+      "bytes": 8388608,
+      "shared_percent": 0,
+      "touch_all": 1,
+      "threads": 1,
+      "optimized_ns": 10367,
+      "baseline_ns": 11492,
+      "speedup": 1.108517411015723
+    },
+    {
+      "bytes": 16777216,
+      "shared_percent": 0,
+      "touch_all": 0,
+      "threads": 0,
+      "optimized_ns": 25820,
+      "baseline_ns": 2666578,
+      "speedup": 103.27567776917118
+    },
+    {
+      "bytes": 16777216,
+      "shared_percent": 0,
+      "touch_all": 1,
+      "threads": 0,
+      "optimized_ns": 1842328,
+      "baseline_ns": 3755406,
+      "speedup": 2.0384024994463528
+    },
+    {
+      "bytes": 16777216,
+      "shared_percent": 50,
+      "touch_all": 0,
+      "threads": 0,
+      "optimized_ns": 26609,
+      "baseline_ns": 2041031,
+      "speedup": 76.70453605922808
+    },
+    {
+      "bytes": 16777216,
+      "shared_percent": 50,
+      "touch_all": 1,
+      "threads": 0,
+      "optimized_ns": 1430367,
+      "baseline_ns": 3765507,
+      "speedup": 2.6325460528661524
+    },
+    {
+      "bytes": 16777216,
+      "shared_percent": 100,
+      "touch_all": 0,
+      "threads": 0,
+      "optimized_ns": 17078,
+      "baseline_ns": 1405671,
+      "speedup": 82.30887691767185
+    },
+    {
+      "bytes": 16777216,
+      "shared_percent": 100,
+      "touch_all": 1,
+      "threads": 0,
+      "optimized_ns": 66570,
+      "baseline_ns": 3732835,
+      "speedup": 56.0738320564819
+    },
+    {
+      "bytes": 16777216,
+      "shared_percent": 0,
+      "touch_all": 1,
+      "threads": 1,
+      "optimized_ns": 16898,
+      "baseline_ns": 20671,
+      "speedup": 1.223280861640431
+    }
+  ]
+}

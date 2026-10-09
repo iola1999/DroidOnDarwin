@@ -152,9 +152,11 @@ static void timer_free(void *timer)
 static void jump_set(struct lkl_jmp_buf *b, void (*fn)(void))
 {
     _Static_assert(sizeof(jmp_buf) <= sizeof(struct lkl_jmp_buf), "jump buffer size");
-    if (setjmp(*(jmp_buf *)b) == 0) fn();
+    /* Darwin longjmp restores its saved mask with process-wide sigprocmask.
+     * LKL host scheduling must preserve each pthread's own signal mask. */
+    if (_setjmp(*(jmp_buf *)b) == 0) fn();
 }
-static void jump_back(struct lkl_jmp_buf *b, int value) { longjmp(*(jmp_buf *)b, value); }
+static void jump_back(struct lkl_jmp_buf *b, int value) { _longjmp(*(jmp_buf *)b, value); }
 
 struct lkl_host_operations nce_lkl_host = {
     .print = host_print, .panic = host_panic,

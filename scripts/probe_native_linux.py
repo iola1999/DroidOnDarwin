@@ -83,7 +83,7 @@ def main():
         summary["benchmarks"].append({"syscall_interval": interval, "native_ms": native / 1e6,
                                       "nce_ms": nce / 1e6, "nce_over_native": nce / native,
                                       "extra_ns_per_call": (nce - native) / calls if calls else None})
-    inputs = [SOURCE / p for p in ("entry.S", "guest.S", "main.c", "nce.c", "nce.h", "probe.c", "probe.h")]
+    inputs = [SOURCE / p for p in ("entry.S", "guest.S", "main.c", "nce.c", "nce.h", "guest-registers.h", "probe.c", "probe.h")]
     inputs.append(Path(__file__).resolve())
     summary["input_sha256"] = {str(p.relative_to(ROOT)): hashlib.sha256(p.read_bytes()).hexdigest()
                                for p in inputs}

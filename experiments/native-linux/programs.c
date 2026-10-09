@@ -25,7 +25,7 @@ int nce_program_patch(NceProgram *p, NceState *state, NceState **active)
 {
     if (!p->stubs.rw) p->stubs = nce_memory_take(16 + 80 * p->patch_count);
     if (nce_write_entry(p->stubs, p->base + p->entry)) return -1;
-    state->pc = p->base + p->entry;
+    state->regs.pc = p->base + p->entry;
     state->resume = (uintptr_t)p->stubs.rx;
     for (size_t i = 0; i < p->patch_count; ++i) {
         const NcePatch *patch = &p->patches[i];

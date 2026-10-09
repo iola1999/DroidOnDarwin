@@ -55,10 +55,10 @@ static uint64_t now(void)
 #ifndef NCE_PROCESS
 static void linux_syscall(NceState *s)
 {
-    if (s->x[8] == 93) { s->done = 1; return; }
+    if (s->regs.x[8] == 93) { s->done = 1; return; }
     long args[6];
-    for (unsigned i = 0; i < 6; ++i) args[i] = (long)s->x[i];
-    s->x[0] = kernel_syscall(s->x[8], args);
+    for (unsigned i = 0; i < 6; ++i) args[i] = (long)s->regs.x[i];
+    s->regs.x[0] = kernel_syscall(s->regs.x[8], args);
 }
 
 struct waiter { int fd; long result, tid; unsigned value; atomic_int ready; };
@@ -119,7 +119,8 @@ static void blocking_tests(void)
 #else
 unsigned long nce_process_setup(void);
 void nce_process_cleanup(void);
-void nce_process_tests(long (*)(long, long *), long (*)(long, long *), int (*)(unsigned long, int));
+void nce_process_tests(long (*)(long, long *), long (*)(long, long *), int (*)(unsigned long, int),
+                       void (*)(long, long, unsigned long), void (*)(unsigned long, int));
 #endif
 
 int nce_lkl_run(const char *image_path)
@@ -174,15 +175,16 @@ int nce_lkl_run(const char *image_path)
 
     #ifdef NCE_PROCESS
     nce_process_tests(kernel_syscall, (void *)(kernel.rx + NCE_RUN_SYSCALL),
-                      (void *)(kernel.rx + NCE_PAGE_FAULT));
+                      (void *)(kernel.rx + NCE_PAGE_FAULT), (void *)(kernel.rx + NCE_USER_RETURN),
+                      (void *)(kernel.rx + NCE_USER_FAULT));
     #else
     NceCode code = dual(65536);
     REQUIRE(mprotect(code.rx, code.size, PROT_READ | PROT_EXEC) == 0);
     void *stack = mapped(65536);
-    NceState state = {.sp = (uintptr_t)stack + 65536, .syscall = linux_syscall};
+    NceState state = {.regs.sp = (uintptr_t)stack + 65536, .syscall = linux_syscall};
     REQUIRE(nce_prepare(code, &state, guest_image, sizeof(guest_image), GUEST_LINUX_FILE) == 0);
     nce_enter(&state);
-    REQUIRE(state.done && state.x[0] == 0 && state.calls == 7);
+    REQUIRE(state.done && state.regs.x[0] == 0 && state.calls == 7);
     puts("{\"test\":\"nce_linux_file_and_timer\",\"passed\":true}");
     blocking_tests();
     const unsigned iterations = 100000;
@@ -193,14 +195,14 @@ int nce_lkl_run(const char *image_path)
     printf("{\"bench\":\"native_linux_getpid\",\"iterations\":%u,\"ns_per_call\":%.2f}\n",
            iterations, (double)(now() - started) / iterations);
     memset(&state, 0, sizeof(state));
-    state.sp = (uintptr_t)stack + 65536; state.syscall = linux_syscall;
+    state.regs.sp = (uintptr_t)stack + 65536; state.syscall = linux_syscall;
     REQUIRE(nce_prepare(code, &state, guest_image, sizeof(guest_image), GUEST_WORK) == 0);
     uint64_t data = 7;
-    state.x[0] = iterations; state.x[1] = (uintptr_t)&data; state.x[2] = 1;
+    state.regs.x[0] = iterations; state.regs.x[1] = (uintptr_t)&data; state.regs.x[2] = 1;
     started = now();
     nce_enter(&state);
     REQUIRE(state.calls == iterations + 1);
-    REQUIRE(state.x[0] == (data ^ ((uint64_t)pid * iterations)));
+    REQUIRE(state.regs.x[0] == (data ^ ((uint64_t)pid * iterations)));
     printf("{\"bench\":\"nce_linux_getpid_with_compute\",\"iterations\":%u,\"ns_per_iteration\":%.2f}\n",
            iterations, (double)(now() - started) / iterations);
     #endif

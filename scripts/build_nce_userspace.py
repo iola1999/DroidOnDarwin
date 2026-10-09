@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """编译内置 Linux 程序，按 ELF 段与 AArch64 映射符号生成执行布局。"""
 import hashlib
+import json
 from pathlib import Path
 import re
 import shlex
@@ -16,6 +17,7 @@ WORK = ROOT / 'work/native-linux-nce'
 PAGE = 16384
 MUSL_SHA = 'a9a118bbe84d8764da0ea0d28b3ab3fae8477fc7e4085d90102b8596fc7c75e4'
 RT_SHA = '15277402f6fd63397c0917a5c7171cda82d16d226094b828c1ed0f58f73b9c69'
+DASH_SHA = '6a474ac46e8b0b32916c4c60df694c82058d3297d8b385b74508030ca4a8f28a'
 
 
 def run(args, **kw):
@@ -152,6 +154,52 @@ def compiler_runtime(llvm, libc):
     return library
 
 
+def dash(out, llvm, libc, runtime, resource):
+    source = WORK / 'dash-0.5.12'
+    archive = WORK / 'dash-0.5.12.tar.gz'
+    if not archive.exists():
+        urllib.request.urlretrieve('https://sources.buildroot.net/dash/dash-0.5.12.tar.gz', archive)
+    if hashlib.sha256(archive.read_bytes()).hexdigest() != DASH_SHA:
+        raise RuntimeError('dash source archive hash mismatch')
+    if not source.exists():
+        with tarfile.open(archive) as tar:
+            tar.extractall(WORK, filter='data')
+    build = WORK / 'dash-build'
+    build.mkdir(exist_ok=True)
+    cc = build / 'target-cc'
+    flags = [str(llvm / 'clang'), '--target=aarch64-linux-musl', '-ffixed-x18', '-mno-outline-atomics',
+             '-nostdinc', '-isystem', str(libc / 'include'), '-isystem', str(resource), '-fPIE']
+    link = ['-nostdlib', '-fuse-ld=lld', '-Wl,-pie,--no-dynamic-linker,-z,max-page-size=16384,-z,common-page-size=16384',
+            str(libc / 'lib/rcrt1.o'), str(libc / 'lib/crti.o')]
+    libraries = [str(libc / 'lib/libc.a'), str(runtime), str(libc / 'lib/crtn.o')]
+    cc.write_text('#!/usr/bin/env python3\nimport os,sys\n'
+                  f'flags={json.dumps(flags)}\nargs=sys.argv[1:]\n'
+                  f'if not any(a in args for a in ("-c","-S","-E")) and any(a.endswith((".c",".o")) for a in args):\n'
+                  f' args={json.dumps(link)}+args+{json.dumps(libraries)}\n'
+                  'os.execv(flags[0], flags+args)\n')
+    cc.chmod(0o755)
+    with (build / 'build.log').open('w') as log:
+        if not (build / 'config.h').exists():
+            run([source / 'configure', '--host=aarch64-linux-musl', '--build=aarch64-apple-darwin',
+                 '--without-libedit', 'CC=' + str(cc), 'CC_FOR_BUILD=cc', 'CFLAGS=-O2 -g'],
+                cwd=build, stdout=log, stderr=subprocess.STDOUT)
+        # mksignames runs on macOS but must use the Linux signal numbers.
+        generator = (source / 'src/mksignames.c').read_text()
+        definitions = dict(re.findall(r'^#define\s+((?:SIG\w+|_NSIG))\s+(\w+)\s*$',
+                                     (libc / 'include/bits/signal.h').read_text(), re.M))
+        names = set(re.findall(r'\bSIG[A-Z0-9]+\b', generator)) | {'NSIG', '_NSIG'}
+        header = '#include <signal.h>\n' + ''.join(f'#undef {name}\n' for name in sorted(names))
+        header += ''.join(f'#define {name} {value}\n' for name, value in definitions.items() if name in names)
+        # musl 1.2.5 reserves 32..34 for its internal thread signals.
+        header += '#define NSIG _NSIG\n#define SIGRTMIN 35\n#define SIGRTMAX 64\n'
+        generated = build / 'src/mksignames-target.c'
+        generated.write_text(generator.replace('#include <signal.h>', header, 1))
+        run(['cc', '-Wno-deprecated-non-prototype', generated, '-o', build / 'src/mksignames'], stdout=log, stderr=subprocess.STDOUT)
+        run(['gmake', '-j8'], cwd=build, stdout=log, stderr=subprocess.STDOUT)
+    shutil.copyfile(build / 'src/dash', out / 'dash.elf')
+    return out / 'dash.elf'
+
+
 def build(out, llvm):
     libc = musl(llvm)
     runtime = compiler_runtime(llvm, libc)
@@ -170,9 +218,12 @@ def build(out, llvm):
         'unsigned exercise_large_text(unsigned x) { for (unsigned i=0;i<4096;++i) x=functions[i](x); return x; }\n')
     run([llvm / 'clang', '--target=aarch64-linux-musl', '-ffixed-x18', '-mno-outline-atomics',
          '-fPIE', '-O2', '-c', large, '-o', out / 'large-text.o'])
-    run([llvm / 'clang', '--target=aarch64-linux-musl', '-ffixed-x18', '-mno-outline-atomics',
-         '-fPIE', '-O2', '-g', '-Wall', '-Wextra', '-Werror', '-nostdinc', '-isystem', libc / 'include', '-isystem', resource,
-         '-c', EXP / 'userspace/mm-tests.c', '-o', out / 'mm-tests.o'])
+    for unit in ('mm-tests', 'signal-tests'):
+        run([llvm / 'clang', '--target=aarch64-linux-musl', '-ffixed-x18', '-mno-outline-atomics',
+             '-fPIE', '-O2', '-g', '-Wall', '-Wextra', '-Werror', '-nostdinc', '-isystem', libc / 'include', '-isystem', resource,
+             '-c', EXP / f'userspace/{unit}.c', '-o', out / f'{unit}.o'])
+    run([llvm / 'clang', '--target=aarch64-linux-musl', '-c', EXP / 'userspace/signal-registers.S',
+         '-o', out / 'signal-registers.o'])
     for name in ('init', 'worker', 'mm-bench'):
         run([llvm / 'clang', '--target=aarch64-linux-musl', '-ffixed-x18', '-mno-outline-atomics',
              '-fPIE', '-O2', '-g', '-Wall', '-Wextra', '-Werror', '-nostdinc', '-isystem', libc / 'include', '-isystem', resource,
@@ -180,9 +231,12 @@ def build(out, llvm):
         run([shutil.which('ld.lld'), '-pie', '--no-dynamic-linker', '-z', 'max-page-size=16384',
              '-z', 'common-page-size=16384', libc / 'lib/rcrt1.o', libc / 'lib/crti.o',
              out / f'{name}.o', *([out / 'large-text.o'] if name == 'worker' else []),
-             *([out / 'mm-tests.o'] if name == 'mm-bench' else []),
+             *([out / 'mm-tests.o', out / 'signal-tests.o', out / 'signal-registers.o'] if name == 'mm-bench' else []),
              libc / 'lib/libc.a', runtime, libc / 'lib/crtn.o', '-o', out / f'{name}.elf'])
         programs.append(('/init-user' if name == 'init' else '/' + name, out / f'{name}.elf'))
+    programs.append(('/bin/sh', dash(out, llvm, libc, runtime, resource)))
+    if len(programs) > 7:
+        raise RuntimeError('Program slots overlap the initial exec stack')
     header, entries = [], []
     for i, (name, path) in enumerate(programs):
         elf = inspect(path)
@@ -196,7 +250,7 @@ def build(out, llvm):
             f'{{.offset={lo},.size={size}}}' for lo, size in elf['segments']) + '};')
         header.append(f'static const NcePatch patches_{i}[] = {{' + ','.join(
             f'{{{va},{word}}}' for va, word in elf['patches']) + '};')
-        entries.append(f'{{.path="{name}",.file=image_{i},.size=sizeof(image_{i}),.offset={i*8*1024*1024},'
+        entries.append(f'{{.path="{name}",.file=image_{i},.size=sizeof(image_{i}),.offset={i*4*1024*1024},'
                        f'.entry={elf["entry"]},.phoff={elf["phoff"]},.phsize={elf["phsize"]},'
                        f'.segments=segments_{i},.segment_count={len(elf["segments"])},'
                        f'.patches=patches_{i},.patch_count={len(elf["patches"])}}}')
@@ -204,3 +258,5 @@ def build(out, llvm):
     header += ['NceProgram nce_programs[] = {' + ',\n'.join(entries) + '};',
                f'const size_t nce_program_count = {len(entries)};']
     (out / 'program-images.h').write_text('\n'.join(header) + '\n')
+    (out / 'user-scripts.h').write_text('static const char shell_script[] = ' +
+                                       json.dumps((EXP / 'userspace/shell-tests.sh').read_text()) + ';\n')

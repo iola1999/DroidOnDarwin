@@ -54,14 +54,14 @@ static void *copy_mapping(void *source, size_t size)
 static void probe_syscall(NceState *s)
 {
     CHECK((s->instruction & 0x001fffe0) == 0);
-    if (s->x[8] == 93) s->done = 1;
-    else { CHECK(s->x[8] == 172); s->x[0] = 11; }
+    if (s->regs.x[8] == 93) s->done = 1;
+    else { CHECK(s->regs.x[8] == 172); s->regs.x[0] = 11; }
 }
 
 static void prepare(NceCode code, NceState *s, size_t entry, void *stack)
 {
     memset(s, 0, sizeof(*s));
-    s->sp = (uintptr_t)stack;
+    s->regs.sp = (uintptr_t)stack;
     s->syscall = probe_syscall;
     CHECK(nce_prepare(code, s, guest_image, sizeof(guest_image), entry) == 0);
 }
@@ -76,20 +76,20 @@ static void register_syscall(NceState *s)
     unsigned stage = (s->instruction >> 5) & 0xffff;
     CHECK(stage == 1 || stage == 2);
     for (unsigned r = 0; r < 31; ++r)
-        if (r != 18) CHECK(s->x[r] == pattern(r, stage - 1));
+        if (r != 18) CHECK(s->regs.x[r] == pattern(r, stage - 1));
     for (unsigned r = 0; r < 64; ++r)
-        CHECK(s->vector[r / 2][r % 2] == pattern(r + 31, stage - 1));
-    CHECK(s->nzcv == (stage == 1 ? 0xa0000000u : 0x60000000u));
-    CHECK(s->fpcr == (stage == 1 ? 0x400000u : 0x800000u));
-    CHECK(s->fpsr == (stage == 1 ? 1u : 2u));
+        CHECK(s->regs.vector[r / 2][r % 2] == pattern(r + 31, stage - 1));
+    CHECK(s->regs.nzcv == (stage == 1 ? 0xa0000000u : 0x60000000u));
+    CHECK(s->regs.fpcr == (stage == 1 ? 0x400000u : 0x800000u));
+    CHECK(s->regs.fpsr == (stage == 1 ? 1u : 2u));
     if (stage == 2) { s->done = 1; return; }
     for (unsigned r = 0; r < 31; ++r)
-        if (r != 18) s->x[r] = pattern(r, 1);
+        if (r != 18) s->regs.x[r] = pattern(r, 1);
     for (unsigned r = 0; r < 64; ++r)
-        s->vector[r / 2][r % 2] = pattern(r + 31, 1);
-    s->nzcv = 0x60000000u;
-    s->fpcr = 0x800000u;
-    s->fpsr = 2;
+        s->regs.vector[r / 2][r % 2] = pattern(r + 31, 1);
+    s->regs.nzcv = 0x60000000u;
+    s->regs.fpcr = 0x800000u;
+    s->regs.fpsr = 2;
 }
 
 static sigjmp_buf fault_return;
@@ -119,29 +119,29 @@ static void correctness(NceCode code, void *stack)
     NceState s;
     prepare(code, &s, GUEST_REGISTERS, stack);
     s.syscall = register_syscall;
-    for (unsigned r = 0; r < 31; ++r) s.x[r] = pattern(r, 0);
-    for (unsigned r = 0; r < 64; ++r) s.vector[r / 2][r % 2] = pattern(r + 31, 0);
-    s.nzcv = 0xa0000000u; s.fpcr = 0x400000u; s.fpsr = 1;
+    for (unsigned r = 0; r < 31; ++r) s.regs.x[r] = pattern(r, 0);
+    for (unsigned r = 0; r < 64; ++r) s.regs.vector[r / 2][r % 2] = pattern(r + 31, 0);
+    s.regs.nzcv = 0xa0000000u; s.regs.fpcr = 0x400000u; s.regs.fpsr = 1;
     nce_enter(&s);
-    CHECK(s.calls == 2 && s.sp == (uintptr_t)stack);
+    CHECK(s.calls == 2 && s.regs.sp == (uintptr_t)stack);
     puts("{\"test\":\"registers_simd_flags\",\"passed\":true}");
 
     prepare(code, &s, GUEST_TLS, stack);
     s.tls = 0x123;
     nce_enter(&s);
-    CHECK(s.x[5] == 0x123 && s.x[6] == 0x678 && s.tls_accesses == 3);
+    CHECK(s.regs.x[5] == 0x123 && s.regs.x[6] == 0x678 && s.tls_accesses == 3);
     puts("{\"test\":\"tls_read_write\",\"passed\":true}");
 
     prepare(code, &s, GUEST_UPDATE, stack);
     uint64_t entry = s.resume;
     nce_enter(&s);
-    CHECK(s.x[0] == 41);
+    CHECK(s.regs.x[0] == 41);
     uint32_t replacement = 0xd2800540; /* mov x0, #42 */
     memcpy(code.rw + GUEST_UPDATE, &replacement, 4);
     nce_sync_code(code);
     s.resume = entry; s.done = 0;
     nce_enter(&s);
-    CHECK(s.x[0] == 42);
+    CHECK(s.regs.x[0] == 42);
     puts("{\"test\":\"dual_alias_code_update\",\"passed\":true}");
 
     void *memory = allocate(page * 2, PROT_READ | PROT_WRITE);
@@ -152,12 +152,12 @@ static void correctness(NceCode code, void *stack)
     CHECK(sigaction(SIGSEGV, &action, &old_segv) == 0);
     CHECK(mprotect(memory, page, PROT_READ) == 0);
     prepare(code, &s, GUEST_FAULT_WRITE, stack);
-    s.x[0] = (uintptr_t)memory; s.x[1] = 3;
-    expect_fault(&s, s.x[0]);
+    s.regs.x[0] = (uintptr_t)memory; s.regs.x[1] = 3;
+    expect_fault(&s, s.regs.x[0]);
     CHECK(mprotect((char *)memory + page, page, PROT_NONE) == 0);
     prepare(code, &s, GUEST_FAULT_READ, stack);
-    s.x[0] = (uintptr_t)memory + page;
-    expect_fault(&s, s.x[0]);
+    s.regs.x[0] = (uintptr_t)memory + page;
+    expect_fault(&s, s.regs.x[0]);
     CHECK(sigaction(SIGBUS, &old_bus, NULL) == 0);
     CHECK(sigaction(SIGSEGV, &old_segv, NULL) == 0);
     puts("{\"test\":\"protection_faults\",\"passed\":true}");
@@ -182,10 +182,10 @@ static void process_syscall(NceState *s)
     unsigned id = p->current;
     unsigned immediate = (s->instruction >> 5) & 0xffff;
     if (immediate == 3) {
-        CHECK(s->x[5] == ++p->expected[id]);
-        CHECK(s->x[4] == 100 + id);
+        CHECK(s->regs.x[5] == ++p->expected[id]);
+        CHECK(s->regs.x[4] == 100 + id);
     } else {
-        CHECK(immediate == 0 && s->x[8] == 93 && s->x[0] == 0);
+        CHECK(immediate == 0 && s->regs.x[8] == 93 && s->regs.x[0] == 0);
         s->done = 1;
         ++p->completed;
     }
@@ -217,9 +217,9 @@ static void processes(NceCode code)
     NceState state;
     prepare(code, &state, GUEST_PROCESS, (char *)p.window + p.size);
     state.syscall = process_syscall; state.opaque = &p;
-    state.x[0] = iterations;
-    state.x[1] = (uintptr_t)p.window;
-    state.x[2] = (uintptr_t)p.window + p.size;
+    state.regs.x[0] = iterations;
+    state.regs.x[1] = (uintptr_t)p.window;
+    state.regs.x[2] = (uintptr_t)p.window + p.size;
     p.saved[0] = p.saved[1] = state;
     p.saved[0].tls = state.tls = 100;
     p.saved[1].tls = 101;
@@ -253,8 +253,8 @@ static void benchmarks(NceCode code, void *stack)
         for (unsigned run = 0; run < 5; ++run) {
             uint64_t native_value = 7, guest_value = 7, native_ns, nce_ns;
             uint64_t native_result = 0, start;
-            s.x[0] = iterations; s.x[1] = (uintptr_t)&guest_value;
-            s.x[2] = intervals[k]; s.resume = resume; s.done = 0; s.calls = 0;
+            s.regs.x[0] = iterations; s.regs.x[1] = (uintptr_t)&guest_value;
+            s.regs.x[2] = intervals[k]; s.resume = resume; s.done = 0; s.calls = 0;
             // Alternate order to reduce bias from frequency and temperature.
             if (run & 1) {
                 start = now(); nce_enter(&s); nce_ns = now() - start;
@@ -265,7 +265,7 @@ static void benchmarks(NceCode code, void *stack)
                 native_ns = now() - start;
                 start = now(); nce_enter(&s); nce_ns = now() - start;
             }
-            CHECK(s.x[0] == native_result && native_value == guest_value);
+            CHECK(s.regs.x[0] == native_result && native_value == guest_value);
             CHECK(s.calls == (intervals[k] ? iterations / intervals[k] : 0) + 1);
             printf("{\"bench\":\"native_vs_nce\",\"interval\":%u,\"run\":%u,"
                    "\"iterations\":%" PRIu64 ",\"native_ns\":%" PRIu64 ",\"nce_ns\":%" PRIu64

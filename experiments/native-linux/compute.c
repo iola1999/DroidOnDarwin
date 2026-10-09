@@ -16,7 +16,7 @@ static uint64_t now(void)
 }
 static void finish(NceState *s)
 {
-    REQUIRE(s->x[8] == 93);
+    REQUIRE(s->regs.x[8] == 93);
     s->done = 1;
 }
 
@@ -30,16 +30,16 @@ void nce_compute_benchmark(void)
     for (unsigned sample = 0; sample < 5; ++sample) {
         uint64_t native_data = 7, guest_data = 7;
         const uint64_t iterations = 4000000;
-        NceState state = {.sp = (uintptr_t)stack + 65536, .syscall = finish};
+        NceState state = {.regs.sp = (uintptr_t)stack + 65536, .syscall = finish};
         REQUIRE(nce_prepare(code, &state, guest_image, sizeof(guest_image), GUEST_WORK) == 0);
-        state.x[0] = iterations; state.x[1] = (uintptr_t)&guest_data;
+        state.regs.x[0] = iterations; state.regs.x[1] = (uintptr_t)&guest_data;
         uint64_t begin = now();
         uint64_t expected = native_work(iterations, &native_data, 0);
         uint64_t direct_ns = now() - begin;
         begin = now();
         nce_enter(&state);
         uint64_t nce_ns = now() - begin;
-        REQUIRE(state.done && state.calls == 1 && state.x[0] == expected && native_data == guest_data);
+        REQUIRE(state.done && state.calls == 1 && state.regs.x[0] == expected && native_data == guest_data);
         printf("{\"bench\":\"prepared_nce_compute\",\"sample\":%u,\"iterations\":%llu,\"direct_ns\":%llu,\"nce_ns\":%llu}\n",
                sample, (unsigned long long)iterations, (unsigned long long)direct_ns, (unsigned long long)nce_ns);
     }

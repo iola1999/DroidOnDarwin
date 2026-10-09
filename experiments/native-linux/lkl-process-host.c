@@ -5,6 +5,7 @@
 #include "lkl-host-ops.h"
 #include "guest-image.h"
 #include "programs.h"
+#include "user-scripts.h"
 #include <mach/mach.h>
 #include <signal.h>
 #include <pthread.h>
@@ -29,7 +30,7 @@ typedef struct {
     const char *exec_path;
     pthread_t thread;
     uintptr_t fault_address;
-    int event_kind, fault_write, stack_unmapped;
+    int event_kind, fault_write, fault_illegal, stack_unmapped;
 } Process;
 static _Thread_local Process *this_process;
 static pthread_mutex_t target_mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -48,8 +49,10 @@ static unsigned long code_copies, code_copy_bytes, data_maps, data_map_bytes, re
 static size_t ram_size;
 static long (*run_syscall)(long, long *);
 static int (*page_fault)(unsigned long, int);
+static void (*user_return)(long, long, unsigned long);
+static void (*user_fault)(unsigned long, int);
 static unsigned long faults, allocated, freed;
-static struct sigaction old_segv, old_bus;
+static struct sigaction old_segv, old_bus, old_ill;
 
 static void shmem_init(unsigned long size)
 {
@@ -110,29 +113,29 @@ static int protect_none(void *address, unsigned long size)
 
 static void capture_state(NceState *s, ucontext_t *u)
 {
-    memcpy(s->x, u->uc_mcontext->__ss.__x, 29 * sizeof(uint64_t));
-    s->x[29] = __darwin_arm_thread_state64_get_fp(u->uc_mcontext->__ss);
-    s->x[30] = __darwin_arm_thread_state64_get_lr(u->uc_mcontext->__ss);
-    s->sp = __darwin_arm_thread_state64_get_sp(u->uc_mcontext->__ss);
-    s->pc = __darwin_arm_thread_state64_get_pc(u->uc_mcontext->__ss);
-    s->nzcv = u->uc_mcontext->__ss.__cpsr & 0xf0000000u;
-    s->fpcr = u->uc_mcontext->__ns.__fpcr;
-    s->fpsr = u->uc_mcontext->__ns.__fpsr;
-    memcpy(s->vector, u->uc_mcontext->__ns.__v, sizeof(s->vector));
+    memcpy(s->regs.x, u->uc_mcontext->__ss.__x, 29 * sizeof(uint64_t));
+    s->regs.x[29] = __darwin_arm_thread_state64_get_fp(u->uc_mcontext->__ss);
+    s->regs.x[30] = __darwin_arm_thread_state64_get_lr(u->uc_mcontext->__ss);
+    s->regs.sp = __darwin_arm_thread_state64_get_sp(u->uc_mcontext->__ss);
+    s->regs.pc = __darwin_arm_thread_state64_get_pc(u->uc_mcontext->__ss);
+    s->regs.nzcv = u->uc_mcontext->__ss.__cpsr & 0xf0000000u;
+    s->regs.fpcr = u->uc_mcontext->__ns.__fpcr;
+    s->regs.fpsr = u->uc_mcontext->__ns.__fpsr;
+    memcpy(s->regs.vector, u->uc_mcontext->__ns.__v, sizeof(s->regs.vector));
 }
 
 static void restore_signal_state(NceState *s, ucontext_t *u)
 {
-    memcpy(u->uc_mcontext->__ss.__x, s->x, 29 * sizeof(uint64_t));
+    memcpy(u->uc_mcontext->__ss.__x, s->regs.x, 29 * sizeof(uint64_t));
     u->uc_mcontext->__ss.__x[18] = s->host_x18;
-    __darwin_arm_thread_state64_set_fp(u->uc_mcontext->__ss, s->x[29]);
-    __darwin_arm_thread_state64_set_lr_fptr(u->uc_mcontext->__ss, (void (*)(void))s->x[30]);
-    __darwin_arm_thread_state64_set_sp(u->uc_mcontext->__ss, s->sp);
-    __darwin_arm_thread_state64_set_pc_fptr(u->uc_mcontext->__ss, (void (*)(void))s->pc);
-    u->uc_mcontext->__ss.__cpsr = (u->uc_mcontext->__ss.__cpsr & ~0xf0000000u) | (uint32_t)s->nzcv;
-    u->uc_mcontext->__ns.__fpcr = (uint32_t)s->fpcr;
-    u->uc_mcontext->__ns.__fpsr = (uint32_t)s->fpsr;
-    memcpy(u->uc_mcontext->__ns.__v, s->vector, sizeof(s->vector));
+    __darwin_arm_thread_state64_set_fp(u->uc_mcontext->__ss, s->regs.x[29]);
+    __darwin_arm_thread_state64_set_lr_fptr(u->uc_mcontext->__ss, (void (*)(void))s->regs.x[30]);
+    __darwin_arm_thread_state64_set_sp(u->uc_mcontext->__ss, s->regs.sp);
+    __darwin_arm_thread_state64_set_pc_fptr(u->uc_mcontext->__ss, (void (*)(void))s->regs.pc);
+    u->uc_mcontext->__ss.__cpsr = (u->uc_mcontext->__ss.__cpsr & ~0xf0000000u) | (uint32_t)s->regs.nzcv;
+    u->uc_mcontext->__ns.__fpcr = (uint32_t)s->regs.fpcr;
+    u->uc_mcontext->__ns.__fpsr = (uint32_t)s->regs.fpsr;
+    memcpy(u->uc_mcontext->__ns.__v, s->regs.vector, sizeof(s->regs.vector));
 }
 
 static int guest_pc(uintptr_t pc)
@@ -148,6 +151,12 @@ static int guest_pc(uintptr_t pc)
 
 static int syscall_stub(uintptr_t pc)
 {
+    uintptr_t fixture = (uintptr_t)code.rx + ((sizeof(guest_image) + 15) & ~(size_t)15) + 16;
+    if (code.rx && pc >= fixture && pc + 80 <= (uintptr_t)code.rx + code.size && (pc - fixture) % 80 == 0) {
+        uintptr_t gate;
+        memcpy(&gate, (void *)(pc + 72), sizeof(gate));
+        if (gate == (uintptr_t)nce_gate) return 1;
+    }
     for (size_t i = 0; i < nce_program_count; ++i) {
         NceProgram *p = &nce_programs[i];
         uintptr_t begin = (uintptr_t)p->stubs.rx + 16;
@@ -161,18 +170,21 @@ static NceState *handle_event(NceState *state)
     Process *p = (void *)state;
     if (p->event_kind == 1) {
         if (!deferred_faults) puts("{\"phase\":\"guest_fault_on_host_stack\"}");
-        REQUIRE(page_fault(p->fault_address, p->fault_write) == 0);
+        if (p->fault_illegal || page_fault(p->fault_address, p->fault_write))
+            user_fault(p->fault_address, p->fault_illegal);
+        else user_return(-1, 0, 0);
         ++faults; ++deferred_faults;
     } else if (p->event_kind == 2) {
         long args[6] = {0};
         REQUIRE(run_syscall(124, args) == 0);
+        user_return(-1, 0, 0);
         ++preemptions;
     } else {
         ++stack_calls;
-        if (p->stack_unmapped && state->x[8] == 93) ++stackless_exits;
+        if (p->stack_unmapped && state->regs.x[8] == 93) ++stackless_exits;
         nce_dispatch(state);
     }
-    REQUIRE(nce_write_entry(event_resume, state->pc) == 0);
+    REQUIRE(nce_write_entry(event_resume, state->regs.pc) == 0);
     nce_sync_code(event_resume);
     state->resume = (uintptr_t)event_resume.rx;
     return state;
@@ -209,6 +221,7 @@ static void fault(int signal, siginfo_t *info, void *opaque)
             p->event_kind = signal == SIGUSR2 ? 2 : stub ? 3 : 1;
             p->fault_address = address;
             p->fault_write = is_write;
+            p->fault_illegal = signal == SIGILL;
             if (stub) {
                 p->state.resume = pc + 40;
                 memcpy(&p->state.instruction, (void *)(pc + 64), 4);
@@ -221,12 +234,6 @@ static void fault(int signal, siginfo_t *info, void *opaque)
         }
     }
     if (signal == SIGUSR2) return;
-    /* Kernel uaccess still uses the current mm's fault path. Guest faults
-     * above leave the signal handler before invoking Linux. */
-    if (address >= USER_BASE && address < USER_BASE + USER_SIZE && page_fault && page_fault(address, is_write) == 0) {
-        ++faults;
-        return;
-    }
     fprintf(stderr, "N2 fatal signal=%d address=%p pc=%lx esr=%x active=%p\n",
             signal, info->si_addr, pc, u->uc_mcontext->__es.__esr, (void *)active);
     _Exit(128 + signal);
@@ -266,8 +273,8 @@ static void *user_clone(void *parent, unsigned long sp, unsigned long tls, unsig
     NceState *state = calloc(1, sizeof(Process));
     if (!state) return NULL;
     *state = *(NceState *)parent;
-    state->x[0] = 0;
-    if (sp) state->sp = sp;
+    state->regs.x[0] = 0;
+    if (sp) state->regs.sp = sp;
     if (flags & 0x80000) state->tls = tls;
     ++allocated;
     return state;
@@ -282,10 +289,18 @@ static void user_free(void *state)
 static void syscall_from_guest(NceState *state)
 {
     long args[6];
-    for (unsigned i = 0; i < 6; ++i) args[i] = state->x[i];
-    state->x[0] = run_syscall(state->x[8], args);
-    if (state->x[8] == 215 && state->x[0] == 0 && state->sp >= (uintptr_t)args[0] &&
-        state->sp - (uintptr_t)args[0] < (uintptr_t)args[1]) ((Process *)state)->stack_unmapped = 1;
+    for (unsigned i = 0; i < 6; ++i) args[i] = state->regs.x[i];
+    long number = state->regs.x[8];
+    uintptr_t continuation = state->regs.pc;
+    long result = run_syscall(number, args);
+    if (number == 215 && result == 0 && state->regs.sp >= (uintptr_t)args[0] &&
+        state->regs.sp - (uintptr_t)args[0] < (uintptr_t)args[1]) ((Process *)state)->stack_unmapped = 1;
+    user_return(number, result, args[0]);
+    if (state->regs.pc != continuation) {
+        REQUIRE(nce_write_entry(event_resume, state->regs.pc) == 0);
+        nce_sync_code(event_resume);
+        state->resume = (uintptr_t)event_resume.rx;
+    }
 }
 static void user_run(void *opaque)
 {
@@ -309,14 +324,15 @@ static void user_run(void *opaque)
         if (!inherited_preempt_blocks) puts("{\"phase\":\"unblocked_inherited_preemption_signal\"}");
         ++inherited_preempt_blocks;
     }
-    if (!state->sp) {
-        long args[6] = {USER_BASE + 0xf00000, 65536, 3, 0x32, -1, 0};
+    if (!state->regs.sp) {
+        long args[6] = {USER_BASE + NCE_MMAP_OFFSET - 65536, 65536, 3, 0x32, -1, 0};
         REQUIRE(run_syscall(222, args) == args[0]);
-        state->sp = args[0] + args[1];
+        state->regs.sp = args[0] + args[1];
     }
     active = state;
     if (process->exec_path) {
-        uintptr_t *stack = (void *)(state->sp - 512);
+        uintptr_t *stack = (void *)(state->regs.sp - 512);
+        REQUIRE(page_fault((uintptr_t)stack, 1) == 0);
         char *path = (void *)(stack + 16);
         char *env = path + 64;
         strcpy(path, process->exec_path);
@@ -337,10 +353,10 @@ static void user_exec(void *opaque, unsigned long entry, unsigned long stack)
     NceState *state = &process->state;
     NceProgram *program = nce_program_entry(entry);
     REQUIRE(program);
-    memset(state->x, 0, sizeof(state->x));
-    memset(state->vector, 0, sizeof(state->vector));
-    state->sp = stack;
-    state->tls = state->nzcv = state->fpcr = state->fpsr = 0;
+    memset(state->regs.x, 0, sizeof(state->regs.x));
+    memset(state->regs.vector, 0, sizeof(state->regs.vector));
+    state->regs.sp = stack;
+    state->tls = state->regs.nzcv = state->regs.fpcr = state->regs.fpsr = 0;
     REQUIRE(nce_program_patch(program, state, &active) == 0);
     for (size_t j = 0; j < program->segment_count; ++j) {
         NceSegment *s = &program->segments[j];
@@ -378,6 +394,7 @@ unsigned long nce_process_setup(void)
     sigemptyset(&action.sa_mask);
     REQUIRE(sigaction(SIGSEGV, &action, &old_segv) == 0);
     REQUIRE(sigaction(SIGBUS, &action, &old_bus) == 0);
+    REQUIRE(sigaction(SIGILL, &action, &old_ill) == 0);
     REQUIRE(sigaction(SIGUSR2, &action, &old_preempt) == 0);
     event_resume = nce_memory_take(PAGE);
     REQUIRE(pthread_create(&timer_thread, NULL, preempt_timer, NULL) == 0);
@@ -405,11 +422,12 @@ static long get_file(long (*call)(long, long *), const char *path, char *buffer,
     return count;
 }
 
-static void run_program(long (*call)(long, long *), const char *path)
+static void run_program(long (*call)(long, long *), const char *path, const char *input)
 {
+    if (input) put_file(call, "/stdin", input, strlen(input));
     const char *streams[] = {"/stdin", "/stdout", "/stderr"};
     for (long fd = 0; fd < 3; ++fd) {
-        long args[6] = {-100, (long)streams[fd], 0x242, 0600};
+        long args[6] = {-100, (long)streams[fd], fd ? 0x242 : 0x40, 0600};
         long opened = call(56, args);
         REQUIRE(opened >= 0);
         if (opened != fd) {
@@ -449,7 +467,7 @@ static void userspace_tests(long (*call)(long, long *))
                          "/worker check\n/worker check\n/worker check\n/worker check\n";
     put_file(call, "/boot.script", script, strlen(script));
     puts("{\"phase\":\"linux_userspace_tests\"}");
-    run_program(call, "/init-user");
+    run_program(call, "/init-user", NULL);
     char buffer[4096];
     REQUIRE(get_file(call, "/userspace.result", buffer, sizeof(buffer)) > 0);
     REQUIRE(strstr(buffer, "init pid=1 commands=8 libc=musl passed"));
@@ -476,10 +494,17 @@ static void userspace_tests(long (*call)(long, long *))
 }
 
 void nce_process_tests(long (*host_syscall)(long, long *), long (*guest_syscall)(long, long *),
-                       int (*handle_fault)(unsigned long, int))
+                       int (*handle_fault)(unsigned long, int),
+                       void (*return_to_user)(long, long, unsigned long), void (*signal_fault)(unsigned long, int))
 {
     run_syscall = guest_syscall;
     page_fault = handle_fault;
+    user_return = return_to_user;
+    user_fault = signal_fault;
+    long mkdir_args[6] = {-100, (long)"/bin", 0755};
+    REQUIRE(host_syscall(34, mkdir_args) == 0);
+    long null_args[6] = {-100, (long)"/dev/null", 0020666, 259};
+    REQUIRE(host_syscall(33, null_args) == 0);
     code = nce_memory_take(65536);
     puts("{\"phase\":\"linux_process_tests\"}");
     const unsigned char *exec_elf = nce_programs[0].file;
@@ -499,7 +524,7 @@ void nce_process_tests(long (*host_syscall)(long, long *), long (*guest_syscall)
         REQUIRE(state);
         ++allocated;
         state->syscall = syscall_from_guest;
-        state->x[21] = USER_BASE;
+        state->regs.x[21] = USER_BASE;
         REQUIRE(nce_prepare_shared(code, state, &active, guest_image, sizeof(guest_image), GUEST_LINUX_PROCESS) == 0);
         args[0] = (long)state;
         args[1] = 0;
@@ -546,13 +571,18 @@ void nce_process_tests(long (*host_syscall)(long, long *), long (*guest_syscall)
            stress_rounds, stress_rounds * 8, stress_rounds * 56);
     puts("{\"phase\":\"linux_mm_benchmark\"}");
     unsigned long maps_before = data_maps, copied_before = code_copy_bytes, revoked_before = revocations;
-    run_program(host_syscall, "/mm-bench");
+    run_program(host_syscall, "/mm-bench", NULL);
     char benchmark[16384];
     REQUIRE(get_file(host_syscall, "/stdout", benchmark, sizeof(benchmark)) > 0);
     REQUIRE(strstr(benchmark, "linux_mm_exchange_integrity"));
     fputs(benchmark, stdout);
     printf("{\"test\":\"linux_mm_host_operations\",\"data_maps\":%lu,\"code_copy_bytes\":%lu,\"revocations\":%lu}\n",
            data_maps - maps_before, code_copy_bytes - copied_before, revocations - revoked_before);
+    puts("{\"phase\":\"linux_dash_shell\"}");
+    run_program(host_syscall, "/bin/sh", shell_script);
+    REQUIRE(get_file(host_syscall, "/stdout", benchmark, sizeof(benchmark)) > 0);
+    REQUIRE(strstr(benchmark, "linux_dash_shell_suite"));
+    fputs(benchmark, stdout);
 }
 void nce_process_cleanup(void)
 {
@@ -561,6 +591,7 @@ void nce_process_cleanup(void)
     REQUIRE(sigaction(SIGUSR2, &old_preempt, NULL) == 0);
     REQUIRE(sigaction(SIGSEGV, &old_segv, NULL) == 0);
     REQUIRE(sigaction(SIGBUS, &old_bus, NULL) == 0);
+    REQUIRE(sigaction(SIGILL, &old_ill, NULL) == 0);
     REQUIRE(munmap(ram, ram_size) == 0);
     for (size_t i = 0; i < nce_program_count; ++i)
         for (size_t j = 0; j < nce_programs[i].segment_count; ++j) {

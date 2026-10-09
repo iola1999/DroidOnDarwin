@@ -3,8 +3,8 @@
 #include <libkern/OSCacheControl.h>
 #include <string.h>
 
-_Static_assert(offsetof(NceState, sp) == 248, "assembly layout");
-_Static_assert(offsetof(NceState, vector) == 288, "assembly layout");
+_Static_assert(offsetof(NceState, regs.sp) == 248, "assembly layout");
+_Static_assert(offsetof(NceState, regs.vector) == 288, "assembly layout");
 _Static_assert(offsetof(NceState, host_sp) == 800, "assembly layout");
 _Static_assert(offsetof(NceState, resume) == 816, "assembly layout");
 _Static_assert(offsetof(NceState, instruction) == 824, "assembly layout");
@@ -63,7 +63,7 @@ int nce_prepare_shared(NceCode code, NceState *s, NceState **active,
     if (nce_write_entry((NceCode){code.rw + cursor, code.rx + cursor, 16},
                         (uintptr_t)code.rx + entry)) return -1;
     s->resume = (uintptr_t)code.rx + cursor;
-    s->pc = (uintptr_t)code.rx + entry;
+    s->regs.pc = (uintptr_t)code.rx + entry;
     cursor += 16;
     for (size_t pos = 0; pos < size; pos += 4) {
         uint32_t word;
@@ -92,14 +92,14 @@ NceState *nce_dispatch(NceState *s)
     /* Every synchronous resume has a B to the next guest instruction. */
     uint32_t branch_word;
     memcpy(&branch_word, (void *)(s->resume + 4), 4);
-    s->pc = s->resume + 4 + ((int64_t)(int32_t)(branch_word << 6) >> 4);
+    s->regs.pc = s->resume + 4 + ((int64_t)(int32_t)(branch_word << 6) >> 4);
     uint32_t word = s->instruction;
     unsigned reg = word & 31;
     if ((word & 0xffffffe0) == 0xd53bd040) {
-        if (reg != 31) s->x[reg] = s->tls;
+        if (reg != 31) s->regs.x[reg] = s->tls;
         ++s->tls_accesses;
     } else if ((word & 0xffffffe0) == 0xd51bd040) {
-        s->tls = reg == 31 ? 0 : s->x[reg];
+        s->tls = reg == 31 ? 0 : s->regs.x[reg];
         ++s->tls_accesses;
     } else {
         ++s->calls;

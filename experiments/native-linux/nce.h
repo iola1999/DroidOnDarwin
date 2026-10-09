@@ -2,12 +2,12 @@
 #pragma once
 #include <stddef.h>
 #include <stdint.h>
+#include "guest-registers.h"
 
 /* Serialized guest execution ABI. x18 remains owned by Darwin. */
 typedef struct NceState NceState;
 struct NceState {
-    uint64_t x[31], sp, pc, nzcv, fpcr, fpsr;
-    uint64_t vector[32][2];
+    struct pt_regs regs;
     uint64_t host_sp, host_x18, resume;
     uint32_t instruction, padding;
     void (*syscall)(NceState *);
