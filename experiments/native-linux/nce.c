@@ -20,7 +20,7 @@ static int x18_instruction(uint32_t word)
     return (word & 0xff800000) == 0xa9000000 && (rd == 18 || ((word >> 10) & 31) == 18);
 }
 
-static int branch(uint32_t *out, uintptr_t from, uintptr_t to)
+int nce_write_branch(uint32_t *out, uintptr_t from, uintptr_t to)
 {
     intptr_t distance = (intptr_t)to - (intptr_t)from;
     if ((distance & 3) || distance < -(1 << 27) || distance >= (1 << 27))
@@ -40,7 +40,7 @@ int nce_write_entry(NceCode stub, uintptr_t entry)
     if (stub.size < 16 || (entry & 3)) return -1;
     uint32_t *words = (void *)stub.rw;
     words[0] = 0xa8c147f0;
-    return branch(&words[1], (uintptr_t)stub.rx + 4, entry);
+    return nce_write_branch(&words[1], (uintptr_t)stub.rx + 4, entry);
 }
 
 int nce_write_patch(uint32_t *write_address, uintptr_t execute_address,
@@ -55,8 +55,8 @@ int nce_write_patch(uint32_t *write_address, uintptr_t execute_address,
     memcpy(stub.rw + 56, &resume, 8);
     memcpy(stub.rw + 64, &instruction, 4);
     memcpy(stub.rw + 72, &gate, 8);
-    if (branch((void *)(stub.rw + 44), (uintptr_t)stub.rx + 44, execute_address + 4)) return -1;
-    return branch(write_address, execute_address, (uintptr_t)stub.rx);
+    if (nce_write_branch((void *)(stub.rw + 44), (uintptr_t)stub.rx + 44, execute_address + 4)) return -1;
+    return nce_write_branch(write_address, execute_address, (uintptr_t)stub.rx);
 }
 
 int nce_prepare_shared(NceCode code, NceState *s, NceState **active,

@@ -88,6 +88,8 @@ _nce_event_gate:
     bl _nce_event_dispatch
     mov x16, x0
 Lrestore:
+    // Another host thread may have replaced code before waking this task.
+    isb
     ldr x17, [x16, #248]
     sub x17, x17, #16
     ldp x0, x1, [x16, #128]

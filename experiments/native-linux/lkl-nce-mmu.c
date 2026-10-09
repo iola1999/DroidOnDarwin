@@ -108,8 +108,15 @@ long nce_publish_code(long *params)
             return -EFAULT;
         }
     }
-    for (unsigned long addr = start; addr < end; addr += PAGE_SIZE)
-        map_view(addr, PAGE_SIZE, view(lookup(mm, addr)));
+    for (unsigned long addr = start; addr < end; addr += PAGE_SIZE) {
+        unsigned long value = view(lookup(mm, addr));
+        map_view(addr, PAGE_SIZE, value);
+        if (mapping_mode != NCE_MM_FULL) {
+            unsigned long index = (addr - USER_BASE) / PAGE_SIZE;
+            installed[index] = desired[index] = value;
+            __set_bit(index / VIEW_CHUNK_PAGES, view_chunks);
+        }
+    }
     mmap_read_unlock(mm);
     return 0;
 }
@@ -204,9 +211,9 @@ void nce_flush_range(struct mm_struct *mm, unsigned long start, unsigned long en
             } else {
                 unsigned long index = (addr - USER_BASE) / PAGE_SIZE;
                 unsigned long value = view(pte);
-                /* Prepared code must contain the next process's instructions
-                 * before entry. Changed data can wait until its first access. */
-                if (mapping_mode == NCE_MM_LAZY && !(value & _PAGE_EXEC) &&
+                /* Changed pages stay inaccessible until first use. Executable
+                 * host pages contain UDF while their Linux view is absent. */
+                if (mapping_mode == NCE_MM_LAZY &&
                     value != installed[index] && !test_bit(index, mm->context.accessed)) value = 0;
                 desired[index] = value;
                 if (value) __set_bit(index / VIEW_CHUNK_PAGES, view_chunks);
@@ -232,6 +239,10 @@ int nce_page_fault(unsigned long address, int access)
     vm_fault_t result;
     bool write = access == 1, execute = access == NCE_FAULT_EXEC;
     if (!mm || address < USER_BASE || address >= TASK_SIZE) return -EFAULT;
+    /* Taking mmap_lock may schedule another thread that restores this view.
+     * Classify the original trap using the view present before that wait. */
+    unsigned long index = (address - USER_BASE) / PAGE_SIZE;
+    unsigned long trapped_view = execute && mapping_mode != NCE_MM_FULL ? installed[index] : 0;
     mmap_read_lock(mm);
     vma = find_vma(mm, address);
     if (vma && address < vma->vm_start && (vma->vm_flags & VM_GROWSDOWN)) {
@@ -245,10 +256,12 @@ int nce_page_fault(unsigned long address, int access)
         return -EFAULT;
     }
     unsigned long prior = view(lookup(mm, address));
-    /* Fork can omit file-backed text PTEs. Prepared host code is cleared to
-     * UDF until Linux installs that page; an already present page is a real
-     * illegal instruction and must reach the Linux signal handler. */
-    if (execute && prior) { mmap_read_unlock(mm); return -ENOEXEC; }
+    /* A present Linux PTE can still have an absent host view after a switch.
+     * Only an installed view proves that UDF came from the guest code. */
+    if (execute && prior && (mapping_mode == NCE_MM_FULL || trapped_view == prior)) {
+        mmap_read_unlock(mm);
+        return -ENOEXEC;
+    }
     bool reused = prior && (!write || (prior & _PAGE_RW));
     result = handle_mm_fault(vma, address, execute ? FAULT_FLAG_INSTRUCTION : write ? FAULT_FLAG_WRITE : 0, NULL);
     if (!(result & VM_FAULT_ERROR) && mapping_mode == NCE_MM_LAZY) {

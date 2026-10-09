@@ -7,8 +7,10 @@
 #include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <initializer_list>
 #include <linux/android/binderfs.h>
 #include <poll.h>
+#include <sched.h>
 #include <signal.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -33,6 +35,34 @@ void nce_property_service(int ready);
 void nce_framework_test();
 void nce_zygote_test();
 void nce_crypto_tests();
+
+static void check_proc_identity()
+{
+    char link[32] = {}, path[64];
+    ssize_t length = readlink("/proc/self", link, sizeof(link) - 1);
+    CHECK(length > 0 && atoi(link) == getpid());
+    snprintf(path, sizeof(path), "/proc/%d/stat", getpid());
+    FILE *file = fopen(path, "r");
+    int pid = 0;
+    CHECK(file && fscanf(file, "%d", &pid) == 1 && pid == getpid() && fclose(file) == 0);
+    snprintf(path, sizeof(path), "/proc/self/task/%d", gettid());
+    CHECK(access(path, F_OK) == 0);
+}
+
+static void mount_namespace_proc()
+{
+    CHECK(getpid() == 1 && unshare(CLONE_NEWNS) == 0);
+    CHECK(mount(nullptr, "/", nullptr, MS_PRIVATE | MS_REC, nullptr) == 0);
+    /* procfs must use the same PID namespace as Android's getpid/gettid. */
+    CHECK(mount("proc", "/proc", "proc", MS_NOSUID | MS_NODEV | MS_NOEXEC, nullptr) == 0);
+    check_proc_identity();
+    pid_t child = fork();
+    CHECK(child >= 0);
+    if (!child) { check_proc_identity(); _exit(0); }
+    int status;
+    CHECK(waitpid(child, &status, 0) == child && status == 0);
+    puts("{\"test\":\"android_proc_pid_namespace\",\"passed\":true}");
+}
 
 static void wait_success(pid_t child)
 {
@@ -230,6 +260,18 @@ static void property_boundaries()
     char value[PROP_VALUE_MAX]; memset(value, 'x', sizeof(value));
     CHECK(property_request(PROP_MSG_SETPROP2, "nce.mutable", 11, value, sizeof(value)) == PROP_ERROR_INVALID_VALUE);
     CHECK(property_request(PROP_MSG_SETPROP2, "ctl.start", 9, "x", 1) == PROP_ERROR_HANDLE_CONTROL_MESSAGE);
+    for (uid_t uid : {1000u, 10000u}) {
+        pid_t writer = fork();
+        CHECK(writer >= 0);
+        if (!writer) {
+            CHECK(setgid(uid) == 0 && setuid(uid) == 0);
+            uint32_t result = property_request(PROP_MSG_SETPROP2, "sys.nce.permission", 18, "ok", 2);
+            CHECK(result == (uid == 1000 ? PROP_SUCCESS : PROP_ERROR_PERMISSION_DENIED));
+            _exit(0);
+        }
+        wait_success(writer);
+    }
+    puts("{\"test\":\"android_property_writer_credentials\",\"passed\":true}");
     const prop_info *property = __system_property_find("nce.mutable");
     CHECK(property);
     uint32_t serial = __system_property_serial(property), updated = 0;
@@ -258,6 +300,7 @@ int main(int argc, char **argv)
     if (argc == 3 && !strcmp(argv[1], "server")) { server(atoi(argv[2])); return 1; }
     if (argc == 3 && !strcmp(argv[1], "properties")) { nce_property_service(atoi(argv[2])); return 1; }
     alarm(20);
+    mount_namespace_proc();
     unix_sockets();
     load_service_policy();
     int properties_ready[2];

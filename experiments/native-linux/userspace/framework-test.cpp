@@ -1,8 +1,11 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 #include <errno.h>
+#include <android/binder_manager.h>
+#include <android/binder_ibinder.h>
 #include <dlfcn.h>
 #include <arpa/inet.h>
 #include <fcntl.h>
+#include <initializer_list>
 #include <signal.h>
 #include <string.h>
 #include <sys/socket.h>
@@ -26,20 +29,41 @@ static void runtime_environment()
         {"ICU_DATA", "/apex/com.android.i18n/etc/icu"},
         {"CLASSPATH", "/system/framework/nce-framework.jar"},
         {"LD_PRELOAD", "/system/lib64/libnce-framework-log.so"},
-        {"BOOTCLASSPATH", "/apex/com.android.art/javalib/core-oj.jar:"
-            "/apex/com.android.art/javalib/core-libart.jar:/apex/com.android.art/javalib/okhttp.jar:"
-            "/apex/com.android.art/javalib/bouncycastle.jar:/apex/com.android.art/javalib/apache-xml.jar:"
-            "/apex/com.android.i18n/javalib/core-icu4j.jar:/apex/com.android.conscrypt/javalib/conscrypt.jar:"
-            "/system/framework/framework.jar:/system/framework/framework-graphics.jar:"
-            "/system/framework/framework-location.jar:/system/framework/ext.jar:"
-            "/apex/com.android.tethering/javalib/framework-connectivity.jar:"
-            "/apex/com.android.tethering/javalib/framework-connectivity-b.jar:"
-            "/apex/com.android.tethering/javalib/framework-connectivity-t.jar:"
-            "/apex/com.android.tethering/javalib/framework-tethering.jar:"
-            "/apex/com.android.configinfrastructure/javalib/framework-configinfrastructure.jar:"
-            "/apex/com.android.os.statsd/javalib/framework-statsd.jar"},
     };
     for (const auto &entry : environment) CHECK(setenv(entry[0], entry[1], 1) == 0);
+}
+
+static void derive_classpath()
+{
+    pid_t child = fork();
+    CHECK(child >= 0);
+    if (!child) {
+        execl("/system/bin/derive_classpath", "derive_classpath", "/data/nce/classpath", nullptr);
+        _exit(108);
+    }
+    int status;
+    CHECK(waitpid(child, &status, 0) == child && status == 0);
+    FILE *file = fopen("/data/nce/classpath", "r");
+    CHECK(file);
+    char line[16384];
+    unsigned variables = 0;
+    while (fgets(line, sizeof(line), file)) {
+        CHECK(!strncmp(line, "export ", 7) && strchr(line, '\n'));
+        line[strcspn(line, "\n")] = 0;
+        char *value = strchr(line + 7, ' ');
+        CHECK(value);
+        *value++ = 0;
+        const char *key = line + 7;
+        CHECK(!strcmp(key, "BOOTCLASSPATH") || !strcmp(key, "DEX2OATBOOTCLASSPATH") ||
+              !strcmp(key, "SYSTEMSERVERCLASSPATH") || !strcmp(key, "STANDALONE_SYSTEMSERVER_JARS"));
+        CHECK(setenv(key, value, 1) == 0);
+        for (char *path = strtok(value, ":"); path; path = strtok(nullptr, ":"))
+            CHECK(access(path, R_OK) == 0);
+        ++variables;
+    }
+    CHECK(!ferror(file) && fclose(file) == 0 && variables == 4);
+    CHECK(getenv("BOOTCLASSPATH") && getenv("SYSTEMSERVERCLASSPATH"));
+    puts("{\"test\":\"android_derived_classpaths\",\"passed\":true,\"variables\":4}");
 }
 
 void nce_framework_test()
@@ -59,6 +83,7 @@ void nce_framework_test()
         {"dalvik.vm.extra-opts", "-Xnoimage-dex2oat -Xcompiler-option --inline-max-code-units=0"},
     };
     for (const auto &entry : properties) CHECK(__system_property_set(entry[0], entry[1]) == 0);
+    derive_classpath();
     pid_t child = fork();
     CHECK(child >= 0);
     if (!child) {
@@ -99,12 +124,41 @@ static void receive_bytes(int fd, void *buffer, size_t size)
 
 void nce_zygote_test()
 {
+    bool system_server = access("/data/nce/system-server-probe", F_OK) == 0;
     CHECK(symlink("/system/etc", "/etc") == 0);
+    if (system_server) {
+        const struct { const char *path; mode_t mode; uid_t owner; } directories[] = {
+            {"/mnt", 0755, 0}, {"/mnt/user", 0755, 0}, {"/mnt/user/0", 0755, 0},
+            {"/storage", 0755, 0}, {"/system_ext", 0755, 0},
+            {"/product", 0755, 0}, {"/vendor", 0755, 0}, {"/data/system", 0775, 1000},
+            {"/data/system/users", 0775, 1000}, {"/data/system/users/0", 0700, 1000},
+            {"/data/system_de", 0770, 1000}, {"/data/system_de/0", 0770, 1000},
+            {"/data/misc", 01771, 1000}, {"/data/resource-cache", 0771, 1000},
+            {"/data/anr", 0775, 1000},
+        };
+        for (const auto &directory : directories) {
+            CHECK(mkdir(directory.path, directory.mode) == 0 || errno == EEXIST);
+            CHECK(chmod(directory.path, directory.mode) == 0);
+            CHECK(chown(directory.path, directory.owner, directory.owner) == 0);
+        }
+    }
     void *setup = dlopen("libprocessgroup_setup.so", RTLD_NOW);
     CHECK(setup);
     auto initialize = reinterpret_cast<bool (*)()>(dlsym(setup, "_Z11CgroupSetupv"));
     CHECK(initialize && initialize());
     CHECK(dlclose(setup) == 0);
+    const char *cpu_groups[] = {"", "foreground", "foreground_window", "background", "top-app",
+                                "rt", "system", "system-background", "dex2oat"};
+    for (const char *group : cpu_groups) {
+        char directory[96], path[128];
+        snprintf(directory, sizeof(directory), "/dev/cpuctl/%s", group);
+        CHECK(mkdir(directory, 0755) == 0 || errno == EEXIST);
+        CHECK(chown(directory, 1000, 1000) == 0);
+        for (const char *file : {"tasks", "cgroup.procs"}) {
+            snprintf(path, sizeof(path), "%s/%s", directory, file);
+            CHECK(chown(path, 1000, 1000) == 0 && chmod(path, 0664) == 0);
+        }
+    }
     CHECK(mkdir("/data/nce/zygote", 0777) == 0 && chmod("/data/nce/zygote", 0777) == 0);
     int command = control_socket("zygote");
     int usap = control_socket("usap_pool_primary");
@@ -113,7 +167,7 @@ void nce_zygote_test()
     if (!zygote) {
         runtime_environment();
         const char *boot = getenv("BOOTCLASSPATH");
-        char classpath[4096];
+        char classpath[16384];
         CHECK(snprintf(classpath, sizeof(classpath), "%s:/system/framework/nce-framework.jar", boot) < static_cast<int>(sizeof(classpath)));
         CHECK(setenv("BOOTCLASSPATH", classpath, 1) == 0);
         char descriptor[32];
@@ -121,11 +175,36 @@ void nce_zygote_test()
         CHECK(setenv("ANDROID_SOCKET_zygote", descriptor, 1) == 0);
         snprintf(descriptor, sizeof(descriptor), "%d", usap);
         CHECK(setenv("ANDROID_SOCKET_usap_pool_primary", descriptor, 1) == 0);
+        if (system_server) {
+            execl("/system/bin/app_process64", "app_process64", "-Xzygote", "-Djava.library.path=/system/lib64",
+                  "/system/bin", "--zygote", "--start-system-server", "--abi-list=arm64-v8a", "--enable-lazy-preload", nullptr);
+            _exit(108);
+        }
         execl("/system/bin/app_process64", "app_process64", "-Xzygote", "-Djava.library.path=/system/lib64",
               "/system/bin", "--zygote", "--abi-list=arm64-v8a", "--enable-lazy-preload", nullptr);
         _exit(108);
     }
     CHECK(close(command) == 0 && close(usap) == 0);
+    if (system_server) {
+        puts("{\"phase\":\"android_system_server_boot\"}");
+        for (unsigned i = 0; i < 400; ++i) {
+            int status;
+            CHECK(waitpid(zygote, &status, WNOHANG) == 0);
+            AIBinder *activity = AServiceManager_checkService("activity");
+            AIBinder *package = AServiceManager_checkService("package");
+            bool ready = activity && package;
+            if (activity) AIBinder_decStrong(activity);
+            if (package) AIBinder_decStrong(package);
+            if (ready) {
+                puts("{\"test\":\"android_system_server_services\",\"passed\":true}");
+                CHECK(kill(zygote, SIGTERM) == 0 && waitpid(zygote, &status, 0) == zygote);
+                return;
+            }
+            usleep(100000);
+        }
+        dprintf(2, "system_server did not publish activity and package services within 40 seconds\n");
+        CHECK(false);
+    }
     pid_t requester = fork();
     CHECK(requester >= 0);
     if (!requester) {

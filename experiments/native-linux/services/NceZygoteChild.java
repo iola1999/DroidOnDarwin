@@ -24,6 +24,11 @@ public final class NceZygoteChild {
         if (!status.contains("Seccomp:\t2\n") || !cgroup.contains("/uid_1000/pid_" + Process.myPid())) {
             throw new AssertionError("child seccomp or cgroup");
         }
+        Process.class.getDeclaredMethod("setThreadGroup", int.class, int.class)
+                     .invoke(null, Process.myTid(), 5);
+        cgroup = new String(Files.readAllBytes(Paths.get("/proc/self/task/" + Process.myTid() + "/cgroup")),
+                            StandardCharsets.US_ASCII);
+        if (!cgroup.contains(":/top-app\n")) throw new AssertionError("CPU scheduling group");
         String[] values = new String[4096];
         for (int i = 0; i < values.length; ++i) values[i] = "zygote-" + i;
         System.gc();

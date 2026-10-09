@@ -33,29 +33,39 @@ int nce_program_reserved(unsigned long address, unsigned long length)
     return 0;
 }
 
-int nce_program_prepare(NceProgram *p)
+int nce_program_prepare(NceProgram *p, NceState **active)
 {
     if (!p->stubs.rw) return -1;
     if (nce_write_entry(p->stubs, p->base + p->entry)) return -1;
+    /* Stub addresses and the active-context pointer remain fixed across mms. */
+    for (size_t i = 0; i < p->patch_count; ++i) {
+        const NcePatch *patch = &p->patches[i];
+        if (i && patch->address <= p->patches[i - 1].address) return -1;
+        size_t pos = 16 + i * 80;
+        NceCode stub = {p->stubs.rw + pos, p->stubs.rx + pos, 80};
+        uint32_t branch;
+        if (nce_write_patch(&branch, p->base + patch->address, stub, active, patch->instruction)) return -1;
+    }
     nce_sync_code(p->stubs);
     return 0;
 }
 
 int nce_program_patch_range(NceProgram *p, NceSegment *segment,
-                            size_t offset, size_t size, NceState **active)
+                            size_t offset, size_t size)
 {
     size_t begin = segment->offset + offset, end = begin + size;
-    for (size_t i = 0; i < p->patch_count; ++i) {
-        const NcePatch *patch = &p->patches[i];
-        if (patch->address < begin || patch->address >= end) continue;
-        unsigned char *write = segment->code.rw + patch->address - segment->offset;
-        uint32_t original;
-        memcpy(&original, write, 4);
-        if (original != patch->instruction) return -1;
-        size_t pos = 16 + i * 80;
-        NceCode stub = {p->stubs.rw + pos, p->stubs.rx + pos, 80};
-        if (nce_write_patch((void *)write, p->base + patch->address, stub, active, original)) return -1;
+    size_t lo = 0, hi = p->patch_count;
+    while (lo < hi) {
+        size_t mid = lo + (hi - lo) / 2;
+        if (p->patches[mid].address < begin) lo = mid + 1;
+        else hi = mid;
     }
-    nce_sync_code(p->stubs);
+    for (size_t i = lo; i < p->patch_count && p->patches[i].address < end; ++i) {
+        const NcePatch *patch = &p->patches[i];
+        uint32_t *write = (void *)(segment->code.rw + patch->address - segment->offset);
+        if (*write != patch->instruction) return -1;
+        if (nce_write_branch(write, p->base + patch->address,
+                             (uintptr_t)p->stubs.rx + 16 + i * 80)) return -1;
+    }
     return 0;
 }

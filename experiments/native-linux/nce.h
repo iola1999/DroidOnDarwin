@@ -39,5 +39,6 @@ void nce_sync_code(NceCode);
 /* Emits one resume entry or one SVC/TLS stub into caller-owned storage. The
  * caller supplies a distinct stub for each instruction and flushes afterwards. */
 int nce_write_entry(NceCode stub, uintptr_t entry);
+int nce_write_branch(uint32_t *out, uintptr_t from, uintptr_t to);
 int nce_write_patch(uint32_t *write_address, uintptr_t execute_address,
                     NceCode stub, NceState **active, uint32_t instruction);

@@ -30,6 +30,6 @@ extern const size_t nce_program_count;
 NceProgram *nce_program_entry(uintptr_t entry);
 unsigned long nce_program_layout(const char *path, const void *header, const void *phdrs);
 int nce_program_reserved(unsigned long address, unsigned long length);
-int nce_program_prepare(NceProgram *program);
+int nce_program_prepare(NceProgram *program, NceState **active);
 int nce_program_patch_range(NceProgram *program, NceSegment *segment,
-                            size_t offset, size_t size, NceState **active);
+                            size_t offset, size_t size);

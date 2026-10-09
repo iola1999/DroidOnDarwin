@@ -1,13 +1,163 @@
 {
   "Attributes": [],
   "Profiles": [
-    {"Name": "TimerSlackNormal", "Actions": [
-      {"Name": "SetTimerSlack", "Params": {"Slack": "50000"}}
-    ]}
+    {
+      "Name": "TimerSlackNormal",
+      "Actions": [
+        {
+          "Name": "SetTimerSlack",
+          "Params": {
+            "Slack": "50000"
+          }
+        }
+      ]
+    },
+    {
+      "Name": "CpuBackground",
+      "Actions": [
+        {
+          "Name": "JoinCgroup",
+          "Params": {
+            "Controller": "cpu",
+            "Path": "background"
+          }
+        }
+      ]
+    },
+    {
+      "Name": "CpuForeground",
+      "Actions": [
+        {
+          "Name": "JoinCgroup",
+          "Params": {
+            "Controller": "cpu",
+            "Path": "foreground"
+          }
+        }
+      ]
+    },
+    {
+      "Name": "CpuForegroundWindow",
+      "Actions": [
+        {
+          "Name": "JoinCgroup",
+          "Params": {
+            "Controller": "cpu",
+            "Path": "foreground_window"
+          }
+        }
+      ]
+    },
+    {
+      "Name": "CpuTopApp",
+      "Actions": [
+        {
+          "Name": "JoinCgroup",
+          "Params": {
+            "Controller": "cpu",
+            "Path": "top-app"
+          }
+        }
+      ]
+    },
+    {
+      "Name": "CpuSystem",
+      "Actions": [
+        {
+          "Name": "JoinCgroup",
+          "Params": {
+            "Controller": "cpu",
+            "Path": "system-background"
+          }
+        }
+      ]
+    },
+    {
+      "Name": "CpuCompute",
+      "Actions": [
+        {
+          "Name": "JoinCgroup",
+          "Params": {
+            "Controller": "cpu",
+            "Path": "foreground"
+          }
+        }
+      ]
+    },
+    {
+      "Name": "CpuRtApp",
+      "Actions": [
+        {
+          "Name": "JoinCgroup",
+          "Params": {
+            "Controller": "cpu",
+            "Path": "rt"
+          }
+        }
+      ]
+    }
   ],
   "AggregateProfiles": [
-    {"Name": "SCHED_SP_DEFAULT", "Profiles": ["TimerSlackNormal"]},
-    {"Name": "SCHED_SP_FOREGROUND", "Profiles": ["TimerSlackNormal"]},
-    {"Name": "CPUSET_SP_DEFAULT", "Profiles": ["TimerSlackNormal"]}
+    {
+      "Name": "SCHED_SP_DEFAULT",
+      "Profiles": [
+        "TimerSlackNormal"
+      ]
+    },
+    {
+      "Name": "SCHED_SP_FOREGROUND",
+      "Profiles": [
+        "CpuForeground",
+        "TimerSlackNormal"
+      ]
+    },
+    {
+      "Name": "CPUSET_SP_DEFAULT",
+      "Profiles": [
+        "TimerSlackNormal"
+      ]
+    },
+    {
+      "Name": "SCHED_SP_BACKGROUND",
+      "Profiles": [
+        "CpuBackground",
+        "TimerSlackNormal"
+      ]
+    },
+    {
+      "Name": "SCHED_SP_FOREGROUND_WINDOW",
+      "Profiles": [
+        "CpuForegroundWindow",
+        "TimerSlackNormal"
+      ]
+    },
+    {
+      "Name": "SCHED_SP_TOP_APP",
+      "Profiles": [
+        "CpuTopApp",
+        "TimerSlackNormal"
+      ]
+    },
+    {
+      "Name": "SCHED_SP_SYSTEM",
+      "Profiles": [
+        "CpuSystem",
+        "TimerSlackNormal"
+      ]
+    },
+    {
+      "Name": "SCHED_SP_COMPUTE",
+      "Profiles": [
+        "CpuCompute",
+        "TimerSlackNormal"
+      ]
+    },
+    {
+      "Name": "SCHED_SP_RT_APP",
+      "Profiles": [
+        "CpuRtApp",
+        "TimerSlackNormal"
+      ]
+    }
   ]
 }

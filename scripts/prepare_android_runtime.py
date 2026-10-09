@@ -14,12 +14,20 @@ DEST = ROOT / 'android36'
 URL = 'https://dl.google.com/android/repository/sys-img/google_apis/arm64-v8a-ps16k-36_r07.zip'
 SHA1 = 'dda632745023567113d9954101709c6526a3c250'
 SIZE = 1875087037
-APEX = ('com.android.runtime.apex', 'com.google.android.art.capex',
-        'com.android.i18n.apex', 'com.google.android.conscrypt.capex',
-        'com.google.android.os.statsd.apex', 'com.google.android.tethering.capex',
-        'com.google.android.configinfrastructure.capex', 'com.google.android.tzdata6.apex')
+APEX = ('com.android.devicelock.apex', 'com.android.i18n.apex', 'com.android.runtime.apex',
+        'com.android.virt.apex', 'com.google.android.adbd.capex', 'com.google.android.adservices.capex',
+        'com.google.android.appsearch.capex', 'com.google.android.art.capex', 'com.google.android.bt.apex',
+        'com.google.android.cellbroadcast.capex', 'com.google.android.configinfrastructure.capex',
+        'com.google.android.conscrypt.capex', 'com.google.android.crashrecovery.capex',
+        'com.google.android.healthfitness.apex', 'com.google.android.ipsec.capex',
+        'com.google.android.media.capex', 'com.google.android.mediaprovider.capex',
+        'com.google.android.nfcservices.capex', 'com.google.android.ondevicepersonalization.capex',
+        'com.google.android.os.statsd.apex', 'com.google.android.permission.capex',
+        'com.google.android.profiling.capex', 'com.google.android.scheduling.capex',
+        'com.google.android.sdkext.apex', 'com.google.android.tethering.capex',
+        'com.google.android.tzdata6.apex', 'com.google.android.uwb.capex', 'com.google.android.wifi.capex')
 DEBUGFS = '/opt/homebrew/opt/e2fsprogs/sbin/debugfs'
-SYSTEM_DIRECTORIES = ('lib64', 'etc', 'bin', 'framework')
+SYSTEM_DIRECTORIES = ('lib64', 'etc', 'bin', 'framework', 'fonts')
 
 
 def digest(path, algorithm='sha256'):

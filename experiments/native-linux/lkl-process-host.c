@@ -32,6 +32,7 @@ typedef struct {
     const char *exec_path;
     pthread_t thread;
     uintptr_t fault_address;
+    uint32_t fault_instruction;
     int event_kind, fault_write, fault_illegal, stack_unmapped;
 } Process;
 static _Thread_local Process *this_process;
@@ -108,7 +109,7 @@ static void *shmem_map(void *address, unsigned long offset, unsigned long size, 
             size_t position = start - (uintptr_t)segment->code.rx;
             memcpy(segment->code.rw + position, ram + offset, length);
             if (prot & LKL_PROT_EXEC)
-                REQUIRE(nce_program_patch_range(program, segment, position, length, &active) == 0);
+                REQUIRE(nce_program_patch_range(program, segment, position, length) == 0);
             nce_sync_code((NceCode){segment->code.rw + position, (void *)start, length});
             ++code_copies;
             code_copy_bytes += length;
@@ -257,9 +258,10 @@ static NceState *handle_event(NceState *state)
     if (p->event_kind == 1) {
         if (!deferred_faults) puts("{\"phase\":\"guest_fault_on_host_stack\"}");
         int result = page_fault(p->fault_address, p->fault_illegal ? NCE_FAULT_EXEC : p->fault_write);
-        if (result && trace) {
-            fprintf(stderr, "guest fault pc=%lx address=%lx write=%d illegal=%d result=%d\n",
-                    state->regs.pc, p->fault_address, p->fault_write, p->fault_illegal, result);
+        if (result && (trace || p->fault_illegal)) {
+            fprintf(stderr, "guest fault pc=%lx address=%lx write=%d illegal=%d result=%d instruction=%08x trapped=%08x\n",
+                    state->regs.pc, p->fault_address, p->fault_write, p->fault_illegal, result,
+                    p->fault_illegal ? *(const uint32_t *)state->regs.pc : 0, p->fault_instruction);
             for (size_t i = 0; i < nce_program_count; ++i) {
                 NceProgram *program = &nce_programs[i];
                 if (state->regs.pc >= program->base && state->regs.pc - program->base < program->span)
@@ -313,6 +315,7 @@ static void fault(int signal, siginfo_t *info, void *opaque)
             p->fault_address = address;
             p->fault_write = is_write;
             p->fault_illegal = signal == SIGILL;
+            p->fault_instruction = signal == SIGILL ? *(const uint32_t *)pc : 0;
             if (stub) {
                 p->state.resume = pc + 40;
                 memcpy(&p->state.instruction, (void *)(pc + 64), 4);
@@ -476,7 +479,7 @@ unsigned long nce_process_setup(void)
     trace = getenv("NCE_TRACE") != NULL;
     user_base = nce_memory_user_base();
     for (size_t i = 0; i < nce_program_count; ++i)
-        REQUIRE(nce_program_prepare(&nce_programs[i]) == 0);
+        REQUIRE(nce_program_prepare(&nce_programs[i], &active) == 0);
     REQUIRE(protect_none((void *)user_base, NCE_USER_SIZE + NCE_RAM_SIZE + NCE_VMALLOC_SIZE) == 0);
     nce_lkl_host.shmem_init = shmem_init;
     nce_lkl_host.shmem_reclaim = shmem_reclaim;
@@ -869,12 +872,14 @@ void nce_process_tests(long (*host_syscall)(long, long *), long (*guest_syscall)
     REQUIRE(strstr(benchmark, "android_art_vm_destroyed"));
     fputs(benchmark, stdout);
     memory_report(host_syscall, "after_art");
+    if (getenv("NCE_SYSTEM_SERVER_PROBE")) put_file(host_syscall, "/data/nce/system-server-probe", "", 0);
     puts("{\"phase\":\"android_platform_services\"}");
     run_program(host_syscall, "/system/bin/android-services-test", NULL);
     REQUIRE(get_file(host_syscall, "/stdout", benchmark, sizeof(benchmark)) > 0);
     REQUIRE(strstr(benchmark, "android_platform_binder_cleanup"));
     REQUIRE(strstr(benchmark, "android_framework_runtime"));
-    REQUIRE(strstr(benchmark, "android_zygote_command_server"));
+    REQUIRE(strstr(benchmark, getenv("NCE_SYSTEM_SERVER_PROBE") ?
+                   "android_system_server_services" : "android_zygote_command_server"));
     REQUIRE(strstr(benchmark, "android_framework_graphics\",\"passed\":true"));
     REQUIRE(strstr(benchmark, "android_crypto"));
     fputs(benchmark, stdout);

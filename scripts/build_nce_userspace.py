@@ -75,15 +75,18 @@ def android_dependencies(llvm, replacements):
                       'com.android.i18n/lib64', 'com.android.os.statsd/lib64'):
         for path in (root / directory).glob('*.so'):
             if path.is_file(): files[path.name] = path
-    for path in (root / 'com.android.tethering/lib64').glob('*.so'):
-        if path.is_file(): files.setdefault(path.name, path)
+    for module in ('com.android.tethering', 'com.android.adbd', 'com.android.conscrypt'):
+        for path in (root / module / 'lib64').glob('*.so'):
+            if path.is_file(): files.setdefault(path.name, path)
     files.update(replacements)
     pending = ['libart.so', 'libjavacore.so', 'libopenjdk.so', 'libicu_jni.so',
-               'libstats_jni.so', 'libartpalette-system.so', 'libbinder_ndk.so', 'libandroid.so',
-               'libprocessgroup_setup.so', 'libframework-connectivity-tiramisu-jni.so']
+               'libstats_jni.so', 'libjavacrypto.so', 'libartpalette-system.so', 'libbinder_ndk.so', 'libandroid.so',
+               'libprocessgroup_setup.so', 'libframework-connectivity-tiramisu-jni.so', 'libandroid_servers.so']
     for name in ('servicemanager', 'app_process64'):
         pending += re.findall(r'Shared library: \[(.*?)\]',
                               subprocess.check_output([llvm / 'llvm-readelf', '-d', root / 'bin' / name], text=True))
+    pending += re.findall(r'Shared library: \[(.*?)\]', subprocess.check_output(
+        [llvm / 'llvm-readelf', '-d', root / 'com.android.sdkext/bin/derive_classpath'], text=True))
     result = {}
     while pending:
         name = pending.pop()
@@ -143,7 +146,7 @@ def android_service_policy(out):
         raise RuntimeError('Android SELinux declarations changed')
     rules = [(EXP / 'services/nce-policy.cil').read_text()]
     rules += [f'(sidcontext {name} (u r nce_t ((s0) (s0))))' for name in sids]
-    rules += [f'(allow nce_t nce_all ({name} (all)))' for name in classes if name != 'service_manager']
+    rules += [f'(allow nce_process nce_all ({name} (all)))' for name in classes if name != 'service_manager']
     path = out / 'nce-policy.cil'
     path.write_text('\n'.join(declarations + rules) + '\n')
     return path
@@ -163,16 +166,23 @@ def android_data(out):
              ('/data/nce/NceWorkload.dex', classes / 'classes.dex'),
              ('/linkerconfig/ld.config.txt', EXP / 'art/ld.config.txt'),
              ('/system/etc/public.libraries.txt', EXP / 'art/public.libraries.txt')]
-    for module, names in {
-        'com.android.art': ('core-oj', 'core-libart', 'okhttp', 'bouncycastle', 'apache-xml'),
-        'com.android.i18n': ('core-icu4j',), 'com.android.conscrypt': ('conscrypt',),
-        'com.android.tethering': ('framework-connectivity', 'framework-connectivity-b',
-                                  'framework-connectivity-t', 'framework-tethering'),
-        'com.android.configinfrastructure': ('framework-configinfrastructure',),
-        'com.android.os.statsd': ('framework-statsd',),
-    }.items():
-        files += [(f'/apex/{module}/javalib/{name}.jar', root / module / 'javalib' / (name + '.jar'))
-                  for name in names]
+    fragments = sorted((root / 'etc/classpaths').glob('*classpath.pb'))
+    fragments += sorted(root.glob('com.android.*/etc/classpaths/*classpath.pb'))
+    jars = set()
+    for fragment in fragments:
+        relative = fragment.relative_to(root)
+        guest = ('/system/' if relative.parts[0] == 'etc' else '/apex/') + str(relative)
+        files.append((guest, fragment))
+        # Copy referenced files; the SDK's derive_classpath binary interprets
+        # protobuf types, SDK conditions and ordering at runtime.
+        jars.update(path.decode() for path in re.findall(rb'/(?:system|apex)/[a-zA-Z0-9_./@-]+\.jar', fragment.read_bytes()))
+    for guest in sorted(jars):
+        if not guest.startswith(('/system/', '/apex/')) or '..' in Path(guest).parts:
+            raise RuntimeError('Unexpected classpath location: ' + guest)
+        source = root / guest.split('/', 2)[2]
+        if not source.is_file():
+            raise RuntimeError('Missing classpath resource: ' + guest)
+        files.append((guest, source))
     files += [('/system/etc/selinux/plat_service_contexts', EXP / 'services/service_contexts')]
     files += [('/system/etc/selinux/plat_seapp_contexts', EXP / 'services/seapp_contexts')]
     files += [(f'/system/etc/{name}.json', EXP / 'services' / f'{name}.json')
@@ -192,8 +202,9 @@ def android_data(out):
     with zipfile.ZipFile(framework_jar, 'w') as jar:
         jar.writestr(zipfile.ZipInfo('classes.dex'), (framework_classes / 'classes.dex').read_bytes())
     files += [('/system/framework/nce-framework.jar', framework_jar)]
-    for name in ('framework', 'framework-graphics', 'framework-location', 'ext'):
-        files.append((f'/system/framework/{name}.jar', root / 'framework' / f'{name}.jar'))
+    files += [('/system/framework/framework-res.apk', root / 'framework/framework-res.apk')]
+    files += [(f'/system/fonts/{path.name}', path) for path in sorted((root / 'fonts').glob('*')) if path.is_file()]
+    files += [(f'/system/etc/{name}', root / 'etc' / name) for name in ('fonts.xml', 'font_fallback.xml')]
     return files
 
 
@@ -336,7 +347,7 @@ def inspect(path, shared=False, function_symbols=False):
                 word, = struct.unpack_from('<I', data, sec[4] + address - sec[3])
                 if word & 0xffe0001f == 0xd4000001 or word & 0xffffffe0 in (0xd53bd040, 0xd51bd040) or x18_instruction(word):
                     patches.append((address, word))
-    return dict(data=data, entry=entry, phoff=phoff, phsize=phnum*phentsize, segments=segments, patches=patches,
+    return dict(data=data, entry=entry, phoff=phoff, phsize=phnum*phentsize, segments=segments, patches=sorted(patches),
                 span=(max(p[3] + p[6] for p in loads) + PAGE - 1) & -PAGE,
                 alignment=max(PAGE, max(p[7] for p in loads)), instruction_ranges=instruction_ranges)
 
@@ -504,6 +515,7 @@ def build(out, llvm):
     programs.append(('/system/bin/secilc', WORK / 'android/android36/bin/secilc'))
     programs.append(('/system/bin/servicemanager', WORK / 'android/android36/bin/servicemanager'))
     programs.append(('/system/bin/app_process64', WORK / 'android/android36/bin/app_process64'))
+    programs.append(('/system/bin/derive_classpath', WORK / 'android/android36/com.android.sdkext/bin/derive_classpath'))
     run([ndk / 'toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android35-clang',
          '-shared', '-fPIC', '-ffixed-x18', '-O2', '-Wall', '-Wextra', '-Werror',
          '-Wl,-z,max-page-size=16384,-z,common-page-size=16384',
@@ -610,7 +622,8 @@ def build(out, llvm):
     (system_root / 'apex/com.android.art/lib64').mkdir(parents=True, exist_ok=True)
     image = out / 'system.img'
     with image.open('wb') as disk:
-        disk.truncate(384 * 1024 * 1024)
+        size = sum(path.stat().st_size for _, path in system_files) + 64 * 1024 * 1024
+        disk.truncate((size + 64 * 1024 * 1024 - 1) & -(64 * 1024 * 1024))
     run(['/opt/homebrew/opt/e2fsprogs/sbin/mke2fs', '-F', '-q', '-t', 'ext4', '-b', '4096',
          '-O', '^has_journal', '-E', 'lazy_itable_init=0', '-d', system_root, image])
     shutil.rmtree(system_root)

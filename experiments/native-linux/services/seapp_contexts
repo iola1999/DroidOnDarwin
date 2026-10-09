@@ -1,1 +1,2 @@
 user=system seinfo=platform domain=nce_t type=nce_t levelFrom=none
+isSystemServer=true domain=system_server type=nce_t

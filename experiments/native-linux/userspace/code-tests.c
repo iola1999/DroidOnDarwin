@@ -27,7 +27,7 @@ static void constant(uint32_t *rw, unsigned value)
     rw[1] = 0xd65f03c0;
 }
 
-static void expect_fault(Code code, int write_access)
+static void expect_fault(Code code, int write_access, int expected)
 {
     pid_t child = fork();
     CHECK(child >= 0);
@@ -38,7 +38,9 @@ static void expect_fault(Code code, int write_access)
     }
     int status;
     CHECK(waitpid(child, &status, 0) == child);
-    CHECK(WIFSIGNALED(status) && WTERMSIG(status) == SIGSEGV);
+    if (!WIFSIGNALED(status) || WTERMSIG(status) != expected)
+        dprintf(2, "code fault expected=%d status=%d write=%d\n", expected, status, write_access);
+    CHECK(WIFSIGNALED(status) && WTERMSIG(status) == expected);
 }
 
 static void reserved_stubs(void)
@@ -90,9 +92,14 @@ void code_tests(void)
         constant(rw, i);
         CHECK(syscall(NCE_SYS_PUBLISH_CODE, rx, 8) == 0 && rx(0) == i);
     }
-    expect_fault(rx, 1);
+    rw[0] = 0; /* Guest UDF must remain SIGILL after lazy code restoration. */
+    CHECK(syscall(NCE_SYS_PUBLISH_CODE, rx, 4) == 0);
+    expect_fault(rx, 0, SIGILL);
+    constant(rw, 127);
+    CHECK(syscall(NCE_SYS_PUBLISH_CODE, rx, 8) == 0);
+    expect_fault(rx, 1, SIGSEGV);
     CHECK(mprotect((void *)rx, PAGE, PROT_NONE) == 0);
-    expect_fault(rx, 0);
+    expect_fault(rx, 0, SIGSEGV);
     CHECK(syscall(NCE_SYS_PUBLISH_CODE, rx, 8) == -1 && errno == EFAULT);
     CHECK(mprotect((void *)rx, PAGE, PROT_READ | PROT_EXEC) == 0 && rx(0) == 127);
 
@@ -134,7 +141,7 @@ void code_tests(void)
     memset(&timer, 0, sizeof(timer));
     CHECK(setitimer(ITIMER_REAL, &timer, NULL) == 0 && ticks > 0);
     CHECK(munmap((void *)rx, PAGE) == 0);
-    expect_fault(rx, 0);
+    expect_fault(rx, 0, SIGSEGV);
     CHECK(syscall(NCE_SYS_PUBLISH_CODE, rx, 8) == -1 && errno == EFAULT);
     CHECK(munmap((void *)second, PAGE) == 0 && munmap(rw, 2 * PAGE) == 0 && close(fd) == 0);
     puts("{\"test\":\"linux_dynamic_code\",\"passed\":true,\"updates\":128,\"sum_iterations\":10000000}");

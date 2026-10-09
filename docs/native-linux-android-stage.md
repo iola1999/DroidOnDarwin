@@ -1,9 +1,10 @@
 # 原生 Linux + NCE：Android 用户态阶段
 
-更新日期：2026-10-09。N3-A1 已完成本地回归和打包。后续实现了动态执行区
-和 ART ARM64 JIT，N3-J1 合并包已完成构建与归档检查。后续引用数组、接口、
-同步和预编译入口扩展已通过 CLI/GCD 回归。用户外出期间继续本机开发，手机
-执行结果保留为待确认。
+更新日期：2026-10-09。ART ARM64 JIT、原版 app_process/Framework、Canvas、
+ext4 系统盘与数据盘、Zygote 派生、cgroup、seccomp 已完成本机 CLI/GCD 回归。
+后续加入 Linux 空闲 RAM 归还宿主、JIT 页面按需填充、ELF 邻近跳转区与 CPU
+指令扩展传递。当前正在推进原版 system_server；完整系统服务和桌面尚未启动。
+用户外出期间继续本机开发，手机执行结果保留为待确认。
 
 ## 阶段验收与验证安排
 
@@ -38,8 +39,8 @@ CLI 与 GCD 两种入口均通过，N3-A1 合并手机测试包已生成并校�
 当前接受构建时登记、宿主页兼容布局的 ELF。x18 作为客体状态保存；目前
 支持已遇到的 MOV/ORR、两条 Bionic setjmp 掩码指令，以及含 x18 的 64 位
 LDP/STP 偏移寻址。构建检查会拒绝其他 x18 指令。客体地址窗口为 16 GiB，
-Linux RAM 为 256 MiB。执行区在 JIT 准备期间确定。ART 动态代码使用额外的
-32 MiB 预授权范围，通过 memfd 可写映射和显式提交更新；通用可执行 mprotect
+Linux RAM 为 512 MiB。静态 ELF 布局范围为 512 MiB，执行区在 JIT 准备期间
+确定。ART 动态代码使用额外的 64 MiB 预授权范围，通过 memfd 可写映射和显式提交更新；通用可执行 mprotect
 仍受限制。
 
 Bionic 的预编译 ELF 是否保留指令映射信息、共享库布局和 x18 使用方式，
@@ -840,3 +841,49 @@ AES-GCM 增加 64 MiB 加密计时和解密校验，原有已知答案、错误�
 默认指令扩展配置完成 CLI、GCD、3 轮进程压力、14 项 ELF 检查和 iOS 目标
 编译。日志为 `work/native-linux-nce/cpu-features-probe.log`；关闭扩展的完整
 CLI 回归记录在 `work/native-linux-nce/cpu-baseline-results.jsonl`。
+
+## 完整类路径与 system_server 集成（2026-10-09，进行中）
+
+系统镜像加入 SDK 原始 classpath protobuf、它们引用的 67 个 JAR、
+framework-res.apk 与系统字体。类路径由 SDK 的 derive_classpath 读取 43 个
+protobuf 片段生成，保留 BOOTCLASSPATH、SYSTEMSERVERCLASSPATH 及独立服务
+JAR 的顺序和版本条件。构建脚本只用文件路径收集依赖，运行时解析沿用 Android。
+
+system_server 启动检查使用真实 Zygote `--start-system-server`，当前单独通过
+`NCE_SYSTEM_SERVER_PROBE=1` 运行。已加入 libandroid_servers 的 ELF 依赖、
+必要的目录、UID 1000 属性写入权限和 system_server SELinux 域。应用 UID
+10000 的属性写入拒绝检查继续保留。此策略用于原型集成，完整 Android 应用
+安全策略仍待实现。
+
+完整类路径首次运行在 fork 前长时间等待。ART 的 PreZygoteFork 日志显示，
+客体 getpid 返回 22，而 `/proc/22/stat` 指向外层 idle_host_task，包含三个
+线程。Android 进程处于独立 PID namespace，procfs 却继承外层挂载。现由
+Android PID 1 创建独立 mount namespace 并挂载自身 procfs；父子进程均检查
+`/proc/self`、`/proc/<pid>/stat` 与 `/proc/self/task/<tid>` 一致。修正后已进入
+真实 SystemServer.run / ActivityThread.systemMain。Conscrypt JNI 现已加入，
+Java SHA-256 已知答案检查通过。CPU cgroup、Android task profiles 和原版
+libprocessgroup 已配合执行，派生进程切换至 top-app 后检查自身 cgroup。
+SystemServer 已经过 StartWatchdog、InitializeProtoLog；当前停在缺少
+apexservice，ApexManager 无法取得活动 APEX 列表。完整系统启动仍未完成。
+
+等待期间的宿主采样还显示代码页反复复制。可执行页现参与按需恢复：缺少宿主
+映射时由 UDF 异常恢复 Linux 页；已有映射中的非法指令继续交给 Linux 信号
+处理。ELF 的系统调用/TLS 跳转代码提前生成一次；恢复代码页时按有序指令
+索引查找，只写入该页内的分支。
+
+新增的动态代码回归先发布 UDF 并检查 SIGILL，再发布正常代码并检查写保护
+和 PROT_NONE。检查发现代码发布后缺少映射状态更新，已修正。GCD 连续运行
+另发现 mmap_read_lock 等待期间可能切换线程并恢复执行页；异常分类现读取
+等待前的映射状态。日志保留异常发生时与处理时的指令，便于区分页面恢复和
+客体非法指令。ARM64 恢复入口加入 ISB；对照运行表明，单独加入 ISB 无法
+解决该竞态。
+
+CLI、GCD、3 轮进程压力、14 项 ELF 检查和 iOS 目标编译通过，随后连续
+8 次 GCD 回归也通过。完整日志为 `work/native-linux-nce/trapped-view-probe.log`，
+重复结果为 `work/native-linux-nce/processes/trapped-view-repeats.json`。完整
+类路径使本轮工作量大于此前子集，耗时和内存数字不能直接用于前后提速比较。
+本轮峰值 footprint 约 643 MB，回收后约 310 MB；手机上的表现待集中验证。
+
+复杂度审查保留 Android 原有类路径解析、cgroup 调整与密码库调用。system_server
+检查作为可选集成入口，常规回归继续运行完整类路径的 Framework 和 Zygote。
+apexservice 需要真实模块信息及模块生命周期支持，后续按这一依赖继续实现。

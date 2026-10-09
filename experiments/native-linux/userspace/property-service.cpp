@@ -80,7 +80,7 @@ void nce_property_service(int ready)
     address.sun_family = AF_UNIX;
     strcpy(address.sun_path, "/dev/socket/property_service");
     CHECK(bind(listener, reinterpret_cast<sockaddr *>(&address), sizeof(address)) == 0);
-    CHECK(listen(listener, 8) == 0);
+    CHECK(chmod(address.sun_path, 0666) == 0 && listen(listener, 8) == 0);
     CHECK(write(ready, "r", 1) == 1 && close(ready) == 0);
     for (;;) {
         int connection = accept4(listener, nullptr, nullptr, SOCK_CLOEXEC);
@@ -93,7 +93,7 @@ void nce_property_service(int ready)
         CHECK(getsockopt(connection, SOL_SOCKET, SO_PEERCRED, &credentials, &size) == 0);
         uint32_t command, result;
         char name[256], value[4096];
-        if (credentials.uid != 0) result = PROP_ERROR_PERMISSION_DENIED;
+        if (credentials.uid != 0 && credentials.uid != 1000) result = PROP_ERROR_PERMISSION_DENIED;
         else if (!receive(connection, &command, sizeof(command))) result = PROP_ERROR_READ_CMD;
         else if (command != PROP_MSG_SETPROP2) result = PROP_ERROR_INVALID_CMD;
         else if (!read_string(connection, name, sizeof(name)) || !read_string(connection, value, sizeof(value))) result = PROP_ERROR_READ_DATA;

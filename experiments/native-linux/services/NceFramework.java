@@ -14,6 +14,8 @@ import android.graphics.Path;
 import java.io.ByteArrayOutputStream;
 import java.io.FileOutputStream;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -58,6 +60,11 @@ public final class NceFramework {
 
     public static void main(String[] args) throws Exception {
         System.out.println("{\"phase\":\"android_framework_java\"}");
+        byte[] digest = MessageDigest.getInstance("SHA-256").digest("abc".getBytes(StandardCharsets.US_ASCII));
+        StringBuilder hex = new StringBuilder();
+        for (byte value : digest) hex.append(String.format("%02x", value & 255));
+        check(hex.toString().equals("ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"));
+        System.out.println("{\"test\":\"android_framework_jca\",\"passed\":true}");
         Parcel parcel = Parcel.obtain();
         parcel.writeInt(1234567);
         parcel.writeString("Android framework 测试");
