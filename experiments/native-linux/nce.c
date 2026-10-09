@@ -12,6 +12,14 @@ _Static_assert(offsetof(NceState, done) == 848, "assembly layout");
 
 extern const unsigned char nce_stub[], nce_stub_end[];
 
+static int x18_instruction(uint32_t word)
+{
+    unsigned rd = word & 31, rn = (word >> 5) & 31, rm = (word >> 16) & 31;
+    if ((word & 0x7fe0fc00) == 0x2a000000 && (rd == 18 || rn == 18 || rm == 18)) return 1;
+    if (word == 0x92403643 || word == 0x9272c652) return 1;
+    return (word & 0xff800000) == 0xa9000000 && (rd == 18 || ((word >> 10) & 31) == 18);
+}
+
 static int branch(uint32_t *out, uintptr_t from, uintptr_t to)
 {
     intptr_t distance = (intptr_t)to - (intptr_t)from;
@@ -71,7 +79,7 @@ int nce_prepare_shared(NceCode code, NceState *s, NceState **active,
         int svc = (word & 0xffe0001f) == 0xd4000001;
         int tls = (word & 0xffffffe0) == 0xd53bd040 ||
                   (word & 0xffffffe0) == 0xd51bd040;
-        if (!svc && !tls) continue;
+        if (!svc && !tls && !x18_instruction(word)) continue;
         if (cursor + 80 > code.size) return -1;
         if (nce_write_patch((void *)(code.rw + pos), (uintptr_t)code.rx + pos,
                             (NceCode){code.rw + cursor, code.rx + cursor, 80}, active, word)) return -1;
@@ -101,6 +109,26 @@ NceState *nce_dispatch(NceState *s)
     } else if ((word & 0xffffffe0) == 0xd51bd040) {
         s->tls = reg == 31 ? 0 : s->regs.x[reg];
         ++s->tls_accesses;
+    } else if ((word & 0x7fe0fc00) == 0x2a000000) {
+        unsigned source = (word >> 16) & 31;
+        unsigned left = (word >> 5) & 31;
+        uint64_t value = source == 31 ? 0 : s->regs.x[source];
+        value |= left == 31 ? 0 : s->regs.x[left];
+        if (reg != 31) s->regs.x[reg] = word & 0x80000000u ? value : (uint32_t)value;
+    } else if (word == 0x92403643) {
+        s->regs.x[3] = s->regs.x[18] & 0x3fff;
+    } else if (word == 0x9272c652) {
+        s->regs.x[18] &= ~UINT64_C(0x3fff);
+    } else if ((word & 0xff800000) == 0xa9000000) {
+        unsigned second = (word >> 10) & 31, base = (word >> 5) & 31;
+        int offset = (int32_t)(word << 10) >> 25;
+        uintptr_t address = (base == 31 ? s->regs.sp : s->regs.x[base]) + offset * 8;
+        int write = !(word & (1u << 22));
+        uint64_t values[2] = {reg == 31 ? 0 : s->regs.x[reg], second == 31 ? 0 : s->regs.x[second]};
+        if (!s->memory(s, address, values, sizeof(values), write) && !write) {
+            if (reg != 31) s->regs.x[reg] = values[0];
+            if (second != 31) s->regs.x[second] = values[1];
+        }
     } else {
         ++s->calls;
         s->syscall(s);

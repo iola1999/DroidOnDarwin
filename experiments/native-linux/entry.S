@@ -34,7 +34,8 @@ _nce_gate:
     stp x14, x15, [x16, #112]
     ldp x0, x1, [sp]
     stp x0, x1, [x16, #128]
-    stp x18, x19, [x16, #144]
+    // Guest x18 is emulated; the hardware register always belongs to Darwin.
+    str x19, [x16, #152]
     stp x20, x21, [x16, #160]
     stp x22, x23, [x16, #176]
     stp x24, x25, [x16, #192]

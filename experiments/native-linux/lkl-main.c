@@ -154,13 +154,15 @@ int nce_lkl_run(const char *image_path)
     void (*cleanup)(void) = (void *)(kernel.rx + LKL_CLEANUP);
     kernel_syscall = (void *)(kernel.rx + LKL_SYSCALL);
     #ifdef NCE_PROCESS
-    void (*set_layout)(unsigned long, unsigned long) = (void *)(kernel.rx + NCE_SET_LAYOUT);
+    void (*set_layout)(unsigned long, unsigned long, unsigned long *) = (void *)(kernel.rx + NCE_SET_LAYOUT);
+    unsigned long *views = calloc(2 * NCE_USER_SIZE / NCE_PAGE_SIZE, sizeof(*views));
+    REQUIRE(views);
     const char *mode = getenv("NCE_MM_MODE");
     if (!mode) mode = "lazy";
     REQUIRE(!strcmp(mode, "full") || !strcmp(mode, "diff") || !strcmp(mode, "lazy"));
     unsigned long mapping_mode = !strcmp(mode, "full") ? NCE_MM_FULL : !strcmp(mode, "diff") ? NCE_MM_DIFF : NCE_MM_LAZY;
     printf("{\"phase\":\"linux_mapping_policy\",\"mode\":\"%s\"}\n", mode);
-    set_layout(nce_process_setup(), mapping_mode);
+    set_layout(nce_process_setup(), mapping_mode, views);
     #endif
     puts("{\"phase\":\"linux_init\"}");
     REQUIRE(init(&nce_lkl_host) == 0);
@@ -211,6 +213,7 @@ int nce_lkl_run(const char *image_path)
     cleanup();
     #ifdef NCE_PROCESS
     nce_process_cleanup();
+    free(views);
     #else
     release(code);
     REQUIRE(munmap(stack, 65536) == 0);

@@ -1,0 +1,40 @@
+{
+  "archives": [
+    {
+      "name": "scudo",
+      "repo": "platform/external/scudo",
+      "revision": "e3a9ec51431e8a7afdba4004c3e4fde3d0ca8544",
+      "sha256": "93dace5f3fbdac5c70c81ac34990772d8d37a37666ca4e841979c7b82992eb9c"
+    },
+    {
+      "name": "bionic-source",
+      "repo": "platform/bionic",
+      "revision": "09a271af557444c9a6b3f3146d6d474156fd6cdb",
+      "sha256": "c6b44c308dc593edd98da7b3b6e65ad6226a47516287cfab1821defaf1c385a0",
+      "archive": "bionic-android16.tar.gz"
+    },
+    {
+      "name": "libbase",
+      "repo": "platform/system/libbase",
+      "revision": "0ac7ea4a65d981166d6e5617e1e4ef0572f774e5",
+      "sha256": "b743cdcc57981480d45d70ee6dcb3897d10427a262b34f716b1a0a12aa9a8412"
+    },
+    {
+      "name": "libziparchive",
+      "repo": "platform/system/libziparchive",
+      "revision": "8c51527debf9394dfa515f7e6c7941d2720c6d01",
+      "sha256": "36b31c106bafa305dec6d41f5fa78c63446b75ead312620adf6b78099186f9ab"
+    },
+    {
+      "name": "liblog",
+      "repo": "platform/system/logging",
+      "revision": "d78b713380007d3c0dde14712cbcbec27f491ad9",
+      "sha256": "b116dff4b55258118142cb6a4d5ae175f342c32aab825b3453c61d982018a40c"
+    }
+  ],
+  "core_header": {
+    "url": "https://android.googlesource.com/platform/system/core/+/68be0c2c0006a0740d0b1809abe4717308f90d15/libcutils/include/private/android_filesystem_config.h?format=TEXT",
+    "revision": "68be0c2c0006a0740d0b1809abe4717308f90d15",
+    "sha256": "ef3a353440f0a1d215d84030577b0a9f6357fa528e9a5495cd4057e7e64b5ea9"
+  }
+}

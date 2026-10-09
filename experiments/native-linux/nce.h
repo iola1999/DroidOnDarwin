@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include "guest-registers.h"
 
-/* Serialized guest execution ABI. x18 remains owned by Darwin. */
+/* Serialized guest execution ABI. Guest x18 lives in regs; hardware x18 belongs to Darwin. */
 typedef struct NceState NceState;
 struct NceState {
     struct pt_regs regs;
@@ -15,6 +15,8 @@ struct NceState {
     uint64_t done, tls, calls, tls_accesses;
     NceState *self;
     NceState *(*event)(NceState *);
+    /* Access a guest operand. On failure, install the guest fault continuation. */
+    int (*memory)(NceState *, uintptr_t, void *, size_t, int write);
 };
 
 typedef struct {

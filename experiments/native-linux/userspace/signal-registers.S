@@ -6,6 +6,7 @@ signal_register_test:
     mov x1, #10
     mov x8, #129
     mov x9, #0x9876
+    mov x18, x9
     movi v0.16b, #0x5a
     movi v31.16b, #0xa5
     mov x10, #0x400000
@@ -21,6 +22,9 @@ signal_register_test:
     b.ne 1f
     mov x10, #0x9876
     cmp x9, x10
+    b.ne 1f
+    mov x11, x18
+    cmp x11, x10
     b.ne 1f
     movi v1.16b, #0x5a
     eor v1.16b, v1.16b, v0.16b

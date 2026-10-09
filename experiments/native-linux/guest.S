@@ -62,7 +62,40 @@ guest_tls:
     svc #0
     brk #0
 
+.globl guest_x18
+guest_x18:
+    mov x9, x18
+    mov w10, w18
+    mov x18, x2
+    mov x8, #172
+    svc #0
+    mov x11, x18
+    mov w18, w3
+    mov x12, x18
+    mov x18, xzr
+    mov x13, x18
+    mov x18, x18
+    mov xzr, x18
+    mov x8, #93
+    svc #0
+    brk #0
+
 .globl guest_fault_read, guest_fault_write
+.globl guest_x18_memory
+guest_x18_memory:
+    stp x18, x19, [x0, #144]
+    mov x18, xzr
+    mov x19, xzr
+    ldp x18, x19, [x0, #144]
+    and x3, x18, #0x3fff
+    mov x5, x3
+    and x18, x18, #0xffffffffffffc000
+    orr x18, x3, x18
+    mov x4, x18
+    mov x8, #93
+    svc #0
+    brk #0
+
 guest_fault_read:
     ldr x0, [x0]
     mov x8, #93

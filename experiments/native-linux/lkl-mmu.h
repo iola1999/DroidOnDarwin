@@ -6,7 +6,7 @@
 typedef struct {
     unsigned long end_brk;
     /* Pages faulted back into the host window after a process switch. */
-    unsigned long accessed[NCE_USER_SIZE / NCE_PAGE_SIZE / 64];
+    unsigned long *accessed;
 } mm_context_t;
 #else
 #include <asm-generic/mmu.h>

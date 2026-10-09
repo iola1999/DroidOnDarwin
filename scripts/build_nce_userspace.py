@@ -10,6 +10,9 @@ import struct
 import subprocess
 import tarfile
 import urllib.request
+from prepare_android_runtime import main as prepare_android_runtime
+from build_android_linker import build as build_android_linker
+from build_android_libc import build as build_android_libc
 
 ROOT = Path(__file__).resolve().parents[1]
 EXP = ROOT / 'experiments/native-linux'
@@ -17,6 +20,7 @@ WORK = ROOT / 'work/native-linux-nce'
 PAGE = 16384
 PROGRAM_SLOT = 2 * 1024 * 1024
 INTERPRETER = '/lib/ld-musl-aarch64.so.1'
+ANDROID_INTERPRETER = '/system/bin/linker64'
 MUSL_SHA = 'a9a118bbe84d8764da0ea0d28b3ab3fae8477fc7e4085d90102b8596fc7c75e4'
 RT_SHA = '15277402f6fd63397c0917a5c7171cda82d16d226094b828c1ed0f58f73b9c69'
 DASH_SHA = '6a474ac46e8b0b32916c4c60df694c82058d3297d8b385b74508030ca4a8f28a'
@@ -51,7 +55,14 @@ def musl(llvm):
     return build / 'install'
 
 
-def inspect(path, shared=False):
+def x18_instruction(word):
+    rd, rn, rm = word & 31, (word >> 5) & 31, (word >> 16) & 31
+    return (word & 0x7fe0fc00 == 0x2a000000 and 18 in (rd, rn, rm) or
+            word in (0x92403643, 0x9272c652) or
+            word & 0xff800000 == 0xa9000000 and 18 in (rd, (word >> 10) & 31))
+
+
+def inspect(path, shared=False, function_symbols=False):
     data = path.read_bytes()
     if len(data) < 64 or data[:7] != b'\x7fELF\x02\x01\x01' or struct.unpack_from('<HH', data, 16) != (3, 183):
         raise RuntimeError(f'{path}: requires AArch64 ET_DYN')
@@ -69,7 +80,7 @@ def inspect(path, shared=False):
     if len(interpreters) > 1:
         raise RuntimeError(f'{path}: multiple ELF interpreters')
     for p in interpreters:
-        if p[2] + p[5] > len(data) or data[p[2]:p[2] + p[5]] != INTERPRETER.encode() + b'\0':
+        if p[2] + p[5] > len(data) or data[p[2]:p[2] + p[5]] not in [i.encode() + b'\0' for i in (INTERPRETER, ANDROID_INTERPRETER)]:
             raise RuntimeError(f'{path}: unsupported ELF interpreter')
     segments = []
     for _, flags, offset, va, _, filesz, memsz, align in loads:
@@ -90,6 +101,7 @@ def inspect(path, shared=False):
         raise RuntimeError(f'{path}: missing executable entry')
     sections = [struct.unpack_from('<IIQQQQIIQQ', data, shoff + i * shentsize) for i in range(shnum)]
     mappings = {}
+    functions = {}
     for symtab in sections:
         if symtab[1] != 2:
             continue
@@ -100,13 +112,15 @@ def inspect(path, shared=False):
             raise RuntimeError(f'{path}: truncated symbol strings')
         strings = data[strings[4]:strings[4] + strings[5]]
         for off in range(symtab[4], symtab[4] + symtab[5], symtab[9]):
-            name, _, _, sec, addr, _ = struct.unpack_from('<IBBHQQ', data, off)
+            name, info, _, sec, addr, size = struct.unpack_from('<IBBHQQ', data, off)
             end = strings.find(b'\0', name)
             if end < 0:
                 raise RuntimeError(f'{path}: invalid symbol name')
             name = strings[name:end].decode()
             if re.fullmatch(r'\$[xd](?:\..*)?', name):
                 mappings.setdefault(sec, set()).add((addr, name[1]))
+            if info & 15 == 2 and size:
+                functions.setdefault(sec, []).append((addr, addr + size))
     patches = []
     for index, sec in enumerate(sections):
         if not sec[2] & 4 or not sec[5]:
@@ -115,9 +129,19 @@ def inspect(path, shared=False):
                    sec[4] - p[2] == sec[3] - p[3] for p in loads):
             raise RuntimeError(f'{path}: executable section is outside its file segment')
         markers = sorted(mappings.get(index, []))
+        inferred = False
         # LLD's AArch64 PLT carries SHF_AARCH64_PURECODE instead of $x symbols.
         if not markers and sec[2] & 0x20000000:
             markers = [(sec[3], 'x')]
+        if not markers and function_symbols:
+            # Pinned Android platform binaries retain function boundaries but
+            # can omit mapping symbols. Scan only those function ranges.
+            ranges = functions.get(index, [])
+            inferred = True
+            boundaries = sorted({sec[3], sec[3] + sec[5]} | {x for pair in ranges for x in pair})
+            if boundaries[0] != sec[3] or boundaries[-1] != sec[3] + sec[5]:
+                raise RuntimeError(f'{path}: function symbol outside executable section')
+            markers = [(a, 'x' if any(lo <= a < hi for lo, hi in ranges) else 'd') for a in boundaries[:-1]]
         if not markers or markers[0][0] != sec[3]:
             raise RuntimeError(f'{path}: executable section lacks mapping symbols')
         for i, (begin, kind) in enumerate(markers):
@@ -125,12 +149,17 @@ def inspect(path, shared=False):
             if begin >= end or end > sec[3] + sec[5]:
                 raise RuntimeError(f'{path}: invalid instruction mapping span')
             if kind != 'x':
+                if inferred:
+                    for address in range(begin, end - 3, 4):
+                        word, = struct.unpack_from('<I', data, sec[4] + address - sec[3])
+                        if word & 0xffe0001f == 0xd4000001 or word & 0xffffffe0 in (0xd53bd040, 0xd51bd040) or x18_instruction(word):
+                            raise RuntimeError(f'{path}: patch candidate outside function symbols at {address:x}')
                 continue
             if begin % 4 or end % 4:
                 raise RuntimeError(f'{path}: unaligned instruction span')
             for address in range(begin, end, 4):
                 word, = struct.unpack_from('<I', data, sec[4] + address - sec[3])
-                if word & 0xffe0001f == 0xd4000001 or word & 0xffffffe0 in (0xd53bd040, 0xd51bd040):
+                if word & 0xffe0001f == 0xd4000001 or word & 0xffffffe0 in (0xd53bd040, 0xd51bd040) or x18_instruction(word):
                     patches.append((address, word))
     return dict(data=data, entry=entry, phoff=phoff, phsize=phnum*phentsize, segments=segments, patches=patches)
 
@@ -251,6 +280,19 @@ def build(out, llvm):
              libc / 'lib/libc.a', runtime, libc / 'lib/crtn.o', '-o', out / f'{name}.elf'])
         programs.append(('/init-user' if name == 'init' else '/' + name, out / f'{name}.elf'))
     programs.append(('/bin/sh', dash(out, llvm, libc, runtime, resource)))
+    ndk = Path('/opt/homebrew/share/android-ndk')
+    if 'Pkg.Revision = 29.0.14206865' not in (ndk / 'source.properties').read_text():
+        raise RuntimeError('Bionic fixture requires Android NDK 29.0.14206865')
+    run([ndk / 'toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android35-clang',
+         '-ffixed-x18', '-mno-outline-atomics', '-g', '-O2', '-Wall', '-Wextra', '-Werror',
+         '-Wl,-z,max-page-size=16384,-z,common-page-size=16384',
+         EXP / 'userspace/bionic-test.c', '-o', out / 'bionic-test.elf'])
+    programs.append(('/bionic-test', out / 'bionic-test.elf'))
+    prepare_android_runtime()
+    android = WORK / 'android/android36/com.android.runtime'
+    programs.append((ANDROID_INTERPRETER, build_android_linker()))
+    programs.append(('/system/lib64/libc.so', build_android_libc()))
+    programs.append(('/system/lib64/libdl.so', android / 'lib64/bionic/libdl.so'))
     shutil.copyfile(libc / 'lib/libc.so', out / 'libc.so')
     programs.append((INTERPRETER, out / 'libc.so'))
     for name in ('dependency', 'plugin', 'dynamic'):
@@ -267,12 +309,16 @@ def build(out, llvm):
         raise RuntimeError('Program slots overlap the mmap area')
     header, entries = [], []
     for i, (name, path) in enumerate(programs):
-        elf = inspect(path, shared=name.endswith('.so'))
+        elf = inspect(path, shared=name.endswith('.so'), function_symbols=name.startswith('/system/') or name == '/bionic-test')
         if name == '/worker' and sum(size for _, size in elf['segments']) <= 65536:
             raise RuntimeError('Large-text fixture did not exceed 64 KiB')
         dis = subprocess.check_output([llvm / 'llvm-objdump', '-d', path], text=True)
-        if re.search(r'\b[wx]18\b', dis):
-            raise RuntimeError(f'{path}: uses the Darwin-reserved x18 register')
+        patched = {address for address, _ in elf['patches']}
+        for line in dis.splitlines():
+            if re.search(r'\b[wx]18\b', line):
+                address = re.match(r'\s*([0-9a-f]+):', line)
+                if not address or int(address[1], 16) not in patched:
+                    raise RuntimeError(f'{path}: unsupported use of x18: {line.strip()}')
         header.append(f'static const unsigned char image_{i}[] = {{' + ','.join(map(str, elf['data'])) + '};')
         header.append(f'static NceSegment segments_{i}[] = {{' + ','.join(
             f'{{.offset={lo},.size={size}}}' for lo, size in elf['segments']) + '};')

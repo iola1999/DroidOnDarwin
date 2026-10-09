@@ -8,21 +8,36 @@
 
 unsigned long nce_user_base, nce_task_size, nce_memory_start;
 static unsigned long mapping_mode;
+static unsigned long *installed, *desired;
+#define VIEW_CHUNK_PAGES 64
+#define VIEW_CHUNKS (NCE_USER_SIZE / PAGE_SIZE / VIEW_CHUNK_PAGES)
+static DECLARE_BITMAP(view_chunks, VIEW_CHUNKS);
 
-void nce_set_layout(unsigned long base, unsigned long mode)
+void nce_set_layout(unsigned long base, unsigned long mode, unsigned long *views)
 {
     mapping_mode = mode;
     nce_user_base = base;
     nce_task_size = base + NCE_USER_SIZE;
     nce_memory_start = nce_task_size;
+    installed = views;
+    desired = views + NCE_USER_SIZE / PAGE_SIZE;
 }
 #define USER_BASE nce_user_base
 static struct mm_struct *active_mm;
 
 int nce_init_mm(struct task_struct *task, struct mm_struct *mm)
 {
-    memset(mm->context.accessed, 0, sizeof(mm->context.accessed));
+    size_t bytes = NCE_USER_SIZE / PAGE_SIZE / 8;
+    mm->context.accessed = lkl_ops->mem_alloc(bytes);
+    if (!mm->context.accessed) return -ENOMEM;
+    memset(mm->context.accessed, 0, bytes);
     return 0;
+}
+
+void nce_destroy_mm(struct mm_struct *mm)
+{
+    lkl_ops->mem_free(mm->context.accessed);
+    mm->context.accessed = NULL;
 }
 
 static pte_t lookup(struct mm_struct *mm, unsigned long addr)
@@ -39,8 +54,15 @@ static pte_t lookup(struct mm_struct *mm, unsigned long addr)
 
 /* One Linux CPU owns the host window. Entries describe installed host views,
  * not another mm's page tables; clearing a Linux PTE invalidates its view. */
-static unsigned long installed[NCE_USER_SIZE / PAGE_SIZE];
-static unsigned long desired[NCE_USER_SIZE / PAGE_SIZE];
+static unsigned long next_table_page(struct mm_struct *mm, unsigned long addr)
+{
+    pgd_t *pgd = pgd_offset(mm, addr);
+    p4d_t *p4d = p4d_offset(pgd, addr);
+    pud_t *pud = pud_offset(p4d, addr);
+    if (pud_none(*pud) || pmd_none(*pmd_offset(pud, addr)))
+        return (addr & PMD_MASK) + PMD_SIZE;
+    return addr + PAGE_SIZE;
+}
 
 static unsigned long view(pte_t pte)
 {
@@ -61,7 +83,7 @@ static void map_view(unsigned long addr, unsigned long size, unsigned long value
                               size, prot) != (void *)addr);
 }
 
-static void apply_views(unsigned long first, unsigned long count)
+static void apply_chunk(unsigned long first, unsigned long count)
 {
     unsigned long end = first + count;
     for (unsigned long i = first; i < end;) {
@@ -75,6 +97,20 @@ static void apply_views(unsigned long first, unsigned long count)
     }
 }
 
+static void apply_views(unsigned long first, unsigned long count)
+{
+    unsigned long end = first + count, chunk = first / VIEW_CHUNK_PAGES;
+    for_each_set_bit_from(chunk, view_chunks, VIEW_CHUNKS) {
+        unsigned long lo = chunk * VIEW_CHUNK_PAGES, hi = lo + VIEW_CHUNK_PAGES;
+        if (lo >= end) break;
+        apply_chunk(max(first, lo), min(end, hi) - max(first, lo));
+        bool occupied = false;
+        for (unsigned long i = lo; i < hi; ++i)
+            if (installed[i] || desired[i]) { occupied = true; break; }
+        if (!occupied) __clear_bit(chunk, view_chunks);
+    }
+}
+
 void mmap_pages_for_ptes(struct mm_struct *mm, unsigned long va, unsigned int nr, pte_t pte)
 {
     unsigned long value = view(pte);
@@ -85,8 +121,10 @@ void mmap_pages_for_ptes(struct mm_struct *mm, unsigned long va, unsigned int nr
     }
     BUG_ON(va < USER_BASE || va + nr * PAGE_SIZE > TASK_SIZE);
     unsigned long first = (va - USER_BASE) / PAGE_SIZE;
-    for (unsigned long i = 0; i < nr; ++i)
+    for (unsigned long i = 0; i < nr; ++i) {
         desired[first + i] = value ? value + i * PAGE_SIZE : 0;
+        __set_bit((first + i) / VIEW_CHUNK_PAGES, view_chunks);
+    }
     apply_views(first, nr);
 }
 
@@ -117,9 +155,18 @@ void nce_flush_range(struct mm_struct *mm, unsigned long start, unsigned long en
     unsigned long first = (start - USER_BASE) / PAGE_SIZE;
     unsigned long count = (end - start) / PAGE_SIZE;
     if (mapping_mode == NCE_MM_FULL) map_view(start, end - start, 0);
-    else memset(desired + first, 0, count * sizeof(*desired));
+    else {
+        unsigned long chunk = first / VIEW_CHUNK_PAGES;
+        for_each_set_bit_from(chunk, view_chunks, VIEW_CHUNKS) {
+            unsigned long lo = max(first, chunk * VIEW_CHUNK_PAGES);
+            unsigned long hi = min(first + count, (chunk + 1) * VIEW_CHUNK_PAGES);
+            if (lo >= hi) break;
+            memset(desired + lo, 0, (hi - lo) * sizeof(*desired));
+        }
+    }
     for_each_vma_range(iter, vma, end) {
-        for (addr = max(start, vma->vm_start); addr < min(end, vma->vm_end); addr += PAGE_SIZE) {
+        if (!(vma->vm_flags & (VM_READ | VM_WRITE | VM_EXEC))) continue;
+        for (addr = max(start, vma->vm_start); addr < min(end, vma->vm_end); addr = next_table_page(mm, addr)) {
             pte_t pte = lookup(mm, addr);
             if (mapping_mode == NCE_MM_FULL) {
                 if (pte_present(pte)) mmap_pages_for_ptes(mm, addr, 1, pte);
@@ -131,6 +178,7 @@ void nce_flush_range(struct mm_struct *mm, unsigned long start, unsigned long en
                 if (mapping_mode == NCE_MM_LAZY && !(value & _PAGE_EXEC) &&
                     value != installed[index] && !test_bit(index, mm->context.accessed)) value = 0;
                 desired[index] = value;
+                if (value) __set_bit(index / VIEW_CHUNK_PAGES, view_chunks);
             }
         }
     }

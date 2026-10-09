@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 #define _GNU_SOURCE
+#include <elf.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <stdint.h>
@@ -16,6 +17,57 @@
 
 void memory_tests(void)
 {
+    CHECK(syscall(245, -1, PAGE) == -1 && errno == EBADF);
+    int ordinary = open("/reserve-not-elf", O_CREAT | O_RDWR, 0600);
+    CHECK(ordinary >= 0);
+    CHECK(syscall(245, ordinary, PAGE) == -1 && errno == ENOEXEC);
+    CHECK(close(ordinary) == 0);
+    int elf = open("/bionic-test", O_RDONLY);
+    CHECK(elf >= 0);
+    Elf64_Ehdr header;
+    CHECK(pread(elf, &header, sizeof(header), 0) == sizeof(header));
+    size_t load_size = 0;
+    for (unsigned i = 0; i < header.e_phnum; ++i) {
+        Elf64_Phdr phdr;
+        CHECK(pread(elf, &phdr, sizeof(phdr), header.e_phoff + i * sizeof(phdr)) == sizeof(phdr));
+        if (phdr.p_type == PT_LOAD && phdr.p_vaddr + phdr.p_memsz > load_size)
+            load_size = phdr.p_vaddr + phdr.p_memsz;
+    }
+    load_size = (load_size + PAGE - 1) & ~(size_t)(PAGE - 1);
+    CHECK(syscall(245, elf, load_size + PAGE) == -1 && errno == EINVAL);
+    void *elf_reservation = (void *)syscall(245, elf, load_size);
+    CHECK(elf_reservation != MAP_FAILED);
+    CHECK(syscall(245, elf, load_size) == -1 && errno == EEXIST);
+    void *metadata = mmap(NULL, PAGE, PROT_READ, MAP_PRIVATE, elf, 0);
+    CHECK(metadata != MAP_FAILED && metadata != elf_reservation);
+    CHECK(!memcmp(metadata, ELFMAG, SELFMAG));
+    CHECK(munmap(metadata, PAGE) == 0 && munmap(elf_reservation, load_size) == 0);
+    CHECK(close(elf) == 0);
+    puts("{\"test\":\"linux_android_elf_reservation_boundaries\",\"passed\":true}");
+
+    const size_t reserve = 8UL * 1024 * 1024 * 1024;
+    unsigned char *sparse = mmap(NULL, reserve, PROT_NONE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+    CHECK(sparse != MAP_FAILED);
+    const size_t offsets[] = {0, 1024UL * 1024 * 1024, reserve - PAGE};
+    for (unsigned i = 0; i < 3; ++i) {
+        CHECK(mprotect(sparse + offsets[i], PAGE, PROT_READ | PROT_WRITE) == 0);
+        sparse[offsets[i]] = 17 + i;
+    }
+    pid_t sparse_child = fork();
+    CHECK(sparse_child >= 0);
+    if (!sparse_child) {
+        for (unsigned i = 0; i < 3; ++i) {
+            CHECK(sparse[offsets[i]] == 17 + i);
+            sparse[offsets[i]] = 90 + i;
+        }
+        _exit(0);
+    }
+    int sparse_status;
+    CHECK(waitpid(sparse_child, &sparse_status, 0) == sparse_child && sparse_status == 0);
+    for (unsigned i = 0; i < 3; ++i) CHECK(sparse[offsets[i]] == 17 + i);
+    CHECK(munmap(sparse, reserve) == 0);
+    puts("{\"test\":\"linux_8gib_sparse_reservation_cow\",\"passed\":true}");
+
     unsigned char *data = mmap(NULL, 4 * PAGE, PROT_READ | PROT_WRITE,
                                MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
     CHECK(data != MAP_FAILED);

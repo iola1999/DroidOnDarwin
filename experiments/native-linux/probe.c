@@ -66,6 +66,14 @@ static void prepare(NceCode code, NceState *s, size_t entry, void *stack)
     CHECK(nce_prepare(code, s, guest_image, sizeof(guest_image), entry) == 0);
 }
 
+static int operand_memory(NceState *state, uintptr_t address, void *buffer, size_t size, int write)
+{
+    (void)state;
+    if (write) memcpy((void *)address, buffer, size);
+    else memcpy(buffer, (void *)address, size);
+    return 0;
+}
+
 static uint64_t pattern(unsigned index, unsigned stage)
 {
     return UINT64_C(0x9876543200000000) + stage * 1000 + index;
@@ -76,7 +84,7 @@ static void register_syscall(NceState *s)
     unsigned stage = (s->instruction >> 5) & 0xffff;
     CHECK(stage == 1 || stage == 2);
     for (unsigned r = 0; r < 31; ++r)
-        if (r != 18) CHECK(s->regs.x[r] == pattern(r, stage - 1));
+        CHECK(s->regs.x[r] == pattern(r, stage - 1));
     for (unsigned r = 0; r < 64; ++r)
         CHECK(s->regs.vector[r / 2][r % 2] == pattern(r + 31, stage - 1));
     CHECK(s->regs.nzcv == (stage == 1 ? 0xa0000000u : 0x60000000u));
@@ -84,7 +92,7 @@ static void register_syscall(NceState *s)
     CHECK(s->regs.fpsr == (stage == 1 ? 1u : 2u));
     if (stage == 2) { s->done = 1; return; }
     for (unsigned r = 0; r < 31; ++r)
-        if (r != 18) s->regs.x[r] = pattern(r, 1);
+        s->regs.x[r] = pattern(r, 1);
     for (unsigned r = 0; r < 64; ++r)
         s->regs.vector[r / 2][r % 2] = pattern(r + 31, 1);
     s->regs.nzcv = 0x60000000u;
@@ -131,6 +139,27 @@ static void correctness(NceCode code, void *stack)
     nce_enter(&s);
     CHECK(s.regs.x[5] == 0x123 && s.regs.x[6] == 0x678 && s.tls_accesses == 3);
     puts("{\"test\":\"tls_read_write\",\"passed\":true}");
+
+    prepare(code, &s, GUEST_X18, stack);
+    s.regs.x[18] = UINT64_C(0x123456789abcdef0);
+    s.regs.x[2] = UINT64_C(0xfedcba9876543210);
+    s.regs.x[3] = UINT64_C(0x9876543287654321);
+    nce_enter(&s);
+    CHECK(s.regs.x[9] == UINT64_C(0x123456789abcdef0) && s.regs.x[10] == 0x9abcdef0u);
+    CHECK(s.regs.x[11] == s.regs.x[2] && s.regs.x[12] == 0x87654321u);
+    CHECK(s.regs.x[13] == 0 && s.regs.x[18] == 0 && s.calls == 2);
+    puts("{\"test\":\"guest_x18_moves_and_syscalls\",\"passed\":true}");
+    uint64_t operands[20] = {0};
+    prepare(code, &s, GUEST_X18_MEMORY, stack);
+    s.memory = operand_memory;
+    s.regs.x[0] = (uintptr_t)operands;
+    s.regs.x[18] = UINT64_C(0x123456789abcdef0);
+    s.regs.x[19] = UINT64_C(0xfedcba9876543210);
+    nce_enter(&s);
+    CHECK(operands[18] == UINT64_C(0x123456789abcdef0) && operands[19] == UINT64_C(0xfedcba9876543210));
+    CHECK(s.regs.x[18] == operands[18] && s.regs.x[19] == operands[19]);
+    CHECK(s.regs.x[4] == operands[18] && s.regs.x[5] == (operands[18] & 0x3fff));
+    puts("{\"test\":\"guest_x18_pair_and_logical\",\"passed\":true}");
 
     prepare(code, &s, GUEST_UPDATE, stack);
     uint64_t entry = s.resume;

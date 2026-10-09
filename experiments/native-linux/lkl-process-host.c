@@ -52,6 +52,7 @@ static int (*page_fault)(unsigned long, int);
 static void (*user_return)(long, long, unsigned long);
 static void (*user_fault)(unsigned long, int);
 static unsigned long faults, allocated, freed;
+static int trace;
 static struct sigaction old_segv, old_bus, old_ill;
 
 static void shmem_init(unsigned long size)
@@ -124,7 +125,8 @@ static int protect_none(void *address, unsigned long size)
 
 static void capture_state(NceState *s, ucontext_t *u)
 {
-    memcpy(s->regs.x, u->uc_mcontext->__ss.__x, 29 * sizeof(uint64_t));
+    memcpy(s->regs.x, u->uc_mcontext->__ss.__x, 18 * sizeof(uint64_t));
+    memcpy(s->regs.x + 19, u->uc_mcontext->__ss.__x + 19, 10 * sizeof(uint64_t));
     s->regs.x[29] = __darwin_arm_thread_state64_get_fp(u->uc_mcontext->__ss);
     s->regs.x[30] = __darwin_arm_thread_state64_get_lr(u->uc_mcontext->__ss);
     s->regs.sp = __darwin_arm_thread_state64_get_sp(u->uc_mcontext->__ss);
@@ -182,6 +184,15 @@ static NceState *handle_event(NceState *state)
     if (p->event_kind == 1) {
         if (!deferred_faults) puts("{\"phase\":\"guest_fault_on_host_stack\"}");
         int result = page_fault(p->fault_address, p->fault_illegal ? NCE_FAULT_EXEC : p->fault_write);
+        if (result && trace) {
+            fprintf(stderr, "guest fault pc=%lx address=%lx write=%d illegal=%d result=%d\n",
+                    state->regs.pc, p->fault_address, p->fault_write, p->fault_illegal, result);
+            for (size_t i = 0; i < nce_program_count; ++i) {
+                NceProgram *program = &nce_programs[i];
+                if (state->regs.pc >= program->base && state->regs.pc - program->base < 2 * 1024 * 1024)
+                    fprintf(stderr, "guest program=%s offset=%lx\n", program->path, state->regs.pc - program->base);
+            }
+        }
         if (result) user_fault(p->fault_address, p->fault_illegal && result == -8);
         else user_return(-1, 0, 0);
         ++faults; ++deferred_faults;
@@ -297,6 +308,25 @@ static void user_free(void *state)
     ++freed;
     free(process);
 }
+static int guest_memory(NceState *state, uintptr_t address, void *buffer, size_t size, int write)
+{
+    uintptr_t bad = address;
+    if (address < USER_BASE || address >= USER_BASE + USER_SIZE || size > USER_BASE + USER_SIZE - address) goto fault;
+    for (uintptr_t p = address; p < address + size; p = (p & ~(PAGE - 1)) + PAGE) {
+        bad = p;
+        if (page_fault(p, write)) goto fault;
+    }
+    if (write) memcpy((void *)address, buffer, size);
+    else memcpy(buffer, (void *)address, size);
+    return 0;
+fault:
+    state->regs.pc -= 4;
+    user_fault(bad, 0);
+    REQUIRE(nce_write_entry(event_resume, state->regs.pc) == 0);
+    nce_sync_code(event_resume);
+    state->resume = (uintptr_t)event_resume.rx;
+    return -1;
+}
 static void syscall_from_guest(NceState *state)
 {
     long args[6];
@@ -304,6 +334,8 @@ static void syscall_from_guest(NceState *state)
     long number = state->regs.x[8];
     uintptr_t continuation = state->regs.pc;
     long result = run_syscall(number, args);
+    if (trace) fprintf(stderr, "guest syscall=%ld pc=%lx args=%lx,%lx,%lx,%lx,%lx,%lx result=%lx\n",
+                       number, continuation, args[0], args[1], args[2], args[3], args[4], args[5], result);
     if (number == 215 && result == 0 && state->regs.sp >= (uintptr_t)args[0] &&
         state->regs.sp - (uintptr_t)args[0] < (uintptr_t)args[1]) ((Process *)state)->stack_unmapped = 1;
     user_return(number, result, args[0]);
@@ -320,6 +352,7 @@ static void user_run(void *opaque)
     this_process = process;
     process->thread = pthread_self();
     state->event = handle_event;
+    state->memory = guest_memory;
     user_switch(state);
     process->signal_stack = malloc(65536);
     REQUIRE(process->signal_stack);
@@ -375,6 +408,7 @@ static void user_exec(void *opaque, unsigned long entry, unsigned long stack)
 unsigned long nce_process_setup(void)
 {
     REQUIRE(getpagesize() == PAGE);
+    trace = getenv("NCE_TRACE") != NULL;
     user_base = nce_memory_user_base();
     for (size_t i = 0; i < nce_program_count; ++i)
         REQUIRE(nce_program_prepare(&nce_programs[i]) == 0);
@@ -514,8 +548,31 @@ void nce_process_tests(long (*host_syscall)(long, long *), long (*guest_syscall)
     REQUIRE(host_syscall(34, mkdir_args) == 0);
     mkdir_args[1] = (long)"/lib";
     REQUIRE(host_syscall(34, mkdir_args) == 0);
+    const char *directories[] = {"/system", "/system/bin", "/system/lib64", "/proc"};
+    for (unsigned i = 0; i < sizeof(directories) / sizeof(*directories); ++i) {
+        mkdir_args[1] = (long)directories[i];
+        REQUIRE(host_syscall(34, mkdir_args) == 0);
+    }
+    long mount_args[6] = {(long)"proc", (long)"/proc", (long)"proc", 0, 0};
+    REQUIRE(host_syscall(40, mount_args) == 0);
     long null_args[6] = {-100, (long)"/dev/null", 0020666, 259};
     REQUIRE(host_syscall(33, null_args) == 0);
+    null_args[1] = (long)"/dev/random"; null_args[3] = 264;
+    REQUIRE(host_syscall(33, null_args) == 0);
+    null_args[1] = (long)"/dev/urandom"; null_args[3] = 265;
+    REQUIRE(host_syscall(33, null_args) == 0);
+    struct { int entropy_bits, bytes; unsigned char data[32]; } entropy = {256, 32, {0}};
+    arc4random_buf(entropy.data, sizeof(entropy.data));
+    long random_args[6] = {-100, (long)"/dev/random", 2};
+    long random_fd = host_syscall(56, random_args);
+    REQUIRE(random_fd >= 0);
+    random_args[0] = random_fd; random_args[1] = 0x40085203; random_args[2] = (long)&entropy;
+    REQUIRE(host_syscall(29, random_args) == 0);
+    REQUIRE(host_syscall(57, random_args) == 0);
+    memset(entropy.data, 0, sizeof(entropy.data));
+    random_args[0] = (long)entropy.data; random_args[1] = sizeof(entropy.data); random_args[2] = 1;
+    REQUIRE(host_syscall(278, random_args) == sizeof(entropy.data));
+    puts("{\"test\":\"linux_random_initialized\",\"passed\":true}");
     code = nce_memory_take(65536);
     puts("{\"phase\":\"linux_process_tests\"}");
     const unsigned char *exec_elf = nce_programs[0].file;
@@ -603,6 +660,11 @@ void nce_process_tests(long (*host_syscall)(long, long *), long (*guest_syscall)
     run_program(host_syscall, "/binder-test", NULL);
     REQUIRE(get_file(host_syscall, "/stdout", benchmark, sizeof(benchmark)) > 0);
     REQUIRE(strstr(benchmark, "linux_binder_invalid_handle_cleanup"));
+    fputs(benchmark, stdout);
+    puts("{\"phase\":\"android_bionic_dynamic\"}");
+    run_program(host_syscall, "/bionic-test", NULL);
+    REQUIRE(get_file(host_syscall, "/stdout", benchmark, sizeof(benchmark)) > 0);
+    REQUIRE(strstr(benchmark, "android_bionic_threads_allocator_tls"));
     fputs(benchmark, stdout);
     check_program_files(host_syscall);
     puts("{\"test\":\"linux_dynamic_elf_files_unchanged\",\"passed\":true}");

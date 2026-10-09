@@ -20,7 +20,7 @@ unsigned long nce_elf_file_layout(struct file *file, const struct elfhdr *header
     return base;
 }
 
-static unsigned long file_layout(struct file *file)
+static unsigned long file_layout(struct file *file, unsigned long *length)
 {
     struct elfhdr header;
     struct elf_phdr *phdrs;
@@ -35,10 +35,32 @@ static unsigned long file_layout(struct file *file)
     phdrs = kmalloc(bytes, GFP_KERNEL);
     if (!phdrs) return 0;
     pos = header.e_phoff;
-    if (pos >= 0 && kernel_read(file, phdrs, bytes, &pos) == bytes)
+    if (pos >= 0 && kernel_read(file, phdrs, bytes, &pos) == bytes) {
         base = nce_elf_file_layout(file, &header, phdrs);
+        if (base && length) {
+            *length = 0;
+            for (unsigned i = 0; i < header.e_phnum; ++i)
+                if (phdrs[i].p_type == PT_LOAD)
+                    *length = max(*length, PAGE_ALIGN(phdrs[i].p_vaddr + phdrs[i].p_memsz));
+        }
+    }
     kfree(phdrs);
     return base;
+}
+
+/* The adapted Android linker asks for its registered ELF reservation before
+ * MAP_FIXED segment loads. Metadata reads retain ordinary mmap placement. */
+long nce_reserve_elf(long *params)
+{
+    struct fd file = fdget(params[0]);
+    unsigned long length = 0, base;
+    if (fd_empty(file)) return -EBADF;
+    base = file_layout(fd_file(file), &length);
+    fdput(file);
+    if (!base) return -ENOEXEC;
+    if (!length || params[1] != length) return -EINVAL;
+    return vm_mmap(NULL, base, length, PROT_NONE,
+                   MAP_PRIVATE | MAP_ANONYMOUS | MAP_FIXED_NOREPLACE, 0);
 }
 
 static int populate_code(unsigned long address, unsigned long length)
@@ -58,21 +80,21 @@ SYSCALL_DEFINE6(nce_mmap, unsigned long, addr, unsigned long, len,
                unsigned long, prot, unsigned long, flags, unsigned long, fd,
                unsigned long, offset)
 {
-    unsigned long base = 0;
+    unsigned long base = 0, load_length = 0;
     long result;
     /* AArch64 mmap takes a byte offset; LKL's generic wrapper used pages. */
     if (offset & ~PAGE_MASK) return -EINVAL;
     if (!(flags & MAP_ANONYMOUS)) {
         struct fd file = fdget(fd);
         if (fd_empty(file)) return -EBADF;
-        base = file_layout(fd_file(file));
+        base = file_layout(fd_file(file), &load_length);
         fdput(file);
     }
     if (prot & PROT_EXEC) {
         if (!base || (prot & PROT_WRITE)) return -EACCES;
     }
-    if (base && !(flags & MAP_FIXED)) {
-        if (offset || (addr && addr != base)) return -EINVAL;
+    if (base && !(flags & MAP_FIXED) && !offset && len == load_length) {
+        if (addr && addr != base) return -EINVAL;
         addr = base;
         flags |= MAP_FIXED_NOREPLACE;
     }
