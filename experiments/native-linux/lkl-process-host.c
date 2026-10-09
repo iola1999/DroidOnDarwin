@@ -26,12 +26,12 @@
 #include <unistd.h>
 #include <time.h>
 
-#define REQUIRE(c)                                                             \
-    do {                                                                       \
-        if (!(c)) {                                                            \
+#define REQUIRE(c) \
+    do { \
+        if (!(c)) { \
             fprintf(stderr, "N2 failure %s:%d: %s\n", __FILE__, __LINE__, #c); \
-            abort();                                                           \
-        }                                                                      \
+            abort(); \
+        } \
     } while (0)
 static uintptr_t user_base;
 #define USER_BASE user_base
@@ -856,7 +856,8 @@ static void run_program(long (*call)(long, long *), const char *path, const char
     pthread_t log_thread;
     if (live_log)
         REQUIRE(pthread_create(&log_thread, NULL, stream_guest_log, &pump) == 0);
-    if (live_log && getenv("NCE_DESKTOP")) nce_session_set_syscall(call);
+    if (live_log && getenv("NCE_DESKTOP"))
+        nce_session_set_syscall(call);
     long args[6] = {(long)process, 1};
     long pid = call(246, args);
     REQUIRE(pid > 0);
@@ -1328,7 +1329,8 @@ void nce_process_tests(long (*host_syscall)(long, long *), long (*guest_syscall)
         fputs(benchmark, stdout);
     }
     memory_report(host_syscall, "after_art");
-    if (getenv("NCE_DESKTOP")) put_file(host_syscall, "/data/nce/desktop-session", "", 0);
+    if (getenv("NCE_DESKTOP"))
+        put_file(host_syscall, "/data/nce/desktop-session", "", 0);
     if (getenv("NCE_SYSTEM_SERVER_PROBE") || getenv("NCE_DESKTOP"))
         put_file(host_syscall, "/data/nce/system-server-probe", "", 0);
     puts("{\"phase\":\"android_platform_services\"}");

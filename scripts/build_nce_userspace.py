@@ -1026,7 +1026,7 @@ def build(out, llvm):
          EXP / 'userspace/android-services-test.cpp', EXP / 'userspace/property-service.cpp',
          EXP / 'userspace/display-service-test.cpp',
          EXP / 'userspace/input-service.cpp',
-         EXP / 'userspace/framework-test.cpp', EXP / 'userspace/crypto-tests.cpp',
+         EXP / 'userspace/framework-test.cpp', EXP / 'userspace/desktop-session.cpp', EXP / 'userspace/crypto-tests.cpp',
          EXP / 'userspace/apex-service.cpp', EXP / 'userspace/suspend-test.cpp', EXP / 'userspace/installd-test.cpp',
          *sorted(apex_generated.rglob('*.cpp')),
          WORK / 'android/android36/lib64/libc++.so',

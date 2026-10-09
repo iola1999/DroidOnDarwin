@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 #include <errno.h>
+#include "desktop-session.h"
 #include <android/binder_manager.h>
 #include <android/binder_ibinder.h>
 #include <dlfcn.h>
@@ -20,12 +21,12 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
-#define CHECK(c)                                                                 \
-    do {                                                                         \
-        if (!(c)) {                                                              \
+#define CHECK(c) \
+    do { \
+        if (!(c)) { \
             dprintf(2, "framework-test:%d errno=%d: %s\n", __LINE__, errno, #c); \
-            _exit(109);                                                          \
-        }                                                                        \
+            _exit(109); \
+        } \
     } while (0)
 
 static void runtime_environment()
@@ -249,7 +250,7 @@ static int control_socket(const char *name, int type = SOCK_STREAM, gid_t group 
     return fd;
 }
 
-static void surface_check(const char *package = nullptr, const char *png = nullptr)
+void nce_surface_check(const char *package, const char *png)
 {
     pid_t child = fork();
     CHECK(child >= 0);
@@ -274,7 +275,7 @@ static void surface_check(const char *package = nullptr, const char *png = nullp
 
 void nce_surface_test()
 {
-    surface_check();
+    nce_surface_check();
 }
 
 static void receive_bytes(int fd, void *buffer, size_t size)
@@ -308,8 +309,8 @@ static void wait_system_service(pid_t child, const char *name)
     CHECK(false);
 }
 
-static void android_command(std::initializer_list<const char *> arguments,
-                            const char *expected = nullptr)
+void nce_android_command(std::initializer_list<const char *> arguments,
+                         const char *expected)
 {
     int output = open("/data/nce/command-output", O_RDWR | O_CREAT | O_TRUNC | O_CLOEXEC, 0600);
     CHECK(output >= 0);
@@ -595,8 +596,13 @@ void nce_zygote_test()
     CHECK(close(command) == 0 && close(usap) == 0);
     if (system_server) {
         puts("{\"phase\":\"android_system_server_boot\"}");
-        bool activity_reported = false, services_reported = false;
-        for (unsigned i = 0; i < 240; ++i) {
+        const bool interactive = access("/data/nce/desktop-session", F_OK) == 0;
+        bool activity_reported = false, services_reported = false, booted = false, stopped = false;
+        for (unsigned i = 0;; ++i) {
+            if (interactive && access("/data/nce/session-stop", F_OK) == 0) {
+                stopped = true;
+                break;
+            }
             int status;
             CHECK(waitpid(zygote, &status, WNOHANG) == 0);
             for (pid_t service : {audio, audio_hal, metrics, allocator, stats, media}) {
@@ -629,47 +635,47 @@ void nce_zygote_test()
                 puts("{\"test\":\"android_system_server_services\",\"passed\":true}");
                 services_reported = true;
                 // This image starts directly into the desktop without a setup wizard.
-                android_command({"settings", "put", "global", "device_provisioned", "1"});
-                android_command({"settings", "put", "secure", "user_setup_complete", "1"});
+                nce_android_command({"settings", "put", "global", "device_provisioned", "1"});
+                nce_android_command({"settings", "put", "secure", "user_setup_complete", "1"});
             }
             char completed[PROP_VALUE_MAX] = {};
             __system_property_get("sys.boot_completed", completed);
-            if (ready && !strcmp(completed, "1")) {
+            if (!booted && ready && !strcmp(completed, "1")) {
                 puts("{\"test\":\"android_system_boot_completed\",\"passed\":true}");
                 wait_system_service(audio, "media.audio_flinger");
                 wait_system_service(audio, "media.audio_policy");
-                android_command({"activity", "start-activity", "-W", "-a", "android.intent.action.MAIN",
-                                 "-c", "android.intent.category.HOME"},
-                                "Status: ok");
-                surface_check("com.google.android.apps.nexuslauncher", "/data/nce/desktop-launcher.png");
-                android_command({"activity", "start-activity", "-W", "-n",
-                                 "com.google.android.deskclock/com.android.deskclock.DeskClock"},
-                                "Status: ok");
-                surface_check("com.google.android.deskclock", "/data/nce/desktop-clock.png");
-                android_command({"activity", "start-activity", "-W", "-n",
-                                 "com.google.android.documentsui/com.android.documentsui.files.FilesActivity"},
-                                "Status: ok");
-                surface_check("com.google.android.documentsui", "/data/nce/desktop-files.png");
-                puts("{\"test\":\"android_desktop_launch_commands\",\"passed\":true,\"applications\":2}");
-                stop_process_group(zygote);
-                AIBinder_decStrong(artd_reference);
-                CHECK(__system_property_set("ctl.stop", "idmap2d") == 0);
-                for (pid_t service : {health, vold, storaged, artd, netd, lmkd, audio, metrics, audio_hal, allocator, gatekeeper, gatekeeper_hal, stats, media})
-                    stop_process_group(service);
-                for (const char *socket : {"dnsproxyd", "mdns", "fwmarkd", "lmkd", "statsdw"}) {
-                    char path[64];
-                    snprintf(path, sizeof(path), "/dev/socket/%s", socket);
-                    CHECK(unlink(path) == 0);
-                }
-                CHECK(unlink("/dev/socket/zygote") == 0 && unlink("/dev/socket/usap_pool_primary") == 0);
-                CHECK(rmdir("/dev/socket/audioserver") == 0);
-                puts("{\"test\":\"android_system_process_groups_stopped\",\"passed\":true}");
-                return;
+                nce_desktop_start(interactive);
+                booted = true;
+                if (interactive)
+                    alarm(0);
             }
+            if (!booted && i >= 239) {
+                dprintf(2, "Android did not complete boot within the 240 second polling window\n");
+                CHECK(false);
+            }
+            if (booted && !interactive)
+                break;
             usleep(1000000);
         }
-        dprintf(2, "Android did not complete boot within the 240 second polling window\n");
-        CHECK(false);
+        CHECK(booted || stopped);
+        stop_process_group(zygote);
+        AIBinder_decStrong(artd_reference);
+        CHECK(__system_property_set("ctl.stop", "idmap2d") == 0);
+        for (pid_t service : {health, vold, storaged, artd, netd, lmkd, audio, metrics, audio_hal, allocator, gatekeeper, gatekeeper_hal, stats, media})
+            stop_process_group(service);
+        for (const char *socket : {"dnsproxyd", "mdns", "fwmarkd", "lmkd", "statsdw"}) {
+            char path[64];
+            snprintf(path, sizeof(path), "/dev/socket/%s", socket);
+            CHECK(unlink(path) == 0);
+        }
+        CHECK(unlink("/dev/socket/zygote") == 0 && unlink("/dev/socket/usap_pool_primary") == 0);
+        CHECK(rmdir("/dev/socket/audioserver") == 0);
+        puts("{\"test\":\"android_system_process_groups_stopped\",\"passed\":true}");
+        if (interactive) {
+            printf("{\"session\":\"android_desktop_stopped\",\"boot_completed\":%s}\n", booted ? "true" : "false");
+            dprintf(2, "{\"phase\":\"android_desktop_stopped\"}\n");
+        }
+        return;
     }
     pid_t requester = fork();
     CHECK(requester >= 0);
