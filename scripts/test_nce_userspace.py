@@ -7,7 +7,7 @@ import subprocess
 import tempfile
 import unittest
 
-from build_nce_userspace import inspect, check_x18_disassembly, PAGE, WORK
+from build_nce_userspace import inspect, check_x18_disassembly, elf_disassembly, PAGE, WORK
 
 
 class ElfLayoutTests(unittest.TestCase):
@@ -131,6 +131,20 @@ class ElfLayoutTests(unittest.TestCase):
         self.path.write_bytes(path.read_bytes().replace(b'.gnu_debugdata', b'.nce_debugdata'))
         with self.assertRaisesRegex(RuntimeError, 'patch candidate outside function symbols'):
             inspect(self.path, shared=True, function_symbols=True)
+
+    def test_stripped_rust_metadata_disassembly_keeps_runtime_bytes(self):
+        path = WORK / 'android/android36/lib64/libaconfig_storage_file.dylib.so'
+        original = path.read_bytes()
+        elf = inspect(path, shared=True, function_symbols=True)
+        disassembly = elf_disassembly(self.llvm, path, elf)
+        check_x18_disassembly(path, elf, disassembly)
+        self.assertEqual(path.read_bytes(), original)
+        self.assertEqual(elf['data'], original)
+        modified = original.replace(b'rust_metadata_', b'code_metadata_')
+        self.path.write_bytes(modified)
+        invalid = inspect(self.path, shared=True, function_symbols=True)
+        with self.assertRaisesRegex(RuntimeError, 'invalid section index'):
+            elf_disassembly(self.llvm, self.path, invalid)
 
     def test_linker_purecode_flag_is_required_without_symbols(self):
         self.data = bytearray((WORK / 'processes/dash.elf').read_bytes())

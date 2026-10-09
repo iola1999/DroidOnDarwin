@@ -922,3 +922,54 @@ leaf、middle 和调用者三个 Java 帧。原有编译/解释/JNI 转换回归
 使实际调用边界得到执行。两个模式共享测试程序，以标准输入选择固定测试配置；
 编译元数据检查只用于确认实际生成结果。CLI、GCD、3 轮进程压力、14 项 ELF
 检查和 iOS 编译通过，日志为 `work/native-linux-nce/inlining-probe.log`。
+
+## aconfig 与固定 APEX 模块登记（2026-10-09）
+
+系统盘加入同一 SDK 镜像的四个分区 aconfig 文件、28 个原始 APEX 归档和
+模块 manifest。模块名称、版本号及版本名由固定提交的 apex_manifest.proto
+解析，归档内 manifest 必须与已展开模块逐字节相同。下载和提取产生的系统
+镜像在成功后删除；保留运行所需归档及逐文件校验清单。
+
+原版 aconfigd-system 以 UID 1000 初始化四个基础分区。此镜像启用了
+aconfigd-mainline，APEX 配置由原版模块程序完成 bootstrap-init 和 init。
+模块程序使用独立的动态库搜索路径，其库按 ELF DT_NEEDED 收集。26 组配置
+连续初始化两次，生成的 package/flag maps、boot values 和 flag info 均与
+SDK 输入逐字节比较。首次执行发现公共信号返回 ELF 仅允许 root 读取，
+导致 UID 1000 在 exec 安装附加映射时失败；现将公共程序设为 0755，配置
+文件设为 0644，加入真实非 root 程序执行回归。
+
+APEX 查询服务使用原版 IApexService AIDL 的 NDK Binder 实现，返回系统盘
+中固定的活动模块、原始归档路径和实际版本。跨进程回归检查 28 个模块、
+归档内容、空安装会话及安装请求错误返回。模块更新、安装和回滚仍待实现。
+原版 APEX 包的 APK 元数据和签名随归档保留，供后续 PackageManager 使用。
+
+CLI、GCD、3 轮进程压力、15 项 ELF 检查与 iOS 目标编译已通过，日志为
+`work/native-linux-nce/apex-registry-probe.log`。新增 ELF 检查覆盖 SDK Rust
+共享库中残留的已移除元数据节索引：仅修正传给反汇编器的临时副本，运行
+文件保持原字节；相同错误出现在普通符号上时继续拒绝。
+
+复杂度审查保留 Android 原版配置初始化和 AIDL 编解码，固定模块服务只实现
+当前只读系统盘所需查询，未增加另一套安装会话或更新状态机。后续完整模块
+生命周期仍需结合可写分区与系统启动流程实现。
+
+## SystemServer 启动与动态代理引用修复（2026-10-09）
+
+APEX 查询完成后，原版 SystemServer 继续初始化兼容性、文件完整性、设备
+标识、功能开关、URI 授权、功耗统计和权限检查服务，并进入 ActivityManager
+构造。系统盘加入 SDK 的 permissions、sysconfig、compatconfig 文件，原型
+服务策略按启动源码中的实际名称加入注册与查询规则。完整 Android SELinux
+策略仍待实现。
+
+ActivityManager 读取 Settings 注解时触发了引用范围检查。Java 栈定位到
+`Settings$Readable.maxTargetSdk`，原生栈定位到 `artQuickProxyInvokeHandler`。
+ARM64 代理入口把压缩的 receiver 直接传给 C++。现仅转换传入 C++ 的 receiver；
+保存的参数帧继续保留压缩引用，供 GC 和参数访问使用。临时栈诊断代码已移除。
+
+独立 NceProxy 回归覆盖运行时注解、primitive/reference/null 返回、寄存器与
+栈中的对象参数、三次 GC 和代理异常。修复后的集成运行已通过此检查，并
+继续执行到 ActivityManager 的服务发布。诊断日志为
+`work/native-linux-nce/system-server-proxy-diagnostic.log`。
+
+内核启用 inotify。Framework 回归使用真实 FileObserver 监听文件关闭写入
+事件，检查通知后停止监听并删除文件。Android 的共享监听线程在停止单个
+监听后继续存活；独立测试进程在全部检查和资源清理完成后调用 System.exit。

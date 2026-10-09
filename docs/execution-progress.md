@@ -4,24 +4,22 @@
 
 ## 目标与当前决策
 
-2026-10-08 启动独立的[原生 Linux 与 NCE 原型](native-linux-nce-prototype.md)。
-N0 地址空间与直接执行测试已通过；N1 已在 Mac 原生启动 Linux 6.12 LKL，
-并通过 NCE 文件操作、定时器、pipe 和 futex 检查。N2a 已通过 32 轮真实 Linux
-用户进程的 fork、COW、共享内存、futex、pipe、ELF exec 与 wait 检查。
-R3 已在 iPhone / iOS 27.2 通过全部受控进程检查。
-2026-10-09 的 [N2b 阶段](native-linux-n2b-progress.md) 已在 Mac 跑通 musl
-静态 PIE、PID namespace 内的用户态 init、pthread 和异步抢占。16 轮检查
-执行 128 次 worker、896 个线程，1,264 个 NCE 上下文全部释放；8 项 ELF
-回归检查通过。N2-B1 在手机完成扩大的执行区及旧进程检查后，停在 C 用户态
-第一轮。Mac 已从 GCD 入口复现：客体线程继承了被屏蔽的抢占信号。
-[N2-B2](native-linux-n2-ios-test.md) 已修复并通过两种宿主入口回归，手机
-全部检查通过，16 轮 C 用户态累计 742.691 ms。当前进入
-[N2c 阶段](native-linux-n2c-progress.md) 已完成映射差异更新、按需恢复与
-Linux 用户指针检查；Mac 三次对照中，16 MiB 稀疏访问通信快约 78–87 倍，
-密集私有访问快约 1.82 倍。256 轮压力测试完成 14,336 个线程，18,814 个
-上下文全部释放。N2-C1 已生成，iOS 映射性能与权限行为待验证。[路线复核](native-linux-nce-feasibility-review.md)已将
-地址空间切换的性能评估提前，随后验证 Linux 信号、Bionic / ART 动态代码
-和图形共享缓冲区。HyperOS 整机收益尚未验证。
+当前推进[原生 Linux 与 NCE](native-linux-android-stage.md)。Linux 6.12 LKL、
+Bionic 动态链接、ART ARM64 JIT、Framework/Canvas、ext4 系统盘和数据盘、
+Android servicemanager、属性服务及 Zygote 派生均已通过本机 CLI/GCD 回归。
+2026-10-09 又加入空闲 RAM 归还、代码页按需恢复、CPU 指令扩展、ART 字符串
+和数值 intrinsic、方法内联，以及完整 Framework 类路径。原版 system_server
+已进入 SystemServer.run，完整系统服务和桌面仍待实现。具体失败位置和检查
+结果持续记录在上述阶段文档中。
+
+早期 N2 进程原型已通过 iPhone 17 / iOS 27.2 检查；本轮 Android 集成仅完成
+Mac 原生验证。用户外出期间继续开发，不等待侧载。北京时间 2026-10-09
+20:00 前持续推进本机可完成的任务，最后提供一个合并的手机测试包。
+当前原型的 Linux 和 Android 均在应用进程内执行，运行无需另一台计算机。
+
+局部性能对照已覆盖 AES-GCM、ART 整数循环和方法内联，各项工作量与参照
+不同。完整 Android 的启动、桌面交互和发热尚无本轮结果。后续判断仍以这些
+整体指标为准。
 
 此前结束了 QEMU 优化开发。M33 的整机检查仍失败；按照用户要求，重新评估了
 可能获得 HVF 量级收益的架构路线，尚未找到满足当前运行条件且有足够收益

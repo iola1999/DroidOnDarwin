@@ -1,0 +1,14 @@
+{
+  "repository": "https://android.googlesource.com/platform/system/apex",
+  "revision": "9921a73777f97def1d8851dd0a1529f1c45bcc72",
+  "files": {
+    "android/apex/ApexInfo.aidl": "51aa1cbc7671889f24002d7d4503dce43157056770498ff1f99a8bae12b27013",
+    "android/apex/ApexInfoList.aidl": "5e49deb7d235b098ab6ffc19006ae0c57158e478e940ceaa3d290d041a057dd6",
+    "android/apex/ApexSessionInfo.aidl": "c4283eb43c806c138be969a570ae2c2c73182fd4b05909860c1bdaefe4022242",
+    "android/apex/ApexSessionParams.aidl": "496a2dc5ff4b3cb1a3eb65e3d1ac7973dfbd67f888777d22e602d9b6fee567a5",
+    "android/apex/CompressedApexInfo.aidl": "664f80e6481a1911b6a779c40c502a8f8e0c505ea3878953133cc7877355436f",
+    "android/apex/CompressedApexInfoList.aidl": "c41afe66ea75a92c4a847454489c897a023b2ff3e15053189f35dc29f83676f1",
+    "android/apex/IApexService.aidl": "453ea41d5ce6afe1437f5cc6c1e90fa7a552007e1e9ec47c5b1b717d488bb2e3",
+    "apex_manifest.proto": "e9505454f5fa759c6364e8680542f48b219f1b57d394a63deadfcfc6e8268ce7"
+  }
+}

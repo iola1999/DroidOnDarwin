@@ -546,7 +546,7 @@ static void mount_system(long (*call)(long, long *))
     REQUIRE(sscanf(device, "%u:%u", &major, &minor) == 2 && major < 4096 && minor < 256);
     long args[6] = {-100, (long)"/dev/ncesystem", 0060400, (major << 8) | minor};
     REQUIRE(call(33, args) == 0);
-    const char *directories[] = {"/system-image", "/apex"};
+    const char *directories[] = {"/system-image", "/apex", "/system_ext", "/product", "/vendor"};
     for (unsigned i = 0; i < sizeof(directories) / sizeof(*directories); ++i) {
         args[0] = -100; args[1] = (long)directories[i]; args[2] = 0755;
         REQUIRE(call(34, args) == 0);
@@ -554,8 +554,8 @@ static void mount_system(long (*call)(long, long *))
     args[0] = (long)"/dev/ncesystem"; args[1] = (long)"/system-image";
     args[2] = (long)"ext4"; args[3] = 1; args[4] = 0;
     REQUIRE(call(40, args) == 0);
-    const char *sources[] = {"/system-image/system", "/system-image/apex"};
-    const char *targets[] = {"/system", "/apex"};
+    const char *sources[] = {"/system-image/system", "/system-image/apex", "/system-image/system_ext", "/system-image/product", "/system-image/vendor"};
+    const char *targets[] = {"/system", "/apex", "/system_ext", "/product", "/vendor"};
     for (unsigned i = 0; i < sizeof(sources) / sizeof(*sources); ++i) {
         args[0] = (long)sources[i]; args[1] = (long)targets[i]; args[2] = 0; args[3] = 4096;
         REQUIRE(call(40, args) == 0);
@@ -754,9 +754,14 @@ void nce_process_tests(long (*host_syscall)(long, long *), long (*guest_syscall)
     puts("{\"phase\":\"linux_process_tests\"}");
     const unsigned char *exec_elf = nce_programs[0].file;
     size_t exec_size = nce_programs[0].size;
-    for (size_t i = 0; i < nce_program_count; ++i)
-        if (!nce_programs[i].system_image)
+    for (size_t i = 0; i < nce_program_count; ++i) {
+        if (!nce_programs[i].system_image) {
             put_file(host_syscall, nce_programs[i].path, nce_programs[i].file, nce_programs[i].size);
+            // Non-root exec also opens the common signal-return ELF during setup.
+            long permissions[6] = {-100, (long)nce_programs[i].path, 0755};
+            REQUIRE(host_syscall(53, permissions) == 0);
+        }
+    }
     long file_args[6] = {0}, fd;
     struct timespec begin, end;
     REQUIRE(clock_gettime(CLOCK_MONOTONIC_RAW, &begin) == 0);
@@ -853,8 +858,11 @@ void nce_process_tests(long (*host_syscall)(long, long *), long (*guest_syscall)
     fputs(benchmark, stdout);
     memory_report(host_syscall, "before_art");
     puts("{\"phase\":\"android_art_load\"}");
-    for (size_t i = 0; i < sizeof(art_assets) / sizeof(art_assets[0]); ++i)
+    for (size_t i = 0; i < sizeof(art_assets) / sizeof(art_assets[0]); ++i) {
         put_file(host_syscall, art_assets[i].path, art_assets[i].data, art_assets[i].size);
+        long permissions[6] = {-100, (long)art_assets[i].path, 0644};
+        REQUIRE(host_syscall(53, permissions) == 0);
+    }
     put_file(host_syscall, "/data/dalvik-cache/arm64/.keep", "", 0);
     run_program(host_syscall, "/system/bin/art-test", "");
     REQUIRE(get_file(host_syscall, "/stdout", benchmark, sizeof(benchmark)) > 0);
@@ -871,6 +879,7 @@ void nce_process_tests(long (*host_syscall)(long, long *), long (*guest_syscall)
     REQUIRE(strstr(benchmark, "android_art_jit_types"));
     REQUIRE(strstr(benchmark, "android_art_jit_intrinsics"));
     REQUIRE(strstr(benchmark, "android_art_intrinsics_benchmark"));
+    REQUIRE(strstr(benchmark, "android_art_proxy_references"));
     REQUIRE(strstr(benchmark, "android_art_vm_destroyed"));
     fputs(benchmark, stdout);
     puts("{\"phase\":\"android_art_inlining\"}");
@@ -888,6 +897,9 @@ void nce_process_tests(long (*host_syscall)(long, long *), long (*guest_syscall)
     REQUIRE(get_file(host_syscall, "/stdout", benchmark, sizeof(benchmark)) > 0);
     REQUIRE(strstr(benchmark, "android_platform_binder_cleanup"));
     REQUIRE(strstr(benchmark, "android_framework_runtime"));
+    REQUIRE(strstr(benchmark, "android_aconfig_storage"));
+    REQUIRE(strstr(benchmark, "android_framework_file_observer"));
+    REQUIRE(strstr(benchmark, "android_apex_registry"));
     REQUIRE(strstr(benchmark, getenv("NCE_SYSTEM_SERVER_PROBE") ?
                    "android_system_server_services" : "android_zygote_command_server"));
     REQUIRE(strstr(benchmark, "android_framework_graphics\",\"passed\":true"));

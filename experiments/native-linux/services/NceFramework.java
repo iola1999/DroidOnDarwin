@@ -110,7 +110,27 @@ public final class NceFramework {
         check(service.transact(1, input, output, 0));
         check(output.readInt() == 73 && output.readInt() == sum);
         input.recycle(); output.recycle();
+        java.io.File watched = new java.io.File("/data/nce/observer");
+        check(watched.mkdir());
+        CountDownLatch changed = new CountDownLatch(1);
+        android.os.FileObserver observer = new android.os.FileObserver(watched, android.os.FileObserver.CLOSE_WRITE) {
+            @Override public void onEvent(int event, String path) {
+                if ((event & CLOSE_WRITE) != 0 && "created".equals(path)) changed.countDown();
+            }
+        };
+        observer.startWatching();
+        java.io.File created = new java.io.File(watched, "created");
+        try (java.io.FileOutputStream outputFile = new java.io.FileOutputStream(created)) {
+            outputFile.write(42);
+        }
+        check(changed.await(2, TimeUnit.SECONDS));
+        observer.stopWatching();
+        check(created.delete() && watched.delete());
+        System.out.println("{\"test\":\"android_framework_file_observer\",\"passed\":true}");
         graphics();
         System.out.println("{\"test\":\"android_framework_runtime\",\"passed\":true,\"parcel\":true,\"looper\":true,\"shared_memory\":true,\"binder\":true}");
+        // Android's shared FileObserver thread outlives individual watches.
+        // This standalone process exits after its checks and explicit resource cleanup.
+        System.exit(0);
     }
 }

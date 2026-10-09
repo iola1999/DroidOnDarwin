@@ -393,6 +393,11 @@ int main(void)
     if (main_method) (*env)->CallStaticVoidMethod(env, workload, main_method, NULL);
     if ((*env)->ExceptionCheck(env)) { (*env)->ExceptionDescribe(env); return 6; }
     if (!main_method) return 7;
+    jclass proxy = (*env)->FindClass(env, "NceProxy");
+    jmethodID proxy_test = proxy ? (*env)->GetStaticMethodID(env, proxy, "run", "()V") : NULL;
+    if (!proxy_test) return 65;
+    (*env)->CallStaticVoidMethod(env, proxy, proxy_test);
+    if ((*env)->ExceptionCheck(env)) { (*env)->ExceptionDescribe(env); return 66; }
     int jit_result = test_jit(env, workload, library);
     if (jit_result) return jit_result;
     }

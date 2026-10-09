@@ -11,6 +11,7 @@ import shutil
 import struct
 import subprocess
 import tarfile
+import tempfile
 import urllib.request
 import zipfile
 from prepare_android_runtime import main as prepare_android_runtime
@@ -18,6 +19,7 @@ from build_android_linker import build as build_android_linker
 from build_android_libc import build as build_android_libc
 from build_android_art import build as build_android_art
 from build_android_crypto import build as build_android_crypto
+from prepare_android_modules import prepare as prepare_android_modules, OUT as MODULES
 
 ROOT = Path(__file__).resolve().parents[1]
 EXP = ROOT / 'experiments/native-linux'
@@ -82,7 +84,7 @@ def android_dependencies(llvm, replacements):
     pending = ['libart.so', 'libjavacore.so', 'libopenjdk.so', 'libicu_jni.so',
                'libstats_jni.so', 'libjavacrypto.so', 'libartpalette-system.so', 'libbinder_ndk.so', 'libandroid.so',
                'libprocessgroup_setup.so', 'libframework-connectivity-tiramisu-jni.so', 'libandroid_servers.so']
-    for name in ('servicemanager', 'app_process64'):
+    for name in ('servicemanager', 'app_process64', 'aconfigd-system'):
         pending += re.findall(r'Shared library: \[(.*?)\]',
                               subprocess.check_output([llvm / 'llvm-readelf', '-d', root / 'bin' / name], text=True))
     pending += re.findall(r'Shared library: \[(.*?)\]', subprocess.check_output(
@@ -99,6 +101,27 @@ def android_dependencies(llvm, replacements):
         dynamic = subprocess.check_output([llvm / 'llvm-readelf', '-d', path], text=True)
         pending += re.findall(r'Shared library: \[(.*?)\]', dynamic)
     return [('/system/lib64/' + name, path) for name, path in sorted(result.items())]
+
+def apex_sources(out):
+    directory = EXP / 'services/apex'
+    origin = json.loads((directory / 'sources.json').read_text())
+    for name, expected in origin['files'].items():
+        if hashlib.sha256((directory / name).read_bytes()).hexdigest() != expected:
+            raise RuntimeError('APEX interface source checksum mismatch: ' + name)
+    modules = prepare_android_modules()['modules']
+    lines = ['static const struct { const char *name, *version_name; long long version, archive_size; } apex_modules[] = {']
+    for module in modules:
+        lines.append('{%s,%s,%d,%d},' % (json.dumps(module['name']), json.dumps(module['version_name']),
+                     module['version'], (MODULES / module['archive']).stat().st_size))
+    (out / 'apex-modules.h').write_text('\n'.join(lines + ['};']) + '\n')
+    generated = out / 'apex-aidl'
+    generated.mkdir(exist_ok=True)
+    aidl = Path('/opt/homebrew/share/android-commandlinetools/build-tools/36.0.0/aidl')
+    for source in sorted((directory / 'android/apex').glob('*.aidl')):
+        run([aidl, '--lang=ndk', '--structured', '--min_sdk_version=35', '-I' + str(directory),
+             '--out=' + str(generated), '--header_out=' + str(generated), source])
+    return generated
+
 
 def android_service_headers():
     directory = WORK / 'android/binder-include/android'
@@ -157,7 +180,7 @@ def android_data(out):
     sdk = Path('/opt/homebrew/share/android-commandlinetools')
     classes = out / 'java-classes'
     classes.mkdir(exist_ok=True)
-    run([java / 'javac', '--release', '11', '-d', classes, EXP / 'art/NceWorkload.java', EXP / 'art/NceIntrinsics.java', EXP / 'art/NceInlining.java'])
+    run([java / 'javac', '--release', '11', '-d', classes, EXP / 'art/NceWorkload.java', EXP / 'art/NceIntrinsics.java', EXP / 'art/NceInlining.java', EXP / 'art/NceProxy.java'])
     run([java / 'java', '-cp', sdk / 'build-tools/36.0.0/lib/d8.jar', 'com.android.tools.r8.D8',
          '--min-api', '35', '--lib', sdk / 'platforms/android-35/android.jar', '--output', classes,
          *sorted(classes.glob('*.class'))])
@@ -203,6 +226,29 @@ def android_data(out):
         jar.writestr(zipfile.ZipInfo('classes.dex'), (framework_classes / 'classes.dex').read_bytes())
     files += [('/system/framework/nce-framework.jar', framework_jar)]
     files += [('/system/framework/framework-res.apk', root / 'framework/framework-res.apk')]
+    for directory in ('permissions', 'sysconfig', 'compatconfig'):
+        for path in sorted((root / 'etc' / directory).rglob('*')):
+            if path.is_file():
+                files.append(('/system/' + str(path.relative_to(root)), path))
+        for module in sorted(root.glob('com.android.*')):
+            for path in sorted((module / 'etc' / directory).rglob('*')):
+                if path.is_file():
+                    files.append(('/apex/' + str(path.relative_to(root)), path))
+
+    config_names = ('package.map', 'flag.map', 'flag.val', 'flag.info')
+    files += [(f'/system/etc/aconfig/{name}', root / 'etc/aconfig' / name) for name in config_names]
+    for module in sorted(root.glob('com.android.*')):
+        if all((module / 'etc' / name).is_file() for name in config_names):
+            files += [(f'/apex/{module.name}/etc/{name}', module / 'etc' / name) for name in config_names]
+    module_manifest = json.loads((MODULES / 'manifest.json').read_text())
+    for module in module_manifest['modules']:
+        name = module['name']
+        files += [(f'/system/apex/{name}.apex', MODULES / module['archive']),
+                  (f'/apex/{name}/apex_manifest.pb', root / name / 'apex_manifest.pb')]
+    for path in sorted((MODULES / 'config').rglob('*')):
+        if path.is_file():
+            partition, name = path.relative_to(MODULES / 'config').parts
+            files.append((f'/{partition}/etc/aconfig/{name}', path))
     files += [(f'/system/fonts/{path.name}', path) for path in sorted((root / 'fonts').glob('*')) if path.is_file()]
     files += [(f'/system/etc/{name}', root / 'etc' / name) for name in ('fonts.xml', 'font_fallback.xml')]
     return files
@@ -350,6 +396,36 @@ def inspect(path, shared=False, function_symbols=False):
     return dict(data=data, entry=entry, phoff=phoff, phsize=phnum*phentsize, segments=segments, patches=sorted(patches),
                 span=(max(p[3] + p[6] for p in loads) + PAGE - 1) & -PAGE,
                 alignment=max(PAGE, max(p[7] for p in loads)), instruction_ranges=instruction_ranges)
+
+
+def elf_disassembly(llvm, path, elf):
+    data = elf['data']
+    shoff, = struct.unpack_from('<Q', data, 40)
+    count, = struct.unpack_from('<H', data, 60)
+    sections = [struct.unpack_from('<IIQQQQIIQQ', data, shoff + i * 64) for i in range(count)]
+    amended = None
+    for section in sections:
+        if section[1] not in (2, 11):
+            continue
+        strings = sections[section[6]]
+        strings = data[strings[4]:strings[4] + strings[5]]
+        for off in range(section[4], section[4] + section[5], 24):
+            name, info, _, index, value, _ = struct.unpack_from('<IBBHQQ', data, off)
+            if count <= index < 0xff00:
+                symbol = strings[name:strings.index(b'\0', name)]
+                if not symbol.startswith(b'rust_metadata_') or info & 15 != 1 or value:
+                    raise RuntimeError(f'{path}: invalid section index on symbol {symbol!r}')
+                # SDK stripping can remove .rustc while retaining its metadata symbol.
+                # Adjust only the disassembler copy; loaded ELF bytes stay unchanged.
+                if amended is None:
+                    amended = bytearray(data)
+                struct.pack_into('<H', amended, off + 6, 0xfff1)  # SHN_ABS
+    if amended is None:
+        return subprocess.check_output([llvm / 'llvm-objdump', '-d', path], text=True)
+    with tempfile.NamedTemporaryFile(suffix='.so', dir=WORK) as temporary:
+        temporary.write(amended)
+        temporary.flush()
+        return subprocess.check_output([llvm / 'llvm-objdump', '-d', temporary.name], text=True)
 
 
 def check_x18_disassembly(path, elf, disassembly):
@@ -506,7 +582,28 @@ def build(out, llvm):
     programs.append(('/system/lib64/libc.so', build_android_libc()))
     programs.append(('/system/lib64/libdl.so', android / 'lib64/bionic/libdl.so'))
     crypto = build_android_crypto()
-    programs += android_dependencies(llvm, {**build_android_art(), **crypto})
+    replacements = {**build_android_art(), **crypto}
+    programs += android_dependencies(llvm, replacements)
+    module = 'com.android.configinfrastructure'
+    module_root = WORK / 'android/android36' / module
+    programs.append((f'/apex/{module}/bin/aconfigd-mainline', module_root / 'bin/aconfigd-mainline'))
+    module_files = {path.name: path for path in (module_root / 'lib64').glob('*.so')}
+    pending, visited = [module_root / 'bin/aconfigd-mainline'], set(replacements) | {'libc.so', 'libdl.so', 'ld-android.so'}
+    while pending:
+        binary = pending.pop()
+        needed = re.findall(r'Shared library: \[(.*?)\]',
+                            subprocess.check_output([llvm / 'llvm-readelf', '-d', binary], text=True))
+        for name in needed:
+            if name in visited:
+                continue
+            visited.add(name)
+            if name not in module_files:
+                if any(guest == '/system/lib64/' + name for guest, _ in programs):
+                    continue
+                raise RuntimeError('Missing aconfig module dependency: ' + name)
+            programs.append((f'/apex/{module}/lib64/{name}', module_files[name]))
+            pending.append(module_files[name])
+
     run([ndk / 'toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android35-clang',
          '-ffixed-x18', '-mno-outline-atomics', '-g', '-O2', '-Wall', '-Wextra', '-Werror',
          '-Wl,-z,max-page-size=16384,-z,common-page-size=16384',
@@ -514,6 +611,7 @@ def build(out, llvm):
     programs.append(('/system/bin/art-test', out / 'art-test.elf'))
     programs.append(('/system/bin/secilc', WORK / 'android/android36/bin/secilc'))
     programs.append(('/system/bin/servicemanager', WORK / 'android/android36/bin/servicemanager'))
+    programs.append(('/system/bin/aconfigd-system', WORK / 'android/android36/bin/aconfigd-system'))
     programs.append(('/system/bin/app_process64', WORK / 'android/android36/bin/app_process64'))
     programs.append(('/system/bin/derive_classpath', WORK / 'android/android36/com.android.sdkext/bin/derive_classpath'))
     run([ndk / 'toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android35-clang',
@@ -521,12 +619,16 @@ def build(out, llvm):
          '-Wl,-z,max-page-size=16384,-z,common-page-size=16384',
          EXP / 'services/framework-log.c', '-llog', '-ldl', '-o', out / 'libnce-framework-log.so'])
     programs.append(('/system/lib64/libnce-framework-log.so', out / 'libnce-framework-log.so'))
+    apex_generated = apex_sources(out)
     run([ndk / 'toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android35-clang++',
          '-ffixed-x18', '-mno-outline-atomics', '-g', '-O2', '-Wall', '-Wextra', '-Werror',
-         '-std=c++17', '-nostdlib++', '-I', android_service_headers(),
+         '-std=c++17', '-nostdlib++', '-include', WORK / 'android/art-build/platform-libcxx-config.h',
+         '-I', apex_generated, '-I', out, '-I', android_service_headers(),
          '-Wl,-z,max-page-size=16384,-z,common-page-size=16384',
          EXP / 'userspace/android-services-test.cpp', EXP / 'userspace/property-service.cpp',
          EXP / 'userspace/framework-test.cpp', EXP / 'userspace/crypto-tests.cpp',
+         EXP / 'userspace/apex-service.cpp', *sorted(apex_generated.rglob('*.cpp')),
+         WORK / 'android/android36/lib64/libc++.so',
          '-I', WORK / 'android/boringssl/src/include', crypto['libcrypto.so'], '-ldl',
          WORK / 'android/android36/lib64/libbinder_ndk.so',
          '-o', out / 'android-services-test.elf'])
@@ -560,8 +662,8 @@ def build(out, llvm):
         if cached and cached['sha256'] == digest:
             elf = dict(cached['layout'], data=data)
         else:
-            elf = inspect(path, shared=name.endswith('.so'), function_symbols=name.startswith('/system/') or name in ('/bionic-test', '/art-test', '/art-heap-test'))
-            dis = subprocess.check_output([llvm / 'llvm-objdump', '-d', path], text=True)
+            elf = inspect(path, shared=name.endswith('.so'), function_symbols=name.startswith(('/system/', '/apex/')) or name in ('/bionic-test', '/art-test', '/art-heap-test'))
+            dis = elf_disassembly(llvm, path, elf)
             check_x18_disassembly(path, elf, dis)
             cache['files'][name] = {'sha256': digest, 'layout': {k: v for k, v in elf.items() if k != 'data'}}
         offset = (offset + elf['alignment'] - 1) & -elf['alignment']
@@ -576,7 +678,7 @@ def build(out, llvm):
         if name == '/worker' and sum(size for _, size in elf['segments']) <= 65536:
             raise RuntimeError('Large-text fixture did not exceed 64 KiB')
         position = len(payload)
-        system_image = name.startswith('/system/')
+        system_image = name.startswith(('/system/', '/apex/'))
         if system_image:
             system_files.append((name, path))
         payload.extend(elf['data'][:elf['phoff'] + elf['phsize']] if system_image else elf['data'])
@@ -598,7 +700,7 @@ def build(out, llvm):
               json.dumps((EXP / 'userspace/shell-tests.sh').read_text()) + ';\n']
     entries = []
     for name, path in android_data(out):
-        if name.startswith(('/system/', '/apex/')):
+        if name.startswith(('/system/', '/apex/', '/system_ext/', '/product/', '/vendor/')):
             system_files.append((name, path))
             continue
         data = path.read_bytes()
@@ -616,7 +718,7 @@ def build(out, llvm):
         target = system_root / name.lstrip('/')
         target.parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(path, target)
-        target.chmod(0o755 if name.startswith('/system/bin/') else 0o644)
+        target.chmod(0o755 if '/bin/' in name else 0o644)
     (system_root / 'system/bin/bootstrap').mkdir(exist_ok=True)
     (system_root / 'system/bin/bootstrap/linker64').symlink_to('/system/bin/linker64')
     (system_root / 'apex/com.android.art/lib64').mkdir(parents=True, exist_ok=True)

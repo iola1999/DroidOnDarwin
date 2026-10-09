@@ -973,7 +973,24 @@
      str    x1, [xSELF, #THREAD_LOCAL_ALLOC_STACK_TOP_OFFSET]
                                                                // Decrement the size of the free list
 
-@@ -1691,6 +1743,14 @@
+@@ -1641,6 +1693,16 @@
+      .extern artQuickProxyInvokeHandler
+ ENTRY art_quick_proxy_invoke_handler
+     SETUP_SAVE_REFS_AND_ARGS_FRAME_WITH_METHOD_IN_X0
++#ifdef ART_NCE
++    // The saved argument frame retains encoded references for GC and visitors.
++    // Convert only the receiver passed to the C++ proxy handler.
++    cbz w1, 9f
++    adrp xIP0, :got:nce_art_reference_base
++    ldr xIP0, [xIP0, :got_lo12:nce_art_reference_base]
++    ldr xIP0, [xIP0]
++    add x1, xIP0, w1, uxtw
++9:
++#endif
+     mov     x2, xSELF                            // pass Thread::Current
+     mov     x3, sp                               // pass SP
+     CALL_SYMBOL artQuickProxyInvokeHandler       // (Method* proxy method, receiver, Thread*, SP)
+@@ -1691,6 +1753,14 @@
 
  ENTRY art_quick_resolution_trampoline
      SETUP_SAVE_REFS_AND_ARGS_FRAME

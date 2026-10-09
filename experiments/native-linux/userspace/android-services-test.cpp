@@ -35,6 +35,8 @@ void nce_property_service(int ready);
 void nce_framework_test();
 void nce_zygote_test();
 void nce_crypto_tests();
+void nce_apex_service(int ready);
+void nce_apex_test();
 
 static void check_proc_identity()
 {
@@ -299,6 +301,7 @@ int main(int argc, char **argv)
     setvbuf(stdout, nullptr, _IONBF, 0);
     if (argc == 3 && !strcmp(argv[1], "server")) { server(atoi(argv[2])); return 1; }
     if (argc == 3 && !strcmp(argv[1], "properties")) { nce_property_service(atoi(argv[2])); return 1; }
+    if (argc == 3 && !strcmp(argv[1], "apex")) { nce_apex_service(atoi(argv[2])); return 1; }
     alarm(20);
     mount_namespace_proc();
     unix_sockets();
@@ -362,6 +365,18 @@ int main(int argc, char **argv)
     if (received != 1) { int status; CHECK(waitpid(service, &status, 0) == service); dprintf(2, "service failed status=%d\n", status); }
     CHECK(received == 1 && value == 'r' && close(ready[0]) == 0);
     puts("{\"test\":\"android_platform_servicemanager_registration\",\"passed\":true}");
+    int apex_ready[2];
+    CHECK(pipe(apex_ready) == 0);
+    pid_t apex = fork();
+    CHECK(apex >= 0);
+    if (!apex) {
+        close(apex_ready[0]);
+        char descriptor[24]; snprintf(descriptor, sizeof(descriptor), "%d", apex_ready[1]);
+        execl(argv[0], argv[0], "apex", descriptor, nullptr); _exit(111);
+    }
+    close(apex_ready[1]);
+    CHECK(read(apex_ready[0], &value, 1) == 1 && value == 'r' && close(apex_ready[0]) == 0);
+    nce_apex_test();
     AIBinder *binder = AServiceManager_checkService(kService);
     CHECK(binder && AIBinder_isRemote(binder) && AIBinder_associateClass(binder, binder_class()));
     CHECK(AServiceManager_checkService("nce.denied") == nullptr);
@@ -420,6 +435,7 @@ int main(int argc, char **argv)
     CHECK(!AIBinder_isAlive(binder));
     AIBinder_DeathRecipient_delete(recipient);
     AIBinder_decStrong(binder);
+    CHECK(kill(apex, SIGTERM) == 0 && waitpid(apex, &status, 0) == apex);
     CHECK(kill(manager, SIGTERM) == 0);
     CHECK(waitpid(manager, &status, 0) == manager && WIFSIGNALED(status) && WTERMSIG(status) == SIGTERM);
     CHECK(unlink("/dev/binder") == 0 && unlink("/binderfs/nce-platform") == 0);

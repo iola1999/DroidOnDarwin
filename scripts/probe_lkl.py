@@ -149,7 +149,7 @@ def main():
             options += ["MMU", "PRINTK", "NAMESPACES", "PID_NS", "POSIX_TIMERS", "ANDROID_BINDER_IPC", "ANDROID_BINDERFS", "MEMFD_CREATE", "TMPFS", "TMPFS_XATTR",
                         "NET", "UNIX", "INET", "AUDIT", "SECURITY", "SECURITY_NETWORK",
                         "SECURITY_SELINUX", "SECURITY_SELINUX_DEVELOP"]
-            options += ["BLOCK", "EXT4_FS", "CGROUPS", "MEMCG", "CGROUP_CPUACCT", "CGROUP_SCHED", "FAIR_GROUP_SCHED", "SECCOMP", "SECCOMP_FILTER", "PAGE_REPORTING"]
+            options += ["BLOCK", "EXT4_FS", "CGROUPS", "MEMCG", "CGROUP_CPUACCT", "CGROUP_SCHED", "FAIR_GROUP_SCHED", "SECCOMP", "SECCOMP_FILTER", "PAGE_REPORTING", "INOTIFY_USER"]
         switches = [arg for name in options for arg in ("-e", name)]
         if PROCESS:
             switches += ["--set-str", "LSM", "selinux"]
@@ -232,11 +232,11 @@ def main():
                     *sorted(EXPERIMENT.glob("lkl-*.h")),
                     *sorted(EXPERIMENT.glob("lkl-nce-*.c")), EXPERIMENT / "exec-guest.S", EXPERIMENT / "programs.h",
                     Path(__file__).with_name("build_nce_userspace.py"), EXPERIMENT / "dispatch-test.c", EXPERIMENT / "host-context-test.c",
-                    Path(__file__).with_name("prepare_android_runtime.py"), Path(__file__).with_name("build_android_linker.py"),
+                    Path(__file__).with_name("prepare_android_runtime.py"), Path(__file__).with_name("prepare_android_modules.py"), Path(__file__).with_name("build_android_linker.py"),
                     Path(__file__).with_name("build_android_libc.py"), Path(__file__).with_name("build_android_art.py"),
                     Path(__file__).with_name("build_android_crypto.py"),
                     EXPERIMENT / "android-sources.json", *sorted((EXPERIMENT / "art").glob("*")),
-                    *sorted((EXPERIMENT / "userspace").glob("*")), *sorted((EXPERIMENT / "services").glob("*"))]
+                    *sorted((EXPERIMENT / "userspace").glob("*")), *sorted(p for p in (EXPERIMENT / "services").rglob("*") if p.is_file())]
         run(["python3", ROOT / "scripts/test_nce_userspace.py"])
         sources.append(ROOT / "scripts/test_nce_userspace.py")
         manifest["stage"] = "Android Bionic, Binder, ART Java and ARM64 JIT workloads"
@@ -250,6 +250,8 @@ def main():
                                       for name in ("linker-build", "libc-build", "art-build", "crypto-build")}
         manifest["android_runtime_manifest_sha256"] = hashlib.sha256(
             (android / "android36-runtime.json").read_bytes()).hexdigest()
+        manifest["android_modules_manifest_sha256"] = hashlib.sha256(
+            (android / "android36-modules/manifest.json").read_bytes()).hexdigest()
     changed = [str(p.relative_to(ROOT)) for p in sources if p.stat().st_mtime_ns > started_ns]
     if changed:
         raise SystemExit("Build inputs changed during validation; rerun: " + ", ".join(changed))

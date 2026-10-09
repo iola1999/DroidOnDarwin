@@ -35,7 +35,7 @@ def digest(path, algorithm='sha256'):
         return hashlib.file_digest(stream, algorithm).hexdigest()
 
 
-def system_partition(image, output):
+def system_partition(image, output, name="system"):
     # This pinned SDK image contains GPT, then a single-device linear LP layout.
     with image.open('rb') as source:
         source.seek(512)
@@ -59,7 +59,7 @@ def system_partition(image, output):
         po, pn, ps = struct.unpack_from('<III', header, 80)
         eo, _, es = struct.unpack_from('<III', header, 92)
         partitions = [struct.unpack_from('<36sIIII', tables, po + i * ps) for i in range(pn)]
-        partition = next(p for p in partitions if p[0].rstrip(b'\0') == b'system')
+        partition = next(p for p in partitions if p[0].rstrip(b'\0') == name.encode())
         with output.open('wb') as target:
             for i in range(partition[2], partition[2] + partition[3]):
                 sectors, kind, start, device = struct.unpack_from('<QIQI', tables, eo + i * es)

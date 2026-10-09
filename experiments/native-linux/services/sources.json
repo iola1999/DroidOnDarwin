@@ -10,6 +10,46 @@
       "name": "binder_process.h",
       "url": "https://android.googlesource.com/platform/frameworks/native/+/2827a4a16b0340ecd07c2d5a6c89991799b362bb/libs/binder/ndk/include_platform/android/binder_process.h?format=TEXT",
       "sha256": "fe9626e20b24d32cfc1c0dc1dc5de1cb80c07489cbb38afc563fa5082bf4a00a"
+    },
+    {
+      "name": "binder_auto_utils.h",
+      "url": "https://android.googlesource.com/platform/frameworks/native/+/2827a4a16b0340ecd07c2d5a6c89991799b362bb/libs/binder/ndk/include_cpp/android/binder_auto_utils.h?format=TEXT",
+      "sha256": "8de4018f17330e3cb68eacd66ef2f10da19ae22b2da0e7f6f6ad4d100607a5f4"
+    },
+    {
+      "name": "binder_enums.h",
+      "url": "https://android.googlesource.com/platform/frameworks/native/+/2827a4a16b0340ecd07c2d5a6c89991799b362bb/libs/binder/ndk/include_cpp/android/binder_enums.h?format=TEXT",
+      "sha256": "a4f3b34f5478d5ad820e93eabfa0d5fe82e53a71727ad6f48b5932a043060189"
+    },
+    {
+      "name": "binder_interface_utils.h",
+      "url": "https://android.googlesource.com/platform/frameworks/native/+/2827a4a16b0340ecd07c2d5a6c89991799b362bb/libs/binder/ndk/include_cpp/android/binder_interface_utils.h?format=TEXT",
+      "sha256": "9898e1d9b7e35072cc411a4ef419d1fa2d498b356e1c45943b23381497b8e8e3"
+    },
+    {
+      "name": "binder_internal_logging.h",
+      "url": "https://android.googlesource.com/platform/frameworks/native/+/2827a4a16b0340ecd07c2d5a6c89991799b362bb/libs/binder/ndk/include_cpp/android/binder_internal_logging.h?format=TEXT",
+      "sha256": "b3dc27d60e3c75629f231f94ab24779af9faeede2c4d605401179265d6d5eea8"
+    },
+    {
+      "name": "binder_parcel_utils.h",
+      "url": "https://android.googlesource.com/platform/frameworks/native/+/2827a4a16b0340ecd07c2d5a6c89991799b362bb/libs/binder/ndk/include_cpp/android/binder_parcel_utils.h?format=TEXT",
+      "sha256": "8a2171d1b7259a39326e7475f481e54bddbe4d48e7f21e6b865cd8ebb0479dcd"
+    },
+    {
+      "name": "binder_parcelable_utils.h",
+      "url": "https://android.googlesource.com/platform/frameworks/native/+/2827a4a16b0340ecd07c2d5a6c89991799b362bb/libs/binder/ndk/include_cpp/android/binder_parcelable_utils.h?format=TEXT",
+      "sha256": "9c330de3ef09843d69d54116616efb52e7f442fb3bca28dc7d22f26c8f0fb869"
+    },
+    {
+      "name": "binder_to_string.h",
+      "url": "https://android.googlesource.com/platform/frameworks/native/+/2827a4a16b0340ecd07c2d5a6c89991799b362bb/libs/binder/ndk/include_cpp/android/binder_to_string.h?format=TEXT",
+      "sha256": "f5333debafd787a6dd0ad000fa08f8a0e585764bf994e75dc15a6fe7dd7da6da"
+    },
+    {
+      "name": "binder_stability.h",
+      "url": "https://android.googlesource.com/platform/frameworks/native/+/2827a4a16b0340ecd07c2d5a6c89991799b362bb/libs/binder/ndk/include_platform/android/binder_stability.h?format=TEXT",
+      "sha256": "f62817c8812f73e006675cd3b9ba0293cfa1a36c14cfbe5ea8d38c9f27c0882a"
     }
   ],
   "property_service": {

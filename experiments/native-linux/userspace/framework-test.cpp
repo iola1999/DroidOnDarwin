@@ -3,6 +3,7 @@
 #include <android/binder_manager.h>
 #include <android/binder_ibinder.h>
 #include <dlfcn.h>
+#include <dirent.h>
 #include <arpa/inet.h>
 #include <fcntl.h>
 #include <initializer_list>
@@ -66,6 +67,89 @@ static void derive_classpath()
     puts("{\"test\":\"android_derived_classpaths\",\"passed\":true,\"variables\":4}");
 }
 
+static void compare_files(const char *source, const char *generated)
+{
+    int first = open(source, O_RDONLY | O_CLOEXEC);
+    int second = open(generated, O_RDONLY | O_CLOEXEC);
+    if (first < 0 || second < 0) dprintf(2, "aconfig files: %s -> %s\n", source, generated);
+    CHECK(first >= 0 && second >= 0);
+    char left[4096], right[4096];
+    for (;;) {
+        ssize_t count = read(first, left, sizeof(left));
+        CHECK(count >= 0 && read(second, right, sizeof(right)) == count);
+        CHECK(!memcmp(left, right, count));
+        if (!count) break;
+    }
+    CHECK(close(first) == 0 && close(second) == 0);
+}
+
+static bool check_aconfig_container(const char *container, const char *source)
+{
+    char from[512], to[512];
+    struct stat info;
+    snprintf(from, sizeof(from), "%s/flag.val", source);
+    if (stat(from, &info) || !info.st_size) return false;
+    const char *files[][2] = {{"package.map", "maps/%s.package.map"},
+                             {"flag.map", "maps/%s.flag.map"},
+                             {"flag.val", "boot/%s.val"}, {"flag.info", "boot/%s.info"}};
+    for (const auto &file : files) {
+        snprintf(from, sizeof(from), "%s/%s", source, file[0]);
+        char relative[256];
+        snprintf(relative, sizeof(relative), file[1], container);
+        snprintf(to, sizeof(to), "/metadata/aconfig/%s", relative);
+        compare_files(from, to);
+    }
+    return true;
+}
+
+static void initialize_aconfig()
+{
+    for (const char *path : {"/metadata", "/metadata/aconfig", "/metadata/aconfig/flags",
+                             "/metadata/aconfig/maps", "/metadata/aconfig/boot"}) {
+        CHECK(mkdir(path, 0775) == 0 || errno == EEXIST);
+        CHECK(chown(path, 0, 1000) == 0 && chmod(path, 0775) == 0);
+    }
+    unsigned containers = 0;
+    for (unsigned round = 0; round < 2; ++round) {
+        const char *commands[][2] = {
+            {"/system/bin/aconfigd-system", "platform-init"},
+            {"/apex/com.android.configinfrastructure/bin/aconfigd-mainline", "bootstrap-init"},
+            {"/apex/com.android.configinfrastructure/bin/aconfigd-mainline", "init"},
+        };
+        for (const auto &command : commands) {
+            pid_t child = fork();
+            CHECK(child >= 0);
+            if (!child) {
+                CHECK(setenv("LD_PRELOAD", "/system/lib64/libnce-framework-log.so", 1) == 0);
+                CHECK(setgid(1000) == 0 && setuid(1000) == 0);
+                execl(command[0], command[0], command[1], nullptr);
+                _exit(108);
+            }
+            int status;
+            CHECK(waitpid(child, &status, 0) == child);
+            if (status) dprintf(2, "aconfigd %s %s status=%d\n", command[0], command[1], status);
+            CHECK(status == 0);
+        }
+        containers = 0;
+        for (const char *name : {"system", "system_ext", "product", "vendor"}) {
+            char source[128];
+            snprintf(source, sizeof(source), "/%s/etc/aconfig", name);
+            CHECK(check_aconfig_container(name, source));
+            ++containers;
+        }
+        DIR *directory = opendir("/apex");
+        CHECK(directory);
+        while (dirent *entry = readdir(directory)) {
+            if (strncmp(entry->d_name, "com.android.", 12)) continue;
+            char source[512];
+            snprintf(source, sizeof(source), "/apex/%s/etc", entry->d_name);
+            if (check_aconfig_container(entry->d_name, source)) ++containers;
+        }
+        CHECK(closedir(directory) == 0 && containers > 1);
+    }
+    printf("{\"test\":\"android_aconfig_storage\",\"passed\":true,\"containers\":%u,\"initializations\":2}\n", containers);
+}
+
 void nce_framework_test()
 {
     const char *properties[][2] = {
@@ -83,6 +167,7 @@ void nce_framework_test()
         {"dalvik.vm.extra-opts", "-Xnoimage-dex2oat"},
     };
     for (const auto &entry : properties) CHECK(__system_property_set(entry[0], entry[1]) == 0);
+    initialize_aconfig();
     derive_classpath();
     pid_t child = fork();
     CHECK(child >= 0);
@@ -129,8 +214,7 @@ void nce_zygote_test()
     if (system_server) {
         const struct { const char *path; mode_t mode; uid_t owner; } directories[] = {
             {"/mnt", 0755, 0}, {"/mnt/user", 0755, 0}, {"/mnt/user/0", 0755, 0},
-            {"/storage", 0755, 0}, {"/system_ext", 0755, 0},
-            {"/product", 0755, 0}, {"/vendor", 0755, 0}, {"/data/system", 0775, 1000},
+            {"/storage", 0755, 0}, {"/data/system", 0775, 1000},
             {"/data/system/users", 0775, 1000}, {"/data/system/users/0", 0700, 1000},
             {"/data/system_de", 0770, 1000}, {"/data/system_de/0", 0770, 1000},
             {"/data/misc", 01771, 1000}, {"/data/resource-cache", 0771, 1000},
@@ -187,17 +271,23 @@ void nce_zygote_test()
     CHECK(close(command) == 0 && close(usap) == 0);
     if (system_server) {
         puts("{\"phase\":\"android_system_server_boot\"}");
+        bool activity_reported = false;
         for (unsigned i = 0; i < 400; ++i) {
             int status;
             CHECK(waitpid(zygote, &status, WNOHANG) == 0);
             AIBinder *activity = AServiceManager_checkService("activity");
             AIBinder *package = AServiceManager_checkService("package");
             bool ready = activity && package;
+            if (activity && !activity_reported) {
+                puts("{\"phase\":\"android_activity_service_registered\"}");
+                activity_reported = true;
+            }
             if (activity) AIBinder_decStrong(activity);
             if (package) AIBinder_decStrong(package);
             if (ready) {
                 puts("{\"test\":\"android_system_server_services\",\"passed\":true}");
                 CHECK(kill(zygote, SIGTERM) == 0 && waitpid(zygote, &status, 0) == zygote);
+                CHECK(unlink("/dev/socket/zygote") == 0 && unlink("/dev/socket/usap_pool_primary") == 0);
                 return;
             }
             usleep(100000);

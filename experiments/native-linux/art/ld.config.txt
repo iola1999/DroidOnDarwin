@@ -1,5 +1,6 @@
 # The standalone fixture stores its APEX dependencies under /system/lib64.
 dir.nce = /system/bin
+dir.aconfig = /apex/com.android.configinfrastructure/bin
 
 [nce]
 additional.namespaces = com_android_art,com_android_i18n,com_android_conscrypt,com_android_tethering,com_android_os_statsd
@@ -26,3 +27,7 @@ namespace.com_android_os_statsd.isolated = false
 namespace.com_android_os_statsd.visible = true
 namespace.com_android_os_statsd.links = default
 namespace.com_android_os_statsd.link.default.allow_all_shared_libs = true
+
+[aconfig]
+namespace.default.isolated = false
+namespace.default.search.paths = /apex/com.android.configinfrastructure/lib64:/system/lib64
