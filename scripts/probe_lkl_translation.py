@@ -26,7 +26,7 @@ def sha(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def validate(rows, memory_interval, mapping="window"):
+def validate(rows, memory_interval, mapping="window", workload="core"):
     expected = {'linux_dynamic_code', 'linux_signal_suite', 'linux_signal_register_restore',
                 'linux_signal_eintr_restart', 'linux_signal_timer_preemption', 'linux_mm_exchange_integrity',
                 'translated_pthread_tls_mutex', 'translated_signals_protection_restore',
@@ -36,6 +36,15 @@ def validate(rows, memory_interval, mapping="window"):
                 'linux_android_elf_reservation_boundaries', 'linux_sparse_reservation_cow',
                 'linux_mmap_byte_offset', 'linux_fault_register_state', 'linux_user_memory_boundaries',
                 'linux_dynamic_link_dlopen_constructors', 'linux_dynamic_tls_threads', 'linux_dynamic_fork_signal'}
+    if workload == 'android':
+        expected = {'android_system_image_readonly', 'android_bionic_threads_allocator_tls',
+                    'android_bionic_many_threads', 'android_scudo_class_growth', 'linux_proc_concurrent_exit',
+                    'android_cfi_library_reload', 'android_apk_native_libraries', 'android_cfi_bounded_shadow',
+                    'android_art_library_loaded', 'android_art_java_workload', 'android_art_jit_arithmetic',
+                    'android_art_jit_objects', 'android_art_jit_calls', 'android_art_jit_allocations',
+                    'android_art_jit_automatic', 'android_art_jit_runtime_features', 'android_art_jit_patterns',
+                    'android_art_jit_strings_classes', 'android_art_jit_types', 'android_art_jit_intrinsics',
+                    'android_art_proxy_references', 'android_art_vm_destroyed'}
     if not rows or rows[-1].get('result') != 'passed' or any(row.get('passed') is False for row in rows):
         return False
     if not expected <= {row.get('test') for row in rows if row.get('passed')}:
@@ -48,9 +57,11 @@ def validate(rows, memory_interval, mapping="window"):
     expected_cases = {(size * 1024 * 1024, shared, touch, 0)
                       for size in (2, 4, 8, 16) for shared in (0, 50, 100) for touch in (0, 1)}
     expected_cases.update((size * 1024 * 1024, 0, 1, 1) for size in (2, 4, 8, 16))
-    if len(cases) != 28 or set(cases) != expected_cases:
+    if workload == 'core' and (len(cases) != 28 or set(cases) != expected_cases):
         return False
     phases = ('kernel_setup', 'guest_setup', 'guest_execution', 'cleanup')
+    if workload == 'android':
+        phases = ('kernel_setup', 'guest_setup', 'bionic_execution', 'cfi_execution', 'art_execution', 'cleanup')
     summaries = [row for row in rows if 'memory_statistics' in row]
     if not memory_interval:
         return not summaries and not any('memory_sample' in row for row in rows)
@@ -77,6 +88,13 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--build-only', action='store_true')
     parser.add_argument('--mapping', choices=('window', 'pte'), default='window')
+    parser.add_argument('--workload', choices=('core', 'android'), default='core')
+    parser.add_argument('--art-nterp', type=int, choices=(0, 1), default=1)
+    parser.add_argument('--art-expanded-jit', type=int, choices=(0, 1), default=0)
+    parser.add_argument('--art-fast-baseline', type=int, choices=(0, 1), default=0)
+    parser.add_argument('--cache-invalidation', choices=('full', 'pages'), default='pages')
+    parser.add_argument('--linux-fastpath', type=int, choices=(0, 1), default=0)
+    parser.add_argument('--cache-mib', type=int, choices=(16, 64, 128), default=16)
     parser.add_argument('--repeat', type=int, default=1)
     parser.add_argument('--batch-instructions', type=int, default=50000)
     parser.add_argument('--preemption', choices=('instructions', 'timer'), default='instructions')
@@ -165,11 +183,21 @@ def main():
     runtime_files = ('sigreturn.elf', 'dynamic.elf', 'libc.so', 'dependency.so', 'plugin.so', 'dash.elf', 'bionic-test.elf')
     for name in runtime_files:
         shutil.copyfile(KERNEL / name, out / name)
+    android_files = []
+    if args.workload == 'android':
+        for name, source in [('NceWorkload.dex', KERNEL / 'java-classes/classes.dex'),
+                             ('ld.config.txt', EXP / 'art/ld.config.txt')]:
+            shutil.copyfile(source, out / name)
+            android_files.append(out / name)
+        for name in ('art-nterp', 'art-expanded-jit', 'art-fast-baseline'):
+            (out / name).write_text(str(getattr(args, name.replace('-', '_'))))
+            android_files.append(out / name)
+        android_files.append(KERNEL / 'system.img')
     if hosts_before != {mode: sha(out / mode) for mode in hosts_before}:
         raise RuntimeError('客体构建后宿主文件发生变化')
     files = [*inputs, EXP / 'translation/linux-execution.h', EXP / 'translation/linux-memory.h', EXP / 'translation/linux-guest.c', Path(__file__),
              EXP / 'dispatch-test.c', EXP / 'layout.h', EXP / 'guest-registers.h',
-             *[EXP / 'userspace' / name for name in guest_sources],
+             *[EXP / 'userspace' / name for name in guest_sources], *android_files,
              kernel / 'lkl-image.bin', kernel / 'lkl-image.h', kernel / 'lkl.so', kernel / 'lkl-host-ops.h',
              EXP / 'translation/kernel-api.h',
              ROOT / 'scripts/build_translation_engine.py', WORK / 'unicorn-tb-stop/build.json',
@@ -186,6 +214,11 @@ def main():
     environment['NCE_TRANSLATION_BATCH'] = str(args.batch_instructions)
     environment['NCE_TRANSLATION_PREEMPTION'] = args.preemption
     environment['NCE_TRANSLATION_MEMORY_MS'] = str(args.memory_interval_ms)
+    environment['NCE_TRANSLATION_WORKLOAD'] = args.workload
+    environment['NCE_TRANSLATION_SYSTEM'] = str(KERNEL / 'system.img')
+    environment['NCE_TRANSLATION_CACHE'] = args.cache_invalidation
+    environment['NCE_TRANSLATION_LINUX_FASTPATH'] = str(args.linux_fastpath)
+    environment['NCE_TRANSLATION_CACHE_MIB'] = str(args.cache_mib)
     results = []
     for iteration in range(args.repeat):
         for mode in ('cli', 'gcd'):
@@ -198,7 +231,7 @@ def main():
                 except subprocess.TimeoutExpired:
                     returncode = 'timeout'
             rows = [json.loads(line) for line in (out / f'{stem}.jsonl').read_text().splitlines() if line.startswith('{')]
-            passed = returncode == 0 and validate(rows, args.memory_interval_ms, args.mapping)
+            passed = returncode == 0 and validate(rows, args.memory_interval_ms, args.mapping, args.workload)
             results.append({'entry': mode, 'iteration': iteration, 'returncode': returncode, 'results': rows,
                             'validated': passed,
                             'stdout_sha256': sha(out / f'{stem}.jsonl'), 'stderr_sha256': sha(out / f'{stem}.log')})
@@ -213,7 +246,11 @@ def main():
               'system_build': subprocess.check_output(['sw_vers', '-buildVersion'], text=True).strip(),
               'dependency': dependency, 'commands': commands, 'host_unchanged_after_guest_build': True,
               'configuration': {'mapping': args.mapping, 'sparse_scan': True, 'fault_prefetch': False, 'guest_page_bytes': 16384,
-                                'guest_ram_bytes': 1073741824, 'translation_cache_bytes': 16777216,
+                                'workload': args.workload, 'art_nterp': args.art_nterp,
+                                'art_expanded_jit': args.art_expanded_jit, 'art_fast_baseline': args.art_fast_baseline,
+                                'cache_invalidation': args.cache_invalidation,
+                                'linux_fastpath': args.linux_fastpath,
+                                'guest_ram_bytes': 1073741824, 'translation_cache_bytes': args.cache_mib * 1024 * 1024,
                                 'instruction_batch': args.batch_instructions, 'memory_interval_ms': args.memory_interval_ms,
                                 'preemption': args.preemption, 'timer_interval_ns': 2000000},
               'measurement': 'Guest clock times 128 pipe round trips per memory case; excludes initial COW materialization. Selected preemption, translation and selected Linux mapping implementation included. Memory means are arithmetic sample means, including phase boundaries; sampled peaks can miss short peaks. Resident lifetime peak is separate.',

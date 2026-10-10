@@ -20,7 +20,16 @@
         } \
     } while (0)
 extern struct lkl_host_operations nce_lkl_host;
+extern int nce_disk_open(unsigned index, const char *path);
+extern void nce_disk_close(void);
 static long (*call)(long, long *);
+
+static void directory(const char *path)
+{
+    long args[6] = {-100, (long)path, 0755};
+    long result = call(34, args);
+    REQUIRE(result == 0 || result == -17);
+}
 
 static void memory_sample(const char *phase)
 {
@@ -55,6 +64,66 @@ static void put_file(const char *guest, const char *file)
     REQUIRE(call(57, args) == 0);
 }
 
+static void android_setup(void)
+{
+    const char *directories[] = {"/sys", "/system-image", "/system", "/apex", "/system_ext", "/product", "/vendor",
+                                 "/data", "/data/nce", "/data/dalvik-cache", "/data/dalvik-cache/arm64", "/linkerconfig"};
+    for (unsigned i = 0; i < sizeof(directories) / sizeof(*directories); ++i)
+        directory(directories[i]);
+    long mount[6] = {(long)"sysfs", (long)"/sys", (long)"sysfs"};
+    REQUIRE(call(40, mount) == 0);
+    long args[6] = {-100, (long)"/sys/block/ncedisk1/dev", 0};
+    long fd = call(56, args);
+    REQUIRE(fd >= 0);
+    char device[64] = {0};
+    args[0] = fd;
+    args[1] = (long)device;
+    args[2] = sizeof(device) - 1;
+    REQUIRE(call(63, args) > 0 && call(57, args) == 0);
+    unsigned major, minor;
+    REQUIRE(sscanf(device, "%u:%u", &major, &minor) == 2 && major < 4096 && minor < 256);
+    long node[6] = {-100, (long)"/dev/ncesystem", 0060400, (major << 8) | minor};
+    REQUIRE(call(33, node) == 0);
+    long system[6] = {(long)"/dev/ncesystem", (long)"/system-image", (long)"ext4", 1};
+    REQUIRE(call(40, system) == 0);
+    const char *targets[] = {"/system", "/apex", "/system_ext", "/product", "/vendor"};
+    for (unsigned i = 0; i < sizeof(targets) / sizeof(*targets); ++i) {
+        char source[128];
+        REQUIRE(snprintf(source, sizeof(source), "/system-image%s", targets[i]) < (int)sizeof(source));
+        long bind[6] = {(long)source, (long)targets[i], 0, 4096};
+        REQUIRE(call(40, bind) == 0);
+    }
+    long readonly[6] = {-100, (long)"/system/write-test", 0x241, 0600};
+    REQUIRE(call(56, readonly) == -30);
+    puts("{\"test\":\"android_system_image_readonly\",\"passed\":true}");
+    const char *devices[] = {"/dev/null", "/dev/random", "/dev/urandom"};
+    const unsigned numbers[] = {259, 264, 265};
+    for (unsigned i = 0; i < 3; ++i) {
+        long create[6] = {-100, (long)devices[i], 0020666, numbers[i]};
+        REQUIRE(call(33, create) == 0);
+    }
+    struct {
+        int entropy_bits, bytes;
+        unsigned char data[32];
+    } entropy = {256, 32, {0}};
+    arc4random_buf(entropy.data, sizeof(entropy.data));
+    long random[6] = {-100, (long)"/dev/random", 2};
+    fd = call(56, random);
+    REQUIRE(fd >= 0);
+    random[0] = fd;
+    random[1] = 0x40085203;
+    random[2] = (long)&entropy;
+    REQUIRE(call(29, random) == 0 && call(57, random) == 0);
+    put_file("/linkerconfig/ld.config.txt", "ld.config.txt");
+    put_file("/data/nce/NceWorkload.dex", "NceWorkload.dex");
+    const char *settings[] = {"art-nterp", "art-expanded-jit", "art-fast-baseline"};
+    for (unsigned i = 0; i < sizeof(settings) / sizeof(*settings); ++i) {
+        char path[128];
+        REQUIRE(snprintf(path, sizeof(path), "/data/nce/%s", settings[i]) < (int)sizeof(path));
+        put_file(path, settings[i]);
+    }
+}
+
 static void dump_file(const char *path, FILE *output)
 {
     long args[6] = {-100, (long)path, 0};
@@ -68,6 +137,31 @@ static void dump_file(const char *path, FILE *output)
     while ((bytes = call(63, args)) > 0)
         REQUIRE(fwrite(buffer, 1, bytes, output) == (size_t)bytes);
     REQUIRE(bytes == 0 && call(57, args) == 0);
+}
+
+static int run_program(const char *path)
+{
+    const char *streams[] = {"/stdin", "/stdout", "/stderr"};
+    for (long fd = 0; fd < 3; ++fd) {
+        long args[6] = {-100, (long)streams[fd], 0x242, 0600};
+        long opened = call(56, args);
+        REQUIRE(opened >= 0);
+        if (opened != fd) {
+            long dup[6] = {opened, fd, 0};
+            REQUIRE(call(24, dup) == fd && call(57, dup) == 0);
+        }
+    }
+    long launch[6] = {(long)translation_linux_process(path), 1};
+    long pid = call(246, launch);
+    REQUIRE(pid > 0);
+    int status = -1;
+    long wait[6] = {pid, (long)&status};
+    long waited = call(260, wait);
+    dump_file("/stdout", stdout);
+    dump_file("/stderr", stderr);
+    printf("{\"test\":\"translated_linux_process\",\"path\":\"%s\",\"passed\":%s,\"waited\":%ld,\"status\":%d}\n",
+           path, waited == pid && status == 0 ? "true" : "false", waited, status);
+    return waited != pid || status != 0;
 }
 
 int nce_lkl_run(const char *path)
@@ -101,10 +195,17 @@ int nce_lkl_run(const char *path)
     REQUIRE(views);
     unsigned long base = translation_linux_setup(kernel, TRANSLATION_COPY_USER, TRANSLATION_LOOKUP, TRANSLATION_LOOKUP ? &state : NULL);
     set_layout(base, TRANSLATION_LOOKUP ? NCE_MM_TRANSLATED : NCE_MM_DEMAND, views, 3, NULL, 1, 0);
+    const char *workload = getenv("NCE_TRANSLATION_WORKLOAD");
+    REQUIRE(!workload || !strcmp(workload, "core") || !strcmp(workload, "android"));
+    int android = workload && !strcmp(workload, "android");
+    if (android) {
+        REQUIRE(getenv("NCE_TRANSLATION_SYSTEM"));
+        REQUIRE(nce_disk_open(1, getenv("NCE_TRANSLATION_SYSTEM")) == 0);
+    }
     REQUIRE(init(&nce_lkl_host) == 0);
     unsigned long slice;
     REQUIRE(start(0, &slice) == 0);
-    printf("{\"phase\":\"translated_linux_boot\",\"slice_ns\":%lu,\"cache_bytes\":16777216}\n", slice);
+    printf("{\"phase\":\"translated_linux_boot\",\"slice_ns\":%lu}\n", slice);
     memory_sample("kernel_ready");
     translation_memory_phase("guest_setup");
     long args[6] = {-100, (long)"/lib", 0755};
@@ -124,38 +225,32 @@ int nce_lkl_run(const char *path)
     put_file("/lib/ld-musl-aarch64.so.1", "libc.so");
     put_file("/lib/dependency.so", "dependency.so");
     put_file("/lib/plugin.so", "plugin.so");
-    const char *streams[] = {"/stdin", "/stdout", "/stderr"};
-    for (long fd = 0; fd < 3; ++fd) {
-        long open_args[6] = {-100, (long)streams[fd], 0x242, 0600};
-        long opened = call(56, open_args);
-        REQUIRE(opened >= 0);
-        if (opened != fd) {
-            long dup_args[6] = {opened, fd, 0};
-            REQUIRE(call(24, dup_args) == fd && call(57, dup_args) == 0);
+    int failed = 0;
+    if (android) {
+        android_setup();
+        const char *programs[] = {"/bionic-test", "/system/bin/cfi-test", "/system/bin/art-test"};
+        const char *phases[] = {"bionic_execution", "cfi_execution", "art_execution"};
+        for (unsigned i = 0; i < 3 && !failed; ++i) {
+            translation_memory_phase(phases[i]);
+            failed = run_program(programs[i]);
         }
+    } else {
+        translation_memory_phase("guest_execution");
+        failed = run_program("/probe-guest");
     }
-    translation_memory_phase("guest_execution");
-    long launch[6] = {(long)translation_linux_process("/probe-guest"), 1};
-    long pid = call(246, launch);
-    REQUIRE(pid > 0);
-    int status = -1;
-    long wait[6] = {pid, (long)&status};
-    long waited = call(260, wait);
-    dump_file("/stdout", stdout);
-    dump_file("/stderr", stderr);
-    printf("{\"test\":\"translated_linux_process\",\"passed\":%s,\"waited\":%ld,\"status\":%d}\n", waited == pid && status == 0 ? "true" : "false", waited, status);
     memory_sample("guest_finished");
     translation_memory_phase("cleanup");
     REQUIRE(halt() == 0);
     cleanup();
+    nce_disk_close();
     translation_linux_cleanup();
     REQUIRE(munmap(kernel, LKL_IMAGE_SIZE) == 0);
     if (!TRANSLATION_LOOKUP)
         free(views);
     memory_sample("cleaned");
     translation_memory_stop();
-    puts(status == 0 && waited == pid ? "{\"result\":\"passed\"}" : "{\"result\":\"failed\"}");
-    return status != 0 || waited != pid;
+    puts(failed ? "{\"result\":\"failed\"}" : "{\"result\":\"passed\"}");
+    return failed;
 }
 
 #ifndef TRANSLATION_DISPATCH

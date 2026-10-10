@@ -16,6 +16,7 @@ __asm__(
 
 #ifndef TEST_STOCK_STOP
 extern uc_err nce_uc_emu_stop_at_tb(uc_engine *engine);
+extern uc_err nce_uc_set_linux_memory(uc_engine *engine, bool enabled);
 #endif
 #define PAGE 16384
 #define CODE 0x10000000UL
@@ -41,7 +42,10 @@ static bool fill(uc_engine *engine, uint64_t address, uc_mem_type access, uc_tlb
         entry->perms = UC_PROT_READ | UC_PROT_WRITE;
         if (!requested && (access == UC_MEM_READ || access == UC_MEM_WRITE)) {
             requested = true;
-#ifdef TEST_STOCK_STOP
+#ifdef TEST_MEMORY_FAULT
+            (void)engine;
+            return false;
+#elif defined(TEST_STOCK_STOP)
             checked(uc_emu_stop(engine));
 #else
             checked(nce_uc_emu_stop_at_tb(engine));
@@ -76,6 +80,9 @@ int main(void)
         checked(uc_open(UC_ARCH_ARM64, UC_MODE_ARM, &engine));
         checked(uc_ctl_set_page_size(engine, PAGE));
         checked(uc_ctl_tlb_mode(engine, UC_TLB_VIRTUAL));
+#ifdef TEST_LINUX_MEMORY
+        checked(nce_uc_set_linux_memory(engine, true));
+#endif
         checked(uc_mem_map_ptr(engine, 0, 2 * PAGE, UC_PROT_ALL, memory));
         uc_hook hook;
         checked(uc_hook_add(engine, &hook, UC_HOOK_TLB_FILL, fill, NULL, 1, 0));
@@ -92,11 +99,22 @@ int main(void)
                                                        : 42;
         uint64_t next = DATA + (test == 2 ? 16 : test ? 8
                                                       : 0);
+#ifdef TEST_MEMORY_FAULT
+        bool passed = result == UC_ERR_EXCEPTION && requested && !finished && pc == CODE &&
+                      x0 == (test ? 17 : DATA) && x1 == DATA && *(uint64_t *)(memory + PAGE) == 41;
+        if (passed) {
+            result = uc_emu_start(engine, pc, 0, 0, 0);
+            checked(uc_reg_read(engine, UC_ARM64_REG_X0, &x0));
+            checked(uc_reg_read(engine, UC_ARM64_REG_X1, &x1));
+            passed = result == UC_ERR_OK && finished && x0 == expected && x1 == next;
+        }
+#else
         bool passed = result == UC_ERR_OK && requested && !finished && pc == CODE + 12 && x0 == expected && x1 == next;
         if (passed) {
             result = uc_emu_start(engine, pc, 0, 0, 0);
             passed = result == UC_ERR_OK && finished;
         }
+#endif
         if (test == 3)
             passed &= *(uint64_t *)(memory + PAGE) == 17;
         printf("{\"test\":\"%s\",\"passed\":%s,\"pc\":%llu,\"x0\":%llu,\"x1\":%llu}\n",

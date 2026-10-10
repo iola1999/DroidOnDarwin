@@ -37,7 +37,7 @@ def build():
                 raise RuntimeError('Unicorn source mismatch: ' + name)
             patched[name] = original.replace(before, after)
 
-        edit('include/uc_priv.h', '    bool stop_request;', '    bool nce_stop_at_tb;\n    bool stop_request;')
+        edit('include/uc_priv.h', '    bool stop_request;', '    bool nce_stop_at_tb;\n    bool nce_linux_memory;\n    bool stop_request;')
         edit('uc.c', 'UNICORN_EXPORT\nuc_err uc_emu_stop(uc_engine *uc)', '''/* The host serializes requests against engine close. Only the execution
  * thread consumes this flag and changes CPU exit state, at a TB boundary.
  * Synchronous callbacks continue to use uc_emu_stop. */
@@ -53,6 +53,40 @@ uc_err nce_uc_emu_stop_at_tb(uc_engine *uc)
 
 UNICORN_EXPORT
 uc_err uc_emu_stop(uc_engine *uc)''')
+        edit('uc.c', 'UNICORN_EXPORT\nuc_err uc_emu_stop(uc_engine *uc)', '''/* This private ARM64 probe maps one RAM block at physical address zero.
+ * The engine must be stopped; offsets identify that RAM block directly. */
+extern void tb_invalidate_phys_range_aarch64(struct uc_struct *, uint64_t, uint64_t);
+UNICORN_EXPORT
+uc_err nce_uc_invalidate_ram(uc_engine *uc, uint64_t start, uint64_t length)
+{
+    if (!uc || uc->arch != UC_ARCH_ARM64 || !length || start + length < start) {
+        return UC_ERR_ARG;
+    }
+    UC_INIT(uc);
+    tb_invalidate_phys_range_aarch64(uc, start, start + length);
+    restore_jit_state(uc);
+    return UC_ERR_OK;
+}
+
+/* The Linux adapter stops on failed TLB fills through cpu_loop_exit_restore.
+ * It has no physical-memory hooks or asynchronous instruction-local stop. */
+UNICORN_EXPORT
+uc_err nce_uc_set_linux_memory(uc_engine *uc, bool enabled)
+{
+    if (!uc || uc->arch != UC_ARCH_ARM64 || uc->nested_level) {
+        return UC_ERR_ARG;
+    }
+    UC_INIT(uc);
+    uc->tb_flush(uc);
+    uc->nce_linux_memory = enabled;
+    restore_jit_state(uc);
+    return UC_ERR_OK;
+}
+
+UNICORN_EXPORT
+uc_err uc_emu_stop(uc_engine *uc)''')
+        edit('qemu/tcg/tcg-op.c', '    if (tcg_ctx->uc->no_exit_request) {',
+             '    if (tcg_ctx->uc->no_exit_request || tcg_ctx->uc->nce_linux_memory) {')
         edit('uc.c', '    uc->stop_request = false;',
              '    __atomic_store_n(&uc->nce_stop_at_tb, false, __ATOMIC_RELEASE);\n    uc->stop_request = false;')
         edit('uc.c', '    uc->stop_request = true;',
@@ -60,6 +94,7 @@ uc_err uc_emu_stop(uc_engine *uc)''')
         edit('qemu/accel/tcg/tcg-runtime.c', '    if (cpu_loop_exit_requested(uc->cpu) && !in_delay_slot) {',
              '''    /* Bit 1 marks the TB entry; bit 0 retains the delay-slot rule. */
     if ((in_delay_slot & 2) &&
+        __atomic_load_n(&uc->nce_stop_at_tb, __ATOMIC_ACQUIRE) &&
         __atomic_exchange_n(&uc->nce_stop_at_tb, false, __ATOMIC_ACQ_REL)) {
         uc->stop_request = true;
         cpu_exit(uc->cpu);
@@ -67,7 +102,33 @@ uc_err uc_emu_stop(uc_engine *uc)''')
     if (cpu_loop_exit_requested(uc->cpu) && !(in_delay_slot & 1)) {''')
         edit('qemu/include/exec/gen-icount.h',
              '    TCGv_ptr puc = tcg_const_ptr(tcg_ctx, tcg_ctx->uc);\n    TCGv_i32 tmp = tcg_const_i32(tcg_ctx, 0);',
-             '    TCGv_ptr puc = tcg_const_ptr(tcg_ctx, tcg_ctx->uc);\n    TCGv_i32 tmp = tcg_const_i32(tcg_ctx, 2);')
+             '''    if (tcg_ctx->uc->nce_linux_memory) {
+        /* ARM64 has no delay slots. At TB entry no instruction-local TCG
+         * temporary crosses this branch. Call the helper only on a request. */
+        TCGLabel *ready = gen_new_label(tcg_ctx);
+        TCGv_ptr address = tcg_const_ptr(tcg_ctx, tcg_ctx->uc);
+        TCGv_i32 pending = tcg_temp_new_i32(tcg_ctx);
+        TCGv_i32 requested = tcg_temp_new_i32(tcg_ctx);
+        tcg_gen_ld8u_i32(tcg_ctx, pending, address, offsetof(struct uc_struct, nce_stop_at_tb));
+        tcg_temp_free_ptr(tcg_ctx, address);
+        address = tcg_const_ptr(tcg_ctx, &cpu_neg(tcg_ctx->uc->cpu)->icount_decr.u32);
+        tcg_gen_ld_i32(tcg_ctx, requested, address, 0);
+        tcg_gen_sari_i32(tcg_ctx, requested, requested, 31);
+        tcg_gen_or_i32(tcg_ctx, pending, pending, requested);
+        tcg_gen_brcondi_i32(tcg_ctx, TCG_COND_EQ, pending, 0, ready);
+        tcg_temp_free_i32(tcg_ctx, pending);
+        tcg_temp_free_i32(tcg_ctx, requested);
+        tcg_temp_free_ptr(tcg_ctx, address);
+        TCGv_ptr callback = tcg_const_ptr(tcg_ctx, tcg_ctx->uc);
+        TCGv_i32 flags = tcg_const_i32(tcg_ctx, 2);
+        gen_helper_check_exit_request(tcg_ctx, callback, flags);
+        tcg_temp_free_i32(tcg_ctx, flags);
+        tcg_temp_free_ptr(tcg_ctx, callback);
+        gen_set_label(tcg_ctx, ready);
+        return;
+    }
+    TCGv_ptr puc = tcg_const_ptr(tcg_ctx, tcg_ctx->uc);
+    TCGv_i32 tmp = tcg_const_i32(tcg_ctx, 2);''')
     for name, content in patched.items():
         path = source / name
         if path.read_text() != content:
@@ -83,6 +144,7 @@ uc_err uc_emu_stop(uc_engine *uc)''')
             subprocess.run(list(map(str, command)), env=env, check=True, stdout=log, stderr=subprocess.STDOUT, timeout=600)
     files = [Path(__file__), archive, source / 'include/uc_priv.h', source / 'uc.c',
              source / 'qemu/accel/tcg/tcg-runtime.c', source / 'qemu/include/exec/gen-icount.h',
+             source / 'qemu/tcg/tcg-op.c',
              prefix / 'lib/libunicorn.a', prefix / 'include/unicorn/unicorn.h']
     manifest = {'version': '2.1.4', 'patch': 'nce-tb-stop', 'path': str(prefix), 'ZERO_AR_DATE': '1',
                 'commands': [list(map(str, command)) for command in commands],

@@ -24,7 +24,16 @@ static unsigned long mapping_mode;''')
         return 0;
     }
     size_t bytes = NCE_USER_SIZE / PAGE_SIZE / 8;''')
-    edit('/* One Linux CPU owns the host window.', '''/* The caller owns the sole Linux CPU. Fault handling and scheduling happen
+    edit('/* One Linux CPU owns the host window.', '''static void changed_code(pte_t pte, unsigned long pages)
+{
+    unsigned long index = ((pte_val(pte) & PAGE_MASK) - memory_start) >> PAGE_SHIFT;
+    BUILD_BUG_ON(NCE_TRANSLATION_CODE_WORDS * 64 != NCE_RAM_SIZE / PAGE_SIZE);
+    BUG_ON(index >= NCE_RAM_SIZE / PAGE_SIZE || pages > NCE_RAM_SIZE / PAGE_SIZE - index);
+    bitmap_set(translation->code_pages, index, pages);
+    ++translation->code;
+}
+
+/* The caller owns the sole Linux CPU. Fault handling and scheduling happen
  * only after leaving the translation engine. Low bits use LKL_PROT flags. */
 unsigned long nce_translate_user(unsigned long address, unsigned long permission)
 {
@@ -47,7 +56,8 @@ unsigned long nce_translate_user(unsigned long address, unsigned long permission
 /* One Linux CPU owns the host window.''')
     edit('''    for (unsigned long addr = start; addr < end; addr += PAGE_SIZE) {
         unsigned long value = view(lookup(mm, addr));''', '''    if (mapping_mode == NCE_MM_TRANSLATED) {
-        ++translation->code;
+        for (unsigned long addr = start; addr < end; addr += PAGE_SIZE)
+            changed_code(lookup(mm, addr), 1);
         mmap_read_unlock(mm);
         return 0;
     }
@@ -58,14 +68,14 @@ unsigned long nce_translate_user(unsigned long address, unsigned long permission
     if (mapping_mode == NCE_MM_TRANSLATED && mm != &init_mm) {
         ++translation->mappings;
         if (pte_exec(pte))
-            ++translation->code;
+            changed_code(pte, nr);
         return;
     }
     if (mm != &init_mm && mm != active_mm)''')
     edit('''    if (mm != &init_mm && addr >= USER_BASE && addr < TASK_SIZE) {''', '''    if (mapping_mode == NCE_MM_TRANSLATED && mm != &init_mm) {
         ++translation->mappings;
         if (pte_exec(*xp))
-            ++translation->code;
+            changed_code(*xp, 1);
         return;
     }
     if (mm != &init_mm && addr >= USER_BASE && addr < TASK_SIZE) {''')

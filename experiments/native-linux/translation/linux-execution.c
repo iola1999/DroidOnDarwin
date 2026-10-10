@@ -34,6 +34,8 @@ static unsigned char *ram;
 static unsigned long base, *pages;
 static unsigned long map_generation, code_generation, maps, revocations, fills, faults, calls, preemptions;
 static unsigned long allocated, freed;
+static unsigned long cache_flushes, cache_pages, tlb_flushes;
+static bool page_invalidation;
 static unsigned long instruction_batch;
 static bool timer_mode, timer_active, timer_stopping;
 static pthread_t timer_thread;
@@ -50,6 +52,8 @@ static unsigned long (*translate_user)(unsigned long, unsigned long);
 static struct nce_translation_state *translation;
 extern struct lkl_host_operations nce_lkl_host;
 extern uc_err nce_uc_emu_stop_at_tb(uc_engine *engine);
+extern uc_err nce_uc_invalidate_ram(uc_engine *engine, uint64_t start, uint64_t length);
+extern uc_err nce_uc_set_linux_memory(uc_engine *engine, bool enabled);
 
 static void checked(uc_err error)
 {
@@ -107,7 +111,12 @@ static int shmem_reclaim(unsigned long offset, unsigned long size)
     REQUIRE(!(offset % PAGE) && !(size % PAGE) && offset <= NCE_RAM_SIZE && size <= NCE_RAM_SIZE - offset);
     REQUIRE(mmap(ram + offset, size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANON | MAP_FIXED, -1, 0) == ram + offset);
     remap((void *)(base + NCE_USER_SIZE + offset), ram + offset, size, PROT_READ | PROT_WRITE);
-    ++code_generation;
+    if (translation) {
+        for (unsigned long i = offset / PAGE; i < (offset + size) / PAGE; ++i)
+            translation->code_pages[i / 64] |= 1UL << (i % 64);
+        ++translation->code;
+    } else
+        ++code_generation;
     return 0;
 }
 
@@ -192,16 +201,6 @@ static bool fill(uc_engine *uc, uint64_t address, uc_mem_type access, uc_tlb_ent
             return true;
         }
     }
-    fault_event(address, access);
-    return false;
-}
-
-static bool invalid_memory(uc_engine *uc, uc_mem_type access, uint64_t address, int size, int64_t value, void *opaque)
-{
-    (void)uc;
-    (void)size;
-    (void)value;
-    (void)opaque;
     fault_event(address, access);
     return false;
 }
@@ -309,12 +308,29 @@ static void user_run(void *opaque)
         unsigned long current_maps = translation ? translation->mappings : map_generation;
         unsigned long current_kernel_code = translation ? translation->code : 0;
         if (seen_code != code_generation || seen_kernel_code != current_kernel_code) {
-            checked(uc_ctl_flush_tb(engine));
+            bool all = seen_code != code_generation || !page_invalidation || !translation;
+            if (all) {
+                checked(uc_ctl_flush_tb(engine));
+                ++cache_flushes;
+            }
+            if (translation) {
+                for (unsigned i = 0; i < NCE_TRANSLATION_CODE_WORDS; ++i) {
+                    unsigned long bits = translation->code_pages[i];
+                    while (bits && !all) {
+                        unsigned bit = __builtin_ctzl(bits);
+                        checked(nce_uc_invalidate_ram(engine, (i * 64UL + bit) * PAGE, PAGE));
+                        ++cache_pages;
+                        bits &= bits - 1;
+                    }
+                    translation->code_pages[i] = 0;
+                }
+            }
             seen_code = code_generation;
             seen_kernel_code = current_kernel_code;
         }
         if (seen_maps != current_maps) {
             checked(uc_ctl_flush_tlb(engine));
+            ++tlb_flushes;
             seen_maps = current_maps;
         }
         registers(p, false);
@@ -333,7 +349,7 @@ static void user_run(void *opaque)
             long number = p->regs.x[8];
             ++calls;
             long result = run_syscall(number, args);
-            if (number == NCE_SYS_PUBLISH_CODE)
+            if (number == NCE_SYS_PUBLISH_CODE && !translation)
                 ++code_generation;
             user_return(number, result, args[0]);
         } else if (kind == 2) {
@@ -345,7 +361,10 @@ static void user_run(void *opaque)
             }
         } else if (kind == 3 || error != UC_ERR_OK) {
             fprintf(stderr, "guest exception pc=%lx error=%s event=%d\n", p->regs.pc, uc_strerror(error), kind);
-            user_fault(p->regs.pc, 1);
+            uint32_t instruction = 0;
+            bool breakpoint = !copy_user(&instruction, p->regs.pc, sizeof(instruction), 0) &&
+                              (instruction & 0xffe0001f) == 0xd4200000;
+            user_fault(p->regs.pc, breakpoint ? 2 : 1);
         } else {
             ++preemptions;
             user_preempt();
@@ -369,7 +388,8 @@ static unsigned long elf_layout(const char *path, unsigned long offset, const vo
     if (memcmp(header->e_ident, "\177ELF\2\1\1", 7) || header->e_type != ET_DYN || header->e_machine != EM_AARCH64 ||
         header->e_phentsize != sizeof(*phdrs) || !header->e_phnum || header->e_phnum > 128 || offset % PAGE)
         return 0;
-    unsigned long span = 0, alignment = PAGE;
+    // Bionic CFI assigns one library to each 256 KiB shadow block.
+    unsigned long span = 0, alignment = 1UL << 18;
     for (unsigned i = 0; i < header->e_phnum; ++i) {
         if (phdrs[i].p_type != PT_LOAD)
             continue;
@@ -422,6 +442,10 @@ unsigned long translation_linux_setup(void *kernel, unsigned long copy_user_offs
 {
     REQUIRE((translate_offset != 0) == (state != NULL));
     translation = state;
+    _Static_assert(NCE_TRANSLATION_CODE_WORDS * 64 == NCE_RAM_SIZE / PAGE, "RAM page bitmap size");
+    const char *invalidation = getenv("NCE_TRANSLATION_CACHE");
+    REQUIRE(!invalidation || !strcmp(invalidation, "full") || !strcmp(invalidation, "pages"));
+    page_invalidation = !invalidation || !strcmp(invalidation, "pages");
     const char *batch_text = getenv("NCE_TRANSLATION_BATCH");
     char *end = NULL;
     instruction_batch = batch_text ? strtoul(batch_text, &end, 10) : 50000;
@@ -450,12 +474,21 @@ unsigned long translation_linux_setup(void *kernel, unsigned long copy_user_offs
     checked(uc_ctl_set_cpu_model(engine, UC_CPU_ARM64_MAX));
     checked(uc_ctl_set_page_size(engine, PAGE));
     checked(uc_ctl_tlb_mode(engine, UC_TLB_VIRTUAL));
-    checked(uc_ctl_set_tcg_buffer_size(engine, 16 * 1024 * 1024));
+    const char *cache_text = getenv("NCE_TRANSLATION_CACHE_MIB");
+    unsigned long cache_mib = cache_text ? strtoul(cache_text, &end, 10) : 16;
+    REQUIRE(!cache_text || (cache_text[0] >= '0' && cache_text[0] <= '9' && !*end));
+    REQUIRE(cache_mib == 16 || cache_mib == 64 || cache_mib == 128);
+    checked(uc_ctl_set_tcg_buffer_size(engine, cache_mib * 1024 * 1024));
+    const char *fastpath = getenv("NCE_TRANSLATION_LINUX_FASTPATH");
+    REQUIRE(!fastpath || !strcmp(fastpath, "0") || !strcmp(fastpath, "1"));
+    checked(nce_uc_set_linux_memory(engine, fastpath && !strcmp(fastpath, "1")));
+    printf("{\"config\":\"translation_cache_settings\",\"cache_bytes\":%lu,\"invalidation\":\"%s\",\"linux_fastpath\":%s}\n",
+           cache_mib * 1024 * 1024, page_invalidation ? "pages" : "full",
+           fastpath && !strcmp(fastpath, "1") ? "true" : "false");
     checked(uc_context_alloc(engine, &empty_cpu));
     checked(uc_context_save(engine, empty_cpu));
     uc_hook hook;
     checked(uc_hook_add(engine, &hook, UC_HOOK_TLB_FILL, fill, NULL, 1, 0));
-    checked(uc_hook_add(engine, &hook, UC_HOOK_MEM_INVALID, invalid_memory, NULL, 1, 0));
     checked(uc_hook_add(engine, &hook, UC_HOOK_INTR, interrupt, NULL, 1, 0));
     if (timer_mode)
         REQUIRE(pthread_create(&timer_thread, NULL, preempt_timer, NULL) == 0);
@@ -495,6 +528,8 @@ void translation_linux_cleanup(void)
     }
     printf("{\"test\":\"translated_context_cleanup\",\"passed\":%s,\"allocated\":%lu,\"freed\":%lu,\"maps\":%lu,\"revocations\":%lu,\"tlb_fills\":%lu,\"faults\":%lu,\"syscalls\":%lu,\"preemptions\":%lu}\n",
            allocated == freed ? "true" : "false", allocated, freed, maps, revocations, fills, faults, calls, preemptions);
+    printf("{\"translation_cache\":\"%s\",\"full_flushes\":%lu,\"invalidated_pages\":%lu,\"tlb_flushes\":%lu}\n",
+           page_invalidation ? "pages" : "full", cache_flushes, cache_pages, tlb_flushes);
     REQUIRE(allocated == freed);
     checked(uc_context_free(empty_cpu));
     checked(uc_close(engine));
