@@ -23,7 +23,8 @@ def apply(source: Path, experiment: Path, *, tests=True):
     files = [('uaccess.c', 'mm/nce_smp_uaccess.c'),
                          ('uaccess.h', 'include/asm/nce-smp-uaccess.h'),
                          ('window.c', 'mm/nce_window.c'),
-                         ('window.h', 'include/asm/nce-window.h')]
+                         ('window.h', 'include/asm/nce-window.h'),
+                         ('present-fault.h', 'mm/nce-present-fault.h')]
     if tests:
         files += [('window-test.c', 'kernel/smp-window-test.c'),
                   ('mmu-test.c', 'kernel/smp-mmu-test.c')]
@@ -37,6 +38,11 @@ def apply(source: Path, experiment: Path, *, tests=True):
              'obj-$(CONFIG_MMU) += nce_smp_uaccess.o\nobj-$(CONFIG_MMU) += mmu_mem.o')
     edit(arch + 'mm/Makefile', 'obj-$(CONFIG_MMU) += nce_smp_uaccess.o',
          'obj-$(CONFIG_MMU) += nce_smp_uaccess.o nce_window.o')
+    edit(arch + 'kernel/irq.c', 'void init_IRQ(void)\n',
+         '/* A guest signal handler retains CPU ownership and only restores\n'
+         ' * the flag here. Pending IRQs run at a normal Linux transition. */\n'
+         'void lkl_restore_guest_irq_flags(unsigned long flags)\n'
+         '{\n\tirqs_enabled = flags;\n}\n\nvoid init_IRQ(void)\n')
     if tests:
         if 'smp-mmu-test.o' not in (source / arch / 'kernel/Makefile').read_text():
             edit(arch + 'kernel/Makefile', 'obj-$(CONFIG_SMP) += smp.o smp-test.o',
@@ -118,6 +124,23 @@ def apply_window(source: Path):
 
     wrap('void nce_destroy_mm(struct mm_struct *mm)', 'nce_destroy_mm', 'mm')
     wrap('static pte_t lookup(struct mm_struct *mm, unsigned long addr)', 'lookup', 'mm, addr', True)
+    # Parent entries can be cleared without the window lock. IRQ exclusion
+    # retains their table pages; snapshots prevent a second parent read from
+    # following a newly cleared entry during the same walk.
+    start = text.index('static pte_t lookup_window_locked(')
+    end = text.index('\n}', start) + 2
+    text = text[:start] + '''static pte_t lookup_window_locked(struct mm_struct *mm, unsigned long addr)
+{
+    pgd_t *pgd = pgd_offset(mm, addr);
+    p4d_t *p4d = p4d_offset(pgd, addr);
+    pud_t pud = READ_ONCE(*pud_offset(p4d, addr));
+    if (!pud_present(pud))
+        return __pte(0);
+    pmd_t pmd = READ_ONCE(*pmd_offset(&pud, addr));
+    if (!pmd_present(pmd))
+        return __pte(0);
+    return ptep_get(pte_offset_kernel(&pmd, addr));
+}''' + text[end:]
     wrap('void mmap_pages_for_ptes(struct mm_struct *mm, unsigned long va, unsigned int nr, pte_t pte)',
          'mmap_pages_for_ptes', 'mm, va, nr, pte')
     wrap('void munmap_page_for_pte(struct mm_struct *mm, unsigned long addr, pte_t *xp)',
@@ -155,16 +178,23 @@ static bool new_data_view(unsigned long addr, unsigned long size, unsigned long 
     text = text.replace('    PROFILE_ADD(switches, 1);\n    active_mm = next;',
                         '    PROFILE_ADD(switches, 1);\n    nce_window_stop();\n    active_mm = next;')
     text = text.replace('if (!mm || mm == active_mm)', 'if (!mm || mm == READ_ONCE(active_mm))')
-    text = text.replace('return restore_present_data(address, access & 1);', 'return 0;')
     text = text.replace('/* One Linux CPU owns the host window. Entries describe installed host views,',
                         '/* The window writer lock protects installed host views,')
-    # The SMP host handles faults after leaving guest execution. Keep the UP
-    # helper out of this independent build so it cannot bypass synchronization.
+    # Replace the UP helper with a nonblocking implementation that preserves
+    # the guest slot and leaves pending IRQ delivery to normal Linux entry.
     begin = text.find('static int restore_present_data(')
     if begin >= 0:
         end = text.index('\n}', begin) + 2
         comment = text.rfind('/* The host calls this only', 0, begin)
         text = text[:comment if comment >= 0 else begin] + text[end:]
+    include_fault = '#include "nce-present-fault.h"\n\n'
+    if include_fault not in text:
+        before = '/* Called only for a fault in the controlled guest window'
+        if text.count(before) != 1:
+            raise RuntimeError('SMP present fault include source mismatch')
+        text = text.replace(before, include_fault + before)
+    text = text.replace('    if (access & NCE_FAULT_TRY_PRESENT)\n        return 0;',
+                        '    if (access & NCE_FAULT_TRY_PRESENT)\n        return restore_present_data(address, access & 1);')
     begin = text.index('long nce_publish_code(')
     end = text.index('\n}', begin) + 2
     body = text[begin:end]

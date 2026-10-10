@@ -17,6 +17,16 @@ static struct {
     unsigned long irq_flags;
 } owners[NR_CPUS];
 
+extern void lkl_restore_guest_irq_flags(unsigned long flags);
+
+static void release_writer(void)
+{
+    BUG_ON(!(atomic64_read(&state) & WRITER));
+    /* Preserve simultaneous guest exits while invalidating entry tokens. */
+    atomic64_add_return_release(VERSION - WRITER, &state);
+    raw_spin_unlock(&writer_lock);
+}
+
 void nce_window_lock(void)
 {
     unsigned long flags;
@@ -48,15 +58,35 @@ void nce_window_unlock(void)
     BUG_ON(!owners[cpu].depth);
     if (--owners[cpu].depth)
         return;
-    u64 value = atomic64_read(&state);
-    BUG_ON(!(value & WRITER));
-    /* A new version prevents entry after an intervening mapping replacement,
-     * even when the active CPU mask has returned to the same value. */
-    /* A metadata-only update can leave guests running. Preserve concurrent
-     * exits while advancing the version and clearing the writer bit. */
-    atomic64_add_return_release(VERSION - WRITER, &state);
-    raw_spin_unlock(&writer_lock);
+    release_writer();
     local_irq_restore(owners[cpu].irq_flags);
+}
+
+bool nce_window_try_lock_guest(void)
+{
+    unsigned long flags;
+    local_irq_save(flags);
+    unsigned cpu = raw_smp_processor_id();
+    if (owners[cpu].depth || !(atomic64_read(&state) & (1ULL << cpu)) ||
+        !raw_spin_trylock(&writer_lock)) {
+        lkl_restore_guest_irq_flags(flags);
+        return false;
+    }
+    owners[cpu].depth = 1;
+    owners[cpu].irq_flags = flags;
+    atomic64_fetch_or(WRITER, &state);
+    return true;
+}
+
+void nce_window_unlock_guest(void)
+{
+    unsigned cpu = raw_smp_processor_id();
+    BUG_ON(owners[cpu].depth != 1 || !(atomic64_read(&state) & (1ULL << cpu)));
+    owners[cpu].depth = 0;
+    release_writer();
+    /* Restoring through local_irq_restore can enter the scheduler on this
+     * Darwin signal stack. The normal return path will deliver pending IRQs. */
+    lkl_restore_guest_irq_flags(owners[cpu].irq_flags);
 }
 
 u64 nce_window_token(void)

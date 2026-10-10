@@ -761,7 +761,6 @@ unsigned long nce_process_setup(void)
     direct_fault = !fault_mode || strcmp(fault_mode, "0");
 #ifdef NCE_SMP
     REQUIRE(enter_window && leave_window && copy_guest && fault_guest);
-    direct_fault = false;
 #endif
     printf("{\"phase\":\"present_page_signal_restore\",\"enabled\":%s}\n", direct_fault ? "true" : "false");
     user_base = nce_memory_user_base();

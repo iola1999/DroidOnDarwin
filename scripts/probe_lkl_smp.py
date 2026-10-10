@@ -159,7 +159,7 @@ def main():
     if arguments.mmu:
         required |= {'linux_smp_mmu_access_boundaries', 'linux_smp_mmu_atomic_and_unmap',
                      'linux_smp_shared_window', 'linux_smp_distinct_windows',
-                     'linux_smp_data_mapping_without_stop'}
+                     'linux_smp_data_mapping_without_stop', 'linux_smp_guest_present_restore'}
     for iteration in range(3):
         for entry in ['probe', 'dispatch-probe']:
             prefix = f'{entry}-{iteration}'

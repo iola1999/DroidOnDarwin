@@ -10,6 +10,10 @@ void nce_window_lock(void);
 /* Stop guests before changing the installed window or its owning mm. */
 void nce_window_stop(void);
 void nce_window_unlock(void);
+/* Signal-stack access retains the caller's guest slot. Neither operation
+ * may schedule or dispatch pending Linux interrupts. */
+bool nce_window_try_lock_guest(void);
+void nce_window_unlock_guest(void);
 u64 nce_window_token(void);
 bool nce_window_try_enter(u64 token);
 bool nce_window_requested(void);
