@@ -1,0 +1,4575 @@
+{
+  "benchmark": {
+    "platform": "macos",
+    "driver_os": "macOS-27.0-arm64-arm-64bit-Mach-O",
+    "matrix": {
+      "configurations": [
+        {
+          "name": "nterp-mapping-diagnostic",
+          "parameters": {
+            "nterp": true,
+            "aot": false,
+            "performanceLogging": true
+          }
+        }
+      ],
+      "actions": [
+        {
+          "kind": "wait",
+          "milliseconds": 10000
+        },
+        {
+          "kind": "key",
+          "key": "home"
+        },
+        {
+          "kind": "swipe",
+          "x": 180,
+          "y": 560,
+          "endX": 180,
+          "endY": 120,
+          "milliseconds": 400
+        },
+        {
+          "kind": "wait",
+          "milliseconds": 5000
+        },
+        {
+          "kind": "key",
+          "key": "home"
+        }
+      ]
+    },
+    "runs": [
+      {
+        "runID": "A0E9D294-2389-4276-8350-F693B89D4318",
+        "configuration_name": "nterp-mapping-diagnostic",
+        "repeat": 0,
+        "request": {
+          "version": 1,
+          "runID": "A0E9D294-2389-4276-8350-F693B89D4318",
+          "deviceID": "493D13B6-2DC8-5F7A-8036-5BDFEC36FBC8",
+          "configuration": {
+            "sparseScan": true,
+            "fastBaseline": false,
+            "performanceLogging": true,
+            "aot": false,
+            "directFault": true,
+            "nterp": true,
+            "expandedJIT": false,
+            "diagnostics": false
+          },
+          "actions": [
+            {
+              "kind": "wait",
+              "milliseconds": 10000
+            },
+            {
+              "kind": "key",
+              "key": "home"
+            },
+            {
+              "kind": "swipe",
+              "x": 180,
+              "y": 560,
+              "endX": 180,
+              "endY": 120,
+              "milliseconds": 400
+            },
+            {
+              "kind": "wait",
+              "milliseconds": 5000
+            },
+            {
+              "kind": "key",
+              "key": "home"
+            }
+          ],
+          "timeoutSeconds": 600,
+          "memorySampling": true
+        },
+        "result": {
+          "buildID": "0.18.0-Mac-20261010-195829",
+          "configuration": {
+            "aot": false,
+            "diagnostics": false,
+            "directFault": true,
+            "expandedJIT": false,
+            "fastBaseline": false,
+            "nterp": true,
+            "performanceLogging": true,
+            "sparseScan": true
+          },
+          "deviceID": "493D13B6-2DC8-5F7A-8036-5BDFEC36FBC8",
+          "events": [
+            {
+              "elapsed_ms": 0.1127081923186779,
+              "event": "accepted",
+              "low_power_mode": false,
+              "thermal_state": 0
+            },
+            {
+              "elapsed_ms": 9.405124932527542,
+              "event": "preparing",
+              "low_power_mode": false,
+              "thermal_state": 0
+            },
+            {
+              "elapsed_ms": 10.945291491225362,
+              "event": "booting",
+              "low_power_mode": false,
+              "thermal_state": 0
+            },
+            {
+              "elapsed_ms": 281103.80541649647,
+              "event": "running",
+              "low_power_mode": false,
+              "thermal_state": 0
+            },
+            {
+              "elapsed_ms": 281104.96874991804,
+              "event": "ready_observed",
+              "low_power_mode": false,
+              "thermal_state": 0
+            },
+            {
+              "action": 0,
+              "elapsed_ms": 281106.0197914485,
+              "event": "action_started",
+              "low_power_mode": false,
+              "thermal_state": 0
+            },
+            {
+              "action": 0,
+              "elapsed_ms": 291182.09479167126,
+              "event": "action_submitted",
+              "low_power_mode": false,
+              "thermal_state": 0
+            },
+            {
+              "action": 1,
+              "elapsed_ms": 291187.49987496994,
+              "event": "action_started",
+              "low_power_mode": false,
+              "thermal_state": 0
+            },
+            {
+              "action": 1,
+              "elapsed_ms": 291191.3057914935,
+              "event": "action_submitted",
+              "low_power_mode": false,
+              "thermal_state": 0
+            },
+            {
+              "action": 2,
+              "elapsed_ms": 291193.8089164905,
+              "event": "action_started",
+              "low_power_mode": false,
+              "thermal_state": 0
+            },
+            {
+              "action": 2,
+              "elapsed_ms": 299643.228958128,
+              "event": "action_submitted",
+              "low_power_mode": false,
+              "thermal_state": 0
+            },
+            {
+              "action": 3,
+              "elapsed_ms": 299647.21233327873,
+              "event": "action_started",
+              "low_power_mode": false,
+              "thermal_state": 0
+            },
+            {
+              "action": 3,
+              "elapsed_ms": 304683.1670831889,
+              "event": "action_submitted",
+              "low_power_mode": false,
+              "thermal_state": 0
+            },
+            {
+              "action": 4,
+              "elapsed_ms": 304686.7556248326,
+              "event": "action_started",
+              "low_power_mode": false,
+              "thermal_state": 0
+            },
+            {
+              "action": 4,
+              "elapsed_ms": 304689.95179166086,
+              "event": "action_submitted",
+              "low_power_mode": false,
+              "thermal_state": 0
+            },
+            {
+              "elapsed_ms": 304693.0819998961,
+              "event": "actions_completed",
+              "low_power_mode": false,
+              "thermal_state": 0
+            },
+            {
+              "elapsed_ms": 304727.35370812006,
+              "event": "stopping",
+              "low_power_mode": false,
+              "thermal_state": 0
+            },
+            {
+              "elapsed_ms": 315461.9530416094,
+              "event": "completed",
+              "low_power_mode": false,
+              "thermal_state": 0
+            }
+          ],
+          "hardware": "arm64",
+          "host_ram_bytes": 274877906944,
+          "log": "session.log",
+          "memory": {
+            "boot_steps": {
+              "0": {
+                "attempts": 2,
+                "failures": 0,
+                "first_attempt_ms": 10.316333267837763,
+                "latest_attempt_ms": 1019.9307082220912,
+                "latest_success_ms": 1019.9307082220912,
+                "maximum_gap_ms": 1009.6143749542534,
+                "metrics": {
+                  "compressed": {
+                    "latest_bytes": 0,
+                    "mean_bytes": 0,
+                    "sampled_peak_bytes": 0,
+                    "samples": 2
+                  },
+                  "footprint": {
+                    "latest_bytes": 569395480,
+                    "mean_bytes": 301344436,
+                    "sampled_peak_bytes": 569395480,
+                    "samples": 2
+                  },
+                  "resident": {
+                    "latest_bytes": 351551488,
+                    "mean_bytes": 229384192,
+                    "sampled_peak_bytes": 351551488,
+                    "samples": 2
+                  },
+                  "virtual": {
+                    "latest_bytes": 508131622912,
+                    "mean_bytes": 504650219520,
+                    "sampled_peak_bytes": 508131622912,
+                    "samples": 2
+                  }
+                }
+              },
+              "2": {
+                "attempts": 91,
+                "failures": 0,
+                "first_attempt_ms": 2008.881124900654,
+                "latest_attempt_ms": 93494.43849991076,
+                "latest_success_ms": 93494.43849991076,
+                "maximum_gap_ms": 1101.540333358571,
+                "metrics": {
+                  "compressed": {
+                    "latest_bytes": 0,
+                    "mean_bytes": 0,
+                    "sampled_peak_bytes": 0,
+                    "samples": 91
+                  },
+                  "footprint": {
+                    "latest_bytes": 1758958224,
+                    "mean_bytes": 1261692527.3846154,
+                    "sampled_peak_bytes": 1924911880,
+                    "samples": 91
+                  },
+                  "resident": {
+                    "latest_bytes": 1498447872,
+                    "mean_bytes": 1295148538.3736265,
+                    "sampled_peak_bytes": 1498447872,
+                    "samples": 91
+                  },
+                  "virtual": {
+                    "latest_bytes": 508609200128,
+                    "mean_bytes": 508482068209.9341,
+                    "sampled_peak_bytes": 508609200128,
+                    "samples": 91
+                  }
+                }
+              },
+              "3": {
+                "attempts": 180,
+                "failures": 0,
+                "first_attempt_ms": 94088.90737500042,
+                "latest_attempt_ms": 280850.4321249202,
+                "latest_success_ms": 280850.4321249202,
+                "maximum_gap_ms": 1102.512374985963,
+                "metrics": {
+                  "compressed": {
+                    "latest_bytes": 0,
+                    "mean_bytes": 0,
+                    "sampled_peak_bytes": 0,
+                    "samples": 180
+                  },
+                  "footprint": {
+                    "latest_bytes": 2001260408,
+                    "mean_bytes": 1588508235.1111112,
+                    "sampled_peak_bytes": 2073317936,
+                    "samples": 180
+                  },
+                  "resident": {
+                    "latest_bytes": 1561444352,
+                    "mean_bytes": 1549959259.0222223,
+                    "sampled_peak_bytes": 1600028672,
+                    "samples": 180
+                  },
+                  "virtual": {
+                    "latest_bytes": 508721856512,
+                    "mean_bytes": 508666264416.7111,
+                    "sampled_peak_bytes": 508721856512,
+                    "samples": 180
+                  }
+                }
+              },
+              "4": {
+                "attempts": 1,
+                "failures": 0,
+                "first_attempt_ms": 281098.95229153335,
+                "latest_attempt_ms": 281098.95229153335,
+                "latest_success_ms": 281098.95229153335,
+                "maximum_gap_ms": 0,
+                "metrics": {
+                  "compressed": {
+                    "latest_bytes": 0,
+                    "mean_bytes": 0,
+                    "sampled_peak_bytes": 0,
+                    "samples": 1
+                  },
+                  "footprint": {
+                    "latest_bytes": 1815859472,
+                    "mean_bytes": 1815859472,
+                    "sampled_peak_bytes": 1815859472,
+                    "samples": 1
+                  },
+                  "resident": {
+                    "latest_bytes": 1560313856,
+                    "mean_bytes": 1560313856,
+                    "sampled_peak_bytes": 1560313856,
+                    "samples": 1
+                  },
+                  "virtual": {
+                    "latest_bytes": 508719415296,
+                    "mean_bytes": 508719415296,
+                    "sampled_peak_bytes": 508719415296,
+                    "samples": 1
+                  }
+                }
+              }
+            },
+            "enabled": true,
+            "mean": "arithmetic mean of successful periodic and boundary samples",
+            "overall": {
+              "attempts": 313,
+              "failures": 0,
+              "first_attempt_ms": 0.012499978765845299,
+              "latest_attempt_ms": 315461.9130832143,
+              "latest_success_ms": 315461.9130832143,
+              "maximum_gap_ms": 1102.512374985963,
+              "metrics": {
+                "compressed": {
+                  "latest_bytes": 0,
+                  "mean_bytes": 0,
+                  "sampled_peak_bytes": 0,
+                  "samples": 313
+                },
+                "footprint": {
+                  "latest_bytes": 402507264,
+                  "mean_bytes": 1475067795.2971246,
+                  "sampled_peak_bytes": 2073317936,
+                  "samples": 313
+                },
+                "resident": {
+                  "latest_bytes": 184287232,
+                  "mean_bytes": 1450727352.0255592,
+                  "sampled_peak_bytes": 1605943296,
+                  "samples": 313
+                },
+                "virtual": {
+                  "latest_bytes": 501260795904,
+                  "mean_bytes": 508495473549.4952,
+                  "sampled_peak_bytes": 508730933248,
+                  "samples": 313
+                }
+              }
+            },
+            "peak_scope": "sampled peaks cover each observed phase; kernel peaks cover process lifetime",
+            "phases": {
+              "booting": {
+                "attempts": 274,
+                "failures": 0,
+                "first_attempt_ms": 10.316333267837763,
+                "latest_attempt_ms": 281098.95229153335,
+                "latest_success_ms": 281098.95229153335,
+                "maximum_gap_ms": 1102.512374985963,
+                "metrics": {
+                  "compressed": {
+                    "latest_bytes": 0,
+                    "mean_bytes": 0,
+                    "sampled_peak_bytes": 0,
+                    "samples": 274
+                  },
+                  "footprint": {
+                    "latest_bytes": 1815859472,
+                    "mean_bytes": 1471401644.729927,
+                    "sampled_peak_bytes": 2073317936,
+                    "samples": 274
+                  },
+                  "resident": {
+                    "latest_bytes": 1560313856,
+                    "mean_bytes": 1455730897.2846715,
+                    "sampled_peak_bytes": 1600028672,
+                    "samples": 274
+                  },
+                  "virtual": {
+                    "latest_bytes": 508719415296,
+                    "mean_bytes": 508575969549.0803,
+                    "sampled_peak_bytes": 508721856512,
+                    "samples": 274
+                  }
+                }
+              },
+              "preparing": {
+                "attempts": 2,
+                "failures": 0,
+                "first_attempt_ms": 0.012499978765845299,
+                "latest_attempt_ms": 1.0390831157565117,
+                "latest_success_ms": 1.0390831157565117,
+                "maximum_gap_ms": 1.0265831369906664,
+                "metrics": {
+                  "compressed": {
+                    "latest_bytes": 0,
+                    "mean_bytes": 0,
+                    "sampled_peak_bytes": 0,
+                    "samples": 2
+                  },
+                  "footprint": {
+                    "latest_bytes": 32834640,
+                    "mean_bytes": 32785488,
+                    "sampled_peak_bytes": 32834640,
+                    "samples": 2
+                  },
+                  "resident": {
+                    "latest_bytes": 106053632,
+                    "mean_bytes": 105955328,
+                    "sampled_peak_bytes": 106053632,
+                    "samples": 2
+                  },
+                  "virtual": {
+                    "latest_bytes": 501169340416,
+                    "mean_bytes": 501169340416,
+                    "sampled_peak_bytes": 501169340416,
+                    "samples": 2
+                  }
+                }
+              },
+              "running": {
+                "attempts": 23,
+                "failures": 0,
+                "first_attempt_ms": 281099.0205416456,
+                "latest_attempt_ms": 303806.6564165056,
+                "latest_success_ms": 303806.6564165056,
+                "maximum_gap_ms": 1096.548541681841,
+                "metrics": {
+                  "compressed": {
+                    "latest_bytes": 0,
+                    "mean_bytes": 0,
+                    "sampled_peak_bytes": 0,
+                    "samples": 23
+                  },
+                  "footprint": {
+                    "latest_bytes": 1501417672,
+                    "mean_bytes": 1642999926.2608695,
+                    "sampled_peak_bytes": 2052297816,
+                    "samples": 23
+                  },
+                  "resident": {
+                    "latest_bytes": 1555955712,
+                    "mean_bytes": 1562825594.4347825,
+                    "sampled_peak_bytes": 1605943296,
+                    "samples": 23
+                  },
+                  "virtual": {
+                    "latest_bytes": 508722577408,
+                    "mean_bytes": 508723661601.3913,
+                    "sampled_peak_bytes": 508724871168,
+                    "samples": 23
+                  }
+                }
+              },
+              "stopped": {
+                "attempts": 2,
+                "failures": 0,
+                "first_attempt_ms": 315461.6872081533,
+                "latest_attempt_ms": 315461.9130832143,
+                "latest_success_ms": 315461.9130832143,
+                "maximum_gap_ms": 0.22587506100535393,
+                "metrics": {
+                  "compressed": {
+                    "latest_bytes": 0,
+                    "mean_bytes": 0,
+                    "sampled_peak_bytes": 0,
+                    "samples": 2
+                  },
+                  "footprint": {
+                    "latest_bytes": 402507264,
+                    "mean_bytes": 402507264,
+                    "sampled_peak_bytes": 402507264,
+                    "samples": 2
+                  },
+                  "resident": {
+                    "latest_bytes": 184287232,
+                    "mean_bytes": 184287232,
+                    "sampled_peak_bytes": 184287232,
+                    "samples": 2
+                  },
+                  "virtual": {
+                    "latest_bytes": 501260795904,
+                    "mean_bytes": 501260795904,
+                    "sampled_peak_bytes": 501260795904,
+                    "samples": 2
+                  }
+                }
+              },
+              "stopping": {
+                "attempts": 12,
+                "failures": 0,
+                "first_attempt_ms": 304696.69237500057,
+                "latest_attempt_ms": 315234.63483317755,
+                "latest_success_ms": 315234.63483317755,
+                "maximum_gap_ms": 1082.4596667662263,
+                "metrics": {
+                  "compressed": {
+                    "latest_bytes": 0,
+                    "mean_bytes": 0,
+                    "sampled_peak_bytes": 0,
+                    "samples": 12
+                  },
+                  "footprint": {
+                    "latest_bytes": 1351847632,
+                    "mean_bytes": 1656048788.6666667,
+                    "sampled_peak_bytes": 2049396576,
+                    "samples": 12
+                  },
+                  "resident": {
+                    "latest_bytes": 1401618432,
+                    "mean_bytes": 1556826794.6666667,
+                    "sampled_peak_bytes": 1593573376,
+                    "samples": 12
+                  },
+                  "virtual": {
+                    "latest_bytes": 508359213056,
+                    "mean_bytes": 508646922922.6667,
+                    "sampled_peak_bytes": 508730933248,
+                    "samples": 12
+                  }
+                }
+              }
+            },
+            "pid": 74370,
+            "process_lifetime_peak_bytes": {
+              "footprint": 2101531832,
+              "resident": 1621884928
+            },
+            "query_max_us": 1412.2501015663147,
+            "query_total_us": 50603.62792573869,
+            "series": "memory.jsonl",
+            "source": "task_info(TASK_VM_INFO), current host process",
+            "target_interval_ms": 1000
+          },
+          "os": "Version 27.0 (Build 26A428)",
+          "resources": {
+            "Runtime.json": {
+              "build": {
+                "art_aot": {
+                  "art_inputs": {
+                    "builder": "7c31f3af2dad7047e4c54c2623f10eead222f8e88e9d95465e9408b0cbfd60e9",
+                    "experiments/native-linux/art/android16.patch": "342182ccf23877d0be817d5b3df3828249732e450e15abda33e700ec02c5bf1e",
+                    "experiments/native-linux/art/compiler-profile.patch": "7a62ddd525c76c9744bc48689255913e06b4695332f601e10436d4e7fd559609",
+                    "experiments/native-linux/art/dex2oat-main.cc": "d700578d5277c1a040e09c6aa6967e088318be35c12546f1bd3b9f95459d4b91",
+                    "experiments/native-linux/art/expanded-jit.patch": "3cb1b6b0b115b8687d81c9340283093422fa3005768143a6ddd86063f843331a",
+                    "experiments/native-linux/art/fast-baseline.patch": "47c55e913eeb1c62c698a7f6838dc2533e24ddd4307ab40c3650b261aa5031c0",
+                    "experiments/native-linux/art/jit_control.cc": "358f458710c3e59237ad2caa19dce9465d3c697aec1cfc31a9dbdf330df50b65",
+                    "experiments/native-linux/art/nterp.patch": "5623b75f44d6e51647966b660de4d6410308b982cda1c9a4d7c843bcea7f8bcc",
+                    "experiments/native-linux/art/offline-compiler.patch": "bbab5fbab3d21958d952a94749093dd3322f9ad20b7ceba679fbeec8554ba1e8",
+                    "experiments/native-linux/art/reference_heap.c": "a10220f756efd4891930521667bcbf6e86b9e6a3d646d910c934884f57782be2",
+                    "experiments/native-linux/art/reference_heap.h": "c814b35b45c201f3893f3e8739f0ea5a0d309facbf70a9ba1f2fd8bb9ddaf71f",
+                    "experiments/native-linux/art/relocatable-code.patch": "9168fe720e7e1d728ff3b67c37e24b8f0954a70d7fc81a1de15dd268024e6b05",
+                    "experiments/native-linux/art/sources.json": "a66d085c58d109c16e99205fe83514cf5a41a60ed372fd924e374007b947f82b",
+                    "layout": "9ecb6dc474edfc516284effcbd1999ba445ba88372233636391771a0715deaa5",
+                    "libc": "4174a2a3908049c19d176cba2d61f61f46369f173a41ed609f445b3e4e2e81ee",
+                    "ndk_libcxx_config": "e7de7bd0b73df77a31d5be96bec3498851cda33ad51b66c654cb51d3e078b6eb",
+                    "offline_compiler": true,
+                    "runtime": "4b1a45b0ee51725c68f1c29765958d0b60b45a5f2325bedfc61764cd49232249"
+                  },
+                  "compiler_heap_bases": [
+                    482593538048,
+                    482662776832
+                  ],
+                  "files": {
+                    "Launcher3QuickStep.odex": "5d58b6cd16e671df0d8bae824e2dee1b26a8372a2877fc240113f46546f75181",
+                    "Launcher3QuickStep.vdex": "213e1030dd57cc364f454615474b760e4eb9016784ade1bc9677e91c54799e13",
+                    "SystemUIGoogle.odex": "5aec712fd27a6a5fb5de6d010f4d10d4d7247b73df0eb9afaf5df847c52f4ec8",
+                    "SystemUIGoogle.vdex": "141e67946d0b97c2f0e207243a6d82048c2d3140f63c750edbd1878caac8c409"
+                  },
+                  "format": 1,
+                  "plan": {
+                    "compiler_settings": {
+                      "expanded_jit": true,
+                      "fast_baseline": false,
+                      "filter": "speed",
+                      "inline_max_code_units": 0,
+                      "max_heap_mib": 256,
+                      "nterp": true
+                    },
+                    "input_files": {
+                      "/apex/com.android.adservices/etc/classpaths/bootclasspath.pb": "2855723bc547408e8c680412d6addf1ba7737cc46dc5518a30b6055c6858acee",
+                      "/apex/com.android.adservices/etc/classpaths/systemserverclasspath.pb": "619c6ff9e9b6cafc0ad4a782f6043153f0bc019bc5227a23167b0d78c8ed9195",
+                      "/apex/com.android.adservices/javalib/framework-adservices.jar": "d7992c2e7328dfc1530e1e2365781635a6c5fbc2037b9f9909f402d47d573b6a",
+                      "/apex/com.android.adservices/javalib/framework-sdksandbox.jar": "836610370be7dcd1c44aa5d31e254e27a54a326b0b2610e0c3e88eeedfee79c7",
+                      "/apex/com.android.adservices/javalib/service-adservices.jar": "e22001c3c4bcbcf9b6fa15ddf8c3ac7610844dd78fe222b3c962e43c6ef905b1",
+                      "/apex/com.android.adservices/javalib/service-sdksandbox.jar": "fcf08c03f20ddcf36100f773eca33b12cd07f76a82387c1d90fedae53660f4af",
+                      "/apex/com.android.appsearch/etc/classpaths/bootclasspath.pb": "efcb96fe921e18008f46995c3af1bfbea0fdd6ea22a4a09efb2ec9127df1e360",
+                      "/apex/com.android.appsearch/etc/classpaths/systemserverclasspath.pb": "0b558e82571f7c858baa78af9eccc24c480fe95c56e41032f81d9c8fffd3a5b8",
+                      "/apex/com.android.appsearch/javalib/framework-appsearch.jar": "47e9b578ec2c2c9ae11344399538243f0c0689188023eedc9387da5b135981b9",
+                      "/apex/com.android.appsearch/javalib/service-appsearch.jar": "16f634ce302beca7e3e58de3c6deec92829d9fc69cbab03935b9fc0d416840dd",
+                      "/apex/com.android.art/etc/classpaths/bootclasspath.pb": "a18712f5be9a8d29a1a1a8b5914abcf672b83923025c50af891fdfbe3f439bf9",
+                      "/apex/com.android.art/etc/classpaths/systemserverclasspath.pb": "08275fa9f8a8e69bdc71eb2821c7940df15a7d3521c1d5463935ca50fc233674",
+                      "/apex/com.android.art/javalib/apache-xml.jar": "22c920c95d866ffd90b8e0cd93d1069199ff3973dcbb2a66dff0074dee721cc0",
+                      "/apex/com.android.art/javalib/bouncycastle.jar": "d81b892d71b1090263fc3b5c0b7c8140d04391e4ef4e5acf51af452939542a42",
+                      "/apex/com.android.art/javalib/core-libart.jar": "199dca2c6e183b6e6c6106984cf04927d14a4882d96c7deb47de13f5d0724b0c",
+                      "/apex/com.android.art/javalib/core-oj.jar": "56c90b6040e16f058cde9e892cb698f81d074a850c6582673bed1ddd60b8f7ff",
+                      "/apex/com.android.art/javalib/okhttp.jar": "5d97195ed09ebb6d067f4d57dd962c2c896a411c5e82dc0179f529ecbc08d3f7",
+                      "/apex/com.android.art/javalib/service-art.jar": "a88fb039ee88877404134ab6aaa839ce4186721a48fdd28d8f8906e857605a01",
+                      "/apex/com.android.bt/etc/classpaths/bootclasspath.pb": "d48b3fec5e2f5c99f66c47590b9672e3fa4ea05a0a4c719c3cf43fa1dc9bbe26",
+                      "/apex/com.android.bt/etc/classpaths/systemserverclasspath.pb": "50a26a755941fc689d4563dca0f704b18fbbf8db89511af73d5e24f224c5fe36",
+                      "/apex/com.android.bt/javalib/framework-bluetooth.jar": "ac8d2a67f4b5b024d4e525f26a227f73d42c10c46db4b7b8e0337be80c4fcb33",
+                      "/apex/com.android.bt/javalib/service-bluetooth.jar": "18a58621fcb0ed5a80c4d6cf84483955cb667cc0c359b90af5ffc7c500d99c38",
+                      "/apex/com.android.configinfrastructure/etc/classpaths/bootclasspath.pb": "755e36ef0e52e94c155e688ef3bc889ef1983400ac382c036dcc5f30b48b9141",
+                      "/apex/com.android.configinfrastructure/etc/classpaths/systemserverclasspath.pb": "b2eab09e90ea13a6478bd3e8cedfc37ad051b8444cbb8bfb51a11819d2ed2a1c",
+                      "/apex/com.android.configinfrastructure/javalib/framework-configinfrastructure.jar": "2cbe45d5b54c40c29b465c566baa8cb731235ca5a5cdf9d97ef2edb01a97633c",
+                      "/apex/com.android.configinfrastructure/javalib/service-configinfrastructure.jar": "f1ec91cbb5a70f6a0916cd7fe9f50b40c33e117be900aa3086ae81c042aba274",
+                      "/apex/com.android.conscrypt/etc/classpaths/bootclasspath.pb": "f6c16d2dd91452d2a8c148546c7fb796274d4e794f751d86694b561ef443efc0",
+                      "/apex/com.android.conscrypt/javalib/conscrypt.jar": "cf2025886539841b5b8a4691a5f8f4831e7aa1304268ea8d7f481f36b0b49823",
+                      "/apex/com.android.crashrecovery/etc/classpaths/bootclasspath.pb": "01a79f0e4fdbfbf1749640110bc24e22b576ca26d64722bd1cd7763ad8bda830",
+                      "/apex/com.android.crashrecovery/etc/classpaths/systemserverclasspath.pb": "4ecd5baa6668ed63bb62f67f6c67bc395ac36b0c0060881d148bd6d3f1af8e7d",
+                      "/apex/com.android.crashrecovery/javalib/framework-crashrecovery.jar": "9d5e1208f27f9a1ca2a0fedbe859a17172fb22ce30fc231e92be5fc80f09b7a2",
+                      "/apex/com.android.crashrecovery/javalib/service-crashrecovery.jar": "80ddf870ee5d9a0ccd4f5f7ee1eef775e4e89b3b27e4d717c3e41fc01e1d5197",
+                      "/apex/com.android.devicelock/etc/classpaths/bootclasspath.pb": "7b70736a5abd725581458c41c0dcb6c551de839b8b221b4c6f1776f03495355b",
+                      "/apex/com.android.devicelock/etc/classpaths/systemserverclasspath.pb": "d16188ef20351e00880489e417e8bf21416becf451d95bccde3d9b60df008050",
+                      "/apex/com.android.devicelock/javalib/framework-devicelock.jar": "ecf13cdad05ef46f5ef44414783874aa06bd677558a4a07db46b77a0ebf20383",
+                      "/apex/com.android.devicelock/javalib/service-devicelock.jar": "68ef973ccde537a402b86b5681460456a63daeb08fb72dbb1a6de498060cc51e",
+                      "/apex/com.android.extservices/javalib/android.ext.adservices.jar": "9acc86a5c20ea114ab721427481edea9d8784ad89645ca8104254c1012d86fbf",
+                      "/apex/com.android.healthfitness/etc/classpaths/bootclasspath.pb": "b1ca4b43d0b5f122b7474abd7a62bdd19e0429b49fa4cd6710e9281674b7b68a",
+                      "/apex/com.android.healthfitness/etc/classpaths/systemserverclasspath.pb": "645d43904f8093656818b7b6313d2a19813769d306466fefb0b08f7a1a807683",
+                      "/apex/com.android.healthfitness/javalib/framework-healthfitness.jar": "f3e3898293818a10bdc0932a825c29b7108cbd93bbeafc66dca5483299081bf8",
+                      "/apex/com.android.healthfitness/javalib/service-healthfitness.jar": "e612ae1eca7d564f19dab2b91a8c84d5a527ee7f6f02b168c0323601aa569846",
+                      "/apex/com.android.i18n/javalib/core-icu4j.jar": "f649d9357d00e94dc7820cc41bea24125b8410e00c3e33ee9e7c0dba0ad9047c",
+                      "/apex/com.android.ipsec/etc/classpaths/bootclasspath.pb": "9e4cd4039a7586d2a723c9489d52d82e9ddc2c7979fc5bcf8f69ae8af4e84d23",
+                      "/apex/com.android.ipsec/javalib/android.net.ipsec.ike.jar": "a5779ecb69889b516178c211398ebe3ae554fe5e606b02b7bfdadd5bcef24c44",
+                      "/apex/com.android.media/etc/classpaths/bootclasspath.pb": "f4fbee71fce7eb12a22164c7ee02a1f5aab6b41b249e32b37bc4dc6265c5fc6c",
+                      "/apex/com.android.media/etc/classpaths/systemserverclasspath.pb": "21d41e865c4911c459824a5a58b518ce53d3ba12852917381c4b455dc24e4339",
+                      "/apex/com.android.media/javalib/service-media-s.jar": "2b4b787993ce9f16ad56ef5a557646a1c5c6c8010f89b5e5aa76eca6ff1d3a3d",
+                      "/apex/com.android.media/javalib/updatable-media.jar": "30ca735fba02b44a1b788c2d9844d5c1d36eaeb7e09c75b5a090be45a7b300d2",
+                      "/apex/com.android.mediaprovider/etc/classpaths/bootclasspath.pb": "2d0509b80a043dd5ae578b272a30dc02c2f5da29a75038c2041ce29463539b47",
+                      "/apex/com.android.mediaprovider/javalib/framework-mediaprovider.jar": "d875177f697a1ca5d239525de9276b66dc66b00ab906891d22e1abb8dd1770b0",
+                      "/apex/com.android.mediaprovider/javalib/framework-pdf-v.jar": "59df0affb1ddf51ebd2a36fbbf10a1be93ba0a5414709b1bb93a058c8134693b",
+                      "/apex/com.android.mediaprovider/javalib/framework-pdf.jar": "02b98dc15b513cb756bf26893d9d9e687fb8d44987977974bda5e130e89bd19c",
+                      "/apex/com.android.mediaprovider/javalib/framework-photopicker.jar": "1cbebc7aa06c8a02762218083c8cc7b6873f6e2d301a8dfe5bb4275b35843b48",
+                      "/apex/com.android.nfcservices/etc/classpaths/bootclasspath.pb": "5620195cccb2cd5463f92eaf40e5dec26c9baf557953c6f5c3181c9f800ab083",
+                      "/apex/com.android.nfcservices/javalib/framework-nfc.jar": "a00592c6a3f91db4335420588c8fdaf88860a110191f4729655ae9e9f0e9242b",
+                      "/apex/com.android.ondevicepersonalization/etc/classpaths/bootclasspath.pb": "c2710b7cba9745ad894822937e0ed651b92121bd3eb4171dbb372ea0dd88f71f",
+                      "/apex/com.android.ondevicepersonalization/etc/classpaths/systemserverclasspath.pb": "a75ed177b4dd95d5da5bf2166e5d0a1a9ac79ec0650349f6449064807bc3a091",
+                      "/apex/com.android.ondevicepersonalization/javalib/framework-ondevicepersonalization.jar": "aa064525b9ffbb48c318369c683d52b12add46adceb9a5e6c162e9ccd1ae5a63",
+                      "/apex/com.android.ondevicepersonalization/javalib/service-ondevicepersonalization.jar": "a1ea9b94dad33cb25163c5fcce4c8f3fa8d368bcd5d064bbf3f7478c881a09ca",
+                      "/apex/com.android.os.statsd/etc/classpaths/bootclasspath.pb": "1429938d3f67c92765e8e8ee6e2e43866d27d2564fc9735d8daa8a83ea6b87d6",
+                      "/apex/com.android.os.statsd/etc/classpaths/systemserverclasspath.pb": "768a981e9b42b32d43d339b77fd27aa7630cb4f5e9d48536f34c01d1735c6d7f",
+                      "/apex/com.android.os.statsd/javalib/framework-statsd.jar": "e69924e3e480d2e7c3ec7a76acc43927fa5dd44af9c716e2d6ae70bfa41f0bf0",
+                      "/apex/com.android.os.statsd/javalib/service-statsd.jar": "27d6fbeaaa7c8b04b3f953af7c8b5db5ad8b57dd0d658c1c68b3bb61cc01fdd0",
+                      "/apex/com.android.permission/etc/classpaths/bootclasspath.pb": "87ca50fa5f72daec09d29584e168ea1b234f2d1929cf0eccb4fd1a002e41310e",
+                      "/apex/com.android.permission/etc/classpaths/systemserverclasspath.pb": "12ef4caeb3836448fd3a733b73105400de907483b3882a3cecc19e4015492ef3",
+                      "/apex/com.android.permission/javalib/framework-permission-s.jar": "23d2ef7745752276ad3f031975047959abaa790c11d3640bb62c2eccdb61c399",
+                      "/apex/com.android.permission/javalib/framework-permission.jar": "961ade8f7a9900237a6340a4050d98667e8326a5250d3c3f307e31ef876e301e",
+                      "/apex/com.android.permission/javalib/service-permission.jar": "b83a503ec11e94621722d82a900f5c069bff54ab9c94144759560e4148875b71",
+                      "/apex/com.android.profiling/etc/classpaths/bootclasspath.pb": "c05fd5c5eea9abf7e0eb213f57a356e069e0a4022121394950ea5ae8dd6da388",
+                      "/apex/com.android.profiling/etc/classpaths/systemserverclasspath.pb": "d3b759885852fef79e4895886ea30919441757a3112fb94bd44223956d6f99f7",
+                      "/apex/com.android.profiling/javalib/framework-profiling.jar": "0a929edaf3f033820bc614225daa228d918f659e8a9b4b7898f140851652fa10",
+                      "/apex/com.android.profiling/javalib/service-profiling.jar": "199a85cbab63d526579a5062f82cfbbddbe8c5cdbb3dd9580ecae2b77a8474cf",
+                      "/apex/com.android.scheduling/etc/classpaths/bootclasspath.pb": "0c0af8dadf37e87822015e68594916d0956bf6d90c72b70318605b880dba5064",
+                      "/apex/com.android.scheduling/etc/classpaths/systemserverclasspath.pb": "0d278ea6d37efa0a928948d44f0361173fbd57b90ad4d1dead2d343d63c85d4a",
+                      "/apex/com.android.scheduling/javalib/framework-scheduling.jar": "fd3c44d1aecc0da95b7dc2104c775a27895a38370c3feab64bbf09006e3f8329",
+                      "/apex/com.android.scheduling/javalib/service-scheduling.jar": "2552d50255e209cc246367294444c11f9800bed6498dd6a36df42fce3a5589bb",
+                      "/apex/com.android.sdkext/etc/classpaths/bootclasspath.pb": "68cce823a18fbfc2d81a8b7c98a874f1bfd4bc9414981260986d280bc6afa924",
+                      "/apex/com.android.sdkext/javalib/framework-sdkextensions.jar": "5103ea585885072b91592c0ec43474ef1e2a53f2aebc3d369b94e2d388bd9969",
+                      "/apex/com.android.tethering/etc/classpaths/bootclasspath.pb": "9c61dc38515694f3b74e5b10d929496a14166a500b2dd2347d9e33b7b8627be0",
+                      "/apex/com.android.tethering/etc/classpaths/systemserverclasspath.pb": "7ce69273b096935598617640caa4d4d8d79cf90bc158fa0af9e6f44df18124ce",
+                      "/apex/com.android.tethering/javalib/framework-connectivity-b.jar": "34508b3987d2eefbb48c932918fbd1e639ac9a2f20e598ae5d2b3bd3d458fc41",
+                      "/apex/com.android.tethering/javalib/framework-connectivity-t.jar": "ab453e3aebdf815023510312567254beba38e67959de211bd532db04ee4fc5f9",
+                      "/apex/com.android.tethering/javalib/framework-connectivity.jar": "00cde56178229bdbe58c2d59e7c2fdc99b6f630773d347923ed1a7535f8dac32",
+                      "/apex/com.android.tethering/javalib/framework-tethering.jar": "89e0bdbea4b1d0ab5a1822c944c2ad9e87fb8028cf4c202fd0d801210d47b4f7",
+                      "/apex/com.android.tethering/javalib/service-connectivity.jar": "a70367718417a2447dac6607dbf7b628f39a48db7adc0414644b4e97fda40f74",
+                      "/apex/com.android.uwb/etc/classpaths/bootclasspath.pb": "23f983ead22b173d554b6d6c7d5cd0d7bee2cdf78cb724dafa442759bb883350",
+                      "/apex/com.android.uwb/etc/classpaths/systemserverclasspath.pb": "e2df91b4e310dfff1b460ecc4174c4a5c577bffe18c75553ee5f9e0624a6fa5c",
+                      "/apex/com.android.uwb/javalib/framework-ranging.jar": "1eea58d07c668fb77a6cec5100db8e0aa3a7a2c08810db4ac9965cd6c4fee677",
+                      "/apex/com.android.uwb/javalib/framework-uwb.jar": "ad1d442d7ba4153d400ae1b825f25ee10f7de604d32a0df69ec8761427c8457c",
+                      "/apex/com.android.uwb/javalib/service-ranging.jar": "2960d2681e4998d20c9f87e449a97c2d5f8abcf45061ef75a1e8d091dee1a97b",
+                      "/apex/com.android.uwb/javalib/service-uwb.jar": "6c99e23118c3d318f084735c5251289164c46d7c67ee9be95acd02d697f28822",
+                      "/apex/com.android.virt/etc/classpaths/bootclasspath.pb": "2237aa8713b8cbc4028e6d08395380de06e8ef675a32a389c0c73c138c15ff78",
+                      "/apex/com.android.virt/etc/classpaths/systemserverclasspath.pb": "a4dd4caa56d6ed12bd8dbc6b14363fb9263d3f309720124371c7b80d9ad7a211",
+                      "/apex/com.android.virt/javalib/framework-virtualization.jar": "572294c52b01be5f3e1fca2be8e71f1ae0841e5754f5a5cfed00144b0b5366a7",
+                      "/apex/com.android.virt/javalib/service-virtualization.jar": "d75d6da087f939ea4b22e2764192cf03a614c628b8e3b9d7a6e2d29d3d9a1eb8",
+                      "/apex/com.android.wifi/etc/classpaths/bootclasspath.pb": "b35a407b1d8c0b0ff04c709d58431175eaec8943cc78090ac7792b4811dda7ca",
+                      "/apex/com.android.wifi/etc/classpaths/systemserverclasspath.pb": "0ca623436dbd6140425f37155deb1037c48b2519639ae456ab9b772e1a7211b9",
+                      "/apex/com.android.wifi/javalib/framework-wifi.jar": "2144c6477592dfa1c18fd4dc667f99780eb7e79f6b2544aed8685897f27d344e",
+                      "/apex/com.android.wifi/javalib/service-wifi.jar": "14de13cce2f134962762b05d0cd70f9da12aaf42758c32304cfe119a17341b10",
+                      "/data/nce/NceWorkload.dex": "449cf8dabec3e4869093cf7915672e78f6e0aa6ac5b6d3bd15467538dadb939f",
+                      "/system_ext/framework/androidx.window.extensions.jar": "99b5cca34fdb016a9f8e24f4cd82e68f23588b281242e425135ebe079f232546",
+                      "/system_ext/framework/androidx.window.sidecar.jar": "8f004266022edcf9b0afb7feb510568a675feaf8dbcdb290f1817f3ec071c4f4",
+                      "/system_ext/priv-app/Launcher3QuickStep/Launcher3QuickStep.apk": "6cc60c3bc96317097579445d5b71d7d2604d68a3163025e2f121367ed3dc0f8f",
+                      "/system_ext/priv-app/SystemUIGoogle/SystemUIGoogle.apk": "a895f88ae0539d9950a74e49f0471ca81237337f0b31d6eb5f4fe29e814d14f5",
+                      "/system/etc/classpaths/bootclasspath.pb": "da823fff03c9f98031372ff1699f7916c13a12166b946b6ad8a95423ffcea03f",
+                      "/system/etc/classpaths/systemserverclasspath.pb": "4c93144d7ee0d12a19dd9ffbdebe5a4cd9e816ccf401225b8ad378a91dddc494",
+                      "/system/framework/android.hidl.base-V1.0-java.jar": "54f41b1fb1a45174c930cc503673ac633e740b7086ccce3d95b63b7f39015a99",
+                      "/system/framework/android.hidl.manager-V1.0-java.jar": "769ba2928dd78f765ce4b5ded54f8d93652368ac458956010159d3e162e42d10",
+                      "/system/framework/android.test.base.jar": "178e952ca5753345f0eb6b32e2727aa1ee7f7b35caa8cb89e08fdf08c45ee597",
+                      "/system/framework/android.test.mock.jar": "73cb23d3539136ec62869bdc44306b0c95f32498315f11502ab887d8f1ff9530",
+                      "/system/framework/android.test.runner.jar": "b99c1ad8b79ab9aff340c207895b86b9f4e13849beaa311492c84b91a06e63c6",
+                      "/system/framework/com.android.future.usb.accessory.jar": "44619b6ca41aa3ed6f17fd2f3a75342f6d70a9cd29e05f07313961b7719687d6",
+                      "/system/framework/com.android.location.provider.jar": "f373528e52dde447fab2a03fda942a7d211673003947022e07e507b90b05ea4d",
+                      "/system/framework/com.android.media.remotedisplay.jar": "52826823b79d5f8aa79378c5d002f53c584ffa523f50ec1762da5057e0107510",
+                      "/system/framework/com.android.mediadrm.signer.jar": "f4d9c7cb94bacce65e12fc5d261cd5ce3fa33dcd9942f3a927dbd0f665bfa6e7",
+                      "/system/framework/com.android.nfc_extras.jar": "2666ec5ea5bf8a3fc8c4fad16d51102487af4f11c662f25e49c4bea52ec1a893",
+                      "/system/framework/ext.jar": "bc1e9384928039c28a8ea76cb070683518d51368c856f265bf310cdda736f8b2",
+                      "/system/framework/framework-graphics.jar": "9024e969f63ed12ff310e0d292daa659648cf969d9ca680ee3f8bc7ea11b3dce",
+                      "/system/framework/framework-location.jar": "8ecdcc2f4e51b851a0e0a2d4b13ce4187d34834b800ae24c510c620d2cb5e50f",
+                      "/system/framework/framework-ondeviceintelligence-platform.jar": "ce433a6fb6b66f25d3bbd4f2edb981aa308cae40d777c56bfb559759f6f5078e",
+                      "/system/framework/framework.jar": "9430cd45f370bc95b5cdab0274bb8e885ae163660ba9dd7cd7ed4847b635fed0",
+                      "/system/framework/ims-common.jar": "2b22a545ee84dbbc2af08b991aa44cc76ebee205407bb8e75a9c666ee8c90742",
+                      "/system/framework/javax.obex.jar": "e0a8c5f2f4a70cbaee8f0714999f21fd7f1fbd56aa45573bbb76782f37423a21",
+                      "/system/framework/nce-framework.jar": "0c97cc999f4d622a68eeabdca462979328c197a03bf18489d0526fed8af4f8d0",
+                      "/system/framework/org.apache.http.legacy.jar": "ddfc5b01ada7fdec48328cd430f392d61cf988ce43f5f1e03e046612620ae26c",
+                      "/system/framework/services.jar": "d82d6412c5843131f6992f53021dbcfbd368695bf5fd440edfb2c8a2046a0b5a",
+                      "/system/framework/telephony-common.jar": "e70424d99c42904cf0d50d0f7f8e01ed86cf588b703e7fc185f640755d9c408c",
+                      "/system/framework/voip-common.jar": "38ec9eb0eea0abb1eb4d29c1fde335b3c7b621c5dc02017ac55d22d2eb56f0c2"
+                    },
+                    "recipe": {
+                      "experiments/native-linux/userspace/art-compiler-test.c": "543a5e929878c5b2d5f6aa42935b110eeb8115cb32583d3259d5b6a491ef0fdb",
+                      "experiments/native-linux/userspace/framework-test.cpp": "beb199bfcbdb5a9d168b3d634c5271af4d2170e0839fe29374a28e714e8c74fa",
+                      "scripts/art_aot.py": "e04df1a44154291c0637ec1ce3ac93b0458092e69648704c4d714b843902a492"
+                    },
+                    "targets": [
+                      {
+                        "context": "PCL[]{PCL[/system_ext/framework/androidx.window.extensions.jar]#PCL[/system_ext/framework/androidx.window.sidecar.jar]}",
+                        "dex": "/system_ext/priv-app/SystemUIGoogle/SystemUIGoogle.apk",
+                        "name": "SystemUIGoogle"
+                      },
+                      {
+                        "context": "PCL[]{PCL[/system_ext/framework/androidx.window.extensions.jar]#PCL[/system_ext/framework/androidx.window.sidecar.jar]}",
+                        "dex": "/system_ext/priv-app/Launcher3QuickStep/Launcher3QuickStep.apk",
+                        "name": "Launcher3QuickStep"
+                      }
+                    ]
+                  }
+                },
+                "art_build_inputs": "a304a3bf8b9a28cbe21058f839877e473e844f79457ffa596b1eeef20d06a188",
+                "art_files": {
+                  "libart.so": "5ac87a89c9178afe8cb4dd7ed0de9afa56384e5db48a69730a703b858e5c4105",
+                  "libartbase.so": "af02b230861c8f209d6df773e4749063cbd7ab25062cbd5629e4a955ef2d31f4"
+                },
+                "kernel_sha256": "d84947106bef4c3ac3c8b4e4fd383448090e9f7aa4cdeb31a5df47e1bee3e59b",
+                "source_inputs_sha256": "61b7f6fb65868162f089a12f084bf556230f7014a2e804017d18a66182b4a512",
+                "system_sha256": "34c59bd2d8bbb86ef8f8450a1078a96980c4ac4e6792f87c16a8c651d1e43428"
+              },
+              "runtime": "48498fe1813dc60547e7df96f511e4179f2adbdc801433e064a8af42ee336784"
+            }
+          },
+          "runID": "A0E9D294-2389-4276-8350-F693B89D4318",
+          "session_active": false,
+          "status": "completed",
+          "timing": "monotonic; ready observed through 1-second log polling; action submission excludes guest rendering completion",
+          "version": 1
+        },
+        "metrics": {
+          "start_to_ready_observed_ms": 281104.8560417257,
+          "core_to_ready_observed_ms": 281094.0234584268,
+          "actions_ms": 23588.11324997805,
+          "stop_ms": 10768.871041713282,
+          "memory_overall_compressed_mean_bytes": 0,
+          "memory_overall_compressed_sampled_peak_bytes": 0,
+          "memory_overall_compressed_latest_bytes": 0,
+          "memory_overall_footprint_mean_bytes": 1475067795.2971246,
+          "memory_overall_footprint_sampled_peak_bytes": 2073317936,
+          "memory_overall_footprint_latest_bytes": 402507264,
+          "memory_overall_resident_mean_bytes": 1450727352.0255592,
+          "memory_overall_resident_sampled_peak_bytes": 1605943296,
+          "memory_overall_resident_latest_bytes": 184287232,
+          "memory_overall_virtual_mean_bytes": 508495473549.4952,
+          "memory_overall_virtual_sampled_peak_bytes": 508730933248,
+          "memory_overall_virtual_latest_bytes": 501260795904,
+          "memory_phase_booting_compressed_mean_bytes": 0,
+          "memory_phase_booting_compressed_sampled_peak_bytes": 0,
+          "memory_phase_booting_compressed_latest_bytes": 0,
+          "memory_phase_booting_footprint_mean_bytes": 1471401644.729927,
+          "memory_phase_booting_footprint_sampled_peak_bytes": 2073317936,
+          "memory_phase_booting_footprint_latest_bytes": 1815859472,
+          "memory_phase_booting_resident_mean_bytes": 1455730897.2846715,
+          "memory_phase_booting_resident_sampled_peak_bytes": 1600028672,
+          "memory_phase_booting_resident_latest_bytes": 1560313856,
+          "memory_phase_booting_virtual_mean_bytes": 508575969549.0803,
+          "memory_phase_booting_virtual_sampled_peak_bytes": 508721856512,
+          "memory_phase_booting_virtual_latest_bytes": 508719415296,
+          "memory_phase_preparing_compressed_mean_bytes": 0,
+          "memory_phase_preparing_compressed_sampled_peak_bytes": 0,
+          "memory_phase_preparing_compressed_latest_bytes": 0,
+          "memory_phase_preparing_footprint_mean_bytes": 32785488,
+          "memory_phase_preparing_footprint_sampled_peak_bytes": 32834640,
+          "memory_phase_preparing_footprint_latest_bytes": 32834640,
+          "memory_phase_preparing_resident_mean_bytes": 105955328,
+          "memory_phase_preparing_resident_sampled_peak_bytes": 106053632,
+          "memory_phase_preparing_resident_latest_bytes": 106053632,
+          "memory_phase_preparing_virtual_mean_bytes": 501169340416,
+          "memory_phase_preparing_virtual_sampled_peak_bytes": 501169340416,
+          "memory_phase_preparing_virtual_latest_bytes": 501169340416,
+          "memory_phase_running_compressed_mean_bytes": 0,
+          "memory_phase_running_compressed_sampled_peak_bytes": 0,
+          "memory_phase_running_compressed_latest_bytes": 0,
+          "memory_phase_running_footprint_mean_bytes": 1642999926.2608695,
+          "memory_phase_running_footprint_sampled_peak_bytes": 2052297816,
+          "memory_phase_running_footprint_latest_bytes": 1501417672,
+          "memory_phase_running_resident_mean_bytes": 1562825594.4347825,
+          "memory_phase_running_resident_sampled_peak_bytes": 1605943296,
+          "memory_phase_running_resident_latest_bytes": 1555955712,
+          "memory_phase_running_virtual_mean_bytes": 508723661601.3913,
+          "memory_phase_running_virtual_sampled_peak_bytes": 508724871168,
+          "memory_phase_running_virtual_latest_bytes": 508722577408,
+          "memory_phase_stopped_compressed_mean_bytes": 0,
+          "memory_phase_stopped_compressed_sampled_peak_bytes": 0,
+          "memory_phase_stopped_compressed_latest_bytes": 0,
+          "memory_phase_stopped_footprint_mean_bytes": 402507264,
+          "memory_phase_stopped_footprint_sampled_peak_bytes": 402507264,
+          "memory_phase_stopped_footprint_latest_bytes": 402507264,
+          "memory_phase_stopped_resident_mean_bytes": 184287232,
+          "memory_phase_stopped_resident_sampled_peak_bytes": 184287232,
+          "memory_phase_stopped_resident_latest_bytes": 184287232,
+          "memory_phase_stopped_virtual_mean_bytes": 501260795904,
+          "memory_phase_stopped_virtual_sampled_peak_bytes": 501260795904,
+          "memory_phase_stopped_virtual_latest_bytes": 501260795904,
+          "memory_phase_stopping_compressed_mean_bytes": 0,
+          "memory_phase_stopping_compressed_sampled_peak_bytes": 0,
+          "memory_phase_stopping_compressed_latest_bytes": 0,
+          "memory_phase_stopping_footprint_mean_bytes": 1656048788.6666667,
+          "memory_phase_stopping_footprint_sampled_peak_bytes": 2049396576,
+          "memory_phase_stopping_footprint_latest_bytes": 1351847632,
+          "memory_phase_stopping_resident_mean_bytes": 1556826794.6666667,
+          "memory_phase_stopping_resident_sampled_peak_bytes": 1593573376,
+          "memory_phase_stopping_resident_latest_bytes": 1401618432,
+          "memory_phase_stopping_virtual_mean_bytes": 508646922922.6667,
+          "memory_phase_stopping_virtual_sampled_peak_bytes": 508730933248,
+          "memory_phase_stopping_virtual_latest_bytes": 508359213056,
+          "memory_boot_step_0_compressed_mean_bytes": 0,
+          "memory_boot_step_0_compressed_sampled_peak_bytes": 0,
+          "memory_boot_step_0_compressed_latest_bytes": 0,
+          "memory_boot_step_0_footprint_mean_bytes": 301344436,
+          "memory_boot_step_0_footprint_sampled_peak_bytes": 569395480,
+          "memory_boot_step_0_footprint_latest_bytes": 569395480,
+          "memory_boot_step_0_resident_mean_bytes": 229384192,
+          "memory_boot_step_0_resident_sampled_peak_bytes": 351551488,
+          "memory_boot_step_0_resident_latest_bytes": 351551488,
+          "memory_boot_step_0_virtual_mean_bytes": 504650219520,
+          "memory_boot_step_0_virtual_sampled_peak_bytes": 508131622912,
+          "memory_boot_step_0_virtual_latest_bytes": 508131622912,
+          "memory_boot_step_2_compressed_mean_bytes": 0,
+          "memory_boot_step_2_compressed_sampled_peak_bytes": 0,
+          "memory_boot_step_2_compressed_latest_bytes": 0,
+          "memory_boot_step_2_footprint_mean_bytes": 1261692527.3846154,
+          "memory_boot_step_2_footprint_sampled_peak_bytes": 1924911880,
+          "memory_boot_step_2_footprint_latest_bytes": 1758958224,
+          "memory_boot_step_2_resident_mean_bytes": 1295148538.3736265,
+          "memory_boot_step_2_resident_sampled_peak_bytes": 1498447872,
+          "memory_boot_step_2_resident_latest_bytes": 1498447872,
+          "memory_boot_step_2_virtual_mean_bytes": 508482068209.9341,
+          "memory_boot_step_2_virtual_sampled_peak_bytes": 508609200128,
+          "memory_boot_step_2_virtual_latest_bytes": 508609200128,
+          "memory_boot_step_3_compressed_mean_bytes": 0,
+          "memory_boot_step_3_compressed_sampled_peak_bytes": 0,
+          "memory_boot_step_3_compressed_latest_bytes": 0,
+          "memory_boot_step_3_footprint_mean_bytes": 1588508235.1111112,
+          "memory_boot_step_3_footprint_sampled_peak_bytes": 2073317936,
+          "memory_boot_step_3_footprint_latest_bytes": 2001260408,
+          "memory_boot_step_3_resident_mean_bytes": 1549959259.0222223,
+          "memory_boot_step_3_resident_sampled_peak_bytes": 1600028672,
+          "memory_boot_step_3_resident_latest_bytes": 1561444352,
+          "memory_boot_step_3_virtual_mean_bytes": 508666264416.7111,
+          "memory_boot_step_3_virtual_sampled_peak_bytes": 508721856512,
+          "memory_boot_step_3_virtual_latest_bytes": 508721856512,
+          "memory_boot_step_4_compressed_mean_bytes": 0,
+          "memory_boot_step_4_compressed_sampled_peak_bytes": 0,
+          "memory_boot_step_4_compressed_latest_bytes": 0,
+          "memory_boot_step_4_footprint_mean_bytes": 1815859472,
+          "memory_boot_step_4_footprint_sampled_peak_bytes": 1815859472,
+          "memory_boot_step_4_footprint_latest_bytes": 1815859472,
+          "memory_boot_step_4_resident_mean_bytes": 1560313856,
+          "memory_boot_step_4_resident_sampled_peak_bytes": 1560313856,
+          "memory_boot_step_4_resident_latest_bytes": 1560313856,
+          "memory_boot_step_4_virtual_mean_bytes": 508719415296,
+          "memory_boot_step_4_virtual_sampled_peak_bytes": 508719415296,
+          "memory_boot_step_4_virtual_latest_bytes": 508719415296,
+          "memory_process_lifetime_footprint_peak_bytes": 2101531832,
+          "memory_process_lifetime_resident_peak_bytes": 1621884928
+        },
+        "error": null,
+        "components": {
+          "component_timing_count": 1237,
+          "timing_limit_per_tag": 40,
+          "component_timings": [
+            {
+              "tag": "SystemServerTiming",
+              "name": "InitBeforeStartServices",
+              "ms": 321,
+              "line": 7906,
+              "timestamp": "10-10 12:22:58.826"
+            },
+            {
+              "tag": "SystemServerTiming",
+              "name": "StartActivityManager",
+              "ms": 232,
+              "line": 8416,
+              "timestamp": "10-10 12:22:59.243"
+            },
+            {
+              "tag": "SystemServerTiming",
+              "name": "StartPackageManagerService",
+              "ms": 1407,
+              "line": 8826,
+              "timestamp": "10-10 12:23:00.975"
+            },
+            {
+              "tag": "SystemServerTiming",
+              "name": "StartOverlayManagerService",
+              "ms": 231,
+              "line": 8877,
+              "timestamp": "10-10 12:23:01.521"
+            },
+            {
+              "tag": "SystemServerTiming",
+              "name": "startBootstrapServices",
+              "ms": 2765,
+              "line": 8893,
+              "timestamp": "10-10 12:23:01.593"
+            },
+            {
+              "tag": "SystemServerTiming",
+              "name": "startCoreServices",
+              "ms": 310,
+              "line": 8984,
+              "timestamp": "10-10 12:23:01.903"
+            },
+            {
+              "tag": "SystemServerTiming",
+              "name": "InstallSystemProviders",
+              "ms": 266,
+              "line": 9256,
+              "timestamp": "10-10 12:23:02.281"
+            },
+            {
+              "tag": "SystemServerTiming",
+              "name": "SetWindowManagerService",
+              "ms": 362,
+              "line": 9439,
+              "timestamp": "10-10 12:23:03.173"
+            },
+            {
+              "tag": "SystemServerTiming",
+              "name": "StartNetworkStatsService",
+              "ms": 289,
+              "line": 9653,
+              "timestamp": "10-10 12:23:04.926"
+            },
+            {
+              "tag": "SystemServerTiming",
+              "name": "StartConnectivityService",
+              "ms": 551,
+              "line": 9679,
+              "timestamp": "10-10 12:23:05.678"
+            },
+            {
+              "tag": "SystemServerTiming",
+              "name": "StartNotificationManager",
+              "ms": 296,
+              "line": 9705,
+              "timestamp": "10-10 12:23:06.049"
+            },
+            {
+              "tag": "SystemServerTiming",
+              "name": "StartAudioService",
+              "ms": 698,
+              "line": 9795,
+              "timestamp": "10-10 12:23:07.088"
+            },
+            {
+              "tag": "SystemServerTiming",
+              "name": "StartJobScheduler",
+              "ms": 244,
+              "line": 9897,
+              "timestamp": "10-10 12:23:07.705"
+            },
+            {
+              "tag": "SystemServerTiming",
+              "name": "StartBiometricService",
+              "ms": 333,
+              "line": 10193,
+              "timestamp": "10-10 12:23:09.216"
+            },
+            {
+              "tag": "SystemServerTiming",
+              "name": "OnBootPhase_500_com.android.server.power.PowerManagerService",
+              "ms": 315,
+              "line": 11011,
+              "timestamp": "10-10 12:23:11.261"
+            },
+            {
+              "tag": "SystemServerTiming",
+              "name": "OnBootPhase_500_com.android.server.sensorprivacy.SensorPrivacyService",
+              "ms": 278,
+              "line": 11073,
+              "timestamp": "10-10 12:23:11.572"
+            },
+            {
+              "tag": "SystemServerTiming",
+              "name": "OnBootPhase_500_com.android.server.vibrator.VibratorManagerService$Lifecycle",
+              "ms": 1281,
+              "line": 11721,
+              "timestamp": "10-10 12:23:13.045"
+            },
+            {
+              "tag": "SystemServerTiming",
+              "name": "OnBootPhase_500",
+              "ms": 2823,
+              "line": 11964,
+              "timestamp": "10-10 12:23:13.535"
+            },
+            {
+              "tag": "SystemServerTiming",
+              "name": "StartBootPhaseSystemServicesReady",
+              "ms": 2823,
+              "line": 11965,
+              "timestamp": "10-10 12:23:13.535"
+            },
+            {
+              "tag": "SystemServerTiming",
+              "name": "MakePackageManagerServiceReady",
+              "ms": 275,
+              "line": 12098,
+              "timestamp": "10-10 12:23:14.009"
+            },
+            {
+              "tag": "SystemServerTiming",
+              "name": "OnBootPhase_550_com.android.server.NetworkStatsServiceInitializer",
+              "ms": 558,
+              "line": 12733,
+              "timestamp": "10-10 12:23:15.544"
+            },
+            {
+              "tag": "SystemServerTiming",
+              "name": "OnBootPhase_550_com.android.server.policy.PermissionPolicyService",
+              "ms": 258,
+              "line": 12907,
+              "timestamp": "10-10 12:23:16.065"
+            },
+            {
+              "tag": "SystemServerTiming",
+              "name": "OnBootPhase_550",
+              "ms": 1431,
+              "line": 12929,
+              "timestamp": "10-10 12:23:16.066"
+            },
+            {
+              "tag": "SystemServerTiming",
+              "name": "StartActivityManagerReadyPhase",
+              "ms": 1432,
+              "line": 12930,
+              "timestamp": "10-10 12:23:16.066"
+            },
+            {
+              "tag": "SystemServerTiming",
+              "name": "RegisterAppOpsPolicy",
+              "ms": 370,
+              "line": 12970,
+              "timestamp": "10-10 12:23:16.508"
+            },
+            {
+              "tag": "SystemServerTiming",
+              "name": "MakeConnectivityServiceReady",
+              "ms": 387,
+              "line": 13060,
+              "timestamp": "10-10 12:23:17.016"
+            },
+            {
+              "tag": "SystemServerTiming",
+              "name": "OnBootPhase_600",
+              "ms": 1072,
+              "line": 13546,
+              "timestamp": "10-10 12:23:18.254"
+            },
+            {
+              "tag": "SystemServerTiming",
+              "name": "PhaseThirdPartyAppsCanStart",
+              "ms": 1073,
+              "line": 13547,
+              "timestamp": "10-10 12:23:18.254"
+            },
+            {
+              "tag": "SystemServerTiming",
+              "name": "startHomeOnAllDisplays",
+              "ms": 494,
+              "line": 14281,
+              "timestamp": "10-10 12:23:22.355"
+            },
+            {
+              "tag": "SystemServerTiming",
+              "name": "ActivityManagerStartApps",
+              "ms": 3971,
+              "line": 14340,
+              "timestamp": "10-10 12:23:22.711"
+            },
+            {
+              "tag": "SystemServerTiming",
+              "name": "PhaseActivityManagerReady",
+              "ms": 8258,
+              "line": 14344,
+              "timestamp": "10-10 12:23:22.712"
+            },
+            {
+              "tag": "SystemServerTiming",
+              "name": "startOtherServices",
+              "ms": 21083,
+              "line": 14364,
+              "timestamp": "10-10 12:23:22.987"
+            },
+            {
+              "tag": "SystemServerTiming",
+              "name": "StartServices",
+              "ms": 24169,
+              "line": 14375,
+              "timestamp": "10-10 12:23:22.996"
+            },
+            {
+              "tag": "SystemUIBootTiming",
+              "name": "StartServices com.android.keyguard.KeyguardUpdateMonitor",
+              "ms": 338,
+              "line": 15519,
+              "timestamp": "10-10 12:23:36.957"
+            },
+            {
+              "tag": "SystemUIBootTiming",
+              "name": "StartServices com.android.systemui.ScreenDecorations",
+              "ms": 335,
+              "line": 15531,
+              "timestamp": "10-10 12:23:37.379"
+            },
+            {
+              "tag": "SystemUIBootTiming",
+              "name": "StartServices com.android.systemui.accessibility.MagnificationImpl",
+              "ms": 323,
+              "line": 15615,
+              "timestamp": "10-10 12:23:37.738"
+            },
+            {
+              "tag": "SystemUIBootTiming",
+              "name": "StartServices com.android.systemui.accessibility.SystemActions",
+              "ms": 10689,
+              "line": 15760,
+              "timestamp": "10-10 12:23:48.454"
+            },
+            {
+              "tag": "SystemUIBootTiming",
+              "name": "StartServices com.android.systemui.biometrics.AuthController",
+              "ms": 73,
+              "line": 15765,
+              "timestamp": "10-10 12:23:48.535"
+            },
+            {
+              "tag": "SystemUIBootTiming",
+              "name": "StartServices com.android.systemui.biometrics.BiometricNotificationService",
+              "ms": 242,
+              "line": 15769,
+              "timestamp": "10-10 12:23:48.913"
+            },
+            {
+              "tag": "SystemUIBootTiming",
+              "name": "StartServices com.android.systemui.clipboardoverlay.ClipboardListener",
+              "ms": 317,
+              "line": 15779,
+              "timestamp": "10-10 12:23:49.273"
+            },
+            {
+              "tag": "SystemUIBootTiming",
+              "name": "StartServices com.android.systemui.communal.CommunalDreamStartable",
+              "ms": 414,
+              "line": 15781,
+              "timestamp": "10-10 12:23:49.702"
+            },
+            {
+              "tag": "SystemUIBootTiming",
+              "name": "StartServices com.android.systemui.communal.CommunalSuppressionStartable",
+              "ms": 264,
+              "line": 15789,
+              "timestamp": "10-10 12:23:49.980"
+            },
+            {
+              "tag": "SystemUIBootTiming",
+              "name": "StartServices com.android.systemui.complication.ComplicationTypesUpdater",
+              "ms": 85,
+              "line": 15794,
+              "timestamp": "10-10 12:23:50.164"
+            },
+            {
+              "tag": "SystemUIBootTiming",
+              "name": "StartServices com.android.systemui.dreams.AssistantAttentionMonitor",
+              "ms": 6231,
+              "line": 15842,
+              "timestamp": "10-10 12:23:56.485"
+            },
+            {
+              "tag": "SystemUIBootTiming",
+              "name": "StartServices com.android.systemui.flags.FeatureFlagsDebugStartable",
+              "ms": 102,
+              "line": 15850,
+              "timestamp": "10-10 12:23:56.681"
+            },
+            {
+              "tag": "SystemUIBootTiming",
+              "name": "StartServices com.android.systemui.globalactions.GlobalActionsComponent",
+              "ms": 58,
+              "line": 15854,
+              "timestamp": "10-10 12:23:56.761"
+            },
+            {
+              "tag": "SystemUIBootTiming",
+              "name": "StartServices com.android.systemui.keyguard.KeyguardViewConfigurator",
+              "ms": 665,
+              "line": 15866,
+              "timestamp": "10-10 12:23:57.552"
+            },
+            {
+              "tag": "SystemUIBootTiming",
+              "name": "StartServices com.android.systemui.keyguard.KeyguardViewMediator",
+              "ms": 692,
+              "line": 15875,
+              "timestamp": "10-10 12:23:58.245"
+            },
+            {
+              "tag": "SystemUIBootTiming",
+              "name": "StartServices com.android.systemui.keyguard.domain.interactor.KeyguardTransitionCoreStartable",
+              "ms": 115,
+              "line": 15889,
+              "timestamp": "10-10 12:23:58.462"
+            },
+            {
+              "tag": "SystemUIBootTiming",
+              "name": "StartServices com.android.systemui.motiontool.MotionToolStartable",
+              "ms": 87,
+              "line": 15913,
+              "timestamp": "10-10 12:23:58.633"
+            },
+            {
+              "tag": "SystemUIBootTiming",
+              "name": "StartServices com.android.systemui.power.PowerUI",
+              "ms": 948,
+              "line": 15915,
+              "timestamp": "10-10 12:23:59.596"
+            },
+            {
+              "tag": "SystemUIBootTiming",
+              "name": "StartServices com.android.systemui.shortcut.ShortcutKeyDispatcher",
+              "ms": 571,
+              "line": 15947,
+              "timestamp": "10-10 12:24:00.608"
+            },
+            {
+              "tag": "SystemUIBootTiming",
+              "name": "StartServices com.android.systemui.statusbar.ImmersiveModeConfirmation",
+              "ms": 168,
+              "line": 15948,
+              "timestamp": "10-10 12:24:00.779"
+            },
+            {
+              "tag": "SystemUIBootTiming",
+              "name": "StartServices com.android.systemui.statusbar.chips.sharetoapp.ui.viewmodel.ShareToAppChipViewModel",
+              "ms": 134,
+              "line": 15954,
+              "timestamp": "10-10 12:24:00.917"
+            },
+            {
+              "tag": "SystemUIBootTiming",
+              "name": "StartServices com.android.systemui.statusbar.notification.InstantAppNotifier",
+              "ms": 107,
+              "line": 15971,
+              "timestamp": "10-10 12:24:01.103"
+            },
+            {
+              "tag": "SystemUIBootTiming",
+              "name": "StartServices com.android.systemui.statusbar.notification.interruption.KeyguardNotificationVisibilityProviderImpl",
+              "ms": 339,
+              "line": 15975,
+              "timestamp": "10-10 12:24:01.449"
+            },
+            {
+              "tag": "SystemUIBootTiming",
+              "name": "StartServices com.android.systemui.statusbar.notification.interruption.VisualInterruptionDecisionProvider",
+              "ms": 96,
+              "line": 15976,
+              "timestamp": "10-10 12:24:01.546"
+            },
+            {
+              "tag": "SystemUIBootTiming",
+              "name": "StartServices com.android.systemui.statusbar.phone.CentralSurfaces",
+              "ms": 10043,
+              "line": 16090,
+              "timestamp": "10-10 12:24:11.709"
+            },
+            {
+              "tag": "SystemUIBootTiming",
+              "name": "StartServices com.android.systemui.stylus.StylusUsiPowerStartable",
+              "ms": 239,
+              "line": 16106,
+              "timestamp": "10-10 12:24:12.162"
+            },
+            {
+              "tag": "SystemUIBootTiming",
+              "name": "StartServices com.android.systemui.theme.ThemeOverlayController",
+              "ms": 284,
+              "line": 16115,
+              "timestamp": "10-10 12:24:12.520"
+            },
+            {
+              "tag": "SystemUIBootTiming",
+              "name": "StartServices com.android.systemui.underlay.UnderlayCoreStartable",
+              "ms": 135,
+              "line": 16120,
+              "timestamp": "10-10 12:24:12.752"
+            },
+            {
+              "tag": "SystemUIBootTiming",
+              "name": "StartServices com.android.systemui.usb.StorageNotification",
+              "ms": 1739,
+              "line": 16321,
+              "timestamp": "10-10 12:24:14.733"
+            },
+            {
+              "tag": "SystemUIBootTiming",
+              "name": "StartServices com.android.systemui.util.BinderLogger",
+              "ms": 2277,
+              "line": 16550,
+              "timestamp": "10-10 12:24:17.035"
+            },
+            {
+              "tag": "SystemServerTiming",
+              "name": "WaitInitThreadPoolShutdown",
+              "ms": 408,
+              "line": 16555,
+              "timestamp": "10-10 12:24:18.206"
+            },
+            {
+              "tag": "SystemUIBootTiming",
+              "name": "StartServices com.android.systemui.util.NotificationChannels",
+              "ms": 2141,
+              "line": 16798,
+              "timestamp": "10-10 12:24:20.292"
+            },
+            {
+              "tag": "SystemUIBootTiming",
+              "name": "StartServices com.android.systemui.volume.VolumeUI",
+              "ms": 564,
+              "line": 16839,
+              "timestamp": "10-10 12:24:21.487"
+            },
+            {
+              "tag": "SystemServerTiming",
+              "name": "prepareUserData-0",
+              "ms": 685,
+              "line": 18314,
+              "timestamp": "10-10 12:24:21.426"
+            },
+            {
+              "tag": "SystemServerTiming",
+              "name": "reconcileAppsData-0",
+              "ms": 1655,
+              "line": 18403,
+              "timestamp": "10-10 12:24:23.979"
+            },
+            {
+              "tag": "SystemServerTiming",
+              "name": "UM.onBeforeUnlockUser-0",
+              "ms": 3244,
+              "line": 18404,
+              "timestamp": "10-10 12:24:23.980"
+            },
+            {
+              "tag": "SystemUIBootTiming",
+              "name": "StartServices com.android.systemui.wmshell.WMShell",
+              "ms": 338,
+              "line": 18466,
+              "timestamp": "10-10 12:24:24.310"
+            },
+            {
+              "tag": "SystemUIBootTiming",
+              "name": "StartServices com.google.android.systemui.GoogleServices",
+              "ms": 2943,
+              "line": 18634,
+              "timestamp": "10-10 12:24:27.587"
+            },
+            {
+              "tag": "SystemUIBootTiming",
+              "name": "StartServices com.google.android.systemui.compose.ComposeHsvStartable",
+              "ms": 492,
+              "line": 18658,
+              "timestamp": "10-10 12:24:28.355"
+            },
+            {
+              "tag": "SystemUIBootTiming",
+              "name": "StartServices com.google.android.systemui.keyguard.AmbientIndicationCoreStartable",
+              "ms": 201,
+              "line": 18663,
+              "timestamp": "10-10 12:24:28.629"
+            },
+            {
+              "tag": "SystemUIBootTiming",
+              "name": "StartServices com.google.android.systemui.smartspace.KeyguardSmartspaceStartable",
+              "ms": 376,
+              "line": 18672,
+              "timestamp": "10-10 12:24:29.031"
+            },
+            {
+              "tag": "SystemUIBootTiming",
+              "name": "StartServices com.google.android.systemui.tips.domain.interactor.ContextualTipsInteractor",
+              "ms": 1123,
+              "line": 18942,
+              "timestamp": "10-10 12:24:30.158"
+            },
+            {
+              "tag": "SystemUIBootTiming",
+              "name": "Topologically start Core Startables",
+              "ms": 54014,
+              "line": 18949,
+              "timestamp": "10-10 12:24:30.628"
+            },
+            {
+              "tag": "SystemUIBootTiming",
+              "name": "StartServices",
+              "ms": 54787,
+              "line": 19088,
+              "timestamp": "10-10 12:24:31.402"
+            },
+            {
+              "tag": "SystemServerTiming",
+              "name": "SystemUserUnlock",
+              "ms": 20029,
+              "line": 19369,
+              "timestamp": "10-10 12:24:39.266"
+            },
+            {
+              "tag": "SystemServerTiming",
+              "name": "finishUserUnlocked-0",
+              "ms": 1790,
+              "line": 19384,
+              "timestamp": "10-10 12:24:40.503"
+            },
+            {
+              "tag": "SystemServerTiming",
+              "name": "broadcastIntent-0-android.intent.action.BOOT_COMPLETED",
+              "ms": 424,
+              "line": 19458,
+              "timestamp": "10-10 12:24:43.624"
+            }
+          ],
+          "displayed_activities": [
+            {
+              "line": 16021,
+              "message": "10-10 12:24:06.558   137   155 I ActivityTaskManager: Displayed com.android.settings/.FallbackHome for user 0: +44s650ms"
+            },
+            {
+              "line": 23025,
+              "message": "10-10 12:27:27.093   137   155 I ActivityTaskManager: Displayed com.android.launcher3/.uioverrides.QuickstepLauncher for user 0: +2m19s909ms"
+            }
+          ],
+          "mapping_cumulative": [
+            {
+              "profile": "host_mapping",
+              "elapsed_ms": 10034.524,
+              "data_calls": 811770,
+              "data_ms": 1158.28,
+              "code_calls": 71737,
+              "code_ms": 231.811,
+              "revoke_calls": 416516,
+              "revoke_ms": 797.026,
+              "line": 8822
+            },
+            {
+              "profile": "host_mapping",
+              "elapsed_ms": 20202.824,
+              "data_calls": 1793006,
+              "data_ms": 2737.512,
+              "code_calls": 165253,
+              "code_ms": 574.331,
+              "revoke_calls": 1035978,
+              "revoke_ms": 1994.993,
+              "line": 10965
+            },
+            {
+              "profile": "host_mapping",
+              "elapsed_ms": 30550.879,
+              "data_calls": 2936039,
+              "data_ms": 4319.602,
+              "code_calls": 269731,
+              "code_ms": 865.197,
+              "revoke_calls": 1770835,
+              "revoke_ms": 3181.525,
+              "line": 13842
+            },
+            {
+              "profile": "host_mapping",
+              "elapsed_ms": 40796.743,
+              "data_calls": 3932764,
+              "data_ms": 6045.403,
+              "code_calls": 355547,
+              "code_ms": 1159.132,
+              "revoke_calls": 2430113,
+              "revoke_ms": 4400.081,
+              "line": 15096
+            },
+            {
+              "profile": "host_mapping",
+              "elapsed_ms": 60338.963,
+              "data_calls": 5171994,
+              "data_ms": 9421.637,
+              "code_calls": 444411,
+              "code_ms": 1595.201,
+              "revoke_calls": 3232041,
+              "revoke_ms": 6739.546,
+              "line": 15810
+            },
+            {
+              "profile": "host_mapping",
+              "elapsed_ms": 71494.453,
+              "data_calls": 5536637,
+              "data_ms": 11476.564,
+              "code_calls": 465981,
+              "code_ms": 1812.429,
+              "revoke_calls": 3467183,
+              "revoke_ms": 8032.989,
+              "line": 15987
+            },
+            {
+              "profile": "host_mapping",
+              "elapsed_ms": 246817.771,
+              "data_calls": 10153445,
+              "data_ms": 43198.033,
+              "code_calls": 821925,
+              "code_ms": 5860.106,
+              "revoke_calls": 6481603,
+              "revoke_ms": 29078.04,
+              "line": 22508
+            },
+            {
+              "profile": "host_mapping",
+              "elapsed_ms": 257337.913,
+              "data_calls": 10428512,
+              "data_ms": 45076.844,
+              "code_calls": 844484,
+              "code_ms": 6104.586,
+              "revoke_calls": 6665433,
+              "revoke_ms": 30333.019,
+              "line": 22588
+            },
+            {
+              "profile": "host_mapping",
+              "elapsed_ms": 268794.036,
+              "data_calls": 10738071,
+              "data_ms": 47159.561,
+              "code_calls": 866333,
+              "code_ms": 6346.12,
+              "revoke_calls": 6865601,
+              "revoke_ms": 31682.973,
+              "line": 22921
+            },
+            {
+              "profile": "host_mapping",
+              "elapsed_ms": 279591.022,
+              "data_calls": 11004210,
+              "data_ms": 48952.217,
+              "code_calls": 891496,
+              "code_ms": 6645.986,
+              "revoke_calls": 7044960,
+              "revoke_ms": 33080.282,
+              "line": 23056
+            },
+            {
+              "profile": "host_mapping",
+              "elapsed_ms": 290438.441,
+              "data_calls": 11108341,
+              "data_ms": 49618.315,
+              "code_calls": 903802,
+              "code_ms": 6775.15,
+              "revoke_calls": 7120154,
+              "revoke_ms": 33559.141,
+              "line": 23203
+            },
+            {
+              "profile": "host_mapping",
+              "elapsed_ms": 300765.72,
+              "data_calls": 11327886,
+              "data_ms": 51119.99,
+              "code_calls": 929145,
+              "code_ms": 7077.997,
+              "revoke_calls": 7280586,
+              "revoke_ms": 34635.712,
+              "line": 23302
+            },
+            {
+              "profile": "host_mapping",
+              "elapsed_ms": 312980.172,
+              "data_calls": 11530281,
+              "data_ms": 52525.035,
+              "code_calls": 952986,
+              "code_ms": 7311.586,
+              "revoke_calls": 7413294,
+              "revoke_ms": 35585.553,
+              "line": 24761
+            }
+          ],
+          "mapping_intervals": [
+            {
+              "elapsed_ms": 10034.524,
+              "data_ms": 1158.28,
+              "code_ms": 231.811,
+              "revoke_ms": 797.026,
+              "mapping_ms": 2187.117,
+              "elapsed_end_ms": 10034.524
+            },
+            {
+              "elapsed_ms": 10168.3,
+              "data_ms": 1579.232,
+              "code_ms": 342.52,
+              "revoke_ms": 1197.967,
+              "mapping_ms": 3119.719,
+              "elapsed_end_ms": 20202.824
+            },
+            {
+              "elapsed_ms": 10348.055,
+              "data_ms": 1582.09,
+              "code_ms": 290.866,
+              "revoke_ms": 1186.532,
+              "mapping_ms": 3059.488,
+              "elapsed_end_ms": 30550.879
+            },
+            {
+              "elapsed_ms": 10245.864,
+              "data_ms": 1725.801,
+              "code_ms": 293.935,
+              "revoke_ms": 1218.556,
+              "mapping_ms": 3238.292,
+              "elapsed_end_ms": 40796.743
+            },
+            {
+              "elapsed_ms": 19542.22,
+              "data_ms": 3376.234,
+              "code_ms": 436.069,
+              "revoke_ms": 2339.465,
+              "mapping_ms": 6151.768,
+              "elapsed_end_ms": 60338.963
+            },
+            {
+              "elapsed_ms": 11155.49,
+              "data_ms": 2054.927,
+              "code_ms": 217.228,
+              "revoke_ms": 1293.443,
+              "mapping_ms": 3565.598,
+              "elapsed_end_ms": 71494.453
+            },
+            {
+              "elapsed_ms": 175323.318,
+              "data_ms": 31721.469,
+              "code_ms": 4047.677,
+              "revoke_ms": 21045.051,
+              "mapping_ms": 56814.197,
+              "elapsed_end_ms": 246817.771
+            },
+            {
+              "elapsed_ms": 10520.142,
+              "data_ms": 1878.811,
+              "code_ms": 244.48,
+              "revoke_ms": 1254.979,
+              "mapping_ms": 3378.27,
+              "elapsed_end_ms": 257337.913
+            },
+            {
+              "elapsed_ms": 11456.123,
+              "data_ms": 2082.717,
+              "code_ms": 241.534,
+              "revoke_ms": 1349.954,
+              "mapping_ms": 3674.205,
+              "elapsed_end_ms": 268794.036
+            },
+            {
+              "elapsed_ms": 10796.986,
+              "data_ms": 1792.656,
+              "code_ms": 299.866,
+              "revoke_ms": 1397.309,
+              "mapping_ms": 3489.831,
+              "elapsed_end_ms": 279591.022
+            },
+            {
+              "elapsed_ms": 10847.419,
+              "data_ms": 666.098,
+              "code_ms": 129.164,
+              "revoke_ms": 478.859,
+              "mapping_ms": 1274.121,
+              "elapsed_end_ms": 290438.441
+            },
+            {
+              "elapsed_ms": 10327.279,
+              "data_ms": 1501.675,
+              "code_ms": 302.847,
+              "revoke_ms": 1076.571,
+              "mapping_ms": 2881.093,
+              "elapsed_end_ms": 300765.72
+            },
+            {
+              "elapsed_ms": 12214.452,
+              "data_ms": 1405.045,
+              "code_ms": 233.589,
+              "revoke_ms": 949.841,
+              "mapping_ms": 2588.475,
+              "elapsed_end_ms": 312980.172
+            }
+          ],
+          "resume_entries": [
+            {
+              "profile": "resume_entries",
+              "hits": 86440,
+              "misses": 12216,
+              "line": 8823
+            },
+            {
+              "profile": "resume_entries",
+              "hits": 169130,
+              "misses": 21818,
+              "line": 10966
+            },
+            {
+              "profile": "resume_entries",
+              "hits": 266009,
+              "misses": 34541,
+              "line": 13843
+            },
+            {
+              "profile": "resume_entries",
+              "hits": 343965,
+              "misses": 44318,
+              "line": 15097
+            },
+            {
+              "profile": "resume_entries",
+              "hits": 422886,
+              "misses": 57051,
+              "line": 15811
+            },
+            {
+              "profile": "resume_entries",
+              "hits": 439811,
+              "misses": 61999,
+              "line": 15988
+            },
+            {
+              "profile": "resume_entries",
+              "hits": 480499,
+              "misses": 70336,
+              "line": 16545
+            },
+            {
+              "profile": "resume_entries",
+              "hits": 516227,
+              "misses": 77882,
+              "line": 17392
+            },
+            {
+              "profile": "resume_entries",
+              "hits": 536797,
+              "misses": 83567,
+              "line": 17804
+            },
+            {
+              "profile": "resume_entries",
+              "hits": 557325,
+              "misses": 89015,
+              "line": 18219
+            },
+            {
+              "profile": "resume_entries",
+              "hits": 615822,
+              "misses": 103933,
+              "line": 19282
+            },
+            {
+              "profile": "resume_entries",
+              "hits": 652875,
+              "misses": 114333,
+              "line": 19751
+            },
+            {
+              "profile": "resume_entries",
+              "hits": 694033,
+              "misses": 126225,
+              "line": 20243
+            },
+            {
+              "profile": "resume_entries",
+              "hits": 719349,
+              "misses": 132986,
+              "line": 20701
+            },
+            {
+              "profile": "resume_entries",
+              "hits": 738217,
+              "misses": 139472,
+              "line": 21790
+            },
+            {
+              "profile": "resume_entries",
+              "hits": 762992,
+              "misses": 147986,
+              "line": 22509
+            },
+            {
+              "profile": "resume_entries",
+              "hits": 782124,
+              "misses": 153754,
+              "line": 22589
+            },
+            {
+              "profile": "resume_entries",
+              "hits": 801127,
+              "misses": 158090,
+              "line": 22922
+            },
+            {
+              "profile": "resume_entries",
+              "hits": 823037,
+              "misses": 162619,
+              "line": 23057
+            },
+            {
+              "profile": "resume_entries",
+              "hits": 834527,
+              "misses": 164526,
+              "line": 23204
+            },
+            {
+              "profile": "resume_entries",
+              "hits": 856598,
+              "misses": 167095,
+              "line": 23303
+            },
+            {
+              "profile": "resume_entries",
+              "hits": 882257,
+              "misses": 170807,
+              "line": 24762
+            }
+          ],
+          "mmu_cumulative": [
+            {
+              "profile": "linux_mmu",
+              "switches": 3455,
+              "scanned_pages": 1965333,
+              "present_faults": 47644,
+              "linux_faults": 50864,
+              "fast_faults": 710009,
+              "restored_pages": 1416647,
+              "line": 8824
+            },
+            {
+              "profile": "linux_mmu",
+              "switches": 7782,
+              "scanned_pages": 4560903,
+              "present_faults": 132873,
+              "linux_faults": 57622,
+              "fast_faults": 1676339,
+              "restored_pages": 3484225,
+              "line": 10967
+            },
+            {
+              "profile": "linux_mmu",
+              "switches": 12646,
+              "scanned_pages": 7647834,
+              "present_faults": 230654,
+              "linux_faults": 69217,
+              "fast_faults": 2789431,
+              "restored_pages": 5746992,
+              "line": 13844
+            },
+            {
+              "profile": "linux_mmu",
+              "switches": 16717,
+              "scanned_pages": 10347334,
+              "present_faults": 312400,
+              "linux_faults": 75013,
+              "fast_faults": 3770764,
+              "restored_pages": 7648453,
+              "line": 15098
+            },
+            {
+              "profile": "linux_mmu",
+              "switches": 20572,
+              "scanned_pages": 13706985,
+              "present_faults": 397888,
+              "linux_faults": 81047,
+              "fast_faults": 4993928,
+              "restored_pages": 9788527,
+              "line": 15812
+            },
+            {
+              "profile": "linux_mmu",
+              "switches": 21470,
+              "scanned_pages": 14786662,
+              "present_faults": 417961,
+              "linux_faults": 82829,
+              "fast_faults": 5356673,
+              "restored_pages": 10326644,
+              "line": 15989
+            },
+            {
+              "profile": "linux_mmu",
+              "switches": 23375,
+              "scanned_pages": 16368922,
+              "present_faults": 456600,
+              "linux_faults": 93233,
+              "fast_faults": 5850121,
+              "restored_pages": 11285367,
+              "line": 16546
+            },
+            {
+              "profile": "linux_mmu",
+              "switches": 25067,
+              "scanned_pages": 17840647,
+              "present_faults": 490669,
+              "linux_faults": 102458,
+              "fast_faults": 6357646,
+              "restored_pages": 12162496,
+              "line": 17393
+            },
+            {
+              "profile": "linux_mmu",
+              "switches": 26225,
+              "scanned_pages": 18883685,
+              "present_faults": 514964,
+              "linux_faults": 104412,
+              "fast_faults": 6698132,
+              "restored_pages": 12782878,
+              "line": 17805
+            },
+            {
+              "profile": "linux_mmu",
+              "switches": 27181,
+              "scanned_pages": 19751411,
+              "present_faults": 538760,
+              "linux_faults": 106586,
+              "fast_faults": 6984142,
+              "restored_pages": 13323967,
+              "line": 18220
+            },
+            {
+              "profile": "linux_mmu",
+              "switches": 30300,
+              "scanned_pages": 22496566,
+              "present_faults": 606737,
+              "linux_faults": 112034,
+              "fast_faults": 7800110,
+              "restored_pages": 14896752,
+              "line": 19283
+            },
+            {
+              "profile": "linux_mmu",
+              "switches": 32017,
+              "scanned_pages": 24018932,
+              "present_faults": 647184,
+              "linux_faults": 119101,
+              "fast_faults": 8253872,
+              "restored_pages": 15785766,
+              "line": 19752
+            },
+            {
+              "profile": "linux_mmu",
+              "switches": 33825,
+              "scanned_pages": 25636742,
+              "present_faults": 694314,
+              "linux_faults": 125060,
+              "fast_faults": 8776663,
+              "restored_pages": 16772529,
+              "line": 20244
+            },
+            {
+              "profile": "linux_mmu",
+              "switches": 35148,
+              "scanned_pages": 26782154,
+              "present_faults": 722455,
+              "linux_faults": 129019,
+              "fast_faults": 9126461,
+              "restored_pages": 17379754,
+              "line": 20702
+            },
+            {
+              "profile": "linux_mmu",
+              "switches": 35971,
+              "scanned_pages": 27559810,
+              "present_faults": 747146,
+              "linux_faults": 129669,
+              "fast_faults": 9414791,
+              "restored_pages": 17863107,
+              "line": 21791
+            },
+            {
+              "profile": "linux_mmu",
+              "switches": 37214,
+              "scanned_pages": 28583280,
+              "present_faults": 778079,
+              "linux_faults": 132000,
+              "fast_faults": 9784808,
+              "restored_pages": 18503986,
+              "line": 22510
+            },
+            {
+              "profile": "linux_mmu",
+              "switches": 38116,
+              "scanned_pages": 29408454,
+              "present_faults": 801928,
+              "linux_faults": 133034,
+              "fast_faults": 10051419,
+              "restored_pages": 18999167,
+              "line": 22590
+            },
+            {
+              "profile": "linux_mmu",
+              "switches": 39038,
+              "scanned_pages": 30281071,
+              "present_faults": 823484,
+              "linux_faults": 134811,
+              "fast_faults": 10354991,
+              "restored_pages": 19523408,
+              "line": 22923
+            },
+            {
+              "profile": "linux_mmu",
+              "switches": 40119,
+              "scanned_pages": 31138698,
+              "present_faults": 847341,
+              "linux_faults": 137386,
+              "fast_faults": 10617398,
+              "restored_pages": 20026726,
+              "line": 23058
+            },
+            {
+              "profile": "linux_mmu",
+              "switches": 40699,
+              "scanned_pages": 31457395,
+              "present_faults": 859150,
+              "linux_faults": 138982,
+              "fast_faults": 10714568,
+              "restored_pages": 20230675,
+              "line": 23205
+            },
+            {
+              "profile": "linux_mmu",
+              "switches": 41860,
+              "scanned_pages": 32142002,
+              "present_faults": 883479,
+              "linux_faults": 139282,
+              "fast_faults": 10932970,
+              "restored_pages": 20711549,
+              "line": 23304
+            },
+            {
+              "profile": "linux_mmu",
+              "switches": 42661,
+              "scanned_pages": 32726694,
+              "present_faults": 904169,
+              "linux_faults": 147958,
+              "fast_faults": 11106429,
+              "restored_pages": 21103345,
+              "line": 24763
+            },
+            {
+              "profile": "linux_mmu",
+              "switches": 42795,
+              "scanned_pages": 32754943,
+              "present_faults": 905918,
+              "linux_faults": 148016,
+              "fast_faults": 11112042,
+              "restored_pages": 21113572,
+              "line": 24793
+            }
+          ],
+          "compiler_filter": [
+            {
+              "pid": 137,
+              "epoch": 7597447000,
+              "kind": "accepted",
+              "count": 4096,
+              "complete_snapshot": false,
+              "examples": [
+                "boolean java.lang.String.equals(java.lang.Object)",
+                "int java.lang.String.length()"
+              ]
+            },
+            {
+              "pid": 137,
+              "epoch": 7597447000,
+              "kind": "Min",
+              "count": 512,
+              "complete_snapshot": false,
+              "examples": [
+                "int java.lang.Math.min(int, int)"
+              ]
+            },
+            {
+              "pid": 137,
+              "epoch": 7597447000,
+              "kind": "InvokeStaticOrDirect",
+              "count": 256,
+              "complete_snapshot": false,
+              "examples": [
+                "java.lang.String java.lang.StringBuilder.toString()"
+              ]
+            },
+            {
+              "pid": 137,
+              "epoch": 7597447000,
+              "kind": "Max",
+              "count": 512,
+              "complete_snapshot": false,
+              "examples": [
+                "int java.lang.Math.max(int, int)"
+              ]
+            },
+            {
+              "pid": 103,
+              "epoch": 7701901000,
+              "kind": "accepted",
+              "count": 32,
+              "complete_snapshot": false,
+              "examples": [
+                "boolean java.lang.String.equals(java.lang.Object)",
+                "int java.lang.String.length()"
+              ]
+            },
+            {
+              "pid": 137,
+              "epoch": 7597447000,
+              "kind": "StringBuilderAppend",
+              "count": 64,
+              "complete_snapshot": false,
+              "examples": [
+                "void com.android.server.SystemConfig.readAllPermissionsFromXml()",
+                "java.lang.String com.android.server.am.BroadcastConstants.propertyOverrideFor(java.lang.String)"
+              ]
+            },
+            {
+              "pid": 103,
+              "epoch": 7701901000,
+              "kind": "InvokeStaticOrDirect",
+              "count": 16,
+              "complete_snapshot": false,
+              "examples": [
+                "java.lang.StringBuilder java.lang.StringBuilder.append(java.lang.String)",
+                "java.lang.StringBuilder java.lang.StringBuilder.append(char)"
+              ]
+            },
+            {
+              "pid": 103,
+              "epoch": 7701901000,
+              "kind": "Max",
+              "count": 2,
+              "complete_snapshot": false,
+              "examples": [
+                "int java.lang.Math.max(int, int)",
+                "long java.lang.Math.max(long, long)"
+              ]
+            },
+            {
+              "pid": 103,
+              "epoch": 7701901000,
+              "kind": "Min",
+              "count": 2,
+              "complete_snapshot": false,
+              "examples": [
+                "int java.lang.Math.min(int, int)",
+                "int android.icu.impl.Trie2_16.rangeEnd(int, int, int)"
+              ]
+            },
+            {
+              "pid": 137,
+              "epoch": 7597447000,
+              "kind": "InvokePolymorphic",
+              "count": 16,
+              "complete_snapshot": false,
+              "examples": [
+                "void com.android.server.pm.PackageManagerService$1.onChange(com.android.server.utils.Watchable)",
+                "void com.android.server.pm.PackageManagerService.onChange(com.android.server.utils.Watchable)"
+              ]
+            },
+            {
+              "pid": 137,
+              "epoch": 7597447000,
+              "kind": "Deoptimize",
+              "count": 64,
+              "complete_snapshot": false,
+              "examples": [
+                "void com.android.server.pm.SharedLibrariesImpl.executeSharedLibrariesUpdateLPw(com.android.server.pm.pkg.AndroidPackage, com.android.server.pm.PackageSetting, com.android.server.pm.pkg.AndroidPackage, com.android.server.pm.PackageSetting, java.util.ArrayList, int[])",
+                "com.android.server.art.jarjar.com.google.protobuf.MessageSchema com.android.server.art.jarjar.com.google.protobuf.MessageSchema.newSchemaForRawMessageInfo(com.android.server.art.jarjar.com.google.protobuf.RawMessageInfo, com.android.server.art.jarjar.com.google.protobuf.NewInstanceSchema, com.android.server.art.jarjar.com.google.protobuf.ListFieldSchema, com.android.server.art.jarjar.com.google.protobuf.UnknownFieldSchema, com.android.server.art.jarjar.com.google.protobuf.ExtensionSchema, com.android.server.art.jarjar.com.google.protobuf.MapFieldSchema)"
+              ]
+            },
+            {
+              "pid": 137,
+              "epoch": 7597447000,
+              "kind": "ShouldDeoptimizeFlag",
+              "count": 64,
+              "complete_snapshot": false,
+              "examples": [
+                "void com.android.server.utils.WatchableImpl.dispatchChange(com.android.server.utils.Watchable)",
+                "void com.android.server.content.ContentService$ObserverNode.addObserverLocked(android.net.Uri, int, android.database.IContentObserver, boolean, java.lang.Object, int, int, int)"
+              ]
+            },
+            {
+              "pid": 334,
+              "epoch": 7701901000,
+              "kind": "Max",
+              "count": 64,
+              "complete_snapshot": false,
+              "examples": []
+            },
+            {
+              "pid": 325,
+              "epoch": 7701901000,
+              "kind": "Max",
+              "count": 256,
+              "complete_snapshot": false,
+              "examples": []
+            },
+            {
+              "pid": 334,
+              "epoch": 7701901000,
+              "kind": "Min",
+              "count": 32,
+              "complete_snapshot": false,
+              "examples": []
+            },
+            {
+              "pid": 325,
+              "epoch": 7701901000,
+              "kind": "Min",
+              "count": 512,
+              "complete_snapshot": false,
+              "examples": []
+            },
+            {
+              "pid": 359,
+              "epoch": 7701901000,
+              "kind": "Max",
+              "count": 32,
+              "complete_snapshot": false,
+              "examples": []
+            },
+            {
+              "pid": 325,
+              "epoch": 7701901000,
+              "kind": "InvokeStaticOrDirect",
+              "count": 256,
+              "complete_snapshot": false,
+              "examples": []
+            },
+            {
+              "pid": 359,
+              "epoch": 7701901000,
+              "kind": "Min",
+              "count": 32,
+              "complete_snapshot": false,
+              "examples": []
+            },
+            {
+              "pid": 334,
+              "epoch": 7701901000,
+              "kind": "StringBuilderAppend",
+              "count": 1,
+              "complete_snapshot": false,
+              "examples": [
+                "java.lang.String com.android.role.controller.model.RoleParser.applyJarjarTransform(java.lang.String)"
+              ]
+            },
+            {
+              "pid": 325,
+              "epoch": 7701901000,
+              "kind": "Deoptimize",
+              "count": 64,
+              "complete_snapshot": false,
+              "examples": [
+                "java.lang.Object com.google.android.systemui.dagger.DaggerSysUIGoogleGlobalRootComponent$SysUIGoogleGlobalRootComponentImpl$SwitchingProvider.get()",
+                "void androidx.compose.ui.graphics.colorspace.Rgb.<init>(java.lang.String, float[], androidx.compose.ui.graphics.colorspace.WhitePoint, float[], androidx.compose.ui.graphics.colorspace.DoubleFunction, androidx.compose.ui.graphics.colorspace.DoubleFunction, float, float, androidx.compose.ui.graphics.colorspace.TransferParameters, int)"
+              ]
+            },
+            {
+              "pid": 334,
+              "epoch": 7701901000,
+              "kind": "accepted",
+              "count": 128,
+              "complete_snapshot": false,
+              "examples": []
+            },
+            {
+              "pid": 334,
+              "epoch": 7701901000,
+              "kind": "InvokeStaticOrDirect",
+              "count": 32,
+              "complete_snapshot": false,
+              "examples": []
+            },
+            {
+              "pid": 359,
+              "epoch": 7701901000,
+              "kind": "InvokeStaticOrDirect",
+              "count": 32,
+              "complete_snapshot": false,
+              "examples": []
+            },
+            {
+              "pid": 325,
+              "epoch": 7701901000,
+              "kind": "accepted",
+              "count": 1024,
+              "complete_snapshot": false,
+              "examples": []
+            },
+            {
+              "pid": 402,
+              "epoch": 7701901000,
+              "kind": "Max",
+              "count": 64,
+              "complete_snapshot": false,
+              "examples": []
+            },
+            {
+              "pid": 402,
+              "epoch": 7701901000,
+              "kind": "Min",
+              "count": 64,
+              "complete_snapshot": false,
+              "examples": []
+            },
+            {
+              "pid": 402,
+              "epoch": 7701901000,
+              "kind": "InvokeStaticOrDirect",
+              "count": 64,
+              "complete_snapshot": false,
+              "examples": []
+            },
+            {
+              "pid": 325,
+              "epoch": 7701901000,
+              "kind": "InvokePolymorphic",
+              "count": 8,
+              "complete_snapshot": false,
+              "examples": [
+                "java.lang.Object kotlinx.coroutines.flow.StateFlowImpl.collect(kotlinx.coroutines.flow.FlowCollector, kotlin.coroutines.Continuation)",
+                "boolean kotlinx.coroutines.flow.StateFlowImpl.updateState(java.lang.Object, java.lang.Object)"
+              ]
+            },
+            {
+              "pid": 454,
+              "epoch": 7701901000,
+              "kind": "Max",
+              "count": 128,
+              "complete_snapshot": false,
+              "examples": []
+            },
+            {
+              "pid": 454,
+              "epoch": 7701901000,
+              "kind": "Min",
+              "count": 128,
+              "complete_snapshot": false,
+              "examples": []
+            },
+            {
+              "pid": 454,
+              "epoch": 7701901000,
+              "kind": "InvokeStaticOrDirect",
+              "count": 128,
+              "complete_snapshot": false,
+              "examples": []
+            },
+            {
+              "pid": 325,
+              "epoch": 7701901000,
+              "kind": "ShouldDeoptimizeFlag",
+              "count": 32,
+              "complete_snapshot": false,
+              "examples": [
+                "kotlinx.coroutines.ChildHandle kotlinx.coroutines.JobSupport.attachChild(kotlinx.coroutines.JobSupport)",
+                "void kotlinx.coroutines.internal.LockFreeLinkedListNode.finishAdd(kotlinx.coroutines.internal.LockFreeLinkedListNode)"
+              ]
+            },
+            {
+              "pid": 325,
+              "epoch": 7701901000,
+              "kind": "StringBuilderAppend",
+              "count": 4,
+              "complete_snapshot": false,
+              "examples": [
+                "java.lang.String androidx.appsearch.app.DocumentClassFactoryRegistry$$ExternalSyntheticOutline0.m$1(java.lang.String, java.lang.String, java.lang.String)",
+                "void com.android.systemui.theme.ThemeOverlayController$$ExternalSyntheticLambda6.accept(java.lang.Object)"
+              ]
+            },
+            {
+              "pid": 504,
+              "epoch": 7701901000,
+              "kind": "Max",
+              "count": 16,
+              "complete_snapshot": false,
+              "examples": []
+            },
+            {
+              "pid": 334,
+              "epoch": 7701901000,
+              "kind": "ShouldDeoptimizeFlag",
+              "count": 1,
+              "complete_snapshot": false,
+              "examples": [
+                "void com.android.permissioncontroller.permission.model.livedatatypes.LightPackageInfo.<init>(android.content.pm.PackageInfo)"
+              ]
+            },
+            {
+              "pid": 504,
+              "epoch": 7701901000,
+              "kind": "Min",
+              "count": 16,
+              "complete_snapshot": false,
+              "examples": []
+            },
+            {
+              "pid": 522,
+              "epoch": 7701901000,
+              "kind": "Max",
+              "count": 32,
+              "complete_snapshot": false,
+              "examples": []
+            },
+            {
+              "pid": 530,
+              "epoch": 92536601000,
+              "kind": "accepted",
+              "count": 512,
+              "complete_snapshot": false,
+              "examples": [
+                "boolean java.lang.String.equals(java.lang.Object)",
+                "int java.lang.String.length()"
+              ]
+            },
+            {
+              "pid": 522,
+              "epoch": 7701901000,
+              "kind": "Min",
+              "count": 32,
+              "complete_snapshot": false,
+              "examples": []
+            },
+            {
+              "pid": 530,
+              "epoch": 92536601000,
+              "kind": "InvokeStaticOrDirect",
+              "count": 128,
+              "complete_snapshot": false,
+              "examples": [
+                "java.lang.String java.lang.StringBuilder.toString()",
+                "java.lang.String java.lang.StringLatin1.newString(byte[], int, int)"
+              ]
+            },
+            {
+              "pid": 530,
+              "epoch": 92536601000,
+              "kind": "Max",
+              "count": 128,
+              "complete_snapshot": false,
+              "examples": [
+                "int java.lang.Math.max(int, int)",
+                "void java.util.zip.ZipFile$Source.initCEN(byte[], int)"
+              ]
+            },
+            {
+              "pid": 530,
+              "epoch": 92536601000,
+              "kind": "Min",
+              "count": 128,
+              "complete_snapshot": false,
+              "examples": [
+                "int java.lang.Math.min(int, int)",
+                "int java.lang.String.lastIndexOf(int, int)"
+              ]
+            },
+            {
+              "pid": 530,
+              "epoch": 92536601000,
+              "kind": "Deoptimize",
+              "count": 128,
+              "complete_snapshot": false,
+              "examples": [
+                "java.lang.String java.io.UnixFileSystem.normalize(java.lang.String)",
+                "java.util.HashMap$Node[] java.util.HashMap.resize()"
+              ]
+            },
+            {
+              "pid": 522,
+              "epoch": 7701901000,
+              "kind": "InvokeStaticOrDirect",
+              "count": 32,
+              "complete_snapshot": false,
+              "examples": []
+            },
+            {
+              "pid": 530,
+              "epoch": 92536601000,
+              "kind": "InvokePolymorphic",
+              "count": 4,
+              "complete_snapshot": false,
+              "examples": [
+                "java.lang.Runnable libcore.util.NativeAllocationRegistry.registerNativeAllocation(java.lang.Object, long)",
+                "void dalvik.system.VMRuntime.notifyNativeAllocation()"
+              ]
+            },
+            {
+              "pid": 530,
+              "epoch": 92536601000,
+              "kind": "StringBuilderAppend",
+              "count": 8,
+              "complete_snapshot": false,
+              "examples": [
+                "void dalvik.system.CloseGuard.openWithCallSite(java.lang.String, java.lang.String)",
+                "java.lang.String java.io.File.slashify(java.lang.String, boolean)"
+              ]
+            },
+            {
+              "pid": 504,
+              "epoch": 7701901000,
+              "kind": "InvokeStaticOrDirect",
+              "count": 32,
+              "complete_snapshot": false,
+              "examples": []
+            },
+            {
+              "pid": 554,
+              "epoch": 7701901000,
+              "kind": "Max",
+              "count": 64,
+              "complete_snapshot": false,
+              "examples": []
+            },
+            {
+              "pid": 554,
+              "epoch": 7701901000,
+              "kind": "Min",
+              "count": 128,
+              "complete_snapshot": false,
+              "examples": []
+            },
+            {
+              "pid": 554,
+              "epoch": 7701901000,
+              "kind": "InvokeStaticOrDirect",
+              "count": 128,
+              "complete_snapshot": false,
+              "examples": []
+            },
+            {
+              "pid": 603,
+              "epoch": 7701901000,
+              "kind": "Max",
+              "count": 16,
+              "complete_snapshot": false,
+              "examples": []
+            },
+            {
+              "pid": 603,
+              "epoch": 7701901000,
+              "kind": "Min",
+              "count": 16,
+              "complete_snapshot": false,
+              "examples": []
+            },
+            {
+              "pid": 554,
+              "epoch": 7701901000,
+              "kind": "accepted",
+              "count": 128,
+              "complete_snapshot": false,
+              "examples": []
+            },
+            {
+              "pid": 554,
+              "epoch": 7701901000,
+              "kind": "StringBuilderAppend",
+              "count": 8,
+              "complete_snapshot": false,
+              "examples": [
+                "int androidx.room.util.CursorUtil.getColumnIndex(android.database.Cursor, java.lang.String)",
+                "java.lang.Object androidx.room.TriggerBasedInvalidationTracker.startTrackingTable(androidx.room.PooledConnection, int, kotlin.coroutines.Continuation)"
+              ]
+            },
+            {
+              "pid": 402,
+              "epoch": 7701901000,
+              "kind": "accepted",
+              "count": 64,
+              "complete_snapshot": false,
+              "examples": []
+            },
+            {
+              "pid": 402,
+              "epoch": 7701901000,
+              "kind": "Deoptimize",
+              "count": 2,
+              "complete_snapshot": false,
+              "examples": [
+                "int com.google.protobuf.Utf8$SafeProcessor.encodeUtf8(java.lang.CharSequence, byte[], int, int)",
+                "int com.google.protobuf.Utf8.encodedLength(java.lang.CharSequence)"
+              ]
+            },
+            {
+              "pid": 522,
+              "epoch": 7701901000,
+              "kind": "StringBuilderAppend",
+              "count": 2,
+              "complete_snapshot": false,
+              "examples": [
+                "int androidx.room.util.CursorUtil.getColumnIndex(android.database.Cursor, java.lang.String)",
+                "java.lang.Object androidx.room.TriggerBasedInvalidationTracker.startTrackingTable(androidx.room.PooledConnection, int, kotlin.coroutines.Continuation)"
+              ]
+            },
+            {
+              "pid": 603,
+              "epoch": 7701901000,
+              "kind": "InvokeStaticOrDirect",
+              "count": 32,
+              "complete_snapshot": false,
+              "examples": []
+            },
+            {
+              "pid": 642,
+              "epoch": 7701901000,
+              "kind": "Max",
+              "count": 16,
+              "complete_snapshot": false,
+              "examples": []
+            },
+            {
+              "pid": 522,
+              "epoch": 7701901000,
+              "kind": "accepted",
+              "count": 64,
+              "complete_snapshot": false,
+              "examples": []
+            },
+            {
+              "pid": 334,
+              "epoch": 7701901000,
+              "kind": "Deoptimize",
+              "count": 1,
+              "complete_snapshot": false,
+              "examples": [
+                "void com.android.permissioncontroller.permission.utils.UserSensitiveFlagsUtils.updateUserSensitiveForUidsInternal(java.util.Map, android.os.UserHandle, java.lang.Runnable)"
+              ]
+            },
+            {
+              "pid": 642,
+              "epoch": 7701901000,
+              "kind": "Min",
+              "count": 32,
+              "complete_snapshot": false,
+              "examples": []
+            },
+            {
+              "pid": 642,
+              "epoch": 7701901000,
+              "kind": "InvokeStaticOrDirect",
+              "count": 32,
+              "complete_snapshot": false,
+              "examples": []
+            },
+            {
+              "pid": 671,
+              "epoch": 7701901000,
+              "kind": "Max",
+              "count": 16,
+              "complete_snapshot": false,
+              "examples": []
+            },
+            {
+              "pid": 671,
+              "epoch": 7701901000,
+              "kind": "Min",
+              "count": 16,
+              "complete_snapshot": false,
+              "examples": []
+            },
+            {
+              "pid": 671,
+              "epoch": 7701901000,
+              "kind": "InvokeStaticOrDirect",
+              "count": 32,
+              "complete_snapshot": false,
+              "examples": []
+            },
+            {
+              "pid": 688,
+              "epoch": 7701901000,
+              "kind": "Max",
+              "count": 16,
+              "complete_snapshot": false,
+              "examples": []
+            },
+            {
+              "pid": 688,
+              "epoch": 7701901000,
+              "kind": "Min",
+              "count": 16,
+              "complete_snapshot": false,
+              "examples": []
+            },
+            {
+              "pid": 688,
+              "epoch": 7701901000,
+              "kind": "InvokeStaticOrDirect",
+              "count": 32,
+              "complete_snapshot": false,
+              "examples": []
+            },
+            {
+              "pid": 704,
+              "epoch": 7701901000,
+              "kind": "Max",
+              "count": 16,
+              "complete_snapshot": false,
+              "examples": []
+            },
+            {
+              "pid": 704,
+              "epoch": 7701901000,
+              "kind": "Min",
+              "count": 16,
+              "complete_snapshot": false,
+              "examples": []
+            },
+            {
+              "pid": 704,
+              "epoch": 7701901000,
+              "kind": "InvokeStaticOrDirect",
+              "count": 32,
+              "complete_snapshot": false,
+              "examples": []
+            },
+            {
+              "pid": 717,
+              "epoch": 7701901000,
+              "kind": "Max",
+              "count": 8,
+              "complete_snapshot": false,
+              "examples": []
+            },
+            {
+              "pid": 717,
+              "epoch": 7701901000,
+              "kind": "Min",
+              "count": 8,
+              "complete_snapshot": false,
+              "examples": []
+            },
+            {
+              "pid": 717,
+              "epoch": 7701901000,
+              "kind": "InvokeStaticOrDirect",
+              "count": 32,
+              "complete_snapshot": false,
+              "examples": []
+            },
+            {
+              "pid": 731,
+              "epoch": 7701901000,
+              "kind": "Max",
+              "count": 16,
+              "complete_snapshot": false,
+              "examples": []
+            },
+            {
+              "pid": 731,
+              "epoch": 7701901000,
+              "kind": "Min",
+              "count": 16,
+              "complete_snapshot": false,
+              "examples": []
+            },
+            {
+              "pid": 731,
+              "epoch": 7701901000,
+              "kind": "InvokeStaticOrDirect",
+              "count": 32,
+              "complete_snapshot": false,
+              "examples": []
+            },
+            {
+              "pid": 746,
+              "epoch": 7701901000,
+              "kind": "Max",
+              "count": 16,
+              "complete_snapshot": false,
+              "examples": []
+            },
+            {
+              "pid": 746,
+              "epoch": 7701901000,
+              "kind": "Min",
+              "count": 16,
+              "complete_snapshot": false,
+              "examples": []
+            },
+            {
+              "pid": 746,
+              "epoch": 7701901000,
+              "kind": "InvokeStaticOrDirect",
+              "count": 32,
+              "complete_snapshot": false,
+              "examples": []
+            },
+            {
+              "pid": 554,
+              "epoch": 7701901000,
+              "kind": "Deoptimize",
+              "count": 1,
+              "complete_snapshot": false,
+              "examples": [
+                "void com.android.providers.media.util.SQLiteQueryBuilder.setProjectionMap(java.util.Map)"
+              ]
+            },
+            {
+              "pid": 454,
+              "epoch": 7701901000,
+              "kind": "accepted",
+              "count": 128,
+              "complete_snapshot": false,
+              "examples": []
+            },
+            {
+              "pid": 454,
+              "epoch": 7701901000,
+              "kind": "StringBuilderAppend",
+              "count": 8,
+              "complete_snapshot": false,
+              "examples": [
+                "boolean com.android.launcher3.logging.FileLog$LogWriterCallback.handleMessage(android.os.Message)",
+                "void com.android.launcher3.Launcher.dump(java.lang.String, java.io.FileDescriptor, java.io.PrintWriter, java.lang.String[])"
+              ]
+            },
+            {
+              "pid": 454,
+              "epoch": 7701901000,
+              "kind": "Deoptimize",
+              "count": 2,
+              "complete_snapshot": false,
+              "examples": [
+                "float com.android.launcher3.views.BaseDragLayer.getDescendantRectRelativeToSelf(android.view.View, android.graphics.Rect)",
+                "com.google.protobuf.MessageSchema com.google.protobuf.MessageSchema.newSchemaForRawMessageInfo(com.google.protobuf.RawMessageInfo, com.google.protobuf.NewInstanceSchema, com.google.protobuf.ListFieldSchema, com.google.protobuf.UnknownFieldSchema, com.google.protobuf.ExtensionSchema, com.google.protobuf.MapFieldSchema)"
+              ]
+            },
+            {
+              "pid": 789,
+              "epoch": 308035375000,
+              "kind": "accepted",
+              "count": 256,
+              "complete_snapshot": false,
+              "examples": [
+                "boolean java.lang.String.equals(java.lang.Object)",
+                "int java.lang.String.length()"
+              ]
+            },
+            {
+              "pid": 789,
+              "epoch": 308035375000,
+              "kind": "InvokeStaticOrDirect",
+              "count": 8,
+              "complete_snapshot": false,
+              "examples": [
+                "java.lang.String java.lang.StringBuilder.toString()"
+              ]
+            },
+            {
+              "pid": 789,
+              "epoch": 308035375000,
+              "kind": "Max",
+              "count": 8,
+              "complete_snapshot": false,
+              "examples": [
+                "int java.lang.Math.max(int, int)"
+              ]
+            },
+            {
+              "pid": 789,
+              "epoch": 308035375000,
+              "kind": "Min",
+              "count": 16,
+              "complete_snapshot": false,
+              "examples": [
+                "int java.lang.Math.min(int, int)"
+              ]
+            },
+            {
+              "pid": 789,
+              "epoch": 308035375000,
+              "kind": "Deoptimize",
+              "count": 8,
+              "complete_snapshot": false,
+              "examples": [
+                "java.util.HashMap$Node[] java.util.HashMap.resize()",
+                "java.lang.String java.io.UnixFileSystem.normalize(java.lang.String)"
+              ]
+            },
+            {
+              "pid": 789,
+              "epoch": 308035375000,
+              "kind": "InvokePolymorphic",
+              "count": 1,
+              "complete_snapshot": false,
+              "examples": [
+                "java.lang.Runnable libcore.util.NativeAllocationRegistry.registerNativeAllocation(java.lang.Object, long)"
+              ]
+            },
+            {
+              "pid": 789,
+              "epoch": 308035375000,
+              "kind": "StringBuilderAppend",
+              "count": 2,
+              "complete_snapshot": false,
+              "examples": [
+                "void dalvik.system.CloseGuard.openWithCallSite(java.lang.String, java.lang.String)",
+                "java.lang.String java.io.File.slashify(java.lang.String, boolean)"
+              ]
+            }
+          ],
+          "fast_baseline": [],
+          "java_fatal_exceptions": 0,
+          "anrs": 0
+        }
+      }
+    ],
+    "data_reset_between_runs": false,
+    "host_file_cache_reset": false,
+    "measurement": "App starts through observed desktop ready, scripted input submission and clean stop. Ready has up to one polling interval of observation delay. No FPS or application render latency assertion.",
+    "data_directory": "/Users/fan/project/app/husk_hyos/work/native-linux-nce/benchmarks/device",
+    "data_image_existed_before_run": true,
+    "bundle_version": "0.18.0",
+    "build_id": "0.18.0-Mac-20261010-195829",
+    "host_cpu": "Apple M5 Ultra",
+    "executable_sha256": "2d1d01b846ef6734677b3f768f2b59740f5020fa8430c11b271099cd25f5f3ce",
+    "app_configuration_defaults": {
+      "sparseScan": true,
+      "fastBaseline": false,
+      "performanceLogging": false,
+      "aot": true,
+      "directFault": true,
+      "nterp": false,
+      "expandedJIT": false,
+      "diagnostics": false
+    },
+    "comparison": {
+      "nterp-mapping-diagnostic": {
+        "memory_overall_resident_mean_bytes": {
+          "median": 1450727352.0255592,
+          "min": 1450727352.0255592,
+          "max": 1450727352.0255592,
+          "samples": [
+            1450727352.0255592
+          ]
+        },
+        "memory_boot_step_0_compressed_latest_bytes": {
+          "median": 0,
+          "min": 0,
+          "max": 0,
+          "samples": [
+            0
+          ]
+        },
+        "memory_boot_step_3_virtual_latest_bytes": {
+          "median": 508721856512,
+          "min": 508721856512,
+          "max": 508721856512,
+          "samples": [
+            508721856512
+          ]
+        },
+        "memory_phase_running_footprint_latest_bytes": {
+          "median": 1501417672,
+          "min": 1501417672,
+          "max": 1501417672,
+          "samples": [
+            1501417672
+          ]
+        },
+        "memory_boot_step_3_virtual_mean_bytes": {
+          "median": 508666264416.7111,
+          "min": 508666264416.7111,
+          "max": 508666264416.7111,
+          "samples": [
+            508666264416.7111
+          ]
+        },
+        "memory_phase_booting_virtual_mean_bytes": {
+          "median": 508575969549.0803,
+          "min": 508575969549.0803,
+          "max": 508575969549.0803,
+          "samples": [
+            508575969549.0803
+          ]
+        },
+        "memory_phase_booting_compressed_sampled_peak_bytes": {
+          "median": 0,
+          "min": 0,
+          "max": 0,
+          "samples": [
+            0
+          ]
+        },
+        "memory_boot_step_3_resident_sampled_peak_bytes": {
+          "median": 1600028672,
+          "min": 1600028672,
+          "max": 1600028672,
+          "samples": [
+            1600028672
+          ]
+        },
+        "memory_phase_stopping_footprint_latest_bytes": {
+          "median": 1351847632,
+          "min": 1351847632,
+          "max": 1351847632,
+          "samples": [
+            1351847632
+          ]
+        },
+        "memory_phase_stopping_virtual_sampled_peak_bytes": {
+          "median": 508730933248,
+          "min": 508730933248,
+          "max": 508730933248,
+          "samples": [
+            508730933248
+          ]
+        },
+        "memory_boot_step_4_resident_mean_bytes": {
+          "median": 1560313856,
+          "min": 1560313856,
+          "max": 1560313856,
+          "samples": [
+            1560313856
+          ]
+        },
+        "memory_phase_stopping_compressed_sampled_peak_bytes": {
+          "median": 0,
+          "min": 0,
+          "max": 0,
+          "samples": [
+            0
+          ]
+        },
+        "memory_phase_stopping_virtual_mean_bytes": {
+          "median": 508646922922.6667,
+          "min": 508646922922.6667,
+          "max": 508646922922.6667,
+          "samples": [
+            508646922922.6667
+          ]
+        },
+        "memory_phase_running_footprint_sampled_peak_bytes": {
+          "median": 2052297816,
+          "min": 2052297816,
+          "max": 2052297816,
+          "samples": [
+            2052297816
+          ]
+        },
+        "memory_phase_running_resident_sampled_peak_bytes": {
+          "median": 1605943296,
+          "min": 1605943296,
+          "max": 1605943296,
+          "samples": [
+            1605943296
+          ]
+        },
+        "memory_overall_footprint_sampled_peak_bytes": {
+          "median": 2073317936,
+          "min": 2073317936,
+          "max": 2073317936,
+          "samples": [
+            2073317936
+          ]
+        },
+        "memory_phase_stopping_resident_sampled_peak_bytes": {
+          "median": 1593573376,
+          "min": 1593573376,
+          "max": 1593573376,
+          "samples": [
+            1593573376
+          ]
+        },
+        "memory_boot_step_3_resident_latest_bytes": {
+          "median": 1561444352,
+          "min": 1561444352,
+          "max": 1561444352,
+          "samples": [
+            1561444352
+          ]
+        },
+        "memory_phase_running_resident_mean_bytes": {
+          "median": 1562825594.4347825,
+          "min": 1562825594.4347825,
+          "max": 1562825594.4347825,
+          "samples": [
+            1562825594.4347825
+          ]
+        },
+        "memory_phase_preparing_compressed_mean_bytes": {
+          "median": 0,
+          "min": 0,
+          "max": 0,
+          "samples": [
+            0
+          ]
+        },
+        "memory_boot_step_0_resident_mean_bytes": {
+          "median": 229384192,
+          "min": 229384192,
+          "max": 229384192,
+          "samples": [
+            229384192
+          ]
+        },
+        "memory_phase_running_virtual_sampled_peak_bytes": {
+          "median": 508724871168,
+          "min": 508724871168,
+          "max": 508724871168,
+          "samples": [
+            508724871168
+          ]
+        },
+        "memory_boot_step_0_virtual_sampled_peak_bytes": {
+          "median": 508131622912,
+          "min": 508131622912,
+          "max": 508131622912,
+          "samples": [
+            508131622912
+          ]
+        },
+        "memory_phase_stopped_resident_sampled_peak_bytes": {
+          "median": 184287232,
+          "min": 184287232,
+          "max": 184287232,
+          "samples": [
+            184287232
+          ]
+        },
+        "memory_boot_step_4_compressed_sampled_peak_bytes": {
+          "median": 0,
+          "min": 0,
+          "max": 0,
+          "samples": [
+            0
+          ]
+        },
+        "memory_phase_running_compressed_mean_bytes": {
+          "median": 0,
+          "min": 0,
+          "max": 0,
+          "samples": [
+            0
+          ]
+        },
+        "memory_overall_compressed_latest_bytes": {
+          "median": 0,
+          "min": 0,
+          "max": 0,
+          "samples": [
+            0
+          ]
+        },
+        "memory_boot_step_3_footprint_latest_bytes": {
+          "median": 2001260408,
+          "min": 2001260408,
+          "max": 2001260408,
+          "samples": [
+            2001260408
+          ]
+        },
+        "memory_phase_stopping_virtual_latest_bytes": {
+          "median": 508359213056,
+          "min": 508359213056,
+          "max": 508359213056,
+          "samples": [
+            508359213056
+          ]
+        },
+        "memory_boot_step_3_virtual_sampled_peak_bytes": {
+          "median": 508721856512,
+          "min": 508721856512,
+          "max": 508721856512,
+          "samples": [
+            508721856512
+          ]
+        },
+        "memory_phase_preparing_resident_sampled_peak_bytes": {
+          "median": 106053632,
+          "min": 106053632,
+          "max": 106053632,
+          "samples": [
+            106053632
+          ]
+        },
+        "memory_phase_running_virtual_mean_bytes": {
+          "median": 508723661601.3913,
+          "min": 508723661601.3913,
+          "max": 508723661601.3913,
+          "samples": [
+            508723661601.3913
+          ]
+        },
+        "memory_boot_step_4_compressed_mean_bytes": {
+          "median": 0,
+          "min": 0,
+          "max": 0,
+          "samples": [
+            0
+          ]
+        },
+        "memory_phase_preparing_compressed_latest_bytes": {
+          "median": 0,
+          "min": 0,
+          "max": 0,
+          "samples": [
+            0
+          ]
+        },
+        "memory_phase_stopping_footprint_sampled_peak_bytes": {
+          "median": 2049396576,
+          "min": 2049396576,
+          "max": 2049396576,
+          "samples": [
+            2049396576
+          ]
+        },
+        "memory_phase_stopped_compressed_sampled_peak_bytes": {
+          "median": 0,
+          "min": 0,
+          "max": 0,
+          "samples": [
+            0
+          ]
+        },
+        "memory_boot_step_3_compressed_sampled_peak_bytes": {
+          "median": 0,
+          "min": 0,
+          "max": 0,
+          "samples": [
+            0
+          ]
+        },
+        "memory_phase_preparing_footprint_mean_bytes": {
+          "median": 32785488,
+          "min": 32785488,
+          "max": 32785488,
+          "samples": [
+            32785488
+          ]
+        },
+        "memory_phase_booting_virtual_sampled_peak_bytes": {
+          "median": 508721856512,
+          "min": 508721856512,
+          "max": 508721856512,
+          "samples": [
+            508721856512
+          ]
+        },
+        "memory_phase_booting_footprint_mean_bytes": {
+          "median": 1471401644.729927,
+          "min": 1471401644.729927,
+          "max": 1471401644.729927,
+          "samples": [
+            1471401644.729927
+          ]
+        },
+        "memory_phase_stopped_footprint_sampled_peak_bytes": {
+          "median": 402507264,
+          "min": 402507264,
+          "max": 402507264,
+          "samples": [
+            402507264
+          ]
+        },
+        "memory_boot_step_4_compressed_latest_bytes": {
+          "median": 0,
+          "min": 0,
+          "max": 0,
+          "samples": [
+            0
+          ]
+        },
+        "memory_overall_virtual_mean_bytes": {
+          "median": 508495473549.4952,
+          "min": 508495473549.4952,
+          "max": 508495473549.4952,
+          "samples": [
+            508495473549.4952
+          ]
+        },
+        "memory_phase_booting_resident_latest_bytes": {
+          "median": 1560313856,
+          "min": 1560313856,
+          "max": 1560313856,
+          "samples": [
+            1560313856
+          ]
+        },
+        "memory_boot_step_0_footprint_latest_bytes": {
+          "median": 569395480,
+          "min": 569395480,
+          "max": 569395480,
+          "samples": [
+            569395480
+          ]
+        },
+        "memory_phase_running_virtual_latest_bytes": {
+          "median": 508722577408,
+          "min": 508722577408,
+          "max": 508722577408,
+          "samples": [
+            508722577408
+          ]
+        },
+        "memory_overall_footprint_latest_bytes": {
+          "median": 402507264,
+          "min": 402507264,
+          "max": 402507264,
+          "samples": [
+            402507264
+          ]
+        },
+        "memory_boot_step_0_resident_latest_bytes": {
+          "median": 351551488,
+          "min": 351551488,
+          "max": 351551488,
+          "samples": [
+            351551488
+          ]
+        },
+        "memory_phase_stopped_compressed_latest_bytes": {
+          "median": 0,
+          "min": 0,
+          "max": 0,
+          "samples": [
+            0
+          ]
+        },
+        "memory_phase_running_compressed_sampled_peak_bytes": {
+          "median": 0,
+          "min": 0,
+          "max": 0,
+          "samples": [
+            0
+          ]
+        },
+        "memory_process_lifetime_resident_peak_bytes": {
+          "median": 1621884928,
+          "min": 1621884928,
+          "max": 1621884928,
+          "samples": [
+            1621884928
+          ]
+        },
+        "memory_phase_preparing_resident_mean_bytes": {
+          "median": 105955328,
+          "min": 105955328,
+          "max": 105955328,
+          "samples": [
+            105955328
+          ]
+        },
+        "memory_phase_running_footprint_mean_bytes": {
+          "median": 1642999926.2608695,
+          "min": 1642999926.2608695,
+          "max": 1642999926.2608695,
+          "samples": [
+            1642999926.2608695
+          ]
+        },
+        "memory_boot_step_0_virtual_latest_bytes": {
+          "median": 508131622912,
+          "min": 508131622912,
+          "max": 508131622912,
+          "samples": [
+            508131622912
+          ]
+        },
+        "memory_phase_preparing_resident_latest_bytes": {
+          "median": 106053632,
+          "min": 106053632,
+          "max": 106053632,
+          "samples": [
+            106053632
+          ]
+        },
+        "memory_phase_booting_resident_mean_bytes": {
+          "median": 1455730897.2846715,
+          "min": 1455730897.2846715,
+          "max": 1455730897.2846715,
+          "samples": [
+            1455730897.2846715
+          ]
+        },
+        "memory_phase_booting_virtual_latest_bytes": {
+          "median": 508719415296,
+          "min": 508719415296,
+          "max": 508719415296,
+          "samples": [
+            508719415296
+          ]
+        },
+        "memory_boot_step_3_footprint_mean_bytes": {
+          "median": 1588508235.1111112,
+          "min": 1588508235.1111112,
+          "max": 1588508235.1111112,
+          "samples": [
+            1588508235.1111112
+          ]
+        },
+        "memory_phase_stopped_footprint_mean_bytes": {
+          "median": 402507264,
+          "min": 402507264,
+          "max": 402507264,
+          "samples": [
+            402507264
+          ]
+        },
+        "memory_phase_booting_compressed_mean_bytes": {
+          "median": 0,
+          "min": 0,
+          "max": 0,
+          "samples": [
+            0
+          ]
+        },
+        "memory_boot_step_4_footprint_mean_bytes": {
+          "median": 1815859472,
+          "min": 1815859472,
+          "max": 1815859472,
+          "samples": [
+            1815859472
+          ]
+        },
+        "memory_phase_stopping_compressed_mean_bytes": {
+          "median": 0,
+          "min": 0,
+          "max": 0,
+          "samples": [
+            0
+          ]
+        },
+        "memory_boot_step_4_footprint_latest_bytes": {
+          "median": 1815859472,
+          "min": 1815859472,
+          "max": 1815859472,
+          "samples": [
+            1815859472
+          ]
+        },
+        "memory_boot_step_3_resident_mean_bytes": {
+          "median": 1549959259.0222223,
+          "min": 1549959259.0222223,
+          "max": 1549959259.0222223,
+          "samples": [
+            1549959259.0222223
+          ]
+        },
+        "memory_phase_stopped_footprint_latest_bytes": {
+          "median": 402507264,
+          "min": 402507264,
+          "max": 402507264,
+          "samples": [
+            402507264
+          ]
+        },
+        "memory_overall_virtual_sampled_peak_bytes": {
+          "median": 508730933248,
+          "min": 508730933248,
+          "max": 508730933248,
+          "samples": [
+            508730933248
+          ]
+        },
+        "memory_phase_stopping_resident_latest_bytes": {
+          "median": 1401618432,
+          "min": 1401618432,
+          "max": 1401618432,
+          "samples": [
+            1401618432
+          ]
+        },
+        "memory_phase_booting_footprint_sampled_peak_bytes": {
+          "median": 2073317936,
+          "min": 2073317936,
+          "max": 2073317936,
+          "samples": [
+            2073317936
+          ]
+        },
+        "memory_process_lifetime_footprint_peak_bytes": {
+          "median": 2101531832,
+          "min": 2101531832,
+          "max": 2101531832,
+          "samples": [
+            2101531832
+          ]
+        },
+        "memory_overall_resident_sampled_peak_bytes": {
+          "median": 1605943296,
+          "min": 1605943296,
+          "max": 1605943296,
+          "samples": [
+            1605943296
+          ]
+        },
+        "memory_phase_stopped_virtual_sampled_peak_bytes": {
+          "median": 501260795904,
+          "min": 501260795904,
+          "max": 501260795904,
+          "samples": [
+            501260795904
+          ]
+        },
+        "memory_phase_booting_resident_sampled_peak_bytes": {
+          "median": 1600028672,
+          "min": 1600028672,
+          "max": 1600028672,
+          "samples": [
+            1600028672
+          ]
+        },
+        "memory_boot_step_4_footprint_sampled_peak_bytes": {
+          "median": 1815859472,
+          "min": 1815859472,
+          "max": 1815859472,
+          "samples": [
+            1815859472
+          ]
+        },
+        "memory_boot_step_2_footprint_latest_bytes": {
+          "median": 1758958224,
+          "min": 1758958224,
+          "max": 1758958224,
+          "samples": [
+            1758958224
+          ]
+        },
+        "memory_boot_step_0_resident_sampled_peak_bytes": {
+          "median": 351551488,
+          "min": 351551488,
+          "max": 351551488,
+          "samples": [
+            351551488
+          ]
+        },
+        "memory_boot_step_2_compressed_sampled_peak_bytes": {
+          "median": 0,
+          "min": 0,
+          "max": 0,
+          "samples": [
+            0
+          ]
+        },
+        "memory_phase_stopping_compressed_latest_bytes": {
+          "median": 0,
+          "min": 0,
+          "max": 0,
+          "samples": [
+            0
+          ]
+        },
+        "memory_boot_step_2_virtual_sampled_peak_bytes": {
+          "median": 508609200128,
+          "min": 508609200128,
+          "max": 508609200128,
+          "samples": [
+            508609200128
+          ]
+        },
+        "memory_boot_step_0_footprint_sampled_peak_bytes": {
+          "median": 569395480,
+          "min": 569395480,
+          "max": 569395480,
+          "samples": [
+            569395480
+          ]
+        },
+        "memory_boot_step_0_compressed_mean_bytes": {
+          "median": 0,
+          "min": 0,
+          "max": 0,
+          "samples": [
+            0
+          ]
+        },
+        "memory_phase_preparing_virtual_mean_bytes": {
+          "median": 501169340416,
+          "min": 501169340416,
+          "max": 501169340416,
+          "samples": [
+            501169340416
+          ]
+        },
+        "memory_overall_compressed_mean_bytes": {
+          "median": 0,
+          "min": 0,
+          "max": 0,
+          "samples": [
+            0
+          ]
+        },
+        "memory_phase_stopped_resident_latest_bytes": {
+          "median": 184287232,
+          "min": 184287232,
+          "max": 184287232,
+          "samples": [
+            184287232
+          ]
+        },
+        "memory_boot_step_4_virtual_sampled_peak_bytes": {
+          "median": 508719415296,
+          "min": 508719415296,
+          "max": 508719415296,
+          "samples": [
+            508719415296
+          ]
+        },
+        "stop_ms": {
+          "median": 10768.871041713282,
+          "min": 10768.871041713282,
+          "max": 10768.871041713282,
+          "samples": [
+            10768.871041713282
+          ]
+        },
+        "actions_ms": {
+          "median": 23588.11324997805,
+          "min": 23588.11324997805,
+          "max": 23588.11324997805,
+          "samples": [
+            23588.11324997805
+          ]
+        },
+        "memory_boot_step_3_footprint_sampled_peak_bytes": {
+          "median": 2073317936,
+          "min": 2073317936,
+          "max": 2073317936,
+          "samples": [
+            2073317936
+          ]
+        },
+        "memory_phase_preparing_compressed_sampled_peak_bytes": {
+          "median": 0,
+          "min": 0,
+          "max": 0,
+          "samples": [
+            0
+          ]
+        },
+        "memory_boot_step_2_footprint_sampled_peak_bytes": {
+          "median": 1924911880,
+          "min": 1924911880,
+          "max": 1924911880,
+          "samples": [
+            1924911880
+          ]
+        },
+        "memory_boot_step_0_virtual_mean_bytes": {
+          "median": 504650219520,
+          "min": 504650219520,
+          "max": 504650219520,
+          "samples": [
+            504650219520
+          ]
+        },
+        "memory_boot_step_4_virtual_latest_bytes": {
+          "median": 508719415296,
+          "min": 508719415296,
+          "max": 508719415296,
+          "samples": [
+            508719415296
+          ]
+        },
+        "memory_boot_step_2_footprint_mean_bytes": {
+          "median": 1261692527.3846154,
+          "min": 1261692527.3846154,
+          "max": 1261692527.3846154,
+          "samples": [
+            1261692527.3846154
+          ]
+        },
+        "memory_overall_footprint_mean_bytes": {
+          "median": 1475067795.2971246,
+          "min": 1475067795.2971246,
+          "max": 1475067795.2971246,
+          "samples": [
+            1475067795.2971246
+          ]
+        },
+        "memory_phase_preparing_footprint_latest_bytes": {
+          "median": 32834640,
+          "min": 32834640,
+          "max": 32834640,
+          "samples": [
+            32834640
+          ]
+        },
+        "memory_overall_resident_latest_bytes": {
+          "median": 184287232,
+          "min": 184287232,
+          "max": 184287232,
+          "samples": [
+            184287232
+          ]
+        },
+        "memory_phase_stopped_virtual_latest_bytes": {
+          "median": 501260795904,
+          "min": 501260795904,
+          "max": 501260795904,
+          "samples": [
+            501260795904
+          ]
+        },
+        "memory_phase_stopping_resident_mean_bytes": {
+          "median": 1556826794.6666667,
+          "min": 1556826794.6666667,
+          "max": 1556826794.6666667,
+          "samples": [
+            1556826794.6666667
+          ]
+        },
+        "memory_phase_preparing_virtual_sampled_peak_bytes": {
+          "median": 501169340416,
+          "min": 501169340416,
+          "max": 501169340416,
+          "samples": [
+            501169340416
+          ]
+        },
+        "memory_boot_step_0_compressed_sampled_peak_bytes": {
+          "median": 0,
+          "min": 0,
+          "max": 0,
+          "samples": [
+            0
+          ]
+        },
+        "memory_phase_stopping_footprint_mean_bytes": {
+          "median": 1656048788.6666667,
+          "min": 1656048788.6666667,
+          "max": 1656048788.6666667,
+          "samples": [
+            1656048788.6666667
+          ]
+        },
+        "memory_boot_step_2_resident_mean_bytes": {
+          "median": 1295148538.3736265,
+          "min": 1295148538.3736265,
+          "max": 1295148538.3736265,
+          "samples": [
+            1295148538.3736265
+          ]
+        },
+        "memory_phase_booting_compressed_latest_bytes": {
+          "median": 0,
+          "min": 0,
+          "max": 0,
+          "samples": [
+            0
+          ]
+        },
+        "memory_boot_step_3_compressed_latest_bytes": {
+          "median": 0,
+          "min": 0,
+          "max": 0,
+          "samples": [
+            0
+          ]
+        },
+        "memory_boot_step_4_resident_sampled_peak_bytes": {
+          "median": 1560313856,
+          "min": 1560313856,
+          "max": 1560313856,
+          "samples": [
+            1560313856
+          ]
+        },
+        "memory_boot_step_2_compressed_latest_bytes": {
+          "median": 0,
+          "min": 0,
+          "max": 0,
+          "samples": [
+            0
+          ]
+        },
+        "core_to_ready_observed_ms": {
+          "median": 281094.0234584268,
+          "min": 281094.0234584268,
+          "max": 281094.0234584268,
+          "samples": [
+            281094.0234584268
+          ]
+        },
+        "memory_boot_step_2_compressed_mean_bytes": {
+          "median": 0,
+          "min": 0,
+          "max": 0,
+          "samples": [
+            0
+          ]
+        },
+        "memory_phase_stopped_virtual_mean_bytes": {
+          "median": 501260795904,
+          "min": 501260795904,
+          "max": 501260795904,
+          "samples": [
+            501260795904
+          ]
+        },
+        "memory_overall_compressed_sampled_peak_bytes": {
+          "median": 0,
+          "min": 0,
+          "max": 0,
+          "samples": [
+            0
+          ]
+        },
+        "memory_boot_step_4_virtual_mean_bytes": {
+          "median": 508719415296,
+          "min": 508719415296,
+          "max": 508719415296,
+          "samples": [
+            508719415296
+          ]
+        },
+        "memory_boot_step_2_virtual_mean_bytes": {
+          "median": 508482068209.9341,
+          "min": 508482068209.9341,
+          "max": 508482068209.9341,
+          "samples": [
+            508482068209.9341
+          ]
+        },
+        "memory_boot_step_2_virtual_latest_bytes": {
+          "median": 508609200128,
+          "min": 508609200128,
+          "max": 508609200128,
+          "samples": [
+            508609200128
+          ]
+        },
+        "memory_phase_preparing_footprint_sampled_peak_bytes": {
+          "median": 32834640,
+          "min": 32834640,
+          "max": 32834640,
+          "samples": [
+            32834640
+          ]
+        },
+        "memory_phase_stopped_compressed_mean_bytes": {
+          "median": 0,
+          "min": 0,
+          "max": 0,
+          "samples": [
+            0
+          ]
+        },
+        "memory_phase_preparing_virtual_latest_bytes": {
+          "median": 501169340416,
+          "min": 501169340416,
+          "max": 501169340416,
+          "samples": [
+            501169340416
+          ]
+        },
+        "memory_phase_running_resident_latest_bytes": {
+          "median": 1555955712,
+          "min": 1555955712,
+          "max": 1555955712,
+          "samples": [
+            1555955712
+          ]
+        },
+        "memory_overall_virtual_latest_bytes": {
+          "median": 501260795904,
+          "min": 501260795904,
+          "max": 501260795904,
+          "samples": [
+            501260795904
+          ]
+        },
+        "memory_phase_stopped_resident_mean_bytes": {
+          "median": 184287232,
+          "min": 184287232,
+          "max": 184287232,
+          "samples": [
+            184287232
+          ]
+        },
+        "memory_boot_step_2_resident_latest_bytes": {
+          "median": 1498447872,
+          "min": 1498447872,
+          "max": 1498447872,
+          "samples": [
+            1498447872
+          ]
+        },
+        "memory_phase_booting_footprint_latest_bytes": {
+          "median": 1815859472,
+          "min": 1815859472,
+          "max": 1815859472,
+          "samples": [
+            1815859472
+          ]
+        },
+        "memory_boot_step_0_footprint_mean_bytes": {
+          "median": 301344436,
+          "min": 301344436,
+          "max": 301344436,
+          "samples": [
+            301344436
+          ]
+        },
+        "memory_boot_step_3_compressed_mean_bytes": {
+          "median": 0,
+          "min": 0,
+          "max": 0,
+          "samples": [
+            0
+          ]
+        },
+        "memory_boot_step_4_resident_latest_bytes": {
+          "median": 1560313856,
+          "min": 1560313856,
+          "max": 1560313856,
+          "samples": [
+            1560313856
+          ]
+        },
+        "memory_phase_running_compressed_latest_bytes": {
+          "median": 0,
+          "min": 0,
+          "max": 0,
+          "samples": [
+            0
+          ]
+        },
+        "start_to_ready_observed_ms": {
+          "median": 281104.8560417257,
+          "min": 281104.8560417257,
+          "max": 281104.8560417257,
+          "samples": [
+            281104.8560417257
+          ]
+        },
+        "memory_boot_step_2_resident_sampled_peak_bytes": {
+          "median": 1498447872,
+          "min": 1498447872,
+          "max": 1498447872,
+          "samples": [
+            1498447872
+          ]
+        }
+      }
+    }
+  },
+  "source_revision": "a297908",
+  "samples": [
+    {
+      "path": "work/native-linux-nce/profile-current/stack-000.txt",
+      "summary": {
+        "metadata": {
+          "Date/Time": "2026-10-10 20:23:03.886 +0800",
+          "Launch Time": "2026-10-10 20:22:50.651 +0800",
+          "OS Version": "macOS 27.0 (26A428)",
+          "Physical footprint": "1.0G",
+          "Physical footprint (peak)": "1.0G"
+        },
+        "all_thread_samples": 198970,
+        "nonwait_samples": 648,
+        "groups": {
+          "explicit_wait": 198322,
+          "other_host": 20,
+          "host_mapping": 212,
+          "signal_handling": 266,
+          "unresolved_native_code": 143,
+          "resume_entry": 7
+        },
+        "nonwait_share": {
+          "other_host": 0.0309,
+          "host_mapping": 0.3272,
+          "signal_handling": 0.4105,
+          "unresolved_native_code": 0.2207,
+          "resume_entry": 0.0108
+        },
+        "top_nonwait_functions": [
+          [
+            "_sigtramp",
+            265
+          ],
+          [
+            "???",
+            143
+          ],
+          [
+            "mach_msg2_trap",
+            93
+          ],
+          [
+            "__mmap",
+            67
+          ],
+          [
+            "__mprotect",
+            29
+          ],
+          [
+            "_platform_memcmp",
+            20
+          ],
+          [
+            "prepare_resume",
+            5
+          ],
+          [
+            "__pthread_kill",
+            4
+          ],
+          [
+            "mach_continuous_time",
+            4
+          ],
+          [
+            "start_wqthread",
+            2
+          ],
+          [
+            "sys_icache_invalidate",
+            2
+          ],
+          [
+            "type metadata accessor for VStack",
+            1
+          ],
+          [
+            "pthread_testcancel",
+            1
+          ],
+          [
+            "pthread_kill",
+            1
+          ],
+          [
+            "fsync",
+            1
+          ],
+          [
+            "nce_memory_remap",
+            1
+          ],
+          [
+            "nce_event_gate",
+            1
+          ],
+          [
+            "_kernelrpc_mach_vm_protect_trap",
+            1
+          ],
+          [
+            "dispatch_thread_override_self_with_base",
+            1
+          ],
+          [
+            "swift::concurrency::trace::job_run_begin(swift::Job*, swift::SerialExecutorRef, swift::TaskExecutorRef)",
+            1
+          ]
+        ]
+      }
+    },
+    {
+      "path": "work/native-linux-nce/profile-current/stack-020.txt",
+      "summary": {
+        "metadata": {
+          "Date/Time": "2026-10-10 20:23:23.884 +0800",
+          "Launch Time": "2026-10-10 20:22:50.651 +0800",
+          "OS Version": "macOS 27.0 (26A428)",
+          "Physical footprint": "1.2G",
+          "Physical footprint (peak)": "1.2G"
+        },
+        "all_thread_samples": 282601,
+        "nonwait_samples": 643,
+        "groups": {
+          "explicit_wait": 281958,
+          "other_host": 24,
+          "unresolved_native_code": 134,
+          "host_mapping": 192,
+          "signal_handling": 283,
+          "resume_entry": 10
+        },
+        "nonwait_share": {
+          "other_host": 0.0373,
+          "unresolved_native_code": 0.2084,
+          "host_mapping": 0.2986,
+          "signal_handling": 0.4401,
+          "resume_entry": 0.0156
+        },
+        "top_nonwait_functions": [
+          [
+            "_sigtramp",
+            278
+          ],
+          [
+            "???",
+            134
+          ],
+          [
+            "mach_msg2_trap",
+            92
+          ],
+          [
+            "__mmap",
+            62
+          ],
+          [
+            "__mprotect",
+            17
+          ],
+          [
+            "_platform_memcmp",
+            17
+          ],
+          [
+            "prepare_resume",
+            9
+          ],
+          [
+            "mach_continuous_time",
+            6
+          ],
+          [
+            "__pthread_kill",
+            4
+          ],
+          [
+            "nce_event_gate",
+            4
+          ],
+          [
+            "start_wqthread",
+            4
+          ],
+          [
+            "pthread_kill",
+            3
+          ],
+          [
+            "_dispatch_event_loop_drain_timers",
+            2
+          ],
+          [
+            "<deduplicated_symbol>",
+            1
+          ],
+          [
+            "icu::CharString::CharString(icu::CharString&&)",
+            1
+          ],
+          [
+            "DYLD-STUB$$clock_gettime_nsec_np",
+            1
+          ],
+          [
+            "pread",
+            1
+          ],
+          [
+            "nce_program_index",
+            1
+          ],
+          [
+            "fault",
+            1
+          ],
+          [
+            "sys_icache_invalidate",
+            1
+          ]
+        ]
+      }
+    },
+    {
+      "path": "work/native-linux-nce/profile-current/stack-045.txt",
+      "summary": {
+        "metadata": {
+          "Date/Time": "2026-10-10 20:23:48.920 +0800",
+          "Launch Time": "2026-10-10 20:22:50.651 +0800",
+          "OS Version": "macOS 27.0 (26A428)",
+          "Physical footprint": "1.3G",
+          "Physical footprint (peak)": "1.5G"
+        },
+        "all_thread_samples": 303268,
+        "nonwait_samples": 626,
+        "groups": {
+          "explicit_wait": 302642,
+          "unresolved_native_code": 175,
+          "other_host": 20,
+          "host_mapping": 193,
+          "signal_handling": 231,
+          "resume_entry": 7
+        },
+        "nonwait_share": {
+          "unresolved_native_code": 0.2796,
+          "other_host": 0.0319,
+          "host_mapping": 0.3083,
+          "signal_handling": 0.369,
+          "resume_entry": 0.0112
+        },
+        "top_nonwait_functions": [
+          [
+            "_sigtramp",
+            228
+          ],
+          [
+            "???",
+            175
+          ],
+          [
+            "mach_msg2_trap",
+            95
+          ],
+          [
+            "__mmap",
+            67
+          ],
+          [
+            "__mprotect",
+            20
+          ],
+          [
+            "_platform_memcmp",
+            9
+          ],
+          [
+            "prepare_resume",
+            6
+          ],
+          [
+            "mach_continuous_time",
+            3
+          ],
+          [
+            "__pthread_kill",
+            2
+          ],
+          [
+            "nce_event_gate",
+            2
+          ],
+          [
+            "_aa_polygon_state_t::cache_render(unsigned int, unsigned char*, unsigned long)::$_0::operator()(unsigned long, unsigned long) const",
+            2
+          ],
+          [
+            "Int._rawHashValue(seed:)",
+            1
+          ],
+          [
+            "AG::Graph::resolve_offset(AG::AttributeID, AGSwiftMetadata const*, unsigned int) const",
+            1
+          ],
+          [
+            "os_unfair_lock_lock_with_options",
+            1
+          ],
+          [
+            "-[NSMutableAttributedString addAttributes:range:]",
+            1
+          ],
+          [
+            "type metadata accessor for Locale",
+            1
+          ],
+          [
+            "+[NSJSONSerialization JSONObjectWithData:options:error:]",
+            1
+          ],
+          [
+            "swift_conformsToProtocolMaybeInstantiateSuperclasses(swift::TargetMetadata<swift::InProcess> const*, swift::TargetProtocolDescriptor<swift::InProcess> const*, bool)",
+            1
+          ],
+          [
+            "swift::ConcurrentReadableHashMap<(anonymous namespace)::ConformanceCacheEntry, swift::LazyMutex>::find<(anonymous namespace)::ConformanceCacheKey>((anonymous namespace)::ConformanceCacheKey const&, swift::ConcurrentReadableHashMap<(anonymous namespace)::ConformanceCacheEntry, swift::LazyMutex>::IndexStorage, unsigned long, (anonymous namespace)::ConformanceCacheEntry*)",
+            1
+          ],
+          [
+            "pthread_kill",
+            1
+          ]
+        ]
+      }
+    },
+    {
+      "path": "work/native-linux-nce/profile-current/stack-070.txt",
+      "summary": {
+        "metadata": {
+          "Date/Time": "2026-10-10 20:24:13.895 +0800",
+          "Launch Time": "2026-10-10 20:22:50.651 +0800",
+          "OS Version": "macOS 27.0 (26A428)",
+          "Physical footprint": "1.3G",
+          "Physical footprint (peak)": "1.8G"
+        },
+        "all_thread_samples": 315387,
+        "nonwait_samples": 610,
+        "groups": {
+          "explicit_wait": 314777,
+          "other_host": 17,
+          "host_mapping": 205,
+          "signal_handling": 241,
+          "unresolved_native_code": 137,
+          "resume_entry": 9,
+          "host_graphics": 1
+        },
+        "nonwait_share": {
+          "other_host": 0.0279,
+          "host_mapping": 0.3361,
+          "signal_handling": 0.3951,
+          "unresolved_native_code": 0.2246,
+          "resume_entry": 0.0148,
+          "host_graphics": 0.0016
+        },
+        "top_nonwait_functions": [
+          [
+            "_sigtramp",
+            238
+          ],
+          [
+            "???",
+            138
+          ],
+          [
+            "mach_msg2_trap",
+            95
+          ],
+          [
+            "__mmap",
+            72
+          ],
+          [
+            "__mprotect",
+            16
+          ],
+          [
+            "_platform_memcmp",
+            16
+          ],
+          [
+            "prepare_resume",
+            6
+          ],
+          [
+            "sys_icache_invalidate",
+            4
+          ],
+          [
+            "__psynch_cvsignal",
+            3
+          ],
+          [
+            "nce_event_gate",
+            3
+          ],
+          [
+            "_kernelrpc_vm_remap",
+            2
+          ],
+          [
+            "start_wqthread",
+            2
+          ],
+          [
+            "_platform_strlen",
+            1
+          ],
+          [
+            "_kernelrpc_mach_port_insert_member_trap",
+            1
+          ],
+          [
+            "_platform_memset",
+            1
+          ],
+          [
+            "__131-[NSCoreTypesetter _getLineMetricsForRange:attributes:attributedString:applySpacing:usesSystemFontLeading:usesNegativeFontLeading:]_block_invoke",
+            1
+          ],
+          [
+            "_CFRunLoopSetCurrent",
+            1
+          ],
+          [
+            "pthread_kill",
+            1
+          ],
+          [
+            "restore_code",
+            1
+          ],
+          [
+            "nce_program_index",
+            1
+          ]
+        ]
+      }
+    },
+    {
+      "path": "work/native-linux-nce/profile-current/stack-late.txt",
+      "summary": {
+        "metadata": {
+          "Date/Time": "2026-10-10 20:27:26.750 +0800",
+          "Launch Time": "2026-10-10 20:22:50.651 +0800",
+          "OS Version": "macOS 27.0 (26A428)",
+          "Physical footprint": "1.9G",
+          "Physical footprint (peak)": "2.0G"
+        },
+        "all_thread_samples": 414108,
+        "nonwait_samples": 586,
+        "groups": {
+          "explicit_wait": 413522,
+          "other_host": 30,
+          "unresolved_native_code": 135,
+          "host_mapping": 182,
+          "signal_handling": 218,
+          "resume_entry": 18,
+          "host_graphics": 3
+        },
+        "nonwait_share": {
+          "other_host": 0.0512,
+          "unresolved_native_code": 0.2304,
+          "host_mapping": 0.3106,
+          "signal_handling": 0.372,
+          "resume_entry": 0.0307,
+          "host_graphics": 0.0051
+        },
+        "top_nonwait_functions": [
+          [
+            "_sigtramp",
+            212
+          ],
+          [
+            "???",
+            135
+          ],
+          [
+            "mach_msg2_trap",
+            79
+          ],
+          [
+            "__mmap",
+            62
+          ],
+          [
+            "__mprotect",
+            27
+          ],
+          [
+            "prepare_resume",
+            18
+          ],
+          [
+            "_platform_memcmp",
+            13
+          ],
+          [
+            "nce_event_gate",
+            5
+          ],
+          [
+            "start_wqthread",
+            5
+          ],
+          [
+            "nce_program_index",
+            3
+          ],
+          [
+            "iokit_user_client_trap",
+            3
+          ],
+          [
+            "_platform_memmove",
+            2
+          ],
+          [
+            "ConfirmationDialogModifier.body(content:)",
+            1
+          ],
+          [
+            "objc_msgSend",
+            1
+          ],
+          [
+            "kevent_id",
+            1
+          ],
+          [
+            "UnaryLayoutEngine.childPlacement(at:)",
+            1
+          ],
+          [
+            "closure #1 in static EnumVTable.update(elt:property:phase:)",
+            1
+          ],
+          [
+            "swift_getGenericMetadata",
+            1
+          ],
+          [
+            "util::UntypedTable::lookup(void*, void**) const",
+            1
+          ],
+          [
+            "outlined destroy of StackLayout.Child",
+            1
+          ]
+        ]
+      }
+    }
+  ],
+  "limits": [
+    "Diagnostic run with mapping counters, ART sparse logs and five-second host sample windows. Startup elapsed time is not compared with uninstrumented runs.",
+    "Stack sample categories are observations; they do not measure CPU time percentages or an optimization speedup."
+  ]
+}

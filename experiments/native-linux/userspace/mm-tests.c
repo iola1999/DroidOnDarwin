@@ -37,6 +37,45 @@ __attribute__((noinline)) static unsigned grow_stack(unsigned depth)
 void file_tests(const char *libc);
 int fault_register_test(const unsigned char *address, unsigned expected);
 
+static void fault_boundary_tests(void)
+{
+    volatile unsigned char *pages = mmap(NULL, 16 * PAGE, PROT_READ | PROT_WRITE,
+                                         MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+    CHECK(pages != MAP_FAILED);
+    for (unsigned i = 0; i < 15; ++i)
+        pages[i * PAGE] = (unsigned char)(i + 1);
+    CHECK(mprotect((void *)(pages + 4 * PAGE), PAGE, PROT_NONE) == 0);
+    CHECK(mprotect((void *)(pages + 8 * PAGE), PAGE, PROT_READ) == 0);
+    CHECK(munmap((void *)(pages + 12 * PAGE), PAGE) == 0);
+    for (unsigned target = 4; target <= 12; target += 4) {
+        pid_t child = fork();
+        CHECK(child >= 0);
+        if (!child) {
+            // Restore neighboring private pages before attempting the forbidden access.
+            for (unsigned i = target - 3; i < target; ++i) {
+                CHECK(pages[i * PAGE] == i + 1);
+                pages[i * PAGE] = (unsigned char)(i + 31);
+            }
+            if (target == 8)
+                pages[target * PAGE] = 99;
+            else
+                _exit(pages[target * PAGE]);
+            _exit(99);
+        }
+        int status;
+        CHECK(waitpid(child, &status, 0) == child);
+        CHECK(WIFSIGNALED(status) && WTERMSIG(status) == SIGSEGV);
+        for (unsigned i = target - 3; i < target; ++i)
+            CHECK(pages[i * PAGE] == i + 1);
+    }
+    CHECK(pages[15 * PAGE] == 0);
+    CHECK(mmap((void *)(pages + 12 * PAGE), PAGE, PROT_READ | PROT_WRITE,
+               MAP_PRIVATE | MAP_ANONYMOUS | MAP_FIXED, -1, 0) == pages + 12 * PAGE);
+    CHECK(pages[12 * PAGE] == 0 && pages[13 * PAGE] == 14);
+    CHECK(munmap((void *)pages, 16 * PAGE) == 0);
+    puts("{\"test\":\"linux_fault_contiguous_data_boundaries\",\"passed\":true}");
+}
+
 void memory_tests(void)
 {
     /* Raw brk changes precede libc's first allocation so its arena stays intact. */
@@ -59,6 +98,7 @@ void memory_tests(void)
         CHECK(heap[i * PAGE] == i + 1);
     CHECK((void *)syscall(SYS_brk, heap) == heap);
     puts("{\"test\":\"linux_brk_growth_cow\",\"passed\":true}");
+    fault_boundary_tests();
     file_tests("musl");
     pid_t limited = fork();
     CHECK(limited >= 0);

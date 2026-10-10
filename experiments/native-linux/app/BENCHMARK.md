@@ -54,6 +54,7 @@ python3 scripts/benchmark_dod.py --platform ios --phone F17 --repeat 3
 | `fastBaseline` | `false` | 优先尝试快速基线编译，未覆盖的方法继续进入优化编译器 |
 | `aot` | `true` | 使用镜像中匹配的 OAT 机器码；关闭后保留解释器/JIT 和可用的验证信息 |
 | `directFault` | `true` | 在信号处理入口恢复符合条件的已有数据页 |
+| `faultPrefetch` | `false` | 快速恢复普通数据页时，最多连续恢复 8 页；依赖 `directFault`，遇到权限或物理页变化时停止 |
 | `sparseScan` | `true` | 减少映射切换时的页表扫描 |
 | `performanceLogging` | `false` | 记录映射、返回入口和 ART 编译过滤统计，增加计时开销 |
 | `diagnostics` | `false` | 会话配置保留此字段；普通桌面组合测试要求关闭，专项回归另行运行 |

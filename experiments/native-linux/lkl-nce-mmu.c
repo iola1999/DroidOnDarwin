@@ -10,7 +10,7 @@
 
 unsigned long nce_user_base, nce_task_size, nce_memory_start, nce_elf_hwcap;
 static unsigned long mapping_mode;
-static bool sparse_scan;
+static bool sparse_scan, fault_prefetch;
 static unsigned long *installed, *desired;
 static struct nce_mmu_profile *profile;
 #define PROFILE_ADD(field, count) \
@@ -23,9 +23,10 @@ static struct nce_mmu_profile *profile;
 static DECLARE_BITMAP(view_chunks, VIEW_CHUNKS);
 
 void nce_set_layout(unsigned long base, unsigned long mode, unsigned long *views, unsigned long hwcap,
-                    struct nce_mmu_profile *counters, unsigned long sparse)
+                    struct nce_mmu_profile *counters, unsigned long sparse, unsigned long prefetch)
 {
     sparse_scan = sparse;
+    fault_prefetch = prefetch;
     profile = counters;
     nce_elf_hwcap = hwcap;
     mapping_mode = mode;
@@ -352,11 +353,27 @@ static int restore_present_data(unsigned long address, bool write)
     if (!value || (value & _PAGE_EXEC) || !pte_young(pte) ||
         (write && (!(value & _PAGE_RW) || !pte_dirty(pte))) || installed[index] == value)
         return 0;
-    mmap_pages_for_ptes(mm, address & PAGE_MASK, 1, pte);
+    unsigned long first = address & PAGE_MASK, count = 1;
+    /* Prepared code ends before BRK_OFFSET. Only ordinary data views can be
+     * restored here without entering the host's code preparation path. */
+    if (fault_prefetch && first >= USER_BASE + NCE_BRK_OFFSET) {
+        while (count < 8 && first + count * PAGE_SIZE < TASK_SIZE) {
+            pte_t next = lookup(mm, first + count * PAGE_SIZE);
+            unsigned long next_value = view(next);
+            if (next_value != value + count * PAGE_SIZE || !pte_young(next) ||
+                ((next_value & _PAGE_RW) && !pte_dirty(next)) ||
+                installed[index + count] == next_value)
+                break;
+            ++count;
+        }
+    }
+    mmap_pages_for_ptes(mm, first, count, pte);
     if (mapping_mode == NCE_MM_LAZY)
-        __set_bit(index, mm->context.accessed);
+        for (unsigned long i = 0; i < count; ++i)
+            __set_bit(index + i, mm->context.accessed);
     PROFILE_ADD(fast_faults, 1);
-    PROFILE_ADD(restored_pages, 1);
+    PROFILE_ADD(fast_restored_pages, count);
+    PROFILE_ADD(restored_pages, count);
     return 1;
 }
 

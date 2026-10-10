@@ -917,12 +917,13 @@ static void report_mmu_profile(void)
 {
     if (!map_profile)
         return;
-    fprintf(stderr, "{\"profile\":\"linux_mmu\",\"switches\":%lu,\"scanned_pages\":%lu,\"present_faults\":%lu,\"linux_faults\":%lu,\"fast_faults\":%lu,\"restored_pages\":%lu}\n",
+    fprintf(stderr, "{\"profile\":\"linux_mmu\",\"switches\":%lu,\"scanned_pages\":%lu,\"present_faults\":%lu,\"linux_faults\":%lu,\"fast_faults\":%lu,\"fast_restored_pages\":%lu,\"restored_pages\":%lu}\n",
             __atomic_load_n(&mmu_profile.switches, __ATOMIC_RELAXED),
             __atomic_load_n(&mmu_profile.scanned_pages, __ATOMIC_RELAXED),
             __atomic_load_n(&mmu_profile.present_faults, __ATOMIC_RELAXED),
             __atomic_load_n(&mmu_profile.linux_faults, __ATOMIC_RELAXED),
             __atomic_load_n(&mmu_profile.fast_faults, __ATOMIC_RELAXED),
+            __atomic_load_n(&mmu_profile.fast_restored_pages, __ATOMIC_RELAXED),
             __atomic_load_n(&mmu_profile.restored_pages, __ATOMIC_RELAXED));
 }
 

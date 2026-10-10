@@ -9,5 +9,6 @@ struct nce_mmu_profile {
     unsigned long present_faults;
     unsigned long linux_faults;
     unsigned long fast_faults;
+    unsigned long fast_restored_pages;
     unsigned long restored_pages;
 };

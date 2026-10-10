@@ -217,7 +217,7 @@ int nce_lkl_run(const char *image_path)
     void (*cleanup)(void) = (void *)(kernel.rx + LKL_CLEANUP);
     kernel_syscall = (void *)(kernel.rx + LKL_SYSCALL);
 #ifdef NCE_PROCESS
-    void (*set_layout)(unsigned long, unsigned long, unsigned long *, unsigned long, struct nce_mmu_profile *, unsigned long) = (void *)(kernel.rx + NCE_SET_LAYOUT);
+    void (*set_layout)(unsigned long, unsigned long, unsigned long *, unsigned long, struct nce_mmu_profile *, unsigned long, unsigned long) = (void *)(kernel.rx + NCE_SET_LAYOUT);
     unsigned long *views = calloc(2 * NCE_USER_SIZE / NCE_PAGE_SIZE, sizeof(*views));
     REQUIRE(views);
     const char *mode = getenv("NCE_MM_MODE");
@@ -229,9 +229,12 @@ int nce_lkl_run(const char *image_path)
                                                                                              : NCE_MM_LAZY;
     const char *sparse_mode = getenv("NCE_SPARSE_SCAN");
     unsigned long sparse_scan = !sparse_mode || strcmp(sparse_mode, "0");
-    printf("{\"phase\":\"linux_mapping_policy\",\"mode\":\"%s\",\"sparse_scan\":%s}\n", mode, sparse_scan ? "true" : "false");
+    const char *prefetch_mode = getenv("NCE_FAULT_PREFETCH");
+    REQUIRE(!prefetch_mode || !strcmp(prefetch_mode, "0") || !strcmp(prefetch_mode, "1"));
+    unsigned long fault_prefetch = prefetch_mode && !strcmp(prefetch_mode, "1");
+    printf("{\"phase\":\"linux_mapping_policy\",\"mode\":\"%s\",\"sparse_scan\":%s,\"fault_prefetch\":%s}\n", mode, sparse_scan ? "true" : "false", fault_prefetch ? "true" : "false");
     unsigned long base = nce_process_setup();
-    set_layout(base, mapping_mode, views, host_hwcap(), nce_process_mmu_profile(), sparse_scan);
+    set_layout(base, mapping_mode, views, host_hwcap(), nce_process_mmu_profile(), sparse_scan, fault_prefetch);
 #endif
     puts("{\"phase\":\"linux_init\"}");
     REQUIRE(nce_disk_open(0, getenv("NCE_STORAGE_IMAGE")) == 0);
