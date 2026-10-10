@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- SPDX-License-Identifier: GPL-2.0-or-later -->
+<permissions>
+    <feature name="android.hardware.touchscreen" />
+    <feature name="android.hardware.screen.portrait" />
+    <feature name="android.software.home_screen" />
+    <feature name="android.software.app_widgets" />
+</permissions>

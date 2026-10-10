@@ -35,7 +35,9 @@ struct AppDetailView: View {
     private var live: AndroidHost.Package {
         host.packages.first { $0.name == app.name } ?? app
     }
-    private var canOpen: Bool { host.isReady && host.busy == nil }
+    private var canOpen: Bool {
+        host.isReady && host.busy == nil
+    }
 
     var body: some View {
         List {
@@ -57,7 +59,9 @@ struct AppDetailView: View {
                 .disabled(!canOpen)
                 .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
             } footer: {
-                if !host.isReady { Text("It opens as soon as Android answers.") }
+                if !host.isReady {
+                    Text("It opens as soon as Android answers.")
+                }
             }
 
             Section {
@@ -93,7 +97,7 @@ struct AppDetailView: View {
             Button("Cancel", role: .cancel) { }
         } message: {
             Text("Its data goes with it. Save Android afterwards or the change is "
-               + "lost on the next launch.")
+                + "lost on the next launch.")
         }
     }
 
@@ -130,8 +134,12 @@ struct AppDetailView: View {
                     .foregroundStyle(.secondary)
                     .lineLimit(1).truncationMode(.middle)
                 HStack(spacing: 6) {
-                    if let c = live.category { Tag(text: c) }
-                    if let b = live.bitness { Tag(text: b) }
+                    if let c = live.category {
+                        Tag(text: c)
+                    }
+                    if let b = live.bitness {
+                        Tag(text: b)
+                    }
                 }
                 .padding(.top, 2)
             }
@@ -147,7 +155,7 @@ struct AppDetailView: View {
         DispatchQueue.global(qos: .userInitiated).async {
             _ = try? GuestBridge.shared.shell(
                 "am start -a android.settings.APPLICATION_DETAILS_SETTINGS "
-              + "-d package:\(pkg)", timeout: 30)
+                    + "-d package:\(pkg)", timeout: 30)
         }
         onOpenGuest()
     }

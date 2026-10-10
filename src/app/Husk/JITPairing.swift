@@ -53,7 +53,9 @@ import UserNotifications
     }
 
     var isShowingPin: Bool {
-        if case .pin = phase { return true }
+        if case .pin = phase {
+            return true
+        }
         return false
     }
 
@@ -66,17 +68,21 @@ import UserNotifications
 
     private var session: OpaquePointer?
     private var registration: DNSServiceRef?
-    private var continued: AnyObject?            // BGContinuedProcessingTask (iOS 26+)
+    private var continued: AnyObject? // BGContinuedProcessingTask (iOS 26+)
     private var registered: String?
     private var grace: UIBackgroundTaskIdentifier = .invalid
     private var deadline: Timer?
 
     private init() {}
 
-    private func log(_ line: String) { HuskLog.log("jit-pairing", line) }
+    private func log(_ line: String) {
+        HuskLog.log("jit-pairing", line)
+    }
 
     func start() {
-        guard Self.isSupported, !active, session == nil else { return }
+        guard Self.isSupported, !active, session == nil else {
+            return
+        }
         var error: UnsafeMutablePointer<CChar>?
         guard let session = husk_rppairing_new(Self.hostName, &error) else {
             fail(Self.take(error) ?? "Husk could not open its pairing port.")
@@ -105,7 +111,9 @@ import UserNotifications
             var device: UnsafeMutablePointer<CChar>?
             var failure: UnsafeMutablePointer<CChar>?
             let status = husk_rppairing_accept(session, { pin, _ in
-                guard let pin else { return }
+                guard let pin else {
+                    return
+                }
                 let code = String(cString: pin)
                 DispatchQueue.main.async { OnDevicePairing.shared.showPin(code) }
             }, nil, &bytes, &length, &device, &failure)
@@ -121,7 +129,9 @@ import UserNotifications
 
     /// Stops a pairing in progress. `reason` is shown as the failure; nil returns to idle.
     func cancel(reason: String? = nil) {
-        guard let session else { return }
+        guard let session else {
+            return
+        }
         husk_rppairing_cancel(session)
         stopAdvertising()
         phase = reason.map(Phase.failed) ?? .idle
@@ -130,12 +140,16 @@ import UserNotifications
 
     /// Forget a finished or failed attempt so the walkthrough starts clean.
     func reset() {
-        guard !active else { return }
+        guard !active else {
+            return
+        }
         phase = .idle
     }
 
     private func showPin(_ pin: String) {
-        guard active else { return }
+        guard active else {
+            return
+        }
         phase = .pin(pin)
         log("code shown")
         if #available(iOS 26.0, *), let task = continued as? BGContinuedProcessingTask {
@@ -148,7 +162,9 @@ import UserNotifications
     }
 
     private func finished(status: Int32, data: Data?, device: String?, message: String?) {
-        if let session { husk_rppairing_free(session) }
+        if let session {
+            husk_rppairing_free(session)
+        }
         session = nil
         stopAdvertising()
         deadline?.invalidate()
@@ -156,7 +172,9 @@ import UserNotifications
         switch status {
         case 0:
             do {
-                guard let data else { throw NSError(domain: "HuskJIT", code: 20) }
+                guard let data else {
+                    throw NSError(domain: "HuskJIT", code: 20)
+                }
                 try JITCoordinator.shared.storeOnDevicePairing(data)
                 phase = .paired(device: device ?? "this \(Self.deviceKind)")
                 log("paired")
@@ -175,17 +193,23 @@ import UserNotifications
     }
 
     private func fail(_ message: String) {
-        if let session { husk_rppairing_cancel(session) }
+        if let session {
+            husk_rppairing_cancel(session)
+        }
         stopAdvertising()
         phase = .failed(message)
         log("failed")
         endBackground(success: false)
     }
 
-    static var deviceKind: String { UIDevice.current.userInterfaceIdiom == .pad ? "iPad" : "iPhone" }
+    static var deviceKind: String {
+        UIDevice.current.userInterfaceIdiom == .pad ? "iPad" : "iPhone"
+    }
 
     nonisolated private static func take(_ string: UnsafeMutablePointer<CChar>?) -> String? {
-        guard let string else { return nil }
+        guard let string else {
+            return nil
+        }
         defer { husk_rppairing_string_free(string) }
         return String(cString: string)
     }
@@ -196,9 +220,11 @@ import UserNotifications
         var txt = TXTRecordRef()
         TXTRecordCreate(&txt, 0, nil)
         defer { TXTRecordDeallocate(&txt) }
-        for index in 0..<husk_rppairing_txt_count(session) {
+        for index in 0 ..< husk_rppairing_txt_count(session) {
             guard let key = husk_rppairing_txt_key(session, index),
-                  let value = husk_rppairing_txt_value(session, index) else { continue }
+                  let value = husk_rppairing_txt_value(session, index) else {
+                continue
+            }
             TXTRecordSetValue(&txt, key, UInt8(clamping: strlen(value)), value)
         }
         var ref: DNSServiceRef?
@@ -206,7 +232,9 @@ import UserNotifications
             &ref, 0, 0, husk_rppairing_service_name(session), "_remotepairing-pairable-host._tcp", nil, nil,
             husk_rppairing_port(session).bigEndian, TXTRecordGetLength(&txt), TXTRecordGetBytesPtr(&txt),
             { _, _, error, _, _, _, _ in
-                guard error != DNSServiceErrorType(kDNSServiceErr_NoError) else { return }
+                guard error != DNSServiceErrorType(kDNSServiceErr_NoError) else {
+                    return
+                }
                 DispatchQueue.main.async { OnDevicePairing.shared.advertisingFailed(error) }
             }, nil)
         guard error == DNSServiceErrorType(kDNSServiceErr_NoError), let ref else {
@@ -219,15 +247,19 @@ import UserNotifications
     }
 
     private func advertisingFailed(_ error: DNSServiceErrorType) {
-        guard active else { return }
+        guard active else {
+            return
+        }
         log("advertising failed error=\(error)")
         fail(error == DNSServiceErrorType(kDNSServiceErr_PolicyDenied)
-             ? "Husk needs Local Network access to pair. Allow it in Settings › Apps › Husk, then try again."
-             : "Husk could not announce itself on the local network. Check that Wi-Fi is on, then try again.")
+            ? "Husk needs Local Network access to pair. Allow it in Settings › Apps › Husk, then try again."
+            : "Husk could not announce itself on the local network. Check that Wi-Fi is on, then try again.")
     }
 
     private func stopAdvertising() {
-        if let registration { DNSServiceRefDeallocate(registration) }
+        if let registration {
+            DNSServiceRefDeallocate(registration)
+        }
         registration = nil
     }
 
@@ -236,7 +268,9 @@ import UserNotifications
     /// The permitted "<bundle id>.pairing.*" identifier from Info.plist, made concrete.
     private var taskIdentifier: String? {
         let permitted = Bundle.main.object(forInfoDictionaryKey: "BGTaskSchedulerPermittedIdentifiers") as? [String] ?? []
-        guard let wildcard = permitted.first(where: { $0.hasSuffix(".pairing.*") }) else { return nil }
+        guard let wildcard = permitted.first(where: { $0.hasSuffix(".pairing.*") }) else {
+            return nil
+        }
         return String(wildcard.dropLast()) + "session"
     }
 
@@ -246,23 +280,37 @@ import UserNotifications
                 let pairing = OnDevicePairing.shared
                 if pairing.continued == nil && pairing.active {
                     pairing.cancel(reason: "iOS stopped Husk in the background before pairing finished. "
-                                         + "Try again, and pair from Settings straight away.")
+                        + "Try again, and pair from Settings straight away.")
                 }
                 pairing.endGrace()
             }
         }
-        if #available(iOS 26.0, *) { submitContinued() } else { backgroundLimited = true }
+        if #available(iOS 26.0, *) {
+            submitContinued()
+        } else {
+            backgroundLimited = true
+        }
     }
 
     @available(iOS 26.0, *)
     private func submitContinued() {
-        guard let identifier = taskIdentifier else { backgroundLimited = true; return }
+        guard let identifier = taskIdentifier else {
+            backgroundLimited = true
+            return
+        }
         if registered != identifier {
             let ok = BGTaskScheduler.shared.register(forTaskWithIdentifier: identifier, using: .main) { task in
-                guard let task = task as? BGContinuedProcessingTask else { task.setTaskCompleted(success: false); return }
+                guard let task = task as? BGContinuedProcessingTask else {
+                    task.setTaskCompleted(success: false)
+                    return
+                }
                 MainActor.assumeIsolated { OnDevicePairing.shared.attach(task) }
             }
-            guard ok else { log("register refused"); backgroundLimited = true; return }
+            guard ok else {
+                log("register refused")
+                backgroundLimited = true
+                return
+            }
             registered = identifier
         }
         let request = BGContinuedProcessingTaskRequest(identifier: identifier, title: "Pairing with Husk",
@@ -279,7 +327,10 @@ import UserNotifications
 
     @available(iOS 26.0, *)
     private func attach(_ task: BGContinuedProcessingTask) {
-        guard active else { task.setTaskCompleted(success: false); return }
+        guard active else {
+            task.setTaskCompleted(success: false)
+            return
+        }
         continued = task
         task.progress.totalUnitCount = 2
         if case .pin(let pin) = phase {
@@ -305,7 +356,9 @@ import UserNotifications
     }
 
     private func endGrace() {
-        guard grace != .invalid else { return }
+        guard grace != .invalid else {
+            return
+        }
         UIApplication.shared.endBackgroundTask(grace)
         grace = .invalid
     }

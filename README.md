@@ -2,7 +2,9 @@
 
 开发前阅读 [AGENTS.md](AGENTS.md) 和[改动记录约定](.agents/notes/README.md)。当前完整系统开发进展见[轮次工作记录](.agents/notes/implemented/process/2026-10-07-轮次工作记录.md)。
 
-C、C++ 与 Objective-C 使用 clang-format（本次验证版本为 22.1.7）；macOS 可通过 `brew install clang-format` 安装。运行 `bash scripts/format.sh` 格式化，或运行 `bash scripts/format.sh --check` 检查；命令末尾可指定文件或目录。配置与范围见[格式化约定](.agents/notes/implemented/process/2026-10-10-C代码格式化与文档段落约定.md)。
+C、C++ 与 Objective-C 使用 clang-format 22.1.7，Swift 使用 SwiftFormat 0.63.1；macOS 可通过 `brew install clang-format swiftformat` 安装。运行 `bash scripts/format.sh` 格式化，或运行 `bash scripts/format.sh --check` 检查；命令末尾可指定文件或目录。配置与范围见 [C 系列格式化约定](.agents/notes/implemented/process/2026-10-10-C代码格式化与文档段落约定.md)和 [Swift 格式化约定](.agents/notes/implemented/process/2026-10-10-Swift存量与提交格式化.md)。
+
+克隆后运行 `git config --local core.hooksPath .githooks` 启用提交前自动格式化。Hook 只处理本次暂存的 C 系列及 Swift 文件；同一文件还有未暂存修改时会中止，保留原有暂存范围。详见[提交前格式化约定](.agents/notes/implemented/process/2026-10-10-提交前自动格式化.md)。
 
 <p align="center">
   <a href="https://trendshift.io/repositories/233057?utm_source=trendshift-badge&amp;utm_medium=badge&amp;utm_campaign=badge-trendshift-233057" target="_blank" rel="noopener noreferrer">

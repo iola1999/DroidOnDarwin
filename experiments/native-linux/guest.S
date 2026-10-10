@@ -55,6 +55,12 @@ guest_registers:
 .globl guest_tls
 guest_tls:
     mrs x5, tpidr_el0
+    mrs x0, tpidr_el0
+    mrs x16, tpidr_el0
+    mrs x17, tpidr_el0
+    mrs x18, tpidr_el0
+    mrs x30, tpidr_el0
+    mrs xzr, tpidr_el0
     mov x7, #0x678
     msr tpidr_el0, x7
     mrs x6, tpidr_el0

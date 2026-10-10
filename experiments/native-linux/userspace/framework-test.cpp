@@ -49,6 +49,24 @@ static void runtime_environment()
     }
 }
 
+void nce_framework_check(const char *name, unsigned seconds)
+{
+    pid_t child = fork();
+    CHECK(child >= 0);
+    if (!child) {
+        alarm(seconds);
+        runtime_environment();
+        execl("/system/bin/app_process64", "app_process64", "-Djava.library.path=/system/lib64",
+              "/system/bin", name, nullptr);
+        _exit(108);
+    }
+    int status;
+    CHECK(waitpid(child, &status, 0) == child);
+    if (status)
+        dprintf(2, "framework check %s child=%d status=%d\n", name, child, status);
+    CHECK(WIFEXITED(status) && WEXITSTATUS(status) == 0);
+}
+
 static void derive_classpath()
 {
     pid_t child = fork();
@@ -185,11 +203,17 @@ void nce_framework_test()
         {"ro.build.version.release_or_codename", "16"},
         {"ro.build.version.codename", "REL"},
         {"ro.build.version.all_codenames", "REL"},
+        // KeyMint waits for these properties to exist. This modified image
+        // does not claim a platform or vendor security patch level.
+        {"ro.build.version.security_patch", ""},
+        {"ro.vendor.build.security_patch", ""},
         {"ro.product.model", "NCE prototype"},
         {"ro.build.type", "userdebug"},
         // This prototype has no ART boot image; retain bounded Android startup
         // timeouts while class verification is measured and optimized.
-        {"ro.hw_timeout_multiplier", "3"},
+        // First-boot initialization without an ART boot image needs a longer
+        // bounded service deadline on a blank data image.
+        {"ro.hw_timeout_multiplier", "10"},
         {"ro.treble.enabled", "true"},
         {"sys.use_memfd", "true"},
         {"dalvik.vm.heapstartsize", "16m"},
@@ -197,10 +221,10 @@ void nce_framework_test()
         {"dalvik.vm.jdwp-provider", "none"},
         {"dalvik.vm.usejit", "true"},
         {"dalvik.vm.jitmaxsize", "32m"},
-        {"dalvik.vm.jitthreshold", "65535"},
+        {"dalvik.vm.jitthreshold", "1024"},
         {"dalvik.vm.gctype", "MS"},
         {"dalvik.vm.boot-image", "/data/no-boot-image.art"},
-        {"dalvik.vm.extra-opts", "-Xnoimage-dex2oat"},
+        {"dalvik.vm.extra-opts", "-Xnoimage-dex2oat -Xjitwarmupthreshold:1024"},
     };
     for (const auto &entry : properties)
         CHECK(__system_property_set(entry[0], entry[1]) == 0);
@@ -219,19 +243,7 @@ void nce_framework_test()
     CHECK(__system_property_set("pm.dexopt.disable_bg_dexopt", "true") == 0);
     initialize_aconfig();
     derive_classpath();
-    pid_t child = fork();
-    CHECK(child >= 0);
-    if (!child) {
-        runtime_environment();
-        execl("/system/bin/app_process64", "app_process64", "-Djava.library.path=/system/lib64",
-              "/system/bin", "NceFramework", nullptr);
-        _exit(108);
-    }
-    int status;
-    CHECK(waitpid(child, &status, 0) == child);
-    if (status)
-        dprintf(2, "framework-test child=%d status=%d\n", child, status);
-    CHECK(WIFEXITED(status) && WEXITSTATUS(status) == 0);
+    nce_framework_check("NceFramework");
 }
 
 static int control_socket(const char *name, int type = SOCK_STREAM, gid_t group = 1000,
@@ -258,6 +270,7 @@ void nce_surface_check(const char *package, const char *png)
     pid_t child = fork();
     CHECK(child >= 0);
     if (!child) {
+        alarm(210);
         runtime_environment();
         // DisplayControl belongs to the server JNI library. Keep its static
         // Binder descriptors alive until process exit, alongside Framework.
@@ -470,12 +483,14 @@ static void dump_threads()
     closedir(processes);
 }
 
+void nce_cgroup_permission_test();
+
 void nce_zygote_test()
 {
     bool system_server = access("/data/nce/system-server-probe", F_OK) == 0;
     pid_t health = -1, vold = -1, storaged = -1, artd = -1, netd = -1, lmkd = -1;
     pid_t audio = -1, metrics = -1, audio_hal = -1, allocator = -1, media = -1;
-    pid_t gatekeeper = -1, gatekeeper_hal = -1, stats = -1;
+    pid_t gatekeeper = -1, gatekeeper_hal = -1, stats = -1, keymint = -1, keystore = -1;
     AIBinder *artd_reference = nullptr;
     void *setup = dlopen("libprocessgroup_setup.so", RTLD_NOW);
     CHECK(setup);
@@ -494,6 +509,7 @@ void nce_zygote_test()
             CHECK(chown(path, 1000, 1000) == 0 && chmod(path, 0664) == 0);
         }
     }
+    nce_cgroup_permission_test();
     if (system_server) {
         int kernel_log = open("/proc/sys/kernel/printk_devkmsg", O_WRONLY | O_CLOEXEC);
         CHECK(kernel_log >= 0 && write(kernel_log, "on\n", 3) == 3 && close(kernel_log) == 0);
@@ -502,18 +518,11 @@ void nce_zygote_test()
             mode_t mode;
             uid_t owner;
         } directories[] = {
-            {"/mnt", 0755, 0},
-            {"/mnt/expand", 0771, 1000},
-            {"/mnt/user", 0755, 0},
-            {"/mnt/user/0", 0755, 0},
-            {"/storage", 0755, 0},
             {"/data/system", 0775, 1000},
             {"/data/system/users", 0775, 1000},
             {"/data/system/users/0", 0700, 1000},
-            {"/data/system_de", 0770, 1000},
             {"/data/system_de/0", 0770, 1000},
             {"/data/app", 0771, 1000},
-            {"/data/system_ce", 0770, 1000},
             {"/data/resource-cache", 0771, 1000},
             {"/data/anr", 0775, 1000},
             {"/data/misc/vold", 0700, 0},
@@ -524,6 +533,7 @@ void nce_zygote_test()
             {"/dev/socket/audioserver", 0775, 1041},
             {"/data/misc/media", 0770, 1013},
             {"/data/misc/gatekeeper", 0700, 1000},
+            {"/data/misc/keystore", 0700, 1017},
             {"/data/misc/stats-active-metric", 0770, 1066},
             {"/data/misc/stats-data", 0770, 1066},
             {"/data/misc/stats-data/restricted-data", 0770, 1066},
@@ -546,6 +556,7 @@ void nce_zygote_test()
         vold = nce_start_system_service("/system/bin/vold", "vold", 0,
                                         {"--blkid_context=u:r:nce_t:s0", "--blkid_untrusted_context=u:r:nce_t:s0",
                                          "--fsck_context=u:r:nce_t:s0", "--fsck_untrusted_context=u:r:nce_t:s0"});
+        nce_framework_check("NceStorage");
         storaged = nce_start_system_service("/system/bin/storaged", "storaged", 0, {});
         artd = nce_start_system_service("/apex/com.android.art/bin/artd", "artd", 0, {});
         // Keep this lazy service alive until the Android session is stopped.
@@ -581,20 +592,38 @@ void nce_zygote_test()
         stats = start_socket_service("/apex/com.android.os.statsd/bin/statsd", "stats", {"statsdw"}, SOCK_DGRAM, 1066, 0222);
         gatekeeper_hal = nce_start_system_service("/vendor/bin/hw/android.hardware.gatekeeper-service.nonsecure",
                                                   "android.hardware.gatekeeper.IGatekeeper/default", 1000, {});
+        keymint = nce_start_system_service("/vendor/bin/hw/android.hardware.security.keymint-service",
+                                           "android.hardware.security.keymint.IKeyMintDevice/default", 9999, {});
+        keystore = nce_start_system_service("/system/bin/keystore2", "android.system.keystore2.IKeystoreService/default", 1017,
+                                            {"/data/misc/keystore"});
         gatekeeper = nce_start_system_service("/system/bin/gatekeeperd",
                                               "android.service.gatekeeper.IGateKeeperService", 1000,
                                               {"/data/misc/gatekeeper"});
+        nce_framework_check("NceKeystore");
         // AudioPolicy initialization waits for ActivityManager from system_server.
         audio = nce_start_system_service("/system/bin/audioserver", nullptr, 1041, {});
         media = nce_start_system_service("/system/bin/mediaserver", nullptr, 1013, {});
     }
     CHECK(mkdir("/data/nce/zygote", 0777) == 0 && chmod("/data/nce/zygote", 0777) == 0);
+    // Zygote reopens inherited files after fork; append keeps each process's logs intact.
+    int log_flags = fcntl(STDERR_FILENO, F_GETFL);
+    CHECK(log_flags >= 0 && fcntl(STDERR_FILENO, F_SETFL, log_flags | O_APPEND) == 0);
+    const char *zygote_log = "/vendor/zygote_whitelist/nce-stderr";
+    CHECK(mount("/stderr", zygote_log, nullptr, MS_BIND, nullptr) == 0);
     int command = control_socket("zygote");
     int usap = control_socket("usap_pool_primary");
     pid_t zygote = fork();
     CHECK(zygote >= 0);
     if (!zygote) {
         runtime_environment();
+        // Keep stdin/stdout on init's null device and logs in Zygote's supported vendor path.
+        int streams = open("/dev/null", O_RDWR | O_CLOEXEC);
+        CHECK(streams > STDERR_FILENO);
+        for (int fd = STDIN_FILENO; fd <= STDOUT_FILENO; ++fd)
+            CHECK(dup2(streams, fd) == fd);
+        CHECK(close(streams) == 0);
+        int log = open(zygote_log, O_WRONLY | O_APPEND | O_CLOEXEC);
+        CHECK(log >= 0 && dup2(log, STDERR_FILENO) == STDERR_FILENO && close(log) == 0);
         const char *boot = getenv("BOOTCLASSPATH");
         char classpath[16384];
         CHECK(snprintf(classpath, sizeof(classpath), "%s:/system/framework/nce-framework.jar", boot) < static_cast<int>(sizeof(classpath)));
@@ -606,7 +635,7 @@ void nce_zygote_test()
         CHECK(setenv("ANDROID_SOCKET_usap_pool_primary", descriptor, 1) == 0);
         if (system_server) {
             execl("/system/bin/app_process64", "app_process64", "-Xzygote", "-Djava.library.path=/system/lib64",
-                  "/system/bin", "--zygote", "--start-system-server", "--abi-list=arm64-v8a", "--enable-lazy-preload", nullptr);
+                  "/system/bin", "--zygote", "--start-system-server", "--abi-list=arm64-v8a", nullptr);
             _exit(108);
         }
         execl("/system/bin/app_process64", "app_process64", "-Xzygote", "-Djava.library.path=/system/lib64",
@@ -625,7 +654,7 @@ void nce_zygote_test()
             }
             int status;
             CHECK(waitpid(zygote, &status, WNOHANG) == 0);
-            for (pid_t service : {audio, audio_hal, metrics, allocator, stats, media}) {
+            for (pid_t service : {audio, audio_hal, metrics, allocator, stats, media, keystore, keymint}) {
                 pid_t exited = waitpid(service, &status, WNOHANG);
                 if (exited == service)
                     dprintf(2, "Android daemon pid=%d exited status=%d\n", service, status);
@@ -637,7 +666,8 @@ void nce_zygote_test()
                 AIBinder *package = AServiceManager_checkService("package");
                 AIBinder *window = AServiceManager_checkService("window");
                 AIBinder *input = AServiceManager_checkService("input");
-                ready = activity && package && window && input;
+                AIBinder *lock_settings = AServiceManager_checkService("lock_settings");
+                ready = activity && package && window && input && lock_settings;
                 if (activity && !activity_reported) {
                     puts("{\"phase\":\"android_activity_service_registered\"}");
                     activity_reported = true;
@@ -650,6 +680,8 @@ void nce_zygote_test()
                     AIBinder_decStrong(window);
                 if (input)
                     AIBinder_decStrong(input);
+                if (lock_settings)
+                    AIBinder_decStrong(lock_settings);
             }
             if (ready && !services_reported) {
                 puts("{\"test\":\"android_system_server_services\",\"passed\":true}");
@@ -657,6 +689,9 @@ void nce_zygote_test()
                 // This image starts directly into the desktop without a setup wizard.
                 nce_android_command({"settings", "put", "global", "device_provisioned", "1"});
                 nce_android_command({"settings", "put", "secure", "user_setup_complete", "1"});
+                nce_android_command({"settings", "put", "system", "screen_off_timeout", "2147483647"});
+                // Configure the embedded display before SystemUI initializes keyguard.
+                nce_android_command({"lock_settings", "set-disabled", "true"}, "Lock screen disabled set to true");
             }
             char completed[PROP_VALUE_MAX] = {};
             __system_property_get("sys.boot_completed", completed);
@@ -683,7 +718,7 @@ void nce_zygote_test()
         stop_process_group(zygote);
         AIBinder_decStrong(artd_reference);
         CHECK(__system_property_set("ctl.stop", "idmap2d") == 0);
-        for (pid_t service : {health, vold, storaged, artd, netd, lmkd, audio, metrics, audio_hal, allocator, gatekeeper, gatekeeper_hal, stats, media})
+        for (pid_t service : {health, vold, storaged, artd, netd, lmkd, audio, metrics, audio_hal, allocator, gatekeeper, gatekeeper_hal, stats, media, keystore, keymint})
             stop_process_group(service);
         for (const char *socket : {"dnsproxyd", "mdns", "fwmarkd", "lmkd", "statsdw"}) {
             char path[64];

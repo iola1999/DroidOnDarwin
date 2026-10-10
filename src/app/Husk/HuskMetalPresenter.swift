@@ -59,7 +59,9 @@ final class HuskMetalPresenter {
     /// not us. On a single-GPU phone these are the same object, but relying on
     /// that would be relying on a coincidence.
     private func prepare(for texture: MTLTexture, _ layer: CAMetalLayer) -> Bool {
-        if pipeline != nil, device === texture.device { return true }
+        if pipeline != nil, device === texture.device {
+            return true
+        }
 
         let dev = texture.device
         device = dev
@@ -132,8 +134,8 @@ final class HuskMetalPresenter {
         sampler = dev.makeSamplerState(descriptor: sd)
 
         HuskLog.log("gl", "metal: presenting on \(dev.name), "
-                        + "guest \(texture.width)x\(texture.height) -> layer "
-                        + "\(Int(layer.drawableSize.width))x\(Int(layer.drawableSize.height))")
+            + "guest \(texture.width)x\(texture.height) -> layer "
+            + "\(Int(layer.drawableSize.width))x\(Int(layer.drawableSize.height))")
         return sampler != nil
     }
 
@@ -154,16 +156,23 @@ final class HuskMetalPresenter {
                 submitted: submitted, noDrawable: noDrawable)
         }
 
-        guard let layer else { return }
+        guard let layer else {
+            return
+        }
         guard prepare(for: texture, layer),
-              let queue, let pipeline, let sampler else { return }
+              let queue, let pipeline, let sampler else {
+            return
+        }
 
         // drawable 池耗尽时会等待。单独计时，区分等待与 Metal 编码的耗时。
         let drawableStart = CACurrentMediaTime()
         let next = layer.nextDrawable()
         let encodeStart = CACurrentMediaTime()
         drawableWait = encodeStart - drawableStart
-        guard let drawable = next else { noDrawable = true; return }
+        guard let drawable = next else {
+            noDrawable = true
+            return
+        }
 
         let pass = MTLRenderPassDescriptor()
         pass.colorAttachments[0].texture = drawable.texture
@@ -172,21 +181,26 @@ final class HuskMetalPresenter {
         pass.colorAttachments[0].storeAction = .store
 
         guard let buffer = queue.makeCommandBuffer(),
-              let encoder = buffer.makeRenderCommandEncoder(descriptor: pass) else { return }
+              let encoder = buffer.makeRenderCommandEncoder(descriptor: pass) else {
+            return
+        }
 
         // Letterbox rather than stretch. The guest occupies effW x effH on
         // screen once any turn is applied; whichever axis runs out first sets
         // the scale, and the other is inset.
         let effW = Float(rotated ? texture.height : texture.width)
-        let effH = Float(rotated ? texture.width  : texture.height)
+        let effH = Float(rotated ? texture.width : texture.height)
         let layerW = Float(layer.drawableSize.width)
         let layerH = Float(layer.drawableSize.height)
         var sx: Float = 1, sy: Float = 1
         if effW > 0, effH > 0, layerW > 0, layerH > 0 {
             let guestAspect = effW / effH
             let layerAspect = layerW / layerH
-            if guestAspect > layerAspect { sy = layerAspect / guestAspect }
-            else                         { sx = guestAspect / layerAspect }
+            if guestAspect > layerAspect {
+                sy = layerAspect / guestAspect
+            } else {
+                sx = guestAspect / layerAspect
+            }
         }
 
         var params = (flip: Float(flip ? 1 : 0), rotate: Float(rotated ? 1 : 0),
@@ -210,7 +224,9 @@ final class HuskMetalPresenter {
                 failed: completed.status == .error)
         }
         drawable.addPresentedHandler { displayed in
-            guard displayed.presentedTime > 0 else { return }
+            guard displayed.presentedTime > 0 else {
+                return
+            }
             HuskFrameMetrics.shared.recordDisplay(elapsed: displayed.presentedTime - start)
         }
         buffer.present(drawable)
@@ -221,7 +237,7 @@ final class HuskMetalPresenter {
         presented &+= 1
         if presented == 1 || presented % 1800 == 0 {
             HuskLog.log("gl", "metal: presented \(presented) frames "
-                            + "(\(texture.width)x\(texture.height), flip=\(flip))")
+                + "(\(texture.width)x\(texture.height), flip=\(flip))")
         }
     }
 
@@ -231,14 +247,18 @@ final class HuskMetalPresenter {
         let first = !complained
         complained = true
         lock.unlock()
-        if first { HuskLog.log("gl", "metal: \(message)") }
+        if first {
+            HuskLog.log("gl", "metal: \(message)")
+        }
     }
 }
 
 /// The C entry point QEMU calls. No captures, so it can be a plain function
 /// pointer; everything it needs hangs off the shared presenter.
 private let huskMetalPresent: husk_metal_present_fn = { texture, flip, _, _ in
-    guard let texture else { return }
+    guard let texture else {
+        return
+    }
     let mtl = Unmanaged<AnyObject>.fromOpaque(texture).takeUnretainedValue()
     guard let tex = mtl as? MTLTexture else {
         HuskMetalPresenter.shared.complainOnce(

@@ -1,0 +1,161 @@
+{
+  "date": "2026-10-10",
+  "stage": "demand restoration with 1 GiB Linux RAM",
+  "configuration_reference": "results-macos-desktop-mapping-baseline.json",
+  "linux_ram_bytes": 1073741824,
+  "capacity_cow_bytes": 671088640,
+  "records": [
+    {
+      "profile": "host_mapping",
+      "elapsed_ms": 10291.707,
+      "data_calls": 378547,
+      "data_ms": 558.074,
+      "code_calls": 65672,
+      "code_ms": 183.603,
+      "revoke_calls": 247799,
+      "revoke_ms": 455.615
+    },
+    {
+      "profile": "host_mapping",
+      "elapsed_ms": 20508.552,
+      "data_calls": 960769,
+      "data_ms": 1484.031,
+      "code_calls": 106877,
+      "code_ms": 333.779,
+      "revoke_calls": 550798,
+      "revoke_ms": 1146.419
+    },
+    {
+      "profile": "host_mapping",
+      "elapsed_ms": 31495.655,
+      "data_calls": 1643682,
+      "data_ms": 2545.154,
+      "code_calls": 155653,
+      "code_ms": 511.806,
+      "revoke_calls": 953005,
+      "revoke_ms": 1878.586
+    },
+    {
+      "profile": "host_mapping",
+      "elapsed_ms": 41720.447,
+      "data_calls": 2337493,
+      "data_ms": 3597.755,
+      "code_calls": 227748,
+      "code_ms": 773.691,
+      "revoke_calls": 1415958,
+      "revoke_ms": 2661.173
+    },
+    {
+      "profile": "host_mapping",
+      "elapsed_ms": 51752.411,
+      "data_calls": 2992434,
+      "data_ms": 4600.728,
+      "code_calls": 279933,
+      "code_ms": 958.63,
+      "revoke_calls": 1835574,
+      "revoke_ms": 3349.699
+    },
+    {
+      "profile": "host_mapping",
+      "elapsed_ms": 61843.704,
+      "data_calls": 3634295,
+      "data_ms": 5580.806,
+      "code_calls": 327889,
+      "code_ms": 1120.357,
+      "revoke_calls": 2237866,
+      "revoke_ms": 4012.785
+    },
+    {
+      "profile": "host_mapping",
+      "elapsed_ms": 72135.35,
+      "data_calls": 4300689,
+      "data_ms": 6601.32,
+      "code_calls": 393180,
+      "code_ms": 1347.304,
+      "revoke_calls": 2674271,
+      "revoke_ms": 4758.805
+    },
+    {
+      "profile": "host_mapping",
+      "elapsed_ms": 82668.086,
+      "data_calls": 5040669,
+      "data_ms": 7728.332,
+      "code_calls": 449753,
+      "code_ms": 1557.244,
+      "revoke_calls": 3146154,
+      "revoke_ms": 5530.322
+    },
+    {
+      "profile": "host_mapping",
+      "elapsed_ms": 93045.913,
+      "data_calls": 5739415,
+      "data_ms": 8800.279,
+      "code_calls": 501780,
+      "code_ms": 1752.543,
+      "revoke_calls": 3588635,
+      "revoke_ms": 6298.922
+    },
+    {
+      "profile": "host_mapping",
+      "elapsed_ms": 103261.217,
+      "data_calls": 6363509,
+      "data_ms": 9756.113,
+      "code_calls": 549128,
+      "code_ms": 1910.335,
+      "revoke_calls": 3963421,
+      "revoke_ms": 6966.84
+    },
+    {
+      "profile": "host_mapping",
+      "elapsed_ms": 113454.411,
+      "data_calls": 7004342,
+      "data_ms": 10729.726,
+      "code_calls": 597064,
+      "code_ms": 2076.901,
+      "revoke_calls": 4380702,
+      "revoke_ms": 7669.425
+    },
+    {
+      "profile": "host_mapping",
+      "elapsed_ms": 123759.094,
+      "data_calls": 7734006,
+      "data_ms": 11831.695,
+      "code_calls": 650802,
+      "code_ms": 2273.741,
+      "revoke_calls": 4854661,
+      "revoke_ms": 8437.925
+    },
+    {
+      "profile": "host_mapping",
+      "elapsed_ms": 133933.618,
+      "data_calls": 8411754,
+      "data_ms": 12871.488,
+      "code_calls": 742618,
+      "code_ms": 2519.518,
+      "revoke_calls": 5328876,
+      "revoke_ms": 9212.252
+    },
+    {
+      "profile": "host_mapping",
+      "elapsed_ms": 144549.809,
+      "data_calls": 9078984,
+      "data_ms": 13897.318,
+      "code_calls": 833686,
+      "code_ms": 2756.916,
+      "revoke_calls": 5771010,
+      "revoke_ms": 9910.807
+    },
+    {
+      "profile": "host_mapping",
+      "elapsed_ms": 155303.863,
+      "data_calls": 9763034,
+      "data_ms": 14974.308,
+      "code_calls": 939278,
+      "code_ms": 3050.349,
+      "revoke_calls": 6267338,
+      "revoke_ms": 10787.019
+    }
+  ],
+  "result": "failed",
+  "failure": "Launcher pixels passed with 941 sampled colors; clock top Activity visible=false while user unlock failed; no lmkd kills observed"
+}

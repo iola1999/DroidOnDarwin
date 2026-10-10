@@ -5,5 +5,6 @@
 
 void nce_android_command(std::initializer_list<const char *> arguments, const char *expected = nullptr);
 void nce_surface_check(const char *package = nullptr, const char *png = nullptr);
+void nce_framework_check(const char *name, unsigned seconds = 30);
 void nce_desktop_start(bool interactive);
 #endif

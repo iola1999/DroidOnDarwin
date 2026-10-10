@@ -43,35 +43,60 @@ struct TLReport: Decodable {
 extension TLReport {
     /// The engine the native runtime drives this app with, if it can: Unity (IL2CPP) games and cocos2d-x games.
     var nativeEngine: TLNativeEngine? {
-        guard ok, !abis.isEmpty, abis.contains("arm64-v8a") else { return nil }
-        if engine?.hasPrefix("Unity") == true { return .unity }
-        if engine == "Cocos" { return .cocos }
-        if engine == "Minecraft" { return .minecraft }
-        if engine == "SDL" { return .sdl }
-        if engine == "Unreal Engine" { return .ue4 }
-        if engine == "Rockstar" { return .gta }
-        if engine == "NativeActivity" { return .nativeactivity }
+        guard ok, !abis.isEmpty, abis.contains("arm64-v8a") else {
+            return nil
+        }
+        if engine?.hasPrefix("Unity") == true {
+            return .unity
+        }
+        if engine == "Cocos" {
+            return .cocos
+        }
+        if engine == "Minecraft" {
+            return .minecraft
+        }
+        if engine == "SDL" {
+            return .sdl
+        }
+        if engine == "Unreal Engine" {
+            return .ue4
+        }
+        if engine == "Rockstar" {
+            return .gta
+        }
+        if engine == "NativeActivity" {
+            return .nativeactivity
+        }
         return nil
     }
 
     /// Games from those engines run through the native runtime, which handles what the scan flags per library
     /// (raw system calls, thread-register use, pages shared between segments). A report made before that
     /// runtime existed still says "needs work", so the app judges by the engine, not by the stored words.
-    var runsOnNativeRuntime: Bool { nativeEngine != nil }
+    var runsOnNativeRuntime: Bool {
+        nativeEngine != nil
+    }
 
     /// "Unity" or "Cocos2d-x", for words on screen.
-    var nativeEngineName: String { nativeEngine == .cocos ? "Cocos2d-x" : nativeEngine == .minecraft ? "Minecraft" : nativeEngine == .sdl ? "SDL" : nativeEngine == .ue4 ? "Unreal Engine" : nativeEngine == .gta ? "Rockstar" : nativeEngine == .nativeactivity ? "NativeActivity" : "Unity" }
+    var nativeEngineName: String {
+        nativeEngine == .cocos ? "Cocos2d-x" : nativeEngine == .minecraft ? "Minecraft" : nativeEngine == .sdl ? "SDL" : nativeEngine == .ue4 ? "Unreal Engine" : nativeEngine == .gta ? "Rockstar" : nativeEngine == .nativeactivity ? "NativeActivity" : "Unity"
+    }
 
     var displaySummary: String {
-        guard runsOnNativeRuntime else { return summary }
+        guard runsOnNativeRuntime else {
+            return summary
+        }
         let flagged = libraries.filter { $0.abi == "arm64-v8a" && $0.status != "ok" }.count
         let total = libraries.filter { $0.abi == "arm64-v8a" }.count
         var text = "A \(nativeEngineName) game. It runs through Husk's native runtime, which loads its \(total) arm64 libraries itself."
-        if nativeEngine == .cocos || nativeEngine == .minecraft || nativeEngine == .ue4 || nativeEngine == .gta { text += " It is a landscape game: Husk turns the screen for it." }
-        else if nativeEngine == .sdl || nativeEngine == .nativeactivity { text += " Husk turns the screen the way the game asks for." }
+        if nativeEngine == .cocos || nativeEngine == .minecraft || nativeEngine == .ue4 || nativeEngine == .gta {
+            text += " It is a landscape game: Husk turns the screen for it."
+        } else if nativeEngine == .sdl || nativeEngine == .nativeactivity {
+            text += " Husk turns the screen the way the game asks for."
+        }
         if flagged > 0 {
             text += " \(flagged) of them use tricks the older loader could not handle; the native runtime handles those too, "
-                  + "except for optional anti-tamper code, which it leaves out."
+                + "except for optional anti-tamper code, which it leaves out."
         }
         return text
     }
@@ -106,7 +131,9 @@ struct TLLibrary: Decodable, Identifiable {
     let soname: String?
     let needed: [String]?
 
-    var id: String { "\(apk)/\(abi)/\(name)" }
+    var id: String {
+        "\(apk)/\(abi)/\(name)"
+    }
 }
 
 /// One answer from husk-tl-probe.c.
@@ -140,7 +167,9 @@ final class TranslationLayerStore: ObservableObject {
     @Published private(set) var checking = false
     @Published var lastError: String?
 
-    private init() { reload() }
+    private init() {
+        reload()
+    }
 
     /// Which reading of an app's libraries its report came from. A newer Husk that recognises more (an engine, a kind of game) reads
     /// the apps it already holds again, so they are not left with what the old one knew.
@@ -163,9 +192,13 @@ final class TranslationLayerStore: ObservableObject {
     }
 
     private func rescanStale() {
-        guard !rescanning else { return }
+        guard !rescanning else {
+            return
+        }
         let stale = apps.filter { Self.scanStamp($0.id) != Self.scanVersion }
-        guard !stale.isEmpty else { return }
+        guard !stale.isEmpty else {
+            return
+        }
         rescanning = true
         HuskLog.log("tl", "reading \(stale.count) app(s) again with the newer scanner")
         Task.detached(priority: .utility) {
@@ -192,16 +225,20 @@ final class TranslationLayerStore: ObservableObject {
     /// Keep a copy of one app -- one APK, or a base APK and its splits,
     /// picked together -- and report on it.
     func add(_ urls: [URL], move: Bool = false) {
-        guard !urls.isEmpty, busy == nil else { return }
+        guard !urls.isEmpty, busy == nil else {
+            return
+        }
         busy = urls.count == 1 ? "Adding \(urls[0].lastPathComponent)…"
-                               : "Adding \(urls.count) APKs…"
+            : "Adding \(urls.count) APKs…"
         Task.detached(priority: .userInitiated) {
             let failure = Self.ingest(urls, move: move)
             await MainActor.run {
                 self.busy = nil
                 self.lastError = failure
                 self.reload()
-                if failure == nil, move { self.adoptDroppedAPKs() }      // the next one waiting, if several were put there
+                if failure == nil, move {
+                    self.adoptDroppedAPKs()
+                } // the next one waiting, if several were put there
             }
         }
     }
@@ -209,11 +246,15 @@ final class TranslationLayerStore: ObservableObject {
     /// APKs put straight into Husk's folder (Files > On My iPhone > Husk, which the app shares) are taken in as apps, one each, and
     /// moved rather than copied, so a big one costs no second copy's worth of storage. This is the way in that needs no file picker.
     func adoptDroppedAPKs() {
-        guard busy == nil, let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first else { return }
+        guard busy == nil, let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first else {
+            return
+        }
         let dropped = ((try? FileManager.default.contentsOfDirectory(at: docs, includingPropertiesForKeys: nil,
-                                                                      options: [.skipsHiddenFiles])) ?? [])
+                                                                     options: [.skipsHiddenFiles])) ?? [])
             .filter { $0.pathExtension.lowercased() == "apk" || BundleUnpacker.extensions.contains($0.pathExtension.lowercased()) }
-        guard let first = dropped.first else { return }
+        guard let first = dropped.first else {
+            return
+        }
         HuskLog.log("tl", "adopting \(dropped.count) APK(s) found in the Husk folder")
         add([first], move: true)
     }
@@ -226,7 +267,9 @@ final class TranslationLayerStore: ObservableObject {
     }
 
     func runChecks() {
-        guard !checking else { return }
+        guard !checking else {
+            return
+        }
         checking = true
         Task.detached(priority: .userInitiated) {
             // Generated code only runs where MAP_JIT is already known to
@@ -249,7 +292,9 @@ final class TranslationLayerStore: ObservableObject {
 
     nonisolated private static func load(_ dir: URL) -> TLApp? {
         let fm = FileManager.default
-        guard let files = try? fm.contentsOfDirectory(atPath: dir.path) else { return nil }
+        guard let files = try? fm.contentsOfDirectory(atPath: dir.path) else {
+            return nil
+        }
         let apks = files.filter { $0.lowercased().hasSuffix(".apk") }
             .sorted { a, b in
                 // The base first: it is the one a game is started from, and the others are its splits and packs.
@@ -257,7 +302,9 @@ final class TranslationLayerStore: ObservableObject {
                 return ra != rb ? ra < rb : a < b
             }
             .map { dir.appendingPathComponent($0).path }
-        guard let first = apks.first else { return nil }
+        guard let first = apks.first else {
+            return nil
+        }
 
         let saved = try? String(contentsOf: dir.appendingPathComponent("label.txt"),
                                 encoding: .utf8)
@@ -281,16 +328,24 @@ final class TranslationLayerStore: ObservableObject {
             for url in urls {
                 // Security-scoped: the picker's URL is only readable inside this pair.
                 let scoped = url.startAccessingSecurityScopedResource()
-                defer { if scoped { url.stopAccessingSecurityScopedResource() } }
+                defer {
+                    if scoped {
+                        url.stopAccessingSecurityScopedResource()
+                    }
+                }
                 // A bundle (.xapk, .apkm, .apks) is a zip of an app's APKs: take them out, and do not keep the bundle itself.
                 if BundleUnpacker.extensions.contains(url.pathExtension.lowercased()) {
                     let names = try BundleUnpacker.unpack(url, into: dir)
                     HuskLog.log("tl", "unpacked \(url.lastPathComponent): \(names.joined(separator: ", "))")
-                    if move { try? fm.removeItem(at: url) }
+                    if move {
+                        try? fm.removeItem(at: url)
+                    }
                     continue
                 }
                 var name = url.lastPathComponent
-                if !name.lowercased().hasSuffix(".apk") { name += ".apk" }
+                if !name.lowercased().hasSuffix(".apk") {
+                    name += ".apk"
+                }
                 let dest = dir.appendingPathComponent(name)
                 if move {
                     try fm.moveItem(at: url, to: dest)
@@ -302,7 +357,9 @@ final class TranslationLayerStore: ObservableObject {
                     NSFileCoordinator().coordinate(readingItemAt: url, options: [], error: &coordinationError) { readable in
                         do { try fm.copyItem(at: readable, to: dest) } catch { copyError = error }
                     }
-                    if let failure = coordinationError ?? copyError { throw failure }
+                    if let failure = coordinationError ?? copyError {
+                        throw failure
+                    }
                 }
             }
         } catch {
@@ -340,9 +397,13 @@ final class TranslationLayerStore: ObservableObject {
         }
         for apk in ordered {
             guard let manifest = entry(apk, "AndroidManifest.xml", limit: 8 << 20),
-                  let arsc = entry(apk, "resources.arsc", limit: 64 << 20) else { continue }
+                  let arsc = entry(apk, "resources.arsc", limit: 64 << 20) else {
+                continue
+            }
             let info = ApkMetadata.read(manifest: manifest, resources: arsc)
-            guard info.label != nil || info.iconEntry != nil else { continue }
+            guard info.label != nil || info.iconEntry != nil else {
+                continue
+            }
 
             if let label = info.label {
                 try? label.write(to: dir.appendingPathComponent("label.txt"),
@@ -366,14 +427,16 @@ final class TranslationLayerStore: ObservableObject {
                 try? png.write(to: dir.appendingPathComponent("icon.png"))
             }
             HuskLog.log("tl", "\((apk as NSString).lastPathComponent): "
-                            + "label=\(info.label ?? "?") icon=\(iconEntry ?? "?")")
+                + "label=\(info.label ?? "?") icon=\(iconEntry ?? "?")")
             return
         }
     }
 
     nonisolated static func entry(_ apk: String, _ name: String, limit: Int) -> Data? {
         var length = 0
-        guard let bytes = husk_tl_read_entry(apk, name, limit, &length) else { return nil }
+        guard let bytes = husk_tl_read_entry(apk, name, limit, &length) else {
+            return nil
+        }
         defer { husk_tl_free(bytes) }
         return Data(bytes: bytes, count: length)
     }
@@ -428,13 +491,21 @@ struct TranslationLayerTab: View {
             }
             .huskFilePicker(isPresented: $importing) { urls in
                 HuskLog.log("ui", "translation layer: adding \(urls.count) file(s): "
-                          + urls.map(\.lastPathComponent).joined(separator: ", "))
+                    + urls.map(\.lastPathComponent).joined(separator: ", "))
                 store.add(urls)
             }
-            .navigationDestination(isPresented: Binding(get: { destination != nil }, set: { if !$0 { destination = nil } })) {
+            .navigationDestination(isPresented: Binding(get: { destination != nil }, set: {
+                if !$0 {
+                    destination = nil
+                }
+            })) {
                 switch destination {
-                case .detail(let id)?: if let app = store.apps.first(where: { $0.id == id }) { TLAppReportView(app: app) }
-                case .settings(let id)?: if let app = store.apps.first(where: { $0.id == id }) { TLAppSettingsView(app: app) }
+                case .detail(let id)?: if let app = store.apps.first(where: { $0.id == id }) {
+                        TLAppReportView(app: app)
+                    }
+                case .settings(let id)?: if let app = store.apps.first(where: { $0.id == id }) {
+                        TLAppSettingsView(app: app)
+                    }
                 case nil: EmptyView()
                 }
             }
@@ -442,9 +513,13 @@ struct TranslationLayerTab: View {
             .fullScreenCover(item: $playing) { TLAttemptView(app: $0) }
             .onAppear { store.adoptDroppedAPKs() }
             .alert("Could not add the app", isPresented: Binding(
-                    get: { store.lastError != nil },
-                    set: { if !$0 { store.lastError = nil } })) {
-                Button("OK", role: .cancel) { store.lastError = nil }
+                get: { store.lastError != nil },
+                set: {
+                    if !$0 {
+                        store.lastError = nil
+                    }
+                })) {
+                    Button("OK", role: .cancel) { store.lastError = nil }
             } message: {
                 Text(store.lastError ?? "")
             }
@@ -486,8 +561,8 @@ struct TranslationLayerTab: View {
             Text("Apps")
         } footer: {
             Text("Runs Android games straight on your iPhone, without starting Android. Add an APK, or a bundle "
-               + "(.xapk, .apkm, .apks) — or pick a base APK and its split pieces together. "
-               + "Husk keeps its own copy, apart from Android's.")
+                + "(.xapk, .apkm, .apks) — or pick a base APK and its split pieces together. "
+                + "Husk keeps its own copy, apart from Android's.")
         }
     }
 
@@ -511,17 +586,17 @@ struct TranslationLayerTab: View {
                 store.runChecks()
             } label: {
                 Label(store.checking ? "Checking…"
-                      : store.checks.isEmpty ? "Run checks" : "Run again",
-                      systemImage: "stethoscope")
+                    : store.checks.isEmpty ? "Run checks" : "Run again",
+                    systemImage: "stethoscope")
             }
             .disabled(store.checking)
         } header: {
             Text("This iPhone")
         } footer: {
             Text("Android's native code expects things of the processor and of memory "
-               + "that only the phone can answer -- above all, whether a library's code "
-               + "can run with its data writable right beside it. Enable JIT first, or "
-               + "the memory checks are skipped. The results go to the console too.")
+                + "that only the phone can answer -- above all, whether a library's code "
+                + "can run with its data writable right beside it. Enable JIT first, or "
+                + "the memory checks are skipped. The results go to the console too.")
         }
     }
 
@@ -547,16 +622,23 @@ struct TLVerdict {
 
     init(_ report: TLReport?) {
         if report?.runsOnNativeRuntime == true {
-            title = "\(report!.nativeEngineName): native runtime"; tint = Theme.good
+            title = "\(report!.nativeEngineName): native runtime"
+            tint = Theme.good
             return
         }
         switch report?.verdict {
-        case "java"?:           title = "Java only";                    tint = Theme.good
-        case "native"?:         title = "Native code, maps cleanly";    tint = Theme.good
-        case "nativeWithWork"?: title = "Native code, needs work";      tint = .orange
-        case "noArm64"?:        title = "No arm64 code";                tint = .red
-        case "unreadable"?:     title = "Could not be read";            tint = .red
-        default:                title = "Not scanned";                  tint = Theme.textDim
+        case "java"?: title = "Java only"
+            tint = Theme.good
+        case "native"?: title = "Native code, maps cleanly"
+            tint = Theme.good
+        case "nativeWithWork"?: title = "Native code, needs work"
+            tint = .orange
+        case "noArm64"?: title = "No arm64 code"
+            tint = .red
+        case "unreadable"?: title = "Could not be read"
+            tint = .red
+        default: title = "Not scanned"
+            tint = Theme.textDim
         }
     }
 }
@@ -567,8 +649,13 @@ struct TLPlainStatus {
     let tint: Color
 
     init(_ report: TLReport?) {
-        if report?.runsOnNativeRuntime == true { title = "Ready to run"; tint = Theme.good }
-        else { title = "May not run"; tint = Theme.textDim }
+        if report?.runsOnNativeRuntime == true {
+            title = "Ready to run"
+            tint = Theme.good
+        } else {
+            title = "May not run"
+            tint = Theme.textDim
+        }
     }
 }
 
@@ -628,11 +715,11 @@ private struct TLCheckTag: View {
 
     var body: some View {
         switch status {
-        case "pass":    Tag(text: "Pass", tint: Theme.good)
-        case "fail":    Tag(text: "Fail", tint: .red)
-        case "warn":    Tag(text: "Partly", tint: .orange)
-        case "skip":    Tag(text: "Skipped")
-        default:        Tag(text: "Info", tint: Theme.accent)
+        case "pass": Tag(text: "Pass", tint: Theme.good)
+        case "fail": Tag(text: "Fail", tint: .red)
+        case "warn": Tag(text: "Partly", tint: .orange)
+        case "skip": Tag(text: "Skipped")
+        default: Tag(text: "Info", tint: Theme.accent)
         }
     }
 }
@@ -695,7 +782,7 @@ struct TLAppReportView: View {
             } footer: {
                 if devInfo {
                     Text("Loads arm64 native code into JIT memory on Apple Silicon and drives "
-                       + "a NativeActivity lifecycle. Apps with Java/Dex require ART (milestone 2).")
+                        + "a NativeActivity lifecycle. Apps with Java/Dex require ART (milestone 2).")
                 } else {
                     Text("Turn on JIT first. Close the game with Close at the top.")
                 }
@@ -708,7 +795,7 @@ struct TLAppReportView: View {
                     }
                     DetailRow(label: "Dex", value: dex(report), mono: false)
                     DetailRow(label: "ABIs", value: report.abis.isEmpty
-                              ? "none" : report.abis.joined(separator: ", "))
+                        ? "none" : report.abis.joined(separator: ", "))
                     DetailRow(label: "APKs", value: "\(app.apks.count)", mono: false)
                 } header: {
                     Text("What it is")
@@ -724,8 +811,8 @@ struct TLAppReportView: View {
                         Text("Android libraries it needs")
                     } footer: {
                         Text("Its own libraries link against these, and it does not "
-                           + "carry them. Each is something the translation layer has "
-                           + "to provide.")
+                            + "carry them. Each is something the translation layer has "
+                            + "to provide.")
                     }
                 }
 
@@ -744,7 +831,7 @@ struct TLAppReportView: View {
                 }
             } footer: {
                 Text("Deletes Husk's copy of the APKs. Anything installed in Android is "
-                   + "untouched.")
+                    + "untouched.")
             }
         }
         .huskForm()
@@ -780,22 +867,24 @@ private struct TLLibraryRows: View {
 
     private var statusTitle: String {
         switch lib.status {
-        case "ok":      return "Maps as it is"
-        case "work":    return "Needs loader work"
-        default:        return "Cannot load"
+        case "ok": return "Maps as it is"
+        case "work": return "Needs loader work"
+        default: return "Cannot load"
         }
     }
 
     private func relocationText(_ count: Int) -> String {
-        guard let packing = lib.packing, packing != "none" else { return "\(count)" }
+        guard let packing = lib.packing, packing != "none" else {
+            return "\(count)"
+        }
         return "\(count) (\(packing))"
     }
 
     private var statusTint: Color {
         switch lib.status {
-        case "ok":      return Theme.good
-        case "work":    return .orange
-        default:        return .red
+        case "ok": return Theme.good
+        case "work": return .orange
+        default: return .red
         }
     }
 
@@ -846,21 +935,29 @@ final class TLAttemptRunner: ObservableObject {
     private var timer: Timer?
 
     var statusText: String {
-        if isRunning { return "Running Attempt..." }
-        guard let code = exitCode else { return "Ready" }
+        if isRunning {
+            return "Running Attempt..."
+        }
+        guard let code = exitCode else {
+            return "Ready"
+        }
         switch code {
-        case 2:  return "Success: The guest drew frames!"
-        case 1:  return "Loaded: Native libraries loaded (no draw)"
+        case 2: return "Success: The guest drew frames!"
+        case 1: return "Loaded: Native libraries loaded (no draw)"
         default: return "Refused: Could not execute"
         }
     }
 
     var statusColor: Color {
-        if isRunning { return Theme.accent }
-        guard let code = exitCode else { return Theme.textDim }
+        if isRunning {
+            return Theme.accent
+        }
+        guard let code = exitCode else {
+            return Theme.textDim
+        }
         switch code {
-        case 2:  return Theme.good
-        case 1:  return .orange
+        case 2: return Theme.good
+        case 1: return .orange
         default: return .red
         }
     }
@@ -879,7 +976,9 @@ final class TLAttemptRunner: ObservableObject {
 
     /// `seconds` of 0 is no limit: the run goes on until it is stopped. It used to stop itself after two minutes.
     func start(apks: [String], seconds: Int = 0) {
-        guard !isRunning else { return }
+        guard !isRunning else {
+            return
+        }
         isRunning = true
         isDone = false
         exitCode = nil
@@ -926,7 +1025,9 @@ final class TLAttemptRunner: ObservableObject {
             updateLog()
         }
         let n = Int(husk_tl_attempt_frames())
-        if n != frameCount { frameCount = n }
+        if n != frameCount {
+            frameCount = n
+        }
 
         var code: Int32 = 0
         if husk_tl_attempt_done(&code) {
@@ -976,7 +1077,9 @@ struct TLClassicAttemptView: View {
     @AppStorage("husk.tl.showLog") private var showLogSetting = true
     @AppStorage(TranslationLayer.devInfoKey) private var devInfo = false
     /// The log is detail: without developer info it stays shut and its bar is not shown at all.
-    private var showLog: Bool { get { showLogSetting && devInfo } nonmutating set { showLogSetting = newValue } }
+    private var showLog: Bool {
+        get { showLogSetting && devInfo } nonmutating set { showLogSetting = newValue }
+    }
 
     var body: some View {
         NavigationStack {
@@ -1019,42 +1122,44 @@ struct TLClassicAttemptView: View {
                 }
 
                 if devInfo {
-                // The log's bar, always there: it is the way back in once the log
-                // is closed, so it cannot be part of what closes.
-                HStack(spacing: 10) {
-                    Button {
-                        withAnimation(.snappy(duration: 0.25)) { showLog.toggle() }
-                    } label: {
-                        HStack(spacing: 6) {
-                            Image(systemName: showLog ? "chevron.down" : "chevron.right")
-                                .font(.system(size: 11, weight: .bold))
-                                .frame(width: 12)
-                            Text("ATTEMPT LOG")
-                                .font(.technical(11, weight: .bold))
-                        }
-                        .foregroundStyle(Theme.textDim)
-                    }
-                    .buttonStyle(.plain)
-                    Spacer()
-                    if showLog {
+                    // The log's bar, always there: it is the way back in once the log
+                    // is closed, so it cannot be part of what closes.
+                    HStack(spacing: 10) {
                         Button {
-                            UIPasteboard.general.string = runner.logText
+                            withAnimation(.snappy(duration: 0.25)) { showLog.toggle() }
                         } label: {
-                            Label("Copy", systemImage: "doc.on.doc")
-                                .font(.system(size: 12))
+                            HStack(spacing: 6) {
+                                Image(systemName: showLog ? "chevron.down" : "chevron.right")
+                                    .font(.system(size: 11, weight: .bold))
+                                    .frame(width: 12)
+                                Text("ATTEMPT LOG")
+                                    .font(.technical(11, weight: .bold))
+                            }
+                            .foregroundStyle(Theme.textDim)
                         }
-                    } else {
-                        Text("tap to show")
-                            .font(.system(size: 11))
-                            .foregroundStyle(Theme.textDim.opacity(0.7))
+                        .buttonStyle(.plain)
+                        Spacer()
+                        if showLog {
+                            Button {
+                                UIPasteboard.general.string = runner.logText
+                            } label: {
+                                Label("Copy", systemImage: "doc.on.doc")
+                                    .font(.system(size: 12))
+                            }
+                        } else {
+                            Text("tap to show")
+                                .font(.system(size: 11))
+                                .foregroundStyle(Theme.textDim.opacity(0.7))
+                        }
                     }
-                }
-                .padding(.horizontal)
-                .padding(.vertical, 8)
-                .contentShape(Rectangle())
-                .onTapGesture {
-                    if !showLog { withAnimation(.snappy(duration: 0.25)) { showLog = true } }
-                }
+                    .padding(.horizontal)
+                    .padding(.vertical, 8)
+                    .contentShape(Rectangle())
+                    .onTapGesture {
+                        if !showLog {
+                            withAnimation(.snappy(duration: 0.25)) { showLog = true }
+                        }
+                    }
 
                 }
 
@@ -1096,4 +1201,3 @@ struct TLClassicAttemptView: View {
         }
     }
 }
-

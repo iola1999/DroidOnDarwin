@@ -273,6 +273,7 @@ public final class NceWorkload {
     }
     public static char $compile$stringAt(String value, int index) { return value.charAt(index); }
     public static char $compile$stringAtOne(String value) { return value.charAt(1); }
+    public static char $compile$stringAtFar(String value) { return value.charAt(8192); }
     public static String $compile$stringLiteral() { return "native-linux-jit"; }
     public static boolean $compile$stringEquals(String first, Object second) {
         return first.equals(second);
@@ -314,6 +315,11 @@ public final class NceWorkload {
                 "UTF-16 character access");
         check($compile$stringAt(mixed, 0) == 0 && $compile$stringAt(mixed, 2) == 255,
                 "zero and non-ASCII character access");
+        char[] farCharacters = new char[8200];
+        java.util.Arrays.fill(farCharacters, 'x');
+        check($compile$stringAtFar(new String(farCharacters)) == 'x', "large compressed offset");
+        farCharacters[8192] = 0x5b89;
+        check($compile$stringAtFar(new String(farCharacters)) == 0x5b89, "large UTF-16 offset");
         check($compile$stringLiteral() == "native-linux-jit", "JIT string root identity");
         check($compile$stringEquals(ascii, new String(ascii))
                 && !$compile$stringEquals(ascii, unicode) && !$compile$stringEquals(ascii, null),
@@ -325,6 +331,10 @@ public final class NceWorkload {
         catch (StringIndexOutOfBoundsException expected) { exceptions++; }
         try { $compile$stringAt(ascii, -1); }
         catch (StringIndexOutOfBoundsException expected) { exceptions++; }
+        try { $compile$stringAtFar(ascii); }
+        catch (StringIndexOutOfBoundsException expected) { exceptions++; }
+        try { $compile$stringAtFar(null); }
+        catch (NullPointerException expected) { exceptions++; }
         Object[] slots = new Object[keys.length];
         long expected = 0;
         for (int r = 0; r < 100000; r++) expected += keys[r & 7].hashCode() + 17;
@@ -336,10 +346,10 @@ public final class NceWorkload {
                 "combined compiled workload checksum");
         collector.join();
         for (int i = 0; i < keys.length; i++) check(slots[i] == keys[i], "combined stored references");
-        check(exceptions == 3, "compiled string exceptions");
+        check(exceptions == 5, "compiled string exceptions");
         System.out.println("{\"test\":\"android_art_jit_strings_classes\",\"passed\":true,"
                 + "\"strings\":8,\"combined_iterations\":100000,\"gc_requests\":8,"
-                + "\"initialization_errors\":2,\"string_exceptions\":3}");
+                + "\"initialization_errors\":2,\"string_exceptions\":5,\"large_offset_strings\":2}");
     }
 
     public static Object $compile$referenceStore(Object[] array, int index, Object value) {

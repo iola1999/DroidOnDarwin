@@ -56,6 +56,43 @@ static jobject native_identity(JNIEnv *env, jclass klass, jobject value)
     return (*env)->NewLocalRef(env, value);
 }
 
+static int test_volatile_floating(JNIEnv *env, void *library)
+{
+    bool (*compile)(JNIEnv *, jmethodID) = dlsym(library, "nce_art_compile_method");
+    void (*keep_interpreted)(JNIEnv *, jmethodID) = dlsym(library, "nce_art_keep_interpreted");
+    jclass klass = (*env)->FindClass(env, "NceVolatile");
+    if (!klass || !compile || !keep_interpreted)
+        return 80;
+    const char *methods[][2] = {
+        {"putFloat", "(LNceVolatile;F)V"},
+        {"getFloat", "(LNceVolatile;)F"},
+        {"putDouble", "(LNceVolatile;D)V"},
+        {"getDouble", "(LNceVolatile;)D"},
+        {"putStaticFloat", "(F)V"},
+        {"getStaticFloat", "()F"},
+        {"putStaticDouble", "(D)V"},
+        {"getStaticDouble", "()D"},
+    };
+    for (unsigned i = 0; i < sizeof(methods) / sizeof(*methods); ++i) {
+        jmethodID method = (*env)->GetStaticMethodID(env, klass, methods[i][0], methods[i][1]);
+        if (!method || !compile(env, method)) {
+            fprintf(stderr, "ART could not compile volatile test %s\n", methods[i][0]);
+            return 81;
+        }
+    }
+    jmethodID check = (*env)->GetStaticMethodID(env, klass, "checkResults", "()V");
+    if (!check)
+        return 82;
+    keep_interpreted(env, check);
+    (*env)->CallStaticVoidMethod(env, klass, check);
+    if ((*env)->ExceptionCheck(env)) {
+        (*env)->ExceptionDescribe(env);
+        return 83;
+    }
+    (*env)->DeleteLocalRef(env, klass);
+    return 0;
+}
+
 static int test_inlining(JNIEnv *env, void *library, bool enabled)
 {
     bool (*compile)(JNIEnv *, jmethodID) = dlsym(library, "nce_art_compile_method");
@@ -266,6 +303,7 @@ static int test_jit(JNIEnv *env, jclass workload, void *library)
         {"$compile$stringHash", "(Ljava/lang/String;)I"},
         {"$compile$stringAt", "(Ljava/lang/String;I)C"},
         {"$compile$stringAtOne", "(Ljava/lang/String;)C"},
+        {"$compile$stringAtFar", "(Ljava/lang/String;)C"},
         {"$compile$stringLiteral", "()Ljava/lang/String;"},
         {"$compile$stringEquals", "(Ljava/lang/String;Ljava/lang/Object;)Z"},
         {"$compile$combined", "([Ljava/lang/String;[Ljava/lang/Object;LNceWorkload$Reader;I)J"},
@@ -402,6 +440,9 @@ static int test_jit(JNIEnv *env, jclass workload, void *library)
     int intrinsic_result = test_intrinsics(env, library);
     if (intrinsic_result)
         return intrinsic_result;
+    int volatile_result = test_volatile_floating(env, library);
+    if (volatile_result)
+        return volatile_result;
     jmethodID types = (*env)->GetStaticMethodID(env, workload, "compiledTypes", "()V");
     if (!types)
         return 50;

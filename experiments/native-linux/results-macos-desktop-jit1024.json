@@ -1,0 +1,312 @@
+{
+  "host": "Apple M5 Ultra / macOS 27.0",
+  "mm_mode": "demand",
+  "jit_threshold": 1024,
+  "jit_warmup_threshold": 1024,
+  "passed": false,
+  "systemui_start_services_ms": 87172,
+  "failure": "SystemUI service ANR; strict Launcher focus/draw check timed out",
+  "guest_abort_seen": false,
+  "profiles": [
+    {
+      "profile": "host_mapping",
+      "elapsed_ms": 10776.364,
+      "data_calls": 470371,
+      "data_ms": 691.867,
+      "code_calls": 75825,
+      "code_ms": 212.941,
+      "revoke_calls": 292781,
+      "revoke_ms": 533.132
+    },
+    {
+      "profile": "resume_entries",
+      "hits": 637307,
+      "misses": 59493
+    },
+    {
+      "profile": "host_mapping",
+      "elapsed_ms": 21785.601,
+      "data_calls": 1164657,
+      "data_ms": 1784.543,
+      "code_calls": 116636,
+      "code_ms": 367.885,
+      "revoke_calls": 629358,
+      "revoke_ms": 1310.863
+    },
+    {
+      "profile": "resume_entries",
+      "hits": 1264838,
+      "misses": 135733
+    },
+    {
+      "profile": "host_mapping",
+      "elapsed_ms": 31963.758,
+      "data_calls": 1854549,
+      "data_ms": 2877.813,
+      "code_calls": 172087,
+      "code_ms": 559.002,
+      "revoke_calls": 1046084,
+      "revoke_ms": 2132.291
+    },
+    {
+      "profile": "resume_entries",
+      "hits": 1887847,
+      "misses": 235113
+    },
+    {
+      "profile": "host_mapping",
+      "elapsed_ms": 42002.338,
+      "data_calls": 2560008,
+      "data_ms": 3961.713,
+      "code_calls": 252315,
+      "code_ms": 832.697,
+      "revoke_calls": 1527720,
+      "revoke_ms": 2920.869
+    },
+    {
+      "profile": "resume_entries",
+      "hits": 2536338,
+      "misses": 355549
+    },
+    {
+      "profile": "host_mapping",
+      "elapsed_ms": 52077.56,
+      "data_calls": 3275278,
+      "data_ms": 5069.128,
+      "code_calls": 315366,
+      "code_ms": 1033.8,
+      "revoke_calls": 2002250,
+      "revoke_ms": 3677.011
+    },
+    {
+      "profile": "resume_entries",
+      "hits": 3174725,
+      "misses": 468890
+    },
+    {
+      "profile": "host_mapping",
+      "elapsed_ms": 62110.64,
+      "data_calls": 4005650,
+      "data_ms": 6204.627,
+      "code_calls": 377986,
+      "code_ms": 1229.062,
+      "revoke_calls": 2493983,
+      "revoke_ms": 4482.263
+    },
+    {
+      "profile": "resume_entries",
+      "hits": 3814529,
+      "misses": 590794
+    },
+    {
+      "profile": "host_mapping",
+      "elapsed_ms": 72322.346,
+      "data_calls": 4727062,
+      "data_ms": 7325.031,
+      "code_calls": 452006,
+      "code_ms": 1477.492,
+      "revoke_calls": 2998121,
+      "revoke_ms": 5323.329
+    },
+    {
+      "profile": "resume_entries",
+      "hits": 4461770,
+      "misses": 716027
+    },
+    {
+      "profile": "host_mapping",
+      "elapsed_ms": 82862.602,
+      "data_calls": 5477636,
+      "data_ms": 8487.616,
+      "code_calls": 519201,
+      "code_ms": 1709.69,
+      "revoke_calls": 3504975,
+      "revoke_ms": 6152.795
+    },
+    {
+      "profile": "resume_entries",
+      "hits": 5123869,
+      "misses": 851646
+    },
+    {
+      "profile": "host_mapping",
+      "elapsed_ms": 92898.424,
+      "data_calls": 6190748,
+      "data_ms": 9596.881,
+      "code_calls": 580496,
+      "code_ms": 1898.498,
+      "revoke_calls": 3970249,
+      "revoke_ms": 6929.107
+    },
+    {
+      "profile": "resume_entries",
+      "hits": 5732326,
+      "misses": 974411
+    },
+    {
+      "profile": "host_mapping",
+      "elapsed_ms": 102924.333,
+      "data_calls": 6913598,
+      "data_ms": 10721.11,
+      "code_calls": 644772,
+      "code_ms": 2105.836,
+      "revoke_calls": 4449538,
+      "revoke_ms": 7689.169
+    },
+    {
+      "profile": "resume_entries",
+      "hits": 6351383,
+      "misses": 1112324
+    },
+    {
+      "profile": "host_mapping",
+      "elapsed_ms": 112926.257,
+      "data_calls": 7616312,
+      "data_ms": 11816.079,
+      "code_calls": 717482,
+      "code_ms": 2307.189,
+      "revoke_calls": 4927652,
+      "revoke_ms": 8455.514
+    },
+    {
+      "profile": "resume_entries",
+      "hits": 6963805,
+      "misses": 1251766
+    },
+    {
+      "profile": "host_mapping",
+      "elapsed_ms": 123263.773,
+      "data_calls": 8343360,
+      "data_ms": 12959.456,
+      "code_calls": 792130,
+      "code_ms": 2510.276,
+      "revoke_calls": 5433750,
+      "revoke_ms": 9274.896
+    },
+    {
+      "profile": "resume_entries",
+      "hits": 7599221,
+      "misses": 1396568
+    },
+    {
+      "profile": "host_mapping",
+      "elapsed_ms": 133270.842,
+      "data_calls": 8956861,
+      "data_ms": 14060.305,
+      "code_calls": 867985,
+      "code_ms": 2711.134,
+      "revoke_calls": 5870525,
+      "revoke_ms": 10203.473
+    },
+    {
+      "profile": "resume_entries",
+      "hits": 8144717,
+      "misses": 1516582
+    },
+    {
+      "profile": "host_mapping",
+      "elapsed_ms": 143320.675,
+      "data_calls": 9577449,
+      "data_ms": 15165.179,
+      "code_calls": 939406,
+      "code_ms": 2910.348,
+      "revoke_calls": 6295966,
+      "revoke_ms": 11146.123
+    },
+    {
+      "profile": "resume_entries",
+      "hits": 8698223,
+      "misses": 1636987
+    },
+    {
+      "profile": "host_mapping",
+      "elapsed_ms": 153831.486,
+      "data_calls": 10260742,
+      "data_ms": 16308.462,
+      "code_calls": 1023805,
+      "code_ms": 3126.364,
+      "revoke_calls": 6768586,
+      "revoke_ms": 12111.033
+    },
+    {
+      "profile": "resume_entries",
+      "hits": 9301402,
+      "misses": 1775280
+    },
+    {
+      "profile": "host_mapping",
+      "elapsed_ms": 164287.026,
+      "data_calls": 10973858,
+      "data_ms": 17439.484,
+      "code_calls": 1107758,
+      "code_ms": 3333.251,
+      "revoke_calls": 7264758,
+      "revoke_ms": 13030.756
+    },
+    {
+      "profile": "resume_entries",
+      "hits": 9926363,
+      "misses": 1931561
+    },
+    {
+      "profile": "host_mapping",
+      "elapsed_ms": 174542.115,
+      "data_calls": 11668233,
+      "data_ms": 18539.006,
+      "code_calls": 1189944,
+      "code_ms": 3550.815,
+      "revoke_calls": 7740561,
+      "revoke_ms": 13888.514
+    },
+    {
+      "profile": "resume_entries",
+      "hits": 10545635,
+      "misses": 2073791
+    },
+    {
+      "profile": "host_mapping",
+      "elapsed_ms": 185436.498,
+      "data_calls": 12428013,
+      "data_ms": 19718.162,
+      "code_calls": 1280417,
+      "code_ms": 3783.07,
+      "revoke_calls": 8267996,
+      "revoke_ms": 14744.703
+    },
+    {
+      "profile": "resume_entries",
+      "hits": 11225614,
+      "misses": 2228108
+    },
+    {
+      "profile": "host_mapping",
+      "elapsed_ms": 196136.366,
+      "data_calls": 13161910,
+      "data_ms": 20870.642,
+      "code_calls": 1374490,
+      "code_ms": 4023.137,
+      "revoke_calls": 8791227,
+      "revoke_ms": 15614.091
+    },
+    {
+      "profile": "resume_entries",
+      "hits": 11877733,
+      "misses": 2390733
+    },
+    {
+      "profile": "host_mapping",
+      "elapsed_ms": 206809.006,
+      "data_calls": 13904566,
+      "data_ms": 22032.715,
+      "code_calls": 1465354,
+      "code_ms": 4248.631,
+      "revoke_calls": 9309966,
+      "revoke_ms": 16438.277
+    },
+    {
+      "profile": "resume_entries",
+      "hits": 12534656,
+      "misses": 2552125
+    }
+  ]
+}

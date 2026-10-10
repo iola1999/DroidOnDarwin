@@ -51,7 +51,9 @@ final class HuskMetalView: MTKView {
         }
     }
 
-    required init(coder: NSCoder) { fatalError("not supported") }
+    required init(coder: NSCoder) {
+        fatalError("not supported")
+    }
 
     // MARK: - Touch -> guest
 
@@ -76,21 +78,31 @@ final class HuskMetalView: MTKView {
     }
 
     private func send(_ touch: UITouch, down: Bool) {
-        guard let (x, y) = guestPoint(from: touch.location(in: self)) else { return }
+        guard let (x, y) = guestPoint(from: touch.location(in: self)) else {
+            return
+        }
         husk_display_send_pointer(x, y, down)
     }
 
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
-        if let t = touches.first { send(t, down: true) }
+        if let t = touches.first {
+            send(t, down: true)
+        }
     }
     override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
-        if let t = touches.first { send(t, down: true) }
+        if let t = touches.first {
+            send(t, down: true)
+        }
     }
     override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
-        if let t = touches.first { send(t, down: false) }
+        if let t = touches.first {
+            send(t, down: false)
+        }
     }
     override func touchesCancelled(_ touches: Set<UITouch>, with event: UIEvent?) {
-        if let t = touches.first { send(t, down: false) }
+        if let t = touches.first {
+            send(t, down: false)
+        }
     }
 }
 
@@ -101,7 +113,9 @@ extension HuskMetalView: MTKViewDelegate {
         guard let device,
               let commandQueue,
               let drawable = currentDrawable,
-              let pass = currentRenderPassDescriptor else { return }
+              let pass = currentRenderPassDescriptor else {
+            return
+        }
 
         let seq = husk_display_sequence()
 
@@ -111,7 +125,9 @@ extension HuskMetalView: MTKViewDelegate {
         // per frame would take the BQL 60 times a second from the UI thread and
         // contend with the emulator for nothing.
         var info = HuskFrameInfo()
-        guard husk_display_lock_frame(&info) else { return }
+        guard husk_display_lock_frame(&info) else {
+            return
+        }
 
         if info.generation != textureGeneration || texture == nil {
             let desc = MTLTextureDescriptor.texture2DDescriptor(
@@ -141,7 +157,9 @@ extension HuskMetalView: MTKViewDelegate {
         guard let texture,
               let pipeline = pipelineState,
               let buffer = commandQueue.makeCommandBuffer(),
-              let enc = buffer.makeRenderCommandEncoder(descriptor: pass) else { return }
+              let enc = buffer.makeRenderCommandEncoder(descriptor: pass) else {
+            return
+        }
 
         // Letterbox: shrink the fullscreen quad on whichever axis has slack so the
         // guest keeps its aspect ratio.
@@ -162,6 +180,8 @@ extension HuskMetalView: MTKViewDelegate {
 
 /// SwiftUI wrapper.
 struct HuskDisplay: UIViewRepresentable {
-    func makeUIView(context: Context) -> HuskMetalView { HuskMetalView() }
+    func makeUIView(context: Context) -> HuskMetalView {
+        HuskMetalView()
+    }
     func updateUIView(_ uiView: HuskMetalView, context: Context) {}
 }

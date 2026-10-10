@@ -1,0 +1,10 @@
+--min-version 0.63.1
+--language-mode 5
+--indent 4
+--linebreaks lf
+--max-width none
+--list-wrap-threshold none
+--indent-strings false
+--semicolons never
+--exclude work,build,.build,third_party,src/app/Frameworks,patches
+--rules braces,consecutiveBlankLines,consecutiveSpaces,elseOnSameLine,indent,linebreakAtEndOfFile,linebreaks,semicolons,spaceAroundBraces,spaceAroundBrackets,spaceAroundComments,spaceAroundGenerics,spaceAroundOperators,spaceAroundParens,spaceInsideBraces,spaceInsideBrackets,spaceInsideGenerics,spaceInsideParens,trailingSpace,wrapFunctionBodies,wrapGuardStatementBodies,wrapIfStatementBodies,wrapLoopBodies,wrapPropertyBodies

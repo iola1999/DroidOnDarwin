@@ -2189,3 +2189,100 @@
          compilation_kind == CompilationKind::kBaseline &&
          !compiler_options.GetDebuggable()) {
        fast_compiler = FastCompiler::Compile(method,
+--- a/compiler/optimizing/code_generator_arm64.cc
++++ b/compiler/optimizing/code_generator_arm64.cc
+@@ -2020,13 +2020,16 @@
+                                      bool needs_null_check) {
+   MacroAssembler* masm = GetVIXLAssembler();
+   UseScratchRegisterScope temps(masm);
+-  Register temp_base = temps.AcquireX();
++  Register temp_base = src.GetBaseRegister();
+
+   DCHECK(!src.IsPreIndex());
+   DCHECK(!src.IsPostIndex());
+
+-  // TODO(vixl): Let the MacroAssembler handle MemOperand.
+-  __ Add(temp_base, src.GetBaseRegister(), OperandFromMemOperand(src));
++  // A completed address leaves one scratch register for floating-point bits.
++  if (!src.IsImmediateOffset() || src.GetOffset() != 0) {
++    temp_base = temps.AcquireX();
++    __ Add(temp_base, src.GetBaseRegister(), OperandFromMemOperand(src));
++  }
+   {
+     // Ensure that between load and MaybeRecordImplicitNullCheck there are no pools emitted.
+     MemOperand base = MemOperand(temp_base);
+@@ -2129,14 +2132,16 @@
+                                       bool needs_null_check) {
+   MacroAssembler* masm = GetVIXLAssembler();
+   UseScratchRegisterScope temps(GetVIXLAssembler());
+-  Register temp_base = temps.AcquireX();
++  Register temp_base = dst.GetBaseRegister();
+
+   DCHECK(!dst.IsPreIndex());
+   DCHECK(!dst.IsPostIndex());
+
+-  // TODO(vixl): Let the MacroAssembler handle this.
+-  Operand op = OperandFromMemOperand(dst);
+-  __ Add(temp_base, dst.GetBaseRegister(), op);
++  // A completed address leaves one scratch register for floating-point bits.
++  if (!dst.IsImmediateOffset() || dst.GetOffset() != 0) {
++    temp_base = temps.AcquireX();
++    __ Add(temp_base, dst.GetBaseRegister(), OperandFromMemOperand(dst));
++  }
+   MemOperand base = MemOperand(temp_base);
+   // Ensure that between store and MaybeRecordImplicitNullCheck there are no pools emitted.
+   switch (type) {
+@@ -2442,7 +2447,8 @@
+   UseScratchRegisterScope temps(GetVIXLAssembler());
+   Register address = NceHeapAddress(GetVIXLAssembler(), &temps,
+                                     InputRegisterAt(instruction, receiver_input));
+-  MemOperand field(address, field_info.GetFieldOffset().SizeValue());
++  if (field_info.IsVolatile()) __ Add(address, address, field_info.GetFieldOffset().SizeValue());
++  MemOperand field(address, field_info.IsVolatile() ? 0 : field_info.GetFieldOffset().SizeValue());
+ #else
+   MemOperand field =
+       HeapOperand(InputRegisterAt(instruction, receiver_input), field_info.GetFieldOffset());
+@@ -2530,7 +2536,8 @@
+
+ #ifdef ART_NCE
+     Register address = NceHeapAddress(GetVIXLAssembler(), &temps, obj);
+-    MemOperand destination(address, offset.SizeValue());
++    if (field_info.IsVolatile()) __ Add(address, address, offset.SizeValue());
++    MemOperand destination(address, field_info.IsVolatile() ? 0 : offset.SizeValue());
+ #else
+     MemOperand destination = HeapOperand(obj, offset);
+ #endif
+--- a/compiler/optimizing/code_generator_arm64.cc
++++ b/compiler/optimizing/code_generator_arm64.cc
+@@ -2981,6 +2981,8 @@
+     if (!instruction->GetArray()->IsIntermediateAddress()) __ Add(address, address, offset);
+     vixl::aarch64::Label uncompressed, done;
+     __ Tbnz(length, 0, &uncompressed);
++    // The branch consumed the compression flag; large offsets may need this scratch.
++    temps.Release(length);
+     __ Ldrb(OutputRegister(instruction), index.IsConstant()
+         ? MemOperand(address, Int64FromLocation(index))
+         : MemOperand(address, XRegisterFrom(index), LSL, 0));
+--- a/runtime/signal_catcher.cc
++++ b/runtime/signal_catcher.cc
+@@ -114,6 +114,12 @@
+
+ void SignalCatcher::Output(const std::string& s) {
+   ScopedThreadStateChange tsc(Thread::Current(), ThreadState::kWaitingForSignalCatcherOutput);
++#ifdef ART_NCE
++  // The embedded session exports stderr; it does not run tombstoned.
++  if (!android::base::WriteStringToFd(s, STDERR_FILENO)) {
++    PLOG(ERROR) << "Failed to write ART thread stacks to the session log";
++  }
++#else
+   palette_status_t status = PaletteWriteCrashThreadStacks(s.data(), s.size());
+   if (status == PALETTE_STATUS_OK) {
+     LOG(INFO) << "Wrote stack traces to tombstoned";
+@@ -121,6 +127,7 @@
+     CHECK(status == PALETTE_STATUS_FAILED_CHECK_LOG);
+     LOG(ERROR) << "Failed to write stack traces to tombstoned";
+   }
++#endif
+ }
+
+ void SignalCatcher::HandleSigQuit() {

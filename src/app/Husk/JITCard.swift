@@ -9,19 +9,27 @@ import SwiftUI
 struct JITCard: View {
     @ObservedObject private var jit = JITCoordinator.shared
 
-    private var isOn: Bool { JITBootstrap.isDebuggerAttached || JITBootstrap.debuggedFlag }
+    private var isOn: Bool {
+        JITBootstrap.isDebuggerAttached || JITBootstrap.debuggedFlag
+    }
 
     /// The way the card offers: StikJIT where Husk has it (iOS 26 and later), and otherwise whatever this device has -- TrollStore, a
     /// jailbreak -- since StikJIT cannot run on an iOS before 26.
     private var offered: JITMethod {
-        if HuskBuiltInJIT.isAvailable { return .builtIn }
+        if HuskBuiltInJIT.isAvailable {
+            return .builtIn
+        }
         let resolved = jit.resolvedMethod
         return resolved == .builtIn ? .builtIn : resolved
     }
 
     var body: some View {
         Group {
-            if isOn { on } else { off }
+            if isOn {
+                on
+            } else {
+                off
+            }
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 4)
@@ -31,14 +39,14 @@ struct JITCard: View {
         switch offered {
         case .trollStore:
             return "TrollStore can turn JIT on for Husk: it opens Husk and enables it, with no computer. "
-                 + "In TrollStore's Settings, URL Scheme must be on."
+                + "In TrollStore's Settings, URL Scheme must be on."
         case .jailbreak:
             return "On a jailbroken device JIT is a setting. In Dopamine, turn on Allow JIT in Apps, then open Husk again."
         case .stikDebug:
             return "StikDebug is installed, so Husk will open it to turn JIT on."
         default:
             return "StikJIT is built into Husk. You can turn JIT on right here — no computer and no other app. "
-                 + "Games and Android both need it."
+                + "Games and Android both need it."
         }
     }
 
@@ -96,7 +104,9 @@ struct JITCard: View {
             } else {
                 Button {
                     // The one this card offers, whatever "Automatic" would have picked.
-                    if offered == .builtIn, HuskBuiltInJIT.isAvailable { jit.method = .builtIn }
+                    if offered == .builtIn, HuskBuiltInJIT.isAvailable {
+                        jit.method = .builtIn
+                    }
                     jit.enable()
                 } label: {
                     HStack {

@@ -1,0 +1,173 @@
+{
+  "date": "2026-10-10",
+  "stage": "Android services startup before deferred user-window restoration",
+  "host": {
+    "system": "macOS-27.0-arm64-arm-64bit-Mach-O",
+    "cpu": "Apple M5 Ultra"
+  },
+  "configuration": {
+    "linux_ram_mib": 512,
+    "linux_cpus": 1,
+    "display": "360x640",
+    "timeout_multiplier": 3,
+    "mapping_profile": true
+  },
+  "checks": [
+    {
+      "test": "android_crypto_sdk_context_abi",
+      "passed": true,
+      "hmac_context_bytes": 104,
+      "aead_context_bytes": 584
+    },
+    {
+      "test": "android_keystore_persistence",
+      "passed": true,
+      "restored": false
+    }
+  ],
+  "mapping_profiles": [
+    {
+      "profile": "host_mapping",
+      "elapsed_ms": 10431.736,
+      "data_calls": 2743374,
+      "data_ms": 3057.768,
+      "code_calls": 363003,
+      "code_ms": 1122.864,
+      "revoke_calls": 947601,
+      "revoke_ms": 1024.219
+    },
+    {
+      "profile": "host_mapping",
+      "elapsed_ms": 21168.271,
+      "data_calls": 5779886,
+      "data_ms": 6610.64,
+      "code_calls": 921225,
+      "code_ms": 2103.335,
+      "revoke_calls": 1910078,
+      "revoke_ms": 2447.179
+    },
+    {
+      "profile": "host_mapping",
+      "elapsed_ms": 31676.317,
+      "data_calls": 10167908,
+      "data_ms": 11399.723,
+      "code_calls": 1484927,
+      "code_ms": 2907.231,
+      "revoke_calls": 3042103,
+      "revoke_ms": 3955.632
+    },
+    {
+      "profile": "host_mapping",
+      "elapsed_ms": 42342.339,
+      "data_calls": 15926541,
+      "data_ms": 17629.734,
+      "code_calls": 2168020,
+      "code_ms": 3874.442,
+      "revoke_calls": 4300339,
+      "revoke_ms": 5581.672
+    },
+    {
+      "profile": "host_mapping",
+      "elapsed_ms": 52589.266,
+      "data_calls": 21607973,
+      "data_ms": 23818.4,
+      "code_calls": 2921584,
+      "code_ms": 4900.084,
+      "revoke_calls": 5555751,
+      "revoke_ms": 7067.357
+    },
+    {
+      "profile": "host_mapping",
+      "elapsed_ms": 63605.529,
+      "data_calls": 28043939,
+      "data_ms": 30763.008,
+      "code_calls": 3792035,
+      "code_ms": 5994.896,
+      "revoke_calls": 6972555,
+      "revoke_ms": 8689.653
+    },
+    {
+      "profile": "host_mapping",
+      "elapsed_ms": 73984.168,
+      "data_calls": 34356951,
+      "data_ms": 37522.947,
+      "code_calls": 4596385,
+      "code_ms": 6968.473,
+      "revoke_calls": 8235464,
+      "revoke_ms": 10185.516
+    },
+    {
+      "profile": "host_mapping",
+      "elapsed_ms": 84062.868,
+      "data_calls": 40346991,
+      "data_ms": 44016.727,
+      "code_calls": 5483139,
+      "code_ms": 8039.689,
+      "revoke_calls": 9542706,
+      "revoke_ms": 11656.957
+    },
+    {
+      "profile": "host_mapping",
+      "elapsed_ms": 94817.435,
+      "data_calls": 46637719,
+      "data_ms": 50768.68,
+      "code_calls": 6372931,
+      "code_ms": 9107.873,
+      "revoke_calls": 10876822,
+      "revoke_ms": 13238.494
+    },
+    {
+      "profile": "host_mapping",
+      "elapsed_ms": 105074.334,
+      "data_calls": 52381507,
+      "data_ms": 56965.884,
+      "code_calls": 7049635,
+      "code_ms": 9965.128,
+      "revoke_calls": 12122038,
+      "revoke_ms": 14705.851
+    },
+    {
+      "profile": "host_mapping",
+      "elapsed_ms": 116226.782,
+      "data_calls": 58648794,
+      "data_ms": 63873.323,
+      "code_calls": 7771534,
+      "code_ms": 10903.748,
+      "revoke_calls": 13505286,
+      "revoke_ms": 16351.897
+    },
+    {
+      "profile": "host_mapping",
+      "elapsed_ms": 126233.041,
+      "data_calls": 64060646,
+      "data_ms": 69903.698,
+      "code_calls": 8381165,
+      "code_ms": 11693.309,
+      "revoke_calls": 14770386,
+      "revoke_ms": 17859.215
+    },
+    {
+      "profile": "host_mapping",
+      "elapsed_ms": 137175.311,
+      "data_calls": 70033448,
+      "data_ms": 76517.568,
+      "code_calls": 8953109,
+      "code_ms": 12406.176,
+      "revoke_calls": 16185070,
+      "revoke_ms": 19504.31
+    },
+    {
+      "profile": "host_mapping",
+      "elapsed_ms": 147712.393,
+      "data_calls": 75822793,
+      "data_ms": 82919.138,
+      "code_calls": 9459187,
+      "code_ms": 13046.304,
+      "revoke_calls": 17468553,
+      "revoke_ms": 21063.723
+    }
+  ],
+  "result": "failed",
+  "failure": "system_server terminated after SIGILL at libc.so + 0x7aac8, MRS CTR_EL0",
+  "limits": "Startup only; no completed desktop or interaction result. Timings include host scheduling waits."
+}

@@ -12,7 +12,10 @@ enum HuskOrientation {
         mask = new
         for case let scene as UIWindowScene in UIApplication.shared.connectedScenes {
             var vc = scene.keyWindow?.rootViewController
-            while let v = vc { v.setNeedsUpdateOfSupportedInterfaceOrientations(); vc = v.presentedViewController }
+            while let v = vc {
+                v.setNeedsUpdateOfSupportedInterfaceOrientations()
+                vc = v.presentedViewController
+            }
             scene.requestGeometryUpdate(.iOS(interfaceOrientations: new)) { error in
                 HuskLog.log("ui", "orientation change refused: \(error.localizedDescription)")
             }

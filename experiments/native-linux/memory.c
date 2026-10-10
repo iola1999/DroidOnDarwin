@@ -65,7 +65,11 @@ int nce_memory_remap(void *target, void *source, size_t size, int protection)
         fprintf(stderr, "vm_remap: %s\n", mach_error_string(kr));
         return -1;
     }
-    if (mprotect(target, size, protection)) {
+    _Static_assert(PROT_READ == VM_PROT_READ && PROT_WRITE == VM_PROT_WRITE &&
+                       PROT_EXEC == VM_PROT_EXECUTE,
+                   "Darwin protection flags");
+    // vm_remap already installs the source's current permissions.
+    if (current != protection && mprotect(target, size, protection)) {
         printf("{\"result\":\"failed\",\"reason\":\"mprotect\",\"errno\":%d,\"target\":\"%p\",\"bytes\":%zu,\"protection\":%d}\n",
                errno, target, size, protection);
         return -1;

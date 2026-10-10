@@ -1,13 +1,14 @@
 #!/usr/bin/env bash
-# clang-format 的文件范围来自 Git，第三方与生成物由 .clang-format-ignore 排除。
+# 文件范围来自 Git，各语言的配置负责排版与第三方排除规则。
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
 MODE=(-i)
+SWIFT_MODE=(--cache ignore --quiet)
 PATHS=()
 while [ "$#" -gt 0 ]; do
     case "$1" in
-        --check) MODE=(--dry-run --Werror) ;;
+        --check) MODE=(--dry-run --Werror); SWIFT_MODE+=(--lint) ;;
         --help|-h)
             echo "用法：bash scripts/format.sh [--check] [--] [文件或目录 ...]"
             exit 0
@@ -23,27 +24,38 @@ while [ "$#" -gt 0 ]; do
     shift
 done
 
-if ! command -v clang-format >/dev/null 2>&1; then
-    echo "缺少 clang-format；macOS 可运行 brew install clang-format。" >&2
-    exit 1
-fi
-
 if [ "${#PATHS[@]}" -eq 0 ]; then
-    PATHS=('*.c' '*.h' '*.cc' '*.cpp' '*.hpp' '*.m' '*.mm')
+    PATHS=('*.c' '*.h' '*.cc' '*.cpp' '*.hpp' '*.m' '*.mm' '*.swift')
 fi
 
 FILES=()
+SWIFT_FILES=()
 while IFS= read -r -d '' file; do
+    [ -f "$file" ] && [ ! -L "$file" ] || continue
     case "$file" in
-        *.c|*.h|*.cc|*.cpp|*.hpp|*.m|*.mm)
-            [ ! -f "$file" ] || FILES+=("$file")
-            ;;
+        *.c|*.h|*.cc|*.cpp|*.hpp|*.m|*.mm) FILES+=("./$file") ;;
+        *.swift) SWIFT_FILES+=("./$file") ;;
     esac
 done < <(git ls-files --cached --others --exclude-standard --deduplicate -z -- "${PATHS[@]}")
 
-if [ "${#FILES[@]}" -eq 0 ]; then
-    echo "指定范围内没有 C、C++ 或 Objective-C 源文件。" >&2
+if [ "${#FILES[@]}" -eq 0 ] && [ "${#SWIFT_FILES[@]}" -eq 0 ]; then
+    echo "指定范围内没有 C、C++、Objective-C 或 Swift 源文件。" >&2
     exit 2
 fi
 
-clang-format --style=file --fail-on-incomplete-format "${MODE[@]}" "${FILES[@]}"
+# 混合提交先检查所需工具，防止执行一部分后才发现另一种工具缺失。
+if [ "${#FILES[@]}" -gt 0 ] && ! command -v clang-format >/dev/null 2>&1; then
+    echo "缺少 clang-format；macOS 可运行 brew install clang-format。" >&2
+    exit 1
+fi
+if [ "${#SWIFT_FILES[@]}" -gt 0 ] && ! command -v swiftformat >/dev/null 2>&1; then
+    echo "缺少 swiftformat；macOS 可运行 brew install swiftformat。" >&2
+    exit 1
+fi
+
+if [ "${#FILES[@]}" -gt 0 ]; then
+    clang-format --style=file --fail-on-incomplete-format "${MODE[@]}" "${FILES[@]}"
+fi
+if [ "${#SWIFT_FILES[@]}" -gt 0 ]; then
+    swiftformat "${SWIFT_FILES[@]}" --config .swiftformat "${SWIFT_MODE[@]}"
+fi

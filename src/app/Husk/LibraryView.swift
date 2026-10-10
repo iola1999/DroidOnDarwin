@@ -40,7 +40,9 @@ struct LibraryView: View {
             }
         }
         .huskFilePicker(isPresented: $importing, types: [Self.apkType, .item]) { urls in
-            for url in urls { bridge.install(apkAt: url) }
+            for url in urls {
+                bridge.install(apkAt: url)
+            }
         }
         .sheet(isPresented: $showLogs) { LogView() }
     }

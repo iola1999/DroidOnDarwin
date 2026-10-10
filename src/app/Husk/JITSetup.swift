@@ -12,7 +12,9 @@ enum JITMethod: String, CaseIterable, Identifiable {
     case jailbreak
     case builtIn
 
-    var id: String { rawValue }
+    var id: String {
+        rawValue
+    }
     var title: String {
         switch self {
         case .automatic: return "Automatic"
@@ -56,7 +58,7 @@ final class JITCoordinator: ObservableObject {
                 return "Husk couldn't reach this device. Connect LocalDevVPN, then try again."
             case .pairing:
                 return "This device closed the connection, which usually means it no longer accepts "
-                     + "Husk's pairing. Pair again, and check that LocalDevVPN is connected."
+                    + "Husk's pairing. Pair again, and check that LocalDevVPN is connected."
             }
         }
     }
@@ -77,7 +79,9 @@ final class JITCoordinator: ObservableObject {
     /// foreground for that, so nothing else tells ContentView to claim the region.
     @Published private(set) var attachGeneration = 0
 
-    var hasPairing: Bool { pairingSource != nil }
+    var hasPairing: Bool {
+        pairingSource != nil
+    }
 
     private init() {
         method = UserDefaults.standard.string(forKey: "husk.jitMethod")
@@ -85,10 +89,18 @@ final class JITCoordinator: ObservableObject {
     }
 
     var resolvedMethod: JITMethod {
-        guard method == .automatic else { return method }
-        if JITBootstrap.isStikDebugInstalled { return .stikDebug }
-        if JITBootstrap.isTrollStoreInstalled { return .trollStore }
-        if JITBootstrap.isJailbroken { return .jailbreak }
+        guard method == .automatic else {
+            return method
+        }
+        if JITBootstrap.isStikDebugInstalled {
+            return .stikDebug
+        }
+        if JITBootstrap.isTrollStoreInstalled {
+            return .trollStore
+        }
+        if JITBootstrap.isJailbroken {
+            return .jailbreak
+        }
         return .builtIn
     }
 
@@ -105,12 +117,16 @@ final class JITCoordinator: ObservableObject {
         pairingSource = JITPairingFileStore.source
     }
 
-    private func log(_ line: String) { HuskLog.log("jit", line) }
+    private func log(_ line: String) {
+        HuskLog.log("jit", line)
+    }
 
     /// Get a debugger attached with whichever method applies, or open the setup
     /// walkthrough when that method is not set up yet.
     func enable() {
-        guard !JITBootstrap.isDebuggerAttached else { return }
+        guard !JITBootstrap.isDebuggerAttached else {
+            return
+        }
         error = nil
         connectionProblem = nil
         switch resolvedMethod {
@@ -150,7 +166,9 @@ final class JITCoordinator: ObservableObject {
         status = "Waiting for TrollStore to enable JIT…"
         log("waiting for TrollStore's attach")
         _ = Self.waitForDebugger(timeout: 60) { [weak self] attached in
-            guard let self else { return }
+            guard let self else {
+                return
+            }
             busy = false
             if attached {
                 status = "JIT is on."
@@ -160,7 +178,7 @@ final class JITCoordinator: ObservableObject {
             } else {
                 status = nil
                 error = "TrollStore did not enable JIT. In TrollStore's Settings turn on URL Scheme, and make sure Husk was "
-                      + "installed through TrollStore (or is signed with get-task-allow)."
+                    + "installed through TrollStore (or is signed with get-task-allow)."
                 log("TrollStore did not enable JIT within a minute")
                 showSetup = true
             }
@@ -194,13 +212,17 @@ final class JITCoordinator: ObservableObject {
 
     /// Check LocalDevVPN and the Developer Disk Image, mounting it when needed.
     func prepareBuiltIn() {
-        guard let pairing = builtInPairing() else { return }
+        guard let pairing = builtInPairing() else {
+            return
+        }
         busy = true
         error = nil
         connectionProblem = nil
         status = "Checking LocalDevVPN and the Developer Disk Image…"
         HuskBuiltInJIT.send(.prepare(pairingData: pairing)) { [weak self] result in
-            guard let self else { return }
+            guard let self else {
+                return
+            }
             busy = false
             switch result {
             case .success(let response):
@@ -218,7 +240,9 @@ final class JITCoordinator: ObservableObject {
     }
 
     func enableBuiltIn() {
-        guard let pairing = builtInPairing() else { return }
+        guard let pairing = builtInPairing() else {
+            return
+        }
         guard let script = JITBootstrap.scriptBase64 else {
             error = "Husk's JIT script is missing from this installation. Reinstall Husk."
             return
@@ -232,7 +256,9 @@ final class JITCoordinator: ObservableObject {
         var readiness: Timer?
         var finished = false
         let finish: (String?) -> Void = { [weak self] failure in
-            guard let self, !finished else { return }
+            guard let self, !finished else {
+                return
+            }
             finished = true
             readiness?.invalidate()
             busy = false
@@ -255,7 +281,7 @@ final class JITCoordinator: ObservableObject {
                 self?.status = "Waiting for the helper to attach…"
                 readiness = Self.waitForDebugger { attached in
                     finish(attached ? nil : "The helper did not attach within 90 seconds. "
-                                          + "Check that LocalDevVPN is connected, then try again.")
+                        + "Check that LocalDevVPN is connected, then try again.")
                 }
             },
             completion: { [weak self] result in
@@ -278,7 +304,9 @@ final class JITCoordinator: ObservableObject {
         error = nil
         status = "Resetting the Developer Disk Image cache…"
         HuskBuiltInJIT.send(.resetDDI) { [weak self] result in
-            guard let self else { return }
+            guard let self else {
+                return
+            }
             busy = false
             prepared = false
             switch result {
@@ -336,8 +364,12 @@ enum LocalDevVPN {
     /// `enable` connects the VPN; `scheme` has LocalDevVPN return to Husk afterwards.
     static let connect = URL(string: "localdevvpn://enable?scheme=husk")!
 
-    static var isInstalled: Bool { UIApplication.shared.canOpenURL(URL(string: "localdevvpn://")!) }
-    static var actionTitle: String { isInstalled ? "Connect LocalDevVPN" : "Get LocalDevVPN" }
+    static var isInstalled: Bool {
+        UIApplication.shared.canOpenURL(URL(string: "localdevvpn://")!)
+    }
+    static var actionTitle: String {
+        isInstalled ? "Connect LocalDevVPN" : "Get LocalDevVPN"
+    }
 
     @MainActor static func open() {
         let installed = isInstalled

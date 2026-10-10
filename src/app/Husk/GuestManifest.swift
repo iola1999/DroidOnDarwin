@@ -57,7 +57,7 @@ struct GuestManifest: Codable, Equatable {
     let snapshot: Snapshot
 
     static let manifestURL = URL(string: "https://github.com/Leviidev/Husk/releases/"
-                                       + "download/\(GuestImage.dependenciesTag)/manifest.json")!
+        + "download/\(GuestImage.dependenciesTag)/manifest.json")!
 
     /// Fetch the manifest, or nil if it cannot be had.
     ///
@@ -76,15 +76,15 @@ struct GuestManifest: Codable, Equatable {
         do {
             let (data, response) = try await URLSession.shared.data(for: request)
             guard let http = response as? HTTPURLResponse,
-                  (200...299).contains(http.statusCode) else {
+                  (200 ... 299).contains(http.statusCode) else {
                 HuskLog.log("guest", "manifest unavailable (HTTP "
-                          + "\((response as? HTTPURLResponse)?.statusCode ?? 0))")
+                    + "\((response as? HTTPURLResponse)?.statusCode ?? 0))")
                 return nil
             }
             let manifest = try JSONDecoder().decode(GuestManifest.self, from: data)
             HuskLog.log("guest", "manifest \(manifest.generation): image "
-                      + "\(manifest.image.sha256.prefix(12))…, snapshot "
-                      + "\(manifest.snapshot.sha256.prefix(12))…")
+                + "\(manifest.image.sha256.prefix(12))…, snapshot "
+                + "\(manifest.snapshot.sha256.prefix(12))…")
             return manifest
         } catch {
             HuskLog.log("guest", "manifest fetch failed: \(error.localizedDescription)")
@@ -94,11 +94,15 @@ struct GuestManifest: Codable, Equatable {
 
     func url(for file: String) -> URL {
         URL(string: "https://github.com/Leviidev/Husk/releases/download/"
-                  + "\(GuestImage.dependenciesTag)/\(file)")!
+            + "\(GuestImage.dependenciesTag)/\(file)")!
     }
 
-    var partURLs: [URL] { snapshot.parts.map { url(for: $0) } }
-    var imageURL: URL { url(for: image.file) }
+    var partURLs: [URL] {
+        snapshot.parts.map { url(for: $0) }
+    }
+    var imageURL: URL {
+        url(for: image.file)
+    }
 }
 
 /// What is out of date, if anything.
@@ -110,12 +114,14 @@ enum GuestUpdate: Equatable {
     /// Only the pre-booted snapshot differs -- or is simply not installed.
     case snapshot(bytes: Int64)
 
-    var isSomething: Bool { self != .none }
+    var isSomething: Bool {
+        self != .none
+    }
 
     var title: String {
         switch self {
-        case .none:     return ""
-        case .image:    return "A new Android image is available"
+        case .none: return ""
+        case .image: return "A new Android image is available"
         case .snapshot: return "A new pre-booted snapshot is available"
         }
     }
@@ -123,22 +129,22 @@ enum GuestUpdate: Equatable {
     var detail: String {
         let bytes: Int64
         switch self {
-        case .none:              return ""
-        case .image(let b):      bytes = b
-        case .snapshot(let b):   bytes = b
+        case .none: return ""
+        case .image(let b): bytes = b
+        case .snapshot(let b): bytes = b
         }
         let gb = Double(bytes) / 1_000_000_000
         let size = String(format: "%.1f GB", gb)
         switch self {
         case .image:
             return "Downloading it replaces the Android system and its pre-booted "
-                 + "snapshot (\(size)), and with them everything inside Android — "
-                 + "installed apps included. A snapshot only restores against the "
-                 + "image it was saved on, so the two cannot be updated separately."
+                + "snapshot (\(size)), and with them everything inside Android — "
+                + "installed apps included. A snapshot only restores against the "
+                + "image it was saved on, so the two cannot be updated separately."
         case .snapshot:
             return "Without it Android boots from cold, which takes several "
-                 + "minutes. The download is \(size), and it replaces what is "
-                 + "inside Android now, including installed apps."
+                + "minutes. The download is \(size), and it replaces what is "
+                + "inside Android now, including installed apps."
         case .none:
             return ""
         }
@@ -153,7 +159,9 @@ enum GuestUpdate: Equatable {
 final class DigestWriter {
     private var hasher = SHA256()
 
-    func update(_ data: Data) { hasher.update(data: data) }
+    func update(_ data: Data) {
+        hasher.update(data: data)
+    }
 
     /// Lowercase hex, matching `shasum -a 256` and what the manifest carries.
     func finish() -> String {
@@ -162,7 +170,9 @@ final class DigestWriter {
 
     /// Digest a file that is already on disk, in chunks.
     static func ofFile(at path: String) -> String? {
-        guard let handle = FileHandle(forReadingAtPath: path) else { return nil }
+        guard let handle = FileHandle(forReadingAtPath: path) else {
+            return nil
+        }
         defer { try? handle.close() }
         let writer = DigestWriter()
         while let chunk = try? handle.read(upToCount: 4 << 20), !chunk.isEmpty {

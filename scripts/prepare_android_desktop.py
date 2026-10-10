@@ -95,5 +95,45 @@ def prepare_vendor_module(name):
     return target
 
 
+def prepare_aosp_components():
+    """校验并提取 API 36 的桌面和模块元数据，保留原始签名。"""
+    target = ROOT / 'android36-aosp-components'
+    entries = (
+        ('system_ext', 'priv-app/Launcher3QuickStep/Launcher3QuickStep.apk',
+         '6cc60c3bc96317097579445d5b71d7d2604d68a3163025e2f121367ed3dc0f8f'),
+        ('product', 'app/ModuleMetadata/ModuleMetadata.apk',
+         '6c433bbf5663c51f1082d48252a252b5b4eff265747fca873ac70566f428248d'),
+        ('system_ext', 'priv-app/Launcher3QuickStep/oat/arm64/Launcher3QuickStep.vdex',
+         '213e1030dd57cc364f454615474b760e4eb9016784ade1bc9677e91c54799e13'),
+    )
+    files = [('/' + part + '/' + path, target / path.split('/', 1)[1])
+             for part, path, _ in entries]
+    if all(path.is_file() and digest(path) == entry[2] for (_, path), entry in zip(files, entries)) and (target / 'NOTICE.txt').is_file():
+        return files
+    target.mkdir(exist_ok=True)
+    archive = target / 'aosp36.zip'
+    image, partition = target / 'system.img', target / 'partition.img'
+    try:
+        with urllib.request.urlopen('https://dl.google.com/android/repository/sys-img/android/arm64-v8a-36_r02.zip', timeout=60) as source, archive.open('wb') as output:
+            shutil.copyfileobj(source, output, 4 * 1024 * 1024)
+        if archive.stat().st_size != 810736863 or digest(archive, 'sha1') != '62ad6714df790f89c8a8ad32552ffe20bb16fe87':
+            raise RuntimeError('AOSP SDK archive checksum mismatch')
+        with zipfile.ZipFile(archive) as package:
+            (target / 'NOTICE.txt').write_bytes(package.read('arm64-v8a/NOTICE.txt'))
+            with package.open('arm64-v8a/system.img') as source, image.open('wb') as output:
+                shutil.copyfileobj(source, output, 4 * 1024 * 1024)
+        directories = dict.fromkeys((part, '/'.join(path.split('/')[:2])) for part, path, _ in entries)
+        for part, directory in directories:
+            system_partition(image, partition, part)
+            subprocess.run([DEBUGFS, '-R', f'rdump /{directory} {target}', partition],
+                           check=True, capture_output=True, timeout=60)
+        if not all(path.is_file() and digest(path) == entry[2] for (_, path), entry in zip(files, entries)):
+            raise RuntimeError('AOSP component APK checksum mismatch')
+        return files
+    finally:
+        for path in (archive, image, partition):
+            path.unlink(missing_ok=True)
+
+
 if __name__ == '__main__':
     prepare()

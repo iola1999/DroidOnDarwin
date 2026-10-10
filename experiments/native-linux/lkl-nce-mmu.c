@@ -5,6 +5,7 @@
 #include <linux/uaccess.h>
 #include <asm/host_ops.h>
 #include <asm/nce-layout.h>
+#include <asm/mmu_context.h>
 
 unsigned long nce_user_base, nce_task_size, nce_memory_start, nce_elf_hwcap;
 static unsigned long mapping_mode;
@@ -25,6 +26,7 @@ void nce_set_layout(unsigned long base, unsigned long mode, unsigned long *views
 }
 #define USER_BASE nce_user_base
 static struct mm_struct *active_mm;
+static void prepare_mm_locked(struct mm_struct *mm);
 
 int nce_init_mm(struct task_struct *task, struct mm_struct *mm)
 {
@@ -38,6 +40,8 @@ int nce_init_mm(struct task_struct *task, struct mm_struct *mm)
 
 void nce_destroy_mm(struct mm_struct *mm)
 {
+    if (active_mm == mm)
+        active_mm = NULL;
     lkl_ops->mem_free(mm->context.accessed);
     mm->context.accessed = NULL;
 }
@@ -107,6 +111,7 @@ long nce_publish_code(long *params)
     if (error)
         return error;
     mmap_read_lock(mm);
+    prepare_mm_locked(mm);
     for (unsigned long addr = start; addr < end; addr += PAGE_SIZE) {
         struct vm_area_struct *vma = find_vma(mm, addr);
         unsigned long value = view(lookup(mm, addr));
@@ -187,8 +192,10 @@ void mmap_pages_for_ptes(struct mm_struct *mm, unsigned long va, unsigned int nr
 
 void munmap_page_for_pte(struct mm_struct *mm, unsigned long addr, pte_t *xp)
 {
-    if (mm != &init_mm && addr >= USER_BASE && addr < TASK_SIZE)
-        __clear_bit((addr - USER_BASE) / PAGE_SIZE, mm->context.accessed);
+    if (mm != &init_mm && addr >= USER_BASE && addr < TASK_SIZE) {
+        unsigned long index = (addr - USER_BASE) / PAGE_SIZE;
+        __clear_bit(index, mm->context.accessed);
+    }
     if (mm != &init_mm && mm != active_mm)
         return;
     if (mapping_mode == NCE_MM_FULL || mm == &init_mm) {
@@ -241,7 +248,7 @@ void nce_flush_range(struct mm_struct *mm, unsigned long start, unsigned long en
                 unsigned long value = view(pte);
                 /* Changed pages stay inaccessible until first use. Executable
                  * host pages contain UDF while their Linux view is absent. */
-                if (mapping_mode == NCE_MM_LAZY &&
+                if (mapping_mode >= NCE_MM_LAZY &&
                     value != installed[index] && !test_bit(index, mm->context.accessed))
                     value = 0;
                 desired[index] = value;
@@ -254,12 +261,22 @@ void nce_flush_range(struct mm_struct *mm, unsigned long start, unsigned long en
         apply_views(first, count);
 }
 
-void nce_switch_mm(struct mm_struct *next)
+static void prepare_mm_locked(struct mm_struct *next)
 {
     if (next == active_mm)
         return;
     active_mm = next;
     nce_flush_range(next, USER_BASE, TASK_SIZE);
+}
+
+void nce_prepare_user(void)
+{
+    struct mm_struct *mm = current->mm;
+    if (!mm || mm == active_mm)
+        return;
+    mmap_read_lock(mm);
+    prepare_mm_locked(mm);
+    mmap_read_unlock(mm);
 }
 
 /* Called only for a fault in the controlled guest window while the Linux CPU
@@ -269,7 +286,8 @@ int nce_page_fault(unsigned long address, int access)
     struct mm_struct *mm = current->mm;
     struct vm_area_struct *vma;
     vm_fault_t result;
-    bool write = access == 1, execute = access == NCE_FAULT_EXEC;
+    bool write = access & 1, execute = access == NCE_FAULT_EXEC;
+    bool direct = access & NCE_FAULT_DIRECT;
     if (!mm || address < USER_BASE || address >= TASK_SIZE)
         return -EFAULT;
     /* Taking mmap_lock may schedule another thread that restores this view.
@@ -301,7 +319,9 @@ int nce_page_fault(unsigned long address, int access)
     result = handle_mm_fault(vma, address, execute ? FAULT_FLAG_INSTRUCTION : write ? FAULT_FLAG_WRITE
                                                                                     : 0,
                              NULL);
-    if (!(result & VM_FAULT_ERROR) && mapping_mode == NCE_MM_LAZY) {
+    if (!(result & VM_FAULT_ERROR) && direct)
+        prepare_mm_locked(mm);
+    if (!(result & VM_FAULT_ERROR) && mapping_mode >= NCE_MM_LAZY) {
         unsigned long first = address & PAGE_MASK;
         unsigned long value = view(lookup(mm, first));
         unsigned long stop = first + PAGE_SIZE;
@@ -316,7 +336,7 @@ int nce_page_fault(unsigned long address, int access)
             mmap_pages_for_ptes(mm, first, (stop - first) / PAGE_SIZE, __pte(value));
             /* Learn demand after a switch, excluding initial allocation and
              * COW setup. Dense readers then avoid repeated signal delivery. */
-            if (reused)
+            if ((reused && mapping_mode == NCE_MM_LAZY) || direct)
                 for (unsigned long addr = first; addr < stop; addr += PAGE_SIZE)
                     __set_bit((addr - USER_BASE) / PAGE_SIZE, mm->context.accessed);
         }

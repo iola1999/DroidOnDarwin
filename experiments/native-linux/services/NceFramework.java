@@ -13,15 +13,28 @@ import android.graphics.Paint;
 import android.graphics.Path;
 import java.io.ByteArrayOutputStream;
 import java.io.FileOutputStream;
+import java.io.FileInputStream;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.zip.GZIPInputStream;
 
 public final class NceFramework {
     private static void check(boolean condition) {
         if (!condition) throw new AssertionError();
+    }
+
+    private static void kernelConfiguration() throws Exception {
+        String configuration;
+        try (GZIPInputStream input = new GZIPInputStream(new FileInputStream("/proc/config.gz"))) {
+            configuration = new String(input.readAllBytes(), StandardCharsets.UTF_8);
+        }
+        check(configuration.contains("\nCONFIG_IKCONFIG=y\n"));
+        boolean vmap = (Boolean) android.os.Debug.class.getDeclaredMethod("isVmapStack").invoke(null);
+        check(vmap == configuration.contains("\nCONFIG_VMAP_STACK=y\n"));
+        System.out.println("{\"test\":\"android_kernel_configuration_query\",\"passed\":true,\"vmap_stack\":" + vmap + "}");
     }
 
     private static void graphics() throws Exception {
@@ -60,6 +73,9 @@ public final class NceFramework {
 
     public static void main(String[] args) throws Exception {
         System.out.println("{\"phase\":\"android_framework_java\"}");
+        kernelConfiguration();
+        check((Boolean) android.os.Build.class.getDeclaredMethod("isBuildConsistent").invoke(null));
+        System.out.println("{\"test\":\"android_vintf_build_consistency\",\"passed\":true}");
         byte[] digest = MessageDigest.getInstance("SHA-256").digest("abc".getBytes(StandardCharsets.US_ASCII));
         StringBuilder hex = new StringBuilder();
         for (byte value : digest) hex.append(String.format("%02x", value & 255));
@@ -83,7 +99,9 @@ public final class NceFramework {
         Handler handler = new Handler(thread.getLooper());
         CountDownLatch completed = new CountDownLatch(1);
         long started = SystemClock.uptimeMillis();
-        check(handler.postDelayed(completed::countDown, 20));
+        check(handler.postDelayed(new Runnable() {
+            @Override public void run() { completed.countDown(); }
+        }, 20));
         check(completed.await(2, TimeUnit.SECONDS));
         check(SystemClock.uptimeMillis() - started >= 20);
         check(thread.quitSafely());

@@ -157,8 +157,16 @@ static void correctness(NceCode code, void *stack)
 
     prepare(code, &s, GUEST_TLS, stack);
     s.tls = 0x123;
+    s.regs.nzcv = 0xa0000000u;
+    s.regs.fpcr = 0x400000u;
+    s.regs.fpsr = 1;
     nce_enter(&s);
-    CHECK(s.regs.x[5] == 0x123 && s.regs.x[6] == 0x678 && s.tls_accesses == 3);
+    CHECK(s.regs.x[5] == 0x123 && s.regs.x[6] == 0x678 && s.tls == 0x678);
+    for (unsigned r = 0; r < 31; ++r)
+        if (r == 0 || r == 16 || r == 17 || r == 18 || r == 30)
+            CHECK(s.regs.x[r] == 0x123);
+    CHECK(s.regs.sp == (uintptr_t)stack && s.regs.nzcv == 0xa0000000u &&
+          s.regs.fpcr == 0x400000u && s.regs.fpsr == 1);
     puts("{\"test\":\"tls_read_write\",\"passed\":true}");
 
     prepare(code, &s, GUEST_X18, stack);

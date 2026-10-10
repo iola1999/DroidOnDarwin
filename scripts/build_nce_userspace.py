@@ -22,7 +22,7 @@ from build_android_libc import build as build_android_libc
 from build_android_art import build as build_android_art
 from build_android_crypto import build as build_android_crypto
 from prepare_android_modules import prepare as prepare_android_modules, OUT as MODULES
-from prepare_android_desktop import prepare as prepare_android_desktop, prepare_vendor_module, OUT as DESKTOP
+from prepare_android_desktop import prepare as prepare_android_desktop, prepare_vendor_module, prepare_aosp_components, OUT as DESKTOP
 from build_android_gralloc import build as build_android_gralloc
 from build_android_network import build as build_android_network
 
@@ -82,7 +82,7 @@ def android_dependencies(llvm, replacements, embedded=()):
                       'com.android.i18n/lib64', 'com.android.os.statsd/lib64'):
         for path in (root / directory).glob('*.so'):
             if path.is_file(): files[path.name] = path
-    for module in ('com.android.tethering', 'com.android.adbd', 'com.android.conscrypt', 'com.android.resolv'):
+    for module in ('com.android.tethering', 'com.android.adbd', 'com.android.conscrypt', 'com.android.resolv', 'com.android.appsearch'):
         for path in (root / module / 'lib64').glob('*.so'):
             if path.is_file(): files.setdefault(path.name, path)
     files.update(replacements)
@@ -90,11 +90,13 @@ def android_dependencies(llvm, replacements, embedded=()):
                'libstats_jni.so', 'libjavacrypto.so', 'libartpalette-system.so', 'libbinder_ndk.so', 'libandroid.so',
                'libprocessgroup_setup.so', 'libframework-connectivity-tiramisu-jni.so', 'libandroid_servers.so',
                'libalarm_jni.so', 'libbpf.so', 'libservice-connectivity.so', 'libmedia_jni.so', 'libsoundpool.so', 'libvintf_jni.so',
-               'libframework-connectivity-jni.so',
+               'libframework-connectivity-jni.so', 'libicing.so', 'libdrmframework_jni.so',
+               'libjnigraphics.so', 'libcompiler_rt.so', 'libaudioeffect_jni.so', 'librtp_jni.so',
+               'libcom.android.tethering.dns_helper.so', 'librs_jni.so', 'libmainlinecronet.133.0.6876.3.so',
                'libandroid_net_connectivity_com_android_net_module_util_jni.so']
     for name in ('servicemanager', 'app_process64', 'aconfigd-system', 'installd', 'idmap2', 'idmap2d',
-                 'vold', 'storaged', 'cmd', 'dumpsys', 'netd', 'lmkd', 'bpfloader',
-                 'iptables', 'audioserver', 'mediaserver', 'mediametrics', 'gatekeeperd', 'hw/android.system.suspend-service'):
+                 'vold', 'vold_prepare_subdirs', 'storaged', 'cmd', 'dumpsys', 'netd', 'lmkd', 'bpfloader',
+                 'iptables', 'audioserver', 'mediaserver', 'mediametrics', 'gatekeeperd', 'keystore2', 'hw/android.system.suspend-service'):
         pending += re.findall(r'Shared library: \[(.*?)\]',
                               subprocess.check_output([llvm / 'llvm-readelf', '-d', root / 'bin' / name], text=True))
     pending += re.findall(r'Shared library: \[(.*?)\]', subprocess.check_output(
@@ -154,6 +156,9 @@ def android_graphics_dependencies(llvm, programs):
     gatekeeper_binary = gatekeeper / 'bin/hw/android.hardware.gatekeeper-service.nonsecure'
     replacements[gatekeeper_binary.name] = gatekeeper_binary
     pending.append((gatekeeper_binary.name, '/vendor/bin/hw/' + gatekeeper_binary.name))
+    keymint = DESKTOP / 'vendor/bin/hw/android.hardware.security.keymint-service'
+    replacements[keymint.name] = keymint
+    pending.append((keymint.name, '/vendor/bin/hw/' + keymint.name))
     audio = DESKTOP / 'vendor/bin/hw/android.hardware.audio.service'
     replacements[audio.name] = audio
     pending.append((audio.name, '/vendor/bin/hw/' + audio.name))
@@ -267,7 +272,7 @@ def android_data(out):
     sdk = Path('/opt/homebrew/share/android-commandlinetools')
     classes = out / 'java-classes'
     classes.mkdir(exist_ok=True)
-    run([java / 'javac', '--release', '11', '-d', classes, EXP / 'art/NceWorkload.java', EXP / 'art/NceIntrinsics.java', EXP / 'art/NceInlining.java', EXP / 'art/NceProxy.java'])
+    run([java / 'javac', '--release', '11', '-d', classes, EXP / 'art/NceWorkload.java', EXP / 'art/NceIntrinsics.java', EXP / 'art/NceInlining.java', EXP / 'art/NceProxy.java', EXP / 'art/NceVolatile.java'])
     run([java / 'java', '-cp', sdk / 'build-tools/36.0.0/lib/d8.jar', 'com.android.tools.r8.D8',
          '--min-api', '35', '--lib', sdk / 'platforms/android-35/android.jar', '--output', classes,
          *sorted(classes.glob('*.class'))])
@@ -275,7 +280,10 @@ def android_data(out):
              ('/data/nce/property_info', android_property_info(out)),
              ('/data/nce/NceWorkload.dex', classes / 'classes.dex'),
              ('/linkerconfig/ld.config.txt', EXP / 'art/ld.config.txt'),
-             ('/system/etc/public.libraries.txt', EXP / 'art/public.libraries.txt')]
+             ('/system/etc/public.libraries.txt', EXP / 'art/public.libraries.txt'),
+             ('/system/etc/llndk.libraries.txt', root / 'etc/llndk.libraries.txt'),
+             ('/system/etc/preloaded-classes', root / 'etc/preloaded-classes'),
+             ('/vendor/etc/permissions/nce-features.xml', EXP / 'services/nce-features.xml')]
     fragments = sorted((root / 'etc/classpaths').glob('*classpath.pb'))
     fragments += sorted(root.glob('com.android.*/etc/classpaths/*classpath.pb'))
     jars = set()
@@ -322,6 +330,13 @@ def android_data(out):
     gatekeeper = prepare_vendor_module('com.android.hardware.gatekeeper.nonsecure')
     files += [('/vendor/etc/vintf/manifest/' + path.name, path)
               for path in sorted((gatekeeper / 'etc/vintf').glob('*.xml'))]
+    for service in ('keymint', 'secureclock', 'sharedsecret'):
+        fragment = f'vendor/etc/vintf/manifest/android.hardware.security.{service}-service.xml'
+        files.append(('/' + fragment, DESKTOP / fragment))
+    key_contexts = out / 'plat_keystore2_key_contexts'
+    namespaces = re.findall(r'^\s*(\d+)\s+u:', (root / 'etc/selinux/plat_keystore2_key_contexts').read_text(), re.M)
+    key_contexts.write_text(''.join(f'{value} u:object_r:nce_t:s0\n' for value in namespaces))
+    files.append(('/system/etc/selinux/plat_keystore2_key_contexts', key_contexts))
     hardware_names = set()
     for source in (root / 'etc/selinux/plat_hwservice_contexts',
                    DESKTOP / 'vendor/etc/selinux/vendor_hwservice_contexts'):
@@ -358,10 +373,13 @@ def android_data(out):
     files += [(f'/apex/com.android.tzdata/etc/tz/{path.relative_to(timezone)}', path)
               for path in sorted(timezone.rglob('*')) if path.is_file()]
     framework_classes = out / 'framework-classes'
-    framework_classes.mkdir(exist_ok=True)
-    run([java / 'javac', '--release', '11', '-cp', sdk / 'platforms/android-35/android.jar',
+    shutil.rmtree(framework_classes, ignore_errors=True)
+    framework_classes.mkdir()
+    run([java / 'javac', '-source', '8', '-target', '8',
+         '-bootclasspath', sdk / 'platforms/android-35/android.jar',
          '-d', framework_classes, EXP / 'services/NceFramework.java', EXP / 'services/NceZygoteChild.java',
-         EXP / 'services/NceSurface.java', EXP / 'services/NceShutdown.java'])
+         EXP / 'services/NceSurface.java', EXP / 'services/NceShutdown.java', EXP / 'services/NceKeystore.java',
+         EXP / 'services/NceAppData.java', EXP / 'services/NceStorage.java', EXP / 'services/NceClockUi.java'])
     run([java / 'java', '-cp', sdk / 'build-tools/36.0.0/lib/d8.jar', 'com.android.tools.r8.D8',
          '--min-api', '35', '--lib', sdk / 'platforms/android-35/android.jar', '--output', framework_classes,
          *sorted(framework_classes.glob('*.class'))])
@@ -386,15 +404,16 @@ def android_data(out):
         'system/app/KeyChain/KeyChain.apk',
         'system/app/GoogleExtShared/GoogleExtShared.apk',
         'system_ext/priv-app/SystemUIGoogle/SystemUIGoogle.apk',
-        'system_ext/priv-app/NexusLauncherRelease/NexusLauncherRelease.apk',
+        'system_ext/priv-app/SettingsGoogle/SettingsGoogle.apk',
+        'system_ext/priv-app/GoogleServicesFramework/GoogleServicesFramework.apk',
         'product/app/PrebuiltDeskClockGoogle/PrebuiltDeskClockGoogle.apk',
-        'product/app/ModuleMetadataGoogle/ModuleMetadataGoogle.apk',
     )
     for name in desktop_apps:
         source = DESKTOP / name
         if not source.is_file():
             raise RuntimeError('Missing desktop APK: ' + name)
         files.append(('/' + name, source))
+    files += prepare_aosp_components()
     for module in ('com.android.permission', 'com.android.configinfrastructure',
                    'com.android.tethering', 'com.android.extservices', 'com.android.devicelock',
                    'com.android.healthfitness', 'com.android.appsearch', 'com.android.mediaprovider'):
@@ -403,7 +422,7 @@ def android_data(out):
                 files.append(('/apex/' + str(source.relative_to(root)), source))
     for source in sorted((root / 'com.android.adservices/app').rglob('SdkSandboxGoogle.apk')):
         files.append(('/apex/' + str(source.relative_to(root)), source))
-    for name in ('GoogleConfigOverlay.apk', 'PixelConfigOverlayCommon.apk', 'RanchuCommonOverlay.apk',
+    for name in ('GoogleConfigOverlay.apk', 'RanchuCommonOverlay.apk',
                  'SystemUIGoogle__sdk_gphone16k_arm64__auto_generated_rro_product.apk',
                  'framework-res__sdk_gphone16k_arm64__auto_generated_rro_product.apk',
                  'framework-res__emulator__auto_generated_characteristics_rro.apk'):
@@ -412,13 +431,17 @@ def android_data(out):
     for partition in ('system_ext', 'product'):
         for source in sorted((DESKTOP / partition / 'etc/permissions').glob('privapp-permissions*.xml')):
             files.append(('/' + str(source.relative_to(DESKTOP)), source))
-    for name in ('com.android.systemui.xml', 'androidx.window.extensions.xml', 'androidx.window.sidecar.xml'):
+    for name in ('com.android.systemui.xml', 'com.android.launcher3.xml', 'androidx.window.extensions.xml', 'androidx.window.sidecar.xml'):
         source = DESKTOP / 'system_ext/etc/permissions' / name
         files.append(('/' + str(source.relative_to(DESKTOP)), source))
 
     files += [('/system/etc/vintf/' + name, root / 'etc/vintf' / name)
               for name in ('manifest.xml', 'manifest/android.system.suspend-service.xml',
-                           'manifest/android.system.net.netd-service.xml')]
+                           'manifest/android.system.net.netd-service.xml', 'manifest/android.system.keystore2-service.xml')]
+    files += [('/system/etc/vintf/' + path.name, path)
+              for path in sorted((root / 'etc/vintf').glob('compatibility_matrix*.xml'))]
+    files.append(('/vendor/etc/vintf/compatibility_matrix.xml',
+                  DESKTOP / 'vendor/etc/vintf/compatibility_matrix.xml'))
     files += [('/' + str(path.relative_to(DESKTOP)), path)
               for path in sorted((DESKTOP / 'system_ext/etc/vintf').rglob('*.xml'))]
     for directory in ('permissions', 'sysconfig', 'compatconfig'):
@@ -446,6 +469,20 @@ def android_data(out):
                 raise RuntimeError('Missing shared Java library: ' + path)
             files.append((path, origin))
             registered.add(path)
+
+    # VDEX stores verifier dependencies; OAT machine code requires separate NCE preparation.
+    vdex_files = []
+    for guest, source in files:
+        if source.suffix not in ('.apk', '.jar'):
+            continue
+        relative = Path('oat/arm64') / (source.stem + '.vdex')
+        cache = source.parent / relative
+        destination = str(Path(guest).parent / relative)
+        if cache.is_file() and destination not in registered:
+            vdex_files.append((destination, cache))
+            registered.add(destination)
+    files += vdex_files
+    print(f'Included {len(vdex_files)} SDK VDEX caches, {sum(path.stat().st_size for _, path in vdex_files)} bytes', flush=True)
 
     config_names = ('package.map', 'flag.map', 'flag.val', 'flag.info')
     files += [(f'/system/etc/aconfig/{name}', root / 'etc/aconfig' / name) for name in config_names]
@@ -713,7 +750,7 @@ def inspect(path, shared=False, function_symbols=False):
             gaps += [(hi, merged[i + 1][0] if i + 1 < len(merged) else sec[3] + sec[5])
                      for i, (_, hi) in enumerate(merged)]
             if any(x18_instruction(word) or word & 0xffe0001f == 0xd4000001 or
-                   word & 0xffffffe0 in (0xd53bd040, 0xd51bd040)
+                   word & 0xffffffe0 in (0xd53bd040, 0xd51bd040, 0xd53b0020)
                    for lo, hi in gaps for (word,) in struct.iter_unpack('<I', data[sec[4] + lo - sec[3]:sec[4] + hi - sec[3]])):
                 merged = extend_function_ranges(path, data, sec, merged, objects.get(index, []), sections, functions)
             markers = [(sec[3], 'd')] if not merged or merged[0][0] > sec[3] else []
@@ -730,7 +767,7 @@ def inspect(path, shared=False, function_symbols=False):
                 if inferred:
                     for address in range(begin, end - 3, 4):
                         word, = struct.unpack_from('<I', data, sec[4] + address - sec[3])
-                        if word & 0xffe0001f == 0xd4000001 or word & 0xffffffe0 in (0xd53bd040, 0xd51bd040) or x18_instruction(word):
+                        if word & 0xffe0001f == 0xd4000001 or word & 0xffffffe0 in (0xd53bd040, 0xd51bd040, 0xd53b0020) or x18_instruction(word):
                             raise RuntimeError(f'{path}: patch candidate outside function symbols at {address:x}')
                 continue
             if begin % 4 or end % 4:
@@ -738,7 +775,7 @@ def inspect(path, shared=False, function_symbols=False):
             instruction_ranges.append((begin, end))
             for address in range(begin, end, 4):
                 word, = struct.unpack_from('<I', data, sec[4] + address - sec[3])
-                if word & 0xffe0001f == 0xd4000001 or word & 0xffffffe0 in (0xd53bd040, 0xd51bd040) or x18_instruction(word):
+                if word & 0xffe0001f == 0xd4000001 or word & 0xffffffe0 in (0xd53bd040, 0xd51bd040, 0xd53b0020) or x18_instruction(word):
                     patches.append((address, word))
     return dict(data=data, entry=entry, phoff=phoff, phsize=phnum*phentsize, segments=segments, patches=sorted(patches),
                 span=(max(p[3] + p[6] for p in loads) + PAGE - 1) & -PAGE,
@@ -939,7 +976,7 @@ def build(out, llvm):
     programs.append((ANDROID_INTERPRETER, build_android_linker()))
     programs.append(('/system/lib64/libc.so', build_android_libc()))
     programs.append(('/system/lib64/libdl.so', WORK / 'android/linker-build/libdl.so'))
-    crypto = build_android_crypto()
+    crypto = {**build_android_crypto(), **build_android_crypto(cronet=True)}
     replacements = {**build_android_art(), **crypto}
     prepare_android_desktop()
     assets = android_data(out) + [native_library_zip(out)]
@@ -1001,8 +1038,8 @@ def build(out, llvm):
     programs.append(('/system/bin/servicemanager', WORK / 'android/android36/bin/servicemanager'))
     programs.append(('/system/bin/aconfigd-system', WORK / 'android/android36/bin/aconfigd-system'))
     programs.append(('/system/bin/installd', WORK / 'android/android36/bin/installd'))
-    for name in ('idmap2', 'idmap2d', 'vold', 'storaged', 'cmd', 'dumpsys', 'netd', 'lmkd',
-                 'bpfloader', 'iptables', 'audioserver', 'mediaserver', 'mediametrics', 'gatekeeperd'):
+    for name in ('idmap2', 'idmap2d', 'vold', 'vold_prepare_subdirs', 'storaged', 'cmd', 'dumpsys', 'netd', 'lmkd',
+                 'bpfloader', 'iptables', 'audioserver', 'mediaserver', 'mediametrics', 'gatekeeperd', 'keystore2'):
         programs.append(('/system/bin/' + name, WORK / 'android/android36/bin' / name))
     programs.append(('/apex/com.android.art/bin/artd', WORK / 'android/android36/com.android.art/bin/artd'))
     programs.append(('/apex/com.android.os.statsd/bin/statsd', WORK / 'android/android36/com.android.os.statsd/bin/statsd'))
@@ -1026,7 +1063,7 @@ def build(out, llvm):
          EXP / 'userspace/android-services-test.cpp', EXP / 'userspace/property-service.cpp',
          EXP / 'userspace/display-service-test.cpp',
          EXP / 'userspace/input-service.cpp',
-         EXP / 'userspace/framework-test.cpp', EXP / 'userspace/desktop-session.cpp', EXP / 'userspace/crypto-tests.cpp',
+         EXP / 'userspace/framework-test.cpp', EXP / 'userspace/cgroup-test.cpp', EXP / 'userspace/desktop-session.cpp', EXP / 'userspace/crypto-tests.cpp',
          EXP / 'userspace/apex-service.cpp', EXP / 'userspace/suspend-test.cpp', EXP / 'userspace/installd-test.cpp', EXP / 'userspace/storage-layout.cpp',
          *sorted(apex_generated.rglob('*.cpp')),
          WORK / 'android/android36/lib64/libc++.so',
@@ -1133,6 +1170,9 @@ def build(out, llvm):
     for name in ('ip6tables', 'iptables-restore', 'ip6tables-restore'):
         (system_root / 'system/bin' / name).symlink_to('iptables')
     (system_root / 'apex/com.android.art/lib64').mkdir(parents=True, exist_ok=True)
+    log_mount = system_root / 'vendor/zygote_whitelist/nce-stderr'
+    log_mount.parent.mkdir(parents=True, exist_ok=True)
+    log_mount.touch()
     image = out / 'system.img'
     with image.open('wb') as disk:
         size = sum(path.stat().st_size for _, path in system_files) + 64 * 1024 * 1024

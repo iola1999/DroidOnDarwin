@@ -48,7 +48,9 @@ final class AppTheme: ObservableObject {
         }
     }
 
-    func reset() { accentColor = Self.husk }
+    func reset() {
+        accentColor = Self.husk
+    }
 
     private func persist() {
         UserDefaults.standard.set(accentColor.themeHex, forKey: Self.key)
@@ -58,8 +60,12 @@ final class AppTheme: ObservableObject {
 extension Color {
     init?(themeHex hex: String) {
         var s = hex.trimmingCharacters(in: .whitespacesAndNewlines)
-        if s.hasPrefix("#") { s.removeFirst() }
-        guard s.count == 6, let value = UInt32(s, radix: 16) else { return nil }
+        if s.hasPrefix("#") {
+            s.removeFirst()
+        }
+        guard s.count == 6, let value = UInt32(s, radix: 16) else {
+            return nil
+        }
         self = Color(red: Double((value >> 16) & 0xFF) / 255,
                      green: Double((value >> 8) & 0xFF) / 255,
                      blue: Double(value & 0xFF) / 255)

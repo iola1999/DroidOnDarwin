@@ -76,18 +76,26 @@ struct DirectoryView: View {
             }
         }
         .sheet(isPresented: $showImportSheet) {
-            ImportSheet(destination: path) { showImportSheet = false; importing = true }
-                .presentationDetents([.height(340)])
+            ImportSheet(destination: path) { showImportSheet = false
+                importing = true
+            }
+            .presentationDetents([.height(340)])
         }
         .huskFilePicker(isPresented: $importing) { urls in
             host.sendFiles(urls, to: path)
         }
         .confirmationDialog("Install \(installing?.name ?? "")?",
                             isPresented: Binding(get: { installing != nil },
-                                                 set: { if !$0 { installing = nil } }),
+                                                 set: {
+                                                     if !$0 {
+                                                         installing = nil
+                                                     }
+                                                 }),
                             titleVisibility: .visible) {
             Button("Install") {
-                if let apk = installing { host.installFromGuest(apk.path, name: apk.name) }
+                if let apk = installing {
+                    host.installFromGuest(apk.path, name: apk.name)
+                }
                 installing = nil
             }
             Button("Cancel", role: .cancel) { installing = nil }
@@ -106,7 +114,9 @@ struct DirectoryView: View {
             }
         } else {
             Button {
-                if e.name.lowercased().hasSuffix(".apk") { installing = e }
+                if e.name.lowercased().hasSuffix(".apk") {
+                    installing = e
+                }
             } label: {
                 HStack {
                     fileLabel(icon: icon(for: e.name), tint: .secondary, title: e.name, subtitle: subtitle(e))
@@ -150,26 +160,38 @@ struct DirectoryView: View {
     }
 
     private func used(_ s: (free: Int64, total: Int64)) -> CGFloat {
-        guard s.total > 0 else { return 0 }
+        guard s.total > 0 else {
+            return 0
+        }
         return min(max(CGFloat(s.total - s.free) / CGFloat(s.total), 0.02), 1)
     }
 
     private func subtitle(_ e: AndroidHost.GuestEntry) -> String {
         let size = AppDetailView.bytes(e.size)
-        guard let m = e.modified else { return size }
+        guard let m = e.modified else {
+            return size
+        }
         return "\(size) · \(Self.when(m))"
     }
 
     private func icon(for name: String) -> String {
         let n = name.lowercased()
-        if n.hasSuffix(".apk") { return "shippingbox.fill" }
+        if n.hasSuffix(".apk") {
+            return "shippingbox.fill"
+        }
         if n.hasSuffix(".png") || n.hasSuffix(".jpg") || n.hasSuffix(".jpeg")
-            || n.hasSuffix(".webp") { return "photo" }
-        if n.hasSuffix(".mp4") || n.hasSuffix(".mkv") { return "film" }
+            || n.hasSuffix(".webp") {
+            return "photo"
+        }
+        if n.hasSuffix(".mp4") || n.hasSuffix(".mkv") {
+            return "film"
+        }
         if n.hasSuffix(".mp3") || n.hasSuffix(".ogg") || n.hasSuffix(".wav") {
             return "music.note"
         }
-        if n.hasSuffix(".zip") || n.hasSuffix(".obb") { return "archivebox" }
+        if n.hasSuffix(".zip") || n.hasSuffix(".obb") {
+            return "archivebox"
+        }
         if n.hasSuffix(".txt") || n.hasSuffix(".log") || n.hasSuffix(".json") {
             return "doc.text"
         }
@@ -218,7 +240,7 @@ struct ImportSheet: View {
                         .foregroundStyle(Color.accentColor)
                     Text("Import Files").font(.headline)
                     Text("They go to \((destination as NSString).lastPathComponent). "
-                       + "Unmodified APKs install from here too.")
+                        + "Unmodified APKs install from here too.")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)

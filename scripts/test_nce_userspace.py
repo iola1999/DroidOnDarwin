@@ -43,10 +43,10 @@ class ElfLayoutTests(unittest.TestCase):
         constant = next(line.split() for line in symbols.splitlines() if line.startswith('instruction_constants '))
         address = int(constant[2], 16)
         segment = next(p for _, p in self.headers if p[0] == 1 and p[3] <= address < p[3] + p[5])
-        words = struct.unpack_from('<III', self.data, segment[2] + address - segment[3])
-        self.assertEqual(words, (0xd4000001, 0xd53bd040, 0xd51bd040))
+        words = struct.unpack_from('<IIII', self.data, segment[2] + address - segment[3])
+        self.assertEqual(words, (0xd4000001, 0xd53bd040, 0xd51bd040, 0xd53b0020))
         patches = dict(elf['patches'])
-        for i in range(3):
+        for i in range(4):
             self.assertNotIn(address + i * 4, patches)
         self.assertIn(words[0], patches.values())
         for word in words[1:]:

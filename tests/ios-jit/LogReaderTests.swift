@@ -10,7 +10,7 @@ struct LogReaderTests {
         defer { try? FileManager.default.removeItem(at: directory) }
         let url = directory.appendingPathComponent("probe.log")
         let reader = ProbeLogReader()
-        let initial = "{\"phase\":\"linux_init\"}\n" + (0..<16000).map { "line \($0)\n" }.joined()
+        let initial = "{\"phase\":\"linux_init\"}\n" + (0 ..< 16000).map { "line \($0)\n" }.joined()
         try Data(initial.utf8).write(to: url)
         let snapshot = try await reader.read(from: url)!
         precondition(snapshot.lines.count == 80)
@@ -53,7 +53,7 @@ struct LogReaderTests {
         try writer.seek(toOffset: 0)
         try writer.write(contentsOf: Data("other\n".utf8))
         try FileManager.default.setAttributes([.modificationDate: Date().addingTimeInterval(2)],
-                                             ofItemAtPath: url.path)
+                                              ofItemAtPath: url.path)
         let rewritten = try await reader.read(from: url)!
         precondition(rewritten.lines.map(\.text) == ["other"])
         print("PASS truncation and same-size replacement reset preview")

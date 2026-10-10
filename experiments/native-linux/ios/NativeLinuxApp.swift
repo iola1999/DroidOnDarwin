@@ -38,12 +38,6 @@ final class ProbeModel: ObservableObject {
     var logURL: URL {
         documents.appendingPathComponent("native-linux-n2-ios.log")
     }
-    var graphicsURL: URL {
-        documents.appendingPathComponent("framework.png")
-    }
-    var gpuURL: URL {
-        documents.appendingPathComponent("gpu.bmp")
-    }
     var paired: Bool {
         JITPairingFileStore.exists
     }
@@ -238,10 +232,7 @@ final class ProbeModel: ObservableObject {
         }
         didRun = true
         setenv("NCE_DESKTOP", "1", 1)
-        setenv("NCE_MM_MODE", "lazy", 1)
-        setenv("NCE_STRESS_ROUNDS", "3", 1)
-        setenv("NCE_GRAPHICS_OUTPUT", graphicsURL.path, 1)
-        setenv("NCE_GPU_OUTPUT", gpuURL.path, 1)
+        setenv("NCE_MM_MODE", "demand", 1)
         startedAt = Date()
         status = "正在准备 JIT 内存"
         // The guest switches stacks and pthreads. Keep the Swift UI on its own queue.

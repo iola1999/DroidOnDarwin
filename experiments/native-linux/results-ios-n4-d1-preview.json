@@ -1,0 +1,299 @@
+{
+  "build": "N4-D1-preview-iOS-20261010-090514",
+  "device": "iPhone 17 (user-provided)",
+  "ios": "27.2",
+  "source_log": "/Users/fan/Downloads/native-linux-n2-ios 6.log",
+  "source_sha256": "b4af7cc8ccb6e674303532c6bb7e5d5a319bd043840f44ddbafa52d0b2f518b6",
+  "configuration": {
+    "linux_ram_bytes": 1073741824,
+    "mapping": "demand",
+    "display": [
+      360,
+      640
+    ]
+  },
+  "user_observation": "滑动还算流畅",
+  "timing_ms": {
+    "SystemServer_StartServices": 22033,
+    "SystemUI_StartServices": 62230,
+    "Launcher_displayed": 67259,
+    "Settings_displayed": 5270,
+    "Settings_SubSettings_displayed": 3320
+  },
+  "fatal_exceptions": [
+    {
+      "process": "com.android.settings",
+      "component": "Settings$WifiSettingsActivity",
+      "cause": "WifiManager null in WifiTrackerInjector.isVerboseLoggingEnabled"
+    },
+    {
+      "process": "com.google.android.deskclock",
+      "cause": "Missing ContentProvider com.google.android.gsf.gservices"
+    }
+  ],
+  "anr_count": 0,
+  "native_fatal_signal_count": 0,
+  "slow_frame_log_count": 68,
+  "limitations": [
+    "Timing values are Android-reported per-component durations, not total host app boot time.",
+    "Slow-frame logs omit normal frames; average FPS and frame percentiles cannot be calculated.",
+    "No complete session shutdown or restart persistence verification in this log.",
+    "Only pre-Android host footprint was sampled; runtime memory and sustained thermal state are unknown."
+  ],
+  "records": [
+    {
+      "test": "prepared_fixed_address_code_updates",
+      "passed": true,
+      "ranges": 678,
+      "updates_per_range": 8
+    },
+    {
+      "test": "prepared_code_permission_restore",
+      "passed": true,
+      "available": true
+    },
+    {
+      "test": "data_fixed_remap_after_detach",
+      "passed": true,
+      "targets": 2,
+      "switches_per_target": 8
+    },
+    {
+      "test": "linux_ram_remap",
+      "passed": true,
+      "bytes": 1073741824
+    },
+    {
+      "test": "native_program_range_index",
+      "passed": true,
+      "programs": 676
+    },
+    {
+      "test": "native_linux_boot",
+      "passed": true,
+      "ms": 54.452
+    },
+    {
+      "test": "linux_uname",
+      "sysname": "Linux",
+      "release": "6.12.0"
+    },
+    {
+      "test": "linux_random_initialized",
+      "passed": true
+    },
+    {
+      "test": "android_system_image_readonly",
+      "passed": true
+    },
+    {
+      "memory": "system_mounted",
+      "linux_available_kib": 1017760,
+      "linux_shmem_kib": 2624,
+      "host_peak_rss_bytes": 332677120,
+      "host_footprint_bytes": 102500696,
+      "reclaimed_bytes": 0,
+      "reclaimed_ranges": 0
+    },
+    {
+      "test": "android_data_ext4_mounted",
+      "passed": true
+    },
+    {
+      "test": "native_metal_display_created",
+      "passed": true
+    },
+    {
+      "test": "android_proc_pid_namespace",
+      "passed": true
+    },
+    {
+      "test": "linux_unix_socket_credentials_fd",
+      "passed": true
+    },
+    {
+      "test": "android_network_stats_rcu_socket",
+      "passed": true
+    },
+    {
+      "test": "linux_selinux_service_policy",
+      "passed": true,
+      "enforcing": true
+    },
+    {
+      "test": "android_property_shared_area",
+      "passed": true
+    },
+    {
+      "test": "android_property_writer_credentials",
+      "passed": true
+    },
+    {
+      "test": "android_property_protocol_wait",
+      "passed": true,
+      "rejected_requests": 6
+    },
+    {
+      "test": "android_platform_servicemanager_registration",
+      "passed": true
+    },
+    {
+      "test": "android_gralloc_process_transfer",
+      "passed": true
+    },
+    {
+      "test": "android_gralloc_cpu_gpu_roundtrip",
+      "passed": true,
+      "width": 37,
+      "height": 23
+    },
+    {
+      "test": "android_apex_registry",
+      "passed": true,
+      "modules": 30,
+      "mutation_rejected": true
+    },
+    {
+      "test": "android_platform_binder_roundtrip",
+      "passed": true,
+      "rounds": 32,
+      "max_payload": 65536
+    },
+    {
+      "test": "android_platform_binder_fd_transfer",
+      "passed": true
+    },
+    {
+      "test": "linux_uinput_touch_navigation",
+      "passed": true,
+      "frames": 5
+    },
+    {
+      "test": "android_crypto_sdk_context_abi",
+      "passed": true,
+      "hmac_context_bytes": 104,
+      "aead_context_bytes": 584
+    },
+    {
+      "test": "android_cronet_crypto",
+      "passed": true,
+      "fips": false,
+      "hmac_context_bytes": 104
+    },
+    {
+      "test": "android_crypto",
+      "passed": true,
+      "fips": false,
+      "known_answers": true,
+      "reject_bad_tag": true
+    },
+    {
+      "test": "android_aconfig_storage",
+      "passed": true,
+      "containers": 26,
+      "initializations": 2
+    },
+    {
+      "test": "android_derived_classpaths",
+      "passed": true,
+      "variables": 4
+    },
+    {
+      "test": "android_kernel_configuration_query",
+      "passed": true,
+      "vmap_stack": false
+    },
+    {
+      "test": "android_vintf_build_consistency",
+      "passed": true
+    },
+    {
+      "test": "android_framework_jca",
+      "passed": true
+    },
+    {
+      "test": "android_framework_file_observer",
+      "passed": true
+    },
+    {
+      "test": "android_framework_graphics",
+      "passed": true,
+      "canvas": true,
+      "png_roundtrip": true
+    },
+    {
+      "test": "android_framework_runtime",
+      "passed": true,
+      "parcel": true,
+      "looper": true,
+      "shared_memory": true,
+      "binder": true
+    },
+    {
+      "test": "android_surfaceflinger_registered",
+      "passed": true
+    },
+    {
+      "test": "android_system_suspend_wakelocks",
+      "passed": true,
+      "acquisitions": 3,
+      "repeat_release": true
+    },
+    {
+      "test": "android_app_data_mount_layout",
+      "passed": true
+    },
+    {
+      "test": "android_installd_app_data",
+      "passed": true,
+      "packages": 2,
+      "storage_types": 2,
+      "caller_uid": 1000
+    },
+    {
+      "test": "android_surfaceflinger_composed_pixels",
+      "passed": true,
+      "frames": 3
+    },
+    {
+      "test": "android_cgroup_cross_uid_permissions",
+      "passed": true,
+      "unprivileged_denied": true
+    },
+    {
+      "test": "android_vold_user_storage",
+      "passed": true,
+      "user": 0,
+      "flags": 3
+    },
+    {
+      "test": "android_network_bpf_loaded",
+      "passed": true
+    },
+    {
+      "test": "android_keystore_persistence",
+      "passed": true,
+      "restored": false
+    },
+    {
+      "test": "android_system_server_services",
+      "passed": true
+    },
+    {
+      "test": "android_system_boot_completed",
+      "passed": true
+    },
+    {
+      "test": "android_desktop_visible_activity",
+      "passed": true,
+      "package": "com.android.launcher3",
+      "sampled_colors": 470
+    },
+    {
+      "session": "android_desktop_ready"
+    },
+    {
+      "phase": "android_desktop_running"
+    }
+  ]
+}

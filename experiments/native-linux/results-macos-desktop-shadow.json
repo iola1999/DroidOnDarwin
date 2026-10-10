@@ -1,0 +1,487 @@
+{
+  "date": "2026-10-10",
+  "platform": "macOS 27.0, Apple M5 Ultra",
+  "configuration": "shadow, 1 GiB Linux RAM, TLS direct read, cached resume entries",
+  "records": [
+    {
+      "bench": "linux_mm_exchange",
+      "bytes": 2097152,
+      "shared_percent": 0,
+      "touch_all": 0,
+      "threads": 0,
+      "rounds": 128,
+      "ns_per_roundtrip": 1537703
+    },
+    {
+      "bench": "linux_mm_exchange",
+      "bytes": 2097152,
+      "shared_percent": 0,
+      "touch_all": 1,
+      "threads": 0,
+      "rounds": 128,
+      "ns_per_roundtrip": 2650562
+    },
+    {
+      "bench": "linux_mm_exchange",
+      "bytes": 2097152,
+      "shared_percent": 50,
+      "touch_all": 0,
+      "threads": 0,
+      "rounds": 128,
+      "ns_per_roundtrip": 1758820
+    },
+    {
+      "bench": "linux_mm_exchange",
+      "bytes": 2097152,
+      "shared_percent": 50,
+      "touch_all": 1,
+      "threads": 0,
+      "rounds": 128,
+      "ns_per_roundtrip": 2250843
+    },
+    {
+      "bench": "linux_mm_exchange",
+      "bytes": 2097152,
+      "shared_percent": 100,
+      "touch_all": 0,
+      "threads": 0,
+      "rounds": 128,
+      "ns_per_roundtrip": 1490570
+    },
+    {
+      "bench": "linux_mm_exchange",
+      "bytes": 2097152,
+      "shared_percent": 100,
+      "touch_all": 1,
+      "threads": 0,
+      "rounds": 128,
+      "ns_per_roundtrip": 1581367
+    },
+    {
+      "bench": "linux_mm_exchange",
+      "bytes": 2097152,
+      "shared_percent": 0,
+      "touch_all": 1,
+      "threads": 1,
+      "rounds": 128,
+      "ns_per_roundtrip": 8007
+    },
+    {
+      "bench": "linux_mm_exchange",
+      "bytes": 4194304,
+      "shared_percent": 0,
+      "touch_all": 0,
+      "threads": 0,
+      "rounds": 128,
+      "ns_per_roundtrip": 1746179
+    },
+    {
+      "bench": "linux_mm_exchange",
+      "bytes": 4194304,
+      "shared_percent": 0,
+      "touch_all": 1,
+      "threads": 0,
+      "rounds": 128,
+      "ns_per_roundtrip": 2382367
+    },
+    {
+      "bench": "linux_mm_exchange",
+      "bytes": 4194304,
+      "shared_percent": 50,
+      "touch_all": 0,
+      "threads": 0,
+      "rounds": 128,
+      "ns_per_roundtrip": 1668945
+    },
+    {
+      "bench": "linux_mm_exchange",
+      "bytes": 4194304,
+      "shared_percent": 50,
+      "touch_all": 1,
+      "threads": 0,
+      "rounds": 128,
+      "ns_per_roundtrip": 2140820
+    },
+    {
+      "bench": "linux_mm_exchange",
+      "bytes": 4194304,
+      "shared_percent": 100,
+      "touch_all": 0,
+      "threads": 0,
+      "rounds": 128,
+      "ns_per_roundtrip": 1561703
+    },
+    {
+      "bench": "linux_mm_exchange",
+      "bytes": 4194304,
+      "shared_percent": 100,
+      "touch_all": 1,
+      "threads": 0,
+      "rounds": 128,
+      "ns_per_roundtrip": 2152921
+    },
+    {
+      "bench": "linux_mm_exchange",
+      "bytes": 4194304,
+      "shared_percent": 0,
+      "touch_all": 1,
+      "threads": 1,
+      "rounds": 128,
+      "ns_per_roundtrip": 8359
+    },
+    {
+      "bench": "linux_mm_exchange",
+      "bytes": 8388608,
+      "shared_percent": 0,
+      "touch_all": 0,
+      "threads": 0,
+      "rounds": 128,
+      "ns_per_roundtrip": 1783671
+    },
+    {
+      "bench": "linux_mm_exchange",
+      "bytes": 8388608,
+      "shared_percent": 0,
+      "touch_all": 1,
+      "threads": 0,
+      "rounds": 128,
+      "ns_per_roundtrip": 3034671
+    },
+    {
+      "bench": "linux_mm_exchange",
+      "bytes": 8388608,
+      "shared_percent": 50,
+      "touch_all": 0,
+      "threads": 0,
+      "rounds": 128,
+      "ns_per_roundtrip": 1842289
+    },
+    {
+      "bench": "linux_mm_exchange",
+      "bytes": 8388608,
+      "shared_percent": 50,
+      "touch_all": 1,
+      "threads": 0,
+      "rounds": 128,
+      "ns_per_roundtrip": 2982828
+    },
+    {
+      "bench": "linux_mm_exchange",
+      "bytes": 8388608,
+      "shared_percent": 100,
+      "touch_all": 0,
+      "threads": 0,
+      "rounds": 128,
+      "ns_per_roundtrip": 1717171
+    },
+    {
+      "bench": "linux_mm_exchange",
+      "bytes": 8388608,
+      "shared_percent": 100,
+      "touch_all": 1,
+      "threads": 0,
+      "rounds": 128,
+      "ns_per_roundtrip": 2425132
+    },
+    {
+      "bench": "linux_mm_exchange",
+      "bytes": 8388608,
+      "shared_percent": 0,
+      "touch_all": 1,
+      "threads": 1,
+      "rounds": 128,
+      "ns_per_roundtrip": 10710
+    },
+    {
+      "bench": "linux_mm_exchange",
+      "bytes": 16777216,
+      "shared_percent": 0,
+      "touch_all": 0,
+      "threads": 0,
+      "rounds": 128,
+      "ns_per_roundtrip": 1925023
+    },
+    {
+      "bench": "linux_mm_exchange",
+      "bytes": 16777216,
+      "shared_percent": 0,
+      "touch_all": 1,
+      "threads": 0,
+      "rounds": 128,
+      "ns_per_roundtrip": 4648781
+    },
+    {
+      "bench": "linux_mm_exchange",
+      "bytes": 16777216,
+      "shared_percent": 50,
+      "touch_all": 0,
+      "threads": 0,
+      "rounds": 128,
+      "ns_per_roundtrip": 1865609
+    },
+    {
+      "bench": "linux_mm_exchange",
+      "bytes": 16777216,
+      "shared_percent": 50,
+      "touch_all": 1,
+      "threads": 0,
+      "rounds": 128,
+      "ns_per_roundtrip": 4002968
+    },
+    {
+      "bench": "linux_mm_exchange",
+      "bytes": 16777216,
+      "shared_percent": 100,
+      "touch_all": 0,
+      "threads": 0,
+      "rounds": 128,
+      "ns_per_roundtrip": 1512164
+    },
+    {
+      "bench": "linux_mm_exchange",
+      "bytes": 16777216,
+      "shared_percent": 100,
+      "touch_all": 1,
+      "threads": 0,
+      "rounds": 128,
+      "ns_per_roundtrip": 3191726
+    },
+    {
+      "bench": "linux_mm_exchange",
+      "bytes": 16777216,
+      "shared_percent": 0,
+      "touch_all": 1,
+      "threads": 1,
+      "rounds": 128,
+      "ns_per_roundtrip": 17382
+    },
+    {
+      "test": "linux_mm_exchange_integrity",
+      "passed": true,
+      "cases": 28
+    },
+    {
+      "test": "linux_mm_host_operations",
+      "data_maps": 613163,
+      "code_copy_bytes": 2768896,
+      "revocations": 402271
+    },
+    {
+      "test": "android_system_boot_completed",
+      "passed": true
+    }
+  ],
+  "profiles": [
+    {
+      "profile": "host_mapping",
+      "elapsed_ms": 10490.751,
+      "data_calls": 683972,
+      "data_ms": 2330.096,
+      "code_calls": 71597,
+      "code_ms": 197.523,
+      "revoke_calls": 413060,
+      "revoke_ms": 380.312
+    },
+    {
+      "profile": "resume_entries",
+      "hits": 342098,
+      "misses": 22339
+    },
+    {
+      "profile": "host_mapping",
+      "elapsed_ms": 21127.929,
+      "data_calls": 1042611,
+      "data_ms": 7038.602,
+      "code_calls": 129776,
+      "code_ms": 405.532,
+      "revoke_calls": 553784,
+      "revoke_ms": 553.619
+    },
+    {
+      "profile": "resume_entries",
+      "hits": 485567,
+      "misses": 38870
+    },
+    {
+      "profile": "host_mapping",
+      "elapsed_ms": 31228.523,
+      "data_calls": 1361806,
+      "data_ms": 13191.293,
+      "code_calls": 203723,
+      "code_ms": 659.902,
+      "revoke_calls": 703998,
+      "revoke_ms": 752.562
+    },
+    {
+      "profile": "resume_entries",
+      "hits": 670701,
+      "misses": 58823
+    },
+    {
+      "profile": "host_mapping",
+      "elapsed_ms": 41492.839,
+      "data_calls": 1583487,
+      "data_ms": 19766.404,
+      "code_calls": 271405,
+      "code_ms": 879.862,
+      "revoke_calls": 817966,
+      "revoke_ms": 916.79
+    },
+    {
+      "profile": "resume_entries",
+      "hits": 822223,
+      "misses": 76332
+    },
+    {
+      "profile": "host_mapping",
+      "elapsed_ms": 51623.107,
+      "data_calls": 1751001,
+      "data_ms": 26210.532,
+      "code_calls": 340643,
+      "code_ms": 1112.139,
+      "revoke_calls": 929838,
+      "revoke_ms": 1085.041
+    },
+    {
+      "profile": "resume_entries",
+      "hits": 981107,
+      "misses": 94792
+    },
+    {
+      "profile": "host_mapping",
+      "elapsed_ms": 62418.665,
+      "data_calls": 1872108,
+      "data_ms": 33108.521,
+      "code_calls": 409051,
+      "code_ms": 1360.296,
+      "revoke_calls": 1025210,
+      "revoke_ms": 1243.032
+    },
+    {
+      "profile": "resume_entries",
+      "hits": 1134767,
+      "misses": 110209
+    },
+    {
+      "profile": "host_mapping",
+      "elapsed_ms": 72420.591,
+      "data_calls": 2102016,
+      "data_ms": 39337.487,
+      "code_calls": 467791,
+      "code_ms": 1549.014,
+      "revoke_calls": 1152103,
+      "revoke_ms": 1405.406
+    },
+    {
+      "profile": "resume_entries",
+      "hits": 1269184,
+      "misses": 126794
+    },
+    {
+      "profile": "host_mapping",
+      "elapsed_ms": 82882.33,
+      "data_calls": 2287551,
+      "data_ms": 46176.501,
+      "code_calls": 531260,
+      "code_ms": 1752.8,
+      "revoke_calls": 1247965,
+      "revoke_ms": 1550.645
+    },
+    {
+      "profile": "resume_entries",
+      "hits": 1397524,
+      "misses": 143853
+    },
+    {
+      "profile": "host_mapping",
+      "elapsed_ms": 92886.415,
+      "data_calls": 2465220,
+      "data_ms": 52773.805,
+      "code_calls": 591010,
+      "code_ms": 1961.348,
+      "revoke_calls": 1336109,
+      "revoke_ms": 1690.905
+    },
+    {
+      "profile": "resume_entries",
+      "hits": 1523670,
+      "misses": 159026
+    },
+    {
+      "profile": "host_mapping",
+      "elapsed_ms": 103076.301,
+      "data_calls": 2670562,
+      "data_ms": 59381.895,
+      "code_calls": 653274,
+      "code_ms": 2192.996,
+      "revoke_calls": 1442036,
+      "revoke_ms": 1846.578
+    },
+    {
+      "profile": "resume_entries",
+      "hits": 1657205,
+      "misses": 173633
+    },
+    {
+      "profile": "host_mapping",
+      "elapsed_ms": 113662.295,
+      "data_calls": 2865201,
+      "data_ms": 66611.481,
+      "code_calls": 710746,
+      "code_ms": 2388.765,
+      "revoke_calls": 1540210,
+      "revoke_ms": 1995.826
+    },
+    {
+      "profile": "resume_entries",
+      "hits": 1780399,
+      "misses": 187384
+    },
+    {
+      "profile": "host_mapping",
+      "elapsed_ms": 124140.695,
+      "data_calls": 3050958,
+      "data_ms": 73601.034,
+      "code_calls": 772864,
+      "code_ms": 2602.455,
+      "revoke_calls": 1649771,
+      "revoke_ms": 2152.013
+    },
+    {
+      "profile": "resume_entries",
+      "hits": 1911935,
+      "misses": 203436
+    },
+    {
+      "profile": "host_mapping",
+      "elapsed_ms": 134274.777,
+      "data_calls": 3169312,
+      "data_ms": 80447.725,
+      "code_calls": 828274,
+      "code_ms": 2791.845,
+      "revoke_calls": 1747473,
+      "revoke_ms": 2292.511
+    },
+    {
+      "profile": "resume_entries",
+      "hits": 2031036,
+      "misses": 216629
+    },
+    {
+      "profile": "host_mapping",
+      "elapsed_ms": 144403.722,
+      "data_calls": 3281726,
+      "data_ms": 87360.064,
+      "code_calls": 892060,
+      "code_ms": 2968.488,
+      "revoke_calls": 1829667,
+      "revoke_ms": 2424.808
+    },
+    {
+      "profile": "resume_entries",
+      "hits": 2154106,
+      "misses": 231883
+    }
+  ],
+  "outcome": "Incomplete. SystemUI service ANR after 60356 ms. Desktop checker then failed because Files.readString is unavailable in the bundled Android runtime. Bulk data view mapping reached 87.360 s of 144.404 s measured wall time; this mode is not selected."
+}

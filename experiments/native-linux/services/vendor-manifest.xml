@@ -9,4 +9,7 @@
         <transport>hwbinder</transport>
         <fqname>@7.0::IEffectsFactory/default</fqname>
     </hal>
+    <sepolicy>
+        <version>202504</version>
+    </sepolicy>
 </manifest>

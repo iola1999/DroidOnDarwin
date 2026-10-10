@@ -15,11 +15,15 @@ import UIKit
 ///    release, with shift wrapped around it when the character needs it.
 final class KeyCapturingView: UIView, UIKeyInput {
 
-    override var canBecomeFirstResponder: Bool { true }
+    override var canBecomeFirstResponder: Bool {
+        true
+    }
 
     // MARK: - UIKeyInput (software keyboard)
 
-    var hasText: Bool { true }
+    var hasText: Bool {
+        true
+    }
 
     var keyboardType: UIKeyboardType = .asciiCapable
     var autocorrectionType: UITextAutocorrectionType = .no
@@ -29,7 +33,9 @@ final class KeyCapturingView: UIView, UIKeyInput {
     var smartDashesType: UITextSmartDashesType = .no
 
     func insertText(_ text: String) {
-        for ch in text { sendCharacter(ch) }
+        for ch in text {
+            sendCharacter(ch)
+        }
     }
 
     func deleteBackward() {
@@ -38,16 +44,26 @@ final class KeyCapturingView: UIView, UIKeyInput {
 
     /// The on-screen keyboard gives no key-up, so press and release immediately.
     private func sendCharacter(_ ch: Character) {
-        if ch == "\n" || ch == "\r" { tap("ret"); return }
-        if ch == " " { tap("spc"); return }
+        if ch == "\n" || ch == "\r" {
+            tap("ret")
+            return
+        }
+        if ch == " " {
+            tap("spc")
+            return
+        }
 
         guard let (qcode, needsShift) = Self.characterMap[ch] else {
             HuskLog.log("kbd", "no key for character \(String(reflecting: ch))")
             return
         }
-        if needsShift { _ = husk_display_send_key("shift", true) }
+        if needsShift {
+            _ = husk_display_send_key("shift", true)
+        }
         tap(qcode)
-        if needsShift { _ = husk_display_send_key("shift", false) }
+        if needsShift {
+            _ = husk_display_send_key("shift", false)
+        }
     }
 
     private func tap(_ qcode: String) {
@@ -65,7 +81,9 @@ final class KeyCapturingView: UIView, UIKeyInput {
                 handled = true
             }
         }
-        if !handled { super.pressesBegan(presses, with: event) }
+        if !handled {
+            super.pressesBegan(presses, with: event)
+        }
     }
 
     override func pressesEnded(_ presses: Set<UIPress>, with event: UIPressesEvent?) {
@@ -76,7 +94,9 @@ final class KeyCapturingView: UIView, UIKeyInput {
                 handled = true
             }
         }
-        if !handled { super.pressesEnded(presses, with: event) }
+        if !handled {
+            super.pressesEnded(presses, with: event)
+        }
     }
 
     override func pressesCancelled(_ presses: Set<UIPress>, with event: UIPressesEvent?) {
@@ -103,12 +123,12 @@ final class KeyCapturingView: UIView, UIKeyInput {
             }
         }
         // Digits run 1..9 then 0, in that order, in both schemes.
-        for (i, name) in ["1","2","3","4","5","6","7","8","9","0"].enumerated() {
+        for (i, name) in ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"].enumerated() {
             if let usage = UIKeyboardHIDUsage(rawValue: UIKeyboardHIDUsage.keyboard1.rawValue + i) {
                 m[usage] = name
             }
         }
-        for i in 0..<12 {
+        for i in 0 ..< 12 {
             if let usage = UIKeyboardHIDUsage(rawValue: UIKeyboardHIDUsage.keyboardF1.rawValue + i) {
                 m[usage] = "f\(i + 1)"
             }
@@ -165,8 +185,8 @@ final class KeyCapturingView: UIView, UIKeyInput {
             m[Character(ch.uppercased())] = (String(ch), true)
         }
         let digits: [(Character, String, Character)] = [
-            ("1","1","!"), ("2","2","@"), ("3","3","#"), ("4","4","$"), ("5","5","%"),
-            ("6","6","^"), ("7","7","&"), ("8","8","*"), ("9","9","("), ("0","0",")"),
+            ("1", "1", "!"), ("2", "2", "@"), ("3", "3", "#"), ("4", "4", "$"), ("5", "5", "%"),
+            ("6", "6", "^"), ("7", "7", "&"), ("8", "8", "*"), ("9", "9", "("), ("0", "0", ")"),
         ]
         for (d, name, shifted) in digits {
             m[d] = (name, false)
@@ -181,7 +201,9 @@ final class KeyCapturingView: UIView, UIKeyInput {
         ]
         for (base, name, shifted) in punct {
             m[base] = (name, false)
-            if let sh = shifted { m[sh] = (name, true) }
+            if let sh = shifted {
+                m[sh] = (name, true)
+            }
         }
         return m
     }()
@@ -231,8 +253,8 @@ struct SpecialKeysBar: View {
                     .font(.caption2.weight(.medium))
                     .padding(.horizontal, 9).padding(.vertical, 6)
                     .background(ctrlLatched ? AnyShapeStyle(Theme.accent)
-                                            : AnyShapeStyle(Theme.surfaceHigh),
-                                in: RoundedRectangle(cornerRadius: 7))
+                        : AnyShapeStyle(Theme.surfaceHigh),
+                        in: RoundedRectangle(cornerRadius: 7))
             }
 
             ForEach(keys, id: \.1) { label, qcode in

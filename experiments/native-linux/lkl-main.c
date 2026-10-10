@@ -146,8 +146,8 @@ static void blocking_tests(void)
 #else
 unsigned long nce_process_setup(void);
 void nce_process_cleanup(void);
-void nce_process_tests(long (*)(long, long *), long (*)(long, long *), int (*)(unsigned long, int),
-                       void (*)(long, long, unsigned long), void (*)(unsigned long, int), void (*)(void));
+void nce_process_run(long (*)(long, long *), long (*)(long, long *), int (*)(unsigned long, int),
+                     void (*)(long, long, unsigned long), void (*)(unsigned long, int), void (*)(void), void (*)(void));
 #endif
 
 #ifdef NCE_PROCESS
@@ -188,7 +188,8 @@ int nce_lkl_run(const char *image_path)
 #ifdef NCE_PROCESS
     if (nce_memory_prepare() != 0)
         return 1;
-    nce_compute_benchmark();
+    if (!getenv("NCE_DESKTOP"))
+        nce_compute_benchmark();
     NceCode kernel = nce_memory_take(LKL_IMAGE_SIZE);
 #else
     NceCode kernel = dual(LKL_IMAGE_SIZE);
@@ -220,8 +221,9 @@ int nce_lkl_run(const char *image_path)
     const char *mode = getenv("NCE_MM_MODE");
     if (!mode)
         mode = "lazy";
-    REQUIRE(!strcmp(mode, "full") || !strcmp(mode, "diff") || !strcmp(mode, "lazy"));
+    REQUIRE(!strcmp(mode, "full") || !strcmp(mode, "diff") || !strcmp(mode, "lazy") || !strcmp(mode, "demand"));
     unsigned long mapping_mode = !strcmp(mode, "full") ? NCE_MM_FULL : !strcmp(mode, "diff") ? NCE_MM_DIFF
+                                                                   : !strcmp(mode, "demand") ? NCE_MM_DEMAND
                                                                                              : NCE_MM_LAZY;
     printf("{\"phase\":\"linux_mapping_policy\",\"mode\":\"%s\"}\n", mode);
     set_layout(nce_process_setup(), mapping_mode, views, host_hwcap());
@@ -244,9 +246,10 @@ int nce_lkl_run(const char *image_path)
     printf("{\"test\":\"linux_uname\",\"sysname\":\"%s\",\"release\":\"%s\"}\n", uts, uts + 130);
 
 #ifdef NCE_PROCESS
-    nce_process_tests(kernel_syscall, (void *)(kernel.rx + NCE_RUN_SYSCALL),
-                      (void *)(kernel.rx + NCE_PAGE_FAULT), (void *)(kernel.rx + NCE_USER_RETURN),
-                      (void *)(kernel.rx + NCE_USER_FAULT), (void *)(kernel.rx + NCE_USER_PREEMPT));
+    nce_process_run(kernel_syscall, (void *)(kernel.rx + NCE_RUN_SYSCALL),
+                    (void *)(kernel.rx + NCE_PAGE_FAULT), (void *)(kernel.rx + NCE_USER_RETURN),
+                    (void *)(kernel.rx + NCE_USER_FAULT), (void *)(kernel.rx + NCE_USER_PREEMPT),
+                    (void *)(kernel.rx + NCE_PREPARE_USER));
 #else
     NceCode code = dual(65536);
     REQUIRE(mprotect(code.rx, code.size, PROT_READ | PROT_EXEC) == 0);
@@ -282,6 +285,11 @@ int nce_lkl_run(const char *image_path)
 #endif
     puts("{\"phase\":\"linux_shutdown\"}");
 #ifdef NCE_PROCESS
+    // Android bind mounts can retain this superblock in another mount namespace.
+    // Finish ext4 writes and its journal before releasing the kernel and host disk.
+    long readonly_args[6] = {0, (long)"/data", 0, 1 | 32, 0};
+    REQUIRE(kernel_syscall(40, readonly_args) == 0);
+    puts("{\"test\":\"linux_data_readonly_shutdown\",\"passed\":true}");
     long unmount_args[6] = {(long)"/data/nce", 0};
     REQUIRE(kernel_syscall(39, unmount_args) == 0);
     unmount_args[0] = (long)"/data";

@@ -36,9 +36,9 @@ final class QemuRunner: ObservableObject {
     /// they are never on by default — but they are here because when a guest dies
     /// three instructions into its first translated block, nothing else will do.
     enum Verbosity: String, CaseIterable {
-        case normal    = "guest_errors,unimp"
-        case detailed  = "guest_errors,unimp,cpu_reset,page,mmu"
-        case firehose  = "guest_errors,unimp,cpu_reset,page,mmu,int,exec,in_asm"
+        case normal = "guest_errors,unimp"
+        case detailed = "guest_errors,unimp,cpu_reset,page,mmu"
+        case firehose = "guest_errors,unimp,cpu_reset,page,mmu,int,exec,in_asm"
     }
 
     var verbosity: Verbosity = .detailed
@@ -50,7 +50,7 @@ final class QemuRunner: ObservableObject {
     /// app bundle with no download, no UEFI and no disk, so if it draws and Phase 1
     /// does not, the problem is above the JIT/display layer.
     enum Profile: String, CaseIterable {
-        case phase0Alpine   = "Alpine (substrate check)"
+        case phase0Alpine = "Alpine (substrate check)"
         case phase1Android = "Android (LineageOS guest)"
     }
 
@@ -72,7 +72,9 @@ final class QemuRunner: ObservableObject {
     /// handed: "HuskGLView COVERED by HuskDisplay".
     enum DisplayKind { case undecided, gl, software }
     @Published var displayKind: DisplayKind = .undecided
-    var glDisplayActive: Bool { displayKind == .gl }
+    var glDisplayActive: Bool {
+        displayKind == .gl
+    }
 
     /// True when this session started from a saved machine rather than booting.
     @Published var restoredFromSnapshot = false
@@ -98,23 +100,23 @@ final class QemuRunner: ObservableObject {
     /// bootanim exits. Evenly spaced numbers would race to 90% and then sit
     /// there, which is the specific thing progress bars are distrusted for.
     nonisolated(unsafe) static let bootMilestones: [(String, String, Int)] = [
-        ("Linux version",                 "Starting the Linux kernel",           5),
-        ("init: init first stage started","Android init, first stage",           10),
-        ("init: init second stage started","Android init, second stage",         15),
-        ("SELinux: policy loaded",        "Loading the security policy",         20),
-        ("apexd: activating",             "Activating system packages",          28),
-        ("servicemanager: Waiting",       "Starting system services",            35),
-        ("starting service 'vold'",       "Preparing storage",                   42),
-        ("starting service 'surfaceflinger'", "Starting the display server",     50),
-        ("starting service 'zygote'",     "Starting the Android runtime",        58),
+        ("Linux version", "Starting the Linux kernel", 5),
+        ("init: init first stage started", "Android init, first stage", 10),
+        ("init: init second stage started", "Android init, second stage", 15),
+        ("SELinux: policy loaded", "Loading the security policy", 20),
+        ("apexd: activating", "Activating system packages", 28),
+        ("servicemanager: Waiting", "Starting system services", 35),
+        ("starting service 'vold'", "Preparing storage", 42),
+        ("starting service 'surfaceflinger'", "Starting the display server", 50),
+        ("starting service 'zygote'", "Starting the Android runtime", 58),
         // The LineageOS image sets ro.boot.nobootanim=1, so the bootanim milestones
         // below never fire. Without these, the bar sat at 58% for the whole second half
         // of a cold boot, which looked like a hang. Both appear on console once system_server is up.
-        ("sid=u:r:system_server:s0",      "Starting Android system services",    66),
-        ("ctl.stop for 'idmap2d'",        "Loading system overlays",             72),
-        ("starting service 'bootanim'",   "Boot animation running",              65),
-        ("Service 'bootanim' (pid",       "Compiling apps (this is the slow part)", 80),
-        ("sys.boot_completed=1",          "Android is up",                       100),
+        ("sid=u:r:system_server:s0", "Starting Android system services", 66),
+        ("ctl.stop for 'idmap2d'", "Loading system overlays", 72),
+        ("starting service 'bootanim'", "Boot animation running", 65),
+        ("Service 'bootanim' (pid", "Compiling apps (this is the slow part)", 80),
+        ("sys.boot_completed=1", "Android is up", 100),
     ]
 
     /// How far through the boot the guest is, 0 to 100.
@@ -208,7 +210,9 @@ final class QemuRunner: ObservableObject {
 
     /// Imported guests cold-boot; bundled guests use the auto-save preference.
     nonisolated static var autoSaveEnabled: Bool {
-        if GuestImage.isCustomGuest || gfxstreamEnabled { return false }
+        if GuestImage.isCustomGuest || gfxstreamEnabled {
+            return false
+        }
         return UserDefaults.standard.object(forKey: "husk.autoSave") as? Bool ?? true
     }
 
@@ -219,7 +223,9 @@ final class QemuRunner: ObservableObject {
     private var documentsDir: String {
         NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true)[0]
     }
-    var guestSerialLogPath: String { "\(documentsDir)/guest-serial.log" }
+    var guestSerialLogPath: String {
+        "\(documentsDir)/guest-serial.log"
+    }
 
     /// Phase 0 guest: Alpine 3.24.1 aarch64, booted directly from kernel+initramfs.
     ///
@@ -349,9 +355,13 @@ final class QemuRunner: ObservableObject {
     /// software one should not silently throw away a GPU one.
     @discardableResult
     nonisolated func forgetSnapshot(mode: String) -> Bool {
-        guard hasSnapshot else { return false }
+        guard hasSnapshot else {
+            return false
+        }
         let have = snapshotDisplay ?? "sw"
-        guard have == mode else { return false }
+        guard have == mode else {
+            return false
+        }
         for path in [snapshotSizePath, snapshotDisplayPath, memoryStrategyPath] {
             try? FileManager.default.removeItem(atPath: path)
         }
@@ -368,7 +378,9 @@ final class QemuRunner: ObservableObject {
     /// saving -- the one running on the GPU -- was never written. A snapshot
     /// taken in the other display mode is not a snapshot this session can use.
     nonisolated var hasUsableSnapshot: Bool {
-        guard hasSnapshot else { return false }
+        guard hasSnapshot else {
+            return false
+        }
         return (snapshotDisplay ?? "sw") == QemuRunner.machineStamp
     }
 
@@ -386,22 +398,27 @@ final class QemuRunner: ObservableObject {
     /// Saving writes the whole of guest RAM, so the picture freezes for as long
     /// as that takes. Callers are expected to say so.
     func saveState(reason: String, completion: ((Bool) -> Void)? = nil) {
-        guard isRunning else { completion?(false); return }
+        guard isRunning else {
+            completion?(false)
+            return
+        }
         // Rutabaga's GLES resources cannot be restored by QEMU migration.
         guard !Self.gfxstreamEnabled else {
             HuskLog.log("snap", "gfxstream requires a cold boot; state save unavailable")
-            completion?(false); return
+            completion?(false)
+            return
         }
         guard !isSavingState else {
             HuskLog.log("snap", "save already in progress; ignoring \(reason)")
-            completion?(false); return
+            completion?(false)
+            return
         }
         isSavingState = true
         QemuRunner.pendingSnapshotMiB = lastGuestMiB
         QemuRunner.saveCompletion = completion
         HuskLog.log("snap", "saving the machine (\(reason), guest "
-                          + "\(QemuRunner.pendingSnapshotMiB) MiB); the picture freezes "
-                          + "while RAM is written to disk")
+            + "\(QemuRunner.pendingSnapshotMiB) MiB); the picture freezes "
+            + "while RAM is written to disk")
 
         // Off the main thread from here.
         //
@@ -449,19 +466,19 @@ final class QemuRunner: ObservableObject {
         if let state = try? GuestBridge.shared.shell("getprop init.svc.zygote", timeout: 20),
            !state.contains("running") {
             HuskLog.log("snap", "this snapshot was saved with the framework stopped; "
-                              + "starting zygote as well")
+                + "starting zygote as well")
             services.append("zygote")
         }
         for svc in services {
             var up = false
-            for attempt in 1...4 {
+            for attempt in 1 ... 4 {
                 _ = try? GuestBridge.shared.run("setprop ctl.start \(svc)", timeout: 20)
                 // init.svc.<name> is init's own answer, and the only thing that
                 // tells "the command was delivered" apart from "it worked".
-                for _ in 1...15 {
+                for _ in 1 ... 15 {
                     if let state = try? GuestBridge.shared.shell(
-                            "getprop init.svc.\(svc)", timeout: 20),
-                       state.contains("running") {
+                        "getprop init.svc.\(svc)", timeout: 20),
+                        state.contains("running") {
                         up = true
                         break
                     }
@@ -469,19 +486,19 @@ final class QemuRunner: ObservableObject {
                 }
                 if up {
                     HuskLog.log("snap", "\(svc) is running again"
-                                      + (attempt > 1 ? " (attempt \(attempt))" : ""))
+                        + (attempt > 1 ? " (attempt \(attempt))" : ""))
                     break
                 }
                 HuskLog.log("snap", "\(svc) did not come up on attempt \(attempt)")
             }
             if !up {
                 HuskLog.log("snap", "\(svc) could NOT be restarted; "
-                                  + "the screen will stay black until the app is relaunched")
+                    + "the screen will stay black until the app is relaunched")
                 allUp = false
             }
         }
         HuskLog.log("snap", allUp ? "Android's UI is running again (\(why))"
-                                  : "Android's UI did not fully come back (\(why))")
+            : "Android's UI did not fully come back (\(why))")
         return allUp
     }
 
@@ -502,7 +519,7 @@ final class QemuRunner: ObservableObject {
         // importantly, by whoever restores this snapshot.
         if QemuRunner.glProven {
             HuskLog.log("snap", "stopping the compositor and app processes so no 3D "
-                              + "resources are live while the machine is written")
+                + "resources are live while the machine is written")
             // Named services, never a blanket `stop`.
             //
             // `stop` acts on whole init classes, and Husk's own command bridge
@@ -535,8 +552,8 @@ final class QemuRunner: ObservableObject {
             // hundred and forty, and it never printed another line.
             guard GuestBridge.shared.isAlive(attempts: 2) else {
                 HuskLog.log("snap", "not saving: the Android shell is not answering, "
-                                  + "so the compositor cannot be stopped first and a "
-                                  + "GPU machine cannot be written safely")
+                    + "so the compositor cannot be stopped first and a "
+                    + "GPU machine cannot be written safely")
                 let done = QemuRunner.saveCompletion
                 QemuRunner.saveCompletion = nil
                 Task { @MainActor in
@@ -598,11 +615,11 @@ final class QemuRunner: ObservableObject {
             if QemuRunner.keepNetworkAcrossSaves {
                 if let r = try? GuestBridge.shared.run("am kill-all", timeout: 60) {
                     HuskLog.log("snap", "closed background apps before saving "
-                                      + "(exit \(r.status)); the framework stays up")
+                        + "(exit \(r.status)); the framework stays up")
                 }
             } else {
                 HuskLog.log("snap", "stopping the framework as well; the network "
-                                  + "will need to re-register after the restore")
+                    + "will need to re-register after the restore")
                 toStop = ["zygote", "surfaceflinger"]
             }
 
@@ -610,16 +627,16 @@ final class QemuRunner: ObservableObject {
                 let r = try? GuestBridge.shared.run("setprop ctl.stop \(svc)", timeout: 60)
                 if (r?.status ?? -1) != 0 {
                     HuskLog.log("snap", "could not stop \(svc): "
-                              + (r?.out.trimmingCharacters(in: .whitespacesAndNewlines)
-                                 ?? "no answer"))
+                        + (r?.out.trimmingCharacters(in: .whitespacesAndNewlines)
+                            ?? "no answer"))
                     quiesced = false
                 }
             }
 
             if !quiesced {
                 HuskLog.log("snap", "REFUSING to save: the GPU could not be quiesced, and "
-                                  + "saving with live 3D resources crashes the process "
-                                  + "outright. The guest is untouched.")
+                    + "saving with live 3D resources crashes the process "
+                    + "outright. The guest is untouched.")
                 QemuRunner.saveCompletion = nil
                 DispatchQueue.main.async {
                     QemuRunner.shared.isSavingState = false
@@ -733,7 +750,7 @@ final class QemuRunner: ObservableObject {
             let freeMiB = free / (1024 * 1024)
             guard free > needBytes else {
                 HuskLog.log("qemu", "only \(freeMiB) MiB free; not backing guest RAM "
-                                  + "with a file, falling back to anonymous memory")
+                    + "with a file, falling back to anonymous memory")
                 return false
             }
             HuskLog.log("qemu", "\(freeMiB) MiB free for the guest RAM file")
@@ -745,7 +762,7 @@ final class QemuRunner: ObservableObject {
         if !FileManager.default.fileExists(atPath: guestRamPath) {
             guard FileManager.default.createFile(atPath: guestRamPath, contents: nil) else {
                 HuskLog.log("qemu", "could not create \(guestRamPath); "
-                                  + "falling back to anonymous memory")
+                    + "falling back to anonymous memory")
                 return false
             }
         }
@@ -786,7 +803,9 @@ final class QemuRunner: ObservableObject {
     }
 
     private func readInt(_ path: String) -> Int? {
-        guard let t = try? String(contentsOfFile: path, encoding: .utf8) else { return nil }
+        guard let t = try? String(contentsOfFile: path, encoding: .utf8) else {
+            return nil
+        }
         return Int(t.trimmingCharacters(in: .whitespacesAndNewlines))
     }
 
@@ -809,13 +828,13 @@ final class QemuRunner: ObservableObject {
 
             guard ftruncate(fd, bytes) == 0 else {
                 HuskLog.log("qemu", "RAM file check: \(mib) MiB cannot be allocated "
-                                  + "on disk (errno \(errno)); trying smaller")
+                    + "on disk (errno \(errno)); trying smaller")
                 continue
             }
             guard let p = mmap(nil, size_t(bytes), PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0),
                   p != MAP_FAILED else {
                 HuskLog.log("qemu", "RAM file check: \(mib) MiB maps no better than "
-                                  + "QEMU would (errno \(errno)); trying smaller")
+                    + "QEMU would (errno \(errno)); trying smaller")
                 continue
             }
 
@@ -877,7 +896,9 @@ final class QemuRunner: ObservableObject {
     /// new one.
     nonisolated static var customResolution: (w: Int, h: Int)? {
         let d = UserDefaults.standard
-        guard d.bool(forKey: "husk.customRes") else { return nil }
+        guard d.bool(forKey: "husk.customRes") else {
+            return nil
+        }
         return validResolution(w: d.integer(forKey: "husk.resWidth"),
                                h: d.integer(forKey: "husk.resHeight"))
     }
@@ -890,12 +911,16 @@ final class QemuRunner: ObservableObject {
     /// launcher has nowhere to lay itself out, and above 2560 a software-drawn
     /// frame costs more than the emulator can deliver in a second.
     nonisolated static func validResolution(w: Int, h: Int) -> (w: Int, h: Int)? {
-        guard w >= 240, w <= 2560, h >= 240, h <= 2560 else { return nil }
+        guard w >= 240, w <= 2560, h >= 240, h <= 2560 else {
+            return nil
+        }
         return (Int((Double(w) / 8).rounded()) * 8, Int((Double(h) / 8).rounded()) * 8)
     }
 
     private var computedGuestResolution: (w: Int, h: Int) {
-        if let custom = QemuRunner.customResolution { return custom }
+        if let custom = QemuRunner.customResolution {
+            return custom
+        }
 
         // A shipped snapshot fixes the resolution: it was saved against one,
         // and a machine whose display differs is a different machine.
@@ -915,7 +940,9 @@ final class QemuRunner: ObservableObject {
             return (long, short)
         }
         let size = HuskGLView.pixelSize
-        guard size.width > 0, size.height > 0 else { return (360, 640) }
+        guard size.width > 0, size.height > 0 else {
+            return (360, 640)
+        }
         let w = 360
         let exact = Double(w) * Double(size.height) / Double(size.width)
         let h = max(480, Int((exact / 8).rounded()) * 8)
@@ -924,12 +951,14 @@ final class QemuRunner: ObservableObject {
 
     private var machineCpu: String {
         GuestImage.shared.hasShippedSnapshot ? GuestImage.shared.snapshotPins.cpu
-                                            : GuestImage.defaultCpu
+            : GuestImage.defaultCpu
     }
     private var machineSmp: Int {
-        if Self.directExecutionEnabled || Self.gfxstreamEnabled { return 1 }
+        if Self.directExecutionEnabled || Self.gfxstreamEnabled {
+            return 1
+        }
         return GuestImage.shared.hasShippedSnapshot ? GuestImage.shared.snapshotPins.smp
-                                            : GuestImage.defaultSmp
+            : GuestImage.defaultSmp
     }
 
     private func guestMemoryMiB() -> Int {
@@ -955,7 +984,7 @@ final class QemuRunner: ObservableObject {
             != QemuRunner.memoryStrategy
         if strategyChanged, FileManager.default.fileExists(atPath: snapshotSizePath) {
             HuskLog.log("qemu", "memory layout changed to \(QemuRunner.memoryStrategy); "
-                              + "retiring the old snapshot, so this boot is a cold one")
+                + "retiring the old snapshot, so this boot is a cold one")
             try? FileManager.default.removeItem(atPath: snapshotSizePath)
         }
 
@@ -982,7 +1011,7 @@ final class QemuRunner: ObservableObject {
         // cannot be walked back. Another app reaching a larger number does not
         // transfer -- clean file-backed pages are evictable and charged
         // differently.
-        let jitMiB = 256          // tb-size
+        let jitMiB = 256 // tb-size
         let qemuOverheadMiB = 750 // measured, not guessed
         // Real margin, in megabytes rather than a fraction. A fraction of what
         // was left quietly cost ~375 MiB the guest could have had; the run that
@@ -1001,7 +1030,7 @@ final class QemuRunner: ObservableObject {
         // the guest from 1906 MiB to 1650.
         let jitStillToCome = JITBootstrap.prewarmed ? 0 : jitMiB
         let anonymousTarget = max(1024, min(6144,
-            availableMiB - safetyMarginMiB - jitStillToCome - qemuOverheadMiB))
+                                            availableMiB - safetyMarginMiB - jitStillToCome - qemuOverheadMiB))
 
         // With a file-backed RAM block the arithmetic above is the wrong shape:
         // it measures room for pages that must stay resident, and these do not
@@ -1038,12 +1067,12 @@ final class QemuRunner: ObservableObject {
             let worst = min(attempted, readInt(ramFailedPath) ?? Int.max)
             try? String(worst).write(toFile: ramFailedPath, atomically: true, encoding: .utf8)
             HuskLog.log("qemu", "last launch attempted \(attempted) MiB and never got "
-                              + "past qemu_init; remembering that permanently")
+                + "past qemu_init; remembering that permanently")
         }
         if let failed = readInt(ramFailedPath) {
             candidates = candidates.filter { $0 < failed }
             HuskLog.log("qemu", "\(failed) MiB is known to fail on this device; "
-                              + "staying below it")
+                + "staying below it")
         }
         let fileBackedTarget = ramFileReady ? largestMappableMiB(candidates) : nil
         let target = fileBackedTarget.map { max(anonymousTarget, $0) } ?? anonymousTarget
@@ -1051,14 +1080,14 @@ final class QemuRunner: ObservableObject {
         QemuRunner.shared.lastGuestMiB = target
         try? String(target).write(toFile: ramAttemptPath, atomically: true, encoding: .utf8)
         HuskLog.log("qemu", "memory budget: \(physMiB) MiB physical but "
-                          + "\(availableMiB) MiB before jetsam -- that is the real "
-                          + "ceiling; reserving \(jitMiB) MiB JIT + \(qemuOverheadMiB) "
-                          + "MiB overhead + \(safetyMarginMiB) MiB margin; "
-                          + "GUEST GETS \(target) MiB "
-                          + (fileBackedTarget != nil
-                             ? "from a file-backed block (anonymous memory could only "
-                             + "have given it \(anonymousTarget) MiB)"
-                             : "as anonymous memory"))
+            + "\(availableMiB) MiB before jetsam -- that is the real "
+            + "ceiling; reserving \(jitMiB) MiB JIT + \(qemuOverheadMiB) "
+            + "MiB overhead + \(safetyMarginMiB) MiB margin; "
+            + "GUEST GETS \(target) MiB "
+            + (fileBackedTarget != nil
+                ? "from a file-backed block (anonymous memory could only "
+                + "have given it \(anonymousTarget) MiB)"
+                : "as anonymous memory"))
         return target
     }
 
@@ -1077,7 +1106,7 @@ final class QemuRunner: ObservableObject {
         return [
             "qemu-system-aarch64",
             "-M", ramFileReady ? "virt,highmem=on,memory-backend=huskram"
-                               : "virt,highmem=on",
+                : "virt,highmem=on",
 
             // Their emulation line, not cortex-a72. "max" is what the image is
             // tested against and avoids guessing which ARMv8 extensions this
@@ -1143,7 +1172,7 @@ final class QemuRunner: ObservableObject {
             // variable store. That is how a 64 MiB UEFI vars image grew to
             // 2.6 GB of guest RAM blobs.
             "-drive", "file=\(guest.userdataPath),if=none,id=vdb,node-name=huskvmstate,"
-                    + "format=qcow2,discard=unmap",
+                + "format=qcow2,discard=unmap",
 
             // Two forwards, both on loopback so nothing outside this app can
             // reach the guest.
@@ -1158,7 +1187,7 @@ final class QemuRunner: ObservableObject {
             //         obtained without adbd's cooperation.
             "-device", "virtio-net-pci,netdev=net0",
             "-netdev", "user,id=net0,hostfwd=tcp:127.0.0.1:5555-:5555,"
-                     + "hostfwd=tcp:127.0.0.1:5599-:5599",
+                + "hostfwd=tcp:127.0.0.1:5599-:5599",
             "-L", "\(Bundle.main.bundlePath)/pc-bios",
 
             // gfxstream owns GLES execution and returns pixels through the
@@ -1218,7 +1247,7 @@ final class QemuRunner: ObservableObject {
             // would make every page resident immediately and hand back exactly
             // the problem this is here to solve.
             "-object", "memory-backend-file,id=huskram,size=\(memMiB)M,"
-                     + "mem-path=\(guestRamPath),share=on,prealloc=off",
+                + "mem-path=\(guestRamPath),share=on,prealloc=off",
         ] : [])
     }
 
@@ -1258,8 +1287,12 @@ final class QemuRunner: ObservableObject {
     /// GPU display requires the user's setting and a successful context probe.
     /// snapshotDisplay selects a cold boot when the saved device type differs.
     nonisolated(unsafe) static var glProven: Bool {
-        guard !gfxstreamEnabled else { return false }
-        guard QemuRunner.gpuModeEnabled else { return false }
+        guard !gfxstreamEnabled else {
+            return false
+        }
+        guard QemuRunner.gpuModeEnabled else {
+            return false
+        }
         return UserDefaults.standard.bool(forKey: "husk.glProven")
     }
 
@@ -1267,7 +1300,9 @@ final class QemuRunner: ObservableObject {
     /// the rendering check after context creation succeeds.
     private func probeGL() {
         // gfxstream owns EGL and returns scanout pixels to Husk's display bridge.
-        guard !Self.gfxstreamEnabled else { return }
+        guard !Self.gfxstreamEnabled else {
+            return
+        }
         guard Self.gpuModeEnabled else {
             HuskLog.log("gl", "software display selected; skipping GL context creation")
             return
@@ -1291,7 +1326,7 @@ final class QemuRunner: ObservableObject {
         // the GPU draws at for the rest of the process. If it disagrees with
         // what is on screen later, that is the bug -- not the renderer.
         HuskLog.log("gl", "binding the EGL surface to the layer published at "
-                        + "\(Int(size.width))x\(Int(size.height)) px")
+            + "\(Int(size.width))x\(Int(size.height)) px")
         var created = false
         DispatchQueue.main.sync {
             created = husk_display_gl_create(Unmanaged.passUnretained(layer).toOpaque(),
@@ -1299,7 +1334,7 @@ final class QemuRunner: ObservableObject {
         }
         if created && QemuRunner.glProven {
             HuskLog.log("gl", "GL already proven on this device; context created "
-                            + "(create=\(created)), skipping the probe")
+                + "(create=\(created)), skipping the probe")
             return
         }
 
@@ -1321,9 +1356,9 @@ final class QemuRunner: ObservableObject {
         let args = (profile == .phase0Alpine) ? phase0Arguments() : phase1Arguments()
         HuskLog.log("qemu", "profile: \(profile.rawValue)")
         HuskLog.log("qemu", "DISPLAY MODE: "
-                          + (Self.gfxstreamEnabled ? "gfxstream GLES / ANGLE Metal / framebuffer scanout"
-                             : QemuRunner.glProven ? "GPU (virtio-gpu-gl)"
-                                                  : "software (CPU framebuffer)"))
+            + (Self.gfxstreamEnabled ? "gfxstream GLES / ANGLE Metal / framebuffer scanout"
+                : QemuRunner.glProven ? "GPU (virtio-gpu-gl)"
+                : "software (CPU framebuffer)"))
         if QemuRunner.glProven {
             // This used to say the GPU and fast relaunch were mutually
             // exclusive, because QEMU refuses to snapshot a virgl machine:
@@ -1332,7 +1367,7 @@ final class QemuRunner: ObservableObject {
             // state left is state nothing will miss. See the virtio-gpu patches
             // in scripts/integrate_husk.sh for why that is sound.
             HuskLog.log("qemu", "GPU display with snapshots: saving stops the "
-                              + "compositor first, and restoring starts it again")
+                + "compositor first, and restoring starts it again")
         }
 
         QemuRunner.bootGuestRes = QemuRunner.lastGuestRes
@@ -1360,7 +1395,7 @@ final class QemuRunner: ObservableObject {
             let attrs = try? FileManager.default.attributesOfItem(atPath: path)
             let size = (attrs?[.size] as? NSNumber)?.intValue ?? -1
             HuskLog.log("qemu", "needs \((path as NSString).lastPathComponent): "
-                              + (size >= 0 ? "\(size) bytes" : "MISSING"))
+                + (size >= 0 ? "\(size) bytes" : "MISSING"))
         }
 
         if QemuRunner.glProven {
@@ -1385,7 +1420,9 @@ final class QemuRunner: ObservableObject {
         // keeps the blocker for everyone who does not set this, because it is
         // only safe alongside the stop-the-framework-before-saving discipline
         // in saveState().
-        if QemuRunner.glProven { setenv("HUSK_VIRGL_SNAPSHOT", "1", 1) }
+        if QemuRunner.glProven {
+            setenv("HUSK_VIRGL_SNAPSHOT", "1", 1)
+        }
 
         HuskLog.log("qemu", "calling qemu_init() -- JIT allocation happens inside this")
         argv.withUnsafeMutableBufferPointer { buf in
@@ -1416,11 +1453,11 @@ final class QemuRunner: ObservableObject {
             if pending.w != QemuRunner.bootGuestRes.w
                 || pending.h != QemuRunner.bootGuestRes.h {
                 HuskLog.log("qemu", "display shape differs from boot; asking for "
-                                  + "\(pending.w)x\(pending.h)")
+                    + "\(pending.w)x\(pending.h)")
                 husk_display_set_ui_size(Int32(pending.w), Int32(pending.h))
             } else {
                 HuskLog.log("qemu", "display is already \(pending.w)x\(pending.h); "
-                                  + "not disturbing the guest")
+                    + "not disturbing the guest")
             }
         }
         // Survived initialisation, so this size is safe to try again next launch.
@@ -1443,7 +1480,7 @@ final class QemuRunner: ObservableObject {
         }
         if !snapshotFits {
             HuskLog.log("qemu", "no snapshot matching a \(QemuRunner.shared.lastGuestMiB) MiB "
-                              + "guest; booting cold rather than failing a restore")
+                + "guest; booting cold rather than failing a restore")
         }
 
         // The display device is part of the machine too.
@@ -1458,7 +1495,7 @@ final class QemuRunner: ObservableObject {
         let displayFits = (wantDisplay == haveDisplay)
         if !displayFits {
             HuskLog.log("qemu", "saved machine is a \(haveDisplay) machine and this one is "
-                              + "\(wantDisplay); booting cold and saving a new one")
+                + "\(wantDisplay); booting cold and saving a new one")
         }
         let restored = !Self.gfxstreamEnabled && snapshotFits && displayFits && husk_snapshot_load_at_startup()
         HuskLog.log("qemu", restored
@@ -1495,7 +1532,7 @@ final class QemuRunner: ObservableObject {
             DispatchQueue.main.async { HuskGLView.applyStoredRotation() }
             glUp = husk_display_gl_bind()
             HuskLog.log("qemu", glUp ? "GL display is up -- the GPU is drawing now"
-                                     : "GL bind failed after a successful probe")
+                : "GL bind failed after a successful probe")
         }
         if !glUp {
             HuskLog.log("qemu", "using the software display")
@@ -1555,14 +1592,14 @@ final class QemuRunner: ObservableObject {
                 let aSilent = husk_audio_underruns()
                 let audio = aFrames == 0 && aSilent == 0
                     ? "" : "  ·  audio \(aFrames - lastAudioFrames) frames in, "
-                          + "\(aSilent - lastAudioSilent) silent"
+                    + "\(aSilent - lastAudioSilent) silent"
                 lastAudioFrames = aFrames
                 lastAudioSilent = aSilent
                 let rate = interval > 0 ? Double(delta) / interval : 0
                 DispatchQueue.main.async { [weak self] in self?.fps = rate }
                 HuskLog.log("perf", "display updates=\(delta) "
-                                  + String(format: "window=%.3fs rate=%.1f/s", interval, rate)
-                                  + " thermal=\(ProcessInfo.processInfo.thermalState.rawValue)" + audio)
+                    + String(format: "window=%.3fs rate=%.1f/s", interval, rate)
+                    + " thermal=\(ProcessInfo.processInfo.thermalState.rawValue)" + audio)
                 HuskLog.log("perf", HuskFrameMetrics.shared.takeWindow().summary)
 
                 // Save the machine once Android is genuinely up, and only once.
@@ -1590,7 +1627,11 @@ final class QemuRunner: ObservableObject {
                 // Under fifteen frames in five seconds means nothing is moving
                 // but a caret; three such windows means Android has stopped
                 // working, which is the moment to freeze it.
-                if delta < 15 { quietWindows += 1 } else { quietWindows = 0 }
+                if delta < 15 {
+                    quietWindows += 1
+                } else {
+                    quietWindows = 0
+                }
                 let settled = QemuRunner.bootCompletedAt.map {
                     Date().timeIntervalSince($0) >= 30
                 } ?? false
@@ -1620,9 +1661,9 @@ final class QemuRunner: ObservableObject {
                 if settled, QemuRunner.autoSaveEnabled, !QemuRunner.snapshotRequested,
                    QemuRunner.shared.hasUsableSnapshot || !(quietWindows >= 3 || overdue) {
                     HuskLog.log("snap", "not saving yet: quiet=\(quietWindows) "
-                              + "overdue=\(overdue) "
-                              + "alreadyHaveOne=\(QemuRunner.shared.hasUsableSnapshot) "
-                              + "(display \(QemuRunner.shared.snapshotDisplay ?? "none"))")
+                        + "overdue=\(overdue) "
+                        + "alreadyHaveOne=\(QemuRunner.shared.hasUsableSnapshot) "
+                        + "(display \(QemuRunner.shared.snapshotDisplay ?? "none"))")
                 }
                 if settled, quietWindows >= 3 || overdue,
                    QemuRunner.autoSaveEnabled,
@@ -1660,11 +1701,11 @@ final class QemuRunner: ObservableObject {
                    QemuRunner.shared.lastGuestMiB > 0 {
                     let shortfall = floorMiB - availMiB + 128
                     let newSize = max(768, QemuRunner.balloonTargetMiB
-                                         ?? QemuRunner.shared.lastGuestMiB) - shortfall
+                        ?? QemuRunner.shared.lastGuestMiB) - shortfall
                     if newSize >= 768, newSize != QemuRunner.balloonTargetMiB {
                         QemuRunner.balloonTargetMiB = newSize
                         HuskLog.log("mem", "only \(availMiB) MiB before jetsam; "
-                                         + "ballooning the guest down to \(newSize) MiB")
+                            + "ballooning the guest down to \(newSize) MiB")
                         husk_balloon_set_bytes(Int64(newSize) * 1024 * 1024)
                     }
                 }
@@ -1674,8 +1715,8 @@ final class QemuRunner: ObservableObject {
                         .attributesOfItem(atPath: QemuRunner.shared.guestSerialLogPath)
                     let size = (attrs?[.size] as? NSNumber)?.intValue ?? -1
                     HuskLog.log("qemu", "guest serial log is \(size) bytes "
-                                      + "(if this grows but no [guest] lines appear, "
-                                      + "the tailer is at fault, not the guest)")
+                        + "(if this grows but no [guest] lines appear, "
+                        + "the tailer is at fault, not the guest)")
                 }
             }
         }
@@ -1710,14 +1751,20 @@ final class QemuRunner: ObservableObject {
                         reportedOpen = true
                         HuskLog.log("guest", "serial log opened (fd \(fd))")
                     }
-                    if fd < 0 { Thread.sleep(forTimeInterval: 0.5); continue }
+                    if fd < 0 {
+                        Thread.sleep(forTimeInterval: 0.5)
+                        continue
+                    }
                 }
 
                 let n = buf.withUnsafeMutableBytes { read(fd, $0.baseAddress, 64 * 1024) }
                 if n < 0 {
-                    if errno == EINTR { continue }
+                    if errno == EINTR {
+                        continue
+                    }
                     HuskLog.log("guest", "serial read failed: errno \(errno); reopening")
-                    close(fd); fd = -1
+                    close(fd)
+                    fd = -1
                     Thread.sleep(forTimeInterval: 1)
                     continue
                 }
@@ -1729,17 +1776,19 @@ final class QemuRunner: ObservableObject {
                 }
 
                 totalRead += n
-                pending.append(contentsOf: buf[0..<n])
+                pending.append(contentsOf: buf[0 ..< n])
 
                 while let nl = pending.firstIndex(of: 0x0A) {
-                    let lineData = pending.subdata(in: pending.startIndex..<nl)
-                    pending.removeSubrange(pending.startIndex...nl)
+                    let lineData = pending.subdata(in: pending.startIndex ..< nl)
+                    pending.removeSubrange(pending.startIndex ... nl)
                     // Serial consoles emit CRLF; strip the CR or every line ends
                     // with a stray carriage return.
                     var line = String(decoding: lineData, as: UTF8.self)
                     line = line.replacingOccurrences(of: "\r", with: "")
                     line = line.trimmingCharacters(in: .whitespaces)
-                    if line.isEmpty { continue }
+                    if line.isEmpty {
+                        continue
+                    }
 
                     HuskLog.log("guest", line)
 
@@ -1755,14 +1804,16 @@ final class QemuRunner: ObservableObject {
                     // has to succeed once, because the snapshot is taken after
                     // it, but it does have to succeed once.
                     for (needle, milestone, percent) in
-                            (QemuRunner.didRestore ? [] : QemuRunner.bootMilestones) {
+                        (QemuRunner.didRestore ? [] : QemuRunner.bootMilestones) {
                         if line.contains(needle) {
                             let secs = Int(Date().timeIntervalSince(QemuRunner.bootStarted))
                             let mins = secs / 60, rem = secs % 60
                             let stamp = String(format: "%d:%02d", mins, rem)
                             Task { @MainActor in
                                 let r = QemuRunner.shared
-                                if percent > r.bootProgress { r.bootProgress = percent }
+                                if percent > r.bootProgress {
+                                    r.bootProgress = percent
+                                }
                                 r.setupMessage =
                                     "\(r.bootProgress)%  ·  \(milestone)  ·  \(stamp) elapsed"
                             }
@@ -1779,7 +1830,7 @@ final class QemuRunner: ObservableObject {
                        line.contains("sys.boot_completed=1") {
                         QemuRunner.bootCompletedAt = Date()
                         HuskLog.log("snap", "Android reports boot_completed; "
-                                          + "will save the machine once it settles")
+                            + "will save the machine once it settles")
                     }
 
                     if let r = line.range(of: "HUSK-SETUP: ") ?? line.range(of: "HUSK-UI: ") {

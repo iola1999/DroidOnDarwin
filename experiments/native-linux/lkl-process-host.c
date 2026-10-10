@@ -52,6 +52,7 @@ static pthread_mutex_t target_mutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_t target_thread, timer_thread;
 static atomic_int timer_stopping;
 static NceCode event_resume;
+static atomic_ulong resume_hits, resume_misses;
 static unsigned long preemptions, deferred_faults, stack_resumes, stack_calls, stackless_exits;
 static unsigned long inherited_preempt_blocks;
 static volatile sig_atomic_t logged_redirect, logged_stack_restore;
@@ -62,6 +63,26 @@ static NceCode code;
 static unsigned char *ram;
 static unsigned long code_copies, code_copy_bytes, data_maps, data_map_bytes, revocations;
 static unsigned long code_reused_bytes;
+static bool map_profile;
+enum MapOperation { MAP_DATA,
+                    MAP_CODE,
+                    MAP_REVOKE,
+                    MAP_OPERATIONS };
+static atomic_ulong map_calls[MAP_OPERATIONS], map_time_ns[MAP_OPERATIONS];
+
+static uint64_t profile_clock(void)
+{
+    return map_profile ? clock_gettime_nsec_np(CLOCK_MONOTONIC_RAW) : 0;
+}
+
+static void profile_mapping(enum MapOperation operation, uint64_t begin)
+{
+    if (!map_profile)
+        return;
+    atomic_fetch_add_explicit(&map_calls[operation], 1, memory_order_relaxed);
+    atomic_fetch_add_explicit(&map_time_ns[operation], profile_clock() - begin, memory_order_relaxed);
+}
+
 static NceSegment dynamic_cache;
 static size_t ram_size;
 static unsigned long reclaimed_ranges, reclaimed_bytes;
@@ -70,6 +91,7 @@ static int (*page_fault)(unsigned long, int);
 static void (*user_return)(long, long, unsigned long);
 static void (*user_fault)(unsigned long, int);
 static void (*user_preempt)(void);
+static void (*prepare_user)(void);
 static unsigned long faults, allocated, freed;
 static int trace, fault_trace;
 static struct sigaction old_segv, old_bus, old_ill, old_trap;
@@ -97,6 +119,7 @@ static int shmem_reclaim(unsigned long offset, unsigned long size)
 static void restore_code(NceProgram *program, NceSegment *segment, size_t position,
                          const unsigned char *source, size_t length, enum lkl_prot prot)
 {
+    uint64_t begin = profile_clock();
     /* Darwin's cache operation needs an accessible RX address. No guest
      * executes concurrently while the single Linux CPU restores this view. */
     REQUIRE(mprotect(segment->code.rx + position, length,
@@ -127,6 +150,7 @@ static void restore_code(NceProgram *program, NceSegment *segment, size_t positi
         ++code_copies;
         code_copy_bytes += PAGE;
     }
+    profile_mapping(MAP_CODE, begin);
 }
 
 static void *shmem_map(void *address, unsigned long offset, unsigned long size, enum lkl_prot prot)
@@ -193,7 +217,9 @@ static void *shmem_map(void *address, unsigned long offset, unsigned long size, 
         } else {
             REQUIRE(!(prot & LKL_PROT_EXEC));
             int host_prot = ((prot & LKL_PROT_READ) ? PROT_READ : 0) | ((prot & LKL_PROT_WRITE) ? PROT_WRITE : 0);
+            uint64_t begin = profile_clock();
             REQUIRE(nce_memory_remap((void *)start, ram + offset, length, host_prot) == 0);
+            profile_mapping(MAP_DATA, begin);
             ++data_maps;
             data_map_bytes += length;
         }
@@ -204,6 +230,7 @@ static void *shmem_map(void *address, unsigned long offset, unsigned long size, 
 }
 static int protect_none(void *address, unsigned long size)
 {
+    uint64_t begin = profile_clock();
     ++revocations;
     uintptr_t start = (uintptr_t)address, end = start + size;
     uintptr_t cursor = start;
@@ -262,6 +289,7 @@ static int protect_none(void *address, unsigned long size)
     if (cursor < end && mmap((void *)cursor, end - cursor, PROT_NONE,
                              MAP_ANON | MAP_PRIVATE | MAP_FIXED, -1, 0) == MAP_FAILED)
         return -1;
+    profile_mapping(MAP_REVOKE, begin);
     return 0;
 }
 
@@ -332,17 +360,29 @@ static void prepare_resume(NceState *state)
     NceCode resume = event_resume;
     NceCode dynamic = nce_memory_dynamic_code();
     if (state->regs.pc >= (uintptr_t)dynamic.rx && state->regs.pc < (uintptr_t)dynamic.rx + dynamic.size)
-        resume = (NceCode){dynamic.rw, dynamic.rx, 16};
-    for (size_t i = 0; i < nce_program_count; ++i) {
+        resume = (NceCode){dynamic.rw, dynamic.rx, PAGE};
+    size_t i = nce_program_index(state->regs.pc);
+    if (i < nce_program_count) {
         NceProgram *p = &nce_programs[i];
         if (state->regs.pc >= p->base && state->regs.pc < p->base + p->span) {
-            size_t offset = p->stubs.size - 16;
-            resume = (NceCode){p->stubs.rw + offset, p->stubs.rx + offset, 16};
-            break;
+            size_t offset = 16 + p->patch_count * 80;
+            resume = (NceCode){p->stubs.rw + offset, p->stubs.rx + offset, p->stubs.size - offset};
         }
     }
-    REQUIRE(nce_write_entry(resume, state->regs.pc) == 0);
-    nce_sync_code(resume);
+    // The Linux CPU owns these slots until the guest resumes. Their branch word
+    // identifies the target; a collision only replaces this slot's old entry.
+    REQUIRE(resume.size >= 16);
+    size_t slot = (state->regs.pc >> 2) % (resume.size / 16) * 16;
+    resume = (NceCode){resume.rw + slot, resume.rx + slot, 16};
+    uint32_t branch;
+    REQUIRE(nce_write_branch(&branch, (uintptr_t)resume.rx + 4, state->regs.pc) == 0);
+    if (((uint32_t *)resume.rw)[1] != branch) {
+        REQUIRE(nce_write_entry(resume, state->regs.pc) == 0);
+        nce_sync_code(resume);
+        atomic_fetch_add_explicit(&resume_misses, 1, memory_order_relaxed);
+    } else {
+        atomic_fetch_add_explicit(&resume_hits, 1, memory_order_relaxed);
+    }
     state->resume = (uintptr_t)resume.rx;
 }
 
@@ -511,9 +551,10 @@ static int guest_memory(NceState *state, uintptr_t address, void *buffer, size_t
         goto fault;
     for (uintptr_t p = address; p < address + size; p = (p & ~(PAGE - 1)) + PAGE) {
         bad = p;
-        if (page_fault(p, write))
+        if (page_fault(p, write | NCE_FAULT_DIRECT))
             goto fault;
     }
+    prepare_user();
     if (write)
         memcpy((void *)address, buffer, size);
     else
@@ -579,7 +620,8 @@ static void user_run(void *opaque)
     active = state;
     if (process->exec_path) {
         uintptr_t *stack = (void *)(state->regs.sp - 512);
-        REQUIRE(page_fault((uintptr_t)stack, 1) == 0);
+        REQUIRE(page_fault((uintptr_t)stack, 1 | NCE_FAULT_DIRECT) == 0);
+        prepare_user();
         char *path = (void *)(stack + 16);
         char *env = path + 64;
         strcpy(path, process->exec_path);
@@ -594,6 +636,7 @@ static void user_run(void *opaque)
             fprintf(stderr, "exec %s failed: %ld\n", process->exec_path, result);
         REQUIRE(result == 0);
     }
+    prepare_user();
     nce_enter(state);
     REQUIRE(0); /* Linux exit terminates the task without returning to NCE. */
 }
@@ -616,6 +659,7 @@ unsigned long nce_process_setup(void)
     REQUIRE(getpagesize() == PAGE);
     trace = getenv("NCE_TRACE") != NULL;
     fault_trace = getenv("NCE_FAULT_TRACE") != NULL;
+    map_profile = getenv("NCE_MAP_PROFILE") != NULL;
     user_base = nce_memory_user_base();
     dynamic_cache = (NceSegment){.size = NCE_EXEC_SIZE, .code = nce_memory_dynamic_code()};
     for (size_t i = 0; i < nce_program_count; ++i) {
@@ -696,14 +740,20 @@ static long get_file(long (*call)(long, long *), const char *path, char *buffer,
     return count;
 }
 
-static void mount_system(long (*call)(long, long *))
+static void create_block_device(long (*call)(long, long *), const char *sysfs, const char *path)
 {
     char device[64];
     unsigned major, minor;
-    REQUIRE(get_file(call, "/sys/block/ncedisk1/dev", device, sizeof(device)) > 0);
+    REQUIRE(get_file(call, sysfs, device, sizeof(device)) > 0);
     REQUIRE(sscanf(device, "%u:%u", &major, &minor) == 2 && major < 4096 && minor < 256);
-    long args[6] = {-100, (long)"/dev/ncesystem", 0060400, (major << 8) | minor};
+    long args[6] = {-100, (long)path, 0060400, (major << 8) | minor};
     REQUIRE(call(33, args) == 0);
+}
+
+static void mount_system(long (*call)(long, long *))
+{
+    create_block_device(call, "/sys/block/ncedisk1/dev", "/dev/ncesystem");
+    long args[6] = {0};
     const char *directories[] = {"/system-image", "/apex", "/system_ext", "/product", "/vendor"};
     for (unsigned i = 0; i < sizeof(directories) / sizeof(*directories); ++i) {
         args[0] = -100;
@@ -811,17 +861,44 @@ static void *stream_guest_log(void *opaque)
 {
     struct LogPump *pump = opaque;
     char buffer[65536];
-    long offset = 0;
+    long offsets[2] = {0, 0};
+    uint64_t begin = profile_clock(), report = begin;
+    unsigned long initial_calls[MAP_OPERATIONS], initial_time[MAP_OPERATIONS];
+    for (unsigned i = 0; i < MAP_OPERATIONS; ++i) {
+        initial_calls[i] = atomic_load_explicit(&map_calls[i], memory_order_relaxed);
+        initial_time[i] = atomic_load_explicit(&map_time_ns[i], memory_order_relaxed);
+    }
     for (;;) {
-        long args[6] = {2, (long)buffer, sizeof(buffer), offset};
-        long count = pump->call(67, args);
-        REQUIRE(count >= 0);
-        if (count) {
-            REQUIRE(fwrite(buffer, 1, count, stderr) == (size_t)count);
-            REQUIRE(fflush(stderr) == 0);
-            offset += count;
-            continue;
+        uint64_t now = profile_clock();
+        if (map_profile && now - report >= 10000000000ULL) {
+            fprintf(stderr, "{\"profile\":\"host_mapping\",\"elapsed_ms\":%.3f,\"data_calls\":%lu,\"data_ms\":%.3f,\"code_calls\":%lu,\"code_ms\":%.3f,\"revoke_calls\":%lu,\"revoke_ms\":%.3f}\n",
+                    (now - begin) / 1e6,
+                    atomic_load_explicit(&map_calls[MAP_DATA], memory_order_relaxed) - initial_calls[MAP_DATA],
+                    (atomic_load_explicit(&map_time_ns[MAP_DATA], memory_order_relaxed) - initial_time[MAP_DATA]) / 1e6,
+                    atomic_load_explicit(&map_calls[MAP_CODE], memory_order_relaxed) - initial_calls[MAP_CODE],
+                    (atomic_load_explicit(&map_time_ns[MAP_CODE], memory_order_relaxed) - initial_time[MAP_CODE]) / 1e6,
+                    atomic_load_explicit(&map_calls[MAP_REVOKE], memory_order_relaxed) - initial_calls[MAP_REVOKE],
+                    (atomic_load_explicit(&map_time_ns[MAP_REVOKE], memory_order_relaxed) - initial_time[MAP_REVOKE]) / 1e6);
+            report = now;
+            fprintf(stderr, "{\"profile\":\"resume_entries\",\"hits\":%lu,\"misses\":%lu}\n",
+                    atomic_load_explicit(&resume_hits, memory_order_relaxed),
+                    atomic_load_explicit(&resume_misses, memory_order_relaxed));
         }
+        bool received = false;
+        for (unsigned stream = 0; stream < 2; ++stream) {
+            long args[6] = {stream + 1, (long)buffer, sizeof(buffer), offsets[stream]};
+            long count = pump->call(67, args);
+            REQUIRE(count >= 0);
+            if (!count)
+                continue;
+            FILE *output = stream ? stderr : stdout;
+            REQUIRE(fwrite(buffer, 1, count, output) == (size_t)count);
+            REQUIRE(fflush(output) == 0);
+            offsets[stream] += count;
+            received = true;
+        }
+        if (received)
+            continue;
         if (atomic_load(&pump->stopping))
             return NULL;
         struct timespec delay = {.tv_sec = 1};
@@ -872,8 +949,12 @@ static void run_program(long (*call)(long, long *), const char *path, const char
         REQUIRE(pthread_join(log_thread, NULL) == 0);
     } else
         dump_file(call, "/stderr");
-    if (status) {
+    if (status || waited != pid) {
         dump_file(call, "/stdout");
+        if (live_log) {
+            dump_file(call, "/data/nce/window-state.txt");
+            dump_file(call, "/data/nce/activity-state.txt");
+        }
         dump_file(call, "/proc/meminfo");
         fprintf(stderr, "userspace pid=%ld waited=%ld status=%d\n", pid, waited, status);
         char messages[16384];
@@ -1063,86 +1144,12 @@ static void *poll_busy_guest(void *opaque)
     return NULL;
 }
 
-void nce_process_tests(long (*host_syscall)(long, long *), long (*guest_syscall)(long, long *),
-                       int (*handle_fault)(unsigned long, int),
-                       void (*return_to_user)(long, long, unsigned long), void (*signal_fault)(unsigned long, int),
-                       void (*preempt_user)(void))
+static void process_regressions(long (*host_syscall)(long, long *))
 {
-    run_syscall = guest_syscall;
-    page_fault = handle_fault;
-    user_return = return_to_user;
-    user_fault = signal_fault;
-    user_preempt = preempt_user;
-    long mkdir_args[6] = {-100, (long)"/bin", 0755};
-    REQUIRE(host_syscall(34, mkdir_args) == 0);
-    mkdir_args[1] = (long)"/lib";
-    REQUIRE(host_syscall(34, mkdir_args) == 0);
-    const char *directories[] = {"/system", "/system/bin", "/system/lib64", "/system/bin/bootstrap", "/proc", "/sys"};
-    for (unsigned i = 0; i < sizeof(directories) / sizeof(*directories); ++i) {
-        mkdir_args[1] = (long)directories[i];
-        REQUIRE(host_syscall(34, mkdir_args) == 0);
-    }
-    long mount_args[6] = {(long)"proc", (long)"/proc", (long)"proc", 0, 0};
-    REQUIRE(host_syscall(40, mount_args) == 0);
-    mount_args[0] = (long)"sysfs";
-    mount_args[1] = (long)"/sys";
-    mount_args[2] = (long)"sysfs";
-    REQUIRE(host_syscall(40, mount_args) == 0);
-    mount_args[0] = (long)"selinuxfs";
-    mount_args[1] = (long)"/sys/fs/selinux";
-    mount_args[2] = (long)"selinuxfs";
-    REQUIRE(host_syscall(40, mount_args) == 0);
-    long link_args[6] = {(long)"/system/bin/linker64", -100, (long)"/system/bin/bootstrap/linker64"};
-    REQUIRE(host_syscall(36, link_args) == 0);
-    long null_args[6] = {-100, (long)"/dev/null", 0020666, 259};
-    REQUIRE(host_syscall(33, null_args) == 0);
-    null_args[1] = (long)"/dev/kmsg";
-    null_args[3] = 267;
-    REQUIRE(host_syscall(33, null_args) == 0);
-    null_args[1] = (long)"/dev/random";
-    null_args[3] = 264;
-    REQUIRE(host_syscall(33, null_args) == 0);
-    null_args[1] = (long)"/dev/urandom";
-    null_args[3] = 265;
-    REQUIRE(host_syscall(33, null_args) == 0);
-    for (const char **path = (const char *[]){"/dev/null", "/dev/random", "/dev/urandom", NULL}; *path; ++path) {
-        long mode_args[6] = {-100, (long)*path, 0666};
-        REQUIRE(host_syscall(53, mode_args) == 0);
-    }
-    struct {
-        int entropy_bits, bytes;
-        unsigned char data[32];
-    } entropy = {256, 32, {0}};
-    arc4random_buf(entropy.data, sizeof(entropy.data));
-    long random_args[6] = {-100, (long)"/dev/random", 2};
-    long random_fd = host_syscall(56, random_args);
-    REQUIRE(random_fd >= 0);
-    random_args[0] = random_fd;
-    random_args[1] = 0x40085203;
-    random_args[2] = (long)&entropy;
-    REQUIRE(host_syscall(29, random_args) == 0);
-    REQUIRE(host_syscall(57, random_args) == 0);
-    memset(entropy.data, 0, sizeof(entropy.data));
-    random_args[0] = (long)entropy.data;
-    random_args[1] = sizeof(entropy.data);
-    random_args[2] = 1;
-    REQUIRE(host_syscall(278, random_args) == sizeof(entropy.data));
-    puts("{\"test\":\"linux_random_initialized\",\"passed\":true}");
-    mount_system(host_syscall);
-    host_input_test(host_syscall);
-    memory_report(host_syscall, "system_mounted");
     code = nce_memory_take(65536);
     puts("{\"phase\":\"linux_process_tests\"}");
     const unsigned char *exec_elf = nce_programs[0].file;
     size_t exec_size = nce_programs[0].size;
-    for (size_t i = 0; i < nce_program_count; ++i) {
-        if (!nce_programs[i].system_image) {
-            put_file(host_syscall, nce_programs[i].path, nce_programs[i].file, nce_programs[i].size);
-            // Non-root exec also opens the common signal-return ELF during setup.
-            long permissions[6] = {-100, (long)nce_programs[i].path, 0755};
-            REQUIRE(host_syscall(53, permissions) == 0);
-        }
-    }
     long file_args[6] = {0}, fd;
     struct timespec begin, end;
     REQUIRE(clock_gettime(CLOCK_MONOTONIC_RAW, &begin) == 0);
@@ -1230,7 +1237,11 @@ void nce_process_tests(long (*host_syscall)(long, long *), long (*guest_syscall)
     REQUIRE(get_file(host_syscall, "/stdout", benchmark, sizeof(benchmark)) > 0);
     REQUIRE(strstr(benchmark, "linux_ext4_persistence"));
     fputs(benchmark, stdout);
-    mount_android_data(host_syscall);
+}
+
+static void android_abi_regressions(long (*host_syscall)(long, long *))
+{
+    char benchmark[16384];
     REQUIRE(nce_session_request_stop() == -19);
     nce_session_set_syscall(host_syscall);
     REQUIRE(nce_session_request_stop() == 0 && nce_session_request_stop() == 0);
@@ -1269,9 +1280,12 @@ void nce_process_tests(long (*host_syscall)(long, long *), long (*guest_syscall)
     REQUIRE(get_file(host_syscall, "/stdout", benchmark, sizeof(benchmark)) > 0);
     REQUIRE(strstr(benchmark, "android_bionic_threads_allocator_tls"));
     fputs(benchmark, stdout);
+}
+
 #ifdef NCE_GRAPHICS
-    puts("{\"phase\":\"native_graphics_start\"}");
-    REQUIRE(nce_graphics_start(host_syscall) == 0);
+static void graphics_regressions(long (*host_syscall)(long, long *))
+{
+    char benchmark[16384];
     run_program(host_syscall, "/system/bin/gpu-test", NULL);
     REQUIRE(get_file(host_syscall, "/stdout", benchmark, sizeof(benchmark)) > 0);
     REQUIRE(strstr(benchmark, "linux_native_gles_metal"));
@@ -1281,7 +1295,6 @@ void nce_process_tests(long (*host_syscall)(long, long *), long (*guest_syscall)
     REQUIRE(get_file(host_syscall, "/stdout", benchmark, sizeof(benchmark)) > 0);
     REQUIRE(strstr(benchmark, "android_sdk_egl_driver_pixels"));
     fputs(benchmark, stdout);
-    put_file(host_syscall, "/data/nce/graphics", "1", 1);
     const char *gpu_output = getenv("NCE_GPU_OUTPUT");
     if (gpu_output) {
         size_t capacity = NCE_GPU_WIDTH * NCE_GPU_HEIGHT * 4 + 55;
@@ -1293,7 +1306,12 @@ void nce_process_tests(long (*host_syscall)(long, long *), long (*guest_syscall)
         REQUIRE(file && fwrite(pixels, 1, bytes, file) == (size_t)bytes && fclose(file) == 0);
         free(pixels);
     }
+}
 #endif
+
+static void art_regressions(long (*host_syscall)(long, long *))
+{
+    char benchmark[16384];
     run_program(host_syscall, "/system/bin/cfi-test", NULL);
     REQUIRE(get_file(host_syscall, "/stdout", benchmark, sizeof(benchmark)) > 0);
     REQUIRE(strstr(benchmark, "android_cfi_library_reload"));
@@ -1305,12 +1323,6 @@ void nce_process_tests(long (*host_syscall)(long, long *), long (*guest_syscall)
     fputs(benchmark, stdout);
     memory_report(host_syscall, "before_art");
     puts("{\"phase\":\"android_art_load\"}");
-    for (size_t i = 0; i < sizeof(art_assets) / sizeof(art_assets[0]); ++i) {
-        put_file(host_syscall, art_assets[i].path, art_assets[i].data, art_assets[i].size);
-        long permissions[6] = {-100, (long)art_assets[i].path, 0644};
-        REQUIRE(host_syscall(53, permissions) == 0);
-    }
-    put_file(host_syscall, "/data/dalvik-cache/arm64/.keep", "", 0);
     run_program(host_syscall, "/system/bin/art-test", "");
     REQUIRE(get_file(host_syscall, "/stdout", benchmark, sizeof(benchmark)) > 0);
     REQUIRE(strstr(benchmark, "android_art_library_loaded"));
@@ -1338,10 +1350,145 @@ void nce_process_tests(long (*host_syscall)(long, long *), long (*guest_syscall)
         fputs(benchmark, stdout);
     }
     memory_report(host_syscall, "after_art");
+}
+
+static void reclaim_regressions(long (*host_syscall)(long, long *))
+{
+    char benchmark[16384];
+    check_program_files(host_syscall);
+    reclaim_file_cache(host_syscall);
+    long reclaim_args[6] = {-100, (long)"/proc/sys/vm/drop_caches", 1};
+    long reclaim_fd = host_syscall(56, reclaim_args);
+    REQUIRE(reclaim_fd >= 0);
+    reclaim_args[0] = reclaim_fd;
+    reclaim_args[1] = (long)"3\n";
+    reclaim_args[2] = 2;
+    REQUIRE(host_syscall(64, reclaim_args) == 2 && host_syscall(57, reclaim_args) == 0);
+    struct timespec reclaim_delay = {3, 0};
+    reclaim_args[0] = (long)&reclaim_delay;
+    reclaim_args[1] = 0;
+    REQUIRE(host_syscall(101, reclaim_args) == 0 && reclaimed_ranges > 0);
+    memory_report(host_syscall, "after_host_reclaim");
+    run_program(host_syscall, "/reclaim-test", NULL);
+    REQUIRE(get_file(host_syscall, "/stdout", benchmark, sizeof(benchmark)) > 0);
+    REQUIRE(strstr(benchmark, "linux_reclaimed_ram_reuse"));
+    fputs(benchmark, stdout);
+    puts("{\"test\":\"linux_dynamic_elf_files_unchanged\",\"passed\":true}");
+}
+
+void nce_process_run(long (*host_syscall)(long, long *), long (*guest_syscall)(long, long *),
+                     int (*handle_fault)(unsigned long, int),
+                     void (*return_to_user)(long, long, unsigned long), void (*signal_fault)(unsigned long, int),
+                     void (*preempt_user)(void), void (*prepare_user_memory)(void))
+{
+    const bool interactive = getenv("NCE_DESKTOP") != NULL;
+    char benchmark[16384];
+    run_syscall = guest_syscall;
+    page_fault = handle_fault;
+    user_return = return_to_user;
+    user_fault = signal_fault;
+    user_preempt = preempt_user;
+    prepare_user = prepare_user_memory;
+    long mkdir_args[6] = {-100, (long)"/bin", 0755};
+    REQUIRE(host_syscall(34, mkdir_args) == 0);
+    mkdir_args[1] = (long)"/lib";
+    REQUIRE(host_syscall(34, mkdir_args) == 0);
+    const char *directories[] = {"/system", "/system/bin", "/system/lib64", "/system/bin/bootstrap", "/proc", "/sys"};
+    for (unsigned i = 0; i < sizeof(directories) / sizeof(*directories); ++i) {
+        mkdir_args[1] = (long)directories[i];
+        REQUIRE(host_syscall(34, mkdir_args) == 0);
+    }
+    long mount_args[6] = {(long)"proc", (long)"/proc", (long)"proc", 0, 0};
+    REQUIRE(host_syscall(40, mount_args) == 0);
+    mount_args[0] = (long)"sysfs";
+    mount_args[1] = (long)"/sys";
+    mount_args[2] = (long)"sysfs";
+    REQUIRE(host_syscall(40, mount_args) == 0);
+    mount_args[0] = (long)"selinuxfs";
+    mount_args[1] = (long)"/sys/fs/selinux";
+    mount_args[2] = (long)"selinuxfs";
+    REQUIRE(host_syscall(40, mount_args) == 0);
+    mount_args[0] = (long)"fusectl";
+    mount_args[1] = (long)"/sys/fs/fuse/connections";
+    mount_args[2] = (long)"fusectl";
+    REQUIRE(host_syscall(40, mount_args) == 0);
+    long fuse_args[6] = {-100, (long)"/dev/fuse", 0020600, (10 << 8) | 229};
+    REQUIRE(host_syscall(33, fuse_args) == 0);
+    long link_args[6] = {(long)"/system/bin/linker64", -100, (long)"/system/bin/bootstrap/linker64"};
+    REQUIRE(host_syscall(36, link_args) == 0);
+    long null_args[6] = {-100, (long)"/dev/null", 0020666, 259};
+    REQUIRE(host_syscall(33, null_args) == 0);
+    null_args[1] = (long)"/dev/kmsg";
+    null_args[3] = 267;
+    REQUIRE(host_syscall(33, null_args) == 0);
+    null_args[1] = (long)"/dev/random";
+    null_args[3] = 264;
+    REQUIRE(host_syscall(33, null_args) == 0);
+    null_args[1] = (long)"/dev/urandom";
+    null_args[3] = 265;
+    REQUIRE(host_syscall(33, null_args) == 0);
+    for (const char **path = (const char *[]){"/dev/null", "/dev/random", "/dev/urandom", NULL}; *path; ++path) {
+        long mode_args[6] = {-100, (long)*path, 0666};
+        REQUIRE(host_syscall(53, mode_args) == 0);
+    }
+    struct {
+        int entropy_bits, bytes;
+        unsigned char data[32];
+    } entropy = {256, 32, {0}};
+    arc4random_buf(entropy.data, sizeof(entropy.data));
+    long random_args[6] = {-100, (long)"/dev/random", 2};
+    long random_fd = host_syscall(56, random_args);
+    REQUIRE(random_fd >= 0);
+    random_args[0] = random_fd;
+    random_args[1] = 0x40085203;
+    random_args[2] = (long)&entropy;
+    REQUIRE(host_syscall(29, random_args) == 0);
+    REQUIRE(host_syscall(57, random_args) == 0);
+    memset(entropy.data, 0, sizeof(entropy.data));
+    random_args[0] = (long)entropy.data;
+    random_args[1] = sizeof(entropy.data);
+    random_args[2] = 1;
+    REQUIRE(host_syscall(278, random_args) == sizeof(entropy.data));
+    puts("{\"test\":\"linux_random_initialized\",\"passed\":true}");
+    mount_system(host_syscall);
+    create_block_device(host_syscall, "/sys/block/ncedisk0/dev", "/dev/ncedisk0");
+    for (size_t i = 0; i < nce_program_count; ++i) {
+        if (!nce_programs[i].system_image) {
+            put_file(host_syscall, nce_programs[i].path, nce_programs[i].file, nce_programs[i].size);
+            // Non-root exec also opens the common signal-return ELF during setup.
+            long permissions[6] = {-100, (long)nce_programs[i].path, 0755};
+            REQUIRE(host_syscall(53, permissions) == 0);
+        }
+    }
+    if (!interactive)
+        host_input_test(host_syscall);
+    memory_report(host_syscall, "system_mounted");
+    if (!interactive)
+        process_regressions(host_syscall);
+    mount_android_data(host_syscall);
+    if (!interactive)
+        android_abi_regressions(host_syscall);
+#ifdef NCE_GRAPHICS
+    puts("{\"phase\":\"native_graphics_start\"}");
+    REQUIRE(nce_graphics_start(host_syscall) == 0);
+    put_file(host_syscall, "/data/nce/graphics", "1", 1);
+    if (!interactive)
+        graphics_regressions(host_syscall);
+#endif
+    for (size_t i = 0; i < sizeof(art_assets) / sizeof(art_assets[0]); ++i) {
+        put_file(host_syscall, art_assets[i].path, art_assets[i].data, art_assets[i].size);
+        long permissions[6] = {-100, (long)art_assets[i].path, 0644};
+        REQUIRE(host_syscall(53, permissions) == 0);
+    }
+    put_file(host_syscall, "/data/dalvik-cache/arm64/.keep", "", 0);
+    if (!interactive)
+        art_regressions(host_syscall);
     if (getenv("NCE_DESKTOP"))
         put_file(host_syscall, "/data/nce/desktop-session", "", 0);
     if (getenv("NCE_SYSTEM_SERVER_PROBE") || getenv("NCE_DESKTOP"))
         put_file(host_syscall, "/data/nce/system-server-probe", "", 0);
+    if (getenv("NCE_TRACE_SYSTEMUI"))
+        put_file(host_syscall, "/data/nce/trace-systemui", "", 0);
     puts("{\"phase\":\"android_platform_services\"}");
     nce_host_input_start(host_syscall);
     run_program(host_syscall, "/system/bin/android-services-test", NULL);
@@ -1349,6 +1496,7 @@ void nce_process_tests(long (*host_syscall)(long, long *), long (*guest_syscall)
     REQUIRE(get_file(host_syscall, "/stdout", benchmark, sizeof(benchmark)) > 0);
     REQUIRE(strstr(benchmark, "android_platform_binder_cleanup"));
     REQUIRE(strstr(benchmark, "android_framework_runtime"));
+    REQUIRE(strstr(benchmark, "android_vintf_build_consistency"));
     REQUIRE(strstr(benchmark, "android_aconfig_storage"));
     REQUIRE(strstr(benchmark, "android_framework_file_observer"));
     REQUIRE(strstr(benchmark, "android_system_suspend_wakelocks"));
@@ -1366,7 +1514,7 @@ void nce_process_tests(long (*host_syscall)(long, long *), long (*guest_syscall)
     nce_graphics_stop();
 #endif
     REQUIRE(strstr(benchmark, "android_crypto"));
-    fputs(benchmark, stdout);
+
     memory_report(host_syscall, "after_framework");
     const char *graphics_path = getenv("NCE_GRAPHICS_OUTPUT");
     if (graphics_path) {
@@ -1393,25 +1541,8 @@ void nce_process_tests(long (*host_syscall)(long, long *), long (*guest_syscall)
             free(pixels);
         }
     }
-    check_program_files(host_syscall);
-    reclaim_file_cache(host_syscall);
-    long reclaim_args[6] = {-100, (long)"/proc/sys/vm/drop_caches", 1};
-    long reclaim_fd = host_syscall(56, reclaim_args);
-    REQUIRE(reclaim_fd >= 0);
-    reclaim_args[0] = reclaim_fd;
-    reclaim_args[1] = (long)"3\n";
-    reclaim_args[2] = 2;
-    REQUIRE(host_syscall(64, reclaim_args) == 2 && host_syscall(57, reclaim_args) == 0);
-    struct timespec reclaim_delay = {3, 0};
-    reclaim_args[0] = (long)&reclaim_delay;
-    reclaim_args[1] = 0;
-    REQUIRE(host_syscall(101, reclaim_args) == 0 && reclaimed_ranges > 0);
-    memory_report(host_syscall, "after_host_reclaim");
-    run_program(host_syscall, "/reclaim-test", NULL);
-    REQUIRE(get_file(host_syscall, "/stdout", benchmark, sizeof(benchmark)) > 0);
-    REQUIRE(strstr(benchmark, "linux_reclaimed_ram_reuse"));
-    fputs(benchmark, stdout);
-    puts("{\"test\":\"linux_dynamic_elf_files_unchanged\",\"passed\":true}");
+    if (!interactive)
+        reclaim_regressions(host_syscall);
     long log_args[6] = {10};
     long log_size = host_syscall(116, log_args);
     REQUIRE(log_size > 0);

@@ -14,6 +14,10 @@ def apply(source: Path, experiment: Path):
         path.write_text(text.replace(before, after))
 
     arch = "arch/lkl/"
+    # Match Android's CAP_SYS_NICE permission for cross-UID task placement.
+    edit("kernel/cgroup/cgroup-v1.c", "\t    !uid_eq(cred->euid, tcred->suid))",
+         "\t    !uid_eq(cred->euid, tcred->suid) &&\n"
+         "\t    !ns_capable(tcred->user_ns, CAP_SYS_NICE))")
     # Host timer IRQs remain pending while a Linux thread owns the CPU.
     # Poll them at cooperative reschedule points before testing NEED_RESCHED.
     edit("kernel/sched/core.c", "int __sched __cond_resched(void)\n{",

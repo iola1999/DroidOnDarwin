@@ -1,5 +1,7 @@
 # Build outputs
 build/
+/work/
+/outputs/
 # On-device pairing crate (scripts/build_rppairing_ios.sh)
 src/rppairing-ios/target/
 third_party/build/
@@ -13,6 +15,9 @@ guests/
 
 # Xcode
 *.xcuserdatad
+xcuserdata/
+*.xcuserstate
+*.xcarchive/
 DerivedData/
 .DS_Store
 
@@ -22,4 +27,11 @@ third_party/gpu/
 .build/
 *.ipa
 .freebuff/
-scripts/__pycache__/
+
+# Python caches
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Formatter cache
+.swiftformatcache

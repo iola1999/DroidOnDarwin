@@ -28,10 +28,18 @@ struct LibraryTab: View {
         NavigationStack(path: $router.library) {
             ScrollView {
                 VStack(spacing: 16) {
-                    if !host.isReady { machineStrip }
-                    if let busy = host.busy { busyStrip(busy) }
-                    if jit.busy, !jit.showSetup { busyStrip(jit.status ?? "Turning on JIT…") }
-                    if !categories.isEmpty { filterPicker }
+                    if !host.isReady {
+                        machineStrip
+                    }
+                    if let busy = host.busy {
+                        busyStrip(busy)
+                    }
+                    if jit.busy, !jit.showSetup {
+                        busyStrip(jit.status ?? "Turning on JIT…")
+                    }
+                    if !categories.isEmpty {
+                        filterPicker
+                    }
 
                     if !shown.isEmpty {
                         LazyVGrid(columns: columns, spacing: 12) {
@@ -44,7 +52,7 @@ struct LibraryTab: View {
                                     Button {
                                         host.launch(app.name) { onOpenGuest() }
                                     } label: { Label("Launch", systemImage: "play.fill") }
-                                    .disabled(!host.isReady || host.busy != nil)
+                                        .disabled(!host.isReady || host.busy != nil)
                                     Button {
                                         router.library.append(app)
                                     } label: { Label("Details", systemImage: "info.circle") }
@@ -58,7 +66,7 @@ struct LibraryTab: View {
                     } else if host.packages.isEmpty && host.isReady {
                         EmptyState(title: "No Apps Yet",
                                    message: "Install an APK and it appears here. Split sets "
-                                          + "work too — pick every piece at once.",
+                                       + "work too — pick every piece at once.",
                                    systemImage: "square.grid.2x2",
                                    actionTitle: "Install APK(s)",
                                    action: { importing = true })
@@ -91,7 +99,7 @@ struct LibraryTab: View {
             }
             .huskFilePicker(isPresented: $importing) { urls in
                 HuskLog.log("ui", "importing \(urls.count) file(s): "
-                          + urls.map(\.lastPathComponent).joined(separator: ", "))
+                    + urls.map(\.lastPathComponent).joined(separator: ", "))
                 host.install(urls)
             }
         }
@@ -119,9 +127,9 @@ struct LibraryTab: View {
                     ProgressView(value: Double(runner.bootProgress), total: 100)
                 } else {
                     Text(started ? host.status
-                                 : JITBootstrap.isDebuggerAttached
-                                   ? "Your apps are here; start it to open them."
-                                   : "Needs JIT. StikJIT is built in — the recommended way.")
+                        : JITBootstrap.isDebuggerAttached
+                        ? "Your apps are here; start it to open them."
+                        : "Needs JIT. StikJIT is built in — the recommended way.")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                         .lineLimit(2)
@@ -129,7 +137,11 @@ struct LibraryTab: View {
             }
             Spacer(minLength: 6)
             Button(started ? "Show" : JITBootstrap.isDebuggerAttached ? "Start" : "Enable JIT") {
-                if started { onOpenGuest() } else { onStartAndroid() }
+                if started {
+                    onOpenGuest()
+                } else {
+                    onStartAndroid()
+                }
             }
             .buttonStyle(.borderedProminent)
             .buttonBorderShape(.capsule)
@@ -173,9 +185,13 @@ struct LibraryTab: View {
 
     private var shown: [AndroidHost.Package] {
         var list = host.packages
-        if filter != "All" { list = list.filter { $0.category == filter } }
+        if filter != "All" {
+            list = list.filter { $0.category == filter }
+        }
         let q = query.trimmingCharacters(in: .whitespaces)
-        guard !q.isEmpty else { return list }
+        guard !q.isEmpty else {
+            return list
+        }
         return list.filter {
             $0.label.localizedCaseInsensitiveContains(q)
                 || $0.name.localizedCaseInsensitiveContains(q)

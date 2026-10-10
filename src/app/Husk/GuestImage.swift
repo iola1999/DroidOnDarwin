@@ -94,10 +94,10 @@ final class GuestImage: ObservableObject {
     /// stream byte for byte and nothing downstream needs to know it happened.
     static let snapshotPartCount = 2
     static var snapshotPartURLs: [URL] {
-        (0..<snapshotPartCount).map { i in
+        (0 ..< snapshotPartCount).map { i in
             URL(string: "https://github.com/Leviidev/Husk/releases/download/"
-                      + "\(dependenciesTag)/vdb-snapshot-\(imageVersion).qcow2.gz."
-                      + String(format: "%02d", i))!
+                + "\(dependenciesTag)/vdb-snapshot-\(imageVersion).qcow2.gz."
+                + String(format: "%02d", i))!
         }
     }
 
@@ -113,7 +113,7 @@ final class GuestImage: ObservableObject {
 
     static var imageURL: URL {
         URL(string: "https://github.com/Leviidev/Husk/releases/download/"
-                  + "\(dependenciesTag)/vda-\(imageVersion).qcow2")!
+            + "\(dependenciesTag)/vda-\(imageVersion).qcow2")!
     }
 
     nonisolated private var versionStampPath: String {
@@ -129,7 +129,9 @@ final class GuestImage: ObservableObject {
     nonisolated private var documents: URL {
         FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
     }
-    nonisolated var diskPath: String { documents.appendingPathComponent("lineage-vda.qcow2").path }
+    nonisolated var diskPath: String {
+        documents.appendingPathComponent("lineage-vda.qcow2").path
+    }
     /// Present when userdata came from the shipped pre-booted snapshot.
     nonisolated var snapshotStampPath: String {
         documents.appendingPathComponent("husk-shipped-snapshot").path
@@ -146,13 +148,17 @@ final class GuestImage: ObservableObject {
     nonisolated var hasShippedSnapshot: Bool {
         // The stamp files can outlive the disk they describe. A snapshot only
         // counts as installed while its qcow2 is present and valid.
-        guard Self.validate(path: userdataPath).problem == nil else { return false }
+        guard Self.validate(path: userdataPath).problem == nil else {
+            return false
+        }
         // A recorded digest is the modern answer. Comparing the stamp to
         // imageVersion, as this used to, quietly tied "do I have a snapshot" to
         // "is the app's generation string current" -- so publishing a new image
         // made every install believe its perfectly good snapshot had vanished,
         // and with it the pinned RAM and resolution a restore depends on.
-        if installedSnapshotDigest != nil { return true }
+        if installedSnapshotDigest != nil {
+            return true
+        }
         // Installs from before digests existed recorded a generation name here
         // instead. Their snapshot is still on disk and still restorable.
         return (try? String(contentsOfFile: snapshotStampPath, encoding: .utf8)) != nil
@@ -180,13 +186,19 @@ final class GuestImage: ObservableObject {
     }
 
     nonisolated private func recorded(at path: String) -> String? {
-        guard let s = try? String(contentsOfFile: path, encoding: .utf8) else { return nil }
+        guard let s = try? String(contentsOfFile: path, encoding: .utf8) else {
+            return nil
+        }
         let trimmed = s.trimmingCharacters(in: .whitespacesAndNewlines)
         return trimmed.isEmpty ? nil : trimmed
     }
 
-    nonisolated var installedImageDigest: String?    { recorded(at: imageDigestPath) }
-    nonisolated var installedSnapshotDigest: String? { recorded(at: snapshotDigestPath) }
+    nonisolated var installedImageDigest: String? {
+        recorded(at: imageDigestPath)
+    }
+    nonisolated var installedSnapshotDigest: String? {
+        recorded(at: snapshotDigestPath)
+    }
 
     /// RAM and resolution the installed snapshot needs, falling back to the
     /// values this app was built against when nothing was recorded.
@@ -197,7 +209,9 @@ final class GuestImage: ObservableObject {
               let j = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
               let mib = j["guestMiB"] as? Int,
               let x = j["xres"] as? Int, let y = j["yres"] as? Int
-        else { return fallback }
+        else {
+            return fallback
+        }
         return (mib, x, y,
                 j["smp"] as? Int ?? Self.defaultSmp,
                 j["cpu"] as? String ?? Self.defaultCpu)
@@ -219,9 +233,17 @@ final class GuestImage: ObservableObject {
     /// wrong: a stamp that outlived the files it described, and an asset
     /// published under a new name carrying the old bytes.
     func checkForUpdates() async {
-        guard !Self.isCustomGuest else { update = .none; return }
-        guard let m = await GuestManifest.fetch() else { return }
-        guard !Self.isCustomGuest else { update = .none; return }
+        guard !Self.isCustomGuest else {
+            update = .none
+            return
+        }
+        guard let m = await GuestManifest.fetch() else {
+            return
+        }
+        guard !Self.isCustomGuest else {
+            update = .none
+            return
+        }
         manifest = m
         snapshotPinsToRecord = m.snapshot
 
@@ -244,16 +266,16 @@ final class GuestImage: ObservableObject {
 
         if !haveImage || installedImageDigest != m.image.sha256 {
             HuskLog.log("guest", "image differs: have "
-                      + "\(installedImageDigest?.prefix(12) ?? "nothing"), "
-                      + "release has \(m.image.sha256.prefix(12))")
+                + "\(installedImageDigest?.prefix(12) ?? "nothing"), "
+                + "release has \(m.image.sha256.prefix(12))")
             update = .image(bytes: m.image.size + m.snapshot.size)
             return
         }
         if Self.wantsSnapshot,
            (!hasShippedSnapshot || installedSnapshotDigest != m.snapshot.sha256) {
             HuskLog.log("guest", "snapshot differs: have "
-                      + "\(installedSnapshotDigest?.prefix(12) ?? "nothing"), "
-                      + "release has \(m.snapshot.sha256.prefix(12))")
+                + "\(installedSnapshotDigest?.prefix(12) ?? "nothing"), "
+                + "release has \(m.snapshot.sha256.prefix(12))")
             update = .snapshot(bytes: m.snapshot.size)
             return
         }
@@ -264,17 +286,27 @@ final class GuestImage: ObservableObject {
     /// Take whatever the update prompt offered.
     func applyUpdate() {
         switch update {
-        case .image:    update = .none; download()
-        case .snapshot: update = .none; downloadSnapshotNow()
-        case .none:     break
+        case .image: update = .none
+            download()
+        case .snapshot: update = .none
+            downloadSnapshotNow()
+        case .none: break
         }
     }
 
-    func dismissUpdate() { update = .none }
+    func dismissUpdate() {
+        update = .none
+    }
 
-    nonisolated var userdataPath: String { documents.appendingPathComponent("lineage-vdb.qcow2").path }
-    nonisolated var varsPath: String { documents.appendingPathComponent("lineage-efi-vars.fd").path }
-    nonisolated var firmwarePath: String { documents.appendingPathComponent("edk2-aarch64-code.fd").path }
+    nonisolated var userdataPath: String {
+        documents.appendingPathComponent("lineage-vdb.qcow2").path
+    }
+    nonisolated var varsPath: String {
+        documents.appendingPathComponent("lineage-efi-vars.fd").path
+    }
+    nonisolated var firmwarePath: String {
+        documents.appendingPathComponent("edk2-aarch64-code.fd").path
+    }
 
     private var task: URLSessionDownloadTask?
 
@@ -310,7 +342,7 @@ final class GuestImage: ObservableObject {
                 hint = " — content was: \(text.trimmingCharacters(in: .whitespacesAndNewlines))"
             }
             return (nil, "only \(size) bytes, expected at least "
-                        + "\(minimumPlausibleSize / (1024 * 1024)) MB\(hint)")
+                + "\(minimumPlausibleSize / (1024 * 1024)) MB\(hint)")
         }
         guard let fh = FileHandle(forReadingAtPath: path),
               let head = try? fh.read(upToCount: 4), head.count == 4 else {
@@ -325,8 +357,12 @@ final class GuestImage: ObservableObject {
     }
 
     func refresh() {
-        if case .downloading = state { return }
-        if case .installing = state { return }
+        if case .downloading = state {
+            return
+        }
+        if case .installing = state {
+            return
+        }
 
         guard FileManager.default.fileExists(atPath: diskPath) else {
             state = Self.isCustomGuest
@@ -340,7 +376,7 @@ final class GuestImage: ObservableObject {
         let installed = try? String(contentsOfFile: versionStampPath, encoding: .utf8)
         if !Self.isCustomGuest, installed != Self.imageVersion {
             HuskLog.log("guest", "installed guest is \(installed ?? "unversioned"), "
-                               + "need \(Self.imageVersion); re-downloading")
+                + "need \(Self.imageVersion); re-downloading")
             try? FileManager.default.removeItem(atPath: diskPath)
             state = .missing
             return
@@ -382,14 +418,16 @@ final class GuestImage: ObservableObject {
         var freed: Int64 = 0
         for name in stale {
             let path = documents.appendingPathComponent(name).path
-            guard fm.fileExists(atPath: path) else { continue }
+            guard fm.fileExists(atPath: path) else {
+                continue
+            }
             let size = ((try? fm.attributesOfItem(atPath: path))?[.size] as? NSNumber)?.int64Value ?? 0
             try? fm.removeItem(atPath: path)
             freed += size
         }
         if freed > 0 {
             HuskLog.log("guest", "removed \(freed / (1024 * 1024)) MiB left by the previous "
-                               + "guest (Debian/Waydroid)")
+                + "guest (Debian/Waydroid)")
         }
     }
 
@@ -398,7 +436,7 @@ final class GuestImage: ObservableObject {
         let fm = FileManager.default
         guard !Self.isCustomGuest || fm.fileExists(atPath: userdataPath) else {
             throw NSError(domain: "husk", code: 3, userInfo: [NSLocalizedDescriptionKey:
-                "Imported userdata disk is missing. Restore the imported disk pair."])
+                    "Imported userdata disk is missing. Restore the imported disk pair."])
         }
         if !fm.fileExists(atPath: firmwarePath) {
             guard let src = Bundle.main.path(forResource: "edk2-aarch64-code", ofType: "fd") else {
@@ -424,7 +462,7 @@ final class GuestImage: ObservableObject {
         if !fm.fileExists(atPath: varsPath) || previous != current {
             if previous != nil, previous != current {
                 HuskLog.log("guest", "device layout changed (\(previous ?? "?") -> \(current)); "
-                                   + "resetting the UEFI variable store so it re-discovers the disk")
+                    + "resetting the UEFI variable store so it re-discovers the disk")
             } else {
                 HuskLog.log("guest", "staging UEFI variable store")
             }
@@ -467,7 +505,7 @@ final class GuestImage: ObservableObject {
                 // replacing a valid, downloaded snapshot with an empty disk.
                 try seedVersion.write(to: seedStamp, atomically: true, encoding: .utf8)
                 HuskLog.log("guest", "preserving installed snapshot and repairing its "
-                                   + "userdata seed stamp")
+                    + "userdata seed stamp")
             } else {
                 // Check for the replacement before deleting existing data. A
                 // missing resource must not turn an upgrade into a missing disk.
@@ -476,7 +514,7 @@ final class GuestImage: ObservableObject {
                         NSLocalizedDescriptionKey: "lineage-vdb-seed.qcow2 missing from the app bundle"])
                 }
                 HuskLog.log("guest", "userdata seed \(seededWith ?? "unversioned") -> \(seedVersion); "
-                                   + "starting from a clean partition")
+                    + "starting from a clean partition")
                 try? fm.removeItem(atPath: userdataPath)
                 try fm.copyItem(atPath: seed, toPath: userdataPath)
                 try seedVersion.write(to: seedStamp, atomically: true, encoding: .utf8)
@@ -499,7 +537,9 @@ final class GuestImage: ObservableObject {
             state = .failed("Restore the imported disk pair to update this system.")
             return
         }
-        if case .downloading = state { return }
+        if case .downloading = state {
+            return
+        }
         state = .downloading(progress: 0, received: 0, total: 0)
         HuskLog.log("guest", "downloading guest image from \(Self.imageURL.absoluteString)")
 
@@ -523,8 +563,12 @@ final class GuestImage: ObservableObject {
     @Published private(set) var isFetchingSnapshot = false
 
     func downloadSnapshotNow() {
-        guard !Self.isCustomGuest else { return }
-        if case .downloading = state { return }
+        guard !Self.isCustomGuest else {
+            return
+        }
+        if case .downloading = state {
+            return
+        }
         if hasShippedSnapshot {
             // A valid but older snapshot may be on disk when the manifest
             // offers a replacement. Do not let the presence check block that
@@ -548,7 +592,9 @@ final class GuestImage: ObservableObject {
             },
             completion: { [weak self] result in
                 Task { @MainActor in
-                    guard let self else { return }
+                    guard let self else {
+                        return
+                    }
                     self.fetcher = nil
                     switch result {
                     case .success(let joined):
@@ -556,8 +602,8 @@ final class GuestImage: ObservableObject {
                             try? FileManager.default.removeItem(at: joined.url)
                             self.isFetchingSnapshot = false
                             self.failed("The snapshot did not match the release "
-                                      + "(sha256 \(joined.digest.prefix(12)), expected "
-                                      + "\(want.prefix(12))).")
+                                + "(sha256 \(joined.digest.prefix(12)), expected "
+                                + "\(want.prefix(12))).")
                             return
                         }
                         self.finishedSnapshot(tempURL: joined.url, digest: joined.digest)
@@ -595,8 +641,10 @@ final class GuestImage: ObservableObject {
                 let size = (try? FileManager.default
                     .attributesOfItem(atPath: dest.path)[.size] as? Int) ?? 0
                 HuskLog.log("guest", "snapshot ready (\(size ?? 0) bytes); "
-                                   + "Android will be restored, not booted")
-                DispatchQueue.main.async { self.isFetchingSnapshot = false; self.state = .ready }
+                    + "Android will be restored, not booted")
+                DispatchQueue.main.async { self.isFetchingSnapshot = false
+                    self.state = .ready
+                }
             } catch {
                 HuskLog.log("guest", "snapshot unpack failed: \(error)")
                 try? FileManager.default.removeItem(at: dest)
@@ -614,7 +662,7 @@ final class GuestImage: ObservableObject {
     /// meaningful alongside the image it was booted from.
     func downloadSnapshot(completion: @escaping (Bool) -> Void) {
         HuskLog.log("guest", "downloading pre-booted snapshot (about 2 GB, "
-                           + "\(Self.snapshotPartCount) parts)")
+            + "\(Self.snapshotPartCount) parts)")
         let expected = manifest?.snapshot.sha256
         fetcher = SnapshotFetcher(
             urls: manifest?.partURLs ?? Self.snapshotPartURLs,
@@ -622,21 +670,26 @@ final class GuestImage: ObservableObject {
                 Task { @MainActor in self?.progressed(received: got, total: total) }
             },
             completion: { [weak self] result in
-                guard let self else { completion(false); return }
+                guard let self else {
+                    completion(false)
+                    return
+                }
                 Task { @MainActor in self.fetcher = nil }
                 guard case .success(let fetched) = result else {
                     if case .failure(let why) = result {
                         HuskLog.log("guest", "snapshot download failed: "
-                                           + why.localizedDescription)
+                            + why.localizedDescription)
                     }
-                    completion(false); return
+                    completion(false)
+                    return
                 }
                 if let want = expected, want != fetched.digest {
                     try? FileManager.default.removeItem(at: fetched.url)
                     HuskLog.log("guest", "snapshot rejected: sha256 "
-                              + "\(fetched.digest.prefix(12)) but the release says "
-                              + "\(want.prefix(12))")
-                    completion(false); return
+                        + "\(fetched.digest.prefix(12)) but the release says "
+                        + "\(want.prefix(12))")
+                    completion(false)
+                    return
                 }
                 let dest = URL(fileURLWithPath: self.userdataPath)
                 do {
@@ -667,15 +720,21 @@ final class GuestImage: ObservableObject {
     /// huskram"), so these have to describe the snapshot on disk rather than
     /// whatever this build of the app happens to prefer.
     nonisolated fileprivate func recordSnapshotPins() {
-        guard let snap = snapshotPinsToRecord else { return }
+        guard let snap = snapshotPinsToRecord else {
+            return
+        }
         var json: [String: Any] = ["guestMiB": snap.guestMiB,
                                    "xres": snap.xres, "yres": snap.yres]
-        if let smp = snap.smp { json["smp"] = smp }
-        if let cpu = snap.cpu { json["cpu"] = cpu }
+        if let smp = snap.smp {
+            json["smp"] = smp
+        }
+        if let cpu = snap.cpu {
+            json["cpu"] = cpu
+        }
         if let data = try? JSONSerialization.data(withJSONObject: json) {
             try? data.write(to: URL(fileURLWithPath: snapshotPinsPath))
             HuskLog.log("guest", "snapshot needs \(snap.guestMiB) MiB at "
-                               + "\(snap.xres)x\(snap.yres)")
+                + "\(snap.xres)x\(snap.yres)")
         }
     }
 
@@ -704,15 +763,17 @@ final class GuestImage: ObservableObject {
                 [NSLocalizedDescriptionKey: "not a gzip file"])
         }
         let flg = head[3]
-        if flg & 0x04 != 0 {                                  // FEXTRA
+        if flg & 0x04 != 0 { // FEXTRA
             let n = try input.read(upToCount: 2) ?? Data()
             let len = Int(n[0]) | (Int(n[1]) << 8)
             _ = try input.read(upToCount: len)
         }
-        for mask in [UInt8(0x08), UInt8(0x10)] where flg & mask != 0 {   // FNAME, FCOMMENT
+        for mask in [UInt8(0x08), UInt8(0x10)] where flg & mask != 0 { // FNAME, FCOMMENT
             while let b = try input.read(upToCount: 1), b.count == 1, b[0] != 0 {}
         }
-        if flg & 0x02 != 0 { _ = try input.read(upToCount: 2) }          // FHCRC
+        if flg & 0x02 != 0 {
+            _ = try input.read(upToCount: 2)
+        } // FHCRC
         head = Data()
 
         var stream = compression_stream(dst_ptr: UnsafeMutablePointer<UInt8>(bitPattern: 1)!,
@@ -746,14 +807,19 @@ final class GuestImage: ObservableObject {
                     if produced > 0 {
                         output.write(Data(bytes: outBuf, count: produced))
                     }
-                    if st == COMPRESSION_STATUS_END { finished = true; break }
+                    if st == COMPRESSION_STATUS_END {
+                        finished = true
+                        break
+                    }
                     if st == COMPRESSION_STATUS_ERROR {
                         throw NSError(domain: "husk", code: 3, userInfo:
                             [NSLocalizedDescriptionKey: "inflate failed"])
                     }
                 } while stream.src_size > 0 || (last && !finished)
             }
-            if last { finished = true }
+            if last {
+                finished = true
+            }
         }
     }
 
@@ -774,7 +840,7 @@ final class GuestImage: ObservableObject {
         if let want = manifest?.image.sha256, let got = digest, want != got {
             try? FileManager.default.removeItem(at: tempURL)
             HuskLog.log("guest", "image rejected: sha256 \(got.prefix(12)) but the "
-                               + "release says \(want.prefix(12))")
+                + "release says \(want.prefix(12))")
             state = .failed("The downloaded image did not match the release. Tap to retry.")
             return
         }
@@ -789,50 +855,50 @@ final class GuestImage: ObservableObject {
         }
         let size = check.size ?? 0
         do {
-                let dest = URL(fileURLWithPath: diskPath)
-                try? FileManager.default.removeItem(at: dest)
-                // Moved, not copied: the image is over a gigabyte and the device
-                // does not need two of them on disk at once.
-                try FileManager.default.moveItem(at: tempURL, to: dest)
-                try? Self.imageVersion.write(toFile: versionStampPath,
-                                             atomically: true, encoding: .utf8)
-                if let digest {
-                    try? digest.write(toFile: imageDigestPath, atomically: true, encoding: .utf8)
-                }
-                // A new system image usually invalidates the snapshot taken
-                // against the old one -- but not always, and the manifest is
-                // what knows. v11 differs from v10 only in a GRUB toggle read
-                // before Android exists, which a restored machine never reads;
-                // the same snapshot restores onto it perfectly well. Dropping
-                // the stamp unconditionally would have charged everyone two
-                // gigabytes for a two-byte change.
-                if let published = manifest?.snapshot.sha256,
-                   installedSnapshotDigest == published {
-                    HuskLog.log("guest", "snapshot is unchanged in the manifest; keeping it")
-                } else {
-                    try? FileManager.default.removeItem(atPath: snapshotDigestPath)
-                }
-                HuskLog.log("guest", "guest image ready (\(size) bytes, \(Self.imageVersion))")
-                // The snapshot only makes sense next to the image it was booted
-                // from, so it is fetched after, not alongside.
-                if Self.wantsSnapshot, !hasShippedSnapshot {
-                    state = .installing
-                    downloadSnapshot { ok in
-                        DispatchQueue.main.async {
-                            if ok {
-                                try? Self.imageVersion.write(toFile: self.snapshotStampPath,
-                                                            atomically: true, encoding: .utf8)
-                                HuskLog.log("guest", "pre-booted snapshot installed; "
-                                                   + "first launch will restore instead of booting")
-                            } else {
-                                HuskLog.log("guest", "no snapshot; Android will boot from cold")
-                            }
-                            self.state = .ready
+            let dest = URL(fileURLWithPath: diskPath)
+            try? FileManager.default.removeItem(at: dest)
+            // Moved, not copied: the image is over a gigabyte and the device
+            // does not need two of them on disk at once.
+            try FileManager.default.moveItem(at: tempURL, to: dest)
+            try? Self.imageVersion.write(toFile: versionStampPath,
+                                         atomically: true, encoding: .utf8)
+            if let digest {
+                try? digest.write(toFile: imageDigestPath, atomically: true, encoding: .utf8)
+            }
+            // A new system image usually invalidates the snapshot taken
+            // against the old one -- but not always, and the manifest is
+            // what knows. v11 differs from v10 only in a GRUB toggle read
+            // before Android exists, which a restored machine never reads;
+            // the same snapshot restores onto it perfectly well. Dropping
+            // the stamp unconditionally would have charged everyone two
+            // gigabytes for a two-byte change.
+            if let published = manifest?.snapshot.sha256,
+               installedSnapshotDigest == published {
+                HuskLog.log("guest", "snapshot is unchanged in the manifest; keeping it")
+            } else {
+                try? FileManager.default.removeItem(atPath: snapshotDigestPath)
+            }
+            HuskLog.log("guest", "guest image ready (\(size) bytes, \(Self.imageVersion))")
+            // The snapshot only makes sense next to the image it was booted
+            // from, so it is fetched after, not alongside.
+            if Self.wantsSnapshot, !hasShippedSnapshot {
+                state = .installing
+                downloadSnapshot { ok in
+                    DispatchQueue.main.async {
+                        if ok {
+                            try? Self.imageVersion.write(toFile: self.snapshotStampPath,
+                                                         atomically: true, encoding: .utf8)
+                            HuskLog.log("guest", "pre-booted snapshot installed; "
+                                + "first launch will restore instead of booting")
+                        } else {
+                            HuskLog.log("guest", "no snapshot; Android will boot from cold")
                         }
+                        self.state = .ready
                     }
-                } else {
-                    state = .ready
                 }
+            } else {
+                state = .ready
+            }
         } catch {
             HuskLog.log("guest", "FAIL: \(error.localizedDescription)")
             state = .failed(error.localizedDescription)
@@ -852,7 +918,9 @@ final class GuestImage: ObservableObject {
 
 private final class DownloadDelegate: NSObject, URLSessionDownloadDelegate {
     weak var owner: GuestImage?
-    init(owner: GuestImage) { self.owner = owner }
+    init(owner: GuestImage) {
+        self.owner = owner
+    }
 
     func urlSession(_ s: URLSession, downloadTask: URLSessionDownloadTask,
                     didFinishDownloadingTo location: URL) {
@@ -861,7 +929,7 @@ private final class DownloadDelegate: NSObject, URLSessionDownloadDelegate {
         // asked for. This is exactly how a 9-byte "Not Found" once became the
         // guest disk image. Check the status before treating it as the payload.
         if let http = downloadTask.response as? HTTPURLResponse,
-           !(200...299).contains(http.statusCode) {
+           !(200 ... 299).contains(http.statusCode) {
             let body = (try? String(contentsOf: location, encoding: .utf8))?
                 .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
             let detail = body.isEmpty ? "" : " — server said: \(body.prefix(200))"
@@ -919,7 +987,9 @@ private final class SnapshotFetcher: NSObject, URLSessionDownloadDelegate {
     private let onDone: (Result<Joined, Error>) -> Void
 
     /// The joined archive and what it hashed to.
-    struct Joined { let url: URL; let digest: String }
+    struct Joined { let url: URL
+        let digest: String
+    }
 
     /// Hashed as the parts are appended. The alternative is a second full pass
     /// over two gigabytes once the download finishes, for no extra information.
@@ -957,7 +1027,7 @@ private final class SnapshotFetcher: NSObject, URLSessionDownloadDelegate {
                 .attributesOfItem(atPath: staged.path)[.size] as? Int) ?? 0
             let digest = hasher.finish()
             HuskLog.log("guest", "snapshot download complete (\(size ?? 0) bytes, "
-                               + "sha256 \(digest.prefix(12))…)")
+                + "sha256 \(digest.prefix(12))…)")
             onDone(.success(Joined(url: staged, digest: digest)))
             session.finishTasksAndInvalidate()
             return
@@ -978,9 +1048,9 @@ private final class SnapshotFetcher: NSObject, URLSessionDownloadDelegate {
         // A completed exchange is not a successful one: a 404 body lands on disk
         // looking exactly like the file that was asked for.
         if let http = downloadTask.response as? HTTPURLResponse,
-           !(200...299).contains(http.statusCode) {
+           !(200 ... 299).contains(http.statusCode) {
             fail("HTTP \(http.statusCode) fetching "
-               + (downloadTask.originalRequest?.url?.lastPathComponent ?? "a snapshot part"))
+                + (downloadTask.originalRequest?.url?.lastPathComponent ?? "a snapshot part"))
             return
         }
         do {

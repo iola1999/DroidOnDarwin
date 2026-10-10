@@ -1,0 +1,36 @@
+{
+  "host": "Apple M5 Ultra / macOS 27.0",
+  "configuration": {
+    "mm_mode": "demand",
+    "jit_threshold": 1024,
+    "jit_warmup_threshold": 1024
+  },
+  "passed": false,
+  "process": "system_server Jit thread pool",
+  "failure": "SIGABRT in VIXL scratch-register allocation",
+  "stack": [
+    "UseScratchRegisterScope::AcquireFrom",
+    "CodeGeneratorARM64::StoreRelease",
+    "InstructionCodeGeneratorARM64::HandleFieldSet",
+    "CodeGenerator::Compile",
+    "OptimizingCompiler::TryCompile",
+    "OptimizingCompiler::JitCompile"
+  ],
+  "raw_frames": [
+    "<3>NCE guest abort pid=2131 comm=Jit thread pool pc=7001760a38 lr=7001760a14 sp=70bba3b6c0",
+    "<3>NCE abort frame[0] fp=70bba3b740 lr=700615fedc",
+    "<3>NCE abort frame[1] fp=70bba3b770 lr=700602c138",
+    "<3>NCE abort frame[2] fp=70bba3b820 lr=700602dcf8",
+    "<3>NCE abort frame[3] fp=70bba3b8e0 lr=7005f4ec68",
+    "<3>NCE abort frame[4] fp=70bba3b960 lr=7005fe670c",
+    "<3>NCE abort frame[5] fp=70bba3bdd0 lr=7005fe8fc0",
+    "<3>NCE abort frame[6] fp=70bba3c160 lr=7005f3a3dc",
+    "<3>NCE abort frame[7] fp=70bba3c320 lr=7005b6cc60",
+    "<3>NCE abort frame[8] fp=70bba3c3a0 lr=7005b75bb8",
+    "<3>NCE abort frame[9] fp=70bba3c420 lr=7005e2d2d0",
+    "<3>NCE abort frame[10] fp=70bba3c480 lr=7005e2cdcc",
+    "<3>NCE abort frame[11] fp=70bba3c4b0 lr=7001752190",
+    "<3>NCE abort frame[12] fp=70bba3c4e0 lr=70017642d0",
+    "<3>NCE abort frame[13] fp=70bba3c510 lr=0"
+  ]
+}

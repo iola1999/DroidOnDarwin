@@ -6,7 +6,7 @@
 #define NCE_USER_SIZE (4UL * 1024 * 1024 * 1024)
 /* Linker and libdl size their CFI shadow for this Darwin address range. */
 #define NCE_HOST_ADDRESS_LIMIT (1UL << 40)
-#define NCE_RAM_SIZE 0x20000000UL
+#define NCE_RAM_SIZE 0x40000000UL
 #define NCE_VMALLOC_SIZE 0x4000000UL
 #define NCE_EXEC_SIZE (64UL * 1024 * 1024)
 #define NCE_EXEC_DATA_OFFSET 0x20000000UL
@@ -19,5 +19,7 @@
 #define NCE_MM_DIFF 0
 #define NCE_MM_FULL 1
 #define NCE_MM_LAZY 2
+#define NCE_MM_DEMAND 3
 #define NCE_FAULT_EXEC 2
+#define NCE_FAULT_DIRECT 4
 #endif

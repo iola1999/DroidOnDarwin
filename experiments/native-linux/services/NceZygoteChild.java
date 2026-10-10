@@ -36,7 +36,9 @@ public final class NceZygoteChild {
             if (!values[i].equals("zygote-" + i)) throw new AssertionError("child heap");
         }
         CountDownLatch done = new CountDownLatch(1);
-        Thread thread = new Thread(done::countDown, "zygote-child-worker");
+        Thread thread = new Thread(new Runnable() {
+            @Override public void run() { done.countDown(); }
+        }, "zygote-child-worker");
         thread.start();
         if (!done.await(2, TimeUnit.SECONDS)) throw new AssertionError("child thread");
         thread.join();

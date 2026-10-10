@@ -1,0 +1,207 @@
+{
+  "date": "2026-10-10",
+  "stage": "desktop windows before content and clean-shutdown corrections",
+  "host": {
+    "cpu": "Apple M5 Ultra",
+    "os": "27.0"
+  },
+  "configuration": {
+    "mapping": "demand",
+    "ram_bytes": 1073741824,
+    "jit_threshold": 1024,
+    "hardware_timeout_multiplier": 6
+  },
+  "result": "incomplete",
+  "limits": [
+    "Clock snapshot can still contain its own splash screen; controls were not yet checked.",
+    "Post-stop ext4 needs_recovery and orphan_present remained set."
+  ],
+  "runs": {
+    "lkl": {
+      "completed": true,
+      "successful_records": 196,
+      "timings": [
+        "10-10 00:39:06.970   206   206 V SystemServerTiming: InitBeforeStartServices took to complete: 292ms",
+        "10-10 00:39:43.361   206   206 V SystemServerTiming: StartServices took to complete: 36390ms",
+        "10-10 00:39:56.464   206   219 I ActivityTaskManager: Displayed com.android.settings/.FallbackHome for user 0: +13s664ms",
+        "10-10 00:41:30.632   393   393 V SystemUIBootTiming: StartServices took to complete: 84265ms",
+        "10-10 00:41:46.057   206   219 I ActivityTaskManager: Displayed com.android.launcher3/.uioverrides.QuickstepLauncher for user 0: +1m16s125ms",
+        "10-10 00:42:21.541   206   219 I ActivityTaskManager: Displayed com.google.android.deskclock/com.android.deskclock.DeskClock for user 0: +10s425ms",
+        "10-10 00:42:41.974   206   219 I ActivityTaskManager: Displayed com.google.android.documentsui/com.android.documentsui.files.FilesActivity for user 0: +14s307ms"
+      ],
+      "checks": [
+        {
+          "test": "linux_ext4_persistence",
+          "generation": 37,
+          "bytes": 1048576,
+          "passed": true
+        },
+        {
+          "test": "android_keystore_persistence",
+          "passed": true,
+          "restored": true
+        },
+        {
+          "test": "android_desktop_visible_activity",
+          "passed": true,
+          "package": "com.android.launcher3",
+          "sampled_colors": 470
+        },
+        {
+          "test": "android_desktop_visible_activity",
+          "passed": true,
+          "package": "com.google.android.deskclock",
+          "sampled_colors": 107
+        },
+        {
+          "test": "android_application_data_persistence",
+          "passed": true,
+          "package": "com.google.android.deskclock",
+          "row_id": 3,
+          "restored": true
+        },
+        {
+          "test": "android_desktop_visible_activity",
+          "passed": true,
+          "package": "com.google.android.documentsui",
+          "sampled_colors": 45
+        },
+        {
+          "test": "android_system_process_groups_stopped",
+          "passed": true
+        },
+        {
+          "test": "linux_host_mapping_totals",
+          "data_maps": 16774286,
+          "data_bytes": 438719660032,
+          "code_copy_bytes": 829947904,
+          "revocations": 11288781
+        }
+      ]
+    },
+    "dispatch": {
+      "completed": true,
+      "successful_records": 196,
+      "timings": [
+        "10-10 00:43:30.182   204   204 V SystemServerTiming: InitBeforeStartServices took to complete: 366ms",
+        "10-10 00:44:07.412   204   204 V SystemServerTiming: StartServices took to complete: 37219ms",
+        "10-10 00:44:23.729   204   222 I ActivityTaskManager: Displayed com.android.settings/.FallbackHome for user 0: +17s94ms",
+        "10-10 00:45:56.722   388   388 V SystemUIBootTiming: StartServices took to complete: 86575ms",
+        "10-10 00:46:09.428   204   222 I ActivityTaskManager: Displayed com.android.launcher3/.uioverrides.QuickstepLauncher for user 0: +1m28s798ms",
+        "10-10 00:46:45.263   204   222 I ActivityTaskManager: Displayed com.google.android.deskclock/com.android.deskclock.DeskClock for user 0: +24s423ms",
+        "10-10 00:47:14.468   204   222 I ActivityTaskManager: Displayed com.google.android.documentsui/com.android.documentsui.files.FilesActivity for user 0: +15s132ms"
+      ],
+      "checks": [
+        {
+          "test": "linux_ext4_persistence",
+          "generation": 38,
+          "bytes": 1048576,
+          "passed": true
+        },
+        {
+          "test": "android_keystore_persistence",
+          "passed": true,
+          "restored": true
+        },
+        {
+          "test": "android_desktop_visible_activity",
+          "passed": true,
+          "package": "com.android.launcher3",
+          "sampled_colors": 470
+        },
+        {
+          "test": "android_desktop_visible_activity",
+          "passed": true,
+          "package": "com.google.android.deskclock",
+          "sampled_colors": 107
+        },
+        {
+          "test": "android_application_data_persistence",
+          "passed": true,
+          "package": "com.google.android.deskclock",
+          "row_id": 3,
+          "restored": true
+        },
+        {
+          "test": "android_desktop_visible_activity",
+          "passed": true,
+          "package": "com.google.android.documentsui",
+          "sampled_colors": 45
+        },
+        {
+          "test": "android_system_process_groups_stopped",
+          "passed": true
+        },
+        {
+          "test": "linux_host_mapping_totals",
+          "data_maps": 17425797,
+          "data_bytes": 424545140736,
+          "code_copy_bytes": 924057600,
+          "revocations": 11753583
+        }
+      ]
+    },
+    "window": {
+      "completed": true,
+      "successful_records": 197,
+      "timings": [
+        "10-10 00:48:04.526   204   204 V SystemServerTiming: InitBeforeStartServices took to complete: 313ms",
+        "10-10 00:48:40.281   204   204 V SystemServerTiming: StartServices took to complete: 35741ms",
+        "10-10 00:48:53.477   204   217 I ActivityTaskManager: Displayed com.android.settings/.FallbackHome for user 0: +14s85ms",
+        "10-10 00:50:33.188   387   387 V SystemUIBootTiming: StartServices took to complete: 87885ms",
+        "10-10 00:50:43.520   204   217 I ActivityTaskManager: Displayed com.android.launcher3/.uioverrides.QuickstepLauncher for user 0: +1m33s108ms",
+        "10-10 00:51:23.392   204   217 I ActivityTaskManager: Displayed com.google.android.deskclock/com.android.deskclock.DeskClock for user 0: +19s446ms",
+        "10-10 00:51:44.439   204   217 I ActivityTaskManager: Displayed com.google.android.documentsui/com.android.documentsui.files.FilesActivity for user 0: +14s328ms"
+      ],
+      "checks": [
+        {
+          "test": "linux_ext4_persistence",
+          "generation": 39,
+          "bytes": 1048576,
+          "passed": true
+        },
+        {
+          "test": "android_keystore_persistence",
+          "passed": true,
+          "restored": true
+        },
+        {
+          "test": "android_desktop_visible_activity",
+          "passed": true,
+          "package": "com.android.launcher3",
+          "sampled_colors": 470
+        },
+        {
+          "test": "android_desktop_visible_activity",
+          "passed": true,
+          "package": "com.google.android.deskclock",
+          "sampled_colors": 107
+        },
+        {
+          "test": "android_application_data_persistence",
+          "passed": true,
+          "package": "com.google.android.deskclock",
+          "row_id": 3,
+          "restored": true
+        },
+        {
+          "test": "android_desktop_visible_activity",
+          "passed": true,
+          "package": "com.google.android.documentsui",
+          "sampled_colors": 45
+        },
+        {
+          "test": "android_system_process_groups_stopped",
+          "passed": true
+        },
+        {
+          "test": "linux_host_mapping_totals",
+          "data_maps": 17062075,
+          "data_bytes": 435889291264,
+          "code_copy_bytes": 896712704,
+          "revocations": 11379900
+        }
+      ]
+    }
+  }
+}

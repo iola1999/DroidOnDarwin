@@ -42,24 +42,28 @@ enum HuskBuiltInJIT {
     private static var running: [HelperRequest] = []
 
     static var unavailableReason: String? {
-#if targetEnvironment(simulator)
-        return "Built-in JIT is available only on a physical device."
-#else
-        guard #available(iOS 26.0, *) else {
-            return "Built-in JIT needs iOS 26 or later. Use StikDebug instead."
-        }
-        if getenv("LC_HOME_PATH") != nil {
-            return "Built-in JIT is unavailable inside LiveContainer. Use StikDebug instead."
-        }
-        return nil
-#endif
+        #if targetEnvironment(simulator)
+            return "Built-in JIT is available only on a physical device."
+        #else
+            guard #available(iOS 26.0, *) else {
+                return "Built-in JIT needs iOS 26 or later. Use StikDebug instead."
+            }
+            if getenv("LC_HOME_PATH") != nil {
+                return "Built-in JIT is unavailable inside LiveContainer. Use StikDebug instead."
+            }
+            return nil
+        #endif
     }
 
-    static var isAvailable: Bool { unavailableReason == nil }
+    static var isAvailable: Bool {
+        unavailableReason == nil
+    }
 
     /// The helper's bundle identifier in this installation; nil when a sideloader left it out.
     static var helperIdentifier: String? {
-        guard let url = Bundle.main.builtInPlugInsURL?.appendingPathComponent(helperFile) else { return nil }
+        guard let url = Bundle.main.builtInPlugInsURL?.appendingPathComponent(helperFile) else {
+            return nil
+        }
         return Bundle(url: url)?.bundleIdentifier
     }
 
@@ -76,7 +80,7 @@ enum HuskBuiltInJIT {
         }
         guard let identifier = helperIdentifier else {
             fail(2, "Husk's JIT helper is missing from this installation. Reinstall Husk, and keep "
-                  + "its app extensions if your sideloader asks, or use StikDebug.")
+                + "its app extensions if your sideloader asks, or use StikDebug.")
             return
         }
         if NSClassFromString("NSExtension") == nil {
@@ -91,7 +95,7 @@ enum HuskBuiltInJIT {
         do { found = try factory.extension(withIdentifier: identifier) }
         catch {
             fail(2, "Husk's JIT helper (\(identifier)) could not be found: \(error.localizedDescription) "
-                  + "Reinstall Husk.")
+                + "Reinstall Husk.")
             return
         }
         guard let data = try? JSONEncoder().encode(request) else {
@@ -113,7 +117,7 @@ enum HuskBuiltInJIT {
 @MainActor
 private final class HelperRequest {
     private let shim: NSExtensionShim
-    private let `extension`: AnyObject   // the NSExtension, kept alive for the request
+    private let `extension`: AnyObject // the NSExtension, kept alive for the request
     private let operation: String
     private var completion: ((Result<HuskJITRequest.Response, Error>) -> Void)?
 
@@ -147,14 +151,16 @@ private final class HelperRequest {
         item.userInfo = [HuskJITRequest.itemKey: data]
         shim.beginExtensionRequest(withInputItems: [item]) { [weak self] uuid in
             DispatchQueue.main.async { MainActor.assumeIsolated {
-                guard let self else { return }
+                guard let self else {
+                    return
+                }
                 guard let uuid else {
                     self.end(.failure(Self.error(7, "Husk's JIT helper did not start. Reinstall Husk, and "
-                                                  + "keep its app extensions if your sideloader asks.")))
+                            + "keep its app extensions if your sideloader asks.")))
                     return
                 }
                 HuskLog.log("jit-helper", "\(self.operation): started \(identifier) as pid "
-                                        + "\(self.shim.pid(forRequestIdentifier: uuid))")
+                    + "\(self.shim.pid(forRequestIdentifier: uuid))")
                 started()
             } }
         }
@@ -171,7 +177,9 @@ private final class HelperRequest {
     }
 
     private func end(_ result: Result<HuskJITRequest.Response, Error>) {
-        guard let completion else { return }   // the first result counts
+        guard let completion else {
+            return
+        } // the first result counts
         self.completion = nil
         if case .failure(let error) = result {
             HuskLog.log("jit-helper", "\(operation): \(error.localizedDescription)")

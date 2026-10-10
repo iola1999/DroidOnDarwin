@@ -37,12 +37,20 @@ final class HuskGLView: UIView {
     /// Guest resolution, for mapping touches back -- read from what QEMU was
     /// actually told rather than kept as a second copy here, which is how this
     /// came to claim 640 while the command line said 800.
-    private var guestWidth: CGFloat { CGFloat(QemuRunner.lastGuestRes.w) }
-    private var guestHeight: CGFloat { CGFloat(QemuRunner.lastGuestRes.h) }
+    private var guestWidth: CGFloat {
+        CGFloat(QemuRunner.lastGuestRes.w)
+    }
+    private var guestHeight: CGFloat {
+        CGFloat(QemuRunner.lastGuestRes.h)
+    }
 
-    override class var layerClass: AnyClass { CAMetalLayer.self }
+    override class var layerClass: AnyClass {
+        CAMetalLayer.self
+    }
 
-    private var metalLayer: CAMetalLayer { layer as! CAMetalLayer }
+    private var metalLayer: CAMetalLayer {
+        layer as! CAMetalLayer
+    }
 
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -68,7 +76,9 @@ final class HuskGLView: UIView {
         backgroundColor = .black
     }
 
-    required init?(coder: NSCoder) { fatalError("not used") }
+    required init?(coder: NSCoder) {
+        fatalError("not used")
+    }
 
     /// The size published on the run that QEMU actually bound its EGL surface
     /// to. Logged on every change afterwards, because a later resize does NOT
@@ -105,9 +115,9 @@ final class HuskGLView: UIView {
         if size != lastLoggedSize {
             lastLoggedSize = size
             HuskLog.log("gl", "\(first ? "published" : "re-laid out") the GL layer: "
-                            + "bounds \(Int(bounds.width))x\(Int(bounds.height)) "
-                            + "@\(scale)x -> drawable \(Int(size.width))x\(Int(size.height)), "
-                            + "window=\(window != nil)")
+                + "bounds \(Int(bounds.width))x\(Int(bounds.height)) "
+                + "@\(scale)x -> drawable \(Int(size.width))x\(Int(size.height)), "
+                + "window=\(window != nil)")
         }
     }
 
@@ -148,7 +158,7 @@ final class HuskGLView: UIView {
             let f = cur.frame
             HuskLog.log("gl", String(
                 format: "placement[%d] %@ frame=%.0f,%.0f %.0fx%.0f alpha=%.2f "
-                      + "hidden=%@ opaque=%@ clips=%@ layerOpacity=%.2f",
+                    + "hidden=%@ opaque=%@ clips=%@ layerOpacity=%.2f",
                 depth, String(describing: type(of: cur)),
                 f.origin.x, f.origin.y, f.width, f.height, cur.alpha,
                 cur.isHidden ? "yes" : "no", cur.isOpaque ? "yes" : "no",
@@ -162,18 +172,18 @@ final class HuskGLView: UIView {
                     .filter { !$0.isHidden && $0.alpha > 0.01 && $0.frame.contains(cur.frame) }
                 if !above.isEmpty {
                     HuskLog.log("gl", "placement[\(depth)] COVERED by "
-                              + above.map { String(describing: type(of: $0)) }
-                                     .joined(separator: ", "))
+                        + above.map { String(describing: type(of: $0)) }
+                        .joined(separator: ", "))
                 }
             }
             v = cur.superview
             depth += 1
         }
         HuskLog.log("gl", "placement: drawable \(Int(metalLayer.drawableSize.width))"
-                        + "x\(Int(metalLayer.drawableSize.height)) "
-                        + "opaque=\(metalLayer.isOpaque) "
-                        + "presentsWithTransaction=\(metalLayer.presentsWithTransaction) "
-                        + "device=\(metalLayer.device?.name ?? "none")")
+            + "x\(Int(metalLayer.drawableSize.height)) "
+            + "opaque=\(metalLayer.isOpaque) "
+            + "presentsWithTransaction=\(metalLayer.presentsWithTransaction) "
+            + "device=\(metalLayer.device?.name ?? "none")")
     }
 
     /// Whether the guest's picture is turned a quarter turn.
@@ -210,47 +220,65 @@ final class HuskGLView: UIView {
     /// confusing failure than a picture that is visibly wrong.
     private func guestPoint(from p: CGPoint) -> (Int32, Int32)? {
         guard bounds.width > 0, bounds.height > 0,
-              guestWidth > 0, guestHeight > 0 else { return nil }
+              guestWidth > 0, guestHeight > 0 else {
+            return nil
+        }
 
         // What the guest occupies on screen, after any turn.
         let effW = Self.rotated ? guestHeight : guestWidth
-        let effH = Self.rotated ? guestWidth  : guestHeight
+        let effH = Self.rotated ? guestWidth : guestHeight
 
         let scale = min(bounds.width / effW, bounds.height / effH)
         let drawW = effW * scale, drawH = effH * scale
-        let lx = (p.x - (bounds.width  - drawW) / 2) / scale
+        let lx = (p.x - (bounds.width - drawW) / 2) / scale
         let ly = (p.y - (bounds.height - drawH) / 2) / scale
-        guard lx >= 0, ly >= 0, lx < effW, ly < effH else { return nil }
+        guard lx >= 0, ly >= 0, lx < effW, ly < effH else {
+            return nil
+        }
 
         // The sampler reads at (1 - uv.y, uv.x) when turned; this is that,
         // against the guest's own dimensions.
-        let gx = Self.rotated ? (1 - ly / effH) * guestWidth  : lx
-        let gy = Self.rotated ? (lx / effW) * guestHeight     : ly
-        guard gx >= 0, gy >= 0, gx < guestWidth, gy < guestHeight else { return nil }
+        let gx = Self.rotated ? (1 - ly / effH) * guestWidth : lx
+        let gy = Self.rotated ? (lx / effW) * guestHeight : ly
+        guard gx >= 0, gy >= 0, gx < guestWidth, gy < guestHeight else {
+            return nil
+        }
         return (Int32(gx), Int32(gy))
     }
 
     private func send(_ touch: UITouch, down: Bool) {
-        guard let (x, y) = guestPoint(from: touch.location(in: self)) else { return }
+        guard let (x, y) = guestPoint(from: touch.location(in: self)) else {
+            return
+        }
         husk_display_send_pointer(x, y, down)
     }
 
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
-        if let t = touches.first { send(t, down: true) }
+        if let t = touches.first {
+            send(t, down: true)
+        }
     }
     override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
-        if let t = touches.first { send(t, down: true) }
+        if let t = touches.first {
+            send(t, down: true)
+        }
     }
     override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
-        if let t = touches.first { send(t, down: false) }
+        if let t = touches.first {
+            send(t, down: false)
+        }
     }
     override func touchesCancelled(_ touches: Set<UITouch>, with event: UIEvent?) {
-        if let t = touches.first { send(t, down: false) }
+        if let t = touches.first {
+            send(t, down: false)
+        }
     }
 }
 
 struct HuskGLScreen: UIViewRepresentable {
     // The shared instance, never a fresh one -- see HuskGLView.shared.
-    func makeUIView(context: Context) -> HuskGLView { HuskGLView.shared }
+    func makeUIView(context: Context) -> HuskGLView {
+        HuskGLView.shared
+    }
     func updateUIView(_ view: HuskGLView, context: Context) {}
 }

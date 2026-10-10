@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 #define _GNU_SOURCE
+#include "../layout.h"
 #include <errno.h>
 #include <pthread.h>
 #include <stdint.h>
@@ -137,6 +138,34 @@ static void benchmark(size_t bytes, unsigned shared_percent, int all, int thread
     CHECK(fflush(stdout) == 0);
 }
 
+static void capacity_test(void)
+{
+    const size_t bytes = NCE_RAM_SIZE * 5 / 8;
+    volatile unsigned char *data = mmap(NULL, bytes, PROT_READ | PROT_WRITE,
+                                        MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+    CHECK(data != MAP_FAILED);
+    for (size_t offset = 0; offset < bytes; offset += PAGE) {
+        CHECK(data[offset] == 0);
+        data[offset] = pattern(offset, 0);
+    }
+    pid_t child = fork();
+    CHECK(child >= 0);
+    if (!child) {
+        for (size_t offset = 0; offset < bytes; offset += PAGE)
+            CHECK(data[offset] == pattern(offset, 0));
+        data[0] ^= 0xff;
+        data[bytes / 2] ^= 0xff;
+        data[bytes - PAGE] ^= 0xff;
+        _exit(0);
+    }
+    int status;
+    CHECK(waitpid(child, &status, 0) == child && status == 0);
+    for (size_t offset = 0; offset < bytes; offset += PAGE)
+        CHECK(data[offset] == pattern(offset, 0));
+    CHECK(munmap((void *)data, bytes) == 0);
+    printf("{\"test\":\"linux_ram_capacity_cow\",\"passed\":true,\"bytes\":%zu}\n", bytes);
+}
+
 int main(void)
 {
     extern void memory_tests(void), code_tests(void);
@@ -144,6 +173,7 @@ int main(void)
     code_tests();
     signal_tests("musl");
     memory_tests();
+    capacity_test();
     for (size_t bytes = 2 * 1024 * 1024; bytes <= 16 * 1024 * 1024; bytes *= 2) {
         for (unsigned shared = 0; shared <= 100; shared += 50)
             for (int all = 0; all <= 1; ++all)

@@ -29,8 +29,12 @@ enum Theme {
     static let textDim = Color(uiColor: .secondaryLabel)
 
     /// The user's accent: what is pressed, selected or switched on.
-    static var accent: Color { AppTheme.shared.accentColor }
-    static var accentSoft: Color { AppTheme.shared.accentColor.opacity(0.16) }
+    static var accent: Color {
+        AppTheme.shared.accentColor
+    }
+    static var accentSoft: Color {
+        AppTheme.shared.accentColor.opacity(0.16)
+    }
     static let good = Color(uiColor: .systemGreen)
     /// What a floating thing casts.
     static let shadow = Color.black.opacity(0.25)
@@ -42,7 +46,9 @@ enum Theme {
 
         static let key = "husk.appearance"
 
-        var id: String { rawValue }
+        var id: String {
+            rawValue
+        }
 
         var title: String {
             switch self {
@@ -81,7 +87,9 @@ enum Theme {
     static let cardCorner: CGFloat = 14
     static let rowCorner: CGFloat = 12
 
-    static var backdrop: some View { bg.ignoresSafeArea() }
+    static var backdrop: some View {
+        bg.ignoresSafeArea()
+    }
 }
 
 extension View {
@@ -382,7 +390,7 @@ struct ToastView: View {
     var body: some View {
         HStack(spacing: 12) {
             Image(systemName: toast.good ? "checkmark.circle.fill"
-                                         : "exclamationmark.triangle.fill")
+                : "exclamationmark.triangle.fill")
                 .font(.system(size: 19))
                 .foregroundStyle(toast.good ? Theme.good : .orange)
             VStack(alignment: .leading, spacing: 2) {
@@ -408,7 +416,7 @@ struct ToastView: View {
         .background(Theme.surfaceHigh,
                     in: RoundedRectangle(cornerRadius: Theme.rowCorner, style: .continuous))
         .overlay(RoundedRectangle(cornerRadius: Theme.rowCorner, style: .continuous)
-                    .stroke(Theme.hairline, lineWidth: 0.5))
+            .stroke(Theme.hairline, lineWidth: 0.5))
         .shadow(color: Theme.shadow, radius: 18, y: 8)
     }
 }

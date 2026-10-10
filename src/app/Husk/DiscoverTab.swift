@@ -93,11 +93,13 @@ struct DiscoverView: View {
     // MARK: - Helpers
 
     private func filteredApps(for source: AppSource) -> [SourceApp] {
-        if debouncedSearchText.isEmpty { return source.apps }
+        if debouncedSearchText.isEmpty {
+            return source.apps
+        }
         let query = debouncedSearchText.lowercased()
         return source.apps.filter {
             $0.name.lowercased().contains(query) ||
-            $0.bundleIdentifier.lowercased().contains(query)
+                $0.bundleIdentifier.lowercased().contains(query)
         }
     }
 
@@ -204,14 +206,18 @@ struct DiscoverView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
-                    Button("Cancel") { newSourceURL = ""; showingAddSource = false }
+                    Button("Cancel") { newSourceURL = ""
+                        showingAddSource = false
+                    }
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Add") {
                         let url = newSourceURL
                         newSourceURL = ""
                         showingAddSource = false
-                        guard !url.isEmpty, URL(string: url) != nil else { return }
+                        guard !url.isEmpty, URL(string: url) != nil else {
+                            return
+                        }
                         Task { await manager.addSource(urlString: url) }
                     }
                     .disabled(newSourceURL.isEmpty)
@@ -247,7 +253,9 @@ struct DiscoverView: View {
                     Button("Done") { showingSources = false }
                 }
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button { showingSources = false; showingAddSource = true } label: {
+                    Button { showingSources = false
+                        showingAddSource = true
+                    } label: {
                         Image(systemName: "plus")
                     }
                 }

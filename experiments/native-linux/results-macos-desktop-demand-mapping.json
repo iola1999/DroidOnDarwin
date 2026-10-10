@@ -1,0 +1,179 @@
+{
+  "date": "2026-10-10",
+  "stage": "demand restoration with 512 MiB Linux RAM",
+  "configuration_reference": "results-macos-desktop-mapping-baseline.json",
+  "records": [
+    {
+      "profile": "host_mapping",
+      "elapsed_ms": 10433.013,
+      "data_calls": 379323,
+      "data_ms": 552.569,
+      "code_calls": 66939,
+      "code_ms": 185.676,
+      "revoke_calls": 249365,
+      "revoke_ms": 460.462
+    },
+    {
+      "profile": "host_mapping",
+      "elapsed_ms": 21073.171,
+      "data_calls": 996586,
+      "data_ms": 1504.375,
+      "code_calls": 113385,
+      "code_ms": 344.469,
+      "revoke_calls": 568321,
+      "revoke_ms": 1157.625
+    },
+    {
+      "profile": "host_mapping",
+      "elapsed_ms": 31483.113,
+      "data_calls": 1659668,
+      "data_ms": 2502.535,
+      "code_calls": 162567,
+      "code_ms": 513.944,
+      "revoke_calls": 958961,
+      "revoke_ms": 1813.487
+    },
+    {
+      "profile": "host_mapping",
+      "elapsed_ms": 41742.268,
+      "data_calls": 2336957,
+      "data_ms": 3548.855,
+      "code_calls": 251988,
+      "code_ms": 766.125,
+      "revoke_calls": 1425040,
+      "revoke_ms": 2618.874
+    },
+    {
+      "profile": "host_mapping",
+      "elapsed_ms": 52110.668,
+      "data_calls": 2955087,
+      "data_ms": 4551.189,
+      "code_calls": 309731,
+      "code_ms": 936.633,
+      "revoke_calls": 1830322,
+      "revoke_ms": 3425.269
+    },
+    {
+      "profile": "host_mapping",
+      "elapsed_ms": 62630.636,
+      "data_calls": 3583125,
+      "data_ms": 5539.53,
+      "code_calls": 367559,
+      "code_ms": 1092.418,
+      "revoke_calls": 2232572,
+      "revoke_ms": 4209.439
+    },
+    {
+      "profile": "host_mapping",
+      "elapsed_ms": 72742.412,
+      "data_calls": 4198707,
+      "data_ms": 6509.366,
+      "code_calls": 487342,
+      "code_ms": 1290.617,
+      "revoke_calls": 2671933,
+      "revoke_ms": 5007.187
+    },
+    {
+      "profile": "host_mapping",
+      "elapsed_ms": 82939.402,
+      "data_calls": 4853054,
+      "data_ms": 7533.513,
+      "code_calls": 610508,
+      "code_ms": 1479.94,
+      "revoke_calls": 3116885,
+      "revoke_ms": 5761.072
+    },
+    {
+      "profile": "host_mapping",
+      "elapsed_ms": 92957.941,
+      "data_calls": 5492938,
+      "data_ms": 8521.486,
+      "code_calls": 717167,
+      "code_ms": 1642.707,
+      "revoke_calls": 3550788,
+      "revoke_ms": 6481.673
+    },
+    {
+      "profile": "host_mapping",
+      "elapsed_ms": 102994.207,
+      "data_calls": 6123371,
+      "data_ms": 9499.585,
+      "code_calls": 829231,
+      "code_ms": 1813.702,
+      "revoke_calls": 3975392,
+      "revoke_ms": 7195.581
+    },
+    {
+      "profile": "host_mapping",
+      "elapsed_ms": 113738.048,
+      "data_calls": 6782893,
+      "data_ms": 10533.979,
+      "code_calls": 970723,
+      "code_ms": 2029.023,
+      "revoke_calls": 4426703,
+      "revoke_ms": 7963.471
+    },
+    {
+      "profile": "host_mapping",
+      "elapsed_ms": 124222.227,
+      "data_calls": 7424017,
+      "data_ms": 11530.157,
+      "code_calls": 1102497,
+      "code_ms": 2229.848,
+      "revoke_calls": 4885617,
+      "revoke_ms": 8723.697
+    },
+    {
+      "profile": "host_mapping",
+      "elapsed_ms": 134267.804,
+      "data_calls": 8062263,
+      "data_ms": 12513.595,
+      "code_calls": 1228991,
+      "code_ms": 2422.455,
+      "revoke_calls": 5354573,
+      "revoke_ms": 9485.309
+    },
+    {
+      "profile": "host_mapping",
+      "elapsed_ms": 144300.91,
+      "data_calls": 8679712,
+      "data_ms": 13485.277,
+      "code_calls": 1352225,
+      "code_ms": 2607.982,
+      "revoke_calls": 5768445,
+      "revoke_ms": 10181.282
+    },
+    {
+      "profile": "host_mapping",
+      "elapsed_ms": 154495.705,
+      "data_calls": 9291666,
+      "data_ms": 14457.892,
+      "code_calls": 1465887,
+      "code_ms": 2779.975,
+      "revoke_calls": 6169620,
+      "revoke_ms": 10905.767
+    },
+    {
+      "profile": "host_mapping",
+      "elapsed_ms": 164545.896,
+      "data_calls": 9933306,
+      "data_ms": 15441.279,
+      "code_calls": 1587830,
+      "code_ms": 2961.747,
+      "revoke_calls": 6608323,
+      "revoke_ms": 11620.25
+    },
+    {
+      "profile": "host_mapping",
+      "elapsed_ms": 174658.448,
+      "data_calls": 10582004,
+      "data_ms": 16444.069,
+      "code_calls": 1698664,
+      "code_ms": 3127.988,
+      "revoke_calls": 7050606,
+      "revoke_ms": 12357.828
+    }
+  ],
+  "result": "failed",
+  "failure": "Launcher visible activity timed out; lmkd killed foreground Launcher under memory pressure; system boot completed and finishUserUnlocking-0 executed"
+}

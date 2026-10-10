@@ -148,7 +148,9 @@ struct BootScreen: View {
     /// so it can never claim more progress than the guest has made.
     private var shown: Int {
         let real = runner.bootProgress
-        guard real > 0, real < 100, !QemuRunner.didRestore else { return real }
+        guard real > 0, real < 100, !QemuRunner.didRestore else {
+            return real
+        }
         let next = QemuRunner.bootMilestones.map { $0.2 }.first { $0 > real } ?? 100
         let creep = Int(now.timeIntervalSince(lastStep) / 30)
         return max(real, min(real + creep, next - 1, 95))
@@ -165,14 +167,20 @@ struct BootScreen: View {
         if done >= 58, !QemuRunner.didRestore {
             let mins = Int(now.timeIntervalSince(QemuRunner.bootStarted) / 60)
             return mins < 1 ? "first boot takes 5–15 min"
-                            : "\(mins) min · first boot takes 5–15 min"
+                : "\(mins) min · first boot takes 5–15 min"
         }
-        guard done >= 8, done <= 92 else { return nil }
+        guard done >= 8, done <= 92 else {
+            return nil
+        }
         let elapsed = now.timeIntervalSince(began)
-        guard elapsed > 6 else { return nil }
+        guard elapsed > 6 else {
+            return nil
+        }
         let total = elapsed / (done / 100)
         let left = total - elapsed
-        guard left > 2, left < 15 * 60 else { return nil }
+        guard left > 2, left < 15 * 60 else {
+            return nil
+        }
         if left < 90 {
             let rounded = Int((left / 5).rounded()) * 5
             return "about \(max(rounded, 5)) seconds remaining"

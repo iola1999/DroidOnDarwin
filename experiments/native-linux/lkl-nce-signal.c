@@ -7,6 +7,7 @@
 #include <asm/sigcontext.h>
 #include <asm/ucontext.h>
 #include <asm/cpu.h>
+#include <asm/mmu_context.h>
 void wakeup_idle_host_task(void);
 
 struct nce_sigframe {
@@ -117,6 +118,20 @@ void nce_user_return(long syscall, long result, unsigned long original_x0)
     bool restart;
     if (!regs)
         return;
+    if ((syscall == __NR_tgkill || syscall == __NR_rt_tgsigqueueinfo) && regs->x[2] == SIGABRT) {
+        unsigned long fp = regs->x[29];
+        pr_err("NCE guest abort pid=%d comm=%s pc=%lx lr=%lx sp=%lx\n",
+               current->pid, current->comm, regs->pc, regs->x[30], regs->sp);
+        for (unsigned int depth = 0; depth < 24 && fp; ++depth) {
+            unsigned long frame[2];
+            if ((fp & 15) || copy_from_user(frame, (void __user *)fp, sizeof(frame)))
+                break;
+            pr_err("NCE abort frame[%u] fp=%lx lr=%lx\n", depth, fp, frame[1]);
+            if (frame[0] <= fp || frame[0] - fp > 1024 * 1024)
+                break;
+            fp = frame[0];
+        }
+    }
     continuation = regs->pc;
     restart = syscall >= 0 && syscall != __NR_rt_sigreturn && (result == -ERESTARTSYS || result == -ERESTARTNOHAND || result == -ERESTARTNOINTR || result == -ERESTART_RESTARTBLOCK);
     if (syscall >= 0 && syscall != __NR_rt_sigreturn)
@@ -134,13 +149,16 @@ void nce_user_return(long syscall, long result, unsigned long original_x0)
         }
         error = setup_frame(&signal, regs);
         signal_setup_done(error, &signal, 0);
-        if (!error)
+        if (!error) {
+            nce_prepare_user();
             return;
+        }
         restart = false;
     }
     if (restart && result == -ERESTART_RESTARTBLOCK)
         regs->x[8] = __NR_restart_syscall;
     restore_saved_sigmask();
+    nce_prepare_user();
 }
 
 void nce_user_fault(unsigned long address, int kind)
@@ -163,8 +181,13 @@ void nce_user_fault(unsigned long address, int kind)
  * syscall. The saved x8 still belongs to the interrupted guest instruction. */
 void nce_user_preempt(void)
 {
-    if (lkl_cpu_has_waiters())
+    if (lkl_cpu_has_waiters()) {
         wakeup_idle_host_task();
-    sys_sched_yield();
+        sys_sched_yield();
+    } else {
+        /* Drain pending LKL timer IRQs and honor the scheduler's time slice.
+         * The host polling interval alone does not require a task switch. */
+        cond_resched();
+    }
     nce_user_return(-1, 0, 0);
 }

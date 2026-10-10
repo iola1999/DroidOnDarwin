@@ -30,7 +30,9 @@ final class HuskAudio {
     /// machine — adding it invalidates snapshots — so this has to be harmless
     /// on a guest that has none.
     func start() {
-        guard !running else { return }
+        guard !running else {
+            return
+        }
 
         let session = AVAudioSession.sharedInstance()
         do {
@@ -67,7 +69,9 @@ final class HuskAudio {
             // Render thread. No allocation, no locks, no logging — husk_audio_pull
             // is lock-free and fills any shortfall with silence itself.
             let buffers = UnsafeMutableAudioBufferListPointer(audioBufferList)
-            guard let out = buffers.first?.mData else { return noErr }
+            guard let out = buffers.first?.mData else {
+                return noErr
+            }
             husk_audio_pull(out.assumingMemoryBound(to: Int16.self), Int32(frameCount))
             return noErr
         }
@@ -86,7 +90,7 @@ final class HuskAudio {
         self.source = node
         running = true
         HuskLog.log("audio", "playing at \(HUSK_AUDIO_RATE) Hz, "
-                           + "\(HUSK_AUDIO_CHANNELS) channels")
+            + "\(HUSK_AUDIO_CHANNELS) channels")
     }
 
     func stop() {

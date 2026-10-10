@@ -3,6 +3,7 @@
 import argparse
 import hashlib
 import json
+import os
 from pathlib import Path
 import plistlib
 import shutil
@@ -14,11 +15,11 @@ ROOT = Path(__file__).resolve().parents[1]
 EXP = ROOT / 'experiments/native-linux'
 INPUT = ROOT / 'work/native-linux-nce/processes'
 OUT = ROOT / 'work/native-linux-nce/ios'
-REVISION = 'N4-G1'
+REVISION = 'N4-D1'
 
 
-def run(args, **kwargs):
-    return subprocess.run([str(x) for x in args], check=True, timeout=600, **kwargs)
+def run(args, timeout=600, **kwargs):
+    return subprocess.run([str(x) for x in args], check=True, timeout=timeout, **kwargs)
 
 
 def plist(path, value):
@@ -30,7 +31,8 @@ def main():
     parser.add_argument('--rebuild-kernel', action='store_true')
     args = parser.parse_args()
     if args.rebuild_kernel or not (INPUT / 'lkl-summary.json').exists():
-        run(['python3', ROOT / 'scripts/probe_lkl.py', '--processes', '--graphics-angle', ROOT / 'work/angle-macos/prefix/lib', '--graphics-window'])
+        run(['python3', ROOT / 'scripts/probe_lkl.py', '--processes', '--graphics-angle', ROOT / 'work/angle-macos/prefix/lib', '--graphics-window'],
+            env={**os.environ, 'NCE_MM_MODE': 'demand', 'NCE_SYSTEM_SERVER_PROBE': '1'}, timeout=1800)
     # A package must contain the kernel and fixtures that passed the host run.
     summary = json.loads((INPUT / 'lkl-summary.json').read_text())
     for name, digest in summary['input_sha256'].items():
@@ -46,6 +48,27 @@ def main():
         raise SystemExit('Run the graphics-enabled Linux probe before packaging')
     if not summary.get('window_results') or summary['window_results'][-1].get('result') != 'passed':
         raise SystemExit('Run the visible Metal window regression before packaging')
+    for mode in ('results', 'dispatch_results', 'window_results'):
+        records = summary.get(mode, [])
+        if not any(r.get('phase') == 'linux_mapping_policy' and r.get('mode') == 'demand' for r in records):
+            raise SystemExit('Desktop package requires demand mapping validation: ' + mode)
+        passed = {r.get('test') for r in records if r.get('passed')}
+        required = {'android_vold_user_storage', 'android_system_boot_completed',
+                    'android_application_data_persistence', 'android_keystore_persistence',
+                    'android_desktop_launch_commands', 'android_system_process_groups_stopped',
+                    'linux_data_readonly_shutdown', 'android_clock_controls_ready',
+                    'android_clock_alarm_activity'}
+        if missing := required - passed:
+            raise SystemExit(f'Desktop validation missing in {mode}: {sorted(missing)}')
+        visible = {r.get('package') for r in records
+                   if r.get('test') == 'android_desktop_visible_activity' and r.get('passed')}
+        if not {'com.android.launcher3', 'com.google.android.deskclock',
+                'com.google.android.documentsui'} <= visible:
+            raise SystemExit('Desktop application pixels were not checked: ' + mode)
+    for test in ('android_application_data_persistence', 'android_keystore_persistence'):
+        if not any(r.get('test') == test and r.get('passed') and r.get('restored')
+                   for r in summary['dispatch_results']):
+            raise SystemExit('Restart persistence was not checked: ' + test)
     for name, digest in summary['graphics_libraries_sha256'].items():
         if hashlib.sha256(Path(name).read_bytes()).hexdigest() != digest:
             raise SystemExit('Host graphics changed; rerun the graphics probe: ' + name)
@@ -90,7 +113,7 @@ def main():
                 UISupportedInterfaceOrientations=['UIInterfaceOrientationPortrait',
                     'UIInterfaceOrientationPortraitUpsideDown',
                     'UIInterfaceOrientationLandscapeLeft', 'UIInterfaceOrientationLandscapeRight'],
-                CFBundleShortVersionString='0.11.1', CFBundleVersion='78')
+                CFBundleShortVersionString='0.12.0', CFBundleVersion='80')
     plist(OUT / 'Info.plist', info)
     helper_info = plistlib.loads((ROOT / 'src/app/HuskJITHelper/Info.plist').read_bytes())
     for key in ['CFBundleShortVersionString', 'CFBundleVersion']:
@@ -115,11 +138,12 @@ def main():
                  ROOT / 'work/native-linux-nce/compiler-rt-20.1.8.src/LICENSE.TXT']]
     android = ROOT / 'work/native-linux-nce/android'
     notices = OUT / 'Android-NOTICES.txt'
-    notice_paths = ['android36/NOTICE.txt', 'art/NOTICE', 'bionic-source/libc/NOTICE',
+    notice_paths = ['android36/NOTICE.txt', 'android36-aosp-components/NOTICE.txt', 'art/NOTICE', 'bionic-source/libc/NOTICE',
                     'bionic-source/linker/NOTICE', 'bionic-source/libdl/NOTICE', 'scudo/LICENSE.TXT',
                     'libunwind-20.1.8.src/LICENSE.TXT', 'fmt/LICENSE', 'dlmalloc/NOTICE',
                     'libnativehelper/NOTICE', 'cpu_features/LICENSE', 'tinyxml2/LICENSE.txt',
                     'lz4/lib/LICENSE', 'lzma/NOTICE', 'libbase/NOTICE', 'liblog/liblog/NOTICE',
+                    'cronet-boringssl/src/LICENSE',
                     'vixl/LICENCE', 'boringssl/src/LICENSE']
     notices.write_bytes(b''.join(f'\n===== {name} =====\n'.encode() + (android / name).read_bytes()
                                 for name in notice_paths))

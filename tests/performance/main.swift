@@ -1,16 +1,24 @@
 import Foundation
 
 func require(_ condition: @autoclosure () -> Bool, _ message: String) {
-    if !condition() { fatalError(message) }
+    if !condition() {
+        fatalError(message)
+    }
 }
 
 var timing = HuskTimingHistogram()
 require(timing.p95Upper == nil, "empty windows have no percentile")
-for _ in 0..<95 { timing.record(milliseconds: 2) }
-for _ in 0..<5 { timing.record(milliseconds: 1500) }
+for _ in 0 ..< 95 {
+    timing.record(milliseconds: 2)
+}
+for _ in 0 ..< 5 {
+    timing.record(milliseconds: 1500)
+}
 require(timing.count == 100 && timing.p95Upper == 2, "p95 must preserve the boundary rank")
 require(timing.maximum == 1500, "long stalls must remain visible")
-for value in [Double.nan, .infinity, -1] { timing.record(milliseconds: value) }
+for value in [Double.nan, .infinity, -1] {
+    timing.record(milliseconds: value)
+}
 require(timing.count == 100, "invalid clock values must be ignored")
 var overflow = HuskTimingHistogram()
 overflow.record(milliseconds: 2000)

@@ -515,7 +515,7 @@ int main(int argc, char **argv)
     CHECK(pread(transferred, data, 15, 0) == 15 && !strcmp(data, "platform-binder"));
     CHECK(close(transferred) == 0);
     puts("{\"test\":\"android_platform_binder_fd_transfer\",\"passed\":true}");
-    alarm(access("/data/nce/system-server-probe", F_OK) == 0 ? 280 : 60);
+    alarm(access("/data/nce/system-server-probe", F_OK) == 0 ? 460 : 60);
     rlimit nice_limit = {40, 40};
     CHECK(setrlimit(RLIMIT_NICE, &nice_limit) == 0);
     nce_input_start();

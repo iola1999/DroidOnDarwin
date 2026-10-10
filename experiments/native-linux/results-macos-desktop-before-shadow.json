@@ -1,0 +1,458 @@
+{
+  "date": "2026-10-10",
+  "configuration": "demand, 1 GiB Linux RAM, TLS direct read, cached resume entries, same persisted Android data disk",
+  "platform": "macOS 27.0, Apple M5 Ultra",
+  "records": [
+    {
+      "memory": "system_mounted",
+      "linux_available_kib": 1017744,
+      "linux_shmem_kib": 2624,
+      "host_peak_rss_bytes": 62128128,
+      "host_footprint_bytes": 52888584,
+      "reclaimed_bytes": 0,
+      "reclaimed_ranges": 0
+    },
+    {
+      "memory": "after_userspace",
+      "phys_footprint": 321799464,
+      "resident_peak": 330825728
+    },
+    {
+      "memory": "after_userspace",
+      "phys_footprint": 326583592,
+      "resident_peak": 338083840
+    },
+    {
+      "memory": "after_userspace",
+      "phys_footprint": 326616360,
+      "resident_peak": 338100224
+    },
+    {
+      "memory": "after_userspace",
+      "phys_footprint": 326649128,
+      "resident_peak": 338165760
+    },
+    {
+      "memory": "after_userspace",
+      "phys_footprint": 326649128,
+      "resident_peak": 338165760
+    },
+    {
+      "memory": "after_userspace",
+      "phys_footprint": 326665512,
+      "resident_peak": 338165760
+    },
+    {
+      "memory": "after_userspace",
+      "phys_footprint": 326665512,
+      "resident_peak": 338182144
+    },
+    {
+      "memory": "after_userspace",
+      "phys_footprint": 326747432,
+      "resident_peak": 338264064
+    },
+    {
+      "memory": "after_userspace",
+      "phys_footprint": 326747432,
+      "resident_peak": 338264064
+    },
+    {
+      "memory": "after_userspace",
+      "phys_footprint": 326747432,
+      "resident_peak": 338264064
+    },
+    {
+      "memory": "after_userspace",
+      "phys_footprint": 326747432,
+      "resident_peak": 338264064
+    },
+    {
+      "memory": "after_userspace",
+      "phys_footprint": 326747432,
+      "resident_peak": 338280448
+    },
+    {
+      "memory": "after_userspace",
+      "phys_footprint": 326747432,
+      "resident_peak": 338280448
+    },
+    {
+      "memory": "after_userspace",
+      "phys_footprint": 326796584,
+      "resident_peak": 338280448
+    },
+    {
+      "memory": "after_userspace",
+      "phys_footprint": 326796584,
+      "resident_peak": 338313216
+    },
+    {
+      "memory": "after_userspace",
+      "phys_footprint": 326796584,
+      "resident_peak": 338313216
+    },
+    {
+      "test": "linux_ram_capacity_cow",
+      "passed": true,
+      "bytes": 671088640
+    },
+    {
+      "bench": "linux_mm_exchange",
+      "bytes": 2097152,
+      "shared_percent": 0,
+      "touch_all": 0,
+      "threads": 0,
+      "rounds": 128,
+      "ns_per_roundtrip": 88718
+    },
+    {
+      "bench": "linux_mm_exchange",
+      "bytes": 2097152,
+      "shared_percent": 0,
+      "touch_all": 1,
+      "threads": 0,
+      "rounds": 128,
+      "ns_per_roundtrip": 260117
+    },
+    {
+      "bench": "linux_mm_exchange",
+      "bytes": 2097152,
+      "shared_percent": 50,
+      "touch_all": 0,
+      "threads": 0,
+      "rounds": 128,
+      "ns_per_roundtrip": 83851
+    },
+    {
+      "bench": "linux_mm_exchange",
+      "bytes": 2097152,
+      "shared_percent": 50,
+      "touch_all": 1,
+      "threads": 0,
+      "rounds": 128,
+      "ns_per_roundtrip": 157921
+    },
+    {
+      "bench": "linux_mm_exchange",
+      "bytes": 2097152,
+      "shared_percent": 100,
+      "touch_all": 0,
+      "threads": 0,
+      "rounds": 128,
+      "ns_per_roundtrip": 59320
+    },
+    {
+      "bench": "linux_mm_exchange",
+      "bytes": 2097152,
+      "shared_percent": 100,
+      "touch_all": 1,
+      "threads": 0,
+      "rounds": 128,
+      "ns_per_roundtrip": 62953
+    },
+    {
+      "bench": "linux_mm_exchange",
+      "bytes": 2097152,
+      "shared_percent": 0,
+      "touch_all": 1,
+      "threads": 1,
+      "rounds": 128,
+      "ns_per_roundtrip": 6453
+    },
+    {
+      "bench": "linux_mm_exchange",
+      "bytes": 4194304,
+      "shared_percent": 0,
+      "touch_all": 0,
+      "threads": 0,
+      "rounds": 128,
+      "ns_per_roundtrip": 88867
+    },
+    {
+      "bench": "linux_mm_exchange",
+      "bytes": 4194304,
+      "shared_percent": 0,
+      "touch_all": 1,
+      "threads": 0,
+      "rounds": 128,
+      "ns_per_roundtrip": 1643421
+    },
+    {
+      "bench": "linux_mm_exchange",
+      "bytes": 4194304,
+      "shared_percent": 50,
+      "touch_all": 0,
+      "threads": 0,
+      "rounds": 128,
+      "ns_per_roundtrip": 83429
+    },
+    {
+      "bench": "linux_mm_exchange",
+      "bytes": 4194304,
+      "shared_percent": 50,
+      "touch_all": 1,
+      "threads": 0,
+      "rounds": 128,
+      "ns_per_roundtrip": 278507
+    },
+    {
+      "bench": "linux_mm_exchange",
+      "bytes": 4194304,
+      "shared_percent": 100,
+      "touch_all": 0,
+      "threads": 0,
+      "rounds": 128,
+      "ns_per_roundtrip": 67406
+    },
+    {
+      "bench": "linux_mm_exchange",
+      "bytes": 4194304,
+      "shared_percent": 100,
+      "touch_all": 1,
+      "threads": 0,
+      "rounds": 128,
+      "ns_per_roundtrip": 82148
+    },
+    {
+      "bench": "linux_mm_exchange",
+      "bytes": 4194304,
+      "shared_percent": 0,
+      "touch_all": 1,
+      "threads": 1,
+      "rounds": 128,
+      "ns_per_roundtrip": 8234
+    },
+    {
+      "bench": "linux_mm_exchange",
+      "bytes": 8388608,
+      "shared_percent": 0,
+      "touch_all": 0,
+      "threads": 0,
+      "rounds": 128,
+      "ns_per_roundtrip": 91265
+    },
+    {
+      "bench": "linux_mm_exchange",
+      "bytes": 8388608,
+      "shared_percent": 0,
+      "touch_all": 1,
+      "threads": 0,
+      "rounds": 128,
+      "ns_per_roundtrip": 1992593
+    },
+    {
+      "bench": "linux_mm_exchange",
+      "bytes": 8388608,
+      "shared_percent": 50,
+      "touch_all": 0,
+      "threads": 0,
+      "rounds": 128,
+      "ns_per_roundtrip": 85054
+    },
+    {
+      "bench": "linux_mm_exchange",
+      "bytes": 8388608,
+      "shared_percent": 50,
+      "touch_all": 1,
+      "threads": 0,
+      "rounds": 128,
+      "ns_per_roundtrip": 490828
+    },
+    {
+      "bench": "linux_mm_exchange",
+      "bytes": 8388608,
+      "shared_percent": 100,
+      "touch_all": 0,
+      "threads": 0,
+      "rounds": 128,
+      "ns_per_roundtrip": 65289
+    },
+    {
+      "bench": "linux_mm_exchange",
+      "bytes": 8388608,
+      "shared_percent": 100,
+      "touch_all": 1,
+      "threads": 0,
+      "rounds": 128,
+      "ns_per_roundtrip": 98523
+    },
+    {
+      "bench": "linux_mm_exchange",
+      "bytes": 8388608,
+      "shared_percent": 0,
+      "touch_all": 1,
+      "threads": 1,
+      "rounds": 128,
+      "ns_per_roundtrip": 9921
+    },
+    {
+      "bench": "linux_mm_exchange",
+      "bytes": 16777216,
+      "shared_percent": 0,
+      "touch_all": 0,
+      "threads": 0,
+      "rounds": 128,
+      "ns_per_roundtrip": 92242
+    },
+    {
+      "bench": "linux_mm_exchange",
+      "bytes": 16777216,
+      "shared_percent": 0,
+      "touch_all": 1,
+      "threads": 0,
+      "rounds": 128,
+      "ns_per_roundtrip": 5297187
+    },
+    {
+      "bench": "linux_mm_exchange",
+      "bytes": 16777216,
+      "shared_percent": 50,
+      "touch_all": 0,
+      "threads": 0,
+      "rounds": 128,
+      "ns_per_roundtrip": 86187
+    },
+    {
+      "bench": "linux_mm_exchange",
+      "bytes": 16777216,
+      "shared_percent": 50,
+      "touch_all": 1,
+      "threads": 0,
+      "rounds": 128,
+      "ns_per_roundtrip": 953460
+    },
+    {
+      "bench": "linux_mm_exchange",
+      "bytes": 16777216,
+      "shared_percent": 100,
+      "touch_all": 0,
+      "threads": 0,
+      "rounds": 128,
+      "ns_per_roundtrip": 68343
+    },
+    {
+      "bench": "linux_mm_exchange",
+      "bytes": 16777216,
+      "shared_percent": 100,
+      "touch_all": 1,
+      "threads": 0,
+      "rounds": 128,
+      "ns_per_roundtrip": 143656
+    },
+    {
+      "bench": "linux_mm_exchange",
+      "bytes": 16777216,
+      "shared_percent": 0,
+      "touch_all": 1,
+      "threads": 1,
+      "rounds": 128,
+      "ns_per_roundtrip": 17164
+    },
+    {
+      "memory": "before_art",
+      "linux_available_kib": 891376,
+      "linux_shmem_kib": 3888,
+      "host_peak_rss_bytes": 1677443072,
+      "host_footprint_bytes": 1078347624,
+      "reclaimed_bytes": 1366032384,
+      "reclaimed_ranges": 98
+    },
+    {
+      "memory": "after_art",
+      "linux_available_kib": 904224,
+      "linux_shmem_kib": 3920,
+      "host_peak_rss_bytes": 1677443072,
+      "host_footprint_bytes": 1105659776,
+      "reclaimed_bytes": 1366032384,
+      "reclaimed_ranges": 98
+    },
+    {
+      "test": "android_vintf_build_consistency",
+      "passed": true
+    },
+    {
+      "test": "android_keystore_persistence",
+      "passed": true,
+      "restored": true
+    },
+    {
+      "test": "android_system_boot_completed",
+      "passed": true
+    },
+    {
+      "test": "android_desktop_visible_activity",
+      "passed": true,
+      "package": "com.google.android.apps.nexuslauncher",
+      "sampled_colors": 855
+    },
+    {
+      "test": "android_desktop_visible_activity",
+      "passed": true,
+      "package": "com.google.android.deskclock",
+      "sampled_colors": 27
+    },
+    {
+      "test": "android_application_data_persistence",
+      "passed": true,
+      "package": "com.google.android.deskclock",
+      "row_id": 3,
+      "restored": false
+    },
+    {
+      "test": "android_desktop_visible_activity",
+      "passed": true,
+      "package": "com.google.android.documentsui",
+      "sampled_colors": 31
+    },
+    {
+      "test": "android_framework_shutdown",
+      "passed": true
+    },
+    {
+      "test": "android_system_process_groups_stopped",
+      "passed": true
+    },
+    {
+      "memory": "after_framework",
+      "linux_available_kib": 994864,
+      "linux_shmem_kib": 11248,
+      "host_peak_rss_bytes": 1677443072,
+      "host_footprint_bytes": 1765837968,
+      "reclaimed_bytes": 1605632000,
+      "reclaimed_ranges": 408
+    },
+    {
+      "memory": "after_host_reclaim",
+      "linux_available_kib": 880432,
+      "linux_shmem_kib": 11248,
+      "host_peak_rss_bytes": 1677443072,
+      "host_footprint_bytes": 1074171024,
+      "reclaimed_bytes": 1989148672,
+      "reclaimed_ranges": 933
+    },
+    {
+      "test": "linux_host_mapping_totals",
+      "data_maps": 15930363,
+      "data_bytes": 459561992192,
+      "code_copy_bytes": 461668352,
+      "revocations": 10498860
+    },
+    {
+      "test": "linux_nce_context_lifetime",
+      "allocated": 2826,
+      "freed": 2826
+    },
+    {
+      "test": "linux_guest_events",
+      "preemptions": 9270,
+      "deferred_faults": 16537238,
+      "stack_resumes": 204423,
+      "stack_calls": 3305
+    },
+    {
+      "result": "passed"
+    }
+  ],
+  "limits": "CLI completed; Launcher capture still contained its starting window. GCD check failed because a SystemUI ANR dialog held focus. This run does not satisfy desktop acceptance."
+}

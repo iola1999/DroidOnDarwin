@@ -23,7 +23,9 @@ enum HuskLog {
     private static let osLog = Logger(subsystem: "com.husk.app", category: "husk")
 
     /// Exposed because a C signal handler closure cannot capture context.
-    fileprivate static var rawLogFD: Int32 { logFD }
+    fileprivate static var rawLogFD: Int32 {
+        logFD
+    }
     private static var logFD: Int32 = -1
     fileprivate static var pipeReadFD: Int32 = -1
 
@@ -52,14 +54,17 @@ enum HuskLog {
     }
 
     static func recentLines(_ n: Int = 400) -> [String] {
-        ringLock.lock(); defer { ringLock.unlock() }
+        ringLock.lock()
+        defer { ringLock.unlock() }
         return Array(ring.suffix(n))
     }
 
     // MARK: - Startup
 
     static func start() {
-        guard !started else { return }
+        guard !started else {
+            return
+        }
         started = true
 
         // A write to a pipe whose read end has closed raises SIGPIPE, and the
@@ -91,13 +96,19 @@ enum HuskLog {
         guard let data = try? Data(contentsOf: previousNativeLogURL),
               !data.isEmpty,
               let text = String(data: data.suffix(8 * 1024), encoding: .utf8)
-        else { return }
+        else {
+            return
+        }
 
         let lines = text.split(separator: "\n", omittingEmptySubsequences: true).suffix(40)
-        guard !lines.isEmpty else { return }
+        guard !lines.isEmpty else {
+            return
+        }
         log("prev", "---- last \(lines.count) lines from the previous run "
-                  + "(the one that may have crashed) ----")
-        for line in lines { log("prev", String(line)) }
+            + "(the one that may have crashed) ----")
+        for line in lines {
+            log("prev", String(line))
+        }
         log("prev", "---- end of the previous run ----")
     }
 
@@ -113,7 +124,9 @@ enum HuskLog {
 
     /// Force everything out to disk.
     static func flushNow() {
-        if logFD >= 0 { fsync(logFD) }
+        if logFD >= 0 {
+            fsync(logFD)
+        }
     }
 
     /// Point stdout and stderr at a pipe we drain ourselves.
@@ -146,7 +159,7 @@ enum HuskLog {
         pipeReadFD = open(cURL.path, O_RDONLY)
         guard pipeWriteFD >= 0, pipeReadFD >= 0 else {
             log("boot", "WARNING: could not open husk-native.log (errno \(errno)); "
-                      + "C-side stderr will not be captured")
+                + "C-side stderr will not be captured")
             return
         }
         log("boot", "native stderr -> husk-native.log (mirrored here)")
@@ -162,7 +175,9 @@ enum HuskLog {
             while true {
                 let n = read(pipeReadFD, &buf, buf.count)
                 if n < 0 {
-                    if errno == EINTR { continue }
+                    if errno == EINTR {
+                        continue
+                    }
                     break
                 }
                 // End of file, not end of stream: the writer is still open and
@@ -172,13 +187,13 @@ enum HuskLog {
                     usleep(40_000)
                     continue
                 }
-                pending.append(contentsOf: buf[0..<n])
+                pending.append(contentsOf: buf[0 ..< n])
 
                 // Emit complete lines only, so a partial write never splits a
                 // message across two log entries.
                 while let nl = pending.firstIndex(of: 0x0A) {
-                    let lineData = pending.subdata(in: pending.startIndex..<nl)
-                    pending.removeSubrange(pending.startIndex...nl)
+                    let lineData = pending.subdata(in: pending.startIndex ..< nl)
+                    pending.removeSubrange(pending.startIndex ... nl)
                     if let line = String(data: lineData, encoding: .utf8) {
                         emit(line, fromStream: true)
                     }
@@ -205,7 +220,9 @@ enum HuskLog {
                 let msg = "\n*** FATAL SIGNAL \(received) -- process is dying ***\n"
                 msg.withCString { p in
                     let n = strlen(p)
-                    if HuskLog.rawLogFD >= 0 { _ = write(HuskLog.rawLogFD, p, n) }
+                    if HuskLog.rawLogFD >= 0 {
+                        _ = write(HuskLog.rawLogFD, p, n)
+                    }
                 }
                 // Drain whatever C wrote but the reader thread never got to.
                 //
@@ -232,7 +249,9 @@ enum HuskLog {
                     // looked exactly like "QEMU printed nothing".
                     while true {
                         let n = read(HuskLog.pipeReadFD, HuskLog.crashBuf, 8192)
-                        if n <= 0 { break }
+                        if n <= 0 {
+                            break
+                        }
                         if HuskLog.rawLogFD >= 0 {
                             _ = write(HuskLog.rawLogFD, HuskLog.crashBuf, n)
                         }
@@ -255,7 +274,9 @@ enum HuskLog {
                     let n = backtrace(HuskLog.crashFrames, 64)
                     backtrace_symbols_fd(HuskLog.crashFrames, n, HuskLog.rawLogFD)
                 }
-                if HuskLog.rawLogFD >= 0 { fsync(HuskLog.rawLogFD) }
+                if HuskLog.rawLogFD >= 0 {
+                    fsync(HuskLog.rawLogFD)
+                }
                 signal(received, SIG_DFL)
                 raise(received)
             }
@@ -266,7 +287,7 @@ enum HuskLog {
             HuskLog.flushNow()
         }
         log("boot", "crash handlers installed (SEGV/ABRT/ILL/FPE/SYS; "
-                  + "TRAP+BUS left to the JIT guard; SIGPIPE ignored)")
+            + "TRAP+BUS left to the JIT guard; SIGPIPE ignored)")
     }
 
     // MARK: - Emitting
@@ -276,7 +297,9 @@ enum HuskLog {
     private static func emit(_ line: String, fromStream: Bool) {
         ringLock.lock()
         ring.append(line)
-        if ring.count > ringLimit { ring.removeFirst(ring.count - ringLimit) }
+        if ring.count > ringLimit {
+            ring.removeFirst(ring.count - ringLimit)
+        }
         ringLock.unlock()
 
         // The C side (husk-ios-jit.c, husk-display.c) writes to os_log itself as
@@ -291,13 +314,17 @@ enum HuskLog {
         // can still be pending when the process dies, which loses exactly the
         // lines that explain why it died -- and those are the whole point of this
         // file. write(2) to a file lands in the page cache and is cheap.
-        guard logFD >= 0, let data = (line + "\n").data(using: .utf8) else { return }
+        guard logFD >= 0, let data = (line + "\n").data(using: .utf8) else {
+            return
+        }
         writeLock.lock()
         data.withUnsafeBytes { raw in
             var off = 0
             while off < raw.count {
                 let n = write(logFD, raw.baseAddress!.advanced(by: off), raw.count - off)
-                if n <= 0 { break }
+                if n <= 0 {
+                    break
+                }
                 off += n
             }
         }
@@ -315,7 +342,8 @@ enum HuskLog {
     /// The hardware identifier, e.g. "iPhone18,1". Which JIT routes exist on
     /// this device is decided from it and the iOS version.
     static var deviceModel: String {
-        var sysinfo = utsname(); uname(&sysinfo)
+        var sysinfo = utsname()
+        uname(&sysinfo)
         return withUnsafePointer(to: &sysinfo.machine) {
             $0.withMemoryRebound(to: CChar.self, capacity: 1) { String(cString: $0) }
         }
@@ -331,7 +359,7 @@ enum HuskLog {
         log("boot", "system      : \(d.systemName) \(d.systemVersion)")
         log("boot", "physical RAM: \(mem) MiB")
         log("boot", "processors  : \(ProcessInfo.processInfo.processorCount) "
-                  + "(active \(ProcessInfo.processInfo.activeProcessorCount))")
+            + "(active \(ProcessInfo.processInfo.activeProcessorCount))")
         log("boot", "bundle      : \(Bundle.main.bundleIdentifier ?? "?")")
         // Which build this is, in the log itself.
         //
@@ -341,9 +369,9 @@ enum HuskLog {
         // and date are stamped into Info.plist by package_ipa.sh.
         let info = Bundle.main.infoDictionary ?? [:]
         let version = info["CFBundleShortVersionString"] as? String ?? "?"
-        let build   = info["CFBundleVersion"] as? String ?? "?"
-        let commit  = info["HuskBuildCommit"] as? String ?? "unstamped"
-        let built   = info["HuskBuildDate"] as? String ?? "?"
+        let build = info["CFBundleVersion"] as? String ?? "?"
+        let commit = info["HuskBuildCommit"] as? String ?? "unstamped"
+        let built = info["HuskBuildDate"] as? String ?? "?"
         log("boot", "build       : \(version) (\(build)) \(commit) built \(built)")
         if let experiment = info["HuskPerformanceBuild"] as? String {
             log("boot", "experiment  : \(experiment)")

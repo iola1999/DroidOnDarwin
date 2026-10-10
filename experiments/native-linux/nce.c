@@ -59,6 +59,18 @@ int nce_write_patch(uint32_t *write_address, uintptr_t execute_address,
     memcpy(stub.rw + 56, &resume, 8);
     memcpy(stub.rw + 64, &instruction, 4);
     memcpy(stub.rw + 72, &gate, 8);
+    unsigned reg = instruction & 31;
+    if ((instruction & 0xffffffe0) == 0xd53bd040 && reg != 18 && reg != 31) {
+        // MRS changes only its destination. The active slot follows Linux task
+        // switches, so these loads need neither guest stack nor host dispatch.
+        _Static_assert(offsetof(NceState, tls) % 8 == 0 && offsetof(NceState, tls) < 32768, "TLS load offset");
+        uint32_t *words = (void *)stub.rw;
+        words[0] = 0x58000180u | reg;  // ldr Xt, [pc + 48]
+        words[1] = 0xf9400000u | (reg << 5) | reg;
+        words[2] = 0xf9400000u | ((offsetof(NceState, tls) / 8) << 10) | (reg << 5) | reg;
+        if (nce_write_branch(&words[3], (uintptr_t)stub.rx + 12, execute_address + 4))
+            return -1;
+    }
     if (nce_write_branch((void *)(stub.rw + 44), (uintptr_t)stub.rx + 44, execute_address + 4))
         return -1;
     return nce_write_branch(write_address, execute_address, (uintptr_t)stub.rx);
@@ -85,7 +97,8 @@ int nce_prepare_shared(NceCode code, NceState *s, NceState **active,
         int svc = (word & 0xffe0001f) == 0xd4000001;
         int tls = (word & 0xffffffe0) == 0xd53bd040 ||
                   (word & 0xffffffe0) == 0xd51bd040;
-        if (!svc && !tls && !x18_instruction(word))
+        int cache_type = (word & 0xffffffe0) == 0xd53b0020;
+        if (!svc && !tls && !cache_type && !x18_instruction(word))
             continue;
         if (cursor + 80 > code.size)
             return -1;
@@ -115,10 +128,13 @@ NceState *nce_dispatch(NceState *s)
     if ((word & 0xffffffe0) == 0xd53bd040) {
         if (reg != 31)
             s->regs.x[reg] = s->tls;
-        ++s->tls_accesses;
     } else if ((word & 0xffffffe0) == 0xd51bd040) {
         s->tls = reg == 31 ? 0 : s->regs.x[reg];
-        ++s->tls_accesses;
+    } else if ((word & 0xffffffe0) == 0xd53b0020) {
+        /* Virtual I/D maintenance granules are 64 bytes; IDC/DIC remain clear.
+         * Executable publication uses Darwin's cache maintenance functions. */
+        if (reg != 31)
+            s->regs.x[reg] = UINT64_C(0x80040004);
     } else if ((word & 0x7fe0fc00) == 0x2a000000) {
         unsigned source = (word >> 16) & 31;
         unsigned left = (word >> 5) & 31;

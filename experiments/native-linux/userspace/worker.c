@@ -80,8 +80,8 @@ static void *thread_work(void *argument)
 }
 
 /* Mapping symbols mark these words as data even inside an executable section. */
-__asm__(".pushsection .text\n.balign 4\n.global instruction_constants\ninstruction_constants:\n.word 0xd4000001, 0xd53bd040, 0xd51bd040\n.popsection");
-extern const unsigned instruction_constants[3];
+__asm__(".pushsection .text\n.balign 4\n.global instruction_constants\ninstruction_constants:\n.word 0xd4000001, 0xd53bd040, 0xd51bd040, 0xd53b0020\n.popsection");
+extern const unsigned instruction_constants[4];
 extern unsigned exercise_large_text(unsigned);
 
 int main(int argc, char **argv)
@@ -96,6 +96,12 @@ int main(int argc, char **argv)
     char formatted[32];
     CHECK(snprintf(formatted, sizeof(formatted), "%.3Lf", input / 2) == 5 && !strcmp(formatted, "0.625"));
     CHECK(instruction_constants[0] == 0xd4000001 && instruction_constants[1] == 0xd53bd040 && instruction_constants[2] == 0xd51bd040);
+    CHECK(instruction_constants[3] == 0xd53b0020);
+    unsigned long cache_type;
+    __asm__ volatile("mrs %0, ctr_el0" : "=r"(cache_type));
+    CHECK((4ul << (cache_type & 15)) == 64 && (4ul << ((cache_type >> 16) & 15)) == 64);
+    CHECK(!(cache_type & (3ul << 28)));
+    __asm__ volatile("mrs xzr, ctr_el0");
     pthread_t threads[4];
     for (uintptr_t i = 0; i < 4; ++i)
         CHECK(pthread_create(&threads[i], NULL, thread_work, (void *)i) == 0);
@@ -142,6 +148,6 @@ int main(int argc, char **argv)
     for (size_t i = 0; i < size; i += 16384)
         CHECK(data[i] == (unsigned char)(i / 16384));
     CHECK(munmap(data, size) == 0);
-    CHECK(printf("worker passed pid=%ld tls=%u\n", (long)getpid(), local) > 0);
+    CHECK(printf("worker passed pid=%ld tls=%u cache_line=64\n", (long)getpid(), local) > 0);
     return 0;
 }

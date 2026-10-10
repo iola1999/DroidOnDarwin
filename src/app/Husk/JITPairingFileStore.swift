@@ -17,20 +17,32 @@ enum JITPairingFileStore {
         FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
             .appendingPathComponent("StikJIT", isDirectory: true)
     }
-    static var url: URL { directory.appendingPathComponent("pairingFile.plist") }
-    static var exists: Bool { FileManager.default.fileExists(atPath: url.path) }
+    static var url: URL {
+        directory.appendingPathComponent("pairingFile.plist")
+    }
+    static var exists: Bool {
+        FileManager.default.fileExists(atPath: url.path)
+    }
     private static let sourceKey = "husk.jitPairingSource"
 
     static var source: JITPairingSource? {
-        guard exists else { return nil }
+        guard exists else {
+            return nil
+        }
         return UserDefaults.standard.string(forKey: sourceKey).flatMap(JITPairingSource.init(rawValue:)) ?? .imported
     }
 
-    static func data() throws -> Data { try Data(contentsOf: url) }
+    static func data() throws -> Data {
+        try Data(contentsOf: url)
+    }
 
     static func importFile(from source: URL) throws {
         let scoped = source.startAccessingSecurityScopedResource()
-        defer { if scoped { source.stopAccessingSecurityScopedResource() } }
+        defer {
+            if scoped {
+                source.stopAccessingSecurityScopedResource()
+            }
+        }
         try store(try Data(contentsOf: source), source: .imported)
     }
 
@@ -44,7 +56,7 @@ enum JITPairingFileStore {
               let identifier = dictionary["identifier"] as? String, !identifier.isEmpty else {
             throw NSError(domain: "HuskJIT", code: 10,
                           userInfo: [NSLocalizedDescriptionKey:
-                            "That is not a remote pairing file. Make one with the StikDebug pairing-file guide and try again."])
+                              "That is not a remote pairing file. Make one with the StikDebug pairing-file guide and try again."])
         }
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
         try data.write(to: url, options: .atomic)

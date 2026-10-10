@@ -1,0 +1,245 @@
+{
+  "date": "2026-10-10",
+  "stage": "deferred user-window restoration; forced 2ms yield retained",
+  "configuration_reference": "results-macos-desktop-mapping-baseline.json",
+  "records": [
+    {
+      "profile": "host_mapping",
+      "elapsed_ms": 10514.333,
+      "data_calls": 1245037,
+      "data_ms": 1604.916,
+      "code_calls": 188334,
+      "code_ms": 621.723,
+      "revoke_calls": 543924,
+      "revoke_ms": 781.481
+    },
+    {
+      "profile": "host_mapping",
+      "elapsed_ms": 20517.01,
+      "data_calls": 4302228,
+      "data_ms": 5066.641,
+      "code_calls": 372379,
+      "code_ms": 1201.052,
+      "revoke_calls": 1316481,
+      "revoke_ms": 2161.877
+    },
+    {
+      "profile": "host_mapping",
+      "elapsed_ms": 30562.053,
+      "data_calls": 9296565,
+      "data_ms": 10407.511,
+      "code_calls": 605064,
+      "code_ms": 1852.731,
+      "revoke_calls": 2389180,
+      "revoke_ms": 3769.077
+    },
+    {
+      "profile": "host_mapping",
+      "elapsed_ms": 41553.951,
+      "data_calls": 15246571,
+      "data_ms": 16856.447,
+      "code_calls": 953378,
+      "code_ms": 2713.104,
+      "revoke_calls": 3694614,
+      "revoke_ms": 5532.514
+    },
+    {
+      "profile": "host_mapping",
+      "elapsed_ms": 51713.062,
+      "data_calls": 21103424,
+      "data_ms": 23242.164,
+      "code_calls": 1317870,
+      "code_ms": 3477.842,
+      "revoke_calls": 5047326,
+      "revoke_ms": 7186.924
+    },
+    {
+      "profile": "host_mapping",
+      "elapsed_ms": 61967.687,
+      "data_calls": 26533525,
+      "data_ms": 29229.371,
+      "code_calls": 1664095,
+      "code_ms": 4153.05,
+      "revoke_calls": 6288932,
+      "revoke_ms": 8877.688
+    },
+    {
+      "profile": "host_mapping",
+      "elapsed_ms": 72641.445,
+      "data_calls": 32207716,
+      "data_ms": 35520.725,
+      "code_calls": 1995493,
+      "code_ms": 4818.665,
+      "revoke_calls": 7459956,
+      "revoke_ms": 10464.543
+    },
+    {
+      "profile": "host_mapping",
+      "elapsed_ms": 82988.147,
+      "data_calls": 37999164,
+      "data_ms": 41917.556,
+      "code_calls": 2298785,
+      "code_ms": 5386.244,
+      "revoke_calls": 8666978,
+      "revoke_ms": 12045.079
+    },
+    {
+      "profile": "host_mapping",
+      "elapsed_ms": 93933.137,
+      "data_calls": 43548098,
+      "data_ms": 48113.813,
+      "code_calls": 2555383,
+      "code_ms": 5870.556,
+      "revoke_calls": 9811378,
+      "revoke_ms": 13581.836
+    },
+    {
+      "profile": "host_mapping",
+      "elapsed_ms": 104169.971,
+      "data_calls": 48860324,
+      "data_ms": 54074.569,
+      "code_calls": 2927335,
+      "code_ms": 6399.639,
+      "revoke_calls": 10980949,
+      "revoke_ms": 15263.606
+    },
+    {
+      "profile": "host_mapping",
+      "elapsed_ms": 114210.747,
+      "data_calls": 53687382,
+      "data_ms": 59550.352,
+      "code_calls": 3334413,
+      "code_ms": 6924.425,
+      "revoke_calls": 12039725,
+      "revoke_ms": 16912.293
+    },
+    {
+      "profile": "host_mapping",
+      "elapsed_ms": 125222.797,
+      "data_calls": 59303631,
+      "data_ms": 65757.636,
+      "code_calls": 3790922,
+      "code_ms": 7481.932,
+      "revoke_calls": 13242740,
+      "revoke_ms": 18479.289
+    },
+    {
+      "profile": "host_mapping",
+      "elapsed_ms": 135385.264,
+      "data_calls": 64520371,
+      "data_ms": 71540.821,
+      "code_calls": 4292587,
+      "code_ms": 8091.99,
+      "revoke_calls": 14427848,
+      "revoke_ms": 20016.716
+    },
+    {
+      "profile": "host_mapping",
+      "elapsed_ms": 146359.62,
+      "data_calls": 70281667,
+      "data_ms": 77943.993,
+      "code_calls": 4874147,
+      "code_ms": 8790.39,
+      "revoke_calls": 15686300,
+      "revoke_ms": 21604.473
+    },
+    {
+      "profile": "host_mapping",
+      "elapsed_ms": 157267.794,
+      "data_calls": 76035701,
+      "data_ms": 84431.835,
+      "code_calls": 5446762,
+      "code_ms": 9487.322,
+      "revoke_calls": 16911473,
+      "revoke_ms": 23272.143
+    },
+    {
+      "profile": "host_mapping",
+      "elapsed_ms": 167455.476,
+      "data_calls": 81239378,
+      "data_ms": 90281.644,
+      "code_calls": 5959803,
+      "code_ms": 10112.726,
+      "revoke_calls": 18082300,
+      "revoke_ms": 24875.156
+    },
+    {
+      "profile": "host_mapping",
+      "elapsed_ms": 177456.025,
+      "data_calls": 86361620,
+      "data_ms": 96030.858,
+      "code_calls": 6424343,
+      "code_ms": 10698.699,
+      "revoke_calls": 19206279,
+      "revoke_ms": 26516.524
+    },
+    {
+      "profile": "host_mapping",
+      "elapsed_ms": 187653.261,
+      "data_calls": 91227914,
+      "data_ms": 101444.869,
+      "code_calls": 6942279,
+      "code_ms": 11319.464,
+      "revoke_calls": 20320982,
+      "revoke_ms": 28017.69
+    },
+    {
+      "profile": "host_mapping",
+      "elapsed_ms": 197932.749,
+      "data_calls": 96468631,
+      "data_ms": 107424.474,
+      "code_calls": 7441778,
+      "code_ms": 11930.89,
+      "revoke_calls": 21429672,
+      "revoke_ms": 29563.274
+    },
+    {
+      "profile": "host_mapping",
+      "elapsed_ms": 208323.151,
+      "data_calls": 101667611,
+      "data_ms": 113308.031,
+      "code_calls": 7952183,
+      "code_ms": 12546.715,
+      "revoke_calls": 22575391,
+      "revoke_ms": 31074.882
+    },
+    {
+      "profile": "host_mapping",
+      "elapsed_ms": 218906.474,
+      "data_calls": 107008878,
+      "data_ms": 119338.018,
+      "code_calls": 8439097,
+      "code_ms": 13136.16,
+      "revoke_calls": 23712590,
+      "revoke_ms": 32653.662
+    },
+    {
+      "profile": "host_mapping",
+      "elapsed_ms": 228909.286,
+      "data_calls": 111448342,
+      "data_ms": 124492.676,
+      "code_calls": 8792295,
+      "code_ms": 13587.067,
+      "revoke_calls": 24682183,
+      "revoke_ms": 34118.155
+    },
+    {
+      "test": "android_crypto_sdk_context_abi",
+      "passed": true,
+      "hmac_context_bytes": 104,
+      "aead_context_bytes": 584
+    },
+    {
+      "test": "android_keystore_persistence",
+      "passed": true,
+      "restored": true
+    },
+    {
+      "test": "android_system_boot_completed",
+      "passed": true
+    }
+  ],
+  "result": "failed",
+  "failure": "vold user storage preparation: missing vendor_ce/vendor_de parent directories and vold_prepare_subdirs; RecoverySystem setup-bcb failure",
+  "observed": "ActivityTaskManager reported Launcher displayed; full visible-activity check not completed"
+}

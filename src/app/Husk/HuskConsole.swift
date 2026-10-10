@@ -19,7 +19,9 @@ enum HuskConsole {
     }
 
     static func poll() {
-        guard enabled else { return }
+        guard enabled else {
+            return
+        }
         queue.async { processRequest() }
     }
 
@@ -31,8 +33,10 @@ enum HuskConsole {
         guard !fm.fileExists(atPath: running.path),
               let data = try? Data(contentsOf: input),
               let request = try? JSONDecoder().decode(Request.self, from: data),
-              request.timeout.isFinite, (1...300).contains(request.timeout),
-              request.command.utf8.count <= 65536 else { return }
+              request.timeout.isFinite, (1 ... 300).contains(request.timeout),
+              request.command.utf8.count <= 65536 else {
+            return
+        }
         // 先移动请求，应用退出后由调用方决定是否重试，防止重复执行命令。
         do { try fm.moveItem(at: input, to: running) } catch { return }
         let start = ProcessInfo.processInfo.systemUptime
@@ -61,7 +65,9 @@ enum HuskConsole {
             NSError(domain: "husk.console", code: 1, userInfo: [NSLocalizedDescriptionKey: text])
         }
         let fd = socket(AF_INET, SOCK_STREAM, 0)
-        guard fd >= 0 else { throw failure("socket failed: \(errno)") }
+        guard fd >= 0 else {
+            throw failure("socket failed: \(errno)")
+        }
         defer { close(fd) }
         var noSignal: Int32 = 1
         setsockopt(fd, SOL_SOCKET, SO_NOSIGPIPE, &noSignal, socklen_t(MemoryLayout<Int32>.size))
@@ -78,7 +84,9 @@ enum HuskConsole {
                 connect(fd, $0, socklen_t(MemoryLayout<sockaddr_in>.size))
             }
         }
-        guard connected == 0 else { throw failure("console connect failed: \(errno)") }
+        guard connected == 0 else {
+            throw failure("console connect failed: \(errno)")
+        }
         let token = "__HUSK_CONSOLE_\(request.id.uuidString)__"
         let command = "\nstty -echo\n{\n\(request.command)\n}\nprintf '\\n\(token)%s\\n' \"$?\"\n"
         let bytes = Array(command.utf8)
@@ -86,8 +94,12 @@ enum HuskConsole {
             var sent = 0
             while sent < raw.count {
                 let count = write(fd, raw.baseAddress!.advanced(by: sent), raw.count - sent)
-                if count < 0 && errno == EINTR { continue }
-                guard count > 0 else { throw failure("console write failed: \(errno)") }
+                if count < 0 && errno == EINTR {
+                    continue
+                }
+                guard count > 0 else {
+                    throw failure("console write failed: \(errno)")
+                }
                 sent += count
             }
         }
@@ -97,10 +109,16 @@ enum HuskConsole {
         var buffer = [UInt8](repeating: 0, count: 16384)
         while ProcessInfo.processInfo.systemUptime < deadline {
             let count = read(fd, &buffer, buffer.count)
-            if count < 0 && [EINTR, EAGAIN, EWOULDBLOCK].contains(errno) { continue }
-            guard count > 0 else { throw failure("console closed: \(errno)") }
+            if count < 0 && [EINTR, EAGAIN, EWOULDBLOCK].contains(errno) {
+                continue
+            }
+            guard count > 0 else {
+                throw failure("console closed: \(errno)")
+            }
             received.append(contentsOf: buffer.prefix(count))
-            guard received.count <= 4 * 1024 * 1024 else { throw failure("console output exceeds 4 MiB") }
+            guard received.count <= 4 * 1024 * 1024 else {
+                throw failure("console output exceeds 4 MiB")
+            }
             let text = String(decoding: received, as: UTF8.self)
             if let match = pattern.firstMatch(in: text, range: NSRange(text.startIndex..., in: text)),
                let statusRange = Range(match.range(at: 1), in: text),

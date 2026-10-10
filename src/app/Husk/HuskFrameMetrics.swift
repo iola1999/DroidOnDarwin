@@ -10,7 +10,9 @@ struct HuskTimingHistogram {
     private(set) var maximum = 0.0
 
     mutating func record(milliseconds: Double) {
-        guard milliseconds.isFinite, milliseconds >= 0 else { return }
+        guard milliseconds.isFinite, milliseconds >= 0 else {
+            return
+        }
         let index = Self.bounds.firstIndex { milliseconds <= $0 } ?? Self.bounds.count
         buckets[index] += 1
         count += 1
@@ -20,18 +22,24 @@ struct HuskTimingHistogram {
 
     /// 返回 p95 所在区间的上界；超过最后一个区间时使用本次最大值。
     var p95Upper: Double? {
-        guard count > 0 else { return nil }
+        guard count > 0 else {
+            return nil
+        }
         let rank = Int(ceil(Double(count) * 0.95))
         var seen = 0
         for (index, number) in buckets.enumerated() {
             seen += number
-            if seen >= rank { return index < Self.bounds.count ? Self.bounds[index] : maximum }
+            if seen >= rank {
+                return index < Self.bounds.count ? Self.bounds[index] : maximum
+            }
         }
         return nil
     }
 
     var summary: String {
-        guard count > 0 else { return "n=0" }
+        guard count > 0 else {
+            return "n=0"
+        }
         return String(format: "n=%d avg=%.3f p95<=%.3f max=%.3f ms",
                       count, total / Double(count), p95Upper!, maximum)
     }
@@ -76,11 +84,19 @@ final class HuskFrameMetrics: @unchecked Sendable {
         lock.lock()
         defer { lock.unlock() }
         window.callbacks += 1
-        if submitted { window.submitted += 1 }
-        if noDrawable { window.noDrawable += 1 }
+        if submitted {
+            window.submitted += 1
+        }
+        if noDrawable {
+            window.noDrawable += 1
+        }
         window.lockWait.record(milliseconds: lockWait * 1000)
-        if let drawableWait { window.drawable.record(milliseconds: drawableWait * 1000) }
-        if let encode { window.encode.record(milliseconds: encode * 1000) }
+        if let drawableWait {
+            window.drawable.record(milliseconds: drawableWait * 1000)
+        }
+        if let encode {
+            window.encode.record(milliseconds: encode * 1000)
+        }
         window.callback.record(milliseconds: elapsed * 1000)
         if let previous = lastCallback {
             window.interval.record(milliseconds: (start - previous) * 1000)
@@ -92,9 +108,13 @@ final class HuskFrameMetrics: @unchecked Sendable {
         lock.lock()
         defer { lock.unlock() }
         window.completed += 1
-        if failed { window.failed += 1 }
+        if failed {
+            window.failed += 1
+        }
         window.completion.record(milliseconds: elapsed * 1000)
-        if let gpu { window.gpu.record(milliseconds: gpu * 1000) }
+        if let gpu {
+            window.gpu.record(milliseconds: gpu * 1000)
+        }
     }
 
     func recordDisplay(elapsed: Double) {

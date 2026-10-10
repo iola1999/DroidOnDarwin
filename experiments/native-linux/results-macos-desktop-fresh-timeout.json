@@ -1,0 +1,23 @@
+{
+  "result": "failed",
+  "configuration": {
+    "mapping": "demand",
+    "linux_ram_bytes": 1073741824,
+    "fresh_data": true,
+    "mapping_profile": true,
+    "hw_timeout_multiplier": 6
+  },
+  "reason": "SystemUI KeyguardService exceeded 120467 ms; Launcher focused but keyguard remained true at the 120 s check deadline",
+  "system_server_start_services_ms": 47368,
+  "launcher_displayed_ms": 83909,
+  "console_sha256": "061a5ce4dbf7a2553ca3f3de382a2d82e7ec8082cb190673687f5d511508183c",
+  "stack_excerpt": [
+    "10-10 01:34:43.026   207   911 E ActivityManager: Reason: executing service com.android.systemui/.keyguard.KeyguardService, waited 120467ms",
+    "10-10 01:34:51.334   579   579 E AndroidRuntime: java.lang.AssertionError: visible desktop activity timed out: com.android.launcher3; top=ComponentInfo{com.android.launcher3/com.android.launcher3.uioverrides.QuickstepLauncher} visible=true keyguard=true mCurrentFocus=Window{92ed800 u0 com.android.launcher3/com.android.launcher3.uioverrides.QuickstepLauncher}"
+  ],
+  "source_files": {
+    "experiments/native-linux/userspace/framework-test.cpp": "a59dd67823a132ffafaed7969e8738757739be0eb89f84551d9e8bb7b4b41233",
+    "experiments/native-linux/services/NceSurface.java": "3f37aebcc8f504c56b04cc4b144cee9808bdab89a88a0bc93387e8e34e9009d9",
+    "scripts/build_nce_userspace.py": "c27ff8462664fda4a12fef9ee77b3568b2d674c17a400129c2475942faa17137"
+  }
+}

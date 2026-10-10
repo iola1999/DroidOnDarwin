@@ -1,0 +1,109 @@
+{
+  "date": "2026-10-10",
+  "stage": "deferred restoration with scheduler-directed preemption and conditional mprotect",
+  "configuration_reference": "results-macos-desktop-mapping-baseline.json",
+  "records": [
+    {
+      "profile": "host_mapping",
+      "elapsed_ms": 10427.631,
+      "data_calls": 1268815,
+      "data_ms": 1524.7,
+      "code_calls": 188352,
+      "code_ms": 615.398,
+      "revoke_calls": 548045,
+      "revoke_ms": 761.99
+    },
+    {
+      "profile": "host_mapping",
+      "elapsed_ms": 21399.545,
+      "data_calls": 4707862,
+      "data_ms": 5299.321,
+      "code_calls": 427956,
+      "code_ms": 1275.286,
+      "revoke_calls": 1445152,
+      "revoke_ms": 2397.549
+    },
+    {
+      "profile": "host_mapping",
+      "elapsed_ms": 32270.933,
+      "data_calls": 9872260,
+      "data_ms": 10612.13,
+      "code_calls": 724107,
+      "code_ms": 1984.476,
+      "revoke_calls": 2592557,
+      "revoke_ms": 4317.607
+    },
+    {
+      "profile": "host_mapping",
+      "elapsed_ms": 42568.663,
+      "data_calls": 15701591,
+      "data_ms": 16512.616,
+      "code_calls": 1219703,
+      "code_ms": 2753.972,
+      "revoke_calls": 3917994,
+      "revoke_ms": 6143.654
+    },
+    {
+      "profile": "host_mapping",
+      "elapsed_ms": 52577.887,
+      "data_calls": 21252961,
+      "data_ms": 22065.38,
+      "code_calls": 1733947,
+      "code_ms": 3466.136,
+      "revoke_calls": 5105025,
+      "revoke_ms": 7791.017
+    },
+    {
+      "profile": "host_mapping",
+      "elapsed_ms": 62772.577,
+      "data_calls": 26588879,
+      "data_ms": 27651.681,
+      "code_calls": 2240001,
+      "code_ms": 4126.699,
+      "revoke_calls": 6295423,
+      "revoke_ms": 9384.049
+    },
+    {
+      "profile": "host_mapping",
+      "elapsed_ms": 72833.446,
+      "data_calls": 31586516,
+      "data_ms": 32996.103,
+      "code_calls": 2728183,
+      "code_ms": 4742.167,
+      "revoke_calls": 7484641,
+      "revoke_ms": 10903.995
+    },
+    {
+      "profile": "host_mapping",
+      "elapsed_ms": 83780.182,
+      "data_calls": 37416169,
+      "data_ms": 39152.741,
+      "code_calls": 3243792,
+      "code_ms": 5382.483,
+      "revoke_calls": 8759827,
+      "revoke_ms": 12677.871
+    },
+    {
+      "profile": "host_mapping",
+      "elapsed_ms": 94466.896,
+      "data_calls": 42910493,
+      "data_ms": 44847.576,
+      "code_calls": 3766831,
+      "code_ms": 6024.933,
+      "revoke_calls": 10029109,
+      "revoke_ms": 14379.868
+    },
+    {
+      "profile": "host_mapping",
+      "elapsed_ms": 105237.011,
+      "data_calls": 49055802,
+      "data_ms": 51124.725,
+      "code_calls": 4208254,
+      "code_ms": 6558.208,
+      "revoke_calls": 11351814,
+      "revoke_ms": 16090.815
+    }
+  ],
+  "result": "failed",
+  "failure": "android.os.Debug native CHECK: Kernel configs could not be fetched; missing /proc/config.gz"
+}

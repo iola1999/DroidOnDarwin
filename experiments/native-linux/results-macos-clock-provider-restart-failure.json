@@ -1,0 +1,82 @@
+{
+  "date": "2026-10-10",
+  "stage": "Google Clock provider restart failure",
+  "host": {
+    "cpu": "Apple M5 Ultra",
+    "os": "27.0"
+  },
+  "configuration": {
+    "mapping": "demand",
+    "linux_ram_bytes": 1073741824,
+    "hardware_timeout_multiplier": 10
+  },
+  "first_run": "Clock Alarm page, persisted alarm, Files and clean shutdown passed on a new data image",
+  "restart_result": "failed",
+  "records": [
+    {
+      "test": "android_keystore_persistence",
+      "passed": true,
+      "restored": true
+    },
+    {
+      "test": "android_desktop_visible_activity",
+      "passed": true,
+      "package": "com.android.launcher3",
+      "sampled_colors": 470
+    }
+  ],
+  "fatal_log": [
+    "10-10 01:48:08.345   638   638 E AndroidRuntime: FATAL EXCEPTION: main",
+    "10-10 01:48:08.345   638   638 E AndroidRuntime: Process: com.google.android.deskclock, PID: 638",
+    "10-10 01:48:08.345   638   638 E AndroidRuntime: java.lang.SecurityException: Failed to find provider com.google.android.gsf.gservices for user 0; expected to find a valid ContentProvider for this authority",
+    "10-10 01:48:08.345   638   638 E AndroidRuntime: \tat android.os.Parcel.createExceptionOrNull(Parcel.java:3340)",
+    "10-10 01:48:08.345   638   638 E AndroidRuntime: \tat android.os.Parcel.createException(Parcel.java:3324)",
+    "10-10 01:48:08.345   638   638 E AndroidRuntime: \tat android.os.Parcel.readException(Parcel.java:3307)",
+    "10-10 01:48:08.345   638   638 E AndroidRuntime: \tat android.os.Parcel.readException(Parcel.java:3249)",
+    "10-10 01:48:08.345   638   638 E AndroidRuntime: \tat android.content.IContentService$Stub$Proxy.registerContentObserver(IContentService.java:1044)",
+    "10-10 01:48:08.345   638   638 E AndroidRuntime: \tat android.content.ContentResolver.registerContentObserver(ContentResolver.java:2730)",
+    "10-10 01:48:08.345   638   638 E AndroidRuntime: \tat android.content.ContentResolver.registerContentObserver(ContentResolver.java:2678)",
+    "10-10 01:48:08.345   638   638 E AndroidRuntime: \tat dek.e(PG:3)",
+    "10-10 01:48:08.345   638   638 E AndroidRuntime: \tat dek.d(PG:1)",
+    "10-10 01:48:08.345   638   638 E AndroidRuntime: \tat blu.x(PG:20)",
+    "10-10 01:48:08.345   638   638 E AndroidRuntime: \tat bms.p(PG:5)",
+    "10-10 01:48:08.345   638   638 E AndroidRuntime: \tat bms.D(PG:1)",
+    "10-10 01:48:08.345   638   638 E AndroidRuntime: \tat bms.e(PG:1)",
+    "10-10 01:48:08.345   638   638 E AndroidRuntime: \tat bfx.D(PG:5)",
+    "10-10 01:48:08.345   638   638 E AndroidRuntime: \tat bfx.bs(PG:1)",
+    "10-10 01:48:08.345   638   638 E AndroidRuntime: \tat ayd.onActivityStarted(PG:4)",
+    "10-10 01:48:08.345   638   638 E AndroidRuntime: \tat android.app.Application.dispatchActivityStarted(Application.java:401)",
+    "10-10 01:48:08.345   638   638 E AndroidRuntime: \tat android.app.Activity.dispatchActivityStarted(Activity.java:1615)",
+    "10-10 01:48:08.345   638   638 E AndroidRuntime: \tat android.app.Activity.onStart(Activity.java:2154)",
+    "10-10 01:48:08.345   638   638 E AndroidRuntime: \tat br.onStart(PG:2)",
+    "10-10 01:48:08.345   638   638 E AndroidRuntime: \tat ey.onStart(PG:1)",
+    "10-10 01:48:08.345   638   638 E AndroidRuntime: \tat android.app.Instrumentation.callActivityOnStart(Instrumentation.java:1696)",
+    "10-10 01:48:08.345   638   638 E AndroidRuntime: \tat android.app.Activity.performStart(Activity.java:9198)",
+    "10-10 01:48:08.345   638   638 E AndroidRuntime: \tat android.app.ActivityThread.handleStartActivity(ActivityThread.java:4305)",
+    "10-10 01:48:08.345   638   638 E AndroidRuntime: \tat android.app.servertransaction.TransactionExecutor.performLifecycleSequence(TransactionExecutor.java:214)",
+    "10-10 01:48:08.345   638   638 E AndroidRuntime: \tat android.app.servertransaction.TransactionExecutor.cycleToPath(TransactionExecutor.java:194)",
+    "10-10 01:48:08.345   638   638 E AndroidRuntime: \tat android.app.servertransaction.TransactionExecutor.executeLifecycleItem(TransactionExecutor.java:166)",
+    "10-10 01:48:08.345   638   638 E AndroidRuntime: \tat android.app.servertransaction.TransactionExecutor.executeTransactionItems(TransactionExecutor.java:101)",
+    "10-10 01:48:08.345   638   638 E AndroidRuntime: \tat android.app.servertransaction.TransactionExecutor.execute(TransactionExecutor.java:80)",
+    "10-10 01:48:08.345   638   638 E AndroidRuntime: \tat android.app.ActivityThread$H.handleMessage(ActivityThread.java:2823)",
+    "10-10 01:48:08.345   638   638 E AndroidRuntime: \tat android.os.Handler.dispatchMessage(Handler.java:110)",
+    "10-10 01:48:08.345   638   638 E AndroidRuntime: \tat android.os.Looper.loopOnce(Looper.java:248)",
+    "10-10 01:48:08.345   638   638 E AndroidRuntime: \tat android.os.Looper.loop(Looper.java:338)",
+    "10-10 01:48:08.345   638   638 E AndroidRuntime: \tat android.app.ActivityThread.main(ActivityThread.java:9067)",
+    "10-10 01:48:08.345   638   638 E AndroidRuntime: \tat java.lang.reflect.Method.invoke(Native Method)",
+    "10-10 01:48:08.345   638   638 E AndroidRuntime: \tat com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run(RuntimeInit.java:593)",
+    "10-10 01:48:08.345   638   638 E AndroidRuntime: \tat com.android.internal.os.ZygoteInit.main(ZygoteInit.java:932)",
+    "10-10 01:48:08.345   638   638 E AndroidRuntime: Caused by: android.os.RemoteException: Remote stack trace:",
+    "10-10 01:48:08.345   638   638 E AndroidRuntime: \tat com.android.server.content.ContentService.registerContentObserver(ContentService.java:382)",
+    "10-10 01:48:08.345   638   638 E AndroidRuntime: \tat android.content.IContentService$Stub.onTransact(IContentService.java:498)",
+    "10-10 01:48:08.345   638   638 E AndroidRuntime: \tat android.os.Binder.execTransactInternal(Binder.java:1421)",
+    "10-10 01:48:08.345   638   638 E AndroidRuntime: \tat android.os.Binder.execTransact(Binder.java:1365)",
+    "10-10 01:48:08.345   638   638 E AndroidRuntime: ",
+    "10-10 01:48:08.345   638   638 E AndroidRuntime: "
+  ],
+  "gsf_resources": {
+    "bool/gsfOwnsProviders": false,
+    "string/checkin_gservices_authority": "com.google.android.gms.gservices.provider.do.not.use"
+  },
+  "log_sha256": "eef9c432d62fa281640b2b7540e46d3cceeefe4185e8000b51997413e34bcdbb"
+}

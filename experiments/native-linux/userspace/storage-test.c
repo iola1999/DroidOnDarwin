@@ -26,10 +26,8 @@ static unsigned char actual[LENGTH];
 
 int main(void)
 {
-    unsigned major, minor;
-    FILE *device = fopen("/sys/block/ncedisk0/dev", "r");
-    CHECK(device && fscanf(device, "%u:%u", &major, &minor) == 2 && fclose(device) == 0);
-    CHECK(mknod("/dev/ncedisk0", S_IFBLK | 0600, makedev(major, minor)) == 0);
+    struct stat device;
+    CHECK(stat("/dev/ncedisk0", &device) == 0 && S_ISBLK(device.st_mode));
     CHECK(mkdir("/storage", 0700) == 0);
     CHECK(mount("/dev/ncedisk0", "/storage", "ext4", MS_NOATIME, NULL) == 0);
     unsigned generation = 0;

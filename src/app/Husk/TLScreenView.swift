@@ -51,7 +51,9 @@ final class TLScreenUIView: UIView {
         addSubview(stats)
     }
 
-    required init?(coder: NSCoder) { fatalError("not used") }
+    required init?(coder: NSCoder) {
+        fatalError("not used")
+    }
 
     deinit {
         link?.invalidate()
@@ -64,7 +66,11 @@ final class TLScreenUIView: UIView {
     private var fitted: CGRect {
         let a = guestSize.width / guestSize.height
         var w = bounds.width, h = bounds.height
-        if w / max(h, 1) > a { w = h * a } else { h = w / a }
+        if w / max(h, 1) > a {
+            w = h * a
+        } else {
+            h = w / a
+        }
         return CGRect(x: (bounds.width - w) / 2, y: (bounds.height - h) / 2, width: w, height: h)
     }
 
@@ -82,7 +88,9 @@ final class TLScreenUIView: UIView {
         link = nil
         statsTimer?.invalidate()
         statsTimer = nil
-        guard window != nil else { return }
+        guard window != nil else {
+            return
+        }
 
         // Tied to the display, not to a timer: a frame is shown on a refresh or
         // not at all. Sixty is the game's own rate, and asking for no more lets a
@@ -101,7 +109,9 @@ final class TLScreenUIView: UIView {
         var pixels: UnsafePointer<UInt8>?
         var w: Int32 = 0, h: Int32 = 0, stride: Int32 = 0, token: Int32 = -1
         let generation = husk_tl_frame_acquire(&pixels, &w, &h, &stride, &token)
-        guard generation != 0, let px = pixels else { return }
+        guard generation != 0, let px = pixels else {
+            return
+        }
 
         // Nothing new since the last refresh: let go of it and keep what is shown.
         if generation == lastGeneration {
@@ -117,8 +127,10 @@ final class TLScreenUIView: UIView {
         let info = UnsafeMutableRawPointer(bitPattern: Int(token) + 1)
         guard let provider = CGDataProvider(dataInfo: info, data: px, size: bytesPerRow * Int(h),
                                             releaseData: { info, _, _ in
-            if let info { husk_tl_frame_release(Int32(Int(bitPattern: info) - 1)) }
-        }) else {
+                                                if let info {
+                                                    husk_tl_frame_release(Int32(Int(bitPattern: info) - 1))
+                                                }
+                                            }) else {
             husk_tl_frame_release(token)
             return
         }
@@ -126,12 +138,14 @@ final class TLScreenUIView: UIView {
         // The alpha byte is ignored: the guest's frame is opaque, and telling
         // Core Animation so is what lets it skip blending.
         let bitmap = CGBitmapInfo(rawValue: CGImageAlphaInfo.noneSkipLast.rawValue
-                                          | CGBitmapInfo.byteOrder32Big.rawValue)
+            | CGBitmapInfo.byteOrder32Big.rawValue)
         guard let image = CGImage(width: Int(w), height: Int(h), bitsPerComponent: 8,
                                   bitsPerPixel: 32, bytesPerRow: bytesPerRow,
                                   space: CGColorSpaceCreateDeviceRGB(), bitmapInfo: bitmap,
                                   provider: provider, decode: nil, shouldInterpolate: false,
-                                  intent: .defaultIntent) else { return }
+                                  intent: .defaultIntent) else {
+            return
+        }
 
         CATransaction.begin()
         CATransaction.setDisableActions(true)
@@ -168,18 +182,30 @@ final class TLScreenUIView: UIView {
     /// a move, so a finger that wobbled while tapping delivered several downs --
     /// and in a game where a down is a flap, several flaps from one tap.
     private func send(_ touches: Set<UITouch>, action: Int32) {
-        guard let t = touches.first else { return }
+        guard let t = touches.first else {
+            return
+        }
         let (x, y) = guest(t.location(in: self))
         husk_tl_send_touch(action, x, y)
     }
 
-    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?)     { send(touches, action: 0) }
-    override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?)     { send(touches, action: 2) }
-    override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?)     { send(touches, action: 1) }
-    override func touchesCancelled(_ touches: Set<UITouch>, with event: UIEvent?) { send(touches, action: 3) }
+    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
+        send(touches, action: 0)
+    }
+    override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
+        send(touches, action: 2)
+    }
+    override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
+        send(touches, action: 1)
+    }
+    override func touchesCancelled(_ touches: Set<UITouch>, with event: UIEvent?) {
+        send(touches, action: 3)
+    }
 }
 
 struct TLScreenView: UIViewRepresentable {
-    func makeUIView(context: Context) -> TLScreenUIView { TLScreenUIView() }
+    func makeUIView(context: Context) -> TLScreenUIView {
+        TLScreenUIView()
+    }
     func updateUIView(_ view: TLScreenUIView, context: Context) {}
 }

@@ -9,7 +9,9 @@ struct TLAppSettings: Codable, Equatable {
     enum Orientation: String, Codable, CaseIterable, Identifiable {
         /// What the game asks for (its manifest), landscape when it does not say.
         case auto, landscape, portrait
-        var id: String { rawValue }
+        var id: String {
+            rawValue
+        }
         var title: String {
             switch self {
             case .auto: return "Automatic"
@@ -22,7 +24,9 @@ struct TLAppSettings: Codable, Equatable {
     /// How many pixels the game draws for each point of the screen. Fewer pixels run faster and take less memory.
     enum Resolution: String, Codable, CaseIterable, Identifiable {
         case low, medium, high, native
-        var id: String { rawValue }
+        var id: String {
+            rawValue
+        }
         var title: String {
             switch self {
             case .low: return "Low"
@@ -53,7 +57,9 @@ struct TLAppSettings: Codable, Equatable {
     enum PadMode: String, Codable, CaseIterable, Identifiable {
         /// For the games that cannot be played without a controller (Unreal), when none is connected.
         case auto, always, never
-        var id: String { rawValue }
+        var id: String {
+            rawValue
+        }
         var title: String {
             switch self {
             case .auto: return "Automatic"
@@ -106,7 +112,9 @@ struct TLAppSettings: Codable, Equatable {
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
         // The folder is gone when the app was removed while its settings page was open.
         guard FileManager.default.fileExists(atPath: Self.url(id).deletingLastPathComponent().path),
-              let data = try? encoder.encode(self) else { return }
+              let data = try? encoder.encode(self) else {
+            return
+        }
         try? data.write(to: Self.url(id), options: .atomic)
     }
 }
@@ -132,7 +140,9 @@ struct TLAppSettingsView: View {
 
     /// The game is loaded in this run of Husk, so what it keeps cannot be swapped from under it.
     private var inUse: Bool {
-        guard let loaded = husk_native_loaded_apk().map({ String(cString: $0) }), let apk = app.apks.first else { return false }
+        guard let loaded = husk_native_loaded_apk().map({ String(cString: $0) }), let apk = app.apks.first else {
+            return false
+        }
         return loaded == apk
     }
 
@@ -172,7 +182,7 @@ struct TLAppSettingsView: View {
                 Text("Display")
             } footer: {
                 Text("\(settings.resolution.detail) Orientation and resolution apply the next time the game starts, and a game already "
-                   + "running in this session needs Husk closed and opened again.")
+                    + "running in this session needs Husk closed and opened again.")
             }
 
             Section {
@@ -181,8 +191,8 @@ struct TLAppSettingsView: View {
                 Text("Screenshots")
             } footer: {
                 Text("The game starts with nothing over it: no bar, no controller, no readout, the picture to every edge. Tap with three "
-                   + "fingers at once to bring the bar back, and again to hide it. The Hide button in the bar does the same while "
-                   + "playing, but leaves the strip the bar sat in.")
+                    + "fingers at once to bring the bar back, and again to hide it. The Hide button in the bar does the same while "
+                    + "playing, but leaves the strip the bar sat in.")
             }
 
             Section {
@@ -192,7 +202,7 @@ struct TLAppSettingsView: View {
                 if settings.pad != .never {
                     VStack(alignment: .leading, spacing: 6) {
                         Text("Opacity")
-                        Slider(value: $settings.padOpacity, in: 0.3...1)
+                        Slider(value: $settings.padOpacity, in: 0.3 ... 1)
                     }
                     Toggle("Vibrate on a press", isOn: $settings.haptics)
                 }
@@ -200,7 +210,7 @@ struct TLAppSettingsView: View {
                 Text("Controller")
             } footer: {
                 Text("Automatic offers the controller for games that cannot be played without one (Unreal Engine games), when no real "
-                   + "controller is connected. Always offers it for any game that understands one. A paired controller is always used.")
+                    + "controller is connected. Always offers it for any game that understands one. A paired controller is always used.")
             }
 
             Section {
@@ -213,19 +223,25 @@ struct TLAppSettingsView: View {
                 Text("Data")
             } footer: {
                 Text(inUse ? "The game is loaded in this session. Close Husk completely and open it again to reset its data."
-                           : "Deletes what the game saved and downloaded here: saves, settings and caches. The game itself stays.")
+                    : "Deletes what the game saved and downloaded here: saves, settings and caches. The game itself stays.")
             }
         }
         .huskForm()
         .navigationTitle("Settings")
         .navigationBarTitleDisplayMode(.inline)
         .onChange(of: settings) { $0.save(app.id) }
-        .onChange(of: nameFocused) { focused in if !focused { rename() } }
+        .onChange(of: nameFocused) {
+            focused in if !focused {
+                rename()
+            }
+        }
         .onDisappear { rename() }
         .task { dataSize = await Self.measure(dataDirs) }
         .confirmationDialog("Reset the data of \(app.label)?", isPresented: $confirmReset, titleVisibility: .visible) {
             Button("Reset Game Data", role: .destructive) {
-                for dir in dataDirs { try? FileManager.default.removeItem(at: dir) }
+                for dir in dataDirs {
+                    try? FileManager.default.removeItem(at: dir)
+                }
                 HuskLog.log("tl", "reset the data of \(app.label)")
                 Task { dataSize = await Self.measure(dataDirs) }
             }
@@ -237,7 +253,9 @@ struct TLAppSettingsView: View {
 
     private func rename() {
         let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty, trimmed != app.label else { return }
+        guard !trimmed.isEmpty, trimmed != app.label else {
+            return
+        }
         store.rename(app, to: trimmed)
     }
 
@@ -248,7 +266,9 @@ struct TLAppSettingsView: View {
                 let walker = FileManager.default.enumerator(at: dir, includingPropertiesForKeys: [.fileSizeKey, .isRegularFileKey])
                 while let url = walker?.nextObject() as? URL {
                     let values = try? url.resourceValues(forKeys: [.fileSizeKey, .isRegularFileKey])
-                    if values?.isRegularFile == true { bytes += Int64(values?.fileSize ?? 0) }
+                    if values?.isRegularFile == true {
+                        bytes += Int64(values?.fileSize ?? 0)
+                    }
                 }
             }
             return bytes == 0 ? "nothing" : ByteCountFormatter.string(fromByteCount: bytes, countStyle: .file)

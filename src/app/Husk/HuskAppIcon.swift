@@ -15,21 +15,23 @@ enum HuskAppIcon: String, CaseIterable, Identifiable {
     /// dark and tinted variants, leaving it selected is what lets iOS switch the
     /// artwork with the system setting -- no picker involved, and nothing this
     /// code has to observe.
-    case automatic    = "AppIcon"
-    case clearLight   = "AppIconClearLight"
-    case clearDark    = "AppIconClearDark"
-    case tintedLight  = "AppIconTintedLight"
-    case tintedDark   = "AppIconTintedDark"
+    case automatic = "AppIcon"
+    case clearLight = "AppIconClearLight"
+    case clearDark = "AppIconClearDark"
+    case tintedLight = "AppIconTintedLight"
+    case tintedDark = "AppIconTintedDark"
 
-    var id: String { rawValue }
+    var id: String {
+        rawValue
+    }
 
     var title: String {
         switch self {
-        case .automatic:   return "Automatic"
-        case .clearLight:  return "Clear Light"
-        case .clearDark:   return "Clear Dark"
+        case .automatic: return "Automatic"
+        case .clearLight: return "Clear Light"
+        case .clearDark: return "Clear Dark"
         case .tintedLight: return "Tinted Light"
-        case .tintedDark:  return "Tinted Dark"
+        case .tintedDark: return "Tinted Dark"
         }
     }
 
@@ -40,7 +42,9 @@ enum HuskAppIcon: String, CaseIterable, Identifiable {
     }
 
     /// What UIKit wants: nil for the primary, the asset name otherwise.
-    var alternateName: String? { self == .automatic ? nil : rawValue }
+    var alternateName: String? {
+        self == .automatic ? nil : rawValue
+    }
 
     /// The artwork, for drawing this icon inside the app.
     ///
@@ -54,16 +58,18 @@ enum HuskAppIcon: String, CaseIterable, Identifiable {
     /// it is whatever the system is currently showing.
     func preview(dark: Bool = false) -> UIImage? {
         switch self {
-        case .automatic:   return UIImage(named: dark ? "icon-dark" : "icon-default")
-        case .clearLight:  return UIImage(named: "icon-clearlight")
-        case .clearDark:   return UIImage(named: "icon-cleardark")
+        case .automatic: return UIImage(named: dark ? "icon-dark" : "icon-default")
+        case .clearLight: return UIImage(named: "icon-clearlight")
+        case .clearDark: return UIImage(named: "icon-cleardark")
         case .tintedLight: return UIImage(named: "icon-tintedlight")
-        case .tintedDark:  return UIImage(named: "icon-tinteddark")
+        case .tintedDark: return UIImage(named: "icon-tinteddark")
         }
     }
 
     static var current: HuskAppIcon {
-        guard let name = UIApplication.shared.alternateIconName else { return .automatic }
+        guard let name = UIApplication.shared.alternateIconName else {
+            return .automatic
+        }
         return HuskAppIcon(rawValue: name) ?? .automatic
     }
 
@@ -77,18 +83,19 @@ enum HuskAppIcon: String, CaseIterable, Identifiable {
             HuskLog.log("ui", "this device does not support alternate app icons")
             return
         }
-        guard icon.alternateName != UIApplication.shared.alternateIconName else { return }
+        guard icon.alternateName != UIApplication.shared.alternateIconName else {
+            return
+        }
         UIApplication.shared.setAlternateIconName(icon.alternateName) { error in
             if let error {
                 HuskLog.log("ui", "could not set the \(icon.title) icon: "
-                                + error.localizedDescription)
+                    + error.localizedDescription)
             } else {
                 HuskLog.log("ui", "app icon set to \(icon.title)")
             }
         }
     }
 }
-
 
 /// The two tabs.
 ///
@@ -102,13 +109,15 @@ enum HuskTab: String, CaseIterable, Identifiable {
     case files
     case settings
 
-    var id: String { rawValue }
+    var id: String {
+        rawValue
+    }
 
     var title: String {
         switch self {
         case .translation: return "Native"
-        case .library:  return "Library"
-        case .files:    return "Files"
+        case .library: return "Library"
+        case .files: return "Files"
         case .settings: return "Settings"
         }
     }
@@ -116,8 +125,8 @@ enum HuskTab: String, CaseIterable, Identifiable {
     var icon: String {
         switch self {
         case .translation: return "gamecontroller.fill"
-        case .library:  return "square.grid.2x2.fill"
-        case .files:    return "folder.fill"
+        case .library: return "square.grid.2x2.fill"
+        case .files: return "folder.fill"
         case .settings: return "gearshape.fill"
         }
     }

@@ -61,7 +61,7 @@ struct OnboardingView: View {
                 // not, and this is the first thing anyone sees.
                 VStack(spacing: 12) {
                     HStack(spacing: 6) {
-                        ForEach(0..<pages, id: \.self) { i in
+                        ForEach(0 ..< pages, id: \.self) { i in
                             Capsule()
                                 .fill(i == page ? Theme.accent : Color.secondary.opacity(0.3))
                                 .frame(width: i == page ? 18 : 6, height: 6)
@@ -94,7 +94,7 @@ struct OnboardingView: View {
         d.set(autoSave, forKey: "husk.autoSave")
         Onboarding.complete()
         HuskLog.log("ui", "setup complete: autoStart=\(autoStart) landscape=\(landscape) "
-                        + "sound=\(sound) autoSave=\(autoSave)")
+            + "sound=\(sound) autoSave=\(autoSave)")
     }
 
     // MARK: pages
@@ -113,7 +113,7 @@ struct OnboardingView: View {
             Text("Android apps, on your iPhone.")
                 .font(.title3).foregroundStyle(.secondary)
             Text("Husk runs a real Android system and opens APKs inside it. "
-               + "A few questions first — all of them can be changed later in Settings.")
+                + "A few questions first — all of them can be changed later in Settings.")
                 .font(.callout).foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 34).padding(.top, 4)
@@ -130,22 +130,22 @@ struct OnboardingView: View {
 
                 choice(icon: "bolt.fill", title: "Start Android on launch",
                        detail: "Boots the guest as soon as Husk opens, once JIT is "
-                             + "available. Off means you start it yourself.",
+                           + "available. Off means you start it yourself.",
                        isOn: $autoStart)
 
                 choice(icon: "rectangle.landscape.rotate", title: "Landscape screen",
                        detail: "Gives Android a landscape screen, which games fill "
-                             + "properly. Portrait apps get letterboxed instead.",
+                           + "properly. Portrait apps get letterboxed instead.",
                        isOn: $landscape)
 
                 choice(icon: "speaker.wave.2.fill", title: "Sound",
                        detail: "Adds a sound device. Android cannot be saved while "
-                             + "this is on, so every launch boots from cold.",
+                           + "this is on, so every launch boots from cold.",
                        isOn: $sound)
 
                 choice(icon: "externaldrive.badge.checkmark", title: "Save automatically",
                        detail: "Saves the machine once Android settles, so later "
-                             + "launches restore in seconds instead of booting.",
+                           + "launches restore in seconds instead of booting.",
                        isOn: $autoSave)
             }
             .padding(.horizontal, 20).padding(.bottom, 20)
@@ -175,9 +175,15 @@ struct OnboardingView: View {
 
     /// What the JIT page says is already in place, if anything.
     private var jitState: String? {
-        if JITBootstrap.debuggedFlag { return "JIT is on." }
-        if jit.method == .stikDebug { return "Husk will use StikDebug." }
-        if jit.method == .trollStore { return "Husk will use TrollStore." }
+        if JITBootstrap.debuggedFlag {
+            return "JIT is on."
+        }
+        if jit.method == .stikDebug {
+            return "Husk will use StikDebug."
+        }
+        if jit.method == .trollStore {
+            return "Husk will use TrollStore."
+        }
         switch jit.pairingSource {
         case .onDevice: return "Paired on this device."
         case .imported: return "Pairing file imported."
@@ -193,8 +199,8 @@ struct OnboardingView: View {
                 .foregroundStyle(Theme.accent)
             Text("Turn on JIT").font(.largeTitle.weight(.semibold))
             Text("Android and Translation Layer games need JIT, which on iOS only an attached debugger can grant. "
-               + "StikJIT is built into Husk and is the recommended way: it turns JIT on from inside the app, "
-               + "with no computer and no other app. StikDebug and TrollStore work too.")
+                + "StikJIT is built into Husk and is the recommended way: it turns JIT on from inside the app, "
+                + "with no computer and no other app. StikDebug and TrollStore work too.")
                 .font(.callout).foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 34)
@@ -218,8 +224,8 @@ struct OnboardingView: View {
                 .foregroundStyle(Theme.accent)
             Text("Ready").font(.largeTitle.weight(.semibold))
             Text("If JIT is not on when Android starts, Husk turns it on with the "
-               + "method you chose, or walks you through setting one up. You can "
-               + "change it any time in Settings › JIT & sideload.")
+                + "method you chose, or walks you through setting one up. You can "
+                + "change it any time in Settings › JIT & sideload.")
                 .font(.callout).foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 34)

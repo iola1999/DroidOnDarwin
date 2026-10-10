@@ -26,7 +26,20 @@ REVISION = "d0f76a77e8c2ca68bd7d96190b8da09040eab072"
 
 
 def run(args, **kwargs):
-    return subprocess.run([str(x) for x in args], check=True, timeout=300, **kwargs)
+    return subprocess.run([str(x) for x in args], check=True, timeout=kwargs.pop('timeout', 300), **kwargs)
+
+
+def check_ext4_shutdown(path):
+    # e2fsck -n may return zero while skipping an unreplayed journal.
+    with path.open('rb') as disk:
+        disk.seek(1024)
+        superblock = disk.read(1024)
+    magic, state = struct.unpack_from('<HH', superblock, 0x38)
+    incompat, ro_compat = struct.unpack_from('<II', superblock, 0x60)
+    if magic != 0xef53 or state != 1 or incompat & 4 or ro_compat & 0x10000:
+        raise SystemExit(f'Unclean ext4 shutdown: {path}: state={state:#x}, '
+                         f'incompat={incompat:#x}, ro_compat={ro_compat:#x}')
+    print('Ext4 shutdown state is clean: ' + str(path), flush=True)
 
 
 def package_elf(path):
@@ -61,7 +74,7 @@ def package_elf(path):
     strings = data[strings[4]:strings[4] + strings[5]]
     required = {"lkl_init", "lkl_syscall", "lkl_sys_halt", "lkl_cleanup", "nce_lkl_start"}
     if PROCESS:
-        required |= {"nce_run_syscall", "nce_page_fault", "nce_set_layout", "nce_user_return", "nce_user_fault", "nce_user_preempt"}
+        required |= {"nce_run_syscall", "nce_page_fault", "nce_set_layout", "nce_user_return", "nce_user_fault", "nce_user_preempt", "nce_prepare_user"}
     for pos in range(symtab[4], symtab[4] + symtab[5], symtab[9]):
         index, _, _, _, value, _ = struct.unpack_from("<IBBHQQ", data, pos)
         name = strings[index:strings.index(b"\0", index)].decode()
@@ -87,6 +100,7 @@ def main():
     parser.add_argument("--graphics-angle", type=Path,
                         help="Run Linux GLES over the in-process renderer using these macOS ANGLE libraries")
     parser.add_argument("--graphics-window", action="store_true", help="Validate presentation in a visible Metal window")
+    parser.add_argument("--storage-image", type=Path, help="Use this data image; create from the blank seed if absent")
     arguments = parser.parse_args()
     PROCESS = arguments.processes
     angle = arguments.graphics_angle.resolve() if arguments.graphics_angle else None
@@ -94,6 +108,8 @@ def main():
         parser.error("--graphics-window requires --graphics-angle")
     if angle and not PROCESS:
         parser.error("--graphics-angle requires --processes")
+    if arguments.storage_image and not PROCESS:
+        parser.error("--storage-image requires --processes")
     if angle:
         for name in ("libANGLE-shared.dylib",):
             if not (angle / name).is_file():
@@ -163,7 +179,7 @@ def main():
             options += ["MMU", "PRINTK", "NAMESPACES", "PID_NS", "POSIX_TIMERS", "ANDROID_BINDER_IPC", "ANDROID_BINDERFS", "MEMFD_CREATE", "TMPFS", "TMPFS_XATTR",
                         "NET", "UNIX", "INET", "AUDIT", "SECURITY", "SECURITY_NETWORK",
                         "SECURITY_SELINUX", "SECURITY_SELINUX_DEVELOP"]
-            options += ["BLOCK", "EXT4_FS", "EXT4_FS_SECURITY", "CGROUPS", "MEMCG", "CGROUP_CPUACCT", "CGROUP_SCHED", "FAIR_GROUP_SCHED", "SECCOMP", "SECCOMP_FILTER", "PAGE_REPORTING", "INOTIFY_USER"]
+            options += ["BLOCK", "EXT4_FS", "EXT4_FS_SECURITY", "EXT4_FS_POSIX_ACL", "TMPFS_POSIX_ACL", "FUSE_FS", "CGROUPS", "MEMCG", "CGROUP_CPUACCT", "CGROUP_SCHED", "FAIR_GROUP_SCHED", "SECCOMP", "SECCOMP_FILTER", "PAGE_REPORTING", "INOTIFY_USER"]
             options += ["INPUT", "INPUT_EVDEV", "INPUT_MISC", "INPUT_UINPUT"]
             options += ["PSI", "BPF_SYSCALL", "CGROUP_BPF", "NETFILTER", "NETFILTER_ADVANCED",
                         "NETFILTER_NETLINK_LOG", "IP_ADVANCED_ROUTER", "IP_MULTIPLE_TABLES",
@@ -179,7 +195,7 @@ def main():
                         "NETFILTER_XT_TARGET_TCPMSS", "NETFILTER_XT_TARGET_CT",
                         "NETFILTER_XT_TARGET_MASQUERADE"]
             options += ["NETFILTER_XT_MATCH_U32", "NETFILTER_XT_MATCH_STATE", "NETFILTER_XT_MATCH_TCPMSS",
-                        "NET_KEY", "IP_MROUTE", "IPV6_MROUTE"]
+                        "NET_KEY", "IP_MROUTE", "IPV6_MROUTE", "IKCONFIG", "IKCONFIG_PROC"]
         switches = [arg for name in options for arg in ("-e", name)]
         if PROCESS:
             switches += ["--set-str", "LSM", "selinux"]
@@ -190,7 +206,7 @@ def main():
     shutil.copyfile(SOURCE / "arch/lkl/include/uapi/asm/host_ops.h", OUT / "lkl-host-ops.h")
     run([*target, "-fPIC", "-fno-stack-protector", "-O2", "-I", OUT, "-I", EXPERIMENT,
          "-c", EXPERIMENT / "lkl-bridge.c", "-o", OUT / "lkl-bridge.o"])
-    exports = ["--globalize-symbol=nce_run_syscall", "--globalize-symbol=nce_page_fault", "--globalize-symbol=nce_set_layout", "--globalize-symbol=nce_user_return", "--globalize-symbol=nce_user_fault", "--globalize-symbol=nce_user_preempt"] if PROCESS else []
+    exports = ["--globalize-symbol=nce_run_syscall", "--globalize-symbol=nce_page_fault", "--globalize-symbol=nce_set_layout", "--globalize-symbol=nce_user_return", "--globalize-symbol=nce_user_fault", "--globalize-symbol=nce_user_preempt", "--globalize-symbol=nce_prepare_user"] if PROCESS else []
     run([llvm / "llvm-objcopy", "--globalize-symbol=vsnprintf", "--globalize-symbol=lkl_ops", *exports,
          BUILD / "lkl.o", OUT / "lkl-exports.o"])
     run(["ld.lld", "-shared", "-Bsymbolic", "--no-undefined", "-z", "max-page-size=16384",
@@ -236,6 +252,8 @@ def main():
                 env={**os.environ, **graphics_env})
     run([clang, *flags, "-isysroot", sdk, *inputs, *payload, *([OUT / "native.o"] if PROCESS else []),
          *graphics_link, "-o", OUT / "lkl-probe"])
+    data_image = arguments.storage_image.resolve() if arguments.storage_image else OUT / "android-data.img"
+    storage_started_from_seed = PROCESS and not data_image.exists()
     if PROCESS:
         seed = OUT / "android-data-seed.img"
         if not seed.exists():
@@ -243,14 +261,17 @@ def main():
                 image.truncate(512 * 1024 * 1024)
             run(["/opt/homebrew/opt/e2fsprogs/sbin/mke2fs", "-F", "-q", "-t", "ext4", "-b", "4096",
                  "-E", "lazy_itable_init=0,lazy_journal_init=0", seed])
-        if not (OUT / "android-data.img").exists():
-            run(["cp", "-c", seed, OUT / "android-data.img"])
+        if storage_started_from_seed:
+            data_image.parent.mkdir(parents=True, exist_ok=True)
+            run(["cp", "-c", seed, data_image])
     with (OUT / "lkl-results.jsonl").open("w") as output, (OUT / "lkl-console.log").open("w") as log:
-        probe_env = {**os.environ, "NCE_GPU_OUTPUT": str(OUT / "gpu.bmp"), "NCE_GRAPHICS_OUTPUT": str(OUT / "framework.png"), "NCE_STORAGE_IMAGE": str(OUT / "android-data.img"), "NCE_SYSTEM_IMAGE": str(OUT / "system.img")} if PROCESS else os.environ
-        run([OUT / "lkl-probe", OUT / "lkl-image.bin"], stdout=output, stderr=log, env={**probe_env, **graphics_env})
+        probe_env = {**os.environ, "NCE_GPU_OUTPUT": str(OUT / "gpu.bmp"), "NCE_GRAPHICS_OUTPUT": str(OUT / "framework.png"), "NCE_STORAGE_IMAGE": str(data_image), "NCE_SYSTEM_IMAGE": str(OUT / "system.img")} if PROCESS else os.environ
+        run([OUT / "lkl-probe", OUT / "lkl-image.bin"], timeout=480, stdout=output, stderr=log, env={**probe_env, **graphics_env})
     results = [json.loads(line) for line in (OUT / "lkl-results.jsonl").read_text().splitlines()]
     if results[-1].get("result") != "passed":
         raise SystemExit("LKL probe did not complete")
+    if PROCESS:
+        check_ext4_shutdown(data_image)
     ios_sdk = subprocess.check_output(["xcrun", "--sdk", "iphoneos", "--show-sdk-path"], text=True).strip()
     run([clang, *flags, "-target", "arm64-apple-ios17.0", "-isysroot", ios_sdk,
          "-c", EXPERIMENT / "lkl-host.c", "-o", OUT / "ios-lkl-host.o"])
@@ -269,11 +290,12 @@ def main():
              EXPERIMENT / "dispatch-test.c", *graphics_link, "-o", OUT / "dispatch-probe"])
         with (OUT / "dispatch-results.jsonl").open("w") as output, (OUT / "dispatch-console.log").open("w") as log:
             subprocess.run([OUT / "dispatch-probe", OUT / "lkl-image.bin"], check=True,
-                           timeout=300, stdout=output, stderr=log,
-                           env={**os.environ, **graphics_env, "NCE_GPU_OUTPUT": str(OUT / "dispatch-gpu.bmp"), "NCE_GRAPHICS_OUTPUT": str(OUT / "dispatch-framework.png"), "NCE_STORAGE_IMAGE": str(OUT / "android-data.img"), "NCE_SYSTEM_IMAGE": str(OUT / "system.img")})
+                           timeout=480, stdout=output, stderr=log,
+                           env={**os.environ, **graphics_env, "NCE_GPU_OUTPUT": str(OUT / "dispatch-gpu.bmp"), "NCE_GRAPHICS_OUTPUT": str(OUT / "dispatch-framework.png"), "NCE_STORAGE_IMAGE": str(data_image), "NCE_SYSTEM_IMAGE": str(OUT / "system.img")})
         dispatch_results = [json.loads(line) for line in (OUT / "dispatch-results.jsonl").read_text().splitlines()]
         if dispatch_results[-1].get("result") != "passed":
             raise SystemExit("GCD probe did not complete")
+        check_ext4_shutdown(data_image)
         if not any(r.get("inherited_blocked_threads", 0) > 0 for r in dispatch_results):
             raise SystemExit("GCD regression did not exercise an inherited signal mask")
         generations = [next((r.get("generation", 0) for r in records
@@ -281,7 +303,15 @@ def main():
                        for records in (results, dispatch_results)]
         if generations[0] < 1 or generations[1] != generations[0] + 1:
             raise SystemExit("Persistent storage did not survive kernel restart")
-        run(["/opt/homebrew/opt/e2fsprogs/sbin/e2fsck", "-fn", OUT / "android-data.img"])
+        if os.environ.get("NCE_SYSTEM_SERVER_PROBE"):
+            for name in ("android_keystore_persistence", "android_application_data_persistence"):
+                checks = [next((r for r in records if r.get("test") == name and r.get("passed")), None)
+                          for records in (results, dispatch_results)]
+                if not all(checks) or not checks[1].get("restored"):
+                    raise SystemExit(name + " did not verify data from the preceding Android run")
+                if name == "android_application_data_persistence" and checks[0]["row_id"] != checks[1]["row_id"]:
+                    raise SystemExit("Clock alarm identity changed across Android restart")
+        run(["/opt/homebrew/opt/e2fsprogs/sbin/e2fsck", "-fn", data_image])
         if (OUT / "framework.png").read_bytes() != (OUT / "dispatch-framework.png").read_bytes():
             raise SystemExit("CLI and GCD framework images differ")
         if angle and (OUT / "gpu.bmp").read_bytes() != (OUT / "dispatch-gpu.bmp").read_bytes():
@@ -301,18 +331,21 @@ def main():
              OUT / "graphics-window.o", *graphics_link, "-framework", "AppKit", "-framework", "Metal",
              "-framework", "QuartzCore", "-o", window_binary])
         with (OUT / "window-results.jsonl").open("w") as output, (OUT / "window-console.log").open("w") as log:
-            run([window_binary, OUT / "lkl-image.bin"], stdout=output, stderr=log,
+            run([window_binary, OUT / "lkl-image.bin"], timeout=480, stdout=output, stderr=log,
                 env={**probe_env, **graphics_env, "NCE_GPU_OUTPUT": str(OUT / "window-gpu.bmp")})
         window_results = [json.loads(line) for line in (OUT / "window-results.jsonl").read_text().splitlines()]
         if window_results[-1].get("result") != "passed" or not any(
                 r.get("test") == "native_metal_display_created" and r.get("passed") for r in window_results):
             raise SystemExit("Metal window validation did not complete")
+        check_ext4_shutdown(data_image)
         if (OUT / "gpu.bmp").read_bytes() != (OUT / "window-gpu.bmp").read_bytes():
             raise SystemExit("Headless and visible GPU output differ")
     manifest = {"source_revision": REVISION, "platform": platform.platform(), "results": results,
                 "ios_status": "this build compiled for iOS; device execution pending",
                 "config_sha256": hashlib.sha256((BUILD / ".config").read_bytes()).hexdigest(),
                 "kernel_sha256": hashlib.sha256((OUT / "lkl-image.bin").read_bytes()).hexdigest()}
+    if PROCESS:
+        manifest["storage_started_from_seed"] = storage_started_from_seed
     if angle:
         manifest["window_results"] = window_results
         manifest["graphics_libraries_sha256"] = {str(p): hashlib.sha256(p.read_bytes()).hexdigest() for p in graphics_files}
@@ -349,6 +382,8 @@ def main():
             (android / "android36-modules/manifest.json").read_bytes()).hexdigest()
         manifest["android_desktop_manifest_sha256"] = hashlib.sha256(
             (android / "android36-desktop/manifest.json").read_bytes()).hexdigest()
+        manifest["aosp_launcher_sha256"] = hashlib.sha256(
+            (android / "android36-aosp-components/Launcher3QuickStep/Launcher3QuickStep.apk").read_bytes()).hexdigest()
         manifest["android_gralloc_build"] = json.loads((ROOT / "work/native-linux-nce/gralloc-build/manifest.json").read_text())
     changed = [str(p.relative_to(ROOT)) for p in sources if p.stat().st_mtime_ns > started_ns]
     if changed:

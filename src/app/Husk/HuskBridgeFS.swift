@@ -21,7 +21,9 @@ final class HuskBridgeFS: ObservableObject {
         let package: String
         let name: String
         let iconPath: String?
-        var id: String { package }
+        var id: String {
+            package
+        }
     }
 
     @Published private(set) var apps: [AndroidApp] = []
@@ -34,10 +36,18 @@ final class HuskBridgeFS: ObservableObject {
         FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
             .appendingPathComponent("share", isDirectory: true)
     }
-    nonisolated var inbox: URL    { shareRoot.appendingPathComponent("inbox", isDirectory: true) }
-    nonisolated var commands: URL { shareRoot.appendingPathComponent("commands", isDirectory: true) }
-    nonisolated var results: URL  { shareRoot.appendingPathComponent("results", isDirectory: true) }
-    nonisolated var catalog: URL  { shareRoot.appendingPathComponent("catalog", isDirectory: true) }
+    nonisolated var inbox: URL {
+        shareRoot.appendingPathComponent("inbox", isDirectory: true)
+    }
+    nonisolated var commands: URL {
+        shareRoot.appendingPathComponent("commands", isDirectory: true)
+    }
+    nonisolated var results: URL {
+        shareRoot.appendingPathComponent("results", isDirectory: true)
+    }
+    nonisolated var catalog: URL {
+        shareRoot.appendingPathComponent("catalog", isDirectory: true)
+    }
 
     /// Create the shared tree before QEMU starts -- 9p exports a directory that
     /// has to already exist.
@@ -48,7 +58,9 @@ final class HuskBridgeFS: ObservableObject {
     }
 
     func startWatching() {
-        guard timer == nil else { return }
+        guard timer == nil else {
+            return
+        }
         HuskLog.log("bridge", "watching \(catalog.path)")
         timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
             Task { @MainActor in self?.poll() }
@@ -74,35 +86,51 @@ final class HuskBridgeFS: ObservableObject {
     private func loadDiagnostics() {
         let file = shareRoot.appendingPathComponent("diagnostics.txt")
         guard let attrs = try? FileManager.default.attributesOfItem(atPath: file.path),
-              let modified = attrs[.modificationDate] as? Date else { return }
-        if let last = lastDiagnosticsStamp, last >= modified { return }
+              let modified = attrs[.modificationDate] as? Date else {
+            return
+        }
+        if let last = lastDiagnosticsStamp, last >= modified {
+            return
+        }
         lastDiagnosticsStamp = modified
 
-        guard let text = try? String(contentsOf: file, encoding: .utf8) else { return }
+        guard let text = try? String(contentsOf: file, encoding: .utf8) else {
+            return
+        }
         HuskLog.log("diag", "---- guest diagnostics ----")
         for line in text.split(separator: "\n", omittingEmptySubsequences: false) {
             let t = line.trimmingCharacters(in: .whitespaces)
-            if !t.isEmpty { HuskLog.log("diag", String(t.prefix(300))) }
+            if !t.isEmpty {
+                HuskLog.log("diag", String(t.prefix(300)))
+            }
         }
         HuskLog.log("diag", "---- end diagnostics ----")
     }
 
     /// Ask the guest to re-dump its state.
-    func requestDiagnostics() { send(["action": "diagnostics"]) }
+    func requestDiagnostics() {
+        send(["action": "diagnostics"])
+    }
 
     private func loadCatalog() {
         let file = catalog.appendingPathComponent("apps.json")
         guard let data = try? Data(contentsOf: file),
               let obj = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-              let list = obj["apps"] as? [[String: Any]] else { return }
+              let list = obj["apps"] as? [[String: Any]] else {
+            return
+        }
 
         let parsed: [AndroidApp] = list.compactMap { entry in
-            guard let pkg = entry["package"] as? String else { return nil }
+            guard let pkg = entry["package"] as? String else {
+                return nil
+            }
             let name = (entry["name"] as? String) ?? pkg
             var icon: String?
             if let rel = entry["icon"] as? String {
                 let p = catalog.appendingPathComponent(rel).path
-                if FileManager.default.fileExists(atPath: p) { icon = p }
+                if FileManager.default.fileExists(atPath: p) {
+                    icon = p
+                }
             }
             return AndroidApp(package: pkg, name: name, iconPath: icon)
         }
@@ -116,7 +144,9 @@ final class HuskBridgeFS: ObservableObject {
 
     private func drainResults() {
         guard let files = try? FileManager.default.contentsOfDirectory(
-            at: results, includingPropertiesForKeys: nil) else { return }
+            at: results, includingPropertiesForKeys: nil) else {
+            return
+        }
         for f in files where f.pathExtension == "json" {
             if let data = try? Data(contentsOf: f),
                let obj = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
@@ -124,7 +154,9 @@ final class HuskBridgeFS: ObservableObject {
                 let detail = (obj["detail"] as? String) ?? ""
                 let id = (obj["id"] as? String) ?? f.lastPathComponent
                 HuskLog.log("bridge", "result \(id): \(ok ? "ok" : "FAILED") \(detail)")
-                if !ok, !detail.isEmpty { lastAgentMessage = detail }
+                if !ok, !detail.isEmpty {
+                    lastAgentMessage = detail
+                }
                 if id.hasPrefix("install-") {
                     pendingInstalls.remove(String(id.dropFirst("install-".count)))
                 }
@@ -141,7 +173,11 @@ final class HuskBridgeFS: ObservableObject {
         // Security-scoped: the document picker hands back a URL we only have
         // permission to read inside this pair of calls.
         let scoped = url.startAccessingSecurityScopedResource()
-        defer { if scoped { url.stopAccessingSecurityScopedResource() } }
+        defer {
+            if scoped {
+                url.stopAccessingSecurityScopedResource()
+            }
+        }
 
         // Write beside the inbox and move into place, so the guest's poller can
         // never see a half-copied APK and try to install it.
@@ -154,18 +190,22 @@ final class HuskBridgeFS: ObservableObject {
             try FileManager.default.moveItem(at: staging, to: dest)
             pendingInstalls.insert(name)
             HuskLog.log("bridge", "queued \(name) for install "
-                               + "(\((try? FileManager.default.attributesOfItem(atPath: dest.path)[.size] as? NSNumber)??.intValue ?? 0) bytes)")
+                + "(\((try? FileManager.default.attributesOfItem(atPath: dest.path)[.size] as? NSNumber)??.intValue ?? 0) bytes)")
         } catch {
             HuskLog.log("bridge", "FAILED to queue \(name): \(error.localizedDescription)")
             lastAgentMessage = "Could not add \(name): \(error.localizedDescription)"
         }
     }
 
-    func launch(package: String) { send(["action": "launch", "package": package]) }
-    func refreshCatalog()        { send(["action": "refresh"]) }
+    func launch(package: String) {
+        send(["action": "launch", "package": package])
+    }
+    func refreshCatalog() {
+        send(["action": "refresh"])
+    }
 
     private func send(_ payload: [String: Any]) {
-        let id = "\(Int(Date().timeIntervalSince1970 * 1000))-\(UInt32.random(in: 0...9999))"
+        let id = "\(Int(Date().timeIntervalSince1970 * 1000))-\(UInt32.random(in: 0 ... 9999))"
         let tmp = shareRoot.appendingPathComponent(".cmd-\(id)")
         let dest = commands.appendingPathComponent("\(id).json")
         do {
@@ -208,7 +248,7 @@ enum BridgeError: LocalizedError {
 
     var errorDescription: String? {
         switch self {
-        case .io(let m):      return m
+        case .io(let m): return m
         case .timeout(let m): return "timed out \(m)"
         }
     }
@@ -249,7 +289,9 @@ final class GuestBridge {
 
     private func openSocket(timeout: TimeInterval = 10) throws -> Int32 {
         let fd = socket(AF_INET, SOCK_STREAM, 0)
-        guard fd >= 0 else { throw BridgeError.io("socket() failed (errno \(errno))") }
+        guard fd >= 0 else {
+            throw BridgeError.io("socket() failed (errno \(errno))")
+        }
 
         var on: Int32 = 1
         setsockopt(fd, IPPROTO_TCP, TCP_NODELAY, &on, socklen_t(MemoryLayout<Int32>.size))
@@ -352,7 +394,9 @@ final class GuestBridge {
             while off < raw.count {
                 let n = write(fd, raw.baseAddress!.advanced(by: off), raw.count - off)
                 if n <= 0 {
-                    if n < 0 && errno == EINTR { continue }
+                    if n < 0 && errno == EINTR {
+                        continue
+                    }
                     throw BridgeError.io("write failed (errno \(errno))")
                 }
                 off += n
@@ -378,7 +422,7 @@ final class GuestBridge {
     /// interleaved on it would each read the other's output. Caller must hold
     /// controlLock.
     private func exchange(_ command: String, timeout: TimeInterval)
-            throws -> (out: String, status: Int) {
+        throws -> (out: String, status: Int) {
         let fd = try controlFD(timeout: timeout)
         sequence += 1
         let token = "\(Self.marker)\(sequence):"
@@ -389,7 +433,9 @@ final class GuestBridge {
         let deadline = Date().addingTimeInterval(timeout)
         while true {
             let n = buf.withUnsafeMutableBytes { read(fd, $0.baseAddress, $0.count) }
-            if n < 0 && errno == EINTR { continue }
+            if n < 0 && errno == EINTR {
+                continue
+            }
             // EAGAIN is SO_RCVTIMEO expiring: the guest has not answered YET.
             // Treating it as a dead socket is what tore down a working
             // connection every fifteen seconds.
@@ -404,12 +450,12 @@ final class GuestBridge {
                 dropControl(why)
                 throw BridgeError.io("guest closed the connection -- \(why)")
             }
-            out += String(decoding: buf[0..<n], as: UTF8.self)
+            out += String(decoding: buf[0 ..< n], as: UTF8.self)
             if let r = out.range(of: token) {
                 let status = Int(out[r.upperBound...]
                     .trimmingCharacters(in: .whitespacesAndNewlines)) ?? 0
                 isConnected = true
-                let body = String(out[out.startIndex..<r.lowerBound])
+                let body = String(out[out.startIndex ..< r.lowerBound])
                 if status != 0 {
                     HuskLog.log("bridge", "`\(command.prefix(60))` exit \(status)")
                 }
@@ -460,9 +506,13 @@ final class GuestBridge {
         var buf = [UInt8](repeating: 0, count: 64 * 1024)
         while out.count < limit {
             let n = buf.withUnsafeMutableBytes { read(fd, $0.baseAddress, $0.count) }
-            if n < 0 && errno == EINTR { continue }
-            if n <= 0 { break }
-            out.append(contentsOf: buf[0..<n])
+            if n < 0 && errno == EINTR {
+                continue
+            }
+            if n <= 0 {
+                break
+            }
+            out.append(contentsOf: buf[0 ..< n])
         }
         isConnected = true
         return out
@@ -482,8 +532,10 @@ final class GuestBridge {
     func push(_ local: URL, to remote: String,
               progress: @escaping (Double) -> Void) throws {
         let size = (try FileManager.default.attributesOfItem(atPath: local.path)[.size]
-                    as? NSNumber)?.intValue ?? 0
-        guard size > 0 else { throw BridgeError.io("\(local.lastPathComponent) is empty") }
+            as? NSNumber)?.intValue ?? 0
+        guard size > 0 else {
+            throw BridgeError.io("\(local.lastPathComponent) is empty")
+        }
 
         let handle = try FileHandle(forReadingFrom: local)
         defer { try? handle.close() }
@@ -524,7 +576,9 @@ final class GuestBridge {
 
         var sent = 0
         while sent < size {
-            guard let chunk = try handle.read(upToCount: 256 * 1024), !chunk.isEmpty else { break }
+            guard let chunk = try handle.read(upToCount: 256 * 1024), !chunk.isEmpty else {
+                break
+            }
             try writeAll(fd, chunk)
             sent += chunk.count
             progress(Double(sent) / Double(size))
@@ -542,7 +596,9 @@ final class GuestBridge {
         let deadline = Date().addingTimeInterval(budget)
         while !out.contains(token) {
             let n = buf.withUnsafeMutableBytes { read(fd, $0.baseAddress, $0.count) }
-            if n < 0 && errno == EINTR { continue }
+            if n < 0 && errno == EINTR {
+                continue
+            }
             if n < 0 && (errno == EAGAIN || errno == EWOULDBLOCK) {
                 if Date() > deadline {
                     dropControl("no acknowledgement after the transfer")
@@ -555,7 +611,7 @@ final class GuestBridge {
                 dropControl(why)
                 throw BridgeError.io("\(why) after sending \(sent) bytes")
             }
-            out += String(decoding: buf[0..<n], as: UTF8.self)
+            out += String(decoding: buf[0 ..< n], as: UTF8.self)
             if Date() > deadline {
                 dropControl("no acknowledgement after the transfer")
                 throw BridgeError.timeout("waiting for the guest to finish writing \(remote)")
@@ -569,12 +625,14 @@ final class GuestBridge {
     /// Retried, because init restarts `husk_agent` when it dies and a single
     /// failed probe cannot tell a dead listener from one being restarted.
     func isAlive(attempts: Int = 4) -> Bool {
-        for i in 1...attempts {
+        for i in 1 ... attempts {
             if let out = try? shell("echo __HUSK_ALIVE__", timeout: 15),
                out.contains("__HUSK_ALIVE__") {
                 return true
             }
-            if i < attempts { Thread.sleep(forTimeInterval: 2) }
+            if i < attempts {
+                Thread.sleep(forTimeInterval: 2)
+            }
         }
         return false
     }
@@ -602,7 +660,9 @@ final class GuestBridge {
     func diagnose() -> String {
         func probe(_ port: UInt16, expectBytes: Bool) -> String {
             let fd = socket(AF_INET, SOCK_STREAM, 0)
-            guard fd >= 0 else { return "socket() failed (errno \(errno))" }
+            guard fd >= 0 else {
+                return "socket() failed (errno \(errno))"
+            }
             defer { close(fd) }
             var tv = timeval(tv_sec: 6, tv_usec: 0)
             setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, &tv, socklen_t(MemoryLayout<timeval>.size))
@@ -618,22 +678,28 @@ final class GuestBridge {
                     connect(fd, $0, socklen_t(MemoryLayout<sockaddr_in>.size))
                 }
             }
-            if rc != 0 { return "connect failed (errno \(errno))" }
-            guard expectBytes else { return "connected" }
+            if rc != 0 {
+                return "connect failed (errno \(errno))"
+            }
+            guard expectBytes else {
+                return "connected"
+            }
 
             _ = try? writeAll(fd, Data("echo __HUSK_ALIVE__\n".utf8))
             var buf = [UInt8](repeating: 0, count: 512)
             let n = buf.withUnsafeMutableBytes { read(fd, $0.baseAddress, $0.count) }
             if n > 0 {
-                let got = String(decoding: buf[0..<n], as: UTF8.self)
+                let got = String(decoding: buf[0 ..< n], as: UTF8.self)
                     .trimmingCharacters(in: .whitespacesAndNewlines)
                 return "answered: \(got.prefix(60))"
             }
-            if n == 0 { return "connected, then the guest closed it at once "
-                             + "(the port is refused inside the guest)" }
+            if n == 0 {
+                return "connected, then the guest closed it at once "
+                    + "(the port is refused inside the guest)"
+            }
             if errno == EAGAIN || errno == EWOULDBLOCK {
                 return "connected, then silence until timeout "
-                     + "(packets dropped rather than refused)"
+                    + "(packets dropped rather than refused)"
             }
             return "connected, then read failed (errno \(errno))"
         }
@@ -649,7 +715,9 @@ final class GuestBridge {
     /// when the answer CHANGES, turns that window into a timestamp that can be
     /// lined up against what init and netd were doing.
     func startHealthWatch() {
-        guard !watching else { return }
+        guard !watching else {
+            return
+        }
         watching = true
         Thread.detachNewThread { [weak self] in
             Thread.current.name = "com.husk.bridge.health"
@@ -673,7 +741,7 @@ final class GuestBridge {
                     for cmd in ["ip addr show", "ip rule show", "ip route show table all"] {
                         if let out = try? self.shell(cmd, timeout: 20) {
                             HuskLog.log("net", "[t+\(ticks * 5)s] \(cmd):\n"
-                                      + out.trimmingCharacters(in: .whitespacesAndNewlines))
+                                + out.trimmingCharacters(in: .whitespacesAndNewlines))
                         }
                     }
                 }
@@ -694,21 +762,23 @@ final class GuestBridge {
                     // queueing three buffers in three minutes -- whatever made
                     // it give up is written here and nowhere else.
                     if let out = try? self.shell(
-                            // Info level, and the HAL tags too. Warnings alone
-                            // produced one repeated line about a flag mismatch
-                            // and nothing about why the stream stops feeding.
-                            "logcat -d -t 200 *:S AudioFlinger:I AudioTrack:I "
-                          + "audio_hw_generic:I AudioPolicyService:I "
-                          + "AudioSystem:I audioserver:I APM_AudioPolicyManager:I "
-                          + "AudioHardwareGeneric:I FastMixer:I AudioMixer:I "
-                          + "SoundPool:I OpenSLES:I", timeout: 30),
-                       !out.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                        // Info level, and the HAL tags too. Warnings alone
+                        // produced one repeated line about a flag mismatch
+                        // and nothing about why the stream stops feeding.
+                        "logcat -d -t 200 *:S AudioFlinger:I AudioTrack:I "
+                            + "audio_hw_generic:I AudioPolicyService:I "
+                            + "AudioSystem:I audioserver:I APM_AudioPolicyManager:I "
+                            + "AudioHardwareGeneric:I FastMixer:I AudioMixer:I "
+                            + "SoundPool:I OpenSLES:I", timeout: 30),
+                        !out.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                         let lines = out.split(separator: "\n").map(String.init)
                             .filter { !$0.isEmpty && !$0.hasPrefix("---------") }
                         if lines != lastAudioLog, !lines.isEmpty {
                             lastAudioLog = lines
                             HuskLog.log("gaudio", "---- Android's audio log ----")
-                            for line in lines.suffix(40) { HuskLog.log("gaudio", line) }
+                            for line in lines.suffix(40) {
+                                HuskLog.log("gaudio", line)
+                            }
                         }
                     }
                 }
@@ -726,8 +796,10 @@ final class GuestBridge {
                         if !fresh.isEmpty {
                             lastCrashLine = lines.last
                             HuskLog.log("crash", "---- \(fresh.count) new line(s) from "
-                                              + "Android's crash log ----")
-                            for line in fresh.suffix(80) { HuskLog.log("crash", line) }
+                                + "Android's crash log ----")
+                            for line in fresh.suffix(80) {
+                                HuskLog.log("crash", line)
+                            }
                         }
                     }
                 }
@@ -736,7 +808,7 @@ final class GuestBridge {
                 if alive != wasAlive {
                     if wasAlive == nil {
                         HuskLog.log("bridge", "health: the shell is "
-                                  + (alive ? "answering" : "NOT answering"))
+                            + (alive ? "answering" : "NOT answering"))
                     } else {
                         HuskLog.log("bridge", alive
                             ? "health: the shell started answering again"
@@ -756,7 +828,9 @@ final class GuestBridge {
     }
     private var watching = false
 
-    func disconnect() { isConnected = false }
+    func disconnect() {
+        isConnected = false
+    }
 }
 
 // MARK: - Android host
@@ -772,7 +846,9 @@ final class AndroidHost: ObservableObject {
     static let shared = AndroidHost()
 
     struct Package: Identifiable, Equatable, Hashable {
-        var id: String { name }
+        var id: String {
+            name
+        }
         let name: String
         var label: String
         /// Local file the icon was written to, once it has been fetched.
@@ -791,14 +867,18 @@ final class AndroidHost: ObservableObject {
         var lastUsed: Date?
 
         var bitness: String? {
-            guard let abi, !abi.isEmpty, abi != "null" else { return nil }
+            guard let abi, !abi.isEmpty, abi != "null" else {
+                return nil
+            }
             return abi.contains("64") ? "64-bit" : "32-bit"
         }
     }
 
     /// One entry in the guest's storage, as the Files tab shows it.
     struct GuestEntry: Identifiable, Equatable {
-        var id: String { path }
+        var id: String {
+            path
+        }
         let path: String
         let name: String
         let isDirectory: Bool
@@ -845,15 +925,29 @@ final class AndroidHost: ObservableObject {
     private func saveCatalogue(_ list: [Package]) {
         let rows: [[String: Any]] = list.map { pkg in
             var row: [String: Any] = ["name": pkg.name, "label": pkg.label]
-            if let v = pkg.iconPath { row["icon"] = v }
-            if let v = pkg.category { row["category"] = v }
-            if let v = pkg.version { row["version"] = v }
-            if let v = pkg.sizeBytes { row["size"] = v }
-            if let v = pkg.abi { row["abi"] = v }
-            if let v = pkg.lastUsed { row["lastUsed"] = v.timeIntervalSince1970 }
+            if let v = pkg.iconPath {
+                row["icon"] = v
+            }
+            if let v = pkg.category {
+                row["category"] = v
+            }
+            if let v = pkg.version {
+                row["version"] = v
+            }
+            if let v = pkg.sizeBytes {
+                row["size"] = v
+            }
+            if let v = pkg.abi {
+                row["abi"] = v
+            }
+            if let v = pkg.lastUsed {
+                row["lastUsed"] = v.timeIntervalSince1970
+            }
             return row
         }
-        guard let data = try? JSONSerialization.data(withJSONObject: rows) else { return }
+        guard let data = try? JSONSerialization.data(withJSONObject: rows) else {
+            return
+        }
         try? data.write(to: Self.catalogueURL, options: .atomic)
     }
 
@@ -866,15 +960,19 @@ final class AndroidHost: ObservableObject {
     nonisolated private static func loadCatalogue() -> [Package] {
         guard let data = try? Data(contentsOf: catalogueURL),
               let rows = try? JSONSerialization.jsonObject(with: data) as? [[String: Any]]
-        else { return [] }
+        else {
+            return []
+        }
         return rows.compactMap { row in
-            guard let name = row["name"] as? String, !name.isEmpty else { return nil }
+            guard let name = row["name"] as? String, !name.isEmpty else {
+                return nil
+            }
             let icon = (row["icon"] as? String) ?? ""
             let used = row["lastUsed"] as? Double
             return Package(name: name,
                            label: (row["label"] as? String) ?? pretty(name),
                            iconPath: FileManager.default.fileExists(atPath: icon)
-                                     ? icon : nil,
+                               ? icon : nil,
                            category: row["category"] as? String,
                            version: row["version"] as? String,
                            sizeBytes: (row["size"] as? NSNumber)?.int64Value,
@@ -906,7 +1004,9 @@ final class AndroidHost: ObservableObject {
 
     /// Poll until the guest's shell answers and Android reports it has booted.
     func waitForReady() {
-        guard !polling, !isReady else { return }
+        guard !polling, !isReady else {
+            return
+        }
         polling = true
         status = "Starting Android…"
         Task.detached { [weak self] in
@@ -922,7 +1022,7 @@ final class AndroidHost: ObservableObject {
                     if attempt == 1 || attempt % 10 == 0 {
                         let who = (try? GuestBridge.shared.shell("id")) ?? "(no answer)"
                         HuskLog.log("bridge", "guest shell: "
-                                  + who.trimmingCharacters(in: .whitespacesAndNewlines))
+                            + who.trimmingCharacters(in: .whitespacesAndNewlines))
                     }
                     let booted = try GuestBridge.shared.shell("getprop sys.boot_completed")
                         .trimmingCharacters(in: .whitespacesAndNewlines)
@@ -948,7 +1048,7 @@ final class AndroidHost: ObservableObject {
                     GuestBridge.shared.disconnect()
                     await MainActor.run {
                         self?.status = attempt < 4 ? "Starting Android…"
-                                                   : "Waiting for Android (\(attempt * 3)s)…"
+                            : "Waiting for Android (\(attempt * 3)s)…"
                     }
                 }
                 try? await Task.sleep(nanoseconds: 3_000_000_000)
@@ -970,17 +1070,21 @@ final class AndroidHost: ObservableObject {
             let known = names.isEmpty ? [:] : await self.launcherCatalogue()
             var labels: [String: String] = [:]
             for (package, entry) in known {
-                if let label = entry.label { labels[package] = label }
-                guard let icon = entry.icon else { continue }
+                if let label = entry.label {
+                    labels[package] = label
+                }
+                guard let icon = entry.icon else {
+                    continue
+                }
                 let dest = Self.iconDirectory.appendingPathComponent("\(package).png")
                 try? icon.write(to: dest)
             }
 
             await MainActor.run {
                 guard !names.isEmpty || self.packages.isEmpty
-                        || self.guestListedPackages else {
+                    || self.guestListedPackages else {
                     HuskLog.log("bridge", "empty package list with \(self.packages.count) "
-                                        + "remembered; keeping those")
+                        + "remembered; keeping those")
                     return
                 }
                 self.guestListedPackages = true
@@ -997,15 +1101,18 @@ final class AndroidHost: ObservableObject {
                     return Package(name: name,
                                    label: labels[name] ?? resolved ?? Self.pretty(name),
                                    iconPath: FileManager.default.fileExists(atPath: cached.path)
-                                             ? cached.path : nil)
+                                       ? cached.path : nil)
                 }
-                    .sorted { $0.label.localizedCaseInsensitiveCompare($1.label)
-                              == .orderedAscending }
+                .sorted { $0.label.localizedCaseInsensitiveCompare($1.label)
+                    == .orderedAscending
+                }
                 self.saveCatalogue(self.packages)
             }
             HuskLog.log("bridge", "\(names.count) user package(s) installed")
             await refreshMetadata(for: names)
-            for name in names { await fetchAppInfo(for: name) }
+            for name in names {
+                await fetchAppInfo(for: name)
+            }
         } catch {
             HuskLog.log("bridge", "could not list packages: \(error.localizedDescription)")
         }
@@ -1033,7 +1140,7 @@ final class AndroidHost: ObservableObject {
     /// `sqlite3` binary. A few hundred kilobytes over the bridge once a session
     /// is cheaper than depending on what a given Android build includes.
     nonisolated private func launcherCatalogue() async
-            -> [String: (label: String?, icon: Data?)] {
+        -> [String: (label: String?, icon: Data?)] {
         var found: [String: (label: String?, icon: Data?)] = [:]
         do {
             let listing = try GuestBridge.shared.shell(
@@ -1045,9 +1152,9 @@ final class AndroidHost: ObservableObject {
                 // cannot read /data/data at all, and that is a different fix
                 // from a launcher that keeps its cache somewhere else.
                 let who = (try? GuestBridge.shared.shell("id -u; ls -d /data/data/* "
-                                                       + "2>&1 | head -2", timeout: 20)) ?? ""
+                        + "2>&1 | head -2", timeout: 20)) ?? ""
                 HuskLog.log("bridge", "no launcher icon cache; the APKs it is. "
-                          + who.replacingOccurrences(of: "\n", with: " | "))
+                    + who.replacingOccurrences(of: "\n", with: " | "))
                 return [:]
             }
 
@@ -1074,7 +1181,7 @@ final class AndroidHost: ObservableObject {
             HuskLog.log("bridge", "launcher cache: \(found.count) app(s) named by Android")
         } catch {
             HuskLog.log("bridge", "launcher cache unavailable: "
-                      + error.localizedDescription)
+                + error.localizedDescription)
         }
         return found
     }
@@ -1082,7 +1189,7 @@ final class AndroidHost: ObservableObject {
     /// Read the pulled cache. One row per launcher activity: the component it
     /// belongs to, the label under it, and the icon as a compressed bitmap.
     nonisolated private static func readIconCache(at url: URL)
-            -> [String: (label: String?, icon: Data?)] {
+        -> [String: (label: String?, icon: Data?)] {
         var out: [String: (label: String?, icon: Data?)] = [:]
         var handle: OpaquePointer?
         // Read-write, because replaying the write-ahead log is a write.
@@ -1104,24 +1211,30 @@ final class AndroidHost: ObservableObject {
             if sqlite3_prepare_v2(handle, "SELECT name FROM sqlite_master WHERE type='table'",
                                   -1, &tables, nil) == SQLITE_OK {
                 while sqlite3_step(tables) == SQLITE_ROW {
-                    if let t = sqlite3_column_text(tables, 0) { names.append(String(cString: t)) }
+                    if let t = sqlite3_column_text(tables, 0) {
+                        names.append(String(cString: t))
+                    }
                 }
             }
             sqlite3_finalize(tables)
             HuskLog.log("bridge", "icon cache has no icons table; tables: "
-                      + (names.isEmpty ? "none" : names.joined(separator: ", ")))
+                + (names.isEmpty ? "none" : names.joined(separator: ", ")))
             return [:]
         }
         defer { sqlite3_finalize(stmt) }
 
         while sqlite3_step(stmt) == SQLITE_ROW {
-            guard let raw = sqlite3_column_text(stmt, 0) else { continue }
+            guard let raw = sqlite3_column_text(stmt, 0) else {
+                continue
+            }
             // "ComponentInfo{com.x.y/com.x.y.Main}" or plain "com.x.y/.Main".
             let component = String(cString: raw)
                 .replacingOccurrences(of: "ComponentInfo{", with: "")
                 .replacingOccurrences(of: "}", with: "")
             guard let package = component.split(separator: "/").first.map(String.init),
-                  !package.isEmpty else { continue }
+                  !package.isEmpty else {
+                continue
+            }
 
             let label = sqlite3_column_text(stmt, 1).map { String(cString: $0) }
             var icon: Data?
@@ -1133,14 +1246,18 @@ final class AndroidHost: ObservableObject {
                 if n > 16 {
                     let data = Data(bytes: bytes, count: n)
                     if data.prefix(4) == Data([0x89, 0x50, 0x4E, 0x47])
-                        || data.prefix(4) == Data("RIFF".utf8) { icon = data }
+                        || data.prefix(4) == Data("RIFF".utf8) {
+                        icon = data
+                    }
                 }
             }
 
             // First row wins per package, except that a row with an icon beats
             // one without: an app can have several launcher entries and only
             // the one the launcher drew has a bitmap against it.
-            if let existing = out[package], existing.icon != nil, icon == nil { continue }
+            if let existing = out[package], existing.icon != nil, icon == nil {
+                continue
+            }
             out[package] = (label?.isEmpty == false ? label : nil, icon)
         }
         return out
@@ -1160,15 +1277,17 @@ final class AndroidHost: ObservableObject {
         let safe = names.filter { $0.allSatisfy {
             $0.isLetter || $0.isNumber || $0 == "." || $0 == "_" || $0 == "-"
         } }
-        guard !safe.isEmpty else { return }
+        guard !safe.isEmpty else {
+            return
+        }
 
         let script = "for p in " + safe.joined(separator: " ") + "; do "
-                   + "echo \"#P $p\"; "
-                   + "dumpsys package \"$p\" 2>/dev/null | grep -E "
-                   + "\"versionName=|primaryCpuAbi=|categoryHint=|appCategory=\" | head -8; "
-                   + "echo \"#K\"; "
-                   + "pm path \"$p\" 2>/dev/null | sed 's/^package://' | "
-                   + "while read a; do stat -c %s \"$a\" 2>/dev/null; done; done"
+            + "echo \"#P $p\"; "
+            + "dumpsys package \"$p\" 2>/dev/null | grep -E "
+            + "\"versionName=|primaryCpuAbi=|categoryHint=|appCategory=\" | head -8; "
+            + "echo \"#K\"; "
+            + "pm path \"$p\" 2>/dev/null | sed 's/^package://' | "
+            + "while read a; do stat -c %s \"$a\" 2>/dev/null; done; done"
 
         guard let text = try? GuestBridge.shared.shell(script, timeout: 180) else {
             HuskLog.log("bridge", "could not read app details")
@@ -1183,13 +1302,22 @@ final class AndroidHost: ObservableObject {
             if line.hasPrefix("#P ") {
                 current = String(line.dropFirst(3))
                 inSizes = false
-                if let c = current { found[c] = Package(name: c, label: "", sizeBytes: 0) }
+                if let c = current {
+                    found[c] = Package(name: c, label: "", sizeBytes: 0)
+                }
                 continue
             }
-            guard let pkg = current, var row = found[pkg] else { continue }
-            if line == "#K" { inSizes = true; continue }
+            guard let pkg = current, var row = found[pkg] else {
+                continue
+            }
+            if line == "#K" {
+                inSizes = true
+                continue
+            }
             if inSizes {
-                if let n = Int64(line) { row.sizeBytes = (row.sizeBytes ?? 0) + n }
+                if let n = Int64(line) {
+                    row.sizeBytes = (row.sizeBytes ?? 0) + n
+                }
             } else if row.version == nil, let v = Self.field("versionName=", line) {
                 row.version = v
             } else if row.abi == nil, let v = Self.field("primaryCpuAbi=", line) {
@@ -1204,15 +1332,19 @@ final class AndroidHost: ObservableObject {
 
         let named = found.filter { $0.value.category != nil }.count
         HuskLog.log("bridge", "details for \(found.count) app(s); "
-                            + "\(named) categorised by Android")
+            + "\(named) categorised by Android")
 
         await MainActor.run {
             for i in self.packages.indices {
-                guard let row = found[self.packages[i].name] else { continue }
+                guard let row = found[self.packages[i].name] else {
+                    continue
+                }
                 self.packages[i].version = row.version
                 self.packages[i].abi = row.abi
                 self.packages[i].category = row.category
-                if let size = row.sizeBytes, size > 0 { self.packages[i].sizeBytes = size }
+                if let size = row.sizeBytes, size > 0 {
+                    self.packages[i].sizeBytes = size
+                }
             }
             self.saveCatalogue(self.packages)
         }
@@ -1220,7 +1352,9 @@ final class AndroidHost: ObservableObject {
 
     /// The value of `key` on a `dumpsys` line, up to the next space or comma.
     nonisolated private static func field(_ key: String, _ line: String) -> String? {
-        guard let r = line.range(of: key) else { return nil }
+        guard let r = line.range(of: key) else {
+            return nil
+        }
         let rest = line[r.upperBound...]
         let value = rest.prefix { !$0.isWhitespace && $0 != "," }
         return value.isEmpty ? nil : String(value)
@@ -1230,10 +1364,10 @@ final class AndroidHost: ObservableObject {
     /// usefully offer. Anything undefined stays nil and shows nothing.
     nonisolated private static func category(_ raw: String) -> String? {
         switch Int(raw) {
-        case 0:               return "Game"
+        case 0: return "Game"
         case 1, 2, 3, 4, 5, 6: return "App"
-        case 7, 8:            return "Tool"
-        default:              return nil
+        case 7, 8: return "Tool"
+        default: return nil
         }
     }
 
@@ -1249,16 +1383,20 @@ final class AndroidHost: ObservableObject {
         let quoted = Self.quote(path)
         let out = try GuestBridge.shared.shell(
             "find \(quoted) -maxdepth 1 -mindepth 1 -exec stat -c '%F|%s|%Y|%n' {} + "
-          + "2>/dev/null | head -800", timeout: 90)
+                + "2>/dev/null | head -800", timeout: 90)
 
         var rows: [GuestEntry] = []
         for line in out.split(separator: "\n") {
             let parts = line.split(separator: "|", maxSplits: 3,
                                    omittingEmptySubsequences: false)
-            guard parts.count == 4 else { continue }
+            guard parts.count == 4 else {
+                continue
+            }
             let full = String(parts[3])
             let name = (full as NSString).lastPathComponent
-            guard !name.isEmpty else { continue }
+            guard !name.isEmpty else {
+                continue
+            }
             rows.append(GuestEntry(
                 path: full,
                 name: name,
@@ -1277,12 +1415,16 @@ final class AndroidHost: ObservableObject {
     /// How much room is left where the files go.
     nonisolated func freeSpace(at path: String) -> (free: Int64, total: Int64)? {
         guard let out = try? GuestBridge.shared.shell(
-                "df -k \(Self.quote(path)) | tail -1", timeout: 30) else { return nil }
+            "df -k \(Self.quote(path)) | tail -1", timeout: 30) else {
+            return nil
+        }
         // Filesystem, 1K-blocks, Used, Available, …  — the filesystem's name can
         // itself contain digits, so take the numbers in order after it.
         let numbers = out.split(whereSeparator: { $0 == " " || $0 == "\t" })
             .compactMap { Int64($0) }
-        guard numbers.count >= 3 else { return nil }
+        guard numbers.count >= 3 else {
+            return nil
+        }
         return (free: numbers[2] * 1024, total: numbers[0] * 1024)
     }
 
@@ -1306,10 +1448,14 @@ final class AndroidHost: ObservableObject {
         let haveIcon = FileManager.default.fileExists(atPath: dest.path)
         let haveLabel = await MainActor.run {
             guard let p = self.packages.first(where: { $0.name == package })
-            else { return false }
+            else {
+                return false
+            }
             return p.label != AndroidHost.pretty(package)
         }
-        if haveIcon && haveLabel { return }
+        if haveIcon && haveLabel {
+            return
+        }
 
         do {
             let paths = try GuestBridge.shared.shell("pm path \(package)", timeout: 30)
@@ -1321,7 +1467,9 @@ final class AndroidHost: ObservableObject {
             // The label and the icon are in the base APK; the config splits
             // carry only per-density and per-ABI pieces.
             guard let apk = apks.first(where: { $0.hasSuffix("base.apk") }) ?? apks.first
-            else { return }
+            else {
+                return
+            }
 
             var label: String?
             var entry: String?
@@ -1339,10 +1487,10 @@ final class AndroidHost: ObservableObject {
                 label = info.label
                 entry = info.iconEntry
                 HuskLog.log("bridge", "\(package): manifest says "
-                          + "label=\(info.label ?? "?") icon=\(info.iconEntry ?? "?")")
+                    + "label=\(info.label ?? "?") icon=\(info.iconEntry ?? "?")")
             } else {
                 HuskLog.log("bridge", "\(package): no manifest/resources "
-                          + "(\(manifest.count)/\(arsc.count) bytes)")
+                    + "(\(manifest.count)/\(arsc.count) bytes)")
             }
 
             // An adaptive icon is an instruction, not a picture: follow it to
@@ -1368,11 +1516,13 @@ final class AndroidHost: ObservableObject {
             if entry == nil, !haveIcon {
                 let listing = try GuestBridge.shared.shell(
                     "unzip -l \(AndroidHost.quote(apk)) | "
-                  + "grep -iE 'res/.*(launcher|icon).*\\.(png|webp)$' "
-                  + "| sort -k1 -rn | head -1", timeout: 60)
+                        + "grep -iE 'res/.*(launcher|icon).*\\.(png|webp)$' "
+                        + "| sort -k1 -rn | head -1", timeout: 60)
                 entry = listing.split(separator: "\n").first?
                     .split(separator: " ").last.map(String.init)
-                if let e = entry { HuskLog.log("bridge", "\(package): guessed \(e)") }
+                if let e = entry {
+                    HuskLog.log("bridge", "\(package): guessed \(e)")
+                }
             }
 
             if !haveIcon, let entry, !entry.isEmpty {
@@ -1388,27 +1538,35 @@ final class AndroidHost: ObservableObject {
                 if data.count > 16, png || webp || jpeg {
                     try data.write(to: dest)
                     HuskLog.log("bridge", "icon for \(package): \(entry), "
-                              + "\(data.count) bytes")
+                        + "\(data.count) bytes")
                 } else {
                     HuskLog.log("bridge", "\(package): \(entry) is not an image "
-                              + "(\(data.count) bytes)")
+                        + "(\(data.count) bytes)")
                 }
             }
 
             let gotIcon = FileManager.default.fileExists(atPath: dest.path)
-            guard label != nil || gotIcon else { return }
+            guard label != nil || gotIcon else {
+                return
+            }
             await MainActor.run {
                 guard let i = self.packages.firstIndex(where: { $0.name == package })
-                else { return }
-                if let label, !haveLabel { self.packages[i].label = label }
-                if gotIcon { self.packages[i].iconPath = dest.path }
+                else {
+                    return
+                }
+                if let label, !haveLabel {
+                    self.packages[i].label = label
+                }
+                if gotIcon {
+                    self.packages[i].iconPath = dest.path
+                }
                 // Written through, so both are on the next launch's first
                 // screen rather than only after the guest has booted again.
                 self.saveCatalogue(self.packages)
             }
         } catch {
             HuskLog.log("bridge", "details for \(package) failed: "
-                      + error.localizedDescription)
+                + error.localizedDescription)
         }
     }
 
@@ -1439,17 +1597,17 @@ final class AndroidHost: ObservableObject {
         }
         // mWakefulness is Awake / Asleep / Dozing / Dreaming.
         if let power = try? GuestBridge.shared.shell(
-                "dumpsys power 2>/dev/null | grep -m1 mWakefulness=", timeout: 20),
-           power.contains("Asleep") || power.contains("Dozing") {
+            "dumpsys power 2>/dev/null | grep -m1 mWakefulness=", timeout: 20),
+            power.contains("Asleep") || power.contains("Dozing") {
             return .asleep
         }
         // Both spellings, because which one exists depends on the Android
         // release and neither is worth depending on alone.
         if let win = try? GuestBridge.shared.shell(
-                "dumpsys window 2>/dev/null | "
-              + "grep -m1 -oE '(mDreamingLockscreen|mShowingLockscreen)=[a-z]+'",
-                timeout: 30),
-           win.contains("=true") {
+            "dumpsys window 2>/dev/null | "
+                + "grep -m1 -oE '(mDreamingLockscreen|mShowingLockscreen)=[a-z]+'",
+            timeout: 30),
+            win.contains("=true") {
             return .locked
         }
         return .ready
@@ -1461,7 +1619,9 @@ final class AndroidHost: ObservableObject {
     /// get into Android -- a save file, a ROM, a texture pack, a photo -- had no
     /// route in at all. Same transfer as an install, minus pm.
     func sendFiles(_ files: [URL], to directory: String = "/sdcard/Download") {
-        guard !files.isEmpty else { return }
+        guard !files.isEmpty else {
+            return
+        }
         busy = "Sending \(files.count == 1 ? files[0].lastPathComponent : "\(files.count) files")…"
         Task.detached { [weak self] in
             var sent = 0
@@ -1479,7 +1639,11 @@ final class AndroidHost: ObservableObject {
                         break
                     }
                     let scoped = file.startAccessingSecurityScopedResource()
-                    defer { if scoped { file.stopAccessingSecurityScopedResource() } }
+                    defer {
+                        if scoped {
+                            file.stopAccessingSecurityScopedResource()
+                        }
+                    }
 
                     // Quoted and stripped of any path: a filename is chosen by
                     // whoever made the file, and it reaches a shell verbatim.
@@ -1496,7 +1660,7 @@ final class AndroidHost: ObservableObject {
                     // media database is what Android's file pickers read.
                     _ = try? GuestBridge.shared.shell(
                         "am broadcast -a android.intent.action.MEDIA_SCANNER_SCAN_FILE "
-                      + "-d file://\(remote)", timeout: 60)
+                            + "-d file://\(remote)", timeout: 60)
                     HuskLog.log("bridge", "sent \(name) to Download")
                     sent += 1
                 } catch {
@@ -1535,14 +1699,14 @@ final class AndroidHost: ObservableObject {
                 "pm install -r \(AndroidHost.quote(path))", timeout: 900)) ?? ""
             let ok = out.contains("Success")
             HuskLog.log("bridge", "install \(name) from guest: "
-                      + out.trimmingCharacters(in: .whitespacesAndNewlines))
+                + out.trimmingCharacters(in: .whitespacesAndNewlines))
             await self?.refreshPackages()
             await MainActor.run {
                 self?.busy = nil
                 self?.say(ok ? "APK installed" : "Install failed",
                           ok ? "\(name) is ready to launch."
-                             : String(out.prefix(120))
-                                 .trimmingCharacters(in: .whitespacesAndNewlines),
+                              : String(out.prefix(120))
+                              .trimmingCharacters(in: .whitespacesAndNewlines),
                           good: ok)
             }
         }
@@ -1559,13 +1723,13 @@ final class AndroidHost: ObservableObject {
             // fixes the whole class of failure.
             if !out.contains("Success") {
                 HuskLog.log("bridge", "uninstall \(package) first try: "
-                          + out.trimmingCharacters(in: .whitespacesAndNewlines))
+                    + out.trimmingCharacters(in: .whitespacesAndNewlines))
                 out = (try? GuestBridge.shared.shell(
                     "pm uninstall --user 0 \(package)", timeout: 300)) ?? out
             }
             let ok = out.contains("Success")
             HuskLog.log("bridge", "uninstall \(package): "
-                      + out.trimmingCharacters(in: .whitespacesAndNewlines))
+                + out.trimmingCharacters(in: .whitespacesAndNewlines))
             let label = await MainActor.run {
                 self?.packages.first { $0.name == package }?.label ?? package
             }
@@ -1580,7 +1744,9 @@ final class AndroidHost: ObservableObject {
     }
 
     /// Copy an APK into the guest and install it.
-    func install(_ apk: URL) { install([apk]) }
+    func install(_ apk: URL) {
+        install([apk])
+    }
 
     /// Install one APK, or a split set as a single app.
     ///
@@ -1592,20 +1758,26 @@ final class AndroidHost: ObservableObject {
     /// to hand them over as one app; installing them one at a time does not
     /// work, because each is incomplete by itself.
     func install(_ apks: [URL]) {
-        guard let first = apks.first else { return }
+        guard let first = apks.first else {
+            return
+        }
         let name = apks.count == 1 ? first.lastPathComponent
-                                   : "\(apks.count) APKs (\(first.lastPathComponent))"
+            : "\(apks.count) APKs (\(first.lastPathComponent))"
         busy = "Installing \(name)…"
         Task.detached { [weak self] in
             // /data/local/tmp is the one directory the shell user owns outright,
             // and the one pm will read an APK from.
-            let remotes = (0..<apks.count).map { "/data/local/tmp/husk-install-\($0).apk" }
+            let remotes = (0 ..< apks.count).map { "/data/local/tmp/husk-install-\($0).apk" }
             let remote = remotes[0]
             do {
                 // A file handed over by the document picker lives outside the
                 // sandbox and is unreadable until this is claimed.
                 let scoped = first.startAccessingSecurityScopedResource()
-                defer { if scoped { first.stopAccessingSecurityScopedResource() } }
+                defer {
+                    if scoped {
+                        first.stopAccessingSecurityScopedResource()
+                    }
+                }
                 let apk = first
 
                 // Check before the transfer, not after. Copying an APK into the
@@ -1621,14 +1793,14 @@ final class AndroidHost: ObservableObject {
                     Thread.sleep(forTimeInterval: 1.5)
                     if case .locked = AndroidHost.guestState() {
                         throw BridgeError.io("Android is locked. Open the Android "
-                                           + "screen, unlock it, and try again.")
+                            + "screen, unlock it, and try again.")
                     }
                 case .locked:
                     throw BridgeError.io("Android is locked. Open the Android "
-                                       + "screen, unlock it, and try again.")
+                        + "screen, unlock it, and try again.")
                 case .unreachable(let why):
                     throw BridgeError.io("\(why). Open the Android screen and "
-                                       + "check it is running, then try again.")
+                        + "check it is running, then try again.")
                 case .ready:
                     break
                 }
@@ -1636,7 +1808,11 @@ final class AndroidHost: ObservableObject {
                 var expected = 0
                 for (i, url) in apks.enumerated() {
                     let scopedOne = i == 0 ? false : url.startAccessingSecurityScopedResource()
-                    defer { if scopedOne { url.stopAccessingSecurityScopedResource() } }
+                    defer {
+                        if scopedOne {
+                            url.stopAccessingSecurityScopedResource()
+                        }
+                    }
                     let label = apks.count == 1 ? name
                         : "\(url.lastPathComponent) (\(i + 1)/\(apks.count))"
                     try GuestBridge.shared.push(url, to: remotes[i]) { p in
@@ -1653,7 +1829,7 @@ final class AndroidHost: ObservableObject {
                         .trimmingCharacters(in: .whitespacesAndNewlines)) ?? -1
                     guard landed == size else {
                         throw BridgeError.io("copied \(landed) of \(size) bytes "
-                                           + "of \(url.lastPathComponent)")
+                            + "of \(url.lastPathComponent)")
                     }
                     expected += size
                 }
@@ -1672,15 +1848,17 @@ final class AndroidHost: ObservableObject {
                     ? "pm install -r -t \(remote)"
                     : "pm install-multiple -r -t \(remotes.joined(separator: " "))"
                 let out = try GuestBridge.shared.shell(command, timeout: installBudget)
-                for r in remotes { _ = try? GuestBridge.shared.shell("rm -f \(r)") }
+                for r in remotes {
+                    _ = try? GuestBridge.shared.shell("rm -f \(r)")
+                }
                 let ok = out.contains("Success")
                 HuskLog.log("bridge", "install \(name): "
-                          + out.trimmingCharacters(in: .whitespacesAndNewlines))
+                    + out.trimmingCharacters(in: .whitespacesAndNewlines))
                 if !ok, out.contains("native libraries") {
                     HuskLog.log("bridge", "that error means pm found no native code it "
-                              + "can run: either this is one piece of a split APK set "
-                              + "(select every .apk together) or the build has no "
-                              + "arm64-v8a library and this guest is 64-bit only")
+                        + "can run: either this is one piece of a split APK set "
+                        + "(select every .apk together) or the build has no "
+                        + "arm64-v8a library and this guest is 64-bit only")
                 }
                 await self?.refreshPackages()
 
@@ -1702,7 +1880,7 @@ final class AndroidHost: ObservableObject {
                         // after installing".
                         guard QemuRunner.autoSaveEnabled else {
                             HuskLog.log("bridge", "\(name) installed; not saving, "
-                                      + "automatic saves are off")
+                                + "automatic saves are off")
                             self?.busy = nil
                             self?.say("APK installed",
                                       "Save Android to keep it past this session.")
@@ -1722,7 +1900,7 @@ final class AndroidHost: ObservableObject {
                                 self?.say("APK installed", "Ready to launch.")
                             } else {
                                 HuskLog.log("bridge", "\(name) is installed but the machine "
-                                          + "was not saved; it will be gone next launch")
+                                    + "was not saved; it will be gone next launch")
                                 self?.say("Installed, but not saved",
                                           "It will be gone on the next launch.",
                                           good: false)
@@ -1742,7 +1920,8 @@ final class AndroidHost: ObservableObject {
                 HuskLog.log("bridge", "install failed: \(error.localizedDescription)")
                 await MainActor.run { self?.busy = "Install failed: \(error.localizedDescription)" }
                 Task { try? await Task.sleep(nanoseconds: 5_000_000_000)
-                       await MainActor.run { self?.busy = nil } }
+                    await MainActor.run { self?.busy = nil }
+                }
             }
         }
     }
@@ -1758,24 +1937,24 @@ final class AndroidHost: ObservableObject {
     func dumpDiagnostics() {
         Task.detached {
             let probes: [(String, String)] = [
-                ("egl driver",   "getprop ro.hardware.egl"),
-                ("gralloc",      "getprop ro.hardware.gralloc"),
-                ("hwui",         "getprop debug.hwui.renderer"),
-                ("memtag",       "getprop ro.arm64.memtag.bootctl"),
+                ("egl driver", "getprop ro.hardware.egl"),
+                ("gralloc", "getprop ro.hardware.gralloc"),
+                ("hwui", "getprop debug.hwui.renderer"),
+                ("memtag", "getprop ro.arm64.memtag.bootctl"),
                 ("cpu features", "grep -m1 Features /proc/cpuinfo"),
                 ("display size", "wm size"),
-                ("density",      "wm density"),
+                ("density", "wm density"),
                 // The renderer is the whole question: a hardware GL string
                 // means the guest found a GPU, and anything mentioning
                 // SwiftShader or llvmpipe means every pixel is being drawn by
                 // an emulated CPU.
-                ("renderer",     "dumpsys SurfaceFlinger | grep -i -m3 'GLES\\|renderer'"),
+                ("renderer", "dumpsys SurfaceFlinger | grep -i -m3 'GLES\\|renderer'"),
             ]
             for (label, cmd) in probes {
                 let out = (try? GuestBridge.shared.shell(cmd, timeout: 45)) ?? "(failed)"
                 HuskLog.log("probe", "\(label): "
-                          + out.trimmingCharacters(in: .whitespacesAndNewlines)
-                               .replacingOccurrences(of: "\n", with: " | "))
+                    + out.trimmingCharacters(in: .whitespacesAndNewlines)
+                    .replacingOccurrences(of: "\n", with: " | "))
             }
             await self.dumpCrashes()
         }
@@ -1801,14 +1980,14 @@ final class AndroidHost: ObservableObject {
     func quietAbsentHardware() async {
         let off = [
             ("bluetooth", "settings put global bluetooth_on 0"),
-            ("ble scan",  "settings put global ble_scan_always_enabled 0"),
+            ("ble scan", "settings put global ble_scan_always_enabled 0"),
         ]
         for (what, cmd) in off {
             let r = try? GuestBridge.shared.run(cmd, timeout: 60)
             HuskLog.log("bridge", (r?.status == 0)
                 ? "\(what) disabled -- this machine has no radio for it"
                 : "could not disable \(what): "
-                  + (r?.out.trimmingCharacters(in: .whitespacesAndNewlines) ?? "no answer"))
+                + (r?.out.trimmingCharacters(in: .whitespacesAndNewlines) ?? "no answer"))
         }
     }
 
@@ -1833,7 +2012,9 @@ final class AndroidHost: ObservableObject {
             return
         }
         HuskLog.log("crash", "---- \(lines.count) lines from Android's crash buffer ----")
-        for line in lines.suffix(200) { HuskLog.log("crash", line) }
+        for line in lines.suffix(200) {
+            HuskLog.log("crash", line)
+        }
         HuskLog.log("crash", "---- end of crash buffer ----")
     }
 
@@ -1851,14 +2032,18 @@ final class AndroidHost: ObservableObject {
         busy = scale >= 1 ? "Restoring full resolution…" : "Reducing render size…"
         Task.detached { [weak self] in
             let base = GuestImage.shared.snapshotPins
-            defer { Task { @MainActor in self?.busy = nil; then() } }
+            defer { Task { @MainActor in self?.busy = nil
+                then()
+            } }
 
             // Physical density, so the override keeps the same physical scale.
             let densityOut = (try? GuestBridge.shared.shell("wm density")) ?? ""
             let physical = densityOut
                 .split(separator: "\n")
                 .compactMap { line -> Int? in
-                    guard line.contains("Physical density") else { return nil }
+                    guard line.contains("Physical density") else {
+                        return nil
+                    }
                     return Int(line.split(separator: ":").last?
                         .trimmingCharacters(in: .whitespaces) ?? "")
                 }.first ?? 240
@@ -1876,8 +2061,8 @@ final class AndroidHost: ObservableObject {
                 _ = try? GuestBridge.shared.shell("wm size \(w)x\(h); wm density \(d)",
                                                   timeout: 60)
                 HuskLog.log("perf", "render size \(w)x\(h) density \(d) "
-                          + "(\(Int(scale * 100))% of \(base.xres)x\(base.yres)); "
-                          + "\(Int((1 - scale * scale) * 100))% fewer pixels to rasterise")
+                    + "(\(Int(scale * 100))% of \(base.xres)x\(base.yres)); "
+                    + "\(Int((1 - scale * scale) * 100))% fewer pixels to rasterise")
             }
 
             // Animations are pure compositor work and buy nothing at 12 fps.
@@ -1894,7 +2079,9 @@ final class AndroidHost: ObservableObject {
     /// its own -- we do not know the activity name and would have to resolve it.
     /// Note that an app was opened, for the "last used" line on its page.
     func markLaunched(_ pkg: String) {
-        guard let i = packages.firstIndex(where: { $0.name == pkg }) else { return }
+        guard let i = packages.firstIndex(where: { $0.name == pkg }) else {
+            return
+        }
         packages[i].lastUsed = Date()
         saveCatalogue(packages)
     }
@@ -1906,7 +2093,9 @@ final class AndroidHost: ObservableObject {
             let out = (try? GuestBridge.shared.shell(
                 "monkey -p \(pkg) -c android.intent.category.LAUNCHER 1", timeout: 60)) ?? ""
             HuskLog.log("bridge", "launch \(pkg): \(out.split(separator: "\n").last ?? "")")
-            await MainActor.run { self?.busy = nil; then() }
+            await MainActor.run { self?.busy = nil
+                then()
+            }
         }
     }
 }

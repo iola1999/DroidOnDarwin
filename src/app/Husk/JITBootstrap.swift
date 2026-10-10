@@ -37,7 +37,7 @@ enum JITBootstrap {
         HuskLog.log("jit", "installing brk trap guard")
         husk_ios_jit_install_trap_handler()
         HuskLog.log("jit", "trap guard installed -- an unserviced brk will now "
-                         + "return 0 instead of killing the process")
+            + "return 0 instead of killing the process")
     }
 
     /// Size QEMU will ask for. Must match tb-size in the phase 1 command line:
@@ -77,29 +77,28 @@ enum JITBootstrap {
             return false
         }
         HuskLog.log("jit", "claiming \(jitBytes / (1024 * 1024)) MiB of JIT memory now, "
-                         + "before the guest download -- StikDebug does not stay attached")
+            + "before the guest download -- StikDebug does not stay attached")
         let ok = husk_ios_jit_prewarm(jitBytes)
         if ok {
             prewarmed = true
             lastFailure = nil
             detachIfDone()
-        }
-        else if mapJITWorks {
+        } else if mapJITWorks {
             // Not a failure worth reporting: this is the ordinary shape of an
             // iOS that does not need a trap servicer. QEMU maps its own buffer
             // with MAP_JIT a moment later and runs exactly as well.
             lastFailure = nil
             HuskLog.log("jit", "no trap servicer, but MAP_JIT executes here -- "
-                             + "QEMU will map its own buffer")
+                + "QEMU will map its own buffer")
         } else {
             lastFailure = "The debugger is attached but is not answering trap "
-                        + "requests, and this device will not execute a MAP_JIT "
-                        + "mapping either, so no executable memory could be "
-                        + "claimed. This is what happens when Husk runs inside "
-                        + "another container app rather than sideloaded on its own."
+                + "requests, and this device will not execute a MAP_JIT "
+                + "mapping either, so no executable memory could be "
+                + "claimed. This is what happens when Husk runs inside "
+                + "another container app rather than sideloaded on its own."
         }
         HuskLog.log("jit", ok ? "JIT region secured; it will be handed to QEMU later"
-                              : "JIT prewarm FAILED -- StikDebug is not servicing traps")
+            : "JIT prewarm FAILED -- StikDebug is not servicing traps")
         return ok
     }
 
@@ -123,9 +122,11 @@ enum JITBootstrap {
     /// Release the debugger once the JIT region is held. It is no longer
     /// needed for anything, and leaving it attached is what froze the app.
     private static func detachIfDone() {
-        guard prewarmed, !detached, !keepDebuggerAttached else { return }
+        guard prewarmed, !detached, !keepDebuggerAttached else {
+            return
+        }
         HuskLog.log("jit", "JIT region held; detaching StikDebug so a suspended "
-                         + "debugger cannot stall the process later")
+            + "debugger cannot stall the process later")
         husk_ios_jit_detach()
         detached = true
     }
@@ -153,7 +154,9 @@ enum JITBootstrap {
     /// answering, that stop freezes the app. Views must never trigger this probe
     /// directly.
     static var mapJITWorks: Bool {
-        if let known = mapJITResult { return known }
+        if let known = mapJITResult {
+            return known
+        }
         let result: Bool
         if deviceEnforcesTXM {
             HuskLog.log("jit", "TXM device: MAP_JIT cannot execute here, not probing")
@@ -173,7 +176,9 @@ enum JITBootstrap {
     /// self-test — which happens inside `qemu_init`. It is therefore always false
     /// before the guest starts, and must NOT be used to decide whether to start it.
     /// Use `isDebuggerAttached` for that, and this afterwards to confirm it worked.
-    static var isLive: Bool { husk_ios_jit_is_available() }
+    static var isLive: Bool {
+        husk_ios_jit_is_available()
+    }
 
     /// The actual precondition for starting the guest: StikDebug has attached.
     ///
@@ -227,19 +232,25 @@ enum JITBootstrap {
     }
 
     /// A rootless jailbreak (Dopamine and its kin) puts its files in /var/jb and lets apps see it.
-    static var isJailbroken: Bool { FileManager.default.fileExists(atPath: "/var/jb") }
+    static var isJailbroken: Bool {
+        FileManager.default.fileExists(atPath: "/var/jb")
+    }
 
     /// Whether Husk was already marked as debugged when it was opened, before it asked anything of anyone. That is what a
     /// jailbreak that allows JIT in apps does to every app it launches (Dopamine's "Allow JIT in Apps" setting), and it needs
     /// no hand-off at all. Read once, early (HuskApp.init), so a later attach is not mistaken for it.
     nonisolated(unsafe) static var debuggedAtLaunch = false
-    static func noteLaunchState() { debuggedAtLaunch = (csStatus() ?? 0) & CS_DEBUGGED != 0 }
+    static func noteLaunchState() {
+        debuggedAtLaunch = (csStatus() ?? 0) & CS_DEBUGGED != 0
+    }
 
     /// Whether this iOS lets a process that is marked as debugged make executable memory for itself, as opposed to needing a
     /// debugger to hand it out: true before iOS 26, which is when the Trusted Execution Monitor arrived. It is what makes
     /// TrollStore and jailbreaks enough, without StikDebug.
     static var canGrantOwnJIT: Bool {
-        if #available(iOS 26, *) { return false }
+        if #available(iOS 26, *) {
+            return false
+        }
         return true
     }
 
@@ -256,14 +267,16 @@ enum JITBootstrap {
     @MainActor
     static func requestTrollStoreAttach() -> Bool {
         HuskLog.log("jit", "requestTrollStoreAttach() -- handing off to TrollStore")
-        guard let bundleID = Bundle.main.bundleIdentifier else { return false }
-        
+        guard let bundleID = Bundle.main.bundleIdentifier else {
+            return false
+        }
+
         let url = "apple-magnifier://enable-jit?bundle-id=\(bundleID)"
         guard let launchURL = URL(string: url), UIApplication.shared.canOpenURL(launchURL) else {
             HuskLog.log("jit", "FAIL: cannot open apple-magnifier:// -- TrollStore is not installed")
             return false
         }
-        
+
         HuskLog.log("jit", "opening apple-magnifier:// for bundle \(bundleID)")
         UIApplication.shared.open(launchURL)
         return true
@@ -285,12 +298,12 @@ enum JITBootstrap {
         // depend on the user having assigned a script to Husk in StikDebug's UI.
         if let script = loadScript(), let encoded = base64URLEncode(script) {
             HuskLog.log("jit", "loaded husk-jit.js (\(script.count) chars, "
-                             + "\(encoded.count) chars encoded); sending inline")
+                + "\(encoded.count) chars encoded); sending inline")
             url += "&script-data=\(encoded)"
         } else {
             HuskLog.log("jit", "WARNING: could not load husk-jit.js from the bundle. "
-                             + "Falling back to whatever script StikDebug has assigned "
-                             + "to this bundle id -- if none, JIT will not be enabled.")
+                + "Falling back to whatever script StikDebug has assigned "
+                + "to this bundle id -- if none, JIT will not be enabled.")
         }
 
         guard let launchURL = URL(string: url) else {
@@ -300,13 +313,13 @@ enum JITBootstrap {
 
         guard UIApplication.shared.canOpenURL(launchURL) else {
             HuskLog.log("jit", "FAIL: cannot open stikjit:// -- StikDebug is not "
-                             + "installed, or LSApplicationQueriesSchemes is missing "
-                             + "the 'stikjit' entry in Info.plist")
+                + "installed, or LSApplicationQueriesSchemes is missing "
+                + "the 'stikjit' entry in Info.plist")
             return false
         }
 
         HuskLog.log("jit", "opening stikjit:// for bundle \(bundleID); "
-                         + "Husk will be backgrounded and relaunched after attach")
+            + "Husk will be backgrounded and relaunched after attach")
         UIApplication.shared.open(launchURL)
         return true
     }
@@ -319,7 +332,9 @@ enum JITBootstrap {
             Bundle.main.path(forResource: "husk-jit", ofType: "js", inDirectory: "Resources"),
         ]
         for case let path? in candidates {
-            if let s = try? String(contentsOfFile: path, encoding: .utf8) { return s }
+            if let s = try? String(contentsOfFile: path, encoding: .utf8) {
+                return s
+            }
         }
         return nil
     }
@@ -327,7 +342,9 @@ enum JITBootstrap {
     /// StikDebug expects base64url (`-`/`_`, no padding) and percent-encodes it
     /// into the query string.
     private static func base64URLEncode(_ s: String) -> String? {
-        guard let data = s.data(using: .utf8) else { return nil }
+        guard let data = s.data(using: .utf8) else {
+            return nil
+        }
         let b64 = data.base64EncodedString()
             .replacingOccurrences(of: "+", with: "-")
             .replacingOccurrences(of: "/", with: "_")

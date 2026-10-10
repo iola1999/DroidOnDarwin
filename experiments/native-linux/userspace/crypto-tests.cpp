@@ -1,6 +1,8 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
+#include <dlfcn.h>
 #include <openssl/aead.h>
 #include <openssl/crypto.h>
+#include <openssl/hmac.h>
 #include <openssl/sha.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -17,9 +19,89 @@
         } \
     } while (0)
 
+template <typename T>
+static T crypto_symbol(void *library, const char *name)
+{
+    auto symbol = reinterpret_cast<T>(dlsym(library, name));
+    CHECK(symbol);
+    return symbol;
+}
+
 void nce_crypto_tests()
 {
-    CHECK(FIPS_mode() == 0 && BORINGSSL_self_test_all() == 1);
+    // SDK clients allocate these public contexts using the Android 16 ABI.
+    static_assert(sizeof(EVP_MD_CTX) == 32 && sizeof(HMAC_CTX) == 104 && sizeof(EVP_AEAD_CTX) == 584);
+    CHECK(FIPS_mode() == 0 && BORINGSSL_self_test() == 1);
+    struct {
+        HMAC_CTX context;
+        unsigned char guard[32];
+    } hmac;
+    memset(hmac.guard, 0xa5, sizeof(hmac.guard));
+    HMAC_CTX_init(&hmac.context);
+    unsigned char hmac_key[20], mac[32];
+    memset(hmac_key, 0x0b, sizeof(hmac_key));
+    // RFC 4231 test case 1, split across two streaming updates.
+    const unsigned char expected_mac[] = {
+        0xb0,
+        0x34,
+        0x4c,
+        0x61,
+        0xd8,
+        0xdb,
+        0x38,
+        0x53,
+        0x5c,
+        0xa8,
+        0xaf,
+        0xce,
+        0xaf,
+        0x0b,
+        0xf1,
+        0x2b,
+        0x88,
+        0x1d,
+        0xc2,
+        0x00,
+        0xc9,
+        0x83,
+        0x3d,
+        0xa7,
+        0x26,
+        0xe9,
+        0x37,
+        0x6c,
+        0x2e,
+        0x32,
+        0xcf,
+        0xf7,
+    };
+    unsigned mac_size = 0;
+    CHECK(HMAC_Init_ex(&hmac.context, hmac_key, sizeof(hmac_key), EVP_sha256(), nullptr) == 1);
+    CHECK(HMAC_Update(&hmac.context, reinterpret_cast<const unsigned char *>("Hi "), 3) == 1);
+    CHECK(HMAC_Update(&hmac.context, reinterpret_cast<const unsigned char *>("There"), 5) == 1);
+    CHECK(HMAC_Final(&hmac.context, mac, &mac_size) == 1);
+    HMAC_CTX_cleanup(&hmac.context);
+    CHECK(mac_size == sizeof(expected_mac) && !memcmp(mac, expected_mac, mac_size));
+    for (unsigned char byte : hmac.guard)
+        CHECK(byte == 0xa5);
+    puts("{\"test\":\"android_crypto_sdk_context_abi\",\"passed\":true,\"hmac_context_bytes\":104,\"aead_context_bytes\":584}");
+    // Cronet carries a separately versioned BoringSSL with the SDK context ABI.
+    void *cronet = dlopen("stable_cronet_libcrypto.so", RTLD_NOW | RTLD_LOCAL);
+    CHECK(cronet);
+    CHECK(crypto_symbol<decltype(&FIPS_mode)>(cronet, "FIPS_mode")() == 0);
+    CHECK(crypto_symbol<decltype(&BORINGSSL_self_test)>(cronet, "BORINGSSL_self_test")() == 1);
+    memset(hmac.guard, 0xa5, sizeof(hmac.guard));
+    crypto_symbol<decltype(&HMAC_CTX_init)>(cronet, "HMAC_CTX_init")(&hmac.context);
+    auto cronet_sha256 = crypto_symbol<decltype(&EVP_sha256)>(cronet, "EVP_sha256")();
+    CHECK(crypto_symbol<decltype(&HMAC_Init_ex)>(cronet, "HMAC_Init_ex")(&hmac.context, hmac_key, sizeof(hmac_key), cronet_sha256, nullptr) == 1);
+    CHECK(crypto_symbol<decltype(&HMAC_Update)>(cronet, "HMAC_Update")(&hmac.context, reinterpret_cast<const unsigned char *>("Hi There"), 8) == 1);
+    CHECK(crypto_symbol<decltype(&HMAC_Final)>(cronet, "HMAC_Final")(&hmac.context, mac, &mac_size) == 1);
+    crypto_symbol<decltype(&HMAC_CTX_cleanup)>(cronet, "HMAC_CTX_cleanup")(&hmac.context);
+    CHECK(mac_size == sizeof(expected_mac) && !memcmp(mac, expected_mac, mac_size));
+    for (unsigned char byte : hmac.guard)
+        CHECK(byte == 0xa5);
+    // BoringSSL TLS destructors can run when the process exits; retain the library.
+    puts("{\"test\":\"android_cronet_crypto\",\"passed\":true,\"fips\":false,\"hmac_context_bytes\":104}");
     const unsigned char expected_sha[] = {
         0xba,
         0x78,

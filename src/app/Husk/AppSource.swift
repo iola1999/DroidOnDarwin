@@ -5,7 +5,9 @@ struct AppSource: Identifiable, Equatable {
     let name: String
     let identifier: String
     var apps: [SourceApp]
-    var id: String { identifier }
+    var id: String {
+        identifier
+    }
 }
 
 struct SourceApp: Identifiable, Equatable {
@@ -15,7 +17,9 @@ struct SourceApp: Identifiable, Equatable {
     let downloadURL: String
     let iconURL: String
     let localizedDescription: String
-    var id: String { bundleIdentifier }
+    var id: String {
+        bundleIdentifier
+    }
 }
 
 // MARK: - F-Droid v1 Schema
@@ -24,7 +28,9 @@ private struct FDroidIndex: Codable {
     let apps: [FDroidApp]
     let packages: [String: [FDroidPackage]]
 }
-private struct FDroidRepo: Codable { let name: String; let address: String }
+private struct FDroidRepo: Codable { let name: String
+    let address: String
+}
 private struct FDroidApp: Codable {
     let packageName: String
     let name: String?
@@ -39,11 +45,15 @@ private struct FDroidLocalized: Codable {
     let description: String?
     let icon: String?
 }
-private struct FDroidPackage: Codable { let apkName: String; let versionName: String }
+private struct FDroidPackage: Codable { let apkName: String
+    let versionName: String
+}
 
 // MARK: - Husk Simple Schema
 private struct HuskSimpleSource: Codable {
-    let name: String; let identifier: String; let apps: [SourceAppCodable]
+    let name: String
+    let identifier: String
+    let apps: [SourceAppCodable]
 }
 private struct SourceAppCodable: Codable {
     let name, bundleIdentifier, version, downloadURL, iconURL, localizedDescription: String
@@ -59,7 +69,9 @@ final class SourceManager: ObservableObject {
     @Published var fetchErrors: [String: String] = [String: String]()
     @Published var downloadProgress: [String: Double] = [String: Double]()
 
-    var isLoading: Bool { !loadingSources.isEmpty }
+    var isLoading: Bool {
+        !loadingSources.isEmpty
+    }
 
     @Published var sourceURLs: [String] = [
         "https://f-droid.org/repo/index-v1.json"
@@ -93,7 +105,9 @@ final class SourceManager: ObservableObject {
 
     // Add a new source and fetch ONLY that one
     func addSource(urlString: String) async {
-        guard !sourceURLs.contains(urlString) else { return }
+        guard !sourceURLs.contains(urlString) else {
+            return
+        }
         sourceURLs.append(urlString)
         await fetchSource(urlString: urlString)
     }
@@ -118,13 +132,15 @@ final class SourceManager: ObservableObject {
                 let baseURL = fdroid.repo.address
                 var apps: [SourceApp] = []
                 for fApp in fdroid.apps {
-                    guard let pkgs = fdroid.packages[fApp.packageName], let latest = pkgs.first else { continue }
+                    guard let pkgs = fdroid.packages[fApp.packageName], let latest = pkgs.first else {
+                        continue
+                    }
                     let loc = fApp.localized?["en-US"] ?? fApp.localized?.values.first
                     let appName = fApp.name ?? loc?.name ?? fApp.packageName
                     let appSummary = fApp.summary ?? loc?.summary ?? fApp.description ?? loc?.description ?? ""
                     let appIcon = fApp.icon ?? loc?.icon
                     let iconURL = appIcon.map { "\(baseURL)/icons/\($0)" } ?? ""
-                    
+
                     apps.append(SourceApp(
                         name: appName,
                         bundleIdentifier: fApp.packageName,
@@ -174,7 +190,9 @@ final class SourceManager: ObservableObject {
     // MARK: - APK Download + Install
 
     func downloadAndInstall(app: SourceApp) {
-        guard let url = URL(string: app.downloadURL) else { return }
+        guard let url = URL(string: app.downloadURL) else {
+            return
+        }
         downloadProgress[app.bundleIdentifier] = 0.01
         HuskLog.log("sources", "Downloading \(app.name)")
 

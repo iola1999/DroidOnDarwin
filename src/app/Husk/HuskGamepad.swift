@@ -17,7 +17,9 @@ final class HuskGamepads: ObservableObject {
     /// The bits of the button mask (husk-tl-gamepad.h, TL_PAD_*).
     private enum Bit: UInt32 {
         case a = 0, b, x, y, l1, r1, thumbL, thumbR, start, select, mode, dpadUp, dpadDown, dpadLeft, dpadRight
-        var mask: UInt32 { 1 << rawValue }
+        var mask: UInt32 {
+            1 << rawValue
+        }
     }
     private static let slots = 4
 
@@ -30,7 +32,9 @@ final class HuskGamepads: ObservableObject {
 
     /// Begin watching. Safe to call again.
     func start() {
-        guard !started else { return }
+        guard !started else {
+            return
+        }
         started = true
         // Input while Husk is in the background is not wanted: the game is paused then too.
         GCController.shouldMonitorBackgroundEvents = false
@@ -53,16 +57,19 @@ final class HuskGamepads: ObservableObject {
             HuskLog.log("pad", "controller \(slot) disconnected")
         }
         for controller in present where slotOf[ObjectIdentifier(controller)] == nil {
-            guard let slot = (0..<Self.slots).first(where: { controllerIn[$0] == nil }) else { break }
+            guard let slot = (0 ..< Self.slots).first(where: { controllerIn[$0] == nil }) else {
+                break
+            }
             slotOf[ObjectIdentifier(controller)] = slot
             controllerIn[slot] = controller
             let name = controller.vendorName ?? controller.productCategory
             husk_gamepad_connect(Int32(slot), name)
             HuskLog.log("pad", "controller \(slot) connected: \(name) (\(controller.productCategory))")
         }
-        names = (0..<Self.slots).compactMap { controllerIn[$0]?.vendorName ?? controllerIn[$0]?.productCategory }
+        names = (0 ..< Self.slots).compactMap { controllerIn[$0]?.vendorName ?? controllerIn[$0]?.productCategory }
         if controllerIn.isEmpty {
-            timer?.invalidate(); timer = nil
+            timer?.invalidate()
+            timer = nil
         } else if timer == nil {
             // 120 times a second, on the main run loop in every mode so that scrolling elsewhere does not stop it.
             let t = Timer(timeInterval: 1.0 / 120.0, repeats: true) { [weak self] _ in
@@ -75,14 +82,30 @@ final class HuskGamepads: ObservableObject {
 
     private func poll() {
         for (slot, controller) in controllerIn {
-            guard let pad = controller.extendedGamepad else { continue }
+            guard let pad = controller.extendedGamepad else {
+                continue
+            }
             var buttons: UInt32 = 0
-            func set(_ bit: Bit, _ input: GCControllerButtonInput?) { if input?.isPressed == true { buttons |= bit.mask } }
-            set(.a, pad.buttonA); set(.b, pad.buttonB); set(.x, pad.buttonX); set(.y, pad.buttonY)
-            set(.l1, pad.leftShoulder); set(.r1, pad.rightShoulder)
-            set(.thumbL, pad.leftThumbstickButton); set(.thumbR, pad.rightThumbstickButton)
-            set(.start, pad.buttonMenu); set(.select, pad.buttonOptions); set(.mode, pad.buttonHome)
-            set(.dpadUp, pad.dpad.up); set(.dpadDown, pad.dpad.down); set(.dpadLeft, pad.dpad.left); set(.dpadRight, pad.dpad.right)
+            func set(_ bit: Bit, _ input: GCControllerButtonInput?) {
+                if input?.isPressed == true {
+                    buttons |= bit.mask
+                }
+            }
+            set(.a, pad.buttonA)
+            set(.b, pad.buttonB)
+            set(.x, pad.buttonX)
+            set(.y, pad.buttonY)
+            set(.l1, pad.leftShoulder)
+            set(.r1, pad.rightShoulder)
+            set(.thumbL, pad.leftThumbstickButton)
+            set(.thumbR, pad.rightThumbstickButton)
+            set(.start, pad.buttonMenu)
+            set(.select, pad.buttonOptions)
+            set(.mode, pad.buttonHome)
+            set(.dpadUp, pad.dpad.up)
+            set(.dpadDown, pad.dpad.down)
+            set(.dpadLeft, pad.dpad.left)
+            set(.dpadRight, pad.dpad.right)
             husk_gamepad_update(Int32(slot), buttons,
                                 pad.leftThumbstick.xAxis.value, pad.leftThumbstick.yAxis.value,
                                 pad.rightThumbstick.xAxis.value, pad.rightThumbstick.yAxis.value,

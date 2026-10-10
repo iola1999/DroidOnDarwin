@@ -1,12 +1,14 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 #include <dirent.h>
 #include <errno.h>
+#include <initializer_list>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/mount.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include "apex-modules.h"
 
 #define CHECK(c) \
     do { \
@@ -42,9 +44,40 @@ void nce_android_storage_prepare()
         uid_t uid;
         gid_t gid;
     } directories[] = {
+        {"/mnt", 0755, 0, 0},
+        {"/mnt/secure", 0700, 0, 0},
+        {"/mnt/secure/asec", 0700, 0, 0},
+        {"/mnt/asec", 0755, 0, 1000},
+        {"/mnt/obb", 0755, 0, 1000},
+        {"/mnt/media_rw", 0750, 0, 1077},
+        {"/mnt/user", 0755, 0, 0},
+        {"/mnt/user/0", 0755, 0, 0},
+        {"/mnt/user/0/self", 0755, 0, 0},
+        {"/mnt/user/0/emulated", 0755, 0, 0},
+        {"/mnt/user/0/emulated/0", 0755, 0, 0},
+        {"/mnt/pass_through", 0700, 0, 0},
+        {"/mnt/pass_through/0", 0710, 0, 1023},
+        {"/mnt/pass_through/0/self", 0710, 0, 1023},
+        {"/mnt/pass_through/0/emulated", 0710, 0, 1023},
+        {"/mnt/pass_through/0/emulated/0", 0710, 0, 1023},
+        {"/mnt/installer", 0755, 0, 0},
+        {"/mnt/androidwritable", 0755, 0, 0},
+        {"/mnt/expand", 0771, 1000, 1000},
+        {"/mnt/appfuse", 0711, 0, 0},
+        {"/mnt/runtime", 0700, 0, 0},
+        {"/mnt/runtime/default", 0755, 0, 0},
+        {"/mnt/runtime/default/self", 0755, 0, 0},
+        {"/mnt/runtime/read", 0755, 0, 0},
+        {"/mnt/runtime/read/self", 0755, 0, 0},
+        {"/mnt/runtime/write", 0755, 0, 0},
+        {"/mnt/runtime/write/self", 0755, 0, 0},
+        {"/mnt/runtime/full", 0755, 0, 0},
+        {"/mnt/runtime/full/self", 0755, 0, 0},
+        {"/storage", 0755, 0, 0},
         {"/data/misc", 01771, 1000, 9998},
         {"/data/misc/user", 0755, 0, 0},
         {"/data/misc/installd", 0700, 0, 0},
+        {"/data/misc/apexdata", 0711, 0, 0},
         {"/data/user", 0711, 1000, 1000},
         {"/data/user/0", 0771, 1000, 1000},
         {"/data/user_de", 0711, 1000, 1000},
@@ -57,6 +90,24 @@ void nce_android_storage_prepare()
     for (const auto &directory : directories) {
         CHECK(mkdir(directory.path, directory.mode) == 0 || errno == EEXIST);
         CHECK(chmod(directory.path, directory.mode) == 0 && chown(directory.path, directory.uid, directory.gid) == 0);
+    }
+    CHECK(symlink("/storage/self/primary", "/mnt/sdcard") == 0);
+    CHECK(symlink("/mnt/user/0/primary", "/mnt/runtime/default/self/primary") == 0);
+    // These slave mounts receive vold mounts without propagating app-specific views back.
+    CHECK(mount(nullptr, "/", nullptr, MS_SHARED | MS_REC, nullptr) == 0);
+    for (const char *path : {"/mnt/installer", "/mnt/androidwritable"}) {
+        CHECK(mount("/mnt/user", path, nullptr, MS_BIND | MS_REC, nullptr) == 0);
+        CHECK(mount(nullptr, path, nullptr, MS_SLAVE, nullptr) == 0);
+        CHECK(mount(nullptr, path, nullptr, MS_SHARED, nullptr) == 0);
+    }
+    CHECK(mount("/mnt/user/0", "/storage", nullptr, MS_BIND | MS_REC, nullptr) == 0);
+    CHECK(mount(nullptr, "/storage", nullptr, MS_SLAVE | MS_REC, nullptr) == 0);
+    // vold uses this inventory to prepare each module's CE/DE directories.
+    for (const auto &module : apex_modules) {
+        char path[256];
+        CHECK(snprintf(path, sizeof(path), "/data/misc/apexdata/%s", module.name) < (int)sizeof(path));
+        CHECK(mkdir(path, 0771) == 0 || errno == EEXIST);
+        CHECK(chmod(path, 0771) == 0 && chown(path, 0, 1000) == 0);
     }
 
     CHECK(chmod("/data/data", 0771) == 0 && chown("/data/data", 1000, 1000) == 0);
@@ -73,8 +124,13 @@ void nce_android_storage_prepare()
         gid_t group;
         mode_t mode;
     } extra[] = {
+        {"/data/media", 1023, 1023, 0550},
         {"/data/misc_ce", 1000, 9998, 0551},
         {"/data/misc_de", 1000, 9998, 0551},
+        {"/data/system_ce", 1000, 1000, 0550},
+        {"/data/system_de", 1000, 1000, 0550},
+        {"/data/vendor_ce", 0, 0, 0551},
+        {"/data/vendor_de", 0, 0, 0551},
         {"/data/storage_area", 0, 0, 0551},
         {"/data_mirror", 0, 1000, 0700},
     };

@@ -55,14 +55,18 @@ struct ContentView: View {
                                    started: started && runner.isRunning)
                     }
                 }
-                    .tabItem { Label("Library", systemImage: "square.grid.2x2.fill") }
-                    .tag(HuskTab.library)
+                .tabItem { Label("Library", systemImage: "square.grid.2x2.fill") }
+                .tag(HuskTab.library)
 
                 Group {
-                    if showSetup { SetupView(showLogs: $showLogs) } else { FilesTab() }
+                    if showSetup {
+                        SetupView(showLogs: $showLogs)
+                    } else {
+                        FilesTab()
+                    }
                 }
-                    .tabItem { Label("Files", systemImage: "folder.fill") }
-                    .tag(HuskTab.files)
+                .tabItem { Label("Files", systemImage: "folder.fill") }
+                .tag(HuskTab.files)
 
                 SettingsTab()
                     .tabItem { Label("Settings", systemImage: "gearshape.fill") }
@@ -84,7 +88,9 @@ struct ContentView: View {
                 .task(id: toast.id) {
                     try? await Task.sleep(nanoseconds: 4_500_000_000)
                     withAnimation(.snappy) {
-                        if host.toast?.id == toast.id { host.toast = nil }
+                        if host.toast?.id == toast.id {
+                            host.toast = nil
+                        }
                     }
                 }
             }
@@ -104,7 +110,9 @@ struct ContentView: View {
                     .transition(.opacity)
                     .zIndex(3)
                     .onChange(of: host.isReady) { ready in
-                        if ready { withAnimation(.easeInOut(duration: 0.45)) { booting = false } }
+                        if ready {
+                            withAnimation(.easeInOut(duration: 0.45)) { booting = false }
+                        }
                     }
             }
 
@@ -133,10 +141,14 @@ struct ContentView: View {
         // Asking rather than downloading. Two gigabytes over someone's cellular
         // connection is not a decision to make on their behalf.
         .alert(guest.update.title, isPresented: Binding(
-                get: { guest.update.isSomething },
-                set: { if !$0 { guest.dismissUpdate() } })) {
-            Button("Download") { guest.applyUpdate() }
-            Button("Not now", role: .cancel) { guest.dismissUpdate() }
+            get: { guest.update.isSomething },
+            set: {
+                if !$0 {
+                    guest.dismissUpdate()
+                }
+            })) {
+                Button("Download") { guest.applyUpdate() }
+                Button("Not now", role: .cancel) { guest.dismissUpdate() }
         } message: {
             Text(guest.update.detail)
         }
@@ -148,7 +160,9 @@ struct ContentView: View {
             HuskLog.log("lifecycle", "scene=\(phase) qemuRunning=\(runner.isRunning)")
             // StikDebug relaunches Husk after attaching, so returning to the
             // foreground is the moment worth re-checking, not first launch.
-            if phase == .active { evaluate() }
+            if phase == .active {
+                evaluate()
+            }
         }
     }
 
@@ -182,7 +196,9 @@ struct ContentView: View {
         // who answered yes has made the decision -- continuing to ignore it
         // just means every launch begins by pressing Start.
         guard Onboarding.autoStart, !started, guest.state == .ready,
-              !showOnboarding else { return }
+              !showOnboarding else {
+            return
+        }
         HuskLog.log("ui", "starting Android on launch")
         booting = true
         start()
@@ -217,8 +233,12 @@ struct ContentView: View {
     }
 
     private func start() {
-        guard !started else { return }
-        guard JITBootstrap.isDebuggerAttached else { return }
+        guard !started else {
+            return
+        }
+        guard JITBootstrap.isDebuggerAttached else {
+            return
+        }
         HuskLog.log("ui", "CS_DEBUGGED set; starting QEMU")
         // Take the JIT region at the last moment before QEMU, as well as before
         // the download. Whichever comes first wins; the second call is a no-op.
@@ -243,11 +263,11 @@ struct ContentView: View {
         if !JITBootstrap.prewarm(), !JITBootstrap.isLive {
             guard JITBootstrap.mapJITWorks else {
                 HuskLog.log("jit", "refusing to start QEMU: no trap servicer is "
-                                 + "answering and MAP_JIT does not execute here")
+                    + "answering and MAP_JIT does not execute here")
                 return
             }
             HuskLog.log("jit", "no dual mapping, but MAP_JIT executes -- letting "
-                             + "QEMU map its own buffer")
+                + "QEMU map its own buffer")
         }
         started = true
         QemuRunner.shared.start()
@@ -259,7 +279,9 @@ struct ContentView: View {
         AndroidHost.shared.waitForReady()
         bridge.startWatching()
         GuestBridge.shared.startHealthWatch()
-        if QemuRunner.soundEnabled { HuskAudio.shared.start() }
+        if QemuRunner.soundEnabled {
+            HuskAudio.shared.start()
+        }
     }
 }
 
@@ -357,11 +379,11 @@ struct GuestScreenView: View {
                                      active: showControls) { showControls = true }
 
                         GuestControl(systemImage: keyboard
-                                     ? "keyboard.chevron.compact.down" : "keyboard",
-                                     active: keyboard) {
-                            keyboard.toggle()
-                            HuskLog.log("kbd", "keyboard \(keyboard ? "shown" : "hidden")")
-                        }
+                            ? "keyboard.chevron.compact.down" : "keyboard",
+                            active: keyboard) {
+                                keyboard.toggle()
+                                HuskLog.log("kbd", "keyboard \(keyboard ? "shown" : "hidden")")
+                            }
 
                         Menu {
                             Button { onBack() } label: {
@@ -512,21 +534,25 @@ struct SetupView: View {
             case .downloading(let p, let received, let total):
                 VStack(spacing: 10) {
                     Text(guest.hasShippedSnapshot || GuestImage.shared.isFetchingSnapshot
-                         ? "Downloading pre-booted Android"
-                         : "Downloading Android runtime").font(.headline)
+                        ? "Downloading pre-booted Android"
+                        : "Downloading Android runtime").font(.headline)
                     ProgressView(value: p).padding(.horizontal, 50)
                     Text("\(fmt(received)) of \(total > 0 ? fmt(total) : "…")")
                         .font(.caption.monospacedDigit()).foregroundStyle(.secondary)
                     Button("Cancel") { guest.cancel() }.font(.footnote)
                 }
             case .installing:
-                VStack(spacing: 10) { ProgressView(); Text("Installing…").font(.callout) }
+                VStack(spacing: 10) { ProgressView()
+                    Text("Installing…").font(.callout)
+                }
             case .failed(let message):
                 VStack(spacing: 10) {
                     Text("Something went wrong").font(.headline).foregroundStyle(.red)
                     Text(message).font(.caption).foregroundStyle(.secondary)
                         .multilineTextAlignment(.center).padding(.horizontal, 34)
-                    Button("Try again") { JITBootstrap.prewarm(); guest.download() }.buttonStyle(.borderedProminent)
+                    Button("Try again") { JITBootstrap.prewarm()
+                        guest.download()
+                    }.buttonStyle(.borderedProminent)
                 }
             case .missing:
                 VStack(spacing: 12) {
@@ -540,7 +566,7 @@ struct SetupView: View {
                         JITBootstrap.prewarm()
                         guest.download()
                     }
-                        .buttonStyle(.borderedProminent)
+                    .buttonStyle(.borderedProminent)
                 }
             case .ready:
                 // Unreachable: SetupView is mounted only while there is no
@@ -576,7 +602,9 @@ struct AppIcon: View {
 
     /// Proportional, so a large icon is not rounded like a small one. This is
     /// close to the ratio iOS uses for a home screen icon.
-    private var corner: CGFloat { size * 0.225 }
+    private var corner: CGFloat {
+        size * 0.225
+    }
 
     var body: some View {
         Group {
@@ -670,9 +698,15 @@ struct LogView: View {
         if line.contains("FAIL") || line.contains("FATAL") || line.contains("error") {
             return .red
         }
-        if line.contains("[husk-jit]") { return .green }
-        if line.contains("[husk-dpy]") { return .cyan }
-        if line.contains("[guest]")    { return .yellow }
+        if line.contains("[husk-jit]") {
+            return .green
+        }
+        if line.contains("[husk-dpy]") {
+            return .cyan
+        }
+        if line.contains("[guest]") {
+            return .yellow
+        }
         return .primary
     }
 }
@@ -732,7 +766,7 @@ struct ControlsSheet: View {
                 }
 
                 Text("Touch always works. A gamepad and a pointer are not wired "
-                   + "through to Android yet.")
+                    + "through to Android yet.")
                     .font(.system(size: 12))
                     .foregroundStyle(Theme.textDim)
                     .multilineTextAlignment(.center)

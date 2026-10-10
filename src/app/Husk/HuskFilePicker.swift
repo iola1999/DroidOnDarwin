@@ -15,7 +15,9 @@ enum HuskFilePicker {
 
     static func present(types: [UTType] = [.item], multiple: Bool = true,
                         onPick: @escaping ([URL]) -> Void, onFail: ((String) -> Void)? = nil) {
-        guard live == nil else { return }
+        guard live == nil else {
+            return
+        }
         let picker = UIDocumentPickerViewController(forOpeningContentTypes: types, asCopy: false)
         picker.allowsMultipleSelection = multiple
         let coordinator = Coordinator(onPick: onPick)
@@ -34,18 +36,24 @@ enum HuskFilePicker {
         let scenes = UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }
         let window = scenes.flatMap { $0.windows }.first { $0.isKeyWindow } ?? scenes.flatMap { $0.windows }.first
         var top = window?.rootViewController
-        while let next = top?.presentedViewController, !next.isBeingDismissed { top = next }
+        while let next = top?.presentedViewController, !next.isBeingDismissed {
+            top = next
+        }
         return top
     }
 
     private final class Coordinator: NSObject, UIDocumentPickerDelegate {
         let onPick: ([URL]) -> Void
-        init(onPick: @escaping ([URL]) -> Void) { self.onPick = onPick }
+        init(onPick: @escaping ([URL]) -> Void) {
+            self.onPick = onPick
+        }
 
         func documentPicker(_ controller: UIDocumentPickerViewController, didPickDocumentsAt urls: [URL]) {
             HuskLog.log("ui", "file picker: \(urls.count) picked: " + urls.map(\.lastPathComponent).joined(separator: ", "))
             HuskFilePicker.live = nil
-            if !urls.isEmpty { onPick(urls) }
+            if !urls.isEmpty {
+                onPick(urls)
+            }
         }
 
         func documentPickerWasCancelled(_ controller: UIDocumentPickerViewController) {
@@ -60,7 +68,9 @@ extension View {
     func huskFilePicker(isPresented: Binding<Bool>, types: [UTType] = [.item], multiple: Bool = true,
                         onPick: @escaping ([URL]) -> Void) -> some View {
         onChange(of: isPresented.wrappedValue) { shown in
-            guard shown else { return }
+            guard shown else {
+                return
+            }
             isPresented.wrappedValue = false
             HuskFilePicker.present(types: types, multiple: multiple, onPick: onPick)
         }

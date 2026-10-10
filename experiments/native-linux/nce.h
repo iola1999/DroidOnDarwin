@@ -12,7 +12,7 @@ struct NceState {
     uint32_t instruction, padding;
     void (*syscall)(NceState *);
     void *opaque;
-    uint64_t done, tls, calls, tls_accesses;
+    uint64_t done, tls, calls;
     NceState *self;
     NceState *(*event)(NceState *);
     /* Access a guest operand. On failure, install the guest fault continuation. */

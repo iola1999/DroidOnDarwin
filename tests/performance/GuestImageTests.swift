@@ -5,9 +5,13 @@ final class FileManager: Foundation.FileManager, @unchecked Sendable {
     static let fixture = Foundation.FileManager.default.temporaryDirectory
         .appendingPathComponent("husk-guest-tests-\(UUID().uuidString)")
     private static let instance = FileManager()
-    override class var `default`: Foundation.FileManager { instance }
+    override class var `default`: Foundation.FileManager {
+        instance
+    }
     override func urls(for directory: SearchPathDirectory, in domainMask: SearchPathDomainMask) -> [URL] {
-        if directory == .documentDirectory { return [Self.fixture] }
+        if directory == .documentDirectory {
+            return [Self.fixture]
+        }
         return super.urls(for: directory, in: domainMask)
     }
 }
@@ -27,7 +31,9 @@ struct GuestImageTests {
             try Data(text.utf8).write(to: root.appendingPathComponent(name))
         }
         func require(_ condition: @autoclosure () -> Bool, _ message: String) {
-            if !condition() { fatalError(message) }
+            if !condition() {
+                fatalError(message)
+            }
         }
         let guest = GuestImage()
         let disk = root.appendingPathComponent("lineage-vda.qcow2")
@@ -68,7 +74,9 @@ struct GuestImageTests {
         require(fm.fileExists(atPath: guest.diskPath), "invalid imported image remains available for recovery")
         try fm.removeItem(at: disk)
         guest.refresh()
-        if case .failed = guest.state {} else { fatalError("missing custom image must report an error") }
+        if case .failed = guest.state {} else {
+            fatalError("missing custom image must report an error")
+        }
 
         // 同一套代码继续保留官方镜像原有的版本检查行为。
         try fm.removeItem(at: root.appendingPathComponent("husk-custom-guest"))
