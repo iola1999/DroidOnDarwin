@@ -1,0 +1,406 @@
+/* SPDX-License-Identifier: GPL-2.0-or-later */
+/*
+ * DroidOnDarwin -- iOS dual-mapped executable memory. See ios-jit.h.
+ * Adapted from Leviidev/Husk src/ios-jit/husk-ios-jit.c (GPL-2.0-or-later).
+ *
+ * Derived from AetherPS4-iOS's src/core/ios/ios_jit_allocator.cpp
+ * (shadPS4 Emulator Project, GPL-2.0-or-later), ported C++ -> C.
+ */
+
+#include "ios-jit.h"
+
+#ifdef __APPLE__
+#include <TargetConditionals.h>
+#endif
+
+#if defined(__APPLE__) && TARGET_OS_IPHONE
+
+#include <errno.h>
+#include <mach/mach.h>
+#include <mach/vm_map.h> /* vm_remap/vm_protect: mach_vm.h is absent from the iOS SDK */
+#include <os/log.h>
+#include <os/proc.h>
+#include <signal.h>
+#include <stdatomic.h>
+#include <stdio.h>
+#include <string.h>
+#include <sys/time.h>
+#include <mach/task.h>
+#include <mach/task_info.h>
+#include <libkern/OSCacheControl.h>
+#include <sys/ucontext.h> /* not <ucontext.h>: that one #errors without _XOPEN_SOURCE */
+#include <unistd.h>
+#include <fcntl.h>
+
+/*
+ * Provide pipe2 for iOS systems where libc does not export it.
+ */
+__attribute__((visibility("default"))) int pipe2(int fds[2], int flags)
+{
+    if (!fds) {
+        errno = EFAULT;
+        return -1;
+    }
+    if (pipe(fds) < 0) {
+        return -1;
+    }
+    if (flags & O_CLOEXEC) {
+        if (fcntl(fds[0], F_SETFD, FD_CLOEXEC) < 0 ||
+            fcntl(fds[1], F_SETFD, FD_CLOEXEC) < 0) {
+            int err = errno;
+            close(fds[0]);
+            close(fds[1]);
+            errno = err;
+            return -1;
+        }
+    }
+    if (flags & O_NONBLOCK) {
+        int f0 = fcntl(fds[0], F_GETFL);
+        int f1 = fcntl(fds[1], F_GETFL);
+        if (f0 < 0 || f1 < 0 ||
+            fcntl(fds[0], F_SETFL, f0 | O_NONBLOCK) < 0 ||
+            fcntl(fds[1], F_SETFL, f1 | O_NONBLOCK) < 0) {
+            int err = errno;
+            close(fds[0]);
+            close(fds[1]);
+            errno = err;
+            return -1;
+        }
+    }
+    return 0;
+}
+
+/* Maximum verbosity by default: this path is nearly impossible to debug after the
+ * fact on device, and every line here is printed at most a handful of times per
+ * session. Goes to os_log (visible in Console.app) and stderr both. */
+static double dod_now_ms(void)
+{
+    static double base = 0;
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    double t = tv.tv_sec * 1000.0 + tv.tv_usec / 1000.0;
+    if (base == 0) {
+        base = t;
+    }
+    return t - base;
+}
+
+#define DOD_LOG(fmt, ...) \
+    do { \
+        os_log(OS_LOG_DEFAULT, "[dod-jit] " fmt, ##__VA_ARGS__); \
+        fprintf(stderr, "[%9.2fms][dod-jit] " fmt "\n", \
+                dod_now_ms(), ##__VA_ARGS__); \
+        fflush(stderr); \
+    } while (0)
+
+/* ------------------------------------------------------------------ symbols */
+/* BreakpointJIT-compatible trap protocol; implemented locally in jit-trap.S. */
+extern void *dod_brk_get_jit_mapping(void *addr, size_t len);
+extern void dod_brk_jit_detach(void);
+extern uint64_t dod_brk_probe(void);
+
+/*
+ * StikDebug answers brk #0x69 by writing a constant into x0. Two encodings are
+ * seen in the wild:
+ *
+ *   0xE0000069  -- the value as written in the script
+ *   0x690000E0  -- that value byte-reversed, which is what universal.js actually
+ *                  produces: it sends the gdb-remote packet `P0=E0000069`, but P
+ *                  takes the register in TARGET byte order, and ARM64 is little
+ *                  endian. It also supplies only 4 bytes for an 8-byte register,
+ *                  so the upper half keeps whatever poison was there (0xcccccccc
+ *                  observed on iPhone18,1 / iOS 27).
+ *
+ * Matching on an exact value is therefore the wrong test. What actually
+ * distinguishes "serviced" from "not serviced" is far simpler: when StikDebug is
+ * absent, our own SIGTRAP handler steps over the brk and sets x0 to exactly 0.
+ * So any non-zero answer means something serviced the trap.
+ */
+#define DOD_PROBE_MAGIC 0xE0000069ull
+#define DOD_PROBE_MAGIC_LE 0x690000E0ull
+
+static atomic_uint_least64_t g_alloc_counter;
+
+/* ------------------------------------------------------- unserviced-trap guard */
+/*
+ * Set for exactly the duration of the BreakGetJITMapping call. If StikDebug is
+ * not there to service the brk, the trap is a real SIGTRAP that would otherwise
+ * kill the process outright -- there is no "call returned an error" to recover
+ * from. The handler below turns that into a NULL return, which the allocation
+ * path already handles.
+ */
+static _Thread_local bool g_expecting_jit_trap;
+
+static struct sigaction g_prev_sigtrap;
+static struct sigaction g_prev_sigbus;
+
+static void dod_trap_handler(int sig, siginfo_t *info, void *ctx)
+{
+    (void)info;
+    if (g_expecting_jit_trap && ctx != NULL) {
+        ucontext_t *uc = (ucontext_t *)ctx;
+        /* Step over the brk and report failure in x0, exactly as the
+         * StikDebug-serviced path would have written a result there. */
+        uc->uc_mcontext->__ss.__pc += 4;
+        uc->uc_mcontext->__ss.__x[0] = 0;
+        return;
+    }
+
+    /* Not ours: restore and re-raise so a genuine breakpoint or bus error is
+     * not silently swallowed. */
+    struct sigaction *prev = (sig == SIGTRAP) ? &g_prev_sigtrap : &g_prev_sigbus;
+    sigaction(sig, prev, NULL);
+    raise(sig);
+}
+
+void dod_ios_jit_install_trap_handler(void)
+{
+    struct sigaction sa;
+    memset(&sa, 0, sizeof(sa));
+    sa.sa_flags = SA_SIGINFO;
+    sa.sa_sigaction = dod_trap_handler;
+    sigemptyset(&sa.sa_mask);
+
+    if (sigaction(SIGTRAP, &sa, &g_prev_sigtrap) != 0) {
+        DOD_LOG("sigaction(SIGTRAP) failed: %s", strerror(errno));
+    }
+    if (sigaction(SIGBUS, &sa, &g_prev_sigbus) != 0) {
+        DOD_LOG("sigaction(SIGBUS) failed: %s", strerror(errno));
+    }
+    DOD_LOG("trap guard installed (SIGTRAP, SIGBUS)");
+}
+
+/* ---------------------------------------------------------------- footprint */
+/*
+ * phys_footprint is the figure jetsam judges us on, so it is the one worth
+ * logging around every large allocation. An iOS app with the
+ * increased-memory-limit entitlement still dies silently when this crosses the
+ * device's cap, and a silent kill with no crash log is otherwise very hard to
+ * tell apart from any other sudden death.
+ */
+static void dod_ios_jit_log_footprint(const char *tag)
+{
+    task_vm_info_data_t info;
+    mach_msg_type_number_t count = TASK_VM_INFO_COUNT;
+    if (task_info(mach_task_self(), TASK_VM_INFO, (task_info_t)&info, &count) != KERN_SUCCESS) {
+        DOD_LOG("footprint[%s]: task_info failed", tag ? tag : "");
+        return;
+    }
+    /*
+     * os_proc_available_memory() is the number that actually matters: how much
+     * more this process may allocate before jetsam kills it. phys_footprint alone
+     * says how much we have used but not how close to the edge that is, and the
+     * limit varies by device and by whether the increased-memory-limit entitlement
+     * is honoured. A jetsam kill is a SIGKILL -- no handler runs and the log simply
+     * stops -- so the only way to see it coming is to watch this fall.
+     */
+    size_t avail = os_proc_available_memory();
+
+    DOD_LOG(
+        "footprint[%s]: phys=%.1f MiB  resident=%.1f MiB  "
+        "available-before-jetsam=%.1f MiB",
+        tag ? tag : "",
+        info.phys_footprint / (1024.0 * 1024.0),
+        info.resident_size / (1024.0 * 1024.0),
+        avail / (1024.0 * 1024.0));
+}
+
+/* Verify that writes through RW are visible through RX before detaching. */
+static bool dod_jit_selftest(const JITDualMapping *m)
+{
+    /* movz w0, #42  ;  ret */
+    static const uint32_t kCode[2] = {0x52800540u, 0xD65F03C0u};
+
+    if (m->rw_addr == NULL || m->rx_addr == NULL) {
+        return false;
+    }
+
+    DOD_LOG("selftest: writing %zu bytes through RW alias %p", sizeof(kCode),
+            (void *)m->rw_addr);
+    memcpy(m->rw_addr, kCode, sizeof(kCode));
+
+    /* Flush the write through to the RX view before executing it. */
+    sys_icache_invalidate(m->rx_addr, sizeof(kCode));
+    DOD_LOG("selftest: icache invalidated on RX alias %p", (void *)m->rx_addr);
+
+    /* Read back through RX to confirm the two aliases really share pages. */
+    uint32_t readback[2];
+    memcpy(readback, m->rx_addr, sizeof(readback));
+    if (readback[0] != kCode[0] || readback[1] != kCode[1]) {
+        DOD_LOG(
+            "selftest: FAIL -- RX alias does not reflect RW writes "
+            "(read 0x%08x 0x%08x, expected 0x%08x 0x%08x). The two mappings "
+            "are not backed by the same pages.",
+            readback[0], readback[1], kCode[0], kCode[1]);
+        return false;
+    }
+    DOD_LOG("selftest: RX alias reflects RW writes (0x%08x 0x%08x) -- aliasing OK",
+            readback[0], readback[1]);
+
+    /* The caller validates execution with a signal guard after detaching. */
+    return true;
+}
+
+/* ------------------------------------------------------------- allocation */
+
+static void dod_ios_jit_release(JITDualMapping *mapping);
+
+static JITDualMapping dod_ios_jit_allocate_real(void *requested, size_t bytes)
+{
+    JITDualMapping region = {NULL, NULL, 0};
+    uint64_t n = atomic_fetch_add(&g_alloc_counter, 1) + 1;
+
+    /* Cheap attach probe: brk #0x69 is answered with a constant when StikDebug
+     * is live, and swallowed by our trap handler as 0 when it is not. Doing this
+     * first turns "no debugger" into a clean diagnostic instead of three slow
+     * retries of the real request. */
+    g_expecting_jit_trap = true;
+    uint64_t probe = dod_brk_probe();
+    g_expecting_jit_trap = false;
+    if (probe == 0) {
+        DOD_LOG(
+            "#%llu: StikDebug is NOT servicing traps -- probe returned 0, which "
+            "is our own SIGTRAP handler stepping over an unanswered brk. "
+            "Cannot allocate %zu bytes.",
+            (unsigned long long)n, bytes);
+        return region;
+    }
+
+    uint32_t probe_lo = (uint32_t)probe;
+    if (probe_lo == (uint32_t)DOD_PROBE_MAGIC ||
+        probe_lo == (uint32_t)DOD_PROBE_MAGIC_LE) {
+        DOD_LOG("#%llu: StikDebug attach probe OK (0x%llx)",
+                (unsigned long long)n, (unsigned long long)probe);
+    } else {
+        /* Serviced, but by something that answers differently. Proceed -- the
+         * allocation itself is the real test -- and record the value so an
+         * unfamiliar StikDebug build is identifiable from the log alone. */
+        DOD_LOG(
+            "#%llu: trap was serviced but the answer is unrecognised (0x%llx). "
+            "Continuing anyway; the allocation below is the real test.",
+            (unsigned long long)n, (unsigned long long)probe);
+    }
+
+    /* A caller-provided RX range is prepared in place by the same script.
+     * Keeping adjacent data outside that range allows later data remapping. */
+    enum { kMaxAttempts = 3 };
+    void *rx = NULL;
+    for (int attempt = 1; attempt <= kMaxAttempts; attempt++) {
+        DOD_LOG(
+            "#%llu: requesting execute-capable region, size=%zu (%.1f MiB), "
+            "attempt %d/%d",
+            (unsigned long long)n, bytes, (double)bytes / (1024.0 * 1024.0),
+            attempt, kMaxAttempts);
+
+        g_expecting_jit_trap = true;
+        rx = dod_brk_get_jit_mapping(requested, bytes);
+        g_expecting_jit_trap = false;
+
+        DOD_LOG("#%llu: BreakGetJITMapping returned %p", (unsigned long long)n, rx);
+        if (rx != NULL) {
+            break;
+        }
+        if (attempt < kMaxAttempts) {
+            usleep(50 * 1000);
+        }
+    }
+
+    if (rx == NULL || (requested && rx != requested)) {
+        DOD_LOG(
+            "#%llu: FAILED after %d attempts. StikDebug must be attached with "
+            "the Universal JIT script BEFORE the guest is started.",
+            (unsigned long long)n, kMaxAttempts);
+        return region;
+    }
+
+    /* Writable alias of the same physical pages. Purely local -- no debugger
+     * involvement, and therefore still available after detach. */
+    vm_address_t rw = 0;
+    vm_prot_t cur_prot = VM_PROT_NONE, max_prot = VM_PROT_NONE;
+    kern_return_t kr = vm_remap(mach_task_self(), &rw, (vm_size_t)bytes,
+                                /*mask=*/0, VM_FLAGS_ANYWHERE,
+                                mach_task_self(), (vm_address_t)rx,
+                                /*copy=*/FALSE, &cur_prot, &max_prot,
+                                VM_INHERIT_NONE);
+    if (kr != KERN_SUCCESS) {
+        DOD_LOG("#%llu: vm_remap failed for rx=%p size=%zu: %d (%s)",
+                (unsigned long long)n, rx, bytes, (int)kr, mach_error_string(kr));
+        return region;
+    }
+
+    kr = vm_protect(mach_task_self(), rw, (vm_size_t)bytes, /*set_maximum=*/FALSE,
+                    VM_PROT_READ | VM_PROT_WRITE);
+    if (kr != KERN_SUCCESS) {
+        DOD_LOG("#%llu: vm_protect(RW) failed for rw=%p size=%zu: %d (%s)",
+                (unsigned long long)n, (void *)rw, bytes, (int)kr,
+                mach_error_string(kr));
+        vm_deallocate(mach_task_self(), rw, (vm_size_t)bytes);
+        return region;
+    }
+
+    region.rw_addr = (uint8_t *)rw;
+    region.rx_addr = (uint8_t *)rx;
+    region.size = bytes;
+
+    DOD_LOG("#%llu: dual mapping established: rw=%p rx=%p size=%zu diff=%+lld",
+            (unsigned long long)n, (void *)region.rw_addr, (void *)region.rx_addr,
+            region.size, (long long)(region.rx_addr - region.rw_addr));
+    dod_ios_jit_log_footprint("after-jit-alloc");
+
+    if (!dod_jit_selftest(&region)) {
+        DOD_LOG(
+            "#%llu: SELFTEST FAILED -- the region is not usable as JIT memory. "
+            "RX alias did not reflect writes through RW.",
+            (unsigned long long)n);
+        dod_ios_jit_release(&region);
+        return region;
+    }
+
+    return region;
+}
+
+static void dod_ios_jit_release(JITDualMapping *m)
+{
+    if (m == NULL) {
+        return;
+    }
+    if (m->rw_addr != NULL) {
+        vm_deallocate(mach_task_self(), (vm_address_t)m->rw_addr, (vm_size_t)m->size);
+        m->rw_addr = NULL;
+    }
+    if (m->rx_addr != NULL) {
+        vm_deallocate(mach_task_self(), (vm_address_t)m->rx_addr, (vm_size_t)m->size);
+        m->rx_addr = NULL;
+    }
+    m->size = 0;
+}
+
+void dod_ios_jit_detach(void)
+{
+    DOD_LOG("detaching debugger; RX mappings persist after this");
+    g_expecting_jit_trap = true;
+    dod_brk_jit_detach();
+    g_expecting_jit_trap = false;
+    DOD_LOG("debugger detached");
+}
+
+#else /* !iOS: keep the symbols so host builds and tests link */
+
+void dod_ios_jit_install_trap_handler(void) {}
+static JITDualMapping dod_ios_jit_allocate_real(void *requested, size_t bytes)
+{
+    (void)requested;
+    (void)bytes;
+    JITDualMapping m = {NULL, NULL, 0};
+    return m;
+}
+void dod_ios_jit_detach(void) {}
+
+#endif
+
+JITDualMapping dod_ios_jit_prepare_range(void *address, size_t bytes)
+{
+    if (!address || !bytes || ((uintptr_t)address % 16384) || (bytes % 16384))
+        return (JITDualMapping){NULL, NULL, 0};
+    return dod_ios_jit_allocate_real(address, bytes);
+}

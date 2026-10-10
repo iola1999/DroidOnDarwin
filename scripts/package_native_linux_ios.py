@@ -15,7 +15,7 @@ ROOT = Path(__file__).resolve().parents[1]
 EXP = ROOT / 'experiments/native-linux'
 INPUT = ROOT / 'work/native-linux-nce/processes'
 OUT = ROOT / 'work/native-linux-nce/ios'
-REVISION = 'N4-D3'
+REVISION = '0.14.0'
 
 
 def run(args, timeout=600, **kwargs):
@@ -108,24 +108,24 @@ def main():
     write_runtime(OUT)
     plist(OUT / 'ResourceSizes.plist', {name: (INPUT / name).stat().st_size for name in ('lkl-image.bin', 'system.img', 'android-data-seed.img')})
     build_id = REVISION + '-iOS-' + time.strftime('%Y%m%d-%H%M%S')
-    info = plistlib.loads((ROOT / 'src/app/Husk/Info.plist').read_bytes())
-    for key in ['CFBundleIcons', 'CFBundleIcons~ipad', 'HuskPerformanceBuild']:
+    info = plistlib.loads((ROOT / 'src/app/Info.plist').read_bytes())
+    for key in ['CFBundleIcons', 'CFBundleIcons~ipad', 'DroidOnDarwinPerformanceBuild']:
         info.pop(key, None)
-    info.update(CFBundleDisplayName='Husk NCE', NCEBuildID=build_id,
+    info.update(CFBundleDisplayName='DroidOnDarwin', DroidOnDarwinBuildID=build_id,
                 UILaunchScreen={},
                 UISupportedInterfaceOrientations=['UIInterfaceOrientationPortrait',
                     'UIInterfaceOrientationPortraitUpsideDown',
                     'UIInterfaceOrientationLandscapeLeft', 'UIInterfaceOrientationLandscapeRight'],
-                CFBundleShortVersionString='0.13.0', CFBundleVersion='82')
-    info['UTImportedTypeDeclarations'] = [{'UTTypeIdentifier': 'app.husk.image', 'UTTypeConformsTo': ['com.apple.package'], 'UTTypeDescription': 'Husk Image', 'UTTypeTagSpecification': {'public.filename-extension': ['huskimage']}}]
+                CFBundleShortVersionString='0.14.0', CFBundleVersion='83')
+    info['UTExportedTypeDeclarations'] = [{'UTTypeIdentifier': 'app.droidondarwin.image', 'UTTypeConformsTo': ['com.apple.package'], 'UTTypeDescription': 'DroidOnDarwin Image', 'UTTypeTagSpecification': {'public.filename-extension': ['droidimage']}}]
     plist(OUT / 'Info.plist', info)
-    helper_info = plistlib.loads((ROOT / 'src/app/HuskJITHelper/Info.plist').read_bytes())
+    helper_info = plistlib.loads((ROOT / 'src/app/JITHelper/Info.plist').read_bytes())
     for key in ['CFBundleShortVersionString', 'CFBundleVersion']:
         helper_info[key] = info[key]
     plist(OUT / 'Helper-Info.plist', helper_info)
     # Deployment entitlements are supplied by iLoader. This ad-hoc signature is
     # for archive integrity; get-task-allow is needed by the in-app JIT helper.
-    plist(OUT / 'Husk.entitlements', {'get-task-allow': True})
+    plist(OUT / 'DroidOnDarwin.entitlements', {'get-task-allow': True})
     sources = [{'path': str(EXP / name)} for name in
                ['lkl-main.c', 'lkl-host.c', 'lkl-process-host.c', 'programs.c', 'memory.c', 'execute-check.c', 'compute.c', 'input.c', 'session.c', 'nce.c', 'entry.S',
                 'ios/Bridge.c', 'ios/NativeLinuxApp.swift', 'ios/Display.swift', 'ios/JITSettingsView.swift', 'app/DeviceStore.mm', 'macos/Storage.mm', 'graphics/host-graphics.cpp']]
@@ -133,65 +133,46 @@ def main():
     sources += [{'path': str(EXP / 'guest.S'), 'compilerFlags': ['-DNATIVE']}]
     sources += [{'path': str(INPUT / 'payload.S')}]
     sources += [{'path': str(ROOT / name)} for name in
-                ['src/ios-jit/husk-ios-jit.c', 'src/ios-jit/husk-brk.S',
-                 'src/app/Husk/JITBuiltIn.swift', 'src/app/Husk/JITPairingFileStore.swift',
-                 'src/app/HuskJITHelper/HuskJITMessages.swift', 'src/app/Husk/Assets.xcassets']]
+                ['src/ios-jit/ios-jit.c', 'src/ios-jit/jit-trap.S',
+                 'src/app/JIT/JITBuiltIn.swift', 'src/app/JIT/JITPairingFileStore.swift',
+                 'src/app/JITHelper/JITMessages.swift', 'src/app/Resources/Assets.xcassets']]
     sources += [{'path': str(path), 'buildPhase': 'resources'} for path in
-                [OUT / 'Runtime.json', OUT / 'ResourceSizes.plist', INPUT / 'lkl-image.bin', INPUT / 'android-data-seed.img', INPUT / 'system.img', ROOT / 'src/app/Husk/Resources/husk-jit.js',
+                [OUT / 'Runtime.json', OUT / 'ResourceSizes.plist', INPUT / 'lkl-image.bin', INPUT / 'android-data-seed.img', INPUT / 'system.img', ROOT / 'src/app/Resources/jit.js',
                  ROOT / 'work/native-linux-nce/musl-1.2.5/COPYRIGHT',
                  ROOT / 'work/native-linux-nce/dash-0.5.12/COPYING',
                  ROOT / 'work/native-linux-nce/compiler-rt-20.1.8.src/LICENSE.TXT']]
-    android = ROOT / 'work/native-linux-nce/android'
-    notices = OUT / 'Android-NOTICES.txt'
-    notice_paths = ['android36/NOTICE.txt', 'android36-aosp-components/NOTICE.txt', 'art/NOTICE', 'bionic-source/libc/NOTICE',
-                    'bionic-source/linker/NOTICE', 'bionic-source/libdl/NOTICE', 'scudo/LICENSE.TXT',
-                    'libunwind-20.1.8.src/LICENSE.TXT', 'fmt/LICENSE', 'dlmalloc/NOTICE',
-                    'libnativehelper/NOTICE', 'cpu_features/LICENSE', 'tinyxml2/LICENSE.txt',
-                    'lz4/lib/LICENSE', 'lzma/NOTICE', 'libbase/NOTICE', 'liblog/liblog/NOTICE',
-                    'cronet-boringssl/src/LICENSE',
-                    'vixl/LICENCE', 'boringssl/src/LICENSE']
-    notices.write_bytes(b''.join(f'\n===== {name} =====\n'.encode() + (android / name).read_bytes()
-                                for name in notice_paths))
-    sources += [{'path': str(notices), 'buildPhase': 'resources'},
-                {'path': str(android / 'android36/etc/NOTICE.xml.gz'), 'buildPhase': 'resources'}]
-    graphics_notices = OUT / 'Graphics-NOTICES.txt'
-    angle_source = ROOT / 'third_party/gpu/webkit/Source/ThirdParty/ANGLE'
-    license_paths = [gfx / 'LICENSE', *sorted((gfx / 'third_party').rglob('LICENSE*')),
-                     *sorted(p for p in angle_source.rglob('*') if p.is_file() and
-                             p.name.upper().startswith(('LICENSE', 'COPYING')) and '.xcarchive/' not in str(p))]
-    graphics_notices.write_bytes(b''.join(('\n===== ' + str(p.relative_to(ROOT)) + ' =====\n').encode()
-                                        + p.read_bytes() for p in license_paths if p.is_file()))
-    sources.append({'path': str(graphics_notices), 'buildPhase': 'resources'})
+    from package_notices import write_notices
+    sources += [{'path': str(path), 'buildPhase': 'resources'} for path in write_notices(OUT, ios=True)]
     framework = ROOT / 'src/app/Frameworks/StikJIT.xcframework'
     spec = {
-        'name': 'HuskNCE',
+        'name': 'DroidOnDarwin',
         'options': {'deploymentTarget': {'iOS': '26.0'}},
         'settings': {'base': {'ARCHS': 'arm64', 'ONLY_ACTIVE_ARCH': 'YES', 'SWIFT_VERSION': '5.0',
                               'CODE_SIGNING_ALLOWED': 'NO', 'SWIFT_OPTIMIZATION_LEVEL': '-O',
                               'ENABLE_BITCODE': 'NO', 'TARGETED_DEVICE_FAMILY': '1'}},
         'targets': {
-            'Husk': {
+            'DroidOnDarwin': {
                 'type': 'application', 'platform': 'iOS', 'sources': sources,
                 'settings': {'base': {
-                    'PRODUCT_BUNDLE_IDENTIFIER': 'com.husk.app',
+                    'PRODUCT_BUNDLE_IDENTIFIER': 'app.droidondarwin.ios',
                     'INFOPLIST_FILE': str(OUT / 'Info.plist'),
                     'SWIFT_OBJC_BRIDGING_HEADER': str(EXP / 'ios/Bridge.h'),
-                    'CODE_SIGN_ENTITLEMENTS': str(OUT / 'Husk.entitlements'),
+                    'CODE_SIGN_ENTITLEMENTS': str(OUT / 'DroidOnDarwin.entitlements'),
                     'ASSETCATALOG_COMPILER_APPICON_NAME': 'AppIcon',
                     'HEADER_SEARCH_PATHS': [str(INPUT), str(EXP), str(ROOT / 'src/ios-jit'), str(gfx / 'host/include'), str(gfx / 'host/features/include'), str(gfx / 'common/base/include')],
                     'CLANG_CXX_LANGUAGE_STANDARD': 'c++17',
                     'LIBRARY_SEARCH_PATHS': ['$(inherited)', str(graphics[0].parent)],
                     'OTHER_CPLUSPLUSFLAGS': ['$(inherited)', '-Wno-return-type-c-linkage'],
                     'GCC_PREPROCESSOR_DEFINITIONS': ['$(inherited)', 'NCE_PROCESS=1', 'NCE_IOS_APP=1',
-                                                     'HUSK_PREPARED_JIT_ONLY=1', 'NCE_GRAPHICS=1'],
+                                                     'NCE_GRAPHICS=1'],
                     'GCC_OPTIMIZATION_LEVEL': '2',
                     'LD_RUNPATH_SEARCH_PATHS': ['$(inherited)', '@executable_path/Frameworks']}},
-                'dependencies': [{'target': 'HuskJITHelper'}, *[{'framework': str(p), 'embed': True, 'link': p.name == 'libgfxstream_backend.dylib'} for p in graphics]]},
-            'HuskJITHelper': {
+                'dependencies': [{'target': 'JITHelper'}, *[{'framework': str(p), 'embed': True, 'link': p.name == 'libgfxstream_backend.dylib'} for p in graphics]]},
+            'JITHelper': {
                 'type': 'app-extension', 'platform': 'iOS',
-                'sources': [{'path': str(ROOT / 'src/app/HuskJITHelper'), 'excludes': ['Info.plist']}],
+                'sources': [{'path': str(ROOT / 'src/app/JITHelper'), 'excludes': ['Info.plist']}],
                 'settings': {'base': {
-                    'PRODUCT_BUNDLE_IDENTIFIER': 'com.husk.app.JITHelper',
+                    'PRODUCT_BUNDLE_IDENTIFIER': 'app.droidondarwin.ios.JITHelper',
                     'INFOPLIST_FILE': str(OUT / 'Helper-Info.plist'),
                     'APPLICATION_EXTENSION_API_ONLY': 'YES',
                     'LD_RUNPATH_SEARCH_PATHS': ['$(inherited)', '@executable_path/../../Frameworks']}},
@@ -199,10 +180,10 @@ def main():
     (OUT / 'project.json').write_text(json.dumps(spec, indent=2) + '\n')
     run(['xcodegen', 'generate', '--spec', OUT / 'project.json', '--project', OUT])
     with (OUT / 'build.log').open('w') as log:
-        run(['xcodebuild', '-project', OUT / 'HuskNCE.xcodeproj', '-scheme', 'Husk',
+        run(['xcodebuild', '-project', OUT / 'DroidOnDarwin.xcodeproj', '-scheme', 'DroidOnDarwin',
              '-configuration', 'Release', '-sdk', 'iphoneos', '-derivedDataPath', OUT / 'DerivedData',
              'CODE_SIGNING_ALLOWED=NO', 'build'], stdout=log, stderr=subprocess.STDOUT)
-    app = OUT / 'DerivedData/Build/Products/Release-iphoneos/Husk.app'
+    app = OUT / 'DerivedData/Build/Products/Release-iphoneos/DroidOnDarwin.app'
     embedded = app / 'Frameworks/StikJIT.framework'
     if embedded.exists():
         shutil.rmtree(embedded)
@@ -210,20 +191,20 @@ def main():
     for directory in ['Headers', 'Modules']:
         shutil.rmtree(embedded / directory, ignore_errors=True)
     plist(embedded / 'Info.plist', {
-        'CFBundleIdentifier': 'com.husk.app.StikJIT', 'CFBundleExecutable': 'StikJIT',
+        'CFBundleIdentifier': 'app.droidondarwin.ios.StikJIT', 'CFBundleExecutable': 'StikJIT',
         'CFBundleName': 'StikJIT', 'CFBundlePackageType': 'FMWK', 'CFBundleInfoDictionaryVersion': '6.0',
         'CFBundleShortVersionString': '1.9.0', 'CFBundleVersion': '1.9.0',
         'MinimumOSVersion': '17.4', 'CFBundleSupportedPlatforms': ['iPhoneOS']})
-    for component in [*[app / 'Frameworks' / p.name for p in graphics], embedded, app / 'PlugIns/HuskJITHelper.appex', app]:
-        entitlements = ['--entitlements', OUT / 'Husk.entitlements'] if component == app else []
+    for component in [*[app / 'Frameworks' / p.name for p in graphics], embedded, app / 'PlugIns/JITHelper.appex', app]:
+        entitlements = ['--entitlements', OUT / 'DroidOnDarwin.entitlements'] if component == app else []
         run(['codesign', '--force', '--sign', '-', '--timestamp=none', *entitlements, component])
         run(['codesign', '--verify', '--strict', component])
     run(['codesign', '--verify', '--deep', '--strict', app])
-    package = OUT / f'Husk-NativeLinux-{REVISION}.ipa'
+    package = OUT / f'DroidOnDarwin-{REVISION}.ipa'
     with zipfile.ZipFile(package, 'w', compression=zipfile.ZIP_DEFLATED) as archive:
         for path in sorted(app.rglob('*')):
             if path.is_file():
-                archive.write(path, Path('Payload/Husk.app') / path.relative_to(app))
+                archive.write(path, Path('Payload/DroidOnDarwin.app') / path.relative_to(app))
     with zipfile.ZipFile(package) as archive:
         if archive.testzip() is not None:
             raise SystemExit('IPA archive validation failed')
@@ -238,7 +219,8 @@ def main():
                 'dispatch_validation': summary['dispatch_results'],
                 'window_validation': summary.get('window_results'),
                 'source_sha256': {str(path.relative_to(ROOT)): hashlib.sha256(path.read_bytes()).hexdigest()
-                                  for path in [Path(__file__).resolve(), ROOT / 'src/ios-jit/husk-ios-jit.h', *sorted(EXP.glob('ios/*')),
+                                  for path in [Path(__file__).resolve(), ROOT / 'ACKNOWLEDGEMENTS.md', ROOT / 'scripts/package_notices.py', ROOT / 'src/ios-jit/ios-jit.h',
+                                               *sorted((ROOT / 'src/app/Resources').rglob('*')),  *sorted(EXP.glob('ios/*')),
                                                *[Path(item['path']) for item in sources]] if path.is_file()}}
 
     (OUT / 'package.json').write_text(json.dumps(manifest, indent=2) + '\n')

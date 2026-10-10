@@ -10,7 +10,7 @@ final class DeviceLibrary: ObservableObject {
     @Published private(set) var working: String?
     @Published var message: String?
     private let store: NceDeviceStore
-    private let queue = DispatchQueue(label: "app.husk.devices", qos: .userInitiated)
+    private let queue = DispatchQueue(label: "app.droidondarwin.devices", qos: .userInitiated)
     let session: SessionModel
     var selected: NceDevice? {
         devices.first { $0.identifier == selection }
@@ -118,7 +118,7 @@ final class DeviceLibrary: ObservableObject {
             return
         }
         guard !session.restartRequired else {
-            message = "请从多任务界面关闭 Husk，再重新打开后启动设备。"
+            message = "请从多任务界面关闭 DroidOnDarwin，再重新打开后启动设备。"
             return
         }
         session.start(RunTarget(device: device), diagnostics: diagnostics,

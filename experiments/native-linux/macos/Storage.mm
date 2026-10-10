@@ -20,7 +20,7 @@
 - (BOOL)fail:(NSString *)message code:(NSInteger)code error:(NSError **)error
 {
     if (error)
-        *error = [NSError errorWithDomain:@"app.husk.storage"
+        *error = [NSError errorWithDomain:@"app.droidondarwin.storage"
                                      code:code
                                  userInfo:@{NSLocalizedDescriptionKey : message}];
     return NO;

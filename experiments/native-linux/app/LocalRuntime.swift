@@ -16,7 +16,7 @@ final class LocalRuntime: SessionRuntime {
     private var generation = 0
     private(set) var restartRequired = false
     private var jitTimer: Timer?
-    private let queue = DispatchQueue(label: "app.husk.prepare", qos: .userInitiated)
+    private let queue = DispatchQueue(label: "app.droidondarwin.prepare", qos: .userInitiated)
     #if os(macOS)
         let display = NceDisplay(frame: CGRect(x: 0, y: 0, width: 360, height: 640))
         var metalLayer: CAMetalLayer {
@@ -27,7 +27,7 @@ final class LocalRuntime: SessionRuntime {
     #endif
     init() {
         #if os(iOS)
-            husk_ios_jit_install_trap_handler()
+            dod_ios_jit_install_trap_handler()
             metalLayer.device = MTLCreateSystemDefaultDevice()
             metalLayer.pixelFormat = .bgra8Unorm
             metalLayer.framebufferOnly = false
@@ -145,7 +145,7 @@ final class LocalRuntime: SessionRuntime {
                 run()
                 return
             }
-            guard let url = Bundle.main.url(forResource: "husk-jit", withExtension: "js"),
+            guard let url = Bundle.main.url(forResource: "jit", withExtension: "js"),
                   let script = try? Data(contentsOf: url) else {
                 finish("安装包缺少 JIT 脚本")
                 return
@@ -176,7 +176,7 @@ final class LocalRuntime: SessionRuntime {
                     finish("未找到 StikDebug，请在设置中选择 JIT 连接方式")
                     return
                 }
-                event?(.connecting("请在 StikDebug 中启用 JIT，然后返回 Husk"))
+                event?(.connecting("请在 StikDebug 中启用 JIT，然后返回 DroidOnDarwin"))
                 UIApplication.shared.open(url)
             } else {
                 guard let pairing = try? JITPairingFileStore.data() else {
@@ -184,7 +184,7 @@ final class LocalRuntime: SessionRuntime {
                     return
                 }
                 event?(.connecting("正在连接手机内的 JIT 助手"))
-                HuskBuiltInJIT.send(.enable(targetPID: getpid(), pairingData: pairing, scriptBase64: script.base64EncodedString())) { [weak self] result in
+                BuiltInJIT.send(JITRequest(targetPID: getpid(), pairingData: pairing, scriptBase64: script.base64EncodedString())) { [weak self] result in
                     guard let self, attempt == generation, stage == .waiting else {
                         return
                     }

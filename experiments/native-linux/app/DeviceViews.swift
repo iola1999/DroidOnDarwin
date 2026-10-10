@@ -96,7 +96,7 @@ struct DeviceHome: View {
             case .log(let url): SessionLogView(url: url)
             }
         }
-        .fileImporter(isPresented: $importing, allowedContentTypes: rawImport ? [.data] : [.folder, UTType(importedAs: "app.husk.image", conformingTo: .package)], allowsMultipleSelection: false) {
+        .fileImporter(isPresented: $importing, allowedContentTypes: rawImport ? [.data] : [.folder, UTType(exportedAs: "app.droidondarwin.image", conformingTo: .package)], allowsMultipleSelection: false) {
             library.importImage($0, raw: rawImport)
         }
         .alert("操作未完成", isPresented: Binding(get: { library.message != nil }, set: {
@@ -158,7 +158,7 @@ struct DeviceHome: View {
                         .font(.subheadline).foregroundStyle(.secondary)
                 }
                 if session.restartRequired && !session.active {
-                    Label("再次启动前，请关闭并重新打开 Husk。", systemImage: "info.circle")
+                    Label("再次启动前，请关闭并重新打开 DroidOnDarwin。", systemImage: "info.circle")
                         .font(.subheadline).foregroundStyle(.secondary)
                 }
                 Divider()
@@ -225,7 +225,7 @@ private struct AddDeviceView: View {
                 }
                 Divider()
                 Button(action: importImage) {
-                    option("导入镜像包", subtitle: "选择 .huskimage 镜像包", icon: "folder.badge.plus")
+                    option("导入镜像包", subtitle: "选择 .droidimage 镜像包", icon: "folder.badge.plus")
                 }
             }.buttonStyle(.plain).padding(28)
                 .toolbar { ToolbarItem(placement: .cancellationAction) { Button("取消", action: close) } }

@@ -19,13 +19,13 @@ extern "C" int nce_lkl_run(const char *path);
     if (self.stopping)
         return NO;
     self.stopping = YES;
-    window.title = @"Husk NCE · 正在停止 Android";
+    window.title = @"DroidOnDarwin · 正在停止 Android";
     dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), ^{
       int result = nce_session_request_stop();
       if (result)
           dispatch_async(dispatch_get_main_queue(), ^{
             self.stopping = NO;
-            window.title = @"Husk NCE · 启动准备中，请稍后关闭";
+            window.title = @"DroidOnDarwin · 启动准备中，请稍后关闭";
           });
     });
     return NO;
@@ -82,12 +82,12 @@ int main(int argc, char **argv)
                                                        styleMask:NSWindowStyleMaskTitled | NSWindowStyleMaskClosable
                                                          backing:NSBackingStoreBuffered
                                                            defer:NO];
-        window.title = @"Husk NCE · Android GPU";
+        window.title = @"DroidOnDarwin · Android GPU";
         // NSWindow does not retain its delegate; keep it through the event loop.
         __attribute__((objc_precise_lifetime)) NceWindowDelegate *delegate = [NceWindowDelegate new];
         window.delegate = delegate;
         NceInputView *view = [[NceInputView alloc] initWithFrame:NSMakeRect(0, 40, 360, 640)];
-        view.inputQueue = dispatch_queue_create("app.husk.android-input", DISPATCH_QUEUE_SERIAL);
+        view.inputQueue = dispatch_queue_create("app.droidondarwin.android-input", DISPATCH_QUEUE_SERIAL);
         [window.contentView addSubview:view];
         NSArray<NSString *> *titles = @[ @"返回", @"主页", @"最近应用" ];
         const int keys[] = {158, 102, 580};

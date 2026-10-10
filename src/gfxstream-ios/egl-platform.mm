@@ -8,7 +8,7 @@ EglOS::Engine *EglOS::Engine::createHostInstance()
     return EglOS::getEgl2EglHostInstance(false);
 }
 
-bool huskGfxstreamWindowSize(void *window, unsigned *width, unsigned *height)
+bool dodGfxstreamWindowSize(void *window, unsigned *width, unsigned *height)
 {
     id object = (__bridge id)window;
     if (![object isKindOfClass:[CAMetalLayer class]])

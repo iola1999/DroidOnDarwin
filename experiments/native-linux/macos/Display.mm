@@ -12,7 +12,7 @@
 - (instancetype)initWithFrame:(NSRect)frame
 {
     if ((self = [super initWithFrame:frame])) {
-        _inputQueue = dispatch_queue_create("app.husk.mac.input", DISPATCH_QUEUE_SERIAL);
+        _inputQueue = dispatch_queue_create("app.droidondarwin.mac.input", DISPATCH_QUEUE_SERIAL);
         self.wantsLayer = YES;
         _metalLayer = [CAMetalLayer layer];
         _metalLayer.device = MTLCreateSystemDefaultDevice();

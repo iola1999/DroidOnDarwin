@@ -1,27 +1,14 @@
-# Patches
+# 上游补丁
 
-## `husk-qemu-ios-jit.patch`
+当前补丁用于 Android 桌面的图形构建，构建脚本检查补丁能否正向应用或已应用。
 
-Husk's own. Diverts `tcg/region.c`'s split-W^X allocator to
-`alloc_code_gen_buffer_splitwx_husk_ios()` on iOS, which sources the executable
-half from StikDebug rather than allocating it locally (TXM forbids the latter).
-Applied by `scripts/integrate_husk.sh` along with copying `src/ios-jit/*` into the
-QEMU tree.
+| 文件 | 使用方 | 用途 |
+| --- | --- | --- |
+| `gfxstream-ios.patch` | `scripts/build_gfxstream.py` | iOS 构建、Darwin 平台接口与 EGL 适配 |
+| `gfxstream-ios-serial-gles.patch` | 同上 | GLES 命令的串行处理 |
+| `gfxstream-angle-shaders.patch` | 同上 | ANGLE 的 shader 处理适配 |
+| `nce-gralloc-memfd.patch` | `scripts/build_android_gralloc.py` | Android gralloc 使用 memfd 共享缓冲区，并处理分配失败时的释放 |
 
-GPL-2.0-or-later, same as the file it patches.
+平台适配源文件位于 `src/gfxstream-ios/`，构建时复制到对应的 gfxstream 源目录。上游版本由各脚本固定，补丁与适配文件的哈希写入构建清单。更新这些文件后重新构建图形库并运行桌面检查，再打包应用。
 
-## `qemu-10.0.12-utm.patch`, `pixman-0.38.0.patch`, `libslirp-v4.9.1.patch`
-
-Not ours. Taken verbatim from UTM's `patches/` directory
-(https://github.com/utmapp/UTM), vendored so the build is reproducible without
-cloning UTM.
-
-These are patches against QEMU, pixman and libslirp, so they carry those
-projects' licences rather than UTM's own Apache-2.0 — the QEMU patch is
-GPL-2.0. This distinction matters: UTM's *application* code is Apache-2.0, which
-is incompatible with GPLv2 and must not be copied into Husk. See
-[the licensing record](../.agents/notes/implemented/process/2026-09-11-许可与分发.md).
-
-UTM's build script (`scripts/build_dependencies.sh`), which Husk's
-`scripts/build_ios.sh` borrows its toolchain setup from, is ISC-licensed
-(credited to Angelo Haller, 2014) and therefore permissive.
+许可证与来源见[开源致谢](../ACKNOWLEDGEMENTS.md)。

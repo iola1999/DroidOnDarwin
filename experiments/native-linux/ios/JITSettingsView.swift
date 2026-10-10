@@ -22,7 +22,7 @@ struct JITSettingsView: View {
                     Button(paired ? "更换配对文件…" : "导入配对文件…") { importing = true }.disabled(active)
                 } footer: { Text("使用这台 iPhone 的配对文件，并保持 LocalDevVPN 已连接。") }
             } else {
-                Section { Text("启动时将打开 StikDebug。启用 JIT 后返回 Husk。").foregroundStyle(.secondary) }
+                Section { Text("启动时将打开 StikDebug。启用 JIT 后返回 DroidOnDarwin。").foregroundStyle(.secondary) }
             }
         }.navigationTitle("JIT 连接")
             .fileImporter(isPresented: $importing, allowedContentTypes: [.data], allowsMultipleSelection: false) { result in

@@ -24,7 +24,7 @@
 static BOOL fail(NSError **error, NSString *message)
 {
     if (error)
-        *error = [NSError errorWithDomain:@"app.husk.devices" code:1 userInfo:@{NSLocalizedDescriptionKey : message}];
+        *error = [NSError errorWithDomain:@"app.droidondarwin.devices" code:1 userInfo:@{NSLocalizedDescriptionKey : message}];
     return NO;
 }
 static BOOL regular(NSURL *url)
@@ -149,24 +149,10 @@ static NSString *sha256(NSURL *url, NSError **error)
     }
     NSURL *marker = [_root URLByAppendingPathComponent:@"devices-initialized"];
     if (![_files fileExistsAtPath:marker.path]) {
-        // A fixed directory lets migration resume if the app exits between the move and metadata write.
+        // The fixed default ID makes first-run initialization repeatable after an interrupted write.
         NSURL *directory = [self.devicesURL URLByAppendingPathComponent:@"default"];
         if (![_files createDirectoryAtURL:directory withIntermediateDirectories:YES attributes:nil error:error])
             return nil;
-        NSURL *old = [_root URLByAppendingPathComponent:@"android-data.img"];
-        if ([_files fileExistsAtPath:old.path]) {
-            int lock = open([_root URLByAppendingPathComponent:@"session.lock"].fileSystemRepresentation, O_CREAT | O_RDWR | O_CLOEXEC | O_NOFOLLOW, 0600);
-            if (lock < 0 || flock(lock, LOCK_EX | LOCK_NB)) {
-                if (lock >= 0)
-                    close(lock);
-                fail(error, @"旧版 Android 仍在运行，请先停止。");
-                return nil;
-            }
-            BOOL moved = [_files moveItemAtURL:old toURL:[directory URLByAppendingPathComponent:@"android-data.img"] error:error];
-            close(lock);
-            if (!moved)
-                return nil;
-        }
         if (![self writeRecord:@{@"id" : @"default", @"name" : @"Android", @"image" : @"内置 Android 16", @"builtin" : @YES} directory:directory error:error] ||
             ![[NSData data] writeToURL:marker options:NSDataWritingAtomic error:error])
             return nil;

@@ -3,7 +3,7 @@ import SwiftUI
 import Metal
 
 enum GuestInput {
-    static let queue = DispatchQueue(label: "app.husk.android-input", qos: .userInteractive)
+    static let queue = DispatchQueue(label: "app.droidondarwin.android-input", qos: .userInteractive)
     static func send(_ action: Int32, _ x: Int32, _ y: Int32 = 0) {
         queue.async { _ = nce_host_input_send(action, x, y) }
     }

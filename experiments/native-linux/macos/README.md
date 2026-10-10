@@ -1,4 +1,4 @@
-# Husk NCE for macOS
+# DroidOnDarwin for macOS
 
 SwiftUI 界面与 AppKit 窗口宿主，在 Apple Silicon Mac 上运行仓库现有的 Linux / Android 与 NCE。当前包使用 1 GiB Linux RAM、demand 映射、360×640 Android 画面和 gfxstream / ANGLE Metal。最低系统为 macOS 27.0，由当前 gfxstream 构建的部署目标决定。
 
@@ -13,7 +13,7 @@ python3 scripts/test_native_linux_macos.py
 
 打包前要求 `work/native-linux-nce/processes/lkl-summary.json` 中的 CLI、GCD、窗口桌面检查成功，且源码、内核、生成物和动态库哈希仍匹配。需要重新生成这些输入时使用 `--rebuild-kernel`。输出已存在时，先退出应用，再使用 `--replace` 重建；应用数据独立保存。
 
-输出为 `work/native-linux-nce/macos/Husk NCE.app`，可以从 Finder 打开。内核、系统镜像、空白数据盘种子、图形动态库和第三方许可随包提供。`package.json` 记录构建标识、输入与包内文件哈希，`host-checks.json` 记录宿主检查结果。
+输出为 `work/native-linux-nce/macos/DroidOnDarwin.app`，可以从 Finder 打开。内核、系统镜像、空白数据盘种子、图形动态库和第三方许可随包提供。`package.json` 记录构建标识、输入与包内文件哈希，`host-checks.json` 记录宿主检查结果。
 
 ## 使用
 
@@ -21,7 +21,7 @@ python3 scripts/test_native_linux_macos.py
 
 鼠标点击、拖动对应 Android 触摸操作。底部提供返回、主页和最近应用按钮，画面顶部菜单提供运行详情和停止入口，设备详情提供日志与数据目录入口。缩放窗口时保持画面比例和逻辑分辨率。启动时显示当前阶段与等待时间，桌面首帧就绪后启用输入。日志预览按需打开，最多保留 80 行，每秒读取量上限为 256 KiB，完整日志保存在设备目录。
 
-数据默认保存在 `~/Library/Application Support/app.husk.nce.mac/Devices/<id>/`。每台设备首次启动创建独立的 `android-data.img`，后续启动沿用该文件；每次运行生成 `Logs/session-*.log`。旧版根目录的数据盘自动迁入默认设备。设备目录锁持续到会话进程退出，设备列表也有独立的进程锁。开发验证可通过 `--data-directory PATH` 指定隔离目录。
+数据默认保存在 `~/Library/Application Support/app.droidondarwin.mac/Devices/<id>/`。每台设备首次启动创建独立的 `android-data.img`，后续启动沿用该文件；每次运行生成 `Logs/session-*.log`。设备目录锁持续到会话进程退出，设备列表也有独立的进程锁。开发验证可通过 `--data-directory PATH` 指定隔离目录。
 
 关闭 Android 窗口或在设备列表选择停止，会请求 Android 结束，等待进程和图形资源释放、数据盘转为只读后关闭会话。关闭设备列表会先停止当前 Android。启动失败时在设备详情显示失败状态，运行日志保留失败原因。
 

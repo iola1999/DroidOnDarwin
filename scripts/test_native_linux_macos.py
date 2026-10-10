@@ -10,7 +10,7 @@ from package_native_linux_macos import ROOT, EXP, INPUT, OUT, audit_libraries, d
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--app', type=Path, default=OUT / 'Husk NCE.app')
+    parser.add_argument('--app', type=Path, default=OUT / 'DroidOnDarwin.app')
     args = parser.parse_args()
     app = args.app.resolve()
     contents = app / 'Contents'
@@ -27,7 +27,7 @@ def main():
     (smoke / 'MacOS').mkdir(parents=True, exist_ok=True)
     (smoke / 'Resources').mkdir(exist_ok=True)
     (smoke / 'Info.plist').write_bytes(plistlib.dumps({
-        'CFBundleIdentifier': 'app.husk.nce.host-checks', 'CFBundleExecutable': 'HostChecks',
+        'CFBundleIdentifier': 'app.droidondarwin.host-checks', 'CFBundleExecutable': 'HostChecks',
         'CFBundleName': 'Host Checks', 'CFBundlePackageType': 'APPL'}))
     sizes = {name: 4096 for name in ('lkl-image.bin', 'system.img', 'android-data-seed.img')}
     for name in sizes:
@@ -89,7 +89,7 @@ def main():
         raise SystemExit('带目标签名的图形库加载失败')
     checks['ad_hoc_library_validation'] = library_results
     run(['codesign', '--verify', '--deep', '--strict', app])
-    for binary in [contents / 'MacOS/HuskNCE', *sorted((contents / 'Frameworks').iterdir())]:
+    for binary in [contents / 'MacOS/DroidOnDarwin', *sorted((contents / 'Frameworks').iterdir())]:
         audit_libraries(binary)
     sizes = plistlib.loads((contents / 'Resources/ResourceSizes.plist').read_bytes())
     assert all((contents / 'Resources' / name).stat().st_size == size for name, size in sizes.items())

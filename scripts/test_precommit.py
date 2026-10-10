@@ -16,7 +16,7 @@ SWIFT_SOURCE = b'func value()->Int{return 1}\n'
 @unittest.skipUnless(shutil.which('clang-format'), '需要 clang-format')
 class PreCommitTest(unittest.TestCase):
     def setUp(self):
-        directory = tempfile.TemporaryDirectory(prefix='husk-precommit-')
+        directory = tempfile.TemporaryDirectory(prefix='droidondarwin-precommit-')
         self.addCleanup(directory.cleanup)
         self.repo = Path(directory.name)
         self.env = {**os.environ, 'GIT_CONFIG_GLOBAL': os.devnull, 'GIT_CONFIG_NOSYSTEM': '1'}

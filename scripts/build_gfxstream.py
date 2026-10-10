@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""构建固定版本的 gfxstream 与 Rutabaga，供 QEMU 的实验图形后端使用。"""
+"""构建原生 Android 桌面使用的 gfxstream 渲染库。"""
 import argparse
 import hashlib
 import json
@@ -7,50 +7,39 @@ from pathlib import Path
 import shutil
 import subprocess
 
-from build_arm64_exec import ROOT, LOGS, apply, run
+ROOT = Path(__file__).resolve().parents[1]
+LOGS = ROOT / "work/gfxstream-logs"
+
+
+def run(command, name, cwd=ROOT):
+    log = LOGS / f"{name}.log"
+    with log.open("w") as output:
+        result = subprocess.run([str(x) for x in command], cwd=cwd,
+                                stdout=output, stderr=subprocess.STDOUT)
+    if result.returncode:
+        raise SystemExit(f"Failed: {name}; see {log}")
+
+
+def apply(source, patch_name):
+    patch = ROOT / "patches" / patch_name
+    command = ["patch", "--batch", "--no-backup-if-mismatch", "-r", "-",
+               "-p1", "-i", str(patch)]
+    for direction in ("--forward", "--reverse"):
+        result = subprocess.run(command + ["--dry-run", direction], cwd=source,
+                                stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        if not result.returncode:
+            if direction == "--forward":
+                run(command + [direction], f"apply-{patch.stem}", source)
+            return
+    raise SystemExit(f"Patch does not match source: {patch}; inspect local changes")
 
 REVISION = "07ee40efb0e7037a9a9b7fe59071e7c4997e7cbe"
-RUTABAGA_REVISION = "ced6af5b1135173c269a037e06213e8a263de271"
-
-
-def write_notices(source, rust_source):
-    metadata = json.loads(subprocess.check_output([
-        "cargo", "metadata", "--manifest-path", str(rust_source / "ffi/Cargo.toml"),
-        "--locked", "--features", "gfxstream", "--format-version", "1",
-        "--filter-platform", "aarch64-apple-ios"], text=True))
-    packages = {p["id"]: p for p in metadata["packages"]}
-    nodes = {n["id"]: n for n in metadata["resolve"]["nodes"]}
-    pending = [metadata["resolve"]["root"]]
-    selected = set()
-    while pending:
-        ident = pending.pop()
-        if ident in selected: continue
-        selected.add(ident)
-        for dep in nodes[ident]["deps"]:
-            if (any(kind["kind"] is None for kind in dep["dep_kinds"]) and
-                not any("proc-macro" in t["kind"] for t in packages[dep["pkg"]]["targets"])):
-                pending.append(dep["pkg"])
-    files = [(f"gfxstream {REVISION}: LICENSE", source / "LICENSE")]
-    files += [("gfxstream source: " + str(p.relative_to(source)), p)
-              for p in sorted((source / "third_party").rglob("LICENSE*")) if p.is_file()]
-    files.append((f"Rutabaga {RUTABAGA_REVISION}", rust_source / "LICENSE"))
-    for package in sorted((packages[i] for i in selected), key=lambda p: p["name"]):
-        folder = Path(package["manifest_path"]).parent
-        for path in sorted(folder.iterdir()):
-            if path.is_file() and path.name.upper().startswith(("LICENSE", "COPYING", "NOTICE")):
-                files.append((f"{package['name']} {package['version']}: {path.name}", path))
-    text = "gfxstream source and Rutabaga runtime dependency notices\n"
-    for label, path in files:
-        text += f"\n{'=' * 72}\n{label}\n\n{path.read_text(errors='replace').rstrip()}\n"
-    (ROOT / "src/app/Husk/Resources/legal/LICENSES-gfxstream.txt").write_text(text)
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--platform", choices=("ios", "macos", "macos-ios-api"), default="ios",
                         help="macos-ios-api runs the iOS EGL/platform code on a Mac for validation")
-    parser.add_argument("--renderer-only", action="store_true",
-                        help="Build the renderer for direct RenderChannel clients")
     args = parser.parse_args()
     platform = args.platform
     source = ROOT / "work/gfxstream-src"
@@ -96,60 +85,18 @@ def main():
     shutil.copyfile(build / artifact.name, artifact)
     run(["xcrun", "install_name_tool", "-id", f"@rpath/{artifact.name}", artifact],
         f"gfxstream-install-name-{platform}")
-    actual = None
     libraries = [artifact]
-    if not args.renderer_only:
-        rust_source = ROOT / "work/rutabaga-src"
-        if not rust_source.exists():
-            run(["git", "init", rust_source], "rutabaga-init")
-            run(["git", "remote", "add", "origin", "https://github.com/magma-gpu/rutabaga_gfx.git"],
-                "rutabaga-remote", rust_source)
-            run(["git", "fetch", "--depth=1", "origin", RUTABAGA_REVISION], "rutabaga-fetch", rust_source)
-            run(["git", "checkout", "--detach", RUTABAGA_REVISION], "rutabaga-checkout", rust_source)
-        actual = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=rust_source, text=True).strip()
-        if actual != RUTABAGA_REVISION:
-            raise SystemExit(f"Rutabaga revision {actual}; expected {RUTABAGA_REVISION}")
-        lock = ROOT / "scripts/locks/rutabaga-Cargo.lock"
-        inputs.append(lock)
-        shutil.copyfile(lock, rust_source / "Cargo.lock")
-        rust_target = "aarch64-apple-ios" if platform == "ios" else "aarch64-apple-darwin"
-        run(["env", f"GFXSTREAM_PATH={prefix}/lib", "IPHONEOS_DEPLOYMENT_TARGET=16.4",
-             "cargo", "build", "--manifest-path", rust_source / "ffi/Cargo.toml", "--locked",
-             "--release", "--features", "gfxstream", "--target", rust_target], f"rutabaga-{platform}")
-        # Link Rust into QEMU on iOS; its generated dylib's string table currently
-        # fails the Xcode 27 linker's alignment check.
-        rutabaga = prefix / ("lib/librutabaga_gfx_ffi.a" if platform == "ios"
-                             else "lib/librutabaga_gfx_ffi.dylib")
-        shutil.copyfile(rust_source / f"target/{rust_target}/release" / rutabaga.name, rutabaga)
-        if platform == "ios":
-            (prefix / "lib/librutabaga_gfx_ffi.dylib").unlink(missing_ok=True)
-        else:
-            run(["xcrun", "install_name_tool", "-id", f"@rpath/{rutabaga.name}", rutabaga],
-                f"rutabaga-install-name-{platform}")
-        include = prefix / "include/rutabaga_gfx"
-        include.mkdir(parents=True, exist_ok=True)
-        shutil.copyfile(rust_source / "ffi/src/include/rutabaga_gfx_ffi.h", include / "rutabaga_gfx_ffi.h")
-        rpath = f" -Wl,-rpath,{prefix}/lib" if platform != "ios" else ""
-        rust_link = "${libdir}/librutabaga_gfx_ffi.a -liconv" if platform == "ios" else "-lrutabaga_gfx_ffi"
-        (prefix / "lib/pkgconfig/rutabaga_gfx_ffi.pc").write_text(
-            f"prefix={prefix}\nlibdir=${{prefix}}/lib\nincludedir=${{prefix}}/include\n"
-            "Name: rutabaga_gfx_ffi\nDescription: Rutabaga C interface with gfxstream\nVersion: 0.1.85\n"
-            f"Libs: -L${{libdir}} {rust_link} -lgfxstream_backend{rpath}\n"
-            "Cflags: -I${includedir}\n")
-        libraries.append(rutabaga)
     run(["xcrun", "otool", "-L", *libraries], f"gfxstream-dependencies-{platform}")
     sdk_name = "iphoneos" if platform == "ios" else "macosx"
     sdk = subprocess.check_output(["xcrun", "--sdk", sdk_name, "--show-sdk-version"],
                                   text=True).strip()
     (build / "manifest.json").write_text(json.dumps({
-        "revision": revision, "rutabaga_revision": actual, "sdk": sdk, "platform": platform,
+        "revision": revision, "sdk": sdk, "platform": platform,
         "libraries": {str(p): hashlib.sha256(p.read_bytes()).hexdigest()
                       for p in libraries},
         "inputs": {str(p.relative_to(ROOT)): hashlib.sha256(p.read_bytes()).hexdigest()
                    for p in inputs},
     }, indent=2) + "\n")
-    if platform == "ios" and not args.renderer_only:
-        write_notices(source, rust_source)
     print(f"Built {len(libraries)} graphics libraries for {platform}: {prefix}")
 
 

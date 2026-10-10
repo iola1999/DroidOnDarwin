@@ -3,7 +3,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const vm = require('node:vm');
 const source = fs.readFileSync(require('node:path').join(__dirname,
-    '../../src/app/Husk/Resources/husk-jit.js'), 'utf8');
+    '../../src/app/Resources/jit.js'), 'utf8');
 const le = value => BigInt(value).toString(16).padStart(16, '0').match(/../g).reverse().join('');
 const brk = immediate => ((0xd4200000 | (immediate << 5)) >>> 0)
     .toString(16).match(/../g).reverse().join('');

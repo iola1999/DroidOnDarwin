@@ -39,13 +39,14 @@ struct SettingsView: View {
                         Form {
                             Section {
                                 Button("导入 system.img…", action: importRaw).disabled(library.busy)
-                            } footer: { Text("接受完整 ext4 镜像。镜像需要匹配当前 NCE 运行组件，其他 Android ROM 可能无法启动。") }
+                            } footer: { Text("接受完整 ext4 镜像。镜像需要匹配当前运行组件，其他 Android ROM 可能无法启动。") }
                         }.formStyle(.grouped).navigationTitle("高级")
                     }
                 }
                 Section("关于") {
-                    LabeledContent("Husk NCE", value: Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "")
-                    Text(Bundle.main.object(forInfoDictionaryKey: "NCEBuildID") as? String ?? "")
+                    NavigationLink("开源致谢") { AcknowledgementsView() }
+                    LabeledContent("DroidOnDarwin", value: Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "")
+                    Text(Bundle.main.object(forInfoDictionaryKey: "DroidOnDarwinBuildID") as? String ?? "")
                         .font(.caption).foregroundStyle(.secondary).textSelection(.enabled)
                 }
             }.formStyle(.grouped).navigationTitle("设置")

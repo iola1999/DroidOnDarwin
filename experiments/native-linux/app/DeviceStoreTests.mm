@@ -30,17 +30,15 @@ int main(void)
         }
         assert([sizes writeToURL:[resources URLByAppendingPathComponent:@"ResourceSizes.plist"] atomically:YES]);
         writeJSON([resources URLByAppendingPathComponent:@"Runtime.json"], @{@"runtime" : @"test-runtime"});
-        NSURL *old = [data URLByAppendingPathComponent:@"android-data.img"];
-        assert([bytes writeToURL:old atomically:YES]);
         NceDeviceStore *store = [[NceDeviceStore alloc] initWithRoot:data resources:resources];
         NSError *error = nil;
         NSArray<NceDevice *> *devices = [store load:&error];
-        assert(devices.count == 1 && !error && ![files fileExistsAtPath:old.path]);
+        assert(devices.count == 1 && !error);
         NceDeviceStore *duplicate = [[NceDeviceStore alloc] initWithRoot:data resources:resources];
         assert(![duplicate load:&error]);
         duplicate = nil;
         NceDevice *first = devices[0];
-        assert([[NSData dataWithContentsOfURL:[first.directory URLByAppendingPathComponent:@"android-data.img"]] isEqual:bytes]);
+        assert(![files fileExistsAtPath:[first.directory URLByAppendingPathComponent:@"android-data.img"].path]);
         NceDevice *second = [store createBuiltinNamed:@"Android" error:&error];
         assert(second && [store load:&error].count == 2 && ![first.identifier isEqual:second.identifier]);
         assert(![store renameDevice:second name:@"  " error:&error]);
@@ -50,13 +48,14 @@ int main(void)
         assert([renamed[1].identifier isEqual:second.identifier]);
         NceStorage *session = [NceStorage new];
         assert([session prepareResources:first.resources directory:first.directory error:&error]);
+        assert([[NSData dataWithContentsOfURL:session.disk] isEqual:bytes]);
         assert(![store deleteDevice:first error:&error]);
         session = nil;
         BOOL deleted = [store deleteDevice:first error:&error];
         if (!deleted)
             NSLog(@"delete: %@", error);
         assert(deleted);
-        NSURL *package = [root URLByAppendingPathComponent:@"Android.huskimage"];
+        NSURL *package = [root URLByAppendingPathComponent:@"Android.droidimage"];
         assert([files createDirectoryAtURL:package withIntermediateDirectories:YES attributes:nil error:nil]);
         for (NSString *name in @[ @"system.img", @"android-data-seed.img" ])
             assert([bytes writeToURL:[package URLByAppendingPathComponent:name] atomically:YES]);
@@ -106,6 +105,6 @@ int main(void)
             assert([store deleteDevice:device error:&error]);
         assert([store load:&error].count == 0);
         assert([files removeItemAtURL:root error:nil]);
-        puts("device store checks passed: migration, independent data, active deletion lock, package version/hash, raw ext4, truncation, symlink, failed import cleanup, empty library persistence");
+        puts("device store checks passed: first-run initialization, independent data, active deletion lock, package version/hash, raw ext4, truncation, symlink, failed import cleanup, empty library persistence");
     }
 }

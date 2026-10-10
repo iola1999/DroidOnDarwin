@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""生成供两端设备列表导入的 .huskimage 目录包。"""
+"""生成供两端设备列表导入的 .droidimage 目录包。"""
 import argparse
 import hashlib
 import json
@@ -30,8 +30,8 @@ def main():
     parser.add_argument('output', type=Path)
     parser.add_argument('--name', default='Android 16')
     args = parser.parse_args()
-    if args.output.suffix != '.huskimage' or args.output.exists():
-        parser.error('输出必须是尚不存在的 .huskimage 目录')
+    if args.output.suffix != '.droidimage' or args.output.exists():
+        parser.error('输出必须是尚不存在的 .droidimage 目录')
     args.output.mkdir(parents=True)
     files = {}
     for name in ('system.img', 'android-data-seed.img'):

@@ -11,7 +11,7 @@
 #include <string.h>
 #include <sys/mman.h>
 #if TARGET_OS_IPHONE
-#include "husk-ios-jit.h"
+#include "ios-jit.h"
 extern int nce_wait_debugger_detach(unsigned timeout_ms);
 #endif
 
@@ -85,7 +85,7 @@ static NceCode prepare_code(unsigned char *rx, size_t size)
         return (NceCode){0};
     }
 #if TARGET_OS_IPHONE
-    HuskDualMapping code = husk_ios_jit_prepare_range(rx, size);
+    JITDualMapping code = dod_ios_jit_prepare_range(rx, size);
     return (NceCode){code.rw_addr, code.rx_addr, code.size};
 #else
     vm_address_t rw = 0;
@@ -202,7 +202,7 @@ int nce_memory_prepare(void)
         printf("{\"result\":\"failed\",\"reason\":\"address_reservation\",\"errno\":%d,\"requested_bytes\":%zu}\n",
                error, RESERVED_BYTES + alignment);
 #if TARGET_OS_IPHONE
-        husk_ios_jit_detach();
+        dod_ios_jit_detach();
         nce_wait_debugger_detach(5000);
 #endif
         return -1;
@@ -227,7 +227,7 @@ int nce_memory_prepare(void)
         }
     }
 #if TARGET_OS_IPHONE
-    husk_ios_jit_detach();
+    dod_ios_jit_detach();
     if (nce_wait_debugger_detach(5000) != 0) {
         nce_memory_release();
         return -1;

@@ -5,4 +5,4 @@
 #define EGL_PLATFORM_ANGLE_TYPE_ANGLE 0x3203
 #define EGL_PLATFORM_ANGLE_TYPE_METAL_ANGLE 0x3489
 #endif
-bool huskGfxstreamWindowSize(void *window, unsigned *width, unsigned *height);
+bool dodGfxstreamWindowSize(void *window, unsigned *width, unsigned *height);

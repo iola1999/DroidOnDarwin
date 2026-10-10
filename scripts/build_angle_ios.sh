@@ -2,17 +2,17 @@
 # Build the WebKit ANGLE Metal backend for iPhone or macOS validation.
 set -euo pipefail
 
-HUSK_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-GPU="$HUSK_ROOT/third_party/gpu"
+DOD_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+GPU="$DOD_ROOT/third_party/gpu"
 WK="$GPU/webkit"
 REVISION=2edaa071178a43a44dfaa4c37716247c43642c66
 SDK="${1:-iphoneos}"
 case "$SDK" in
-    iphoneos) PREFIX="$HUSK_ROOT/build/ios-arm64/sysroot" ;;
-    macosx) PREFIX="$HUSK_ROOT/work/angle-macos/prefix" ;;
+    iphoneos) PREFIX="$DOD_ROOT/build/ios-arm64/sysroot" ;;
+    macosx) PREFIX="$DOD_ROOT/work/angle-macos/prefix" ;;
     *) echo "Usage: $0 [iphoneos|macosx]" >&2; exit 2 ;;
 esac
-LOG="$HUSK_ROOT/build/logs/angle-build-$SDK.log"
+LOG="$DOD_ROOT/build/logs/angle-build-$SDK.log"
 mkdir -p "$GPU" "$(dirname "$LOG")"
 if [ ! -d "$WK" ]; then
     git init "$WK"
@@ -52,7 +52,7 @@ install -d "$PREFIX/lib" "$PREFIX/include"
 cp "$DYLIB" "$PREFIX/lib/"
 rsync -a include/ "$PREFIX/include/"
 install_name_tool -id @rpath/libANGLE-shared.dylib "$PREFIX/lib/libANGLE-shared.dylib"
-python3 - "$HUSK_ROOT" "$PREFIX" "$REVISION" "$SDK" <<'PY'
+python3 - "$DOD_ROOT" "$PREFIX" "$REVISION" "$SDK" <<'PY'
 import hashlib, json, subprocess, sys
 from pathlib import Path
 root, prefix = map(Path, sys.argv[1:3])

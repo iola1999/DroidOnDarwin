@@ -2,14 +2,6 @@
 build/
 /work/
 /outputs/
-# On-device pairing crate (scripts/build_rppairing_ios.sh)
-src/rppairing-ios/target/
-third_party/build/
-third_party/sources/
-third_party/qemu-upstream/
-third_party/utm/
-third_party/utm-qemu/
-
 # Guest images (large, redistributable only from upstream)
 guests/
 

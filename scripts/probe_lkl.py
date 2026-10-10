@@ -137,9 +137,9 @@ def main():
         with tarfile.open(archive) as tar:
             tar.extractall(OUT, filter="data")
         (OUT / f"linux-{REVISION}").rename(SOURCE)
-        (SOURCE / ".husk-source-revision").write_text(REVISION + "\n")
+        (SOURCE / ".droidondarwin-source-revision").write_text(REVISION + "\n")
         archive.unlink()
-    if (SOURCE / ".husk-source-revision").read_text().strip() != REVISION:
+    if (SOURCE / ".droidondarwin-source-revision").read_text().strip() != REVISION:
         raise SystemExit("Unexpected LKL source revision")
     if PROCESS:
         apply(SOURCE, EXPERIMENT)
@@ -318,11 +318,11 @@ def main():
             raise SystemExit("CLI and GCD GPU images differ")
     window_results = None
     if arguments.graphics_window:
-        app = OUT / "HuskNCEGPU.app/Contents"
+        app = OUT / "DroidOnDarwinGPU.app/Contents"
         (app / "MacOS").mkdir(parents=True, exist_ok=True)
         (app / "Info.plist").write_bytes(plistlib.dumps({
-            "CFBundleIdentifier": "com.husk.nce.graphics-test",
-            "CFBundleExecutable": "graphics-window", "CFBundleName": "Husk NCE GPU",
+            "CFBundleIdentifier": "app.droidondarwin.graphics-test",
+            "CFBundleExecutable": "graphics-window", "CFBundleName": "DroidOnDarwin GPU",
             "CFBundlePackageType": "APPL", "NSHighResolutionCapable": True}))
         window_binary = app / "MacOS/graphics-window"
         run([clang, "-std=c++17", "-O2", "-fobjc-arc", "-isysroot", sdk,

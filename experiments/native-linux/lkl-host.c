@@ -271,7 +271,7 @@ static void *timer_alloc(void (*fn)(void))
     struct timer *t = calloc(1, sizeof(*t));
     REQUIRE(t);
     t->fn = fn;
-    t->queue = dispatch_queue_create("husk.lkl.timer", DISPATCH_QUEUE_SERIAL);
+    t->queue = dispatch_queue_create("app.droidondarwin.lkl.timer", DISPATCH_QUEUE_SERIAL);
     t->source = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, t->queue);
     REQUIRE(t->source);
     dispatch_set_context(t->source, t);

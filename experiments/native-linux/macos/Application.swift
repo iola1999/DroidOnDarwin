@@ -74,7 +74,7 @@ final class MacEnvironment {
             return args[index + 1]
         }
         let base = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
-            .appendingPathComponent("app.husk.nce.mac", isDirectory: true)
+            .appendingPathComponent("app.droidondarwin.mac", isDirectory: true)
         let root = value("--data-directory").map { URL(fileURLWithPath: $0, isDirectory: true) } ?? base
         let resources = value("--resources").map { URL(fileURLWithPath: $0, isDirectory: true) } ?? Bundle.main.resourceURL!
         libraryPID = value("--library-pid").flatMap(Int32.init)
@@ -121,6 +121,7 @@ final class MacEnvironment {
 final class MacApplicationDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     private var terminating = false
     private var window: NSWindow?
+    private var aboutWindow: NSWindow?
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.regular)
         let environment = MacEnvironment.shared
@@ -135,7 +136,7 @@ final class MacApplicationDelegate: NSObject, NSApplicationDelegate, NSWindowDel
         let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: worker ? 380 : 960, height: worker ? 760 : 640),
                               styleMask: [.titled, .closable, .miniaturizable, .resizable], backing: .buffered, defer: false)
         self.window = window
-        window.title = environment.workerTarget?.name ?? "Husk"
+        window.title = environment.workerTarget?.name ?? "DroidOnDarwin"
         window.contentMinSize = worker ? NSSize(width: 300, height: 550) : NSSize(width: 720, height: 520)
         window.delegate = self
         window.isReleasedWhenClosed = false
@@ -159,10 +160,10 @@ final class MacApplicationDelegate: NSObject, NSApplicationDelegate, NSWindowDel
         NSApp.activate(ignoringOtherApps: true)
         let menu = NSMenu()
         let appMenu = NSMenu()
-        menu.addItem(withTitle: "Husk", action: nil, keyEquivalent: "").submenu = appMenu
-        appMenu.addItem(withTitle: "关于 Husk", action: #selector(NSApplication.orderFrontStandardAboutPanel(_:)), keyEquivalent: "")
+        menu.addItem(withTitle: "DroidOnDarwin", action: nil, keyEquivalent: "").submenu = appMenu
+        appMenu.addItem(withTitle: "关于 DroidOnDarwin", action: #selector(showAbout), keyEquivalent: "").target = self
         appMenu.addItem(.separator())
-        appMenu.addItem(withTitle: "退出 Husk", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
+        appMenu.addItem(withTitle: "退出 DroidOnDarwin", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
         let edit = NSMenu(title: "编辑")
         menu.addItem(withTitle: "编辑", action: nil, keyEquivalent: "").submenu = edit
         edit.addItem(withTitle: "剪切", action: #selector(NSText.cut(_:)), keyEquivalent: "x")
@@ -172,6 +173,21 @@ final class MacApplicationDelegate: NSObject, NSApplicationDelegate, NSWindowDel
         NSApp.mainMenu = menu
         DispatchQueue.main.async { environment.launchWorker() }
     }
+    @objc private func showAbout() {
+        if aboutWindow == nil {
+            let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 620, height: 560),
+                                  styleMask: [.titled, .closable, .resizable], backing: .buffered, defer: false)
+            window.title = "关于 DroidOnDarwin"
+            window.isReleasedWhenClosed = false
+            window.contentViewController = NSHostingController(rootView: AcknowledgementsView())
+            window.contentMinSize = NSSize(width: 480, height: 360)
+            window.setContentSize(NSSize(width: 620, height: 560))
+            window.center()
+            aboutWindow = window
+        }
+        aboutWindow?.makeKeyAndOrderFront(nil)
+    }
+
     func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
         let session = MacEnvironment.shared.session
         if !session.active {
@@ -225,7 +241,7 @@ private struct MacDisplay: NSViewRepresentable {
 }
 
 enum GuestInput {
-    private static let queue = DispatchQueue(label: "app.husk.navigation", qos: .userInteractive)
+    private static let queue = DispatchQueue(label: "app.droidondarwin.navigation", qos: .userInteractive)
     static func send(_ action: Int32, _ x: Int32, _ y: Int32 = 0) {
         queue.async { _ = nce_host_input_send(action, x, y) }
     }

@@ -1,13 +1,13 @@
-# NCE 设备与镜像
+# DroidOnDarwin 设备与镜像
 
-macOS 与 iOS 共用 SwiftUI 的设备列表、详情、添加、设置、启动页与日志页。`DeviceLibrary` 管理设备操作，`SessionModel` 管理会话状态，`DeviceStore` 负责设备记录、迁移、导入、重命名和删除。系统盘只读，每台设备使用独立的数据盘。应用打开后进入设备列表；首次使用建立内置设备记录，首次启动时复制数据盘种子。
+macOS 与 iOS 共用 SwiftUI 的设备列表、详情、添加、设置、启动页与日志页。`DeviceLibrary` 管理设备操作，`SessionModel` 管理会话状态，`DeviceStore` 负责设备记录、导入、重命名和删除。系统盘只读，每台设备使用独立的数据盘。应用打开后进入设备列表；首次使用建立内置设备记录，首次启动时复制数据盘种子。
 
 ## 完整镜像包
 
-通过设备列表的导入入口选择 `.huskimage` 目录包。构建完成后可生成镜像包：
+通过设备列表的导入入口选择 `.droidimage` 目录包。构建完成后可生成镜像包：
 
 ```sh
-python3 scripts/package_native_linux_image.py work/Android-16.huskimage --name 'Android 16'
+python3 scripts/package_native_linux_image.py work/Android-16.droidimage --name 'Android 16'
 ```
 
 目录内固定包含 `manifest.json`、`system.img` 和 `android-data-seed.img`。配置格式为：
@@ -34,7 +34,7 @@ python3 scripts/package_native_linux_image.py work/Android-16.huskimage --name '
 
 设备目录包含 `device.json`、`android-data.img` 和 `Logs/`；导入设备另有 `Images/`。UUID 作为目录名，显示名称不参与路径拼接。导入通过隐藏临时目录完成，中断导入的目录在下次打开设备列表时清理。设备列表持有目录锁，运行会话另持数据目录锁，禁止删除运行中的设备。
 
-Mac 每次运行使用独立宿主进程，停止后可以再次启动。iOS 首版停止后返回列表，再次启动会提示从多任务界面关闭 Husk 后重新打开；后续范围见[iOS 连续重启 Android](../../../.agents/notes/proposed/feature/2026-10-10-iOS连续重启Android.md)。
+Mac 每次运行使用独立宿主进程，停止后可以再次启动。iOS 首版停止后返回列表，再次启动会提示从多任务界面关闭 DroidOnDarwin 后重新打开；后续范围见[iOS 连续重启 Android](../../../.agents/notes/proposed/feature/2026-10-10-iOS连续重启Android.md)。
 
 ## 两端开发检查
 

@@ -2,14 +2,14 @@
 import SwiftUI
 
 // 现有 JIT 助手共用此日志入口。
-enum HuskLog {
+enum AppLog {
     static func log(_ category: String, _ message: String) {
         nce_log("[\(category)] \(message)")
     }
 }
 
 @main
-struct NativeLinuxApp: App {
+struct DroidOnDarwinApp: App {
     @StateObject private var library: DeviceLibrary
     private let runtime: LocalRuntime
     init() {
@@ -17,7 +17,7 @@ struct NativeLinuxApp: App {
         self.runtime = runtime
         let session = SessionModel(runtime: runtime)
         let root = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
-            .appendingPathComponent("NativeLinux", isDirectory: true)
+            .appendingPathComponent("DroidOnDarwin", isDirectory: true)
         _library = StateObject(wrappedValue: DeviceLibrary(root: root, resources: Bundle.main.resourceURL!, session: session))
     }
     var body: some Scene {

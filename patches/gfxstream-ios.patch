@@ -296,7 +296,7 @@ index 9a9038d..4c83757 100644
      return screen_get_window_property_iv(win, SCREEN_PROPERTY_SIZE, size) != -1;
 +#elif defined(GFXSTREAM_IOS)
 +    unsigned width, height;
-+    return huskGfxstreamWindowSize(win, &width, &height);
++    return dodGfxstreamWindowSize(win, &width, &height);
  #else // __APPLE__
      unsigned int width, height;
      return nsGetWinDims(win, &width, &height);
@@ -305,7 +305,7 @@ index 9a9038d..4c83757 100644
      *height = size[1];
      return true;
 +#elif defined(GFXSTREAM_IOS)
-+    return huskGfxstreamWindowSize(win, width, height);
++    return dodGfxstreamWindowSize(win, width, height);
  #else // __APPLE__
      bool ret = nsGetWinDims(win, width, height);
  
