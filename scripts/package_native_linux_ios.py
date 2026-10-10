@@ -15,7 +15,7 @@ ROOT = Path(__file__).resolve().parents[1]
 EXP = ROOT / 'experiments/native-linux'
 INPUT = ROOT / 'work/native-linux-nce/processes'
 OUT = ROOT / 'work/native-linux-nce/ios'
-REVISION = '0.22.0'
+REVISION = '0.23.0'
 
 
 def run(args, timeout=600, **kwargs):
@@ -92,7 +92,7 @@ def main():
     with (OUT / 'detach-test.log').open('w') as log:
         run([OUT / 'detach-test'], stdout=log)
     run(['xcrun', 'clang', '-O2', '-Wall', '-Wextra', '-Werror', '-isysroot', sdk, '-I', EXP, '-I', INPUT,
-         EXP / 'execute-check.c', EXP / 'memory.c', EXP / 'nce.c', EXP / 'entry.S',
+         EXP / 'execute-check.c', EXP / 'memory.c', EXP / 'nce.c', EXP / 'nce-thread.c', EXP / 'entry.S',
          EXP / 'programs.c', INPUT / 'payload.S',
          EXP / 'ios/execute-test.c', '-o', OUT / 'execute-test'])
     with (OUT / 'execute-test.log').open('w') as log:
@@ -114,7 +114,7 @@ def main():
                 UISupportedInterfaceOrientations=['UIInterfaceOrientationPortrait',
                     'UIInterfaceOrientationPortraitUpsideDown',
                     'UIInterfaceOrientationLandscapeLeft', 'UIInterfaceOrientationLandscapeRight'],
-                CFBundleShortVersionString='0.22.0', CFBundleVersion='91')
+                CFBundleShortVersionString='0.23.0', CFBundleVersion='92')
     info['UTExportedTypeDeclarations'] = [{'UTTypeIdentifier': 'app.droidondarwin.image', 'UTTypeConformsTo': ['com.apple.package'], 'UTTypeDescription': 'DroidOnDarwin Image', 'UTTypeTagSpecification': {'public.filename-extension': ['droidimage']}}]
     info['CFBundleURLTypes'] = [{'CFBundleURLName': 'app.droidondarwin.benchmark', 'CFBundleURLSchemes': ['droidondarwin']}]
     plist(OUT / 'Info.plist', info)
@@ -126,7 +126,7 @@ def main():
     # for archive integrity; get-task-allow is needed by the in-app JIT helper.
     plist(OUT / 'DroidOnDarwin.entitlements', {'get-task-allow': True})
     sources = [{'path': str(EXP / name)} for name in
-               ['lkl-main.c', 'lkl-host.c', 'lkl-process-host.c', 'programs.c', 'memory.c', 'execute-check.c', 'compute.c', 'input.c', 'session.c', 'nce.c', 'entry.S',
+               ['lkl-main.c', 'lkl-host.c', 'lkl-process-host.c', 'programs.c', 'memory.c', 'execute-check.c', 'compute.c', 'input.c', 'session.c', 'nce.c', 'nce-thread.c', 'entry.S',
                 'ios/Bridge.c', 'ios/NativeLinuxApp.swift', 'ios/Display.swift', 'ios/JITSettingsView.swift', 'app/DeviceStore.mm', 'macos/Storage.mm', 'graphics/host-graphics.cpp']]
     sources += [{'path': str(path)} for path in sorted((EXP / 'app').glob('*.swift'))]
     sources += [{'path': str(EXP / 'guest.S'), 'compilerFlags': ['-DNATIVE']}]

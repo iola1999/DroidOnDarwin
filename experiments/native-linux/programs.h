@@ -39,6 +39,6 @@ int nce_program_reserved(unsigned long address, unsigned long length);
 /* First program whose complete reserved range ends after address, or count.
  * The generated layout orders all program ranges by increasing address. */
 size_t nce_program_index(uintptr_t address);
-int nce_program_prepare(NceProgram *program, NceState **active);
+int nce_program_prepare(NceProgram *program);
 int nce_program_patch_range(NceProgram *program, NceSegment *segment,
                             size_t offset, size_t size);

@@ -29,7 +29,7 @@ def main():
     inputs = [Path(__file__), Path(__file__).with_name('lkl_smp_patch.py'),
               Path(__file__).with_name('lkl_nce_patch.py'), Path(__file__).with_name('probe_lkl.py'), *sorted((EXP / 'smp').glob('*')),
               *[EXP / name for name in ['lkl-main.c', 'lkl-host.c', 'lkl-bridge.c', 'dispatch-test.c',
-                                       'nce.c', 'nce.h', 'entry.S', 'layout.h']]]
+                                       'nce.c', 'nce-thread.c', 'nce.h', 'nce-thread.h', 'entry.S', 'layout.h']]]
     digest = lambda path: hashlib.sha256(path.read_bytes()).hexdigest()
     input_hashes = {str(p.relative_to(ROOT)): digest(p) for p in inputs}
     source = OUT / 'source'
@@ -102,7 +102,7 @@ def main():
     (OUT / 'main.c').write_text(host_source.replace('    blocking_tests();',
                                                   '    blocking_tests();\n    REQUIRE(kernel_syscall(244, args) == 0);'))
     host = [clang, '-isysroot', sdk, '-O2', '-g', '-Wall', '-Wextra', '-Werror', '-I', OUT, '-I', EXP,
-            OUT / 'main.c', EXP / 'lkl-host.c', EXP / 'nce.c', EXP / 'entry.S']
+            OUT / 'main.c', EXP / 'lkl-host.c', EXP / 'nce.c', EXP / 'nce-thread.c', EXP / 'entry.S']
     run([*host, '-o', OUT / 'probe'])
     run([*host, '-DNCE_IOS_APP', EXP / 'dispatch-test.c', '-o', OUT / 'dispatch-probe'])
     runs, raw = [], ['lkl.so', 'lkl-image.bin', 'build/.config']

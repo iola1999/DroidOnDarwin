@@ -1,6 +1,9 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 #include "nce.h"
+#include "nce-thread.h"
 #include <libkern/OSCacheControl.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 _Static_assert(offsetof(NceState, regs.sp) == 248, "assembly layout");
@@ -11,6 +14,22 @@ _Static_assert(offsetof(NceState, instruction) == 824, "assembly layout");
 _Static_assert(offsetof(NceState, done) == 848, "assembly layout");
 
 extern const unsigned char nce_stub[], nce_stub_end[];
+extern void nce_enter_bound(NceState *);
+
+void nce_enter(NceState *state)
+{
+    int result = nce_thread_bind(state);
+    if (result) {
+        fprintf(stderr, "NCE thread context binding failed: %d\n", result);
+        abort();
+    }
+    nce_enter_bound(state);
+    result = nce_thread_bind(NULL);
+    if (result) {
+        fprintf(stderr, "NCE thread context clearing failed: %d\n", result);
+        abort();
+    }
+}
 
 static int x18_instruction(uint32_t word)
 {
@@ -47,26 +66,26 @@ int nce_write_entry(NceCode stub, uintptr_t entry)
 }
 
 int nce_write_patch(uint32_t *write_address, uintptr_t execute_address,
-                    NceCode stub, NceState **active, uint32_t instruction)
+                    NceCode stub, uint32_t instruction)
 {
-    if (stub.size < 80 || nce_stub_end - nce_stub != 80)
+    unsigned key;
+    if (stub.size < 80 || nce_stub_end - nce_stub != 80 || nce_thread_key(&key))
         return -1;
     memcpy(stub.rw, nce_stub, 80);
-    uint64_t context = (uintptr_t)active;
+    uint32_t *words = (void *)stub.rw;
+    words[2] = 0xf9400210u | (key << 10);  // ldr x16, [x16, #key * 8]
     uint64_t resume = (uintptr_t)stub.rx + 40;
     uint64_t gate = (uintptr_t)nce_gate;
-    memcpy(stub.rw + 48, &context, 8);
     memcpy(stub.rw + 56, &resume, 8);
     memcpy(stub.rw + 64, &instruction, 4);
     memcpy(stub.rw + 72, &gate, 8);
     unsigned reg = instruction & 31;
     if ((instruction & 0xffffffe0) == 0xd53bd040 && reg != 18 && reg != 31) {
-        // MRS changes only its destination. The active slot follows Linux task
-        // switches, so these loads need neither guest stack nor host dispatch.
+        // Only the destination changes. The TSD slot belongs to this pthread,
+        // so shared code needs neither guest stack nor host dispatch for TLS.
         _Static_assert(offsetof(NceState, tls) % 8 == 0 && offsetof(NceState, tls) < 32768, "TLS load offset");
-        uint32_t *words = (void *)stub.rw;
-        words[0] = 0x58000180u | reg;  // ldr Xt, [pc + 48]
-        words[1] = 0xf9400000u | (reg << 5) | reg;
+        words[0] = 0xd53bd060u | reg;  // mrs Xt, tpidrro_el0
+        words[1] = 0xf9400000u | (key << 10) | (reg << 5) | reg;
         words[2] = 0xf9400000u | ((offsetof(NceState, tls) / 8) << 10) | (reg << 5) | reg;
         if (nce_write_branch(&words[3], (uintptr_t)stub.rx + 12, execute_address + 4))
             return -1;
@@ -76,8 +95,7 @@ int nce_write_patch(uint32_t *write_address, uintptr_t execute_address,
     return nce_write_branch(write_address, execute_address, (uintptr_t)stub.rx);
 }
 
-int nce_prepare_shared(NceCode code, NceState *s, NceState **active,
-                       const void *bytes, size_t size, size_t entry)
+int nce_prepare(NceCode code, NceState *s, const void *bytes, size_t size, size_t entry)
 {
     size_t cursor = (size + 15) & ~(size_t)15;
     if (!code.rw || !code.rx || (size & 3) || (entry & 3) || entry >= size ||
@@ -103,18 +121,12 @@ int nce_prepare_shared(NceCode code, NceState *s, NceState **active,
         if (cursor + 80 > code.size)
             return -1;
         if (nce_write_patch((void *)(code.rw + pos), (uintptr_t)code.rx + pos,
-                            (NceCode){code.rw + cursor, code.rx + cursor, 80}, active, word))
+                            (NceCode){code.rw + cursor, code.rx + cursor, 80}, word))
             return -1;
         cursor += 80;
     }
     nce_sync_code(code);
     return 0;
-}
-
-int nce_prepare(NceCode code, NceState *s, const void *bytes, size_t size, size_t entry)
-{
-    s->self = s;
-    return nce_prepare_shared(code, s, &s->self, bytes, size, entry);
 }
 
 NceState *nce_dispatch(NceState *s)

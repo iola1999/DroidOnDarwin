@@ -58,7 +58,7 @@ def main():
     mac_sdk = subprocess.check_output(["xcrun", "--sdk", "macosx", "--show-sdk-path"], text=True).strip()
     mac_flags = [*common, "-isysroot", mac_sdk]
     run([clang, *mac_flags, "-DNATIVE", "-c", SOURCE / "guest.S", "-o", OUT / "native.o"])
-    files = [SOURCE / s for s in ("main.c", "nce.c", "probe.c", "entry.S")]
+    files = [SOURCE / s for s in ("main.c", "nce.c", "nce-thread.c", "probe.c", "entry.S")]
     run([clang, *mac_flags, *files, OUT / "native.o", "-o", OUT / "nce-probe"])
     with (OUT / "results.jsonl").open("w") as output:
         run([OUT / "nce-probe"], stdout=output)
@@ -67,7 +67,7 @@ def main():
         raise SystemExit("Probe did not complete")
     sdk = subprocess.check_output(["xcrun", "--sdk", "iphoneos", "--show-sdk-path"], text=True).strip()
     ios = []
-    for source in ("nce.c", "probe.c", "entry.S", "guest.S"):
+    for source in ("nce.c", "nce-thread.c", "probe.c", "entry.S", "guest.S"):
         obj = OUT / f"ios-{source}.o"
         run([clang, *common, "-target", "arm64-apple-ios17.0", "-isysroot", sdk,
              *(["-DNATIVE"] if source == "guest.S" else []), "-c", SOURCE / source, "-o", obj])
@@ -83,7 +83,7 @@ def main():
         summary["benchmarks"].append({"syscall_interval": interval, "native_ms": native / 1e6,
                                       "nce_ms": nce / 1e6, "nce_over_native": nce / native,
                                       "extra_ns_per_call": (nce - native) / calls if calls else None})
-    inputs = [SOURCE / p for p in ("entry.S", "guest.S", "main.c", "nce.c", "nce.h", "guest-registers.h", "probe.c", "probe.h")]
+    inputs = [SOURCE / p for p in ("entry.S", "guest.S", "main.c", "nce.c", "nce-thread.c", "nce.h", "nce-thread.h", "guest-registers.h", "probe.c", "probe.h")]
     inputs.append(Path(__file__).resolve())
     summary["input_sha256"] = {str(p.relative_to(ROOT)): hashlib.sha256(p.read_bytes()).hexdigest()
                                for p in inputs}

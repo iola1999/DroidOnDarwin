@@ -250,7 +250,7 @@ def main():
     package_elf(OUT / "lkl.so")
     if PROCESS:
         build_userspace(OUT, llvm, art_compiler=arguments.art_compiler, art_oat=arguments.art_oat, art_desktop=arguments.art_desktop, art_boot=arguments.art_boot, art_boot_image=arguments.art_boot_image)
-    inputs = [EXPERIMENT / name for name in ("lkl-main.c", "lkl-host.c", "nce.c", "entry.S")]
+    inputs = [EXPERIMENT / name for name in ("lkl-main.c", "lkl-host.c", "nce.c", "nce-thread.c", "entry.S")]
     flags = ["-O2", "-g", "-Wall", "-Wextra", "-Werror", "-I", OUT, "-I", EXPERIMENT]
     if PROCESS:
         flags += ["-DNCE_PROCESS"]
@@ -412,7 +412,7 @@ def main():
         manifest["window_results"] = window_results
         manifest["graphics_libraries_sha256"] = {str(p): hashlib.sha256(p.read_bytes()).hexdigest() for p in graphics_files}
         manifest["ios_status"] = "core compiled for iOS; graphics integration and device execution pending"
-    sources = [*inputs, EXPERIMENT / "lkl-bridge.c", EXPERIMENT / "nce.h", EXPERIMENT / "guest-registers.h", EXPERIMENT / "guest.S", Path(__file__).resolve()]
+    sources = [*inputs, EXPERIMENT / "lkl-bridge.c", EXPERIMENT / "nce.h", EXPERIMENT / "nce-thread.h", EXPERIMENT / "guest-registers.h", EXPERIMENT / "guest.S", Path(__file__).resolve()]
     if PROCESS:
         manifest["dispatch_results"] = dispatch_results
         sources += [EXPERIMENT / "memory.h", EXPERIMENT / "layout.h", EXPERIMENT / "execute-check.h", EXPERIMENT / "input.h", EXPERIMENT / "session.h", Path(__file__).with_name("lkl_nce_patch.py"),

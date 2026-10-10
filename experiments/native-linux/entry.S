@@ -1,8 +1,8 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 .text
 .p2align 2
-.globl _nce_enter
-_nce_enter:
+.globl _nce_enter_bound
+_nce_enter_bound:
     stp x19, x20, [sp, #-176]!
     stp x21, x22, [sp, #16]
     stp x23, x24, [sp, #32]
@@ -158,7 +158,7 @@ Lfinish:
 .globl _nce_stub, _nce_stub_end
 _nce_stub:
     stp x16, x17, [sp, #-16]!
-    ldr x16, 1f
+    mrs x16, tpidrro_el0
     ldr x16, [x16]
     str x30, [x16, #240]
     ldr x17, 2f
@@ -169,7 +169,7 @@ _nce_stub:
     br x17
     ldp x16, x17, [sp], #16
     b .
-1:  .quad 0
+    .quad 0 // Preserve the shared patch layout; the TSD key is in the LDR.
 2:  .quad 0
 3:  .word 0
     nop

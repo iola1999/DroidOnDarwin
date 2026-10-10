@@ -119,7 +119,7 @@ def main():
              f'-mmacosx-version-min={minimum}', '-I', INPUT, '-I', EXP,
              '-DNCE_PROCESS', '-DNCE_GRAPHICS', '-DNCE_IOS_APP']
     sources = [EXP / name for name in ['lkl-main.c', 'lkl-host.c', 'lkl-process-host.c',
-               'nce.c', 'entry.S', 'programs.c', 'memory.c', 'execute-check.c', 'compute.c', 'input.c', 'session.c']]
+               'nce.c', 'nce-thread.c', 'entry.S', 'programs.c', 'memory.c', 'execute-check.c', 'compute.c', 'input.c', 'session.c']]
     sources += [INPUT / 'payload.S', EXP / 'guest.S', EXP / 'graphics/host-graphics.cpp',
                 *[EXP / 'macos' / name for name in ('Display.mm', 'Storage.mm')]]
     sources += [EXP / "app/DeviceStore.mm", EXP / "ios/Bridge.c"]
@@ -159,10 +159,10 @@ def main():
             run(['sips', '-z', size * scale, size * scale, source,
                  '--out', iconset / f'icon_{size}x{size}{suffix}.png'], stdout=subprocess.DEVNULL)
     run(['iconutil', '-c', 'icns', iconset, '-o', resources / 'AppIcon.icns'])
-    build = '0.22.0-Mac-' + datetime.now().astimezone().strftime('%Y%m%d-%H%M%S')
+    build = '0.23.0-Mac-' + datetime.now().astimezone().strftime('%Y%m%d-%H%M%S')
     info = {'CFBundleIdentifier': 'app.droidondarwin.mac', 'CFBundleExecutable': executable.name,
             'CFBundleName': 'DroidOnDarwin', 'CFBundleDisplayName': 'DroidOnDarwin', 'CFBundlePackageType': 'APPL',
-            'CFBundleShortVersionString': '0.22.0', 'CFBundleVersion': '11', 'DroidOnDarwinBuildID': build,
+            'CFBundleShortVersionString': '0.23.0', 'CFBundleVersion': '12', 'DroidOnDarwinBuildID': build,
             'DroidOnDarwinBenchmarkConfigurationQuery': True,
             'CFBundleIconFile': 'AppIcon', 'LSMinimumSystemVersion': minimum,
             'LSArchitecturePriority': ['arm64'], 'NSHighResolutionCapable': True,

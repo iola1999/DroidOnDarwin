@@ -66,7 +66,7 @@ def main():
     checks['benchmark'] = run([benchmark_test], capture_output=True, text=True, timeout=15).stdout.strip()
     execute = OUT / 'signed-execute-test'
     run(['xcrun', 'clang', '-O2', '-Wall', '-Wextra', '-Werror', '-I', EXP, '-I', INPUT,
-         *[EXP / name for name in ['execute-check.c', 'memory.c', 'nce.c', 'entry.S', 'programs.c']],
+         *[EXP / name for name in ['execute-check.c', 'memory.c', 'nce.c', 'nce-thread.c', 'entry.S', 'programs.c']],
          INPUT / 'payload.S', EXP / 'ios/execute-test.c', '-o', execute])
     entitlement = OUT / 'execution-test.plist'
     entitlement.write_bytes(plistlib.dumps({'com.apple.security.cs.allow-unsigned-executable-memory': True}))

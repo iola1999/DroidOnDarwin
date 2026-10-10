@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 #include "art-aot-targets.h"
 #include "nce.h"
+#include "nce-thread.h"
 #include "memory.h"
 #include "layout.h"
 #include "lkl-mmu-profile.h"
@@ -60,7 +61,6 @@ static unsigned long inherited_preempt_blocks;
 static volatile sig_atomic_t logged_redirect, logged_stack_restore;
 static struct sigaction old_preempt;
 
-static NceState *active;
 static NceCode code;
 static unsigned char *ram;
 static unsigned long code_copies, code_copy_bytes, data_maps, data_map_bytes, revocations;
@@ -456,7 +456,7 @@ static void fault(int signal, siginfo_t *info, void *opaque)
     uintptr_t address = (uintptr_t)info->si_addr;
     int is_write = (u->uc_mcontext->__es.__esr & (1u << 6)) != 0;
     Process *p = this_process;
-    if (p && active == &p->state) {
+    if (p) {
         if (signal != SIGUSR2 && pc == (uintptr_t)nce_restore_stack) {
             /* The guest may legally unmap its own stack before SYS_exit.
              * Signal return can restore every register without stack scratch. */
@@ -505,13 +505,12 @@ static void fault(int signal, siginfo_t *info, void *opaque)
     if (signal == SIGUSR2)
         return;
     fprintf(stderr, "N2 fatal signal=%d address=%p pc=%lx esr=%x active=%p\n",
-            signal, info->si_addr, pc, u->uc_mcontext->__es.__esr, (void *)active);
+            signal, info->si_addr, pc, u->uc_mcontext->__es.__esr, (void *)p);
     _Exit(128 + signal);
 }
 
 static void user_switch(void *state)
 {
-    active = state;
     REQUIRE(pthread_mutex_lock(&target_mutex) == 0);
     target_thread = state ? ((Process *)state)->thread : NULL;
     REQUIRE(pthread_mutex_unlock(&target_mutex) == 0);
@@ -523,6 +522,8 @@ void nce_process_thread_exit(void)
     if (target_thread == pthread_self())
         target_thread = NULL;
     REQUIRE(pthread_mutex_unlock(&target_mutex) == 0);
+    if (this_process)
+        REQUIRE(nce_thread_bind(NULL) == 0);
     this_process = NULL;
 }
 
@@ -634,7 +635,6 @@ static void user_run(void *opaque)
         REQUIRE(run_syscall(222, args) == args[0]);
         state->regs.sp = args[0] + args[1];
     }
-    active = state;
     if (process->exec_path) {
         uintptr_t *stack = (void *)(state->regs.sp - 512);
         REQUIRE(page_fault((uintptr_t)stack, 1 | NCE_FAULT_DIRECT) == 0);
@@ -684,7 +684,7 @@ unsigned long nce_process_setup(void)
     user_base = nce_memory_user_base();
     dynamic_cache = (NceSegment){.size = NCE_EXEC_SIZE, .code = nce_memory_dynamic_code()};
     for (size_t i = 0; i < nce_program_count; ++i) {
-        REQUIRE(nce_program_prepare(&nce_programs[i], &active) == 0);
+        REQUIRE(nce_program_prepare(&nce_programs[i]) == 0);
         NceProgram *p = &nce_programs[i];
         uintptr_t stub = p->base + p->span, end = stub + p->stub_size;
         REQUIRE(nce_program_index(p->base) == i && nce_program_index(end) == i + 1);
@@ -1243,7 +1243,7 @@ static void process_regressions(long (*host_syscall)(long, long *))
         ++allocated;
         state->syscall = syscall_from_guest;
         state->regs.x[21] = USER_BASE + NCE_MMAP_OFFSET;
-        REQUIRE(nce_prepare_shared(code, state, &active, guest_image, sizeof(guest_image), GUEST_LINUX_PROCESS) == 0);
+        REQUIRE(nce_prepare(code, state, guest_image, sizeof(guest_image), GUEST_LINUX_PROCESS) == 0);
         args[0] = (long)state;
         args[1] = 0;
         long pid = host_syscall(246, args);

@@ -56,7 +56,7 @@ int nce_program_reserved(unsigned long address, unsigned long length)
     return i < nce_program_count && address + length > nce_programs[i].base + nce_programs[i].span;
 }
 
-int nce_program_prepare(NceProgram *p, NceState **active)
+int nce_program_prepare(NceProgram *p)
 {
     if (p > nce_programs && p->base < p[-1].base + p[-1].span + p[-1].stub_size)
         return -1;
@@ -72,7 +72,7 @@ int nce_program_prepare(NceProgram *p, NceState **active)
         size_t pos = 16 + i * 80;
         NceCode stub = {p->stubs.rw + pos, p->stubs.rx + pos, 80};
         uint32_t branch;
-        if (nce_write_patch(&branch, p->base + patch->address, stub, active, patch->instruction))
+        if (nce_write_patch(&branch, p->base + patch->address, stub, patch->instruction))
             return -1;
     }
     nce_sync_code(p->stubs);
