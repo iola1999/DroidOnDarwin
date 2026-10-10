@@ -911,7 +911,7 @@ def dash(out, llvm, libc, runtime, resource):
     return out / 'dash.elf'
 
 
-def build(out, llvm, art_compiler=False, art_oat=None, art_desktop=False):
+def build(out, llvm, art_compiler=False, art_oat=None, art_desktop=False, art_boot=None):
     libc = musl(llvm)
     runtime = compiler_runtime(llvm, libc)
     with (WORK / 'musl-build/shared-build.log').open('w') as log:
@@ -993,6 +993,15 @@ def build(out, llvm, art_compiler=False, art_oat=None, art_desktop=False):
     prepare_android_desktop()
     assets = android_data(out) + [native_library_zip(out)]
     art_aot.generate_header(out / 'art-aot-targets.h')
+    if art_compiler or art_boot:
+        boot_plan = art_aot.boot_plan(assets)
+        (out / 'art-boot-plan.json').write_text(json.dumps(boot_plan, indent=2) + '\n')
+    if art_boot:
+        current = json.loads((WORK / 'android/art-build/manifest.json').read_text())['inputs']
+        art_aot.validate(art_boot, current, boot_plan)
+        programs.append(('/data/nce/boot/arm64/boot.oat', art_boot / 'boot.oat'))
+        assets += [('/data/nce/boot/arm64/' + name, art_boot / name)
+                   for name in ('boot.art', 'boot.vdex')]
     if art_compiler or art_oat:
         aot_plan = art_aot.plan(assets, desktop=art_desktop)
         (out / 'art-aot-plan.json').write_text(json.dumps(aot_plan, indent=2) + '\n')
@@ -1134,7 +1143,7 @@ def build(out, llvm, art_compiler=False, art_oat=None, art_desktop=False):
         if cached and cached['sha256'] == digest:
             elf = dict(cached['layout'], data=data)
         else:
-            elf = inspect(path, shared=name.endswith(('.so', '.odex')), function_symbols=name.endswith('.odex') or name.startswith(('/system/', '/vendor/', '/apex/', '/system_ext/', '/product/')) or name in ('/bionic-test', '/art-test', '/art-heap-test'), nce_oat=name.endswith('.odex'))
+            elf = inspect(path, shared=name.endswith(('.so', '.odex', '.oat')), function_symbols=name.endswith(('.odex', '.oat')) or name.startswith(('/system/', '/vendor/', '/apex/', '/system_ext/', '/product/')) or name in ('/bionic-test', '/art-test', '/art-heap-test'), nce_oat=name.endswith(('.odex', '.oat')))
             dis = elf_disassembly(llvm, path, elf)
             check_x18_disassembly(path, elf, dis)
             cache['files'][name] = {'sha256': digest, 'layout': {k: v for k, v in elf.items() if k != 'data'}}

@@ -44,6 +44,8 @@ def plan(assets, desktop=False):
 
 
 def file_names(current_plan):
+    if current_plan.get('kind') == 'boot':
+        return {'boot.art', 'boot.oat', 'boot.vdex'}
     return {target['name'] + '.' + extension
             for target in current_plan['targets'] for extension in ('odex', 'vdex')}
 
@@ -54,12 +56,14 @@ def write_manifest(directory, art_inputs, current_plan, compiler_heap_bases):
     result = {'format': 1, 'art_inputs': art_inputs, 'plan': current_plan,
               'compiler_heap_bases': sorted(set(compiler_heap_bases)),
               'files': {name: digest(directory / name) for name in sorted(file_names(current_plan))}}
-    (directory / 'manifest.json').write_text(json.dumps(result, indent=2) + '\n')
+    name = 'boot-manifest.json' if current_plan.get('kind') == 'boot' else 'manifest.json'
+    (directory / name).write_text(json.dumps(result, indent=2) + '\n')
     return result
 
 
 def validate(directory, art_inputs, current_plan):
-    manifest = json.loads((directory / 'manifest.json').read_text())
+    name = 'boot-manifest.json' if current_plan.get('kind') == 'boot' else 'manifest.json'
+    manifest = json.loads((directory / name).read_text())
     if manifest.get('format') != 1:
         raise RuntimeError('Unsupported AOT manifest format; regenerate the artifact')
     compiler_inputs = {key: value for key, value in manifest['art_inputs'].items()
@@ -73,6 +77,15 @@ def validate(directory, art_inputs, current_plan):
         if digest(directory / name) != expected:
             raise RuntimeError('AOT artifact checksum mismatch: ' + name)
     return manifest
+
+
+def boot_plan(assets):
+    return {'kind': 'boot',
+            'input_files': {name: digest(path) for name, path in assets if name.endswith('.jar')},
+            'recipe': {str(path.relative_to(ROOT)): digest(path) for path in (
+                Path(__file__).resolve(), ROOT / 'experiments/native-linux/userspace/art-compiler-test.c')},
+            'compiler_settings': {'filter': 'verify', 'single_image': True,
+                                  'image_offset': 2097152, 'max_heap_mib': 256}}
 
 
 def generate_header(path):

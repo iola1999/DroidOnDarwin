@@ -676,8 +676,9 @@ int main(void)
     bool inlining_test = fgets(mode, sizeof(mode), stdin) && !strncmp(mode, "inline:", 7);
     bool inlining_enabled = inlining_test && atoi(mode + 7) != 0;
     bool verified_oat_test = !strcmp(mode, "oat-verify\n");
-    bool shifted_heap = !strcmp(mode, "oat-shifted\n");
-    bool aot_test = shifted_heap || !strcmp(mode, "oat-speed\n");
+    bool boot_image_test = !strcmp(mode, "boot-image\n") || !strcmp(mode, "boot-shifted\n");
+    bool shifted_heap = !strcmp(mode, "oat-shifted\n") || !strcmp(mode, "boot-shifted\n");
+    bool aot_test = !strcmp(mode, "oat-shifted\n") || !strcmp(mode, "oat-speed\n");
     const size_t reservation_size = 64 * 1024 * 1024;
     void *reservation = NULL;
     if (shifted_heap) {
@@ -726,7 +727,7 @@ int main(void)
         {.optionString = "-Xcompiler-option"},
         {.optionString = inlining_enabled ? "--inline-max-code-units=32" : "--inline-max-code-units=0"},
         {.optionString = "-Xnoimage-dex2oat"},
-        {.optionString = "-Ximage:/data/no-boot-image.art"},
+        {.optionString = boot_image_test ? "-Ximage:/data/nce/boot/boot.art" : "-Ximage:/data/no-boot-image.art"},
         {.optionString = "-Xms8m"},
         {.optionString = "-Xmx64m"},
         {.optionString = "-Xbootclasspath:/apex/com.android.art/javalib/core-oj.jar:"
@@ -749,6 +750,15 @@ int main(void)
     fflush(stdout);
     if (create(&vm, (void **)&env, &args) != JNI_OK || !vm || !env)
         return 5;
+    if (boot_image_test) {
+        uintptr_t *base = dlsym(library, "nce_art_reference_base");
+        bool (*check_image)(JNIEnv *, const char *) = dlsym(library, "nce_art_check_boot_image");
+        if (!base || !*base || !check_image || !check_image(env, "/data/nce/boot/arm64/boot.art"))
+            return 113;
+        printf("{\"phase\":\"art_boot_runtime_heap\",\"shifted\":%s,\"reference_base\":%" PRIuPTR "}\n",
+               shifted_heap ? "true" : "false", *base);
+        puts("{\"test\":\"android_art_boot_image_loaded\",\"passed\":true}");
+    }
     if (aot_test) {
         uintptr_t *base = dlsym(library, "nce_art_reference_base");
         if (!base || !*base)

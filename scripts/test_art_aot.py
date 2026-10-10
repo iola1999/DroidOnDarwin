@@ -54,6 +54,20 @@ class ArtifactTests(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, 'heap address'):
             art_aot.write_manifest(self.directory, self.inputs, self.plan, [])
 
+    def test_boot_image_components_are_checked_independently_of_app_artifacts(self):
+        plan = {'kind': 'boot', 'input_files': self.plan['input_files'], 'recipe': self.plan['recipe']}
+        for name in art_aot.file_names(plan):
+            (self.directory / name).write_bytes(b'boot')
+        expected = art_aot.write_manifest(self.directory, self.inputs, plan, [123])
+        self.assertEqual(art_aot.validate(self.directory, self.inputs, plan), expected)
+        self.assertEqual(art_aot.validate(self.directory, self.inputs, self.plan), self.manifest)
+        for name in ('boot.art', 'boot.oat', 'boot.vdex'):
+            with self.subTest(file=name):
+                (self.directory / name).write_bytes(b'changed')
+                with self.assertRaisesRegex(RuntimeError, 'checksum'):
+                    art_aot.validate(self.directory, self.inputs, plan)
+                (self.directory / name).write_bytes(b'boot')
+
 
 class LiteralPoolTests(unittest.TestCase):
     def words(self, *values):

@@ -1,0 +1,926 @@
+--- a/compiler/optimizing/code_generator_arm64.cc
++++ b/compiler/optimizing/code_generator_arm64.cc
+@@ -5724,7 +5724,7 @@
+     gc::Heap* heap = Runtime::Current()->GetHeap();
+     DCHECK(!heap->GetBootImageSpaces().empty());
+     const uint8_t* address = heap->GetBootImageSpaces()[0]->Begin() + boot_image_reference;
+-    __ Ldr(reg.W(), DeduplicateBootImageAddressLiteral(reinterpret_cast<uintptr_t>(address)));
++    __ Ldr(reg.X(), DeduplicateBootImageAddressLiteral(reinterpret_cast<uintptr_t>(address)));
+   }
+ }
+ 
+@@ -6093,9 +6093,9 @@
+     }
+     case HLoadClass::LoadKind::kJitBootImageAddress: {
+       DCHECK_EQ(read_barrier_option, kWithoutReadBarrier);
+-      uint32_t address = reinterpret_cast32<uint32_t>(cls->GetClass().Get());
+-      DCHECK_NE(address, 0u);
+-      __ Ldr(out.W(), codegen_->DeduplicateBootImageAddressLiteral(address));
++      uint32_t reference = nce_art_encode_reference(cls->GetClass().Get());
++      DCHECK_NE(reference, 0u);
++      __ Mov(out.W(), reference);
+       break;
+     }
+     case HLoadClass::LoadKind::kJitTableAddress: {
+@@ -6350,9 +6350,9 @@
+       return;
+     }
+     case HLoadString::LoadKind::kJitBootImageAddress: {
+-      uint32_t address = reinterpret_cast32<uint32_t>(load->GetString().Get());
+-      DCHECK_NE(address, 0u);
+-      __ Ldr(out.W(), codegen_->DeduplicateBootImageAddressLiteral(address));
++      uint32_t reference = nce_art_encode_reference(load->GetString().Get());
++      DCHECK_NE(reference, 0u);
++      __ Mov(out.W(), reference);
+       return;
+     }
+     case HLoadString::LoadKind::kJitTableAddress: {
+--- a/compiler/optimizing/code_generator_arm64.h
++++ b/compiler/optimizing/code_generator_arm64.h
+@@ -938,7 +938,7 @@
+   // the associated patch for AOT or slow path for JIT.
+   void EmitBakerReadBarrierCbnz(uint32_t custom_data);
+ 
+-  vixl::aarch64::Literal<uint32_t>* DeduplicateBootImageAddressLiteral(uint64_t address) {
++  vixl::aarch64::Literal<uint64_t>* DeduplicateBootImageAddressLiteral(uint64_t address) {
+     return jit_patches_.DeduplicateBootImageAddressLiteral(address);
+   }
+   vixl::aarch64::Literal<JitRootAddress>* DeduplicateJitStringLiteral(const DexFile& dex_file,
+--- a/compiler/optimizing/jit_patches_arm64.cc
++++ b/compiler/optimizing/jit_patches_arm64.cc
+@@ -76,9 +76,9 @@
+   }
+ }
+ 
+-vixl::aarch64::Literal<uint32_t>* JitPatchesARM64::DeduplicateBootImageAddressLiteral(
++vixl::aarch64::Literal<uint64_t>* JitPatchesARM64::DeduplicateBootImageAddressLiteral(
+     uint64_t address) {
+-  return DeduplicateUint32Literal(dchecked_integral_cast<uint32_t>(address));
++  return DeduplicateUint64Literal(address);
+ }
+ 
+ vixl::aarch64::Literal<JitRootAddress>* JitPatchesARM64::DeduplicateJitStringLiteral(
+--- a/compiler/optimizing/jit_patches_arm64.h
++++ b/compiler/optimizing/jit_patches_arm64.h
+@@ -84,7 +84,7 @@
+ 
+   vixl::aarch64::Literal<uint32_t>* DeduplicateUint32Literal(uint32_t value);
+   vixl::aarch64::Literal<uint64_t>* DeduplicateUint64Literal(uint64_t value);
+-  vixl::aarch64::Literal<uint32_t>* DeduplicateBootImageAddressLiteral(uint64_t address);
++  vixl::aarch64::Literal<uint64_t>* DeduplicateBootImageAddressLiteral(uint64_t address);
+   vixl::aarch64::Literal<JitRootAddress>* DeduplicateJitStringLiteral(
+       const DexFile& dex_file,
+       dex::StringIndex string_index,
+--- a/compiler/optimizing/optimizing_compiler.cc
++++ b/compiler/optimizing/optimizing_compiler.cc
+@@ -926,6 +926,7 @@
+   }
+   void VisitLoadClass(HLoadClass* load) override {
+     if (load->GetLoadKind() != HLoadClass::LoadKind::kJitTableAddress &&
++        load->GetLoadKind() != HLoadClass::LoadKind::kJitBootImageAddress &&
+         load->GetLoadKind() != HLoadClass::LoadKind::kReferrersClass &&
+         load->GetLoadKind() != HLoadClass::LoadKind::kBssEntry &&
+         load->GetLoadKind() != HLoadClass::LoadKind::kBssEntryPublic &&
+@@ -938,6 +939,7 @@
+   }
+   void VisitLoadString(HLoadString* load) override {
+     if (load->GetLoadKind() != HLoadString::LoadKind::kJitTableAddress &&
++        load->GetLoadKind() != HLoadString::LoadKind::kJitBootImageAddress &&
+         load->GetLoadKind() != HLoadString::LoadKind::kBssEntry &&
+         load->GetLoadKind() != HLoadString::LoadKind::kRuntimeCall) RejectGraph(load);
+   }
+--- a/dex2oat/driver/compiler_driver.cc
++++ b/dex2oat/driver/compiler_driver.cc
+@@ -946,7 +946,7 @@
+   bool operator()(ObjPtr<mirror::Class> c) override REQUIRES_SHARED(Locks::mutator_lock_) {
+     // Filter out classes from boot images we're compiling against.
+     // These have been processed when we compiled those boot images.
+-    if (reinterpret_cast32<uint32_t>(c.Ptr()) - boot_images_start_ < boot_images_size_) {
++    if (reinterpret_cast<uintptr_t>(c.Ptr()) - boot_images_start_ < boot_images_size_) {
+       DCHECK(Runtime::Current()->GetHeap()->ObjectIsInBootImageSpace(c));
+       return true;
+     }
+@@ -1059,7 +1059,7 @@
+   SafeMap<const DexFile*, DexFileRecord> dex_file_records_;
+   std::vector<ObjPtr<mirror::Class>> unprocessed_classes_;
+   std::vector<ExceptionTypeReference> exception_types_to_resolve_;
+-  const uint32_t boot_images_start_;
++  const uintptr_t boot_images_start_;
+   const uint32_t boot_images_size_;
+ };
+ 
+--- a/dex2oat/linker/image_writer.cc
++++ b/dex2oat/linker/image_writer.cc
+@@ -701,7 +701,7 @@
+       LOG(FATAL) << "UNREACHABLE";
+       UNREACHABLE();
+   }
+-  object->SetLockWord(LockWord::FromForwardingAddress(bin_slot.Uint32Value()),
++  object->SetLockWord(LockWord::FromForwardingOffset(bin_slot.Uint32Value()),
+                       /*as_volatile=*/ false);
+   DCHECK_EQ(object->GetLockWord(false).ReadBarrierState(), 0u);
+   DCHECK(IsImageBinSlotAssigned(object));
+@@ -834,7 +834,7 @@
+     return false;
+   } else if (kIsDebugBuild) {
+     LockWord lock_word = object->GetLockWord(false);
+-    size_t offset = lock_word.ForwardingAddress();
++    size_t offset = lock_word.ForwardingOffset();
+     BinSlot bin_slot(offset);
+     size_t oat_index = GetOatIndex(object);
+     const ImageInfo& image_info = GetImageInfo(oat_index);
+@@ -849,7 +849,7 @@
+   DCHECK(IsImageBinSlotAssigned(object));
+ 
+   LockWord lock_word = object->GetLockWord(false);
+-  size_t offset = lock_word.ForwardingAddress();  // TODO: ForwardingAddress should be uint32_t
++  size_t offset = lock_word.ForwardingOffset();
+   DCHECK_LE(offset, std::numeric_limits<uint32_t>::max());
+ 
+   BinSlot bin_slot(static_cast<uint32_t>(offset));
+@@ -864,7 +864,7 @@
+   BinSlot old_bin_slot = GetImageBinSlot(object, oat_index);
+   DCHECK_LT(new_offset, GetImageInfo(oat_index).GetBinSlotSize(old_bin_slot.GetBin()));
+   BinSlot new_bin_slot(old_bin_slot.GetBin(), new_offset);
+-  object->SetLockWord(LockWord::FromForwardingAddress(new_bin_slot.Uint32Value()),
++  object->SetLockWord(LockWord::FromForwardingOffset(new_bin_slot.Uint32Value()),
+                       /*as_volatile=*/ false);
+   DCHECK_EQ(object->GetLockWord(false).ReadBarrierState(), 0u);
+   DCHECK(IsImageBinSlotAssigned(object));
+@@ -2629,7 +2629,7 @@
+   for (ImageInfo& image_info : image_infos_) {
+     auto image_roots = DecodeGlobalWithoutRB<mirror::ObjectArray<mirror::Object>>(
+         vm, image_roots_[oat_index]);
+-    image_info.image_roots_address_ = PointerToLowMemUInt32(GetImageAddress(image_roots.Ptr()));
++    image_info.image_roots_address_ = reinterpret_cast<uintptr_t>(GetImageAddress(image_roots.Ptr()));
+     ++oat_index;
+   }
+ 
+@@ -2842,15 +2842,15 @@
+   new (image_info.image_.Begin()) ImageHeader(
+       image_reservation_size,
+       current_component_count,
+-      PointerToLowMemUInt32(image_info.image_begin_),
++      reinterpret_cast<uintptr_t>(image_info.image_begin_),
+       image_end,
+       sections.data(),
+       image_info.image_roots_address_,
+       image_info.oat_checksum_,
+-      PointerToLowMemUInt32(oat_file_begin),
+-      PointerToLowMemUInt32(image_info.oat_data_begin_),
+-      PointerToLowMemUInt32(oat_data_end),
+-      PointerToLowMemUInt32(oat_file_end),
++      reinterpret_cast<uintptr_t>(oat_file_begin),
++      reinterpret_cast<uintptr_t>(image_info.oat_data_begin_),
++      reinterpret_cast<uintptr_t>(oat_data_end),
++      reinterpret_cast<uintptr_t>(oat_file_end),
+       boot_image_begin_,
+       boot_image_size_,
+       boot_image_components,
+@@ -3014,7 +3014,7 @@
+     ArtMethod* method = image_methods_[i];
+     CHECK(method != nullptr);
+     CopyAndFixupPointer(
+-        reinterpret_cast<void**>(&image_header->image_methods_[i]), method, PointerSize::k32);
++        reinterpret_cast<void**>(&image_header->image_methods_[i]), method, PointerSize::k64);
+   }
+   FixupRootVisitor root_visitor(this);
+ 
+--- a/dex2oat/linker/image_writer.h
++++ b/dex2oat/linker/image_writer.h
+@@ -341,7 +341,7 @@
+ 
+     // Offset to the free space in image_, initially size of image header.
+     size_t image_end_ = RoundUp(sizeof(ImageHeader), kObjectAlignment);
+-    uint32_t image_roots_address_ = 0;  // The image roots address in the image.
++    uint64_t image_roots_address_ = 0;  // The image roots address in the image.
+     size_t image_offset_ = 0;  // Offset of this image from the start of the first image.
+ 
+     // Image size is the *address space* covered by this image. As the live bitmap is aligned
+@@ -647,7 +647,7 @@
+   bool mark_memory_shared_methods_;
+ 
+   // Cached boot image begin and size. This includes heap, native objects and oat files.
+-  const uint32_t boot_image_begin_;
++  const uint64_t boot_image_begin_;
+   const uint32_t boot_image_size_;
+ 
+   // Beginning target image address for the first image.
+--- a/runtime/gc/heap.cc
++++ b/runtime/gc/heap.cc
+@@ -247,24 +247,10 @@
+       CHECK_EQ(image_spaces[i + j]->GetImageHeader().GetImageReservationSize(), 0u);
+     }
+ 
+-    // Check the start of the heap.
+     CHECK_EQ(image_spaces[0]->Begin() + boot_image_size, image_spaces[i]->Begin());
+-    // Check contiguous layout of images and oat files.
+-    const uint8_t* current_heap = image_spaces[i]->Begin();
+-    const uint8_t* current_oat = image_spaces[i]->GetImageHeader().GetOatFileBegin();
+-    for (size_t j = 0u; j != image_count; ++j) {
+-      const ImageHeader& current_header = image_spaces[i + j]->GetImageHeader();
+-      CHECK_EQ(current_heap, image_spaces[i + j]->Begin());
+-      CHECK_EQ(current_oat, current_header.GetOatFileBegin());
+-      current_heap += RoundUp(current_header.GetImageSize(), kElfSegmentAlignment);
+-      CHECK_GT(current_header.GetOatFileEnd(), current_header.GetOatFileBegin());
+-      current_oat = current_header.GetOatFileEnd();
+-    }
+-    // Check that oat files start at the end of images.
+-    CHECK_EQ(current_heap, image_spaces[i]->GetImageHeader().GetOatFileBegin());
+-    // Check that the reservation size equals the size of images and oat files.
+-    CHECK_EQ(reservation_size, static_cast<size_t>(current_oat - image_spaces[i]->Begin()));
+-
++    CHECK_EQ(image_count, 1u);
++    CHECK_GE(reservation_size, RoundUp(image_header.GetImageSize(), kElfSegmentAlignment));
++    CHECK(image_spaces[i]->GetOatFile() != nullptr);
+     boot_image_size += reservation_size;
+     i += image_count;
+   }
+@@ -521,7 +507,8 @@
+                                        &heap_reservation)) {
+     DCHECK_EQ(heap_reservation_size, heap_reservation.IsValid() ? heap_reservation.Size() : 0u);
+     DCHECK(!boot_image_spaces.empty());
+-    request_begin = boot_image_spaces.back()->GetImageHeader().GetOatFileEnd();
++    request_begin = boot_image_spaces.front()->Begin() +
++        boot_image_spaces.front()->GetImageHeader().GetImageReservationSize();
+     DCHECK_IMPLIES(heap_reservation.IsValid(), request_begin == heap_reservation.Begin())
+         << "request_begin=" << static_cast<const void*>(request_begin)
+         << " heap_reservation.Begin()=" << static_cast<const void*>(heap_reservation.Begin());
+@@ -529,10 +516,8 @@
+       boot_image_spaces_.push_back(space.get());
+       AddSpace(space.release());
+     }
+-    boot_images_start_address_ = PointerToLowMemUInt32(boot_image_spaces_.front()->Begin());
+-    uint32_t boot_images_end =
+-        PointerToLowMemUInt32(boot_image_spaces_.back()->GetImageHeader().GetOatFileEnd());
+-    boot_images_size_ = boot_images_end - boot_images_start_address_;
++    boot_images_start_address_ = reinterpret_cast<uintptr_t>(boot_image_spaces_.front()->Begin());
++    boot_images_size_ = RoundUp(boot_image_spaces_.front()->GetImageHeader().GetImageSize(), kElfSegmentAlignment);
+     if (kIsDebugBuild) {
+       VerifyBootImagesContiguity(boot_image_spaces_);
+     }
+@@ -4540,13 +4525,10 @@
+ }
+ 
+ bool Heap::IsInBootImageOatFile(const void* p) const {
+-  DCHECK_EQ(IsBootImageAddress(p),
+-            any_of(boot_image_spaces_.begin(),
+-                   boot_image_spaces_.end(),
+-                   [p](gc::space::ImageSpace* space) REQUIRES_SHARED(Locks::mutator_lock_) {
+-                     return space->GetOatFile()->Contains(p);
+-                   }));
+-  return IsBootImageAddress(p);
++  return any_of(boot_image_spaces_.begin(), boot_image_spaces_.end(),
++                [p](gc::space::ImageSpace* space) REQUIRES_SHARED(Locks::mutator_lock_) {
++                  return space->GetOatFile()->Contains(p);
++                });
+ }
+ 
+ void Heap::SetAllocationListener(AllocationListener* l) {
+--- a/runtime/gc/heap.h
++++ b/runtime/gc/heap.h
+@@ -725,11 +725,11 @@
+   bool IsInBootImageOatFile(const void* p) const;
+ 
+   // Get the start address of the boot images if any; otherwise returns 0.
+-  uint32_t GetBootImagesStartAddress() const {
++  uintptr_t GetBootImagesStartAddress() const {
+     return boot_images_start_address_;
+   }
+ 
+-  // Get the size of all boot images, including the heap and oat areas.
++  // Size of the boot image object and metadata mappings.
+   uint32_t GetBootImagesSize() const {
+     return boot_images_size_;
+   }
+@@ -1756,8 +1756,8 @@
+   // Boot image spaces.
+   std::vector<space::ImageSpace*> boot_image_spaces_;
+ 
+-  // Boot image address range. Includes images and oat files.
+-  uint32_t boot_images_start_address_;
++  // Boot image objects and metadata. OAT files are mapped separately.
++  uintptr_t boot_images_start_address_;
+   uint32_t boot_images_size_;
+ 
+   // The number of times we initiated a GC of last resort to try to avoid an OOME.
+--- a/runtime/gc/space/image_space.cc
++++ b/runtime/gc/space/image_space.cc
+@@ -15,6 +15,7 @@
+  */
+ 
+ #include "image_space.h"
++#include "reference_heap.h"
+ 
+ #include <sys/statvfs.h>
+ #include <sys/types.h>
+@@ -1865,7 +1866,7 @@
+   }
+ 
+   if (chunks_.empty()) {
+-    base_address_ = reinterpret_cast32<uint32_t>(header.GetImageBegin());
++    base_address_ = reinterpret_cast<uintptr_t>(header.GetImageBegin());
+   }
+   ImageChunk chunk;
+   chunk.base_location = base_location;
+@@ -2296,7 +2297,11 @@
+       /*out*/std::string* error_msg) REQUIRES_SHARED(Locks::mutator_lock_) {
+     ArrayRef<const BootImageLayout::ImageChunk> chunks = layout.GetChunks();
+     DCHECK(!chunks.empty());
+-    const uint32_t base_address = layout.GetBaseAddress();
++    if (chunks.size() != 1u || chunks[0].image_space_count != 1u ||
++        chunks[0].boot_image_component_count != 0u) {
++      *error_msg = "NCE boot image loader requires a single primary image";
++      return false;
++    }
+     const size_t image_component_count = layout.GetTotalComponentCount();
+     const size_t image_reservation_size = layout.GetTotalReservationSize();
+ 
+@@ -2309,9 +2314,13 @@
+       return false;
+     }
+ 
+-    // Reserve address space. If relocating, choose a random address for ALSR.
++    // The containing reference heap supplies the process-specific address.
++    if (nce_art_heap_init() != 0) {
++      *error_msg = "Cannot reserve NCE reference heap for boot image";
++      return false;
++    }
+     uint8_t* addr = reinterpret_cast<uint8_t*>(
+-        relocate_ ? ART_BASE_ADDRESS + ChooseRelocationOffsetDelta() : base_address);
++        RoundUp(nce_art_reference_base + kElfSegmentAlignment, kElfSegmentAlignment));
+     MemMap image_reservation =
+         ReserveBootImageMemory(addr, image_reservation_size + extra_reservation_size, error_msg);
+     if (!image_reservation.IsValid()) {
+@@ -2400,16 +2409,16 @@
+  private:
+   class SimpleRelocateVisitor {
+    public:
+-    SimpleRelocateVisitor(uint32_t diff, uint32_t begin, uint32_t size)
++    SimpleRelocateVisitor(uintptr_t diff, uintptr_t begin, uintptr_t size)
+         : diff_(diff), begin_(begin), size_(size) {}
+ 
+     // Adapter taking the same arguments as SplitRangeRelocateVisitor
+     // to simplify constructing the various visitors in DoRelocateSpaces().
+-    SimpleRelocateVisitor(uint32_t base_diff,
+-                          uint32_t current_diff,
+-                          uint32_t bound,
+-                          uint32_t begin,
+-                          uint32_t size)
++    SimpleRelocateVisitor(uintptr_t base_diff,
++                          uintptr_t current_diff,
++                          uintptr_t bound,
++                          uintptr_t begin,
++                          uintptr_t size)
+         : SimpleRelocateVisitor(base_diff, begin, size) {
+       // Check arguments unused by this class.
+       DCHECK_EQ(base_diff, current_diff);
+@@ -2419,36 +2428,36 @@
+     template <typename T>
+     ALWAYS_INLINE T* operator()(T* src) const {
+       DCHECK(InSource(src));
+-      uint32_t raw_src = reinterpret_cast32<uint32_t>(src);
+-      return reinterpret_cast32<T*>(raw_src + diff_);
++      uintptr_t raw_src = reinterpret_cast<uintptr_t>(src);
++      return reinterpret_cast<T*>(raw_src + diff_);
+     }
+ 
+     template <typename T>
+     ALWAYS_INLINE bool InSource(T* ptr) const {
+-      uint32_t raw_ptr = reinterpret_cast32<uint32_t>(ptr);
++      uintptr_t raw_ptr = reinterpret_cast<uintptr_t>(ptr);
+       return raw_ptr - begin_ < size_;
+     }
+ 
+     template <typename T>
+     ALWAYS_INLINE bool InDest(T* ptr) const {
+-      uint32_t raw_ptr = reinterpret_cast32<uint32_t>(ptr);
+-      uint32_t src_ptr = raw_ptr - diff_;
++      uintptr_t raw_ptr = reinterpret_cast<uintptr_t>(ptr);
++      uintptr_t src_ptr = raw_ptr - diff_;
+       return src_ptr - begin_ < size_;
+     }
+ 
+    private:
+-    const uint32_t diff_;
+-    const uint32_t begin_;
+-    const uint32_t size_;
++    const uintptr_t diff_;
++    const uintptr_t begin_;
++    const uintptr_t size_;
+   };
+ 
+   class SplitRangeRelocateVisitor {
+    public:
+-    SplitRangeRelocateVisitor(uint32_t base_diff,
+-                              uint32_t current_diff,
+-                              uint32_t bound,
+-                              uint32_t begin,
+-                              uint32_t size)
++    SplitRangeRelocateVisitor(uintptr_t base_diff,
++                              uintptr_t current_diff,
++                              uintptr_t bound,
++                              uintptr_t begin,
++                              uintptr_t size)
+         : base_diff_(base_diff),
+           current_diff_(current_diff),
+           bound_(bound),
+@@ -2462,23 +2471,23 @@
+     template <typename T>
+     ALWAYS_INLINE T* operator()(T* src) const {
+       DCHECK(InSource(src));
+-      uint32_t raw_src = reinterpret_cast32<uint32_t>(src);
+-      uint32_t diff = (raw_src < bound_) ? base_diff_ : current_diff_;
+-      return reinterpret_cast32<T*>(raw_src + diff);
++      uintptr_t raw_src = reinterpret_cast<uintptr_t>(src);
++      uintptr_t diff = (raw_src < bound_) ? base_diff_ : current_diff_;
++      return reinterpret_cast<T*>(raw_src + diff);
+     }
+ 
+     template <typename T>
+     ALWAYS_INLINE bool InSource(T* ptr) const {
+-      uint32_t raw_ptr = reinterpret_cast32<uint32_t>(ptr);
++      uintptr_t raw_ptr = reinterpret_cast<uintptr_t>(ptr);
+       return raw_ptr - begin_ < size_;
+     }
+ 
+    private:
+-    const uint32_t base_diff_;
+-    const uint32_t current_diff_;
+-    const uint32_t bound_;
+-    const uint32_t begin_;
+-    const uint32_t size_;
++    const uintptr_t base_diff_;
++    const uintptr_t current_diff_;
++    const uintptr_t bound_;
++    const uintptr_t begin_;
++    const uintptr_t size_;
+   };
+ 
+   static void** PointerAddress(ArtMethod* method, MemberOffset offset) {
+@@ -2521,23 +2530,44 @@
+       REQUIRES_SHARED(Locks::mutator_lock_) {
+     DCHECK(!spaces.empty());
+     const ImageHeader& first_header = spaces.front()->GetImageHeader();
+-    uint32_t image_begin = reinterpret_cast32<uint32_t>(first_header.GetImageBegin());
++    CHECK(!kExtension);
++    CHECK_EQ(spaces.size(), 1u);
++    uintptr_t image_begin = reinterpret_cast<uintptr_t>(first_header.GetImageBegin());
+     uint32_t image_size = first_header.GetImageReservationSize();
+     DCHECK_NE(image_size, 0u);
+-    uint32_t source_begin = kExtension ? first_header.GetBootImageBegin() : image_begin;
++    uintptr_t source_begin = kExtension ? first_header.GetBootImageBegin() : image_begin;
+     uint32_t source_size = kExtension ? first_header.GetBootImageSize() + image_size : image_size;
+     if (kExtension) {
+       DCHECK_EQ(first_header.GetBootImageBegin() + first_header.GetBootImageSize(), image_begin);
+     }
+     int64_t current_diff64 = kExtension
+-        ? static_cast<int64_t>(reinterpret_cast32<uint32_t>(spaces.front()->Begin())) -
++        ? static_cast<int64_t>(reinterpret_cast<uintptr_t>(spaces.front()->Begin())) -
+               static_cast<int64_t>(image_begin)
+         : base_diff64;
+-    if (base_diff64 == 0 && current_diff64 == 0) {
+-      return;
+-    }
+-    uint32_t base_diff = static_cast<uint32_t>(base_diff64);
+-    uint32_t current_diff = static_cast<uint32_t>(current_diff64);
++    const uintptr_t decoded_begin = nce_art_reference_base + image_begin -
++        first_header.GetReferenceBase();
++    const uintptr_t decoded_diff = reinterpret_cast<uintptr_t>(spaces.front()->Begin()) -
++        decoded_begin;
++    RelocationRange native_image(image_begin,
++                                 reinterpret_cast<uintptr_t>(spaces.front()->Begin()),
++                                 first_header.GetImageSize());
++    const OatFile* oat_file = spaces.front()->GetOatFile();
++    const uintptr_t oat_diff = reinterpret_cast<uintptr_t>(oat_file->Begin()) -
++        reinterpret_cast<uintptr_t>(first_header.GetOatDataBegin());
++    RelocationRange native_oat(reinterpret_cast<uintptr_t>(first_header.GetOatFileBegin()),
++                               reinterpret_cast<uintptr_t>(first_header.GetOatFileBegin()) + oat_diff,
++                               first_header.GetOatFileEnd() - first_header.GetOatFileBegin());
++    auto relocate_native = [&](auto* pointer) {
++      if (native_image.InSource(reinterpret_cast<uintptr_t>(pointer))) {
++        return native_image.ToDest(pointer);
++      }
++      CHECK(native_oat.InSource(reinterpret_cast<uintptr_t>(pointer)));
++      return native_oat.ToDest(pointer);
++    };
++    uintptr_t base_diff = decoded_diff;
++    uintptr_t current_diff = decoded_diff;
++    source_begin = decoded_begin;
++    image_begin = decoded_begin;
+ 
+     // For boot image the main visitor is a SimpleRelocateVisitor. For the boot image extension we
+     // mostly use a SplitRelocationVisitor but some work can still use the SimpleRelocationVisitor.
+@@ -2548,13 +2578,13 @@
+         base_diff, current_diff, /*bound=*/ image_begin, source_begin, source_size);
+ 
+     using MainPatchRelocateVisitor =
+-        PatchObjectVisitor<kPointerSize, MainRelocateVisitor, MainRelocateVisitor>;
++        PatchObjectVisitor<kPointerSize, MainRelocateVisitor, decltype(relocate_native)>;
+     using SimplePatchRelocateVisitor =
+-        PatchObjectVisitor<kPointerSize, SimpleRelocateVisitor, SimpleRelocateVisitor>;
++        PatchObjectVisitor<kPointerSize, SimpleRelocateVisitor, decltype(relocate_native)>;
+     MainPatchRelocateVisitor main_patch_object_visitor(main_relocate_visitor,
+-                                                       main_relocate_visitor);
++                                                       relocate_native);
+     SimplePatchRelocateVisitor simple_patch_object_visitor(simple_relocate_visitor,
+-                                                           simple_relocate_visitor);
++                                                           relocate_native);
+ 
+     // Retrieve the Class.class, Method.class and Constructor.class needed in the loops below.
+     ObjPtr<mirror::ObjectArray<mirror::Class>> class_roots;
+@@ -2565,7 +2595,7 @@
+     ObjPtr<mirror::Class> static_field_var_handle_class;
+     {
+       ObjPtr<mirror::ObjectArray<mirror::Object>> image_roots =
+-          simple_relocate_visitor(first_header.GetImageRoots<kWithoutReadBarrier>().Ptr());
++          relocate_native(first_header.GetImageRoots<kWithoutReadBarrier>().Ptr());
+       DCHECK(!patched_objects->Test(image_roots.Ptr()));
+ 
+       SimpleRelocateVisitor base_relocate_visitor(
+@@ -2606,6 +2636,8 @@
+       // First patch the image header.
+       reinterpret_cast<ImageHeader*>(space->Begin())->RelocateImageReferences(current_diff64);
+       reinterpret_cast<ImageHeader*>(space->Begin())->RelocateBootImageReferences(base_diff64);
++      reinterpret_cast<ImageHeader*>(space->Begin())->RelocateOatReferences(oat_diff - current_diff64);
++      reinterpret_cast<ImageHeader*>(space->Begin())->SetReferenceBase(nce_art_reference_base);
+ 
+       // Patch fields and methods.
+       const ImageHeader& image_header = space->GetImageHeader();
+@@ -2627,7 +2659,7 @@
+       }, space->Begin(), kPointerSize);
+       auto method_table_visitor = [&](ArtMethod* method) {
+         DCHECK(method != nullptr);
+-        return main_relocate_visitor(method);
++        return relocate_native(method);
+       };
+       image_header.VisitPackedImTables(method_table_visitor, space->Begin(), kPointerSize);
+       image_header.VisitPackedImtConflictTables(method_table_visitor, space->Begin(), kPointerSize);
+@@ -2708,7 +2740,7 @@
+             ObjPtr<mirror::Executable> as_executable =
+                 ObjPtr<mirror::Executable>::DownCast(object);
+             ArtMethod* unpatched_method = as_executable->GetArtMethod<kVerifyNone>();
+-            ArtMethod* patched_method = main_relocate_visitor(unpatched_method);
++            ArtMethod* patched_method = relocate_native(unpatched_method);
+             as_executable->SetArtMethod</*kTransactionActive=*/ false,
+                                         /*kCheckTransaction=*/ true,
+                                         kVerifyNone>(patched_method);
+@@ -2717,7 +2749,7 @@
+             ObjPtr<mirror::FieldVarHandle> as_field_var_handle =
+                 ObjPtr<mirror::FieldVarHandle>::DownCast(object);
+             ArtField* unpatched_field = as_field_var_handle->GetArtField<kVerifyNone>();
+-            ArtField* patched_field = main_relocate_visitor(unpatched_field);
++            ArtField* patched_field = relocate_native(unpatched_field);
+             as_field_var_handle->SetArtField<kVerifyNone>(patched_field);
+           }
+         }
+@@ -2739,8 +2771,8 @@
+     ImageSpace* first_space = spaces.front().get();
+     const ImageHeader& first_space_header = first_space->GetImageHeader();
+     int64_t base_diff64 =
+-        static_cast<int64_t>(reinterpret_cast32<uint32_t>(first_space->Begin())) -
+-        static_cast<int64_t>(reinterpret_cast32<uint32_t>(first_space_header.GetImageBegin()));
++        static_cast<int64_t>(reinterpret_cast<uintptr_t>(first_space->Begin())) -
++        static_cast<int64_t>(reinterpret_cast<uintptr_t>(first_space_header.GetImageBegin()));
+     if (!relocate_) {
+       DCHECK_EQ(base_diff64, 0);
+     }
+@@ -2896,7 +2928,7 @@
+                                      /*low_4gb=*/false,
+                                      dex_filenames,
+                                      dex_files,
+-                                     image_reservation,
++                                     /*reservation=*/nullptr,
+                                      error_msg));
+       } else {
+         oat_file.reset(OatFile::Open(/*zip_fd=*/-1,
+@@ -2907,7 +2939,7 @@
+                                      /*low_4gb=*/false,
+                                      dex_filenames,
+                                      dex_files,
+-                                     image_reservation,
++                                     /*reservation=*/nullptr,
+                                      error_msg));
+         // We no longer need the file descriptors and they will be closed by
+         // the unique_fd destructor when we leave this function.
+@@ -2976,18 +3008,7 @@
+           return false;
+         }
+       }
+-      ptrdiff_t relocation_diff = space->Begin() - image_header.GetImageBegin();
+-      CHECK(image_header.GetOatDataBegin() != nullptr);
+-      uint8_t* oat_data_begin = image_header.GetOatDataBegin() + relocation_diff;
+-      if (oat_file->Begin() != oat_data_begin) {
+-        *error_msg = StringPrintf("Oat file '%s' referenced from image %s has unexpected begin"
+-                                      " %p v. %p",
+-                                  oat_filename.c_str(),
+-                                  space->GetName(),
+-                                  oat_file->Begin(),
+-                                  oat_data_begin);
+-        return false;
+-      }
++
+     }
+     if (validate_oat_file) {
+       TimingLogger::ScopedTiming timing("ValidateOatFile", logger);
+--- a/runtime/gc/space/image_space.h
++++ b/runtime/gc/space/image_space.h
+@@ -373,7 +373,7 @@
+ 
+     ArrayRef<const ImageChunk> GetChunks() const { return ArrayRef<const ImageChunk>(chunks_); }
+ 
+-    uint32_t GetBaseAddress() const { return base_address_; }
++    uintptr_t GetBaseAddress() const { return base_address_; }
+ 
+     size_t GetNextBcpIndex() const { return next_bcp_index_; }
+ 
+@@ -469,7 +469,7 @@
+     ArrayRef<File> boot_class_path_oat_files_;
+ 
+     std::vector<ImageChunk> chunks_;
+-    uint32_t base_address_ = 0u;
++    uintptr_t base_address_ = 0u;
+     size_t next_bcp_index_ = 0u;
+     size_t total_component_count_ = 0u;
+     size_t total_reservation_size_ = 0u;
+--- a/runtime/lock_word-inl.h
++++ b/runtime/lock_word-inl.h
+@@ -43,7 +43,7 @@
+ 
+ inline size_t LockWord::ForwardingAddress() const {
+   DCHECK_EQ(GetState(), kForwardingAddress);
+-  return reinterpret_cast<size_t>(nce_art_decode_reference(value_ << kForwardingAddressShift));
++  return reinterpret_cast<size_t>(nce_art_decode_reference(ForwardingOffset()));
+ }
+ 
+ inline LockWord::LockWord() : value_(0) {
+--- a/runtime/lock_word.h
++++ b/runtime/lock_word.h
+@@ -150,10 +150,19 @@
+                     (kStateThinOrUnlocked << kStateShift));
+   }
+ 
++  // ImageWriter stores bin offsets here while GC is disabled.
++  static LockWord FromForwardingOffset(uint32_t offset) {
++    DCHECK_ALIGNED(offset, (1 << kForwardingAddressShift));
++    return LockWord((offset >> kForwardingAddressShift) | kStateForwardingAddressShifted);
++  }
++
++  uint32_t ForwardingOffset() const {
++    DCHECK_EQ(GetState(), kForwardingAddress);
++    return value_ << kForwardingAddressShift;
++  }
++
+   static LockWord FromForwardingAddress(size_t target) {
+-    DCHECK_ALIGNED(target, (1 << kStateSize));
+-    uint32_t reference = nce_art_encode_reference(reinterpret_cast<const void*>(target));
+-    return LockWord((reference >> kForwardingAddressShift) | kStateForwardingAddressShifted);
++    return FromForwardingOffset(nce_art_encode_reference(reinterpret_cast<const void*>(target)));
+   }
+ 
+   static LockWord FromHashCode(uint32_t hash_code, uint32_t gc_state) {
+--- a/runtime/oat/image.cc
++++ b/runtime/oat/image.cc
+@@ -15,6 +15,7 @@
+  */
+ 
+ #include "image.h"
++#include "reference_heap.h"
+ 
+ #include <lz4.h>
+ #include <lz4hc.h>
+@@ -35,28 +36,34 @@
+ namespace art HIDDEN {
+ 
+ const uint8_t ImageHeader::kImageMagic[] = { 'a', 'r', 't', '\n' };
+-// Revert dex cache change.
+-const uint8_t ImageHeader::kImageVersion[] = { '1', '1', '8', '\0' };
++// NCE preserves native addresses and the compressed-reference heap base.
++const uint8_t ImageHeader::kImageVersion[] = { 'n', '0', '1', '\0' };
+ 
+ ImageHeader::ImageHeader(uint32_t image_reservation_size,
+                          uint32_t component_count,
+-                         uint32_t image_begin,
++                         uint64_t image_begin,
+                          uint32_t image_size,
+                          ImageSection* sections,
+-                         uint32_t image_roots,
++                         uint64_t image_roots,
+                          uint32_t oat_checksum,
+-                         uint32_t oat_file_begin,
+-                         uint32_t oat_data_begin,
+-                         uint32_t oat_data_end,
+-                         uint32_t oat_file_end,
+-                         uint32_t boot_image_begin,
++                         uint64_t oat_file_begin,
++                         uint64_t oat_data_begin,
++                         uint64_t oat_data_end,
++                         uint64_t oat_file_end,
++                         uint64_t boot_image_begin,
+                          uint32_t boot_image_size,
+                          uint32_t boot_image_component_count,
+                          uint32_t boot_image_checksum,
+                          PointerSize pointer_size)
+-  : image_reservation_size_(image_reservation_size),
++  : image_reservation_size_(component_count != 0u &&
++                            image_begin + image_reservation_size == oat_file_end
++                                ? RoundUp(image_size, kElfSegmentAlignment)
++                                : image_reservation_size),
+     component_count_(component_count),
++    image_space_count_(image_begin + image_reservation_size == oat_file_end ? 1u : component_count),
++    is_app_image_(image_reservation_size == RoundUp(image_size, kElfSegmentAlignment)),
+     image_begin_(image_begin),
++    reference_base_(nce_art_reference_base),
+     image_size_(image_size),
+     image_checksum_(0u),
+     oat_checksum_(oat_checksum),
+@@ -75,6 +82,7 @@
+     CHECK_EQ(oat_file_begin, RoundUp(oat_file_begin, kElfSegmentAlignment));
+     CHECK_EQ(oat_data_begin, RoundUp(oat_data_begin, alignof(OatHeader)));
+     CHECK_LT(image_roots, oat_file_begin);
++    CHECK_NE(reference_base_, 0u);
+     CHECK_LE(oat_file_begin, oat_data_begin);
+     CHECK_LT(oat_data_begin, oat_data_end);
+     CHECK_LE(oat_data_end, oat_file_end);
+@@ -108,12 +116,16 @@
+   //       otherwise inconsistency would still be possible e.g. when using
+   //       `dlopen`-like calls to load OAT files.
+   CHECK_ALIGNED_PARAM(delta, gPageSize) << "relocation delta must be page aligned";
++  RelocateOatReferences(delta);
++  image_begin_ += delta;
++  image_roots_ += delta;
++}
++
++void ImageHeader::RelocateOatReferences(int64_t delta) {
+   oat_file_begin_ += delta;
+   oat_data_begin_ += delta;
+   oat_data_end_ += delta;
+   oat_file_end_ += delta;
+-  image_begin_ += delta;
+-  image_roots_ += delta;
+ }
+ 
+ void ImageHeader::RelocateBootImageReferences(int64_t delta) {
+@@ -128,18 +140,14 @@
+ }
+ 
+ bool ImageHeader::IsAppImage() const {
+-  // Unlike boot image and boot image extensions which include address space for
+-  // oat files in their reservation size, app images are loaded separately from oat
+-  // files and their reservation size is the image size rounded up to Elf alignment.
+-  return image_reservation_size_ == RoundUp(image_size_, kElfSegmentAlignment);
++  return is_app_image_ != 0u;
+ }
+ 
+ uint32_t ImageHeader::GetImageSpaceCount() const {
+   DCHECK(!IsAppImage());
+   DCHECK_NE(component_count_, 0u);  // Must be the header for the first component.
+-  // For images compiled with --single-image, there is only one oat file. To detect
+-  // that, check whether the reservation ends at the end of the first oat file.
+-  return (image_begin_ + image_reservation_size_ == oat_file_end_) ? 1u : component_count_;
++  // NCE maps OAT code separately from the object reservation.
++  return image_space_count_;
+ }
+ 
+ bool ImageHeader::IsValid() const {
+@@ -150,6 +158,11 @@
+     return false;
+   }
+   if (!IsAligned<kElfSegmentAlignment>(image_reservation_size_)) {
++    return false;
++  }
++  if (!reference_base_ || image_begin_ - reference_base_ >= NCE_ART_HEAP_SIZE ||
++      image_size_ > NCE_ART_HEAP_SIZE - (image_begin_ - reference_base_) ||
++      image_roots_ < image_begin_ || image_roots_ - image_begin_ >= image_size_) {
+     return false;
+   }
+   // Unsigned so wraparound is well defined.
+--- a/runtime/oat/image.h
++++ b/runtime/oat/image.h
+@@ -132,16 +132,16 @@
+   ImageHeader() {}
+   EXPORT ImageHeader(uint32_t image_reservation_size,
+                      uint32_t component_count,
+-                     uint32_t image_begin,
++                     uint64_t image_begin,
+                      uint32_t image_size,
+                      ImageSection* sections,
+-                     uint32_t image_roots,
++                     uint64_t image_roots,
+                      uint32_t oat_checksum,
+-                     uint32_t oat_file_begin,
+-                     uint32_t oat_data_begin,
+-                     uint32_t oat_data_end,
+-                     uint32_t oat_file_end,
+-                     uint32_t boot_image_begin,
++                     uint64_t oat_file_begin,
++                     uint64_t oat_data_begin,
++                     uint64_t oat_data_end,
++                     uint64_t oat_file_end,
++                     uint64_t boot_image_begin,
+                      uint32_t boot_image_size,
+                      uint32_t boot_image_component_count,
+                      uint32_t boot_image_checksum,
+@@ -164,6 +164,10 @@
+ 
+   size_t GetImageSize() const {
+     return image_size_;
++  }
++
++  uint64_t GetReferenceBase() const {
++    return reference_base_;
+   }
+ 
+   uint32_t GetImageChecksum() const {
+@@ -350,9 +354,11 @@
+       REQUIRES_SHARED(Locks::mutator_lock_);
+ 
+   void RelocateImageReferences(int64_t delta);
++  void RelocateOatReferences(int64_t delta);
++  void SetReferenceBase(uint64_t base) { reference_base_ = base; }
+   void RelocateBootImageReferences(int64_t delta);
+ 
+-  uint32_t GetBootImageBegin() const {
++  uint64_t GetBootImageBegin() const {
+     return boot_image_begin_;
+   }
+ 
+@@ -445,11 +451,8 @@
+   uint8_t magic_[4];
+   uint8_t version_[4];
+ 
+-  // The total memory reservation size for the image.
+-  // For boot image or boot image extension, the primary image includes the reservation
+-  // for all image files and oat files, secondary images have the reservation set to 0.
+-  // App images have reservation equal to `image_size_` rounded up to page size because
+-  // their oat files are mmapped independently.
++  // NCE single-image reservations contain objects and metadata. OAT code is
++  // registered independently and must not leave a gap before the non-moving heap.
+   uint32_t image_reservation_size_ = 0u;
+ 
+   // The number of components (jar files contributing to the image).
+@@ -459,9 +462,14 @@
+   // if multiple components are compiled with --single-image there will only be 1 image associated
+   // with those components.
+   uint32_t component_count_ = 0u;
++  uint32_t image_space_count_ = 0u;
++  uint32_t is_app_image_ = 0u;
+ 
+   // Required base address for mapping the image.
+-  uint32_t image_begin_ = 0u;
++  uint64_t image_begin_ = 0u;
++
++  // Compressed object fields are offsets from the generating runtime heap.
++  uint64_t reference_base_ = 0u;
+ 
+   // Image size, not page aligned.
+   uint32_t image_size_ = 0u;
+@@ -473,20 +481,20 @@
+   uint32_t oat_checksum_ = 0u;
+ 
+   // Start address for oat file. Will be before oat_data_begin_ for .so files.
+-  uint32_t oat_file_begin_ = 0u;
++  uint64_t oat_file_begin_ = 0u;
+ 
+   // Required oat address expected by image Method::GetCode() pointers.
+-  uint32_t oat_data_begin_ = 0u;
++  uint64_t oat_data_begin_ = 0u;
+ 
+   // End of oat data address range for this image file.
+-  uint32_t oat_data_end_ = 0u;
++  uint64_t oat_data_end_ = 0u;
+ 
+   // End of oat file address range. will be after oat_data_end_ for
+   // .so files. Used for positioning a following alloc spaces.
+-  uint32_t oat_file_end_ = 0u;
++  uint64_t oat_file_end_ = 0u;
+ 
+   // Boot image begin and end (only applies to boot image extension and app image headers).
+-  uint32_t boot_image_begin_ = 0u;
++  uint64_t boot_image_begin_ = 0u;
+   uint32_t boot_image_size_ = 0u;  // Includes heap (*.art) and code (.oat).
+ 
+   // Number of boot image components that this image depends on and their composite checksum
+@@ -495,7 +503,7 @@
+   uint32_t boot_image_checksum_ = 0u;
+ 
+   // Absolute address of an Object[] of objects needed to reinitialize from an image.
+-  uint32_t image_roots_ = 0u;
++  uint64_t image_roots_ = 0u;
+ 
+   // Pointer size, this affects the size of the ArtMethods.
+   PointerSize pointer_size_;
+--- a/runtime/runtime_image.cc
++++ b/runtime/runtime_image.cc
+@@ -1869,6 +1869,11 @@
+ }
+ 
+ bool RuntimeImage::WriteImageToDisk(std::string* error_msg) {
++#ifdef ART_NCE
++  // The app-image writer still serializes native addresses as 32-bit values.
++  *error_msg = "NCE runtime app image serialization is not implemented";
++  return false;
++#endif
+   gc::Heap* heap = Runtime::Current()->GetHeap();
+   if (!heap->HasBootImageSpace()) {
+     *error_msg = "Cannot generate an app image without a boot image";

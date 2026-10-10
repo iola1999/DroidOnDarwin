@@ -10,6 +10,8 @@
 #include "jit/small_pattern_matcher.h"
 #include "jni/jni_internal.h"
 #include "interpreter/mterp/nterp.h"
+#include "gc/heap.h"
+#include "gc/space/image_space.h"
 #include "scoped_thread_state_change-inl.h"
 
 namespace art
@@ -158,4 +160,28 @@ extern "C" JNIEXPORT bool nce_art_method_uses_oat(JNIEnv *env, jmethodID id, con
         return false;
     }
     return true;
+}
+
+extern "C" JNIEXPORT bool nce_art_check_boot_image(JNIEnv *env, const char *path)
+{
+    art::ScopedObjectAccess soa(env);
+    const auto &spaces = art::Runtime::Current()->GetHeap()->GetBootImageSpaces();
+    if (spaces.size() != 1 || spaces[0]->GetImageFilename() != path)
+        return false;
+    auto *space = spaces[0];
+    const auto &header = space->GetImageHeader();
+    jclass object = env->FindClass("java/lang/Object");
+    auto klass = object ? soa.Decode<art::mirror::Class>(object) : nullptr;
+    const bool valid = klass != nullptr && space->Contains(klass.Ptr()) && header.IsValid() &&
+                       header.GetReferenceBase() == nce_art_reference_base &&
+                       header.GetImageBegin() == space->Begin() && space->GetOatFile() &&
+                       space->GetOatFile()->IsExecutable();
+    if (valid)
+        printf("{\"phase\":\"art_boot_runtime_image\",\"reference_base\":%llu,\"image_begin\":%llu,\"image_size\":%zu,\"reservation_size\":%u,\"components\":%u}\n",
+               (unsigned long long)nce_art_reference_base,
+               (unsigned long long)header.GetImageBegin(), header.GetImageSize(),
+               header.GetImageReservationSize(), header.GetComponentCount());
+    if (object)
+        env->DeleteLocalRef(object);
+    return valid;
 }

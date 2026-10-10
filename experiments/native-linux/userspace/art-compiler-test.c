@@ -148,6 +148,82 @@ static off_t check_file(const char *path, const char *magic)
     return valid ? info.st_size : -1;
 }
 
+static int inspect_boot(const char *path)
+{
+    pid_t child = fork();
+    if (child < 0)
+        return -1;
+    if (!child) {
+        alarm(30);
+        execl("/system/bin/nce-dex2oat", "nce-dex2oat", "--nce-inspect-image", path, (char *)NULL);
+        _exit(127);
+    }
+    return wait_child(child);
+}
+
+static int compile_boot(void)
+{
+    if ((mkdir("/data/nce/boot", 0700) && errno != EEXIST) ||
+        (mkdir("/data/nce/boot/arm64", 0700) && errno != EEXIST))
+        return 1;
+    struct timespec begin, end;
+    if (clock_gettime(CLOCK_MONOTONIC, &begin))
+        return 1;
+    pid_t child = fork();
+    if (child < 0)
+        return 1;
+    if (!child) {
+        alarm(180);
+        execl("/system/bin/nce-dex2oat", "nce-dex2oat", "-j1", "--no-watch-dog",
+              "--dex-file=/apex/com.android.art/javalib/core-oj.jar",
+              "--dex-file=/apex/com.android.art/javalib/core-libart.jar",
+              "--dex-file=/apex/com.android.art/javalib/okhttp.jar",
+              "--dex-file=/apex/com.android.art/javalib/bouncycastle.jar",
+              "--dex-file=/apex/com.android.art/javalib/apache-xml.jar",
+              "--dex-file=/apex/com.android.i18n/javalib/core-icu4j.jar",
+              "--dex-file=/apex/com.android.conscrypt/javalib/conscrypt.jar",
+              "--image=/data/nce/boot/arm64/boot.art",
+              "--oat-file=/data/nce/boot/arm64/boot.oat", "--single-image",
+              "--nce-image-offset=200000", "--image-format=uncompressed",
+              "--compiler-filter=verify", "--generate-debug-info", "--instruction-set=arm64",
+              "--runtime-arg", boot_class_path, "--runtime-arg", "-Xms16m",
+              "--runtime-arg", "-Xmx256m", "--dump-timings", (char *)NULL);
+        _exit(127);
+    }
+    int result = wait_child(child);
+    off_t image = check_file("/data/nce/boot/arm64/boot.art", "art\n");
+    off_t oat = check_file("/data/nce/boot/arm64/boot.oat", "\177ELF");
+    off_t vdex = check_file("/data/nce/boot/arm64/boot.vdex", "vdex");
+    if (result || image < 0 || oat < 0 || vdex < 0 || clock_gettime(CLOCK_MONOTONIC, &end)) {
+        fprintf(stderr, "Boot image generation failed: exit=%d\n", result);
+        return 1;
+    }
+    if (inspect_boot("/data/nce/boot/arm64/boot.art"))
+        return 1;
+    unsigned char header[512];
+    int input = open("/data/nce/boot/arm64/boot.art", O_RDONLY | O_CLOEXEC);
+    if (input < 0 || read(input, header, sizeof(header)) != sizeof(header))
+        return 1;
+    close(input);
+    header[4] ^= 1;
+    const size_t lengths[] = {8, sizeof(header)};
+    for (size_t i = 0; i < sizeof(lengths) / sizeof(lengths[0]); ++i) {
+        int bad = open("/data/nce/boot/invalid.art", O_WRONLY | O_CREAT | O_TRUNC | O_CLOEXEC, 0600);
+        if (bad < 0 || write(bad, header, lengths[i]) != (ssize_t)lengths[i])
+            return 1;
+        close(bad);
+        if (inspect_boot("/data/nce/boot/invalid.art") != 3)
+            return 1;
+    }
+    if (unlink("/data/nce/boot/invalid.art"))
+        return 1;
+    puts("{\"test\":\"android_art_boot_image_invalid_headers\",\"passed\":true,\"cases\":2}");
+    double elapsed = (end.tv_sec - begin.tv_sec) * 1000.0 + (end.tv_nsec - begin.tv_nsec) / 1000000.0;
+    printf("{\"test\":\"android_art_boot_image_generated\",\"passed\":true,\"image_bytes\":%lld,\"oat_bytes\":%lld,\"vdex_bytes\":%lld,\"elapsed_ms\":%.3f}\n",
+           (long long)image, (long long)oat, (long long)vdex, elapsed);
+    return 0;
+}
+
 int main(void)
 {
     char mode[32] = {};
@@ -161,6 +237,8 @@ int main(void)
     setenv("ANDROID_I18N_ROOT", "/apex/com.android.i18n", 1);
     setenv("ANDROID_TZDATA_ROOT", "/apex/com.android.tzdata", 1);
     setenv("ICU_DATA", "/apex/com.android.i18n/etc/icu", 1);
+    if (!strcmp(mode, "boot\n"))
+        return compile_boot();
     if ((mkdir("/data/nce/oat", 0700) && errno != EEXIST) ||
         (mkdir("/data/nce/oat/arm64", 0700) && errno != EEXIST))
         return 1;

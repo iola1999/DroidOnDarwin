@@ -1595,6 +1595,19 @@ void nce_process_run(long (*host_syscall)(long, long *), long (*guest_syscall)(l
         const char *output = getenv("NCE_ART_COMPILER_OUTPUT");
         REQUIRE(output);
         bool desktop = getenv("NCE_ART_COMPILER_DESKTOP") != NULL;
+        if (getenv("NCE_ART_COMPILER_BOOT")) {
+            run_program(host_syscall, "/system/bin/art-compiler-test", "boot\n");
+            REQUIRE(get_file(host_syscall, "/stdout", benchmark, sizeof(benchmark)) > 0);
+            REQUIRE(strstr(benchmark, "android_art_boot_image_generated"));
+            const char *extensions[] = {"art", "oat", "vdex"};
+            for (size_t i = 0; i < 3; ++i) {
+                char guest[512], host[4096];
+                snprintf(guest, sizeof(guest), "/data/nce/boot/arm64/boot.%s", extensions[i]);
+                int length = snprintf(host, sizeof(host), "%s/boot.%s", output, extensions[i]);
+                REQUIRE(length > 0 && (size_t)length < sizeof(host));
+                export_guest_file(host_syscall, guest, host);
+            }
+        }
         if (desktop) {
             run_program(host_syscall, "/system/bin/art-compiler-test", "desktop\n");
             REQUIRE(get_file(host_syscall, "/stdout", benchmark, sizeof(benchmark)) > 0);
@@ -1611,6 +1624,15 @@ void nce_process_run(long (*host_syscall)(long, long *), long (*guest_syscall)(l
                 REQUIRE(length > 0 && (size_t)length < sizeof(host));
                 export_guest_file(host_syscall, guest, host);
             }
+        }
+    } else if (getenv("NCE_ART_BOOT_PROBE")) {
+        const char *modes[] = {"boot-image\n", "boot-shifted\n"};
+        for (size_t i = 0; i < 2; ++i) {
+            run_program(host_syscall, "/system/bin/art-test", modes[i]);
+            REQUIRE(get_file(host_syscall, "/stdout", benchmark, sizeof(benchmark)) > 0);
+            REQUIRE(strstr(benchmark, "android_art_boot_image_loaded"));
+            REQUIRE(strstr(benchmark, "android_art_vm_destroyed"));
+            fputs(benchmark, stdout);
         }
     } else if (getenv("NCE_ART_OAT_PROBE")) {
         const char *modes[] = {"oat-speed\n", "oat-shifted\n"};
