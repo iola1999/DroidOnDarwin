@@ -64,6 +64,16 @@ final class MacEnvironment {
     private var benchmark: BenchmarkSession?
     private init() {
         let args = CommandLine.arguments
+        if args.contains("--benchmark-configuration") {
+            do {
+                let data = try JSONEncoder().encode(RunConfiguration())
+                print(String(decoding: data, as: UTF8.self))
+                exit(0)
+            } catch {
+                fputs("Benchmark configuration: \(error.localizedDescription)\n", stderr)
+                exit(2)
+            }
+        }
         func value(_ flag: String) -> String? {
             guard let index = args.firstIndex(of: flag), args.indices.contains(index + 1) else {
                 return nil

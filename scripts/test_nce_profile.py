@@ -1,10 +1,21 @@
 #!/usr/bin/env python3
 """检查调用树的自身样本及映射调用与等待栈的分类边界。"""
 import unittest
-from analyze_nce_profile import art_summary, compiler_filter_summary, log_summary, sample_summary
+from analyze_nce_profile import art_summary, compiler_filter_summary, fast_baseline_summary, log_summary, sample_summary
 
 
 class SampleTests(unittest.TestCase):
+    def test_fast_baseline_counts_keep_thread_and_runtime_boundaries(self):
+        result = fast_baseline_summary("""NCE_ART_FAST_BASELINE pid=10 epoch=50 tid=12 installed=4
+NCE_ART_FAST_BASELINE pid=10 epoch=50 tid=12 installed=2
+NCE_ART_FAST_BASELINE pid=10 epoch=50 tid=13 installed=8
+NCE_ART_FAST_BASELINE pid=10 epoch=70 tid=12 installed=1
+NCE_ART_FAST_BASELINE pid=20 epoch=50 tid=12 installed=16""")
+        self.assertEqual(len(result), 4)
+        self.assertEqual([r['installed_lower_bound'] for r in result], [4, 8, 1, 16])
+        self.assertEqual(fast_baseline_summary('ordinary log'), [])
+
+
     def test_compiler_counts_separate_processes_and_snapshots(self):
         result = compiler_filter_summary('''I art: NCE_ART_FILTER pid=10 kind=accepted count=4
 I art: NCE_ART_FILTER pid=10 kind=InvokeStaticOrDirect count=1 method=java.lang.String Foo.run()

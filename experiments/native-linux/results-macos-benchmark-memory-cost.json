@@ -1,0 +1,46 @@
+{
+  "date": "2026-10-10",
+  "scope": "Repeated current-process task_info query, aggregation and JSONL encoding in optimized Swift CLI; full App scheduling, periodic writes and iPhone not measured. Android functional probe ran concurrently.",
+  "host_cpu": "Apple M5 Ultra",
+  "os": "macOS-27.0-arm64-arm-64bit-Mach-O",
+  "build": "xcrun swiftc -O -parse-as-library",
+  "source_sha256": "e6aa14cb7b40a8d00337ee2383b1627de41998c02c2f92b7a2b4e4469092827a",
+  "samples": [
+    {
+      "capture_and_encode_us_per_sample": 9.916166542097926,
+      "flush_1000_samples_ms": 0.23437500931322575,
+      "query_max_us": 3.00002284348011,
+      "query_total_us": 616.4142396301031,
+      "samples": 1000
+    },
+    {
+      "capture_and_encode_us_per_sample": 6.3384585082530975,
+      "flush_1000_samples_ms": 0.18170825205743313,
+      "query_max_us": 2.541579306125641,
+      "query_total_us": 649.0759551525116,
+      "samples": 1000
+    },
+    {
+      "capture_and_encode_us_per_sample": 6.006291601806879,
+      "flush_1000_samples_ms": 0.09391666390001774,
+      "query_max_us": 1.2083910405635834,
+      "query_total_us": 613.1180562078953,
+      "samples": 1000
+    },
+    {
+      "capture_and_encode_us_per_sample": 6.493833381682634,
+      "flush_1000_samples_ms": 0.16783317551016808,
+      "query_max_us": 6.458256393671036,
+      "query_total_us": 647.0000371336937,
+      "samples": 1000
+    },
+    {
+      "capture_and_encode_us_per_sample": 6.205541547387838,
+      "flush_1000_samples_ms": 0.1257916446775198,
+      "query_max_us": 1.3331882655620575,
+      "query_total_us": 638.0048580467701,
+      "samples": 1000
+    }
+  ],
+  "source": "work/native-linux-nce/benchmark-memory-cost.swift"
+}

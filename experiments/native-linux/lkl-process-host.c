@@ -1512,6 +1512,12 @@ void nce_process_run(long (*host_syscall)(long, long *), long (*guest_syscall)(l
     long jit_permissions[6] = {-100, (long)"/data/nce/art-expanded-jit", 0644};
     REQUIRE(host_syscall(53, jit_permissions) == 0);
     printf("{\"config\":\"art_expanded_jit\",\"requested\":%s}\n", expanded_jit ? expanded_jit : "0");
+    const char *fast_baseline = getenv("NCE_ART_FAST_BASELINE");
+    REQUIRE(!fast_baseline || !strcmp(fast_baseline, "0") || !strcmp(fast_baseline, "1"));
+    put_file(host_syscall, "/data/nce/art-fast-baseline", fast_baseline ? fast_baseline : "0", 1);
+    long fast_permissions[6] = {-100, (long)"/data/nce/art-fast-baseline", 0644};
+    REQUIRE(host_syscall(53, fast_permissions) == 0);
+    printf("{\"config\":\"art_fast_baseline\",\"requested\":%s}\n", fast_baseline ? fast_baseline : "0");
     put_file(host_syscall, "/data/nce/art-compiler-profile", map_profile ? "1" : "0", 1);
     long compiler_profile_permissions[6] = {-100, (long)"/data/nce/art-compiler-profile", 0644};
     REQUIRE(host_syscall(53, compiler_profile_permissions) == 0);

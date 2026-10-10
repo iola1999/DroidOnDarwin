@@ -61,7 +61,7 @@ def main():
     checks['session'] = run([session_test], capture_output=True, text=True, timeout=15).stdout.strip()
     benchmark_test = OUT / 'benchmark-tests'
     run(['xcrun', 'swiftc', '-O', '-parse-as-library', '-import-objc-header', EXP / 'macos/Bridge.h',
-         *[EXP / 'app' / name for name in ('RunConfiguration.swift', 'BenchmarkRequest.swift', 'BenchmarkSession.swift', 'SessionModel.swift', 'ProbeLogReader.swift')],
+         *[EXP / 'app' / name for name in ('RunConfiguration.swift', 'BenchmarkRequest.swift', 'BenchmarkMemory.swift', 'BenchmarkSession.swift', 'SessionModel.swift', 'ProbeLogReader.swift')],
          ROOT / 'tests/ios-jit/BenchmarkTests.swift', '-o', benchmark_test])
     checks['benchmark'] = run([benchmark_test], capture_output=True, text=True, timeout=15).stdout.strip()
     execute = OUT / 'signed-execute-test'
@@ -101,6 +101,11 @@ def main():
     package = json.loads((OUT / 'package.json').read_text())
     assert all(digest(app / name) == expected for name, expected in package['files'].items())
     assert all(digest(ROOT / name) == expected for name, expected in package['inputs'].items())
+    query = run([contents / 'MacOS/DroidOnDarwin', '--benchmark-configuration'], capture_output=True, text=True, timeout=15)
+    defaults = json.loads(query.stdout)
+    assert defaults and all(type(v) is bool for v in defaults.values())
+    assert defaults['fastBaseline'] is False and defaults['nterp'] is False
+    checks['benchmark_configuration_query'] = defaults
     checks['bundle'] = 'signature, package hashes, input hashes, resource sizes and relocatable library paths passed'
     (OUT / 'host-checks.json').write_text(json.dumps(checks, ensure_ascii=False, indent=2) + '\n')
     print(json.dumps(checks, ensure_ascii=False, indent=2))

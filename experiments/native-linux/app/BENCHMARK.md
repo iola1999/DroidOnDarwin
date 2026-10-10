@@ -51,6 +51,7 @@ python3 scripts/benchmark_dod.py --platform ios --phone F17 --repeat 3
 | --- | --- | --- |
 | `nterp` | `false` | 使用已适配的汇编解释器执行符合入口条件的方法 |
 | `expandedJIT` | `false` | 编译已适配的字符串构造、拼接、Min/Max 和多态调用路径 |
+| `fastBaseline` | `false` | 优先尝试快速基线编译，未覆盖的方法继续进入优化编译器 |
 | `directFault` | `true` | 在信号处理入口恢复符合条件的已有数据页 |
 | `sparseScan` | `true` | 减少映射切换时的页表扫描 |
 | `performanceLogging` | `false` | 记录映射、返回入口和 ART 编译过滤统计，增加计时开销 |
@@ -61,6 +62,16 @@ python3 scripts/benchmark_dod.py --platform ios --phone F17 --repeat 3
 同一组按正序、反序交替运行。首轮初始化、宿主缓存、设备温度和后台任务会影响结果；报告保留全部样本，不自动删除慢样本。关注首次安装时单独使用新设备；关注重复启动时先完成初始化，记录预热条件。诊断开启和关闭的样本分别分析。
 
 ## 结果与接口
+
+内存默认按一秒间隔采集，阶段变化时追加取样，原始序列保存为 `memory.jsonl`。`result.json` 的 `memory` 含整体、会话阶段和启动子阶段统计；每项提供 `latest_bytes`、`mean_bytes`、`sampled_peak_bytes`、样本数量与最近成功时间。`summary.json` 按参数组合比较这些指标的全部样本、中位数及范围。`--no-memory-sampling` 可关闭采集，用于比较测量开销；原始请求对应可选布尔字段 `memorySampling`，省略时开启。
+
+`footprint` 使用 Darwin 的 `phys_footprint`，`resident` 为驻留内存，`compressed` 为压缩内存，`virtual` 为虚拟地址空间，单位均为 byte。选择 RAM、缓存和编译参数时优先看 footprint 及其变化，虚拟地址预留不能直接换算为实际 RAM。平均值为成功取样的算术平均，包含阶段边界样本；阶段很短或调度延迟较大时，须结合样本数量和 `maximum_gap_ms` 判断覆盖情况。
+
+采样峰值属于本轮观察区间，可能遗漏两次取样之间的短峰值；`process_lifetime_peak_bytes` 是内核维护的整个宿主进程生命周期峰值，可能包含实验开始前的占用，单独保留。查询失败记录错误码与失败次数，最新成功值保留其时间，不补零。每十秒、阶段变化和结束时写入状态与序列；异常退出可能缺少最后一个批次。查询总耗时和单次最大耗时记为微秒，文件写入及统计开销另通过开启/关闭对照测量。
+
+Mac 的范围是 Android 运行进程，iPhone 的范围是 App 进程，包含同进程 Linux、ART、图形及宿主界面。独立的 JIT 辅助进程和系统进程未计入。采集从接受实验开始，设备创建、资源导入等先于该时刻的工作未覆盖。启动子阶段来自已有日志观察，带有轮询延迟；暂不按 Android PID 分摊共享内存。
+
+会话阶段 `preparing`、`connecting`、`booting`、`running`、`stopping`、`stopped` 分别表示准备、JIT 连接、核心启动、桌面操作、停止中和停止后。启动子阶段沿用进度界面编号：0 准备、1 内核、2 系统服务、3 桌面、4 就绪。仅记录本轮实际观察到的阶段，极短阶段可能只有边界样本。
 
 每轮保存 `request.json`、`result.json` 和 `session.log`，整个矩阵保存 `summary.json`。运行编号为 UUID，重复编号失败。结果含构建编号、资源清单中的内核/ART/系统哈希、硬件与系统、宿主内存、完整配置、阶段与操作时间、低电量模式和热状态。脚本检查会话日志里的配置，并检查 Java 崩溃及 ANR。
 
@@ -73,3 +84,7 @@ Mac 原始入口为运行进程的 `--benchmark-request 请求文件`，请求�
 ART 和 Linux 专项回归的同构建对照继续使用 `scripts/benchmark_nce_art.py`。其中整段诊断包含测试程序，时间范围与普通桌面启动不同。
 
 ART 编译过滤日志在每类计数达到 1、2、4、8… 时输出，前两次附带方法样例；普通日志汇总中的计数为下限。单独请求 SIGQUIT 后得到当时完整快照，但线程暂停会影响该轮耗时。`accepted` 只说明过滤通过；方法仍可能在后续编译步骤失败。fork 子进程继承父进程当时的计数，分析时分别查看 PID 与运行期编号，不能相加作为系统总方法数。
+
+脚本从目标 App 查询默认配置，随后覆盖 matrix 指定的参数。Mac 入口为 `--benchmark-configuration`，iPhone 状态文件包含 `configuration_defaults`；脚本没有另一份默认值。新增参数只在支持该参数的构建中运行，旧构建返回明确错误。快速基线编译的配置键为 `fastBaseline`，默认关闭；可与 `nterp`、`expandedJIT` 分别对照。按需开启性能日志时，`NCE_ART_FAST_BASELINE` 按编译线程报告已安装方法数量的下限，分析时不合并不同运行或线程的计数。
+
+iPhone 状态查询可使用 `droidondarwin://benchmark-status?requestID=<UUID>`；响应原样返回规范化的 `requestID`。脚本通过编号确认本次响应，手机与 Mac 的时钟差异不会影响判断。App 仍在加载设备时会在加载完成后写出响应；状态中的 active 包括已接受、尚未开始的实验。

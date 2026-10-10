@@ -357,6 +357,7 @@ def main():
                     *sorted(EXPERIMENT.glob("lkl-*.h")),
                     *sorted(EXPERIMENT.glob("lkl-nce-*.c")), EXPERIMENT / "exec-guest.S", EXPERIMENT / "programs.h",
                     Path(__file__).with_name("build_nce_userspace.py"), EXPERIMENT / "dispatch-test.c", EXPERIMENT / "host-context-test.c",
+                    Path(__file__).with_name("prepare_art_test_dex.py"),
                     Path(__file__).with_name("prepare_android_runtime.py"), Path(__file__).with_name("prepare_android_modules.py"),
                     Path(__file__).with_name("prepare_android_desktop.py"), Path(__file__).with_name("build_android_linker.py"),
                     Path(__file__).with_name("build_android_libc.py"), Path(__file__).with_name("build_android_art.py"),

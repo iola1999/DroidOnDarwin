@@ -1,0 +1,358 @@
+--- a/compiler/optimizing/code_generator_arm64.cc
++++ b/compiler/optimizing/code_generator_arm64.cc
+@@ -99,7 +99,7 @@
+ #ifdef ART_NCE
+ // Registers and stack maps retain compressed references. Only the address
+ // used by a heap access is expanded to the native pointer.
+-static Register NceHeapAddress(MacroAssembler* masm, UseScratchRegisterScope* temps,
++Register NceHeapAddress(MacroAssembler* masm, UseScratchRegisterScope* temps,
+                                Register reference) {
+   Register address = temps->AcquireX();
+   masm->Mov(address, nce_art_reference_base);
+@@ -108,7 +108,7 @@
+ }
+ 
+ // Runtime entrypoints take native pointers; null must remain zero.
+-static void NceRuntimeReference(MacroAssembler* masm, Register reference) {
++void NceRuntimeReference(MacroAssembler* masm, Register reference) {
+   vixl::aarch64::Label done;
+   masm->Cbz(reference.W(), &done);
+   UseScratchRegisterScope temps(masm);
+@@ -117,7 +117,7 @@
+   masm->Bind(&done);
+ }
+ 
+-static void NceQuickReference(MacroAssembler* masm, Register reference) {
++void NceQuickReference(MacroAssembler* masm, Register reference) {
+   vixl::aarch64::Label done;
+   masm->Cbz(reference.X(), &done);
+   UseScratchRegisterScope temps(masm);
+--- a/compiler/optimizing/code_generator_arm64.h
++++ b/compiler/optimizing/code_generator_arm64.h
+@@ -48,6 +48,17 @@
+ namespace arm64 {
+ 
+ class CodeGeneratorARM64;
++
++#ifdef ART_NCE
++// Quick registers keep encoded references; expand only at heap/runtime boundaries.
++vixl::aarch64::Register NceHeapAddress(vixl::aarch64::MacroAssembler* masm,
++                                      vixl::aarch64::UseScratchRegisterScope* temps,
++                                      vixl::aarch64::Register reference);
++void NceRuntimeReference(vixl::aarch64::MacroAssembler* masm,
++                         vixl::aarch64::Register reference);
++void NceQuickReference(vixl::aarch64::MacroAssembler* masm,
++                       vixl::aarch64::Register reference);
++#endif
+ 
+ // Use a local definition to prevent copying mistakes.
+ static constexpr size_t kArm64WordSize = static_cast<size_t>(kArm64PointerSize);
+--- a/compiler/optimizing/fast_compiler_arm64.cc
++++ b/compiler/optimizing/fast_compiler_arm64.cc
+@@ -240,6 +240,10 @@
+   // Generate code for doing a runtime invoke.
+   void InvokeRuntime(QuickEntrypointEnum entrypoint, uint32_t dex_pc);
+ 
++#ifdef ART_NCE
++  void CheckNceNull(Register reference, uint32_t dex_pc);
++#endif
++
+   bool BuildLoadString(uint32_t vreg, dex::StringIndex string_index, const Instruction* next);
+   bool BuildNewInstance(
+       uint32_t vreg, dex::TypeIndex string_index, uint32_t dex_pc, const Instruction* next);
+@@ -798,6 +802,17 @@
+   return true;
+ }
+ 
++#ifdef ART_NCE
++void FastCompilerARM64::CheckNceNull(Register reference, uint32_t dex_pc) {
++  DCHECK(has_frame_);
++  vixl::aarch64::Label non_null;
++  __ Cbnz(reference.W(), &non_null);
++  InvokeRuntime(kQuickThrowNullPointer, dex_pc);
++  __ Brk(0);
++  __ Bind(&non_null);
++}
++#endif
++
+ bool FastCompilerARM64::LoadMethod(Register reg, ArtMethod* method) {
+   if (Runtime::Current()->IsAotCompiler()) {
+     unimplemented_reason_ = "AOTLoadMethod";
+@@ -845,6 +860,12 @@
+       return true;
+     }
+ 
++#ifdef ART_NCE
++    // Object methods reached through an interface use the class vtable.
++    if (invoke_type == kInterface && resolved_method->GetDeclaringClass()->IsObjectClass()) {
++      invoke_type = kVirtual;
++    }
++#endif
+     if (invoke_type == kSuper) {
+       resolved_method = method_->SkipAccessChecks()
+           ? FindSuperMethodToCall</*access_check=*/false>(method_index,
+@@ -905,11 +926,19 @@
+       InvokeDexCallingConvention calling_convention;
+       Register receiver = calling_convention.GetRegisterAt(0);
+       Offset class_offset = mirror::Object::ClassOffset();
++#ifdef ART_NCE
++      if (can_be_null) CheckNceNull(receiver, dex_pc);
++      UseScratchRegisterScope temps(GetVIXLAssembler());
++      Register address = NceHeapAddress(GetVIXLAssembler(), &temps, receiver);
++      __ Ldr(kArtMethodRegister.W(), MemOperand(address, class_offset.Int32Value()));
++      NceRuntimeReference(GetVIXLAssembler(), kArtMethodRegister);
++#else
+       EmissionCheckScope guard(GetVIXLAssembler(), kMaxMacroInstructionSizeInBytes);
+       __ Ldr(kArtMethodRegister.W(), HeapOperand(receiver.W(), class_offset));
+       if (can_be_null) {
+         RecordPcInfo(dex_pc);
+       }
++#endif
+     }
+   }
+ 
+@@ -983,7 +1012,12 @@
+ 
+   Handle<mirror::String> h_str = handles_->NewHandle(str);
+   Register dst = RegisterFrom(loc, DataType::Type::kReference);
+-  __ Ldr(dst.W(), jit_patches_.DeduplicateJitStringLiteral(GetDexFile(),
++#ifdef ART_NCE
++  Register root_address = dst.X();
++#else
++  Register root_address = dst.W();
++#endif
++  __ Ldr(root_address, jit_patches_.DeduplicateJitStringLiteral(GetDexFile(),
+                                                            string_index,
+                                                            h_str,
+                                                            code_generation_data_.get()));
+@@ -1019,7 +1053,12 @@
+   InvokeRuntimeCallingConvention calling_convention;
+   Register cls_reg = calling_convention.GetRegisterAt(0);
+   Handle<mirror::Class> h_klass = handles_->NewHandle(klass);
+-  __ Ldr(cls_reg.W(), jit_patches_.DeduplicateJitClassLiteral(GetDexFile(),
++#ifdef ART_NCE
++  Register root_address = cls_reg.X();
++#else
++  Register root_address = cls_reg.W();
++#endif
++  __ Ldr(root_address, jit_patches_.DeduplicateJitClassLiteral(GetDexFile(),
+                                                               type_index,
+                                                               h_klass ,
+                                                               code_generation_data_.get()));
+@@ -1033,7 +1072,13 @@
+       !klass->IsInstantiable()) {
+     entrypoint = kQuickAllocObjectWithChecks;
+   }
++#ifdef ART_NCE
++  NceRuntimeReference(GetVIXLAssembler(), cls_reg);
++#endif
+   InvokeRuntime(entrypoint, dex_pc);
++#ifdef ART_NCE
++  NceQuickReference(GetVIXLAssembler(), x0);
++#endif
+   __ Dmb(InnerShareable, BarrierWrites);
+   if (!MoveLocation(CreateNewRegisterLocation(vreg, DataType::Type::kReference, next),
+                     calling_convention.GetReturnLocation(DataType::Type::kReference),
+@@ -1073,12 +1118,23 @@
+ 
+   vixl::aarch64::Label exit, read_barrier_exit;
+   __ Cbz(obj, &exit);
+-  __ Ldr(cls.W(), jit_patches_.DeduplicateJitClassLiteral(GetDexFile(),
++#ifdef ART_NCE
++  Register root_address = cls.X();
++#else
++  Register root_address = cls.W();
++#endif
++  __ Ldr(root_address, jit_patches_.DeduplicateJitClassLiteral(GetDexFile(),
+                                                           type_index,
+                                                           h_klass ,
+                                                           code_generation_data_.get()));
+   __ Ldr(cls.W(), MemOperand(cls.X()));
++#ifdef ART_NCE
++  Register address = NceHeapAddress(GetVIXLAssembler(), &temps, obj);
++  __ Ldr(obj_cls.W(), MemOperand(address));
++  temps.Release(address);
++#else
+   __ Ldr(obj_cls.W(), MemOperand(obj.X()));
++#endif
+   __ Cmp(cls.W(), obj_cls.W());
+   __ B(eq, &exit);
+ 
+@@ -1095,6 +1151,10 @@
+                     DataType::Type::kReference)) {
+     return false;
+   }
++#ifdef ART_NCE
++  NceRuntimeReference(GetVIXLAssembler(), calling_convention.GetRegisterAt(0));
++  NceRuntimeReference(GetVIXLAssembler(), cls);
++#endif
+   InvokeRuntime(kQuickCheckInstanceOf, dex_pc);
+ 
+   __ Bind(&exit);
+@@ -1105,6 +1165,10 @@
+                                         vixl::aarch64::Label* exit,
+                                         bool do_mr_check) {
+   DCHECK(has_frame_);
++#ifdef ART_NCE
++  static_assert(!gUseReadBarrier);
++  return;
++#endif
+   vixl::aarch64::Label local_exit;
+   if (do_mr_check) {
+     __ Cbz(mr, (exit != nullptr) ? exit : &local_exit);
+@@ -1130,12 +1194,14 @@
+     return false;
+   }
+ 
++#ifndef ART_NCE
+   if (can_receiver_be_null) {
+     if (!CanDoImplicitNullCheckOn(field->GetOffset().Uint32Value())) {
+       unimplemented_reason_ = "TooLargeFieldOffset";
+       return false;
+     }
+   }
++#endif
+   return true;
+ }
+ 
+@@ -1907,13 +1973,19 @@
+         }
+       }
+ 
+-      MemOperand mem = HeapOperand(
+-          RegisterFrom(GetExistingRegisterLocation(obj_reg, DataType::Type::kReference),
+-                       DataType::Type::kReference),
+-          field->GetOffset());
+-      if (HitUnimplemented()) {
+-        return false;
+-      }
++      Register holder = RegisterFrom(
++          GetExistingRegisterLocation(obj_reg, DataType::Type::kReference),
++          DataType::Type::kReference);
++      if (HitUnimplemented()) return false;
++#ifdef ART_NCE
++      if (can_receiver_be_null) CheckNceNull(holder, dex_pc);
++      can_receiver_be_null = false;
++      UseScratchRegisterScope temps(GetVIXLAssembler());
++      Register address = NceHeapAddress(GetVIXLAssembler(), &temps, holder);
++      MemOperand mem(address, field->GetOffset().Int32Value());
++#else
++      MemOperand mem = HeapOperand(holder, field->GetOffset());
++#endif
+       if (is_object) {
+         Register dst = WRegisterFrom(
+             CreateNewRegisterLocation(source_or_dest_reg, DataType::Type::kReference, next));
+@@ -2029,10 +2101,18 @@
+       if (HitUnimplemented()) {
+         return false;
+       }
++#ifdef ART_NCE
++      if (can_receiver_be_null) CheckNceNull(holder, dex_pc);
++      can_receiver_be_null = false;
++#endif
++      // NCE retains the native holder address through the store and card marking.
++      UseScratchRegisterScope temps(GetVIXLAssembler());
++#ifdef ART_NCE
++      Register address = NceHeapAddress(GetVIXLAssembler(), &temps, holder);
++      MemOperand mem(address, field->GetOffset().Int32Value());
++#else
+       MemOperand mem = HeapOperand(holder, field->GetOffset());
+-
+-      // Need one temp if the stored value is a constant.
+-      UseScratchRegisterScope temps(GetVIXLAssembler());
++#endif
+       Location src = vreg_locations_[source_reg];
+       bool assigning_constant = false;
+       if (src.IsConstant()) {
+@@ -2066,10 +2146,15 @@
+           vixl::aarch64::Label exit;
+           __ Cbz(reg, &exit);
+           Register card = temps.AcquireX();
++          __ Ldr(card, MemOperand(tr, Thread::CardTableOffset<kArm64PointerSize>().Int32Value()));
++#ifdef ART_NCE
++          __ Lsr(address, address, gc::accounting::CardTable::kCardShift);
++          __ Strb(card, MemOperand(card, address));
++#else
+           Register temp = temps.AcquireW();
+-          __ Ldr(card, MemOperand(tr, Thread::CardTableOffset<kArm64PointerSize>().Int32Value()));
+           __ Lsr(temp, holder, gc::accounting::CardTable::kCardShift);
+           __ Strb(card, MemOperand(card, temp.X()));
++#endif
+           __ Bind(&exit);
+         }
+         return true;
+@@ -2182,6 +2267,9 @@
+                         DataType::Type::kReference)) {
+         return false;
+       }
++#ifdef ART_NCE
++      NceRuntimeReference(GetVIXLAssembler(), calling_convention.GetRegisterAt(0));
++#endif
+       InvokeRuntime(kQuickDeliverException, dex_pc);
+       return true;
+     }
+@@ -2278,11 +2366,15 @@
+     VariableSizedHandleScope* handles,
+     const CompilerOptions& compiler_options,
+     const DexCompilationUnit& dex_compilation_unit) {
+-  if (!compiler_options.GetImplicitNullChecks() ||
++  if (
++#ifndef ART_NCE
++      !compiler_options.GetImplicitNullChecks() ||
++      !kReserveMarkingRegister ||
++#else
++      gUseReadBarrier || method->IsSynchronized() ||
++#endif
+       !compiler_options.GetImplicitStackOverflowChecks() ||
+-      kUseTableLookupReadBarrier ||
+-      !kReserveMarkingRegister ||
+-      kPoisonHeapReferences) {
++      kUseTableLookupReadBarrier || kPoisonHeapReferences) {
+     // Configurations we don't support.
+     return nullptr;
+   }
+--- a/compiler/optimizing/optimizing_compiler.cc
++++ b/compiler/optimizing/optimizing_compiler.cc
+@@ -814,6 +814,17 @@
+ #endif
+ 
+ #ifdef ART_NCE
++// Used by the synchronous regression on this compilation thread.
++thread_local uint64_t nce_fast_baseline_installed = 0;
++
++static bool NceFastBaselineEnabled() {
++  static const bool enabled = [] {
++    std::ifstream mode("/data/nce/art-fast-baseline");
++    return mode.get() == '1';
++  }();
++  return enabled;
++}
++
+ static bool NceExpandedJitEnabled() {
+   static const bool enabled = [] {
+     std::ifstream mode("/data/nce/art-expanded-jit");
+@@ -1634,7 +1645,7 @@
+ #ifndef ART_NCE
+         com::android::art::flags::fast_baseline_compiler() &&
+ #else
+-        false &&
++        NceFastBaselineEnabled() &&
+ #endif
+         compilation_kind == CompilationKind::kBaseline &&
+         !compiler_options.GetDebuggable()) {
+@@ -1715,6 +1726,15 @@
+     if (jit_logger != nullptr) {
+       jit_logger->WriteLog(code, fast_compiler->GetCode().size(), method);
+     }
++#ifdef ART_NCE
++    ++nce_fast_baseline_installed;
++    if (NceCompilerProfileEnabled() &&
++        (nce_fast_baseline_installed & (nce_fast_baseline_installed - 1)) == 0) {
++      LOG(INFO) << "NCE_ART_FAST_BASELINE pid=" << getpid()
++                << " epoch=" << NceCompilerProfileEpoch() << " tid=" << gettid()
++                << " installed=" << nce_fast_baseline_installed;
++    }
++#endif
+     VLOG(jit) << "Fast compiled " << method->PrettyMethod();
+   } else {
+     ScopedArenaVector<uint8_t> stack_map = codegen->BuildStackMaps(code_item);

@@ -1,0 +1,5411 @@
+{
+  "date": "2026-10-10",
+  "scope": "Fast baseline compiler CLI and GCD functional desktop regression; performance logging enabled, concurrent compiler work, timings are not a startup benchmark.",
+  "source_revision": "707fb29 plus fast baseline and benchmark memory changes",
+  "host_cpu": "Apple M5 Ultra",
+  "os": "macOS-27.0-arm64-arm-64bit-Mach-O",
+  "kernel_sha256": "d8cfa8459453d60a40bf3d358d507fccdfc4308543125e85fcf7012fbb499896",
+  "art_build": {
+    "build_inputs": "0fb3d2fdf882eccff8706b9060b0c0f0d9bf19185393714c9d802f95472aab2c",
+    "inputs": {
+      "experiments/native-linux/art/android16.patch": "342182ccf23877d0be817d5b3df3828249732e450e15abda33e700ec02c5bf1e",
+      "experiments/native-linux/art/reference_heap.h": "c814b35b45c201f3893f3e8739f0ea5a0d309facbf70a9ba1f2fd8bb9ddaf71f",
+      "experiments/native-linux/art/reference_heap.c": "a10220f756efd4891930521667bcbf6e86b9e6a3d646d910c934884f57782be2",
+      "experiments/native-linux/art/jit_control.cc": "b8c4b73ff7b275e1b9f9dfb3730ad5e2c4104926c8eed7876c0d50bd586a802c",
+      "experiments/native-linux/art/sources.json": "a66d085c58d109c16e99205fe83514cf5a41a60ed372fd924e374007b947f82b",
+      "experiments/native-linux/art/nterp.patch": "5623b75f44d6e51647966b660de4d6410308b982cda1c9a4d7c843bcea7f8bcc",
+      "experiments/native-linux/art/compiler-profile.patch": "7a62ddd525c76c9744bc48689255913e06b4695332f601e10436d4e7fd559609",
+      "experiments/native-linux/art/expanded-jit.patch": "3cb1b6b0b115b8687d81c9340283093422fa3005768143a6ddd86063f843331a",
+      "experiments/native-linux/art/fast-baseline.patch": "47c55e913eeb1c62c698a7f6838dc2533e24ddd4307ab40c3650b261aa5031c0",
+      "ndk_libcxx_config": "e7de7bd0b73df77a31d5be96bec3498851cda33ad51b66c654cb51d3e078b6eb",
+      "libc": "4174a2a3908049c19d176cba2d61f61f46369f173a41ed609f445b3e4e2e81ee",
+      "runtime": "4b1a45b0ee51725c68f1c29765958d0b60b45a5f2325bedfc61764cd49232249",
+      "builder": "2dfdf4607afe7dc90c1329aa97af26ac1ffa01081c4ac042bea3b3db3ce6c9b2",
+      "layout": "9ecb6dc474edfc516284effcbd1999ba445ba88372233636391771a0715deaa5"
+    },
+    "files": {
+      "libart.so": "63194ec93becbcef7a2b66ebec46943580260c2109de489e151aa5d044db58cc",
+      "libartbase.so": "af02b230861c8f209d6df773e4749063cbd7ab25062cbd5629e4a955ef2d31f4"
+    },
+    "art_flags": {
+      "use_generational_cmc": false,
+      "always_enable_profile_code": false,
+      "test": false,
+      "executable_method_file_offsets": false,
+      "executable_method_file_offsets_v2": false,
+      "art_service_v3": false,
+      "virtual_thread_impl_v1": false,
+      "fast_baseline_compiler": false
+    },
+    "execution": "restricted-arm64-jit",
+    "compressed_references": "offset-in-high-4GiB-arena"
+  },
+  "configuration": {
+    "nterp": true,
+    "expandedJIT": true,
+    "fastBaseline": true,
+    "performanceLogging": true,
+    "guest_ram_mib": 1024,
+    "guest_cpus": 1
+  },
+  "runs": [
+    {
+      "entry": "results",
+      "passed": true,
+      "checks": 213,
+      "tests": [
+        {
+          "test": "android_art_fast_baseline_paths",
+          "passed": true,
+          "gc_requests": 64,
+          "exceptions": 12
+        },
+        {
+          "test": "android_art_fast_baseline_entries",
+          "passed": true,
+          "enabled": true,
+          "methods": 20,
+          "fast_methods": 19,
+          "compile_ms": 0.762
+        },
+        {
+          "test": "android_system_boot_completed",
+          "passed": true
+        },
+        {
+          "test": "android_system_process_groups_stopped",
+          "passed": true
+        },
+        {
+          "test": "linux_data_readonly_shutdown",
+          "passed": true
+        },
+        {
+          "test": "guest_preemption_signal_mask",
+          "inherited_blocked_threads": 0,
+          "passed": true
+        }
+      ],
+      "components": {
+        "component_timing_count": 1237,
+        "timing_limit_per_tag": 40,
+        "component_timings": [
+          {
+            "tag": "SystemServerTiming",
+            "name": "InitBeforeStartServices",
+            "ms": 352,
+            "line": 9246,
+            "timestamp": "10-10 09:32:25.884"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "StartActivityManager",
+            "ms": 229,
+            "line": 9737,
+            "timestamp": "10-10 09:32:26.282"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "StartPackageManagerService",
+            "ms": 2618,
+            "line": 10688,
+            "timestamp": "10-10 09:32:29.196"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "SetSystemProcess",
+            "ms": 284,
+            "line": 10720,
+            "timestamp": "10-10 09:32:29.547"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "StartOverlayManagerService",
+            "ms": 200,
+            "line": 10731,
+            "timestamp": "10-10 09:32:29.783"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "startBootstrapServices",
+            "ms": 3969,
+            "line": 10747,
+            "timestamp": "10-10 09:32:29.856"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "startCoreServices",
+            "ms": 296,
+            "line": 10853,
+            "timestamp": "10-10 09:32:30.152"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "StartWindowManagerService",
+            "ms": 190,
+            "line": 11055,
+            "timestamp": "10-10 09:32:30.961"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "SetWindowManagerService",
+            "ms": 383,
+            "line": 11060,
+            "timestamp": "10-10 09:32:31.344"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "StartNetworkStatsService",
+            "ms": 279,
+            "line": 11271,
+            "timestamp": "10-10 09:32:32.904"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "StartConnectivityService",
+            "ms": 403,
+            "line": 11297,
+            "timestamp": "10-10 09:32:33.395"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "StartNotificationManager",
+            "ms": 243,
+            "line": 11323,
+            "timestamp": "10-10 09:32:33.693"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "StartAudioService",
+            "ms": 533,
+            "line": 11413,
+            "timestamp": "10-10 09:32:34.503"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "StartJobScheduler",
+            "ms": 209,
+            "line": 11537,
+            "timestamp": "10-10 09:32:34.949"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "StarSdkSandboxManagerService",
+            "ms": 340,
+            "line": 12064,
+            "timestamp": "10-10 09:32:37.213"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "OnBootPhase_500_com.android.server.am.ActivityManagerService$Lifecycle",
+            "ms": 255,
+            "line": 12576,
+            "timestamp": "10-10 09:32:37.933"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "OnBootPhase_500_com.android.server.power.PowerManagerService",
+            "ms": 312,
+            "line": 12640,
+            "timestamp": "10-10 09:32:38.248"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "OnBootPhase_500_com.android.server.sensorprivacy.SensorPrivacyService",
+            "ms": 317,
+            "line": 12716,
+            "timestamp": "10-10 09:32:38.567"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "OnBootPhase_500_com.android.server.vibrator.VibratorManagerService$Lifecycle",
+            "ms": 1166,
+            "line": 13315,
+            "timestamp": "10-10 09:32:39.945"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "OnBootPhase_500",
+            "ms": 2805,
+            "line": 13562,
+            "timestamp": "10-10 09:32:40.430"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "StartBootPhaseSystemServicesReady",
+            "ms": 2806,
+            "line": 13563,
+            "timestamp": "10-10 09:32:40.430"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "OnBootPhase_550_com.android.server.NetworkStatsServiceInitializer",
+            "ms": 820,
+            "line": 14301,
+            "timestamp": "10-10 09:32:43.051"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "OnBootPhase_550_com.android.server.wallpaper.WallpaperManagerService$Lifecycle",
+            "ms": 231,
+            "line": 14344,
+            "timestamp": "10-10 09:32:43.373"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "OnBootPhase_550",
+            "ms": 1728,
+            "line": 14476,
+            "timestamp": "10-10 09:32:43.511"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "StartActivityManagerReadyPhase",
+            "ms": 1728,
+            "line": 14477,
+            "timestamp": "10-10 09:32:43.511"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "MakeConnectivityServiceReady",
+            "ms": 386,
+            "line": 14559,
+            "timestamp": "10-10 09:32:44.035"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "MakeNetworkPolicyServiceReady",
+            "ms": 232,
+            "line": 14619,
+            "timestamp": "10-10 09:32:44.476"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "OnBootPhase_600_com.android.server.job.JobSchedulerService",
+            "ms": 230,
+            "line": 14887,
+            "timestamp": "10-10 09:32:45.083"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "OnBootPhase_600",
+            "ms": 1179,
+            "line": 15017,
+            "timestamp": "10-10 09:32:45.735"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "PhaseThirdPartyAppsCanStart",
+            "ms": 1179,
+            "line": 15018,
+            "timestamp": "10-10 09:32:45.735"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "StartNetworkStack",
+            "ms": 344,
+            "line": 15078,
+            "timestamp": "10-10 09:32:46.086"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "startHomeOnAllDisplays",
+            "ms": 486,
+            "line": 15591,
+            "timestamp": "10-10 09:32:48.152"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "ActivityManagerStartApps",
+            "ms": 2001,
+            "line": 15615,
+            "timestamp": "10-10 09:32:48.460"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "PhaseActivityManagerReady",
+            "ms": 6988,
+            "line": 15619,
+            "timestamp": "10-10 09:32:48.461"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "startOtherServices",
+            "ms": 18696,
+            "line": 15632,
+            "timestamp": "10-10 09:32:48.849"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "StartServices",
+            "ms": 23026,
+            "line": 15649,
+            "timestamp": "10-10 09:32:48.912"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.keyguard.KeyguardUpdateMonitor",
+            "ms": 404,
+            "line": 16793,
+            "timestamp": "10-10 09:33:02.005"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.systemui.ScreenDecorations",
+            "ms": 261,
+            "line": 16798,
+            "timestamp": "10-10 09:33:02.284"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.systemui.accessibility.MagnificationImpl",
+            "ms": 448,
+            "line": 16877,
+            "timestamp": "10-10 09:33:02.755"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.systemui.accessibility.SystemActions",
+            "ms": 4623,
+            "line": 17050,
+            "timestamp": "10-10 09:33:07.403"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.systemui.biometrics.AuthRippleController",
+            "ms": 37,
+            "line": 17054,
+            "timestamp": "10-10 09:33:07.462"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.systemui.biometrics.BiometricNotificationService",
+            "ms": 32,
+            "line": 17056,
+            "timestamp": "10-10 09:33:07.496"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.systemui.clipboardoverlay.ClipboardListener",
+            "ms": 22,
+            "line": 17066,
+            "timestamp": "10-10 09:33:07.527"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.systemui.communal.CommunalSuppressionStartable",
+            "ms": 51,
+            "line": 17072,
+            "timestamp": "10-10 09:33:07.615"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.systemui.complication.ComplicationTypesUpdater",
+            "ms": 19,
+            "line": 17077,
+            "timestamp": "10-10 09:33:07.650"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.systemui.dreams.AssistantAttentionMonitor",
+            "ms": 1535,
+            "line": 17112,
+            "timestamp": "10-10 09:33:09.199"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.systemui.education.domain.interactor.ContextualEducationInteractor",
+            "ms": 19,
+            "line": 17117,
+            "timestamp": "10-10 09:33:09.271"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.systemui.education.ui.view.ContextualEduUiCoordinator",
+            "ms": 37,
+            "line": 17119,
+            "timestamp": "10-10 09:33:09.333"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.systemui.flags.FeatureFlagsDebugStartable",
+            "ms": 116,
+            "line": 17121,
+            "timestamp": "10-10 09:33:09.449"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.systemui.flags.FlagDependencies",
+            "ms": 24,
+            "line": 17123,
+            "timestamp": "10-10 09:33:09.496"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.systemui.globalactions.GlobalActionsComponent",
+            "ms": 69,
+            "line": 17126,
+            "timestamp": "10-10 09:33:09.566"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.systemui.keyboard.KeyboardUI",
+            "ms": 23,
+            "line": 17129,
+            "timestamp": "10-10 09:33:09.625"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.systemui.keyboard.PhysicalKeyboardCoreStartable",
+            "ms": 55,
+            "line": 17133,
+            "timestamp": "10-10 09:33:09.680"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.systemui.keyboard.shortcut.ui.ShortcutHelperDialogStarter",
+            "ms": 26,
+            "line": 17135,
+            "timestamp": "10-10 09:33:09.720"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.systemui.keyguard.KeyguardViewConfigurator",
+            "ms": 375,
+            "line": 17138,
+            "timestamp": "10-10 09:33:10.118"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.systemui.keyguard.KeyguardViewMediator",
+            "ms": 291,
+            "line": 17147,
+            "timestamp": "10-10 09:33:10.414"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.systemui.keyguard.domain.interactor.KeyguardTransitionCoreStartable",
+            "ms": 53,
+            "line": 17161,
+            "timestamp": "10-10 09:33:10.475"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.systemui.media.RingtonePlayer",
+            "ms": 28,
+            "line": 17173,
+            "timestamp": "10-10 09:33:10.533"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.systemui.power.PowerUI",
+            "ms": 204,
+            "line": 17188,
+            "timestamp": "10-10 09:33:10.801"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.systemui.shortcut.ShortcutKeyDispatcher",
+            "ms": 52,
+            "line": 17215,
+            "timestamp": "10-10 09:33:10.984"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.systemui.statusbar.ImmersiveModeConfirmation",
+            "ms": 74,
+            "line": 17217,
+            "timestamp": "10-10 09:33:11.059"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.systemui.statusbar.chips.sharetoapp.ui.viewmodel.ShareToAppChipViewModel",
+            "ms": 81,
+            "line": 17220,
+            "timestamp": "10-10 09:33:11.158"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.systemui.statusbar.notification.interruption.KeyguardNotificationVisibilityProviderImpl",
+            "ms": 83,
+            "line": 17240,
+            "timestamp": "10-10 09:33:11.258"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.systemui.statusbar.notification.interruption.VisualInterruptionDecisionProvider",
+            "ms": 47,
+            "line": 17241,
+            "timestamp": "10-10 09:33:11.307"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.systemui.statusbar.phone.CentralSurfaces",
+            "ms": 2563,
+            "line": 17312,
+            "timestamp": "10-10 09:33:13.884"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.systemui.stylus.StylusUsiPowerStartable",
+            "ms": 31,
+            "line": 17327,
+            "timestamp": "10-10 09:33:13.962"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.systemui.theme.ThemeOverlayController",
+            "ms": 94,
+            "line": 17334,
+            "timestamp": "10-10 09:33:14.056"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.systemui.usb.StorageNotification",
+            "ms": 94,
+            "line": 17350,
+            "timestamp": "10-10 09:33:14.174"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.systemui.util.BinderLogger",
+            "ms": 24,
+            "line": 17352,
+            "timestamp": "10-10 09:33:14.203"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.systemui.util.NotificationChannels",
+            "ms": 43,
+            "line": 17353,
+            "timestamp": "10-10 09:33:14.257"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.systemui.volume.VolumeUI",
+            "ms": 67,
+            "line": 17355,
+            "timestamp": "10-10 09:33:14.325"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.google.android.systemui.GoogleServices",
+            "ms": 65,
+            "line": 17358,
+            "timestamp": "10-10 09:33:14.479"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.google.android.systemui.compose.ComposeHsvStartable",
+            "ms": 26,
+            "line": 17361,
+            "timestamp": "10-10 09:33:14.506"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.google.android.systemui.smartspace.KeyguardSmartspaceStartable",
+            "ms": 34,
+            "line": 17367,
+            "timestamp": "10-10 09:33:14.565"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "Topologically start Core Startables",
+            "ms": 12996,
+            "line": 17374,
+            "timestamp": "10-10 09:33:14.582"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices",
+            "ms": 13023,
+            "line": 17376,
+            "timestamp": "10-10 09:33:14.610"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "prepareUserData-0",
+            "ms": 304,
+            "line": 18137,
+            "timestamp": "10-10 09:33:21.216"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "UM.onBeforeUnlockUser-0",
+            "ms": 441,
+            "line": 18183,
+            "timestamp": "10-10 09:33:21.333"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "SystemUserUnlock",
+            "ms": 2162,
+            "line": 18669,
+            "timestamp": "10-10 09:33:22.926"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "finishUserUnlocked-0",
+            "ms": 2686,
+            "line": 22028,
+            "timestamp": "10-10 09:33:25.608"
+          }
+        ],
+        "displayed_activities": [
+          {
+            "line": 17277,
+            "message": "10-10 09:33:12.869   202   220 I ActivityTaskManager: Displayed com.android.settings/.FallbackHome for user 0: +25s101ms"
+          },
+          {
+            "line": 29861,
+            "message": "10-10 09:34:05.372   202   220 I ActivityTaskManager: Displayed com.android.launcher3/.uioverrides.QuickstepLauncher for user 0: +43s353ms"
+          },
+          {
+            "line": 31903,
+            "message": "10-10 09:34:17.133   202   220 I ActivityTaskManager: Displayed com.android.deskclock/.DeskClock for user 0: +8s884ms"
+          },
+          {
+            "line": 36987,
+            "message": "10-10 09:34:39.417   202   220 I ActivityTaskManager: Displayed com.google.android.documentsui/com.android.documentsui.files.FilesActivity for user 0: +9s255ms"
+          }
+        ],
+        "mapping_cumulative": [
+          {
+            "profile": "host_mapping",
+            "elapsed_ms": 10895.757,
+            "data_calls": 569905,
+            "data_ms": 873.359,
+            "code_calls": 78829,
+            "code_ms": 229.406,
+            "revoke_calls": 329655,
+            "revoke_ms": 704.229,
+            "line": 9002
+          },
+          {
+            "profile": "host_mapping",
+            "elapsed_ms": 21828.113,
+            "data_calls": 1698118,
+            "data_ms": 2582.881,
+            "code_calls": 149511,
+            "code_ms": 477.193,
+            "revoke_calls": 932178,
+            "revoke_ms": 1970.107,
+            "line": 11273
+          },
+          {
+            "profile": "host_mapping",
+            "elapsed_ms": 31918.497,
+            "data_calls": 2629231,
+            "data_ms": 4104.664,
+            "code_calls": 242027,
+            "code_ms": 814.317,
+            "revoke_calls": 1556490,
+            "revoke_ms": 3339.123,
+            "line": 14547
+          },
+          {
+            "profile": "host_mapping",
+            "elapsed_ms": 42180.763,
+            "data_calls": 3595293,
+            "data_ms": 5762.918,
+            "code_calls": 318495,
+            "code_ms": 1089.919,
+            "revoke_calls": 2191229,
+            "revoke_ms": 4806.145,
+            "line": 16106
+          },
+          {
+            "profile": "host_mapping",
+            "elapsed_ms": 52907.694,
+            "data_calls": 4771368,
+            "data_ms": 7506.402,
+            "code_calls": 408131,
+            "code_ms": 1384.852,
+            "revoke_calls": 2968304,
+            "revoke_ms": 6183.584,
+            "line": 16976
+          },
+          {
+            "profile": "host_mapping",
+            "elapsed_ms": 63738.859,
+            "data_calls": 5936045,
+            "data_ms": 9245.736,
+            "code_calls": 487976,
+            "code_ms": 1649.023,
+            "revoke_calls": 3718247,
+            "revoke_ms": 7605.852,
+            "line": 17473
+          },
+          {
+            "profile": "host_mapping",
+            "elapsed_ms": 95710.289,
+            "data_calls": 9245759,
+            "data_ms": 14241.653,
+            "code_calls": 918044,
+            "code_ms": 2493.017,
+            "revoke_calls": 5945273,
+            "revoke_ms": 11440.087,
+            "line": 29144
+          },
+          {
+            "profile": "host_mapping",
+            "elapsed_ms": 106031.078,
+            "data_calls": 10296314,
+            "data_ms": 15839.36,
+            "code_calls": 1077534,
+            "code_ms": 2768.368,
+            "revoke_calls": 6663338,
+            "revoke_ms": 12665.624,
+            "line": 29486
+          },
+          {
+            "profile": "host_mapping",
+            "elapsed_ms": 116184.079,
+            "data_calls": 11225990,
+            "data_ms": 17269.158,
+            "code_calls": 1226035,
+            "code_ms": 3030.488,
+            "revoke_calls": 7300628,
+            "revoke_ms": 13770.627,
+            "line": 29987
+          },
+          {
+            "profile": "host_mapping",
+            "elapsed_ms": 126970.5,
+            "data_calls": 12256041,
+            "data_ms": 18881.492,
+            "code_calls": 1407983,
+            "code_ms": 3326.003,
+            "revoke_calls": 7996979,
+            "revoke_ms": 14987.269,
+            "line": 31919
+          },
+          {
+            "profile": "host_mapping",
+            "elapsed_ms": 137313.185,
+            "data_calls": 13050855,
+            "data_ms": 20168.353,
+            "code_calls": 1567158,
+            "code_ms": 3583.163,
+            "revoke_calls": 8539690,
+            "revoke_ms": 16063.12,
+            "line": 34984
+          },
+          {
+            "profile": "host_mapping",
+            "elapsed_ms": 147903.069,
+            "data_calls": 13972826,
+            "data_ms": 21640.875,
+            "code_calls": 1740332,
+            "code_ms": 3858.496,
+            "revoke_calls": 9176275,
+            "revoke_ms": 17256.58,
+            "line": 36964
+          }
+        ],
+        "mapping_intervals": [
+          {
+            "elapsed_ms": 10895.757,
+            "data_ms": 873.359,
+            "code_ms": 229.406,
+            "revoke_ms": 704.229,
+            "mapping_ms": 1806.994,
+            "elapsed_end_ms": 10895.757
+          },
+          {
+            "elapsed_ms": 10932.356,
+            "data_ms": 1709.522,
+            "code_ms": 247.787,
+            "revoke_ms": 1265.878,
+            "mapping_ms": 3223.187,
+            "elapsed_end_ms": 21828.113
+          },
+          {
+            "elapsed_ms": 10090.384,
+            "data_ms": 1521.783,
+            "code_ms": 337.124,
+            "revoke_ms": 1369.016,
+            "mapping_ms": 3227.923,
+            "elapsed_end_ms": 31918.497
+          },
+          {
+            "elapsed_ms": 10262.266,
+            "data_ms": 1658.254,
+            "code_ms": 275.602,
+            "revoke_ms": 1467.022,
+            "mapping_ms": 3400.878,
+            "elapsed_end_ms": 42180.763
+          },
+          {
+            "elapsed_ms": 10726.931,
+            "data_ms": 1743.484,
+            "code_ms": 294.933,
+            "revoke_ms": 1377.439,
+            "mapping_ms": 3415.856,
+            "elapsed_end_ms": 52907.694
+          },
+          {
+            "elapsed_ms": 10831.165,
+            "data_ms": 1739.334,
+            "code_ms": 264.171,
+            "revoke_ms": 1422.268,
+            "mapping_ms": 3425.773,
+            "elapsed_end_ms": 63738.859
+          },
+          {
+            "elapsed_ms": 31971.43,
+            "data_ms": 4995.917,
+            "code_ms": 843.994,
+            "revoke_ms": 3834.235,
+            "mapping_ms": 9674.146,
+            "elapsed_end_ms": 95710.289
+          },
+          {
+            "elapsed_ms": 10320.789,
+            "data_ms": 1597.707,
+            "code_ms": 275.351,
+            "revoke_ms": 1225.537,
+            "mapping_ms": 3098.595,
+            "elapsed_end_ms": 106031.078
+          },
+          {
+            "elapsed_ms": 10153.001,
+            "data_ms": 1429.798,
+            "code_ms": 262.12,
+            "revoke_ms": 1105.003,
+            "mapping_ms": 2796.921,
+            "elapsed_end_ms": 116184.079
+          },
+          {
+            "elapsed_ms": 10786.421,
+            "data_ms": 1612.334,
+            "code_ms": 295.515,
+            "revoke_ms": 1216.642,
+            "mapping_ms": 3124.491,
+            "elapsed_end_ms": 126970.5
+          },
+          {
+            "elapsed_ms": 10342.685,
+            "data_ms": 1286.861,
+            "code_ms": 257.16,
+            "revoke_ms": 1075.851,
+            "mapping_ms": 2619.872,
+            "elapsed_end_ms": 137313.185
+          },
+          {
+            "elapsed_ms": 10589.884,
+            "data_ms": 1472.522,
+            "code_ms": 275.333,
+            "revoke_ms": 1193.46,
+            "mapping_ms": 2941.315,
+            "elapsed_end_ms": 147903.069
+          }
+        ],
+        "resume_entries": [
+          {
+            "profile": "resume_entries",
+            "hits": 270464,
+            "misses": 11745,
+            "line": 9003
+          },
+          {
+            "profile": "resume_entries",
+            "hits": 345614,
+            "misses": 21517,
+            "line": 11274
+          },
+          {
+            "profile": "resume_entries",
+            "hits": 421605,
+            "misses": 31322,
+            "line": 14548
+          },
+          {
+            "profile": "resume_entries",
+            "hits": 491173,
+            "misses": 42708,
+            "line": 16107
+          },
+          {
+            "profile": "resume_entries",
+            "hits": 567461,
+            "misses": 54998,
+            "line": 16977
+          },
+          {
+            "profile": "resume_entries",
+            "hits": 629982,
+            "misses": 70487,
+            "line": 17474
+          },
+          {
+            "profile": "resume_entries",
+            "hits": 715646,
+            "misses": 91763,
+            "line": 22087
+          },
+          {
+            "profile": "resume_entries",
+            "hits": 843267,
+            "misses": 139018,
+            "line": 26019
+          },
+          {
+            "profile": "resume_entries",
+            "hits": 983175,
+            "misses": 190400,
+            "line": 29145
+          },
+          {
+            "profile": "resume_entries",
+            "hits": 1107587,
+            "misses": 237928,
+            "line": 29487
+          },
+          {
+            "profile": "resume_entries",
+            "hits": 1228926,
+            "misses": 277073,
+            "line": 29988
+          },
+          {
+            "profile": "resume_entries",
+            "hits": 1389012,
+            "misses": 327196,
+            "line": 31920
+          },
+          {
+            "profile": "resume_entries",
+            "hits": 1526402,
+            "misses": 369798,
+            "line": 34985
+          },
+          {
+            "profile": "resume_entries",
+            "hits": 1677690,
+            "misses": 418566,
+            "line": 36965
+          }
+        ],
+        "mmu_cumulative": [
+          {
+            "profile": "linux_mmu",
+            "switches": 10749,
+            "scanned_pages": 3497688,
+            "present_faults": 30536,
+            "linux_faults": 248713,
+            "fast_faults": 1204552,
+            "restored_pages": 2005454,
+            "line": 9004
+          },
+          {
+            "profile": "linux_mmu",
+            "switches": 13929,
+            "scanned_pages": 5893267,
+            "present_faults": 90906,
+            "linux_faults": 272994,
+            "fast_faults": 2285601,
+            "restored_pages": 4082933,
+            "line": 11275
+          },
+          {
+            "profile": "linux_mmu",
+            "switches": 19418,
+            "scanned_pages": 8529801,
+            "present_faults": 172586,
+            "linux_faults": 276965,
+            "fast_faults": 3209484,
+            "restored_pages": 6229234,
+            "line": 14549
+          },
+          {
+            "profile": "linux_mmu",
+            "switches": 23096,
+            "scanned_pages": 11050613,
+            "present_faults": 242014,
+            "linux_faults": 288404,
+            "fast_faults": 4142957,
+            "restored_pages": 8130299,
+            "line": 16108
+          },
+          {
+            "profile": "linux_mmu",
+            "switches": 27522,
+            "scanned_pages": 14322099,
+            "present_faults": 323363,
+            "linux_faults": 295529,
+            "fast_faults": 5301665,
+            "restored_pages": 10380318,
+            "line": 16978
+          },
+          {
+            "profile": "linux_mmu",
+            "switches": 30955,
+            "scanned_pages": 17370589,
+            "present_faults": 396570,
+            "linux_faults": 300147,
+            "fast_faults": 6457862,
+            "restored_pages": 12419276,
+            "line": 17475
+          },
+          {
+            "profile": "linux_mmu",
+            "switches": 34516,
+            "scanned_pages": 20242160,
+            "present_faults": 482454,
+            "linux_faults": 320940,
+            "fast_faults": 7511579,
+            "restored_pages": 14472579,
+            "line": 22088
+          },
+          {
+            "profile": "linux_mmu",
+            "switches": 38396,
+            "scanned_pages": 22932882,
+            "present_faults": 646024,
+            "linux_faults": 332026,
+            "fast_faults": 8544228,
+            "restored_pages": 16059730,
+            "line": 26020
+          },
+          {
+            "profile": "linux_mmu",
+            "switches": 42634,
+            "scanned_pages": 25829600,
+            "present_faults": 825367,
+            "linux_faults": 343904,
+            "fast_faults": 9616193,
+            "restored_pages": 17586042,
+            "line": 29146
+          },
+          {
+            "profile": "linux_mmu",
+            "switches": 46068,
+            "scanned_pages": 28330382,
+            "present_faults": 991043,
+            "linux_faults": 349989,
+            "fast_faults": 10637065,
+            "restored_pages": 19008009,
+            "line": 29488
+          },
+          {
+            "profile": "linux_mmu",
+            "switches": 49498,
+            "scanned_pages": 30667397,
+            "present_faults": 1144500,
+            "linux_faults": 356815,
+            "fast_faults": 11540567,
+            "restored_pages": 20318386,
+            "line": 29989
+          },
+          {
+            "profile": "linux_mmu",
+            "switches": 53391,
+            "scanned_pages": 33189604,
+            "present_faults": 1338095,
+            "linux_faults": 373229,
+            "fast_faults": 12506929,
+            "restored_pages": 21711937,
+            "line": 31921
+          },
+          {
+            "profile": "linux_mmu",
+            "switches": 56676,
+            "scanned_pages": 35144433,
+            "present_faults": 1494964,
+            "linux_faults": 396139,
+            "fast_faults": 13221418,
+            "restored_pages": 22750013,
+            "line": 34986
+          },
+          {
+            "profile": "linux_mmu",
+            "switches": 60369,
+            "scanned_pages": 37414953,
+            "present_faults": 1677230,
+            "linux_faults": 413802,
+            "fast_faults": 14077663,
+            "restored_pages": 23953356,
+            "line": 36966
+          },
+          {
+            "profile": "linux_mmu",
+            "switches": 63024,
+            "scanned_pages": 38917136,
+            "present_faults": 1802571,
+            "linux_faults": 444492,
+            "fast_faults": 14656547,
+            "restored_pages": 24780705,
+            "line": 38580
+          }
+        ],
+        "compiler_filter": [
+          {
+            "pid": 1,
+            "epoch": 11143949000,
+            "kind": "accepted",
+            "count": 64,
+            "complete_snapshot": false,
+            "examples": [
+              "boolean java.lang.String.equals(java.lang.Object)",
+              "long NceWorkload.$compile$mix(long, long)"
+            ]
+          },
+          {
+            "pid": 1,
+            "epoch": 11369395000,
+            "kind": "accepted",
+            "count": 16,
+            "complete_snapshot": false,
+            "examples": [
+              "int NceInlining.leaf(NceInlining$Node)",
+              "int NceInlining.middle(NceInlining$Node[], int)"
+            ]
+          },
+          {
+            "pid": 1,
+            "epoch": 11450323000,
+            "kind": "accepted",
+            "count": 16,
+            "complete_snapshot": false,
+            "examples": [
+              "int NceInlining.leaf(NceInlining$Node)",
+              "boolean java.lang.String.equals(java.lang.Object)"
+            ]
+          },
+          {
+            "pid": 27,
+            "epoch": 13526986000,
+            "kind": "accepted",
+            "count": 256,
+            "complete_snapshot": false,
+            "examples": [
+              "boolean java.lang.String.equals(java.lang.Object)",
+              "int java.lang.String.length()"
+            ]
+          },
+          {
+            "pid": 27,
+            "epoch": 13526986000,
+            "kind": "Deoptimize",
+            "count": 16,
+            "complete_snapshot": false,
+            "examples": [
+              "java.util.HashMap$Node[] java.util.HashMap.resize()",
+              "void java.lang.System.arraycopy(byte[], int, byte[], int, int)"
+            ]
+          },
+          {
+            "pid": 73,
+            "epoch": 14886863000,
+            "kind": "accepted",
+            "count": 256,
+            "complete_snapshot": false,
+            "examples": [
+              "boolean java.lang.String.equals(java.lang.Object)",
+              "int java.lang.String.length()"
+            ]
+          },
+          {
+            "pid": 73,
+            "epoch": 14886863000,
+            "kind": "Deoptimize",
+            "count": 16,
+            "complete_snapshot": false,
+            "examples": [
+              "java.lang.String java.io.UnixFileSystem.normalize(java.lang.String)",
+              "java.util.HashMap$Node[] java.util.HashMap.resize()"
+            ]
+          },
+          {
+            "pid": 73,
+            "epoch": 14886863000,
+            "kind": "ShouldDeoptimizeFlag",
+            "count": 1,
+            "complete_snapshot": false,
+            "examples": [
+              "boolean java.util.HashSet.add(java.lang.Object)"
+            ]
+          },
+          {
+            "pid": 97,
+            "epoch": 17385073000,
+            "kind": "accepted",
+            "count": 128,
+            "complete_snapshot": false,
+            "examples": [
+              "boolean java.lang.String.equals(java.lang.Object)",
+              "int java.lang.String.length()"
+            ]
+          },
+          {
+            "pid": 97,
+            "epoch": 17385073000,
+            "kind": "Deoptimize",
+            "count": 8,
+            "complete_snapshot": false,
+            "examples": [
+              "java.util.HashMap$Node[] java.util.HashMap.resize()",
+              "void java.lang.System.arraycopy(byte[], int, byte[], int, int)"
+            ]
+          },
+          {
+            "pid": 158,
+            "epoch": 19296661000,
+            "kind": "accepted",
+            "count": 128,
+            "complete_snapshot": false,
+            "examples": [
+              "boolean java.lang.String.equals(java.lang.Object)",
+              "int java.lang.String.length()"
+            ]
+          },
+          {
+            "pid": 158,
+            "epoch": 19296661000,
+            "kind": "Deoptimize",
+            "count": 8,
+            "complete_snapshot": false,
+            "examples": [
+              "java.util.HashMap$Node[] java.util.HashMap.resize()",
+              "void java.lang.System.arraycopy(byte[], int, byte[], int, int)"
+            ]
+          },
+          {
+            "pid": 202,
+            "epoch": 24878438000,
+            "kind": "accepted",
+            "count": 2117,
+            "complete_snapshot": true,
+            "examples": [
+              "boolean java.lang.String.equals(java.lang.Object)",
+              "int java.lang.String.length()"
+            ]
+          },
+          {
+            "pid": 170,
+            "epoch": 25006146000,
+            "kind": "accepted",
+            "count": 32,
+            "complete_snapshot": false,
+            "examples": [
+              "boolean java.lang.String.equals(java.lang.Object)",
+              "int java.lang.String.length()"
+            ]
+          },
+          {
+            "pid": 170,
+            "epoch": 25006146000,
+            "kind": "InvokeStaticOrDirect",
+            "count": 16,
+            "complete_snapshot": false,
+            "examples": [
+              "java.lang.StringBuilder java.lang.StringBuilder.append(java.lang.String)",
+              "java.lang.StringBuilder java.lang.StringBuilder.append(char)"
+            ]
+          },
+          {
+            "pid": 202,
+            "epoch": 24878438000,
+            "kind": "ShouldDeoptimizeFlag",
+            "count": 128,
+            "complete_snapshot": false,
+            "examples": [
+              "void com.android.server.utils.WatchableImpl.dispatchChange(com.android.server.utils.Watchable)",
+              "android.util.ArraySet com.android.server.pm.AppsFilterImpl.addPackageInternal(com.android.server.pm.pkg.PackageStateInternal, android.util.ArrayMap)"
+            ]
+          },
+          {
+            "pid": 202,
+            "epoch": 24878438000,
+            "kind": "Deoptimize",
+            "count": 64,
+            "complete_snapshot": false,
+            "examples": [
+              "void com.android.server.pm.SharedLibrariesImpl.executeSharedLibrariesUpdateLPw(com.android.server.pm.pkg.AndroidPackage, com.android.server.pm.PackageSetting, com.android.server.pm.pkg.AndroidPackage, com.android.server.pm.PackageSetting, java.util.ArrayList, int[])",
+              "com.android.server.art.jarjar.com.google.protobuf.MessageSchema com.android.server.art.jarjar.com.google.protobuf.MessageSchema.newSchemaForRawMessageInfo(com.android.server.art.jarjar.com.google.protobuf.RawMessageInfo, com.android.server.art.jarjar.com.google.protobuf.NewInstanceSchema, com.android.server.art.jarjar.com.google.protobuf.ListFieldSchema, com.android.server.art.jarjar.com.google.protobuf.UnknownFieldSchema, com.android.server.art.jarjar.com.google.protobuf.ExtensionSchema, com.android.server.art.jarjar.com.google.protobuf.MapFieldSchema)"
+            ]
+          },
+          {
+            "pid": 389,
+            "epoch": 25006146000,
+            "kind": "Deoptimize",
+            "count": 128,
+            "complete_snapshot": false,
+            "examples": [
+              "java.lang.Object com.google.android.systemui.dagger.DaggerSysUIGoogleGlobalRootComponent$SysUIGoogleGlobalRootComponentImpl$SwitchingProvider.get()",
+              "void androidx.compose.ui.graphics.colorspace.Rgb.<init>(java.lang.String, float[], androidx.compose.ui.graphics.colorspace.WhitePoint, float[], androidx.compose.ui.graphics.colorspace.DoubleFunction, androidx.compose.ui.graphics.colorspace.DoubleFunction, float, float, androidx.compose.ui.graphics.colorspace.TransferParameters, int)"
+            ]
+          },
+          {
+            "pid": 411,
+            "epoch": 25006146000,
+            "kind": "Deoptimize",
+            "count": 2,
+            "complete_snapshot": false,
+            "examples": [
+              "void java.lang.System.arraycopy(byte[], int, byte[], int, int)"
+            ]
+          },
+          {
+            "pid": 389,
+            "epoch": 25006146000,
+            "kind": "accepted",
+            "count": 1101,
+            "complete_snapshot": true,
+            "examples": []
+          },
+          {
+            "pid": 464,
+            "epoch": 25006146000,
+            "kind": "accepted",
+            "count": 128,
+            "complete_snapshot": false,
+            "examples": []
+          },
+          {
+            "pid": 506,
+            "epoch": 25006146000,
+            "kind": "Deoptimize",
+            "count": 16,
+            "complete_snapshot": false,
+            "examples": [
+              "void java.lang.System.arraycopy(byte[], int, byte[], int, int)"
+            ]
+          },
+          {
+            "pid": 389,
+            "epoch": 25006146000,
+            "kind": "ShouldDeoptimizeFlag",
+            "count": 32,
+            "complete_snapshot": false,
+            "examples": [
+              "kotlinx.coroutines.ChildHandle kotlinx.coroutines.JobSupport.attachChild(kotlinx.coroutines.JobSupport)",
+              "int kotlinx.coroutines.JobSupport.startInternal(java.lang.Object)"
+            ]
+          },
+          {
+            "pid": 389,
+            "epoch": 25006146000,
+            "kind": "ClassTableGet",
+            "count": 2,
+            "complete_snapshot": false,
+            "examples": [
+              "kotlin.coroutines.CoroutineContext kotlin.coroutines.CoroutineContext$DefaultImpls.minusKey(kotlin.coroutines.CoroutineContext$Element, kotlin.coroutines.CoroutineContext$Key)",
+              "void com.android.systemui.util.DelayableMarqueeTextView.stopMarquee()"
+            ]
+          },
+          {
+            "pid": 604,
+            "epoch": 84233766000,
+            "kind": "accepted",
+            "count": 512,
+            "complete_snapshot": false,
+            "examples": [
+              "boolean java.lang.String.equals(java.lang.Object)",
+              "int java.lang.String.length()"
+            ]
+          },
+          {
+            "pid": 604,
+            "epoch": 84233766000,
+            "kind": "Deoptimize",
+            "count": 64,
+            "complete_snapshot": false,
+            "examples": [
+              "java.lang.String java.io.UnixFileSystem.normalize(java.lang.String)",
+              "java.util.HashMap$Node[] java.util.HashMap.resize()"
+            ]
+          },
+          {
+            "pid": 389,
+            "epoch": 25006146000,
+            "kind": "InvokeStaticOrDirect",
+            "count": 17,
+            "complete_snapshot": true,
+            "examples": []
+          },
+          {
+            "pid": 506,
+            "epoch": 25006146000,
+            "kind": "accepted",
+            "count": 128,
+            "complete_snapshot": false,
+            "examples": []
+          },
+          {
+            "pid": 572,
+            "epoch": 25006146000,
+            "kind": "Deoptimize",
+            "count": 16,
+            "complete_snapshot": false,
+            "examples": [
+              "void java.lang.System.arraycopy(byte[], int, byte[], int, int)"
+            ]
+          },
+          {
+            "pid": 605,
+            "epoch": 25006146000,
+            "kind": "Deoptimize",
+            "count": 4,
+            "complete_snapshot": false,
+            "examples": [
+              "void java.lang.System.arraycopy(byte[], int, byte[], int, int)"
+            ]
+          },
+          {
+            "pid": 605,
+            "epoch": 25006146000,
+            "kind": "accepted",
+            "count": 128,
+            "complete_snapshot": false,
+            "examples": []
+          },
+          {
+            "pid": 426,
+            "epoch": 25006146000,
+            "kind": "accepted",
+            "count": 64,
+            "complete_snapshot": false,
+            "examples": []
+          },
+          {
+            "pid": 426,
+            "epoch": 25006146000,
+            "kind": "Deoptimize",
+            "count": 2,
+            "complete_snapshot": false,
+            "examples": [
+              "int com.google.protobuf.Utf8$SafeProcessor.encodeUtf8(java.lang.CharSequence, byte[], int, int)",
+              "int com.google.protobuf.Utf8.encodedLength(java.lang.CharSequence)"
+            ]
+          },
+          {
+            "pid": 652,
+            "epoch": 25006146000,
+            "kind": "Deoptimize",
+            "count": 2,
+            "complete_snapshot": false,
+            "examples": [
+              "void java.lang.System.arraycopy(byte[], int, byte[], int, int)"
+            ]
+          },
+          {
+            "pid": 652,
+            "epoch": 25006146000,
+            "kind": "accepted",
+            "count": 64,
+            "complete_snapshot": false,
+            "examples": []
+          },
+          {
+            "pid": 464,
+            "epoch": 25006146000,
+            "kind": "Deoptimize",
+            "count": 1,
+            "complete_snapshot": false,
+            "examples": [
+              "void java.lang.System.arraycopy(byte[], int, byte[], int, int)"
+            ]
+          },
+          {
+            "pid": 840,
+            "epoch": 129555450000,
+            "kind": "accepted",
+            "count": 256,
+            "complete_snapshot": false,
+            "examples": [
+              "boolean java.lang.String.equals(java.lang.Object)",
+              "int java.lang.String.length()"
+            ]
+          },
+          {
+            "pid": 840,
+            "epoch": 129555450000,
+            "kind": "Deoptimize",
+            "count": 32,
+            "complete_snapshot": false,
+            "examples": [
+              "java.lang.String java.io.UnixFileSystem.normalize(java.lang.String)",
+              "java.util.HashMap$Node[] java.util.HashMap.resize()"
+            ]
+          },
+          {
+            "pid": 572,
+            "epoch": 25006146000,
+            "kind": "accepted",
+            "count": 256,
+            "complete_snapshot": false,
+            "examples": []
+          },
+          {
+            "pid": 572,
+            "epoch": 25006146000,
+            "kind": "VecSub",
+            "count": 1,
+            "complete_snapshot": false,
+            "examples": [
+              "void androidx.gridlayout.widget.GridLayout$Axis.computeLocations(int[])"
+            ]
+          },
+          {
+            "pid": 572,
+            "epoch": 25006146000,
+            "kind": "ShouldDeoptimizeFlag",
+            "count": 2,
+            "complete_snapshot": false,
+            "examples": [
+              "void androidx.gridlayout.widget.GridLayout$Axis.computeGroupBounds()",
+              "void androidx.fragment.app.Fragment.dump(java.lang.String, java.io.FileDescriptor, java.io.PrintWriter, java.lang.String[])"
+            ]
+          },
+          {
+            "pid": 840,
+            "epoch": 129555450000,
+            "kind": "ShouldDeoptimizeFlag",
+            "count": 1,
+            "complete_snapshot": false,
+            "examples": [
+              "boolean java.util.HashSet.add(java.lang.Object)"
+            ]
+          },
+          {
+            "pid": 877,
+            "epoch": 141135593000,
+            "kind": "accepted",
+            "count": 128,
+            "complete_snapshot": false,
+            "examples": [
+              "boolean java.lang.String.equals(java.lang.Object)",
+              "int java.lang.String.length()"
+            ]
+          },
+          {
+            "pid": 877,
+            "epoch": 141135593000,
+            "kind": "Deoptimize",
+            "count": 8,
+            "complete_snapshot": false,
+            "examples": [
+              "java.util.HashMap$Node[] java.util.HashMap.resize()",
+              "void java.lang.System.arraycopy(byte[], int, byte[], int, int)"
+            ]
+          },
+          {
+            "pid": 890,
+            "epoch": 143372398000,
+            "kind": "accepted",
+            "count": 256,
+            "complete_snapshot": false,
+            "examples": [
+              "boolean java.lang.String.equals(java.lang.Object)",
+              "int java.lang.String.length()"
+            ]
+          },
+          {
+            "pid": 890,
+            "epoch": 143372398000,
+            "kind": "Deoptimize",
+            "count": 32,
+            "complete_snapshot": false,
+            "examples": [
+              "java.lang.String java.io.UnixFileSystem.normalize(java.lang.String)",
+              "java.util.HashMap$Node[] java.util.HashMap.resize()"
+            ]
+          },
+          {
+            "pid": 890,
+            "epoch": 143372398000,
+            "kind": "ShouldDeoptimizeFlag",
+            "count": 2,
+            "complete_snapshot": false,
+            "examples": [
+              "boolean java.util.HashSet.add(java.lang.Object)",
+              "void android.view.accessibility.AccessibilityNodeInfo.addAction(android.view.accessibility.AccessibilityNodeInfo$AccessibilityAction)"
+            ]
+          },
+          {
+            "pid": 912,
+            "epoch": 151797155000,
+            "kind": "accepted",
+            "count": 256,
+            "complete_snapshot": false,
+            "examples": [
+              "boolean java.lang.String.equals(java.lang.Object)",
+              "int java.lang.String.length()"
+            ]
+          },
+          {
+            "pid": 912,
+            "epoch": 151797155000,
+            "kind": "Deoptimize",
+            "count": 32,
+            "complete_snapshot": false,
+            "examples": [
+              "java.lang.String java.io.UnixFileSystem.normalize(java.lang.String)",
+              "java.util.HashMap$Node[] java.util.HashMap.resize()"
+            ]
+          },
+          {
+            "pid": 914,
+            "epoch": 25006146000,
+            "kind": "Deoptimize",
+            "count": 8,
+            "complete_snapshot": false,
+            "examples": [
+              "void java.lang.System.arraycopy(byte[], int, byte[], int, int)",
+              "void java.lang.System.arraycopy(int[], int, int[], int, int)"
+            ]
+          },
+          {
+            "pid": 914,
+            "epoch": 25006146000,
+            "kind": "accepted",
+            "count": 256,
+            "complete_snapshot": false,
+            "examples": []
+          },
+          {
+            "pid": 914,
+            "epoch": 25006146000,
+            "kind": "ShouldDeoptimizeFlag",
+            "count": 2,
+            "complete_snapshot": false,
+            "examples": [
+              "void com.google.android.material.chip.Chip.updateFrameworkRippleBackground()",
+              "android.graphics.RectF com.google.android.material.shape.MaterialShapeDrawable.getBoundsAsRectF()"
+            ]
+          },
+          {
+            "pid": 975,
+            "epoch": 165644182000,
+            "kind": "accepted",
+            "count": 128,
+            "complete_snapshot": false,
+            "examples": [
+              "boolean java.lang.String.equals(java.lang.Object)",
+              "int java.lang.String.length()"
+            ]
+          },
+          {
+            "pid": 975,
+            "epoch": 165644182000,
+            "kind": "Deoptimize",
+            "count": 8,
+            "complete_snapshot": false,
+            "examples": [
+              "java.util.HashMap$Node[] java.util.HashMap.resize()",
+              "void java.lang.System.arraycopy(byte[], int, byte[], int, int)"
+            ]
+          }
+        ],
+        "fast_baseline": [
+          {
+            "pid": 1,
+            "epoch": 11143949000,
+            "tid": 3,
+            "installed_lower_bound": 8
+          },
+          {
+            "pid": 1,
+            "epoch": 11143949000,
+            "tid": 1,
+            "installed_lower_bound": 16
+          },
+          {
+            "pid": 1,
+            "epoch": 11369395000,
+            "tid": 3,
+            "installed_lower_bound": 8
+          },
+          {
+            "pid": 1,
+            "epoch": 11450323000,
+            "tid": 3,
+            "installed_lower_bound": 8
+          },
+          {
+            "pid": 27,
+            "epoch": 13526986000,
+            "tid": 28,
+            "installed_lower_bound": 64
+          },
+          {
+            "pid": 73,
+            "epoch": 14886863000,
+            "tid": 74,
+            "installed_lower_bound": 128
+          },
+          {
+            "pid": 97,
+            "epoch": 17385073000,
+            "tid": 98,
+            "installed_lower_bound": 64
+          },
+          {
+            "pid": 158,
+            "epoch": 19296661000,
+            "tid": 159,
+            "installed_lower_bound": 64
+          },
+          {
+            "pid": 202,
+            "epoch": 24878438000,
+            "tid": 209,
+            "installed_lower_bound": 1024
+          },
+          {
+            "pid": 389,
+            "epoch": 25006146000,
+            "tid": 391,
+            "installed_lower_bound": 256
+          },
+          {
+            "pid": 411,
+            "epoch": 25006146000,
+            "tid": 413,
+            "installed_lower_bound": 8
+          },
+          {
+            "pid": 426,
+            "epoch": 25006146000,
+            "tid": 429,
+            "installed_lower_bound": 16
+          },
+          {
+            "pid": 464,
+            "epoch": 25006146000,
+            "tid": 466,
+            "installed_lower_bound": 32
+          },
+          {
+            "pid": 506,
+            "epoch": 25006146000,
+            "tid": 508,
+            "installed_lower_bound": 32
+          },
+          {
+            "pid": 560,
+            "epoch": 25006146000,
+            "tid": 562,
+            "installed_lower_bound": 4
+          },
+          {
+            "pid": 572,
+            "epoch": 25006146000,
+            "tid": 574,
+            "installed_lower_bound": 128
+          },
+          {
+            "pid": 604,
+            "epoch": 84233766000,
+            "tid": 617,
+            "installed_lower_bound": 128
+          },
+          {
+            "pid": 605,
+            "epoch": 25006146000,
+            "tid": 607,
+            "installed_lower_bound": 32
+          },
+          {
+            "pid": 652,
+            "epoch": 25006146000,
+            "tid": 654,
+            "installed_lower_bound": 16
+          },
+          {
+            "pid": 662,
+            "epoch": 25006146000,
+            "tid": 664,
+            "installed_lower_bound": 4
+          },
+          {
+            "pid": 685,
+            "epoch": 25006146000,
+            "tid": 687,
+            "installed_lower_bound": 8
+          },
+          {
+            "pid": 722,
+            "epoch": 25006146000,
+            "tid": 724,
+            "installed_lower_bound": 4
+          },
+          {
+            "pid": 742,
+            "epoch": 25006146000,
+            "tid": 744,
+            "installed_lower_bound": 4
+          },
+          {
+            "pid": 761,
+            "epoch": 25006146000,
+            "tid": 763,
+            "installed_lower_bound": 4
+          },
+          {
+            "pid": 775,
+            "epoch": 25006146000,
+            "tid": 777,
+            "installed_lower_bound": 4
+          },
+          {
+            "pid": 787,
+            "epoch": 25006146000,
+            "tid": 789,
+            "installed_lower_bound": 4
+          },
+          {
+            "pid": 799,
+            "epoch": 25006146000,
+            "tid": 801,
+            "installed_lower_bound": 4
+          },
+          {
+            "pid": 840,
+            "epoch": 129555450000,
+            "tid": 844,
+            "installed_lower_bound": 128
+          },
+          {
+            "pid": 877,
+            "epoch": 141135593000,
+            "tid": 878,
+            "installed_lower_bound": 64
+          },
+          {
+            "pid": 890,
+            "epoch": 143372398000,
+            "tid": 893,
+            "installed_lower_bound": 128
+          },
+          {
+            "pid": 914,
+            "epoch": 25006146000,
+            "tid": 916,
+            "installed_lower_bound": 64
+          },
+          {
+            "pid": 912,
+            "epoch": 151797155000,
+            "tid": 927,
+            "installed_lower_bound": 128
+          },
+          {
+            "pid": 975,
+            "epoch": 165644182000,
+            "tid": 976,
+            "installed_lower_bound": 64
+          }
+        ],
+        "java_fatal_exceptions": 0,
+        "anrs": 0
+      },
+      "compiler": [
+        {
+          "pid": 1,
+          "epoch": 11143949000,
+          "tid": 3,
+          "installed_lower_bound": 8
+        },
+        {
+          "pid": 1,
+          "epoch": 11143949000,
+          "tid": 1,
+          "installed_lower_bound": 16
+        },
+        {
+          "pid": 1,
+          "epoch": 11369395000,
+          "tid": 3,
+          "installed_lower_bound": 8
+        },
+        {
+          "pid": 1,
+          "epoch": 11450323000,
+          "tid": 3,
+          "installed_lower_bound": 8
+        },
+        {
+          "pid": 27,
+          "epoch": 13526986000,
+          "tid": 28,
+          "installed_lower_bound": 64
+        },
+        {
+          "pid": 73,
+          "epoch": 14886863000,
+          "tid": 74,
+          "installed_lower_bound": 128
+        },
+        {
+          "pid": 97,
+          "epoch": 17385073000,
+          "tid": 98,
+          "installed_lower_bound": 64
+        },
+        {
+          "pid": 158,
+          "epoch": 19296661000,
+          "tid": 159,
+          "installed_lower_bound": 64
+        },
+        {
+          "pid": 202,
+          "epoch": 24878438000,
+          "tid": 209,
+          "installed_lower_bound": 1024
+        },
+        {
+          "pid": 389,
+          "epoch": 25006146000,
+          "tid": 391,
+          "installed_lower_bound": 256
+        },
+        {
+          "pid": 411,
+          "epoch": 25006146000,
+          "tid": 413,
+          "installed_lower_bound": 8
+        },
+        {
+          "pid": 426,
+          "epoch": 25006146000,
+          "tid": 429,
+          "installed_lower_bound": 16
+        },
+        {
+          "pid": 464,
+          "epoch": 25006146000,
+          "tid": 466,
+          "installed_lower_bound": 32
+        },
+        {
+          "pid": 506,
+          "epoch": 25006146000,
+          "tid": 508,
+          "installed_lower_bound": 32
+        },
+        {
+          "pid": 560,
+          "epoch": 25006146000,
+          "tid": 562,
+          "installed_lower_bound": 4
+        },
+        {
+          "pid": 572,
+          "epoch": 25006146000,
+          "tid": 574,
+          "installed_lower_bound": 128
+        },
+        {
+          "pid": 604,
+          "epoch": 84233766000,
+          "tid": 617,
+          "installed_lower_bound": 128
+        },
+        {
+          "pid": 605,
+          "epoch": 25006146000,
+          "tid": 607,
+          "installed_lower_bound": 32
+        },
+        {
+          "pid": 652,
+          "epoch": 25006146000,
+          "tid": 654,
+          "installed_lower_bound": 16
+        },
+        {
+          "pid": 662,
+          "epoch": 25006146000,
+          "tid": 664,
+          "installed_lower_bound": 4
+        },
+        {
+          "pid": 685,
+          "epoch": 25006146000,
+          "tid": 687,
+          "installed_lower_bound": 8
+        },
+        {
+          "pid": 722,
+          "epoch": 25006146000,
+          "tid": 724,
+          "installed_lower_bound": 4
+        },
+        {
+          "pid": 742,
+          "epoch": 25006146000,
+          "tid": 744,
+          "installed_lower_bound": 4
+        },
+        {
+          "pid": 761,
+          "epoch": 25006146000,
+          "tid": 763,
+          "installed_lower_bound": 4
+        },
+        {
+          "pid": 775,
+          "epoch": 25006146000,
+          "tid": 777,
+          "installed_lower_bound": 4
+        },
+        {
+          "pid": 787,
+          "epoch": 25006146000,
+          "tid": 789,
+          "installed_lower_bound": 4
+        },
+        {
+          "pid": 799,
+          "epoch": 25006146000,
+          "tid": 801,
+          "installed_lower_bound": 4
+        },
+        {
+          "pid": 840,
+          "epoch": 129555450000,
+          "tid": 844,
+          "installed_lower_bound": 128
+        },
+        {
+          "pid": 877,
+          "epoch": 141135593000,
+          "tid": 878,
+          "installed_lower_bound": 64
+        },
+        {
+          "pid": 890,
+          "epoch": 143372398000,
+          "tid": 893,
+          "installed_lower_bound": 128
+        },
+        {
+          "pid": 914,
+          "epoch": 25006146000,
+          "tid": 916,
+          "installed_lower_bound": 64
+        },
+        {
+          "pid": 912,
+          "epoch": 151797155000,
+          "tid": 927,
+          "installed_lower_bound": 128
+        },
+        {
+          "pid": 975,
+          "epoch": 165644182000,
+          "tid": 976,
+          "installed_lower_bound": 64
+        }
+      ]
+    },
+    {
+      "entry": "dispatch_results",
+      "passed": true,
+      "checks": 213,
+      "tests": [
+        {
+          "test": "android_art_fast_baseline_paths",
+          "passed": true,
+          "gc_requests": 64,
+          "exceptions": 12
+        },
+        {
+          "test": "android_art_fast_baseline_entries",
+          "passed": true,
+          "enabled": true,
+          "methods": 20,
+          "fast_methods": 19,
+          "compile_ms": 0.766
+        },
+        {
+          "test": "android_system_boot_completed",
+          "passed": true
+        },
+        {
+          "test": "android_system_process_groups_stopped",
+          "passed": true
+        },
+        {
+          "test": "linux_data_readonly_shutdown",
+          "passed": true
+        },
+        {
+          "test": "guest_preemption_signal_mask",
+          "inherited_blocked_threads": 64,
+          "passed": true
+        }
+      ],
+      "components": {
+        "component_timing_count": 1237,
+        "timing_limit_per_tag": 40,
+        "component_timings": [
+          {
+            "tag": "SystemServerTiming",
+            "name": "InitBeforeStartServices",
+            "ms": 300,
+            "line": 9228,
+            "timestamp": "10-10 09:35:23.541"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "StartActivityManager",
+            "ms": 217,
+            "line": 9732,
+            "timestamp": "10-10 09:35:24.007"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "StartPackageManagerService",
+            "ms": 1418,
+            "line": 10147,
+            "timestamp": "10-10 09:35:25.735"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "SetSystemProcess",
+            "ms": 238,
+            "line": 10180,
+            "timestamp": "10-10 09:35:26.059"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "StartOverlayManagerService",
+            "ms": 201,
+            "line": 10194,
+            "timestamp": "10-10 09:35:26.268"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "startBootstrapServices",
+            "ms": 2804,
+            "line": 10210,
+            "timestamp": "10-10 09:35:26.346"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "startCoreServices",
+            "ms": 259,
+            "line": 10299,
+            "timestamp": "10-10 09:35:26.605"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "InstallSystemProviders",
+            "ms": 201,
+            "line": 10364,
+            "timestamp": "10-10 09:35:26.888"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "StartWindowManagerService",
+            "ms": 205,
+            "line": 10515,
+            "timestamp": "10-10 09:35:27.467"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "SetWindowManagerService",
+            "ms": 382,
+            "line": 10520,
+            "timestamp": "10-10 09:35:27.849"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "StartConnectivityService",
+            "ms": 408,
+            "line": 10753,
+            "timestamp": "10-10 09:35:29.672"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "StartNotificationManager",
+            "ms": 262,
+            "line": 10788,
+            "timestamp": "10-10 09:35:30.017"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "StartAudioService",
+            "ms": 496,
+            "line": 10877,
+            "timestamp": "10-10 09:35:30.700"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "StartJobScheduler",
+            "ms": 183,
+            "line": 10971,
+            "timestamp": "10-10 09:35:31.079"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "StartBiometricService",
+            "ms": 179,
+            "line": 11248,
+            "timestamp": "10-10 09:35:32.035"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "StarSdkSandboxManagerService",
+            "ms": 210,
+            "line": 11466,
+            "timestamp": "10-10 09:35:33.129"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "OnBootPhase_500_com.android.server.am.ActivityManagerService$Lifecycle",
+            "ms": 220,
+            "line": 11969,
+            "timestamp": "10-10 09:35:33.806"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "OnBootPhase_500_com.android.server.power.PowerManagerService",
+            "ms": 310,
+            "line": 12043,
+            "timestamp": "10-10 09:35:34.117"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "OnBootPhase_500_com.android.server.sensorprivacy.SensorPrivacyService",
+            "ms": 213,
+            "line": 12123,
+            "timestamp": "10-10 09:35:34.331"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "OnBootPhase_500_com.android.server.vibrator.VibratorManagerService$Lifecycle",
+            "ms": 1458,
+            "line": 12777,
+            "timestamp": "10-10 09:35:35.964"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "OnBootPhase_500",
+            "ms": 3038,
+            "line": 13026,
+            "timestamp": "10-10 09:35:36.567"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "StartBootPhaseSystemServicesReady",
+            "ms": 3038,
+            "line": 13027,
+            "timestamp": "10-10 09:35:36.568"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "OnBootPhase_550_com.android.server.NetworkStatsServiceInitializer",
+            "ms": 585,
+            "line": 13751,
+            "timestamp": "10-10 09:35:38.456"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "OnBootPhase_550_com.android.server.policy.PermissionPolicyService",
+            "ms": 176,
+            "line": 13910,
+            "timestamp": "10-10 09:35:38.855"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "OnBootPhase_550",
+            "ms": 1295,
+            "line": 13932,
+            "timestamp": "10-10 09:35:38.856"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "StartActivityManagerReadyPhase",
+            "ms": 1296,
+            "line": 13933,
+            "timestamp": "10-10 09:35:38.857"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "MakeConnectivityServiceReady",
+            "ms": 414,
+            "line": 14027,
+            "timestamp": "10-10 09:35:39.463"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "OnBootPhase_600_com.android.server.stats.StatsCompanion$Lifecycle",
+            "ms": 188,
+            "line": 14415,
+            "timestamp": "10-10 09:35:40.635"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "OnBootPhase_600",
+            "ms": 1107,
+            "line": 14469,
+            "timestamp": "10-10 09:35:40.692"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "PhaseThirdPartyAppsCanStart",
+            "ms": 1107,
+            "line": 14470,
+            "timestamp": "10-10 09:35:40.692"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "StartNetworkStack",
+            "ms": 202,
+            "line": 14495,
+            "timestamp": "10-10 09:35:40.895"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "startHomeOnAllDisplays",
+            "ms": 791,
+            "line": 15041,
+            "timestamp": "10-10 09:35:42.732"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "ActivityManagerStartApps",
+            "ms": 1812,
+            "line": 15072,
+            "timestamp": "10-10 09:35:42.991"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "PhaseActivityManagerReady",
+            "ms": 5636,
+            "line": 15076,
+            "timestamp": "10-10 09:35:42.996"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "startOtherServices",
+            "ms": 16539,
+            "line": 15081,
+            "timestamp": "10-10 09:35:43.144"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "StartServices",
+            "ms": 19628,
+            "line": 15094,
+            "timestamp": "10-10 09:35:43.170"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.keyguard.KeyguardUpdateMonitor",
+            "ms": 401,
+            "line": 16252,
+            "timestamp": "10-10 09:35:56.258"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.systemui.ScreenDecorations",
+            "ms": 187,
+            "line": 16258,
+            "timestamp": "10-10 09:35:56.524"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.systemui.accessibility.MagnificationImpl",
+            "ms": 603,
+            "line": 16347,
+            "timestamp": "10-10 09:35:57.146"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.systemui.accessibility.SystemActions",
+            "ms": 4717,
+            "line": 16502,
+            "timestamp": "10-10 09:36:01.863"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.systemui.biometrics.BiometricNotificationService",
+            "ms": 24,
+            "line": 16507,
+            "timestamp": "10-10 09:36:01.928"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.systemui.biometrics.ui.binder.SideFpsOverlayViewBinder",
+            "ms": 18,
+            "line": 16508,
+            "timestamp": "10-10 09:36:01.947"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.systemui.clipboardoverlay.ClipboardListener",
+            "ms": 19,
+            "line": 16516,
+            "timestamp": "10-10 09:36:01.977"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.systemui.communal.CommunalDreamStartable",
+            "ms": 43,
+            "line": 16518,
+            "timestamp": "10-10 09:36:02.029"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.systemui.communal.CommunalSuppressionStartable",
+            "ms": 40,
+            "line": 16522,
+            "timestamp": "10-10 09:36:02.079"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.systemui.complication.ComplicationTypesUpdater",
+            "ms": 23,
+            "line": 16527,
+            "timestamp": "10-10 09:36:02.141"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.systemui.dreams.AssistantAttentionMonitor",
+            "ms": 1589,
+            "line": 16571,
+            "timestamp": "10-10 09:36:03.751"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.systemui.education.ui.view.ContextualEduUiCoordinator",
+            "ms": 29,
+            "line": 16578,
+            "timestamp": "10-10 09:36:03.868"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.systemui.flags.FeatureFlagsDebugStartable",
+            "ms": 90,
+            "line": 16579,
+            "timestamp": "10-10 09:36:03.959"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.systemui.flags.FlagDependencies",
+            "ms": 39,
+            "line": 16580,
+            "timestamp": "10-10 09:36:03.999"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.systemui.globalactions.GlobalActionsComponent",
+            "ms": 95,
+            "line": 16583,
+            "timestamp": "10-10 09:36:04.095"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.systemui.keyboard.PhysicalKeyboardCoreStartable",
+            "ms": 21,
+            "line": 16588,
+            "timestamp": "10-10 09:36:04.186"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.systemui.keyboard.shortcut.ui.ShortcutHelperDialogStarter",
+            "ms": 33,
+            "line": 16592,
+            "timestamp": "10-10 09:36:04.231"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.systemui.keyguard.KeyguardViewConfigurator",
+            "ms": 261,
+            "line": 16602,
+            "timestamp": "10-10 09:36:04.517"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.systemui.keyguard.KeyguardViewMediator",
+            "ms": 194,
+            "line": 16610,
+            "timestamp": "10-10 09:36:04.712"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.systemui.keyguard.domain.interactor.KeyguardTransitionCoreStartable",
+            "ms": 73,
+            "line": 16624,
+            "timestamp": "10-10 09:36:04.788"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.systemui.media.RingtonePlayer",
+            "ms": 19,
+            "line": 16637,
+            "timestamp": "10-10 09:36:04.954"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.systemui.power.PowerUI",
+            "ms": 225,
+            "line": 16648,
+            "timestamp": "10-10 09:36:05.205"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.systemui.shortcut.ShortcutKeyDispatcher",
+            "ms": 67,
+            "line": 16682,
+            "timestamp": "10-10 09:36:05.513"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.systemui.statusbar.ImmersiveModeConfirmation",
+            "ms": 70,
+            "line": 16684,
+            "timestamp": "10-10 09:36:05.585"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.systemui.statusbar.chips.sharetoapp.ui.viewmodel.ShareToAppChipViewModel",
+            "ms": 30,
+            "line": 16687,
+            "timestamp": "10-10 09:36:05.628"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.systemui.statusbar.notification.interruption.KeyguardNotificationVisibilityProviderImpl",
+            "ms": 139,
+            "line": 16707,
+            "timestamp": "10-10 09:36:05.794"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.systemui.statusbar.notification.interruption.VisualInterruptionDecisionProvider",
+            "ms": 48,
+            "line": 16708,
+            "timestamp": "10-10 09:36:05.842"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.systemui.statusbar.notification.logging.NotificationMemoryMonitor",
+            "ms": 22,
+            "line": 16713,
+            "timestamp": "10-10 09:36:05.865"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.systemui.statusbar.phone.CentralSurfaces",
+            "ms": 3273,
+            "line": 16818,
+            "timestamp": "10-10 09:36:09.171"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.systemui.stylus.StylusUsiPowerStartable",
+            "ms": 24,
+            "line": 16833,
+            "timestamp": "10-10 09:36:09.240"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.systemui.theme.ThemeOverlayController",
+            "ms": 89,
+            "line": 16841,
+            "timestamp": "10-10 09:36:09.350"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.systemui.usb.StorageNotification",
+            "ms": 55,
+            "line": 16858,
+            "timestamp": "10-10 09:36:09.446"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.systemui.util.BinderLogger",
+            "ms": 33,
+            "line": 16860,
+            "timestamp": "10-10 09:36:09.482"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.systemui.util.NotificationChannels",
+            "ms": 35,
+            "line": 16861,
+            "timestamp": "10-10 09:36:09.525"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.systemui.volume.VolumeUI",
+            "ms": 46,
+            "line": 16862,
+            "timestamp": "10-10 09:36:09.571"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.systemui.wmshell.WMShell",
+            "ms": 42,
+            "line": 16865,
+            "timestamp": "10-10 09:36:09.628"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.google.android.systemui.GoogleServices",
+            "ms": 87,
+            "line": 16866,
+            "timestamp": "10-10 09:36:09.806"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.google.android.systemui.smartspace.KeyguardSmartspaceStartable",
+            "ms": 30,
+            "line": 16953,
+            "timestamp": "10-10 09:36:09.872"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "Topologically start Core Startables",
+            "ms": 14061,
+            "line": 16961,
+            "timestamp": "10-10 09:36:09.894"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices",
+            "ms": 14083,
+            "line": 16963,
+            "timestamp": "10-10 09:36:09.916"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "prepareUserData-0",
+            "ms": 182,
+            "line": 17485,
+            "timestamp": "10-10 09:36:11.990"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "UM.onBeforeUnlockUser-0",
+            "ms": 341,
+            "line": 17560,
+            "timestamp": "10-10 09:36:12.149"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "SystemUserUnlock",
+            "ms": 5306,
+            "line": 21613,
+            "timestamp": "10-10 09:36:17.064"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "finishUserUnlocked-0",
+            "ms": 1188,
+            "line": 21817,
+            "timestamp": "10-10 09:36:18.249"
+          }
+        ],
+        "displayed_activities": [
+          {
+            "line": 16746,
+            "message": "10-10 09:36:07.453   204   221 I ActivityTaskManager: Displayed com.android.settings/.FallbackHome for user 0: +25s398ms"
+          },
+          {
+            "line": 29423,
+            "message": "10-10 09:36:57.854   204   221 I ActivityTaskManager: Displayed com.android.launcher3/.uioverrides.QuickstepLauncher for user 0: +44s861ms"
+          },
+          {
+            "line": 31458,
+            "message": "10-10 09:37:09.034   204   221 I ActivityTaskManager: Displayed com.android.deskclock/.DeskClock for user 0: +8s376ms"
+          },
+          {
+            "line": 36537,
+            "message": "10-10 09:37:28.733   204   221 I ActivityTaskManager: Displayed com.google.android.documentsui/com.android.documentsui.files.FilesActivity for user 0: +8s608ms"
+          }
+        ],
+        "mapping_cumulative": [
+          {
+            "profile": "host_mapping",
+            "elapsed_ms": 10684.646,
+            "data_calls": 589317,
+            "data_ms": 865.222,
+            "code_calls": 77899,
+            "code_ms": 222.115,
+            "revoke_calls": 332218,
+            "revoke_ms": 667.808,
+            "line": 8999
+          },
+          {
+            "profile": "host_mapping",
+            "elapsed_ms": 20714.028,
+            "data_calls": 1677880,
+            "data_ms": 2477.238,
+            "code_calls": 148321,
+            "code_ms": 462.46,
+            "revoke_calls": 922104,
+            "revoke_ms": 1782.574,
+            "line": 10979
+          },
+          {
+            "profile": "host_mapping",
+            "elapsed_ms": 31700.618,
+            "data_calls": 2804122,
+            "data_ms": 4170.679,
+            "code_calls": 253410,
+            "code_ms": 817.885,
+            "revoke_calls": 1663439,
+            "revoke_ms": 3189.362,
+            "line": 14547
+          },
+          {
+            "profile": "host_mapping",
+            "elapsed_ms": 42098.351,
+            "data_calls": 3879995,
+            "data_ms": 5835.031,
+            "code_calls": 341446,
+            "code_ms": 1117.576,
+            "revoke_calls": 2367637,
+            "revoke_ms": 4558.883,
+            "line": 16065
+          },
+          {
+            "profile": "host_mapping",
+            "elapsed_ms": 52911.141,
+            "data_calls": 5032019,
+            "data_ms": 7602.692,
+            "code_calls": 417543,
+            "code_ms": 1370.652,
+            "revoke_calls": 3106062,
+            "revoke_ms": 6002.76,
+            "line": 16558
+          },
+          {
+            "profile": "host_mapping",
+            "elapsed_ms": 63155.665,
+            "data_calls": 6155514,
+            "data_ms": 9272.917,
+            "code_calls": 500987,
+            "code_ms": 1642.338,
+            "revoke_calls": 3839494,
+            "revoke_ms": 7301.457,
+            "line": 17901
+          },
+          {
+            "profile": "host_mapping",
+            "elapsed_ms": 84569.004,
+            "data_calls": 8515103,
+            "data_ms": 12815.722,
+            "code_calls": 679865,
+            "code_ms": 2189.298,
+            "revoke_calls": 5366957,
+            "revoke_ms": 9908.072,
+            "line": 28357
+          },
+          {
+            "profile": "host_mapping",
+            "elapsed_ms": 94643.784,
+            "data_calls": 9628782,
+            "data_ms": 14457.442,
+            "code_calls": 763116,
+            "code_ms": 2429.446,
+            "revoke_calls": 6119104,
+            "revoke_ms": 11182.062,
+            "line": 28792
+          },
+          {
+            "profile": "host_mapping",
+            "elapsed_ms": 104660.48,
+            "data_calls": 10728968,
+            "data_ms": 16098.942,
+            "code_calls": 843255,
+            "code_ms": 2677.884,
+            "revoke_calls": 6819580,
+            "revoke_ms": 12392.812,
+            "line": 29205
+          },
+          {
+            "profile": "host_mapping",
+            "elapsed_ms": 114676.602,
+            "data_calls": 11707813,
+            "data_ms": 17610.858,
+            "code_calls": 934103,
+            "code_ms": 2942.968,
+            "revoke_calls": 7447008,
+            "revoke_ms": 13510.401,
+            "line": 31149
+          },
+          {
+            "profile": "host_mapping",
+            "elapsed_ms": 135394.458,
+            "data_calls": 13647728,
+            "data_ms": 20569.135,
+            "code_calls": 1164521,
+            "code_ms": 3465.617,
+            "revoke_calls": 8706575,
+            "revoke_ms": 15733.126,
+            "line": 36406
+          },
+          {
+            "profile": "host_mapping",
+            "elapsed_ms": 145644.874,
+            "data_calls": 14568286,
+            "data_ms": 21983.232,
+            "code_calls": 1300639,
+            "code_ms": 3742.816,
+            "revoke_calls": 9335568,
+            "revoke_ms": 16845.668,
+            "line": 38062
+          }
+        ],
+        "mapping_intervals": [
+          {
+            "elapsed_ms": 10684.646,
+            "data_ms": 865.222,
+            "code_ms": 222.115,
+            "revoke_ms": 667.808,
+            "mapping_ms": 1755.145,
+            "elapsed_end_ms": 10684.646
+          },
+          {
+            "elapsed_ms": 10029.382,
+            "data_ms": 1612.016,
+            "code_ms": 240.345,
+            "revoke_ms": 1114.766,
+            "mapping_ms": 2967.127,
+            "elapsed_end_ms": 20714.028
+          },
+          {
+            "elapsed_ms": 10986.59,
+            "data_ms": 1693.441,
+            "code_ms": 355.425,
+            "revoke_ms": 1406.788,
+            "mapping_ms": 3455.654,
+            "elapsed_end_ms": 31700.618
+          },
+          {
+            "elapsed_ms": 10397.733,
+            "data_ms": 1664.352,
+            "code_ms": 299.691,
+            "revoke_ms": 1369.521,
+            "mapping_ms": 3333.564,
+            "elapsed_end_ms": 42098.351
+          },
+          {
+            "elapsed_ms": 10812.79,
+            "data_ms": 1767.661,
+            "code_ms": 253.076,
+            "revoke_ms": 1443.877,
+            "mapping_ms": 3464.614,
+            "elapsed_end_ms": 52911.141
+          },
+          {
+            "elapsed_ms": 10244.524,
+            "data_ms": 1670.225,
+            "code_ms": 271.686,
+            "revoke_ms": 1298.697,
+            "mapping_ms": 3240.608,
+            "elapsed_end_ms": 63155.665
+          },
+          {
+            "elapsed_ms": 21413.339,
+            "data_ms": 3542.805,
+            "code_ms": 546.96,
+            "revoke_ms": 2606.615,
+            "mapping_ms": 6696.38,
+            "elapsed_end_ms": 84569.004
+          },
+          {
+            "elapsed_ms": 10074.78,
+            "data_ms": 1641.72,
+            "code_ms": 240.148,
+            "revoke_ms": 1273.99,
+            "mapping_ms": 3155.858,
+            "elapsed_end_ms": 94643.784
+          },
+          {
+            "elapsed_ms": 10016.696,
+            "data_ms": 1641.5,
+            "code_ms": 248.438,
+            "revoke_ms": 1210.75,
+            "mapping_ms": 3100.688,
+            "elapsed_end_ms": 104660.48
+          },
+          {
+            "elapsed_ms": 10016.122,
+            "data_ms": 1511.916,
+            "code_ms": 265.084,
+            "revoke_ms": 1117.589,
+            "mapping_ms": 2894.589,
+            "elapsed_end_ms": 114676.602
+          },
+          {
+            "elapsed_ms": 20717.856,
+            "data_ms": 2958.277,
+            "code_ms": 522.649,
+            "revoke_ms": 2222.725,
+            "mapping_ms": 5703.651,
+            "elapsed_end_ms": 135394.458
+          },
+          {
+            "elapsed_ms": 10250.416,
+            "data_ms": 1414.097,
+            "code_ms": 277.199,
+            "revoke_ms": 1112.542,
+            "mapping_ms": 2803.838,
+            "elapsed_end_ms": 145644.874
+          }
+        ],
+        "resume_entries": [
+          {
+            "profile": "resume_entries",
+            "hits": 270414,
+            "misses": 11902,
+            "line": 9000
+          },
+          {
+            "profile": "resume_entries",
+            "hits": 341370,
+            "misses": 21839,
+            "line": 10980
+          },
+          {
+            "profile": "resume_entries",
+            "hits": 430908,
+            "misses": 34057,
+            "line": 14548
+          },
+          {
+            "profile": "resume_entries",
+            "hits": 509365,
+            "misses": 44999,
+            "line": 16066
+          },
+          {
+            "profile": "resume_entries",
+            "hits": 572531,
+            "misses": 57036,
+            "line": 16559
+          },
+          {
+            "profile": "resume_entries",
+            "hits": 639811,
+            "misses": 73111,
+            "line": 17902
+          },
+          {
+            "profile": "resume_entries",
+            "hits": 721020,
+            "misses": 90774,
+            "line": 24173
+          },
+          {
+            "profile": "resume_entries",
+            "hits": 804213,
+            "misses": 112821,
+            "line": 28358
+          },
+          {
+            "profile": "resume_entries",
+            "hits": 880937,
+            "misses": 132971,
+            "line": 28793
+          },
+          {
+            "profile": "resume_entries",
+            "hits": 946630,
+            "misses": 151413,
+            "line": 29206
+          },
+          {
+            "profile": "resume_entries",
+            "hits": 1037123,
+            "misses": 169322,
+            "line": 31150
+          },
+          {
+            "profile": "resume_entries",
+            "hits": 1150942,
+            "misses": 192058,
+            "line": 33137
+          },
+          {
+            "profile": "resume_entries",
+            "hits": 1267496,
+            "misses": 217228,
+            "line": 36407
+          },
+          {
+            "profile": "resume_entries",
+            "hits": 1389368,
+            "misses": 247340,
+            "line": 38063
+          }
+        ],
+        "mmu_cumulative": [
+          {
+            "profile": "linux_mmu",
+            "switches": 10688,
+            "scanned_pages": 3490763,
+            "present_faults": 30094,
+            "linux_faults": 249229,
+            "fast_faults": 1223301,
+            "restored_pages": 2013524,
+            "line": 9001
+          },
+          {
+            "profile": "linux_mmu",
+            "switches": 13976,
+            "scanned_pages": 5878297,
+            "present_faults": 89502,
+            "linux_faults": 270532,
+            "fast_faults": 2265559,
+            "restored_pages": 4045193,
+            "line": 10981
+          },
+          {
+            "profile": "linux_mmu",
+            "switches": 19940,
+            "scanned_pages": 8938349,
+            "present_faults": 182802,
+            "linux_faults": 278830,
+            "fast_faults": 3373096,
+            "restored_pages": 6524202,
+            "line": 14549
+          },
+          {
+            "profile": "linux_mmu",
+            "switches": 24606,
+            "scanned_pages": 11943165,
+            "present_faults": 262831,
+            "linux_faults": 288069,
+            "fast_faults": 4423228,
+            "restored_pages": 8690341,
+            "line": 16067
+          },
+          {
+            "profile": "linux_mmu",
+            "switches": 27929,
+            "scanned_pages": 14907895,
+            "present_faults": 331912,
+            "linux_faults": 294057,
+            "fast_faults": 5561186,
+            "restored_pages": 10692741,
+            "line": 16560
+          },
+          {
+            "profile": "linux_mmu",
+            "switches": 31653,
+            "scanned_pages": 17970075,
+            "present_faults": 407630,
+            "linux_faults": 301552,
+            "fast_faults": 6664394,
+            "restored_pages": 12771526,
+            "line": 17903
+          },
+          {
+            "profile": "linux_mmu",
+            "switches": 35720,
+            "scanned_pages": 21265177,
+            "present_faults": 485323,
+            "linux_faults": 322335,
+            "fast_faults": 7737486,
+            "restored_pages": 14946512,
+            "line": 24174
+          },
+          {
+            "profile": "linux_mmu",
+            "switches": 40008,
+            "scanned_pages": 24931084,
+            "present_faults": 579841,
+            "linux_faults": 333003,
+            "fast_faults": 8911304,
+            "restored_pages": 17170980,
+            "line": 28359
+          },
+          {
+            "profile": "linux_mmu",
+            "switches": 43855,
+            "scanned_pages": 28279791,
+            "present_faults": 667418,
+            "linux_faults": 342191,
+            "fast_faults": 9981713,
+            "restored_pages": 19123735,
+            "line": 28794
+          },
+          {
+            "profile": "linux_mmu",
+            "switches": 47192,
+            "scanned_pages": 31217010,
+            "present_faults": 746496,
+            "linux_faults": 347007,
+            "fast_faults": 11062833,
+            "restored_pages": 21085902,
+            "line": 29207
+          },
+          {
+            "profile": "linux_mmu",
+            "switches": 50845,
+            "scanned_pages": 33950684,
+            "present_faults": 837387,
+            "linux_faults": 364293,
+            "fast_faults": 11982714,
+            "restored_pages": 22957808,
+            "line": 31151
+          },
+          {
+            "profile": "linux_mmu",
+            "switches": 54490,
+            "scanned_pages": 36531631,
+            "present_faults": 952957,
+            "linux_faults": 385066,
+            "fast_faults": 12833421,
+            "restored_pages": 24589408,
+            "line": 33138
+          },
+          {
+            "profile": "linux_mmu",
+            "switches": 58216,
+            "scanned_pages": 39246090,
+            "present_faults": 1072898,
+            "linux_faults": 406654,
+            "fast_faults": 13761771,
+            "restored_pages": 26292019,
+            "line": 36408
+          },
+          {
+            "profile": "linux_mmu",
+            "switches": 62246,
+            "scanned_pages": 41822143,
+            "present_faults": 1207368,
+            "linux_faults": 423984,
+            "fast_faults": 14623767,
+            "restored_pages": 27760480,
+            "line": 38064
+          },
+          {
+            "profile": "linux_mmu",
+            "switches": 62299,
+            "scanned_pages": 41830709,
+            "present_faults": 1207727,
+            "linux_faults": 440397,
+            "fast_faults": 14625120,
+            "restored_pages": 27779216,
+            "line": 38131
+          }
+        ],
+        "compiler_filter": [
+          {
+            "pid": 1,
+            "epoch": 10711768000,
+            "kind": "accepted",
+            "count": 64,
+            "complete_snapshot": false,
+            "examples": [
+              "boolean java.lang.String.equals(java.lang.Object)",
+              "int java.lang.String.length()"
+            ]
+          },
+          {
+            "pid": 1,
+            "epoch": 10944898000,
+            "kind": "accepted",
+            "count": 16,
+            "complete_snapshot": false,
+            "examples": [
+              "boolean java.lang.String.equals(java.lang.Object)",
+              "int java.lang.String.length()"
+            ]
+          },
+          {
+            "pid": 1,
+            "epoch": 11032488000,
+            "kind": "accepted",
+            "count": 16,
+            "complete_snapshot": false,
+            "examples": [
+              "boolean java.lang.String.equals(java.lang.Object)",
+              "int NceInlining.leaf(NceInlining$Node)"
+            ]
+          },
+          {
+            "pid": 27,
+            "epoch": 13097921000,
+            "kind": "accepted",
+            "count": 256,
+            "complete_snapshot": false,
+            "examples": [
+              "boolean java.lang.String.equals(java.lang.Object)",
+              "int java.lang.String.length()"
+            ]
+          },
+          {
+            "pid": 27,
+            "epoch": 13097921000,
+            "kind": "Deoptimize",
+            "count": 16,
+            "complete_snapshot": false,
+            "examples": [
+              "java.util.HashMap$Node[] java.util.HashMap.resize()",
+              "void java.lang.System.arraycopy(byte[], int, byte[], int, int)"
+            ]
+          },
+          {
+            "pid": 73,
+            "epoch": 14453770000,
+            "kind": "accepted",
+            "count": 256,
+            "complete_snapshot": false,
+            "examples": [
+              "boolean java.lang.String.equals(java.lang.Object)",
+              "int java.lang.String.length()"
+            ]
+          },
+          {
+            "pid": 73,
+            "epoch": 14453770000,
+            "kind": "Deoptimize",
+            "count": 16,
+            "complete_snapshot": false,
+            "examples": [
+              "java.lang.String java.io.UnixFileSystem.normalize(java.lang.String)",
+              "java.util.HashMap$Node[] java.util.HashMap.resize()"
+            ]
+          },
+          {
+            "pid": 73,
+            "epoch": 14453770000,
+            "kind": "ShouldDeoptimizeFlag",
+            "count": 1,
+            "complete_snapshot": false,
+            "examples": [
+              "boolean java.util.HashSet.add(java.lang.Object)"
+            ]
+          },
+          {
+            "pid": 96,
+            "epoch": 16709276000,
+            "kind": "accepted",
+            "count": 128,
+            "complete_snapshot": false,
+            "examples": [
+              "boolean java.lang.String.equals(java.lang.Object)",
+              "int java.lang.String.length()"
+            ]
+          },
+          {
+            "pid": 96,
+            "epoch": 16709276000,
+            "kind": "Deoptimize",
+            "count": 8,
+            "complete_snapshot": false,
+            "examples": [
+              "java.util.HashMap$Node[] java.util.HashMap.resize()",
+              "void java.lang.System.arraycopy(byte[], int, byte[], int, int)"
+            ]
+          },
+          {
+            "pid": 158,
+            "epoch": 18592284000,
+            "kind": "accepted",
+            "count": 64,
+            "complete_snapshot": false,
+            "examples": [
+              "boolean java.lang.String.equals(java.lang.Object)",
+              "int java.lang.String.length()"
+            ]
+          },
+          {
+            "pid": 158,
+            "epoch": 18592284000,
+            "kind": "Deoptimize",
+            "count": 8,
+            "complete_snapshot": false,
+            "examples": [
+              "java.util.HashMap$Node[] java.util.HashMap.resize()",
+              "void java.lang.System.arraycopy(byte[], int, byte[], int, int)"
+            ]
+          },
+          {
+            "pid": 170,
+            "epoch": 23870184000,
+            "kind": "accepted",
+            "count": 32,
+            "complete_snapshot": false,
+            "examples": [
+              "boolean java.lang.String.equals(java.lang.Object)",
+              "int java.lang.String.length()"
+            ]
+          },
+          {
+            "pid": 204,
+            "epoch": 23882597000,
+            "kind": "accepted",
+            "count": 2048,
+            "complete_snapshot": false,
+            "examples": [
+              "boolean java.lang.String.equals(java.lang.Object)",
+              "int java.lang.String.length()"
+            ]
+          },
+          {
+            "pid": 170,
+            "epoch": 23870184000,
+            "kind": "InvokeStaticOrDirect",
+            "count": 16,
+            "complete_snapshot": false,
+            "examples": [
+              "java.lang.StringBuilder java.lang.StringBuilder.append(java.lang.String)",
+              "java.lang.StringBuilder java.lang.StringBuilder.append(char)"
+            ]
+          },
+          {
+            "pid": 204,
+            "epoch": 23882597000,
+            "kind": "Deoptimize",
+            "count": 64,
+            "complete_snapshot": false,
+            "examples": [
+              "void com.android.server.pm.SharedLibrariesImpl.executeSharedLibrariesUpdateLPw(com.android.server.pm.pkg.AndroidPackage, com.android.server.pm.PackageSetting, com.android.server.pm.pkg.AndroidPackage, com.android.server.pm.PackageSetting, java.util.ArrayList, int[])",
+              "com.android.server.art.jarjar.com.google.protobuf.MessageSchema com.android.server.art.jarjar.com.google.protobuf.MessageSchema.newSchemaForRawMessageInfo(com.android.server.art.jarjar.com.google.protobuf.RawMessageInfo, com.android.server.art.jarjar.com.google.protobuf.NewInstanceSchema, com.android.server.art.jarjar.com.google.protobuf.ListFieldSchema, com.android.server.art.jarjar.com.google.protobuf.UnknownFieldSchema, com.android.server.art.jarjar.com.google.protobuf.ExtensionSchema, com.android.server.art.jarjar.com.google.protobuf.MapFieldSchema)"
+            ]
+          },
+          {
+            "pid": 204,
+            "epoch": 23882597000,
+            "kind": "ShouldDeoptimizeFlag",
+            "count": 128,
+            "complete_snapshot": false,
+            "examples": [
+              "void com.android.server.utils.WatchableImpl.dispatchChange(com.android.server.utils.Watchable)",
+              "java.lang.String com.android.server.pm.Settings.getRenamedPackageLPr(java.lang.String)"
+            ]
+          },
+          {
+            "pid": 387,
+            "epoch": 23870184000,
+            "kind": "Deoptimize",
+            "count": 128,
+            "complete_snapshot": false,
+            "examples": [
+              "java.lang.Object com.google.android.systemui.dagger.DaggerSysUIGoogleGlobalRootComponent$SysUIGoogleGlobalRootComponentImpl$SwitchingProvider.get()",
+              "void androidx.compose.ui.graphics.colorspace.Rgb.<init>(java.lang.String, float[], androidx.compose.ui.graphics.colorspace.WhitePoint, float[], androidx.compose.ui.graphics.colorspace.DoubleFunction, androidx.compose.ui.graphics.colorspace.DoubleFunction, float, float, androidx.compose.ui.graphics.colorspace.TransferParameters, int)"
+            ]
+          },
+          {
+            "pid": 387,
+            "epoch": 23870184000,
+            "kind": "accepted",
+            "count": 1024,
+            "complete_snapshot": false,
+            "examples": []
+          },
+          {
+            "pid": 408,
+            "epoch": 23870184000,
+            "kind": "Deoptimize",
+            "count": 2,
+            "complete_snapshot": false,
+            "examples": [
+              "void java.lang.System.arraycopy(byte[], int, byte[], int, int)"
+            ]
+          },
+          {
+            "pid": 458,
+            "epoch": 23870184000,
+            "kind": "accepted",
+            "count": 128,
+            "complete_snapshot": false,
+            "examples": []
+          },
+          {
+            "pid": 507,
+            "epoch": 23870184000,
+            "kind": "Deoptimize",
+            "count": 16,
+            "complete_snapshot": false,
+            "examples": [
+              "void java.lang.System.arraycopy(byte[], int, byte[], int, int)"
+            ]
+          },
+          {
+            "pid": 387,
+            "epoch": 23870184000,
+            "kind": "ShouldDeoptimizeFlag",
+            "count": 32,
+            "complete_snapshot": false,
+            "examples": [
+              "kotlinx.coroutines.ChildHandle kotlinx.coroutines.JobSupport.attachChild(kotlinx.coroutines.JobSupport)",
+              "void kotlinx.coroutines.internal.LockFreeLinkedListNode.finishAdd(kotlinx.coroutines.internal.LockFreeLinkedListNode)"
+            ]
+          },
+          {
+            "pid": 387,
+            "epoch": 23870184000,
+            "kind": "ClassTableGet",
+            "count": 2,
+            "complete_snapshot": false,
+            "examples": [
+              "kotlin.coroutines.CoroutineContext kotlin.coroutines.CoroutineContext$DefaultImpls.minusKey(kotlin.coroutines.CoroutineContext$Element, kotlin.coroutines.CoroutineContext$Key)",
+              "void com.android.systemui.util.DelayableMarqueeTextView.stopMarquee()"
+            ]
+          },
+          {
+            "pid": 600,
+            "epoch": 76648129000,
+            "kind": "accepted",
+            "count": 512,
+            "complete_snapshot": false,
+            "examples": [
+              "boolean java.lang.String.equals(java.lang.Object)",
+              "int java.lang.String.length()"
+            ]
+          },
+          {
+            "pid": 507,
+            "epoch": 23870184000,
+            "kind": "accepted",
+            "count": 128,
+            "complete_snapshot": false,
+            "examples": []
+          },
+          {
+            "pid": 600,
+            "epoch": 76648129000,
+            "kind": "Deoptimize",
+            "count": 64,
+            "complete_snapshot": false,
+            "examples": [
+              "java.lang.String java.io.UnixFileSystem.normalize(java.lang.String)",
+              "java.util.HashMap$Node[] java.util.HashMap.resize()"
+            ]
+          },
+          {
+            "pid": 387,
+            "epoch": 23870184000,
+            "kind": "InvokeStaticOrDirect",
+            "count": 18,
+            "complete_snapshot": true,
+            "examples": []
+          },
+          {
+            "pid": 568,
+            "epoch": 23870184000,
+            "kind": "Deoptimize",
+            "count": 16,
+            "complete_snapshot": false,
+            "examples": [
+              "void java.lang.System.arraycopy(byte[], int, byte[], int, int)"
+            ]
+          },
+          {
+            "pid": 428,
+            "epoch": 23870184000,
+            "kind": "accepted",
+            "count": 64,
+            "complete_snapshot": false,
+            "examples": []
+          },
+          {
+            "pid": 428,
+            "epoch": 23870184000,
+            "kind": "Deoptimize",
+            "count": 2,
+            "complete_snapshot": false,
+            "examples": [
+              "int com.google.protobuf.Utf8$SafeProcessor.encodeUtf8(java.lang.CharSequence, byte[], int, int)",
+              "int com.google.protobuf.Utf8.encodedLength(java.lang.CharSequence)"
+            ]
+          },
+          {
+            "pid": 604,
+            "epoch": 23870184000,
+            "kind": "Deoptimize",
+            "count": 4,
+            "complete_snapshot": false,
+            "examples": [
+              "void java.lang.System.arraycopy(byte[], int, byte[], int, int)"
+            ]
+          },
+          {
+            "pid": 604,
+            "epoch": 23870184000,
+            "kind": "accepted",
+            "count": 128,
+            "complete_snapshot": false,
+            "examples": []
+          },
+          {
+            "pid": 659,
+            "epoch": 23870184000,
+            "kind": "Deoptimize",
+            "count": 4,
+            "complete_snapshot": false,
+            "examples": [
+              "void java.lang.System.arraycopy(byte[], int, byte[], int, int)"
+            ]
+          },
+          {
+            "pid": 659,
+            "epoch": 23870184000,
+            "kind": "accepted",
+            "count": 64,
+            "complete_snapshot": false,
+            "examples": []
+          },
+          {
+            "pid": 458,
+            "epoch": 23870184000,
+            "kind": "Deoptimize",
+            "count": 2,
+            "complete_snapshot": false,
+            "examples": [
+              "void java.lang.System.arraycopy(byte[], int, byte[], int, int)"
+            ]
+          },
+          {
+            "pid": 600,
+            "epoch": 76648129000,
+            "kind": "ShouldDeoptimizeFlag",
+            "count": 1,
+            "complete_snapshot": false,
+            "examples": [
+              "boolean java.util.HashSet.add(java.lang.Object)"
+            ]
+          },
+          {
+            "pid": 847,
+            "epoch": 123194154000,
+            "kind": "accepted",
+            "count": 256,
+            "complete_snapshot": false,
+            "examples": [
+              "boolean java.lang.String.equals(java.lang.Object)",
+              "int java.lang.String.length()"
+            ]
+          },
+          {
+            "pid": 847,
+            "epoch": 123194154000,
+            "kind": "Deoptimize",
+            "count": 32,
+            "complete_snapshot": false,
+            "examples": [
+              "java.lang.String java.io.UnixFileSystem.normalize(java.lang.String)",
+              "java.util.HashMap$Node[] java.util.HashMap.resize()"
+            ]
+          },
+          {
+            "pid": 568,
+            "epoch": 23870184000,
+            "kind": "accepted",
+            "count": 256,
+            "complete_snapshot": false,
+            "examples": []
+          },
+          {
+            "pid": 847,
+            "epoch": 123194154000,
+            "kind": "ShouldDeoptimizeFlag",
+            "count": 1,
+            "complete_snapshot": false,
+            "examples": [
+              "boolean java.util.HashSet.add(java.lang.Object)"
+            ]
+          },
+          {
+            "pid": 568,
+            "epoch": 23870184000,
+            "kind": "VecSub",
+            "count": 1,
+            "complete_snapshot": false,
+            "examples": [
+              "void androidx.gridlayout.widget.GridLayout$Axis.computeLocations(int[])"
+            ]
+          },
+          {
+            "pid": 568,
+            "epoch": 23870184000,
+            "kind": "ShouldDeoptimizeFlag",
+            "count": 1,
+            "complete_snapshot": false,
+            "examples": [
+              "void androidx.fragment.app.Fragment.dump(java.lang.String, java.io.FileDescriptor, java.io.PrintWriter, java.lang.String[])"
+            ]
+          },
+          {
+            "pid": 885,
+            "epoch": 134310541000,
+            "kind": "accepted",
+            "count": 128,
+            "complete_snapshot": false,
+            "examples": [
+              "boolean java.lang.String.equals(java.lang.Object)",
+              "int java.lang.String.length()"
+            ]
+          },
+          {
+            "pid": 885,
+            "epoch": 134310541000,
+            "kind": "Deoptimize",
+            "count": 8,
+            "complete_snapshot": false,
+            "examples": [
+              "java.util.HashMap$Node[] java.util.HashMap.resize()",
+              "void java.lang.System.arraycopy(byte[], int, byte[], int, int)"
+            ]
+          },
+          {
+            "pid": 898,
+            "epoch": 136403160000,
+            "kind": "accepted",
+            "count": 256,
+            "complete_snapshot": false,
+            "examples": [
+              "boolean java.lang.String.equals(java.lang.Object)",
+              "int java.lang.String.length()"
+            ]
+          },
+          {
+            "pid": 898,
+            "epoch": 136403160000,
+            "kind": "Deoptimize",
+            "count": 32,
+            "complete_snapshot": false,
+            "examples": [
+              "java.lang.String java.io.UnixFileSystem.normalize(java.lang.String)",
+              "java.util.HashMap$Node[] java.util.HashMap.resize()"
+            ]
+          },
+          {
+            "pid": 898,
+            "epoch": 136403160000,
+            "kind": "ShouldDeoptimizeFlag",
+            "count": 1,
+            "complete_snapshot": false,
+            "examples": [
+              "boolean java.util.HashSet.add(java.lang.Object)"
+            ]
+          },
+          {
+            "pid": 917,
+            "epoch": 142871507000,
+            "kind": "accepted",
+            "count": 256,
+            "complete_snapshot": false,
+            "examples": [
+              "boolean java.lang.String.equals(java.lang.Object)",
+              "int java.lang.String.length()"
+            ]
+          },
+          {
+            "pid": 917,
+            "epoch": 142871507000,
+            "kind": "Deoptimize",
+            "count": 32,
+            "complete_snapshot": false,
+            "examples": [
+              "java.lang.String java.io.UnixFileSystem.normalize(java.lang.String)",
+              "java.util.HashMap$Node[] java.util.HashMap.resize()"
+            ]
+          },
+          {
+            "pid": 918,
+            "epoch": 23870184000,
+            "kind": "Deoptimize",
+            "count": 8,
+            "complete_snapshot": false,
+            "examples": [
+              "void java.lang.System.arraycopy(byte[], int, byte[], int, int)",
+              "void androidx.recyclerview.widget.LinearLayoutManager.onLayoutChildren(androidx.recyclerview.widget.RecyclerView$Recycler, androidx.recyclerview.widget.RecyclerView$State)"
+            ]
+          },
+          {
+            "pid": 918,
+            "epoch": 23870184000,
+            "kind": "accepted",
+            "count": 256,
+            "complete_snapshot": false,
+            "examples": []
+          },
+          {
+            "pid": 917,
+            "epoch": 142871507000,
+            "kind": "ShouldDeoptimizeFlag",
+            "count": 1,
+            "complete_snapshot": false,
+            "examples": [
+              "boolean java.util.HashSet.add(java.lang.Object)"
+            ]
+          },
+          {
+            "pid": 918,
+            "epoch": 23870184000,
+            "kind": "ShouldDeoptimizeFlag",
+            "count": 2,
+            "complete_snapshot": false,
+            "examples": [
+              "void com.google.android.material.chip.Chip.updateFrameworkRippleBackground()",
+              "android.graphics.RectF com.google.android.material.shape.MaterialShapeDrawable.getBoundsAsRectF()"
+            ]
+          },
+          {
+            "pid": 979,
+            "epoch": 155327372000,
+            "kind": "accepted",
+            "count": 128,
+            "complete_snapshot": false,
+            "examples": [
+              "boolean java.lang.String.equals(java.lang.Object)",
+              "int java.lang.String.length()"
+            ]
+          },
+          {
+            "pid": 979,
+            "epoch": 155327372000,
+            "kind": "Deoptimize",
+            "count": 8,
+            "complete_snapshot": false,
+            "examples": [
+              "java.util.HashMap$Node[] java.util.HashMap.resize()",
+              "void java.lang.System.arraycopy(byte[], int, byte[], int, int)"
+            ]
+          }
+        ],
+        "fast_baseline": [
+          {
+            "pid": 1,
+            "epoch": 10711768000,
+            "tid": 3,
+            "installed_lower_bound": 8
+          },
+          {
+            "pid": 1,
+            "epoch": 10711768000,
+            "tid": 1,
+            "installed_lower_bound": 16
+          },
+          {
+            "pid": 1,
+            "epoch": 10944898000,
+            "tid": 3,
+            "installed_lower_bound": 8
+          },
+          {
+            "pid": 1,
+            "epoch": 11032488000,
+            "tid": 3,
+            "installed_lower_bound": 8
+          },
+          {
+            "pid": 27,
+            "epoch": 13097921000,
+            "tid": 28,
+            "installed_lower_bound": 64
+          },
+          {
+            "pid": 73,
+            "epoch": 14453770000,
+            "tid": 75,
+            "installed_lower_bound": 128
+          },
+          {
+            "pid": 96,
+            "epoch": 16709276000,
+            "tid": 97,
+            "installed_lower_bound": 32
+          },
+          {
+            "pid": 158,
+            "epoch": 18592284000,
+            "tid": 159,
+            "installed_lower_bound": 16
+          },
+          {
+            "pid": 204,
+            "epoch": 23882597000,
+            "tid": 211,
+            "installed_lower_bound": 1024
+          },
+          {
+            "pid": 387,
+            "epoch": 23870184000,
+            "tid": 389,
+            "installed_lower_bound": 256
+          },
+          {
+            "pid": 408,
+            "epoch": 23870184000,
+            "tid": 410,
+            "installed_lower_bound": 8
+          },
+          {
+            "pid": 428,
+            "epoch": 23870184000,
+            "tid": 430,
+            "installed_lower_bound": 16
+          },
+          {
+            "pid": 458,
+            "epoch": 23870184000,
+            "tid": 460,
+            "installed_lower_bound": 32
+          },
+          {
+            "pid": 507,
+            "epoch": 23870184000,
+            "tid": 509,
+            "installed_lower_bound": 32
+          },
+          {
+            "pid": 557,
+            "epoch": 23870184000,
+            "tid": 559,
+            "installed_lower_bound": 4
+          },
+          {
+            "pid": 568,
+            "epoch": 23870184000,
+            "tid": 570,
+            "installed_lower_bound": 128
+          },
+          {
+            "pid": 600,
+            "epoch": 76648129000,
+            "tid": 606,
+            "installed_lower_bound": 128
+          },
+          {
+            "pid": 604,
+            "epoch": 23870184000,
+            "tid": 609,
+            "installed_lower_bound": 32
+          },
+          {
+            "pid": 642,
+            "epoch": 23870184000,
+            "tid": 644,
+            "installed_lower_bound": 4
+          },
+          {
+            "pid": 659,
+            "epoch": 23870184000,
+            "tid": 662,
+            "installed_lower_bound": 16
+          },
+          {
+            "pid": 682,
+            "epoch": 23870184000,
+            "tid": 685,
+            "installed_lower_bound": 8
+          },
+          {
+            "pid": 718,
+            "epoch": 23870184000,
+            "tid": 720,
+            "installed_lower_bound": 4
+          },
+          {
+            "pid": 741,
+            "epoch": 23870184000,
+            "tid": 743,
+            "installed_lower_bound": 4
+          },
+          {
+            "pid": 753,
+            "epoch": 23870184000,
+            "tid": 755,
+            "installed_lower_bound": 4
+          },
+          {
+            "pid": 766,
+            "epoch": 23870184000,
+            "tid": 768,
+            "installed_lower_bound": 4
+          },
+          {
+            "pid": 785,
+            "epoch": 23870184000,
+            "tid": 787,
+            "installed_lower_bound": 4
+          },
+          {
+            "pid": 802,
+            "epoch": 23870184000,
+            "tid": 804,
+            "installed_lower_bound": 4
+          },
+          {
+            "pid": 847,
+            "epoch": 123194154000,
+            "tid": 852,
+            "installed_lower_bound": 128
+          },
+          {
+            "pid": 885,
+            "epoch": 134310541000,
+            "tid": 886,
+            "installed_lower_bound": 32
+          },
+          {
+            "pid": 898,
+            "epoch": 136403160000,
+            "tid": 899,
+            "installed_lower_bound": 128
+          },
+          {
+            "pid": 918,
+            "epoch": 23870184000,
+            "tid": 920,
+            "installed_lower_bound": 64
+          },
+          {
+            "pid": 917,
+            "epoch": 142871507000,
+            "tid": 932,
+            "installed_lower_bound": 128
+          },
+          {
+            "pid": 979,
+            "epoch": 155327372000,
+            "tid": 980,
+            "installed_lower_bound": 64
+          }
+        ],
+        "java_fatal_exceptions": 0,
+        "anrs": 0
+      },
+      "compiler": [
+        {
+          "pid": 1,
+          "epoch": 10711768000,
+          "tid": 3,
+          "installed_lower_bound": 8
+        },
+        {
+          "pid": 1,
+          "epoch": 10711768000,
+          "tid": 1,
+          "installed_lower_bound": 16
+        },
+        {
+          "pid": 1,
+          "epoch": 10944898000,
+          "tid": 3,
+          "installed_lower_bound": 8
+        },
+        {
+          "pid": 1,
+          "epoch": 11032488000,
+          "tid": 3,
+          "installed_lower_bound": 8
+        },
+        {
+          "pid": 27,
+          "epoch": 13097921000,
+          "tid": 28,
+          "installed_lower_bound": 64
+        },
+        {
+          "pid": 73,
+          "epoch": 14453770000,
+          "tid": 75,
+          "installed_lower_bound": 128
+        },
+        {
+          "pid": 96,
+          "epoch": 16709276000,
+          "tid": 97,
+          "installed_lower_bound": 32
+        },
+        {
+          "pid": 158,
+          "epoch": 18592284000,
+          "tid": 159,
+          "installed_lower_bound": 16
+        },
+        {
+          "pid": 204,
+          "epoch": 23882597000,
+          "tid": 211,
+          "installed_lower_bound": 1024
+        },
+        {
+          "pid": 387,
+          "epoch": 23870184000,
+          "tid": 389,
+          "installed_lower_bound": 256
+        },
+        {
+          "pid": 408,
+          "epoch": 23870184000,
+          "tid": 410,
+          "installed_lower_bound": 8
+        },
+        {
+          "pid": 428,
+          "epoch": 23870184000,
+          "tid": 430,
+          "installed_lower_bound": 16
+        },
+        {
+          "pid": 458,
+          "epoch": 23870184000,
+          "tid": 460,
+          "installed_lower_bound": 32
+        },
+        {
+          "pid": 507,
+          "epoch": 23870184000,
+          "tid": 509,
+          "installed_lower_bound": 32
+        },
+        {
+          "pid": 557,
+          "epoch": 23870184000,
+          "tid": 559,
+          "installed_lower_bound": 4
+        },
+        {
+          "pid": 568,
+          "epoch": 23870184000,
+          "tid": 570,
+          "installed_lower_bound": 128
+        },
+        {
+          "pid": 600,
+          "epoch": 76648129000,
+          "tid": 606,
+          "installed_lower_bound": 128
+        },
+        {
+          "pid": 604,
+          "epoch": 23870184000,
+          "tid": 609,
+          "installed_lower_bound": 32
+        },
+        {
+          "pid": 642,
+          "epoch": 23870184000,
+          "tid": 644,
+          "installed_lower_bound": 4
+        },
+        {
+          "pid": 659,
+          "epoch": 23870184000,
+          "tid": 662,
+          "installed_lower_bound": 16
+        },
+        {
+          "pid": 682,
+          "epoch": 23870184000,
+          "tid": 685,
+          "installed_lower_bound": 8
+        },
+        {
+          "pid": 718,
+          "epoch": 23870184000,
+          "tid": 720,
+          "installed_lower_bound": 4
+        },
+        {
+          "pid": 741,
+          "epoch": 23870184000,
+          "tid": 743,
+          "installed_lower_bound": 4
+        },
+        {
+          "pid": 753,
+          "epoch": 23870184000,
+          "tid": 755,
+          "installed_lower_bound": 4
+        },
+        {
+          "pid": 766,
+          "epoch": 23870184000,
+          "tid": 768,
+          "installed_lower_bound": 4
+        },
+        {
+          "pid": 785,
+          "epoch": 23870184000,
+          "tid": 787,
+          "installed_lower_bound": 4
+        },
+        {
+          "pid": 802,
+          "epoch": 23870184000,
+          "tid": 804,
+          "installed_lower_bound": 4
+        },
+        {
+          "pid": 847,
+          "epoch": 123194154000,
+          "tid": 852,
+          "installed_lower_bound": 128
+        },
+        {
+          "pid": 885,
+          "epoch": 134310541000,
+          "tid": 886,
+          "installed_lower_bound": 32
+        },
+        {
+          "pid": 898,
+          "epoch": 136403160000,
+          "tid": 899,
+          "installed_lower_bound": 128
+        },
+        {
+          "pid": 918,
+          "epoch": 23870184000,
+          "tid": 920,
+          "installed_lower_bound": 64
+        },
+        {
+          "pid": 917,
+          "epoch": 142871507000,
+          "tid": 932,
+          "installed_lower_bound": 128
+        },
+        {
+          "pid": 979,
+          "epoch": 155327372000,
+          "tid": 980,
+          "installed_lower_bound": 64
+        }
+      ]
+    }
+  ],
+  "disabled_configuration_checks": [
+    {
+      "binary": "lkl-probe",
+      "passed": true,
+      "checks": 213,
+      "fast_baseline": [
+        {
+          "test": "android_art_fast_baseline_paths",
+          "passed": true,
+          "gc_requests": 64,
+          "exceptions": 12
+        },
+        {
+          "test": "android_art_fast_baseline_entries",
+          "passed": true,
+          "enabled": false,
+          "methods": 20,
+          "fast_methods": 0,
+          "compile_ms": 0.861
+        }
+      ],
+      "components": {
+        "component_timing_count": 1237,
+        "timing_limit_per_tag": 40,
+        "component_timings": [
+          {
+            "tag": "SystemServerTiming",
+            "name": "InitBeforeStartServices",
+            "ms": 253,
+            "line": 9097,
+            "timestamp": "10-10 09:39:21.968"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "StartActivityManager",
+            "ms": 282,
+            "line": 9597,
+            "timestamp": "10-10 09:39:22.612"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "StartPackageManagerService",
+            "ms": 2541,
+            "line": 10009,
+            "timestamp": "10-10 09:39:25.482"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "SetSystemProcess",
+            "ms": 393,
+            "line": 10041,
+            "timestamp": "10-10 09:39:25.983"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "StartOverlayManagerService",
+            "ms": 272,
+            "line": 10082,
+            "timestamp": "10-10 09:39:26.302"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "startBootstrapServices",
+            "ms": 4443,
+            "line": 10098,
+            "timestamp": "10-10 09:39:26.412"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "startCoreServices",
+            "ms": 309,
+            "line": 10175,
+            "timestamp": "10-10 09:39:26.722"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "SetWindowManagerService",
+            "ms": 497,
+            "line": 10379,
+            "timestamp": "10-10 09:39:28.061"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "StartNetworkStatsService",
+            "ms": 261,
+            "line": 10591,
+            "timestamp": "10-10 09:39:29.938"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "StartConnectivityService",
+            "ms": 533,
+            "line": 10615,
+            "timestamp": "10-10 09:39:30.599"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "StartNotificationManager",
+            "ms": 279,
+            "line": 10641,
+            "timestamp": "10-10 09:39:30.938"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "StartAudioService",
+            "ms": 643,
+            "line": 10729,
+            "timestamp": "10-10 09:39:31.824"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "StartBiometricService",
+            "ms": 531,
+            "line": 11124,
+            "timestamp": "10-10 09:39:33.786"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "StarSdkSandboxManagerService",
+            "ms": 215,
+            "line": 11357,
+            "timestamp": "10-10 09:39:35.092"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "OnBootPhase_500_com.android.server.am.ActivityManagerService$Lifecycle",
+            "ms": 325,
+            "line": 11857,
+            "timestamp": "10-10 09:39:35.946"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "OnBootPhase_500_com.android.server.power.PowerManagerService",
+            "ms": 399,
+            "line": 11926,
+            "timestamp": "10-10 09:39:36.346"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "OnBootPhase_500_com.android.server.sensorprivacy.SensorPrivacyService",
+            "ms": 354,
+            "line": 12002,
+            "timestamp": "10-10 09:39:36.702"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "OnBootPhase_500_com.android.server.vibrator.VibratorManagerService$Lifecycle",
+            "ms": 1759,
+            "line": 12633,
+            "timestamp": "10-10 09:39:38.728"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "OnBootPhase_500",
+            "ms": 3770,
+            "line": 12881,
+            "timestamp": "10-10 09:39:39.331"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "StartBootPhaseSystemServicesReady",
+            "ms": 3770,
+            "line": 12882,
+            "timestamp": "10-10 09:39:39.331"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "OnBootPhase_550_com.android.server.NetworkStatsServiceInitializer",
+            "ms": 680,
+            "line": 13594,
+            "timestamp": "10-10 09:39:41.436"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "OnBootPhase_550_com.android.server.policy.PermissionPolicyService",
+            "ms": 217,
+            "line": 13758,
+            "timestamp": "10-10 09:39:42.052"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "OnBootPhase_550",
+            "ms": 1573,
+            "line": 13782,
+            "timestamp": "10-10 09:39:42.059"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "StartActivityManagerReadyPhase",
+            "ms": 1573,
+            "line": 13783,
+            "timestamp": "10-10 09:39:42.059"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "MakeConnectivityServiceReady",
+            "ms": 538,
+            "line": 13866,
+            "timestamp": "10-10 09:39:42.707"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "OnBootPhase_600_com.android.server.location.LocationManagerService$Lifecycle",
+            "ms": 232,
+            "line": 14128,
+            "timestamp": "10-10 09:39:43.438"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "OnBootPhase_600",
+            "ms": 1340,
+            "line": 14307,
+            "timestamp": "10-10 09:39:44.220"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "PhaseThirdPartyAppsCanStart",
+            "ms": 1340,
+            "line": 14308,
+            "timestamp": "10-10 09:39:44.220"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "StartNetworkStack",
+            "ms": 238,
+            "line": 14333,
+            "timestamp": "10-10 09:39:44.458"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "MakeTelephonyRegistryReady",
+            "ms": 331,
+            "line": 14426,
+            "timestamp": "10-10 09:39:45.158"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "startHomeOnAllDisplays",
+            "ms": 323,
+            "line": 14877,
+            "timestamp": "10-10 09:39:46.392"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "ActivityManagerStartApps",
+            "ms": 1266,
+            "line": 14894,
+            "timestamp": "10-10 09:39:46.526"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "PhaseActivityManagerReady",
+            "ms": 6299,
+            "line": 14898,
+            "timestamp": "10-10 09:39:46.527"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "startOtherServices",
+            "ms": 19993,
+            "line": 14921,
+            "timestamp": "10-10 09:39:46.716"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "StartServices",
+            "ms": 24793,
+            "line": 14931,
+            "timestamp": "10-10 09:39:46.762"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.keyguard.KeyguardUpdateMonitor",
+            "ms": 411,
+            "line": 16092,
+            "timestamp": "10-10 09:39:59.765"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.systemui.ScreenDecorations",
+            "ms": 391,
+            "line": 16101,
+            "timestamp": "10-10 09:40:00.162"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.systemui.accessibility.MagnificationImpl",
+            "ms": 598,
+            "line": 16189,
+            "timestamp": "10-10 09:40:00.779"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.systemui.accessibility.SystemActions",
+            "ms": 4185,
+            "line": 16327,
+            "timestamp": "10-10 09:40:04.964"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.systemui.biometrics.BiometricNotificationService",
+            "ms": 46,
+            "line": 16334,
+            "timestamp": "10-10 09:40:05.063"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.systemui.clipboardoverlay.ClipboardListener",
+            "ms": 26,
+            "line": 16345,
+            "timestamp": "10-10 09:40:05.117"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.systemui.communal.CommunalDreamStartable",
+            "ms": 37,
+            "line": 16347,
+            "timestamp": "10-10 09:40:05.166"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.systemui.communal.CommunalSuppressionStartable",
+            "ms": 43,
+            "line": 16351,
+            "timestamp": "10-10 09:40:05.212"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.systemui.complication.ComplicationTypesUpdater",
+            "ms": 24,
+            "line": 16356,
+            "timestamp": "10-10 09:40:05.262"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.systemui.dreams.AssistantAttentionMonitor",
+            "ms": 1689,
+            "line": 16390,
+            "timestamp": "10-10 09:40:06.978"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.systemui.education.ui.view.ContextualEduUiCoordinator",
+            "ms": 29,
+            "line": 16397,
+            "timestamp": "10-10 09:40:07.075"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.systemui.flags.FeatureFlagsDebugStartable",
+            "ms": 104,
+            "line": 16400,
+            "timestamp": "10-10 09:40:07.209"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.systemui.flags.FlagDependencies",
+            "ms": 43,
+            "line": 16401,
+            "timestamp": "10-10 09:40:07.253"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.systemui.globalactions.GlobalActionsComponent",
+            "ms": 101,
+            "line": 16404,
+            "timestamp": "10-10 09:40:07.355"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.systemui.keyboard.KeyboardUI",
+            "ms": 26,
+            "line": 16409,
+            "timestamp": "10-10 09:40:07.430"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.systemui.keyboard.PhysicalKeyboardCoreStartable",
+            "ms": 73,
+            "line": 16410,
+            "timestamp": "10-10 09:40:07.511"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.systemui.keyboard.shortcut.ui.ShortcutHelperDialogStarter",
+            "ms": 42,
+            "line": 16412,
+            "timestamp": "10-10 09:40:07.573"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.systemui.keyguard.KeyguardViewConfigurator",
+            "ms": 251,
+            "line": 16418,
+            "timestamp": "10-10 09:40:07.849"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.systemui.keyguard.KeyguardViewMediator",
+            "ms": 161,
+            "line": 16426,
+            "timestamp": "10-10 09:40:08.011"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.systemui.keyguard.domain.interactor.KeyguardTransitionCoreStartable",
+            "ms": 91,
+            "line": 16441,
+            "timestamp": "10-10 09:40:08.136"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.systemui.motiontool.MotionToolStartable",
+            "ms": 26,
+            "line": 16465,
+            "timestamp": "10-10 09:40:08.235"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.systemui.power.PowerUI",
+            "ms": 261,
+            "line": 16468,
+            "timestamp": "10-10 09:40:08.496"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.systemui.scene.domain.startable.SceneContainerStartable",
+            "ms": 26,
+            "line": 16482,
+            "timestamp": "10-10 09:40:08.634"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.systemui.shade.ShadeStateTraceLogger",
+            "ms": 28,
+            "line": 16495,
+            "timestamp": "10-10 09:40:08.753"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.systemui.shortcut.ShortcutKeyDispatcher",
+            "ms": 26,
+            "line": 16500,
+            "timestamp": "10-10 09:40:08.783"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.systemui.statusbar.ImmersiveModeConfirmation",
+            "ms": 97,
+            "line": 16504,
+            "timestamp": "10-10 09:40:08.881"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.systemui.statusbar.chips.sharetoapp.ui.viewmodel.ShareToAppChipViewModel",
+            "ms": 49,
+            "line": 16507,
+            "timestamp": "10-10 09:40:08.937"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.systemui.statusbar.notification.interruption.KeyguardNotificationVisibilityProviderImpl",
+            "ms": 77,
+            "line": 16527,
+            "timestamp": "10-10 09:40:09.037"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.systemui.statusbar.notification.interruption.VisualInterruptionDecisionProvider",
+            "ms": 28,
+            "line": 16528,
+            "timestamp": "10-10 09:40:09.066"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.systemui.statusbar.phone.CentralSurfaces",
+            "ms": 2756,
+            "line": 16594,
+            "timestamp": "10-10 09:40:11.856"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.systemui.stylus.StylusUsiPowerStartable",
+            "ms": 40,
+            "line": 16610,
+            "timestamp": "10-10 09:40:12.003"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.systemui.theme.ThemeOverlayController",
+            "ms": 90,
+            "line": 16617,
+            "timestamp": "10-10 09:40:12.105"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.systemui.usb.StorageNotification",
+            "ms": 75,
+            "line": 16632,
+            "timestamp": "10-10 09:40:12.217"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.systemui.util.NotificationChannels",
+            "ms": 53,
+            "line": 16637,
+            "timestamp": "10-10 09:40:12.290"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.systemui.volume.VolumeUI",
+            "ms": 57,
+            "line": 16638,
+            "timestamp": "10-10 09:40:12.353"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.systemui.wmshell.WMShell",
+            "ms": 37,
+            "line": 16639,
+            "timestamp": "10-10 09:40:12.394"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.google.android.systemui.GoogleServices",
+            "ms": 69,
+            "line": 16640,
+            "timestamp": "10-10 09:40:12.496"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.google.android.systemui.compose.ComposeHsvStartable",
+            "ms": 31,
+            "line": 16643,
+            "timestamp": "10-10 09:40:12.528"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "Topologically start Core Startables",
+            "ms": 13338,
+            "line": 16656,
+            "timestamp": "10-10 09:40:12.588"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices",
+            "ms": 13362,
+            "line": 16658,
+            "timestamp": "10-10 09:40:12.613"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "prepareUserData-0",
+            "ms": 264,
+            "line": 17338,
+            "timestamp": "10-10 09:40:16.270"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "reconcileAppsData-0",
+            "ms": 238,
+            "line": 17397,
+            "timestamp": "10-10 09:40:16.509"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "UM.onBeforeUnlockUser-0",
+            "ms": 533,
+            "line": 17398,
+            "timestamp": "10-10 09:40:16.509"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "SystemUserUnlock",
+            "ms": 6451,
+            "line": 19546,
+            "timestamp": "10-10 09:40:22.308"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "finishUserUnlocked-0",
+            "ms": 607,
+            "line": 19733,
+            "timestamp": "10-10 09:40:22.912"
+          }
+        ],
+        "displayed_activities": [
+          {
+            "line": 16559,
+            "message": "10-10 09:40:10.429   203   221 I ActivityTaskManager: Displayed com.android.settings/.FallbackHome for user 0: +24s274ms"
+          },
+          {
+            "line": 22390,
+            "message": "10-10 09:41:02.262   203   221 I ActivityTaskManager: Displayed com.android.launcher3/.uioverrides.QuickstepLauncher for user 0: +45s45ms"
+          },
+          {
+            "line": 24422,
+            "message": "10-10 09:41:14.062   203   221 I ActivityTaskManager: Displayed com.android.deskclock/.DeskClock for user 0: +8s707ms"
+          },
+          {
+            "line": 29453,
+            "message": "10-10 09:41:34.220   203   221 I ActivityTaskManager: Displayed com.google.android.documentsui/com.android.documentsui.files.FilesActivity for user 0: +9s15ms"
+          }
+        ],
+        "mapping_cumulative": [],
+        "mapping_intervals": [],
+        "resume_entries": [],
+        "mmu_cumulative": [],
+        "compiler_filter": [],
+        "fast_baseline": [],
+        "java_fatal_exceptions": 0,
+        "anrs": 0
+      },
+      "stdout": "/Users/fan/project/app/husk_hyos/work/native-linux-nce/processes/lkl-probe-fast-off.jsonl",
+      "stderr": "/Users/fan/project/app/husk_hyos/work/native-linux-nce/processes/lkl-probe-fast-off.log"
+    },
+    {
+      "binary": "dispatch-probe",
+      "passed": true,
+      "checks": 213,
+      "fast_baseline": [
+        {
+          "test": "android_art_fast_baseline_paths",
+          "passed": true,
+          "gc_requests": 64,
+          "exceptions": 12
+        },
+        {
+          "test": "android_art_fast_baseline_entries",
+          "passed": true,
+          "enabled": false,
+          "methods": 20,
+          "fast_methods": 0,
+          "compile_ms": 0.953
+        }
+      ],
+      "components": {
+        "component_timing_count": 1237,
+        "timing_limit_per_tag": 40,
+        "component_timings": [
+          {
+            "tag": "SystemServerTiming",
+            "name": "InitBeforeStartServices",
+            "ms": 274,
+            "line": 9103,
+            "timestamp": "10-10 09:42:18.170"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "StartActivityManager",
+            "ms": 260,
+            "line": 9603,
+            "timestamp": "10-10 09:42:18.724"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "StartPackageManagerService",
+            "ms": 2326,
+            "line": 10012,
+            "timestamp": "10-10 09:42:21.455"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "SetSystemProcess",
+            "ms": 211,
+            "line": 10044,
+            "timestamp": "10-10 09:42:21.721"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "StartOverlayManagerService",
+            "ms": 280,
+            "line": 10055,
+            "timestamp": "10-10 09:42:22.069"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "startBootstrapServices",
+            "ms": 3996,
+            "line": 10086,
+            "timestamp": "10-10 09:42:22.168"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "startCoreServices",
+            "ms": 248,
+            "line": 10160,
+            "timestamp": "10-10 09:42:22.416"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "InstallSystemProviders",
+            "ms": 233,
+            "line": 10225,
+            "timestamp": "10-10 09:42:22.757"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "StartWindowManagerService",
+            "ms": 204,
+            "line": 10377,
+            "timestamp": "10-10 09:42:23.345"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "SetWindowManagerService",
+            "ms": 377,
+            "line": 10382,
+            "timestamp": "10-10 09:42:23.726"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "StartConnectivityService",
+            "ms": 331,
+            "line": 10599,
+            "timestamp": "10-10 09:42:25.448"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "StartNotificationManager",
+            "ms": 374,
+            "line": 10639,
+            "timestamp": "10-10 09:42:25.873"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "StartAudioService",
+            "ms": 580,
+            "line": 10728,
+            "timestamp": "10-10 09:42:26.641"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "StartJobScheduler",
+            "ms": 232,
+            "line": 10832,
+            "timestamp": "10-10 09:42:27.073"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "StartBiometricService",
+            "ms": 228,
+            "line": 11096,
+            "timestamp": "10-10 09:42:28.037"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "OnBootPhase_500_com.android.server.am.ActivityManagerService$Lifecycle",
+            "ms": 428,
+            "line": 11792,
+            "timestamp": "10-10 09:42:29.806"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "OnBootPhase_500_com.android.server.power.PowerManagerService",
+            "ms": 372,
+            "line": 11860,
+            "timestamp": "10-10 09:42:30.179"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "OnBootPhase_500_com.android.server.vibrator.VibratorManagerService$Lifecycle",
+            "ms": 888,
+            "line": 12311,
+            "timestamp": "10-10 09:42:31.483"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "OnBootPhase_500",
+            "ms": 3025,
+            "line": 12712,
+            "timestamp": "10-10 09:42:32.360"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "StartBootPhaseSystemServicesReady",
+            "ms": 3025,
+            "line": 12713,
+            "timestamp": "10-10 09:42:32.360"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "MakePackageManagerServiceReady",
+            "ms": 246,
+            "line": 12874,
+            "timestamp": "10-10 09:42:32.893"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "MakeDisplayManagerServiceReady",
+            "ms": 182,
+            "line": 12906,
+            "timestamp": "10-10 09:42:33.092"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "StartSafetyCenterService",
+            "ms": 256,
+            "line": 13267,
+            "timestamp": "10-10 09:42:33.473"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "OnBootPhase_550_com.android.server.NetworkStatsServiceInitializer",
+            "ms": 578,
+            "line": 13601,
+            "timestamp": "10-10 09:42:34.663"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "OnBootPhase_550_com.android.server.policy.PermissionPolicyService",
+            "ms": 185,
+            "line": 13765,
+            "timestamp": "10-10 09:42:35.167"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "OnBootPhase_550",
+            "ms": 1329,
+            "line": 13787,
+            "timestamp": "10-10 09:42:35.168"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "StartActivityManagerReadyPhase",
+            "ms": 1329,
+            "line": 13788,
+            "timestamp": "10-10 09:42:35.168"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "MakeConnectivityServiceReady",
+            "ms": 443,
+            "line": 13871,
+            "timestamp": "10-10 09:42:35.749"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "OnBootPhase_600_com.android.server.job.JobSchedulerService",
+            "ms": 360,
+            "line": 14169,
+            "timestamp": "10-10 09:42:36.451"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "OnBootPhase_600",
+            "ms": 990,
+            "line": 14316,
+            "timestamp": "10-10 09:42:36.872"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "PhaseThirdPartyAppsCanStart",
+            "ms": 991,
+            "line": 14317,
+            "timestamp": "10-10 09:42:36.872"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "StartNetworkStack",
+            "ms": 362,
+            "line": 14378,
+            "timestamp": "10-10 09:42:37.235"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "startHomeOnAllDisplays",
+            "ms": 505,
+            "line": 14907,
+            "timestamp": "10-10 09:42:38.917"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "ActivityManagerStartApps",
+            "ms": 1618,
+            "line": 14931,
+            "timestamp": "10-10 09:42:39.082"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "PhaseActivityManagerReady",
+            "ms": 5451,
+            "line": 14935,
+            "timestamp": "10-10 09:42:39.083"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "startOtherServices",
+            "ms": 16828,
+            "line": 14943,
+            "timestamp": "10-10 09:42:39.245"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "StartServices",
+            "ms": 21136,
+            "line": 14954,
+            "timestamp": "10-10 09:42:39.307"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.keyguard.KeyguardUpdateMonitor",
+            "ms": 384,
+            "line": 16076,
+            "timestamp": "10-10 09:42:51.813"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.systemui.ScreenDecorations",
+            "ms": 355,
+            "line": 16085,
+            "timestamp": "10-10 09:42:52.206"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.systemui.accessibility.MagnificationImpl",
+            "ms": 420,
+            "line": 16153,
+            "timestamp": "10-10 09:42:52.643"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.systemui.accessibility.SystemActions",
+            "ms": 4358,
+            "line": 16306,
+            "timestamp": "10-10 09:42:57.002"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.systemui.biometrics.BiometricNotificationService",
+            "ms": 30,
+            "line": 16311,
+            "timestamp": "10-10 09:42:57.069"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.systemui.communal.CommunalSuppressionStartable",
+            "ms": 56,
+            "line": 16326,
+            "timestamp": "10-10 09:42:57.200"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.systemui.complication.ComplicationTypesUpdater",
+            "ms": 17,
+            "line": 16331,
+            "timestamp": "10-10 09:42:57.220"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.systemui.dreams.AssistantAttentionMonitor",
+            "ms": 1529,
+            "line": 16366,
+            "timestamp": "10-10 09:42:58.777"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.systemui.education.ui.view.ContextualEduUiCoordinator",
+            "ms": 48,
+            "line": 16373,
+            "timestamp": "10-10 09:42:58.875"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.systemui.flags.FeatureFlagsDebugStartable",
+            "ms": 112,
+            "line": 16374,
+            "timestamp": "10-10 09:42:58.988"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.systemui.flags.FlagDependencies",
+            "ms": 26,
+            "line": 16376,
+            "timestamp": "10-10 09:42:59.026"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.systemui.globalactions.GlobalActionsComponent",
+            "ms": 65,
+            "line": 16379,
+            "timestamp": "10-10 09:42:59.091"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.systemui.keyboard.KeyboardUI",
+            "ms": 32,
+            "line": 16383,
+            "timestamp": "10-10 09:42:59.146"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.systemui.keyboard.PhysicalKeyboardCoreStartable",
+            "ms": 50,
+            "line": 16384,
+            "timestamp": "10-10 09:42:59.205"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.systemui.keyboard.shortcut.ui.ShortcutHelperDialogStarter",
+            "ms": 27,
+            "line": 16386,
+            "timestamp": "10-10 09:42:59.269"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.systemui.keyguard.KeyguardViewConfigurator",
+            "ms": 292,
+            "line": 16394,
+            "timestamp": "10-10 09:42:59.585"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.systemui.keyguard.KeyguardViewMediator",
+            "ms": 254,
+            "line": 16405,
+            "timestamp": "10-10 09:42:59.840"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.systemui.keyguard.domain.interactor.KeyguardBlueprintInteractor",
+            "ms": 16,
+            "line": 16409,
+            "timestamp": "10-10 09:42:59.869"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.systemui.keyguard.domain.interactor.KeyguardTransitionCoreStartable",
+            "ms": 37,
+            "line": 16419,
+            "timestamp": "10-10 09:42:59.907"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.systemui.keyguard.ui.binder.SideFpsProgressBarViewBinder",
+            "ms": 20,
+            "line": 16426,
+            "timestamp": "10-10 09:42:59.953"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.systemui.media.RingtonePlayer",
+            "ms": 42,
+            "line": 16432,
+            "timestamp": "10-10 09:42:59.998"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.systemui.power.PowerUI",
+            "ms": 195,
+            "line": 16444,
+            "timestamp": "10-10 09:43:00.321"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.systemui.shortcut.ShortcutKeyDispatcher",
+            "ms": 35,
+            "line": 16471,
+            "timestamp": "10-10 09:43:00.489"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.systemui.statusbar.ImmersiveModeConfirmation",
+            "ms": 84,
+            "line": 16473,
+            "timestamp": "10-10 09:43:00.575"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.systemui.statusbar.chips.sharetoapp.ui.viewmodel.ShareToAppChipViewModel",
+            "ms": 49,
+            "line": 16479,
+            "timestamp": "10-10 09:43:00.668"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.systemui.statusbar.notification.InstantAppNotifier",
+            "ms": 26,
+            "line": 16496,
+            "timestamp": "10-10 09:43:00.697"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.systemui.statusbar.notification.interruption.KeyguardNotificationVisibilityProviderImpl",
+            "ms": 68,
+            "line": 16499,
+            "timestamp": "10-10 09:43:00.766"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.systemui.statusbar.notification.interruption.VisualInterruptionDecisionProvider",
+            "ms": 36,
+            "line": 16500,
+            "timestamp": "10-10 09:43:00.804"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.systemui.statusbar.phone.CentralSurfaces",
+            "ms": 2926,
+            "line": 16578,
+            "timestamp": "10-10 09:43:03.745"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.systemui.stylus.StylusUsiPowerStartable",
+            "ms": 29,
+            "line": 16595,
+            "timestamp": "10-10 09:43:03.873"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.systemui.theme.ThemeOverlayController",
+            "ms": 99,
+            "line": 16603,
+            "timestamp": "10-10 09:43:03.984"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.systemui.usb.StorageNotification",
+            "ms": 63,
+            "line": 16618,
+            "timestamp": "10-10 09:43:04.077"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.systemui.util.BinderLogger",
+            "ms": 33,
+            "line": 16620,
+            "timestamp": "10-10 09:43:04.117"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.systemui.util.NotificationChannels",
+            "ms": 42,
+            "line": 16621,
+            "timestamp": "10-10 09:43:04.161"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.systemui.volume.VolumeUI",
+            "ms": 43,
+            "line": 16622,
+            "timestamp": "10-10 09:43:04.205"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.android.systemui.wmshell.WMShell",
+            "ms": 21,
+            "line": 16623,
+            "timestamp": "10-10 09:43:04.239"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.google.android.systemui.GoogleServices",
+            "ms": 73,
+            "line": 16624,
+            "timestamp": "10-10 09:43:04.336"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices com.google.android.systemui.smartspace.KeyguardSmartspaceStartable",
+            "ms": 21,
+            "line": 16633,
+            "timestamp": "10-10 09:43:04.404"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "Topologically start Core Startables",
+            "ms": 12998,
+            "line": 16640,
+            "timestamp": "10-10 09:43:04.420"
+          },
+          {
+            "tag": "SystemUIBootTiming",
+            "name": "StartServices",
+            "ms": 13045,
+            "line": 16642,
+            "timestamp": "10-10 09:43:04.467"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "UM.onBeforeUnlockUser-0",
+            "ms": 224,
+            "line": 17382,
+            "timestamp": "10-10 09:43:11.007"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "SystemUserUnlock",
+            "ms": 1919,
+            "line": 17935,
+            "timestamp": "10-10 09:43:12.625"
+          },
+          {
+            "tag": "SystemServerTiming",
+            "name": "finishUserUnlocked-0",
+            "ms": 2584,
+            "line": 19553,
+            "timestamp": "10-10 09:43:15.202"
+          }
+        ],
+        "displayed_activities": [
+          {
+            "line": 16528,
+            "message": "10-10 09:43:02.320   203   221 I ActivityTaskManager: Displayed com.android.settings/.FallbackHome for user 0: +23s852ms"
+          },
+          {
+            "line": 22393,
+            "message": "10-10 09:43:53.966   203   221 I ActivityTaskManager: Displayed com.android.launcher3/.uioverrides.QuickstepLauncher for user 0: +41s723ms"
+          },
+          {
+            "line": 24403,
+            "message": "10-10 09:44:07.402   203   221 I ActivityTaskManager: Displayed com.android.deskclock/.DeskClock for user 0: +10s391ms"
+          },
+          {
+            "line": 29389,
+            "message": "10-10 09:44:29.679   203   221 I ActivityTaskManager: Displayed com.google.android.documentsui/com.android.documentsui.files.FilesActivity for user 0: +9s447ms"
+          }
+        ],
+        "mapping_cumulative": [],
+        "mapping_intervals": [],
+        "resume_entries": [],
+        "mmu_cumulative": [],
+        "compiler_filter": [],
+        "fast_baseline": [],
+        "java_fatal_exceptions": 0,
+        "anrs": 0
+      },
+      "stdout": "/Users/fan/project/app/husk_hyos/work/native-linux-nce/processes/dispatch-probe-fast-off.jsonl",
+      "stderr": "/Users/fan/project/app/husk_hyos/work/native-linux-nce/processes/dispatch-probe-fast-off.log"
+    }
+  ]
+}

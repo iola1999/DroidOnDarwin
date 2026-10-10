@@ -16,6 +16,12 @@ final class BenchmarkSession {
     private var task: Task<Void, Never>?
     private var watchdog: Task<Void, Never>?
     private var phaseObserver: AnyCancellable?
+    private var stepObserver: AnyCancellable?
+    private var memoryTask: Task<Void, Never>?
+    private var memory = BenchmarkMemory()
+    private var memoryPhase = "preparing"
+    private var memoryBootStep = 0
+    private var memoryLastWrite: Double = 0
     #if os(iOS)
         private var backgroundObserver: AnyCancellable?
     #endif
@@ -54,6 +60,7 @@ final class BenchmarkSession {
 
     func start() throws {
         started = ProcessInfo.processInfo.systemUptime
+        try sampleMemory()
         try record("accepted")
         let previousCompletion = session.onFinish
         session.onFinish = { [weak self] in
@@ -67,6 +74,12 @@ final class BenchmarkSession {
             previousCompletion?()
         }
         phaseObserver = session.$phase.dropFirst().sink { [weak self] phase in
+            guard let self, !finished else {
+                return
+            }
+            // 结束回调可同步退出；在 Published 通知中采样，保留极短的停止阶段。
+            memoryPhase = String(describing: phase)
+            do { try sampleMemory() } catch { failure = failure ?? error.localizedDescription }
             // Published 在赋值前通知；下一次主线程任务读取完整会话状态。
             Task { @MainActor [weak self] in
                 guard let self, !finished else {
@@ -77,6 +90,13 @@ final class BenchmarkSession {
                     fail(session.status)
                 }
             }
+        }
+        stepObserver = session.$bootStep.removeDuplicates().dropFirst().sink { [weak self] step in
+            guard let self, !finished else {
+                return
+            }
+            memoryBootStep = step
+            do { try sampleMemory() } catch { failure = failure ?? error.localizedDescription }
         }
         #if os(iOS)
             backgroundObserver = NotificationCenter.default.publisher(for: UIApplication.didEnterBackgroundNotification).sink { [weak self] _ in
@@ -89,6 +109,22 @@ final class BenchmarkSession {
             }
         #endif
         session.start(target, configuration: request.configuration)
+        if request.memorySampling != false {
+            memoryTask = Task { [weak self] in
+                while !Task.isCancelled {
+                    do { try await Task.sleep(for: .seconds(1)) } catch { return }
+                    guard let self, !finished else {
+                        return
+                    }
+                    do {
+                        try sampleMemory()
+                        if ProcessInfo.processInfo.systemUptime - memoryLastWrite >= 10 {
+                            try writeState("running")
+                        }
+                    } catch { fail(error.localizedDescription) }
+                }
+            }
+        }
         watchdog = Task { [weak self] in
             guard let self else {
                 return
@@ -153,7 +189,9 @@ final class BenchmarkSession {
         finished = true
         task?.cancel()
         watchdog?.cancel()
+        memoryTask?.cancel()
         phaseObserver = nil
+        stepObserver = nil
         #if os(iOS)
             backgroundObserver = nil
         #endif
@@ -163,8 +201,10 @@ final class BenchmarkSession {
         if failure == nil && !events.contains(where: { $0["event"] as? String == "actions_completed" }) {
             failure = "实验操作尚未完成，会话已结束"
         }
-        do { try record(failure == nil ? "completed" : "failed") }
-        catch { NSLog("Benchmark result: %@", error.localizedDescription) }
+        do {
+            try sampleMemory()
+            try record(failure == nil ? "completed" : "failed")
+        } catch { NSLog("Benchmark result: %@", error.localizedDescription) }
         onFinish?()
     }
 
@@ -180,17 +220,23 @@ final class BenchmarkSession {
     }
 
     private func writeState(_ status: String) throws {
+        if request.memorySampling != false {
+            try memory.flush(to: directory.appendingPathComponent("memory.jsonl"))
+            memoryLastWrite = ProcessInfo.processInfo.systemUptime
+        }
         var machine = utsname()
         uname(&machine)
         let capacity = MemoryLayout.size(ofValue: machine.machine)
         let hardware = withUnsafePointer(to: &machine.machine) {
             $0.withMemoryRebound(to: CChar.self, capacity: capacity) { String(cString: $0) }
         }
+        let memorySummary: [String: Any] = request.memorySampling == false ? ["enabled": false] : memory.json
         var value: [String: Any] = ["version": 1, "runID": request.runID.uuidString, "status": status,
                                     "deviceID": target.id, "buildID": Bundle.main.object(forInfoDictionaryKey: "DroidOnDarwinBuildID") as? String ?? "unknown",
                                     "hardware": hardware, "os": ProcessInfo.processInfo.operatingSystemVersionString,
                                     "host_ram_bytes": ProcessInfo.processInfo.physicalMemory,
                                     "resources": resources,
+                                    "memory": memorySummary,
                                     "configuration": try JSONSerialization.jsonObject(with: JSONEncoder().encode(request.configuration)),
                                     "events": events, "session_active": session.active,
                                     "log": "session.log", "timing": "monotonic; ready observed through 1-second log polling; action submission excludes guest rendering completion"]
@@ -199,6 +245,14 @@ final class BenchmarkSession {
         }
         try JSONSerialization.data(withJSONObject: value, options: [.sortedKeys]).write(
             to: directory.appendingPathComponent("result.json"), options: .atomic)
+    }
+
+    private func sampleMemory() throws {
+        guard request.memorySampling != false else {
+            return
+        }
+        try memory.add(.current(), elapsedMS: (ProcessInfo.processInfo.systemUptime - started) * 1000,
+                       phase: memoryPhase, bootStep: memoryBootStep)
     }
 
     private func send(_ action: Int32, _ x: Int32, _ y: Int32 = 0) async throws {

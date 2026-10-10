@@ -25,6 +25,7 @@ from prepare_android_modules import prepare as prepare_android_modules, OUT as M
 from prepare_android_desktop import prepare as prepare_android_desktop, prepare_vendor_module, prepare_aosp_components, OUT as DESKTOP
 from build_android_gralloc import build as build_android_gralloc
 from build_android_network import build as build_android_network
+from prepare_art_test_dex import prepare_interface_object_calls
 
 ROOT = Path(__file__).resolve().parents[1]
 EXP = ROOT / 'experiments/native-linux'
@@ -272,10 +273,11 @@ def android_data(out):
     sdk = Path('/opt/homebrew/share/android-commandlinetools')
     classes = out / 'java-classes'
     classes.mkdir(exist_ok=True)
-    run([java / 'javac', '--release', '11', '-d', classes, EXP / 'art/NceWorkload.java', EXP / 'art/NceIntrinsics.java', EXP / 'art/NceInlining.java', EXP / 'art/NceProxy.java', EXP / 'art/NceVolatile.java', EXP / 'art/NceInterpreter.java', EXP / 'art/NceCompilerPaths.java'])
+    run([java / 'javac', '--release', '11', '-d', classes, EXP / 'art/NceWorkload.java', EXP / 'art/NceIntrinsics.java', EXP / 'art/NceInlining.java', EXP / 'art/NceProxy.java', EXP / 'art/NceVolatile.java', EXP / 'art/NceInterpreter.java', EXP / 'art/NceCompilerPaths.java', EXP / 'art/NceFastBaseline.java'])
     run([java / 'java', '-cp', sdk / 'build-tools/36.0.0/lib/d8.jar', 'com.android.tools.r8.D8',
          '--min-api', '35', '--lib', sdk / 'platforms/android-35/android.jar', '--output', classes,
          *sorted(classes.glob('*.class'))])
+    prepare_interface_object_calls(classes / 'classes.dex')
     files = [('/data/nce/nce-policy.cil', android_service_policy(out)),
              ('/data/nce/property_info', android_property_info(out)),
              ('/data/nce/NceWorkload.dex', classes / 'classes.dex'),

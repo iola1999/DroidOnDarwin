@@ -113,6 +113,66 @@ static int test_compiler_paths(JNIEnv *env, void *library)
     return 0;
 }
 
+static int test_fast_baseline(JNIEnv *env, void *library)
+{
+    int (*compile)(JNIEnv *, jmethodID) = dlsym(library, "nce_art_compile_baseline");
+    void (*keep_interpreted)(JNIEnv *, jmethodID) = dlsym(library, "nce_art_keep_interpreted");
+    FILE *setting = fopen("/data/nce/art-fast-baseline", "r");
+    if (!setting || !compile || !keep_interpreted)
+        return 100;
+    bool enabled = fgetc(setting) == '1';
+    fclose(setting);
+    jclass klass = (*env)->FindClass(env, "NceFastBaseline");
+    if (!klass)
+        return 101;
+    const char *methods[][2] = {
+        {"number", "(LNceFastBaseline;)I"},
+        {"reference", "(LNceFastBaseline;)Ljava/lang/Object;"},
+        {"storeReference", "(LNceFastBaseline;Ljava/lang/Object;)V"},
+        {"storeNumber", "(LNceFastBaseline;I)V"},
+        {"storeNull", "(LNceFastBaseline;)V"},
+        {"small", "(LNceFastBaseline;)B"},
+        {"signed", "(LNceFastBaseline;)S"},
+        {"letter", "(LNceFastBaseline;)C"},
+        {"flag", "(LNceFastBaseline;)Z"},
+        {"literal", "()Ljava/lang/String;"},
+        {"allocate", "()Ljava/lang/Object;"},
+        {"cast", "(Ljava/lang/Object;)LNceFastBaseline;"},
+        {"virtualCall", "(LNceFastBaseline$Base;)Ljava/lang/Object;"},
+        {"interfaceCall", "(LNceFastBaseline$Reader;)Ljava/lang/Object;"},
+        {"acrossGc", "(Ljava/lang/Object;)Ljava/lang/Object;"},
+        {"throwValue", "(Ljava/lang/RuntimeException;)V"},
+        {"interfaceEquals", "(LNceFastBaseline$Reader;Ljava/lang/Object;)Z"},
+        {"interfaceHash", "(LNceFastBaseline$Reader;)I"},
+        {"interfaceString", "(LNceFastBaseline$Reader;)Ljava/lang/String;"},
+        {"volatileFallback", "(LNceFastBaseline;)I"},
+    };
+    double begin = now_ms();
+    for (unsigned i = 0; i < sizeof(methods) / sizeof(*methods); ++i) {
+        jmethodID method = (*env)->GetStaticMethodID(env, klass, methods[i][0], methods[i][1]);
+        int expected = enabled && i < 19 ? 2 : 1;
+        int actual = method ? compile(env, method) : 0;
+        if (actual != expected) {
+            fprintf(stderr, "ART baseline selection %s expected=%d actual=%d\n", methods[i][0], expected, actual);
+            return 102;
+        }
+    }
+    double compile_ms = now_ms() - begin;
+    jmethodID run = (*env)->GetStaticMethodID(env, klass, "run", "()V");
+    if (!run)
+        return 103;
+    keep_interpreted(env, run);
+    (*env)->CallStaticVoidMethod(env, klass, run);
+    if ((*env)->ExceptionCheck(env)) {
+        (*env)->ExceptionDescribe(env);
+        return 104;
+    }
+    (*env)->DeleteLocalRef(env, klass);
+    printf("{\"test\":\"android_art_fast_baseline_entries\",\"passed\":true,\"enabled\":%s,\"methods\":20,\"fast_methods\":%d,\"compile_ms\":%.3f}\n",
+           enabled ? "true" : "false", enabled ? 19 : 0, compile_ms);
+    return 0;
+}
+
 static int test_interpreter_entry(JNIEnv *env, void *library)
 {
     bool (*enabled)(void) = dlsym(library, "nce_art_nterp_enabled");
@@ -546,6 +606,9 @@ static int test_jit(JNIEnv *env, jclass workload, void *library)
     int volatile_result = test_volatile_floating(env, library);
     if (volatile_result)
         return volatile_result;
+    int fast_baseline_result = test_fast_baseline(env, library);
+    if (fast_baseline_result)
+        return fast_baseline_result;
     int compiler_paths_result = test_compiler_paths(env, library);
     if (compiler_paths_result)
         return compiler_paths_result;

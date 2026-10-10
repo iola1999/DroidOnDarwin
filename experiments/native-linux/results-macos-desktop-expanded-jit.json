@@ -1,0 +1,413 @@
+{
+  "platform": "macos",
+  "driver_os": "macOS-27.0-arm64-arm-64bit-Mach-O",
+  "matrix": {
+    "configurations": [
+      {
+        "name": "nterp",
+        "parameters": {
+          "nterp": true
+        }
+      },
+      {
+        "name": "nterp-expanded",
+        "parameters": {
+          "nterp": true,
+          "expandedJIT": true
+        }
+      }
+    ],
+    "actions": [
+      {
+        "kind": "wait",
+        "milliseconds": 2000
+      },
+      {
+        "kind": "key",
+        "key": "home"
+      },
+      {
+        "kind": "swipe",
+        "x": 180,
+        "y": 560,
+        "endX": 180,
+        "endY": 120,
+        "milliseconds": 400
+      },
+      {
+        "kind": "wait",
+        "milliseconds": 2000
+      },
+      {
+        "kind": "key",
+        "key": "home"
+      }
+    ]
+  },
+  "data_reset_between_runs": false,
+  "host_file_cache_reset": false,
+  "measurement": "App starts through observed desktop ready, scripted input submission and clean stop. Ready has up to one polling interval of observation delay. No FPS or application render latency assertion.",
+  "data_directory": "/Users/fan/project/app/husk_hyos/work/native-linux-nce/benchmarks/device",
+  "data_image_existed_before_run": true,
+  "bundle_version": "0.16.0",
+  "build_id": "0.16.0-Mac-20261010-164958",
+  "host_cpu": "Apple M5 Ultra",
+  "executable_sha256": "362b855744c90bb1721f4a6115e0e84f6067d07808b89a8639ed01aa9689a3de",
+  "comparison": {
+    "nterp": {
+      "core_to_ready_observed_ms": {
+        "median": 99043.32533339038,
+        "min": 98990.02808332443,
+        "max": 102041.29429161549,
+        "samples": [
+          102041.29429161549,
+          98990.02808332443,
+          99043.32533339038
+        ]
+      },
+      "stop_ms": {
+        "median": 4243.851291714236,
+        "min": 4178.962749894708,
+        "max": 4550.497708376497,
+        "samples": [
+          4550.497708376497,
+          4243.851291714236,
+          4178.962749894708
+        ]
+      },
+      "start_to_ready_observed_ms": {
+        "median": 99059.03016682714,
+        "min": 99005.57579169981,
+        "max": 102057.25595820695,
+        "samples": [
+          102057.25595820695,
+          99005.57579169981,
+          99059.03016682714
+        ]
+      },
+      "actions_ms": {
+        "median": 6065.681166714057,
+        "min": 5909.734999993816,
+        "max": 6085.973166627809,
+        "samples": [
+          6065.681166714057,
+          5909.734999993816,
+          6085.973166627809
+        ]
+      }
+    },
+    "nterp-expanded": {
+      "core_to_ready_observed_ms": {
+        "median": 99057.14662489481,
+        "min": 98015.07195830345,
+        "max": 101028.21916667745,
+        "samples": [
+          99057.14662489481,
+          101028.21916667745,
+          98015.07195830345
+        ]
+      },
+      "stop_ms": {
+        "median": 3415.3167083859444,
+        "min": 3406.3942916691303,
+        "max": 4071.3950416538864,
+        "samples": [
+          4071.3950416538864,
+          3415.3167083859444,
+          3406.3942916691303
+        ]
+      },
+      "start_to_ready_observed_ms": {
+        "median": 99073.24129156768,
+        "min": 98030.29595827684,
+        "max": 101043.12420845963,
+        "samples": [
+          99073.24129156768,
+          101043.12420845963,
+          98030.29595827684
+        ]
+      },
+      "actions_ms": {
+        "median": 6063.032458303496,
+        "min": 5923.214833252132,
+        "max": 6147.861958481371,
+        "samples": [
+          6147.861958481371,
+          5923.214833252132,
+          6063.032458303496
+        ]
+      }
+    }
+  },
+  "raw_results": "work/native-linux-nce/benchmarks/20261010-165206-0c17d2/summary.json",
+  "guest_configuration": {
+    "ram_bytes": 1073741824,
+    "display_pixels": [
+      360,
+      640
+    ],
+    "cpu_count": 1,
+    "mm_mode": "demand",
+    "jit_threshold": 1024
+  },
+  "validation": "Six visible App runs completed with matching parameters, no Java fatal exceptions or ANRs, and clean stop. Final ext4 state clean. No concurrent builds or other NCE runs during measurement.",
+  "limits": [
+    "Same data image and host file cache retained; ready observation has up to one second polling delay.",
+    "Scripted input submission excludes guest rendering completion. No iPhone or sustained frame-time result.",
+    "Expanded JIT produced no measurable startup reduction in these samples."
+  ],
+  "runs": [
+    {
+      "runID": "A5D3358F-6CC1-4502-8DDC-9934C379B44B",
+      "configuration_name": "nterp",
+      "repeat": 0,
+      "metrics": {
+        "start_to_ready_observed_ms": 102057.25595820695,
+        "core_to_ready_observed_ms": 102041.29429161549,
+        "actions_ms": 6065.681166714057,
+        "stop_ms": 4550.497708376497
+      },
+      "error": null,
+      "configuration": {
+        "diagnostics": false,
+        "directFault": true,
+        "expandedJIT": false,
+        "nterp": true,
+        "performanceLogging": false,
+        "sparseScan": true
+      },
+      "status": "completed",
+      "resources": {
+        "Runtime.json": {
+          "build": {
+            "art_build_inputs": "eb1dcb190528419725d5f0100a8280bc4e6302e4542ed3af1dba9d3982d49b75",
+            "art_files": {
+              "libart.so": "bef634bd6c6e82ee6f9cafda1f87b794af71b4823902c8dec80eb72237d82b9f",
+              "libartbase.so": "af02b230861c8f209d6df773e4749063cbd7ab25062cbd5629e4a955ef2d31f4"
+            },
+            "kernel_sha256": "d8cfa8459453d60a40bf3d358d507fccdfc4308543125e85fcf7012fbb499896",
+            "source_inputs_sha256": "fb48ac13ce50ee85d9437727db15edbf1c938b374a05b0dbc43e9439808b0f84",
+            "system_sha256": "a96771d43b1a92bba7946b9f81e16dd047464c9236522555409ad12400534567"
+          },
+          "runtime": "41dd422b2683bdbfbdcf56ded79d478918c473695601a6e7d4d271d51b79ecb0"
+        }
+      },
+      "thermal_states": [
+        0
+      ],
+      "low_power_modes": [
+        false
+      ]
+    },
+    {
+      "runID": "54BB927E-E832-4072-B6EB-DD6FDA728912",
+      "configuration_name": "nterp-expanded",
+      "repeat": 0,
+      "metrics": {
+        "start_to_ready_observed_ms": 99073.24129156768,
+        "core_to_ready_observed_ms": 99057.14662489481,
+        "actions_ms": 6147.861958481371,
+        "stop_ms": 4071.3950416538864
+      },
+      "error": null,
+      "configuration": {
+        "diagnostics": false,
+        "directFault": true,
+        "expandedJIT": true,
+        "nterp": true,
+        "performanceLogging": false,
+        "sparseScan": true
+      },
+      "status": "completed",
+      "resources": {
+        "Runtime.json": {
+          "build": {
+            "art_build_inputs": "eb1dcb190528419725d5f0100a8280bc4e6302e4542ed3af1dba9d3982d49b75",
+            "art_files": {
+              "libart.so": "bef634bd6c6e82ee6f9cafda1f87b794af71b4823902c8dec80eb72237d82b9f",
+              "libartbase.so": "af02b230861c8f209d6df773e4749063cbd7ab25062cbd5629e4a955ef2d31f4"
+            },
+            "kernel_sha256": "d8cfa8459453d60a40bf3d358d507fccdfc4308543125e85fcf7012fbb499896",
+            "source_inputs_sha256": "fb48ac13ce50ee85d9437727db15edbf1c938b374a05b0dbc43e9439808b0f84",
+            "system_sha256": "a96771d43b1a92bba7946b9f81e16dd047464c9236522555409ad12400534567"
+          },
+          "runtime": "41dd422b2683bdbfbdcf56ded79d478918c473695601a6e7d4d271d51b79ecb0"
+        }
+      },
+      "thermal_states": [
+        0
+      ],
+      "low_power_modes": [
+        false
+      ]
+    },
+    {
+      "runID": "7A4D5216-51F7-4B50-9063-F2F92519048B",
+      "configuration_name": "nterp-expanded",
+      "repeat": 1,
+      "metrics": {
+        "start_to_ready_observed_ms": 101043.12420845963,
+        "core_to_ready_observed_ms": 101028.21916667745,
+        "actions_ms": 5923.214833252132,
+        "stop_ms": 3415.3167083859444
+      },
+      "error": null,
+      "configuration": {
+        "diagnostics": false,
+        "directFault": true,
+        "expandedJIT": true,
+        "nterp": true,
+        "performanceLogging": false,
+        "sparseScan": true
+      },
+      "status": "completed",
+      "resources": {
+        "Runtime.json": {
+          "build": {
+            "art_build_inputs": "eb1dcb190528419725d5f0100a8280bc4e6302e4542ed3af1dba9d3982d49b75",
+            "art_files": {
+              "libart.so": "bef634bd6c6e82ee6f9cafda1f87b794af71b4823902c8dec80eb72237d82b9f",
+              "libartbase.so": "af02b230861c8f209d6df773e4749063cbd7ab25062cbd5629e4a955ef2d31f4"
+            },
+            "kernel_sha256": "d8cfa8459453d60a40bf3d358d507fccdfc4308543125e85fcf7012fbb499896",
+            "source_inputs_sha256": "fb48ac13ce50ee85d9437727db15edbf1c938b374a05b0dbc43e9439808b0f84",
+            "system_sha256": "a96771d43b1a92bba7946b9f81e16dd047464c9236522555409ad12400534567"
+          },
+          "runtime": "41dd422b2683bdbfbdcf56ded79d478918c473695601a6e7d4d271d51b79ecb0"
+        }
+      },
+      "thermal_states": [
+        0
+      ],
+      "low_power_modes": [
+        false
+      ]
+    },
+    {
+      "runID": "D380EAD1-2CEB-4229-BB5C-D1289CE90FA1",
+      "configuration_name": "nterp",
+      "repeat": 1,
+      "metrics": {
+        "start_to_ready_observed_ms": 99005.57579169981,
+        "core_to_ready_observed_ms": 98990.02808332443,
+        "actions_ms": 5909.734999993816,
+        "stop_ms": 4243.851291714236
+      },
+      "error": null,
+      "configuration": {
+        "diagnostics": false,
+        "directFault": true,
+        "expandedJIT": false,
+        "nterp": true,
+        "performanceLogging": false,
+        "sparseScan": true
+      },
+      "status": "completed",
+      "resources": {
+        "Runtime.json": {
+          "build": {
+            "art_build_inputs": "eb1dcb190528419725d5f0100a8280bc4e6302e4542ed3af1dba9d3982d49b75",
+            "art_files": {
+              "libart.so": "bef634bd6c6e82ee6f9cafda1f87b794af71b4823902c8dec80eb72237d82b9f",
+              "libartbase.so": "af02b230861c8f209d6df773e4749063cbd7ab25062cbd5629e4a955ef2d31f4"
+            },
+            "kernel_sha256": "d8cfa8459453d60a40bf3d358d507fccdfc4308543125e85fcf7012fbb499896",
+            "source_inputs_sha256": "fb48ac13ce50ee85d9437727db15edbf1c938b374a05b0dbc43e9439808b0f84",
+            "system_sha256": "a96771d43b1a92bba7946b9f81e16dd047464c9236522555409ad12400534567"
+          },
+          "runtime": "41dd422b2683bdbfbdcf56ded79d478918c473695601a6e7d4d271d51b79ecb0"
+        }
+      },
+      "thermal_states": [
+        0
+      ],
+      "low_power_modes": [
+        false
+      ]
+    },
+    {
+      "runID": "ABE6E734-1082-4E5A-B2CC-EF9DB47D0767",
+      "configuration_name": "nterp",
+      "repeat": 2,
+      "metrics": {
+        "start_to_ready_observed_ms": 99059.03016682714,
+        "core_to_ready_observed_ms": 99043.32533339038,
+        "actions_ms": 6085.973166627809,
+        "stop_ms": 4178.962749894708
+      },
+      "error": null,
+      "configuration": {
+        "diagnostics": false,
+        "directFault": true,
+        "expandedJIT": false,
+        "nterp": true,
+        "performanceLogging": false,
+        "sparseScan": true
+      },
+      "status": "completed",
+      "resources": {
+        "Runtime.json": {
+          "build": {
+            "art_build_inputs": "eb1dcb190528419725d5f0100a8280bc4e6302e4542ed3af1dba9d3982d49b75",
+            "art_files": {
+              "libart.so": "bef634bd6c6e82ee6f9cafda1f87b794af71b4823902c8dec80eb72237d82b9f",
+              "libartbase.so": "af02b230861c8f209d6df773e4749063cbd7ab25062cbd5629e4a955ef2d31f4"
+            },
+            "kernel_sha256": "d8cfa8459453d60a40bf3d358d507fccdfc4308543125e85fcf7012fbb499896",
+            "source_inputs_sha256": "fb48ac13ce50ee85d9437727db15edbf1c938b374a05b0dbc43e9439808b0f84",
+            "system_sha256": "a96771d43b1a92bba7946b9f81e16dd047464c9236522555409ad12400534567"
+          },
+          "runtime": "41dd422b2683bdbfbdcf56ded79d478918c473695601a6e7d4d271d51b79ecb0"
+        }
+      },
+      "thermal_states": [
+        0
+      ],
+      "low_power_modes": [
+        false
+      ]
+    },
+    {
+      "runID": "5DDA64A1-4DD1-482D-B108-28B4714345A2",
+      "configuration_name": "nterp-expanded",
+      "repeat": 2,
+      "metrics": {
+        "start_to_ready_observed_ms": 98030.29595827684,
+        "core_to_ready_observed_ms": 98015.07195830345,
+        "actions_ms": 6063.032458303496,
+        "stop_ms": 3406.3942916691303
+      },
+      "error": null,
+      "configuration": {
+        "diagnostics": false,
+        "directFault": true,
+        "expandedJIT": true,
+        "nterp": true,
+        "performanceLogging": false,
+        "sparseScan": true
+      },
+      "status": "completed",
+      "resources": {
+        "Runtime.json": {
+          "build": {
+            "art_build_inputs": "eb1dcb190528419725d5f0100a8280bc4e6302e4542ed3af1dba9d3982d49b75",
+            "art_files": {
+              "libart.so": "bef634bd6c6e82ee6f9cafda1f87b794af71b4823902c8dec80eb72237d82b9f",
+              "libartbase.so": "af02b230861c8f209d6df773e4749063cbd7ab25062cbd5629e4a955ef2d31f4"
+            },
+            "kernel_sha256": "d8cfa8459453d60a40bf3d358d507fccdfc4308543125e85fcf7012fbb499896",
+            "source_inputs_sha256": "fb48ac13ce50ee85d9437727db15edbf1c938b374a05b0dbc43e9439808b0f84",
+            "system_sha256": "a96771d43b1a92bba7946b9f81e16dd047464c9236522555409ad12400534567"
+          },
+          "runtime": "41dd422b2683bdbfbdcf56ded79d478918c473695601a6e7d4d271d51b79ecb0"
+        }
+      },
+      "thermal_states": [
+        0
+      ],
+      "low_power_modes": [
+        false
+      ]
+    }
+  ]
+}

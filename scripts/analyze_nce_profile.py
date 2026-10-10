@@ -92,6 +92,18 @@ def compiler_filter_summary(text):
     return list(buckets.values())
 
 
+def fast_baseline_summary(text):
+    """按编译线程汇总稀疏日志；installed 为最后一次报告时的安装数量下限。"""
+    buckets = {}
+    pattern = re.compile(r'NCE_ART_FAST_BASELINE pid=(\d+) epoch=(\d+) tid=(\d+) installed=(\d+)')
+    for match in pattern.finditer(text):
+        pid, epoch, tid, installed = map(int, match.groups())
+        key = (pid, epoch, tid)
+        value = buckets.setdefault(key, dict(pid=pid, epoch=epoch, tid=tid, installed_lower_bound=0))
+        value['installed_lower_bound'] = max(value['installed_lower_bound'], installed)
+    return list(buckets.values())
+
+
 def log_summary(text):
     mappings, timings, activities, resume, mmu = [], [], [], [], []
     for line_number, line in enumerate(text.splitlines(), 1):
@@ -131,6 +143,7 @@ def log_summary(text):
                 mapping_cumulative=mappings, mapping_intervals=intervals, resume_entries=resume,
                 mmu_cumulative=mmu,
                 compiler_filter=compiler_filter_summary(text),
+                fast_baseline=fast_baseline_summary(text),
                 java_fatal_exceptions=text.count('FATAL EXCEPTION:'), anrs=text.count('ANR in '))
 
 

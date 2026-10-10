@@ -13,6 +13,7 @@ final class DeviceLibrary: ObservableObject {
     private let queue = DispatchQueue(label: "app.droidondarwin.devices", qos: .userInitiated)
     private var benchmark: BenchmarkSession?
     private var benchmarkPending = false
+    private var benchmarkStatusRequestID: String?
     var automationEnabled: Bool {
         UserDefaults.standard.bool(forKey: "benchmarkAutomation") || CommandLine.arguments.contains("--allow-benchmark")
     }
@@ -152,9 +153,13 @@ final class DeviceLibrary: ObservableObject {
             let values = devices.map { ["id": $0.identifier, "name": $0.name] }
             try JSONSerialization.data(withJSONObject: values, options: [.sortedKeys]).write(
                 to: benchmarkDirectory.appendingPathComponent("devices.json"), options: .atomic)
-            let status: [String: Any] = ["pid": getpid(), "active": session.active,
+            var status: [String: Any] = ["pid": getpid(), "active": session.active || benchmarkPending,
+                                         "configuration_defaults": try JSONSerialization.jsonObject(with: JSONEncoder().encode(RunConfiguration())),
                                          "restart_required": session.restartRequired,
                                          "timestamp": Date().timeIntervalSince1970]
+            if let benchmarkStatusRequestID {
+                status["requestID"] = benchmarkStatusRequestID
+            }
             try JSONSerialization.data(withJSONObject: status).write(
                 to: benchmarkDirectory.appendingPathComponent("app-status.json"), options: .atomic)
         } catch { message = error.localizedDescription }
@@ -165,7 +170,18 @@ final class DeviceLibrary: ObservableObject {
             message = "请先在高级设置中启用自动化测试"
             return
         }
-        if url.absoluteString == "droidondarwin://benchmark-status" {
+        if url.scheme == "droidondarwin", url.host == "benchmark-status", url.path.isEmpty,
+           url.user == nil, url.password == nil, url.port == nil, url.fragment == nil {
+            let items = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems ?? []
+            if items.isEmpty {
+                benchmarkStatusRequestID = nil
+            } else if items.count == 1, items[0].name == "requestID", let id = items[0].value,
+                      let requestID = UUID(uuidString: id) {
+                benchmarkStatusRequestID = requestID.uuidString
+            } else {
+                message = "状态请求编号无效"
+                return
+            }
             exportBenchmarkDevices()
             return
         }

@@ -17,14 +17,18 @@ struct BenchmarkRequest: Codable, Sendable {
     let configuration: RunConfiguration
     let actions: [Action]
     let timeoutSeconds: Int
+    let memorySampling: Bool?
 
     static func decode(_ data: Data) throws -> Self {
         guard data.count <= 32768,
               let object = try JSONSerialization.jsonObject(with: data) as? [String: Any],
-              Set(object.keys) == ["version", "runID", "deviceID", "configuration", "actions", "timeoutSeconds"],
+              Set(object.keys).subtracting(["memorySampling"]) == ["version", "runID", "deviceID", "configuration", "actions", "timeoutSeconds"],
               let config = object["configuration"] as? [String: Any], Set(config.keys) == RunConfiguration.keys,
               let actions = object["actions"] as? [[String: Any]] else {
             throw BenchmarkError.invalid("实验请求字段不完整或含未知字段")
+        }
+        if object["memorySampling"] is NSNull {
+            throw BenchmarkError.invalid("memorySampling 需要布尔值")
         }
         for action in actions {
             let fields: Set<String>
