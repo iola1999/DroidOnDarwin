@@ -24,7 +24,27 @@ static unsigned long mapping_mode;''')
         return 0;
     }
     size_t bytes = NCE_USER_SIZE / PAGE_SIZE / 8;''')
-    edit('/* One Linux CPU owns the host window.', '''static void changed_code(pte_t pte, unsigned long pages)
+    edit('/* One Linux CPU owns the host window.', '''static void changed_mapping(struct mm_struct *mm, unsigned long start, unsigned long end)
+{
+    ++translation->mappings;
+    if (mm != active_mm) {
+        ++translation->inactive_mapping_changes;
+        return;
+    }
+    start = max(start & PAGE_MASK, USER_BASE);
+    end = min(PAGE_ALIGN(end), TASK_SIZE);
+    if (end <= start)
+        return;
+    if (!translation->tlb_end) {
+        translation->tlb_start = start;
+        translation->tlb_end = end;
+    } else {
+        translation->tlb_start = min(translation->tlb_start, start);
+        translation->tlb_end = max(translation->tlb_end, end);
+    }
+}
+
+static void changed_code(pte_t pte, unsigned long pages)
 {
     unsigned long index = ((pte_val(pte) & PAGE_MASK) - memory_start) >> PAGE_SHIFT;
     BUILD_BUG_ON(NCE_TRANSLATION_CODE_WORDS * 64 != NCE_RAM_SIZE / PAGE_SIZE);
@@ -66,14 +86,14 @@ unsigned long nce_translate_user(unsigned long address, unsigned long permission
     edit('''    unsigned long value = view(pte);
     if (mm != &init_mm && mm != active_mm)''', '''    unsigned long value = view(pte);
     if (mapping_mode == NCE_MM_TRANSLATED && mm != &init_mm) {
-        ++translation->mappings;
+        changed_mapping(mm, va, va + nr * PAGE_SIZE);
         if (pte_exec(pte))
             changed_code(pte, nr);
         return;
     }
     if (mm != &init_mm && mm != active_mm)''')
     edit('''    if (mm != &init_mm && addr >= USER_BASE && addr < TASK_SIZE) {''', '''    if (mapping_mode == NCE_MM_TRANSLATED && mm != &init_mm) {
-        ++translation->mappings;
+        changed_mapping(mm, addr, addr + PAGE_SIZE);
         if (pte_exec(*xp))
             changed_code(*xp, 1);
         return;
@@ -82,12 +102,16 @@ unsigned long nce_translate_user(unsigned long address, unsigned long permission
     edit('''    struct vm_area_struct *vma;
     unsigned long addr;
     VMA_ITERATOR(iter, mm, start);''', '''    if (mapping_mode == NCE_MM_TRANSLATED && mm != &init_mm) {
-        ++translation->mappings;
+        changed_mapping(mm, start, end);
         return;
     }
     struct vm_area_struct *vma;
     unsigned long addr;
     VMA_ITERATOR(iter, mm, start);''')
+    edit('    active_mm = next;\n    nce_flush_range(next, USER_BASE, TASK_SIZE);', '''    active_mm = next;
+    if (mapping_mode == NCE_MM_TRANSLATED)
+        ++translation->mm_switches;
+    nce_flush_range(next, USER_BASE, TASK_SIZE);''')
     edit('''    if (access & NCE_FAULT_TRY_PRESENT)
         return restore_present_data(address, access & 1);''', '''    if (access & NCE_FAULT_TRY_PRESENT)
         return mapping_mode == NCE_MM_TRANSLATED ? 0 : restore_present_data(address, access & 1);''')

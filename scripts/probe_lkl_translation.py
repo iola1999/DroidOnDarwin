@@ -26,7 +26,7 @@ def sha(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def validate(rows, memory_interval, mapping="window", workload="core"):
+def validate(rows, memory_interval, mapping="window", workload="core", tlb_invalidation=None):
     expected = {'linux_dynamic_code', 'linux_signal_suite', 'linux_signal_register_restore',
                 'linux_signal_eintr_restart', 'linux_signal_timer_preemption', 'linux_mm_exchange_integrity',
                 'translated_pthread_tls_mutex', 'translated_signals_protection_restore',
@@ -78,6 +78,16 @@ def validate(rows, memory_interval, mapping="window", workload="core"):
     requested, actual = settings[0]['cache_bytes'], settings[0].get('actual_cache_bytes', 0)
     if not 0 <= requested - actual < 65536 or actual != cache[0]['capacity_bytes'] or cache[0]['used_bytes'] > actual:
         return False
+    tlb_settings = [row for row in rows if row.get('config') == 'translation_tlb_invalidation']
+    tlb = [row for row in rows if 'translation_tlb' in row]
+    if len(tlb_settings) != 1 or len(tlb) != 1:
+        return False
+    mode = tlb_settings[0]['mode']
+    if (mode not in ('full', 'pages') or mode != tlb[0]['translation_tlb'] or
+            (tlb_invalidation is not None and mode != tlb_invalidation) or
+            (mode == 'pages' and mapping != 'pte') or
+            (mode == 'full' and (tlb[0]['invalidated_pages'] or tlb[0]['inactive_skips']))):
+        return False
     cases = [(row['bytes'], row['shared_percent'], row['touch_all'], row['threads'])
              for row in rows if row.get('bench') == 'linux_mm_exchange']
     expected_cases = {(size * 1024 * 1024, shared, touch, 0)
@@ -125,6 +135,7 @@ def main():
     parser.add_argument('--art-fast-baseline', type=int, choices=(0, 1), default=0)
     parser.add_argument('--cache-invalidation', choices=('full', 'pages'), default='pages')
     parser.add_argument('--exec-cache', choices=('full', 'pages'), default='full')
+    parser.add_argument('--tlb-invalidation', choices=('full', 'pages'), default='full')
     parser.add_argument('--linux-fastpath', type=int, choices=(0, 1), default=0)
     parser.add_argument('--cache-mib', type=int, choices=(16, 64, 128), default=16)
     parser.add_argument('--repeat', type=int, default=1)
@@ -138,6 +149,8 @@ def main():
         parser.error('可见窗口用于 desktop 负载')
     if args.exec_cache == 'pages' and (args.mapping != 'pte' or args.cache_invalidation != 'pages'):
         parser.error('exec 按页失效需要 PTE 映射与按页代码失效')
+    if args.tlb_invalidation == 'pages' and args.mapping != 'pte':
+        parser.error('TLB 按页失效需要 PTE 映射')
     out = args.output.resolve()
     if not out.is_relative_to(WORK):
         parser.error('实验产物必须放在本项目 work/native-linux-nce 下')
@@ -293,6 +306,7 @@ def main():
     environment['NCE_TRANSLATION_SYSTEM'] = str(KERNEL / 'system.img')
     environment['NCE_TRANSLATION_CACHE'] = args.cache_invalidation
     environment['NCE_TRANSLATION_EXEC_CACHE'] = args.exec_cache
+    environment['NCE_TRANSLATION_TLB'] = args.tlb_invalidation
     environment['NCE_TRANSLATION_LINUX_FASTPATH'] = str(args.linux_fastpath)
     environment['NCE_TRANSLATION_CACHE_MIB'] = str(args.cache_mib)
     for name in ('NCE_DESKTOP', 'NCE_SYSTEM_SERVER_PROBE', 'NCE_DIAGNOSTICS', 'NCE_TRACE_SYSTEMUI'):
@@ -320,7 +334,7 @@ def main():
                 except subprocess.TimeoutExpired:
                     returncode = 'timeout'
             rows = [json.loads(line) for line in (out / f'{stem}.jsonl').read_text().splitlines() if line.startswith('{')]
-            passed = returncode == 0 and validate(rows, args.memory_interval_ms, args.mapping, args.workload)
+            passed = returncode == 0 and validate(rows, args.memory_interval_ms, args.mapping, args.workload, args.tlb_invalidation)
             if data is not None:
                 data['final_sha256'] = sha(data_path)
                 metadata = subprocess.run(['/opt/homebrew/opt/e2fsprogs/sbin/dumpe2fs', '-h', data_path],
@@ -347,6 +361,7 @@ def main():
                                 'art_expanded_jit': args.art_expanded_jit, 'art_fast_baseline': args.art_fast_baseline,
                                 'cache_invalidation': args.cache_invalidation,
                                 'exec_cache': args.exec_cache,
+                                'tlb_invalidation': args.tlb_invalidation,
                                 'linux_fastpath': args.linux_fastpath,
                                 'guest_ram_bytes': 1073741824, 'translation_cache_bytes': args.cache_mib * 1024 * 1024,
                                 'instruction_batch': args.batch_instructions, 'memory_interval_ms': args.memory_interval_ms,

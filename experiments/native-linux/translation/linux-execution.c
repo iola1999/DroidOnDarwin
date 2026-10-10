@@ -34,8 +34,8 @@ static unsigned char *ram;
 static unsigned long base, *pages;
 static unsigned long map_generation, code_generation, maps, revocations, fills, faults, calls, preemptions;
 static unsigned long allocated, freed;
-static unsigned long cache_flushes, cache_pages, tlb_flushes;
-static bool page_invalidation, retain_exec_cache;
+static unsigned long cache_flushes, cache_pages, tlb_flushes, tlb_pages, tlb_inactive_skips;
+static bool page_invalidation, retain_exec_cache, page_tlb_invalidation;
 static unsigned long instruction_batch;
 static bool timer_mode, timer_active, timer_stopping;
 static pthread_t timer_thread;
@@ -53,6 +53,7 @@ static struct nce_translation_state *translation;
 extern struct lkl_host_operations nce_lkl_host;
 extern uc_err nce_uc_emu_stop_at_tb(uc_engine *engine);
 extern uc_err nce_uc_invalidate_ram(uc_engine *engine, uint64_t start, uint64_t length);
+extern uc_err nce_uc_invalidate_tlb(uc_engine *engine, uint64_t start, uint64_t length);
 extern uc_err nce_uc_set_linux_memory(uc_engine *engine, bool enabled);
 extern void nce_uc_cache_stats_aarch64(uc_engine *engine, uint64_t values[5]);
 
@@ -331,8 +332,18 @@ static void user_run(void *opaque)
             seen_kernel_code = current_kernel_code;
         }
         if (seen_maps != current_maps) {
-            checked(uc_ctl_flush_tlb(engine));
-            ++tlb_flushes;
+            unsigned long length = translation ? translation->tlb_end - translation->tlb_start : 0;
+            if (page_tlb_invalidation && !length) {
+                ++tlb_inactive_skips;
+            } else if (page_tlb_invalidation && length <= 64 * PAGE) {
+                checked(nce_uc_invalidate_tlb(engine, translation->tlb_start, length));
+                tlb_pages += length / PAGE;
+            } else {
+                checked(uc_ctl_flush_tlb(engine));
+                ++tlb_flushes;
+            }
+            if (translation)
+                translation->tlb_start = translation->tlb_end = 0;
             seen_maps = current_maps;
         }
         registers(p, false);
@@ -463,6 +474,12 @@ unsigned long translation_linux_setup(void *kernel, unsigned long copy_user_offs
     // The PTE backend reports physical code pages on install, removal and reuse.
     REQUIRE(!retain_exec_cache || (translation && page_invalidation));
     printf("{\"config\":\"translation_exec_cache\",\"mode\":\"%s\"}\n", retain_exec_cache ? "pages" : "full");
+    const char *tlb = getenv("NCE_TRANSLATION_TLB");
+    REQUIRE(!tlb || !strcmp(tlb, "full") || !strcmp(tlb, "pages"));
+    page_tlb_invalidation = tlb && !strcmp(tlb, "pages");
+    REQUIRE(!page_tlb_invalidation || translation);
+    printf("{\"config\":\"translation_tlb_invalidation\",\"mode\":\"%s\",\"range_limit_pages\":64}\n",
+           page_tlb_invalidation ? "pages" : "full");
     const char *batch_text = getenv("NCE_TRANSLATION_BATCH");
     char *end = NULL;
     instruction_batch = batch_text ? strtoul(batch_text, &end, 10) : 50000;
@@ -552,6 +569,9 @@ void translation_linux_cleanup(void)
            allocated == freed ? "true" : "false", allocated, freed, maps, revocations, fills, faults, calls, preemptions);
     printf("{\"translation_cache\":\"%s\",\"full_flushes\":%lu,\"invalidated_pages\":%lu,\"tlb_flushes\":%lu}\n",
            page_invalidation ? "pages" : "full", cache_flushes, cache_pages, tlb_flushes);
+    printf("{\"translation_tlb\":\"%s\",\"full_flushes\":%lu,\"invalidated_pages\":%lu,\"inactive_skips\":%lu,\"mm_switches\":%lu,\"inactive_mapping_changes\":%lu}\n",
+           page_tlb_invalidation ? "pages" : "full", tlb_flushes, tlb_pages, tlb_inactive_skips,
+           translation ? translation->mm_switches : 0, translation ? translation->inactive_mapping_changes : 0);
     uint64_t stats[5];
     nce_uc_cache_stats_aarch64(engine, stats);
     printf("{\"translation_engine_cache\":true,\"total_flushes\":%llu,\"invalidated_blocks\":%llu,\"current_blocks\":%llu,\"used_bytes\":%llu,\"capacity_bytes\":%llu}\n",

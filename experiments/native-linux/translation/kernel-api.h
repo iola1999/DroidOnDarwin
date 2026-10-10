@@ -9,6 +9,9 @@
 struct nce_translation_state {
     unsigned long mappings;
     unsigned long code;
+    /* Pending virtual range belongs to the active mm; a switch covers all VA. */
+    unsigned long tlb_start, tlb_end;
+    unsigned long mm_switches, inactive_mapping_changes;
     /* One bit per 16 KiB RAM page. The host consumes bits before execution. */
     unsigned long code_pages[NCE_TRANSLATION_CODE_WORDS];
 };

@@ -55,6 +55,25 @@ UNICORN_EXPORT
 uc_err uc_emu_stop(uc_engine *uc)''')
         edit('uc.c', 'UNICORN_EXPORT\nuc_err uc_emu_stop(uc_engine *uc)', '''/* This private ARM64 probe maps one RAM block at physical address zero.
  * The engine must be stopped; offsets identify that RAM block directly. */
+extern void tlb_flush_page_aarch64(CPUState *, uint64_t);
+UNICORN_EXPORT
+uc_err nce_uc_invalidate_tlb(uc_engine *uc, uint64_t start, uint64_t length)
+{
+    if (!uc || uc->arch != UC_ARCH_ARM64 || uc->nested_level || !length || start + length < start) {
+        return UC_ERR_ARG;
+    }
+    UC_INIT(uc);
+    if (start % uc->target_page_size || length % uc->target_page_size) {
+        restore_jit_state(uc);
+        return UC_ERR_ARG;
+    }
+    for (uint64_t address = start; address < start + length; address += uc->target_page_size) {
+        tlb_flush_page_aarch64(uc->cpu, address);
+    }
+    restore_jit_state(uc);
+    return UC_ERR_OK;
+}
+
 extern void tb_invalidate_phys_range_aarch64(struct uc_struct *, uint64_t, uint64_t);
 UNICORN_EXPORT
 uc_err nce_uc_invalidate_ram(uc_engine *uc, uint64_t start, uint64_t length)
