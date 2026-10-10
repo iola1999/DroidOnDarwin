@@ -243,6 +243,11 @@ int nce_lkl_run(const char *image_path)
     nce_process_smp((void *)(kernel.rx + NCE_BEGIN_USER), (void *)(kernel.rx + NCE_WINDOW_LEAVE),
                     (void *)(kernel.rx + NCE_COPY_USER), (void *)(kernel.rx + NCE_GUEST_FAULT));
     puts("{\"phase\":\"linux_smp_execution\",\"cpus\":2}");
+#ifdef NCE_CORE_SCHEDULING
+    puts("{\"config\":\"same_mm_core_scheduling\",\"enabled\":true}");
+#else
+    puts("{\"config\":\"same_mm_core_scheduling\",\"enabled\":false}");
+#endif
 #endif
     unsigned long base = nce_process_setup();
     set_layout(base, mapping_mode, views, host_hwcap(), nce_process_mmu_profile(), sparse_scan, fault_prefetch);

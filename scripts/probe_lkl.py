@@ -102,6 +102,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--processes", action="store_true")
     parser.add_argument("--smp", action="store_true", help="Build and validate the independent two-CPU userspace variant")
+    parser.add_argument("--core-scheduling", action="store_true", help="Coordinate SMP execution by address space")
     parser.add_argument("--art-oat", type=Path, help="Validate an offline-compiled OAT directory with the runtime build")
     parser.add_argument("--art-desktop", action="store_true", help="Use the desktop classpath for boot images or SystemUI/Launcher AOT")
     parser.add_argument("--art-compiler", action="store_true", help="Validate the matching dex2oat tool in an isolated NCE image")
@@ -116,6 +117,8 @@ def main():
     SMP = arguments.smp
     if SMP and not PROCESS:
         parser.error("--smp requires --processes")
+    if arguments.core_scheduling and not SMP:
+        parser.error("--core-scheduling requires --smp")
     angle = arguments.graphics_angle.resolve() if arguments.graphics_angle else None
     if arguments.graphics_window and not angle:
         parser.error("--graphics-window requires --graphics-angle")
@@ -148,8 +151,9 @@ def main():
             if not (angle / name).is_file():
                 parser.error("Missing ANGLE library: " + str(angle / name))
     base = OUT
+    smp_variant = "smp-core" if arguments.core_scheduling else "smp"
     if SMP:
-        source = base / "lkl-smp-process-source"
+        source = base / f"lkl-{smp_variant}-process-source"
         if not source.exists():
             run(["/bin/cp", "-cR", SOURCE, source], timeout=120)
         SOURCE = source
@@ -166,8 +170,8 @@ def main():
         else:
             directory = "processes"
         if SMP:
-            directory += "-smp"
-            BUILD = base / "lkl-smp-process-build"
+            directory += "-" + smp_variant
+            BUILD = base / f"lkl-{smp_variant}-process-build"
         OUT = base / directory
         OUT.mkdir(exist_ok=True)
         for name in ("guest-image.h", "guest-source.sha256"):
@@ -209,6 +213,9 @@ def main():
                 marker.write_text(json.dumps(base_hashes, indent=2) + "\n")
             apply_smp(SOURCE, EXPERIMENT, tests=False)
             apply_mmu(SOURCE, EXPERIMENT, tests=False)
+            if arguments.core_scheduling:
+                from lkl_smp_core_patch import apply as apply_core
+                apply_core(SOURCE, EXPERIMENT)
         else:
             apply(SOURCE, EXPERIMENT)
     # This host-tool type conflicts with Darwin's uuid_t from sys/types.h.
@@ -269,6 +276,8 @@ def main():
         switches = [arg for name in options for arg in ("-e", name)]
         if SMP:
             switches += ["-e", "SMP", "-e", "DEBUG_KERNEL"]
+        if arguments.core_scheduling:
+            switches += ["-e", "SCHED_SMT", "-e", "SCHED_CORE"]
         if PROCESS:
             switches += ["--set-str", "LSM", "selinux"]
         switches += [arg for name in ("KALLSYMS", "DEBUG_INFO", "SLUB_DEBUG", *([] if PROCESS else ["BLOCK"])) for arg in ("-d", name)]
@@ -278,6 +287,7 @@ def main():
             config = (BUILD / ".config").read_text()
             assert all(name + "=y\n" in config for name in ("CONFIG_SMP", "CONFIG_MMU", "CONFIG_MMU_GATHER_RCU_TABLE_FREE"))
             assert "CONFIG_NR_CPUS=2\n" in config
+            assert ("CONFIG_SCHED_CORE=y\n" in config) == arguments.core_scheduling
         run([*make, "-j8", "all"], env=env, stdout=log, stderr=subprocess.STDOUT)
     shutil.copyfile(SOURCE / "arch/lkl/include/uapi/asm/host_ops.h", OUT / "lkl-host-ops.h")
     run([*target, "-fPIC", "-fno-stack-protector", "-O2", "-I", OUT, "-I", EXPERIMENT,
@@ -297,6 +307,8 @@ def main():
     flags = ["-O2", "-g", "-Wall", "-Wextra", "-Werror", "-I", OUT, "-I", EXPERIMENT]
     if SMP:
         flags += ["-DNCE_SMP"]
+    if arguments.core_scheduling:
+        flags += ["-DNCE_CORE_SCHEDULING"]
     if PROCESS:
         flags += ["-DNCE_PROCESS"]
         inputs += [EXPERIMENT / "lkl-process-host.c", EXPERIMENT / "nce-cpu.c", EXPERIMENT / "programs.c", EXPERIMENT / "memory.c", EXPERIMENT / "execute-check.c", EXPERIMENT / "compute.c", EXPERIMENT / "input.c", EXPERIMENT / "session.c"]
@@ -460,8 +472,11 @@ def main():
     sources = [*inputs, EXPERIMENT / "lkl-bridge.c", EXPERIMENT / "nce.h", EXPERIMENT / "nce-thread.h", EXPERIMENT / "guest-registers.h", EXPERIMENT / "guest.S", Path(__file__).resolve()]
     if SMP:
         manifest["cpus"] = 2
+        manifest["core_scheduling"] = arguments.core_scheduling
         sources += [*sorted((EXPERIMENT / "smp").glob("*")), Path(__file__).with_name("lkl_smp_patch.py"),
                     Path(__file__).with_name("lkl_smp_mmu_patch.py")]
+        if arguments.core_scheduling:
+            sources.append(Path(__file__).with_name("lkl_smp_core_patch.py"))
     if PROCESS:
         manifest["dispatch_results"] = dispatch_results
         sources += [EXPERIMENT / "nce-cpu.h", EXPERIMENT / "memory.h", EXPERIMENT / "layout.h", EXPERIMENT / "execute-check.h", EXPERIMENT / "input.h", EXPERIMENT / "session.h", Path(__file__).with_name("lkl_nce_patch.py"),

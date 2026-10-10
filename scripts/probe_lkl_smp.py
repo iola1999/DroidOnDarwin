@@ -28,9 +28,12 @@ def main():
     global OUT
     parser = argparse.ArgumentParser()
     parser.add_argument('--mmu', action='store_true', help='Validate shared-mm RAM access in the SMP kernel')
+    parser.add_argument('--core-scheduling', action='store_true', help='Coordinate the two CPUs by address space')
     arguments = parser.parse_args()
+    if arguments.core_scheduling and not arguments.mmu:
+        parser.error('--core-scheduling requires --mmu')
     if arguments.mmu:
-        OUT = OUT.with_name('smp-mmu')
+        OUT = OUT.with_name('smp-mmu-core' if arguments.core_scheduling else 'smp-mmu')
     if platform.system() != 'Darwin' or platform.machine() != 'arm64':
         raise SystemExit('需要 Apple Silicon Mac')
     OUT.mkdir(parents=True, exist_ok=True)
@@ -42,6 +45,8 @@ def main():
     if arguments.mmu:
         inputs += [*sorted(EXP.glob('lkl-nce-*.c')), *sorted(EXP.glob('lkl-*.h')),
                    EXP / 'guest-registers.h']
+    if arguments.core_scheduling:
+        inputs.append(Path(__file__).with_name('lkl_smp_core_patch.py'))
     digest = lambda path: hashlib.sha256(path.read_bytes()).hexdigest()
     input_hashes = {str(p.relative_to(ROOT)): digest(p) for p in inputs}
     source = OUT / 'source'
@@ -71,6 +76,9 @@ def main():
     apply_smp(source, EXP)
     if arguments.mmu:
         apply_mmu(source, EXP)
+    if arguments.core_scheduling:
+        from lkl_smp_core_patch import apply as apply_core
+        apply_core(source, EXP)
     mod = source / 'scripts/mod/file2alias.c'
     text = mod.read_text()
     if '#define uuid_t lkl_mod_uuid_t' not in text:
@@ -96,6 +104,8 @@ def main():
                    'TIMERFD', 'SMP', 'DEBUG_KERNEL', 'LKL_HOST_MEMCPY', 'LKL_HOST_MEMSET', 'LKL_HOST_MEMMOVE']
         if arguments.mmu:
             enabled += ['MMU']
+        if arguments.core_scheduling:
+            enabled += ['SCHED_SMT', 'SCHED_CORE']
         switches = [item for name in enabled for item in ('-e', name)]
         switches += [item for name in ['BLOCK', 'KALLSYMS', 'DEBUG_INFO', 'SLUB_DEBUG',
                                        *([] if arguments.mmu else ['MMU'])] for item in ('-d', name)]
@@ -108,6 +118,8 @@ def main():
         if arguments.mmu:
             assert 'CONFIG_MMU_GATHER_RCU_TABLE_FREE=y\n' in config
             assert 'CONFIG_ARCH_HAS_PTE_SPECIAL=y\n' in config
+        if arguments.core_scheduling:
+            assert 'CONFIG_SCHED_SMT=y\n' in config and 'CONFIG_SCHED_CORE=y\n' in config
         run([*make, '-j8', 'all'], env=env, stdout=log, stderr=subprocess.STDOUT, timeout=900)
     shutil.copyfile(source / 'arch/lkl/include/uapi/asm/host_ops.h', OUT / 'lkl-host-ops.h')
     shutil.copyfile(ROOT / 'work/native-linux-nce/guest-image.h', OUT / 'guest-image.h')
@@ -168,7 +180,8 @@ def main():
               'host': {'platform': platform.platform(),
                        'cpu': subprocess.check_output(['sysctl', '-n', 'machdep.cpu.brand_string'], text=True).strip(),
                        'system_build': subprocess.check_output(['sw_vers', '-buildVersion'], text=True).strip()},
-              'configuration': {'cpus': 2, 'mmu': arguments.mmu, 'nce_processes': False, 'debug_kernel': True},
+              'configuration': {'cpus': 2, 'mmu': arguments.mmu, 'core_scheduling': arguments.core_scheduling,
+                                'nce_processes': False, 'debug_kernel': True},
               'raw': {name: digest(OUT / name) for name in raw}}
     (OUT / 'summary.json').write_text(json.dumps(report, ensure_ascii=False, indent=2) + '\n')
     print(json.dumps([{'entry': r['entry'], 'iteration': r['iteration'], 'checks': r['kernel_checks']}
