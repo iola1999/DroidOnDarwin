@@ -917,14 +917,23 @@ static void report_mmu_profile(void)
 {
     if (!map_profile)
         return;
-    fprintf(stderr, "{\"profile\":\"linux_mmu\",\"switches\":%lu,\"scanned_pages\":%lu,\"present_faults\":%lu,\"linux_faults\":%lu,\"fast_faults\":%lu,\"fast_restored_pages\":%lu,\"restored_pages\":%lu}\n",
+    fprintf(stderr, "{\"profile\":\"linux_mmu\",\"switches\":%lu,\"scanned_pages\":%lu,\"present_faults\":%lu,\"linux_faults\":%lu,\"fast_faults\":%lu,\"fast_restored_pages\":%lu,\"restored_pages\":%lu,\"fault_retries\":%lu}\n",
             __atomic_load_n(&mmu_profile.switches, __ATOMIC_RELAXED),
             __atomic_load_n(&mmu_profile.scanned_pages, __ATOMIC_RELAXED),
             __atomic_load_n(&mmu_profile.present_faults, __ATOMIC_RELAXED),
             __atomic_load_n(&mmu_profile.linux_faults, __ATOMIC_RELAXED),
             __atomic_load_n(&mmu_profile.fast_faults, __ATOMIC_RELAXED),
             __atomic_load_n(&mmu_profile.fast_restored_pages, __ATOMIC_RELAXED),
-            __atomic_load_n(&mmu_profile.restored_pages, __ATOMIC_RELAXED));
+            __atomic_load_n(&mmu_profile.restored_pages, __ATOMIC_RELAXED),
+            __atomic_load_n(&mmu_profile.fault_retries, __ATOMIC_RELAXED));
+    const struct nce_schedule_profile *s = &mmu_profile.schedule;
+#define READ(field) __atomic_load_n(&s->field, __ATOMIC_RELAXED)
+    fprintf(stderr, "{\"profile\":\"linux_runnable\",\"samples\":%lu,\"same_mm_samples\":%lu,\"other_mm_samples\":%lu,\"same_mm_ready\":%lu,\"other_mm_ready\":%lu,\"kernel_or_host_ready\":%lu,\"max_same_mm_ready\":%lu,\"max_other_mm_ready\":%lu,\"interval_ns\":%lu,\"max_interval_ns\":%lu,\"collection_ns\":%lu,\"minimum_interval_ns\":10000000}\n",
+            READ(samples), READ(same_mm_samples), READ(other_mm_samples),
+            READ(same_mm_ready), READ(other_mm_ready), READ(kernel_or_host_ready),
+            READ(max_same_mm_ready), READ(max_other_mm_ready), READ(interval_ns),
+            READ(max_interval_ns), READ(collection_ns));
+#undef READ
 }
 
 static void *stream_guest_log(void *opaque)
@@ -1355,6 +1364,38 @@ static void android_abi_regressions(long (*host_syscall)(long, long *))
     fputs(benchmark, stdout);
 }
 
+static void scheduling_profile_regressions(long (*call)(long, long *))
+{
+    run_program(call, "/fault-race-test", NULL);
+    char output[1024];
+    REQUIRE(get_file(call, "/stdout", output, sizeof(output)) > 0);
+    REQUIRE(strstr(output, "linux_private_file_discard_cow") && strstr(output, "linux_truncated_file_fault"));
+    fputs(output, stdout);
+    const char *modes[] = {"busy\n", "blocked\n", "process\n"};
+    for (unsigned i = 0; i < 3; ++i) {
+        // Guest execution has stopped at these snapshots; no counter writer remains.
+        struct nce_schedule_profile before = mmu_profile.schedule;
+        run_program(call, "/schedule-test", modes[i]);
+        struct nce_schedule_profile after = mmu_profile.schedule;
+        unsigned long samples = after.samples - before.samples;
+        unsigned long same = after.same_mm_samples - before.same_mm_samples;
+        unsigned long other = after.other_mm_samples - before.other_mm_samples;
+        if (map_profile) {
+            REQUIRE(samples >= 5);
+            if (i == 0)
+                REQUIRE(same * 2 >= samples);
+            else if (i == 1)
+                REQUIRE(same <= 3);
+            else
+                REQUIRE(other * 2 >= samples && same == 0);
+        } else {
+            REQUIRE(samples == 0 && same == 0 && other == 0);
+        }
+        printf("{\"test\":\"linux_runnable_sampling\",\"mode\":%u,\"enabled\":%s,\"samples\":%lu,\"same_mm_samples\":%lu,\"other_mm_samples\":%lu,\"passed\":true}\n",
+               i, map_profile ? "true" : "false", samples, same, other);
+    }
+}
+
 #ifdef NCE_GRAPHICS
 static void graphics_regressions(long (*host_syscall)(long, long *))
 {
@@ -1565,8 +1606,10 @@ void nce_process_run(long (*host_syscall)(long, long *), long (*guest_syscall)(l
     put_file(host_syscall, "/data/nce/art-compiler-profile", map_profile ? "1" : "0", 1);
     long compiler_profile_permissions[6] = {-100, (long)"/data/nce/art-compiler-profile", 0644};
     REQUIRE(host_syscall(53, compiler_profile_permissions) == 0);
-    if (!interactive)
+    if (!interactive) {
+        scheduling_profile_regressions(host_syscall);
         android_abi_regressions(host_syscall);
+    }
 #ifdef NCE_GRAPHICS
     puts("{\"phase\":\"native_graphics_start\"}");
     REQUIRE(nce_graphics_start(host_syscall) == 0);

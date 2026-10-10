@@ -174,6 +174,8 @@ def apply(source: Path, experiment: Path):
          "nce_process.o nce_signal.o nce_elf.o\nobj-$(CONFIG_BLOCK) += nce_block.o")
     edit(arch + "kernel/Makefile", "obj-$(CONFIG_BLOCK) += nce_block.o",
          "obj-$(CONFIG_BLOCK) += nce_block.o\nobj-$(CONFIG_PAGE_REPORTING) += nce_reclaim.o")
+    edit(arch + "kernel/Makefile", "obj-$(CONFIG_PAGE_REPORTING) += nce_reclaim.o",
+         "obj-$(CONFIG_PAGE_REPORTING) += nce_reclaim.o\nobj-$(CONFIG_MMU) += nce_schedule.o")
     for local, destination in (("layout.h", "include/asm/nce-layout.h"),
                                ("lkl-mmu-profile.h", "include/asm/nce-mmu-profile.h"),
                                ("lkl-syscall.h", "include/asm/syscall.h"),
@@ -183,6 +185,7 @@ def apply(source: Path, experiment: Path):
                                ("lkl-nce-mmu.c", "mm/nce_mmu.c"),
                                ("lkl-nce-process.c", "kernel/nce_process.c"),
                                ("lkl-nce-signal.c", "kernel/nce_signal.c"),
+                               ("lkl-nce-schedule.c", "kernel/nce_schedule.c"),
                                ("lkl-nce-elf.c", "kernel/nce_elf.c"),
                                ("lkl-nce-block.c", "kernel/nce_block.c"),
                                ("lkl-nce-reclaim.c", "kernel/nce_reclaim.c"),

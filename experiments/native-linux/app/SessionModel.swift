@@ -175,15 +175,16 @@ final class SessionModel: ObservableObject {
                 activityAge = 0
             }
         }
-        guard phase == .booting, let key = snapshot?.phase else {
+        guard phase == .booting, let snapshot else {
             return
         }
-        if key == "android_desktop_running" {
+        // Separate guest output streams can deliver an earlier phase after ready.
+        if snapshot.step == 4 {
             phase = .running
             status = "Android 正在运行"
             timer?.invalidate()
             timer = nil
-        } else if let label = ProbeLogReader.phaseLabels[key] {
+        } else if let key = snapshot.phase, let label = ProbeLogReader.phaseLabels[key] {
             status = label
         }
     }

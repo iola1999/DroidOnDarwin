@@ -98,6 +98,18 @@ Total time spent in GC: 677.554ms
         self.assertEqual(result['fast_faults'], 12)
         self.assertEqual(result['line'], 1)
 
+    def test_runnable_samples_remain_separate_from_mapping_time(self):
+        self.assertEqual(log_summary('ordinary log')['runnable_cumulative'], [])
+        text = '''{"profile":"linux_runnable","samples":10,"same_mm_samples":4,"other_mm_samples":7,"collection_ns":100}
+{"profile":"linux_mmu","switches":6}
+{"profile":"linux_runnable","samples":20,"same_mm_samples":9,"other_mm_samples":14,"collection_ns":210}
+'''
+        result = log_summary(text)
+        self.assertEqual([r['samples'] for r in result['runnable_cumulative']], [10, 20])
+        self.assertEqual([r['line'] for r in result['runnable_cumulative']], [1, 3])
+        self.assertEqual(result['mapping_intervals'], [])
+        self.assertEqual(result['mmu_cumulative'][0]['switches'], 6)
+
 
 if __name__ == '__main__':
     unittest.main()

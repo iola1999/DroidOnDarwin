@@ -943,7 +943,7 @@ def build(out, llvm, art_compiler=False, art_oat=None, art_desktop=False, art_bo
              '-c', EXP / f'userspace/{unit}.c', '-o', out / f'{unit}.o'])
     run([llvm / 'clang', '--target=aarch64-linux-musl', '-c', EXP / 'userspace/signal-registers.S',
          '-o', out / 'signal-registers.o'])
-    for name in ('init', 'worker', 'mm-bench', 'binder-test', 'storage-test', 'reclaim-test', 'host-poll-test'):
+    for name in ('init', 'worker', 'mm-bench', 'binder-test', 'storage-test', 'reclaim-test', 'host-poll-test', 'schedule-test', 'fault-race-test'):
         run([llvm / 'clang', '--target=aarch64-linux-musl', '-ffixed-x18', '-mno-outline-atomics',
              '-fPIE', '-O2', '-g', '-Wall', '-Wextra', '-Werror', '-nostdinc', '-isystem', libc / 'include', '-isystem', resource,
              '-isystem', out / 'linux-uapi/include',

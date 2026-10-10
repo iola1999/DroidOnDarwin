@@ -3,6 +3,7 @@
 #include <linux/pgtable.h>
 #include <linux/bitops.h>
 #include <linux/uaccess.h>
+#include <linux/sched/signal.h>
 #include <asm/host_ops.h>
 #include <asm/nce-layout.h>
 #include <asm/mmu_context.h>
@@ -330,6 +331,8 @@ static void prepare_mm_locked(struct mm_struct *next)
 void nce_prepare_user(void)
 {
     struct mm_struct *mm = current->mm;
+    if (profile && mm)
+        nce_sample_runnable(&profile->schedule);
     if (!mm || mm == active_mm)
         return;
     mmap_read_lock(mm);
@@ -394,6 +397,7 @@ int nce_page_fault(unsigned long address, int access)
      * Classify the original trap using the view present before that wait. */
     unsigned long index = (address - USER_BASE) / PAGE_SIZE;
     unsigned long trapped_view = execute && mapping_mode != NCE_MM_FULL ? installed[index] : 0;
+retry_lock:
     mmap_read_lock(mm);
     vma = find_vma(mm, address);
     if (vma && address < vma->vm_start && (vma->vm_flags & VM_GROWSDOWN)) {
@@ -427,6 +431,24 @@ int nce_page_fault(unsigned long address, int access)
     result = handle_mm_fault(vma, address, execute ? FAULT_FLAG_INSTRUCTION : write ? FAULT_FLAG_WRITE
                                                                                     : 0,
                              NULL);
+    /* Linux may release the lock or leave the PTE unresolved when another
+     * task changes it during COW. Revalidate before restoring a host view;
+     * kernel user copies also need a PTE with the requested access. */
+    bool lock_released = result & (VM_FAULT_RETRY | VM_FAULT_COMPLETED);
+    pte_t resolved = lock_released ? __pte(0) : lookup(mm, address);
+    if (lock_released || (!(result & VM_FAULT_ERROR) &&
+                          (!view(resolved) || (write && !pte_write(resolved))))) {
+        PROFILE_ADD(fault_retries, 1);
+        if (profile && __atomic_load_n(&profile->fault_retries, __ATOMIC_RELAXED) <= 8)
+            pr_info("NCE fault retry pid=%d address=%lx access=%x result=%x pte=%lx\n",
+                    current->pid, address, access, (unsigned int)result, pte_val(resolved));
+        if (!lock_released)
+            mmap_read_unlock(mm);
+        if (fatal_signal_pending(current))
+            return -EFAULT;
+        cond_resched();
+        goto retry_lock;
+    }
     if (!(result & VM_FAULT_ERROR) && direct)
         prepare_mm_locked(mm);
     if (!(result & VM_FAULT_ERROR) && mapping_mode >= NCE_MM_LAZY) {
@@ -438,17 +460,13 @@ int nce_page_fault(unsigned long address, int access)
         while (value && stop < vma->vm_end && stop - first < 32 * PAGE_SIZE &&
                view(lookup(mm, stop)) == value + stop - first)
             stop += PAGE_SIZE;
-        if (!value)
-            result = VM_FAULT_SIGBUS;
-        else {
-            mmap_pages_for_ptes(mm, first, (stop - first) / PAGE_SIZE, __pte(value));
-            PROFILE_ADD(restored_pages, (stop - first) / PAGE_SIZE);
-            /* Learn demand after a switch, excluding initial allocation and
-             * COW setup. Dense readers then avoid repeated signal delivery. */
-            if ((reused && mapping_mode == NCE_MM_LAZY) || direct)
-                for (unsigned long addr = first; addr < stop; addr += PAGE_SIZE)
-                    __set_bit((addr - USER_BASE) / PAGE_SIZE, mm->context.accessed);
-        }
+        mmap_pages_for_ptes(mm, first, (stop - first) / PAGE_SIZE, __pte(value));
+        PROFILE_ADD(restored_pages, (stop - first) / PAGE_SIZE);
+        /* Learn demand after a switch, excluding initial allocation and
+         * COW setup. Dense readers then avoid repeated signal delivery. */
+        if ((reused && mapping_mode == NCE_MM_LAZY) || direct)
+            for (unsigned long addr = first; addr < stop; addr += PAGE_SIZE)
+                __set_bit((addr - USER_BASE) / PAGE_SIZE, mm->context.accessed);
     }
     if ((result & VM_FAULT_ERROR) && profile)
         pr_info("NCE fault failed pid=%d comm=%s address=%lx access=%x result=%x vma=%lx-%lx flags=%lx\n",

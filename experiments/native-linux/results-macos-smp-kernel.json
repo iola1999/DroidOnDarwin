@@ -1,0 +1,468 @@
+{
+  "scope": "two CPU Linux kernel only; NCE process execution is not enabled",
+  "revision": "d0f76a77e8c2ca68bd7d96190b8da09040eab072",
+  "runs": [
+    {
+      "entry": "probe",
+      "iteration": 0,
+      "results": [
+        {
+          "phase": "load_linux_image"
+        },
+        {
+          "phase": "linux_init"
+        },
+        {
+          "test": "native_linux_boot",
+          "passed": true,
+          "ms": 54.05
+        },
+        {
+          "test": "linux_uname",
+          "sysname": "Linux",
+          "release": "6.12.0"
+        },
+        {
+          "test": "nce_linux_file_and_timer",
+          "passed": true
+        },
+        {
+          "test": "linux_pipe_host_threads",
+          "passed": true
+        },
+        {
+          "test": "linux_futex_wait_wake",
+          "passed": true
+        },
+        {
+          "bench": "native_linux_getpid",
+          "iterations": 100000,
+          "ns_per_call": 36.43
+        },
+        {
+          "bench": "nce_linux_getpid_with_compute",
+          "iterations": 100000,
+          "ns_per_iteration": 69.73
+        },
+        {
+          "phase": "linux_shutdown"
+        },
+        {
+          "result": "passed"
+        }
+      ],
+      "kernel_checks": [
+        {
+          "test": "linux_smp_parallel_kernel",
+          "count": 200000,
+          "overlap_ns": 5219000,
+          "passed": true
+        },
+        {
+          "test": "linux_smp_atomic64_futex",
+          "passed": true
+        },
+        {
+          "test": "linux_smp_ipi_timer_migration",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "entry": "dispatch-probe",
+      "iteration": 0,
+      "results": [
+        {
+          "test": "dispatch_signal_mask",
+          "sigusr2_blocked": 1
+        },
+        {
+          "phase": "load_linux_image"
+        },
+        {
+          "phase": "linux_init"
+        },
+        {
+          "test": "native_linux_boot",
+          "passed": true,
+          "ms": 72.034
+        },
+        {
+          "test": "linux_uname",
+          "sysname": "Linux",
+          "release": "6.12.0"
+        },
+        {
+          "test": "nce_linux_file_and_timer",
+          "passed": true
+        },
+        {
+          "test": "linux_pipe_host_threads",
+          "passed": true
+        },
+        {
+          "test": "linux_futex_wait_wake",
+          "passed": true
+        },
+        {
+          "bench": "native_linux_getpid",
+          "iterations": 100000,
+          "ns_per_call": 42.19
+        },
+        {
+          "bench": "nce_linux_getpid_with_compute",
+          "iterations": 100000,
+          "ns_per_iteration": 75.75
+        },
+        {
+          "phase": "linux_shutdown"
+        },
+        {
+          "result": "passed"
+        }
+      ],
+      "kernel_checks": [
+        {
+          "test": "linux_smp_parallel_kernel",
+          "count": 200000,
+          "overlap_ns": 4616000,
+          "passed": true
+        },
+        {
+          "test": "linux_smp_atomic64_futex",
+          "passed": true
+        },
+        {
+          "test": "linux_smp_ipi_timer_migration",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "entry": "probe",
+      "iteration": 1,
+      "results": [
+        {
+          "phase": "load_linux_image"
+        },
+        {
+          "phase": "linux_init"
+        },
+        {
+          "test": "native_linux_boot",
+          "passed": true,
+          "ms": 72.704
+        },
+        {
+          "test": "linux_uname",
+          "sysname": "Linux",
+          "release": "6.12.0"
+        },
+        {
+          "test": "nce_linux_file_and_timer",
+          "passed": true
+        },
+        {
+          "test": "linux_pipe_host_threads",
+          "passed": true
+        },
+        {
+          "test": "linux_futex_wait_wake",
+          "passed": true
+        },
+        {
+          "bench": "native_linux_getpid",
+          "iterations": 100000,
+          "ns_per_call": 321.64
+        },
+        {
+          "bench": "nce_linux_getpid_with_compute",
+          "iterations": 100000,
+          "ns_per_iteration": 71.1
+        },
+        {
+          "phase": "linux_shutdown"
+        },
+        {
+          "result": "passed"
+        }
+      ],
+      "kernel_checks": [
+        {
+          "test": "linux_smp_parallel_kernel",
+          "count": 200000,
+          "overlap_ns": 13839000,
+          "passed": true
+        },
+        {
+          "test": "linux_smp_atomic64_futex",
+          "passed": true
+        },
+        {
+          "test": "linux_smp_ipi_timer_migration",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "entry": "dispatch-probe",
+      "iteration": 1,
+      "results": [
+        {
+          "test": "dispatch_signal_mask",
+          "sigusr2_blocked": 1
+        },
+        {
+          "phase": "load_linux_image"
+        },
+        {
+          "phase": "linux_init"
+        },
+        {
+          "test": "native_linux_boot",
+          "passed": true,
+          "ms": 46.321
+        },
+        {
+          "test": "linux_uname",
+          "sysname": "Linux",
+          "release": "6.12.0"
+        },
+        {
+          "test": "nce_linux_file_and_timer",
+          "passed": true
+        },
+        {
+          "test": "linux_pipe_host_threads",
+          "passed": true
+        },
+        {
+          "test": "linux_futex_wait_wake",
+          "passed": true
+        },
+        {
+          "bench": "native_linux_getpid",
+          "iterations": 100000,
+          "ns_per_call": 37.57
+        },
+        {
+          "bench": "nce_linux_getpid_with_compute",
+          "iterations": 100000,
+          "ns_per_iteration": 72.75
+        },
+        {
+          "phase": "linux_shutdown"
+        },
+        {
+          "result": "passed"
+        }
+      ],
+      "kernel_checks": [
+        {
+          "test": "linux_smp_parallel_kernel",
+          "count": 200000,
+          "overlap_ns": 14583000,
+          "passed": true
+        },
+        {
+          "test": "linux_smp_atomic64_futex",
+          "passed": true
+        },
+        {
+          "test": "linux_smp_ipi_timer_migration",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "entry": "probe",
+      "iteration": 2,
+      "results": [
+        {
+          "phase": "load_linux_image"
+        },
+        {
+          "phase": "linux_init"
+        },
+        {
+          "test": "native_linux_boot",
+          "passed": true,
+          "ms": 50.648
+        },
+        {
+          "test": "linux_uname",
+          "sysname": "Linux",
+          "release": "6.12.0"
+        },
+        {
+          "test": "nce_linux_file_and_timer",
+          "passed": true
+        },
+        {
+          "test": "linux_pipe_host_threads",
+          "passed": true
+        },
+        {
+          "test": "linux_futex_wait_wake",
+          "passed": true
+        },
+        {
+          "bench": "native_linux_getpid",
+          "iterations": 100000,
+          "ns_per_call": 44.5
+        },
+        {
+          "bench": "nce_linux_getpid_with_compute",
+          "iterations": 100000,
+          "ns_per_iteration": 78.19
+        },
+        {
+          "phase": "linux_shutdown"
+        },
+        {
+          "result": "passed"
+        }
+      ],
+      "kernel_checks": [
+        {
+          "test": "linux_smp_parallel_kernel",
+          "count": 200000,
+          "overlap_ns": 10902000,
+          "passed": true
+        },
+        {
+          "test": "linux_smp_atomic64_futex",
+          "passed": true
+        },
+        {
+          "test": "linux_smp_ipi_timer_migration",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "entry": "dispatch-probe",
+      "iteration": 2,
+      "results": [
+        {
+          "test": "dispatch_signal_mask",
+          "sigusr2_blocked": 1
+        },
+        {
+          "phase": "load_linux_image"
+        },
+        {
+          "phase": "linux_init"
+        },
+        {
+          "test": "native_linux_boot",
+          "passed": true,
+          "ms": 62.765
+        },
+        {
+          "test": "linux_uname",
+          "sysname": "Linux",
+          "release": "6.12.0"
+        },
+        {
+          "test": "nce_linux_file_and_timer",
+          "passed": true
+        },
+        {
+          "test": "linux_pipe_host_threads",
+          "passed": true
+        },
+        {
+          "test": "linux_futex_wait_wake",
+          "passed": true
+        },
+        {
+          "bench": "native_linux_getpid",
+          "iterations": 100000,
+          "ns_per_call": 44.14
+        },
+        {
+          "bench": "nce_linux_getpid_with_compute",
+          "iterations": 100000,
+          "ns_per_iteration": 76.18
+        },
+        {
+          "phase": "linux_shutdown"
+        },
+        {
+          "result": "passed"
+        }
+      ],
+      "kernel_checks": [
+        {
+          "test": "linux_smp_parallel_kernel",
+          "count": 200000,
+          "overlap_ns": 9487000,
+          "passed": true
+        },
+        {
+          "test": "linux_smp_atomic64_futex",
+          "passed": true
+        },
+        {
+          "test": "linux_smp_ipi_timer_migration",
+          "passed": true
+        }
+      ]
+    }
+  ],
+  "inputs": {
+    "scripts/probe_lkl_smp.py": "b51d3204d415a1e0b0ffe24cecd6f19948681182f5a6312852b88ca8272d5a38",
+    "scripts/lkl_smp_patch.py": "6dc01da25ded03c3916a2a6f55f4e9bc96e234f9f9788c5c321ca7daff29a5f4",
+    "scripts/lkl_nce_patch.py": "77c886c11e3e2277ce8ae9bf372c2342193e07fdb2c26394dd1121c4f0cea001",
+    "scripts/probe_lkl.py": "227323d8f6ea8fae5062b04d22c56ac3372022b9fff4a6e22a1da554363b59a5",
+    "experiments/native-linux/smp/barrier.h": "7b876a7e45e50ca337e32182bb3a613af92bacd6e2f52e8f26762131b3bf789e",
+    "experiments/native-linux/smp/cmpxchg.h": "d5935bc077108929f29c14c4b930c7b57578eba04a72ae6a51000e59fbeaace3",
+    "experiments/native-linux/smp/futex.h": "7160f014b38b6ca7d4b9f575ebaabf97133e6b6744773d07579872fbdba04b86",
+    "experiments/native-linux/smp/smp.c": "fad3b284035dc949f05d84ae13ad7b1b0cd2900024f905f38ad368a651ff0e95",
+    "experiments/native-linux/smp/smp.h": "abfdfb4437f77747084cdb4971248dba9718fd2f6f9480ef00d4aeaadf4cdab0",
+    "experiments/native-linux/smp/test.c": "52dd515375fa7c6231c4347459db50483d100acfc467120cc4a56453c308632d",
+    "experiments/native-linux/smp/time.c": "15198fffd6685dc865a4aa841bc738f893d64439052e880b3358fbd9b1138afb",
+    "experiments/native-linux/lkl-main.c": "c4233df93b50cc3843cacbdb97beff8faf70fd7834ea7cb5e2cc691ca7b16611",
+    "experiments/native-linux/lkl-host.c": "49c63f1be4112408bbe5bdced53cf8bd0314eedaf770fe4d869d30edf3a6c671",
+    "experiments/native-linux/lkl-bridge.c": "15ecb94c6da3451b66dfc784b189792d220c73faaf1727a8e6121b48456cbd37",
+    "experiments/native-linux/dispatch-test.c": "5211698bd58018aae173d4c6d75daeeb0e4eb357fb2742c4c08d595bc9d7b55b",
+    "experiments/native-linux/nce.c": "ed745f1502bdb751b2d990e8c0d6e5455df337d1ee034dfb7ab488328b2a85c4",
+    "experiments/native-linux/nce.h": "58e305f0ace78a6d03084ca07133f3a76f60141e2ed12cdf4d0040e20e39540f",
+    "experiments/native-linux/entry.S": "853afbb6718066cfa41a0e4db996e0935cd76766655f2045bc1c756544d524fb",
+    "experiments/native-linux/layout.h": "9ecb6dc474edfc516284effcbd1999ba445ba88372233636391771a0715deaa5"
+  },
+  "host": {
+    "platform": "macOS-27.0-arm64-arm-64bit-Mach-O",
+    "cpu": "Apple M5 Ultra",
+    "system_build": "26A428"
+  },
+  "configuration": {
+    "cpus": 2,
+    "mmu": false,
+    "nce_processes": false,
+    "debug_kernel": true
+  },
+  "raw": {
+    "lkl.so": "bf381b4ca50261f55dd06cb1d22ae745da746d9b2a0d01b07ad1e2827fee1733",
+    "lkl-image.bin": "1576c0a79e95cbec82dee5377c822a28043ddca5aa91be7c30c871ae6cf0f6e0",
+    "build/.config": "b88b636b34e363ebc8697dce26b8d58f7dbf33bdad05827c4ba7d474fa479bc4",
+    "probe-0-results.jsonl": "96636638ea87590f462f553101492c6578798deecad3d9e53d17832c7e03be6e",
+    "probe-0-console.log": "d21817b6f07fb517b2a7775ae4140c87e313faa5b0627a3cc37ad6fc197cfd50",
+    "dispatch-probe-0-results.jsonl": "a8aac6b13bbed331c5ac725dc167bf15a621372eca24748ccd3638d2873328ea",
+    "dispatch-probe-0-console.log": "2ea7df3a7491b53acf8bc0fbfc795abb790cc7e8b552c28ab80156890d8b7ac5",
+    "probe-1-results.jsonl": "42584ea314a71ac5d7ee2ff0fe833f8bd468b564f77917d19a63c08c21160004",
+    "probe-1-console.log": "49f67d94db063078e4d218a83bb756bcb24a742b4f129c9f7b98cd2206a59dd9",
+    "dispatch-probe-1-results.jsonl": "8f474b84548008fff10f72da2fe82d03d781215e06c0b01894d4b92b4f04754a",
+    "dispatch-probe-1-console.log": "974e54f77b0af1c8fb325b6d7e763672897bf96e88a5ff9c0097c6adf08479ac",
+    "probe-2-results.jsonl": "d3b183ee3eb38249a400c03658d3a0da2d57a50f09ad508c61d455a5eb9d8e1d",
+    "probe-2-console.log": "d46145aa5bf69e6028c9402c1b3c3d4342c300561f9bb1179d53c760361b1c42",
+    "dispatch-probe-2-results.jsonl": "f588917e5449ec60736f7b7f2550e19f76a4930aac6caef1df903fefd646508e",
+    "dispatch-probe-2-console.log": "e18e914b47499fd02827c6ea078351a1ffaf8115c285457752fa90cec254937c"
+  },
+  "command": "python3 scripts/probe_lkl_smp.py",
+  "limits": [
+    "NOMMU kernel foundation only. Android/NCE process execution, shared-window synchronization and iPhone execution are pending.",
+    "Compute overlap verifies concurrent work; no UP/SMP performance comparison or Android speedup is claimed."
+  ]
+}
