@@ -126,16 +126,21 @@ def log_summary(text):
         if 'ActivityTaskManager: Displayed ' in line:
             activities.append(dict(line=line_number, message=line))
     intervals = []
-    previous = dict(elapsed_ms=0, data_ms=0, code_ms=0, revoke_ms=0)
+    previous = None
     for current in mappings:
-        elapsed = current['elapsed_ms'] - previous['elapsed_ms']
-        if elapsed <= 0:
-            raise ValueError('Mapping elapsed time must increase within one session')
-        delta = {k: round(current[k] - previous[k], 3) for k in previous}
-        delta['mapping_ms'] = round(sum(delta[k] for k in ('data_ms', 'code_ms', 'revoke_ms')), 3)
-        delta['elapsed_end_ms'] = current['elapsed_ms']
-        intervals.append(delta)
-        previous = {k: current[k] for k in previous}
+        # Counters can include earlier probes while elapsed_ms starts at the
+        # Android log pump. Only observed snapshots define a common interval.
+        if previous is not None:
+            elapsed = current['elapsed_ms'] - previous['elapsed_ms']
+            if elapsed <= 0:
+                raise ValueError('Mapping elapsed time must increase within one session')
+            delta = {k: round(current[k] - previous[k], 3) for k in previous}
+            if any(value < 0 for value in delta.values()):
+                raise ValueError('Mapping counters decreased within one session')
+            delta['mapping_ms'] = round(sum(delta[k] for k in ('data_ms', 'code_ms', 'revoke_ms')), 3)
+            delta['elapsed_end_ms'] = current['elapsed_ms']
+            intervals.append(delta)
+        previous = {k: current[k] for k in ('elapsed_ms', 'data_ms', 'code_ms', 'revoke_ms')}
     selected = set()
     for tag in ('SystemServerTiming', 'SystemUIBootTiming'):
         selected.update(r['line'] for r in sorted((r for r in timings if r['tag'] == tag),
@@ -187,6 +192,7 @@ def main():
                   limits=[
                       'Nonwait shares describe sampled stack observations, not measured CPU-time percentages.',
                       'Mapping times include scheduling delay inside each call; component timers can overlap.',
+                      'The first mapping snapshot is a baseline; its counters may include work before elapsed_ms starts.',
                       'Unresolved native addresses include Linux, guest ELF code, branch stubs and ART JIT.',
                       'Sampling and mapping counters add overhead; this run does not measure uninstrumented startup.'
                   ])

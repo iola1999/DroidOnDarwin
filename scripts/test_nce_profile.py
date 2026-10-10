@@ -65,7 +65,20 @@ Total number in stack:
 '''
         result = log_summary(text)
         self.assertEqual([r['ms'] for r in result['component_timings']], [30, 40])
-        self.assertEqual([r['mapping_ms'] for r in result['mapping_intervals']], [10, 6])
+        self.assertEqual([r['mapping_ms'] for r in result['mapping_intervals']], [6])
+
+    def test_mapping_intervals_exclude_work_before_the_first_snapshot(self):
+        first = '{"profile":"host_mapping","elapsed_ms":0,"data_ms":5000,"code_ms":2000,"revoke_ms":3000}'
+        second = '{"profile":"host_mapping","elapsed_ms":100,"data_ms":5005,"code_ms":2002,"revoke_ms":3003}'
+        self.assertEqual(log_summary(first)['mapping_intervals'], [])
+        interval = log_summary(first + '\n' + second)['mapping_intervals'][0]
+        self.assertEqual(interval['elapsed_ms'], 100)
+        self.assertEqual(interval['mapping_ms'], 10)
+        with self.assertRaises(ValueError):
+            log_summary(second + '\n' + first)
+        decreased = '{"profile":"host_mapping","elapsed_ms":200,"data_ms":5,"code_ms":2,"revoke_ms":3}'
+        with self.assertRaises(ValueError):
+            log_summary(second + '\n' + decreased)
 
     def test_art_snapshot_process_and_thread_boundaries(self):
         text = '''----- pid 10 at 2026-10-10 00:00:00+0000 -----

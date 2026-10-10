@@ -2,7 +2,7 @@
 /* Included by nce_mmu.c so the signal path uses its protected view arrays. */
 static int restore_present_data(unsigned long address, bool write)
 {
-    if (mapping_mode < NCE_MM_LAZY || address < USER_BASE + NCE_BRK_OFFSET ||
+    if (mapping_mode < NCE_MM_LAZY || address < USER_BASE ||
         address >= TASK_SIZE || !nce_window_try_lock_guest())
         return 0;
     int restored = 0;
@@ -30,6 +30,8 @@ static int restore_present_data(unsigned long address, bool write)
             ++count;
         }
     }
+    if (!new_data_view(first, count * PAGE_SIZE, value))
+        goto out;
     mmap_pages_for_ptes_window_locked(mm, first, count, pte);
     if (mapping_mode == NCE_MM_LAZY)
         for (unsigned long i = 0; i < count; ++i)

@@ -45,6 +45,14 @@ static int unmap_ram(void *address, unsigned long size)
     return mprotect(address, size, PROT_NONE);
 }
 
+static int data_range(unsigned long address, unsigned long size)
+{
+    /* The low-window check models a prepared code page whose current Linux
+     * PTE has data permissions. Its host view must still require a stop. */
+    uintptr_t guarded = (uintptr_t)window + 35 * NCE_PAGE_SIZE;
+    return !(address < guarded + NCE_PAGE_SIZE && guarded < address + size);
+}
+
 void nce_smp_mmu_setup(NceSmpSetLayout set_layout)
 {
     assert(getpagesize() == NCE_PAGE_SIZE);
@@ -55,6 +63,7 @@ void nce_smp_mmu_setup(NceSmpSetLayout set_layout)
     nce_lkl_host.shmem_init = init_ram;
     nce_lkl_host.shmem_mmap = map_ram;
     nce_lkl_host.munmap = unmap_ram;
+    nce_lkl_host.user_data_range = data_range;
     set_layout((uintptr_t)window, NCE_MM_DEMAND, views, 3, NULL, 1, 0);
 }
 

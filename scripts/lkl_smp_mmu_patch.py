@@ -17,6 +17,10 @@ def apply(source: Path, experiment: Path, *, tests=True):
     edit(arch + 'include/uapi/asm/host_ops.h',
          '\tvoid (*user_run)(void *state);',
          '\tvoid (*user_run)(void *state);\n\tvoid (*user_interrupt)(unsigned int mask);')
+    edit(arch + 'include/uapi/asm/host_ops.h', '\tvoid (*user_interrupt)(unsigned int mask);',
+         '\tvoid (*user_interrupt)(unsigned int mask);\n'
+         '\t/* Nonblocking query over the immutable prepared-code layout. */\n'
+         '\tint (*user_data_range)(unsigned long address, unsigned long length);')
     edit(arch + 'Kconfig', '\tdepends on !MMU\n\tselect ARCH_USE_QUEUED_RWLOCKS',
          '\tselect MMU_GATHER_RCU_TABLE_FREE if MMU\n\tselect ARCH_HAS_PTE_SPECIAL if MMU\n'
          '\tselect ARCH_USE_QUEUED_RWLOCKS')
@@ -158,23 +162,27 @@ def apply_window(source: Path):
     body = body.replace('    if (addr >= USER_BASE && addr < TASK_SIZE)\n',
                         '    if (addr >= USER_BASE && addr < TASK_SIZE && !new_data_view(addr, size, value))\n')
     text = text[:begin] + body + text[end:]
-    if 'static bool new_data_view(' not in text:
-        helper = '''/* The writer lock excludes PTE updates and mm switches. Installing an
- * absent data view leaves other threads' existing mappings and code intact. */
-static bool new_data_view(unsigned long addr, unsigned long size, unsigned long value)
+    helper = '''static bool new_data_view(unsigned long addr, unsigned long size, unsigned long value)
 {
     if (mapping_mode < NCE_MM_LAZY || !value || (value & _PAGE_EXEC) ||
-        addr < USER_BASE + NCE_BRK_OFFSET || addr >= TASK_SIZE || size > TASK_SIZE - addr)
+        addr < USER_BASE || addr >= TASK_SIZE || size > TASK_SIZE - addr)
         return false;
     unsigned long first = (addr - USER_BASE) / PAGE_SIZE;
     for (unsigned long i = 0; i < size / PAGE_SIZE; ++i)
         if (installed[first + i])
             return false;
-    return true;
+    return addr >= USER_BASE + NCE_BRK_OFFSET ||
+           (lkl_ops->user_data_range && lkl_ops->user_data_range(addr, size));
 }
-
 '''
-        text = text.replace('static void map_view(', helper + 'static void map_view(', 1)
+    if 'static bool new_data_view(' in text:
+        begin = text.index('static bool new_data_view(')
+        end = text.index('\n}', begin) + 3
+        text = text[:begin] + helper + text[end:]
+    else:
+        comment = ('/* The writer lock excludes PTE updates and mm switches. Installing an\n'
+                   ' * absent data view leaves other threads\' existing mappings and code intact. */\n')
+        text = text.replace('static void map_view(', comment + helper + '\nstatic void map_view(', 1)
     text = text.replace('    PROFILE_ADD(switches, 1);\n    active_mm = next;',
                         '    PROFILE_ADD(switches, 1);\n    nce_window_stop();\n    active_mm = next;')
     text = text.replace('if (!mm || mm == active_mm)', 'if (!mm || mm == READ_ONCE(active_mm))')

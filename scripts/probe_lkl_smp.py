@@ -67,12 +67,15 @@ def main():
         raise SystemExit('LKL 源码版本不匹配')
     # Use an independent source/build tree; the desktop image retains UP/MMU.
     base_marker = source / '.droidondarwin-smp-base'
-    base_hash = hashlib.sha256(Path(__file__).with_name('lkl_nce_patch.py').read_bytes()).hexdigest()
+    base_inputs = [Path(__file__).with_name('lkl_nce_patch.py'),
+                   *sorted(EXP.glob('lkl-nce-*.c')), *sorted(EXP.glob('lkl-*.h')),
+                   EXP / 'guest-registers.h', EXP / 'layout.h']
+    base_hash = json.dumps({str(p.relative_to(ROOT)): digest(p) for p in base_inputs}, sort_keys=True)
     if not base_marker.exists():
         apply_nce(source, EXP)
         base_marker.write_text(base_hash + '\n')
     elif base_marker.read_text().strip() != base_hash:
-        raise SystemExit('NCE 基础补丁已变化，请重新生成独立 SMP 源码树')
+        raise SystemExit('NCE 基础输入已变化，请重新生成独立 SMP 源码树')
     apply_smp(source, EXP)
     if arguments.mmu:
         apply_mmu(source, EXP)
@@ -140,7 +143,9 @@ def main():
     host_source = (EXP / 'lkl-main.c').read_text()
     assert host_source.count('    blocking_tests();') == 1
     host_source = host_source.replace('    blocking_tests();',
-                                     f'    blocking_tests();\n    REQUIRE(kernel_syscall({242 if arguments.mmu else 244}, args) == 0);')
+                                     f'    blocking_tests();\n    long smp_result = kernel_syscall({242 if arguments.mmu else 244}, args);\n'
+                                     '    if (smp_result) fprintf(stderr, "SMP test result=%ld\\n", smp_result);\n'
+                                     '    REQUIRE(smp_result == 0);')
     if arguments.mmu:
         host_source = '#include "smp/mmu-host.h"\n' + host_source
         point = '    kernel_syscall = (void *)(kernel.rx + LKL_SYSCALL);'
@@ -159,7 +164,8 @@ def main():
     if arguments.mmu:
         required |= {'linux_smp_mmu_access_boundaries', 'linux_smp_mmu_atomic_and_unmap',
                      'linux_smp_shared_window', 'linux_smp_distinct_windows',
-                     'linux_smp_data_mapping_without_stop', 'linux_smp_guest_present_restore'}
+                     'linux_smp_data_mapping_without_stop', 'linux_smp_guest_present_restore',
+                     'linux_smp_guest_library_restore'}
     for iteration in range(3):
         for entry in ['probe', 'dispatch-probe']:
             prefix = f'{entry}-{iteration}'

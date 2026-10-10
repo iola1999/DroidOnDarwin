@@ -36,6 +36,9 @@ NceProgram *nce_program_entry(uintptr_t entry);
 unsigned long nce_program_layout(const char *path, unsigned long source_offset, const void *header, const void *phdrs);
 unsigned long nce_program_source_offset(unsigned long address);
 int nce_program_reserved(unsigned long address, unsigned long length);
+/* The fixed program layout must remain immutable while guest CPUs execute.
+ * Return zero for ranges touching prepared ELF code or reserved stubs. */
+int nce_program_data_range(unsigned long address, unsigned long length);
 /* First program whose complete reserved range ends after address, or count.
  * The generated layout orders all program ranges by increasing address. */
 size_t nce_program_index(uintptr_t address);

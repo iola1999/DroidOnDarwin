@@ -2305,5 +2305,3446 @@
       "experiments/native-linux/smp/window.c": "73a820e02b09b16a1859aaa97a21bc8ab38f3d9ad3fc725416d2f56c885bc2bf",
       "experiments/native-linux/smp/window.h": "0cc93b042267cb00bc81e44afd427fa4537cbf49d2f91160de530f3088b0e305"
     }
+  },
+  "library_data_candidate": {
+    "configuration": {
+      "cpus": 2,
+      "core_scheduling": true,
+      "linux_ram_bytes": 1073741824,
+      "page_bytes": 16384,
+      "mapping": "demand",
+      "art_nterp": true,
+      "art_aot": false,
+      "art_boot_image": false,
+      "art_expanded_jit": false,
+      "art_fast_baseline": false,
+      "map_profile": true,
+      "fault_trace": true,
+      "direct_fault": true
+    },
+    "kernel_core_regression": {
+      "source": {
+        "path": "work/native-linux-nce/smp-mmu-core/summary.json",
+        "sha256": "4831d8a2aa42b75590bb9f4a7965bd95da09e90d15f85a31a8dbbcb10aa9faff"
+      },
+      "runs": [
+        {
+          "entry": "probe",
+          "iteration": 0,
+          "results": [
+            {
+              "phase": "load_linux_image"
+            },
+            {
+              "phase": "linux_init"
+            },
+            {
+              "test": "native_linux_boot",
+              "passed": true,
+              "ms": 92.321
+            },
+            {
+              "test": "linux_uname",
+              "sysname": "Linux",
+              "release": "6.12.0"
+            },
+            {
+              "test": "nce_linux_file_and_timer",
+              "passed": true
+            },
+            {
+              "test": "linux_pipe_host_threads",
+              "passed": true
+            },
+            {
+              "test": "linux_futex_wait_wake",
+              "passed": true
+            },
+            {
+              "bench": "native_linux_getpid",
+              "iterations": 100000,
+              "ns_per_call": 2530.58
+            },
+            {
+              "bench": "nce_linux_getpid_with_compute",
+              "iterations": 100000,
+              "ns_per_iteration": 76.02
+            },
+            {
+              "phase": "linux_shutdown"
+            },
+            {
+              "result": "passed"
+            }
+          ],
+          "kernel_checks": [
+            {
+              "test": "linux_smp_parallel_kernel",
+              "count": 200000,
+              "overlap_ns": 11932000,
+              "passed": true
+            },
+            {
+              "test": "linux_smp_atomic64_futex",
+              "passed": true
+            },
+            {
+              "test": "linux_smp_ipi_timer_migration",
+              "passed": true
+            },
+            {
+              "test": "linux_smp_mmu_access_boundaries",
+              "passed": true
+            },
+            {
+              "test": "linux_smp_mmu_atomic_and_unmap",
+              "passed": true,
+              "count": 40000,
+              "copies": 1187379,
+              "faults": 978,
+              "generations": 54
+            },
+            {
+              "test": "linux_smp_shared_window",
+              "passed": true,
+              "count": 200000,
+              "overlap_ns": 935000
+            },
+            {
+              "test": "linux_smp_distinct_windows",
+              "passed": true,
+              "reads": 2048000,
+              "stops": 0
+            },
+            {
+              "test": "linux_smp_data_mapping_without_stop",
+              "passed": true,
+              "pages": 32,
+              "reads": 110592
+            },
+            {
+              "test": "linux_smp_guest_present_restore",
+              "passed": true,
+              "pages": 32,
+              "reads": 90112
+            },
+            {
+              "test": "linux_smp_guest_library_restore",
+              "passed": true,
+              "pages": 32,
+              "reads": 49152
+            }
+          ]
+        },
+        {
+          "entry": "dispatch-probe",
+          "iteration": 0,
+          "results": [
+            {
+              "test": "dispatch_signal_mask",
+              "sigusr2_blocked": 1
+            },
+            {
+              "phase": "load_linux_image"
+            },
+            {
+              "phase": "linux_init"
+            },
+            {
+              "test": "native_linux_boot",
+              "passed": true,
+              "ms": 121.907
+            },
+            {
+              "test": "linux_uname",
+              "sysname": "Linux",
+              "release": "6.12.0"
+            },
+            {
+              "test": "nce_linux_file_and_timer",
+              "passed": true
+            },
+            {
+              "test": "linux_pipe_host_threads",
+              "passed": true
+            },
+            {
+              "test": "linux_futex_wait_wake",
+              "passed": true
+            },
+            {
+              "bench": "native_linux_getpid",
+              "iterations": 100000,
+              "ns_per_call": 2018.67
+            },
+            {
+              "bench": "nce_linux_getpid_with_compute",
+              "iterations": 100000,
+              "ns_per_iteration": 77.55
+            },
+            {
+              "phase": "linux_shutdown"
+            },
+            {
+              "result": "passed"
+            }
+          ],
+          "kernel_checks": [
+            {
+              "test": "linux_smp_parallel_kernel",
+              "count": 200000,
+              "overlap_ns": 7028000,
+              "passed": true
+            },
+            {
+              "test": "linux_smp_atomic64_futex",
+              "passed": true
+            },
+            {
+              "test": "linux_smp_ipi_timer_migration",
+              "passed": true
+            },
+            {
+              "test": "linux_smp_mmu_access_boundaries",
+              "passed": true
+            },
+            {
+              "test": "linux_smp_mmu_atomic_and_unmap",
+              "passed": true,
+              "count": 40000,
+              "copies": 652778,
+              "faults": 476,
+              "generations": 28
+            },
+            {
+              "test": "linux_smp_shared_window",
+              "passed": true,
+              "count": 200000,
+              "overlap_ns": 821000
+            },
+            {
+              "test": "linux_smp_distinct_windows",
+              "passed": true,
+              "reads": 2048000,
+              "stops": 0
+            },
+            {
+              "test": "linux_smp_data_mapping_without_stop",
+              "passed": true,
+              "pages": 32,
+              "reads": 106496
+            },
+            {
+              "test": "linux_smp_guest_present_restore",
+              "passed": true,
+              "pages": 32,
+              "reads": 90112
+            },
+            {
+              "test": "linux_smp_guest_library_restore",
+              "passed": true,
+              "pages": 32,
+              "reads": 90112
+            }
+          ]
+        },
+        {
+          "entry": "probe",
+          "iteration": 1,
+          "results": [
+            {
+              "phase": "load_linux_image"
+            },
+            {
+              "phase": "linux_init"
+            },
+            {
+              "test": "native_linux_boot",
+              "passed": true,
+              "ms": 138.767
+            },
+            {
+              "test": "linux_uname",
+              "sysname": "Linux",
+              "release": "6.12.0"
+            },
+            {
+              "test": "nce_linux_file_and_timer",
+              "passed": true
+            },
+            {
+              "test": "linux_pipe_host_threads",
+              "passed": true
+            },
+            {
+              "test": "linux_futex_wait_wake",
+              "passed": true
+            },
+            {
+              "bench": "native_linux_getpid",
+              "iterations": 100000,
+              "ns_per_call": 764.42
+            },
+            {
+              "bench": "nce_linux_getpid_with_compute",
+              "iterations": 100000,
+              "ns_per_iteration": 78.45
+            },
+            {
+              "phase": "linux_shutdown"
+            },
+            {
+              "result": "passed"
+            }
+          ],
+          "kernel_checks": [
+            {
+              "test": "linux_smp_parallel_kernel",
+              "count": 200000,
+              "overlap_ns": 4895000,
+              "passed": true
+            },
+            {
+              "test": "linux_smp_atomic64_futex",
+              "passed": true
+            },
+            {
+              "test": "linux_smp_ipi_timer_migration",
+              "passed": true
+            },
+            {
+              "test": "linux_smp_mmu_access_boundaries",
+              "passed": true
+            },
+            {
+              "test": "linux_smp_mmu_atomic_and_unmap",
+              "passed": true,
+              "count": 40000,
+              "copies": 762463,
+              "faults": 926,
+              "generations": 45
+            },
+            {
+              "test": "linux_smp_shared_window",
+              "passed": true,
+              "count": 200000,
+              "overlap_ns": 680000
+            },
+            {
+              "test": "linux_smp_distinct_windows",
+              "passed": true,
+              "reads": 2048000,
+              "stops": 0
+            },
+            {
+              "test": "linux_smp_data_mapping_without_stop",
+              "passed": true,
+              "pages": 32,
+              "reads": 147456
+            },
+            {
+              "test": "linux_smp_guest_present_restore",
+              "passed": true,
+              "pages": 32,
+              "reads": 102400
+            },
+            {
+              "test": "linux_smp_guest_library_restore",
+              "passed": true,
+              "pages": 32,
+              "reads": 90112
+            }
+          ]
+        },
+        {
+          "entry": "dispatch-probe",
+          "iteration": 1,
+          "results": [
+            {
+              "test": "dispatch_signal_mask",
+              "sigusr2_blocked": 1
+            },
+            {
+              "phase": "load_linux_image"
+            },
+            {
+              "phase": "linux_init"
+            },
+            {
+              "test": "native_linux_boot",
+              "passed": true,
+              "ms": 102.825
+            },
+            {
+              "test": "linux_uname",
+              "sysname": "Linux",
+              "release": "6.12.0"
+            },
+            {
+              "test": "nce_linux_file_and_timer",
+              "passed": true
+            },
+            {
+              "test": "linux_pipe_host_threads",
+              "passed": true
+            },
+            {
+              "test": "linux_futex_wait_wake",
+              "passed": true
+            },
+            {
+              "bench": "native_linux_getpid",
+              "iterations": 100000,
+              "ns_per_call": 89.84
+            },
+            {
+              "bench": "nce_linux_getpid_with_compute",
+              "iterations": 100000,
+              "ns_per_iteration": 117.46
+            },
+            {
+              "phase": "linux_shutdown"
+            },
+            {
+              "result": "passed"
+            }
+          ],
+          "kernel_checks": [
+            {
+              "test": "linux_smp_parallel_kernel",
+              "count": 200000,
+              "overlap_ns": 21866000,
+              "passed": true
+            },
+            {
+              "test": "linux_smp_atomic64_futex",
+              "passed": true
+            },
+            {
+              "test": "linux_smp_ipi_timer_migration",
+              "passed": true
+            },
+            {
+              "test": "linux_smp_mmu_access_boundaries",
+              "passed": true
+            },
+            {
+              "test": "linux_smp_mmu_atomic_and_unmap",
+              "passed": true,
+              "count": 40000,
+              "copies": 522596,
+              "faults": 619,
+              "generations": 52
+            },
+            {
+              "test": "linux_smp_shared_window",
+              "passed": true,
+              "count": 200000,
+              "overlap_ns": 1066000
+            },
+            {
+              "test": "linux_smp_distinct_windows",
+              "passed": true,
+              "reads": 2048000,
+              "stops": 0
+            },
+            {
+              "test": "linux_smp_data_mapping_without_stop",
+              "passed": true,
+              "pages": 32,
+              "reads": 126976
+            },
+            {
+              "test": "linux_smp_guest_present_restore",
+              "passed": true,
+              "pages": 32,
+              "reads": 98304
+            },
+            {
+              "test": "linux_smp_guest_library_restore",
+              "passed": true,
+              "pages": 32,
+              "reads": 356352
+            }
+          ]
+        },
+        {
+          "entry": "probe",
+          "iteration": 2,
+          "results": [
+            {
+              "phase": "load_linux_image"
+            },
+            {
+              "phase": "linux_init"
+            },
+            {
+              "test": "native_linux_boot",
+              "passed": true,
+              "ms": 145.598
+            },
+            {
+              "test": "linux_uname",
+              "sysname": "Linux",
+              "release": "6.12.0"
+            },
+            {
+              "test": "nce_linux_file_and_timer",
+              "passed": true
+            },
+            {
+              "test": "linux_pipe_host_threads",
+              "passed": true
+            },
+            {
+              "test": "linux_futex_wait_wake",
+              "passed": true
+            },
+            {
+              "bench": "native_linux_getpid",
+              "iterations": 100000,
+              "ns_per_call": 2584.86
+            },
+            {
+              "bench": "nce_linux_getpid_with_compute",
+              "iterations": 100000,
+              "ns_per_iteration": 88.48
+            },
+            {
+              "phase": "linux_shutdown"
+            },
+            {
+              "result": "passed"
+            }
+          ],
+          "kernel_checks": [
+            {
+              "test": "linux_smp_parallel_kernel",
+              "count": 200000,
+              "overlap_ns": 23589000,
+              "passed": true
+            },
+            {
+              "test": "linux_smp_atomic64_futex",
+              "passed": true
+            },
+            {
+              "test": "linux_smp_ipi_timer_migration",
+              "passed": true
+            },
+            {
+              "test": "linux_smp_mmu_access_boundaries",
+              "passed": true
+            },
+            {
+              "test": "linux_smp_mmu_atomic_and_unmap",
+              "passed": true,
+              "count": 40000,
+              "copies": 221316,
+              "faults": 2515,
+              "generations": 20
+            },
+            {
+              "test": "linux_smp_shared_window",
+              "passed": true,
+              "count": 200000,
+              "overlap_ns": 644000
+            },
+            {
+              "test": "linux_smp_distinct_windows",
+              "passed": true,
+              "reads": 2048000,
+              "stops": 0
+            },
+            {
+              "test": "linux_smp_data_mapping_without_stop",
+              "passed": true,
+              "pages": 32,
+              "reads": 139264
+            },
+            {
+              "test": "linux_smp_guest_present_restore",
+              "passed": true,
+              "pages": 32,
+              "reads": 90112
+            },
+            {
+              "test": "linux_smp_guest_library_restore",
+              "passed": true,
+              "pages": 32,
+              "reads": 98304
+            }
+          ]
+        },
+        {
+          "entry": "dispatch-probe",
+          "iteration": 2,
+          "results": [
+            {
+              "test": "dispatch_signal_mask",
+              "sigusr2_blocked": 1
+            },
+            {
+              "phase": "load_linux_image"
+            },
+            {
+              "phase": "linux_init"
+            },
+            {
+              "test": "native_linux_boot",
+              "passed": true,
+              "ms": 126.016
+            },
+            {
+              "test": "linux_uname",
+              "sysname": "Linux",
+              "release": "6.12.0"
+            },
+            {
+              "test": "nce_linux_file_and_timer",
+              "passed": true
+            },
+            {
+              "test": "linux_pipe_host_threads",
+              "passed": true
+            },
+            {
+              "test": "linux_futex_wait_wake",
+              "passed": true
+            },
+            {
+              "bench": "native_linux_getpid",
+              "iterations": 100000,
+              "ns_per_call": 2248.86
+            },
+            {
+              "bench": "nce_linux_getpid_with_compute",
+              "iterations": 100000,
+              "ns_per_iteration": 88.37
+            },
+            {
+              "phase": "linux_shutdown"
+            },
+            {
+              "result": "passed"
+            }
+          ],
+          "kernel_checks": [
+            {
+              "test": "linux_smp_parallel_kernel",
+              "count": 200000,
+              "overlap_ns": 4984000,
+              "passed": true
+            },
+            {
+              "test": "linux_smp_atomic64_futex",
+              "passed": true
+            },
+            {
+              "test": "linux_smp_ipi_timer_migration",
+              "passed": true
+            },
+            {
+              "test": "linux_smp_mmu_access_boundaries",
+              "passed": true
+            },
+            {
+              "test": "linux_smp_mmu_atomic_and_unmap",
+              "passed": true,
+              "count": 40000,
+              "copies": 1078137,
+              "faults": 12207,
+              "generations": 52
+            },
+            {
+              "test": "linux_smp_shared_window",
+              "passed": true,
+              "count": 200000,
+              "overlap_ns": 1445000
+            },
+            {
+              "test": "linux_smp_distinct_windows",
+              "passed": true,
+              "reads": 2048000,
+              "stops": 0
+            },
+            {
+              "test": "linux_smp_data_mapping_without_stop",
+              "passed": true,
+              "pages": 32,
+              "reads": 888832
+            },
+            {
+              "test": "linux_smp_guest_present_restore",
+              "passed": true,
+              "pages": 32,
+              "reads": 430080
+            },
+            {
+              "test": "linux_smp_guest_library_restore",
+              "passed": true,
+              "pages": 32,
+              "reads": 724992
+            }
+          ]
+        }
+      ],
+      "inputs": {
+        "scripts/probe_lkl_smp.py": "02811aafa46adca08bb2990a7940b1ad8bddff2c004979cd0444bb053fbb06f6",
+        "scripts/lkl_smp_patch.py": "75598f70efc03eda69bfd8bb0a9991c68b9d9d47ed908938a4da5c1c1f9f2afa",
+        "scripts/lkl_nce_patch.py": "3aa45cc89c0e13aa5925efd0ed4348bf77318cd6f0b0006fb2fe678471e134d9",
+        "scripts/lkl_smp_mmu_patch.py": "99aab8be64839504731fdefe70ba81205c82606558c3aa6b50042521f3f1448b",
+        "scripts/probe_lkl.py": "c92d95020e1c179d78e363b50a9c249d6fd72331f5f6199aa5dbab1057e73de9",
+        "experiments/native-linux/smp/barrier.h": "7b876a7e45e50ca337e32182bb3a613af92bacd6e2f52e8f26762131b3bf789e",
+        "experiments/native-linux/smp/cmpxchg.h": "d5935bc077108929f29c14c4b930c7b57578eba04a72ae6a51000e59fbeaace3",
+        "experiments/native-linux/smp/core.h": "05bd56b8be546e2d7169393be10e642cdd4685c6416f6f8c23402fe6988b98d9",
+        "experiments/native-linux/smp/futex.h": "17d59ac7861cbd26c7a6e6a2a37ca34763890a42ea09c9735b43573c3e9e3062",
+        "experiments/native-linux/smp/mmu-host.c": "9a874741c6e6f6546b8151e4355a3d1cbe4c787aa146011921604ea1143d3097",
+        "experiments/native-linux/smp/mmu-host.h": "ff2a0dbaa1a19f1a7be99a7fcb859f157c6b84cd238ec9acacab4e7724d6782c",
+        "experiments/native-linux/smp/mmu-test.c": "1c713bbeab0127fdf5c72ad51835dc4703e09d66d54cddd1277239ac67602158",
+        "experiments/native-linux/smp/present-fault.h": "71a6d4ea8427b0ee9b1b32f0734a5b056dc4e0079fb74fefe41bb38fc656f8f2",
+        "experiments/native-linux/smp/smp.c": "fad3b284035dc949f05d84ae13ad7b1b0cd2900024f905f38ad368a651ff0e95",
+        "experiments/native-linux/smp/smp.h": "abfdfb4437f77747084cdb4971248dba9718fd2f6f9480ef00d4aeaadf4cdab0",
+        "experiments/native-linux/smp/test.c": "d0b39c670ac9cf6797be9aa6d7127bbdda8b716a4d28f333339694b547f737b5",
+        "experiments/native-linux/smp/time.c": "15198fffd6685dc865a4aa841bc738f893d64439052e880b3358fbd9b1138afb",
+        "experiments/native-linux/smp/topology.h": "2901026feaf7c64ef5507ceba84469ac62fd4b2daa3e2075bd18088812d54ae7",
+        "experiments/native-linux/smp/uaccess.c": "c478af4a56d154c2274711c7faa49d1a5f8c0af28d496f676aa2ef175d92138e",
+        "experiments/native-linux/smp/uaccess.h": "4252db4fb8b40ebe699196b3f1019de75ec44f9143dafad48006f140067938fb",
+        "experiments/native-linux/smp/window-test.c": "a88cc174619830233784998a709d19bd012bc102d9a846f14a024b9d74f51143",
+        "experiments/native-linux/smp/window.c": "73a820e02b09b16a1859aaa97a21bc8ab38f3d9ad3fc725416d2f56c885bc2bf",
+        "experiments/native-linux/smp/window.h": "0cc93b042267cb00bc81e44afd427fa4537cbf49d2f91160de530f3088b0e305",
+        "experiments/native-linux/lkl-main.c": "a857b2eb50fe2ddc63b28263d70a43036dee1e6138979a6ac8e2431cfd5de44b",
+        "experiments/native-linux/lkl-host.c": "49c63f1be4112408bbe5bdced53cf8bd0314eedaf770fe4d869d30edf3a6c671",
+        "experiments/native-linux/lkl-bridge.c": "15ecb94c6da3451b66dfc784b189792d220c73faaf1727a8e6121b48456cbd37",
+        "experiments/native-linux/dispatch-test.c": "5211698bd58018aae173d4c6d75daeeb0e4eb357fb2742c4c08d595bc9d7b55b",
+        "experiments/native-linux/nce.c": "fac0dff4a7e683a47a3fafa3877f69f279a816115b81ca4f1d9dad709a7e402d",
+        "experiments/native-linux/nce-thread.c": "f9f7ddedf2d640ddbab6d0700409c9ba43da4017991b42aeb7e0a4f17034be4e",
+        "experiments/native-linux/nce.h": "7bcdc5e777e10e1d70f0bf1838a2160e87c70613a44b90b16c3e07aedf4a9f58",
+        "experiments/native-linux/nce-thread.h": "4b289193a10b16ae74982c0d986f949ef61b4fffb84211b4033e05c43deddeff",
+        "experiments/native-linux/entry.S": "7c18477d050befc16c1f749c591f3aa88ec9955a281bd368fff32a73c76f8102",
+        "experiments/native-linux/layout.h": "9ecb6dc474edfc516284effcbd1999ba445ba88372233636391771a0715deaa5",
+        "experiments/native-linux/lkl-nce-block.c": "2a8d0356c87a73575f760755d4666a53ecacca3d55eb33dea797f1ebbb8e3b60",
+        "experiments/native-linux/lkl-nce-elf.c": "ddf6494c012b2017f26a647bd9a4eb0002f7fa96a93a6c0a491da883f259ff20",
+        "experiments/native-linux/lkl-nce-mmu.c": "e91e227b43d903c851af9c0491380ae6525bbf5a0fafa41314a688609bc62be4",
+        "experiments/native-linux/lkl-nce-process.c": "0fe64668ed5c77a84f3c4cd1440b451908913eaed1c25cad4f2fc093581b8d22",
+        "experiments/native-linux/lkl-nce-reclaim.c": "0341deb0311e7262427e4d0d6e5c0f335cb19af018ab227e4615840c736be293",
+        "experiments/native-linux/lkl-nce-schedule.c": "32dbb6b603eafb65cc9bd512a926ace0f9d9bd093601c3bf29f40f557d40af4e",
+        "experiments/native-linux/lkl-nce-signal.c": "d5e0d29dbc408dd419edfb5b5006ce25fca62eed0b64dfeb80c0aa573a17422e",
+        "experiments/native-linux/lkl-elf.h": "addf40a6adc1a51ddb68bffa315f1c74afed260508cc154be1d696b149ceb99b",
+        "experiments/native-linux/lkl-fcntl.h": "a93dbe60bbed231461aead2289756e46996e8486b50e895a5b4af798ee98da47",
+        "experiments/native-linux/lkl-mmu-context.h": "38b62f9a8056956cf41752467a9b6ff4ee0a31f9e339013600c23bd87e5c56d0",
+        "experiments/native-linux/lkl-mmu-profile.h": "c6410a8ac3d795c136b00c8108e698ac7a7f04e0ec3cf85cfbc4a01a60fa48aa",
+        "experiments/native-linux/lkl-mmu.h": "a38bb934c2e33959d92c1bde7ad2aebd1bf6c77343956669bb59da6c8e11f2ca",
+        "experiments/native-linux/lkl-seccomp.h": "95aa047dcb9ececaa38898eeebab120953c65448e05331cc079eae32807de7ac",
+        "experiments/native-linux/lkl-signal.h": "d16a7718ab952a7f2f53adc6b6381a0cb2fd6b352f47cefb1ec72f0d862d1491",
+        "experiments/native-linux/lkl-syscall.h": "a895d2f1e7aa6a34b5645d21b6fcedbcd2952dd69ad6b6067724d51f47c1cfac",
+        "experiments/native-linux/lkl-tlbflush.h": "e9140c9203d073e3a46d2c2f0e3f88b816c8ddc652fba53bca1196b31b173eea",
+        "experiments/native-linux/lkl-uaccess.h": "7a326a80c7c386f2a94f1c375a84b490e2bc16a9287e310a02f7ab649fb548b3",
+        "experiments/native-linux/guest-registers.h": "90a4d5b6e613ce4f2cda359dcd05f6e8d876a788bc437c2c1e13e05403e4627a",
+        "scripts/lkl_smp_core_patch.py": "aaea75ea74e5dae1aadbd151be864ee56a5f4448cea93f3bf01e8c9a96327966"
+      }
+    },
+    "userspace_status": "CLI fails desktop keyguard deadline; normal cleanup passes; GCD pending",
+    "prior_kernel_failure": "guard timeout phases=peer-entry/guard-check held=1 checked=0 window=cde6",
+    "test_barrier_fix": "withdraw arrival count before cooperative re-entry; once both CPUs arrive, retain the state through the guard check",
+    "kernel_uncoordinated_regression": {
+      "source": {
+        "path": "work/native-linux-nce/smp-mmu/summary.json",
+        "sha256": "1d41680aab2a360273c777810099f61405d80ef30d5c4059d17b86b3209846cf"
+      },
+      "runs": [
+        {
+          "entry": "probe",
+          "iteration": 0,
+          "results": [
+            {
+              "phase": "load_linux_image"
+            },
+            {
+              "phase": "linux_init"
+            },
+            {
+              "test": "native_linux_boot",
+              "passed": true,
+              "ms": 108.144
+            },
+            {
+              "test": "linux_uname",
+              "sysname": "Linux",
+              "release": "6.12.0"
+            },
+            {
+              "test": "nce_linux_file_and_timer",
+              "passed": true
+            },
+            {
+              "test": "linux_pipe_host_threads",
+              "passed": true
+            },
+            {
+              "test": "linux_futex_wait_wake",
+              "passed": true
+            },
+            {
+              "bench": "native_linux_getpid",
+              "iterations": 100000,
+              "ns_per_call": 57.25
+            },
+            {
+              "bench": "nce_linux_getpid_with_compute",
+              "iterations": 100000,
+              "ns_per_iteration": 82.5
+            },
+            {
+              "phase": "linux_shutdown"
+            },
+            {
+              "result": "passed"
+            }
+          ],
+          "kernel_checks": [
+            {
+              "test": "linux_smp_parallel_kernel",
+              "count": 200000,
+              "overlap_ns": 9322000,
+              "passed": true
+            },
+            {
+              "test": "linux_smp_atomic64_futex",
+              "passed": true
+            },
+            {
+              "test": "linux_smp_ipi_timer_migration",
+              "passed": true
+            },
+            {
+              "test": "linux_smp_mmu_access_boundaries",
+              "passed": true
+            },
+            {
+              "test": "linux_smp_mmu_atomic_and_unmap",
+              "passed": true,
+              "count": 40000,
+              "copies": 3599149,
+              "faults": 7204,
+              "generations": 230
+            },
+            {
+              "test": "linux_smp_shared_window",
+              "passed": true,
+              "count": 200000,
+              "overlap_ns": 1061000
+            },
+            {
+              "test": "linux_smp_distinct_windows",
+              "passed": true,
+              "reads": 1744593,
+              "stops": 431
+            },
+            {
+              "test": "linux_smp_data_mapping_without_stop",
+              "passed": true,
+              "pages": 32,
+              "reads": 106496
+            },
+            {
+              "test": "linux_smp_guest_present_restore",
+              "passed": true,
+              "pages": 32,
+              "reads": 172032
+            },
+            {
+              "test": "linux_smp_guest_library_restore",
+              "passed": true,
+              "pages": 32,
+              "reads": 98304
+            }
+          ]
+        },
+        {
+          "entry": "dispatch-probe",
+          "iteration": 0,
+          "results": [
+            {
+              "test": "dispatch_signal_mask",
+              "sigusr2_blocked": 1
+            },
+            {
+              "phase": "load_linux_image"
+            },
+            {
+              "phase": "linux_init"
+            },
+            {
+              "test": "native_linux_boot",
+              "passed": true,
+              "ms": 64.313
+            },
+            {
+              "test": "linux_uname",
+              "sysname": "Linux",
+              "release": "6.12.0"
+            },
+            {
+              "test": "nce_linux_file_and_timer",
+              "passed": true
+            },
+            {
+              "test": "linux_pipe_host_threads",
+              "passed": true
+            },
+            {
+              "test": "linux_futex_wait_wake",
+              "passed": true
+            },
+            {
+              "bench": "native_linux_getpid",
+              "iterations": 100000,
+              "ns_per_call": 40.94
+            },
+            {
+              "bench": "nce_linux_getpid_with_compute",
+              "iterations": 100000,
+              "ns_per_iteration": 78.37
+            },
+            {
+              "phase": "linux_shutdown"
+            },
+            {
+              "result": "passed"
+            }
+          ],
+          "kernel_checks": [
+            {
+              "test": "linux_smp_parallel_kernel",
+              "count": 200000,
+              "overlap_ns": 15557000,
+              "passed": true
+            },
+            {
+              "test": "linux_smp_atomic64_futex",
+              "passed": true
+            },
+            {
+              "test": "linux_smp_ipi_timer_migration",
+              "passed": true
+            },
+            {
+              "test": "linux_smp_mmu_access_boundaries",
+              "passed": true
+            },
+            {
+              "test": "linux_smp_mmu_atomic_and_unmap",
+              "passed": true,
+              "count": 40000,
+              "copies": 1068375,
+              "faults": 6443,
+              "generations": 158
+            },
+            {
+              "test": "linux_smp_shared_window",
+              "passed": true,
+              "count": 200000,
+              "overlap_ns": 586000
+            },
+            {
+              "test": "linux_smp_distinct_windows",
+              "passed": true,
+              "reads": 1730778,
+              "stops": 508
+            },
+            {
+              "test": "linux_smp_data_mapping_without_stop",
+              "passed": true,
+              "pages": 32,
+              "reads": 135168
+            },
+            {
+              "test": "linux_smp_guest_present_restore",
+              "passed": true,
+              "pages": 32,
+              "reads": 81920
+            },
+            {
+              "test": "linux_smp_guest_library_restore",
+              "passed": true,
+              "pages": 32,
+              "reads": 118784
+            }
+          ]
+        },
+        {
+          "entry": "probe",
+          "iteration": 1,
+          "results": [
+            {
+              "phase": "load_linux_image"
+            },
+            {
+              "phase": "linux_init"
+            },
+            {
+              "test": "native_linux_boot",
+              "passed": true,
+              "ms": 83.852
+            },
+            {
+              "test": "linux_uname",
+              "sysname": "Linux",
+              "release": "6.12.0"
+            },
+            {
+              "test": "nce_linux_file_and_timer",
+              "passed": true
+            },
+            {
+              "test": "linux_pipe_host_threads",
+              "passed": true
+            },
+            {
+              "test": "linux_futex_wait_wake",
+              "passed": true
+            },
+            {
+              "bench": "native_linux_getpid",
+              "iterations": 100000,
+              "ns_per_call": 42.84
+            },
+            {
+              "bench": "nce_linux_getpid_with_compute",
+              "iterations": 100000,
+              "ns_per_iteration": 76.44
+            },
+            {
+              "phase": "linux_shutdown"
+            },
+            {
+              "result": "passed"
+            }
+          ],
+          "kernel_checks": [
+            {
+              "test": "linux_smp_parallel_kernel",
+              "count": 200000,
+              "overlap_ns": 22778000,
+              "passed": true
+            },
+            {
+              "test": "linux_smp_atomic64_futex",
+              "passed": true
+            },
+            {
+              "test": "linux_smp_ipi_timer_migration",
+              "passed": true
+            },
+            {
+              "test": "linux_smp_mmu_access_boundaries",
+              "passed": true
+            },
+            {
+              "test": "linux_smp_mmu_atomic_and_unmap",
+              "passed": true,
+              "count": 40000,
+              "copies": 1823381,
+              "faults": 3418,
+              "generations": 133
+            },
+            {
+              "test": "linux_smp_shared_window",
+              "passed": true,
+              "count": 200000,
+              "overlap_ns": 713000
+            },
+            {
+              "test": "linux_smp_distinct_windows",
+              "passed": true,
+              "reads": 1550833,
+              "stops": 641
+            },
+            {
+              "test": "linux_smp_data_mapping_without_stop",
+              "passed": true,
+              "pages": 32,
+              "reads": 106496
+            },
+            {
+              "test": "linux_smp_guest_present_restore",
+              "passed": true,
+              "pages": 32,
+              "reads": 86016
+            },
+            {
+              "test": "linux_smp_guest_library_restore",
+              "passed": true,
+              "pages": 32,
+              "reads": 94208
+            }
+          ]
+        },
+        {
+          "entry": "dispatch-probe",
+          "iteration": 1,
+          "results": [
+            {
+              "test": "dispatch_signal_mask",
+              "sigusr2_blocked": 1
+            },
+            {
+              "phase": "load_linux_image"
+            },
+            {
+              "phase": "linux_init"
+            },
+            {
+              "test": "native_linux_boot",
+              "passed": true,
+              "ms": 54.621
+            },
+            {
+              "test": "linux_uname",
+              "sysname": "Linux",
+              "release": "6.12.0"
+            },
+            {
+              "test": "nce_linux_file_and_timer",
+              "passed": true
+            },
+            {
+              "test": "linux_pipe_host_threads",
+              "passed": true
+            },
+            {
+              "test": "linux_futex_wait_wake",
+              "passed": true
+            },
+            {
+              "bench": "native_linux_getpid",
+              "iterations": 100000,
+              "ns_per_call": 54.57
+            },
+            {
+              "bench": "nce_linux_getpid_with_compute",
+              "iterations": 100000,
+              "ns_per_iteration": 83.37
+            },
+            {
+              "phase": "linux_shutdown"
+            },
+            {
+              "result": "passed"
+            }
+          ],
+          "kernel_checks": [
+            {
+              "test": "linux_smp_parallel_kernel",
+              "count": 200000,
+              "overlap_ns": 22833000,
+              "passed": true
+            },
+            {
+              "test": "linux_smp_atomic64_futex",
+              "passed": true
+            },
+            {
+              "test": "linux_smp_ipi_timer_migration",
+              "passed": true
+            },
+            {
+              "test": "linux_smp_mmu_access_boundaries",
+              "passed": true
+            },
+            {
+              "test": "linux_smp_mmu_atomic_and_unmap",
+              "passed": true,
+              "count": 40000,
+              "copies": 1972544,
+              "faults": 6960,
+              "generations": 232
+            },
+            {
+              "test": "linux_smp_shared_window",
+              "passed": true,
+              "count": 200000,
+              "overlap_ns": 1021000
+            },
+            {
+              "test": "linux_smp_distinct_windows",
+              "passed": true,
+              "reads": 1589810,
+              "stops": 586
+            },
+            {
+              "test": "linux_smp_data_mapping_without_stop",
+              "passed": true,
+              "pages": 32,
+              "reads": 172032
+            },
+            {
+              "test": "linux_smp_guest_present_restore",
+              "passed": true,
+              "pages": 32,
+              "reads": 303104
+            },
+            {
+              "test": "linux_smp_guest_library_restore",
+              "passed": true,
+              "pages": 32,
+              "reads": 81920
+            }
+          ]
+        },
+        {
+          "entry": "probe",
+          "iteration": 2,
+          "results": [
+            {
+              "phase": "load_linux_image"
+            },
+            {
+              "phase": "linux_init"
+            },
+            {
+              "test": "native_linux_boot",
+              "passed": true,
+              "ms": 66.612
+            },
+            {
+              "test": "linux_uname",
+              "sysname": "Linux",
+              "release": "6.12.0"
+            },
+            {
+              "test": "nce_linux_file_and_timer",
+              "passed": true
+            },
+            {
+              "test": "linux_pipe_host_threads",
+              "passed": true
+            },
+            {
+              "test": "linux_futex_wait_wake",
+              "passed": true
+            },
+            {
+              "bench": "native_linux_getpid",
+              "iterations": 100000,
+              "ns_per_call": 54.09
+            },
+            {
+              "bench": "nce_linux_getpid_with_compute",
+              "iterations": 100000,
+              "ns_per_iteration": 87.83
+            },
+            {
+              "phase": "linux_shutdown"
+            },
+            {
+              "result": "passed"
+            }
+          ],
+          "kernel_checks": [
+            {
+              "test": "linux_smp_parallel_kernel",
+              "count": 200000,
+              "overlap_ns": 22825000,
+              "passed": true
+            },
+            {
+              "test": "linux_smp_atomic64_futex",
+              "passed": true
+            },
+            {
+              "test": "linux_smp_ipi_timer_migration",
+              "passed": true
+            },
+            {
+              "test": "linux_smp_mmu_access_boundaries",
+              "passed": true
+            },
+            {
+              "test": "linux_smp_mmu_atomic_and_unmap",
+              "passed": true,
+              "count": 40000,
+              "copies": 2690622,
+              "faults": 5007,
+              "generations": 201
+            },
+            {
+              "test": "linux_smp_shared_window",
+              "passed": true,
+              "count": 200000,
+              "overlap_ns": 681000
+            },
+            {
+              "test": "linux_smp_distinct_windows",
+              "passed": true,
+              "reads": 1064915,
+              "stops": 974
+            },
+            {
+              "test": "linux_smp_data_mapping_without_stop",
+              "passed": true,
+              "pages": 32,
+              "reads": 114688
+            },
+            {
+              "test": "linux_smp_guest_present_restore",
+              "passed": true,
+              "pages": 32,
+              "reads": 86016
+            },
+            {
+              "test": "linux_smp_guest_library_restore",
+              "passed": true,
+              "pages": 32,
+              "reads": 77824
+            }
+          ]
+        },
+        {
+          "entry": "dispatch-probe",
+          "iteration": 2,
+          "results": [
+            {
+              "test": "dispatch_signal_mask",
+              "sigusr2_blocked": 1
+            },
+            {
+              "phase": "load_linux_image"
+            },
+            {
+              "phase": "linux_init"
+            },
+            {
+              "test": "native_linux_boot",
+              "passed": true,
+              "ms": 81.03
+            },
+            {
+              "test": "linux_uname",
+              "sysname": "Linux",
+              "release": "6.12.0"
+            },
+            {
+              "test": "nce_linux_file_and_timer",
+              "passed": true
+            },
+            {
+              "test": "linux_pipe_host_threads",
+              "passed": true
+            },
+            {
+              "test": "linux_futex_wait_wake",
+              "passed": true
+            },
+            {
+              "bench": "native_linux_getpid",
+              "iterations": 100000,
+              "ns_per_call": 56.86
+            },
+            {
+              "bench": "nce_linux_getpid_with_compute",
+              "iterations": 100000,
+              "ns_per_iteration": 86.86
+            },
+            {
+              "phase": "linux_shutdown"
+            },
+            {
+              "result": "passed"
+            }
+          ],
+          "kernel_checks": [
+            {
+              "test": "linux_smp_parallel_kernel",
+              "count": 200000,
+              "overlap_ns": 4967000,
+              "passed": true
+            },
+            {
+              "test": "linux_smp_atomic64_futex",
+              "passed": true
+            },
+            {
+              "test": "linux_smp_ipi_timer_migration",
+              "passed": true
+            },
+            {
+              "test": "linux_smp_mmu_access_boundaries",
+              "passed": true
+            },
+            {
+              "test": "linux_smp_mmu_atomic_and_unmap",
+              "passed": true,
+              "count": 40000,
+              "copies": 4585693,
+              "faults": 5622,
+              "generations": 280
+            },
+            {
+              "test": "linux_smp_shared_window",
+              "passed": true,
+              "count": 200000,
+              "overlap_ns": 688000
+            },
+            {
+              "test": "linux_smp_distinct_windows",
+              "passed": true,
+              "reads": 1660826,
+              "stops": 508
+            },
+            {
+              "test": "linux_smp_data_mapping_without_stop",
+              "passed": true,
+              "pages": 32,
+              "reads": 126976
+            },
+            {
+              "test": "linux_smp_guest_present_restore",
+              "passed": true,
+              "pages": 32,
+              "reads": 61440
+            },
+            {
+              "test": "linux_smp_guest_library_restore",
+              "passed": true,
+              "pages": 32,
+              "reads": 69632
+            }
+          ]
+        }
+      ],
+      "inputs": {
+        "scripts/probe_lkl_smp.py": "02811aafa46adca08bb2990a7940b1ad8bddff2c004979cd0444bb053fbb06f6",
+        "scripts/lkl_smp_patch.py": "75598f70efc03eda69bfd8bb0a9991c68b9d9d47ed908938a4da5c1c1f9f2afa",
+        "scripts/lkl_nce_patch.py": "3aa45cc89c0e13aa5925efd0ed4348bf77318cd6f0b0006fb2fe678471e134d9",
+        "scripts/lkl_smp_mmu_patch.py": "99aab8be64839504731fdefe70ba81205c82606558c3aa6b50042521f3f1448b",
+        "scripts/probe_lkl.py": "c92d95020e1c179d78e363b50a9c249d6fd72331f5f6199aa5dbab1057e73de9",
+        "experiments/native-linux/smp/barrier.h": "7b876a7e45e50ca337e32182bb3a613af92bacd6e2f52e8f26762131b3bf789e",
+        "experiments/native-linux/smp/cmpxchg.h": "d5935bc077108929f29c14c4b930c7b57578eba04a72ae6a51000e59fbeaace3",
+        "experiments/native-linux/smp/core.h": "05bd56b8be546e2d7169393be10e642cdd4685c6416f6f8c23402fe6988b98d9",
+        "experiments/native-linux/smp/futex.h": "17d59ac7861cbd26c7a6e6a2a37ca34763890a42ea09c9735b43573c3e9e3062",
+        "experiments/native-linux/smp/mmu-host.c": "9a874741c6e6f6546b8151e4355a3d1cbe4c787aa146011921604ea1143d3097",
+        "experiments/native-linux/smp/mmu-host.h": "ff2a0dbaa1a19f1a7be99a7fcb859f157c6b84cd238ec9acacab4e7724d6782c",
+        "experiments/native-linux/smp/mmu-test.c": "1c713bbeab0127fdf5c72ad51835dc4703e09d66d54cddd1277239ac67602158",
+        "experiments/native-linux/smp/present-fault.h": "71a6d4ea8427b0ee9b1b32f0734a5b056dc4e0079fb74fefe41bb38fc656f8f2",
+        "experiments/native-linux/smp/smp.c": "fad3b284035dc949f05d84ae13ad7b1b0cd2900024f905f38ad368a651ff0e95",
+        "experiments/native-linux/smp/smp.h": "abfdfb4437f77747084cdb4971248dba9718fd2f6f9480ef00d4aeaadf4cdab0",
+        "experiments/native-linux/smp/test.c": "d0b39c670ac9cf6797be9aa6d7127bbdda8b716a4d28f333339694b547f737b5",
+        "experiments/native-linux/smp/time.c": "15198fffd6685dc865a4aa841bc738f893d64439052e880b3358fbd9b1138afb",
+        "experiments/native-linux/smp/topology.h": "2901026feaf7c64ef5507ceba84469ac62fd4b2daa3e2075bd18088812d54ae7",
+        "experiments/native-linux/smp/uaccess.c": "c478af4a56d154c2274711c7faa49d1a5f8c0af28d496f676aa2ef175d92138e",
+        "experiments/native-linux/smp/uaccess.h": "4252db4fb8b40ebe699196b3f1019de75ec44f9143dafad48006f140067938fb",
+        "experiments/native-linux/smp/window-test.c": "a88cc174619830233784998a709d19bd012bc102d9a846f14a024b9d74f51143",
+        "experiments/native-linux/smp/window.c": "73a820e02b09b16a1859aaa97a21bc8ab38f3d9ad3fc725416d2f56c885bc2bf",
+        "experiments/native-linux/smp/window.h": "0cc93b042267cb00bc81e44afd427fa4537cbf49d2f91160de530f3088b0e305",
+        "experiments/native-linux/lkl-main.c": "a857b2eb50fe2ddc63b28263d70a43036dee1e6138979a6ac8e2431cfd5de44b",
+        "experiments/native-linux/lkl-host.c": "49c63f1be4112408bbe5bdced53cf8bd0314eedaf770fe4d869d30edf3a6c671",
+        "experiments/native-linux/lkl-bridge.c": "15ecb94c6da3451b66dfc784b189792d220c73faaf1727a8e6121b48456cbd37",
+        "experiments/native-linux/dispatch-test.c": "5211698bd58018aae173d4c6d75daeeb0e4eb357fb2742c4c08d595bc9d7b55b",
+        "experiments/native-linux/nce.c": "fac0dff4a7e683a47a3fafa3877f69f279a816115b81ca4f1d9dad709a7e402d",
+        "experiments/native-linux/nce-thread.c": "f9f7ddedf2d640ddbab6d0700409c9ba43da4017991b42aeb7e0a4f17034be4e",
+        "experiments/native-linux/nce.h": "7bcdc5e777e10e1d70f0bf1838a2160e87c70613a44b90b16c3e07aedf4a9f58",
+        "experiments/native-linux/nce-thread.h": "4b289193a10b16ae74982c0d986f949ef61b4fffb84211b4033e05c43deddeff",
+        "experiments/native-linux/entry.S": "7c18477d050befc16c1f749c591f3aa88ec9955a281bd368fff32a73c76f8102",
+        "experiments/native-linux/layout.h": "9ecb6dc474edfc516284effcbd1999ba445ba88372233636391771a0715deaa5",
+        "experiments/native-linux/lkl-nce-block.c": "2a8d0356c87a73575f760755d4666a53ecacca3d55eb33dea797f1ebbb8e3b60",
+        "experiments/native-linux/lkl-nce-elf.c": "ddf6494c012b2017f26a647bd9a4eb0002f7fa96a93a6c0a491da883f259ff20",
+        "experiments/native-linux/lkl-nce-mmu.c": "e91e227b43d903c851af9c0491380ae6525bbf5a0fafa41314a688609bc62be4",
+        "experiments/native-linux/lkl-nce-process.c": "0fe64668ed5c77a84f3c4cd1440b451908913eaed1c25cad4f2fc093581b8d22",
+        "experiments/native-linux/lkl-nce-reclaim.c": "0341deb0311e7262427e4d0d6e5c0f335cb19af018ab227e4615840c736be293",
+        "experiments/native-linux/lkl-nce-schedule.c": "32dbb6b603eafb65cc9bd512a926ace0f9d9bd093601c3bf29f40f557d40af4e",
+        "experiments/native-linux/lkl-nce-signal.c": "d5e0d29dbc408dd419edfb5b5006ce25fca62eed0b64dfeb80c0aa573a17422e",
+        "experiments/native-linux/lkl-elf.h": "addf40a6adc1a51ddb68bffa315f1c74afed260508cc154be1d696b149ceb99b",
+        "experiments/native-linux/lkl-fcntl.h": "a93dbe60bbed231461aead2289756e46996e8486b50e895a5b4af798ee98da47",
+        "experiments/native-linux/lkl-mmu-context.h": "38b62f9a8056956cf41752467a9b6ff4ee0a31f9e339013600c23bd87e5c56d0",
+        "experiments/native-linux/lkl-mmu-profile.h": "c6410a8ac3d795c136b00c8108e698ac7a7f04e0ec3cf85cfbc4a01a60fa48aa",
+        "experiments/native-linux/lkl-mmu.h": "a38bb934c2e33959d92c1bde7ad2aebd1bf6c77343956669bb59da6c8e11f2ca",
+        "experiments/native-linux/lkl-seccomp.h": "95aa047dcb9ececaa38898eeebab120953c65448e05331cc079eae32807de7ac",
+        "experiments/native-linux/lkl-signal.h": "d16a7718ab952a7f2f53adc6b6381a0cb2fd6b352f47cefb1ec72f0d862d1491",
+        "experiments/native-linux/lkl-syscall.h": "a895d2f1e7aa6a34b5645d21b6fcedbcd2952dd69ad6b6067724d51f47c1cfac",
+        "experiments/native-linux/lkl-tlbflush.h": "e9140c9203d073e3a46d2c2f0e3f88b816c8ddc652fba53bca1196b31b173eea",
+        "experiments/native-linux/lkl-uaccess.h": "7a326a80c7c386f2a94f1c375a84b490e2bc16a9287e310a02f7ab649fb548b3",
+        "experiments/native-linux/guest-registers.h": "90a4d5b6e613ce4f2cda359dcd05f6e8d876a788bc437c2c1e13e05403e4627a"
+      }
+    },
+    "userspace_attempt4": {
+      "status": "incomplete_after_debugger_attach",
+      "raw_logs": [
+        {
+          "path": "work/native-linux-nce/processes-smp-core/attempt4-lkl-results.jsonl",
+          "sha256": "1fa85c66c708d16774686e56557d1deb3671813c0e115a3ffb62a35077e046d4"
+        },
+        {
+          "path": "work/native-linux-nce/processes-smp-core/attempt4-lkl-console.log",
+          "sha256": "d2b7c056354a6c1d953acd2a45d7f924f9a159de7df956fa7455f251b7a9638d"
+        }
+      ],
+      "profiles": [
+        {
+          "profile": "host_mapping",
+          "elapsed_ms": 10135.019,
+          "data_calls": 133060,
+          "data_ms": 194.255,
+          "code_calls": 33365,
+          "code_ms": 75.504,
+          "revoke_calls": 110694,
+          "revoke_ms": 160.979
+        },
+        {
+          "profile": "resume_entries",
+          "hits": 1093854,
+          "misses": 30187
+        },
+        {
+          "profile": "linux_mmu",
+          "switches": 9302,
+          "scanned_pages": 2339947,
+          "present_faults": 11512,
+          "linux_faults": 213096,
+          "fast_faults": 878131,
+          "fast_restored_pages": 878131,
+          "restored_pages": 1172488,
+          "fault_retries": 0
+        },
+        {
+          "profile": "linux_runnable",
+          "samples": 2106,
+          "same_mm_samples": 373,
+          "other_mm_samples": 1867,
+          "same_mm_ready": 530,
+          "other_mm_ready": 2898,
+          "kernel_or_host_ready": 377,
+          "max_same_mm_ready": 11,
+          "max_other_mm_ready": 9,
+          "interval_ns": 38659833000,
+          "max_interval_ns": 919967000,
+          "collection_ns": 6205000,
+          "minimum_interval_ns": 10000000
+        },
+        {
+          "profile": "host_mapping",
+          "elapsed_ms": 20259.983,
+          "data_calls": 362287,
+          "data_ms": 578.957,
+          "code_calls": 89182,
+          "code_ms": 189.131,
+          "revoke_calls": 250276,
+          "revoke_ms": 462.975
+        },
+        {
+          "profile": "resume_entries",
+          "hits": 1288947,
+          "misses": 61068
+        },
+        {
+          "profile": "linux_mmu",
+          "switches": 11274,
+          "scanned_pages": 3208071,
+          "present_faults": 71353,
+          "linux_faults": 227997,
+          "fast_faults": 1064110,
+          "fast_restored_pages": 1064110,
+          "restored_pages": 1570203,
+          "fault_retries": 0
+        },
+        {
+          "profile": "linux_runnable",
+          "samples": 2820,
+          "same_mm_samples": 474,
+          "other_mm_samples": 2543,
+          "same_mm_ready": 641,
+          "other_mm_ready": 4216,
+          "kernel_or_host_ready": 432,
+          "max_same_mm_ready": 11,
+          "max_other_mm_ready": 9,
+          "interval_ns": 48768852000,
+          "max_interval_ns": 919967000,
+          "collection_ns": 10865000,
+          "minimum_interval_ns": 10000000
+        },
+        {
+          "profile": "host_mapping",
+          "elapsed_ms": 30358.574,
+          "data_calls": 585382,
+          "data_ms": 917.441,
+          "code_calls": 143294,
+          "code_ms": 285.944,
+          "revoke_calls": 390003,
+          "revoke_ms": 738.641
+        },
+        {
+          "profile": "resume_entries",
+          "hits": 1759442,
+          "misses": 89589
+        },
+        {
+          "profile": "linux_mmu",
+          "switches": 13585,
+          "scanned_pages": 4032954,
+          "present_faults": 121063,
+          "linux_faults": 243457,
+          "fast_faults": 1244715,
+          "fast_restored_pages": 1244715,
+          "restored_pages": 1919741,
+          "fault_retries": 0
+        },
+        {
+          "profile": "linux_runnable",
+          "samples": 3601,
+          "same_mm_samples": 535,
+          "other_mm_samples": 3293,
+          "same_mm_ready": 709,
+          "other_mm_ready": 5606,
+          "kernel_or_host_ready": 503,
+          "max_same_mm_ready": 11,
+          "max_other_mm_ready": 9,
+          "interval_ns": 58877918000,
+          "max_interval_ns": 919967000,
+          "collection_ns": 14388000,
+          "minimum_interval_ns": 10000000
+        },
+        {
+          "profile": "host_mapping",
+          "elapsed_ms": 40565.126,
+          "data_calls": 1067281,
+          "data_ms": 1741.808,
+          "code_calls": 234996,
+          "code_ms": 454.212,
+          "revoke_calls": 664837,
+          "revoke_ms": 1281.392
+        },
+        {
+          "profile": "resume_entries",
+          "hits": 2275745,
+          "misses": 139732
+        },
+        {
+          "profile": "linux_mmu",
+          "switches": 16554,
+          "scanned_pages": 5423061,
+          "present_faults": 236450,
+          "linux_faults": 258562,
+          "fast_faults": 1659248,
+          "fast_restored_pages": 1659248,
+          "restored_pages": 2712915,
+          "fault_retries": 0
+        },
+        {
+          "profile": "linux_runnable",
+          "samples": 4500,
+          "same_mm_samples": 1014,
+          "other_mm_samples": 3960,
+          "same_mm_ready": 1220,
+          "other_mm_ready": 7165,
+          "kernel_or_host_ready": 571,
+          "max_same_mm_ready": 11,
+          "max_other_mm_ready": 10,
+          "interval_ns": 69088049000,
+          "max_interval_ns": 919967000,
+          "collection_ns": 20825000,
+          "minimum_interval_ns": 10000000
+        },
+        {
+          "profile": "host_mapping",
+          "elapsed_ms": 50899.351,
+          "data_calls": 1528182,
+          "data_ms": 2537.959,
+          "code_calls": 318641,
+          "code_ms": 600.889,
+          "revoke_calls": 943741,
+          "revoke_ms": 1822.047
+        },
+        {
+          "profile": "resume_entries",
+          "hits": 2797665,
+          "misses": 180810
+        },
+        {
+          "profile": "linux_mmu",
+          "switches": 18903,
+          "scanned_pages": 6467855,
+          "present_faults": 348620,
+          "linux_faults": 263839,
+          "fast_faults": 2080758,
+          "fast_restored_pages": 2080758,
+          "restored_pages": 3417641,
+          "fault_retries": 0
+        },
+        {
+          "profile": "linux_runnable",
+          "samples": 5354,
+          "same_mm_samples": 1418,
+          "other_mm_samples": 4585,
+          "same_mm_ready": 1629,
+          "other_mm_ready": 8371,
+          "kernel_or_host_ready": 589,
+          "max_same_mm_ready": 11,
+          "max_other_mm_ready": 10,
+          "interval_ns": 79429176000,
+          "max_interval_ns": 919967000,
+          "collection_ns": 27479000,
+          "minimum_interval_ns": 10000000
+        },
+        {
+          "profile": "host_mapping",
+          "elapsed_ms": 60975.842,
+          "data_calls": 1967927,
+          "data_ms": 3275.465,
+          "code_calls": 404526,
+          "code_ms": 748.941,
+          "revoke_calls": 1221781,
+          "revoke_ms": 2347.73
+        },
+        {
+          "profile": "resume_entries",
+          "hits": 2944061,
+          "misses": 232120
+        },
+        {
+          "profile": "linux_mmu",
+          "switches": 21335,
+          "scanned_pages": 7596332,
+          "present_faults": 461565,
+          "linux_faults": 274409,
+          "fast_faults": 2471928,
+          "fast_restored_pages": 2471928,
+          "restored_pages": 4076832,
+          "fault_retries": 0
+        },
+        {
+          "profile": "linux_runnable",
+          "samples": 6136,
+          "same_mm_samples": 1636,
+          "other_mm_samples": 5276,
+          "same_mm_ready": 1973,
+          "other_mm_ready": 9835,
+          "kernel_or_host_ready": 668,
+          "max_same_mm_ready": 11,
+          "max_other_mm_ready": 10,
+          "interval_ns": 89500340000,
+          "max_interval_ns": 919967000,
+          "collection_ns": 34873000,
+          "minimum_interval_ns": 10000000
+        },
+        {
+          "profile": "host_mapping",
+          "elapsed_ms": 71083.273,
+          "data_calls": 2450962,
+          "data_ms": 4140.852,
+          "code_calls": 521758,
+          "code_ms": 950.414,
+          "revoke_calls": 1556500,
+          "revoke_ms": 2965.897
+        },
+        {
+          "profile": "resume_entries",
+          "hits": 3184503,
+          "misses": 304051
+        },
+        {
+          "profile": "linux_mmu",
+          "switches": 23830,
+          "scanned_pages": 8860270,
+          "present_faults": 631430,
+          "linux_faults": 281561,
+          "fast_faults": 2889554,
+          "fast_restored_pages": 2889554,
+          "restored_pages": 4863155,
+          "fault_retries": 0
+        },
+        {
+          "profile": "linux_runnable",
+          "samples": 6974,
+          "same_mm_samples": 1998,
+          "other_mm_samples": 5902,
+          "same_mm_ready": 2556,
+          "other_mm_ready": 11213,
+          "kernel_or_host_ready": 705,
+          "max_same_mm_ready": 11,
+          "max_other_mm_ready": 10,
+          "interval_ns": 99612609000,
+          "max_interval_ns": 919967000,
+          "collection_ns": 44225000,
+          "minimum_interval_ns": 10000000
+        },
+        {
+          "profile": "host_mapping",
+          "elapsed_ms": 81182.742,
+          "data_calls": 2868462,
+          "data_ms": 4879.013,
+          "code_calls": 629140,
+          "code_ms": 1137.855,
+          "revoke_calls": 1871469,
+          "revoke_ms": 3528.294
+        },
+        {
+          "profile": "resume_entries",
+          "hits": 3346865,
+          "misses": 365862
+        },
+        {
+          "profile": "linux_mmu",
+          "switches": 26695,
+          "scanned_pages": 10107876,
+          "present_faults": 778532,
+          "linux_faults": 285838,
+          "fast_faults": 3258741,
+          "fast_restored_pages": 3258741,
+          "restored_pages": 5570610,
+          "fault_retries": 0
+        },
+        {
+          "profile": "linux_runnable",
+          "samples": 7776,
+          "same_mm_samples": 2270,
+          "other_mm_samples": 6603,
+          "same_mm_ready": 3006,
+          "other_mm_ready": 12835,
+          "kernel_or_host_ready": 770,
+          "max_same_mm_ready": 11,
+          "max_other_mm_ready": 10,
+          "interval_ns": 109708932000,
+          "max_interval_ns": 919967000,
+          "collection_ns": 52917000,
+          "minimum_interval_ns": 10000000
+        },
+        {
+          "profile": "host_mapping",
+          "elapsed_ms": 91514.555,
+          "data_calls": 3490594,
+          "data_ms": 6035.347,
+          "code_calls": 760751,
+          "code_ms": 1375.77,
+          "revoke_calls": 2309812,
+          "revoke_ms": 4315.523
+        },
+        {
+          "profile": "resume_entries",
+          "hits": 3560675,
+          "misses": 456019
+        },
+        {
+          "profile": "linux_mmu",
+          "switches": 29668,
+          "scanned_pages": 11703130,
+          "present_faults": 975818,
+          "linux_faults": 291250,
+          "fast_faults": 3800341,
+          "fast_restored_pages": 3800341,
+          "restored_pages": 6595671,
+          "fault_retries": 0
+        },
+        {
+          "profile": "linux_runnable",
+          "samples": 8673,
+          "same_mm_samples": 2766,
+          "other_mm_samples": 7262,
+          "same_mm_ready": 4438,
+          "other_mm_ready": 14639,
+          "kernel_or_host_ready": 845,
+          "max_same_mm_ready": 11,
+          "max_other_mm_ready": 10,
+          "interval_ns": 120027342000,
+          "max_interval_ns": 919967000,
+          "collection_ns": 64769000,
+          "minimum_interval_ns": 10000000
+        },
+        {
+          "profile": "host_mapping",
+          "elapsed_ms": 101749.469,
+          "data_calls": 4059892,
+          "data_ms": 7056.214,
+          "code_calls": 902644,
+          "code_ms": 1621.842,
+          "revoke_calls": 2752045,
+          "revoke_ms": 5050.993
+        },
+        {
+          "profile": "resume_entries",
+          "hits": 3744932,
+          "misses": 544013
+        },
+        {
+          "profile": "linux_mmu",
+          "switches": 33810,
+          "scanned_pages": 13509901,
+          "present_faults": 1185832,
+          "linux_faults": 294148,
+          "fast_faults": 4295946,
+          "fast_restored_pages": 4295946,
+          "restored_pages": 7599407,
+          "fault_retries": 0
+        },
+        {
+          "profile": "linux_runnable",
+          "samples": 9555,
+          "same_mm_samples": 3197,
+          "other_mm_samples": 7964,
+          "same_mm_ready": 5277,
+          "other_mm_ready": 16690,
+          "kernel_or_host_ready": 883,
+          "max_same_mm_ready": 11,
+          "max_other_mm_ready": 12,
+          "interval_ns": 130269774000,
+          "max_interval_ns": 919967000,
+          "collection_ns": 77104000,
+          "minimum_interval_ns": 10000000
+        },
+        {
+          "profile": "host_mapping",
+          "elapsed_ms": 111930.387,
+          "data_calls": 4617587,
+          "data_ms": 8036.645,
+          "code_calls": 1027944,
+          "code_ms": 1827.919,
+          "revoke_calls": 3170302,
+          "revoke_ms": 5737.114
+        },
+        {
+          "profile": "resume_entries",
+          "hits": 3923884,
+          "misses": 623057
+        },
+        {
+          "profile": "linux_mmu",
+          "switches": 36829,
+          "scanned_pages": 14988225,
+          "present_faults": 1369690,
+          "linux_faults": 297105,
+          "fast_faults": 4788914,
+          "fast_restored_pages": 4788914,
+          "restored_pages": 8493613,
+          "fault_retries": 0
+        },
+        {
+          "profile": "linux_runnable",
+          "samples": 10410,
+          "same_mm_samples": 3618,
+          "other_mm_samples": 8633,
+          "same_mm_ready": 6191,
+          "other_mm_ready": 18364,
+          "kernel_or_host_ready": 925,
+          "max_same_mm_ready": 11,
+          "max_other_mm_ready": 12,
+          "interval_ns": 140453228000,
+          "max_interval_ns": 919967000,
+          "collection_ns": 89531000,
+          "minimum_interval_ns": 10000000
+        },
+        {
+          "profile": "host_mapping",
+          "elapsed_ms": 122262.848,
+          "data_calls": 5238313,
+          "data_ms": 9149.662,
+          "code_calls": 1146788,
+          "code_ms": 2025.036,
+          "revoke_calls": 3619548,
+          "revoke_ms": 6475.96
+        },
+        {
+          "profile": "resume_entries",
+          "hits": 4113887,
+          "misses": 706994
+        },
+        {
+          "profile": "linux_mmu",
+          "switches": 39918,
+          "scanned_pages": 16590515,
+          "present_faults": 1547537,
+          "linux_faults": 303237,
+          "fast_faults": 5331724,
+          "fast_restored_pages": 5331724,
+          "restored_pages": 9439652,
+          "fault_retries": 0
+        },
+        {
+          "profile": "linux_runnable",
+          "samples": 11306,
+          "same_mm_samples": 4088,
+          "other_mm_samples": 9438,
+          "same_mm_ready": 7698,
+          "other_mm_ready": 22055,
+          "kernel_or_host_ready": 1008,
+          "max_same_mm_ready": 14,
+          "max_other_mm_ready": 19,
+          "interval_ns": 150790132000,
+          "max_interval_ns": 919967000,
+          "collection_ns": 103051000,
+          "minimum_interval_ns": 10000000
+        },
+        {
+          "profile": "host_mapping",
+          "elapsed_ms": 132672.685,
+          "data_calls": 5933116,
+          "data_ms": 10378.756,
+          "code_calls": 1276708,
+          "code_ms": 2238.951,
+          "revoke_calls": 4136386,
+          "revoke_ms": 7315.848
+        },
+        {
+          "profile": "resume_entries",
+          "hits": 4321877,
+          "misses": 797718
+        },
+        {
+          "profile": "linux_mmu",
+          "switches": 43958,
+          "scanned_pages": 18617875,
+          "present_faults": 1740243,
+          "linux_faults": 308501,
+          "fast_faults": 5948735,
+          "fast_restored_pages": 5948735,
+          "restored_pages": 10489308,
+          "fault_retries": 0
+        },
+        {
+          "profile": "linux_runnable",
+          "samples": 12253,
+          "same_mm_samples": 4673,
+          "other_mm_samples": 10385,
+          "same_mm_ready": 9599,
+          "other_mm_ready": 28573,
+          "kernel_or_host_ready": 1072,
+          "max_same_mm_ready": 14,
+          "max_other_mm_ready": 19,
+          "interval_ns": 161196953000,
+          "max_interval_ns": 919967000,
+          "collection_ns": 119033000,
+          "minimum_interval_ns": 10000000
+        },
+        {
+          "profile": "host_mapping",
+          "elapsed_ms": 143306.839,
+          "data_calls": 6707947,
+          "data_ms": 11782.903,
+          "code_calls": 1406600,
+          "code_ms": 2458.975,
+          "revoke_calls": 4697121,
+          "revoke_ms": 8232.242
+        },
+        {
+          "profile": "resume_entries",
+          "hits": 4557869,
+          "misses": 893027
+        },
+        {
+          "profile": "linux_mmu",
+          "switches": 47753,
+          "scanned_pages": 20729167,
+          "present_faults": 1944988,
+          "linux_faults": 311646,
+          "fast_faults": 6640690,
+          "fast_restored_pages": 6640690,
+          "restored_pages": 11644669,
+          "fault_retries": 0
+        },
+        {
+          "profile": "linux_runnable",
+          "samples": 13235,
+          "same_mm_samples": 5336,
+          "other_mm_samples": 11367,
+          "same_mm_ready": 12118,
+          "other_mm_ready": 36580,
+          "kernel_or_host_ready": 1136,
+          "max_same_mm_ready": 14,
+          "max_other_mm_ready": 21,
+          "interval_ns": 171830368000,
+          "max_interval_ns": 919967000,
+          "collection_ns": 136766000,
+          "minimum_interval_ns": 10000000
+        },
+        {
+          "profile": "host_mapping",
+          "elapsed_ms": 154025.181,
+          "data_calls": 7448819,
+          "data_ms": 13136.288,
+          "code_calls": 1535529,
+          "code_ms": 2689.327,
+          "revoke_calls": 5252603,
+          "revoke_ms": 9192.532
+        },
+        {
+          "profile": "resume_entries",
+          "hits": 4728009,
+          "misses": 980339
+        },
+        {
+          "profile": "linux_mmu",
+          "switches": 52144,
+          "scanned_pages": 23277626,
+          "present_faults": 2138822,
+          "linux_faults": 316023,
+          "fast_faults": 7304129,
+          "fast_restored_pages": 7304129,
+          "restored_pages": 12765803,
+          "fault_retries": 0
+        },
+        {
+          "profile": "linux_runnable",
+          "samples": 14207,
+          "same_mm_samples": 5930,
+          "other_mm_samples": 12338,
+          "same_mm_ready": 14655,
+          "other_mm_ready": 45634,
+          "kernel_or_host_ready": 1242,
+          "max_same_mm_ready": 15,
+          "max_other_mm_ready": 23,
+          "interval_ns": 182548640000,
+          "max_interval_ns": 919967000,
+          "collection_ns": 159168000,
+          "minimum_interval_ns": 10000000
+        },
+        {
+          "profile": "host_mapping",
+          "elapsed_ms": 164668.549,
+          "data_calls": 8197171,
+          "data_ms": 14494.47,
+          "code_calls": 1677569,
+          "code_ms": 2979.069,
+          "revoke_calls": 5825810,
+          "revoke_ms": 10152.904
+        },
+        {
+          "profile": "resume_entries",
+          "hits": 4929917,
+          "misses": 1072328
+        },
+        {
+          "profile": "linux_mmu",
+          "switches": 56764,
+          "scanned_pages": 25885014,
+          "present_faults": 2350297,
+          "linux_faults": 317928,
+          "fast_faults": 7976270,
+          "fast_restored_pages": 7976270,
+          "restored_pages": 14126715,
+          "fault_retries": 0
+        },
+        {
+          "profile": "linux_runnable",
+          "samples": 15199,
+          "same_mm_samples": 6553,
+          "other_mm_samples": 13330,
+          "same_mm_ready": 17334,
+          "other_mm_ready": 53982,
+          "kernel_or_host_ready": 1300,
+          "max_same_mm_ready": 15,
+          "max_other_mm_ready": 23,
+          "interval_ns": 193181171000,
+          "max_interval_ns": 919967000,
+          "collection_ns": 181570000,
+          "minimum_interval_ns": 10000000
+        },
+        {
+          "profile": "host_mapping",
+          "elapsed_ms": 174773.617,
+          "data_calls": 8887965,
+          "data_ms": 15739.359,
+          "code_calls": 1817222,
+          "code_ms": 3287.622,
+          "revoke_calls": 6363606,
+          "revoke_ms": 11045.612
+        },
+        {
+          "profile": "resume_entries",
+          "hits": 5122830,
+          "misses": 1153915
+        },
+        {
+          "profile": "linux_mmu",
+          "switches": 61477,
+          "scanned_pages": 28314218,
+          "present_faults": 2553744,
+          "linux_faults": 318587,
+          "fast_faults": 8597985,
+          "fast_restored_pages": 8597985,
+          "restored_pages": 15546435,
+          "fault_retries": 0
+        },
+        {
+          "profile": "linux_runnable",
+          "samples": 16140,
+          "same_mm_samples": 7104,
+          "other_mm_samples": 14271,
+          "same_mm_ready": 20846,
+          "other_mm_ready": 66600,
+          "kernel_or_host_ready": 1343,
+          "max_same_mm_ready": 17,
+          "max_other_mm_ready": 29,
+          "interval_ns": 203298836000,
+          "max_interval_ns": 919967000,
+          "collection_ns": 202913000,
+          "minimum_interval_ns": 10000000
+        },
+        {
+          "profile": "host_mapping",
+          "elapsed_ms": 185064.092,
+          "data_calls": 9555151,
+          "data_ms": 16934.711,
+          "code_calls": 1962272,
+          "code_ms": 3609.574,
+          "revoke_calls": 6895086,
+          "revoke_ms": 11924.181
+        },
+        {
+          "profile": "resume_entries",
+          "hits": 5321286,
+          "misses": 1235638
+        },
+        {
+          "profile": "linux_mmu",
+          "switches": 66450,
+          "scanned_pages": 30561583,
+          "present_faults": 2762008,
+          "linux_faults": 319132,
+          "fast_faults": 9197618,
+          "fast_restored_pages": 9197618,
+          "restored_pages": 16995059,
+          "fault_retries": 0
+        },
+        {
+          "profile": "linux_runnable",
+          "samples": 17103,
+          "same_mm_samples": 7680,
+          "other_mm_samples": 15234,
+          "same_mm_ready": 24245,
+          "other_mm_ready": 79662,
+          "kernel_or_host_ready": 1384,
+          "max_same_mm_ready": 17,
+          "max_other_mm_ready": 29,
+          "interval_ns": 213590378000,
+          "max_interval_ns": 919967000,
+          "collection_ns": 223931000,
+          "minimum_interval_ns": 10000000
+        },
+        {
+          "profile": "host_mapping",
+          "elapsed_ms": 195160.174,
+          "data_calls": 10200141,
+          "data_ms": 18125.735,
+          "code_calls": 2102967,
+          "code_ms": 3925.953,
+          "revoke_calls": 7409995,
+          "revoke_ms": 12833.607
+        },
+        {
+          "profile": "resume_entries",
+          "hits": 5509975,
+          "misses": 1314032
+        },
+        {
+          "profile": "linux_mmu",
+          "switches": 71326,
+          "scanned_pages": 32679590,
+          "present_faults": 2963198,
+          "linux_faults": 319431,
+          "fast_faults": 9779767,
+          "fast_restored_pages": 9779767,
+          "restored_pages": 18361867,
+          "fault_retries": 0
+        },
+        {
+          "profile": "linux_runnable",
+          "samples": 18040,
+          "same_mm_samples": 8265,
+          "other_mm_samples": 16171,
+          "same_mm_ready": 27607,
+          "other_mm_ready": 92039,
+          "kernel_or_host_ready": 1464,
+          "max_same_mm_ready": 17,
+          "max_other_mm_ready": 29,
+          "interval_ns": 223684344000,
+          "max_interval_ns": 919967000,
+          "collection_ns": 249139000,
+          "minimum_interval_ns": 10000000
+        },
+        {
+          "profile": "host_mapping",
+          "elapsed_ms": 205486.461,
+          "data_calls": 10763731,
+          "data_ms": 19113.047,
+          "code_calls": 2245171,
+          "code_ms": 4246.852,
+          "revoke_calls": 7874582,
+          "revoke_ms": 13623.819
+        },
+        {
+          "profile": "resume_entries",
+          "hits": 5694277,
+          "misses": 1387769
+        },
+        {
+          "profile": "linux_mmu",
+          "switches": 76499,
+          "scanned_pages": 34864864,
+          "present_faults": 3159815,
+          "linux_faults": 320077,
+          "fast_faults": 10290759,
+          "fast_restored_pages": 10290759,
+          "restored_pages": 19696097,
+          "fault_retries": 0
+        },
+        {
+          "profile": "linux_runnable",
+          "samples": 18994,
+          "same_mm_samples": 8787,
+          "other_mm_samples": 17124,
+          "same_mm_ready": 28655,
+          "other_mm_ready": 98772,
+          "kernel_or_host_ready": 1481,
+          "max_same_mm_ready": 17,
+          "max_other_mm_ready": 29,
+          "interval_ns": 234009210000,
+          "max_interval_ns": 919967000,
+          "collection_ns": 271114000,
+          "minimum_interval_ns": 10000000
+        },
+        {
+          "profile": "host_mapping",
+          "elapsed_ms": 216291.5,
+          "data_calls": 11373994,
+          "data_ms": 20170.031,
+          "code_calls": 2390989,
+          "code_ms": 4571.154,
+          "revoke_calls": 8362558,
+          "revoke_ms": 14444.832
+        },
+        {
+          "profile": "resume_entries",
+          "hits": 5864662,
+          "misses": 1470431
+        },
+        {
+          "profile": "linux_mmu",
+          "switches": 81548,
+          "scanned_pages": 37215574,
+          "present_faults": 3359199,
+          "linux_faults": 321181,
+          "fast_faults": 10844103,
+          "fast_restored_pages": 10844103,
+          "restored_pages": 21095889,
+          "fault_retries": 0
+        },
+        {
+          "profile": "linux_runnable",
+          "samples": 19965,
+          "same_mm_samples": 9336,
+          "other_mm_samples": 18087,
+          "same_mm_ready": 29598,
+          "other_mm_ready": 104044,
+          "kernel_or_host_ready": 1497,
+          "max_same_mm_ready": 17,
+          "max_other_mm_ready": 29,
+          "interval_ns": 244820394000,
+          "max_interval_ns": 919967000,
+          "collection_ns": 292329000,
+          "minimum_interval_ns": 10000000
+        },
+        {
+          "profile": "host_mapping",
+          "elapsed_ms": 227264.028,
+          "data_calls": 12075249,
+          "data_ms": 21428.775,
+          "code_calls": 2542566,
+          "code_ms": 4900.643,
+          "revoke_calls": 8911911,
+          "revoke_ms": 15358.574
+        },
+        {
+          "profile": "resume_entries",
+          "hits": 6045802,
+          "misses": 1566606
+        },
+        {
+          "profile": "linux_mmu",
+          "switches": 86724,
+          "scanned_pages": 39703234,
+          "present_faults": 3575301,
+          "linux_faults": 325065,
+          "fast_faults": 11466791,
+          "fast_restored_pages": 11466791,
+          "restored_pages": 22569439,
+          "fault_retries": 0
+        },
+        {
+          "profile": "linux_runnable",
+          "samples": 20987,
+          "same_mm_samples": 9989,
+          "other_mm_samples": 19109,
+          "same_mm_ready": 31429,
+          "other_mm_ready": 112960,
+          "kernel_or_host_ready": 1578,
+          "max_same_mm_ready": 17,
+          "max_other_mm_ready": 29,
+          "interval_ns": 255791305000,
+          "max_interval_ns": 919967000,
+          "collection_ns": 315912000,
+          "minimum_interval_ns": 10000000
+        },
+        {
+          "profile": "host_mapping",
+          "elapsed_ms": 237626.476,
+          "data_calls": 12663412,
+          "data_ms": 22455.772,
+          "code_calls": 2674842,
+          "code_ms": 5174.315,
+          "revoke_calls": 9360698,
+          "revoke_ms": 16108.396
+        },
+        {
+          "profile": "resume_entries",
+          "hits": 6239852,
+          "misses": 1645513
+        },
+        {
+          "profile": "linux_mmu",
+          "switches": 91294,
+          "scanned_pages": 41693450,
+          "present_faults": 3749420,
+          "linux_faults": 336915,
+          "fast_faults": 11974123,
+          "fast_restored_pages": 11974123,
+          "restored_pages": 23741782,
+          "fault_retries": 0
+        },
+        {
+          "profile": "linux_runnable",
+          "samples": 21960,
+          "same_mm_samples": 10474,
+          "other_mm_samples": 20081,
+          "same_mm_ready": 32850,
+          "other_mm_ready": 125610,
+          "kernel_or_host_ready": 1757,
+          "max_same_mm_ready": 17,
+          "max_other_mm_ready": 29,
+          "interval_ns": 266152828000,
+          "max_interval_ns": 919967000,
+          "collection_ns": 338541000,
+          "minimum_interval_ns": 10000000
+        },
+        {
+          "profile": "host_mapping",
+          "elapsed_ms": 247802.004,
+          "data_calls": 13271599,
+          "data_ms": 23551.849,
+          "code_calls": 2789689,
+          "code_ms": 5385.936,
+          "revoke_calls": 9794335,
+          "revoke_ms": 16894.762
+        },
+        {
+          "profile": "resume_entries",
+          "hits": 6415903,
+          "misses": 1712150
+        },
+        {
+          "profile": "linux_mmu",
+          "switches": 94608,
+          "scanned_pages": 43235362,
+          "present_faults": 3891200,
+          "linux_faults": 341252,
+          "fast_faults": 12542571,
+          "fast_restored_pages": 12542571,
+          "restored_pages": 24677293,
+          "fault_retries": 0
+        },
+        {
+          "profile": "linux_runnable",
+          "samples": 22938,
+          "same_mm_samples": 11141,
+          "other_mm_samples": 21059,
+          "same_mm_ready": 35610,
+          "other_mm_ready": 143421,
+          "kernel_or_host_ready": 2598,
+          "max_same_mm_ready": 17,
+          "max_other_mm_ready": 30,
+          "interval_ns": 276319832000,
+          "max_interval_ns": 919967000,
+          "collection_ns": 364318000,
+          "minimum_interval_ns": 10000000
+        },
+        {
+          "profile": "host_mapping",
+          "elapsed_ms": 258153.022,
+          "data_calls": 13897824,
+          "data_ms": 24746.23,
+          "code_calls": 2927801,
+          "code_ms": 5678.026,
+          "revoke_calls": 10276434,
+          "revoke_ms": 17755.593
+        },
+        {
+          "profile": "resume_entries",
+          "hits": 6587068,
+          "misses": 1799826
+        },
+        {
+          "profile": "linux_mmu",
+          "switches": 98902,
+          "scanned_pages": 45188151,
+          "present_faults": 4080488,
+          "linux_faults": 343887,
+          "fast_faults": 13106075,
+          "fast_restored_pages": 13106075,
+          "restored_pages": 25873059,
+          "fault_retries": 0
+        },
+        {
+          "profile": "linux_runnable",
+          "samples": 23924,
+          "same_mm_samples": 11737,
+          "other_mm_samples": 22045,
+          "same_mm_ready": 38912,
+          "other_mm_ready": 159178,
+          "kernel_or_host_ready": 2751,
+          "max_same_mm_ready": 17,
+          "max_other_mm_ready": 35,
+          "interval_ns": 286679287000,
+          "max_interval_ns": 919967000,
+          "collection_ns": 393884000,
+          "minimum_interval_ns": 10000000
+        },
+        {
+          "profile": "host_mapping",
+          "elapsed_ms": 268502.151,
+          "data_calls": 14518155,
+          "data_ms": 25901.047,
+          "code_calls": 3058487,
+          "code_ms": 5973.354,
+          "revoke_calls": 10751779,
+          "revoke_ms": 18608.23
+        },
+        {
+          "profile": "resume_entries",
+          "hits": 6755082,
+          "misses": 1877005
+        },
+        {
+          "profile": "linux_mmu",
+          "switches": 103406,
+          "scanned_pages": 47219713,
+          "present_faults": 4261245,
+          "linux_faults": 345304,
+          "fast_faults": 13668827,
+          "fast_restored_pages": 13668827,
+          "restored_pages": 27135316,
+          "fault_retries": 0
+        },
+        {
+          "profile": "linux_runnable",
+          "samples": 24897,
+          "same_mm_samples": 12325,
+          "other_mm_samples": 23017,
+          "same_mm_ready": 42219,
+          "other_mm_ready": 172648,
+          "kernel_or_host_ready": 2897,
+          "max_same_mm_ready": 20,
+          "max_other_mm_ready": 35,
+          "interval_ns": 297022272000,
+          "max_interval_ns": 919967000,
+          "collection_ns": 425275000,
+          "minimum_interval_ns": 10000000
+        },
+        {
+          "profile": "host_mapping",
+          "elapsed_ms": 278869.955,
+          "data_calls": 15133360,
+          "data_ms": 27043.701,
+          "code_calls": 3188182,
+          "code_ms": 6265.014,
+          "revoke_calls": 11223082,
+          "revoke_ms": 19438.209
+        },
+        {
+          "profile": "resume_entries",
+          "hits": 6980487,
+          "misses": 1957983
+        },
+        {
+          "profile": "linux_mmu",
+          "switches": 107782,
+          "scanned_pages": 49263442,
+          "present_faults": 4446292,
+          "linux_faults": 348733,
+          "fast_faults": 14213751,
+          "fast_restored_pages": 14213751,
+          "restored_pages": 28417089,
+          "fault_retries": 0
+        },
+        {
+          "profile": "linux_runnable",
+          "samples": 25862,
+          "same_mm_samples": 12885,
+          "other_mm_samples": 23982,
+          "same_mm_ready": 45576,
+          "other_mm_ready": 187507,
+          "kernel_or_host_ready": 3009,
+          "max_same_mm_ready": 20,
+          "max_other_mm_ready": 35,
+          "interval_ns": 307395606000,
+          "max_interval_ns": 919967000,
+          "collection_ns": 455349000,
+          "minimum_interval_ns": 10000000
+        },
+        {
+          "profile": "host_mapping",
+          "elapsed_ms": 289508.223,
+          "data_calls": 15834009,
+          "data_ms": 28337.613,
+          "code_calls": 3330981,
+          "code_ms": 6568.193,
+          "revoke_calls": 11758463,
+          "revoke_ms": 20357.875
+        },
+        {
+          "profile": "resume_entries",
+          "hits": 7181606,
+          "misses": 2048191
+        },
+        {
+          "profile": "linux_mmu",
+          "switches": 112352,
+          "scanned_pages": 51544229,
+          "present_faults": 4656385,
+          "linux_faults": 350669,
+          "fast_faults": 14836309,
+          "fast_restored_pages": 14836309,
+          "restored_pages": 29760172,
+          "fault_retries": 0
+        },
+        {
+          "profile": "linux_runnable",
+          "samples": 26857,
+          "same_mm_samples": 13501,
+          "other_mm_samples": 24977,
+          "same_mm_ready": 50040,
+          "other_mm_ready": 208862,
+          "kernel_or_host_ready": 3107,
+          "max_same_mm_ready": 22,
+          "max_other_mm_ready": 39,
+          "interval_ns": 318027318000,
+          "max_interval_ns": 919967000,
+          "collection_ns": 486659000,
+          "minimum_interval_ns": 10000000
+        },
+        {
+          "profile": "host_mapping",
+          "elapsed_ms": 299638.378,
+          "data_calls": 16542150,
+          "data_ms": 29656.508,
+          "code_calls": 3455185,
+          "code_ms": 6791.402,
+          "revoke_calls": 12296294,
+          "revoke_ms": 21257.913
+        },
+        {
+          "profile": "resume_entries",
+          "hits": 7475919,
+          "misses": 2141494
+        },
+        {
+          "profile": "linux_mmu",
+          "switches": 116531,
+          "scanned_pages": 53788118,
+          "present_faults": 4848962,
+          "linux_faults": 353718,
+          "fast_faults": 15468522,
+          "fast_restored_pages": 15468522,
+          "restored_pages": 30806274,
+          "fault_retries": 0
+        },
+        {
+          "profile": "linux_runnable",
+          "samples": 27814,
+          "same_mm_samples": 14105,
+          "other_mm_samples": 25934,
+          "same_mm_ready": 54813,
+          "other_mm_ready": 226796,
+          "kernel_or_host_ready": 3166,
+          "max_same_mm_ready": 22,
+          "max_other_mm_ready": 39,
+          "interval_ns": 328163541000,
+          "max_interval_ns": 919967000,
+          "collection_ns": 515732000,
+          "minimum_interval_ns": 10000000
+        },
+        {
+          "profile": "host_mapping",
+          "elapsed_ms": 309685.16,
+          "data_calls": 17249073,
+          "data_ms": 30969.949,
+          "code_calls": 3577642,
+          "code_ms": 7015.841,
+          "revoke_calls": 12828899,
+          "revoke_ms": 22184.402
+        },
+        {
+          "profile": "resume_entries",
+          "hits": 7648179,
+          "misses": 2231728
+        },
+        {
+          "profile": "linux_mmu",
+          "switches": 120438,
+          "scanned_pages": 55919745,
+          "present_faults": 5034490,
+          "linux_faults": 356857,
+          "fast_faults": 16103399,
+          "fast_restored_pages": 16103399,
+          "restored_pages": 31847650,
+          "fault_retries": 0
+        },
+        {
+          "profile": "linux_runnable",
+          "samples": 28770,
+          "same_mm_samples": 14700,
+          "other_mm_samples": 26890,
+          "same_mm_ready": 58182,
+          "other_mm_ready": 240835,
+          "kernel_or_host_ready": 3415,
+          "max_same_mm_ready": 22,
+          "max_other_mm_ready": 39,
+          "interval_ns": 338210535000,
+          "max_interval_ns": 919967000,
+          "collection_ns": 549246000,
+          "minimum_interval_ns": 10000000
+        },
+        {
+          "profile": "host_mapping",
+          "elapsed_ms": 320317.84,
+          "data_calls": 17962902,
+          "data_ms": 32575.667,
+          "code_calls": 3706593,
+          "code_ms": 7262.528,
+          "revoke_calls": 13375458,
+          "revoke_ms": 23197.126
+        },
+        {
+          "profile": "resume_entries",
+          "hits": 7879970,
+          "misses": 2327331
+        },
+        {
+          "profile": "linux_mmu",
+          "switches": 124439,
+          "scanned_pages": 58009518,
+          "present_faults": 5232815,
+          "linux_faults": 359175,
+          "fast_faults": 16742344,
+          "fast_restored_pages": 16742344,
+          "restored_pages": 32906775,
+          "fault_retries": 0
+        },
+        {
+          "profile": "linux_runnable",
+          "samples": 29756,
+          "same_mm_samples": 15362,
+          "other_mm_samples": 27876,
+          "same_mm_ready": 61671,
+          "other_mm_ready": 254780,
+          "kernel_or_host_ready": 3540,
+          "max_same_mm_ready": 22,
+          "max_other_mm_ready": 39,
+          "interval_ns": 348847496000,
+          "max_interval_ns": 919967000,
+          "collection_ns": 587170000,
+          "minimum_interval_ns": 10000000
+        },
+        {
+          "profile": "host_mapping",
+          "elapsed_ms": 330326.368,
+          "data_calls": 18654693,
+          "data_ms": 33922.182,
+          "code_calls": 3818165,
+          "code_ms": 7476.835,
+          "revoke_calls": 13896554,
+          "revoke_ms": 24145.857
+        },
+        {
+          "profile": "resume_entries",
+          "hits": 8087199,
+          "misses": 2410363
+        },
+        {
+          "profile": "linux_mmu",
+          "switches": 128138,
+          "scanned_pages": 60249175,
+          "present_faults": 5409335,
+          "linux_faults": 361056,
+          "fast_faults": 17365730,
+          "fast_restored_pages": 17365730,
+          "restored_pages": 33918803,
+          "fault_retries": 0
+        },
+        {
+          "profile": "linux_runnable",
+          "samples": 30647,
+          "same_mm_samples": 15987,
+          "other_mm_samples": 28767,
+          "same_mm_ready": 65330,
+          "other_mm_ready": 268433,
+          "kernel_or_host_ready": 3621,
+          "max_same_mm_ready": 22,
+          "max_other_mm_ready": 39,
+          "interval_ns": 358848198000,
+          "max_interval_ns": 919967000,
+          "collection_ns": 625112000,
+          "minimum_interval_ns": 10000000
+        },
+        {
+          "profile": "host_mapping",
+          "elapsed_ms": 341119.987,
+          "data_calls": 19434549,
+          "data_ms": 35399.811,
+          "code_calls": 3957749,
+          "code_ms": 7743.087,
+          "revoke_calls": 14487897,
+          "revoke_ms": 25199.957
+        },
+        {
+          "profile": "resume_entries",
+          "hits": 8309766,
+          "misses": 2510400
+        },
+        {
+          "profile": "linux_mmu",
+          "switches": 132314,
+          "scanned_pages": 62553695,
+          "present_faults": 5616178,
+          "linux_faults": 364704,
+          "fast_faults": 18067753,
+          "fast_restored_pages": 18067753,
+          "restored_pages": 35114038,
+          "fault_retries": 0
+        },
+        {
+          "profile": "linux_runnable",
+          "samples": 31666,
+          "same_mm_samples": 16630,
+          "other_mm_samples": 29786,
+          "same_mm_ready": 70316,
+          "other_mm_ready": 284399,
+          "kernel_or_host_ready": 3748,
+          "max_same_mm_ready": 22,
+          "max_other_mm_ready": 39,
+          "interval_ns": 369641992000,
+          "max_interval_ns": 919967000,
+          "collection_ns": 667677000,
+          "minimum_interval_ns": 10000000
+        }
+      ],
+      "debugger_log": "work/native-linux-nce/processes-smp-core/library-debugger.txt",
+      "sample": "work/native-linux-nce/processes-smp-core/library-startup-sample.txt",
+      "note": "Boot-completed passed. A one-second sample was followed by LLDB attach during desktop first-frame wait. Driver reported incomplete, child was briefly reparented then exited. No performance conclusion or normal shutdown confirmation.",
+      "named_check_count": 200,
+      "failed_checks": [],
+      "last_records": [
+        {
+          "test": "android_installd_app_data",
+          "passed": true,
+          "packages": 2,
+          "storage_types": 2,
+          "caller_uid": 1000
+        },
+        {
+          "test": "android_surfaceflinger_composed_pixels",
+          "passed": true,
+          "frames": 3
+        },
+        {
+          "phase": "android_zygote_launch"
+        },
+        {
+          "test": "android_cgroup_cross_uid_permissions",
+          "passed": true,
+          "unprivileged_denied": true
+        },
+        {
+          "test": "android_vold_user_storage",
+          "passed": true,
+          "user": 0,
+          "flags": 3
+        },
+        {
+          "test": "android_network_bpf_loaded",
+          "passed": true
+        },
+        {
+          "test": "android_keystore_persistence",
+          "passed": true,
+          "restored": false
+        },
+        {
+          "phase": "android_system_server_boot"
+        },
+        {
+          "phase": "android_activity_service_registered"
+        },
+        {
+          "test": "android_system_server_services",
+          "passed": true
+        },
+        {
+          "test": "android_system_boot_completed",
+          "passed": true
+        },
+        {
+          "phase": "android_desktop_first_frame_wait"
+        }
+      ],
+      "sample_summary": {
+        "metadata": {
+          "Date/Time": "2026-10-11 03:51:09.873 +0800",
+          "Launch Time": "2026-10-11 03:45:24.783 +0800",
+          "OS Version": "macOS 27.0 (26A428)",
+          "Physical footprint": "1.4G",
+          "Physical footprint (peak)": "2.0G"
+        },
+        "all_thread_samples": 195988,
+        "nonwait_samples": 532,
+        "groups": {
+          "explicit_wait": 195456,
+          "other_host": 222,
+          "host_mapping": 77,
+          "unresolved_native_code": 54,
+          "resume_entry": 27,
+          "signal_handling": 152
+        },
+        "nonwait_share": {
+          "other_host": 0.4173,
+          "host_mapping": 0.1447,
+          "unresolved_native_code": 0.1015,
+          "resume_entry": 0.0508,
+          "signal_handling": 0.2857
+        },
+        "top_nonwait_functions": [
+          [
+            "_sigtramp",
+            149
+          ],
+          [
+            "???",
+            54
+          ],
+          [
+            "__pthread_kill",
+            39
+          ],
+          [
+            "mach_msg2_trap",
+            35
+          ],
+          [
+            "__mmap",
+            25
+          ],
+          [
+            "pthread_kill",
+            22
+          ],
+          [
+            "pthread_getspecific",
+            21
+          ],
+          [
+            "DYLD-STUB$$pthread_getspecific",
+            19
+          ],
+          [
+            "lkl_current_cpu (LKL+0x115070)",
+            17
+          ],
+          [
+            "lkl_current_cpu (LKL+0x115090)",
+            16
+          ],
+          [
+            "nce_cpu_resume",
+            16
+          ],
+          [
+            "__psynch_mutexwait",
+            14
+          ],
+          [
+            "__mprotect",
+            12
+          ],
+          [
+            "sys_icache_invalidate",
+            10
+          ],
+          [
+            "arch_local_irq_restore (LKL+0x1166f4)",
+            7
+          ],
+          [
+            "arch_local_irq_restore (LKL+0x1167e0)",
+            7
+          ],
+          [
+            "set_irq_pending (LKL+0x116188)",
+            7
+          ],
+          [
+            "__psynch_mutexdrop",
+            4
+          ],
+          [
+            "lkl_current_cpu (LKL+0x11506c)",
+            3
+          ],
+          [
+            "arch_local_irq_restore (LKL+0x11671c)",
+            3
+          ]
+        ],
+        "symbolization": {
+          "kernel_base": "0x7000018000",
+          "basis": "2 MiB aligned reservation 0x7000000000 inferred from stack addresses; two 16 KiB verification pages and one 64 KiB compute allocation precede Linux. __switch_to and lkl_syscall stack offsets match lkl.so."
+        }
+      }
+    },
+    "userspace_attempt5": {
+      "status": "failed_launcher_keyguard_timeout",
+      "raw_logs": [
+        {
+          "path": "work/native-linux-nce/processes-smp-core/attempt5-lkl-results.jsonl",
+          "sha256": "c5555c1605e7cc122207d684601f4e94911be6bb4660b4f0bbc33de69d193fe8"
+        },
+        {
+          "path": "work/native-linux-nce/processes-smp-core/attempt5-lkl-console.log",
+          "sha256": "c61391b98abb70777f516babefe04e02dcfc95003f9fd8fbde7d65a55ce94320"
+        }
+      ],
+      "named_check_count": 208,
+      "last_records": [
+        {
+          "test": "android_keystore_persistence",
+          "passed": true,
+          "restored": false
+        },
+        {
+          "phase": "android_system_server_boot"
+        },
+        {
+          "phase": "android_activity_service_registered"
+        },
+        {
+          "test": "android_system_server_services",
+          "passed": true
+        },
+        {
+          "test": "android_system_boot_completed",
+          "passed": true
+        },
+        {
+          "phase": "android_desktop_first_frame_wait"
+        },
+        {
+          "test": "native_graphics_channels_released",
+          "passed": true,
+          "opened": 75,
+          "closed": 75
+        },
+        {
+          "memory": "after_framework_failure",
+          "linux_available_kib": 988528,
+          "linux_shmem_kib": 10560,
+          "host_peak_rss_bytes": 1707606016,
+          "host_footprint_bytes": 1511820456,
+          "reclaimed_bytes": 2520776704,
+          "reclaimed_ranges": 863
+        },
+        {
+          "phase": "linux_shutdown"
+        },
+        {
+          "test": "linux_data_readonly_shutdown",
+          "passed": true
+        },
+        {
+          "test": "fixed_linux_code_view",
+          "copies": 58743,
+          "passed": true
+        },
+        {
+          "test": "linux_retained_code_bytes",
+          "bytes": 174660632576
+        },
+        {
+          "test": "linux_host_mapping_totals",
+          "data_maps": 26012800,
+          "data_bytes": 466951585792,
+          "code_copy_bytes": 962445312,
+          "revocations": 18810838
+        },
+        {
+          "test": "linux_nce_context_lifetime",
+          "allocated": 2788,
+          "freed": 2788
+        },
+        {
+          "test": "linux_guest_events",
+          "preemptions": 82027,
+          "deferred_faults": 7449457,
+          "stack_resumes": 398567,
+          "stack_calls": 2417
+        },
+        {
+          "test": "guest_preemption_signal_mask",
+          "inherited_blocked_threads": 0,
+          "passed": true
+        },
+        {
+          "result": "failed"
+        }
+      ],
+      "last_profiles": {
+        "host_mapping": {
+          "profile": "host_mapping",
+          "elapsed_ms": 414823.487,
+          "data_calls": 24648532,
+          "data_ms": 46704.334,
+          "code_calls": 4807427,
+          "code_ms": 9795.244,
+          "revoke_calls": 18315831,
+          "revoke_ms": 33666.9
+        },
+        "linux_mmu": {
+          "profile": "linux_mmu",
+          "switches": 161651,
+          "scanned_pages": 77238787,
+          "present_faults": 7052706,
+          "linux_faults": 399702,
+          "fast_faults": 22919444,
+          "fast_restored_pages": 22919444,
+          "restored_pages": 44024497,
+          "fault_retries": 0
+        },
+        "linux_runnable": {
+          "profile": "linux_runnable",
+          "samples": 39231,
+          "same_mm_samples": 21680,
+          "other_mm_samples": 37430,
+          "same_mm_ready": 101815,
+          "other_mm_ready": 390857,
+          "kernel_or_host_ready": 3877,
+          "max_same_mm_ready": 73,
+          "max_other_mm_ready": 336,
+          "interval_ns": 445758449000,
+          "max_interval_ns": 560563000,
+          "collection_ns": 1103042000,
+          "minimum_interval_ns": 10000000
+        }
+      },
+      "failure": "10-10 20:01:36.796   624   624 E AndroidRuntime: java.lang.AssertionError: visible desktop activity timed out: com.android.launcher3; top=ComponentInfo{com.android.launcher3/com.android.launcher3.uioverrides.QuickstepLauncher} visible=true keyguard=true mCurrentFocus=Window{a6481d1 u0 com.android.launcher3/com.android.launcher3.uioverrides.QuickstepLauncher}",
+      "gcd": "not started",
+      "note": "Fresh test data, no debugger or sample. Launcher display observed, keyguard remained true at the existing 180-second desktop check deadline. Normal cleanup completed; full Android regression remains failed."
+    },
+    "up_regression": {
+      "source": {
+        "path": "work/native-linux-nce/processes/lkl-summary.json",
+        "sha256": "2f226912c3e094bbae4824fc5dfcd4813dcbadc7c70f84d99e7a5b36ff62d91c"
+      },
+      "configuration": {
+        "cpus": 1,
+        "mapping": "demand",
+        "nterp": true,
+        "map_profile": true,
+        "direct_fault": true,
+        "aot": false,
+        "boot_image": false,
+        "expanded_jit": false,
+        "fast_baseline": false,
+        "system_server_probe": true
+      },
+      "kernel_sha256": "8f48ba776f7b93d8de11b03e8c6609450a84368ba2fadaf7fd1fcf41340531ca",
+      "input_sha256": {
+        "experiments/native-linux/lkl-main.c": "a857b2eb50fe2ddc63b28263d70a43036dee1e6138979a6ac8e2431cfd5de44b",
+        "experiments/native-linux/lkl-host.c": "49c63f1be4112408bbe5bdced53cf8bd0314eedaf770fe4d869d30edf3a6c671",
+        "experiments/native-linux/nce.c": "fac0dff4a7e683a47a3fafa3877f69f279a816115b81ca4f1d9dad709a7e402d",
+        "experiments/native-linux/nce-thread.c": "f9f7ddedf2d640ddbab6d0700409c9ba43da4017991b42aeb7e0a4f17034be4e",
+        "experiments/native-linux/entry.S": "7c18477d050befc16c1f749c591f3aa88ec9955a281bd368fff32a73c76f8102",
+        "experiments/native-linux/lkl-process-host.c": "cd8b49dc8e5e56b7e5c531f51bda7b2faf19ac6316a12808cce7269f6281e7d4",
+        "experiments/native-linux/nce-cpu.c": "96cd6ef41c130a58c36e958c57ba5c1f6b204ab92924fea250d4d386136e23df",
+        "experiments/native-linux/programs.c": "53555eab1fc4fbc7a86f0b37a944cfc09ab3c9b604fbec1a99fc12c4bc2ad7ca",
+        "experiments/native-linux/memory.c": "8168a1891149e79c6176f5322fb86a33411118261e80da35a1f731015d805b6c",
+        "experiments/native-linux/execute-check.c": "afb5d3436392a5ef4b53871028e9a3c668a9bcae15b5b4bd33a8c9c893184ca8",
+        "experiments/native-linux/compute.c": "dbd8e347a783f3d94525abb8ab01cf96491710d5d4f373d39343d259de53f985",
+        "experiments/native-linux/input.c": "4e95e2121a29b3d675ab36c613347cd149d2e5233607d094701991ec9d576db5",
+        "experiments/native-linux/session.c": "7e14ef3c52b5119a49c72719ac8c2c14e2e2028586479e01fb5285b5bfc59d34",
+        "experiments/native-linux/lkl-bridge.c": "15ecb94c6da3451b66dfc784b189792d220c73faaf1727a8e6121b48456cbd37",
+        "experiments/native-linux/nce.h": "7bcdc5e777e10e1d70f0bf1838a2160e87c70613a44b90b16c3e07aedf4a9f58",
+        "experiments/native-linux/nce-thread.h": "4b289193a10b16ae74982c0d986f949ef61b4fffb84211b4033e05c43deddeff",
+        "experiments/native-linux/guest-registers.h": "90a4d5b6e613ce4f2cda359dcd05f6e8d876a788bc437c2c1e13e05403e4627a",
+        "experiments/native-linux/guest.S": "0e1e3def0151e5d1fc605378f3e55ef65fc0b0364b83dfd7b65df7d1d482e372",
+        "scripts/probe_lkl.py": "c92d95020e1c179d78e363b50a9c249d6fd72331f5f6199aa5dbab1057e73de9",
+        "experiments/native-linux/nce-cpu.h": "4eab0d9848c5c713b6dc07819d13529af1fcf04b46ce0fbd4139428be76c1340",
+        "experiments/native-linux/memory.h": "aeaaf612df0a787fbfd6411a45f539807bc49e1c766625bede5e31e87159ddd5",
+        "experiments/native-linux/layout.h": "9ecb6dc474edfc516284effcbd1999ba445ba88372233636391771a0715deaa5",
+        "experiments/native-linux/execute-check.h": "3bf58a2a09ea16d489f96b49f50bfaa7b1106216c15f40a7d4bde588d53f2541",
+        "experiments/native-linux/input.h": "c7a1092bc3fbd87f1a329afad8b0bc798bd02cbac7da6f9c468959152ff80b42",
+        "experiments/native-linux/session.h": "f6d18e13285a0e7785bb6b7c2540dc5d2625dcd87aa19667f68569e73dc97e3d",
+        "scripts/lkl_nce_patch.py": "3aa45cc89c0e13aa5925efd0ed4348bf77318cd6f0b0006fb2fe678471e134d9",
+        "experiments/native-linux/lkl-elf.h": "addf40a6adc1a51ddb68bffa315f1c74afed260508cc154be1d696b149ceb99b",
+        "experiments/native-linux/lkl-fcntl.h": "a93dbe60bbed231461aead2289756e46996e8486b50e895a5b4af798ee98da47",
+        "experiments/native-linux/lkl-mmu-context.h": "38b62f9a8056956cf41752467a9b6ff4ee0a31f9e339013600c23bd87e5c56d0",
+        "experiments/native-linux/lkl-mmu-profile.h": "c6410a8ac3d795c136b00c8108e698ac7a7f04e0ec3cf85cfbc4a01a60fa48aa",
+        "experiments/native-linux/lkl-mmu.h": "a38bb934c2e33959d92c1bde7ad2aebd1bf6c77343956669bb59da6c8e11f2ca",
+        "experiments/native-linux/lkl-seccomp.h": "95aa047dcb9ececaa38898eeebab120953c65448e05331cc079eae32807de7ac",
+        "experiments/native-linux/lkl-signal.h": "d16a7718ab952a7f2f53adc6b6381a0cb2fd6b352f47cefb1ec72f0d862d1491",
+        "experiments/native-linux/lkl-syscall.h": "a895d2f1e7aa6a34b5645d21b6fcedbcd2952dd69ad6b6067724d51f47c1cfac",
+        "experiments/native-linux/lkl-tlbflush.h": "e9140c9203d073e3a46d2c2f0e3f88b816c8ddc652fba53bca1196b31b173eea",
+        "experiments/native-linux/lkl-uaccess.h": "7a326a80c7c386f2a94f1c375a84b490e2bc16a9287e310a02f7ab649fb548b3",
+        "experiments/native-linux/lkl-nce-block.c": "2a8d0356c87a73575f760755d4666a53ecacca3d55eb33dea797f1ebbb8e3b60",
+        "experiments/native-linux/lkl-nce-elf.c": "ddf6494c012b2017f26a647bd9a4eb0002f7fa96a93a6c0a491da883f259ff20",
+        "experiments/native-linux/lkl-nce-mmu.c": "e91e227b43d903c851af9c0491380ae6525bbf5a0fafa41314a688609bc62be4",
+        "experiments/native-linux/lkl-nce-process.c": "0fe64668ed5c77a84f3c4cd1440b451908913eaed1c25cad4f2fc093581b8d22",
+        "experiments/native-linux/lkl-nce-reclaim.c": "0341deb0311e7262427e4d0d6e5c0f335cb19af018ab227e4615840c736be293",
+        "experiments/native-linux/lkl-nce-schedule.c": "32dbb6b603eafb65cc9bd512a926ace0f9d9bd093601c3bf29f40f557d40af4e",
+        "experiments/native-linux/lkl-nce-signal.c": "d5e0d29dbc408dd419edfb5b5006ce25fca62eed0b64dfeb80c0aa573a17422e",
+        "experiments/native-linux/exec-guest.S": "833d10bd1b10f0b3a35c7324aaec8a24b1774a42200c24389bd772facb0244e8",
+        "experiments/native-linux/programs.h": "f2efaea1dde37afa4ef1f58c8a41ba09a53293cd8ddfcbbad799de7a8db5ec8b",
+        "scripts/build_nce_userspace.py": "36515d92485380cce6a01615482fec609c4d83844f99a6cacff347ae007b99e0",
+        "experiments/native-linux/dispatch-test.c": "5211698bd58018aae173d4c6d75daeeb0e4eb357fb2742c4c08d595bc9d7b55b",
+        "experiments/native-linux/host-context-test.c": "d2f604cbb13bde655de4a930d89f08e348c979f74f9dfc049da4d30796b1f072",
+        "scripts/prepare_art_test_dex.py": "0ad0452fe3855c87bfc034a6de87fbc700f01677bfc5781d2730fea313cbfb6f",
+        "scripts/art_aot.py": "c8980024e79ac0ad809b6406578e08922aa260c2934d7b5ea7b63f228cfc7e13",
+        "scripts/prepare_android_runtime.py": "d18f79cbe9e97ce69d80be7ef22e50dde40eb166525d0c8c991ed8d80f31c6b0",
+        "scripts/prepare_android_modules.py": "661c32667048fad3b371e95a5dcf47726d4ab2242727db51ef38731764c9adc4",
+        "scripts/prepare_android_desktop.py": "0ab4eedb447d2e1b124d3e1df0982f99c05dcbde715087553fe25ebf8d799cba",
+        "scripts/build_android_linker.py": "8df4e3342c2948021e2b247bd67e48e3a2117e45e5d790f697c620e3367817fc",
+        "scripts/build_android_libc.py": "00e7a51f553911f71983a86df8d5ff3da1885fcd407c0dd9dc1ee837a0aa6ae5",
+        "scripts/build_android_art.py": "4b987c8b6fd5d3af28e90af6fdfd4a67e49bb3a2bb1e12206651bb1971b83dae",
+        "scripts/build_android_crypto.py": "9f3e72a9f3059bef68f2b014a8600e6529c89201e8e54199f125e0d615ef9d6b",
+        "scripts/build_android_gralloc.py": "d5e9fddfe4d5da96f93fa790cec2f491645d1e0da80ab9ebf653f4fc9d6efd8c",
+        "scripts/build_android_network.py": "74d6062ea085af21780553d27ec64e320900a0b0e1f7adc3e1c8cdf47483bde4",
+        "patches/nce-gralloc-memfd.patch": "9bec559a3604f40ce6cf292e9680e0baa99f5d1e5fe90f86f6a634f10226ffb7",
+        "experiments/native-linux/android-sources.json": "baa0cd4e5fed6b7aa12533561e027e07b53a32725c4a98f212d2da238d64e12e",
+        "experiments/native-linux/art/NceCompilerPaths.java": "1dee0707d42a26ad467f3a27510d7237ae63ed0f2477b1b8ae00eea017c0a5df",
+        "experiments/native-linux/art/NceFastBaseline.java": "529588f56c35c9ed222c4cafa281cd8d376c26a842317f803c1e43405bc138cf",
+        "experiments/native-linux/art/NceInlining.java": "41442df9b97a4b1c6fa5d7f82c7f35269b5af0c67714a76e8469d1ccebf57d89",
+        "experiments/native-linux/art/NceInterpreter.java": "ba5e2ee3da9990b10d8ac887fb3cc72026c72b6039c52d091be6ce1e2bb919db",
+        "experiments/native-linux/art/NceIntrinsics.java": "254a658f02b51c9fb59e12760d82555fcd8d23ebf46f76a859a9b01b1f69158f",
+        "experiments/native-linux/art/NceProxy.java": "2f5b363c069ee1ea19768457e9cb7931917381fd9cd183f65812b9279e450b40",
+        "experiments/native-linux/art/NceTestDex.java": "5bf3c0f51b3e2db0d057aaa01fdcb384a074e5ef603412c73eb4f0d9e2cb922e",
+        "experiments/native-linux/art/NceVolatile.java": "28863b49b1e1f71f015f10b6c45ebf04393e718de45ccad35a5e23070e9a6b26",
+        "experiments/native-linux/art/NceWorkload.java": "2ab0909f3a0e99d3a4bce911f959062b9f7a25abf53463f4e45865323e0a6d90",
+        "experiments/native-linux/art/android16.patch": "342182ccf23877d0be817d5b3df3828249732e450e15abda33e700ec02c5bf1e",
+        "experiments/native-linux/art/boot-image.patch": "9256ec9f11d843479bf0d69e6f6e77b45edf5041c5e7aaeb2fd980a4eaf79be4",
+        "experiments/native-linux/art/compiler-profile.patch": "7a62ddd525c76c9744bc48689255913e06b4695332f601e10436d4e7fd559609",
+        "experiments/native-linux/art/dex2oat-main.cc": "554ed561de73913dbd0172bab8a0843a4f38c03c09f388eb2ccf87eb47bdac3c",
+        "experiments/native-linux/art/expanded-jit.patch": "3cb1b6b0b115b8687d81c9340283093422fa3005768143a6ddd86063f843331a",
+        "experiments/native-linux/art/fast-baseline.patch": "47c55e913eeb1c62c698a7f6838dc2533e24ddd4307ab40c3650b261aa5031c0",
+        "experiments/native-linux/art/jit_control.cc": "71d5e980f4745202bd6aa0f60e9e5ba8f79d42900b605d7ac84bccc0ce8ac123",
+        "experiments/native-linux/art/ld.config.txt": "dc106c5021978b80e002a74cb56941b4e8381a66a2f00ffc7116dbabc946d89b",
+        "experiments/native-linux/art/nterp.patch": "5623b75f44d6e51647966b660de4d6410308b982cda1c9a4d7c843bcea7f8bcc",
+        "experiments/native-linux/art/offline-compiler.patch": "bbab5fbab3d21958d952a94749093dd3322f9ad20b7ceba679fbeec8554ba1e8",
+        "experiments/native-linux/art/public.libraries.txt": "366951154ef964f6e055ac1071d6dba9d6dd692360b7b9d4a66def1036727c66",
+        "experiments/native-linux/art/reference_heap.c": "a10220f756efd4891930521667bcbf6e86b9e6a3d646d910c934884f57782be2",
+        "experiments/native-linux/art/reference_heap.h": "c814b35b45c201f3893f3e8739f0ea5a0d309facbf70a9ba1f2fd8bb9ddaf71f",
+        "experiments/native-linux/art/reference_heap_test.c": "8c33dc74cff193951e5243cdbbb1f401ad69a1d3963134bbde0e54bbada0d84e",
+        "experiments/native-linux/art/relocatable-code.patch": "9168fe720e7e1d728ff3b67c37e24b8f0954a70d7fc81a1de15dd268024e6b05",
+        "experiments/native-linux/art/sources.json": "a66d085c58d109c16e99205fe83514cf5a41a60ed372fd924e374007b947f82b",
+        "experiments/native-linux/userspace/android-services-test.cpp": "0c6b16be1b0b047a39ebd69314f46b3b479666a19974be825fe9148c05f48439",
+        "experiments/native-linux/userspace/apex-service.cpp": "40f22ed6571cdfd0fe5441540f8e4e1eb3e6b59c0ea4e05a0244c3b006fe7200",
+        "experiments/native-linux/userspace/art-compiler-test.c": "59a4bb0396589dcf30f72a5d3c79fb0ecc6f8156d12f89c83c0bedb1cbc5b2c4",
+        "experiments/native-linux/userspace/art-test.c": "139bb5452d27bf3551fdb10173f1a38dec0894e6fc262f2f8c011bc24566784b",
+        "experiments/native-linux/userspace/binder-test.c": "65b1157ce3ad45c30d3a225f9ecbade4eac5db870b639af683ac3870772e3502",
+        "experiments/native-linux/userspace/bionic-test.c": "ffa10bd0d16dd15edddb368a0435d9d94b529270c13a89f6b3c5536dc40c0b76",
+        "experiments/native-linux/userspace/cfi-library.c": "c6c1dbfa7a6e6f84283f9881f421b264227d51a9bd74ffd6aca8ad6e27b3f04a",
+        "experiments/native-linux/userspace/cfi-test.c": "425798dbd9b56d37ceddd945e87bfc5a762cd0c7acc90243b06c74e190de1aa1",
+        "experiments/native-linux/userspace/cgroup-test.cpp": "500cc19577709255ef4db79d03d5ab60b9c2f135407da638be236eb930537dc8",
+        "experiments/native-linux/userspace/code-tests.c": "6ab3334c22be91f739ef7197df6282d144e4688b912233bceb12cc2ba608eda8",
+        "experiments/native-linux/userspace/crypto-tests.cpp": "fc2132ffe774ce353dd935e77030e78ed87f3e8442ce6d0673f46e6418b89abf",
+        "experiments/native-linux/userspace/dependency.c": "753a84c1ae29ab3dd1d8f7b77c741cf8cb3784feb72aa601d358a19f12a0b721",
+        "experiments/native-linux/userspace/desktop-session.cpp": "5c9c222b945c227ebf25bcc3bed1bd0cfa584f2c1ec7ce89ff0340b969f7d0be",
+        "experiments/native-linux/userspace/desktop-session.h": "eadde6afec629d00965a74279832a32fb3ffbd28e400836b31bb47e60d6777e0",
+        "experiments/native-linux/userspace/diagnostics.h": "c57d0bf3754256d7e24811deb972873c6cfd5e76bd9542480b8777bd0d0a4359",
+        "experiments/native-linux/userspace/display-service-test.cpp": "690c7823bdcc69a67e1bbc943895b8c8c4e34fd5ba9f083c21b8384482ea0b38",
+        "experiments/native-linux/userspace/dynamic.c": "ab07423aaa383f7903dddb9e06ad34aca0d8d6c2c8a10e0b844e38b21146759b",
+        "experiments/native-linux/userspace/egl-test.c": "f2b9c5c92ef6be72d495a852e580637348b84c814eb004eac655f2d28fc14269",
+        "experiments/native-linux/userspace/fault-race-test.c": "3b5821b300b30d795025563d9c9d92eaf1798dd8106543be245eeac4fa763175",
+        "experiments/native-linux/userspace/file-tests.c": "ba844093595dd91ca3634ffcf7bf5531ba634fc176c2e4f1167a13ab86a515fb",
+        "experiments/native-linux/userspace/framework-test.cpp": "d441b9e92197d22d93e58d6a25c7cb479111852cb2278c7feaa3ac13cdba0902",
+        "experiments/native-linux/userspace/gpu-test.c": "4321a0539fd8dff9ca2b06ac9029f6537f210022e694334891caf03ef191c4da",
+        "experiments/native-linux/userspace/gralloc-test.c": "7c292e14e894caa903a02a6bc23598ece6367b5b3da446ea47d1ed1e8174ff62",
+        "experiments/native-linux/userspace/host-poll-test.c": "b66c7e6f260f206ebc67a414cc28d74224e3bf8ec84ef00de14e77489bd19110",
+        "experiments/native-linux/userspace/init.c": "45eeb139957be97bd9a3ca4b72509e8b5de85463b231e7e4236be0f9b4e11356",
+        "experiments/native-linux/userspace/input-service.cpp": "7310151a8563c400c42ad20cb4c66171639360dff87d6b414738d2fb5d653a92",
+        "experiments/native-linux/userspace/installd-test.cpp": "23937ec41275a537533db1f4194931b5972d450fa39435530431f4621c5566e9",
+        "experiments/native-linux/userspace/mm-bench.c": "f5a4aeef35fb962cccc46f7b14380a45a089e9fa74118445de0ce94d41563521",
+        "experiments/native-linux/userspace/mm-tests.c": "527d6c94abaf861909f891f54651dd6fa3ec07f4e20263c730767863e3405357",
+        "experiments/native-linux/userspace/plugin.c": "d7724184a5ae48178c3b96badd6a5a37d8585df30efb07d53b6a5d2ec20afbf1",
+        "experiments/native-linux/userspace/proc-exit-tests.c": "8c27b588c67dd8edc4fde6ea6526d5c97742a5e838fa65bab3999bb264d21d24",
+        "experiments/native-linux/userspace/property-service.cpp": "bfe1b3139e37c60f7c149902f36886e85823ca8c80c7cad6ccac08d3431338d2",
+        "experiments/native-linux/userspace/reclaim-test.c": "c93ec8238aec1aa8d988abde28eb5c57c7418893479fd403f6c8ee36de9f3bb6",
+        "experiments/native-linux/userspace/schedule-test.c": "b2ca7357a6d95755509e784341de193d8c61e7c680c3858422d46e2c4d2c6c9c",
+        "experiments/native-linux/userspace/seccomp-tests.c": "7ac584c36df43561ad7c947eeec40ba0c39188a28d1a79245100b4f683626931",
+        "experiments/native-linux/userspace/shell-tests.sh": "52c1cc230ccf2f9d02d4b5c5502bf460ae71f211d97d39f87a5da113160eb4bd",
+        "experiments/native-linux/userspace/signal-registers.S": "68e13063df3b1a82a0b5805eb98082204b7ee6e29e7c020cc452ef5199f6d257",
+        "experiments/native-linux/userspace/signal-tests.c": "43b86323b4dd66c98db20065b8cc41d868fb7ab538135d6eba9d7c65a263a549",
+        "experiments/native-linux/userspace/sigreturn.S": "38d3d7dcfb32d84698bd3a7733e34bfbb8c534c1bb8cbfc00d0031a24db3ed7b",
+        "experiments/native-linux/userspace/sigreturn.ld": "68da814c0446db7c9e4c5dbd6b670b82274dd6d749aca93fe5324aacf49cfc27",
+        "experiments/native-linux/userspace/storage-layout.cpp": "e2bd2bba3aba767fb492cad600de06883810e16dedf0b6584d1d37714679721a",
+        "experiments/native-linux/userspace/storage-test.c": "1b5a8b10384d9c591df6f989e8cdd8aea21b2407b220496c131cdbb5ed3f6de7",
+        "experiments/native-linux/userspace/suspend-test.cpp": "8c6fb5cd92091cc95acbce5a3cbdc4e528a0ff39c1f73e929e3b3429257a57d8",
+        "experiments/native-linux/userspace/worker.c": "7fde14d029471084016690a5e5a7804cd41380eee825bee8121536f778928f78",
+        "experiments/native-linux/services/NCE_Touch.idc": "181ae37a4a3fcf919b7df72d97218c33df2dfdd4c4a1924a34a038758c6f7aec",
+        "experiments/native-linux/services/NCE_Touch.kl": "7165057ef302448aaaa997b0661ff5c1e3d748ef9ff7420689c2dbaab2fb3a1a",
+        "experiments/native-linux/services/NceAppData.java": "575a0cbc97f0168bdcd7f637ef0b87a2eb5d049dc29c1af0bde162cf62b76d1a",
+        "experiments/native-linux/services/NceClockUi.java": "0d4ee189f42d8c72972e9c86a7aaa24608fdb03a23cdf74c4d9879c1aabe3f8b",
+        "experiments/native-linux/services/NceFramework.java": "c20379a865976e243126445e1d004f82cd9d9d346b8acb3ccbfb99f7c725d3f6",
+        "experiments/native-linux/services/NceKeystore.java": "61bef9906203975cc1a66a086c84fc93c612b2053c14837a5621cb8198378b69",
+        "experiments/native-linux/services/NceShutdown.java": "003bd83c76e51431b203934a3912013ff14cbdb453e9f677cb26480268cda137",
+        "experiments/native-linux/services/NceStorage.java": "fcbceaff92eb161ac8042236757f51f0ce124c3c9f1eab8127fec17a006f281e",
+        "experiments/native-linux/services/NceSurface.java": "49b7665108752d939e91eb4b72fd8a8311632f383a6778bbdd090091c9c7e052",
+        "experiments/native-linux/services/NceZygoteChild.java": "e96207a7e67abd3e9651aec88885dc8e4e35d8ee2bd1766321df2374ce001c5a",
+        "experiments/native-linux/services/apex/android/apex/ApexInfo.aidl": "51aa1cbc7671889f24002d7d4503dce43157056770498ff1f99a8bae12b27013",
+        "experiments/native-linux/services/apex/android/apex/ApexInfoList.aidl": "5e49deb7d235b098ab6ffc19006ae0c57158e478e940ceaa3d290d041a057dd6",
+        "experiments/native-linux/services/apex/android/apex/ApexSessionInfo.aidl": "c4283eb43c806c138be969a570ae2c2c73182fd4b05909860c1bdaefe4022242",
+        "experiments/native-linux/services/apex/android/apex/ApexSessionParams.aidl": "496a2dc5ff4b3cb1a3eb65e3d1ac7973dfbd67f888777d22e602d9b6fee567a5",
+        "experiments/native-linux/services/apex/android/apex/CompressedApexInfo.aidl": "664f80e6481a1911b6a779c40c502a8f8e0c505ea3878953133cc7877355436f",
+        "experiments/native-linux/services/apex/android/apex/CompressedApexInfoList.aidl": "c41afe66ea75a92c4a847454489c897a023b2ff3e15053189f35dc29f83676f1",
+        "experiments/native-linux/services/apex/android/apex/IApexService.aidl": "453ea41d5ce6afe1437f5cc6c1e90fa7a552007e1e9ec47c5b1b717d488bb2e3",
+        "experiments/native-linux/services/apex/apex_manifest.proto": "e9505454f5fa759c6364e8680542f48b219f1b57d394a63deadfcfc6e8268ce7",
+        "experiments/native-linux/services/apex/sources.json": "7f41436e5d00c75a388c3b649b8a02e9245fc3edd43685acee21b4ba315d82f5",
+        "experiments/native-linux/services/cgroups.json": "5f3af0749bf377db4a5187b619166894bb609653b5161b349abaa7306cdcd516",
+        "experiments/native-linux/services/file_contexts": "d2c49eb3064a96ab435492f22481d0a7b980a86233ce19e7014a5e9c80815de8",
+        "experiments/native-linux/services/framework-log.c": "b4c79827cbe40c4f1b2efdab8a0e93808d2aa0889e55bbeafa0a9d2d03e68802",
+        "experiments/native-linux/services/fstab.nce": "6d23d4618d00071e903d8d93ce8972a61e1527787c299fb44e0fc1c2b7d22cf8",
+        "experiments/native-linux/services/installd/android/os/CreateAppDataArgs.aidl": "395f48daec3b728c2b7b9949ed0dc1d5de34192971475fb2b2eba348d7cb9819",
+        "experiments/native-linux/services/installd/android/os/CreateAppDataResult.aidl": "131dcd1af2b29d48490033b494432cda834d9b98ebdf199c82406cb948a8cd07",
+        "experiments/native-linux/services/installd/android/os/IInstalld.aidl": "a29f74f099ba5aa224a901c3f236e60a17d6d4c3c7999694f9e090bb7fcf8784",
+        "experiments/native-linux/services/installd/android/os/ReconcileSdkDataArgs.aidl": "85b1a6ca20cd53b156b44aaa1444aa54bf02679e50017b48c2d06705b64f3bfe",
+        "experiments/native-linux/services/installd/android/os/storage/CrateMetadata.aidl": "292d89d237a5292d25399d722b13177a9263c5e21d5e39ca86ffa12d14be09da",
+        "experiments/native-linux/services/installd/sources.json": "dccabdbdd9b56efc85ec815f23bfb0c537e1feaa32371e779f135a76b73b9572",
+        "experiments/native-linux/services/nce-features.xml": "3a4d73896e1abd736daa031da2797101307023dbd23c47b2fbbf10b1d133c704",
+        "experiments/native-linux/services/nce-policy.cil": "723b75c76a9f5a4799d170bbbb5e535ea0d9decc94123e3ae76a69bb6ba0addc",
+        "experiments/native-linux/services/network-sources.json": "c47b7f8166ed712c356b454233dbb38886f4b3228aa0f660beb8816350b8835e",
+        "experiments/native-linux/services/property-info.cpp": "53e933824b647db3f64b6cc610aebf8e4e181a0ee8c3f215303c9e74856bd982",
+        "experiments/native-linux/services/seapp_contexts": "ea5539cd26de26ae1b375b01ca8e3707ed24d23d7e32770bc4b692074046b3c2",
+        "experiments/native-linux/services/service_contexts": "8b3ffe1f8497bb9755aafb8397e420e69d149e52f47157fa5c29c42096ef93ec",
+        "experiments/native-linux/services/sources.json": "b4bf7da997e6fe7011d03eb26eca434ca084cc16f761f4d18d55c12a09853ade",
+        "experiments/native-linux/services/suspend/android/system/suspend/ISystemSuspend.aidl": "4ef9b85fbdf5fb18fc9e7cc50d184a2d9aa003b624ddcc12d128477b63e6062d",
+        "experiments/native-linux/services/suspend/android/system/suspend/IWakeLock.aidl": "663fb611a9b421168ed9d74b96a4fc67d16ed7c371fd5e39f2ab199f1575716c",
+        "experiments/native-linux/services/suspend/android/system/suspend/WakeLockType.aidl": "fcd5e48f11ad311cd10dcae0689d6f64ae5db74b07357b23edad14015ad8f019",
+        "experiments/native-linux/services/suspend/sources.json": "7a42ce14ef2f78f6698e1bc0b71f26726f0fa335423ab3dd185df77d63f084dd",
+        "experiments/native-linux/services/task_profiles.json": "d61e618ce83f7587860f0b36a152795f1f3bf5f4f12c938ccb5b3db1bf4a8dc1",
+        "experiments/native-linux/services/vendor-manifest.xml": "1eb0d66f9e783bf168a111d468d46620a7b114ecd55794f63b5ab684f5173ca7",
+        "experiments/native-linux/graphics/android-sources.json": "8918989ae7b6703e6301809107dfc4b83af4ef04183d9450c9a16008519260f6",
+        "experiments/native-linux/graphics/channel-test.cpp": "7bc4e9c42067855f8cd198d7d9357eeb62dff907a0492bbe4656783602ef2a15",
+        "experiments/native-linux/graphics/guest-pipe.c": "ced626792fde7984dd4f6ccf09e4acebbce7bc86898c783e5583dc025260ebda",
+        "experiments/native-linux/graphics/host-graphics.cpp": "099e66814a919cd08ade810e281a96166845118711255a4371596d5361631ac0",
+        "experiments/native-linux/graphics/host-graphics.h": "b2ed42bd0bd016faeb36d34175b85c2e759f63ad95c2cce8752db02cc890ac8c",
+        "experiments/native-linux/graphics/protocol/gles2_opcodes.h": "006c946813dd6e35a7093b5f752e9637fcf1cb97d8fb0c9552a2fd86c0ff8526",
+        "experiments/native-linux/graphics/protocol/renderControl_opcodes.h": "cdfe0e627071592e0176c03a7e75cea86caac82e8750d57befd2a3c2868e4627",
+        "experiments/native-linux/graphics/protocol/sources.json": "f60961e22969d99dbfeeb11a8564479f5eb6b9089b6dec7f53490be7643f2f28",
+        "experiments/native-linux/graphics/window-test.mm": "0ca686b47373a172239f96d32c20b2d59800197774e9bd00d4445f36f871c851",
+        "scripts/test_nce_userspace.py": "930ecd68b38c64381e4e2348db81edff7ebda6100a6aea74ddc2a3a06ae536b2"
+      },
+      "runs": [
+        {
+          "entry": "CLI",
+          "named_check_count": 225,
+          "result": {
+            "result": "passed"
+          },
+          "lifetime": {
+            "test": "linux_nce_context_lifetime",
+            "allocated": 2911,
+            "freed": 2911
+          },
+          "desktop": [
+            {
+              "test": "android_desktop_visible_activity",
+              "passed": true,
+              "package": "com.android.launcher3",
+              "sampled_colors": 470
+            },
+            {
+              "test": "android_desktop_visible_activity",
+              "passed": true,
+              "package": "com.android.deskclock",
+              "sampled_colors": 122
+            },
+            {
+              "test": "android_desktop_visible_activity",
+              "passed": true,
+              "package": "com.android.deskclock",
+              "sampled_colors": 138
+            },
+            {
+              "test": "android_desktop_visible_activity",
+              "passed": true,
+              "package": "com.google.android.documentsui",
+              "sampled_colors": 45
+            },
+            {
+              "test": "native_graphics_channels_released",
+              "passed": true,
+              "opened": 127,
+              "closed": 127
+            },
+            {
+              "test": "linux_data_readonly_shutdown",
+              "passed": true
+            }
+          ]
+        },
+        {
+          "entry": "GCD",
+          "named_check_count": 226,
+          "result": {
+            "result": "passed"
+          },
+          "lifetime": {
+            "test": "linux_nce_context_lifetime",
+            "allocated": 2837,
+            "freed": 2837
+          },
+          "desktop": [
+            {
+              "test": "android_desktop_visible_activity",
+              "passed": true,
+              "package": "com.android.launcher3",
+              "sampled_colors": 470
+            },
+            {
+              "test": "android_desktop_visible_activity",
+              "passed": true,
+              "package": "com.android.deskclock",
+              "sampled_colors": 145
+            },
+            {
+              "test": "android_desktop_visible_activity",
+              "passed": true,
+              "package": "com.android.deskclock",
+              "sampled_colors": 138
+            },
+            {
+              "test": "android_desktop_visible_activity",
+              "passed": true,
+              "package": "com.google.android.documentsui",
+              "sampled_colors": 108
+            },
+            {
+              "test": "native_graphics_channels_released",
+              "passed": true,
+              "opened": 134,
+              "closed": 134
+            },
+            {
+              "test": "linux_data_readonly_shutdown",
+              "passed": true
+            }
+          ]
+        }
+      ],
+      "scope": "Full desktop, Clock/Files, persistence, cleanup; functional validation with profiling, not a timing comparison. Swift-only benchmark request checks ran briefly during GCD."
+    }
   }
 }

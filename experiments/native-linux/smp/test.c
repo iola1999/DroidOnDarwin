@@ -63,8 +63,10 @@ long lkl_smp_test(void)
 {
     struct task_struct *tasks[2];
     unsigned int cpu, observed;
-    if (num_online_cpus() != 2 || raw_smp_processor_id())
+    if (num_online_cpus() != 2 || raw_smp_processor_id()) {
+        lkl_printf("smp test entry online=%u cpu=%u\n", num_online_cpus(), raw_smp_processor_id());
         return -EINVAL;
+    }
     for (cpu = 0; cpu < 2; ++cpu) {
         observed = 99;
         if (smp_call_function_single(cpu, observe_ipi, &observed, 1) || observed != cpu)
@@ -86,13 +88,20 @@ long lkl_smp_test(void)
         wake_up_process(tasks[cpu]);
     for (cpu = 0; cpu < 2; ++cpu) {
         if (!wait_for_completion_timeout(&workers[cpu].done, 10 * HZ) ||
-            workers[cpu].observed_cpu != cpu || workers[cpu].error)
+            workers[cpu].observed_cpu != cpu || workers[cpu].error) {
+            lkl_printf("smp compute failed cpu=%u observed=%u error=%d\n",
+                       cpu, workers[cpu].observed_cpu, workers[cpu].error);
             return -ETIMEDOUT;
+        }
     }
     if (atomic_read(&count) != 200000 || atomic64_read(&count64) != (1ULL << 40) + 200000 ||
         futex_count != 200000 ||
-        max(workers[0].start, workers[1].start) >= min(workers[0].end, workers[1].end))
+        max(workers[0].start, workers[1].start) >= min(workers[0].end, workers[1].end)) {
+        lkl_printf("smp compute counts=%d/%lld/%u times=%llu-%llu/%llu-%llu\n",
+                   atomic_read(&count), atomic64_read(&count64), futex_count,
+                   workers[0].start, workers[0].end, workers[1].start, workers[1].end);
         return -EUCLEAN;
+    }
     lkl_printf("{\"test\":\"linux_smp_parallel_kernel\",\"count\":%d,\"overlap_ns\":%llu,\"passed\":true}\n",
                atomic_read(&count), min(workers[0].end, workers[1].end) - max(workers[0].start, workers[1].start));
     u32 observed_value;

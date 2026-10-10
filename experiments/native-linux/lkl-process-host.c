@@ -750,6 +750,20 @@ static void user_exec(void *opaque, unsigned long entry, unsigned long stack)
     state->resume = (uintptr_t)program->stubs.rx;
 }
 
+#ifdef NCE_SMP
+static int user_data_range(unsigned long address, unsigned long length)
+{
+    if (address < USER_BASE || address >= USER_BASE + USER_SIZE ||
+        length > USER_BASE + USER_SIZE - address)
+        return 0;
+    NceCode dynamic = nce_memory_dynamic_code();
+    uintptr_t start = (uintptr_t)dynamic.rx;
+    if (address < start + dynamic.size && start < address + length)
+        return 0;
+    return nce_program_data_range(address, length);
+}
+#endif
+
 unsigned long nce_process_setup(void)
 {
     REQUIRE(getpagesize() == PAGE);
@@ -773,8 +787,23 @@ unsigned long nce_process_setup(void)
         REQUIRE(!nce_program_reserved(p->base, p->span));
         REQUIRE(nce_program_reserved(stub - 1, 2) && nce_program_reserved(end - 1, 1));
         REQUIRE(!nce_program_reserved(end, 1) && !nce_program_reserved(stub, 0));
+        uintptr_t cursor = p->base;
+        for (size_t j = 0; j < p->segment_count; ++j) {
+            const NceSegment *s = &p->segments[j];
+            uintptr_t start = p->base + s->offset;
+            REQUIRE(!nce_program_data_range(start, s->size));
+            REQUIRE(!nce_program_data_range(start - 1, 2));
+            REQUIRE(!nce_program_data_range(start + s->size - 1, 2));
+            if (cursor < start)
+                REQUIRE(nce_program_data_range(cursor, start - cursor));
+            cursor = start + s->size;
+        }
+        if (cursor < stub)
+            REQUIRE(nce_program_data_range(cursor, stub - cursor));
+        REQUIRE(!nce_program_data_range(stub, p->stub_size));
     }
     REQUIRE(nce_program_reserved(ULONG_MAX, 2));
+    REQUIRE(!nce_program_data_range(ULONG_MAX, 2) && !nce_program_data_range(USER_BASE, 0));
     printf("{\"test\":\"native_program_range_index\",\"passed\":true,\"programs\":%zu}\n", nce_program_count);
     REQUIRE(protect_none((void *)user_base, NCE_USER_SIZE + NCE_RAM_SIZE + NCE_VMALLOC_SIZE) == 0);
     nce_lkl_host.shmem_init = shmem_init;
@@ -791,6 +820,12 @@ unsigned long nce_process_setup(void)
     nce_lkl_host.user_reserved = nce_program_reserved;
 #ifdef NCE_SMP
     nce_lkl_host.user_interrupt = interrupt_guests;
+    nce_lkl_host.user_data_range = user_data_range;
+    uintptr_t dynamic_start = (uintptr_t)dynamic_cache.code.rx;
+    REQUIRE(user_data_range(USER_BASE + NCE_EXEC_DATA_OFFSET, PAGE));
+    REQUIRE(!user_data_range(dynamic_start, PAGE));
+    REQUIRE(!user_data_range(dynamic_start - 1, 2));
+    REQUIRE(!user_data_range(dynamic_start + dynamic_cache.size - 1, 2));
 #endif
     struct sigaction action = {.sa_sigaction = fault, .sa_flags = SA_SIGINFO | SA_ONSTACK};
     sigemptyset(&action.sa_mask);

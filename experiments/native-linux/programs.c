@@ -56,6 +56,23 @@ int nce_program_reserved(unsigned long address, unsigned long length)
     return i < nce_program_count && address + length > nce_programs[i].base + nce_programs[i].span;
 }
 
+int nce_program_data_range(unsigned long address, unsigned long length)
+{
+    if (!length || nce_program_reserved(address, length))
+        return 0;
+    uintptr_t end = address + length;
+    for (size_t i = nce_program_index(address); i < nce_program_count && nce_programs[i].base < end; ++i) {
+        const NceProgram *p = &nce_programs[i];
+        for (size_t j = 0; j < p->segment_count; ++j) {
+            const NceSegment *s = &p->segments[j];
+            uintptr_t start = p->base + s->offset;
+            if (address < start + s->size && start < end)
+                return 0;
+        }
+    }
+    return 1;
+}
+
 int nce_program_prepare(NceProgram *p)
 {
     if (p > nce_programs && p->base < p[-1].base + p[-1].span + p[-1].stub_size)

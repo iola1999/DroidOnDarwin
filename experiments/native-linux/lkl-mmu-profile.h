@@ -15,7 +15,7 @@ struct nce_schedule_profile {
     unsigned long collection_ns;
 };
 
-/* The Linux CPU writes these optional counters; the host log thread reads
+/* Linux CPUs update these optional counters; the host log thread reads
  * individual fields atomically. A report is not a transactional snapshot. */
 struct nce_mmu_profile {
     unsigned long switches;
