@@ -15,7 +15,7 @@ ROOT = Path(__file__).resolve().parents[1]
 EXP = ROOT / 'experiments/native-linux'
 INPUT = ROOT / 'work/native-linux-nce/processes'
 OUT = ROOT / 'work/native-linux-nce/ios'
-REVISION = 'N4-D2'
+REVISION = 'N4-D3'
 
 
 def run(args, timeout=600, **kwargs):
@@ -100,10 +100,13 @@ def main():
     with (OUT / 'execute-test.log').open('w') as log:
         run([OUT / 'execute-test'], stdout=log)
     run(['node', ROOT / 'tests/ios-jit/script-test.cjs'])
-    run(['xcrun', 'swiftc', '-O', EXP / 'ios/ProbeLogReader.swift',
+    run(['xcrun', 'swiftc', '-O', EXP / 'app/ProbeLogReader.swift',
          ROOT / 'tests/ios-jit/LogReaderTests.swift', '-o', OUT / 'log-reader-test'])
     with (OUT / 'log-reader-test.log').open('w') as log:
         run([OUT / 'log-reader-test'], stdout=log)
+    from package_native_linux_image import write_runtime
+    write_runtime(OUT)
+    plist(OUT / 'ResourceSizes.plist', {name: (INPUT / name).stat().st_size for name in ('lkl-image.bin', 'system.img', 'android-data-seed.img')})
     build_id = REVISION + '-iOS-' + time.strftime('%Y%m%d-%H%M%S')
     info = plistlib.loads((ROOT / 'src/app/Husk/Info.plist').read_bytes())
     for key in ['CFBundleIcons', 'CFBundleIcons~ipad', 'HuskPerformanceBuild']:
@@ -113,7 +116,8 @@ def main():
                 UISupportedInterfaceOrientations=['UIInterfaceOrientationPortrait',
                     'UIInterfaceOrientationPortraitUpsideDown',
                     'UIInterfaceOrientationLandscapeLeft', 'UIInterfaceOrientationLandscapeRight'],
-                CFBundleShortVersionString='0.12.1', CFBundleVersion='81')
+                CFBundleShortVersionString='0.13.0', CFBundleVersion='82')
+    info['UTImportedTypeDeclarations'] = [{'UTTypeIdentifier': 'app.husk.image', 'UTTypeConformsTo': ['com.apple.package'], 'UTTypeDescription': 'Husk Image', 'UTTypeTagSpecification': {'public.filename-extension': ['huskimage']}}]
     plist(OUT / 'Info.plist', info)
     helper_info = plistlib.loads((ROOT / 'src/app/HuskJITHelper/Info.plist').read_bytes())
     for key in ['CFBundleShortVersionString', 'CFBundleVersion']:
@@ -124,7 +128,8 @@ def main():
     plist(OUT / 'Husk.entitlements', {'get-task-allow': True})
     sources = [{'path': str(EXP / name)} for name in
                ['lkl-main.c', 'lkl-host.c', 'lkl-process-host.c', 'programs.c', 'memory.c', 'execute-check.c', 'compute.c', 'input.c', 'session.c', 'nce.c', 'entry.S',
-                'ios/Bridge.c', 'ios/NativeLinuxApp.swift', 'ios/ProbeLogReader.swift', 'graphics/host-graphics.cpp']]
+                'ios/Bridge.c', 'ios/NativeLinuxApp.swift', 'ios/Display.swift', 'ios/JITSettingsView.swift', 'app/DeviceStore.mm', 'macos/Storage.mm', 'graphics/host-graphics.cpp']]
+    sources += [{'path': str(path)} for path in sorted((EXP / 'app').glob('*.swift'))]
     sources += [{'path': str(EXP / 'guest.S'), 'compilerFlags': ['-DNATIVE']}]
     sources += [{'path': str(INPUT / 'payload.S')}]
     sources += [{'path': str(ROOT / name)} for name in
@@ -132,7 +137,7 @@ def main():
                  'src/app/Husk/JITBuiltIn.swift', 'src/app/Husk/JITPairingFileStore.swift',
                  'src/app/HuskJITHelper/HuskJITMessages.swift', 'src/app/Husk/Assets.xcassets']]
     sources += [{'path': str(path), 'buildPhase': 'resources'} for path in
-                [INPUT / 'lkl-image.bin', INPUT / 'android-data-seed.img', INPUT / 'system.img', ROOT / 'src/app/Husk/Resources/husk-jit.js',
+                [OUT / 'Runtime.json', OUT / 'ResourceSizes.plist', INPUT / 'lkl-image.bin', INPUT / 'android-data-seed.img', INPUT / 'system.img', ROOT / 'src/app/Husk/Resources/husk-jit.js',
                  ROOT / 'work/native-linux-nce/musl-1.2.5/COPYRIGHT',
                  ROOT / 'work/native-linux-nce/dash-0.5.12/COPYING',
                  ROOT / 'work/native-linux-nce/compiler-rt-20.1.8.src/LICENSE.TXT']]

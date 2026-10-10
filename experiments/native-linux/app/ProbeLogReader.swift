@@ -57,6 +57,16 @@ actor ProbeLogReader {
         phase = nil
     }
 
+    func tail(from url: URL) throws -> ProbeLogSnapshot? {
+        reset()
+        let attributes = try FileManager.default.attributesOfItem(atPath: url.path)
+        let size = (attributes[.size] as? NSNumber)?.uint64Value ?? 0
+        fileID = (attributes[.systemFileNumber] as? NSNumber)?.uint64Value
+        modified = attributes[.modificationDate] as? Date
+        offset = size > 65536 ? size - 65536 : 0
+        return try read(from: url)
+    }
+
     func read(from url: URL) throws -> ProbeLogSnapshot? {
         let attributes = try FileManager.default.attributesOfItem(atPath: url.path)
         let size = (attributes[.size] as? NSNumber)?.uint64Value ?? 0
@@ -73,9 +83,10 @@ actor ProbeLogReader {
         let file = try FileHandle(forReadingFrom: url)
         defer { try? file.close() }
         try file.seek(toOffset: offset)
-        // Bound each read and stop at the captured size even while the guest writes.
-        while offset < size {
-            let data = try file.read(upToCount: Int(min(size - offset, 65536))) ?? Data()
+        // Bound total work per poll, including while the guest keeps writing.
+        let end = min(size, offset + 262144)
+        while offset < end {
+            let data = try file.read(upToCount: Int(min(end - offset, 65536))) ?? Data()
             if data.isEmpty {
                 break
             }

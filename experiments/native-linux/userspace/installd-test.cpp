@@ -1,4 +1,5 @@
 /* SPDX-License-Identifier: Apache-2.0 */
+#include "diagnostics.h"
 #include <aidl/android/os/IInstalld.h>
 #include <android/binder_manager.h>
 #include <errno.h>
@@ -123,6 +124,8 @@ pid_t nce_installd_start(const char *executable)
             usleep(10000);
     }
     CHECK(service.get() && AIBinder_ping(service.get()) == STATUS_OK);
+    if (!nce_diagnostics())
+        return child;
     client(executable, "create");
     for (const char *base : {"/data/user/0", "/data/user_de/0"}) {
         for (unsigned i = 0; i < 2; ++i) {

@@ -1,4 +1,5 @@
 /* SPDX-License-Identifier: Apache-2.0 */
+#include "diagnostics.h"
 #include <aidl/android/system/suspend/ISystemSuspend.h>
 #include <android/binder_manager.h>
 #include <errno.h>
@@ -36,6 +37,8 @@ pid_t nce_suspend_start()
             usleep(10000);
     }
     CHECK(service && service->isRemote());
+    if (!nce_diagnostics())
+        return child;
     std::shared_ptr<IWakeLock> first, second;
     CHECK(service->acquireWakeLock(WakeLockType::PARTIAL, "nce-first", &first).isOk() && first);
     CHECK(service->acquireWakeLock(WakeLockType::FULL, "nce-second", &second).isOk() && second);

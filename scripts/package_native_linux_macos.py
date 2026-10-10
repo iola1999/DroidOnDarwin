@@ -102,8 +102,8 @@ def main():
              ROOT / 'work/angle-macos/prefix/lib', '--graphics-window'], timeout=1800,
             env={**os.environ, 'NCE_MM_MODE': 'demand', 'NCE_SYSTEM_SERVER_PROBE': '1'})
     verified = validate_inputs()
-    local = [*[p for p in sorted((EXP / 'macos').glob('*')) if p.suffix in ('.h', '.mm') and not p.name.endswith('Tests.mm')],
-             Path(__file__).resolve()]
+    local = [*[p for p in sorted((EXP / 'macos').glob('*')) if p.suffix in ('.h', '.mm', '.swift') and not p.name.endswith('Tests.mm')],
+             *[p for p in sorted((EXP / "app").glob("*")) if p.suffix in (".h", ".mm", ".swift") and not p.name.endswith("Tests.mm")], ROOT / "scripts/package_native_linux_image.py", EXP / 'ios/Bridge.c', EXP / 'ios/Bridge.h', Path(__file__).resolve()]
     verified.update({p: digest(p) for p in local if p.is_file()})
     OUT.mkdir(parents=True, exist_ok=True)
     app = OUT / 'Husk NCE.app'
@@ -146,7 +146,8 @@ def main():
     sources = [EXP / name for name in ['lkl-main.c', 'lkl-host.c', 'lkl-process-host.c',
                'nce.c', 'entry.S', 'programs.c', 'memory.c', 'execute-check.c', 'compute.c', 'input.c', 'session.c']]
     sources += [INPUT / 'payload.S', EXP / 'guest.S', EXP / 'graphics/host-graphics.cpp',
-                *[EXP / 'macos' / name for name in ('App.mm', 'Display.mm', 'Storage.mm')]]
+                *[EXP / 'macos' / name for name in ('Display.mm', 'Storage.mm')]]
+    sources += [EXP / "app/DeviceStore.mm", EXP / "ios/Bridge.c"]
     objects = []
     with (OUT / 'build.log').open('w') as log:
         for index, source in enumerate(sources):
@@ -161,14 +162,18 @@ def main():
                     extra += ['-isystem', gfx / include]
             run(['xcrun', 'clang', *flags, *extra, '-c', source, '-o', obj], stdout=log, stderr=subprocess.STDOUT)
             objects.append(obj)
-        run(['xcrun', 'clang++', *objects, f'-mmacosx-version-min={minimum}',
+        run(['xcrun', 'swiftc', '-O', '-parse-as-library', '-import-objc-header', EXP / 'macos/Bridge.h',
+             '-target', f'arm64-apple-macosx{minimum}', *sorted((EXP / 'app').glob('*.swift')),
+             EXP / 'macos/Application.swift', *objects, '-Xlinker', '-lc++',
              '-framework', 'AppKit', '-framework', 'Metal', '-framework', 'QuartzCore',
-             '-L', frameworks, '-lgfxstream_backend', '-Wl,-rpath,@executable_path/../Frameworks',
+             '-L', frameworks, '-lgfxstream_backend', '-Xlinker', '-rpath', '-Xlinker', '@executable_path/../Frameworks',
              '-o', executable], stdout=log, stderr=subprocess.STDOUT)
     for name in ('lkl-image.bin', 'system.img', 'android-data-seed.img'):
         run(['cp', '-c', INPUT / name, resources / name])
     (resources / 'ResourceSizes.plist').write_bytes(plistlib.dumps({
         name: (resources / name).stat().st_size for name in ('lkl-image.bin', 'system.img', 'android-data-seed.img')}))
+    from package_native_linux_image import write_runtime
+    write_runtime(resources)
     write_notices(resources)
     iconset = OUT / 'AppIcon.iconset'
     iconset.mkdir(exist_ok=True)
@@ -182,7 +187,7 @@ def main():
     build = 'Mac-M1-' + datetime.now().astimezone().strftime('%Y%m%d-%H%M%S')
     info = {'CFBundleIdentifier': 'app.husk.nce.mac', 'CFBundleExecutable': executable.name,
             'CFBundleName': 'Husk NCE', 'CFBundleDisplayName': 'Husk NCE', 'CFBundlePackageType': 'APPL',
-            'CFBundleShortVersionString': '0.12.1', 'CFBundleVersion': '1', 'NCEBuildID': build,
+            'CFBundleShortVersionString': '0.13.0', 'CFBundleVersion': '2', 'NCEBuildID': build,
             'CFBundleIconFile': 'AppIcon', 'LSMinimumSystemVersion': minimum,
             'LSArchitecturePriority': ['arm64'], 'NSHighResolutionCapable': True,
             'NSSupportsAutomaticTermination': False, 'NSSupportsSuddenTermination': False}

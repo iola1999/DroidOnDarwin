@@ -67,5 +67,14 @@ struct LogReaderTests {
         let retained = try Data(contentsOf: url)
         precondition(retained == Data("replacement\n".utf8))
         print("PASS file replacement and new attempt; source bytes preserved")
+        let backlog = Data(repeating: 120, count: 600000) + Data("\n{\"phase\":\"android_desktop_running\"}\n".utf8)
+        try backlog.write(to: url, options: .atomic)
+        let chunk1 = try await reader.read(from: url)!
+        let chunk2 = try await reader.read(from: url)!
+        let chunk3 = try await reader.read(from: url)!
+        precondition(chunk1.phase == nil && chunk2.phase == nil && chunk3.phase == "android_desktop_running")
+        let tail = try await reader.tail(from: url)!
+        precondition(tail.phase == "android_desktop_running" && tail.lines.count <= 80)
+        print("PASS per-poll byte budget and on-demand tail of a large log")
     }
 }

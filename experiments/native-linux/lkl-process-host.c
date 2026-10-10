@@ -1521,6 +1521,8 @@ void nce_process_run(long (*host_syscall)(long, long *), long (*guest_syscall)(l
         put_file(host_syscall, "/data/nce/desktop-session", "", 0);
     if (getenv("NCE_SYSTEM_SERVER_PROBE") || getenv("NCE_DESKTOP"))
         put_file(host_syscall, "/data/nce/system-server-probe", "", 0);
+    if (getenv("NCE_DIAGNOSTICS"))
+        put_file(host_syscall, "/data/nce/diagnostics", "", 0);
     if (getenv("NCE_TRACE_SYSTEMUI"))
         put_file(host_syscall, "/data/nce/trace-systemui", "", 0);
     puts("{\"phase\":\"android_platform_services\"}");
@@ -1528,30 +1530,33 @@ void nce_process_run(long (*host_syscall)(long, long *), long (*guest_syscall)(l
     run_program(host_syscall, "/system/bin/android-services-test", NULL);
     nce_host_input_stop();
     REQUIRE(get_file(host_syscall, "/stdout", benchmark, sizeof(benchmark)) > 0);
-    REQUIRE(strstr(benchmark, "android_platform_binder_cleanup"));
-    REQUIRE(strstr(benchmark, "android_framework_runtime"));
-    REQUIRE(strstr(benchmark, "android_vintf_build_consistency"));
-    REQUIRE(strstr(benchmark, "android_aconfig_storage"));
-    REQUIRE(strstr(benchmark, "android_framework_file_observer"));
-    REQUIRE(strstr(benchmark, "android_system_suspend_wakelocks"));
-    REQUIRE(strstr(benchmark, "android_installd_app_data"));
-    REQUIRE(strstr(benchmark, "android_apex_registry"));
-    REQUIRE(strstr(benchmark, (getenv("NCE_SYSTEM_SERVER_PROBE") || getenv("NCE_DESKTOP")) ? "android_system_process_groups_stopped" : "android_zygote_command_server"));
-    if (getenv("NCE_SYSTEM_SERVER_PROBE") && !getenv("NCE_DESKTOP")) {
-        REQUIRE(strstr(benchmark, "android_system_boot_completed"));
-        REQUIRE(strstr(benchmark, "android_desktop_launch_commands"));
-        REQUIRE(strstr(benchmark, "android_system_process_groups_stopped"));
-    }
-    REQUIRE(strstr(benchmark, "android_framework_graphics\",\"passed\":true"));
+    if (!interactive || getenv("NCE_DIAGNOSTICS")) {
+        REQUIRE(strstr(benchmark, "android_platform_binder_cleanup"));
+        REQUIRE(strstr(benchmark, "android_framework_runtime"));
+        REQUIRE(strstr(benchmark, "android_vintf_build_consistency"));
+        REQUIRE(strstr(benchmark, "android_aconfig_storage"));
+        REQUIRE(strstr(benchmark, "android_framework_file_observer"));
+        REQUIRE(strstr(benchmark, "android_system_suspend_wakelocks"));
+        REQUIRE(strstr(benchmark, "android_installd_app_data"));
+        REQUIRE(strstr(benchmark, "android_apex_registry"));
+        REQUIRE(strstr(benchmark, (getenv("NCE_SYSTEM_SERVER_PROBE") || getenv("NCE_DESKTOP")) ? "android_system_process_groups_stopped" : "android_zygote_command_server"));
+        if (getenv("NCE_SYSTEM_SERVER_PROBE") && !getenv("NCE_DESKTOP")) {
+            REQUIRE(strstr(benchmark, "android_system_boot_completed"));
+            REQUIRE(strstr(benchmark, "android_desktop_launch_commands"));
+            REQUIRE(strstr(benchmark, "android_system_process_groups_stopped"));
+        }
+        REQUIRE(strstr(benchmark, "android_framework_graphics\",\"passed\":true"));
 #ifdef NCE_GRAPHICS
-    REQUIRE(strstr(benchmark, "android_gralloc_cpu_gpu_roundtrip\",\"passed\":true"));
+        REQUIRE(strstr(benchmark, "android_gralloc_cpu_gpu_roundtrip\",\"passed\":true"));
+#endif
+        REQUIRE(strstr(benchmark, "android_crypto"));
+    }
+#ifdef NCE_GRAPHICS
     nce_graphics_stop();
 #endif
-    REQUIRE(strstr(benchmark, "android_crypto"));
-
     memory_report(host_syscall, "after_framework");
     const char *graphics_path = getenv("NCE_GRAPHICS_OUTPUT");
-    if (graphics_path) {
+    if (graphics_path && (!interactive || getenv("NCE_DIAGNOSTICS"))) {
         long bytes = get_file(host_syscall, "/data/nce/framework.png", benchmark, sizeof(benchmark));
         REQUIRE(bytes > 8 && bytes < (long)sizeof(benchmark) - 1);
         REQUIRE(!memcmp(benchmark, "\x89PNG\r\n\x1a\n", 8));

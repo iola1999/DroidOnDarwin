@@ -1,4 +1,5 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
+#include "diagnostics.h"
 #include <errno.h>
 #include "desktop-session.h"
 #include <android/binder_manager.h>
@@ -243,7 +244,8 @@ void nce_framework_test()
     CHECK(__system_property_set("pm.dexopt.disable_bg_dexopt", "true") == 0);
     initialize_aconfig();
     derive_classpath();
-    nce_framework_check("NceFramework");
+    if (nce_diagnostics())
+        nce_framework_check("NceFramework");
 }
 
 static int control_socket(const char *name, int type = SOCK_STREAM, gid_t group = 1000,
@@ -509,7 +511,8 @@ void nce_zygote_test()
             CHECK(chown(path, 1000, 1000) == 0 && chmod(path, 0664) == 0);
         }
     }
-    nce_cgroup_permission_test();
+    if (nce_diagnostics())
+        nce_cgroup_permission_test();
     if (system_server) {
         int kernel_log = open("/proc/sys/kernel/printk_devkmsg", O_WRONLY | O_CLOEXEC);
         CHECK(kernel_log >= 0 && write(kernel_log, "on\n", 3) == 3 && close(kernel_log) == 0);
@@ -556,7 +559,8 @@ void nce_zygote_test()
         vold = nce_start_system_service("/system/bin/vold", "vold", 0,
                                         {"--blkid_context=u:r:nce_t:s0", "--blkid_untrusted_context=u:r:nce_t:s0",
                                          "--fsck_context=u:r:nce_t:s0", "--fsck_untrusted_context=u:r:nce_t:s0"});
-        nce_framework_check("NceStorage");
+        if (nce_diagnostics())
+            nce_framework_check("NceStorage");
         storaged = nce_start_system_service("/system/bin/storaged", "storaged", 0, {});
         artd = nce_start_system_service("/apex/com.android.art/bin/artd", "artd", 0, {});
         // Keep this lazy service alive until the Android session is stopped.
@@ -599,7 +603,8 @@ void nce_zygote_test()
         gatekeeper = nce_start_system_service("/system/bin/gatekeeperd",
                                               "android.service.gatekeeper.IGateKeeperService", 1000,
                                               {"/data/misc/gatekeeper"});
-        nce_framework_check("NceKeystore");
+        if (nce_diagnostics())
+            nce_framework_check("NceKeystore");
         // AudioPolicy initialization waits for ActivityManager from system_server.
         audio = nce_start_system_service("/system/bin/audioserver", nullptr, 1041, {});
         media = nce_start_system_service("/system/bin/mediaserver", nullptr, 1013, {});

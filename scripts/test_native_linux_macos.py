@@ -35,16 +35,30 @@ def main():
         fixture[1024 + 0x38:1024 + 0x3a] = b'\x53\xef'
         (smoke / 'Resources' / name).write_bytes(fixture)
     (smoke / 'Resources/ResourceSizes.plist').write_bytes(plistlib.dumps(sizes))
-    run(['xcrun', 'clang++', '-std=c++17', '-O2', '-fobjc-arc', '-Wall', '-Wextra', '-Werror',
-         '-framework', 'AppKit', '-framework', 'QuartzCore', '-framework', 'Metal',
-         *[EXP / 'macos' / name for name in ('App.mm', 'Display.mm', 'Storage.mm', 'AppSmokeTests.mm')],
+    objects = []
+    for source in [EXP / 'macos/Display.mm', EXP / 'macos/Storage.mm', EXP / 'macos/AppSmokeTests.mm', EXP / 'app/DeviceStore.mm', EXP / 'ios/Bridge.c']:
+        obj = OUT / ('smoke-' + source.stem + '.o')
+        flags = ['-std=c++17', '-fobjc-arc'] if source.suffix == '.mm' else []
+        run(['xcrun', 'clang', '-O2', *flags, '-c', source, '-o', obj])
+        objects.append(obj)
+    run(['xcrun', 'swiftc', '-O', '-parse-as-library', '-import-objc-header', EXP / 'macos/Bridge.h',
+         *sorted((EXP / 'app').glob('*.swift')), EXP / 'macos/Application.swift', *objects,
+         '-Xlinker', '-lc++', '-framework', 'AppKit', '-framework', 'QuartzCore', '-framework', 'Metal',
          '-o', smoke / 'MacOS/HostChecks'])
     smoke_data = OUT / 'host-check-data'
-    run([smoke / 'MacOS/HostChecks', '--data-directory', smoke_data], timeout=15)
+    run([smoke / 'MacOS/HostChecks', '--data-directory', smoke_data, '--run-device'], timeout=45)
     log = max((smoke_data / 'Logs').glob('*'), key=lambda p: p.stat().st_mtime)
     line = log.read_text().splitlines()[-1]
     assert line.startswith('app lifecycle checks passed:')
     checks['app_lifecycle'] = line
+    store_test = OUT / 'device-store-tests'
+    run(['xcrun', 'clang++', '-std=c++17', '-O2', '-fobjc-arc', '-Wall', '-Wextra', '-Werror', '-framework', 'Foundation', EXP / 'app/DeviceStore.mm', EXP / 'app/DeviceStoreTests.mm', EXP / 'macos/Storage.mm', '-o', store_test])
+    checks['devices'] = run([store_test], capture_output=True, text=True, timeout=30).stdout.strip()
+    session_test = OUT / 'session-model-tests'
+    run(['xcrun', 'swiftc', '-O', '-parse-as-library', '-import-objc-header', EXP / 'macos/Bridge.h',
+         EXP / 'app/SessionModel.swift', EXP / 'app/ProbeLogReader.swift',
+         ROOT / 'tests/ios-jit/SessionModelTests.swift', '-o', session_test])
+    checks['session'] = run([session_test], capture_output=True, text=True, timeout=15).stdout.strip()
     execute = OUT / 'signed-execute-test'
     run(['xcrun', 'clang', '-O2', '-Wall', '-Wextra', '-Werror', '-I', EXP, '-I', INPUT,
          *[EXP / name for name in ['execute-check.c', 'memory.c', 'nce.c', 'entry.S', 'programs.c']],

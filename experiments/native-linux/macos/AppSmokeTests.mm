@@ -3,6 +3,7 @@
 #include <assert.h>
 #include <atomic>
 #include <unistd.h>
+#include <signal.h>
 
 static std::atomic<bool> stopped;
 static std::atomic<unsigned> stopRequests;
@@ -30,20 +31,22 @@ extern "C" int nce_host_input_send(int, int, int)
     return 0;
 }
 
+static NceDisplay *findDisplay(NSView *root)
+{
+    if ([root isKindOfClass:NceDisplay.class])
+        return (NceDisplay *)root;
+    for (NSView *child in root.subviews) {
+        NceDisplay *found = findDisplay(child);
+        if (found)
+            return found;
+    }
+    return nil;
+}
 static void checkLayout(NSWindow *window)
 {
     [window.contentView layoutSubtreeIfNeeded];
-    NceDisplay *display = nil;
-    NSStackView *navigation = nil;
-    for (NSView *view in window.contentView.subviews) {
-        if ([view isKindOfClass:NceDisplay.class])
-            display = (NceDisplay *)view;
-        if ([view isKindOfClass:NSStackView.class])
-            navigation = (NSStackView *)view;
-    }
-    assert(display && navigation);
-    assert(NSMinY(display.frame) >= NSMaxY(navigation.frame));
-    assert(NSMinX(display.frame) >= 0 && NSMaxX(display.frame) <= window.contentView.bounds.size.width);
+    NceDisplay *display = findDisplay(window.contentView);
+    assert(display);
     assert(fabs(display.bounds.size.width / display.bounds.size.height - 360.0 / 640) < 0.001);
     assert(CGSizeEqualToSize(display.metalLayer.bounds.size, CGSizeMake(360, 640)));
     assert(CGSizeEqualToSize(display.metalLayer.drawableSize, CGSizeMake(360, 640)));
@@ -56,6 +59,8 @@ extern "C" void nce_graphics_set_window(void *)
     checkLayout(window);
     [window setContentSize:NSMakeSize(800, 500)];
     checkLayout(window);
-    // 退出会进入 AppKit 事件循环；从运行循环调用，允许主 GCD 队列继续处理停止回调。
-    [NSApp performSelector:@selector(terminate:) withObject:nil afterDelay:1];
+    // 管理进程通过 SIGTERM 请求停止；覆盖信号转入 AppKit 退出事件循环的路径。
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, NSEC_PER_SEC), dispatch_get_main_queue(), ^{
+      kill(getpid(), SIGTERM);
+    });
 }

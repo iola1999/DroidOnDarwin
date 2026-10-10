@@ -1,4 +1,5 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
+#include "diagnostics.h"
 #include <android/binder_ibinder.h>
 #include <android/binder_manager.h>
 #include <android/binder_parcel.h>
@@ -372,8 +373,11 @@ int main(int argc, char **argv)
     }
     alarm(20);
     mount_namespace_proc();
-    unix_sockets();
-    network_stats_rcu_socket();
+    const bool diagnostics = nce_diagnostics();
+    if (diagnostics) {
+        unix_sockets();
+        network_stats_rcu_socket();
+    }
     load_service_policy();
     int properties_ready[2];
     CHECK(pipe(properties_ready) == 0);
@@ -394,14 +398,16 @@ int main(int argc, char **argv)
     CHECK(properties_init && properties_init() == 0);
     char property_value[PROP_VALUE_MAX];
     CHECK(__system_property_get("ro.property_service.version", property_value) == 1 && !strcmp(property_value, "2"));
-    CHECK(__system_property_set("nce.mutable", "first") == 0);
-    CHECK(__system_property_get("nce.mutable", property_value) == 5 && !strcmp(property_value, "first"));
-    CHECK(__system_property_set("nce.mutable", "second") == 0);
-    CHECK(__system_property_get("nce.mutable", property_value) == 6 && !strcmp(property_value, "second"));
-    CHECK(__system_property_set("ro.nce.prototype", "2") == -1);
-    CHECK(__system_property_get("ro.nce.prototype", property_value) == 1 && !strcmp(property_value, "1"));
-    puts("{\"test\":\"android_property_shared_area\",\"passed\":true}");
-    property_boundaries();
+    if (diagnostics) {
+        CHECK(__system_property_set("nce.mutable", "first") == 0);
+        CHECK(__system_property_get("nce.mutable", property_value) == 5 && !strcmp(property_value, "first"));
+        CHECK(__system_property_set("nce.mutable", "second") == 0);
+        CHECK(__system_property_get("nce.mutable", property_value) == 6 && !strcmp(property_value, "second"));
+        CHECK(__system_property_set("ro.nce.prototype", "2") == -1);
+        CHECK(__system_property_get("ro.nce.prototype", property_value) == 1 && !strcmp(property_value, "1"));
+        puts("{\"test\":\"android_property_shared_area\",\"passed\":true}");
+        property_boundaries();
+    }
     CHECK(mkdir("/binderfs", 0700) == 0);
     CHECK(mount(nullptr, "/binderfs", "binder", 0, nullptr) == 0);
     int control = open("/binderfs/binder-control", O_RDWR | O_CLOEXEC);
@@ -424,27 +430,31 @@ int main(int argc, char **argv)
         execl("/system/bin/servicemanager", "servicemanager", nullptr);
         _exit(101);
     }
-    int ready[2];
-    CHECK(pipe(ready) == 0);
-    pid_t service = fork();
-    CHECK(service >= 0);
-    if (!service) {
-        close(ready[0]);
-        char descriptor[24];
-        snprintf(descriptor, sizeof(descriptor), "%d", ready[1]);
-        execl(argv[0], argv[0], "server", descriptor, nullptr);
-        _exit(102);
-    }
-    close(ready[1]);
+    pid_t service = -1;
     char value;
-    ssize_t received = read(ready[0], &value, 1);
-    if (received != 1) {
-        int status;
-        CHECK(waitpid(service, &status, 0) == service);
-        dprintf(2, "service failed status=%d\n", status);
+    if (diagnostics) {
+        int ready[2];
+        CHECK(pipe(ready) == 0);
+        service = fork();
+        CHECK(service >= 0);
+        if (!service) {
+            close(ready[0]);
+            char descriptor[24];
+            snprintf(descriptor, sizeof(descriptor), "%d", ready[1]);
+            execl(argv[0], argv[0], "server", descriptor, nullptr);
+            _exit(102);
+        }
+        close(ready[1]);
+
+        ssize_t received = read(ready[0], &value, 1);
+        if (received != 1) {
+            int status;
+            CHECK(waitpid(service, &status, 0) == service);
+            dprintf(2, "service failed status=%d\n", status);
+        }
+        CHECK(received == 1 && value == 'r' && close(ready[0]) == 0);
+        puts("{\"test\":\"android_platform_servicemanager_registration\",\"passed\":true}");
     }
-    CHECK(received == 1 && value == 'r' && close(ready[0]) == 0);
-    puts("{\"test\":\"android_platform_servicemanager_registration\",\"passed\":true}");
     pid_t hwmanager = nce_start_system_service("/system_ext/bin/hwservicemanager", nullptr, 1000, {});
     for (unsigned i = 0;; ++i) {
         int status;
@@ -457,13 +467,15 @@ int main(int argc, char **argv)
     }
     if (access("/data/nce/graphics", F_OK) == 0) {
         CHECK(__system_property_set("ro.hardware.gralloc", "ranchu") == 0);
-        pid_t graphics = fork();
-        CHECK(graphics >= 0);
-        if (!graphics) {
-            execl("/system/bin/gralloc-test", "gralloc-test", nullptr);
-            _exit(114);
+        if (diagnostics) {
+            pid_t graphics = fork();
+            CHECK(graphics >= 0);
+            if (!graphics) {
+                execl("/system/bin/gralloc-test", "gralloc-test", nullptr);
+                _exit(114);
+            }
+            wait_success(graphics);
         }
-        wait_success(graphics);
     }
     int apex_ready[2];
     CHECK(pipe(apex_ready) == 0);
@@ -478,48 +490,52 @@ int main(int argc, char **argv)
     }
     close(apex_ready[1]);
     CHECK(read(apex_ready[0], &value, 1) == 1 && value == 'r' && close(apex_ready[0]) == 0);
-    nce_apex_test();
-    AIBinder *binder = AServiceManager_checkService(kService);
-    CHECK(binder && AIBinder_isRemote(binder) && AIBinder_associateClass(binder, binder_class()));
-    CHECK(AServiceManager_checkService("nce.denied") == nullptr);
-    const int32_t sizes[] = {0, 128, 16380, 65536};
-    for (unsigned round = 0; round < kRounds; ++round) {
+    AIBinder *binder = nullptr;
+    if (diagnostics) {
+        nce_apex_test();
+        binder = AServiceManager_checkService(kService);
+        CHECK(binder && AIBinder_isRemote(binder) && AIBinder_associateClass(binder, binder_class()));
+        CHECK(AServiceManager_checkService("nce.denied") == nullptr);
+        const int32_t sizes[] = {0, 128, 16380, 65536};
+        for (unsigned round = 0; round < kRounds; ++round) {
+            AParcel *in = nullptr, *out = nullptr;
+            CHECK(AIBinder_prepareTransaction(binder, &in) == STATUS_OK);
+            Payload payload;
+            payload.size = sizes[round % 4];
+            int32_t sum = 0;
+            for (int32_t i = 0; i < payload.size; ++i) {
+                payload.bytes[i] = static_cast<int8_t>(round * 7 + i);
+                sum += static_cast<uint8_t>(payload.bytes[i]);
+            }
+            CHECK(AParcel_writeInt32(in, round) == STATUS_OK);
+            CHECK(AParcel_writeByteArray(in, payload.bytes, payload.size) == STATUS_OK);
+            CHECK(AIBinder_transact(binder, 1, &in, &out, 0) == STATUS_OK);
+            int32_t actual_sequence, actual_sum;
+            CHECK(AParcel_readInt32(out, &actual_sequence) == STATUS_OK && actual_sequence == static_cast<int32_t>(round));
+            CHECK(AParcel_readInt32(out, &actual_sum) == STATUS_OK && actual_sum == sum);
+            AParcel_delete(out);
+        }
+        puts("{\"test\":\"android_platform_binder_roundtrip\",\"passed\":true,\"rounds\":32,\"max_payload\":65536}");
+        int transferred = memfd_create("nce-binder", MFD_CLOEXEC);
+        CHECK(transferred >= 0);
         AParcel *in = nullptr, *out = nullptr;
         CHECK(AIBinder_prepareTransaction(binder, &in) == STATUS_OK);
-        Payload payload;
-        payload.size = sizes[round % 4];
-        int32_t sum = 0;
-        for (int32_t i = 0; i < payload.size; ++i) {
-            payload.bytes[i] = static_cast<int8_t>(round * 7 + i);
-            sum += static_cast<uint8_t>(payload.bytes[i]);
-        }
-        CHECK(AParcel_writeInt32(in, round) == STATUS_OK);
-        CHECK(AParcel_writeByteArray(in, payload.bytes, payload.size) == STATUS_OK);
-        CHECK(AIBinder_transact(binder, 1, &in, &out, 0) == STATUS_OK);
-        int32_t actual_sequence, actual_sum;
-        CHECK(AParcel_readInt32(out, &actual_sequence) == STATUS_OK && actual_sequence == static_cast<int32_t>(round));
-        CHECK(AParcel_readInt32(out, &actual_sum) == STATUS_OK && actual_sum == sum);
+        CHECK(AParcel_writeParcelFileDescriptor(in, transferred) == STATUS_OK);
+        CHECK(AIBinder_transact(binder, 2, &in, &out, 0) == STATUS_OK);
+        int32_t written;
+        CHECK(AParcel_readInt32(out, &written) == STATUS_OK && written == 15);
         AParcel_delete(out);
+        char data[16] = {};
+        CHECK(pread(transferred, data, 15, 0) == 15 && !strcmp(data, "platform-binder"));
+        CHECK(close(transferred) == 0);
+        puts("{\"test\":\"android_platform_binder_fd_transfer\",\"passed\":true}");
     }
-    puts("{\"test\":\"android_platform_binder_roundtrip\",\"passed\":true,\"rounds\":32,\"max_payload\":65536}");
-    int transferred = memfd_create("nce-binder", MFD_CLOEXEC);
-    CHECK(transferred >= 0);
-    AParcel *in = nullptr, *out = nullptr;
-    CHECK(AIBinder_prepareTransaction(binder, &in) == STATUS_OK);
-    CHECK(AParcel_writeParcelFileDescriptor(in, transferred) == STATUS_OK);
-    CHECK(AIBinder_transact(binder, 2, &in, &out, 0) == STATUS_OK);
-    int32_t written;
-    CHECK(AParcel_readInt32(out, &written) == STATUS_OK && written == 15);
-    AParcel_delete(out);
-    char data[16] = {};
-    CHECK(pread(transferred, data, 15, 0) == 15 && !strcmp(data, "platform-binder"));
-    CHECK(close(transferred) == 0);
-    puts("{\"test\":\"android_platform_binder_fd_transfer\",\"passed\":true}");
     alarm(access("/data/nce/system-server-probe", F_OK) == 0 ? 460 : 60);
     rlimit nice_limit = {40, 40};
     CHECK(setrlimit(RLIMIT_NICE, &nice_limit) == 0);
     nce_input_start();
-    nce_crypto_tests();
+    if (diagnostics)
+        nce_crypto_tests();
     puts("{\"phase\":\"android_framework_launch\"}");
     nce_framework_test();
     pid_t power = nce_start_system_service("/vendor/bin/hw/android.hardware.power-service.example",
@@ -530,7 +546,7 @@ int main(int argc, char **argv)
         nce_display_start();
     pid_t suspend = nce_suspend_start();
     pid_t installd = nce_installd_start(argv[0]);
-    if (access("/data/nce/graphics", F_OK) == 0)
+    if (diagnostics && access("/data/nce/graphics", F_OK) == 0)
         nce_surface_test();
     puts("{\"phase\":\"android_zygote_launch\"}");
     nce_zygote_test();
@@ -538,23 +554,25 @@ int main(int argc, char **argv)
         nce_display_stop();
     nce_input_stop();
     alarm(20);
-    int binder_fd;
-    CHECK(ABinderProcess_setupPolling(&binder_fd) == STATUS_OK && binder_fd >= 0);
-    AIBinder_DeathRecipient *recipient = AIBinder_DeathRecipient_new(binder_died);
-    CHECK(recipient && AIBinder_linkToDeath(binder, recipient, nullptr) == STATUS_OK);
-    CHECK(kill(service, SIGTERM) == 0);
     int status;
     for (pid_t daemon : {power, power_stats})
         CHECK(kill(daemon, SIGTERM) == 0 && waitpid(daemon, &status, 0) == daemon);
-    CHECK(waitpid(service, &status, 0) == service && WIFSIGNALED(status) && WTERMSIG(status) == SIGTERM);
-    while (!died) {
-        pollfd fd = {binder_fd, POLLIN, 0};
-        CHECK(poll(&fd, 1, 2000) == 1 && (fd.revents & POLLIN));
-        CHECK(ABinderProcess_handlePolledCommands() == STATUS_OK);
+    if (diagnostics) {
+        int binder_fd;
+        CHECK(ABinderProcess_setupPolling(&binder_fd) == STATUS_OK && binder_fd >= 0);
+        AIBinder_DeathRecipient *recipient = AIBinder_DeathRecipient_new(binder_died);
+        CHECK(recipient && AIBinder_linkToDeath(binder, recipient, nullptr) == STATUS_OK);
+        CHECK(kill(service, SIGTERM) == 0);
+        CHECK(waitpid(service, &status, 0) == service && WIFSIGNALED(status) && WTERMSIG(status) == SIGTERM);
+        while (!died) {
+            pollfd fd = {binder_fd, POLLIN, 0};
+            CHECK(poll(&fd, 1, 2000) == 1 && (fd.revents & POLLIN));
+            CHECK(ABinderProcess_handlePolledCommands() == STATUS_OK);
+        }
+        CHECK(!AIBinder_isAlive(binder));
+        AIBinder_DeathRecipient_delete(recipient);
+        AIBinder_decStrong(binder);
     }
-    CHECK(!AIBinder_isAlive(binder));
-    AIBinder_DeathRecipient_delete(recipient);
-    AIBinder_decStrong(binder);
     CHECK(kill(suspend, SIGTERM) == 0 && waitpid(suspend, &status, 0) == suspend);
     CHECK(kill(installd, SIGTERM) == 0 && waitpid(installd, &status, 0) == installd);
     CHECK(kill(apex, SIGTERM) == 0 && waitpid(apex, &status, 0) == apex);
@@ -570,6 +588,6 @@ int main(int argc, char **argv)
     CHECK(unlink("/dev/socket/property_service") == 0 && rmdir("/dev/socket") == 0);
     CHECK(umount2("/dev/__properties__", MNT_DETACH) == 0 && rmdir("/dev/__properties__") == 0);
     alarm(0);
-    puts("{\"test\":\"android_platform_binder_cleanup\",\"passed\":true,\"death_notifications\":1}");
+    puts(diagnostics ? "{\"test\":\"android_platform_binder_cleanup\",\"passed\":true,\"death_notifications\":1}" : "{\"phase\":\"android_services_stopped\"}");
     return 0;
 }

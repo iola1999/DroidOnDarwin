@@ -1,4 +1,5 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
+#include "diagnostics.h"
 #include "desktop-session.h"
 #include <dirent.h>
 #include <fcntl.h>
@@ -42,7 +43,7 @@ void nce_desktop_start(bool interactive)
                          "-c", "android.intent.category.HOME"},
                         "Starting:");
     trace_systemui();
-    nce_surface_check("com.android.launcher3", "/data/nce/desktop-launcher.png");
+    nce_surface_check("com.android.launcher3", nce_diagnostics() ? "/data/nce/desktop-launcher.png" : "--ready");
     if (interactive) {
         puts("{\"session\":\"android_desktop_ready\"}");
         dprintf(2, "{\"phase\":\"android_desktop_running\"}\n");

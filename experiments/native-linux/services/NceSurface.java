@@ -112,6 +112,10 @@ public final class NceSurface {
                         SystemClock.sleep(750);
                         continue;
                     }
+                    if ("--ready".equals(args[1])) {
+                        System.out.println("{\"phase\":\"android_desktop_first_frame\"}");
+                        return;
+                    }
                     System.err.println("Capturing desktop activity: " + top);
                     Bitmap pixels = capture(display);
                     System.err.println("Desktop capture completed: " + pixels.getWidth() + "x" + pixels.getHeight());
