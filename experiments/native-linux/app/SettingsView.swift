@@ -10,6 +10,7 @@ struct SettingsView: View {
     @AppStorage("artNterp") private var nterp = false
     @AppStorage("artExpandedJIT") private var expandedJIT = false
     @AppStorage("artFastBaseline") private var fastBaseline = false
+    @AppStorage("artAOT") private var aot = true
     @AppStorage("directFault") private var directFault = true
     @AppStorage("sparseScan") private var sparseScan = true
     @AppStorage("benchmarkAutomation") private var automation = false
@@ -47,10 +48,11 @@ struct SettingsView: View {
                                 Toggle("汇编解释器", isOn: $nterp).disabled(session.active)
                                 Toggle("扩展 JIT 编译", isOn: $expandedJIT).disabled(session.active)
                                 Toggle("快速基线编译", isOn: $fastBaseline).disabled(session.active)
+                                Toggle("预编译代码", isOn: $aot).disabled(session.active)
                                 Toggle("快速恢复数据页", isOn: $directFault).disabled(session.active)
                                 Toggle("稀疏页表扫描", isOn: $sparseScan).disabled(session.active)
                             } header: { Text("性能实验") } footer: {
-                                Text("汇编解释器使用 ART nterp；扩展 JIT 增加字符串和 MethodHandle 等路径的编译覆盖。快速基线编译优先用单遍编译器处理适用方法。各项下次启动生效，可分别比较运行速度。")
+                                Text("汇编解释器使用 ART nterp；扩展 JIT 增加字符串和 MethodHandle 等路径的编译覆盖。快速基线编译优先用单遍编译器处理适用方法。预编译代码在镜像包含对应产物时生效，关闭后使用解释器或 JIT。各项下次启动生效，可分别比较运行速度。")
                             }
                             Section {
                                 Toggle("自动化测试", isOn: $automation).disabled(session.active)

@@ -1551,6 +1551,12 @@ void nce_process_run(long (*host_syscall)(long, long *), long (*guest_syscall)(l
     long fast_permissions[6] = {-100, (long)"/data/nce/art-fast-baseline", 0644};
     REQUIRE(host_syscall(53, fast_permissions) == 0);
     printf("{\"config\":\"art_fast_baseline\",\"requested\":%s}\n", fast_baseline ? fast_baseline : "0");
+    const char *aot = getenv("NCE_ART_AOT");
+    REQUIRE(!aot || !strcmp(aot, "0") || !strcmp(aot, "1"));
+    put_file(host_syscall, "/data/nce/art-aot", aot ? aot : "1", 1);
+    long aot_permissions[6] = {-100, (long)"/data/nce/art-aot", 0644};
+    REQUIRE(host_syscall(53, aot_permissions) == 0);
+    printf("{\"config\":\"art_aot\",\"requested\":%s}\n", aot ? aot : "1");
     put_file(host_syscall, "/data/nce/art-compiler-profile", map_profile ? "1" : "0", 1);
     long compiler_profile_permissions[6] = {-100, (long)"/data/nce/art-compiler-profile", 0644};
     REQUIRE(host_syscall(53, compiler_profile_permissions) == 0);

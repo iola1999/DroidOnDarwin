@@ -47,7 +47,7 @@ struct BenchmarkChecks {
         precondition((memory.json["process_lifetime_peak_bytes"] as? [String: UInt64])?["footprint"] == 900)
         let live = BenchmarkMemoryReading.current()
         precondition(live.error == nil && live.bytes["footprint"]! > 0 && live.bytes["resident"]! > 0)
-        let configuration = RunConfiguration(nterp: true, expandedJIT: true, fastBaseline: true, directFault: false, sparseScan: false)
+        let configuration = RunConfiguration(nterp: true, expandedJIT: true, fastBaseline: true, aot: false, directFault: false, sparseScan: false)
         precondition(RunConfiguration.fromEnvironment(configuration.environment) == configuration)
         let config = try JSONSerialization.jsonObject(with: JSONEncoder().encode(configuration))
         let id = UUID().uuidString

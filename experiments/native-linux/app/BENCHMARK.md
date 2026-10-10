@@ -52,6 +52,7 @@ python3 scripts/benchmark_dod.py --platform ios --phone F17 --repeat 3
 | `nterp` | `false` | 使用已适配的汇编解释器执行符合入口条件的方法 |
 | `expandedJIT` | `false` | 编译已适配的字符串构造、拼接、Min/Max 和多态调用路径 |
 | `fastBaseline` | `false` | 优先尝试快速基线编译，未覆盖的方法继续进入优化编译器 |
+| `aot` | `true` | 使用镜像中匹配的 OAT 机器码；关闭后保留解释器/JIT 和可用的验证信息 |
 | `directFault` | `true` | 在信号处理入口恢复符合条件的已有数据页 |
 | `sparseScan` | `true` | 减少映射切换时的页表扫描 |
 | `performanceLogging` | `false` | 记录映射、返回入口和 ART 编译过滤统计，增加计时开销 |

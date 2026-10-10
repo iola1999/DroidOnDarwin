@@ -234,3 +234,21 @@
 +    os << "\n";
    }
  }
+--- a/runtime/runtime.cc
++++ b/runtime/runtime.cc
+@@ -3271,3 +3271,15 @@
+ bool Runtime::GetOatFilesExecutable() const {
++#ifdef ART_NCE
++  static const bool enabled = [] {
++    FILE* mode = std::fopen("/data/nce/art-aot", "r");
++    if (mode == nullptr) {
++      return true;
++    }
++    int value = std::fgetc(mode);
++    std::fclose(mode);
++    return value != '0';
++  }();
++  if (!enabled) return false;
++#endif
+   return !IsAotCompiler() && !IsSystemServerProfiled();
+ }

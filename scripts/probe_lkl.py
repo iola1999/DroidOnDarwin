@@ -416,8 +416,9 @@ def main():
                     log = (OUT / log_name).read_text()
                     for target in art_aot.DESKTOP:
                         path = str(Path(target['dex']).parent / 'oat/arm64' / (target['name'] + '.odex'))
-                        if path + ': speed executable=true' not in log:
-                            raise SystemExit('Missing executable AOT load in ' + log_name + ': ' + path)
+                        executable = 'false' if os.environ.get('NCE_ART_AOT') == '0' else 'true'
+                        if path + ': speed executable=' + executable not in log:
+                            raise SystemExit('Missing expected AOT executable=' + executable + ' in ' + log_name + ': ' + path)
         manifest["userspace_libraries"] = {"musl": "1.2.5", "compiler-rt": "20.1.8", "dash": "0.5.12"}
         manifest["generated_sha256"] = {name: hashlib.sha256((OUT / name).read_bytes()).hexdigest()
                                         for name in ["system.img", "art-aot-targets.h", "android-data-seed.img", "storage-test.elf", "program-images.h", "user-scripts.h", "payload.S", "payload.bin", "lkl-image.h", "lkl-host-ops.h", "guest-image.h",
