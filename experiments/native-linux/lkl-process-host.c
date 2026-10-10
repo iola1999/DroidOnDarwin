@@ -1506,6 +1506,15 @@ void nce_process_run(long (*host_syscall)(long, long *), long (*guest_syscall)(l
     long nterp_permissions[6] = {-100, (long)"/data/nce/art-nterp", 0644};
     REQUIRE(host_syscall(53, nterp_permissions) == 0);
     printf("{\"config\":\"art_nterp\",\"requested\":%s}\n", nterp ? nterp : "0");
+    const char *expanded_jit = getenv("NCE_ART_EXPANDED_JIT");
+    REQUIRE(!expanded_jit || !strcmp(expanded_jit, "0") || !strcmp(expanded_jit, "1"));
+    put_file(host_syscall, "/data/nce/art-expanded-jit", expanded_jit ? expanded_jit : "0", 1);
+    long jit_permissions[6] = {-100, (long)"/data/nce/art-expanded-jit", 0644};
+    REQUIRE(host_syscall(53, jit_permissions) == 0);
+    printf("{\"config\":\"art_expanded_jit\",\"requested\":%s}\n", expanded_jit ? expanded_jit : "0");
+    put_file(host_syscall, "/data/nce/art-compiler-profile", map_profile ? "1" : "0", 1);
+    long compiler_profile_permissions[6] = {-100, (long)"/data/nce/art-compiler-profile", 0644};
+    REQUIRE(host_syscall(53, compiler_profile_permissions) == 0);
     if (!interactive)
         android_abi_regressions(host_syscall);
 #ifdef NCE_GRAPHICS

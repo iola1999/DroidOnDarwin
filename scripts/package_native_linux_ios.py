@@ -15,7 +15,7 @@ ROOT = Path(__file__).resolve().parents[1]
 EXP = ROOT / 'experiments/native-linux'
 INPUT = ROOT / 'work/native-linux-nce/processes'
 OUT = ROOT / 'work/native-linux-nce/ios'
-REVISION = '0.15.0'
+REVISION = '0.16.0'
 
 
 def run(args, timeout=600, **kwargs):
@@ -114,7 +114,7 @@ def main():
                 UISupportedInterfaceOrientations=['UIInterfaceOrientationPortrait',
                     'UIInterfaceOrientationPortraitUpsideDown',
                     'UIInterfaceOrientationLandscapeLeft', 'UIInterfaceOrientationLandscapeRight'],
-                CFBundleShortVersionString='0.15.0', CFBundleVersion='84')
+                CFBundleShortVersionString='0.16.0', CFBundleVersion='85')
     info['UTExportedTypeDeclarations'] = [{'UTTypeIdentifier': 'app.droidondarwin.image', 'UTTypeConformsTo': ['com.apple.package'], 'UTTypeDescription': 'DroidOnDarwin Image', 'UTTypeTagSpecification': {'public.filename-extension': ['droidimage']}}]
     info['CFBundleURLTypes'] = [{'CFBundleURLName': 'app.droidondarwin.benchmark', 'CFBundleURLSchemes': ['droidondarwin']}]
     plist(OUT / 'Info.plist', info)
@@ -218,7 +218,7 @@ def main():
                 'dispatch_validation': summary['dispatch_results'],
                 'window_validation': summary.get('window_results'),
                 'source_sha256': {str(path.relative_to(ROOT)): hashlib.sha256(path.read_bytes()).hexdigest()
-                                  for path in [Path(__file__).resolve(), ROOT / 'ACKNOWLEDGEMENTS.md', ROOT / 'src/ios-jit/ios-jit.h',
+                                  for path in [Path(__file__).resolve(), ROOT / 'scripts/package_native_linux_image.py', ROOT / 'ACKNOWLEDGEMENTS.md', ROOT / 'src/ios-jit/ios-jit.h',
                                                *sorted((ROOT / 'src/app/Resources').rglob('*')),  *sorted(EXP.glob('ios/*')),
                                                *[Path(item['path']) for item in sources]] if path.is_file()}}
 

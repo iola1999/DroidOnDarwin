@@ -72,6 +72,26 @@ def sample_summary(text):
                 top_nonwait_functions=functions.most_common(20))
 
 
+def compiler_filter_summary(text):
+    """汇总编译过滤计数；周期日志给出下限，SIGQUIT 给出当时快照。"""
+    buckets = {}
+    pattern = re.compile(r'NCE_ART_FILTER(_SUMMARY)? pid=(\d+)(?: epoch=(\d+))? kind=(\w+) count=(\d+)(?: method=(.*))?')
+    for line in text.splitlines():
+        match = pattern.search(line)
+        if not match:
+            continue
+        snapshot, pid, epoch, kind, count, method = match.groups()
+        key = (int(pid), int(epoch or 0), kind)
+        value = buckets.setdefault(key, dict(pid=int(pid), epoch=int(epoch or 0), kind=kind, count=0, complete_snapshot=False, examples=[]))
+        count = int(count)
+        if count >= value['count']:
+            value['count'] = count
+            value['complete_snapshot'] = bool(snapshot)
+        if method and method not in value['examples'] and len(value['examples']) < 2:
+            value['examples'].append(method)
+    return list(buckets.values())
+
+
 def log_summary(text):
     mappings, timings, activities, resume, mmu = [], [], [], [], []
     for line_number, line in enumerate(text.splitlines(), 1):
@@ -110,6 +130,7 @@ def log_summary(text):
                 component_timings=[r for r in timings if r['line'] in selected], displayed_activities=activities,
                 mapping_cumulative=mappings, mapping_intervals=intervals, resume_entries=resume,
                 mmu_cumulative=mmu,
+                compiler_filter=compiler_filter_summary(text),
                 java_fatal_exceptions=text.count('FATAL EXCEPTION:'), anrs=text.count('ANR in '))
 
 

@@ -22,7 +22,13 @@ def runtime():
 
 
 def write_runtime(directory):
-    (Path(directory) / 'Runtime.json').write_text(json.dumps({'runtime': runtime()}) + '\n')
+    summary = json.loads((INPUT / 'lkl-summary.json').read_text())
+    art = summary['android_builds']['art-build']
+    build = {'kernel_sha256': summary['kernel_sha256'],
+             'system_sha256': summary['generated_sha256']['system.img'],
+             'source_inputs_sha256': hashlib.sha256(json.dumps(summary['input_sha256'], sort_keys=True).encode()).hexdigest(),
+             'art_build_inputs': art['build_inputs'], 'art_files': art['files']}
+    (Path(directory) / 'Runtime.json').write_text(json.dumps({'runtime': runtime(), 'build': build}) + '\n')
 
 
 def main():

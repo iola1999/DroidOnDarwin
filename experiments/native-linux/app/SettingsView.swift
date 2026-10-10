@@ -8,6 +8,7 @@ struct SettingsView: View {
     let importRaw: () -> Void
     @AppStorage("performanceLogging") private var performance = false
     @AppStorage("artNterp") private var nterp = false
+    @AppStorage("artExpandedJIT") private var expandedJIT = false
     @AppStorage("directFault") private var directFault = true
     @AppStorage("sparseScan") private var sparseScan = true
     @AppStorage("benchmarkAutomation") private var automation = false
@@ -43,10 +44,11 @@ struct SettingsView: View {
                         Form {
                             Section {
                                 Toggle("汇编解释器", isOn: $nterp).disabled(session.active)
+                                Toggle("扩展 JIT 编译", isOn: $expandedJIT).disabled(session.active)
                                 Toggle("快速恢复数据页", isOn: $directFault).disabled(session.active)
                                 Toggle("稀疏页表扫描", isOn: $sparseScan).disabled(session.active)
                             } header: { Text("性能实验") } footer: {
-                                Text("使用 ART nterp 执行尚未编译的 Java 方法。下次启动生效，可关闭后比较启动和应用运行速度。")
+                                Text("汇编解释器使用 ART nterp；扩展 JIT 增加字符串和 MethodHandle 等路径的编译覆盖。各项下次启动生效，可分别比较运行速度。")
                             }
                             Section {
                                 Toggle("自动化测试", isOn: $automation).disabled(session.active)

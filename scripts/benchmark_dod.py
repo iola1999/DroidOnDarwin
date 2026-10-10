@@ -17,7 +17,7 @@ from analyze_nce_profile import log_summary
 
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / 'work/native-linux-nce/benchmarks'
-DEFAULTS = dict(nterp=False, directFault=True, sparseScan=True, performanceLogging=False, diagnostics=False)
+DEFAULTS = dict(nterp=False, expandedJIT=False, directFault=True, sparseScan=True, performanceLogging=False, diagnostics=False)
 DEFAULT_MATRIX = {
     'configurations': [{'name': 'baseline', 'parameters': {}}, {'name': 'nterp', 'parameters': {'nterp': True}}],
     'actions': [{'kind': 'wait', 'milliseconds': 2000}, {'kind': 'key', 'key': 'home'},

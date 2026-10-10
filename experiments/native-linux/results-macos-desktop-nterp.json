@@ -1,0 +1,432 @@
+{
+  "platform": "macos",
+  "driver_os": "macOS-27.0-arm64-arm-64bit-Mach-O",
+  "matrix": {
+    "configurations": [
+      {
+        "name": "baseline",
+        "parameters": {}
+      },
+      {
+        "name": "nterp",
+        "parameters": {
+          "nterp": true
+        }
+      }
+    ],
+    "actions": [
+      {
+        "kind": "wait",
+        "milliseconds": 2000
+      },
+      {
+        "kind": "key",
+        "key": "home"
+      },
+      {
+        "kind": "swipe",
+        "x": 180,
+        "y": 560,
+        "endX": 180,
+        "endY": 120,
+        "milliseconds": 400
+      },
+      {
+        "kind": "wait",
+        "milliseconds": 2000
+      },
+      {
+        "kind": "key",
+        "key": "home"
+      }
+    ]
+  },
+  "data_reset_between_runs": false,
+  "host_file_cache_reset": false,
+  "measurement": "App starts through observed desktop ready, scripted input submission and clean stop. Ready has up to one polling interval of observation delay. No FPS or application render latency assertion.",
+  "data_directory": "/Users/fan/project/app/husk_hyos/work/native-linux-nce/benchmarks/device",
+  "data_image_existed_before_run": true,
+  "bundle_version": "0.15.0",
+  "build_id": "0.15.0-Mac-20261010-160210",
+  "host_cpu": "Apple M5 Ultra",
+  "executable_sha256": "c098bbe0e8f62cc41fce3e8785e677583e377cdb7869f527648d7e410cf5cd30",
+  "comparison": {
+    "baseline": {
+      "stop_ms": {
+        "median": 4248.1793749611825,
+        "min": 3499.6330831199884,
+        "max": 4429.055958520621,
+        "samples": [
+          4429.055958520621,
+          4248.1793749611825,
+          3499.6330831199884
+        ]
+      },
+      "start_to_ready_observed_ms": {
+        "median": 112028.18424999714,
+        "min": 111051.51200015098,
+        "max": 112093.63700007088,
+        "samples": [
+          111051.51200015098,
+          112093.63700007088,
+          112028.18424999714
+        ]
+      },
+      "actions_ms": {
+        "median": 5852.34162514098,
+        "min": 5659.068833338097,
+        "max": 6105.230874847621,
+        "samples": [
+          6105.230874847621,
+          5659.068833338097,
+          5852.34162514098
+        ]
+      },
+      "core_to_ready_observed_ms": {
+        "median": 112017.93658337556,
+        "min": 111041.09412501566,
+        "max": 112082.73833338171,
+        "samples": [
+          111041.09412501566,
+          112082.73833338171,
+          112017.93658337556
+        ]
+      }
+    },
+    "nterp": {
+      "stop_ms": {
+        "median": 3756.2655832152814,
+        "min": 3519.2975834943354,
+        "max": 4475.550958421081,
+        "samples": [
+          3756.2655832152814,
+          4475.550958421081,
+          3519.2975834943354
+        ]
+      },
+      "start_to_ready_observed_ms": {
+        "median": 102076.29120838828,
+        "min": 99032.16774994507,
+        "max": 104082.46370847337,
+        "samples": [
+          104082.46370847337,
+          99032.16774994507,
+          102076.29120838828
+        ]
+      },
+      "actions_ms": {
+        "median": 6223.30474993214,
+        "min": 5862.8507915418595,
+        "max": 6241.997708333656,
+        "samples": [
+          6241.997708333656,
+          6223.30474993214,
+          5862.8507915418595
+        ]
+      },
+      "core_to_ready_observed_ms": {
+        "median": 102060.8599584084,
+        "min": 99003.99950006977,
+        "max": 104072.44845852256,
+        "samples": [
+          104072.44845852256,
+          99003.99950006977,
+          102060.8599584084
+        ]
+      }
+    }
+  },
+  "raw_results": "work/native-linux-nce/benchmarks/20261010-160403-e5790a/summary.json",
+  "runtime_manifest": {
+    "runtime": "b64d374c60e906a5a77fbfeb70791c821d5bd6ea709b77f2c57f334d24f62e34"
+  },
+  "guest_configuration": {
+    "ram_bytes": 1073741824,
+    "display_pixels": [
+      360,
+      640
+    ],
+    "cpu_count": 1,
+    "mm_mode": "demand",
+    "jit_threshold": 1024
+  },
+  "warmup": "One prior completed App run initialized the same data image. Its result callback failed; Android shutdown and ext4 cleanup succeeded.",
+  "validation": "Six visible App runs completed their requests, configuration checks, no Java fatal exceptions or ANRs, and clean stop. Final ext4 shutdown check passed. No concurrent builds or other NCE experiments were running.",
+  "limits": [
+    "The workload measures ordinary startup and scripted input submission, not application frame completion or iPhone performance.",
+    "Each ready observation includes up to one second of existing log polling delay.",
+    "Data and host file cache were retained across alternating runs."
+  ],
+  "runs": [
+    {
+      "runID": "9CC87216-67A9-4BB9-8FFB-C6C9455AC3E6",
+      "configuration_name": "baseline",
+      "repeat": 0,
+      "metrics": {
+        "start_to_ready_observed_ms": 111051.51200015098,
+        "core_to_ready_observed_ms": 111041.09412501566,
+        "actions_ms": 6105.230874847621,
+        "stop_ms": 4429.055958520621
+      },
+      "error": null,
+      "thermal_states": [
+        0
+      ],
+      "low_power_modes": [
+        false
+      ],
+      "status": "completed",
+      "component_timings": [
+        {
+          "tag": "SystemServerTiming",
+          "name": "StartServices",
+          "ms": 27737,
+          "line": 14658,
+          "timestamp": "10-10 08:04:39.809"
+        },
+        {
+          "tag": "SystemUIBootTiming",
+          "name": "StartServices",
+          "ms": 41828,
+          "line": 21166,
+          "timestamp": "10-10 08:05:34.079"
+        }
+      ],
+      "displayed_activities": [
+        {
+          "line": 15912,
+          "message": "10-10 08:04:55.696   137   151 I ActivityTaskManager: Displayed com.android.settings/.FallbackHome for user 0: +16s308ms"
+        },
+        {
+          "line": 21936,
+          "message": "10-10 08:05:52.345   137   151 I ActivityTaskManager: Displayed com.android.launcher3/.uioverrides.QuickstepLauncher for user 0: +41s415ms"
+        }
+      ]
+    },
+    {
+      "runID": "C60C328C-0E76-4C62-A414-CF25D56BADAC",
+      "configuration_name": "nterp",
+      "repeat": 0,
+      "metrics": {
+        "start_to_ready_observed_ms": 104082.46370847337,
+        "core_to_ready_observed_ms": 104072.44845852256,
+        "actions_ms": 6241.997708333656,
+        "stop_ms": 3756.2655832152814
+      },
+      "error": null,
+      "thermal_states": [
+        0
+      ],
+      "low_power_modes": [
+        false
+      ],
+      "status": "completed",
+      "component_timings": [
+        {
+          "tag": "SystemServerTiming",
+          "name": "StartServices",
+          "ms": 26019,
+          "line": 15187,
+          "timestamp": "10-10 08:06:39.981"
+        },
+        {
+          "tag": "SystemUIBootTiming",
+          "name": "StartServices",
+          "ms": 12982,
+          "line": 16821,
+          "timestamp": "10-10 08:07:03.513"
+        }
+      ],
+      "displayed_activities": [
+        {
+          "line": 16683,
+          "message": "10-10 08:07:01.566   138   152 I ActivityTaskManager: Displayed com.android.settings/.FallbackHome for user 0: +23s471ms"
+        },
+        {
+          "line": 22317,
+          "message": "10-10 08:07:47.060   138   152 I ActivityTaskManager: Displayed com.android.launcher3/.uioverrides.QuickstepLauncher for user 0: +33s300ms"
+        }
+      ]
+    },
+    {
+      "runID": "E0E99107-837E-45E0-AF18-BDA55DED1BC9",
+      "configuration_name": "nterp",
+      "repeat": 1,
+      "metrics": {
+        "start_to_ready_observed_ms": 99032.16774994507,
+        "core_to_ready_observed_ms": 99003.99950006977,
+        "actions_ms": 6223.30474993214,
+        "stop_ms": 4475.550958421081
+      },
+      "error": null,
+      "thermal_states": [
+        0
+      ],
+      "low_power_modes": [
+        false
+      ],
+      "status": "completed",
+      "component_timings": [
+        {
+          "tag": "SystemServerTiming",
+          "name": "StartServices",
+          "ms": 24708,
+          "line": 14896,
+          "timestamp": "10-10 08:08:33.025"
+        },
+        {
+          "tag": "SystemUIBootTiming",
+          "name": "StartServices",
+          "ms": 12492,
+          "line": 16648,
+          "timestamp": "10-10 08:08:57.051"
+        }
+      ],
+      "displayed_activities": [
+        {
+          "line": 16460,
+          "message": "10-10 08:08:54.889   137   150 I ActivityTaskManager: Displayed com.android.settings/.FallbackHome for user 0: +22s794ms"
+        },
+        {
+          "line": 22049,
+          "message": "10-10 08:09:38.801   137   150 I ActivityTaskManager: Displayed com.android.launcher3/.uioverrides.QuickstepLauncher for user 0: +37s757ms"
+        }
+      ]
+    },
+    {
+      "runID": "DAF53CBF-1CDC-4F39-A89E-E70FCB5301D8",
+      "configuration_name": "baseline",
+      "repeat": 1,
+      "metrics": {
+        "start_to_ready_observed_ms": 112093.63700007088,
+        "core_to_ready_observed_ms": 112082.73833338171,
+        "actions_ms": 5659.068833338097,
+        "stop_ms": 4248.1793749611825
+      },
+      "error": null,
+      "thermal_states": [
+        0
+      ],
+      "low_power_modes": [
+        false
+      ],
+      "status": "completed",
+      "component_timings": [
+        {
+          "tag": "SystemServerTiming",
+          "name": "StartServices",
+          "ms": 26922,
+          "line": 15115,
+          "timestamp": "10-10 08:10:26.744"
+        },
+        {
+          "tag": "SystemUIBootTiming",
+          "name": "StartServices",
+          "ms": 13232,
+          "line": 16890,
+          "timestamp": "10-10 08:10:53.144"
+        }
+      ],
+      "displayed_activities": [
+        {
+          "line": 16630,
+          "message": "10-10 08:10:49.158   139   157 I ActivityTaskManager: Displayed com.android.settings/.FallbackHome for user 0: +23s304ms"
+        },
+        {
+          "line": 22483,
+          "message": "10-10 08:11:40.463   139   157 I ActivityTaskManager: Displayed com.android.launcher3/.uioverrides.QuickstepLauncher for user 0: +36s575ms"
+        }
+      ]
+    },
+    {
+      "runID": "D0DF4A3C-121A-4498-B28E-9C5A46A78855",
+      "configuration_name": "baseline",
+      "repeat": 2,
+      "metrics": {
+        "start_to_ready_observed_ms": 112028.18424999714,
+        "core_to_ready_observed_ms": 112017.93658337556,
+        "actions_ms": 5852.34162514098,
+        "stop_ms": 3499.6330831199884
+      },
+      "error": null,
+      "thermal_states": [
+        0
+      ],
+      "low_power_modes": [
+        false
+      ],
+      "status": "completed",
+      "component_timings": [
+        {
+          "tag": "SystemServerTiming",
+          "name": "StartServices",
+          "ms": 29103,
+          "line": 15096,
+          "timestamp": "10-10 08:12:31.770"
+        },
+        {
+          "tag": "SystemUIBootTiming",
+          "name": "StartServices",
+          "ms": 41699,
+          "line": 21595,
+          "timestamp": "10-10 08:13:26.117"
+        }
+      ],
+      "displayed_activities": [
+        {
+          "line": 16356,
+          "message": "10-10 08:12:47.281   139   157 I ActivityTaskManager: Displayed com.android.settings/.FallbackHome for user 0: +16s606ms"
+        },
+        {
+          "line": 22346,
+          "message": "10-10 08:13:44.830   139   157 I ActivityTaskManager: Displayed com.android.launcher3/.uioverrides.QuickstepLauncher for user 0: +50s435ms"
+        }
+      ]
+    },
+    {
+      "runID": "34D1DE34-1340-4C19-89AD-8D58A59AA6B7",
+      "configuration_name": "nterp",
+      "repeat": 2,
+      "metrics": {
+        "start_to_ready_observed_ms": 102076.29120838828,
+        "core_to_ready_observed_ms": 102060.8599584084,
+        "actions_ms": 5862.8507915418595,
+        "stop_ms": 3519.2975834943354
+      },
+      "error": null,
+      "thermal_states": [
+        0
+      ],
+      "low_power_modes": [
+        false
+      ],
+      "status": "completed",
+      "component_timings": [
+        {
+          "tag": "SystemServerTiming",
+          "name": "StartServices",
+          "ms": 25100,
+          "line": 15022,
+          "timestamp": "10-10 08:14:29.609"
+        },
+        {
+          "tag": "SystemUIBootTiming",
+          "name": "StartServices",
+          "ms": 12943,
+          "line": 16703,
+          "timestamp": "10-10 08:14:53.713"
+        }
+      ],
+      "displayed_activities": [
+        {
+          "line": 16566,
+          "message": "10-10 08:14:51.437   137   150 I ActivityTaskManager: Displayed com.android.settings/.FallbackHome for user 0: +23s114ms"
+        },
+        {
+          "line": 22154,
+          "message": "10-10 08:15:37.207   137   150 I ActivityTaskManager: Displayed com.android.launcher3/.uioverrides.QuickstepLauncher for user 0: +34s756ms"
+        }
+      ]
+    }
+  ]
+}

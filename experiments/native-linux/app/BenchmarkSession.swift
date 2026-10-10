@@ -11,6 +11,7 @@ final class BenchmarkSession {
     private let session: SessionModel
     private let directory: URL
     private let target: RunTarget
+    private let resources: [String: Any]
     private let input = DispatchQueue(label: "app.droidondarwin.benchmark-input", qos: .userInitiated)
     private var task: Task<Void, Never>?
     private var watchdog: Task<Void, Never>?
@@ -39,6 +40,14 @@ final class BenchmarkSession {
         try JSONEncoder().encode(request).write(to: directory.appendingPathComponent("request.json"), options: .atomic)
         self.request = request
         self.session = session
+        var manifests: [String: Any] = [:]
+        for name in ["Runtime.json", "manifest.json"] {
+            let path = target.resources.appendingPathComponent(name)
+            if let data = try? Data(contentsOf: path), let value = try? JSONSerialization.jsonObject(with: data) {
+                manifests[name] = value
+            }
+        }
+        resources = manifests
         self.target = RunTarget(id: target.id, name: target.name, directory: target.directory,
                                 resources: target.resources, log: directory.appendingPathComponent("session.log"))
     }
@@ -181,6 +190,7 @@ final class BenchmarkSession {
                                     "deviceID": target.id, "buildID": Bundle.main.object(forInfoDictionaryKey: "DroidOnDarwinBuildID") as? String ?? "unknown",
                                     "hardware": hardware, "os": ProcessInfo.processInfo.operatingSystemVersionString,
                                     "host_ram_bytes": ProcessInfo.processInfo.physicalMemory,
+                                    "resources": resources,
                                     "configuration": try JSONSerialization.jsonObject(with: JSONEncoder().encode(request.configuration)),
                                     "events": events, "session_active": session.active,
                                     "log": "session.log", "timing": "monotonic; ready observed through 1-second log polling; action submission excludes guest rendering completion"]

@@ -49,10 +49,11 @@ def restore_sources():
             path.write_bytes(base64.b64decode(urllib.request.urlopen(item['url'], timeout=30).read()))
         if sha(path) != item['sha256']:
             raise RuntimeError(f"ART header checksum mismatch: {item['path']}")
-    subprocess.run(['patch', '--batch', '-p1', '-i', str(PATCHES / 'android16.patch')],
+    subprocess.run(['patch', '--posix', '--batch', '-p1', '-i', str(PATCHES / 'android16.patch')],
                    cwd=WORK / 'art', check=True, capture_output=True)
-    subprocess.run(['patch', '--batch', '-p1', '-i', str(PATCHES / 'nterp.patch')],
-                   cwd=WORK / 'art', check=True, capture_output=True)
+    for name in ('nterp.patch', 'compiler-profile.patch', 'expanded-jit.patch'):
+        subprocess.run(['patch', '--posix', '--batch', '-p1', '-i', str(PATCHES / name)],
+                       cwd=WORK / 'art', check=True, capture_output=True)
 
 
 def build():
@@ -60,7 +61,7 @@ def build():
     OUT.mkdir(exist_ok=True)
     config = TOOL / 'sysroot/usr/include/c++/v1/__config_site'
     inputs = {str(path.relative_to(ROOT)): sha(path) for path in [PATCHES / name for name in ('android16.patch', 'reference_heap.h',
-                  'reference_heap.c', 'jit_control.cc', 'sources.json', 'nterp.patch')]
+                  'reference_heap.c', 'jit_control.cc', 'sources.json', 'nterp.patch', 'compiler-profile.patch', 'expanded-jit.patch')]
               if path.is_file()}
     inputs.update(ndk_libcxx_config=sha(config), libc=sha(libc),
                   runtime=sha(WORK / 'android36-runtime.json'), builder=sha(Path(__file__)),

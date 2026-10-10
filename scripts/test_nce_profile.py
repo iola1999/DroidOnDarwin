@@ -1,10 +1,30 @@
 #!/usr/bin/env python3
 """检查调用树的自身样本及映射调用与等待栈的分类边界。"""
 import unittest
-from analyze_nce_profile import art_summary, log_summary, sample_summary
+from analyze_nce_profile import art_summary, compiler_filter_summary, log_summary, sample_summary
 
 
 class SampleTests(unittest.TestCase):
+    def test_compiler_counts_separate_processes_and_snapshots(self):
+        result = compiler_filter_summary('''I art: NCE_ART_FILTER pid=10 kind=accepted count=4
+I art: NCE_ART_FILTER pid=10 kind=InvokeStaticOrDirect count=1 method=java.lang.String Foo.run()
+I art: NCE_ART_FILTER pid=20 kind=accepted count=2
+NCE_ART_FILTER_SUMMARY pid=10 kind=accepted count=7
+I art: NCE_ART_FILTER pid=10 kind=accepted count=8
+NCE_ART_FILTER_SUMMARY pid=20 kind=accepted count=3
+''')
+        by_key = {(r['pid'], r['kind']): r for r in result}
+        self.assertEqual(by_key[10, 'accepted']['count'], 8)
+        self.assertFalse(by_key[10, 'accepted']['complete_snapshot'])
+        self.assertEqual(by_key[20, 'accepted']['count'], 3)
+        self.assertTrue(by_key[20, 'accepted']['complete_snapshot'])
+        self.assertEqual(by_key[10, 'InvokeStaticOrDirect']['examples'], ['java.lang.String Foo.run()'])
+        self.assertEqual(compiler_filter_summary('ordinary log'), [])
+        result = compiler_filter_summary('''NCE_ART_FILTER pid=1 epoch=100 kind=accepted count=4
+NCE_ART_FILTER pid=1 epoch=200 kind=accepted count=1
+''')
+        self.assertEqual([(r['epoch'], r['count']) for r in result], [(100, 4), (200, 1)])
+
     def test_exclusive_samples_and_remap_mach_call(self):
         text = '''Call graph:
     10 Thread_1

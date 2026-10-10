@@ -35,6 +35,7 @@ python3 scripts/benchmark_dod.py --platform ios --phone F17 --repeat 3
   "configurations": [
     {"name": "baseline", "parameters": {}},
     {"name": "nterp", "parameters": {"nterp": true}},
+    {"name": "expanded-jit", "parameters": {"nterp": true, "expandedJIT": true}},
     {"name": "nterp-profile", "parameters": {"nterp": true, "performanceLogging": true}}
   ],
   "actions": [
@@ -49,9 +50,10 @@ python3 scripts/benchmark_dod.py --platform ios --phone F17 --repeat 3
 | 配置 | 默认值 | 行为 |
 | --- | --- | --- |
 | `nterp` | `false` | 使用已适配的汇编解释器执行符合入口条件的方法 |
+| `expandedJIT` | `false` | 编译已适配的字符串构造、拼接、Min/Max 和多态调用路径 |
 | `directFault` | `true` | 在信号处理入口恢复符合条件的已有数据页 |
 | `sparseScan` | `true` | 减少映射切换时的页表扫描 |
-| `performanceLogging` | `false` | 记录映射与返回入口统计，增加计时开销 |
+| `performanceLogging` | `false` | 记录映射、返回入口和 ART 编译过滤统计，增加计时开销 |
 | `diagnostics` | `false` | 会话配置保留此字段；普通桌面组合测试要求关闭，专项回归另行运行 |
 
 坐标固定为 Android 显示的 `360×640` 像素；导航键支持 `home`、`back`、`recent`。点击包含按下和抬起，滑动按约 16 ms 间隔发送移动事件。输入通过现有通道进入 Android，提交成功后系统仍可能继续处理与绘制。每组最多 128 个操作；等待为 0..60000 ms，滑动为 16..5000 ms，整轮超时由 `--timeout` 指定，范围 30..900 秒，默认 600 秒。
@@ -60,7 +62,7 @@ python3 scripts/benchmark_dod.py --platform ios --phone F17 --repeat 3
 
 ## 结果与接口
 
-每轮保存 `request.json`、`result.json` 和 `session.log`，整个矩阵保存 `summary.json`。运行编号为 UUID，重复编号失败。结果含构建编号、硬件与系统、宿主内存、完整配置、阶段与操作时间、低电量模式和热状态。脚本检查会话日志里的配置，并检查 Java 崩溃及 ANR。
+每轮保存 `request.json`、`result.json` 和 `session.log`，整个矩阵保存 `summary.json`。运行编号为 UUID，重复编号失败。结果含构建编号、资源清单中的内核/ART/系统哈希、硬件与系统、宿主内存、完整配置、阶段与操作时间、低电量模式和热状态。脚本检查会话日志里的配置，并检查 Java 崩溃及 ANR。
 
 计时使用宿主单调时钟。`start_to_ready_observed_ms` 包含准备和 JIT 连接；`core_to_ready_observed_ms` 从运行核心开始计时。桌面就绪由现有一秒日志轮询观察，两个指标包含观察延迟。`actions_ms` 统计操作提交序列，等待也在范围内；帧完成、目标应用就绪与 FPS 需要另外的图形或 Android 侧测量。日志中保留 SystemServer、SystemUI 和 Activity 的原有计时。
 
@@ -69,3 +71,5 @@ Mac 原始入口为运行进程的 `--benchmark-request 请求文件`，请求�
 运行进程通过 `--allow-benchmark` 可为本次进程开启入口。请求不能指定任意文件路径、shell 命令或下载地址。App 进入后台时，已经开始运行核心的实验记为失败并请求正常停止；iOS 暂停进程时外部脚本可能只能先收集最后状态。
 
 ART 和 Linux 专项回归的同构建对照继续使用 `scripts/benchmark_nce_art.py`。其中整段诊断包含测试程序，时间范围与普通桌面启动不同。
+
+ART 编译过滤日志在每类计数达到 1、2、4、8… 时输出，前两次附带方法样例；普通日志汇总中的计数为下限。单独请求 SIGQUIT 后得到当时完整快照，但线程暂停会影响该轮耗时。`accepted` 只说明过滤通过；方法仍可能在后续编译步骤失败。fork 子进程继承父进程当时的计数，分析时分别查看 PID 与运行期编号，不能相加作为系统总方法数。

@@ -1,0 +1,162 @@
+--- a/compiler/optimizing/optimizing_compiler.cc
++++ b/compiler/optimizing/optimizing_compiler.cc
+@@ -16,6 +16,8 @@
+ 
+ #include "optimizing_compiler.h"
+ 
++#include <atomic>
++#include <time.h>
+ #include <fstream>
+ #include <memory>
+ #include <sstream>
+@@ -759,6 +761,58 @@
+   return compiled_method;
+ }
+ 
++#ifdef ART_NCE
++static bool NceCompilerProfileEnabled() {
++  static const bool enabled = [] {
++    std::ifstream mode("/data/nce/art-compiler-profile");
++    return mode.get() == '1';
++  }();
++  return enabled;
++}
++
++static uint64_t NceCompilerProfileEpoch() {
++  static const uint64_t epoch = [] {
++    timespec now;
++    clock_gettime(CLOCK_MONOTONIC, &now);
++    return static_cast<uint64_t>(now.tv_sec) * 1000000000ULL + now.tv_nsec;
++  }();
++  return epoch;
++}
++
++// One decision per graph. A rejection identifies the first unsupported IR,
++// while acceptance only means this filter allowed later code generation.
++static std::atomic<uint64_t> nce_filter_counts[HInstruction::kLastInstructionKind + 1];
++
++static const char* NceFilterKindName(size_t kind) {
++  switch (kind) {
++#define NCE_KIND_NAME(name, super) case HInstruction::k##name: return #name;
++    FOR_EACH_CONCRETE_INSTRUCTION(NCE_KIND_NAME)
++#undef NCE_KIND_NAME
++    default: return "accepted";
++  }
++}
++
++static void RecordNceCompilerFilter(HInstruction* rejected, const std::string& method) {
++  if (!NceCompilerProfileEnabled()) return;
++  const size_t kind = rejected ? rejected->GetKind() : HInstruction::kLastInstructionKind;
++  uint64_t count = nce_filter_counts[kind].fetch_add(1, std::memory_order_relaxed) + 1;
++  // Logarithmic reports bound log volume. SIGQUIT provides a complete snapshot.
++  if ((count & (count - 1)) == 0) {
++    LOG(INFO) << "NCE_ART_FILTER pid=" << getpid() << " epoch=" << NceCompilerProfileEpoch() << " kind=" << NceFilterKindName(kind)
++              << " count=" << count << (count <= 2 ? " method=" + method : "");
++  }
++}
++
++void DumpNceCompilerProfile(std::ostream& os) {
++  if (!NceCompilerProfileEnabled()) return;
++  for (size_t kind = 0; kind <= HInstruction::kLastInstructionKind; ++kind) {
++    uint64_t count = nce_filter_counts[kind].load(std::memory_order_relaxed);
++    if (count) os << "NCE_ART_FILTER_SUMMARY pid=" << getpid()
++                  << " epoch=" << NceCompilerProfileEpoch() << " kind=" << NceFilterKindName(kind) << " count=" << count << '\n';
++  }
++}
++#endif
++
+ #ifdef ART_USE_RESTRICTED_MODE
+ 
+ // This class acts as a filter and enables gradual enablement of ART Simulator work - we
+@@ -767,14 +821,16 @@
+  public:
+   explicit CompilationFilterForRestrictedMode(HGraph* graph)
+       : HGraphDelegateVisitor(graph),
+-        has_unsupported_instructions_(false) {}
++        first_rejection_(nullptr) {}
+ 
+   // Returns true if the graph contains instructions which are not currently supported in
+   // the restricted mode.
+-  bool GraphRejected() const { return has_unsupported_instructions_; }
++  bool GraphRejected() const { return first_rejection_ != nullptr; }
++
++  HInstruction* FirstRejection() const { return first_rejection_; }
+ 
+  private:
+-  void VisitInstruction(HInstruction*) override { RejectGraph(); }
++  void VisitInstruction(HInstruction* instruction) override { RejectGraph(instruction); }
+ #ifdef ART_NCE
+   // Admit only code generation paths adapted to the high-address heap.
+   // Unknown instructions retain interpreter execution, including after inlining.
+@@ -835,7 +891,7 @@
+   void VisitLoadClass(HLoadClass* load) override {
+     if (load->GetLoadKind() != HLoadClass::LoadKind::kJitTableAddress &&
+         load->GetLoadKind() != HLoadClass::LoadKind::kReferrersClass &&
+-        load->GetLoadKind() != HLoadClass::LoadKind::kRuntimeCall) RejectGraph();
++        load->GetLoadKind() != HLoadClass::LoadKind::kRuntimeCall) RejectGraph(load);
+   }
+   void VisitInvokeVirtual(HInvokeVirtual* call) override {
+     // ARM64 TryDispatch admits only the reviewed NCE intrinsic paths.
+@@ -843,22 +899,22 @@
+   }
+   void VisitLoadString(HLoadString* load) override {
+     if (load->GetLoadKind() != HLoadString::LoadKind::kJitTableAddress &&
+-        load->GetLoadKind() != HLoadString::LoadKind::kRuntimeCall) RejectGraph();
++        load->GetLoadKind() != HLoadString::LoadKind::kRuntimeCall) RejectGraph(load);
+   }
+   void VisitVecLoad(HVecLoad* access) override {
+-    if (access->IsStringCharAt()) RejectGraph();
++    if (access->IsStringCharAt()) RejectGraph(access);
+   }
+   void VisitInvokeStaticOrDirect(HInvokeStaticOrDirect* call) override {
+     if (call->GetLocations()->Intrinsified()) return;
+     if (call->GetMethodLoadKind() == MethodLoadKind::kStringInit ||
+-        call->GetMethodLoadKind() == MethodLoadKind::kRuntimeCall) RejectGraph();
++        call->GetMethodLoadKind() == MethodLoadKind::kRuntimeCall) RejectGraph(call);
+   }
+ #endif
+-  void RejectGraph() {
+-    has_unsupported_instructions_ = true;
+-  }
+-
+-  bool has_unsupported_instructions_;
++  void RejectGraph(HInstruction* instruction) {
++    if (first_rejection_ == nullptr) first_rejection_ = instruction;
++  }
++
++  HInstruction* first_rejection_;
+ };
+ 
+ // Returns whether an ArtMethod, specified by a name, should be compiled. Used in restricted
+@@ -877,6 +933,9 @@
+ 
+   CompilationFilterForRestrictedMode filter_visitor(graph);
+   filter_visitor.VisitReversePostOrder();
++#ifdef ART_NCE
++  RecordNceCompilerFilter(filter_visitor.FirstRejection(), method_name);
++#endif
+ 
+   return !filter_visitor.GraphRejected();
+ }
+--- a/runtime/jit/jit.cc
++++ b/runtime/jit/jit.cc
+@@ -62,6 +62,9 @@
+ using android::base::unique_fd;
+ 
+ namespace art HIDDEN {
++#ifdef ART_NCE
++void DumpNceCompilerProfile(std::ostream& os);
++#endif
+ namespace jit {
+ 
+ static constexpr bool kEnableOnStackReplacement = true;
+@@ -78,6 +81,9 @@
+ 
+ void Jit::DumpForSigQuit(std::ostream& os) {
+   DumpInfo(os);
++#ifdef ART_NCE
++  DumpNceCompilerProfile(os);
++#endif
+   ProfileSaver::DumpInstanceInfo(os);
+ }
+ 

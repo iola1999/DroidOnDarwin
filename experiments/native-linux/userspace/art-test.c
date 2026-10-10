@@ -56,6 +56,63 @@ static jobject native_identity(JNIEnv *env, jclass klass, jobject value)
     return (*env)->NewLocalRef(env, value);
 }
 
+static bool expanded_jit_enabled(void)
+{
+    FILE *setting = fopen("/data/nce/art-expanded-jit", "r");
+    if (!setting)
+        abort();
+    bool enabled = fgetc(setting) == '1';
+    fclose(setting);
+    return enabled;
+}
+
+static int test_compiler_paths(JNIEnv *env, void *library)
+{
+    bool (*compile)(JNIEnv *, jmethodID) = dlsym(library, "nce_art_compile_method");
+    void (*keep_interpreted)(JNIEnv *, jmethodID) = dlsym(library, "nce_art_keep_interpreted");
+    jclass klass = (*env)->FindClass(env, "NceCompilerPaths");
+    if (!klass || !compile || !keep_interpreted)
+        return 90;
+    bool enabled = expanded_jit_enabled();
+    const char *methods[][2] = {
+        {"fromChars", "([CII)Ljava/lang/String;"},
+        {"fromBytes", "([B)Ljava/lang/String;"},
+        {"concat", "(Ljava/lang/String;Ljava/lang/String;IJFDZC)Ljava/lang/String;"},
+        {"minInt", "(II)I"},
+        {"maxLong", "(JJ)J"},
+        {"maxFloat", "(FF)F"},
+        {"minDouble", "(DD)D"},
+        {"invoke", "(Ljava/lang/invoke/MethodHandle;Ljava/lang/Object;)Ljava/lang/Object;"},
+        {"invokeInt", "(Ljava/lang/invoke/MethodHandle;I)I"},
+        {"cas", "(Ljava/lang/invoke/VarHandle;LNceCompilerPaths;Ljava/lang/Object;Ljava/lang/Object;)Z"},
+    };
+    for (unsigned i = 0; i < sizeof(methods) / sizeof(*methods); ++i) {
+        jmethodID method = (*env)->GetStaticMethodID(env, klass, methods[i][0], methods[i][1]);
+        if (!method)
+            return 91;
+        if (enabled) {
+            if (!compile(env, method)) {
+                fprintf(stderr, "ART could not compile expanded path %s\n", methods[i][0]);
+                return 92;
+            }
+        } else {
+            keep_interpreted(env, method);
+        }
+    }
+    jmethodID check = (*env)->GetStaticMethodID(env, klass, "run", "()V");
+    if (!check)
+        return 93;
+    keep_interpreted(env, check);
+    (*env)->CallStaticVoidMethod(env, klass, check);
+    if ((*env)->ExceptionCheck(env)) {
+        (*env)->ExceptionDescribe(env);
+        return 94;
+    }
+    (*env)->DeleteLocalRef(env, klass);
+    printf("{\"test\":\"android_art_expanded_jit_entries\",\"passed\":true,\"enabled\":%s,\"methods\":10}\n", enabled ? "true" : "false");
+    return 0;
+}
+
 static int test_interpreter_entry(JNIEnv *env, void *library)
 {
     bool (*enabled)(void) = dlsym(library, "nce_art_nterp_enabled");
@@ -489,6 +546,9 @@ static int test_jit(JNIEnv *env, jclass workload, void *library)
     int volatile_result = test_volatile_floating(env, library);
     if (volatile_result)
         return volatile_result;
+    int compiler_paths_result = test_compiler_paths(env, library);
+    if (compiler_paths_result)
+        return compiler_paths_result;
     jmethodID types = (*env)->GetStaticMethodID(env, workload, "compiledTypes", "()V");
     if (!types)
         return 50;
@@ -501,7 +561,7 @@ static int test_jit(JNIEnv *env, jclass workload, void *library)
     }
     jmethodID unsupported = (*env)->GetStaticMethodID(env, workload, "$compile$unsupportedString",
                                                       "(Ljava/lang/Object;)Ljava/lang/Object;");
-    if (!unsupported || compile(env, unsupported))
+    if (!unsupported || compile(env, unsupported) != expanded_jit_enabled())
         return 31;
     const jchar expected_chars[] = {'N', 'C', 'E', 0x4e2d};
     jcharArray chars = (*env)->NewCharArray(env, 4);
@@ -527,11 +587,12 @@ static int test_jit(JNIEnv *env, jclass workload, void *library)
     jlong sum = (*env)->CallStaticLongMethod(env, workload, warm);
     if ((*env)->ExceptionCheck(env) || sum != 60003100000LL || !wait_compiled(env, hot))
         return 33;
-    if (wait_compiled(env, unsupported))
+    if (wait_compiled(env, unsupported) != expanded_jit_enabled())
         return 34;
-    puts(
+    printf(
         "{\"test\":\"android_art_jit_automatic\",\"passed\":true,\"warmup_calls\":200000,"
-        "\"unsupported_retains_interpreter\":true}");
+        "\"string_constructor_compiled\":%s}\n",
+        expanded_jit_enabled() ? "true" : "false");
     return 0;
 }
 

@@ -32,7 +32,7 @@ final class BenchmarkRuntime: SessionRuntime {
 @main
 struct BenchmarkChecks {
     @MainActor static func main() async throws {
-        let configuration = RunConfiguration(nterp: true, directFault: false, sparseScan: false)
+        let configuration = RunConfiguration(nterp: true, expandedJIT: true, directFault: false, sparseScan: false)
         precondition(RunConfiguration.fromEnvironment(configuration.environment) == configuration)
         let config = try JSONSerialization.jsonObject(with: JSONEncoder().encode(configuration))
         let id = UUID().uuidString
@@ -78,6 +78,7 @@ struct BenchmarkChecks {
         let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(at: root) }
+        try Data("{\"runtime\":\"test-runtime\",\"build\":{\"art_build_inputs\":\"test-art\"}}".utf8).write(to: root.appendingPathComponent("Runtime.json"))
         let target = RunTarget(id: id, name: "test", directory: root, resources: root, log: root.appendingPathComponent("unused.log"))
         let runtime = BenchmarkRuntime()
         let session = SessionModel(runtime: runtime)
@@ -101,6 +102,9 @@ struct BenchmarkChecks {
         precondition(finished && !session.active && runtime.configuration == configuration && completionCalls == 1)
         let result = try JSONSerialization.jsonObject(with: Data(contentsOf: root.appendingPathComponent(request.runID.uuidString + "/result.json"))) as! [String: Any]
         precondition(result["status"] as? String == "completed")
+        let resources = result["resources"] as! [String: Any]
+        let runtimeManifest = resources["Runtime.json"] as! [String: Any]
+        precondition(runtimeManifest["runtime"] as? String == "test-runtime")
         let events = inputLock.withLock { inputEvents }
         precondition(events.first == [Int32(NCE_INPUT_KEY), 102, 0])
         precondition(events.last == [Int32(NCE_INPUT_UP), 50, 50])

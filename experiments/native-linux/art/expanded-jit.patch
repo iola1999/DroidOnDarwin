@@ -1,0 +1,72 @@
+--- a/compiler/optimizing/optimizing_compiler.cc
++++ b/compiler/optimizing/optimizing_compiler.cc
+@@ -813,6 +813,16 @@
+ }
+ #endif
+ 
++#ifdef ART_NCE
++static bool NceExpandedJitEnabled() {
++  static const bool enabled = [] {
++    std::ifstream mode("/data/nce/art-expanded-jit");
++    return mode.get() == '1';
++  }();
++  return enabled;
++}
++#endif
++
+ #ifdef ART_USE_RESTRICTED_MODE
+ 
+ // This class acts as a filter and enables gradual enablement of ART Simulator work - we
+@@ -888,6 +898,20 @@
+   NCE_ALLOW(VecMul)
+   NCE_ALLOW(VecStore)
+ #undef NCE_ALLOW
++#define NCE_ALLOW_EXPANDED(name) \
++  void Visit##name(H##name* instruction) override { \
++    if (!NceExpandedJitEnabled()) RejectGraph(instruction); \
++  }
++  NCE_ALLOW_EXPANDED(Min)
++  NCE_ALLOW_EXPANDED(Max)
++  NCE_ALLOW_EXPANDED(StringBuilderAppend)
++  NCE_ALLOW_EXPANDED(InvokePolymorphic)
++#undef NCE_ALLOW_EXPANDED
++  void VisitLoadMethodType(HLoadMethodType* load) override {
++    if (!NceExpandedJitEnabled() ||
++        (load->GetLoadKind() != HLoadMethodType::LoadKind::kJitTableAddress &&
++         load->GetLoadKind() != HLoadMethodType::LoadKind::kRuntimeCall)) RejectGraph(load);
++  }
+   void VisitLoadClass(HLoadClass* load) override {
+     if (load->GetLoadKind() != HLoadClass::LoadKind::kJitTableAddress &&
+         load->GetLoadKind() != HLoadClass::LoadKind::kReferrersClass &&
+@@ -906,7 +930,7 @@
+   }
+   void VisitInvokeStaticOrDirect(HInvokeStaticOrDirect* call) override {
+     if (call->GetLocations()->Intrinsified()) return;
+-    if (call->GetMethodLoadKind() == MethodLoadKind::kStringInit ||
++    if ((call->GetMethodLoadKind() == MethodLoadKind::kStringInit && !NceExpandedJitEnabled()) ||
+         call->GetMethodLoadKind() == MethodLoadKind::kRuntimeCall) RejectGraph(call);
+   }
+ #endif
+--- a/compiler/optimizing/code_generator_arm64.cc
++++ b/compiler/optimizing/code_generator_arm64.cc
+@@ -6211,6 +6211,9 @@
+     default:
+       DCHECK_EQ(load->GetLoadKind(), HLoadMethodType::LoadKind::kRuntimeCall);
+       codegen_->GenerateLoadMethodTypeRuntimeCall(load);
++#ifdef ART_NCE
++      NceQuickReference(GetVIXLAssembler(), x0);
++#endif
+       break;
+   }
+ }
+@@ -6970,6 +6973,10 @@
+ void InstructionCodeGeneratorARM64::VisitStringBuilderAppend(HStringBuilderAppend* instruction) {
+   __ Mov(w0, instruction->GetFormat()->GetValue());
+   codegen_->InvokeRuntime(kQuickStringBuilderAppend, instruction);
++#ifdef ART_NCE
++  // The runtime returns a native pointer; Quick callers retain encoded references.
++  NceQuickReference(GetVIXLAssembler(), x0);
++#endif
+ }
+ 
+ void LocationsBuilderARM64::VisitUnresolvedInstanceFieldGet(

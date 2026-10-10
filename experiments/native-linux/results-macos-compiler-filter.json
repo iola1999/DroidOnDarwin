@@ -1,0 +1,123 @@
+{
+  "platform": "macOS-27.0-arm64-arm-64bit-Mach-O",
+  "kernel_sha256": "d8cfa8459453d60a40bf3d358d507fccdfc4308543125e85fcf7012fbb499896",
+  "android_builds": {
+    "art-build": {
+      "build_inputs": "2995c94c2cf39ce5749490f62db6e4a2273532eda490b106b548d2e41f97e2f8",
+      "inputs": {
+        "experiments/native-linux/art/android16.patch": "342182ccf23877d0be817d5b3df3828249732e450e15abda33e700ec02c5bf1e",
+        "experiments/native-linux/art/reference_heap.h": "c814b35b45c201f3893f3e8739f0ea5a0d309facbf70a9ba1f2fd8bb9ddaf71f",
+        "experiments/native-linux/art/reference_heap.c": "a10220f756efd4891930521667bcbf6e86b9e6a3d646d910c934884f57782be2",
+        "experiments/native-linux/art/jit_control.cc": "b68545764226eec8aac0dd853452cbb629c2484ba84b0fd318aec5870ccf0f7f",
+        "experiments/native-linux/art/sources.json": "a66d085c58d109c16e99205fe83514cf5a41a60ed372fd924e374007b947f82b",
+        "experiments/native-linux/art/nterp.patch": "5623b75f44d6e51647966b660de4d6410308b982cda1c9a4d7c843bcea7f8bcc",
+        "experiments/native-linux/art/compiler-profile.patch": "051c8f6833e84ae435a6054afe736e819ec16e145af2b4a554929d946daa1dfe",
+        "ndk_libcxx_config": "e7de7bd0b73df77a31d5be96bec3498851cda33ad51b66c654cb51d3e078b6eb",
+        "libc": "4174a2a3908049c19d176cba2d61f61f46369f173a41ed609f445b3e4e2e81ee",
+        "runtime": "4b1a45b0ee51725c68f1c29765958d0b60b45a5f2325bedfc61764cd49232249",
+        "builder": "1bd3167f374b6d36627fe884158cb9b607284440778acfe4dceaa4eafc6964ee",
+        "layout": "9ecb6dc474edfc516284effcbd1999ba445ba88372233636391771a0715deaa5"
+      },
+      "files": {
+        "libart.so": "c2bfc7052d45776a9195086708b3b056e1f556738f9a2ff75fe64199a4dfbd3a",
+        "libartbase.so": "af02b230861c8f209d6df773e4749063cbd7ab25062cbd5629e4a955ef2d31f4"
+      },
+      "art_flags": {
+        "use_generational_cmc": false,
+        "always_enable_profile_code": false,
+        "test": false,
+        "executable_method_file_offsets": false,
+        "executable_method_file_offsets_v2": false,
+        "art_service_v3": false,
+        "virtual_thread_impl_v1": false,
+        "fast_baseline_compiler": false
+      },
+      "execution": "restricted-arm64-jit",
+      "compressed_references": "offset-in-high-4GiB-arena"
+    }
+  },
+  "generated_sha256": {
+    "system.img": "d6d9e65306fcc66af11c5c87f06bafdd3fe7e68038b7f72b3e89660608b5d2d5",
+    "android-data-seed.img": "0387fb300ae1d4145b6fdcf4c878553a2e806b8c8b4918925d3482152fede620",
+    "storage-test.elf": "34a413f47cc3852d34ecb42f41915e3b73927e9a3966458724749c8f6dbf71e3",
+    "program-images.h": "b9ee150e23eeb601345d62aef57d10a2d9cb5226bf679b772f5f018e26852a89",
+    "user-scripts.h": "22cb619c4fa6f66c5b5e46bde202b4fcb9faa1021ec7003278b32bd152350102",
+    "payload.S": "bece844288b5fe32786f489a901a98b7655fb69003a0b3ed600ca62861be778b",
+    "payload.bin": "c397f306339f6e2b7587583ab98a85dda5c63897bf7b827f488dced88b9c8b33",
+    "lkl-image.h": "aed704b181f7c62715ec213e6c83d3f1e347fa182e39e1e47abe86c9c2849882",
+    "lkl-host-ops.h": "3016ed7e8fdb6218884af64b6b63e030f7657d327edec772763520266309c556",
+    "guest-image.h": "e5c4e5cddfc16b459f9e480134dc102e4811a5c9121d0a7ac9d52d933e94a5ba",
+    "exec-guest.elf": "2653f70b168f2c2b58e048b5fe81137ebf36d6a8e6e13a37f4d579b02f6c3e9d",
+    "sigreturn.elf": "795d053b14585230d5f6ec0d09fdd5d91b8685c9fb6acdd0935d3d9359baf271",
+    "init.elf": "00de6b3cbb8850e9ae68851a362e7ff71b3c646187b1c919201e91c3531d7123",
+    "worker.elf": "0bd986c90cfc0fa7468b462e013c73b667368cf8dbe13e8fe9f4ab144d233e11",
+    "mm-bench.elf": "b327185deb374f894e6843964c1ec0d6587bc2378262a50cad5c751d2c24085c",
+    "dash.elf": "ffe90f94a6b8387bf8b0e8b575b484ef9835245bad6be77548f8d61dbac03253",
+    "libc.so": "5198895e4b82cec0a529cc5202e485edb5836844f9d2c0004e96c94346115ce7",
+    "dependency.so": "85f8153310870d802e5dcca5a9c0b60cc713ed967c28f15c9e35f890bf3460a6",
+    "plugin.so": "e71ca3312f3e368e1017ed7ceac0a97264766b997b864e1b21ccf712df60d6fb",
+    "dynamic.elf": "306e652a456237aab0895b76d2c547992f90c96a3537b19005828308577f5ab5",
+    "binder-test.elf": "61c3e9cae975bd205ecbd3dc97ac22e62a8fc85b3880a6c66ae38b07b3d1f8e4",
+    "gpu-test.elf": "b8f9619c074f73371c9f0988b8fa8cfc472174d07614dc9f8a97b96b1fd6f49e",
+    "egl-test.elf": "e8b91c9dfca5b18a8f699f75c81b76a024d8ac10c30049928e593f29601b22a6",
+    "gralloc-test.elf": "44a80f591e74849f073bf28a175412ffc32565c887c0556bd486247b89fe77cd",
+    "libnce-qemupipe.so": "f912df14f4564f948b43a63d8a2b9f79511e99f19ea4a9ac7240921c893899f2",
+    "bionic-test.elf": "a4d7e5e74848986f176e1506de3e8558edf76f6e16b313111a20d207441547cc",
+    "cfi-test.elf": "9b372d9239f9ba0af43fd62bf19afa61436d11cfe0eaf1d24ef64f83144be2bd",
+    "libnce-cfi-a.so": "6e620987d2df90cf9d7eb31ede1c004a3346ba78cb7cbce9b24ad585e65ebc09",
+    "libnce-cfi-b.so": "5209f0b3d20923471df3bdb95d5eb554ecf7cb470d49932c3beba40f69495ac5",
+    "nce-native-libraries.apk": "75d2d4f2e9fd6f51618d594f5c59157c582d858f59288f1fd193929618372590",
+    "art-test.elf": "64546604795ae3c0b52b1294dfd5c6e5481bd61aa96b52de52996464381d2fe7",
+    "art-heap-test.elf": "99a9ab9a6ac677f6459d4686d504cc5c588850861e416cd8d9ee42537e1e0e63",
+    "android-services-test.elf": "44ca469a40a2fb4186807f26dd10ca78685bacc48010d4558b553a77ef7bf55a"
+  },
+  "configuration": {
+    "nterp": true,
+    "compiler_profile": true,
+    "sigquit_at_launcher": true,
+    "workload": "full-desktop-regressions"
+  },
+  "validation": {
+    "results": true,
+    "dispatch_results": true
+  },
+  "filter_snapshots": {
+    "lkl": [
+      "NCE_ART_FILTER_SUMMARY pid=390 kind=ShouldDeoptimizeFlag count=23",
+      "NCE_ART_FILTER_SUMMARY pid=390 kind=Deoptimize count=85",
+      "NCE_ART_FILTER_SUMMARY pid=390 kind=InvokeStaticOrDirect count=155",
+      "NCE_ART_FILTER_SUMMARY pid=390 kind=InvokePolymorphic count=8",
+      "NCE_ART_FILTER_SUMMARY pid=390 kind=Max count=215",
+      "NCE_ART_FILTER_SUMMARY pid=390 kind=StringBuilderAppend count=4",
+      "NCE_ART_FILTER_SUMMARY pid=390 kind=accepted count=1215",
+      "NCE_ART_FILTER_SUMMARY pid=202 kind=ShouldDeoptimizeFlag count=86",
+      "NCE_ART_FILTER_SUMMARY pid=202 kind=Deoptimize count=57",
+      "NCE_ART_FILTER_SUMMARY pid=202 kind=InvokeStaticOrDirect count=470",
+      "NCE_ART_FILTER_SUMMARY pid=202 kind=InvokePolymorphic count=18",
+      "NCE_ART_FILTER_SUMMARY pid=202 kind=Max count=426",
+      "NCE_ART_FILTER_SUMMARY pid=202 kind=StringBuilderAppend count=51",
+      "NCE_ART_FILTER_SUMMARY pid=202 kind=accepted count=2772"
+    ],
+    "dispatch": [
+      "NCE_ART_FILTER_SUMMARY pid=387 kind=ShouldDeoptimizeFlag count=18",
+      "NCE_ART_FILTER_SUMMARY pid=387 kind=Deoptimize count=37",
+      "NCE_ART_FILTER_SUMMARY pid=387 kind=InvokeStaticOrDirect count=135",
+      "NCE_ART_FILTER_SUMMARY pid=387 kind=InvokePolymorphic count=8",
+      "NCE_ART_FILTER_SUMMARY pid=387 kind=Max count=173",
+      "NCE_ART_FILTER_SUMMARY pid=387 kind=StringBuilderAppend count=4",
+      "NCE_ART_FILTER_SUMMARY pid=387 kind=accepted count=806",
+      "NCE_ART_FILTER_SUMMARY pid=201 kind=ShouldDeoptimizeFlag count=66",
+      "NCE_ART_FILTER_SUMMARY pid=201 kind=Deoptimize count=51",
+      "NCE_ART_FILTER_SUMMARY pid=201 kind=InvokeStaticOrDirect count=261",
+      "NCE_ART_FILTER_SUMMARY pid=201 kind=InvokePolymorphic count=19",
+      "NCE_ART_FILTER_SUMMARY pid=201 kind=Max count=277",
+      "NCE_ART_FILTER_SUMMARY pid=201 kind=StringBuilderAppend count=51",
+      "NCE_ART_FILTER_SUMMARY pid=201 kind=accepted count=2655"
+    ]
+  },
+  "limits": [
+    "Counts are compiler filter decisions, not installed JIT methods or execution time.",
+    "The observed snapshots precede later compilation. Counters may be inherited at fork.",
+    "SIGQUIT and mapping timers change execution timing; this run is diagnostic only."
+  ]
+}
