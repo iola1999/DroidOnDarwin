@@ -35,6 +35,7 @@ __attribute__((noinline)) static unsigned grow_stack(unsigned depth)
 }
 
 void file_tests(const char *libc);
+int fault_register_test(const unsigned char *address, unsigned expected);
 
 void memory_tests(void)
 {
@@ -195,8 +196,10 @@ void memory_tests(void)
         CHECK(write(to_child[1], &value, 1) == 1);
         CHECK(read(to_parent[0], &value, 1) == 1);
         CHECK(shared[0] == i + 64);
+        CHECK(fault_register_test(data, 17) == 0);
         CHECK(data[0] == 17 && data[PAGE] == 17 && data[2 * PAGE] == 17);
     }
+    puts("{\"test\":\"linux_fault_register_state\",\"passed\":true,\"switches\":64}");
     int status;
     CHECK(waitpid(child, &status, 0) == child && WIFEXITED(status) && WEXITSTATUS(status) == 0);
     CHECK(close(to_child[1]) == 0 && close(to_parent[0]) == 0 && close(fd) == 0);

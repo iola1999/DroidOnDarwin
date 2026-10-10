@@ -6,16 +6,27 @@
 #include <asm/host_ops.h>
 #include <asm/nce-layout.h>
 #include <asm/mmu_context.h>
+#include <asm/nce-mmu-profile.h>
 
 unsigned long nce_user_base, nce_task_size, nce_memory_start, nce_elf_hwcap;
 static unsigned long mapping_mode;
+static bool sparse_scan;
 static unsigned long *installed, *desired;
+static struct nce_mmu_profile *profile;
+#define PROFILE_ADD(field, count) \
+    do { \
+        if (profile) \
+            __atomic_fetch_add(&profile->field, count, __ATOMIC_RELAXED); \
+    } while (0)
 #define VIEW_CHUNK_PAGES 64
 #define VIEW_CHUNKS (NCE_USER_SIZE / PAGE_SIZE / VIEW_CHUNK_PAGES)
 static DECLARE_BITMAP(view_chunks, VIEW_CHUNKS);
 
-void nce_set_layout(unsigned long base, unsigned long mode, unsigned long *views, unsigned long hwcap)
+void nce_set_layout(unsigned long base, unsigned long mode, unsigned long *views, unsigned long hwcap,
+                    struct nce_mmu_profile *counters, unsigned long sparse)
 {
+    sparse_scan = sparse;
+    profile = counters;
     nce_elf_hwcap = hwcap;
     mapping_mode = mode;
     nce_user_base = base;
@@ -208,6 +219,44 @@ void munmap_page_for_pte(struct mm_struct *mm, unsigned long addr, pte_t *xp)
     apply_views(first, 1);
 }
 
+/* Demand views can survive a switch only when already installed or explicitly
+ * requested by a host access. Unvisited pages have zero installed and desired
+ * entries, so walking their VMAs cannot change the result. */
+static void refresh_demand_views(struct mm_struct *mm, unsigned long first, unsigned long count)
+{
+    unsigned long end = first + count, chunk = first / VIEW_CHUNK_PAGES;
+    unsigned long scanned = 0;
+    for_each_set_bit_from(chunk, view_chunks, VIEW_CHUNKS)
+    {
+        unsigned long lo = max(first, chunk * VIEW_CHUNK_PAGES);
+        unsigned long hi = min(end, (chunk + 1) * VIEW_CHUNK_PAGES);
+        if (lo >= hi)
+            break;
+        for (unsigned long i = lo; i < hi; ++i) {
+            unsigned long value = 0;
+            if (installed[i]) {
+                value = view(lookup(mm, USER_BASE + i * PAGE_SIZE));
+                ++scanned;
+                if (value != installed[i] && !test_bit(i, mm->context.accessed))
+                    value = 0;
+            }
+            desired[i] = value;
+        }
+    }
+    unsigned long i = first;
+    for_each_set_bit_from(i, mm->context.accessed, end)
+    {
+        if (installed[i])
+            continue;
+        desired[i] = view(lookup(mm, USER_BASE + i * PAGE_SIZE));
+        ++scanned;
+        if (desired[i])
+            __set_bit(i / VIEW_CHUNK_PAGES, view_chunks);
+    }
+    apply_views(first, count);
+    PROFILE_ADD(scanned_pages, scanned);
+}
+
 void nce_flush_range(struct mm_struct *mm, unsigned long start, unsigned long end)
 {
     struct vm_area_struct *vma;
@@ -221,6 +270,10 @@ void nce_flush_range(struct mm_struct *mm, unsigned long start, unsigned long en
         return;
     unsigned long first = (start - USER_BASE) / PAGE_SIZE;
     unsigned long count = (end - start) / PAGE_SIZE;
+    if (sparse_scan && mapping_mode >= NCE_MM_LAZY) {
+        refresh_demand_views(mm, first, count);
+        return;
+    }
     if (mapping_mode == NCE_MM_FULL)
         map_view(start, end - start, 0);
     else {
@@ -234,11 +287,13 @@ void nce_flush_range(struct mm_struct *mm, unsigned long start, unsigned long en
             memset(desired + lo, 0, (hi - lo) * sizeof(*desired));
         }
     }
+    unsigned long scanned = 0;
     for_each_vma_range(iter, vma, end)
     {
         if (!(vma->vm_flags & (VM_READ | VM_WRITE | VM_EXEC)))
             continue;
         for (addr = max(start, vma->vm_start); addr < min(end, vma->vm_end); addr = next_table_page(mm, addr)) {
+            ++scanned;
             pte_t pte = lookup(mm, addr);
             if (mapping_mode == NCE_MM_FULL) {
                 if (pte_present(pte))
@@ -259,12 +314,14 @@ void nce_flush_range(struct mm_struct *mm, unsigned long start, unsigned long en
     }
     if (mapping_mode != NCE_MM_FULL)
         apply_views(first, count);
+    PROFILE_ADD(scanned_pages, scanned);
 }
 
 static void prepare_mm_locked(struct mm_struct *next)
 {
     if (next == active_mm)
         return;
+    PROFILE_ADD(switches, 1);
     active_mm = next;
     nce_flush_range(next, USER_BASE, TASK_SIZE);
 }
@@ -279,10 +336,36 @@ void nce_prepare_user(void)
     mmap_read_unlock(mm);
 }
 
+/* The host calls this only while executing guest code with sole ownership of
+ * the Linux CPU. No page allocation, Linux lock or reschedule is allowed on
+ * its signal stack. COW, protection and accessed/dirty updates take the normal
+ * fault path. The host excludes prepared code addresses before calling. */
+static int restore_present_data(unsigned long address, bool write)
+{
+    struct mm_struct *mm = current->mm;
+    if (!mm || mm != active_mm || mapping_mode < NCE_MM_LAZY ||
+        address < USER_BASE || address >= TASK_SIZE)
+        return 0;
+    pte_t pte = lookup(mm, address);
+    unsigned long value = view(pte);
+    unsigned long index = (address - USER_BASE) / PAGE_SIZE;
+    if (!value || (value & _PAGE_EXEC) || !pte_young(pte) ||
+        (write && (!(value & _PAGE_RW) || !pte_dirty(pte))) || installed[index] == value)
+        return 0;
+    mmap_pages_for_ptes(mm, address & PAGE_MASK, 1, pte);
+    if (mapping_mode == NCE_MM_LAZY)
+        __set_bit(index, mm->context.accessed);
+    PROFILE_ADD(fast_faults, 1);
+    PROFILE_ADD(restored_pages, 1);
+    return 1;
+}
+
 /* Called only for a fault in the controlled guest window while the Linux CPU
  * is owned by the faulting pthread. Invalid mappings return an error. */
 int nce_page_fault(unsigned long address, int access)
 {
+    if (access & NCE_FAULT_TRY_PRESENT)
+        return restore_present_data(address, access & 1);
     struct mm_struct *mm = current->mm;
     struct vm_area_struct *vma;
     vm_fault_t result;
@@ -316,6 +399,10 @@ int nce_page_fault(unsigned long address, int access)
         return -ENOEXEC;
     }
     bool reused = prior && (!write || (prior & _PAGE_RW));
+    if (reused)
+        PROFILE_ADD(present_faults, 1);
+    else
+        PROFILE_ADD(linux_faults, 1);
     result = handle_mm_fault(vma, address, execute ? FAULT_FLAG_INSTRUCTION : write ? FAULT_FLAG_WRITE
                                                                                     : 0,
                              NULL);
@@ -334,6 +421,7 @@ int nce_page_fault(unsigned long address, int access)
             result = VM_FAULT_SIGBUS;
         else {
             mmap_pages_for_ptes(mm, first, (stop - first) / PAGE_SIZE, __pte(value));
+            PROFILE_ADD(restored_pages, (stop - first) / PAGE_SIZE);
             /* Learn demand after a switch, excluding initial allocation and
              * COW setup. Dense readers then avoid repeated signal delivery. */
             if ((reused && mapping_mode == NCE_MM_LAZY) || direct)

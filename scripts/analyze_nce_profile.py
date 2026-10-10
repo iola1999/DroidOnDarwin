@@ -73,7 +73,7 @@ def sample_summary(text):
 
 
 def log_summary(text):
-    mappings, timings, activities, resume = [], [], [], []
+    mappings, timings, activities, resume, mmu = [], [], [], [], []
     for line_number, line in enumerate(text.splitlines(), 1):
         try:
             record = json.loads(line)
@@ -83,6 +83,8 @@ def log_summary(text):
             mappings.append(dict(record, line=line_number))
         if record.get('profile') == 'resume_entries':
             resume.append(dict(record, line=line_number))
+        if record.get('profile') == 'linux_mmu':
+            mmu.append(dict(record, line=line_number))
         match = re.search(r'(SystemUIBootTiming|SystemServerTiming): (.+) took to complete: (\d+)ms', line)
         if match:
             timings.append(dict(tag=match[1], name=match[2], ms=int(match[3]), line=line_number,
@@ -107,6 +109,7 @@ def log_summary(text):
     return dict(component_timing_count=len(timings), timing_limit_per_tag=40,
                 component_timings=[r for r in timings if r['line'] in selected], displayed_activities=activities,
                 mapping_cumulative=mappings, mapping_intervals=intervals, resume_entries=resume,
+                mmu_cumulative=mmu,
                 java_fatal_exceptions=text.count('FATAL EXCEPTION:'), anrs=text.count('ANR in '))
 
 

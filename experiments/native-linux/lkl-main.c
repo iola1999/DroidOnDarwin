@@ -3,6 +3,7 @@
 #ifdef NCE_PROCESS
 #include "memory.h"
 #include "layout.h"
+#include "lkl-mmu-profile.h"
 void nce_compute_benchmark(void);
 #endif
 #include "lkl-host-ops.h"
@@ -145,6 +146,7 @@ static void blocking_tests(void)
 
 #else
 unsigned long nce_process_setup(void);
+struct nce_mmu_profile *nce_process_mmu_profile(void);
 void nce_process_cleanup(void);
 void nce_process_run(long (*)(long, long *), long (*)(long, long *), int (*)(unsigned long, int),
                      void (*)(long, long, unsigned long), void (*)(unsigned long, int), void (*)(void), void (*)(void));
@@ -215,7 +217,7 @@ int nce_lkl_run(const char *image_path)
     void (*cleanup)(void) = (void *)(kernel.rx + LKL_CLEANUP);
     kernel_syscall = (void *)(kernel.rx + LKL_SYSCALL);
 #ifdef NCE_PROCESS
-    void (*set_layout)(unsigned long, unsigned long, unsigned long *, unsigned long) = (void *)(kernel.rx + NCE_SET_LAYOUT);
+    void (*set_layout)(unsigned long, unsigned long, unsigned long *, unsigned long, struct nce_mmu_profile *, unsigned long) = (void *)(kernel.rx + NCE_SET_LAYOUT);
     unsigned long *views = calloc(2 * NCE_USER_SIZE / NCE_PAGE_SIZE, sizeof(*views));
     REQUIRE(views);
     const char *mode = getenv("NCE_MM_MODE");
@@ -225,8 +227,11 @@ int nce_lkl_run(const char *image_path)
     unsigned long mapping_mode = !strcmp(mode, "full") ? NCE_MM_FULL : !strcmp(mode, "diff") ? NCE_MM_DIFF
                                                                    : !strcmp(mode, "demand") ? NCE_MM_DEMAND
                                                                                              : NCE_MM_LAZY;
-    printf("{\"phase\":\"linux_mapping_policy\",\"mode\":\"%s\"}\n", mode);
-    set_layout(nce_process_setup(), mapping_mode, views, host_hwcap());
+    const char *sparse_mode = getenv("NCE_SPARSE_SCAN");
+    unsigned long sparse_scan = !sparse_mode || strcmp(sparse_mode, "0");
+    printf("{\"phase\":\"linux_mapping_policy\",\"mode\":\"%s\",\"sparse_scan\":%s}\n", mode, sparse_scan ? "true" : "false");
+    unsigned long base = nce_process_setup();
+    set_layout(base, mapping_mode, views, host_hwcap(), nce_process_mmu_profile(), sparse_scan);
 #endif
     puts("{\"phase\":\"linux_init\"}");
     REQUIRE(nce_disk_open(0, getenv("NCE_STORAGE_IMAGE")) == 0);

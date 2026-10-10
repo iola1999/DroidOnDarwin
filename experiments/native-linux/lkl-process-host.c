@@ -2,6 +2,7 @@
 #include "nce.h"
 #include "memory.h"
 #include "layout.h"
+#include "lkl-mmu-profile.h"
 #include "lkl-host-ops.h"
 #include "guest-image.h"
 #include "programs.h"
@@ -64,6 +65,13 @@ static unsigned char *ram;
 static unsigned long code_copies, code_copy_bytes, data_maps, data_map_bytes, revocations;
 static unsigned long code_reused_bytes;
 static bool map_profile;
+static bool direct_fault;
+static struct nce_mmu_profile mmu_profile;
+
+struct nce_mmu_profile *nce_process_mmu_profile(void)
+{
+    return map_profile ? &mmu_profile : NULL;
+}
 enum MapOperation { MAP_DATA,
                     MAP_CODE,
                     MAP_REVOKE,
@@ -328,7 +336,8 @@ static int guest_pc(uintptr_t pc)
         return 1;
     if (pc >= (uintptr_t)code.rx && pc < (uintptr_t)code.rx + sizeof(guest_image))
         return 1;
-    for (size_t i = 0; i < nce_program_count; ++i)
+    size_t i = nce_program_index(pc);
+    if (i < nce_program_count)
         for (size_t j = 0; j < nce_programs[i].segment_count; ++j) {
             NceCode c = nce_programs[i].segments[j].code;
             if (pc >= (uintptr_t)c.rx && pc < (uintptr_t)c.rx + c.size)
@@ -346,7 +355,8 @@ static int syscall_stub(uintptr_t pc)
         if (gate == (uintptr_t)nce_gate)
             return 1;
     }
-    for (size_t i = 0; i < nce_program_count; ++i) {
+    size_t i = nce_program_index(pc);
+    if (i < nce_program_count) {
         NceProgram *p = &nce_programs[i];
         uintptr_t begin = (uintptr_t)p->stubs.rx + 16;
         if (p->stubs.rx && pc >= begin && pc < begin + p->patch_count * 80 && !((pc - begin) % 80))
@@ -379,8 +389,9 @@ static void prepare_resume(NceState *state)
     if (((uint32_t *)resume.rw)[1] != branch) {
         REQUIRE(nce_write_entry(resume, state->regs.pc) == 0);
         nce_sync_code(resume);
-        atomic_fetch_add_explicit(&resume_misses, 1, memory_order_relaxed);
-    } else {
+        if (map_profile)
+            atomic_fetch_add_explicit(&resume_misses, 1, memory_order_relaxed);
+    } else if (map_profile) {
         atomic_fetch_add_explicit(&resume_hits, 1, memory_order_relaxed);
     }
     state->resume = (uintptr_t)resume.rx;
@@ -459,6 +470,12 @@ static void fault(int signal, siginfo_t *info, void *opaque)
         }
         int stub = signal != SIGUSR2 && syscall_stub(pc);
         if (guest_pc(pc) || stub) {
+            unsigned exception_class = u->uc_mcontext->__es.__esr >> 26;
+            bool execute = signal == SIGILL || exception_class == 0x20 || exception_class == 0x21;
+            if (direct_fault && (signal == SIGSEGV || signal == SIGBUS) && !execute &&
+                address >= USER_BASE && address < USER_BASE + USER_SIZE && !guest_pc(address) &&
+                page_fault(address, NCE_FAULT_TRY_PRESENT | is_write))
+                return;
             if (!logged_redirect) {
                 static const char message[] = "{\"phase\":\"signal_redirect_to_host_entry\"}\n";
                 write(STDOUT_FILENO, message, sizeof(message) - 1);
@@ -471,8 +488,7 @@ static void fault(int signal, siginfo_t *info, void *opaque)
             p->fault_address = address;
             p->fault_write = is_write;
             p->fault_illegal = signal == SIGILL;
-            unsigned exception_class = u->uc_mcontext->__es.__esr >> 26;
-            p->fault_execute = p->fault_illegal || exception_class == 0x20 || exception_class == 0x21;
+            p->fault_execute = execute;
             p->fault_instruction = signal == SIGILL ? *(const uint32_t *)pc : 0;
             if (stub) {
                 p->state.resume = pc + 40;
@@ -659,7 +675,11 @@ unsigned long nce_process_setup(void)
     REQUIRE(getpagesize() == PAGE);
     trace = getenv("NCE_TRACE") != NULL;
     fault_trace = getenv("NCE_FAULT_TRACE") != NULL;
-    map_profile = getenv("NCE_MAP_PROFILE") != NULL;
+    const char *profile_mode = getenv("NCE_MAP_PROFILE");
+    map_profile = profile_mode && strcmp(profile_mode, "0");
+    const char *fault_mode = getenv("NCE_DIRECT_FAULT");
+    direct_fault = !fault_mode || strcmp(fault_mode, "0");
+    printf("{\"phase\":\"present_page_signal_restore\",\"enabled\":%s}\n", direct_fault ? "true" : "false");
     user_base = nce_memory_user_base();
     dynamic_cache = (NceSegment){.size = NCE_EXEC_SIZE, .code = nce_memory_dynamic_code()};
     for (size_t i = 0; i < nce_program_count; ++i) {
@@ -857,6 +877,19 @@ struct LogPump {
     atomic_int stopping;
 };
 
+static void report_mmu_profile(void)
+{
+    if (!map_profile)
+        return;
+    fprintf(stderr, "{\"profile\":\"linux_mmu\",\"switches\":%lu,\"scanned_pages\":%lu,\"present_faults\":%lu,\"linux_faults\":%lu,\"fast_faults\":%lu,\"restored_pages\":%lu}\n",
+            __atomic_load_n(&mmu_profile.switches, __ATOMIC_RELAXED),
+            __atomic_load_n(&mmu_profile.scanned_pages, __ATOMIC_RELAXED),
+            __atomic_load_n(&mmu_profile.present_faults, __ATOMIC_RELAXED),
+            __atomic_load_n(&mmu_profile.linux_faults, __ATOMIC_RELAXED),
+            __atomic_load_n(&mmu_profile.fast_faults, __ATOMIC_RELAXED),
+            __atomic_load_n(&mmu_profile.restored_pages, __ATOMIC_RELAXED));
+}
+
 static void *stream_guest_log(void *opaque)
 {
     struct LogPump *pump = opaque;
@@ -883,6 +916,7 @@ static void *stream_guest_log(void *opaque)
             fprintf(stderr, "{\"profile\":\"resume_entries\",\"hits\":%lu,\"misses\":%lu}\n",
                     atomic_load_explicit(&resume_hits, memory_order_relaxed),
                     atomic_load_explicit(&resume_misses, memory_order_relaxed));
+            report_mmu_profile();
         }
         bool received = false;
         for (unsigned stream = 0; stream < 2; ++stream) {
@@ -1561,6 +1595,7 @@ void nce_process_run(long (*host_syscall)(long, long *), long (*guest_syscall)(l
 }
 void nce_process_cleanup(void)
 {
+    report_mmu_profile();
     atomic_store(&timer_stopping, 1);
     REQUIRE(pthread_join(timer_thread, NULL) == 0);
     REQUIRE(sigaction(SIGUSR2, &old_preempt, NULL) == 0);

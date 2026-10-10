@@ -22,4 +22,5 @@
 #define NCE_MM_DEMAND 3
 #define NCE_FAULT_EXEC 2
 #define NCE_FAULT_DIRECT 4
+#define NCE_FAULT_TRY_PRESENT 8
 #endif

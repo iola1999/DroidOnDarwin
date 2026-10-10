@@ -175,6 +175,7 @@ def apply(source: Path, experiment: Path):
     edit(arch + "kernel/Makefile", "obj-$(CONFIG_BLOCK) += nce_block.o",
          "obj-$(CONFIG_BLOCK) += nce_block.o\nobj-$(CONFIG_PAGE_REPORTING) += nce_reclaim.o")
     for local, destination in (("layout.h", "include/asm/nce-layout.h"),
+                               ("lkl-mmu-profile.h", "include/asm/nce-mmu-profile.h"),
                                ("lkl-syscall.h", "include/asm/syscall.h"),
                                ("lkl-seccomp.h", "include/asm/seccomp.h"),
                                ("guest-registers.h", "include/asm/guest-registers.h"),

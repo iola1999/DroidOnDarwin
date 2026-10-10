@@ -1,10 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 .text
-.global signal_register_test
-.type signal_register_test, %function
-signal_register_test:
-    mov x1, #10
-    mov x8, #129
+.macro init_registers
     mov x9, #0x9876
     mov x18, x9
     movi v0.16b, #0x5a
@@ -14,7 +10,9 @@ signal_register_test:
     mov x10, #0x8000000
     msr fpsr, x10
     cmp xzr, xzr
-    svc #0
+.endm
+
+.macro check_registers
     // Read condition flags before the checks overwrite them.
     mrs x10, nzcv
     mov x11, #0x60000000
@@ -50,5 +48,26 @@ signal_register_test:
 2:  msr fpcr, xzr
     msr fpsr, xzr
     ret
+.endm
+
+.global signal_register_test
+.type signal_register_test, %function
+signal_register_test:
+    mov x1, #10
+    mov x8, #129
+    init_registers
+    svc #0
+    check_registers
 .size signal_register_test, .-signal_register_test
+
+.global fault_register_test
+.type fault_register_test, %function
+fault_register_test:
+    init_registers
+    // A context switch invalidates this private page's host view.
+    ldrb w2, [x0]
+    eor w2, w2, w1
+    cbnz w2, 1f
+    check_registers
+.size fault_register_test, .-fault_register_test
 .section .note.GNU-stack,"",%progbits

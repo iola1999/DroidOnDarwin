@@ -58,6 +58,15 @@ Total time spent in GC: 677.554ms
         self.assertEqual(result[0]['main_java_frames'], ['at android.os.BinderProxy.transact(Native method)'])
         self.assertEqual(result[0]['statistics'], ['Total time spent in GC: 1.086s'])
 
+    def test_optional_mmu_reports_preserve_fault_categories(self):
+        self.assertEqual(log_summary('ordinary log')['mmu_cumulative'], [])
+        report = '{"profile":"linux_mmu","switches":4,"present_faults":8,"linux_faults":3,"fast_faults":12,"restored_pages":20}'
+        result = log_summary(report)['mmu_cumulative'][0]
+        self.assertEqual(result['present_faults'], 8)
+        self.assertEqual(result['linux_faults'], 3)
+        self.assertEqual(result['fast_faults'], 12)
+        self.assertEqual(result['line'], 1)
+
 
 if __name__ == '__main__':
     unittest.main()

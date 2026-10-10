@@ -26,6 +26,7 @@ final class ProbeModel: ObservableObject {
     }
     @Published var didRun = false
     @Published var importing = false
+    @Published var performanceLogging = false
     let metalLayer = CAMetalLayer()
     private let logReader = ProbeLogReader()
     private var phase: String?
@@ -233,6 +234,7 @@ final class ProbeModel: ObservableObject {
         didRun = true
         setenv("NCE_DESKTOP", "1", 1)
         setenv("NCE_MM_MODE", "demand", 1)
+        setenv("NCE_MAP_PROFILE", performanceLogging ? "1" : "0", 1)
         startedAt = Date()
         status = "正在准备 JIT 内存"
         // The guest switches stacks and pthreads. Keep the Swift UI on its own queue.
@@ -408,6 +410,12 @@ struct NativeLinuxApp: App {
                             }
                             Button(model.paired ? "更换配对文件" : "导入配对文件") { model.importing = true }
                         }.disabled(model.busy || model.didRun)
+                        Section {
+                            Toggle("性能统计", isOn: $model.performanceLogging)
+                                .disabled(model.busy || model.didRun)
+                        } footer: {
+                            Text("启动前开启，统计会写入导出日志。计时会增加运行开销。")
+                        }
                         if !model.logLines.isEmpty {
                             Section("日志") {
                                 ShareLink("导出日志", item: model.logURL)
