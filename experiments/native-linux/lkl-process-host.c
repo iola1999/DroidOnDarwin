@@ -57,15 +57,16 @@ static pthread_t timer_thread;
 static atomic_int timer_stopping;
 static NceCode event_resume;
 static atomic_ulong resume_hits, resume_misses;
-static unsigned long preemptions, deferred_faults, stack_resumes, stack_calls, stackless_exits;
-static unsigned long inherited_preempt_blocks;
-static volatile sig_atomic_t logged_redirect, logged_stack_restore;
+static atomic_ulong preemptions, deferred_faults, stack_resumes, stack_calls, stackless_exits;
+static atomic_ulong inherited_preempt_blocks;
+static atomic_int logged_redirect, logged_stack_restore;
+_Static_assert(ATOMIC_INT_LOCK_FREE == 2, "signal logging requires lock-free atomics");
 static struct sigaction old_preempt;
 
 static NceCode code;
 static unsigned char *ram;
-static unsigned long code_copies, code_copy_bytes, data_maps, data_map_bytes, revocations;
-static unsigned long code_reused_bytes;
+static atomic_ulong code_copies, code_copy_bytes, data_maps, data_map_bytes, revocations;
+static atomic_ulong code_reused_bytes;
 static bool map_profile;
 static bool direct_fault;
 static struct nce_mmu_profile mmu_profile;
@@ -95,16 +96,58 @@ static void profile_mapping(enum MapOperation operation, uint64_t begin)
 
 static NceSegment dynamic_cache;
 static size_t ram_size;
-static unsigned long reclaimed_ranges, reclaimed_bytes;
+static atomic_ulong reclaimed_ranges, reclaimed_bytes;
 static long (*run_syscall)(long, long *);
 static int (*page_fault)(unsigned long, int);
 static void (*user_return)(long, long, unsigned long);
 static void (*user_fault)(unsigned long, int);
 static void (*user_preempt)(void);
 static void (*prepare_user)(void);
-static unsigned long faults, allocated, freed;
+static atomic_ulong faults, allocated, freed;
 static int trace, fault_trace;
 static struct sigaction old_segv, old_bus, old_ill, old_trap;
+
+#ifdef NCE_SMP
+static void (*enter_window)(void), (*leave_window)(void);
+static unsigned long (*copy_guest)(void *, unsigned long, unsigned long, int);
+static int (*fault_guest)(unsigned long, int);
+static _Thread_local bool executing_guest;
+
+static void interrupt_guests(unsigned mask)
+{
+    nce_cpu_interrupt(mask, SIGUSR2);
+}
+
+void nce_process_smp(void (*enter)(void), void (*leave)(void),
+                     unsigned long (*copy)(void *, unsigned long, unsigned long, int),
+                     int (*fault)(unsigned long, int))
+{
+    enter_window = enter;
+    leave_window = leave;
+    copy_guest = copy;
+    fault_guest = fault;
+}
+#endif
+
+static void leave_execution(void)
+{
+#ifdef NCE_SMP
+    if (executing_guest) {
+        executing_guest = false;
+        leave_window();
+    }
+#endif
+}
+
+static void enter_execution(void)
+{
+#ifdef NCE_SMP
+    if (!executing_guest) {
+        enter_window();
+        executing_guest = true;
+    }
+#endif
+}
 
 static void shmem_init(unsigned long size)
 {
@@ -130,8 +173,8 @@ static void restore_code(NceProgram *program, NceSegment *segment, size_t positi
                          const unsigned char *source, size_t length, enum lkl_prot prot)
 {
     uint64_t begin = profile_clock();
-    /* Darwin's cache operation needs an accessible RX address. No guest
-     * executes concurrently while the single Linux CPU restores this view. */
+    /* Darwin's cache operation needs an accessible RX address. UP ownership
+     * or the SMP window writer excludes guest execution during restoration. */
     REQUIRE(mprotect(segment->code.rx + position, length,
                      PROT_READ | (prot & LKL_PROT_EXEC ? PROT_EXEC : 0)) == 0);
     if (!segment->source_cache) {
@@ -391,14 +434,23 @@ static void prepare_resume(NceState *state)
 static NceState *handle_event(NceState *state)
 {
     Process *p = (void *)state;
+    if (p->event_kind != 1)
+        leave_execution();
     if (p->event_kind == 1) {
         if (!deferred_faults)
             puts("{\"phase\":\"guest_fault_on_host_stack\"}");
-        int result = page_fault(p->fault_address, p->fault_execute ? NCE_FAULT_EXEC : p->fault_write);
+        int access = p->fault_execute ? NCE_FAULT_EXEC : p->fault_write;
+#ifdef NCE_SMP
+        REQUIRE(executing_guest);
+        executing_guest = false;
+        int result = fault_guest(p->fault_address, access);
+#else
+        int result = page_fault(p->fault_address, access);
+#endif
         if (result && (trace || fault_trace || p->fault_illegal)) {
             fprintf(stderr, "guest fault pc=%lx address=%lx write=%d illegal=%d result=%d instruction=%08x trapped=%08x\n",
                     state->regs.pc, p->fault_address, p->fault_write, p->fault_illegal, result,
-                    p->fault_illegal ? *(const uint32_t *)state->regs.pc : 0, p->fault_instruction);
+                    p->fault_instruction, p->fault_instruction);
             if (fault_trace)
                 fprintf(stderr, "fault registers x0=%lx x1=%lx x8=%lx x19=%lx sp=%lx\n",
                         state->regs.x[0], state->regs.x[1], state->regs.x[8], state->regs.x[19], state->regs.sp);
@@ -420,7 +472,7 @@ static NceState *handle_event(NceState *state)
     } else if (p->event_kind == 4) {
         if (fault_trace) {
             fprintf(stderr, "guest trap pc=%lx lr=%lx instruction=%08x x0=%lx x1=%lx x8=%lx\n",
-                    state->regs.pc, state->regs.x[30], *(const uint32_t *)state->regs.pc,
+                    state->regs.pc, state->regs.x[30], p->fault_instruction,
                     state->regs.x[0], state->regs.x[1], state->regs.x[8]);
             for (size_t i = 0; i < nce_program_count; ++i) {
                 NceProgram *program = &nce_programs[i];
@@ -433,8 +485,9 @@ static NceState *handle_event(NceState *state)
         ++stack_calls;
         if (p->stack_unmapped && state->regs.x[8] == 93)
             ++stackless_exits;
-        nce_dispatch(state);
+        nce_emulate(state);
     }
+    enter_execution();
     prepare_resume(state);
     return state;
 }
@@ -450,10 +503,9 @@ static void fault(int signal, siginfo_t *info, void *opaque)
         if (signal != SIGUSR2 && pc == (uintptr_t)nce_restore_stack) {
             /* The guest may legally unmap its own stack before SYS_exit.
              * Signal return can restore every register without stack scratch. */
-            if (!logged_stack_restore) {
+            if (!atomic_exchange_explicit(&logged_stack_restore, 1, memory_order_relaxed)) {
                 static const char message[] = "{\"phase\":\"signal_restore_without_guest_stack\"}\n";
                 write(STDOUT_FILENO, message, sizeof(message) - 1);
-                logged_stack_restore = 1;
             }
             restore_signal_state(&p->state, u);
             ++stack_resumes;
@@ -467,10 +519,9 @@ static void fault(int signal, siginfo_t *info, void *opaque)
                 address >= USER_BASE && address < USER_BASE + USER_SIZE && !guest_pc(address) &&
                 page_fault(address, NCE_FAULT_TRY_PRESENT | is_write))
                 return;
-            if (!logged_redirect) {
+            if (!atomic_exchange_explicit(&logged_redirect, 1, memory_order_relaxed)) {
                 static const char message[] = "{\"phase\":\"signal_redirect_to_host_entry\"}\n";
                 write(STDOUT_FILENO, message, sizeof(message) - 1);
-                logged_redirect = 1;
             }
             capture_state(&p->state, u);
             p->event_kind = signal == SIGUSR2 ? 2 : signal == SIGTRAP ? 4
@@ -480,10 +531,14 @@ static void fault(int signal, siginfo_t *info, void *opaque)
             p->fault_write = is_write;
             p->fault_illegal = signal == SIGILL;
             p->fault_execute = execute;
-            p->fault_instruction = signal == SIGILL ? *(const uint32_t *)pc : 0;
+            p->fault_instruction = signal == SIGILL || signal == SIGTRAP ? *(const uint32_t *)pc : 0;
             if (stub) {
                 p->state.resume = pc + 40;
                 memcpy(&p->state.instruction, (void *)(pc + 64), 4);
+                /* Capture the continuation before releasing the window; JIT
+                 * stubs can be replaced by another address space afterward. */
+                uint32_t branch = *(const uint32_t *)(pc + 44);
+                p->state.regs.pc = pc + 44 + ((int64_t)(int32_t)(branch << 6) >> 4);
             }
             u->uc_mcontext->__ss.__x[0] = (uintptr_t)&p->state;
             u->uc_mcontext->__ss.__x[18] = p->state.host_x18;
@@ -512,6 +567,7 @@ static void user_switch(void *state, unsigned cpu, unsigned cpus)
 
 void nce_process_thread_exit(void)
 {
+    leave_execution();
     nce_cpu_forget(pthread_self());
     if (this_process)
         REQUIRE(nce_thread_bind(NULL) == 0);
@@ -524,7 +580,7 @@ static void *preempt_timer(void *unused)
     while (!atomic_load(&timer_stopping)) {
         struct timespec interval = {.tv_nsec = 2000000};
         nanosleep(&interval, NULL);
-        nce_cpu_interrupt(SIGUSR2);
+        nce_cpu_interrupt((1u << NCE_MAX_CPUS) - 1, SIGUSR2);
     }
     return NULL;
 }
@@ -552,9 +608,19 @@ static void user_free(void *state)
 }
 static int guest_memory(NceState *state, uintptr_t address, void *buffer, size_t size, int write)
 {
+    leave_execution();
     uintptr_t bad = address;
     if (address < USER_BASE || address >= USER_BASE + USER_SIZE || size > USER_BASE + USER_SIZE - address)
         goto fault;
+#ifdef NCE_SMP
+    unsigned long remaining = copy_guest(buffer, address, size, write);
+    if (remaining) {
+        bad = address + size - remaining;
+        goto fault;
+    }
+    enter_execution();
+    prepare_resume(state);
+#else
     for (uintptr_t p = address; p < address + size; p = (p & ~(PAGE - 1)) + PAGE) {
         bad = p;
         if (page_fault(p, write | NCE_FAULT_DIRECT))
@@ -565,6 +631,7 @@ static int guest_memory(NceState *state, uintptr_t address, void *buffer, size_t
         memcpy((void *)address, buffer, size);
     else
         memcpy(buffer, (void *)address, size);
+#endif
     return 0;
 fault:
     if (fault_trace)
@@ -572,11 +639,13 @@ fault:
                 state->regs.pc - 4, bad, size, write, state->regs.x[0], state->regs.x[8]);
     state->regs.pc -= 4;
     user_fault(bad, 0);
+    enter_execution();
     prepare_resume(state);
     return -1;
 }
 static void syscall_from_guest(NceState *state)
 {
+    leave_execution();
     long args[6];
     for (unsigned i = 0; i < 6; ++i)
         args[i] = state->regs.x[i];
@@ -590,9 +659,14 @@ static void syscall_from_guest(NceState *state)
         state->regs.sp - (uintptr_t)args[0] < (uintptr_t)args[1])
         ((Process *)state)->stack_unmapped = 1;
     user_return(number, result, args[0]);
+#ifdef NCE_SMP
+    enter_execution();
+    prepare_resume(state);
+#else
     if (state->regs.pc != continuation) {
         prepare_resume(state);
     }
+#endif
 }
 static void user_run(void *opaque)
 {
@@ -625,6 +699,18 @@ static void user_run(void *opaque)
     }
     if (process->exec_path) {
         uintptr_t *stack = (void *)(state->regs.sp - 512);
+#ifdef NCE_SMP
+        uintptr_t storage[64] = {0};
+        uintptr_t path_address = (uintptr_t)(stack + 16);
+        uintptr_t env_address = path_address + 64;
+        REQUIRE(strlen(process->exec_path) < 64);
+        strcpy((char *)storage + 128, process->exec_path);
+        strcpy((char *)storage + 192, "NCE_TEST=userspace");
+        storage[0] = path_address;
+        storage[2] = env_address;
+        REQUIRE(copy_guest(storage, (uintptr_t)stack, sizeof(storage), 1) == 0);
+        long args[6] = {(long)path_address, (long)stack, (long)(stack + 2)};
+#else
         REQUIRE(page_fault((uintptr_t)stack, 1 | NCE_FAULT_DIRECT) == 0);
         prepare_user();
         char *path = (void *)(stack + 16);
@@ -636,12 +722,17 @@ static void user_run(void *opaque)
         stack[2] = (uintptr_t)env;
         stack[3] = 0;
         long args[6] = {(long)path, (long)stack, (long)(stack + 2)};
+#endif
         long result = run_syscall(221, args);
         if (result)
             fprintf(stderr, "exec %s failed: %ld\n", process->exec_path, result);
         REQUIRE(result == 0);
     }
     prepare_user();
+#ifdef NCE_SMP
+    enter_execution();
+    prepare_resume(state);
+#endif
     nce_enter(state);
     REQUIRE(0); /* Linux exit terminates the task without returning to NCE. */
 }
@@ -668,6 +759,10 @@ unsigned long nce_process_setup(void)
     map_profile = profile_mode && strcmp(profile_mode, "0");
     const char *fault_mode = getenv("NCE_DIRECT_FAULT");
     direct_fault = !fault_mode || strcmp(fault_mode, "0");
+#ifdef NCE_SMP
+    REQUIRE(enter_window && leave_window && copy_guest && fault_guest);
+    direct_fault = false;
+#endif
     printf("{\"phase\":\"present_page_signal_restore\",\"enabled\":%s}\n", direct_fault ? "true" : "false");
     user_base = nce_memory_user_base();
     dynamic_cache = (NceSegment){.size = NCE_EXEC_SIZE, .code = nce_memory_dynamic_code()};
@@ -695,6 +790,9 @@ unsigned long nce_process_setup(void)
     nce_lkl_host.user_elf = nce_program_layout;
     nce_lkl_host.user_elf_offset = nce_program_source_offset;
     nce_lkl_host.user_reserved = nce_program_reserved;
+#ifdef NCE_SMP
+    nce_lkl_host.user_interrupt = interrupt_guests;
+#endif
     struct sigaction action = {.sa_sigaction = fault, .sa_flags = SA_SIGINFO | SA_ONSTACK};
     sigemptyset(&action.sa_mask);
     REQUIRE(sigaction(SIGSEGV, &action, &old_segv) == 0);

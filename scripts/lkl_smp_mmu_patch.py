@@ -3,7 +3,7 @@
 from pathlib import Path
 
 
-def apply(source: Path, experiment: Path):
+def apply(source: Path, experiment: Path, *, tests=True):
     def edit(name, before, after):
         path = source / name
         text = path.read_text()
@@ -14,15 +14,20 @@ def apply(source: Path, experiment: Path):
         path.write_text(text.replace(before, after))
 
     arch = 'arch/lkl/'
+    edit(arch + 'include/uapi/asm/host_ops.h',
+         '\tvoid (*user_run)(void *state);',
+         '\tvoid (*user_run)(void *state);\n\tvoid (*user_interrupt)(unsigned int mask);')
     edit(arch + 'Kconfig', '\tdepends on !MMU\n\tselect ARCH_USE_QUEUED_RWLOCKS',
          '\tselect MMU_GATHER_RCU_TABLE_FREE if MMU\n\tselect ARCH_HAS_PTE_SPECIAL if MMU\n'
          '\tselect ARCH_USE_QUEUED_RWLOCKS')
-    for name, target in [('uaccess.c', 'mm/nce_smp_uaccess.c'),
+    files = [('uaccess.c', 'mm/nce_smp_uaccess.c'),
                          ('uaccess.h', 'include/asm/nce-smp-uaccess.h'),
                          ('window.c', 'mm/nce_window.c'),
-                         ('window.h', 'include/asm/nce-window.h'),
-                         ('window-test.c', 'kernel/smp-window-test.c'),
-                         ('mmu-test.c', 'kernel/smp-mmu-test.c')]:
+                         ('window.h', 'include/asm/nce-window.h')]
+    if tests:
+        files += [('window-test.c', 'kernel/smp-window-test.c'),
+                  ('mmu-test.c', 'kernel/smp-mmu-test.c')]
+    for name, target in files:
         path = source / arch / target
         content = (experiment / 'smp' / name).read_bytes()
         if not path.exists() or path.read_bytes() != content:
@@ -32,15 +37,31 @@ def apply(source: Path, experiment: Path):
              'obj-$(CONFIG_MMU) += nce_smp_uaccess.o\nobj-$(CONFIG_MMU) += mmu_mem.o')
     edit(arch + 'mm/Makefile', 'obj-$(CONFIG_MMU) += nce_smp_uaccess.o',
          'obj-$(CONFIG_MMU) += nce_smp_uaccess.o nce_window.o')
-    if 'smp-mmu-test.o' not in (source / arch / 'kernel/Makefile').read_text():
-        edit(arch + 'kernel/Makefile', 'obj-$(CONFIG_SMP) += smp.o smp-test.o',
-             'obj-$(CONFIG_SMP) += smp.o smp-test.o\nobj-$(CONFIG_MMU) += smp-mmu-test.o')
-    edit(arch + 'kernel/Makefile', 'obj-$(CONFIG_MMU) += smp-mmu-test.o',
-         'obj-$(CONFIG_MMU) += smp-mmu-test.o smp-window-test.o')
-    edit(arch + 'kernel/syscalls.c', 'extern long nce_launch(long *params);',
-         'extern long nce_launch(long *params);\nextern long lkl_smp_mmu_test(void);')
-    edit(arch + 'kernel/syscalls.c', '\tif (no == 243)',
-         '\tif (no == 242) return lkl_smp_mmu_test();\n\tif (no == 243)')
+    if tests:
+        if 'smp-mmu-test.o' not in (source / arch / 'kernel/Makefile').read_text():
+            edit(arch + 'kernel/Makefile', 'obj-$(CONFIG_SMP) += smp.o smp-test.o',
+                 'obj-$(CONFIG_SMP) += smp.o smp-test.o\nobj-$(CONFIG_MMU) += smp-mmu-test.o')
+        edit(arch + 'kernel/Makefile', 'obj-$(CONFIG_MMU) += smp-mmu-test.o',
+             'obj-$(CONFIG_MMU) += smp-mmu-test.o smp-window-test.o')
+        edit(arch + 'kernel/syscalls.c', 'extern long nce_launch(long *params);',
+             'extern long nce_launch(long *params);\nextern long lkl_smp_mmu_test(void);')
+        edit(arch + 'kernel/syscalls.c', '\tif (no == 243)',
+             '\tif (no == 242) return lkl_smp_mmu_test();\n\tif (no == 243)')
+    else:
+        edit(arch + 'kernel/nce_process.c', '    current->thread.nce_state = state;',
+             '    if (set_cpus_allowed_ptr(current, cpu_online_mask))\n        return -EINVAL;\n'
+             '    current->thread.nce_state = state;')
+    # The host registers execution through nce_begin_user after all signal
+    # delivery work. Preparing here can make the two CPUs repeatedly replace
+    # each other's window before either one reaches that final entry.
+    signal = source / arch / 'kernel/nce_signal.c'
+    text = signal.read_text()
+    calls = text.count('nce_prepare_user();')
+    if calls not in (0, 2):
+        raise RuntimeError('SMP signal return preparation source mismatch')
+    if calls:
+        signal.write_text(text.replace('            nce_prepare_user();\n', '')
+                         .replace('    nce_prepare_user();\n', ''))
     edit(arch + 'mm/nce_mmu.c', '#include <asm/nce-mmu-profile.h>',
          '#include <asm/nce-mmu-profile.h>\n#include <asm/nce-smp-uaccess.h>')
     mmu = source / arch / 'mm/nce_mmu.c'
@@ -104,6 +125,16 @@ def apply_window(source: Path):
     wrap('void nce_flush_range(struct mm_struct *mm, unsigned long start, unsigned long end)',
          'nce_flush_range', 'mm, start, end')
     wrap('static void prepare_mm_locked(struct mm_struct *next)', 'prepare_mm_locked', 'next')
+    begin = text.index('static void map_view(')
+    end = text.index('\n}', begin) + 2
+    body = text[begin:end]
+    if 'nce_window_stop();' not in body:
+        body = body.replace('    enum lkl_prot prot',
+                            '    if (addr >= USER_BASE && addr < TASK_SIZE)\n        nce_window_stop();\n'
+                            '    enum lkl_prot prot')
+        text = text[:begin] + body + text[end:]
+    text = text.replace('    PROFILE_ADD(switches, 1);\n    active_mm = next;',
+                        '    PROFILE_ADD(switches, 1);\n    nce_window_stop();\n    active_mm = next;')
     text = text.replace('if (!mm || mm == active_mm)', 'if (!mm || mm == READ_ONCE(active_mm))')
     text = text.replace('return restore_present_data(address, access & 1);', 'return 0;')
     text = text.replace('/* One Linux CPU owns the host window. Entries describe installed host views,',
@@ -141,6 +172,36 @@ void nce_begin_user(void)
             return;
         cond_resched();
     }
+}
+'''
+    if 'int nce_guest_fault(' not in text:
+        text = text.replace('int nce_page_fault(unsigned long address, int access)\n',
+                            'static int nce_page_fault_view(unsigned long address, int access, unsigned long trapped_view)\n')
+        before = '''    /* Taking mmap_lock may schedule another thread that restores this view.
+     * Classify the original trap using the view present before that wait. */
+    unsigned long index = (address - USER_BASE) / PAGE_SIZE;
+    unsigned long trapped_view = execute && mapping_mode != NCE_MM_FULL ? installed[index] : 0;
+'''
+        if before not in text:
+            raise RuntimeError('SMP fault view capture source mismatch')
+        text = text.replace(before, '')
+        text += '''
+
+int nce_page_fault(unsigned long address, int access)
+{
+    return nce_page_fault_view(address, access, 0);
+}
+
+/* The caller still owns a guest slot. Capture its view before a writer can
+ * switch address spaces, then leave before taking any Linux locks. */
+int nce_guest_fault(unsigned long address, int access)
+{
+    BUG_ON(!(nce_window_token() & (1ULL << raw_smp_processor_id())));
+    unsigned long trapped_view = 0;
+    if (access == NCE_FAULT_EXEC && address >= USER_BASE && address < TASK_SIZE)
+        trapped_view = installed[(address - USER_BASE) / PAGE_SIZE];
+    nce_window_leave();
+    return nce_page_fault_view(address, access, trapped_view);
 }
 '''
     mmu.write_text(text)

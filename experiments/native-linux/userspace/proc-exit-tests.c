@@ -96,7 +96,10 @@ void proc_exit_tests(void)
     }
     atomic_store(&shared->done, 1);
     int status;
-    CHECK(waitpid(observer, &status, 0) == observer && status == 0 && shared->reads > 0);
+    pid_t waited = waitpid(observer, &status, 0);
+    if (waited != observer || status || !shared->reads)
+        dprintf(2, "proc-exit observer=%d waited=%d status=%d stat_reads=%u\n", observer, waited, status, shared->reads);
+    CHECK(waited == observer && status == 0 && shared->reads > 0);
     printf("{\"test\":\"linux_proc_concurrent_exit\",\"passed\":true,\"processes\":32,\"threads\":256,\"stat_reads\":%u}\n", shared->reads);
     CHECK(munmap(shared, 16384) == 0);
     CHECK(umount("/proc") == 0);

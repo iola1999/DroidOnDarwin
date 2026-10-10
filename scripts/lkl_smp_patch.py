@@ -3,7 +3,7 @@
 from pathlib import Path
 
 
-def apply(source: Path, experiment: Path):
+def apply(source: Path, experiment: Path, *, tests=True):
     def edit(name, before, after):
         path = source / name
         text = path.read_text()
@@ -42,10 +42,12 @@ config LKL_FUZZING''')
         content = f'#include <asm-generic/{include}>\n'
         if not destination.exists() or destination.read_text() != content:
             destination.write_text(content)
-    for name in ['smp.c', 'time.c', 'test.c']:
+    for name in ['smp.c', 'time.c', *(['test.c'] if tests else [])]:
         copy(name, source / arch / 'kernel' / ('smp-test.c' if name == 'test.c' else name))
-    if 'obj-$(CONFIG_SMP) += smp.o smp-test.o' not in (source / arch / 'kernel/Makefile').read_text():
-        edit(arch + 'kernel/Makefile', 'obj-y = setup.o', 'obj-$(CONFIG_SMP) += smp.o smp-test.o\nobj-y += setup.o')
+    kernel_objects = 'smp.o smp-test.o' if tests else 'smp.o'
+    if 'obj-$(CONFIG_SMP) += ' + kernel_objects not in (source / arch / 'kernel/Makefile').read_text():
+        edit(arch + 'kernel/Makefile', 'obj-y = setup.o',
+             'obj-$(CONFIG_SMP) += ' + kernel_objects + '\nobj-y += setup.o')
     edit('kernel/sched/core.c', 'int __sched __cond_resched(void)\n{',
          'int __sched __cond_resched(void)\n{\n#ifdef CONFIG_LKL\n\tcpu_relax();\n#endif')
     # Early SMP setup can panic before the printk console is registered.
@@ -126,9 +128,10 @@ config LKL_FUZZING''')
     edit(arch + 'kernel/syscalls.c', 'int syscalls_init(void)\n{',
          'int syscalls_init(void)\n{\n\tif (set_cpus_allowed_ptr(current, cpumask_of(0)))\n'
          '\t\treturn -EINVAL;')
-    edit(arch + 'kernel/syscalls.c', '\thandler = (syscall_handler_t)syscall_table[no];',
-         '\tif (no == 244)\n\t\treturn lkl_smp_test();\n'
-         '\thandler = (syscall_handler_t)syscall_table[no];')
+    if tests:
+        edit(arch + 'kernel/syscalls.c', '\thandler = (syscall_handler_t)syscall_table[no];',
+             '\tif (no == 244)\n\t\treturn lkl_smp_test();\n'
+             '\thandler = (syscall_handler_t)syscall_table[no];')
     edit(arch + 'kernel/setup.c', '\tbootmem_init(mem_size);',
          '\tlkl_smp_prepare_possible();\n\tbootmem_init(mem_size);')
     edit(arch + 'kernel/setup.c', '\ttick_suspend_local();',

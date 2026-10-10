@@ -153,6 +153,11 @@ int nce_process_run(long (*)(long, long *), long (*)(long, long *), int (*)(unsi
 #endif
 
 #ifdef NCE_PROCESS
+#ifdef NCE_SMP
+void nce_process_smp(void (*)(void), void (*)(void),
+                     unsigned long (*)(void *, unsigned long, unsigned long, int),
+                     int (*)(unsigned long, int));
+#endif
 static unsigned long host_hwcap(void)
 {
     /* FP and ASIMD use the register state already saved by the NCE entry code.
@@ -234,6 +239,11 @@ int nce_lkl_run(const char *image_path)
     REQUIRE(!prefetch_mode || !strcmp(prefetch_mode, "0") || !strcmp(prefetch_mode, "1"));
     unsigned long fault_prefetch = prefetch_mode && !strcmp(prefetch_mode, "1");
     printf("{\"phase\":\"linux_mapping_policy\",\"mode\":\"%s\",\"sparse_scan\":%s,\"fault_prefetch\":%s}\n", mode, sparse_scan ? "true" : "false", fault_prefetch ? "true" : "false");
+#ifdef NCE_SMP
+    nce_process_smp((void *)(kernel.rx + NCE_BEGIN_USER), (void *)(kernel.rx + NCE_WINDOW_LEAVE),
+                    (void *)(kernel.rx + NCE_COPY_USER), (void *)(kernel.rx + NCE_GUEST_FAULT));
+    puts("{\"phase\":\"linux_smp_execution\",\"cpus\":2}");
+#endif
     unsigned long base = nce_process_setup();
     set_layout(base, mapping_mode, views, host_hwcap(), nce_process_mmu_profile(), sparse_scan, fault_prefetch);
 #endif

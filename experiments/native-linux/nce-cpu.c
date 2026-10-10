@@ -36,11 +36,11 @@ void nce_cpu_forget(pthread_t thread)
     unlock_targets();
 }
 
-void nce_cpu_interrupt(int signal)
+void nce_cpu_interrupt(unsigned mask, int signal)
 {
     lock_targets();
     for (unsigned cpu = 0; cpu < NCE_MAX_CPUS; ++cpu)
-        if (targets[cpu])
+        if ((mask & (1u << cpu)) && targets[cpu])
             pthread_kill(targets[cpu], signal);
     unlock_targets();
 }

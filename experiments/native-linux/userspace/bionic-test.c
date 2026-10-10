@@ -102,6 +102,7 @@ static void allocator_class_growth(void)
 
 int main(void)
 {
+    setvbuf(stdout, NULL, _IONBF, 0);
     file_tests("bionic");
     signal_tests("bionic");
     seccomp_tests();

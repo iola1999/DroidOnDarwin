@@ -32,6 +32,8 @@ void nce_gate(void);
 void nce_event_gate(void);
 void nce_restore_stack(void);
 NceState *nce_dispatch(NceState *);
+/* regs.pc already points past the captured instruction. */
+NceState *nce_emulate(NceState *);
 NceState *nce_event_dispatch(NceState *);
 void nce_sync_code(NceCode);
 /* Emits one resume entry or one SVC/TLS stub into caller-owned storage. The

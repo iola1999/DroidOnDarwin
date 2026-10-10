@@ -1,0 +1,253 @@
+{
+  "scope": "SMP userspace integration diagnostic; full Android validation incomplete",
+  "date": "2026-10-11",
+  "host": {
+    "machine": "Apple M5 Ultra",
+    "platform": "macOS-27.0-arm64-arm-64bit-Mach-O"
+  },
+  "linux_revision": "d0f76a77e8c2ca68bd7d96190b8da09040eab072",
+  "configuration": {
+    "cpus": 2,
+    "linux_ram_bytes": 1073741824,
+    "page_bytes": 16384,
+    "mapping": "demand",
+    "map_profile": false,
+    "direct_fault": false,
+    "art_nterp": true,
+    "art_aot": false,
+    "art_boot_image": false,
+    "art_expanded_jit": false,
+    "art_fast_baseline": false
+  },
+  "common_up_regression": {
+    "source": {
+      "path": "work/native-linux-nce/processes/lkl-summary.json",
+      "sha256": "9a0a3be5f3bd5988f862f76d69a94ca368d2feb2a145094dca1e4ba665e0d54d"
+    },
+    "kernel_sha256": "5bbf9719d352063c13572f55cf3b6de3d7feb62ba8521c9e5fcdc4fbbc429d60",
+    "cli": {
+      "named_checks": 225,
+      "unique_checks": 154,
+      "failed_checks": [],
+      "final": {
+        "result": "passed"
+      }
+    },
+    "gcd": {
+      "named_checks": 226,
+      "unique_checks": 155,
+      "failed_checks": [],
+      "final": {
+        "result": "passed"
+      }
+    },
+    "ios_status": "core compiled for iOS; graphics integration and device execution pending",
+    "input_sha256": {
+      "experiments/native-linux/lkl-main.c": "c19f482b5ee1841c9e0761e7e7f4222bab4aad4418f1ea2b2140b50ae7c9784a",
+      "experiments/native-linux/nce.c": "fac0dff4a7e683a47a3fafa3877f69f279a816115b81ca4f1d9dad709a7e402d",
+      "experiments/native-linux/lkl-process-host.c": "8ad90d7592579a5bc333ca795e437ca76ceb61f16251419e075c9fd6641da18b",
+      "experiments/native-linux/nce-cpu.c": "96cd6ef41c130a58c36e958c57ba5c1f6b204ab92924fea250d4d386136e23df",
+      "experiments/native-linux/nce.h": "7bcdc5e777e10e1d70f0bf1838a2160e87c70613a44b90b16c3e07aedf4a9f58",
+      "scripts/probe_lkl.py": "f425e217297e4576c1c0bcf8086f63e32d0309fe64ba76187bc2f5a2d5debb97",
+      "experiments/native-linux/nce-cpu.h": "4eab0d9848c5c713b6dc07819d13529af1fcf04b46ce0fbd4139428be76c1340",
+      "experiments/native-linux/userspace/bionic-test.c": "ffa10bd0d16dd15edddb368a0435d9d94b529270c13a89f6b3c5536dc40c0b76",
+      "experiments/native-linux/userspace/proc-exit-tests.c": "8c27b588c67dd8edc4fde6ea6526d5c97742a5e838fa65bab3999bb264d21d24"
+    }
+  },
+  "cpu_entry_regression": {
+    "source": {
+      "path": "work/native-linux-nce/cpu-probe/summary.json",
+      "sha256": "28e6206e9fdcd8bf945f1d6ea22b707cd007e912cd989ff4594875b935ab0844"
+    },
+    "target_lifecycle": "passed",
+    "entries": [
+      "cli",
+      "gcd"
+    ],
+    "ios": "compiled; device execution pending"
+  },
+  "independent_mmu_regression": {
+    "source": {
+      "path": "work/native-linux-nce/smp-mmu/summary.json",
+      "sha256": "71faa8c241e26f15ef726166c2410273afe1123babb6414d566b4644a51ae69f"
+    },
+    "runs": [
+      {
+        "entry": "probe",
+        "iteration": 0,
+        "checks": {
+          "named_checks": 5,
+          "unique_checks": 5,
+          "failed_checks": [],
+          "final": {
+            "result": "passed"
+          }
+        }
+      },
+      {
+        "entry": "dispatch-probe",
+        "iteration": 0,
+        "checks": {
+          "named_checks": 6,
+          "unique_checks": 6,
+          "failed_checks": [],
+          "final": {
+            "result": "passed"
+          }
+        }
+      },
+      {
+        "entry": "probe",
+        "iteration": 1,
+        "checks": {
+          "named_checks": 5,
+          "unique_checks": 5,
+          "failed_checks": [],
+          "final": {
+            "result": "passed"
+          }
+        }
+      },
+      {
+        "entry": "dispatch-probe",
+        "iteration": 1,
+        "checks": {
+          "named_checks": 6,
+          "unique_checks": 6,
+          "failed_checks": [],
+          "final": {
+            "result": "passed"
+          }
+        }
+      },
+      {
+        "entry": "probe",
+        "iteration": 2,
+        "checks": {
+          "named_checks": 5,
+          "unique_checks": 5,
+          "failed_checks": [],
+          "final": {
+            "result": "passed"
+          }
+        }
+      },
+      {
+        "entry": "dispatch-probe",
+        "iteration": 2,
+        "checks": {
+          "named_checks": 6,
+          "unique_checks": 6,
+          "failed_checks": [],
+          "final": {
+            "result": "passed"
+          }
+        }
+      }
+    ]
+  },
+  "actual_userspace": {
+    "status": "failed",
+    "passed_before_failure": [
+      "Linux process/fork/COW/futex",
+      "musl signal suite",
+      "dynamic linking",
+      "Binder cross-process and FD transfer",
+      "Bionic signals/seccomp/allocator/128 threads"
+    ],
+    "blocking_check": "linux_proc_concurrent_exit",
+    "observer_deadline_seconds": 20,
+    "attempts": [
+      {
+        "id": 3,
+        "observer_wait_status": 14,
+        "stat_reads": 26547,
+        "sampled": true
+      },
+      {
+        "id": 4,
+        "observer_wait_status": 14,
+        "stat_reads": 11954,
+        "sampled": false
+      },
+      {
+        "id": 5,
+        "observer_wait_status": 14,
+        "stat_reads": 3636,
+        "sampled": false
+      },
+      {
+        "id": 6,
+        "observer_wait_status": 14,
+        "stat_reads": 926,
+        "sampled": true,
+        "stress_rounds": 1
+      }
+    ],
+    "kernel_sha256": "5429ae3a3e4ed54b1682915b5cdbbf6f64d76490b0ac55de22c05618783bde8e",
+    "raw": [
+      {
+        "path": "work/native-linux-nce/processes-smp/attempt3-lkl-results.jsonl",
+        "sha256": "4e53c2198cf7e0fced0ea9cecb163fa2755a3381e1f18de66df5355da95a902c"
+      },
+      {
+        "path": "work/native-linux-nce/processes-smp/attempt4-lkl-results.jsonl",
+        "sha256": "93e544f9a3a349daadb2ef981c2d8f6917476b96ae5e8907fa7210f1daf72b42"
+      },
+      {
+        "path": "work/native-linux-nce/processes-smp/attempt5-lkl-results.jsonl",
+        "sha256": "29b90ecaf9030b62013cc571a313f513ff1fcc9d98400cbba9e13819c64efb54"
+      },
+      {
+        "path": "work/native-linux-nce/processes-smp/attempt6-results.jsonl",
+        "sha256": "f834a4b4194bf059ca3256bca90db309ed557af48dca3e16542d054b53e3a6fd"
+      },
+      {
+        "path": "work/native-linux-nce/processes-smp/attempt3-lkl-console.log",
+        "sha256": "fb7c5c1ffce8d4620c729c112f06bd0b82d76a061bf27b54a405cc9049a439a6"
+      },
+      {
+        "path": "work/native-linux-nce/processes-smp/attempt4-lkl-console.log",
+        "sha256": "c9d96e575a926e2abf7a34cde6c367f7a2f7bba2fe11e785af6dccd8de83ea13"
+      },
+      {
+        "path": "work/native-linux-nce/processes-smp/attempt5-lkl-console.log",
+        "sha256": "447aa66825c49bc3832a12b0936cfa7902999013ff235031267dc67768db9221"
+      },
+      {
+        "path": "work/native-linux-nce/processes-smp/attempt6-console.log",
+        "sha256": "d8939eb1ea1759a47a84434bf552b2c696093f33014957a3642d41c3e4938ded"
+      },
+      {
+        "path": "work/native-linux-nce/processes-smp/attempt6-profile.json",
+        "sha256": "b694bc49089d239f8e34da40e4bc426864bbbbef2f68ac0b31d36841edf61313"
+      },
+      {
+        "path": "work/native-linux-nce/processes-smp/attempt6-kernel-symbols.txt",
+        "sha256": "4f5b714ad5637d5716e7a4f11c6951380b19dd502875fada35d324a18ffd535a"
+      }
+    ]
+  },
+  "limitations": [
+    "The diagnostic runs include sampling or concurrent functional validation and are not controlled performance comparisons.",
+    "The last SMP patch removes duplicate signal-return window preparation; the observer still expires.",
+    "Shared-window kernel tests do not establish full Android or iPhone SMP readiness."
+  ],
+  "input_sha256": {
+    "experiments/native-linux/cpu-probe.c": "2c35e6746c135fbcf06dc12c9753fd8f92081d7e8808fcb313bb4d2db55ac0e1",
+    "experiments/native-linux/lkl-main.c": "c19f482b5ee1841c9e0761e7e7f4222bab4aad4418f1ea2b2140b50ae7c9784a",
+    "experiments/native-linux/lkl-process-host.c": "8ad90d7592579a5bc333ca795e437ca76ceb61f16251419e075c9fd6641da18b",
+    "experiments/native-linux/nce-cpu.c": "96cd6ef41c130a58c36e958c57ba5c1f6b204ab92924fea250d4d386136e23df",
+    "experiments/native-linux/nce-cpu.h": "4eab0d9848c5c713b6dc07819d13529af1fcf04b46ce0fbd4139428be76c1340",
+    "experiments/native-linux/nce.c": "fac0dff4a7e683a47a3fafa3877f69f279a816115b81ca4f1d9dad709a7e402d",
+    "experiments/native-linux/nce.h": "7bcdc5e777e10e1d70f0bf1838a2160e87c70613a44b90b16c3e07aedf4a9f58",
+    "experiments/native-linux/smp/window.c": "b8f96d4d15bfd3226f8ec2d742bfafea29d8dcddb41f861ac3cf8102713cd873",
+    "experiments/native-linux/smp/window.h": "3609746fc21b4829ae1ac71da541a744b7b7c8bccfb5142c205e0c92af5b51c1",
+    "experiments/native-linux/userspace/bionic-test.c": "ffa10bd0d16dd15edddb368a0435d9d94b529270c13a89f6b3c5536dc40c0b76",
+    "experiments/native-linux/userspace/proc-exit-tests.c": "8c27b588c67dd8edc4fde6ea6526d5c97742a5e838fa65bab3999bb264d21d24",
+    "scripts/lkl_smp_mmu_patch.py": "e1a1a77324f8e3b93d56bbc633f4c5fec8806fe46183b518b2a55ae1f051276c",
+    "scripts/lkl_smp_patch.py": "75598f70efc03eda69bfd8bb0a9991c68b9d9d47ed908938a4da5c1c1f9f2afa",
+    "scripts/probe_lkl.py": "f425e217297e4576c1c0bcf8086f63e32d0309fe64ba76187bc2f5a2d5debb97",
+    "scripts/probe_nce_cpus.py": "6da30c900b8e329a7dc189ec6a56cac6389723732f99734fff612de1bfc7ba2d"
+  }
+}

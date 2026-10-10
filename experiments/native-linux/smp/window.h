@@ -7,6 +7,8 @@
 /* Writers can hold Linux PTE locks. Guest leave must remain lock-free and
  * precede any Linux call that can wait for those locks. */
 void nce_window_lock(void);
+/* Stop guests before changing the installed window or its owning mm. */
+void nce_window_stop(void);
 void nce_window_unlock(void);
 u64 nce_window_token(void);
 bool nce_window_try_enter(u64 token);

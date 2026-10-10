@@ -135,6 +135,11 @@ NceState *nce_dispatch(NceState *s)
     uint32_t branch_word;
     memcpy(&branch_word, (void *)(s->resume + 4), 4);
     s->regs.pc = s->resume + 4 + ((int64_t)(int32_t)(branch_word << 6) >> 4);
+    return nce_emulate(s);
+}
+
+NceState *nce_emulate(NceState *s)
+{
     uint32_t word = s->instruction;
     unsigned reg = word & 31;
     if ((word & 0xffffffe0) == 0xd53bd040) {

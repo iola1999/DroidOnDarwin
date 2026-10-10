@@ -9,7 +9,7 @@ enum { NCE_MAX_CPUS = 2 };
  * Clear a target before that pthread exits; signal delivery uses the same lock. */
 void nce_cpu_target(unsigned cpu, pthread_t thread);
 void nce_cpu_forget(pthread_t thread);
-void nce_cpu_interrupt(int signal);
+void nce_cpu_interrupt(unsigned mask, int signal);
 
 /* Each CPU exclusively owns its slice until the guest enters the selected
  * branch. The caller must not schedule between this call and guest entry.

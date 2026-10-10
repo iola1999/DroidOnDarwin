@@ -131,10 +131,10 @@ static void run(void *unused)
         }
         while (atomic_load(&ready) != 2)
             sched_yield();
-        nce_cpu_interrupt(SIGUSR1);
+        nce_cpu_interrupt(3, SIGUSR1);
         atomic_store(&go, true);
         while (atomic_load(&finished) != 2) {
-            nce_cpu_interrupt(SIGUSR1);
+            nce_cpu_interrupt(3, SIGUSR1);
             usleep(100);
         }
         for (unsigned i = 0; i < 2; ++i) {
@@ -143,7 +143,7 @@ static void run(void *unused)
             assert(workers[i].state.calls == ITERATIONS);
             free(workers[i].stack);
         }
-        nce_cpu_interrupt(SIGUSR1);
+        nce_cpu_interrupt(3, SIGUSR1);
         printf(
             "{\"test\":\"nce_cpu_shared_resume_parallel\",\"passed\":true,\"round\":%u,"
             "\"iterations_per_thread\":%u,\"cpu\":[%u,%u],\"signals\":[%u,%u]}\n",

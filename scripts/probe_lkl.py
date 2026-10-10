@@ -24,6 +24,7 @@ SOURCE = OUT / "lkl-source"
 BUILD = OUT / "lkl-build"
 EXPERIMENT = ROOT / "experiments/native-linux"
 REVISION = "d0f76a77e8c2ca68bd7d96190b8da09040eab072"
+SMP = False
 
 
 def run(args, **kwargs):
@@ -76,6 +77,8 @@ def package_elf(path):
     required = {"lkl_init", "lkl_syscall", "lkl_sys_halt", "lkl_cleanup", "nce_lkl_start"}
     if PROCESS:
         required |= {"nce_run_syscall", "nce_page_fault", "nce_set_layout", "nce_user_return", "nce_user_fault", "nce_user_preempt", "nce_prepare_user"}
+    if SMP:
+        required |= {"nce_begin_user", "nce_window_leave", "nce_copy_user", "nce_guest_fault"}
     for pos in range(symtab[4], symtab[4] + symtab[5], symtab[9]):
         index, _, _, _, value, _ = struct.unpack_from("<IBBHQQ", data, pos)
         name = strings[index:strings.index(b"\0", index)].decode()
@@ -94,10 +97,11 @@ def package_elf(path):
 
 
 def main():
-    global OUT, BUILD, PROCESS
+    global OUT, BUILD, PROCESS, SOURCE, SMP
     started_ns = time.time_ns()
     parser = argparse.ArgumentParser()
     parser.add_argument("--processes", action="store_true")
+    parser.add_argument("--smp", action="store_true", help="Build and validate the independent two-CPU userspace variant")
     parser.add_argument("--art-oat", type=Path, help="Validate an offline-compiled OAT directory with the runtime build")
     parser.add_argument("--art-desktop", action="store_true", help="Use the desktop classpath for boot images or SystemUI/Launcher AOT")
     parser.add_argument("--art-compiler", action="store_true", help="Validate the matching dex2oat tool in an isolated NCE image")
@@ -109,6 +113,9 @@ def main():
     parser.add_argument("--storage-image", type=Path, help="Use this data image; create from the blank seed if absent")
     arguments = parser.parse_args()
     PROCESS = arguments.processes
+    SMP = arguments.smp
+    if SMP and not PROCESS:
+        parser.error("--smp requires --processes")
     angle = arguments.graphics_angle.resolve() if arguments.graphics_angle else None
     if arguments.graphics_window and not angle:
         parser.error("--graphics-window requires --graphics-angle")
@@ -141,6 +148,11 @@ def main():
             if not (angle / name).is_file():
                 parser.error("Missing ANGLE library: " + str(angle / name))
     base = OUT
+    if SMP:
+        source = base / "lkl-smp-process-source"
+        if not source.exists():
+            run(["/bin/cp", "-cR", SOURCE, source], timeout=120)
+        SOURCE = source
     if PROCESS:
         BUILD = base / "lkl-process-build"
         if arguments.art_boot_image:
@@ -153,6 +165,9 @@ def main():
             directory = "art-oat"
         else:
             directory = "processes"
+        if SMP:
+            directory += "-smp"
+            BUILD = base / "lkl-smp-process-build"
         OUT = base / directory
         OUT.mkdir(exist_ok=True)
         for name in ("guest-image.h", "guest-source.sha256"):
@@ -178,7 +193,24 @@ def main():
     if (SOURCE / ".droidondarwin-source-revision").read_text().strip() != REVISION:
         raise SystemExit("Unexpected LKL source revision")
     if PROCESS:
-        apply(SOURCE, EXPERIMENT)
+        if SMP:
+            from lkl_smp_patch import apply as apply_smp
+            from lkl_smp_mmu_patch import apply as apply_mmu
+            base_inputs = [Path(__file__).with_name("lkl_nce_patch.py"),
+                           *sorted(EXPERIMENT.glob("lkl-nce-*.c")), *sorted(EXPERIMENT.glob("lkl-*.h")),
+                           EXPERIMENT / "guest-registers.h", EXPERIMENT / "layout.h"]
+            base_hashes = {str(p.relative_to(ROOT)): hashlib.sha256(p.read_bytes()).hexdigest() for p in base_inputs}
+            marker = SOURCE / ".droidondarwin-smp-process-base.json"
+            if marker.exists():
+                if json.loads(marker.read_text()) != base_hashes:
+                    raise SystemExit("NCE base changed; regenerate the independent SMP process source tree")
+            else:
+                apply(SOURCE, EXPERIMENT)
+                marker.write_text(json.dumps(base_hashes, indent=2) + "\n")
+            apply_smp(SOURCE, EXPERIMENT, tests=False)
+            apply_mmu(SOURCE, EXPERIMENT, tests=False)
+        else:
+            apply(SOURCE, EXPERIMENT)
     # This host-tool type conflicts with Darwin's uuid_t from sys/types.h.
     mod = SOURCE / "scripts/mod/file2alias.c"
     text = mod.read_text()
@@ -196,6 +228,8 @@ def main():
     sed_prefix = subprocess.check_output(["brew", "--prefix", "gnu-sed"], text=True).strip()
     env["PATH"] = f"{sed_prefix}/libexec/gnubin:{llvm}:" + env["PATH"]
     target = [llvm / "clang", "--target=aarch64-linux-gnu", "-ffixed-x18"]
+    if SMP:
+        target += ["-mno-outline-atomics"]
     make = ["gmake", "-C", SOURCE, f"O={BUILD}", "ARCH=lkl", "CLANG_TARGET_FLAGS_lkl=aarch64-linux-gnu",
             f"CC={shlex.join(map(str, target))}", f"HOSTCC={shlex.join([clang, '-isysroot', sdk, '-I', str(include), *(['-idirafter', str(OUT / 'linux-uapi/include')] if PROCESS else [])])}",
             f"LD={shutil.which('ld.lld')}", "AR=llvm-ar", "NM=llvm-nm", "OBJCOPY=llvm-objcopy",
@@ -233,16 +267,25 @@ def main():
             options += ["NETFILTER_XT_MATCH_U32", "NETFILTER_XT_MATCH_STATE", "NETFILTER_XT_MATCH_TCPMSS",
                         "NET_KEY", "IP_MROUTE", "IPV6_MROUTE", "IKCONFIG", "IKCONFIG_PROC"]
         switches = [arg for name in options for arg in ("-e", name)]
+        if SMP:
+            switches += ["-e", "SMP", "-e", "DEBUG_KERNEL"]
         if PROCESS:
             switches += ["--set-str", "LSM", "selinux"]
         switches += [arg for name in ("KALLSYMS", "DEBUG_INFO", "SLUB_DEBUG", *([] if PROCESS else ["BLOCK"])) for arg in ("-d", name)]
         run([SOURCE / "scripts/config", "--file", BUILD / ".config", *switches], env=env)
         run([*make, "olddefconfig"], env=env, stdout=log, stderr=subprocess.STDOUT)
+        if SMP:
+            config = (BUILD / ".config").read_text()
+            assert all(name + "=y\n" in config for name in ("CONFIG_SMP", "CONFIG_MMU", "CONFIG_MMU_GATHER_RCU_TABLE_FREE"))
+            assert "CONFIG_NR_CPUS=2\n" in config
         run([*make, "-j8", "all"], env=env, stdout=log, stderr=subprocess.STDOUT)
     shutil.copyfile(SOURCE / "arch/lkl/include/uapi/asm/host_ops.h", OUT / "lkl-host-ops.h")
     run([*target, "-fPIC", "-fno-stack-protector", "-O2", "-I", OUT, "-I", EXPERIMENT,
          "-c", EXPERIMENT / "lkl-bridge.c", "-o", OUT / "lkl-bridge.o"])
     exports = ["--globalize-symbol=nce_run_syscall", "--globalize-symbol=nce_page_fault", "--globalize-symbol=nce_set_layout", "--globalize-symbol=nce_user_return", "--globalize-symbol=nce_user_fault", "--globalize-symbol=nce_user_preempt", "--globalize-symbol=nce_prepare_user"] if PROCESS else []
+    if SMP:
+        exports += ["--globalize-symbol=" + name for name in ("nce_begin_user", "nce_window_leave", "nce_copy_user", "nce_guest_fault")]
+        exports += ["--set-section-alignment=.data..percpu=16384"]
     run([llvm / "llvm-objcopy", "--globalize-symbol=vsnprintf", "--globalize-symbol=lkl_ops", *exports,
          BUILD / "lkl.o", OUT / "lkl-exports.o"])
     run(["ld.lld", "-shared", "-Bsymbolic", "--no-undefined", "-z", "max-page-size=16384",
@@ -252,6 +295,8 @@ def main():
         build_userspace(OUT, llvm, art_compiler=arguments.art_compiler, art_oat=arguments.art_oat, art_desktop=arguments.art_desktop, art_boot=arguments.art_boot, art_boot_image=arguments.art_boot_image)
     inputs = [EXPERIMENT / name for name in ("lkl-main.c", "lkl-host.c", "nce.c", "nce-thread.c", "entry.S")]
     flags = ["-O2", "-g", "-Wall", "-Wextra", "-Werror", "-I", OUT, "-I", EXPERIMENT]
+    if SMP:
+        flags += ["-DNCE_SMP"]
     if PROCESS:
         flags += ["-DNCE_PROCESS"]
         inputs += [EXPERIMENT / "lkl-process-host.c", EXPERIMENT / "nce-cpu.c", EXPERIMENT / "programs.c", EXPERIMENT / "memory.c", EXPERIMENT / "execute-check.c", EXPERIMENT / "compute.c", EXPERIMENT / "input.c", EXPERIMENT / "session.c"]
@@ -413,6 +458,10 @@ def main():
         manifest["graphics_libraries_sha256"] = {str(p): hashlib.sha256(p.read_bytes()).hexdigest() for p in graphics_files}
         manifest["ios_status"] = "core compiled for iOS; graphics integration and device execution pending"
     sources = [*inputs, EXPERIMENT / "lkl-bridge.c", EXPERIMENT / "nce.h", EXPERIMENT / "nce-thread.h", EXPERIMENT / "guest-registers.h", EXPERIMENT / "guest.S", Path(__file__).resolve()]
+    if SMP:
+        manifest["cpus"] = 2
+        sources += [*sorted((EXPERIMENT / "smp").glob("*")), Path(__file__).with_name("lkl_smp_patch.py"),
+                    Path(__file__).with_name("lkl_smp_mmu_patch.py")]
     if PROCESS:
         manifest["dispatch_results"] = dispatch_results
         sources += [EXPERIMENT / "nce-cpu.h", EXPERIMENT / "memory.h", EXPERIMENT / "layout.h", EXPERIMENT / "execute-check.h", EXPERIMENT / "input.h", EXPERIMENT / "session.h", Path(__file__).with_name("lkl_nce_patch.py"),

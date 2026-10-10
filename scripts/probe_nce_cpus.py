@@ -27,17 +27,25 @@ int main(void) {
     pthread_t first = (pthread_t)1, second = (pthread_t)2;
     nce_cpu_target(0, first);
     nce_cpu_target(1, second);
-    nce_cpu_interrupt(SIGUSR1);
+    nce_cpu_interrupt(0, SIGUSR1);
+    assert(count == 0);
+    nce_cpu_interrupt(1, SIGUSR1);
+    assert(count == 1 && delivered[0] == first);
+    count = 0;
+    nce_cpu_interrupt(2, SIGUSR1);
+    assert(count == 1 && delivered[0] == second);
+    count = 0;
+    nce_cpu_interrupt(3, SIGUSR1);
     assert(count == 2 && delivered[0] == first && delivered[1] == second);
     count = 0;
     nce_cpu_target(0, NULL);
     nce_cpu_target(1, first);
     nce_cpu_forget(second);
-    nce_cpu_interrupt(SIGUSR1);
+    nce_cpu_interrupt(3, SIGUSR1);
     assert(count == 1 && delivered[0] == first);
     count = 0;
     nce_cpu_forget(first);
-    nce_cpu_interrupt(SIGUSR1);
+    nce_cpu_interrupt(3, SIGUSR1);
     assert(count == 0);
 }
 '''

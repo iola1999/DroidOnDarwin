@@ -4,6 +4,7 @@
 #include <linux/smp.h>
 #include <linux/spinlock.h>
 #include <asm/nce-window.h>
+#include <asm/host_ops.h>
 
 #define GUESTS ((1ULL << NR_CPUS) - 1)
 #define WRITER (1ULL << NR_CPUS)
@@ -27,6 +28,14 @@ void nce_window_lock(void)
     raw_spin_lock(&writer_lock);
     u64 previous = atomic64_fetch_or(WRITER, &state);
     BUG_ON(previous & (1ULL << cpu));
+}
+
+void nce_window_stop(void)
+{
+    BUG_ON(!owners[raw_smp_processor_id()].depth);
+    u64 guests = atomic64_read_acquire(&state) & GUESTS;
+    if (guests && lkl_ops->user_interrupt)
+        lkl_ops->user_interrupt(guests);
     /* The host's preemption signal makes active guest threads leave without
      * entering Linux. IRQs stay disabled until table walks and copies finish. */
     while (atomic64_read_acquire(&state) & GUESTS)
@@ -40,10 +49,12 @@ void nce_window_unlock(void)
     if (--owners[cpu].depth)
         return;
     u64 value = atomic64_read(&state);
-    BUG_ON((value & GUESTS) || !(value & WRITER));
+    BUG_ON(!(value & WRITER));
     /* A new version prevents entry after an intervening mapping replacement,
      * even when the active CPU mask has returned to the same value. */
-    atomic64_set_release(&state, (value & ~WRITER) + VERSION);
+    /* A metadata-only update can leave guests running. Preserve concurrent
+     * exits while advancing the version and clearing the writer bit. */
+    atomic64_add_return_release(VERSION - WRITER, &state);
     raw_spin_unlock(&writer_lock);
     local_irq_restore(owners[cpu].irq_flags);
 }
