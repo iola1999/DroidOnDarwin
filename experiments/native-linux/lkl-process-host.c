@@ -1487,6 +1487,11 @@ static void android_abi_regressions(long (*host_syscall)(long, long *))
 
 static void scheduling_profile_regressions(long (*call)(long, long *))
 {
+    char compute[4096];
+    REQUIRE(run_program(call, "/schedule-test", "compute\n") == 0);
+    REQUIRE(get_file(call, "/stdout", compute, sizeof(compute)) > 0);
+    REQUIRE(strstr(compute, "linux_user_parallel_compute_integrity"));
+    fputs(compute, stdout);
     REQUIRE(run_program(call, "/fault-race-test", NULL) == 0);
     char output[1024];
     REQUIRE(get_file(call, "/stdout", output, sizeof(output)) > 0);

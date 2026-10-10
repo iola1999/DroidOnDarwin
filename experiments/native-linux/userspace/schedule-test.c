@@ -57,6 +57,11 @@ int main(void)
     char mode[32];
     CHECK(fgets(mode, sizeof(mode), stdin));
     mode[strcspn(mode, "\n")] = 0;
+    if (!strcmp(mode, "compute")) {
+        extern void parallel_compute_benchmark(void);
+        parallel_compute_benchmark();
+        return 0;
+    }
     int is_blocked = !strcmp(mode, "blocked"), is_process = !strcmp(mode, "process");
     CHECK(is_blocked || is_process || !strcmp(mode, "busy"));
     state = mmap(NULL, 16384, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);

@@ -103,7 +103,8 @@ def main():
     assert all(digest(ROOT / name) == expected for name, expected in package['inputs'].items())
     query = run([contents / 'MacOS/DroidOnDarwin', '--benchmark-configuration'], capture_output=True, text=True, timeout=15)
     defaults = json.loads(query.stdout)
-    assert defaults and all(type(v) is bool for v in defaults.values())
+    assert defaults and defaults['schedulerSliceUS'] == 0 and type(defaults['schedulerSliceUS']) is int
+    assert all(type(v) is bool for key, v in defaults.items() if key != 'schedulerSliceUS')
     assert defaults['fastBaseline'] is False and defaults['nterp'] is False and defaults['bootImage'] is False
     checks['benchmark_configuration_query'] = defaults
     checks['bundle'] = 'signature, package hashes, input hashes, resource sizes and relocatable library paths passed'

@@ -296,7 +296,7 @@ def main():
     if SMP:
         exports += ["--globalize-symbol=" + name for name in ("nce_begin_user", "nce_window_leave", "nce_copy_user", "nce_guest_fault")]
         exports += ["--set-section-alignment=.data..percpu=16384"]
-    run([llvm / "llvm-objcopy", "--globalize-symbol=vsnprintf", "--globalize-symbol=lkl_ops", *exports,
+    run([llvm / "llvm-objcopy", "--globalize-symbol=vsnprintf", "--globalize-symbol=lkl_ops", "--globalize-symbol=sysctl_sched_base_slice", *exports,
          BUILD / "lkl.o", OUT / "lkl-exports.o"])
     run(["ld.lld", "-shared", "-Bsymbolic", "--no-undefined", "-z", "max-page-size=16384",
          "-z", "common-page-size=16384", OUT / "lkl-exports.o", OUT / "lkl-bridge.o", "-o", OUT / "lkl.so"])

@@ -116,8 +116,8 @@ def main():
         if set(variant) != {'name', 'parameters'} or variant['name'] in names:
             parser.error('配置需要唯一 name 和 parameters')
         names.add(variant['name'])
-        if any(type(v) is not bool for v in variant['parameters'].values()):
-            parser.error('性能参数必须是布尔值')
+        if any(type(v) not in (bool, int) for v in variant['parameters'].values()):
+            parser.error('性能参数必须是布尔值或整数')
         if variant['parameters'].get('diagnostics'):
             parser.error('普通桌面性能实验需要关闭 diagnostics')
     folder = args.output.resolve() / (time.strftime('%Y%m%d-%H%M%S') + '-' + uuid.uuid4().hex[:6])
@@ -150,11 +150,13 @@ def main():
         report['host_cpu'] = subprocess.check_output(['sysctl', '-n', 'machdep.cpu.brand_string'], text=True).strip()
         with (args.app / 'Contents/MacOS/DroidOnDarwin').open('rb') as stream:
             report['executable_sha256'] = hashlib.file_digest(stream, 'sha256').hexdigest()
-    if not isinstance(defaults, dict) or not defaults or any(type(v) is not bool for v in defaults.values()):
+    if not isinstance(defaults, dict) or not defaults or any(type(v) not in (bool, int) for v in defaults.values()):
         raise SystemExit('App 未返回有效的默认参数；请更新 App 与实验脚本')
     for variant in matrix['configurations']:
         if unknown := set(variant['parameters']) - defaults.keys():
             raise SystemExit('App 尚未实现这些参数：' + ', '.join(sorted(unknown)))
+        if mismatched := [name for name, value in variant['parameters'].items() if type(value) is not type(defaults[name])]:
+            raise SystemExit('参数类型与 App 不一致：' + ', '.join(sorted(mismatched)))
     report['app_configuration_defaults'] = defaults
     args.device_id = str(uuid.UUID(args.device_id)).upper()
     for repeat in range(args.repeat):

@@ -1,0 +1,416 @@
+{
+  "scope": "Independent ARM64 user-code translation prototype; no LKL, Android or iPhone integration",
+  "platform": "macOS-27.0-arm64-arm-64bit-Mach-O",
+  "cpu": "Apple M5 Ultra",
+  "system_build": "26A428",
+  "dependency": {
+    "version": "2.1.4",
+    "path": "/Users/fan/project/app/husk_hyos/work/native-linux-nce/user-translation-venv/lib/python3.14/site-packages/unicorn"
+  },
+  "command": [
+    "xcrun",
+    "clang",
+    "-O2",
+    "-g",
+    "-Wall",
+    "-Wextra",
+    "-Werror",
+    "-I",
+    "/Users/fan/project/app/husk_hyos/work/native-linux-nce/user-translation-venv/lib/python3.14/site-packages/unicorn/include",
+    "/Users/fan/project/app/husk_hyos/experiments/native-linux/translation/benchmark.c",
+    "/Users/fan/project/app/husk_hyos/experiments/native-linux/translation/kernels.S",
+    "/Users/fan/project/app/husk_hyos/work/native-linux-nce/user-translation-venv/lib/python3.14/site-packages/unicorn/lib/libunicorn.a",
+    "-o",
+    "/Users/fan/project/app/husk_hyos/work/native-linux-nce/user-translation/benchmark"
+  ],
+  "returncode": 0,
+  "measurement": "Same assembly bytes; warmed translated blocks; three alternating rounds. Wall and thread CPU include one engine entry and register exchange. Host buffer initialization and comparison excluded. Memory values are boundary samples, with lifetime resident peak; no time-weighted average.",
+  "sha256": {
+    "experiments/native-linux/translation/benchmark.c": "5e2256bd900c53500fcfca1453c817bede5f9d169cb158db77e4be3d32f51b04",
+    "experiments/native-linux/translation/kernels.S": "ef9cdea4f3b3ad6122caa7b781de29e1d535e600511e0e497be43c5bd77081b7",
+    "scripts/probe_user_translation.py": "40cf634940e36fd21e0b96e0b3923b86278990f822607e4cacfb91d12c841876",
+    "work/native-linux-nce/user-translation/benchmark": "f669931d3e648ca0878fa728cda3c41e026f3f60d205e2b809f50e465983d1c4",
+    "work/native-linux-nce/user-translation-venv/lib/python3.14/site-packages/unicorn/lib/libunicorn.a": "37de931fc7acaee2bed4d1cf27a3f1660351cf04ee362a9f3b8eff50ac9c6faf"
+  },
+  "results": [
+    {
+      "engine_version": "2.1",
+      "guest_page_bytes": 16384,
+      "tcg_buffer_bytes": 16777216
+    },
+    {
+      "phase": "before_engine",
+      "footprint_bytes": 1687936,
+      "resident_bytes": 2179072,
+      "resident_peak_bytes": 2179072
+    },
+    {
+      "phase": "engine_ready",
+      "footprint_bytes": 3228056,
+      "resident_bytes": 4390912,
+      "resident_peak_bytes": 4390912
+    },
+    {
+      "bench": "user_translation",
+      "kernel": "integer",
+      "engine": "native",
+      "round": 0,
+      "iterations": 320000000,
+      "wall_ns": 434715000,
+      "thread_cpu_ns": 433552916,
+      "tlb_fills": 0
+    },
+    {
+      "bench": "user_translation",
+      "kernel": "integer",
+      "engine": "unicorn",
+      "round": 0,
+      "iterations": 320000000,
+      "wall_ns": 445171000,
+      "thread_cpu_ns": 444054542,
+      "tlb_fills": 0
+    },
+    {
+      "test": "integer",
+      "passed": true
+    },
+    {
+      "bench": "user_translation",
+      "kernel": "integer",
+      "engine": "unicorn",
+      "round": 1,
+      "iterations": 320000000,
+      "wall_ns": 440109000,
+      "thread_cpu_ns": 439430667,
+      "tlb_fills": 0
+    },
+    {
+      "bench": "user_translation",
+      "kernel": "integer",
+      "engine": "native",
+      "round": 1,
+      "iterations": 320000000,
+      "wall_ns": 426586000,
+      "thread_cpu_ns": 426281250,
+      "tlb_fills": 0
+    },
+    {
+      "test": "integer",
+      "passed": true
+    },
+    {
+      "bench": "user_translation",
+      "kernel": "integer",
+      "engine": "native",
+      "round": 2,
+      "iterations": 320000000,
+      "wall_ns": 421361000,
+      "thread_cpu_ns": 421044000,
+      "tlb_fills": 0
+    },
+    {
+      "bench": "user_translation",
+      "kernel": "integer",
+      "engine": "unicorn",
+      "round": 2,
+      "iterations": 320000000,
+      "wall_ns": 435577000,
+      "thread_cpu_ns": 435054500,
+      "tlb_fills": 0
+    },
+    {
+      "test": "integer",
+      "passed": true
+    },
+    {
+      "phase": "integer",
+      "footprint_bytes": 3359128,
+      "resident_bytes": 4767744,
+      "resident_peak_bytes": 4767744
+    },
+    {
+      "bench": "user_translation",
+      "kernel": "memory",
+      "engine": "native",
+      "round": 0,
+      "iterations": 160000000,
+      "wall_ns": 106529000,
+      "thread_cpu_ns": 106386166,
+      "tlb_fills": 0
+    },
+    {
+      "bench": "user_translation",
+      "kernel": "memory",
+      "engine": "unicorn",
+      "round": 0,
+      "iterations": 160000000,
+      "wall_ns": 457366000,
+      "thread_cpu_ns": 457082959,
+      "tlb_fills": 3
+    },
+    {
+      "test": "memory",
+      "passed": true
+    },
+    {
+      "bench": "user_translation",
+      "kernel": "memory",
+      "engine": "unicorn",
+      "round": 1,
+      "iterations": 160000000,
+      "wall_ns": 459607000,
+      "thread_cpu_ns": 458281875,
+      "tlb_fills": 0
+    },
+    {
+      "bench": "user_translation",
+      "kernel": "memory",
+      "engine": "native",
+      "round": 1,
+      "iterations": 160000000,
+      "wall_ns": 107618000,
+      "thread_cpu_ns": 107463417,
+      "tlb_fills": 0
+    },
+    {
+      "test": "memory",
+      "passed": true
+    },
+    {
+      "bench": "user_translation",
+      "kernel": "memory",
+      "engine": "native",
+      "round": 2,
+      "iterations": 160000000,
+      "wall_ns": 107310000,
+      "thread_cpu_ns": 107224500,
+      "tlb_fills": 0
+    },
+    {
+      "bench": "user_translation",
+      "kernel": "memory",
+      "engine": "unicorn",
+      "round": 2,
+      "iterations": 160000000,
+      "wall_ns": 465164000,
+      "thread_cpu_ns": 464703916,
+      "tlb_fills": 0
+    },
+    {
+      "test": "memory",
+      "passed": true
+    },
+    {
+      "phase": "memory",
+      "footprint_bytes": 3375512,
+      "resident_bytes": 4800512,
+      "resident_peak_bytes": 4800512
+    },
+    {
+      "bench": "user_translation",
+      "kernel": "atomic",
+      "engine": "native",
+      "round": 0,
+      "iterations": 40000000,
+      "wall_ns": 141827000,
+      "thread_cpu_ns": 141709375,
+      "tlb_fills": 0
+    },
+    {
+      "bench": "user_translation",
+      "kernel": "atomic",
+      "engine": "unicorn",
+      "round": 0,
+      "iterations": 40000000,
+      "wall_ns": 164945000,
+      "thread_cpu_ns": 164574541,
+      "tlb_fills": 0
+    },
+    {
+      "test": "atomic",
+      "passed": true
+    },
+    {
+      "bench": "user_translation",
+      "kernel": "atomic",
+      "engine": "unicorn",
+      "round": 1,
+      "iterations": 40000000,
+      "wall_ns": 163453000,
+      "thread_cpu_ns": 163309167,
+      "tlb_fills": 0
+    },
+    {
+      "bench": "user_translation",
+      "kernel": "atomic",
+      "engine": "native",
+      "round": 1,
+      "iterations": 40000000,
+      "wall_ns": 141179000,
+      "thread_cpu_ns": 141054709,
+      "tlb_fills": 0
+    },
+    {
+      "test": "atomic",
+      "passed": true
+    },
+    {
+      "bench": "user_translation",
+      "kernel": "atomic",
+      "engine": "native",
+      "round": 2,
+      "iterations": 40000000,
+      "wall_ns": 143222000,
+      "thread_cpu_ns": 143099917,
+      "tlb_fills": 0
+    },
+    {
+      "bench": "user_translation",
+      "kernel": "atomic",
+      "engine": "unicorn",
+      "round": 2,
+      "iterations": 40000000,
+      "wall_ns": 164827000,
+      "thread_cpu_ns": 164732959,
+      "tlb_fills": 0
+    },
+    {
+      "test": "atomic",
+      "passed": true
+    },
+    {
+      "phase": "atomic",
+      "footprint_bytes": 3490200,
+      "resident_bytes": 4915200,
+      "resident_peak_bytes": 4915200
+    },
+    {
+      "test": "same_virtual_address_private_data",
+      "passed": true
+    },
+    {
+      "bench": "translation_context_switch",
+      "switches": 256,
+      "iterations_per_switch": 64,
+      "wall_ns": 1485000,
+      "thread_cpu_ns": 1484791
+    },
+    {
+      "test": "software_tlb_write_protection",
+      "passed": true
+    },
+    {
+      "test": "software_tlb_permission_restore",
+      "passed": true
+    },
+    {
+      "test": "dynamic_code_first_execution",
+      "passed": true
+    },
+    {
+      "test": "dynamic_code_invalidation",
+      "passed": true
+    },
+    {
+      "phase": "boundaries",
+      "footprint_bytes": 3719576,
+      "resident_bytes": 5144576,
+      "resident_peak_bytes": 5144576
+    },
+    {
+      "phase": "contexts_ready",
+      "footprint_bytes": 3768728,
+      "resident_bytes": 5193728,
+      "resident_peak_bytes": 5193728
+    },
+    {
+      "test": "guest_tls_x18_simd_context_restore",
+      "passed": true
+    },
+    {
+      "test": "guest_tls_x18_simd_context_restore",
+      "passed": true
+    },
+    {
+      "bench": "translation_register_switch",
+      "switches": 256,
+      "context_bytes": 12640,
+      "wall_ns": 1408000,
+      "thread_cpu_ns": 1407084
+    },
+    {
+      "phase": "contexts_closed",
+      "footprint_bytes": 3768728,
+      "resident_bytes": 5242880,
+      "resident_peak_bytes": 5242880
+    },
+    {
+      "phase": "engine_closed",
+      "footprint_bytes": 3621272,
+      "resident_bytes": 5111808,
+      "resident_peak_bytes": 5324800
+    },
+    {
+      "result": "passed"
+    }
+  ],
+  "comparison": {
+    "integer": {
+      "native": {
+        "wall_ns": [
+          434715000,
+          426586000,
+          421361000
+        ],
+        "median_wall_ns": 426586000
+      },
+      "unicorn": {
+        "wall_ns": [
+          445171000,
+          440109000,
+          435577000
+        ],
+        "median_wall_ns": 440109000
+      },
+      "translated_to_native_wall_ratio": 1.031700524630438
+    },
+    "memory": {
+      "native": {
+        "wall_ns": [
+          106529000,
+          107618000,
+          107310000
+        ],
+        "median_wall_ns": 107310000
+      },
+      "unicorn": {
+        "wall_ns": [
+          457366000,
+          459607000,
+          465164000
+        ],
+        "median_wall_ns": 459607000
+      },
+      "translated_to_native_wall_ratio": 4.2829838784829
+    },
+    "atomic": {
+      "native": {
+        "wall_ns": [
+          141827000,
+          141179000,
+          143222000
+        ],
+        "median_wall_ns": 141827000
+      },
+      "unicorn": {
+        "wall_ns": [
+          164945000,
+          163453000,
+          164827000
+        ],
+        "median_wall_ns": 164827000
+      },
+      "translated_to_native_wall_ratio": 1.162169403569137
+    }
+  }
+}

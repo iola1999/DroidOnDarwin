@@ -49,7 +49,7 @@ void nce_window_stop(void)
     /* The host's preemption signal makes active guest threads leave without
      * entering Linux. IRQs stay disabled until table walks and copies finish. */
     while (atomic64_read_acquire(&state) & GUESTS)
-        cpu_relax();
+        __asm__ volatile("yield" ::: "memory");
 }
 
 void nce_window_unlock(void)

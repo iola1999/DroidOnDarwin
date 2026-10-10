@@ -12,9 +12,14 @@ struct RunConfiguration: Codable, Equatable, Sendable {
     var sparseScan = true
     var performanceLogging = false
     var diagnostics = false
+    var schedulerSliceUS = 0
 
-    static let keys: Set<String> = ["nterp", "expandedJIT", "fastBaseline", "aot", "bootImage", "directFault", "faultPrefetch", "sparseScan", "performanceLogging", "diagnostics"]
-    static let environmentKeys = ["NCE_ART_NTERP", "NCE_ART_EXPANDED_JIT", "NCE_ART_FAST_BASELINE", "NCE_ART_AOT", "NCE_ART_BOOT_IMAGE", "NCE_DIRECT_FAULT", "NCE_FAULT_PREFETCH", "NCE_SPARSE_SCAN", "NCE_MAP_PROFILE", "NCE_DIAGNOSTICS"]
+    static let keys: Set<String> = ["nterp", "expandedJIT", "fastBaseline", "aot", "bootImage", "directFault", "faultPrefetch", "sparseScan", "performanceLogging", "diagnostics", "schedulerSliceUS"]
+    static let environmentKeys = ["NCE_ART_NTERP", "NCE_ART_EXPANDED_JIT", "NCE_ART_FAST_BASELINE", "NCE_ART_AOT", "NCE_ART_BOOT_IMAGE", "NCE_DIRECT_FAULT", "NCE_FAULT_PREFETCH", "NCE_SPARSE_SCAN", "NCE_MAP_PROFILE", "NCE_DIAGNOSTICS", "NCE_SCHED_SLICE_US"]
+
+    var schedulerSliceIsValid: Bool {
+        schedulerSliceUS == 0 || (100 ... 100000).contains(schedulerSliceUS)
+    }
 
     static func saved(_ defaults: UserDefaults = .standard, diagnostics: Bool = false) -> Self {
         Self(nterp: defaults.bool(forKey: "artNterp"),
@@ -25,7 +30,8 @@ struct RunConfiguration: Codable, Equatable, Sendable {
              directFault: defaults.object(forKey: "directFault") as? Bool ?? true,
              faultPrefetch: defaults.bool(forKey: "faultPrefetch"),
              sparseScan: defaults.object(forKey: "sparseScan") as? Bool ?? true,
-             performanceLogging: defaults.bool(forKey: "performanceLogging"), diagnostics: diagnostics)
+             performanceLogging: defaults.bool(forKey: "performanceLogging"), diagnostics: diagnostics,
+             schedulerSliceUS: defaults.integer(forKey: "schedulerSliceUS"))
     }
 
     var environment: [String: String] {
@@ -35,7 +41,8 @@ struct RunConfiguration: Codable, Equatable, Sendable {
                       "NCE_ART_AOT": aot ? "1" : "0",
                       "NCE_ART_BOOT_IMAGE": bootImage ? "1" : "0",
                       "NCE_FAULT_PREFETCH": faultPrefetch ? "1" : "0",
-                      "NCE_SPARSE_SCAN": sparseScan ? "1" : "0", "NCE_MAP_PROFILE": performanceLogging ? "1" : "0"]
+                      "NCE_SPARSE_SCAN": sparseScan ? "1" : "0", "NCE_MAP_PROFILE": performanceLogging ? "1" : "0",
+                      "NCE_SCHED_SLICE_US": String(schedulerSliceUS)]
         if diagnostics {
             values["NCE_DIAGNOSTICS"] = "1"
         }
@@ -43,6 +50,10 @@ struct RunConfiguration: Codable, Equatable, Sendable {
     }
 
     func validateResources(_ resources: URL) throws {
+        guard schedulerSliceIsValid else {
+            throw NSError(domain: "DroidOnDarwin.Configuration", code: 2,
+                          userInfo: [NSLocalizedDescriptionKey: "调度时间片需要为 0 或 100–100000 微秒"])
+        }
         guard bootImage else {
             return
         }
@@ -59,8 +70,9 @@ struct RunConfiguration: Codable, Equatable, Sendable {
     }
 
     static func fromEnvironment(_ values: [String: String]) -> Self {
-        Self(nterp: values["NCE_ART_NTERP"] == "1", expandedJIT: values["NCE_ART_EXPANDED_JIT"] == "1", fastBaseline: values["NCE_ART_FAST_BASELINE"] == "1", aot: values["NCE_ART_AOT"] != "0", bootImage: values["NCE_ART_BOOT_IMAGE"] == "1", directFault: values["NCE_DIRECT_FAULT"] != "0",
-             faultPrefetch: values["NCE_FAULT_PREFETCH"] == "1", sparseScan: values["NCE_SPARSE_SCAN"] != "0", performanceLogging: values["NCE_MAP_PROFILE"] == "1",
-             diagnostics: values["NCE_DIAGNOSTICS"] == "1")
+        let slice = values["NCE_SCHED_SLICE_US"].flatMap(Int.init) ?? (values["NCE_SCHED_SLICE_US"] == nil ? 0 : -1)
+        return Self(nterp: values["NCE_ART_NTERP"] == "1", expandedJIT: values["NCE_ART_EXPANDED_JIT"] == "1", fastBaseline: values["NCE_ART_FAST_BASELINE"] == "1", aot: values["NCE_ART_AOT"] != "0", bootImage: values["NCE_ART_BOOT_IMAGE"] == "1", directFault: values["NCE_DIRECT_FAULT"] != "0",
+                    faultPrefetch: values["NCE_FAULT_PREFETCH"] == "1", sparseScan: values["NCE_SPARSE_SCAN"] != "0", performanceLogging: values["NCE_MAP_PROFILE"] == "1",
+                    diagnostics: values["NCE_DIAGNOSTICS"] == "1", schedulerSliceUS: slice)
     }
 }

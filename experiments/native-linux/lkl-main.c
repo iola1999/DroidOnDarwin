@@ -10,6 +10,7 @@ void nce_compute_benchmark(void);
 #include "lkl-image.h"
 #include "guest-image.h"
 #include <mach/mach.h>
+#include <errno.h>
 #include <pthread.h>
 #include <sched.h>
 #include <stdatomic.h>
@@ -192,6 +193,18 @@ static unsigned long host_hwcap(void)
 int nce_lkl_run(const char *image_path)
 {
     setvbuf(stdout, NULL, _IOLBF, 0);
+    unsigned long scheduler_slice_us = 0;
+    const char *slice_text = getenv("NCE_SCHED_SLICE_US");
+    if (slice_text) {
+        char *end;
+        errno = 0;
+        scheduler_slice_us = strtoul(slice_text, &end, 10);
+        if (errno || slice_text[0] < '0' || slice_text[0] > '9' || *end ||
+            (scheduler_slice_us && (scheduler_slice_us < 100 || scheduler_slice_us > 100000))) {
+            puts("{\"result\":\"failed\",\"reason\":\"scheduler_slice_invalid\"}");
+            return 1;
+        }
+    }
     int result = 0;
 #ifdef NCE_PROCESS
     if (nce_memory_prepare() != 0)
@@ -218,7 +231,7 @@ int nce_lkl_run(const char *image_path)
     }
     nce_sync_code(kernel);
     int (*init)(struct lkl_host_operations *) = (void *)(kernel.rx + LKL_INIT);
-    int (*start)(void) = (void *)(kernel.rx + NCE_LKL_START);
+    int (*start)(unsigned long, unsigned long *) = (void *)(kernel.rx + NCE_LKL_START);
     long (*halt)(void) = (void *)(kernel.rx + LKL_SYS_HALT);
     void (*cleanup)(void) = (void *)(kernel.rx + LKL_CLEANUP);
     kernel_syscall = (void *)(kernel.rx + LKL_SYSCALL);
@@ -257,7 +270,11 @@ int nce_lkl_run(const char *image_path)
     REQUIRE(nce_disk_open(1, getenv("NCE_SYSTEM_IMAGE")) == 0);
     REQUIRE(init(&nce_lkl_host) == 0);
     uint64_t started = now();
-    REQUIRE(start() == 0);
+    unsigned long applied_slice_ns = 0;
+    REQUIRE(start(scheduler_slice_us * 1000, &applied_slice_ns) == 0);
+    REQUIRE(applied_slice_ns && (!scheduler_slice_us || applied_slice_ns == scheduler_slice_us * 1000));
+    printf("{\"config\":\"linux_scheduler_slice\",\"requested_us\":%lu,\"applied_ns\":%lu}\n",
+           scheduler_slice_us, applied_slice_ns);
     printf("{\"test\":\"native_linux_boot\",\"passed\":true,\"ms\":%.3f}\n", (now() - started) / 1e6);
     struct timespec realtime;
     REQUIRE(clock_gettime(CLOCK_REALTIME, &realtime) == 0);

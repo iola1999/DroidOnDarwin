@@ -47,7 +47,7 @@ struct BenchmarkChecks {
         precondition((memory.json["process_lifetime_peak_bytes"] as? [String: UInt64])?["footprint"] == 900)
         let live = BenchmarkMemoryReading.current()
         precondition(live.error == nil && live.bytes["footprint"]! > 0 && live.bytes["resident"]! > 0)
-        let configuration = RunConfiguration(nterp: true, expandedJIT: true, fastBaseline: true, aot: false, bootImage: true, directFault: false, faultPrefetch: true, sparseScan: false)
+        let configuration = RunConfiguration(nterp: true, expandedJIT: true, fastBaseline: true, aot: false, bootImage: true, directFault: false, faultPrefetch: true, sparseScan: false, schedulerSliceUS: 12000)
         precondition(RunConfiguration.fromEnvironment(configuration.environment) == configuration)
         let config = try JSONSerialization.jsonObject(with: JSONEncoder().encode(configuration))
         let id = UUID().uuidString
@@ -65,6 +65,23 @@ struct BenchmarkChecks {
         components.queryItems = [URLQueryItem(name: "request", value: data.base64EncodedString())]
         let decodedURL = try BenchmarkRequest.fromURL(components.url!)
         precondition(decodedURL.runID == request.runID)
+        precondition(decodedURL.configuration.schedulerSliceUS == 12000)
+        for value: Any in [-1, 99, 100001, true, "12000", NSNull()] {
+            var bad = object
+            var parameters = config as! [String: Any]
+            parameters["schedulerSliceUS"] = value
+            bad["configuration"] = parameters
+            do { _ = try BenchmarkRequest.decode(encoded(bad))
+                preconditionFailure("invalid scheduler slice accepted")
+            } catch {}
+        }
+        for value in [0, 100, 100000] {
+            let parameter = RunConfiguration(schedulerSliceUS: value)
+            precondition(parameter.schedulerSliceIsValid)
+            precondition(RunConfiguration.fromEnvironment(parameter.environment) == parameter)
+        }
+        precondition(!RunConfiguration.fromEnvironment(["NCE_SCHED_SLICE_US": "invalid"]).schedulerSliceIsValid)
+        precondition(!RunConfiguration.fromEnvironment(["NCE_SCHED_SLICE_US": "-1"]).schedulerSliceIsValid)
         var invalid = object
         invalid["unknown"] = true
         do { _ = try BenchmarkRequest.decode(encoded(invalid))

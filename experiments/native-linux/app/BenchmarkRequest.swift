@@ -44,6 +44,9 @@ struct BenchmarkRequest: Codable, Sendable {
             }
         }
         let request = try JSONDecoder().decode(Self.self, from: data)
+        guard request.configuration.schedulerSliceIsValid else {
+            throw BenchmarkError.invalid("调度时间片需要为 0 或 100–100000 微秒")
+        }
         guard request.version == 1, UUID(uuidString: request.deviceID) != nil,
               (30 ... 900).contains(request.timeoutSeconds), request.actions.count <= 128,
               !request.configuration.diagnostics else {

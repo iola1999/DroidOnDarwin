@@ -24,6 +24,23 @@ REVISION = probe_lkl.REVISION
 run = probe_lkl.run
 
 
+def check_invalid_scheduler_slices(folder):
+    checks = []
+    for value in ['', '-1', '99', '100001', '18446744073709551616', '12x']:
+        for entry in ['probe', 'dispatch-probe']:
+            result = subprocess.run([folder / entry, folder / 'lkl-image.bin'],
+                                    env={**os.environ, 'NCE_SCHED_SLICE_US': value},
+                                    capture_output=True, text=True, timeout=10)
+            records = [json.loads(line) for line in result.stdout.splitlines()]
+            expected = [{'result': 'failed', 'reason': 'scheduler_slice_invalid'}]
+            if entry == 'dispatch-probe':
+                assert records[0]['test'] == 'dispatch_signal_mask'
+                records = records[1:]
+            assert result.returncode == 1 and records == expected and not result.stderr, result
+            checks.append({'entry': entry, 'value': value, 'passed': True})
+    return checks
+
+
 def main():
     global OUT
     parser = argparse.ArgumentParser()
@@ -133,6 +150,7 @@ def main():
     exports = ['nce_run_syscall', 'nce_page_fault', 'nce_set_layout', 'nce_user_return',
                'nce_user_fault', 'nce_user_preempt', 'nce_prepare_user'] if arguments.mmu else []
     run([llvm / 'llvm-objcopy', '--globalize-symbol=vsnprintf', '--globalize-symbol=lkl_ops',
+         '--globalize-symbol=sysctl_sched_base_slice',
          *['--globalize-symbol=' + name for name in exports],
          f'--set-section-alignment=.data..percpu={16384 if arguments.mmu else 4096}',
          build / 'lkl.o', OUT / 'exports.o'])
@@ -159,6 +177,7 @@ def main():
         host += [EXP / 'smp/mmu-host.c']
     run([*host, '-o', OUT / 'probe'])
     run([*host, '-DNCE_IOS_APP', EXP / 'dispatch-test.c', '-o', OUT / 'dispatch-probe'])
+    invalid_slices = check_invalid_scheduler_slices(OUT)
     runs, raw = [], ['lkl.so', 'lkl-image.bin', 'build/.config']
     required = {'linux_smp_parallel_kernel', 'linux_smp_atomic64_futex', 'linux_smp_ipi_timer_migration'}
     if arguments.mmu:
@@ -182,7 +201,7 @@ def main():
     if input_hashes != {str(p.relative_to(ROOT)): digest(p) for p in inputs}:
         raise SystemExit('验证期间输入文件发生变化，请重新运行')
     report = {'scope': 'two CPU Linux kernel only; NCE process execution is not enabled',
-              'revision': REVISION, 'runs': runs,
+              'revision': REVISION, 'runs': runs, 'invalid_scheduler_slices': invalid_slices,
               'inputs': input_hashes,
               'host': {'platform': platform.platform(),
                        'cpu': subprocess.check_output(['sysctl', '-n', 'machdep.cpu.brand_string'], text=True).strip(),
