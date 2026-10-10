@@ -903,7 +903,7 @@ def dash(out, llvm, libc, runtime, resource):
     return out / 'dash.elf'
 
 
-def build(out, llvm, art_compiler=False):
+def build(out, llvm, art_compiler=False, art_oat=None):
     libc = musl(llvm)
     runtime = compiler_runtime(llvm, libc)
     with (WORK / 'musl-build/shared-build.log').open('w') as log:
@@ -984,6 +984,20 @@ def build(out, llvm, art_compiler=False):
     replacements = {**art, **crypto}
     prepare_android_desktop()
     assets = android_data(out) + [native_library_zip(out)]
+    if art_oat:
+        manifest = json.loads((art_oat / 'manifest.json').read_text())
+        current = json.loads((WORK / 'android/art-build/manifest.json').read_text())['inputs']
+        expected = {key: value for key, value in manifest['art_inputs'].items() if key != 'offline_compiler'}
+        actual = {key: value for key, value in current.items() if key != 'offline_compiler'}
+        if expected != actual or manifest['dex_sha256'] != hashlib.sha256((out / 'java-classes/classes.dex').read_bytes()).hexdigest():
+            raise RuntimeError('AOT compiler sources or DEX differ; regenerate the artifact')
+        for name, digest in manifest['files'].items():
+            if name not in ('NceWorkload.odex', 'NceWorkload.vdex') or hashlib.sha256((art_oat / name).read_bytes()).hexdigest() != digest:
+                raise RuntimeError('AOT artifact checksum or filename mismatch')
+        if set(manifest['files']) != {'NceWorkload.odex', 'NceWorkload.vdex'}:
+            raise RuntimeError('AOT artifact is incomplete')
+        programs.append(('/data/nce/oat/arm64/NceWorkload.odex', art_oat / 'NceWorkload.odex'))
+        assets.append(('/data/nce/oat/arm64/NceWorkload.vdex', art_oat / 'NceWorkload.vdex'))
     embedded, program_locations = apk_native_libraries(out, assets)
     programs += android_dependencies(llvm, replacements, embedded)
     programs += embedded
@@ -1114,7 +1128,7 @@ def build(out, llvm, art_compiler=False):
         if cached and cached['sha256'] == digest:
             elf = dict(cached['layout'], data=data)
         else:
-            elf = inspect(path, shared=name.endswith('.so'), function_symbols=name.startswith(('/system/', '/vendor/', '/apex/', '/system_ext/', '/product/')) or name in ('/bionic-test', '/art-test', '/art-heap-test'))
+            elf = inspect(path, shared=name.endswith(('.so', '.odex')), function_symbols=name.endswith('.odex') or name.startswith(('/system/', '/vendor/', '/apex/', '/system_ext/', '/product/')) or name in ('/bionic-test', '/art-test', '/art-heap-test'))
             dis = elf_disassembly(llvm, path, elf)
             check_x18_disassembly(path, elf, dis)
             cache['files'][name] = {'sha256': digest, 'layout': {k: v for k, v in elf.items() if k != 'data'}}

@@ -136,16 +136,25 @@ extern "C" JNIEXPORT int nce_art_inlined_frames(JNIEnv *env, jmethodID id)
     return static_cast<int>(depth);
 }
 
-extern "C" JNIEXPORT bool nce_art_method_uses_verified_oat(JNIEnv *env, jmethodID id, const char *path)
+extern "C" JNIEXPORT bool nce_art_method_uses_oat(JNIEnv *env, jmethodID id, const char *path, bool compiled)
 {
     art::ScopedObjectAccess soa(env);
     art::ArtMethod *method = art::jni::DecodeArtMethod(id);
+    {
+        art::ScopedThreadSuspension suspended(soa.Self(), art::ThreadState::kNative);
+        art::Runtime::Current()->GetClassLinker()->MakeInitializedClassesVisiblyInitialized(
+            soa.Self(), true);
+    }
     const art::OatDexFile *dex = method ? method->GetDexFile()->GetOatDexFile() : nullptr;
     const art::OatFile *oat = dex ? dex->GetOatFile() : nullptr;
-    if (!oat || oat->GetLocation() != path || oat->GetCompilerFilter() != art::CompilerFilter::kVerify) {
-        fprintf(stderr, "ART verified OAT expected=%s actual=%s filter=%d\n", path,
+    const auto filter = compiled ? art::CompilerFilter::kSpeed : art::CompilerFilter::kVerify;
+    const void *entry = method ? method->GetEntryPointFromQuickCompiledCode() : nullptr;
+    if (!oat || oat->GetLocation() != path || oat->GetCompilerFilter() != filter ||
+        (compiled && !oat->Contains(entry))) {
+        fprintf(stderr, "ART OAT expected=%s actual=%s filter=%d entry=%p method=%s\n", path,
                 oat ? oat->GetLocation().c_str() : "<none>",
-                oat ? static_cast<int>(oat->GetCompilerFilter()) : -1);
+                oat ? static_cast<int>(oat->GetCompilerFilter()) : -1, entry,
+                method ? method->PrettyMethod().c_str() : "<none>");
         return false;
     }
     return true;

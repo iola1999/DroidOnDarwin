@@ -16,7 +16,7 @@ static const char boot_class_path[] =
     "/apex/com.android.art/javalib/bouncycastle.jar:/apex/com.android.art/javalib/apache-xml.jar:"
     "/apex/com.android.i18n/javalib/core-icu4j.jar:/apex/com.android.conscrypt/javalib/conscrypt.jar";
 
-static int compile(int invalid_input)
+static int compile(int invalid_input, int speed)
 {
     pid_t child = fork();
     if (child < 0)
@@ -26,7 +26,8 @@ static int compile(int invalid_input)
         execl("/system/bin/nce-dex2oat", "nce-dex2oat", "-j1", "--no-watch-dog",
               invalid_input ? "--dex-file=/data/nce/invalid.dex" : "--dex-file=/data/nce/NceWorkload.dex",
               invalid_input ? "--oat-file=/data/nce/compiler-invalid.odex" : "--oat-file=/data/nce/oat/arm64/NceWorkload.odex",
-              "--compiler-filter=verify",
+              speed ? "--compiler-filter=speed" : "--compiler-filter=verify",
+              "--inline-max-code-units=0", "--generate-debug-info",
               "--instruction-set=arm64", "--boot-image=/data/no-boot-image.art",
               "--runtime-arg", boot_class_path, "--runtime-arg", "-Xms16m",
               "--runtime-arg", "-Xmx256m", "--dump-timings", (char *)NULL);
@@ -58,6 +59,8 @@ static off_t check_file(const char *path, const char *magic)
 
 int main(void)
 {
+    char mode[32] = {};
+    int speed = fgets(mode, sizeof(mode), stdin) && !strcmp(mode, "speed\n");
     setenv("ANDROID_ROOT", "/system", 1);
     setenv("ANDROID_DATA", "/data", 1);
     setenv("ANDROID_ART_ROOT", "/apex/com.android.art", 1);
@@ -72,9 +75,9 @@ int main(void)
     struct timespec begin, end;
     if (clock_gettime(CLOCK_MONOTONIC, &begin))
         return 1;
-    int result = compile(0);
+    int result = compile(0, speed);
     if (result) {
-        fprintf(stderr, "dex2oat verify failed: exit=%d\n", result);
+        fprintf(stderr, "dex2oat failed: exit=%d\n", result);
         return 2;
     }
     off_t oat = check_file("/data/nce/oat/arm64/NceWorkload.odex", "\177ELF");
@@ -82,12 +85,12 @@ int main(void)
     if (oat < 0 || vdex < 0 || clock_gettime(CLOCK_MONOTONIC, &end))
         return 3;
     double elapsed = (end.tv_sec - begin.tv_sec) * 1000.0 + (end.tv_nsec - begin.tv_nsec) / 1000000.0;
-    printf("{\"test\":\"android_art_compiler_verify\",\"passed\":true,\"oat_bytes\":%lld,\"vdex_bytes\":%lld,\"elapsed_ms\":%.3f}\n", (long long)oat, (long long)vdex, elapsed);
+    printf("{\"test\":\"android_art_compiler_%s\",\"passed\":true,\"oat_bytes\":%lld,\"vdex_bytes\":%lld,\"elapsed_ms\":%.3f}\n", speed ? "speed" : "verify", (long long)oat, (long long)vdex, elapsed);
     fflush(stdout);
     int invalid = open("/data/nce/invalid.dex", O_WRONLY | O_CREAT | O_TRUNC | O_CLOEXEC, 0600);
     if (invalid < 0 || write(invalid, "invalid dex", 11) != 11 || close(invalid))
         return 4;
-    result = compile(1);
+    result = compile(1, speed);
     if (result <= 0 || result == 127)
         return 4;
     printf("{\"test\":\"android_art_compiler_invalid_input\",\"passed\":true,\"exit\":%d}\n", result);

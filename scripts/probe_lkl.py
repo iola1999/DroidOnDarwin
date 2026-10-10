@@ -97,6 +97,7 @@ def main():
     started_ns = time.time_ns()
     parser = argparse.ArgumentParser()
     parser.add_argument("--processes", action="store_true")
+    parser.add_argument("--art-oat", type=Path, help="Validate an offline-compiled OAT directory with the runtime build")
     parser.add_argument("--art-compiler", action="store_true", help="Validate the matching dex2oat tool in an isolated NCE image")
     parser.add_argument("--graphics-angle", type=Path,
                         help="Run Linux GLES over the in-process renderer using these macOS ANGLE libraries")
@@ -111,8 +112,12 @@ def main():
         parser.error("--graphics-angle requires --processes")
     if arguments.storage_image and not PROCESS:
         parser.error("--storage-image requires --processes")
-    if arguments.art_compiler and (not PROCESS or angle or os.environ.get('NCE_DESKTOP') or os.environ.get('NCE_SYSTEM_SERVER_PROBE')):
-        parser.error("--art-compiler requires --processes and cannot run the desktop or graphics checks")
+    if (arguments.art_compiler or arguments.art_oat) and (not PROCESS or angle or os.environ.get('NCE_DESKTOP') or os.environ.get('NCE_SYSTEM_SERVER_PROBE')):
+        parser.error("ART compiler checks require --processes and cannot run the desktop or graphics checks")
+    if arguments.art_compiler and arguments.art_oat:
+        parser.error("Choose artifact generation or runtime loading")
+    if arguments.art_oat:
+        arguments.art_oat = arguments.art_oat.resolve()
     if angle:
         for name in ("libANGLE-shared.dylib",):
             if not (angle / name).is_file():
@@ -120,7 +125,7 @@ def main():
     base = OUT
     if PROCESS:
         BUILD = base / "lkl-process-build"
-        OUT = base / ("art-compiler" if arguments.art_compiler else "processes")
+        OUT = base / ("art-compiler" if arguments.art_compiler else "art-oat" if arguments.art_oat else "processes")
         OUT.mkdir(exist_ok=True)
         for name in ("guest-image.h", "guest-source.sha256"):
             shutil.copyfile(base / name, OUT / name)
@@ -216,7 +221,7 @@ def main():
          "-z", "common-page-size=16384", OUT / "lkl-exports.o", OUT / "lkl-bridge.o", "-o", OUT / "lkl.so"])
     package_elf(OUT / "lkl.so")
     if PROCESS:
-        build_userspace(OUT, llvm, art_compiler=arguments.art_compiler)
+        build_userspace(OUT, llvm, art_compiler=arguments.art_compiler, art_oat=arguments.art_oat)
     inputs = [EXPERIMENT / name for name in ("lkl-main.c", "lkl-host.c", "nce.c", "entry.S")]
     flags = ["-O2", "-g", "-Wall", "-Wextra", "-Werror", "-I", OUT, "-I", EXPERIMENT]
     if PROCESS:
@@ -271,6 +276,11 @@ def main():
         probe_env = {**os.environ, "NCE_GPU_OUTPUT": str(OUT / "gpu.bmp"), "NCE_GRAPHICS_OUTPUT": str(OUT / "framework.png"), "NCE_STORAGE_IMAGE": str(data_image), "NCE_SYSTEM_IMAGE": str(OUT / "system.img")} if PROCESS else os.environ
         if arguments.art_compiler:
             probe_env['NCE_ART_COMPILER_PROBE'] = '1'
+            artifacts = OUT / 'artifacts'
+            artifacts.mkdir(exist_ok=True)
+            probe_env['NCE_ART_COMPILER_OUTPUT'] = str(artifacts)
+        if arguments.art_oat:
+            probe_env['NCE_ART_OAT_PROBE'] = '1'
         run([OUT / "lkl-probe", OUT / "lkl-image.bin"], timeout=480, stdout=output, stderr=log, env={**probe_env, **graphics_env})
     results = [json.loads(line) for line in (OUT / "lkl-results.jsonl").read_text().splitlines()]
     if results[-1].get("result") != "passed":
@@ -301,6 +311,12 @@ def main():
         if dispatch_results[-1].get("result") != "passed":
             raise SystemExit("GCD probe did not complete")
         check_ext4_shutdown(data_image)
+        if arguments.art_oat:
+            compiler_bases = set(json.loads((arguments.art_oat / 'manifest.json').read_text())['compiler_heap_bases'])
+            for records in (results, dispatch_results):
+                runtime_bases = {row['reference_base'] for row in records if row.get('phase') == 'art_aot_heap'}
+                if len(runtime_bases) != 2 or not runtime_bases - compiler_bases:
+                    raise SystemExit('AOT checks did not exercise different compiler/runtime heap bases')
         if not any(r.get("inherited_blocked_threads", 0) > 0 for r in dispatch_results):
             raise SystemExit("GCD regression did not exercise an inherited signal mask")
         generations = [next((r.get("generation", 0) for r in records
@@ -317,7 +333,7 @@ def main():
                 if name == "android_application_data_persistence" and checks[0]["row_id"] != checks[1]["row_id"]:
                     raise SystemExit("Clock alarm identity changed across Android restart")
         run(["/opt/homebrew/opt/e2fsprogs/sbin/e2fsck", "-fn", data_image])
-        if not arguments.art_compiler and (OUT / "framework.png").read_bytes() != (OUT / "dispatch-framework.png").read_bytes():
+        if not arguments.art_compiler and not arguments.art_oat and (OUT / "framework.png").read_bytes() != (OUT / "dispatch-framework.png").read_bytes():
             raise SystemExit("CLI and GCD framework images differ")
         if angle and (OUT / "gpu.bmp").read_bytes() != (OUT / "dispatch-gpu.bmp").read_bytes():
             raise SystemExit("CLI and GCD GPU images differ")
@@ -376,6 +392,9 @@ def main():
         manifest["stage"] = "Android Bionic, Binder, ART Java and ARM64 JIT workloads"
         if arguments.art_compiler:
             manifest["stage"] = "NCE ART offline compiler validation"
+        if arguments.art_oat:
+            manifest["stage"] = "NCE ART offline code execution validation"
+            sources += [arguments.art_oat / name for name in ('manifest.json', 'NceWorkload.odex', 'NceWorkload.vdex')]
         manifest["userspace_libraries"] = {"musl": "1.2.5", "compiler-rt": "20.1.8", "dash": "0.5.12"}
         manifest["generated_sha256"] = {name: hashlib.sha256((OUT / name).read_bytes()).hexdigest()
                                         for name in ["system.img", "android-data-seed.img", "storage-test.elf", "program-images.h", "user-scripts.h", "payload.S", "payload.bin", "lkl-image.h", "lkl-host-ops.h", "guest-image.h",
@@ -398,6 +417,19 @@ def main():
         raise SystemExit("Build inputs changed during validation; rerun: " + ", ".join(changed))
     manifest["input_sha256"] = {str(p.relative_to(ROOT)): hashlib.sha256(p.read_bytes()).hexdigest() for p in sources}
     (OUT / "lkl-summary.json").write_text(json.dumps(manifest, indent=2) + "\n")
+    if arguments.art_compiler:
+        artifacts = OUT / 'artifacts'
+        compiler_heap_bases = sorted({row['reference_base'] for row in results + dispatch_results
+                                      if row.get('phase') == 'art_compiler_heap'})
+        if not compiler_heap_bases:
+            raise SystemExit('Compiler heap address was not recorded')
+        (artifacts / 'manifest.json').write_text(json.dumps({
+            'art_inputs': manifest['android_builds']['art-build']['inputs'],
+            'compiler_heap_bases': compiler_heap_bases,
+            'dex_sha256': hashlib.sha256((OUT / 'java-classes/classes.dex').read_bytes()).hexdigest(),
+            'files': {name: hashlib.sha256((artifacts / name).read_bytes()).hexdigest()
+                      for name in ('NceWorkload.odex', 'NceWorkload.vdex')}
+        }, indent=2) + '\n')
     print(json.dumps(manifest, indent=2))
 
 

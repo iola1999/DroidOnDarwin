@@ -744,6 +744,20 @@ static void put_file(long (*call)(long, long *), const char *path, const void *d
     REQUIRE(call(57, args) == 0);
 }
 
+// Files under /data must be installed after mounting the session data filesystem.
+static void install_program_files(long (*call)(long, long *), bool data_files)
+{
+    for (size_t i = 0; i < nce_program_count; ++i) {
+        NceProgram *program = &nce_programs[i];
+        if (program->system_image || (!strncmp(program->path, "/data/", 6)) != data_files)
+            continue;
+        put_file(call, program->path, program->file, program->size);
+        // Non-root exec also opens the common signal-return ELF during setup.
+        long permissions[6] = {-100, (long)program->path, 0755};
+        REQUIRE(call(53, permissions) == 0);
+    }
+}
+
 static long get_file(long (*call)(long, long *), const char *path, char *buffer, size_t size)
 {
     long args[6] = {-100, (long)path, 0};
@@ -758,6 +772,27 @@ static long get_file(long (*call)(long, long *), const char *path, char *buffer,
     if (count >= 0)
         buffer[count] = 0;
     return count;
+}
+
+static void export_guest_file(long (*call)(long, long *), const char *guest, const char *host)
+{
+    long args[6] = {-100, (long)guest, 0};
+    long fd = call(56, args);
+    REQUIRE(fd >= 0);
+    FILE *output = fopen(host, "wb");
+    REQUIRE(output);
+    char buffer[65536];
+    args[0] = fd;
+    args[1] = (long)buffer;
+    args[2] = sizeof(buffer);
+    long count;
+    size_t total = 0;
+    while ((count = call(63, args)) > 0) {
+        REQUIRE(fwrite(buffer, 1, count, output) == (size_t)count);
+        total += count;
+    }
+    REQUIRE(count == 0 && total > 0 && fclose(output) == 0);
+    REQUIRE(call(57, args) == 0);
 }
 
 static void create_block_device(long (*call)(long, long *), const char *sysfs, const char *path)
@@ -1004,10 +1039,12 @@ static void run_program(long (*call)(long, long *), const char *path, const char
     }
 }
 
-static void check_program_files(long (*call)(long, long *))
+static void check_program_files(long (*call)(long, long *), bool data_files)
 {
     for (size_t i = 1; i < nce_program_count; ++i) {
         NceProgram *p = &nce_programs[i];
+        if ((!strncmp(p->path, "/data/", 6)) != data_files)
+            continue;
         unsigned char *bytes = malloc(p->size + 1);
         REQUIRE(bytes);
         if (p->source_offset) {
@@ -1052,7 +1089,7 @@ static void reclaim_file_cache(long (*call)(long, long *))
     line = strstr(info, "Cached:");
     REQUIRE(line && sscanf(line, "Cached: %lu", &after) == 1);
     REQUIRE(before > after + 1024);
-    check_program_files(call);
+    check_program_files(call, false);
     printf("{\"test\":\"android_system_cache_reclaim\",\"before_kib\":%lu,\"after_kib\":%lu,\"passed\":true}\n", before, after);
 }
 
@@ -1073,7 +1110,7 @@ static void userspace_tests(long (*call)(long, long *))
     REQUIRE(get_file(call, "/userspace.result", buffer, sizeof(buffer)) > 0);
     REQUIRE(strstr(buffer, "init pid=1 commands=8 libc=musl passed"));
     fprintf(stderr, "%s", buffer);
-    check_program_files(call);
+    check_program_files(call, false);
     puts("{\"test\":\"linux_musl_static_pie_processes\",\"passed\":true,\"commands\":8,\"cow_bytes_per_command\":2097152}");
     puts("{\"test\":\"linux_compiled_elf_files_unchanged\",\"passed\":true}");
     REQUIRE(preemptions > previous_preemptions && deferred_faults > 0 && stackless_exits - previous_stackless == 8);
@@ -1389,7 +1426,7 @@ static void art_regressions(long (*host_syscall)(long, long *))
 static void reclaim_regressions(long (*host_syscall)(long, long *))
 {
     char benchmark[16384];
-    check_program_files(host_syscall);
+    check_program_files(host_syscall, false);
     reclaim_file_cache(host_syscall);
     long reclaim_args[6] = {-100, (long)"/proc/sys/vm/drop_caches", 1};
     long reclaim_fd = host_syscall(56, reclaim_args);
@@ -1486,20 +1523,15 @@ void nce_process_run(long (*host_syscall)(long, long *), long (*guest_syscall)(l
     puts("{\"test\":\"linux_random_initialized\",\"passed\":true}");
     mount_system(host_syscall);
     create_block_device(host_syscall, "/sys/block/ncedisk0/dev", "/dev/ncedisk0");
-    for (size_t i = 0; i < nce_program_count; ++i) {
-        if (!nce_programs[i].system_image) {
-            put_file(host_syscall, nce_programs[i].path, nce_programs[i].file, nce_programs[i].size);
-            // Non-root exec also opens the common signal-return ELF during setup.
-            long permissions[6] = {-100, (long)nce_programs[i].path, 0755};
-            REQUIRE(host_syscall(53, permissions) == 0);
-        }
-    }
+    install_program_files(host_syscall, false);
     if (!interactive)
         host_input_test(host_syscall);
     memory_report(host_syscall, "system_mounted");
     if (!interactive)
         process_regressions(host_syscall);
     mount_android_data(host_syscall);
+    install_program_files(host_syscall, true);
+    check_program_files(host_syscall, true);
     const char *nterp = getenv("NCE_ART_NTERP");
     REQUIRE(!nterp || !strcmp(nterp, "0") || !strcmp(nterp, "1"));
     put_file(host_syscall, "/data/nce/art-nterp", nterp ? nterp : "0", 1);
@@ -1550,6 +1582,29 @@ void nce_process_run(long (*host_syscall)(long, long *), long (*guest_syscall)(l
         REQUIRE(strstr(benchmark, "android_art_java_workload"));
         REQUIRE(strstr(benchmark, "android_art_vm_destroyed"));
         fputs(benchmark, stdout);
+        run_program(host_syscall, "/system/bin/art-compiler-test", "speed\n");
+        REQUIRE(get_file(host_syscall, "/stdout", benchmark, sizeof(benchmark)) > 0);
+        REQUIRE(strstr(benchmark, "android_art_compiler_speed"));
+        fputs(benchmark, stdout);
+        const char *output = getenv("NCE_ART_COMPILER_OUTPUT");
+        REQUIRE(output);
+        const char *extensions[] = {"odex", "vdex"};
+        for (size_t i = 0; i < 2; ++i) {
+            char guest[128], host[4096];
+            snprintf(guest, sizeof(guest), "/data/nce/oat/arm64/NceWorkload.%s", extensions[i]);
+            int length = snprintf(host, sizeof(host), "%s/NceWorkload.%s", output, extensions[i]);
+            REQUIRE(length > 0 && (size_t)length < sizeof(host));
+            export_guest_file(host_syscall, guest, host);
+        }
+    } else if (getenv("NCE_ART_OAT_PROBE")) {
+        const char *modes[] = {"oat-speed\n", "oat-shifted\n"};
+        for (size_t i = 0; i < 2; ++i) {
+            run_program(host_syscall, "/system/bin/art-test", modes[i]);
+            REQUIRE(get_file(host_syscall, "/stdout", benchmark, sizeof(benchmark)) > 0);
+            REQUIRE(strstr(benchmark, "android_art_aot_entries"));
+            REQUIRE(strstr(benchmark, "android_art_vm_destroyed"));
+            fputs(benchmark, stdout);
+        }
     } else {
         if (!interactive)
             art_regressions(host_syscall);

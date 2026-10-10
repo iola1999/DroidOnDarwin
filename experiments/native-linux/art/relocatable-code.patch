@@ -1,0 +1,222 @@
+--- a/runtime/thread.h
++++ b/runtime/thread.h
+@@ -1081,6 +1081,14 @@
+   static constexpr ThreadOffset<pointer_size> SelfOffset() {
+     return ThreadOffsetFromTlsPtr<pointer_size>(OFFSETOF_MEMBER(tls_ptr_sized_values, self));
+   }
++
++#ifdef ART_NCE
++  template<PointerSize pointer_size>
++  static constexpr ThreadOffset<pointer_size> NceReferenceBaseOffset() {
++    return ThreadOffsetFromTlsPtr<pointer_size>(
++        OFFSETOF_MEMBER(tls_ptr_sized_values, nce_reference_base));
++  }
++#endif
+ 
+   template<PointerSize pointer_size>
+   static constexpr ThreadOffset<pointer_size> ExceptionOffset() {
+@@ -2425,6 +2433,10 @@
+     // If the thread is asserting that there should be no transaction checks,
+     // what is causing that assertion (debug builds only).
+     const char* last_no_transaction_checks_cause;
++#ifdef ART_NCE
++    // Persisted compiled code reads the current process heap base through Thread.
++    uintptr_t nce_reference_base = 0;
++#endif
+   } tlsPtr_;
+ 
+   // Small thread-local cache to be used from the interpreter.
+--- a/runtime/thread.cc
++++ b/runtime/thread.cc
+@@ -155,6 +155,10 @@
+ static const char* kThreadNameDuringStartup = "<native thread without managed peer>";
+ 
+ void Thread::InitCardTable() {
++#ifdef ART_NCE
++  CHECK_NE(nce_art_reference_base, 0u);
++  tlsPtr_.nce_reference_base = nce_art_reference_base;
++#endif
+   tlsPtr_.card_table = Runtime::Current()->GetHeap()->GetCardTable()->GetBiasedBegin();
+ }
+ 
+--- a/compiler/optimizing/code_generator_arm64.cc
++++ b/compiler/optimizing/code_generator_arm64.cc
+@@ -102,7 +102,7 @@
+ Register NceHeapAddress(MacroAssembler* masm, UseScratchRegisterScope* temps,
+                                Register reference) {
+   Register address = temps->AcquireX();
+-  masm->Mov(address, nce_art_reference_base);
++  masm->Ldr(address, MemOperand(tr, Thread::NceReferenceBaseOffset<kArm64PointerSize>().Int32Value()));
+   masm->Add(address, address, Operand(reference.W(), UXTW));
+   return address;
+ }
+@@ -122,7 +122,7 @@
+   masm->Cbz(reference.X(), &done);
+   UseScratchRegisterScope temps(masm);
+   Register base = temps.AcquireX();
+-  masm->Mov(base, nce_art_reference_base);
++  masm->Ldr(base, MemOperand(tr, Thread::NceReferenceBaseOffset<kArm64PointerSize>().Int32Value()));
+   masm->Sub(reference.X(), reference.X(), base);
+   masm->Bind(&done);
+ }
+@@ -324,6 +324,9 @@
+     __ Mov(calling_convention.GetRegisterAt(0).W(), proto_index.index_);
+ 
+     arm64_codegen->InvokeRuntime(kQuickResolveMethodType, instruction_, this);
++#ifdef ART_NCE
++    NceQuickReference(arm64_codegen->GetVIXLAssembler(), x0);
++#endif
+     CheckEntrypointTypes<kQuickResolveMethodType, void*, uint32_t>();
+ 
+     DataType::Type type = instruction_->GetType();
+@@ -428,6 +431,9 @@
+     const dex::StringIndex string_index = instruction_->AsLoadString()->GetStringIndex();
+     __ Mov(calling_convention.GetRegisterAt(0).W(), string_index.index_);
+     arm64_codegen->InvokeRuntime(kQuickResolveString, instruction_, this);
++#ifdef ART_NCE
++    NceQuickReference(arm64_codegen->GetVIXLAssembler(), x0);
++#endif
+     CheckEntrypointTypes<kQuickResolveString, void*, uint32_t>();
+     DataType::Type type = instruction_->GetType();
+     arm64_codegen->MoveLocation(locations->Out(), calling_convention.GetReturnLocation(type), type);
+@@ -1480,7 +1486,7 @@
+     // resolution trampoline to do a suspend check before re-entering this code.
+     __ Ldr(temp1, MemOperand(kArtMethodRegister, ArtMethod::DeclaringClassOffset().Int32Value()));
+ #ifdef ART_NCE
+-    __ Mov(temp2.X(), nce_art_reference_base);
++    __ Ldr(temp2.X(), MemOperand(tr, Thread::NceReferenceBaseOffset<kArm64PointerSize>().Int32Value()));
+     __ Add(temp1.X(), temp2.X(), Operand(temp1.W(), UXTW));
+     __ Ldrb(temp2, MemOperand(temp1.X(), kClassStatusByteOffset));
+ #else
+@@ -1687,7 +1693,7 @@
+   __ Ldr(card, MemOperand(tr, Thread::CardTableOffset<kArm64PointerSize>().Int32Value()));
+   // Calculate the offset (in the card table) of the card corresponding to `object`.
+ #ifdef ART_NCE
+-  __ Mov(temp.X(), nce_art_reference_base);
++  __ Ldr(temp.X(), MemOperand(tr, Thread::NceReferenceBaseOffset<kArm64PointerSize>().Int32Value()));
+   __ Add(temp.X(), temp.X(), Operand(object.W(), UXTW));
+   __ Lsr(temp.X(), temp.X(), gc::accounting::CardTable::kCardShift);
+ #else
+@@ -1718,7 +1724,7 @@
+   __ Ldr(card, MemOperand(tr, Thread::CardTableOffset<kArm64PointerSize>().Int32Value()));
+   // Calculate the offset (in the card table) of the card corresponding to `object`.
+ #ifdef ART_NCE
+-  __ Mov(temp.X(), nce_art_reference_base);
++  __ Ldr(temp.X(), MemOperand(tr, Thread::NceReferenceBaseOffset<kArm64PointerSize>().Int32Value()));
+   __ Add(temp.X(), temp.X(), Operand(object.W(), UXTW));
+   __ Lsr(temp.X(), temp.X(), gc::accounting::CardTable::kCardShift);
+ #else
+@@ -3278,13 +3284,13 @@
+         // slow path.
+ 
+ #ifdef ART_NCE
+-        __ Mov(temp.X(), nce_art_reference_base);
++        __ Ldr(temp.X(), MemOperand(tr, Thread::NceReferenceBaseOffset<kArm64PointerSize>().Int32Value()));
+         __ Add(temp.X(), temp.X(), Operand(array.W(), UXTW));
+         __ Ldr(temp.W(), MemOperand(temp.X(), class_offset));
+-        __ Mov(temp2.X(), nce_art_reference_base);
++        __ Ldr(temp2.X(), MemOperand(tr, Thread::NceReferenceBaseOffset<kArm64PointerSize>().Int32Value()));
+         __ Add(temp2.X(), temp2.X(), Operand(temp.W(), UXTW));
+         __ Ldr(temp.W(), MemOperand(temp2.X(), component_offset));
+-        __ Mov(temp2.X(), nce_art_reference_base);
++        __ Ldr(temp2.X(), MemOperand(tr, Thread::NceReferenceBaseOffset<kArm64PointerSize>().Int32Value()));
+         __ Add(temp2.X(), temp2.X(), Operand(Register(value).W(), UXTW));
+         __ Ldr(temp2.W(), MemOperand(temp2.X(), class_offset));
+ #else
+@@ -3315,7 +3321,7 @@
+ 
+           // /* HeapReference<Class> */ temp = temp->super_class_
+ #ifdef ART_NCE
+-          __ Mov(temp2.X(), nce_art_reference_base);
++          __ Ldr(temp2.X(), MemOperand(tr, Thread::NceReferenceBaseOffset<kArm64PointerSize>().Int32Value()));
+           __ Add(temp2.X(), temp2.X(), Operand(temp.W(), UXTW));
+           __ Ldr(temp.W(), MemOperand(temp2.X(), super_offset));
+ #else
+@@ -4661,7 +4667,7 @@
+       UseScratchRegisterScope temps(GetVIXLAssembler());
+       Register table = temps.AcquireX();
+       Register current = temps.AcquireW();
+-      __ Mov(current.X(), nce_art_reference_base);
++      __ Ldr(current.X(), MemOperand(tr, Thread::NceReferenceBaseOffset<kArm64PointerSize>().Int32Value()));
+       __ Add(table, current.X(), Operand(obj.W(), UXTW));
+       __ Ldr(table.W(), MemOperand(table, class_offset));
+       GetAssembler()->MaybeUnpoisonHeapReference(table.W());
+@@ -6234,7 +6240,7 @@
+   Register base = temps.AcquireX();
+   Register output = OutputRegister(instruction);
+   __ Ldr(output.X(), GetExceptionTlsAddress());
+-  __ Mov(base, nce_art_reference_base);
++  __ Ldr(base, MemOperand(tr, Thread::NceReferenceBaseOffset<kArm64PointerSize>().Int32Value()));
+   __ Sub(output.X(), output.X(), base);
+ #else
+   __ Ldr(OutputRegister(instruction), GetExceptionTlsAddress());
+@@ -6513,7 +6519,7 @@
+   {
+     UseScratchRegisterScope temps(GetVIXLAssembler());
+     Register base = temps.AcquireX();
+-    __ Mov(base, nce_art_reference_base);
++    __ Ldr(base, MemOperand(tr, Thread::NceReferenceBaseOffset<kArm64PointerSize>().Int32Value()));
+     __ Sub(x0, x0, base);
+   }
+ #endif
+@@ -6542,7 +6548,7 @@
+   {
+     UseScratchRegisterScope temps(GetVIXLAssembler());
+     Register base = temps.AcquireX();
+-    __ Mov(base, nce_art_reference_base);
++    __ Ldr(base, MemOperand(tr, Thread::NceReferenceBaseOffset<kArm64PointerSize>().Int32Value()));
+     __ Sub(x0, x0, base);
+   }
+ #endif
+--- a/compiler/optimizing/intrinsics_arm64.cc
++++ b/compiler/optimizing/intrinsics_arm64.cc
+@@ -2368,7 +2368,7 @@
+ #ifdef ART_NCE
+   str_address = XRegisterFrom(locations->GetTemp(locations->GetTempCount() - 2));
+   arg_address = XRegisterFrom(locations->GetTemp(locations->GetTempCount() - 1));
+-  __ Mov(str_address, nce_art_reference_base);
++  __ Ldr(str_address, MemOperand(tr, Thread::NceReferenceBaseOffset<kArm64PointerSize>().Int32Value()));
+   __ Add(arg_address, str_address, Operand(arg, UXTW));
+   __ Add(str_address, str_address, Operand(str, UXTW));
+ #endif
+--- a/compiler/optimizing/optimizing_compiler.cc
++++ b/compiler/optimizing/optimizing_compiler.cc
+@@ -921,11 +921,15 @@
+   void VisitLoadMethodType(HLoadMethodType* load) override {
+     if (!NceExpandedJitEnabled() ||
+         (load->GetLoadKind() != HLoadMethodType::LoadKind::kJitTableAddress &&
++         load->GetLoadKind() != HLoadMethodType::LoadKind::kBssEntry &&
+          load->GetLoadKind() != HLoadMethodType::LoadKind::kRuntimeCall)) RejectGraph(load);
+   }
+   void VisitLoadClass(HLoadClass* load) override {
+     if (load->GetLoadKind() != HLoadClass::LoadKind::kJitTableAddress &&
+         load->GetLoadKind() != HLoadClass::LoadKind::kReferrersClass &&
++        load->GetLoadKind() != HLoadClass::LoadKind::kBssEntry &&
++        load->GetLoadKind() != HLoadClass::LoadKind::kBssEntryPublic &&
++        load->GetLoadKind() != HLoadClass::LoadKind::kBssEntryPackage &&
+         load->GetLoadKind() != HLoadClass::LoadKind::kRuntimeCall) RejectGraph(load);
+   }
+   void VisitInvokeVirtual(HInvokeVirtual* call) override {
+@@ -934,6 +938,7 @@
+   }
+   void VisitLoadString(HLoadString* load) override {
+     if (load->GetLoadKind() != HLoadString::LoadKind::kJitTableAddress &&
++        load->GetLoadKind() != HLoadString::LoadKind::kBssEntry &&
+         load->GetLoadKind() != HLoadString::LoadKind::kRuntimeCall) RejectGraph(load);
+   }
+   void VisitVecLoad(HVecLoad* access) override {
+--- a/runtime/oat/oat.h
++++ b/runtime/oat/oat.h
+@@ -48,7 +48,12 @@
+  public:
+   static constexpr std::array<uint8_t, 4> kOatMagic { { 'o', 'a', 't', '\n' } };
+   // Last oat version changed reason: Ensure oat checksum determinism across hosts and devices.
++#ifdef ART_NCE
++  // NCE quick references and thread layout differ from upstream ART.
++  static constexpr std::array<uint8_t, 4> kOatVersion{{'n', '0', '1', '\0'}};
++#else
+   static constexpr std::array<uint8_t, 4> kOatVersion{{'2', '5', '9', '\0'}};
++#endif
+ 
+   static constexpr const char* kDex2OatCmdLineKey = "dex2oat-cmdline";
+   static constexpr const char* kDebuggableKey = "debuggable";

@@ -1,6 +1,8 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 #include <dlfcn.h>
 #include <jni.h>
+#include <inttypes.h>
+#include <sys/mman.h>
 #include <signal.h>
 #include <stdbool.h>
 #include <stdint.h>
@@ -113,7 +115,7 @@ static int test_compiler_paths(JNIEnv *env, void *library)
     return 0;
 }
 
-static int test_fast_baseline(JNIEnv *env, void *library)
+static int test_fast_baseline(JNIEnv *env, void *library, bool aot)
 {
     int (*compile)(JNIEnv *, jmethodID) = dlsym(library, "nce_art_compile_baseline");
     void (*keep_interpreted)(JNIEnv *, jmethodID) = dlsym(library, "nce_art_keep_interpreted");
@@ -147,11 +149,15 @@ static int test_fast_baseline(JNIEnv *env, void *library)
         {"interfaceString", "(LNceFastBaseline$Reader;)Ljava/lang/String;"},
         {"volatileFallback", "(LNceFastBaseline;)I"},
     };
+    bool (*uses_oat)(JNIEnv *, jmethodID, const char *, bool) = dlsym(library, "nce_art_method_uses_oat");
+    if (aot && !uses_oat)
+        return 105;
     double begin = now_ms();
     for (unsigned i = 0; i < sizeof(methods) / sizeof(*methods); ++i) {
         jmethodID method = (*env)->GetStaticMethodID(env, klass, methods[i][0], methods[i][1]);
-        int expected = enabled && i < 19 ? 2 : 1;
-        int actual = method ? compile(env, method) : 0;
+        int expected = !aot && enabled && i < 19 ? 2 : 1;
+        int actual = !method ? 0 : aot ? uses_oat(env, method, "/data/nce/oat/arm64/NceWorkload.odex", true)
+                                       : compile(env, method);
         if (actual != expected) {
             fprintf(stderr, "ART baseline selection %s expected=%d actual=%d\n", methods[i][0], expected, actual);
             return 102;
@@ -161,13 +167,18 @@ static int test_fast_baseline(JNIEnv *env, void *library)
     jmethodID run = (*env)->GetStaticMethodID(env, klass, "run", "()V");
     if (!run)
         return 103;
-    keep_interpreted(env, run);
+    if (!aot)
+        keep_interpreted(env, run);
     (*env)->CallStaticVoidMethod(env, klass, run);
     if ((*env)->ExceptionCheck(env)) {
         (*env)->ExceptionDescribe(env);
         return 104;
     }
     (*env)->DeleteLocalRef(env, klass);
+    if (aot) {
+        puts("{\"test\":\"android_art_aot_entries\",\"passed\":true,\"methods\":20}");
+        return 0;
+    }
     printf("{\"test\":\"android_art_fast_baseline_entries\",\"passed\":true,\"enabled\":%s,\"methods\":20,\"fast_methods\":%d,\"compile_ms\":%.3f}\n",
            enabled ? "true" : "false", enabled ? 19 : 0, compile_ms);
     return 0;
@@ -606,7 +617,7 @@ static int test_jit(JNIEnv *env, jclass workload, void *library)
     int volatile_result = test_volatile_floating(env, library);
     if (volatile_result)
         return volatile_result;
-    int fast_baseline_result = test_fast_baseline(env, library);
+    int fast_baseline_result = test_fast_baseline(env, library, false);
     if (fast_baseline_result)
         return fast_baseline_result;
     int compiler_paths_result = test_compiler_paths(env, library);
@@ -665,6 +676,15 @@ int main(void)
     bool inlining_test = fgets(mode, sizeof(mode), stdin) && !strncmp(mode, "inline:", 7);
     bool inlining_enabled = inlining_test && atoi(mode + 7) != 0;
     bool verified_oat_test = !strcmp(mode, "oat-verify\n");
+    bool shifted_heap = !strcmp(mode, "oat-shifted\n");
+    bool aot_test = shifted_heap || !strcmp(mode, "oat-speed\n");
+    const size_t reservation_size = 64 * 1024 * 1024;
+    void *reservation = NULL;
+    if (shifted_heap) {
+        reservation = mmap(NULL, reservation_size, PROT_NONE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+        if (reservation == MAP_FAILED)
+            return 111;
+    }
     if (signal(SIGALRM, deadline) == SIG_ERR)
         return 11;
     alarm(90);
@@ -700,7 +720,7 @@ int main(void)
         return 4;
     check_cfi();
     JavaVMOption options[] = {
-        {.optionString = "-Xusejit:true"},
+        {.optionString = aot_test ? "-Xusejit:false" : "-Xusejit:true"},
         {.optionString = "-Xjitmaxsize:32m"},
         {.optionString = "-Xjitthreshold:65535"},
         {.optionString = "-Xcompiler-option"},
@@ -729,50 +749,65 @@ int main(void)
     fflush(stdout);
     if (create(&vm, (void **)&env, &args) != JNI_OK || !vm || !env)
         return 5;
+    if (aot_test) {
+        uintptr_t *base = dlsym(library, "nce_art_reference_base");
+        if (!base || !*base)
+            return 112;
+        printf("{\"phase\":\"art_aot_heap\",\"shifted\":%s,\"reference_base\":%" PRIuPTR "}\n",
+               shifted_heap ? "true" : "false", *base);
+    }
     if (verified_oat_test) {
-        bool (*uses_oat)(JNIEnv *, jmethodID, const char *) = dlsym(library, "nce_art_method_uses_verified_oat");
+        bool (*uses_oat)(JNIEnv *, jmethodID, const char *, bool) = dlsym(library, "nce_art_method_uses_oat");
         jclass workload = (*env)->FindClass(env, "NceWorkload");
         jmethodID method = workload ? (*env)->GetStaticMethodID(env, workload, "mixBaseline", "(JJ)J") : NULL;
-        if (!uses_oat || !method || !uses_oat(env, method, "/data/nce/oat/arm64/NceWorkload.odex"))
+        if (!uses_oat || !method || !uses_oat(env, method, "/data/nce/oat/arm64/NceWorkload.odex", false))
             return 110;
         (*env)->DeleteLocalRef(env, workload);
         puts("{\"test\":\"android_art_compiler_runtime_load\",\"passed\":true,\"filter\":\"verify\"}");
     }
-    int entry_result = test_interpreter_entry(env, library);
-    if (entry_result)
-        return entry_result;
-    if (inlining_test) {
-        int result = test_inlining(env, library, inlining_enabled);
+    if (!aot_test) {
+        int entry_result = test_interpreter_entry(env, library);
+        if (entry_result)
+            return entry_result;
+        if (inlining_test) {
+            int result = test_inlining(env, library, inlining_enabled);
+            if (result)
+                return result;
+        } else {
+            puts("{\"phase\":\"android_art_java_workload\"}");
+            fflush(stdout);
+            jclass workload = (*env)->FindClass(env, "NceWorkload");
+            jmethodID main_method = workload ? (*env)->GetStaticMethodID(env, workload, "main", "([Ljava/lang/String;)V") : NULL;
+            if (main_method)
+                (*env)->CallStaticVoidMethod(env, workload, main_method, NULL);
+            if ((*env)->ExceptionCheck(env)) {
+                (*env)->ExceptionDescribe(env);
+                return 6;
+            }
+            if (!main_method)
+                return 7;
+            jclass proxy = (*env)->FindClass(env, "NceProxy");
+            jmethodID proxy_test = proxy ? (*env)->GetStaticMethodID(env, proxy, "run", "()V") : NULL;
+            if (!proxy_test)
+                return 65;
+            (*env)->CallStaticVoidMethod(env, proxy, proxy_test);
+            if ((*env)->ExceptionCheck(env)) {
+                (*env)->ExceptionDescribe(env);
+                return 66;
+            }
+            int jit_result = test_jit(env, workload, library);
+            if (jit_result)
+                return jit_result;
+        }
+    } else {
+        int result = test_fast_baseline(env, library, true);
         if (result)
             return result;
-    } else {
-        puts("{\"phase\":\"android_art_java_workload\"}");
-        fflush(stdout);
-        jclass workload = (*env)->FindClass(env, "NceWorkload");
-        jmethodID main_method = workload ? (*env)->GetStaticMethodID(env, workload, "main", "([Ljava/lang/String;)V") : NULL;
-        if (main_method)
-            (*env)->CallStaticVoidMethod(env, workload, main_method, NULL);
-        if ((*env)->ExceptionCheck(env)) {
-            (*env)->ExceptionDescribe(env);
-            return 6;
-        }
-        if (!main_method)
-            return 7;
-        jclass proxy = (*env)->FindClass(env, "NceProxy");
-        jmethodID proxy_test = proxy ? (*env)->GetStaticMethodID(env, proxy, "run", "()V") : NULL;
-        if (!proxy_test)
-            return 65;
-        (*env)->CallStaticVoidMethod(env, proxy, proxy_test);
-        if ((*env)->ExceptionCheck(env)) {
-            (*env)->ExceptionDescribe(env);
-            return 66;
-        }
-        int jit_result = test_jit(env, workload, library);
-        if (jit_result)
-            return jit_result;
     }
     if ((*vm)->DestroyJavaVM(vm) != JNI_OK)
         return 8;
+    if (reservation && munmap(reservation, reservation_size))
+        return 113;
     alarm(0);
     if (clock_gettime(CLOCK_MONOTONIC, &end) != 0)
         return 12;

@@ -9,3 +9,17 @@
            static_cast<uint32_t>(initial_value)
        };
        JValue result;
+@@ -3191,6 +3191,13 @@
+ 
+ int main(int argc, char** argv) {
+   int result = static_cast<int>(art::Dex2oat(argc, argv));
++#ifdef ART_NCE
++  if (result == 0) {
++    printf("{\"phase\":\"art_compiler_heap\",\"reference_base\":%llu}\n",
++           static_cast<unsigned long long>(nce_art_reference_base));
++    fflush(stdout);
++  }
++#endif
+   // Everything was done, do an explicit exit here to avoid running Runtime destructors that take
+   // time (bug 10645725) unless we're a debug or instrumented build or running on a memory tool.
+   // Note: The Dex2Oat class should not destruct the runtime in this case.
