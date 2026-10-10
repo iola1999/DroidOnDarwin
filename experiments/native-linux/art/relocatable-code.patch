@@ -220,3 +220,17 @@
  
    static constexpr const char* kDex2OatCmdLineKey = "dex2oat-cmdline";
    static constexpr const char* kDebuggableKey = "debuggable";
+--- a/runtime/oat/oat_file_manager.cc
++++ b/runtime/oat/oat_file_manager.cc
+@@ -909,6 +909,10 @@
+     if (ContainsElement(boot_oat_files, oat_file.get())) {
+       continue;
+     }
+-    os << oat_file->GetLocation() << ": " << oat_file->GetCompilerFilter() << "\n";
++    os << oat_file->GetLocation() << ": " << oat_file->GetCompilerFilter();
++#ifdef ART_NCE
++    os << " executable=" << (oat_file->IsExecutable() ? "true" : "false");
++#endif
++    os << "\n";
+   }
+ }

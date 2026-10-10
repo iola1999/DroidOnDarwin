@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """在 Darwin 原生执行 LKL，并从受控 ARM64 ELF 调用真实 Linux 文件与定时器接口。"""
 import argparse
+import art_aot
 import hashlib
 from lkl_nce_patch import apply
 from build_nce_userspace import build as build_userspace
@@ -98,6 +99,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--processes", action="store_true")
     parser.add_argument("--art-oat", type=Path, help="Validate an offline-compiled OAT directory with the runtime build")
+    parser.add_argument("--art-desktop", action="store_true", help="Generate or validate the SystemUI/Launcher AOT variant")
     parser.add_argument("--art-compiler", action="store_true", help="Validate the matching dex2oat tool in an isolated NCE image")
     parser.add_argument("--graphics-angle", type=Path,
                         help="Run Linux GLES over the in-process renderer using these macOS ANGLE libraries")
@@ -112,10 +114,18 @@ def main():
         parser.error("--graphics-angle requires --processes")
     if arguments.storage_image and not PROCESS:
         parser.error("--storage-image requires --processes")
-    if (arguments.art_compiler or arguments.art_oat) and (not PROCESS or angle or os.environ.get('NCE_DESKTOP') or os.environ.get('NCE_SYSTEM_SERVER_PROBE')):
-        parser.error("ART compiler checks require --processes and cannot run the desktop or graphics checks")
+    if (arguments.art_compiler or arguments.art_oat) and not PROCESS:
+        parser.error("ART compiler checks require --processes")
+    if arguments.art_desktop and not (arguments.art_compiler or arguments.art_oat):
+        parser.error("--art-desktop requires --art-compiler or --art-oat")
     if arguments.art_compiler and arguments.art_oat:
         parser.error("Choose artifact generation or runtime loading")
+    if arguments.art_compiler or (arguments.art_oat and not arguments.art_desktop):
+        if angle or os.environ.get('NCE_DESKTOP') or os.environ.get('NCE_SYSTEM_SERVER_PROBE'):
+            parser.error("Isolated ART checks cannot run desktop or graphics checks")
+    if arguments.art_oat and arguments.art_desktop:
+        if not angle or not os.environ.get('NCE_SYSTEM_SERVER_PROBE') or os.environ.get('NCE_DESKTOP'):
+            parser.error("Desktop AOT validation requires graphics and NCE_SYSTEM_SERVER_PROBE=1")
     if arguments.art_oat:
         arguments.art_oat = arguments.art_oat.resolve()
     if angle:
@@ -125,7 +135,7 @@ def main():
     base = OUT
     if PROCESS:
         BUILD = base / "lkl-process-build"
-        OUT = base / ("art-compiler" if arguments.art_compiler else "art-oat" if arguments.art_oat else "processes")
+        OUT = base / ("art-compiler-desktop" if arguments.art_compiler and arguments.art_desktop else "art-compiler" if arguments.art_compiler else "art-oat" if arguments.art_oat and not arguments.art_desktop else "processes")
         OUT.mkdir(exist_ok=True)
         for name in ("guest-image.h", "guest-source.sha256"):
             shutil.copyfile(base / name, OUT / name)
@@ -221,7 +231,7 @@ def main():
          "-z", "common-page-size=16384", OUT / "lkl-exports.o", OUT / "lkl-bridge.o", "-o", OUT / "lkl.so"])
     package_elf(OUT / "lkl.so")
     if PROCESS:
-        build_userspace(OUT, llvm, art_compiler=arguments.art_compiler, art_oat=arguments.art_oat)
+        build_userspace(OUT, llvm, art_compiler=arguments.art_compiler, art_oat=arguments.art_oat, art_desktop=arguments.art_desktop)
     inputs = [EXPERIMENT / name for name in ("lkl-main.c", "lkl-host.c", "nce.c", "entry.S")]
     flags = ["-O2", "-g", "-Wall", "-Wextra", "-Werror", "-I", OUT, "-I", EXPERIMENT]
     if PROCESS:
@@ -275,13 +285,17 @@ def main():
     with (OUT / "lkl-results.jsonl").open("w") as output, (OUT / "lkl-console.log").open("w") as log:
         probe_env = {**os.environ, "NCE_GPU_OUTPUT": str(OUT / "gpu.bmp"), "NCE_GRAPHICS_OUTPUT": str(OUT / "framework.png"), "NCE_STORAGE_IMAGE": str(data_image), "NCE_SYSTEM_IMAGE": str(OUT / "system.img")} if PROCESS else os.environ
         if arguments.art_compiler:
-            probe_env['NCE_ART_COMPILER_PROBE'] = '1'
+            probe_env.update(NCE_ART_COMPILER_PROBE='1', NCE_ART_NTERP='1',
+                             NCE_ART_EXPANDED_JIT='1', NCE_ART_FAST_BASELINE='0')
+            if arguments.art_desktop:
+                probe_env['NCE_ART_COMPILER_DESKTOP'] = '1'
             artifacts = OUT / 'artifacts'
             artifacts.mkdir(exist_ok=True)
             probe_env['NCE_ART_COMPILER_OUTPUT'] = str(artifacts)
         if arguments.art_oat:
-            probe_env['NCE_ART_OAT_PROBE'] = '1'
-        run([OUT / "lkl-probe", OUT / "lkl-image.bin"], timeout=480, stdout=output, stderr=log, env={**probe_env, **graphics_env})
+            probe_env['NCE_TRACE_SYSTEMUI' if arguments.art_desktop else 'NCE_ART_OAT_PROBE'] = '1'
+        probe_timeout = 3600 if arguments.art_compiler and arguments.art_desktop else 480
+        run([OUT / "lkl-probe", OUT / "lkl-image.bin"], timeout=probe_timeout, stdout=output, stderr=log, env={**probe_env, **graphics_env})
     results = [json.loads(line) for line in (OUT / "lkl-results.jsonl").read_text().splitlines()]
     if results[-1].get("result") != "passed":
         raise SystemExit("LKL probe did not complete")
@@ -305,13 +319,13 @@ def main():
              EXPERIMENT / "dispatch-test.c", *graphics_link, "-o", OUT / "dispatch-probe"])
         with (OUT / "dispatch-results.jsonl").open("w") as output, (OUT / "dispatch-console.log").open("w") as log:
             subprocess.run([OUT / "dispatch-probe", OUT / "lkl-image.bin"], check=True,
-                           timeout=480, stdout=output, stderr=log,
+                           timeout=probe_timeout, stdout=output, stderr=log,
                            env={**probe_env, **graphics_env, "NCE_GPU_OUTPUT": str(OUT / "dispatch-gpu.bmp"), "NCE_GRAPHICS_OUTPUT": str(OUT / "dispatch-framework.png")})
         dispatch_results = [json.loads(line) for line in (OUT / "dispatch-results.jsonl").read_text().splitlines()]
         if dispatch_results[-1].get("result") != "passed":
             raise SystemExit("GCD probe did not complete")
         check_ext4_shutdown(data_image)
-        if arguments.art_oat:
+        if arguments.art_oat and not arguments.art_desktop:
             compiler_bases = set(json.loads((arguments.art_oat / 'manifest.json').read_text())['compiler_heap_bases'])
             for records in (results, dispatch_results):
                 runtime_bases = {row['reference_base'] for row in records if row.get('phase') == 'art_aot_heap'}
@@ -333,7 +347,7 @@ def main():
                 if name == "android_application_data_persistence" and checks[0]["row_id"] != checks[1]["row_id"]:
                     raise SystemExit("Clock alarm identity changed across Android restart")
         run(["/opt/homebrew/opt/e2fsprogs/sbin/e2fsck", "-fn", data_image])
-        if not arguments.art_compiler and not arguments.art_oat and (OUT / "framework.png").read_bytes() != (OUT / "dispatch-framework.png").read_bytes():
+        if not arguments.art_compiler and (not arguments.art_oat or arguments.art_desktop) and (OUT / "framework.png").read_bytes() != (OUT / "dispatch-framework.png").read_bytes():
             raise SystemExit("CLI and GCD framework images differ")
         if angle and (OUT / "gpu.bmp").read_bytes() != (OUT / "dispatch-gpu.bmp").read_bytes():
             raise SystemExit("CLI and GCD GPU images differ")
@@ -378,7 +392,7 @@ def main():
                     *sorted(EXPERIMENT.glob("lkl-*.h")),
                     *sorted(EXPERIMENT.glob("lkl-nce-*.c")), EXPERIMENT / "exec-guest.S", EXPERIMENT / "programs.h",
                     Path(__file__).with_name("build_nce_userspace.py"), EXPERIMENT / "dispatch-test.c", EXPERIMENT / "host-context-test.c",
-                    Path(__file__).with_name("prepare_art_test_dex.py"),
+                    Path(__file__).with_name("prepare_art_test_dex.py"), Path(__file__).with_name("art_aot.py"),
                     Path(__file__).with_name("prepare_android_runtime.py"), Path(__file__).with_name("prepare_android_modules.py"),
                     Path(__file__).with_name("prepare_android_desktop.py"), Path(__file__).with_name("build_android_linker.py"),
                     Path(__file__).with_name("build_android_libc.py"), Path(__file__).with_name("build_android_art.py"),
@@ -394,10 +408,19 @@ def main():
             manifest["stage"] = "NCE ART offline compiler validation"
         if arguments.art_oat:
             manifest["stage"] = "NCE ART offline code execution validation"
-            sources += [arguments.art_oat / name for name in ('manifest.json', 'NceWorkload.odex', 'NceWorkload.vdex')]
+            artifact = json.loads((arguments.art_oat / 'manifest.json').read_text())
+            sources += [arguments.art_oat / name for name in ['manifest.json', *artifact['files']]]
+            manifest['art_aot'] = artifact
+            if arguments.art_desktop:
+                for log_name in ('lkl-console.log', 'dispatch-console.log'):
+                    log = (OUT / log_name).read_text()
+                    for target in art_aot.DESKTOP:
+                        path = str(Path(target['dex']).parent / 'oat/arm64' / (target['name'] + '.odex'))
+                        if path + ': speed executable=true' not in log:
+                            raise SystemExit('Missing executable AOT load in ' + log_name + ': ' + path)
         manifest["userspace_libraries"] = {"musl": "1.2.5", "compiler-rt": "20.1.8", "dash": "0.5.12"}
         manifest["generated_sha256"] = {name: hashlib.sha256((OUT / name).read_bytes()).hexdigest()
-                                        for name in ["system.img", "android-data-seed.img", "storage-test.elf", "program-images.h", "user-scripts.h", "payload.S", "payload.bin", "lkl-image.h", "lkl-host-ops.h", "guest-image.h",
+                                        for name in ["system.img", "art-aot-targets.h", "android-data-seed.img", "storage-test.elf", "program-images.h", "user-scripts.h", "payload.S", "payload.bin", "lkl-image.h", "lkl-host-ops.h", "guest-image.h",
                                                      "exec-guest.elf", "sigreturn.elf", "init.elf", "worker.elf", "mm-bench.elf", "dash.elf",
                                                      "libc.so", "dependency.so", "plugin.so", "dynamic.elf", "binder-test.elf", "gpu-test.elf", "egl-test.elf", "gralloc-test.elf", "libnce-qemupipe.so", "bionic-test.elf", "cfi-test.elf", "libnce-cfi-a.so", "libnce-cfi-b.so", "nce-native-libraries.apk", "art-test.elf", "art-heap-test.elf", "android-services-test.elf"]}
         android = ROOT / "work/native-linux-nce/android"
@@ -423,13 +446,8 @@ def main():
                                       if row.get('phase') == 'art_compiler_heap'})
         if not compiler_heap_bases:
             raise SystemExit('Compiler heap address was not recorded')
-        (artifacts / 'manifest.json').write_text(json.dumps({
-            'art_inputs': manifest['android_builds']['art-build']['inputs'],
-            'compiler_heap_bases': compiler_heap_bases,
-            'dex_sha256': hashlib.sha256((OUT / 'java-classes/classes.dex').read_bytes()).hexdigest(),
-            'files': {name: hashlib.sha256((artifacts / name).read_bytes()).hexdigest()
-                      for name in ('NceWorkload.odex', 'NceWorkload.vdex')}
-        }, indent=2) + '\n')
+        art_aot.write_manifest(artifacts, manifest['android_builds']['art-build']['inputs'],
+                               json.loads((OUT / 'art-aot-plan.json').read_text()), compiler_heap_bases)
     print(json.dumps(manifest, indent=2))
 
 

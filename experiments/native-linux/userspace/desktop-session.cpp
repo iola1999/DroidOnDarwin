@@ -26,7 +26,7 @@ static void trace_systemui()
             continue;
         ssize_t count = read(fd, name, sizeof(name) - 1);
         close(fd);
-        if (count > 0 && (!strcmp(name, "com.android.systemui") || !strcmp(name, "system_server"))) {
+        if (count > 0 && (!strcmp(name, "com.android.systemui") || !strcmp(name, "system_server") || !strcmp(name, "com.android.launcher3"))) {
             pid_t pid = atoi(process->d_name);
             dprintf(2, "Requesting ART SIGQUIT trace: %s pid=%d result=%d\n", name, pid, kill(pid, SIGQUIT));
         }
@@ -42,8 +42,8 @@ void nce_desktop_start(bool interactive)
     nce_android_command({"activity", "start-activity", "-a", "android.intent.action.MAIN",
                          "-c", "android.intent.category.HOME"},
                         "Starting:");
-    trace_systemui();
     nce_surface_check("com.android.launcher3", nce_diagnostics() ? "/data/nce/desktop-launcher.png" : "--ready");
+    trace_systemui();
     if (interactive) {
         puts("{\"session\":\"android_desktop_ready\"}");
         dprintf(2, "{\"phase\":\"android_desktop_running\"}\n");

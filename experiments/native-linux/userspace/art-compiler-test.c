@@ -1,4 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
+#include "art-aot-targets.h"
+#include <dlfcn.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <signal.h>
@@ -6,6 +8,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
+#include <sys/system_properties.h>
 #include <sys/wait.h>
 #include <time.h>
 #include <unistd.h>
@@ -16,33 +19,121 @@ static const char boot_class_path[] =
     "/apex/com.android.art/javalib/bouncycastle.jar:/apex/com.android.art/javalib/apache-xml.jar:"
     "/apex/com.android.i18n/javalib/core-icu4j.jar:/apex/com.android.conscrypt/javalib/conscrypt.jar";
 
-static int compile(int invalid_input, int speed)
+static int wait_child(pid_t child)
 {
-    pid_t child = fork();
-    if (child < 0)
-        return -1;
-    if (!child) {
-        alarm(180);
-        execl("/system/bin/nce-dex2oat", "nce-dex2oat", "-j1", "--no-watch-dog",
-              invalid_input ? "--dex-file=/data/nce/invalid.dex" : "--dex-file=/data/nce/NceWorkload.dex",
-              invalid_input ? "--oat-file=/data/nce/compiler-invalid.odex" : "--oat-file=/data/nce/oat/arm64/NceWorkload.odex",
-              speed ? "--compiler-filter=speed" : "--compiler-filter=verify",
-              "--inline-max-code-units=0", "--generate-debug-info",
-              "--instruction-set=arm64", "--boot-image=/data/no-boot-image.art",
-              "--runtime-arg", boot_class_path, "--runtime-arg", "-Xms16m",
-              "--runtime-arg", "-Xmx256m", "--dump-timings", (char *)NULL);
-        _exit(127);
-    }
     int status = -1;
     pid_t waited;
     do {
         waited = waitpid(child, &status, 0);
     } while (waited < 0 && errno == EINTR);
     if (waited != child || !WIFEXITED(status)) {
-        fprintf(stderr, "dex2oat child did not exit normally: pid=%d waited=%d status=%d\n", child, waited, status);
+        fprintf(stderr, "compiler child did not exit normally: pid=%d waited=%d status=%d\n", child, waited, status);
         return -1;
     }
     return WEXITSTATUS(status);
+}
+
+static int compile(const char *dex, const char *oat, const char *classpath, const char *context, int speed, unsigned seconds)
+{
+    char dex_arg[512], oat_arg[512], context_arg[1024];
+    if (snprintf(dex_arg, sizeof(dex_arg), "--dex-file=%s", dex) >= (int)sizeof(dex_arg) ||
+        snprintf(oat_arg, sizeof(oat_arg), "--oat-file=%s", oat) >= (int)sizeof(oat_arg) ||
+        snprintf(context_arg, sizeof(context_arg), "--class-loader-context=%s", context) >= (int)sizeof(context_arg))
+        return -1;
+    pid_t child = fork();
+    if (child < 0)
+        return -1;
+    if (!child) {
+        alarm(seconds);
+        execl("/system/bin/nce-dex2oat", "nce-dex2oat", "-j1", "--no-watch-dog",
+              dex_arg, oat_arg, context_arg,
+              speed ? "--compiler-filter=speed" : "--compiler-filter=verify",
+              "--inline-max-code-units=0", "--generate-debug-info",
+              "--instruction-set=arm64", "--boot-image=/data/no-boot-image.art",
+              "--runtime-arg", classpath, "--runtime-arg", "-Xms16m",
+              "--runtime-arg", "-Xmx256m", "--dump-timings", (char *)NULL);
+        _exit(127);
+    }
+    return wait_child(child);
+}
+
+static int prepare_properties(void)
+{
+    int ready[2];
+    if (pipe(ready))
+        return -1;
+    pid_t child = fork();
+    if (child < 0) {
+        close(ready[0]);
+        close(ready[1]);
+        return -1;
+    }
+    if (!child) {
+        close(ready[0]);
+        char descriptor[24];
+        snprintf(descriptor, sizeof(descriptor), "%d", ready[1]);
+        setenv("LD_PRELOAD", "/system/lib64/libnce-framework-log.so", 1);
+        execl("/system/bin/android-services-test", "android-services-test", "properties", descriptor, (char *)NULL);
+        _exit(127);
+    }
+    close(ready[1]);
+    char byte = 0;
+    int result = -1;
+    if (read(ready[0], &byte, 1) == 1 && byte == 'r') {
+        int (*initialize)(void) = dlsym(RTLD_DEFAULT, "__system_properties_init");
+        if (initialize && !initialize() &&
+            !__system_property_set("ro.build.version.sdk", "36") &&
+            !__system_property_set("ro.build.version.codename", "REL") &&
+            !__system_property_set("ro.build.version.all_codenames", "REL"))
+            result = 0;
+    }
+    close(ready[0]);
+    // The property area remains available to compiler children after its writer exits.
+    if (kill(child, SIGTERM))
+        result = -1;
+    int status = 0;
+    if (waitpid(child, &status, 0) != child || !WIFSIGNALED(status) || WTERMSIG(status) != SIGTERM)
+        result = -1;
+    return result;
+}
+
+static int desktop_classpath(char *result, size_t capacity)
+{
+    pid_t child = fork();
+    if (child < 0)
+        return -1;
+    if (!child) {
+        alarm(60);
+        if (setenv("LD_PRELOAD", "/system/lib64/libnce-framework-log.so", 1))
+            _exit(127);
+        execl("/system/bin/derive_classpath", "derive_classpath", "/data/nce/classpath", (char *)NULL);
+        _exit(127);
+    }
+    if (wait_child(child))
+        return -1;
+    FILE *file = fopen("/data/nce/classpath", "r");
+    if (!file)
+        return -1;
+    char line[16384];
+    int found = 0;
+    while (fgets(line, sizeof(line), file)) {
+        const char prefix[] = "export BOOTCLASSPATH ";
+        if (strncmp(line, prefix, sizeof(prefix) - 1))
+            continue;
+        if (!strchr(line, '\n') || found) {
+            found = 0;
+            break;
+        }
+        line[strcspn(line, "\n")] = 0;
+        // The desktop Zygote appends this same framework helper to the derived path.
+        int length = snprintf(result, capacity, "-Xbootclasspath:%s:/system/framework/nce-framework.jar", line + sizeof(prefix) - 1);
+        if (length < 0 || (size_t)length >= capacity)
+            break;
+        found = 1;
+    }
+    int failed = ferror(file);
+    fclose(file);
+    return found && !failed ? 0 : -1;
 }
 
 static off_t check_file(const char *path, const char *magic)
@@ -60,7 +151,10 @@ static off_t check_file(const char *path, const char *magic)
 int main(void)
 {
     char mode[32] = {};
-    int speed = fgets(mode, sizeof(mode), stdin) && !strcmp(mode, "speed\n");
+    if (!fgets(mode, sizeof(mode), stdin))
+        mode[0] = 0;
+    int speed = !strcmp(mode, "speed\n");
+    int desktop = !strcmp(mode, "desktop\n");
     setenv("ANDROID_ROOT", "/system", 1);
     setenv("ANDROID_DATA", "/data", 1);
     setenv("ANDROID_ART_ROOT", "/apex/com.android.art", 1);
@@ -70,12 +164,37 @@ int main(void)
     if ((mkdir("/data/nce/oat", 0700) && errno != EEXIST) ||
         (mkdir("/data/nce/oat/arm64", 0700) && errno != EEXIST))
         return 1;
+    if (desktop) {
+        char classpath[16384];
+        if (prepare_properties() || desktop_classpath(classpath, sizeof(classpath)))
+            return 5;
+        for (size_t i = 0; i < sizeof(aot_desktop_targets) / sizeof(aot_desktop_targets[0]); ++i) {
+            char oat_path[512], vdex_path[512];
+            snprintf(oat_path, sizeof(oat_path), "/data/nce/oat/arm64/%s.odex", aot_desktop_targets[i].name);
+            snprintf(vdex_path, sizeof(vdex_path), "/data/nce/oat/arm64/%s.vdex", aot_desktop_targets[i].name);
+            struct timespec begin, end;
+            if (clock_gettime(CLOCK_MONOTONIC, &begin))
+                return 5;
+            fprintf(stderr, "Compiling desktop AOT: %s\n", aot_desktop_targets[i].dex);
+            int result = compile(aot_desktop_targets[i].dex, oat_path, classpath, aot_desktop_targets[i].context, 1, 1500);
+            off_t oat = check_file(oat_path, "\177ELF"), vdex = check_file(vdex_path, "vdex");
+            if (result || oat < 0 || vdex < 0 || clock_gettime(CLOCK_MONOTONIC, &end)) {
+                fprintf(stderr, "Desktop AOT failed: %s exit=%d\n", aot_desktop_targets[i].name, result);
+                return 6;
+            }
+            double elapsed = (end.tv_sec - begin.tv_sec) * 1000.0 + (end.tv_nsec - begin.tv_nsec) / 1000000.0;
+            printf("{\"test\":\"android_art_compiler_desktop\",\"passed\":true,\"target\":\"%s\",\"oat_bytes\":%lld,\"vdex_bytes\":%lld,\"elapsed_ms\":%.3f}\n",
+                   aot_desktop_targets[i].name, (long long)oat, (long long)vdex, elapsed);
+            fflush(stdout);
+        }
+        return 0;
+    }
     unlink("/data/nce/oat/arm64/NceWorkload.odex");
     unlink("/data/nce/oat/arm64/NceWorkload.vdex");
     struct timespec begin, end;
     if (clock_gettime(CLOCK_MONOTONIC, &begin))
         return 1;
-    int result = compile(0, speed);
+    int result = compile("/data/nce/NceWorkload.dex", "/data/nce/oat/arm64/NceWorkload.odex", boot_class_path, "PCL[]", speed, 180);
     if (result) {
         fprintf(stderr, "dex2oat failed: exit=%d\n", result);
         return 2;
@@ -90,7 +209,7 @@ int main(void)
     int invalid = open("/data/nce/invalid.dex", O_WRONLY | O_CREAT | O_TRUNC | O_CLOEXEC, 0600);
     if (invalid < 0 || write(invalid, "invalid dex", 11) != 11 || close(invalid))
         return 4;
-    result = compile(1, speed);
+    result = compile("/data/nce/invalid.dex", "/data/nce/compiler-invalid.odex", boot_class_path, "PCL[]", speed, 180);
     if (result <= 0 || result == 127)
         return 4;
     printf("{\"test\":\"android_art_compiler_invalid_input\",\"passed\":true,\"exit\":%d}\n", result);

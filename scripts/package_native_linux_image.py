@@ -28,6 +28,8 @@ def write_runtime(directory):
              'system_sha256': summary['generated_sha256']['system.img'],
              'source_inputs_sha256': hashlib.sha256(json.dumps(summary['input_sha256'], sort_keys=True).encode()).hexdigest(),
              'art_build_inputs': art['build_inputs'], 'art_files': art['files']}
+    if 'art_aot' in summary:
+        build['art_aot'] = summary['art_aot']
     (Path(directory) / 'Runtime.json').write_text(json.dumps({'runtime': runtime(), 'build': build}) + '\n')
 
 

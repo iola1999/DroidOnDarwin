@@ -1,4 +1,5 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
+#include "art-aot-targets.h"
 #include "nce.h"
 #include "memory.h"
 #include "layout.h"
@@ -998,7 +999,7 @@ static void run_program(long (*call)(long, long *), const char *path, const char
     process->state.syscall = syscall_from_guest;
     process->exec_path = path;
     struct LogPump pump = {.call = call, .stopping = 0};
-    bool live_log = !strcmp(path, "/system/bin/android-services-test");
+    bool live_log = !strcmp(path, "/system/bin/android-services-test") || !strcmp(path, "/system/bin/art-compiler-test");
     pthread_t log_thread;
     if (live_log)
         REQUIRE(pthread_create(&log_thread, NULL, stream_guest_log, &pump) == 0);
@@ -1574,7 +1575,6 @@ void nce_process_run(long (*host_syscall)(long, long *), long (*guest_syscall)(l
         REQUIRE(get_file(host_syscall, "/stdout", benchmark, sizeof(benchmark)) > 0);
         REQUIRE(strstr(benchmark, "android_art_compiler_verify"));
         REQUIRE(strstr(benchmark, "android_art_compiler_invalid_input"));
-        fputs(benchmark, stdout);
         memory_report(host_syscall, "after_art_compiler");
         run_program(host_syscall, "/system/bin/art-test", "oat-verify\n");
         REQUIRE(get_file(host_syscall, "/stdout", benchmark, sizeof(benchmark)) > 0);
@@ -1585,16 +1585,25 @@ void nce_process_run(long (*host_syscall)(long, long *), long (*guest_syscall)(l
         run_program(host_syscall, "/system/bin/art-compiler-test", "speed\n");
         REQUIRE(get_file(host_syscall, "/stdout", benchmark, sizeof(benchmark)) > 0);
         REQUIRE(strstr(benchmark, "android_art_compiler_speed"));
-        fputs(benchmark, stdout);
         const char *output = getenv("NCE_ART_COMPILER_OUTPUT");
         REQUIRE(output);
+        bool desktop = getenv("NCE_ART_COMPILER_DESKTOP") != NULL;
+        if (desktop) {
+            run_program(host_syscall, "/system/bin/art-compiler-test", "desktop\n");
+            REQUIRE(get_file(host_syscall, "/stdout", benchmark, sizeof(benchmark)) > 0);
+            REQUIRE(strstr(benchmark, "android_art_compiler_desktop"));
+        }
         const char *extensions[] = {"odex", "vdex"};
-        for (size_t i = 0; i < 2; ++i) {
-            char guest[128], host[4096];
-            snprintf(guest, sizeof(guest), "/data/nce/oat/arm64/NceWorkload.%s", extensions[i]);
-            int length = snprintf(host, sizeof(host), "%s/NceWorkload.%s", output, extensions[i]);
-            REQUIRE(length > 0 && (size_t)length < sizeof(host));
-            export_guest_file(host_syscall, guest, host);
+        size_t targets = desktop ? sizeof(aot_desktop_targets) / sizeof(aot_desktop_targets[0]) : 1;
+        for (size_t i = 0; i < targets; ++i) {
+            const char *name = desktop ? aot_desktop_targets[i].name : "NceWorkload";
+            for (size_t j = 0; j < 2; ++j) {
+                char guest[512], host[4096];
+                snprintf(guest, sizeof(guest), "/data/nce/oat/arm64/%s.%s", name, extensions[j]);
+                int length = snprintf(host, sizeof(host), "%s/%s.%s", output, name, extensions[j]);
+                REQUIRE(length > 0 && (size_t)length < sizeof(host));
+                export_guest_file(host_syscall, guest, host);
+            }
         }
     } else if (getenv("NCE_ART_OAT_PROBE")) {
         const char *modes[] = {"oat-speed\n", "oat-shifted\n"};

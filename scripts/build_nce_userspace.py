@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """编译内置 Linux 程序，按 ELF 段与 AArch64 映射符号生成执行布局。"""
 import base64
+import art_aot
 import hashlib
 import inspect as python_inspect
 import json
@@ -628,7 +629,7 @@ def extend_function_ranges(path, data, section, ranges, objects, sections=(), fu
     return merged
 
 
-def inspect(path, shared=False, function_symbols=False):
+def inspect(path, shared=False, function_symbols=False, nce_oat=False):
     data = path.read_bytes()
     if len(data) < 64 or data[:7] != b'\x7fELF\x02\x01\x01' or struct.unpack_from('<HH', data, 16) != (3, 183):
         raise RuntimeError(f'{path}: requires AArch64 ET_DYN')
@@ -667,6 +668,11 @@ def inspect(path, shared=False, function_symbols=False):
     if not segments or not (shared and entry == 0) and not any(p[1] & 1 and p[3] <= entry < p[3] + p[5] for p in loads):
         raise RuntimeError(f'{path}: missing executable entry')
     sections = [struct.unpack_from('<IIQQQQIIQQ', data, shoff + i * shentsize) for i in range(shnum)]
+    if nce_oat:
+        rodata = [section for section in sections if section[1] == 1 and section[2] == 2
+                  and data[section[4]:section[4] + 8] == b'oat\nn01\0']
+        if len(rodata) != 1:
+            raise RuntimeError('Expected NCE n01 OAT header for literal pool parsing')
     mappings = {}
     functions = {}
     objects = {}
@@ -750,10 +756,12 @@ def inspect(path, shared=False, function_symbols=False):
             gaps = [(sec[3], merged[0][0])] if merged else [(sec[3], sec[3] + sec[5])]
             gaps += [(hi, merged[i + 1][0] if i + 1 < len(merged) else sec[3] + sec[5])
                      for i, (_, hi) in enumerate(merged)]
-            if any(x18_instruction(word) or word & 0xffe0001f == 0xd4000001 or
+            if not nce_oat and any(x18_instruction(word) or word & 0xffe0001f == 0xd4000001 or
                    word & 0xffffffe0 in (0xd53bd040, 0xd51bd040, 0xd53b0020)
                    for lo, hi in gaps for (word,) in struct.iter_unpack('<I', data[sec[4] + lo - sec[3]:sec[4] + hi - sec[3]])):
                 merged = extend_function_ranges(path, data, sec, merged, objects.get(index, []), sections, functions)
+            if nce_oat:
+                merged = art_aot.code_ranges(data, sec[4], sec[3], merged)
             markers = [(sec[3], 'd')] if not merged or merged[0][0] > sec[3] else []
             for lo, hi in merged:
                 markers.append((lo, 'x'))
@@ -765,7 +773,7 @@ def inspect(path, shared=False, function_symbols=False):
             if begin >= end or end > sec[3] + sec[5]:
                 raise RuntimeError(f'{path}: invalid instruction mapping span')
             if kind != 'x':
-                if inferred:
+                if inferred and not nce_oat:
                     for address in range(begin, end - 3, 4):
                         word, = struct.unpack_from('<I', data, sec[4] + address - sec[3])
                         if word & 0xffe0001f == 0xd4000001 or word & 0xffffffe0 in (0xd53bd040, 0xd51bd040, 0xd53b0020) or x18_instruction(word):
@@ -903,7 +911,7 @@ def dash(out, llvm, libc, runtime, resource):
     return out / 'dash.elf'
 
 
-def build(out, llvm, art_compiler=False, art_oat=None):
+def build(out, llvm, art_compiler=False, art_oat=None, art_desktop=False):
     libc = musl(llvm)
     runtime = compiler_runtime(llvm, libc)
     with (WORK / 'musl-build/shared-build.log').open('w') as log:
@@ -984,20 +992,18 @@ def build(out, llvm, art_compiler=False, art_oat=None):
     replacements = {**art, **crypto}
     prepare_android_desktop()
     assets = android_data(out) + [native_library_zip(out)]
+    art_aot.generate_header(out / 'art-aot-targets.h')
+    if art_compiler or art_oat:
+        aot_plan = art_aot.plan(assets, desktop=art_desktop)
+        (out / 'art-aot-plan.json').write_text(json.dumps(aot_plan, indent=2) + '\n')
     if art_oat:
-        manifest = json.loads((art_oat / 'manifest.json').read_text())
         current = json.loads((WORK / 'android/art-build/manifest.json').read_text())['inputs']
-        expected = {key: value for key, value in manifest['art_inputs'].items() if key != 'offline_compiler'}
-        actual = {key: value for key, value in current.items() if key != 'offline_compiler'}
-        if expected != actual or manifest['dex_sha256'] != hashlib.sha256((out / 'java-classes/classes.dex').read_bytes()).hexdigest():
-            raise RuntimeError('AOT compiler sources or DEX differ; regenerate the artifact')
-        for name, digest in manifest['files'].items():
-            if name not in ('NceWorkload.odex', 'NceWorkload.vdex') or hashlib.sha256((art_oat / name).read_bytes()).hexdigest() != digest:
-                raise RuntimeError('AOT artifact checksum or filename mismatch')
-        if set(manifest['files']) != {'NceWorkload.odex', 'NceWorkload.vdex'}:
-            raise RuntimeError('AOT artifact is incomplete')
-        programs.append(('/data/nce/oat/arm64/NceWorkload.odex', art_oat / 'NceWorkload.odex'))
-        assets.append(('/data/nce/oat/arm64/NceWorkload.vdex', art_oat / 'NceWorkload.vdex'))
+        art_aot.validate(art_oat, current, aot_plan)
+        for target in aot_plan['targets']:
+            prefix = str(Path(target['dex']).parent / 'oat/arm64' / target['name'])
+            programs.append((prefix + '.odex', art_oat / (target['name'] + '.odex')))
+            assets = [(guest, path) for guest, path in assets if guest != prefix + '.vdex']
+            assets.append((prefix + '.vdex', art_oat / (target['name'] + '.vdex')))
     embedded, program_locations = apk_native_libraries(out, assets)
     programs += android_dependencies(llvm, replacements, embedded)
     programs += embedded
@@ -1032,7 +1038,7 @@ def build(out, llvm, art_compiler=False, art_oat=None):
         run([ndk / 'toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android35-clang',
              '-ffixed-x18', '-mno-outline-atomics', '-O2', '-Wall', '-Wextra', '-Werror',
              '-Wl,-z,max-page-size=16384,-z,common-page-size=16384',
-             EXP / 'userspace/art-compiler-test.c', '-o', out / 'art-compiler-test.elf'])
+             '-I', out, EXP / 'userspace/art-compiler-test.c', '-ldl', '-o', out / 'art-compiler-test.elf'])
         programs.append(('/system/bin/art-compiler-test', out / 'art-compiler-test.elf'))
     protocol = EXP / 'graphics/protocol'
     for name, origin in json.loads((protocol / 'sources.json').read_text())['files'].items():
@@ -1112,7 +1118,7 @@ def build(out, llvm, art_compiler=False, art_oat=None):
     system_files = []
     cache_path = out / 'elf-inspection-cache.json'
     inspector_source = '\n'.join(python_inspect.getsource(function) for function in
-        (inspect, x18_instruction, direct_branch, extend_function_ranges, elf_disassembly, check_x18_disassembly))
+        (inspect, x18_instruction, direct_branch, extend_function_ranges, elf_disassembly, check_x18_disassembly, art_aot.code_ranges))
     inspector_source += repr((PAGE, PROGRAM_LIMIT, MAX_ALIGNMENT, INTERPRETER,
                               ANDROID_INTERPRETER, ANDROID_BOOTSTRAP_INTERPRETER))
     inspector = hashlib.sha256(inspector_source.encode() + subprocess.check_output(
@@ -1128,7 +1134,7 @@ def build(out, llvm, art_compiler=False, art_oat=None):
         if cached and cached['sha256'] == digest:
             elf = dict(cached['layout'], data=data)
         else:
-            elf = inspect(path, shared=name.endswith(('.so', '.odex')), function_symbols=name.endswith('.odex') or name.startswith(('/system/', '/vendor/', '/apex/', '/system_ext/', '/product/')) or name in ('/bionic-test', '/art-test', '/art-heap-test'))
+            elf = inspect(path, shared=name.endswith(('.so', '.odex')), function_symbols=name.endswith('.odex') or name.startswith(('/system/', '/vendor/', '/apex/', '/system_ext/', '/product/')) or name in ('/bionic-test', '/art-test', '/art-heap-test'), nce_oat=name.endswith('.odex'))
             dis = elf_disassembly(llvm, path, elf)
             check_x18_disassembly(path, elf, dis)
             cache['files'][name] = {'sha256': digest, 'layout': {k: v for k, v in elf.items() if k != 'data'}}
