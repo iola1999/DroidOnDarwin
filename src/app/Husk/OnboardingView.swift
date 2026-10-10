@@ -109,7 +109,6 @@ struct OnboardingView: View {
                     .clipShape(RoundedRectangle(cornerRadius: 25, style: .continuous))
                     .shadow(color: Theme.accent.opacity(0.35), radius: 22, y: 10)
             }
-            Text("Husk").font(.system(size: 40, weight: .semibold, design: .rounded))
             Text("Android apps, on your iPhone.")
                 .font(.title3).foregroundStyle(.secondary)
             Text("Husk runs a real Android system and opens APKs inside it. "
@@ -124,10 +123,6 @@ struct OnboardingView: View {
     private var choices: some View {
         ScrollView {
             VStack(spacing: 14) {
-                Text("How should Husk behave?")
-                    .font(.title2.weight(.semibold))
-                    .padding(.top, 34).padding(.bottom, 6)
-
                 choice(icon: "bolt.fill", title: "Start Android on launch",
                        detail: "Boots the guest as soon as Husk opens, once JIT is "
                            + "available. Off means you start it yourself.",

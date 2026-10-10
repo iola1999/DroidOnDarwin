@@ -40,12 +40,9 @@ struct SettingsTab: View {
     private var appCard: some View {
         HStack(spacing: 14) {
             HuskMark(size: 56)
-            VStack(alignment: .leading, spacing: 2) {
-                Text("Husk").font(.title3.weight(.semibold))
-                Text("Version \(Bundle.main.version) · \(Bundle.main.commit)")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-            }
+            Text("Version \(Bundle.main.version) · \(Bundle.main.commit)")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
         }
         .padding(.vertical, 6)
     }
@@ -757,7 +754,6 @@ struct AboutSettings: View {
             Section {
                 VStack(spacing: 8) {
                     HuskMark(size: 84)
-                    Text("Husk").font(.title2.weight(.semibold))
                     Text("Version \(Bundle.main.version)")
                         .font(.subheadline).foregroundStyle(.secondary)
                 }

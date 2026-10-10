@@ -25,7 +25,7 @@ struct LibraryView: View {
                     grid
                 }
             }
-            .navigationTitle("Husk")
+            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
                     Button { importing = true } label: { Image(systemName: "plus") }

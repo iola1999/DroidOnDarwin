@@ -343,91 +343,87 @@ struct NativeLinuxApp: App {
     @State private var showDetails = false
     var body: some Scene {
         WindowGroup {
-            NavigationStack {
-                VStack(spacing: 0) {
-                    GuestMetalDisplay(metalLayer: model.metalLayer)
-                        .aspectRatio(360.0 / 640.0, contentMode: .fit)
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                        .background(.black)
-                    HStack {
+            VStack(spacing: 0) {
+                GuestMetalDisplay(metalLayer: model.metalLayer)
+                    .aspectRatio(360.0 / 640.0, contentMode: .fit)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .background(.black)
+                HStack {
+                    Group {
                         Button("返回") { GuestInput.send(Int32(NCE_INPUT_KEY), 158) }
                         Spacer()
                         Button("主页") { GuestInput.send(Int32(NCE_INPUT_KEY), 102) }
                         Spacer()
                         Button("最近应用") { GuestInput.send(Int32(NCE_INPUT_KEY), 580) }
                     }
-                    .padding()
                     .disabled(!model.desktopReady || model.stopping)
-                    if !model.desktopReady || model.stopping {
-                        VStack(spacing: 12) {
-                            Text(model.status).font(.headline).accessibilityIdentifier("probe-status")
-                            if model.busy {
-                                ProgressView()
-                            }
-                            if !model.busy && !model.didRun {
-                                Button("启动 Android") { model.builtIn() }
-                                    .buttonStyle(.borderedProminent)
-                                Button("连接与日志") { showDetails = true }
-                            }
-                            if model.didRun && !model.busy {
-                                Text("重新启动前，请从多任务界面关闭 Husk 后再打开。")
-                                    .font(.caption).foregroundStyle(.secondary)
-                            }
-                        }.padding()
-                    }
+                    Spacer()
+                    Menu {
+                        Button("连接与日志") { showDetails = true }
+                        if model.busy && model.didRun {
+                            Button("停止 Android", role: .destructive) { model.stop() }
+                                .disabled(model.stopping)
+                        }
+                    } label: { Image(systemName: "ellipsis.circle") }
+                        .accessibilityLabel("更多操作")
                 }
-                .navigationTitle("Husk")
-                .navigationBarTitleDisplayMode(.inline)
-                .toolbar {
-                    ToolbarItem(placement: .topBarTrailing) {
-                        Menu {
+                .padding()
+                if !model.desktopReady || model.stopping {
+                    VStack(spacing: 12) {
+                        Text(model.status).font(.headline).accessibilityIdentifier("probe-status")
+                        if model.busy {
+                            ProgressView()
+                        }
+                        if !model.busy && !model.didRun {
+                            Button("启动 Android") { model.builtIn() }
+                                .buttonStyle(.borderedProminent)
                             Button("连接与日志") { showDetails = true }
-                            if model.busy && model.didRun {
-                                Button("停止 Android", role: .destructive) { model.stop() }
-                                    .disabled(model.stopping)
-                            }
-                        } label: { Image(systemName: "ellipsis.circle") }
-                    }
+                        }
+                        if model.didRun && !model.busy {
+                            Text("重新启动前，请从多任务界面关闭 Husk 后再打开。")
+                                .font(.caption).foregroundStyle(.secondary)
+                        }
+                    }.padding()
                 }
-                .sheet(isPresented: $showDetails) {
-                    NavigationStack {
-                        List {
-                            Section {
-                                Text(model.status).font(.headline)
-                                Text(Bundle.main.object(forInfoDictionaryKey: "NCEBuildID") as? String ?? "NCE")
+            }
+            .sheet(isPresented: $showDetails) {
+                NavigationStack {
+                    List {
+                        Section {
+                            Text(model.status).font(.headline)
+                            Text(Bundle.main.object(forInfoDictionaryKey: "NCEBuildID") as? String ?? "NCE")
+                                .font(.caption).foregroundStyle(.secondary)
+                        }
+                        Section("连接") {
+                            Button("启用内置 JIT 并启动") { model.builtIn()
+                                showDetails = false
+                            }
+                            Button("通过 StikDebug 启动") { model.external()
+                                showDetails = false
+                            }
+                            if nce_debugger_attached() {
+                                Button("使用已连接的 JIT 启动") { model.runAttached()
+                                    showDetails = false
+                                }
+                            }
+                            Button(model.paired ? "更换配对文件" : "导入配对文件") { model.importing = true }
+                        }.disabled(model.busy || model.didRun)
+                        if !model.logLines.isEmpty {
+                            Section("日志") {
+                                ShareLink("导出日志", item: model.logURL)
+                                Text("显示最近 80 行，导出可查看完整日志。")
                                     .font(.caption).foregroundStyle(.secondary)
-                            }
-                            Section("连接") {
-                                Button("启用内置 JIT 并启动") { model.builtIn()
-                                    showDetails = false
-                                }
-                                Button("通过 StikDebug 启动") { model.external()
-                                    showDetails = false
-                                }
-                                if nce_debugger_attached() {
-                                    Button("使用已连接的 JIT 启动") { model.runAttached()
-                                        showDetails = false
-                                    }
-                                }
-                                Button(model.paired ? "更换配对文件" : "导入配对文件") { model.importing = true }
-                            }.disabled(model.busy || model.didRun)
-                            if !model.logLines.isEmpty {
-                                Section("日志") {
-                                    ShareLink("导出日志", item: model.logURL)
-                                    Text("显示最近 80 行，导出可查看完整日志。")
-                                        .font(.caption).foregroundStyle(.secondary)
-                                    ForEach(model.logLines) { line in
-                                        Text(line.text).font(.system(.caption, design: .monospaced)).lineLimit(4)
-                                    }
+                                ForEach(model.logLines) { line in
+                                    Text(line.text).font(.system(.caption, design: .monospaced)).lineLimit(4)
                                 }
                             }
                         }
-                        .navigationTitle("连接与日志")
-                        .navigationBarTitleDisplayMode(.inline)
-                        .toolbar { ToolbarItem(placement: .confirmationAction) { Button("完成") { showDetails = false } } }
-                        .fileImporter(isPresented: $model.importing, allowedContentTypes: [.data], allowsMultipleSelection: false) {
-                            model.importPairing($0)
-                        }
+                    }
+                    .navigationTitle("连接与日志")
+                    .navigationBarTitleDisplayMode(.inline)
+                    .toolbar { ToolbarItem(placement: .confirmationAction) { Button("完成") { showDetails = false } } }
+                    .fileImporter(isPresented: $model.importing, allowedContentTypes: [.data], allowsMultipleSelection: false) {
+                        model.importPairing($0)
                     }
                 }
             }

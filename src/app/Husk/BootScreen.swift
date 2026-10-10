@@ -57,13 +57,6 @@ struct BootScreen: View {
                                value: pulse)
                     .onAppear { pulse = true }
 
-                Text("HUSK")
-                    .font(.system(size: 22, weight: .semibold))
-                    .tracking(9)
-                    .foregroundStyle(Theme.text)
-                    .padding(.leading, 9)
-                    .padding(.top, 18)
-
                 // The line that talks. Keyed on the index so each one fades
                 // into the next rather than snapping.
                 Text(Self.phrases[phrase % Self.phrases.count])
