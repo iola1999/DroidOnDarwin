@@ -405,6 +405,10 @@ int nce_page_fault(unsigned long address, int access)
     }
     if (!vma || address < vma->vm_start || !(vma->vm_flags & (execute ? VM_EXEC : write ? VM_WRITE
                                                                                         : VM_READ))) {
+        if (profile)
+            pr_info("NCE fault rejected pid=%d comm=%s address=%lx access=%x vma=%lx-%lx flags=%lx\n",
+                    current->pid, current->comm, address, access,
+                    vma ? vma->vm_start : 0, vma ? vma->vm_end : 0, vma ? vma->vm_flags : 0);
         mmap_read_unlock(mm);
         return -EFAULT;
     }
@@ -446,6 +450,10 @@ int nce_page_fault(unsigned long address, int access)
                     __set_bit((addr - USER_BASE) / PAGE_SIZE, mm->context.accessed);
         }
     }
+    if ((result & VM_FAULT_ERROR) && profile)
+        pr_info("NCE fault failed pid=%d comm=%s address=%lx access=%x result=%x vma=%lx-%lx flags=%lx\n",
+                current->pid, current->comm, address, access, (unsigned int)result,
+                vma->vm_start, vma->vm_end, vma->vm_flags);
     mmap_read_unlock(mm);
     return result & VM_FAULT_ERROR ? -EFAULT : 0;
 }

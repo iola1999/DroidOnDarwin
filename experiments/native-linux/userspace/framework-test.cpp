@@ -210,10 +210,8 @@ void nce_framework_test()
         {"ro.vendor.build.security_patch", ""},
         {"ro.product.model", "NCE prototype"},
         {"ro.build.type", "userdebug"},
-        // This prototype has no ART boot image; retain bounded Android startup
-        // timeouts while class verification is measured and optimized.
-        // First-boot initialization without an ART boot image needs a longer
-        // bounded service deadline on a blank data image.
+        // Blank data images and startup without a boot image need a longer
+        // bounded service deadline during the current performance experiments.
         {"ro.hw_timeout_multiplier", "10"},
         {"ro.treble.enabled", "true"},
         {"sys.use_memfd", "true"},
@@ -229,6 +227,14 @@ void nce_framework_test()
     };
     for (const auto &entry : properties)
         CHECK(__system_property_set(entry[0], entry[1]) == 0);
+    FILE *boot_mode = fopen("/data/nce/art-boot-image", "r");
+    CHECK(boot_mode);
+    int boot_enabled = fgetc(boot_mode);
+    CHECK(fclose(boot_mode) == 0 && (boot_enabled == '0' || boot_enabled == '1'));
+    if (boot_enabled == '1') {
+        CHECK(access("/system/framework/arm64/nce-boot.art", R_OK) == 0);
+        CHECK(__system_property_set("dalvik.vm.boot-image", "/system/framework/nce-boot.art") == 0);
+    }
     // APK execution uses the prepared ART JIT. Keep installation verification
     // separate from dex2oat code generation, whose output is not prepared yet.
     const char *dexopt_reasons[] = {"ab-ota", "bg-dexopt", "boot-after-mainline-update", "boot-after-ota",

@@ -47,7 +47,7 @@ struct BenchmarkChecks {
         precondition((memory.json["process_lifetime_peak_bytes"] as? [String: UInt64])?["footprint"] == 900)
         let live = BenchmarkMemoryReading.current()
         precondition(live.error == nil && live.bytes["footprint"]! > 0 && live.bytes["resident"]! > 0)
-        let configuration = RunConfiguration(nterp: true, expandedJIT: true, fastBaseline: true, aot: false, directFault: false, faultPrefetch: true, sparseScan: false)
+        let configuration = RunConfiguration(nterp: true, expandedJIT: true, fastBaseline: true, aot: false, bootImage: true, directFault: false, faultPrefetch: true, sparseScan: false)
         precondition(RunConfiguration.fromEnvironment(configuration.environment) == configuration)
         let config = try JSONSerialization.jsonObject(with: JSONEncoder().encode(configuration))
         let id = UUID().uuidString
@@ -100,6 +100,21 @@ struct BenchmarkChecks {
         let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(at: root) }
+        try RunConfiguration().validateResources(root)
+        do { try configuration.validateResources(root)
+            preconditionFailure("missing boot image accepted")
+        } catch {}
+        let metadataURL = root.appendingPathComponent("Runtime.json")
+        for files in [["boot.art": "image"], ["boot.art": "image", "boot.oat": "code", "boot.vdex": "dex"]] {
+            try JSONSerialization.data(withJSONObject: ["build": ["art_boot": ["files": files]]]).write(to: metadataURL)
+            if files.count == 3 {
+                try configuration.validateResources(root)
+            } else {
+                do { try configuration.validateResources(root)
+                    preconditionFailure("incomplete boot image accepted")
+                } catch {}
+            }
+        }
         try Data("{\"runtime\":\"test-runtime\",\"build\":{\"art_build_inputs\":\"test-art\"}}".utf8).write(to: root.appendingPathComponent("Runtime.json"))
         let target = RunTarget(id: id, name: "test", directory: root, resources: root, log: root.appendingPathComponent("unused.log"))
         let runtime = BenchmarkRuntime()

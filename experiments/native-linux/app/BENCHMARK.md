@@ -53,6 +53,7 @@ python3 scripts/benchmark_dod.py --platform ios --phone F17 --repeat 3
 | `expandedJIT` | `false` | 编译已适配的字符串构造、拼接、Min/Max 和多态调用路径 |
 | `fastBaseline` | `false` | 优先尝试快速基线编译，未覆盖的方法继续进入优化编译器 |
 | `aot` | `true` | 使用镜像中匹配的 OAT 机器码；关闭后保留解释器/JIT 和可用的验证信息 |
+| `bootImage` | `false` | 复用匹配的公共启动镜像；构建缺少产物时在启动前报告错误，应用 DEX 继续使用解释器/JIT |
 | `directFault` | `true` | 在信号处理入口恢复符合条件的已有数据页 |
 | `faultPrefetch` | `false` | 快速恢复普通数据页时，最多连续恢复 8 页；依赖 `directFault`，遇到权限或物理页变化时停止 |
 | `sparseScan` | `true` | 减少映射切换时的页表扫描 |
@@ -76,6 +77,8 @@ Mac 的范围是 Android 运行进程，iPhone 的范围是 App 进程，包含�
 会话阶段 `preparing`、`connecting`、`booting`、`running`、`stopping`、`stopped` 分别表示准备、JIT 连接、核心启动、桌面操作、停止中和停止后。启动子阶段沿用进度界面编号：0 准备、1 内核、2 系统服务、3 桌面、4 就绪。仅记录本轮实际观察到的阶段，极短阶段可能只有边界样本。
 
 每轮保存 `request.json`、`result.json` 和 `session.log`，整个矩阵保存 `summary.json`。运行编号为 UUID，重复编号失败。结果含构建编号、资源清单中的内核/ART/系统哈希、硬件与系统、宿主内存、完整配置、阶段与操作时间、低电量模式和热状态。脚本检查会话日志里的配置，并检查 Java 崩溃及 ANR。
+
+包含公共启动镜像的构建在 `Runtime.json` 中记录 `art_boot` 的输入与产物摘要；开启 `bootImage` 前检查该记录。镜像只覆盖系统公共类，应用 DEX 继续使用解释器/JIT。benchmark 额外核对 ART 的实际加载日志，加载状态与请求不一致时结束实验，保留该轮结果。
 
 计时使用宿主单调时钟。`start_to_ready_observed_ms` 包含准备和 JIT 连接；`core_to_ready_observed_ms` 从运行核心开始计时。桌面就绪由现有一秒日志轮询观察，两个指标包含观察延迟。`actions_ms` 统计操作提交序列，等待也在范围内；帧完成、目标应用就绪与 FPS 需要另外的图形或 Android 侧测量。日志中保留 SystemServer、SystemUI 和 Activity 的原有计时。
 

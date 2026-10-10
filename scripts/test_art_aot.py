@@ -54,6 +54,22 @@ class ArtifactTests(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, 'heap address'):
             art_aot.write_manifest(self.directory, self.inputs, self.plan, [])
 
+    def test_boot_scope_and_classpath_fragments_invalidate_artifacts(self):
+        jar = self.directory / 'core.jar'
+        jar.write_bytes(b'dex')
+        fragment = self.directory / 'bootclasspath.pb'
+        fragment.write_bytes(b'first order')
+        assets = [('/system/framework/core.jar', jar), ('/system/etc/classpaths/bootclasspath.pb', fragment)]
+        plan = art_aot.boot_plan(assets, desktop=True)
+        for name in art_aot.file_names(plan):
+            (self.directory / name).write_bytes(b'boot')
+        art_aot.write_manifest(self.directory, self.inputs, plan, [123])
+        with self.assertRaisesRegex(RuntimeError, 'compiler, recipe or DEX'):
+            art_aot.validate(self.directory, self.inputs, art_aot.boot_plan(assets, desktop=False))
+        fragment.write_bytes(b'changed order')
+        with self.assertRaisesRegex(RuntimeError, 'compiler, recipe or DEX'):
+            art_aot.validate(self.directory, self.inputs, art_aot.boot_plan(assets, desktop=True))
+
     def test_boot_image_components_are_checked_independently_of_app_artifacts(self):
         plan = {'kind': 'boot', 'input_files': self.plan['input_files'], 'recipe': self.plan['recipe']}
         for name in art_aot.file_names(plan):

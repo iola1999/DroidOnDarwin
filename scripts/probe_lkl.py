@@ -99,7 +99,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--processes", action="store_true")
     parser.add_argument("--art-oat", type=Path, help="Validate an offline-compiled OAT directory with the runtime build")
-    parser.add_argument("--art-desktop", action="store_true", help="Generate or validate the SystemUI/Launcher AOT variant")
+    parser.add_argument("--art-desktop", action="store_true", help="Use the desktop classpath for boot images or SystemUI/Launcher AOT")
     parser.add_argument("--art-compiler", action="store_true", help="Validate the matching dex2oat tool in an isolated NCE image")
     parser.add_argument("--art-boot-image", action="store_true", help="Generate a matching experimental ART boot image with --art-compiler")
     parser.add_argument("--art-boot", type=Path, help="Validate a single boot image at two runtime heap addresses")
@@ -118,20 +118,20 @@ def main():
         parser.error("--storage-image requires --processes")
     if (arguments.art_compiler or arguments.art_oat or arguments.art_boot) and not PROCESS:
         parser.error("ART compiler checks require --processes")
-    if arguments.art_desktop and not (arguments.art_compiler or arguments.art_oat):
-        parser.error("--art-desktop requires --art-compiler or --art-oat")
+    if arguments.art_desktop and not (arguments.art_compiler or arguments.art_oat or arguments.art_boot):
+        parser.error("--art-desktop requires --art-compiler, --art-oat or --art-boot")
     if arguments.art_compiler and arguments.art_oat:
         parser.error("Choose artifact generation or runtime loading")
-    if arguments.art_boot and (arguments.art_compiler or arguments.art_oat or arguments.art_desktop):
-        parser.error("--art-boot uses an isolated runtime loading check")
-    if arguments.art_boot_image and (not arguments.art_compiler or arguments.art_desktop):
-        parser.error("--art-boot-image requires --art-compiler without --art-desktop")
-    if arguments.art_compiler or arguments.art_boot or (arguments.art_oat and not arguments.art_desktop):
+    if arguments.art_boot and (arguments.art_compiler or arguments.art_oat):
+        parser.error("Choose boot image runtime loading or other ART artifact modes")
+    if arguments.art_boot_image and not arguments.art_compiler:
+        parser.error("--art-boot-image requires --art-compiler")
+    if arguments.art_compiler or ((arguments.art_boot or arguments.art_oat) and not arguments.art_desktop):
         if angle or os.environ.get('NCE_DESKTOP') or os.environ.get('NCE_SYSTEM_SERVER_PROBE'):
             parser.error("Isolated ART checks cannot run desktop or graphics checks")
-    if arguments.art_oat and arguments.art_desktop:
+    if (arguments.art_oat or arguments.art_boot) and arguments.art_desktop:
         if not angle or not os.environ.get('NCE_SYSTEM_SERVER_PROBE') or os.environ.get('NCE_DESKTOP'):
-            parser.error("Desktop AOT validation requires graphics and NCE_SYSTEM_SERVER_PROBE=1")
+            parser.error("Desktop ART validation requires graphics and NCE_SYSTEM_SERVER_PROBE=1")
     if arguments.art_oat:
         arguments.art_oat = arguments.art_oat.resolve()
     if arguments.art_boot:
@@ -143,7 +143,17 @@ def main():
     base = OUT
     if PROCESS:
         BUILD = base / "lkl-process-build"
-        OUT = base / ("art-boot-runtime" if arguments.art_boot else "art-boot-compiler" if arguments.art_boot_image else "art-compiler-desktop" if arguments.art_compiler and arguments.art_desktop else "art-compiler" if arguments.art_compiler else "art-oat" if arguments.art_oat and not arguments.art_desktop else "processes")
+        if arguments.art_boot_image:
+            directory = "art-boot-compiler-desktop" if arguments.art_desktop else "art-boot-compiler"
+        elif arguments.art_boot and not arguments.art_desktop:
+            directory = "art-boot-runtime"
+        elif arguments.art_compiler:
+            directory = "art-compiler-desktop" if arguments.art_desktop else "art-compiler"
+        elif arguments.art_oat and not arguments.art_desktop:
+            directory = "art-oat"
+        else:
+            directory = "processes"
+        OUT = base / directory
         OUT.mkdir(exist_ok=True)
         for name in ("guest-image.h", "guest-source.sha256"):
             shutil.copyfile(base / name, OUT / name)
@@ -239,7 +249,7 @@ def main():
          "-z", "common-page-size=16384", OUT / "lkl-exports.o", OUT / "lkl-bridge.o", "-o", OUT / "lkl.so"])
     package_elf(OUT / "lkl.so")
     if PROCESS:
-        build_userspace(OUT, llvm, art_compiler=arguments.art_compiler, art_oat=arguments.art_oat, art_desktop=arguments.art_desktop, art_boot=arguments.art_boot)
+        build_userspace(OUT, llvm, art_compiler=arguments.art_compiler, art_oat=arguments.art_oat, art_desktop=arguments.art_desktop, art_boot=arguments.art_boot, art_boot_image=arguments.art_boot_image)
     inputs = [EXPERIMENT / name for name in ("lkl-main.c", "lkl-host.c", "nce.c", "entry.S")]
     flags = ["-O2", "-g", "-Wall", "-Wextra", "-Werror", "-I", OUT, "-I", EXPERIMENT]
     if PROCESS:
@@ -296,7 +306,8 @@ def main():
             probe_env.update(NCE_ART_COMPILER_PROBE='1', NCE_ART_NTERP='1',
                              NCE_ART_EXPANDED_JIT='1', NCE_ART_FAST_BASELINE='0')
             if arguments.art_desktop:
-                probe_env['NCE_ART_COMPILER_DESKTOP'] = '1'
+                key = 'NCE_ART_COMPILER_BOOT_DESKTOP' if arguments.art_boot_image else 'NCE_ART_COMPILER_DESKTOP'
+                probe_env[key] = '1'
             if arguments.art_boot_image:
                 probe_env['NCE_ART_COMPILER_BOOT'] = '1'
             artifacts = OUT / 'artifacts'
@@ -305,8 +316,11 @@ def main():
         if arguments.art_oat:
             probe_env['NCE_TRACE_SYSTEMUI' if arguments.art_desktop else 'NCE_ART_OAT_PROBE'] = '1'
         if arguments.art_boot:
-            probe_env.update(NCE_ART_BOOT_PROBE='1', NCE_ART_NTERP='1',
-                             NCE_ART_EXPANDED_JIT='1', NCE_ART_FAST_BASELINE='0')
+            if arguments.art_desktop:
+                probe_env['NCE_ART_BOOT_IMAGE'] = os.environ.get('NCE_ART_BOOT_IMAGE', '1')
+            else:
+                probe_env.update(NCE_ART_BOOT_PROBE='1', NCE_ART_NTERP='1',
+                                 NCE_ART_EXPANDED_JIT='1', NCE_ART_FAST_BASELINE='0')
         probe_timeout = 3600 if arguments.art_compiler and arguments.art_desktop else 480
         run([OUT / "lkl-probe", OUT / "lkl-image.bin"], timeout=probe_timeout, stdout=output, stderr=log, env={**probe_env, **graphics_env})
     results = [json.loads(line) for line in (OUT / "lkl-results.jsonl").read_text().splitlines()]
@@ -360,7 +374,7 @@ def main():
                 if name == "android_application_data_persistence" and checks[0]["row_id"] != checks[1]["row_id"]:
                     raise SystemExit("Clock alarm identity changed across Android restart")
         run(["/opt/homebrew/opt/e2fsprogs/sbin/e2fsck", "-fn", data_image])
-        if not arguments.art_compiler and not arguments.art_boot and (not arguments.art_oat or arguments.art_desktop) and (OUT / "framework.png").read_bytes() != (OUT / "dispatch-framework.png").read_bytes():
+        if not arguments.art_compiler and (not arguments.art_boot or arguments.art_desktop) and (not arguments.art_oat or arguments.art_desktop) and (OUT / "framework.png").read_bytes() != (OUT / "dispatch-framework.png").read_bytes():
             raise SystemExit("CLI and GCD framework images differ")
         if angle and (OUT / "gpu.bmp").read_bytes() != (OUT / "dispatch-gpu.bmp").read_bytes():
             raise SystemExit("CLI and GCD GPU images differ")
@@ -420,11 +434,11 @@ def main():
         if arguments.art_compiler:
             manifest["stage"] = "NCE ART offline compiler validation"
         if arguments.art_boot:
-            manifest['stage'] = 'NCE ART boot image loading at two heap addresses'
+            manifest['stage'] = 'NCE ART boot image desktop validation' if arguments.art_desktop else 'NCE ART boot image loading at two heap addresses'
             artifact = json.loads((arguments.art_boot / 'boot-manifest.json').read_text())
             sources += [arguments.art_boot / name for name in ['boot-manifest.json', *artifact['files']]]
             manifest['art_boot'] = artifact
-            for records in (results, dispatch_results):
+            for records in (() if arguments.art_desktop else (results, dispatch_results)):
                 bases = {r['reference_base'] for r in records if r.get('phase') == 'art_boot_runtime_heap'}
                 if len(bases) != 2 or not bases - set(artifact['compiler_heap_bases']):
                     raise SystemExit('Boot image checks did not exercise different heap bases')
@@ -432,6 +446,14 @@ def main():
                 generated_offset = artifact['plan']['compiler_settings']['image_offset']
                 if len(images) != 2 or any(r['image_begin'] - r['reference_base'] == generated_offset for r in images):
                     raise SystemExit('Boot image checks did not relocate compressed object offsets')
+            if arguments.art_desktop:
+                log_names = ['lkl-console.log', 'dispatch-console.log']
+                if window_results is not None:
+                    log_names.append('window-console.log')
+                for log_name in log_names:
+                    loaded = 'NCE_BOOT_IMAGE loaded=' in (OUT / log_name).read_text()
+                    if loaded != (probe_env['NCE_ART_BOOT_IMAGE'] == '1'):
+                        raise SystemExit('Unexpected boot image loading state in ' + log_name)
         if arguments.art_oat:
             manifest["stage"] = "NCE ART offline code execution validation"
             artifact = json.loads((arguments.art_oat / 'manifest.json').read_text())

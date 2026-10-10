@@ -924,3 +924,39 @@
    gc::Heap* heap = Runtime::Current()->GetHeap();
    if (!heap->HasBootImageSpace()) {
      *error_msg = "Cannot generate an app image without a boot image";
+--- a/runtime/runtime.cc
++++ b/runtime/runtime.cc
+@@ -2004,11 +2004,21 @@
+         intern_table_,
+         runtime_options.GetOrDefault(Opt::FastClassNotFoundException));
+   }
++  const bool nce_image_requested = image_locations_.size() == 1u &&
++      image_locations_.front() == "/data/nce/boot/boot.art";
++  if (nce_image_requested && !GetHeap()->HasBootImageSpace()) {
++    LOG(ERROR) << "Requested NCE boot image did not load";
++    return false;
++  }
+   if (GetHeap()->HasBootImageSpace()) {
+     bool result = class_linker_->InitFromBootImage(&error_msg);
+     if (!result) {
+       LOG(ERROR) << "Could not initialize from image: " << error_msg;
+       return false;
++    }
++    if (nce_image_requested) {
++      LOG(INFO) << "NCE_BOOT_IMAGE loaded=" << heap_->GetBootImageSpaces()[0]->GetImageFilename()
++                << " components=" << heap_->GetBootImageSpaces()[0]->GetImageHeader().GetComponentCount();
+     }
+     if (kIsDebugBuild) {
+       for (auto image_space : GetHeap()->GetBootImageSpaces()) {
+--- a/runtime/runtime.cc
++++ b/runtime/runtime.cc
+@@ -2005,7 +2005,8 @@
+         runtime_options.GetOrDefault(Opt::FastClassNotFoundException));
+   }
+   const bool nce_image_requested = image_locations_.size() == 1u &&
+-      image_locations_.front() == "/data/nce/boot/boot.art";
++      (image_locations_.front() == "/data/nce/boot/boot.art" ||
++       image_locations_.front() == "/system/framework/nce-boot.art");
+   if (nce_image_requested && !GetHeap()->HasBootImageSpace()) {
+     LOG(ERROR) << "Requested NCE boot image did not load";
+     return false;

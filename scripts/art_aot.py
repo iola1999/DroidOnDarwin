@@ -79,12 +79,13 @@ def validate(directory, art_inputs, current_plan):
     return manifest
 
 
-def boot_plan(assets):
+def boot_plan(assets, desktop=False):
     return {'kind': 'boot',
-            'input_files': {name: digest(path) for name, path in assets if name.endswith('.jar')},
+            'input_files': {name: digest(path) for name, path in assets
+                            if name.endswith('.jar') or '/etc/classpaths/' in name},
             'recipe': {str(path.relative_to(ROOT)): digest(path) for path in (
                 Path(__file__).resolve(), ROOT / 'experiments/native-linux/userspace/art-compiler-test.c')},
-            'compiler_settings': {'filter': 'verify', 'single_image': True,
+            'compiler_settings': {'filter': 'verify', 'single_image': True, 'desktop': desktop,
                                   'image_offset': 2097152, 'max_heap_mib': 256}}
 
 

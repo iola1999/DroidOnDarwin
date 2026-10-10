@@ -1558,6 +1558,10 @@ void nce_process_run(long (*host_syscall)(long, long *), long (*guest_syscall)(l
     long aot_permissions[6] = {-100, (long)"/data/nce/art-aot", 0644};
     REQUIRE(host_syscall(53, aot_permissions) == 0);
     printf("{\"config\":\"art_aot\",\"requested\":%s}\n", aot ? aot : "1");
+    const char *boot_image = getenv("NCE_ART_BOOT_IMAGE");
+    REQUIRE(!boot_image || !strcmp(boot_image, "0") || !strcmp(boot_image, "1"));
+    put_file(host_syscall, "/data/nce/art-boot-image", boot_image ? boot_image : "0", 1);
+    printf("{\"config\":\"art_boot_image\",\"requested\":%s}\n", boot_image ? boot_image : "0");
     put_file(host_syscall, "/data/nce/art-compiler-profile", map_profile ? "1" : "0", 1);
     long compiler_profile_permissions[6] = {-100, (long)"/data/nce/art-compiler-profile", 0644};
     REQUIRE(host_syscall(53, compiler_profile_permissions) == 0);
@@ -1596,7 +1600,7 @@ void nce_process_run(long (*host_syscall)(long, long *), long (*guest_syscall)(l
         REQUIRE(output);
         bool desktop = getenv("NCE_ART_COMPILER_DESKTOP") != NULL;
         if (getenv("NCE_ART_COMPILER_BOOT")) {
-            run_program(host_syscall, "/system/bin/art-compiler-test", "boot\n");
+            run_program(host_syscall, "/system/bin/art-compiler-test", getenv("NCE_ART_COMPILER_BOOT_DESKTOP") ? "boot-desktop\n" : "boot\n");
             REQUIRE(get_file(host_syscall, "/stdout", benchmark, sizeof(benchmark)) > 0);
             REQUIRE(strstr(benchmark, "android_art_boot_image_generated"));
             const char *extensions[] = {"art", "oat", "vdex"};

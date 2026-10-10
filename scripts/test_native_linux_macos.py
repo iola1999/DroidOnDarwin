@@ -104,7 +104,7 @@ def main():
     query = run([contents / 'MacOS/DroidOnDarwin', '--benchmark-configuration'], capture_output=True, text=True, timeout=15)
     defaults = json.loads(query.stdout)
     assert defaults and all(type(v) is bool for v in defaults.values())
-    assert defaults['fastBaseline'] is False and defaults['nterp'] is False
+    assert defaults['fastBaseline'] is False and defaults['nterp'] is False and defaults['bootImage'] is False
     checks['benchmark_configuration_query'] = defaults
     checks['bundle'] = 'signature, package hashes, input hashes, resource sizes and relocatable library paths passed'
     (OUT / 'host-checks.json').write_text(json.dumps(checks, ensure_ascii=False, indent=2) + '\n')

@@ -911,7 +911,7 @@ def dash(out, llvm, libc, runtime, resource):
     return out / 'dash.elf'
 
 
-def build(out, llvm, art_compiler=False, art_oat=None, art_desktop=False, art_boot=None):
+def build(out, llvm, art_compiler=False, art_oat=None, art_desktop=False, art_boot=None, art_boot_image=False):
     libc = musl(llvm)
     runtime = compiler_runtime(llvm, libc)
     with (WORK / 'musl-build/shared-build.log').open('w') as log:
@@ -994,16 +994,17 @@ def build(out, llvm, art_compiler=False, art_oat=None, art_desktop=False, art_bo
     assets = android_data(out) + [native_library_zip(out)]
     art_aot.generate_header(out / 'art-aot-targets.h')
     if art_compiler or art_boot:
-        boot_plan = art_aot.boot_plan(assets)
+        boot_plan = art_aot.boot_plan(assets, desktop=art_desktop)
         (out / 'art-boot-plan.json').write_text(json.dumps(boot_plan, indent=2) + '\n')
     if art_boot:
         current = json.loads((WORK / 'android/art-build/manifest.json').read_text())['inputs']
         art_aot.validate(art_boot, current, boot_plan)
-        programs.append(('/data/nce/boot/arm64/boot.oat', art_boot / 'boot.oat'))
-        assets += [('/data/nce/boot/arm64/' + name, art_boot / name)
-                   for name in ('boot.art', 'boot.vdex')]
+        prefix = '/system/framework/arm64/nce-boot' if art_desktop else '/data/nce/boot/arm64/boot'
+        programs.append((prefix + '.oat', art_boot / 'boot.oat'))
+        assets += [(prefix + '.' + extension, art_boot / ('boot.' + extension))
+                   for extension in ('art', 'vdex')]
     if art_compiler or art_oat:
-        aot_plan = art_aot.plan(assets, desktop=art_desktop)
+        aot_plan = art_aot.plan(assets, desktop=art_desktop and not art_boot_image)
         (out / 'art-aot-plan.json').write_text(json.dumps(aot_plan, indent=2) + '\n')
     if art_oat:
         current = json.loads((WORK / 'android/art-build/manifest.json').read_text())['inputs']

@@ -97,7 +97,7 @@ static int prepare_properties(void)
     return result;
 }
 
-static int desktop_classpath(char *result, size_t capacity)
+static int desktop_classpath(char *result, size_t capacity, int include_helper)
 {
     pid_t child = fork();
     if (child < 0)
@@ -125,8 +125,9 @@ static int desktop_classpath(char *result, size_t capacity)
             break;
         }
         line[strcspn(line, "\n")] = 0;
-        // The desktop Zygote appends this same framework helper to the derived path.
-        int length = snprintf(result, capacity, "-Xbootclasspath:%s:/system/framework/nce-framework.jar", line + sizeof(prefix) - 1);
+        // Zygote appends the helper; other app_process entries use the shared system path.
+        int length = snprintf(result, capacity, "-Xbootclasspath:%s%s", line + sizeof(prefix) - 1,
+                              include_helper ? ":/system/framework/nce-framework.jar" : "");
         if (length < 0 || (size_t)length >= capacity)
             break;
         found = 1;
@@ -161,7 +162,7 @@ static int inspect_boot(const char *path)
     return wait_child(child);
 }
 
-static int compile_boot(void)
+static int compile_boot(int desktop)
 {
     if ((mkdir("/data/nce/boot", 0700) && errno != EEXIST) ||
         (mkdir("/data/nce/boot/arm64", 0700) && errno != EEXIST))
@@ -173,21 +174,36 @@ static int compile_boot(void)
     if (child < 0)
         return 1;
     if (!child) {
-        alarm(180);
-        execl("/system/bin/nce-dex2oat", "nce-dex2oat", "-j1", "--no-watch-dog",
-              "--dex-file=/apex/com.android.art/javalib/core-oj.jar",
-              "--dex-file=/apex/com.android.art/javalib/core-libart.jar",
-              "--dex-file=/apex/com.android.art/javalib/okhttp.jar",
-              "--dex-file=/apex/com.android.art/javalib/bouncycastle.jar",
-              "--dex-file=/apex/com.android.art/javalib/apache-xml.jar",
-              "--dex-file=/apex/com.android.i18n/javalib/core-icu4j.jar",
-              "--dex-file=/apex/com.android.conscrypt/javalib/conscrypt.jar",
-              "--image=/data/nce/boot/arm64/boot.art",
-              "--oat-file=/data/nce/boot/arm64/boot.oat", "--single-image",
-              "--nce-image-offset=200000", "--image-format=uncompressed",
-              "--compiler-filter=verify", "--generate-debug-info", "--instruction-set=arm64",
-              "--runtime-arg", boot_class_path, "--runtime-arg", "-Xms16m",
-              "--runtime-arg", "-Xmx256m", "--dump-timings", (char *)NULL);
+        alarm(desktop ? 600 : 180);
+        char classpath[16384];
+        if (desktop) {
+            if (prepare_properties() || desktop_classpath(classpath, sizeof(classpath), 0))
+                _exit(126);
+        } else {
+            snprintf(classpath, sizeof(classpath), "%s", boot_class_path);
+        }
+        char paths[sizeof(classpath)];
+        snprintf(paths, sizeof(paths), "%s", classpath + strlen("-Xbootclasspath:"));
+        char dex_args[128][512];
+        const char *args[160] = {"nce-dex2oat", "-j1", "--no-watch-dog"};
+        size_t count = 3, dex_count = 0;
+        for (char *path = strtok(paths, ":"); path; path = strtok(NULL, ":")) {
+            if (dex_count == 128 || snprintf(dex_args[dex_count], sizeof(dex_args[0]), "--dex-file=%s", path) >= (int)sizeof(dex_args[0]))
+                _exit(126);
+            args[count++] = dex_args[dex_count++];
+        }
+        if (!dex_count)
+            _exit(126);
+        const char *options[] = {
+            "--image=/data/nce/boot/arm64/boot.art",
+            "--oat-file=/data/nce/boot/arm64/boot.oat", "--single-image",
+            "--nce-image-offset=200000", "--image-format=uncompressed",
+            "--compiler-filter=verify", "--generate-debug-info", "--instruction-set=arm64",
+            "--runtime-arg", classpath, "--runtime-arg", "-Xms16m",
+            "--runtime-arg", "-Xmx256m", "--dump-timings", NULL};
+        for (size_t i = 0; i < sizeof(options) / sizeof(options[0]); ++i)
+            args[count++] = options[i];
+        execv("/system/bin/nce-dex2oat", (char *const *)args);
         _exit(127);
     }
     int result = wait_child(child);
@@ -237,14 +253,14 @@ int main(void)
     setenv("ANDROID_I18N_ROOT", "/apex/com.android.i18n", 1);
     setenv("ANDROID_TZDATA_ROOT", "/apex/com.android.tzdata", 1);
     setenv("ICU_DATA", "/apex/com.android.i18n/etc/icu", 1);
-    if (!strcmp(mode, "boot\n"))
-        return compile_boot();
+    if (!strcmp(mode, "boot\n") || !strcmp(mode, "boot-desktop\n"))
+        return compile_boot(!strcmp(mode, "boot-desktop\n"));
     if ((mkdir("/data/nce/oat", 0700) && errno != EEXIST) ||
         (mkdir("/data/nce/oat/arm64", 0700) && errno != EEXIST))
         return 1;
     if (desktop) {
         char classpath[16384];
-        if (prepare_properties() || desktop_classpath(classpath, sizeof(classpath)))
+        if (prepare_properties() || desktop_classpath(classpath, sizeof(classpath), 1))
             return 5;
         for (size_t i = 0; i < sizeof(aot_desktop_targets) / sizeof(aot_desktop_targets[0]); ++i) {
             char oat_path[512], vdex_path[512];

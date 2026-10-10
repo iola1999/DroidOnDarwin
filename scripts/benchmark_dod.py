@@ -241,6 +241,10 @@ def main():
                             configurations.append(json.loads(line)['configuration'])
                     if configurations != [request['configuration']]:
                         error = error or '会话日志中的生效配置不匹配'
+                    if 'bootImage' in request['configuration']:
+                        record['boot_image_loaded'] = 'NCE_BOOT_IMAGE loaded=' in contents
+                        if record['boot_image_loaded'] != request['configuration']['bootImage']:
+                            error = error or '公共启动镜像的实际加载状态与请求不匹配'
                     if record['components']['java_fatal_exceptions'] or record['components']['anrs']:
                         error = error or '运行日志包含 Java 崩溃或 ANR'
                     record['error'] = error

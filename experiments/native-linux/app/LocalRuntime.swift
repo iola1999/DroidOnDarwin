@@ -46,6 +46,8 @@ final class LocalRuntime: SessionRuntime {
         let prepared = NceStorage()
         queue.async {
             do {
+                // Executable layouts and embedded ART assets belong to the installed runtime.
+                try configuration.validateResources(Bundle.main.resourceURL ?? target.resources)
                 try prepared.prepareResources(target.resources, directory: target.directory)
                 DispatchQueue.main.async {
                     self.storage = prepared
