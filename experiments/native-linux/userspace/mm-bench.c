@@ -166,6 +166,17 @@ static void capacity_test(void)
     printf("{\"test\":\"linux_ram_capacity_cow\",\"passed\":true,\"bytes\":%zu}\n", bytes);
 }
 
+void memory_exchange_benchmarks(void)
+{
+    for (size_t bytes = 2 * 1024 * 1024; bytes <= 16 * 1024 * 1024; bytes *= 2) {
+        for (unsigned shared = 0; shared <= 100; shared += 50)
+            for (int all = 0; all <= 1; ++all)
+                benchmark(bytes, shared, all, 0);
+        benchmark(bytes, 0, 1, 1);
+    }
+    puts("{\"test\":\"linux_mm_exchange_integrity\",\"passed\":true,\"cases\":28}");
+}
+
 int main(void)
 {
     extern void memory_tests(void), code_tests(void);
@@ -174,12 +185,6 @@ int main(void)
     signal_tests("musl");
     memory_tests();
     capacity_test();
-    for (size_t bytes = 2 * 1024 * 1024; bytes <= 16 * 1024 * 1024; bytes *= 2) {
-        for (unsigned shared = 0; shared <= 100; shared += 50)
-            for (int all = 0; all <= 1; ++all)
-                benchmark(bytes, shared, all, 0);
-        benchmark(bytes, 0, 1, 1);
-    }
-    puts("{\"test\":\"linux_mm_exchange_integrity\",\"passed\":true,\"cases\":28}");
+    memory_exchange_benchmarks();
     return 0;
 }

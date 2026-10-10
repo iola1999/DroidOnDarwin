@@ -78,9 +78,8 @@ static void reserved_stubs(void)
     puts("{\"test\":\"linux_reserved_branch_stubs\",\"passed\":true}");
 }
 
-void code_tests(void)
+void dynamic_code_tests(void)
 {
-    reserved_stubs();
     CHECK(syscall(NCE_SYS_MAP_CODE, -1, PAGE, 0) == -1 && errno == EBADF);
     int fd = memfd_create("nce-code", MFD_CLOEXEC);
     CHECK(fd >= 0 && ftruncate(fd, 2 * PAGE) == 0);
@@ -159,4 +158,10 @@ void code_tests(void)
     CHECK(syscall(NCE_SYS_PUBLISH_CODE, rx, 8) == -1 && errno == EFAULT);
     CHECK(munmap((void *)second, PAGE) == 0 && munmap(rw, 2 * PAGE) == 0 && close(fd) == 0);
     puts("{\"test\":\"linux_dynamic_code\",\"passed\":true,\"updates\":128,\"sum_iterations\":10000000}");
+}
+
+void code_tests(void)
+{
+    reserved_stubs();
+    dynamic_code_tests();
 }
