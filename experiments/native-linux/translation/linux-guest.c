@@ -65,8 +65,11 @@ int main(int argc, char **argv)
     CHECK(getenv("NCE_TEST") && !strcmp(getenv("NCE_TEST"), "translation"));
     setvbuf(stdout, NULL, _IOLBF, 0);
     extern void signal_tests(const char *libc), dynamic_code_tests(void), memory_exchange_benchmarks(void);
+    extern void memory_tests(void), memory_capacity_test(void);
     dynamic_code_tests();
     signal_tests("musl-translated");
+    memory_tests();
+    memory_capacity_test();
     memory_exchange_benchmarks();
     pthread_t threads[2];
     for (uintptr_t i = 0; i < 2; ++i)

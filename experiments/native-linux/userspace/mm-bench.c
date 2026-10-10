@@ -138,7 +138,7 @@ static void benchmark(size_t bytes, unsigned shared_percent, int all, int thread
     CHECK(fflush(stdout) == 0);
 }
 
-static void capacity_test(void)
+void memory_capacity_test(void)
 {
     const size_t bytes = NCE_RAM_SIZE * 5 / 8;
     volatile unsigned char *data = mmap(NULL, bytes, PROT_READ | PROT_WRITE,
@@ -184,7 +184,7 @@ int main(void)
     code_tests();
     signal_tests("musl");
     memory_tests();
-    capacity_test();
+    memory_capacity_test();
     memory_exchange_benchmarks();
     return 0;
 }

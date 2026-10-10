@@ -46,7 +46,10 @@ static int (*page_fault)(unsigned long, int);
 static void (*user_return)(long, long, unsigned long), (*user_fault)(unsigned long, int);
 static void (*user_preempt)(void), (*prepare_user)(void);
 static unsigned long (*copy_user)(void *, unsigned long, unsigned long, int);
+static unsigned long (*translate_user)(unsigned long, unsigned long);
+static struct nce_translation_state *translation;
 extern struct lkl_host_operations nce_lkl_host;
+extern uc_err nce_uc_emu_stop_at_tb(uc_engine *engine);
 
 static void checked(uc_err error)
 {
@@ -64,10 +67,10 @@ static void *preempt_timer(void *unused)
         struct timespec interval = {.tv_nsec = 2000000};
         int error = pthread_cond_timedwait_relative_np(&timer_condition, &timer_lock, &interval);
         REQUIRE(error == 0 || error == ETIMEDOUT);
-        /* Unicorn 2.1.4 also calls uc_emu_stop from its timeout thread. This
-         * lock excludes register/cache operations and engine destruction. */
+        /* Async stopping must finish the current guest instruction. The lock
+         * excludes register/cache operations and engine destruction. */
         if (timer_active && !timer_stopping)
-            checked(uc_emu_stop(engine));
+            checked(nce_uc_emu_stop_at_tb(engine));
     }
     REQUIRE(pthread_mutex_unlock(&timer_lock) == 0);
     return NULL;
@@ -118,6 +121,7 @@ static void *shmem_map(void *address, unsigned long offset, unsigned long size, 
         remap(address, ram + offset, size, prot);
         return address;
     }
+    REQUIRE(!translation);
     REQUIRE(size <= base + NCE_USER_SIZE - start);
     for (unsigned long i = 0; i < size; i += PAGE) {
         unsigned long index = (start + i - base) / PAGE;
@@ -139,6 +143,7 @@ static int revoke_pages(void *address, unsigned long size)
     REQUIRE(start >= base && !(start % PAGE) && !(size % PAGE));
     REQUIRE(start <= base + RESERVATION && size <= base + RESERVATION - start);
     if (start < base + NCE_USER_SIZE) {
+        REQUIRE(!translation);
         unsigned long length = size < base + NCE_USER_SIZE - start ? size : base + NCE_USER_SIZE - start;
         for (unsigned long i = 0; i < length; i += PAGE) {
             unsigned long index = (start + i - base) / PAGE;
@@ -179,8 +184,9 @@ static bool fill(uc_engine *uc, uint64_t address, uc_mem_type access, uc_tlb_ent
     unsigned permission = access == UC_MEM_WRITE ? UC_PROT_WRITE : access == UC_MEM_FETCH ? UC_PROT_EXEC
                                                                                           : UC_PROT_READ;
     if (address >= base && address < base + NCE_USER_SIZE) {
-        unsigned long value = pages[(address - base) / PAGE];
+        unsigned long value = translate_user ? translate_user(address, permission) : pages[(address - base) / PAGE];
         if (value & permission) {
+            REQUIRE((value & ~(PAGE - 1)) < NCE_RAM_SIZE);
             entry->paddr = value & ~(PAGE - 1);
             entry->perms = value & UC_PROT_ALL;
             return true;
@@ -299,14 +305,17 @@ static void user_run(void *opaque)
         /* Each entry starts with no exclusive reservation. Linux may have
          * switched threads or installed a signal frame during the previous exit. */
         checked(uc_context_restore(engine, empty_cpu));
-        static unsigned long seen_maps, seen_code;
-        if (seen_code != code_generation) {
+        static unsigned long seen_maps, seen_code, seen_kernel_code;
+        unsigned long current_maps = translation ? translation->mappings : map_generation;
+        unsigned long current_kernel_code = translation ? translation->code : 0;
+        if (seen_code != code_generation || seen_kernel_code != current_kernel_code) {
             checked(uc_ctl_flush_tb(engine));
             seen_code = code_generation;
+            seen_kernel_code = current_kernel_code;
         }
-        if (seen_maps != map_generation) {
+        if (seen_maps != current_maps) {
             checked(uc_ctl_flush_tlb(engine));
-            seen_maps = map_generation;
+            seen_maps = current_maps;
         }
         registers(p, false);
         memset(&event, 0, sizeof(event));
@@ -329,8 +338,11 @@ static void user_run(void *opaque)
             user_return(number, result, args[0]);
         } else if (kind == 2) {
             ++faults;
-            if (page_fault(address, access))
+            int result = page_fault(address, access);
+            if (result) {
+                fprintf(stderr, "guest fault pc=%lx address=%lx access=%d result=%d\n", p->regs.pc, address, access, result);
                 user_fault(address, 0);
+            }
         } else if (kind == 3 || error != UC_ERR_OK) {
             fprintf(stderr, "guest exception pc=%lx error=%s event=%d\n", p->regs.pc, uc_strerror(error), kind);
             user_fault(p->regs.pc, 1);
@@ -405,8 +417,11 @@ static int user_reserved(unsigned long address, unsigned long size)
     return 0;
 }
 
-unsigned long translation_linux_setup(void *kernel, unsigned long copy_user_offset)
+unsigned long translation_linux_setup(void *kernel, unsigned long copy_user_offset,
+                                      unsigned long translate_offset, struct nce_translation_state *state)
 {
+    REQUIRE((translate_offset != 0) == (state != NULL));
+    translation = state;
     const char *batch_text = getenv("NCE_TRANSLATION_BATCH");
     char *end = NULL;
     instruction_batch = batch_text ? strtoul(batch_text, &end, 10) : 50000;
@@ -419,8 +434,10 @@ unsigned long translation_linux_setup(void *kernel, unsigned long copy_user_offs
            timer_mode ? "timer" : "instructions", instruction_batch);
     base = (uintptr_t)mmap(NULL, RESERVATION, PROT_NONE, MAP_PRIVATE | MAP_ANON, -1, 0);
     REQUIRE((void *)base != MAP_FAILED && base + RESERVATION < NCE_HOST_ADDRESS_LIMIT);
-    pages = calloc(NCE_USER_SIZE / PAGE, sizeof(*pages));
-    REQUIRE(pages);
+    if (!translation) {
+        pages = calloc(NCE_USER_SIZE / PAGE, sizeof(*pages));
+        REQUIRE(pages);
+    }
     run_syscall = kernel + NCE_RUN_SYSCALL;
     page_fault = kernel + NCE_PAGE_FAULT;
     user_return = kernel + NCE_USER_RETURN;
@@ -428,6 +445,7 @@ unsigned long translation_linux_setup(void *kernel, unsigned long copy_user_offs
     user_preempt = kernel + NCE_USER_PREEMPT;
     prepare_user = kernel + NCE_PREPARE_USER;
     copy_user = kernel + copy_user_offset;
+    translate_user = translate_offset ? kernel + translate_offset : NULL;
     checked(uc_open(UC_ARCH_ARM64, UC_MODE_ARM, &engine));
     checked(uc_ctl_set_cpu_model(engine, UC_CPU_ARM64_MAX));
     checked(uc_ctl_set_page_size(engine, PAGE));

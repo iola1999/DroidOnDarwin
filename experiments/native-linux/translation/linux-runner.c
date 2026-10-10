@@ -96,10 +96,11 @@ int nce_lkl_run(const char *path)
     void (*cleanup)(void) = (void *)(kernel + LKL_CLEANUP);
     call = (void *)(kernel + LKL_SYSCALL);
     void (*set_layout)(unsigned long, unsigned long, unsigned long *, unsigned long, void *, unsigned long, unsigned long) = (void *)(kernel + NCE_SET_LAYOUT);
-    unsigned long *views = calloc(2 * NCE_USER_SIZE / NCE_PAGE_SIZE, sizeof(*views));
+    struct nce_translation_state state = {0};
+    unsigned long *views = TRANSLATION_LOOKUP ? (void *)&state : calloc(2 * NCE_USER_SIZE / NCE_PAGE_SIZE, sizeof(*views));
     REQUIRE(views);
-    unsigned long base = translation_linux_setup(kernel, TRANSLATION_COPY_USER);
-    set_layout(base, NCE_MM_DEMAND, views, 3, NULL, 1, 0);
+    unsigned long base = translation_linux_setup(kernel, TRANSLATION_COPY_USER, TRANSLATION_LOOKUP, TRANSLATION_LOOKUP ? &state : NULL);
+    set_layout(base, TRANSLATION_LOOKUP ? NCE_MM_TRANSLATED : NCE_MM_DEMAND, views, 3, NULL, 1, 0);
     REQUIRE(init(&nce_lkl_host) == 0);
     unsigned long slice;
     REQUIRE(start(0, &slice) == 0);
@@ -110,12 +111,16 @@ int nce_lkl_run(const char *path)
     REQUIRE(call(34, args) == 0);
     args[1] = (long)"/proc";
     REQUIRE(call(34, args) == 0);
+    args[1] = (long)"/bin";
+    REQUIRE(call(34, args) == 0);
     long mount[6] = {(long)"proc", (long)"/proc", (long)"proc"};
     REQUIRE(call(40, mount) == 0);
     put_file("/lib/nce-sigreturn.so", "sigreturn.elf");
     put_file("/probe-guest", "guest.elf");
     put_file("/probe-after-build", "late.elf");
     put_file("/dynamic", "dynamic.elf");
+    put_file("/bin/sh", "dash.elf");
+    put_file("/bionic-test", "bionic-test.elf");
     put_file("/lib/ld-musl-aarch64.so.1", "libc.so");
     put_file("/lib/dependency.so", "dependency.so");
     put_file("/lib/plugin.so", "plugin.so");
@@ -145,7 +150,8 @@ int nce_lkl_run(const char *path)
     cleanup();
     translation_linux_cleanup();
     REQUIRE(munmap(kernel, LKL_IMAGE_SIZE) == 0);
-    free(views);
+    if (!TRANSLATION_LOOKUP)
+        free(views);
     memory_sample("cleaned");
     translation_memory_stop();
     puts(status == 0 && waited == pid ? "{\"result\":\"passed\"}" : "{\"result\":\"failed\"}");
