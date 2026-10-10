@@ -1,0 +1,2096 @@
+{
+  "log": {
+    "path": "work/native-linux-nce/processes/profile-desktop-baseline.log",
+    "sha256": "35af88b794c2fb26b297fae8809ed23b58ad5f2c2d05664448171a63272fe6e2",
+    "summary": {
+      "component_timing_count": 1237,
+      "timing_limit_per_tag": 40,
+      "component_timings": [
+        {
+          "tag": "SystemServerTiming",
+          "name": "InitBeforeStartServices",
+          "ms": 379,
+          "line": 8180,
+          "timestamp": "10-10 02:31:16.075"
+        },
+        {
+          "tag": "SystemServerTiming",
+          "name": "StartActivityManager",
+          "ms": 370,
+          "line": 8678,
+          "timestamp": "10-10 02:31:16.908"
+        },
+        {
+          "tag": "SystemServerTiming",
+          "name": "StartPackageManagerService",
+          "ms": 3709,
+          "line": 9092,
+          "timestamp": "10-10 02:31:21.217"
+        },
+        {
+          "tag": "SystemServerTiming",
+          "name": "SetSystemProcess",
+          "ms": 496,
+          "line": 9145,
+          "timestamp": "10-10 02:31:21.958"
+        },
+        {
+          "tag": "SystemServerTiming",
+          "name": "startBootstrapServices",
+          "ms": 6411,
+          "line": 9204,
+          "timestamp": "10-10 02:31:22.487"
+        },
+        {
+          "tag": "SystemServerTiming",
+          "name": "startCoreServices",
+          "ms": 341,
+          "line": 9264,
+          "timestamp": "10-10 02:31:22.828"
+        },
+        {
+          "tag": "SystemServerTiming",
+          "name": "SetWindowManagerService",
+          "ms": 670,
+          "line": 9471,
+          "timestamp": "10-10 02:31:24.762"
+        },
+        {
+          "tag": "SystemServerTiming",
+          "name": "StartConnectivityService",
+          "ms": 583,
+          "line": 9707,
+          "timestamp": "10-10 02:31:27.730"
+        },
+        {
+          "tag": "SystemServerTiming",
+          "name": "StartNotificationManager",
+          "ms": 533,
+          "line": 9750,
+          "timestamp": "10-10 02:31:28.327"
+        },
+        {
+          "tag": "SystemServerTiming",
+          "name": "StartAudioService",
+          "ms": 836,
+          "line": 9873,
+          "timestamp": "10-10 02:31:29.462"
+        },
+        {
+          "tag": "SystemServerTiming",
+          "name": "StartSelinuxAuditLogsService",
+          "ms": 491,
+          "line": 10284,
+          "timestamp": "10-10 02:31:32.366"
+        },
+        {
+          "tag": "SystemServerTiming",
+          "name": "OnBootPhase_500_com.android.server.am.ActivityManagerService$Lifecycle",
+          "ms": 614,
+          "line": 10897,
+          "timestamp": "10-10 02:31:35.811"
+        },
+        {
+          "tag": "SystemServerTiming",
+          "name": "OnBootPhase_500_com.android.server.power.PowerManagerService",
+          "ms": 1602,
+          "line": 11041,
+          "timestamp": "10-10 02:31:37.414"
+        },
+        {
+          "tag": "SystemServerTiming",
+          "name": "OnBootPhase_500_com.android.server.notification.NotificationManagerService",
+          "ms": 585,
+          "line": 11522,
+          "timestamp": "10-10 02:31:39.667"
+        },
+        {
+          "tag": "SystemServerTiming",
+          "name": "OnBootPhase_500",
+          "ms": 5366,
+          "line": 11763,
+          "timestamp": "10-10 02:31:40.412"
+        },
+        {
+          "tag": "SystemServerTiming",
+          "name": "StartBootPhaseSystemServicesReady",
+          "ms": 5366,
+          "line": 11764,
+          "timestamp": "10-10 02:31:40.412"
+        },
+        {
+          "tag": "SystemServerTiming",
+          "name": "MakePackageManagerServiceReady",
+          "ms": 522,
+          "line": 11937,
+          "timestamp": "10-10 02:31:41.228"
+        },
+        {
+          "tag": "SystemServerTiming",
+          "name": "MakeDisplayManagerServiceReady",
+          "ms": 347,
+          "line": 11997,
+          "timestamp": "10-10 02:31:41.674"
+        },
+        {
+          "tag": "SystemServerTiming",
+          "name": "StartSafetyCenterService",
+          "ms": 378,
+          "line": 12354,
+          "timestamp": "10-10 02:31:42.311"
+        },
+        {
+          "tag": "SystemServerTiming",
+          "name": "OnBootPhase_550_com.android.server.NetworkStatsServiceInitializer",
+          "ms": 750,
+          "line": 12745,
+          "timestamp": "10-10 02:31:44.574"
+        },
+        {
+          "tag": "SystemServerTiming",
+          "name": "Permission_synchronize_addPackages-0",
+          "ms": 378,
+          "line": 12916,
+          "timestamp": "10-10 02:31:45.514"
+        },
+        {
+          "tag": "SystemServerTiming",
+          "name": "Permission_synchronize_permissions-0",
+          "ms": 480,
+          "line": 12934,
+          "timestamp": "10-10 02:31:45.610"
+        },
+        {
+          "tag": "SystemServerTiming",
+          "name": "OnBootPhase_550_com.android.server.policy.PermissionPolicyService",
+          "ms": 483,
+          "line": 12936,
+          "timestamp": "10-10 02:31:45.611"
+        },
+        {
+          "tag": "SystemServerTiming",
+          "name": "OnBootPhase_550",
+          "ms": 2268,
+          "line": 12958,
+          "timestamp": "10-10 02:31:45.624"
+        },
+        {
+          "tag": "SystemServerTiming",
+          "name": "StartActivityManagerReadyPhase",
+          "ms": 2268,
+          "line": 12959,
+          "timestamp": "10-10 02:31:45.624"
+        },
+        {
+          "tag": "SystemServerTiming",
+          "name": "MakeConnectivityServiceReady",
+          "ms": 511,
+          "line": 13022,
+          "timestamp": "10-10 02:31:46.342"
+        },
+        {
+          "tag": "SystemServerTiming",
+          "name": "OnBootPhase_600",
+          "ms": 1540,
+          "line": 13455,
+          "timestamp": "10-10 02:31:48.275"
+        },
+        {
+          "tag": "SystemServerTiming",
+          "name": "PhaseThirdPartyAppsCanStart",
+          "ms": 1540,
+          "line": 13456,
+          "timestamp": "10-10 02:31:48.275"
+        },
+        {
+          "tag": "SystemServerTiming",
+          "name": "StartNetworkStack",
+          "ms": 837,
+          "line": 13599,
+          "timestamp": "10-10 02:31:49.113"
+        },
+        {
+          "tag": "SystemServerTiming",
+          "name": "startHomeOnAllDisplays",
+          "ms": 722,
+          "line": 14067,
+          "timestamp": "10-10 02:31:51.789"
+        },
+        {
+          "tag": "SystemServerTiming",
+          "name": "ActivityManagerStartApps",
+          "ms": 2697,
+          "line": 14101,
+          "timestamp": "10-10 02:31:52.131"
+        },
+        {
+          "tag": "SystemServerTiming",
+          "name": "PhaseActivityManagerReady",
+          "ms": 9189,
+          "line": 14105,
+          "timestamp": "10-10 02:31:52.134"
+        },
+        {
+          "tag": "SystemServerTiming",
+          "name": "startOtherServices",
+          "ms": 29617,
+          "line": 14127,
+          "timestamp": "10-10 02:31:52.446"
+        },
+        {
+          "tag": "SystemServerTiming",
+          "name": "StartServices",
+          "ms": 36391,
+          "line": 14137,
+          "timestamp": "10-10 02:31:52.466"
+        },
+        {
+          "tag": "SystemUIBootTiming",
+          "name": "StartServices com.android.keyguard.KeyguardUpdateMonitor",
+          "ms": 735,
+          "line": 15399,
+          "timestamp": "10-10 02:32:15.748"
+        },
+        {
+          "tag": "SystemUIBootTiming",
+          "name": "StartServices com.android.systemui.ScreenDecorations",
+          "ms": 2048,
+          "line": 15804,
+          "timestamp": "10-10 02:32:17.893"
+        },
+        {
+          "tag": "SystemServerTiming",
+          "name": "prepareUserData-0",
+          "ms": 417,
+          "line": 15941,
+          "timestamp": "10-10 02:32:18.927"
+        },
+        {
+          "tag": "SystemServerTiming",
+          "name": "reconcileAppsData-0",
+          "ms": 330,
+          "line": 15995,
+          "timestamp": "10-10 02:32:19.392"
+        },
+        {
+          "tag": "SystemServerTiming",
+          "name": "UM.onBeforeUnlockUser-0",
+          "ms": 885,
+          "line": 15996,
+          "timestamp": "10-10 02:32:19.393"
+        },
+        {
+          "tag": "SystemServerTiming",
+          "name": "SystemUserUnlock",
+          "ms": 6143,
+          "line": 18060,
+          "timestamp": "10-10 02:32:24.631"
+        },
+        {
+          "tag": "SystemUIBootTiming",
+          "name": "StartServices com.android.systemui.accessibility.MagnificationImpl",
+          "ms": 6892,
+          "line": 18067,
+          "timestamp": "10-10 02:32:25.220"
+        },
+        {
+          "tag": "SystemServerTiming",
+          "name": "finishUserUnlocked-0",
+          "ms": 3819,
+          "line": 18461,
+          "timestamp": "10-10 02:32:28.276"
+        },
+        {
+          "tag": "SystemServerTiming",
+          "name": "broadcastIntent-0-android.intent.action.BOOT_COMPLETED",
+          "ms": 566,
+          "line": 18611,
+          "timestamp": "10-10 02:32:30.951"
+        },
+        {
+          "tag": "SystemUIBootTiming",
+          "name": "StartServices com.android.systemui.accessibility.SystemActions",
+          "ms": 46659,
+          "line": 20825,
+          "timestamp": "10-10 02:33:11.896"
+        },
+        {
+          "tag": "SystemUIBootTiming",
+          "name": "StartServices com.android.systemui.back.domain.interactor.BackActionInteractor",
+          "ms": 72,
+          "line": 20830,
+          "timestamp": "10-10 02:33:12.169"
+        },
+        {
+          "tag": "SystemUIBootTiming",
+          "name": "StartServices com.android.systemui.biometrics.AuthRippleController",
+          "ms": 105,
+          "line": 20835,
+          "timestamp": "10-10 02:33:12.383"
+        },
+        {
+          "tag": "SystemUIBootTiming",
+          "name": "StartServices com.android.systemui.biometrics.BiometricNotificationService",
+          "ms": 760,
+          "line": 20886,
+          "timestamp": "10-10 02:33:13.145"
+        },
+        {
+          "tag": "SystemUIBootTiming",
+          "name": "StartServices com.android.systemui.classifier.FalsingCoreStartable",
+          "ms": 83,
+          "line": 20904,
+          "timestamp": "10-10 02:33:13.386"
+        },
+        {
+          "tag": "SystemUIBootTiming",
+          "name": "StartServices com.android.systemui.clipboardoverlay.ClipboardListener",
+          "ms": 78,
+          "line": 20908,
+          "timestamp": "10-10 02:33:13.466"
+        },
+        {
+          "tag": "SystemUIBootTiming",
+          "name": "StartServices com.android.systemui.communal.CommunalDreamStartable",
+          "ms": 694,
+          "line": 21013,
+          "timestamp": "10-10 02:33:14.546"
+        },
+        {
+          "tag": "SystemUIBootTiming",
+          "name": "StartServices com.android.systemui.communal.CommunalSuppressionStartable",
+          "ms": 909,
+          "line": 21047,
+          "timestamp": "10-10 02:33:16.292"
+        },
+        {
+          "tag": "SystemUIBootTiming",
+          "name": "StartServices com.android.systemui.complication.ComplicationTypesUpdater",
+          "ms": 198,
+          "line": 21058,
+          "timestamp": "10-10 02:33:16.633"
+        },
+        {
+          "tag": "SystemUIBootTiming",
+          "name": "StartServices com.android.systemui.dreams.AssistantAttentionMonitor",
+          "ms": 15061,
+          "line": 21690,
+          "timestamp": "10-10 02:33:32.078"
+        },
+        {
+          "tag": "SystemUIBootTiming",
+          "name": "StartServices com.android.systemui.dreams.homecontrols.system.HomeControlsDreamStartable",
+          "ms": 231,
+          "line": 21739,
+          "timestamp": "10-10 02:33:32.463"
+        },
+        {
+          "tag": "SystemUIBootTiming",
+          "name": "StartServices com.android.systemui.education.ui.view.ContextualEduUiCoordinator",
+          "ms": 433,
+          "line": 21752,
+          "timestamp": "10-10 02:33:33.012"
+        },
+        {
+          "tag": "SystemUIBootTiming",
+          "name": "StartServices com.android.systemui.flags.FeatureFlagsDebugStartable",
+          "ms": 133,
+          "line": 21754,
+          "timestamp": "10-10 02:33:33.146"
+        },
+        {
+          "tag": "SystemUIBootTiming",
+          "name": "StartServices com.android.systemui.globalactions.GlobalActionsComponent",
+          "ms": 192,
+          "line": 21757,
+          "timestamp": "10-10 02:33:33.416"
+        },
+        {
+          "tag": "SystemUIBootTiming",
+          "name": "StartServices com.android.systemui.keyboard.PhysicalKeyboardCoreStartable",
+          "ms": 94,
+          "line": 21761,
+          "timestamp": "10-10 02:33:33.620"
+        },
+        {
+          "tag": "SystemUIBootTiming",
+          "name": "StartServices com.android.systemui.keyguard.KeyguardViewConfigurator",
+          "ms": 550,
+          "line": 21769,
+          "timestamp": "10-10 02:33:34.308"
+        },
+        {
+          "tag": "SystemUIBootTiming",
+          "name": "StartServices com.android.systemui.keyguard.KeyguardViewMediator",
+          "ms": 604,
+          "line": 21813,
+          "timestamp": "10-10 02:33:34.966"
+        },
+        {
+          "tag": "SystemUIBootTiming",
+          "name": "StartServices com.android.systemui.keyguard.domain.interactor.KeyguardTransitionCoreStartable",
+          "ms": 138,
+          "line": 21829,
+          "timestamp": "10-10 02:33:35.163"
+        },
+        {
+          "tag": "SystemUIBootTiming",
+          "name": "StartServices com.android.systemui.power.PowerUI",
+          "ms": 456,
+          "line": 21856,
+          "timestamp": "10-10 02:33:36.014"
+        },
+        {
+          "tag": "SystemUIBootTiming",
+          "name": "StartServices com.android.systemui.shortcut.ShortcutKeyDispatcher",
+          "ms": 78,
+          "line": 21888,
+          "timestamp": "10-10 02:33:36.482"
+        },
+        {
+          "tag": "SystemUIBootTiming",
+          "name": "StartServices com.android.systemui.statusbar.ImmersiveModeConfirmation",
+          "ms": 300,
+          "line": 21890,
+          "timestamp": "10-10 02:33:36.784"
+        },
+        {
+          "tag": "SystemUIBootTiming",
+          "name": "StartServices com.android.systemui.statusbar.chips.sharetoapp.ui.viewmodel.ShareToAppChipViewModel",
+          "ms": 129,
+          "line": 21895,
+          "timestamp": "10-10 02:33:36.931"
+        },
+        {
+          "tag": "SystemUIBootTiming",
+          "name": "StartServices com.android.systemui.statusbar.notification.interruption.KeyguardNotificationVisibilityProviderImpl",
+          "ms": 146,
+          "line": 21915,
+          "timestamp": "10-10 02:33:37.161"
+        },
+        {
+          "tag": "SystemUIBootTiming",
+          "name": "StartServices com.android.systemui.statusbar.notification.interruption.VisualInterruptionDecisionProvider",
+          "ms": 121,
+          "line": 21918,
+          "timestamp": "10-10 02:33:37.283"
+        },
+        {
+          "tag": "SystemUIBootTiming",
+          "name": "StartServices com.android.systemui.statusbar.phone.CentralSurfaces",
+          "ms": 5213,
+          "line": 21989,
+          "timestamp": "10-10 02:33:42.587"
+        },
+        {
+          "tag": "SystemUIBootTiming",
+          "name": "StartServices com.android.systemui.stylus.StylusUsiPowerStartable",
+          "ms": 309,
+          "line": 22019,
+          "timestamp": "10-10 02:33:43.467"
+        },
+        {
+          "tag": "SystemUIBootTiming",
+          "name": "StartServices com.android.systemui.theme.ThemeOverlayController",
+          "ms": 214,
+          "line": 22030,
+          "timestamp": "10-10 02:33:43.729"
+        },
+        {
+          "tag": "SystemUIBootTiming",
+          "name": "StartServices com.android.systemui.usb.StorageNotification",
+          "ms": 179,
+          "line": 22045,
+          "timestamp": "10-10 02:33:43.914"
+        },
+        {
+          "tag": "SystemUIBootTiming",
+          "name": "StartServices com.android.systemui.user.ui.dialog.UserSwitcherDialogCoordinator",
+          "ms": 70,
+          "line": 22046,
+          "timestamp": "10-10 02:33:43.986"
+        },
+        {
+          "tag": "SystemUIBootTiming",
+          "name": "StartServices com.android.systemui.util.NotificationChannels",
+          "ms": 88,
+          "line": 22048,
+          "timestamp": "10-10 02:33:44.112"
+        },
+        {
+          "tag": "SystemUIBootTiming",
+          "name": "StartServices com.android.systemui.volume.VolumeUI",
+          "ms": 150,
+          "line": 22049,
+          "timestamp": "10-10 02:33:44.263"
+        },
+        {
+          "tag": "SystemUIBootTiming",
+          "name": "StartServices com.google.android.systemui.GoogleServices",
+          "ms": 419,
+          "line": 22055,
+          "timestamp": "10-10 02:33:44.778"
+        },
+        {
+          "tag": "SystemUIBootTiming",
+          "name": "StartServices com.google.android.systemui.keyguard.AmbientIndicationCoreStartable",
+          "ms": 69,
+          "line": 22061,
+          "timestamp": "10-10 02:33:45.049"
+        },
+        {
+          "tag": "SystemUIBootTiming",
+          "name": "StartServices com.google.android.systemui.tips.domain.interactor.ContextualTipsInteractor",
+          "ms": 70,
+          "line": 22068,
+          "timestamp": "10-10 02:33:45.177"
+        },
+        {
+          "tag": "SystemUIBootTiming",
+          "name": "StartServices com.google.android.systemui.vpn.AdaptivePPNService",
+          "ms": 205,
+          "line": 22077,
+          "timestamp": "10-10 02:33:45.461"
+        },
+        {
+          "tag": "SystemUIBootTiming",
+          "name": "Topologically start Core Startables",
+          "ms": 90578,
+          "line": 22080,
+          "timestamp": "10-10 02:33:45.466"
+        },
+        {
+          "tag": "SystemUIBootTiming",
+          "name": "StartServices",
+          "ms": 90643,
+          "line": 22084,
+          "timestamp": "10-10 02:33:45.532"
+        }
+      ],
+      "displayed_activities": [
+        {
+          "line": 14881,
+          "message": "10-10 02:32:04.625   206   223 I ActivityTaskManager: Displayed com.android.settings/.FallbackHome for user 0: +12s803ms"
+        },
+        {
+          "line": 22241,
+          "message": "10-10 02:33:49.833   206   223 I ActivityTaskManager: Displayed com.android.launcher3/.uioverrides.QuickstepLauncher for user 0: +1m11s564ms"
+        }
+      ],
+      "mapping_cumulative": [
+        {
+          "profile": "host_mapping",
+          "elapsed_ms": 10624.683,
+          "data_calls": 425841,
+          "data_ms": 686.348,
+          "code_calls": 89353,
+          "code_ms": 205.388,
+          "revoke_calls": 291458,
+          "revoke_ms": 533.873,
+          "line": 7721
+        },
+        {
+          "profile": "host_mapping",
+          "elapsed_ms": 21354.013,
+          "data_calls": 984109,
+          "data_ms": 1663.099,
+          "code_calls": 133128,
+          "code_ms": 355.196,
+          "revoke_calls": 576823,
+          "revoke_ms": 1315.108,
+          "line": 8842
+        },
+        {
+          "profile": "host_mapping",
+          "elapsed_ms": 31370.221,
+          "data_calls": 1612921,
+          "data_ms": 2671.521,
+          "code_calls": 200671,
+          "code_ms": 543.228,
+          "revoke_calls": 981512,
+          "revoke_ms": 2118.562,
+          "line": 9840
+        },
+        {
+          "profile": "host_mapping",
+          "elapsed_ms": 41442.239,
+          "data_calls": 2153335,
+          "data_ms": 3680.192,
+          "code_calls": 292254,
+          "code_ms": 793.163,
+          "revoke_calls": 1380683,
+          "revoke_ms": 2980.329,
+          "line": 11442
+        },
+        {
+          "profile": "host_mapping",
+          "elapsed_ms": 51932.613,
+          "data_calls": 2824384,
+          "data_ms": 4740.935,
+          "code_calls": 380437,
+          "code_ms": 1010.769,
+          "revoke_calls": 1856240,
+          "revoke_ms": 3866.697,
+          "line": 13524
+        },
+        {
+          "profile": "host_mapping",
+          "elapsed_ms": 62992.28,
+          "data_calls": 3579513,
+          "data_ms": 5927.558,
+          "code_calls": 465150,
+          "code_ms": 1229.37,
+          "revoke_calls": 2403231,
+          "revoke_ms": 4801.728,
+          "line": 14551
+        },
+        {
+          "profile": "host_mapping",
+          "elapsed_ms": 73080.945,
+          "data_calls": 4260520,
+          "data_ms": 6970.967,
+          "code_calls": 554991,
+          "code_ms": 1449.24,
+          "revoke_calls": 2903448,
+          "revoke_ms": 5636.902,
+          "line": 15297
+        },
+        {
+          "profile": "host_mapping",
+          "elapsed_ms": 93518.652,
+          "data_calls": 5625160,
+          "data_ms": 9052.624,
+          "code_calls": 728828,
+          "code_ms": 1892.513,
+          "revoke_calls": 3862390,
+          "revoke_ms": 7272.528,
+          "line": 18625
+        },
+        {
+          "profile": "host_mapping",
+          "elapsed_ms": 103526.905,
+          "data_calls": 6288330,
+          "data_ms": 10102.512,
+          "code_calls": 807026,
+          "code_ms": 2098.969,
+          "revoke_calls": 4330469,
+          "revoke_ms": 8101.509,
+          "line": 19276
+        },
+        {
+          "profile": "host_mapping",
+          "elapsed_ms": 114413.631,
+          "data_calls": 7009400,
+          "data_ms": 11215.991,
+          "code_calls": 892156,
+          "code_ms": 2321.821,
+          "revoke_calls": 4862072,
+          "revoke_ms": 8986.96,
+          "line": 19892
+        },
+        {
+          "profile": "host_mapping",
+          "elapsed_ms": 124472.607,
+          "data_calls": 7563206,
+          "data_ms": 12295.99,
+          "code_calls": 950298,
+          "code_ms": 2486.425,
+          "revoke_calls": 5256333,
+          "revoke_ms": 9861.007,
+          "line": 20340
+        },
+        {
+          "profile": "host_mapping",
+          "elapsed_ms": 134474.05,
+          "data_calls": 8234232,
+          "data_ms": 13370.247,
+          "code_calls": 1019732,
+          "code_ms": 2670.826,
+          "revoke_calls": 5745122,
+          "revoke_ms": 10746.126,
+          "line": 20832
+        },
+        {
+          "profile": "host_mapping",
+          "elapsed_ms": 144558.783,
+          "data_calls": 8926882,
+          "data_ms": 14458.694,
+          "code_calls": 1087238,
+          "code_ms": 2852.733,
+          "revoke_calls": 6250240,
+          "revoke_ms": 11591.842,
+          "line": 21357
+        },
+        {
+          "profile": "host_mapping",
+          "elapsed_ms": 154605.598,
+          "data_calls": 9620676,
+          "data_ms": 15537.53,
+          "code_calls": 1159053,
+          "code_ms": 3041.017,
+          "revoke_calls": 6750650,
+          "revoke_ms": 12425.218,
+          "line": 21736
+        },
+        {
+          "profile": "host_mapping",
+          "elapsed_ms": 165142.033,
+          "data_calls": 10330826,
+          "data_ms": 16652.613,
+          "code_calls": 1238414,
+          "code_ms": 3264.141,
+          "revoke_calls": 7265658,
+          "revoke_ms": 13296.797,
+          "line": 21981
+        },
+        {
+          "profile": "host_mapping",
+          "elapsed_ms": 175195.847,
+          "data_calls": 11015093,
+          "data_ms": 17720.259,
+          "code_calls": 1306846,
+          "code_ms": 3455.603,
+          "revoke_calls": 7743369,
+          "revoke_ms": 14113.143,
+          "line": 22288
+        },
+        {
+          "profile": "host_mapping",
+          "elapsed_ms": 185261.306,
+          "data_calls": 11683960,
+          "data_ms": 18755.117,
+          "code_calls": 1378686,
+          "code_ms": 3654.125,
+          "revoke_calls": 8208845,
+          "revoke_ms": 14920.096,
+          "line": 22499
+        },
+        {
+          "profile": "host_mapping",
+          "elapsed_ms": 195382.883,
+          "data_calls": 12355058,
+          "data_ms": 19799.009,
+          "code_calls": 1458282,
+          "code_ms": 3862.715,
+          "revoke_calls": 8682656,
+          "revoke_ms": 15729.145,
+          "line": 22841
+        },
+        {
+          "profile": "host_mapping",
+          "elapsed_ms": 206043.015,
+          "data_calls": 12862233,
+          "data_ms": 20628.534,
+          "code_calls": 1519189,
+          "code_ms": 4029.771,
+          "revoke_calls": 9046985,
+          "revoke_ms": 16420.405,
+          "line": 23088
+        },
+        {
+          "profile": "host_mapping",
+          "elapsed_ms": 216101.906,
+          "data_calls": 12932080,
+          "data_ms": 20839.237,
+          "code_calls": 1531113,
+          "code_ms": 4076.712,
+          "revoke_calls": 9104001,
+          "revoke_ms": 16693.237,
+          "line": 23128
+        },
+        {
+          "profile": "host_mapping",
+          "elapsed_ms": 226143.387,
+          "data_calls": 12994360,
+          "data_ms": 21043.946,
+          "code_calls": 1542157,
+          "code_ms": 4121.004,
+          "revoke_calls": 9156737,
+          "revoke_ms": 16975.212,
+          "line": 23170
+        },
+        {
+          "profile": "host_mapping",
+          "elapsed_ms": 236335.94,
+          "data_calls": 13063631,
+          "data_ms": 21247.701,
+          "code_calls": 1554117,
+          "code_ms": 4165.739,
+          "revoke_calls": 9214710,
+          "revoke_ms": 17245.652,
+          "line": 23213
+        },
+        {
+          "profile": "host_mapping",
+          "elapsed_ms": 246409.881,
+          "data_calls": 13159635,
+          "data_ms": 21500.446,
+          "code_calls": 1569920,
+          "code_ms": 4222.437,
+          "revoke_calls": 9292220,
+          "revoke_ms": 17562.584,
+          "line": 23288
+        },
+        {
+          "profile": "host_mapping",
+          "elapsed_ms": 256543.399,
+          "data_calls": 13222962,
+          "data_ms": 21704.599,
+          "code_calls": 1580696,
+          "code_ms": 4264.832,
+          "revoke_calls": 9343939,
+          "revoke_ms": 17844.549,
+          "line": 23330
+        },
+        {
+          "profile": "host_mapping",
+          "elapsed_ms": 266667.376,
+          "data_calls": 13283020,
+          "data_ms": 21871.712,
+          "code_calls": 1591382,
+          "code_ms": 4301.443,
+          "revoke_calls": 9395185,
+          "revoke_ms": 18085.004,
+          "line": 23370
+        },
+        {
+          "profile": "host_mapping",
+          "elapsed_ms": 276858.361,
+          "data_calls": 13344633,
+          "data_ms": 22056.081,
+          "code_calls": 1602282,
+          "code_ms": 4341.119,
+          "revoke_calls": 9447600,
+          "revoke_ms": 18350.349,
+          "line": 23412
+        },
+        {
+          "profile": "host_mapping",
+          "elapsed_ms": 287156.754,
+          "data_calls": 13403048,
+          "data_ms": 22206.794,
+          "code_calls": 1612700,
+          "code_ms": 4369.825,
+          "revoke_calls": 9497295,
+          "revoke_ms": 18567.745,
+          "line": 23456
+        },
+        {
+          "profile": "host_mapping",
+          "elapsed_ms": 297380.195,
+          "data_calls": 13460934,
+          "data_ms": 22399.653,
+          "code_calls": 1623031,
+          "code_ms": 4403.728,
+          "revoke_calls": 9546776,
+          "revoke_ms": 18830.149,
+          "line": 23498
+        },
+        {
+          "profile": "host_mapping",
+          "elapsed_ms": 307651.445,
+          "data_calls": 13547134,
+          "data_ms": 22632.217,
+          "code_calls": 1637361,
+          "code_ms": 4451.963,
+          "revoke_calls": 9615582,
+          "revoke_ms": 19127.118,
+          "line": 23541
+        },
+        {
+          "profile": "host_mapping",
+          "elapsed_ms": 317917.563,
+          "data_calls": 13608218,
+          "data_ms": 22822.125,
+          "code_calls": 1648269,
+          "code_ms": 4492.293,
+          "revoke_calls": 9666578,
+          "revoke_ms": 19399.105,
+          "line": 23600
+        },
+        {
+          "profile": "host_mapping",
+          "elapsed_ms": 328188.099,
+          "data_calls": 13677009,
+          "data_ms": 23024.404,
+          "code_calls": 1660128,
+          "code_ms": 4534.477,
+          "revoke_calls": 9723793,
+          "revoke_ms": 19675.224,
+          "line": 23642
+        },
+        {
+          "profile": "host_mapping",
+          "elapsed_ms": 338284.472,
+          "data_calls": 13741154,
+          "data_ms": 23221.885,
+          "code_calls": 1671274,
+          "code_ms": 4575.774,
+          "revoke_calls": 9777397,
+          "revoke_ms": 19951.117,
+          "line": 23680
+        },
+        {
+          "profile": "host_mapping",
+          "elapsed_ms": 348332.571,
+          "data_calls": 13803719,
+          "data_ms": 23407.727,
+          "code_calls": 1682025,
+          "code_ms": 4613.136,
+          "revoke_calls": 9829137,
+          "revoke_ms": 20236.648,
+          "line": 23722
+        }
+      ],
+      "mapping_intervals": [
+        {
+          "elapsed_ms": 10624.683,
+          "data_ms": 686.348,
+          "code_ms": 205.388,
+          "revoke_ms": 533.873,
+          "mapping_ms": 1425.609,
+          "elapsed_end_ms": 10624.683
+        },
+        {
+          "elapsed_ms": 10729.33,
+          "data_ms": 976.751,
+          "code_ms": 149.808,
+          "revoke_ms": 781.235,
+          "mapping_ms": 1907.794,
+          "elapsed_end_ms": 21354.013
+        },
+        {
+          "elapsed_ms": 10016.208,
+          "data_ms": 1008.422,
+          "code_ms": 188.032,
+          "revoke_ms": 803.454,
+          "mapping_ms": 1999.908,
+          "elapsed_end_ms": 31370.221
+        },
+        {
+          "elapsed_ms": 10072.018,
+          "data_ms": 1008.671,
+          "code_ms": 249.935,
+          "revoke_ms": 861.767,
+          "mapping_ms": 2120.373,
+          "elapsed_end_ms": 41442.239
+        },
+        {
+          "elapsed_ms": 10490.374,
+          "data_ms": 1060.743,
+          "code_ms": 217.606,
+          "revoke_ms": 886.368,
+          "mapping_ms": 2164.717,
+          "elapsed_end_ms": 51932.613
+        },
+        {
+          "elapsed_ms": 11059.667,
+          "data_ms": 1186.623,
+          "code_ms": 218.601,
+          "revoke_ms": 935.031,
+          "mapping_ms": 2340.255,
+          "elapsed_end_ms": 62992.28
+        },
+        {
+          "elapsed_ms": 10088.665,
+          "data_ms": 1043.409,
+          "code_ms": 219.87,
+          "revoke_ms": 835.174,
+          "mapping_ms": 2098.453,
+          "elapsed_end_ms": 73080.945
+        },
+        {
+          "elapsed_ms": 20437.707,
+          "data_ms": 2081.657,
+          "code_ms": 443.273,
+          "revoke_ms": 1635.626,
+          "mapping_ms": 4160.556,
+          "elapsed_end_ms": 93518.652
+        },
+        {
+          "elapsed_ms": 10008.253,
+          "data_ms": 1049.888,
+          "code_ms": 206.456,
+          "revoke_ms": 828.981,
+          "mapping_ms": 2085.325,
+          "elapsed_end_ms": 103526.905
+        },
+        {
+          "elapsed_ms": 10886.726,
+          "data_ms": 1113.479,
+          "code_ms": 222.852,
+          "revoke_ms": 885.451,
+          "mapping_ms": 2221.782,
+          "elapsed_end_ms": 114413.631
+        },
+        {
+          "elapsed_ms": 10058.976,
+          "data_ms": 1079.999,
+          "code_ms": 164.604,
+          "revoke_ms": 874.047,
+          "mapping_ms": 2118.65,
+          "elapsed_end_ms": 124472.607
+        },
+        {
+          "elapsed_ms": 10001.443,
+          "data_ms": 1074.257,
+          "code_ms": 184.401,
+          "revoke_ms": 885.119,
+          "mapping_ms": 2143.777,
+          "elapsed_end_ms": 134474.05
+        },
+        {
+          "elapsed_ms": 10084.733,
+          "data_ms": 1088.447,
+          "code_ms": 181.907,
+          "revoke_ms": 845.716,
+          "mapping_ms": 2116.07,
+          "elapsed_end_ms": 144558.783
+        },
+        {
+          "elapsed_ms": 10046.815,
+          "data_ms": 1078.836,
+          "code_ms": 188.284,
+          "revoke_ms": 833.376,
+          "mapping_ms": 2100.496,
+          "elapsed_end_ms": 154605.598
+        },
+        {
+          "elapsed_ms": 10536.435,
+          "data_ms": 1115.083,
+          "code_ms": 223.124,
+          "revoke_ms": 871.579,
+          "mapping_ms": 2209.786,
+          "elapsed_end_ms": 165142.033
+        },
+        {
+          "elapsed_ms": 10053.814,
+          "data_ms": 1067.646,
+          "code_ms": 191.462,
+          "revoke_ms": 816.346,
+          "mapping_ms": 2075.454,
+          "elapsed_end_ms": 175195.847
+        },
+        {
+          "elapsed_ms": 10065.459,
+          "data_ms": 1034.858,
+          "code_ms": 198.522,
+          "revoke_ms": 806.953,
+          "mapping_ms": 2040.333,
+          "elapsed_end_ms": 185261.306
+        },
+        {
+          "elapsed_ms": 10121.577,
+          "data_ms": 1043.892,
+          "code_ms": 208.59,
+          "revoke_ms": 809.049,
+          "mapping_ms": 2061.531,
+          "elapsed_end_ms": 195382.883
+        },
+        {
+          "elapsed_ms": 10660.132,
+          "data_ms": 829.525,
+          "code_ms": 167.056,
+          "revoke_ms": 691.26,
+          "mapping_ms": 1687.841,
+          "elapsed_end_ms": 206043.015
+        },
+        {
+          "elapsed_ms": 10058.891,
+          "data_ms": 210.703,
+          "code_ms": 46.941,
+          "revoke_ms": 272.832,
+          "mapping_ms": 530.476,
+          "elapsed_end_ms": 216101.906
+        },
+        {
+          "elapsed_ms": 10041.481,
+          "data_ms": 204.709,
+          "code_ms": 44.292,
+          "revoke_ms": 281.975,
+          "mapping_ms": 530.976,
+          "elapsed_end_ms": 226143.387
+        },
+        {
+          "elapsed_ms": 10192.553,
+          "data_ms": 203.755,
+          "code_ms": 44.735,
+          "revoke_ms": 270.44,
+          "mapping_ms": 518.93,
+          "elapsed_end_ms": 236335.94
+        },
+        {
+          "elapsed_ms": 10073.941,
+          "data_ms": 252.745,
+          "code_ms": 56.698,
+          "revoke_ms": 316.932,
+          "mapping_ms": 626.375,
+          "elapsed_end_ms": 246409.881
+        },
+        {
+          "elapsed_ms": 10133.518,
+          "data_ms": 204.153,
+          "code_ms": 42.395,
+          "revoke_ms": 281.965,
+          "mapping_ms": 528.513,
+          "elapsed_end_ms": 256543.399
+        },
+        {
+          "elapsed_ms": 10123.977,
+          "data_ms": 167.113,
+          "code_ms": 36.611,
+          "revoke_ms": 240.455,
+          "mapping_ms": 444.179,
+          "elapsed_end_ms": 266667.376
+        },
+        {
+          "elapsed_ms": 10190.985,
+          "data_ms": 184.369,
+          "code_ms": 39.676,
+          "revoke_ms": 265.345,
+          "mapping_ms": 489.39,
+          "elapsed_end_ms": 276858.361
+        },
+        {
+          "elapsed_ms": 10298.393,
+          "data_ms": 150.713,
+          "code_ms": 28.706,
+          "revoke_ms": 217.396,
+          "mapping_ms": 396.815,
+          "elapsed_end_ms": 287156.754
+        },
+        {
+          "elapsed_ms": 10223.441,
+          "data_ms": 192.859,
+          "code_ms": 33.903,
+          "revoke_ms": 262.404,
+          "mapping_ms": 489.166,
+          "elapsed_end_ms": 297380.195
+        },
+        {
+          "elapsed_ms": 10271.25,
+          "data_ms": 232.564,
+          "code_ms": 48.235,
+          "revoke_ms": 296.969,
+          "mapping_ms": 577.768,
+          "elapsed_end_ms": 307651.445
+        },
+        {
+          "elapsed_ms": 10266.118,
+          "data_ms": 189.908,
+          "code_ms": 40.33,
+          "revoke_ms": 271.987,
+          "mapping_ms": 502.225,
+          "elapsed_end_ms": 317917.563
+        },
+        {
+          "elapsed_ms": 10270.536,
+          "data_ms": 202.279,
+          "code_ms": 42.184,
+          "revoke_ms": 276.119,
+          "mapping_ms": 520.582,
+          "elapsed_end_ms": 328188.099
+        },
+        {
+          "elapsed_ms": 10096.373,
+          "data_ms": 197.481,
+          "code_ms": 41.297,
+          "revoke_ms": 275.893,
+          "mapping_ms": 514.671,
+          "elapsed_end_ms": 338284.472
+        },
+        {
+          "elapsed_ms": 10048.099,
+          "data_ms": 185.842,
+          "code_ms": 37.362,
+          "revoke_ms": 285.531,
+          "mapping_ms": 508.735,
+          "elapsed_end_ms": 348332.571
+        }
+      ],
+      "resume_entries": [
+        {
+          "profile": "resume_entries",
+          "hits": 298917,
+          "misses": 60395,
+          "line": 7722
+        },
+        {
+          "profile": "resume_entries",
+          "hits": 806246,
+          "misses": 125553,
+          "line": 8843
+        },
+        {
+          "profile": "resume_entries",
+          "hits": 1375215,
+          "misses": 228056,
+          "line": 9841
+        },
+        {
+          "profile": "resume_entries",
+          "hits": 1881171,
+          "misses": 337658,
+          "line": 11443
+        },
+        {
+          "profile": "resume_entries",
+          "hits": 2485724,
+          "misses": 463208,
+          "line": 13525
+        },
+        {
+          "profile": "resume_entries",
+          "hits": 3153748,
+          "misses": 598825,
+          "line": 14552
+        },
+        {
+          "profile": "resume_entries",
+          "hits": 3764963,
+          "misses": 733382,
+          "line": 15298
+        },
+        {
+          "profile": "resume_entries",
+          "hits": 4370882,
+          "misses": 866043,
+          "line": 16701
+        },
+        {
+          "profile": "resume_entries",
+          "hits": 4950919,
+          "misses": 1008296,
+          "line": 18626
+        },
+        {
+          "profile": "resume_entries",
+          "hits": 5527456,
+          "misses": 1144454,
+          "line": 19277
+        },
+        {
+          "profile": "resume_entries",
+          "hits": 6162668,
+          "misses": 1286889,
+          "line": 19893
+        },
+        {
+          "profile": "resume_entries",
+          "hits": 6640756,
+          "misses": 1396336,
+          "line": 20341
+        },
+        {
+          "profile": "resume_entries",
+          "hits": 7218598,
+          "misses": 1525917,
+          "line": 20833
+        },
+        {
+          "profile": "resume_entries",
+          "hits": 7821349,
+          "misses": 1655127,
+          "line": 21358
+        },
+        {
+          "profile": "resume_entries",
+          "hits": 8419095,
+          "misses": 1790800,
+          "line": 21737
+        },
+        {
+          "profile": "resume_entries",
+          "hits": 9039267,
+          "misses": 1939395,
+          "line": 21982
+        },
+        {
+          "profile": "resume_entries",
+          "hits": 9640369,
+          "misses": 2073121,
+          "line": 22289
+        },
+        {
+          "profile": "resume_entries",
+          "hits": 10231964,
+          "misses": 2198607,
+          "line": 22500
+        },
+        {
+          "profile": "resume_entries",
+          "hits": 10823242,
+          "misses": 2343232,
+          "line": 22842
+        },
+        {
+          "profile": "resume_entries",
+          "hits": 11275836,
+          "misses": 2447091,
+          "line": 23089
+        },
+        {
+          "profile": "resume_entries",
+          "hits": 11350474,
+          "misses": 2453549,
+          "line": 23129
+        },
+        {
+          "profile": "resume_entries",
+          "hits": 11417920,
+          "misses": 2458943,
+          "line": 23171
+        },
+        {
+          "profile": "resume_entries",
+          "hits": 11491430,
+          "misses": 2465943,
+          "line": 23214
+        },
+        {
+          "profile": "resume_entries",
+          "hits": 11587603,
+          "misses": 2479920,
+          "line": 23289
+        },
+        {
+          "profile": "resume_entries",
+          "hits": 11656615,
+          "misses": 2484653,
+          "line": 23331
+        },
+        {
+          "profile": "resume_entries",
+          "hits": 11722043,
+          "misses": 2489514,
+          "line": 23371
+        },
+        {
+          "profile": "resume_entries",
+          "hits": 11788915,
+          "misses": 2494696,
+          "line": 23413
+        },
+        {
+          "profile": "resume_entries",
+          "hits": 11852908,
+          "misses": 2499168,
+          "line": 23457
+        },
+        {
+          "profile": "resume_entries",
+          "hits": 11916463,
+          "misses": 2503507,
+          "line": 23499
+        },
+        {
+          "profile": "resume_entries",
+          "hits": 12005589,
+          "misses": 2513935,
+          "line": 23542
+        },
+        {
+          "profile": "resume_entries",
+          "hits": 12072293,
+          "misses": 2518737,
+          "line": 23601
+        },
+        {
+          "profile": "resume_entries",
+          "hits": 12145433,
+          "misses": 2525612,
+          "line": 23643
+        },
+        {
+          "profile": "resume_entries",
+          "hits": 12214423,
+          "misses": 2531360,
+          "line": 23681
+        },
+        {
+          "profile": "resume_entries",
+          "hits": 12281641,
+          "misses": 2536939,
+          "line": 23723
+        }
+      ],
+      "java_fatal_exceptions": 0,
+      "anrs": 0
+    }
+  },
+  "samples": [
+    {
+      "path": "work/native-linux-nce/profile-desktop-baseline-t011.sample.txt",
+      "sha256": "7bfe527ba904b3bdfe0fe70d3d0687b04c09bcd847602aa6314349c6cbc7a267",
+      "summary": {
+        "metadata": {
+          "Date/Time": "2026-10-10 10:31:08.272 +0800",
+          "Launch Time": "2026-10-10 10:30:57.541 +0800",
+          "OS Version": "macOS 27.0 (26A428)",
+          "Physical footprint": "869.8M",
+          "Physical footprint (peak)": "1.2G"
+        },
+        "all_thread_samples": 145116,
+        "nonwait_samples": 678,
+        "groups": {
+          "explicit_wait": 144438,
+          "other_host": 28,
+          "host_mapping": 119,
+          "signal_handling": 164,
+          "unresolved_native_code": 320,
+          "resume_entry": 47
+        },
+        "nonwait_share": {
+          "other_host": 0.0413,
+          "host_mapping": 0.1755,
+          "signal_handling": 0.2419,
+          "unresolved_native_code": 0.472,
+          "resume_entry": 0.0693
+        },
+        "top_nonwait_functions": [
+          [
+            "???",
+            320
+          ],
+          [
+            "_sigtramp",
+            133
+          ],
+          [
+            "mach_msg2_trap",
+            52
+          ],
+          [
+            "__mmap",
+            48
+          ],
+          [
+            "prepare_resume",
+            35
+          ],
+          [
+            "fault",
+            19
+          ],
+          [
+            "nce_event_gate",
+            13
+          ],
+          [
+            "sys_icache_invalidate",
+            12
+          ],
+          [
+            "__mprotect",
+            10
+          ],
+          [
+            "_platform_memcmp",
+            6
+          ],
+          [
+            "nce_gate",
+            5
+          ],
+          [
+            "mach_continuous_time",
+            4
+          ],
+          [
+            "pthread_kill",
+            3
+          ],
+          [
+            "__pthread_kill",
+            2
+          ],
+          [
+            "start_wqthread",
+            2
+          ],
+          [
+            "__psynch_cvsignal",
+            2
+          ],
+          [
+            "nce_memory_dynamic_code",
+            2
+          ],
+          [
+            "getMethodNoSuper_nolock(objc_class*, objc_selector*)",
+            1
+          ],
+          [
+            "pthread_testcancel",
+            1
+          ],
+          [
+            "DYLD-STUB$$pthread_mutex_unlock",
+            1
+          ]
+        ]
+      }
+    },
+    {
+      "path": "work/native-linux-nce/profile-desktop-baseline-t035.sample.txt",
+      "sha256": "588513139b6402bfd399bf1d8da898754992f6c3405aedc892da8f4c2bc82932",
+      "summary": {
+        "metadata": {
+          "Date/Time": "2026-10-10 10:31:32.052 +0800",
+          "Launch Time": "2026-10-10 10:30:57.541 +0800",
+          "OS Version": "macOS 27.0 (26A428)",
+          "Physical footprint": "1.0G",
+          "Physical footprint (peak)": "1.3G"
+        },
+        "all_thread_samples": 216813,
+        "nonwait_samples": 626,
+        "groups": {
+          "explicit_wait": 216187,
+          "other_host": 14,
+          "host_mapping": 142,
+          "resume_entry": 86,
+          "unresolved_native_code": 171,
+          "signal_handling": 213
+        },
+        "nonwait_share": {
+          "other_host": 0.0224,
+          "host_mapping": 0.2268,
+          "resume_entry": 0.1374,
+          "unresolved_native_code": 0.2732,
+          "signal_handling": 0.3403
+        },
+        "top_nonwait_functions": [
+          [
+            "_sigtramp",
+            181
+          ],
+          [
+            "???",
+            171
+          ],
+          [
+            "prepare_resume",
+            66
+          ],
+          [
+            "mach_msg2_trap",
+            65
+          ],
+          [
+            "__mmap",
+            54
+          ],
+          [
+            "fault",
+            24
+          ],
+          [
+            "sys_icache_invalidate",
+            20
+          ],
+          [
+            "__mprotect",
+            11
+          ],
+          [
+            "_platform_memcmp",
+            10
+          ],
+          [
+            "nce_event_gate",
+            8
+          ],
+          [
+            "__pthread_kill",
+            4
+          ],
+          [
+            "start_wqthread",
+            3
+          ],
+          [
+            "__psynch_cvsignal",
+            3
+          ],
+          [
+            "mach_continuous_time",
+            2
+          ],
+          [
+            "pthread_kill",
+            1
+          ],
+          [
+            "_platform_memset",
+            1
+          ],
+          [
+            "nce_program_index",
+            1
+          ],
+          [
+            "kevent_id",
+            1
+          ]
+        ]
+      }
+    },
+    {
+      "path": "work/native-linux-nce/profile-desktop-baseline-t115.sample.txt",
+      "sha256": "b1bb3e257c41e66d3c26280c2faca36e9f9b3f724927f1f138dfcbfdf966614f",
+      "summary": {
+        "metadata": {
+          "Date/Time": "2026-10-10 10:32:52.193 +0800",
+          "Launch Time": "2026-10-10 10:30:57.541 +0800",
+          "OS Version": "macOS 27.0 (26A428)",
+          "Physical footprint": "1.9G",
+          "Physical footprint (peak)": "1.9G"
+        },
+        "all_thread_samples": 373457,
+        "nonwait_samples": 612,
+        "groups": {
+          "explicit_wait": 372845,
+          "other_host": 16,
+          "host_mapping": 136,
+          "unresolved_native_code": 193,
+          "resume_entry": 85,
+          "signal_handling": 177,
+          "host_graphics": 5
+        },
+        "nonwait_share": {
+          "other_host": 0.0261,
+          "host_mapping": 0.2222,
+          "unresolved_native_code": 0.3154,
+          "resume_entry": 0.1389,
+          "signal_handling": 0.2892,
+          "host_graphics": 0.0082
+        },
+        "top_nonwait_functions": [
+          [
+            "???",
+            193
+          ],
+          [
+            "_sigtramp",
+            148
+          ],
+          [
+            "mach_msg2_trap",
+            68
+          ],
+          [
+            "prepare_resume",
+            68
+          ],
+          [
+            "__mmap",
+            50
+          ],
+          [
+            "fault",
+            19
+          ],
+          [
+            "sys_icache_invalidate",
+            17
+          ],
+          [
+            "__mprotect",
+            13
+          ],
+          [
+            "nce_event_gate",
+            10
+          ],
+          [
+            "start_wqthread",
+            5
+          ],
+          [
+            "pthread_kill",
+            3
+          ],
+          [
+            "_platform_memcmp",
+            3
+          ],
+          [
+            "iokit_user_client_trap",
+            3
+          ],
+          [
+            "protect_none",
+            2
+          ],
+          [
+            "nce_restore_stack",
+            2
+          ],
+          [
+            "mach_continuous_time",
+            2
+          ],
+          [
+            "__pthread_kill",
+            1
+          ],
+          [
+            "fsync",
+            1
+          ],
+          [
+            "_platform_memset",
+            1
+          ],
+          [
+            "mach_absolute_time",
+            1
+          ]
+        ]
+      }
+    },
+    {
+      "path": "work/native-linux-nce/profile-desktop-baseline-t279.sample.txt",
+      "sha256": "efbe39686716328143f2481eebe62a8042eca5911276d79bdc985e5ae57d2d36",
+      "summary": {
+        "metadata": {
+          "Date/Time": "2026-10-10 10:35:36.544 +0800",
+          "Launch Time": "2026-10-10 10:30:57.541 +0800",
+          "OS Version": "macOS 27.0 (26A428)",
+          "Physical footprint": "1.4G",
+          "Physical footprint (peak)": "2.0G"
+        },
+        "all_thread_samples": 463390,
+        "nonwait_samples": 96,
+        "groups": {
+          "explicit_wait": 463294,
+          "other_host": 13,
+          "unresolved_native_code": 25,
+          "signal_handling": 30,
+          "resume_entry": 10,
+          "host_mapping": 18
+        },
+        "nonwait_share": {
+          "other_host": 0.1354,
+          "unresolved_native_code": 0.2604,
+          "signal_handling": 0.3125,
+          "resume_entry": 0.1042,
+          "host_mapping": 0.1875
+        },
+        "top_nonwait_functions": [
+          [
+            "_sigtramp",
+            27
+          ],
+          [
+            "???",
+            25
+          ],
+          [
+            "prepare_resume",
+            8
+          ],
+          [
+            "start_wqthread",
+            8
+          ],
+          [
+            "__mmap",
+            7
+          ],
+          [
+            "mach_msg2_trap",
+            7
+          ],
+          [
+            "__mprotect",
+            2
+          ],
+          [
+            "fault",
+            2
+          ],
+          [
+            "sys_icache_invalidate",
+            2
+          ],
+          [
+            "__pthread_kill",
+            1
+          ],
+          [
+            "pthread_kill",
+            1
+          ],
+          [
+            "__psynch_mutexdrop",
+            1
+          ],
+          [
+            "nce_event_gate",
+            1
+          ],
+          [
+            "nce_restore_stack",
+            1
+          ],
+          [
+            "nce_program_index",
+            1
+          ],
+          [
+            "_platform_memcmp",
+            1
+          ],
+          [
+            "_dispatch_source_wakeup",
+            1
+          ]
+        ]
+      }
+    }
+  ],
+  "limits": [
+    "Nonwait shares describe sampled stack observations, not measured CPU-time percentages.",
+    "Mapping times include scheduling delay inside each call; component timers can overlap.",
+    "Unresolved native addresses include Linux, guest ELF code, branch stubs and ART JIT.",
+    "Sampling and mapping counters add overhead; this run does not measure uninstrumented startup.",
+    "ART SIGQUIT snapshots suspend guest threads and describe only the captured instants."
+  ],
+  "results": {
+    "path": "work/native-linux-nce/processes/profile-desktop-baseline.jsonl",
+    "sha256": "968c000098ab2ad923b1f8f6cf705d27d507653506b04bca5146c617b85e23b3",
+    "completed": true,
+    "records": [
+      {
+        "test": "android_system_boot_completed",
+        "passed": true
+      },
+      {
+        "test": "android_desktop_visible_activity",
+        "passed": true,
+        "package": "com.android.launcher3",
+        "sampled_colors": 470
+      },
+      {
+        "test": "linux_data_readonly_shutdown",
+        "passed": true
+      },
+      {
+        "test": "linux_host_mapping_totals",
+        "data_maps": 14009937,
+        "data_bytes": 477902733312,
+        "code_copy_bytes": 779337728,
+        "revocations": 9970495
+      },
+      {
+        "test": "linux_nce_context_lifetime",
+        "allocated": 893,
+        "freed": 893
+      },
+      {
+        "test": "linux_guest_events",
+        "preemptions": 11646,
+        "deferred_faults": 15020251,
+        "stack_resumes": 181638,
+        "stack_calls": 636
+      }
+    ]
+  },
+  "art_diagnostic": {
+    "path": "work/native-linux-nce/processes/profile-desktop-art-trace.log",
+    "sha256": "ea9287edceaa8b427f6993f88a506ea65b61f3a7301959c58de6043637bb6a07",
+    "snapshots": [
+      {
+        "pid": 393,
+        "timestamp": "2026-10-10 02:42:41.780589000+0000",
+        "process": "com.android.systemui",
+        "main_native_frames": [
+          "native: #00 pc 000c850c  /system/lib64/libc.so (__ioctl+12)",
+          "native: #01 pc 0006cdf4  /system/lib64/libc.so (ioctl+156)",
+          "native: #02 pc 00064294  /system/lib64/libbinder.so (android::IPCThreadState::transact+1640) (BuildId: d5c9379afa9ba9546c0c905ce798efa6)",
+          "native: #03 pc 00079794  /system/lib64/libbinder.so (android::BpBinder::transact+268) (BuildId: d5c9379afa9ba9546c0c905ce798efa6)",
+          "native: #04 pc 001dfbc0  /system/lib64/libandroid_runtime.so (android_os_BinderProxy_transact+152) (BuildId: d2709c129e71fb74eab7847fbed936ba)",
+          "native: #05 pc 00798d70  /system/lib64/libart.so (art_quick_generic_jni_trampoline+144)",
+          "native: #06 pc 007819e4  /system/lib64/libart.so (art_quick_invoke_stub+612)",
+          "native: #07 pc 0025a808  /system/lib64/libart.so (art::ArtMethod::Invoke+192)",
+          "native: #08 pc 003fb10c  /system/lib64/libart.so (art::PerformCall+148)",
+          "native: #09 pc 003f7d00  /system/lib64/libart.so (bool art::interpreter::DoCall<false>+2340)",
+          "native: #10 pc 003fe5a8  /system/lib64/libart.so (void art::interpreter::ExecuteSwitchImplCpp<false>+12644)",
+          "native: #11 pc 0079bc98  /system/lib64/libart.so (ExecuteSwitchImplAsm+8)"
+        ],
+        "main_java_frames": [
+          "at android.os.BinderProxy.transactNative(Native method)",
+          "at android.os.BinderProxy.transact(BinderProxy.java:592)",
+          "at android.content.IContentService$Stub$Proxy.registerContentObserver(IContentService.java:1043)",
+          "at android.content.ContentResolver.registerContentObserver(ContentResolver.java:2730)",
+          "at android.content.ContentResolver.registerContentObserver(ContentResolver.java:2678)",
+          "at com.android.internal.util.NotificationMessagingUtil.<init>(NotificationMessagingUtil.java:49)",
+          "at com.google.android.systemui.dagger.DaggerSysUIGoogleGlobalRootComponent$SysUIGoogleSysUIComponentImpl$SwitchingProvider.get4(go/retraceme 5ef7505f3172d45c77e95a8eba788f1ba3487bafbb4dd5bf3a1ad9be0371fc04:1403)",
+          "at com.google.android.systemui.dagger.DaggerSysUIGoogleGlobalRootComponent$SysUIGoogleSysUIComponentImpl$SwitchingProvider.get(go/retraceme 5ef7505f3172d45c77e95a8eba788f1ba3487bafbb4dd5bf3a1ad9be0371fc04:3562)",
+          "at dagger.internal.DoubleCheck.get(go/retraceme 5ef7505f3172d45c77e95a8eba788f1ba3487bafbb4dd5bf3a1ad9be0371fc04:14)",
+          "at com.google.android.systemui.dagger.DaggerSysUIGoogleGlobalRootComponent$SysUIGoogleSysUIComponentImpl$SwitchingProvider.get4(go/retraceme 5ef7505f3172d45c77e95a8eba788f1ba3487bafbb4dd5bf3a1ad9be0371fc04:3166)",
+          "at com.google.android.systemui.dagger.DaggerSysUIGoogleGlobalRootComponent$SysUIGoogleSysUIComponentImpl$SwitchingProvider.get(go/retraceme 5ef7505f3172d45c77e95a8eba788f1ba3487bafbb4dd5bf3a1ad9be0371fc04:3562)",
+          "at dagger.internal.DoubleCheck.get(go/retraceme 5ef7505f3172d45c77e95a8eba788f1ba3487bafbb4dd5bf3a1ad9be0371fc04:14)",
+          "at com.google.android.systemui.dagger.DaggerSysUIGoogleGlobalRootComponent$SysUIGoogleSysUIComponentImpl$SwitchingProvider.get4(go/retraceme 5ef7505f3172d45c77e95a8eba788f1ba3487bafbb4dd5bf3a1ad9be0371fc04:3270)",
+          "at com.google.android.systemui.dagger.DaggerSysUIGoogleGlobalRootComponent$SysUIGoogleSysUIComponentImpl$SwitchingProvider.get(go/retraceme 5ef7505f3172d45c77e95a8eba788f1ba3487bafbb4dd5bf3a1ad9be0371fc04:3562)",
+          "at dagger.internal.DoubleCheck.get(go/retraceme 5ef7505f3172d45c77e95a8eba788f1ba3487bafbb4dd5bf3a1ad9be0371fc04:14)",
+          "at com.google.android.systemui.dagger.DaggerSysUIGoogleGlobalRootComponent$SysUIGoogleSysUIComponentImpl$SwitchingProvider.get6(go/retraceme 5ef7505f3172d45c77e95a8eba788f1ba3487bafbb4dd5bf3a1ad9be0371fc04:4935)",
+          "at com.google.android.systemui.dagger.DaggerSysUIGoogleGlobalRootComponent$SysUIGoogleSysUIComponentImpl$SwitchingProvider.get(go/retraceme 5ef7505f3172d45c77e95a8eba788f1ba3487bafbb4dd5bf3a1ad9be0371fc04:3552)",
+          "at dagger.internal.DoubleCheck.get(go/retraceme 5ef7505f3172d45c77e95a8eba788f1ba3487bafbb4dd5bf3a1ad9be0371fc04:14)",
+          "at dagger.internal.DelegateFactory.get(go/retraceme 5ef7505f3172d45c77e95a8eba788f1ba3487bafbb4dd5bf3a1ad9be0371fc04:5)",
+          "at com.google.android.systemui.dagger.DaggerSysUIGoogleGlobalRootComponent$SysUIGoogleSysUIComponentImpl$SwitchingProvider.get13(go/retraceme 5ef7505f3172d45c77e95a8eba788f1ba3487bafbb4dd5bf3a1ad9be0371fc04:2619)",
+          "at com.google.android.systemui.dagger.DaggerSysUIGoogleGlobalRootComponent$SysUIGoogleSysUIComponentImpl$SwitchingProvider.get(go/retraceme 5ef7505f3172d45c77e95a8eba788f1ba3487bafbb4dd5bf3a1ad9be0371fc04:3517)",
+          "at dagger.internal.DoubleCheck.get(go/retraceme 5ef7505f3172d45c77e95a8eba788f1ba3487bafbb4dd5bf3a1ad9be0371fc04:14)",
+          "at com.google.android.systemui.dagger.DaggerSysUIGoogleGlobalRootComponent$SysUIGoogleSysUIComponentImpl$SwitchingProvider.get2(go/retraceme 5ef7505f3172d45c77e95a8eba788f1ba3487bafbb4dd5bf3a1ad9be0371fc04:397)",
+          "at com.google.android.systemui.dagger.DaggerSysUIGoogleGlobalRootComponent$SysUIGoogleSysUIComponentImpl$SwitchingProvider.get(go/retraceme 5ef7505f3172d45c77e95a8eba788f1ba3487bafbb4dd5bf3a1ad9be0371fc04:3572)",
+          "at dagger.internal.DoubleCheck.get(go/retraceme 5ef7505f3172d45c77e95a8eba788f1ba3487bafbb4dd5bf3a1ad9be0371fc04:14)",
+          "at dagger.internal.DelegateFactory.get(go/retraceme 5ef7505f3172d45c77e95a8eba788f1ba3487bafbb4dd5bf3a1ad9be0371fc04:5)",
+          "at com.google.android.systemui.dagger.DaggerSysUIGoogleGlobalRootComponent$SysUIGoogleSysUIComponentImpl$SwitchingProvider.get7(go/retraceme 5ef7505f3172d45c77e95a8eba788f1ba3487bafbb4dd5bf3a1ad9be0371fc04:1152)",
+          "at com.google.android.systemui.dagger.DaggerSysUIGoogleGlobalRootComponent$SysUIGoogleSysUIComponentImpl$SwitchingProvider.get(go/retraceme 5ef7505f3172d45c77e95a8eba788f1ba3487bafbb4dd5bf3a1ad9be0371fc04:3547)",
+          "at dagger.internal.DoubleCheck.get(go/retraceme 5ef7505f3172d45c77e95a8eba788f1ba3487bafbb4dd5bf3a1ad9be0371fc04:14)",
+          "at com.android.systemui.accessibility.SystemActions.registerOrUnregisterDismissNotificationShadeAction(go/retraceme 5ef7505f3172d45c77e95a8eba788f1ba3487bafbb4dd5bf3a1ad9be0371fc04:6)",
+          "at com.android.systemui.accessibility.SystemActions.registerActions(go/retraceme 5ef7505f3172d45c77e95a8eba788f1ba3487bafbb4dd5bf3a1ad9be0371fc04:293)",
+          "at com.android.systemui.accessibility.SystemActions.start(go/retraceme 5ef7505f3172d45c77e95a8eba788f1ba3487bafbb4dd5bf3a1ad9be0371fc04:95)",
+          "at com.android.systemui.SystemUIApplication.startStartable(go/retraceme 5ef7505f3172d45c77e95a8eba788f1ba3487bafbb4dd5bf3a1ad9be0371fc04:26)",
+          "at com.android.systemui.SystemUIApplication$$ExternalSyntheticLambda0.run(go/retraceme 5ef7505f3172d45c77e95a8eba788f1ba3487bafbb4dd5bf3a1ad9be0371fc04:56)",
+          "at com.android.systemui.SystemUIApplication.timeInitialization(go/retraceme 5ef7505f3172d45c77e95a8eba788f1ba3487bafbb4dd5bf3a1ad9be0371fc04:28)",
+          "at com.android.systemui.SystemUIApplication.startServicesIfNeeded(go/retraceme 5ef7505f3172d45c77e95a8eba788f1ba3487bafbb4dd5bf3a1ad9be0371fc04:213)",
+          "at com.android.systemui.SystemUIApplication.startSystemUserServicesIfNeeded(go/retraceme 5ef7505f3172d45c77e95a8eba788f1ba3487bafbb4dd5bf3a1ad9be0371fc04:70)",
+          "at com.android.systemui.SystemUIService.onCreate(go/retraceme 5ef7505f3172d45c77e95a8eba788f1ba3487bafbb4dd5bf3a1ad9be0371fc04:10)",
+          "at android.app.ActivityThread.handleCreateService(ActivityThread.java:5282)",
+          "at android.app.ActivityThread.-$$Nest$mhandleCreateService(unavailable:0)",
+          "at android.app.ActivityThread$H.handleMessage(ActivityThread.java:2597)",
+          "at android.os.Handler.dispatchMessage(Handler.java:110)",
+          "at android.os.Looper.loopOnce(Looper.java:248)",
+          "at android.os.Looper.loop(Looper.java:338)",
+          "at android.app.ActivityThread.main(ActivityThread.java:9067)",
+          "at java.lang.reflect.Method.invoke(Native method)",
+          "at com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run(RuntimeInit.java:593)",
+          "at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:932)"
+        ],
+        "statistics": [
+          "Total time spent in GC: 1.086s",
+          "Total blocking GC count: 2",
+          "Total blocking GC time: 697.848ms",
+          "Current JIT code cache size (used / resident): 1973KB / 1984KB",
+          "Current number of JIT code cache entries: 490",
+          "Total number of JIT code cache collections: 0",
+          "Compiling baseline:\tSum: 1.177s Avg: 1.552ms",
+          "Compiling optimized:\tSum: 117.452ms Avg: 154.949us"
+        ]
+      },
+      {
+        "pid": 207,
+        "timestamp": "2026-10-10 02:42:41.853698000+0000",
+        "process": "system_server",
+        "main_native_frames": [
+          "native: #00 pc 00087a60  /system/lib64/libc.so (syscall+32)",
+          "native: #01 pc 00265b3c  /system/lib64/libart.so (art::ConditionVariable::WaitHoldingLocks+132)",
+          "native: #02 pc 0076f294  /system/lib64/libart.so (artJniMethodEnd+412)",
+          "native: #03 pc 0076ead0  /system/lib64/libart.so (art::GenericJniMethodEnd+80)",
+          "native: #04 pc 00774890  /system/lib64/libart.so (artQuickGenericJniEndTrampoline+48)",
+          "native: #05 pc 00798d80  /system/lib64/libart.so (art_quick_generic_jni_trampoline+160)",
+          "native: #06 pc 00781cb0  /system/lib64/libart.so (art_quick_invoke_static_stub+640)",
+          "native: #07 pc 0025a87c  /system/lib64/libart.so (art::ArtMethod::Invoke+308)",
+          "native: #08 pc 003fb10c  /system/lib64/libart.so (art::PerformCall+148)",
+          "native: #09 pc 003f8950  /system/lib64/libart.so (bool art::interpreter::DoCall<true>+2256)",
+          "native: #10 pc 003fe994  /system/lib64/libart.so (void art::interpreter::ExecuteSwitchImplCpp<false>+13648)",
+          "native: #11 pc 0079bc98  /system/lib64/libart.so (ExecuteSwitchImplAsm+8)"
+        ],
+        "main_java_frames": [
+          "at com.android.server.utils.AnrTimer.nativeAnrTimerStart(Native method)",
+          "at com.android.server.utils.AnrTimer.-$$Nest$smnativeAnrTimerStart(AnrTimer.java:0)",
+          "at com.android.server.utils.AnrTimer$FeatureEnabled.start(AnrTimer.java:566)",
+          "at com.android.server.utils.AnrTimer.start(AnrTimer.java:723)",
+          "at com.android.server.am.BroadcastQueueImpl.startDeliveryTimeoutLocked(BroadcastQueueImpl.java:1300)",
+          "at com.android.server.am.BroadcastQueueImpl.dispatchReceivers(BroadcastQueueImpl.java:1162)",
+          "at com.android.server.am.BroadcastQueueImpl.scheduleReceiverWarmLocked(BroadcastQueueImpl.java:1083)",
+          "at com.android.server.am.BroadcastQueueImpl.finishReceiverLocked(BroadcastQueueImpl.java:1413)",
+          "at com.android.server.am.BroadcastController.finishReceiver(BroadcastController.java:1822)",
+          "at com.android.server.am.ActivityManagerService.finishReceiver(ActivityManagerService.java:14420)",
+          "at android.content.BroadcastReceiver$PendingResult.sendFinished(BroadcastReceiver.java:329)",
+          "at android.content.BroadcastReceiver$PendingResult.finish(BroadcastReceiver.java:298)",
+          "at android.app.LoadedApk$ReceiverDispatcher$Args.lambda$getRunnable$0(LoadedApk.java:1858)",
+          "at android.app.LoadedApk$ReceiverDispatcher$Args.$r8$lambda$mcNAAl1SQ4MyJPyDg8TJ2x2h0Rk(unavailable:0)",
+          "at android.app.LoadedApk$ReceiverDispatcher$Args$$ExternalSyntheticLambda0.run(D8$$SyntheticClass:0)",
+          "at android.os.Handler.handleCallback(Handler.java:995)",
+          "at android.os.Handler.dispatchMessage(Handler.java:103)",
+          "at android.os.Looper.loopOnce(Looper.java:248)",
+          "at android.os.Looper.loop(Looper.java:338)",
+          "at com.android.server.SystemServer.run(SystemServer.java:1036)",
+          "at com.android.server.SystemServer.main(SystemServer.java:689)",
+          "at java.lang.reflect.Method.invoke(Native method)",
+          "at com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run(RuntimeInit.java:593)",
+          "at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:910)"
+        ],
+        "statistics": [
+          "Total time spent in GC: 677.554ms",
+          "Total blocking GC count: 3",
+          "Total blocking GC time: 332.412ms",
+          "Current JIT code cache size (used / resident): 3481KB / 3504KB",
+          "Current number of JIT code cache entries: 2371",
+          "Total number of JIT code cache collections: 0",
+          "Compiling baseline:\tSum: 3.186s Avg: 1.143ms",
+          "Compiling optimized:\tSum: 103.802ms Avg: 37.258us"
+        ]
+      }
+    ],
+    "completed": true,
+    "results_sha256": "42ea6da64b483dff603623ab35e49067016567b7134d67b0e71c44766373bb8c",
+    "termination_checks": [
+      {
+        "test": "linux_data_readonly_shutdown",
+        "passed": true
+      },
+      {
+        "test": "linux_nce_context_lifetime",
+        "allocated": 893,
+        "freed": 893
+      }
+    ]
+  },
+  "configuration": {
+    "host_cpu": "Apple M5 Ultra",
+    "host_os": "macOS 27.0 (26A428)",
+    "source_commit": "f3f3796",
+    "linux_ram_bytes": 1073741824,
+    "mapping": "demand",
+    "display": [
+      360,
+      640
+    ],
+    "jit_threshold": 1024,
+    "mapping_run": {
+      "NCE_DESKTOP": 1,
+      "NCE_MAP_PROFILE": 1,
+      "NCE_FAULT_TRACE": false,
+      "samples_seconds": 5,
+      "sample_interval_ms": 5
+    },
+    "art_run": {
+      "NCE_DESKTOP": 1,
+      "NCE_MAP_PROFILE": false,
+      "NCE_TRACE_SYSTEMUI": 1
+    },
+    "storage": "Existing desktop-fresh-data.img reused; restarted host and Linux; host file cache not cleared."
+  },
+  "build_and_validation": {
+    "host_binary": {
+      "path": "work/native-linux-nce/processes/HuskNCEGPU.app/Contents/MacOS/graphics-window",
+      "sha256": "e99d8aab502027f3c9d710e8aafee44030903ff84372dad594c6a423fafd8aab"
+    },
+    "kernel": {
+      "path": "work/native-linux-nce/processes/lkl-image.bin",
+      "sha256": "28fc07a7bb93cd46d331ee77d12207d23c608eaebba3365406f3251aa98f9d76"
+    },
+    "system_image": {
+      "path": "work/native-linux-nce/processes/system.img",
+      "sha256": "8fe7d4980abcb41774db4c31775786570e9159dfd8f8f0f2d72b59a433c26756"
+    },
+    "e2fsck": {
+      "path": "work/native-linux-nce/profile-desktop-e2fsck.log",
+      "sha256": "a73e6cf9a943ceedea3a0d4304ba14e45df5715131f76058f31e19655bd92c70"
+    }
+  }
+}
