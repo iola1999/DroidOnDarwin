@@ -13,15 +13,10 @@ struct AcknowledgementsView: View {
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
-                Text(text).textSelection(.enabled)
-                if let url = Bundle.main.url(forResource: "ThirdPartyNotices", withExtension: "txt") {
-                    ShareLink("导出许可文本", item: url)
-                }
-                if let url = Bundle.main.url(forResource: "NOTICE", withExtension: "xml.gz") {
-                    ShareLink("导出 Android 组件声明", item: url)
-                }
-            }.frame(maxWidth: .infinity, alignment: .leading).padding(24)
+            Text(text)
+                .textSelection(.enabled)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(24)
         }.navigationTitle("开源致谢")
     }
 }

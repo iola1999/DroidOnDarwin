@@ -78,7 +78,7 @@ def main():
     verified = validate_inputs()
     local = [*[p for p in sorted((EXP / 'macos').glob('*')) if p.suffix in ('.h', '.mm', '.swift') and not p.name.endswith('Tests.mm')],
              *[p for p in sorted((EXP / "app").glob("*")) if p.suffix in (".h", ".mm", ".swift") and not p.name.endswith("Tests.mm")], ROOT / "scripts/package_native_linux_image.py", EXP / 'ios/Bridge.c', EXP / 'ios/Bridge.h', Path(__file__).resolve()]
-    local += [ROOT / 'ACKNOWLEDGEMENTS.md', ROOT / 'scripts/package_notices.py', ROOT / 'src/app/Resources/Icon-mac.png']
+    local += [ROOT / 'ACKNOWLEDGEMENTS.md', ROOT / 'src/app/Resources/Icon-mac.png']
     verified.update({p: digest(p) for p in local if p.is_file()})
     OUT.mkdir(parents=True, exist_ok=True)
     app = OUT / 'DroidOnDarwin.app'
@@ -149,8 +149,7 @@ def main():
         name: (resources / name).stat().st_size for name in ('lkl-image.bin', 'system.img', 'android-data-seed.img')}))
     from package_native_linux_image import write_runtime
     write_runtime(resources)
-    from package_notices import write_notices
-    write_notices(resources)
+    shutil.copyfile(ROOT / 'ACKNOWLEDGEMENTS.md', resources / 'Acknowledgements.md')
     iconset = OUT / 'AppIcon.iconset'
     iconset.mkdir(exist_ok=True)
     source = ROOT / 'src/app/Resources/Icon-mac.png'

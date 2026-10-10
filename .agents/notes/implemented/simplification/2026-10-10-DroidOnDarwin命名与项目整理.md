@@ -14,7 +14,7 @@
 
 当前运行所需的 JIT 文件、扩展、资源和图形构建函数已迁出旧应用目录。旧 QEMU 应用、应用兼容层、Dynarmic/Direct、bulk 实验及其专用工具、脚本和补丁已删除。保留完整 Android 的内核、用户态、图形、设备管理与回归检查，图形构建直接生成 gfxstream 库。当前输出目录中的 9 个旧 app、IPA、生成工程及签名配置也已清理。
 
-仓库以 [ACKNOWLEDGEMENTS.md](../../../../ACKNOWLEDGEMENTS.md) 记录 Husk、AetherPS4-iOS、StikJIT、LiveContainer 及 Linux/Android/图形组件的实际关联，原有版权与许可文本继续保留。两端设置及 Mac 关于窗口使用同一份致谢资源，并提供随包许可导出。许可收集脚本检查必要文件；Android SDK 的 NOTICE 含孤立 Latin-1 版权符号，汇总时转换为 UTF-8，保留原有文字与版权内容。
+仓库以 [ACKNOWLEDGEMENTS.md](../../../../ACKNOWLEDGEMENTS.md) 记录 Husk、AetherPS4-iOS、StikJIT、LiveContainer 及 Linux/Android/图形组件的实际关联，原有版权与许可文本继续保留。两端设置及 Mac 关于窗口使用同一份致谢资源，当前展示方式见[开源致谢文本](2026-10-10-开源致谢文本.md)。
 
 GitHub 仓库为 `iola1999/DroidOnDarwin`，描述更新为 Linux and Android on Darwin with native ARM64 execution。`origin` 和 gh 默认仓库已更新，旧 `upstream` 关联已移除；仓库可见性保持 private。本轮未推送代码。
 
@@ -28,7 +28,7 @@ GitHub 仓库为 `iola1999/DroidOnDarwin`，描述更新为 Linux and Android on
 - JIT 只保留固定 RX 区间准备、RW 别名、断点保护与分离。预分配 TCG/EL0 分区、MAP_JIT 探测、可用状态缓存及无人调用的公共入口已删除；外部断点请求协议继续由现有检查覆盖。
 - 主应用只发送启用 JIT 请求。独立 prepare/resetDDI 消息、未使用的 TXM 返回字段、配对来源枚举和本机配对说明已删除。StikJIT.enableJIT 继续执行其所需的准备步骤。
 - 当前构建入口、SwiftUI 页面、共享状态、目录锁和 Android 运行组件均有实际调用方。删除这些部分会影响导入、运行、停止或交付，因此保留。
-- 两端相同的许可收集逻辑合并为一个函数，UI 共用一个致谢视图。图标由一个 AppKit 脚本生成两端所需资源，未增加第三方依赖。
+- 两端 UI 共用一个致谢视图。图标由一个 AppKit 脚本生成两端所需资源，未增加第三方依赖。
 
 ### 验证
 

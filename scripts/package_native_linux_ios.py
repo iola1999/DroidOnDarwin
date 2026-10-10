@@ -139,8 +139,8 @@ def main():
                  ROOT / 'work/native-linux-nce/musl-1.2.5/COPYRIGHT',
                  ROOT / 'work/native-linux-nce/dash-0.5.12/COPYING',
                  ROOT / 'work/native-linux-nce/compiler-rt-20.1.8.src/LICENSE.TXT']]
-    from package_notices import write_notices
-    sources += [{'path': str(path), 'buildPhase': 'resources'} for path in write_notices(OUT, ios=True)]
+    shutil.copyfile(ROOT / 'ACKNOWLEDGEMENTS.md', OUT / 'Acknowledgements.md')
+    sources.append({'path': str(OUT / 'Acknowledgements.md'), 'buildPhase': 'resources'})
     framework = ROOT / 'src/app/Frameworks/StikJIT.xcframework'
     spec = {
         'name': 'DroidOnDarwin',
@@ -180,7 +180,7 @@ def main():
     with (OUT / 'build.log').open('w') as log:
         run(['xcodebuild', '-project', OUT / 'DroidOnDarwin.xcodeproj', '-scheme', 'DroidOnDarwin',
              '-configuration', 'Release', '-sdk', 'iphoneos', '-derivedDataPath', OUT / 'DerivedData',
-             'CODE_SIGNING_ALLOWED=NO', 'build'], stdout=log, stderr=subprocess.STDOUT)
+             'CODE_SIGNING_ALLOWED=NO', 'clean', 'build'], stdout=log, stderr=subprocess.STDOUT)
     app = OUT / 'DerivedData/Build/Products/Release-iphoneos/DroidOnDarwin.app'
     embedded = app / 'Frameworks/StikJIT.framework'
     if embedded.exists():
@@ -217,7 +217,7 @@ def main():
                 'dispatch_validation': summary['dispatch_results'],
                 'window_validation': summary.get('window_results'),
                 'source_sha256': {str(path.relative_to(ROOT)): hashlib.sha256(path.read_bytes()).hexdigest()
-                                  for path in [Path(__file__).resolve(), ROOT / 'ACKNOWLEDGEMENTS.md', ROOT / 'scripts/package_notices.py', ROOT / 'src/ios-jit/ios-jit.h',
+                                  for path in [Path(__file__).resolve(), ROOT / 'ACKNOWLEDGEMENTS.md', ROOT / 'src/ios-jit/ios-jit.h',
                                                *sorted((ROOT / 'src/app/Resources').rglob('*')),  *sorted(EXP.glob('ios/*')),
                                                *[Path(item['path']) for item in sources]] if path.is_file()}}
 
