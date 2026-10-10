@@ -158,7 +158,8 @@ def main():
     required = {'linux_smp_parallel_kernel', 'linux_smp_atomic64_futex', 'linux_smp_ipi_timer_migration'}
     if arguments.mmu:
         required |= {'linux_smp_mmu_access_boundaries', 'linux_smp_mmu_atomic_and_unmap',
-                     'linux_smp_shared_window', 'linux_smp_distinct_windows'}
+                     'linux_smp_shared_window', 'linux_smp_distinct_windows',
+                     'linux_smp_data_mapping_without_stop'}
     for iteration in range(3):
         for entry in ['probe', 'dispatch-probe']:
             prefix = f'{entry}-{iteration}'

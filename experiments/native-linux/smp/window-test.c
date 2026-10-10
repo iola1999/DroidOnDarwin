@@ -15,7 +15,9 @@ extern int nce_page_fault(unsigned long address, int access);
 
 static unsigned long test_address;
 static atomic_t ready, computing;
-static bool shared;
+static atomic_t mapped;
+static bool shared, mapping;
+static unsigned long mapping_address;
 static struct window_worker {
     struct mm_struct *mm;
     struct completion done;
@@ -42,13 +44,40 @@ static int exercise_window(void *argument)
     if (shared) {
         nce_begin_user();
         atomic_inc(&computing);
-        while (atomic_read(&computing) != 2)
-            barrier();
+        while (atomic_read(&computing) != 2) {
+            /* These kernel workers have no NCE signal handler. Cooperate
+             * with a pending group switch while the peer reaches entry. */
+            if (need_resched() || nce_window_requested()) {
+                nce_window_leave();
+                cond_resched();
+                nce_begin_user();
+            }
+            cpu_relax();
+        }
         worker->begin = lkl_ops->time();
-        for (unsigned i = 0; i < 100000; ++i)
-            __atomic_fetch_add((u64 *)test_address, 1, __ATOMIC_RELAXED);
+        if (mapping && !worker->index) {
+            nce_window_leave();
+            for (unsigned i = 0; i < 32; ++i) {
+                unsigned long address = mapping_address + i * PAGE_SIZE;
+                BUG_ON(nce_page_fault(address, 1 | NCE_FAULT_DIRECT));
+                WRITE_ONCE(*(u64 *)address, i + 1);
+            }
+            atomic_set_release(&mapped, 1);
+        } else if (mapping) {
+            do {
+                for (unsigned i = 0; i < 4096; ++i) {
+                    BUG_ON(READ_ONCE(*(u64 *)test_address) != 0);
+                    ++worker->reads;
+                }
+            } while (!atomic_read_acquire(&mapped) && lkl_ops->time() - worker->begin < 1000000000);
+            worker->stops = !atomic_read_acquire(&mapped);
+        } else {
+            for (unsigned i = 0; i < 100000; ++i)
+                __atomic_fetch_add((u64 *)test_address, 1, __ATOMIC_RELAXED);
+        }
         worker->end = lkl_ops->time();
-        nce_window_leave();
+        if (!mapping || worker->index)
+            nce_window_leave();
     } else {
         for (unsigned iteration = 0; iteration < 1000; ++iteration) {
             nce_begin_user();
@@ -80,10 +109,19 @@ void nce_smp_window_test(struct mm_struct *mm, unsigned long address)
     test_address = address;
     u64 count = 0;
     BUG_ON(nce_copy_user(&count, address, sizeof(count), 1));
-    for (unsigned round = 0; round < 2; ++round) {
-        shared = round == 0;
+    for (unsigned round = 0; round < 3; ++round) {
+        shared = round != 1;
+        mapping = round == 2;
+        if (mapping) {
+            count = 0;
+            BUG_ON(nce_copy_user(&count, address, sizeof(count), 1));
+            mapping_address = vm_mmap(NULL, 0, 32 * PAGE_SIZE, PROT_READ | PROT_WRITE,
+                                      MAP_PRIVATE | MAP_ANONYMOUS, 0);
+            BUG_ON(IS_ERR_VALUE(mapping_address));
+        }
         atomic_set(&ready, 0);
         atomic_set(&computing, 0);
+        atomic_set(&mapped, 0);
         struct task_struct *tasks[2];
         for (unsigned i = 0; i < 2; ++i) {
             workers[i] = (struct window_worker){.mm = shared ? mm : mm_alloc(), .index = i};
@@ -97,7 +135,16 @@ void nce_smp_window_test(struct mm_struct *mm, unsigned long address)
             wake_up_process(tasks[i]);
         for (unsigned i = 0; i < 2; ++i)
             BUG_ON(!wait_for_completion_timeout(&workers[i].done, 30 * HZ));
-        if (shared) {
+        if (mapping) {
+            BUG_ON(workers[1].stops || !workers[1].reads);
+            for (unsigned i = 0; i < 32; ++i) {
+                BUG_ON(nce_copy_user(&count, mapping_address + i * PAGE_SIZE, sizeof(count), 0));
+                BUG_ON(count != i + 1);
+            }
+            BUG_ON(vm_munmap(mapping_address, 32 * PAGE_SIZE));
+            lkl_printf("{\"test\":\"linux_smp_data_mapping_without_stop\",\"passed\":true,\"pages\":32,\"reads\":%u}\n",
+                       workers[1].reads);
+        } else if (shared) {
             BUG_ON(nce_copy_user(&count, address, sizeof(count), 0));
             u64 begin = max(workers[0].begin, workers[1].begin);
             u64 end = min(workers[0].end, workers[1].end);

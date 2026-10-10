@@ -658,5 +658,748 @@
     "experiments/native-linux/smp/core.h": "05bd56b8be546e2d7169393be10e642cdd4685c6416f6f8c23402fe6988b98d9",
     "experiments/native-linux/smp/topology.h": "2901026feaf7c64ef5507ceba84469ac62fd4b2daa3e2075bd18088812d54ae7",
     "scripts/lkl_smp_mmu_patch.py": "e1a1a77324f8e3b93d56bbc633f4c5fec8806fe46183b518b2a55ae1f051276c"
+  },
+  "data_mapping_candidate": {
+    "configuration": {
+      "add_absent_data_without_stop": true,
+      "source_storage": "fresh seed",
+      "remaining": {
+        "cpus": 2,
+        "core_scheduling": true,
+        "linux_ram_bytes": 1073741824,
+        "page_bytes": 16384,
+        "mapping": "demand",
+        "art_nterp": true,
+        "art_aot": false,
+        "art_boot_image": false,
+        "art_expanded_jit": false,
+        "art_fast_baseline": false,
+        "map_profile": false,
+        "fault_trace": true,
+        "direct_fault": false
+      }
+    },
+    "kernel_regression": {
+      "source": {
+        "path": "work/native-linux-nce/smp-mmu-core/summary.json",
+        "sha256": "e24235fb48d71bcfb372b1e40239a154e49252b1e4919431883e6dae2ad7418b"
+      },
+      "runs": [
+        {
+          "entry": "probe",
+          "iteration": 0,
+          "result": {
+            "result": "passed"
+          },
+          "checks": [
+            {
+              "test": "linux_smp_parallel_kernel",
+              "count": 200000,
+              "overlap_ns": 33837000,
+              "passed": true
+            },
+            {
+              "test": "linux_smp_atomic64_futex",
+              "passed": true
+            },
+            {
+              "test": "linux_smp_ipi_timer_migration",
+              "passed": true
+            },
+            {
+              "test": "linux_smp_mmu_access_boundaries",
+              "passed": true
+            },
+            {
+              "test": "linux_smp_mmu_atomic_and_unmap",
+              "passed": true,
+              "count": 40000,
+              "copies": 514881,
+              "faults": 1082,
+              "generations": 49
+            },
+            {
+              "test": "linux_smp_shared_window",
+              "passed": true,
+              "count": 200000,
+              "overlap_ns": 932000
+            },
+            {
+              "test": "linux_smp_distinct_windows",
+              "passed": true,
+              "reads": 2048000,
+              "stops": 0
+            },
+            {
+              "test": "linux_smp_data_mapping_without_stop",
+              "passed": true,
+              "pages": 32,
+              "reads": 106496
+            }
+          ]
+        },
+        {
+          "entry": "dispatch-probe",
+          "iteration": 0,
+          "result": {
+            "result": "passed"
+          },
+          "checks": [
+            {
+              "test": "linux_smp_parallel_kernel",
+              "count": 200000,
+              "overlap_ns": 6501000,
+              "passed": true
+            },
+            {
+              "test": "linux_smp_atomic64_futex",
+              "passed": true
+            },
+            {
+              "test": "linux_smp_ipi_timer_migration",
+              "passed": true
+            },
+            {
+              "test": "linux_smp_mmu_access_boundaries",
+              "passed": true
+            },
+            {
+              "test": "linux_smp_mmu_atomic_and_unmap",
+              "passed": true,
+              "count": 40000,
+              "copies": 4259828,
+              "faults": 1394,
+              "generations": 124
+            },
+            {
+              "test": "linux_smp_shared_window",
+              "passed": true,
+              "count": 200000,
+              "overlap_ns": 1075000
+            },
+            {
+              "test": "linux_smp_distinct_windows",
+              "passed": true,
+              "reads": 2048000,
+              "stops": 0
+            },
+            {
+              "test": "linux_smp_data_mapping_without_stop",
+              "passed": true,
+              "pages": 32,
+              "reads": 106496
+            }
+          ]
+        },
+        {
+          "entry": "probe",
+          "iteration": 1,
+          "result": {
+            "result": "passed"
+          },
+          "checks": [
+            {
+              "test": "linux_smp_parallel_kernel",
+              "count": 200000,
+              "overlap_ns": 11745000,
+              "passed": true
+            },
+            {
+              "test": "linux_smp_atomic64_futex",
+              "passed": true
+            },
+            {
+              "test": "linux_smp_ipi_timer_migration",
+              "passed": true
+            },
+            {
+              "test": "linux_smp_mmu_access_boundaries",
+              "passed": true
+            },
+            {
+              "test": "linux_smp_mmu_atomic_and_unmap",
+              "passed": true,
+              "count": 40000,
+              "copies": 3484575,
+              "faults": 1180,
+              "generations": 74
+            },
+            {
+              "test": "linux_smp_shared_window",
+              "passed": true,
+              "count": 200000,
+              "overlap_ns": 1159000
+            },
+            {
+              "test": "linux_smp_distinct_windows",
+              "passed": true,
+              "reads": 2048000,
+              "stops": 0
+            },
+            {
+              "test": "linux_smp_data_mapping_without_stop",
+              "passed": true,
+              "pages": 32,
+              "reads": 94208
+            }
+          ]
+        },
+        {
+          "entry": "dispatch-probe",
+          "iteration": 1,
+          "result": {
+            "result": "passed"
+          },
+          "checks": [
+            {
+              "test": "linux_smp_parallel_kernel",
+              "count": 200000,
+              "overlap_ns": 21856000,
+              "passed": true
+            },
+            {
+              "test": "linux_smp_atomic64_futex",
+              "passed": true
+            },
+            {
+              "test": "linux_smp_ipi_timer_migration",
+              "passed": true
+            },
+            {
+              "test": "linux_smp_mmu_access_boundaries",
+              "passed": true
+            },
+            {
+              "test": "linux_smp_mmu_atomic_and_unmap",
+              "passed": true,
+              "count": 40000,
+              "copies": 3034388,
+              "faults": 759,
+              "generations": 70
+            },
+            {
+              "test": "linux_smp_shared_window",
+              "passed": true,
+              "count": 200000,
+              "overlap_ns": 1024000
+            },
+            {
+              "test": "linux_smp_distinct_windows",
+              "passed": true,
+              "reads": 2048000,
+              "stops": 0
+            },
+            {
+              "test": "linux_smp_data_mapping_without_stop",
+              "passed": true,
+              "pages": 32,
+              "reads": 122880
+            }
+          ]
+        },
+        {
+          "entry": "probe",
+          "iteration": 2,
+          "result": {
+            "result": "passed"
+          },
+          "checks": [
+            {
+              "test": "linux_smp_parallel_kernel",
+              "count": 200000,
+              "overlap_ns": 7702000,
+              "passed": true
+            },
+            {
+              "test": "linux_smp_atomic64_futex",
+              "passed": true
+            },
+            {
+              "test": "linux_smp_ipi_timer_migration",
+              "passed": true
+            },
+            {
+              "test": "linux_smp_mmu_access_boundaries",
+              "passed": true
+            },
+            {
+              "test": "linux_smp_mmu_atomic_and_unmap",
+              "passed": true,
+              "count": 40000,
+              "copies": 536539,
+              "faults": 1033,
+              "generations": 57
+            },
+            {
+              "test": "linux_smp_shared_window",
+              "passed": true,
+              "count": 200000,
+              "overlap_ns": 640000
+            },
+            {
+              "test": "linux_smp_distinct_windows",
+              "passed": true,
+              "reads": 2048000,
+              "stops": 0
+            },
+            {
+              "test": "linux_smp_data_mapping_without_stop",
+              "passed": true,
+              "pages": 32,
+              "reads": 212992
+            }
+          ]
+        },
+        {
+          "entry": "dispatch-probe",
+          "iteration": 2,
+          "result": {
+            "result": "passed"
+          },
+          "checks": [
+            {
+              "test": "linux_smp_parallel_kernel",
+              "count": 200000,
+              "overlap_ns": 14036000,
+              "passed": true
+            },
+            {
+              "test": "linux_smp_atomic64_futex",
+              "passed": true
+            },
+            {
+              "test": "linux_smp_ipi_timer_migration",
+              "passed": true
+            },
+            {
+              "test": "linux_smp_mmu_access_boundaries",
+              "passed": true
+            },
+            {
+              "test": "linux_smp_mmu_atomic_and_unmap",
+              "passed": true,
+              "count": 40000,
+              "copies": 3614111,
+              "faults": 697,
+              "generations": 61
+            },
+            {
+              "test": "linux_smp_shared_window",
+              "passed": true,
+              "count": 200000,
+              "overlap_ns": 1174000
+            },
+            {
+              "test": "linux_smp_distinct_windows",
+              "passed": true,
+              "reads": 2048000,
+              "stops": 0
+            },
+            {
+              "test": "linux_smp_data_mapping_without_stop",
+              "passed": true,
+              "pages": 32,
+              "reads": 110592
+            }
+          ]
+        }
+      ]
+    },
+    "userspace_attempt2": {
+      "raw": [
+        {
+          "path": "work/native-linux-nce/processes-smp-core/attempt2-lkl-results.jsonl",
+          "sha256": "f17b7eb750e6cab709a27e23ac05974643b40ae8223e116c6a51b5fc0b224387"
+        },
+        {
+          "path": "work/native-linux-nce/processes-smp-core/attempt2-lkl-console.log",
+          "sha256": "76774ec2f976467542052195184fc201c63d6a5087ac36a08a3c3a4efc58afb4"
+        }
+      ],
+      "kernel": {
+        "path": "work/native-linux-nce/processes-smp-core/lkl-image.bin",
+        "sha256": "18a938cb83bf215cb79653cf6797ec16ad66d33e83116835684a2f6b68b41c47"
+      },
+      "executable": {
+        "path": "work/native-linux-nce/processes-smp-core/lkl-probe",
+        "sha256": "00dae2344ead98d252dfd3b1d3605911fe521e860b71a02efe3d6e927c751225"
+      },
+      "named_checks": 207,
+      "last_success": "android_system_server_services",
+      "failure": "Android did not complete boot within the 240 second polling window",
+      "result": {
+        "result": "failed"
+      },
+      "selected_checks": [
+        {
+          "test": "linux_proc_concurrent_exit",
+          "passed": true,
+          "processes": 32,
+          "threads": 256,
+          "stat_reads": 77697
+        },
+        {
+          "test": "native_graphics_channels_released",
+          "passed": true,
+          "opened": 50,
+          "closed": 50
+        },
+        {
+          "test": "linux_data_readonly_shutdown",
+          "passed": true
+        },
+        {
+          "test": "linux_host_mapping_totals",
+          "data_maps": 11055554,
+          "data_bytes": 301468598272,
+          "code_copy_bytes": 300023808,
+          "revocations": 8441828
+        },
+        {
+          "test": "linux_nce_context_lifetime",
+          "allocated": 2429,
+          "freed": 2429
+        },
+        {
+          "test": "linux_guest_events",
+          "preemptions": 141705,
+          "deferred_faults": 13014221,
+          "stack_resumes": 317138,
+          "stack_calls": 3197
+        }
+      ]
+    },
+    "input_sha256": {
+      "scripts/lkl_smp_mmu_patch.py": "532a9027bdf3d8e7677c895fb55d06862929f022df39983a6d716f6846991911",
+      "scripts/probe_lkl_smp.py": "f34f177e8073c66e67cb67ada0e0652743bd722ac5c68b412d4c28b2d6da40dd",
+      "experiments/native-linux/smp/window-test.c": "fd3a492525b61a2024dbd83d5b83c3b4ef281ae259bb4d630a1bacec12fa0a46"
+    },
+    "note": "Functional and diagnostic runs; full Android load not completed, so event counts cannot establish whole-system speedup.",
+    "core_scheduling_disabled_kernel_regression": {
+      "source": {
+        "path": "work/native-linux-nce/smp-mmu/summary.json",
+        "sha256": "4fc67f9de7184e95f4971e1278b8ec5eead3749fff3542168090c1429c514940"
+      },
+      "runs": [
+        {
+          "entry": "probe",
+          "iteration": 0,
+          "result": {
+            "result": "passed"
+          },
+          "checks": [
+            {
+              "test": "linux_smp_parallel_kernel",
+              "count": 200000,
+              "overlap_ns": 20670000,
+              "passed": true
+            },
+            {
+              "test": "linux_smp_atomic64_futex",
+              "passed": true
+            },
+            {
+              "test": "linux_smp_ipi_timer_migration",
+              "passed": true
+            },
+            {
+              "test": "linux_smp_mmu_access_boundaries",
+              "passed": true
+            },
+            {
+              "test": "linux_smp_mmu_atomic_and_unmap",
+              "passed": true,
+              "count": 40000,
+              "copies": 3902688,
+              "faults": 21135,
+              "generations": 140
+            },
+            {
+              "test": "linux_smp_shared_window",
+              "passed": true,
+              "count": 200000,
+              "overlap_ns": 569000
+            },
+            {
+              "test": "linux_smp_distinct_windows",
+              "passed": true,
+              "reads": 1632957,
+              "stops": 436
+            },
+            {
+              "test": "linux_smp_data_mapping_without_stop",
+              "passed": true,
+              "pages": 32,
+              "reads": 122880
+            }
+          ]
+        },
+        {
+          "entry": "dispatch-probe",
+          "iteration": 0,
+          "result": {
+            "result": "passed"
+          },
+          "checks": [
+            {
+              "test": "linux_smp_parallel_kernel",
+              "count": 200000,
+              "overlap_ns": 5375000,
+              "passed": true
+            },
+            {
+              "test": "linux_smp_atomic64_futex",
+              "passed": true
+            },
+            {
+              "test": "linux_smp_ipi_timer_migration",
+              "passed": true
+            },
+            {
+              "test": "linux_smp_mmu_access_boundaries",
+              "passed": true
+            },
+            {
+              "test": "linux_smp_mmu_atomic_and_unmap",
+              "passed": true,
+              "count": 40000,
+              "copies": 2816783,
+              "faults": 20233,
+              "generations": 187
+            },
+            {
+              "test": "linux_smp_shared_window",
+              "passed": true,
+              "count": 200000,
+              "overlap_ns": 781000
+            },
+            {
+              "test": "linux_smp_distinct_windows",
+              "passed": true,
+              "reads": 511632,
+              "stops": 1518
+            },
+            {
+              "test": "linux_smp_data_mapping_without_stop",
+              "passed": true,
+              "pages": 32,
+              "reads": 475136
+            }
+          ]
+        },
+        {
+          "entry": "probe",
+          "iteration": 1,
+          "result": {
+            "result": "passed"
+          },
+          "checks": [
+            {
+              "test": "linux_smp_parallel_kernel",
+              "count": 200000,
+              "overlap_ns": 24701000,
+              "passed": true
+            },
+            {
+              "test": "linux_smp_atomic64_futex",
+              "passed": true
+            },
+            {
+              "test": "linux_smp_ipi_timer_migration",
+              "passed": true
+            },
+            {
+              "test": "linux_smp_mmu_access_boundaries",
+              "passed": true
+            },
+            {
+              "test": "linux_smp_mmu_atomic_and_unmap",
+              "passed": true,
+              "count": 40000,
+              "copies": 2944643,
+              "faults": 18452,
+              "generations": 169
+            },
+            {
+              "test": "linux_smp_shared_window",
+              "passed": true,
+              "count": 200000,
+              "overlap_ns": 2142000
+            },
+            {
+              "test": "linux_smp_distinct_windows",
+              "passed": true,
+              "reads": 731408,
+              "stops": 1355
+            },
+            {
+              "test": "linux_smp_data_mapping_without_stop",
+              "passed": true,
+              "pages": 32,
+              "reads": 135168
+            }
+          ]
+        },
+        {
+          "entry": "dispatch-probe",
+          "iteration": 1,
+          "result": {
+            "result": "passed"
+          },
+          "checks": [
+            {
+              "test": "linux_smp_parallel_kernel",
+              "count": 200000,
+              "overlap_ns": 9796000,
+              "passed": true
+            },
+            {
+              "test": "linux_smp_atomic64_futex",
+              "passed": true
+            },
+            {
+              "test": "linux_smp_ipi_timer_migration",
+              "passed": true
+            },
+            {
+              "test": "linux_smp_mmu_access_boundaries",
+              "passed": true
+            },
+            {
+              "test": "linux_smp_mmu_atomic_and_unmap",
+              "passed": true,
+              "count": 40000,
+              "copies": 4358209,
+              "faults": 46165,
+              "generations": 207
+            },
+            {
+              "test": "linux_smp_shared_window",
+              "passed": true,
+              "count": 200000,
+              "overlap_ns": 766000
+            },
+            {
+              "test": "linux_smp_distinct_windows",
+              "passed": true,
+              "reads": 1486650,
+              "stops": 719
+            },
+            {
+              "test": "linux_smp_data_mapping_without_stop",
+              "passed": true,
+              "pages": 32,
+              "reads": 98304
+            }
+          ]
+        },
+        {
+          "entry": "probe",
+          "iteration": 2,
+          "result": {
+            "result": "passed"
+          },
+          "checks": [
+            {
+              "test": "linux_smp_parallel_kernel",
+              "count": 200000,
+              "overlap_ns": 26629000,
+              "passed": true
+            },
+            {
+              "test": "linux_smp_atomic64_futex",
+              "passed": true
+            },
+            {
+              "test": "linux_smp_ipi_timer_migration",
+              "passed": true
+            },
+            {
+              "test": "linux_smp_mmu_access_boundaries",
+              "passed": true
+            },
+            {
+              "test": "linux_smp_mmu_atomic_and_unmap",
+              "passed": true,
+              "count": 40000,
+              "copies": 9748388,
+              "faults": 3779,
+              "generations": 240
+            },
+            {
+              "test": "linux_smp_shared_window",
+              "passed": true,
+              "count": 200000,
+              "overlap_ns": 1131000
+            },
+            {
+              "test": "linux_smp_distinct_windows",
+              "passed": true,
+              "reads": 316048,
+              "stops": 1711
+            },
+            {
+              "test": "linux_smp_data_mapping_without_stop",
+              "passed": true,
+              "pages": 32,
+              "reads": 114688
+            }
+          ]
+        },
+        {
+          "entry": "dispatch-probe",
+          "iteration": 2,
+          "result": {
+            "result": "passed"
+          },
+          "checks": [
+            {
+              "test": "linux_smp_parallel_kernel",
+              "count": 200000,
+              "overlap_ns": 26278000,
+              "passed": true
+            },
+            {
+              "test": "linux_smp_atomic64_futex",
+              "passed": true
+            },
+            {
+              "test": "linux_smp_ipi_timer_migration",
+              "passed": true
+            },
+            {
+              "test": "linux_smp_mmu_access_boundaries",
+              "passed": true
+            },
+            {
+              "test": "linux_smp_mmu_atomic_and_unmap",
+              "passed": true,
+              "count": 40000,
+              "copies": 2687904,
+              "faults": 3438,
+              "generations": 281
+            },
+            {
+              "test": "linux_smp_shared_window",
+              "passed": true,
+              "count": 200000,
+              "overlap_ns": 763000
+            },
+            {
+              "test": "linux_smp_distinct_windows",
+              "passed": true,
+              "reads": 1045319,
+              "stops": 1042
+            },
+            {
+              "test": "linux_smp_data_mapping_without_stop",
+              "passed": true,
+              "pages": 32,
+              "reads": 729088
+            }
+          ]
+        }
+      ]
+    }
   }
 }

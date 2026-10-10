@@ -132,7 +132,26 @@ def apply_window(source: Path):
         body = body.replace('    enum lkl_prot prot',
                             '    if (addr >= USER_BASE && addr < TASK_SIZE)\n        nce_window_stop();\n'
                             '    enum lkl_prot prot')
-        text = text[:begin] + body + text[end:]
+    body = body.replace('    if (addr >= USER_BASE && addr < TASK_SIZE)\n',
+                        '    if (addr >= USER_BASE && addr < TASK_SIZE && !new_data_view(addr, size, value))\n')
+    text = text[:begin] + body + text[end:]
+    if 'static bool new_data_view(' not in text:
+        helper = '''/* The writer lock excludes PTE updates and mm switches. Installing an
+ * absent data view leaves other threads' existing mappings and code intact. */
+static bool new_data_view(unsigned long addr, unsigned long size, unsigned long value)
+{
+    if (mapping_mode < NCE_MM_LAZY || !value || (value & _PAGE_EXEC) ||
+        addr < USER_BASE + NCE_BRK_OFFSET || addr >= TASK_SIZE || size > TASK_SIZE - addr)
+        return false;
+    unsigned long first = (addr - USER_BASE) / PAGE_SIZE;
+    for (unsigned long i = 0; i < size / PAGE_SIZE; ++i)
+        if (installed[first + i])
+            return false;
+    return true;
+}
+
+'''
+        text = text.replace('static void map_view(', helper + 'static void map_view(', 1)
     text = text.replace('    PROFILE_ADD(switches, 1);\n    active_mm = next;',
                         '    PROFILE_ADD(switches, 1);\n    nce_window_stop();\n    active_mm = next;')
     text = text.replace('if (!mm || mm == active_mm)', 'if (!mm || mm == READ_ONCE(active_mm))')
