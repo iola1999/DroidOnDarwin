@@ -10,6 +10,7 @@
 #include <asm/futex.h>
 #include <asm/host_ops.h>
 #include <asm/ptrace.h>
+#include <asm/nce-window.h>
 
 static struct mm_struct *test_mm;
 static unsigned long counter_address, race_address;
@@ -171,6 +172,7 @@ long lkl_smp_mmu_test(void)
         "{\"test\":\"linux_smp_mmu_atomic_and_unmap\",\"passed\":true,"
         "\"count\":%u,\"copies\":%u,\"faults\":%u,\"generations\":%u}\n",
         count, workers[0].copies, workers[0].faults, workers[0].changes);
+    nce_smp_window_test(test_mm, counter_address);
     BUG_ON(vm_munmap(counter_address, 3 * PAGE_SIZE));
     current->thread.nce_state = NULL;
     if (!borrowed)
