@@ -27223,5 +27223,15 @@
     "Sample means include phase boundaries; sampled peaks may miss short peaks. The 640 MiB capacity test dominates the guest-execution footprint peak.",
     "Timer interval is a request interval; actual exit occurs at the next translated block boundary.",
     "Only AArch64 ET_DYN with current 16 KiB layout and explicit dynamic-code publication protocol is covered."
-  ]
+  ],
+  "configuration_correction": {
+    "date": "2026-10-11",
+    "affected": "LKL translation engine cache capacity",
+    "requested_capacity_only": true,
+    "actual_allocation_bytes": 1073741824,
+    "actual_usable_bytes_observed_in_services": 1073725364,
+    "cause": "TCG buffer size was set after UC_CTL_TLB_TYPE initialized the engine. The setter updated the configuration field without reallocating the cache.",
+    "interpretation": "Recorded requested sizes are not effective capacities. 16/64 MiB rows do not compare different capacities. Other timing observations retain their original workload scope.",
+    "record": ".agents/notes/implemented/bug-fix/2026-10-11-\u7ffb\u8bd1\u7f13\u5b58\u5bb9\u91cf\u8bbe\u7f6e\u672a\u751f\u6548.md"
+  }
 }

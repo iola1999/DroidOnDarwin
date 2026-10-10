@@ -87,6 +87,18 @@ UNICORN_EXPORT
 uc_err uc_emu_stop(uc_engine *uc)''')
         edit('qemu/tcg/tcg-op.c', '    if (tcg_ctx->uc->no_exit_request) {',
              '    if (tcg_ctx->uc->no_exit_request || tcg_ctx->uc->nce_linux_memory) {')
+        edit('qemu/accel/tcg/translate-all.c', 'void tb_flush(CPUState *cpu)', '''/* Read existing counters only while the host has stopped the engine. */
+void nce_uc_cache_stats_aarch64(struct uc_struct *uc, uint64_t values[5])
+{
+    TCGContext *context = uc->tcg_ctx;
+    values[0] = context->tb_ctx.tb_flush_count;
+    values[1] = context->tb_phys_invalidate_count;
+    values[2] = tcg_nb_tbs(context);
+    values[3] = tcg_code_size(context);
+    values[4] = context->code_gen_buffer_size;
+}
+
+void tb_flush(CPUState *cpu)''')
         edit('uc.c', '    uc->stop_request = false;',
              '    __atomic_store_n(&uc->nce_stop_at_tb, false, __ATOMIC_RELEASE);\n    uc->stop_request = false;')
         edit('uc.c', '    uc->stop_request = true;',
@@ -145,6 +157,7 @@ uc_err uc_emu_stop(uc_engine *uc)''')
     files = [Path(__file__), archive, source / 'include/uc_priv.h', source / 'uc.c',
              source / 'qemu/accel/tcg/tcg-runtime.c', source / 'qemu/include/exec/gen-icount.h',
              source / 'qemu/tcg/tcg-op.c',
+             source / 'qemu/accel/tcg/translate-all.c',
              prefix / 'lib/libunicorn.a', prefix / 'include/unicorn/unicorn.h']
     manifest = {'version': '2.1.4', 'patch': 'nce-tb-stop', 'path': str(prefix), 'ZERO_AR_DATE': '1',
                 'commands': [list(map(str, command)) for command in commands],

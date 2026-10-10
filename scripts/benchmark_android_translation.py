@@ -53,6 +53,7 @@ def main():
                            NCE_TRANSLATION_SYSTEM=str(WORK / 'processes/system.img'),
                            NCE_TRANSLATION_BATCH='50000', NCE_TRANSLATION_PREEMPTION='timer',
                            NCE_TRANSLATION_MEMORY_MS='100', NCE_TRANSLATION_CACHE=config['cache_invalidation'],
+                           NCE_TRANSLATION_EXEC_CACHE='full',
                            NCE_TRANSLATION_LINUX_FASTPATH=str(config['linux_fastpath']),
                            NCE_TRANSLATION_CACHE_MIB=str(config['cache_mib']))
                 stem = f'{iteration}-{entry}-{name}'

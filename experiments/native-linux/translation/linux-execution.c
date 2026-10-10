@@ -35,7 +35,7 @@ static unsigned long base, *pages;
 static unsigned long map_generation, code_generation, maps, revocations, fills, faults, calls, preemptions;
 static unsigned long allocated, freed;
 static unsigned long cache_flushes, cache_pages, tlb_flushes;
-static bool page_invalidation;
+static bool page_invalidation, retain_exec_cache;
 static unsigned long instruction_batch;
 static bool timer_mode, timer_active, timer_stopping;
 static pthread_t timer_thread;
@@ -54,6 +54,7 @@ extern struct lkl_host_operations nce_lkl_host;
 extern uc_err nce_uc_emu_stop_at_tb(uc_engine *engine);
 extern uc_err nce_uc_invalidate_ram(uc_engine *engine, uint64_t start, uint64_t length);
 extern uc_err nce_uc_set_linux_memory(uc_engine *engine, bool enabled);
+extern void nce_uc_cache_stats_aarch64(uc_engine *engine, uint64_t values[5]);
 
 static void checked(uc_err error)
 {
@@ -273,7 +274,8 @@ static void user_exec(void *opaque, unsigned long entry, unsigned long stack)
     p->regs.pc = entry;
     p->regs.sp = stack;
     p->tls = 0;
-    ++code_generation;
+    if (!retain_exec_cache)
+        ++code_generation;
 }
 
 static void user_run(void *opaque)
@@ -372,13 +374,14 @@ static void user_run(void *opaque)
     }
 }
 
-/* Runtime ELF placement is intentionally separate from the native program
- * registry. This bounded probe retains each file's original code and headers. */
-static struct {
+/* Runtime ELF placement retains original code and headers. The execution address
+ * range and minimum library alignment bound the number of table entries. */
+typedef struct {
     char *path;
     unsigned long offset, base, span;
-} layouts[64];
-static unsigned layout_count;
+} ElfLayout;
+static ElfLayout *layouts;
+static unsigned layout_count, layout_capacity;
 static unsigned long cursor;
 
 static unsigned long elf_layout(const char *path, unsigned long offset, const void *raw_header, const void *raw_phdrs)
@@ -409,8 +412,16 @@ static unsigned long elf_layout(const char *path, unsigned long offset, const vo
         if (offset == layouts[i].offset && !strcmp(path, layouts[i].path))
             return span == layouts[i].span && !(layouts[i].base % alignment) ? layouts[i].base : 0;
     unsigned long start = (base + cursor + alignment - 1) & ~(alignment - 1);
-    if (!span || start - base > NCE_EXEC_DATA_OFFSET || span > NCE_EXEC_DATA_OFFSET - (start - base) || layout_count == 64)
+    if (!span || start - base > NCE_EXEC_DATA_OFFSET || span > NCE_EXEC_DATA_OFFSET - (start - base))
         return 0;
+    if (layout_count == layout_capacity) {
+        unsigned capacity = layout_capacity ? layout_capacity * 2 : 16;
+        REQUIRE(capacity <= NCE_EXEC_DATA_OFFSET / (1UL << 18));
+        ElfLayout *grown = realloc(layouts, capacity * sizeof(*layouts));
+        REQUIRE(grown);
+        layouts = grown;
+        layout_capacity = capacity;
+    }
     unsigned index = layout_count++;
     layouts[index].path = strdup(path);
     REQUIRE(layouts[index].path);
@@ -446,6 +457,12 @@ unsigned long translation_linux_setup(void *kernel, unsigned long copy_user_offs
     const char *invalidation = getenv("NCE_TRANSLATION_CACHE");
     REQUIRE(!invalidation || !strcmp(invalidation, "full") || !strcmp(invalidation, "pages"));
     page_invalidation = !invalidation || !strcmp(invalidation, "pages");
+    const char *exec_cache = getenv("NCE_TRANSLATION_EXEC_CACHE");
+    REQUIRE(!exec_cache || !strcmp(exec_cache, "full") || !strcmp(exec_cache, "pages"));
+    retain_exec_cache = exec_cache && !strcmp(exec_cache, "pages");
+    // The PTE backend reports physical code pages on install, removal and reuse.
+    REQUIRE(!retain_exec_cache || (translation && page_invalidation));
+    printf("{\"config\":\"translation_exec_cache\",\"mode\":\"%s\"}\n", retain_exec_cache ? "pages" : "full");
     const char *batch_text = getenv("NCE_TRANSLATION_BATCH");
     char *end = NULL;
     instruction_batch = batch_text ? strtoul(batch_text, &end, 10) : 50000;
@@ -473,17 +490,22 @@ unsigned long translation_linux_setup(void *kernel, unsigned long copy_user_offs
     checked(uc_open(UC_ARCH_ARM64, UC_MODE_ARM, &engine));
     checked(uc_ctl_set_cpu_model(engine, UC_CPU_ARM64_MAX));
     checked(uc_ctl_set_page_size(engine, PAGE));
-    checked(uc_ctl_tlb_mode(engine, UC_TLB_VIRTUAL));
     const char *cache_text = getenv("NCE_TRANSLATION_CACHE_MIB");
     unsigned long cache_mib = cache_text ? strtoul(cache_text, &end, 10) : 16;
     REQUIRE(!cache_text || (cache_text[0] >= '0' && cache_text[0] <= '9' && !*end));
     REQUIRE(cache_mib == 16 || cache_mib == 64 || cache_mib == 128);
-    checked(uc_ctl_set_tcg_buffer_size(engine, cache_mib * 1024 * 1024));
+    unsigned long cache_bytes = cache_mib * 1024 * 1024;
+    // TLB mode initializes Unicorn; buffer size must be supplied before that call.
+    checked(uc_ctl_set_tcg_buffer_size(engine, (uint32_t)cache_bytes));
+    checked(uc_ctl_tlb_mode(engine, UC_TLB_VIRTUAL));
     const char *fastpath = getenv("NCE_TRANSLATION_LINUX_FASTPATH");
     REQUIRE(!fastpath || !strcmp(fastpath, "0") || !strcmp(fastpath, "1"));
     checked(nce_uc_set_linux_memory(engine, fastpath && !strcmp(fastpath, "1")));
-    printf("{\"config\":\"translation_cache_settings\",\"cache_bytes\":%lu,\"invalidation\":\"%s\",\"linux_fastpath\":%s}\n",
-           cache_mib * 1024 * 1024, page_invalidation ? "pages" : "full",
+    uint64_t stats[5];
+    nce_uc_cache_stats_aarch64(engine, stats);
+    REQUIRE(stats[4] <= cache_bytes && cache_bytes - stats[4] < 65536);
+    printf("{\"config\":\"translation_cache_settings\",\"cache_bytes\":%lu,\"actual_cache_bytes\":%llu,\"invalidation\":\"%s\",\"linux_fastpath\":%s}\n",
+           cache_bytes, stats[4], page_invalidation ? "pages" : "full",
            fastpath && !strcmp(fastpath, "1") ? "true" : "false");
     checked(uc_context_alloc(engine, &empty_cpu));
     checked(uc_context_save(engine, empty_cpu));
@@ -530,6 +552,10 @@ void translation_linux_cleanup(void)
            allocated == freed ? "true" : "false", allocated, freed, maps, revocations, fills, faults, calls, preemptions);
     printf("{\"translation_cache\":\"%s\",\"full_flushes\":%lu,\"invalidated_pages\":%lu,\"tlb_flushes\":%lu}\n",
            page_invalidation ? "pages" : "full", cache_flushes, cache_pages, tlb_flushes);
+    uint64_t stats[5];
+    nce_uc_cache_stats_aarch64(engine, stats);
+    printf("{\"translation_engine_cache\":true,\"total_flushes\":%llu,\"invalidated_blocks\":%llu,\"current_blocks\":%llu,\"used_bytes\":%llu,\"capacity_bytes\":%llu}\n",
+           stats[0], stats[1], stats[2], stats[3], stats[4]);
     REQUIRE(allocated == freed);
     checked(uc_context_free(empty_cpu));
     checked(uc_close(engine));
@@ -538,4 +564,5 @@ void translation_linux_cleanup(void)
     free(pages);
     for (unsigned i = 0; i < layout_count; ++i)
         free(layouts[i].path);
+    free(layouts);
 }

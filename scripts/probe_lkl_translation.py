@@ -45,12 +45,38 @@ def validate(rows, memory_interval, mapping="window", workload="core"):
                     'android_art_jit_automatic', 'android_art_jit_runtime_features', 'android_art_jit_patterns',
                     'android_art_jit_strings_classes', 'android_art_jit_types', 'android_art_jit_intrinsics',
                     'android_art_proxy_references', 'android_art_vm_destroyed'}
+    elif workload in ('services', 'desktop'):
+        expected = {'android_system_image_readonly', 'android_data_ext4_mounted', 'android_proc_pid_namespace',
+                    'linux_selinux_service_policy', 'android_platform_binder_cleanup', 'android_framework_runtime',
+                    'android_vintf_build_consistency', 'android_aconfig_storage', 'android_framework_file_observer',
+                    'android_system_suspend_wakelocks', 'android_installd_app_data', 'android_apex_registry',
+                    'android_zygote_command_server', 'android_framework_graphics', 'android_crypto',
+                    'linux_data_readonly_shutdown'}
+        if workload == 'desktop':
+            expected.remove('android_zygote_command_server')
+            expected.update({'android_system_boot_completed', 'android_desktop_launch_commands',
+                             'android_system_process_groups_stopped', 'android_gralloc_cpu_gpu_roundtrip',
+                             'native_graphics_channels_released'})
+            activities = {row.get('package') for row in rows
+                          if row.get('test') == 'android_desktop_visible_activity' and row.get('passed')}
+            if not {'com.android.launcher3', 'com.android.deskclock', 'com.google.android.documentsui'} <= activities:
+                return False
+            expected.update({'android_application_data_persistence', 'android_keystore_persistence',
+                             'android_clock_controls_ready', 'android_clock_alarm_activity',
+                             'android_preview_clock_data_preserved'})
     if not rows or rows[-1].get('result') != 'passed' or any(row.get('passed') is False for row in rows):
         return False
     if not expected <= {row.get('test') for row in rows if row.get('passed')}:
         return False
     cleanup = [row for row in rows if row.get('test') == 'translated_context_cleanup']
     if len(cleanup) != 1 or (mapping == 'pte' and (cleanup[0]['maps'] or cleanup[0]['revocations'])):
+        return False
+    settings = [row for row in rows if row.get('config') == 'translation_cache_settings']
+    cache = [row for row in rows if row.get('translation_engine_cache')]
+    if len(settings) != 1 or len(cache) != 1:
+        return False
+    requested, actual = settings[0]['cache_bytes'], settings[0].get('actual_cache_bytes', 0)
+    if not 0 <= requested - actual < 65536 or actual != cache[0]['capacity_bytes'] or cache[0]['used_bytes'] > actual:
         return False
     cases = [(row['bytes'], row['shared_percent'], row['touch_all'], row['threads'])
              for row in rows if row.get('bench') == 'linux_mm_exchange']
@@ -62,6 +88,10 @@ def validate(rows, memory_interval, mapping="window", workload="core"):
     phases = ('kernel_setup', 'guest_setup', 'guest_execution', 'cleanup')
     if workload == 'android':
         phases = ('kernel_setup', 'guest_setup', 'bionic_execution', 'cfi_execution', 'art_execution', 'cleanup')
+    elif workload == 'services':
+        phases = ('kernel_setup', 'guest_setup', 'services_execution', 'cleanup')
+    elif workload == 'desktop':
+        phases = ('kernel_setup', 'guest_setup', 'desktop_execution', 'cleanup')
     summaries = [row for row in rows if 'memory_statistics' in row]
     if not memory_interval:
         return not summaries and not any('memory_sample' in row for row in rows)
@@ -88,11 +118,13 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--build-only', action='store_true')
     parser.add_argument('--mapping', choices=('window', 'pte'), default='window')
-    parser.add_argument('--workload', choices=('core', 'android'), default='core')
+    parser.add_argument('--workload', choices=('core', 'android', 'services', 'desktop'), default='core')
+    parser.add_argument('--entry', choices=('both', 'cli', 'gcd', 'window'), default='both')
     parser.add_argument('--art-nterp', type=int, choices=(0, 1), default=1)
     parser.add_argument('--art-expanded-jit', type=int, choices=(0, 1), default=0)
     parser.add_argument('--art-fast-baseline', type=int, choices=(0, 1), default=0)
     parser.add_argument('--cache-invalidation', choices=('full', 'pages'), default='pages')
+    parser.add_argument('--exec-cache', choices=('full', 'pages'), default='full')
     parser.add_argument('--linux-fastpath', type=int, choices=(0, 1), default=0)
     parser.add_argument('--cache-mib', type=int, choices=(16, 64, 128), default=16)
     parser.add_argument('--repeat', type=int, default=1)
@@ -101,6 +133,11 @@ def main():
     parser.add_argument('--output', type=Path, default=DEFAULT_OUT)
     parser.add_argument('--memory-interval-ms', type=int, default=100)
     args = parser.parse_args()
+    entries = ('cli', 'gcd') if args.entry == 'both' else (args.entry,)
+    if args.entry == 'window' and args.workload != 'desktop':
+        parser.error('可见窗口用于 desktop 负载')
+    if args.exec_cache == 'pages' and (args.mapping != 'pte' or args.cache_invalidation != 'pages'):
+        parser.error('exec 按页失效需要 PTE 映射与按页代码失效')
     out = args.output.resolve()
     if not out.is_relative_to(WORK):
         parser.error('实验产物必须放在本项目 work/native-linux-nce 下')
@@ -147,16 +184,46 @@ def main():
     (out / 'translation-symbols.h').write_text(header)
     inputs = [EXP / 'translation/linux-execution.c', EXP / 'translation/linux-runner.c', EXP / 'translation/linux-memory.c', EXP / 'lkl-host.c']
     commands = []
-    for mode in ('cli', 'gcd'):
+    graphics_link, graphics_files = [], []
+    if args.workload == 'desktop':
+        gfx = ROOT / 'work/gfxstream-src'
+        prefix = ROOT / 'work/gfxstream-build-macos-ios-api/prefix'
+        angle = ROOT / 'work/angle-macos/prefix/lib'
+        manifest_path = prefix.parent / 'manifest.json'
+        graphics_manifest = json.loads(manifest_path.read_text())
+        for name, expected in graphics_manifest['inputs'].items():
+            if sha(ROOT / name) != expected:
+                raise SystemExit('gfxstream 源码发生变化，需要重新构建：' + name)
+        for name, expected in graphics_manifest['libraries'].items():
+            if sha(Path(name)) != expected:
+                raise SystemExit('gfxstream 库与构建记录不一致：' + name)
+        command = ['xcrun', 'clang++', '-std=c++17', '-O2', '-g', '-Wall', '-Wextra', '-Werror',
+                   '-Wno-return-type-c-linkage', '-isystem', gfx / 'host/include',
+                   '-isystem', gfx / 'host/features/include', '-isystem', gfx / 'common/base/include',
+                   '-c', EXP / 'graphics/host-graphics.cpp', '-o', out / 'host-graphics.o']
+        run(command)
+        commands.append(list(map(str, command)))
+        inputs += [EXP / 'input.c', EXP / 'session.c']
+        graphics_link = ['-DNCE_GRAPHICS', out / 'host-graphics.o', '-L', prefix / 'lib', '-lgfxstream_backend', '-lc++',
+                         '-Wl,-rpath,' + str(prefix / 'lib'), '-Wl,-rpath,' + str(angle)]
+        graphics_files = [manifest_path, EXP / 'graphics/host-graphics.cpp', EXP / 'graphics/host-graphics.h',
+                          EXP / 'input.h', EXP / 'session.h', prefix / 'lib/libgfxstream_backend.dylib',
+                          angle / 'libANGLE-shared.dylib']
+    build_entries = ('cli', 'gcd', 'window') if args.entry == 'window' else ('cli', 'gcd')
+    for mode in build_entries:
         command = ['xcrun', 'clang', '-O2', '-g', '-DNCE_PROCESS', '-Wall', '-Wextra', '-Werror',
                    '-I', EXP, '-I', kernel, '-I', out, '-I', KERNEL / 'host-include', '-I', library / 'include',
-                   *inputs, library / 'lib/libunicorn.a', '-o', out / mode]
+                   *inputs, library / 'lib/libunicorn.a', *graphics_link, '-o', out / mode]
         if mode == 'gcd':
             command += ['-DTRANSLATION_DISPATCH', EXP / 'dispatch-test.c']
+        elif mode == 'window':
+            command += ['-DTRANSLATION_DISPATCH', EXP / 'graphics/window-test.mm', '-fobjc-arc',
+                        '-framework', 'AppKit', '-framework', 'Metal', '-framework', 'QuartzCore']
+            graphics_files.append(EXP / 'graphics/window-test.mm')
         run(command)
         commands.append(list(map(str, command)))
     # Guest files are built after both hosts and are never linked into them.
-    hosts_before = {mode: sha(out / mode) for mode in ('cli', 'gcd')}
+    hosts_before = {mode: sha(out / mode) for mode in build_entries}
     libc = WORK / 'musl-build/install'
     resource = Path(subprocess.check_output([llvm / 'clang', '-print-resource-dir'], text=True).strip()) / 'include'
     command = [llvm / 'clang', '--target=aarch64-linux-musl', '-mno-outline-atomics', '-fPIE', '-O2', '-g',
@@ -184,7 +251,7 @@ def main():
     for name in runtime_files:
         shutil.copyfile(KERNEL / name, out / name)
     android_files = []
-    if args.workload == 'android':
+    if args.workload != 'core':
         for name, source in [('NceWorkload.dex', KERNEL / 'java-classes/classes.dex'),
                              ('ld.config.txt', EXP / 'art/ld.config.txt')]:
             shutil.copyfile(source, out / name)
@@ -193,15 +260,23 @@ def main():
             (out / name).write_text(str(getattr(args, name.replace('-', '_'))))
             android_files.append(out / name)
         android_files.append(KERNEL / 'system.img')
+        if args.workload in ('services', 'desktop'):
+            for name in ('nce-policy.cil', 'property_info'):
+                shutil.copyfile(KERNEL / name, out / name)
+                android_files.append(out / name)
+            (out / 'disabled').write_text('0')
+            android_files.append(out / 'disabled')
+            (out / 'enabled').write_text('1')
+            android_files.append(out / 'enabled')
     if hosts_before != {mode: sha(out / mode) for mode in hosts_before}:
         raise RuntimeError('客体构建后宿主文件发生变化')
     files = [*inputs, EXP / 'translation/linux-execution.h', EXP / 'translation/linux-memory.h', EXP / 'translation/linux-guest.c', Path(__file__),
              EXP / 'dispatch-test.c', EXP / 'layout.h', EXP / 'guest-registers.h',
-             *[EXP / 'userspace' / name for name in guest_sources], *android_files,
+             *[EXP / 'userspace' / name for name in guest_sources], *android_files, *graphics_files,
              kernel / 'lkl-image.bin', kernel / 'lkl-image.h', kernel / 'lkl.so', kernel / 'lkl-host-ops.h',
              EXP / 'translation/kernel-api.h',
              ROOT / 'scripts/build_translation_engine.py', WORK / 'unicorn-tb-stop/build.json',
-             library / 'lib/libunicorn.a', *[out / name for name in ('cli', 'gcd', 'guest.elf', 'late.elf', *runtime_files)]]
+             library / 'lib/libunicorn.a', *[out / name for name in (*build_entries, 'guest.elf', 'late.elf', *runtime_files)]]
     if args.mapping == 'pte':
         files += [ROOT / 'scripts/build_lkl_translation_kernel.py', ROOT / 'scripts/lkl_translation_patch.py',
                   EXP / 'lkl-nce-mmu.c', kernel / 'build.json']
@@ -217,23 +292,45 @@ def main():
     environment['NCE_TRANSLATION_WORKLOAD'] = args.workload
     environment['NCE_TRANSLATION_SYSTEM'] = str(KERNEL / 'system.img')
     environment['NCE_TRANSLATION_CACHE'] = args.cache_invalidation
+    environment['NCE_TRANSLATION_EXEC_CACHE'] = args.exec_cache
     environment['NCE_TRANSLATION_LINUX_FASTPATH'] = str(args.linux_fastpath)
     environment['NCE_TRANSLATION_CACHE_MIB'] = str(args.cache_mib)
+    for name in ('NCE_DESKTOP', 'NCE_SYSTEM_SERVER_PROBE', 'NCE_DIAGNOSTICS', 'NCE_TRACE_SYSTEMUI'):
+        environment.pop(name, None)
+    if args.workload == 'desktop':
+        environment.update(DYLD_LIBRARY_PATH=str(angle), ANGLE_DEFAULT_PLATFORM='metal')
     results = []
     for iteration in range(args.repeat):
-        for mode in ('cli', 'gcd'):
+        for mode in entries:
             stem = f'{mode}-{iteration}'
+            data = None
+            if args.workload in ('services', 'desktop'):
+                data_path = out / f'{stem}-data.img'
+                with data_path.open('wb') as image:
+                    image.truncate(512 * 1024 * 1024)
+                run(['/opt/homebrew/opt/e2fsprogs/sbin/mke2fs', '-F', '-q', '-t', 'ext4', '-b', '4096',
+                     '-E', 'lazy_itable_init=0,lazy_journal_init=0', data_path])
+                environment['NCE_TRANSLATION_DATA'] = str(data_path)
+                data = {'path': str(data_path.relative_to(ROOT)), 'initial_sha256': sha(data_path), 'fresh': True}
             with (out / f'{stem}.jsonl').open('w') as output, (out / f'{stem}.log').open('w') as error:
                 try:
                     process = subprocess.run([out / mode, kernel / 'lkl-image.bin'], env=environment,
-                                             stdout=output, stderr=error, timeout=120)
+                                             stdout=output, stderr=error, timeout=480 if args.workload == 'desktop' else 120)
                     returncode = process.returncode
                 except subprocess.TimeoutExpired:
                     returncode = 'timeout'
             rows = [json.loads(line) for line in (out / f'{stem}.jsonl').read_text().splitlines() if line.startswith('{')]
             passed = returncode == 0 and validate(rows, args.memory_interval_ms, args.mapping, args.workload)
+            if data is not None:
+                data['final_sha256'] = sha(data_path)
+                metadata = subprocess.run(['/opt/homebrew/opt/e2fsprogs/sbin/dumpe2fs', '-h', data_path],
+                                          capture_output=True, text=True, timeout=30)
+                data['clean_shutdown'] = (metadata.returncode == 0 and
+                                          re.search(r'^Filesystem state:\s+clean$', metadata.stdout, re.M) is not None and
+                                          'needs_recovery' not in metadata.stdout and 'orphan_present' not in metadata.stdout)
+                passed = passed and data['clean_shutdown']
             results.append({'entry': mode, 'iteration': iteration, 'returncode': returncode, 'results': rows,
-                            'validated': passed,
+                            'validated': passed, 'data_image': data,
                             'stdout_sha256': sha(out / f'{stem}.jsonl'), 'stderr_sha256': sha(out / f'{stem}.log')})
             if not passed:
                 break
@@ -241,14 +338,15 @@ def main():
             break
     if input_hashes != {str(path.relative_to(ROOT)): sha(path) for path in files}:
         raise SystemExit('本轮验证期间源码或二进制发生变化，请重跑')
-    report = {'scope': 'Native single-CPU LKL with translated ARM64 userspace; no Android/iPhone integration',
+    report = {'scope': 'Native single-CPU LKL with translated ARM64 userspace; selected workload only; iPhone unverified',
               'platform': platform.platform(), 'cpu': subprocess.check_output(['sysctl', '-n', 'machdep.cpu.brand_string'], text=True).strip(),
               'system_build': subprocess.check_output(['sw_vers', '-buildVersion'], text=True).strip(),
               'dependency': dependency, 'commands': commands, 'host_unchanged_after_guest_build': True,
               'configuration': {'mapping': args.mapping, 'sparse_scan': True, 'fault_prefetch': False, 'guest_page_bytes': 16384,
-                                'workload': args.workload, 'art_nterp': args.art_nterp,
+                                'workload': args.workload, 'entries': entries, 'art_nterp': args.art_nterp,
                                 'art_expanded_jit': args.art_expanded_jit, 'art_fast_baseline': args.art_fast_baseline,
                                 'cache_invalidation': args.cache_invalidation,
+                                'exec_cache': args.exec_cache,
                                 'linux_fastpath': args.linux_fastpath,
                                 'guest_ram_bytes': 1073741824, 'translation_cache_bytes': args.cache_mib * 1024 * 1024,
                                 'instruction_batch': args.batch_instructions, 'memory_interval_ms': args.memory_interval_ms,
@@ -257,7 +355,7 @@ def main():
               'sha256': input_hashes, 'runs': results}
     (out / 'summary.json').write_text(json.dumps(report, indent=2) + '\n')
     print(out / 'summary.json')
-    if len(results) != args.repeat * 2 or any(not row['validated'] for row in results):
+    if len(results) != args.repeat * len(entries) or any(not row['validated'] for row in results):
         raise SystemExit('Linux 翻译原型失败，查看对应 jsonl/log')
 
 
