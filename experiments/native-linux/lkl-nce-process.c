@@ -4,12 +4,13 @@
 #include <linux/sched/signal.h>
 #include <linux/sched/task.h>
 #include <linux/syscalls.h>
+#include <linux/smp.h>
 #include <asm/host_ops.h>
 
 static int user_start(void *state)
 {
     current->thread.nce_state = state;
-    lkl_ops->user_switch(state);
+    lkl_ops->user_switch(state, raw_smp_processor_id(), num_possible_cpus());
     lkl_ops->user_run(state);
     return 0;
 }

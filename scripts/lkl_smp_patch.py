@@ -20,7 +20,8 @@ def apply(source: Path, experiment: Path):
 
     arch = 'arch/lkl/'
     edit(arch + 'Kconfig', 'depends on !SMP && !COREDUMP', 'depends on !COREDUMP')
-    edit(arch + 'Kconfig', 'config LKL_FUZZING', '''config SMP
+    if 'config SMP\n' not in (source / arch / 'Kconfig').read_text():
+        edit(arch + 'Kconfig', 'config LKL_FUZZING', '''config SMP
 	bool "Experimental LKL SMP"
 	depends on !MMU
 	select ARCH_USE_QUEUED_RWLOCKS
@@ -43,7 +44,8 @@ config LKL_FUZZING''')
             destination.write_text(content)
     for name in ['smp.c', 'time.c', 'test.c']:
         copy(name, source / arch / 'kernel' / ('smp-test.c' if name == 'test.c' else name))
-    edit(arch + 'kernel/Makefile', 'obj-y = setup.o', 'obj-$(CONFIG_SMP) += smp.o smp-test.o\nobj-y += setup.o')
+    if 'obj-$(CONFIG_SMP) += smp.o smp-test.o' not in (source / arch / 'kernel/Makefile').read_text():
+        edit(arch + 'kernel/Makefile', 'obj-y = setup.o', 'obj-$(CONFIG_SMP) += smp.o smp-test.o\nobj-y += setup.o')
     edit('kernel/sched/core.c', 'int __sched __cond_resched(void)\n{',
          'int __sched __cond_resched(void)\n{\n#ifdef CONFIG_LKL\n\tcpu_relax();\n#endif')
     # Early SMP setup can panic before the printk console is registered.

@@ -2,6 +2,7 @@
 #include "art-aot-targets.h"
 #include "nce.h"
 #include "nce-thread.h"
+#include "nce-cpu.h"
 #include "memory.h"
 #include "layout.h"
 #include "lkl-mmu-profile.h"
@@ -46,13 +47,13 @@ typedef struct {
     void *signal_stack;
     const char *exec_path;
     pthread_t thread;
+    unsigned cpu, cpus;
     uintptr_t fault_address;
     uint32_t fault_instruction;
     int event_kind, fault_write, fault_illegal, fault_execute, stack_unmapped;
 } Process;
 static _Thread_local Process *this_process;
-static pthread_mutex_t target_mutex = PTHREAD_MUTEX_INITIALIZER;
-static pthread_t target_thread, timer_thread;
+static pthread_t timer_thread;
 static atomic_int timer_stopping;
 static NceCode event_resume;
 static atomic_ulong resume_hits, resume_misses;
@@ -380,22 +381,11 @@ static void prepare_resume(NceState *state)
             resume = (NceCode){p->stubs.rw + offset, p->stubs.rx + offset, p->stubs.size - offset};
         }
     }
-    // The Linux CPU owns these slots until the guest resumes. Their branch word
-    // identifies the target; a collision only replaces this slot's old entry.
-    REQUIRE(resume.size >= 16);
-    size_t slot = (state->regs.pc >> 2) % (resume.size / 16) * 16;
-    resume = (NceCode){resume.rw + slot, resume.rx + slot, 16};
-    uint32_t branch;
-    REQUIRE(nce_write_branch(&branch, (uintptr_t)resume.rx + 4, state->regs.pc) == 0);
-    if (((uint32_t *)resume.rw)[1] != branch) {
-        REQUIRE(nce_write_entry(resume, state->regs.pc) == 0);
-        nce_sync_code(resume);
-        if (map_profile)
-            atomic_fetch_add_explicit(&resume_misses, 1, memory_order_relaxed);
-    } else if (map_profile) {
-        atomic_fetch_add_explicit(&resume_hits, 1, memory_order_relaxed);
-    }
-    state->resume = (uintptr_t)resume.rx;
+    Process *process = (void *)state;
+    int changed = nce_cpu_resume(state, resume, process->cpu, process->cpus);
+    REQUIRE(changed >= 0);
+    if (map_profile)
+        atomic_fetch_add_explicit(changed ? &resume_misses : &resume_hits, 1, memory_order_relaxed);
 }
 
 static NceState *handle_event(NceState *state)
@@ -509,19 +499,20 @@ static void fault(int signal, siginfo_t *info, void *opaque)
     _Exit(128 + signal);
 }
 
-static void user_switch(void *state)
+static void user_switch(void *state, unsigned cpu, unsigned cpus)
 {
-    REQUIRE(pthread_mutex_lock(&target_mutex) == 0);
-    target_thread = state ? ((Process *)state)->thread : NULL;
-    REQUIRE(pthread_mutex_unlock(&target_mutex) == 0);
+    REQUIRE(cpus && cpus <= NCE_MAX_CPUS && cpu < cpus);
+    Process *process = state;
+    if (process) {
+        process->cpu = cpu;
+        process->cpus = cpus;
+    }
+    nce_cpu_target(cpu, process ? process->thread : NULL);
 }
 
 void nce_process_thread_exit(void)
 {
-    REQUIRE(pthread_mutex_lock(&target_mutex) == 0);
-    if (target_thread == pthread_self())
-        target_thread = NULL;
-    REQUIRE(pthread_mutex_unlock(&target_mutex) == 0);
+    nce_cpu_forget(pthread_self());
     if (this_process)
         REQUIRE(nce_thread_bind(NULL) == 0);
     this_process = NULL;
@@ -533,10 +524,7 @@ static void *preempt_timer(void *unused)
     while (!atomic_load(&timer_stopping)) {
         struct timespec interval = {.tv_nsec = 2000000};
         nanosleep(&interval, NULL);
-        REQUIRE(pthread_mutex_lock(&target_mutex) == 0);
-        if (target_thread)
-            pthread_kill(target_thread, SIGUSR2);
-        REQUIRE(pthread_mutex_unlock(&target_mutex) == 0);
+        nce_cpu_interrupt(SIGUSR2);
     }
     return NULL;
 }
@@ -614,7 +602,7 @@ static void user_run(void *opaque)
     process->thread = pthread_self();
     state->event = handle_event;
     state->memory = guest_memory;
-    user_switch(state);
+    user_switch(state, process->cpu, process->cpus);
     process->signal_stack = malloc(65536);
     REQUIRE(process->signal_stack);
     stack_t signal_stack = {.ss_sp = process->signal_stack, .ss_size = 65536};

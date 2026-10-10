@@ -118,7 +118,7 @@ def main():
     flags = ['-O2', '-g', '-Wall', '-Wextra', '-Werror', '-isysroot', sdk,
              f'-mmacosx-version-min={minimum}', '-I', INPUT, '-I', EXP,
              '-DNCE_PROCESS', '-DNCE_GRAPHICS', '-DNCE_IOS_APP']
-    sources = [EXP / name for name in ['lkl-main.c', 'lkl-host.c', 'lkl-process-host.c',
+    sources = [EXP / name for name in ['lkl-main.c', 'lkl-host.c', 'lkl-process-host.c', 'nce-cpu.c',
                'nce.c', 'nce-thread.c', 'entry.S', 'programs.c', 'memory.c', 'execute-check.c', 'compute.c', 'input.c', 'session.c']]
     sources += [INPUT / 'payload.S', EXP / 'guest.S', EXP / 'graphics/host-graphics.cpp',
                 *[EXP / 'macos' / name for name in ('Display.mm', 'Storage.mm')]]

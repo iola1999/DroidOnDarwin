@@ -120,7 +120,10 @@ def apply(source: Path, experiment: Path):
     if migrated != original:
         processor.write_text(migrated)
     edit(arch + "include/asm/processor.h", "#define TASK_UNMAPPED_BASE\tCONFIG_LKL_TASK_UNMAPPED_BASE", "#include <asm/nce-layout.h>\n#define TASK_UNMAPPED_BASE\t(nce_user_base + NCE_MMAP_OFFSET)")
-    edit(arch + "include/uapi/asm/host_ops.h", "\tstruct lkl_dev_pci_ops *pci_ops;", "\tstruct lkl_dev_pci_ops *pci_ops;\n\n\t/* N2 controlled userspace. The Linux CPU owns the active context. */\n\tvoid *(*user_clone)(void *parent, unsigned long sp, unsigned long tls, unsigned long flags);\n\tvoid (*user_free)(void *state);\n\tvoid (*user_switch)(void *state);\n\tvoid (*user_run)(void *state);\n\tvoid (*user_exec)(void *state, unsigned long entry, unsigned long stack);\n")
+    if "(*user_clone)" not in (source / arch / "include/uapi/asm/host_ops.h").read_text():
+        edit(arch + "include/uapi/asm/host_ops.h", "\tstruct lkl_dev_pci_ops *pci_ops;", "\tstruct lkl_dev_pci_ops *pci_ops;\n\n\t/* N2 controlled userspace. The Linux CPU owns the active context. */\n\tvoid *(*user_clone)(void *parent, unsigned long sp, unsigned long tls, unsigned long flags);\n\tvoid (*user_free)(void *state);\n\tvoid (*user_switch)(void *state);\n\tvoid (*user_run)(void *state);\n\tvoid (*user_exec)(void *state, unsigned long entry, unsigned long stack);\n")
+    edit(arch + "include/uapi/asm/host_ops.h", "void (*user_switch)(void *state);",
+         "void (*user_switch)(void *state, unsigned int cpu, unsigned int cpus);")
     if "(*user_elf)" not in (source / arch / "include/uapi/asm/host_ops.h").read_text():
         edit(arch + "include/uapi/asm/host_ops.h", "\tvoid (*user_exec)(void *state, unsigned long entry, unsigned long stack);", "\tvoid (*user_exec)(void *state, unsigned long entry, unsigned long stack);\n\tunsigned long (*user_elf)(const char *path, const void *header, const void *phdrs);")
     edit("fs/binfmt_elf.c", "unsigned long load_bias = 0, phdr_addr = 0;", "unsigned long load_bias = 0, phdr_addr = 0;\n#ifdef NCE_ELF_LAYOUT\n\tunsigned long nce_bias;\n#endif")
@@ -141,7 +144,10 @@ def apply(source: Path, experiment: Path):
          "unsigned long (*user_elf)(const char *path, unsigned long source_offset, const void *header, const void *phdrs);\n\tunsigned long (*user_elf_offset)(unsigned long address);")
     edit(arch + "kernel/threads.c", "\tti->flags = org_ti->flags;", "\tp->thread.nce_state = NULL;\n\tti->flags = org_ti->flags;")
     edit(arch + "kernel/threads.c", "\tkill_thread(ti);\n\tkfree(ti);", "\tkill_thread(ti);\n#ifdef CONFIG_MMU\n\tif (tsk->thread.nce_state)\n\t\tlkl_ops->user_free(tsk->thread.nce_state);\n#endif\n\tkfree(ti);")
-    edit(arch + "kernel/threads.c", "\tlkl_ops->sem_up(_next->sched_sem);", "#ifdef CONFIG_MMU\n\tif (lkl_ops->user_switch)\n\t\tlkl_ops->user_switch(next->thread.nce_state);\n#endif\n\tlkl_ops->sem_up(_next->sched_sem);")
+    if "if (lkl_ops->user_switch)" not in (source / arch / "kernel/threads.c").read_text():
+        edit(arch + "kernel/threads.c", "\tlkl_ops->sem_up(_next->sched_sem);", "#ifdef CONFIG_MMU\n\tif (lkl_ops->user_switch)\n\t\tlkl_ops->user_switch(next->thread.nce_state);\n#endif\n\tlkl_ops->sem_up(_next->sched_sem);")
+    edit(arch + "kernel/threads.c", "lkl_ops->user_switch(next->thread.nce_state);",
+         "lkl_ops->user_switch(next->thread.nce_state, raw_smp_processor_id(), num_possible_cpus());")
     edit(arch + "kernel/threads.c", "int copy_thread(struct task_struct *p, const struct kernel_clone_args *args)", "#ifdef CONFIG_MMU\nstatic int user_bootstrap(void *unused)\n{\n\tlkl_ops->user_run(current->thread.nce_state);\n\treturn 0;\n}\n#endif\n\nint copy_thread(struct task_struct *p, const struct kernel_clone_args *args)")
     edit(arch + "kernel/threads.c", "if (!test_ti_thread_flag(ti, TIF_HOST_THREAD)) {", "if (!test_ti_thread_flag(ti, TIF_HOST_THREAD) && ti->tid) {")
     edit(arch + "kernel/threads.c", "\ttba = kmalloc(sizeof(*tba), GFP_KERNEL);", "\tclear_ti_thread_flag(ti, TIF_HOST_THREAD);\n#ifdef CONFIG_MMU\n\tif (!esp) {\n\t\tif (!current->thread.nce_state || !lkl_ops->user_clone)\n\t\t\treturn -EINVAL;\n\t\tp->thread.nce_state = lkl_ops->user_clone(current->thread.nce_state,\n\t\t\targs->stack, args->tls, args->flags);\n\t\tif (!p->thread.nce_state)\n\t\t\treturn -ENOMEM;\n\t\tesp = (unsigned long)user_bootstrap;\n\t}\n#endif\n\ttba = kmalloc(sizeof(*tba), GFP_KERNEL);")
