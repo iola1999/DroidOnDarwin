@@ -273,7 +273,7 @@ static int control_socket(const char *name, int type = SOCK_STREAM, gid_t group 
     return fd;
 }
 
-void nce_surface_check(const char *package, const char *png)
+bool nce_surface_check(const char *package, const char *png, bool cancellable)
 {
     pid_t child = fork();
     CHECK(child >= 0);
@@ -290,16 +290,18 @@ void nce_surface_check(const char *package, const char *png)
               "/system/bin", "NceSurface", package, png, nullptr);
         _exit(108);
     }
-    int status;
-    CHECK(waitpid(child, &status, 0) == child);
+    int status = nce_wait_desktop_child(child, cancellable);
+    if (status == -ECANCELED)
+        return false;
     if (status)
         dprintf(2, "surface-test child=%d status=%d\n", child, status);
-    CHECK(WIFEXITED(status) && WEXITSTATUS(status) == 0);
+    CHECK(status >= 0 && WIFEXITED(status) && WEXITSTATUS(status) == 0);
+    return true;
 }
 
 void nce_surface_test()
 {
-    nce_surface_check();
+    CHECK(nce_surface_check());
 }
 
 static void receive_bytes(int fd, void *buffer, size_t size)
@@ -713,7 +715,10 @@ void nce_zygote_test()
                 puts("{\"test\":\"android_system_boot_completed\",\"passed\":true}");
                 wait_system_service(audio, "media.audio_flinger");
                 wait_system_service(audio, "media.audio_policy");
-                nce_desktop_start(interactive);
+                if (!nce_desktop_start(interactive)) {
+                    stopped = true;
+                    break;
+                }
                 booted = true;
                 if (interactive)
                     alarm(0);

@@ -986,7 +986,7 @@ static void *stream_guest_log(void *opaque)
     }
 }
 
-static void run_program(long (*call)(long, long *), const char *path, const char *input)
+static int run_program(long (*call)(long, long *), const char *path, const char *input)
 {
     if (input)
         put_file(call, "/stdin", input, strlen(input));
@@ -1043,11 +1043,12 @@ static void run_program(long (*call)(long, long *), const char *path, const char
         if (bytes > 0)
             fwrite(messages, 1, bytes, stderr);
     }
-    REQUIRE(waited == pid && status == 0);
+    REQUIRE(waited == pid);
     for (long fd = 0; fd < 3; ++fd) {
         args[0] = fd;
         REQUIRE(call(57, args) == 0);
     }
+    return status;
 }
 
 static void check_program_files(long (*call)(long, long *), bool data_files)
@@ -1116,7 +1117,7 @@ static void userspace_tests(long (*call)(long, long *))
         "/worker check\n/worker check\n/worker check\n/worker check\n";
     put_file(call, "/boot.script", script, strlen(script));
     puts("{\"phase\":\"linux_userspace_tests\"}");
-    run_program(call, "/init-user", NULL);
+    REQUIRE(run_program(call, "/init-user", NULL) == 0);
     char buffer[4096];
     REQUIRE(get_file(call, "/userspace.result", buffer, sizeof(buffer)) > 0);
     REQUIRE(strstr(buffer, "init pid=1 commands=8 libc=musl passed"));
@@ -1297,7 +1298,7 @@ static void process_regressions(long (*host_syscall)(long, long *))
            stress_rounds, stress_rounds * 8, stress_rounds * 56);
     puts("{\"phase\":\"linux_mm_benchmark\"}");
     unsigned long maps_before = data_maps, copied_before = code_copy_bytes, revoked_before = revocations;
-    run_program(host_syscall, "/mm-bench", NULL);
+    REQUIRE(run_program(host_syscall, "/mm-bench", NULL) == 0);
     char benchmark[16384];
     REQUIRE(get_file(host_syscall, "/stdout", benchmark, sizeof(benchmark)) > 0);
     REQUIRE(strstr(benchmark, "linux_mm_exchange_integrity"));
@@ -1305,17 +1306,17 @@ static void process_regressions(long (*host_syscall)(long, long *))
     printf("{\"test\":\"linux_mm_host_operations\",\"data_maps\":%lu,\"code_copy_bytes\":%lu,\"revocations\":%lu}\n",
            data_maps - maps_before, code_copy_bytes - copied_before, revocations - revoked_before);
     puts("{\"phase\":\"linux_dash_shell\"}");
-    run_program(host_syscall, "/bin/sh", shell_script);
+    REQUIRE(run_program(host_syscall, "/bin/sh", shell_script) == 0);
     REQUIRE(get_file(host_syscall, "/stdout", benchmark, sizeof(benchmark)) > 0);
     REQUIRE(strstr(benchmark, "linux_dash_shell_suite"));
     fputs(benchmark, stdout);
     puts("{\"phase\":\"linux_dynamic_program\"}");
-    run_program(host_syscall, "/dynamic", NULL);
+    REQUIRE(run_program(host_syscall, "/dynamic", NULL) == 0);
     REQUIRE(get_file(host_syscall, "/stdout", benchmark, sizeof(benchmark)) > 0);
     REQUIRE(strstr(benchmark, "linux_dynamic_fork_signal"));
     fputs(benchmark, stdout);
     puts("{\"phase\":\"linux_storage_program\"}");
-    run_program(host_syscall, "/storage-test", NULL);
+    REQUIRE(run_program(host_syscall, "/storage-test", NULL) == 0);
     REQUIRE(get_file(host_syscall, "/stdout", benchmark, sizeof(benchmark)) > 0);
     REQUIRE(strstr(benchmark, "linux_ext4_persistence"));
     fputs(benchmark, stdout);
@@ -1346,19 +1347,19 @@ static void android_abi_regressions(long (*host_syscall)(long, long *))
     REQUIRE(host_poll.fd >= 16 && host_syscall(57, poll_args) == 0);
     pthread_t host_poll_thread;
     REQUIRE(pthread_create(&host_poll_thread, NULL, poll_busy_guest, &host_poll) == 0);
-    run_program(host_syscall, "/host-poll-test", NULL);
+    REQUIRE(run_program(host_syscall, "/host-poll-test", NULL) == 0);
     REQUIRE(pthread_join(host_poll_thread, NULL) == 0);
     REQUIRE(get_file(host_syscall, "/stdout", benchmark, sizeof(benchmark)) > 0);
     REQUIRE(strstr(benchmark, "linux_busy_guest_host_requests"));
     fputs(benchmark, stdout);
     printf("{\"benchmark\":\"linux_busy_guest_host_requests\",\"elapsed_ms\":%.3f}\n", host_poll.elapsed_ms);
     puts("{\"phase\":\"linux_binder_program\"}");
-    run_program(host_syscall, "/binder-test", NULL);
+    REQUIRE(run_program(host_syscall, "/binder-test", NULL) == 0);
     REQUIRE(get_file(host_syscall, "/stdout", benchmark, sizeof(benchmark)) > 0);
     REQUIRE(strstr(benchmark, "linux_binder_invalid_handle_cleanup"));
     fputs(benchmark, stdout);
     puts("{\"phase\":\"android_bionic_dynamic\"}");
-    run_program(host_syscall, "/bionic-test", NULL);
+    REQUIRE(run_program(host_syscall, "/bionic-test", NULL) == 0);
     REQUIRE(get_file(host_syscall, "/stdout", benchmark, sizeof(benchmark)) > 0);
     REQUIRE(strstr(benchmark, "android_bionic_threads_allocator_tls"));
     fputs(benchmark, stdout);
@@ -1366,7 +1367,7 @@ static void android_abi_regressions(long (*host_syscall)(long, long *))
 
 static void scheduling_profile_regressions(long (*call)(long, long *))
 {
-    run_program(call, "/fault-race-test", NULL);
+    REQUIRE(run_program(call, "/fault-race-test", NULL) == 0);
     char output[1024];
     REQUIRE(get_file(call, "/stdout", output, sizeof(output)) > 0);
     REQUIRE(strstr(output, "linux_private_file_discard_cow") && strstr(output, "linux_truncated_file_fault"));
@@ -1375,7 +1376,7 @@ static void scheduling_profile_regressions(long (*call)(long, long *))
     for (unsigned i = 0; i < 3; ++i) {
         // Guest execution has stopped at these snapshots; no counter writer remains.
         struct nce_schedule_profile before = mmu_profile.schedule;
-        run_program(call, "/schedule-test", modes[i]);
+        REQUIRE(run_program(call, "/schedule-test", modes[i]) == 0);
         struct nce_schedule_profile after = mmu_profile.schedule;
         unsigned long samples = after.samples - before.samples;
         unsigned long same = after.same_mm_samples - before.same_mm_samples;
@@ -1400,12 +1401,12 @@ static void scheduling_profile_regressions(long (*call)(long, long *))
 static void graphics_regressions(long (*host_syscall)(long, long *))
 {
     char benchmark[16384];
-    run_program(host_syscall, "/system/bin/gpu-test", NULL);
+    REQUIRE(run_program(host_syscall, "/system/bin/gpu-test", NULL) == 0);
     REQUIRE(get_file(host_syscall, "/stdout", benchmark, sizeof(benchmark)) > 0);
     REQUIRE(strstr(benchmark, "linux_native_gles_metal"));
     REQUIRE(strstr(benchmark, "linux_native_gles_shader_frames"));
     fputs(benchmark, stdout);
-    run_program(host_syscall, "/system/bin/egl-test", NULL);
+    REQUIRE(run_program(host_syscall, "/system/bin/egl-test", NULL) == 0);
     REQUIRE(get_file(host_syscall, "/stdout", benchmark, sizeof(benchmark)) > 0);
     REQUIRE(strstr(benchmark, "android_sdk_egl_driver_pixels"));
     fputs(benchmark, stdout);
@@ -1426,18 +1427,18 @@ static void graphics_regressions(long (*host_syscall)(long, long *))
 static void art_regressions(long (*host_syscall)(long, long *))
 {
     char benchmark[16384];
-    run_program(host_syscall, "/system/bin/cfi-test", NULL);
+    REQUIRE(run_program(host_syscall, "/system/bin/cfi-test", NULL) == 0);
     REQUIRE(get_file(host_syscall, "/stdout", benchmark, sizeof(benchmark)) > 0);
     REQUIRE(strstr(benchmark, "android_cfi_library_reload"));
     fputs(benchmark, stdout);
     puts("{\"phase\":\"android_art_reference_heap\"}");
-    run_program(host_syscall, "/art-heap-test", NULL);
+    REQUIRE(run_program(host_syscall, "/art-heap-test", NULL) == 0);
     REQUIRE(get_file(host_syscall, "/stdout", benchmark, sizeof(benchmark)) > 0);
     REQUIRE(strstr(benchmark, "art_high_reference_heap"));
     fputs(benchmark, stdout);
     memory_report(host_syscall, "before_art");
     puts("{\"phase\":\"android_art_load\"}");
-    run_program(host_syscall, "/system/bin/art-test", "");
+    REQUIRE(run_program(host_syscall, "/system/bin/art-test", "") == 0);
     REQUIRE(get_file(host_syscall, "/stdout", benchmark, sizeof(benchmark)) > 0);
     REQUIRE(strstr(benchmark, "android_art_library_loaded"));
     REQUIRE(strstr(benchmark, "android_art_java_workload"));
@@ -1457,7 +1458,7 @@ static void art_regressions(long (*host_syscall)(long, long *))
     fputs(benchmark, stdout);
     puts("{\"phase\":\"android_art_inlining\"}");
     for (unsigned enabled = 0; enabled < 2; ++enabled) {
-        run_program(host_syscall, "/system/bin/art-test", enabled ? "inline:32\n" : "inline:0\n");
+        REQUIRE(run_program(host_syscall, "/system/bin/art-test", enabled ? "inline:32\n" : "inline:0\n") == 0);
         REQUIRE(get_file(host_syscall, "/stdout", benchmark, sizeof(benchmark)) > 0);
         REQUIRE(strstr(benchmark, "android_art_jit_inlining"));
         REQUIRE(strstr(benchmark, "android_art_vm_destroyed"));
@@ -1483,17 +1484,17 @@ static void reclaim_regressions(long (*host_syscall)(long, long *))
     reclaim_args[1] = 0;
     REQUIRE(host_syscall(101, reclaim_args) == 0 && reclaimed_ranges > 0);
     memory_report(host_syscall, "after_host_reclaim");
-    run_program(host_syscall, "/reclaim-test", NULL);
+    REQUIRE(run_program(host_syscall, "/reclaim-test", NULL) == 0);
     REQUIRE(get_file(host_syscall, "/stdout", benchmark, sizeof(benchmark)) > 0);
     REQUIRE(strstr(benchmark, "linux_reclaimed_ram_reuse"));
     fputs(benchmark, stdout);
     puts("{\"test\":\"linux_dynamic_elf_files_unchanged\",\"passed\":true}");
 }
 
-void nce_process_run(long (*host_syscall)(long, long *), long (*guest_syscall)(long, long *),
-                     int (*handle_fault)(unsigned long, int),
-                     void (*return_to_user)(long, long, unsigned long), void (*signal_fault)(unsigned long, int),
-                     void (*preempt_user)(void), void (*prepare_user_memory)(void))
+int nce_process_run(long (*host_syscall)(long, long *), long (*guest_syscall)(long, long *),
+                    int (*handle_fault)(unsigned long, int),
+                    void (*return_to_user)(long, long, unsigned long), void (*signal_fault)(unsigned long, int),
+                    void (*preempt_user)(void), void (*prepare_user_memory)(void))
 {
     const bool interactive = getenv("NCE_DESKTOP") != NULL;
     char benchmark[16384];
@@ -1625,25 +1626,25 @@ void nce_process_run(long (*host_syscall)(long, long *), long (*guest_syscall)(l
     put_file(host_syscall, "/data/dalvik-cache/arm64/.keep", "", 0);
     if (getenv("NCE_ART_COMPILER_PROBE")) {
         puts("{\"phase\":\"android_art_compiler\"}");
-        run_program(host_syscall, "/system/bin/art-compiler-test", "");
+        REQUIRE(run_program(host_syscall, "/system/bin/art-compiler-test", "") == 0);
         REQUIRE(get_file(host_syscall, "/stdout", benchmark, sizeof(benchmark)) > 0);
         REQUIRE(strstr(benchmark, "android_art_compiler_verify"));
         REQUIRE(strstr(benchmark, "android_art_compiler_invalid_input"));
         memory_report(host_syscall, "after_art_compiler");
-        run_program(host_syscall, "/system/bin/art-test", "oat-verify\n");
+        REQUIRE(run_program(host_syscall, "/system/bin/art-test", "oat-verify\n") == 0);
         REQUIRE(get_file(host_syscall, "/stdout", benchmark, sizeof(benchmark)) > 0);
         REQUIRE(strstr(benchmark, "android_art_compiler_runtime_load"));
         REQUIRE(strstr(benchmark, "android_art_java_workload"));
         REQUIRE(strstr(benchmark, "android_art_vm_destroyed"));
         fputs(benchmark, stdout);
-        run_program(host_syscall, "/system/bin/art-compiler-test", "speed\n");
+        REQUIRE(run_program(host_syscall, "/system/bin/art-compiler-test", "speed\n") == 0);
         REQUIRE(get_file(host_syscall, "/stdout", benchmark, sizeof(benchmark)) > 0);
         REQUIRE(strstr(benchmark, "android_art_compiler_speed"));
         const char *output = getenv("NCE_ART_COMPILER_OUTPUT");
         REQUIRE(output);
         bool desktop = getenv("NCE_ART_COMPILER_DESKTOP") != NULL;
         if (getenv("NCE_ART_COMPILER_BOOT")) {
-            run_program(host_syscall, "/system/bin/art-compiler-test", getenv("NCE_ART_COMPILER_BOOT_DESKTOP") ? "boot-desktop\n" : "boot\n");
+            REQUIRE(run_program(host_syscall, "/system/bin/art-compiler-test", getenv("NCE_ART_COMPILER_BOOT_DESKTOP") ? "boot-desktop\n" : "boot\n") == 0);
             REQUIRE(get_file(host_syscall, "/stdout", benchmark, sizeof(benchmark)) > 0);
             REQUIRE(strstr(benchmark, "android_art_boot_image_generated"));
             const char *extensions[] = {"art", "oat", "vdex"};
@@ -1656,7 +1657,7 @@ void nce_process_run(long (*host_syscall)(long, long *), long (*guest_syscall)(l
             }
         }
         if (desktop) {
-            run_program(host_syscall, "/system/bin/art-compiler-test", "desktop\n");
+            REQUIRE(run_program(host_syscall, "/system/bin/art-compiler-test", "desktop\n") == 0);
             REQUIRE(get_file(host_syscall, "/stdout", benchmark, sizeof(benchmark)) > 0);
             REQUIRE(strstr(benchmark, "android_art_compiler_desktop"));
         }
@@ -1675,7 +1676,7 @@ void nce_process_run(long (*host_syscall)(long, long *), long (*guest_syscall)(l
     } else if (getenv("NCE_ART_BOOT_PROBE")) {
         const char *modes[] = {"boot-image\n", "boot-shifted\n"};
         for (size_t i = 0; i < 2; ++i) {
-            run_program(host_syscall, "/system/bin/art-test", modes[i]);
+            REQUIRE(run_program(host_syscall, "/system/bin/art-test", modes[i]) == 0);
             REQUIRE(get_file(host_syscall, "/stdout", benchmark, sizeof(benchmark)) > 0);
             REQUIRE(strstr(benchmark, "android_art_boot_image_loaded"));
             REQUIRE(strstr(benchmark, "android_art_vm_destroyed"));
@@ -1684,7 +1685,7 @@ void nce_process_run(long (*host_syscall)(long, long *), long (*guest_syscall)(l
     } else if (getenv("NCE_ART_OAT_PROBE")) {
         const char *modes[] = {"oat-speed\n", "oat-shifted\n"};
         for (size_t i = 0; i < 2; ++i) {
-            run_program(host_syscall, "/system/bin/art-test", modes[i]);
+            REQUIRE(run_program(host_syscall, "/system/bin/art-test", modes[i]) == 0);
             REQUIRE(get_file(host_syscall, "/stdout", benchmark, sizeof(benchmark)) > 0);
             REQUIRE(strstr(benchmark, "android_art_aot_entries"));
             REQUIRE(strstr(benchmark, "android_art_vm_destroyed"));
@@ -1703,8 +1704,15 @@ void nce_process_run(long (*host_syscall)(long, long *), long (*guest_syscall)(l
             put_file(host_syscall, "/data/nce/trace-systemui", "", 0);
         puts("{\"phase\":\"android_platform_services\"}");
         nce_host_input_start(host_syscall);
-        run_program(host_syscall, "/system/bin/android-services-test", NULL);
+        int status = run_program(host_syscall, "/system/bin/android-services-test", NULL);
         nce_host_input_stop();
+        if (status) {
+#ifdef NCE_GRAPHICS
+            nce_graphics_stop();
+#endif
+            memory_report(host_syscall, "after_framework_failure");
+            return 1;
+        }
         REQUIRE(get_file(host_syscall, "/stdout", benchmark, sizeof(benchmark)) > 0);
         if (!interactive || getenv("NCE_DIAGNOSTICS")) {
             REQUIRE(strstr(benchmark, "android_platform_binder_cleanup"));
@@ -1774,6 +1782,7 @@ void nce_process_run(long (*host_syscall)(long, long *), long (*guest_syscall)(l
     free(messages);
     REQUIRE(!warnings);
     puts("{\"test\":\"linux_kernel_warnings\",\"passed\":true}");
+    return 0;
 }
 void nce_process_cleanup(void)
 {

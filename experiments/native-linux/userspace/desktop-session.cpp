@@ -2,6 +2,8 @@
 #include "diagnostics.h"
 #include "desktop-session.h"
 #include <dirent.h>
+#include <errno.h>
+#include <sys/wait.h>
 #include <fcntl.h>
 #include <signal.h>
 #include <stdio.h>
@@ -34,7 +36,35 @@ static void trace_systemui()
     closedir(processes);
 }
 
-void nce_desktop_start(bool interactive)
+int nce_wait_desktop_child(pid_t child, bool cancellable)
+{
+    for (;;) {
+        int status;
+        pid_t waited = waitpid(child, &status, WNOHANG);
+        if (waited == child)
+            return status;
+        if (waited < 0) {
+            if (errno == EINTR)
+                continue;
+            return -errno;
+        }
+        if (cancellable && access("/data/nce/session-stop", F_OK) == 0) {
+            // The helper owns an ART runtime. Reap it before stopping its Binder services.
+            if (kill(child, SIGKILL) < 0 && errno != ESRCH)
+                return -errno;
+            do {
+                waited = waitpid(child, &status, 0);
+            } while (waited < 0 && errno == EINTR);
+            if (waited != child)
+                return -errno;
+            puts("{\"session\":\"android_surface_wait_cancelled\"}");
+            return -ECANCELED;
+        }
+        usleep(100000);
+    }
+}
+
+bool nce_desktop_start(bool interactive)
 {
     nce_android_command({"input", "keyevent", "KEYCODE_WAKEUP"});
     nce_android_command({"window", "dismiss-keyguard"});
@@ -42,12 +72,16 @@ void nce_desktop_start(bool interactive)
     nce_android_command({"activity", "start-activity", "-a", "android.intent.action.MAIN",
                          "-c", "android.intent.category.HOME"},
                         "Starting:");
-    nce_surface_check("com.android.launcher3", nce_diagnostics() ? "/data/nce/desktop-launcher.png" : "--ready");
+    puts("{\"phase\":\"android_desktop_first_frame_wait\"}");
+    if (!nce_surface_check("com.android.launcher3", nce_diagnostics() ? "/data/nce/desktop-launcher.png" : "--ready", interactive))
+        return false;
+    if (interactive && access("/data/nce/session-stop", F_OK) == 0)
+        return false;
     trace_systemui();
     if (interactive) {
         puts("{\"session\":\"android_desktop_ready\"}");
         dprintf(2, "{\"phase\":\"android_desktop_running\"}\n");
-        return;
+        return true;
     }
     nce_android_command({"activity", "start-activity", "-a", "android.intent.action.SHOW_ALARMS",
                          "-p", "com.android.deskclock"},
@@ -64,4 +98,5 @@ void nce_desktop_start(bool interactive)
                         "Starting:");
     nce_surface_check("com.google.android.documentsui", "/data/nce/desktop-files.png");
     puts("{\"test\":\"android_desktop_launch_commands\",\"passed\":true,\"applications\":2}");
+    return true;
 }

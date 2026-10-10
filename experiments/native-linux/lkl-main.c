@@ -148,8 +148,8 @@ static void blocking_tests(void)
 unsigned long nce_process_setup(void);
 struct nce_mmu_profile *nce_process_mmu_profile(void);
 void nce_process_cleanup(void);
-void nce_process_run(long (*)(long, long *), long (*)(long, long *), int (*)(unsigned long, int),
-                     void (*)(long, long, unsigned long), void (*)(unsigned long, int), void (*)(void), void (*)(void));
+int nce_process_run(long (*)(long, long *), long (*)(long, long *), int (*)(unsigned long, int),
+                    void (*)(long, long, unsigned long), void (*)(unsigned long, int), void (*)(void), void (*)(void));
 #endif
 
 #ifdef NCE_PROCESS
@@ -187,6 +187,7 @@ static unsigned long host_hwcap(void)
 int nce_lkl_run(const char *image_path)
 {
     setvbuf(stdout, NULL, _IOLBF, 0);
+    int result = 0;
 #ifdef NCE_PROCESS
     if (nce_memory_prepare() != 0)
         return 1;
@@ -254,10 +255,10 @@ int nce_lkl_run(const char *image_path)
     printf("{\"test\":\"linux_uname\",\"sysname\":\"%s\",\"release\":\"%s\"}\n", uts, uts + 130);
 
 #ifdef NCE_PROCESS
-    nce_process_run(kernel_syscall, (void *)(kernel.rx + NCE_RUN_SYSCALL),
-                    (void *)(kernel.rx + NCE_PAGE_FAULT), (void *)(kernel.rx + NCE_USER_RETURN),
-                    (void *)(kernel.rx + NCE_USER_FAULT), (void *)(kernel.rx + NCE_USER_PREEMPT),
-                    (void *)(kernel.rx + NCE_PREPARE_USER));
+    result = nce_process_run(kernel_syscall, (void *)(kernel.rx + NCE_RUN_SYSCALL),
+                             (void *)(kernel.rx + NCE_PAGE_FAULT), (void *)(kernel.rx + NCE_USER_RETURN),
+                             (void *)(kernel.rx + NCE_USER_FAULT), (void *)(kernel.rx + NCE_USER_PREEMPT),
+                             (void *)(kernel.rx + NCE_PREPARE_USER));
 #else
     NceCode code = dual(65536);
     REQUIRE(mprotect(code.rx, code.size, PROT_READ | PROT_EXEC) == 0);
@@ -319,8 +320,8 @@ int nce_lkl_run(const char *image_path)
 #else
     release(kernel);
 #endif
-    puts("{\"result\":\"passed\"}");
-    return 0;
+    puts(result ? "{\"result\":\"failed\"}" : "{\"result\":\"passed\"}");
+    return result;
 }
 
 #ifndef NCE_IOS_APP
