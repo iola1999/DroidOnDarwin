@@ -1500,6 +1500,12 @@ void nce_process_run(long (*host_syscall)(long, long *), long (*guest_syscall)(l
     if (!interactive)
         process_regressions(host_syscall);
     mount_android_data(host_syscall);
+    const char *nterp = getenv("NCE_ART_NTERP");
+    REQUIRE(!nterp || !strcmp(nterp, "0") || !strcmp(nterp, "1"));
+    put_file(host_syscall, "/data/nce/art-nterp", nterp ? nterp : "0", 1);
+    long nterp_permissions[6] = {-100, (long)"/data/nce/art-nterp", 0644};
+    REQUIRE(host_syscall(53, nterp_permissions) == 0);
+    printf("{\"config\":\"art_nterp\",\"requested\":%s}\n", nterp ? nterp : "0");
     if (!interactive)
         android_abi_regressions(host_syscall);
 #ifdef NCE_GRAPHICS

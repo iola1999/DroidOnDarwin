@@ -1,0 +1,129 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
+import Foundation
+
+private let inputLock = NSLock()
+private var inputEvents: [[Int32]] = []
+private var inputFailure = false
+@_cdecl("nce_host_input_send")
+func benchmarkInput(_ action: Int32, _ x: Int32, _ y: Int32) -> Int32 {
+    inputLock.lock()
+    defer { inputLock.unlock() }
+    inputEvents.append([action, x, y])
+    return inputFailure ? -5 : 0
+}
+
+@MainActor
+final class BenchmarkRuntime: SessionRuntime {
+    var restartRequired = false
+    var configuration: RunConfiguration?
+    private var event: ((RuntimeEvent) -> Void)?
+    func start(_ target: RunTarget, configuration: RunConfiguration, event: @escaping (RuntimeEvent) -> Void) {
+        self.configuration = configuration
+        self.event = event
+        event(.booting)
+        try! Data("{\"phase\":\"android_desktop_running\"}\n".utf8).write(to: target.log)
+    }
+    func stop() {
+        event?(.finished(nil))
+    }
+    func openDisplay() {}
+}
+
+@main
+struct BenchmarkChecks {
+    @MainActor static func main() async throws {
+        let configuration = RunConfiguration(nterp: true, directFault: false, sparseScan: false)
+        precondition(RunConfiguration.fromEnvironment(configuration.environment) == configuration)
+        let config = try JSONSerialization.jsonObject(with: JSONEncoder().encode(configuration))
+        let id = UUID().uuidString
+        var object: [String: Any] = ["version": 1, "runID": UUID().uuidString, "deviceID": id,
+                                     "configuration": config, "timeoutSeconds": 30,
+                                     "actions": [["kind": "key", "key": "home"],
+                                                 ["kind": "tap", "x": 10, "y": 20],
+                                                 ["kind": "swipe", "x": 50, "y": 400, "endX": 50, "endY": 50, "milliseconds": 32]]]
+        func encoded(_ object: [String: Any]) throws -> Data {
+            try JSONSerialization.data(withJSONObject: object)
+        }
+        let data = try encoded(object)
+        let request = try BenchmarkRequest.decode(data)
+        var components = URLComponents(string: "droidondarwin://benchmark")!
+        components.queryItems = [URLQueryItem(name: "request", value: data.base64EncodedString())]
+        let decodedURL = try BenchmarkRequest.fromURL(components.url!)
+        precondition(decodedURL.runID == request.runID)
+        var invalid = object
+        invalid["unknown"] = true
+        do { _ = try BenchmarkRequest.decode(encoded(invalid))
+            preconditionFailure("unknown field accepted")
+        } catch {}
+        invalid = object
+        invalid["actions"] = [["kind": "tap", "x": 360, "y": 20]]
+        do { _ = try BenchmarkRequest.decode(encoded(invalid))
+            preconditionFailure("invalid coordinate accepted")
+        } catch {}
+        invalid = object
+        invalid["actions"] = [["kind": "tap", "x": 10, "y": 20, "key": "home"]]
+        do { _ = try BenchmarkRequest.decode(encoded(invalid))
+            preconditionFailure("extra field accepted")
+        } catch {}
+        invalid = object
+        invalid["deviceID"] = "../../escape"
+        do { _ = try BenchmarkRequest.decode(encoded(invalid))
+            preconditionFailure("invalid ID accepted")
+        } catch {}
+        invalid = object
+        invalid["actions"] = [["kind": "tap", "x": NSNull(), "y": 20]]
+        do { _ = try BenchmarkRequest.decode(encoded(invalid))
+            preconditionFailure("null coordinate accepted")
+        } catch {}
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let target = RunTarget(id: id, name: "test", directory: root, resources: root, log: root.appendingPathComponent("unused.log"))
+        let runtime = BenchmarkRuntime()
+        let session = SessionModel(runtime: runtime)
+        var completionCalls = 0
+        session.onFinish = {
+            let path = root.appendingPathComponent(request.runID.uuidString + "/result.json")
+            let saved = try! JSONSerialization.jsonObject(with: Data(contentsOf: path)) as! [String: Any]
+            precondition(saved["status"] as? String == "completed")
+            completionCalls += 1
+        }
+        let run = try BenchmarkSession(request: request, session: session, target: target, output: root)
+        var finished = false
+        run.onFinish = { finished = true }
+        try run.start()
+        for _ in 0 ..< 100 {
+            if finished {
+                break
+            }
+            try await Task.sleep(for: .milliseconds(50))
+        }
+        precondition(finished && !session.active && runtime.configuration == configuration && completionCalls == 1)
+        let result = try JSONSerialization.jsonObject(with: Data(contentsOf: root.appendingPathComponent(request.runID.uuidString + "/result.json"))) as! [String: Any]
+        precondition(result["status"] as? String == "completed")
+        let events = inputLock.withLock { inputEvents }
+        precondition(events.first == [Int32(NCE_INPUT_KEY), 102, 0])
+        precondition(events.last == [Int32(NCE_INPUT_UP), 50, 50])
+        precondition(events.count == 7)
+        do { _ = try BenchmarkSession(request: request, session: session, target: target, output: root)
+            preconditionFailure("duplicate run accepted")
+        } catch {}
+        object["runID"] = UUID().uuidString
+        session.onFinish = nil
+        let failingRequest = try BenchmarkRequest.decode(encoded(object))
+        inputLock.withLock { inputFailure = true }
+        let failing = try BenchmarkSession(request: failingRequest, session: session, target: target, output: root)
+        finished = false
+        failing.onFinish = { finished = true }
+        try failing.start()
+        for _ in 0 ..< 100 {
+            if finished {
+                break
+            }
+            try await Task.sleep(for: .milliseconds(50))
+        }
+        let failed = try JSONSerialization.jsonObject(with: Data(contentsOf: root.appendingPathComponent(failingRequest.runID.uuidString + "/result.json"))) as! [String: Any]
+        precondition(finished && !session.active && failed["status"] as? String == "failed" && failed["error"] != nil)
+        print("benchmark checks passed: configuration, URL validation, IDs, ordered inputs, completed report, input failure and cleanup")
+    }
+}

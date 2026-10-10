@@ -1,0 +1,284 @@
+{
+  "platform": "macOS-27.0-arm64-arm-64bit-Mach-O",
+  "hardware": "Apple M5 Ultra",
+  "host_ram_bytes": 274877906944,
+  "workload": "full-desktop-regressions",
+  "files": {
+    "lkl-probe": "83d2f2df46a3702f4900b224ddd6624d84ae394bc16fef7a15de417e04f2eff7",
+    "lkl-image.bin": "d8cfa8459453d60a40bf3d358d507fccdfc4308543125e85fcf7012fbb499896",
+    "system.img": "1c6dcba6e5ef1535ca2badffa93013dfebd9c996898dad09677be8d6dbe90445"
+  },
+  "art_build": {
+    "build_inputs": "aac0a33bf63994819294b2ba71d34d944533d446f81bd607549a356fbe3e432b",
+    "inputs": {
+      "experiments/native-linux/art/android16.patch": "342182ccf23877d0be817d5b3df3828249732e450e15abda33e700ec02c5bf1e",
+      "experiments/native-linux/art/reference_heap.h": "c814b35b45c201f3893f3e8739f0ea5a0d309facbf70a9ba1f2fd8bb9ddaf71f",
+      "experiments/native-linux/art/reference_heap.c": "a10220f756efd4891930521667bcbf6e86b9e6a3d646d910c934884f57782be2",
+      "experiments/native-linux/art/jit_control.cc": "b68545764226eec8aac0dd853452cbb629c2484ba84b0fd318aec5870ccf0f7f",
+      "experiments/native-linux/art/sources.json": "a66d085c58d109c16e99205fe83514cf5a41a60ed372fd924e374007b947f82b",
+      "experiments/native-linux/art/nterp.patch": "5623b75f44d6e51647966b660de4d6410308b982cda1c9a4d7c843bcea7f8bcc",
+      "ndk_libcxx_config": "e7de7bd0b73df77a31d5be96bec3498851cda33ad51b66c654cb51d3e078b6eb",
+      "libc": "4174a2a3908049c19d176cba2d61f61f46369f173a41ed609f445b3e4e2e81ee",
+      "runtime": "4b1a45b0ee51725c68f1c29765958d0b60b45a5f2325bedfc61764cd49232249",
+      "builder": "aaa225c2e957116b2cb96b148e910d49bf6a88617496793317a8a03f2addcd53",
+      "layout": "9ecb6dc474edfc516284effcbd1999ba445ba88372233636391771a0715deaa5"
+    },
+    "files": {
+      "libart.so": "3a5919c4bd5087aafc508db4569e791ea63bbdf94f939775140e4715d207f420",
+      "libartbase.so": "af02b230861c8f209d6df773e4749063cbd7ab25062cbd5629e4a955ef2d31f4"
+    },
+    "art_flags": {
+      "use_generational_cmc": false,
+      "always_enable_profile_code": false,
+      "test": false,
+      "executable_method_file_offsets": false,
+      "executable_method_file_offsets_v2": false,
+      "art_service_v3": false,
+      "virtual_thread_impl_v1": false,
+      "fast_baseline_compiler": false
+    },
+    "execution": "restricted-arm64-jit",
+    "compressed_references": "offset-in-high-4GiB-arena"
+  },
+  "configuration": {
+    "NCE_MM_MODE": "demand",
+    "NCE_MAP_PROFILE": "0",
+    "NCE_DIRECT_FAULT": "1",
+    "NCE_SPARSE_SCAN": "1",
+    "NCE_STORAGE_IMAGE": "/Users/fan/project/app/husk_hyos/work/native-linux-nce/processes/desktop-fresh-data.img",
+    "NCE_SYSTEM_IMAGE": "/Users/fan/project/app/husk_hyos/work/native-linux-nce/processes/system.img",
+    "NCE_SYSTEM_SERVER_PROBE": "1"
+  },
+  "data_reset_between_runs": false,
+  "host_file_cache_reset": false,
+  "timing_scope": "Whole diagnostic process, ART method benchmarks, and logged component timers; excludes user interaction measurements.",
+  "comparison": {
+    "False": {
+      "diagnostic_process_seconds": {
+        "median": 175.47103687515482,
+        "min": 164.22019845806062,
+        "max": 182.82870366587304,
+        "samples": [
+          164.22019845806062,
+          182.82870366587304,
+          175.47103687515482
+        ]
+      },
+      "android_art_jit_arithmetic_interpreter_ms": {
+        "median": 55.344,
+        "min": 55.307,
+        "max": 55.905,
+        "samples": [
+          55.307,
+          55.344,
+          55.905
+        ]
+      },
+      "android_art_intrinsics_benchmark_interpreter_ms": {
+        "median": 18.136,
+        "min": 18.012,
+        "max": 19.077,
+        "samples": [
+          19.077,
+          18.012,
+          18.136
+        ]
+      }
+    },
+    "True": {
+      "diagnostic_process_seconds": {
+        "median": 156.93736224994063,
+        "min": 154.40190712502226,
+        "max": 161.12586962501518,
+        "samples": [
+          161.12586962501518,
+          154.40190712502226,
+          156.93736224994063
+        ]
+      },
+      "android_art_jit_arithmetic_interpreter_ms": {
+        "median": 9.302,
+        "min": 8.787,
+        "max": 9.333,
+        "samples": [
+          8.787,
+          9.302,
+          9.333
+        ]
+      },
+      "android_art_intrinsics_benchmark_interpreter_ms": {
+        "median": 4.309,
+        "min": 4.291,
+        "max": 4.492,
+        "samples": [
+          4.309,
+          4.291,
+          4.492
+        ]
+      }
+    }
+  },
+  "raw_results": "work/native-linux-nce/art-benchmark/20261010-154456/results.json",
+  "measurement_limitations": [
+    "Host app builds, smoke checks and a desktop warmup overlapped part of this diagnostic series. Whole-process durations are retained for reference; use separate ordinary-app runs for performance conclusions.",
+    "Method microbenchmarks select the shortest of three within each process; three independent process runs per configuration are preserved."
+  ],
+  "runs": [
+    {
+      "nterp": false,
+      "elapsed_seconds": 164.22019845806062,
+      "passed": true,
+      "art_check_count": 29,
+      "art_failed_checks": [],
+      "interpreter_entries": [
+        {
+          "test": "android_art_interpreter_entry",
+          "passed": true,
+          "nterp": false
+        },
+        {
+          "test": "android_art_interpreter_entry",
+          "passed": true,
+          "nterp": false
+        },
+        {
+          "test": "android_art_interpreter_entry",
+          "passed": true,
+          "nterp": false
+        }
+      ],
+      "java_fatal_exceptions": 0,
+      "anrs": 0
+    },
+    {
+      "nterp": true,
+      "elapsed_seconds": 161.12586962501518,
+      "passed": true,
+      "art_check_count": 29,
+      "art_failed_checks": [],
+      "interpreter_entries": [
+        {
+          "test": "android_art_interpreter_entry",
+          "passed": true,
+          "nterp": true
+        },
+        {
+          "test": "android_art_interpreter_entry",
+          "passed": true,
+          "nterp": true
+        },
+        {
+          "test": "android_art_interpreter_entry",
+          "passed": true,
+          "nterp": true
+        }
+      ],
+      "java_fatal_exceptions": 0,
+      "anrs": 0
+    },
+    {
+      "nterp": true,
+      "elapsed_seconds": 154.40190712502226,
+      "passed": true,
+      "art_check_count": 29,
+      "art_failed_checks": [],
+      "interpreter_entries": [
+        {
+          "test": "android_art_interpreter_entry",
+          "passed": true,
+          "nterp": true
+        },
+        {
+          "test": "android_art_interpreter_entry",
+          "passed": true,
+          "nterp": true
+        },
+        {
+          "test": "android_art_interpreter_entry",
+          "passed": true,
+          "nterp": true
+        }
+      ],
+      "java_fatal_exceptions": 0,
+      "anrs": 0
+    },
+    {
+      "nterp": false,
+      "elapsed_seconds": 182.82870366587304,
+      "passed": true,
+      "art_check_count": 29,
+      "art_failed_checks": [],
+      "interpreter_entries": [
+        {
+          "test": "android_art_interpreter_entry",
+          "passed": true,
+          "nterp": false
+        },
+        {
+          "test": "android_art_interpreter_entry",
+          "passed": true,
+          "nterp": false
+        },
+        {
+          "test": "android_art_interpreter_entry",
+          "passed": true,
+          "nterp": false
+        }
+      ],
+      "java_fatal_exceptions": 0,
+      "anrs": 0
+    },
+    {
+      "nterp": false,
+      "elapsed_seconds": 175.47103687515482,
+      "passed": true,
+      "art_check_count": 29,
+      "art_failed_checks": [],
+      "interpreter_entries": [
+        {
+          "test": "android_art_interpreter_entry",
+          "passed": true,
+          "nterp": false
+        },
+        {
+          "test": "android_art_interpreter_entry",
+          "passed": true,
+          "nterp": false
+        },
+        {
+          "test": "android_art_interpreter_entry",
+          "passed": true,
+          "nterp": false
+        }
+      ],
+      "java_fatal_exceptions": 0,
+      "anrs": 0
+    },
+    {
+      "nterp": true,
+      "elapsed_seconds": 156.93736224994063,
+      "passed": true,
+      "art_check_count": 29,
+      "art_failed_checks": [],
+      "interpreter_entries": [
+        {
+          "test": "android_art_interpreter_entry",
+          "passed": true,
+          "nterp": true
+        },
+        {
+          "test": "android_art_interpreter_entry",
+          "passed": true,
+          "nterp": true
+        },
+        {
+          "test": "android_art_interpreter_entry",
+          "passed": true,
+          "nterp": true
+        }
+      ],
+      "java_fatal_exceptions": 0,
+      "anrs": 0
+    }
+  ]
+}

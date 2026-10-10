@@ -6,9 +6,11 @@ final class RuntimeFixture: SessionRuntime {
     var restartRequired = false
     var launches = 0
     var stops = 0
+    var nterp = false
     var event: ((RuntimeEvent) -> Void)?
-    func start(_ target: RunTarget, diagnostics: Bool, performance: Bool, event: @escaping (RuntimeEvent) -> Void) {
+    func start(_ target: RunTarget, configuration: RunConfiguration, event: @escaping (RuntimeEvent) -> Void) {
         launches += 1
+        self.nterp = configuration.nterp
         self.event = event
     }
     func stop() {
@@ -26,9 +28,9 @@ struct SessionChecks {
         try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(at: root) }
         let target = RunTarget(id: "one", name: "Android", directory: root, resources: root, log: root.appendingPathComponent("session.log"))
+        session.start(target, configuration: .init(nterp: true))
         session.start(target)
-        session.start(target)
-        precondition(runtime.launches == 1 && session.phase == .preparing)
+        precondition(runtime.launches == 1 && runtime.nterp && session.phase == .preparing)
         runtime.event?(.connecting("连接 JIT"))
         session.stop()
         session.stop()
@@ -37,6 +39,7 @@ struct SessionChecks {
         runtime.event?(.finished(nil))
         precondition(!session.active && !session.showDisplay)
         session.start(target)
+        precondition(!runtime.nterp)
         runtime.event?(.booting)
         try Data("{\"phase\":\"android_desktop_running\"}\n".utf8).write(to: target.log)
         try await Task.sleep(for: .milliseconds(1300))

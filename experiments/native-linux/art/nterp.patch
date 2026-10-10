@@ -1,0 +1,527 @@
+--- a/runtime/interpreter/mterp/nterp.cc
++++ b/runtime/interpreter/mterp/nterp.cc
+@@ -30,12 +30,25 @@
+ #include "interpreter/shadow_frame-inl.h"
+ #include "mirror/string-alloc-inl.h"
+ #include "nterp_helpers.h"
++#include "reference_heap.h"
++#include <cstdio>
+ 
+ namespace art HIDDEN {
+ namespace interpreter {
+ 
+ bool IsNterpSupported() {
+-#ifdef ART_USE_RESTRICTED_MODE
++#ifdef ART_NCE
++  static_assert(!gUseReadBarrier, "NCE nterp requires the MS collector");
++  // The host writes this session setting before any ART process starts.
++  static const bool enabled = [] {
++    FILE* file = fopen("/data/nce/art-nterp", "r");
++    if (file == nullptr) return false;
++    const bool result = fgetc(file) == '1';
++    fclose(file);
++    return result;
++  }();
++  return enabled && kReserveMarkingRegister && kRuntimeQuickCodeISA == InstructionSet::kArm64;
++#elif defined(ART_USE_RESTRICTED_MODE)
+   // TODO(Simulator): Support Nterp.
+   // Nterp uses the native stack and quick stack frame layout; this will be a complication
+   // for the simulator mode. We should use switch interpreter only for now.
+@@ -712,7 +725,7 @@
+       new_array->AsIntArray()->SetWithoutChecks</* kTransactionActive= */ false>(i, regs[src_reg]);
+     } else {
+       new_array->AsObjectArray<mirror::Object>()->SetWithoutChecks</* kTransactionActive= */ false>(
+-          i, reinterpret_cast<mirror::Object*>(regs[src_reg]));
++          i, static_cast<mirror::Object*>(nce_art_decode_reference(regs[src_reg])));
+     }
+   }
+   return new_array.Ptr();
+--- a/runtime/interpreter/mterp/arm64ng/main.S
++++ b/runtime/interpreter/mterp/arm64ng/main.S
+@@ -88,6 +88,30 @@
+ #define wip      w16
+ #define wip2     w17
+ 
++
++// DEX registers and Quick arguments contain offsets. Runtime pointers are native.
++// Both conversions preserve flags and use only ip2 as an additional scratch register.
++.macro NCE_DECODE_REF target, source
++    cbnz \source, .Lnce_decode_nonnull\@
++    mov \target, xzr
++    b .Lnce_decode_done\@
++.Lnce_decode_nonnull\@:
++    adrp ip2, :got:nce_art_reference_base
++    ldr ip2, [ip2, :got_lo12:nce_art_reference_base]
++    ldr ip2, [ip2]
++    add \target, ip2, \source, uxtw
++.Lnce_decode_done\@:
++.endm
++
++.macro NCE_ENCODE_REF target
++    cbz \target, .Lnce_encode_done\@
++    adrp ip2, :got:nce_art_reference_base
++    ldr ip2, [ip2, :got_lo12:nce_art_reference_base]
++    ldr ip2, [ip2]
++    sub \target, \target, ip2
++.Lnce_encode_done\@:
++.endm
++
+ // To avoid putting ifdefs arond the use of wMR, make sure it's defined.
+ // IsNterpSupported returns false for configurations that don't have wMR (typically CMS).
+ #ifndef wMR
+@@ -1381,7 +1405,7 @@
+    .if \is_object
+    cbz     \value, \label
+    ldr     ip, [xSELF, #THREAD_CARD_TABLE_OFFSET]
+-   lsr     wip2, \holder, #CARD_TABLE_CARD_SHIFT
++   lsr     ip2, \holder, #CARD_TABLE_CARD_SHIFT
+    strb    wip, [ip, ip2]
+ \label:
+    .endif
+@@ -1573,6 +1597,7 @@
+     // on art_quick_resolution_trampoline to always have a suspend point before
+     // calling back here.
+     ldr wip, [x0, #ART_METHOD_DECLARING_CLASS_OFFSET]
++    NCE_DECODE_REF ip, wip
+     ldr wip2, [ip, #MIRROR_CLASS_STATUS_OFFSET]
+     lsr wip2, wip2, #MIRROR_CLASS_STATUS_SHIFT
+     cmp wip2, #MIRROR_CLASS_STATUS_VISIBLY_INITIALIZED
+--- a/runtime/interpreter/mterp/arm64ng/array.S
++++ b/runtime/interpreter/mterp/arm64ng/array.S
+@@ -11,6 +11,7 @@
+     GET_VREG w0, w2                     // w0<- vBB (array object)
+     GET_VREG w1, w3                     // w1<- vCC (requested index)
+     cbz     x0, common_errNullObject    // bail if null array object.
++    NCE_DECODE_REF x0, w0
+     ldr     w3, [x0, #MIRROR_ARRAY_LENGTH_OFFSET]    // w3<- arrayObj->length
+     add     x0, x0, w1, uxtw #$shift    // w0<- arrayObj + index*width
+     cmp     w1, w3                      // compare unsigned index, length
+@@ -68,6 +69,7 @@
+     GET_VREG w0, w2                     // w0<- vBB (array object)
+     GET_VREG w1, w3                     // w1<- vCC (requested index)
+     cbz     w0, common_errNullObject    // bail if null
++    NCE_DECODE_REF x0, w0
+     ldr     w3, [x0, #MIRROR_ARRAY_LENGTH_OFFSET]     // w3<- arrayObj->length
+     .if !$is_object
+     add     x0, x0, w1, uxtw #$shift    // w0<- arrayObj + index*width
+@@ -86,6 +88,7 @@
+     .if $wide
+     $store  x2, [x0, #$data_offset]     // vBB[vCC]<- x2
+     .elseif $is_object
++    NCE_DECODE_REF x2, w2
+     bl art_quick_aput_obj
+     .else
+     $store  w2, [x0, #$data_offset]     // vBB[vCC]<- w2
+@@ -119,6 +122,7 @@
+     ubfx    w2, wINST, #8, #4           // w2<- A
+     GET_VREG w0, w1                     // w0<- vB (object ref)
+     cbz     w0, common_errNullObject    // bail if null
++    NCE_DECODE_REF x0, w0
+     FETCH_ADVANCE_INST 1                // advance rPC, load rINST
+     ldr     w3, [x0, #MIRROR_ARRAY_LENGTH_OFFSET]    // w3<- array length
+     GET_INST_OPCODE ip                  // extract opcode from rINST
+@@ -134,6 +138,7 @@
+     orr     x0, x0, x1, lsl #16         // x0<- ssssssssBBBBbbbb
+     GET_VREG w1, w3                     // w1<- vAA (array object)
+     add     x0, xPC, x0, lsl #1         // x0<- PC + ssssssssBBBBbbbb*2 (array data off.)
++    NCE_DECODE_REF x1, w1
+     bl      art_quick_handle_fill_data
+     FETCH_ADVANCE_INST 3                // advance rPC, load rINST
+     GET_INST_OPCODE ip                  // extract opcode from rINST
+@@ -153,6 +158,7 @@
+     mov     x2, xFP
+     mov     x3, xPC
+     bl      $helper
++    NCE_ENCODE_REF x0
+     FETCH_ADVANCE_INST 3                // advance rPC, load rINST
+     GET_INST_OPCODE ip                  // extract opcode from rINST
+     GOTO_OPCODE ip                      // jump to next instruction
+@@ -173,6 +179,7 @@
+    blr lr
+    dmb ishst                           // need fence for making array's class visible
+    ubfx    w1, wINST, #8, #4           // w1<- A
++   NCE_ENCODE_REF x0
+    SET_VREG_OBJECT w0, w1
+    FETCH_ADVANCE_INST 2
+    GET_INST_OPCODE ip
+--- a/runtime/interpreter/mterp/arm64ng/object.S
++++ b/runtime/interpreter/mterp/arm64ng/object.S
+@@ -1,4 +1,8 @@
+ %def op_check_cast():
++%  body = add_slow_path(op_check_cast_nce_body, suffix="_nce_body")
++   b $body
++
++%def op_check_cast_nce_body():
+ %  slow_path = add_slow_path(op_check_cast_slow_path)
+    // Fast-path which gets the class from thread-local cache.
+ %  fetch_from_thread_cache("x1", miss_label="2f")
+@@ -6,10 +10,12 @@
+    lsr     w2, wINST, #8               // w2<- A
+    GET_VREG w0, w2                     // w0<- vA (object)
+    cbz     w0, .L${opcode}_resume
++   NCE_DECODE_REF x0, w0
+    ldr     w2, [x0, #MIRROR_OBJECT_CLASS_OFFSET]
+    UNPOISON_HEAP_REF w2
++   NCE_DECODE_REF x2, w2
+    // Fast path: do a comparison without read barrier.
+-   cmp     w1, w2
++   cmp     x1, x2
+    bne     ${slow_path}
+ .L${opcode}_resume:
+    FETCH_ADVANCE_INST 2
+@@ -34,13 +40,15 @@
+    tbnz    w3, #MIRROR_CLASS_IS_INTERFACE_FLAG_BIT, 2f
+    ldr     w3, [x1, #MIRROR_CLASS_COMPONENT_TYPE_OFFSET]
+    UNPOISON_HEAP_REF w3
+-   cbnz    w3, 5f
++   NCE_DECODE_REF x3, w3
++   cbnz    x3, 5f
+ 1:
+    ldr     w2, [x2, #MIRROR_CLASS_SUPER_CLASS_OFFSET]
+    UNPOISON_HEAP_REF w2
+-   cmp     w1, w2
++   NCE_DECODE_REF x2, w2
++   cmp     x1, x2
+    beq     .L${opcode}_resume
+-   cbnz    w2, 1b
++   cbnz    x2, 1b
+ 2:
+    TEST_IF_MARKING 4f
+ 3:
+@@ -54,8 +62,9 @@
+    // Class in w1 is an array, w3 is the component type.
+    ldr     w2, [x2, #MIRROR_CLASS_COMPONENT_TYPE_OFFSET]
+    UNPOISON_HEAP_REF w2
++   NCE_DECODE_REF x2, w2
+    // Check if object is an array.
+-   cbz     w2, 2b
++   cbz     x2, 2b
+    ldr     w4, [x3, #MIRROR_CLASS_SUPER_CLASS_OFFSET]
+    UNPOISON_HEAP_REF w4
+    // If the super class of the component type is not null, go slow path.
+@@ -70,6 +79,10 @@
+    b 2b
+ 
+ %def op_instance_of():
++%  body = add_slow_path(op_instance_of_nce_body, suffix="_nce_body")
++   b $body
++
++%def op_instance_of_nce_body():
+ %  slow_path = add_slow_path(op_instance_of_slow_path)
+    /* instance-of vA, vB, class@CCCC */
+    // Fast-path which gets the class from thread-local cache.
+@@ -78,10 +91,12 @@
+    lsr     w2, wINST, #12              // w2<- B
+    GET_VREG w0, w2                     // w0<- vB (object)
+    cbz     w0, .L${opcode}_resume
++   NCE_DECODE_REF x0, w0
+    ldr     w2, [x0, #MIRROR_OBJECT_CLASS_OFFSET]
+    UNPOISON_HEAP_REF w2
++   NCE_DECODE_REF x2, w2
+    // Fast path: do a comparison without read barrier.
+-   cmp     w1, w2
++   cmp     x1, x2
+    bne     ${slow_path}
+ .L${opcode}_set_one:
+    mov     w0, #1
+@@ -108,13 +123,15 @@
+    tbnz    w3, #MIRROR_CLASS_IS_INTERFACE_FLAG_BIT, 5f
+    ldr     w3, [x1, #MIRROR_CLASS_COMPONENT_TYPE_OFFSET]
+    UNPOISON_HEAP_REF w3
+-   cbnz    w3, 3f
++   NCE_DECODE_REF x3, w3
++   cbnz    x3, 3f
+ 1:
+    ldr     w2, [x2, #MIRROR_CLASS_SUPER_CLASS_OFFSET]
+    UNPOISON_HEAP_REF w2
+-   cmp     w1, w2
++   NCE_DECODE_REF x2, w2
++   cmp     x1, x2
+    beq     .L${opcode}_set_one
+-   cbnz    w2, 1b
++   cbnz    x2, 1b
+ 2:
+    mov     w0, #0
+    b       .L${opcode}_resume
+@@ -122,8 +139,9 @@
+    // Class in x1 is an array, x3 is the component type of x1, and x2 is the class of the object.
+    ldr     w2, [x2, #MIRROR_CLASS_COMPONENT_TYPE_OFFSET]
+    UNPOISON_HEAP_REF w2
++   NCE_DECODE_REF x2, w2
+    // Check if object is an array.
+-   cbz     w2, 2b
++   cbz     x2, 2b
+    // Check of x1 is Object[]
+    ldr     w4, [x3, #MIRROR_CLASS_SUPER_CLASS_OFFSET]
+    UNPOISON_HEAP_REF w4
+@@ -166,6 +184,7 @@
+    GET_VREG w3, w2                     // w3<- object we're operating on
+    ubfx    w2, wINST, #8, #4           // w2<- A
+    cbz     w3, common_errNullObject    // object was null
++   NCE_DECODE_REF x3, w3
+    .if $wide
+    $load   x0, [x3, x0]
+    SET_VREG_WIDE x0, w2                // fp[A] <- value
+@@ -205,6 +224,7 @@
+    GET_VREG w3, w2                     // w3<- object we're operating on
+    ubfx    w2, wINST, #8, #4           // w2<- A
+    cbz     w3, common_errNullObject    // object was null
++   NCE_DECODE_REF x3, w3
+    add     x3, x3, x0
+    .if $wide
+    $volatile_load x0, [x3]
+@@ -255,12 +275,13 @@
+    lsr     w2, wINST, #12              // w2<- B
+    GET_VREG w2, w2                     // vB (object we're operating on)
+    cbz w2, common_errNullObject
++   NCE_DECODE_REF x2, w2
+    .if $wide
+    $store  x26, [x2, x0]
+    .else
+    POISON_HEAP_REF_IF_OBJECT $is_object, w26
+    $store  w26, [x2, x0]
+-   WRITE_BARRIER_IF_OBJECT $is_object, w26, w2, .L${opcode}_skip_write_barrier
++   WRITE_BARRIER_IF_OBJECT $is_object, w26, x2, .L${opcode}_skip_write_barrier
+    .endif
+    FETCH_ADVANCE_INST 2
+    GET_INST_OPCODE ip
+@@ -271,7 +292,7 @@
+    ldr     x1, [sp]
+    mov     x2, xPC
+    .if $is_object
+-   mov     x3, x26
++   NCE_DECODE_REF x3, w26
+    .else
+    mov     x3, #0
+    .endif
+@@ -291,13 +312,14 @@
+    lsr     w2, wINST, #12              // w2<- B
+    GET_VREG w2, w2                     // vB (object we're operating on)
+    cbz     w2, common_errNullObject
++   NCE_DECODE_REF x2, w2
+    add     x3, x2, x0
+    .if $wide
+    $volatile_store x26, [x3]
+    .else
+    POISON_HEAP_REF_IF_OBJECT $is_object, w26
+    $volatile_store w26, [x3]
+-   WRITE_BARRIER_IF_OBJECT $is_object, w26, w2, .L${opcode}_slow_path_skip_write_barrier
++   WRITE_BARRIER_IF_OBJECT $is_object, w26, x2, .L${opcode}_slow_path_skip_write_barrier
+    .endif
+    FETCH_ADVANCE_INST 2
+    GET_INST_OPCODE ip
+@@ -331,6 +353,7 @@
+    ldr     w0, [x0, #ART_FIELD_DECLARING_CLASS_OFFSET]
+    TEST_IF_MARKING .L${opcode}_read_barrier
+ .L${opcode}_resume_after_read_barrier:
++   NCE_DECODE_REF x0, w0
+    .if $wide
+    ldr     x0, [x0, x1]
+    SET_VREG_WIDE x0, w2                // fp[A] <- value
+@@ -374,6 +397,7 @@
+    ldr     w0, [x0, #ART_FIELD_DECLARING_CLASS_OFFSET]
+    TEST_IF_MARKING .L${opcode}_slow_path_read_barrier
+ .L${opcode}_slow_path_resume_after_read_barrier:
++   NCE_DECODE_REF x0, w0
+    add     x0, x0, x1
+    .if $wide
+    ldar    x0, [x0]
+@@ -428,12 +452,13 @@
+    ldr     w0, [x0, #ART_FIELD_DECLARING_CLASS_OFFSET]
+    TEST_IF_MARKING .L${opcode}_read_barrier
+ .L${opcode}_resume_after_read_barrier:
++   NCE_DECODE_REF x0, w0
+    .if $wide
+    $store  x26, [x0, x1]
+    .else
+    POISON_HEAP_REF_IF_OBJECT $is_object, w26
+    $store  w26, [x0, x1]
+-   WRITE_BARRIER_IF_OBJECT $is_object, w26, w0, .L${opcode}_skip_write_barrier
++   WRITE_BARRIER_IF_OBJECT $is_object, w26, x0, .L${opcode}_skip_write_barrier
+    .endif
+    FETCH_ADVANCE_INST 2
+    GET_INST_OPCODE ip
+@@ -447,7 +472,7 @@
+    ldr     x1, [sp]
+    mov     x2, xPC
+    .if $is_object
+-   mov     x3, x26
++   NCE_DECODE_REF x3, w26
+    .else
+    mov     x3, #0
+    .endif
+@@ -464,13 +489,14 @@
+    ldr     w0, [x0, #ART_FIELD_DECLARING_CLASS_OFFSET]
+    TEST_IF_MARKING .L${opcode}_slow_path_read_barrier
+ .L${opcode}_slow_path_resume_after_read_barrier:
++   NCE_DECODE_REF x0, w0
+    add     x1, x0, x1
+    .if $wide
+    $volatile_store    x26, [x1]
+    .else
+    POISON_HEAP_REF_IF_OBJECT $is_object, w26
+    $volatile_store    w26, [x1]
+-   WRITE_BARRIER_IF_OBJECT $is_object, w26, w0, .L${opcode}_slow_path_skip_write_barrier
++   WRITE_BARRIER_IF_OBJECT $is_object, w26, x0, .L${opcode}_slow_path_skip_write_barrier
+    .endif
+    FETCH_ADVANCE_INST 2
+    GET_INST_OPCODE ip
+@@ -495,6 +521,7 @@
+    blr     lr
+    dmb     ishst                       // need fence for making object's class visible
+ 1:
++   NCE_ENCODE_REF x0
+    lsr     w1, wINST, #8               // w1 <- A
+    SET_VREG_OBJECT w0, w1              // fp[A] <- value
+    FETCH_ADVANCE_INST 2
+--- a/runtime/interpreter/mterp/arm64ng/invoke.S
++++ b/runtime/interpreter/mterp/arm64ng/invoke.S
+@@ -70,6 +70,10 @@
+    b NterpCommonInvokePolymorphicRange
+ 
+ %def invoke_interface(range=""):
++%  body = add_slow_path(invoke_interface_nce_body, range, suffix="_nce_body")
++   b $body
++
++%def invoke_interface_nce_body(range=""):
+ %  slow_path = add_slow_path(invoke_interface_slow_path, range)
+    EXPORT_PC
+    // Fast-path which gets the method from thread-local cache.
+@@ -81,9 +85,11 @@
+    and w1, w1, #0xf
+    .endif
+    GET_VREG w1, w1
+-   // Note: if w1 is null, this will be handled by our SIGSEGV handler.
+-   ldr w2, [x1, #MIRROR_OBJECT_CLASS_OFFSET]
++   cbz w1, common_errNullObject
++   NCE_DECODE_REF x2, w1
++   ldr w2, [x2, #MIRROR_OBJECT_CLASS_OFFSET]
+    UNPOISON_HEAP_REF w2
++   NCE_DECODE_REF x2, w2
+    // Test the first two bits of the fetched ArtMethod:
+    // - If the first bit is set, this is a method on j.l.Object
+    // - If the second bit is set, this is a default method.
+@@ -106,7 +112,7 @@
+    b 1b
+ 3:
+    lsr w26, w26, #16
+-   add w2, w2, #MIRROR_CLASS_VTABLE_OFFSET_64
++   add x2, x2, #MIRROR_CLASS_VTABLE_OFFSET_64
+    ldr x0, [x2, w26, uxtw #3]
+    .if $range
+    b NterpCommonInvokeInstanceRange
+@@ -147,6 +153,10 @@
+ %  invoke_static(helper="NterpCommonInvokeStaticRange")
+ 
+ %def invoke_virtual(helper="", range=""):
++%  body = add_slow_path(invoke_virtual_nce_body, helper, range, suffix="_nce_body")
++   b $body
++
++%def invoke_virtual_nce_body(helper="", range=""):
+    EXPORT_PC
+    // Fast-path which gets the method from thread-local cache.
+ %  fetch_from_thread_cache("x2", miss_label="2f")
+@@ -156,10 +166,12 @@
+    and w1, w1, #0xf
+    .endif
+    GET_VREG w1, w1
+-   // Note: if w1 is null, this will be handled by our SIGSEGV handler.
+-   ldr w0, [x1, #MIRROR_OBJECT_CLASS_OFFSET]
++   cbz w1, common_errNullObject
++   NCE_DECODE_REF x0, w1
++   ldr w0, [x0, #MIRROR_OBJECT_CLASS_OFFSET]
+    UNPOISON_HEAP_REF w0
+-   add w0, w0, #MIRROR_CLASS_VTABLE_OFFSET_64
++   NCE_DECODE_REF x0, w0
++   add x0, x0, #MIRROR_CLASS_VTABLE_OFFSET_64
+    ldr x0, [x0, w2, uxtw #3]
+    b $helper
+ 2:
+--- a/runtime/interpreter/mterp/arm64ng/other.S
++++ b/runtime/interpreter/mterp/arm64ng/other.S
+@@ -45,6 +45,7 @@
+ %  fetch_from_thread_cache("x0", miss_label="2f")
+    TEST_IF_MARKING 3f
+ 1:
++   NCE_ENCODE_REF x0
+    lsr     w1, wINST, #8               // w1<- AA
+    .if $jumbo
+    FETCH_ADVANCE_INST 3                // advance rPC, load wINST
+@@ -135,6 +136,7 @@
+     EXPORT_PC
+     lsr      w2, wINST, #8               // w2<- AA
+     GET_VREG w0, w2
++    NCE_DECODE_REF x0, w0
+     bl art_quick_lock_object
+     FETCH_ADVANCE_INST 1
+     GET_INST_OPCODE ip                   // extract opcode from rINST
+@@ -152,6 +154,7 @@
+     EXPORT_PC
+     lsr      w2, wINST, #8               // w2<- AA
+     GET_VREG w0, w2
++    NCE_DECODE_REF x0, w0
+     bl art_quick_unlock_object
+     FETCH_ADVANCE_INST 1
+     GET_INST_OPCODE ip                   // extract opcode from rINST
+@@ -191,6 +194,7 @@
+     /* move-exception vAA */
+     lsr     w2, wINST, #8               // w2<- AA
+     ldr     x3, [xSELF, #THREAD_EXCEPTION_OFFSET]
++    NCE_ENCODE_REF x3
+     FETCH_ADVANCE_INST 1                // advance rPC, load rINST
+     SET_VREG_OBJECT w3, w2              // fp[AA]<- exception obj
+     GET_INST_OPCODE ip                  // extract opcode from rINST
+--- a/runtime/interpreter/mterp/arm64ng/control_flow.S
++++ b/runtime/interpreter/mterp/arm64ng/control_flow.S
+@@ -184,5 +184,6 @@
+   lsr      w2, wINST, #8               // r2<- AA
+   GET_VREG w0, w2                      // r0<- vAA (exception object)
+   mov x1, xSELF
++  NCE_DECODE_REF x0, w0
+   bl art_quick_deliver_exception
+   brk 0
+--- a/runtime/arch/arm64/quick_entrypoints_arm64.S
++++ b/runtime/arch/arm64/quick_entrypoints_arm64.S
+@@ -2503,6 +2503,15 @@
+ ENTRY art_quick_invoke_polymorphic
+     SETUP_SAVE_REFS_AND_ARGS_FRAME      // Save callee saves in case allocation triggers GC.
+     mov     x0, x1                      // x0 := receiver
++#ifdef ART_NCE
++    // Decode after saving the encoded Quick arguments for stack scanning.
++    cbz w0, 9f
++    adrp xIP0, :got:nce_art_reference_base
++    ldr xIP0, [xIP0, :got_lo12:nce_art_reference_base]
++    ldr xIP0, [xIP0]
++    add x0, xIP0, w0, uxtw
++9:
++#endif
+     mov     x1, xSELF                   // x1 := Thread::Current()
+     mov     x2, sp                      // x2 := SP
+     CALL_SYMBOL artInvokePolymorphic    // artInvokePolymorphic(receiver, thread, save_area)
+@@ -2523,6 +2532,15 @@
+ ENTRY art_quick_invoke_polymorphic_with_hidden_receiver
+                                         // On entry: w0 := receiver
+     SETUP_SAVE_REFS_AND_ARGS_FRAME      // Save callee saves in case allocation triggers GC.
++#ifdef ART_NCE
++    // Decode after saving the encoded Quick arguments for stack scanning.
++    cbz w0, 9f
++    adrp xIP0, :got:nce_art_reference_base
++    ldr xIP0, [xIP0, :got_lo12:nce_art_reference_base]
++    ldr xIP0, [xIP0]
++    add x0, xIP0, w0, uxtw
++9:
++#endif
+     mov     x1, xSELF                   // x1 := Thread::Current()
+     mov     x2, sp                      // x2 := SP
+     CALL_SYMBOL artInvokePolymorphicWithHiddenReceiver // invoke with (receiver, thread, save_area)
+--- a/runtime/method_handles.cc
++++ b/runtime/method_handles.cc
+@@ -335,7 +335,7 @@
+     // If both register locations contains the same value, the register probably holds a reference.
+     // Note: As an optimization, non-moving collectors leave a stale reference value
+     // in the references array even after the original vreg was overwritten to a non-reference.
+-    if (src_value == reinterpret_cast<uintptr_t>(o.Ptr())) {
++    if (src_value == nce_art_reference_cast<uint32_t>(o.Ptr())) {
+       callee_frame->SetVRegReference(dst_reg, o);
+     } else {
+       callee_frame->SetVReg(dst_reg, src_value);

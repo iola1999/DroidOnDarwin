@@ -1,0 +1,114 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
+import Foundation
+
+struct BenchmarkRequest: Codable, Sendable {
+    struct Action: Codable, Sendable {
+        let kind: String
+        let milliseconds: Int?
+        let x: Int?
+        let y: Int?
+        let endX: Int?
+        let endY: Int?
+        let key: String?
+    }
+    let version: Int
+    let runID: UUID
+    let deviceID: String
+    let configuration: RunConfiguration
+    let actions: [Action]
+    let timeoutSeconds: Int
+
+    static func decode(_ data: Data) throws -> Self {
+        guard data.count <= 32768,
+              let object = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+              Set(object.keys) == ["version", "runID", "deviceID", "configuration", "actions", "timeoutSeconds"],
+              let config = object["configuration"] as? [String: Any], Set(config.keys) == RunConfiguration.keys,
+              let actions = object["actions"] as? [[String: Any]] else {
+            throw BenchmarkError.invalid("实验请求字段不完整或含未知字段")
+        }
+        for action in actions {
+            let fields: Set<String>
+            switch action["kind"] as? String {
+            case "wait": fields = ["kind", "milliseconds"]
+            case "tap": fields = ["kind", "x", "y"]
+            case "swipe": fields = ["kind", "x", "y", "endX", "endY", "milliseconds"]
+            case "key": fields = ["kind", "key"]
+            default: throw BenchmarkError.invalid("未知的实验操作")
+            }
+            guard Set(action.keys) == fields else {
+                throw BenchmarkError.invalid("实验操作字段不匹配")
+            }
+        }
+        let request = try JSONDecoder().decode(Self.self, from: data)
+        guard request.version == 1, UUID(uuidString: request.deviceID) != nil,
+              (30 ... 900).contains(request.timeoutSeconds), request.actions.count <= 128,
+              !request.configuration.diagnostics else {
+            throw BenchmarkError.invalid("实验版本、设备编号、时限或诊断配置无效")
+        }
+        for action in request.actions {
+            if action.kind == "tap" || action.kind == "swipe" {
+                guard action.x != nil, action.y != nil else {
+                    throw BenchmarkError.invalid("操作缺少坐标")
+                }
+            }
+            if action.kind == "swipe" {
+                guard action.endX != nil, action.endY != nil else {
+                    throw BenchmarkError.invalid("滑动缺少终点")
+                }
+            }
+            if action.kind == "wait" || action.kind == "swipe" {
+                guard action.milliseconds != nil else {
+                    throw BenchmarkError.invalid("操作缺少时长")
+                }
+            }
+            if action.kind == "key" {
+                guard action.key != nil else {
+                    throw BenchmarkError.invalid("操作缺少导航键")
+                }
+            }
+            for x in [action.x, action.endX].compactMap({ $0 }) {
+                guard (0 ..< 360).contains(x) else {
+                    throw BenchmarkError.invalid("点击横坐标超出范围")
+                }
+            }
+            for y in [action.y, action.endY].compactMap({ $0 }) {
+                guard (0 ..< 640).contains(y) else {
+                    throw BenchmarkError.invalid("点击纵坐标超出范围")
+                }
+            }
+            if let duration = action.milliseconds {
+                let range = action.kind == "swipe" ? 16 ... 5000 : 0 ... 60000
+                guard range.contains(duration) else {
+                    throw BenchmarkError.invalid("操作时长超出范围")
+                }
+            }
+            if let key = action.key, !["home", "back", "recent"].contains(key) {
+                throw BenchmarkError.invalid("未知的导航键")
+            }
+        }
+        return request
+    }
+
+    static func fromURL(_ url: URL) throws -> Self {
+        guard url.scheme == "droidondarwin", url.host == "benchmark", url.path.isEmpty,
+              url.user == nil, url.password == nil, url.port == nil, url.fragment == nil,
+              let items = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems,
+              items.count == 1, items[0].name == "request", var encoded = items[0].value,
+              encoded.count <= 45000 else {
+            throw BenchmarkError.invalid("实验链接无效")
+        }
+        encoded = encoded.replacingOccurrences(of: "-", with: "+").replacingOccurrences(of: "_", with: "/")
+        encoded += String(repeating: "=", count: (4 - encoded.count % 4) % 4)
+        guard let data = Data(base64Encoded: encoded) else {
+            throw BenchmarkError.invalid("实验链接编码无效")
+        }
+        return try decode(data)
+    }
+}
+
+enum BenchmarkError: LocalizedError {
+    case invalid(String)
+    var errorDescription: String? {
+        switch self { case .invalid(let message): return message }
+    }
+}

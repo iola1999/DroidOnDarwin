@@ -56,9 +56,14 @@ def main():
     checks['devices'] = run([store_test], capture_output=True, text=True, timeout=30).stdout.strip()
     session_test = OUT / 'session-model-tests'
     run(['xcrun', 'swiftc', '-O', '-parse-as-library', '-import-objc-header', EXP / 'macos/Bridge.h',
-         EXP / 'app/SessionModel.swift', EXP / 'app/ProbeLogReader.swift',
+         EXP / 'app/SessionModel.swift', EXP / 'app/ProbeLogReader.swift', EXP / 'app/RunConfiguration.swift',
          ROOT / 'tests/ios-jit/SessionModelTests.swift', '-o', session_test])
     checks['session'] = run([session_test], capture_output=True, text=True, timeout=15).stdout.strip()
+    benchmark_test = OUT / 'benchmark-tests'
+    run(['xcrun', 'swiftc', '-O', '-parse-as-library', '-import-objc-header', EXP / 'macos/Bridge.h',
+         *[EXP / 'app' / name for name in ('RunConfiguration.swift', 'BenchmarkRequest.swift', 'BenchmarkSession.swift', 'SessionModel.swift', 'ProbeLogReader.swift')],
+         ROOT / 'tests/ios-jit/BenchmarkTests.swift', '-o', benchmark_test])
+    checks['benchmark'] = run([benchmark_test], capture_output=True, text=True, timeout=15).stdout.strip()
     execute = OUT / 'signed-execute-test'
     run(['xcrun', 'clang', '-O2', '-Wall', '-Wextra', '-Werror', '-I', EXP, '-I', INPUT,
          *[EXP / name for name in ['execute-check.c', 'memory.c', 'nce.c', 'entry.S', 'programs.c']],

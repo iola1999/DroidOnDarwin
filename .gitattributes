@@ -1,2 +1,3 @@
 # Unified-diff context lines use a space for blank source lines.
 patches/*.patch whitespace=-blank-at-eol
+experiments/native-linux/art/*.patch whitespace=-blank-at-eol

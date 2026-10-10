@@ -41,5 +41,6 @@ private struct IOSRoot: View {
                     .accessibilityHidden(!session.showDisplay)
             }
         }
+        .onOpenURL { library.openBenchmarkURL($0) }
     }
 }

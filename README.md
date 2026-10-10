@@ -30,7 +30,7 @@ python3 scripts/package_native_linux_ios.py
 产物：
 
 - macOS：`work/native-linux-nce/macos/DroidOnDarwin.app`，包标识 `app.droidondarwin.mac`。
-- iOS：`work/native-linux-nce/ios/DroidOnDarwin-0.14.0.ipa`，包标识 `app.droidondarwin.ios`，JIT 扩展为 `app.droidondarwin.ios.JITHelper`。
+- iOS：`work/native-linux-nce/ios/DroidOnDarwin-0.15.0.ipa`，包标识 `app.droidondarwin.ios`，JIT 扩展为 `app.droidondarwin.ios.JITHelper`。
 
 Mac 包使用本机 ad-hoc 签名；Developer ID、公证及其他机器的分发验证尚待完成。iOS 包需要通过支持应用扩展的侧载工具重新签名，运行时需要 JIT 连接。最低目标版本为 iOS 26.0；Mac 最低版本由图形动态库的部署目标决定，当前构建为 macOS 27.0。
 
@@ -41,6 +41,8 @@ Mac 包使用本机 ad-hoc 签名；Developer ID、公证及其他机器的分�
 执行核心、Android 集成和两端应用位于 `experiments/native-linux/`；iOS JIT 支持位于 `src/ios-jit/` 和 `src/app/`；图形适配位于 `src/gfxstream-ios/`。`scripts/` 保留当前构建、打包、诊断和检查入口，[patches/README.md](patches/README.md) 说明上游补丁。
 
 开发约定见 [AGENTS.md](AGENTS.md)。提交前运行 `bash scripts/format.sh --check`；本地提交钩子通过 `git config --local core.hooksPath .githooks` 启用。
+
+两端参数组合、自动操作和日志收集见[性能实验说明](experiments/native-linux/app/BENCHMARK.md)。
 
 ## 来源与许可
 

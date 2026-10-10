@@ -7,6 +7,10 @@ struct SettingsView: View {
     let close: () -> Void
     let importRaw: () -> Void
     @AppStorage("performanceLogging") private var performance = false
+    @AppStorage("artNterp") private var nterp = false
+    @AppStorage("directFault") private var directFault = true
+    @AppStorage("sparseScan") private var sparseScan = true
+    @AppStorage("benchmarkAutomation") private var automation = false
     @State private var diagnosticID = ""
     var body: some View {
         NavigationStack {
@@ -37,6 +41,19 @@ struct SettingsView: View {
                     }
                     NavigationLink("高级") {
                         Form {
+                            Section {
+                                Toggle("汇编解释器", isOn: $nterp).disabled(session.active)
+                                Toggle("快速恢复数据页", isOn: $directFault).disabled(session.active)
+                                Toggle("稀疏页表扫描", isOn: $sparseScan).disabled(session.active)
+                            } header: { Text("性能实验") } footer: {
+                                Text("使用 ART nterp 执行尚未编译的 Java 方法。下次启动生效，可关闭后比较启动和应用运行速度。")
+                            }
+                            Section {
+                                Toggle("自动化测试", isOn: $automation).disabled(session.active)
+                                    .onChange(of: automation) { library.exportBenchmarkDevices() }
+                            } footer: {
+                                Text("允许实验链接启动已有设备、执行操作并保存测试日志。每次实验的参数单独生效。")
+                            }
                             Section {
                                 Button("导入 system.img…", action: importRaw).disabled(library.busy)
                             } footer: { Text("接受完整 ext4 镜像。镜像需要匹配当前运行组件，其他 Android ROM 可能无法启动。") }

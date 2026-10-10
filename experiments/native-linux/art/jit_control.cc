@@ -7,7 +7,27 @@
 #include "jit/jit_code_cache.h"
 #include "jit/small_pattern_matcher.h"
 #include "jni/jni_internal.h"
+#include "interpreter/mterp/nterp.h"
 #include "scoped_thread_state_change-inl.h"
+
+extern "C" JNIEXPORT bool nce_art_nterp_enabled()
+{
+    return art::interpreter::IsNterpSupported();
+}
+
+extern "C" JNIEXPORT bool nce_art_method_uses_nterp(JNIEnv *env, jmethodID id)
+{
+    art::ScopedObjectAccess soa(env);
+    // JNI 查找可能保留类初始化入口；先完成发布，再检查方法的执行入口。
+    {
+        art::ScopedThreadSuspension suspended(soa.Self(), art::ThreadState::kNative);
+        art::Runtime::Current()->GetClassLinker()->MakeInitializedClassesVisiblyInitialized(
+            soa.Self(), true);
+    }
+    art::ArtMethod *method = art::jni::DecodeArtMethod(id);
+    return method && art::Runtime::Current()->GetClassLinker()->IsNterpEntryPoint(
+                         method->GetEntryPointFromQuickCompiledCode());
+}
 
 /* The regression invokes compilation synchronously so that success requires
  * an installed JIT entrypoint, independent of background hotness sampling. */

@@ -34,7 +34,7 @@ final class LocalRuntime: SessionRuntime {
             metalLayer.drawableSize = CGSize(width: 360, height: 640)
         #endif
     }
-    func start(_ target: RunTarget, diagnostics: Bool, performance: Bool, event: @escaping (RuntimeEvent) -> Void) {
+    func start(_ target: RunTarget, configuration: RunConfiguration, event: @escaping (RuntimeEvent) -> Void) {
         guard !restartRequired else {
             return
         }
@@ -65,11 +65,14 @@ final class LocalRuntime: SessionRuntime {
                     setenv("NCE_SYSTEM_IMAGE", target.resources.appendingPathComponent("system.img").path, 1)
                     setenv("NCE_DESKTOP", "1", 1)
                     setenv("NCE_MM_MODE", "demand", 1)
-                    setenv("NCE_MAP_PROFILE", performance ? "1" : "0", 1)
-                    if diagnostics {
-                        setenv("NCE_DIAGNOSTICS", "1", 1)
-                    } else {
-                        unsetenv("NCE_DIAGNOSTICS")
+                    for key in RunConfiguration.environmentKeys {
+                        unsetenv(key)
+                    }
+                    for (key, value) in configuration.environment {
+                        setenv(key, value, 1)
+                    }
+                    if let data = try? JSONEncoder().encode(configuration), let json = String(data: data, encoding: .utf8) {
+                        nce_log("{\"configuration\":\(json)}")
                     }
                     nce_graphics_set_window(Unmanaged.passUnretained(self.metalLayer).toOpaque())
                     #if os(iOS)

@@ -9,7 +9,7 @@ final class ProcessRuntime: SessionRuntime {
     var restartRequired: Bool {
         false
     }
-    func start(_ target: RunTarget, diagnostics: Bool, performance: Bool, event: @escaping (RuntimeEvent) -> Void) {
+    func start(_ target: RunTarget, configuration: RunConfiguration, event: @escaping (RuntimeEvent) -> Void) {
         stopping = false
         let process = Process()
         self.process = process
@@ -19,14 +19,10 @@ final class ProcessRuntime: SessionRuntime {
                              "--device-name", target.name, "--session-log", target.log.path,
                              "--library-pid", String(getpid())]
         var environment = ProcessInfo.processInfo.environment
-        environment.removeValue(forKey: "NCE_DIAGNOSTICS")
-        environment.removeValue(forKey: "NCE_MAP_PROFILE")
-        if diagnostics {
-            environment["NCE_DIAGNOSTICS"] = "1"
+        for key in RunConfiguration.environmentKeys {
+            environment.removeValue(forKey: key)
         }
-        if performance {
-            environment["NCE_MAP_PROFILE"] = "1"
-        }
+        environment.merge(configuration.environment) { _, requested in requested }
         process.environment = environment
         process.terminationHandler = { task in
             DispatchQueue.main.async {
@@ -65,6 +61,7 @@ final class MacEnvironment {
     let workerTarget: RunTarget?
     private let libraryPID: pid_t?
     private var stopSignal: DispatchSourceSignal?
+    private var benchmark: BenchmarkSession?
     private init() {
         let args = CommandLine.arguments
         func value(_ flag: String) -> String? {
@@ -104,8 +101,22 @@ final class MacEnvironment {
             NSApp.perform(#selector(NSApplication.terminate(_:)), with: nil, afterDelay: 0)
         }
         stopSignal?.resume()
-        session.start(workerTarget, diagnostics: ProcessInfo.processInfo.environment["NCE_DIAGNOSTICS"] == "1",
-                      performance: ProcessInfo.processInfo.environment["NCE_MAP_PROFILE"] == "1")
+        let args = CommandLine.arguments
+        if let index = args.firstIndex(of: "--benchmark-request"), args.indices.contains(index + 1) {
+            do {
+                let source = URL(fileURLWithPath: args[index + 1])
+                let request = try BenchmarkRequest.decode(Data(contentsOf: source))
+                let run = try BenchmarkSession(request: request, session: session, target: workerTarget,
+                                               output: source.deletingLastPathComponent())
+                benchmark = run
+                try run.start()
+            } catch {
+                fputs("Benchmark: \(error.localizedDescription)\n", stderr)
+                exit(2)
+            }
+        } else {
+            session.start(workerTarget, configuration: .fromEnvironment(ProcessInfo.processInfo.environment))
+        }
     }
     func returnToLibrary() {
         guard let libraryPID, let app = NSRunningApplication(processIdentifier: libraryPID) else {

@@ -38,7 +38,7 @@ enum RuntimeEvent {
 @MainActor
 protocol SessionRuntime: AnyObject {
     var restartRequired: Bool { get }
-    func start(_ target: RunTarget, diagnostics: Bool, performance: Bool, event: @escaping (RuntimeEvent) -> Void)
+    func start(_ target: RunTarget, configuration: RunConfiguration, event: @escaping (RuntimeEvent) -> Void)
     func stop()
     func openDisplay()
 }
@@ -76,7 +76,7 @@ final class SessionModel: ObservableObject {
     init(runtime: any SessionRuntime) {
         self.runtime = runtime
     }
-    func start(_ target: RunTarget, diagnostics: Bool = false, performance: Bool = false) {
+    func start(_ target: RunTarget, configuration: RunConfiguration = .init()) {
         guard !active, !runtime.restartRequired else {
             return
         }
@@ -95,7 +95,7 @@ final class SessionModel: ObservableObject {
         showDisplay = true
         Task { await reader.reset() }
         startPolling()
-        runtime.start(target, diagnostics: diagnostics, performance: performance) { [weak self] event in
+        runtime.start(target, configuration: configuration) { [weak self] event in
             guard let self else {
                 return
             }

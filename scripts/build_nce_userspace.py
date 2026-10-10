@@ -272,7 +272,7 @@ def android_data(out):
     sdk = Path('/opt/homebrew/share/android-commandlinetools')
     classes = out / 'java-classes'
     classes.mkdir(exist_ok=True)
-    run([java / 'javac', '--release', '11', '-d', classes, EXP / 'art/NceWorkload.java', EXP / 'art/NceIntrinsics.java', EXP / 'art/NceInlining.java', EXP / 'art/NceProxy.java', EXP / 'art/NceVolatile.java'])
+    run([java / 'javac', '--release', '11', '-d', classes, EXP / 'art/NceWorkload.java', EXP / 'art/NceIntrinsics.java', EXP / 'art/NceInlining.java', EXP / 'art/NceProxy.java', EXP / 'art/NceVolatile.java', EXP / 'art/NceInterpreter.java'])
     run([java / 'java', '-cp', sdk / 'build-tools/36.0.0/lib/d8.jar', 'com.android.tools.r8.D8',
          '--min-api', '35', '--lib', sdk / 'platforms/android-35/android.jar', '--output', classes,
          *sorted(classes.glob('*.class'))])

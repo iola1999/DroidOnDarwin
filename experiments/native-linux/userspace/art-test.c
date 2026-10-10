@@ -56,6 +56,52 @@ static jobject native_identity(JNIEnv *env, jclass klass, jobject value)
     return (*env)->NewLocalRef(env, value);
 }
 
+static int test_interpreter_entry(JNIEnv *env, void *library)
+{
+    bool (*enabled)(void) = dlsym(library, "nce_art_nterp_enabled");
+    bool (*uses_nterp)(JNIEnv *, jmethodID) = dlsym(library, "nce_art_method_uses_nterp");
+    void (*keep_interpreted)(JNIEnv *, jmethodID) = dlsym(library, "nce_art_keep_interpreted");
+    FILE *setting = fopen("/data/nce/art-nterp", "r");
+    if (!enabled || !uses_nterp || !keep_interpreted || !setting)
+        return 84;
+    bool requested = fgetc(setting) == '1';
+    fclose(setting);
+    jclass klass = (*env)->FindClass(env, "NceWorkload");
+    jmethodID method = klass ? (*env)->GetStaticMethodID(env, klass, "mixBaseline", "(JJ)J") : NULL;
+    if (!method || enabled() != requested)
+        return 85;
+    keep_interpreted(env, method);
+    uint64_t expected = 413;
+    for (int i = 0; i < 19; ++i) {
+        expected = expected * UINT64_C(6364136223846793005) + UINT64_C(1442695040888963407);
+        expected ^= expected >> 27;
+    }
+    jlong result = (*env)->CallStaticLongMethod(env, klass, method, (jlong)19, (jlong)413);
+    if ((*env)->ExceptionCheck(env) || (uint64_t)result != expected || uses_nterp(env, method) != requested) {
+        fprintf(stderr, "ART interpreter check: requested=%d nterp=%d result=%016llx expected=%016llx\n",
+                requested, uses_nterp(env, method), (unsigned long long)result, (unsigned long long)expected);
+        if ((*env)->ExceptionCheck(env))
+            (*env)->ExceptionDescribe(env);
+        return 86;
+    }
+    printf("{\"test\":\"android_art_interpreter_entry\",\"passed\":true,\"nterp\":%s}\n", requested ? "true" : "false");
+    (*env)->DeleteLocalRef(env, klass);
+    klass = (*env)->FindClass(env, "NceInterpreter");
+    method = klass ? (*env)->GetStaticMethodID(env, klass, "run", "()V") : NULL;
+    if (!method)
+        return 87;
+    keep_interpreted(env, method);
+    (*env)->CallStaticVoidMethod(env, klass, method);
+    if ((*env)->ExceptionCheck(env)) {
+        (*env)->ExceptionDescribe(env);
+        return 88;
+    }
+    if (uses_nterp(env, method) != requested)
+        return 89;
+    (*env)->DeleteLocalRef(env, klass);
+    return 0;
+}
+
 static int test_volatile_floating(JNIEnv *env, void *library)
 {
     bool (*compile)(JNIEnv *, jmethodID) = dlsym(library, "nce_art_compile_method");
@@ -558,6 +604,9 @@ int main(void)
     fflush(stdout);
     if (create(&vm, (void **)&env, &args) != JNI_OK || !vm || !env)
         return 5;
+    int entry_result = test_interpreter_entry(env, library);
+    if (entry_result)
+        return entry_result;
     if (inlining_test) {
         int result = test_inlining(env, library, inlining_enabled);
         if (result)
