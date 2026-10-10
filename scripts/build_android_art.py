@@ -51,28 +51,36 @@ def restore_sources():
             raise RuntimeError(f"ART header checksum mismatch: {item['path']}")
     subprocess.run(['patch', '--posix', '--batch', '-p1', '-i', str(PATCHES / 'android16.patch')],
                    cwd=WORK / 'art', check=True, capture_output=True)
-    for name in ('nterp.patch', 'compiler-profile.patch', 'expanded-jit.patch', 'fast-baseline.patch'):
+    for name in ('nterp.patch', 'compiler-profile.patch', 'expanded-jit.patch', 'fast-baseline.patch', 'offline-compiler.patch'):
         subprocess.run(['patch', '--posix', '--batch', '-p1', '-i', str(PATCHES / name)],
                        cwd=WORK / 'art', check=True, capture_output=True)
 
 
-def build():
+def build(include_compiler=False):
     libc = build_libc()
+    compiler_dependencies = {}
+    if include_compiler:
+        from build_android_crypto import build as build_crypto
+        crypto = build_crypto()
+        compiler_dependencies['libcrypto.so'] = sha(crypto['libcrypto.so'])
     OUT.mkdir(exist_ok=True)
     config = TOOL / 'sysroot/usr/include/c++/v1/__config_site'
     inputs = {str(path.relative_to(ROOT)): sha(path) for path in [PATCHES / name for name in ('android16.patch', 'reference_heap.h',
-                  'reference_heap.c', 'jit_control.cc', 'sources.json', 'nterp.patch', 'compiler-profile.patch', 'expanded-jit.patch', 'fast-baseline.patch')]
+                  'reference_heap.c', 'jit_control.cc', 'sources.json', 'nterp.patch', 'compiler-profile.patch', 'expanded-jit.patch', 'fast-baseline.patch', 'offline-compiler.patch', 'dex2oat-main.cc')]
               if path.is_file()}
     inputs.update(ndk_libcxx_config=sha(config), libc=sha(libc),
                   runtime=sha(WORK / 'android36-runtime.json'), builder=sha(Path(__file__)),
-                  layout=sha(ROOT / 'experiments/native-linux/layout.h'))
+                  layout=sha(ROOT / 'experiments/native-linux/layout.h'), offline_compiler=include_compiler)
     fingerprint = hashlib.sha256(json.dumps(inputs, sort_keys=True).encode()).hexdigest()
     manifest = OUT / 'manifest.json'
+    required = ['libart.so', 'libartbase.so'] + (['nce-dex2oat'] if include_compiler else [])
     if manifest.exists():
         previous = json.loads(manifest.read_text())
-        if previous['build_inputs'] == fingerprint and all((OUT / name).exists() and
-                sha(OUT / name) == checksum for name, checksum in previous['files'].items()):
-            return {name: OUT / name for name in previous['files']}
+        if (previous['build_inputs'] == fingerprint and
+                (not include_compiler or previous.get('compiler_dependencies') == compiler_dependencies) and
+                all(name in previous['files'] and
+                (OUT / name).exists() and sha(OUT / name) == previous['files'][name] for name in required)):
+            return {name: OUT / name for name in required}
     restore_sources()
     art = WORK / 'art'
     # 平台共享库使用 __1；NDK 头文件的默认命名空间是 __ndk1。
@@ -81,13 +89,13 @@ def build():
     includes = [art / name for name in ('runtime', 'libartbase', 'libdexfile', 'libprofile',
                 'libartpalette/include', 'libnativebridge/include', 'libnativeloader/include',
                 'sigchainlib', 'cmdline', 'tools/cpp-define-generator', 'compiler',
-                'compiler/export', 'libelffile', 'odrefresh/include')]
+                'compiler/export', 'libelffile', 'odrefresh/include', 'dex2oat')]
     includes += [WORK / name for name in ('bionic-source/libc/platform', 'libbase/include',
                   'liblog/liblog/include', 'libziparchive/include', 'fmt/include', 'dlmalloc',
                   'libnativehelper/header_only_include', 'libnativehelper/include_jni',
                   'libnativehelper/include_platform', 'libnativehelper/include_platform_header_only',
                   'cpu_features/include', 'tinyxml2', 'unwinding/libunwindstack/include',
-                  'modules-utils/build/include', 'lz4/lib', 'lzma/C', 'perfetto-heap')]
+                  'modules-utils/build/include', 'lz4/lib', 'lzma/C', 'perfetto-heap', 'boringssl/src/include')]
     includes += [OUT, PATCHES, WORK / 'vixl/src', art / 'disassembler', ROOT / 'experiments/native-linux']
     flags = ['--target=aarch64-linux-android10000', '-fPIC', '-ftrivial-auto-var-init=zero', '-ffixed-x18', '-mno-outline-atomics',
              '-O2', '-DNDEBUG', '-DART_TARGET', '-DART_TARGET_ANDROID', '-DART_DEFAULT_GC_TYPE_IS_MS',
@@ -137,6 +145,14 @@ def build():
     runtime += [art / 'compiler' / name for name in re.findall(r'"([^"\n]+)"',
                   re.search(r'\bsrcs:\s*\[(.*?)\]', arm64, re.S)[1])]
     runtime += sorted((WORK / 'vixl/src').glob('*.cc')) + sorted((WORK / 'vixl/src/aarch64').glob('*.cc'))
+    compiler = []
+    if include_compiler:
+        operators = OUT / 'dex2oat-operators.cc'
+        operators.write_bytes(subprocess.check_output(['python3', art / 'tools/generate_operator_out.py',
+            art / 'dex2oat', art / 'dex2oat/linker/image_writer.h']))
+        compiler = source_list(art / 'dex2oat', 'libart-dex2oat-defaults') + [art / 'dex2oat' / name for name in
+            ('dex2oat.cc', 'dex2oat_options.cc', 'linker/arm64/relative_patcher_arm64.cc',
+             'linker/arm/relative_patcher_arm_base.cc')] + [operators]
     objects = OUT / 'objects'
     objects.mkdir(exist_ok=True)
 
@@ -152,6 +168,8 @@ def build():
         extra = cpp_flags if cpp else ['-D__ASSEMBLY__'] if source.suffix == '.S' else []
         if 'cpu_features' in str(source):
             extra += ['-DSTACK_LINE_READER_BUFFER_SIZE=1024', '-DHAVE_DLFCN_H', '-DHAVE_STRONG_GETAUXVAL']
+        if source == art / 'dex2oat/dex2oat.cc':
+            extra = [*extra, '-Dmain=nce_art_dex2oat_main']
         command = list(map(str, [TOOL / 'bin' / ('clang++' if cpp else 'clang'), *flags, *extra,
                                 '-DART_STATIC_LIBARTBASE', '-MD', '-MF', dependencies,
                                 '-c', source, '-o', obj]))
@@ -171,7 +189,8 @@ def build():
         return obj
 
     with concurrent.futures.ThreadPoolExecutor(6) as pool:
-        compiled = dict(zip(base + runtime, pool.map(compile, base + runtime)))
+        units = base + runtime + compiler + ([PATCHES / 'dex2oat-main.cc'] if include_compiler else [])
+        compiled = dict(zip(units, pool.map(compile, units)))
     libraries = {}
     for directory in ('lib64', 'com.android.art/lib64', 'com.android.runtime/lib64/bionic',
                       'com.android.i18n/lib64', 'com.android.os.statsd/lib64'):
@@ -190,11 +209,23 @@ def build():
         libraries[name] = binary
 
     link('libartbase.so', base, common)
-    link('libart.so', runtime, common + ['libdl_android.so', 'libartbase.so', 'libdexfile.so',
+    runtime_libraries = common + ['libdl_android.so', 'libartbase.so', 'libdexfile.so',
          'libprofile.so', 'libnativebridge.so', 'libnativeloader.so', 'libsigchain.so',
-         'libunwindstack.so', 'liblz4.so', 'liblzma.so', 'heapprofd_client_api.so'])
-    files = {name: sha(OUT / name) for name in ('libart.so', 'libartbase.so')}
+         'libunwindstack.so', 'liblz4.so', 'liblzma.so', 'heapprofd_client_api.so']
+    if include_compiler:
+        libraries['libcrypto.so'] = crypto['libcrypto.so']
+        runtime_libraries.append('libcrypto.so')
+    link('libart.so', runtime + compiler, runtime_libraries)
+    if include_compiler:
+        # JNI 依赖 libart.so；编译器入口放入同一 DSO，防止创建两份 runtime 状态。
+        subprocess.run([TOOL / 'bin/aarch64-linux-android35-clang++', '-nostdlib++', '-pie',
+            '-Wl,--allow-shlib-undefined,-z,defs,-z,max-page-size=16384,-z,common-page-size=16384',
+            compiled[PATCHES / 'dex2oat-main.cc'], libraries['libart.so'],
+            *[libraries[name] for name in runtime_libraries], '-o', OUT / 'nce-dex2oat'],
+            check=True, timeout=120)
+    files = {name: sha(OUT / name) for name in required}
     manifest.write_text(json.dumps(dict(build_inputs=fingerprint, inputs=inputs, files=files,
+        compiler_dependencies=compiler_dependencies,
         art_flags={name: False for name in names}, execution='restricted-arm64-jit',
         compressed_references='offset-in-high-4GiB-arena'), indent=2) + '\n')
     return {name: OUT / name for name in files}

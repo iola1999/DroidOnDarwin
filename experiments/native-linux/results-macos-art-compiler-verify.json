@@ -1,0 +1,334 @@
+{
+  "date": "2026-10-10",
+  "scope": "Matching dex2oat verify-only generation, invalid input and fresh ART process loading; functional CLI/GCD regression, not a startup benchmark.",
+  "source_revision": "9033411 plus offline compiler changes",
+  "command": "python3 scripts/probe_lkl.py --processes --art-compiler",
+  "host_cpu": "Apple M5 Ultra",
+  "os": "macOS-27.0-arm64-arm-64bit-Mach-O",
+  "kernel_sha256": "a3c4bce76e20f425c79e6b3b087bdb726770685aa0d079ca99a6fc239590c743",
+  "art_build": {
+    "build_inputs": "699a6bda82fe9c471488d5587ded890e319c001b02f9aea304b7207f76696618",
+    "inputs": {
+      "experiments/native-linux/art/android16.patch": "342182ccf23877d0be817d5b3df3828249732e450e15abda33e700ec02c5bf1e",
+      "experiments/native-linux/art/reference_heap.h": "c814b35b45c201f3893f3e8739f0ea5a0d309facbf70a9ba1f2fd8bb9ddaf71f",
+      "experiments/native-linux/art/reference_heap.c": "a10220f756efd4891930521667bcbf6e86b9e6a3d646d910c934884f57782be2",
+      "experiments/native-linux/art/jit_control.cc": "46dcfcf1bc685a10fa9862f87ff4a26a6e0c565608ed5b8f3d3b06caa8ac80fa",
+      "experiments/native-linux/art/sources.json": "a66d085c58d109c16e99205fe83514cf5a41a60ed372fd924e374007b947f82b",
+      "experiments/native-linux/art/nterp.patch": "5623b75f44d6e51647966b660de4d6410308b982cda1c9a4d7c843bcea7f8bcc",
+      "experiments/native-linux/art/compiler-profile.patch": "7a62ddd525c76c9744bc48689255913e06b4695332f601e10436d4e7fd559609",
+      "experiments/native-linux/art/expanded-jit.patch": "3cb1b6b0b115b8687d81c9340283093422fa3005768143a6ddd86063f843331a",
+      "experiments/native-linux/art/fast-baseline.patch": "47c55e913eeb1c62c698a7f6838dc2533e24ddd4307ab40c3650b261aa5031c0",
+      "experiments/native-linux/art/offline-compiler.patch": "6ada995c92aa2f5cecea8c1feb3fd1ae5a6d5f7a3a3346de12d80741cde46d0c",
+      "experiments/native-linux/art/dex2oat-main.cc": "d700578d5277c1a040e09c6aa6967e088318be35c12546f1bd3b9f95459d4b91",
+      "ndk_libcxx_config": "e7de7bd0b73df77a31d5be96bec3498851cda33ad51b66c654cb51d3e078b6eb",
+      "libc": "4174a2a3908049c19d176cba2d61f61f46369f173a41ed609f445b3e4e2e81ee",
+      "runtime": "4b1a45b0ee51725c68f1c29765958d0b60b45a5f2325bedfc61764cd49232249",
+      "builder": "cbe00a155a532d094dfeb4474f539cbc47bd23a3394de9c5ace7ac754579d68b",
+      "layout": "9ecb6dc474edfc516284effcbd1999ba445ba88372233636391771a0715deaa5",
+      "offline_compiler": true
+    },
+    "files": {
+      "libart.so": "809cd2e1228756b1361eeb4ef5d3d8e5a8c2b7f5f0df1c136a3f8f8fcba9a26b",
+      "libartbase.so": "af02b230861c8f209d6df773e4749063cbd7ab25062cbd5629e4a955ef2d31f4",
+      "nce-dex2oat": "7f010738f6d115a9fe992fedf4278799682e8f22af8f0e1819a6db5ec38c2af0"
+    },
+    "compiler_dependencies": {
+      "libcrypto.so": "fe52d3634fe46e81afe92ac9558806e16fde2110a52dce2f8351e4dd2cae57f6"
+    },
+    "art_flags": {
+      "use_generational_cmc": false,
+      "always_enable_profile_code": false,
+      "test": false,
+      "executable_method_file_offsets": false,
+      "executable_method_file_offsets_v2": false,
+      "art_service_v3": false,
+      "virtual_thread_impl_v1": false,
+      "fast_baseline_compiler": false
+    },
+    "execution": "restricted-arm64-jit",
+    "compressed_references": "offset-in-high-4GiB-arena"
+  },
+  "configuration": {
+    "guest_ram_mib": 1024,
+    "guest_cpus": 1,
+    "mm_mode": "demand",
+    "nterp": false,
+    "expandedJIT": false,
+    "fastBaseline": false
+  },
+  "elf_checks": {
+    "passed": true,
+    "count": 21,
+    "fixture_directory": "work/native-linux-nce/art-compiler"
+  },
+  "runs": [
+    {
+      "entry": "lkl",
+      "passed": true,
+      "checks": 145,
+      "checksums": {
+        "-results.jsonl": "ec03207840678104c52dbe5184fadaf0b4dda3d02dc25177e6b63ce1c5a8daa0",
+        "-console.log": "740d36f114609fac17cdb1df618411e877a974e65401a49f43e779659966285a"
+      },
+      "compiler_checks": [
+        {
+          "test": "android_art_compiler_verify",
+          "passed": true,
+          "oat_bytes": 17248,
+          "vdex_bytes": 944,
+          "elapsed_ms": 63.644
+        },
+        {
+          "test": "android_art_compiler_invalid_input",
+          "passed": true,
+          "exit": 1
+        },
+        {
+          "test": "android_art_compiler_runtime_load",
+          "passed": true,
+          "filter": "verify"
+        },
+        {
+          "test": "android_art_compiler_paths",
+          "passed": true,
+          "gc_requests": 10,
+          "exceptions": 3
+        }
+      ],
+      "runtime_checks": [
+        {
+          "test": "android_art_java_workload",
+          "passed": true,
+          "allocated_bytes": 16777216,
+          "gc_weak_reference_cleared": true,
+          "retained_cycle_nodes": 64,
+          "threads": 2,
+          "exceptions": 3,
+          "sum": 4002000
+        },
+        {
+          "test": "android_art_jit_arithmetic",
+          "passed": true,
+          "iterations": 2000000,
+          "compile_ms": 0.117,
+          "interpreter_ms": 63.7,
+          "jit_ms": 2.767,
+          "checksum": "de0adba4164b790e"
+        },
+        {
+          "test": "android_art_jit_objects",
+          "passed": true,
+          "array_updates": 32768,
+          "field_traversals": 20000000,
+          "gc_requests": 8,
+          "retained_cycle_nodes": 64,
+          "exceptions": 2
+        },
+        {
+          "test": "android_art_jit_calls",
+          "passed": true,
+          "reference_returns": 5,
+          "null_returns": 4
+        },
+        {
+          "test": "android_art_jit_allocations",
+          "passed": true,
+          "object_array_pairs": 40000,
+          "virtual_targets": 2,
+          "exceptions": 2
+        },
+        {
+          "test": "android_art_jit_patterns",
+          "passed": true,
+          "installed_patterns": 11
+        },
+        {
+          "test": "android_art_jit_runtime_features",
+          "passed": true,
+          "reference_elements": 256,
+          "interface_targets": 2,
+          "monitor_calls": 4000,
+          "monitor_updates": 20001,
+          "exceptions": 6
+        },
+        {
+          "test": "android_art_jit_strings_classes",
+          "passed": true,
+          "strings": 8,
+          "combined_iterations": 100000,
+          "gc_requests": 8,
+          "initialization_errors": 2,
+          "string_exceptions": 5,
+          "large_offset_strings": 2
+        },
+        {
+          "test": "android_art_jit_intrinsics",
+          "passed": true,
+          "integer_inputs": 264,
+          "floating_inputs": 15,
+          "string_cases": 28
+        },
+        {
+          "test": "android_art_jit_volatile_floating",
+          "passed": true,
+          "compiled_methods": 8,
+          "bit_patterns": 16,
+          "null_exceptions": 4
+        },
+        {
+          "test": "android_art_jit_types",
+          "passed": true,
+          "instanceof_calls": 12012,
+          "casts": 41,
+          "rejected": 79,
+          "caught": 64
+        },
+        {
+          "test": "android_art_jit_automatic",
+          "passed": true,
+          "warmup_calls": 200000,
+          "string_constructor_compiled": false
+        },
+        {
+          "test": "android_art_vm_destroyed",
+          "passed": true,
+          "elapsed_ms": 512.557
+        }
+      ]
+    },
+    {
+      "entry": "dispatch",
+      "passed": true,
+      "checks": 145,
+      "checksums": {
+        "-results.jsonl": "40c03b0f3f048319a9925d57e3ff74b9962eb86795304825008870838a9944c9",
+        "-console.log": "50a6a9483a0b63f066b45746aa2b05ebbd6d6f32e673855e7101c9048d9889f3"
+      },
+      "compiler_checks": [
+        {
+          "test": "android_art_compiler_verify",
+          "passed": true,
+          "oat_bytes": 17248,
+          "vdex_bytes": 944,
+          "elapsed_ms": 54.658
+        },
+        {
+          "test": "android_art_compiler_invalid_input",
+          "passed": true,
+          "exit": 1
+        },
+        {
+          "test": "android_art_compiler_runtime_load",
+          "passed": true,
+          "filter": "verify"
+        },
+        {
+          "test": "android_art_compiler_paths",
+          "passed": true,
+          "gc_requests": 10,
+          "exceptions": 3
+        }
+      ],
+      "runtime_checks": [
+        {
+          "test": "android_art_java_workload",
+          "passed": true,
+          "allocated_bytes": 16777216,
+          "gc_weak_reference_cleared": true,
+          "retained_cycle_nodes": 64,
+          "threads": 2,
+          "exceptions": 3,
+          "sum": 4002000
+        },
+        {
+          "test": "android_art_jit_arithmetic",
+          "passed": true,
+          "iterations": 2000000,
+          "compile_ms": 0.082,
+          "interpreter_ms": 57.3,
+          "jit_ms": 2.698,
+          "checksum": "de0adba4164b790e"
+        },
+        {
+          "test": "android_art_jit_objects",
+          "passed": true,
+          "array_updates": 32768,
+          "field_traversals": 20000000,
+          "gc_requests": 8,
+          "retained_cycle_nodes": 64,
+          "exceptions": 2
+        },
+        {
+          "test": "android_art_jit_calls",
+          "passed": true,
+          "reference_returns": 5,
+          "null_returns": 4
+        },
+        {
+          "test": "android_art_jit_allocations",
+          "passed": true,
+          "object_array_pairs": 40000,
+          "virtual_targets": 2,
+          "exceptions": 2
+        },
+        {
+          "test": "android_art_jit_patterns",
+          "passed": true,
+          "installed_patterns": 11
+        },
+        {
+          "test": "android_art_jit_runtime_features",
+          "passed": true,
+          "reference_elements": 256,
+          "interface_targets": 2,
+          "monitor_calls": 4000,
+          "monitor_updates": 20001,
+          "exceptions": 6
+        },
+        {
+          "test": "android_art_jit_strings_classes",
+          "passed": true,
+          "strings": 8,
+          "combined_iterations": 100000,
+          "gc_requests": 8,
+          "initialization_errors": 2,
+          "string_exceptions": 5,
+          "large_offset_strings": 2
+        },
+        {
+          "test": "android_art_jit_intrinsics",
+          "passed": true,
+          "integer_inputs": 264,
+          "floating_inputs": 15,
+          "string_cases": 28
+        },
+        {
+          "test": "android_art_jit_volatile_floating",
+          "passed": true,
+          "compiled_methods": 8,
+          "bit_patterns": 16,
+          "null_exceptions": 4
+        },
+        {
+          "test": "android_art_jit_types",
+          "passed": true,
+          "instanceof_calls": 12012,
+          "casts": 41,
+          "rejected": 79,
+          "caught": 64
+        },
+        {
+          "test": "android_art_jit_automatic",
+          "passed": true,
+          "warmup_calls": 200000,
+          "string_constructor_compiled": false
+        },
+        {
+          "test": "android_art_vm_destroyed",
+          "passed": true,
+          "elapsed_ms": 433.016
+        }
+      ]
+    }
+  ]
+}

@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """检查 ELF 执行布局，以及代码区内常量的指令分类。先构建 N2b 用户程序。"""
 from pathlib import Path
+import argparse
+import sys
 import shutil
 import struct
 import subprocess
@@ -11,10 +13,13 @@ import zipfile
 from build_nce_userspace import inspect, check_x18_disassembly, elf_disassembly, apk_native_libraries, native_library_zip, PAGE, WORK
 
 
+FIXTURES = WORK / 'processes'
+
+
 class ElfLayoutTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.fixture = WORK / 'processes/worker.elf'
+        cls.fixture = FIXTURES / 'worker.elf'
         if not cls.fixture.exists():
             raise RuntimeError('Run python3 scripts/probe_lkl.py --processes first')
         cls.original = cls.fixture.read_bytes()
@@ -171,7 +176,7 @@ constant: .word 0xd4000001,0xd65f03c0
 
     def test_dynamic_program_and_shared_library(self):
         for name in ('dash.elf', 'dynamic.elf', 'libc.so'):
-            self.assertGreater(len(inspect(WORK / 'processes' / name)['segments']), 0)
+            self.assertGreater(len(inspect(FIXTURES / name)['segments']), 0)
         self.assertEqual(inspect(WORK / 'processes/plugin.so', shared=True)['entry'], 0)
         with self.assertRaisesRegex(RuntimeError, 'missing executable entry'):
             inspect(WORK / 'processes/plugin.so')
@@ -259,7 +264,7 @@ class ApkLibraryTests(unittest.TestCase):
         self.addCleanup(self.directory.cleanup)
         self.out = Path(self.directory.name)
         for name in ('libnce-cfi-a.so', 'libnce-cfi-b.so'):
-            shutil.copyfile(WORK / 'processes' / name, self.out / name)
+            shutil.copyfile(FIXTURES / name, self.out / name)
 
     def test_distinct_member_offsets_preserve_archive_bytes(self):
         asset = native_library_zip(self.out)
@@ -288,4 +293,8 @@ class ApkLibraryTests(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    unittest.main(verbosity=2)
+    parser = argparse.ArgumentParser(add_help=False)
+    parser.add_argument('--fixtures', type=Path, default=FIXTURES)
+    args, remaining = parser.parse_known_args()
+    FIXTURES = args.fixtures
+    unittest.main(argv=[sys.argv[0], *remaining], verbosity=2)

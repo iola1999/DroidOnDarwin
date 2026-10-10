@@ -1536,69 +1536,85 @@ void nce_process_run(long (*host_syscall)(long, long *), long (*guest_syscall)(l
         REQUIRE(host_syscall(53, permissions) == 0);
     }
     put_file(host_syscall, "/data/dalvik-cache/arm64/.keep", "", 0);
-    if (!interactive)
-        art_regressions(host_syscall);
-    if (getenv("NCE_DESKTOP"))
-        put_file(host_syscall, "/data/nce/desktop-session", "", 0);
-    if (getenv("NCE_SYSTEM_SERVER_PROBE") || getenv("NCE_DESKTOP"))
-        put_file(host_syscall, "/data/nce/system-server-probe", "", 0);
-    if (getenv("NCE_DIAGNOSTICS"))
-        put_file(host_syscall, "/data/nce/diagnostics", "", 0);
-    if (getenv("NCE_TRACE_SYSTEMUI"))
-        put_file(host_syscall, "/data/nce/trace-systemui", "", 0);
-    puts("{\"phase\":\"android_platform_services\"}");
-    nce_host_input_start(host_syscall);
-    run_program(host_syscall, "/system/bin/android-services-test", NULL);
-    nce_host_input_stop();
-    REQUIRE(get_file(host_syscall, "/stdout", benchmark, sizeof(benchmark)) > 0);
-    if (!interactive || getenv("NCE_DIAGNOSTICS")) {
-        REQUIRE(strstr(benchmark, "android_platform_binder_cleanup"));
-        REQUIRE(strstr(benchmark, "android_framework_runtime"));
-        REQUIRE(strstr(benchmark, "android_vintf_build_consistency"));
-        REQUIRE(strstr(benchmark, "android_aconfig_storage"));
-        REQUIRE(strstr(benchmark, "android_framework_file_observer"));
-        REQUIRE(strstr(benchmark, "android_system_suspend_wakelocks"));
-        REQUIRE(strstr(benchmark, "android_installd_app_data"));
-        REQUIRE(strstr(benchmark, "android_apex_registry"));
-        REQUIRE(strstr(benchmark, (getenv("NCE_SYSTEM_SERVER_PROBE") || getenv("NCE_DESKTOP")) ? "android_system_process_groups_stopped" : "android_zygote_command_server"));
-        if (getenv("NCE_SYSTEM_SERVER_PROBE") && !getenv("NCE_DESKTOP")) {
-            REQUIRE(strstr(benchmark, "android_system_boot_completed"));
-            REQUIRE(strstr(benchmark, "android_desktop_launch_commands"));
-            REQUIRE(strstr(benchmark, "android_system_process_groups_stopped"));
-        }
-        REQUIRE(strstr(benchmark, "android_framework_graphics\",\"passed\":true"));
-#ifdef NCE_GRAPHICS
-        REQUIRE(strstr(benchmark, "android_gralloc_cpu_gpu_roundtrip\",\"passed\":true"));
-#endif
-        REQUIRE(strstr(benchmark, "android_crypto"));
-    }
-#ifdef NCE_GRAPHICS
-    nce_graphics_stop();
-#endif
-    memory_report(host_syscall, "after_framework");
-    const char *graphics_path = getenv("NCE_GRAPHICS_OUTPUT");
-    if (graphics_path && (!interactive || getenv("NCE_DIAGNOSTICS"))) {
-        long bytes = get_file(host_syscall, "/data/nce/framework.png", benchmark, sizeof(benchmark));
-        REQUIRE(bytes > 8 && bytes < (long)sizeof(benchmark) - 1);
-        REQUIRE(!memcmp(benchmark, "\x89PNG\r\n\x1a\n", 8));
-        FILE *graphics = fopen(graphics_path, "wb");
-        REQUIRE(graphics && fwrite(benchmark, 1, bytes, graphics) == (size_t)bytes);
-        REQUIRE(fclose(graphics) == 0);
-        if (getenv("NCE_SYSTEM_SERVER_PROBE") && !getenv("NCE_DESKTOP")) {
-            const char *names[] = {"launcher", "clock", "files"};
-            size_t capacity = 2 * 1024 * 1024;
-            char *pixels = malloc(capacity);
-            REQUIRE(pixels);
-            for (unsigned i = 0; i < 3; ++i) {
-                char guest[128], host[1024];
-                snprintf(guest, sizeof(guest), "/data/nce/desktop-%s.png", names[i]);
-                REQUIRE(snprintf(host, sizeof(host), "%s.%s.png", graphics_path, names[i]) < (int)sizeof(host));
-                long size = get_file(host_syscall, guest, pixels, capacity);
-                REQUIRE(size > 8 && size < (long)capacity - 1 && !memcmp(pixels, "\x89PNG\r\n\x1a\n", 8));
-                FILE *image = fopen(host, "wb");
-                REQUIRE(image && fwrite(pixels, 1, size, image) == (size_t)size && fclose(image) == 0);
+    if (getenv("NCE_ART_COMPILER_PROBE")) {
+        puts("{\"phase\":\"android_art_compiler\"}");
+        run_program(host_syscall, "/system/bin/art-compiler-test", "");
+        REQUIRE(get_file(host_syscall, "/stdout", benchmark, sizeof(benchmark)) > 0);
+        REQUIRE(strstr(benchmark, "android_art_compiler_verify"));
+        REQUIRE(strstr(benchmark, "android_art_compiler_invalid_input"));
+        fputs(benchmark, stdout);
+        memory_report(host_syscall, "after_art_compiler");
+        run_program(host_syscall, "/system/bin/art-test", "oat-verify\n");
+        REQUIRE(get_file(host_syscall, "/stdout", benchmark, sizeof(benchmark)) > 0);
+        REQUIRE(strstr(benchmark, "android_art_compiler_runtime_load"));
+        REQUIRE(strstr(benchmark, "android_art_java_workload"));
+        REQUIRE(strstr(benchmark, "android_art_vm_destroyed"));
+        fputs(benchmark, stdout);
+    } else {
+        if (!interactive)
+            art_regressions(host_syscall);
+        if (getenv("NCE_DESKTOP"))
+            put_file(host_syscall, "/data/nce/desktop-session", "", 0);
+        if (getenv("NCE_SYSTEM_SERVER_PROBE") || getenv("NCE_DESKTOP"))
+            put_file(host_syscall, "/data/nce/system-server-probe", "", 0);
+        if (getenv("NCE_DIAGNOSTICS"))
+            put_file(host_syscall, "/data/nce/diagnostics", "", 0);
+        if (getenv("NCE_TRACE_SYSTEMUI"))
+            put_file(host_syscall, "/data/nce/trace-systemui", "", 0);
+        puts("{\"phase\":\"android_platform_services\"}");
+        nce_host_input_start(host_syscall);
+        run_program(host_syscall, "/system/bin/android-services-test", NULL);
+        nce_host_input_stop();
+        REQUIRE(get_file(host_syscall, "/stdout", benchmark, sizeof(benchmark)) > 0);
+        if (!interactive || getenv("NCE_DIAGNOSTICS")) {
+            REQUIRE(strstr(benchmark, "android_platform_binder_cleanup"));
+            REQUIRE(strstr(benchmark, "android_framework_runtime"));
+            REQUIRE(strstr(benchmark, "android_vintf_build_consistency"));
+            REQUIRE(strstr(benchmark, "android_aconfig_storage"));
+            REQUIRE(strstr(benchmark, "android_framework_file_observer"));
+            REQUIRE(strstr(benchmark, "android_system_suspend_wakelocks"));
+            REQUIRE(strstr(benchmark, "android_installd_app_data"));
+            REQUIRE(strstr(benchmark, "android_apex_registry"));
+            REQUIRE(strstr(benchmark, (getenv("NCE_SYSTEM_SERVER_PROBE") || getenv("NCE_DESKTOP")) ? "android_system_process_groups_stopped" : "android_zygote_command_server"));
+            if (getenv("NCE_SYSTEM_SERVER_PROBE") && !getenv("NCE_DESKTOP")) {
+                REQUIRE(strstr(benchmark, "android_system_boot_completed"));
+                REQUIRE(strstr(benchmark, "android_desktop_launch_commands"));
+                REQUIRE(strstr(benchmark, "android_system_process_groups_stopped"));
             }
-            free(pixels);
+            REQUIRE(strstr(benchmark, "android_framework_graphics\",\"passed\":true"));
+#ifdef NCE_GRAPHICS
+            REQUIRE(strstr(benchmark, "android_gralloc_cpu_gpu_roundtrip\",\"passed\":true"));
+#endif
+            REQUIRE(strstr(benchmark, "android_crypto"));
+        }
+#ifdef NCE_GRAPHICS
+        nce_graphics_stop();
+#endif
+        memory_report(host_syscall, "after_framework");
+        const char *graphics_path = getenv("NCE_GRAPHICS_OUTPUT");
+        if (graphics_path && (!interactive || getenv("NCE_DIAGNOSTICS"))) {
+            long bytes = get_file(host_syscall, "/data/nce/framework.png", benchmark, sizeof(benchmark));
+            REQUIRE(bytes > 8 && bytes < (long)sizeof(benchmark) - 1);
+            REQUIRE(!memcmp(benchmark, "\x89PNG\r\n\x1a\n", 8));
+            FILE *graphics = fopen(graphics_path, "wb");
+            REQUIRE(graphics && fwrite(benchmark, 1, bytes, graphics) == (size_t)bytes);
+            REQUIRE(fclose(graphics) == 0);
+            if (getenv("NCE_SYSTEM_SERVER_PROBE") && !getenv("NCE_DESKTOP")) {
+                const char *names[] = {"launcher", "clock", "files"};
+                size_t capacity = 2 * 1024 * 1024;
+                char *pixels = malloc(capacity);
+                REQUIRE(pixels);
+                for (unsigned i = 0; i < 3; ++i) {
+                    char guest[128], host[1024];
+                    snprintf(guest, sizeof(guest), "/data/nce/desktop-%s.png", names[i]);
+                    REQUIRE(snprintf(host, sizeof(host), "%s.%s.png", graphics_path, names[i]) < (int)sizeof(host));
+                    long size = get_file(host_syscall, guest, pixels, capacity);
+                    REQUIRE(size > 8 && size < (long)capacity - 1 && !memcmp(pixels, "\x89PNG\r\n\x1a\n", 8));
+                    FILE *image = fopen(host, "wb");
+                    REQUIRE(image && fwrite(pixels, 1, size, image) == (size_t)size && fclose(image) == 0);
+                }
+                free(pixels);
+            }
         }
     }
     if (!interactive)

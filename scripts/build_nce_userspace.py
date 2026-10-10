@@ -903,7 +903,7 @@ def dash(out, llvm, libc, runtime, resource):
     return out / 'dash.elf'
 
 
-def build(out, llvm):
+def build(out, llvm, art_compiler=False):
     libc = musl(llvm)
     runtime = compiler_runtime(llvm, libc)
     with (WORK / 'musl-build/shared-build.log').open('w') as log:
@@ -978,7 +978,10 @@ def build(out, llvm):
     programs.append(('/system/lib64/libc.so', build_android_libc()))
     programs.append(('/system/lib64/libdl.so', WORK / 'android/linker-build/libdl.so'))
     crypto = {**build_android_crypto(), **build_android_crypto(cronet=True)}
-    replacements = {**build_android_art(), **crypto}
+    art = build_android_art(include_compiler=art_compiler)
+    if art_compiler:
+        programs.append(('/system/bin/nce-dex2oat', art.pop('nce-dex2oat')))
+    replacements = {**art, **crypto}
     prepare_android_desktop()
     assets = android_data(out) + [native_library_zip(out)]
     embedded, program_locations = apk_native_libraries(out, assets)
@@ -1011,6 +1014,12 @@ def build(out, llvm):
          '-Wl,-z,max-page-size=16384,-z,common-page-size=16384',
          EXP / 'userspace/art-test.c', '-ldl', '-o', out / 'art-test.elf'])
     programs.append(('/system/bin/art-test', out / 'art-test.elf'))
+    if art_compiler:
+        run([ndk / 'toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android35-clang',
+             '-ffixed-x18', '-mno-outline-atomics', '-O2', '-Wall', '-Wextra', '-Werror',
+             '-Wl,-z,max-page-size=16384,-z,common-page-size=16384',
+             EXP / 'userspace/art-compiler-test.c', '-o', out / 'art-compiler-test.elf'])
+        programs.append(('/system/bin/art-compiler-test', out / 'art-compiler-test.elf'))
     protocol = EXP / 'graphics/protocol'
     for name, origin in json.loads((protocol / 'sources.json').read_text())['files'].items():
         if hashlib.sha256((protocol / name).read_bytes()).hexdigest() != origin['sha256']:

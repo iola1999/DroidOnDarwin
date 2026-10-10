@@ -97,6 +97,7 @@ def main():
     started_ns = time.time_ns()
     parser = argparse.ArgumentParser()
     parser.add_argument("--processes", action="store_true")
+    parser.add_argument("--art-compiler", action="store_true", help="Validate the matching dex2oat tool in an isolated NCE image")
     parser.add_argument("--graphics-angle", type=Path,
                         help="Run Linux GLES over the in-process renderer using these macOS ANGLE libraries")
     parser.add_argument("--graphics-window", action="store_true", help="Validate presentation in a visible Metal window")
@@ -110,6 +111,8 @@ def main():
         parser.error("--graphics-angle requires --processes")
     if arguments.storage_image and not PROCESS:
         parser.error("--storage-image requires --processes")
+    if arguments.art_compiler and (not PROCESS or angle or os.environ.get('NCE_DESKTOP') or os.environ.get('NCE_SYSTEM_SERVER_PROBE')):
+        parser.error("--art-compiler requires --processes and cannot run the desktop or graphics checks")
     if angle:
         for name in ("libANGLE-shared.dylib",):
             if not (angle / name).is_file():
@@ -117,7 +120,7 @@ def main():
     base = OUT
     if PROCESS:
         BUILD = base / "lkl-process-build"
-        OUT = base / "processes"
+        OUT = base / ("art-compiler" if arguments.art_compiler else "processes")
         OUT.mkdir(exist_ok=True)
         for name in ("guest-image.h", "guest-source.sha256"):
             shutil.copyfile(base / name, OUT / name)
@@ -213,7 +216,7 @@ def main():
          "-z", "common-page-size=16384", OUT / "lkl-exports.o", OUT / "lkl-bridge.o", "-o", OUT / "lkl.so"])
     package_elf(OUT / "lkl.so")
     if PROCESS:
-        build_userspace(OUT, llvm)
+        build_userspace(OUT, llvm, art_compiler=arguments.art_compiler)
     inputs = [EXPERIMENT / name for name in ("lkl-main.c", "lkl-host.c", "nce.c", "entry.S")]
     flags = ["-O2", "-g", "-Wall", "-Wextra", "-Werror", "-I", OUT, "-I", EXPERIMENT]
     if PROCESS:
@@ -266,6 +269,8 @@ def main():
             run(["cp", "-c", seed, data_image])
     with (OUT / "lkl-results.jsonl").open("w") as output, (OUT / "lkl-console.log").open("w") as log:
         probe_env = {**os.environ, "NCE_GPU_OUTPUT": str(OUT / "gpu.bmp"), "NCE_GRAPHICS_OUTPUT": str(OUT / "framework.png"), "NCE_STORAGE_IMAGE": str(data_image), "NCE_SYSTEM_IMAGE": str(OUT / "system.img")} if PROCESS else os.environ
+        if arguments.art_compiler:
+            probe_env['NCE_ART_COMPILER_PROBE'] = '1'
         run([OUT / "lkl-probe", OUT / "lkl-image.bin"], timeout=480, stdout=output, stderr=log, env={**probe_env, **graphics_env})
     results = [json.loads(line) for line in (OUT / "lkl-results.jsonl").read_text().splitlines()]
     if results[-1].get("result") != "passed":
@@ -291,7 +296,7 @@ def main():
         with (OUT / "dispatch-results.jsonl").open("w") as output, (OUT / "dispatch-console.log").open("w") as log:
             subprocess.run([OUT / "dispatch-probe", OUT / "lkl-image.bin"], check=True,
                            timeout=480, stdout=output, stderr=log,
-                           env={**os.environ, **graphics_env, "NCE_GPU_OUTPUT": str(OUT / "dispatch-gpu.bmp"), "NCE_GRAPHICS_OUTPUT": str(OUT / "dispatch-framework.png"), "NCE_STORAGE_IMAGE": str(data_image), "NCE_SYSTEM_IMAGE": str(OUT / "system.img")})
+                           env={**probe_env, **graphics_env, "NCE_GPU_OUTPUT": str(OUT / "dispatch-gpu.bmp"), "NCE_GRAPHICS_OUTPUT": str(OUT / "dispatch-framework.png")})
         dispatch_results = [json.loads(line) for line in (OUT / "dispatch-results.jsonl").read_text().splitlines()]
         if dispatch_results[-1].get("result") != "passed":
             raise SystemExit("GCD probe did not complete")
@@ -312,7 +317,7 @@ def main():
                 if name == "android_application_data_persistence" and checks[0]["row_id"] != checks[1]["row_id"]:
                     raise SystemExit("Clock alarm identity changed across Android restart")
         run(["/opt/homebrew/opt/e2fsprogs/sbin/e2fsck", "-fn", data_image])
-        if (OUT / "framework.png").read_bytes() != (OUT / "dispatch-framework.png").read_bytes():
+        if not arguments.art_compiler and (OUT / "framework.png").read_bytes() != (OUT / "dispatch-framework.png").read_bytes():
             raise SystemExit("CLI and GCD framework images differ")
         if angle and (OUT / "gpu.bmp").read_bytes() != (OUT / "dispatch-gpu.bmp").read_bytes():
             raise SystemExit("CLI and GCD GPU images differ")
@@ -366,9 +371,11 @@ def main():
                     EXPERIMENT / "android-sources.json", *sorted((EXPERIMENT / "art").glob("*")),
                     *sorted((EXPERIMENT / "userspace").glob("*")), *sorted(p for p in (EXPERIMENT / "services").rglob("*") if p.is_file()),
                     *sorted(p for p in (EXPERIMENT / "graphics").rglob("*") if p.is_file())]
-        run(["python3", ROOT / "scripts/test_nce_userspace.py"])
+        run(["python3", ROOT / "scripts/test_nce_userspace.py", "--fixtures", OUT])
         sources.append(ROOT / "scripts/test_nce_userspace.py")
         manifest["stage"] = "Android Bionic, Binder, ART Java and ARM64 JIT workloads"
+        if arguments.art_compiler:
+            manifest["stage"] = "NCE ART offline compiler validation"
         manifest["userspace_libraries"] = {"musl": "1.2.5", "compiler-rt": "20.1.8", "dash": "0.5.12"}
         manifest["generated_sha256"] = {name: hashlib.sha256((OUT / name).read_bytes()).hexdigest()
                                         for name in ["system.img", "android-data-seed.img", "storage-test.elf", "program-images.h", "user-scripts.h", "payload.S", "payload.bin", "lkl-image.h", "lkl-host-ops.h", "guest-image.h",

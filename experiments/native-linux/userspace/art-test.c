@@ -664,6 +664,7 @@ int main(void)
     char mode[32] = {};
     bool inlining_test = fgets(mode, sizeof(mode), stdin) && !strncmp(mode, "inline:", 7);
     bool inlining_enabled = inlining_test && atoi(mode + 7) != 0;
+    bool verified_oat_test = !strcmp(mode, "oat-verify\n");
     if (signal(SIGALRM, deadline) == SIG_ERR)
         return 11;
     alarm(90);
@@ -728,6 +729,15 @@ int main(void)
     fflush(stdout);
     if (create(&vm, (void **)&env, &args) != JNI_OK || !vm || !env)
         return 5;
+    if (verified_oat_test) {
+        bool (*uses_oat)(JNIEnv *, jmethodID, const char *) = dlsym(library, "nce_art_method_uses_verified_oat");
+        jclass workload = (*env)->FindClass(env, "NceWorkload");
+        jmethodID method = workload ? (*env)->GetStaticMethodID(env, workload, "mixBaseline", "(JJ)J") : NULL;
+        if (!uses_oat || !method || !uses_oat(env, method, "/data/nce/oat/arm64/NceWorkload.odex"))
+            return 110;
+        (*env)->DeleteLocalRef(env, workload);
+        puts("{\"test\":\"android_art_compiler_runtime_load\",\"passed\":true,\"filter\":\"verify\"}");
+    }
     int entry_result = test_interpreter_entry(env, library);
     if (entry_result)
         return entry_result;

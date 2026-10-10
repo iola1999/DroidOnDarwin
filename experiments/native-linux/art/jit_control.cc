@@ -2,6 +2,8 @@
 #include "art_method-inl.h"
 #include "class_linker.h"
 #include "oat/oat_quick_method_header.h"
+#include "oat/oat_file.h"
+#include "dex/dex_file-inl.h"
 #include "oat/stack_map.h"
 #include "jit/jit.h"
 #include "jit/jit_code_cache.h"
@@ -132,4 +134,19 @@ extern "C" JNIEXPORT int nce_art_inlined_frames(JNIEnv *env, jmethodID id)
             depth = current;
     }
     return static_cast<int>(depth);
+}
+
+extern "C" JNIEXPORT bool nce_art_method_uses_verified_oat(JNIEnv *env, jmethodID id, const char *path)
+{
+    art::ScopedObjectAccess soa(env);
+    art::ArtMethod *method = art::jni::DecodeArtMethod(id);
+    const art::OatDexFile *dex = method ? method->GetDexFile()->GetOatDexFile() : nullptr;
+    const art::OatFile *oat = dex ? dex->GetOatFile() : nullptr;
+    if (!oat || oat->GetLocation() != path || oat->GetCompilerFilter() != art::CompilerFilter::kVerify) {
+        fprintf(stderr, "ART verified OAT expected=%s actual=%s filter=%d\n", path,
+                oat ? oat->GetLocation().c_str() : "<none>",
+                oat ? static_cast<int>(oat->GetCompilerFilter()) : -1);
+        return false;
+    }
+    return true;
 }

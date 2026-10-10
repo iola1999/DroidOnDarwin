@@ -1,0 +1,11 @@
+--- a/dex2oat/dex2oat.cc
++++ b/dex2oat/dex2oat.cc
+@@ -461,7 +461,7 @@
+       ArtMethod* constructor = old_field_value_->GetClass()->FindConstructor("(I)V", pointer_size);
+       CHECK(constructor != nullptr);
+       uint32_t args[] = {
+-          reinterpret_cast32<uint32_t>(new_field_value.Get()),
++          nce_art_reference_cast<uint32_t>(new_field_value.Get()),
+           static_cast<uint32_t>(initial_value)
+       };
+       JValue result;
