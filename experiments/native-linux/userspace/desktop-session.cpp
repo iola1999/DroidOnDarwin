@@ -48,15 +48,15 @@ void nce_desktop_start(bool interactive)
         dprintf(2, "{\"phase\":\"android_desktop_running\"}\n");
         return;
     }
-    nce_android_command({"activity", "start-activity", "-n",
-                         "com.google.android.deskclock/com.android.deskclock.DeskClock"},
+    nce_android_command({"activity", "start-activity", "-a", "android.intent.action.SHOW_ALARMS",
+                         "-p", "com.android.deskclock"},
                         "Starting:");
-    nce_surface_check("com.google.android.deskclock", "/data/nce/desktop-clock.png");
+    nce_surface_check("com.android.deskclock", "/data/nce/desktop-clock.png");
     nce_framework_check("NceAppData", 60);
     nce_android_command({"activity", "start-activity", "-a", "android.intent.action.SHOW_ALARMS",
-                         "-p", "com.google.android.deskclock"},
+                         "-p", "com.android.deskclock"},
                         "Starting:");
-    nce_surface_check("com.google.android.deskclock", "/data/nce/desktop-clock.png");
+    nce_surface_check("com.android.deskclock", "/data/nce/desktop-clock.png");
     puts("{\"test\":\"android_clock_alarm_activity\",\"passed\":true}");
     nce_android_command({"activity", "start-activity", "-n",
                          "com.google.android.documentsui/com.android.documentsui.files.FilesActivity"},

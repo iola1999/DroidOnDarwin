@@ -405,7 +405,6 @@ def android_data(out):
         'system/app/GoogleExtShared/GoogleExtShared.apk',
         'system_ext/priv-app/SystemUIGoogle/SystemUIGoogle.apk',
         'system_ext/priv-app/SettingsGoogle/SettingsGoogle.apk',
-        'system_ext/priv-app/GoogleServicesFramework/GoogleServicesFramework.apk',
         'product/app/PrebuiltDeskClockGoogle/PrebuiltDeskClockGoogle.apk',
     )
     for name in desktop_apps:

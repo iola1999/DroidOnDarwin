@@ -96,7 +96,7 @@ def prepare_vendor_module(name):
 
 
 def prepare_aosp_components():
-    """校验并提取 API 36 的桌面和模块元数据，保留原始签名。"""
+    """校验并提取 API 36 的桌面、时钟和模块元数据，保留原始签名。"""
     target = ROOT / 'android36-aosp-components'
     entries = (
         ('system_ext', 'priv-app/Launcher3QuickStep/Launcher3QuickStep.apk',
@@ -105,6 +105,10 @@ def prepare_aosp_components():
          '6c433bbf5663c51f1082d48252a252b5b4eff265747fca873ac70566f428248d'),
         ('system_ext', 'priv-app/Launcher3QuickStep/oat/arm64/Launcher3QuickStep.vdex',
          '213e1030dd57cc364f454615474b760e4eb9016784ade1bc9677e91c54799e13'),
+        ('product', 'app/DeskClock/DeskClock.apk',
+         '2213388d2a5c601562de6f6b887d3b849f35562ca98597743316426c7fdc3638'),
+        ('product', 'app/DeskClock/oat/arm64/DeskClock.vdex',
+         '6b73c635c56793a824490168885a104ca1115668af8686cd9c74327c713aa40e'),
     )
     files = [('/' + part + '/' + path, target / path.split('/', 1)[1])
              for part, path, _ in entries]

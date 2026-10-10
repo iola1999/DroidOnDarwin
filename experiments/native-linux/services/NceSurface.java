@@ -81,7 +81,7 @@ public final class NceSurface {
                     .getMethod("isUserUnlocked", int.class);
             String observed = "no focused task";
             long deadline = SystemClock.uptimeMillis() + 180000;
-            try (NceClockUi clock = "com.google.android.deskclock".equals(args[0]) ? new NceClockUi() : null) {
+            try (NceClockUi clock = "com.android.deskclock".equals(args[0]) ? new NceClockUi() : null) {
                 while (SystemClock.uptimeMillis() < deadline) {
                     SystemClock.sleep(250);
                     if (!(Boolean) isUnlocked.invoke(users, 0)) {

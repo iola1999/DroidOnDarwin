@@ -690,6 +690,9 @@ void nce_zygote_test()
                 nce_android_command({"settings", "put", "global", "device_provisioned", "1"});
                 nce_android_command({"settings", "put", "secure", "user_setup_complete", "1"});
                 nce_android_command({"settings", "put", "system", "screen_off_timeout", "2147483647"});
+                // Keep the preview's Google Clock APK and data, but expose the
+                // AOSP Clock whose local features run without Play services.
+                nce_android_command({"package", "disable-user", "--user", "0", "com.google.android.deskclock"}, "disabled-user");
                 // Configure the embedded display before SystemUI initializes keyguard.
                 nce_android_command({"lock_settings", "set-disabled", "true"}, "Lock screen disabled set to true");
             }

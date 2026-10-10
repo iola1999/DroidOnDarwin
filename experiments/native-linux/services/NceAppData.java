@@ -10,9 +10,9 @@ import java.io.FileOutputStream;
 import java.util.concurrent.TimeUnit;
 
 public final class NceAppData {
-    private static final String PACKAGE = "com.google.android.deskclock";
+    private static final String PACKAGE = "com.android.deskclock";
     private static final String LABEL = "NCE storage check";
-    private static final File RECORD = new File("/data/system/nce-clock-record-v1");
+    private static final File RECORD = new File("/data/system/nce-aosp-clock-record-v1");
 
     private static long findAlarm(String path) {
         if (!new File(path).isFile()) return -1;
@@ -31,17 +31,25 @@ public final class NceAppData {
         }
     }
 
+    private static long verifyRecord(File record) throws Exception {
+        try (DataInputStream input = new DataInputStream(new FileInputStream(record))) {
+            String path = input.readUTF();
+            long id = input.readLong();
+            if (input.read() != -1 || id < 0) throw new AssertionError("clock record format");
+            if (findAlarm(path) != id) throw new AssertionError("clock data did not survive restart");
+            return id;
+        }
+    }
+
     public static void main(String[] args) throws Exception {
+        File preview = new File("/data/system/nce-clock-record-v1");
+        if (preview.exists()) verifyRecord(preview);
+        System.out.println("{\"test\":\"android_preview_clock_data_preserved\",\"passed\":true,"
+                + "\"present\":" + preview.exists() + "}");
         boolean restored = RECORD.exists();
-        String path;
         long id;
         if (restored) {
-            try (DataInputStream input = new DataInputStream(new FileInputStream(RECORD))) {
-                path = input.readUTF();
-                id = input.readLong();
-                if (input.read() != -1 || id < 0) throw new AssertionError("clock record format");
-            }
-            if (findAlarm(path) != id) throw new AssertionError("clock data did not survive restart");
+            id = verifyRecord(RECORD);
         } else {
             // Let the actual application handle its public SET_ALARM intent.
             // A repeating alarm retains its template after an occurrence.
@@ -60,7 +68,7 @@ public final class NceAppData {
             if (command.exitValue() != 0) throw new AssertionError("clock intent failed");
             String[] paths = {"/data/user_de/0/" + PACKAGE + "/databases/alarms.db",
                               "/data/user/0/" + PACKAGE + "/databases/alarms.db"};
-            path = null;
+            String path = null;
             id = -1;
             for (int attempt = 0; attempt < 40 && id < 0; ++attempt) {
                 for (String candidate : paths) {

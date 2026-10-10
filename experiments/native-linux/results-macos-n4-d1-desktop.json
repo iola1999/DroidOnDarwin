@@ -1,0 +1,565 @@
+{
+  "date": "2026-10-10",
+  "stage": "N4-D1 AOSP Clock desktop validation",
+  "host": {
+    "cpu": "Apple M5 Ultra",
+    "os": "27.0"
+  },
+  "configuration": {
+    "mapping": "demand",
+    "linux_ram_bytes": 1073741824,
+    "jit_threshold": 1024,
+    "hardware_timeout_multiplier": 10,
+    "NCE_MAP_PROFILE": true,
+    "NCE_FAULT_TRACE": true,
+    "display": [
+      360,
+      640
+    ]
+  },
+  "storage_started_from_seed": false,
+  "storage_case": "Upgrade the preceding Google Clock test data image; create AOSP Clock data, then restart the host twice",
+  "kernel_sha256": "28fc07a7bb93cd46d331ee77d12207d23c608eaebba3365406f3251aa98f9d76",
+  "system_image_sha256": "8fe7d4980abcb41774db4c31775786570e9159dfd8f8f0f2d72b59a433c26756",
+  "input_sha256": {
+    "experiments/native-linux/lkl-main.c": "0a4545514f2db7ae03a3961ed41020289a6d8a35ca2b497c872df905bdefecc6",
+    "experiments/native-linux/lkl-host.c": "d47217d388e6bb6e70941d5840268a7bf80de89fb526beb37bc608b6c0c14dc3",
+    "experiments/native-linux/nce.c": "ed745f1502bdb751b2d990e8c0d6e5455df337d1ee034dfb7ab488328b2a85c4",
+    "experiments/native-linux/entry.S": "853afbb6718066cfa41a0e4db996e0935cd76766655f2045bc1c756544d524fb",
+    "experiments/native-linux/lkl-process-host.c": "18859554d55f0125c68a7f5a91ccf924fc2a276949dc55df08d29d3e720db61f",
+    "experiments/native-linux/programs.c": "27e8b193c422bd771359f0e286a37a3d4d25165de48431136a025a595198dce1",
+    "experiments/native-linux/memory.c": "aaa73f7b6824422d0b4663be79b053ea9f27a4ec3026c7cf4c2d317820d5bc55",
+    "experiments/native-linux/execute-check.c": "afb5d3436392a5ef4b53871028e9a3c668a9bcae15b5b4bd33a8c9c893184ca8",
+    "experiments/native-linux/compute.c": "dbd8e347a783f3d94525abb8ab01cf96491710d5d4f373d39343d259de53f985",
+    "experiments/native-linux/input.c": "4e95e2121a29b3d675ab36c613347cd149d2e5233607d094701991ec9d576db5",
+    "experiments/native-linux/session.c": "7e14ef3c52b5119a49c72719ac8c2c14e2e2028586479e01fb5285b5bfc59d34",
+    "experiments/native-linux/lkl-bridge.c": "15ecb94c6da3451b66dfc784b189792d220c73faaf1727a8e6121b48456cbd37",
+    "experiments/native-linux/nce.h": "58e305f0ace78a6d03084ca07133f3a76f60141e2ed12cdf4d0040e20e39540f",
+    "experiments/native-linux/guest-registers.h": "90a4d5b6e613ce4f2cda359dcd05f6e8d876a788bc437c2c1e13e05403e4627a",
+    "experiments/native-linux/guest.S": "0e1e3def0151e5d1fc605378f3e55ef65fc0b0364b83dfd7b65df7d1d482e372",
+    "scripts/probe_lkl.py": "e8aa1242cdffe95977ec9a1019e375c7bfbc67b4a922ae76678c11e54a4a920e",
+    "experiments/native-linux/memory.h": "aeaaf612df0a787fbfd6411a45f539807bc49e1c766625bede5e31e87159ddd5",
+    "experiments/native-linux/layout.h": "c4651e35ca05e96c298640de5ffd1116ba4833b8eb6063ce002503ba49d139f5",
+    "experiments/native-linux/execute-check.h": "3bf58a2a09ea16d489f96b49f50bfaa7b1106216c15f40a7d4bde588d53f2541",
+    "experiments/native-linux/input.h": "c7a1092bc3fbd87f1a329afad8b0bc798bd02cbac7da6f9c468959152ff80b42",
+    "experiments/native-linux/session.h": "f6d18e13285a0e7785bb6b7c2540dc5d2625dcd87aa19667f68569e73dc97e3d",
+    "scripts/lkl_nce_patch.py": "4dccf22dfde9746b922430677d09f08bd1ebbf450e8dacf6ab064a8e5b20790a",
+    "experiments/native-linux/lkl-elf.h": "addf40a6adc1a51ddb68bffa315f1c74afed260508cc154be1d696b149ceb99b",
+    "experiments/native-linux/lkl-fcntl.h": "a93dbe60bbed231461aead2289756e46996e8486b50e895a5b4af798ee98da47",
+    "experiments/native-linux/lkl-mmu-context.h": "38b62f9a8056956cf41752467a9b6ff4ee0a31f9e339013600c23bd87e5c56d0",
+    "experiments/native-linux/lkl-mmu.h": "a38bb934c2e33959d92c1bde7ad2aebd1bf6c77343956669bb59da6c8e11f2ca",
+    "experiments/native-linux/lkl-seccomp.h": "95aa047dcb9ececaa38898eeebab120953c65448e05331cc079eae32807de7ac",
+    "experiments/native-linux/lkl-signal.h": "d16a7718ab952a7f2f53adc6b6381a0cb2fd6b352f47cefb1ec72f0d862d1491",
+    "experiments/native-linux/lkl-syscall.h": "a895d2f1e7aa6a34b5645d21b6fcedbcd2952dd69ad6b6067724d51f47c1cfac",
+    "experiments/native-linux/lkl-tlbflush.h": "e9140c9203d073e3a46d2c2f0e3f88b816c8ddc652fba53bca1196b31b173eea",
+    "experiments/native-linux/lkl-uaccess.h": "7a326a80c7c386f2a94f1c375a84b490e2bc16a9287e310a02f7ab649fb548b3",
+    "experiments/native-linux/lkl-nce-block.c": "2a8d0356c87a73575f760755d4666a53ecacca3d55eb33dea797f1ebbb8e3b60",
+    "experiments/native-linux/lkl-nce-elf.c": "ddf6494c012b2017f26a647bd9a4eb0002f7fa96a93a6c0a491da883f259ff20",
+    "experiments/native-linux/lkl-nce-mmu.c": "4b0a520f77b7305d13ce01026862a694710caf7a0c770edb8e7376949377384a",
+    "experiments/native-linux/lkl-nce-process.c": "2466114a2c3547460d069995b47c2b34e205c7001a05711d9afea8f38f0454ee",
+    "experiments/native-linux/lkl-nce-reclaim.c": "0341deb0311e7262427e4d0d6e5c0f335cb19af018ab227e4615840c736be293",
+    "experiments/native-linux/lkl-nce-signal.c": "d5e0d29dbc408dd419edfb5b5006ce25fca62eed0b64dfeb80c0aa573a17422e",
+    "experiments/native-linux/exec-guest.S": "833d10bd1b10f0b3a35c7324aaec8a24b1774a42200c24389bd772facb0244e8",
+    "experiments/native-linux/programs.h": "4126ee8394996ef4bf5c68f4f210cd46147bcfb81dbef60bea53793528982e08",
+    "scripts/build_nce_userspace.py": "d9fdf0d9db3046521181e01a071a6f8166babae46dd9bec02d34e68698450188",
+    "experiments/native-linux/dispatch-test.c": "5211698bd58018aae173d4c6d75daeeb0e4eb357fb2742c4c08d595bc9d7b55b",
+    "experiments/native-linux/host-context-test.c": "d2f604cbb13bde655de4a930d89f08e348c979f74f9dfc049da4d30796b1f072",
+    "scripts/prepare_android_runtime.py": "d18f79cbe9e97ce69d80be7ef22e50dde40eb166525d0c8c991ed8d80f31c6b0",
+    "scripts/prepare_android_modules.py": "661c32667048fad3b371e95a5dcf47726d4ab2242727db51ef38731764c9adc4",
+    "scripts/prepare_android_desktop.py": "0ab4eedb447d2e1b124d3e1df0982f99c05dcbde715087553fe25ebf8d799cba",
+    "scripts/build_android_linker.py": "8df4e3342c2948021e2b247bd67e48e3a2117e45e5d790f697c620e3367817fc",
+    "scripts/build_android_libc.py": "00e7a51f553911f71983a86df8d5ff3da1885fcd407c0dd9dc1ee837a0aa6ae5",
+    "scripts/build_android_art.py": "cfb7f984b638e2303eee9cce1ce6e2acf0c8ea8298898fa81cf4b7ed2042b3c5",
+    "scripts/build_android_crypto.py": "9f3e72a9f3059bef68f2b014a8600e6529c89201e8e54199f125e0d615ef9d6b",
+    "scripts/build_android_gralloc.py": "d5e9fddfe4d5da96f93fa790cec2f491645d1e0da80ab9ebf653f4fc9d6efd8c",
+    "scripts/build_android_network.py": "74d6062ea085af21780553d27ec64e320900a0b0e1f7adc3e1c8cdf47483bde4",
+    "patches/nce-gralloc-memfd.patch": "9bec559a3604f40ce6cf292e9680e0baa99f5d1e5fe90f86f6a634f10226ffb7",
+    "experiments/native-linux/android-sources.json": "baa0cd4e5fed6b7aa12533561e027e07b53a32725c4a98f212d2da238d64e12e",
+    "experiments/native-linux/art/NceInlining.java": "41442df9b97a4b1c6fa5d7f82c7f35269b5af0c67714a76e8469d1ccebf57d89",
+    "experiments/native-linux/art/NceIntrinsics.java": "254a658f02b51c9fb59e12760d82555fcd8d23ebf46f76a859a9b01b1f69158f",
+    "experiments/native-linux/art/NceProxy.java": "2f5b363c069ee1ea19768457e9cb7931917381fd9cd183f65812b9279e450b40",
+    "experiments/native-linux/art/NceVolatile.java": "28863b49b1e1f71f015f10b6c45ebf04393e718de45ccad35a5e23070e9a6b26",
+    "experiments/native-linux/art/NceWorkload.java": "2ab0909f3a0e99d3a4bce911f959062b9f7a25abf53463f4e45865323e0a6d90",
+    "experiments/native-linux/art/android16.patch": "342182ccf23877d0be817d5b3df3828249732e450e15abda33e700ec02c5bf1e",
+    "experiments/native-linux/art/jit_control.cc": "1bef285b4a8662a43a6bb04d672f0d42c27011ac7822ef42872f2d995f84a067",
+    "experiments/native-linux/art/ld.config.txt": "dc106c5021978b80e002a74cb56941b4e8381a66a2f00ffc7116dbabc946d89b",
+    "experiments/native-linux/art/public.libraries.txt": "366951154ef964f6e055ac1071d6dba9d6dd692360b7b9d4a66def1036727c66",
+    "experiments/native-linux/art/reference_heap.c": "a10220f756efd4891930521667bcbf6e86b9e6a3d646d910c934884f57782be2",
+    "experiments/native-linux/art/reference_heap.h": "c814b35b45c201f3893f3e8739f0ea5a0d309facbf70a9ba1f2fd8bb9ddaf71f",
+    "experiments/native-linux/art/reference_heap_test.c": "8c33dc74cff193951e5243cdbbb1f401ad69a1d3963134bbde0e54bbada0d84e",
+    "experiments/native-linux/art/sources.json": "a66d085c58d109c16e99205fe83514cf5a41a60ed372fd924e374007b947f82b",
+    "experiments/native-linux/userspace/android-services-test.cpp": "adc2760f0ca52cbdbd33105a06d22020439c310bd7aabbd458131abb1d095c5c",
+    "experiments/native-linux/userspace/apex-service.cpp": "40f22ed6571cdfd0fe5441540f8e4e1eb3e6b59c0ea4e05a0244c3b006fe7200",
+    "experiments/native-linux/userspace/art-test.c": "d7e2993d661fd20f2904f7c7706e67b6e91bf5d20e737db3c912a7bc2239cdeb",
+    "experiments/native-linux/userspace/binder-test.c": "65b1157ce3ad45c30d3a225f9ecbade4eac5db870b639af683ac3870772e3502",
+    "experiments/native-linux/userspace/bionic-test.c": "816ea167d6c81346e41af3124da4f7f345e9594d148a5400ee43b8ba70dfcbba",
+    "experiments/native-linux/userspace/cfi-library.c": "c6c1dbfa7a6e6f84283f9881f421b264227d51a9bd74ffd6aca8ad6e27b3f04a",
+    "experiments/native-linux/userspace/cfi-test.c": "425798dbd9b56d37ceddd945e87bfc5a762cd0c7acc90243b06c74e190de1aa1",
+    "experiments/native-linux/userspace/cgroup-test.cpp": "500cc19577709255ef4db79d03d5ab60b9c2f135407da638be236eb930537dc8",
+    "experiments/native-linux/userspace/code-tests.c": "6ab3334c22be91f739ef7197df6282d144e4688b912233bceb12cc2ba608eda8",
+    "experiments/native-linux/userspace/crypto-tests.cpp": "fc2132ffe774ce353dd935e77030e78ed87f3e8442ce6d0673f46e6418b89abf",
+    "experiments/native-linux/userspace/dependency.c": "753a84c1ae29ab3dd1d8f7b77c741cf8cb3784feb72aa601d358a19f12a0b721",
+    "experiments/native-linux/userspace/desktop-session.cpp": "210f4244a084e1adb1da975bcd31409bb8a38422f82fb075730b001c195fffaf",
+    "experiments/native-linux/userspace/desktop-session.h": "1aeb8799af6bf2d639dc6d9f2e0e9eeb23f25ce3dadd6f6a159abbbd1fb32f03",
+    "experiments/native-linux/userspace/display-service-test.cpp": "130c68d0424361d685f4d5a03aedab2fa60a44e25a81500921eb9806eb709e13",
+    "experiments/native-linux/userspace/dynamic.c": "ab07423aaa383f7903dddb9e06ad34aca0d8d6c2c8a10e0b844e38b21146759b",
+    "experiments/native-linux/userspace/egl-test.c": "f2b9c5c92ef6be72d495a852e580637348b84c814eb004eac655f2d28fc14269",
+    "experiments/native-linux/userspace/file-tests.c": "ba844093595dd91ca3634ffcf7bf5531ba634fc176c2e4f1167a13ab86a515fb",
+    "experiments/native-linux/userspace/framework-test.cpp": "d617adabb1548a74dfb3b028fcf2609e9709a59aa15c94d685f69745c6e3ebe4",
+    "experiments/native-linux/userspace/gpu-test.c": "4321a0539fd8dff9ca2b06ac9029f6537f210022e694334891caf03ef191c4da",
+    "experiments/native-linux/userspace/gralloc-test.c": "7c292e14e894caa903a02a6bc23598ece6367b5b3da446ea47d1ed1e8174ff62",
+    "experiments/native-linux/userspace/host-poll-test.c": "b66c7e6f260f206ebc67a414cc28d74224e3bf8ec84ef00de14e77489bd19110",
+    "experiments/native-linux/userspace/init.c": "45eeb139957be97bd9a3ca4b72509e8b5de85463b231e7e4236be0f9b4e11356",
+    "experiments/native-linux/userspace/input-service.cpp": "7310151a8563c400c42ad20cb4c66171639360dff87d6b414738d2fb5d653a92",
+    "experiments/native-linux/userspace/installd-test.cpp": "4b359078406d80889424a9e54aff0823e586c5644140c092a234de34840d63f8",
+    "experiments/native-linux/userspace/mm-bench.c": "f5a4aeef35fb962cccc46f7b14380a45a089e9fa74118445de0ce94d41563521",
+    "experiments/native-linux/userspace/mm-tests.c": "5f82eb1b1338a77b67eba47285d74136e3387d66d28505e9df08a8b85b5bf7fd",
+    "experiments/native-linux/userspace/plugin.c": "d7724184a5ae48178c3b96badd6a5a37d8585df30efb07d53b6a5d2ec20afbf1",
+    "experiments/native-linux/userspace/proc-exit-tests.c": "4d697d187bc40a40b2aeab0e0c88c3512a8639afc9e2ce8a008318db27b09e36",
+    "experiments/native-linux/userspace/property-service.cpp": "bfe1b3139e37c60f7c149902f36886e85823ca8c80c7cad6ccac08d3431338d2",
+    "experiments/native-linux/userspace/reclaim-test.c": "c93ec8238aec1aa8d988abde28eb5c57c7418893479fd403f6c8ee36de9f3bb6",
+    "experiments/native-linux/userspace/seccomp-tests.c": "7ac584c36df43561ad7c947eeec40ba0c39188a28d1a79245100b4f683626931",
+    "experiments/native-linux/userspace/shell-tests.sh": "52c1cc230ccf2f9d02d4b5c5502bf460ae71f211d97d39f87a5da113160eb4bd",
+    "experiments/native-linux/userspace/signal-registers.S": "12dcddd707a79ec336c3a115af0956669a6208e92bdcc87a2c64751251701355",
+    "experiments/native-linux/userspace/signal-tests.c": "43b86323b4dd66c98db20065b8cc41d868fb7ab538135d6eba9d7c65a263a549",
+    "experiments/native-linux/userspace/sigreturn.S": "38d3d7dcfb32d84698bd3a7733e34bfbb8c534c1bb8cbfc00d0031a24db3ed7b",
+    "experiments/native-linux/userspace/sigreturn.ld": "68da814c0446db7c9e4c5dbd6b670b82274dd6d749aca93fe5324aacf49cfc27",
+    "experiments/native-linux/userspace/storage-layout.cpp": "e2bd2bba3aba767fb492cad600de06883810e16dedf0b6584d1d37714679721a",
+    "experiments/native-linux/userspace/storage-test.c": "1b5a8b10384d9c591df6f989e8cdd8aea21b2407b220496c131cdbb5ed3f6de7",
+    "experiments/native-linux/userspace/suspend-test.cpp": "9a438e658a1254d374135d9e8853abb9dcbafa0474c915dbcb4c72c1ed6f3d8d",
+    "experiments/native-linux/userspace/worker.c": "7fde14d029471084016690a5e5a7804cd41380eee825bee8121536f778928f78",
+    "experiments/native-linux/services/NCE_Touch.idc": "181ae37a4a3fcf919b7df72d97218c33df2dfdd4c4a1924a34a038758c6f7aec",
+    "experiments/native-linux/services/NCE_Touch.kl": "7165057ef302448aaaa997b0661ff5c1e3d748ef9ff7420689c2dbaab2fb3a1a",
+    "experiments/native-linux/services/NceAppData.java": "575a0cbc97f0168bdcd7f637ef0b87a2eb5d049dc29c1af0bde162cf62b76d1a",
+    "experiments/native-linux/services/NceClockUi.java": "0d4ee189f42d8c72972e9c86a7aaa24608fdb03a23cdf74c4d9879c1aabe3f8b",
+    "experiments/native-linux/services/NceFramework.java": "c20379a865976e243126445e1d004f82cd9d9d346b8acb3ccbfb99f7c725d3f6",
+    "experiments/native-linux/services/NceKeystore.java": "61bef9906203975cc1a66a086c84fc93c612b2053c14837a5621cb8198378b69",
+    "experiments/native-linux/services/NceShutdown.java": "003bd83c76e51431b203934a3912013ff14cbdb453e9f677cb26480268cda137",
+    "experiments/native-linux/services/NceStorage.java": "fcbceaff92eb161ac8042236757f51f0ce124c3c9f1eab8127fec17a006f281e",
+    "experiments/native-linux/services/NceSurface.java": "0eee8fd9a1bbbe7724cd64f7bb905fab7aba65107df5c2c75b05a44f789ec377",
+    "experiments/native-linux/services/NceZygoteChild.java": "e96207a7e67abd3e9651aec88885dc8e4e35d8ee2bd1766321df2374ce001c5a",
+    "experiments/native-linux/services/apex/android/apex/ApexInfo.aidl": "51aa1cbc7671889f24002d7d4503dce43157056770498ff1f99a8bae12b27013",
+    "experiments/native-linux/services/apex/android/apex/ApexInfoList.aidl": "5e49deb7d235b098ab6ffc19006ae0c57158e478e940ceaa3d290d041a057dd6",
+    "experiments/native-linux/services/apex/android/apex/ApexSessionInfo.aidl": "c4283eb43c806c138be969a570ae2c2c73182fd4b05909860c1bdaefe4022242",
+    "experiments/native-linux/services/apex/android/apex/ApexSessionParams.aidl": "496a2dc5ff4b3cb1a3eb65e3d1ac7973dfbd67f888777d22e602d9b6fee567a5",
+    "experiments/native-linux/services/apex/android/apex/CompressedApexInfo.aidl": "664f80e6481a1911b6a779c40c502a8f8e0c505ea3878953133cc7877355436f",
+    "experiments/native-linux/services/apex/android/apex/CompressedApexInfoList.aidl": "c41afe66ea75a92c4a847454489c897a023b2ff3e15053189f35dc29f83676f1",
+    "experiments/native-linux/services/apex/android/apex/IApexService.aidl": "453ea41d5ce6afe1437f5cc6c1e90fa7a552007e1e9ec47c5b1b717d488bb2e3",
+    "experiments/native-linux/services/apex/apex_manifest.proto": "e9505454f5fa759c6364e8680542f48b219f1b57d394a63deadfcfc6e8268ce7",
+    "experiments/native-linux/services/apex/sources.json": "7f41436e5d00c75a388c3b649b8a02e9245fc3edd43685acee21b4ba315d82f5",
+    "experiments/native-linux/services/cgroups.json": "5f3af0749bf377db4a5187b619166894bb609653b5161b349abaa7306cdcd516",
+    "experiments/native-linux/services/file_contexts": "d2c49eb3064a96ab435492f22481d0a7b980a86233ce19e7014a5e9c80815de8",
+    "experiments/native-linux/services/framework-log.c": "b4c79827cbe40c4f1b2efdab8a0e93808d2aa0889e55bbeafa0a9d2d03e68802",
+    "experiments/native-linux/services/fstab.nce": "6d23d4618d00071e903d8d93ce8972a61e1527787c299fb44e0fc1c2b7d22cf8",
+    "experiments/native-linux/services/installd/android/os/CreateAppDataArgs.aidl": "395f48daec3b728c2b7b9949ed0dc1d5de34192971475fb2b2eba348d7cb9819",
+    "experiments/native-linux/services/installd/android/os/CreateAppDataResult.aidl": "131dcd1af2b29d48490033b494432cda834d9b98ebdf199c82406cb948a8cd07",
+    "experiments/native-linux/services/installd/android/os/IInstalld.aidl": "a29f74f099ba5aa224a901c3f236e60a17d6d4c3c7999694f9e090bb7fcf8784",
+    "experiments/native-linux/services/installd/android/os/ReconcileSdkDataArgs.aidl": "85b1a6ca20cd53b156b44aaa1444aa54bf02679e50017b48c2d06705b64f3bfe",
+    "experiments/native-linux/services/installd/android/os/storage/CrateMetadata.aidl": "292d89d237a5292d25399d722b13177a9263c5e21d5e39ca86ffa12d14be09da",
+    "experiments/native-linux/services/installd/sources.json": "dccabdbdd9b56efc85ec815f23bfb0c537e1feaa32371e779f135a76b73b9572",
+    "experiments/native-linux/services/nce-features.xml": "3a4d73896e1abd736daa031da2797101307023dbd23c47b2fbbf10b1d133c704",
+    "experiments/native-linux/services/nce-policy.cil": "723b75c76a9f5a4799d170bbbb5e535ea0d9decc94123e3ae76a69bb6ba0addc",
+    "experiments/native-linux/services/network-sources.json": "c47b7f8166ed712c356b454233dbb38886f4b3228aa0f660beb8816350b8835e",
+    "experiments/native-linux/services/property-info.cpp": "53e933824b647db3f64b6cc610aebf8e4e181a0ee8c3f215303c9e74856bd982",
+    "experiments/native-linux/services/seapp_contexts": "ea5539cd26de26ae1b375b01ca8e3707ed24d23d7e32770bc4b692074046b3c2",
+    "experiments/native-linux/services/service_contexts": "8b3ffe1f8497bb9755aafb8397e420e69d149e52f47157fa5c29c42096ef93ec",
+    "experiments/native-linux/services/sources.json": "b4bf7da997e6fe7011d03eb26eca434ca084cc16f761f4d18d55c12a09853ade",
+    "experiments/native-linux/services/suspend/android/system/suspend/ISystemSuspend.aidl": "4ef9b85fbdf5fb18fc9e7cc50d184a2d9aa003b624ddcc12d128477b63e6062d",
+    "experiments/native-linux/services/suspend/android/system/suspend/IWakeLock.aidl": "663fb611a9b421168ed9d74b96a4fc67d16ed7c371fd5e39f2ab199f1575716c",
+    "experiments/native-linux/services/suspend/android/system/suspend/WakeLockType.aidl": "fcd5e48f11ad311cd10dcae0689d6f64ae5db74b07357b23edad14015ad8f019",
+    "experiments/native-linux/services/suspend/sources.json": "7a42ce14ef2f78f6698e1bc0b71f26726f0fa335423ab3dd185df77d63f084dd",
+    "experiments/native-linux/services/task_profiles.json": "d61e618ce83f7587860f0b36a152795f1f3bf5f4f12c938ccb5b3db1bf4a8dc1",
+    "experiments/native-linux/services/vendor-manifest.xml": "1eb0d66f9e783bf168a111d468d46620a7b114ecd55794f63b5ab684f5173ca7",
+    "experiments/native-linux/graphics/android-sources.json": "8918989ae7b6703e6301809107dfc4b83af4ef04183d9450c9a16008519260f6",
+    "experiments/native-linux/graphics/channel-test.cpp": "7bc4e9c42067855f8cd198d7d9357eeb62dff907a0492bbe4656783602ef2a15",
+    "experiments/native-linux/graphics/guest-pipe.c": "ced626792fde7984dd4f6ccf09e4acebbce7bc86898c783e5583dc025260ebda",
+    "experiments/native-linux/graphics/host-graphics.cpp": "099e66814a919cd08ade810e281a96166845118711255a4371596d5361631ac0",
+    "experiments/native-linux/graphics/host-graphics.h": "b2ed42bd0bd016faeb36d34175b85c2e759f63ad95c2cce8752db02cc890ac8c",
+    "experiments/native-linux/graphics/protocol/gles2_opcodes.h": "006c946813dd6e35a7093b5f752e9637fcf1cb97d8fb0c9552a2fd86c0ff8526",
+    "experiments/native-linux/graphics/protocol/renderControl_opcodes.h": "cdfe0e627071592e0176c03a7e75cea86caac82e8750d57befd2a3c2868e4627",
+    "experiments/native-linux/graphics/protocol/sources.json": "f60961e22969d99dbfeeb11a8564479f5eb6b9089b6dec7f53490be7643f2f28",
+    "experiments/native-linux/graphics/window-test.mm": "fec6a5f6541dc223fdea0b0a4d58c8cd46797288c08519e8a0a4cbd78dac0af8",
+    "scripts/test_nce_userspace.py": "9dd5e2f66da0b3a10bee68a1c497f31e35e6f802465fbb2d628a103d1a44a1a3"
+  },
+  "runs": {
+    "lkl": {
+      "completed": true,
+      "successful_named_tests": 137,
+      "checks": [
+        {
+          "test": "linux_ext4_persistence",
+          "generation": 3,
+          "bytes": 1048576,
+          "passed": true
+        },
+        {
+          "test": "android_keystore_persistence",
+          "passed": true,
+          "restored": true
+        },
+        {
+          "test": "android_desktop_visible_activity",
+          "passed": true,
+          "package": "com.android.launcher3",
+          "sampled_colors": 470
+        },
+        {
+          "test": "android_desktop_visible_activity",
+          "passed": true,
+          "package": "com.android.deskclock",
+          "sampled_colors": 122
+        },
+        {
+          "test": "android_clock_controls_ready",
+          "passed": true
+        },
+        {
+          "test": "android_preview_clock_data_preserved",
+          "passed": true,
+          "present": true
+        },
+        {
+          "test": "android_application_data_persistence",
+          "passed": true,
+          "package": "com.android.deskclock",
+          "row_id": 3,
+          "restored": false
+        },
+        {
+          "test": "android_desktop_visible_activity",
+          "passed": true,
+          "package": "com.android.deskclock",
+          "sampled_colors": 138
+        },
+        {
+          "test": "android_clock_controls_ready",
+          "passed": true
+        },
+        {
+          "test": "android_clock_alarm_activity",
+          "passed": true
+        },
+        {
+          "test": "android_desktop_visible_activity",
+          "passed": true,
+          "package": "com.google.android.documentsui",
+          "sampled_colors": 45
+        },
+        {
+          "test": "android_desktop_launch_commands",
+          "passed": true,
+          "applications": 2
+        },
+        {
+          "test": "android_framework_shutdown",
+          "passed": true
+        },
+        {
+          "test": "android_system_process_groups_stopped",
+          "passed": true
+        },
+        {
+          "test": "linux_data_readonly_shutdown",
+          "passed": true
+        },
+        {
+          "test": "linux_nce_context_lifetime",
+          "allocated": 2869,
+          "freed": 2869
+        }
+      ],
+      "timings": [
+        "10-10 01:56:42.804   204   204 V SystemServerTiming: StartServices took to complete: 40843ms",
+        "10-10 01:56:56.251   204   218 I ActivityTaskManager: Displayed com.android.settings/.FallbackHome for user 0: +14s834ms",
+        "10-10 01:58:27.596   397   397 V SystemUIBootTiming: StartServices took to complete: 84155ms",
+        "10-10 01:58:49.445   204   218 I ActivityTaskManager: Displayed com.android.launcher3/.uioverrides.QuickstepLauncher for user 0: +1m19s211ms",
+        "10-10 01:59:28.743   204   218 I ActivityTaskManager: Displayed com.android.deskclock/.DeskClock for user 0: +18s475ms",
+        "10-10 02:00:12.396   204   218 I ActivityTaskManager: Displayed com.google.android.documentsui/com.android.documentsui.files.FilesActivity for user 0: +19s169ms"
+      ],
+      "java_fatal_exceptions": 0,
+      "anrs": 0,
+      "source_log_sha256": "9860542a7e2e3eb6e91a8846bacc2099054075d46f2b50b46551291c0f0e5802"
+    },
+    "dispatch": {
+      "completed": true,
+      "successful_named_tests": 137,
+      "checks": [
+        {
+          "test": "linux_ext4_persistence",
+          "generation": 4,
+          "bytes": 1048576,
+          "passed": true
+        },
+        {
+          "test": "android_keystore_persistence",
+          "passed": true,
+          "restored": true
+        },
+        {
+          "test": "android_desktop_visible_activity",
+          "passed": true,
+          "package": "com.android.launcher3",
+          "sampled_colors": 470
+        },
+        {
+          "test": "android_desktop_visible_activity",
+          "passed": true,
+          "package": "com.android.deskclock",
+          "sampled_colors": 145
+        },
+        {
+          "test": "android_clock_controls_ready",
+          "passed": true
+        },
+        {
+          "test": "android_preview_clock_data_preserved",
+          "passed": true,
+          "present": true
+        },
+        {
+          "test": "android_application_data_persistence",
+          "passed": true,
+          "package": "com.android.deskclock",
+          "row_id": 3,
+          "restored": true
+        },
+        {
+          "test": "android_desktop_visible_activity",
+          "passed": true,
+          "package": "com.android.deskclock",
+          "sampled_colors": 138
+        },
+        {
+          "test": "android_clock_controls_ready",
+          "passed": true
+        },
+        {
+          "test": "android_clock_alarm_activity",
+          "passed": true
+        },
+        {
+          "test": "android_desktop_visible_activity",
+          "passed": true,
+          "package": "com.google.android.documentsui",
+          "sampled_colors": 45
+        },
+        {
+          "test": "android_desktop_launch_commands",
+          "passed": true,
+          "applications": 2
+        },
+        {
+          "test": "android_framework_shutdown",
+          "passed": true
+        },
+        {
+          "test": "android_system_process_groups_stopped",
+          "passed": true
+        },
+        {
+          "test": "linux_data_readonly_shutdown",
+          "passed": true
+        },
+        {
+          "test": "linux_nce_context_lifetime",
+          "allocated": 2846,
+          "freed": 2846
+        }
+      ],
+      "timings": [
+        "10-10 02:01:33.739   205   205 V SystemServerTiming: StartServices took to complete: 34385ms",
+        "10-10 02:01:50.606   205   218 I ActivityTaskManager: Displayed com.android.settings/.FallbackHome for user 0: +17s735ms",
+        "10-10 02:03:03.106   393   393 V SystemUIBootTiming: StartServices took to complete: 66970ms",
+        "10-10 02:03:45.387   205   218 I ActivityTaskManager: Displayed com.android.launcher3/.uioverrides.QuickstepLauncher for user 0: +1m14s251ms",
+        "10-10 02:04:06.891   205   218 I ActivityTaskManager: Displayed com.android.deskclock/.DeskClock for user 0: +14s358ms",
+        "10-10 02:04:35.641   205   218 I ActivityTaskManager: Displayed com.google.android.documentsui/com.android.documentsui.files.FilesActivity for user 0: +13s276ms"
+      ],
+      "java_fatal_exceptions": 0,
+      "anrs": 0,
+      "source_log_sha256": "92fbaff7139aee8ae860bef38d9250f469809929ef9f034e58c183ae3ffa2a32"
+    },
+    "window": {
+      "completed": true,
+      "successful_named_tests": 138,
+      "checks": [
+        {
+          "test": "linux_ext4_persistence",
+          "generation": 5,
+          "bytes": 1048576,
+          "passed": true
+        },
+        {
+          "test": "android_keystore_persistence",
+          "passed": true,
+          "restored": true
+        },
+        {
+          "test": "android_desktop_visible_activity",
+          "passed": true,
+          "package": "com.android.launcher3",
+          "sampled_colors": 470
+        },
+        {
+          "test": "android_desktop_visible_activity",
+          "passed": true,
+          "package": "com.android.deskclock",
+          "sampled_colors": 150
+        },
+        {
+          "test": "android_clock_controls_ready",
+          "passed": true
+        },
+        {
+          "test": "android_preview_clock_data_preserved",
+          "passed": true,
+          "present": true
+        },
+        {
+          "test": "android_application_data_persistence",
+          "passed": true,
+          "package": "com.android.deskclock",
+          "row_id": 3,
+          "restored": true
+        },
+        {
+          "test": "android_desktop_visible_activity",
+          "passed": true,
+          "package": "com.android.deskclock",
+          "sampled_colors": 138
+        },
+        {
+          "test": "android_clock_controls_ready",
+          "passed": true
+        },
+        {
+          "test": "android_clock_alarm_activity",
+          "passed": true
+        },
+        {
+          "test": "android_desktop_visible_activity",
+          "passed": true,
+          "package": "com.google.android.documentsui",
+          "sampled_colors": 45
+        },
+        {
+          "test": "android_desktop_launch_commands",
+          "passed": true,
+          "applications": 2
+        },
+        {
+          "test": "android_framework_shutdown",
+          "passed": true
+        },
+        {
+          "test": "android_system_process_groups_stopped",
+          "passed": true
+        },
+        {
+          "test": "linux_data_readonly_shutdown",
+          "passed": true
+        },
+        {
+          "test": "linux_nce_context_lifetime",
+          "allocated": 2845,
+          "freed": 2845
+        }
+      ],
+      "timings": [
+        "10-10 02:06:00.625   206   206 V SystemServerTiming: StartServices took to complete: 36268ms",
+        "10-10 02:06:14.650   206   224 I ActivityTaskManager: Displayed com.android.settings/.FallbackHome for user 0: +15s103ms",
+        "10-10 02:07:53.212   394   394 V SystemUIBootTiming: StartServices took to complete: 89027ms",
+        "10-10 02:08:05.465   206   224 I ActivityTaskManager: Displayed com.android.launcher3/.uioverrides.QuickstepLauncher for user 0: +1m19s205ms",
+        "10-10 02:08:48.366   206   224 I ActivityTaskManager: Displayed com.android.deskclock/.DeskClock for user 0: +26s562ms",
+        "10-10 02:09:21.564   206   224 I ActivityTaskManager: Displayed com.google.android.documentsui/com.android.documentsui.files.FilesActivity for user 0: +15s384ms"
+      ],
+      "java_fatal_exceptions": 0,
+      "anrs": 0,
+      "source_log_sha256": "985bf5085fa6d3f6822d39c774416e4773f285af34e9ea5f0ed5cf5fc65afc43"
+    }
+  },
+  "limits": [
+    "Mac timings include regression and mapping/fault profiling; they are not iPhone performance measurements.",
+    "This build has not yet been exercised on iPhone.",
+    "Manual touch and task switching are recorded separately.",
+    "The Wi-Fi Settings page remains outside validated hardware support."
+  ],
+  "manual_session": {
+    "date": "2026-10-10",
+    "host_exit_code": 0,
+    "NCE_DESKTOP": true,
+    "NCE_MAP_PROFILE": false,
+    "NCE_FAULT_TRACE": false,
+    "observations": [
+      "Launcher swipe opens the application list containing Clock, Files and Settings.",
+      "AOSP Clock alarm page displays the persisted NCE storage check alarm.",
+      "The first explicit Clock launch requests Android notification permission; Allow dismisses the dialog.",
+      "Stopwatch starts and advances, then pauses at 46.95 seconds.",
+      "Home returns to Launcher; a second swipe opens the application list.",
+      "Files opens Downloads; its sidebar opens and Back closes it.",
+      "Recents displays Clock and Files cards; selecting Clock restores its paused stopwatch at 46.95 seconds.",
+      "Closing the host window stops Android normally."
+    ],
+    "java_fatal_exceptions": 0,
+    "anrs": 0,
+    "checks": [
+      {
+        "test": "android_framework_shutdown",
+        "passed": true
+      },
+      {
+        "test": "android_system_process_groups_stopped",
+        "passed": true
+      },
+      {
+        "session": "android_desktop_stopped",
+        "boot_completed": true
+      },
+      {
+        "test": "native_graphics_channels_released",
+        "passed": true,
+        "opened": 145,
+        "closed": 145
+      },
+      {
+        "test": "linux_data_readonly_shutdown",
+        "passed": true
+      },
+      {
+        "test": "linux_nce_context_lifetime",
+        "allocated": 1008,
+        "freed": 1008
+      }
+    ],
+    "ext4_superblock_clean": true,
+    "readonly_e2fsck_exit_code": 0,
+    "memory_after_framework": {
+      "memory": "after_framework",
+      "linux_available_kib": 996480,
+      "linux_shmem_kib": 9616,
+      "host_peak_rss_bytes": 1649000448,
+      "host_footprint_bytes": 1826409976,
+      "reclaimed_bytes": 1072693248,
+      "reclaimed_ranges": 308
+    },
+    "logs": {
+      "results": {
+        "path": "work/native-linux-nce/processes/manual-aosp-desktop-results.jsonl",
+        "sha256": "777e57326734959e81cd09d32c930ec181ae48c2aeebf83f63b051596e451889"
+      },
+      "console": {
+        "path": "work/native-linux-nce/processes/manual-aosp-desktop-console.log",
+        "sha256": "3f033b0402faf4d3d00a170eb6d148fbc5830f736007f0be0f99806d382aa53b"
+      },
+      "e2fsck": {
+        "path": "work/native-linux-nce/processes/manual-aosp-desktop-e2fsck.log",
+        "sha256": "3b8fe538d891726dbbd7923035196b57189e63a7afb15506a4ec8f93a024cddc"
+      }
+    },
+    "limits": [
+      "Package compilation overlapped initial boot; this session is not a cold-start performance benchmark.",
+      "No continuous frame-time capture was collected; observations establish behavior only.",
+      "Post-framework memory values describe this Mac session, not iPhone runtime memory.",
+      "Files uses low-contrast guest navigation icons on a light background; host navigation buttons remain usable."
+    ]
+  }
+}

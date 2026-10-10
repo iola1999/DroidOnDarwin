@@ -51,8 +51,8 @@ final class NceClockUi implements AutoCloseable {
         AccessibilityNodeInfo root = automation.getRootInActiveWindow();
         if (root == null) return false;
         try {
-            if (!"com.google.android.deskclock".equals(String.valueOf(root.getPackageName()))) return false;
-            return visible(root, "tab_menu_alarm", pixels) && visible(root, "tab_menu_timer", pixels);
+            if (!"com.android.deskclock".equals(String.valueOf(root.getPackageName()))) return false;
+            return visible(root, "alarms_recycler_view", pixels) && visible(root, "tabs", pixels);
         } finally {
             root.recycle();
         }
@@ -60,7 +60,7 @@ final class NceClockUi implements AutoCloseable {
 
     private static boolean visible(AccessibilityNodeInfo root, String id, Bitmap pixels) {
         List<AccessibilityNodeInfo> nodes = root.findAccessibilityNodeInfosByViewId(
-                "com.google.android.deskclock:id/" + id);
+                "com.android.deskclock:id/" + id);
         boolean found = false;
         for (AccessibilityNodeInfo node : nodes) {
             if (node.isVisibleToUser() && node.isEnabled()) {

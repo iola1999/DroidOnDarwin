@@ -57,12 +57,12 @@ def main():
                     'android_application_data_persistence', 'android_keystore_persistence',
                     'android_desktop_launch_commands', 'android_system_process_groups_stopped',
                     'linux_data_readonly_shutdown', 'android_clock_controls_ready',
-                    'android_clock_alarm_activity'}
+                    'android_clock_alarm_activity', 'android_preview_clock_data_preserved'}
         if missing := required - passed:
             raise SystemExit(f'Desktop validation missing in {mode}: {sorted(missing)}')
         visible = {r.get('package') for r in records
                    if r.get('test') == 'android_desktop_visible_activity' and r.get('passed')}
-        if not {'com.android.launcher3', 'com.google.android.deskclock',
+        if not {'com.android.launcher3', 'com.android.deskclock',
                 'com.google.android.documentsui'} <= visible:
             raise SystemExit('Desktop application pixels were not checked: ' + mode)
     for test in ('android_application_data_persistence', 'android_keystore_persistence'):
