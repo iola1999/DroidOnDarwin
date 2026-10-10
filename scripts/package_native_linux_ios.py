@@ -15,7 +15,7 @@ ROOT = Path(__file__).resolve().parents[1]
 EXP = ROOT / 'experiments/native-linux'
 INPUT = ROOT / 'work/native-linux-nce/processes'
 OUT = ROOT / 'work/native-linux-nce/ios'
-REVISION = '0.21.0'
+REVISION = '0.22.0'
 
 
 def run(args, timeout=600, **kwargs):
@@ -114,7 +114,7 @@ def main():
                 UISupportedInterfaceOrientations=['UIInterfaceOrientationPortrait',
                     'UIInterfaceOrientationPortraitUpsideDown',
                     'UIInterfaceOrientationLandscapeLeft', 'UIInterfaceOrientationLandscapeRight'],
-                CFBundleShortVersionString='0.21.0', CFBundleVersion='90')
+                CFBundleShortVersionString='0.22.0', CFBundleVersion='91')
     info['UTExportedTypeDeclarations'] = [{'UTTypeIdentifier': 'app.droidondarwin.image', 'UTTypeConformsTo': ['com.apple.package'], 'UTTypeDescription': 'DroidOnDarwin Image', 'UTTypeTagSpecification': {'public.filename-extension': ['droidimage']}}]
     info['CFBundleURLTypes'] = [{'CFBundleURLName': 'app.droidondarwin.benchmark', 'CFBundleURLSchemes': ['droidondarwin']}]
     plist(OUT / 'Info.plist', info)

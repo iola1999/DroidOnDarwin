@@ -21,6 +21,26 @@
 
 static pid_t allocator, composer, surfaceflinger;
 
+static void wait_for_service(pid_t child, const char *path, const char *service)
+{
+    for (unsigned i = 0; i < 300; ++i) {
+        int status;
+        if (waitpid(child, &status, WNOHANG) != 0) {
+            dprintf(2, "%s exited: status=%d\n", path, status);
+            CHECK(false);
+        }
+        AIBinder *binder = AServiceManager_checkService(service);
+        if (binder) {
+            AIBinder_decStrong(binder);
+            printf("{\"phase\":\"android_display_service_registered\",\"service\":\"%s\"}\n", service);
+            return;
+        }
+        usleep(100000);
+    }
+    dprintf(2, "%s did not register %s within 30 seconds\n", path, service);
+    CHECK(false);
+}
+
 static pid_t start(const char *path, const char *service)
 {
     pid_t child = fork();
@@ -33,23 +53,8 @@ static pid_t start(const char *path, const char *service)
         execl(path, path, nullptr);
         _exit(116);
     }
-    for (unsigned i = 0; i < 300; ++i) {
-        int status;
-        if (waitpid(child, &status, WNOHANG) != 0) {
-            dprintf(2, "%s exited: status=%d\n", path, status);
-            CHECK(false);
-        }
-        AIBinder *binder = AServiceManager_checkService(service);
-        if (binder) {
-            AIBinder_decStrong(binder);
-            printf("{\"phase\":\"android_display_service_registered\",\"service\":\"%s\"}\n", service);
-            return child;
-        }
-        usleep(100000);
-    }
-    dprintf(2, "%s did not register %s within 30 seconds\n", path, service);
-    CHECK(false);
-    return -1;
+    wait_for_service(child, path, service);
+    return child;
 }
 
 void nce_display_start()
@@ -65,9 +70,8 @@ void nce_display_start()
     composer = start("/vendor/bin/hw/android.hardware.graphics.composer3-service.ranchu",
                      "android.hardware.graphics.composer3.IComposer/default");
     surfaceflinger = start("/system/bin/surfaceflinger", "SurfaceFlinger");
-    AIBinder *binder = AServiceManager_checkService("SurfaceFlingerAIDL");
-    CHECK(binder);
-    AIBinder_decStrong(binder);
+    /* SurfaceFlinger publishes its two Binder services in separate calls. */
+    wait_for_service(surfaceflinger, "/system/bin/surfaceflinger", "SurfaceFlingerAIDL");
     puts("{\"test\":\"android_surfaceflinger_registered\",\"passed\":true}");
 }
 
