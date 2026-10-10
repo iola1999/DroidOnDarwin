@@ -9,6 +9,9 @@ struct ProbeLogLine: Identifiable, Equatable {
 struct ProbeLogSnapshot {
     let lines: [ProbeLogLine]
     let phase: String?
+    let step: Int?
+    let activity: String?
+    let activitySequence: UInt64
 }
 
 // File reads and parsing stay off the main actor. The exported file is unchanged.
@@ -20,12 +23,16 @@ actor ProbeLogReader {
     private var lines: [ProbeLogLine] = []
     private var nextLine: UInt64 = 0
     private var phase: String?
+    private var step: Int?
+    private var activity: String?
+    private var activitySequence: UInt64 = 0
     static let lineLimit = 80
     static let phaseLabels = [
         "android_desktop_running": "Android 正在运行",
         "android_desktop_stopped": "Android 已停止",
         "android_system_server_boot": "正在启动 Android 系统",
-        "android_activity_service_registered": "正在启动 Android 桌面",
+        "android_activity_service_registered": "正在启动系统服务",
+        "android_desktop_first_frame": "正在显示桌面",
         "native_graphics_start": "正在启动图形服务",
         "linux_shutdown": "正在停止 Linux",
         "android_zygote_launch": "正在启动 Android 进程",
@@ -55,6 +62,9 @@ actor ProbeLogReader {
         pending.removeAll()
         lines.removeAll()
         phase = nil
+        step = nil
+        activity = nil
+        activitySequence = 0
     }
 
     func tail(from url: URL) throws -> ProbeLogSnapshot? {
@@ -95,6 +105,7 @@ actor ProbeLogReader {
             while let newline = pending.firstIndex(of: 10) {
                 let line = String(decoding: pending[..<newline], as: UTF8.self)
                 pending.removeSubrange(...newline)
+                recordActivity(line)
                 if line.hasPrefix("{\"phase\":") {
                     let value = try? JSONSerialization.jsonObject(with: Data(line.utf8)) as? [String: Any]
                     if let key = value?["phase"] as? String, Self.phaseLabels[key] != nil {
@@ -113,6 +124,66 @@ actor ProbeLogReader {
                 pending = Data(pending.suffix(4096))
             }
         }
-        return ProbeLogSnapshot(lines: lines, phase: phase)
+        return ProbeLogSnapshot(lines: lines, phase: phase, step: step, activity: activity, activitySequence: activitySequence)
     }
+    private func recordActivity(_ line: String) {
+        var update: String?
+        var nextStep: Int?
+        if line.hasPrefix("{") {
+            let value = (try? JSONSerialization.jsonObject(with: Data(line.utf8))) as? [String: Any]
+            let key = value?["phase"] as? String ?? ((value?["passed"] as? Bool == true) ? value?["test"] as? String : nil)
+            switch key {
+            case "linux_init": nextStep = 1
+                update = "正在初始化 Linux 内核"
+            case "native_graphics_start": nextStep = 2
+                update = "正在连接图形服务"
+            case "android_platform_services": nextStep = 2
+                update = "正在启动 Android 基础服务"
+            case "android_display_service_registered": update = "图形服务已注册"
+            case "android_framework_launch": nextStep = 2
+                update = "正在加载 Android 系统框架"
+            case "android_zygote_launch": nextStep = 2
+                update = "正在启动 Android 进程"
+            case "android_system_server_boot": nextStep = 2
+                update = "正在初始化系统服务"
+            case "android_activity_service_registered": nextStep = 2
+                update = "应用运行服务已注册"
+            case "android_system_server_services": nextStep = 2
+                update = "正在准备用户环境"
+            case "android_system_boot_completed": nextStep = 3
+                update = "系统初始化完成，正在打开桌面"
+            case "android_desktop_first_frame": nextStep = 3
+                update = "桌面已绘制，正在完成启动"
+            case "android_desktop_running": nextStep = 4
+                update = "桌面已就绪"
+            default: break
+            }
+        } else {
+            let events = ["StartPackageManagerService": "应用管理服务", "StartActivityManager": "应用运行服务",
+                          "StartWindowManagerService": "窗口服务", "StartInputManagerService": "输入服务",
+                          "StartSystemUI": "系统界面进程"]
+            if let range = line.range(of: "SystemServerTiming: ") {
+                let event = String(line[range.upperBound...])
+                for (key, name) in events where event == key || event.hasPrefix(key + " took to complete:") {
+                    update = event == key ? "正在启动" + name : name + "已完成初始化"
+                }
+            } else if let range = line.range(of: "SystemUIBootTiming: ") {
+                let event = String(line[range.upperBound...])
+                if event == "StartServices" {
+                    update = "正在加载系统界面"
+                }
+                if event.hasPrefix("StartServices took to complete:") {
+                    update = "系统界面已完成初始化"
+                }
+            }
+        }
+        if let nextStep {
+            step = max(step ?? 0, nextStep)
+        }
+        if let update, update != activity {
+            activity = update
+            activitySequence += 1
+        }
+    }
+
 }

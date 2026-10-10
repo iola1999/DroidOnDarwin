@@ -48,6 +48,13 @@ final class SessionModel: ObservableObject {
     @Published private(set) var phase: SessionPhase = .idle
     @Published private(set) var status = "已停止"
     @Published private(set) var elapsed = 0
+    @Published private(set) var bootStep = 0
+    @Published private(set) var stepElapsed = 0
+    @Published private(set) var activity = "正在准备运行资源"
+    @Published private(set) var activityAge = 0
+    private var stepStarted = Date()
+    private var activityUpdated = Date()
+    private var activitySequence: UInt64 = 0
     @Published private(set) var target: RunTarget?
     @Published var showDisplay = false
     private let runtime: any SessionRuntime
@@ -78,6 +85,13 @@ final class SessionModel: ObservableObject {
         status = "正在准备设备"
         elapsed = 0
         started = Date()
+        stepStarted = started
+        activityUpdated = started
+        bootStep = 0
+        stepElapsed = 0
+        activityAge = 0
+        activitySequence = 0
+        activity = "正在准备运行资源"
         showDisplay = true
         Task { await reader.reset() }
         startPolling()
@@ -92,6 +106,8 @@ final class SessionModel: ObservableObject {
                 }
                 phase = .connecting
                 status = text
+                activity = text
+                activityUpdated = Date()
             case .booting:
                 guard phase != .stopping else {
                     return
@@ -140,10 +156,25 @@ final class SessionModel: ObservableObject {
         refreshing = true
         defer { refreshing = false }
         let snapshot = try? await reader.read(from: target.log)
-        guard active else {
+        guard active, self.target?.log == target.log else {
             return
         }
         elapsed = Int(Date().timeIntervalSince(started))
+        stepElapsed = Int(Date().timeIntervalSince(stepStarted))
+        activityAge = Int(Date().timeIntervalSince(activityUpdated))
+        if phase == .booting, let snapshot {
+            if let next = snapshot.step, next > bootStep {
+                bootStep = next
+                stepStarted = Date()
+                stepElapsed = 0
+            }
+            if snapshot.activitySequence != activitySequence, let detail = snapshot.activity {
+                activitySequence = snapshot.activitySequence
+                activity = detail
+                activityUpdated = Date()
+                activityAge = 0
+            }
+        }
         guard phase == .booting, let key = snapshot?.phase else {
             return
         }

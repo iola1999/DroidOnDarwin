@@ -76,5 +76,22 @@ struct LogReaderTests {
         let tail = try await reader.tail(from: url)!
         precondition(tail.phase == "android_desktop_running" && tail.lines.count <= 80)
         print("PASS per-poll byte budget and on-demand tail of a large log")
+        let events = "{\"phase\":\"android_system_server_boot\"}\n"
+            + "10-10 00:00:01 D SystemServerTiming: StartPackageManagerService\n"
+        try Data(events.utf8).write(to: url, options: .atomic)
+        let starting = try await reader.read(from: url)!
+        precondition(starting.step == 2 && starting.activity == "正在启动应用管理服务")
+        let noisy = events + String(repeating: "E CameraManagerGlobal: Camera service is unavailable\n", count: 100)
+        try Data(noisy.utf8).write(to: url)
+        let noise = try await reader.read(from: url)!
+        precondition(noise.activity == starting.activity && noise.activitySequence == starting.activitySequence)
+        try Data((noisy + "{\"test\":\"android_system_boot_completed\",\"passed\":true}\n").utf8).write(to: url)
+        let desktop = try await reader.read(from: url)!
+        precondition(desktop.step == 3 && desktop.activity == "系统初始化完成，正在打开桌面")
+        try Data((noisy + "{\"test\":\"android_system_boot_completed\",\"passed\":false}\n").utf8).write(to: url, options: .atomic)
+        let failedCheck = try await reader.read(from: url)!
+        precondition(failedCheck.step == 2)
+        print("PASS boot milestones, selected service activity, duplicate warning filtering and failed-check boundary")
+
     }
 }

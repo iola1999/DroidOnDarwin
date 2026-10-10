@@ -133,11 +133,16 @@ final class MacApplicationDelegate: NSObject, NSApplicationDelegate, NSWindowDel
             }
         }
         let worker = environment.workerTarget != nil
-        let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: worker ? 380 : 960, height: worker ? 760 : 640),
-                              styleMask: [.titled, .closable, .miniaturizable, .resizable], backing: .buffered, defer: false)
+        let windowType: NSWindow.Type = worker ? AndroidWindow.self : NSWindow.self
+        let window = windowType.init(contentRect: NSRect(x: 0, y: 0, width: worker ? 360 : 960, height: worker ? 730 : 640),
+                                     styleMask: [.titled, .closable, .miniaturizable, .resizable], backing: .buffered, defer: false)
         self.window = window
         window.title = environment.workerTarget?.name ?? "DroidOnDarwin"
-        window.contentMinSize = worker ? NSSize(width: 300, height: 550) : NSSize(width: 720, height: 520)
+        window.contentMinSize = worker ? NSSize(width: 240, height: 240 * 640 / 360 + AndroidWindow.chromeHeight) : NSSize(width: 720, height: 520)
+        if worker {
+            window.isRestorable = false
+            window.collectionBehavior.insert(.fullScreenNone)
+        }
         window.delegate = self
         window.isReleasedWhenClosed = false
         let content: AnyView
@@ -154,7 +159,7 @@ final class MacApplicationDelegate: NSObject, NSApplicationDelegate, NSWindowDel
             window.toolbarStyle = .unifiedCompact
         }
         window.contentViewController = NSHostingController(rootView: content)
-        window.setContentSize(worker ? NSSize(width: 380, height: 760) : NSSize(width: 960, height: 640))
+        window.setContentSize(worker ? NSSize(width: 360, height: 730) : NSSize(width: 960, height: 640))
         window.center()
         window.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
@@ -188,6 +193,23 @@ final class MacApplicationDelegate: NSObject, NSApplicationDelegate, NSWindowDel
         aboutWindow?.makeKeyAndOrderFront(nil)
     }
 
+    func windowWillResize(_ sender: NSWindow, to proposed: NSSize) -> NSSize {
+        guard let window = sender as? AndroidWindow else {
+            return proposed
+        }
+        var frame = NSRect(origin: sender.frame.origin, size: proposed)
+        if abs(proposed.height - sender.frame.height) > abs(proposed.width - sender.frame.width) {
+            let content = sender.contentRect(forFrameRect: frame)
+            frame.size.width = (content.height - AndroidWindow.chromeHeight) * 360 / 640
+        }
+        return window.fittedFrame(frame).size
+    }
+    func windowWillUseStandardFrame(_ window: NSWindow, defaultFrame frame: NSRect) -> NSRect {
+        guard let window = window as? AndroidWindow else {
+            return frame
+        }
+        return window.fittedFrame(frame)
+    }
     func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
         let session = MacEnvironment.shared.session
         if !session.active {

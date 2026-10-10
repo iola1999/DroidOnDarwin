@@ -17,13 +17,15 @@ python3 scripts/build_gfxstream.py --platform ios
 python3 scripts/build_gfxstream.py --platform macos-ios-api
 python3 scripts/probe_native_linux.py
 NCE_MM_MODE=demand NCE_SYSTEM_SERVER_PROBE=1 python3 scripts/probe_lkl.py \
-  --processes --graphics-angle work/angle-macos/prefix/lib --graphics-window
+  --processes --graphics-angle work/angle-macos/prefix/lib
 python3 scripts/package_native_linux_macos.py
 python3 scripts/test_native_linux_macos.py
 python3 scripts/package_native_linux_ios.py
 ```
 
-打包要求 CLI、GCD 和可见窗口检查成功，且源码、内核、图形库和生成物与验证清单一致。重新生成桌面检查可使用打包脚本的 `--rebuild-kernel`；替换已存在且未运行的 Mac 包使用 `--replace`。
+打包要求 CLI 与 GCD 桌面检查成功，且源码、内核、图形库和生成物与验证清单一致。正式 Mac App 的窗口与退出行为由宿主检查覆盖。重新生成桌面检查可使用打包脚本的 `--rebuild-kernel`；替换已存在且未运行的 Mac 包使用 `--replace`。
+
+需要独立 GPU 诊断窗口时，在上述 `probe_lkl.py` 命令中追加 `--graphics-window`。
 
 产物：
 

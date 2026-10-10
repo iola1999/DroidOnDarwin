@@ -36,7 +36,7 @@ def validate_inputs():
     for path, expected in files.items():
         if digest(path) != expected:
             raise SystemExit(f'输入发生变化，请重新运行桌面回归：{path}')
-    for mode in ('results', 'dispatch_results', 'window_results'):
+    for mode in ('results', 'dispatch_results'):
         records = summary.get(mode, [])
         required = {'android_system_boot_completed', 'android_clock_controls_ready',
                     'android_application_data_persistence', 'android_keystore_persistence',
@@ -73,7 +73,7 @@ def main():
         raise SystemExit('需要 Apple Silicon Mac')
     if args.rebuild_kernel:
         run(['python3', ROOT / 'scripts/probe_lkl.py', '--processes', '--graphics-angle',
-             ROOT / 'work/angle-macos/prefix/lib', '--graphics-window'], timeout=1800,
+             ROOT / 'work/angle-macos/prefix/lib'], timeout=1800,
             env={**os.environ, 'NCE_MM_MODE': 'demand', 'NCE_SYSTEM_SERVER_PROBE': '1'})
     verified = validate_inputs()
     local = [*[p for p in sorted((EXP / 'macos').glob('*')) if p.suffix in ('.h', '.mm', '.swift') and not p.name.endswith('Tests.mm')],
@@ -139,7 +139,7 @@ def main():
             objects.append(obj)
         run(['xcrun', 'swiftc', '-O', '-parse-as-library', '-import-objc-header', EXP / 'macos/Bridge.h',
              '-target', f'arm64-apple-macosx{minimum}', *sorted((EXP / 'app').glob('*.swift')),
-             EXP / 'macos/Application.swift', *objects, '-Xlinker', '-lc++',
+             EXP / 'macos/Application.swift', EXP / 'macos/AndroidWindow.swift', *objects, '-Xlinker', '-lc++',
              '-framework', 'AppKit', '-framework', 'Metal', '-framework', 'QuartzCore',
              '-L', frameworks, '-lgfxstream_backend', '-Xlinker', '-rpath', '-Xlinker', '@executable_path/../Frameworks',
              '-o', executable], stdout=log, stderr=subprocess.STDOUT)

@@ -19,39 +19,42 @@ struct SessionView<Display: View>: View {
                     Button("运行详情") { logs = true }
                     Button("停止设备…", role: .destructive) { stopping = true }.disabled(!session.canStop)
                 } label: { Image(systemName: "ellipsis.circle") }.accessibilityLabel("运行操作")
-            }.padding(.horizontal, 16).padding(.vertical, 12)
-            Divider()
+            }.padding(.horizontal, 16)
+            #if os(macOS)
+                .frame(height: 48)
+            #else
+                .padding(.vertical, 12)
+            #endif
+            Divider().frame(height: 1)
             ZStack {
-                display().aspectRatio(360.0 / 640.0, contentMode: .fit)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .background(.black).allowsHitTesting(session.phase == .running)
+                #if os(macOS)
+                    display().frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .allowsHitTesting(session.phase == .running)
+                #else
+                    display().aspectRatio(360.0 / 640.0, contentMode: .fit)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .background(.black).allowsHitTesting(session.phase == .running)
+                #endif
                 if session.phase != .running {
                     Rectangle().fill(.background)
-                    VStack(spacing: 18) {
-                        if session.active {
-                            ProgressView().controlSize(.large)
-                        } else {
-                            Image(systemName: session.phase == .failed ? "exclamationmark.circle" : "power").font(.largeTitle).foregroundStyle(.secondary)
-                        }
-                        Text(session.status).font(.headline).multilineTextAlignment(.center)
-                        if session.active {
-                            Text("已等待 \(session.elapsed) 秒").font(.subheadline).foregroundStyle(.secondary).monospacedDigit()
-                        }
-                        Button("查看详情") { logs = true }
-                        if !session.active {
-                            Button("返回设备", action: returnToLibrary)
-                        }
-                    }.padding(28).frame(maxWidth: 460)
+                    BootProgressView(session: session, details: { logs = true },
+                                     stop: { stopping = true }, back: returnToLibrary)
                 }
             }
-            Divider()
+            Divider().frame(height: 1)
             HStack {
                 navigation("返回", key: 158)
                 Spacer()
                 navigation("主页", key: 102)
                 Spacer()
                 navigation("最近应用", key: 580)
-            }.padding(.horizontal, 20).padding(.vertical, 12).disabled(session.phase != .running)
+            }.padding(.horizontal, 20)
+            #if os(macOS)
+                .frame(height: 40)
+            #else
+                .padding(.vertical, 12)
+            #endif
+                .disabled(session.phase != .running)
         }.background(.background)
             .sheet(isPresented: $logs) {
                 if let url = session.target?.log {

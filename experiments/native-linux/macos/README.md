@@ -11,7 +11,7 @@ python3 scripts/package_native_linux_macos.py
 python3 scripts/test_native_linux_macos.py
 ```
 
-打包前要求 `work/native-linux-nce/processes/lkl-summary.json` 中的 CLI、GCD、窗口桌面检查成功，且源码、内核、生成物和动态库哈希仍匹配。需要重新生成这些输入时使用 `--rebuild-kernel`。输出已存在时，先退出应用，再使用 `--replace` 重建；应用数据独立保存。
+打包前要求 `work/native-linux-nce/processes/lkl-summary.json` 中的 CLI 与 GCD 桌面检查成功，且源码、内核、生成物和动态库哈希仍匹配。需要重新生成这些输入时使用 `--rebuild-kernel`。输出已存在时，先退出应用，再使用 `--replace` 重建；应用数据独立保存。
 
 输出为 `work/native-linux-nce/macos/DroidOnDarwin.app`，可以从 Finder 打开。内核、系统镜像、空白数据盘种子、图形动态库和第三方许可随包提供。`package.json` 记录构建标识、输入与包内文件哈希，`host-checks.json` 记录宿主检查结果。
 
@@ -19,7 +19,7 @@ python3 scripts/test_native_linux_macos.py
 
 打开应用进入设备列表。可以添加内置 Android 设备、导入镜像包、查看详情和删除已停止的设备。每次只运行一台设备，点击启动后打开 Android 窗口；停止会话后保留设备列表，可以再次启动或切换设备。删除前需要确认，并同时删除该设备的数据与导入镜像。
 
-鼠标点击、拖动对应 Android 触摸操作。底部提供返回、主页和最近应用按钮，画面顶部菜单提供运行详情和停止入口，设备详情提供日志与数据目录入口。缩放窗口时保持画面比例和逻辑分辨率。启动时显示当前阶段与等待时间，桌面首帧就绪后启用输入。日志预览按需打开，最多保留 80 行，每秒读取量上限为 256 KiB，完整日志保存在设备目录。
+鼠标点击、拖动对应 Android 触摸操作。底部提供返回、主页和最近应用按钮，画面顶部菜单提供运行详情和停止入口，设备详情提供日志与数据目录入口。运行窗口按 Android 画面比例缩放，操作栏保持固定高度；每次打开按默认宽度和屏幕可用区域重新确定尺寸。设备资料库可以自由缩放。启动时显示阶段清单、总等待时间、当前阶段时间和最近活动，桌面首帧就绪后启用输入。日志预览按需打开，最多保留 80 行，每秒读取量上限为 256 KiB，完整日志保存在设备目录。
 
 数据默认保存在 `~/Library/Application Support/app.droidondarwin.mac/Devices/<id>/`。每台设备首次启动创建独立的 `android-data.img`，后续启动沿用该文件；每次运行生成 `Logs/session-*.log`。设备目录锁持续到会话进程退出，设备列表也有独立的进程锁。开发验证可通过 `--data-directory PATH` 指定隔离目录。
 

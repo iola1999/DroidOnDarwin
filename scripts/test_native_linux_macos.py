@@ -42,7 +42,7 @@ def main():
         run(['xcrun', 'clang', '-O2', *flags, '-c', source, '-o', obj])
         objects.append(obj)
     run(['xcrun', 'swiftc', '-O', '-parse-as-library', '-import-objc-header', EXP / 'macos/Bridge.h',
-         *sorted((EXP / 'app').glob('*.swift')), EXP / 'macos/Application.swift', *objects,
+         *sorted((EXP / 'app').glob('*.swift')), EXP / 'macos/Application.swift', EXP / 'macos/AndroidWindow.swift', *objects,
          '-Xlinker', '-lc++', '-framework', 'AppKit', '-framework', 'QuartzCore', '-framework', 'Metal',
          '-o', smoke / 'MacOS/HostChecks'])
     smoke_data = OUT / 'host-check-data'

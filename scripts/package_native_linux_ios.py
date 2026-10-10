@@ -31,7 +31,7 @@ def main():
     parser.add_argument('--rebuild-kernel', action='store_true')
     args = parser.parse_args()
     if args.rebuild_kernel or not (INPUT / 'lkl-summary.json').exists():
-        run(['python3', ROOT / 'scripts/probe_lkl.py', '--processes', '--graphics-angle', ROOT / 'work/angle-macos/prefix/lib', '--graphics-window'],
+        run(['python3', ROOT / 'scripts/probe_lkl.py', '--processes', '--graphics-angle', ROOT / 'work/angle-macos/prefix/lib'],
             env={**os.environ, 'NCE_MM_MODE': 'demand', 'NCE_SYSTEM_SERVER_PROBE': '1'}, timeout=1800)
     # A package must contain the kernel and fixtures that passed the host run.
     summary = json.loads((INPUT / 'lkl-summary.json').read_text())
@@ -46,9 +46,7 @@ def main():
     if not any(r.get('test') == 'linux_native_gles_shader_frames' and r.get('passed')
                for r in summary['results']):
         raise SystemExit('Run the graphics-enabled Linux probe before packaging')
-    if not summary.get('window_results') or summary['window_results'][-1].get('result') != 'passed':
-        raise SystemExit('Run the visible Metal window regression before packaging')
-    for mode in ('results', 'dispatch_results', 'window_results'):
+    for mode in ('results', 'dispatch_results'):
         records = summary.get(mode, [])
         if not any(r.get('phase') == 'linux_mapping_policy' and r.get('mode') == 'demand' for r in records):
             raise SystemExit('Desktop package requires demand mapping validation: ' + mode)
