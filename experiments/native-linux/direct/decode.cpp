@@ -24,6 +24,16 @@ unsigned structure_registers(uint32_t word)
             return 0;
     }
 }
+unsigned structure_lane_bytes(uint32_t word)
+{
+    unsigned scale = (word >> 14) & 3, size = (word >> 10) & 3;
+    if (scale == 3)
+        scale = size;
+    else if (scale == 2 && (size & 1))
+        scale = 3;
+    unsigned registers = (((word >> 13) & 1) * 2 + ((word >> 21) & 1)) + 1;
+    return registers << scale;
+}
 
 Kind decode(uint32_t w)
 {
@@ -153,6 +163,11 @@ Kind decode(uint32_t w)
     if ((w & 0xfffff0ff) == 0xd50330bf || (w & 0xfffff0ff) == 0xd503309f)
         return Barrier;
     bool vector = w & 0x04000000;
+    if ((w & 0x3b000000) == 0x18000000) {
+        if ((w >> 30) < 3)
+            return Literal;
+        return vector ? Other : Hint;
+    }
     if ((w & 0x3fff7c00) == 0x085f7c00)
         return ExclusiveLoad;
     if ((w & 0x3fe07c00) == 0x08007c00)
@@ -219,6 +234,15 @@ Kind decode(uint32_t w)
         if (((w & (1U << 23)) || !((w >> 16) & 31)) &&
             (((w >> 10) & 3) != 3 || q || sequential))
             return Structure;
+    }
+    if ((w & 0xbf000000) == 0x0d000000 &&
+        ((w & (1U << 23)) || !((w >> 16) & 31))) {
+        unsigned scale = (w >> 14) & 3, size = (w >> 10) & 3;
+        bool s = w & (1U << 12);
+        if (scale == 0 || (scale == 1 && !(size & 1)) ||
+            (scale == 2 && !(size & 2) && (!(size & 1) || !s)) ||
+            (scale == 3 && (w & (1U << 22)) && !s))
+            return StructureLane;
     }
     if ((w & 0x9ff80c00) == 0x0f000400 &&
         (q || !((w >> 29) & 1) || ((w >> 12) & 15) != 15))
@@ -291,6 +315,10 @@ Kind decode(uint32_t w)
         case 0x2e208000:  // SMLAL/UMLAL
         case 0x0e20a000:
         case 0x2e20a000:  // SMLSL/UMLSL
+        case 0x0e201000:
+        case 0x2e201000:  // SADDW/UADDW
+        case 0x0e203000:
+        case 0x2e203000:  // SSUBW/USUBW
             if (element != 3)
                 return Vector;
             break;
@@ -378,6 +406,8 @@ Kind decode(uint32_t w)
         }
     }
     // Only validated FP32/FP64 encodings use the host FPCR/FPSR.
+    if ((w & 0xffbffc00) == 0x5e21d800 || (w & 0xffbffc00) == 0x7e21d800)
+        return Vector;  // scalar SCVTF/UCVTF from a SIMD register
     if (!((w >> 22) & 1) || q) {
         switch (w & 0xbfa0fc00) {
             case 0x0e20cc00:
@@ -390,6 +420,13 @@ Kind decode(uint32_t w)
         }
     }
     if (element <= 1) {
+        if ((w & 0x7f200000) == 0x1e000000 && (sf || (w & (1U << 15)))) {
+            unsigned opcode = (w >> 16) & 31;
+            if (opcode == 2 || opcode == 3)
+                return FpFromGpr;
+            if (opcode == 24 || opcode == 25)
+                return GprFromFp;
+        }
         switch (w & 0xff3ffc00) {
             case 0x1e204000:
             case 0x1e20c000:
@@ -425,9 +462,19 @@ Kind decode(uint32_t w)
         if ((w & 0x7f3ffc00) == 0x1e220000 ||
             (w & 0x7f3ffc00) == 0x1e230000)
             return FpFromGpr;  // SCVTF/UCVTF
-        if ((w & 0x7f3ffc00) == 0x1e380000 ||
-            (w & 0x7f3ffc00) == 0x1e390000)
-            return GprFromFp;  // FCVTZS/FCVTZU
+        switch (w & 0x7f3ffc00) {
+            case 0x1e200000:
+            case 0x1e210000:
+            case 0x1e240000:
+            case 0x1e250000:
+            case 0x1e280000:
+            case 0x1e290000:
+            case 0x1e300000:
+            case 0x1e310000:
+            case 0x1e380000:
+            case 0x1e390000:
+                return GprFromFp;  // FCVTN/A/P/M/Z, signed and unsigned
+        }
     }
     switch (w & 0xfffffc00) {
         case 0x1e270000:

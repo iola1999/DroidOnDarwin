@@ -421,28 +421,42 @@ size_t Page::compile(uint64_t new_page, const void *bytes, size_t entry,
                 c.l(invalid);
                 exit(pc, Fallback);
                 c.l(done);
-            } else if (kind == Memory || kind == Pair || kind == Atomic || kind == Structure) {
+            } else if (kind == Memory || kind == Pair || kind == Atomic || kind == Structure ||
+                       kind == StructureLane || kind == Literal) {
                 bool pair = kind == Pair;
                 bool atomic = kind == Atomic;
-                bool structure = kind == Structure;
-                bool ordered = atomic || (!pair && !structure && (w & 0x3fbffc00) == 0x089ffc00);
+                bool structure_lane = kind == StructureLane;
+                bool structure = kind == Structure || structure_lane;
+                bool literal = kind == Literal;
+                bool ordered = atomic || (!pair && !structure && !literal && (w & 0x3fbffc00) == 0x089ffc00);
                 bool vector = w & 0x04000000;
-                bool write = atomic || (pair || vector || ordered ? !(w & (1U << 22)) : ((w >> 22) & 3) == 0);
-                bool reg_offset = !structure && !pair && (w & 0x3b200c00) == 0x38200800;
-                bool indexed = !structure && !pair && !ordered && !reg_offset && (w & 0x3b000000) != 0x39000000;
+                bool write = !literal && (atomic || (pair || vector || ordered ? !(w & (1U << 22)) : ((w >> 22) & 3) == 0));
+                bool reg_offset = !structure && !pair && !literal && (w & 0x3b200c00) == 0x38200800;
+                bool indexed = !structure && !pair && !literal && !ordered && !reg_offset && (w & 0x3b000000) != 0x39000000;
                 unsigned mode = structure ? ((w >> 23) & 1) : pair  ? (((w >> 23) & 1) ? ((w >> 23) & 3) : 0)
                                                           : indexed ? (w >> 10) & 3
                                                                     : 0;
                 unsigned size_log2 = structure ? (w >> 10) & 3 : pair ? 2 + (vector ? w >> 30 : w >> 31)
                                                                       : (w >> 30) + (vector ? ((w >> 23) & 1) * 4 : 0);
-                unsigned access_bytes = structure ? structure_registers(w) * (w & (1U << 30) ? 16 : 8) : (pair ? 2U : 1U) << size_log2;
-                int64_t offset = structure ? 0 : pair                ? sign_extend((w >> 15) & 127, 7) * (1 << size_log2)
-                                             : reg_offset || ordered ? 0
-                                             : indexed               ? sign_extend((w >> 12) & 511, 9)
-                                                                     : ((w >> 10) & 4095) << size_log2;
+                if (literal)
+                    size_log2 = 2 + (vector ? w >> 30 : (w >> 30) & 1);
+                if (structure_lane) {
+                    unsigned scale = (w >> 14) & 3;
+                    size_log2 = scale == 3 ? size_log2 : scale == 2 && (size_log2 & 1) ? 3
+                                                                                       : scale;
+                }
+                unsigned access_bytes = structure_lane ? structure_lane_bytes(w) : structure ? structure_registers(w) * (w & (1U << 30) ? 16 : 8)
+                                                                                             : (pair ? 2U : 1U) << size_log2;
+                int64_t offset = structure || literal ? 0 : pair                ? sign_extend((w >> 15) & 127, 7) * (1 << size_log2)
+                                                        : reg_offset || ordered ? 0
+                                                        : indexed               ? sign_extend((w >> 12) & 511, 9)
+                                                                                : ((w >> 10) & 4095) << size_log2;
                 Label miss, invalid, done;
-                load(rn, X16, true);
-                if (rn == 31) {
+                if (literal)
+                    relative_address(X16, pc - new_page + sign_extend((w >> 5) & 0x7ffff, 19) * 4, X17);
+                else
+                    load(rn, X16, true);
+                if (!literal && rn == 31) {
                     c.AND(X17, X16, 15);
                     c.CBNZ(X17, invalid);
                 }
@@ -483,6 +497,14 @@ size_t Page::compile(uint64_t new_page, const void *bytes, size_t entry,
                     // Guest writeback follows success and retains address tags.
 
                     c.dw((w & ~((1U << 23) | (31U << 16) | (31U << 5))) | (17 << 5));
+                } else if (literal) {
+                    unsigned opc = w >> 30;
+                    uint32_t load_word = vector     ? (opc == 2 ? 0x3dc00000 : 0xbd400000 | (opc << 30))
+                                         : opc == 2 ? 0xb9800000
+                                                    : 0xb9400000 | (opc << 30);
+                    c.dw(load_word | (17 << 5) | data);
+                    if (!vector && data == 26)
+                        save(rd, X26);
                 } else if (atomic) {
                     unsigned rs = (w >> 16) & 31;
                     load(rs, X26);

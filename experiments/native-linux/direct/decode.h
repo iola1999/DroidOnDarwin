@@ -45,10 +45,13 @@ enum Kind { Other,
             ExclusiveStore,
             ClearExclusive,
             Structure,
+            StructureLane,
+            Literal,
             Dczid,
             CacheZero };
 
 unsigned structure_registers(uint32_t);
+unsigned structure_lane_bytes(uint32_t);
 Kind decode(uint32_t);
 bool integer_kind(Kind);
 uint64_t target(uint32_t, Kind, uint64_t);

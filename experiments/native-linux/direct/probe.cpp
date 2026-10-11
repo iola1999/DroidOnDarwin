@@ -44,6 +44,8 @@ Probe::~Probe()
 void *Probe::Map(void *opaque, uint64_t address, bool write)
 {
     auto &probe = *static_cast<Probe *>(opaque);
+    if (!write && probe.readable && address >= CodeVA && address < CodeVA + sizeof(probe.code))
+        return (char *)probe.code.data() + address - CodeVA;
     if (address < DataVA || address >= DataVA + DataBytes || (write ? !probe.writable : !probe.readable))
         return nullptr;
     return probe.alias_code ? (char *)probe.code.data() + probe.alias_offset : (char *)probe.data.data() + address - DataVA;

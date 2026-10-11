@@ -52,4 +52,5 @@ struct Probe {
 };
 void direct_tests();
 void direct_page_table_tests();
+void direct_instruction_tests(Probe &);
 void direct_benchmark(const char *engine);

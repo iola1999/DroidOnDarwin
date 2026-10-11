@@ -28,6 +28,7 @@ void direct_tests()
 {
     auto holder = std::make_unique<Probe>();
     auto &probe = *holder;
+    direct_instruction_tests(probe);
     std::mt19937_64 random(0x4845534b);
     std::array<uint32_t, 65> words{};
     for (unsigned sample = 0; sample < 1024; ++sample) {

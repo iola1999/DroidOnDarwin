@@ -49,7 +49,7 @@ def build(out):
         from build_translation_engine import build as build_unicorn
         unicorn = Path(build_unicorn()['path'])
     out.mkdir(parents=True, exist_ok=True)
-    files = [SOURCE / name for name in ('probe.cpp', 'tests.cpp', 'page-table-tests.cpp', 'benchmark.cpp', 'main.cpp')] + [
+    files = [SOURCE / name for name in ('probe.cpp', 'tests.cpp', 'instruction-tests.cpp', 'page-table-tests.cpp', 'benchmark.cpp', 'main.cpp')] + [
         ROOT / 'experiments/native-linux/translation/kernels.S',
         ROOT / 'experiments/native-linux/translation/linux-memory.c']
     for index, path in enumerate(files):
@@ -93,6 +93,8 @@ def validate(rows, mode, interval, config=None):
         expected |= {'direct_flat_exclusive_pair_and_zva', 'direct_flat_cross_page_table_switch_and_configuration'}
         expected |= {'code_version_reuse_and_mutation', 'code_version_backing_permissions_and_fallback',
                      'code_version_owner_and_provider_changes'}
+        expected |= {'literal_load_signed_vector_pc_and_permissions', 'simd_lane_replicate_writeback_and_faults',
+                     'fp_fixed_rounding_and_widening', 'new_instruction_reserved_encodings'}
         if not expected <= {r.get('test') for r in rows if r.get('passed')}:
             return False
     else:
