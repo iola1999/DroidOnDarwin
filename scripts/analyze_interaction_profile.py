@@ -146,6 +146,20 @@ def execution_summary(output):
     return raw
 
 
+def host_visibility(result, beginning, ending):
+    known = [event for event in result['events'] if 'app_visible' in event and 'host_monotonic_ns' in event]
+    if not known or beginning is None or ending is None:
+        return {'available': False}
+    before = [event for event in known if event['host_monotonic_ns'] <= beginning]
+    selected = before[-1:] + [event for event in known if beginning < event['host_monotonic_ns'] <= ending]
+    return {'available': bool(selected), 'tracking': result.get('visibility_tracking', 'action boundaries only'),
+            'all_visible': bool(before) and all(event['app_visible'] for event in selected),
+            'all_active': bool(before) and all(event.get('app_active') for event in selected),
+            'all_activity_asserted': bool(before) and all(event.get('benchmark_activity') for event in selected),
+            'events': [{key: event.get(key) for key in ('host_monotonic_ns', 'event', 'app_visible', 'app_active', 'benchmark_activity')} for event in selected],
+            'scope': 'App-wide occlusion and activation; actual drawable presentation unmeasured'}
+
+
 def analyze(directory):
     request = json.loads((directory / 'request.json').read_text())
     result = json.loads((directory / 'result.json').read_text())
@@ -233,14 +247,19 @@ def analyze(directory):
         if not cpu_stats or not (output / 'kernel.ftrace').is_file():
             failures.append('scheduler capture missing')
     execution = execution_summary(output)
-    if execution['available'] and (execution['overflow'] or execution['clock_errors']):
+    if execution['available'] and (execution['overflow'] or execution['clock_errors'] or execution.get('fallback_overflow')):
         failures.append('execution collection overflow or clock errors')
+    if execution['available'] and 'fallbacks' in execution:
+        fallback_total = execution['stage_totals'][2]
+        if any(sum(row[key] for row in execution['fallbacks']) != fallback_total[key] for key in ('cpu_ns', 'wall_ns', 'calls')):
+            failures.append('fallback attribution does not cover all Unicorn intervals')
     if execution['available'] and not execution['threads']:
         failures.append('execution capture contains no threads')
     files = [directory / name for name in ('request.json', 'result.json')] + sorted(output.glob('*'))
     return {'version': 1, 'analyzer_sha256': hashlib.sha256(Path(__file__).read_bytes()).hexdigest(), 'runID': result['runID'], 'buildID': result['buildID'],
             'configuration': result['configuration'], 'hardware': result['hardware'], 'os': result['os'],
             'benchmark_status': result['status'], 'failures': failures,
+            'host_visibility': host_visibility(result, beginning, ending),
             'scope': 'Settings HWUI completion, wall time including scheduling/waits; host presentation unmeasured; no FPS claim',
             'clocks': clocks, 'alignment_uncertainty_ns': uncertainty if selected and all(c['resolution_known'] for c in selected) else None,
             'alignment_bracket_half_width_ns': uncertainty,
@@ -256,8 +275,13 @@ def main():
     parser.add_argument('run', type=Path)
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--trace-processor', type=Path)
+    parser.add_argument('--require-visible', action='store_true', help='要求采集期间 Mac App 持续可见且有状态变化记录')
     args = parser.parse_args()
     report = analyze(args.run)
+    if args.require_visible:
+        visible = report['host_visibility']
+        if not visible.get('all_visible') or visible.get('tracking') != 'AppKit notifications and action boundaries':
+            report['failures'].append('continuous visible Mac capture not confirmed')
     if args.trace_processor and (args.run / 'interaction/kernel.ftrace').exists():
         begin, end = (int(value) for value in report['guest_window_ns'])
         overlap = f"max(0,min(ts+dur,{end})-max(ts,{begin}))"

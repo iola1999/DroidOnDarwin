@@ -47,6 +47,7 @@ typedef struct {
     unsigned long tls;
     const char *path;
     NceExecutionProfile *profile;
+    uint32_t fallback_instruction;
 } Process;
 static unsigned char *ram;
 static unsigned long base, *pages;
@@ -594,6 +595,7 @@ static bool direct_execute(Process *p, unsigned long generation)
         return true;
     }
     ++execution->direct_fallbacks;
+    p->fallback_instruction = word;
     unsigned slot = ((word >> 2) ^ (word >> 16)) % 256;
     for (unsigned i = 0; i < 256; ++i, slot = (slot + 1) % 256) {
         if (!execution->direct_missing[slot].count || execution->direct_missing[slot].instruction == word) {
@@ -731,7 +733,7 @@ static void user_run(void *opaque)
 #else
         prepare_user();
 #endif
-        nce_execution_profile_end(p->profile, NCE_STAGE_PREPARE, stamp);
+        nce_execution_profile_end(p->profile, NCE_STAGE_PREPARE, stamp, 0);
         unsigned long current_maps = translation ? execution->view->mappings : map_generation;
         memset(&execution->event, 0, sizeof(execution->event));
         bool handled = false;
@@ -739,7 +741,7 @@ static void user_run(void *opaque)
         mark_executing(true);
         stamp = nce_execution_profile_begin();
         handled = direct_execute(p, current_maps);
-        nce_execution_profile_end(p->profile, NCE_STAGE_DIRECT, stamp);
+        nce_execution_profile_end(p->profile, NCE_STAGE_DIRECT, stamp, 0);
         mark_executing(false);
 #endif
         uc_err error = UC_ERR_OK;
@@ -757,7 +759,7 @@ static void user_run(void *opaque)
             error = uc_emu_start(execution->engine, p->regs.pc, 0, 0, timer_mode ? 0 : instruction_batch);
             mark_executing(false);
             registers(p, true);
-            nce_execution_profile_end(p->profile, NCE_STAGE_UNICORN, stamp);
+            nce_execution_profile_end(p->profile, NCE_STAGE_UNICORN, stamp, p->fallback_instruction);
         }
         /* Copy callback state before entering Linux: a blocking syscall or
          * page fault can let another Linux thread use this same engine. */

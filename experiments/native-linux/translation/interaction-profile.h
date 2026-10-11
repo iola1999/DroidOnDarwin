@@ -14,6 +14,7 @@ enum { NCE_STAGE_PREPARE,
 bool nce_execution_profile_enabled(void);
 NceExecutionProfile *nce_execution_profile_thread(long pid, long tid);
 NceProfileStamp nce_execution_profile_begin(void);
-void nce_execution_profile_end(NceExecutionProfile *thread, unsigned stage, NceProfileStamp start);
+/* instruction labels the first instruction of the entire Unicorn interval. */
+void nce_execution_profile_end(NceExecutionProfile *thread, unsigned stage, NceProfileStamp start, uint32_t instruction);
 /* Called outside guest execution, only while the session callback is registered. */
 int nce_execution_profile_control(bool enabled, const char *directory);

@@ -13,7 +13,7 @@
     ]
   },
   "measurement": "FrameCompleted minus IntendedVsync; all wall-time stages; actual host presentation unmeasured; trace/sample overhead not yet qualified",
-  "desktop_regression": "work/native-linux-nce/lkl-interaction-v4-1-desktop/summary.json",
+  "desktop_regression": "work/native-linux-nce/lkl-interaction-v7-1-desktop/summary.json",
   "runs": [
     {
       "runID": "4370073A-7A5D-43AE-904B-D84AA087B58C",
@@ -1166,6 +1166,1227 @@
       "failures": [],
       "alignment_uncertainty_ns": 10000000.0,
       "scope": "preflight only; data image evolved between runs; actual gesture duration differs; causal profiling overhead unqualified"
+    },
+    {
+      "runID": "F2B86530-6F6A-4844-899B-032DB5E175BB",
+      "buildID": "0.25.0-Mac-20261012-015300-direct1-dual",
+      "configuration": {
+        "aot": false,
+        "bootImage": false,
+        "diagnostics": false,
+        "directFault": true,
+        "expandedJIT": false,
+        "fastBaseline": false,
+        "faultPrefetch": false,
+        "nterp": true,
+        "performanceLogging": false,
+        "schedulerSliceUS": 0,
+        "sparseScan": true,
+        "translation": {
+          "cacheMiB": 128,
+          "codeWatch": true,
+          "crossPage": true,
+          "linuxFastpath": false,
+          "memoryGroups": false,
+          "onlineCPUs": 1,
+          "retainRoutes": false,
+          "reuseCodeChecks": false,
+          "routeEpochs": false,
+          "vectorTable": false
+        }
+      },
+      "frame_counts": {
+        "accepted": 29
+      },
+      "duration": {
+        "count": 29,
+        "p50_ms": 309.318692,
+        "p95_ms": 435.29977839999987,
+        "p99_ms": 460.11479536,
+        "max_ms": 462.232362,
+        "p95_small_sample": true,
+        "p99_small_sample": true,
+        "tail_count_reference": {
+          "p95": 1,
+          "p99": 0
+        },
+        "percentile_method": "linear interpolation; small-sample flag uses fewer than 10 expected tail observations; frames are not independent runs",
+        "above_ms": {
+          "16.666667": 29,
+          "100": 29,
+          "250": 20,
+          "1000": 0
+        }
+      },
+      "failures": [],
+      "alignment_uncertainty_ns": 10000000.0,
+      "source_sha256": {
+        "work/native-linux-nce/benchmarks/interaction/20261012-015947-b23c16/F2B86530-6F6A-4844-899B-032DB5E175BB/request.json": "9bd450a1829fa62e8650248656e972d5618c814143278423e895cf2914446699",
+        "work/native-linux-nce/benchmarks/interaction/20261012-015947-b23c16/F2B86530-6F6A-4844-899B-032DB5E175BB/result.json": "7ee081651cf83615333766587d069158ef3bc81fda83be781f02da1abf92e91c",
+        "work/native-linux-nce/benchmarks/interaction/20261012-015947-b23c16/F2B86530-6F6A-4844-899B-032DB5E175BB/interaction/clock-pairs.jsonl": "d7ee37a8f1fa65c5730b379449d875357d4b48cec6470cad4b5d62ae1ddeb9de",
+        "work/native-linux-nce/benchmarks/interaction/20261012-015947-b23c16/F2B86530-6F6A-4844-899B-032DB5E175BB/interaction/clock.txt": "b21e3b8fcb175197cfbda952dab37a9fa870eb7795f14fa3f7e82fcd37ec69f3",
+        "work/native-linux-nce/benchmarks/interaction/20261012-015947-b23c16/F2B86530-6F6A-4844-899B-032DB5E175BB/interaction/cpu0.txt": "ffda8f65a88d975cc3f75dfba5bab71e812beccbbd3a58f5aa148f5d3517ac97",
+        "work/native-linux-nce/benchmarks/interaction/20261012-015947-b23c16/F2B86530-6F6A-4844-899B-032DB5E175BB/interaction/execution.json": "0b5f4d4ab46393f83d6a4c3deb5385e83d6d50228e1f50fbf39f5b89f0473b5e",
+        "work/native-linux-nce/benchmarks/interaction/20261012-015947-b23c16/F2B86530-6F6A-4844-899B-032DB5E175BB/interaction/frames.txt": "165a394e838353b5b964f627d0afaa6b43766a3758fe39bfd34601dcd0a51d03",
+        "work/native-linux-nce/benchmarks/interaction/20261012-015947-b23c16/F2B86530-6F6A-4844-899B-032DB5E175BB/interaction/kernel.ftrace": "ad162989ea4ba64f0845bbfe47f0ecc095454e0c7cc3825a0b00bc4bf34065a3",
+        "work/native-linux-nce/benchmarks/interaction/20261012-015947-b23c16/F2B86530-6F6A-4844-899B-032DB5E175BB/interaction/threads-after.txt": "01a79803a20004c1a2d5fb4fd6179920c8c1267d8da5e327b5f4a87d7b525d9e",
+        "work/native-linux-nce/benchmarks/interaction/20261012-015947-b23c16/F2B86530-6F6A-4844-899B-032DB5E175BB/interaction/threads-before.txt": "c7352aaf34969182fea68424d32b7ea5d7ecd5eaea67c48d766687b6f2ca2572"
+      },
+      "cpu_stats": {
+        "cpu0": {
+          "entries": 8945,
+          "overrun": 0,
+          "commit overrun": 0,
+          "bytes": 465176,
+          "dropped events": 0,
+          "read events": 0
+        }
+      },
+      "directory": "work/native-linux-nce/benchmarks/interaction/20261012-015947-b23c16/F2B86530-6F6A-4844-899B-032DB5E175BB",
+      "capture_mode": "detailed",
+      "execution_stage_totals": [
+        {
+          "wall_ns": 17399000,
+          "cpu_ns": 7360448,
+          "calls": 27865
+        },
+        {
+          "wall_ns": 1537161000,
+          "cpu_ns": 1381907386,
+          "calls": 27865
+        },
+        {
+          "wall_ns": 1246261000,
+          "cpu_ns": 1105082258,
+          "calls": 1612
+        }
+      ],
+      "scope": "preflight; evolving data and relative gesture waits; no causal overhead claim",
+      "swipe": {
+        "wall_ms": 3489.1716248821467,
+        "process_cpu_ms": 2746.347,
+        "input_total_ms": {
+          "queue_us": 5.61,
+          "call_us": 808.422,
+          "resume_us": 3.512
+        }
+      }
+    },
+    {
+      "runID": "C889FF7B-56BE-4375-9765-568338CC504D",
+      "buildID": "0.25.0-Mac-20261012-020546-direct1-dual",
+      "configuration": {
+        "aot": false,
+        "bootImage": false,
+        "diagnostics": false,
+        "directFault": true,
+        "expandedJIT": false,
+        "fastBaseline": false,
+        "faultPrefetch": false,
+        "nterp": true,
+        "performanceLogging": false,
+        "schedulerSliceUS": 0,
+        "sparseScan": true,
+        "translation": {
+          "cacheMiB": 128,
+          "codeWatch": true,
+          "crossPage": true,
+          "linuxFastpath": false,
+          "memoryGroups": false,
+          "onlineCPUs": 1,
+          "retainRoutes": false,
+          "reuseCodeChecks": false,
+          "routeEpochs": false,
+          "vectorTable": false
+        }
+      },
+      "frame_counts": {
+        "accepted": 5
+      },
+      "duration": {
+        "count": 5,
+        "p50_ms": 307.211504,
+        "p95_ms": 428.0155612,
+        "p99_ms": 442.51817464,
+        "max_ms": 446.143828,
+        "p95_small_sample": true,
+        "p99_small_sample": true,
+        "tail_count_reference": {
+          "p95": 0,
+          "p99": 0
+        },
+        "percentile_method": "linear interpolation; small-sample flag uses fewer than 10 expected tail observations; frames are not independent runs",
+        "above_ms": {
+          "16.666667": 5,
+          "100": 5,
+          "250": 3,
+          "1000": 0
+        }
+      },
+      "failures": [
+        "continuous visible Mac capture not confirmed"
+      ],
+      "alignment_uncertainty_ns": 10000000.0,
+      "source_sha256": {
+        "work/native-linux-nce/benchmarks/interaction/20261012-020610-1c1565/C889FF7B-56BE-4375-9765-568338CC504D/request.json": "27b53bf24741ce38d43eea7532807117d6f7b8ac70071d9952f78e460820d5e6",
+        "work/native-linux-nce/benchmarks/interaction/20261012-020610-1c1565/C889FF7B-56BE-4375-9765-568338CC504D/result.json": "32f421fe26eb7d2d6b178c4dab4fcb0c7816b7bb8038f745cc09a7ed271ed4b8",
+        "work/native-linux-nce/benchmarks/interaction/20261012-020610-1c1565/C889FF7B-56BE-4375-9765-568338CC504D/interaction/clock-pairs.jsonl": "a43ec4f73962b7e17ae5d391a5fa06a5acca0eb856fe3e9f796ef844975cb524",
+        "work/native-linux-nce/benchmarks/interaction/20261012-020610-1c1565/C889FF7B-56BE-4375-9765-568338CC504D/interaction/frames.txt": "709a619693361b2842f4e7c50817ae52031bc91b32c434963dc0f44d38b58891",
+        "work/native-linux-nce/benchmarks/interaction/20261012-020610-1c1565/C889FF7B-56BE-4375-9765-568338CC504D/interaction/threads-after.txt": "f57c45abd5a75e69ba5de4242861a1b9098126796a4ac4ae351e69a4ae4edeeb",
+        "work/native-linux-nce/benchmarks/interaction/20261012-020610-1c1565/C889FF7B-56BE-4375-9765-568338CC504D/interaction/threads-before.txt": "2eb4b9d892807936052b8afeace4e3b58618c72b1b4389299352c591a72004c8"
+      },
+      "host_visibility": {
+        "available": true,
+        "tracking": "action boundaries only",
+        "all_visible": false,
+        "all_active": false,
+        "all_activity_asserted": false,
+        "events": [
+          {
+            "host_monotonic_ns": 1536390525884000,
+            "event": "action_submitted",
+            "app_visible": false,
+            "app_active": false,
+            "benchmark_activity": null
+          },
+          {
+            "host_monotonic_ns": 1536390528295000,
+            "event": "action_started",
+            "app_visible": false,
+            "app_active": false,
+            "benchmark_activity": null
+          },
+          {
+            "host_monotonic_ns": 1536391500698000,
+            "event": "action_submitted",
+            "app_visible": false,
+            "app_active": false,
+            "benchmark_activity": null
+          },
+          {
+            "host_monotonic_ns": 1536391503560000,
+            "event": "action_started",
+            "app_visible": false,
+            "app_active": false,
+            "benchmark_activity": null
+          },
+          {
+            "host_monotonic_ns": 1536392745322000,
+            "event": "action_submitted",
+            "app_visible": false,
+            "app_active": false,
+            "benchmark_activity": null
+          },
+          {
+            "host_monotonic_ns": 1536392748396000,
+            "event": "action_started",
+            "app_visible": false,
+            "app_active": false,
+            "benchmark_activity": null
+          }
+        ],
+        "scope": "App-wide occlusion and activation; actual drawable presentation unmeasured"
+      },
+      "directory": "work/native-linux-nce/benchmarks/interaction/20261012-020610-1c1565/C889FF7B-56BE-4375-9765-568338CC504D",
+      "capture_mode": "minimal",
+      "scope": "fixed seed and absolute gesture timing; occluded Mac window; visible desktop acceptance failed",
+      "initial_data_sha256": "7fa03db87afe4a7ddbb7f881a96f93f832b557fb2f4af8750aeb8a8ac9e1f228"
+    },
+    {
+      "runID": "88BA9BA9-9AF9-4CBF-8EEE-4A4332BA9043",
+      "buildID": "0.25.0-Mac-20261012-021923-direct1-dual",
+      "configuration": {
+        "aot": false,
+        "bootImage": false,
+        "diagnostics": false,
+        "directFault": true,
+        "expandedJIT": false,
+        "fastBaseline": false,
+        "faultPrefetch": false,
+        "nterp": true,
+        "performanceLogging": false,
+        "schedulerSliceUS": 0,
+        "sparseScan": true,
+        "translation": {
+          "cacheMiB": 128,
+          "codeWatch": true,
+          "crossPage": true,
+          "linuxFastpath": false,
+          "memoryGroups": false,
+          "onlineCPUs": 1,
+          "retainRoutes": false,
+          "reuseCodeChecks": false,
+          "routeEpochs": false,
+          "vectorTable": false
+        }
+      },
+      "frame_counts": {
+        "accepted": 27
+      },
+      "duration": {
+        "count": 27,
+        "p50_ms": 73.162836,
+        "p95_ms": 117.2745542,
+        "p99_ms": 122.62898612,
+        "max_ms": 124.167494,
+        "p95_small_sample": true,
+        "p99_small_sample": true,
+        "tail_count_reference": {
+          "p95": 1,
+          "p99": 0
+        },
+        "percentile_method": "linear interpolation; small-sample flag uses fewer than 10 expected tail observations; frames are not independent runs",
+        "above_ms": {
+          "16.666667": 27,
+          "100": 7,
+          "250": 0,
+          "1000": 0
+        }
+      },
+      "failures": [],
+      "alignment_uncertainty_ns": 10000000.0,
+      "source_sha256": {
+        "work/native-linux-nce/benchmarks/interaction/20261012-021944-5b3a4b/88BA9BA9-9AF9-4CBF-8EEE-4A4332BA9043/request.json": "73d06f06f2516d2f472807fe34f239850c126c94ff91307e8825e4f7484681a3",
+        "work/native-linux-nce/benchmarks/interaction/20261012-021944-5b3a4b/88BA9BA9-9AF9-4CBF-8EEE-4A4332BA9043/result.json": "a079faa7d4b0b643290885bcf87237c331bde0dd637f0027175f39b4f541df61",
+        "work/native-linux-nce/benchmarks/interaction/20261012-021944-5b3a4b/88BA9BA9-9AF9-4CBF-8EEE-4A4332BA9043/interaction/clock-pairs.jsonl": "03df6b786927e8cdfd26ec845140f6adff0b3261af597a4c99124a7e3a8b3397",
+        "work/native-linux-nce/benchmarks/interaction/20261012-021944-5b3a4b/88BA9BA9-9AF9-4CBF-8EEE-4A4332BA9043/interaction/clock.txt": "b21e3b8fcb175197cfbda952dab37a9fa870eb7795f14fa3f7e82fcd37ec69f3",
+        "work/native-linux-nce/benchmarks/interaction/20261012-021944-5b3a4b/88BA9BA9-9AF9-4CBF-8EEE-4A4332BA9043/interaction/cpu0.txt": "2797a70a4f617ff1a372e0e8d62dd39c47c91e8ce9720315edd7243f21480ca6",
+        "work/native-linux-nce/benchmarks/interaction/20261012-021944-5b3a4b/88BA9BA9-9AF9-4CBF-8EEE-4A4332BA9043/interaction/execution.json": "600b3d4a0b4cd67fa7f917d726423c691cc01201c51f8e31b82dd6d4dcb62a5e",
+        "work/native-linux-nce/benchmarks/interaction/20261012-021944-5b3a4b/88BA9BA9-9AF9-4CBF-8EEE-4A4332BA9043/interaction/frames.txt": "82b9010b394258416d7ed99a76b888c6b7a07569acc70b1b8cbbdbe9c7138ce2",
+        "work/native-linux-nce/benchmarks/interaction/20261012-021944-5b3a4b/88BA9BA9-9AF9-4CBF-8EEE-4A4332BA9043/interaction/kernel.ftrace": "f7bface855dfbb7a61ae5039b225cca6af27d9796acacb30e050e12845a76c39",
+        "work/native-linux-nce/benchmarks/interaction/20261012-021944-5b3a4b/88BA9BA9-9AF9-4CBF-8EEE-4A4332BA9043/interaction/threads-after.txt": "f355bea1762c052d91e4a235d7dd040b17a87d51341a73e26ce3773bb21cd7f9",
+        "work/native-linux-nce/benchmarks/interaction/20261012-021944-5b3a4b/88BA9BA9-9AF9-4CBF-8EEE-4A4332BA9043/interaction/threads-before.txt": "cb9c146f0014cc135cb1617ca60631cc2562bec9a8d498e075daaf87a62ad65d"
+      },
+      "host_visibility": {
+        "available": true,
+        "tracking": "AppKit notifications and action boundaries",
+        "all_visible": false,
+        "all_active": false,
+        "all_activity_asserted": true,
+        "events": [
+          {
+            "host_monotonic_ns": 1537079191942000,
+            "event": "action_submitted",
+            "app_visible": false,
+            "app_active": false,
+            "benchmark_activity": true
+          },
+          {
+            "host_monotonic_ns": 1537079192815000,
+            "event": "action_started",
+            "app_visible": false,
+            "app_active": false,
+            "benchmark_activity": true
+          },
+          {
+            "host_monotonic_ns": 1537079800026000,
+            "event": "action_submitted",
+            "app_visible": false,
+            "app_active": false,
+            "benchmark_activity": true
+          },
+          {
+            "host_monotonic_ns": 1537079801447000,
+            "event": "action_started",
+            "app_visible": false,
+            "app_active": false,
+            "benchmark_activity": true
+          },
+          {
+            "host_monotonic_ns": 1537081003404000,
+            "event": "action_submitted",
+            "app_visible": false,
+            "app_active": false,
+            "benchmark_activity": true
+          },
+          {
+            "host_monotonic_ns": 1537081004533000,
+            "event": "action_started",
+            "app_visible": false,
+            "app_active": false,
+            "benchmark_activity": true
+          }
+        ],
+        "scope": "App-wide occlusion and activation; actual drawable presentation unmeasured"
+      },
+      "cpu_stats": {
+        "cpu0": {
+          "entries": 8056,
+          "overrun": 0,
+          "commit overrun": 0,
+          "bytes": 423652,
+          "dropped events": 0,
+          "read events": 0
+        }
+      },
+      "directory": "work/native-linux-nce/benchmarks/interaction/20261012-021944-5b3a4b/88BA9BA9-9AF9-4CBF-8EEE-4A4332BA9043",
+      "execution_stage_totals": [
+        {
+          "wall_ns": 4805000,
+          "cpu_ns": 2116225,
+          "calls": 18735
+        },
+        {
+          "wall_ns": 405406000,
+          "cpu_ns": 401462832,
+          "calls": 18735
+        },
+        {
+          "wall_ns": 449952000,
+          "cpu_ns": 448920718,
+          "calls": 1305
+        }
+      ],
+      "fallback_intervals": [
+        {
+          "android_pid": 391,
+          "android_tid": 409,
+          "host_tid": 186655723,
+          "instruction": 506004484,
+          "wall_ns": 2005000,
+          "cpu_ns": 2004750,
+          "calls": 1
+        },
+        {
+          "android_pid": 391,
+          "android_tid": 409,
+          "host_tid": 186655723,
+          "instruction": 1765811285,
+          "wall_ns": 4516000,
+          "cpu_ns": 4508167,
+          "calls": 5
+        },
+        {
+          "android_pid": 391,
+          "android_tid": 409,
+          "host_tid": 186655723,
+          "instruction": 255523873,
+          "wall_ns": 2346000,
+          "cpu_ns": 2346333,
+          "calls": 1
+        },
+        {
+          "android_pid": 23,
+          "android_tid": 28,
+          "host_tid": 186648143,
+          "instruction": 1310840834,
+          "wall_ns": 253000,
+          "cpu_ns": 252209,
+          "calls": 1
+        },
+        {
+          "android_pid": 145,
+          "android_tid": 234,
+          "host_tid": 186653477,
+          "instruction": 2287991872,
+          "wall_ns": 627000,
+          "cpu_ns": 627000,
+          "calls": 1
+        },
+        {
+          "android_pid": 391,
+          "android_tid": 409,
+          "host_tid": 186655723,
+          "instruction": 1769965999,
+          "wall_ns": 372000,
+          "cpu_ns": 372042,
+          "calls": 7
+        },
+        {
+          "android_pid": 23,
+          "android_tid": 23,
+          "host_tid": 186648134,
+          "instruction": 1847691264,
+          "wall_ns": 4559000,
+          "cpu_ns": 4548125,
+          "calls": 30
+        },
+        {
+          "android_pid": 391,
+          "android_tid": 409,
+          "host_tid": 186655723,
+          "instruction": 1856103489,
+          "wall_ns": 2429000,
+          "cpu_ns": 2428750,
+          "calls": 3
+        },
+        {
+          "android_pid": 391,
+          "android_tid": 409,
+          "host_tid": 186655723,
+          "instruction": 1577845926,
+          "wall_ns": 4931000,
+          "cpu_ns": 4930500,
+          "calls": 2
+        },
+        {
+          "android_pid": 391,
+          "android_tid": 409,
+          "host_tid": 186655723,
+          "instruction": 1334022180,
+          "wall_ns": 35632000,
+          "cpu_ns": 35612960,
+          "calls": 29
+        },
+        {
+          "android_pid": 391,
+          "android_tid": 409,
+          "host_tid": 186655723,
+          "instruction": 782296098,
+          "wall_ns": 9011000,
+          "cpu_ns": 8998954,
+          "calls": 29
+        },
+        {
+          "android_pid": 391,
+          "android_tid": 409,
+          "host_tid": 186655723,
+          "instruction": 1856037922,
+          "wall_ns": 4016000,
+          "cpu_ns": 3999958,
+          "calls": 5
+        },
+        {
+          "android_pid": 23,
+          "android_tid": 31,
+          "host_tid": 186648164,
+          "instruction": 2124534785,
+          "wall_ns": 116000,
+          "cpu_ns": 113706,
+          "calls": 16
+        },
+        {
+          "android_pid": 23,
+          "android_tid": 23,
+          "host_tid": 186648134,
+          "instruction": 2124534785,
+          "wall_ns": 843000,
+          "cpu_ns": 821750,
+          "calls": 95
+        },
+        {
+          "android_pid": 23,
+          "android_tid": 232,
+          "host_tid": 186653374,
+          "instruction": 2124534785,
+          "wall_ns": 239000,
+          "cpu_ns": 233913,
+          "calls": 19
+        },
+        {
+          "android_pid": 23,
+          "android_tid": 32,
+          "host_tid": 186648165,
+          "instruction": 2124534785,
+          "wall_ns": 259000,
+          "cpu_ns": 256090,
+          "calls": 45
+        },
+        {
+          "android_pid": 23,
+          "android_tid": 567,
+          "host_tid": 186658594,
+          "instruction": 2124534785,
+          "wall_ns": 37000,
+          "cpu_ns": 35959,
+          "calls": 3
+        },
+        {
+          "android_pid": 391,
+          "android_tid": 424,
+          "host_tid": 186655883,
+          "instruction": 1765811464,
+          "wall_ns": 1640000,
+          "cpu_ns": 1628086,
+          "calls": 14
+        },
+        {
+          "android_pid": 391,
+          "android_tid": 409,
+          "host_tid": 186655723,
+          "instruction": 505480608,
+          "wall_ns": 319000,
+          "cpu_ns": 318625,
+          "calls": 1
+        },
+        {
+          "android_pid": 23,
+          "android_tid": 23,
+          "host_tid": 186648134,
+          "instruction": 2124469281,
+          "wall_ns": 2131000,
+          "cpu_ns": 2130834,
+          "calls": 5
+        },
+        {
+          "android_pid": 145,
+          "android_tid": 233,
+          "host_tid": 186653476,
+          "instruction": 2287959404,
+          "wall_ns": 2488000,
+          "cpu_ns": 2478333,
+          "calls": 6
+        },
+        {
+          "android_pid": 391,
+          "android_tid": 409,
+          "host_tid": 186655723,
+          "instruction": 1333956610,
+          "wall_ns": 11474000,
+          "cpu_ns": 11356001,
+          "calls": 10
+        },
+        {
+          "android_pid": 391,
+          "android_tid": 409,
+          "host_tid": 186655723,
+          "instruction": 245440512,
+          "wall_ns": 21950000,
+          "cpu_ns": 21919960,
+          "calls": 27
+        },
+        {
+          "android_pid": 23,
+          "android_tid": 28,
+          "host_tid": 186648143,
+          "instruction": 245440512,
+          "wall_ns": 10680000,
+          "cpu_ns": 10645706,
+          "calls": 27
+        },
+        {
+          "android_pid": 23,
+          "android_tid": 32,
+          "host_tid": 186648165,
+          "instruction": 2124534792,
+          "wall_ns": 2370000,
+          "cpu_ns": 2362665,
+          "calls": 29
+        },
+        {
+          "android_pid": 391,
+          "android_tid": 409,
+          "host_tid": 186655723,
+          "instruction": 1334874160,
+          "wall_ns": 1516000,
+          "cpu_ns": 1515708,
+          "calls": 1
+        },
+        {
+          "android_pid": 391,
+          "android_tid": 409,
+          "host_tid": 186655723,
+          "instruction": 1591751824,
+          "wall_ns": 1581000,
+          "cpu_ns": 1580666,
+          "calls": 1
+        },
+        {
+          "android_pid": 23,
+          "android_tid": 36,
+          "host_tid": 186648169,
+          "instruction": 2124534786,
+          "wall_ns": 2496000,
+          "cpu_ns": 2495209,
+          "calls": 1
+        },
+        {
+          "android_pid": 391,
+          "android_tid": 409,
+          "host_tid": 186655723,
+          "instruction": 237099041,
+          "wall_ns": 5189000,
+          "cpu_ns": 5188376,
+          "calls": 4
+        },
+        {
+          "android_pid": 391,
+          "android_tid": 409,
+          "host_tid": 186655723,
+          "instruction": 505615428,
+          "wall_ns": 1586000,
+          "cpu_ns": 1574291,
+          "calls": 5
+        },
+        {
+          "android_pid": 145,
+          "android_tid": 233,
+          "host_tid": 186653476,
+          "instruction": 2287992425,
+          "wall_ns": 4399000,
+          "cpu_ns": 4391124,
+          "calls": 19
+        },
+        {
+          "android_pid": 391,
+          "android_tid": 391,
+          "host_tid": 186655282,
+          "instruction": 2287992425,
+          "wall_ns": 16965000,
+          "cpu_ns": 16946044,
+          "calls": 16
+        },
+        {
+          "android_pid": 145,
+          "android_tid": 565,
+          "host_tid": 186658471,
+          "instruction": 2287992425,
+          "wall_ns": 358000,
+          "cpu_ns": 357708,
+          "calls": 1
+        },
+        {
+          "android_pid": 145,
+          "android_tid": 188,
+          "host_tid": 186651649,
+          "instruction": 2287992425,
+          "wall_ns": 1432000,
+          "cpu_ns": 1426667,
+          "calls": 13
+        },
+        {
+          "android_pid": 145,
+          "android_tid": 145,
+          "host_tid": 186651399,
+          "instruction": 2287992425,
+          "wall_ns": 553000,
+          "cpu_ns": 549624,
+          "calls": 18
+        },
+        {
+          "android_pid": 145,
+          "android_tid": 182,
+          "host_tid": 186651613,
+          "instruction": 2287992425,
+          "wall_ns": 966000,
+          "cpu_ns": 964082,
+          "calls": 6
+        },
+        {
+          "android_pid": 145,
+          "android_tid": 166,
+          "host_tid": 186651530,
+          "instruction": 2287992425,
+          "wall_ns": 1046000,
+          "cpu_ns": 1017834,
+          "calls": 8
+        },
+        {
+          "android_pid": 391,
+          "android_tid": 391,
+          "host_tid": 186655282,
+          "instruction": 505529344,
+          "wall_ns": 306000,
+          "cpu_ns": 306333,
+          "calls": 2
+        },
+        {
+          "android_pid": 458,
+          "android_tid": 458,
+          "host_tid": 186656600,
+          "instruction": 505529344,
+          "wall_ns": 106000,
+          "cpu_ns": 106125,
+          "calls": 1
+        },
+        {
+          "android_pid": 145,
+          "android_tid": 164,
+          "host_tid": 186651525,
+          "instruction": 505529344,
+          "wall_ns": 2973000,
+          "cpu_ns": 2972501,
+          "calls": 2
+        },
+        {
+          "android_pid": 391,
+          "android_tid": 409,
+          "host_tid": 186655723,
+          "instruction": 1577845760,
+          "wall_ns": 232000,
+          "cpu_ns": 232666,
+          "calls": 1
+        },
+        {
+          "android_pid": 391,
+          "android_tid": 409,
+          "host_tid": 186655723,
+          "instruction": 505545728,
+          "wall_ns": 3736000,
+          "cpu_ns": 3735125,
+          "calls": 2
+        },
+        {
+          "android_pid": 391,
+          "android_tid": 409,
+          "host_tid": 186655723,
+          "instruction": 1334087844,
+          "wall_ns": 451000,
+          "cpu_ns": 450875,
+          "calls": 2
+        },
+        {
+          "android_pid": 391,
+          "android_tid": 391,
+          "host_tid": 186655282,
+          "instruction": 2287992488,
+          "wall_ns": 1422000,
+          "cpu_ns": 1421834,
+          "calls": 1
+        },
+        {
+          "android_pid": 391,
+          "android_tid": 409,
+          "host_tid": 186655723,
+          "instruction": 505431072,
+          "wall_ns": 957000,
+          "cpu_ns": 956375,
+          "calls": 1
+        },
+        {
+          "android_pid": 391,
+          "android_tid": 409,
+          "host_tid": 186655723,
+          "instruction": 782296096,
+          "wall_ns": 255000,
+          "cpu_ns": 254125,
+          "calls": 1
+        },
+        {
+          "android_pid": 391,
+          "android_tid": 409,
+          "host_tid": 186655723,
+          "instruction": 245426244,
+          "wall_ns": 144000,
+          "cpu_ns": 143542,
+          "calls": 1
+        },
+        {
+          "android_pid": 391,
+          "android_tid": 391,
+          "host_tid": 186655282,
+          "instruction": 782301184,
+          "wall_ns": 2304000,
+          "cpu_ns": 2302917,
+          "calls": 2
+        },
+        {
+          "android_pid": 391,
+          "android_tid": 409,
+          "host_tid": 186655723,
+          "instruction": 237082624,
+          "wall_ns": 2120000,
+          "cpu_ns": 2108252,
+          "calls": 54
+        },
+        {
+          "android_pid": 391,
+          "android_tid": 409,
+          "host_tid": 186655723,
+          "instruction": 237099008,
+          "wall_ns": 1065000,
+          "cpu_ns": 1057792,
+          "calls": 5
+        },
+        {
+          "android_pid": 391,
+          "android_tid": 409,
+          "host_tid": 186655723,
+          "instruction": 782301184,
+          "wall_ns": 2467000,
+          "cpu_ns": 2447500,
+          "calls": 1
+        },
+        {
+          "android_pid": 391,
+          "android_tid": 409,
+          "host_tid": 186655723,
+          "instruction": 241268736,
+          "wall_ns": 1295000,
+          "cpu_ns": 1294750,
+          "calls": 1
+        },
+        {
+          "android_pid": 23,
+          "android_tid": 23,
+          "host_tid": 186648134,
+          "instruction": 1860237312,
+          "wall_ns": 3476000,
+          "cpu_ns": 3440459,
+          "calls": 27
+        },
+        {
+          "android_pid": 391,
+          "android_tid": 409,
+          "host_tid": 186655723,
+          "instruction": 1311040676,
+          "wall_ns": 1841000,
+          "cpu_ns": 1840417,
+          "calls": 1
+        },
+        {
+          "android_pid": 23,
+          "android_tid": 28,
+          "host_tid": 186648143,
+          "instruction": 245430834,
+          "wall_ns": 43000,
+          "cpu_ns": 42625,
+          "calls": 1
+        },
+        {
+          "android_pid": 391,
+          "android_tid": 409,
+          "host_tid": 186655723,
+          "instruction": 1604358177,
+          "wall_ns": 6764000,
+          "cpu_ns": 6755167,
+          "calls": 4
+        },
+        {
+          "android_pid": 23,
+          "android_tid": 28,
+          "host_tid": 186648143,
+          "instruction": 1604423779,
+          "wall_ns": 80000,
+          "cpu_ns": 79625,
+          "calls": 1
+        },
+        {
+          "android_pid": 23,
+          "android_tid": 28,
+          "host_tid": 186648143,
+          "instruction": 505550436,
+          "wall_ns": 1054000,
+          "cpu_ns": 1054292,
+          "calls": 6
+        },
+        {
+          "android_pid": 391,
+          "android_tid": 409,
+          "host_tid": 186655723,
+          "instruction": 1604423779,
+          "wall_ns": 15776000,
+          "cpu_ns": 15748834,
+          "calls": 11
+        },
+        {
+          "android_pid": 145,
+          "android_tid": 164,
+          "host_tid": 186651525,
+          "instruction": 260083776,
+          "wall_ns": 26966000,
+          "cpu_ns": 26937456,
+          "calls": 78
+        },
+        {
+          "android_pid": 145,
+          "android_tid": 234,
+          "host_tid": 186653477,
+          "instruction": 260083776,
+          "wall_ns": 1871000,
+          "cpu_ns": 1870375,
+          "calls": 1
+        },
+        {
+          "android_pid": 145,
+          "android_tid": 233,
+          "host_tid": 186653476,
+          "instruction": 260083776,
+          "wall_ns": 9956000,
+          "cpu_ns": 9935876,
+          "calls": 7
+        },
+        {
+          "android_pid": 391,
+          "android_tid": 391,
+          "host_tid": 186655282,
+          "instruction": 260083776,
+          "wall_ns": 44961000,
+          "cpu_ns": 44849125,
+          "calls": 53
+        },
+        {
+          "android_pid": 458,
+          "android_tid": 458,
+          "host_tid": 186656600,
+          "instruction": 260083776,
+          "wall_ns": 3301000,
+          "cpu_ns": 3300668,
+          "calls": 2
+        },
+        {
+          "android_pid": 23,
+          "android_tid": 23,
+          "host_tid": 186648134,
+          "instruction": 1577845969,
+          "wall_ns": 1789000,
+          "cpu_ns": 1749210,
+          "calls": 81
+        },
+        {
+          "android_pid": 391,
+          "android_tid": 409,
+          "host_tid": 186655723,
+          "instruction": 1577845761,
+          "wall_ns": 3358000,
+          "cpu_ns": 3346542,
+          "calls": 3
+        },
+        {
+          "android_pid": 391,
+          "android_tid": 409,
+          "host_tid": 186655723,
+          "instruction": 1856168961,
+          "wall_ns": 6140000,
+          "cpu_ns": 6135043,
+          "calls": 19
+        },
+        {
+          "android_pid": 17,
+          "android_tid": 17,
+          "host_tid": 186648033,
+          "instruction": 3361733664,
+          "wall_ns": 721000,
+          "cpu_ns": 720248,
+          "calls": 12
+        },
+        {
+          "android_pid": 17,
+          "android_tid": 17,
+          "host_tid": 186648033,
+          "instruction": 2287959072,
+          "wall_ns": 4683000,
+          "cpu_ns": 4681126,
+          "calls": 12
+        },
+        {
+          "android_pid": 391,
+          "android_tid": 391,
+          "host_tid": 186655282,
+          "instruction": 1333956770,
+          "wall_ns": 37013000,
+          "cpu_ns": 36973915,
+          "calls": 36
+        },
+        {
+          "android_pid": 5,
+          "android_tid": 5,
+          "host_tid": 186648009,
+          "instruction": 3361733664,
+          "wall_ns": 568000,
+          "cpu_ns": 567915,
+          "calls": 10
+        },
+        {
+          "android_pid": 5,
+          "android_tid": 5,
+          "host_tid": 186648009,
+          "instruction": 2287959072,
+          "wall_ns": 5846000,
+          "cpu_ns": 5843376,
+          "calls": 10
+        },
+        {
+          "android_pid": 23,
+          "android_tid": 23,
+          "host_tid": 186648134,
+          "instruction": 2124469314,
+          "wall_ns": 2354000,
+          "cpu_ns": 2328078,
+          "calls": 59
+        },
+        {
+          "android_pid": 391,
+          "android_tid": 409,
+          "host_tid": 186655723,
+          "instruction": 237159457,
+          "wall_ns": 4023000,
+          "cpu_ns": 4022334,
+          "calls": 4
+        },
+        {
+          "android_pid": 391,
+          "android_tid": 409,
+          "host_tid": 186655723,
+          "instruction": 237099009,
+          "wall_ns": 1627000,
+          "cpu_ns": 1626666,
+          "calls": 1
+        },
+        {
+          "android_pid": 391,
+          "android_tid": 409,
+          "host_tid": 186655723,
+          "instruction": 237082625,
+          "wall_ns": 1140000,
+          "cpu_ns": 1140042,
+          "calls": 1
+        },
+        {
+          "android_pid": 391,
+          "android_tid": 409,
+          "host_tid": 186655723,
+          "instruction": 1312159248,
+          "wall_ns": 3421000,
+          "cpu_ns": 3419208,
+          "calls": 2
+        },
+        {
+          "android_pid": 23,
+          "android_tid": 28,
+          "host_tid": 186648143,
+          "instruction": 1577845894,
+          "wall_ns": 12229000,
+          "cpu_ns": 12200661,
+          "calls": 81
+        },
+        {
+          "android_pid": 23,
+          "android_tid": 28,
+          "host_tid": 186648143,
+          "instruction": 1311237127,
+          "wall_ns": 6830000,
+          "cpu_ns": 6814463,
+          "calls": 27
+        },
+        {
+          "android_pid": 391,
+          "android_tid": 391,
+          "host_tid": 186655282,
+          "instruction": 1856103426,
+          "wall_ns": 19791000,
+          "cpu_ns": 19738378,
+          "calls": 54
+        },
+        {
+          "android_pid": 391,
+          "android_tid": 409,
+          "host_tid": 186655723,
+          "instruction": 1577845767,
+          "wall_ns": 1003000,
+          "cpu_ns": 1002500,
+          "calls": 1
+        },
+        {
+          "android_pid": 145,
+          "android_tid": 234,
+          "host_tid": 186653477,
+          "instruction": 1577845833,
+          "wall_ns": 6181000,
+          "cpu_ns": 6172208,
+          "calls": 38
+        },
+        {
+          "android_pid": 23,
+          "android_tid": 23,
+          "host_tid": 186648134,
+          "instruction": 505586690,
+          "wall_ns": 1254000,
+          "cpu_ns": 1245832,
+          "calls": 13
+        },
+        {
+          "android_pid": 391,
+          "android_tid": 409,
+          "host_tid": 186655723,
+          "instruction": 245422212,
+          "wall_ns": 2462000,
+          "cpu_ns": 2462625,
+          "calls": 1
+        },
+        {
+          "android_pid": 391,
+          "android_tid": 409,
+          "host_tid": 186655723,
+          "instruction": 1856103426,
+          "wall_ns": 5046000,
+          "cpu_ns": 5046167,
+          "calls": 3
+        },
+        {
+          "android_pid": 23,
+          "android_tid": 36,
+          "host_tid": 186648169,
+          "instruction": 2124534784,
+          "wall_ns": 3561000,
+          "cpu_ns": 3560085,
+          "calls": 4
+        },
+        {
+          "android_pid": 145,
+          "android_tid": 233,
+          "host_tid": 186653476,
+          "instruction": 2287992073,
+          "wall_ns": 893000,
+          "cpu_ns": 892792,
+          "calls": 1
+        },
+        {
+          "android_pid": 23,
+          "android_tid": 23,
+          "host_tid": 186648134,
+          "instruction": 2124534784,
+          "wall_ns": 3325000,
+          "cpu_ns": 3318167,
+          "calls": 9
+        },
+        {
+          "android_pid": 391,
+          "android_tid": 409,
+          "host_tid": 186655723,
+          "instruction": 1334022275,
+          "wall_ns": 358000,
+          "cpu_ns": 357875,
+          "calls": 2
+        },
+        {
+          "android_pid": 391,
+          "android_tid": 391,
+          "host_tid": 186655282,
+          "instruction": 506070272,
+          "wall_ns": 13102000,
+          "cpu_ns": 12996333,
+          "calls": 14
+        },
+        {
+          "android_pid": 23,
+          "android_tid": 23,
+          "host_tid": 186648134,
+          "instruction": 3363822872,
+          "wall_ns": 187000,
+          "cpu_ns": 180755,
+          "calls": 31
+        },
+        {
+          "android_pid": 391,
+          "android_tid": 409,
+          "host_tid": 186655723,
+          "instruction": 245506146,
+          "wall_ns": 1586000,
+          "cpu_ns": 1586000,
+          "calls": 1
+        },
+        {
+          "android_pid": 23,
+          "android_tid": 28,
+          "host_tid": 186648143,
+          "instruction": 1334022275,
+          "wall_ns": 66000,
+          "cpu_ns": 65084,
+          "calls": 1
+        },
+        {
+          "android_pid": 23,
+          "android_tid": 28,
+          "host_tid": 186648143,
+          "instruction": 505545984,
+          "wall_ns": 143000,
+          "cpu_ns": 142750,
+          "calls": 1
+        }
+      ],
+      "scope": "fixed seed and absolute zero-tolerance gesture; benchmark process activity; complete diagnostic attribution; Mac window occluded",
+      "initial_data_sha256": "7fa03db87afe4a7ddbb7f881a96f93f832b557fb2f4af8750aeb8a8ac9e1f228"
     }
   ],
   "host_checks": "work/native-linux-nce/macos-direct-1-interaction-v3/host-checks.json"

@@ -12,7 +12,11 @@ static void *worker(void *value)
         volatile unsigned total = 0;
         for (unsigned j = 0; j < 10000; ++j)
             total += j;
-        nce_execution_profile_end(thread, NCE_STAGE_DIRECT, stamp);
+        nce_execution_profile_end(thread, NCE_STAGE_DIRECT, stamp, 0);
+        stamp = nce_execution_profile_begin();
+        for (unsigned j = 0; j < 10000; ++j)
+            total += j;
+        nce_execution_profile_end(thread, NCE_STAGE_UNICORN, stamp, i & 1 ? 0x7ea1d401 : 0x885ffe69);
     }
     return 0;
 }

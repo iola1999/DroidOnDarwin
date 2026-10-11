@@ -3,6 +3,8 @@ import Foundation
 import Combine
 #if os(iOS)
     import UIKit
+#elseif os(macOS)
+    import AppKit
 #endif
 
 @MainActor
@@ -24,10 +26,14 @@ final class BenchmarkSession {
     private var memoryLastWrite: Double = 0
     #if os(iOS)
         private var backgroundObserver: AnyCancellable?
+    #elseif os(macOS)
+        private var visibilityObserver: AnyCancellable?
+        private var activity: NSObjectProtocol?
     #endif
     private var started = ProcessInfo.processInfo.systemUptime
     private var events: [[String: Any]] = []
     private var inputTimings: [[String: Int64]] = []
+    private var waitTimings: [[String: Int64]] = []
     private var failure: String?
     private var finished = false
     var runID: UUID {
@@ -63,6 +69,18 @@ final class BenchmarkSession {
         started = ProcessInfo.processInfo.systemUptime
         try sampleMemory()
         try record("accepted")
+        #if os(macOS)
+            activity = ProcessInfo.processInfo.beginActivity(options: [.userInitiated, .latencyCritical, .idleDisplaySleepDisabled], reason: "DroidOnDarwin interaction benchmark")
+            visibilityObserver = NotificationCenter.default.publisher(for: NSApplication.didChangeOcclusionStateNotification)
+                .merge(with: NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification),
+                       NotificationCenter.default.publisher(for: NSApplication.didResignActiveNotification))
+                .sink { [weak self] _ in
+                    guard let self, !finished else {
+                        return
+                    }
+                    do { try record("host_visibility_changed") } catch { fail(error.localizedDescription) }
+                }
+        #endif
         let previousCompletion = session.onFinish
         session.onFinish = { [weak self] in
             guard let self else {
@@ -151,6 +169,7 @@ final class BenchmarkSession {
                         throw BenchmarkError.invalid("操作期间 Android 已停止")
                     }
                     inputTimings = []
+                    waitTimings = []
                     try record("action_started", index: index)
                     try await perform(action)
                     try record("action_submitted", index: index)
@@ -196,6 +215,12 @@ final class BenchmarkSession {
         stepObserver = nil
         #if os(iOS)
             backgroundObserver = nil
+        #elseif os(macOS)
+            visibilityObserver = nil
+            if let activity {
+                ProcessInfo.processInfo.endActivity(activity)
+                self.activity = nil
+            }
         #endif
         if failure == nil && session.phase == .failed {
             failure = session.status
@@ -228,6 +253,14 @@ final class BenchmarkSession {
         if event == "action_submitted", !inputTimings.isEmpty {
             entry["input_timings"] = inputTimings
         }
+        if event == "action_submitted", !waitTimings.isEmpty {
+            entry["wait_timings"] = waitTimings
+        }
+        #if os(macOS)
+            entry["app_active"] = NSApp?.isActive ?? false
+            entry["app_visible"] = NSApp?.occlusionState.contains(.visible) ?? false
+            entry["benchmark_activity"] = activity != nil
+        #endif
         events.append(entry)
         try writeState(finished ? event : "running")
     }
@@ -252,7 +285,10 @@ final class BenchmarkSession {
                                     "memory": memorySummary,
                                     "configuration": try JSONSerialization.jsonObject(with: JSONEncoder().encode(request.configuration)),
                                     "events": events, "session_active": session.active,
-                                    "log": "session.log", "timing": "monotonic; ready observed through 1-second log polling; action submission excludes guest rendering completion"]
+                                    "log": "session.log", "timing": "monotonic; zero-tolerance absolute swipe deadlines; ready observed through 1-second log polling; action submission excludes guest rendering completion"]
+        #if os(macOS)
+            value["visibility_tracking"] = "AppKit notifications and action boundaries"
+        #endif
         if let failure {
             value["error"] = failure
         }
@@ -289,6 +325,20 @@ final class BenchmarkSession {
         try Task.checkCancellation()
     }
 
+    private func wait(until deadline: ContinuousClock.Instant) async throws {
+        let clock = ContinuousClock()
+        let requested = clock.now.duration(to: deadline)
+        let began = ProcessInfo.processInfo.systemUptime
+        try await clock.sleep(until: deadline, tolerance: .zero)
+        let late = deadline.duration(to: clock.now)
+        func microseconds(_ value: Duration) -> Int64 {
+            value.components.seconds * 1_000_000 + value.components.attoseconds / 1_000_000_000_000
+        }
+        waitTimings.append(["requested_us": microseconds(requested),
+                            "elapsed_us": Int64((ProcessInfo.processInfo.systemUptime - began) * 1_000_000),
+                            "late_us": microseconds(late)])
+    }
+
     private func perform(_ action: BenchmarkRequest.Action) async throws {
         switch action.kind {
         case "profile":
@@ -304,17 +354,20 @@ final class BenchmarkSession {
                 throw BenchmarkError.invalid("交互采集失败：\(result)")
             }
             try Task.checkCancellation()
-        case "wait": try await Task.sleep(for: .milliseconds(action.milliseconds!))
+        case "wait": try await wait(until: .now.advanced(by: .milliseconds(action.milliseconds!)))
         case "key": try await send(Int32(NCE_INPUT_KEY), ["home": Int32(NCE_KEY_HOME), "back": Int32(NCE_KEY_BACK), "recent": Int32(NCE_KEY_RECENT)][action.key!]!)
         case "tap":
             try await send(Int32(NCE_INPUT_DOWN), Int32(action.x!), Int32(action.y!))
-            try await Task.sleep(for: .milliseconds(40))
+            try await wait(until: .now.advanced(by: .milliseconds(40)))
             try await send(Int32(NCE_INPUT_UP), Int32(action.x!), Int32(action.y!))
         case "swipe":
             let count = max(1, action.milliseconds! / 16)
             try await send(Int32(NCE_INPUT_DOWN), Int32(action.x!), Int32(action.y!))
+            let began = ContinuousClock.now
             for step in 1 ... count {
-                try await Task.sleep(for: .milliseconds(action.milliseconds! / count))
+                // Keep the requested motion duration independent of earlier
+                // sends. Late events are retained and their delay is recorded.
+                try await wait(until: began.advanced(by: .milliseconds(action.milliseconds! * step / count)))
                 let x = action.x! + (action.endX! - action.x!) * step / count
                 let y = action.y! + (action.endY! - action.y!) * step / count
                 try await send(Int32(NCE_INPUT_MOVE), Int32(x), Int32(y))

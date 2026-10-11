@@ -194,6 +194,8 @@ struct BenchmarkChecks {
         let timings = recorded.flatMap { $0["input_timings"] as? [[String: Int64]] ?? [] }
         precondition(timings.count == events.count)
         precondition(timings.allSatisfy { $0["call_us"]! >= 2000 && $0["queue_us"]! >= 0 && $0["resume_us"]! >= 0 })
+        let waits = recorded.flatMap { $0["wait_timings"] as? [[String: Int64]] ?? [] }
+        precondition(waits.count == 3 && waits.allSatisfy { $0["elapsed_us"]! >= 0 && $0["late_us"]! >= 0 })
         do { _ = try BenchmarkSession(request: request, session: session, target: target, output: root)
             preconditionFailure("duplicate run accepted")
         } catch {}

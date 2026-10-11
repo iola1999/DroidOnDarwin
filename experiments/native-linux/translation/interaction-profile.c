@@ -13,6 +13,14 @@ struct NceExecutionProfile {
     uint64_t wall[NCE_STAGE_COUNT], cpu[NCE_STAGE_COUNT], calls[NCE_STAGE_COUNT];
 };
 static struct NceExecutionProfile threads[THREAD_CAPACITY];
+static NceExecutionProfile discarded;
+#define FALLBACK_CAPACITY 8192
+static struct {
+    NceExecutionProfile *thread;
+    uint32_t instruction;
+    uint64_t wall, cpu, calls;
+} fallbacks[FALLBACK_CAPACITY];
+static unsigned fallback_overflow;
 static unsigned thread_count, overflow;
 static atomic_bool enabled;
 static atomic_uint clock_errors;
@@ -40,7 +48,6 @@ NceExecutionProfile *nce_execution_profile_thread(long pid, long tid)
     uint64_t host_tid = 0;
     bool valid = pid > 0 && tid > 0 && !pthread_threadid_np(NULL, &host_tid);
     pthread_mutex_lock(&lock);
-    static NceExecutionProfile discarded;
     NceExecutionProfile *result = &discarded;
     if (valid && thread_count < THREAD_CAPACITY) {
         result = &threads[thread_count++];
@@ -59,7 +66,7 @@ NceProfileStamp nce_execution_profile_begin(void)
     return (NceProfileStamp){now(CLOCK_MONOTONIC), now(CLOCK_THREAD_CPUTIME_ID)};
 }
 
-void nce_execution_profile_end(NceExecutionProfile *thread, unsigned stage, NceProfileStamp start)
+void nce_execution_profile_end(NceExecutionProfile *thread, unsigned stage, NceProfileStamp start, uint32_t instruction)
 {
     if (!start.wall || !start.cpu || !thread || stage >= NCE_STAGE_COUNT)
         return;
@@ -71,6 +78,22 @@ void nce_execution_profile_end(NceExecutionProfile *thread, unsigned stage, NceP
         thread->wall[stage] += wall - start.wall;
         thread->cpu[stage] += cpu - start.cpu;
         ++thread->calls[stage];
+        if (stage == NCE_STAGE_UNICORN && thread != &discarded) {
+            unsigned slot = (((uintptr_t)thread >> 4) ^ (instruction * UINT32_C(2654435761))) & (FALLBACK_CAPACITY - 1);
+            unsigned i;
+            for (i = 0; i < FALLBACK_CAPACITY; ++i, slot = (slot + 1) & (FALLBACK_CAPACITY - 1)) {
+                if (!fallbacks[slot].thread || (fallbacks[slot].thread == thread && fallbacks[slot].instruction == instruction)) {
+                    fallbacks[slot].thread = thread;
+                    fallbacks[slot].instruction = instruction;
+                    fallbacks[slot].wall += wall - start.wall;
+                    fallbacks[slot].cpu += cpu - start.cpu;
+                    ++fallbacks[slot].calls;
+                    break;
+                }
+            }
+            if (i == FALLBACK_CAPACITY)
+                ++fallback_overflow;
+        }
     }
     pthread_mutex_unlock(&lock);
 }
@@ -108,6 +131,17 @@ int nce_execution_profile_control(bool active, const char *directory)
                 for (unsigned stage = 0; stage < NCE_STAGE_COUNT; ++stage)
                     fprintf(out, "%s{\"wall_ns\":%llu,\"cpu_ns\":%llu,\"calls\":%llu}", stage ? "," : "", (unsigned long long)thread->wall[stage], (unsigned long long)thread->cpu[stage], (unsigned long long)thread->calls[stage]);
                 fputs("]}", out);
+            }
+            fprintf(out, "],\"fallback_overflow\":%u,\"fallback_scope\":\"entire Unicorn interval grouped by first instruction; not individual instruction cost\",\"fallbacks\":[", fallback_overflow);
+            bool first = true;
+            for (unsigned i = 0; i < FALLBACK_CAPACITY; ++i) {
+                NceExecutionProfile *thread = fallbacks[i].thread;
+                if (!thread)
+                    continue;
+                fprintf(out, "%s{\"android_pid\":%ld,\"android_tid\":%ld,\"host_tid\":%llu,\"instruction\":%u,\"wall_ns\":%llu,\"cpu_ns\":%llu,\"calls\":%llu}", first ? "" : ",", thread->pid, thread->tid,
+                        (unsigned long long)thread->host_tid, fallbacks[i].instruction,
+                        (unsigned long long)fallbacks[i].wall, (unsigned long long)fallbacks[i].cpu, (unsigned long long)fallbacks[i].calls);
+                first = false;
             }
             fputs("]}\n", out);
             if (ferror(out))

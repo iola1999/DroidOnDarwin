@@ -1,10 +1,19 @@
 #!/usr/bin/env python3
 """检查帧记录缺失、格式错误和时钟采样误差的处理。"""
 import unittest
-from analyze_interaction_profile import read_frames, clock_alignment, distribution, read_frame_totals, read_thread_map
+from analyze_interaction_profile import read_frames, clock_alignment, distribution, read_frame_totals, read_thread_map, host_visibility
 
 
 class InteractionProfileTests(unittest.TestCase):
+    def test_hidden_interval_is_not_erased_by_visible_endpoints(self):
+        result = {'visibility_tracking': 'AppKit notifications and action boundaries', 'events': [
+            {'host_monotonic_ns': time, 'app_visible': visible, 'app_active': visible}
+            for time, visible in ((10, True), (20, False), (30, True), (50, False))]}
+        self.assertFalse(host_visibility(result, 15, 40)['all_visible'])
+        self.assertTrue(host_visibility(result, 30, 40)['all_visible'])
+        self.assertFalse(host_visibility(result, 5, 15)['all_visible'])
+        self.assertFalse(host_visibility({'events': []}, 10, 40)['available'])
+
     def test_window_and_malformed_frames(self):
         rows, errors = read_frames('''Window: Settings
 ---PROFILEDATA---
