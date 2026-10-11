@@ -8,6 +8,7 @@
 #include <sys/stat.h>
 #include <sys/ioctl.h>
 #include <sys/mman.h>
+#include <sys/mount.h>
 #include <sys/wait.h>
 #include <unistd.h>
 
@@ -21,6 +22,18 @@
 void file_tests(const char *libc)
 {
     CHECK(mkdir("/open-flags", 0700) == 0);
+    const char *invalid = (const char *)1;
+    CHECK(open(invalid, O_RDONLY) == -1 && errno == EFAULT);
+    CHECK(mount("proc", "/open-flags", invalid, 0, NULL) == -1 && errno == EFAULT);
+    long page = sysconf(_SC_PAGESIZE);
+    CHECK(page > 0);
+    char *boundary = mmap(NULL, page * 2, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+    CHECK(boundary != MAP_FAILED && mprotect(boundary + page, page, PROT_NONE) == 0);
+    memset(boundary + page - 8, 'a', 8);
+    CHECK(open(boundary + page - 8, O_RDONLY) == -1 && errno == EFAULT);
+    CHECK(mount("proc", "/open-flags", boundary + page - 8, 0, NULL) == -1 && errno == EFAULT);
+    CHECK(munmap(boundary, page * 2) == 0);
+    printf("{\"test\":\"linux_user_string_boundaries\",\"passed\":true,\"libc\":\"%s\"}\n", libc);
     int memory = memfd_create("ashmem-size", MFD_CLOEXEC | MFD_ALLOW_SEALING);
     CHECK(memory >= 0 && ioctl(memory, _IO(0x77, 4), 0) == 0);
     CHECK(ftruncate(memory, 16384) == 0 && ioctl(memory, _IO(0x77, 4), 0) == 16384);

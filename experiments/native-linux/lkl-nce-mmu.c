@@ -476,6 +476,12 @@ retry_lock:
     return result & VM_FAULT_ERROR ? -EFAULT : 0;
 }
 
+unsigned long nce_user_string_limit(void)
+{
+    /* Host syscall buffers can lie above the Linux user window. */
+    return current->thread.nce_state ? TASK_SIZE : ~0UL;
+}
+
 int nce_access_ok(const void *ptr, unsigned long size)
 {
     unsigned long address = (unsigned long)ptr;

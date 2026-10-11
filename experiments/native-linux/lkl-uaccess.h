@@ -4,6 +4,8 @@
 #ifdef CONFIG_MMU
 #include <linux/string.h>
 int nce_access_ok(const void *ptr, unsigned long size);
+unsigned long nce_user_string_limit(void);
+#define NCE_USER_STRING_LIMIT nce_user_string_limit()
 unsigned long nce_copy_user(void *kernel, unsigned long user, unsigned long size, int operation);
 #define __access_ok(addr, size) nce_access_ok((const void *)(addr), size)
 static inline unsigned long raw_copy_from_user(void *to, const void __user *from, unsigned long size)

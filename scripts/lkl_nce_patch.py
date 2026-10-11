@@ -14,6 +14,10 @@ def apply(source: Path, experiment: Path):
         path.write_text(text.replace(before, after))
 
     arch = "arch/lkl/"
+    for name in ("lib/strncpy_from_user.c", "lib/strnlen_user.c"):
+        edit(name, "\tmax_addr = TASK_SIZE_MAX;",
+             "#ifdef NCE_USER_STRING_LIMIT\n\tmax_addr = NCE_USER_STRING_LIMIT;\n"
+             "#else\n\tmax_addr = TASK_SIZE_MAX;\n#endif")
     # Match Android's CAP_SYS_NICE permission for cross-UID task placement.
     edit("kernel/cgroup/cgroup-v1.c", "\t    !uid_eq(cred->euid, tcred->suid))",
          "\t    !uid_eq(cred->euid, tcred->suid) &&\n"
