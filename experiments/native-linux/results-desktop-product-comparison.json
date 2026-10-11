@@ -1,0 +1,613 @@
+{
+  "scope": "Previous complete native product versus current Direct product with selected configuration; distinct kernels and system images, not an isolated execution-engine comparison; shared persisted data and host file cache",
+  "host": {
+    "driver_os": "macOS-27.0-arm64-arm-64bit-Mach-O",
+    "host_cpu": "Apple M5 Ultra",
+    "data_directory": "/Users/fan/project/app/husk_hyos/work/native-linux-nce/benchmarks/direct-up-device",
+    "data_reset_between_runs": false,
+    "host_file_cache_reset": false,
+    "ram_bytes": 274877906944
+  },
+  "apps": {
+    "native-previous": {
+      "path": "/Users/fan/project/app/husk_hyos/work/native-linux-nce/macos/DroidOnDarwin.app",
+      "executable_sha256": "49e291c6af44f9d7b95f5d2955dc3c26c4ad284284574388c3252e6cef41cdc5",
+      "resources": {
+        "runtime": "9681c5605d89caf9b6f9031198c9f869587043dbf5b5a69be990ef8959c540d6",
+        "build": {
+          "kernel_sha256": "6faacb9ad2bc8cd6d6533162ab18a017068307b4906919e816c40fff2624c4e8",
+          "system_sha256": "b7e9d67dadbd1d729269d9cdacc48f470d0084ca5532d5db49b1f977139074bd",
+          "source_inputs_sha256": "bd14f9907fef42205769c60b922923137344adb157ff6f8fec0f690f7719bbaa",
+          "art_build_inputs": "d7afbe9b91f2c65f698a65234767e4fdca10a24bb83ee96143f5384f261bc3a9",
+          "art_files": {
+            "libart.so": "a4db268d5522bc4d17dfbcb53f9bded4e9b9f0f52e9786405d2034aa1800769c",
+            "libartbase.so": "af02b230861c8f209d6df773e4749063cbd7ab25062cbd5629e4a955ef2d31f4"
+          }
+        }
+      }
+    },
+    "direct-reuse": {
+      "path": "/Users/fan/project/app/husk_hyos/work/native-linux-nce/macos-direct-1-home/DroidOnDarwin.app",
+      "executable_sha256": "315d70ce8e2130dd11a18d638eda10671a689decb391b0c44257334f82b11bee",
+      "resources": {
+        "runtime": "5e8f90994991ea5df9498460586fba5662bad86764edad11184515788d040119",
+        "execution": {
+          "engine": "direct",
+          "cpus": 1,
+          "code_memory": "dual"
+        },
+        "build": {
+          "kernel_sha256": "253bfdd53ed4cba8e3d9d3d2a57bfb79ee263e42ab1a8034974c4ff0ba15578a",
+          "system_sha256": "fd6302cd09359b5cab0b120aa81bc352a19b7420a110c5dd68f84fa409852899",
+          "source_inputs_sha256": "8cfd5b6495d223dc2a506621ca8bb650121473c455104c8aacccd664db0c8584"
+        }
+      }
+    },
+    "direct-default": {
+      "path": "/Users/fan/project/app/husk_hyos/work/native-linux-nce/macos-direct-1-home/DroidOnDarwin.app",
+      "executable_sha256": "315d70ce8e2130dd11a18d638eda10671a689decb391b0c44257334f82b11bee",
+      "resources": {
+        "runtime": "5e8f90994991ea5df9498460586fba5662bad86764edad11184515788d040119",
+        "execution": {
+          "engine": "direct",
+          "cpus": 1,
+          "code_memory": "dual"
+        },
+        "build": {
+          "kernel_sha256": "253bfdd53ed4cba8e3d9d3d2a57bfb79ee263e42ab1a8034974c4ff0ba15578a",
+          "system_sha256": "fd6302cd09359b5cab0b120aa81bc352a19b7420a110c5dd68f84fa409852899",
+          "source_inputs_sha256": "8cfd5b6495d223dc2a506621ca8bb650121473c455104c8aacccd664db0c8584"
+        }
+      }
+    }
+  },
+  "sequence": [
+    "native-previous",
+    "direct-reuse",
+    "direct-default",
+    "direct-reuse",
+    "direct-default",
+    "native-previous",
+    "direct-default",
+    "native-previous",
+    "direct-reuse",
+    "native-previous"
+  ],
+  "excluded_runs": [
+    {
+      "variant": "native-previous",
+      "source": "work/native-linux-nce/benchmarks/home-fixed-product-comparison/5-native-previous/20261011-225847-d73cab/summary.json",
+      "sha256": "6bf0d5748d627a23470daf7fec57c467439a27c80608f2d19f4e3481a8567a73",
+      "exclusion_reason": "A passive UI inspection raced completion of the preceding Direct session and relaunched an idle Direct window during this native startup. The idle window was immediately terminated; retain this run as functional only."
+    }
+  ],
+  "runs": [
+    {
+      "variant": "native-previous",
+      "build_id": "0.25.0-Mac-20261011-044921",
+      "source": "work/native-linux-nce/benchmarks/home-fixed-product-comparison/0-native-previous/20261011-224219-bfcbe9/summary.json",
+      "source_sha256": "63f94fc5d1f9809c8c486138d50511495c31af819d509de06f763a489b9bc92f",
+      "run_id": "96B8AC88-8A13-45A2-A095-7AB6901708FD",
+      "configuration": {
+        "aot": false,
+        "bootImage": false,
+        "diagnostics": false,
+        "directFault": true,
+        "expandedJIT": false,
+        "fastBaseline": false,
+        "faultPrefetch": false,
+        "nterp": true,
+        "performanceLogging": false,
+        "schedulerSliceUS": 0,
+        "sparseScan": true
+      },
+      "metrics": {
+        "start_to_ready_observed_ms": 101076.9177917391,
+        "stop_ms": 3464.989583240822,
+        "clock_displayed_ms": 5069,
+        "files_displayed_ms": 6900,
+        "footprint_lifetime_peak_bytes": 2154500848
+      },
+      "thermal_states": [
+        0
+      ],
+      "low_power_mode_states": [
+        false
+      ]
+    },
+    {
+      "variant": "direct-reuse",
+      "build_id": "0.25.0-Mac-20261011-220337-direct1-dual",
+      "source": "work/native-linux-nce/benchmarks/home-fixed-product-comparison/1-direct-reuse/20261011-224602-23b20e/summary.json",
+      "source_sha256": "9d7f38c696125a8708e8d30b886d77896029b904ed8ff8afdb72b139b2545967",
+      "run_id": "268513C7-1D46-4169-B310-A617D545E24E",
+      "configuration": {
+        "aot": false,
+        "bootImage": false,
+        "diagnostics": false,
+        "directFault": true,
+        "expandedJIT": false,
+        "fastBaseline": false,
+        "faultPrefetch": false,
+        "nterp": true,
+        "performanceLogging": false,
+        "schedulerSliceUS": 0,
+        "sparseScan": true,
+        "translation": {
+          "cacheMiB": 64,
+          "codeWatch": true,
+          "crossPage": true,
+          "linuxFastpath": false,
+          "memoryGroups": false,
+          "onlineCPUs": 1,
+          "retainRoutes": true,
+          "reuseCodeChecks": true,
+          "routeEpochs": true,
+          "vectorTable": false
+        }
+      },
+      "metrics": {
+        "start_to_ready_observed_ms": 71033.73504173942,
+        "stop_ms": 3538.7505416292697,
+        "clock_displayed_ms": 6099,
+        "files_displayed_ms": 6093,
+        "footprint_lifetime_peak_bytes": 2984447624
+      },
+      "thermal_states": [
+        0
+      ],
+      "low_power_mode_states": [
+        false
+      ]
+    },
+    {
+      "variant": "direct-default",
+      "build_id": "0.25.0-Mac-20261011-220337-direct1-dual",
+      "source": "work/native-linux-nce/benchmarks/home-fixed-product-comparison/2-direct-default/20261011-224911-c971ba/summary.json",
+      "source_sha256": "583412323364b7caec995ca68075a5876d73e9dc15e8d36199d6e560771ef910",
+      "run_id": "6BFA6662-C197-441C-A60B-D39A9D10734D",
+      "configuration": {
+        "aot": false,
+        "bootImage": false,
+        "diagnostics": false,
+        "directFault": true,
+        "expandedJIT": false,
+        "fastBaseline": false,
+        "faultPrefetch": false,
+        "nterp": true,
+        "performanceLogging": false,
+        "schedulerSliceUS": 0,
+        "sparseScan": true,
+        "translation": {
+          "cacheMiB": 128,
+          "codeWatch": true,
+          "crossPage": true,
+          "linuxFastpath": false,
+          "memoryGroups": false,
+          "onlineCPUs": 1,
+          "retainRoutes": false,
+          "reuseCodeChecks": false,
+          "routeEpochs": false,
+          "vectorTable": false
+        }
+      },
+      "metrics": {
+        "start_to_ready_observed_ms": 71048.35616680793,
+        "stop_ms": 3466.1814998835325,
+        "clock_displayed_ms": 5043,
+        "files_displayed_ms": 4980,
+        "footprint_lifetime_peak_bytes": 3144093584
+      },
+      "thermal_states": [
+        0
+      ],
+      "low_power_mode_states": [
+        false
+      ]
+    },
+    {
+      "variant": "direct-reuse",
+      "build_id": "0.25.0-Mac-20261011-220337-direct1-dual",
+      "source": "work/native-linux-nce/benchmarks/home-fixed-product-comparison/3-direct-reuse/20261011-225221-def2a4/summary.json",
+      "source_sha256": "7097d73ea956975c31d8edf9c255eaba2609c35bb0ba79fb0189dc95c24e6caa",
+      "run_id": "E680ADA8-4F9F-49A5-95D7-22DE323A2216",
+      "configuration": {
+        "aot": false,
+        "bootImage": false,
+        "diagnostics": false,
+        "directFault": true,
+        "expandedJIT": false,
+        "fastBaseline": false,
+        "faultPrefetch": false,
+        "nterp": true,
+        "performanceLogging": false,
+        "schedulerSliceUS": 0,
+        "sparseScan": true,
+        "translation": {
+          "cacheMiB": 64,
+          "codeWatch": true,
+          "crossPage": true,
+          "linuxFastpath": false,
+          "memoryGroups": false,
+          "onlineCPUs": 1,
+          "retainRoutes": true,
+          "reuseCodeChecks": true,
+          "routeEpochs": true,
+          "vectorTable": false
+        }
+      },
+      "metrics": {
+        "start_to_ready_observed_ms": 76069.17941686697,
+        "stop_ms": 4494.64925006032,
+        "clock_displayed_ms": 5972,
+        "files_displayed_ms": 7475,
+        "footprint_lifetime_peak_bytes": 2974158472
+      },
+      "thermal_states": [
+        0
+      ],
+      "low_power_mode_states": [
+        false
+      ]
+    },
+    {
+      "variant": "direct-default",
+      "build_id": "0.25.0-Mac-20261011-220337-direct1-dual",
+      "source": "work/native-linux-nce/benchmarks/home-fixed-product-comparison/4-direct-default/20261011-225537-b8c1de/summary.json",
+      "source_sha256": "9032ab188b1e56333e010cc1d6d58b0c528c63f86bc3426338579079ee19defd",
+      "run_id": "D05FFF3A-BEFF-4F8A-A617-124AEAB3496F",
+      "configuration": {
+        "aot": false,
+        "bootImage": false,
+        "diagnostics": false,
+        "directFault": true,
+        "expandedJIT": false,
+        "fastBaseline": false,
+        "faultPrefetch": false,
+        "nterp": true,
+        "performanceLogging": false,
+        "schedulerSliceUS": 0,
+        "sparseScan": true,
+        "translation": {
+          "cacheMiB": 128,
+          "codeWatch": true,
+          "crossPage": true,
+          "linuxFastpath": false,
+          "memoryGroups": false,
+          "onlineCPUs": 1,
+          "retainRoutes": false,
+          "reuseCodeChecks": false,
+          "routeEpochs": false,
+          "vectorTable": false
+        }
+      },
+      "metrics": {
+        "start_to_ready_observed_ms": 71087.3949166853,
+        "stop_ms": 4037.3841249383986,
+        "clock_displayed_ms": 5356,
+        "files_displayed_ms": 4887,
+        "footprint_lifetime_peak_bytes": 3152482168
+      },
+      "thermal_states": [
+        0
+      ],
+      "low_power_mode_states": [
+        false
+      ]
+    },
+    {
+      "variant": "direct-default",
+      "build_id": "0.25.0-Mac-20261011-220337-direct1-dual",
+      "source": "work/native-linux-nce/benchmarks/home-fixed-product-comparison/6-direct-default/20261011-230239-c8cf69/summary.json",
+      "source_sha256": "42e2b8a294a29d5ce6c430fe22c5cd3379880ee450530ce949098c255a5f7bd3",
+      "run_id": "B71A862D-E168-458C-A667-9245B3DE2B27",
+      "configuration": {
+        "aot": false,
+        "bootImage": false,
+        "diagnostics": false,
+        "directFault": true,
+        "expandedJIT": false,
+        "fastBaseline": false,
+        "faultPrefetch": false,
+        "nterp": true,
+        "performanceLogging": false,
+        "schedulerSliceUS": 0,
+        "sparseScan": true,
+        "translation": {
+          "cacheMiB": 128,
+          "codeWatch": true,
+          "crossPage": true,
+          "linuxFastpath": false,
+          "memoryGroups": false,
+          "onlineCPUs": 1,
+          "retainRoutes": false,
+          "reuseCodeChecks": false,
+          "routeEpochs": false,
+          "vectorTable": false
+        }
+      },
+      "metrics": {
+        "start_to_ready_observed_ms": 72059.1054582037,
+        "stop_ms": 4286.434749839827,
+        "clock_displayed_ms": 4684,
+        "files_displayed_ms": 5722,
+        "footprint_lifetime_peak_bytes": 3139702648
+      },
+      "thermal_states": [
+        0
+      ],
+      "low_power_mode_states": [
+        false
+      ]
+    },
+    {
+      "variant": "native-previous",
+      "build_id": "0.25.0-Mac-20261011-044921",
+      "source": "work/native-linux-nce/benchmarks/home-fixed-product-comparison/7-native-previous/20261011-230550-359455/summary.json",
+      "source_sha256": "29ac28f6ce6f6ab68f3ead79e90563ea73b1c158893b0cd828bb957fed8740fc",
+      "run_id": "C19D91B4-4CD7-47CD-9609-B707D7498B88",
+      "configuration": {
+        "aot": false,
+        "bootImage": false,
+        "diagnostics": false,
+        "directFault": true,
+        "expandedJIT": false,
+        "fastBaseline": false,
+        "faultPrefetch": false,
+        "nterp": true,
+        "performanceLogging": false,
+        "schedulerSliceUS": 0,
+        "sparseScan": true
+      },
+      "metrics": {
+        "start_to_ready_observed_ms": 103021.96491672657,
+        "stop_ms": 3036.4816666115075,
+        "clock_displayed_ms": 5236,
+        "files_displayed_ms": 7418,
+        "footprint_lifetime_peak_bytes": 2154697768
+      },
+      "thermal_states": [
+        0
+      ],
+      "low_power_mode_states": [
+        false
+      ]
+    },
+    {
+      "variant": "direct-reuse",
+      "build_id": "0.25.0-Mac-20261011-220337-direct1-dual",
+      "source": "work/native-linux-nce/benchmarks/home-fixed-product-comparison/8-direct-reuse/20261011-230934-0295b9/summary.json",
+      "source_sha256": "ee92651fd7ffb261c06b6f1f3e58f7bd5a1f920d120a23a05774c46b429eebaa",
+      "run_id": "7EF29016-9C67-4BF0-8AD4-D702644BE528",
+      "configuration": {
+        "aot": false,
+        "bootImage": false,
+        "diagnostics": false,
+        "directFault": true,
+        "expandedJIT": false,
+        "fastBaseline": false,
+        "faultPrefetch": false,
+        "nterp": true,
+        "performanceLogging": false,
+        "schedulerSliceUS": 0,
+        "sparseScan": true,
+        "translation": {
+          "cacheMiB": 64,
+          "codeWatch": true,
+          "crossPage": true,
+          "linuxFastpath": false,
+          "memoryGroups": false,
+          "onlineCPUs": 1,
+          "retainRoutes": true,
+          "reuseCodeChecks": true,
+          "routeEpochs": true,
+          "vectorTable": false
+        }
+      },
+      "metrics": {
+        "start_to_ready_observed_ms": 77060.61516655609,
+        "stop_ms": 4291.490125004202,
+        "clock_displayed_ms": 6268,
+        "files_displayed_ms": 6169,
+        "footprint_lifetime_peak_bytes": 2989395592
+      },
+      "thermal_states": [
+        0
+      ],
+      "low_power_mode_states": [
+        false
+      ]
+    },
+    {
+      "variant": "native-previous",
+      "build_id": "0.25.0-Mac-20261011-044921",
+      "source": "work/native-linux-nce/benchmarks/home-fixed-product-comparison/9-native-previous/20261011-231252-67f9bf/summary.json",
+      "source_sha256": "79505523ab9f8503b69e80f08f961156c1eb8e59ac46550c954fd5add61480fd",
+      "run_id": "5C71F209-CD91-473E-BC00-9CC74A802177",
+      "configuration": {
+        "aot": false,
+        "bootImage": false,
+        "diagnostics": false,
+        "directFault": true,
+        "expandedJIT": false,
+        "fastBaseline": false,
+        "faultPrefetch": false,
+        "nterp": true,
+        "performanceLogging": false,
+        "schedulerSliceUS": 0,
+        "sparseScan": true
+      },
+      "metrics": {
+        "start_to_ready_observed_ms": 104081.98070828803,
+        "stop_ms": 2903.7467499729246,
+        "clock_displayed_ms": 5744,
+        "files_displayed_ms": 6881,
+        "footprint_lifetime_peak_bytes": 2136871928
+      },
+      "thermal_states": [
+        0
+      ],
+      "low_power_mode_states": [
+        false
+      ]
+    }
+  ],
+  "comparison": {
+    "native-previous": {
+      "start_to_ready_observed_ms": {
+        "median": 103021.96491672657,
+        "min": 101076.9177917391,
+        "max": 104081.98070828803,
+        "samples": [
+          101076.9177917391,
+          103021.96491672657,
+          104081.98070828803
+        ]
+      },
+      "stop_ms": {
+        "median": 3036.4816666115075,
+        "min": 2903.7467499729246,
+        "max": 3464.989583240822,
+        "samples": [
+          3464.989583240822,
+          3036.4816666115075,
+          2903.7467499729246
+        ]
+      },
+      "clock_displayed_ms": {
+        "median": 5236,
+        "min": 5069,
+        "max": 5744,
+        "samples": [
+          5069,
+          5236,
+          5744
+        ]
+      },
+      "files_displayed_ms": {
+        "median": 6900,
+        "min": 6881,
+        "max": 7418,
+        "samples": [
+          6900,
+          7418,
+          6881
+        ]
+      },
+      "footprint_lifetime_peak_bytes": {
+        "median": 2154500848,
+        "min": 2136871928,
+        "max": 2154697768,
+        "samples": [
+          2154500848,
+          2154697768,
+          2136871928
+        ]
+      }
+    },
+    "direct-reuse": {
+      "start_to_ready_observed_ms": {
+        "median": 76069.17941686697,
+        "min": 71033.73504173942,
+        "max": 77060.61516655609,
+        "samples": [
+          71033.73504173942,
+          76069.17941686697,
+          77060.61516655609
+        ]
+      },
+      "stop_ms": {
+        "median": 4291.490125004202,
+        "min": 3538.7505416292697,
+        "max": 4494.64925006032,
+        "samples": [
+          3538.7505416292697,
+          4494.64925006032,
+          4291.490125004202
+        ]
+      },
+      "clock_displayed_ms": {
+        "median": 6099,
+        "min": 5972,
+        "max": 6268,
+        "samples": [
+          6099,
+          5972,
+          6268
+        ]
+      },
+      "files_displayed_ms": {
+        "median": 6169,
+        "min": 6093,
+        "max": 7475,
+        "samples": [
+          6093,
+          7475,
+          6169
+        ]
+      },
+      "footprint_lifetime_peak_bytes": {
+        "median": 2984447624,
+        "min": 2974158472,
+        "max": 2989395592,
+        "samples": [
+          2984447624,
+          2974158472,
+          2989395592
+        ]
+      }
+    },
+    "direct-default": {
+      "start_to_ready_observed_ms": {
+        "median": 71087.3949166853,
+        "min": 71048.35616680793,
+        "max": 72059.1054582037,
+        "samples": [
+          71048.35616680793,
+          71087.3949166853,
+          72059.1054582037
+        ]
+      },
+      "stop_ms": {
+        "median": 4037.3841249383986,
+        "min": 3466.1814998835325,
+        "max": 4286.434749839827,
+        "samples": [
+          3466.1814998835325,
+          4037.3841249383986,
+          4286.434749839827
+        ]
+      },
+      "clock_displayed_ms": {
+        "median": 5043,
+        "min": 4684,
+        "max": 5356,
+        "samples": [
+          5043,
+          5356,
+          4684
+        ]
+      },
+      "files_displayed_ms": {
+        "median": 4980,
+        "min": 4887,
+        "max": 5722,
+        "samples": [
+          4980,
+          4887,
+          5722
+        ]
+      },
+      "footprint_lifetime_peak_bytes": {
+        "median": 3144093584,
+        "min": 3139702648,
+        "max": 3152482168,
+        "samples": [
+          3144093584,
+          3152482168,
+          3139702648
+        ]
+      }
+    }
+  }
+}
