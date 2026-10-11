@@ -1260,7 +1260,9 @@ static void *send_input_from_host_thread(void *unused)
 {
     (void)unused;
     REQUIRE(nce_host_input_send(NCE_INPUT_DOWN, 359, 639) == 0);
-    REQUIRE(nce_host_input_send(NCE_INPUT_KEY, 158, 0) == 0);
+    REQUIRE(nce_host_input_send(NCE_INPUT_KEY, NCE_KEY_BACK, 0) == 0);
+    REQUIRE(nce_host_input_send(NCE_INPUT_KEY, NCE_KEY_HOME, 0) == 0);
+    REQUIRE(nce_host_input_send(NCE_INPUT_KEY, 172, 0) == -22);
     REQUIRE(nce_host_input_send(NCE_INPUT_MOVE, 360, 0) == -22);
     REQUIRE(nce_host_input_send(NCE_INPUT_KEY, 999, 0) == -22);
     return NULL;
@@ -1284,13 +1286,13 @@ static void host_input_test(long (*call)(long, long *))
     pthread_t thread;
     REQUIRE(pthread_create(&thread, NULL, send_input_from_host_thread, NULL) == 0);
     REQUIRE(pthread_join(thread, NULL) == 0);
-    const NceInputCommand expected[] = {{NCE_INPUT_DOWN, 359, 639}, {NCE_INPUT_KEY, 158, 0}};
+    const NceInputCommand expected[] = {{NCE_INPUT_DOWN, 359, 639}, {NCE_INPUT_KEY, NCE_KEY_BACK, 0}, {NCE_INPUT_KEY, NCE_KEY_HOME, 0}};
     NceInputCommand command;
     args[0] = fd;
     args[1] = (long)&command;
     args[2] = sizeof(command);
     args[3] = 0x40;
-    for (unsigned i = 0; i < 2; ++i) {
+    for (unsigned i = 0; i < sizeof(expected) / sizeof(expected[0]); ++i) {
         REQUIRE(call(207, args) == sizeof(command));
         REQUIRE(memcmp(&command, &expected[i], sizeof(command)) == 0);
     }
@@ -1852,6 +1854,7 @@ int nce_process_run(long (*host_syscall)(long, long *), long (*guest_syscall)(lo
             if (getenv("NCE_SYSTEM_SERVER_PROBE") && !getenv("NCE_DESKTOP")) {
                 REQUIRE(strstr(benchmark, "android_system_boot_completed"));
                 REQUIRE(strstr(benchmark, "android_desktop_launch_commands"));
+                REQUIRE(strstr(benchmark, "android_home_navigation"));
                 REQUIRE(strstr(benchmark, "android_system_process_groups_stopped"));
             }
             REQUIRE(strstr(benchmark, "android_framework_graphics\",\"passed\":true"));

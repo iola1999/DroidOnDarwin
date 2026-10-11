@@ -48,7 +48,7 @@ int main(void)
         [display mouseDragged:pointer(window, NSEventTypeLeftMouseDragged, NSMakePoint(900, -10))];
         [display mouseUp:pointer(window, NSEventTypeLeftMouseUp, NSMakePoint(-20, 1500))];
         NSButton *home = [NSButton new];
-        home.tag = 102;
+        home.tag = NCE_KEY_HOME;
         [display navigate:home];
         for (int attempt = 0; attempt < 200; ++attempt) {
             {
@@ -63,7 +63,7 @@ int main(void)
         assert(commands[0].action == NCE_INPUT_DOWN && commands[0].x == 180 && commands[0].y == 320);
         assert(commands[1].action == NCE_INPUT_MOVE && commands[1].x == 359 && commands[1].y == 639);
         assert(commands[2].action == NCE_INPUT_UP && commands[2].x == 0 && commands[2].y == 0);
-        assert(commands[3].action == NCE_INPUT_KEY && commands[3].x == 102);
+        assert(commands[3].action == NCE_INPUT_KEY && commands[3].x == NCE_KEY_HOME);
         puts("display checks passed: initial layer geometry, fixed drawable, scaled coordinates, edge clamping, input readiness and ordered navigation");
     }
 }

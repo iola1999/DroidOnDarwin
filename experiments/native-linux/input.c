@@ -35,7 +35,7 @@ int nce_host_input_send(int action, int x, int y)
         return -22;
     if (action != NCE_INPUT_KEY && (x < 0 || x >= 360 || y < 0 || y >= 640))
         return -22;
-    if (action == NCE_INPUT_KEY && x != 102 && x != 158 && x != 580)
+    if (action == NCE_INPUT_KEY && x != NCE_KEY_HOME && x != NCE_KEY_BACK && x != NCE_KEY_RECENT)
         return -22;
     NceInputCommand command = {action, x, y};
     // Linux sockaddr_un has no Darwin sa_len field.

@@ -21,6 +21,8 @@
             _exit(117); \
         } \
     } while (0)
+static_assert(NCE_KEY_HOME == KEY_HOME && NCE_KEY_BACK == KEY_BACK && NCE_KEY_RECENT == KEY_APPSELECT);
+
 static char event_path[128];
 static pid_t input_process = -1;
 

@@ -268,7 +268,7 @@ final class BenchmarkSession {
     private func perform(_ action: BenchmarkRequest.Action) async throws {
         switch action.kind {
         case "wait": try await Task.sleep(for: .milliseconds(action.milliseconds!))
-        case "key": try await send(Int32(NCE_INPUT_KEY), ["home": 102, "back": 158, "recent": 580][action.key!]!)
+        case "key": try await send(Int32(NCE_INPUT_KEY), ["home": Int32(NCE_KEY_HOME), "back": Int32(NCE_KEY_BACK), "recent": Int32(NCE_KEY_RECENT)][action.key!]!)
         case "tap":
             try await send(Int32(NCE_INPUT_DOWN), Int32(action.x!), Int32(action.y!))
             try await Task.sleep(for: .milliseconds(40))

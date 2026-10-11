@@ -90,7 +90,7 @@ int main(int argc, char **argv)
         view.inputQueue = dispatch_queue_create("app.droidondarwin.android-input", DISPATCH_QUEUE_SERIAL);
         [window.contentView addSubview:view];
         NSArray<NSString *> *titles = @[ @"返回", @"主页", @"最近应用" ];
-        const int keys[] = {158, 102, 580};
+        const int keys[] = {NCE_KEY_BACK, NCE_KEY_HOME, NCE_KEY_RECENT};
         for (unsigned i = 0; i < 3; ++i) {
             NSButton *button = [NSButton buttonWithTitle:titles[i] target:view action:@selector(navigate:)];
             button.frame = NSMakeRect(i * 120, 0, 120, 40);

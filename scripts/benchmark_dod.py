@@ -8,6 +8,7 @@ import os
 from pathlib import Path
 import platform
 import plistlib
+import re
 import statistics
 import subprocess
 import time
@@ -23,6 +24,15 @@ DEFAULT_MATRIX = {
                 {'kind': 'swipe', 'x': 180, 'y': 560, 'endX': 180, 'endY': 120, 'milliseconds': 400},
                 {'kind': 'wait', 'milliseconds': 2000}, {'kind': 'key', 'key': 'home'}],
 }
+
+
+def missing_displayed_packages(components, required):
+    displayed = set()
+    for row in components['displayed_activities']:
+        match = re.search(r'ActivityTaskManager: Displayed ([^ /]+)/[^ ]+ for user ', row['message'])
+        if match:
+            displayed.add(match[1])
+    return sorted(set(required) - displayed)
 
 
 def save(path, value):
@@ -120,6 +130,8 @@ def main():
     parser.add_argument('--phone', help='devicectl 中的设备 ID 或名称')
     parser.add_argument('--bundle-id', default='app.droidondarwin.ios')
     parser.add_argument('--matrix', type=Path, help='包含 configurations 和 actions 的 JSON 文件')
+    parser.add_argument('--require-displayed-package', action='append', default=[],
+                        help='要求日志包含该包的 Activity 首帧，可重复指定；适用于本次会话首次打开的 Activity')
     parser.add_argument('--repeat', type=int, default=3)
     parser.add_argument('--timeout', type=int, default=600)
     parser.add_argument('--output', type=Path, default=OUT)
@@ -144,6 +156,7 @@ def main():
     folder = args.output.resolve() / (time.strftime('%Y%m%d-%H%M%S') + '-' + uuid.uuid4().hex[:6])
     folder.mkdir(parents=True)
     report = {'platform': args.platform, 'driver_os': platform.platform(), 'matrix': matrix, 'runs': [],
+              'required_displayed_packages': args.require_displayed_package,
               'data_reset_between_runs': False, 'host_file_cache_reset': False,
               'measurement': 'App starts through observed desktop ready, scripted input submission and clean stop. Ready has up to one polling interval of observation delay. No FPS or application render latency assertion.'}
     save(folder / 'summary.json', report)
@@ -258,6 +271,9 @@ def main():
                 if log.exists():
                     contents = log.read_text(errors='replace')
                     record['components'] = log_summary(contents)
+                    missing = missing_displayed_packages(record['components'], args.require_displayed_package)
+                    if missing:
+                        error = error or '缺少应用首帧：' + ', '.join(missing)
                     configurations = []
                     for line in contents.splitlines():
                         if line.startswith('{"configuration":'):

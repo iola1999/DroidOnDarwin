@@ -43,11 +43,11 @@ struct SessionView<Display: View>: View {
             }
             Divider().frame(height: 1)
             HStack {
-                navigation("返回", key: 158)
+                navigation("返回", key: Int32(NCE_KEY_BACK))
                 Spacer()
-                navigation("主页", key: 102)
+                navigation("主页", key: Int32(NCE_KEY_HOME))
                 Spacer()
-                navigation("最近应用", key: 580)
+                navigation("最近应用", key: Int32(NCE_KEY_RECENT))
             }.padding(.horizontal, 20)
             #if os(macOS)
                 .frame(height: 40)

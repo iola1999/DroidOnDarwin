@@ -6,6 +6,10 @@ enum { NCE_INPUT_DOWN,
        NCE_INPUT_MOVE,
        NCE_INPUT_UP,
        NCE_INPUT_KEY };
+/* The bundled NCE_Touch.kl maps Linux KEY_HOME (102) to Android HOME. */
+enum { NCE_KEY_HOME = 102,
+       NCE_KEY_BACK = 158,
+       NCE_KEY_RECENT = 580 };
 typedef struct {
     int32_t action, x, y;
 } NceInputCommand;

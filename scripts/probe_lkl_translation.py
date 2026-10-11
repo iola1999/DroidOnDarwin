@@ -123,7 +123,7 @@ def validate(rows, memory_interval, mapping="window", workload="core", tlb_inval
             if not {'com.android.launcher3', 'com.android.deskclock', 'com.google.android.documentsui'} <= activities:
                 return False
             expected.update({'android_application_data_persistence', 'android_keystore_persistence',
-                             'android_clock_controls_ready', 'android_clock_alarm_activity',
+                             'android_clock_controls_ready', 'android_clock_alarm_activity', 'android_home_navigation',
                              'android_preview_clock_data_preserved'})
     if not rows or rows[-1].get('result') != 'passed' or any(row.get('passed') is False for row in rows):
         return False

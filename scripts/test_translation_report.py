@@ -24,6 +24,8 @@ def main():
                         code_memory=config.get('code_memory'), online_cpus=config.get('online_cpus'))
 
     assert accepted(original)
+    if config['workload'] == 'desktop':
+        assert not accepted([row for row in original if row.get('test') != 'android_home_navigation'])
     if config.get('online_cpus'):
         assert not accepted([row for row in original if row.get('config') != 'translation_online_cpus'])
         for field in ('capacity', 'requested', 'online_mask'):

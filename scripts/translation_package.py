@@ -25,7 +25,7 @@ def prepare(report_path, out, target):
         raise ValueError('翻译应用默认启用全部 CPU，需要对应的完整桌面验证')
     required = {'android_system_boot_completed', 'android_application_data_persistence', 'android_keystore_persistence',
                 'android_system_process_groups_stopped', 'linux_data_readonly_shutdown', 'android_clock_controls_ready',
-                'translation_prepared_code_execution', 'translated_context_cleanup'}
+                'translation_prepared_code_execution', 'translated_context_cleanup', 'android_home_navigation'}
     for entry in ('cli', 'gcd'):
         runs = [run for run in report['runs'] if run['entry'] == entry]
         if not runs or any(not run['validated'] or run['returncode'] or not run.get('data_image', {}).get('clean_shutdown') for run in runs):

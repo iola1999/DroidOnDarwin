@@ -1,0 +1,264 @@
+{
+  "scope": "Actual HOME navigation after Clock plus complete desktop and packaging checks; not a performance measurement",
+  "native": {
+    "source": "work/native-linux-nce/processes/lkl-summary.json",
+    "sha256": "c4675ddc3bfe690247b512cfb122fa65a31b2ac77acf6ea2aed8b5b065d644a5",
+    "platform": "macOS-27.0-arm64-arm-64bit-Mach-O",
+    "kernel_sha256": "7dde143da4fd36578e9c510c25de49374a797931b3b5f3e266267bab070105ae",
+    "system_sha256": "fd6302cd09359b5cab0b120aa81bc352a19b7420a110c5dd68f84fa409852899",
+    "runs": {
+      "results": [
+        {
+          "test": "linux_host_input_thread_protocol",
+          "passed": true
+        },
+        {
+          "test": "android_keystore_persistence",
+          "passed": true,
+          "restored": true
+        },
+        {
+          "test": "android_application_data_persistence",
+          "passed": true,
+          "package": "com.android.deskclock",
+          "row_id": 3,
+          "restored": true
+        },
+        {
+          "test": "android_home_navigation",
+          "passed": true
+        },
+        {
+          "test": "android_desktop_launch_commands",
+          "passed": true,
+          "applications": 2
+        },
+        {
+          "test": "linux_data_readonly_shutdown",
+          "passed": true
+        },
+        {
+          "result": "passed"
+        }
+      ],
+      "dispatch_results": [
+        {
+          "test": "linux_host_input_thread_protocol",
+          "passed": true
+        },
+        {
+          "test": "android_keystore_persistence",
+          "passed": true,
+          "restored": true
+        },
+        {
+          "test": "android_application_data_persistence",
+          "passed": true,
+          "package": "com.android.deskclock",
+          "row_id": 3,
+          "restored": true
+        },
+        {
+          "test": "android_home_navigation",
+          "passed": true
+        },
+        {
+          "test": "android_desktop_launch_commands",
+          "passed": true,
+          "applications": 2
+        },
+        {
+          "test": "linux_data_readonly_shutdown",
+          "passed": true
+        },
+        {
+          "result": "passed"
+        }
+      ]
+    }
+  },
+  "direct_single": {
+    "source": "work/native-linux-nce/lkl-home-navigation-1-desktop/summary.json",
+    "sha256": "568c41981e5598f3fcecc0c9449f1a51c6ebb23eec4331f6f2c5bac140d4b56b",
+    "configuration": {
+      "code_memory": "dual",
+      "execution": "direct",
+      "direct": {
+        "mapping_entries": 256,
+        "route_entries": 256,
+        "selective_writes": false,
+        "reuse_code_checks": false,
+        "memory": "flat",
+        "code_watch": true,
+        "cross_page": true,
+        "route_epochs": false,
+        "retain_routes": false,
+        "memory_groups": false,
+        "native_exclusive": true,
+        "vector_table": false
+      },
+      "mapping": "pte",
+      "sparse_scan": true,
+      "fault_prefetch": false,
+      "guest_page_bytes": 16384,
+      "workload": "desktop",
+      "entries": [
+        "cli",
+        "gcd"
+      ],
+      "art_nterp": 1,
+      "cpus": 1,
+      "online_cpus": 1,
+      "uaccess_stop": "all",
+      "parallel_profile": false,
+      "art_expanded_jit": 0,
+      "art_fast_baseline": 0,
+      "cache_invalidation": "pages",
+      "exec_cache": "pages",
+      "tlb_invalidation": "pages",
+      "linux_fastpath": 0,
+      "guest_ram_bytes": 1073741824,
+      "translation_cache_bytes": 134217728,
+      "instruction_batch": 50000,
+      "memory_interval_ms": 100,
+      "preemption": "timer",
+      "timer_interval_ns": 2000000
+    },
+    "runs": [
+      {
+        "entry": "cli",
+        "iteration": 0,
+        "returncode": 0,
+        "validated": true,
+        "data_image": {
+          "path": "work/native-linux-nce/lkl-home-navigation-1-desktop/persistent-data.img",
+          "initial_sha256": "0387fb300ae1d4145b6fdcf4c878553a2e806b8c8b4918925d3482152fede620",
+          "fresh": true,
+          "final_sha256": "a77bbe5c7af1d03f23a2a8f48198deb3d4ecd5c63836f70a277122913ef57d7e",
+          "clean_shutdown": true
+        },
+        "stdout_sha256": "68a5781abed1f5cbfb40c88634d8a10aeed9914d941ebaeb9932997a6ebd9600",
+        "stderr_sha256": "cad2822b4e9d8bc6f8c73ea8c175a80f05fc50dd6b7ffdd5d3193cf17e62de45"
+      },
+      {
+        "entry": "gcd",
+        "iteration": 0,
+        "returncode": 0,
+        "validated": true,
+        "data_image": {
+          "path": "work/native-linux-nce/lkl-home-navigation-1-desktop/persistent-data.img",
+          "initial_sha256": "a77bbe5c7af1d03f23a2a8f48198deb3d4ecd5c63836f70a277122913ef57d7e",
+          "fresh": false,
+          "final_sha256": "627eba1e5639be131d25a4058c59d0cfc9ba52c0f0b0f5774d522291c53bc5b0",
+          "clean_shutdown": true
+        },
+        "stdout_sha256": "8a597f730014dd16f975716ae7f846c213aca26446964c8d7d612a53aa405168",
+        "stderr_sha256": "dfcb06f2e0d2e26f9c42a004c83669248a963680eb33f2ee67053609307523ae"
+      }
+    ]
+  },
+  "direct_dual": {
+    "source": "work/native-linux-nce/lkl-home-navigation-2-desktop/summary.json",
+    "sha256": "fd55de6bcf097abee01b60b3c14393ae1d47e85b511b456220cd15f1a768e8eb",
+    "configuration": {
+      "code_memory": "dual",
+      "execution": "direct",
+      "direct": {
+        "mapping_entries": 256,
+        "route_entries": 256,
+        "selective_writes": false,
+        "reuse_code_checks": false,
+        "memory": "flat",
+        "code_watch": true,
+        "cross_page": true,
+        "route_epochs": false,
+        "retain_routes": false,
+        "memory_groups": false,
+        "native_exclusive": true,
+        "vector_table": false
+      },
+      "mapping": "pte",
+      "sparse_scan": true,
+      "fault_prefetch": false,
+      "guest_page_bytes": 16384,
+      "workload": "desktop",
+      "entries": [
+        "cli",
+        "gcd"
+      ],
+      "art_nterp": 1,
+      "cpus": 2,
+      "online_cpus": 2,
+      "uaccess_stop": "code",
+      "parallel_profile": false,
+      "art_expanded_jit": 0,
+      "art_fast_baseline": 0,
+      "cache_invalidation": "pages",
+      "exec_cache": "pages",
+      "tlb_invalidation": "pages",
+      "linux_fastpath": 0,
+      "guest_ram_bytes": 1073741824,
+      "translation_cache_bytes": 134217728,
+      "instruction_batch": 50000,
+      "memory_interval_ms": 100,
+      "preemption": "timer",
+      "timer_interval_ns": 2000000
+    },
+    "scope": "Functional checks; overlapped single CPU visual inspection and diagnosis, not a performance comparison",
+    "runs": [
+      {
+        "entry": "cli",
+        "iteration": 0,
+        "returncode": 0,
+        "validated": true,
+        "data_image": {
+          "path": "work/native-linux-nce/lkl-home-navigation-2-desktop/persistent-data.img",
+          "initial_sha256": "0387fb300ae1d4145b6fdcf4c878553a2e806b8c8b4918925d3482152fede620",
+          "fresh": true,
+          "final_sha256": "0e643ab444202bb12441424e7a65b42e257df77469591b0b98844b26bb495bb4",
+          "clean_shutdown": true
+        },
+        "stdout_sha256": "58ec0677b99d362e8fa4f0d460ddd731a9dbea4a45fbaae66263b122990c3c65",
+        "stderr_sha256": "f83cbf2226b1fc61a31c2167d9a090cec03e08557ee2de9629156c545e87944d"
+      },
+      {
+        "entry": "gcd",
+        "iteration": 0,
+        "returncode": 0,
+        "validated": true,
+        "data_image": {
+          "path": "work/native-linux-nce/lkl-home-navigation-2-desktop/persistent-data.img",
+          "initial_sha256": "0e643ab444202bb12441424e7a65b42e257df77469591b0b98844b26bb495bb4",
+          "fresh": false,
+          "final_sha256": "a8ba43985074fc88b26938b544bf9988fad994b97e2e10138ec0dfff2638a091",
+          "clean_shutdown": true
+        },
+        "stdout_sha256": "590ba08d5abca1debde0fda4cbd63c15ee4159283932b967956a9091acdef7d9",
+        "stderr_sha256": "bd30f5e2d09641a1c7549f1a34669daf143e72626e4466b76f6c0244e9fdc0aa"
+      }
+    ]
+  },
+  "products": {
+    "1": {
+      "macos": "0.25.0-Mac-20261011-220337-direct1-dual",
+      "app": "work/native-linux-nce/macos-direct-1-home/DroidOnDarwin.app",
+      "host_checks": "work/native-linux-nce/macos-direct-1-home/host-checks.json",
+      "ios_ipa": "work/native-linux-nce/ios-direct-1/DroidOnDarwin-0.25.0.ipa",
+      "ios_ipa_sha256": "1d83bd50d52b4d4a1c0340ef3de45a5c07e859e20551a77fca9b4ab833ef6050",
+      "ios_device_execution": "pending"
+    },
+    "2": {
+      "macos": "0.25.0-Mac-20261011-221441-direct2-dual",
+      "app": "work/native-linux-nce/macos-direct-2-home/DroidOnDarwin.app",
+      "host_checks": "work/native-linux-nce/macos-direct-2-home/host-checks.json",
+      "ios_ipa": "work/native-linux-nce/ios-direct-2/DroidOnDarwin-0.25.0.ipa",
+      "ios_ipa_sha256": "cf6421355612642fd6e48cf3a85787e31db44c0ddc6c26daf13ba1c9ee7102a5",
+      "ios_device_execution": "pending"
+    }
+  },
+  "isolated_desktop": {
+    "source": "work/native-linux-nce/benchmarks/home-navigation-isolated/20261011-221754-9c7058/summary.json",
+    "sha256": "c5bab7c3ed3a3a8d131091e90c0baf9c6282ee4a82bd33dee3b64bf222e7d955",
+    "result": "completed with Clock/Files first-frame checks; Clock window visually checked"
+  }
+}

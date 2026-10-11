@@ -166,7 +166,7 @@ struct BenchmarkChecks {
         let runtimeManifest = resources["Runtime.json"] as! [String: Any]
         precondition(runtimeManifest["runtime"] as? String == "test-runtime")
         let events = inputLock.withLock { inputEvents }
-        precondition(events.first == [Int32(NCE_INPUT_KEY), 102, 0])
+        precondition(events.first == [Int32(NCE_INPUT_KEY), Int32(NCE_KEY_HOME), 0])
         precondition(events.last == [Int32(NCE_INPUT_UP), 50, 50])
         precondition(events.count == 7)
         do { _ = try BenchmarkSession(request: request, session: session, target: target, output: root)

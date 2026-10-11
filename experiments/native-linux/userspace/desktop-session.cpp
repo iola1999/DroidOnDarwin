@@ -1,6 +1,9 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 #include "diagnostics.h"
 #include "desktop-session.h"
+#include "../input.h"
+#include <sys/socket.h>
+#include <sys/un.h>
 #include <dirent.h>
 #include <errno.h>
 #include <sys/wait.h>
@@ -10,6 +13,23 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
+static void check_home_navigation()
+{
+    int fd = socket(AF_UNIX, SOCK_DGRAM | SOCK_CLOEXEC, 0);
+    sockaddr_un address = {};
+    address.sun_family = AF_UNIX;
+    strcpy(address.sun_path, "/dev/nce-input");
+    NceInputCommand command = {NCE_INPUT_KEY, NCE_KEY_HOME, 0};
+    if (fd < 0 || sendto(fd, &command, sizeof(command), 0,
+                         reinterpret_cast<sockaddr *>(&address), sizeof(address)) != sizeof(command)) {
+        perror("desktop HOME input");
+        _exit(117);
+    }
+    close(fd);
+    nce_surface_check("com.android.launcher3", "--ready");
+    puts("{\"test\":\"android_home_navigation\",\"passed\":true}");
+}
 
 static void trace_systemui()
 {
@@ -93,6 +113,7 @@ bool nce_desktop_start(bool interactive)
                         "Starting:");
     nce_surface_check("com.android.deskclock", "/data/nce/desktop-clock.png");
     puts("{\"test\":\"android_clock_alarm_activity\",\"passed\":true}");
+    check_home_navigation();
     nce_android_command({"activity", "start-activity", "-n",
                          "com.google.android.documentsui/com.android.documentsui.files.FilesActivity"},
                         "Starting:");

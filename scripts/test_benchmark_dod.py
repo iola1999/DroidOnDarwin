@@ -27,6 +27,19 @@ class TranslationParametersTests(unittest.TestCase):
         self.assertTrue(benchmark_dod.parameter_values_valid({'nterp': True, 'translation': {'cacheMiB': 64}}))
 
 
+class DesktopActivityTests(unittest.TestCase):
+    def test_input_completion_requires_requested_first_frames(self):
+        components = {'displayed_activities': [
+            {'message': 'ActivityTaskManager: Displayed com.android.deskclock/.DeskClock for user 0: +2s123ms'},
+            {'message': 'ActivityTaskManager: Displayed com.google.android.documentsui.extra/.Files for user 0: +20ms'}]}
+        required = ['com.android.deskclock', 'com.google.android.documentsui']
+        self.assertEqual(benchmark_dod.missing_displayed_packages(components, required), [required[1]])
+        components['displayed_activities'].append(
+            {'message': 'ActivityTaskManager: Displayed com.google.android.documentsui/.Files for user 0: +31ms'})
+        self.assertEqual(benchmark_dod.missing_displayed_packages(components, required), [])
+        self.assertEqual(benchmark_dod.missing_displayed_packages({'displayed_activities': []}, []), [])
+
+
 class PhoneStatusTests(unittest.TestCase):
     def query(self, active=False, stale_only=False):
         request_id = None

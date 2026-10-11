@@ -1,0 +1,134 @@
+{
+  "configurations": [
+    {
+      "name": "direct-default",
+      "parameters": {
+        "nterp": true,
+        "aot": false,
+        "bootImage": false,
+        "expandedJIT": false,
+        "fastBaseline": false,
+        "schedulerSliceUS": 0,
+        "performanceLogging": false,
+        "diagnostics": false,
+        "translation": {
+          "cacheMiB": 128,
+          "linuxFastpath": false,
+          "reuseCodeChecks": false,
+          "routeEpochs": false,
+          "retainRoutes": false
+        }
+      }
+    },
+    {
+      "name": "direct-reuse-64",
+      "parameters": {
+        "nterp": true,
+        "aot": false,
+        "bootImage": false,
+        "expandedJIT": false,
+        "fastBaseline": false,
+        "schedulerSliceUS": 0,
+        "performanceLogging": false,
+        "diagnostics": false,
+        "translation": {
+          "cacheMiB": 64,
+          "linuxFastpath": false,
+          "reuseCodeChecks": true,
+          "routeEpochs": true,
+          "retainRoutes": true
+        }
+      }
+    }
+  ],
+  "actions": [
+    {
+      "kind": "wait",
+      "milliseconds": 2000
+    },
+    {
+      "kind": "key",
+      "key": "home"
+    },
+    {
+      "kind": "wait",
+      "milliseconds": 12000
+    },
+    {
+      "kind": "swipe",
+      "x": 180,
+      "y": 550,
+      "endX": 180,
+      "endY": 150,
+      "milliseconds": 700
+    },
+    {
+      "kind": "wait",
+      "milliseconds": 5000
+    },
+    {
+      "kind": "tap",
+      "x": 45,
+      "y": 134
+    },
+    {
+      "kind": "wait",
+      "milliseconds": 30000
+    },
+    {
+      "kind": "tap",
+      "x": 120,
+      "y": 54
+    },
+    {
+      "kind": "wait",
+      "milliseconds": 2000
+    },
+    {
+      "kind": "tap",
+      "x": 40,
+      "y": 54
+    },
+    {
+      "kind": "wait",
+      "milliseconds": 2000
+    },
+    {
+      "kind": "key",
+      "key": "home"
+    },
+    {
+      "kind": "wait",
+      "milliseconds": 12000
+    },
+    {
+      "kind": "swipe",
+      "x": 180,
+      "y": 550,
+      "endX": 180,
+      "endY": 150,
+      "milliseconds": 700
+    },
+    {
+      "kind": "wait",
+      "milliseconds": 5000
+    },
+    {
+      "kind": "tap",
+      "x": 135,
+      "y": 134
+    },
+    {
+      "kind": "wait",
+      "milliseconds": 30000
+    },
+    {
+      "kind": "key",
+      "key": "home"
+    },
+    {
+      "kind": "wait",
+      "milliseconds": 12000
+    }
+  ]
+}
