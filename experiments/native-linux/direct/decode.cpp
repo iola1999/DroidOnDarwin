@@ -72,6 +72,10 @@ Kind decode(uint32_t w)
             case 0x2e20e400:  // FCMGE
             case 0x2ea0e400:  // FCMGT
             case 0x2ea0d400:  // FABD
+            case 0x0e20c400:  // FMAXNM
+            case 0x0ea0c400:  // FMINNM
+            case 0x0e20f400:  // FMAX
+            case 0x0ea0f400:  // FMIN
                 return VectorMath;
         }
         switch (w & 0xbfbffc00) {
@@ -79,6 +83,18 @@ Kind decode(uint32_t w)
             case 0x2e21d800:  // UCVTF
             case 0x0ea0f800:  // FABS
             case 0x2ea0f800:  // FNEG
+            case 0x0e218800:  // FRINTN
+            case 0x0e219800:  // FRINTM
+            case 0x0ea18800:  // FRINTP
+            case 0x0ea19800:  // FRINTZ
+            case 0x2e218800:  // FRINTA
+            case 0x2e219800:  // FRINTX
+            case 0x2ea19800:  // FRINTI
+            case 0x0ea0c800:  // FCMGT zero
+            case 0x0ea0d800:  // FCMEQ zero
+            case 0x0ea0e800:  // FCMLT zero
+            case 0x2ea0c800:  // FCMGE zero
+            case 0x2ea0d800:  // FCMLE zero
                 return VectorMath;
         }
     }

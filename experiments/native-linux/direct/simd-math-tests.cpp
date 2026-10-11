@@ -31,9 +31,15 @@ void direct_simd_math_tests(Probe &probe)
             0, UINT64_C(0x8000000000000000), UINT64_C(0x3ff8000000000000),
             UINT64_C(0xbff8000000000000), UINT64_C(0x7ff8000000000000),
             UINT64_C(0x7ff0000000000000), UINT64_C(0x7ff0000000000001),
-            UINT64_C(0x7fefffffffffffff), UINT64_C(0x0010000000000000), 1};
+            UINT64_C(0x7fefffffffffffff), UINT64_C(0x0010000000000000), 1,
+            UINT64_C(0xfff0000000000000), UINT64_C(0xffefffffffffffff),
+            UINT64_C(0x8010000000000000), UINT64_C(0x8000000000000001),
+            UINT64_C(0x4004000000000000), UINT64_C(0xc004000000000000),
+            UINT64_C(0x3fe0000000000000), UINT64_C(0xbfe0000000000000)};
         constexpr uint32_t singles[] = {0, 0x80000000, 0x3fc00000, 0xbfc00000, 0x7fc00000,
-                                        0x7f800000, 0x7f800001, 0x7f7fffff, 0x00800000, 1};
+                                        0x7f800000, 0x7f800001, 0x7f7fffff, 0x00800000, 1,
+                                        0xff800000, 0xff7fffff, 0x80800000, 0x80000001,
+                                        0x40200000, 0xc0200000, 0x3f000000, 0xbf000000};
         for (unsigned r = 0; r < 32; ++r)
             for (unsigned half = 0; half < 2; ++half) {
                 unsigned index = (r + half + pattern) % std::size(doubles);
@@ -93,9 +99,15 @@ void direct_simd_math_tests(Probe &probe)
                     compare(0x5e000400U | (((lane << (size + 1)) | (1U << size)) << 16) | (rn << 5) | rd, 17);
     for (uint32_t base : {0x0e20e400U, 0x2e20e400U, 0x2ea0e400U, 0x2ea0d400U,
                           0x5e20e400U, 0x7e20e400U, 0x7ea0e400U, 0x7ea0d400U,
-                          0x0e21d800U, 0x2e21d800U, 0x0ea0f800U, 0x2ea0f800U}) {
+                          0x0e21d800U, 0x2e21d800U, 0x0ea0f800U, 0x2ea0f800U,
+                          0x0e20c400U, 0x0ea0c400U, 0x0e20f400U, 0x0ea0f400U,
+                          0x0e218800U, 0x0e219800U, 0x0ea18800U, 0x0ea19800U,
+                          0x2e218800U, 0x2e219800U, 0x2ea19800U,
+                          0x0ea0c800U, 0x0ea0d800U, 0x0ea0e800U, 0x2ea0c800U, 0x2ea0d800U}) {
         bool scalar = base & (1U << 28);
-        bool unary = (base & 0xfc00) == 0xd800 || (base & 0xfc00) == 0xf800;
+        bool unary = !(base & (1U << 10));
+        if (!scalar)
+            CHECK(nce_direct::decode(base | (1U << 22)) == nce_direct::Other);
         for (unsigned width = 0; width < 2; ++width)
             for (unsigned q = scalar || width ? 1 : 0; q < 2; ++q)
                 for (unsigned rn = 0; rn < 32; ++rn)
