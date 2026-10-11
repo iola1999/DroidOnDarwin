@@ -1,0 +1,675 @@
+{
+  "scope": "Same macOS Direct UP build, balanced four-configuration order, shared persisted data and host file cache; start readiness/input submission/stop only; iOS execution pending",
+  "host": {
+    "build_id": "0.25.0-Mac-20261011-201842-direct1-dual",
+    "cpu": "Apple M5 Ultra",
+    "platform": "macOS-27.0-arm64-arm-64bit-Mach-O",
+    "system_build": "26A428"
+  },
+  "source_reports": {
+    "work/native-linux-nce/benchmarks/direct-combined/20261011-210610-e4c862/summary.json": "280680010de8b23887b8a00581dce37111a3d06121b4215c0698d7d658da35aa",
+    "work/native-linux-nce/lkl-dual-combined-core/summary.json": "3f2fb32fbee9ccc8be96dae604aef1873ba309de5af393bbc5ee9c199ea8ad55"
+  },
+  "core": {
+    "configuration": {
+      "code_memory": "dual",
+      "execution": "direct",
+      "direct": {
+        "mapping_entries": 256,
+        "route_entries": 256,
+        "selective_writes": false,
+        "reuse_code_checks": true,
+        "memory": "flat",
+        "code_watch": true,
+        "cross_page": true,
+        "route_epochs": true,
+        "retain_routes": true,
+        "memory_groups": false,
+        "native_exclusive": true,
+        "vector_table": false
+      },
+      "mapping": "pte",
+      "sparse_scan": true,
+      "fault_prefetch": false,
+      "guest_page_bytes": 16384,
+      "workload": "core",
+      "entries": [
+        "cli",
+        "gcd"
+      ],
+      "art_nterp": 1,
+      "cpus": 1,
+      "online_cpus": 1,
+      "uaccess_stop": "all",
+      "parallel_profile": false,
+      "art_expanded_jit": 0,
+      "art_fast_baseline": 0,
+      "cache_invalidation": "pages",
+      "exec_cache": "pages",
+      "tlb_invalidation": "pages",
+      "linux_fastpath": 1,
+      "guest_ram_bytes": 1073741824,
+      "translation_cache_bytes": 67108864,
+      "instruction_batch": 50000,
+      "memory_interval_ms": 100,
+      "preemption": "timer",
+      "timer_interval_ns": 2000000
+    },
+    "runs": [
+      {
+        "entry": "cli",
+        "validated": true,
+        "returncode": 0
+      },
+      {
+        "entry": "gcd",
+        "validated": true,
+        "returncode": 0
+      }
+    ]
+  },
+  "runs": [
+    {
+      "configuration_name": "baseline-128",
+      "repeat": 0,
+      "runID": "FA8020C7-787F-446F-B3E7-8E2AAB6198D3",
+      "configuration": {
+        "aot": false,
+        "bootImage": false,
+        "diagnostics": false,
+        "directFault": true,
+        "expandedJIT": false,
+        "fastBaseline": false,
+        "faultPrefetch": false,
+        "nterp": true,
+        "performanceLogging": false,
+        "schedulerSliceUS": 0,
+        "sparseScan": true,
+        "translation": {
+          "cacheMiB": 128,
+          "codeWatch": true,
+          "crossPage": true,
+          "linuxFastpath": false,
+          "memoryGroups": false,
+          "onlineCPUs": 1,
+          "retainRoutes": false,
+          "reuseCodeChecks": false,
+          "routeEpochs": false,
+          "vectorTable": false
+        }
+      },
+      "status": "completed",
+      "timing_ms": {
+        "start_to_ready_observed_ms": 82026.96654153988,
+        "stop_ms": 8164.2195417080075
+      },
+      "peak_bytes": {
+        "footprint": 3093974880,
+        "resident": 2777088000
+      },
+      "thermal_states": [
+        0
+      ],
+      "counters": [
+        {
+          "cpu": 0,
+          "translation_engine_cache": true,
+          "total_flushes": 5,
+          "invalidated_blocks": 639410,
+          "current_blocks": 81565,
+          "used_bytes": 65549780,
+          "capacity_bytes": 134201268
+        },
+        {
+          "cpu": 0,
+          "direct_execution": true,
+          "calls": 3333169,
+          "fallbacks": 59055,
+          "compiles": 439305,
+          "flushes": 10,
+          "code_changes": 16260,
+          "code_bytes": 121396400,
+          "capacity_bytes": 134217728,
+          "pages": 5064,
+          "mapping_misses": 210177,
+          "code_lookups": 162445241,
+          "read_mapping_misses": 140708,
+          "write_mapping_misses": 69469,
+          "write_invalidations": 0,
+          "code_validation_hits": 0,
+          "pte_read_refills": 0
+        }
+      ],
+      "session_log_sha256": "1e34317c3fdc6596552820d517584505a4dd3932299c05a93f080df78a0e0259"
+    },
+    {
+      "configuration_name": "baseline-64",
+      "repeat": 0,
+      "runID": "37976DEA-92BA-4049-BC4E-7C62A2038447",
+      "configuration": {
+        "aot": false,
+        "bootImage": false,
+        "diagnostics": false,
+        "directFault": true,
+        "expandedJIT": false,
+        "fastBaseline": false,
+        "faultPrefetch": false,
+        "nterp": true,
+        "performanceLogging": false,
+        "schedulerSliceUS": 0,
+        "sparseScan": true,
+        "translation": {
+          "cacheMiB": 64,
+          "codeWatch": true,
+          "crossPage": true,
+          "linuxFastpath": false,
+          "memoryGroups": false,
+          "onlineCPUs": 1,
+          "retainRoutes": false,
+          "reuseCodeChecks": false,
+          "routeEpochs": false,
+          "vectorTable": false
+        }
+      },
+      "status": "completed",
+      "timing_ms": {
+        "start_to_ready_observed_ms": 82085.50754166208,
+        "stop_ms": 8625.568291638047
+      },
+      "peak_bytes": {
+        "footprint": 2926497344,
+        "resident": 2549547008
+      },
+      "thermal_states": [
+        0
+      ],
+      "counters": [
+        {
+          "cpu": 0,
+          "translation_engine_cache": true,
+          "total_flushes": 10,
+          "invalidated_blocks": 540969,
+          "current_blocks": 12117,
+          "used_bytes": 9125972,
+          "capacity_bytes": 67092404
+        },
+        {
+          "cpu": 0,
+          "direct_execution": true,
+          "calls": 3137545,
+          "fallbacks": 51566,
+          "compiles": 980644,
+          "flushes": 50,
+          "code_changes": 14693,
+          "code_bytes": 61236096,
+          "capacity_bytes": 67108864,
+          "pages": 3129,
+          "mapping_misses": 211911,
+          "code_lookups": 157469921,
+          "read_mapping_misses": 141857,
+          "write_mapping_misses": 70054,
+          "write_invalidations": 0,
+          "code_validation_hits": 0,
+          "pte_read_refills": 0
+        }
+      ],
+      "session_log_sha256": "84ce55a14d78b02d7e08de6d04896c234d26016a4e74ddf1d0dc5ca8a75e8414"
+    },
+    {
+      "configuration_name": "fastpath-64",
+      "repeat": 0,
+      "runID": "D0CC8D4A-0626-44F5-9C4A-841CCD3BA9CA",
+      "configuration": {
+        "aot": false,
+        "bootImage": false,
+        "diagnostics": false,
+        "directFault": true,
+        "expandedJIT": false,
+        "fastBaseline": false,
+        "faultPrefetch": false,
+        "nterp": true,
+        "performanceLogging": false,
+        "schedulerSliceUS": 0,
+        "sparseScan": true,
+        "translation": {
+          "cacheMiB": 64,
+          "codeWatch": true,
+          "crossPage": true,
+          "linuxFastpath": true,
+          "memoryGroups": false,
+          "onlineCPUs": 1,
+          "retainRoutes": false,
+          "reuseCodeChecks": false,
+          "routeEpochs": false,
+          "vectorTable": false
+        }
+      },
+      "status": "completed",
+      "timing_ms": {
+        "start_to_ready_observed_ms": 82093.48174999468,
+        "stop_ms": 9215.236958116293
+      },
+      "peak_bytes": {
+        "footprint": 2999864944,
+        "resident": 2522185728
+      },
+      "thermal_states": [
+        0
+      ],
+      "counters": [
+        {
+          "cpu": 0,
+          "translation_engine_cache": true,
+          "total_flushes": 9,
+          "invalidated_blocks": 540888,
+          "current_blocks": 70656,
+          "used_bytes": 54949828,
+          "capacity_bytes": 67092404
+        },
+        {
+          "cpu": 0,
+          "direct_execution": true,
+          "calls": 3362472,
+          "fallbacks": 51785,
+          "compiles": 1007276,
+          "flushes": 51,
+          "code_changes": 16792,
+          "code_bytes": 50080192,
+          "capacity_bytes": 67108864,
+          "pages": 2956,
+          "mapping_misses": 213673,
+          "code_lookups": 162909599,
+          "read_mapping_misses": 143548,
+          "write_mapping_misses": 70125,
+          "write_invalidations": 0,
+          "code_validation_hits": 0,
+          "pte_read_refills": 0
+        }
+      ],
+      "session_log_sha256": "5cbcac39829d604be5115c36b530c8fc832ed8887765d2809dafb05362735037"
+    },
+    {
+      "configuration_name": "reuse-fastpath-64",
+      "repeat": 0,
+      "runID": "5242E0C8-738D-4575-81AE-5013765AD1D5",
+      "configuration": {
+        "aot": false,
+        "bootImage": false,
+        "diagnostics": false,
+        "directFault": true,
+        "expandedJIT": false,
+        "fastBaseline": false,
+        "faultPrefetch": false,
+        "nterp": true,
+        "performanceLogging": false,
+        "schedulerSliceUS": 0,
+        "sparseScan": true,
+        "translation": {
+          "cacheMiB": 64,
+          "codeWatch": true,
+          "crossPage": true,
+          "linuxFastpath": true,
+          "memoryGroups": false,
+          "onlineCPUs": 1,
+          "retainRoutes": true,
+          "reuseCodeChecks": true,
+          "routeEpochs": true,
+          "vectorTable": false
+        }
+      },
+      "status": "completed",
+      "timing_ms": {
+        "start_to_ready_observed_ms": 77063.00570815802,
+        "stop_ms": 9383.577999891713
+      },
+      "peak_bytes": {
+        "footprint": 2915143256,
+        "resident": 2541420544
+      },
+      "thermal_states": [
+        0
+      ],
+      "counters": [
+        {
+          "cpu": 0,
+          "translation_engine_cache": true,
+          "total_flushes": 9,
+          "invalidated_blocks": 542998,
+          "current_blocks": 61922,
+          "used_bytes": 47494628,
+          "capacity_bytes": 67092404
+        },
+        {
+          "cpu": 0,
+          "direct_execution": true,
+          "calls": 3170376,
+          "fallbacks": 45804,
+          "compiles": 984422,
+          "flushes": 51,
+          "code_changes": 15020,
+          "code_bytes": 10794384,
+          "capacity_bytes": 67108864,
+          "pages": 765,
+          "mapping_misses": 212112,
+          "code_lookups": 90038041,
+          "read_mapping_misses": 142386,
+          "write_mapping_misses": 69726,
+          "write_invalidations": 0,
+          "code_validation_hits": 72496452,
+          "pte_read_refills": 0
+        }
+      ],
+      "session_log_sha256": "6838c2326a3c12d94e0dcbfd62ad1826b5de7dfd8c60742b24fa15d6f39efb1b"
+    },
+    {
+      "configuration_name": "reuse-fastpath-64",
+      "repeat": 1,
+      "runID": "AD49A69A-2F62-43CC-9DD8-4F7F0FFCEDD8",
+      "configuration": {
+        "aot": false,
+        "bootImage": false,
+        "diagnostics": false,
+        "directFault": true,
+        "expandedJIT": false,
+        "fastBaseline": false,
+        "faultPrefetch": false,
+        "nterp": true,
+        "performanceLogging": false,
+        "schedulerSliceUS": 0,
+        "sparseScan": true,
+        "translation": {
+          "cacheMiB": 64,
+          "codeWatch": true,
+          "crossPage": true,
+          "linuxFastpath": true,
+          "memoryGroups": false,
+          "onlineCPUs": 1,
+          "retainRoutes": true,
+          "reuseCodeChecks": true,
+          "routeEpochs": true,
+          "vectorTable": false
+        }
+      },
+      "status": "completed",
+      "timing_ms": {
+        "start_to_ready_observed_ms": 79006.86324993148,
+        "stop_ms": 8383.112458512187
+      },
+      "peak_bytes": {
+        "footprint": 2962607728,
+        "resident": 2573467648
+      },
+      "thermal_states": [
+        0
+      ],
+      "counters": [
+        {
+          "cpu": 0,
+          "translation_engine_cache": true,
+          "total_flushes": 10,
+          "invalidated_blocks": 562580,
+          "current_blocks": 13044,
+          "used_bytes": 9804324,
+          "capacity_bytes": 67092404
+        },
+        {
+          "cpu": 0,
+          "direct_execution": true,
+          "calls": 3239456,
+          "fallbacks": 45801,
+          "compiles": 1021484,
+          "flushes": 53,
+          "code_changes": 16035,
+          "code_bytes": 8505776,
+          "capacity_bytes": 67108864,
+          "pages": 615,
+          "mapping_misses": 211914,
+          "code_lookups": 90595193,
+          "read_mapping_misses": 141358,
+          "write_mapping_misses": 70556,
+          "write_invalidations": 0,
+          "code_validation_hits": 72903732,
+          "pte_read_refills": 0
+        }
+      ],
+      "session_log_sha256": "2e0ce8d0efd1548bf0ff7a3ce67024036e825be21f4945b10479ff12a68d4750"
+    },
+    {
+      "configuration_name": "fastpath-64",
+      "repeat": 1,
+      "runID": "E1B544E1-2CA8-418E-88BA-2E30742F6DAA",
+      "configuration": {
+        "aot": false,
+        "bootImage": false,
+        "diagnostics": false,
+        "directFault": true,
+        "expandedJIT": false,
+        "fastBaseline": false,
+        "faultPrefetch": false,
+        "nterp": true,
+        "performanceLogging": false,
+        "schedulerSliceUS": 0,
+        "sparseScan": true,
+        "translation": {
+          "cacheMiB": 64,
+          "codeWatch": true,
+          "crossPage": true,
+          "linuxFastpath": true,
+          "memoryGroups": false,
+          "onlineCPUs": 1,
+          "retainRoutes": false,
+          "reuseCodeChecks": false,
+          "routeEpochs": false,
+          "vectorTable": false
+        }
+      },
+      "status": "completed",
+      "timing_ms": {
+        "start_to_ready_observed_ms": 82054.68429159373,
+        "stop_ms": 8790.479624876752
+      },
+      "peak_bytes": {
+        "footprint": 2991165016,
+        "resident": 2527461376
+      },
+      "thermal_states": [
+        0
+      ],
+      "counters": [
+        {
+          "cpu": 0,
+          "translation_engine_cache": true,
+          "total_flushes": 9,
+          "invalidated_blocks": 547025,
+          "current_blocks": 76386,
+          "used_bytes": 59162612,
+          "capacity_bytes": 67092404
+        },
+        {
+          "cpu": 0,
+          "direct_execution": true,
+          "calls": 3149569,
+          "fallbacks": 53576,
+          "compiles": 1018496,
+          "flushes": 52,
+          "code_changes": 16056,
+          "code_bytes": 43514080,
+          "capacity_bytes": 67108864,
+          "pages": 2655,
+          "mapping_misses": 214117,
+          "code_lookups": 156978773,
+          "read_mapping_misses": 144378,
+          "write_mapping_misses": 69739,
+          "write_invalidations": 0,
+          "code_validation_hits": 0,
+          "pte_read_refills": 0
+        }
+      ],
+      "session_log_sha256": "6151e416a76029f4fd2ee1324c314bed70564e1538de5d2d2a8f9ac3d943a43f"
+    },
+    {
+      "configuration_name": "baseline-64",
+      "repeat": 1,
+      "runID": "8CE674F7-DCEA-42CD-AEB8-9A851C2A0704",
+      "configuration": {
+        "aot": false,
+        "bootImage": false,
+        "diagnostics": false,
+        "directFault": true,
+        "expandedJIT": false,
+        "fastBaseline": false,
+        "faultPrefetch": false,
+        "nterp": true,
+        "performanceLogging": false,
+        "schedulerSliceUS": 0,
+        "sparseScan": true,
+        "translation": {
+          "cacheMiB": 64,
+          "codeWatch": true,
+          "crossPage": true,
+          "linuxFastpath": false,
+          "memoryGroups": false,
+          "onlineCPUs": 1,
+          "retainRoutes": false,
+          "reuseCodeChecks": false,
+          "routeEpochs": false,
+          "vectorTable": false
+        }
+      },
+      "status": "completed",
+      "timing_ms": {
+        "start_to_ready_observed_ms": 85037.87095821463,
+        "stop_ms": 8488.38183330372
+      },
+      "peak_bytes": {
+        "footprint": 2937228864,
+        "resident": 2553806848
+      },
+      "thermal_states": [
+        0
+      ],
+      "counters": [
+        {
+          "cpu": 0,
+          "translation_engine_cache": true,
+          "total_flushes": 10,
+          "invalidated_blocks": 530847,
+          "current_blocks": 34348,
+          "used_bytes": 27308404,
+          "capacity_bytes": 67092404
+        },
+        {
+          "cpu": 0,
+          "direct_execution": true,
+          "calls": 3267698,
+          "fallbacks": 53855,
+          "compiles": 1007034,
+          "flushes": 51,
+          "code_changes": 15978,
+          "code_bytes": 63071152,
+          "capacity_bytes": 67108864,
+          "pages": 3560,
+          "mapping_misses": 210247,
+          "code_lookups": 159321315,
+          "read_mapping_misses": 140503,
+          "write_mapping_misses": 69744,
+          "write_invalidations": 0,
+          "code_validation_hits": 0,
+          "pte_read_refills": 0
+        }
+      ],
+      "session_log_sha256": "f1bd8868f3d057fd8e9580203d4e1b5233ec9a64153114555607536b1e738d2f"
+    },
+    {
+      "configuration_name": "baseline-128",
+      "repeat": 1,
+      "runID": "D5480402-B1DF-4AFD-9E00-134866BB305C",
+      "configuration": {
+        "aot": false,
+        "bootImage": false,
+        "diagnostics": false,
+        "directFault": true,
+        "expandedJIT": false,
+        "fastBaseline": false,
+        "faultPrefetch": false,
+        "nterp": true,
+        "performanceLogging": false,
+        "schedulerSliceUS": 0,
+        "sparseScan": true,
+        "translation": {
+          "cacheMiB": 128,
+          "codeWatch": true,
+          "crossPage": true,
+          "linuxFastpath": false,
+          "memoryGroups": false,
+          "onlineCPUs": 1,
+          "retainRoutes": false,
+          "reuseCodeChecks": false,
+          "routeEpochs": false,
+          "vectorTable": false
+        }
+      },
+      "status": "completed",
+      "timing_ms": {
+        "start_to_ready_observed_ms": 74006.30970834754,
+        "stop_ms": 6607.24295838736
+      },
+      "peak_bytes": {
+        "footprint": 3117666096,
+        "resident": 2759819264
+      },
+      "thermal_states": [
+        0
+      ],
+      "counters": [
+        {
+          "cpu": 0,
+          "translation_engine_cache": true,
+          "total_flushes": 5,
+          "invalidated_blocks": 559318,
+          "current_blocks": 32635,
+          "used_bytes": 25871220,
+          "capacity_bytes": 134201268
+        },
+        {
+          "cpu": 0,
+          "direct_execution": true,
+          "calls": 3296633,
+          "fallbacks": 52370,
+          "compiles": 440031,
+          "flushes": 10,
+          "code_changes": 16794,
+          "code_bytes": 126851344,
+          "capacity_bytes": 134217728,
+          "pages": 5392,
+          "mapping_misses": 206580,
+          "code_lookups": 161976428,
+          "read_mapping_misses": 137226,
+          "write_mapping_misses": 69354,
+          "write_invalidations": 0,
+          "code_validation_hits": 0,
+          "pte_read_refills": 0
+        }
+      ],
+      "session_log_sha256": "fa7d456578b21aef6afe71a87511bd581de78c026f5465ebad97eedcd639bd49"
+    }
+  ],
+  "medians": {
+    "baseline-128": {
+      "start_ms": 78016.63812494371,
+      "footprint_peak_bytes": 3105820488.0
+    },
+    "baseline-64": {
+      "start_ms": 83561.68924993835,
+      "footprint_peak_bytes": 2931863104.0
+    },
+    "fastpath-64": {
+      "start_ms": 82074.0830207942,
+      "footprint_peak_bytes": 2995514980.0
+    },
+    "reuse-fastpath-64": {
+      "start_ms": 78034.93447904475,
+      "footprint_peak_bytes": 2938875492.0
+    }
+  }
+}
