@@ -97,6 +97,10 @@ def validate(rows, mode, interval, config=None):
                      'fp_fixed_rounding_and_widening', 'new_instruction_reserved_encodings'}
         expected |= {'cross_page_noncontiguous_memory_vectors_faults_12', 'cross_page_noncontiguous_memory_vectors_faults_14'}
         expected |= {'route_epochs_fetch_permission_and_code_replacement', 'route_epochs_flush_and_return_to_freed_page'}
+        expected |= {name + suffix for name in (
+            'retained_routes_registers_and_cached_target', 'retained_routes_permissions_code_remap_and_flags',
+            'retained_routes_untracked_alias_and_zero_epoch', 'retained_routes_cached_target_write_alias')
+            for suffix in ('', '_flat')}
         if not expected <= {r.get('test') for r in rows if r.get('passed')}:
             return False
     else:
@@ -137,7 +141,10 @@ def main():
     parser.add_argument('--selective-writes', type=int, choices=(0, 1), default=0)
     parser.add_argument('--reuse-code-checks', type=int, choices=(0, 1), default=0)
     parser.add_argument('--route-epochs', type=int, choices=(0, 1), default=0)
+    parser.add_argument('--retain-routes', type=int, choices=(0, 1), default=0)
     args = parser.parse_args()
+    if args.retain_routes and not args.route_epochs:
+        parser.error('跨调用复用需要开启跳转序号')
     if platform.system() != 'Darwin' or platform.machine() != 'arm64':
         parser.error('该原型需要 Apple Silicon Mac')
     if not 0 <= args.memory_interval_ms <= 60000:
@@ -152,10 +159,10 @@ def main():
     runs = []
     config = {'mapping_entries': args.mapping_entries, 'route_entries': args.route_entries,
               'selective_writes': bool(args.selective_writes), 'reuse_code_checks': bool(args.reuse_code_checks),
-              'route_epochs': bool(args.route_epochs)}
+              'route_epochs': bool(args.route_epochs), 'retain_routes': bool(args.retain_routes)}
     environment = dict(os.environ, NCE_DIRECT_MAPPING_ENTRIES=str(args.mapping_entries),
                        NCE_DIRECT_ROUTE_ENTRIES=str(args.route_entries), NCE_DIRECT_SELECTIVE_WRITES=str(args.selective_writes),
-                       NCE_DIRECT_REUSE_CODE_CHECKS=str(args.reuse_code_checks), NCE_DIRECT_ROUTE_EPOCHS=str(args.route_epochs))
+                       NCE_DIRECT_REUSE_CODE_CHECKS=str(args.reuse_code_checks), NCE_DIRECT_ROUTE_EPOCHS=str(args.route_epochs), NCE_DIRECT_RETAIN_ROUTES=str(args.retain_routes))
     modes = (['tests'] if args.mode != 'bench' else []) + (['native', 'unicorn', 'direct'] if args.mode != 'tests' else [])
     for entry in ('cli', 'gcd'):
         for mode in (modes if entry == 'cli' else list(reversed(modes))):

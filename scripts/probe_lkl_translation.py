@@ -113,6 +113,9 @@ def validate(rows, memory_interval, mapping="window", workload="core", tlb_inval
                         return False
                 elif cleared != routes[0]['invalidations'] * direct_config['route_entries']:
                     return False
+                if direct_config.get('retain_routes') is not None:
+                    if bool(routes[0]['reused_runs']) != direct_config['retain_routes']:
+                        return False
                 if routes[0]['branch_exits'] > direct[0]['code_lookups']:
                     return False
             if checks[0]['content_checks'] + checks[0]['version_hits'] > direct[0]['code_lookups']:
@@ -199,6 +202,7 @@ def main():
     parser.add_argument('--direct-reuse-code-checks', type=int, choices=(0, 1), default=0)
     parser.add_argument('--direct-code-watch', type=int, choices=(0, 1), default=0)
     parser.add_argument('--direct-cross-page', type=int, choices=(0, 1), default=0)
+    parser.add_argument('--direct-retain-routes', type=int, choices=(0, 1), default=0)
     parser.add_argument('--direct-route-epochs', type=int, choices=(0, 1), default=0)
     parser.add_argument('--direct-memory', choices=('cached', 'pte', 'refill', 'flat'), default='cached')
     parser.add_argument('--build-only', action='store_true')
@@ -232,9 +236,11 @@ def main():
     direct_config = {'mapping_entries': args.direct_mapping_entries, 'route_entries': args.direct_route_entries,
                      'selective_writes': bool(args.direct_selective_writes), 'reuse_code_checks': bool(args.direct_reuse_code_checks),
                      'memory': args.direct_memory, 'code_watch': bool(args.direct_code_watch), 'cross_page': bool(args.direct_cross_page),
-                     'route_epochs': bool(args.direct_route_epochs)} if args.execution == 'direct' else None
-    if args.execution != 'direct' and (args.direct_mapping_entries != 256 or args.direct_route_entries != 256 or args.direct_selective_writes or args.direct_reuse_code_checks or args.direct_code_watch or args.direct_cross_page or args.direct_route_epochs or args.direct_memory != 'cached'):
+                     'route_epochs': bool(args.direct_route_epochs), 'retain_routes': bool(args.direct_retain_routes)} if args.execution == 'direct' else None
+    if args.execution != 'direct' and (args.direct_mapping_entries != 256 or args.direct_route_entries != 256 or args.direct_selective_writes or args.direct_reuse_code_checks or args.direct_code_watch or args.direct_cross_page or args.direct_route_epochs or args.direct_retain_routes or args.direct_memory != 'cached'):
         parser.error('Direct 缓存参数需要 --execution direct')
+    if args.direct_retain_routes and not (args.direct_route_epochs and args.direct_code_watch and args.direct_memory in ('pte', 'flat')):
+        parser.error('跨调用复用需要跳转序号、代码写入跟踪与 PTE/flat 访存')
     if args.direct_memory in ('pte', 'flat') and (args.direct_mapping_entries != 256 or args.direct_selective_writes):
         parser.error('pte/flat 使用地址表访存，数据缓存参数必须保持默认值')
     out = args.output.resolve()
@@ -415,7 +421,7 @@ def main():
                        NCE_DIRECT_ROUTE_ENTRIES=str(args.direct_route_entries), NCE_DIRECT_SELECTIVE_WRITES=str(args.direct_selective_writes),
                        NCE_DIRECT_REUSE_CODE_CHECKS=str(args.direct_reuse_code_checks), NCE_DIRECT_MEMORY=args.direct_memory,
                        NCE_DIRECT_CODE_WATCH=str(args.direct_code_watch), NCE_DIRECT_CROSS_PAGE=str(args.direct_cross_page),
-                       NCE_DIRECT_ROUTE_EPOCHS=str(args.direct_route_epochs))
+                       NCE_DIRECT_ROUTE_EPOCHS=str(args.direct_route_epochs), NCE_DIRECT_RETAIN_ROUTES=str(args.direct_retain_routes))
     for name in ('NCE_DESKTOP', 'NCE_SYSTEM_SERVER_PROBE', 'NCE_DIAGNOSTICS', 'NCE_TRACE_SYSTEMUI'):
         environment.pop(name, None)
     if args.workload == 'desktop':

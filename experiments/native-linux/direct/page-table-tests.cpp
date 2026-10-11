@@ -15,13 +15,17 @@ struct Tables {
     NceDirectPageTable table;
     bool refill_reads;
     std::vector<nce_direct_flat_page> flat;
-    uint64_t epoch = 1;
-    explicit Tables(unsigned mode, bool cross_page = false) : engine(nce_direct_create({2 * 1024 * 1024, 256, 256, mode == 1, false, cross_page, false})),
-                                                              table{root.data(), CodeVA, (UINT64_C(1) << 37) - CodeVA, PhysicalBase, ram.data(), ram.size()},
-                                                              refill_reads(mode == 1),
-                                                              flat(mode == 2 ? DIRECT_FLAT_BYTES / sizeof(nce_direct_flat_page) : 0)
+    uint64_t epoch = 1, code_epoch = 1;
+    bool retain_routes = false;
+    const void *untracked_code = nullptr;
+    uint64_t code_limit = CodeVA + PageBytes;
+    explicit Tables(unsigned mode, bool cross_page = false, bool retain = false) : engine(nce_direct_create({2 * 1024 * 1024, 256, 256, mode == 1, false, cross_page, retain, retain})),
+                                                                                   table{root.data(), CodeVA, (UINT64_C(1) << 37) - CodeVA, PhysicalBase, ram.data(), ram.size()},
+                                                                                   refill_reads(mode == 1),
+                                                                                   flat(mode == 2 ? DIRECT_FLAT_BYTES / sizeof(nce_direct_flat_page) : 0)
     {
         CHECK(engine);
+        retain_routes = retain;
         if (!flat.empty())
             table.user_size = UINT64_C(1) << DIRECT_FLAT_USER_BITS;
         root[0] = uintptr_t(middle.data()) | ReadWrite;
@@ -40,6 +44,7 @@ struct Tables {
     }
     void code(uint32_t instruction)
     {
+        ++code_epoch;
         std::memset(ram.data(), 0, PageBytes);
         std::memcpy(ram.data(), &instruction, sizeof(instruction));
     }
@@ -58,9 +63,14 @@ struct Tables {
     static const void *fetch(void *opaque, uint64_t address)
     {
         auto &self = *static_cast<Tables *>(opaque);
-        if (address < CodeVA || address >= CodeVA + PageBytes || !(self.leaves[address >> 14] & 0x200))
+        if (address < CodeVA || address >= self.code_limit || !(self.leaves[address >> 14] & 0x200))
             return nullptr;
         return map(opaque, address, false);
+    }
+    static uint64_t version(void *opaque, const void *address)
+    {
+        auto &self = *static_cast<Tables *>(opaque);
+        return address == self.untracked_code ? 0 : self.code_epoch;
     }
     NceDirectExit run(NceDirectState &state, uint64_t &fault)
     {
@@ -68,7 +78,8 @@ struct Tables {
             for (uint64_t address : {CodeVA, DataVA, DataVA + PageBytes})
                 flat[(address - CodeVA) >> 14] = {uintptr_t(map(this, address, false)), uintptr_t(map(this, address, true))};
         }
-        NceDirectMemory memory{this, map, fetch, epoch, 14, &table, refill_reads, flat.empty() ? nullptr : flat.data(), nullptr};
+        NceDirectMemory memory{this, map, fetch, epoch, 14, &table, refill_reads, flat.empty() ? nullptr : flat.data(),
+                               retain_routes ? version : nullptr, retain_routes ? code_epoch : 0};
         return nce_direct_run(engine, &state, memory, 1000, &fault);
     }
 };
@@ -251,11 +262,118 @@ static void check_cross_pages(unsigned mode)
     report("direct_pte_cross_page_permissions_retry_and_code_alias", mode);
 }
 
+static void check_retained_routes(unsigned mode)
+{
+    auto holder = std::make_unique<Tables>(mode, true, true);
+    auto &test = *holder;
+    const uint64_t target = CodeVA + PageBytes;
+    test.code_limit = target + PageBytes;
+    test.leaves[target >> 14] = PhysicalBase + 2 * PageBytes + DIRECT_PTE_READ_REQUIRED + 0x200;
+    test.code(0xd61f0020);  // br x1
+    uint32_t *body = reinterpret_cast<uint32_t *>(test.ram.data() + 2 * PageBytes);
+    body[0] = 0x91000400;  // add x0,x0,#1
+    body[1] = 0xd65f03c0;  // ret
+    NceDirectState initial{};
+    std::mt19937_64 random(0x524f555445);
+    for (auto &reg : initial.x)
+        reg = random();
+    for (auto &vector : initial.v) {
+        vector[0] = random();
+        vector[1] = random();
+    }
+    initial.pc = CodeVA;
+    initial.x[1] = target;
+    initial.x[30] = CodeVA + 4;
+    initial.nzcv = 0xb0000000;
+    initial.access_flags = NCE_DIRECT_UNALIGNED;
+    initial.exclusive_address = UINT64_MAX;
+    uint64_t fault = 0;
+    auto completed = [&](uint64_t increment) {
+        auto actual = initial, expected = initial;
+        expected.x[0] += increment;
+        expected.pc += 4;
+        CHECK(test.run(actual, fault) == NCE_DIRECT_UNSUPPORTED);
+        CHECK(!std::memcmp(&actual, &expected, sizeof(actual)));
+    };
+    completed(1);
+    auto before = nce_direct_stats(test.engine);
+    completed(1);
+    auto after = nce_direct_stats(test.engine);
+    CHECK(after.route_reused_runs == before.route_reused_runs + 1);
+    CHECK(after.branch_exits == before.branch_exits);
+    report("retained_routes_registers_and_cached_target", mode);
+
+    test.leaves[target >> 14] &= ~UINT64_C(0x200);
+    ++test.epoch;
+    auto actual = initial, expected = initial;
+    expected.pc = target;
+    CHECK(test.run(actual, fault) == NCE_DIRECT_FETCH_FAULT && fault == target);
+    CHECK(!std::memcmp(&actual, &expected, sizeof(actual)));
+    test.leaves[target >> 14] |= 0x200;
+    ++test.epoch;
+    completed(1);
+    body[0] = 0x91000c00;  // add x0,x0,#3
+    ++test.code_epoch;
+    completed(3);
+    std::memcpy(test.ram.data() + 3 * PageBytes, body, 4096);
+    body = reinterpret_cast<uint32_t *>(test.ram.data() + 3 * PageBytes);
+    body[0] = 0x91001c00;  // add x0,x0,#7
+    test.leaves[target >> 14] = PhysicalBase + 3 * PageBytes + DIRECT_PTE_READ_REQUIRED + 0x200;
+    ++test.epoch;
+    completed(7);
+    before = nce_direct_stats(test.engine);
+    initial.access_flags = 0;
+    completed(7);
+    after = nce_direct_stats(test.engine);
+    CHECK(after.compiles > before.compiles && after.route_reused_runs == before.route_reused_runs);
+    report("retained_routes_permissions_code_remap_and_flags", mode);
+
+    test.untracked_code = body;
+    ++test.code_epoch;
+    completed(7);
+    before = nce_direct_stats(test.engine);
+    body[0] = 0x91001400;  // add x0,x0,#5; this alias has no write notification
+    completed(5);
+    after = nce_direct_stats(test.engine);
+    CHECK(after.route_reused_runs == before.route_reused_runs && after.code_changes > before.code_changes);
+    test.untracked_code = nullptr;
+    test.code_epoch = 0;
+    completed(5);
+    before = nce_direct_stats(test.engine);
+    completed(5);
+    CHECK(nce_direct_stats(test.engine).route_reused_runs == before.route_reused_runs);
+    report("retained_routes_untracked_alias_and_zero_epoch", mode);
+
+    // The second run reaches the old target through the cached branch. Its
+    // physical page must remain guarded even though resolve() is bypassed.
+    test.code_epoch = 100;
+    test.data_page(3);
+    body[0] = 0xb4000042;  // cbz x2,pc+8
+    body[1] = 0xf9000083;  // str x3,[x4]
+    body[2] = 0xd65f03c0;
+    initial.x[2] = 0;
+    initial.x[4] = DataVA + 128;
+    completed(0);
+    before = nce_direct_stats(test.engine);
+    initial.x[2] = 1;
+    actual = initial;
+    expected = initial;
+    expected.pc = target + 4;
+    auto bytes = test.ram;
+    CHECK(test.run(actual, fault) == NCE_DIRECT_WRITE_FAULT && fault == initial.x[4]);
+    CHECK(!std::memcmp(&actual, &expected, sizeof(actual)) && bytes == test.ram);
+    after = nce_direct_stats(test.engine);
+    CHECK(after.route_reused_runs == before.route_reused_runs + 1 && after.branch_exits == before.branch_exits);
+    report("retained_routes_cached_target_write_alias", mode);
+}
+
 void direct_page_table_tests()
 {
     for (unsigned mode = 0; mode < 3; ++mode) {
         check_page_tables(mode);
         check_cross_pages(mode);
+        if (mode != 1)
+            check_retained_routes(mode);
     }
 
     auto holder = std::make_unique<Tables>(2);
@@ -305,7 +423,7 @@ void direct_page_table_tests()
     second[(DataVA - CodeVA) >> 14].read = uintptr_t(test.ram.data() + 2 * PageBytes);
     value = 97;
     std::memcpy(test.ram.data() + 2 * PageBytes, &value, 8);
-    NceDirectMemory memory{&test, Tables::map, Tables::fetch, test.epoch, 14, &test.table, false, second.data(), nullptr};
+    NceDirectMemory memory{&test, Tables::map, Tables::fetch, test.epoch, 14, &test.table, false, second.data(), nullptr, 0};
     actual = initial;
     CHECK(nce_direct_run(test.engine, &actual, memory, 1000, &fault) == NCE_DIRECT_UNSUPPORTED);
     CHECK(actual.x[1] == 97);

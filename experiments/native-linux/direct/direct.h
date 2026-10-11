@@ -67,6 +67,10 @@ typedef struct {
      * never repeat for that RAM address during the engine's lifetime, and
      * remain stable throughout run. Execution permission is checked separately. */
     uint64_t (*code_version)(void *, const void *ram_address);
+    /* Nonzero permits route reuse with mapping_epoch. Change after every
+     * mutation/replacement of previously versioned code, including writes via
+     * aliases. Values must not repeat. Zero keeps per-call validation. */
+    uint64_t code_epoch;
 } NceDirectMemory;
 
 typedef enum {
@@ -85,7 +89,7 @@ typedef struct {
     uint64_t code_content_checks, code_version_hits;
     uint64_t alignment_exits, cross_page_exits;
     uint64_t cross_page_completed, cross_page_fallbacks, cross_page_faults, cross_page_bytes;
-    uint64_t route_invalidations, route_cleared_entries, branch_exits;
+    uint64_t route_invalidations, route_cleared_entries, branch_exits, route_reused_runs;
     size_t code_bytes, code_capacity, pages;
 } NceDirectStats;
 
@@ -99,6 +103,9 @@ typedef struct {
     bool cross_page;
     /* Validate route generations instead of clearing every entry on return. */
     bool route_epochs;
+    /* Keep routes across calls with stable mapping/code epochs. Requires
+     * route_epochs; reuse applies only to direct page-table/flat memory. */
+    bool retain_routes;
 } NceDirectConfig;
 
 /* One sequential caller per engine. Code cache is 2..256 MiB, 16 KiB aligned.
@@ -112,7 +119,9 @@ void nce_direct_request_stop(NceDirect *);
  * Fault/unsupported returns preserve the complete state at the pending PC.
  * Cross-page ordinary RAM accesses can be enabled at creation. Otherwise they
  * return UNSUPPORTED. Ordered and exclusive accesses keep their alignment checks.
- * Writes to code visited during this call return WRITE_FAULT before the store.
+ * Writes to visited code return WRITE_FAULT before the store. With retained
+ * routes this includes targets visited during earlier calls in the same
+ * validation interval.
  * fault_address is meaningful for FETCH/READ/WRITE_FAULT only. */
 NceDirectExit nce_direct_run(NceDirect *, NceDirectState *, NceDirectMemory,
                              uint64_t budget, uint64_t *fault_address);

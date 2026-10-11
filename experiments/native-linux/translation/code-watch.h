@@ -21,6 +21,9 @@ void nce_code_watch_destroy(NceCodeWatch *);
 /* Returns a nonzero stable version for the containing RAM page, or zero when
  * protection failed. A version cannot survive mutation or range replacement. */
 uint64_t nce_code_watch_version(NceCodeWatch *, const void *ram_address);
+/* Read with quiescent writers. Changes on a tracked write or invalidation;
+ * version() returning zero still requires per-call content checks. */
+uint64_t nce_code_watch_epoch(const NceCodeWatch *);
 /* Call before replacing backing storage; restores write access for the range. */
 int nce_code_watch_invalidate(NceCodeWatch *, size_t offset, size_t size);
 /* Additional writable aliases require content comparison for these pages for

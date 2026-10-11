@@ -25,6 +25,8 @@ struct NceDirect {
     std::vector<uint64_t> code_page_runs;
     uint64_t run_id = 0;
     uint64_t route_epoch = 0;
+    uint32_t previous_flags = 0;
+    bool volatile_routes = false;
     NceDirectMemory previous{};
     std::atomic<uint32_t> stop_request{0};
     static_assert(std::atomic<uint32_t>::is_always_lock_free);
@@ -38,6 +40,8 @@ struct NceDirect {
     explicit NceDirect(NceDirectConfig value)
         : config(value), mappings(entries(value.mapping_entries), EmptyMapping), routes(entries(value.route_entries))
     {
+        if (config.retain_routes && !config.route_epochs)
+            throw std::invalid_argument("Retained routes require route epochs");
         size_t capacity = config.cache_bytes;
         if (capacity < 2 * Page::max_bytes || capacity > 256 * Page::max_bytes || capacity % 16384)
             throw std::invalid_argument("Direct cache must be 2..256 MiB, aligned to 16 KiB");
@@ -62,6 +66,7 @@ struct NceDirect {
     void reset_routes()
     {
         ++stats.route_invalidations;
+        volatile_routes = false;
         if (config.route_epochs && ++route_epoch)
             return;
         std::fill(routes.begin(), routes.end(), CodeRoute{UINT64_MAX, nullptr, nullptr, 0});
@@ -87,6 +92,7 @@ struct NceDirect {
             item->second->validated_run == run_id && item->second->entries[index]) {
             ++stats.code_validation_hits;
             auto *page = item->second.get();
+            volatile_routes |= !page->source_version;
             routes[(address >> 12) & (routes.size() - 1)] = {address >> 12, page->branch_entries.data(), page, route_epoch};
             return page;
         }
@@ -154,6 +160,7 @@ struct NceDirect {
         page->validated_run = run_id;
         page->source_pointer = bytes;
         page->source_version = version;
+        volatile_routes |= !version;
         routes[(address >> 12) & (routes.size() - 1)] = {address >> 12, page->branch_entries.data(), page, route_epoch};
         return page;
     }
@@ -241,11 +248,6 @@ struct NceDirect {
             return NCE_DIRECT_UNSUPPORTED;
         if (memory.code_version != previous.code_version || memory.opaque != previous.opaque)
             clear();
-        if (++run_id == 0) {
-            clear();
-            std::fill(code_page_runs.begin(), code_page_runs.end(), 0);
-            run_id = 1;
-        }
         uint32_t flags = state.access_flags & NCE_DIRECT_UNALIGNED;
         if (page_bits == 14)
             flags |= CompileData16K;
@@ -269,13 +271,32 @@ struct NceDirect {
             flags |= CompileZva64;
         if (state.access_flags & NCE_DIRECT_PAC_HINT_NOP)
             flags |= CompilePauthNop;
+        bool retain = config.retain_routes && config.route_epochs && !volatile_routes &&
+                      memory.page_table && !memory.refill_reads && memory.mapping_epoch &&
+                      memory.code_epoch && memory.code_version && memory.code_epoch == previous.code_epoch &&
+                      memory.mapping_epoch == previous.mapping_epoch && flags == previous_flags &&
+                      memory.opaque == previous.opaque && memory.map_code == previous.map_code &&
+                      memory.map_page == previous.map_page && memory.code_version == previous.code_version &&
+                      memory.page_bits == previous.page_bits && !previous.refill_reads && previous.page_table;
+        if (retain) {
+            ++stats.route_reused_runs;
+        } else {
+            if (++run_id == 0) {
+                clear();
+                std::fill(code_page_runs.begin(), code_page_runs.end(), 0);
+                run_id = 1;
+            }
+            reset_routes();
+        }
+        // A retained validation interval keeps its visited physical pages
+        // write-protected by the generated checks, including cached branches.
         if (!memory.mapping_epoch || memory.mapping_epoch != previous.mapping_epoch ||
             memory.opaque != previous.opaque || memory.map_page != previous.map_page || memory.page_bits != previous.page_bits) {
             std::fill(mappings.begin(), mappings.end(), EmptyMapping);
             write_aliases.clear();
         }
         previous = memory;
-        reset_routes();
+        previous_flags = flags;
         active_code.clear();
         stop_request.store(0, std::memory_order_release);
         Frame frame{};

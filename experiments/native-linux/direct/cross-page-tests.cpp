@@ -13,7 +13,7 @@ struct Crossing {
     bool alias_code = false;
     uint64_t epoch = 1;
     NceDirect *engine;
-    Crossing(Probe &owner, unsigned page_bits) : probe(owner), bits(page_bits), page_bytes(1U << bits), engine(nce_direct_create({16 * 1024 * 1024, 256, 256, true, false, true, owner.config.route_epochs}))
+    Crossing(Probe &owner, unsigned page_bits) : probe(owner), bits(page_bits), page_bytes(1U << bits), engine(nce_direct_create({16 * 1024 * 1024, 256, 256, true, false, true, owner.config.route_epochs, false}))
     {
         CHECK(engine);
         std::mt19937_64 random(0x43524f5353);
@@ -56,7 +56,7 @@ struct Crossing {
     }
     NceDirectExit run(NceDirectState &state, uint64_t &fault)
     {
-        NceDirectMemory memory{this, map, code, epoch, bits, nullptr, false, nullptr, nullptr};
+        NceDirectMemory memory{this, map, code, epoch, bits, nullptr, false, nullptr, nullptr, 0};
         return nce_direct_run(engine, &state, memory, 1000, &fault);
     }
     void compare(uint32_t word, NceDirectState initial)

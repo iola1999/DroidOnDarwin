@@ -73,15 +73,21 @@ static void check(void *unused)
     assert(nce_code_watch_invalidate(watch, size, PAGE_BYTES) == -1 && errno == EINVAL);
     report("code_watch_configuration_and_bounds");
 
+    uint64_t epoch = nce_code_watch_epoch(watch);
+    assert(epoch);
     uint64_t first = nce_code_watch_version(watch, ram);
     assert(first && nce_code_watch_version(watch, ram + 4096) == first);
+    assert(nce_code_watch_epoch(watch) == epoch);
     errno = EDOM;
     *(volatile unsigned char *)ram = 17;
     assert(errno == EDOM && *(volatile unsigned char *)alias == 17);
+    assert(nce_code_watch_epoch(watch) > epoch);
+    epoch = nce_code_watch_epoch(watch);
     uint64_t second = nce_code_watch_version(watch, ram);
     assert(second > first);
     *(volatile unsigned char *)alias = 23;
     assert(*(volatile unsigned char *)ram == 23);
+    assert(nce_code_watch_epoch(watch) > epoch);
     uint64_t third = nce_code_watch_version(watch, ram);
     assert(third > second && nce_code_watch_version(watch, ram) == third);
     report("code_watch_both_aliases_and_reprotection");
@@ -110,7 +116,9 @@ static void check(void *unused)
     }
     report("code_watch_concurrent_fault_retry");
 
+    epoch = nce_code_watch_epoch(watch);
     assert(!nce_code_watch_invalidate(watch, 0, PAGE_BYTES));
+    assert(nce_code_watch_epoch(watch) > epoch);
     assert(mmap(ram, PAGE_BYTES, PROT_READ | PROT_WRITE, MAP_ANON | MAP_PRIVATE | MAP_FIXED, -1, 0) == ram);
     alias_page(alias, ram, PAGE_BYTES);
     assert(*(volatile unsigned char *)ram == 0);
@@ -136,7 +144,9 @@ static void check(void *unused)
 
     unsigned char *third_alias = mmap(NULL, PAGE_BYTES, PROT_NONE, MAP_ANON | MAP_PRIVATE, -1, 0);
     assert(third_alias != MAP_FAILED);
+    epoch = nce_code_watch_epoch(watch);
     assert(!nce_code_watch_exclude(watch, 3 * PAGE_BYTES, PAGE_BYTES));
+    assert(nce_code_watch_epoch(watch) > epoch);
     alias_page(third_alias, ram + 3 * PAGE_BYTES, PAGE_BYTES);
     *(volatile unsigned char *)third_alias = 83;
     assert(*(volatile unsigned char *)(ram + 3 * PAGE_BYTES) == 83);

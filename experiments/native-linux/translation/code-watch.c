@@ -16,12 +16,19 @@ struct NceCodeWatch {
     /* Odd versions are protected; even versions need protection before use. */
     _Atomic uint64_t *versions;
     _Atomic uint64_t write_faults;
+    _Atomic uint64_t mutation_epoch;
     NceCodeWatchStats stats;
     struct sigaction previous[2];
 };
 static _Atomic(NceCodeWatch *) active;
 static const int signals[] = {SIGBUS, SIGSEGV};
 _Static_assert(ATOMIC_LLONG_LOCK_FREE == 2 && ATOMIC_POINTER_LOCK_FREE == 2, "signal state must be lock-free");
+
+static void changed(NceCodeWatch *watch)
+{
+    if (atomic_fetch_add_explicit(&watch->mutation_epoch, 1, memory_order_release) == UINT64_MAX)
+        _exit(126);
+}
 
 static int protect(NceCodeWatch *watch, size_t offset, size_t size, int protection)
 {
@@ -81,6 +88,7 @@ static void write_fault(int number, siginfo_t *info, void *opaque)
             if (protect(watch, index * PAGE_BYTES, PAGE_BYTES, PROT_READ | PROT_WRITE))
                 _exit(126);
             atomic_fetch_add_explicit(&watch->write_faults, 1, memory_order_relaxed);
+            changed(watch);
             errno = saved_errno;
             return;
         }
@@ -103,6 +111,7 @@ NceCodeWatch *nce_code_watch_create(void *ram, void *alias, size_t size)
     watch->ram = ram;
     watch->alias = alias;
     watch->size = size;
+    atomic_init(&watch->mutation_epoch, 1);
     watch->versions = calloc(size / PAGE_BYTES, sizeof(*watch->versions));
     if (!watch->versions) {
         free(watch);
@@ -176,7 +185,13 @@ int nce_code_watch_invalidate(NceCodeWatch *watch, size_t offset, size_t size)
         atomic_store_explicit(&watch->versions[index], (version + 2) & ~UINT64_C(1), memory_order_release);
         ++watch->stats.invalidations;
     }
+    changed(watch);
     return 0;
+}
+
+uint64_t nce_code_watch_epoch(const NceCodeWatch *watch)
+{
+    return atomic_load_explicit(&watch->mutation_epoch, memory_order_acquire);
 }
 
 int nce_code_watch_exclude(NceCodeWatch *watch, size_t offset, size_t size)
