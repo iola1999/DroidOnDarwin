@@ -82,9 +82,13 @@ def analyze_presentation(data, beginning, ending, distribution):
         times = sorted(set(timestamps))
         values = [(b - a) / 1e6 for a, b in zip(times, times[1:])]
         intervals.extend(values)
-        layers.append({'layer': layer, 'drawables': len(timestamps), 'unique_present_times': len(times), 'interval_ms': distribution(values)})
+        layers.append({'layer': layer, 'drawables': len(timestamps), 'unique_present_times': len(times),
+                       'first_present_offset_ms': (times[0] - beginning) / 1e6,
+                       'last_present_offset_ms': (times[-1] - beginning) / 1e6,
+                       'trailing_without_present_ms': (ending - times[-1]) / 1e6,
+                       'interval_ms': distribution(values)})
     return {'available': True, 'failures': errors, 'counts': counts,
             'alignment_offset_ns': offset, 'alignment_uncertainty_ns': uncertainty,
             'acquire_wait_ms': distribution(acquire), 'drawable_to_present_ms': distribution(queue),
             'unique_presentation_interval_ms': distribution(intervals), 'layers': layers,
-            'scope': 'host drawable display; repeated content and Android frame identity unmeasured; pending and zero timestamps excluded'}
+            'scope': 'host drawable display; boundary gaps may include idle time; repeated content and Android frame identity unmeasured; pending and zero timestamps excluded'}

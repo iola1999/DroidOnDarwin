@@ -29,6 +29,9 @@ class PresentationChecks(unittest.TestCase):
         self.assertEqual(result['counts']['presented_in_window'], 2)
         self.assertEqual(result['unique_presentation_interval_ms']['p50_ms'], 200)
         self.assertAlmostEqual(result['drawable_to_present_ms']['p50_ms'], 90)
+        self.assertAlmostEqual(result['layers'][0]['first_present_offset_ms'], 200)
+        self.assertAlmostEqual(result['layers'][0]['last_present_offset_ms'], 400)
+        self.assertAlmostEqual(result['layers'][0]['trailing_without_present_ms'], 400)
 
     def test_pending_zero_nil_and_late_presentation_stay_separate(self):
         unavailable = frame(1.6, None)
