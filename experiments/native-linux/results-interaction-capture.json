@@ -2387,6 +2387,114 @@
       ],
       "scope": "fixed seed and absolute zero-tolerance gesture; benchmark process activity; complete diagnostic attribution; Mac window occluded",
       "initial_data_sha256": "7fa03db87afe4a7ddbb7f881a96f93f832b557fb2f4af8750aeb8a8ac9e1f228"
+    },
+    {
+      "runID": "4FCBD4C0-EACC-407F-9B78-4677F727F8F7",
+      "buildID": "0.25.0-Mac-20261012-021923-direct1-dual",
+      "configuration": {
+        "aot": false,
+        "bootImage": false,
+        "diagnostics": false,
+        "directFault": true,
+        "expandedJIT": false,
+        "fastBaseline": false,
+        "faultPrefetch": false,
+        "nterp": true,
+        "performanceLogging": false,
+        "schedulerSliceUS": 0,
+        "sparseScan": true,
+        "translation": {
+          "cacheMiB": 128,
+          "codeWatch": true,
+          "crossPage": true,
+          "linuxFastpath": false,
+          "memoryGroups": false,
+          "onlineCPUs": 1,
+          "retainRoutes": false,
+          "reuseCodeChecks": false,
+          "routeEpochs": false,
+          "vectorTable": false
+        }
+      },
+      "frame_counts": {
+        "accepted": 35
+      },
+      "duration": {
+        "count": 35,
+        "p50_ms": 60.9653,
+        "p95_ms": 115.5435876,
+        "p99_ms": 118.82703912,
+        "max_ms": 119.564952,
+        "p95_small_sample": true,
+        "p99_small_sample": true,
+        "tail_count_reference": {
+          "p95": 1,
+          "p99": 0
+        },
+        "percentile_method": "linear interpolation; small-sample flag uses fewer than 10 expected tail observations; frames are not independent runs",
+        "above_ms": {
+          "16.666667": 35,
+          "100": 3,
+          "250": 0,
+          "1000": 0
+        }
+      },
+      "host_visibility": {
+        "available": true,
+        "tracking": "AppKit notifications and action boundaries",
+        "all_visible": false,
+        "all_active": false,
+        "all_activity_asserted": true,
+        "events": [
+          {
+            "host_monotonic_ns": 1537289747359000,
+            "event": "action_submitted",
+            "app_visible": false,
+            "app_active": false,
+            "benchmark_activity": true
+          },
+          {
+            "host_monotonic_ns": 1537289748185000,
+            "event": "action_started",
+            "app_visible": false,
+            "app_active": false,
+            "benchmark_activity": true
+          },
+          {
+            "host_monotonic_ns": 1537290352995000,
+            "event": "action_submitted",
+            "app_visible": false,
+            "app_active": false,
+            "benchmark_activity": true
+          },
+          {
+            "host_monotonic_ns": 1537290354300000,
+            "event": "action_started",
+            "app_visible": false,
+            "app_active": false,
+            "benchmark_activity": true
+          },
+          {
+            "host_monotonic_ns": 1537291556110000,
+            "event": "action_submitted",
+            "app_visible": false,
+            "app_active": false,
+            "benchmark_activity": true
+          },
+          {
+            "host_monotonic_ns": 1537291557229000,
+            "event": "action_started",
+            "app_visible": false,
+            "app_active": false,
+            "benchmark_activity": true
+          }
+        ],
+        "scope": "App-wide occlusion and activation; actual drawable presentation unmeasured"
+      },
+      "failures": [],
+      "directory": "work/native-linux-nce/benchmarks/interaction/20261012-022319-828627/4FCBD4C0-EACC-407F-9B78-4677F727F8F7",
+      "analysis": "work/native-linux-nce/interaction-preflight/v7-minimal-analysis.json",
+      "scope": "fixed seed, absolute gesture, process activity; frames only; host presentation unmeasured"
     }
   ],
   "host_checks": "work/native-linux-nce/macos-direct-1-interaction-v3/host-checks.json"

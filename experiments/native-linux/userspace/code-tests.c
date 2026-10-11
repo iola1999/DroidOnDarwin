@@ -78,8 +78,11 @@ static void reserved_stubs(void)
     puts("{\"test\":\"linux_reserved_branch_stubs\",\"passed\":true}");
 }
 
+static void simd_fallback_tests(void);
+
 void dynamic_code_tests(void)
 {
+    simd_fallback_tests();
     CHECK(syscall(NCE_SYS_MAP_CODE, -1, PAGE, 0) == -1 && errno == EBADF);
     int fd = memfd_create("nce-code", MFD_CLOEXEC);
     CHECK(fd >= 0 && ftruncate(fd, 2 * PAGE) == 0);
@@ -158,6 +161,52 @@ void dynamic_code_tests(void)
     CHECK(syscall(NCE_SYS_PUBLISH_CODE, rx, 8) == -1 && errno == EFAULT);
     CHECK(munmap((void *)second, PAGE) == 0 && munmap(rw, 2 * PAGE) == 0 && close(fd) == 0);
     puts("{\"test\":\"linux_dynamic_code\",\"passed\":true,\"updates\":128,\"sum_iterations\":10000000}");
+}
+
+/* These instructions enter Unicorn when the Direct SIMD group is uncovered.
+ * The following stores check continuation, including an interrupted exclusive
+ * sequence whose retry must execute through its successful store. */
+static void simd_fallback_tests(void)
+{
+    const float scale[2] = {2, 3}, input[2] = {4, 5};
+    float product[2] = {0};
+    const int32_t left[2] = {INT32_MIN, 8}, right[2] = {1, -5};
+    int64_t difference[2] = {0};
+    asm volatile(
+        "ldr d0, [%0]\nldr d2, [%1]\n"
+        ".inst 0x0f809040\nstr d0, [%2]"
+        : : "r"(scale), "r"(input), "r"(product) : "v0", "v2", "memory");
+    CHECK(product[0] == 8 && product[1] == 10);
+    asm volatile(
+        "ldr d0, [%0]\nldr d1, [%1]\n"
+        ".inst 0x0ea12000\nstr q0, [%2]"
+        : : "r"(left), "r"(right), "r"(difference) : "v0", "v1", "memory");
+    CHECK(difference[0] == INT64_C(-2147483649) && difference[1] == 13);
+    uint64_t fpcr, fpsr, flags;
+    const uint32_t huge[2] = {0x7f7fffff, 0x7f7fffff};
+    uint32_t overflow[2] = {0};
+    asm volatile("mrs %0, fpcr\nmrs %1, fpsr" : "=r"(fpcr), "=r"(fpsr));
+    asm volatile("msr fpcr, xzr\nmsr fpsr, xzr");
+    CHECK(syscall(SYS_getpid) > 0);
+    asm volatile(
+        "ldr d0, [%1]\nldr d2, [%2]\n.inst 0x0f809040\n"
+        "str d0, [%3]\nmrs %0, fpsr"
+        : "=r"(flags) : "r"(scale), "r"(huge), "r"(overflow) : "v0", "v2", "memory");
+    asm volatile("msr fpcr, %0\nmsr fpsr, %1" : : "r"(fpcr), "r"(fpsr));
+    CHECK(overflow[0] == 0x7f800000 && overflow[1] == 0x7f800000 && (flags & 0x14) == 0x14);
+    for (unsigned attempt = 0; attempt < 8; ++attempt) {
+        uint32_t cell = 41, status;
+        CHECK(syscall(SYS_getpid) > 0);
+        asm volatile(
+            "ldr d0, [%2]\nldr d2, [%3]\nmov w11, #1024\n"
+            "1: ldaxr w9, [%1]\n.inst 0x0f809040\nadd w9, w9, #1\n"
+            "stlxr w10, w9, [%1]\ncbz w10, 2f\nsubs w11, w11, #1\nb.ne 1b\n"
+            "2: mov %w0, w10\nclrex"
+            : "=r"(status) : "r"(&cell), "r"(scale), "r"(input)
+            : "x9", "x10", "x11", "v0", "v2", "cc", "memory");
+        CHECK(status == 0 && cell == 42);
+    }
+    puts("{\"test\":\"linux_simd_fallback_continuation\",\"passed\":true}");
 }
 
 void code_tests(void)

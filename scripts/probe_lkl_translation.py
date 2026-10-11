@@ -88,7 +88,7 @@ def validate(rows, memory_interval, mapping="window", workload="core", tlb_inval
                             mapping, workload, tlb_invalidation, execution, direct_config,
                             code_lookup_limit=code_lookup_limit, code_memory=code_memory)
                    for cpu in range(active_cpus))
-    expected = {'linux_dynamic_code', 'linux_signal_suite', 'linux_signal_register_restore',
+    expected = {'linux_simd_fallback_continuation', 'linux_dynamic_code', 'linux_signal_suite', 'linux_signal_register_restore',
                 'linux_signal_eintr_restart', 'linux_signal_timer_preemption', 'linux_mm_exchange_integrity',
                 'translated_pthread_tls_mutex', 'translated_signals_protection_restore',
                 'translated_runtime_elf_exec', 'translated_runtime_libraries', 'translated_context_cleanup',
