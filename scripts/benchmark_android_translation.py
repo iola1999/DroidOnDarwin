@@ -20,6 +20,7 @@ def main():
     parser.add_argument('--entry', choices=('both', 'cli', 'gcd', 'window'), default='both')
     parser.add_argument('--output', type=Path)
     parser.add_argument('--reuse-engine-build', action='store_true')
+    parser.add_argument('--prepared-report', type=Path, help='在线 CPU 对照复用已通过的同负载 SMP 报告及二进制')
     args = parser.parse_args()
     if args.repeat < 2 or args.repeat % 2:
         parser.error('repeat 必须为至少 2 的偶数，以平衡执行顺序')
@@ -32,10 +33,33 @@ def main():
         parser.error('output 必须位于 work/native-linux-nce 下')
     engines = ('unicorn', 'direct') if args.comparison == 'execution' else ('direct',) if args.comparison.startswith('direct-') else ('unicorn',)
     folders = {name: out / ('runtime-' + name if args.comparison == 'execution' else 'runtime') for name in engines}
+    cached = None
+    if args.prepared_report:
+        source_report = args.prepared_report.resolve()
+        if args.comparison != 'direct-smp-online' or not source_report.is_relative_to(WORK.resolve()):
+            parser.error('报告复用仅用于 direct-smp-online，报告需要位于 work/native-linux-nce')
+        cached = json.loads(source_report.read_text())
+        config = cached['configuration']
+        if (config['workload'] != args.workload or config['execution'] != 'direct' or
+                config['code_memory'] != args.code_memory or config['cpus'] != 2 or
+                config.get('online_cpus', 2) != 2 or config['exec_cache'] != 'pages' or
+                config['mapping'] != 'pte' or config['preemption'] != 'timer' or
+                config['instruction_batch'] != 50000 or config['memory_interval_ms'] != 100 or
+                not set(entries) <= set(config['entries']) or not cached['runs'] or
+                not all(row['validated'] and row['returncode'] == 0 for row in cached['runs'])):
+            parser.error('复用报告的配置、入口或成功状态不匹配')
+        folders = {'direct': source_report.parent}
+        if out == source_report.parent:
+            parser.error('新对照输出需要与复用报告目录分开')
+        if any(str((source_report.parent / entry).relative_to(ROOT)) not in cached['sha256'] for entry in entries):
+            parser.error('所需入口二进制未包含在复用报告的输入摘要中')
     out.mkdir(parents=True, exist_ok=True)
     (out / 'summary.json').unlink(missing_ok=True)
     prepared = {}
     for execution, folder in folders.items():
+        if cached is not None:
+            prepared[execution] = cached
+            continue
         command = [sys.executable, ROOT / 'scripts/probe_lkl_translation.py', '--mapping', 'pte',
                    '--preemption', 'timer', '--workload', args.workload, '--entry', args.entry, '--output', folder, '--execution', execution,
                    '--code-memory', args.code_memory]
@@ -57,6 +81,8 @@ def main():
         prepared[execution] = json.loads((folder / 'summary.json').read_text())
     baseline = next(iter(prepared.values()))
     hashes = {str(Path(__file__).resolve().relative_to(ROOT)): sha(Path(__file__))}
+    if cached is not None:
+        hashes[str(source_report.relative_to(ROOT))] = sha(source_report)
     for result in prepared.values():
         for name, digest in result['sha256'].items():
             if name in hashes and hashes[name] != digest:
@@ -64,6 +90,7 @@ def main():
             hashes[name] = digest
     common = {key: value for key, value in baseline['configuration'].items()
               if key not in ('execution', 'direct', 'cache_invalidation', 'linux_fastpath', 'translation_cache_bytes', 'tlb_invalidation')}
+    common.update(entries=list(entries), parallel_profile=False)
     configurations = {
         'full-16': {'cache_invalidation': 'full', 'linux_fastpath': 0, 'cache_mib': 16},
         'pages-16': {'cache_invalidation': 'pages', 'linux_fastpath': 0, 'cache_mib': 16},
@@ -195,6 +222,7 @@ def main():
         common.pop('online_cpus', None)
     for config in configurations.values():
         config.setdefault('online_cpus', common['cpus'])
+        config['scheduler_slice_us'] = 750 if args.comparison == 'direct-smp-online' else 0
         if config['execution'] == 'direct' and 'direct' not in config:
             config['direct'] = {'mapping_entries': 256, 'route_entries': 256, 'selective_writes': False, 'reuse_code_checks': False}
         if 'direct' in config:
@@ -224,7 +252,7 @@ def main():
                 folder = folders[config['execution']]
                 env = dict(os.environ, NCE_ART_NTERP=str(common['art_nterp']),
                            NCE_ART_EXPANDED_JIT=str(common['art_expanded_jit']), NCE_ART_FAST_BASELINE=str(common['art_fast_baseline']),
-                           NCE_ART_AOT='0', NCE_ART_BOOT_IMAGE='0', NCE_SCHED_SLICE_US='0', NCE_TRANSLATION_FILES=str(folder), NCE_TRANSLATION_WORKLOAD=args.workload,
+                           NCE_ART_AOT='0', NCE_ART_BOOT_IMAGE='0', NCE_SCHED_SLICE_US=str(config['scheduler_slice_us']), NCE_TRANSLATION_FILES=str(folder), NCE_TRANSLATION_WORKLOAD=args.workload,
                            NCE_TRANSLATION_SYSTEM=str(WORK / 'processes/system.img'),
                            NCE_TRANSLATION_BATCH='50000', NCE_TRANSLATION_PREEMPTION='timer',
                            NCE_TRANSLATION_MEMORY_MS='100', NCE_TRANSLATION_CACHE=config['cache_invalidation'],
@@ -268,6 +296,10 @@ def main():
                         returncode = 'timeout'
                 rows = [json.loads(line) for line in (out / f'{stem}.jsonl').read_text().splitlines() if line.startswith('{')]
                 passed = returncode == 0 and validate(rows, 100, 'pte', args.workload, config['tlb_invalidation'], config['execution'], direct, common['cpus'], False, config.get('uaccess_stop', 'all'), code_memory=args.code_memory, online_cpus=config['online_cpus'])
+                slices = [row for row in rows if row.get('config') == 'linux_scheduler_slice']
+                passed = passed and len(slices) == 1 and slices[0]['requested_us'] == config['scheduler_slice_us']
+                if config['scheduler_slice_us']:
+                    passed = passed and slices[0]['applied_ns'] == config['scheduler_slice_us'] * 1000
                 if data is not None:
                     data['final_sha256'] = sha(data_path)
                     metadata = subprocess.run(['/opt/homebrew/opt/e2fsprogs/sbin/dumpe2fs', '-h', data_path],
