@@ -26,7 +26,15 @@ def sha(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def validate(rows, memory_interval, mapping="window", workload="core", tlb_invalidation=None, execution=None, direct_config=None, cpus=1, parallel_profile=None, uaccess_stop=None, code_lookup_limit=None, code_memory=None):
+def validate(rows, memory_interval, mapping="window", workload="core", tlb_invalidation=None, execution=None, direct_config=None, cpus=1, parallel_profile=None, uaccess_stop=None, code_lookup_limit=None, code_memory=None, online_cpus=None):
+    if online_cpus is not None:
+        if not 1 <= online_cpus <= cpus:
+            return False
+        if [row for row in rows if row.get('config') == 'translation_online_cpus'] != [
+                {'config': 'translation_online_cpus', 'capacity': cpus, 'requested': online_cpus,
+                 'online_mask': (1 << online_cpus) - 1}]:
+            return False
+    active_cpus = cpus if online_cpus is None else online_cpus
     if code_memory is not None:
         settings = [row for row in rows if row.get('config') == 'translation_code_memory']
         if settings != [{'config': 'translation_code_memory', 'kernel': 'dual' if code_memory == 'dual' else 'single',
@@ -51,14 +59,21 @@ def validate(rows, memory_interval, mapping="window", workload="core", tlb_inval
             if (not record['union_wall_ns'] or not record['thread_cpu_ns'] or
                     record['overlap_ns'] > record['union_wall_ns'] or
                     record['thread_cpu_ns'] != record['cpu0_ns'] + record['cpu1_ns'] or
-                    (cpus == 1 and (record['overlap_ns'] or record['cpu1_ns']))):
+                    (active_cpus == 1 and (record['overlap_ns'] or record['cpu1_ns']))):
                 return False
     if cpus > 1:
         selected = [row for row in rows if row.get('config') == 'translation_execution']
         if len(selected) != cpus or {row.get('cpu') for row in selected} != set(range(cpus)):
             return False
-        if workload == 'core' and not {'translated_smp_private_mm_compute', 'translated_smp_code_alias_updates', 'translated_smp_copy_unmap_protect'} <= {row.get('test') for row in rows if row.get('passed')}:
+        if workload == 'core' and active_cpus == 2 and not {'translated_smp_private_mm_compute', 'translated_smp_code_alias_updates', 'translated_smp_copy_unmap_protect'} <= {row.get('test') for row in rows if row.get('passed')}:
             return False
+        if workload == 'core' and online_cpus is not None and [row for row in rows if row.get('test') == 'translated_smp_online_cpus'] != [
+                {'test': 'translated_smp_online_cpus', 'passed': True, 'online': active_cpus}]:
+            return False
+        for cpu in range(active_cpus, cpus):
+            idle = [row for row in rows if row.get('cpu') == cpu and row.get('direct_execution')]
+            if len(idle) != 1 or any(idle[0][key] for key in ('calls', 'fallbacks', 'compiles', 'code_lookups', 'code_bytes')):
+                return False
         if execution == 'direct':
             watch = [row for row in rows if row.get('direct_code_watch')]
             if len(watch) != cpus or {row.get('cpu') for row in watch} != set(range(cpus)):
@@ -72,7 +87,7 @@ def validate(rows, memory_interval, mapping="window", workload="core", tlb_inval
         return all(validate([row for row in rows if row.get('cpu', cpu) == cpu], memory_interval,
                             mapping, workload, tlb_invalidation, execution, direct_config,
                             code_lookup_limit=code_lookup_limit, code_memory=code_memory)
-                   for cpu in range(cpus))
+                   for cpu in range(active_cpus))
     expected = {'linux_dynamic_code', 'linux_signal_suite', 'linux_signal_register_restore',
                 'linux_signal_eintr_restart', 'linux_signal_timer_preemption', 'linux_mm_exchange_integrity',
                 'translated_pthread_tls_mutex', 'translated_signals_protection_restore',
@@ -263,6 +278,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--parallel-profile', type=int, choices=(0, 1), default=0)
     parser.add_argument('--cpus', type=int, choices=(1, 2), default=1)
+    parser.add_argument('--online-cpus', type=int, choices=(1, 2), help='启动时启用的 CPU 数量，默认启用构建中的全部 CPU')
     parser.add_argument('--smp-uaccess-stop', choices=('all', 'code'), default='all')
     parser.add_argument('--code-memory', choices=('map-jit', 'dual'), default='map-jit')
     parser.add_argument('--execution', choices=('unicorn', 'direct'), default='unicorn')
@@ -299,6 +315,9 @@ def main():
     parser.add_argument('--output', type=Path, default=DEFAULT_OUT)
     parser.add_argument('--memory-interval-ms', type=int, default=100)
     args = parser.parse_args()
+    args.online_cpus = args.cpus if args.online_cpus is None else args.online_cpus
+    if args.online_cpus > args.cpus or (args.mapping != 'pte' and args.online_cpus != args.cpus):
+        parser.error('在线 CPU 数量不能超过构建容量，单 CPU 对照需要 PTE 翻译内核')
     if args.cpus == 2 and (args.mapping != 'pte' or args.execution != 'direct' or
                            args.direct_memory != 'flat' or not args.direct_native_exclusive or
                            args.direct_retain_routes or
@@ -518,6 +537,7 @@ def main():
         return
     environment = os.environ.copy()
     environment['NCE_TRANSLATION_FILES'] = str(out)
+    environment['NCE_TRANSLATION_ONLINE_CPUS'] = str(args.online_cpus)
     environment.update(NCE_ART_NTERP=str(args.art_nterp), NCE_ART_EXPANDED_JIT=str(args.art_expanded_jit),
                        NCE_ART_FAST_BASELINE=str(args.art_fast_baseline), NCE_ART_AOT='0', NCE_ART_BOOT_IMAGE='0', NCE_SCHED_SLICE_US='0')
     environment['NCE_TRANSLATION_BATCH'] = str(args.batch_instructions)
@@ -565,7 +585,7 @@ def main():
                 except subprocess.TimeoutExpired:
                     returncode = 'timeout'
             rows = [json.loads(line) for line in (out / f'{stem}.jsonl').read_text().splitlines() if line.startswith('{')]
-            passed = returncode == 0 and validate(rows, args.memory_interval_ms, args.mapping, args.workload, args.tlb_invalidation, args.execution, direct_config, args.cpus, bool(args.parallel_profile), args.smp_uaccess_stop, code_memory=args.code_memory)
+            passed = returncode == 0 and validate(rows, args.memory_interval_ms, args.mapping, args.workload, args.tlb_invalidation, args.execution, direct_config, args.cpus, bool(args.parallel_profile), args.smp_uaccess_stop, code_memory=args.code_memory, online_cpus=args.online_cpus)
             if data is not None:
                 data['final_sha256'] = sha(data_path)
                 metadata = subprocess.run(['/opt/homebrew/opt/e2fsprogs/sbin/dumpe2fs', '-h', data_path],
@@ -593,7 +613,7 @@ def main():
               'dependency': dependency, 'commands': commands, 'host_unchanged_after_guest_build': True,
               'configuration': {'code_memory': args.code_memory, 'execution': args.execution, 'direct': direct_config, 'mapping': args.mapping, 'sparse_scan': True, 'fault_prefetch': False, 'guest_page_bytes': 16384,
                                 'workload': args.workload, 'entries': entries, 'art_nterp': args.art_nterp,
-                                'cpus': args.cpus, 'uaccess_stop': args.smp_uaccess_stop, 'parallel_profile': bool(args.parallel_profile), 'art_expanded_jit': args.art_expanded_jit, 'art_fast_baseline': args.art_fast_baseline,
+                                'cpus': args.cpus, 'online_cpus': args.online_cpus, 'uaccess_stop': args.smp_uaccess_stop, 'parallel_profile': bool(args.parallel_profile), 'art_expanded_jit': args.art_expanded_jit, 'art_fast_baseline': args.art_fast_baseline,
                                 'cache_invalidation': args.cache_invalidation,
                                 'exec_cache': args.exec_cache,
                                 'tlb_invalidation': args.tlb_invalidation,

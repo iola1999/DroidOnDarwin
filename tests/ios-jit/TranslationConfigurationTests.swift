@@ -19,6 +19,17 @@ struct TranslationConfigurationChecks {
         try manifest(["execution": ["engine": "direct", "cpus": 2]])
         try config.validateResources(directory)
         precondition(RunConfiguration.fromEnvironment(config.environment) == config)
+        for count in [0, 3] {
+            config.translation!.onlineCPUs = count
+            rejected { try config.validateResources(directory) }
+        }
+        config.translation!.onlineCPUs = 2
+        try config.validateResources(directory)
+        precondition(RunConfiguration.fromEnvironment(config.environment) == config)
+        try manifest(["execution": ["engine": "direct", "cpus": 1]])
+        rejected { try config.validateResources(directory) }
+        config.translation!.onlineCPUs = 1
+        try manifest(["execution": ["engine": "direct", "cpus": 2]])
         config.translation!.linuxFastpath = true
         rejected { try config.validateResources(directory) }
         try manifest(["execution": ["engine": "direct", "cpus": 1]])

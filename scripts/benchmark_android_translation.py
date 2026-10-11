@@ -14,7 +14,7 @@ from probe_lkl_translation import ROOT, WORK, sha, validate
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--repeat', type=int, default=2)
-    parser.add_argument('--comparison', choices=('cache', 'tlb', 'execution', 'direct-mappings', 'direct-cache', 'direct-memory', 'direct-flat', 'direct-code-watch', 'direct-cross-page', 'direct-routes', 'direct-retain-routes', 'direct-memory-groups', 'direct-read-views', 'direct-native-exclusive', 'direct-smp-uaccess', 'direct-vector-table', 'direct-smp-code-cache', 'direct-smp-code-watch', 'direct-linux-fastpath', 'direct-smp-linux-fastpath'), default='cache')
+    parser.add_argument('--comparison', choices=('cache', 'tlb', 'execution', 'direct-mappings', 'direct-cache', 'direct-memory', 'direct-flat', 'direct-code-watch', 'direct-cross-page', 'direct-routes', 'direct-retain-routes', 'direct-memory-groups', 'direct-read-views', 'direct-native-exclusive', 'direct-smp-uaccess', 'direct-vector-table', 'direct-smp-code-cache', 'direct-smp-code-watch', 'direct-linux-fastpath', 'direct-smp-linux-fastpath', 'direct-smp-online'), default='cache')
     parser.add_argument('--code-memory', choices=('map-jit', 'dual'), default='map-jit')
     parser.add_argument('--workload', choices=('android', 'services', 'desktop'), default='android')
     parser.add_argument('--entry', choices=('both', 'cli', 'gcd', 'window'), default='both')
@@ -43,13 +43,13 @@ def main():
             command += ['--reuse-engine-build']
         if args.comparison != 'cache':
             command += ['--cache-mib', '128', '--linux-fastpath', '1']
-        if args.comparison in ('direct-smp-uaccess', 'direct-vector-table', 'direct-smp-code-cache', 'direct-smp-code-watch', 'direct-smp-linux-fastpath'):
+        if args.comparison in ('direct-smp-uaccess', 'direct-vector-table', 'direct-smp-code-cache', 'direct-smp-code-watch', 'direct-smp-linux-fastpath', 'direct-smp-online'):
             command += ['--cpus', '2', '--direct-memory', 'flat', '--direct-native-exclusive', '1',
                         '--direct-cross-page', '1', '--exec-cache', 'pages', '--tlb-invalidation', 'pages',
                         '--linux-fastpath', '0']
-        if args.comparison in ('direct-vector-table', 'direct-smp-code-cache', 'direct-smp-code-watch', 'direct-smp-linux-fastpath'):
+        if args.comparison in ('direct-vector-table', 'direct-smp-code-cache', 'direct-smp-code-watch', 'direct-smp-linux-fastpath', 'direct-smp-online'):
             command += ['--smp-uaccess-stop', 'code']
-        if args.comparison in ('direct-linux-fastpath', 'direct-smp-linux-fastpath'):
+        if args.comparison in ('direct-linux-fastpath', 'direct-smp-linux-fastpath', 'direct-smp-online'):
             command += ['--direct-memory', 'flat', '--direct-native-exclusive', '1', '--direct-cross-page', '1',
                         '--direct-code-watch', '1', '--exec-cache', 'pages', '--tlb-invalidation', 'pages', '--linux-fastpath', '0']
         with (out / f'prepare-{execution}.log').open('w') as log:
@@ -187,7 +187,14 @@ def main():
                                  'cache_mib': 128, 'tlb_invalidation': 'pages', 'uaccess_stop': baseline['configuration']['uaccess_stop'],
                                  'direct': baseline['configuration']['direct']}
                           for name, enabled in (('per-access', 0), ('block-entry', 1))}
+    if args.comparison == 'direct-smp-online':
+        configurations = {name: {'execution': 'direct', 'cache_invalidation': 'pages', 'linux_fastpath': 0,
+                                 'cache_mib': 128, 'tlb_invalidation': 'pages', 'uaccess_stop': 'code',
+                                 'online_cpus': count, 'direct': baseline['configuration']['direct']}
+                          for name, count in (('online-1', 1), ('online-2', 2))}
+        common.pop('online_cpus', None)
     for config in configurations.values():
+        config.setdefault('online_cpus', common['cpus'])
         if config['execution'] == 'direct' and 'direct' not in config:
             config['direct'] = {'mapping_entries': 256, 'route_entries': 256, 'selective_writes': False, 'reuse_code_checks': False}
         if 'direct' in config:
@@ -222,7 +229,7 @@ def main():
                            NCE_TRANSLATION_BATCH='50000', NCE_TRANSLATION_PREEMPTION='timer',
                            NCE_TRANSLATION_MEMORY_MS='100', NCE_TRANSLATION_CACHE=config['cache_invalidation'],
                            NCE_TRANSLATION_EXEC_CACHE=common['exec_cache'],
-                           NCE_TRANSLATION_PARALLEL_PROFILE='0',
+                           NCE_TRANSLATION_PARALLEL_PROFILE='0', NCE_TRANSLATION_ONLINE_CPUS=str(config['online_cpus']),
                            NCE_TRANSLATION_UACCESS_STOP=config.get('uaccess_stop', 'all'),
                            NCE_TRANSLATION_TLB=config['tlb_invalidation'],
                            NCE_TRANSLATION_LINUX_FASTPATH=str(config['linux_fastpath']),
@@ -260,7 +267,7 @@ def main():
                     except subprocess.TimeoutExpired:
                         returncode = 'timeout'
                 rows = [json.loads(line) for line in (out / f'{stem}.jsonl').read_text().splitlines() if line.startswith('{')]
-                passed = returncode == 0 and validate(rows, 100, 'pte', args.workload, config['tlb_invalidation'], config['execution'], direct, common['cpus'], False, config.get('uaccess_stop', 'all'), code_memory=args.code_memory)
+                passed = returncode == 0 and validate(rows, 100, 'pte', args.workload, config['tlb_invalidation'], config['execution'], direct, common['cpus'], False, config.get('uaccess_stop', 'all'), code_memory=args.code_memory, online_cpus=config['online_cpus'])
                 if data is not None:
                     data['final_sha256'] = sha(data_path)
                     metadata = subprocess.run(['/opt/homebrew/opt/e2fsprogs/sbin/dumpe2fs', '-h', data_path],

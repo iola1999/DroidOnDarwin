@@ -369,7 +369,11 @@ int nce_lkl_run(const char *path)
     }
     unsigned char *kernel = loaded.base;
     int (*init)(struct lkl_host_operations *) = (void *)(kernel + LKL_INIT);
+#if TRANSLATION_LOOKUP
+    int (*start)(unsigned long, unsigned long *, unsigned) = (void *)(kernel + NCE_LKL_START_CPUS);
+#else
     int (*start)(unsigned long, unsigned long *) = (void *)(kernel + NCE_LKL_START);
+#endif
     long (*halt)(void) = (void *)(kernel + LKL_SYS_HALT);
     void (*cleanup)(void) = (void *)(kernel + LKL_CLEANUP);
     call = (void *)(kernel + LKL_SYSCALL);
@@ -408,9 +412,20 @@ int nce_lkl_run(const char *path)
             REQUIRE(nce_disk_open(0, getenv("NCE_TRANSLATION_DATA")) == 0);
         }
     }
+    const char *online_text = getenv("NCE_TRANSLATION_ONLINE_CPUS");
+    unsigned online_cpus = NCE_TRANSLATION_CPUS;
+    if (online_text) {
+        REQUIRE(!strcmp(online_text, "1") || !strcmp(online_text, "2"));
+        online_cpus = (unsigned)(online_text[0] - '0');
+    }
+    REQUIRE(online_cpus <= NCE_TRANSLATION_CPUS);
     REQUIRE(init(&nce_lkl_host) == 0);
     unsigned long slice;
+#if TRANSLATION_LOOKUP
+    REQUIRE(start(scheduler_slice_us * 1000, &slice, online_cpus) == 0);
+#else
     REQUIRE(start(scheduler_slice_us * 1000, &slice) == 0);
+#endif
     REQUIRE(slice && (!scheduler_slice_us || slice == scheduler_slice_us * 1000));
     printf("{\"config\":\"linux_scheduler_slice\",\"requested_us\":%lu,\"applied_ns\":%lu}\n", scheduler_slice_us, slice);
     printf("{\"phase\":\"translated_linux_boot\",\"slice_ns\":%lu}\n", slice);
@@ -424,6 +439,20 @@ int nce_lkl_run(const char *path)
     REQUIRE(call(34, args) == 0);
     long mount[6] = {(long)"proc", (long)"/proc", (long)"proc"};
     REQUIRE(call(40, mount) == 0);
+    /* The host syscall task is pinned to CPU 0. /proc/stat reports the online
+     * CPU set independently of that task's scheduling affinity. */
+    long stat_args[6] = {-100, (long)"/proc/stat", 0};
+    long stat_fd = call(56, stat_args);
+    REQUIRE(stat_fd >= 0);
+    char stat_text[1024] = {0};
+    stat_args[0] = stat_fd;
+    stat_args[1] = (long)stat_text;
+    stat_args[2] = sizeof(stat_text) - 1;
+    REQUIRE(call(63, stat_args) > 0 && call(57, stat_args) == 0);
+    unsigned long online_mask = (strstr(stat_text, "\ncpu0 ") ? 1UL : 0UL) | (strstr(stat_text, "\ncpu1 ") ? 2UL : 0UL);
+    REQUIRE(online_mask == (1UL << online_cpus) - 1);
+    printf("{\"config\":\"translation_online_cpus\",\"capacity\":%u,\"requested\":%u,\"online_mask\":%lu}\n",
+           NCE_TRANSLATION_CPUS, online_cpus, online_mask);
     put_file("/lib/nce-sigreturn.so", "sigreturn.elf");
     put_file("/probe-guest", "guest.elf");
     put_file("/probe-after-build", "late.elf");

@@ -21,6 +21,8 @@ def prepare(report_path, out, target):
     config = report['configuration']
     if config['workload'] != 'desktop' or config['execution'] != 'direct' or config['code_memory'] != 'dual':
         raise ValueError('翻译应用需要双映射 Direct 完整桌面验证')
+    if config.get('online_cpus', config['cpus']) != config['cpus']:
+        raise ValueError('翻译应用默认启用全部 CPU，需要对应的完整桌面验证')
     required = {'android_system_boot_completed', 'android_application_data_persistence', 'android_keystore_persistence',
                 'android_system_process_groups_stopped', 'linux_data_readonly_shutdown', 'android_clock_controls_ready',
                 'translation_prepared_code_execution', 'translated_context_cleanup'}

@@ -2,6 +2,7 @@
 #define _GNU_SOURCE
 #include <errno.h>
 #include <pthread.h>
+#include <sched.h>
 #include <setjmp.h>
 #include <signal.h>
 #include <stdatomic.h>
@@ -68,7 +69,19 @@ int main(int argc, char **argv)
     extern void memory_tests(void), memory_capacity_test(void);
 #if NCE_TRANSLATION_CPUS == 2
     extern void translation_smp_guest_test(void);
-    translation_smp_guest_test();
+    cpu_set_t available;
+    CPU_ZERO(&available);
+    CPU_SET(0, &available);
+    CPU_SET(1, &available);
+    CHECK(!sched_setaffinity(0, sizeof(available), &available));
+    CPU_ZERO(&available);
+    CHECK(!sched_getaffinity(0, sizeof(available), &available));
+    CHECK(CPU_ISSET(0, &available) && (CPU_COUNT(&available) == 1 || CPU_COUNT(&available) == 2));
+    printf("{\"test\":\"translated_smp_online_cpus\",\"passed\":true,\"online\":%d}\n", CPU_COUNT(&available));
+    if (CPU_COUNT(&available) == 2) {
+        CHECK(CPU_ISSET(1, &available));
+        translation_smp_guest_test();
+    }
 #endif
     dynamic_code_tests();
     signal_tests("musl-translated");

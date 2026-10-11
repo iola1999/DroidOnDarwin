@@ -21,9 +21,20 @@ def main():
         return validate(rows, config['memory_interval_ms'], config['mapping'], config['workload'],
                         config['tlb_invalidation'], config['execution'], config['direct'],
                         config['cpus'], config['parallel_profile'], config['uaccess_stop'],
-                        code_memory=config.get('code_memory'))
+                        code_memory=config.get('code_memory'), online_cpus=config.get('online_cpus'))
 
     assert accepted(original)
+    if config.get('online_cpus'):
+        assert not accepted([row for row in original if row.get('config') != 'translation_online_cpus'])
+        for field in ('capacity', 'requested', 'online_mask'):
+            rows = deepcopy(original)
+            next(row for row in rows if row.get('config') == 'translation_online_cpus')[field] += 1
+            assert not accepted(rows), field
+        if config['online_cpus'] == 1:
+            for field in ('calls', 'fallbacks', 'compiles', 'code_lookups', 'code_bytes'):
+                rows = deepcopy(original)
+                next(row for row in rows if row.get('cpu') == 1 and row.get('direct_execution'))[field] = 1
+                assert not accepted(rows), 'inactive CPU: ' + field
     if config.get('code_memory'):
         assert not accepted([row for row in original if row.get('config') != 'translation_code_memory'])
         if config['code_memory'] == 'dual':

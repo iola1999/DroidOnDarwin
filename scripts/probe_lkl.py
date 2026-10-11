@@ -74,7 +74,7 @@ def package_elf(path, *, smp_exports=None):
     symtab = next(s for s in sections if s[1] == 11)
     strings = sections[symtab[6]]
     strings = data[strings[4]:strings[4] + strings[5]]
-    required = {"lkl_init", "lkl_syscall", "lkl_sys_halt", "lkl_cleanup", "nce_lkl_start"}
+    required = {"lkl_init", "lkl_syscall", "lkl_sys_halt", "lkl_cleanup", "nce_lkl_start", "nce_lkl_start_cpus"}
     if PROCESS:
         required |= {"nce_run_syscall", "nce_page_fault", "nce_set_layout", "nce_user_return", "nce_user_fault", "nce_user_preempt", "nce_prepare_user"}
     if SMP:
