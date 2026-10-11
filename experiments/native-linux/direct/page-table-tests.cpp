@@ -68,7 +68,7 @@ struct Tables {
             for (uint64_t address : {CodeVA, DataVA})
                 flat[(address - CodeVA) >> 14] = {uintptr_t(map(this, address, false)), uintptr_t(map(this, address, true))};
         }
-        NceDirectMemory memory{this, map, fetch, epoch, 14, &table, refill_reads, flat.empty() ? nullptr : flat.data()};
+        NceDirectMemory memory{this, map, fetch, epoch, 14, &table, refill_reads, flat.empty() ? nullptr : flat.data(), nullptr};
         return nce_direct_run(engine, &state, memory, 1000, &fault);
     }
 };
@@ -228,7 +228,7 @@ void direct_page_table_tests()
     second[(DataVA - CodeVA) >> 14].read = uintptr_t(test.ram.data() + 2 * PageBytes);
     value = 97;
     std::memcpy(test.ram.data() + 2 * PageBytes, &value, 8);
-    NceDirectMemory memory{&test, Tables::map, Tables::fetch, test.epoch, 14, &test.table, false, second.data()};
+    NceDirectMemory memory{&test, Tables::map, Tables::fetch, test.epoch, 14, &test.table, false, second.data(), nullptr};
     actual = initial;
     CHECK(nce_direct_run(test.engine, &actual, memory, 1000, &fault) == NCE_DIRECT_UNSUPPORTED);
     CHECK(actual.x[1] == 97);

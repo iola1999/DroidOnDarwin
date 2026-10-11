@@ -88,6 +88,20 @@ def validate(rows, memory_interval, mapping="window", workload="core", tlb_inval
                 return False
             if direct_config is not None and ((direct[0]['pte_read_refills'] > 0) != (direct_config.get('memory') == 'refill')):
                 return False
+            watch = [row for row in rows if row.get('direct_code_watch')]
+            checks = [row for row in rows if row.get('direct_code_validation')]
+            if len(watch) != 1 or len(checks) != 1 or watch[0]['enabled'] != selected[0]['code_watch']:
+                return False
+            if checks[0]['content_checks'] + checks[0]['version_hits'] > direct[0]['code_lookups']:
+                return False
+            if watch[0]['enabled']:
+                if not watch[0]['queries'] or not watch[0]['protections'] or not checks[0]['version_hits']:
+                    return False
+                if watch[0]['protection_failures'] or watch[0]['queries'] > direct[0]['code_lookups']:
+                    return False
+            elif checks[0]['version_hits'] or any(watch[0][key] for key in
+                    ('queries', 'protections', 'write_faults', 'invalidations', 'protection_failures', 'excluded_pages')):
+                return False
             flat = [row for row in rows if row.get('direct_flat_tables')]
             enabled = selected[0].get('memory') == 'flat'
             if len(flat) != 1 or flat[0]['enabled'] != enabled or flat[0]['live_virtual_bytes']:
@@ -160,6 +174,7 @@ def main():
     parser.add_argument('--direct-route-entries', type=int, choices=(256, 1024, 4096, 16384, 65536), default=256)
     parser.add_argument('--direct-selective-writes', type=int, choices=(0, 1), default=0)
     parser.add_argument('--direct-reuse-code-checks', type=int, choices=(0, 1), default=0)
+    parser.add_argument('--direct-code-watch', type=int, choices=(0, 1), default=0)
     parser.add_argument('--direct-memory', choices=('cached', 'pte', 'refill', 'flat'), default='cached')
     parser.add_argument('--build-only', action='store_true')
     parser.add_argument('--reuse-engine-build', action='store_true', help='校验摘要后复用已构建的 Unicorn，用于执行器成组对照')
@@ -191,8 +206,8 @@ def main():
         parser.error('Direct 执行使用 PTE 映射')
     direct_config = {'mapping_entries': args.direct_mapping_entries, 'route_entries': args.direct_route_entries,
                      'selective_writes': bool(args.direct_selective_writes), 'reuse_code_checks': bool(args.direct_reuse_code_checks),
-                     'memory': args.direct_memory} if args.execution == 'direct' else None
-    if args.execution != 'direct' and (args.direct_mapping_entries != 256 or args.direct_route_entries != 256 or args.direct_selective_writes or args.direct_reuse_code_checks or args.direct_memory != 'cached'):
+                     'memory': args.direct_memory, 'code_watch': bool(args.direct_code_watch)} if args.execution == 'direct' else None
+    if args.execution != 'direct' and (args.direct_mapping_entries != 256 or args.direct_route_entries != 256 or args.direct_selective_writes or args.direct_reuse_code_checks or args.direct_code_watch or args.direct_memory != 'cached'):
         parser.error('Direct 缓存参数需要 --execution direct')
     if args.direct_memory in ('pte', 'flat') and (args.direct_mapping_entries != 256 or args.direct_selective_writes):
         parser.error('pte/flat 使用地址表访存，数据缓存参数必须保持默认值')
@@ -256,6 +271,8 @@ def main():
         from probe_direct_execution import build_engine as build_direct
         direct_objects, direct_files = build_direct(out / 'direct')
         direct_link = ['-DNCE_DIRECT_EXECUTION', *direct_objects, '-lc++']
+        inputs.append(EXP / 'translation/code-watch.c')
+        direct_files.append(EXP / 'translation/code-watch.h')
     graphics_link, graphics_files = [], []
     if args.workload == 'desktop':
         gfx = ROOT / 'work/gfxstream-src'
@@ -370,7 +387,8 @@ def main():
     environment['NCE_TRANSLATION_CACHE_MIB'] = str(args.cache_mib)
     environment.update(NCE_DIRECT_MAPPING_ENTRIES=str(args.direct_mapping_entries),
                        NCE_DIRECT_ROUTE_ENTRIES=str(args.direct_route_entries), NCE_DIRECT_SELECTIVE_WRITES=str(args.direct_selective_writes),
-                       NCE_DIRECT_REUSE_CODE_CHECKS=str(args.direct_reuse_code_checks), NCE_DIRECT_MEMORY=args.direct_memory)
+                       NCE_DIRECT_REUSE_CODE_CHECKS=str(args.direct_reuse_code_checks), NCE_DIRECT_MEMORY=args.direct_memory,
+                       NCE_DIRECT_CODE_WATCH=str(args.direct_code_watch))
     for name in ('NCE_DESKTOP', 'NCE_SYSTEM_SERVER_PROBE', 'NCE_DIAGNOSTICS', 'NCE_TRACE_SYSTEMUI'):
         environment.pop(name, None)
     if args.workload == 'desktop':

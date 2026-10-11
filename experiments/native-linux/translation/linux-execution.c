@@ -16,8 +16,13 @@
 #include <unicorn/unicorn.h>
 #ifdef NCE_DIRECT_EXECUTION
 #include "../direct/direct.h"
+#include "code-watch.h"
 static NceDirect *direct_engine;
-static bool direct_pte_memory, direct_pte_refill, direct_flat;
+static bool direct_pte_memory, direct_pte_refill, direct_flat, direct_code_watch;
+static NceCodeWatch *code_watch;
+static NceCodeWatchStats code_watch_stats;
+static void (*original_page_free)(void *, unsigned long);
+static int (*original_disk_io)(unsigned int, unsigned int, unsigned long long, void *, unsigned long);
 static unsigned long direct_calls, direct_fallbacks;
 static struct {
     uint32_t instruction;
@@ -114,6 +119,34 @@ static void remap(void *target, void *source, unsigned long size, int prot)
     REQUIRE(mprotect(target, size, prot) == 0);
 }
 
+#ifdef NCE_DIRECT_EXECUTION
+static int watch_disk_io(unsigned int index, unsigned int operation, unsigned long long offset,
+                         void *buffer, unsigned long size)
+{
+    unsigned long start = (uintptr_t)buffer - (base + NCE_USER_SIZE);
+    if (code_watch && operation == 0 && size && start < NCE_RAM_SIZE) {
+        REQUIRE(size <= NCE_RAM_SIZE - start);
+        unsigned long first = start & ~(PAGE - 1);
+        unsigned long end = (start + size + PAGE - 1) & ~(PAGE - 1);
+        /* Kernel copyout from pread reports EFAULT instead of a user write fault. */
+        REQUIRE(nce_code_watch_invalidate(code_watch, first, end - first) == 0);
+    }
+    return original_disk_io(index, operation, offset, buffer, size);
+}
+
+static void watch_page_free(void *address, unsigned long size)
+{
+    if (code_watch && address == (void *)(base + NCE_USER_SIZE)) {
+        /* LKL calls this after joining all task threads and before unmapping RAM. */
+        REQUIRE(size == NCE_RAM_SIZE);
+        code_watch_stats = nce_code_watch_stats(code_watch);
+        nce_code_watch_destroy(code_watch);
+        code_watch = NULL;
+    }
+    original_page_free(address, size);
+}
+#endif
+
 static void shmem_init(unsigned long size)
 {
     REQUIRE(size == NCE_RAM_SIZE);
@@ -122,11 +155,21 @@ static void shmem_init(unsigned long size)
     if (translation)
         translation->ram = (uintptr_t)ram;
     checked(uc_mem_map_ptr(engine, 0, size, UC_PROT_ALL, ram));
+#ifdef NCE_DIRECT_EXECUTION
+    if (direct_code_watch) {
+        code_watch = nce_code_watch_create(ram, (void *)(base + NCE_USER_SIZE), size);
+        REQUIRE(code_watch);
+    }
+#endif
 }
 
 static int shmem_reclaim(unsigned long offset, unsigned long size)
 {
     REQUIRE(!(offset % PAGE) && !(size % PAGE) && offset <= NCE_RAM_SIZE && size <= NCE_RAM_SIZE - offset);
+#ifdef NCE_DIRECT_EXECUTION
+    if (code_watch)
+        REQUIRE(nce_code_watch_invalidate(code_watch, offset, size) == 0);
+#endif
     REQUIRE(mmap(ram + offset, size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANON | MAP_FIXED, -1, 0) == ram + offset);
     remap((void *)(base + NCE_USER_SIZE + offset), ram + offset, size, PROT_READ | PROT_WRITE);
     if (translation) {
@@ -145,6 +188,14 @@ static void *shmem_map(void *address, unsigned long offset, unsigned long size, 
     REQUIRE(offset <= NCE_RAM_SIZE && size <= NCE_RAM_SIZE - offset);
     if (start >= base + NCE_USER_SIZE) {
         REQUIRE(start <= base + RESERVATION && size <= base + RESERVATION - start);
+#ifdef NCE_DIRECT_EXECUTION
+        if (code_watch) {
+            if (start == base + NCE_USER_SIZE + offset)
+                REQUIRE(nce_code_watch_invalidate(code_watch, offset, size) == 0);
+            else
+                REQUIRE(nce_code_watch_exclude(code_watch, offset, size) == 0);
+        }
+#endif
         remap(address, ram + offset, size, prot);
         return address;
     }
@@ -289,6 +340,12 @@ static const void *direct_map_code(void *opaque, uint64_t address)
     return ram + (value & ~(PAGE - 1)) + (address & (PAGE - 1));
 }
 
+static uint64_t direct_code_version(void *opaque, const void *address)
+{
+    (void)opaque;
+    return nce_code_watch_version(code_watch, address);
+}
+
 /* Unsupported instructions continue in Unicorn until the next Linux return.
  * Keeping the whole remainder there preserves its exclusive monitor. */
 static bool direct_execute(Process *p, unsigned long generation)
@@ -309,7 +366,8 @@ static bool direct_execute(Process *p, unsigned long generation)
                                 base + NCE_USER_SIZE, ram, NCE_RAM_SIZE};
     NceDirectMemory memory = {NULL, direct_map_page, direct_map_code, generation, 14,
                               direct_pte_memory ? &table : NULL, direct_pte_refill,
-                              direct_flat ? (const struct nce_direct_flat_page *)translation->flat : NULL};
+                              direct_flat ? (const struct nce_direct_flat_page *)translation->flat : NULL,
+                              direct_code_watch ? direct_code_version : NULL};
     REQUIRE(!direct_flat || memory.flat_pages);
     uint64_t address = 0;
     ++direct_calls;
@@ -645,6 +703,9 @@ unsigned long translation_linux_setup(void *kernel, unsigned long copy_user_offs
     REQUIRE(translation && translate_user);
     unsigned selective = direct_setting("NCE_DIRECT_SELECTIVE_WRITES", 0);
     unsigned reuse = direct_setting("NCE_DIRECT_REUSE_CODE_CHECKS", 0);
+    unsigned watch = direct_setting("NCE_DIRECT_CODE_WATCH", 0);
+    REQUIRE(watch <= 1);
+    direct_code_watch = watch;
     const char *direct_memory = getenv("NCE_DIRECT_MEMORY");
     REQUIRE(!direct_memory || !strcmp(direct_memory, "cached") || !strcmp(direct_memory, "pte") || !strcmp(direct_memory, "refill") || !strcmp(direct_memory, "flat"));
     direct_pte_memory = direct_memory && strcmp(direct_memory, "cached");
@@ -657,8 +718,14 @@ unsigned long translation_linux_setup(void *kernel, unsigned long copy_user_offs
     REQUIRE(!direct_pte_memory || direct_pte_refill || (direct_config.mapping_entries == 256 && !selective));
     direct_engine = nce_direct_create(direct_config);
     REQUIRE(direct_engine);
-    printf("{\"config\":\"translation_execution\",\"engine\":\"direct\",\"direct_cache_bytes\":%lu,\"data_page_bytes\":16384,\"mapping_entries\":%u,\"route_entries\":%u,\"selective_writes\":%s,\"reuse_code_checks\":%s,\"memory\":\"%s\"}\n",
-           cache_bytes, direct_config.mapping_entries, direct_config.route_entries, direct_config.selective_writes ? "true" : "false", direct_config.reuse_code_checks ? "true" : "false", direct_memory ? direct_memory : "cached");
+    printf("{\"config\":\"translation_execution\",\"engine\":\"direct\",\"direct_cache_bytes\":%lu,\"data_page_bytes\":16384,\"mapping_entries\":%u,\"route_entries\":%u,\"selective_writes\":%s,\"reuse_code_checks\":%s,\"memory\":\"%s\",\"code_watch\":%s}\n",
+           cache_bytes, direct_config.mapping_entries, direct_config.route_entries, direct_config.selective_writes ? "true" : "false", direct_config.reuse_code_checks ? "true" : "false", direct_memory ? direct_memory : "cached", direct_code_watch ? "true" : "false");
+    if (direct_code_watch) {
+        original_page_free = nce_lkl_host.page_free;
+        nce_lkl_host.page_free = watch_page_free;
+        original_disk_io = nce_lkl_host.disk_io;
+        nce_lkl_host.disk_io = watch_disk_io;
+    }
 #else
     printf("{\"config\":\"translation_execution\",\"engine\":\"unicorn\"}\n");
 #endif
@@ -732,11 +799,16 @@ void translation_linux_cleanup(void)
     printf("{\"translation_engine_cache\":true,\"total_flushes\":%llu,\"invalidated_blocks\":%llu,\"current_blocks\":%llu,\"used_bytes\":%llu,\"capacity_bytes\":%llu}\n",
            stats[0], stats[1], stats[2], stats[3], stats[4]);
 #ifdef NCE_DIRECT_EXECUTION
+    REQUIRE(!code_watch);
+    printf("{\"direct_code_watch\":true,\"enabled\":%s,\"queries\":%llu,\"protections\":%llu,\"write_faults\":%llu,\"invalidations\":%llu,\"protection_failures\":%llu,\"excluded_pages\":%llu}\n",
+           direct_code_watch ? "true" : "false", code_watch_stats.queries, code_watch_stats.protections,
+           code_watch_stats.write_faults, code_watch_stats.invalidations, code_watch_stats.protection_failures, code_watch_stats.excluded_pages);
     printf("{\"direct_flat_tables\":true,\"enabled\":%s,\"live_virtual_bytes\":%lu,\"peak_virtual_bytes\":%lu,\"updates\":%lu,\"refresh_pages\":%lu}\n",
            direct_flat ? "true" : "false", translation->flat_live_bytes, translation->flat_peak_bytes,
            translation->flat_updates, translation->flat_refresh_pages);
     REQUIRE(!translation->flat_live_bytes);
     NceDirectStats direct = nce_direct_stats(direct_engine);
+    printf("{\"direct_code_validation\":true,\"content_checks\":%llu,\"version_hits\":%llu}\n", direct.code_content_checks, direct.code_version_hits);
     printf("{\"direct_execution\":true,\"calls\":%lu,\"fallbacks\":%lu,\"compiles\":%llu,\"flushes\":%llu,\"code_changes\":%llu,\"code_bytes\":%zu,\"capacity_bytes\":%zu,\"pages\":%zu,\"mapping_misses\":%llu,\"code_lookups\":%llu,\"read_mapping_misses\":%llu,\"write_mapping_misses\":%llu,\"write_invalidations\":%llu,\"code_validation_hits\":%llu,\"pte_read_refills\":%llu}\n",
            direct_calls, direct_fallbacks, direct.compiles, direct.flushes, direct.code_changes,
            direct.code_bytes, direct.code_capacity, direct.pages, direct.mapping_misses, direct.code_lookups,

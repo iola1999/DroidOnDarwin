@@ -91,6 +91,8 @@ def validate(rows, mode, interval, config=None):
             'direct_pte_code_alias_and_next_run_release'}
         expected |= {name + suffix for name in expected if name.startswith('direct_pte_') for suffix in ('_refill', '_flat')}
         expected |= {'direct_flat_exclusive_pair_and_zva', 'direct_flat_cross_page_table_switch_and_configuration'}
+        expected |= {'code_version_reuse_and_mutation', 'code_version_backing_permissions_and_fallback',
+                     'code_version_owner_and_provider_changes'}
         if not expected <= {r.get('test') for r in rows if r.get('passed')}:
             return False
     else:

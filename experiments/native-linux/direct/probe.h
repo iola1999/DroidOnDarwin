@@ -40,7 +40,7 @@ struct Probe {
     ~Probe();
     NceDirectMemory memory()
     {
-        return {this, Map, Code, epoch, 12, nullptr, false, nullptr};
+        return {this, Map, Code, epoch, 12, nullptr, false, nullptr, nullptr};
     }
     static void *Map(void *, uint64_t, bool);
     static const void *Code(void *, uint64_t);

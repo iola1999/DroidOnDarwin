@@ -401,5 +401,64 @@ void direct_tests()
     auto cache = nce_direct_stats(probe.direct);
     CHECK(cache.flushes > 0 && cache.code_bytes <= cache.code_capacity);
     report("bounded_cache_reuse_and_code_replacement");
+    struct VersionedCode {
+        uint32_t *code;
+        uint64_t version;
+        bool executable;
+    } owner{probe.code.data(), 1, true};
+    probe.code.fill(0);
+    probe.code[0] = 0x91000400;  // add x0,x0,#1
+    NceDirectMemory versioned{};
+    versioned.opaque = &owner;
+    versioned.page_bits = 12;
+    versioned.map_page = [](void *, uint64_t, bool) -> void * { return nullptr; };
+    versioned.map_code = [](void *opaque, uint64_t address) -> const void * {
+        const auto &source = *static_cast<VersionedCode *>(opaque);
+        return source.executable && address == CodeVA ? source.code : nullptr;
+    };
+    versioned.code_version = [](void *opaque, const void *) -> uint64_t {
+        return static_cast<VersionedCode *>(opaque)->version;
+    };
+    auto run_versioned = [&](uint64_t expected_value) {
+        NceDirectState current{};
+        current.pc = CodeVA;
+        CHECK(nce_direct_run(probe.direct, &current, versioned, 1000, &fault) == NCE_DIRECT_UNSUPPORTED);
+        CHECK(current.pc == CodeVA + 4 && current.x[0] == expected_value);
+    };
+    run_versioned(1);
+    auto before_version = nce_direct_stats(probe.direct);
+    run_versioned(1);
+    CHECK(nce_direct_stats(probe.direct).code_version_hits > before_version.code_version_hits);
+    CHECK(nce_direct_stats(probe.direct).code_content_checks == before_version.code_content_checks);
+    probe.code[0] = 0x91000800;
+    ++owner.version;
+    run_versioned(2);
+    report("code_version_reuse_and_mutation");
+    probe.reference.fill(0);
+    reinterpret_cast<uint32_t *>(probe.reference.data())[0] = 0x91000c00;
+    owner.code = reinterpret_cast<uint32_t *>(probe.reference.data());
+    run_versioned(3);
+    owner.executable = false;
+    actual = {};
+    actual.pc = CodeVA;
+    CHECK(nce_direct_run(probe.direct, &actual, versioned, 1000, &fault) == NCE_DIRECT_FETCH_FAULT);
+    CHECK(actual.pc == CodeVA && fault == CodeVA);
+    owner.executable = true;
+    owner.version = 0;
+    owner.code[0] = 0x91001000;
+    run_versioned(4);
+    owner.code[0] = 0x91001400;
+    run_versioned(5);
+    report("code_version_backing_permissions_and_fallback");
+    VersionedCode replacement{probe.code.data(), 1, true};
+    before_version = nce_direct_stats(probe.direct);
+    versioned.opaque = &replacement;
+    run_versioned(2);
+    CHECK(nce_direct_stats(probe.direct).flushes > before_version.flushes);
+    before_version = nce_direct_stats(probe.direct);
+    versioned.code_version = nullptr;
+    run_versioned(2);
+    CHECK(nce_direct_stats(probe.direct).flushes > before_version.flushes);
+    report("code_version_owner_and_provider_changes");
     direct_page_table_tests();
 }

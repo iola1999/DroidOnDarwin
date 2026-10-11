@@ -13,7 +13,7 @@ from probe_lkl_translation import ROOT, WORK, sha, validate
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--repeat', type=int, default=2)
-    parser.add_argument('--comparison', choices=('cache', 'tlb', 'execution', 'direct-mappings', 'direct-cache', 'direct-memory', 'direct-flat'), default='cache')
+    parser.add_argument('--comparison', choices=('cache', 'tlb', 'execution', 'direct-mappings', 'direct-cache', 'direct-memory', 'direct-flat', 'direct-code-watch'), default='cache')
     parser.add_argument('--output', type=Path)
     args = parser.parse_args()
     if args.repeat < 2 or args.repeat % 2:
@@ -80,7 +80,7 @@ def main():
     else:
         for config in configurations.values():
             config['execution'] = 'unicorn'
-    if args.comparison in ('direct-memory', 'direct-flat'):
+    if args.comparison in ('direct-memory', 'direct-flat', 'direct-code-watch'):
         configurations = {name: configurations[name] for name in ('full-256', 'mapping-4096')}
         configurations['pte'] = {
             'execution': 'direct', 'cache_invalidation': 'pages', 'linux_fastpath': 1,
@@ -92,18 +92,23 @@ def main():
             'cache_mib': 128, 'tlb_invalidation': 'full',
             'direct': {'mapping_entries': 4096, 'route_entries': 256, 'selective_writes': True,
                        'reuse_code_checks': False, 'memory': 'refill'}}
-    if args.comparison == 'direct-flat':
+    if args.comparison in ('direct-flat', 'direct-code-watch'):
         configurations = {name: configurations[name] for name in ('mapping-4096', 'refill-4096')}
         configurations['flat'] = {
             'execution': 'direct', 'cache_invalidation': 'pages', 'linux_fastpath': 1,
             'cache_mib': 128, 'tlb_invalidation': 'full',
             'direct': {'mapping_entries': 256, 'route_entries': 256, 'selective_writes': False,
                        'reuse_code_checks': False, 'memory': 'flat'}}
+    if args.comparison == 'direct-code-watch':
+        configurations = {name + ('-watch' if enabled else '-compare'): {
+            **configurations[name], 'direct': {**configurations[name]['direct'], 'code_watch': enabled}}
+            for name in ('mapping-4096', 'flat') for enabled in (False, True)}
     for config in configurations.values():
         if config['execution'] == 'direct' and 'direct' not in config:
             config['direct'] = {'mapping_entries': 256, 'route_entries': 256, 'selective_writes': False, 'reuse_code_checks': False}
         if 'direct' in config:
             config['direct'].setdefault('memory', 'cached')
+            config['direct'].setdefault('code_watch', False)
 
     def check_inputs():
         for path, expected in hashes.items():
@@ -134,7 +139,7 @@ def main():
                                NCE_DIRECT_ROUTE_ENTRIES=str(direct['route_entries']),
                                NCE_DIRECT_SELECTIVE_WRITES=str(int(direct['selective_writes'])),
                                NCE_DIRECT_REUSE_CODE_CHECKS=str(int(direct['reuse_code_checks'])),
-                               NCE_DIRECT_MEMORY=direct['memory'])
+                               NCE_DIRECT_MEMORY=direct['memory'], NCE_DIRECT_CODE_WATCH=str(int(direct['code_watch'])))
                 stem = f'{iteration}-{entry}-{name}'
                 with (out / f'{stem}.jsonl').open('w') as stdout, (out / f'{stem}.log').open('w') as stderr:
                     try:

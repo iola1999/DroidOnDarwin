@@ -62,6 +62,11 @@ typedef struct {
      * entries must be aligned pointers inside its RAM; only Linux updates them
      * while the sole CPU is outside run. */
     const struct nce_direct_flat_page *flat_pages;
+    /* Optional physical code-page version. Zero requests content comparison.
+     * A nonzero version must change after any write or backing replacement,
+     * never repeat for that RAM address during the engine's lifetime, and
+     * remain stable throughout run. Execution permission is checked separately. */
+    uint64_t (*code_version)(void *, const void *ram_address);
 } NceDirectMemory;
 
 typedef enum {
@@ -77,6 +82,7 @@ typedef struct {
     uint64_t read_mapping_misses, write_mapping_misses, write_invalidations;
     uint64_t code_validation_hits;
     uint64_t pte_read_refills;
+    uint64_t code_content_checks, code_version_hits;
     size_t code_bytes, code_capacity, pages;
 } NceDirectStats;
 

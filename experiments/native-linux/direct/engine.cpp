@@ -112,8 +112,18 @@ struct NceDirect {
                 }
             }
         }
-        if (item != pages.end() &&
-            (item->second->flags != flags || std::memcmp(item->second->source.data(), bytes, 4096))) {
+        uint64_t version = memory.code_version ? memory.code_version(memory.opaque, bytes) : 0;
+        bool content_changed = false;
+        if (item != pages.end()) {
+            const Page &page = *item->second;
+            if (version && page.source_pointer == bytes && page.source_version == version)
+                ++stats.code_version_hits;
+            else {
+                ++stats.code_content_checks;
+                content_changed = std::memcmp(page.source.data(), bytes, 4096) != 0;
+            }
+        }
+        if (item != pages.end() && (item->second->flags != flags || content_changed)) {
             reset_routes();
             pages.erase(item);
             ++stats.code_changes;
@@ -136,6 +146,8 @@ struct NceDirect {
         }
         auto *page = pages.at(address).get();
         page->validated_run = run_id;
+        page->source_pointer = bytes;
+        page->source_version = version;
         routes[(address >> 12) & (routes.size() - 1)] = {address >> 12, page->branch_entries.data(), page, 0};
         return page;
     }
@@ -167,6 +179,8 @@ struct NceDirect {
         uint64_t page_mask = (UINT64_C(1) << page_bits) - 1;
         if ((state.pc & 3) || (state.fpcr & ~DIRECT_FPCR_MASK))
             return NCE_DIRECT_UNSUPPORTED;
+        if (memory.code_version != previous.code_version || memory.opaque != previous.opaque)
+            clear();
         if (++run_id == 0) {
             clear();
             std::fill(code_page_runs.begin(), code_page_runs.end(), 0);

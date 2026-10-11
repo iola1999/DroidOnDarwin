@@ -24,6 +24,8 @@ struct Page {
     std::array<void *, 1024> entries{}, branch_entries{};
     uint32_t flags = 0;
     uint64_t validated_run = 0;
+    const void *source_pointer = nullptr;
+    uint64_t source_version = 0;
     size_t compile(uint64_t, const void *, size_t, uint32_t *, uint32_t, void **, unsigned);
 };
 struct Frame {
