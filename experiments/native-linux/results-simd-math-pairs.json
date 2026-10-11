@@ -1,0 +1,1228 @@
+{
+  "scope": "fixed seed, same build, absolute gesture; HWUI completion; host presentation unmeasured",
+  "source_summary": "work/native-linux-nce/benchmarks/interaction/20261012-025357-ed77f2/summary.json",
+  "source_summary_sha256": "0eeb5414475c3451fabf1b20411e7ba891469c2904269b41b72c8e655ae40b9f",
+  "script_sha256": "3052836c9c7cd25b0a8a21ebe855d71b1311a6c0ef36f9b3c822ca264f4744c8",
+  "host": {
+    "hardware": "arm64",
+    "os": "Version 27.0 (Build 26A428)",
+    "host_ram_bytes": 274877906944,
+    "cpu": "Apple M5 Ultra"
+  },
+  "runs": [
+    {
+      "runID": "19DD92FE-CE74-47BD-9563-E30184E1C219",
+      "name": "simd-off",
+      "repeat": 0,
+      "buildID": "0.25.0-Mac-20261012-025247-direct1-dual",
+      "directory": "work/native-linux-nce/benchmarks/interaction/20261012-025357-ed77f2/19DD92FE-CE74-47BD-9563-E30184E1C219",
+      "configuration": {
+        "aot": false,
+        "bootImage": false,
+        "diagnostics": false,
+        "directFault": true,
+        "expandedJIT": false,
+        "fastBaseline": false,
+        "faultPrefetch": false,
+        "nterp": true,
+        "performanceLogging": false,
+        "schedulerSliceUS": 0,
+        "sparseScan": true,
+        "translation": {
+          "cacheMiB": 128,
+          "codeWatch": true,
+          "crossPage": true,
+          "linuxFastpath": false,
+          "memoryGroups": false,
+          "onlineCPUs": 1,
+          "retainRoutes": false,
+          "reuseCodeChecks": false,
+          "routeEpochs": false,
+          "simdMath": false,
+          "vectorTable": false
+        }
+      },
+      "initial_data_sha256": "7fa03db87afe4a7ddbb7f881a96f93f832b557fb2f4af8750aeb8a8ac9e1f228",
+      "frame_counts": {
+        "accepted": 33
+      },
+      "duration": {
+        "count": 33,
+        "p50_ms": 46.694792,
+        "p95_ms": 182.38190759999998,
+        "p99_ms": 221.18783824,
+        "max_ms": 232.162772,
+        "p95_small_sample": true,
+        "p99_small_sample": true,
+        "tail_count_reference": {
+          "p95": 1,
+          "p99": 0
+        },
+        "percentile_method": "linear interpolation; small-sample flag uses fewer than 10 expected tail observations; frames are not independent runs",
+        "above_ms": {
+          "16.666667": 33,
+          "100": 6,
+          "250": 0,
+          "1000": 0
+        }
+      },
+      "host_visibility": {
+        "available": true,
+        "tracking": "AppKit notifications and action boundaries",
+        "all_visible": true,
+        "all_active": true,
+        "all_activity_asserted": true,
+        "events": [
+          {
+            "host_monotonic_ns": 1539131244133000,
+            "event": "action_submitted",
+            "app_visible": true,
+            "app_active": true,
+            "benchmark_activity": true
+          },
+          {
+            "host_monotonic_ns": 1539131244907000,
+            "event": "action_started",
+            "app_visible": true,
+            "app_active": true,
+            "benchmark_activity": true
+          },
+          {
+            "host_monotonic_ns": 1539131850320000,
+            "event": "action_submitted",
+            "app_visible": true,
+            "app_active": true,
+            "benchmark_activity": true
+          },
+          {
+            "host_monotonic_ns": 1539131851347000,
+            "event": "action_started",
+            "app_visible": true,
+            "app_active": true,
+            "benchmark_activity": true
+          },
+          {
+            "host_monotonic_ns": 1539133053236000,
+            "event": "action_submitted",
+            "app_visible": true,
+            "app_active": true,
+            "benchmark_activity": true
+          },
+          {
+            "host_monotonic_ns": 1539133056003000,
+            "event": "action_started",
+            "app_visible": true,
+            "app_active": true,
+            "benchmark_activity": true
+          }
+        ],
+        "scope": "App-wide occlusion and activation; actual drawable presentation unmeasured"
+      },
+      "host_conditions": {
+        "thermal_state": [
+          0,
+          0
+        ],
+        "low_power_mode": [
+          false,
+          false
+        ],
+        "benchmark_activity": [
+          true,
+          true
+        ]
+      },
+      "failures": [],
+      "metrics": {
+        "start_to_ready_observed_ms": 81071.43687503412,
+        "core_to_ready_observed_ms": 81052.80750012025,
+        "actions_ms": 49943.8209165819,
+        "stop_ms": 4666.495000012219,
+        "memory_overall_compressed_mean_bytes": 0,
+        "memory_overall_compressed_sampled_peak_bytes": 0,
+        "memory_overall_compressed_latest_bytes": 0,
+        "memory_overall_footprint_mean_bytes": 2344611228.8333335,
+        "memory_overall_footprint_sampled_peak_bytes": 3105902384,
+        "memory_overall_footprint_latest_bytes": 395134560,
+        "memory_overall_resident_mean_bytes": 2302735360,
+        "memory_overall_resident_sampled_peak_bytes": 2789638144,
+        "memory_overall_resident_latest_bytes": 394854400,
+        "memory_overall_virtual_mean_bytes": 508573988522.6667,
+        "memory_overall_virtual_sampled_peak_bytes": 509035544576,
+        "memory_overall_virtual_latest_bytes": 501241135104,
+        "memory_phase_booting_compressed_mean_bytes": 0,
+        "memory_phase_booting_compressed_sampled_peak_bytes": 0,
+        "memory_phase_booting_compressed_latest_bytes": 0,
+        "memory_phase_booting_footprint_mean_bytes": 2180218278.7619047,
+        "memory_phase_booting_footprint_sampled_peak_bytes": 3105902384,
+        "memory_phase_booting_footprint_latest_bytes": 2818510664,
+        "memory_phase_booting_resident_mean_bytes": 2104441709.7142856,
+        "memory_phase_booting_resident_sampled_peak_bytes": 2756149248,
+        "memory_phase_booting_resident_latest_bytes": 2730082304,
+        "memory_phase_booting_virtual_mean_bytes": 508640649996.1905,
+        "memory_phase_booting_virtual_sampled_peak_bytes": 509002039296,
+        "memory_phase_booting_virtual_latest_bytes": 508984049664,
+        "memory_phase_preparing_compressed_mean_bytes": 0,
+        "memory_phase_preparing_compressed_sampled_peak_bytes": 0,
+        "memory_phase_preparing_compressed_latest_bytes": 0,
+        "memory_phase_preparing_footprint_mean_bytes": 33416272,
+        "memory_phase_preparing_footprint_sampled_peak_bytes": 33473616,
+        "memory_phase_preparing_footprint_latest_bytes": 33473616,
+        "memory_phase_preparing_resident_mean_bytes": 106840064,
+        "memory_phase_preparing_resident_sampled_peak_bytes": 106938368,
+        "memory_phase_preparing_resident_latest_bytes": 106938368,
+        "memory_phase_preparing_virtual_mean_bytes": 501168078848,
+        "memory_phase_preparing_virtual_sampled_peak_bytes": 501168078848,
+        "memory_phase_preparing_virtual_latest_bytes": 501168078848,
+        "memory_phase_running_compressed_mean_bytes": 0,
+        "memory_phase_running_compressed_sampled_peak_bytes": 0,
+        "memory_phase_running_compressed_latest_bytes": 0,
+        "memory_phase_running_footprint_mean_bytes": 2748428585.882353,
+        "memory_phase_running_footprint_sampled_peak_bytes": 3091189576,
+        "memory_phase_running_footprint_latest_bytes": 3035926344,
+        "memory_phase_running_resident_mean_bytes": 2746516419.7647057,
+        "memory_phase_running_resident_sampled_peak_bytes": 2789638144,
+        "memory_phase_running_resident_latest_bytes": 2733096960,
+        "memory_phase_running_virtual_mean_bytes": 508999179163.60785,
+        "memory_phase_running_virtual_sampled_peak_bytes": 509035544576,
+        "memory_phase_running_virtual_latest_bytes": 509003743232,
+        "memory_phase_stopped_compressed_mean_bytes": 0,
+        "memory_phase_stopped_compressed_sampled_peak_bytes": 0,
+        "memory_phase_stopped_compressed_latest_bytes": 0,
+        "memory_phase_stopped_footprint_mean_bytes": 395183712,
+        "memory_phase_stopped_footprint_sampled_peak_bytes": 395232864,
+        "memory_phase_stopped_footprint_latest_bytes": 395134560,
+        "memory_phase_stopped_resident_mean_bytes": 394903552,
+        "memory_phase_stopped_resident_sampled_peak_bytes": 394952704,
+        "memory_phase_stopped_resident_latest_bytes": 394854400,
+        "memory_phase_stopped_virtual_mean_bytes": 501241421824,
+        "memory_phase_stopped_virtual_sampled_peak_bytes": 501241708544,
+        "memory_phase_stopped_virtual_latest_bytes": 501241135104,
+        "memory_phase_stopping_compressed_mean_bytes": 0,
+        "memory_phase_stopping_compressed_sampled_peak_bytes": 0,
+        "memory_phase_stopping_compressed_latest_bytes": 0,
+        "memory_phase_stopping_footprint_mean_bytes": 2691724737.6,
+        "memory_phase_stopping_footprint_sampled_peak_bytes": 3072773984,
+        "memory_phase_stopping_footprint_latest_bytes": 3072773984,
+        "memory_phase_stopping_resident_mean_bytes": 2748992716.8,
+        "memory_phase_stopping_resident_sampled_peak_bytes": 2776580096,
+        "memory_phase_stopping_resident_latest_bytes": 2776580096,
+        "memory_phase_stopping_virtual_mean_bytes": 509012521779.2,
+        "memory_phase_stopping_virtual_sampled_peak_bytes": 509020045312,
+        "memory_phase_stopping_virtual_latest_bytes": 509017636864,
+        "memory_boot_step_0_compressed_mean_bytes": 0,
+        "memory_boot_step_0_compressed_sampled_peak_bytes": 0,
+        "memory_boot_step_0_compressed_latest_bytes": 0,
+        "memory_boot_step_0_footprint_mean_bytes": 296453476,
+        "memory_boot_step_0_footprint_sampled_peak_bytes": 557663864,
+        "memory_boot_step_0_footprint_latest_bytes": 557663864,
+        "memory_boot_step_0_resident_mean_bytes": 224501760,
+        "memory_boot_step_0_resident_sampled_peak_bytes": 336658432,
+        "memory_boot_step_0_resident_latest_bytes": 336658432,
+        "memory_boot_step_0_virtual_mean_bytes": 504762122240,
+        "memory_boot_step_0_virtual_sampled_peak_bytes": 508356329472,
+        "memory_boot_step_0_virtual_latest_bytes": 508356329472,
+        "memory_boot_step_2_compressed_mean_bytes": 0,
+        "memory_boot_step_2_compressed_sampled_peak_bytes": 0,
+        "memory_boot_step_2_compressed_latest_bytes": 0,
+        "memory_boot_step_2_footprint_mean_bytes": 1626186571.5348837,
+        "memory_boot_step_2_footprint_sampled_peak_bytes": 2668989920,
+        "memory_boot_step_2_footprint_latest_bytes": 2668989920,
+        "memory_boot_step_2_resident_mean_bytes": 1690473305.3023255,
+        "memory_boot_step_2_resident_sampled_peak_bytes": 2385084416,
+        "memory_boot_step_2_resident_latest_bytes": 2385084416,
+        "memory_boot_step_2_virtual_mean_bytes": 508597843348.8372,
+        "memory_boot_step_2_virtual_sampled_peak_bytes": 508748529664,
+        "memory_boot_step_2_virtual_latest_bytes": 508748529664,
+        "memory_boot_step_3_compressed_mean_bytes": 0,
+        "memory_boot_step_3_compressed_sampled_peak_bytes": 0,
+        "memory_boot_step_3_compressed_latest_bytes": 0,
+        "memory_boot_step_3_footprint_mean_bytes": 2889497242.736842,
+        "memory_boot_step_3_footprint_sampled_peak_bytes": 3105902384,
+        "memory_boot_step_3_footprint_latest_bytes": 2818559816,
+        "memory_boot_step_3_resident_mean_bytes": 2655359622.736842,
+        "memory_boot_step_3_resident_sampled_peak_bytes": 2756149248,
+        "memory_boot_step_3_resident_latest_bytes": 2729967616,
+        "memory_boot_step_3_virtual_mean_bytes": 508884185303.5789,
+        "memory_boot_step_3_virtual_sampled_peak_bytes": 509002039296,
+        "memory_boot_step_3_virtual_latest_bytes": 508985196544,
+        "memory_boot_step_4_compressed_mean_bytes": 0,
+        "memory_boot_step_4_compressed_sampled_peak_bytes": 0,
+        "memory_boot_step_4_compressed_latest_bytes": 0,
+        "memory_boot_step_4_footprint_mean_bytes": 2818510664,
+        "memory_boot_step_4_footprint_sampled_peak_bytes": 2818510664,
+        "memory_boot_step_4_footprint_latest_bytes": 2818510664,
+        "memory_boot_step_4_resident_mean_bytes": 2730082304,
+        "memory_boot_step_4_resident_sampled_peak_bytes": 2730082304,
+        "memory_boot_step_4_resident_latest_bytes": 2730082304,
+        "memory_boot_step_4_virtual_mean_bytes": 508984049664,
+        "memory_boot_step_4_virtual_sampled_peak_bytes": 508984049664,
+        "memory_boot_step_4_virtual_latest_bytes": 508984049664,
+        "memory_process_lifetime_footprint_peak_bytes": 3110948656,
+        "memory_process_lifetime_resident_peak_bytes": 2792980480,
+        "swipe_ms": 605.4111665580422,
+        "swipe_cpu_ms": 628.43,
+        "input_call_ms": 135.012,
+        "input_lateness_max_ms": 2.073,
+        "p50_ms": 46.694792,
+        "p95_ms": 182.38190759999998,
+        "p99_ms": 221.18783824,
+        "max_ms": 232.162772
+      },
+      "execution_totals": null,
+      "source_sha256": {
+        "/Users/fan/project/app/husk_hyos/work/native-linux-nce/benchmarks/interaction/20261012-025357-ed77f2/19DD92FE-CE74-47BD-9563-E30184E1C219/request.json": "8622240ddc02a088f679a96bf3263a63287e1411c9f28131f4a54f28108edc4c",
+        "/Users/fan/project/app/husk_hyos/work/native-linux-nce/benchmarks/interaction/20261012-025357-ed77f2/19DD92FE-CE74-47BD-9563-E30184E1C219/result.json": "dd86823eb3b72a0ebe7e65960deddee4a6ee9314f3915fe1ae9c8e59cd27f32f",
+        "/Users/fan/project/app/husk_hyos/work/native-linux-nce/benchmarks/interaction/20261012-025357-ed77f2/19DD92FE-CE74-47BD-9563-E30184E1C219/interaction/clock-pairs.jsonl": "6d1aaab452a80d201129162e8e6b87940e1ad87720bade65166600655bfbd9e2",
+        "/Users/fan/project/app/husk_hyos/work/native-linux-nce/benchmarks/interaction/20261012-025357-ed77f2/19DD92FE-CE74-47BD-9563-E30184E1C219/interaction/frames.txt": "359b0006c81279bd5eb57e4d1108594434f59dce04ab0055489b474728084235",
+        "/Users/fan/project/app/husk_hyos/work/native-linux-nce/benchmarks/interaction/20261012-025357-ed77f2/19DD92FE-CE74-47BD-9563-E30184E1C219/interaction/threads-after.txt": "0d25693391c89d492b7d5058e51ec2de1edc267351c149abd0a26e3fc24ed0aa",
+        "/Users/fan/project/app/husk_hyos/work/native-linux-nce/benchmarks/interaction/20261012-025357-ed77f2/19DD92FE-CE74-47BD-9563-E30184E1C219/interaction/threads-before.txt": "ead77b3f0e9c5936b4754b28e9fea980c43e9b97da45ef96de356dcfdd9c47a5"
+      }
+    },
+    {
+      "runID": "0F177797-BD86-4AC5-B898-920B1563F741",
+      "name": "simd-on",
+      "repeat": 0,
+      "buildID": "0.25.0-Mac-20261012-025247-direct1-dual",
+      "directory": "work/native-linux-nce/benchmarks/interaction/20261012-025357-ed77f2/0F177797-BD86-4AC5-B898-920B1563F741",
+      "configuration": {
+        "aot": false,
+        "bootImage": false,
+        "diagnostics": false,
+        "directFault": true,
+        "expandedJIT": false,
+        "fastBaseline": false,
+        "faultPrefetch": false,
+        "nterp": true,
+        "performanceLogging": false,
+        "schedulerSliceUS": 0,
+        "sparseScan": true,
+        "translation": {
+          "cacheMiB": 128,
+          "codeWatch": true,
+          "crossPage": true,
+          "linuxFastpath": false,
+          "memoryGroups": false,
+          "onlineCPUs": 1,
+          "retainRoutes": false,
+          "reuseCodeChecks": false,
+          "routeEpochs": false,
+          "simdMath": true,
+          "vectorTable": false
+        }
+      },
+      "initial_data_sha256": "7fa03db87afe4a7ddbb7f881a96f93f832b557fb2f4af8750aeb8a8ac9e1f228",
+      "frame_counts": {
+        "accepted": 38
+      },
+      "duration": {
+        "count": 38,
+        "p50_ms": 49.316463,
+        "p95_ms": 123.97429369999998,
+        "p99_ms": 138.7073641,
+        "max_ms": 138.874112,
+        "p95_small_sample": true,
+        "p99_small_sample": true,
+        "tail_count_reference": {
+          "p95": 1,
+          "p99": 0
+        },
+        "percentile_method": "linear interpolation; small-sample flag uses fewer than 10 expected tail observations; frames are not independent runs",
+        "above_ms": {
+          "16.666667": 38,
+          "100": 3,
+          "250": 0,
+          "1000": 0
+        }
+      },
+      "host_visibility": {
+        "available": true,
+        "tracking": "AppKit notifications and action boundaries",
+        "all_visible": true,
+        "all_active": false,
+        "all_activity_asserted": true,
+        "events": [
+          {
+            "host_monotonic_ns": 1539259072096000,
+            "event": "action_submitted",
+            "app_visible": true,
+            "app_active": false,
+            "benchmark_activity": true
+          },
+          {
+            "host_monotonic_ns": 1539259072890000,
+            "event": "action_started",
+            "app_visible": true,
+            "app_active": false,
+            "benchmark_activity": true
+          },
+          {
+            "host_monotonic_ns": 1539259681459000,
+            "event": "action_submitted",
+            "app_visible": true,
+            "app_active": false,
+            "benchmark_activity": true
+          },
+          {
+            "host_monotonic_ns": 1539259682630000,
+            "event": "action_started",
+            "app_visible": true,
+            "app_active": false,
+            "benchmark_activity": true
+          },
+          {
+            "host_monotonic_ns": 1539260884441000,
+            "event": "action_submitted",
+            "app_visible": true,
+            "app_active": false,
+            "benchmark_activity": true
+          },
+          {
+            "host_monotonic_ns": 1539260886348000,
+            "event": "action_started",
+            "app_visible": true,
+            "app_active": false,
+            "benchmark_activity": true
+          }
+        ],
+        "scope": "App-wide occlusion and activation; actual drawable presentation unmeasured"
+      },
+      "host_conditions": {
+        "thermal_state": [
+          0,
+          0
+        ],
+        "low_power_mode": [
+          false,
+          false
+        ],
+        "benchmark_activity": [
+          true,
+          true
+        ]
+      },
+      "failures": [],
+      "metrics": {
+        "start_to_ready_observed_ms": 73021.55241672881,
+        "core_to_ready_observed_ms": 72992.06104176119,
+        "actions_ms": 49447.15191680007,
+        "stop_ms": 4605.524708284065,
+        "memory_overall_compressed_mean_bytes": 0,
+        "memory_overall_compressed_sampled_peak_bytes": 0,
+        "memory_overall_compressed_latest_bytes": 0,
+        "memory_overall_footprint_mean_bytes": 2377914738.529412,
+        "memory_overall_footprint_sampled_peak_bytes": 3099692848,
+        "memory_overall_footprint_latest_bytes": 617219704,
+        "memory_overall_resident_mean_bytes": 2323095190.5882354,
+        "memory_overall_resident_sampled_peak_bytes": 2789277696,
+        "memory_overall_resident_latest_bytes": 395460608,
+        "memory_overall_virtual_mean_bytes": 508576303706.35297,
+        "memory_overall_virtual_sampled_peak_bytes": 509044834304,
+        "memory_overall_virtual_latest_bytes": 501254242304,
+        "memory_phase_booting_compressed_mean_bytes": 0,
+        "memory_phase_booting_compressed_sampled_peak_bytes": 0,
+        "memory_phase_booting_compressed_latest_bytes": 0,
+        "memory_phase_booting_footprint_mean_bytes": 2196899585.4736843,
+        "memory_phase_booting_footprint_sampled_peak_bytes": 3099692848,
+        "memory_phase_booting_footprint_latest_bytes": 2810154824,
+        "memory_phase_booting_resident_mean_bytes": 2110359444.2105262,
+        "memory_phase_booting_resident_sampled_peak_bytes": 2755198976,
+        "memory_phase_booting_resident_latest_bytes": 2720514048,
+        "memory_phase_booting_virtual_mean_bytes": 508645292570.9474,
+        "memory_phase_booting_virtual_sampled_peak_bytes": 509015588864,
+        "memory_phase_booting_virtual_latest_bytes": 509005660160,
+        "memory_phase_preparing_compressed_mean_bytes": 0,
+        "memory_phase_preparing_compressed_sampled_peak_bytes": 0,
+        "memory_phase_preparing_compressed_latest_bytes": 0,
+        "memory_phase_preparing_footprint_mean_bytes": 31614032,
+        "memory_phase_preparing_footprint_sampled_peak_bytes": 31654992,
+        "memory_phase_preparing_footprint_latest_bytes": 31654992,
+        "memory_phase_preparing_resident_mean_bytes": 104284160,
+        "memory_phase_preparing_resident_sampled_peak_bytes": 104366080,
+        "memory_phase_preparing_resident_latest_bytes": 104366080,
+        "memory_phase_preparing_virtual_mean_bytes": 501152940032,
+        "memory_phase_preparing_virtual_sampled_peak_bytes": 501152940032,
+        "memory_phase_preparing_virtual_latest_bytes": 501152940032,
+        "memory_phase_running_compressed_mean_bytes": 0,
+        "memory_phase_running_compressed_sampled_peak_bytes": 0,
+        "memory_phase_running_compressed_latest_bytes": 0,
+        "memory_phase_running_footprint_mean_bytes": 2769278393.92,
+        "memory_phase_running_footprint_sampled_peak_bytes": 3095793504,
+        "memory_phase_running_footprint_latest_bytes": 3081506656,
+        "memory_phase_running_resident_mean_bytes": 2757970165.76,
+        "memory_phase_running_resident_sampled_peak_bytes": 2787409920,
+        "memory_phase_running_resident_latest_bytes": 2779611136,
+        "memory_phase_running_virtual_mean_bytes": 509013992079.36,
+        "memory_phase_running_virtual_sampled_peak_bytes": 509044834304,
+        "memory_phase_running_virtual_latest_bytes": 509024010240,
+        "memory_phase_stopped_compressed_mean_bytes": 0,
+        "memory_phase_stopped_compressed_sampled_peak_bytes": 0,
+        "memory_phase_stopped_compressed_latest_bytes": 0,
+        "memory_phase_stopped_footprint_mean_bytes": 617219704,
+        "memory_phase_stopped_footprint_sampled_peak_bytes": 617219704,
+        "memory_phase_stopped_footprint_latest_bytes": 617219704,
+        "memory_phase_stopped_resident_mean_bytes": 395460608,
+        "memory_phase_stopped_resident_sampled_peak_bytes": 395460608,
+        "memory_phase_stopped_resident_latest_bytes": 395460608,
+        "memory_phase_stopped_virtual_mean_bytes": 501254242304,
+        "memory_phase_stopped_virtual_sampled_peak_bytes": 501254242304,
+        "memory_phase_stopped_virtual_latest_bytes": 501254242304,
+        "memory_phase_stopping_compressed_mean_bytes": 0,
+        "memory_phase_stopping_compressed_sampled_peak_bytes": 0,
+        "memory_phase_stopping_compressed_latest_bytes": 0,
+        "memory_phase_stopping_footprint_mean_bytes": 2778408129.3333335,
+        "memory_phase_stopping_footprint_sampled_peak_bytes": 3087716216,
+        "memory_phase_stopping_footprint_latest_bytes": 3031404384,
+        "memory_phase_stopping_resident_mean_bytes": 2775938389.3333335,
+        "memory_phase_stopping_resident_sampled_peak_bytes": 2789277696,
+        "memory_phase_stopping_resident_latest_bytes": 2735292416,
+        "memory_phase_stopping_virtual_mean_bytes": 508970183338.6667,
+        "memory_phase_stopping_virtual_sampled_peak_bytes": 509033021440,
+        "memory_phase_stopping_virtual_latest_bytes": 508678684672,
+        "memory_boot_step_0_compressed_mean_bytes": 0,
+        "memory_boot_step_0_compressed_sampled_peak_bytes": 0,
+        "memory_boot_step_0_compressed_latest_bytes": 0,
+        "memory_boot_step_0_footprint_mean_bytes": 336659836,
+        "memory_boot_step_0_footprint_sampled_peak_bytes": 637863568,
+        "memory_boot_step_0_footprint_latest_bytes": 637863568,
+        "memory_boot_step_0_resident_mean_bytes": 264724480,
+        "memory_boot_step_0_resident_sampled_peak_bytes": 416956416,
+        "memory_boot_step_0_resident_latest_bytes": 416956416,
+        "memory_boot_step_0_virtual_mean_bytes": 504779882496,
+        "memory_boot_step_0_virtual_sampled_peak_bytes": 508383150080,
+        "memory_boot_step_0_virtual_latest_bytes": 508383150080,
+        "memory_boot_step_2_compressed_mean_bytes": 0,
+        "memory_boot_step_2_compressed_sampled_peak_bytes": 0,
+        "memory_boot_step_2_compressed_latest_bytes": 0,
+        "memory_boot_step_2_footprint_mean_bytes": 1666561977.2307692,
+        "memory_boot_step_2_footprint_sampled_peak_bytes": 2715684392,
+        "memory_boot_step_2_footprint_latest_bytes": 2715684392,
+        "memory_boot_step_2_resident_mean_bytes": 1709709049.4358974,
+        "memory_boot_step_2_resident_sampled_peak_bytes": 2430484480,
+        "memory_boot_step_2_resident_latest_bytes": 2430484480,
+        "memory_boot_step_2_virtual_mean_bytes": 508610048315.0769,
+        "memory_boot_step_2_virtual_sampled_peak_bytes": 508787982336,
+        "memory_boot_step_2_virtual_latest_bytes": 508787982336,
+        "memory_boot_step_3_compressed_mean_bytes": 0,
+        "memory_boot_step_3_compressed_sampled_peak_bytes": 0,
+        "memory_boot_step_3_compressed_latest_bytes": 0,
+        "memory_boot_step_3_footprint_mean_bytes": 2896616967.2941175,
+        "memory_boot_step_3_footprint_sampled_peak_bytes": 3099692848,
+        "memory_boot_step_3_footprint_latest_bytes": 2809794376,
+        "memory_boot_step_3_resident_mean_bytes": 2660550053.647059,
+        "memory_boot_step_3_resident_sampled_peak_bytes": 2755198976,
+        "memory_boot_step_3_resident_latest_bytes": 2720137216,
+        "memory_boot_step_3_virtual_mean_bytes": 508902497822.1177,
+        "memory_boot_step_3_virtual_sampled_peak_bytes": 509015588864,
+        "memory_boot_step_3_virtual_latest_bytes": 509005660160,
+        "memory_boot_step_4_compressed_mean_bytes": 0,
+        "memory_boot_step_4_compressed_sampled_peak_bytes": 0,
+        "memory_boot_step_4_compressed_latest_bytes": 0,
+        "memory_boot_step_4_footprint_mean_bytes": 2810154824,
+        "memory_boot_step_4_footprint_sampled_peak_bytes": 2810154824,
+        "memory_boot_step_4_footprint_latest_bytes": 2810154824,
+        "memory_boot_step_4_resident_mean_bytes": 2720514048,
+        "memory_boot_step_4_resident_sampled_peak_bytes": 2720514048,
+        "memory_boot_step_4_resident_latest_bytes": 2720514048,
+        "memory_boot_step_4_virtual_mean_bytes": 509005660160,
+        "memory_boot_step_4_virtual_sampled_peak_bytes": 509005660160,
+        "memory_boot_step_4_virtual_latest_bytes": 509005660160,
+        "memory_process_lifetime_footprint_peak_bytes": 3107131184,
+        "memory_process_lifetime_resident_peak_bytes": 2793537536,
+        "swipe_ms": 608.5669165477157,
+        "swipe_cpu_ms": 636.337,
+        "input_call_ms": 125.715,
+        "input_lateness_max_ms": 1.08,
+        "p50_ms": 49.316463,
+        "p95_ms": 123.97429369999998,
+        "p99_ms": 138.7073641,
+        "max_ms": 138.874112
+      },
+      "execution_totals": null,
+      "source_sha256": {
+        "/Users/fan/project/app/husk_hyos/work/native-linux-nce/benchmarks/interaction/20261012-025357-ed77f2/0F177797-BD86-4AC5-B898-920B1563F741/request.json": "4e957f1e4d1401fca650b3988e51d586b1eeee2421179828e62d231ee66767ea",
+        "/Users/fan/project/app/husk_hyos/work/native-linux-nce/benchmarks/interaction/20261012-025357-ed77f2/0F177797-BD86-4AC5-B898-920B1563F741/result.json": "9ebb5ed04294c6abfee184196aebce85a7845a385aa33a149ae33b94813d1e9e",
+        "/Users/fan/project/app/husk_hyos/work/native-linux-nce/benchmarks/interaction/20261012-025357-ed77f2/0F177797-BD86-4AC5-B898-920B1563F741/interaction/clock-pairs.jsonl": "39a3209ca5e6ceeab2e5bd9a09ab67b8083af2786029a762fe326922f9ad142e",
+        "/Users/fan/project/app/husk_hyos/work/native-linux-nce/benchmarks/interaction/20261012-025357-ed77f2/0F177797-BD86-4AC5-B898-920B1563F741/interaction/frames.txt": "b47e37fa83d588d816e93f7aeaaafea0bf36eeace7a6195adf2ae4b257621bd9",
+        "/Users/fan/project/app/husk_hyos/work/native-linux-nce/benchmarks/interaction/20261012-025357-ed77f2/0F177797-BD86-4AC5-B898-920B1563F741/interaction/threads-after.txt": "dda81eadb8b96aef2265f1479db0ec4feec8016d151e00de29396402d8c0ad2d",
+        "/Users/fan/project/app/husk_hyos/work/native-linux-nce/benchmarks/interaction/20261012-025357-ed77f2/0F177797-BD86-4AC5-B898-920B1563F741/interaction/threads-before.txt": "ac7eb75c00cc5815b9ba4be6803dc72ec91c99f6c1b6f96fb1f040e0ce4827a3"
+      }
+    },
+    {
+      "runID": "1B188ACE-CC0F-49E0-995C-6ED398B28162",
+      "name": "simd-on",
+      "repeat": 1,
+      "buildID": "0.25.0-Mac-20261012-025247-direct1-dual",
+      "directory": "work/native-linux-nce/benchmarks/interaction/20261012-025357-ed77f2/1B188ACE-CC0F-49E0-995C-6ED398B28162",
+      "configuration": {
+        "aot": false,
+        "bootImage": false,
+        "diagnostics": false,
+        "directFault": true,
+        "expandedJIT": false,
+        "fastBaseline": false,
+        "faultPrefetch": false,
+        "nterp": true,
+        "performanceLogging": false,
+        "schedulerSliceUS": 0,
+        "sparseScan": true,
+        "translation": {
+          "cacheMiB": 128,
+          "codeWatch": true,
+          "crossPage": true,
+          "linuxFastpath": false,
+          "memoryGroups": false,
+          "onlineCPUs": 1,
+          "retainRoutes": false,
+          "reuseCodeChecks": false,
+          "routeEpochs": false,
+          "simdMath": true,
+          "vectorTable": false
+        }
+      },
+      "initial_data_sha256": "7fa03db87afe4a7ddbb7f881a96f93f832b557fb2f4af8750aeb8a8ac9e1f228",
+      "frame_counts": {
+        "accepted": 10
+      },
+      "duration": {
+        "count": 10,
+        "p50_ms": 162.380506,
+        "p95_ms": 439.03475449999996,
+        "p99_ms": 445.6978757,
+        "max_ms": 447.363656,
+        "p95_small_sample": true,
+        "p99_small_sample": true,
+        "tail_count_reference": {
+          "p95": 0,
+          "p99": 0
+        },
+        "percentile_method": "linear interpolation; small-sample flag uses fewer than 10 expected tail observations; frames are not independent runs",
+        "above_ms": {
+          "16.666667": 10,
+          "100": 9,
+          "250": 3,
+          "1000": 0
+        }
+      },
+      "host_visibility": {
+        "available": true,
+        "tracking": "AppKit notifications and action boundaries",
+        "all_visible": false,
+        "all_active": false,
+        "all_activity_asserted": true,
+        "events": [
+          {
+            "host_monotonic_ns": 1539392417146000,
+            "event": "action_submitted",
+            "app_visible": false,
+            "app_active": false,
+            "benchmark_activity": true
+          },
+          {
+            "host_monotonic_ns": 1539392418839000,
+            "event": "action_started",
+            "app_visible": false,
+            "app_active": false,
+            "benchmark_activity": true
+          },
+          {
+            "host_monotonic_ns": 1539393026610000,
+            "event": "action_submitted",
+            "app_visible": false,
+            "app_active": false,
+            "benchmark_activity": true
+          },
+          {
+            "host_monotonic_ns": 1539393027873000,
+            "event": "action_started",
+            "app_visible": false,
+            "app_active": false,
+            "benchmark_activity": true
+          },
+          {
+            "host_monotonic_ns": 1539394229588000,
+            "event": "action_submitted",
+            "app_visible": false,
+            "app_active": false,
+            "benchmark_activity": true
+          },
+          {
+            "host_monotonic_ns": 1539394232039000,
+            "event": "action_started",
+            "app_visible": false,
+            "app_active": false,
+            "benchmark_activity": true
+          }
+        ],
+        "scope": "App-wide occlusion and activation; actual drawable presentation unmeasured"
+      },
+      "host_conditions": {
+        "thermal_state": [
+          0,
+          0
+        ],
+        "low_power_mode": [
+          false,
+          false
+        ],
+        "benchmark_activity": [
+          true,
+          true
+        ]
+      },
+      "failures": [],
+      "metrics": {
+        "start_to_ready_observed_ms": 74022.20324985683,
+        "core_to_ready_observed_ms": 74010.04929165356,
+        "actions_ms": 53586.63916680962,
+        "stop_ms": 7326.370166614652,
+        "memory_overall_compressed_mean_bytes": 0,
+        "memory_overall_compressed_sampled_peak_bytes": 0,
+        "memory_overall_compressed_latest_bytes": 0,
+        "memory_overall_footprint_mean_bytes": 2395689429.3333335,
+        "memory_overall_footprint_sampled_peak_bytes": 3092270944,
+        "memory_overall_footprint_latest_bytes": 396838496,
+        "memory_overall_resident_mean_bytes": 2352719644.4444447,
+        "memory_overall_resident_sampled_peak_bytes": 2794356736,
+        "memory_overall_resident_latest_bytes": 394395648,
+        "memory_overall_virtual_mean_bytes": 508592279210.6667,
+        "memory_overall_virtual_sampled_peak_bytes": 509044523008,
+        "memory_overall_virtual_latest_bytes": 501250375680,
+        "memory_phase_booting_compressed_mean_bytes": 0,
+        "memory_phase_booting_compressed_sampled_peak_bytes": 0,
+        "memory_phase_booting_compressed_latest_bytes": 0,
+        "memory_phase_booting_footprint_mean_bytes": 2203177684.7792206,
+        "memory_phase_booting_footprint_sampled_peak_bytes": 3070775088,
+        "memory_phase_booting_footprint_latest_bytes": 2829668192,
+        "memory_phase_booting_resident_mean_bytes": 2121299462.6493506,
+        "memory_phase_booting_resident_sampled_peak_bytes": 2744549376,
+        "memory_phase_booting_resident_latest_bytes": 2744549376,
+        "memory_phase_booting_virtual_mean_bytes": 508638791972.5714,
+        "memory_phase_booting_virtual_sampled_peak_bytes": 509004136448,
+        "memory_phase_booting_virtual_latest_bytes": 508994748416,
+        "memory_phase_preparing_compressed_mean_bytes": 0,
+        "memory_phase_preparing_compressed_sampled_peak_bytes": 0,
+        "memory_phase_preparing_compressed_latest_bytes": 0,
+        "memory_phase_preparing_footprint_mean_bytes": 33440872,
+        "memory_phase_preparing_footprint_sampled_peak_bytes": 33473640,
+        "memory_phase_preparing_footprint_latest_bytes": 33473640,
+        "memory_phase_preparing_resident_mean_bytes": 106881024,
+        "memory_phase_preparing_resident_sampled_peak_bytes": 106954752,
+        "memory_phase_preparing_resident_latest_bytes": 106954752,
+        "memory_phase_preparing_virtual_mean_bytes": 501172510720,
+        "memory_phase_preparing_virtual_sampled_peak_bytes": 501172518912,
+        "memory_phase_preparing_virtual_latest_bytes": 501172502528,
+        "memory_phase_running_compressed_mean_bytes": 0,
+        "memory_phase_running_compressed_sampled_peak_bytes": 0,
+        "memory_phase_running_compressed_latest_bytes": 0,
+        "memory_phase_running_footprint_mean_bytes": 2764403134.814815,
+        "memory_phase_running_footprint_sampled_peak_bytes": 3092270944,
+        "memory_phase_running_footprint_latest_bytes": 3075379040,
+        "memory_phase_running_resident_mean_bytes": 2766999400.296296,
+        "memory_phase_running_resident_sampled_peak_bytes": 2789474304,
+        "memory_phase_running_resident_latest_bytes": 2783903744,
+        "memory_phase_running_virtual_mean_bytes": 509009397835.85187,
+        "memory_phase_running_virtual_sampled_peak_bytes": 509044523008,
+        "memory_phase_running_virtual_latest_bytes": 509021028352,
+        "memory_phase_stopped_compressed_mean_bytes": 0,
+        "memory_phase_stopped_compressed_sampled_peak_bytes": 0,
+        "memory_phase_stopped_compressed_latest_bytes": 0,
+        "memory_phase_stopped_footprint_mean_bytes": 396838496,
+        "memory_phase_stopped_footprint_sampled_peak_bytes": 396838496,
+        "memory_phase_stopped_footprint_latest_bytes": 396838496,
+        "memory_phase_stopped_resident_mean_bytes": 394395648,
+        "memory_phase_stopped_resident_sampled_peak_bytes": 394395648,
+        "memory_phase_stopped_resident_latest_bytes": 394395648,
+        "memory_phase_stopped_virtual_mean_bytes": 501250375680,
+        "memory_phase_stopped_virtual_sampled_peak_bytes": 501250375680,
+        "memory_phase_stopped_virtual_latest_bytes": 501250375680,
+        "memory_phase_stopping_compressed_mean_bytes": 0,
+        "memory_phase_stopping_compressed_sampled_peak_bytes": 0,
+        "memory_phase_stopping_compressed_latest_bytes": 0,
+        "memory_phase_stopping_footprint_mean_bytes": 2799585342.2222223,
+        "memory_phase_stopping_footprint_sampled_peak_bytes": 3081654112,
+        "memory_phase_stopping_footprint_latest_bytes": 2786594608,
+        "memory_phase_stopping_resident_mean_bytes": 2781227690.6666665,
+        "memory_phase_stopping_resident_sampled_peak_bytes": 2794356736,
+        "memory_phase_stopping_resident_latest_bytes": 2718777344,
+        "memory_phase_stopping_virtual_mean_bytes": 508971996501.3333,
+        "memory_phase_stopping_virtual_sampled_peak_bytes": 509033725952,
+        "memory_phase_stopping_virtual_latest_bytes": 508531998720,
+        "memory_boot_step_0_compressed_mean_bytes": 0,
+        "memory_boot_step_0_compressed_sampled_peak_bytes": 0,
+        "memory_boot_step_0_compressed_latest_bytes": 0,
+        "memory_boot_step_0_footprint_mean_bytes": 335619440,
+        "memory_boot_step_0_footprint_sampled_peak_bytes": 637339256,
+        "memory_boot_step_0_footprint_latest_bytes": 637339256,
+        "memory_boot_step_0_resident_mean_bytes": 262291456,
+        "memory_boot_step_0_resident_sampled_peak_bytes": 416514048,
+        "memory_boot_step_0_resident_latest_bytes": 416514048,
+        "memory_boot_step_0_virtual_mean_bytes": 504775237632,
+        "memory_boot_step_0_virtual_sampled_peak_bytes": 508378497024,
+        "memory_boot_step_0_virtual_latest_bytes": 508378497024,
+        "memory_boot_step_2_compressed_mean_bytes": 0,
+        "memory_boot_step_2_compressed_sampled_peak_bytes": 0,
+        "memory_boot_step_2_compressed_latest_bytes": 0,
+        "memory_boot_step_2_footprint_mean_bytes": 1666454050.2564104,
+        "memory_boot_step_2_footprint_sampled_peak_bytes": 2704445016,
+        "memory_boot_step_2_footprint_latest_bytes": 2704445016,
+        "memory_boot_step_2_resident_mean_bytes": 1712734628.102564,
+        "memory_boot_step_2_resident_sampled_peak_bytes": 2429452288,
+        "memory_boot_step_2_resident_latest_bytes": 2429452288,
+        "memory_boot_step_2_virtual_mean_bytes": 508609375310.7692,
+        "memory_boot_step_2_virtual_sampled_peak_bytes": 508767633408,
+        "memory_boot_step_2_virtual_latest_bytes": 508767633408,
+        "memory_boot_step_3_compressed_mean_bytes": 0,
+        "memory_boot_step_3_compressed_sampled_peak_bytes": 0,
+        "memory_boot_step_3_compressed_latest_bytes": 0,
+        "memory_boot_step_3_footprint_mean_bytes": 2890059048.457143,
+        "memory_boot_step_3_footprint_sampled_peak_bytes": 3070775088,
+        "memory_boot_step_3_footprint_latest_bytes": 2829520736,
+        "memory_boot_step_3_resident_mean_bytes": 2664979309.714286,
+        "memory_boot_step_3_resident_sampled_peak_bytes": 2744532992,
+        "memory_boot_step_3_resident_latest_bytes": 2744385536,
+        "memory_boot_step_3_virtual_mean_bytes": 508882174888.2286,
+        "memory_boot_step_3_virtual_sampled_peak_bytes": 509004136448,
+        "memory_boot_step_3_virtual_latest_bytes": 508994748416,
+        "memory_boot_step_4_compressed_mean_bytes": 0,
+        "memory_boot_step_4_compressed_sampled_peak_bytes": 0,
+        "memory_boot_step_4_compressed_latest_bytes": 0,
+        "memory_boot_step_4_footprint_mean_bytes": 2829668192,
+        "memory_boot_step_4_footprint_sampled_peak_bytes": 2829668192,
+        "memory_boot_step_4_footprint_latest_bytes": 2829668192,
+        "memory_boot_step_4_resident_mean_bytes": 2744549376,
+        "memory_boot_step_4_resident_sampled_peak_bytes": 2744549376,
+        "memory_boot_step_4_resident_latest_bytes": 2744549376,
+        "memory_boot_step_4_virtual_mean_bytes": 508994748416,
+        "memory_boot_step_4_virtual_sampled_peak_bytes": 508994748416,
+        "memory_boot_step_4_virtual_latest_bytes": 508994748416,
+        "memory_process_lifetime_footprint_peak_bytes": 3096858464,
+        "memory_process_lifetime_resident_peak_bytes": 2797289472,
+        "swipe_ms": 607.7687917277217,
+        "swipe_cpu_ms": 570.668,
+        "input_call_ms": 160.669,
+        "input_lateness_max_ms": 1.232,
+        "p50_ms": 162.380506,
+        "p95_ms": 439.03475449999996,
+        "p99_ms": 445.6978757,
+        "max_ms": 447.363656
+      },
+      "execution_totals": null,
+      "source_sha256": {
+        "/Users/fan/project/app/husk_hyos/work/native-linux-nce/benchmarks/interaction/20261012-025357-ed77f2/1B188ACE-CC0F-49E0-995C-6ED398B28162/request.json": "e228c2ecd674dfd704d327cb959789ba24f4b520597396aa3f3a8e02470e9f77",
+        "/Users/fan/project/app/husk_hyos/work/native-linux-nce/benchmarks/interaction/20261012-025357-ed77f2/1B188ACE-CC0F-49E0-995C-6ED398B28162/result.json": "d1f332710d08377166a1508619ad411e38bb8a84c7140c1a95cabe921b943288",
+        "/Users/fan/project/app/husk_hyos/work/native-linux-nce/benchmarks/interaction/20261012-025357-ed77f2/1B188ACE-CC0F-49E0-995C-6ED398B28162/interaction/clock-pairs.jsonl": "9b792edf6c58ade5500146b1e4d918f0efbef07d47adbbf6449ec76f73e9e6ae",
+        "/Users/fan/project/app/husk_hyos/work/native-linux-nce/benchmarks/interaction/20261012-025357-ed77f2/1B188ACE-CC0F-49E0-995C-6ED398B28162/interaction/frames.txt": "96f73b0b4668a8bd5b8574cb149cb0973336a3c96bd21f654966b81dbe56609b",
+        "/Users/fan/project/app/husk_hyos/work/native-linux-nce/benchmarks/interaction/20261012-025357-ed77f2/1B188ACE-CC0F-49E0-995C-6ED398B28162/interaction/threads-after.txt": "6bda03601e81a83a128f5d4ebc75560cfac1cfc0b38e665b64d1b8e7df7b9883",
+        "/Users/fan/project/app/husk_hyos/work/native-linux-nce/benchmarks/interaction/20261012-025357-ed77f2/1B188ACE-CC0F-49E0-995C-6ED398B28162/interaction/threads-before.txt": "680f68dd5e928cfb7e61726fe1c964deee35ffe7171b8cec9b1db5c42433fce6"
+      }
+    },
+    {
+      "runID": "8E1500AD-4919-4A0D-895F-906438966B1D",
+      "name": "simd-off",
+      "repeat": 1,
+      "buildID": "0.25.0-Mac-20261012-025247-direct1-dual",
+      "directory": "work/native-linux-nce/benchmarks/interaction/20261012-025357-ed77f2/8E1500AD-4919-4A0D-895F-906438966B1D",
+      "configuration": {
+        "aot": false,
+        "bootImage": false,
+        "diagnostics": false,
+        "directFault": true,
+        "expandedJIT": false,
+        "fastBaseline": false,
+        "faultPrefetch": false,
+        "nterp": true,
+        "performanceLogging": false,
+        "schedulerSliceUS": 0,
+        "sparseScan": true,
+        "translation": {
+          "cacheMiB": 128,
+          "codeWatch": true,
+          "crossPage": true,
+          "linuxFastpath": false,
+          "memoryGroups": false,
+          "onlineCPUs": 1,
+          "retainRoutes": false,
+          "reuseCodeChecks": false,
+          "routeEpochs": false,
+          "simdMath": false,
+          "vectorTable": false
+        }
+      },
+      "initial_data_sha256": "7fa03db87afe4a7ddbb7f881a96f93f832b557fb2f4af8750aeb8a8ac9e1f228",
+      "frame_counts": {
+        "accepted": 28
+      },
+      "duration": {
+        "count": 28,
+        "p50_ms": 76.262066,
+        "p95_ms": 131.06111979999997,
+        "p99_ms": 147.16981582,
+        "max_ms": 150.529246,
+        "p95_small_sample": true,
+        "p99_small_sample": true,
+        "tail_count_reference": {
+          "p95": 1,
+          "p99": 0
+        },
+        "percentile_method": "linear interpolation; small-sample flag uses fewer than 10 expected tail observations; frames are not independent runs",
+        "above_ms": {
+          "16.666667": 28,
+          "100": 7,
+          "250": 0,
+          "1000": 0
+        }
+      },
+      "host_visibility": {
+        "available": true,
+        "tracking": "AppKit notifications and action boundaries",
+        "all_visible": false,
+        "all_active": false,
+        "all_activity_asserted": true,
+        "events": [
+          {
+            "host_monotonic_ns": 1539534687323000,
+            "event": "action_submitted",
+            "app_visible": false,
+            "app_active": false,
+            "benchmark_activity": true
+          },
+          {
+            "host_monotonic_ns": 1539534688111000,
+            "event": "action_started",
+            "app_visible": false,
+            "app_active": false,
+            "benchmark_activity": true
+          },
+          {
+            "host_monotonic_ns": 1539535298524000,
+            "event": "action_submitted",
+            "app_visible": false,
+            "app_active": false,
+            "benchmark_activity": true
+          },
+          {
+            "host_monotonic_ns": 1539535299645000,
+            "event": "action_started",
+            "app_visible": false,
+            "app_active": false,
+            "benchmark_activity": true
+          },
+          {
+            "host_monotonic_ns": 1539536501415000,
+            "event": "action_submitted",
+            "app_visible": false,
+            "app_active": false,
+            "benchmark_activity": true
+          },
+          {
+            "host_monotonic_ns": 1539536503952000,
+            "event": "action_started",
+            "app_visible": false,
+            "app_active": false,
+            "benchmark_activity": true
+          }
+        ],
+        "scope": "App-wide occlusion and activation; actual drawable presentation unmeasured"
+      },
+      "host_conditions": {
+        "thermal_state": [
+          0,
+          0
+        ],
+        "low_power_mode": [
+          false,
+          false
+        ],
+        "benchmark_activity": [
+          true,
+          true
+        ]
+      },
+      "failures": [],
+      "metrics": {
+        "start_to_ready_observed_ms": 85051.99262499809,
+        "core_to_ready_observed_ms": 85033.395125065,
+        "actions_ms": 48694.37062507495,
+        "stop_ms": 4588.348291581497,
+        "memory_overall_compressed_mean_bytes": 0,
+        "memory_overall_compressed_sampled_peak_bytes": 0,
+        "memory_overall_compressed_latest_bytes": 0,
+        "memory_overall_footprint_mean_bytes": 2317186577.3061223,
+        "memory_overall_footprint_sampled_peak_bytes": 3097825144,
+        "memory_overall_footprint_latest_bytes": 614139464,
+        "memory_overall_resident_mean_bytes": 2277105496.8163266,
+        "memory_overall_resident_sampled_peak_bytes": 2791473152,
+        "memory_overall_resident_latest_bytes": 391593984,
+        "memory_overall_virtual_mean_bytes": 508576284114.72107,
+        "memory_overall_virtual_sampled_peak_bytes": 509039640576,
+        "memory_overall_virtual_latest_bytes": 501238611968,
+        "memory_phase_booting_compressed_mean_bytes": 0,
+        "memory_phase_booting_compressed_sampled_peak_bytes": 0,
+        "memory_phase_booting_compressed_latest_bytes": 0,
+        "memory_phase_booting_footprint_mean_bytes": 2133540794.1818182,
+        "memory_phase_booting_footprint_sampled_peak_bytes": 3085995824,
+        "memory_phase_booting_footprint_latest_bytes": 2527432520,
+        "memory_phase_booting_resident_mean_bytes": 2065088698.1818182,
+        "memory_phase_booting_resident_sampled_peak_bytes": 2745565184,
+        "memory_phase_booting_resident_latest_bytes": 2742566912,
+        "memory_phase_booting_virtual_mean_bytes": 508642000896,
+        "memory_phase_booting_virtual_sampled_peak_bytes": 509004939264,
+        "memory_phase_booting_virtual_latest_bytes": 508990423040,
+        "memory_phase_preparing_compressed_mean_bytes": 0,
+        "memory_phase_preparing_compressed_sampled_peak_bytes": 0,
+        "memory_phase_preparing_compressed_latest_bytes": 0,
+        "memory_phase_preparing_footprint_mean_bytes": 34587800,
+        "memory_phase_preparing_footprint_sampled_peak_bytes": 34636952,
+        "memory_phase_preparing_footprint_latest_bytes": 34636952,
+        "memory_phase_preparing_resident_mean_bytes": 107913216,
+        "memory_phase_preparing_resident_sampled_peak_bytes": 108003328,
+        "memory_phase_preparing_resident_latest_bytes": 108003328,
+        "memory_phase_preparing_virtual_mean_bytes": 501184978944,
+        "memory_phase_preparing_virtual_sampled_peak_bytes": 501184987136,
+        "memory_phase_preparing_virtual_latest_bytes": 501184987136,
+        "memory_phase_running_compressed_mean_bytes": 0,
+        "memory_phase_running_compressed_sampled_peak_bytes": 0,
+        "memory_phase_running_compressed_latest_bytes": 0,
+        "memory_phase_running_footprint_mean_bytes": 2750939140.32,
+        "memory_phase_running_footprint_sampled_peak_bytes": 3097825144,
+        "memory_phase_running_footprint_latest_bytes": 2818510712,
+        "memory_phase_running_resident_mean_bytes": 2764504760.32,
+        "memory_phase_running_resident_sampled_peak_bytes": 2791473152,
+        "memory_phase_running_resident_latest_bytes": 2730885120,
+        "memory_phase_running_virtual_mean_bytes": 509005559889.92,
+        "memory_phase_running_virtual_sampled_peak_bytes": 509039640576,
+        "memory_phase_running_virtual_latest_bytes": 509015179264,
+        "memory_phase_stopped_compressed_mean_bytes": 0,
+        "memory_phase_stopped_compressed_sampled_peak_bytes": 0,
+        "memory_phase_stopped_compressed_latest_bytes": 0,
+        "memory_phase_stopped_footprint_mean_bytes": 614139464,
+        "memory_phase_stopped_footprint_sampled_peak_bytes": 614139464,
+        "memory_phase_stopped_footprint_latest_bytes": 614139464,
+        "memory_phase_stopped_resident_mean_bytes": 391593984,
+        "memory_phase_stopped_resident_sampled_peak_bytes": 391593984,
+        "memory_phase_stopped_resident_latest_bytes": 391593984,
+        "memory_phase_stopped_virtual_mean_bytes": 501238611968,
+        "memory_phase_stopped_virtual_sampled_peak_bytes": 501238611968,
+        "memory_phase_stopped_virtual_latest_bytes": 501238611968,
+        "memory_phase_stopping_compressed_mean_bytes": 0,
+        "memory_phase_stopping_compressed_sampled_peak_bytes": 0,
+        "memory_phase_stopping_compressed_latest_bytes": 0,
+        "memory_phase_stopping_footprint_mean_bytes": 2806085086.4,
+        "memory_phase_stopping_footprint_sampled_peak_bytes": 3077590904,
+        "memory_phase_stopping_footprint_latest_bytes": 3077590904,
+        "memory_phase_stopping_resident_mean_bytes": 2756490035.2,
+        "memory_phase_stopping_resident_sampled_peak_bytes": 2777694208,
+        "memory_phase_stopping_resident_latest_bytes": 2777694208,
+        "memory_phase_stopping_virtual_mean_bytes": 509018501939.2,
+        "memory_phase_stopping_virtual_sampled_peak_bytes": 509023092736,
+        "memory_phase_stopping_virtual_latest_bytes": 509021552640,
+        "memory_boot_step_0_compressed_mean_bytes": 0,
+        "memory_boot_step_0_compressed_sampled_peak_bytes": 0,
+        "memory_boot_step_0_compressed_latest_bytes": 0,
+        "memory_boot_step_0_footprint_mean_bytes": 318285204,
+        "memory_boot_step_0_footprint_sampled_peak_bytes": 600409744,
+        "memory_boot_step_0_footprint_latest_bytes": 600409744,
+        "memory_boot_step_0_resident_mean_bytes": 245309440,
+        "memory_boot_step_0_resident_sampled_peak_bytes": 377470976,
+        "memory_boot_step_0_resident_latest_bytes": 377470976,
+        "memory_boot_step_0_virtual_mean_bytes": 504784683008,
+        "memory_boot_step_0_virtual_sampled_peak_bytes": 508384460800,
+        "memory_boot_step_0_virtual_latest_bytes": 508384460800,
+        "memory_boot_step_2_compressed_mean_bytes": 0,
+        "memory_boot_step_2_compressed_sampled_peak_bytes": 0,
+        "memory_boot_step_2_compressed_latest_bytes": 0,
+        "memory_boot_step_2_footprint_mean_bytes": 1607062432.1702127,
+        "memory_boot_step_2_footprint_sampled_peak_bytes": 2659634632,
+        "memory_boot_step_2_footprint_latest_bytes": 2659634632,
+        "memory_boot_step_2_resident_mean_bytes": 1667689711.6595745,
+        "memory_boot_step_2_resident_sampled_peak_bytes": 2329477120,
+        "memory_boot_step_2_resident_latest_bytes": 2329477120,
+        "memory_boot_step_2_virtual_mean_bytes": 508607757290.21277,
+        "memory_boot_step_2_virtual_sampled_peak_bytes": 508739665920,
+        "memory_boot_step_2_virtual_latest_bytes": 508738142208,
+        "memory_boot_step_3_compressed_mean_bytes": 0,
+        "memory_boot_step_3_compressed_sampled_peak_bytes": 0,
+        "memory_boot_step_3_compressed_latest_bytes": 0,
+        "memory_boot_step_3_footprint_mean_bytes": 2869885596,
+        "memory_boot_step_3_footprint_sampled_peak_bytes": 3085995824,
+        "memory_boot_step_3_footprint_latest_bytes": 2829438792,
+        "memory_boot_step_3_resident_mean_bytes": 2634557978.9473686,
+        "memory_boot_step_3_resident_sampled_peak_bytes": 2745565184,
+        "memory_boot_step_3_resident_latest_bytes": 2742435840,
+        "memory_boot_step_3_virtual_mean_bytes": 508878202556.6316,
+        "memory_boot_step_3_virtual_sampled_peak_bytes": 509004939264,
+        "memory_boot_step_3_virtual_latest_bytes": 508993863680,
+        "memory_boot_step_4_compressed_mean_bytes": 0,
+        "memory_boot_step_4_compressed_sampled_peak_bytes": 0,
+        "memory_boot_step_4_compressed_latest_bytes": 0,
+        "memory_boot_step_4_footprint_mean_bytes": 2527432520,
+        "memory_boot_step_4_footprint_sampled_peak_bytes": 2527432520,
+        "memory_boot_step_4_footprint_latest_bytes": 2527432520,
+        "memory_boot_step_4_resident_mean_bytes": 2742566912,
+        "memory_boot_step_4_resident_sampled_peak_bytes": 2742566912,
+        "memory_boot_step_4_resident_latest_bytes": 2742566912,
+        "memory_boot_step_4_virtual_mean_bytes": 508990423040,
+        "memory_boot_step_4_virtual_sampled_peak_bytes": 508990423040,
+        "memory_boot_step_4_virtual_latest_bytes": 508990423040,
+        "memory_process_lifetime_footprint_peak_bytes": 3098316664,
+        "memory_process_lifetime_resident_peak_bytes": 2795536384,
+        "swipe_ms": 610.4116248898208,
+        "swipe_cpu_ms": 642.315,
+        "input_call_ms": 110.509,
+        "input_lateness_max_ms": 1.083,
+        "p50_ms": 76.262066,
+        "p95_ms": 131.06111979999997,
+        "p99_ms": 147.16981582,
+        "max_ms": 150.529246
+      },
+      "execution_totals": null,
+      "source_sha256": {
+        "/Users/fan/project/app/husk_hyos/work/native-linux-nce/benchmarks/interaction/20261012-025357-ed77f2/8E1500AD-4919-4A0D-895F-906438966B1D/request.json": "42070120ff26ebcf85a0eb946928bcf1173c2b08c8a1b6e0a4d76c45d7ebe5c1",
+        "/Users/fan/project/app/husk_hyos/work/native-linux-nce/benchmarks/interaction/20261012-025357-ed77f2/8E1500AD-4919-4A0D-895F-906438966B1D/result.json": "251bb7ddd6f6da251a669f1816af4e9bbedf239a5b6440a914fcd8dcbfeeb117",
+        "/Users/fan/project/app/husk_hyos/work/native-linux-nce/benchmarks/interaction/20261012-025357-ed77f2/8E1500AD-4919-4A0D-895F-906438966B1D/interaction/clock-pairs.jsonl": "9b953dc192273123e2b1eaa282a8575352bae386903ca0fda18cb4fabadde093",
+        "/Users/fan/project/app/husk_hyos/work/native-linux-nce/benchmarks/interaction/20261012-025357-ed77f2/8E1500AD-4919-4A0D-895F-906438966B1D/interaction/frames.txt": "345a8af81d3af9ba5c9d6f9cadb3be246ded283963f5602b70e034db39e75799",
+        "/Users/fan/project/app/husk_hyos/work/native-linux-nce/benchmarks/interaction/20261012-025357-ed77f2/8E1500AD-4919-4A0D-895F-906438966B1D/interaction/threads-after.txt": "c25d6e5dc14778f10fd82f3d6116ab3b516e3ebeb76e5e7d9c1da6fea3ec3372",
+        "/Users/fan/project/app/husk_hyos/work/native-linux-nce/benchmarks/interaction/20261012-025357-ed77f2/8E1500AD-4919-4A0D-895F-906438966B1D/interaction/threads-before.txt": "45f1f6cb0611d70d91546e21d5e93626b8cae2b1d454e07071b6a17f2d3d714a"
+      }
+    }
+  ],
+  "groups": {
+    "simd-off": {
+      "p50_ms": {
+        "samples": [
+          46.694792,
+          76.262066
+        ],
+        "median": 61.478429000000006
+      },
+      "p95_ms": {
+        "samples": [
+          182.38190759999998,
+          131.06111979999997
+        ],
+        "median": 156.72151369999997
+      },
+      "max_ms": {
+        "samples": [
+          232.162772,
+          150.529246
+        ],
+        "median": 191.34600899999998
+      },
+      "swipe_ms": {
+        "samples": [
+          605.4111665580422,
+          610.4116248898208
+        ],
+        "median": 607.9113957239315
+      },
+      "swipe_cpu_ms": {
+        "samples": [
+          628.43,
+          642.315
+        ],
+        "median": 635.3725
+      },
+      "input_call_ms": {
+        "samples": [
+          135.012,
+          110.509
+        ],
+        "median": 122.76050000000001
+      },
+      "input_lateness_max_ms": {
+        "samples": [
+          2.073,
+          1.083
+        ],
+        "median": 1.5779999999999998
+      }
+    },
+    "simd-on": {
+      "p50_ms": {
+        "samples": [
+          49.316463,
+          162.380506
+        ],
+        "median": 105.8484845
+      },
+      "p95_ms": {
+        "samples": [
+          123.97429369999998,
+          439.03475449999996
+        ],
+        "median": 281.50452409999997
+      },
+      "max_ms": {
+        "samples": [
+          138.874112,
+          447.363656
+        ],
+        "median": 293.118884
+      },
+      "swipe_ms": {
+        "samples": [
+          608.5669165477157,
+          607.7687917277217
+        ],
+        "median": 608.1678541377187
+      },
+      "swipe_cpu_ms": {
+        "samples": [
+          636.337,
+          570.668
+        ],
+        "median": 603.5025
+      },
+      "input_call_ms": {
+        "samples": [
+          125.715,
+          160.669
+        ],
+        "median": 143.192
+      },
+      "input_lateness_max_ms": {
+        "samples": [
+          1.08,
+          1.232
+        ],
+        "median": 1.1560000000000001
+      }
+    }
+  },
+  "pairs": [
+    {
+      "repeat": 0,
+      "reduction_percent": {
+        "p50_ms": -5.61448266007909,
+        "p95_ms": 32.02489472152007,
+        "max_ms": 40.18243717386352,
+        "swipe_ms": -0.5212573146965438,
+        "swipe_cpu_ms": -1.2582149165380363,
+        "input_call_ms": 6.886054572926847,
+        "input_lateness_max_ms": 47.90159189580317
+      }
+    },
+    {
+      "repeat": 1,
+      "reduction_percent": {
+        "p50_ms": -112.92434694858646,
+        "p95_ms": -234.98474236292927,
+        "max_ms": -197.19384630412614,
+        "swipe_ms": 0.43295917940228135,
+        "swipe_cpu_ms": 11.154495847053248,
+        "input_call_ms": -45.389968237881085,
+        "input_lateness_max_ms": -13.75807940904894
+      }
+    }
+  ],
+  "guest": {
+    "ram_bytes": 1073741824,
+    "display": [
+      360,
+      640
+    ]
+  },
+  "decision": "no repeatable interaction improvement established; simdMath remains disabled by default; recapture remaining fallback CPU before expanding coverage"
+}
