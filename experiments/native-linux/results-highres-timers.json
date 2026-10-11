@@ -1,5 +1,5 @@
 {
-  "status": "single CPU low/high resolution core and full desktop CLI/GCD passed; visible interaction and iPhone pending",
+  "status": "UP low/high resolution core and full desktop CLI/GCD passed with packages; SMP highres core passed but full desktop exceeded deadline with one or two online CPUs; visible interaction and iPhone pending",
   "host": {
     "cpu": "Apple M5 Ultra",
     "os": "macOS 27.0 (26A428)"
@@ -149,7 +149,14 @@
         "bytes": 473445816,
         "sha256": "c44c9897f939c7bf21d5eca3d28cd107cb3a480967a4b90634d25fc7895e7d47",
         "device_execution": "pending",
-        "package_report": "work/native-linux-nce/ios-direct-1/package.json"
+        "package_report": "work/native-linux-nce/ios-direct-1/package.json",
+        "execution": {
+          "engine": "direct",
+          "cpus": 1,
+          "code_memory": "dual",
+          "high_res_timers": false
+        },
+        "package_report_sha256": "684a0c8d9999170483143f620e432164dbeb796f464137ef2a5c6509cc541258"
       },
       "macos": {
         "directory": "work/native-linux-nce/macos-direct-1-simd-v4-baseline-validated",
@@ -323,7 +330,14 @@
         "bytes": 473446800,
         "sha256": "a5685098ebd793a6c668e6515e077970523aaefc326eb86258189a2bbdac101f",
         "device_execution": "pending",
-        "package_report": "work/native-linux-nce/ios-direct-1-highres/package.json"
+        "package_report": "work/native-linux-nce/ios-direct-1-highres/package.json",
+        "execution": {
+          "engine": "direct",
+          "cpus": 1,
+          "code_memory": "dual",
+          "high_res_timers": true
+        },
+        "package_report_sha256": "79c04437032d40c50c8fd359bfefa874ce8ceff887fff48932cdea15086523f2"
       },
       "macos": {
         "directory": "work/native-linux-nce/macos-direct-1-simd-v4-highres-validated",
@@ -650,5 +664,80 @@
       }
     ],
     "reason": "android-services deadline exceeded; parallel functional and package activity, not performance comparison"
+  },
+  "smp_normal_desktop": {
+    "report": "work/native-linux-nce/lkl-timer-baseline-v4-2-code-desktop/summary.json",
+    "sha256": "dc5983b48f916f456155a044afc4b51e5f790ee498e1d5a939efb243e7263b86",
+    "configuration": {
+      "code_memory": "dual",
+      "execution": "direct",
+      "direct": {
+        "mapping_entries": 256,
+        "route_entries": 256,
+        "selective_writes": false,
+        "reuse_code_checks": false,
+        "memory": "flat",
+        "code_watch": true,
+        "cross_page": true,
+        "route_epochs": false,
+        "retain_routes": false,
+        "memory_groups": false,
+        "native_exclusive": true,
+        "vector_table": false,
+        "simd_math": true
+      },
+      "mapping": "pte",
+      "sparse_scan": true,
+      "fault_prefetch": false,
+      "guest_page_bytes": 16384,
+      "workload": "desktop",
+      "entries": [
+        "cli",
+        "gcd"
+      ],
+      "art_nterp": 1,
+      "cpus": 2,
+      "high_res_timers": false,
+      "online_cpus": 2,
+      "uaccess_stop": "code",
+      "parallel_profile": false,
+      "art_expanded_jit": 0,
+      "art_fast_baseline": 0,
+      "cache_invalidation": "pages",
+      "exec_cache": "pages",
+      "tlb_invalidation": "pages",
+      "linux_fastpath": 0,
+      "guest_ram_bytes": 1073741824,
+      "translation_cache_bytes": 134217728,
+      "instruction_batch": 50000,
+      "memory_interval_ms": 100,
+      "preemption": "timer",
+      "timer_interval_ns": 2000000
+    },
+    "status": "CLI/GCD full desktop and persistent data passed",
+    "scope": "functional, not a matched interaction performance comparison; CLI overlapped tail of earlier functional run and package checks",
+    "macos": {
+      "directory": "work/native-linux-nce/macos-direct-2-simd-v4-baseline",
+      "app": "/Users/fan/project/app/husk_hyos/work/native-linux-nce/macos-direct-2-simd-v4-baseline/DroidOnDarwin.app",
+      "build": "0.25.0-Mac-20261012-063928-direct2-dual",
+      "package_report_sha256": "5d6cdf74dce09c894c9fe2a73a8cc965f655a70c1c01897837cfc804abef0c85",
+      "host_checks": "passed",
+      "host_checks_sha256": "e8332b4d8be317a7821aae0bf99316ff2018944fc48e646ee93d0aaadadc90be"
+    },
+    "ios": {
+      "build": "0.25.0-iOS-20261012-063913-direct2-dual",
+      "ipa": "/Users/fan/project/app/husk_hyos/work/native-linux-nce/ios-direct-2/DroidOnDarwin-0.25.0.ipa",
+      "bytes": 473698209,
+      "sha256": "658af1b0e8447e0f0a59f227150990791b68289eb5b86bfe7b355fcca4ca8e0a",
+      "execution": {
+        "engine": "direct",
+        "cpus": 2,
+        "code_memory": "dual",
+        "high_res_timers": false
+      },
+      "device_execution": "pending",
+      "package_report": "work/native-linux-nce/ios-direct-2/package.json",
+      "package_report_sha256": "6789b7ceb72dd183546fb721e4e8d144dcc1d3a0419492263d0e0dffaba862ac"
+    }
   }
 }
