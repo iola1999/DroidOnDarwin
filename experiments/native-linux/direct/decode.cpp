@@ -62,6 +62,35 @@ Kind decode(uint32_t w)
         return VectorMath;
     if ((w & 0x9f20fc00) == 0x0e202000 && ((w >> 22) & 3) != 3)
         return VectorMath;  // SSUBL/USUBL, Q selects the source half.
+    unsigned copy_lane = (w >> 16) & 31;
+    if ((w & 0xffe0fc00) == 0x5e000400 && copy_lane && __builtin_ctz(copy_lane) < 4)
+        return VectorMath;  // DUP element to scalar, including MOV aliases.
+    bool vector_double_valid = !(w & (1U << 22)) || (w & (1U << 30));
+    if (vector_double_valid) {
+        switch (w & 0xbfa0fc00) {
+            case 0x0e20e400:  // FCMEQ
+            case 0x2e20e400:  // FCMGE
+            case 0x2ea0e400:  // FCMGT
+            case 0x2ea0d400:  // FABD
+                return VectorMath;
+        }
+        switch (w & 0xbfbffc00) {
+            case 0x0e21d800:  // SCVTF
+            case 0x2e21d800:  // UCVTF
+            case 0x0ea0f800:  // FABS
+            case 0x2ea0f800:  // FNEG
+                return VectorMath;
+        }
+    }
+    switch (w & 0xffa0fc00) {
+        case 0x5e20e400:  // scalar FCMEQ
+        case 0x7e20e400:  // scalar FCMGE
+        case 0x7ea0e400:  // scalar FCMGT
+        case 0x7ea0d400:  // scalar FABD
+            return VectorMath;
+    }
+    if ((w & 0xff200c00) == 0x1e200400 && ((w >> 22) & 3) <= 1)
+        return VectorMath;  // FCCMP/FCCMPE, FP32/FP64 only.
     if ((w & 0xbfe08c00) == 0x0e000000)
         return VectorTable;  // TBL/TBX, one through four table registers.
     if ((w & 0xffffffe0) == 0xd53b00e0)

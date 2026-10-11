@@ -122,7 +122,7 @@ def validate(rows, mode, interval, config=None):
         expected |= {'code_version_reuse_and_mutation', 'code_version_backing_permissions_and_fallback',
                      'code_version_owner_and_provider_changes'}
         expected |= {'literal_load_signed_vector_pc_and_permissions', 'simd_lane_replicate_writeback_and_faults',
-                     'fp_fixed_rounding_and_widening', 'new_instruction_reserved_encodings', 'simd_table_alias_wrap_indices_and_setting', 'simd_indexed_fmul_widening_subtract'}
+                     'fp_fixed_rounding_and_widening', 'new_instruction_reserved_encodings', 'simd_table_alias_wrap_indices_and_setting', 'simd_math'}
         expected |= {'cross_page_noncontiguous_memory_vectors_faults_12', 'cross_page_noncontiguous_memory_vectors_faults_14'}
         expected.add('unicorn_hook_state_cache_reset_and_independent_close')
         expected |= {'route_epochs_fetch_permission_and_code_replacement', 'route_epochs_flush_and_return_to_freed_page'}
