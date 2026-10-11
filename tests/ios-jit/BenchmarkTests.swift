@@ -4,6 +4,7 @@ import Foundation
 private let inputLock = NSLock()
 private var inputEvents: [[Int32]] = []
 private var inputFailure = false
+private var profileFailure = true
 @_cdecl("nce_host_input_send")
 func benchmarkInput(_ action: Int32, _ x: Int32, _ y: Int32) -> Int32 {
     inputLock.lock()
@@ -15,7 +16,7 @@ func benchmarkInput(_ action: Int32, _ x: Int32, _ y: Int32) -> Int32 {
 
 @_cdecl("nce_session_profile")
 func benchmarkProfile(_ command: Int32, _ directory: UnsafePointer<CChar>?) -> Int32 {
-    -5
+    inputLock.withLock { profileFailure ? -5 : 0 }
 }
 
 @MainActor
@@ -194,6 +195,12 @@ struct BenchmarkChecks {
         let timings = recorded.flatMap { $0["input_timings"] as? [[String: Int64]] ?? [] }
         precondition(timings.count == events.count)
         precondition(timings.allSatisfy { $0["call_us"]! >= 2000 && $0["queue_us"]! >= 0 && $0["resume_us"]! >= 0 })
+        for (timing, input) in zip(timings, events) {
+            precondition(timing["action"] == Int64(input[0]) && timing["x"] == Int64(input[1]) && timing["y"] == Int64(input[2]))
+            precondition(timing["enqueued_ns"]! <= timing["begin_ns"]! && timing["begin_ns"]! <= timing["end_ns"]! && timing["end_ns"]! <= timing["resumed_ns"]!)
+            precondition(timing["enqueued_ns"]! >= (recorded.first!["host_monotonic_ns"] as! NSNumber).int64Value)
+            precondition(timing["resumed_ns"]! <= (recorded.last!["host_monotonic_ns"] as! NSNumber).int64Value)
+        }
         let waits = recorded.flatMap { $0["wait_timings"] as? [[String: Int64]] ?? [] }
         precondition(waits.count == 3 && waits.allSatisfy { $0["elapsed_us"]! >= 0 && $0["late_us"]! >= 0 })
         do { _ = try BenchmarkSession(request: request, session: session, target: target, output: root)
@@ -234,6 +241,25 @@ struct BenchmarkChecks {
         let profileResult = try JSONSerialization.jsonObject(with: Data(contentsOf: root.appendingPathComponent(profileRequest.runID.uuidString + "/result.json"))) as! [String: Any]
         precondition(finished && !session.active && profileResult["status"] as? String == "failed")
         precondition((profileResult["error"] as? String)?.contains("-5") == true)
+        #if os(macOS)
+            inputLock.withLock { profileFailure = false }
+            object["runID"] = UUID().uuidString
+            object["actions"] = ["settings", "frames-start", "capture-end"].map { ["kind": "profile", "key": $0] }
+            let missingWindowRequest = try BenchmarkRequest.decode(encoded(object))
+            let missingWindowRun = try BenchmarkSession(request: missingWindowRequest, session: session, target: target, output: root)
+            finished = false
+            missingWindowRun.onFinish = { finished = true }
+            try missingWindowRun.start()
+            for _ in 0 ..< 100 {
+                if finished {
+                    break
+                }
+                try await Task.sleep(for: .milliseconds(50))
+            }
+            let missingWindowResult = try JSONSerialization.jsonObject(with: Data(contentsOf: root.appendingPathComponent(missingWindowRequest.runID.uuidString + "/result.json"))) as! [String: Any]
+            precondition(finished && !session.active && missingWindowResult["status"] as? String == "failed")
+            precondition((missingWindowResult["error"] as? String)?.contains("找不到 Android 显示窗口") == true)
+        #endif
         let series = root.appendingPathComponent("memory.jsonl")
         try memory.flush(to: series)
         try memory.flush(to: series)

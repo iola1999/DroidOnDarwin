@@ -239,10 +239,14 @@ final class BenchmarkSession {
         onFinish?()
     }
 
-    private func record(_ event: String, index: Int? = nil) throws {
+    private nonisolated static func monotonicNS() -> Int64 {
         var monotonic = timespec()
         clock_gettime(CLOCK_MONOTONIC, &monotonic)
-        var entry: [String: Any] = ["event": event, "host_monotonic_ns": Int64(monotonic.tv_sec) * 1_000_000_000 + Int64(monotonic.tv_nsec), "elapsed_ms": (ProcessInfo.processInfo.systemUptime - started) * 1000,
+        return Int64(monotonic.tv_sec) * 1_000_000_000 + Int64(monotonic.tv_nsec)
+    }
+
+    private func record(_ event: String, index: Int? = nil) throws {
+        var entry: [String: Any] = ["event": event, "host_monotonic_ns": Self.monotonicNS(), "elapsed_ms": (ProcessInfo.processInfo.systemUptime - started) * 1000,
                                     "thermal_state": ProcessInfo.processInfo.thermalState.rawValue,
                                     "low_power_mode": ProcessInfo.processInfo.isLowPowerModeEnabled]
         if let index {
@@ -314,19 +318,20 @@ final class BenchmarkSession {
     }
 
     private func send(_ action: Int32, _ x: Int32, _ y: Int32 = 0) async throws {
-        let enqueued = ProcessInfo.processInfo.systemUptime
-        let (result, began, ended): (Int32, Double, Double) = await withCheckedContinuation { continuation in
+        let enqueued = Self.monotonicNS()
+        let (result, began, ended): (Int32, Int64, Int64) = await withCheckedContinuation { continuation in
             input.async {
-                let began = ProcessInfo.processInfo.systemUptime
+                let began = Self.monotonicNS()
                 let result = nce_host_input_send(action, x, y)
-                continuation.resume(returning: (result, began, ProcessInfo.processInfo.systemUptime))
+                continuation.resume(returning: (result, began, Self.monotonicNS()))
             }
         }
-        let resumed = ProcessInfo.processInfo.systemUptime
+        let resumed = Self.monotonicNS()
         // These boundaries separate queue delay, synchronous Linux entry and
         // resumption on the main actor; guest consumption remains asynchronous.
-        inputTimings.append(["action": Int64(action), "queue_us": Int64((began - enqueued) * 1_000_000),
-                             "call_us": Int64((ended - began) * 1_000_000), "resume_us": Int64((resumed - ended) * 1_000_000),
+        inputTimings.append(["action": Int64(action), "x": Int64(x), "y": Int64(y),
+                             "enqueued_ns": enqueued, "begin_ns": began, "end_ns": ended, "resumed_ns": resumed, "queue_us": (began - enqueued) / 1000,
+                             "call_us": (ended - began) / 1000, "resume_us": (resumed - ended) / 1000,
                              "result": Int64(result)])
         guard result == 0 else {
             throw BenchmarkError.invalid("输入提交失败：\(result)")
@@ -356,6 +361,42 @@ final class BenchmarkSession {
         try DisplayFrameCapture.shared.write(to: directory.appendingPathComponent("interaction/presentation.json"))
     }
 
+    #if os(macOS)
+        private var displayReady: Bool {
+            guard let window = NSApp?.windows.first(where: { $0.identifier?.rawValue == "android-display" }) else {
+                return false
+            }
+            return NSApp.isActive && window.isVisible && !window.isMiniaturized && window.occlusionState.contains(.visible)
+        }
+
+        private func prepareDisplayCapture() async throws {
+            guard let window = NSApp?.windows.first(where: { $0.identifier?.rawValue == "android-display" }) else {
+                throw BenchmarkError.invalid("找不到 Android 显示窗口")
+            }
+            window.makeKeyAndOrderFront(nil)
+            NSApp.activate(ignoringOtherApps: true)
+            let clock = ContinuousClock()
+            let deadline = clock.now.advanced(by: .seconds(5))
+            var visibleSince: ContinuousClock.Instant?
+            while clock.now < deadline {
+                try Task.checkCancellation()
+                if displayReady {
+                    if let visibleSince, visibleSince.duration(to: clock.now) >= .milliseconds(200) {
+                        try record("display_prepared")
+                        return
+                    }
+                    if visibleSince == nil {
+                        visibleSince = clock.now
+                    }
+                } else {
+                    visibleSince = nil
+                }
+                try await clock.sleep(until: clock.now.advanced(by: .milliseconds(50)), tolerance: .zero)
+            }
+            throw BenchmarkError.invalid("Android 显示窗口未在 5 秒内持续可见并激活")
+        }
+    #endif
+
     private func perform(_ action: BenchmarkRequest.Action) async throws {
         switch action.kind {
         case "profile":
@@ -366,8 +407,7 @@ final class BenchmarkSession {
             let command = commands[action.key!]!
             #if os(macOS)
                 if action.key == "frames-start" || action.key == "trace-start" {
-                    NSApp.windows.first { $0.identifier?.rawValue == "android-display" }?.makeKeyAndOrderFront(nil)
-                    NSApp.activate(ignoringOtherApps: true)
+                    try await prepareDisplayCapture()
                 }
             #endif
             if action.key == "capture-end" {
@@ -381,6 +421,11 @@ final class BenchmarkSession {
             }
             try Task.checkCancellation()
             if action.key == "frames-start" || action.key == "trace-start" {
+                #if os(macOS)
+                    guard displayReady else {
+                        throw BenchmarkError.invalid("开始采集时 Android 显示窗口已失去可见或激活状态")
+                    }
+                #endif
                 try DisplayFrameCapture.shared.begin()
                 displayCaptureStarted = true
             } else if action.key == "capture-end" {
