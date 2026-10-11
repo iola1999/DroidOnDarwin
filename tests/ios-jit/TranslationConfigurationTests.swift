@@ -15,7 +15,13 @@ struct TranslationConfigurationChecks {
                 preconditionFailure("invalid configuration accepted")
             } catch {}
         }
+        let defaults = UserDefaults(suiteName: "simd-math-" + UUID().uuidString)!
+        precondition(!TranslationConfiguration.saved(defaults).simdMath)
+        defaults.set(true, forKey: "translationSimdMath")
+        precondition(TranslationConfiguration.saved(defaults).simdMath)
+        defaults.removeObject(forKey: "translationSimdMath")
         var config = RunConfiguration(aot: false, translation: .init())
+        config.translation!.simdMath = true
         try manifest(["execution": ["engine": "direct", "cpus": 2]])
         try config.validateResources(directory)
         precondition(RunConfiguration.fromEnvironment(config.environment) == config)

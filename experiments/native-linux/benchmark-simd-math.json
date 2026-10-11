@@ -1,0 +1,54 @@
+{
+  "configurations": [
+    {
+      "name": "simd-off",
+      "parameters": {
+        "translation": {
+          "simdMath": false
+        }
+      }
+    },
+    {
+      "name": "simd-on",
+      "parameters": {
+        "translation": {
+          "simdMath": true
+        }
+      }
+    }
+  ],
+  "actions": [
+    {
+      "kind": "wait",
+      "milliseconds": 20000
+    },
+    {
+      "kind": "profile",
+      "key": "settings"
+    },
+    {
+      "kind": "wait",
+      "milliseconds": 15000
+    },
+    {
+      "kind": "profile",
+      "key": "frames-start"
+    },
+    {
+      "kind": "swipe",
+      "x": 180,
+      "y": 550,
+      "endX": 180,
+      "endY": 180,
+      "milliseconds": 600
+    },
+    {
+      "kind": "wait",
+      "milliseconds": 1200
+    },
+    {
+      "kind": "profile",
+      "key": "capture-end"
+    }
+  ]
+}

@@ -914,7 +914,8 @@ unsigned long translation_linux_setup(void *kernel, unsigned long copy_user_offs
         unsigned groups = direct_setting("NCE_DIRECT_MEMORY_GROUPS", 0);
         unsigned native = direct_setting("NCE_DIRECT_NATIVE_EXCLUSIVE", 0);
         unsigned tables = direct_setting("NCE_DIRECT_VECTOR_TABLE", 0);
-        REQUIRE(tables <= 1);
+        unsigned math = direct_setting("NCE_DIRECT_SIMD_MATH", 0);
+        REQUIRE(tables <= 1 && math <= 1);
         REQUIRE(watch <= 1 && crossing <= 1 && epochs <= 1 && retain <= 1 && groups <= 1 && native <= 1);
         REQUIRE(!retain || (watch && epochs));
         direct_code_watch = watch;
@@ -933,7 +934,7 @@ unsigned long translation_linux_setup(void *kernel, unsigned long copy_user_offs
         }
         REQUIRE(selective <= 1 && reuse <= 1);
         NceDirectConfig direct_config = {cache_bytes, direct_setting("NCE_DIRECT_MAPPING_ENTRIES", 256),
-                                         direct_setting("NCE_DIRECT_ROUTE_ENTRIES", 256), selective != 0, reuse != 0, crossing != 0, epochs != 0, retain != 0, groups != 0, native != 0, tables != 0};
+                                         direct_setting("NCE_DIRECT_ROUTE_ENTRIES", 256), selective != 0, reuse != 0, crossing != 0, epochs != 0, retain != 0, groups != 0, native != 0, tables != 0, math != 0};
         REQUIRE(!direct_pte_memory || direct_pte_refill || (direct_config.mapping_entries == 256 && !selective));
         execution->direct_engine = nce_direct_create(direct_config);
         if (!execution->direct_engine)
@@ -942,8 +943,8 @@ unsigned long translation_linux_setup(void *kernel, unsigned long copy_user_offs
         REQUIRE(direct_flat && !direct_read_views && native && !retain);
         nce_direct_set_code_guard(execution->direct_engine, (const uint64_t *)translation->code_guard, NCE_RAM_SIZE / PAGE);
 #endif
-        printf("{\"cpu\":%u,\"config\":\"translation_execution\",\"engine\":\"direct\",\"direct_cache_bytes\":%lu,\"data_page_bytes\":16384,\"mapping_entries\":%u,\"route_entries\":%u,\"selective_writes\":%s,\"reuse_code_checks\":%s,\"memory\":\"%s\",\"code_watch\":%s,\"cross_page\":%s,\"route_epochs\":%s,\"retain_routes\":%s,\"memory_groups\":%s,\"native_exclusive\":%s,\"vector_table\":%s}\n",
-               execution->index, cache_bytes, direct_config.mapping_entries, direct_config.route_entries, direct_config.selective_writes ? "true" : "false", direct_config.reuse_code_checks ? "true" : "false", direct_memory ? direct_memory : "cached", direct_code_watch ? "true" : "false", crossing ? "true" : "false", epochs ? "true" : "false", retain ? "true" : "false", groups ? "true" : "false", native ? "true" : "false", tables ? "true" : "false");
+        printf("{\"cpu\":%u,\"config\":\"translation_execution\",\"engine\":\"direct\",\"direct_cache_bytes\":%lu,\"data_page_bytes\":16384,\"mapping_entries\":%u,\"route_entries\":%u,\"selective_writes\":%s,\"reuse_code_checks\":%s,\"memory\":\"%s\",\"code_watch\":%s,\"cross_page\":%s,\"route_epochs\":%s,\"retain_routes\":%s,\"memory_groups\":%s,\"native_exclusive\":%s,\"vector_table\":%s,\"simd_math\":%s}\n",
+               execution->index, cache_bytes, direct_config.mapping_entries, direct_config.route_entries, direct_config.selective_writes ? "true" : "false", direct_config.reuse_code_checks ? "true" : "false", direct_memory ? direct_memory : "cached", direct_code_watch ? "true" : "false", crossing ? "true" : "false", epochs ? "true" : "false", retain ? "true" : "false", groups ? "true" : "false", native ? "true" : "false", tables ? "true" : "false", math ? "true" : "false");
         if (direct_code_watch && cpu_index == 0) {
             original_page_free = nce_lkl_host.page_free;
             nce_lkl_host.page_free = watch_page_free;

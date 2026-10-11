@@ -12,6 +12,7 @@ struct TranslationSettings: View {
     @AppStorage("translationRetainRoutes") private var retainRoutes = false
     @AppStorage("translationMemoryGroups") private var memoryGroups = false
     @AppStorage("translationVectorTable") private var vectorTable = false
+    @AppStorage("translationSimdMath") private var simdMath = false
     @AppStorage("translationLinuxFastpath") private var linuxFastpath = false
 
     var body: some View {
@@ -36,6 +37,7 @@ struct TranslationSettings: View {
             }
             Toggle("连续访存合并", isOn: $memoryGroups)
             Toggle("直接执行向量查表", isOn: $vectorTable)
+            Toggle("扩展 SIMD 计算", isOn: $simdMath)
         } header: { Text("翻译执行实验") } footer: {
             Text("各项下次启动生效。每个 CPU 的 Direct 与 Unicorn 分别使用所选缓存容量；总内存还包含 Android 系统和应用。")
             if RunConfiguration.translationCPUs == 2 {

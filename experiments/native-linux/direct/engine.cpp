@@ -296,6 +296,8 @@ struct NceDirect {
             flags |= CompilePteReadRefill;
         if (memory.flat_pages)
             flags |= CompileFlat;
+        if (config.simd_math)
+            flags |= CompileSimdMath;
         if (config.vector_table)
             flags |= CompileVectorTable;
         if (config.memory_groups)

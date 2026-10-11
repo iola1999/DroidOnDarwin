@@ -55,6 +55,7 @@ void unicorn_hook_tests();
 void direct_parallel_tests();
 void direct_page_table_tests();
 void direct_instruction_tests(Probe &);
+void direct_simd_math_tests(Probe &);
 void direct_cross_page_tests(Probe &);
 void direct_route_tests();
 void direct_memory_group_tests(Probe &);

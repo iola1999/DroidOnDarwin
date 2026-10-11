@@ -52,6 +52,16 @@ MemoryAccess memory_access(uint32_t word, Kind kind)
 Kind decode(uint32_t w)
 {
     bool sf = w >> 31;
+    // FP32/FP64 FMUL by element. D lanes require Q=1 and L=0;
+    // scalar forms also require the fixed Q bit. FP16 remains unsupported.
+    bool indexed_vector = (w & 0xbf00f400) == 0x0f009000;
+    bool indexed_scalar = (w & 0xff00f400) == 0x5f009000;
+    unsigned indexed_size = (w >> 22) & 3;
+    if ((indexed_vector || indexed_scalar) &&
+        (indexed_size == 2 || (indexed_size == 3 && (w & (1U << 30)) && !(w & (1U << 21)))))
+        return VectorMath;
+    if ((w & 0x9f20fc00) == 0x0e202000 && ((w >> 22) & 3) != 3)
+        return VectorMath;  // SSUBL/USUBL, Q selects the source half.
     if ((w & 0xbfe08c00) == 0x0e000000)
         return VectorTable;  // TBL/TBX, one through four table registers.
     if ((w & 0xffffffe0) == 0xd53b00e0)

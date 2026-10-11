@@ -25,7 +25,10 @@ Compilation Page::compile(uint64_t new_page, const void *bytes, size_t entry,
     // fallback configuration compiles code beyond its unsupported instruction.
     auto selected_kind = [flags](uint32_t word) {
         Kind kind = decode(word);
-        return kind == VectorTable && !(flags & CompileVectorTable) ? Other : kind;
+        if ((kind == VectorTable && !(flags & CompileVectorTable)) ||
+            (kind == VectorMath && !(flags & CompileSimdMath)))
+            return Other;
+        return kind;
     };
     std::array<uint32_t, 1024> input;
     std::memcpy(input.data(), bytes, 4096);
@@ -386,7 +389,7 @@ Compilation Page::compile(uint64_t new_page, const void *bytes, size_t entry,
                     w = (w & ~(31U << 16)) | (17 << 16);
                 }
                 c.dw(w);
-            } else if (kind == Vector || kind == VectorTable || kind == CryptoAes || kind == CryptoSha1 || kind == CryptoSha256) {
+            } else if (kind == Vector || kind == VectorTable || kind == VectorMath || kind == CryptoAes || kind == CryptoSha1 || kind == CryptoSha256) {
                 c.dw(w);
             } else if (kind == VectorFromGpr || kind == FpFromGpr) {
                 load(rn, X16);

@@ -265,6 +265,7 @@ void direct_instruction_tests(Probe &probe)
     structure_lanes(probe, random);
     fp_conversions(probe, random);
     vector_tables(probe, random);
+    direct_simd_math_tests(probe);
     for (uint32_t word : {0xdc000000U, 0x0d010000U, 0x0d004400U, 0x0d008800U,
                           0x0d009400U, 0x0d00c000U, 0x0d40d000U,
                           0x1e020000U, 0x1e820000U, 0x9e060000U, 0x2ee01000U})

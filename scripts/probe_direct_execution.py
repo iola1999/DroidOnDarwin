@@ -66,7 +66,7 @@ def build(out, code_memory='map-jit'):
         unicorn = Path(dependency['path'])
     core_inputs += [manifest_path, *[ROOT / name for name in dependency['sha256']]]
     out.mkdir(parents=True, exist_ok=True)
-    files = [SOURCE / name for name in ('probe.cpp', 'tests.cpp', 'instruction-tests.cpp', 'cross-page-tests.cpp', 'route-tests.cpp', 'memory-group-tests.cpp', 'page-table-tests.cpp', 'parallel-tests.cpp', 'unicorn-hook-tests.cpp', 'benchmark.cpp', 'main.cpp')] + [
+    files = [SOURCE / name for name in ('probe.cpp', 'tests.cpp', 'instruction-tests.cpp', 'simd-math-tests.cpp', 'cross-page-tests.cpp', 'route-tests.cpp', 'memory-group-tests.cpp', 'page-table-tests.cpp', 'parallel-tests.cpp', 'unicorn-hook-tests.cpp', 'benchmark.cpp', 'main.cpp')] + [
         ROOT / 'experiments/native-linux/translation/kernels.S',
         ROOT / 'experiments/native-linux/translation/read-view.c',
         ROOT / 'experiments/native-linux/translation/linux-memory.c']
@@ -122,7 +122,7 @@ def validate(rows, mode, interval, config=None):
         expected |= {'code_version_reuse_and_mutation', 'code_version_backing_permissions_and_fallback',
                      'code_version_owner_and_provider_changes'}
         expected |= {'literal_load_signed_vector_pc_and_permissions', 'simd_lane_replicate_writeback_and_faults',
-                     'fp_fixed_rounding_and_widening', 'new_instruction_reserved_encodings', 'simd_table_alias_wrap_indices_and_setting'}
+                     'fp_fixed_rounding_and_widening', 'new_instruction_reserved_encodings', 'simd_table_alias_wrap_indices_and_setting', 'simd_indexed_fmul_widening_subtract'}
         expected |= {'cross_page_noncontiguous_memory_vectors_faults_12', 'cross_page_noncontiguous_memory_vectors_faults_14'}
         expected.add('unicorn_hook_state_cache_reset_and_independent_close')
         expected |= {'route_epochs_fetch_permission_and_code_replacement', 'route_epochs_flush_and_return_to_freed_page'}
@@ -176,6 +176,7 @@ def main():
     parser.add_argument('--route-epochs', type=int, choices=(0, 1), default=0)
     parser.add_argument('--retain-routes', type=int, choices=(0, 1), default=0)
     parser.add_argument('--memory-groups', type=int, choices=(0, 1), default=0)
+    parser.add_argument('--simd-math', type=int, choices=(0, 1), default=0)
     parser.add_argument('--vector-table', type=int, choices=(0, 1), default=0)
     args = parser.parse_args()
     if args.retain_routes and not args.route_epochs:
@@ -194,10 +195,10 @@ def main():
     runs = []
     config = {'mapping_entries': args.mapping_entries, 'route_entries': args.route_entries,
               'selective_writes': bool(args.selective_writes), 'reuse_code_checks': bool(args.reuse_code_checks),
-              'route_epochs': bool(args.route_epochs), 'retain_routes': bool(args.retain_routes), 'memory_groups': bool(args.memory_groups), 'vector_table': bool(args.vector_table)}
+              'route_epochs': bool(args.route_epochs), 'retain_routes': bool(args.retain_routes), 'memory_groups': bool(args.memory_groups), 'vector_table': bool(args.vector_table), 'simd_math': bool(args.simd_math)}
     environment = dict(os.environ, NCE_DIRECT_MAPPING_ENTRIES=str(args.mapping_entries),
                        NCE_DIRECT_ROUTE_ENTRIES=str(args.route_entries), NCE_DIRECT_SELECTIVE_WRITES=str(args.selective_writes),
-                       NCE_DIRECT_REUSE_CODE_CHECKS=str(args.reuse_code_checks), NCE_DIRECT_ROUTE_EPOCHS=str(args.route_epochs), NCE_DIRECT_RETAIN_ROUTES=str(args.retain_routes), NCE_DIRECT_MEMORY_GROUPS=str(args.memory_groups), NCE_DIRECT_VECTOR_TABLE=str(args.vector_table))
+                       NCE_DIRECT_REUSE_CODE_CHECKS=str(args.reuse_code_checks), NCE_DIRECT_ROUTE_EPOCHS=str(args.route_epochs), NCE_DIRECT_RETAIN_ROUTES=str(args.retain_routes), NCE_DIRECT_MEMORY_GROUPS=str(args.memory_groups), NCE_DIRECT_VECTOR_TABLE=str(args.vector_table), NCE_DIRECT_SIMD_MATH=str(args.simd_math))
     modes = (['tests'] if args.mode != 'bench' else []) + (['native', 'unicorn', 'direct'] if args.mode != 'tests' else [])
     for entry in ('cli', 'gcd'):
         for mode in (modes if entry == 'cli' else list(reversed(modes))):

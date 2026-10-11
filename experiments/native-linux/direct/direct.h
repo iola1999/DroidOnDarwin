@@ -123,6 +123,8 @@ typedef struct {
     bool native_exclusive;
     /* TBL/TBX execute with the saved guest SIMD registers when enabled. */
     bool vector_table;
+    /* Validated indexed FMUL and widening subtraction use host SIMD. */
+    bool simd_math;
 } NceDirectConfig;
 
 /* One sequential caller per engine. Code cache is 2..256 MiB, 16 KiB aligned.

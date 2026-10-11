@@ -36,7 +36,7 @@ struct Executor {
     NceDirect *engine;
     NceDirectPageTable table;
     explicit Executor(Ram &memory, unsigned cpu, bool native = true, bool crossing = false)
-        : ram(memory), flat(DIRECT_FLAT_BYTES / sizeof(nce_direct_flat_page)), engine(nce_direct_create({2 * 1024 * 1024, 256, 256, false, false, crossing, false, false, false, native, false})), table{root.data(), CodeVA, UINT64_C(1) << 32, 0x500000000, ram.bytes.data(), ram.bytes.size()}
+        : ram(memory), flat(DIRECT_FLAT_BYTES / sizeof(nce_direct_flat_page)), engine(nce_direct_create({2 * 1024 * 1024, 256, 256, false, false, crossing, false, false, false, native, false, false})), table{root.data(), CodeVA, UINT64_C(1) << 32, 0x500000000, ram.bytes.data(), ram.bytes.size()}
     {
         CHECK(engine && cpu < 2);
         flat[0] = {uintptr_t(ram.bytes.data()), 0};

@@ -103,6 +103,6 @@ Direct 应用由 `--translation-report` 指定完整桌面验证记录，macOS/i
 
 打包报告须包含 CLI/GCD 完整桌面检查，以及 `probe_lkl_translation.py --persistent-data` 的同一数据盘重启检查。每轮记录初始与最终摘要，第二轮起确认应用数据和密钥已恢复。包内初始盘使用报告的 `data_seed`；首次运行从该盘创建设备数据，后续启动继续使用设备数据盘。
 
-查询该变体的默认配置会额外返回 `translation` 对象，包含 `cacheMiB`、`codeWatch`、`crossPage`、`reuseCodeChecks`、`routeEpochs`、`retainRoutes`、`memoryGroups` 和 `vectorTable`。`cacheMiB` 可取 16、64、128，分别应用到每个 CPU 的 Direct 与 Unicorn 缓存。跨调用复用只用于单核，并要求代码页写入跟踪和跳转序号检查。应用启动前校验依赖，运行期间不能修改。
+查询该变体的默认配置会额外返回 `translation` 对象，包含 `cacheMiB`、`codeWatch`、`crossPage`、`reuseCodeChecks`、`routeEpochs`、`retainRoutes`、`memoryGroups`、`vectorTable` 和 `simdMath`。`cacheMiB` 可取 16、64、128，分别应用到每个 CPU 的 Direct 与 Unicorn 缓存。跨调用复用只用于单核，并要求代码页写入跟踪和跳转序号检查。`simdMath` 默认关闭，开启 FP32/FP64 按元素乘法和整数加宽减法的直接执行。应用启动前校验依赖，运行期间不能修改。
 
 matrix 可以覆盖 `translation` 中的部分字段，例如 `{"name":"code-watch-off","parameters":{"translation":{"codeWatch":false}}}`。驱动从 App 查询完整默认对象，再覆盖指定字段；未知字段与类型错误在启动前返回。原生构建收到翻译缓存参数时也会返回配置错误。当前翻译变体关闭应用 AOT 和 boot image；开启请求需要匹配产物，现有变体会拒绝此请求。

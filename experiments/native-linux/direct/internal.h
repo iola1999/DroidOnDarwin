@@ -18,6 +18,7 @@ constexpr uint32_t CompileMemoryGroups = 8388608;
 constexpr uint32_t CompileReadView = 16777216;
 constexpr uint32_t CompileNativeExclusive = 33554432;
 constexpr uint32_t CompileVectorTable = 67108864;
+constexpr uint32_t CompileSimdMath = 134217728;
 enum Stop : uint64_t { Budget = 0,
                        Fallback = 1,
                        ReadPage = 2,
