@@ -45,7 +45,8 @@ def main():
                 config.get('online_cpus', 2) != 2 or config['exec_cache'] != 'pages' or
                 config['mapping'] != 'pte' or config['preemption'] != 'timer' or
                 config['instruction_batch'] != 50000 or config['memory_interval_ms'] != 100 or
-                not set(entries) <= set(config['entries']) or not cached['runs'] or
+                not set(entries) <= set(config['entries']) or
+                not set(entries) <= {row['entry'] for row in cached['runs']} or
                 not all(row['validated'] and row['returncode'] == 0 for row in cached['runs'])):
             parser.error('复用报告的配置、入口或成功状态不匹配')
         folders = {'direct': source_report.parent}
