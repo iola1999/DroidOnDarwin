@@ -26,7 +26,7 @@ def sha(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def validate(rows, memory_interval, mapping="window", workload="core", tlb_invalidation=None):
+def validate(rows, memory_interval, mapping="window", workload="core", tlb_invalidation=None, execution=None):
     expected = {'linux_dynamic_code', 'linux_signal_suite', 'linux_signal_register_restore',
                 'linux_signal_eintr_restart', 'linux_signal_timer_preemption', 'linux_mm_exchange_integrity',
                 'translated_pthread_tls_mutex', 'translated_signals_protection_restore',
@@ -71,6 +71,18 @@ def validate(rows, memory_interval, mapping="window", workload="core", tlb_inval
     cleanup = [row for row in rows if row.get('test') == 'translated_context_cleanup']
     if len(cleanup) != 1 or (mapping == 'pte' and (cleanup[0]['maps'] or cleanup[0]['revocations'])):
         return False
+    if execution is not None:
+        selected = [row for row in rows if row.get('config') == 'translation_execution']
+        if len(selected) != 1 or selected[0].get('engine') != execution:
+            return False
+        if execution == 'direct':
+            direct = [row for row in rows if row.get('direct_execution')]
+            if len(direct) != 1 or not direct[0]['calls'] or not direct[0]['compiles']:
+                return False
+            if (direct[0]['code_bytes'] > direct[0]['capacity_bytes'] or
+                    direct[0]['capacity_bytes'] != selected[0]['direct_cache_bytes'] or
+                    direct[0]['fallbacks'] > direct[0]['calls']):
+                return False
     settings = [row for row in rows if row.get('config') == 'translation_cache_settings']
     cache = [row for row in rows if row.get('translation_engine_cache')]
     if len(settings) != 1 or len(cache) != 1:
@@ -126,7 +138,9 @@ def validate(rows, memory_interval, mapping="window", workload="core", tlb_inval
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--execution', choices=('unicorn', 'direct'), default='unicorn')
     parser.add_argument('--build-only', action='store_true')
+    parser.add_argument('--reuse-engine-build', action='store_true', help='校验摘要后复用已构建的 Unicorn，用于执行器成组对照')
     parser.add_argument('--mapping', choices=('window', 'pte'), default='window')
     parser.add_argument('--workload', choices=('core', 'android', 'services', 'desktop'), default='core')
     parser.add_argument('--entry', choices=('both', 'cli', 'gcd', 'window'), default='both')
@@ -151,6 +165,8 @@ def main():
         parser.error('exec 按页失效需要 PTE 映射与按页代码失效')
     if args.tlb_invalidation == 'pages' and args.mapping != 'pte':
         parser.error('TLB 按页失效需要 PTE 映射')
+    if args.execution == 'direct' and args.mapping != 'pte':
+        parser.error('Direct 执行使用 PTE 映射')
     out = args.output.resolve()
     if not out.is_relative_to(WORK):
         parser.error('实验产物必须放在本项目 work/native-linux-nce 下')
@@ -158,8 +174,17 @@ def main():
         parser.error('需要 Apple Silicon Mac，repeat 必须为正数')
     if not 1000 <= args.batch_instructions <= 1000000 or not (args.memory_interval_ms == 0 or 10 <= args.memory_interval_ms <= 10000):
         parser.error('指令批次范围 1000…1000000；内存采样间隔为 0 或 10…10000 ms')
-    from build_translation_engine import build as build_engine
-    dependency = build_engine()
+    if args.reuse_engine_build:
+        manifest = WORK / 'unicorn-tb-stop/build.json'
+        dependency = json.loads(manifest.read_text())
+        if dependency.get('version') != '2.1.4' or not dependency.get('sha256'):
+            parser.error('Unicorn 构建记录无效')
+        for name, expected in dependency['sha256'].items():
+            if sha(ROOT / name) != expected:
+                parser.error('Unicorn 构建输入或产物已变化：' + name)
+    else:
+        from build_translation_engine import build as build_engine
+        dependency = build_engine()
     library = Path(dependency['path'])
     out.mkdir(parents=True, exist_ok=True)
     llvm = Path('/opt/homebrew/opt/llvm/bin')
@@ -197,6 +222,11 @@ def main():
     (out / 'translation-symbols.h').write_text(header)
     inputs = [EXP / 'translation/linux-execution.c', EXP / 'translation/linux-runner.c', EXP / 'translation/linux-memory.c', EXP / 'lkl-host.c']
     commands = []
+    direct_link, direct_files = [], []
+    if args.execution == 'direct':
+        from probe_direct_execution import build_engine as build_direct
+        direct_objects, direct_files = build_direct(out / 'direct')
+        direct_link = ['-DNCE_DIRECT_EXECUTION', *direct_objects, '-lc++']
     graphics_link, graphics_files = [], []
     if args.workload == 'desktop':
         gfx = ROOT / 'work/gfxstream-src'
@@ -226,7 +256,7 @@ def main():
     for mode in build_entries:
         command = ['xcrun', 'clang', '-O2', '-g', '-DNCE_PROCESS', '-Wall', '-Wextra', '-Werror',
                    '-I', EXP, '-I', kernel, '-I', out, '-I', KERNEL / 'host-include', '-I', library / 'include',
-                   *inputs, library / 'lib/libunicorn.a', *graphics_link, '-o', out / mode]
+                   *inputs, library / 'lib/libunicorn.a', *graphics_link, *[x for x in direct_link if x != '-lc++' or '-lc++' not in graphics_link], '-o', out / mode]
         if mode == 'gcd':
             command += ['-DTRANSLATION_DISPATCH', EXP / 'dispatch-test.c']
         elif mode == 'window':
@@ -283,7 +313,7 @@ def main():
             android_files.append(out / 'enabled')
     if hosts_before != {mode: sha(out / mode) for mode in hosts_before}:
         raise RuntimeError('客体构建后宿主文件发生变化')
-    files = [*inputs, EXP / 'translation/linux-execution.h', EXP / 'translation/linux-memory.h', EXP / 'translation/linux-guest.c', Path(__file__),
+    files = [*inputs, *direct_files, EXP / 'translation/linux-execution.h', EXP / 'translation/linux-memory.h', EXP / 'translation/linux-guest.c', Path(__file__),
              EXP / 'dispatch-test.c', EXP / 'layout.h', EXP / 'guest-registers.h',
              *[EXP / 'userspace' / name for name in guest_sources], *android_files, *graphics_files,
              kernel / 'lkl-image.bin', kernel / 'lkl-image.h', kernel / 'lkl.so', kernel / 'lkl-host-ops.h',
@@ -334,7 +364,7 @@ def main():
                 except subprocess.TimeoutExpired:
                     returncode = 'timeout'
             rows = [json.loads(line) for line in (out / f'{stem}.jsonl').read_text().splitlines() if line.startswith('{')]
-            passed = returncode == 0 and validate(rows, args.memory_interval_ms, args.mapping, args.workload, args.tlb_invalidation)
+            passed = returncode == 0 and validate(rows, args.memory_interval_ms, args.mapping, args.workload, args.tlb_invalidation, args.execution)
             if data is not None:
                 data['final_sha256'] = sha(data_path)
                 metadata = subprocess.run(['/opt/homebrew/opt/e2fsprogs/sbin/dumpe2fs', '-h', data_path],
@@ -356,7 +386,7 @@ def main():
               'platform': platform.platform(), 'cpu': subprocess.check_output(['sysctl', '-n', 'machdep.cpu.brand_string'], text=True).strip(),
               'system_build': subprocess.check_output(['sw_vers', '-buildVersion'], text=True).strip(),
               'dependency': dependency, 'commands': commands, 'host_unchanged_after_guest_build': True,
-              'configuration': {'mapping': args.mapping, 'sparse_scan': True, 'fault_prefetch': False, 'guest_page_bytes': 16384,
+              'configuration': {'execution': args.execution, 'mapping': args.mapping, 'sparse_scan': True, 'fault_prefetch': False, 'guest_page_bytes': 16384,
                                 'workload': args.workload, 'entries': entries, 'art_nterp': args.art_nterp,
                                 'art_expanded_jit': args.art_expanded_jit, 'art_fast_baseline': args.art_fast_baseline,
                                 'cache_invalidation': args.cache_invalidation,

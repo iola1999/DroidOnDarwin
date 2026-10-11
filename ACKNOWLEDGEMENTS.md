@@ -16,4 +16,8 @@ iOS 包含 [StikJIT 1.9.0](https://github.com/StikDebug/StikJIT/tree/1.9.0) 的�
 
 图形实现使用 [gfxstream](https://github.com/google/gfxstream) 和 [WebKit 中的 ANGLE](https://github.com/WebKit/WebKit/tree/main/Source/ThirdParty/ANGLE)。本仓库保存平台适配源码和补丁。
 
+**实验执行器**
+
+`experiments/native-linux/direct/` 的 ARM64 生成器使用 [Oaknut](https://github.com/merryhime/oaknut) 头文件，版本为 `94c726ce0338b054eb8cb5ea91de8fe6c19f4392`，版权归 merryhime，遵循 MIT 许可。独立对照和未覆盖指令的执行使用 [Unicorn](https://github.com/unicorn-engine/unicorn) 2.1.4。构建脚本下载的源码保留上游许可文件；这些实验组件尚未进入产品包。
+
 项目源码中的 SPDX 标识和原有版权声明继续有效。仓库根目录 `LICENSE` 保存 GPL v2 全文；可修改版本范围以各文件的 GPL-2.0-or-later 标识及依赖自身许可为准。

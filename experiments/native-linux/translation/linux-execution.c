@@ -14,6 +14,15 @@
 #include <string.h>
 #include <sys/mman.h>
 #include <unicorn/unicorn.h>
+#ifdef NCE_DIRECT_EXECUTION
+#include "../direct/direct.h"
+static NceDirect *direct_engine;
+static unsigned long direct_calls, direct_fallbacks;
+static struct {
+    uint32_t instruction;
+    unsigned long count;
+} direct_missing[256];
+#endif
 
 #define REQUIRE(c) \
     do { \
@@ -75,8 +84,12 @@ static void *preempt_timer(void *unused)
         REQUIRE(error == 0 || error == ETIMEDOUT);
         /* Async stopping must finish the current guest instruction. The lock
          * excludes register/cache operations and engine destruction. */
-        if (timer_active && !timer_stopping)
+        if (timer_active && !timer_stopping) {
             checked(nce_uc_emu_stop_at_tb(engine));
+#ifdef NCE_DIRECT_EXECUTION
+            nce_direct_request_stop(direct_engine);
+#endif
+        }
     }
     REQUIRE(pthread_mutex_unlock(&timer_lock) == 0);
     return NULL;
@@ -239,6 +252,89 @@ static void registers(Process *p, bool save)
     checked(save ? uc_reg_read_batch(engine, ids, values, count) : uc_reg_write_batch(engine, ids, values, count));
 }
 
+#ifdef NCE_DIRECT_EXECUTION
+static void *direct_map_page(void *opaque, uint64_t address, bool write)
+{
+    (void)opaque;
+    ++fills;
+    unsigned permission = write ? LKL_PROT_WRITE : LKL_PROT_READ;
+    unsigned long value = translate_user(address, permission);
+    if (!(value & permission))
+        return NULL;
+    REQUIRE((value & ~(PAGE - 1)) < NCE_RAM_SIZE);
+    return ram + (value & ~(PAGE - 1)) + (address & (PAGE - 1));
+}
+
+static const void *direct_map_code(void *opaque, uint64_t address)
+{
+    (void)opaque;
+    unsigned long value = translate_user(address, LKL_PROT_EXEC);
+    if (!(value & LKL_PROT_EXEC))
+        return NULL;
+    REQUIRE((value & ~(PAGE - 1)) < NCE_RAM_SIZE);
+    return ram + (value & ~(PAGE - 1)) + (address & (PAGE - 1));
+}
+
+/* Unsupported instructions continue in Unicorn until the next Linux return.
+ * Keeping the whole remainder there preserves its exclusive monitor. */
+static bool direct_execute(Process *p, unsigned long generation)
+{
+    NceDirectState state = {0};
+    memcpy(state.x, p->regs.x, sizeof(state.x));
+    memcpy(state.v, p->regs.vector, sizeof(state.v));
+    state.pc = p->regs.pc;
+    state.sp = p->regs.sp;
+    state.nzcv = p->regs.nzcv;
+    state.fpcr = p->regs.fpcr;
+    state.fpsr = p->regs.fpsr;
+    state.tpidr_el0 = p->tls;
+    state.exclusive_address = UINT64_MAX;
+    state.access_flags = NCE_DIRECT_UNALIGNED | NCE_DIRECT_PAC_HINT_NOP | NCE_DIRECT_CRC |
+                         NCE_DIRECT_LSE | NCE_DIRECT_AES | NCE_DIRECT_SHA1 | NCE_DIRECT_SHA256 | NCE_DIRECT_DC_ZVA64;
+    NceDirectMemory memory = {NULL, direct_map_page, direct_map_code, generation, 14};
+    uint64_t address = 0;
+    ++direct_calls;
+    NceDirectExit result = nce_direct_run(direct_engine, &state, memory,
+                                          timer_mode ? (UINT64_C(1) << 60) : instruction_batch, &address);
+    memcpy(p->regs.x, state.x, sizeof(state.x));
+    memcpy(p->regs.vector, state.v, sizeof(state.v));
+    p->regs.pc = state.pc;
+    p->regs.sp = state.sp;
+    p->regs.nzcv = state.nzcv;
+    p->regs.fpcr = state.fpcr;
+    p->regs.fpsr = state.fpsr;
+    if (result == NCE_DIRECT_BUDGET)
+        return true;
+    if (result == NCE_DIRECT_FETCH_FAULT || result == NCE_DIRECT_READ_FAULT || result == NCE_DIRECT_WRITE_FAULT) {
+        // A writable code alias is executed by Unicorn after ending this slice.
+        if (result != NCE_DIRECT_WRITE_FAULT || !direct_map_page(NULL, address & ~UINT64_C(4095), true)) {
+            fault_event(address, result == NCE_DIRECT_FETCH_FAULT ? UC_MEM_FETCH : result == NCE_DIRECT_WRITE_FAULT ? UC_MEM_WRITE
+                                                                                                                    : UC_MEM_READ);
+            return true;
+        }
+    } else
+        REQUIRE(result == NCE_DIRECT_UNSUPPORTED);
+    const uint32_t *code = direct_map_code(NULL, state.pc & ~UINT64_C(4095));
+    REQUIRE(code);
+    uint32_t word = code[(state.pc & 4095) / 4];
+    if ((word & 0xffe0001f) == 0xd4000001) {
+        p->regs.pc += 4;
+        event.kind = 1;
+        return true;
+    }
+    ++direct_fallbacks;
+    unsigned slot = ((word >> 2) ^ (word >> 16)) % 256;
+    for (unsigned i = 0; i < 256; ++i, slot = (slot + 1) % 256) {
+        if (!direct_missing[slot].count || direct_missing[slot].instruction == word) {
+            direct_missing[slot].instruction = word;
+            ++direct_missing[slot].count;
+            break;
+        }
+    }
+    return false;
+}
+#endif
+
 static void *user_clone(void *parent, unsigned long sp, unsigned long tls, unsigned long flags)
 {
     Process *p = calloc(1, sizeof(*p));
@@ -279,6 +375,51 @@ static void user_exec(void *opaque, unsigned long entry, unsigned long stack)
         ++code_generation;
 }
 
+static void prepare_unicorn(unsigned long current_maps)
+{
+    /* Each entry starts with no exclusive reservation. Linux may have
+     * switched threads or installed a signal frame during the previous exit. */
+    checked(uc_context_restore(engine, empty_cpu));
+    static unsigned long seen_maps, seen_code, seen_kernel_code;
+    unsigned long current_kernel_code = translation ? translation->code : 0;
+    if (seen_code != code_generation || seen_kernel_code != current_kernel_code) {
+        bool all = seen_code != code_generation || !page_invalidation || !translation;
+        if (all) {
+            checked(uc_ctl_flush_tb(engine));
+            ++cache_flushes;
+        }
+        if (translation) {
+            for (unsigned i = 0; i < NCE_TRANSLATION_CODE_WORDS; ++i) {
+                unsigned long bits = translation->code_pages[i];
+                while (bits && !all) {
+                    unsigned bit = __builtin_ctzl(bits);
+                    checked(nce_uc_invalidate_ram(engine, (i * 64UL + bit) * PAGE, PAGE));
+                    ++cache_pages;
+                    bits &= bits - 1;
+                }
+                translation->code_pages[i] = 0;
+            }
+        }
+        seen_code = code_generation;
+        seen_kernel_code = current_kernel_code;
+    }
+    if (seen_maps != current_maps) {
+        unsigned long length = translation ? translation->tlb_end - translation->tlb_start : 0;
+        if (page_tlb_invalidation && !length) {
+            ++tlb_inactive_skips;
+        } else if (page_tlb_invalidation && length <= 64 * PAGE) {
+            checked(nce_uc_invalidate_tlb(engine, translation->tlb_start, length));
+            tlb_pages += length / PAGE;
+        } else {
+            checked(uc_ctl_flush_tlb(engine));
+            ++tlb_flushes;
+        }
+        if (translation)
+            translation->tlb_start = translation->tlb_end = 0;
+        seen_maps = current_maps;
+    }
+}
+
 static void user_run(void *opaque)
 {
     Process *p = opaque;
@@ -304,54 +445,23 @@ static void user_run(void *opaque)
     }
     for (;;) {
         prepare_user();
-        /* Each entry starts with no exclusive reservation. Linux may have
-         * switched threads or installed a signal frame during the previous exit. */
-        checked(uc_context_restore(engine, empty_cpu));
-        static unsigned long seen_maps, seen_code, seen_kernel_code;
         unsigned long current_maps = translation ? translation->mappings : map_generation;
-        unsigned long current_kernel_code = translation ? translation->code : 0;
-        if (seen_code != code_generation || seen_kernel_code != current_kernel_code) {
-            bool all = seen_code != code_generation || !page_invalidation || !translation;
-            if (all) {
-                checked(uc_ctl_flush_tb(engine));
-                ++cache_flushes;
-            }
-            if (translation) {
-                for (unsigned i = 0; i < NCE_TRANSLATION_CODE_WORDS; ++i) {
-                    unsigned long bits = translation->code_pages[i];
-                    while (bits && !all) {
-                        unsigned bit = __builtin_ctzl(bits);
-                        checked(nce_uc_invalidate_ram(engine, (i * 64UL + bit) * PAGE, PAGE));
-                        ++cache_pages;
-                        bits &= bits - 1;
-                    }
-                    translation->code_pages[i] = 0;
-                }
-            }
-            seen_code = code_generation;
-            seen_kernel_code = current_kernel_code;
-        }
-        if (seen_maps != current_maps) {
-            unsigned long length = translation ? translation->tlb_end - translation->tlb_start : 0;
-            if (page_tlb_invalidation && !length) {
-                ++tlb_inactive_skips;
-            } else if (page_tlb_invalidation && length <= 64 * PAGE) {
-                checked(nce_uc_invalidate_tlb(engine, translation->tlb_start, length));
-                tlb_pages += length / PAGE;
-            } else {
-                checked(uc_ctl_flush_tlb(engine));
-                ++tlb_flushes;
-            }
-            if (translation)
-                translation->tlb_start = translation->tlb_end = 0;
-            seen_maps = current_maps;
-        }
-        registers(p, false);
         memset(&event, 0, sizeof(event));
+        bool handled = false;
+#ifdef NCE_DIRECT_EXECUTION
         mark_executing(true);
-        uc_err error = uc_emu_start(engine, p->regs.pc, 0, 0, timer_mode ? 0 : instruction_batch);
+        handled = direct_execute(p, current_maps);
         mark_executing(false);
-        registers(p, true);
+#endif
+        uc_err error = UC_ERR_OK;
+        if (!handled) {
+            prepare_unicorn(current_maps);
+            registers(p, false);
+            mark_executing(true);
+            error = uc_emu_start(engine, p->regs.pc, 0, 0, timer_mode ? 0 : instruction_batch);
+            mark_executing(false);
+            registers(p, true);
+        }
         /* Copy callback state before entering Linux: a blocking syscall or
          * page fault can let another Linux thread use this same engine. */
         int kind = event.kind, access = event.access;
@@ -512,6 +622,14 @@ unsigned long translation_linux_setup(void *kernel, unsigned long copy_user_offs
     REQUIRE(!cache_text || (cache_text[0] >= '0' && cache_text[0] <= '9' && !*end));
     REQUIRE(cache_mib == 16 || cache_mib == 64 || cache_mib == 128);
     unsigned long cache_bytes = cache_mib * 1024 * 1024;
+#ifdef NCE_DIRECT_EXECUTION
+    REQUIRE(translation && translate_user);
+    direct_engine = nce_direct_create(cache_bytes);
+    REQUIRE(direct_engine);
+    printf("{\"config\":\"translation_execution\",\"engine\":\"direct\",\"direct_cache_bytes\":%lu,\"data_page_bytes\":16384}\n", cache_bytes);
+#else
+    printf("{\"config\":\"translation_execution\",\"engine\":\"unicorn\"}\n");
+#endif
     // TLB mode initializes Unicorn; buffer size must be supplied before that call.
     checked(uc_ctl_set_tcg_buffer_size(engine, (uint32_t)cache_bytes));
     checked(uc_ctl_tlb_mode(engine, UC_TLB_VIRTUAL));
@@ -524,6 +642,11 @@ unsigned long translation_linux_setup(void *kernel, unsigned long copy_user_offs
     printf("{\"config\":\"translation_cache_settings\",\"cache_bytes\":%lu,\"actual_cache_bytes\":%llu,\"invalidation\":\"%s\",\"linux_fastpath\":%s}\n",
            cache_bytes, stats[4], page_invalidation ? "pages" : "full",
            fastpath && !strcmp(fastpath, "1") ? "true" : "false");
+#ifdef NCE_DIRECT_EXECUTION
+    uc_arm64_cp_reg dczid = {.op0 = 3, .op1 = 3, .crn = 0, .crm = 0, .op2 = 7};
+    checked(uc_reg_read(engine, UC_ARM64_REG_CP_REG, &dczid));
+    REQUIRE(dczid.val == 4);
+#endif
     checked(uc_context_alloc(engine, &empty_cpu));
     checked(uc_context_save(engine, empty_cpu));
     uc_hook hook;
@@ -576,6 +699,16 @@ void translation_linux_cleanup(void)
     nce_uc_cache_stats_aarch64(engine, stats);
     printf("{\"translation_engine_cache\":true,\"total_flushes\":%llu,\"invalidated_blocks\":%llu,\"current_blocks\":%llu,\"used_bytes\":%llu,\"capacity_bytes\":%llu}\n",
            stats[0], stats[1], stats[2], stats[3], stats[4]);
+#ifdef NCE_DIRECT_EXECUTION
+    NceDirectStats direct = nce_direct_stats(direct_engine);
+    printf("{\"direct_execution\":true,\"calls\":%lu,\"fallbacks\":%lu,\"compiles\":%llu,\"flushes\":%llu,\"code_changes\":%llu,\"code_bytes\":%zu,\"capacity_bytes\":%zu,\"pages\":%zu,\"mapping_misses\":%llu,\"code_lookups\":%llu}\n",
+           direct_calls, direct_fallbacks, direct.compiles, direct.flushes, direct.code_changes,
+           direct.code_bytes, direct.code_capacity, direct.pages, direct.mapping_misses, direct.code_lookups);
+    for (unsigned i = 0; i < 256; ++i)
+        if (direct_missing[i].count)
+            printf("{\"direct_fallback\":%u,\"count\":%lu}\n", direct_missing[i].instruction, direct_missing[i].count);
+    nce_direct_destroy(direct_engine);
+#endif
     REQUIRE(allocated == freed);
     checked(uc_context_free(empty_cpu));
     checked(uc_close(engine));
