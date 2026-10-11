@@ -1,0 +1,89 @@
+{
+  "status": "passed: current product kernel tracefs and offline ftrace parsing preflight; complete Android and iPhone recording pending",
+  "environment": {
+    "hardware": "Apple M5 Ultra",
+    "os": "macOS 27.0 (26A428)",
+    "host_ram_bytes": 274877906944
+  },
+  "product_build": "0.25.0-Mac-20261011-220337-direct1-dual",
+  "product_kernel_matches_probe": true,
+  "configuration": {
+    "TRACEPOINTS": true,
+    "EVENT_TRACING": true,
+    "CONTEXT_SWITCH_TRACER": true,
+    "TRACING": true,
+    "SCHEDSTATS": false,
+    "DEBUG_FS": false,
+    "PERF_EVENTS": false
+  },
+  "packaged_system_tools": {
+    "dumpsys": true,
+    "perfetto": false,
+    "traced": false,
+    "traced_probes": false,
+    "atrace": false
+  },
+  "probe": {
+    "guest_android_started": false,
+    "host_threads": 8,
+    "tracefs_mount_result": 0,
+    "enabled_events": [
+      "sched/sched_switch",
+      "sched/sched_waking",
+      "binder/binder_transaction"
+    ],
+    "observed_events": [
+      "sched_switch",
+      "sched_waking"
+    ],
+    "trace_clock": "local",
+    "per_cpu_stats": "entries: 85\noverrun: 0\ncommit overrun: 0\nbytes: 4856\noldest event ts:     0.040225\nnow ts:     0.040692\ndropped events: 0\nread events: 0",
+    "clean_halt": true
+  },
+  "offline_analysis": {
+    "tool": "Perfetto Trace Processor v58.2 mac-arm64",
+    "source": "https://get.perfetto.dev/trace_processor",
+    "download": {
+      "arch": "mac-arm64",
+      "file_name": "trace_processor_shell",
+      "file_size": 13597976,
+      "url": "https://commondatastorage.googleapis.com/perfetto-luci-artifacts/v58.2/mac-arm64/trace_processor_shell",
+      "sha256": "d29864d1ba3b36855527bb1b0ca3aa7f703cdce338b9680bb922c5c151b358fa",
+      "platform": "darwin",
+      "machine": [
+        "arm64"
+      ]
+    },
+    "sched_slice_count": 52,
+    "positive_sched_duration_ns_sum": 257000,
+    "nonzero_non_info_stats": []
+  },
+  "boundaries": [
+    "Binder event enable succeeded, no Binder transaction generated in this probe.",
+    "This is a short empty-kernel check. Event loss and collector overhead under Android load remain unmeasured.",
+    "Current guest CPU Running state does not account for host thread descheduling or blocking.",
+    "Guest clocksource uses host CLOCK_MONOTONIC; scheduler clock subtracts boot_time. Runtime clock calibration remains pending.",
+    "gfxinfo execution, FrameTimeline, Metal presentation callbacks and phone collection are pending.",
+    "Temporary probe source and commands retained under work; product sources and kernel were not modified."
+  ],
+  "reproduce_commands": [
+    "xcrun clang -std=c11 -O2 -g -fblocks -I work/native-linux-nce/lkl-translation-kernel -I experiments/native-linux work/native-linux-nce/interaction-preflight/probe.c experiments/native-linux/lkl-host.c -o work/native-linux-nce/interaction-preflight/probe",
+    "codesign --force --sign - --options runtime --entitlements work/native-linux-nce/host-admission/debug.entitlements work/native-linux-nce/interaction-preflight/probe",
+    "work/native-linux-nce/interaction-preflight/probe work/native-linux-nce/lkl-translation-kernel/lkl-image.bin",
+    "Extract the trace section from probe.log without altering event text; import kernel.ftrace with trace_processor_shell. Query sched_slice and nonzero non-info stats."
+  ],
+  "sha256": {
+    "work/native-linux-nce/interaction-preflight/probe.c": "ad336892e8daf93a51385d2de6ab32e88c0d78c7a11a00073db77ebda75fb77d",
+    "work/native-linux-nce/interaction-preflight/probe": "00f774b25bda418b11c75c3dbe4e59e77771d2e753cab6c0575cd1fb689f4e95",
+    "work/native-linux-nce/interaction-preflight/probe.log": "530a05d2e63c7c119b358396299927d5b5e8b3576ec46b010ee0c9e4dfc18a4d",
+    "work/native-linux-nce/interaction-preflight/kernel.ftrace": "5e27014c534cdc9fe2cfbad5299096ad8b0f5106fff0620a8d3f70121b68ee05",
+    "work/native-linux-nce/interaction-preflight/trace-processor.log": "54b62e0849dbaabb3146838cb86ab714c8eae302ff5d8ed51bf3d6c7678ad919",
+    "work/native-linux-nce/interaction-preflight/trace_processor_shell": "d29864d1ba3b36855527bb1b0ca3aa7f703cdce338b9680bb922c5c151b358fa",
+    "work/native-linux-nce/interaction-preflight/trace-processor-download.json": "507f3f34549b93a4f7f9e59ff5f29391b192342fbcd382f48734ffe1842cfaec",
+    "work/native-linux-nce/lkl-translation-kernel/lkl-image.bin": "253bfdd53ed4cba8e3d9d3d2a57bfb79ee263e42ab1a8034974c4ff0ba15578a",
+    "work/native-linux-nce/lkl-translation-kernel/lkl-image.h": "5a6dec26b8fa77438c3dc2271ed56d26d8ab30e71a70c6b4c2b65eb8614d081f",
+    "work/native-linux-nce/lkl-translation-kernel/lkl-host-ops.h": "54bf2a775fa582ca2bc04fb6a25dc85525b6c69da1cde54f610c4a35e0c1a833",
+    "work/native-linux-nce/lkl-translation-kernel/build/.config": "34e0f142d555cccb9b9367d86898227775374b0e251b7d8cb7a012f4264230a0",
+    "experiments/native-linux/lkl-host.c": "49c63f1be4112408bbe5bdced53cf8bd0314eedaf770fe4d869d30edf3a6c671"
+  }
+}
