@@ -26,6 +26,23 @@ def sha(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def validate_android_image(root, directory):
+    """拒绝使用尚未包含当前用户态源码的 Android 系统镜像。"""
+    manifest = json.loads((directory / 'lkl-summary.json').read_text())
+    prefix = 'experiments/native-linux/userspace/'
+    fixed = {'scripts/build_nce_userspace.py', 'experiments/native-linux/input.h',
+             'experiments/native-linux/interaction-profile.h'}
+    expected = manifest['input_sha256']
+    current = {str(p.relative_to(root)) for p in (root / prefix).glob('*') if p.is_file()}
+    names = current | fixed | {name for name in expected if name.startswith(prefix)}
+    stale = sorted(name for name in names if not (root / name).is_file() or
+                   expected.get(name) != sha(root / name))
+    if manifest.get('generated_sha256', {}).get('system.img') != sha(directory / 'system.img'):
+        stale.append('system.img')
+    if stale:
+        raise ValueError('Android 系统镜像与当前用户态源码不一致，请先通过 scripts/probe_lkl.py 重建并验证：' + ', '.join(stale))
+
+
 def validate(rows, memory_interval, mapping="window", workload="core", tlb_invalidation=None, execution=None, direct_config=None, cpus=1, parallel_profile=None, uaccess_stop=None, code_lookup_limit=None, code_memory=None, online_cpus=None):
     if online_cpus is not None:
         if not 1 <= online_cpus <= cpus:
@@ -352,6 +369,11 @@ def main():
         parser.error('需要 Apple Silicon Mac，repeat 必须为正数')
     if not 1000 <= args.batch_instructions <= 1000000 or not (args.memory_interval_ms == 0 or 10 <= args.memory_interval_ms <= 10000):
         parser.error('指令批次范围 1000…1000000；内存采样间隔为 0 或 10…10000 ms')
+    if args.workload != 'core':
+        try:
+            validate_android_image(ROOT, KERNEL)
+        except (OSError, ValueError, KeyError) as error:
+            parser.error(str(error))
     manifest = WORK / ('unicorn-tb-stop-dual/build.json' if args.code_memory == 'dual' else 'unicorn-tb-stop/build.json')
     if args.reuse_engine_build:
         dependency = json.loads(manifest.read_text())
@@ -499,7 +521,7 @@ def main():
                              ('ld.config.txt', EXP / 'art/ld.config.txt')]:
             shutil.copyfile(source, out / name)
             android_files.append(out / name)
-        android_files.append(KERNEL / 'system.img')
+        android_files.extend([KERNEL / 'system.img', KERNEL / 'lkl-summary.json'])
         if args.workload in ('services', 'desktop'):
             for name in ('nce-policy.cil', 'property_info'):
                 shutil.copyfile(KERNEL / name, out / name)
