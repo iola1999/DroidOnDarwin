@@ -1,0 +1,38 @@
+{
+  "url": "https://dl.google.com/android/repository/sys-img/google_apis/arm64-v8a-ps16k-36_r07.zip",
+  "archive_sha1": "dda632745023567113d9954101709c6526a3c250",
+  "archive_bytes": 1875087037,
+  "image_directory": "work/native-linux-nce/android-reference/sdk/system-images/android-36/google_apis_ps16k/arm64-v8a",
+  "scope": "unmodified SDK reference for Mac; no AVD launched",
+  "emulator_version": "37.2.12.0 build 16428233",
+  "package": "system-images;android-36;google_apis_ps16k;arm64-v8a",
+  "avd": "dod-android36-reference",
+  "configuration": {
+    "cpus": 1,
+    "ram_mib": 1024,
+    "width": 360,
+    "height": 640,
+    "density": 160,
+    "refresh_hz": 60,
+    "gpu": "host",
+    "data_partition": "6G"
+  },
+  "avd_config": "/Users/fan/project/app/husk_hyos/work/native-linux-nce/android-reference/avds/dod-android36-reference.avd/config.ini",
+  "avd_config_sha256": "aabd871dc519bfdde8022d2ee73705d2176669aa552c9563d4efe449415150f4",
+  "images_sha256": {
+    "system.img": "54a96f82a138e0919686cefffead8861e10c6189bf94188fef4fa08e24dc3ed1",
+    "vendor.img": "f8b0906cb80af15018e09735fd2e8e18847b99acddfa97f2ad7406cbca26958d",
+    "ramdisk.img": "5eff5ed46490588b7576716741e19709b8a99dccd5a7f1e7ee1256c027dacf1d",
+    "kernel-ranchu": "801a74a9235e3e0a868da68c07a51bcd476e20c4d00d417307ff23ebb6c00f55"
+  },
+  "sdk_package_metadata_source": "https://dl.google.com/android/repository/sys-img/google_apis/sys-img2-4.xml",
+  "sdk_package_metadata_sha256": "e5c11760d2ee002198c5e886c6f8e4617faa5207807114394608f179d96d122d",
+  "status": "AVD created and listed; never launched; Mac locked",
+  "preparation_logs": [
+    "work/native-linux-nce/android-reference/avd-create.log",
+    "work/native-linux-nce/android-reference/avd-create-exact-tag.log",
+    "work/native-linux-nce/android-reference/avd-create-final.log"
+  ],
+  "visible_launch_script": "work/native-linux-nce/android-reference/launch-reference.sh",
+  "purpose": "Same Android SDK revision Settings reference on Mac. iPhone product architecture unchanged; actual guest configuration and performance pending visible validation."
+}
