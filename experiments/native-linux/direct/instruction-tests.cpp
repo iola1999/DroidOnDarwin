@@ -61,8 +61,11 @@ void literal_loads(Probe &probe, std::mt19937_64 &random)
     code[0] = 0x9c000000 | (uint32_t((DataVA + 4092 - CodeVA) / 4) << 5);
     probe.load(code, sizeof(code));
     actual = initial;
+    auto counts = nce_direct_stats(probe.direct);
     CHECK(probe.run(actual) == NCE_DIRECT_UNSUPPORTED);
     CHECK(!std::memcmp(&actual, &initial, sizeof(actual)));
+    CHECK(nce_direct_stats(probe.direct).cross_page_exits == counts.cross_page_exits + 1);
+    CHECK(nce_direct_stats(probe.direct).alignment_exits == counts.alignment_exits);
     // Prefetch ignores inaccessible addresses and preserves every register.
     code[0] = 0xd8000000 | (0x3ffff << 5) | 31;
     probe.load(code, sizeof(code));
@@ -128,6 +131,15 @@ void structure_lanes(Probe &probe, std::mt19937_64 &random)
     actual = initial;
     CHECK(probe.run(actual) == NCE_DIRECT_UNSUPPORTED);
     CHECK(!std::memcmp(&actual, &initial, sizeof(actual)));
+    code[0] = 0xf94003e0;  // ldr x0, [sp]
+    probe.load(code, sizeof(code));
+    initial.sp = DataVA + 1;
+    actual = initial;
+    auto counts = nce_direct_stats(probe.direct);
+    CHECK(probe.run(actual) == NCE_DIRECT_UNSUPPORTED);
+    CHECK(!std::memcmp(&actual, &initial, sizeof(actual)));
+    CHECK(nce_direct_stats(probe.direct).alignment_exits == counts.alignment_exits + 1);
+    CHECK(nce_direct_stats(probe.direct).cross_page_exits == counts.cross_page_exits);
     report("simd_lane_replicate_writeback_and_faults");
 }
 void fp_conversions(Probe &probe, std::mt19937_64 &random)

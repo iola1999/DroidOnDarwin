@@ -246,7 +246,9 @@ struct NceDirect {
                 result = NCE_DIRECT_BUDGET;
                 break;
             }
-            if (frame.reason == Fallback) {
+            if (frame.reason == Fallback || frame.reason == Alignment || frame.reason == CrossPage) {
+                stats.alignment_exits += frame.reason == Alignment;
+                stats.cross_page_exits += frame.reason == CrossPage;
                 result = NCE_DIRECT_UNSUPPORTED;
                 break;
             }

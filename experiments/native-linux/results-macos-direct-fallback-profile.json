@@ -1,0 +1,6419 @@
+{
+  "date": "2026-10-11",
+  "base_commit": "f47aa0d",
+  "scope": "Diagnostic counters and Time Profiler; wall time excluded from performance comparisons; macOS only",
+  "configuration": {
+    "execution": "direct",
+    "direct": {
+      "mapping_entries": 256,
+      "route_entries": 256,
+      "selective_writes": false,
+      "reuse_code_checks": false,
+      "memory": "flat",
+      "code_watch": true
+    },
+    "mapping": "pte",
+    "sparse_scan": true,
+    "fault_prefetch": false,
+    "guest_page_bytes": 16384,
+    "workload": "desktop",
+    "entries": [
+      "cli"
+    ],
+    "art_nterp": 1,
+    "art_expanded_jit": 0,
+    "art_fast_baseline": 0,
+    "cache_invalidation": "pages",
+    "exec_cache": "full",
+    "tlb_invalidation": "full",
+    "linux_fastpath": 1,
+    "guest_ram_bytes": 1073741824,
+    "translation_cache_bytes": 134217728,
+    "instruction_batch": 50000,
+    "memory_interval_ms": 100,
+    "preemption": "timer",
+    "timer_interval_ns": 2000000
+  },
+  "sha256": {
+    "experiments/native-linux/translation/linux-execution.c": "c083910dcf33ea0fce10df4a69b749c1c023962e759e36ad66540e1cdeccfdfc",
+    "experiments/native-linux/translation/linux-runner.c": "6c5026037fb9049381917190223028a726717ba2d5b3d53adf1fd5b5bb58599d",
+    "experiments/native-linux/translation/linux-memory.c": "0cc6ab6ff8ab7abe76c1c73aaf18fecb200ff27251ea29f0f15b0618a6020e31",
+    "experiments/native-linux/lkl-host.c": "49c63f1be4112408bbe5bdced53cf8bd0314eedaf770fe4d869d30edf3a6c671",
+    "experiments/native-linux/translation/code-watch.c": "5357b7d9b7c87d060376c47592931f50191fe35f24995ca3125b9532fc290284",
+    "experiments/native-linux/input.c": "4e95e2121a29b3d675ab36c613347cd149d2e5233607d094701991ec9d576db5",
+    "experiments/native-linux/session.c": "7e14ef3c52b5119a49c72719ac8c2c14e2e2028586479e01fb5285b5bfc59d34",
+    "experiments/native-linux/direct/engine.cpp": "db2e75060959d4972bcdceb9b1a7658d5abdd15903a79a387cca0d3f7760fcdf",
+    "experiments/native-linux/direct/compile.cpp": "f1acb94ac7256df856eac5d71e31a0164bbb4ab73cbbb9b8eb4c031163224d3f",
+    "experiments/native-linux/direct/decode.cpp": "8bbabb3da372360fdc13465503de05c3f389b35cfd89b080c13a79edede02b7a",
+    "experiments/native-linux/direct/entry.S": "901bf7d56d00c81277dd981c7186283d6bc413d1afe3ba8c0abd12ee695849a4",
+    "experiments/native-linux/direct/decode.h": "5f0d69562b252c6a53482f126a479e041048053ec4ee36dac2965a1d30ddb539",
+    "experiments/native-linux/direct/direct.h": "be75dfee411b4a359af0a04c3fed91a7d0eceee6b83e7b01ee9fdf5daefeb155",
+    "experiments/native-linux/direct/internal.h": "cc19c9862dbf97e66c63addd435dbccf74643ed983d399475d50d4bcda10238e",
+    "experiments/native-linux/direct/layout.h": "0a196defa551ce459446ec52c719e0872c84987aaa47aa9ccf7a32aea5feccc9",
+    "experiments/native-linux/direct/page-table-layout.h": "500897ffde014c17c73d03a92b34b07a9990e52695c369d9228c01d5d4600109",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/code_block.hpp": "c1b59e9d8a37775f8558fb3a0f7b34a6b7dbd2b2c13c088be65253c2223faa8a",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/dual_code_block.hpp": "619a01b3c69e107cc1c13c79b0dfbe97b09395e70a6c705b77e0531894a69620",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/feature_detection/cpu_feature.hpp": "2ae6e67bd4af85bd7d6d6eb7585f73cbdc237183167bb265a0427b74807e0a02",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/feature_detection/feature_detection.hpp": "4d13c256d5028d1ca3e5a0ad59382e888b79e033b72cffe7dae4c3e9ecc8d97e",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/feature_detection/feature_detection_apple.hpp": "99d88802080a50bd7d73a07020c18eee44417e193ff5515cbad8f6972890bbc6",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/feature_detection/feature_detection_freebsd.hpp": "84a10ab44c7c566523705703fb118904156c39b6b93148d458e2ab77a80a2c2d",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/feature_detection/feature_detection_generic.hpp": "4b78fafbb988a18b25b1aeb04c5ebff6b3a675f502e315fd8430f2d3f61f0fd2",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/feature_detection/feature_detection_hwcaps.hpp": "5839e027d9145f182149586fc30f129f33d5b482ffa174ed4ac6f9bb3b5a3b3f",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/feature_detection/feature_detection_idregs.hpp": "f759c5fd02bb2d2bafe45376e3856fa9371737282b22f66101fd4ae8db5f7b96",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/feature_detection/feature_detection_linux.hpp": "a49f3c60ad2cae71c158fd9207fdbad5e40837793f57289490603455302299c6",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/feature_detection/feature_detection_netbsd.hpp": "1315afa43ea61ffb7beb1102bf090d24d1285f2340028b5da50c3d31491dd09c",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/feature_detection/feature_detection_openbsd.hpp": "941dd25a778b8153e3e98aa9b7795a2c54359d24d8337f56a8658993f3fecb96",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/feature_detection/feature_detection_w32.hpp": "f228126514f482b43c0304a1f9dfb5942b93afabfc4372662af1193679c503de",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/feature_detection/id_registers.hpp": "ed83ce3fdaa0bea503dbdd9c0e728e8cb4eb0307fdf3bc60192fc0dfa130d1c8",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/feature_detection/read_id_registers_directly.hpp": "ff2e769fabf6f43d6e12939072e6cd911694f7966d2bd8c4ce6c3075aad34020",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/arm64_encode_helpers.inc.hpp": "55576102b1774f7f7b681857a3d2c6843776045cccd24fa09b8c4713929adbaf",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/cpu_feature.inc.hpp": "5919c8d8b32ae0899d04a888d8e852a79c604b33f9b6cffe632234437f57ab67",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/enum.hpp": "603697b7a7e16795219a74fa2d735e8bd442c79cdcb539ed0abed2b83417fd26",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/imm.hpp": "268b0414bf57c82cddb3de6b286e8e1ce52fb2b413aaecaa1f0cf9099b7e7cc1",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/list.hpp": "0592b31d29a6f1bfbee46cdb0aa5ce778edc9643db90a39d42215970357328e9",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/mnemonics_fpsimd_v8.0.inc.hpp": "3ecdfd1ff46ff749b2525e1a75acbabc6022848f700a6f16b36f480ab954a266",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/mnemonics_fpsimd_v8.1.inc.hpp": "404268b9e0e3b4708d5018fd1fbf3ea1339c641382e7cfd15534af56a7672e69",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/mnemonics_fpsimd_v8.2.inc.hpp": "52e7a48b969badf327c00c2ea4556353c61950a0c452adeaee37c6820926261f",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/mnemonics_fpsimd_v8.3.inc.hpp": "84bcced18fe10c753ec5ea1c84e9531ab1ceb4e08b046519e75788a14b814ae4",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/mnemonics_generic_v8.0.inc.hpp": "8ffd907bb38b27700022e29d40111fe72e640d003ad6aa3e372c4d8a7ebd3f6c",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/mnemonics_generic_v8.1.inc.hpp": "9f60f325c392e907dd9d2cbab62e1f8cfc7ab95c88e54df75b1a1f64bc7fa93b",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/mnemonics_generic_v8.2.inc.hpp": "1b53f462d1ed7e0a763236dbef9c4bfc70f6430cf5f8b420b2acc4dd2e8884ab",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/mnemonics_generic_v8.3.inc.hpp": "4b775baed83b1bb32b7bd339433175ce09b4bbc6da33d887bc9ca989d42b5d76",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/multi_typed_name.hpp": "a4322bfdb95f8477e6f92b31194110ef860c7402d50ce18daae6e016d4fa9aac",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/oaknut_exception.inc.hpp": "48629c93b468527c440dad30f8044818aa202caff67e73f45a246a3e96f8ad28",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/offset.hpp": "cb48c0eface8f5458a89402a090084690d3f999ff562e63870a1b16f438a7d52",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/overloaded.hpp": "03f0f551fa10b0b3d8d2c75130c1023ddcc5e8a3566629470408aad370d87fc2",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/reg.hpp": "352456b9b9ea1fb8cb5637e82169e16f08189579da9645ad5a5c1992f95ed198",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/string_literal.hpp": "96dce09750c24842a88e8eb3dfdafe047a5ab94c9398c94ea41cca8e1434e1bb",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/oaknut.hpp": "e25f4222f8f7d17b683d5ea8ff2851f88a3b40c478fcdc6046fe962cfcab2f37",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/oaknut_exception.hpp": "8277ac5a6cf6697305fd169d817d6786b0011027d66962fc9d982ffbce2c19a0",
+    "scripts/probe_direct_execution.py": "7f1b9baf5301032f35b450635b6b0e03c7f0ad284f954de585b665cfcb151bdf",
+    "work/native-linux-nce/oaknut-94c726c.tar.gz": "c404db82002f9a851a412b3d55ac9be8a42a2e319fd2fc8a73e63e6ef5d4f97b",
+    "experiments/native-linux/translation/code-watch.h": "8b368808fb7dcd355736cae741088cae380376cbf03310178f502ae0582b5806",
+    "experiments/native-linux/translation/linux-execution.h": "27fe570acf993efd92ddf29857291b752cf80b454792650759066124377c142c",
+    "experiments/native-linux/translation/linux-memory.h": "11b7a1402acaa07152cdb17d43fed3e6effdeb65af902e8b64ae5ea5cded35e9",
+    "experiments/native-linux/translation/linux-guest.c": "7068eda69b507a97d370c341e99bea75e4d03d93386613292a6565c0ebbaee00",
+    "scripts/probe_lkl_translation.py": "e2a474cb1c2a59be0987b3c9749a1b8dbc0b21fd20570966a720e4a8bd92e48c",
+    "experiments/native-linux/dispatch-test.c": "5211698bd58018aae173d4c6d75daeeb0e4eb357fb2742c4c08d595bc9d7b55b",
+    "experiments/native-linux/layout.h": "9ecb6dc474edfc516284effcbd1999ba445ba88372233636391771a0715deaa5",
+    "experiments/native-linux/guest-registers.h": "90a4d5b6e613ce4f2cda359dcd05f6e8d876a788bc437c2c1e13e05403e4627a",
+    "experiments/native-linux/userspace/signal-tests.c": "43b86323b4dd66c98db20065b8cc41d868fb7ab538135d6eba9d7c65a263a549",
+    "experiments/native-linux/userspace/signal-registers.S": "68e13063df3b1a82a0b5805eb98082204b7ee6e29e7c020cc452ef5199f6d257",
+    "experiments/native-linux/userspace/code-tests.c": "696cdfa3f07c58b3b36a5d10d0d4b5bd1f8d9641459b48b36e60b1369880f856",
+    "experiments/native-linux/userspace/mm-bench.c": "27beca8aea863ceedf2698524346cbbbc20134fe005a3e5dd4c623dbcf1c8674",
+    "experiments/native-linux/userspace/mm-tests.c": "527d6c94abaf861909f891f54651dd6fa3ec07f4e20263c730767863e3405357",
+    "experiments/native-linux/userspace/file-tests.c": "ba844093595dd91ca3634ffcf7bf5531ba634fc176c2e4f1167a13ab86a515fb",
+    "work/native-linux-nce/direct-fallback-profile/NceWorkload.dex": "449cf8dabec3e4869093cf7915672e78f6e0aa6ac5b6d3bd15467538dadb939f",
+    "work/native-linux-nce/direct-fallback-profile/ld.config.txt": "dc106c5021978b80e002a74cb56941b4e8381a66a2f00ffc7116dbabc946d89b",
+    "work/native-linux-nce/direct-fallback-profile/art-nterp": "6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b",
+    "work/native-linux-nce/direct-fallback-profile/art-expanded-jit": "5feceb66ffc86f38d952786c6d696c79c2dbc239dd4e91b46729d73a27fb57e9",
+    "work/native-linux-nce/direct-fallback-profile/art-fast-baseline": "5feceb66ffc86f38d952786c6d696c79c2dbc239dd4e91b46729d73a27fb57e9",
+    "work/native-linux-nce/processes/system.img": "9947c2c1004a7cdfb625fa6140c65a4bea3e36fb3534851b1f7b7aa6cac347c3",
+    "work/native-linux-nce/direct-fallback-profile/nce-policy.cil": "c276d06f95fb8d83251fdfd373f043b820267523e020d473d065c1ab96e70cd3",
+    "work/native-linux-nce/direct-fallback-profile/property_info": "0e69219aa8f9b509bea139a2ec04319618454e462021237e48bae46147c0cbdd",
+    "work/native-linux-nce/direct-fallback-profile/disabled": "5feceb66ffc86f38d952786c6d696c79c2dbc239dd4e91b46729d73a27fb57e9",
+    "work/native-linux-nce/direct-fallback-profile/enabled": "6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b",
+    "work/gfxstream-build-macos-ios-api/manifest.json": "b0536f0a38f3e49b4c210d56088a2bcbc832b653be92da60305ffea30e6aa6e1",
+    "experiments/native-linux/graphics/host-graphics.cpp": "099e66814a919cd08ade810e281a96166845118711255a4371596d5361631ac0",
+    "experiments/native-linux/graphics/host-graphics.h": "b2ed42bd0bd016faeb36d34175b85c2e759f63ad95c2cce8752db02cc890ac8c",
+    "experiments/native-linux/input.h": "c7a1092bc3fbd87f1a329afad8b0bc798bd02cbac7da6f9c468959152ff80b42",
+    "experiments/native-linux/session.h": "f6d18e13285a0e7785bb6b7c2540dc5d2625dcd87aa19667f68569e73dc97e3d",
+    "work/gfxstream-build-macos-ios-api/prefix/lib/libgfxstream_backend.dylib": "0cda09756d8459f5d600f063e97bc00dd1ccec79e91bb63054a2cd4cf1d71fc6",
+    "work/angle-macos/prefix/lib/libANGLE-shared.dylib": "08c705f602720609f043fc9fa380a73a7caae47710d105b37ae74a3cf621bd1b",
+    "work/native-linux-nce/lkl-translation-kernel/lkl-image.bin": "621157917621a839803b23417d66499eb77ab7592631364ebd7ee20df435e8b6",
+    "work/native-linux-nce/lkl-translation-kernel/lkl-image.h": "85bb9a8f02ca46b7e616d0b4d4d19cb7966a3e3c52266911968a138385d98b7a",
+    "work/native-linux-nce/lkl-translation-kernel/lkl.so": "b624acd829c6de7567e9f5895281256c23416f13044419a65c514e4e68de6a33",
+    "work/native-linux-nce/lkl-translation-kernel/lkl-host-ops.h": "54bf2a775fa582ca2bc04fb6a25dc85525b6c69da1cde54f610c4a35e0c1a833",
+    "experiments/native-linux/translation/kernel-api.h": "be5351cd57b6537c096db1cedf8f8f9fe3512cde3e35c1155ac0cb62098647d1",
+    "scripts/build_translation_engine.py": "316c2406bc7015af2ac8b92c7cff92879ba60484f82c3971c6884c8fdfbe90ca",
+    "work/native-linux-nce/unicorn-tb-stop/build.json": "ad9e5c13952a271d97085c7caca9fa61c32d7f22dd8b50a7769ea1dc5c8efaaa",
+    "work/native-linux-nce/unicorn-tb-stop/prefix/lib/libunicorn.a": "6bf29b96bbcbb0d6cf8ab4a830765086509b380a9eb625c9b12ac44c9466f8d2",
+    "work/native-linux-nce/direct-fallback-profile/cli": "4a1b70185ae38f8d9c6845bec8fbd6955c2ccbfa2e22166e02a88494c0e5dac3",
+    "work/native-linux-nce/direct-fallback-profile/gcd": "ec66047089cd6f0df421ca1bb8059bb1f00312401958fa09e8d627ad16a879ac",
+    "work/native-linux-nce/direct-fallback-profile/guest.elf": "072dc1540d796db8f3d120ba937ca7bc41a3ae4a9fb5d9a4cbb639ce35dd59e1",
+    "work/native-linux-nce/direct-fallback-profile/late.elf": "ab412f081f8efd2a1e98e970bd8a4d4b9e5e62a0911edf3ce00a75edadb1cd52",
+    "work/native-linux-nce/direct-fallback-profile/sigreturn.elf": "795d053b14585230d5f6ec0d09fdd5d91b8685c9fb6acdd0935d3d9359baf271",
+    "work/native-linux-nce/direct-fallback-profile/dynamic.elf": "306e652a456237aab0895b76d2c547992f90c96a3537b19005828308577f5ab5",
+    "work/native-linux-nce/direct-fallback-profile/libc.so": "5198895e4b82cec0a529cc5202e485edb5836844f9d2c0004e96c94346115ce7",
+    "work/native-linux-nce/direct-fallback-profile/dependency.so": "85f8153310870d802e5dcca5a9c0b60cc713ed967c28f15c9e35f890bf3460a6",
+    "work/native-linux-nce/direct-fallback-profile/plugin.so": "e71ca3312f3e368e1017ed7ceac0a97264766b997b864e1b21ccf712df60d6fb",
+    "work/native-linux-nce/direct-fallback-profile/dash.elf": "ffe90f94a6b8387bf8b0e8b575b484ef9835245bad6be77548f8d61dbac03253",
+    "work/native-linux-nce/direct-fallback-profile/bionic-test.elf": "639caeb261bd99af38ab20607a6348e3c30c1979ff65fc5e4e3abbd84ee41cec",
+    "scripts/build_lkl_translation_kernel.py": "fb4275aca5e91bccc106171f9574c51d26feb8328d20f4620bddc7694bd21af1",
+    "scripts/lkl_translation_patch.py": "8e248498d4bc33e408b1fdff56931eaf6e9685960d76086e2e5faa5cf8ba7e2d",
+    "experiments/native-linux/lkl-nce-mmu.c": "e91e227b43d903c851af9c0491380ae6525bbf5a0fafa41314a688609bc62be4",
+    "work/native-linux-nce/lkl-translation-kernel/build.json": "ff3242e76a920ab3b3cfd7145dba6633fae1c33616be7498b38c5b15708521b2"
+  },
+  "profile": {
+    "base_commit": "f47aa0d",
+    "scope": "Diagnostic only; elapsed time excluded from performance comparison",
+    "driver_sha256": "31a9e1eeede2cb9a238319e30ac48d5c54cd637185ce86e739852de476a8c350",
+    "captures": [
+      {
+        "command": [
+          "xcrun",
+          "xctrace",
+          "record",
+          "--template",
+          "Time Profiler",
+          "--attach",
+          "9348",
+          "--time-limit",
+          "10s",
+          "--output",
+          "/Users/fan/project/app/husk_hyos/work/native-linux-nce/direct-fallback-profile/cpu-0.trace",
+          "--no-prompt"
+        ],
+        "returncode": 0,
+        "elapsed_s": 41.8242925000377,
+        "rows": 10443,
+        "weight_ns": 10443000000,
+        "categories_ns": {
+          "unicorn": 2813000000,
+          "other": 5854000000,
+          "direct": 1776000000
+        },
+        "states_ns": {
+          "Running": 10443000000
+        },
+        "leaf_ns": [
+          [
+            "nce_direct_enter",
+            548000000
+          ],
+          [
+            "nce_direct_leave",
+            548000000
+          ],
+          [
+            "nce_direct_branch_stub",
+            359000000
+          ],
+          [
+            "load_helper",
+            305000000
+          ],
+          [
+            "helper_lookup_tb_ptr_aarch64",
+            162000000
+          ],
+          [
+            "pthread_jit_write_protect_np",
+            116000000
+          ],
+          [
+            "g_tree_lookup",
+            109000000
+          ],
+          [
+            "tlb_reset_dirty_by_vaddr_aarch64",
+            103000000
+          ],
+          [
+            "cpu_get_tb_cpu_state_aarch64",
+            98000000
+          ],
+          [
+            "cpu_restore_state_from_tb",
+            85000000
+          ],
+          [
+            "unicorn_fill_tlb_aarch64",
+            85000000
+          ],
+          [
+            "qht_lookup_custom",
+            53000000
+          ],
+          [
+            "tb_tc_cmp",
+            51000000
+          ],
+          [
+            "NceDirect::run(NceDirectState&, NceDirectMemory, unsigned long long, unsigned long long&)",
+            47000000
+          ],
+          [
+            "flatview_translate_aarch64",
+            44000000
+          ],
+          [
+            "address_space_translate_internal",
+            42000000
+          ],
+          [
+            "liveness_pass_1",
+            41000000
+          ],
+          [
+            "std::__1::__wrap_iter<nce_direct::CodeRoute*> std::__1::__fill_n[abi:nqe220106]<std::__1::__wrap_iter<nce_direct::CodeRoute*>, long, nce_direct::CodeRoute, 0>(std::__1::__wrap_iter<nce_direct::CodeRoute*>, long, nce_direct::CodeRoute const&)",
+            41000000
+          ],
+          [
+            "store_helper",
+            38000000
+          ],
+          [
+            "tlb_set_page_with_attrs_aarch64",
+            37000000
+          ],
+          [
+            "sys_icache_invalidate",
+            37000000
+          ],
+          [
+            "tcg_optimize_aarch64",
+            35000000
+          ],
+          [
+            "NceDirect::resolve(unsigned long long, unsigned int, NceDirectMemory)",
+            35000000
+          ],
+          [
+            "__psynch_cvwait",
+            31000000
+          ],
+          [
+            "_platform_memmove",
+            29000000
+          ],
+          [
+            "tb_htable_lookup_aarch64",
+            23000000
+          ],
+          [
+            "tlb_flush_vtlb_page_locked",
+            22000000
+          ],
+          [
+            "get_page_addr_code_hostp_aarch64",
+            22000000
+          ],
+          [
+            "tcg_gen_code_aarch64",
+            21000000
+          ],
+          [
+            "mach_absolute_time",
+            19000000
+          ]
+        ],
+        "inclusive_ns": [
+          [
+            "_pthread_start",
+            3626000000
+          ],
+          [
+            "thread_start",
+            3626000000
+          ],
+          [
+            "0x107c5e19f",
+            3592000000
+          ],
+          [
+            "user_run",
+            3539000000
+          ],
+          [
+            "uc_emu_start",
+            2813000000
+          ],
+          [
+            "resume_all_vcpus_aarch64",
+            2813000000
+          ],
+          [
+            "cpu_exec_aarch64",
+            2812000000
+          ],
+          [
+            "load_helper",
+            895000000
+          ],
+          [
+            "direct_execute",
+            694000000
+          ],
+          [
+            "nce_direct_run",
+            687000000
+          ],
+          [
+            "nce_direct_enter",
+            552000000
+          ],
+          [
+            "nce_direct_leave",
+            549000000
+          ],
+          [
+            "unicorn_fill_tlb_aarch64",
+            534000000
+          ],
+          [
+            "helper_lookup_tb_ptr_aarch64",
+            376000000
+          ],
+          [
+            "nce_direct_branch_stub",
+            359000000
+          ],
+          [
+            "NceDirect::run(NceDirectState&, NceDirectMemory, unsigned long long, unsigned long long&)",
+            321000000
+          ],
+          [
+            "tb_gen_code_aarch64",
+            289000000
+          ],
+          [
+            "cpu_restore_state_aarch64",
+            254000000
+          ],
+          [
+            "NceDirect::resolve(unsigned long long, unsigned int, NceDirectMemory)",
+            216000000
+          ],
+          [
+            "g_tree_lookup",
+            160000000
+          ],
+          [
+            "tcg_tb_lookup_aarch64",
+            153000000
+          ],
+          [
+            "tcg_gen_code_aarch64",
+            130000000
+          ],
+          [
+            "pthread_jit_write_protect_np",
+            117000000
+          ],
+          [
+            "tb_htable_lookup_aarch64",
+            115000000
+          ],
+          [
+            "nce_direct_exit_stub",
+            111000000
+          ],
+          [
+            "tlb_reset_dirty_by_vaddr_aarch64",
+            103000000
+          ],
+          [
+            "store_helper",
+            103000000
+          ],
+          [
+            "cpu_get_tb_cpu_state_aarch64",
+            98000000
+          ],
+          [
+            "find_memory_mapping_aarch64",
+            90000000
+          ],
+          [
+            "cpu_restore_state_from_tb",
+            87000000
+          ]
+        ],
+        "source_sha256": "5ff10fe1119da59f711198462fa58868de09fb74c3889a81ae100ffe08652627"
+      },
+      {
+        "command": [
+          "xcrun",
+          "xctrace",
+          "record",
+          "--template",
+          "Time Profiler",
+          "--attach",
+          "9348",
+          "--time-limit",
+          "10s",
+          "--output",
+          "/Users/fan/project/app/husk_hyos/work/native-linux-nce/direct-fallback-profile/cpu-1.trace",
+          "--no-prompt"
+        ],
+        "returncode": 0,
+        "elapsed_s": 92.31387787498534,
+        "rows": 10596,
+        "weight_ns": 10596000000,
+        "categories_ns": {
+          "unicorn": 3994000000,
+          "other": 4828000000,
+          "direct": 1774000000
+        },
+        "states_ns": {
+          "Running": 10596000000
+        },
+        "leaf_ns": [
+          [
+            "tlb_reset_dirty_by_vaddr_aarch64",
+            895000000
+          ],
+          [
+            "nce_direct_enter",
+            438000000
+          ],
+          [
+            "nce_direct_leave",
+            360000000
+          ],
+          [
+            "liveness_pass_1",
+            285000000
+          ],
+          [
+            "nce_direct_branch_stub",
+            279000000
+          ],
+          [
+            "sys_icache_invalidate",
+            262000000
+          ],
+          [
+            "tcg_gen_code_aarch64",
+            252000000
+          ],
+          [
+            "__psynch_cvwait",
+            249000000
+          ],
+          [
+            "tcg_optimize_aarch64",
+            210000000
+          ],
+          [
+            "helper_lookup_tb_ptr_aarch64",
+            109000000
+          ],
+          [
+            "qht_lookup_custom",
+            97000000
+          ],
+          [
+            "g_tree_lookup",
+            94000000
+          ],
+          [
+            "pthread_jit_write_protect_np",
+            89000000
+          ],
+          [
+            "_platform_memmove",
+            85000000
+          ],
+          [
+            "load_helper",
+            73000000
+          ],
+          [
+            "nce_direct::decode(unsigned int)",
+            65000000
+          ],
+          [
+            "nce_direct::Page::compile(unsigned long long, void const*, unsigned long, unsigned int*, unsigned int, void**, unsigned int)",
+            62000000
+          ],
+          [
+            "cpu_restore_state_from_tb",
+            58000000
+          ],
+          [
+            "NceDirect::resolve(unsigned long long, unsigned int, NceDirectMemory)",
+            55000000
+          ],
+          [
+            "__psynch_cvsignal",
+            51000000
+          ],
+          [
+            "tb_gen_code_aarch64",
+            50000000
+          ],
+          [
+            "unicorn_fill_tlb_aarch64",
+            48000000
+          ],
+          [
+            "disas_a64_insn",
+            44000000
+          ],
+          [
+            "tcg_emit_op_aarch64",
+            43000000
+          ],
+          [
+            "cpu_get_tb_cpu_state_aarch64",
+            35000000
+          ],
+          [
+            "std::__1::__wrap_iter<nce_direct::CodeRoute*> std::__1::__fill_n[abi:nqe220106]<std::__1::__wrap_iter<nce_direct::CodeRoute*>, long, nce_direct::CodeRoute, 0>(std::__1::__wrap_iter<nce_direct::CodeRoute*>, long, nce_direct::CodeRoute const&)",
+            34000000
+          ],
+          [
+            "tcg_reg_alloc",
+            33000000
+          ],
+          [
+            "NceDirect::run(NceDirectState&, NceDirectMemory, unsigned long long, unsigned long long&)",
+            29000000
+          ],
+          [
+            "unsigned int oaknut::BasicCodeGenerator<oaknut::VectorCodeGeneratorPolicy>::pdep<16777184u>(unsigned int)",
+            29000000
+          ],
+          [
+            "tb_exec_unlock_aarch64",
+            26000000
+          ]
+        ],
+        "inclusive_ns": [
+          [
+            "_pthread_start",
+            5450000000
+          ],
+          [
+            "thread_start",
+            5450000000
+          ],
+          [
+            "0x107c5e19f",
+            5279000000
+          ],
+          [
+            "user_run",
+            5108000000
+          ],
+          [
+            "uc_emu_start",
+            3994000000
+          ],
+          [
+            "resume_all_vcpus_aarch64",
+            3990000000
+          ],
+          [
+            "cpu_exec_aarch64",
+            3989000000
+          ],
+          [
+            "tb_gen_code_aarch64",
+            2249000000
+          ],
+          [
+            "direct_execute",
+            1025000000
+          ],
+          [
+            "nce_direct_run",
+            1020000000
+          ],
+          [
+            "tcg_gen_code_aarch64",
+            932000000
+          ],
+          [
+            "tlb_reset_dirty_by_vaddr_aarch64",
+            895000000
+          ],
+          [
+            "NceDirect::run(NceDirectState&, NceDirectMemory, unsigned long long, unsigned long long&)",
+            689000000
+          ],
+          [
+            "NceDirect::resolve(unsigned long long, unsigned int, NceDirectMemory)",
+            616000000
+          ],
+          [
+            "nce_direct::Page::compile(unsigned long long, void const*, unsigned long, unsigned int*, unsigned int, void**, unsigned int)",
+            446000000
+          ],
+          [
+            "nce_direct_enter",
+            439000000
+          ],
+          [
+            "load_helper",
+            361000000
+          ],
+          [
+            "nce_direct_leave",
+            361000000
+          ],
+          [
+            "unicorn_fill_tlb_aarch64",
+            296000000
+          ],
+          [
+            "helper_lookup_tb_ptr_aarch64",
+            290000000
+          ],
+          [
+            "liveness_pass_1",
+            285000000
+          ],
+          [
+            "nce_direct_branch_stub",
+            279000000
+          ],
+          [
+            "sys_icache_invalidate",
+            262000000
+          ],
+          [
+            "_pthread_cond_wait",
+            253000000
+          ],
+          [
+            "__psynch_cvwait",
+            249000000
+          ],
+          [
+            "tcg_optimize_aarch64",
+            224000000
+          ],
+          [
+            "gen_intermediate_code_aarch64",
+            219000000
+          ],
+          [
+            "translator_loop_aarch64",
+            214000000
+          ],
+          [
+            "0x1081b7d3b",
+            181000000
+          ],
+          [
+            "sem_down",
+            174000000
+          ]
+        ],
+        "source_sha256": "80b1fc56bcbfc22b8c8b69d4f557258039004dbd61c541c019578f7a1da0798c"
+      },
+      {
+        "command": [
+          "xcrun",
+          "xctrace",
+          "record",
+          "--template",
+          "Time Profiler",
+          "--attach",
+          "9348",
+          "--time-limit",
+          "10s",
+          "--output",
+          "/Users/fan/project/app/husk_hyos/work/native-linux-nce/direct-fallback-profile/cpu-2.trace",
+          "--no-prompt"
+        ],
+        "returncode": 0,
+        "elapsed_s": 142.58741133310832,
+        "rows": 10690,
+        "weight_ns": 10690000000,
+        "categories_ns": {
+          "other": 4284000000,
+          "direct": 1536000000,
+          "unicorn": 4870000000
+        },
+        "states_ns": {
+          "Running": 10690000000
+        },
+        "leaf_ns": [
+          [
+            "tlb_reset_dirty_by_vaddr_aarch64",
+            863000000
+          ],
+          [
+            "nce_direct_enter",
+            384000000
+          ],
+          [
+            "__psynch_cvwait",
+            307000000
+          ],
+          [
+            "nce_direct_leave",
+            274000000
+          ],
+          [
+            "nce_direct_branch_stub",
+            261000000
+          ],
+          [
+            "liveness_pass_1",
+            251000000
+          ],
+          [
+            "helper_lookup_tb_ptr_aarch64",
+            249000000
+          ],
+          [
+            "sys_icache_invalidate",
+            247000000
+          ],
+          [
+            "tcg_gen_code_aarch64",
+            213000000
+          ],
+          [
+            "tcg_optimize_aarch64",
+            202000000
+          ],
+          [
+            "g_tree_lookup",
+            149000000
+          ],
+          [
+            "qht_lookup_custom",
+            141000000
+          ],
+          [
+            "_platform_memmove",
+            115000000
+          ],
+          [
+            "pthread_jit_write_protect_np",
+            106000000
+          ],
+          [
+            "load_helper",
+            95000000
+          ],
+          [
+            "cpu_get_tb_cpu_state_aarch64",
+            85000000
+          ],
+          [
+            "nce_direct::decode(unsigned int)",
+            74000000
+          ],
+          [
+            "__psynch_cvsignal",
+            70000000
+          ],
+          [
+            "cpu_restore_state_from_tb",
+            58000000
+          ],
+          [
+            "nce_direct::Page::compile(unsigned long long, void const*, unsigned long, unsigned int*, unsigned int, void**, unsigned int)",
+            54000000
+          ],
+          [
+            "unicorn_fill_tlb_aarch64",
+            51000000
+          ],
+          [
+            "tb_gen_code_aarch64",
+            48000000
+          ],
+          [
+            "tcg_emit_op_aarch64",
+            45000000
+          ],
+          [
+            "tcg_reg_alloc",
+            30000000
+          ],
+          [
+            "NceDirect::resolve(unsigned long long, unsigned int, NceDirectMemory)",
+            28000000
+          ],
+          [
+            "get_page_addr_code_hostp_aarch64",
+            25000000
+          ],
+          [
+            "address_space_translate_internal",
+            24000000
+          ],
+          [
+            "_platform_memset",
+            23000000
+          ],
+          [
+            "iokit_user_client_trap",
+            23000000
+          ],
+          [
+            "flatview_translate_aarch64",
+            22000000
+          ]
+        ],
+        "inclusive_ns": [
+          [
+            "_pthread_start",
+            6251000000
+          ],
+          [
+            "thread_start",
+            6251000000
+          ],
+          [
+            "0x107c5e19f",
+            6047000000
+          ],
+          [
+            "user_run",
+            5874000000
+          ],
+          [
+            "uc_emu_start",
+            4870000000
+          ],
+          [
+            "resume_all_vcpus_aarch64",
+            4868000000
+          ],
+          [
+            "cpu_exec_aarch64",
+            4867000000
+          ],
+          [
+            "tb_gen_code_aarch64",
+            2064000000
+          ],
+          [
+            "direct_execute",
+            932000000
+          ],
+          [
+            "nce_direct_run",
+            926000000
+          ],
+          [
+            "tcg_gen_code_aarch64",
+            868000000
+          ],
+          [
+            "tlb_reset_dirty_by_vaddr_aarch64",
+            863000000
+          ],
+          [
+            "NceDirect::run(NceDirectState&, NceDirectMemory, unsigned long long, unsigned long long&)",
+            612000000
+          ],
+          [
+            "NceDirect::resolve(unsigned long long, unsigned int, NceDirectMemory)",
+            586000000
+          ],
+          [
+            "helper_lookup_tb_ptr_aarch64",
+            550000000
+          ],
+          [
+            "load_helper",
+            496000000
+          ],
+          [
+            "unicorn_fill_tlb_aarch64",
+            415000000
+          ],
+          [
+            "nce_direct::Page::compile(unsigned long long, void const*, unsigned long, unsigned int*, unsigned int, void**, unsigned int)",
+            398000000
+          ],
+          [
+            "nce_direct_enter",
+            384000000
+          ],
+          [
+            "_pthread_cond_wait",
+            310000000
+          ],
+          [
+            "__psynch_cvwait",
+            307000000
+          ],
+          [
+            "nce_direct_leave",
+            274000000
+          ],
+          [
+            "nce_direct_branch_stub",
+            261000000
+          ],
+          [
+            "liveness_pass_1",
+            251000000
+          ],
+          [
+            "sys_icache_invalidate",
+            247000000
+          ],
+          [
+            "sem_down",
+            232000000
+          ],
+          [
+            "0x1081b7d3b",
+            228000000
+          ],
+          [
+            "cpu_restore_state_aarch64",
+            228000000
+          ],
+          [
+            "tb_htable_lookup_aarch64",
+            217000000
+          ],
+          [
+            "tcg_optimize_aarch64",
+            212000000
+          ]
+        ],
+        "source_sha256": "25f559508c5a9d60dd008a4ba6b0cd782a1b2a40fbcae65da876a9e8261ab296"
+      }
+    ],
+    "command": [
+      "/opt/homebrew/opt/python@3.14/bin/python3.14",
+      "scripts/probe_lkl_translation.py",
+      "--execution",
+      "direct",
+      "--mapping",
+      "pte",
+      "--workload",
+      "desktop",
+      "--entry",
+      "cli",
+      "--direct-memory",
+      "flat",
+      "--direct-code-watch",
+      "1",
+      "--cache-mib",
+      "128",
+      "--linux-fastpath",
+      "1",
+      "--art-nterp",
+      "1",
+      "--art-expanded-jit",
+      "0",
+      "--art-fast-baseline",
+      "0",
+      "--preemption",
+      "timer",
+      "--reuse-engine-build",
+      "--output",
+      "/Users/fan/project/app/husk_hyos/work/native-linux-nce/direct-fallback-profile"
+    ],
+    "returncode": 0,
+    "report_sha256": "da8c327b72a6d72c9518f407314ef5f5316e05674795287bec48fcba3fec5d47"
+  },
+  "results": [
+    {
+      "phase": "before_kernel",
+      "footprint_bytes": 3375536,
+      "resident_bytes": 8060928,
+      "resident_peak_bytes": 8060928
+    },
+    {
+      "config": "translation_exec_cache",
+      "mode": "full"
+    },
+    {
+      "config": "translation_tlb_invalidation",
+      "mode": "full",
+      "range_limit_pages": 64
+    },
+    {
+      "config": "translation_preemption",
+      "mode": "timer",
+      "instructions": 50000,
+      "timer_interval_ns": 2000000
+    },
+    {
+      "config": "translation_execution",
+      "engine": "direct",
+      "direct_cache_bytes": 134217728,
+      "data_page_bytes": 16384,
+      "mapping_entries": 256,
+      "route_entries": 256,
+      "selective_writes": false,
+      "reuse_code_checks": false,
+      "memory": "flat",
+      "code_watch": true
+    },
+    {
+      "config": "translation_cache_settings",
+      "cache_bytes": 134217728,
+      "actual_cache_bytes": 134201268,
+      "invalidation": "pages",
+      "linux_fastpath": true
+    },
+    {
+      "phase": "translated_linux_boot",
+      "slice_ns": 750000
+    },
+    {
+      "phase": "kernel_ready",
+      "footprint_bytes": 29475440,
+      "resident_bytes": 35225600,
+      "resident_peak_bytes": 35241984
+    },
+    {
+      "memory_statistics": "kernel_setup",
+      "interval_ms": 100,
+      "samples": 2,
+      "errors": 0,
+      "duration_ns": 40150000,
+      "collection_ns": 43000,
+      "footprint_mean_bytes": 16417296.0,
+      "footprint_sample_peak_bytes": 29475440,
+      "footprint_latest_bytes": 29475440,
+      "resident_mean_bytes": 21635072.0,
+      "resident_sample_peak_bytes": 35225600,
+      "resident_latest_bytes": 35225600,
+      "resident_lifetime_peak_bytes": 35241984
+    },
+    {
+      "test": "android_system_image_readonly",
+      "passed": true
+    },
+    {
+      "test": "android_data_ext4_mounted",
+      "passed": true
+    },
+    {
+      "memory_statistics": "guest_setup",
+      "interval_ms": 100,
+      "samples": 2,
+      "errors": 0,
+      "duration_ns": 32751000,
+      "collection_ns": 19000,
+      "footprint_mean_bytes": 187572944.0,
+      "footprint_sample_peak_bytes": 345670448,
+      "footprint_latest_bytes": 345670448,
+      "resident_mean_bytes": 46424064.0,
+      "resident_sample_peak_bytes": 57622528,
+      "resident_latest_bytes": 57622528,
+      "resident_lifetime_peak_bytes": 57622528
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/bin/android-services-test",
+      "span_bytes": 393216
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/bin/linker64",
+      "span_bytes": 983040
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/lib/nce-sigreturn.so",
+      "span_bytes": 16384
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libc++.so",
+      "span_bytes": 1130496
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libcrypto.so",
+      "span_bytes": 1736704
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libdl.so",
+      "span_bytes": 81920
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libbinder_ndk.so",
+      "span_bytes": 196608
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libm.so",
+      "span_bytes": 262144
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libc.so",
+      "span_bytes": 1048576
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libbinder.so",
+      "span_bytes": 835584
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/liblog.so",
+      "span_bytes": 114688
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libutils.so",
+      "span_bytes": 180224
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libcutils.so",
+      "span_bytes": 131072
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libapexsupport.so",
+      "span_bytes": 196608
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libvndksupport.so",
+      "span_bytes": 65536
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libbase.so",
+      "span_bytes": 229376
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libdl_android.so",
+      "span_bytes": 49152
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libnetd_client.so",
+      "span_bytes": 65536
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/bin/secilc",
+      "span_bytes": 393216
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/bin/servicemanager",
+      "span_bytes": 147456
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libvintf.so",
+      "span_bytes": 655360
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libselinux.so",
+      "span_bytes": 147456
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libperfetto_c.so",
+      "span_bytes": 819200
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libtinyxml2.so",
+      "span_bytes": 163840
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libz.so",
+      "span_bytes": 131072
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libpcre2.so",
+      "span_bytes": 393216
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libpackagelistparser.so",
+      "span_bytes": 65536
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system_ext/bin/hwservicemanager",
+      "span_bytes": 131072
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libnce-qemupipe.so",
+      "span_bytes": 49152
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libnce-framework-log.so",
+      "span_bytes": 49152
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.hidl.token@1.0.so",
+      "span_bytes": 131072
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libhidl-gen-utils.so",
+      "span_bytes": 81920
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libhidlbase.so",
+      "span_bytes": 720896
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/bin/gralloc-test",
+      "span_bytes": 65536
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libandroid.so",
+      "span_bytes": 327680
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libEGL.so",
+      "span_bytes": 311296
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libGLESv2.so",
+      "span_bytes": 131072
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.hardware.power-V6-ndk.so",
+      "span_bytes": 131072
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libandroidfw.so",
+      "span_bytes": 1196032
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libinput.so",
+      "span_bytes": 2473984
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libui.so",
+      "span_bytes": 458752
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libgui.so",
+      "span_bytes": 1622016
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libharfbuzz_ng.so",
+      "span_bytes": 1048576
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libsensor.so",
+      "span_bytes": 131072
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libactivitymanager_aidl.so",
+      "span_bytes": 81920
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libandroid_runtime.so",
+      "span_bytes": 2949120
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libminikin.so",
+      "span_bytes": 1441792
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libhwui.so",
+      "span_bytes": 12632064
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libxml2.so",
+      "span_bytes": 1179648
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libpowermanager.so",
+      "span_bytes": 360448
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.hardware.configstore@1.0.so",
+      "span_bytes": 180224
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.hardware.configstore-utils.so",
+      "span_bytes": 49152
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.os.flags-aconfig-cc.so",
+      "span_bytes": 65536
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/dynamic_instrumentation_manager_aidl-cpp.so",
+      "span_bytes": 81920
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libnativedisplay.so",
+      "span_bytes": 114688
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libfmq.so",
+      "span_bytes": 65536
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libgraphicsenv.so",
+      "span_bytes": 98304
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libnativewindow.so",
+      "span_bytes": 81920
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libaconfig_storage_read_api_cc.so",
+      "span_bytes": 131072
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libegl_flags.so",
+      "span_bytes": 65536
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libnativebridge_lazy.so",
+      "span_bytes": 65536
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libnativeloader_lazy.so",
+      "span_bytes": 65536
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libSurfaceFlingerProp.so",
+      "span_bytes": 131072
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libunwindstack.so",
+      "span_bytes": 720896
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.hardware.common.fmq-V1-ndk.so",
+      "span_bytes": 65536
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.hardware.common-V2-ndk.so",
+      "span_bytes": 65536
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libincfs.so",
+      "span_bytes": 212992
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libclang_rt.ubsan_standalone-aarch64-android.so",
+      "span_bytes": 2506752
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.companion.virtualdevice.flags-aconfig-cc.so",
+      "span_bytes": 65536
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/com.android.window.flags.window-aconfig_flags_c_lib.so",
+      "span_bytes": 98304
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libPlatformProperties.so",
+      "span_bytes": 131072
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/server_configurable_flags.so",
+      "span_bytes": 49152
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.hardware.graphics.allocator@2.0.so",
+      "span_bytes": 131072
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.hardware.graphics.allocator@3.0.so",
+      "span_bytes": 131072
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.hardware.graphics.allocator@4.0.so",
+      "span_bytes": 131072
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.hardware.graphics.common@1.2.so",
+      "span_bytes": 49152
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.hardware.graphics.mapper@2.0.so",
+      "span_bytes": 131072
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.hardware.graphics.mapper@2.1.so",
+      "span_bytes": 131072
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.hardware.graphics.mapper@3.0.so",
+      "span_bytes": 147456
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.hardware.graphics.mapper@4.0.so",
+      "span_bytes": 180224
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libgralloctypes.so",
+      "span_bytes": 114688
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libsync.so",
+      "span_bytes": 65536
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.hardware.graphics.common-V6-ndk.so",
+      "span_bytes": 65536
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.hardware.graphics.allocator-V2-ndk.so",
+      "span_bytes": 81920
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.hardware.graphics.bufferqueue@1.0.so",
+      "span_bytes": 278528
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.hardware.graphics.bufferqueue@2.0.so",
+      "span_bytes": 229376
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.hardware.graphics.common@1.1.so",
+      "span_bytes": 49152
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.hidl.token@1.0-utils.so",
+      "span_bytes": 65536
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libicu.so",
+      "span_bytes": 81920
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libhardware.so",
+      "span_bytes": 49152
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libpermission.so",
+      "span_bytes": 114688
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.companion.virtual.virtualdevice_aidl-cpp.so",
+      "span_bytes": 65536
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.media.audio.common.types-V4-cpp.so",
+      "span_bytes": 147456
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libmediautils.so",
+      "span_bytes": 557056
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.database.sqlite-aconfig-cc.so",
+      "span_bytes": 65536
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.media.audiopolicy-aconfig-cc.so",
+      "span_bytes": 65536
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/audioclient-types-aidl-cpp.so",
+      "span_bytes": 98304
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/audioflinger-aidl-cpp.so",
+      "span_bytes": 393216
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/audiopolicy-types-aidl-cpp.so",
+      "span_bytes": 65536
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/spatializer-aidl-cpp.so",
+      "span_bytes": 131072
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/volumegroupcallback-aidl-cpp.so",
+      "span_bytes": 65536
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/av-types-aidl-cpp.so",
+      "span_bytes": 81920
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.hardware.camera.device@3.2.so",
+      "span_bytes": 262144
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/camera_platform_flags_c_lib.so",
+      "span_bytes": 65536
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.hardware.common.fmq-V1-cpp.so",
+      "span_bytes": 49152
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.hardware.common-V2-cpp.so",
+      "span_bytes": 49152
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libandroid_net.so",
+      "span_bytes": 49152
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libbattery.so",
+      "span_bytes": 49152
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libnetdutils.so",
+      "span_bytes": 131072
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libmemtrack.so",
+      "span_bytes": 65536
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libappfuse.so",
+      "span_bytes": 98304
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libdebuggerd_client.so",
+      "span_bytes": 49152
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libdebugstore_cxx.so",
+      "span_bytes": 212992
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libbinderdebug.so",
+      "span_bytes": 98304
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libmediandk.so",
+      "span_bytes": 294912
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libcamera_client.so",
+      "span_bytes": 655360
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libcamera_metadata.so",
+      "span_bytes": 98304
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libprocinfo.so",
+      "span_bytes": 49152
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libsqlite.so",
+      "span_bytes": 1556480
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libGLESv1_CM.so",
+      "span_bytes": 65536
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libGLESv3.so",
+      "span_bytes": 131072
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libdataloader.so",
+      "span_bytes": 114688
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libvulkan.so",
+      "span_bytes": 229376
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libETC1.so",
+      "span_bytes": 49152
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libjpeg.so",
+      "span_bytes": 360448
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libhardware_legacy.so",
+      "span_bytes": 65536
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libmedia.so",
+      "span_bytes": 688128
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libmedia_helper.so",
+      "span_bytes": 147456
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libmediametrics.so",
+      "span_bytes": 114688
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libmeminfo.so",
+      "span_bytes": 131072
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libaudioclient.so",
+      "span_bytes": 1081344
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libaudioclient_aidl_conversion.so",
+      "span_bytes": 393216
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libaudiofoundation.so",
+      "span_bytes": 311296
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libaudiopolicy.so",
+      "span_bytes": 114688
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libusbhost.so",
+      "span_bytes": 49152
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libpdfium.so",
+      "span_bytes": 4915200
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libimg_utils.so",
+      "span_bytes": 163840
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libprocessgroup.so",
+      "span_bytes": 376832
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libmemunreachable.so",
+      "span_bytes": 262144
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libtimeinstate.so",
+      "span_bytes": 81920
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libimage_io.so",
+      "span_bytes": 245760
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libultrahdr.so",
+      "span_bytes": 344064
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libtracing_perfetto.so",
+      "span_bytes": 81920
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/aconfig_text_flags_c_lib.so",
+      "span_bytes": 65536
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libpng.so",
+      "span_bytes": 262144
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libdng_sdk.so",
+      "span_bytes": 819200
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libpiex.so",
+      "span_bytes": 131072
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libexpat.so",
+      "span_bytes": 196608
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libharfbuzz_subset.so",
+      "span_bytes": 999424
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.hardware.drm.common-V1-ndk.so",
+      "span_bytes": 65536
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.hardware.graphics.composer3-V4-ndk.so",
+      "span_bytes": 262144
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libheif.so",
+      "span_bytes": 81920
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libprotobuf-cpp-lite.so",
+      "span_bytes": 606208
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libft2.so",
+      "span_bytes": 622592
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/aconfig_view_accessibility_flags_c_lib.so",
+      "span_bytes": 65536
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libandroidicu.so",
+      "span_bytes": 65536
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.hardware.power@1.0.so",
+      "span_bytes": 131072
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.hardware.power@1.1.so",
+      "span_bytes": 131072
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.hardware.power@1.2.so",
+      "span_bytes": 131072
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.hardware.power@1.3.so",
+      "span_bytes": 131072
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.hardware.configstore@1.1.so",
+      "span_bytes": 147456
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/liblzma.so",
+      "span_bytes": 245760
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.hardware.graphics.common@1.0.so",
+      "span_bytes": 49152
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.hardware.media@1.0.so",
+      "span_bytes": 49152
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libicuuc.so",
+      "span_bytes": 2015232
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libicui18n.so",
+      "span_bytes": 2785280
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/com.android.media.audio-aconfig-cc.so",
+      "span_bytes": 65536
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libaudioutils.so",
+      "span_bytes": 376832
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/packagemanager_aidl-cpp.so",
+      "span_bytes": 98304
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/framework-permission-aidl-cpp.so",
+      "span_bytes": 81920
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/effect-aidl-cpp.so",
+      "span_bytes": 98304
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/shared-file-region-aidl-cpp.so",
+      "span_bytes": 49152
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.hardware.camera.common@1.0.so",
+      "span_bytes": 49152
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.hardware.memtrack@1.0.so",
+      "span_bytes": 114688
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.hardware.memtrack-V1-ndk.so",
+      "span_bytes": 81920
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libandroid_runtime_lazy.so",
+      "span_bytes": 65536
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libdatasource.so",
+      "span_bytes": 180224
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libmedia_codeclist.so",
+      "span_bytes": 114688
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libmedia_codeclist_capabilities.so",
+      "span_bytes": 229376
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libmediadrm.so",
+      "span_bytes": 589824
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libmedia_omx.so",
+      "span_bytes": 229376
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libmedia_jni_utils.so",
+      "span_bytes": 49152
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libstagefright.so",
+      "span_bytes": 2064384
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libstagefright_foundation.so",
+      "span_bytes": 262144
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libmediandk_utils.so",
+      "span_bytes": 49152
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.hardware.drm-V1-ndk.so",
+      "span_bytes": 212992
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/lib-platform-compat-native-api.so",
+      "span_bytes": 65536
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libziparchive.so",
+      "span_bytes": 131072
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.system.suspend-V1-ndk.so",
+      "span_bytes": 81920
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/mediametricsservice-aidl-cpp.so",
+      "span_bytes": 65536
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/audiopolicy-aidl-cpp.so",
+      "span_bytes": 327680
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/capture_state_listener-aidl-cpp.so",
+      "span_bytes": 65536
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/com.android.media.audioclient-aconfig-cc.so",
+      "span_bytes": 65536
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libaudio_aidl_conversion_common_cpp.so",
+      "span_bytes": 294912
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libaudiomanager.so",
+      "span_bytes": 65536
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libnblog.so",
+      "span_bytes": 262144
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libshmemcompat.so",
+      "span_bytes": 49152
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libbpf_bcc.so",
+      "span_bytes": 98304
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libbpf_minimal.so",
+      "span_bytes": 81920
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libjpegencoder.so",
+      "span_bytes": 65536
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libjpegdecoder.so",
+      "span_bytes": 49152
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libspeexresampler.so",
+      "span_bytes": 65536
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.hardware.media.omx@1.0.so",
+      "span_bytes": 491520
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libmediadrmmetrics_lite.so",
+      "span_bytes": 131072
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.hardware.drm@1.0.so",
+      "span_bytes": 475136
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.hardware.drm@1.1.so",
+      "span_bytes": 327680
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.hardware.drm@1.2.so",
+      "span_bytes": 475136
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.hardware.drm@1.3.so",
+      "span_bytes": 180224
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.hardware.drm@1.4.so",
+      "span_bytes": 409600
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libhidlallocatorutils.so",
+      "span_bytes": 49152
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.hardware.cas.native@1.0.so",
+      "span_bytes": 131072
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.hidl.allocator@1.0.so",
+      "span_bytes": 131072
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libcodec2.so",
+      "span_bytes": 49152
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libcodec2_vndk.so",
+      "span_bytes": 819200
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libhidlmemory.so",
+      "span_bytes": 65536
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libmedia_omx_client.so",
+      "span_bytes": 49152
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libsfplugin_ccodec.so",
+      "span_bytes": 901120
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libsfplugin_ccodec_utils.so",
+      "span_bytes": 573440
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libstagefright_codecbase.so",
+      "span_bytes": 98304
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libstagefright_framecapture_utils.so",
+      "span_bytes": 212992
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libstagefright_omx_utils.so",
+      "span_bytes": 65536
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/aconfig_mediacodec_flags_c_lib.so",
+      "span_bytes": 65536
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/media_quality_aidl_interface-cpp.so",
+      "span_bytes": 180224
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/audio-permission-aidl-cpp.so",
+      "span_bytes": 81920
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libshmemutil.so",
+      "span_bytes": 49152
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.hidl.memory@1.0.so",
+      "span_bytes": 180224
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.hardware.cas@1.0.so",
+      "span_bytes": 311296
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.hardware.media.bufferpool@2.0.so",
+      "span_bytes": 262144
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.hardware.media.bufferpool2-V2-ndk.so",
+      "span_bytes": 131072
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.hardware.media.c2-V1-ndk.so",
+      "span_bytes": 294912
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libdmabufheap.so",
+      "span_bytes": 114688
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libion.so",
+      "span_bytes": 65536
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libstagefright_bufferpool@2.0.1.so",
+      "span_bytes": 229376
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libstagefright_aidl_bufferpool2.so",
+      "span_bytes": 196608
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.hidl.memory.token@1.0.so",
+      "span_bytes": 114688
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.hardware.media.c2@1.0.so",
+      "span_bytes": 638976
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/graphicbuffersource-aidl-ndk.so",
+      "span_bytes": 114688
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libcodec2_client.so",
+      "span_bytes": 376832
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libstagefright_bufferqueue_helper.so",
+      "span_bytes": 131072
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libstagefright_graphicbuffersource_aidl.so",
+      "span_bytes": 65536
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libstagefright_omx.so",
+      "span_bytes": 360448
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libstagefright_surface_utils.so",
+      "span_bytes": 65536
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libstagefright_xmlparser.so",
+      "span_bytes": 147456
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libmedia_quality_include.so",
+      "span_bytes": 180224
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.hidl.safe_union@1.0.so",
+      "span_bytes": 49152
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libcodec2_hal_common.so",
+      "span_bytes": 131072
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libcodec2_aidl_client.so",
+      "span_bytes": 163840
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.hardware.media.c2@1.1.so",
+      "span_bytes": 212992
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.hardware.media.c2@1.2.so",
+      "span_bytes": 245760
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libcodec2_hidl_client@1.0.so",
+      "span_bytes": 147456
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libcodec2_hidl_client@1.1.so",
+      "span_bytes": 49152
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libcodec2_hidl_client@1.2.so",
+      "span_bytes": 49152
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/vendor/bin/hw/android.hardware.graphics.allocator-service.nce",
+      "span_bytes": 114688
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libOpenglCodecCommon.so",
+      "span_bytes": 212992
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libOpenglSystemCommon.so",
+      "span_bytes": 131072
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/lib_renderControl_enc.so",
+      "span_bytes": 131072
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libqemupipe.ranchu.so",
+      "span_bytes": 65536
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libdrm.so",
+      "span_bytes": 147456
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libGLESv1_enc.so",
+      "span_bytes": 262144
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libGLESv2_enc.so",
+      "span_bytes": 1064960
+    },
+    {
+      "test": "android_proc_pid_namespace",
+      "passed": true
+    },
+    {
+      "test": "linux_unix_socket_credentials_fd",
+      "passed": true
+    },
+    {
+      "test": "android_network_stats_rcu_socket",
+      "passed": true
+    },
+    {
+      "test": "linux_selinux_service_policy",
+      "passed": true,
+      "enforcing": true
+    },
+    {
+      "test": "android_property_shared_area",
+      "passed": true
+    },
+    {
+      "test": "android_property_writer_credentials",
+      "passed": true
+    },
+    {
+      "test": "android_property_protocol_wait",
+      "passed": true,
+      "rejected_requests": 6
+    },
+    {
+      "test": "android_platform_servicemanager_registration",
+      "passed": true
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/vendor/lib64/hw/mapper.ranchu.so",
+      "span_bytes": 114688
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libandroidemu.so",
+      "span_bytes": 98304
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/vendor/lib64/egl/libEGL_emulation.so",
+      "span_bytes": 147456
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/vendor/lib64/egl/libGLESv1_CM_emulation.so",
+      "span_bytes": 114688
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/vendor/lib64/egl/libGLESv2_emulation.so",
+      "span_bytes": 147456
+    },
+    {
+      "test": "android_gralloc_process_transfer",
+      "passed": true
+    },
+    {
+      "test": "android_gralloc_cpu_gpu_roundtrip",
+      "passed": true,
+      "width": 37,
+      "height": 23
+    },
+    {
+      "test": "android_apex_registry",
+      "passed": true,
+      "modules": 30,
+      "mutation_rejected": true
+    },
+    {
+      "test": "android_platform_binder_roundtrip",
+      "passed": true,
+      "rounds": 32,
+      "max_payload": 65536
+    },
+    {
+      "test": "android_platform_binder_fd_transfer",
+      "passed": true
+    },
+    {
+      "test": "linux_uinput_touch_navigation",
+      "passed": true,
+      "frames": 5
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/stable_cronet_libcrypto.so",
+      "span_bytes": 1654784
+    },
+    {
+      "test": "android_crypto_sdk_context_abi",
+      "passed": true,
+      "hmac_context_bytes": 104,
+      "aead_context_bytes": 584
+    },
+    {
+      "test": "android_cronet_crypto",
+      "passed": true,
+      "fips": false,
+      "hmac_context_bytes": 104
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/bin/aconfigd-system",
+      "span_bytes": 98304
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libaconfigd_rust.dylib.so",
+      "span_bytes": 196608
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/librustutils.dylib.so",
+      "span_bytes": 98304
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libandroid_logger.dylib.so",
+      "span_bytes": 65536
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libopenssl.dylib.so",
+      "span_bytes": 491520
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libmemmap2.dylib.so",
+      "span_bytes": 65536
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libanyhow.dylib.so",
+      "span_bytes": 49152
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/liblog_rust.dylib.so",
+      "span_bytes": 65536
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libclap_builder.dylib.so",
+      "span_bytes": 393216
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libclap_lex.dylib.so",
+      "span_bytes": 49152
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libstd.dylib.so",
+      "span_bytes": 884736
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libaconfig_storage_write_api.dylib.so",
+      "span_bytes": 49152
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libaconfig_storage_read_api.dylib.so",
+      "span_bytes": 49152
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libaconfig_storage_file.dylib.so",
+      "span_bytes": 163840
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libaconfigd_rust_proto.dylib.so",
+      "span_bytes": 163840
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libprotobuf.dylib.so",
+      "span_bytes": 1540096
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libnix.dylib.so",
+      "span_bytes": 327680
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libenv_filter.dylib.so",
+      "span_bytes": 65536
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libonce_cell.dylib.so",
+      "span_bytes": 49152
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libbitflags.dylib.so",
+      "span_bytes": 49152
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libssl.so",
+      "span_bytes": 753664
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libstrsim.dylib.so",
+      "span_bytes": 65536
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libanstyle.dylib.so",
+      "span_bytes": 49152
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libtempfile.dylib.so",
+      "span_bytes": 98304
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libaconfig_storage_protos.dylib.so",
+      "span_bytes": 131072
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libprotobuf_support.dylib.so",
+      "span_bytes": 81920
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libbytes.dylib.so",
+      "span_bytes": 81920
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/liblibc.dylib.so",
+      "span_bytes": 65536
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libregex.dylib.so",
+      "span_bytes": 376832
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libfastrand.dylib.so",
+      "span_bytes": 65536
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/librustix.dylib.so",
+      "span_bytes": 212992
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libaho_corasick.dylib.so",
+      "span_bytes": 98304
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libmemchr.dylib.so",
+      "span_bytes": 49152
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libregex_syntax.dylib.so",
+      "span_bytes": 655360
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/liberrno.dylib.so",
+      "span_bytes": 49152
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/apex/com.android.configinfrastructure/bin/aconfigd-mainline",
+      "span_bytes": 98304
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/apex/com.android.configinfrastructure/lib64/libaconfigd_rust.dylib.so",
+      "span_bytes": 196608
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/apex/com.android.configinfrastructure/lib64/librustutils.dylib.so",
+      "span_bytes": 98304
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/apex/com.android.configinfrastructure/lib64/libandroid_logger.dylib.so",
+      "span_bytes": 65536
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/apex/com.android.configinfrastructure/lib64/libopenssl.dylib.so",
+      "span_bytes": 491520
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/apex/com.android.configinfrastructure/lib64/libmemmap2.dylib.so",
+      "span_bytes": 65536
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/apex/com.android.configinfrastructure/lib64/libanyhow.dylib.so",
+      "span_bytes": 49152
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/apex/com.android.configinfrastructure/lib64/liblog_rust.dylib.so",
+      "span_bytes": 65536
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/apex/com.android.configinfrastructure/lib64/libclap_builder.dylib.so",
+      "span_bytes": 393216
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/apex/com.android.configinfrastructure/lib64/libclap_lex.dylib.so",
+      "span_bytes": 49152
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/apex/com.android.configinfrastructure/lib64/libstd.dylib.so",
+      "span_bytes": 884736
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/apex/com.android.configinfrastructure/lib64/libaconfig_storage_write_api.dylib.so",
+      "span_bytes": 49152
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/apex/com.android.configinfrastructure/lib64/libaconfig_storage_read_api.dylib.so",
+      "span_bytes": 49152
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/apex/com.android.configinfrastructure/lib64/libaconfig_storage_file.dylib.so",
+      "span_bytes": 163840
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/apex/com.android.configinfrastructure/lib64/libaconfigd_rust_proto.dylib.so",
+      "span_bytes": 163840
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/apex/com.android.configinfrastructure/lib64/libprotobuf.dylib.so",
+      "span_bytes": 1540096
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/apex/com.android.configinfrastructure/lib64/libnix.dylib.so",
+      "span_bytes": 327680
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/apex/com.android.configinfrastructure/lib64/libcutils.so",
+      "span_bytes": 131072
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/apex/com.android.configinfrastructure/lib64/libenv_filter.dylib.so",
+      "span_bytes": 65536
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/apex/com.android.configinfrastructure/lib64/libonce_cell.dylib.so",
+      "span_bytes": 49152
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/apex/com.android.configinfrastructure/lib64/libbitflags.dylib.so",
+      "span_bytes": 49152
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/apex/com.android.configinfrastructure/lib64/libstrsim.dylib.so",
+      "span_bytes": 65536
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/apex/com.android.configinfrastructure/lib64/libanstyle.dylib.so",
+      "span_bytes": 49152
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/apex/com.android.configinfrastructure/lib64/libc++.so",
+      "span_bytes": 1130496
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/apex/com.android.configinfrastructure/lib64/libtempfile.dylib.so",
+      "span_bytes": 98304
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/apex/com.android.configinfrastructure/lib64/libaconfig_storage_protos.dylib.so",
+      "span_bytes": 131072
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/apex/com.android.configinfrastructure/lib64/libprotobuf_support.dylib.so",
+      "span_bytes": 81920
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/apex/com.android.configinfrastructure/lib64/libbytes.dylib.so",
+      "span_bytes": 81920
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/apex/com.android.configinfrastructure/lib64/liblibc.dylib.so",
+      "span_bytes": 65536
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/apex/com.android.configinfrastructure/lib64/libbase.so",
+      "span_bytes": 229376
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/apex/com.android.configinfrastructure/lib64/libregex.dylib.so",
+      "span_bytes": 376832
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/apex/com.android.configinfrastructure/lib64/libfastrand.dylib.so",
+      "span_bytes": 65536
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/apex/com.android.configinfrastructure/lib64/librustix.dylib.so",
+      "span_bytes": 212992
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/apex/com.android.configinfrastructure/lib64/libaho_corasick.dylib.so",
+      "span_bytes": 98304
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/apex/com.android.configinfrastructure/lib64/libmemchr.dylib.so",
+      "span_bytes": 49152
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/apex/com.android.configinfrastructure/lib64/libregex_syntax.dylib.so",
+      "span_bytes": 655360
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/apex/com.android.configinfrastructure/lib64/liberrno.dylib.so",
+      "span_bytes": 49152
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/bin/derive_classpath",
+      "span_bytes": 376832
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/bin/app_process64",
+      "span_bytes": 65536
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libnativeloader.so",
+      "span_bytes": 180224
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libsigchain.so",
+      "span_bytes": 81920
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libwilhelm.so",
+      "span_bytes": 311296
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libnativebridge.so",
+      "span_bytes": 65536
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libstagefright_http_support.so",
+      "span_bytes": 49152
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libnativehelper.so",
+      "span_bytes": 65536
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libart.so",
+      "span_bytes": 11206656
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libartpalette.so",
+      "span_bytes": 65536
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libartbase.so",
+      "span_bytes": 557056
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libdexfile.so",
+      "span_bytes": 278528
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libprofile.so",
+      "span_bytes": 196608
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/liblz4.so",
+      "span_bytes": 180224
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/heapprofd_client_api.so",
+      "span_bytes": 131072
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libartpalette-system.so",
+      "span_bytes": 65536
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libtombstoned_client.so",
+      "span_bytes": 49152
+    },
+    {
+      "benchmark": "android_aes_gcm",
+      "hwcap": 3,
+      "bytes": 67108864,
+      "elapsed_ms": 5136.562
+    },
+    {
+      "test": "android_crypto",
+      "passed": true,
+      "fips": false,
+      "known_answers": true,
+      "reject_bad_tag": true
+    },
+    {
+      "phase": "android_framework_launch"
+    },
+    {
+      "test": "android_aconfig_storage",
+      "passed": true,
+      "containers": 26,
+      "initializations": 2
+    },
+    {
+      "test": "android_derived_classpaths",
+      "passed": true,
+      "variables": 4
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libicu_jni.so",
+      "span_bytes": 147456
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libjavacore.so",
+      "span_bytes": 311296
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libandroidio.so",
+      "span_bytes": 65536
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libopenjdk.so",
+      "span_bytes": 262144
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libopenjdkjvm.so",
+      "span_bytes": 65536
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libframework-connectivity-tiramisu-jni.so",
+      "span_bytes": 49152
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libvintf_jni.so",
+      "span_bytes": 81920
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libjavacrypto.so",
+      "span_bytes": 262144
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libstatssocket.so",
+      "span_bytes": 98304
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/vendor/bin/hw/android.hardware.power-service.example",
+      "span_bytes": 81920
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/vendor/bin/hw/android.hardware.power.stats-service.example",
+      "span_bytes": 81920
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.hardware.power.stats-V2-ndk.so",
+      "span_bytes": 98304
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/vendor/bin/hw/android.hardware.graphics.composer3-service.ranchu",
+      "span_bytes": 311296
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.hardware.graphics.composer@2.1-resources.so",
+      "span_bytes": 49152
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.hardware.graphics.composer@2.2-resources.so",
+      "span_bytes": 49152
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libjsoncpp.so",
+      "span_bytes": 212992
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.hardware.graphics.composer@2.1.so",
+      "span_bytes": 344064
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.hardware.graphics.composer@2.2.so",
+      "span_bytes": 262144
+    },
+    {
+      "phase": "android_framework_java"
+    },
+    {
+      "test": "android_kernel_configuration_query",
+      "passed": true,
+      "vmap_stack": false
+    },
+    {
+      "test": "android_vintf_build_consistency",
+      "passed": true
+    },
+    {
+      "test": "android_framework_jca",
+      "passed": true
+    },
+    {
+      "test": "android_framework_file_observer",
+      "passed": true
+    },
+    {
+      "phase": "android_framework_graphics"
+    },
+    {
+      "test": "android_framework_graphics",
+      "passed": true,
+      "canvas": true,
+      "png_roundtrip": true
+    },
+    {
+      "test": "android_framework_runtime",
+      "passed": true,
+      "parcel": true,
+      "looper": true,
+      "shared_memory": true,
+      "binder": true
+    },
+    {
+      "phase": "android_display_service_registered",
+      "service": "android.hardware.graphics.allocator.IAllocator/default"
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/bin/surfaceflinger",
+      "span_bytes": 8093696
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.adpf.sessionmanager_aidl-ndk.so",
+      "span_bytes": 65536
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libtimestats_atoms_proto.so",
+      "span_bytes": 114688
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.hardware.graphics.composer@2.3.so",
+      "span_bytes": 344064
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.hardware.graphics.composer@2.4.so",
+      "span_bytes": 409600
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.os.flags-aconfig-cc-host.so",
+      "span_bytes": 65536
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libstatslog_surfaceflinger.so",
+      "span_bytes": 49152
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.os.statsbootstrap_aidl-cpp.so",
+      "span_bytes": 81920
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libstatsbootstrap.so",
+      "span_bytes": 65536
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/bin/hw/android.system.suspend-service",
+      "span_bytes": 229376
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/bin/installd",
+      "span_bytes": 458752
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/liblogwrap.so",
+      "span_bytes": 65536
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libandroid_servers.so",
+      "span_bytes": 884736
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libadb_pairing_server.so",
+      "span_bytes": 311296
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libadb_pairing_connection.so",
+      "span_bytes": 524288
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libchrome.so",
+      "span_bytes": 1228800
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libmemevents.so",
+      "span_bytes": 81920
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libmemtrackproxy.so",
+      "span_bytes": 65536
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libmtp.so",
+      "span_bytes": 278528
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libvibratorservice.so",
+      "span_bytes": 163840
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libinputflinger.so",
+      "span_bytes": 3244032
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libinputflinger_base.so",
+      "span_bytes": 98304
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libinputservice.so",
+      "span_bytes": 163840
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libservices.core-gnss.so",
+      "span_bytes": 491520
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libstatshidl.so",
+      "span_bytes": 65536
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libstatspull.so",
+      "span_bytes": 163840
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libstatslog.so",
+      "span_bytes": 344064
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libschedulerservicehidl.so",
+      "span_bytes": 49152
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libsensorservice.so",
+      "span_bytes": 475136
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libsensorservicehidl.so",
+      "span_bytes": 65536
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libsensorserviceaidl.so",
+      "span_bytes": 98304
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libtinyalsa.so",
+      "span_bytes": 81920
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libnetutils.so",
+      "span_bytes": 81920
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libpsi.so",
+      "span_bytes": 49152
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.hardware.audio.common@2.0.so",
+      "span_bytes": 49152
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.media.audio.common.types-V1-ndk.so",
+      "span_bytes": 98304
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.hardware.broadcastradio@1.0.so",
+      "span_bytes": 327680
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.hardware.broadcastradio@1.1.so",
+      "span_bytes": 360448
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.hardware.contexthub@1.0.so",
+      "span_bytes": 196608
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.hardware.gnss-V6-cpp.so",
+      "span_bytes": 671744
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.hardware.gnss@1.0.so",
+      "span_bytes": 1146880
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.hardware.gnss@1.1.so",
+      "span_bytes": 393216
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.hardware.gnss@2.0.so",
+      "span_bytes": 753664
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.hardware.gnss@2.1.so",
+      "span_bytes": 573440
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.hardware.gnss.measurement_corrections@1.0.so",
+      "span_bytes": 163840
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.hardware.input.processor-V1-ndk.so",
+      "span_bytes": 65536
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.hardware.ir@1.0.so",
+      "span_bytes": 131072
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.hardware.light@2.0.so",
+      "span_bytes": 131072
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.hardware.power.stats@1.0.so",
+      "span_bytes": 147456
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.hardware.power.stats-V1-ndk.so",
+      "span_bytes": 98304
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.hardware.thermal@1.0.so",
+      "span_bytes": 131072
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.hardware.thermal-V3-ndk.so",
+      "span_bytes": 114688
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.hardware.tv.input@1.0.so",
+      "span_bytes": 180224
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.hardware.tv.input-V3-ndk.so",
+      "span_bytes": 98304
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.hardware.vibrator-V3-ndk.so",
+      "span_bytes": 163840
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.hardware.vr@1.0.so",
+      "span_bytes": 114688
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.frameworks.schedulerservice@1.0.so",
+      "span_bytes": 131072
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.frameworks.sensorservice@1.0.so",
+      "span_bytes": 278528
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.frameworks.sensorservice-V1-ndk.so",
+      "span_bytes": 114688
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.frameworks.stats@1.0.so",
+      "span_bytes": 180224
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.frameworks.stats-V2-ndk.so",
+      "span_bytes": 98304
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.os.vibrator.flags-aconfig-cc.so",
+      "span_bytes": 65536
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.system.suspend.control-V1-cpp.so",
+      "span_bytes": 81920
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.system.suspend.control.internal-cpp.so",
+      "span_bytes": 81920
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android_location_flags_c_lib.so",
+      "span_bytes": 65536
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/service.incremental.so",
+      "span_bytes": 1146880
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libcrypto_utils.so",
+      "span_bytes": 49152
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libadb_pairing_auth.so",
+      "span_bytes": 278528
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libevent.so",
+      "span_bytes": 344064
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libasyncio.so",
+      "span_bytes": 49152
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/com.android.server.inputflinger-ndk.so",
+      "span_bytes": 114688
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libkll.so",
+      "span_bytes": 114688
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libinputreader.so",
+      "span_bytes": 1359872
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libinputreporter.so",
+      "span_bytes": 49152
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.hardware.gnss.visibility_control@1.0.so",
+      "span_bytes": 163840
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libexpresslog.so",
+      "span_bytes": 49152
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.hardware.sensors@1.0.so",
+      "span_bytes": 147456
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.hardware.sensors@2.0.so",
+      "span_bytes": 196608
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.hardware.sensors@2.1.so",
+      "span_bytes": 196608
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libbatterystats_aidl.so",
+      "span_bytes": 65536
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libprotoutil.so",
+      "span_bytes": 81920
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libsensorprivacy.so",
+      "span_bytes": 98304
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.hardware.sensors-V3-ndk.so",
+      "span_bytes": 131072
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.hardware.gnss.measurement_corrections@1.1.so",
+      "span_bytes": 131072
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.hardware.input.common-V1-ndk.so",
+      "span_bytes": 65536
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libcap.so",
+      "span_bytes": 81920
+    },
+    {
+      "phase": "android_display_service_registered",
+      "service": "android.hardware.graphics.composer3.IComposer/default"
+    },
+    {
+      "phase": "android_display_service_registered",
+      "service": "SurfaceFlinger"
+    },
+    {
+      "phase": "android_display_service_registered",
+      "service": "SurfaceFlingerAIDL"
+    },
+    {
+      "test": "android_surfaceflinger_registered",
+      "passed": true
+    },
+    {
+      "test": "android_system_suspend_wakelocks",
+      "passed": true,
+      "acquisitions": 3,
+      "repeat_release": true
+    },
+    {
+      "test": "android_app_data_mount_layout",
+      "passed": true
+    },
+    {
+      "test": "android_installd_app_data",
+      "passed": true,
+      "packages": 2,
+      "storage_types": 2,
+      "caller_uid": 1000
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libprocessgroup_setup.so",
+      "span_bytes": 65536
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/vendor/bin/hw/android.hardware.health-service.example",
+      "span_bytes": 229376
+    },
+    {
+      "test": "android_surfaceflinger_composed_pixels",
+      "passed": true,
+      "frames": 3
+    },
+    {
+      "phase": "android_zygote_launch"
+    },
+    {
+      "test": "android_cgroup_cross_uid_permissions",
+      "passed": true,
+      "unprivileged_denied": true
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.hardware.health-V4-ndk.so",
+      "span_bytes": 98304
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/bin/vold",
+      "span_bytes": 1032192
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.system.keystore2-V5-ndk.so",
+      "span_bytes": 131072
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.hardware.boot@1.0.so",
+      "span_bytes": 147456
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.hardware.boot-V1-ndk.so",
+      "span_bytes": 81920
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libboot_control_client.so",
+      "span_bytes": 81920
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libext4_utils.so",
+      "span_bytes": 65536
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libf2fs_sparseblock.so",
+      "span_bytes": 98304
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libgsi.so",
+      "span_bytes": 49152
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libkeymint_support.so",
+      "span_bytes": 163840
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libsysutils.so",
+      "span_bytes": 81920
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.hardware.security.keymint-V4-ndk.so",
+      "span_bytes": 163840
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.hardware.boot@1.1.so",
+      "span_bytes": 131072
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.hardware.boot@1.2.so",
+      "span_bytes": 131072
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libext2_uuid.so",
+      "span_bytes": 65536
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.hardware.security.secureclock-V1-ndk.so",
+      "span_bytes": 81920
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/bin/vold_prepare_subdirs",
+      "span_bytes": 81920
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/bin/storaged",
+      "span_bytes": 229376
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.hardware.health@1.0.so",
+      "span_bytes": 49152
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.hardware.health@2.0.so",
+      "span_bytes": 229376
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/apex/com.android.art/bin/artd",
+      "span_bytes": 327680
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libartservice.so",
+      "span_bytes": 49152
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libarttools.so",
+      "span_bytes": 229376
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/apex/com.android.tethering/bin/netbpfload",
+      "span_bytes": 1212416
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libbpf.so",
+      "span_bytes": 966656
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/bin/bpfloader",
+      "span_bytes": 98304
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/liblibbpf_rs.dylib.so",
+      "span_bytes": 180224
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libbpf_android.so",
+      "span_bytes": 98304
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/liblibbpf_sys.dylib.so",
+      "span_bytes": 65536
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libvsprintf_wrapper.so",
+      "span_bytes": 49152
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/bin/netd",
+      "span_bytes": 573440
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/netd_aidl_interface-V17-cpp.so",
+      "span_bytes": 376832
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.system.net.netd@1.0.so",
+      "span_bytes": 131072
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.system.net.netd@1.1.so",
+      "span_bytes": 147456
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.system.net.netd-V1-ndk.so",
+      "span_bytes": 81920
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libnetd_updatable.so",
+      "span_bytes": 81920
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libnetd_resolv.so",
+      "span_bytes": 2424832
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libpcap.so",
+      "span_bytes": 344064
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/mdns_aidl_interface-V1-cpp.so",
+      "span_bytes": 98304
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/netd_event_listener_interface-V1-cpp.so",
+      "span_bytes": 81920
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/oemnetd_aidl_interface-cpp.so",
+      "span_bytes": 81920
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/bin/iptables",
+      "span_bytes": 917504
+    },
+    {
+      "test": "android_vold_user_storage",
+      "passed": true,
+      "user": 0,
+      "flags": 3
+    },
+    {
+      "test": "android_network_bpf_loaded",
+      "passed": true
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libcom.android.tethering.dns_helper.so",
+      "span_bytes": 81920
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/bin/lmkd",
+      "span_bytes": 147456
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system_ext/bin/hw/android.hidl.allocator@1.0-service",
+      "span_bytes": 65536
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/vendor/bin/hw/android.hardware.audio.service",
+      "span_bytes": 65536
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/bin/mediametrics",
+      "span_bytes": 65536
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libmediametricsservice.so",
+      "span_bytes": 606208
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libstats_media_metrics.so",
+      "span_bytes": 65536
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/vendor/lib64/hw/android.hardware.audio@7.1-impl.ranchu.so",
+      "span_bytes": 294912
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.hardware.audio@7.0.so",
+      "span_bytes": 933888
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.hardware.audio@7.0-util.so",
+      "span_bytes": 49152
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.hardware.audio.common@7.0.so",
+      "span_bytes": 131072
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.hardware.audio.common@7.0-util.so",
+      "span_bytes": 196608
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libtinyalsav2.so",
+      "span_bytes": 98304
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.hardware.audio@7.1.so",
+      "span_bytes": 540672
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.hardware.audio.common@7.1-enums.so",
+      "span_bytes": 114688
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.hardware.audio.effect@7.0.so",
+      "span_bytes": 1605632
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.hardware.audio.common-util.so",
+      "span_bytes": 65536
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.hardware.audio.common@7.0-enums.so",
+      "span_bytes": 114688
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/vendor/lib64/hw/android.hardware.audio.legacy@7.1-impl.ranchu.so",
+      "span_bytes": 245760
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libmediautils_vendor.so",
+      "span_bytes": 212992
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.hardware.audio@7.1-util.so",
+      "span_bytes": 49152
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.hardware.audio.common@7.1-util.so",
+      "span_bytes": 196608
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/vendor/lib64/hw/android.hardware.audio.effect@7.0-impl.so",
+      "span_bytes": 344064
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libeffects.so",
+      "span_bytes": 65536
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.hardware.audio.effect@7.0-util.so",
+      "span_bytes": 49152
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libeffectsconfig.so",
+      "span_bytes": 81920
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/apex/com.android.os.statsd/bin/statsd",
+      "span_bytes": 2457600
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libincident.so",
+      "span_bytes": 49152
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libincidentpriv.so",
+      "span_bytes": 163840
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/vendor/bin/hw/android.hardware.gatekeeper-service.nonsecure",
+      "span_bytes": 81920
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.hardware.gatekeeper-V1-ndk.so",
+      "span_bytes": 81920
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.hardware.security.sharedsecret-V1-ndk.so",
+      "span_bytes": 98304
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/lib_android_keymaster_keymint_utils.so",
+      "span_bytes": 49152
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libgatekeeper.so",
+      "span_bytes": 49152
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libkeymaster_portable.so",
+      "span_bytes": 573440
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libcppbor.so",
+      "span_bytes": 114688
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libcppcose_rkp.so",
+      "span_bytes": 131072
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/vendor/bin/hw/android.hardware.security.keymint-service",
+      "span_bytes": 65536
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.hardware.security.rkp-V3-ndk.so",
+      "span_bytes": 98304
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libkeymint.so",
+      "span_bytes": 180224
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libpuresoftkeymasterdevice.so",
+      "span_bytes": 147456
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libkeymaster_messages.so",
+      "span_bytes": 147456
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libsoft_attestation_cert.so",
+      "span_bytes": 65536
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/bin/keystore2",
+      "span_bytes": 2326528
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libkeystore2_aaid.so",
+      "span_bytes": 49152
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libkeystore2_apc_compat.so",
+      "span_bytes": 81920
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libkeystore2_crypto.so",
+      "span_bytes": 49152
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libkm_compat_service.so",
+      "span_bytes": 65536
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libkeystore-attestation-application-id.so",
+      "span_bytes": 65536
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.hardware.confirmationui-V1-ndk.so",
+      "span_bytes": 98304
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.hardware.confirmationui@1.0.so",
+      "span_bytes": 163840
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.security.compat-ndk.so",
+      "span_bytes": 65536
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libkeymaster4_1support.so",
+      "span_bytes": 147456
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libkm_compat.so",
+      "span_bytes": 245760
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.security.aaid_aidl-cpp.so",
+      "span_bytes": 81920
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.hardware.keymaster@4.0.so",
+      "span_bytes": 262144
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.hardware.keymaster@3.0.so",
+      "span_bytes": 212992
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.hardware.keymaster@4.1.so",
+      "span_bytes": 180224
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libkeymaster4support.so",
+      "span_bytes": 114688
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/bin/gatekeeperd",
+      "span_bytes": 98304
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.hardware.gatekeeper@1.0.so",
+      "span_bytes": 131072
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libgatekeeper_aidl.so",
+      "span_bytes": 81920
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.security.authorization-ndk.so",
+      "span_bytes": 98304
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/bin/audioserver",
+      "span_bytes": 2916352
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.media.audio-aconfig-cc.so",
+      "span_bytes": 65536
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libaudiopolicycomponents.so",
+      "span_bytes": 671744
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libaudiopolicymanagerdefault.so",
+      "span_bytes": 737280
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libaudiousecasevalidation.so",
+      "span_bytes": 49152
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libheadtracking.so",
+      "span_bytes": 131072
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libheadtracking-binding.so",
+      "span_bytes": 65536
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/com.android.media.audioserver-aconfig-cc.so",
+      "span_bytes": 65536
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libaudioflinger_datapath.so",
+      "span_bytes": 49152
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libaudioflinger_fastpath.so",
+      "span_bytes": 98304
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libaudioflinger_timing.so",
+      "span_bytes": 49152
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libaudioflinger_utils.so",
+      "span_bytes": 65536
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libaudiohal.so",
+      "span_bytes": 65536
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libaudiopermission.so",
+      "span_bytes": 147456
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libaudioprocessing.so",
+      "span_bytes": 753664
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libnbaio.so",
+      "span_bytes": 98304
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libsounddose.so",
+      "span_bytes": 131072
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libvibrator.so",
+      "span_bytes": 81920
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/aaudio-aidl-cpp.so",
+      "span_bytes": 114688
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/com.android.media.aaudio-aconfig-cc.so",
+      "span_bytes": 65536
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libaaudio_internal.so",
+      "span_bytes": 475136
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.hardware.audio.core.sounddose-V3-ndk.so",
+      "span_bytes": 98304
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libaudiopolicyenginedefault.so",
+      "span_bytes": 327680
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libaudiospdif.so",
+      "span_bytes": 65536
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libsonic.so",
+      "span_bytes": 49152
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.media.audio.common.types-V4-ndk.so",
+      "span_bytes": 180224
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.hardware.audio.sounddose-V3-ndk.so",
+      "span_bytes": 65536
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libaudio_aidl_conversion_common_ndk.so",
+      "span_bytes": 311296
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.hardware.audio.common-V4-ndk.so",
+      "span_bytes": 65536
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/bin/mediaserver",
+      "span_bytes": 65536
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libmediaplayerservice.so",
+      "span_bytes": 1458176
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libresourcemanagerservice.so",
+      "span_bytes": 294912
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libdrmframework.so",
+      "span_bytes": 81920
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libstagefright_httplive.so",
+      "span_bytes": 557056
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libdrmframeworkcommon.so",
+      "span_bytes": 147456
+    },
+    {
+      "test": "android_keystore_persistence",
+      "passed": true,
+      "restored": false
+    },
+    {
+      "phase": "android_system_server_boot"
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libaudiohal@7.1.so",
+      "span_bytes": 2572288
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libaudiohal_deathhandler.so",
+      "span_bytes": 65536
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/vendor/lib64/hw/audio.r_submix.default.so",
+      "span_bytes": 65536
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libnbaio_mono.so",
+      "span_bytes": 49152
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libstats_jni.so",
+      "span_bytes": 49152
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libmedia_jni.so",
+      "span_bytes": 622592
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libmediadrmmetrics_consumer.so",
+      "span_bytes": 49152
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libsonivox.so",
+      "span_bytes": 638976
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.hardware.tv.tuner-V3-ndk.so",
+      "span_bytes": 425984
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libmediadrmmetrics_full.so",
+      "span_bytes": 147456
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libprotobuf-cpp-full.so",
+      "span_bytes": 2228224
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libsoundpool.so",
+      "span_bytes": 131072
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libaudioeffect_jni.so",
+      "span_bytes": 98304
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/librtp_jni.so",
+      "span_bytes": 262144
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libstagefright_amrnb_common.so",
+      "span_bytes": 98304
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/librs_jni.so",
+      "span_bytes": 114688
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libRS.so",
+      "span_bytes": 98304
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libjnigraphics.so",
+      "span_bytes": 65536
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libutilscallstack.so",
+      "span_bytes": 65536
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/android.hardware.renderscript@1.0.so",
+      "span_bytes": 425984
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/bin/idmap2",
+      "span_bytes": 98304
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libidmap2.so",
+      "span_bytes": 245760
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libframework-connectivity-jni.so",
+      "span_bytes": 65536
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libcompiler_rt.so",
+      "span_bytes": 81920
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libmainlinecronet.133.0.6876.3.so",
+      "span_bytes": 5799936
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/stable_cronet_libpki.so",
+      "span_bytes": 475136
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/stable_cronet_libssl.so",
+      "span_bytes": 737280
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/bin/idmap2d",
+      "span_bytes": 147456
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libalarm_jni.so",
+      "span_bytes": 49152
+    },
+    {
+      "phase": "android_activity_service_registered"
+    },
+    {
+      "test": "android_system_server_services",
+      "passed": true
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/bin/cmd",
+      "span_bytes": 81920
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libservice-connectivity.so",
+      "span_bytes": 114688
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libnetworkstats.so",
+      "span_bytes": 507904
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libandroid_net_connectivity_com_android_net_module_util_jni.so",
+      "span_bytes": 81920
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/apex/com.android.tethering/priv-app/TetheringGoogle@BE2A.250530.026.F3/TetheringGoogle.apk",
+      "span_bytes": 49152
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/apex/com.android.tethering/priv-app/TetheringGoogle@BE2A.250530.026.F3/TetheringGoogle.apk",
+      "span_bytes": 245760
+    },
+    {
+      "test": "android_system_boot_completed",
+      "passed": true
+    },
+    {
+      "phase": "android_desktop_first_frame_wait"
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libicing.so",
+      "span_bytes": 1867776
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libstdc++.so",
+      "span_bytes": 65536
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/apex/com.android.mediaprovider/priv-app/MediaProviderGoogle@BE2A.250530.026.F3/MediaProviderGoogle.apk",
+      "span_bytes": 1146880
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/apex/com.android.mediaprovider/priv-app/MediaProviderGoogle@BE2A.250530.026.F3/MediaProviderGoogle.apk",
+      "span_bytes": 294912
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/apex/com.android.mediaprovider/priv-app/MediaProviderGoogle@BE2A.250530.026.F3/MediaProviderGoogle.apk",
+      "span_bytes": 1179648
+    },
+    {
+      "phase": "runtime_elf",
+      "path": "/system/lib64/libdrmframework_jni.so",
+      "span_bytes": 81920
+    },
+    {
+      "test": "android_desktop_visible_activity",
+      "passed": true,
+      "package": "com.android.launcher3",
+      "sampled_colors": 470
+    },
+    {
+      "test": "android_desktop_visible_activity",
+      "passed": true,
+      "package": "com.android.deskclock",
+      "sampled_colors": 122
+    },
+    {
+      "test": "android_clock_controls_ready",
+      "passed": true
+    },
+    {
+      "test": "android_preview_clock_data_preserved",
+      "passed": true,
+      "present": false
+    },
+    {
+      "test": "android_application_data_persistence",
+      "passed": true,
+      "package": "com.android.deskclock",
+      "row_id": 3,
+      "restored": false
+    },
+    {
+      "test": "android_desktop_visible_activity",
+      "passed": true,
+      "package": "com.android.deskclock",
+      "sampled_colors": 138
+    },
+    {
+      "test": "android_clock_controls_ready",
+      "passed": true
+    },
+    {
+      "test": "android_clock_alarm_activity",
+      "passed": true
+    },
+    {
+      "test": "android_desktop_visible_activity",
+      "passed": true,
+      "package": "com.google.android.documentsui",
+      "sampled_colors": 92
+    },
+    {
+      "test": "android_desktop_launch_commands",
+      "passed": true,
+      "applications": 2
+    },
+    {
+      "test": "android_framework_shutdown",
+      "passed": true
+    },
+    {
+      "test": "android_system_process_groups_stopped",
+      "passed": true
+    },
+    {
+      "test": "android_platform_binder_cleanup",
+      "passed": true,
+      "death_notifications": 1
+    },
+    {
+      "test": "translated_linux_process",
+      "path": "/system/bin/android-services-test",
+      "passed": true,
+      "waited": 30,
+      "status": 0
+    },
+    {
+      "test": "native_graphics_channels_released",
+      "passed": true,
+      "opened": 126,
+      "closed": 126
+    },
+    {
+      "phase": "guest_finished",
+      "footprint_bytes": 3011611480,
+      "resident_bytes": 2615705600,
+      "resident_peak_bytes": 2719498240
+    },
+    {
+      "memory_statistics": "desktop_execution",
+      "interval_ms": 100,
+      "samples": 1640,
+      "errors": 0,
+      "duration_ns": 175002285000,
+      "collection_ns": 185066000,
+      "footprint_mean_bytes": 2332898439.971,
+      "footprint_sample_peak_bytes": 3172355288,
+      "footprint_latest_bytes": 3011611480,
+      "resident_mean_bytes": 2175625285.932,
+      "resident_sample_peak_bytes": 2714927104,
+      "resident_latest_bytes": 2615705600,
+      "resident_lifetime_peak_bytes": 2719498240
+    },
+    {
+      "test": "linux_data_readonly_shutdown",
+      "passed": true
+    },
+    {
+      "test": "translated_context_cleanup",
+      "passed": true,
+      "allocated": 1072,
+      "freed": 1072,
+      "maps": 0,
+      "revocations": 0,
+      "tlb_fills": 70605273,
+      "faults": 519433,
+      "syscalls": 4210037,
+      "preemptions": 54934
+    },
+    {
+      "translation_cache": "pages",
+      "full_flushes": 122,
+      "invalidated_pages": 271100,
+      "tlb_flushes": 101098
+    },
+    {
+      "translation_tlb": "full",
+      "full_flushes": 101098,
+      "invalidated_pages": 0,
+      "inactive_skips": 0,
+      "mm_switches": 86299,
+      "inactive_mapping_changes": 1182437
+    },
+    {
+      "translation_engine_cache": true,
+      "total_flushes": 128,
+      "invalidated_blocks": 2603424,
+      "current_blocks": 174976,
+      "used_bytes": 128759108,
+      "capacity_bytes": 134201268
+    },
+    {
+      "direct_code_watch": true,
+      "enabled": true,
+      "queries": 283422096,
+      "protections": 10147,
+      "write_faults": 5114,
+      "invalidations": 10969,
+      "protection_failures": 0,
+      "excluded_pages": 402
+    },
+    {
+      "direct_flat_tables": true,
+      "enabled": true,
+      "live_virtual_bytes": 0,
+      "peak_virtual_bytes": 226492416,
+      "updates": 1847453,
+      "refresh_pages": 111740365
+    },
+    {
+      "direct_code_validation": true,
+      "content_checks": 30150,
+      "version_hits": 283297710
+    },
+    {
+      "direct_fallback_reasons": true,
+      "alignment": 0,
+      "cross_page": 209426,
+      "code_write": 0
+    },
+    {
+      "direct_execution": true,
+      "calls": 4784404,
+      "fallbacks": 243644,
+      "compiles": 761764,
+      "flushes": 17,
+      "code_changes": 27285,
+      "code_bytes": 93565232,
+      "capacity_bytes": 134217728,
+      "pages": 4819,
+      "mapping_misses": 408652,
+      "code_lookups": 283489686,
+      "read_mapping_misses": 287395,
+      "write_mapping_misses": 121257,
+      "write_invalidations": 0,
+      "code_validation_hits": 0,
+      "pte_read_refills": 0
+    },
+    {
+      "direct_fallback": 2902458368,
+      "count": 580
+    },
+    {
+      "direct_fallback": 2902523904,
+      "count": 1658
+    },
+    {
+      "direct_fallback": 2902459392,
+      "count": 564
+    },
+    {
+      "direct_fallback": 2906652929,
+      "count": 12
+    },
+    {
+      "direct_fallback": 2902688736,
+      "count": 303
+    },
+    {
+      "direct_fallback": 2902492128,
+      "count": 374
+    },
+    {
+      "direct_fallback": 2839603483,
+      "count": 19
+    },
+    {
+      "direct_fallback": 2902558689,
+      "count": 695
+    },
+    {
+      "direct_fallback": 2835581923,
+      "count": 458
+    },
+    {
+      "direct_fallback": 2835386340,
+      "count": 76
+    },
+    {
+      "direct_fallback": 4161192959,
+      "count": 56
+    },
+    {
+      "direct_fallback": 3575369792,
+      "count": 244
+    },
+    {
+      "direct_fallback": 4248830688,
+      "count": 169
+    },
+    {
+      "direct_fallback": 2835588095,
+      "count": 92
+    },
+    {
+      "direct_fallback": 4161258486,
+      "count": 96
+    },
+    {
+      "direct_fallback": 2902524896,
+      "count": 165
+    },
+    {
+      "direct_fallback": 1308631104,
+      "count": 1
+    },
+    {
+      "direct_fallback": 2902556736,
+      "count": 85
+    },
+    {
+      "direct_fallback": 2902529028,
+      "count": 198
+    },
+    {
+      "direct_fallback": 2903376864,
+      "count": 11
+    },
+    {
+      "direct_fallback": 2902459360,
+      "count": 44
+    },
+    {
+      "direct_fallback": 2902918112,
+      "count": 116
+    },
+    {
+      "direct_fallback": 2903081952,
+      "count": 48
+    },
+    {
+      "direct_fallback": 2906590370,
+      "count": 1999
+    },
+    {
+      "direct_fallback": 2906588320,
+      "count": 213
+    },
+    {
+      "direct_fallback": 2902524000,
+      "count": 852
+    },
+    {
+      "direct_fallback": 2902559842,
+      "count": 16230
+    },
+    {
+      "direct_fallback": 2902492256,
+      "count": 2887
+    },
+    {
+      "direct_fallback": 1309941808,
+      "count": 2
+    },
+    {
+      "direct_fallback": 2906526884,
+      "count": 240
+    },
+    {
+      "direct_fallback": 2906521728,
+      "count": 2078
+    },
+    {
+      "direct_fallback": 2906587264,
+      "count": 1110
+    },
+    {
+      "direct_fallback": 2906528934,
+      "count": 61
+    },
+    {
+      "direct_fallback": 505529344,
+      "count": 41
+    },
+    {
+      "direct_fallback": 2902589536,
+      "count": 240
+    },
+    {
+      "direct_fallback": 2835443733,
+      "count": 95
+    },
+    {
+      "direct_fallback": 1021247617,
+      "count": 98
+    },
+    {
+      "direct_fallback": 2835514347,
+      "count": 631
+    },
+    {
+      "direct_fallback": 2835448810,
+      "count": 184
+    },
+    {
+      "direct_fallback": 2835480575,
+      "count": 654
+    },
+    {
+      "direct_fallback": 2835939327,
+      "count": 5
+    },
+    {
+      "direct_fallback": 2902524897,
+      "count": 38
+    },
+    {
+      "direct_fallback": 2902623200,
+      "count": 208
+    },
+    {
+      "direct_fallback": 2835372040,
+      "count": 42
+    },
+    {
+      "direct_fallback": 2902655968,
+      "count": 303
+    },
+    {
+      "direct_fallback": 2902852576,
+      "count": 225
+    },
+    {
+      "direct_fallback": 2910817604,
+      "count": 1
+    },
+    {
+      "direct_fallback": 2902819808,
+      "count": 42
+    },
+    {
+      "direct_fallback": 2902787040,
+      "count": 173
+    },
+    {
+      "direct_fallback": 2906719680,
+      "count": 31
+    },
+    {
+      "direct_fallback": 2902754272,
+      "count": 46
+    },
+    {
+      "direct_fallback": 2903016416,
+      "count": 22
+    },
+    {
+      "direct_fallback": 4167008518,
+      "count": 285
+    },
+    {
+      "direct_fallback": 2835546111,
+      "count": 247
+    },
+    {
+      "direct_fallback": 2843616544,
+      "count": 57
+    },
+    {
+      "direct_fallback": 2910815520,
+      "count": 1
+    },
+    {
+      "direct_fallback": 1309016312,
+      "count": 2
+    },
+    {
+      "direct_fallback": 4162814119,
+      "count": 27
+    },
+    {
+      "direct_fallback": 2907178432,
+      "count": 14
+    },
+    {
+      "direct_fallback": 2835808255,
+      "count": 994
+    },
+    {
+      "direct_fallback": 2902624225,
+      "count": 826
+    },
+    {
+      "direct_fallback": 2841095818,
+      "count": 5
+    },
+    {
+      "direct_fallback": 2843678980,
+      "count": 1512
+    },
+    {
+      "direct_fallback": 2839839001,
+      "count": 23
+    },
+    {
+      "direct_fallback": 2839548931,
+      "count": 1553
+    },
+    {
+      "direct_fallback": 2839614467,
+      "count": 1879
+    },
+    {
+      "direct_fallback": 2839680003,
+      "count": 597
+    },
+    {
+      "direct_fallback": 2835358986,
+      "count": 54
+    },
+    {
+      "direct_fallback": 2836004149,
+      "count": 3
+    },
+    {
+      "direct_fallback": 2902560002,
+      "count": 3
+    },
+    {
+      "direct_fallback": 2902458624,
+      "count": 48
+    },
+    {
+      "direct_fallback": 2843677923,
+      "count": 2095
+    },
+    {
+      "direct_fallback": 2839615524,
+      "count": 603
+    },
+    {
+      "direct_fallback": 2902458656,
+      "count": 32
+    },
+    {
+      "direct_fallback": 2906817568,
+      "count": 1257
+    },
+    {
+      "direct_fallback": 2839681060,
+      "count": 430
+    },
+    {
+      "direct_fallback": 2839549988,
+      "count": 2177
+    },
+    {
+      "direct_fallback": 2906885154,
+      "count": 32130
+    },
+    {
+      "direct_fallback": 2906653728,
+      "count": 373
+    },
+    {
+      "direct_fallback": 2835414303,
+      "count": 6
+    },
+    {
+      "direct_fallback": 4181721124,
+      "count": 581
+    },
+    {
+      "direct_fallback": 4181721091,
+      "count": 70
+    },
+    {
+      "direct_fallback": 1015644960,
+      "count": 95
+    },
+    {
+      "direct_fallback": 2902753536,
+      "count": 42
+    },
+    {
+      "direct_fallback": 2839544840,
+      "count": 317
+    },
+    {
+      "direct_fallback": 2902786368,
+      "count": 53
+    },
+    {
+      "direct_fallback": 2835381535,
+      "count": 1051
+    },
+    {
+      "direct_fallback": 2902655232,
+      "count": 299
+    },
+    {
+      "direct_fallback": 3107979300,
+      "count": 11733
+    },
+    {
+      "direct_fallback": 1031908192,
+      "count": 7
+    },
+    {
+      "direct_fallback": 2902458688,
+      "count": 60
+    },
+    {
+      "direct_fallback": 2902655296,
+      "count": 56
+    },
+    {
+      "direct_fallback": 2903277888,
+      "count": 24
+    },
+    {
+      "direct_fallback": 2902721793,
+      "count": 407
+    },
+    {
+      "direct_fallback": 2902589760,
+      "count": 30
+    },
+    {
+      "direct_fallback": 2910782592,
+      "count": 154
+    },
+    {
+      "direct_fallback": 2910721156,
+      "count": 143
+    },
+    {
+      "direct_fallback": 3107979267,
+      "count": 8097
+    },
+    {
+      "direct_fallback": 2902917440,
+      "count": 98
+    },
+    {
+      "direct_fallback": 2902524224,
+      "count": 29
+    },
+    {
+      "direct_fallback": 2902492481,
+      "count": 129
+    },
+    {
+      "direct_fallback": 2902851904,
+      "count": 131
+    },
+    {
+      "direct_fallback": 2906625382,
+      "count": 39
+    },
+    {
+      "direct_fallback": 4167008485,
+      "count": 263
+    },
+    {
+      "direct_fallback": 2910784642,
+      "count": 1315
+    },
+    {
+      "direct_fallback": 2835526059,
+      "count": 161
+    },
+    {
+      "direct_fallback": 4167723011,
+      "count": 61
+    },
+    {
+      "direct_fallback": 2835521875,
+      "count": 112
+    },
+    {
+      "direct_fallback": 2902622464,
+      "count": 167
+    },
+    {
+      "direct_fallback": 2835371284,
+      "count": 23
+    },
+    {
+      "direct_fallback": 2835381526,
+      "count": 284
+    },
+    {
+      "direct_fallback": 2902753568,
+      "count": 560
+    },
+    {
+      "direct_fallback": 1015907104,
+      "count": 239
+    },
+    {
+      "direct_fallback": 2903049696,
+      "count": 34
+    },
+    {
+      "direct_fallback": 2902884640,
+      "count": 643
+    },
+    {
+      "direct_fallback": 1016628128,
+      "count": 126
+    },
+    {
+      "direct_fallback": 1016890272,
+      "count": 134
+    },
+    {
+      "direct_fallback": 2839577608,
+      "count": 14
+    },
+    {
+      "direct_fallback": 1016693665,
+      "count": 95
+    },
+    {
+      "direct_fallback": 692062249,
+      "count": 340
+    },
+    {
+      "direct_fallback": 1015059424,
+      "count": 11
+    },
+    {
+      "direct_fallback": 1765936289,
+      "count": 153
+    },
+    {
+      "direct_fallback": 1016824736,
+      "count": 126
+    },
+    {
+      "direct_fallback": 2902656480,
+      "count": 166
+    },
+    {
+      "direct_fallback": 2902720832,
+      "count": 29
+    },
+    {
+      "direct_fallback": 2903015680,
+      "count": 29
+    },
+    {
+      "direct_fallback": 2902853088,
+      "count": 56
+    },
+    {
+      "direct_fallback": 1015514080,
+      "count": 131
+    },
+    {
+      "direct_fallback": 1031798787,
+      "count": 60
+    },
+    {
+      "direct_fallback": 1015054336,
+      "count": 285
+    },
+    {
+      "direct_fallback": 2034253577,
+      "count": 11
+    },
+    {
+      "direct_fallback": 1031798784,
+      "count": 553
+    },
+    {
+      "direct_fallback": 3093283045,
+      "count": 96
+    },
+    {
+      "direct_fallback": 1015776032,
+      "count": 227
+    },
+    {
+      "direct_fallback": 689940072,
+      "count": 8
+    },
+    {
+      "direct_fallback": 2906620288,
+      "count": 36
+    },
+    {
+      "direct_fallback": 2835349791,
+      "count": 878
+    },
+    {
+      "direct_fallback": 2902819104,
+      "count": 341
+    },
+    {
+      "direct_fallback": 2836911734,
+      "count": 1
+    },
+    {
+      "direct_fallback": 2836505193,
+      "count": 37
+    },
+    {
+      "direct_fallback": 1015726082,
+      "count": 11
+    },
+    {
+      "direct_fallback": 2902458657,
+      "count": 475
+    },
+    {
+      "direct_fallback": 1015971840,
+      "count": 19
+    },
+    {
+      "direct_fallback": 2835370261,
+      "count": 54
+    },
+    {
+      "direct_fallback": 2903016032,
+      "count": 64
+    },
+    {
+      "direct_fallback": 2903081568,
+      "count": 143
+    },
+    {
+      "direct_fallback": 4161651327,
+      "count": 237
+    },
+    {
+      "direct_fallback": 1766134616,
+      "count": 50
+    },
+    {
+      "direct_fallback": 2902983264,
+      "count": 120
+    },
+    {
+      "direct_fallback": 2839552763,
+      "count": 36
+    },
+    {
+      "direct_fallback": 2903376480,
+      "count": 3
+    },
+    {
+      "direct_fallback": 1021247778,
+      "count": 1
+    },
+    {
+      "direct_fallback": 1285529632,
+      "count": 64
+    },
+    {
+      "direct_fallback": 2902524512,
+      "count": 134
+    },
+    {
+      "direct_fallback": 1308688997,
+      "count": 15
+    },
+    {
+      "direct_fallback": 2839543445,
+      "count": 1358
+    },
+    {
+      "direct_fallback": 2835578495,
+      "count": 174
+    },
+    {
+      "direct_fallback": 4161053311,
+      "count": 148
+    },
+    {
+      "direct_fallback": 2835457663,
+      "count": 16
+    },
+    {
+      "direct_fallback": 2835381887,
+      "count": 11
+    },
+    {
+      "direct_fallback": 3575333399,
+      "count": 4
+    },
+    {
+      "direct_fallback": 1308689026,
+      "count": 46
+    },
+    {
+      "direct_fallback": 1308689025,
+      "count": 357
+    },
+    {
+      "direct_fallback": 2839587723,
+      "count": 11
+    },
+    {
+      "direct_fallback": 1017341952,
+      "count": 158
+    },
+    {
+      "direct_fallback": 2902950496,
+      "count": 113
+    },
+    {
+      "direct_fallback": 1587656705,
+      "count": 104
+    },
+    {
+      "direct_fallback": 237232656,
+      "count": 268
+    },
+    {
+      "direct_fallback": 2835742358,
+      "count": 492
+    },
+    {
+      "direct_fallback": 2835882687,
+      "count": 73
+    },
+    {
+      "direct_fallback": 2835653228,
+      "count": 14
+    },
+    {
+      "direct_fallback": 2836014089,
+      "count": 109
+    },
+    {
+      "direct_fallback": 2835686079,
+      "count": 96
+    },
+    {
+      "direct_fallback": 2836046495,
+      "count": 263
+    },
+    {
+      "direct_fallback": 2835435779,
+      "count": 250
+    },
+    {
+      "direct_fallback": 2835381948,
+      "count": 24
+    },
+    {
+      "direct_fallback": 1015119872,
+      "count": 180
+    },
+    {
+      "direct_fallback": 2835775199,
+      "count": 91
+    },
+    {
+      "direct_fallback": 1035993376,
+      "count": 471
+    },
+    {
+      "direct_fallback": 1308754628,
+      "count": 151
+    },
+    {
+      "direct_fallback": 2835382995,
+      "count": 7
+    },
+    {
+      "direct_fallback": 1021280928,
+      "count": 36
+    },
+    {
+      "direct_fallback": 2839601408,
+      "count": 125
+    },
+    {
+      "direct_fallback": 1017053345,
+      "count": 348
+    },
+    {
+      "direct_fallback": 2906621472,
+      "count": 405
+    },
+    {
+      "direct_fallback": 1039142182,
+      "count": 1
+    },
+    {
+      "direct_fallback": 1017053344,
+      "count": 48
+    },
+    {
+      "direct_fallback": 2835447528,
+      "count": 55
+    },
+    {
+      "direct_fallback": 2906916834,
+      "count": 4
+    },
+    {
+      "direct_fallback": 4165452776,
+      "count": 106
+    },
+    {
+      "direct_fallback": 2835414751,
+      "count": 42
+    },
+    {
+      "direct_fallback": 2839731188,
+      "count": 68
+    },
+    {
+      "direct_fallback": 1031801088,
+      "count": 17
+    },
+    {
+      "direct_fallback": 1031799040,
+      "count": 151
+    },
+    {
+      "direct_fallback": 1035995138,
+      "count": 3
+    },
+    {
+      "direct_fallback": 2835480313,
+      "count": 47
+    },
+    {
+      "direct_fallback": 2835545813,
+      "count": 115
+    },
+    {
+      "direct_fallback": 2902663142,
+      "count": 806
+    },
+    {
+      "direct_fallback": 1015095553,
+      "count": 20
+    },
+    {
+      "direct_fallback": 2835369759,
+      "count": 408
+    },
+    {
+      "direct_fallback": 1035993120,
+      "count": 126
+    },
+    {
+      "direct_fallback": 2835524200,
+      "count": 44
+    },
+    {
+      "direct_fallback": 1015759456,
+      "count": 21
+    },
+    {
+      "direct_fallback": 1308754724,
+      "count": 1272
+    },
+    {
+      "direct_fallback": 1015267616,
+      "count": 23
+    },
+    {
+      "direct_fallback": 2835358730,
+      "count": 9
+    },
+    {
+      "direct_fallback": 1032192288,
+      "count": 2
+    },
+    {
+      "direct_fallback": 1016066304,
+      "count": 127
+    },
+    {
+      "direct_fallback": 1031799104,
+      "count": 26
+    },
+    {
+      "direct_fallback": 2839478207,
+      "count": 766
+    },
+    {
+      "direct_fallback": 2839412671,
+      "count": 548
+    },
+    {
+      "direct_fallback": 2839454643,
+      "count": 216
+    },
+    {
+      "direct_fallback": 1015316800,
+      "count": 50
+    },
+    {
+      "direct_fallback": 2839323583,
+      "count": 124
+    },
+    {
+      "direct_fallback": 2839401407,
+      "count": 76
+    },
+    {
+      "direct_fallback": 2898352216,
+      "count": 4155
+    },
+    {
+      "direct_fallback": 2839347105,
+      "count": 83
+    },
+    {
+      "direct_fallback": 2839084991,
+      "count": 551
+    },
+    {
+      "direct_fallback": 2835447615,
+      "count": 28
+    },
+    {
+      "direct_fallback": 2835382090,
+      "count": 15
+    },
+    {
+      "direct_fallback": 2839716458,
+      "count": 67
+    },
+    {
+      "direct_fallback": 2906456992,
+      "count": 8
+    },
+    {
+      "direct_fallback": 2839545440,
+      "count": 17
+    },
+    {
+      "direct_fallback": 2839586504,
+      "count": 3
+    },
+    {
+      "direct_fallback": 2906655360,
+      "count": 32
+    },
+    {
+      "direct_fallback": 2904097760,
+      "count": 4
+    },
+    {
+      "direct_fallback": 2839612033,
+      "count": 41
+    },
+    {
+      "direct_fallback": 2839552651,
+      "count": 12
+    },
+    {
+      "direct_fallback": 2839619210,
+      "count": 29
+    },
+    {
+      "direct_fallback": 2906718849,
+      "count": 93
+    },
+    {
+      "direct_fallback": 2902786752,
+      "count": 1
+    },
+    {
+      "direct_fallback": 2836987903,
+      "count": 166
+    },
+    {
+      "direct_fallback": 2836922367,
+      "count": 9
+    },
+    {
+      "direct_fallback": 2906686113,
+      "count": 181
+    },
+    {
+      "direct_fallback": 1015088544,
+      "count": 125
+    },
+    {
+      "direct_fallback": 2906555296,
+      "count": 54
+    },
+    {
+      "direct_fallback": 2903802848,
+      "count": 11
+    },
+    {
+      "direct_fallback": 1015250944,
+      "count": 35
+    },
+    {
+      "direct_fallback": 2034253498,
+      "count": 17
+    },
+    {
+      "direct_fallback": 2835730463,
+      "count": 3
+    },
+    {
+      "direct_fallback": 2902983648,
+      "count": 9576
+    },
+    {
+      "direct_fallback": 692153025,
+      "count": 15
+    },
+    {
+      "direct_fallback": 1592899584,
+      "count": 731
+    },
+    {
+      "direct_fallback": 2903180256,
+      "count": 275
+    },
+    {
+      "direct_fallback": 2903049184,
+      "count": 273
+    },
+    {
+      "direct_fallback": 2903311328,
+      "count": 156
+    },
+    {
+      "direct_fallback": 2903245792,
+      "count": 84
+    },
+    {
+      "direct_fallback": 2903114720,
+      "count": 268
+    },
+    {
+      "direct_fallback": 2835393505,
+      "count": 63
+    },
+    {
+      "direct_fallback": 2902557664,
+      "count": 1356
+    },
+    {
+      "direct_fallback": 2902590432,
+      "count": 1342
+    },
+    {
+      "direct_fallback": 779297313,
+      "count": 1
+    },
+    {
+      "direct_fallback": 2902721504,
+      "count": 239
+    },
+    {
+      "direct_fallback": 2902723553,
+      "count": 4
+    },
+    {
+      "direct_fallback": 2902723552,
+      "count": 4
+    },
+    {
+      "direct_fallback": 2835457001,
+      "count": 105
+    },
+    {
+      "phase": "cleaned",
+      "footprint_bytes": 592938064,
+      "resident_bytes": 276037632,
+      "resident_peak_bytes": 2719498240
+    },
+    {
+      "memory_statistics": "cleanup",
+      "interval_ms": 100,
+      "samples": 2,
+      "errors": 0,
+      "duration_ns": 54904000,
+      "collection_ns": 14000,
+      "footprint_mean_bytes": 1802266580.0,
+      "footprint_sample_peak_bytes": 3011611480,
+      "footprint_latest_bytes": 592921680,
+      "resident_mean_bytes": 1445863424.0,
+      "resident_sample_peak_bytes": 2615705600,
+      "resident_latest_bytes": 276021248,
+      "resident_lifetime_peak_bytes": 2719498240
+    },
+    {
+      "result": "passed"
+    }
+  ],
+  "desktop_validated": true,
+  "data_image": {
+    "path": "work/native-linux-nce/direct-fallback-profile/cli-0-data.img",
+    "initial_sha256": "ac1f8e1ba627811858f7a919bbe2498e7ebb442fc33d618530cbff52ddd8d231",
+    "fresh": true,
+    "final_sha256": "49f1d9961a28aac97691b98ca5d261c41c514ad5e94a544784b134f316b409b3",
+    "clean_shutdown": true
+  },
+  "standalone": {
+    "scope": "Independent runtime ARM64 blocks; no Linux/Android/iPhone integration",
+    "platform": "macOS-27.0-arm64-arm-64bit-Mach-O",
+    "cpu": "Apple M5 Ultra",
+    "system_build": "26A428",
+    "measurement": "Three warm rounds per engine in separate processes, reversed process order for GCD. Same ARM64 bytes and checked results. Direct includes one-million-instruction slice entries; Unicorn includes register exchange. Memory phases include initialization and result verification, with arithmetic sample mean, sampled peak and latest; lifetime RSS peak is separate.",
+    "build_flags": [
+      "-std=c++20",
+      "-O2",
+      "-g",
+      "-Wall",
+      "-Wextra",
+      "-Werror"
+    ],
+    "configuration": {
+      "mapping_entries": 256,
+      "route_entries": 256,
+      "selective_writes": false,
+      "reuse_code_checks": false
+    },
+    "dependency": {
+      "oaknut_revision": "94c726ce0338b054eb8cb5ea91de8fe6c19f4392",
+      "oaknut_archive_sha256": "c404db82002f9a851a412b3d55ac9be8a42a2e319fd2fc8a73e63e6ef5d4f97b"
+    },
+    "sha256": {
+      "experiments/native-linux/direct/probe.cpp": "0ade2faaa917d07bc77e29d3ab8710d1a07fba8526a5f73bb355cc28f6dc9c25",
+      "experiments/native-linux/direct/tests.cpp": "1470ae63ca2ddfb639b58c7c00229afd1aef30e0b4d579d1ce7d2c66508dd54c",
+      "experiments/native-linux/direct/instruction-tests.cpp": "a0739ef27b5678ff8d7332d97a5d5196b0115856dc5443a876ffcfbae759b8d3",
+      "experiments/native-linux/direct/page-table-tests.cpp": "814b5ead2d5bb927813dcb027f5a0b1ecccb0899894c431698a947929b0d301b",
+      "experiments/native-linux/direct/benchmark.cpp": "4397dc57178792f611fc7fe659054d6304ea3fc288a84776d7b701affede1229",
+      "experiments/native-linux/direct/main.cpp": "e192a72d055550241e3f27bf83fbdedc20b9f5a477558dd6b090592393701421",
+      "experiments/native-linux/translation/kernels.S": "ef9cdea4f3b3ad6122caa7b781de29e1d535e600511e0e497be43c5bd77081b7",
+      "experiments/native-linux/translation/linux-memory.c": "0cc6ab6ff8ab7abe76c1c73aaf18fecb200ff27251ea29f0f15b0618a6020e31",
+      "experiments/native-linux/direct/engine.cpp": "db2e75060959d4972bcdceb9b1a7658d5abdd15903a79a387cca0d3f7760fcdf",
+      "experiments/native-linux/direct/compile.cpp": "f1acb94ac7256df856eac5d71e31a0164bbb4ab73cbbb9b8eb4c031163224d3f",
+      "experiments/native-linux/direct/decode.cpp": "8bbabb3da372360fdc13465503de05c3f389b35cfd89b080c13a79edede02b7a",
+      "experiments/native-linux/direct/entry.S": "901bf7d56d00c81277dd981c7186283d6bc413d1afe3ba8c0abd12ee695849a4",
+      "experiments/native-linux/direct/decode.h": "5f0d69562b252c6a53482f126a479e041048053ec4ee36dac2965a1d30ddb539",
+      "experiments/native-linux/direct/direct.h": "be75dfee411b4a359af0a04c3fed91a7d0eceee6b83e7b01ee9fdf5daefeb155",
+      "experiments/native-linux/direct/internal.h": "cc19c9862dbf97e66c63addd435dbccf74643ed983d399475d50d4bcda10238e",
+      "experiments/native-linux/direct/layout.h": "0a196defa551ce459446ec52c719e0872c84987aaa47aa9ccf7a32aea5feccc9",
+      "experiments/native-linux/direct/page-table-layout.h": "500897ffde014c17c73d03a92b34b07a9990e52695c369d9228c01d5d4600109",
+      "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/code_block.hpp": "c1b59e9d8a37775f8558fb3a0f7b34a6b7dbd2b2c13c088be65253c2223faa8a",
+      "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/dual_code_block.hpp": "619a01b3c69e107cc1c13c79b0dfbe97b09395e70a6c705b77e0531894a69620",
+      "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/feature_detection/cpu_feature.hpp": "2ae6e67bd4af85bd7d6d6eb7585f73cbdc237183167bb265a0427b74807e0a02",
+      "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/feature_detection/feature_detection.hpp": "4d13c256d5028d1ca3e5a0ad59382e888b79e033b72cffe7dae4c3e9ecc8d97e",
+      "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/feature_detection/feature_detection_apple.hpp": "99d88802080a50bd7d73a07020c18eee44417e193ff5515cbad8f6972890bbc6",
+      "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/feature_detection/feature_detection_freebsd.hpp": "84a10ab44c7c566523705703fb118904156c39b6b93148d458e2ab77a80a2c2d",
+      "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/feature_detection/feature_detection_generic.hpp": "4b78fafbb988a18b25b1aeb04c5ebff6b3a675f502e315fd8430f2d3f61f0fd2",
+      "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/feature_detection/feature_detection_hwcaps.hpp": "5839e027d9145f182149586fc30f129f33d5b482ffa174ed4ac6f9bb3b5a3b3f",
+      "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/feature_detection/feature_detection_idregs.hpp": "f759c5fd02bb2d2bafe45376e3856fa9371737282b22f66101fd4ae8db5f7b96",
+      "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/feature_detection/feature_detection_linux.hpp": "a49f3c60ad2cae71c158fd9207fdbad5e40837793f57289490603455302299c6",
+      "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/feature_detection/feature_detection_netbsd.hpp": "1315afa43ea61ffb7beb1102bf090d24d1285f2340028b5da50c3d31491dd09c",
+      "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/feature_detection/feature_detection_openbsd.hpp": "941dd25a778b8153e3e98aa9b7795a2c54359d24d8337f56a8658993f3fecb96",
+      "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/feature_detection/feature_detection_w32.hpp": "f228126514f482b43c0304a1f9dfb5942b93afabfc4372662af1193679c503de",
+      "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/feature_detection/id_registers.hpp": "ed83ce3fdaa0bea503dbdd9c0e728e8cb4eb0307fdf3bc60192fc0dfa130d1c8",
+      "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/feature_detection/read_id_registers_directly.hpp": "ff2e769fabf6f43d6e12939072e6cd911694f7966d2bd8c4ce6c3075aad34020",
+      "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/arm64_encode_helpers.inc.hpp": "55576102b1774f7f7b681857a3d2c6843776045cccd24fa09b8c4713929adbaf",
+      "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/cpu_feature.inc.hpp": "5919c8d8b32ae0899d04a888d8e852a79c604b33f9b6cffe632234437f57ab67",
+      "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/enum.hpp": "603697b7a7e16795219a74fa2d735e8bd442c79cdcb539ed0abed2b83417fd26",
+      "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/imm.hpp": "268b0414bf57c82cddb3de6b286e8e1ce52fb2b413aaecaa1f0cf9099b7e7cc1",
+      "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/list.hpp": "0592b31d29a6f1bfbee46cdb0aa5ce778edc9643db90a39d42215970357328e9",
+      "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/mnemonics_fpsimd_v8.0.inc.hpp": "3ecdfd1ff46ff749b2525e1a75acbabc6022848f700a6f16b36f480ab954a266",
+      "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/mnemonics_fpsimd_v8.1.inc.hpp": "404268b9e0e3b4708d5018fd1fbf3ea1339c641382e7cfd15534af56a7672e69",
+      "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/mnemonics_fpsimd_v8.2.inc.hpp": "52e7a48b969badf327c00c2ea4556353c61950a0c452adeaee37c6820926261f",
+      "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/mnemonics_fpsimd_v8.3.inc.hpp": "84bcced18fe10c753ec5ea1c84e9531ab1ceb4e08b046519e75788a14b814ae4",
+      "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/mnemonics_generic_v8.0.inc.hpp": "8ffd907bb38b27700022e29d40111fe72e640d003ad6aa3e372c4d8a7ebd3f6c",
+      "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/mnemonics_generic_v8.1.inc.hpp": "9f60f325c392e907dd9d2cbab62e1f8cfc7ab95c88e54df75b1a1f64bc7fa93b",
+      "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/mnemonics_generic_v8.2.inc.hpp": "1b53f462d1ed7e0a763236dbef9c4bfc70f6430cf5f8b420b2acc4dd2e8884ab",
+      "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/mnemonics_generic_v8.3.inc.hpp": "4b775baed83b1bb32b7bd339433175ce09b4bbc6da33d887bc9ca989d42b5d76",
+      "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/multi_typed_name.hpp": "a4322bfdb95f8477e6f92b31194110ef860c7402d50ce18daae6e016d4fa9aac",
+      "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/oaknut_exception.inc.hpp": "48629c93b468527c440dad30f8044818aa202caff67e73f45a246a3e96f8ad28",
+      "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/offset.hpp": "cb48c0eface8f5458a89402a090084690d3f999ff562e63870a1b16f438a7d52",
+      "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/overloaded.hpp": "03f0f551fa10b0b3d8d2c75130c1023ddcc5e8a3566629470408aad370d87fc2",
+      "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/reg.hpp": "352456b9b9ea1fb8cb5637e82169e16f08189579da9645ad5a5c1992f95ed198",
+      "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/string_literal.hpp": "96dce09750c24842a88e8eb3dfdafe047a5ab94c9398c94ea41cca8e1434e1bb",
+      "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/oaknut.hpp": "e25f4222f8f7d17b683d5ea8ff2851f88a3b40c478fcdc6046fe962cfcab2f37",
+      "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/oaknut_exception.hpp": "8277ac5a6cf6697305fd169d817d6786b0011027d66962fc9d982ffbce2c19a0",
+      "scripts/probe_direct_execution.py": "7f1b9baf5301032f35b450635b6b0e03c7f0ad284f954de585b665cfcb151bdf",
+      "work/native-linux-nce/oaknut-94c726c.tar.gz": "c404db82002f9a851a412b3d55ac9be8a42a2e319fd2fc8a73e63e6ef5d4f97b",
+      "experiments/native-linux/direct/probe.h": "29958caeccb3103b022768ed188ab5323b6e9028b2cb1da766ba3c9acae1d2e2",
+      "work/native-linux-nce/unicorn-tb-stop/prefix/lib/libunicorn.a": "6bf29b96bbcbb0d6cf8ab4a830765086509b380a9eb625c9b12ac44c9466f8d2",
+      "work/native-linux-nce/direct-fallback-categories/probe": "8da1e00004783aa1ac97deb3b761f6d7c1dc826e8f225aee56202a2ea609c818"
+    },
+    "runs": [
+      {
+        "entry": "cli",
+        "mode": "tests",
+        "command": [
+          "/Users/fan/project/app/husk_hyos/work/native-linux-nce/direct-fallback-categories/probe",
+          "tests",
+          "cli",
+          "100"
+        ],
+        "returncode": 0,
+        "results": [
+          {
+            "mode": "tests",
+            "entry": "cli",
+            "memory_interval_ms": 100,
+            "cache_bytes": 16777216
+          },
+          {
+            "memory_sample": "kernel_setup",
+            "monotonic_ns": 1482561445979000,
+            "footprint_bytes": 1671552,
+            "resident_bytes": 2195456,
+            "resident_lifetime_peak_bytes": 2195456
+          },
+          {
+            "memory_sample": "kernel_setup",
+            "monotonic_ns": 1482561446005000,
+            "footprint_bytes": 1687936,
+            "resident_bytes": 2228224,
+            "resident_lifetime_peak_bytes": 2228224
+          },
+          {
+            "memory_statistics": "kernel_setup",
+            "interval_ms": 100,
+            "samples": 2,
+            "errors": 0,
+            "duration_ns": 34000,
+            "collection_ns": 14000,
+            "footprint_mean_bytes": 1679744.0,
+            "footprint_sample_peak_bytes": 1687936,
+            "footprint_latest_bytes": 1687936,
+            "resident_mean_bytes": 2211840.0,
+            "resident_sample_peak_bytes": 2228224,
+            "resident_latest_bytes": 2228224,
+            "resident_lifetime_peak_bytes": 2228224
+          },
+          {
+            "memory_sample": "boundaries",
+            "monotonic_ns": 1482561446015000,
+            "footprint_bytes": 1687936,
+            "resident_bytes": 2228224,
+            "resident_lifetime_peak_bytes": 2228224
+          },
+          {
+            "direct_config": true,
+            "mapping_entries": 256,
+            "route_entries": 256,
+            "selective_writes": false,
+            "reuse_code_checks": false
+          },
+          {
+            "test": "literal_load_signed_vector_pc_and_permissions",
+            "passed": true
+          },
+          {
+            "test": "simd_lane_replicate_writeback_and_faults",
+            "passed": true
+          },
+          {
+            "memory_sample": "boundaries",
+            "monotonic_ns": 1482561556012000,
+            "footprint_bytes": 4407728,
+            "resident_bytes": 5849088,
+            "resident_lifetime_peak_bytes": 5849088
+          },
+          {
+            "memory_sample": "boundaries",
+            "monotonic_ns": 1482561658882000,
+            "footprint_bytes": 4604336,
+            "resident_bytes": 6045696,
+            "resident_lifetime_peak_bytes": 6045696
+          },
+          {
+            "test": "fp_fixed_rounding_and_widening",
+            "passed": true
+          },
+          {
+            "test": "new_instruction_reserved_encodings",
+            "passed": true
+          },
+          {
+            "test": "integer_gpr_sp_nzcv_65536_instructions",
+            "passed": true
+          },
+          {
+            "memory_sample": "boundaries",
+            "monotonic_ns": 1482561768914000,
+            "footprint_bytes": 5800368,
+            "resident_bytes": 7258112,
+            "resident_lifetime_peak_bytes": 7258112
+          },
+          {
+            "test": "memory_all_gpr_930_combinations",
+            "passed": true
+          },
+          {
+            "test": "fp_simd_rounding_fpsr_32768_instructions",
+            "passed": true
+          },
+          {
+            "test": "tls_x18_vectors",
+            "passed": true
+          },
+          {
+            "test": "write_permission_fault_and_post_index_retry",
+            "passed": true
+          },
+          {
+            "test": "writable_physical_code_alias_rejected",
+            "passed": true
+          },
+          {
+            "test": "cross_page_and_read_permission_fault",
+            "passed": true
+          },
+          {
+            "test": "changed_code_same_guest_address",
+            "passed": true
+          },
+          {
+            "test": "direct_and_indirect_self_branch_budget",
+            "passed": true
+          },
+          {
+            "test": "cross_page_indirect_call_return",
+            "passed": true
+          },
+          {
+            "test": "changed_cross_page_branch_cache",
+            "passed": true
+          },
+          {
+            "test": "dczid_zero_block_alignment_permission_and_prefetch",
+            "passed": true
+          },
+          {
+            "test": "pair_pre_post_index_all_base_registers",
+            "passed": true
+          },
+          {
+            "test": "exclusive_load_store_all_widths",
+            "passed": true
+          },
+          {
+            "test": "asynchronous_stop_at_block_and_indirect_boundary",
+            "passed": true
+          },
+          {
+            "test": "16k_data_page_internal_and_external_boundaries",
+            "passed": true
+          },
+          {
+            "test": "cached_write_alias_becomes_executable",
+            "passed": true
+          },
+          {
+            "test": "route_collision_reuse_and_next_run_fetch_permission",
+            "passed": true
+          },
+          {
+            "memory_sample": "boundaries",
+            "monotonic_ns": 1482561873849000,
+            "footprint_bytes": 5145008,
+            "resident_bytes": 6668288,
+            "resident_lifetime_peak_bytes": 7979008
+          },
+          {
+            "test": "bounded_cache_reuse_and_code_replacement",
+            "passed": true
+          },
+          {
+            "test": "code_version_reuse_and_mutation",
+            "passed": true
+          },
+          {
+            "test": "code_version_backing_permissions_and_fallback",
+            "passed": true
+          },
+          {
+            "test": "code_version_owner_and_provider_changes",
+            "passed": true
+          },
+          {
+            "test": "direct_pte_registers_flags_and_post_index",
+            "passed": true
+          },
+          {
+            "test": "direct_pte_read_permissions_directories_and_bounds",
+            "passed": true
+          },
+          {
+            "test": "direct_pte_write_permissions_remap_and_retry",
+            "passed": true
+          },
+          {
+            "test": "direct_pte_code_alias_and_next_run_release",
+            "passed": true
+          },
+          {
+            "test": "direct_pte_registers_flags_and_post_index_refill",
+            "passed": true
+          },
+          {
+            "test": "direct_pte_read_permissions_directories_and_bounds_refill",
+            "passed": true
+          },
+          {
+            "test": "direct_pte_write_permissions_remap_and_retry_refill",
+            "passed": true
+          },
+          {
+            "test": "direct_pte_code_alias_and_next_run_release_refill",
+            "passed": true
+          },
+          {
+            "test": "direct_pte_registers_flags_and_post_index_flat",
+            "passed": true
+          },
+          {
+            "test": "direct_pte_read_permissions_directories_and_bounds_flat",
+            "passed": true
+          },
+          {
+            "test": "direct_pte_write_permissions_remap_and_retry_flat",
+            "passed": true
+          },
+          {
+            "test": "direct_pte_code_alias_and_next_run_release_flat",
+            "passed": true
+          },
+          {
+            "test": "direct_flat_exclusive_pair_and_zva",
+            "passed": true
+          },
+          {
+            "test": "direct_flat_cross_page_table_switch_and_configuration",
+            "passed": true
+          },
+          {
+            "memory_sample": "boundaries",
+            "monotonic_ns": 1482561910740000,
+            "footprint_bytes": 12566936,
+            "resident_bytes": 14106624,
+            "resident_lifetime_peak_bytes": 15253504
+          },
+          {
+            "memory_statistics": "boundaries",
+            "interval_ms": 100,
+            "samples": 6,
+            "errors": 0,
+            "duration_ns": 464733000,
+            "collection_ns": 107000,
+            "footprint_mean_bytes": 5702052.0,
+            "footprint_sample_peak_bytes": 12566936,
+            "footprint_latest_bytes": 12566936,
+            "resident_mean_bytes": 7026005.333,
+            "resident_sample_peak_bytes": 14106624,
+            "resident_latest_bytes": 14106624,
+            "resident_lifetime_peak_bytes": 15253504
+          },
+          {
+            "result": "passed"
+          }
+        ]
+      },
+      {
+        "entry": "gcd",
+        "mode": "tests",
+        "command": [
+          "/Users/fan/project/app/husk_hyos/work/native-linux-nce/direct-fallback-categories/probe",
+          "tests",
+          "gcd",
+          "100"
+        ],
+        "returncode": 0,
+        "results": [
+          {
+            "mode": "tests",
+            "entry": "gcd",
+            "memory_interval_ms": 100,
+            "cache_bytes": 16777216
+          },
+          {
+            "memory_sample": "kernel_setup",
+            "monotonic_ns": 1482561947944000,
+            "footprint_bytes": 1671552,
+            "resident_bytes": 2195456,
+            "resident_lifetime_peak_bytes": 2195456
+          },
+          {
+            "memory_sample": "kernel_setup",
+            "monotonic_ns": 1482561947959000,
+            "footprint_bytes": 1687936,
+            "resident_bytes": 2228224,
+            "resident_lifetime_peak_bytes": 2228224
+          },
+          {
+            "memory_statistics": "kernel_setup",
+            "interval_ms": 100,
+            "samples": 2,
+            "errors": 0,
+            "duration_ns": 21000,
+            "collection_ns": 12000,
+            "footprint_mean_bytes": 1679744.0,
+            "footprint_sample_peak_bytes": 1687936,
+            "footprint_latest_bytes": 1687936,
+            "resident_mean_bytes": 2211840.0,
+            "resident_sample_peak_bytes": 2228224,
+            "resident_latest_bytes": 2228224,
+            "resident_lifetime_peak_bytes": 2228224
+          },
+          {
+            "memory_sample": "boundaries",
+            "monotonic_ns": 1482561947970000,
+            "footprint_bytes": 1687936,
+            "resident_bytes": 2228224,
+            "resident_lifetime_peak_bytes": 2228224
+          },
+          {
+            "direct_config": true,
+            "mapping_entries": 256,
+            "route_entries": 256,
+            "selective_writes": false,
+            "reuse_code_checks": false
+          },
+          {
+            "test": "literal_load_signed_vector_pc_and_permissions",
+            "passed": true
+          },
+          {
+            "test": "simd_lane_replicate_writeback_and_faults",
+            "passed": true
+          },
+          {
+            "memory_sample": "boundaries",
+            "monotonic_ns": 1482562052490000,
+            "footprint_bytes": 4374960,
+            "resident_bytes": 5816320,
+            "resident_lifetime_peak_bytes": 5816320
+          },
+          {
+            "memory_sample": "boundaries",
+            "monotonic_ns": 1482562157173000,
+            "footprint_bytes": 4555184,
+            "resident_bytes": 5996544,
+            "resident_lifetime_peak_bytes": 5996544
+          },
+          {
+            "test": "fp_fixed_rounding_and_widening",
+            "passed": true
+          },
+          {
+            "test": "new_instruction_reserved_encodings",
+            "passed": true
+          },
+          {
+            "test": "integer_gpr_sp_nzcv_65536_instructions",
+            "passed": true
+          },
+          {
+            "memory_sample": "boundaries",
+            "monotonic_ns": 1482562262540000,
+            "footprint_bytes": 5800368,
+            "resident_bytes": 7258112,
+            "resident_lifetime_peak_bytes": 7258112
+          },
+          {
+            "test": "memory_all_gpr_930_combinations",
+            "passed": true
+          },
+          {
+            "test": "fp_simd_rounding_fpsr_32768_instructions",
+            "passed": true
+          },
+          {
+            "test": "tls_x18_vectors",
+            "passed": true
+          },
+          {
+            "test": "write_permission_fault_and_post_index_retry",
+            "passed": true
+          },
+          {
+            "test": "writable_physical_code_alias_rejected",
+            "passed": true
+          },
+          {
+            "test": "cross_page_and_read_permission_fault",
+            "passed": true
+          },
+          {
+            "test": "changed_code_same_guest_address",
+            "passed": true
+          },
+          {
+            "test": "direct_and_indirect_self_branch_budget",
+            "passed": true
+          },
+          {
+            "test": "cross_page_indirect_call_return",
+            "passed": true
+          },
+          {
+            "test": "changed_cross_page_branch_cache",
+            "passed": true
+          },
+          {
+            "test": "dczid_zero_block_alignment_permission_and_prefetch",
+            "passed": true
+          },
+          {
+            "test": "pair_pre_post_index_all_base_registers",
+            "passed": true
+          },
+          {
+            "test": "exclusive_load_store_all_widths",
+            "passed": true
+          },
+          {
+            "test": "asynchronous_stop_at_block_and_indirect_boundary",
+            "passed": true
+          },
+          {
+            "test": "16k_data_page_internal_and_external_boundaries",
+            "passed": true
+          },
+          {
+            "test": "cached_write_alias_becomes_executable",
+            "passed": true
+          },
+          {
+            "test": "route_collision_reuse_and_next_run_fetch_permission",
+            "passed": true
+          },
+          {
+            "memory_sample": "boundaries",
+            "monotonic_ns": 1482562372571000,
+            "footprint_bytes": 5095856,
+            "resident_bytes": 6619136,
+            "resident_lifetime_peak_bytes": 7929856
+          },
+          {
+            "test": "bounded_cache_reuse_and_code_replacement",
+            "passed": true
+          },
+          {
+            "test": "code_version_reuse_and_mutation",
+            "passed": true
+          },
+          {
+            "test": "code_version_backing_permissions_and_fallback",
+            "passed": true
+          },
+          {
+            "test": "code_version_owner_and_provider_changes",
+            "passed": true
+          },
+          {
+            "test": "direct_pte_registers_flags_and_post_index",
+            "passed": true
+          },
+          {
+            "test": "direct_pte_read_permissions_directories_and_bounds",
+            "passed": true
+          },
+          {
+            "test": "direct_pte_write_permissions_remap_and_retry",
+            "passed": true
+          },
+          {
+            "test": "direct_pte_code_alias_and_next_run_release",
+            "passed": true
+          },
+          {
+            "test": "direct_pte_registers_flags_and_post_index_refill",
+            "passed": true
+          },
+          {
+            "test": "direct_pte_read_permissions_directories_and_bounds_refill",
+            "passed": true
+          },
+          {
+            "test": "direct_pte_write_permissions_remap_and_retry_refill",
+            "passed": true
+          },
+          {
+            "test": "direct_pte_code_alias_and_next_run_release_refill",
+            "passed": true
+          },
+          {
+            "test": "direct_pte_registers_flags_and_post_index_flat",
+            "passed": true
+          },
+          {
+            "test": "direct_pte_read_permissions_directories_and_bounds_flat",
+            "passed": true
+          },
+          {
+            "test": "direct_pte_write_permissions_remap_and_retry_flat",
+            "passed": true
+          },
+          {
+            "test": "direct_pte_code_alias_and_next_run_release_flat",
+            "passed": true
+          },
+          {
+            "test": "direct_flat_exclusive_pair_and_zva",
+            "passed": true
+          },
+          {
+            "test": "direct_flat_cross_page_table_switch_and_configuration",
+            "passed": true
+          },
+          {
+            "memory_sample": "boundaries",
+            "monotonic_ns": 1482562395383000,
+            "footprint_bytes": 12517784,
+            "resident_bytes": 14057472,
+            "resident_lifetime_peak_bytes": 15204352
+          },
+          {
+            "memory_statistics": "boundaries",
+            "interval_ms": 100,
+            "samples": 6,
+            "errors": 0,
+            "duration_ns": 447425000,
+            "collection_ns": 122000,
+            "footprint_mean_bytes": 5672014.667,
+            "footprint_sample_peak_bytes": 12517784,
+            "footprint_latest_bytes": 12517784,
+            "resident_mean_bytes": 6995968.0,
+            "resident_sample_peak_bytes": 14057472,
+            "resident_latest_bytes": 14057472,
+            "resident_lifetime_peak_bytes": 15204352
+          },
+          {
+            "result": "passed"
+          }
+        ]
+      }
+    ],
+    "comparison": {
+      "cli": {
+        "integer": {},
+        "memory": {},
+        "atomic": {}
+      },
+      "gcd": {
+        "integer": {},
+        "memory": {},
+        "atomic": {}
+      }
+    }
+  }
+}

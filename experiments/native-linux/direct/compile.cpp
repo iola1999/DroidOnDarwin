@@ -419,7 +419,7 @@ size_t Page::compile(uint64_t new_page, const void *bytes, size_t entry,
                 c.STR(X16, X27, DIRECT_ADDRESS);
                 exit(pc, write ? WritePage : ReadPage);
                 c.l(invalid);
-                exit(pc, Fallback);
+                exit(pc, Alignment);
                 c.l(done);
             } else if (kind == Memory || kind == Pair || kind == Atomic || kind == Structure ||
                        kind == StructureLane || kind == Literal) {
@@ -451,7 +451,7 @@ size_t Page::compile(uint64_t new_page, const void *bytes, size_t entry,
                                                         : reg_offset || ordered ? 0
                                                         : indexed               ? sign_extend((w >> 12) & 511, 9)
                                                                                 : ((w >> 10) & 4095) << size_log2;
-                Label miss, invalid, done;
+                Label miss, invalid, crossing, done;
                 if (literal)
                     relative_address(X16, pc - new_page + sign_extend((w >> 5) & 0x7ffff, 19) * 4, X17);
                 else
@@ -488,7 +488,7 @@ size_t Page::compile(uint64_t new_page, const void *bytes, size_t entry,
                     c.ADD(X17, X16, access_bytes - 1);
                     c.EOR(X17, X17, X16);
                     c.LSR(X17, X17, page_bits);
-                    c.CBNZ(X17, invalid);
+                    c.CBNZ(X17, crossing);
                 }
                 translate(write, miss);
                 unsigned data = vector || resident(rd) || rd == 31 ? rd : 26;
@@ -562,7 +562,9 @@ size_t Page::compile(uint64_t new_page, const void *bytes, size_t entry,
                 c.STR(X16, X27, DIRECT_ADDRESS);
                 exit(pc, write ? WritePage : ReadPage);
                 c.l(invalid);
-                exit(pc, Fallback);
+                exit(pc, Alignment);
+                c.l(crossing);
+                exit(pc, CrossPage);
                 c.l(done);
             } else {
                 exit(pc, Fallback);

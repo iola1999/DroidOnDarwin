@@ -83,6 +83,7 @@ typedef struct {
     uint64_t code_validation_hits;
     uint64_t pte_read_refills;
     uint64_t code_content_checks, code_version_hits;
+    uint64_t alignment_exits, cross_page_exits;
     size_t code_bytes, code_capacity, pages;
 } NceDirectStats;
 

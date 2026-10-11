@@ -17,7 +17,9 @@ enum Stop : uint64_t { Budget = 0,
                        Fallback = 1,
                        ReadPage = 2,
                        WritePage = 3,
-                       CodeBranch = 5 };
+                       CodeBranch = 5,
+                       Alignment = 6,
+                       CrossPage = 7 };
 struct Page {
     static constexpr size_t max_bytes = 1024 * 1024;
     std::array<uint32_t, 1024> source{};

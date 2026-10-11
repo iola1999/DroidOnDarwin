@@ -23,7 +23,7 @@ static NceCodeWatch *code_watch;
 static NceCodeWatchStats code_watch_stats;
 static void (*original_page_free)(void *, unsigned long);
 static int (*original_disk_io)(unsigned int, unsigned int, unsigned long long, void *, unsigned long);
-static unsigned long direct_calls, direct_fallbacks;
+static unsigned long direct_calls, direct_fallbacks, direct_code_writes;
 static struct {
     uint32_t instruction;
     unsigned long count;
@@ -389,6 +389,7 @@ static bool direct_execute(Process *p, unsigned long generation)
                                                                                                                     : UC_MEM_READ);
             return true;
         }
+        ++direct_code_writes;
     } else
         REQUIRE(result == NCE_DIRECT_UNSUPPORTED);
     const uint32_t *code = direct_map_code(NULL, state.pc & ~UINT64_C(4095));
@@ -809,6 +810,8 @@ void translation_linux_cleanup(void)
     REQUIRE(!translation->flat_live_bytes);
     NceDirectStats direct = nce_direct_stats(direct_engine);
     printf("{\"direct_code_validation\":true,\"content_checks\":%llu,\"version_hits\":%llu}\n", direct.code_content_checks, direct.code_version_hits);
+    printf("{\"direct_fallback_reasons\":true,\"alignment\":%llu,\"cross_page\":%llu,\"code_write\":%lu}\n",
+           direct.alignment_exits, direct.cross_page_exits, direct_code_writes);
     printf("{\"direct_execution\":true,\"calls\":%lu,\"fallbacks\":%lu,\"compiles\":%llu,\"flushes\":%llu,\"code_changes\":%llu,\"code_bytes\":%zu,\"capacity_bytes\":%zu,\"pages\":%zu,\"mapping_misses\":%llu,\"code_lookups\":%llu,\"read_mapping_misses\":%llu,\"write_mapping_misses\":%llu,\"write_invalidations\":%llu,\"code_validation_hits\":%llu,\"pte_read_refills\":%llu}\n",
            direct_calls, direct_fallbacks, direct.compiles, direct.flushes, direct.code_changes,
            direct.code_bytes, direct.code_capacity, direct.pages, direct.mapping_misses, direct.code_lookups,
