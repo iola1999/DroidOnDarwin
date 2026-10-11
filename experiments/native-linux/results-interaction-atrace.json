@@ -1,0 +1,126 @@
+{
+  "status": "native and Direct CLI/GCD passed including atrace control; actual trace export pending",
+  "host": {
+    "cpu": "Apple M5 Ultra",
+    "os": "macOS 27.0 (26A428)",
+    "ram_bytes": 274877906944
+  },
+  "invalid_configuration_attempts": [
+    {
+      "nterp": false,
+      "configuration_issue": "interactive NCE_DESKTOP=1 entry and omitted NCE_MM_MODE=demand",
+      "result": "Launcher visible and focused but keyguard=true until 180 second readiness timeout; cleanup passed; GCD not started",
+      "source_sha256": {
+        "work/native-linux-nce/interaction-preflight/atrace-native-nterp-off.jsonl": "d5dd8f4dd58efa1caff410d123a709d1026b3d45b2618194ffdcc5d2af7a946d",
+        "work/native-linux-nce/interaction-preflight/atrace-native-nterp-off.log": "624fdfd2aad5bdfa1b8ee311b6b512ca5cfa7a0af585509a22e8bf202ea914d6"
+      }
+    },
+    {
+      "nterp": true,
+      "configuration_issue": "interactive NCE_DESKTOP=1 entry and omitted NCE_MM_MODE=demand",
+      "result": "Launcher visible and focused but keyguard=true until 180 second readiness timeout; cleanup passed; GCD not started",
+      "source_sha256": {
+        "work/native-linux-nce/interaction-preflight/atrace-native-nterp-on-full-map.jsonl": "e2cf5f2d06d9d082870c858fdad9f42d94e95e043f8f8a2115d86abb37f671aa",
+        "work/native-linux-nce/interaction-preflight/atrace-native-nterp-on-full-map.log": "c618aa8e023c71103432603410b3e4c9175d23bd0adcaa9fd4ffef3460411c75"
+      }
+    }
+  ],
+  "macos": {
+    "app": "work/native-linux-nce/macos-direct-1-atrace-v2/DroidOnDarwin.app",
+    "buildID": "0.25.0-Mac-20261012-043834-direct1-dual",
+    "host_checks": "passed",
+    "host_checks_log": "work/native-linux-nce/interaction-preflight/atrace-mac-host-checks.log"
+  },
+  "ios": {
+    "ipa": "work/native-linux-nce/ios-direct-1/DroidOnDarwin-0.25.0.ipa",
+    "bytes": 473391266,
+    "sha256": "85cd1b2ef2aea7bb4e971e31fa1b9a739881e8dff2699472e910e747f6cd387c",
+    "device_execution": "pending"
+  },
+  "failed_capture": {
+    "runID": "B5CF0E01-6DA1-4E05-80E0-03BD153486CD",
+    "buildID": "0.25.0-Mac-20261012-043834-direct1-dual",
+    "failure": "atrace missing android.hardware.atrace@1.0.so; start and stop failed before capture; tags=0 apps=0",
+    "directory": "work/native-linux-nce/benchmarks/interaction/20261012-044009-dfca00/B5CF0E01-6DA1-4E05-80E0-03BD153486CD",
+    "source_sha256": {
+      "work/native-linux-nce/benchmarks/interaction/20261012-044009-dfca00/B5CF0E01-6DA1-4E05-80E0-03BD153486CD/result.json": "a69d01822d8881576ec0d41064723b4802842a7053a5896681f3ea957509a926",
+      "work/native-linux-nce/benchmarks/interaction/20261012-044009-dfca00/B5CF0E01-6DA1-4E05-80E0-03BD153486CD/session.log": "8f40562a20f77e8514515c801118c4932f89f370039bfd13ac1e05d33c7ec527",
+      "work/native-linux-nce/benchmarks/interaction/20261012-044009-dfca00/B5CF0E01-6DA1-4E05-80E0-03BD153486CD/request.json": "96721a6f226a67d94c17e74b584ae315d43f60880ad31eab6ca527a1ff74d970"
+    }
+  },
+  "native_before_dependency_fix": {
+    "manifest": "embedded in work/native-linux-nce/interaction-preflight/atrace-native-demand-build.log",
+    "manifest_sha256": "1e7417e7012584563b1bae6c90d28c9307d0edcf709261841098210ca0122576",
+    "system_image_sha256": "fdb0f694ae8a0725a53d6565da2923747d1f7358369328a8bc82239ef1069fdc",
+    "configuration": {
+      "NCE_MM_MODE": "demand",
+      "NCE_SYSTEM_SERVER_PROBE": "1",
+      "NCE_ART_NTERP": "1",
+      "NCE_ART_AOT": "0"
+    },
+    "data_image": "work/native-linux-nce/interaction-preflight/atrace-native-demand-data.img",
+    "scope": "functional desktop; fresh seed then persisted GCD run; elapsed time not performance comparison",
+    "checks": {
+      "results": {
+        "result": {
+          "result": "passed"
+        },
+        "passed_named_checks": 224
+      },
+      "dispatch_results": {
+        "result": {
+          "result": "passed"
+        },
+        "passed_named_checks": 224
+      }
+    }
+  },
+  "native": {
+    "manifest": "work/native-linux-nce/processes/lkl-summary.json",
+    "manifest_sha256": "b63be9520ac1c3218b7afb074d3c465b966f4314559d9d9ba5f1f71264128e82",
+    "system_image_sha256": "c094ea502fc0beaf0db201c363a126ae19565cfb7aeb7cff998a6f44e2853b5a",
+    "configuration": {
+      "NCE_MM_MODE": "demand",
+      "NCE_SYSTEM_SERVER_PROBE": "1",
+      "NCE_ART_NTERP": "1",
+      "NCE_ART_AOT": "0"
+    },
+    "scope": "full native CLI/GCD desktop and atrace enable/disable with property verification",
+    "checks": {
+      "results": {
+        "result": {
+          "result": "passed"
+        },
+        "passed_named_checks": 225,
+        "atrace_control": [
+          {
+            "test": "android_atrace_userspace_control",
+            "passed": true
+          }
+        ]
+      },
+      "dispatch_results": {
+        "result": {
+          "result": "passed"
+        },
+        "passed_named_checks": 225,
+        "atrace_control": [
+          {
+            "test": "android_atrace_userspace_control",
+            "passed": true
+          }
+        ]
+      }
+    }
+  },
+  "direct_before_dependency_fix": {
+    "manifest": "work/native-linux-nce/lkl-interaction-atrace-v2-1-desktop/summary.json",
+    "manifest_sha256": "bcff03e5e55fa3f355b401482897963ae56cbdcb576c0c95ae60f6fadfa6fa58",
+    "scope": "full desktop CLI/GCD; simdMath on; functional validation only"
+  },
+  "direct": {
+    "manifest": "work/native-linux-nce/lkl-interaction-atrace-v3-1-desktop/summary.json",
+    "manifest_sha256": "63f905e3bd78a15fc71342e6c2229b0d4dd16ef7668cae927839aeb6ebf3c060",
+    "scope": "full desktop CLI/GCD including actual atrace enable/disable; simdMath on; functional validation only"
+  }
+}

@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 #include "diagnostics.h"
+#include "desktop-session.h"
 #include <android/binder_ibinder.h>
 #include <android/binder_manager.h>
 #include <android/binder_parcel.h>
@@ -373,6 +374,7 @@ int main(int argc, char **argv)
     }
     alarm(20);
     mount_namespace_proc();
+    nce_interaction_profile_init();
     const bool diagnostics = nce_diagnostics();
     if (diagnostics) {
         unix_sockets();
@@ -399,6 +401,8 @@ int main(int argc, char **argv)
     char property_value[PROP_VALUE_MAX];
     CHECK(__system_property_get("ro.property_service.version", property_value) == 1 && !strcmp(property_value, "2"));
     if (diagnostics) {
+        CHECK(nce_interaction_profile_check() == 0);
+        puts("{\"test\":\"android_atrace_userspace_control\",\"passed\":true}");
         CHECK(__system_property_set("nce.mutable", "first") == 0);
         CHECK(__system_property_get("nce.mutable", property_value) == 5 && !strcmp(property_value, "first"));
         CHECK(__system_property_set("nce.mutable", "second") == 0);

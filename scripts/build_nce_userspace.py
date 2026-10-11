@@ -42,6 +42,13 @@ RT_SHA = '15277402f6fd63397c0917a5c7171cda82d16d226094b828c1ed0f58f73b9c69'
 DASH_SHA = '6a474ac46e8b0b32916c4c60df694c82058d3297d8b385b74508030ca4a8f28a'
 
 
+ANDROID_SYSTEM_PROGRAMS = (
+    'secilc', 'servicemanager', 'aconfigd-system', 'installd', 'idmap2', 'idmap2d',
+    'vold', 'vold_prepare_subdirs', 'storaged', 'cmd', 'dumpsys', 'netd', 'lmkd',
+    'bpfloader', 'iptables', 'audioserver', 'mediaserver', 'mediametrics', 'gatekeeperd',
+    'keystore2', 'atrace', 'hw/android.system.suspend-service', 'app_process64')
+
+
 def run(args, **kw):
     return subprocess.run([str(a) for a in args], check=True, timeout=300, **kw)
 
@@ -96,9 +103,7 @@ def android_dependencies(llvm, replacements, embedded=()):
                'libjnigraphics.so', 'libcompiler_rt.so', 'libaudioeffect_jni.so', 'librtp_jni.so',
                'libcom.android.tethering.dns_helper.so', 'librs_jni.so', 'libmainlinecronet.133.0.6876.3.so',
                'libandroid_net_connectivity_com_android_net_module_util_jni.so']
-    for name in ('servicemanager', 'app_process64', 'aconfigd-system', 'installd', 'idmap2', 'idmap2d',
-                 'vold', 'vold_prepare_subdirs', 'storaged', 'cmd', 'dumpsys', 'netd', 'lmkd', 'bpfloader',
-                 'iptables', 'audioserver', 'mediaserver', 'mediametrics', 'gatekeeperd', 'keystore2', 'hw/android.system.suspend-service'):
+    for name in ANDROID_SYSTEM_PROGRAMS:
         pending += re.findall(r'Shared library: \[(.*?)\]',
                               subprocess.check_output([llvm / 'llvm-readelf', '-d', root / 'bin' / name], text=True))
     pending += re.findall(r'Shared library: \[(.*?)\]', subprocess.check_output(
@@ -1085,20 +1090,13 @@ def build(out, llvm, art_compiler=False, art_oat=None, art_desktop=False, art_bo
          '-Wl,-z,max-page-size=16384,-z,common-page-size=16384',
          EXP / 'userspace/gralloc-test.c', '-landroid', '-lEGL', '-lGLESv2', '-o', out / 'gralloc-test.elf'])
     programs.append(('/system/bin/gralloc-test', out / 'gralloc-test.elf'))
-    programs.append(('/system/bin/secilc', WORK / 'android/android36/bin/secilc'))
-    programs.append(('/system/bin/servicemanager', WORK / 'android/android36/bin/servicemanager'))
-    programs.append(('/system/bin/aconfigd-system', WORK / 'android/android36/bin/aconfigd-system'))
-    programs.append(('/system/bin/installd', WORK / 'android/android36/bin/installd'))
-    for name in ('idmap2', 'idmap2d', 'vold', 'vold_prepare_subdirs', 'storaged', 'cmd', 'dumpsys', 'netd', 'lmkd',
-                 'bpfloader', 'iptables', 'audioserver', 'mediaserver', 'mediametrics', 'gatekeeperd', 'keystore2'):
+    for name in ANDROID_SYSTEM_PROGRAMS:
         programs.append(('/system/bin/' + name, WORK / 'android/android36/bin' / name))
     programs.append(('/apex/com.android.art/bin/artd', WORK / 'android/android36/com.android.art/bin/artd'))
     programs.append(('/apex/com.android.os.statsd/bin/statsd', WORK / 'android/android36/com.android.os.statsd/bin/statsd'))
     programs.append(('/apex/com.android.tethering/bin/netbpfload', build_android_network()))
     programs.append(('/apex/com.android.tethering/bin/for-system/clatd',
                      WORK / 'android/android36/com.android.tethering/bin/for-system/clatd'))
-    programs.append(('/system/bin/hw/android.system.suspend-service', WORK / 'android/android36/bin/hw/android.system.suspend-service'))
-    programs.append(('/system/bin/app_process64', WORK / 'android/android36/bin/app_process64'))
     programs.append(('/system/bin/derive_classpath', WORK / 'android/android36/com.android.sdkext/bin/derive_classpath'))
     run([ndk / 'toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android35-clang',
          '-shared', '-fPIC', '-ffixed-x18', '-O2', '-Wall', '-Wextra', '-Werror',

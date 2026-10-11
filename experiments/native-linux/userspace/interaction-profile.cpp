@@ -4,16 +4,19 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <signal.h>
 #include <string.h>
 #include <sys/mount.h>
 #include <sys/stat.h>
+#include <sys/system_properties.h>
 #include <sys/wait.h>
 #include <time.h>
 #include <unistd.h>
 
 static bool tracing;
 static bool capturing;
+static int trace_preparation = -EAGAIN;
 
 static int put(const char *path, const char *value)
 {
@@ -83,11 +86,75 @@ static int frames(bool reset)
     return status == 0 ? 0 : -EIO;
 }
 
-static int start_trace()
+static long trace_property(const char *name)
+{
+    char value[PROP_VALUE_MAX] = {};
+    if (!__system_property_get(name, value) || !value[0])
+        return 0;
+    char *end = nullptr;
+    errno = 0;
+    long number = strtol(value, &end, 0);
+    return errno || !end || *end || number < 0 ? -EINVAL : number;
+}
+
+static int userspace_trace(bool enabled)
+{
+    pid_t child = fork();
+    if (child < 0)
+        return -errno;
+    if (!child) {
+        alarm(25);
+        if (enabled)
+            execl("/system/bin/atrace", "atrace", "--only_userspace", "--async_start",
+                  "-a", "com.android.settings", "input", "gfx", "view", nullptr);
+        else
+            execl("/system/bin/atrace", "atrace", "--only_userspace", "--async_stop", nullptr);
+        _exit(121);
+    }
+    int status = nce_wait_desktop_child(child, enabled);
+    long tags = trace_property("debug.atrace.tags.enableflags");
+    long apps = trace_property("debug.atrace.app_number");
+    // atrace can exit successfully after a property error. Verify the state
+    // that existing Android trace producers actually read (gfx/input/view).
+    int result = status == 0 && tags == (enabled ? 14 : 0) && apps == (enabled ? 1 : 0) ? 0 : -EIO;
+    dprintf(2, "{\"interaction_userspace_trace\":%s,\"tags\":%ld,\"apps\":%ld,\"wait_status\":%d,\"status\":%d}\n",
+            enabled ? "true" : "false", tags, apps, status, result);
+    return result;
+}
+
+int nce_interaction_profile_check()
+{
+    if (trace_preparation)
+        return trace_preparation;
+    int result = userspace_trace(true);
+    int cleanup = userspace_trace(false);
+    return result ? result : cleanup;
+}
+
+static int prepare_tracefs()
 {
     mkdir("/sys/kernel/tracing", 0700);
     if (mount("tracefs", "/sys/kernel/tracing", "tracefs", 0, nullptr) < 0 && errno != EBUSY)
         return -errno;
+    if (chmod("/sys/kernel/tracing", 0755) < 0 || chmod("/sys/kernel/tracing/trace_marker", 0222) < 0)
+        return -errno;
+    return put("/sys/kernel/tracing/tracing_on", "0");
+}
+
+void nce_interaction_profile_init()
+{
+    // libcutils opens trace_marker once per process. Prepare it before Android
+    // services start; enabling tags after a failed open cannot repair that fd.
+    trace_preparation = prepare_tracefs();
+    dprintf(2, "{\"interaction_trace_prepare\":%d}\n", trace_preparation);
+}
+
+static int start_trace()
+{
+    if (trace_preparation)
+        return trace_preparation;
+    if (trace_property("debug.atrace.tags.enableflags") != 0 || trace_property("debug.atrace.app_number") != 0)
+        return -EBUSY;
     const char *settings[][2] = {
         {"tracing_on", "0"},
         {"events/enable", "0"},
@@ -100,7 +167,6 @@ static int start_trace()
         {"events/sched/sched_process_exit/enable", "1"},
         {"events/binder/binder_transaction/enable", "1"},
         {"events/binder/binder_transaction_received/enable", "1"},
-        {"tracing_on", "1"},
     };
     for (const auto &setting : settings) {
         char path[192];
@@ -111,7 +177,14 @@ static int start_trace()
             return result;
         }
     }
-    return 0;
+    int result = userspace_trace(true);
+    if (!result)
+        result = put("/sys/kernel/tracing/tracing_on", "1");
+    if (result) {
+        put("/sys/kernel/tracing/tracing_on", "0");
+        userspace_trace(false);
+    }
+    return result;
 }
 
 static int perform(int command)
@@ -157,8 +230,12 @@ static int perform(int command)
     int result = 0;
     if (tracing) {
         result = put("/sys/kernel/tracing/tracing_on", "0");
+        int cleanup = userspace_trace(false);
         if (!result)
-            result = copy("/sys/kernel/tracing/trace", "kernel.ftrace");
+            result = cleanup;
+        int exported = copy("/sys/kernel/tracing/trace", "kernel.ftrace");
+        if (!result)
+            result = exported;
         for (int cpu = 0; cpu < 2; ++cpu) {
             char path[128], name[32];
             snprintf(path, sizeof(path), "/sys/kernel/tracing/per_cpu/cpu%d/stats", cpu);
