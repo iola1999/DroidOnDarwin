@@ -1,0 +1,1172 @@
+{
+  "status": "capture implementation in progress; no optimization or device-performance claim",
+  "host": {
+    "cpu": "Apple M5 Ultra",
+    "os": "macOS 27.0 (26A428)",
+    "ram_bytes": 274877906944
+  },
+  "guest": {
+    "ram_bytes": 1073741824,
+    "display": [
+      360,
+      640
+    ]
+  },
+  "measurement": "FrameCompleted minus IntendedVsync; all wall-time stages; actual host presentation unmeasured; trace/sample overhead not yet qualified",
+  "desktop_regression": "work/native-linux-nce/lkl-interaction-v4-1-desktop/summary.json",
+  "runs": [
+    {
+      "runID": "4370073A-7A5D-43AE-904B-D84AA087B58C",
+      "buildID": "0.25.0-Mac-20261012-003131-direct1-dual",
+      "directory": "work/native-linux-nce/benchmarks/interaction/20261012-003142-331a2e/4370073A-7A5D-43AE-904B-D84AA087B58C",
+      "configuration": {
+        "aot": false,
+        "bootImage": false,
+        "diagnostics": false,
+        "directFault": true,
+        "expandedJIT": false,
+        "fastBaseline": false,
+        "faultPrefetch": false,
+        "nterp": true,
+        "performanceLogging": false,
+        "schedulerSliceUS": 0,
+        "sparseScan": true,
+        "translation": {
+          "cacheMiB": 128,
+          "codeWatch": true,
+          "crossPage": true,
+          "linuxFastpath": false,
+          "memoryGroups": false,
+          "onlineCPUs": 1,
+          "retainRoutes": false,
+          "reuseCodeChecks": false,
+          "routeEpochs": false,
+          "vectorTable": false
+        }
+      },
+      "frame_counts": {
+        "nonzero_flags": 1,
+        "accepted": 1,
+        "outside_or_crossing_window": 1,
+        "incomplete_or_invalid_time": 2
+      },
+      "measurement_failures": [
+        "window statistics restarted during capture: com.android.settings/com.android.settings.homepage.SettingsHomepageActivity",
+        "process frame total exceeds exported window totals"
+      ],
+      "duration": {
+        "count": 1,
+        "p50_ms": 449.986402,
+        "p95_ms": 449.986402,
+        "p99_ms": 449.986402,
+        "max_ms": 449.986402,
+        "p95_small_sample": true,
+        "p99_small_sample": true,
+        "tail_count_reference": {
+          "p95": 0,
+          "p99": 0
+        },
+        "percentile_method": "linear interpolation; small-sample flag uses fewer than 10 expected tail observations; frames are not independent runs",
+        "above_ms": {
+          "16.666667": 1,
+          "100": 1,
+          "250": 1,
+          "1000": 0
+        }
+      },
+      "phase_duration": {
+        "before_input": {
+          "count": 1,
+          "p50_ms": 404.307402,
+          "p95_ms": 404.307402,
+          "p99_ms": 404.307402,
+          "max_ms": 404.307402,
+          "p95_small_sample": true,
+          "p99_small_sample": true,
+          "tail_count_reference": {
+            "p95": 0,
+            "p99": 0
+          },
+          "percentile_method": "linear interpolation; small-sample flag uses fewer than 10 expected tail observations; frames are not independent runs",
+          "above_ms": {
+            "16.666667": 1,
+            "100": 1,
+            "250": 1,
+            "1000": 0
+          }
+        },
+        "main_to_sync": {
+          "count": 1,
+          "p50_ms": 1.982,
+          "p95_ms": 1.982,
+          "p99_ms": 1.982,
+          "max_ms": 1.982,
+          "p95_small_sample": true,
+          "p99_small_sample": true,
+          "tail_count_reference": {
+            "p95": 0,
+            "p99": 0
+          },
+          "percentile_method": "linear interpolation; small-sample flag uses fewer than 10 expected tail observations; frames are not independent runs",
+          "above_ms": {
+            "16.666667": 0,
+            "100": 0,
+            "250": 0,
+            "1000": 0
+          }
+        },
+        "render_queue": {
+          "count": 1,
+          "p50_ms": 1.798,
+          "p95_ms": 1.798,
+          "p99_ms": 1.798,
+          "max_ms": 1.798,
+          "p95_small_sample": true,
+          "p99_small_sample": true,
+          "tail_count_reference": {
+            "p95": 0,
+            "p99": 0
+          },
+          "percentile_method": "linear interpolation; small-sample flag uses fewer than 10 expected tail observations; frames are not independent runs",
+          "above_ms": {
+            "16.666667": 0,
+            "100": 0,
+            "250": 0,
+            "1000": 0
+          }
+        },
+        "render_setup": {
+          "count": 1,
+          "p50_ms": 0.242,
+          "p95_ms": 0.242,
+          "p99_ms": 0.242,
+          "max_ms": 0.242,
+          "p95_small_sample": true,
+          "p99_small_sample": true,
+          "tail_count_reference": {
+            "p95": 0,
+            "p99": 0
+          },
+          "percentile_method": "linear interpolation; small-sample flag uses fewer than 10 expected tail observations; frames are not independent runs",
+          "above_ms": {
+            "16.666667": 0,
+            "100": 0,
+            "250": 0,
+            "1000": 0
+          }
+        },
+        "issue_to_swap": {
+          "count": 1,
+          "p50_ms": 8.751,
+          "p95_ms": 8.751,
+          "p99_ms": 8.751,
+          "max_ms": 8.751,
+          "p95_small_sample": true,
+          "p99_small_sample": true,
+          "tail_count_reference": {
+            "p95": 0,
+            "p99": 0
+          },
+          "percentile_method": "linear interpolation; small-sample flag uses fewer than 10 expected tail observations; frames are not independent runs",
+          "above_ms": {
+            "16.666667": 0,
+            "100": 0,
+            "250": 0,
+            "1000": 0
+          }
+        },
+        "swap_to_completed": {
+          "count": 1,
+          "p50_ms": 32.906,
+          "p95_ms": 32.906,
+          "p99_ms": 32.906,
+          "max_ms": 32.906,
+          "p95_small_sample": true,
+          "p99_small_sample": true,
+          "tail_count_reference": {
+            "p95": 0,
+            "p99": 0
+          },
+          "percentile_method": "linear interpolation; small-sample flag uses fewer than 10 expected tail observations; frames are not independent runs",
+          "above_ms": {
+            "16.666667": 1,
+            "100": 0,
+            "250": 0,
+            "1000": 0
+          }
+        }
+      },
+      "cpu_stats": {
+        "cpu0": {
+          "entries": 44414,
+          "overrun": 0,
+          "commit overrun": 0,
+          "bytes": 2283716,
+          "dropped events": 0,
+          "read events": 0
+        }
+      },
+      "host_sampling": false,
+      "clock_resolution_recorded": false,
+      "performance_comparison_qualified": false,
+      "sha256": {
+        "work/native-linux-nce/benchmarks/interaction/20261012-003142-331a2e/4370073A-7A5D-43AE-904B-D84AA087B58C/request.json": "3a61bdf29e2b1389546b53d1690bbb0af69944bbc1c14dcbb677a64dd4baa7ec",
+        "work/native-linux-nce/benchmarks/interaction/20261012-003142-331a2e/4370073A-7A5D-43AE-904B-D84AA087B58C/result.json": "7cdd097988850d3b0e472695311c15e6513555c9bf90269d8f9960ebc19304f5",
+        "work/native-linux-nce/benchmarks/interaction/20261012-003142-331a2e/4370073A-7A5D-43AE-904B-D84AA087B58C/session.log": "9fce772a1b264308e51991d8722b90204e8c4e061689d457ebd64da6c0f707e9",
+        "work/native-linux-nce/benchmarks/interaction/20261012-003142-331a2e/4370073A-7A5D-43AE-904B-D84AA087B58C/interaction/clock-pairs.jsonl": "00538d6d4d2d013beb6d526e02d348fc072a35e33917feb7b26f1548a98f4693",
+        "work/native-linux-nce/benchmarks/interaction/20261012-003142-331a2e/4370073A-7A5D-43AE-904B-D84AA087B58C/interaction/clock.txt": "b21e3b8fcb175197cfbda952dab37a9fa870eb7795f14fa3f7e82fcd37ec69f3",
+        "work/native-linux-nce/benchmarks/interaction/20261012-003142-331a2e/4370073A-7A5D-43AE-904B-D84AA087B58C/interaction/cpu0.txt": "c04d60bf07c2daefc615e2839b4bb5a639a12a44061bc1dfdb37075bef92ef5a",
+        "work/native-linux-nce/benchmarks/interaction/20261012-003142-331a2e/4370073A-7A5D-43AE-904B-D84AA087B58C/interaction/frames.txt": "976d76bb1346c20739ad7faee6556440346b02565b9435343135aa4022057bd7",
+        "work/native-linux-nce/benchmarks/interaction/20261012-003142-331a2e/4370073A-7A5D-43AE-904B-D84AA087B58C/interaction/kernel.ftrace": "d71c68492966f4bf421f658e62234a62e4615a62bc19403d9a8972b8a78bee0a"
+      },
+      "alignment_uncertainty_ns": null
+    },
+    {
+      "runID": "40DF7081-2E1D-47CB-80F0-F242BEE911A8",
+      "buildID": "0.25.0-Mac-20261012-003131-direct1-dual",
+      "directory": "work/native-linux-nce/benchmarks/interaction/20261012-003645-5babd6/40DF7081-2E1D-47CB-80F0-F242BEE911A8",
+      "configuration": {
+        "aot": false,
+        "bootImage": false,
+        "diagnostics": false,
+        "directFault": true,
+        "expandedJIT": false,
+        "fastBaseline": false,
+        "faultPrefetch": false,
+        "nterp": true,
+        "performanceLogging": false,
+        "schedulerSliceUS": 0,
+        "sparseScan": true,
+        "translation": {
+          "cacheMiB": 128,
+          "codeWatch": true,
+          "crossPage": true,
+          "linuxFastpath": false,
+          "memoryGroups": false,
+          "onlineCPUs": 1,
+          "retainRoutes": false,
+          "reuseCodeChecks": false,
+          "routeEpochs": false,
+          "vectorTable": false
+        }
+      },
+      "frame_counts": {
+        "accepted": 118
+      },
+      "measurement_failures": [],
+      "duration": {
+        "count": 118,
+        "p50_ms": 63.482903,
+        "p95_ms": 776.9132076999995,
+        "p99_ms": 1058.6923901399998,
+        "max_ms": 1078.020462,
+        "p95_small_sample": true,
+        "p99_small_sample": true,
+        "tail_count_reference": {
+          "p95": 5,
+          "p99": 1
+        },
+        "percentile_method": "linear interpolation; small-sample flag uses fewer than 10 expected tail observations; frames are not independent runs",
+        "above_ms": {
+          "16.666667": 118,
+          "100": 39,
+          "250": 32,
+          "1000": 2
+        }
+      },
+      "phase_duration": {
+        "before_input": {
+          "count": 118,
+          "p50_ms": 16.417932,
+          "p95_ms": 330.58166479999994,
+          "p99_ms": 405.97137847999994,
+          "max_ms": 461.864462,
+          "p95_small_sample": true,
+          "p99_small_sample": true,
+          "tail_count_reference": {
+            "p95": 5,
+            "p99": 1
+          },
+          "percentile_method": "linear interpolation; small-sample flag uses fewer than 10 expected tail observations; frames are not independent runs",
+          "above_ms": {
+            "16.666667": 59,
+            "100": 26,
+            "250": 9,
+            "1000": 0
+          }
+        },
+        "main_to_sync": {
+          "count": 118,
+          "p50_ms": 6.8515,
+          "p95_ms": 206.84159999999994,
+          "p99_ms": 281.9828999999999,
+          "max_ms": 353.069,
+          "p95_small_sample": true,
+          "p99_small_sample": true,
+          "tail_count_reference": {
+            "p95": 5,
+            "p99": 1
+          },
+          "percentile_method": "linear interpolation; small-sample flag uses fewer than 10 expected tail observations; frames are not independent runs",
+          "above_ms": {
+            "16.666667": 31,
+            "100": 16,
+            "250": 2,
+            "1000": 0
+          }
+        },
+        "render_queue": {
+          "count": 118,
+          "p50_ms": 13.736,
+          "p95_ms": 103.73699999999992,
+          "p99_ms": 203.62732,
+          "max_ms": 294.869,
+          "p95_small_sample": true,
+          "p99_small_sample": true,
+          "tail_count_reference": {
+            "p95": 5,
+            "p99": 1
+          },
+          "percentile_method": "linear interpolation; small-sample flag uses fewer than 10 expected tail observations; frames are not independent runs",
+          "above_ms": {
+            "16.666667": 50,
+            "100": 7,
+            "250": 1,
+            "1000": 0
+          }
+        },
+        "render_setup": {
+          "count": 118,
+          "p50_ms": 0.3025,
+          "p95_ms": 6.464549999999997,
+          "p99_ms": 28.615739999999978,
+          "max_ms": 41.593,
+          "p95_small_sample": true,
+          "p99_small_sample": true,
+          "tail_count_reference": {
+            "p95": 5,
+            "p99": 1
+          },
+          "percentile_method": "linear interpolation; small-sample flag uses fewer than 10 expected tail observations; frames are not independent runs",
+          "above_ms": {
+            "16.666667": 3,
+            "100": 0,
+            "250": 0,
+            "1000": 0
+          }
+        },
+        "issue_to_swap": {
+          "count": 118,
+          "p50_ms": 16.9555,
+          "p95_ms": 304.4200999999999,
+          "p99_ms": 388.83982999999995,
+          "max_ms": 665.515,
+          "p95_small_sample": true,
+          "p99_small_sample": true,
+          "tail_count_reference": {
+            "p95": 5,
+            "p99": 1
+          },
+          "percentile_method": "linear interpolation; small-sample flag uses fewer than 10 expected tail observations; frames are not independent runs",
+          "above_ms": {
+            "16.666667": 60,
+            "100": 29,
+            "250": 11,
+            "1000": 0
+          }
+        },
+        "swap_to_completed": {
+          "count": 118,
+          "p50_ms": 7.2655,
+          "p95_ms": 31.23624999999999,
+          "p99_ms": 50.60928999999998,
+          "max_ms": 97.846,
+          "p95_small_sample": true,
+          "p99_small_sample": true,
+          "tail_count_reference": {
+            "p95": 5,
+            "p99": 1
+          },
+          "percentile_method": "linear interpolation; small-sample flag uses fewer than 10 expected tail observations; frames are not independent runs",
+          "above_ms": {
+            "16.666667": 23,
+            "100": 0,
+            "250": 0,
+            "1000": 0
+          }
+        }
+      },
+      "cpu_stats": {
+        "cpu0": {
+          "entries": 44139,
+          "overrun": 0,
+          "commit overrun": 0,
+          "bytes": 2309524,
+          "dropped events": 0,
+          "read events": 0
+        }
+      },
+      "host_sampling": true,
+      "clock_resolution_recorded": false,
+      "performance_comparison_qualified": false,
+      "sha256": {
+        "work/native-linux-nce/benchmarks/interaction/20261012-003645-5babd6/40DF7081-2E1D-47CB-80F0-F242BEE911A8/request.json": "ca1857b6c9f92a199247e7b832a2a8ffe0c189562bf1c2ad22018a8250eb8740",
+        "work/native-linux-nce/benchmarks/interaction/20261012-003645-5babd6/40DF7081-2E1D-47CB-80F0-F242BEE911A8/result.json": "802ad9b850b3bdf341f9603619c181444adfa4f306ebc715ac2f4be8db8a06f2",
+        "work/native-linux-nce/benchmarks/interaction/20261012-003645-5babd6/40DF7081-2E1D-47CB-80F0-F242BEE911A8/session.log": "0ba9f9d6533b119c4c89b18ca638c2587bdb58259f9c42a3dfba9111b9e8d500",
+        "work/native-linux-nce/benchmarks/interaction/20261012-003645-5babd6/40DF7081-2E1D-47CB-80F0-F242BEE911A8/interaction/clock-pairs.jsonl": "ae47db7c259dc5b883265cef7f9ee9a871c4be943d562a02763853257cb1cf0b",
+        "work/native-linux-nce/benchmarks/interaction/20261012-003645-5babd6/40DF7081-2E1D-47CB-80F0-F242BEE911A8/interaction/clock.txt": "b21e3b8fcb175197cfbda952dab37a9fa870eb7795f14fa3f7e82fcd37ec69f3",
+        "work/native-linux-nce/benchmarks/interaction/20261012-003645-5babd6/40DF7081-2E1D-47CB-80F0-F242BEE911A8/interaction/cpu0.txt": "348dc0638ed0b758f336ef91a11d6624912b6f3f16bb95202395c23522349653",
+        "work/native-linux-nce/benchmarks/interaction/20261012-003645-5babd6/40DF7081-2E1D-47CB-80F0-F242BEE911A8/interaction/frames.txt": "1b701cd3e66d276af4610e3f67839b3756844d9e2bc72fd22823f69a759d5c13",
+        "work/native-linux-nce/benchmarks/interaction/20261012-003645-5babd6/40DF7081-2E1D-47CB-80F0-F242BEE911A8/interaction/kernel.ftrace": "91cfa964e0649de65d2b97048ae5f25ce3ccc72f5296ad416de60e6831a683a6"
+      },
+      "alignment_uncertainty_ns": null
+    },
+    {
+      "runID": "115CA2BF-0218-492C-9CDF-F5B50FBD17E6",
+      "buildID": "0.25.0-Mac-20261012-005729-direct1-dual",
+      "directory": "work/native-linux-nce/benchmarks/interaction/20261012-010154-dda1dc/115CA2BF-0218-492C-9CDF-F5B50FBD17E6",
+      "configuration": {
+        "aot": false,
+        "bootImage": false,
+        "diagnostics": false,
+        "directFault": true,
+        "expandedJIT": false,
+        "fastBaseline": false,
+        "faultPrefetch": false,
+        "nterp": true,
+        "performanceLogging": false,
+        "schedulerSliceUS": 0,
+        "sparseScan": true,
+        "translation": {
+          "cacheMiB": 128,
+          "codeWatch": true,
+          "crossPage": true,
+          "linuxFastpath": false,
+          "memoryGroups": false,
+          "onlineCPUs": 1,
+          "retainRoutes": false,
+          "reuseCodeChecks": false,
+          "routeEpochs": false,
+          "vectorTable": false
+        }
+      },
+      "benchmark_status": "failed",
+      "measurement_failures": [
+        "thread snapshot open returned EINVAL before capture; AArch64 O_DIRECTORY flag corrected from 0x10000 to 0x4000"
+      ],
+      "frame_counts": {},
+      "duration": {
+        "count": 0
+      }
+    },
+    {
+      "runID": "2BDE189E-8140-4AD9-A303-673986017311",
+      "buildID": "0.25.0-Mac-20261012-011220-direct1-dual",
+      "directory": "work/native-linux-nce/benchmarks/interaction/20261012-011233-e45f03/2BDE189E-8140-4AD9-A303-673986017311",
+      "configuration": {
+        "aot": false,
+        "bootImage": false,
+        "diagnostics": false,
+        "directFault": true,
+        "expandedJIT": false,
+        "fastBaseline": false,
+        "faultPrefetch": false,
+        "nterp": true,
+        "performanceLogging": false,
+        "schedulerSliceUS": 0,
+        "sparseScan": true,
+        "translation": {
+          "cacheMiB": 128,
+          "codeWatch": true,
+          "crossPage": true,
+          "linuxFastpath": false,
+          "memoryGroups": false,
+          "onlineCPUs": 1,
+          "retainRoutes": false,
+          "reuseCodeChecks": false,
+          "routeEpochs": false,
+          "vectorTable": false
+        }
+      },
+      "benchmark_status": "failed",
+      "measurement_failures": [
+        "thread snapshot returned EFAULT before capture; standalone host and GCD procfs preflight passed; cause under investigation"
+      ],
+      "frame_counts": {},
+      "duration": {
+        "count": 0
+      }
+    },
+    {
+      "runID": "7D346BD3-9580-4499-BB51-22DA6AE72D1C",
+      "buildID": "0.25.0-Mac-20261012-014258-direct1-dual",
+      "configuration": {
+        "aot": false,
+        "bootImage": false,
+        "diagnostics": false,
+        "directFault": true,
+        "expandedJIT": false,
+        "fastBaseline": false,
+        "faultPrefetch": false,
+        "nterp": true,
+        "performanceLogging": false,
+        "schedulerSliceUS": 0,
+        "sparseScan": true,
+        "translation": {
+          "cacheMiB": 128,
+          "codeWatch": true,
+          "crossPage": true,
+          "linuxFastpath": false,
+          "memoryGroups": false,
+          "onlineCPUs": 1,
+          "retainRoutes": false,
+          "reuseCodeChecks": false,
+          "routeEpochs": false,
+          "vectorTable": false
+        }
+      },
+      "frame_counts": {
+        "accepted": 118,
+        "nonzero_flags": 2
+      },
+      "frame_totals": [
+        {
+          "window": null,
+          "since_ns": 213376619000,
+          "total_frames": 129
+        },
+        {
+          "window": "com.android.settings/com.android.settings.homepage.SettingsHomepageActivity",
+          "since_ns": 213376614000,
+          "total_frames": 129
+        }
+      ],
+      "alignment_uncertainty_ns": 10000750.0,
+      "cpu_stats": {
+        "cpu0": {
+          "entries": 41741,
+          "overrun": 0,
+          "commit overrun": 0,
+          "bytes": 2176708,
+          "dropped events": 0,
+          "read events": 0
+        }
+      },
+      "source_sha256": {
+        "work/native-linux-nce/benchmarks/interaction/20261012-014340-21bc2b/7D346BD3-9580-4499-BB51-22DA6AE72D1C/request.json": "4276c8d6627d7ee05b635895860d81fb6eabb992acfcc76065718998c59ce16f",
+        "work/native-linux-nce/benchmarks/interaction/20261012-014340-21bc2b/7D346BD3-9580-4499-BB51-22DA6AE72D1C/result.json": "b9768b01067f4bf70ec3d596d95db314a3b938d3c3a555ed63e8b1e8c3c47623",
+        "work/native-linux-nce/benchmarks/interaction/20261012-014340-21bc2b/7D346BD3-9580-4499-BB51-22DA6AE72D1C/interaction/clock-pairs.jsonl": "897117d1d5ced9c8dc16df7f802fe9f8273027ffe711951d39d7468e84a2d128",
+        "work/native-linux-nce/benchmarks/interaction/20261012-014340-21bc2b/7D346BD3-9580-4499-BB51-22DA6AE72D1C/interaction/clock.txt": "b21e3b8fcb175197cfbda952dab37a9fa870eb7795f14fa3f7e82fcd37ec69f3",
+        "work/native-linux-nce/benchmarks/interaction/20261012-014340-21bc2b/7D346BD3-9580-4499-BB51-22DA6AE72D1C/interaction/cpu0.txt": "1d0948996ef19ed58480925240c1e3b1f9818d5c2731b9870b77c3e1fb856858",
+        "work/native-linux-nce/benchmarks/interaction/20261012-014340-21bc2b/7D346BD3-9580-4499-BB51-22DA6AE72D1C/interaction/execution.json": "c990b4ea818d2a53f6d51febd4a2a59af6d8d84daa2a85ef3468b9dd55ab2cf3",
+        "work/native-linux-nce/benchmarks/interaction/20261012-014340-21bc2b/7D346BD3-9580-4499-BB51-22DA6AE72D1C/interaction/frames.txt": "7be0b1f7f6a395437ac1be063bdb50d1197bd9cc8234ebd89c47ef6549e213c7",
+        "work/native-linux-nce/benchmarks/interaction/20261012-014340-21bc2b/7D346BD3-9580-4499-BB51-22DA6AE72D1C/interaction/kernel.ftrace": "ede43e4907c9a0bca1611214eb0db8afac9fcf4dac440d5d076d1fcca2a3c532",
+        "work/native-linux-nce/benchmarks/interaction/20261012-014340-21bc2b/7D346BD3-9580-4499-BB51-22DA6AE72D1C/interaction/threads-after.txt": "82beb052164516580c8f2a638f66e83f6393298a2242513fa19d15c04e1bdd3c",
+        "work/native-linux-nce/benchmarks/interaction/20261012-014340-21bc2b/7D346BD3-9580-4499-BB51-22DA6AE72D1C/interaction/threads-before.txt": "d956766e8410f397ce6fb153e6a74fedefdf6b3da0c1bd892a80bca1928f8887"
+      },
+      "directory": "work/native-linux-nce/benchmarks/interaction/20261012-014340-21bc2b/7D346BD3-9580-4499-BB51-22DA6AE72D1C",
+      "measurement_failures": [
+        "window frame history is shorter than its rendered total: com.android.settings/com.android.settings.homepage.SettingsHomepageActivity"
+      ],
+      "analysis": "work/native-linux-nce/interaction-preflight/v4-analysis.json",
+      "host_window_ns": [
+        1534999389010000,
+        1535018218012000
+      ],
+      "execution_stage_totals": [
+        {
+          "wall_ns": 59479000,
+          "cpu_ns": 25873640,
+          "calls": 129699
+        },
+        {
+          "wall_ns": 4885064000,
+          "cpu_ns": 4583688647,
+          "calls": 129699
+        },
+        {
+          "wall_ns": 4089180000,
+          "cpu_ns": 3838783909,
+          "calls": 7200
+        }
+      ],
+      "scope": "Execution attribution complete; frame history truncated; full-window frame percentiles unavailable; profiling overhead unqualified",
+      "execution_top_threads": [
+        {
+          "android_pid": 393,
+          "android_tid": 393,
+          "host_tid": 186225096,
+          "stages": [
+            {
+              "wall_ns": 10621000,
+              "cpu_ns": 4586363,
+              "calls": 24112
+            },
+            {
+              "wall_ns": 889034000,
+              "cpu_ns": 838528512,
+              "calls": 24112
+            },
+            {
+              "wall_ns": 1255500000,
+              "cpu_ns": 1197684540,
+              "calls": 801
+            }
+          ],
+          "namespace_match": "unique",
+          "global_pid": 444,
+          "global_tid": 444,
+          "names": [
+            "ndroid.settings"
+          ],
+          "observed_in": [
+            "threads-after.txt",
+            "threads-before.txt"
+          ]
+        },
+        {
+          "android_pid": 393,
+          "android_tid": 412,
+          "host_tid": 186225199,
+          "stages": [
+            {
+              "wall_ns": 4602000,
+              "cpu_ns": 1963841,
+              "calls": 9952
+            },
+            {
+              "wall_ns": 379289000,
+              "cpu_ns": 356774028,
+              "calls": 9952
+            },
+            {
+              "wall_ns": 1567958000,
+              "cpu_ns": 1453954860,
+              "calls": 871
+            }
+          ],
+          "namespace_match": "unique",
+          "global_pid": 444,
+          "global_tid": 463,
+          "names": [
+            "RenderThread"
+          ],
+          "observed_in": [
+            "threads-after.txt",
+            "threads-before.txt"
+          ]
+        },
+        {
+          "android_pid": 393,
+          "android_tid": 398,
+          "host_tid": 186225101,
+          "stages": [
+            {
+              "wall_ns": 3770000,
+              "cpu_ns": 1709906,
+              "calls": 9051
+            },
+            {
+              "wall_ns": 672619000,
+              "cpu_ns": 640687379,
+              "calls": 9051
+            },
+            {
+              "wall_ns": 0,
+              "cpu_ns": 0,
+              "calls": 0
+            }
+          ],
+          "namespace_match": "unique",
+          "global_pid": 444,
+          "global_tid": 449,
+          "names": [
+            "Jit thread pool"
+          ],
+          "observed_in": [
+            "threads-after.txt",
+            "threads-before.txt"
+          ]
+        },
+        {
+          "android_pid": 146,
+          "android_tid": 234,
+          "host_tid": 186223821,
+          "stages": [
+            {
+              "wall_ns": 7615000,
+              "cpu_ns": 3392502,
+              "calls": 16198
+            },
+            {
+              "wall_ns": 433191000,
+              "cpu_ns": 400505855,
+              "calls": 16198
+            },
+            {
+              "wall_ns": 196386000,
+              "cpu_ns": 187333451,
+              "calls": 470
+            }
+          ],
+          "namespace_match": "unique",
+          "global_pid": 195,
+          "global_tid": 283,
+          "names": [
+            "InputDispatcher"
+          ],
+          "observed_in": [
+            "threads-after.txt",
+            "threads-before.txt"
+          ]
+        },
+        {
+          "android_pid": 23,
+          "android_tid": 23,
+          "host_tid": 186218649,
+          "stages": [
+            {
+              "wall_ns": 4731000,
+              "cpu_ns": 2034686,
+              "calls": 10179
+            },
+            {
+              "wall_ns": 374057000,
+              "cpu_ns": 350890769,
+              "calls": 10179
+            },
+            {
+              "wall_ns": 161014000,
+              "cpu_ns": 152700514,
+              "calls": 1804
+            }
+          ],
+          "namespace_match": "unique",
+          "global_pid": 55,
+          "global_tid": 55,
+          "names": [
+            "surfaceflinger"
+          ],
+          "observed_in": [
+            "threads-after.txt",
+            "threads-before.txt"
+          ]
+        },
+        {
+          "android_pid": 23,
+          "android_tid": 28,
+          "host_tid": 186218676,
+          "stages": [
+            {
+              "wall_ns": 987000,
+              "cpu_ns": 404426,
+              "calls": 1938
+            },
+            {
+              "wall_ns": 45920000,
+              "cpu_ns": 43815332,
+              "calls": 1938
+            },
+            {
+              "wall_ns": 313347000,
+              "cpu_ns": 301013831,
+              "calls": 648
+            }
+          ],
+          "namespace_match": "unique",
+          "global_pid": 55,
+          "global_tid": 60,
+          "names": [
+            "RenderEngine"
+          ],
+          "observed_in": [
+            "threads-after.txt",
+            "threads-before.txt"
+          ]
+        },
+        {
+          "android_pid": 146,
+          "android_tid": 154,
+          "host_tid": 186222501,
+          "stages": [
+            {
+              "wall_ns": 1505000,
+              "cpu_ns": 624625,
+              "calls": 3027
+            },
+            {
+              "wall_ns": 365597000,
+              "cpu_ns": 340370164,
+              "calls": 3027
+            },
+            {
+              "wall_ns": 0,
+              "cpu_ns": 0,
+              "calls": 0
+            }
+          ],
+          "namespace_match": "unique",
+          "global_pid": 195,
+          "global_tid": 203,
+          "names": [
+            "Jit thread pool"
+          ],
+          "observed_in": [
+            "threads-after.txt",
+            "threads-before.txt"
+          ]
+        },
+        {
+          "android_pid": 146,
+          "android_tid": 146,
+          "host_tid": 186222475,
+          "stages": [
+            {
+              "wall_ns": 5480000,
+              "cpu_ns": 2486700,
+              "calls": 12586
+            },
+            {
+              "wall_ns": 338077000,
+              "cpu_ns": 317085225,
+              "calls": 12586
+            },
+            {
+              "wall_ns": 2919000,
+              "cpu_ns": 2800333,
+              "calls": 10
+            }
+          ],
+          "namespace_match": "unique",
+          "global_pid": 195,
+          "global_tid": 195,
+          "names": [
+            "system_server"
+          ],
+          "observed_in": [
+            "threads-after.txt",
+            "threads-before.txt"
+          ]
+        },
+        {
+          "android_pid": 337,
+          "android_tid": 337,
+          "host_tid": 186224619,
+          "stages": [
+            {
+              "wall_ns": 1472000,
+              "cpu_ns": 604891,
+              "calls": 2997
+            },
+            {
+              "wall_ns": 188135000,
+              "cpu_ns": 175592356,
+              "calls": 2997
+            },
+            {
+              "wall_ns": 161406000,
+              "cpu_ns": 133680794,
+              "calls": 52
+            }
+          ],
+          "namespace_match": "unique",
+          "global_pid": 386,
+          "global_tid": 386,
+          "names": [
+            "ndroid.systemui"
+          ],
+          "observed_in": [
+            "threads-after.txt",
+            "threads-before.txt"
+          ]
+        },
+        {
+          "android_pid": 146,
+          "android_tid": 165,
+          "host_tid": 186222513,
+          "stages": [
+            {
+              "wall_ns": 1845000,
+              "cpu_ns": 830383,
+              "calls": 4003
+            },
+            {
+              "wall_ns": 141639000,
+              "cpu_ns": 132485634,
+              "calls": 4003
+            },
+            {
+              "wall_ns": 110044000,
+              "cpu_ns": 104729258,
+              "calls": 314
+            }
+          ],
+          "namespace_match": "unique",
+          "global_pid": 195,
+          "global_tid": 214,
+          "names": [
+            "android.ui"
+          ],
+          "observed_in": [
+            "threads-after.txt",
+            "threads-before.txt"
+          ]
+        }
+      ],
+      "swipe_durations_ms": [
+        {
+          "action": 4,
+          "requested": 600,
+          "submitted": 3719.6528748609126
+        },
+        {
+          "action": 6,
+          "requested": 600,
+          "submitted": 3762.350416742265
+        },
+        {
+          "action": 8,
+          "requested": 600,
+          "submitted": 3730.5895001627505
+        },
+        {
+          "action": 10,
+          "requested": 600,
+          "submitted": 3896.431874949485
+        }
+      ]
+    },
+    {
+      "runID": "D613E47A-BBC2-4752-A458-643DC4292493",
+      "buildID": "0.25.0-Mac-20261012-015300-direct1-dual",
+      "configuration": {
+        "aot": false,
+        "bootImage": false,
+        "diagnostics": false,
+        "directFault": true,
+        "expandedJIT": false,
+        "fastBaseline": false,
+        "faultPrefetch": false,
+        "nterp": true,
+        "performanceLogging": false,
+        "schedulerSliceUS": 0,
+        "sparseScan": true,
+        "translation": {
+          "cacheMiB": 128,
+          "codeWatch": true,
+          "crossPage": true,
+          "linuxFastpath": false,
+          "memoryGroups": false,
+          "onlineCPUs": 1,
+          "retainRoutes": false,
+          "reuseCodeChecks": false,
+          "routeEpochs": false,
+          "vectorTable": false
+        }
+      },
+      "status": "completed",
+      "directory": "work/native-linux-nce/benchmarks/interaction/20261012-015336-84c482/D613E47A-BBC2-4752-A458-643DC4292493",
+      "capture_mode": "off",
+      "source_sha256": {
+        "request.json": "5e6f7803c7474479fa4b577d06388f69e1173127ede9083254fe9d22ec6416a2",
+        "result.json": "b2c87928ec48cab997c5ee256a671515a172cca4365430a6e38c5235b1bff89b",
+        "session.log": "d7e2ad9a11fce23f2c1d19b696977c58d72f31a3fd42e7f6f21c3aa77b0452aa"
+      },
+      "actions": [
+        {
+          "index": 0,
+          "request": {
+            "milliseconds": 20000,
+            "kind": "wait"
+          },
+          "wall_ms": 20009.192291880026,
+          "process_cpu_ms": 16164.264
+        },
+        {
+          "index": 1,
+          "request": {
+            "key": "settings",
+            "kind": "profile"
+          },
+          "wall_ms": 12087.506916606799,
+          "process_cpu_ms": 12160.889
+        },
+        {
+          "index": 2,
+          "request": {
+            "milliseconds": 15000,
+            "kind": "wait"
+          },
+          "wall_ms": 15000.723249977455,
+          "process_cpu_ms": 2093.925
+        },
+        {
+          "index": 3,
+          "request": {
+            "y": 550,
+            "x": 180,
+            "endX": 180,
+            "milliseconds": 600,
+            "endY": 180,
+            "kind": "swipe"
+          },
+          "wall_ms": 758.2337083294988,
+          "process_cpu_ms": 798.652,
+          "input_total_ms": {
+            "queue_us": 0.622,
+            "call_us": 126.699,
+            "resume_us": 0.993
+          }
+        },
+        {
+          "index": 4,
+          "request": {
+            "milliseconds": 1200,
+            "kind": "wait"
+          },
+          "wall_ms": 1206.25195838511,
+          "process_cpu_ms": 388.555
+        }
+      ],
+      "scope": "preflight only; data image evolved between runs; actual gesture duration differs; causal profiling overhead unqualified"
+    },
+    {
+      "runID": "C3062B14-46AC-4627-BA73-F6C117AA0F8A",
+      "buildID": "0.25.0-Mac-20261012-015300-direct1-dual",
+      "configuration": {
+        "aot": false,
+        "bootImage": false,
+        "diagnostics": false,
+        "directFault": true,
+        "expandedJIT": false,
+        "fastBaseline": false,
+        "faultPrefetch": false,
+        "nterp": true,
+        "performanceLogging": false,
+        "schedulerSliceUS": 0,
+        "sparseScan": true,
+        "translation": {
+          "cacheMiB": 128,
+          "codeWatch": true,
+          "crossPage": true,
+          "linuxFastpath": false,
+          "memoryGroups": false,
+          "onlineCPUs": 1,
+          "retainRoutes": false,
+          "reuseCodeChecks": false,
+          "routeEpochs": false,
+          "vectorTable": false
+        }
+      },
+      "status": "completed",
+      "directory": "work/native-linux-nce/benchmarks/interaction/20261012-015559-2088f9/C3062B14-46AC-4627-BA73-F6C117AA0F8A",
+      "capture_mode": "minimal",
+      "source_sha256": {
+        "request.json": "e36e00a7502db02899303ba7c2e86e07b2f7b98c88f039cdd2dcbec43ca38f1f",
+        "result.json": "0b824a42b486a7de085a492a264b94d0179af5c8a0bc22cb5d2d6c3b683b4b12",
+        "session.log": "ee5005ec18f255b9b31d3d189ec4b98920e97b8d7c6e7c6af2ed308348629cd3"
+      },
+      "actions": [
+        {
+          "index": 0,
+          "request": {
+            "milliseconds": 20000,
+            "kind": "wait"
+          },
+          "wall_ms": 20002.14833347127,
+          "process_cpu_ms": 14117.716
+        },
+        {
+          "index": 1,
+          "request": {
+            "kind": "profile",
+            "key": "settings"
+          },
+          "wall_ms": 23324.158208444715,
+          "process_cpu_ms": 21830.828
+        },
+        {
+          "index": 2,
+          "request": {
+            "milliseconds": 15000,
+            "kind": "wait"
+          },
+          "wall_ms": 15037.821291713044,
+          "process_cpu_ms": 3847.282
+        },
+        {
+          "index": 3,
+          "request": {
+            "kind": "profile",
+            "key": "frames-start"
+          },
+          "wall_ms": 718.7286666594446,
+          "process_cpu_ms": 280.589
+        },
+        {
+          "index": 4,
+          "request": {
+            "y": 550,
+            "milliseconds": 600,
+            "endY": 180,
+            "kind": "swipe",
+            "endX": 180,
+            "x": 180
+          },
+          "wall_ms": 3343.2953748852015,
+          "process_cpu_ms": 2716.49,
+          "input_total_ms": {
+            "queue_us": 4.829,
+            "call_us": 664.621,
+            "resume_us": 2.221
+          }
+        },
+        {
+          "index": 5,
+          "request": {
+            "milliseconds": 1200,
+            "kind": "wait"
+          },
+          "wall_ms": 1217.5674999598414,
+          "process_cpu_ms": 205.107
+        },
+        {
+          "index": 6,
+          "request": {
+            "kind": "profile",
+            "key": "capture-end"
+          },
+          "wall_ms": 836.9754999876022,
+          "process_cpu_ms": 155.124
+        }
+      ],
+      "frame_counts": {
+        "accepted": 35
+      },
+      "duration": {
+        "count": 35,
+        "p50_ms": 206.619264,
+        "p95_ms": 289.08029139999996,
+        "p99_ms": 357.5351144399997,
+        "max_ms": 389.290548,
+        "p95_small_sample": true,
+        "p99_small_sample": true,
+        "tail_count_reference": {
+          "p95": 1,
+          "p99": 0
+        },
+        "percentile_method": "linear interpolation; small-sample flag uses fewer than 10 expected tail observations; frames are not independent runs",
+        "above_ms": {
+          "16.666667": 35,
+          "100": 34,
+          "250": 9,
+          "1000": 0
+        }
+      },
+      "failures": [],
+      "alignment_uncertainty_ns": 10000000.0,
+      "scope": "preflight only; data image evolved between runs; actual gesture duration differs; causal profiling overhead unqualified"
+    }
+  ],
+  "host_checks": "work/native-linux-nce/macos-direct-1-interaction-v3/host-checks.json"
+}

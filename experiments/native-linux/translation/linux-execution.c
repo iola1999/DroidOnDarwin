@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 #include "linux-execution.h"
+#include "interaction-profile.h"
 #include "guest-registers.h"
 #include "layout.h"
 #include "lkl-host-ops.h"
@@ -45,6 +46,7 @@ typedef struct {
     struct pt_regs regs;
     unsigned long tls;
     const char *path;
+    NceExecutionProfile *profile;
 } Process;
 static unsigned char *ram;
 static unsigned long base, *pages;
@@ -610,6 +612,7 @@ static void *user_clone(void *parent, unsigned long sp, unsigned long tls, unsig
     REQUIRE(p);
     *p = *(Process *)parent;
     p->path = NULL;
+    p->profile = NULL;
     p->regs.x[0] = 0;
     if (sp)
         p->regs.sp = sp;
@@ -716,18 +719,27 @@ static void user_run(void *opaque)
         p->path = NULL;
     }
     for (;;) {
+        if (!p->profile && nce_execution_profile_enabled()) {
+            long args[6] = {0};
+            long pid = run_syscall(172, args), tid = run_syscall(178, args);
+            p->profile = nce_execution_profile_thread(pid, tid);
+        }
+        NceProfileStamp stamp = nce_execution_profile_begin();
 #ifdef NCE_SMP
         unsigned long irq_flags = enter_guest();
         bool exclusive = false;
 #else
         prepare_user();
 #endif
+        nce_execution_profile_end(p->profile, NCE_STAGE_PREPARE, stamp);
         unsigned long current_maps = translation ? execution->view->mappings : map_generation;
         memset(&execution->event, 0, sizeof(execution->event));
         bool handled = false;
 #ifdef NCE_DIRECT_EXECUTION
         mark_executing(true);
+        stamp = nce_execution_profile_begin();
         handled = direct_execute(p, current_maps);
+        nce_execution_profile_end(p->profile, NCE_STAGE_DIRECT, stamp);
         mark_executing(false);
 #endif
         uc_err error = UC_ERR_OK;
@@ -738,12 +750,14 @@ static void user_run(void *opaque)
             exclusive = true;
             current_maps = execution->view->mappings;
 #endif
+            stamp = nce_execution_profile_begin();
             prepare_unicorn(current_maps);
             registers(p, false);
             mark_executing(true);
             error = uc_emu_start(execution->engine, p->regs.pc, 0, 0, timer_mode ? 0 : instruction_batch);
             mark_executing(false);
             registers(p, true);
+            nce_execution_profile_end(p->profile, NCE_STAGE_UNICORN, stamp);
         }
         /* Copy callback state before entering Linux: a blocking syscall or
          * page fault can let another Linux thread use this same engine. */

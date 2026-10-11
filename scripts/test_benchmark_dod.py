@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """检查设备状态查询的新旧响应与活动会话边界，不连接实际手机。"""
 import json
+import hashlib
 from pathlib import Path
 import tempfile
 import unittest
@@ -8,6 +9,25 @@ from unittest.mock import patch
 from urllib.parse import parse_qs, urlparse
 
 import benchmark_dod
+
+
+class SeededDataTests(unittest.TestCase):
+    def test_runs_are_isolated_and_existing_data_is_preserved(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            seed = root / 'seed.img'
+            seed.write_bytes(b'initial-data')
+            digest = benchmark_dod.prepare_seeded_data(seed, root / 'first')
+            self.assertEqual(digest, hashlib.sha256(seed.read_bytes()).hexdigest())
+            (root / 'first/android-data.img').write_bytes(b'changed')
+            self.assertEqual(benchmark_dod.prepare_seeded_data(seed, root / 'second'), digest)
+            with self.assertRaises(FileExistsError):
+                benchmark_dod.prepare_seeded_data(seed, root / 'first')
+            self.assertEqual((root / 'first/android-data.img').read_bytes(), b'changed')
+            self.assertEqual(seed.read_bytes(), b'initial-data')
+            with self.assertRaises(ValueError):
+                benchmark_dod.prepare_seeded_data(root / 'missing.img', root / 'third')
+            self.assertFalse((root / 'third').exists())
 
 
 class TranslationParametersTests(unittest.TestCase):

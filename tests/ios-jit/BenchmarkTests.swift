@@ -9,7 +9,13 @@ func benchmarkInput(_ action: Int32, _ x: Int32, _ y: Int32) -> Int32 {
     inputLock.lock()
     defer { inputLock.unlock() }
     inputEvents.append([action, x, y])
+    usleep(2000)
     return inputFailure ? -5 : 0
+}
+
+@_cdecl("nce_session_profile")
+func benchmarkProfile(_ command: Int32, _ directory: UnsafePointer<CChar>?) -> Int32 {
+    -5
 }
 
 @MainActor
@@ -114,6 +120,19 @@ struct BenchmarkChecks {
                 preconditionFailure("invalid memory sampling setting accepted")
             } catch {}
         }
+        for keys in [["capture-end"], ["trace-start"], ["frames-start", "trace-start", "capture-end"],
+                     ["frames-start", "settings", "capture-end"], ["shell"], ["trace-start", "capture-end", "capture-end"]] {
+            invalid = object
+            invalid["actions"] = keys.map { ["kind": "profile", "key": $0] }
+            do { _ = try BenchmarkRequest.decode(encoded(invalid))
+                preconditionFailure("invalid capture sequence accepted")
+            } catch {}
+        }
+        for mode in ["frames-start", "trace-start"] {
+            var valid = object
+            valid["actions"] = ["settings", mode, "capture-end"].map { ["kind": "profile", "key": $0] }
+            _ = try BenchmarkRequest.decode(encoded(valid))
+        }
         let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(at: root) }
@@ -169,6 +188,12 @@ struct BenchmarkChecks {
         precondition(events.first == [Int32(NCE_INPUT_KEY), Int32(NCE_KEY_HOME), 0])
         precondition(events.last == [Int32(NCE_INPUT_UP), 50, 50])
         precondition(events.count == 7)
+        let recorded = result["events"] as! [[String: Any]]
+        let cpu = recorded.map { ($0["process_cpu_us"] as! NSNumber).int64Value }
+        precondition(zip(cpu, cpu.dropFirst()).allSatisfy { $0 <= $1 })
+        let timings = recorded.flatMap { $0["input_timings"] as? [[String: Int64]] ?? [] }
+        precondition(timings.count == events.count)
+        precondition(timings.allSatisfy { $0["call_us"]! >= 2000 && $0["queue_us"]! >= 0 && $0["resume_us"]! >= 0 })
         do { _ = try BenchmarkSession(request: request, session: session, target: target, output: root)
             preconditionFailure("duplicate run accepted")
         } catch {}
@@ -191,6 +216,22 @@ struct BenchmarkChecks {
         precondition(finished && !session.active && failed["status"] as? String == "failed" && failed["error"] != nil)
         precondition((failed["memory"] as? [String: Bool])?["enabled"] == false)
         precondition(!FileManager.default.fileExists(atPath: root.appendingPathComponent(failingRequest.runID.uuidString + "/memory.jsonl").path))
+        object["runID"] = UUID().uuidString
+        object["actions"] = [["kind": "profile", "key": "settings"]]
+        let profileRequest = try BenchmarkRequest.decode(encoded(object))
+        let profileRun = try BenchmarkSession(request: profileRequest, session: session, target: target, output: root)
+        finished = false
+        profileRun.onFinish = { finished = true }
+        try profileRun.start()
+        for _ in 0 ..< 100 {
+            if finished {
+                break
+            }
+            try await Task.sleep(for: .milliseconds(50))
+        }
+        let profileResult = try JSONSerialization.jsonObject(with: Data(contentsOf: root.appendingPathComponent(profileRequest.runID.uuidString + "/result.json"))) as! [String: Any]
+        precondition(finished && !session.active && profileResult["status"] as? String == "failed")
+        precondition((profileResult["error"] as? String)?.contains("-5") == true)
         let series = root.appendingPathComponent("memory.jsonl")
         try memory.flush(to: series)
         try memory.flush(to: series)

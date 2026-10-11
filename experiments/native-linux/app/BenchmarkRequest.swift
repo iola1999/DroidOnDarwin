@@ -41,6 +41,7 @@ struct BenchmarkRequest: Codable, Sendable {
             case "wait": fields = ["kind", "milliseconds"]
             case "tap": fields = ["kind", "x", "y"]
             case "swipe": fields = ["kind", "x", "y", "endX", "endY", "milliseconds"]
+            case "profile": fields = ["kind", "key"]
             case "key": fields = ["kind", "key"]
             default: throw BenchmarkError.invalid("未知的实验操作")
             }
@@ -57,7 +58,29 @@ struct BenchmarkRequest: Codable, Sendable {
               !request.configuration.diagnostics else {
             throw BenchmarkError.invalid("实验版本、设备编号、时限或诊断配置无效")
         }
+        var profileStarted = false
+        var profileEnded = false
         for action in request.actions {
+            if action.kind == "profile" {
+                guard let key = action.key, ["settings", "frames-start", "trace-start", "capture-end"].contains(key), !profileEnded else {
+                    throw BenchmarkError.invalid("采集命令无效或窗口已经结束")
+                }
+                if key == "settings" {
+                    guard !profileStarted else {
+                        throw BenchmarkError.invalid("采集期间不能切换准备场景")
+                    }
+                } else if key == "capture-end" {
+                    guard profileStarted else {
+                        throw BenchmarkError.invalid("采集尚未开始")
+                    }
+                    profileEnded = true
+                } else {
+                    guard !profileStarted else {
+                        throw BenchmarkError.invalid("每轮只允许一个采集窗口")
+                    }
+                    profileStarted = true
+                }
+            }
             if action.kind == "tap" || action.kind == "swipe" {
                 guard action.x != nil, action.y != nil else {
                     throw BenchmarkError.invalid("操作缺少坐标")
@@ -94,9 +117,12 @@ struct BenchmarkRequest: Codable, Sendable {
                     throw BenchmarkError.invalid("操作时长超出范围")
                 }
             }
-            if let key = action.key, !["home", "back", "recent"].contains(key) {
+            if action.kind == "key", let key = action.key, !["home", "back", "recent"].contains(key) {
                 throw BenchmarkError.invalid("未知的导航键")
             }
+        }
+        guard !profileStarted || profileEnded else {
+            throw BenchmarkError.invalid("采集缺少结束动作")
         }
         return request
     }

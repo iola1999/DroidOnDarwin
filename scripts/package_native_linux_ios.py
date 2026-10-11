@@ -163,7 +163,7 @@ def main():
         sources += [{'path': str(path)} for path in sorted((EXP / 'app').glob('*.swift'))]
     else:
         sources = [{'path': str(EXP / name)} for name in
-                   ['lkl-main.c', 'lkl-host.c', 'lkl-process-host.c', 'nce-cpu.c', 'programs.c', 'memory.c', 'code-memory.c', 'execute-check.c', 'compute.c', 'input.c', 'session.c', 'nce.c', 'nce-thread.c', 'entry.S',
+                   ['lkl-main.c', 'lkl-host.c', 'lkl-process-host.c', 'nce-cpu.c', 'programs.c', 'memory.c', 'code-memory.c', 'execute-check.c', 'compute.c', 'input.c', 'session.c', 'session-profile.c', 'nce.c', 'nce-thread.c', 'entry.S',
                     'ios/Bridge.c', 'ios/NativeLinuxApp.swift', 'ios/Display.swift', 'ios/JITSettingsView.swift', 'app/DeviceStore.mm', 'macos/Storage.mm', 'graphics/host-graphics.cpp']]
         sources += [{'path': str(path)} for path in sorted((EXP / 'app').glob('*.swift'))]
         sources += [{'path': str(EXP / 'guest.S'), 'compilerFlags': ['-DNATIVE']}]

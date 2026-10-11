@@ -30,6 +30,10 @@ extern "C" int nce_host_input_send(int, int, int)
 {
     return 0;
 }
+extern "C" int nce_session_profile(int, const char *)
+{
+    return -19;
+}
 
 static NceDisplay *findDisplay(NSView *root)
 {

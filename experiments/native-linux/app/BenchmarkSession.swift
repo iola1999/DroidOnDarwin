@@ -27,6 +27,7 @@ final class BenchmarkSession {
     #endif
     private var started = ProcessInfo.processInfo.systemUptime
     private var events: [[String: Any]] = []
+    private var inputTimings: [[String: Int64]] = []
     private var failure: String?
     private var finished = false
     var runID: UUID {
@@ -149,6 +150,7 @@ final class BenchmarkSession {
                     guard session.phase == .running else {
                         throw BenchmarkError.invalid("操作期间 Android 已停止")
                     }
+                    inputTimings = []
                     try record("action_started", index: index)
                     try await perform(action)
                     try record("action_submitted", index: index)
@@ -209,11 +211,22 @@ final class BenchmarkSession {
     }
 
     private func record(_ event: String, index: Int? = nil) throws {
-        var entry: [String: Any] = ["event": event, "elapsed_ms": (ProcessInfo.processInfo.systemUptime - started) * 1000,
+        var monotonic = timespec()
+        clock_gettime(CLOCK_MONOTONIC, &monotonic)
+        var entry: [String: Any] = ["event": event, "host_monotonic_ns": Int64(monotonic.tv_sec) * 1_000_000_000 + Int64(monotonic.tv_nsec), "elapsed_ms": (ProcessInfo.processInfo.systemUptime - started) * 1000,
                                     "thermal_state": ProcessInfo.processInfo.thermalState.rawValue,
                                     "low_power_mode": ProcessInfo.processInfo.isLowPowerModeEnabled]
         if let index {
             entry["action"] = index
+        }
+        var usage = rusage()
+        if getrusage(RUSAGE_SELF, &usage) == 0 {
+            entry["process_cpu_us"] = Int64(usage.ru_utime.tv_sec + usage.ru_stime.tv_sec) * 1_000_000 + Int64(usage.ru_utime.tv_usec + usage.ru_stime.tv_usec)
+        } else {
+            entry["process_cpu_error"] = errno
+        }
+        if event == "action_submitted", !inputTimings.isEmpty {
+            entry["input_timings"] = inputTimings
         }
         events.append(entry)
         try writeState(finished ? event : "running")
@@ -256,9 +269,20 @@ final class BenchmarkSession {
     }
 
     private func send(_ action: Int32, _ x: Int32, _ y: Int32 = 0) async throws {
-        let result: Int32 = await withCheckedContinuation { continuation in
-            input.async { continuation.resume(returning: nce_host_input_send(action, x, y)) }
+        let enqueued = ProcessInfo.processInfo.systemUptime
+        let (result, began, ended): (Int32, Double, Double) = await withCheckedContinuation { continuation in
+            input.async {
+                let began = ProcessInfo.processInfo.systemUptime
+                let result = nce_host_input_send(action, x, y)
+                continuation.resume(returning: (result, began, ProcessInfo.processInfo.systemUptime))
+            }
         }
+        let resumed = ProcessInfo.processInfo.systemUptime
+        // These boundaries separate queue delay, synchronous Linux entry and
+        // resumption on the main actor; guest consumption remains asynchronous.
+        inputTimings.append(["action": Int64(action), "queue_us": Int64((began - enqueued) * 1_000_000),
+                             "call_us": Int64((ended - began) * 1_000_000), "resume_us": Int64((resumed - ended) * 1_000_000),
+                             "result": Int64(result)])
         guard result == 0 else {
             throw BenchmarkError.invalid("输入提交失败：\(result)")
         }
@@ -267,6 +291,19 @@ final class BenchmarkSession {
 
     private func perform(_ action: BenchmarkRequest.Action) async throws {
         switch action.kind {
+        case "profile":
+            let commands: [String: Int32] = ["settings": Int32(NCE_PROFILE_SETTINGS), "frames-start": Int32(NCE_PROFILE_FRAMES),
+                                             "trace-start": Int32(NCE_PROFILE_SCHEDULER), "capture-end": Int32(NCE_PROFILE_END)]
+            let output = directory.appendingPathComponent("interaction", isDirectory: true)
+            try FileManager.default.createDirectory(at: output, withIntermediateDirectories: true)
+            let command = commands[action.key!]!
+            let result: Int32 = await withCheckedContinuation { continuation in
+                input.async { continuation.resume(returning: nce_session_profile(command, output.path)) }
+            }
+            guard result == 0 else {
+                throw BenchmarkError.invalid("交互采集失败：\(result)")
+            }
+            try Task.checkCancellation()
         case "wait": try await Task.sleep(for: .milliseconds(action.milliseconds!))
         case "key": try await send(Int32(NCE_INPUT_KEY), ["home": Int32(NCE_KEY_HOME), "back": Int32(NCE_KEY_BACK), "recent": Int32(NCE_KEY_RECENT)][action.key!]!)
         case "tap":

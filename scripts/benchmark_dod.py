@@ -9,6 +9,7 @@ from pathlib import Path
 import platform
 import plistlib
 import re
+import shutil
 import statistics
 import subprocess
 import time
@@ -37,6 +38,16 @@ def missing_displayed_packages(components, required):
 
 def save(path, value):
     path.write_text(json.dumps(value, ensure_ascii=False, indent=2) + '\n')
+
+
+def prepare_seeded_data(seed, destination):
+    # Each run owns a new directory; existing device data is never replaced.
+    if not seed.is_file():
+        raise ValueError('实验数据种子不存在：' + str(seed))
+    destination.mkdir()
+    shutil.copyfile(seed, destination / 'android-data.img')
+    with (destination / 'android-data.img').open('rb') as stream:
+        return hashlib.file_digest(stream, 'sha256').hexdigest()
 
 
 def devicectl(args, command, check=True):
@@ -126,6 +137,7 @@ def main():
     parser.add_argument('--platform', choices=['macos', 'ios'], default='macos')
     parser.add_argument('--app', type=Path, default=ROOT / 'work/native-linux-nce/macos/DroidOnDarwin.app')
     parser.add_argument('--data-directory', type=Path, default=OUT / 'device')
+    parser.add_argument('--data-seed', type=Path, help='Mac 每轮从指定实验种子新建数据目录，替代 data-directory')
     parser.add_argument('--device-id', help='iPhone 上已有虚拟设备的 UUID；Mac 可省略')
     parser.add_argument('--phone', help='devicectl 中的设备 ID 或名称')
     parser.add_argument('--bundle-id', default='app.droidondarwin.ios')
@@ -141,6 +153,8 @@ def main():
         parser.error('repeat 需要大于零，timeout 为 30..900 秒')
     if args.platform == 'ios' and not args.phone:
         parser.error('iOS 需要 --phone')
+    if args.data_seed and args.platform != 'macos':
+        parser.error('data-seed 当前只适用于 Mac')
     matrix = json.loads(args.matrix.read_text()) if args.matrix else DEFAULT_MATRIX
     if set(matrix) != {'configurations', 'actions'} or not matrix['configurations']:
         parser.error('matrix 需要 configurations 和 actions')
@@ -160,6 +174,11 @@ def main():
               'data_reset_between_runs': False, 'host_file_cache_reset': False,
               'measurement': 'App starts through observed desktop ready, scripted input submission and clean stop. Ready has up to one polling interval of observation delay. No FPS or application render latency assertion.'}
     save(folder / 'summary.json', report)
+    if args.data_seed:
+        args.data_seed = args.data_seed.resolve()
+        with args.data_seed.open('rb') as stream:
+            report['data_seed'] = {'path': str(args.data_seed), 'sha256': hashlib.file_digest(stream, 'sha256').hexdigest()}
+        report['data_reset_between_runs'] = True
     if args.platform == 'ios':
         status = phone_idle(args, folder)
         defaults = status.get('configuration_defaults')
@@ -172,8 +191,8 @@ def main():
     else:
         args.data_directory = args.data_directory.resolve()
         args.device_id = args.device_id or str(uuid.uuid5(uuid.NAMESPACE_URL, str(args.data_directory))).upper()
-        report['data_directory'] = str(args.data_directory)
-        report['data_image_existed_before_run'] = (args.data_directory / 'android-data.img').exists()
+        report['data_directory'] = None if args.data_seed else str(args.data_directory)
+        report['data_image_existed_before_run'] = False if args.data_seed else (args.data_directory / 'android-data.img').exists()
         info = plistlib.loads((args.app / 'Contents/Info.plist').read_bytes())
         if not info.get('DroidOnDarwinBenchmarkConfigurationQuery'):
             raise SystemExit('这个 App 缺少参数查询入口，请重新构建后运行实验')
@@ -207,11 +226,22 @@ def main():
             error = None
             path = folder / run_id
             console = None
+            initial_data = None
+            run_data = args.data_directory
             try:
                 if args.platform == 'macos':
+                    if args.data_seed:
+                        run_data = folder / (run_id + '-device')
+                        initial_data = prepare_seeded_data(args.data_seed, run_data)
+                        if initial_data != report['data_seed']['sha256']:
+                            raise RuntimeError('实验种子或复制后的数据哈希发生变化')
+                    data_image = run_data / 'android-data.img'
+                    if not args.data_seed and data_image.exists():
+                        with data_image.open('rb') as disk:
+                            initial_data = hashlib.file_digest(disk, 'sha256').hexdigest()
                     console = (folder / (run_id + '-host.log')).open('w')
                     process = subprocess.Popen([str(args.app.resolve() / 'Contents/MacOS/DroidOnDarwin'), '--run-device',
-                                                '--data-directory', str(args.data_directory), '--device-id', args.device_id,
+                                                '--data-directory', str(run_data), '--device-id', args.device_id,
                                                 '--benchmark-request', str(request_file)], stdout=console, stderr=subprocess.STDOUT)
                 else:
                     encoded = base64.urlsafe_b64encode(json.dumps(request).encode()).decode().rstrip('=')
@@ -261,12 +291,18 @@ def main():
                 if args.platform == 'ios':
                     for name in ('result.json', 'session.log', 'request.json', 'memory.jsonl'):
                         copy_phone(args, run_id + '/' + name, path / name)
+                    if any(action.get('kind') == 'profile' for action in request['actions']):
+                        if not copy_phone(args, run_id + '/interaction', path / 'interaction'):
+                            error = error or '未能收集交互采集文件'
                     if (path / 'result.json').exists():
                         result = json.loads((path / 'result.json').read_text())
                     if not (path / 'session.log').exists():
                         error = error or '未能收集运行日志'
                 record = {'runID': run_id, 'configuration_name': variant['name'], 'repeat': repeat, 'request': request,
-                          'result': result, 'metrics': measure(result or {}), 'error': error}
+                          'result': result, 'metrics': measure(result or {}), 'error': error,
+                          'initial_data_sha256': initial_data}
+                if args.platform == 'macos':
+                    record['data_directory'] = str(run_data)
                 log = path / 'session.log'
                 if log.exists():
                     contents = log.read_text(errors='replace')

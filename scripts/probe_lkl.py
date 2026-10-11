@@ -311,7 +311,7 @@ def main():
         flags += ["-DNCE_CORE_SCHEDULING"]
     if PROCESS:
         flags += ["-DNCE_PROCESS"]
-        inputs += [EXPERIMENT / "lkl-process-host.c", EXPERIMENT / "nce-cpu.c", EXPERIMENT / "programs.c", EXPERIMENT / "memory.c", EXPERIMENT / "code-memory.c", EXPERIMENT / "execute-check.c", EXPERIMENT / "compute.c", EXPERIMENT / "input.c", EXPERIMENT / "session.c"]
+        inputs += [EXPERIMENT / "lkl-process-host.c", EXPERIMENT / "nce-cpu.c", EXPERIMENT / "programs.c", EXPERIMENT / "memory.c", EXPERIMENT / "code-memory.c", EXPERIMENT / "execute-check.c", EXPERIMENT / "compute.c", EXPERIMENT / "input.c", EXPERIMENT / "session.c", EXPERIMENT / "session-profile.c"]
         run([clang, *flags, "-isysroot", sdk, "-DNATIVE", "-c", EXPERIMENT / "guest.S", "-o", OUT / "native.o"])
     payload = [OUT / "payload.S"] if PROCESS else []
     graphics_link = []
@@ -479,7 +479,7 @@ def main():
             sources.append(Path(__file__).with_name("lkl_smp_core_patch.py"))
     if PROCESS:
         manifest["dispatch_results"] = dispatch_results
-        sources += [EXPERIMENT / "nce-cpu.h", EXPERIMENT / "memory.h", EXPERIMENT / "code-memory.h", EXPERIMENT / "layout.h", EXPERIMENT / "execute-check.h", EXPERIMENT / "input.h", EXPERIMENT / "session.h", Path(__file__).with_name("lkl_nce_patch.py"),
+        sources += [EXPERIMENT / "nce-cpu.h", EXPERIMENT / "memory.h", EXPERIMENT / "code-memory.h", EXPERIMENT / "layout.h", EXPERIMENT / "execute-check.h", EXPERIMENT / "input.h", EXPERIMENT / "session.h", EXPERIMENT / "session-internal.h", EXPERIMENT / "interaction-profile.h", Path(__file__).with_name("lkl_nce_patch.py"),
                     *sorted(EXPERIMENT.glob("lkl-*.h")),
                     *sorted(EXPERIMENT.glob("lkl-nce-*.c")), EXPERIMENT / "exec-guest.S", EXPERIMENT / "programs.h",
                     Path(__file__).with_name("build_nce_userspace.py"), EXPERIMENT / "dispatch-test.c", EXPERIMENT / "host-context-test.c",

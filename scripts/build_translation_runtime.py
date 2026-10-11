@@ -50,10 +50,10 @@ def build(report_path, out, target):
     for include in (EXP, kernel, fixtures, WORK / 'processes/host-include', unicorn / 'include', ROOT / 'src/ios-jit'):
         flags += ['-I', str(include)]
     commands = []
-    sources = ['translation/kernel-image.c', 'translation/linux-elf.c', 'translation/linux-execution.c',
+    sources = ['translation/kernel-image.c', 'translation/linux-elf.c', 'translation/linux-execution.c', 'translation/interaction-profile.c',
                'translation/linux-runner.c', 'translation/linux-memory.c', 'translation/code-watch.c',
                'translation/read-view.c', 'translation/unicorn-code-memory.c', 'lkl-host.c', 'input.c',
-               'session.c', 'graphics/host-graphics.cpp']
+               'session.c', 'session-profile.c', 'graphics/host-graphics.cpp']
     for name in sources:
         source = EXP / name
         obj = out / (source.stem + '.o')
@@ -73,7 +73,7 @@ def build(report_path, out, target):
     commands.append(command)
     inputs += [Path(__file__), report_path, dependency_path, *[ROOT / name for name in dependency['sha256']],
                kernel / 'lkl-image.h', kernel / 'lkl-host-ops.h', fixtures / 'translation-symbols.h',
-               *sorted((EXP / 'translation').glob('*.h')), EXP / 'lkl-host-ops.h', EXP / 'layout.h']
+               *sorted((EXP / 'translation').glob('*.h')), EXP / 'lkl-host-ops.h', EXP / 'layout.h', EXP / 'session.h', EXP / 'session-internal.h', EXP / 'interaction-profile.h']
     inputs = sorted(set(path for path in inputs if path.is_file()))
     result = {'scope': 'Cross compilation; device execution pending', 'target': target, 'sdk': sdk,
               'configuration': config, 'source_report': str(report_path.relative_to(ROOT)),

@@ -397,7 +397,7 @@ def main():
             parser.error(name + ' 的 ELF 地址与内核镜像不一致')
         header += f'#define {constant} 0x{symbol:x}UL\n'
     (out / 'translation-symbols.h').write_text(header)
-    inputs = [EXP / 'translation/kernel-image.c', EXP / 'translation/linux-elf.c', EXP / 'translation/linux-execution.c', EXP / 'translation/linux-runner.c', EXP / 'translation/linux-memory.c', EXP / 'lkl-host.c']
+    inputs = [EXP / 'translation/kernel-image.c', EXP / 'translation/linux-elf.c', EXP / 'translation/linux-execution.c', EXP / 'translation/interaction-profile.c', EXP / 'translation/linux-runner.c', EXP / 'translation/linux-memory.c', EXP / 'lkl-host.c']
     commands = []
     direct_link, direct_files = [], []
     if args.execution == 'direct':
@@ -430,11 +430,11 @@ def main():
                    '-c', EXP / 'graphics/host-graphics.cpp', '-o', out / 'host-graphics.o']
         run(command)
         commands.append(list(map(str, command)))
-        inputs += [EXP / 'input.c', EXP / 'session.c']
+        inputs += [EXP / 'input.c', EXP / 'session.c', EXP / 'session-profile.c']
         graphics_link = ['-DNCE_GRAPHICS', out / 'host-graphics.o', '-L', prefix / 'lib', '-lgfxstream_backend', '-lc++',
                          '-Wl,-rpath,' + str(prefix / 'lib'), '-Wl,-rpath,' + str(angle)]
         graphics_files = [manifest_path, EXP / 'graphics/host-graphics.cpp', EXP / 'graphics/host-graphics.h',
-                          EXP / 'input.h', EXP / 'session.h', prefix / 'lib/libgfxstream_backend.dylib',
+                          EXP / 'input.h', EXP / 'session.h', EXP / 'session-internal.h', EXP / 'interaction-profile.h', prefix / 'lib/libgfxstream_backend.dylib',
                           angle / 'libANGLE-shared.dylib']
     build_entries = ('cli', 'gcd', 'window') if args.entry == 'window' else ('cli', 'gcd')
     for mode in build_entries:
@@ -509,7 +509,7 @@ def main():
         raise RuntimeError('客体构建后宿主文件发生变化')
     files = [*inputs, *direct_files, ROOT / 'scripts/build_nce_userspace.py',
              *[EXP / 'userspace' / name for name in BIONIC_TEST_SOURCES],
-             EXP / 'translation/unicorn-code-memory.h', EXP / 'execute-check.h', EXP / 'translation/linux-elf.h', EXP / 'translation/linux-execution.h', EXP / 'translation/linux-memory.h', EXP / 'translation/linux-guest.c', Path(__file__),
+             EXP / 'translation/unicorn-code-memory.h', EXP / 'execute-check.h', EXP / 'translation/linux-elf.h', EXP / 'translation/linux-execution.h', EXP / 'translation/interaction-profile.h', EXP / 'translation/linux-memory.h', EXP / 'translation/linux-guest.c', Path(__file__),
              EXP / 'dispatch-test.c', EXP / 'layout.h', EXP / 'guest-registers.h',
              *[EXP / 'userspace' / name for name in guest_sources], *android_files, *graphics_files,
              kernel / 'lkl-image.bin', kernel / 'lkl-image.h', kernel / 'lkl.so', kernel / 'lkl-host-ops.h',

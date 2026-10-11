@@ -727,6 +727,8 @@ void nce_zygote_test()
                 dprintf(2, "Android did not complete boot within the 240 second polling window\n");
                 CHECK(false);
             }
+            if (booted && interactive)
+                nce_interaction_profile_poll();
             if (booted && !interactive)
                 break;
             usleep(1000000);
