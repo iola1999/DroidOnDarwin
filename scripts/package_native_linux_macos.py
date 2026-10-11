@@ -69,8 +69,14 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--rebuild-kernel', action='store_true')
     parser.add_argument('--translation-report', type=Path, help='使用已验证的 Direct 完整桌面构建')
+    parser.add_argument('--output', type=Path, help='独立应用变体的构建目录，位于 work/native-linux-nce 下')
     parser.add_argument('--replace', action='store_true', help='替换未运行的本机生成包，保留用户数据')
     args = parser.parse_args()
+    if args.output:
+        OUT = args.output.resolve()
+        work = ROOT / 'work/native-linux-nce'
+        if OUT == work or not OUT.is_relative_to(work):
+            parser.error('独立变体的输出需要位于 work/native-linux-nce 的子目录')
     if platform.system() != 'Darwin' or platform.machine() != 'arm64':
         raise SystemExit('需要 Apple Silicon Mac')
     if args.translation_report and args.rebuild_kernel:
@@ -83,7 +89,8 @@ def main():
     if args.translation_report:
         from translation_package import prepare
         cpu_count = json.loads(args.translation_report.read_text())['configuration']['cpus']
-        OUT = ROOT / f'work/native-linux-nce/macos-direct-{cpu_count}'
+        if not args.output:
+            OUT = ROOT / f'work/native-linux-nce/macos-direct-{cpu_count}'
         translation = prepare(args.translation_report, OUT, 'macos')
         verified = translation['verified']
     else:

@@ -50,7 +50,8 @@ void tcg_prologue_init''')
     name = 'qemu/tcg/aarch64/tcg-target.inc.c'
     for field, width in ((0, 26), (5, 19)):
         change(name, f'*code_ptr = deposit32(*code_ptr, {field}, {width}, offset);',
-               f'*NCE_CODE_WRITE(code_ptr) = deposit32(*code_ptr, {field}, {width}, offset);')
+               'tcg_insn_unit *writable = NCE_CODE_WRITE(code_ptr);\n'
+               f'        *writable = deposit32(*writable, {field}, {width}, offset);')
     change(name, 'atomic_set((uint64_t *)jmp_addr, pair);',
            'atomic_set(NCE_CODE_WRITE((uint64_t *)jmp_addr), pair);')
     change(name, '        p[i] = NOP;', '        NCE_CODE_WRITE(p)[i] = NOP;')

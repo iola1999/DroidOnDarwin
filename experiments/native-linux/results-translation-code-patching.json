@@ -1,0 +1,777 @@
+{
+  "scope": "RW instruction reads during ARM64 Unicorn branch patching; isolated diagnostics, UP CLI/GCD desktop and balanced macOS app comparison; iOS device execution pending",
+  "host": {
+    "cpu": "Apple M5 Ultra",
+    "platform": "macOS-27.0-arm64-arm-64bit-Mach-O",
+    "system_build": "26A428"
+  },
+  "source_reports": {
+    "work/native-linux-nce/code-patch-read-diagnostic/summary.json": "219f532182d112622a2c49f52dc4eb7435ffffff5bcf6475e142edc54f9489ae",
+    "work/native-linux-nce/code-patch-read-diagnostic/results-final.jsonl": "0b49df5ce9649f0f186d133341fb3252db5cab88ab285d5a893b2b8400b381f0",
+    "work/native-linux-nce/direct-dual-rw-patch-tests/summary.json": "4db5ccda13114d22847808cbcecfe542442fbb1c7e03b8b7c57483b695a23b83",
+    "work/native-linux-nce/benchmarks/direct-startup-profile/early.sample.txt": "9f1bf8d899b5a2b9eb47dd1c7bcff35b788f34e06289fcc2df740f6225449bfe",
+    "work/native-linux-nce/benchmarks/direct-startup-profile/systemui.sample.txt": "45087c7f60dc4b1a43ef15b11cfc0c07bb4dab5864e81c1b24e75f45dd201b51",
+    "work/native-linux-nce/lkl-dual-rw-patch-desktop/summary.json": "b0d2594555fb02aaa4830dac524e3f427ee4cb9ac809aeae5a9a6590a44d2c0b",
+    "work/native-linux-nce/benchmarks/rw-patch-app-comparison/summary.json": "7546bd98be72cfe57b330b7aa60ea39b166ed04355832e077cea3290629fc4a2",
+    "work/native-linux-nce/code-patch-read-diagnostic/execute-summary.json": "9dc4000c38bcd522e8240f1d6797d8771983d670113d31e008ae19c825acf5fb",
+    "work/native-linux-nce/code-patch-read-diagnostic/loop-summary.json": "3afbae22012947a3ffbe61ea4b5159d29435c48d1d3f3de5b7edfb2e27dc8315"
+  },
+  "alias_access": [
+    {
+      "round": 0,
+      "read": "rw",
+      "writes": 200000,
+      "ns": 205000
+    },
+    {
+      "round": 0,
+      "read": "rx",
+      "writes": 200000,
+      "ns": 626689000
+    },
+    {
+      "round": 1,
+      "read": "rx",
+      "writes": 200000,
+      "ns": 643729000
+    },
+    {
+      "round": 1,
+      "read": "rw",
+      "writes": 200000,
+      "ns": 209000
+    },
+    {
+      "round": 2,
+      "read": "rw",
+      "writes": 200000,
+      "ns": 209000
+    },
+    {
+      "round": 2,
+      "read": "rx",
+      "writes": 200000,
+      "ns": 621360000
+    },
+    {
+      "round": 3,
+      "read": "rx",
+      "writes": 200000,
+      "ns": 651942000
+    },
+    {
+      "round": 3,
+      "read": "rw",
+      "writes": 200000,
+      "ns": 220000
+    }
+  ],
+  "constant_compilation": {
+    "scope": "Isolated Unicorn constant compilation with full cache flush per iteration; macOS M5 Ultra; not desktop performance",
+    "runs": [
+      {
+        "round": 0,
+        "mode": "rx-read",
+        "benchmark": "unicorn_recompile_constants",
+        "iterations": 2000,
+        "ns": 278075000
+      },
+      {
+        "round": 0,
+        "mode": "rw-read",
+        "benchmark": "unicorn_recompile_constants",
+        "iterations": 2000,
+        "ns": 45990000
+      },
+      {
+        "round": 1,
+        "mode": "rw-read",
+        "benchmark": "unicorn_recompile_constants",
+        "iterations": 2000,
+        "ns": 48652000
+      },
+      {
+        "round": 1,
+        "mode": "rx-read",
+        "benchmark": "unicorn_recompile_constants",
+        "iterations": 2000,
+        "ns": 282932000
+      },
+      {
+        "round": 2,
+        "mode": "rx-read",
+        "benchmark": "unicorn_recompile_constants",
+        "iterations": 2000,
+        "ns": 260690000
+      },
+      {
+        "round": 2,
+        "mode": "rw-read",
+        "benchmark": "unicorn_recompile_constants",
+        "iterations": 2000,
+        "ns": 47529000
+      },
+      {
+        "round": 3,
+        "mode": "rw-read",
+        "benchmark": "unicorn_recompile_constants",
+        "iterations": 2000,
+        "ns": 43450000
+      },
+      {
+        "round": 3,
+        "mode": "rx-read",
+        "benchmark": "unicorn_recompile_constants",
+        "iterations": 2000,
+        "ns": 263037000
+      }
+    ],
+    "sha256": {
+      "work/native-linux-nce/code-patch-read-diagnostic/compile.c": "73b0c2e35a656dc7695a5f700b7f1205af05e4f0d19879cabdd0180869901648",
+      "work/native-linux-nce/code-patch-read-diagnostic/rx-read": "94c5e31d885924c14283f0442f8a4b94353a54d43621c925bec85726a73aa999",
+      "work/native-linux-nce/code-patch-read-diagnostic/rw-read": "500f1df988c3521099772c38b6d29d43a4fd808cd14987eff10d18600ddd1af4",
+      "work/native-linux-nce/code-patch-read-diagnostic/probe.c": "970fe8afda2aafa93de185b7e031f39e604934d9472c97b443bcb5e301c082bb",
+      "work/native-linux-nce/code-patch-read-diagnostic/probe": "41af01e7714194beab2ccc2ab0fe736ff2771d05ce4ef96df45615075d859f4d"
+    },
+    "median_ns": {
+      "rx-read": 270556000.0,
+      "rw-read": 46759500.0
+    }
+  },
+  "regressions": [
+    {
+      "entry": "cli",
+      "mode": "tests",
+      "returncode": 0,
+      "checks": 88,
+      "last_result": {
+        "result": "passed"
+      },
+      "hook_benchmarks": [
+        {
+          "benchmark": "unicorn_write_hook_restore",
+          "iterations": 1000000,
+          "stop_at_tb": false,
+          "wall_ns": 41284000
+        },
+        {
+          "benchmark": "unicorn_write_hook_restore",
+          "iterations": 1000000,
+          "stop_at_tb": true,
+          "wall_ns": 144628000
+        },
+        {
+          "benchmark": "unicorn_write_hook_restore",
+          "iterations": 1000000,
+          "stop_at_tb": true,
+          "wall_ns": 152703000
+        },
+        {
+          "benchmark": "unicorn_write_hook_restore",
+          "iterations": 1000000,
+          "stop_at_tb": false,
+          "wall_ns": 55247000
+        }
+      ]
+    },
+    {
+      "entry": "gcd",
+      "mode": "tests",
+      "returncode": 0,
+      "checks": 88,
+      "last_result": {
+        "result": "passed"
+      },
+      "hook_benchmarks": [
+        {
+          "benchmark": "unicorn_write_hook_restore",
+          "iterations": 1000000,
+          "stop_at_tb": false,
+          "wall_ns": 39915000
+        },
+        {
+          "benchmark": "unicorn_write_hook_restore",
+          "iterations": 1000000,
+          "stop_at_tb": true,
+          "wall_ns": 135683000
+        },
+        {
+          "benchmark": "unicorn_write_hook_restore",
+          "iterations": 1000000,
+          "stop_at_tb": true,
+          "wall_ns": 149629000
+        },
+        {
+          "benchmark": "unicorn_write_hook_restore",
+          "iterations": 1000000,
+          "stop_at_tb": false,
+          "wall_ns": 53170000
+        }
+      ]
+    }
+  ],
+  "desktop": {
+    "configuration": {
+      "code_memory": "dual",
+      "execution": "direct",
+      "direct": {
+        "mapping_entries": 256,
+        "route_entries": 256,
+        "selective_writes": false,
+        "reuse_code_checks": false,
+        "memory": "flat",
+        "code_watch": true,
+        "cross_page": true,
+        "route_epochs": false,
+        "retain_routes": false,
+        "memory_groups": false,
+        "native_exclusive": true,
+        "vector_table": false
+      },
+      "mapping": "pte",
+      "sparse_scan": true,
+      "fault_prefetch": false,
+      "guest_page_bytes": 16384,
+      "workload": "desktop",
+      "entries": [
+        "cli",
+        "gcd"
+      ],
+      "art_nterp": 1,
+      "cpus": 1,
+      "online_cpus": 1,
+      "uaccess_stop": "all",
+      "parallel_profile": false,
+      "art_expanded_jit": 0,
+      "art_fast_baseline": 0,
+      "cache_invalidation": "pages",
+      "exec_cache": "pages",
+      "tlb_invalidation": "pages",
+      "linux_fastpath": 0,
+      "guest_ram_bytes": 1073741824,
+      "translation_cache_bytes": 134217728,
+      "instruction_batch": 50000,
+      "memory_interval_ms": 100,
+      "preemption": "timer",
+      "timer_interval_ns": 2000000
+    },
+    "data_seed": {
+      "path": "work/native-linux-nce/processes/android-data-seed.img",
+      "sha256": "0387fb300ae1d4145b6fdcf4c878553a2e806b8c8b4918925d3482152fede620"
+    },
+    "runs": [
+      {
+        "entry": "cli",
+        "validated": true,
+        "data_image": {
+          "path": "work/native-linux-nce/lkl-dual-rw-patch-desktop/persistent-data.img",
+          "initial_sha256": "0387fb300ae1d4145b6fdcf4c878553a2e806b8c8b4918925d3482152fede620",
+          "fresh": true,
+          "final_sha256": "430051b9dc021c9e292e62ed9c7d892734898ac9795c5111fc3007a5fce2efc4",
+          "clean_shutdown": true
+        },
+        "phases": [
+          {
+            "memory_statistics": "desktop_execution",
+            "interval_ms": 100,
+            "samples": 1811,
+            "errors": 0,
+            "duration_ns": 187649164000,
+            "collection_ns": 237324000,
+            "footprint_mean_bytes": 2370439095.982,
+            "footprint_sample_peak_bytes": 3162967616,
+            "footprint_latest_bytes": 2765065360,
+            "resident_mean_bytes": 2259089510.909,
+            "resident_sample_peak_bytes": 2753396736,
+            "resident_latest_bytes": 2640265216,
+            "resident_lifetime_peak_bytes": 2757066752
+          },
+          {
+            "memory_statistics": "cleanup",
+            "interval_ms": 100,
+            "samples": 2,
+            "errors": 0,
+            "duration_ns": 54583000,
+            "collection_ns": 21000,
+            "footprint_mean_bytes": 1567336668.0,
+            "footprint_sample_peak_bytes": 2765065360,
+            "footprint_latest_bytes": 369607976,
+            "resident_mean_bytes": 1473445888.0,
+            "resident_sample_peak_bytes": 2640265216,
+            "resident_latest_bytes": 306626560,
+            "resident_lifetime_peak_bytes": 2757066752
+          }
+        ],
+        "persistence": [
+          {
+            "test": "android_keystore_persistence",
+            "passed": true,
+            "restored": false
+          },
+          {
+            "test": "android_application_data_persistence",
+            "passed": true,
+            "package": "com.android.deskclock",
+            "row_id": 3,
+            "restored": false
+          }
+        ]
+      },
+      {
+        "entry": "gcd",
+        "validated": true,
+        "data_image": {
+          "path": "work/native-linux-nce/lkl-dual-rw-patch-desktop/persistent-data.img",
+          "initial_sha256": "430051b9dc021c9e292e62ed9c7d892734898ac9795c5111fc3007a5fce2efc4",
+          "fresh": false,
+          "final_sha256": "78b43e28b38ee5dee92a9da288e09a7b07c9cd1952ef852632b4a49150dffcfb",
+          "clean_shutdown": true
+        },
+        "phases": [
+          {
+            "memory_statistics": "desktop_execution",
+            "interval_ms": 100,
+            "samples": 1516,
+            "errors": 0,
+            "duration_ns": 156967851000,
+            "collection_ns": 187633000,
+            "footprint_mean_bytes": 2326386838.391,
+            "footprint_sample_peak_bytes": 3142356520,
+            "footprint_latest_bytes": 2778696800,
+            "resident_mean_bytes": 2179378238.142,
+            "resident_sample_peak_bytes": 2754396160,
+            "resident_latest_bytes": 2648834048,
+            "resident_lifetime_peak_bytes": 2757181440
+          },
+          {
+            "memory_statistics": "cleanup",
+            "interval_ms": 100,
+            "samples": 3,
+            "errors": 0,
+            "duration_ns": 59215000,
+            "collection_ns": 41000,
+            "footprint_mean_bytes": 1570414037.333,
+            "footprint_sample_peak_bytes": 2778696800,
+            "footprint_latest_bytes": 367625368,
+            "resident_mean_bytes": 1465455957.333,
+            "resident_sample_peak_bytes": 2648834048,
+            "resident_latest_bytes": 308592640,
+            "resident_lifetime_peak_bytes": 2757181440
+          }
+        ],
+        "persistence": [
+          {
+            "test": "android_keystore_persistence",
+            "passed": true,
+            "restored": true
+          },
+          {
+            "test": "android_application_data_persistence",
+            "passed": true,
+            "package": "com.android.deskclock",
+            "row_id": 3,
+            "restored": true
+          }
+        ]
+      }
+    ]
+  },
+  "app_comparison": {
+    "scope": "Alternating complete macOS app builds, shared persisted data and host file cache; online CPU reporting added in candidate; no concurrent build or CPU profiler",
+    "runs": [
+      {
+        "variant": "rx-read",
+        "build": "0.25.0-Mac-20261011-194824-direct1-dual",
+        "source": "work/native-linux-nce/benchmarks/rw-patch-app-comparison/0-rx-read/20261011-202040-69e9f7/summary.json",
+        "sha256": "b91e0b810bcc7ad48e50ce1f6379c15b3319445d549c4a34a2619f0ea4dca295",
+        "status": "completed",
+        "metrics": {
+          "start_to_ready_observed_ms": 85021.37725008652,
+          "stop_ms": 9615.165083436295
+        },
+        "peak_bytes": {
+          "footprint": 3087699808,
+          "resident": 2767945728
+        },
+        "thermal_states": [
+          0
+        ],
+        "configuration": {
+          "aot": false,
+          "bootImage": false,
+          "diagnostics": false,
+          "directFault": true,
+          "expandedJIT": false,
+          "fastBaseline": false,
+          "faultPrefetch": false,
+          "nterp": true,
+          "performanceLogging": false,
+          "schedulerSliceUS": 0,
+          "sparseScan": true,
+          "translation": {
+            "cacheMiB": 128,
+            "codeWatch": true,
+            "crossPage": true,
+            "linuxFastpath": false,
+            "memoryGroups": false,
+            "retainRoutes": false,
+            "reuseCodeChecks": false,
+            "routeEpochs": false,
+            "vectorTable": false
+          }
+        }
+      },
+      {
+        "variant": "rw-read",
+        "build": "0.25.0-Mac-20261011-201842-direct1-dual",
+        "source": "work/native-linux-nce/benchmarks/rw-patch-app-comparison/1-rw-read/20261011-202221-03b87c/summary.json",
+        "sha256": "6c35aa3144deda16492d598e512e43254950c3ed6832094c4d80c3dd311e23f0",
+        "status": "completed",
+        "metrics": {
+          "start_to_ready_observed_ms": 77035.82520829514,
+          "stop_ms": 8242.638750001788
+        },
+        "peak_bytes": {
+          "footprint": 3111931696,
+          "resident": 2786492416
+        },
+        "thermal_states": [
+          0
+        ],
+        "configuration": {
+          "aot": false,
+          "bootImage": false,
+          "diagnostics": false,
+          "directFault": true,
+          "expandedJIT": false,
+          "fastBaseline": false,
+          "faultPrefetch": false,
+          "nterp": true,
+          "performanceLogging": false,
+          "schedulerSliceUS": 0,
+          "sparseScan": true,
+          "translation": {
+            "cacheMiB": 128,
+            "codeWatch": true,
+            "crossPage": true,
+            "linuxFastpath": false,
+            "memoryGroups": false,
+            "onlineCPUs": 1,
+            "retainRoutes": false,
+            "reuseCodeChecks": false,
+            "routeEpochs": false,
+            "vectorTable": false
+          }
+        }
+      },
+      {
+        "variant": "rw-read",
+        "build": "0.25.0-Mac-20261011-201842-direct1-dual",
+        "source": "work/native-linux-nce/benchmarks/rw-patch-app-comparison/2-rw-read/20261011-202351-70bfc6/summary.json",
+        "sha256": "2cd20989d01ebd4a679dd85410365509009a0e0af3df8e12d1b03ab0c396bf24",
+        "status": "completed",
+        "metrics": {
+          "start_to_ready_observed_ms": 78075.43587498367,
+          "stop_ms": 7103.209583554417
+        },
+        "peak_bytes": {
+          "footprint": 3079819056,
+          "resident": 2772484096
+        },
+        "thermal_states": [
+          0
+        ],
+        "configuration": {
+          "aot": false,
+          "bootImage": false,
+          "diagnostics": false,
+          "directFault": true,
+          "expandedJIT": false,
+          "fastBaseline": false,
+          "faultPrefetch": false,
+          "nterp": true,
+          "performanceLogging": false,
+          "schedulerSliceUS": 0,
+          "sparseScan": true,
+          "translation": {
+            "cacheMiB": 128,
+            "codeWatch": true,
+            "crossPage": true,
+            "linuxFastpath": false,
+            "memoryGroups": false,
+            "onlineCPUs": 1,
+            "retainRoutes": false,
+            "reuseCodeChecks": false,
+            "routeEpochs": false,
+            "vectorTable": false
+          }
+        }
+      },
+      {
+        "variant": "rx-read",
+        "build": "0.25.0-Mac-20261011-194824-direct1-dual",
+        "source": "work/native-linux-nce/benchmarks/rw-patch-app-comparison/3-rx-read/20261011-202522-d4d219/summary.json",
+        "sha256": "fb9d7c2c79932af65dbe9cd55d87c0d1aa0ddcac3575bc6a7cbf0db50788d8c4",
+        "status": "completed",
+        "metrics": {
+          "start_to_ready_observed_ms": 91012.09254167043,
+          "stop_ms": 9918.88445825316
+        },
+        "peak_bytes": {
+          "footprint": 3093614432,
+          "resident": 2760654848
+        },
+        "thermal_states": [
+          0
+        ],
+        "configuration": {
+          "aot": false,
+          "bootImage": false,
+          "diagnostics": false,
+          "directFault": true,
+          "expandedJIT": false,
+          "fastBaseline": false,
+          "faultPrefetch": false,
+          "nterp": true,
+          "performanceLogging": false,
+          "schedulerSliceUS": 0,
+          "sparseScan": true,
+          "translation": {
+            "cacheMiB": 128,
+            "codeWatch": true,
+            "crossPage": true,
+            "linuxFastpath": false,
+            "memoryGroups": false,
+            "retainRoutes": false,
+            "reuseCodeChecks": false,
+            "routeEpochs": false,
+            "vectorTable": false
+          }
+        }
+      },
+      {
+        "variant": "rx-read",
+        "build": "0.25.0-Mac-20261011-194824-direct1-dual",
+        "source": "work/native-linux-nce/benchmarks/rw-patch-app-comparison/4-rx-read/20261011-202708-9aef06/summary.json",
+        "sha256": "fea90c03999fcda6af4d696cde3083fa6e0c6d95e43f9d4acc20a68106a668df",
+        "status": "completed",
+        "metrics": {
+          "start_to_ready_observed_ms": 88034.71812489443,
+          "stop_ms": 10481.41241678968
+        },
+        "peak_bytes": {
+          "footprint": 3107573576,
+          "resident": 2778628096
+        },
+        "thermal_states": [
+          0
+        ],
+        "configuration": {
+          "aot": false,
+          "bootImage": false,
+          "diagnostics": false,
+          "directFault": true,
+          "expandedJIT": false,
+          "fastBaseline": false,
+          "faultPrefetch": false,
+          "nterp": true,
+          "performanceLogging": false,
+          "schedulerSliceUS": 0,
+          "sparseScan": true,
+          "translation": {
+            "cacheMiB": 128,
+            "codeWatch": true,
+            "crossPage": true,
+            "linuxFastpath": false,
+            "memoryGroups": false,
+            "retainRoutes": false,
+            "reuseCodeChecks": false,
+            "routeEpochs": false,
+            "vectorTable": false
+          }
+        }
+      },
+      {
+        "variant": "rw-read",
+        "build": "0.25.0-Mac-20261011-201842-direct1-dual",
+        "source": "work/native-linux-nce/benchmarks/rw-patch-app-comparison/5-rw-read/20261011-202852-f0ea94/summary.json",
+        "sha256": "24b3487cbf0192f9ec004d0388f7a1b57e97d4ab2dde0c1eb7963f7157339dcc",
+        "status": "completed",
+        "metrics": {
+          "start_to_ready_observed_ms": 78066.24191673473,
+          "stop_ms": 7972.637999802828
+        },
+        "peak_bytes": {
+          "footprint": 3097268064,
+          "resident": 2771369984
+        },
+        "thermal_states": [
+          0
+        ],
+        "configuration": {
+          "aot": false,
+          "bootImage": false,
+          "diagnostics": false,
+          "directFault": true,
+          "expandedJIT": false,
+          "fastBaseline": false,
+          "faultPrefetch": false,
+          "nterp": true,
+          "performanceLogging": false,
+          "schedulerSliceUS": 0,
+          "sparseScan": true,
+          "translation": {
+            "cacheMiB": 128,
+            "codeWatch": true,
+            "crossPage": true,
+            "linuxFastpath": false,
+            "memoryGroups": false,
+            "onlineCPUs": 1,
+            "retainRoutes": false,
+            "reuseCodeChecks": false,
+            "routeEpochs": false,
+            "vectorTable": false
+          }
+        }
+      }
+    ],
+    "median_start_ms": {
+      "rx-read": 88034.71812489443,
+      "rw-read": 78066.24191673473
+    }
+  },
+  "execute_constants_diagnostic": {
+    "runs": [
+      {
+        "benchmark": "unicorn_execute_constants",
+        "iterations": 200000,
+        "ns": 1549819000,
+        "round": 0,
+        "mode": "map-jit"
+      },
+      {
+        "benchmark": "unicorn_execute_constants",
+        "iterations": 200000,
+        "ns": 3199109000,
+        "round": 0,
+        "mode": "dual"
+      },
+      {
+        "benchmark": "unicorn_execute_constants",
+        "iterations": 200000,
+        "ns": 3099406000,
+        "round": 1,
+        "mode": "dual"
+      },
+      {
+        "benchmark": "unicorn_execute_constants",
+        "iterations": 200000,
+        "ns": 1651498000,
+        "round": 1,
+        "mode": "map-jit"
+      },
+      {
+        "benchmark": "unicorn_execute_constants",
+        "iterations": 200000,
+        "ns": 1603974000,
+        "round": 2,
+        "mode": "map-jit"
+      },
+      {
+        "benchmark": "unicorn_execute_constants",
+        "iterations": 200000,
+        "ns": 3236179000,
+        "round": 2,
+        "mode": "dual"
+      },
+      {
+        "benchmark": "unicorn_execute_constants",
+        "iterations": 200000,
+        "ns": 3162298000,
+        "round": 3,
+        "mode": "dual"
+      },
+      {
+        "benchmark": "unicorn_execute_constants",
+        "iterations": 200000,
+        "ns": 1593127000,
+        "round": 3,
+        "mode": "map-jit"
+      }
+    ],
+    "median_ns": {
+      "map-jit": 1598550500.0,
+      "dual": 3180703500.0
+    }
+  },
+  "loop_constants_diagnostic": {
+    "runs": [
+      {
+        "benchmark": "unicorn_loop_constants",
+        "iterations": 200000,
+        "ns": 925000,
+        "round": 0,
+        "mode": "map-jit"
+      },
+      {
+        "benchmark": "unicorn_loop_constants",
+        "iterations": 200000,
+        "ns": 1057000,
+        "round": 0,
+        "mode": "dual"
+      },
+      {
+        "benchmark": "unicorn_loop_constants",
+        "iterations": 200000,
+        "ns": 1008000,
+        "round": 1,
+        "mode": "dual"
+      },
+      {
+        "benchmark": "unicorn_loop_constants",
+        "iterations": 200000,
+        "ns": 890000,
+        "round": 1,
+        "mode": "map-jit"
+      },
+      {
+        "benchmark": "unicorn_loop_constants",
+        "iterations": 200000,
+        "ns": 880000,
+        "round": 2,
+        "mode": "map-jit"
+      },
+      {
+        "benchmark": "unicorn_loop_constants",
+        "iterations": 200000,
+        "ns": 933000,
+        "round": 2,
+        "mode": "dual"
+      },
+      {
+        "benchmark": "unicorn_loop_constants",
+        "iterations": 200000,
+        "ns": 1006000,
+        "round": 3,
+        "mode": "dual"
+      },
+      {
+        "benchmark": "unicorn_loop_constants",
+        "iterations": 200000,
+        "ns": 882000,
+        "round": 3,
+        "mode": "map-jit"
+      }
+    ],
+    "median_ns": {
+      "map-jit": 886000.0,
+      "dual": 1007000.0
+    }
+  },
+  "product_builds": {
+    "macos": "0.25.0-Mac-20261011-201842-direct1-dual",
+    "ios": "0.25.0-iOS-20261011-201839-direct1-dual",
+    "ipa_sha256": "1899d53a697a7e59008248cb249240a39019ca45d4f1291493f1b3ed40f25e46",
+    "ios_device_validated": false
+  }
+}
