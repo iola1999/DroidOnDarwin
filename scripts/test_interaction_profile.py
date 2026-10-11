@@ -5,6 +5,15 @@ from analyze_interaction_profile import read_frames, clock_alignment, distributi
 
 
 class InteractionProfileTests(unittest.TestCase):
+    def test_android_window_visibility_overrides_app_visibility(self):
+        event = {'host_monotonic_ns': 10, 'app_visible': True, 'app_active': True, 'display_visible': False}
+        result = {'visibility_tracking': 'Android window AppKit notifications and action boundaries', 'events': [event]}
+        self.assertFalse(host_visibility(result, 15, 40)['all_visible'])
+        event['display_visible'] = True
+        self.assertTrue(host_visibility(result, 15, 40)['all_visible'])
+        del event['display_visible']
+        self.assertFalse(host_visibility(result, 15, 40)['all_visible'])
+
     def test_hidden_interval_is_not_erased_by_visible_endpoints(self):
         result = {'visibility_tracking': 'AppKit notifications and action boundaries', 'events': [
             {'host_monotonic_ns': time, 'app_visible': visible, 'app_active': visible}

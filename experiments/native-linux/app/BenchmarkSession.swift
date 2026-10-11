@@ -36,6 +36,7 @@ final class BenchmarkSession {
     private var waitTimings: [[String: Int64]] = []
     private var failure: String?
     private var finished = false
+    private var displayCaptureStarted = false
     var runID: UUID {
         request.runID
     }
@@ -73,7 +74,8 @@ final class BenchmarkSession {
             activity = ProcessInfo.processInfo.beginActivity(options: [.userInitiated, .latencyCritical, .idleDisplaySleepDisabled], reason: "DroidOnDarwin interaction benchmark")
             visibilityObserver = NotificationCenter.default.publisher(for: NSApplication.didChangeOcclusionStateNotification)
                 .merge(with: NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification),
-                       NotificationCenter.default.publisher(for: NSApplication.didResignActiveNotification))
+                       NotificationCenter.default.publisher(for: NSApplication.didResignActiveNotification),
+                       NotificationCenter.default.publisher(for: NSWindow.didChangeOcclusionStateNotification))
                 .sink { [weak self] _ in
                     guard let self, !finished else {
                         return
@@ -193,6 +195,7 @@ final class BenchmarkSession {
         }
         task?.cancel()
         watchdog?.cancel()
+        do { try finishDisplayCapture() } catch { failure = failure ?? error.localizedDescription }
         session.stop()
         guard !finished else {
             return
@@ -228,6 +231,7 @@ final class BenchmarkSession {
         if failure == nil && !events.contains(where: { $0["event"] as? String == "actions_completed" }) {
             failure = "实验操作尚未完成，会话已结束"
         }
+        do { try finishDisplayCapture() } catch { failure = failure ?? error.localizedDescription }
         do {
             try sampleMemory()
             try record(failure == nil ? "completed" : "failed")
@@ -259,6 +263,8 @@ final class BenchmarkSession {
         #if os(macOS)
             entry["app_active"] = NSApp?.isActive ?? false
             entry["app_visible"] = NSApp?.occlusionState.contains(.visible) ?? false
+            let window = NSApp?.windows.first { $0.identifier?.rawValue == "android-display" }
+            entry["display_visible"] = window.map { $0.isVisible && !$0.isMiniaturized && $0.occlusionState.contains(.visible) } ?? false
             entry["benchmark_activity"] = activity != nil
         #endif
         events.append(entry)
@@ -287,8 +293,11 @@ final class BenchmarkSession {
                                     "events": events, "session_active": session.active,
                                     "log": "session.log", "timing": "monotonic; zero-tolerance absolute swipe deadlines; ready observed through 1-second log polling; action submission excludes guest rendering completion"]
         #if os(macOS)
-            value["visibility_tracking"] = "AppKit notifications and action boundaries"
+            value["visibility_tracking"] = "Android window AppKit notifications and action boundaries"
         #endif
+        if displayCaptureStarted {
+            value["presentation_capture"] = "metal_drawable_presented_time_v1"
+        }
         if let failure {
             value["error"] = failure
         }
@@ -339,6 +348,14 @@ final class BenchmarkSession {
                             "late_us": microseconds(late)])
     }
 
+    private func finishDisplayCapture() throws {
+        guard displayCaptureStarted else {
+            return
+        }
+        DisplayFrameCapture.shared.end()
+        try DisplayFrameCapture.shared.write(to: directory.appendingPathComponent("interaction/presentation.json"))
+    }
+
     private func perform(_ action: BenchmarkRequest.Action) async throws {
         switch action.kind {
         case "profile":
@@ -347,6 +364,15 @@ final class BenchmarkSession {
             let output = directory.appendingPathComponent("interaction", isDirectory: true)
             try FileManager.default.createDirectory(at: output, withIntermediateDirectories: true)
             let command = commands[action.key!]!
+            #if os(macOS)
+                if action.key == "frames-start" || action.key == "trace-start" {
+                    NSApp.windows.first { $0.identifier?.rawValue == "android-display" }?.makeKeyAndOrderFront(nil)
+                    NSApp.activate(ignoringOtherApps: true)
+                }
+            #endif
+            if action.key == "capture-end" {
+                try finishDisplayCapture()
+            }
             let result: Int32 = await withCheckedContinuation { continuation in
                 input.async { continuation.resume(returning: nce_session_profile(command, output.path)) }
             }
@@ -354,6 +380,12 @@ final class BenchmarkSession {
                 throw BenchmarkError.invalid("交互采集失败：\(result)")
             }
             try Task.checkCancellation()
+            if action.key == "frames-start" || action.key == "trace-start" {
+                try DisplayFrameCapture.shared.begin()
+                displayCaptureStarted = true
+            } else if action.key == "capture-end" {
+                try finishDisplayCapture()
+            }
         case "wait": try await wait(until: .now.advanced(by: .milliseconds(action.milliseconds!)))
         case "key": try await send(Int32(NCE_INPUT_KEY), ["home": Int32(NCE_KEY_HOME), "back": Int32(NCE_KEY_BACK), "recent": Int32(NCE_KEY_RECENT)][action.key!]!)
         case "tap":

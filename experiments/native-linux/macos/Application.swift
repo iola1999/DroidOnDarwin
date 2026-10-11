@@ -161,6 +161,7 @@ final class MacApplicationDelegate: NSObject, NSApplicationDelegate, NSWindowDel
         window.title = environment.workerTarget?.name ?? "DroidOnDarwin"
         window.contentMinSize = worker ? NSSize(width: 240, height: 240 * 640 / 360 + AndroidWindow.chromeHeight) : NSSize(width: 720, height: 520)
         if worker {
+            window.identifier = NSUserInterfaceItemIdentifier("android-display")
             window.isRestorable = false
             window.collectionBehavior.insert(.fullScreenNone)
         }

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""分析单轮 Settings 帧采集；保留无效帧和采集边界，帧完成时间不含宿主显示确认。"""
+"""分别分析 Settings 帧完成与可选 Metal 显示回调，保留无效帧和采集边界。"""
 import argparse
 import csv as csv_module
 import io
@@ -9,6 +9,7 @@ import json
 from pathlib import Path
 import re
 import subprocess
+from interaction_presentation import analyze_presentation
 
 REQUIRED = ('Flags', 'IntendedVsync', 'FrameCompleted')
 PHASES = {
@@ -147,17 +148,19 @@ def execution_summary(output):
 
 
 def host_visibility(result, beginning, ending):
+    window_tracking = result.get('visibility_tracking') == 'Android window AppKit notifications and action boundaries'
+    visible_key = 'display_visible' if window_tracking else 'app_visible'
     known = [event for event in result['events'] if 'app_visible' in event and 'host_monotonic_ns' in event]
     if not known or beginning is None or ending is None:
         return {'available': False}
     before = [event for event in known if event['host_monotonic_ns'] <= beginning]
     selected = before[-1:] + [event for event in known if beginning < event['host_monotonic_ns'] <= ending]
     return {'available': bool(selected), 'tracking': result.get('visibility_tracking', 'action boundaries only'),
-            'all_visible': bool(before) and all(event['app_visible'] for event in selected),
+            'all_visible': bool(before) and all(event.get(visible_key, False) for event in selected),
             'all_active': bool(before) and all(event.get('app_active') for event in selected),
             'all_activity_asserted': bool(before) and all(event.get('benchmark_activity') for event in selected),
-            'events': [{key: event.get(key) for key in ('host_monotonic_ns', 'event', 'app_visible', 'app_active', 'benchmark_activity')} for event in selected],
-            'scope': 'App-wide occlusion and activation; actual drawable presentation unmeasured'}
+            'events': [{key: event.get(key) for key in ('host_monotonic_ns', 'event', 'app_visible', 'display_visible', 'app_active', 'benchmark_activity')} for event in selected],
+            'scope': ('Android window occlusion and App activation; drawable presentation reported separately' if window_tracking else 'App-wide occlusion and activation; Android drawable visibility not confirmed')}
 
 
 def analyze(directory):
@@ -255,16 +258,24 @@ def analyze(directory):
             failures.append('fallback attribution does not cover all Unicorn intervals')
     if execution['available'] and not execution['threads']:
         failures.append('execution capture contains no threads')
+    presentation_path = output / 'presentation.json'
+    presentation = {'available': False}
+    if presentation_path.exists():
+        presentation = analyze_presentation(json.loads(presentation_path.read_text()), beginning, ending, distribution)
+        presentation['analyzer_sha256'] = hashlib.sha256(Path(__file__).with_name('interaction_presentation.py').read_bytes()).hexdigest()
+        failures.extend(presentation['failures'])
+    elif result.get('presentation_capture'):
+        failures.append('missing requested drawable presentation capture')
     files = [directory / name for name in ('request.json', 'result.json')] + sorted(output.glob('*'))
     return {'version': 1, 'analyzer_sha256': hashlib.sha256(Path(__file__).read_bytes()).hexdigest(), 'runID': result['runID'], 'buildID': result['buildID'],
             'configuration': result['configuration'], 'hardware': result['hardware'], 'os': result['os'],
             'benchmark_status': result['status'], 'failures': failures,
             'host_visibility': host_visibility(result, beginning, ending),
-            'scope': 'Settings HWUI completion, wall time including scheduling/waits; host presentation unmeasured; no FPS claim',
+            'scope': ('Settings HWUI completion and separate Metal drawable presentation; Android/host frame identity unmeasured' if presentation['available'] else 'Settings HWUI completion, wall time including scheduling/waits; host presentation unmeasured; no FPS claim'),
             'clocks': clocks, 'alignment_uncertainty_ns': uncertainty if selected and all(c['resolution_known'] for c in selected) else None,
             'alignment_bracket_half_width_ns': uncertainty,
             'host_window_ns': [beginning, ending], 'guest_window_ns': [value + offset if value is not None else None for value in (beginning, ending)],
-            'frame_totals': totals, 'frame_counts': dict(counts), 'frames': rows, 'duration': distribution([row['duration_ms'] for row in accepted]),
+            'presentation': presentation, 'frame_totals': totals, 'frame_counts': dict(counts), 'frames': rows, 'duration': distribution([row['duration_ms'] for row in accepted]),
             'phase_duration': {name: distribution([row['phases_ms'][name] for row in accepted if name in row['phases_ms']]) for name in PHASES},
             'cpu_stats': cpu_stats, 'ring_capacity_known': False, 'execution': execution,
             'source_sha256': {str(path): hashlib.sha256(path.read_bytes()).hexdigest() for path in files if path.is_file()}}
@@ -280,8 +291,10 @@ def main():
     report = analyze(args.run)
     if args.require_visible:
         visible = report['host_visibility']
-        if not visible.get('all_visible') or visible.get('tracking') != 'AppKit notifications and action boundaries':
+        if not visible.get('all_visible') or visible.get('tracking') not in ('AppKit notifications and action boundaries', 'Android window AppKit notifications and action boundaries'):
             report['failures'].append('continuous visible Mac capture not confirmed')
+        if report['presentation'].get('available') and not report['presentation'].get('counts', {}).get('presented_in_window'):
+            report['failures'].append('no drawable presentation in visible capture window')
     if args.trace_processor and (args.run / 'interaction/kernel.ftrace').exists():
         begin, end = (int(value) for value in report['guest_window_ns'])
         overlap = f"max(0,min(ts+dur,{end})-max(ts,{begin}))"

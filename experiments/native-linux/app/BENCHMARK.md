@@ -106,3 +106,11 @@ Direct 应用由 `--translation-report` 指定完整桌面验证记录，macOS/i
 查询该变体的默认配置会额外返回 `translation` 对象，包含 `cacheMiB`、`codeWatch`、`crossPage`、`reuseCodeChecks`、`routeEpochs`、`retainRoutes`、`memoryGroups`、`vectorTable` 和 `simdMath`。`cacheMiB` 可取 16、64、128，分别应用到每个 CPU 的 Direct 与 Unicorn 缓存。跨调用复用只用于单核，并要求代码页写入跟踪和跳转序号检查。`simdMath` 默认关闭，开启 FP32/FP64 按元素乘法和整数加宽减法的直接执行。应用启动前校验依赖，运行期间不能修改。
 
 matrix 可以覆盖 `translation` 中的部分字段，例如 `{"name":"code-watch-off","parameters":{"translation":{"codeWatch":false}}}`。驱动从 App 查询完整默认对象，再覆盖指定字段；未知字段与类型错误在启动前返回。原生构建收到翻译缓存参数时也会返回配置错误。当前翻译变体关闭应用 AOT 和 boot image；开启请求需要匹配产物，现有变体会拒绝此请求。
+
+### 实际显示采集
+
+`frames-start` 和 `trace-start` 同时启用宿主 drawable 采集，`capture-end` 停止新增记录。`interaction/presentation.json` 保存获取开始/结束的宿主单调时间（纳秒）、drawable ID、Metal 显示时间（秒）和回调到达时间（纳秒），并在起止位置校准两个时钟。结束后到达的同轮回调保留到最终导出；新一轮使用独立 generation。容量为 2048 条，超出容量会计数，分析器将该轮标记为不完整。
+
+`presented_time_seconds = 0`、尚未收到回调、获取 drawable 失败分别统计。显示间隔按同一 layer 的实际显示时间计算，不使用回调到达顺序。HWUI 帧与宿主 drawable 尚未建立一一对应；重复画面和应用空闲也可能影响显示次数，结果中分别给出帧完成与宿主显示统计。
+
+Mac 在开始采集前显示并激活 Android 窗口，结果分别保存 `app_visible` 与 `display_visible`。窗口及应用状态变化也会写入事件；应用可见性只描述应用窗口集合。`--require-visible` 检查有记录的 Android 窗口状态，并在新格式中要求至少一个有效 drawable 显示时间。

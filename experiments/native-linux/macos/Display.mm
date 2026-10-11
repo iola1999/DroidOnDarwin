@@ -11,10 +11,14 @@
 }
 - (instancetype)initWithFrame:(NSRect)frame
 {
+    return [self initWithFrame:frame metalLayer:[CAMetalLayer layer]];
+}
+- (instancetype)initWithFrame:(NSRect)frame metalLayer:(CAMetalLayer *)layer
+{
     if ((self = [super initWithFrame:frame])) {
         _inputQueue = dispatch_queue_create("app.droidondarwin.mac.input", DISPATCH_QUEUE_SERIAL);
         self.wantsLayer = YES;
-        _metalLayer = [CAMetalLayer layer];
+        _metalLayer = layer;
         _metalLayer.device = MTLCreateSystemDefaultDevice();
         _metalLayer.pixelFormat = MTLPixelFormatBGRA8Unorm;
         _metalLayer.framebufferOnly = NO;

@@ -4,6 +4,7 @@
 
 @interface NceDisplay : NSView
 @property(nonatomic) BOOL inputEnabled;
-@property(nonatomic, readonly) CAMetalLayer *metalLayer;
-- (void)navigate:(id)sender;
+@property(nonatomic, readonly) CAMetalLayer *_Nonnull metalLayer;
+- (instancetype _Nonnull)initWithFrame:(NSRect)frame metalLayer:(CAMetalLayer *_Nonnull)layer;
+- (void)navigate:(id _Nullable)sender;
 @end

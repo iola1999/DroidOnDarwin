@@ -1,0 +1,391 @@
+{
+  "status": "actual Android drawable presentation not confirmed in first pair; investigating visibility",
+  "host": {
+    "cpu": "Apple M5 Ultra",
+    "os": "macOS 27.0 (26A428)",
+    "ram_bytes": 274877906944
+  },
+  "runs": [
+    {
+      "runID": "D99D7656-CBCE-4636-99D9-CE75A83FC779",
+      "buildID": "0.25.0-Mac-20261012-030737-direct1-dual",
+      "configuration": {
+        "aot": false,
+        "bootImage": false,
+        "diagnostics": false,
+        "directFault": true,
+        "expandedJIT": false,
+        "fastBaseline": false,
+        "faultPrefetch": false,
+        "nterp": true,
+        "performanceLogging": false,
+        "schedulerSliceUS": 0,
+        "sparseScan": true,
+        "translation": {
+          "cacheMiB": 128,
+          "codeWatch": true,
+          "crossPage": true,
+          "linuxFastpath": false,
+          "memoryGroups": false,
+          "onlineCPUs": 1,
+          "retainRoutes": false,
+          "reuseCodeChecks": false,
+          "routeEpochs": false,
+          "simdMath": true,
+          "vectorTable": false
+        }
+      },
+      "hardware": "arm64",
+      "os": "Version 27.0 (Build 26A428)",
+      "failures": [
+        "no drawable presentation in visible capture window"
+      ],
+      "host_visibility": {
+        "available": true,
+        "tracking": "AppKit notifications and action boundaries",
+        "all_visible": true,
+        "all_active": false,
+        "all_activity_asserted": true,
+        "events": [
+          {
+            "host_monotonic_ns": 1540011810954000,
+            "event": "action_submitted",
+            "app_visible": true,
+            "display_visible": null,
+            "app_active": false,
+            "benchmark_activity": true
+          },
+          {
+            "host_monotonic_ns": 1540011811860000,
+            "event": "action_started",
+            "app_visible": true,
+            "display_visible": null,
+            "app_active": false,
+            "benchmark_activity": true
+          },
+          {
+            "host_monotonic_ns": 1540012415234000,
+            "event": "action_submitted",
+            "app_visible": true,
+            "display_visible": null,
+            "app_active": false,
+            "benchmark_activity": true
+          },
+          {
+            "host_monotonic_ns": 1540012416258000,
+            "event": "action_started",
+            "app_visible": true,
+            "display_visible": null,
+            "app_active": false,
+            "benchmark_activity": true
+          },
+          {
+            "host_monotonic_ns": 1540013618170000,
+            "event": "action_submitted",
+            "app_visible": true,
+            "display_visible": null,
+            "app_active": false,
+            "benchmark_activity": true
+          },
+          {
+            "host_monotonic_ns": 1540013619338000,
+            "event": "action_started",
+            "app_visible": true,
+            "display_visible": null,
+            "app_active": false,
+            "benchmark_activity": true
+          }
+        ],
+        "scope": "App-wide occlusion and activation; Android drawable visibility not confirmed"
+      },
+      "presentation": {
+        "available": true,
+        "failures": [],
+        "counts": {
+          "captured": 29,
+          "in_window": 29,
+          "pending_acquisition": 0,
+          "drawable_unavailable": 0,
+          "pending_callback": 0,
+          "zero_presented_time": 29,
+          "outside_presentation_window": 0,
+          "presented_in_window": 0
+        },
+        "alignment_offset_ns": -2224440687.875,
+        "alignment_uncertainty_ns": 4020.875,
+        "acquire_wait_ms": {
+          "count": 29,
+          "p50_ms": 0.035,
+          "p95_ms": 0.057599999999999985,
+          "p99_ms": 0.06935999999999998,
+          "max_ms": 0.073,
+          "p95_small_sample": true,
+          "p99_small_sample": true,
+          "tail_count_reference": {
+            "p95": 1,
+            "p99": 0
+          },
+          "percentile_method": "linear interpolation; small-sample flag uses fewer than 10 expected tail observations; frames are not independent runs",
+          "above_ms": {
+            "16.666667": 0,
+            "100": 0,
+            "250": 0,
+            "1000": 0
+          }
+        },
+        "drawable_to_present_ms": {
+          "count": 0
+        },
+        "unique_presentation_interval_ms": {
+          "count": 0
+        },
+        "layers": [],
+        "scope": "host drawable display; repeated content and Android frame identity unmeasured; pending and zero timestamps excluded",
+        "analyzer_sha256": "0fd8ca5b9d250a9a1badd300df41ad78ffcb9390943256f7be98514d12482799"
+      },
+      "frame_counts": {
+        "accepted": 29
+      },
+      "duration": {
+        "count": 29,
+        "p50_ms": 74.259488,
+        "p95_ms": 146.05974039999998,
+        "p99_ms": 151.05923656000002,
+        "max_ms": 151.838476,
+        "p95_small_sample": true,
+        "p99_small_sample": true,
+        "tail_count_reference": {
+          "p95": 1,
+          "p99": 0
+        },
+        "percentile_method": "linear interpolation; small-sample flag uses fewer than 10 expected tail observations; frames are not independent runs",
+        "above_ms": {
+          "16.666667": 29,
+          "100": 7,
+          "250": 0,
+          "1000": 0
+        }
+      },
+      "alignment_uncertainty_ns": 10000000.0,
+      "source_sha256": {
+        "work/native-linux-nce/benchmarks/interaction/20261012-030828-54138f/D99D7656-CBCE-4636-99D9-CE75A83FC779/request.json": "23294bb2b18127b52de47dbebc8d3983666d3e3e80755f23356e29d7f0898ef7",
+        "work/native-linux-nce/benchmarks/interaction/20261012-030828-54138f/D99D7656-CBCE-4636-99D9-CE75A83FC779/result.json": "a0738602a4a239d3bf26eb4fa03b42d459268014e86e21ae201a5dd735769370",
+        "work/native-linux-nce/benchmarks/interaction/20261012-030828-54138f/D99D7656-CBCE-4636-99D9-CE75A83FC779/interaction/clock-pairs.jsonl": "fc2672899a2d15b781256a7366265dc7b08fb525ae86934e86c82797d89142b7",
+        "work/native-linux-nce/benchmarks/interaction/20261012-030828-54138f/D99D7656-CBCE-4636-99D9-CE75A83FC779/interaction/clock.txt": "b21e3b8fcb175197cfbda952dab37a9fa870eb7795f14fa3f7e82fcd37ec69f3",
+        "work/native-linux-nce/benchmarks/interaction/20261012-030828-54138f/D99D7656-CBCE-4636-99D9-CE75A83FC779/interaction/cpu0.txt": "891444818a324b3620c964a5e4a6e99a33a1f2912f44df2136caf0a41c607ed2",
+        "work/native-linux-nce/benchmarks/interaction/20261012-030828-54138f/D99D7656-CBCE-4636-99D9-CE75A83FC779/interaction/execution.json": "18461d9a4422d3a12d54feb4981495f1fea862684dc85b980d5357fad4a01b5a",
+        "work/native-linux-nce/benchmarks/interaction/20261012-030828-54138f/D99D7656-CBCE-4636-99D9-CE75A83FC779/interaction/frames.txt": "ac2937f094ada25b070be43b1749921422afb974b92e25a364c0a4691f0c5d2d",
+        "work/native-linux-nce/benchmarks/interaction/20261012-030828-54138f/D99D7656-CBCE-4636-99D9-CE75A83FC779/interaction/kernel.ftrace": "bb5563ab55f5033cc5f34330c2a64e3fb58d4b00739246847bb022924a3cecaf",
+        "work/native-linux-nce/benchmarks/interaction/20261012-030828-54138f/D99D7656-CBCE-4636-99D9-CE75A83FC779/interaction/presentation.json": "765178b80c89795ae22881bc23a9a18dcca710dfa5fbcb1a3c3679ed3ea888fb",
+        "work/native-linux-nce/benchmarks/interaction/20261012-030828-54138f/D99D7656-CBCE-4636-99D9-CE75A83FC779/interaction/threads-after.txt": "d3085655ba7f4738eb1f7d5a9923d0176a2cc4e935f99a8ad47c06d8fa672d67",
+        "work/native-linux-nce/benchmarks/interaction/20261012-030828-54138f/D99D7656-CBCE-4636-99D9-CE75A83FC779/interaction/threads-before.txt": "9c817aa2b0f7e5caae197e0552eee2da24dd96d6b44d73a6f21405f127ee5eee"
+      },
+      "analysis": "work/native-linux-nce/interaction-preflight/presentation-on-analysis.json",
+      "analysis_sha256": "9cff7e8a121cce25ee6832ed2fbce7982d4503e45a28ee70632f0b59501200be",
+      "execution_stage_cpu_ms": {
+        "kernel_prepare": 2.322,
+        "direct_including_compile": 492.53,
+        "unicorn_prepare_and_execute": 467.01
+      }
+    },
+    {
+      "runID": "0368500B-8098-41D6-924F-D5039C8ED175",
+      "buildID": "0.25.0-Mac-20261012-030737-direct1-dual",
+      "configuration": {
+        "aot": false,
+        "bootImage": false,
+        "diagnostics": false,
+        "directFault": true,
+        "expandedJIT": false,
+        "fastBaseline": false,
+        "faultPrefetch": false,
+        "nterp": true,
+        "performanceLogging": false,
+        "schedulerSliceUS": 0,
+        "sparseScan": true,
+        "translation": {
+          "cacheMiB": 128,
+          "codeWatch": true,
+          "crossPage": true,
+          "linuxFastpath": false,
+          "memoryGroups": false,
+          "onlineCPUs": 1,
+          "retainRoutes": false,
+          "reuseCodeChecks": false,
+          "routeEpochs": false,
+          "simdMath": false,
+          "vectorTable": false
+        }
+      },
+      "hardware": "arm64",
+      "os": "Version 27.0 (Build 26A428)",
+      "failures": [
+        "no drawable presentation in visible capture window"
+      ],
+      "host_visibility": {
+        "available": true,
+        "tracking": "AppKit notifications and action boundaries",
+        "all_visible": true,
+        "all_active": false,
+        "all_activity_asserted": true,
+        "events": [
+          {
+            "host_monotonic_ns": 1540161981220000,
+            "event": "action_submitted",
+            "app_visible": true,
+            "display_visible": null,
+            "app_active": false,
+            "benchmark_activity": true
+          },
+          {
+            "host_monotonic_ns": 1540161982106000,
+            "event": "action_started",
+            "app_visible": true,
+            "display_visible": null,
+            "app_active": false,
+            "benchmark_activity": true
+          },
+          {
+            "host_monotonic_ns": 1540162586123000,
+            "event": "action_submitted",
+            "app_visible": true,
+            "display_visible": null,
+            "app_active": false,
+            "benchmark_activity": true
+          },
+          {
+            "host_monotonic_ns": 1540162587206000,
+            "event": "action_started",
+            "app_visible": true,
+            "display_visible": null,
+            "app_active": false,
+            "benchmark_activity": true
+          },
+          {
+            "host_monotonic_ns": 1540163788361000,
+            "event": "action_submitted",
+            "app_visible": true,
+            "display_visible": null,
+            "app_active": false,
+            "benchmark_activity": true
+          },
+          {
+            "host_monotonic_ns": 1540163789585000,
+            "event": "action_started",
+            "app_visible": true,
+            "display_visible": null,
+            "app_active": false,
+            "benchmark_activity": true
+          }
+        ],
+        "scope": "App-wide occlusion and activation; Android drawable visibility not confirmed"
+      },
+      "presentation": {
+        "available": true,
+        "failures": [],
+        "counts": {
+          "captured": 26,
+          "in_window": 26,
+          "pending_acquisition": 0,
+          "drawable_unavailable": 0,
+          "pending_callback": 0,
+          "zero_presented_time": 26,
+          "outside_presentation_window": 0,
+          "presented_in_window": 0
+        },
+        "alignment_offset_ns": -2223860708.75,
+        "alignment_uncertainty_ns": 4041.75,
+        "acquire_wait_ms": {
+          "count": 26,
+          "p50_ms": 0.038,
+          "p95_ms": 0.052,
+          "p99_ms": 0.056,
+          "max_ms": 0.057,
+          "p95_small_sample": true,
+          "p99_small_sample": true,
+          "tail_count_reference": {
+            "p95": 1,
+            "p99": 0
+          },
+          "percentile_method": "linear interpolation; small-sample flag uses fewer than 10 expected tail observations; frames are not independent runs",
+          "above_ms": {
+            "16.666667": 0,
+            "100": 0,
+            "250": 0,
+            "1000": 0
+          }
+        },
+        "drawable_to_present_ms": {
+          "count": 0
+        },
+        "unique_presentation_interval_ms": {
+          "count": 0
+        },
+        "layers": [],
+        "scope": "host drawable display; repeated content and Android frame identity unmeasured; pending and zero timestamps excluded",
+        "analyzer_sha256": "0fd8ca5b9d250a9a1badd300df41ad78ffcb9390943256f7be98514d12482799"
+      },
+      "frame_counts": {
+        "accepted": 26
+      },
+      "duration": {
+        "count": 26,
+        "p50_ms": 78.390661,
+        "p95_ms": 206.38023850000002,
+        "p99_ms": 225.4853235,
+        "max_ms": 226.496324,
+        "p95_small_sample": true,
+        "p99_small_sample": true,
+        "tail_count_reference": {
+          "p95": 1,
+          "p99": 0
+        },
+        "percentile_method": "linear interpolation; small-sample flag uses fewer than 10 expected tail observations; frames are not independent runs",
+        "above_ms": {
+          "16.666667": 26,
+          "100": 8,
+          "250": 0,
+          "1000": 0
+        }
+      },
+      "alignment_uncertainty_ns": 10000000.0,
+      "source_sha256": {
+        "work/native-linux-nce/benchmarks/interaction/20261012-030828-54138f/0368500B-8098-41D6-924F-D5039C8ED175/request.json": "dd05ff2c675f88d3f4ce1947b9e2663be963afed689da3f888a86213161b57f6",
+        "work/native-linux-nce/benchmarks/interaction/20261012-030828-54138f/0368500B-8098-41D6-924F-D5039C8ED175/result.json": "5348999cf07e050ab0cced5d7f63c17f8ce9160d33cede53d128204d7cf3d4da",
+        "work/native-linux-nce/benchmarks/interaction/20261012-030828-54138f/0368500B-8098-41D6-924F-D5039C8ED175/interaction/clock-pairs.jsonl": "6449f369a36ab02e98a8130875af733702a8d3c8e6427f7f9a8ce9bd9f7613ef",
+        "work/native-linux-nce/benchmarks/interaction/20261012-030828-54138f/0368500B-8098-41D6-924F-D5039C8ED175/interaction/clock.txt": "b21e3b8fcb175197cfbda952dab37a9fa870eb7795f14fa3f7e82fcd37ec69f3",
+        "work/native-linux-nce/benchmarks/interaction/20261012-030828-54138f/0368500B-8098-41D6-924F-D5039C8ED175/interaction/cpu0.txt": "6b1d7ecbe37451c6a2c7e685ab63bc1ae12827bec94f82381eeaa295a8b6432a",
+        "work/native-linux-nce/benchmarks/interaction/20261012-030828-54138f/0368500B-8098-41D6-924F-D5039C8ED175/interaction/execution.json": "1b5b99e2c20a63867241515e29e901d1a9e83a523876680156c8d23e3d6f95c9",
+        "work/native-linux-nce/benchmarks/interaction/20261012-030828-54138f/0368500B-8098-41D6-924F-D5039C8ED175/interaction/frames.txt": "968b072f089b35224444fcc5658512f3d629c2210f4cac3bc999d898c0904fc2",
+        "work/native-linux-nce/benchmarks/interaction/20261012-030828-54138f/0368500B-8098-41D6-924F-D5039C8ED175/interaction/kernel.ftrace": "7e213be6d47fc1f3aeca0a48ec73d4280dc52b29316539fad50bf0ac30034df2",
+        "work/native-linux-nce/benchmarks/interaction/20261012-030828-54138f/0368500B-8098-41D6-924F-D5039C8ED175/interaction/presentation.json": "d857066eb8f8957a2d8dfb0281192bc732afc61d39464d6443f1a49f18e697ce",
+        "work/native-linux-nce/benchmarks/interaction/20261012-030828-54138f/0368500B-8098-41D6-924F-D5039C8ED175/interaction/threads-after.txt": "c021896465fc25c1c3656344af2cc390eba35425aa173a906f07491ccbe3be83",
+        "work/native-linux-nce/benchmarks/interaction/20261012-030828-54138f/0368500B-8098-41D6-924F-D5039C8ED175/interaction/threads-before.txt": "af794ac234c45f1a2c8ed29a1f6f9a6f20e2dfa42484f9dc338dcc43fecbd7c2"
+      },
+      "analysis": "work/native-linux-nce/interaction-preflight/presentation-off-analysis.json",
+      "analysis_sha256": "849457a3f8cc85c5f9fc38486df6712691d519988ca081c7ebadfb8ba7b17371",
+      "execution_stage_cpu_ms": {
+        "kernel_prepare": 2.077,
+        "direct_including_compile": 562.609,
+        "unicorn_prepare_and_execute": 443.124
+      }
+    }
+  ],
+  "control": {
+    "source": "work/native-linux-nce/interaction-preflight/metal-presentation-probe.json",
+    "sha256": "5951a33a4b306b3151c162da2dafe7a2a776a677dc6c9174cd0979da2e21054e",
+    "scope": "standalone visible Metal clear; original and subclass layers; no Android or ANGLE",
+    "layers": [
+      {
+        "type": "CAMetalLayer",
+        "callbacks": 183,
+        "positive_presented_time": 182
+      },
+      {
+        "type": "ProfiledMetalLayer",
+        "callbacks": 183,
+        "positive_presented_time": 182
+      }
+    ]
+  }
+}

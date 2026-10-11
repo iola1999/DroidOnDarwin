@@ -18,12 +18,12 @@ final class LocalRuntime: SessionRuntime {
     private var jitTimer: Timer?
     private let queue = DispatchQueue(label: "app.droidondarwin.prepare", qos: .userInitiated)
     #if os(macOS)
-        let display = NceDisplay(frame: CGRect(x: 0, y: 0, width: 360, height: 640))
+        let display = NceDisplay(frame: CGRect(x: 0, y: 0, width: 360, height: 640), metalLayer: ProfiledMetalLayer())
         var metalLayer: CAMetalLayer {
             display.metalLayer
         }
     #else
-        let metalLayer = CAMetalLayer()
+        let metalLayer = ProfiledMetalLayer()
     #endif
     init() {
         #if os(iOS)

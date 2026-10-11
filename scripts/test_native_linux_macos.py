@@ -63,9 +63,14 @@ def main():
     checks['session'] = run([session_test], capture_output=True, text=True, timeout=15).stdout.strip()
     benchmark_test = OUT / 'benchmark-tests'
     run(['xcrun', 'swiftc', '-O', '-parse-as-library', '-import-objc-header', EXP / 'macos/Bridge.h',
-         *[EXP / 'app' / name for name in ('RunConfiguration.swift', 'TranslationConfiguration.swift', 'BenchmarkRequest.swift', 'BenchmarkMemory.swift', 'BenchmarkSession.swift', 'SessionModel.swift', 'ProbeLogReader.swift')],
+         *[EXP / 'app' / name for name in ('RunConfiguration.swift', 'TranslationConfiguration.swift', 'BenchmarkRequest.swift', 'BenchmarkMemory.swift', 'DisplayFrameCapture.swift', 'BenchmarkSession.swift', 'SessionModel.swift', 'ProbeLogReader.swift')],
          ROOT / 'tests/ios-jit/BenchmarkTests.swift', '-o', benchmark_test])
     checks['benchmark'] = run([benchmark_test], capture_output=True, text=True, timeout=15).stdout.strip()
+    display_capture_test = OUT / 'display-capture-tests'
+    run(['xcrun', 'swiftc', '-O', '-parse-as-library',
+         *[EXP / 'app' / name for name in ('RunConfiguration.swift', 'TranslationConfiguration.swift', 'BenchmarkRequest.swift', 'DisplayFrameCapture.swift')],
+         ROOT / 'tests/ios-jit/DisplayFrameCaptureTests.swift', '-o', display_capture_test])
+    checks['display_capture'] = run([display_capture_test], capture_output=True, text=True, timeout=15).stdout.strip()
     translation_test = OUT / 'translation-configuration-tests'
     run(['xcrun', 'swiftc', '-O', '-parse-as-library',
          *[EXP / 'app' / name for name in ('RunConfiguration.swift', 'TranslationConfiguration.swift', 'BenchmarkRequest.swift')],
