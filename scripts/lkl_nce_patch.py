@@ -41,6 +41,81 @@ def apply(source: Path, experiment: Path):
          "if ((!need_resched() || lkl_cpu_has_waiters()) && idle_host_task)")
     edit(arch + "kernel/syscalls.c", "\t\tlkl_cpu_put();\n\t\tlkl_ops->sem_down(ti->sched_sem);",
          "\t\tlkl_cpu_put_idle();\n\t\tlkl_ops->sem_down(ti->sched_sem);")
+    # host0 is shared by first-time callers; task allocation may sleep.
+    edit(arch + "kernel/syscalls.c", "static struct lkl_tls_key *task_key;", """static struct lkl_tls_key *task_key;
+static struct lkl_mutex *host_task_lock;
+static struct lkl_sem *host_tasks_drained;
+static unsigned int host_task_requests;
+static bool host_tasks_closing;
+
+static void free_host_syscall_state(void)
+{
+	if (host_task_lock)
+		lkl_ops->mutex_free(host_task_lock);
+	if (host_tasks_drained)
+		lkl_ops->sem_free(host_tasks_drained);
+	if (task_key && lkl_ops->tls_free)
+		lkl_ops->tls_free(task_key);
+}""")
+    edit(arch + "kernel/syscalls.c", """		if (!task) {
+			ret = new_host_task(&task, no == __NR_new_thread_group_leader);
+			if (ret)
+				goto out;
+			lkl_ops->tls_set(task_key, task);
+		}""", """		if (!task) {
+			int acquired;
+
+			/* Register before releasing the CPU: shutdown waits for these callers. */
+			__sync_add_and_fetch(&host_task_requests, 1);
+			lkl_cpu_put();
+			/* The current creator may need the CPU while this thread waits. */
+			lkl_ops->mutex_lock(host_task_lock);
+			acquired = lkl_cpu_get();
+			ret = acquired;
+			if (acquired >= 0) {
+				ret = new_host_task(&task, no == __NR_new_thread_group_leader);
+				if (!ret)
+					lkl_ops->tls_set(task_key, task);
+			}
+			if (!__sync_sub_and_fetch(&host_task_requests, 1) && host_tasks_closing)
+				lkl_ops->sem_up(host_tasks_drained);
+			lkl_ops->mutex_unlock(host_task_lock);
+			if (acquired < 0)
+				return ret;
+			if (ret)
+				goto out;
+		}""")
+    edit(arch + "kernel/syscalls.c", """		task_key = lkl_ops->tls_alloc(del_host_task);
+		if (!task_key)
+			return -1;""", """		task_key = lkl_ops->tls_alloc(del_host_task);
+		host_task_lock = lkl_ops->mutex_alloc(0);
+		host_tasks_drained = lkl_ops->sem_alloc(0);
+		if (!task_key || !host_task_lock || !host_tasks_drained) {
+			free_host_syscall_state();
+			return -1;
+		}""")
+    edit(arch + "kernel/syscalls.c", """	if (kernel_thread(idle_host_task_loop, NULL, NULL, CLONE_FLAGS) < 0) {
+		if (lkl_ops->tls_free)
+			lkl_ops->tls_free(task_key);""", """	if (kernel_thread(idle_host_task_loop, NULL, NULL, CLONE_FLAGS) < 0) {
+		free_host_syscall_state();""")
+    edit(arch + "kernel/syscalls.c", "void syscalls_cleanup(void)\n{", """void syscalls_cleanup(void)
+{
+	/* CPU shutdown rejects new requests; registered callers still own this lock. */
+	if (host_task_lock) {
+		lkl_ops->mutex_lock(host_task_lock);
+		host_tasks_closing = true;
+		if (__sync_fetch_and_add(&host_task_requests, 0)) {
+			lkl_ops->mutex_unlock(host_task_lock);
+			lkl_ops->sem_down(host_tasks_drained);
+			lkl_ops->mutex_lock(host_task_lock);
+		}
+		lkl_ops->mutex_unlock(host_task_lock);
+	}
+""")
+    edit(arch + "kernel/syscalls.c", "\n\tif (lkl_ops->tls_free)\n\t\tlkl_ops->tls_free(task_key);\n}",
+         "\n\tfree_host_syscall_state();\n}")
+    edit(arch + "kernel/setup.c", "\tsyscalls_init();",
+         '\tif (syscalls_init())\n\t\tpanic("cannot initialize host syscall tasks");')
     edit(arch + "Kconfig", "depends on !SMP && !COREDUMP && !SECCOMP && !UPROBES",
          "depends on !SMP && !COREDUMP && !UPROBES")
     edit(arch + "Kconfig", "\tselect GENERIC_ATOMIC64",
