@@ -25,7 +25,7 @@ final class DisplayFrameCapture: @unchecked Sendable {
     static let shared = DisplayFrameCapture()
     struct Ticket: Sendable {
         let generation: UInt64
-        let index: Int
+        let index: UInt64
     }
     struct ClockSample: Codable {
         let host_before_ns: UInt64
@@ -54,10 +54,11 @@ final class DisplayFrameCapture: @unchecked Sendable {
     private let lock = NSLock()
     private let capacity: Int
     private var generation: UInt64 = 0
-    private var active = false
+    private var armed = false
+    private var nextIndex: UInt64 = 0
     private var beginSample: ClockSample?
     private var endSample: ClockSample?
-    private var frames: [Frame] = []
+    private var frames: [UInt64: Frame] = [:]
     private var overflow: UInt64 = 0
     private var duplicateCallbacks: UInt64 = 0
     private var clockErrors: UInt64 = 0
@@ -78,54 +79,71 @@ final class DisplayFrameCapture: @unchecked Sendable {
         let before = now(), media = CACurrentMediaTime(), after = now()
         return ClockSample(host_before_ns: before, media_seconds: media, host_after_ns: after)
     }
-    func begin() throws {
+    // Arm before Android starts: ANGLE may retain a drawable across an idle
+    // period and present it after the measurement window begins.
+    func arm() throws {
         lock.lock()
         defer { lock.unlock() }
-        guard !active else {
-            throw BenchmarkError.invalid("显示采集已经开始")
+        guard !armed else {
+            throw BenchmarkError.invalid("显示采集已经准备")
         }
         generation &+= 1
+        nextIndex = 0
         frames.removeAll(keepingCapacity: true)
         frames.reserveCapacity(capacity)
         overflow = 0
         duplicateCallbacks = 0
         clockErrors = 0
+        beginSample = nil
         endSample = nil
+        armed = true
+    }
+    func begin() throws {
+        lock.lock()
+        defer { lock.unlock() }
+        guard armed, beginSample == nil else {
+            throw BenchmarkError.invalid("显示采集尚未准备或已经开始")
+        }
         beginSample = clockSample()
-        active = true
     }
     func end() {
         lock.lock()
         defer { lock.unlock() }
-        guard active else {
+        guard armed else {
             return
         }
-        endSample = clockSample()
-        active = false
+        if beginSample != nil {
+            endSample = clockSample()
+        }
+        armed = false
     }
     func acquiring(layer: String) -> Ticket? {
         lock.lock()
         defer { lock.unlock() }
-        guard active else {
+        guard armed else {
             return nil
         }
         guard frames.count < capacity else {
             overflow += 1
             return nil
         }
-        let ticket = Ticket(generation: generation, index: frames.count)
-        frames.append(Frame(layer: layer, acquire_begin_ns: now()))
+        let ticket = Ticket(generation: generation, index: nextIndex)
+        nextIndex &+= 1
+        frames[ticket.index] = Frame(layer: layer, acquire_begin_ns: now())
         return ticket
     }
     func acquired(_ ticket: Ticket, drawableID: UInt64?) {
         lock.lock()
         defer { lock.unlock() }
-        guard ticket.generation == generation, frames.indices.contains(ticket.index) else {
+        guard ticket.generation == generation, frames[ticket.index] != nil else {
             return
         }
-        frames[ticket.index].acquire_end_ns = now()
-        frames[ticket.index].drawable_id = drawableID
-        frames[ticket.index].drawable_unavailable = drawableID == nil
+        frames[ticket.index]!.acquire_end_ns = now()
+        frames[ticket.index]!.drawable_id = drawableID
+        frames[ticket.index]!.drawable_unavailable = drawableID == nil
+        if beginSample == nil && drawableID == nil {
+            frames.removeValue(forKey: ticket.index)
+        }
     }
     func presented(_ ticket: Ticket, time: Double) {
         lock.lock()
@@ -133,15 +151,19 @@ final class DisplayFrameCapture: @unchecked Sendable {
         // Callbacks may arrive after end or after another capture has begun.
         // Keep late callbacks for the same generation so export can distinguish
         // pending, skipped, and presentations outside the measured interval.
-        guard ticket.generation == generation, frames.indices.contains(ticket.index) else {
+        guard ticket.generation == generation, frames[ticket.index] != nil else {
             return
         }
-        guard frames[ticket.index].callback_ns == nil else {
+        guard frames[ticket.index]!.callback_ns == nil else {
             duplicateCallbacks += 1
             return
         }
-        frames[ticket.index].callback_ns = now()
-        frames[ticket.index].presented_time_seconds = time
+        if beginSample == nil {
+            frames.removeValue(forKey: ticket.index)
+            return
+        }
+        frames[ticket.index]!.callback_ns = now()
+        frames[ticket.index]!.presented_time_seconds = time
     }
     func snapshot() -> Snapshot? {
         lock.lock()
@@ -149,9 +171,9 @@ final class DisplayFrameCapture: @unchecked Sendable {
         guard let beginSample else {
             return nil
         }
-        return Snapshot(version: 1, capacity: capacity, begin: beginSample, end: endSample,
+        return Snapshot(version: 2, capacity: capacity, begin: beginSample, end: endSample,
                         overflow: overflow, duplicate_callbacks: duplicateCallbacks,
-                        clock_errors: clockErrors, frames: frames)
+                        clock_errors: clockErrors, frames: frames.keys.sorted().compactMap { frames[$0] })
     }
     func write(to file: URL) throws {
         guard let value = snapshot() else {

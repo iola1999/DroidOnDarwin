@@ -4,7 +4,7 @@ import math
 
 def analyze_presentation(data, beginning, ending, distribution):
     errors = []
-    if data.get('version') != 1:
+    if data.get('version') not in (1, 2):
         return {'available': True, 'failures': ['unknown presentation schema']}
     for name in ('overflow', 'duplicate_callbacks', 'clock_errors'):
         if data.get(name) != 0:
@@ -26,7 +26,7 @@ def analyze_presentation(data, beginning, ending, distribution):
         errors.append('missing host capture window')
     rows = data.get('frames', [])
     counts = {'captured': len(rows), 'in_window': 0, 'pending_acquisition': 0, 'drawable_unavailable': 0,
-              'pending_callback': 0, 'zero_presented_time': 0, 'outside_presentation_window': 0, 'presented_in_window': 0}
+              'pending_callback': 0, 'zero_presented_time': 0, 'outside_presentation_window': 0, 'presented_in_window': 0, 'acquired_before_window_presented_inside': 0}
     seen = set()
     acquire, queue = [], []
     presented = {}
@@ -36,16 +36,18 @@ def analyze_presentation(data, beginning, ending, distribution):
             errors.append('invalid drawable acquisition start')
             continue
         inside = beginning is not None and ending is not None and beginning <= start <= ending
-        if not inside:
+        if inside:
+            counts['in_window'] += 1
+        elif data['version'] == 1 or beginning is None or ending is None or start > ending:
             continue
-        counts['in_window'] += 1
         if end is None:
             counts['pending_acquisition'] += 1
             continue
         if not isinstance(end, int) or end < start:
             errors.append('invalid drawable acquisition end')
             continue
-        acquire.append((end - start) / 1e6)
+        if inside:
+            acquire.append((end - start) / 1e6)
         if frame.get('drawable_unavailable'):
             counts['drawable_unavailable'] += 1
             continue
@@ -74,6 +76,8 @@ def analyze_presentation(data, beginning, ending, distribution):
             counts['outside_presentation_window'] += 1
             continue
         counts['presented_in_window'] += 1
+        if not inside:
+            counts['acquired_before_window_presented_inside'] += 1
         presented.setdefault(identity[0], []).append(host)
         queue.append(max(0, host - end) / 1e6)
     intervals = []
@@ -91,4 +95,5 @@ def analyze_presentation(data, beginning, ending, distribution):
             'alignment_offset_ns': offset, 'alignment_uncertainty_ns': uncertainty,
             'acquire_wait_ms': distribution(acquire), 'drawable_to_present_ms': distribution(queue),
             'unique_presentation_interval_ms': distribution(intervals), 'layers': layers,
-            'scope': 'host drawable display; boundary gaps may include idle time; repeated content and Android frame identity unmeasured; pending and zero timestamps excluded'}
+            'scope': 'host drawable display; boundary gaps may include idle time; repeated content and Android frame identity unmeasured; pending and zero timestamps excluded'
+                     + ('; pre-window acquisitions not captured' if data['version'] == 1 else '; includes pre-window acquisitions still pending when capture began')}

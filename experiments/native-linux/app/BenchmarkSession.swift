@@ -129,6 +129,9 @@ final class BenchmarkSession {
                 }
             }
         #endif
+        if request.actions.contains(where: { $0.kind == "profile" && ($0.key == "frames-start" || $0.key == "trace-start") }) {
+            try DisplayFrameCapture.shared.arm()
+        }
         session.start(target, configuration: request.configuration)
         if request.memorySampling != false {
             memoryTask = Task { [weak self] in
@@ -300,7 +303,7 @@ final class BenchmarkSession {
             value["visibility_tracking"] = "Android window AppKit notifications and action boundaries"
         #endif
         if displayCaptureStarted {
-            value["presentation_capture"] = "metal_drawable_presented_time_v1"
+            value["presentation_capture"] = "metal_drawable_presented_time_v2"
         }
         if let failure {
             value["error"] = failure
@@ -354,10 +357,10 @@ final class BenchmarkSession {
     }
 
     private func finishDisplayCapture() throws {
+        DisplayFrameCapture.shared.end()
         guard displayCaptureStarted else {
             return
         }
-        DisplayFrameCapture.shared.end()
         try DisplayFrameCapture.shared.write(to: directory.appendingPathComponent("interaction/presentation.json"))
     }
 

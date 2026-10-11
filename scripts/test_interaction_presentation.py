@@ -49,6 +49,21 @@ class PresentationChecks(unittest.TestCase):
             data['frames'][1].update(change)
             self.assertTrue(self.analyze(data)['failures'], change)
 
+    def test_preacquired_drawable_is_included_only_with_new_schema(self):
+        self.data['frames'].insert(0, frame(1.05, 3, 10.15, 1.25))
+        old = self.analyze()
+        self.assertEqual(old['counts']['presented_in_window'], 2)
+        self.data['version'] = 2
+        current = self.analyze()
+        self.assertEqual(current['failures'], [])
+        self.assertEqual(current['counts']['in_window'], 2)
+        self.assertEqual(current['counts']['presented_in_window'], 3)
+        self.assertEqual(current['counts']['acquired_before_window_presented_inside'], 1)
+        self.assertAlmostEqual(current['layers'][0]['first_present_offset_ms'], 50)
+        # A pre-window display with a late callback stays outside the interval.
+        self.data['frames'].append(frame(1.01, 4, 10.05, 1.8))
+        self.assertEqual(self.analyze()['counts']['outside_presentation_window'], 1)
+
     def test_capture_errors_are_reported(self):
         for name in ('overflow', 'duplicate_callbacks', 'clock_errors'):
             data = deepcopy(self.data)
