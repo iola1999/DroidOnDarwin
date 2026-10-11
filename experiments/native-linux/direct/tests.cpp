@@ -401,4 +401,5 @@ void direct_tests()
     auto cache = nce_direct_stats(probe.direct);
     CHECK(cache.flushes > 0 && cache.code_bytes <= cache.code_capacity);
     report("bounded_cache_reuse_and_code_replacement");
+    direct_page_table_tests();
 }

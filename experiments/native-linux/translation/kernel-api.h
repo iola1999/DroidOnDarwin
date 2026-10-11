@@ -12,6 +12,8 @@ struct nce_translation_state {
     /* Pending virtual range belongs to the active mm; a switch covers all VA. */
     unsigned long tlb_start, tlb_end;
     unsigned long mm_switches, inactive_mapping_changes;
+    /* Current mm's PGD, valid while the sole Linux CPU executes userspace. */
+    unsigned long pgd;
     /* One bit per 16 KiB RAM page. The host consumes bits before execution. */
     unsigned long code_pages[NCE_TRANSLATION_CODE_WORDS];
 };

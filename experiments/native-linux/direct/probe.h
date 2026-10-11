@@ -40,7 +40,7 @@ struct Probe {
     ~Probe();
     NceDirectMemory memory()
     {
-        return {this, Map, Code, epoch, 12};
+        return {this, Map, Code, epoch, 12, nullptr, false};
     }
     static void *Map(void *, uint64_t, bool);
     static const void *Code(void *, uint64_t);
@@ -51,4 +51,5 @@ struct Probe {
     void compare(NceDirectState, size_t instructions);
 };
 void direct_tests();
+void direct_page_table_tests();
 void direct_benchmark(const char *engine);

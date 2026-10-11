@@ -14,6 +14,7 @@ def apply(source: Path, experiment: Path):
         text = text.replace(before, after)
 
     edit('static unsigned long mapping_mode;', '''#include <asm/nce-translation.h>
+#include <asm/nce-direct-page-table.h>
 static struct nce_translation_state *translation;
 static unsigned long mapping_mode;''')
     edit('    installed = views;\n    desired = views + NCE_USER_SIZE / PAGE_SIZE;', '''    BUG_ON(mode != NCE_MM_TRANSLATED);
@@ -108,6 +109,30 @@ unsigned long nce_translate_user(unsigned long address, unsigned long permission
     struct vm_area_struct *vma;
     unsigned long addr;
     VMA_ITERATOR(iter, mm, start);''')
+    edit('''void nce_prepare_user(void)
+{
+    struct mm_struct *mm = current->mm;''', '''void nce_prepare_user(void)
+{
+    struct mm_struct *mm = current->mm;
+    BUILD_BUG_ON(PAGE_SHIFT != DIRECT_PTE_PAGE_SHIFT || PMD_SHIFT != DIRECT_PTE_PMD_SHIFT || PGDIR_SHIFT != DIRECT_PTE_PGD_SHIFT);
+    BUILD_BUG_ON(PTRS_PER_PGD != (1 << DIRECT_PTE_INDEX_BITS) || PTRS_PER_PMD != PTRS_PER_PGD || PTRS_PER_PTE != PTRS_PER_PGD);
+    BUILD_BUG_ON(_PAGE_PRESENT != DIRECT_PTE_PRESENT || _PAGE_PROTNONE != DIRECT_PTE_PROTNONE || _PAGE_RW != DIRECT_PTE_WRITE);
+    BUILD_BUG_ON(_PAGE_USER != DIRECT_PTE_USER || _PAGE_ACCESSED != DIRECT_PTE_YOUNG || _PAGE_DIRTY != DIRECT_PTE_DIRTY);
+    BUILD_BUG_ON(sizeof(pgd_t) != 8 || sizeof(pmd_t) != 8 || sizeof(pte_t) != 8);''')
+    edit('''    if (!mm || mm == active_mm)
+        return;
+    mmap_read_lock(mm);
+    prepare_mm_locked(mm);
+    mmap_read_unlock(mm);
+}''', '''    if (mm && mm != active_mm) {
+        mmap_read_lock(mm);
+        prepare_mm_locked(mm);
+        mmap_read_unlock(mm);
+    }
+    /* mmap_lock may schedule another task that publishes its own root. */
+    if (mapping_mode == NCE_MM_TRANSLATED)
+        translation->pgd = mm ? (unsigned long)mm->pgd : 0;
+}''')
     edit('    active_mm = next;\n    nce_flush_range(next, USER_BASE, TASK_SIZE);', '''    active_mm = next;
     if (mapping_mode == NCE_MM_TRANSLATED)
         ++translation->mm_switches;
@@ -126,5 +151,9 @@ unsigned long nce_translate_user(unsigned long address, unsigned long permission
         path.write_text(text)
     header = source / 'arch/lkl/include/asm/nce-translation.h'
     content = (experiment / 'translation/kernel-api.h').read_bytes()
+    if not header.exists() or header.read_bytes() != content:
+        header.write_bytes(content)
+    header = source / 'arch/lkl/include/asm/nce-direct-page-table.h'
+    content = (experiment / 'direct/page-table-layout.h').read_bytes()
     if not header.exists() or header.read_bytes() != content:
         header.write_bytes(content)

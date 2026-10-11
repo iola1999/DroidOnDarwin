@@ -22,6 +22,7 @@ struct NceDirect {
     std::vector<CodeRoute> routes;
     std::unordered_set<const void *> active_code;
     std::unordered_multimap<uintptr_t, unsigned> write_aliases;
+    std::vector<uint64_t> code_page_runs;
     uint64_t run_id = 0;
     NceDirectMemory previous{};
     std::atomic<uint32_t> stop_request{0};
@@ -87,7 +88,13 @@ struct NceDirect {
         if (!bytes || (uintptr_t(bytes) & 4095))
             return nullptr;
         // A newly executable alias must not retain a previously writable mapping.
-        if (active_code.insert(bytes).second) {
+        if (memory.page_table && !memory.refill_reads) {
+            const auto &table = *memory.page_table;
+            uintptr_t offset = uintptr_t(bytes) - uintptr_t(table.ram);
+            if (offset >= table.ram_size)
+                return nullptr;
+            code_page_runs[offset >> 14] = run_id;
+        } else if (active_code.insert(bytes).second) {
             unsigned page_bits = memory.page_bits ? memory.page_bits : 12;
             uintptr_t physical_page = uintptr_t(bytes) & ~((uintptr_t(1) << page_bits) - 1);
             if (config.selective_writes) {
@@ -138,17 +145,37 @@ struct NceDirect {
             return NCE_DIRECT_ERROR;
         if (memory.page_bits && memory.page_bits != 12 && memory.page_bits != 14)
             return NCE_DIRECT_ERROR;
+        if (memory.refill_reads && !memory.page_table)
+            return NCE_DIRECT_ERROR;
+        if (memory.page_table) {
+            const auto &table = *memory.page_table;
+            if (memory.page_bits != 14 || !table.root || (uintptr_t(table.root) & 16383) ||
+                !table.ram || (uintptr_t(table.ram) & 16383) || (table.physical_base & 16383) ||
+                !table.ram_size || (table.ram_size & 16383) || table.ram_size > (UINT64_C(1) << 32) ||
+                !table.user_size || table.user_size > UINT64_MAX - table.user_base ||
+                table.user_base >= (UINT64_C(1) << 47) || table.user_size > (UINT64_C(1) << 47) - table.user_base ||
+                (table.user_base & 16383) || (table.user_size & 16383) ||
+                table.ram_size > UINT64_MAX - table.physical_base || table.ram_size > UINTPTR_MAX - uintptr_t(table.ram))
+                return NCE_DIRECT_ERROR;
+            if (!memory.refill_reads)
+                code_page_runs.resize(table.ram_size >> 14);
+        }
         unsigned page_bits = memory.page_bits ? memory.page_bits : 12;
         uint64_t page_mask = (UINT64_C(1) << page_bits) - 1;
         if ((state.pc & 3) || (state.fpcr & ~DIRECT_FPCR_MASK))
             return NCE_DIRECT_UNSUPPORTED;
         if (++run_id == 0) {
             clear();
+            std::fill(code_page_runs.begin(), code_page_runs.end(), 0);
             run_id = 1;
         }
         uint32_t flags = state.access_flags & NCE_DIRECT_UNALIGNED;
         if (page_bits == 14)
             flags |= CompileData16K;
+        if (memory.page_table)
+            flags |= CompilePageTable;
+        if (memory.refill_reads)
+            flags |= CompilePteReadRefill;
         uint32_t allowed = supported & state.access_flags;
         flags |= allowed & (NCE_DIRECT_LSE | NCE_DIRECT_CRC);
         if (supported & NCE_DIRECT_LSE)
@@ -180,6 +207,14 @@ struct NceDirect {
         frame.branch_stub = nce_direct_branch_stub;
         frame.stop_request = &stop_request;
         frame.route_mask = config.route_entries - 1;
+        if (memory.page_table) {
+            frame.page_table = *memory.page_table;
+            frame.code_page_runs = code_page_runs.data();
+            frame.run_id = run_id;
+            frame.read_pte_stub = nce_direct_read_pte;
+            frame.write_pte_stub = nce_direct_write_pte;
+            frame.pte_refill_mask = memory.refill_reads ? config.mapping_entries - 1 : 0;
+        }
         NceDirectExit result = NCE_DIRECT_ERROR;
         Page *page = resolve(state.pc, flags, memory);
         void *entry = page ? page->branch_entries[(state.pc & 4095) / 4] : nullptr;
@@ -213,6 +248,11 @@ struct NceDirect {
                 ++stats.write_mapping_misses;
             else
                 ++stats.read_mapping_misses;
+            if (memory.page_table && !memory.refill_reads) {
+                fault = frame.address;
+                result = write ? NCE_DIRECT_WRITE_FAULT : NCE_DIRECT_READ_FAULT;
+                break;
+            }
             uint64_t address = frame.address & ~page_mask;
             void *mapped = memory.map_page(memory.opaque, address, write);
             bool code_alias = false;
@@ -253,6 +293,7 @@ struct NceDirect {
             fault = frame.state.pc;
             result = NCE_DIRECT_FETCH_FAULT;
         }
+        stats.pte_read_refills += frame.pte_read_refills;
         state = frame.state;
         return result;
     }

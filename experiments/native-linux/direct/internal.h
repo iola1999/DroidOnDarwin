@@ -10,6 +10,8 @@ constexpr uint32_t CompileExclusive = 512;
 constexpr uint32_t CompileAes = 16384, CompileSha1 = 32768, CompileSha256 = 65536;
 constexpr uint32_t CompilePauthNop = 131072;
 constexpr uint32_t CompileData16K = 262144, CompileZva64 = 524288;
+constexpr uint32_t CompilePageTable = 1048576;
+constexpr uint32_t CompilePteReadRefill = 2097152;
 enum Stop : uint64_t { Budget = 0,
                        Fallback = 1,
                        ReadPage = 2,
@@ -32,6 +34,13 @@ struct Frame {
     void (*exit_stub)(), (*branch_stub)();
     const void *stop_request;
     uint64_t route_mask;
+    NceDirectPageTable page_table;
+    uint64_t *code_page_runs;
+    uint64_t run_id;
+    void (*read_pte_stub)(), (*write_pte_stub)();
+    uint64_t pte_saved_nzcv, pte_saved_link, pte_required;
+    uint64_t pte_read_refills;
+    uint64_t pte_refill_mask;
 };
 struct Mapping {
     uint64_t read_tag, read_addend, write_tag, write_addend;
@@ -66,9 +75,26 @@ CHECK_OFFSET(exit_stub, DIRECT_EXIT_STUB);
 CHECK_OFFSET(branch_stub, DIRECT_BRANCH_STUB);
 CHECK_OFFSET(stop_request, DIRECT_STOP_REQUEST);
 CHECK_OFFSET(route_mask, DIRECT_ROUTE_MASK);
+CHECK_OFFSET(page_table.root, DIRECT_PTE_ROOT);
+CHECK_OFFSET(page_table.user_base, DIRECT_PTE_USER_BASE);
+CHECK_OFFSET(page_table.user_size, DIRECT_PTE_USER_SIZE);
+CHECK_OFFSET(page_table.physical_base, DIRECT_PTE_PHYSICAL_BASE);
+CHECK_OFFSET(page_table.ram, DIRECT_PTE_RAM);
+CHECK_OFFSET(page_table.ram_size, DIRECT_PTE_RAM_SIZE);
+CHECK_OFFSET(code_page_runs, DIRECT_PTE_CODE_RUNS);
+CHECK_OFFSET(run_id, DIRECT_RUN_ID);
+CHECK_OFFSET(read_pte_stub, DIRECT_PTE_READ_STUB);
+CHECK_OFFSET(write_pte_stub, DIRECT_PTE_WRITE_STUB);
+CHECK_OFFSET(pte_saved_nzcv, DIRECT_PTE_SAVED_NZCV);
+CHECK_OFFSET(pte_saved_link, DIRECT_PTE_SAVED_LINK);
+CHECK_OFFSET(pte_required, DIRECT_PTE_REQUIRED);
+CHECK_OFFSET(pte_read_refills, DIRECT_PTE_READ_REFILLS);
+CHECK_OFFSET(pte_refill_mask, DIRECT_PTE_REFILL_MASK);
 #undef CHECK_OFFSET
 extern "C" void nce_direct_enter(Frame *, void *, Mapping *);
 extern "C" void nce_direct_leave();
 extern "C" void nce_direct_exit_stub();
 extern "C" void nce_direct_branch_stub();
+extern "C" void nce_direct_read_pte();
+extern "C" void nce_direct_write_pte();
 }  // namespace nce_direct

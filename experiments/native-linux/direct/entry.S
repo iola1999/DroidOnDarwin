@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 #include "layout.h"
+#include "page-table-layout.h"
 .text
 .p2align 2
 .globl _nce_direct_enter
@@ -155,3 +156,84 @@ Lbranch_miss:
     mov x17, #5 // CodeBranch
     str x17, [x27, #DIRECT_REASON]
     b _nce_direct_leave
+
+// Private ABI: preserve guest registers, NZCV and x16 (guest address).
+// x17 returns the host address or zero; x26/x30 are scratch. No C call or
+// host stack access occurs while the guest register set remains resident.
+.p2align 2
+.globl _nce_direct_read_pte
+_nce_direct_read_pte:
+    mov x17, #DIRECT_PTE_READ_REQUIRED
+    b Lpte_walk
+.globl _nce_direct_write_pte
+_nce_direct_write_pte:
+    mov x17, #DIRECT_PTE_WRITE_REQUIRED
+Lpte_walk:
+    str x17, [x27, #DIRECT_PTE_REQUIRED]
+    str x30, [x27, #DIRECT_PTE_SAVED_LINK]
+    mrs x17, nzcv
+    str x17, [x27, #DIRECT_PTE_SAVED_NZCV]
+    ldr x17, [x27, #DIRECT_PTE_USER_BASE]
+    sub x26, x16, x17
+    ldr x17, [x27, #DIRECT_PTE_USER_SIZE]
+    cmp x26, x17
+    b.hs Lpte_miss
+    ldr x17, [x27, #DIRECT_PTE_ROOT]
+    ubfx x26, x16, #DIRECT_PTE_PGD_SHIFT, #DIRECT_PTE_INDEX_BITS
+    ldr x17, [x17, x26, lsl #3]
+    and x17, x17, #0xffffffffffffc000
+    cbz x17, Lpte_miss
+    ubfx x26, x16, #DIRECT_PTE_PMD_SHIFT, #DIRECT_PTE_INDEX_BITS
+    ldr x17, [x17, x26, lsl #3]
+    and x17, x17, #0xffffffffffffc000
+    cbz x17, Lpte_miss
+    ubfx x26, x16, #DIRECT_PTE_PAGE_SHIFT, #DIRECT_PTE_INDEX_BITS
+    ldr x17, [x17, x26, lsl #3]
+    tbnz x17, #4, Lpte_miss
+    ldr x26, [x27, #DIRECT_PTE_REQUIRED]
+    and x30, x17, x26
+    cmp x30, x26
+    b.ne Lpte_miss
+    and x17, x17, #0xffffffffffffc000
+    ldr x26, [x27, #DIRECT_PTE_PHYSICAL_BASE]
+    sub x17, x17, x26
+    ldr x26, [x27, #DIRECT_PTE_RAM_SIZE]
+    cmp x17, x26
+    b.hs Lpte_miss
+    ldr x26, [x27, #DIRECT_PTE_REQUIRED]
+    tbz x26, #5, Lpte_address
+    lsr x26, x17, #DIRECT_PTE_PAGE_SHIFT
+    ldr x30, [x27, #DIRECT_PTE_CODE_RUNS]
+    ldr x26, [x30, x26, lsl #3]
+    ldr x30, [x27, #DIRECT_RUN_ID]
+    cmp x26, x30
+    b.eq Lpte_miss
+Lpte_address:
+    ldr x26, [x27, #DIRECT_PTE_RAM]
+    add x17, x17, x26
+    and x26, x16, #16383
+    add x17, x17, x26
+    b Lpte_return
+Lpte_miss:
+    mov x17, #0
+Lpte_return:
+    cbz x17, Lpte_restore
+    ldr x26, [x27, #DIRECT_PTE_REFILL_MASK]
+    cbz x26, Lpte_restore
+    // Refill read fields only; the host owns write aliases and their index.
+    lsr x30, x16, #DIRECT_PTE_PAGE_SHIFT
+    eor x30, x30, x30, lsr #8
+    and x26, x26, x30
+    add x26, x28, x26, lsl #5
+    lsr x30, x16, #DIRECT_PTE_PAGE_SHIFT
+    str x30, [x26]
+    sub x30, x17, x16
+    str x30, [x26, #8]
+    ldr x26, [x27, #DIRECT_PTE_READ_REFILLS]
+    add x26, x26, #1
+    str x26, [x27, #DIRECT_PTE_READ_REFILLS]
+Lpte_restore:
+    ldr x26, [x27, #DIRECT_PTE_SAVED_NZCV]
+    msr nzcv, x26
+    ldr x30, [x27, #DIRECT_PTE_SAVED_LINK]
+    ret

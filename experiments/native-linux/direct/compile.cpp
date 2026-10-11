@@ -168,6 +168,34 @@ size_t Page::compile(uint64_t new_page, const void *bytes, size_t entry,
         if (!resident(rd) && (rd != 31 || dest_sp))
             c.STR(XReg(d), X27, rd * 8);
     };
+    auto translate = [&](bool write, Label &miss) {
+        if ((flags & CompilePageTable) && !(flags & CompilePteReadRefill)) {
+            c.LDR(X26, X27, write ? DIRECT_PTE_WRITE_STUB : DIRECT_PTE_READ_STUB);
+            c.BLR(X26);
+            c.CBZ(X17, miss);
+            return;
+        }
+        c.LSR(X17, X16, page_bits);
+        c.EOR(X17, X17, X17, LSR, 8);
+        c.AND(X17, X17, mapping_mask);
+        c.ADD(X17, X28, X17, LSL, 5);
+        c.LDP(X26, X17, X17, write ? 16 : 0);
+        c.EOR(X26, X26, X16, LSR, page_bits);
+        if (!write && (flags & CompilePteReadRefill)) {
+            Label cached, done;
+            c.CBZ(X26, cached);
+            c.LDR(X26, X27, DIRECT_PTE_READ_STUB);
+            c.BLR(X26);
+            c.CBZ(X17, miss);
+            c.B(done);
+            c.l(cached);
+            c.ADD(X17, X16, X17);
+            c.l(done);
+        } else {
+            c.CBNZ(X26, miss);
+            c.ADD(X17, X16, X17);
+        }
+    };
     for (size_t i = first; i < limit; ++i) {
         if (emit[i]) {
             uint64_t pc = new_page + i * 4;
@@ -222,14 +250,7 @@ size_t Page::compile(uint64_t new_page, const void *bytes, size_t entry,
                 Label miss, done;
                 load(rd, X16);
                 c.AND(X16, X16, ~UINT64_C(63));
-                c.LSR(X17, X16, page_bits);
-                c.EOR(X17, X17, X17, LSR, 8);
-                c.AND(X17, X17, mapping_mask);
-                c.ADD(X17, X28, X17, LSL, 5);
-                c.LDP(X26, X17, X17, 16);
-                c.EOR(X26, X26, X16, LSR, page_bits);
-                c.CBNZ(X26, miss);
-                c.ADD(X17, X16, X17);
+                translate(true, miss);
                 for (unsigned offset = 0; offset < 64; offset += 16)
                     c.STP(XZR, XZR, X17, offset);
                 c.B(done);
@@ -346,14 +367,7 @@ size_t Page::compile(uint64_t new_page, const void *bytes, size_t entry,
                     c.CBNZ(X17, invalid);
                 }
                 // A software reservation survives mapping callbacks and slice exits.
-                c.LSR(X17, X16, page_bits);
-                c.EOR(X17, X17, X17, LSR, 8);
-                c.AND(X17, X17, mapping_mask);
-                c.ADD(X17, X28, X17, LSL, 5);
-                c.LDP(X26, X17, X17, write ? 16 : 0);
-                c.EOR(X26, X26, X16, LSR, page_bits);
-                c.CBNZ(X26, miss);
-                c.ADD(X17, X16, X17);
+                translate(write, miss);
                 if (write) {
                     c.LDR(X26, X27, DIRECT_EXCLUSIVE_VALUE);
                     load(rd, X30);
@@ -438,14 +452,7 @@ size_t Page::compile(uint64_t new_page, const void *bytes, size_t entry,
                     c.LSR(X17, X17, page_bits);
                     c.CBNZ(X17, invalid);
                 }
-                c.LSR(X17, X16, page_bits);
-                c.EOR(X17, X17, X17, LSR, 8);
-                c.AND(X17, X17, mapping_mask);
-                c.ADD(X17, X28, X17, LSL, 5);
-                c.LDP(X26, X17, X17, write ? 16 : 0);
-                c.EOR(X26, X26, X16, LSR, page_bits);
-                c.CBNZ(X26, miss);
-                c.ADD(X17, X16, X17);
+                translate(write, miss);
                 unsigned data = vector || resident(rd) || rd == 31 ? rd : 26;
                 if (structure) {
                     // Validate the complete list before issuing the host access.

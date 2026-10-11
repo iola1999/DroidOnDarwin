@@ -27,6 +27,17 @@ typedef struct {
 } NceDirectState;
 
 typedef struct {
+    /* LKL 16 KiB page tables; directory entries contain host pointers.
+     * Leaf physical addresses in [physical_base, physical_base + ram_size)
+     * correspond to the contiguous host RAM range starting at ram.
+     * The sole Linux CPU keeps all tables and RAM alive throughout a run. */
+    const uint64_t *root;
+    uint64_t user_base, user_size, physical_base;
+    void *ram;
+    uint64_t ram_size;
+} NceDirectPageTable;
+
+typedef struct {
     void *opaque;
     /* Validate a complete data page and return its aligned RAM pointer.
      * Mappings and code bytes remain valid until run returns. Callbacks may
@@ -39,6 +50,12 @@ typedef struct {
     /* Data page size is 1 << page_bits, with 0 selecting 12. Supports 12/14.
      * Code callbacks always validate 4 KiB. */
     unsigned page_bits;
+    /* Optional direct table walk. Requires 16 KiB data pages and aligned RAM.
+     * map_code must return pointers into this RAM range. */
+    const NceDirectPageTable *page_table;
+    /* With page_table, use the table walker only to refill read-cache misses.
+     * Writes keep map_page and the writable-code-alias checks. */
+    bool refill_reads;
 } NceDirectMemory;
 
 typedef enum {
@@ -53,6 +70,7 @@ typedef struct {
     uint64_t compiles, flushes, code_changes, mapping_misses, code_lookups;
     uint64_t read_mapping_misses, write_mapping_misses, write_invalidations;
     uint64_t code_validation_hits;
+    uint64_t pte_read_refills;
     size_t code_bytes, code_capacity, pages;
 } NceDirectStats;
 

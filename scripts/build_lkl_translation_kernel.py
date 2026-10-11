@@ -75,7 +75,7 @@ def build():
     probe_lkl.package_elf(OUT / 'lkl.so')
     files = [Path(__file__), Path(lkl_translation_patch.__file__), Path(probe_lkl.__file__),
              ROOT / 'scripts/lkl_nce_patch.py', EXP / 'lkl-nce-mmu.c', EXP / 'translation/kernel-api.h',
-             EXP / 'lkl-bridge.c', config, build_dir / '.config',
+             EXP / 'lkl-bridge.c', EXP / 'direct/page-table-layout.h', config, build_dir / '.config',
              source / 'arch/lkl/mm/nce_mmu.c', *[OUT / name for name in ('lkl.so', 'lkl-image.bin', 'lkl-image.h', 'lkl-host-ops.h')]]
     manifest = {'status': 'built; functional validation belongs to probe_lkl_translation.py',
                 'build_identity': {key: env[key] for key in env if key.startswith('KBUILD_BUILD_')},

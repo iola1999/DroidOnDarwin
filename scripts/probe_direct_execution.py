@@ -39,7 +39,7 @@ def build_engine(out):
         subprocess.run([*command, '-O2', '-g', '-Wall', '-Wextra', '-Werror', '-I', str(headers / 'include'),
                         '-c', str(path), '-o', str(obj)], check=True, timeout=120)
         objects.append(obj)
-    return objects, inputs + [SOURCE / name for name in ('decode.h', 'direct.h', 'internal.h', 'layout.h')] + sorted((headers / 'include').rglob('*.hpp')) + [Path(__file__), archive]
+    return objects, inputs + [SOURCE / name for name in ('decode.h', 'direct.h', 'internal.h', 'layout.h', 'page-table-layout.h')] + sorted((headers / 'include').rglob('*.hpp')) + [Path(__file__), archive]
 
 
 def build(out):
@@ -49,7 +49,7 @@ def build(out):
         from build_translation_engine import build as build_unicorn
         unicorn = Path(build_unicorn()['path'])
     out.mkdir(parents=True, exist_ok=True)
-    files = [SOURCE / name for name in ('probe.cpp', 'tests.cpp', 'benchmark.cpp', 'main.cpp')] + [
+    files = [SOURCE / name for name in ('probe.cpp', 'tests.cpp', 'page-table-tests.cpp', 'benchmark.cpp', 'main.cpp')] + [
         ROOT / 'experiments/native-linux/translation/kernels.S',
         ROOT / 'experiments/native-linux/translation/linux-memory.c']
     for index, path in enumerate(files):
@@ -86,7 +86,10 @@ def validate(rows, mode, interval, config=None):
             'exclusive_load_store_all_widths', 'asynchronous_stop_at_block_and_indirect_boundary',
             '16k_data_page_internal_and_external_boundaries', 'bounded_cache_reuse_and_code_replacement',
             'dczid_zero_block_alignment_permission_and_prefetch', 'cached_write_alias_becomes_executable',
-            'route_collision_reuse_and_next_run_fetch_permission'}
+            'route_collision_reuse_and_next_run_fetch_permission', 'direct_pte_registers_flags_and_post_index',
+            'direct_pte_read_permissions_directories_and_bounds', 'direct_pte_write_permissions_remap_and_retry',
+            'direct_pte_code_alias_and_next_run_release'}
+        expected |= {name + '_refill' for name in expected if name.startswith('direct_pte_')}
         if not expected <= {r.get('test') for r in rows if r.get('passed')}:
             return False
     else:
