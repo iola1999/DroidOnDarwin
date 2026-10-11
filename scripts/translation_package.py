@@ -23,6 +23,9 @@ def prepare(report_path, out, target):
         raise ValueError('翻译应用需要双映射 Direct 完整桌面验证')
     if config.get('online_cpus', config['cpus']) != config['cpus']:
         raise ValueError('翻译应用默认启用全部 CPU，需要对应的完整桌面验证')
+    expected_uaccess = 'code' if config['cpus'] == 2 else 'all'
+    if config.get('uaccess_stop') != expected_uaccess:
+        raise ValueError('完整桌面验证的用户复制暂停策略与 App 不一致：需要 ' + expected_uaccess)
     required = {'android_system_boot_completed', 'android_application_data_persistence', 'android_keystore_persistence',
                 'android_system_process_groups_stopped', 'linux_data_readonly_shutdown', 'android_clock_controls_ready',
                 'translation_prepared_code_execution', 'translated_context_cleanup', 'android_home_navigation'}
