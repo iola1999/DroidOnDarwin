@@ -15,12 +15,20 @@ def apply(source: Path, experiment: Path):
 
     edit('static unsigned long mapping_mode;', '''#include <asm/nce-translation.h>
 #include <asm/nce-direct-page-table.h>
+#include <linux/smp.h>
 static struct nce_translation_state *translation;
+static LIST_HEAD(translation_mms);
+static struct nce_translation_cpu *cpu_translation(void)
+{
+    return &translation->cpus[raw_smp_processor_id()];
+}
 static unsigned long mapping_mode;''')
     edit('    installed = views;\n    desired = views + NCE_USER_SIZE / PAGE_SIZE;', '''    BUG_ON(mode != NCE_MM_TRANSLATED);
     translation = (void *)views;
+    BUG_ON(!translation->cpu_count || translation->cpu_count > NCE_TRANSLATION_MAX_CPUS);
     installed = desired = NULL;''')
     edit('    size_t bytes = NCE_USER_SIZE / PAGE_SIZE / 8;', '''    if (mapping_mode == NCE_MM_TRANSLATED) {
+        INIT_LIST_HEAD(&mm->context.translation_node);
         mm->context.accessed = NULL;
         mm->context.flat = NULL;
         mm->context.read_view = NULL;
@@ -40,10 +48,21 @@ static unsigned long mapping_mode;''')
                 return -ENOMEM;
             }
         }
+        list_add_tail(&mm->context.translation_node, &translation_mms);
         return 0;
     }
     size_t bytes = NCE_USER_SIZE / PAGE_SIZE / 8;''')
-    edit('    lkl_ops->mem_free(mm->context.accessed);', '''    if (mapping_mode == NCE_MM_TRANSLATED && mm->context.read_view) {
+    edit('    lkl_ops->mem_free(mm->context.accessed);', '''    if (mapping_mode == NCE_MM_TRANSLATED) {
+        list_del_init(&mm->context.translation_node);
+        for (unsigned int i = 0; i < translation->cpu_count; ++i) {
+            struct nce_translation_cpu *cpu = &translation->cpus[i];
+            if (cpu->pgd == (unsigned long)mm->pgd) {
+                cpu->pgd = cpu->flat = 0;
+                cpu->read_view = NULL;
+            }
+        }
+    }
+    if (mapping_mode == NCE_MM_TRANSLATED && mm->context.read_view) {
         translation->read_view_destroy(mm->context.read_view);
         mm->context.read_view = NULL;
     }
@@ -55,21 +74,24 @@ static unsigned long mapping_mode;''')
     lkl_ops->mem_free(mm->context.accessed);''')
     edit('/* One Linux CPU owns the host window.', '''static void changed_mapping(struct mm_struct *mm, unsigned long start, unsigned long end)
 {
-    ++translation->mappings;
-    if (mm != active_mm) {
-        ++translation->inactive_mapping_changes;
-        return;
-    }
     start = max(start & PAGE_MASK, USER_BASE);
     end = min(PAGE_ALIGN(end), TASK_SIZE);
     if (end <= start)
         return;
-    if (!translation->tlb_end) {
-        translation->tlb_start = start;
-        translation->tlb_end = end;
-    } else {
-        translation->tlb_start = min(translation->tlb_start, start);
-        translation->tlb_end = max(translation->tlb_end, end);
+    for (unsigned int i = 0; i < translation->cpu_count; ++i) {
+        struct nce_translation_cpu *cpu = &translation->cpus[i];
+        ++cpu->mappings;
+        if (cpu->pgd != (unsigned long)mm->pgd) {
+            ++cpu->inactive_mapping_changes;
+            continue;
+        }
+        if (!cpu->tlb_end) {
+            cpu->tlb_start = start;
+            cpu->tlb_end = end;
+        } else {
+            cpu->tlb_start = min(cpu->tlb_start, start);
+            cpu->tlb_end = max(cpu->tlb_end, end);
+        }
     }
 }
 
@@ -118,8 +140,14 @@ static void changed_code(pte_t pte, unsigned long pages)
     unsigned long index = ((pte_val(pte) & PAGE_MASK) - memory_start) >> PAGE_SHIFT;
     BUILD_BUG_ON(NCE_TRANSLATION_CODE_WORDS * 64 != NCE_RAM_SIZE / PAGE_SIZE);
     BUG_ON(index >= NCE_RAM_SIZE / PAGE_SIZE || pages > NCE_RAM_SIZE / PAGE_SIZE - index);
-    bitmap_set(translation->code_pages, index, pages);
-    ++translation->code;
+    if (translation->code_guard) {
+        for (unsigned long i = index; i < index + pages; ++i)
+            translation->code_guard[i] = 1;
+    }
+    for (unsigned int i = 0; i < translation->cpu_count; ++i) {
+        bitmap_set(translation->cpus[i].code_pages, index, pages);
+        ++translation->cpus[i].code;
+    }
 }
 
 /* The caller owns the sole Linux CPU. Fault handling and scheduling happen
@@ -196,25 +224,29 @@ unsigned long nce_translate_user(unsigned long address, unsigned long permission
     mmap_read_lock(mm);
     prepare_mm_locked(mm);
     mmap_read_unlock(mm);
-}''', '''    if (mm && mm != active_mm) {
-        mmap_read_lock(mm);
-        prepare_mm_locked(mm);
-        mmap_read_unlock(mm);
-    }
-    /* mmap_lock may schedule another task that publishes its own root. */
-    if (mapping_mode == NCE_MM_TRANSLATED) {
-        translation->pgd = mm ? (unsigned long)mm->pgd : 0;
-        translation->flat = mm ? (unsigned long)mm->context.flat : 0;
-        translation->read_view = mm ? mm->context.read_view : NULL;
-    }
-}''')
-    edit('    active_mm = next;\n    nce_flush_range(next, USER_BASE, TASK_SIZE);', '''    active_mm = next;
-    if (mapping_mode == NCE_MM_TRANSLATED) {
-        ++translation->mm_switches;
-        changed_mapping(next, USER_BASE, TASK_SIZE);
+}''', '''    if (mapping_mode == NCE_MM_TRANSLATED) {
+        struct nce_translation_cpu *cpu = cpu_translation();
+        unsigned long pgd = mm ? (unsigned long)mm->pgd : 0;
+        if (cpu->pgd != pgd) {
+            ++cpu->mm_switches;
+            ++cpu->mappings;
+            cpu->tlb_start = USER_BASE;
+            cpu->tlb_end = TASK_SIZE;
+        }
+        cpu->pgd = pgd;
+        cpu->flat = mm ? (unsigned long)mm->context.flat : 0;
+        cpu->read_view = mm ? mm->context.read_view : NULL;
         return;
     }
-    nce_flush_range(next, USER_BASE, TASK_SIZE);''')
+    if (!mm || mm == active_mm)
+        return;
+    mmap_read_lock(mm);
+    prepare_mm_locked(mm);
+    mmap_read_unlock(mm);
+}''')
+    edit('''    if (next == active_mm)
+        return;''', '''    if (mapping_mode == NCE_MM_TRANSLATED || next == active_mm)
+        return;''')
     edit('''    if (access & NCE_FAULT_TRY_PRESENT)
         return restore_present_data(address, access & 1);''', '''    if (access & NCE_FAULT_TRY_PRESENT)
         return mapping_mode == NCE_MM_TRANSLATED ? 0 : restore_present_data(address, access & 1);''')
@@ -224,6 +256,17 @@ unsigned long nce_translate_user(unsigned long address, unsigned long permission
          'if (mapping_mode != NCE_MM_TRANSLATED && execute && prior && (mapping_mode == NCE_MM_FULL || trapped_view == prior))')
     edit('if (!(result & VM_FAULT_ERROR) && mapping_mode >= NCE_MM_LAZY)',
          'if (!(result & VM_FAULT_ERROR) && mapping_mode >= NCE_MM_LAZY && mapping_mode != NCE_MM_TRANSLATED)')
+    text += '''
+
+void nce_translation_cleanup(void)
+{
+    /* Called after all Linux task threads have joined, before freeing RAM. */
+    while (!list_empty(&translation_mms)) {
+        struct mm_struct *mm = list_first_entry(&translation_mms, struct mm_struct, context.translation_node);
+        nce_destroy_mm(mm);
+    }
+}
+'''
     # Reapply from the tracked MMU source so previous overlay output is never input.
     if not path.exists() or path.read_text() != text:
         path.write_text(text)
@@ -231,13 +274,15 @@ unsigned long nce_translate_user(unsigned long address, unsigned long permission
     if threads.exists():
         content = threads.read_text()
         marker = '\tlkl_ops->sem_free(init_thread_union.thread_info.sched_sem);'
-        replacement = '''\t/* All task threads have stopped; halt bypasses the surviving mm teardown. */
+        legacy = '''\t/* All task threads have stopped; halt bypasses the surviving mm teardown. */
 \tfor_each_process_thread(p, t) {
 \t\tif (t->mm && t->mm->context.flat)
 \t\t\tnce_destroy_mm(t->mm);
 \t}
 
-''' + marker
+'''
+        content = content.replace(legacy, '')
+        replacement = '\textern void nce_translation_cleanup(void);\n\tnce_translation_cleanup();\n\n' + marker
         if replacement not in content:
             if content.count(marker) != 1:
                 raise RuntimeError('Translation thread cleanup mismatch')
@@ -254,6 +299,8 @@ unsigned long nce_translate_user(unsigned long address, unsigned long permission
             content = content.replace(marker, marker + addition)
         if '\n    void *read_view;' not in content:
             content = content.replace(addition, addition + '\n    void *read_view;')
+        if 'struct list_head translation_node;' not in content:
+            content = content.replace(marker, marker + '\n    struct list_head translation_node;')
         if context.read_text() != content:
             context.write_text(content)
     header = source / 'arch/lkl/include/asm/nce-translation.h'

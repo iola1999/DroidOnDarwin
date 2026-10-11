@@ -32,7 +32,7 @@ typedef struct {
     /* LKL 16 KiB page tables; directory entries contain host pointers.
      * Leaf physical addresses in [physical_base, physical_base + ram_size)
      * correspond to the contiguous host RAM range starting at ram.
-     * The sole Linux CPU keeps all tables and RAM alive throughout a run. */
+     * The caller keeps all tables and RAM alive throughout a run. */
     const uint64_t *root;
     uint64_t user_base, user_size, physical_base;
     void *ram;
@@ -61,7 +61,7 @@ typedef struct {
     /* Optional Linux-maintained table, one entry per 16 KiB page in the 4 GiB
      * user range. Requires page_table and excludes refill_reads. Nonzero
      * entries must be aligned pointers inside its RAM; only Linux updates them
-     * while the sole CPU is outside run. */
+     * while affected CPUs are outside run. */
     const struct nce_direct_flat_page *flat_pages;
     /* Optional physical code-page version. Zero requests content comparison.
      * A nonzero version must change after any write or backing replacement,
@@ -106,7 +106,8 @@ typedef struct {
     unsigned mapping_entries, route_entries;
     bool selective_writes;
     bool reuse_code_checks;
-    /* Ordinary RAM only, with serialized guest execution. */
+    /* Ordinary RAM only. The caller retains both mappings and excludes writes
+     * to executable backing while the instruction is completed. */
     bool cross_page;
     /* Validate route generations instead of clearing every entry on return. */
     bool route_epochs;
@@ -120,6 +121,8 @@ typedef struct {
      * If a host return interrupts a reservation, the next exclusive load in
      * that run returns UNSUPPORTED so a caller can execute its retry elsewhere. */
     bool native_exclusive;
+    /* TBL/TBX execute with the saved guest SIMD registers when enabled. */
+    bool vector_table;
 } NceDirectConfig;
 
 /* One sequential caller per engine. Code cache is 2..256 MiB, 16 KiB aligned.
@@ -127,8 +130,16 @@ typedef struct {
 NceDirect *nce_direct_create(NceDirectConfig);
 void nce_direct_destroy(NceDirect *);
 /* Request from another thread; consumed at the next block boundary. The owner
- * must exclude engine destruction. A new run clears earlier requests. */
+ * must exclude engine destruction. An unprepared run clears earlier requests. */
 void nce_direct_request_stop(NceDirect *);
+/* The owning thread calls this before registering guest execution with an
+ * external writer. The next run preserves stop requests received afterwards.
+ * Calls without preparation continue to clear old requests on entry. */
+void nce_direct_prepare_run(NceDirect *);
+/* Optional shared RAM code markers for concurrent executors using page_table
+ * without refill_reads. One 64-bit word per 16 KiB RAM page, value 0 or 1.
+ * The caller updates markers only while all affected runs are stopped. */
+void nce_direct_set_code_guard(NceDirect *, const uint64_t *pages, size_t count);
 /* Budget is a soft instruction limit, checked at block/indirect-branch entries.
  * Fault/unsupported returns preserve the complete state at the pending PC.
  * Cross-page ordinary RAM accesses can be enabled at creation. Otherwise they

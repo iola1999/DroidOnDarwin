@@ -26,7 +26,34 @@ def sha(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def validate(rows, memory_interval, mapping="window", workload="core", tlb_invalidation=None, execution=None, direct_config=None):
+def validate(rows, memory_interval, mapping="window", workload="core", tlb_invalidation=None, execution=None, direct_config=None, cpus=1, parallel_profile=None, uaccess_stop=None):
+    if parallel_profile is not None:
+        settings = [row for row in rows if row.get('config') == 'translation_parallel']
+        if len(settings) != 1 or settings[0] != {'config': 'translation_parallel', 'cpus': cpus,
+                                               'profile': parallel_profile, 'uaccess_stop': uaccess_stop}:
+            return False
+        profiles = [row for row in rows if row.get('parallel_execution_profile')]
+        if len(profiles) != int(parallel_profile):
+            return False
+        if profiles:
+            record = profiles[0]
+            keys = ('union_wall_ns', 'overlap_ns', 'thread_cpu_ns', 'cpu0_ns', 'cpu1_ns')
+            if record.get('cpus') != cpus or any(type(record.get(key)) != int or record[key] < 0 for key in keys):
+                return False
+            if (not record['union_wall_ns'] or not record['thread_cpu_ns'] or
+                    record['overlap_ns'] > record['union_wall_ns'] or
+                    record['thread_cpu_ns'] != record['cpu0_ns'] + record['cpu1_ns'] or
+                    (cpus == 1 and (record['overlap_ns'] or record['cpu1_ns']))):
+                return False
+    if cpus > 1:
+        selected = [row for row in rows if row.get('config') == 'translation_execution']
+        if len(selected) != cpus or {row.get('cpu') for row in selected} != set(range(cpus)):
+            return False
+        if workload == 'core' and not {'translated_smp_private_mm_compute', 'translated_smp_code_alias_updates', 'translated_smp_copy_unmap_protect'} <= {row.get('test') for row in rows if row.get('passed')}:
+            return False
+        return all(validate([row for row in rows if row.get('cpu', cpu) == cpu], memory_interval,
+                            mapping, workload, tlb_invalidation, execution, direct_config)
+                   for cpu in range(cpus))
     expected = {'linux_dynamic_code', 'linux_signal_suite', 'linux_signal_register_restore',
                 'linux_signal_eintr_restart', 'linux_signal_timer_preemption', 'linux_mm_exchange_integrity',
                 'translated_pthread_tls_mutex', 'translated_signals_protection_restore',
@@ -215,6 +242,9 @@ def validate(rows, memory_interval, mapping="window", workload="core", tlb_inval
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--parallel-profile', type=int, choices=(0, 1), default=0)
+    parser.add_argument('--cpus', type=int, choices=(1, 2), default=1)
+    parser.add_argument('--smp-uaccess-stop', choices=('all', 'code'), default='all')
     parser.add_argument('--execution', choices=('unicorn', 'direct'), default='unicorn')
     parser.add_argument('--direct-mapping-entries', type=int, choices=(256, 1024, 4096, 16384, 65536), default=256)
     parser.add_argument('--direct-route-entries', type=int, choices=(256, 1024, 4096, 16384, 65536), default=256)
@@ -223,6 +253,7 @@ def main():
     parser.add_argument('--direct-code-watch', type=int, choices=(0, 1), default=0)
     parser.add_argument('--direct-cross-page', type=int, choices=(0, 1), default=0)
     parser.add_argument('--direct-memory-groups', type=int, choices=(0, 1), default=0)
+    parser.add_argument('--direct-vector-table', type=int, choices=(0, 1), default=0)
     parser.add_argument('--direct-native-exclusive', type=int, choices=(0, 1), default=0)
     parser.add_argument('--direct-retain-routes', type=int, choices=(0, 1), default=0)
     parser.add_argument('--direct-route-epochs', type=int, choices=(0, 1), default=0)
@@ -246,6 +277,13 @@ def main():
     parser.add_argument('--output', type=Path, default=DEFAULT_OUT)
     parser.add_argument('--memory-interval-ms', type=int, default=100)
     args = parser.parse_args()
+    if args.cpus == 2 and (args.mapping != 'pte' or args.execution != 'direct' or
+                           args.direct_memory != 'flat' or not args.direct_native_exclusive or
+                           args.direct_code_watch or args.direct_retain_routes or
+                           args.exec_cache != 'pages' or args.preemption != 'timer'):
+        parser.error('双核原型需要 direct/pte/flat、原生独占、pages exec-cache 和 timer；代码写入跟踪及跳转复用需关闭')
+    if args.cpus == 1 and args.smp_uaccess_stop != 'all':
+        parser.error('用户复制的停止策略仅用于双核原型')
     entries = ('cli', 'gcd') if args.entry == 'both' else (args.entry,)
     if args.entry == 'window' and args.workload != 'desktop':
         parser.error('可见窗口用于 desktop 负载')
@@ -258,8 +296,8 @@ def main():
     direct_config = {'mapping_entries': args.direct_mapping_entries, 'route_entries': args.direct_route_entries,
                      'selective_writes': bool(args.direct_selective_writes), 'reuse_code_checks': bool(args.direct_reuse_code_checks),
                      'memory': args.direct_memory, 'code_watch': bool(args.direct_code_watch), 'cross_page': bool(args.direct_cross_page),
-                     'route_epochs': bool(args.direct_route_epochs), 'retain_routes': bool(args.direct_retain_routes), 'memory_groups': bool(args.direct_memory_groups), 'native_exclusive': bool(args.direct_native_exclusive)} if args.execution == 'direct' else None
-    if args.execution != 'direct' and (args.direct_mapping_entries != 256 or args.direct_route_entries != 256 or args.direct_selective_writes or args.direct_reuse_code_checks or args.direct_code_watch or args.direct_cross_page or args.direct_route_epochs or args.direct_retain_routes or args.direct_memory_groups or args.direct_native_exclusive or args.direct_memory != 'cached'):
+                     'route_epochs': bool(args.direct_route_epochs), 'retain_routes': bool(args.direct_retain_routes), 'memory_groups': bool(args.direct_memory_groups), 'native_exclusive': bool(args.direct_native_exclusive), 'vector_table': bool(args.direct_vector_table)} if args.execution == 'direct' else None
+    if args.execution != 'direct' and (args.direct_mapping_entries != 256 or args.direct_route_entries != 256 or args.direct_selective_writes or args.direct_reuse_code_checks or args.direct_code_watch or args.direct_cross_page or args.direct_route_epochs or args.direct_retain_routes or args.direct_memory_groups or args.direct_native_exclusive or args.direct_vector_table or args.direct_memory != 'cached'):
         parser.error('Direct 缓存参数需要 --execution direct')
     if args.direct_retain_routes and not (args.direct_route_epochs and args.direct_code_watch and args.direct_memory in ('pte', 'flat', 'view')):
         parser.error('跨调用复用需要跳转序号、代码写入跟踪与 PTE/flat 访存')
@@ -289,7 +327,7 @@ def main():
     kernel = KERNEL
     if args.mapping == 'pte':
         from build_lkl_translation_kernel import build
-        kernel = build()
+        kernel = build(args.cpus)
     else:
         native_manifest = json.loads((kernel / 'lkl-summary.json').read_text())
         if sha(kernel / 'lkl-image.bin') != native_manifest['kernel_sha256'] or any(
@@ -318,7 +356,7 @@ def main():
             parser.error(name + ' 的 ELF 地址与内核镜像不一致')
         header += f'#define {constant} 0x{symbol:x}UL\n'
     (out / 'translation-symbols.h').write_text(header)
-    inputs = [EXP / 'translation/linux-execution.c', EXP / 'translation/linux-runner.c', EXP / 'translation/linux-memory.c', EXP / 'lkl-host.c']
+    inputs = [EXP / 'translation/linux-elf.c', EXP / 'translation/linux-execution.c', EXP / 'translation/linux-runner.c', EXP / 'translation/linux-memory.c', EXP / 'lkl-host.c']
     commands = []
     direct_link, direct_files = [], []
     if args.execution == 'direct':
@@ -355,9 +393,11 @@ def main():
                           angle / 'libANGLE-shared.dylib']
     build_entries = ('cli', 'gcd', 'window') if args.entry == 'window' else ('cli', 'gcd')
     for mode in build_entries:
-        command = ['xcrun', 'clang', '-O2', '-g', '-DNCE_PROCESS', '-Wall', '-Wextra', '-Werror',
+        command = ['xcrun', 'clang', '-O2', '-g', '-DNCE_PROCESS', f'-DNCE_TRANSLATION_CPUS={args.cpus}', '-Wall', '-Wextra', '-Werror',
                    '-I', EXP, '-I', kernel, '-I', out, '-I', KERNEL / 'host-include', '-I', library / 'include',
                    *inputs, library / 'lib/libunicorn.a', *graphics_link, *[x for x in direct_link if x != '-lc++' or '-lc++' not in graphics_link], '-o', out / mode]
+        if args.cpus == 2:
+            command += ['-DNCE_SMP']
         if mode == 'gcd':
             command += ['-DTRANSLATION_DISPATCH', EXP / 'dispatch-test.c']
         elif mode == 'window':
@@ -372,7 +412,7 @@ def main():
     resource = Path(subprocess.check_output([llvm / 'clang', '-print-resource-dir'], text=True).strip()) / 'include'
     command = [llvm / 'clang', '--target=aarch64-linux-musl', '-mno-outline-atomics', '-fPIE', '-O2', '-g',
                '-Wall', '-Wextra', '-Werror', '-nostdinc', '-isystem', libc / 'include', '-isystem', resource,
-               '-c', EXP / 'translation/linux-guest.c', '-o', out / 'guest.o']
+               f'-DNCE_TRANSLATION_CPUS={args.cpus}', '-c', EXP / 'translation/linux-guest.c', '-o', out / 'guest.o']
     run(command)
     commands.append(list(map(str, command)))
     guest_objects = []
@@ -384,6 +424,14 @@ def main():
                            '-c', EXP / 'userspace' / name, '-o', obj]
         run(compile_command)
         commands.append(list(map(str, compile_command)))
+        guest_objects.append(obj)
+    if args.cpus == 2:
+        obj = out / 'smp-guest.o'
+        command = [llvm / 'clang', '--target=aarch64-linux-musl', '-mno-outline-atomics', '-fPIE', '-O2', '-g',
+                   '-Wall', '-Wextra', '-Werror', '-nostdinc', '-isystem', libc / 'include', '-isystem', resource,
+                   '-c', EXP / 'translation/smp-guest.c', '-o', obj]
+        run(command)
+        commands.append(list(map(str, command)))
         guest_objects.append(obj)
     command = [shutil.which('ld.lld'), '-pie', '--gc-sections', '--no-dynamic-linker', '-z', 'max-page-size=16384', '-z', 'common-page-size=16384',
                libc / 'lib/rcrt1.o', libc / 'lib/crti.o', out / 'guest.o', *guest_objects, libc / 'lib/libc.a',
@@ -414,7 +462,7 @@ def main():
             android_files.append(out / 'enabled')
     if hosts_before != {mode: sha(out / mode) for mode in hosts_before}:
         raise RuntimeError('客体构建后宿主文件发生变化')
-    files = [*inputs, *direct_files, EXP / 'translation/linux-execution.h', EXP / 'translation/linux-memory.h', EXP / 'translation/linux-guest.c', Path(__file__),
+    files = [*inputs, *direct_files, EXP / 'translation/linux-elf.h', EXP / 'translation/linux-execution.h', EXP / 'translation/linux-memory.h', EXP / 'translation/linux-guest.c', Path(__file__),
              EXP / 'dispatch-test.c', EXP / 'layout.h', EXP / 'guest-registers.h',
              *[EXP / 'userspace' / name for name in guest_sources], *android_files, *graphics_files,
              kernel / 'lkl-image.bin', kernel / 'lkl-image.h', kernel / 'lkl.so', kernel / 'lkl-host-ops.h',
@@ -424,6 +472,8 @@ def main():
     if args.mapping == 'pte':
         files += [ROOT / 'scripts/build_lkl_translation_kernel.py', ROOT / 'scripts/lkl_translation_patch.py',
                   EXP / 'lkl-nce-mmu.c', kernel / 'build.json']
+    if args.cpus == 2:
+        files += [EXP / 'translation/smp-guest.c', ROOT / 'scripts/lkl_translation_smp_patch.py']
     input_hashes = {str(path.relative_to(ROOT)): sha(path) for path in files}
     if args.build_only:
         print(out)
@@ -431,6 +481,8 @@ def main():
     environment = os.environ.copy()
     environment['NCE_TRANSLATION_FILES'] = str(out)
     environment['NCE_TRANSLATION_BATCH'] = str(args.batch_instructions)
+    environment['NCE_TRANSLATION_PARALLEL_PROFILE'] = str(args.parallel_profile)
+    environment['NCE_TRANSLATION_UACCESS_STOP'] = args.smp_uaccess_stop
     environment['NCE_TRANSLATION_PREEMPTION'] = args.preemption
     environment['NCE_TRANSLATION_MEMORY_MS'] = str(args.memory_interval_ms)
     environment['NCE_TRANSLATION_WORKLOAD'] = args.workload
@@ -444,7 +496,7 @@ def main():
                        NCE_DIRECT_ROUTE_ENTRIES=str(args.direct_route_entries), NCE_DIRECT_SELECTIVE_WRITES=str(args.direct_selective_writes),
                        NCE_DIRECT_REUSE_CODE_CHECKS=str(args.direct_reuse_code_checks), NCE_DIRECT_MEMORY=args.direct_memory,
                        NCE_DIRECT_CODE_WATCH=str(args.direct_code_watch), NCE_DIRECT_CROSS_PAGE=str(args.direct_cross_page),
-                       NCE_DIRECT_ROUTE_EPOCHS=str(args.direct_route_epochs), NCE_DIRECT_RETAIN_ROUTES=str(args.direct_retain_routes), NCE_DIRECT_MEMORY_GROUPS=str(args.direct_memory_groups), NCE_DIRECT_NATIVE_EXCLUSIVE=str(args.direct_native_exclusive))
+                       NCE_DIRECT_ROUTE_EPOCHS=str(args.direct_route_epochs), NCE_DIRECT_RETAIN_ROUTES=str(args.direct_retain_routes), NCE_DIRECT_MEMORY_GROUPS=str(args.direct_memory_groups), NCE_DIRECT_NATIVE_EXCLUSIVE=str(args.direct_native_exclusive), NCE_DIRECT_VECTOR_TABLE=str(args.direct_vector_table))
     for name in ('NCE_DESKTOP', 'NCE_SYSTEM_SERVER_PROBE', 'NCE_DIAGNOSTICS', 'NCE_TRACE_SYSTEMUI'):
         environment.pop(name, None)
     if args.workload == 'desktop':
@@ -470,7 +522,7 @@ def main():
                 except subprocess.TimeoutExpired:
                     returncode = 'timeout'
             rows = [json.loads(line) for line in (out / f'{stem}.jsonl').read_text().splitlines() if line.startswith('{')]
-            passed = returncode == 0 and validate(rows, args.memory_interval_ms, args.mapping, args.workload, args.tlb_invalidation, args.execution, direct_config)
+            passed = returncode == 0 and validate(rows, args.memory_interval_ms, args.mapping, args.workload, args.tlb_invalidation, args.execution, direct_config, args.cpus, bool(args.parallel_profile), args.smp_uaccess_stop)
             if data is not None:
                 data['final_sha256'] = sha(data_path)
                 metadata = subprocess.run(['/opt/homebrew/opt/e2fsprogs/sbin/dumpe2fs', '-h', data_path],
@@ -488,13 +540,13 @@ def main():
             break
     if input_hashes != {str(path.relative_to(ROOT)): sha(path) for path in files}:
         raise SystemExit('本轮验证期间源码或二进制发生变化，请重跑')
-    report = {'scope': 'Native single-CPU LKL with translated ARM64 userspace; selected workload only; iPhone unverified',
+    report = {'scope': f'Native {args.cpus}-CPU LKL with translated ARM64 userspace; selected workload only; iPhone unverified',
               'platform': platform.platform(), 'cpu': subprocess.check_output(['sysctl', '-n', 'machdep.cpu.brand_string'], text=True).strip(),
               'system_build': subprocess.check_output(['sw_vers', '-buildVersion'], text=True).strip(),
               'dependency': dependency, 'commands': commands, 'host_unchanged_after_guest_build': True,
               'configuration': {'execution': args.execution, 'direct': direct_config, 'mapping': args.mapping, 'sparse_scan': True, 'fault_prefetch': False, 'guest_page_bytes': 16384,
                                 'workload': args.workload, 'entries': entries, 'art_nterp': args.art_nterp,
-                                'art_expanded_jit': args.art_expanded_jit, 'art_fast_baseline': args.art_fast_baseline,
+                                'cpus': args.cpus, 'uaccess_stop': args.smp_uaccess_stop, 'parallel_profile': bool(args.parallel_profile), 'art_expanded_jit': args.art_expanded_jit, 'art_fast_baseline': args.art_fast_baseline,
                                 'cache_invalidation': args.cache_invalidation,
                                 'exec_cache': args.exec_cache,
                                 'tlb_invalidation': args.tlb_invalidation,

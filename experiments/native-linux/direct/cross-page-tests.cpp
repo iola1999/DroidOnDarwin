@@ -13,7 +13,7 @@ struct Crossing {
     bool alias_code = false;
     uint64_t epoch = 1;
     NceDirect *engine;
-    Crossing(Probe &owner, unsigned page_bits) : probe(owner), bits(page_bits), page_bytes(1U << bits), engine(nce_direct_create({16 * 1024 * 1024, 256, 256, true, false, true, owner.config.route_epochs, false, owner.config.memory_groups, false}))
+    Crossing(Probe &owner, unsigned page_bits) : probe(owner), bits(page_bits), page_bytes(1U << bits), engine(nce_direct_create({16 * 1024 * 1024, 256, 256, true, false, true, owner.config.route_epochs, false, owner.config.memory_groups, false, false}))
     {
         CHECK(engine);
         std::mt19937_64 random(0x43524f5353);

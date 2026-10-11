@@ -24,6 +24,9 @@ struct NceDirect {
     std::unordered_multimap<uintptr_t, unsigned> write_aliases;
     std::vector<uint64_t> code_page_runs;
     uint64_t run_id = 0;
+    bool prepared_run = false;
+    const uint64_t *shared_code_guard = nullptr;
+    size_t shared_code_pages = 0;
     uint64_t route_epoch = 0;
     uint32_t previous_flags = 0;
     bool volatile_routes = false;
@@ -193,7 +196,7 @@ struct NceDirect {
                 uintptr_t offset = uintptr_t(ram) - uintptr_t(memory.page_table->ram);
                 valid = offset < memory.page_table->ram_size;
                 if (valid && access.write)
-                    valid = code_page_runs[offset >> 14] != run_id;
+                    valid = shared_code_guard ? !shared_code_guard[offset >> 14] : code_page_runs[offset >> 14] != run_id;
             } else if (valid && access.write) {
                 for (unsigned offset = 0; offset <= mask; offset += 4096)
                     valid &= active_code.count(ram + offset) == 0;
@@ -223,6 +226,13 @@ struct NceDirect {
     }
     NceDirectExit run(NceDirectState &state, NceDirectMemory memory, uint64_t budget, uint64_t &fault)
     {
+        bool prepared = prepared_run;
+        prepared_run = false;
+        if (!prepared)
+            stop_request.store(0, std::memory_order_release);
+        if (shared_code_guard && (!memory.page_table || memory.refill_reads || memory.read_view ||
+                                  shared_code_pages != memory.page_table->ram_size / 16384))
+            return NCE_DIRECT_ERROR;
         if (!memory.map_page || !memory.map_code || !budget || budget > INT64_MAX)
             return NCE_DIRECT_ERROR;
         if (memory.page_bits && memory.page_bits != 12 && memory.page_bits != 14)
@@ -263,6 +273,8 @@ struct NceDirect {
             flags |= CompilePteReadRefill;
         if (memory.flat_pages)
             flags |= CompileFlat;
+        if (config.vector_table)
+            flags |= CompileVectorTable;
         if (config.memory_groups)
             flags |= CompileMemoryGroups;
         if (memory.read_view)
@@ -311,7 +323,6 @@ struct NceDirect {
         previous = memory;
         previous_flags = flags;
         active_code.clear();
-        stop_request.store(0, std::memory_order_release);
         Frame frame{};
         frame.state = state;
         frame.exclusive_interrupted = config.native_exclusive && state.exclusive_address != UINT64_MAX;
@@ -325,8 +336,8 @@ struct NceDirect {
         frame.flat_pages = memory.flat_pages;
         if (memory.page_table) {
             frame.page_table = *memory.page_table;
-            frame.code_page_runs = code_page_runs.data();
-            frame.run_id = run_id;
+            frame.code_page_runs = shared_code_guard ? const_cast<uint64_t *>(shared_code_guard) : code_page_runs.data();
+            frame.run_id = shared_code_guard ? 1 : run_id;
             frame.read_pte_stub = nce_direct_read_pte;
             frame.write_pte_stub = nce_direct_write_pte;
             frame.pte_refill_mask = memory.refill_reads ? config.mapping_entries - 1 : 0;
@@ -479,4 +490,16 @@ extern "C" NceDirectStats nce_direct_stats(const NceDirect *engine)
 extern "C" void nce_direct_request_stop(NceDirect *engine)
 {
     engine->stop_request.store(1, std::memory_order_release);
+}
+
+extern "C" void nce_direct_prepare_run(NceDirect *engine)
+{
+    engine->stop_request.store(0, std::memory_order_release);
+    engine->prepared_run = true;
+}
+
+extern "C" void nce_direct_set_code_guard(NceDirect *engine, const uint64_t *pages, size_t count)
+{
+    engine->shared_code_guard = pages;
+    engine->shared_code_pages = count;
 }

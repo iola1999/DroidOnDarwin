@@ -17,29 +17,55 @@ EXP = ROOT / 'experiments/native-linux'
 OUT = WORK / 'lkl-translation-kernel'
 
 
-def build():
+def build(cpus=1):
+    if cpus not in (1, 2):
+        raise ValueError('translation CPU count must be 1 or 2')
+    out = OUT if cpus == 1 else WORK / 'lkl-translation-smp-kernel'
     base = WORK / 'lkl-source'
-    source = OUT / 'source'
-    build_dir = OUT / 'build'
-    OUT.mkdir(parents=True, exist_ok=True)
+    source = out / 'source'
+    build_dir = out / 'build'
+    out.mkdir(parents=True, exist_ok=True)
     if (base / '.droidondarwin-source-revision').read_text().strip() != probe_lkl.REVISION:
         raise RuntimeError('需要先准备当前单核 LKL 源码')
-    if not source.exists():
-        probe_lkl.run(['/bin/cp', '-cR', base, source], timeout=120)
-    if (source / '.droidondarwin-source-revision').read_text().strip() != probe_lkl.REVISION:
-        raise RuntimeError('独立内核源码版本不匹配，需要重新准备该构建目录')
-    probe_lkl.apply(source, EXP)
-    lkl_translation_patch.apply(source, EXP)
+    patch_files = [Path(__file__), Path(probe_lkl.__file__), Path(lkl_translation_patch.__file__),
+                   ROOT / 'scripts/lkl_nce_patch.py', EXP / 'lkl-nce-mmu.c',
+                   EXP / 'translation/kernel-api.h', EXP / 'direct/page-table-layout.h']
+    if cpus == 2:
+        patch_files += [ROOT / ('scripts/' + name + '.py') for name in
+                        ('lkl_smp_patch', 'lkl_smp_mmu_patch', 'lkl_translation_smp_patch')]
+        patch_files += sorted((EXP / 'smp').glob('*.[ch]'))
+    patch_digest = hashlib.sha256(b''.join(path.read_bytes() for path in patch_files)).hexdigest()
+    stamp = out / 'source-inputs.sha256'
+    prepared = source.exists() and stamp.exists() and stamp.read_text().strip() == patch_digest
+    if not prepared:
+        # This directory contains only generated sources; build objects stay separate.
+        if source.exists() and cpus == 2:
+            shutil.rmtree(source)
+        if not source.exists():
+            probe_lkl.run(['/bin/cp', '-cR', base, source], timeout=120)
+        if (source / '.droidondarwin-source-revision').read_text().strip() != probe_lkl.REVISION:
+            raise RuntimeError('独立内核源码版本不匹配，需要重新准备该构建目录')
+        probe_lkl.apply(source, EXP)
+        if cpus == 2:
+            import lkl_smp_patch
+            lkl_smp_patch.apply(source, EXP, tests=False)
+        lkl_translation_patch.apply(source, EXP)
+        if cpus == 2:
+            import lkl_smp_mmu_patch
+            import lkl_translation_smp_patch
+            lkl_smp_mmu_patch.apply(source, EXP, tests=False)
+            lkl_translation_smp_patch.apply(source, EXP)
+        stamp.write_text(patch_digest + '\n')
     build_dir.mkdir(exist_ok=True)
-    config = WORK / 'lkl-process-build/.config'
-    if 'CONFIG_SMP=y' in config.read_text():
-        raise RuntimeError('翻译原型需要单核内核配置')
+    config = WORK / ('lkl-process-build/.config' if cpus == 1 else 'lkl-smp-process-build/.config')
+    if ('CONFIG_SMP=y' in config.read_text()) != (cpus == 2):
+        raise RuntimeError('翻译内核配置与 CPU 数量不一致')
     if not (build_dir / '.config').exists() or (build_dir / '.config').read_bytes() != config.read_bytes():
         shutil.copyfile(config, build_dir / '.config')
     llvm = Path(subprocess.check_output(['brew', '--prefix', 'llvm'], text=True).strip()) / 'bin'
     sdk = subprocess.check_output(['xcrun', '--sdk', 'macosx', '--show-sdk-path'], text=True).strip()
     clang = subprocess.check_output(['xcrun', '--find', 'clang'], text=True).strip()
-    target = [llvm / 'clang', '--target=aarch64-linux-gnu', '-ffixed-x18']
+    target = [llvm / 'clang', '--target=aarch64-linux-gnu', '-ffixed-x18', '-mno-outline-atomics']
     env = os.environ.copy()
     env.update(KBUILD_BUILD_TIMESTAMP='1970-01-01 00:00:00 UTC', KBUILD_BUILD_VERSION='1',
                KBUILD_BUILD_USER='droidondarwin', KBUILD_BUILD_HOST='local')
@@ -56,35 +82,44 @@ def build():
         commands.append(list(map(str, command)))
         probe_lkl.run(command, env=env, stdout=log, stderr=subprocess.STDOUT, timeout=600)
 
-    with (OUT / 'build.log').open('w') as log:
+    with (out / 'build.log').open('w') as log:
         run([*make, 'olddefconfig'], log)
         run([*make, '-j8', 'all'], log)
-        shutil.copyfile(source / 'arch/lkl/include/uapi/asm/host_ops.h', OUT / 'lkl-host-ops.h')
-        run([*target, '-fPIC', '-fno-stack-protector', '-O2', '-I', OUT, '-I', EXP,
-             '-c', EXP / 'lkl-bridge.c', '-o', OUT / 'lkl-bridge.o'], log)
+        shutil.copyfile(source / 'arch/lkl/include/uapi/asm/host_ops.h', out / 'lkl-host-ops.h')
+        run([*target, '-fPIC', '-fno-stack-protector', '-O2', '-I', out, '-I', EXP,
+             '-c', EXP / 'lkl-bridge.c', '-o', out / 'lkl-bridge.o'], log)
         exports = ('vsnprintf', 'lkl_ops', 'sysctl_sched_base_slice', 'nce_run_syscall', 'nce_page_fault',
                    'nce_set_layout', 'nce_user_return', 'nce_user_fault', 'nce_user_preempt', 'nce_prepare_user',
                    'nce_translate_user')
-        run([llvm / 'llvm-objcopy', *['--globalize-symbol=' + name for name in exports],
-             build_dir / 'lkl.o', OUT / 'lkl-exports.o'], log)
+        if cpus == 2:
+            exports += ('nce_translation_enter', 'nce_translation_leave', 'nce_translation_exclusive', 'nce_window_unlock', 'nce_translation_written')
+        run([llvm / 'llvm-objcopy', *(['--set-section-alignment=.data..percpu=16384'] if cpus == 2 else []),
+             *['--globalize-symbol=' + name for name in exports],
+             build_dir / 'lkl.o', out / 'lkl-exports.o'], log)
         run([shutil.which('ld.lld'), '-shared', '-Bsymbolic', '--no-undefined', '-z', 'max-page-size=16384',
-             '-z', 'common-page-size=16384', OUT / 'lkl-exports.o', OUT / 'lkl-bridge.o', '-o', OUT / 'lkl.so'], log)
-    probe_lkl.OUT = OUT
+             '-z', 'common-page-size=16384', out / 'lkl-exports.o', out / 'lkl-bridge.o', '-o', out / 'lkl.so'], log)
+    probe_lkl.OUT = out
     probe_lkl.PROCESS = True
-    probe_lkl.SMP = False
-    probe_lkl.package_elf(OUT / 'lkl.so')
+    probe_lkl.SMP = cpus == 2
+    probe_lkl.package_elf(out / 'lkl.so', smp_exports={'nce_translation_enter', 'nce_translation_leave', 'nce_translation_exclusive', 'nce_window_unlock', 'nce_translation_written'})
     files = [Path(__file__), Path(lkl_translation_patch.__file__), Path(probe_lkl.__file__),
              ROOT / 'scripts/lkl_nce_patch.py', EXP / 'lkl-nce-mmu.c', EXP / 'translation/kernel-api.h',
              EXP / 'lkl-bridge.c', EXP / 'direct/page-table-layout.h', config, build_dir / '.config',
              source / 'arch/lkl/mm/nce_mmu.c', source / 'arch/lkl/include/asm/mmu.h', source / 'arch/lkl/kernel/threads.c',
-             *[OUT / name for name in ('lkl.so', 'lkl-image.bin', 'lkl-image.h', 'lkl-host-ops.h')]]
-    manifest = {'status': 'built; functional validation belongs to probe_lkl_translation.py',
+             *[out / name for name in ('lkl.so', 'lkl-image.bin', 'lkl-image.h', 'lkl-host-ops.h')]]
+    if cpus == 2:
+        files += [ROOT / ('scripts/' + name + '.py') for name in ('lkl_smp_patch', 'lkl_smp_mmu_patch', 'lkl_translation_smp_patch')]
+        files += list((EXP / 'smp').glob('*.[ch]'))
+    manifest = {'cpus': cpus, 'status': 'built; functional validation belongs to probe_lkl_translation.py',
                 'build_identity': {key: env[key] for key in env if key.startswith('KBUILD_BUILD_')},
                 'revision': probe_lkl.REVISION, 'commands': commands,
                 'sha256': {str(path.relative_to(ROOT)): hashlib.sha256(path.read_bytes()).hexdigest() for path in files}}
-    (OUT / 'build.json').write_text(json.dumps(manifest, indent=2) + '\n')
-    return OUT
+    (out / 'build.json').write_text(json.dumps(manifest, indent=2) + '\n')
+    return out
 
 
 if __name__ == '__main__':
-    print(build())
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--cpus', type=int, choices=(1, 2), default=1)
+    print(build(parser.parse_args().cpus))

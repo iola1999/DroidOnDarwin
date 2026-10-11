@@ -52,6 +52,8 @@ MemoryAccess memory_access(uint32_t word, Kind kind)
 Kind decode(uint32_t w)
 {
     bool sf = w >> 31;
+    if ((w & 0xbfe08c00) == 0x0e000000)
+        return VectorTable;  // TBL/TBX, one through four table registers.
     if ((w & 0xffffffe0) == 0xd53b00e0)
         return Dczid;
     if ((w & 0xffffffe0) == 0xd50b7420)

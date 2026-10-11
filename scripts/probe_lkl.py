@@ -44,7 +44,7 @@ def check_ext4_shutdown(path):
     print('Ext4 shutdown state is clean: ' + str(path), flush=True)
 
 
-def package_elf(path):
+def package_elf(path, *, smp_exports=None):
     data = path.read_bytes()
     phoff, shoff = struct.unpack_from("<QQ", data, 32)
     phsize, phnum, shsize, shnum = struct.unpack_from("<HHHH", data, 54)
@@ -78,7 +78,7 @@ def package_elf(path):
     if PROCESS:
         required |= {"nce_run_syscall", "nce_page_fault", "nce_set_layout", "nce_user_return", "nce_user_fault", "nce_user_preempt", "nce_prepare_user"}
     if SMP:
-        required |= {"nce_begin_user", "nce_window_leave", "nce_copy_user", "nce_guest_fault"}
+        required |= smp_exports if smp_exports is not None else {"nce_begin_user", "nce_window_leave", "nce_copy_user", "nce_guest_fault"}
     for pos in range(symtab[4], symtab[4] + symtab[5], symtab[9]):
         index, _, _, _, value, _ = struct.unpack_from("<IBBHQQ", data, pos)
         name = strings[index:strings.index(b"\0", index)].decode()

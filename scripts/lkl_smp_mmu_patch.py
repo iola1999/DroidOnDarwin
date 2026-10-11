@@ -239,6 +239,9 @@ void nce_begin_user(void)
     unsigned long index = (address - USER_BASE) / PAGE_SIZE;
     unsigned long trapped_view = execute && mapping_mode != NCE_MM_FULL ? installed[index] : 0;
 '''
+        if 'NCE_MM_TRANSLATED' in text:
+            before = before.replace('mapping_mode != NCE_MM_FULL ?',
+                                    'mapping_mode != NCE_MM_FULL && mapping_mode != NCE_MM_TRANSLATED ?')
         if before not in text:
             raise RuntimeError('SMP fault view capture source mismatch')
         text = text.replace(before, '')
@@ -255,7 +258,7 @@ int nce_guest_fault(unsigned long address, int access)
 {
     BUG_ON(!(nce_window_token() & (1ULL << raw_smp_processor_id())));
     unsigned long trapped_view = 0;
-    if (access == NCE_FAULT_EXEC && address >= USER_BASE && address < TASK_SIZE)
+    if (installed && access == NCE_FAULT_EXEC && address >= USER_BASE && address < TASK_SIZE)
         trapped_view = installed[(address - USER_BASE) / PAGE_SIZE];
     nce_window_leave();
     return nce_page_fault_view(address, access, trapped_view);

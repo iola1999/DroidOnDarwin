@@ -35,8 +35,8 @@ struct Executor {
     std::vector<nce_direct_flat_page> flat;
     NceDirect *engine;
     NceDirectPageTable table;
-    explicit Executor(Ram &memory, unsigned cpu, bool native = true)
-        : ram(memory), flat(DIRECT_FLAT_BYTES / sizeof(nce_direct_flat_page)), engine(nce_direct_create({2 * 1024 * 1024, 256, 256, false, false, false, false, false, false, native})), table{root.data(), CodeVA, UINT64_C(1) << 32, 0x500000000, ram.bytes.data(), ram.bytes.size()}
+    explicit Executor(Ram &memory, unsigned cpu, bool native = true, bool crossing = false)
+        : ram(memory), flat(DIRECT_FLAT_BYTES / sizeof(nce_direct_flat_page)), engine(nce_direct_create({2 * 1024 * 1024, 256, 256, false, false, crossing, false, false, false, native, false})), table{root.data(), CodeVA, UINT64_C(1) << 32, 0x500000000, ram.bytes.data(), ram.bytes.size()}
     {
         CHECK(engine && cpu < 2);
         flat[0] = {uintptr_t(ram.bytes.data()), 0};
@@ -291,4 +291,64 @@ void direct_parallel_tests()
     CHECK(value.x[2] == 1 && value.x[3] == 60 && value.exclusive_address == UINT64_MAX);
     CHECK(*ram->shared() == 59);
     report("native_exclusive_interrupted_retry_fallback");
+    {
+        std::array<uint64_t, 10> guard{};
+        guard[0] = guard[9] = 1;
+        const uint32_t store[] = {0xf9000001, 0xd4200000};
+        ram->code(store, sizeof(store));
+        *ram->shared() = 17;
+        for (auto &executor : cpu) {
+            nce_direct_set_code_guard(executor->engine, guard.data(), guard.size());
+            auto pending = state();
+            pending.x[0] = SharedVA;
+            pending.x[1] = 29;
+            CHECK(executor->run(pending, 1000) == NCE_DIRECT_WRITE_FAULT);
+            CHECK(pending.pc == CodeVA && *ram->shared() == 17);
+        }
+        // The owner has stopped both engines before releasing the code page.
+        guard[9] = 0;
+        auto pending = state();
+        pending.x[0] = SharedVA;
+        pending.x[1] = 29;
+        CHECK(cpu[1]->run(pending, 1000) == NCE_DIRECT_UNSUPPORTED);
+        CHECK(pending.pc == CodeVA + 4 && *ram->shared() == 29);
+        nce_direct_set_code_guard(cpu[0]->engine, guard.data(), guard.size() - 1);
+        pending = state();
+        CHECK(cpu[0]->run(pending, 1000) == NCE_DIRECT_ERROR);
+        for (auto &executor : cpu)
+            nce_direct_set_code_guard(executor->engine, nullptr, 0);
+    }
+    report("shared_code_guard_across_executors");
+    {
+        std::array<uint64_t, 10> guard{};
+        guard[0] = 1;
+        std::array<std::unique_ptr<Executor>, 2> crossing;
+        const uint32_t words[] = {0x3dc00000, 0x3d800020, 0};  // ldr q0,[x0]; str q0,[x1]
+        ram->code(words, sizeof(words));
+        for (unsigned i = 0; i < 2; ++i) {
+            crossing[i] = std::make_unique<Executor>(*ram, i, true, true);
+            nce_direct_set_code_guard(crossing[i]->engine, guard.data(), guard.size());
+            for (unsigned byte = 0; byte < 16; ++byte)
+                ram->bytes[(2 + i * 4) * PageBytes - 8 + byte] = i * 17 + byte;
+        }
+        parallel([&](unsigned i) {
+            auto pending = state();
+            pending.access_flags = NCE_DIRECT_UNALIGNED;
+            pending.x[0] = DataVA + PageBytes - 8;
+            pending.x[1] = DataVA + 3 * PageBytes - 8;
+            CHECK(crossing[i]->run(pending) == NCE_DIRECT_UNSUPPORTED && pending.pc == CodeVA + 8);
+            CHECK(!std::memcmp(ram->bytes.data() + (2 + i * 4) * PageBytes - 8,
+                               ram->bytes.data() + (4 + i * 4) * PageBytes - 8, 16));
+        });
+        guard[8] = 1;
+        std::memset(ram->bytes.data() + 8 * PageBytes - 8, 0, 16);
+        auto pending = state();
+        pending.access_flags = NCE_DIRECT_UNALIGNED;
+        pending.x[0] = DataVA + PageBytes - 8;
+        pending.x[1] = DataVA + 3 * PageBytes - 8;
+        CHECK(crossing[1]->run(pending) == NCE_DIRECT_WRITE_FAULT && pending.pc == CodeVA + 4);
+        for (unsigned byte = 0; byte < 16; ++byte)
+            CHECK(!ram->bytes[8 * PageBytes - 8 + byte]);
+    }
+    report("parallel_cross_page_and_remote_code_guard");
 }

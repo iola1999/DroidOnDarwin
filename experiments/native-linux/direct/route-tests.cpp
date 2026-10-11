@@ -7,7 +7,7 @@ struct Routes {
     alignas(4096) std::array<uint32_t, 1024> header{}, body{}, tail{};
     unsigned body_pages = 1;
     bool executable = true, return_to_start = false;
-    NceDirect *engine = nce_direct_create({2 * 1024 * 1024, 256, 65536, false, false, false, true, false, false, false});
+    NceDirect *engine = nce_direct_create({2 * 1024 * 1024, 256, 65536, false, false, false, true, false, false, false, false});
     Routes()
     {
         CHECK(engine);

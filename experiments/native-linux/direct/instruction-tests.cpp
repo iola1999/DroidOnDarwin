@@ -190,6 +190,72 @@ void fp_conversions(Probe &probe, std::mt19937_64 &random)
     }
     report("fp_fixed_rounding_and_widening");
 }
+void vector_tables(Probe &probe, std::mt19937_64 &random)
+{
+    auto original = probe.direct;
+    auto config = probe.config;
+    config.vector_table = true;
+    auto enabled = nce_direct_create(config);
+    config.vector_table = false;
+    auto disabled = nce_direct_create(config);
+    CHECK(enabled && disabled);
+    for (unsigned q = 0; q < 2; ++q) {
+        for (unsigned extension = 0; extension < 2; ++extension) {
+            for (unsigned length = 1; length <= 4; ++length) {
+                for (unsigned rn = 0; rn < 32; ++rn) {
+                    for (unsigned alias = 0; alias < 4; ++alias) {
+                        unsigned rm = alias == 3 ? (rn + length - 1) & 31 : (rn + 7) & 31;
+                        unsigned rd = alias == 0 ? (rn + 9) & 31 : alias == 1 ? rn
+                                                                              : rm;
+                        uint32_t code[] = {0x0e000000 | (q << 30) | (rm << 16) |
+                                               ((length - 1) << 13) | (extension << 12) | (rn << 5) | rd,
+                                           0};
+                        probe.load(code, sizeof(code));
+                        for (unsigned pattern = 0; pattern < 4; ++pattern) {
+                            auto initial = random_state(random);
+                            auto *indices = reinterpret_cast<uint8_t *>(initial.v[rm]);
+                            for (unsigned lane = 0; lane < 16; ++lane) {
+                                // Include every table boundary and out-of-range indices,
+                                // including when the index register is part of the table.
+                                constexpr uint8_t boundaries[] = {0, 15, 16, 31, 32, 47, 48, 63, 64, 127, 128, 255};
+                                indices[lane] = pattern < 3 ? boundaries[(lane + pattern * 4) % 12] : random();
+                            }
+                            probe.direct = disabled;
+                            auto actual = initial;
+                            CHECK(probe.run(actual) == NCE_DIRECT_UNSUPPORTED);
+                            CHECK(!std::memcmp(&actual, &initial, sizeof(actual)));
+                            probe.direct = enabled;
+                            probe.compare(initial, 1);
+                        }
+                    }
+                }
+            }
+        }
+    }
+    nce_direct_destroy(enabled);
+    nce_direct_destroy(disabled);
+    size_t fallback_bytes = 0;
+    for (uint32_t first : {0U, 0x4e020324U}) {
+        probe.direct = nce_direct_create(config);
+        CHECK(probe.direct);
+        std::array<uint32_t, 1024> code;
+        code.fill(0xd503201f);  // NOPs must remain uncompiled after a disabled instruction.
+        code[0] = first;
+        probe.load(code.data(), sizeof(code));
+        auto actual = random_state(random);
+        CHECK(probe.run(actual) == NCE_DIRECT_UNSUPPORTED);
+        size_t bytes = nce_direct_stats(probe.direct).code_bytes;
+        if (!first)
+            fallback_bytes = bytes;
+        else
+            CHECK(bytes == fallback_bytes);
+        nce_direct_destroy(probe.direct);
+    }
+    probe.direct = original;
+    for (uint32_t word : {0x8e000000U, 0x0e008000U, 0x0e800000U, 0x0e400000U})
+        CHECK(nce_direct::decode(word) == nce_direct::Other);
+    report("simd_table_alias_wrap_indices_and_setting");
+}
 }  // namespace
 
 void direct_instruction_tests(Probe &probe)
@@ -198,6 +264,7 @@ void direct_instruction_tests(Probe &probe)
     literal_loads(probe, random);
     structure_lanes(probe, random);
     fp_conversions(probe, random);
+    vector_tables(probe, random);
     for (uint32_t word : {0xdc000000U, 0x0d010000U, 0x0d004400U, 0x0d008800U,
                           0x0d009400U, 0x0d00c000U, 0x0d40d000U,
                           0x1e020000U, 0x1e820000U, 0x9e060000U, 0x2ee01000U})

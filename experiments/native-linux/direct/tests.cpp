@@ -332,6 +332,24 @@ void direct_tests()
         timer.join();
     }
     report("asynchronous_stop_at_block_and_indirect_boundary");
+    {
+        // A writer may request stop after registration but before run starts.
+        const uint32_t words[] = {0x91000400, 0x17ffffff};  // add x0, x0, #1; b back
+        probe.load(words, sizeof(words));
+        NceDirectState state{};
+        state.pc = CodeVA;
+        nce_direct_prepare_run(probe.direct);
+        nce_direct_request_stop(probe.direct);
+        CHECK(probe.run(state, 1000) == NCE_DIRECT_BUDGET);
+        CHECK(state.pc == CodeVA && state.x[0] == 0);
+        nce_direct_prepare_run(probe.direct);
+        CHECK(probe.run(state, 1000) == NCE_DIRECT_BUDGET && state.x[0] > 0);
+        nce_direct_request_stop(probe.direct);
+        state.pc = CodeVA;
+        state.x[0] = 0;
+        CHECK(probe.run(state, 1000) == NCE_DIRECT_BUDGET && state.x[0] > 0);
+    }
+    report("stop_between_registration_and_entry");
     auto large_page = probe.memory();
     large_page.page_bits = 14;
     probe.load(load, sizeof(load));

@@ -21,6 +21,12 @@ Compilation Page::compile(uint64_t new_page, const void *bytes, size_t entry,
 {
     bool unaligned = flags & 1;
     unsigned page_bits = flags & CompileData16K ? 14 : 12;
+    // Disabled candidates must also stop block discovery; otherwise the
+    // fallback configuration compiles code beyond its unsupported instruction.
+    auto selected_kind = [flags](uint32_t word) {
+        Kind kind = decode(word);
+        return kind == VectorTable && !(flags & CompileVectorTable) ? Other : kind;
+    };
     std::array<uint32_t, 1024> input;
     std::memcpy(input.data(), bytes, 4096);
     std::array<bool, 1024> emit{};
@@ -30,7 +36,7 @@ Compilation Page::compile(uint64_t new_page, const void *bytes, size_t entry,
         pending.pop_back();
         for (; i < input.size() && !emit[i] && !entries[i]; ++i) {
             emit[i] = true;
-            Kind k = decode(input[i]);
+            Kind k = selected_kind(input[i]);
             if (k >= Branch && k <= TestBranch) {
                 uint64_t address = target(input[i], k, new_page + i * 4);
                 if (address >= new_page && address - new_page < 4096)
@@ -58,7 +64,7 @@ Compilation Page::compile(uint64_t new_page, const void *bytes, size_t entry,
             continue;
         if (!(i % 32) || i == entry || (i && !emit[i - 1]))
             leaders[i] = true;
-        Kind k = decode(input[i]);
+        Kind k = selected_kind(input[i]);
         if (k >= Branch && k <= TestBranch) {
             uint64_t address = target(input[i], k, new_page + i * 4);
             if (address >= new_page && address - new_page < 4096)
@@ -321,7 +327,7 @@ Compilation Page::compile(uint64_t new_page, const void *bytes, size_t entry,
             }
             uint32_t w = input[i];
             unsigned rd = w & 31, rn = (w >> 5) & 31;
-            Kind kind = decode(w);
+            Kind kind = selected_kind(w);
             if (kind == Atomic && !(flags & 4))
                 kind = Other;
             if (kind == Crc && !(flags & 64))
@@ -380,7 +386,7 @@ Compilation Page::compile(uint64_t new_page, const void *bytes, size_t entry,
                     w = (w & ~(31U << 16)) | (17 << 16);
                 }
                 c.dw(w);
-            } else if (kind == Vector || kind == CryptoAes || kind == CryptoSha1 || kind == CryptoSha256) {
+            } else if (kind == Vector || kind == VectorTable || kind == CryptoAes || kind == CryptoSha1 || kind == CryptoSha256) {
                 c.dw(w);
             } else if (kind == VectorFromGpr || kind == FpFromGpr) {
                 load(rn, X16);

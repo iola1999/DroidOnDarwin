@@ -4,7 +4,7 @@
 #include "layout.h"
 #include "lkl-host-ops.h"
 #include "lkl-image.h"
-#include <elf.h>
+#include "linux-elf.h"
 #include <errno.h>
 #include <mach/mach.h>
 #include <pthread.h>
@@ -13,12 +13,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/mman.h>
+#include <time.h>
 #include <unicorn/unicorn.h>
 #ifdef NCE_DIRECT_EXECUTION
 #include "../direct/direct.h"
 #include "code-watch.h"
 #include "read-view.h"
-static NceDirect *direct_engine;
 static bool direct_pte_memory, direct_pte_refill, direct_flat, direct_code_watch;
 static bool direct_read_views;
 static unsigned long read_views_created, read_views_destroyed, read_views_live, read_views_peak, read_view_maps, read_view_revocations;
@@ -26,11 +26,6 @@ static NceCodeWatch *code_watch;
 static NceCodeWatchStats code_watch_stats;
 static void (*original_page_free)(void *, unsigned long);
 static int (*original_disk_io)(unsigned int, unsigned int, unsigned long long, void *, unsigned long);
-static unsigned long direct_calls, direct_fallbacks, direct_code_writes;
-static struct {
-    uint32_t instruction;
-    unsigned long count;
-} direct_missing[256];
 #endif
 
 #define REQUIRE(c) \
@@ -50,17 +45,15 @@ typedef struct {
 } Process;
 static unsigned char *ram;
 static unsigned long base, *pages;
-static unsigned long map_generation, code_generation, maps, revocations, fills, faults, calls, preemptions;
+static unsigned long map_generation, code_generation, maps, revocations;
 static unsigned long allocated, freed;
-static unsigned long cache_flushes, cache_pages, tlb_flushes, tlb_pages, tlb_inactive_skips;
 static bool page_invalidation, retain_exec_cache, page_tlb_invalidation;
 static unsigned long instruction_batch;
-static bool timer_mode, timer_active, timer_stopping;
+static bool timer_mode, timer_stopping, parallel_profile;
+static uint64_t profile_last_ns, profile_union_ns, profile_overlap_ns;
 static pthread_t timer_thread;
 static pthread_mutex_t timer_lock = PTHREAD_MUTEX_INITIALIZER;
 static pthread_cond_t timer_condition = PTHREAD_COND_INITIALIZER;
-static uc_engine *engine;
-static uc_context *empty_cpu;
 static long (*run_syscall)(long, long *);
 static int (*page_fault)(unsigned long, int);
 static void (*user_return)(long, long, unsigned long), (*user_fault)(unsigned long, int);
@@ -68,12 +61,95 @@ static void (*user_preempt)(void), (*prepare_user)(void);
 static unsigned long (*copy_user)(void *, unsigned long, unsigned long, int);
 static unsigned long (*translate_user)(unsigned long, unsigned long);
 static struct nce_translation_state *translation;
+#ifdef NCE_SMP
+static unsigned long (*enter_guest)(void);
+static void (*leave_guest)(unsigned long), (*exclusive_begin)(void), (*exclusive_end)(void);
+static void (*kernel_written)(unsigned long, unsigned long);
+
+#endif
+#ifndef NCE_TRANSLATION_CPUS
+#define NCE_TRANSLATION_CPUS 1
+#endif
+static const unsigned execution_count = NCE_TRANSLATION_CPUS;
+typedef struct {
+    unsigned index;
+    struct nce_translation_cpu *view;
+    uc_engine *engine;
+    uc_context *empty_cpu;
+    bool timer_active;
+    uint64_t run_started_cpu_ns, run_cpu_ns;
+    unsigned long fills, faults, calls, preemptions;
+    unsigned long cache_flushes, cache_pages, tlb_flushes, tlb_pages, tlb_inactive_skips;
+    unsigned long seen_maps, seen_code, seen_kernel_code;
+    struct {
+        int kind, access;
+        uint64_t address;
+    } event;
+#ifdef NCE_DIRECT_EXECUTION
+    NceDirect *direct_engine;
+    unsigned long direct_calls, direct_fallbacks, direct_code_writes;
+    struct {
+        uint32_t instruction;
+        unsigned long count;
+    } direct_missing[256];
+#endif
+} ExecutionCpu;
+static ExecutionCpu executions[NCE_TRANSLATION_MAX_CPUS];
+/* Linux invokes user_switch after scheduling, including task migration. */
+static _Thread_local ExecutionCpu *execution = &executions[0];
+#ifdef NCE_SMP
+/* IRQ-disabled registration retains all directory pages. Read each parent
+ * once because Linux may clear a parent before its RCU reclamation. */
+static unsigned long lookup_guest(unsigned long address, unsigned long permission)
+{
+    if (address < base || address - base >= NCE_USER_SIZE)
+        return 0;
+    const unsigned long *table = (void *)execution->view->pgd;
+    unsigned shifts[] = {36, 25, 14};
+    if (!table)
+        return 0;
+    unsigned long value = 0;
+    for (unsigned i = 0; i < 3; ++i) {
+        value = __atomic_load_n(&table[(address >> shifts[i]) & 2047], __ATOMIC_ACQUIRE);
+        if (!(value & 1))
+            return 0;
+        if (i != 2)
+            table = (void *)(value & ~(PAGE - 1));
+    }
+    if ((value & 0x0d1) != 0x0c1)
+        return 0;
+    unsigned long offset = (value & ~(PAGE - 1)) - (base + NCE_USER_SIZE);
+    if (offset >= NCE_RAM_SIZE)
+        return 0;
+    unsigned long prot = LKL_PROT_READ;
+    if ((value & 0x120) == 0x120)
+        prot |= LKL_PROT_WRITE;
+    if (value & 0x200)
+        prot |= LKL_PROT_EXEC;
+    return prot & permission ? offset | prot : 0;
+}
+
+static void user_prepare(unsigned index)
+{
+    REQUIRE(index < execution_count);
+    execution = &executions[index];
+    nce_direct_prepare_run(execution->direct_engine);
+}
+
+static void user_interrupt(unsigned mask)
+{
+    for (unsigned i = 0; i < execution_count; ++i)
+        if (mask & (1U << i))
+            nce_direct_request_stop(executions[i].direct_engine);
+}
+#endif
+
 extern struct lkl_host_operations nce_lkl_host;
-extern uc_err nce_uc_emu_stop_at_tb(uc_engine *engine);
-extern uc_err nce_uc_invalidate_ram(uc_engine *engine, uint64_t start, uint64_t length);
-extern uc_err nce_uc_invalidate_tlb(uc_engine *engine, uint64_t start, uint64_t length);
-extern uc_err nce_uc_set_linux_memory(uc_engine *engine, bool enabled);
-extern void nce_uc_cache_stats_aarch64(uc_engine *engine, uint64_t values[5]);
+extern uc_err nce_uc_emu_stop_at_tb(uc_engine *uc);
+extern uc_err nce_uc_invalidate_ram(uc_engine *uc, uint64_t start, uint64_t length);
+extern uc_err nce_uc_invalidate_tlb(uc_engine *uc, uint64_t start, uint64_t length);
+extern uc_err nce_uc_set_linux_memory(uc_engine *uc, bool enabled);
+extern void nce_uc_cache_stats_aarch64(uc_engine *uc, uint64_t values[5]);
 
 static void checked(uc_err error)
 {
@@ -93,10 +169,13 @@ static void *preempt_timer(void *unused)
         REQUIRE(error == 0 || error == ETIMEDOUT);
         /* Async stopping must finish the current guest instruction. The lock
          * excludes register/cache operations and engine destruction. */
-        if (timer_active && !timer_stopping) {
-            checked(nce_uc_emu_stop_at_tb(engine));
+        for (unsigned i = 0; i < execution_count && !timer_stopping; ++i) {
+            ExecutionCpu *execution = &executions[i];
+            if (!execution->timer_active)
+                continue;
+            checked(nce_uc_emu_stop_at_tb(execution->engine));
 #ifdef NCE_DIRECT_EXECUTION
-            nce_direct_request_stop(direct_engine);
+            nce_direct_request_stop(execution->direct_engine);
 #endif
         }
     }
@@ -104,12 +183,35 @@ static void *preempt_timer(void *unused)
     return NULL;
 }
 
+static uint64_t clock_ns(clockid_t clock)
+{
+    struct timespec value;
+    REQUIRE(!clock_gettime(clock, &value));
+    return (uint64_t)value.tv_sec * 1000000000 + value.tv_nsec;
+}
+
 static void mark_executing(bool active)
 {
-    if (!timer_mode)
+    if (!timer_mode && !parallel_profile)
         return;
     REQUIRE(pthread_mutex_lock(&timer_lock) == 0);
-    timer_active = active;
+    if (parallel_profile) {
+        uint64_t now = clock_ns(CLOCK_MONOTONIC);
+        unsigned running = 0;
+        for (unsigned i = 0; i < execution_count; ++i)
+            running += executions[i].timer_active;
+        if (running)
+            profile_union_ns += now - profile_last_ns;
+        if (running > 1)
+            profile_overlap_ns += now - profile_last_ns;
+        profile_last_ns = now;
+        uint64_t thread = clock_ns(CLOCK_THREAD_CPUTIME_ID);
+        if (active)
+            execution->run_started_cpu_ns = thread;
+        else
+            execution->run_cpu_ns += thread - execution->run_started_cpu_ns;
+    }
+    execution->timer_active = active;
     REQUIRE(pthread_mutex_unlock(&timer_lock) == 0);
 }
 
@@ -153,8 +255,8 @@ static void read_view_destroy(void *opaque)
     read_view_revocations += view->revocations;
     read_views_live -= view->size;
     REQUIRE(!nce_read_view_destroy(view));
-    if (translation->read_view == view)
-        translation->read_view = NULL;
+    if (execution->view->read_view == view)
+        execution->view->read_view = NULL;
     free(view);
     ++read_views_destroyed;
 }
@@ -170,7 +272,19 @@ static int watch_disk_io(unsigned int index, unsigned int operation, unsigned lo
         /* Kernel copyout from pread reports EFAULT instead of a user write fault. */
         REQUIRE(nce_code_watch_invalidate(code_watch, first, end - first) == 0);
     }
+#ifdef NCE_SMP
+    bool writing = operation == 0 && size && start < NCE_RAM_SIZE;
+    if (writing)
+        exclusive_begin();
+    int result = original_disk_io(index, operation, offset, buffer, size);
+    if (writing) {
+        kernel_written((uintptr_t)buffer, size);
+        exclusive_end();
+    }
+    return result;
+#else
     return original_disk_io(index, operation, offset, buffer, size);
+#endif
 }
 
 static void watch_page_free(void *address, unsigned long size)
@@ -193,7 +307,8 @@ static void shmem_init(unsigned long size)
     REQUIRE(ram != MAP_FAILED);
     if (translation)
         translation->ram = (uintptr_t)ram;
-    checked(uc_mem_map_ptr(engine, 0, size, UC_PROT_ALL, ram));
+    for (unsigned i = 0; i < execution_count; ++i)
+        checked(uc_mem_map_ptr(executions[i].engine, 0, size, UC_PROT_ALL, ram));
 #ifdef NCE_DIRECT_EXECUTION
     if (direct_code_watch) {
         code_watch = nce_code_watch_create(ram, (void *)(base + NCE_USER_SIZE), size);
@@ -204,6 +319,9 @@ static void shmem_init(unsigned long size)
 
 static int shmem_reclaim(unsigned long offset, unsigned long size)
 {
+#ifdef NCE_SMP
+    exclusive_begin();
+#endif
     REQUIRE(!(offset % PAGE) && !(size % PAGE) && offset <= NCE_RAM_SIZE && size <= NCE_RAM_SIZE - offset);
 #ifdef NCE_DIRECT_EXECUTION
     if (code_watch)
@@ -212,11 +330,19 @@ static int shmem_reclaim(unsigned long offset, unsigned long size)
     REQUIRE(mmap(ram + offset, size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANON | MAP_FIXED, -1, 0) == ram + offset);
     remap((void *)(base + NCE_USER_SIZE + offset), ram + offset, size, PROT_READ | PROT_WRITE);
     if (translation) {
-        for (unsigned long i = offset / PAGE; i < (offset + size) / PAGE; ++i)
-            translation->code_pages[i / 64] |= 1UL << (i % 64);
-        ++translation->code;
+        for (unsigned cpu = 0; cpu < execution_count; ++cpu) {
+            ExecutionCpu *execution = &executions[cpu];
+            for (unsigned long i = offset / PAGE; i < (offset + size) / PAGE; ++i)
+                execution->view->code_pages[i / 64] |= 1UL << (i % 64);
+            ++execution->view->code;
+        }
     } else
         ++code_generation;
+#ifdef NCE_SMP
+    for (unsigned long page = offset / PAGE; page < (offset + size) / PAGE; ++page)
+        REQUIRE(!translation->code_guard[page]);
+    exclusive_end();
+#endif
     return 0;
 }
 
@@ -280,24 +406,19 @@ static int revoke_pages(void *address, unsigned long size)
     return 0;
 }
 
-static struct {
-    int kind, access;
-    uint64_t address;
-} event;
-
 static void fault_event(uint64_t address, uc_mem_type access)
 {
-    event.kind = 2;
-    event.address = address;
-    event.access = access == UC_MEM_WRITE || access == UC_MEM_WRITE_PROT || access == UC_MEM_WRITE_UNMAPPED ? 1 : access == UC_MEM_FETCH || access == UC_MEM_FETCH_PROT || access == UC_MEM_FETCH_UNMAPPED ? NCE_FAULT_EXEC
-                                                                                                                                                                                                           : 0;
+    execution->event.kind = 2;
+    execution->event.address = address;
+    execution->event.access = access == UC_MEM_WRITE || access == UC_MEM_WRITE_PROT || access == UC_MEM_WRITE_UNMAPPED ? 1 : access == UC_MEM_FETCH || access == UC_MEM_FETCH_PROT || access == UC_MEM_FETCH_UNMAPPED ? NCE_FAULT_EXEC
+                                                                                                                                                                                                                      : 0;
 }
 
 static bool fill(uc_engine *uc, uint64_t address, uc_mem_type access, uc_tlb_entry *entry, void *opaque)
 {
     (void)uc;
     (void)opaque;
-    ++fills;
+    ++execution->fills;
     unsigned permission = access == UC_MEM_WRITE ? UC_PROT_WRITE : access == UC_MEM_FETCH ? UC_PROT_EXEC
                                                                                           : UC_PROT_READ;
     if (address >= base && address < base + NCE_USER_SIZE) {
@@ -313,10 +434,25 @@ static bool fill(uc_engine *uc, uint64_t address, uc_mem_type access, uc_tlb_ent
     return false;
 }
 
+#ifdef NCE_SMP
+static void fallback_write(uc_engine *uc, uc_mem_type type, uint64_t address, int size, int64_t value, void *opaque)
+{
+    (void)uc;
+    (void)type;
+    (void)value;
+    (void)opaque;
+    /* Unicorn memory hooks report physical addresses after virtual TLB lookup.
+     * This engine maps its shared RAM block at physical address zero. */
+    if (size <= 0 || address >= NCE_RAM_SIZE || (unsigned)size > NCE_RAM_SIZE - address)
+        return;
+    kernel_written(base + NCE_USER_SIZE + address, (unsigned)size);
+}
+#endif
+
 static void interrupt(uc_engine *uc, uint32_t number, void *opaque)
 {
     (void)opaque;
-    event.kind = number == 2 ? 1 : 3;
+    execution->event.kind = number == 2 ? 1 : 3;
     checked(uc_emu_stop(uc));
 }
 
@@ -342,7 +478,7 @@ static void registers(Process *p, bool save)
     ids[count] = UC_ARM64_REG_TPIDR_EL0;
     values[count++] = &p->tls;
     REQUIRE(count == 69);
-    checked(save ? uc_reg_read_batch(engine, ids, values, count) : uc_reg_write_batch(engine, ids, values, count));
+    checked(save ? uc_reg_read_batch(execution->engine, ids, values, count) : uc_reg_write_batch(execution->engine, ids, values, count));
 }
 
 #ifdef NCE_DIRECT_EXECUTION
@@ -360,7 +496,7 @@ static unsigned direct_setting(const char *name, unsigned fallback)
 static void *direct_map_page(void *opaque, uint64_t address, bool write)
 {
     (void)opaque;
-    ++fills;
+    ++execution->fills;
     unsigned permission = write ? LKL_PROT_WRITE : LKL_PROT_READ;
     unsigned long value = translate_user(address, permission);
     if (!(value & permission))
@@ -401,20 +537,20 @@ static bool direct_execute(Process *p, unsigned long generation)
     state.exclusive_address = UINT64_MAX;
     state.access_flags = NCE_DIRECT_UNALIGNED | NCE_DIRECT_PAC_HINT_NOP | NCE_DIRECT_CRC |
                          NCE_DIRECT_LSE | NCE_DIRECT_AES | NCE_DIRECT_SHA1 | NCE_DIRECT_SHA256 | NCE_DIRECT_DC_ZVA64;
-    NceDirectPageTable table = {(const uint64_t *)translation->pgd, base, NCE_USER_SIZE,
+    NceDirectPageTable table = {(const uint64_t *)execution->view->pgd, base, NCE_USER_SIZE,
                                 base + NCE_USER_SIZE, ram, NCE_RAM_SIZE};
-    NceReadView *view = direct_read_views ? translation->read_view : NULL;
+    NceReadView *view = direct_read_views ? execution->view->read_view : NULL;
     REQUIRE(!direct_read_views || view);
     NceDirectMemory memory = {NULL, direct_map_page, direct_map_code, generation, 14,
                               direct_pte_memory ? &table : NULL, direct_pte_refill,
-                              direct_flat ? (const struct nce_direct_flat_page *)translation->flat : NULL,
+                              direct_flat ? (const struct nce_direct_flat_page *)execution->view->flat : NULL,
                               direct_code_watch ? direct_code_version : NULL,
                               direct_code_watch ? nce_code_watch_epoch(code_watch) : 0,
                               view ? view->base : NULL};
     REQUIRE(!direct_flat || memory.flat_pages);
     uint64_t address = 0;
-    ++direct_calls;
-    NceDirectExit result = nce_direct_run(direct_engine, &state, memory,
+    ++execution->direct_calls;
+    NceDirectExit result = nce_direct_run(execution->direct_engine, &state, memory,
                                           timer_mode ? (UINT64_C(1) << 60) : instruction_batch, &address);
     memcpy(p->regs.x, state.x, sizeof(state.x));
     memcpy(p->regs.vector, state.v, sizeof(state.v));
@@ -432,7 +568,7 @@ static bool direct_execute(Process *p, unsigned long generation)
                                                                                                                     : UC_MEM_READ);
             return true;
         }
-        ++direct_code_writes;
+        ++execution->direct_code_writes;
     } else
         REQUIRE(result == NCE_DIRECT_UNSUPPORTED);
     const uint32_t *code = direct_map_code(NULL, state.pc & ~UINT64_C(4095));
@@ -440,15 +576,15 @@ static bool direct_execute(Process *p, unsigned long generation)
     uint32_t word = code[(state.pc & 4095) / 4];
     if ((word & 0xffe0001f) == 0xd4000001) {
         p->regs.pc += 4;
-        event.kind = 1;
+        execution->event.kind = 1;
         return true;
     }
-    ++direct_fallbacks;
+    ++execution->direct_fallbacks;
     unsigned slot = ((word >> 2) ^ (word >> 16)) % 256;
     for (unsigned i = 0; i < 256; ++i, slot = (slot + 1) % 256) {
-        if (!direct_missing[slot].count || direct_missing[slot].instruction == word) {
-            direct_missing[slot].instruction = word;
-            ++direct_missing[slot].count;
+        if (!execution->direct_missing[slot].count || execution->direct_missing[slot].instruction == word) {
+            execution->direct_missing[slot].instruction = word;
+            ++execution->direct_missing[slot].count;
             break;
         }
     }
@@ -467,20 +603,21 @@ static void *user_clone(void *parent, unsigned long sp, unsigned long tls, unsig
         p->regs.sp = sp;
     if (flags & 0x80000)
         p->tls = tls;
-    ++allocated;
+    __atomic_fetch_add(&allocated, 1, __ATOMIC_RELAXED);
     return p;
 }
 
 static void user_free(void *p)
 {
-    ++freed;
+    __atomic_fetch_add(&freed, 1, __ATOMIC_RELAXED);
     free(p);
 }
 
-static void user_switch(void *p, unsigned cpu, unsigned cpus)
+static void user_switch(void *p, unsigned index, unsigned count)
 {
     (void)p;
-    REQUIRE(cpu == 0 && cpus == 1);
+    REQUIRE(index < execution_count && count == execution_count);
+    execution = &executions[index];
 }
 
 void nce_process_thread_exit(void) {}
@@ -498,46 +635,48 @@ static void user_exec(void *opaque, unsigned long entry, unsigned long stack)
 
 static void prepare_unicorn(unsigned long current_maps)
 {
+    /* Leaving Direct may migrate the task to another CPU before the fallback
+     * acquires the writer lock. Clear the event owned by the selected CPU. */
+    memset(&execution->event, 0, sizeof(execution->event));
     /* Each entry starts with no exclusive reservation. Linux may have
      * switched threads or installed a signal frame during the previous exit. */
-    checked(uc_context_restore(engine, empty_cpu));
-    static unsigned long seen_maps, seen_code, seen_kernel_code;
-    unsigned long current_kernel_code = translation ? translation->code : 0;
-    if (seen_code != code_generation || seen_kernel_code != current_kernel_code) {
-        bool all = seen_code != code_generation || !page_invalidation || !translation;
+    checked(uc_context_restore(execution->engine, execution->empty_cpu));
+    unsigned long current_kernel_code = translation ? execution->view->code : 0;
+    if (execution->seen_code != code_generation || execution->seen_kernel_code != current_kernel_code) {
+        bool all = execution->seen_code != code_generation || !page_invalidation || !translation;
         if (all) {
-            checked(uc_ctl_flush_tb(engine));
-            ++cache_flushes;
+            checked(uc_ctl_flush_tb(execution->engine));
+            ++execution->cache_flushes;
         }
         if (translation) {
             for (unsigned i = 0; i < NCE_TRANSLATION_CODE_WORDS; ++i) {
-                unsigned long bits = translation->code_pages[i];
+                unsigned long bits = execution->view->code_pages[i];
                 while (bits && !all) {
                     unsigned bit = __builtin_ctzl(bits);
-                    checked(nce_uc_invalidate_ram(engine, (i * 64UL + bit) * PAGE, PAGE));
-                    ++cache_pages;
+                    checked(nce_uc_invalidate_ram(execution->engine, (i * 64UL + bit) * PAGE, PAGE));
+                    ++execution->cache_pages;
                     bits &= bits - 1;
                 }
-                translation->code_pages[i] = 0;
+                execution->view->code_pages[i] = 0;
             }
         }
-        seen_code = code_generation;
-        seen_kernel_code = current_kernel_code;
+        execution->seen_code = code_generation;
+        execution->seen_kernel_code = current_kernel_code;
     }
-    if (seen_maps != current_maps) {
-        unsigned long length = translation ? translation->tlb_end - translation->tlb_start : 0;
+    if (execution->seen_maps != current_maps) {
+        unsigned long length = translation ? execution->view->tlb_end - execution->view->tlb_start : 0;
         if (page_tlb_invalidation && !length) {
-            ++tlb_inactive_skips;
+            ++execution->tlb_inactive_skips;
         } else if (page_tlb_invalidation && length <= 64 * PAGE) {
-            checked(nce_uc_invalidate_tlb(engine, translation->tlb_start, length));
-            tlb_pages += length / PAGE;
+            checked(nce_uc_invalidate_tlb(execution->engine, execution->view->tlb_start, length));
+            execution->tlb_pages += length / PAGE;
         } else {
-            checked(uc_ctl_flush_tlb(engine));
-            ++tlb_flushes;
+            checked(uc_ctl_flush_tlb(execution->engine));
+            ++execution->tlb_flushes;
         }
         if (translation)
-            translation->tlb_start = translation->tlb_end = 0;
-        seen_maps = current_maps;
+            execution->view->tlb_start = execution->view->tlb_end = 0;
+        execution->seen_maps = current_maps;
     }
 }
 
@@ -565,9 +704,14 @@ static void user_run(void *opaque)
         p->path = NULL;
     }
     for (;;) {
+#ifdef NCE_SMP
+        unsigned long irq_flags = enter_guest();
+        bool exclusive = false;
+#else
         prepare_user();
-        unsigned long current_maps = translation ? translation->mappings : map_generation;
-        memset(&event, 0, sizeof(event));
+#endif
+        unsigned long current_maps = translation ? execution->view->mappings : map_generation;
+        memset(&execution->event, 0, sizeof(execution->event));
         bool handled = false;
 #ifdef NCE_DIRECT_EXECUTION
         mark_executing(true);
@@ -576,28 +720,40 @@ static void user_run(void *opaque)
 #endif
         uc_err error = UC_ERR_OK;
         if (!handled) {
+#ifdef NCE_SMP
+            leave_guest(irq_flags);
+            exclusive_begin();
+            exclusive = true;
+            current_maps = execution->view->mappings;
+#endif
             prepare_unicorn(current_maps);
             registers(p, false);
             mark_executing(true);
-            error = uc_emu_start(engine, p->regs.pc, 0, 0, timer_mode ? 0 : instruction_batch);
+            error = uc_emu_start(execution->engine, p->regs.pc, 0, 0, timer_mode ? 0 : instruction_batch);
             mark_executing(false);
             registers(p, true);
         }
         /* Copy callback state before entering Linux: a blocking syscall or
          * page fault can let another Linux thread use this same engine. */
-        int kind = event.kind, access = event.access;
-        unsigned long address = event.address;
+        int kind = execution->event.kind, access = execution->event.access;
+        unsigned long address = execution->event.address;
+#ifdef NCE_SMP
+        if (exclusive)
+            exclusive_end();
+        else
+            leave_guest(irq_flags);
+#endif
         if (kind == 1) {
             long args[6];
             memcpy(args, p->regs.x, sizeof(args));
             long number = p->regs.x[8];
-            ++calls;
+            ++execution->calls;
             long result = run_syscall(number, args);
             if (number == NCE_SYS_PUBLISH_CODE && !translation)
                 ++code_generation;
             user_return(number, result, args[0]);
         } else if (kind == 2) {
-            ++faults;
+            ++execution->faults;
             int result = page_fault(address, access);
             if (result) {
                 fprintf(stderr, "guest fault pc=%lx address=%lx access=%d result=%d\n", p->regs.pc, address, access, result);
@@ -610,77 +766,10 @@ static void user_run(void *opaque)
                               (instruction & 0xffe0001f) == 0xd4200000;
             user_fault(p->regs.pc, breakpoint ? 2 : 1);
         } else {
-            ++preemptions;
+            ++execution->preemptions;
             user_preempt();
         }
     }
-}
-
-/* Runtime ELF placement retains original code and headers. The execution address
- * range and minimum library alignment bound the number of table entries. */
-typedef struct {
-    char *path;
-    unsigned long offset, base, span;
-} ElfLayout;
-static ElfLayout *layouts;
-static unsigned layout_count, layout_capacity;
-static unsigned long cursor;
-
-static unsigned long elf_layout(const char *path, unsigned long offset, const void *raw_header, const void *raw_phdrs)
-{
-    const Elf64_Ehdr *header = raw_header;
-    const Elf64_Phdr *phdrs = raw_phdrs;
-    if (memcmp(header->e_ident, "\177ELF\2\1\1", 7) || header->e_type != ET_DYN || header->e_machine != EM_AARCH64 ||
-        header->e_phentsize != sizeof(*phdrs) || !header->e_phnum || header->e_phnum > 128 || offset % PAGE)
-        return 0;
-    // Bionic CFI assigns one library to each 256 KiB shadow block.
-    unsigned long span = 0, alignment = 1UL << 18;
-    for (unsigned i = 0; i < header->e_phnum; ++i) {
-        if (phdrs[i].p_type != PT_LOAD)
-            continue;
-        unsigned long align = phdrs[i].p_align;
-        if ((align && (align & (align - 1))) || align > 2 * 1024 * 1024 || phdrs[i].p_filesz > phdrs[i].p_memsz)
-            return 0;
-        if (align > alignment)
-            alignment = align;
-        if (phdrs[i].p_vaddr > NCE_EXEC_DATA_OFFSET || phdrs[i].p_memsz > NCE_EXEC_DATA_OFFSET - phdrs[i].p_vaddr ||
-            (phdrs[i].p_vaddr - phdrs[i].p_offset) % PAGE)
-            return 0;
-        unsigned long end = (phdrs[i].p_vaddr + phdrs[i].p_memsz + PAGE - 1) & ~(PAGE - 1);
-        if (end > span)
-            span = end;
-    }
-    for (unsigned i = 0; i < layout_count; ++i)
-        if (offset == layouts[i].offset && !strcmp(path, layouts[i].path))
-            return span == layouts[i].span && !(layouts[i].base % alignment) ? layouts[i].base : 0;
-    unsigned long start = (base + cursor + alignment - 1) & ~(alignment - 1);
-    if (!span || start - base > NCE_EXEC_DATA_OFFSET || span > NCE_EXEC_DATA_OFFSET - (start - base))
-        return 0;
-    if (layout_count == layout_capacity) {
-        unsigned capacity = layout_capacity ? layout_capacity * 2 : 16;
-        REQUIRE(capacity <= NCE_EXEC_DATA_OFFSET / (1UL << 18));
-        ElfLayout *grown = realloc(layouts, capacity * sizeof(*layouts));
-        REQUIRE(grown);
-        layouts = grown;
-        layout_capacity = capacity;
-    }
-    unsigned index = layout_count++;
-    layouts[index].path = strdup(path);
-    REQUIRE(layouts[index].path);
-    layouts[index].offset = offset;
-    layouts[index].base = start;
-    layouts[index].span = span;
-    cursor = start - base + span;
-    printf("{\"phase\":\"runtime_elf\",\"path\":\"%s\",\"span_bytes\":%lu}\n", path, span);
-    return layouts[index].base;
-}
-
-static unsigned long elf_offset(unsigned long address)
-{
-    for (unsigned i = 0; i < layout_count; ++i)
-        if (address >= layouts[i].base && address - layouts[i].base < layouts[i].span)
-            return layouts[i].offset;
-    return 0;
 }
 
 static int user_reserved(unsigned long address, unsigned long size)
@@ -695,6 +784,25 @@ unsigned long translation_linux_setup(void *kernel, unsigned long copy_user_offs
 {
     REQUIRE((translate_offset != 0) == (state != NULL));
     translation = state;
+#ifdef NCE_SMP
+    REQUIRE(translation && execution_count == 2);
+    enter_guest = kernel + NCE_TRANSLATION_ENTER;
+    leave_guest = kernel + NCE_TRANSLATION_LEAVE;
+    exclusive_begin = kernel + NCE_TRANSLATION_EXCLUSIVE;
+    exclusive_end = kernel + NCE_WINDOW_UNLOCK;
+    kernel_written = kernel + NCE_TRANSLATION_WRITTEN;
+    nce_lkl_host.user_prepare = user_prepare;
+    nce_lkl_host.user_interrupt = user_interrupt;
+    translation->code_guard = calloc(NCE_RAM_SIZE / PAGE, sizeof(unsigned long));
+    REQUIRE(translation->code_guard);
+#endif
+    if (translation)
+        translation->cpu_count = execution_count;
+    REQUIRE(execution_count && execution_count <= NCE_TRANSLATION_MAX_CPUS);
+    for (unsigned i = 0; i < execution_count; ++i) {
+        executions[i].index = i;
+        executions[i].view = translation ? &translation->cpus[i] : NULL;
+    }
     _Static_assert(NCE_TRANSLATION_CODE_WORDS * 64 == NCE_RAM_SIZE / PAGE, "RAM page bitmap size");
     const char *invalidation = getenv("NCE_TRANSLATION_CACHE");
     REQUIRE(!invalidation || !strcmp(invalidation, "full") || !strcmp(invalidation, "pages"));
@@ -721,6 +829,17 @@ unsigned long translation_linux_setup(void *kernel, unsigned long copy_user_offs
     timer_mode = preemption && !strcmp(preemption, "timer");
     printf("{\"config\":\"translation_preemption\",\"mode\":\"%s\",\"instructions\":%lu,\"timer_interval_ns\":2000000}\n",
            timer_mode ? "timer" : "instructions", instruction_batch);
+    const char *profile = getenv("NCE_TRANSLATION_PARALLEL_PROFILE");
+    REQUIRE(!profile || !strcmp(profile, "0") || !strcmp(profile, "1"));
+    parallel_profile = profile && !strcmp(profile, "1");
+    const char *access = getenv("NCE_TRANSLATION_UACCESS_STOP");
+    REQUIRE(!access || !strcmp(access, "all") || !strcmp(access, "code"));
+    bool code_only = access && !strcmp(access, "code");
+    REQUIRE(!code_only || execution_count == 2);
+    if (translation)
+        translation->uaccess_code_only = code_only;
+    printf("{\"config\":\"translation_parallel\",\"cpus\":%u,\"profile\":%s,\"uaccess_stop\":\"%s\"}\n",
+           execution_count, parallel_profile ? "true" : "false", code_only ? "code" : "all");
     base = (uintptr_t)mmap(NULL, RESERVATION, PROT_NONE, MAP_PRIVATE | MAP_ANON, -1, 0);
     REQUIRE((void *)base != MAP_FAILED && base + RESERVATION < NCE_HOST_ADDRESS_LIMIT);
     if (!translation) {
@@ -735,79 +854,96 @@ unsigned long translation_linux_setup(void *kernel, unsigned long copy_user_offs
     prepare_user = kernel + NCE_PREPARE_USER;
     copy_user = kernel + copy_user_offset;
     translate_user = translate_offset ? kernel + translate_offset : NULL;
-    checked(uc_open(UC_ARCH_ARM64, UC_MODE_ARM, &engine));
-    checked(uc_ctl_set_cpu_model(engine, UC_CPU_ARM64_MAX));
-    checked(uc_ctl_set_page_size(engine, PAGE));
+#ifdef NCE_SMP
+    translate_user = lookup_guest;
+#endif
     const char *cache_text = getenv("NCE_TRANSLATION_CACHE_MIB");
     unsigned long cache_mib = cache_text ? strtoul(cache_text, &end, 10) : 16;
     REQUIRE(!cache_text || (cache_text[0] >= '0' && cache_text[0] <= '9' && !*end));
     REQUIRE(cache_mib == 16 || cache_mib == 64 || cache_mib == 128);
     unsigned long cache_bytes = cache_mib * 1024 * 1024;
+    for (unsigned cpu_index = 0; cpu_index < execution_count; ++cpu_index) {
+        ExecutionCpu *execution = &executions[cpu_index];
+        checked(uc_open(UC_ARCH_ARM64, UC_MODE_ARM, &execution->engine));
+        checked(uc_ctl_set_cpu_model(execution->engine, UC_CPU_ARM64_MAX));
+        checked(uc_ctl_set_page_size(execution->engine, PAGE));
 #ifdef NCE_DIRECT_EXECUTION
-    REQUIRE(translation && translate_user);
-    unsigned selective = direct_setting("NCE_DIRECT_SELECTIVE_WRITES", 0);
-    unsigned reuse = direct_setting("NCE_DIRECT_REUSE_CODE_CHECKS", 0);
-    unsigned watch = direct_setting("NCE_DIRECT_CODE_WATCH", 0);
-    unsigned crossing = direct_setting("NCE_DIRECT_CROSS_PAGE", 0);
-    unsigned epochs = direct_setting("NCE_DIRECT_ROUTE_EPOCHS", 0);
-    unsigned retain = direct_setting("NCE_DIRECT_RETAIN_ROUTES", 0);
-    unsigned groups = direct_setting("NCE_DIRECT_MEMORY_GROUPS", 0);
-    unsigned native = direct_setting("NCE_DIRECT_NATIVE_EXCLUSIVE", 0);
-    REQUIRE(watch <= 1 && crossing <= 1 && epochs <= 1 && retain <= 1 && groups <= 1 && native <= 1);
-    REQUIRE(!retain || (watch && epochs));
-    direct_code_watch = watch;
-    const char *direct_memory = getenv("NCE_DIRECT_MEMORY");
-    REQUIRE(!direct_memory || !strcmp(direct_memory, "cached") || !strcmp(direct_memory, "pte") || !strcmp(direct_memory, "refill") || !strcmp(direct_memory, "flat") || !strcmp(direct_memory, "view"));
-    direct_pte_memory = direct_memory && strcmp(direct_memory, "cached");
-    direct_pte_refill = direct_memory && !strcmp(direct_memory, "refill");
-    direct_read_views = direct_memory && !strcmp(direct_memory, "view");
-    direct_flat = direct_read_views || (direct_memory && !strcmp(direct_memory, "flat"));
-    translation->flat_enabled = direct_flat;
-    if (direct_read_views) {
-        REQUIRE(!nce_direct_install_read_faults());
-        translation->read_view_create = read_view_create;
-        translation->read_view_update = read_view_update;
-        translation->read_view_destroy = read_view_destroy;
-    }
-    REQUIRE(selective <= 1 && reuse <= 1);
-    NceDirectConfig direct_config = {cache_bytes, direct_setting("NCE_DIRECT_MAPPING_ENTRIES", 256),
-                                     direct_setting("NCE_DIRECT_ROUTE_ENTRIES", 256), selective != 0, reuse != 0, crossing != 0, epochs != 0, retain != 0, groups != 0, native != 0};
-    REQUIRE(!direct_pte_memory || direct_pte_refill || (direct_config.mapping_entries == 256 && !selective));
-    direct_engine = nce_direct_create(direct_config);
-    REQUIRE(direct_engine);
-    printf("{\"config\":\"translation_execution\",\"engine\":\"direct\",\"direct_cache_bytes\":%lu,\"data_page_bytes\":16384,\"mapping_entries\":%u,\"route_entries\":%u,\"selective_writes\":%s,\"reuse_code_checks\":%s,\"memory\":\"%s\",\"code_watch\":%s,\"cross_page\":%s,\"route_epochs\":%s,\"retain_routes\":%s,\"memory_groups\":%s,\"native_exclusive\":%s}\n",
-           cache_bytes, direct_config.mapping_entries, direct_config.route_entries, direct_config.selective_writes ? "true" : "false", direct_config.reuse_code_checks ? "true" : "false", direct_memory ? direct_memory : "cached", direct_code_watch ? "true" : "false", crossing ? "true" : "false", epochs ? "true" : "false", retain ? "true" : "false", groups ? "true" : "false", native ? "true" : "false");
-    if (direct_code_watch) {
-        original_page_free = nce_lkl_host.page_free;
-        nce_lkl_host.page_free = watch_page_free;
-        original_disk_io = nce_lkl_host.disk_io;
-        nce_lkl_host.disk_io = watch_disk_io;
-    }
+        REQUIRE(translation && translate_user);
+        unsigned selective = direct_setting("NCE_DIRECT_SELECTIVE_WRITES", 0);
+        unsigned reuse = direct_setting("NCE_DIRECT_REUSE_CODE_CHECKS", 0);
+        unsigned watch = direct_setting("NCE_DIRECT_CODE_WATCH", 0);
+        unsigned crossing = direct_setting("NCE_DIRECT_CROSS_PAGE", 0);
+        unsigned epochs = direct_setting("NCE_DIRECT_ROUTE_EPOCHS", 0);
+        unsigned retain = direct_setting("NCE_DIRECT_RETAIN_ROUTES", 0);
+        unsigned groups = direct_setting("NCE_DIRECT_MEMORY_GROUPS", 0);
+        unsigned native = direct_setting("NCE_DIRECT_NATIVE_EXCLUSIVE", 0);
+        unsigned tables = direct_setting("NCE_DIRECT_VECTOR_TABLE", 0);
+        REQUIRE(tables <= 1);
+        REQUIRE(watch <= 1 && crossing <= 1 && epochs <= 1 && retain <= 1 && groups <= 1 && native <= 1);
+        REQUIRE(!retain || (watch && epochs));
+        direct_code_watch = watch;
+        const char *direct_memory = getenv("NCE_DIRECT_MEMORY");
+        REQUIRE(!direct_memory || !strcmp(direct_memory, "cached") || !strcmp(direct_memory, "pte") || !strcmp(direct_memory, "refill") || !strcmp(direct_memory, "flat") || !strcmp(direct_memory, "view"));
+        direct_pte_memory = direct_memory && strcmp(direct_memory, "cached");
+        direct_pte_refill = direct_memory && !strcmp(direct_memory, "refill");
+        direct_read_views = direct_memory && !strcmp(direct_memory, "view");
+        direct_flat = direct_read_views || (direct_memory && !strcmp(direct_memory, "flat"));
+        translation->flat_enabled = direct_flat;
+        if (direct_read_views && cpu_index == 0) {
+            REQUIRE(!nce_direct_install_read_faults());
+            translation->read_view_create = read_view_create;
+            translation->read_view_update = read_view_update;
+            translation->read_view_destroy = read_view_destroy;
+        }
+        REQUIRE(selective <= 1 && reuse <= 1);
+        NceDirectConfig direct_config = {cache_bytes, direct_setting("NCE_DIRECT_MAPPING_ENTRIES", 256),
+                                         direct_setting("NCE_DIRECT_ROUTE_ENTRIES", 256), selective != 0, reuse != 0, crossing != 0, epochs != 0, retain != 0, groups != 0, native != 0, tables != 0};
+        REQUIRE(!direct_pte_memory || direct_pte_refill || (direct_config.mapping_entries == 256 && !selective));
+        execution->direct_engine = nce_direct_create(direct_config);
+        REQUIRE(execution->direct_engine);
+#ifdef NCE_SMP
+        REQUIRE(direct_flat && !direct_read_views && !direct_code_watch && native && !retain);
+        nce_direct_set_code_guard(execution->direct_engine, (const uint64_t *)translation->code_guard, NCE_RAM_SIZE / PAGE);
+#endif
+        printf("{\"cpu\":%u,\"config\":\"translation_execution\",\"engine\":\"direct\",\"direct_cache_bytes\":%lu,\"data_page_bytes\":16384,\"mapping_entries\":%u,\"route_entries\":%u,\"selective_writes\":%s,\"reuse_code_checks\":%s,\"memory\":\"%s\",\"code_watch\":%s,\"cross_page\":%s,\"route_epochs\":%s,\"retain_routes\":%s,\"memory_groups\":%s,\"native_exclusive\":%s,\"vector_table\":%s}\n",
+               execution->index, cache_bytes, direct_config.mapping_entries, direct_config.route_entries, direct_config.selective_writes ? "true" : "false", direct_config.reuse_code_checks ? "true" : "false", direct_memory ? direct_memory : "cached", direct_code_watch ? "true" : "false", crossing ? "true" : "false", epochs ? "true" : "false", retain ? "true" : "false", groups ? "true" : "false", native ? "true" : "false", tables ? "true" : "false");
+        if (direct_code_watch && cpu_index == 0) {
+            original_page_free = nce_lkl_host.page_free;
+            nce_lkl_host.page_free = watch_page_free;
+        }
+        if ((direct_code_watch || execution_count > 1) && cpu_index == 0) {
+            original_disk_io = nce_lkl_host.disk_io;
+            nce_lkl_host.disk_io = watch_disk_io;
+        }
 #else
-    printf("{\"config\":\"translation_execution\",\"engine\":\"unicorn\"}\n");
+        printf("{\"cpu\":%u,\"config\":\"translation_execution\",\"engine\":\"unicorn\"}\n", execution->index);
 #endif
-    // TLB mode initializes Unicorn; buffer size must be supplied before that call.
-    checked(uc_ctl_set_tcg_buffer_size(engine, (uint32_t)cache_bytes));
-    checked(uc_ctl_tlb_mode(engine, UC_TLB_VIRTUAL));
-    const char *fastpath = getenv("NCE_TRANSLATION_LINUX_FASTPATH");
-    REQUIRE(!fastpath || !strcmp(fastpath, "0") || !strcmp(fastpath, "1"));
-    checked(nce_uc_set_linux_memory(engine, fastpath && !strcmp(fastpath, "1")));
-    uint64_t stats[5];
-    nce_uc_cache_stats_aarch64(engine, stats);
-    REQUIRE(stats[4] <= cache_bytes && cache_bytes - stats[4] < 65536);
-    printf("{\"config\":\"translation_cache_settings\",\"cache_bytes\":%lu,\"actual_cache_bytes\":%llu,\"invalidation\":\"%s\",\"linux_fastpath\":%s}\n",
-           cache_bytes, stats[4], page_invalidation ? "pages" : "full",
-           fastpath && !strcmp(fastpath, "1") ? "true" : "false");
+        // TLB mode initializes Unicorn; buffer size must be supplied before that call.
+        checked(uc_ctl_set_tcg_buffer_size(execution->engine, (uint32_t)cache_bytes));
+        checked(uc_ctl_tlb_mode(execution->engine, UC_TLB_VIRTUAL));
+        const char *fastpath = getenv("NCE_TRANSLATION_LINUX_FASTPATH");
+        REQUIRE(!fastpath || !strcmp(fastpath, "0") || !strcmp(fastpath, "1"));
+        checked(nce_uc_set_linux_memory(execution->engine, fastpath && !strcmp(fastpath, "1")));
+        uint64_t stats[5];
+        nce_uc_cache_stats_aarch64(execution->engine, stats);
+        REQUIRE(stats[4] <= cache_bytes && cache_bytes - stats[4] < 65536);
+        printf("{\"cpu\":%u,\"config\":\"translation_cache_settings\",\"cache_bytes\":%lu,\"actual_cache_bytes\":%llu,\"invalidation\":\"%s\",\"linux_fastpath\":%s}\n",
+               execution->index, cache_bytes, stats[4], page_invalidation ? "pages" : "full",
+               fastpath && !strcmp(fastpath, "1") ? "true" : "false");
 #ifdef NCE_DIRECT_EXECUTION
-    uc_arm64_cp_reg dczid = {.op0 = 3, .op1 = 3, .crn = 0, .crm = 0, .op2 = 7};
-    checked(uc_reg_read(engine, UC_ARM64_REG_CP_REG, &dczid));
-    REQUIRE(dczid.val == 4);
+        uc_arm64_cp_reg dczid = {.op0 = 3, .op1 = 3, .crn = 0, .crm = 0, .op2 = 7};
+        checked(uc_reg_read(execution->engine, UC_ARM64_REG_CP_REG, &dczid));
+        REQUIRE(dczid.val == 4);
 #endif
-    checked(uc_context_alloc(engine, &empty_cpu));
-    checked(uc_context_save(engine, empty_cpu));
-    uc_hook hook;
-    checked(uc_hook_add(engine, &hook, UC_HOOK_TLB_FILL, fill, NULL, 1, 0));
-    checked(uc_hook_add(engine, &hook, UC_HOOK_INTR, interrupt, NULL, 1, 0));
+        checked(uc_context_alloc(execution->engine, &execution->empty_cpu));
+        checked(uc_context_save(execution->engine, execution->empty_cpu));
+        uc_hook hook;
+        checked(uc_hook_add(execution->engine, &hook, UC_HOOK_TLB_FILL, fill, NULL, 1, 0));
+        checked(uc_hook_add(execution->engine, &hook, UC_HOOK_INTR, interrupt, NULL, 1, 0));
+#ifdef NCE_SMP
+        checked(uc_hook_add(execution->engine, &hook, UC_HOOK_MEM_WRITE, fallback_write, NULL, 1, 0));
+#endif
+    }
     if (timer_mode)
         REQUIRE(pthread_create(&timer_thread, NULL, preempt_timer, NULL) == 0);
     nce_lkl_host.shmem_init = shmem_init;
@@ -819,8 +955,9 @@ unsigned long translation_linux_setup(void *kernel, unsigned long copy_user_offs
     nce_lkl_host.user_switch = user_switch;
     nce_lkl_host.user_run = user_run;
     nce_lkl_host.user_exec = user_exec;
-    nce_lkl_host.user_elf = elf_layout;
-    nce_lkl_host.user_elf_offset = elf_offset;
+    translation_elf_initialize(base);
+    nce_lkl_host.user_elf = translation_elf_layout;
+    nce_lkl_host.user_elf_offset = translation_elf_offset;
     nce_lkl_host.user_reserved = user_reserved;
     return base;
 }
@@ -830,7 +967,7 @@ void *translation_linux_process(const char *path)
     Process *p = calloc(1, sizeof(*p));
     REQUIRE(p);
     p->path = path;
-    ++allocated;
+    __atomic_fetch_add(&allocated, 1, __ATOMIC_RELAXED);
     return p;
 }
 
@@ -838,65 +975,85 @@ void translation_linux_cleanup(void)
 {
     if (timer_mode) {
         REQUIRE(pthread_mutex_lock(&timer_lock) == 0);
-        REQUIRE(!timer_active);
+        for (unsigned i = 0; i < execution_count; ++i)
+            REQUIRE(!executions[i].timer_active);
         timer_stopping = true;
         REQUIRE(pthread_cond_signal(&timer_condition) == 0);
         REQUIRE(pthread_mutex_unlock(&timer_lock) == 0);
         REQUIRE(pthread_join(timer_thread, NULL) == 0);
     }
+    if (parallel_profile) {
+        uint64_t total = 0;
+        for (unsigned i = 0; i < execution_count; ++i)
+            total += executions[i].run_cpu_ns;
+        printf("{\"parallel_execution_profile\":true,\"cpus\":%u,\"union_wall_ns\":%llu,\"overlap_ns\":%llu,\"thread_cpu_ns\":%llu,\"cpu0_ns\":%llu,\"cpu1_ns\":%llu}\n",
+               execution_count, (unsigned long long)profile_union_ns, (unsigned long long)profile_overlap_ns,
+               (unsigned long long)total, (unsigned long long)executions[0].run_cpu_ns,
+               (unsigned long long)executions[1].run_cpu_ns);
+    }
+    unsigned long fills = 0, faults = 0, calls = 0, preemptions = 0;
+    for (unsigned i = 0; i < execution_count; ++i) {
+        fills += executions[i].fills;
+        faults += executions[i].faults;
+        calls += executions[i].calls;
+        preemptions += executions[i].preemptions;
+    }
     printf("{\"test\":\"translated_context_cleanup\",\"passed\":%s,\"allocated\":%lu,\"freed\":%lu,\"maps\":%lu,\"revocations\":%lu,\"tlb_fills\":%lu,\"faults\":%lu,\"syscalls\":%lu,\"preemptions\":%lu}\n",
            allocated == freed ? "true" : "false", allocated, freed, maps, revocations, fills, faults, calls, preemptions);
-    printf("{\"translation_cache\":\"%s\",\"full_flushes\":%lu,\"invalidated_pages\":%lu,\"tlb_flushes\":%lu}\n",
-           page_invalidation ? "pages" : "full", cache_flushes, cache_pages, tlb_flushes);
-    printf("{\"translation_tlb\":\"%s\",\"full_flushes\":%lu,\"invalidated_pages\":%lu,\"inactive_skips\":%lu,\"mm_switches\":%lu,\"inactive_mapping_changes\":%lu}\n",
-           page_tlb_invalidation ? "pages" : "full", tlb_flushes, tlb_pages, tlb_inactive_skips,
-           translation ? translation->mm_switches : 0, translation ? translation->inactive_mapping_changes : 0);
-    uint64_t stats[5];
-    nce_uc_cache_stats_aarch64(engine, stats);
-    printf("{\"translation_engine_cache\":true,\"total_flushes\":%llu,\"invalidated_blocks\":%llu,\"current_blocks\":%llu,\"used_bytes\":%llu,\"capacity_bytes\":%llu}\n",
-           stats[0], stats[1], stats[2], stats[3], stats[4]);
+    for (unsigned i = 0; i < execution_count; ++i) {
+        ExecutionCpu *execution = &executions[i];
+        printf("{\"cpu\":%u,\"translation_cache\":\"%s\",\"full_flushes\":%lu,\"invalidated_pages\":%lu,\"tlb_flushes\":%lu}\n", execution->index,
+               page_invalidation ? "pages" : "full", execution->cache_flushes, execution->cache_pages, execution->tlb_flushes);
+        printf("{\"cpu\":%u,\"translation_tlb\":\"%s\",\"full_flushes\":%lu,\"invalidated_pages\":%lu,\"inactive_skips\":%lu,\"mm_switches\":%lu,\"inactive_mapping_changes\":%lu}\n", execution->index,
+               page_tlb_invalidation ? "pages" : "full", execution->tlb_flushes, execution->tlb_pages, execution->tlb_inactive_skips,
+               translation ? execution->view->mm_switches : 0, translation ? execution->view->inactive_mapping_changes : 0);
+        uint64_t stats[5];
+        nce_uc_cache_stats_aarch64(execution->engine, stats);
+        printf("{\"cpu\":%u,\"translation_engine_cache\":true,\"total_flushes\":%llu,\"invalidated_blocks\":%llu,\"current_blocks\":%llu,\"used_bytes\":%llu,\"capacity_bytes\":%llu}\n", execution->index,
+               stats[0], stats[1], stats[2], stats[3], stats[4]);
 #ifdef NCE_DIRECT_EXECUTION
-    REQUIRE(!code_watch);
-    printf("{\"direct_code_watch\":true,\"enabled\":%s,\"queries\":%llu,\"protections\":%llu,\"write_faults\":%llu,\"invalidations\":%llu,\"protection_failures\":%llu,\"excluded_pages\":%llu}\n",
-           direct_code_watch ? "true" : "false", code_watch_stats.queries, code_watch_stats.protections,
-           code_watch_stats.write_faults, code_watch_stats.invalidations, code_watch_stats.protection_failures, code_watch_stats.excluded_pages);
-    printf("{\"direct_flat_tables\":true,\"enabled\":%s,\"live_virtual_bytes\":%lu,\"peak_virtual_bytes\":%lu,\"updates\":%lu,\"refresh_pages\":%lu}\n",
-           direct_flat ? "true" : "false", translation->flat_live_bytes, translation->flat_peak_bytes,
-           translation->flat_updates, translation->flat_refresh_pages);
-    REQUIRE(!translation->flat_live_bytes);
-    NceDirectStats direct = nce_direct_stats(direct_engine);
-    REQUIRE(!read_views_live && read_views_created == read_views_destroyed);
-    printf("{\"direct_read_views\":true,\"enabled\":%s,\"created\":%lu,\"destroyed\":%lu,\"live_virtual_bytes\":%lu,\"peak_virtual_bytes\":%lu,\"maps\":%lu,\"revocations\":%lu,\"read_changes\":%lu,\"write_changes\":%lu,\"compiled_reads\":%llu,\"read_faults\":%llu}\n",
-           direct_read_views ? "true" : "false", read_views_created, read_views_destroyed,
-           read_views_live, read_views_peak, read_view_maps, read_view_revocations,
-           translation->flat_read_changes, translation->flat_write_changes, direct.read_view_sites, direct.read_view_faults);
-    printf("{\"direct_memory_groups\":true,\"groups\":%llu,\"instructions\":%llu}\n",
-           direct.memory_groups, direct.memory_group_instructions);
-    printf("{\"direct_code_routes\":true,\"invalidations\":%llu,\"cleared_entries\":%llu,\"branch_exits\":%llu,\"reused_runs\":%llu}\n",
-           direct.route_invalidations, direct.route_cleared_entries, direct.branch_exits, direct.route_reused_runs);
-    printf("{\"direct_code_validation\":true,\"content_checks\":%llu,\"version_hits\":%llu}\n", direct.code_content_checks, direct.code_version_hits);
-    printf("{\"direct_fallback_reasons\":true,\"alignment\":%llu,\"cross_page\":%llu,\"code_write\":%lu}\n",
-           direct.alignment_exits, direct.cross_page_fallbacks, direct_code_writes);
-    printf("{\"direct_cross_page\":true,\"exits\":%llu,\"completed\":%llu,\"fallbacks\":%llu,\"faults\":%llu,\"bytes\":%llu}\n",
-           direct.cross_page_exits, direct.cross_page_completed, direct.cross_page_fallbacks, direct.cross_page_faults, direct.cross_page_bytes);
-    printf("{\"direct_execution\":true,\"calls\":%lu,\"fallbacks\":%lu,\"compiles\":%llu,\"flushes\":%llu,\"code_changes\":%llu,\"code_bytes\":%zu,\"capacity_bytes\":%zu,\"pages\":%zu,\"mapping_misses\":%llu,\"code_lookups\":%llu,\"read_mapping_misses\":%llu,\"write_mapping_misses\":%llu,\"write_invalidations\":%llu,\"code_validation_hits\":%llu,\"pte_read_refills\":%llu}\n",
-           direct_calls, direct_fallbacks, direct.compiles, direct.flushes, direct.code_changes,
-           direct.code_bytes, direct.code_capacity, direct.pages, direct.mapping_misses, direct.code_lookups,
-           direct.read_mapping_misses, direct.write_mapping_misses, direct.write_invalidations, direct.code_validation_hits, direct.pte_read_refills);
-    for (unsigned i = 0; i < 256; ++i)
-        if (direct_missing[i].count)
-            printf("{\"direct_fallback\":%u,\"count\":%lu}\n", direct_missing[i].instruction, direct_missing[i].count);
-    nce_direct_destroy(direct_engine);
-    if (direct_read_views)
-        REQUIRE(!nce_direct_remove_read_faults());
+        REQUIRE(!code_watch);
+        printf("{\"cpu\":%u,\"direct_code_watch\":true,\"enabled\":%s,\"queries\":%llu,\"protections\":%llu,\"write_faults\":%llu,\"invalidations\":%llu,\"protection_failures\":%llu,\"excluded_pages\":%llu}\n", execution->index,
+               direct_code_watch ? "true" : "false", code_watch_stats.queries, code_watch_stats.protections,
+               code_watch_stats.write_faults, code_watch_stats.invalidations, code_watch_stats.protection_failures, code_watch_stats.excluded_pages);
+        printf("{\"cpu\":%u,\"direct_flat_tables\":true,\"enabled\":%s,\"live_virtual_bytes\":%lu,\"peak_virtual_bytes\":%lu,\"updates\":%lu,\"refresh_pages\":%lu}\n", execution->index,
+               direct_flat ? "true" : "false", translation->flat_live_bytes, translation->flat_peak_bytes,
+               translation->flat_updates, translation->flat_refresh_pages);
+        REQUIRE(!translation->flat_live_bytes);
+        NceDirectStats direct = nce_direct_stats(execution->direct_engine);
+        REQUIRE(!read_views_live && read_views_created == read_views_destroyed);
+        printf("{\"cpu\":%u,\"direct_read_views\":true,\"enabled\":%s,\"created\":%lu,\"destroyed\":%lu,\"live_virtual_bytes\":%lu,\"peak_virtual_bytes\":%lu,\"maps\":%lu,\"revocations\":%lu,\"read_changes\":%lu,\"write_changes\":%lu,\"compiled_reads\":%llu,\"read_faults\":%llu}\n", execution->index,
+               direct_read_views ? "true" : "false", read_views_created, read_views_destroyed,
+               read_views_live, read_views_peak, read_view_maps, read_view_revocations,
+               translation->flat_read_changes, translation->flat_write_changes, direct.read_view_sites, direct.read_view_faults);
+        printf("{\"cpu\":%u,\"direct_memory_groups\":true,\"groups\":%llu,\"instructions\":%llu}\n", execution->index,
+               direct.memory_groups, direct.memory_group_instructions);
+        printf("{\"cpu\":%u,\"direct_code_routes\":true,\"invalidations\":%llu,\"cleared_entries\":%llu,\"branch_exits\":%llu,\"reused_runs\":%llu}\n", execution->index,
+               direct.route_invalidations, direct.route_cleared_entries, direct.branch_exits, direct.route_reused_runs);
+        printf("{\"cpu\":%u,\"direct_code_validation\":true,\"content_checks\":%llu,\"version_hits\":%llu}\n", execution->index, direct.code_content_checks, direct.code_version_hits);
+        printf("{\"cpu\":%u,\"direct_fallback_reasons\":true,\"alignment\":%llu,\"cross_page\":%llu,\"code_write\":%lu}\n", execution->index,
+               direct.alignment_exits, direct.cross_page_fallbacks, execution->direct_code_writes);
+        printf("{\"cpu\":%u,\"direct_cross_page\":true,\"exits\":%llu,\"completed\":%llu,\"fallbacks\":%llu,\"faults\":%llu,\"bytes\":%llu}\n", execution->index,
+               direct.cross_page_exits, direct.cross_page_completed, direct.cross_page_fallbacks, direct.cross_page_faults, direct.cross_page_bytes);
+        printf("{\"cpu\":%u,\"direct_execution\":true,\"calls\":%lu,\"fallbacks\":%lu,\"compiles\":%llu,\"flushes\":%llu,\"code_changes\":%llu,\"code_bytes\":%zu,\"capacity_bytes\":%zu,\"pages\":%zu,\"mapping_misses\":%llu,\"code_lookups\":%llu,\"read_mapping_misses\":%llu,\"write_mapping_misses\":%llu,\"write_invalidations\":%llu,\"code_validation_hits\":%llu,\"pte_read_refills\":%llu}\n", execution->index,
+               execution->direct_calls, execution->direct_fallbacks, direct.compiles, direct.flushes, direct.code_changes,
+               direct.code_bytes, direct.code_capacity, direct.pages, direct.mapping_misses, direct.code_lookups,
+               direct.read_mapping_misses, direct.write_mapping_misses, direct.write_invalidations, direct.code_validation_hits, direct.pte_read_refills);
+        for (unsigned i = 0; i < 256; ++i)
+            if (execution->direct_missing[i].count)
+                printf("{\"cpu\":%u,\"direct_fallback\":%u,\"count\":%lu}\n", execution->index, execution->direct_missing[i].instruction, execution->direct_missing[i].count);
+        nce_direct_destroy(execution->direct_engine);
+        if (direct_read_views)
+            REQUIRE(!nce_direct_remove_read_faults());
 #endif
-    REQUIRE(allocated == freed);
-    checked(uc_context_free(empty_cpu));
-    checked(uc_close(engine));
+        REQUIRE(allocated == freed);
+        checked(uc_context_free(execution->empty_cpu));
+        checked(uc_close(execution->engine));
+    }
     REQUIRE(munmap(ram, NCE_RAM_SIZE) == 0);
     REQUIRE(munmap((void *)base, RESERVATION) == 0);
     free(pages);
-    for (unsigned i = 0; i < layout_count; ++i)
-        free(layouts[i].path);
-    free(layouts);
+    if (translation)
+        free(translation->code_guard);
+    translation_elf_cleanup();
 }

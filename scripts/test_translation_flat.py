@@ -13,6 +13,7 @@ PRELUDE = r'''
 #include <assert.h>
 #include <errno.h>
 #include <stdint.h>
+#include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
 #include "nce-direct-page-table.h"
@@ -34,9 +35,26 @@ typedef unsigned long pte_t;
 #define pte_write(x) (((x) & DIRECT_PTE_WRITE) && !((x) & DIRECT_PTE_PROTNONE))
 #define pte_young(x) ((x) & DIRECT_PTE_YOUNG)
 #define pte_dirty(x) ((x) & DIRECT_PTE_DIRTY)
+#define BUILD_BUG_ON(x) _Static_assert(!(x), #x)
+#define BUG_ON(x) assert(!(x))
+struct list_head { struct list_head *next, *prev; };
+#define INIT_LIST_HEAD(p) ((p)->next = (p)->prev = (p))
+static void list_add_tail(struct list_head *node, struct list_head *head) {
+    node->prev = head->prev; node->next = head; head->prev->next = node; head->prev = node;
+}
+static void list_del_init(struct list_head *node) {
+    node->prev->next = node->next; node->next->prev = node->prev; INIT_LIST_HEAD(node);
+}
+#define list_empty(p) ((p)->next == (p))
+#define list_first_entry(head, type, member) ((type *)((char *)(head)->next - offsetof(type, member)))
+static struct list_head translation_mms = { &translation_mms, &translation_mms };
+static void bitmap_set(unsigned long *bits, unsigned long index, unsigned long count) {
+    for (unsigned long i = index; i < index + count; ++i) bits[i / 64] |= 1UL << (i % 64);
+}
 struct task_struct { int unused; };
 struct mm_struct {
-    struct { unsigned long *accessed; struct nce_direct_flat_page *flat; } context;
+    struct { unsigned long *accessed; struct nce_direct_flat_page *flat; void *read_view; struct list_head translation_node; } context;
+    void *pgd;
     pte_t ptes[4];
 };
 static struct nce_translation_state state, *translation = &state;
@@ -62,6 +80,8 @@ CHECKS = r'''
 int main(void)
 {
     struct mm_struct a = {0}, b = {0}, failed = {0};
+    state.cpu_count = 2;
+    a.pgd = a.ptes; b.pgd = b.ptes;
     state.flat_enabled = 1;
     state.ram = 0x100000000UL;
     assert(!nce_init_mm(NULL, &a) && !nce_init_mm(NULL, &b));
@@ -105,18 +125,34 @@ int main(void)
     flat_refresh(&a, USER_BASE, USER_BASE + 2 * PAGE_SIZE);
     assert(!a.context.flat[0].read && !a.context.flat[1].read);
     assert(state.flat_refresh_pages == 4);
+    state.cpus[0].pgd = (unsigned long)a.pgd;
+    state.cpus[1].pgd = (unsigned long)b.pgd;
+    changed_mapping(&a, USER_BASE + 1, USER_BASE + PAGE_SIZE);
+    assert(state.cpus[0].tlb_start == USER_BASE && state.cpus[0].tlb_end == USER_BASE + PAGE_SIZE);
+    assert(!state.cpus[1].tlb_end && state.cpus[1].inactive_mapping_changes == 1);
+    changed_mapping(&b, USER_BASE + PAGE_SIZE, USER_BASE + 2 * PAGE_SIZE);
+    assert(state.cpus[1].tlb_start == USER_BASE + PAGE_SIZE);
+    state.code_guard = calloc(NCE_RAM_SIZE / PAGE_SIZE, sizeof(unsigned long));
+    assert(state.code_guard);
+    changed_code(valid, 1);
+    assert(state.code_guard[1] == 1 && state.cpus[0].code_pages[0] == 2 && state.cpus[1].code_pages[0] == 2);
+    state.cpus[0].code_pages[0] = 0;
+    assert(state.cpus[1].code_pages[0] == 2);
     active_mm = &a;
     nce_destroy_mm(&a);
     assert(!active_mm && !a.context.flat && state.flat_live_bytes == DIRECT_FLAT_BYTES);
     nce_destroy_mm(&a);
     assert(state.flat_live_bytes == DIRECT_FLAT_BYTES);
-    nce_destroy_mm(&b);
+    nce_translation_cleanup();
+    assert(!a.context.flat && !b.context.flat && list_empty(&translation_mms));
+    assert(!state.cpus[0].pgd && !state.cpus[1].pgd);
     assert(!state.flat_live_bytes);
     state.flat_enabled = 0;
     fail_alloc = 0;
     assert(!nce_init_mm(NULL, &a) && !a.context.flat);
     nce_destroy_mm(&a);
     assert(!state.flat_live_bytes);
+    free(state.code_guard);
 }
 '''
 
@@ -131,7 +167,7 @@ def main():
         apply(folder, ROOT / 'experiments/native-linux')
         generated = (folder / 'arch/lkl/mm/nce_mmu.c').read_text()
         functions = []
-        for signature in ('int nce_init_mm(', 'void nce_destroy_mm(', 'static void flat_update(', 'static void flat_refresh('):
+        for signature in ('int nce_init_mm(', 'void nce_destroy_mm(', 'static void flat_update(', 'static void flat_refresh(', 'static void changed_mapping(', 'static void changed_code(', 'void nce_translation_cleanup('):
             start = generated.index(signature)
             end = generated.index('\n}\n', start) + 3
             functions.append(generated[start:end])

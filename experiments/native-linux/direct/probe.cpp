@@ -18,13 +18,15 @@ Probe::Probe(const char *mode)
         unsigned epochs = setting("NCE_DIRECT_ROUTE_EPOCHS", 0);
         unsigned retain = setting("NCE_DIRECT_RETAIN_ROUTES", 0);
         unsigned groups = setting("NCE_DIRECT_MEMORY_GROUPS", 0);
+        unsigned tables = setting("NCE_DIRECT_VECTOR_TABLE", 0);
+        CHECK(tables <= 1);
         CHECK(selective <= 1 && reuse <= 1 && epochs <= 1 && retain <= 1 && groups <= 1);
         config = {16 * 1024 * 1024, setting("NCE_DIRECT_MAPPING_ENTRIES", 256),
-                  setting("NCE_DIRECT_ROUTE_ENTRIES", 256), bool(selective), bool(reuse), false, bool(epochs), bool(retain), bool(groups), false};
+                  setting("NCE_DIRECT_ROUTE_ENTRIES", 256), bool(selective), bool(reuse), false, bool(epochs), bool(retain), bool(groups), false, bool(tables)};
         direct = nce_direct_create(config);
         CHECK(direct);
-        std::printf("{\"direct_config\":true,\"mapping_entries\":%u,\"route_entries\":%u,\"selective_writes\":%s,\"reuse_code_checks\":%s,\"route_epochs\":%s,\"retain_routes\":%s,\"memory_groups\":%s}\n",
-                    config.mapping_entries, config.route_entries, config.selective_writes ? "true" : "false", config.reuse_code_checks ? "true" : "false", config.route_epochs ? "true" : "false", config.retain_routes ? "true" : "false", config.memory_groups ? "true" : "false");
+        std::printf("{\"direct_config\":true,\"mapping_entries\":%u,\"route_entries\":%u,\"selective_writes\":%s,\"reuse_code_checks\":%s,\"route_epochs\":%s,\"retain_routes\":%s,\"memory_groups\":%s,\"vector_table\":%s}\n",
+                    config.mapping_entries, config.route_entries, config.selective_writes ? "true" : "false", config.reuse_code_checks ? "true" : "false", config.route_epochs ? "true" : "false", config.retain_routes ? "true" : "false", config.memory_groups ? "true" : "false", config.vector_table ? "true" : "false");
     }
     if (std::strcmp(mode, "tests") && std::strcmp(mode, "unicorn"))
         return;

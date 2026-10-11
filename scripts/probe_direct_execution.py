@@ -85,6 +85,8 @@ def validate(rows, mode, interval, config=None):
             'direct_and_indirect_self_branch_budget', 'cross_page_indirect_call_return',
             'changed_cross_page_branch_cache', 'pair_pre_post_index_all_base_registers',
             'exclusive_load_store_all_widths', 'asynchronous_stop_at_block_and_indirect_boundary',
+            'stop_between_registration_and_entry', 'shared_code_guard_across_executors',
+            'parallel_cross_page_and_remote_code_guard',
             '16k_data_page_internal_and_external_boundaries', 'bounded_cache_reuse_and_code_replacement',
             'dczid_zero_block_alignment_permission_and_prefetch', 'cached_write_alias_becomes_executable',
             'route_collision_reuse_and_next_run_fetch_permission', 'direct_pte_registers_flags_and_post_index',
@@ -101,7 +103,7 @@ def validate(rows, mode, interval, config=None):
         expected |= {'code_version_reuse_and_mutation', 'code_version_backing_permissions_and_fallback',
                      'code_version_owner_and_provider_changes'}
         expected |= {'literal_load_signed_vector_pc_and_permissions', 'simd_lane_replicate_writeback_and_faults',
-                     'fp_fixed_rounding_and_widening', 'new_instruction_reserved_encodings'}
+                     'fp_fixed_rounding_and_widening', 'new_instruction_reserved_encodings', 'simd_table_alias_wrap_indices_and_setting'}
         expected |= {'cross_page_noncontiguous_memory_vectors_faults_12', 'cross_page_noncontiguous_memory_vectors_faults_14'}
         expected |= {'route_epochs_fetch_permission_and_code_replacement', 'route_epochs_flush_and_return_to_freed_page'}
         expected |= {'memory_groups_all_bases_widths_vectors_and_pairs', 'memory_groups_inner_entries_and_partial_page_faults',
@@ -153,6 +155,7 @@ def main():
     parser.add_argument('--route-epochs', type=int, choices=(0, 1), default=0)
     parser.add_argument('--retain-routes', type=int, choices=(0, 1), default=0)
     parser.add_argument('--memory-groups', type=int, choices=(0, 1), default=0)
+    parser.add_argument('--vector-table', type=int, choices=(0, 1), default=0)
     args = parser.parse_args()
     if args.retain_routes and not args.route_epochs:
         parser.error('跨调用复用需要开启跳转序号')
@@ -170,10 +173,10 @@ def main():
     runs = []
     config = {'mapping_entries': args.mapping_entries, 'route_entries': args.route_entries,
               'selective_writes': bool(args.selective_writes), 'reuse_code_checks': bool(args.reuse_code_checks),
-              'route_epochs': bool(args.route_epochs), 'retain_routes': bool(args.retain_routes), 'memory_groups': bool(args.memory_groups)}
+              'route_epochs': bool(args.route_epochs), 'retain_routes': bool(args.retain_routes), 'memory_groups': bool(args.memory_groups), 'vector_table': bool(args.vector_table)}
     environment = dict(os.environ, NCE_DIRECT_MAPPING_ENTRIES=str(args.mapping_entries),
                        NCE_DIRECT_ROUTE_ENTRIES=str(args.route_entries), NCE_DIRECT_SELECTIVE_WRITES=str(args.selective_writes),
-                       NCE_DIRECT_REUSE_CODE_CHECKS=str(args.reuse_code_checks), NCE_DIRECT_ROUTE_EPOCHS=str(args.route_epochs), NCE_DIRECT_RETAIN_ROUTES=str(args.retain_routes), NCE_DIRECT_MEMORY_GROUPS=str(args.memory_groups))
+                       NCE_DIRECT_REUSE_CODE_CHECKS=str(args.reuse_code_checks), NCE_DIRECT_ROUTE_EPOCHS=str(args.route_epochs), NCE_DIRECT_RETAIN_ROUTES=str(args.retain_routes), NCE_DIRECT_MEMORY_GROUPS=str(args.memory_groups), NCE_DIRECT_VECTOR_TABLE=str(args.vector_table))
     modes = (['tests'] if args.mode != 'bench' else []) + (['native', 'unicorn', 'direct'] if args.mode != 'tests' else [])
     for entry in ('cli', 'gcd'):
         for mode in (modes if entry == 'cli' else list(reversed(modes))):

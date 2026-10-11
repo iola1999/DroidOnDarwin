@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""检查实际生成的 nce_prepare_user 在锁等待期间切换任务后发布当前页表。"""
+"""检查实际生成的 nce_prepare_user 按 CPU 发布页表、切换失效与空地址空间。"""
 from pathlib import Path
 import subprocess
 import tempfile
@@ -12,6 +12,7 @@ WORK = ROOT / 'work/native-linux-nce'
 PRELUDE = r'''
 #include <assert.h>
 #include <stdint.h>
+#include <stddef.h>
 #include "nce-direct-page-table.h"
 #include "nce-translation.h"
 #define BUILD_BUG_ON(x) _Static_assert(!(x), #x)
@@ -28,12 +29,16 @@ PRELUDE = r'''
 #define _PAGE_ACCESSED DIRECT_PTE_YOUNG
 #define _PAGE_DIRTY DIRECT_PTE_DIRTY
 typedef uint64_t pgd_t, pmd_t, pte_t;
-struct mm_struct { pgd_t *pgd; struct { void *flat; } context; } a, b, *active_mm;
+struct mm_struct { pgd_t *pgd; struct { void *flat; void *read_view; } context; } a, b, *active_mm;
 struct task { struct mm_struct *mm; } task;
 #define current (&task)
 struct nce_translation_state shared, *translation = &shared;
 struct sample_profile { int schedule; } *profile;
 static int mapping_mode = NCE_MM_TRANSLATED, switch_in_lock;
+static unsigned cpu_index;
+#define USER_BASE 0x7000000000UL
+#define TASK_SIZE (USER_BASE + (1UL << 32))
+static struct nce_translation_cpu *cpu_translation(void) { return &translation->cpus[cpu_index]; }
 static void nce_prepare_user(void);
 static void nce_sample_runnable(int *value) { (void)value; }
 static void mmap_read_lock(struct mm_struct *mm)
@@ -43,7 +48,7 @@ static void mmap_read_lock(struct mm_struct *mm)
         switch_in_lock = 0;
         current->mm = &b;
         nce_prepare_user();
-        assert(translation->pgd == (unsigned long)b.pgd);
+        assert(translation->cpus[cpu_index].pgd == (unsigned long)b.pgd);
         current->mm = mm;
     }
 }
@@ -62,18 +67,33 @@ int main(void)
     current->mm = &a;
     switch_in_lock = 1;
     nce_prepare_user();
-    assert(!switch_in_lock && active_mm == &a);
-    assert(translation->pgd == (unsigned long)a.pgd && translation->flat == (unsigned long)a.context.flat);
-    translation->pgd = 0;
+    assert(switch_in_lock && !active_mm);
+    assert(translation->cpus[0].tlb_start == USER_BASE && translation->cpus[0].tlb_end == TASK_SIZE);
+    assert(translation->cpus[cpu_index].pgd == (unsigned long)a.pgd && translation->cpus[cpu_index].flat == (unsigned long)a.context.flat);
+    translation->cpus[cpu_index].pgd = 0;
     nce_prepare_user();
-    assert(translation->pgd == (unsigned long)a.pgd && translation->flat == (unsigned long)a.context.flat);
+    assert(translation->cpus[cpu_index].pgd == (unsigned long)a.pgd && translation->cpus[cpu_index].flat == (unsigned long)a.context.flat);
     current->mm = 0;
     nce_prepare_user();
-    assert(translation->pgd == 0 && translation->flat == 0);
+    assert(translation->cpus[cpu_index].pgd == 0 && translation->cpus[cpu_index].flat == 0);
+    cpu_index = 1;
+    current->mm = &b;
+    nce_prepare_user();
+    assert(translation->cpus[1].pgd == (unsigned long)b.pgd && !translation->cpus[0].pgd);
+    unsigned long mappings = translation->cpus[1].mappings;
+    nce_prepare_user();
+    assert(translation->cpus[1].mappings == mappings);
+    cpu_index = 0;
+    current->mm = &a;
+    nce_prepare_user();
+    assert(translation->cpus[0].pgd == (unsigned long)a.pgd);
+    assert(translation->cpus[1].pgd == (unsigned long)b.pgd);
+    translation->cpus[0].pgd = 0;
+    switch_in_lock = 0;
     mapping_mode = 0;
     current->mm = &b;
     nce_prepare_user();
-    assert(active_mm == &b && translation->pgd == 0);
+    assert(active_mm == &b && translation->cpus[cpu_index].pgd == 0);
     return 0;
 }
 '''
@@ -96,7 +116,7 @@ def main():
         subprocess.run(['xcrun', 'clang', '-std=c11', '-Wall', '-Wextra', '-Werror', '-I', headers,
                         source, '-o', executable], check=True, timeout=30)
         subprocess.run([executable], check=True, timeout=5)
-    print('translation root: lock handoff, same mm, no mm, native mode passed')
+    print('translation root: per-CPU roots, switch invalidation, same mm, no mm and native mode passed')
 
 
 if __name__ == '__main__':
