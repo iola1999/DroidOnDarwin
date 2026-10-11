@@ -14,6 +14,9 @@ struct nce_translation_state {
     unsigned long mm_switches, inactive_mapping_changes;
     /* Current mm's PGD, valid while the sole Linux CPU executes userspace. */
     unsigned long pgd;
+    /* Host sets flat_enabled/RAM before boot; Linux owns each mm's table. */
+    unsigned long flat_enabled, ram, flat;
+    unsigned long flat_live_bytes, flat_peak_bytes, flat_updates, flat_refresh_pages;
     /* One bit per 16 KiB RAM page. The host consumes bits before execution. */
     unsigned long code_pages[NCE_TRANSLATION_CODE_WORDS];
 };

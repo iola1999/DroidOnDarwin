@@ -13,3 +13,11 @@
 #define DIRECT_PTE_DIRTY 0x100
 #define DIRECT_PTE_READ_REQUIRED 0x0c1
 #define DIRECT_PTE_WRITE_REQUIRED 0x1e1
+#define DIRECT_FLAT_USER_BITS 32
+#define DIRECT_FLAT_BYTES (1UL << (DIRECT_FLAT_USER_BITS - DIRECT_PTE_PAGE_SHIFT + 4))
+#ifndef __ASSEMBLER__
+/* Zero requires Linux fault handling. Nonzero entries point to RAM pages. */
+struct nce_direct_flat_page {
+    unsigned long read, write;
+};
+#endif

@@ -88,6 +88,14 @@ def validate(rows, memory_interval, mapping="window", workload="core", tlb_inval
                 return False
             if direct_config is not None and ((direct[0]['pte_read_refills'] > 0) != (direct_config.get('memory') == 'refill')):
                 return False
+            flat = [row for row in rows if row.get('direct_flat_tables')]
+            enabled = selected[0].get('memory') == 'flat'
+            if len(flat) != 1 or flat[0]['enabled'] != enabled or flat[0]['live_virtual_bytes']:
+                return False
+            if enabled and (not flat[0]['updates'] or flat[0]['peak_virtual_bytes'] < 4194304):
+                return False
+            if not enabled and any(flat[0][key] for key in ('updates', 'refresh_pages', 'peak_virtual_bytes')):
+                return False
             if (direct[0]['code_bytes'] > direct[0]['capacity_bytes'] or
                     direct[0]['capacity_bytes'] != selected[0]['direct_cache_bytes'] or
                     direct[0]['fallbacks'] > direct[0]['calls']):
@@ -152,7 +160,7 @@ def main():
     parser.add_argument('--direct-route-entries', type=int, choices=(256, 1024, 4096, 16384, 65536), default=256)
     parser.add_argument('--direct-selective-writes', type=int, choices=(0, 1), default=0)
     parser.add_argument('--direct-reuse-code-checks', type=int, choices=(0, 1), default=0)
-    parser.add_argument('--direct-memory', choices=('cached', 'pte', 'refill'), default='cached')
+    parser.add_argument('--direct-memory', choices=('cached', 'pte', 'refill', 'flat'), default='cached')
     parser.add_argument('--build-only', action='store_true')
     parser.add_argument('--reuse-engine-build', action='store_true', help='校验摘要后复用已构建的 Unicorn，用于执行器成组对照')
     parser.add_argument('--mapping', choices=('window', 'pte'), default='window')
@@ -186,8 +194,8 @@ def main():
                      'memory': args.direct_memory} if args.execution == 'direct' else None
     if args.execution != 'direct' and (args.direct_mapping_entries != 256 or args.direct_route_entries != 256 or args.direct_selective_writes or args.direct_reuse_code_checks or args.direct_memory != 'cached'):
         parser.error('Direct 缓存参数需要 --execution direct')
-    if args.direct_memory == 'pte' and (args.direct_mapping_entries != 256 or args.direct_selective_writes):
-        parser.error('直接 PTE 模式使用页表访存，数据缓存参数必须保持默认值')
+    if args.direct_memory in ('pte', 'flat') and (args.direct_mapping_entries != 256 or args.direct_selective_writes):
+        parser.error('pte/flat 使用地址表访存，数据缓存参数必须保持默认值')
     out = args.output.resolve()
     if not out.is_relative_to(WORK):
         parser.error('实验产物必须放在本项目 work/native-linux-nce 下')

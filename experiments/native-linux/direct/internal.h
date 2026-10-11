@@ -12,6 +12,7 @@ constexpr uint32_t CompilePauthNop = 131072;
 constexpr uint32_t CompileData16K = 262144, CompileZva64 = 524288;
 constexpr uint32_t CompilePageTable = 1048576;
 constexpr uint32_t CompilePteReadRefill = 2097152;
+constexpr uint32_t CompileFlat = 4194304;
 enum Stop : uint64_t { Budget = 0,
                        Fallback = 1,
                        ReadPage = 2,
@@ -54,6 +55,7 @@ struct CodeRoute {
 };
 static_assert(sizeof(NceDirectState) == 816);
 static_assert(sizeof(Mapping) == 32 && offsetof(Mapping, write_tag) == 16);
+static_assert(sizeof(nce_direct_flat_page) == 16 && offsetof(nce_direct_flat_page, write) == 8);
 static_assert(sizeof(CodeRoute) == 32 && offsetof(CodeRoute, code) == 16);
 #define CHECK_OFFSET(field, macro) static_assert(offsetof(Frame, field) == macro)
 CHECK_OFFSET(state.pc, DIRECT_PC);
@@ -91,7 +93,7 @@ CHECK_OFFSET(pte_required, DIRECT_PTE_REQUIRED);
 CHECK_OFFSET(pte_read_refills, DIRECT_PTE_READ_REFILLS);
 CHECK_OFFSET(pte_refill_mask, DIRECT_PTE_REFILL_MASK);
 #undef CHECK_OFFSET
-extern "C" void nce_direct_enter(Frame *, void *, Mapping *);
+extern "C" void nce_direct_enter(Frame *, void *, const void *);
 extern "C" void nce_direct_leave();
 extern "C" void nce_direct_exit_stub();
 extern "C" void nce_direct_branch_stub();

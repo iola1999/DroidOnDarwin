@@ -13,6 +13,7 @@ PRELUDE = r'''
 #include <assert.h>
 #include <stdint.h>
 #include "nce-direct-page-table.h"
+#include "nce-translation.h"
 #define BUILD_BUG_ON(x) _Static_assert(!(x), #x)
 #define PAGE_SHIFT DIRECT_PTE_PAGE_SHIFT
 #define PMD_SHIFT DIRECT_PTE_PMD_SHIFT
@@ -26,12 +27,11 @@ PRELUDE = r'''
 #define _PAGE_USER DIRECT_PTE_USER
 #define _PAGE_ACCESSED DIRECT_PTE_YOUNG
 #define _PAGE_DIRTY DIRECT_PTE_DIRTY
-#define NCE_MM_TRANSLATED 3
 typedef uint64_t pgd_t, pmd_t, pte_t;
-struct mm_struct { pgd_t *pgd; } a, b, *active_mm;
+struct mm_struct { pgd_t *pgd; struct { void *flat; } context; } a, b, *active_mm;
 struct task { struct mm_struct *mm; } task;
 #define current (&task)
-struct { unsigned long pgd; } shared, *translation = &shared;
+struct nce_translation_state shared, *translation = &shared;
 struct sample_profile { int schedule; } *profile;
 static int mapping_mode = NCE_MM_TRANSLATED, switch_in_lock;
 static void nce_prepare_user(void);
@@ -57,17 +57,19 @@ int main(void)
     pgd_t root_a[1], root_b[1];
     a.pgd = root_a;
     b.pgd = root_b;
+    a.context.flat = root_a;
+    b.context.flat = root_b;
     current->mm = &a;
     switch_in_lock = 1;
     nce_prepare_user();
     assert(!switch_in_lock && active_mm == &a);
-    assert(translation->pgd == (unsigned long)a.pgd);
+    assert(translation->pgd == (unsigned long)a.pgd && translation->flat == (unsigned long)a.context.flat);
     translation->pgd = 0;
     nce_prepare_user();
-    assert(translation->pgd == (unsigned long)a.pgd);
+    assert(translation->pgd == (unsigned long)a.pgd && translation->flat == (unsigned long)a.context.flat);
     current->mm = 0;
     nce_prepare_user();
-    assert(translation->pgd == 0);
+    assert(translation->pgd == 0 && translation->flat == 0);
     mapping_mode = 0;
     current->mm = &b;
     nce_prepare_user();

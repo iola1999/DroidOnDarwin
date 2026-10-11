@@ -13,7 +13,7 @@ from probe_lkl_translation import ROOT, WORK, sha, validate
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--repeat', type=int, default=2)
-    parser.add_argument('--comparison', choices=('cache', 'tlb', 'execution', 'direct-mappings', 'direct-cache', 'direct-memory'), default='cache')
+    parser.add_argument('--comparison', choices=('cache', 'tlb', 'execution', 'direct-mappings', 'direct-cache', 'direct-memory', 'direct-flat'), default='cache')
     parser.add_argument('--output', type=Path)
     args = parser.parse_args()
     if args.repeat < 2 or args.repeat % 2:
@@ -80,7 +80,7 @@ def main():
     else:
         for config in configurations.values():
             config['execution'] = 'unicorn'
-    if args.comparison == 'direct-memory':
+    if args.comparison in ('direct-memory', 'direct-flat'):
         configurations = {name: configurations[name] for name in ('full-256', 'mapping-4096')}
         configurations['pte'] = {
             'execution': 'direct', 'cache_invalidation': 'pages', 'linux_fastpath': 1,
@@ -92,6 +92,13 @@ def main():
             'cache_mib': 128, 'tlb_invalidation': 'full',
             'direct': {'mapping_entries': 4096, 'route_entries': 256, 'selective_writes': True,
                        'reuse_code_checks': False, 'memory': 'refill'}}
+    if args.comparison == 'direct-flat':
+        configurations = {name: configurations[name] for name in ('mapping-4096', 'refill-4096')}
+        configurations['flat'] = {
+            'execution': 'direct', 'cache_invalidation': 'pages', 'linux_fastpath': 1,
+            'cache_mib': 128, 'tlb_invalidation': 'full',
+            'direct': {'mapping_entries': 256, 'route_entries': 256, 'selective_writes': False,
+                       'reuse_code_checks': False, 'memory': 'flat'}}
     for config in configurations.values():
         if config['execution'] == 'direct' and 'direct' not in config:
             config['direct'] = {'mapping_entries': 256, 'route_entries': 256, 'selective_writes': False, 'reuse_code_checks': False}

@@ -169,6 +169,30 @@ size_t Page::compile(uint64_t new_page, const void *bytes, size_t entry,
             c.STR(XReg(d), X27, rd * 8);
     };
     auto translate = [&](bool write, Label &miss) {
+        if (flags & CompileFlat) {
+            // Keep NZCV intact and validate upper address bits before indexing.
+            c.LDR(X26, X27, DIRECT_PTE_USER_BASE);
+            c.SUB(X17, X16, X26);
+            c.LSR(X26, X17, DIRECT_FLAT_USER_BITS);
+            c.CBNZ(X26, miss);
+            c.LSR(X17, X17, 14);
+            c.ADD(X17, X28, X17, LSL, 4);
+            c.LDR(X17, X17, write ? 8 : 0);
+            c.CBZ(X17, miss);
+            if (write) {
+                c.LDR(X26, X27, DIRECT_PTE_RAM);
+                c.SUB(X26, X17, X26);
+                c.LSR(X26, X26, 14);
+                c.LDR(X30, X27, DIRECT_PTE_CODE_RUNS);
+                c.LDR(X26, X30, X26, LSL, 3);
+                c.LDR(X30, X27, DIRECT_RUN_ID);
+                c.EOR(X26, X26, X30);
+                c.CBZ(X26, miss);
+            }
+            c.AND(X26, X16, 16383);
+            c.ADD(X17, X17, X26);
+            return;
+        }
         if ((flags & CompilePageTable) && !(flags & CompilePteReadRefill)) {
             c.LDR(X26, X27, write ? DIRECT_PTE_WRITE_STUB : DIRECT_PTE_READ_STUB);
             c.BLR(X26);

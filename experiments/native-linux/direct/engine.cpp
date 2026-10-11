@@ -147,6 +147,9 @@ struct NceDirect {
             return NCE_DIRECT_ERROR;
         if (memory.refill_reads && !memory.page_table)
             return NCE_DIRECT_ERROR;
+        if (memory.flat_pages && (!memory.page_table || memory.refill_reads ||
+                                  memory.page_table->user_size != (UINT64_C(1) << DIRECT_FLAT_USER_BITS)))
+            return NCE_DIRECT_ERROR;
         if (memory.page_table) {
             const auto &table = *memory.page_table;
             if (memory.page_bits != 14 || !table.root || (uintptr_t(table.root) & 16383) ||
@@ -176,6 +179,8 @@ struct NceDirect {
             flags |= CompilePageTable;
         if (memory.refill_reads)
             flags |= CompilePteReadRefill;
+        if (memory.flat_pages)
+            flags |= CompileFlat;
         uint32_t allowed = supported & state.access_flags;
         flags |= allowed & (NCE_DIRECT_LSE | NCE_DIRECT_CRC);
         if (supported & NCE_DIRECT_LSE)
@@ -221,7 +226,7 @@ struct NceDirect {
         while (page) {
             frame.code_page = frame.state.pc & ~UINT64_C(4095);
             frame.code = page;
-            nce_direct_enter(&frame, entry, mappings.data());
+            nce_direct_enter(&frame, entry, memory.flat_pages ? static_cast<const void *>(memory.flat_pages) : mappings.data());
             page = frame.code;
             if (frame.reason == Budget) {
                 result = NCE_DIRECT_BUDGET;

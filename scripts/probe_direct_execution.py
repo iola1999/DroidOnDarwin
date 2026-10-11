@@ -89,7 +89,8 @@ def validate(rows, mode, interval, config=None):
             'route_collision_reuse_and_next_run_fetch_permission', 'direct_pte_registers_flags_and_post_index',
             'direct_pte_read_permissions_directories_and_bounds', 'direct_pte_write_permissions_remap_and_retry',
             'direct_pte_code_alias_and_next_run_release'}
-        expected |= {name + '_refill' for name in expected if name.startswith('direct_pte_')}
+        expected |= {name + suffix for name in expected if name.startswith('direct_pte_') for suffix in ('_refill', '_flat')}
+        expected |= {'direct_flat_exclusive_pair_and_zva', 'direct_flat_cross_page_table_switch_and_configuration'}
         if not expected <= {r.get('test') for r in rows if r.get('passed')}:
             return False
     else:

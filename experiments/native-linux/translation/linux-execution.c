@@ -17,7 +17,7 @@
 #ifdef NCE_DIRECT_EXECUTION
 #include "../direct/direct.h"
 static NceDirect *direct_engine;
-static bool direct_pte_memory, direct_pte_refill;
+static bool direct_pte_memory, direct_pte_refill, direct_flat;
 static unsigned long direct_calls, direct_fallbacks;
 static struct {
     uint32_t instruction;
@@ -119,6 +119,8 @@ static void shmem_init(unsigned long size)
     REQUIRE(size == NCE_RAM_SIZE);
     ram = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANON, -1, 0);
     REQUIRE(ram != MAP_FAILED);
+    if (translation)
+        translation->ram = (uintptr_t)ram;
     checked(uc_mem_map_ptr(engine, 0, size, UC_PROT_ALL, ram));
 }
 
@@ -306,7 +308,9 @@ static bool direct_execute(Process *p, unsigned long generation)
     NceDirectPageTable table = {(const uint64_t *)translation->pgd, base, NCE_USER_SIZE,
                                 base + NCE_USER_SIZE, ram, NCE_RAM_SIZE};
     NceDirectMemory memory = {NULL, direct_map_page, direct_map_code, generation, 14,
-                              direct_pte_memory ? &table : NULL, direct_pte_refill};
+                              direct_pte_memory ? &table : NULL, direct_pte_refill,
+                              direct_flat ? (const struct nce_direct_flat_page *)translation->flat : NULL};
+    REQUIRE(!direct_flat || memory.flat_pages);
     uint64_t address = 0;
     ++direct_calls;
     NceDirectExit result = nce_direct_run(direct_engine, &state, memory,
@@ -642,9 +646,11 @@ unsigned long translation_linux_setup(void *kernel, unsigned long copy_user_offs
     unsigned selective = direct_setting("NCE_DIRECT_SELECTIVE_WRITES", 0);
     unsigned reuse = direct_setting("NCE_DIRECT_REUSE_CODE_CHECKS", 0);
     const char *direct_memory = getenv("NCE_DIRECT_MEMORY");
-    REQUIRE(!direct_memory || !strcmp(direct_memory, "cached") || !strcmp(direct_memory, "pte") || !strcmp(direct_memory, "refill"));
+    REQUIRE(!direct_memory || !strcmp(direct_memory, "cached") || !strcmp(direct_memory, "pte") || !strcmp(direct_memory, "refill") || !strcmp(direct_memory, "flat"));
     direct_pte_memory = direct_memory && strcmp(direct_memory, "cached");
     direct_pte_refill = direct_memory && !strcmp(direct_memory, "refill");
+    direct_flat = direct_memory && !strcmp(direct_memory, "flat");
+    translation->flat_enabled = direct_flat;
     REQUIRE(selective <= 1 && reuse <= 1);
     NceDirectConfig direct_config = {cache_bytes, direct_setting("NCE_DIRECT_MAPPING_ENTRIES", 256),
                                      direct_setting("NCE_DIRECT_ROUTE_ENTRIES", 256), selective != 0, reuse != 0};
@@ -726,6 +732,10 @@ void translation_linux_cleanup(void)
     printf("{\"translation_engine_cache\":true,\"total_flushes\":%llu,\"invalidated_blocks\":%llu,\"current_blocks\":%llu,\"used_bytes\":%llu,\"capacity_bytes\":%llu}\n",
            stats[0], stats[1], stats[2], stats[3], stats[4]);
 #ifdef NCE_DIRECT_EXECUTION
+    printf("{\"direct_flat_tables\":true,\"enabled\":%s,\"live_virtual_bytes\":%lu,\"peak_virtual_bytes\":%lu,\"updates\":%lu,\"refresh_pages\":%lu}\n",
+           direct_flat ? "true" : "false", translation->flat_live_bytes, translation->flat_peak_bytes,
+           translation->flat_updates, translation->flat_refresh_pages);
+    REQUIRE(!translation->flat_live_bytes);
     NceDirectStats direct = nce_direct_stats(direct_engine);
     printf("{\"direct_execution\":true,\"calls\":%lu,\"fallbacks\":%lu,\"compiles\":%llu,\"flushes\":%llu,\"code_changes\":%llu,\"code_bytes\":%zu,\"capacity_bytes\":%zu,\"pages\":%zu,\"mapping_misses\":%llu,\"code_lookups\":%llu,\"read_mapping_misses\":%llu,\"write_mapping_misses\":%llu,\"write_invalidations\":%llu,\"code_validation_hits\":%llu,\"pte_read_refills\":%llu}\n",
            direct_calls, direct_fallbacks, direct.compiles, direct.flushes, direct.code_changes,
