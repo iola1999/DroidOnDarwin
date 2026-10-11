@@ -67,6 +67,7 @@ int main(int argc, char **argv)
     setvbuf(stdout, NULL, _IOLBF, 0);
     extern void signal_tests(const char *libc), dynamic_code_tests(void), memory_exchange_benchmarks(void);
     extern void memory_tests(void), memory_capacity_test(void);
+    extern void translation_timer_tests(int high_resolution);
 #if NCE_TRANSLATION_CPUS == 2
     extern void translation_smp_guest_test(void);
     cpu_set_t available;
@@ -84,6 +85,7 @@ int main(int argc, char **argv)
     }
 #endif
     dynamic_code_tests();
+    translation_timer_tests(NCE_TRANSLATION_HIGH_RES_TIMERS);
     signal_tests("musl-translated");
     memory_tests();
     memory_capacity_test();

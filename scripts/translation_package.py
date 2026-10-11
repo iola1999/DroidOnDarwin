@@ -70,7 +70,8 @@ def prepare(report_path, out, target):
     identity = {**{name: digest(path) for name, path in files.items()},
                 **{'Translation/' + name: digest(path) for name, path in resources.items()}}
     metadata = {'runtime': hashlib.sha256(json.dumps(identity, sort_keys=True).encode()).hexdigest(),
-                'execution': {'engine': 'direct', 'cpus': config['cpus'], 'code_memory': 'dual'},
+                'execution': {'engine': 'direct', 'cpus': config['cpus'], 'code_memory': 'dual',
+                              'high_res_timers': config.get('high_res_timers', False)},
                 'build': {'kernel_sha256': identity['lkl-image.bin'], 'system_sha256': identity['system.img'],
                           'source_inputs_sha256': hashlib.sha256(json.dumps(build['sha256'], sort_keys=True).encode()).hexdigest()}}
     return {'configuration': config, 'library': Path(build['library']), 'verified': verified,

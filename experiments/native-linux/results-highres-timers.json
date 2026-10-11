@@ -1,0 +1,436 @@
+{
+  "status": "single CPU low/high resolution core and full desktop CLI/GCD passed; visible interaction and iPhone pending",
+  "host": {
+    "cpu": "Apple M5 Ultra",
+    "os": "macOS 27.0 (26A428)"
+  },
+  "scope": "8 samples per requested sleep; serial core runs, locked Mac desktop; not interaction performance",
+  "configuration": "Direct 1 CPU, flat/PTE, SIMD v4 on, native exclusive/cross-page/code-watch, 128 MiB caches, 2 ms host preemption",
+  "variants": {
+    "baseline": {
+      "report": "work/native-linux-nce/lkl-timer-baseline-v2-1-core/summary.json",
+      "sha256": "9550db862cdecb7097c54fbba07158bca9f83bb46e9fa75d704618fcdf339e00",
+      "entries": {
+        "cli": {
+          "checks": [
+            {
+              "test": "translated_timer_boundaries",
+              "passed": true,
+              "high_res_timers": false,
+              "resolution_ns": 10000000
+            }
+          ],
+          "sleeps": [
+            {
+              "timer_wait": "nanosleep",
+              "requested_ns": 1000000,
+              "resolution_ns": 10000000,
+              "elapsed_ns": [
+                4168000,
+                10905000,
+                8619000,
+                11067000,
+                10880000,
+                8676000,
+                10733000,
+                8139000
+              ],
+              "median_ns": 9704500.0,
+              "max_ns": 11067000
+            },
+            {
+              "timer_wait": "nanosleep",
+              "requested_ns": 4000000,
+              "resolution_ns": 10000000,
+              "elapsed_ns": [
+                11498000,
+                8931000,
+                10661000,
+                10746000,
+                10344000,
+                9330000,
+                10850000,
+                8774000
+              ],
+              "median_ns": 10502500.0,
+              "max_ns": 11498000
+            },
+            {
+              "timer_wait": "nanosleep",
+              "requested_ns": 16666666,
+              "resolution_ns": 10000000,
+              "elapsed_ns": [
+                19733000,
+                21425000,
+                19609000,
+                19645000,
+                19643000,
+                20104000,
+                21957000,
+                18650000
+              ],
+              "median_ns": 19689000.0,
+              "max_ns": 21957000
+            }
+          ]
+        },
+        "gcd": {
+          "checks": [
+            {
+              "test": "translated_timer_boundaries",
+              "passed": true,
+              "high_res_timers": false,
+              "resolution_ns": 10000000
+            }
+          ],
+          "sleeps": [
+            {
+              "timer_wait": "nanosleep",
+              "requested_ns": 1000000,
+              "resolution_ns": 10000000,
+              "elapsed_ns": [
+                2407000,
+                11877000,
+                9905000,
+                6748000,
+                14749000,
+                5916000,
+                12729000,
+                9762000
+              ],
+              "median_ns": 9833500.0,
+              "max_ns": 14749000
+            },
+            {
+              "timer_wait": "nanosleep",
+              "requested_ns": 4000000,
+              "resolution_ns": 10000000,
+              "elapsed_ns": [
+                6880000,
+                14634000,
+                7775000,
+                10848000,
+                8946000,
+                7798000,
+                14638000,
+                7707000
+              ],
+              "median_ns": 8372000.0,
+              "max_ns": 14638000
+            },
+            {
+              "timer_wait": "nanosleep",
+              "requested_ns": 16666666,
+              "resolution_ns": 10000000,
+              "elapsed_ns": [
+                20651000,
+                21645000,
+                18672000,
+                30915000,
+                19870000,
+                18850000,
+                19609000,
+                19045000
+              ],
+              "median_ns": 19739500.0,
+              "max_ns": 30915000
+            }
+          ]
+        }
+      },
+      "desktop": {
+        "report": "work/native-linux-nce/lkl-timer-baseline-v4-1-desktop/summary.json",
+        "sha256": "fcaa9b76906085eac87e2af8aa2758236f4f183907b312d5c30e668e0f0d0d98",
+        "scope": "functional CLI/GCD, concurrent variants; elapsed times excluded from performance comparison"
+      }
+    },
+    "highres": {
+      "report": "work/native-linux-nce/lkl-timer-highres-1-core/summary.json",
+      "sha256": "88cd28de4db70942ba1f290d6613aecb0f46c73ba9a2d66066265c250542adc3",
+      "entries": {
+        "cli": {
+          "checks": [
+            {
+              "test": "translated_timer_boundaries",
+              "passed": true,
+              "high_res_timers": true,
+              "resolution_ns": 1
+            }
+          ],
+          "sleeps": [
+            {
+              "timer_wait": "nanosleep",
+              "requested_ns": 1000000,
+              "resolution_ns": 1,
+              "elapsed_ns": [
+                1634000,
+                1606000,
+                1604000,
+                1613000,
+                1657000,
+                1614000,
+                1610000,
+                1167000
+              ],
+              "median_ns": 1611500.0,
+              "max_ns": 1657000
+            },
+            {
+              "timer_wait": "nanosleep",
+              "requested_ns": 4000000,
+              "resolution_ns": 1,
+              "elapsed_ns": [
+                6130000,
+                5929000,
+                4136000,
+                6143000,
+                4284000,
+                6053000,
+                4441000,
+                4408000
+              ],
+              "median_ns": 5185000.0,
+              "max_ns": 6143000
+            },
+            {
+              "timer_wait": "nanosleep",
+              "requested_ns": 16666666,
+              "resolution_ns": 1,
+              "elapsed_ns": [
+                18434000,
+                16792000,
+                19546000,
+                19181000,
+                17232000,
+                16800000,
+                16858000,
+                19996000
+              ],
+              "median_ns": 17833000.0,
+              "max_ns": 19996000
+            }
+          ]
+        },
+        "gcd": {
+          "checks": [
+            {
+              "test": "translated_timer_boundaries",
+              "passed": true,
+              "high_res_timers": true,
+              "resolution_ns": 1
+            }
+          ],
+          "sleeps": [
+            {
+              "timer_wait": "nanosleep",
+              "requested_ns": 1000000,
+              "resolution_ns": 1,
+              "elapsed_ns": [
+                1682000,
+                1983000,
+                2413000,
+                1649000,
+                1621000,
+                1662000,
+                1827000,
+                1696000
+              ],
+              "median_ns": 1689000.0,
+              "max_ns": 2413000
+            },
+            {
+              "timer_wait": "nanosleep",
+              "requested_ns": 4000000,
+              "resolution_ns": 1,
+              "elapsed_ns": [
+                4983000,
+                6392000,
+                5769000,
+                5137000,
+                6124000,
+                4525000,
+                6117000,
+                5094000
+              ],
+              "median_ns": 5453000.0,
+              "max_ns": 6392000
+            },
+            {
+              "timer_wait": "nanosleep",
+              "requested_ns": 16666666,
+              "resolution_ns": 1,
+              "elapsed_ns": [
+                19257000,
+                20370000,
+                18970000,
+                19622000,
+                19186000,
+                17237000,
+                17895000,
+                17437000
+              ],
+              "median_ns": 19078000.0,
+              "max_ns": 20370000
+            }
+          ]
+        }
+      },
+      "desktop": {
+        "report": "work/native-linux-nce/lkl-timer-highres-v4-1-desktop/summary.json",
+        "sha256": "5d3e5e04ad331ea73c23a9b02836a40d15651e0706e8fad9c9ab51e52324e728",
+        "scope": "functional CLI/GCD, concurrent variants; elapsed times excluded from performance comparison"
+      }
+    }
+  },
+  "failed_initial_test": {
+    "report": "work/native-linux-nce/lkl-timer-baseline-1-core/summary.json",
+    "reason": "periodic timer accumulation assertion assumed a 1 ms effective interval despite reported 10 ms resolution; test corrected to wait multiple effective periods"
+  },
+  "baseline_visible_vsync": {
+    "runID": "8F4DF52B-1029-45A9-ADB3-2AD02C7C3AE7",
+    "global_tid": 69,
+    "android_pid": 21,
+    "android_tid": 29,
+    "destination_global_pid": 55,
+    "binder_code": "0x4",
+    "guest_window_ns": [
+      122355778000.0,
+      124170829000.0
+    ],
+    "transactions": 109,
+    "interval_ms": {
+      "count": 108,
+      "p50_ms": 18.7225,
+      "p95_ms": 21.619600000000002,
+      "p99_ms": 22.663279999999993,
+      "max_ms": 26.679,
+      "p95_small_sample": true,
+      "p99_small_sample": true,
+      "tail_count_reference": {
+        "p95": 5,
+        "p99": 1
+      },
+      "percentile_method": "linear interpolation; small-sample flag uses fewer than 10 expected tail observations; frames are not independent runs",
+      "above_ms": {
+        "16.666667": 70,
+        "100": 0,
+        "250": 0,
+        "1000": 0
+      }
+    },
+    "interval_mean_ms": 16.636203703703703,
+    "timestamps_ns": [
+      122365521000,
+      122382288000,
+      122405000000,
+      122412061000,
+      122431320000,
+      122457999000,
+      122462984000,
+      122482073000,
+      122493011000,
+      122512521000,
+      122532063000,
+      122552067000,
+      122562088000,
+      122581431000,
+      122601424000,
+      122611686000,
+      122632091000,
+      122650782000,
+      122665645000,
+      122682073000,
+      122700307000,
+      122712510000,
+      122732130000,
+      122742544000,
+      122761705000,
+      122781332000,
+      122800651000,
+      122813148000,
+      122830049000,
+      122852065000,
+      122861402000,
+      122882104000,
+      122902270000,
+      122912337000,
+      122932059000,
+      122952085000,
+      122962129000,
+      122982216000,
+      123002119000,
+      123012147000,
+      123030895000,
+      123050470000,
+      123062075000,
+      123082085000,
+      123102133000,
+      123112086000,
+      123132080000,
+      123152076000,
+      123162464000,
+      123182072000,
+      123202076000,
+      123212329000,
+      123230584000,
+      123252080000,
+      123262255000,
+      123280631000,
+      123302068000,
+      123312169000,
+      123330676000,
+      123352110000,
+      123362680000,
+      123380697000,
+      123401278000,
+      123411944000,
+      123430749000,
+      123451232000,
+      123462340000,
+      123480296000,
+      123500588000,
+      123512037000,
+      123530386000,
+      123552069000,
+      123561180000,
+      123580370000,
+      123602156000,
+      123611148000,
+      123630602000,
+      123652091000,
+      123662071000,
+      123680551000,
+      123702186000,
+      123718722000,
+      123730506000,
+      123752097000,
+      123762083000,
+      123780560000,
+      123802117000,
+      123812095000,
+      123830612000,
+      123852082000,
+      123861485000,
+      123880618000,
+      123902133000,
+      123913619000,
+      123930725000,
+      123952151000,
+      123962258000,
+      123980803000,
+      124002136000,
+      124012157000,
+      124030908000,
+      124052229000,
+      124062147000,
+      124080844000,
+      124102161000,
+      124112171000,
+      124130921000,
+      124152219000,
+      124162231000
+    ],
+    "trace_sha256": "2d121cd2c636a216768f45a49e6a79a7833b476230dd0d18146fd8ca3bc3cce7",
+    "scope": "Composer vsync thread Binder sends; original payload vsync times and host display identity unmeasured"
+  }
+}

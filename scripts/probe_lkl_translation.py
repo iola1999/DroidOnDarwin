@@ -107,7 +107,7 @@ def validate(rows, memory_interval, mapping="window", workload="core", tlb_inval
                    for cpu in range(active_cpus))
     expected = {'linux_simd_fallback_continuation', 'linux_dynamic_code', 'linux_signal_suite', 'linux_signal_register_restore',
                 'linux_signal_eintr_restart', 'linux_signal_timer_preemption', 'linux_mm_exchange_integrity',
-                'translated_pthread_tls_mutex', 'translated_signals_protection_restore',
+                'translated_pthread_tls_mutex', 'translated_signals_protection_restore', 'translated_timer_boundaries',
                 'translated_runtime_elf_exec', 'translated_runtime_libraries', 'translated_context_cleanup',
                 'linux_ram_capacity_cow', 'linux_brk_growth_cow', 'linux_fault_contiguous_data_boundaries',
                 'linux_exec_symlink', 'linux_aarch64_file_open_flags', 'linux_stack_growth_and_limit',
@@ -295,6 +295,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--parallel-profile', type=int, choices=(0, 1), default=0)
     parser.add_argument('--cpus', type=int, choices=(1, 2), default=1)
+    parser.add_argument('--high-res-timers', action='store_true', help='使用独立的高分辨率定时器内核变体')
     parser.add_argument('--online-cpus', type=int, choices=(1, 2), help='启动时启用的 CPU 数量，默认启用构建中的全部 CPU')
     parser.add_argument('--smp-uaccess-stop', choices=('all', 'code'), default='all')
     parser.add_argument('--code-memory', choices=('map-jit', 'dual'), default='map-jit')
@@ -333,6 +334,8 @@ def main():
     parser.add_argument('--output', type=Path, default=DEFAULT_OUT)
     parser.add_argument('--memory-interval-ms', type=int, default=100)
     args = parser.parse_args()
+    if args.high_res_timers and args.mapping != 'pte':
+        parser.error('高分辨率定时器变体需要 --mapping pte')
     args.online_cpus = args.cpus if args.online_cpus is None else args.online_cpus
     if args.online_cpus > args.cpus or (args.mapping != 'pte' and args.online_cpus != args.cpus):
         parser.error('在线 CPU 数量不能超过构建容量，单 CPU 对照需要 PTE 翻译内核')
@@ -391,7 +394,7 @@ def main():
     kernel = KERNEL
     if args.mapping == 'pte':
         from build_lkl_translation_kernel import build
-        kernel = build(args.cpus)
+        kernel = build(args.cpus, args.high_res_timers)
     else:
         native_manifest = json.loads((kernel / 'lkl-summary.json').read_text())
         if sha(kernel / 'lkl-image.bin') != native_manifest['kernel_sha256'] or any(
@@ -482,16 +485,19 @@ def main():
     resource = Path(subprocess.check_output([llvm / 'clang', '-print-resource-dir'], text=True).strip()) / 'include'
     command = [llvm / 'clang', '--target=aarch64-linux-musl', '-mno-outline-atomics', '-fPIE', '-O2', '-g',
                '-Wall', '-Wextra', '-Werror', '-nostdinc', '-isystem', libc / 'include', '-isystem', resource,
-               f'-DNCE_TRANSLATION_CPUS={args.cpus}', '-c', EXP / 'translation/linux-guest.c', '-o', out / 'guest.o']
+               f'-DNCE_TRANSLATION_CPUS={args.cpus}', f'-DNCE_TRANSLATION_HIGH_RES_TIMERS={int(args.high_res_timers)}',
+               '-c', EXP / 'translation/linux-guest.c', '-o', out / 'guest.o']
     run(command)
     commands.append(list(map(str, command)))
     guest_objects = []
-    guest_sources = ('signal-tests.c', 'signal-registers.S', 'code-tests.c', 'mm-bench.c', 'mm-tests.c', 'file-tests.c')
-    for name in guest_sources:
-        obj = out / (Path(name).stem + '.o')
+    guest_sources = [EXP / 'userspace' / name for name in
+                     ('signal-tests.c', 'signal-registers.S', 'code-tests.c', 'mm-bench.c', 'mm-tests.c', 'file-tests.c')]
+    guest_sources.append(EXP / 'translation/timer-tests.c')
+    for source in guest_sources:
+        obj = out / (source.stem + '.o')
         compile_command = [llvm / 'clang', '--target=aarch64-linux-musl', '-mno-outline-atomics', '-fPIE', '-O2', '-g',
                            '-Wall', '-Wextra', '-Werror', '-ffunction-sections', '-Dmain=unused_mm_main', '-nostdinc', '-isystem', libc / 'include', '-isystem', resource,
-                           '-c', EXP / 'userspace' / name, '-o', obj]
+                           '-c', source, '-o', obj]
         run(compile_command)
         commands.append(list(map(str, compile_command)))
         guest_objects.append(obj)
@@ -534,7 +540,7 @@ def main():
              *[EXP / 'userspace' / name for name in BIONIC_TEST_SOURCES],
              EXP / 'translation/unicorn-code-memory.h', EXP / 'execute-check.h', EXP / 'translation/linux-elf.h', EXP / 'translation/linux-execution.h', EXP / 'translation/interaction-profile.h', EXP / 'translation/linux-memory.h', EXP / 'translation/linux-guest.c', Path(__file__),
              EXP / 'dispatch-test.c', EXP / 'layout.h', EXP / 'guest-registers.h',
-             *[EXP / 'userspace' / name for name in guest_sources], *android_files, *graphics_files,
+             *guest_sources, *android_files, *graphics_files,
              kernel / 'lkl-image.bin', kernel / 'lkl-image.h', kernel / 'lkl.so', kernel / 'lkl-host-ops.h',
              EXP / 'translation/kernel-api.h', EXP / 'translation/kernel-image.h', EXP / 'code-memory.h', EXP / 'nce.h', out / 'translation-symbols.h',
              ROOT / 'scripts/build_translation_engine.py', manifest,
@@ -636,7 +642,7 @@ def main():
               'dependency': dependency, 'commands': commands, 'host_unchanged_after_guest_build': True,
               'configuration': {'code_memory': args.code_memory, 'execution': args.execution, 'direct': direct_config, 'mapping': args.mapping, 'sparse_scan': True, 'fault_prefetch': False, 'guest_page_bytes': 16384,
                                 'workload': args.workload, 'entries': entries, 'art_nterp': args.art_nterp,
-                                'cpus': args.cpus, 'online_cpus': args.online_cpus, 'uaccess_stop': args.smp_uaccess_stop, 'parallel_profile': bool(args.parallel_profile), 'art_expanded_jit': args.art_expanded_jit, 'art_fast_baseline': args.art_fast_baseline,
+                                'cpus': args.cpus, 'high_res_timers': args.high_res_timers, 'online_cpus': args.online_cpus, 'uaccess_stop': args.smp_uaccess_stop, 'parallel_profile': bool(args.parallel_profile), 'art_expanded_jit': args.art_expanded_jit, 'art_fast_baseline': args.art_fast_baseline,
                                 'cache_invalidation': args.cache_invalidation,
                                 'exec_cache': args.exec_cache,
                                 'tlb_invalidation': args.tlb_invalidation,

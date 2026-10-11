@@ -88,9 +88,10 @@ def main():
     translation = None
     if args.translation_report:
         from translation_package import prepare
-        cpu_count = json.loads(args.translation_report.read_text())['configuration']['cpus']
+        variant = json.loads(args.translation_report.read_text())['configuration']
+        cpu_count = variant['cpus']
         if not args.output:
-            OUT = ROOT / f'work/native-linux-nce/macos-direct-{cpu_count}'
+            OUT = ROOT / (f'work/native-linux-nce/macos-direct-{cpu_count}' + ('-highres' if variant.get('high_res_timers') else ''))
         translation = prepare(args.translation_report, OUT, 'macos')
         verified = translation['verified']
     else:
@@ -190,6 +191,8 @@ def main():
     build = '0.25.0-Mac-' + datetime.now().astimezone().strftime('%Y%m%d-%H%M%S')
     if translation:
         build += f'-direct{cpu_count}-dual'
+        if translation['configuration'].get('high_res_timers'):
+            build += '-highres'
     info = {'CFBundleIdentifier': 'app.droidondarwin.mac', 'CFBundleExecutable': executable.name,
             'CFBundleName': 'DroidOnDarwin', 'CFBundleDisplayName': 'DroidOnDarwin', 'CFBundlePackageType': 'APPL',
             'CFBundleShortVersionString': '0.25.0', 'CFBundleVersion': '14', 'DroidOnDarwinBuildID': build,

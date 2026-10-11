@@ -1,5 +1,5 @@
 {
-  "status": "independent SIMD and single/dual CPU core CLI/GCD passed; full desktop and visible performance pending",
+  "status": "independent SIMD, single/dual CPU core and single CPU full desktop CLI/GCD passed; visible performance and iPhone pending",
   "scope": "FCVTZS/FCVTZU scalar/vector FP32/FP64; simdMath default off",
   "reports": {
     "direct-simd-math-v4": {
@@ -13,6 +13,11 @@
     "lkl-simd-math-v4-2-core": {
       "path": "work/native-linux-nce/lkl-simd-math-v4-2-core/summary.json",
       "sha256": "3eedde82fe3ca5444bfa06d0f1514e5e1a981fe24b0552b217ded9f4c5b8bdc1"
+    },
+    "desktop": {
+      "path": "work/native-linux-nce/lkl-timer-baseline-v4-1-desktop/summary.json",
+      "sha256": "fcaa9b76906085eac87e2af8aa2758236f4f183907b312d5c30e668e0f0d0d98",
+      "scope": "default low-resolution kernel, SIMD v4 on; functional checks"
     }
   }
 }

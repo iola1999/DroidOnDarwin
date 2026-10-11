@@ -37,8 +37,9 @@ def main():
         if args.rebuild_kernel:
             parser.error('翻译变体由桌面验证记录指定内核')
         from translation_package import prepare
-        cpu_count = json.loads(args.translation_report.read_text())['configuration']['cpus']
-        OUT = ROOT / f'work/native-linux-nce/ios-direct-{cpu_count}'
+        variant = json.loads(args.translation_report.read_text())['configuration']
+        cpu_count = variant['cpus']
+        OUT = ROOT / (f'work/native-linux-nce/ios-direct-{cpu_count}' + ('-highres' if variant.get('high_res_timers') else ''))
         translation = prepare(args.translation_report, OUT, 'ios')
         report = json.loads(args.translation_report.read_text())
         summary = {'kernel_sha256': translation['metadata']['build']['kernel_sha256'],
@@ -134,6 +135,8 @@ def main():
     build_id = REVISION + '-iOS-' + time.strftime('%Y%m%d-%H%M%S')
     if translation:
         build_id += f'-direct{cpu_count}-dual'
+        if translation['configuration'].get('high_res_timers'):
+            build_id += '-highres'
     bundle_id = 'app.droidondarwin.ios' + (f'.direct{cpu_count}' if translation else '')
     info = plistlib.loads((ROOT / 'src/app/Info.plist').read_bytes())
     for key in ['CFBundleIcons', 'CFBundleIcons~ipad', 'DroidOnDarwinPerformanceBuild']:

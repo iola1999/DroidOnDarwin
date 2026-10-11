@@ -4,6 +4,7 @@ import hashlib
 import json
 import os
 from pathlib import Path
+import re
 import shlex
 import shutil
 import subprocess
@@ -17,10 +18,12 @@ EXP = ROOT / 'experiments/native-linux'
 OUT = WORK / 'lkl-translation-kernel'
 
 
-def build(cpus=1):
+def build(cpus=1, high_res_timers=False):
     if cpus not in (1, 2):
         raise ValueError('translation CPU count must be 1 or 2')
     out = OUT if cpus == 1 else WORK / 'lkl-translation-smp-kernel'
+    if high_res_timers:
+        out = out.with_name(out.name + '-highres')
     base = WORK / 'lkl-source'
     source = out / 'source'
     build_dir = out / 'build'
@@ -60,8 +63,13 @@ def build(cpus=1):
     config = WORK / ('lkl-process-build/.config' if cpus == 1 else 'lkl-smp-process-build/.config')
     if ('CONFIG_SMP=y' in config.read_text()) != (cpus == 2):
         raise RuntimeError('翻译内核配置与 CPU 数量不一致')
-    if not (build_dir / '.config').exists() or (build_dir / '.config').read_bytes() != config.read_bytes():
-        shutil.copyfile(config, build_dir / '.config')
+    requested_config, count = re.subn(r'^(?:# CONFIG_HIGH_RES_TIMERS is not set|CONFIG_HIGH_RES_TIMERS=[yn])$',
+                                     'CONFIG_HIGH_RES_TIMERS=y' if high_res_timers else '# CONFIG_HIGH_RES_TIMERS is not set',
+                                     config.read_text(), flags=re.MULTILINE)
+    if count != 1:
+        raise RuntimeError('基础内核配置缺少唯一的 HIGH_RES_TIMERS 项')
+    if not (build_dir / '.config').exists() or (build_dir / '.config').read_text() != requested_config:
+        (build_dir / '.config').write_text(requested_config)
     llvm = Path(subprocess.check_output(['brew', '--prefix', 'llvm'], text=True).strip()) / 'bin'
     sdk = subprocess.check_output(['xcrun', '--sdk', 'macosx', '--show-sdk-path'], text=True).strip()
     clang = subprocess.check_output(['xcrun', '--find', 'clang'], text=True).strip()
@@ -84,6 +92,8 @@ def build(cpus=1):
 
     with (out / 'build.log').open('w') as log:
         run([*make, 'olddefconfig'], log)
+        if ('CONFIG_HIGH_RES_TIMERS=y' in (build_dir / '.config').read_text()) != high_res_timers:
+            raise RuntimeError('生成的内核配置与请求的定时器变体不一致')
         run([*make, '-j8', 'all'], log)
         shutil.copyfile(source / 'arch/lkl/include/uapi/asm/host_ops.h', out / 'lkl-host-ops.h')
         run([*target, '-fPIC', '-fno-stack-protector', '-O2', '-I', out, '-I', EXP,
@@ -110,7 +120,7 @@ def build(cpus=1):
     if cpus == 2:
         files += [ROOT / ('scripts/' + name + '.py') for name in ('lkl_smp_patch', 'lkl_smp_mmu_patch', 'lkl_translation_smp_patch')]
         files += list((EXP / 'smp').glob('*.[ch]'))
-    manifest = {'cpus': cpus, 'status': 'built; functional validation belongs to probe_lkl_translation.py',
+    manifest = {'cpus': cpus, 'high_res_timers': high_res_timers, 'status': 'built; functional validation belongs to probe_lkl_translation.py',
                 'build_identity': {key: env[key] for key in env if key.startswith('KBUILD_BUILD_')},
                 'revision': probe_lkl.REVISION, 'commands': commands,
                 'sha256': {str(path.relative_to(ROOT)): hashlib.sha256(path.read_bytes()).hexdigest() for path in files}}
@@ -122,4 +132,6 @@ if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument('--cpus', type=int, choices=(1, 2), default=1)
-    print(build(parser.parse_args().cpus))
+    parser.add_argument('--high-res-timers', action='store_true')
+    args = parser.parse_args()
+    print(build(args.cpus, args.high_res_timers))
