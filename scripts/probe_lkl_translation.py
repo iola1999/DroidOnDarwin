@@ -26,7 +26,7 @@ def sha(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def validate(rows, memory_interval, mapping="window", workload="core", tlb_invalidation=None, execution=None, direct_config=None, cpus=1, parallel_profile=None, uaccess_stop=None):
+def validate(rows, memory_interval, mapping="window", workload="core", tlb_invalidation=None, execution=None, direct_config=None, cpus=1, parallel_profile=None, uaccess_stop=None, code_lookup_limit=None):
     if parallel_profile is not None:
         settings = [row for row in rows if row.get('config') == 'translation_parallel']
         if len(settings) != 1 or settings[0] != {'config': 'translation_parallel', 'cpus': cpus,
@@ -51,8 +51,19 @@ def validate(rows, memory_interval, mapping="window", workload="core", tlb_inval
             return False
         if workload == 'core' and not {'translated_smp_private_mm_compute', 'translated_smp_code_alias_updates', 'translated_smp_copy_unmap_protect'} <= {row.get('test') for row in rows if row.get('passed')}:
             return False
+        if execution == 'direct':
+            watch = [row for row in rows if row.get('direct_code_watch')]
+            if len(watch) != cpus or {row.get('cpu') for row in watch} != set(range(cpus)):
+                return False
+            totals = [{key: value for key, value in row.items() if key != 'cpu'} for row in watch]
+            if any(row != totals[0] for row in totals[1:]):
+                return False
+            if totals[0]['enabled'] and totals[0].get('scope') != 'process':
+                return False
+            code_lookup_limit = sum(row['code_lookups'] for row in rows if row.get('direct_execution'))
         return all(validate([row for row in rows if row.get('cpu', cpu) == cpu], memory_interval,
-                            mapping, workload, tlb_invalidation, execution, direct_config)
+                            mapping, workload, tlb_invalidation, execution, direct_config,
+                            code_lookup_limit=code_lookup_limit)
                    for cpu in range(cpus))
     expected = {'linux_dynamic_code', 'linux_signal_suite', 'linux_signal_register_restore',
                 'linux_signal_eintr_restart', 'linux_signal_timer_preemption', 'linux_mm_exchange_integrity',
@@ -156,7 +167,7 @@ def validate(rows, memory_interval, mapping="window", workload="core", tlb_inval
             if watch[0]['enabled']:
                 if not watch[0]['queries'] or not watch[0]['protections'] or not checks[0]['version_hits']:
                     return False
-                if watch[0]['protection_failures'] or watch[0]['queries'] > direct[0]['code_lookups']:
+                if watch[0]['protection_failures'] or watch[0]['queries'] > (direct[0]['code_lookups'] if code_lookup_limit is None else code_lookup_limit):
                     return False
             elif checks[0]['version_hits'] or any(watch[0][key] for key in
                     ('queries', 'protections', 'write_faults', 'invalidations', 'protection_failures', 'excluded_pages')):
@@ -279,9 +290,9 @@ def main():
     args = parser.parse_args()
     if args.cpus == 2 and (args.mapping != 'pte' or args.execution != 'direct' or
                            args.direct_memory != 'flat' or not args.direct_native_exclusive or
-                           args.direct_code_watch or args.direct_retain_routes or
+                           args.direct_retain_routes or
                            args.exec_cache != 'pages' or args.preemption != 'timer'):
-        parser.error('双核原型需要 direct/pte/flat、原生独占、pages exec-cache 和 timer；代码写入跟踪及跳转复用需关闭')
+        parser.error('双核原型需要 direct/pte/flat、原生独占、pages exec-cache 和 timer；跳转复用需关闭')
     if args.cpus == 1 and args.smp_uaccess_stop != 'all':
         parser.error('用户复制的停止策略仅用于双核原型')
     entries = ('cli', 'gcd') if args.entry == 'both' else (args.entry,)
@@ -439,9 +450,12 @@ def main():
     run(command)
     commands.append(list(map(str, command)))
     run([llvm / 'llvm-strip', '--strip-all', out / 'guest.elf', '-o', out / 'late.elf'])
-    runtime_files = ('sigreturn.elf', 'dynamic.elf', 'libc.so', 'dependency.so', 'plugin.so', 'dash.elf', 'bionic-test.elf')
+    runtime_files = ('sigreturn.elf', 'dynamic.elf', 'libc.so', 'dependency.so', 'plugin.so', 'dash.elf')
     for name in runtime_files:
         shutil.copyfile(KERNEL / name, out / name)
+    from build_nce_userspace import BIONIC_TEST_SOURCES, build_bionic_test
+    commands.append(build_bionic_test(out))
+    runtime_files += ('bionic-test.elf',)
     android_files = []
     if args.workload != 'core':
         for name, source in [('NceWorkload.dex', KERNEL / 'java-classes/classes.dex'),
@@ -462,7 +476,9 @@ def main():
             android_files.append(out / 'enabled')
     if hosts_before != {mode: sha(out / mode) for mode in hosts_before}:
         raise RuntimeError('客体构建后宿主文件发生变化')
-    files = [*inputs, *direct_files, EXP / 'translation/linux-elf.h', EXP / 'translation/linux-execution.h', EXP / 'translation/linux-memory.h', EXP / 'translation/linux-guest.c', Path(__file__),
+    files = [*inputs, *direct_files, ROOT / 'scripts/build_nce_userspace.py',
+             *[EXP / 'userspace' / name for name in BIONIC_TEST_SOURCES],
+             EXP / 'translation/linux-elf.h', EXP / 'translation/linux-execution.h', EXP / 'translation/linux-memory.h', EXP / 'translation/linux-guest.c', Path(__file__),
              EXP / 'dispatch-test.c', EXP / 'layout.h', EXP / 'guest-registers.h',
              *[EXP / 'userspace' / name for name in guest_sources], *android_files, *graphics_files,
              kernel / 'lkl-image.bin', kernel / 'lkl-image.h', kernel / 'lkl.so', kernel / 'lkl-host-ops.h',

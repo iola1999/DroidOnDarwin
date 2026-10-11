@@ -911,6 +911,22 @@ def dash(out, llvm, libc, runtime, resource):
     return out / 'dash.elf'
 
 
+BIONIC_TEST_SOURCES = ('bionic-test.c', 'proc-exit-tests.c', 'file-tests.c', 'seccomp-tests.c',
+                      'signal-tests.c', 'signal-registers.S')
+
+
+def build_bionic_test(out):
+    ndk = Path('/opt/homebrew/share/android-ndk')
+    if 'Pkg.Revision = 29.0.14206865' not in (ndk / 'source.properties').read_text():
+        raise RuntimeError('Bionic fixture requires Android NDK 29.0.14206865')
+    command = [ndk / 'toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android35-clang',
+               '-ffixed-x18', '-mno-outline-atomics', '-g', '-O2', '-Wall', '-Wextra', '-Werror',
+               '-Wl,-z,max-page-size=16384,-z,common-page-size=16384',
+               *[EXP / 'userspace' / name for name in BIONIC_TEST_SOURCES], '-o', out / 'bionic-test.elf']
+    run(command)
+    return list(map(str, command))
+
+
 def build(out, llvm, art_compiler=False, art_oat=None, art_desktop=False, art_boot=None, art_boot_image=False):
     libc = musl(llvm)
     runtime = compiler_runtime(llvm, libc)
@@ -957,13 +973,7 @@ def build(out, llvm, art_compiler=False, art_oat=None, art_desktop=False, art_bo
         programs.append(('/init-user' if name == 'init' else '/' + name, out / f'{name}.elf'))
     programs.append(('/bin/sh', dash(out, llvm, libc, runtime, resource)))
     ndk = Path('/opt/homebrew/share/android-ndk')
-    if 'Pkg.Revision = 29.0.14206865' not in (ndk / 'source.properties').read_text():
-        raise RuntimeError('Bionic fixture requires Android NDK 29.0.14206865')
-    run([ndk / 'toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android35-clang',
-         '-ffixed-x18', '-mno-outline-atomics', '-g', '-O2', '-Wall', '-Wextra', '-Werror',
-         '-Wl,-z,max-page-size=16384,-z,common-page-size=16384',
-         EXP / 'userspace/bionic-test.c', EXP / 'userspace/proc-exit-tests.c', EXP / 'userspace/file-tests.c', EXP / 'userspace/seccomp-tests.c',
-         EXP / 'userspace/signal-tests.c', EXP / 'userspace/signal-registers.S', '-o', out / 'bionic-test.elf'])
+    build_bionic_test(out)
     programs.append(('/bionic-test', out / 'bionic-test.elf'))
     cfi_flags = [ndk / 'toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android35-clang',
                  '-ffixed-x18', '-mno-outline-atomics', '-O2', '-g', '-flto',

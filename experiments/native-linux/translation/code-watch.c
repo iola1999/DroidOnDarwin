@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 #include "code-watch.h"
 #include <errno.h>
+#include <pthread.h>
 #include <signal.h>
 #include <stdatomic.h>
 #include <stdbool.h>
@@ -17,6 +18,7 @@ struct NceCodeWatch {
     _Atomic uint64_t *versions;
     _Atomic uint64_t write_faults;
     _Atomic uint64_t mutation_epoch;
+    pthread_mutex_t protection_lock;
     NceCodeWatchStats stats;
     struct sigaction previous[2];
 };
@@ -117,8 +119,16 @@ NceCodeWatch *nce_code_watch_create(void *ram, void *alias, size_t size)
         free(watch);
         return NULL;
     }
+    int error = pthread_mutex_init(&watch->protection_lock, NULL);
+    if (error) {
+        free(watch->versions);
+        free(watch);
+        errno = error;
+        return NULL;
+    }
     NceCodeWatch *expected = NULL;
     if (!atomic_compare_exchange_strong(&active, &expected, watch)) {
+        pthread_mutex_destroy(&watch->protection_lock);
         free(watch->versions);
         free(watch);
         errno = EBUSY;
@@ -139,6 +149,7 @@ NceCodeWatch *nce_code_watch_create(void *ram, void *alias, size_t size)
             sigaction(signals[installed], &watch->previous[installed], NULL);
         }
         atomic_store(&active, NULL);
+        pthread_mutex_destroy(&watch->protection_lock);
         free(watch->versions);
         free(watch);
         errno = error;
@@ -152,19 +163,33 @@ uint64_t nce_code_watch_version(NceCodeWatch *watch, const void *ram_address)
     size_t offset = (uintptr_t)ram_address - (uintptr_t)watch->ram;
     if (offset >= watch->size)
         return 0;
-    ++watch->stats.queries;
+    __atomic_fetch_add(&watch->stats.queries, 1, __ATOMIC_RELAXED);
     size_t index = offset / PAGE_BYTES;
     uint64_t version = atomic_load_explicit(&watch->versions[index], memory_order_acquire);
     if (version == UINT64_MAX)
         return 0;
     if (version & 1)
         return version;
+    // Two first queries must not interleave protection and partial rollback.
+    // Writers to this page and range invalidation are excluded by the owner.
+    if (pthread_mutex_lock(&watch->protection_lock))
+        _exit(126);
+    version = atomic_load_explicit(&watch->versions[index], memory_order_acquire);
+    if (version & 1) {
+        if (pthread_mutex_unlock(&watch->protection_lock))
+            _exit(126);
+        return version == UINT64_MAX ? 0 : version;
+    }
     if (protect(watch, index * PAGE_BYTES, PAGE_BYTES, PROT_READ)) {
         ++watch->stats.protection_failures;
+        if (pthread_mutex_unlock(&watch->protection_lock))
+            _exit(126);
         return 0;
     }
     ++watch->stats.protections;
     atomic_store_explicit(&watch->versions[index], version + 1, memory_order_release);
+    if (pthread_mutex_unlock(&watch->protection_lock))
+        _exit(126);
     return version + 1;
 }
 
@@ -220,6 +245,8 @@ void nce_code_watch_destroy(NceCodeWatch *watch)
         if (sigaction(signals[i], &watch->previous[i], NULL))
             _exit(126);
     atomic_store_explicit(&active, NULL, memory_order_release);
+    if (pthread_mutex_destroy(&watch->protection_lock))
+        _exit(126);
     free(watch->versions);
     free(watch);
 }

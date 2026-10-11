@@ -54,7 +54,8 @@ void proc_exit_tests(void)
             snprintf(path, sizeof(path), "/proc/%d/task", pid);
             DIR *tasks = opendir(path);
             if (!tasks) {
-                CHECK(errno == ENOENT);
+                // proc_pid_permission returns ESRCH if exit races path lookup.
+                CHECK(errno == ENOENT || errno == ESRCH);
                 continue;
             }
             struct dirent *entry;
@@ -66,7 +67,7 @@ void proc_exit_tests(void)
                 snprintf(path, sizeof(path), "/proc/%d/task/%ld/stat", pid, tid);
                 int fd = open(path, O_RDONLY | O_CLOEXEC);
                 if (fd < 0) {
-                    CHECK(errno == ENOENT);
+                    CHECK(errno == ENOENT || errno == ESRCH);
                     continue;
                 }
                 char text[2048];

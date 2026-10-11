@@ -28,7 +28,9 @@ def main():
     expected = {'configuration_and_bounds', 'both_aliases_and_reprotection', 'unrelated_read_and_write_forwarding',
                 'concurrent_fault_retry', 'backing_replacement', 'protection_failure_and_retry',
                 'partial_protection_rollback', 'additional_alias_uses_content_checks',
-                'kernel_copyout_after_invalidation', 'shutdown_restores_permissions_and_handlers'}
+                'kernel_copyout_after_invalidation', 'shutdown_restores_permissions_and_handlers',
+                'concurrent_version_queries', 'queries_during_other_page_writes',
+                'concurrent_partial_protection_failure'}
     report = {'platform': platform.platform(), 'command': command, 'sha256': hashes, 'runs': []}
     hashes[str((out / 'probe').relative_to(ROOT))] = hashlib.sha256((out / 'probe').read_bytes()).hexdigest()
     for entry in ('cli', 'gcd'):

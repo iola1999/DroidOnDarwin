@@ -8,6 +8,7 @@
 #include <sched.h>
 #include <signal.h>
 #include <stdatomic.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -49,6 +50,58 @@ static void *writer(void *address)
         sched_yield();
     *(volatile unsigned *)address = 37;
     return NULL;
+}
+
+struct Query {
+    NceCodeWatch *watch;
+    void *address;
+    uint64_t version;
+    unsigned repeats;
+    bool valid;
+};
+
+static void *query(void *opaque)
+{
+    struct Query *q = opaque;
+    atomic_fetch_add_explicit(&writers_ready, 1, memory_order_release);
+    while (!atomic_load_explicit(&writers_go, memory_order_acquire))
+        sched_yield();
+    for (unsigned i = 0; i < q->repeats; ++i) {
+        uint64_t version = nce_code_watch_version(q->watch, q->address);
+        assert((version != 0) == q->valid);
+        if (!i)
+            q->version = version;
+        assert(version == q->version);
+    }
+    return NULL;
+}
+
+static void concurrent_queries(NceCodeWatch *watch, unsigned char *ram, unsigned pages, bool valid, bool other_writers)
+{
+    struct Query queries[8];
+    pthread_t threads[8];
+    unsigned count = other_writers ? 4 : 8, repeats = valid ? 2048 : 1;
+    atomic_store(&writers_ready, 0);
+    atomic_store(&writers_go, 0);
+    NceCodeWatchStats before = nce_code_watch_stats(watch);
+    for (unsigned i = 0; i < count; ++i) {
+        queries[i] = (struct Query){watch, ram + (i % pages) * PAGE_BYTES, 0, repeats, valid};
+        assert(!pthread_create(&threads[i], NULL, query, &queries[i]));
+    }
+    for (unsigned i = count; i < 8; ++i)
+        assert(!pthread_create(&threads[i], NULL, writer, ram + PAGE_BYTES + i * 4));
+    while (atomic_load_explicit(&writers_ready, memory_order_acquire) != 8)
+        sched_yield();
+    atomic_store_explicit(&writers_go, 1, memory_order_release);
+    for (unsigned i = 0; i < 8; ++i)
+        assert(!pthread_join(threads[i], NULL));
+    NceCodeWatchStats after = nce_code_watch_stats(watch);
+    assert(after.queries - before.queries == count * repeats);
+    assert(after.protections - before.protections == (valid ? pages : 0));
+    if (!valid)
+        assert(after.protection_failures - before.protection_failures == count);
+    for (unsigned i = pages; i < count; ++i)
+        assert(queries[i].version == queries[i % pages].version);
 }
 
 static void check(void *unused)
@@ -166,6 +219,26 @@ static void check(void *unused)
     assert(nce_code_watch_version(watch, ram) > first);
     assert(!fclose(input));
     report("code_watch_kernel_copyout_after_invalidation");
+
+    for (unsigned round = 0; round < 16; ++round) {
+        assert(!nce_code_watch_invalidate(watch, 0, 2 * PAGE_BYTES));
+        concurrent_queries(watch, ram, 1 + round % 2, true, false);
+    }
+    report("code_watch_concurrent_version_queries");
+    assert(nce_code_watch_version(watch, ram + PAGE_BYTES));
+    assert(!nce_code_watch_invalidate(watch, 0, PAGE_BYTES));
+    concurrent_queries(watch, ram, 1, true, true);
+    for (unsigned i = 4; i < 8; ++i)
+        assert(*(unsigned *)(ram + PAGE_BYTES + i * 4) == 37);
+    report("code_watch_queries_during_other_page_writes");
+    assert(!nce_code_watch_invalidate(watch, 2 * PAGE_BYTES, PAGE_BYTES));
+    assert(vm_protect(mach_task_self(), (uintptr_t)ram + 2 * PAGE_BYTES, PAGE_BYTES, TRUE, VM_PROT_NONE) == KERN_SUCCESS);
+    concurrent_queries(watch, ram + 2 * PAGE_BYTES, 1, false, false);
+    *(volatile unsigned char *)(alias + 2 * PAGE_BYTES) = 89;
+    alias_page(ram + 2 * PAGE_BYTES, alias + 2 * PAGE_BYTES, PAGE_BYTES);
+    concurrent_queries(watch, ram + 2 * PAGE_BYTES, 1, true, false);
+    assert(*(volatile unsigned char *)(ram + 2 * PAGE_BYTES) == 89);
+    report("code_watch_concurrent_partial_protection_failure");
     nce_code_watch_destroy(watch);
     *(volatile unsigned char *)ram = 51;
     *(volatile unsigned char *)alias = 63;

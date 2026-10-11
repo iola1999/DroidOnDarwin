@@ -12,9 +12,10 @@ typedef struct {
 } NceCodeWatchStats;
 
 /* One watch per process, two shared RW mappings of the same RAM. All addresses
- * and size must use the 16 KiB host page size. Create/destroy, version queries
- * and invalidation require quiescent writers. Concurrent writes are allowed
- * between queries; each write fault restores both aliases before retrying.
+ * and size must use the 16 KiB host page size. Version queries may run together;
+ * writers to each queried page must remain quiescent until its queries return.
+ * Create/destroy, invalidation and exclusion require quiescent queries/writers.
+ * Each write fault restores both aliases before retrying.
  * The owner must destroy the watch before either mapping is removed. */
 NceCodeWatch *nce_code_watch_create(void *ram, void *alias, size_t size);
 void nce_code_watch_destroy(NceCodeWatch *);
@@ -29,6 +30,7 @@ int nce_code_watch_invalidate(NceCodeWatch *, size_t offset, size_t size);
 /* Additional writable aliases require content comparison for these pages for
  * the rest of this watch's lifetime. Call before publishing the new alias. */
 int nce_code_watch_exclude(NceCodeWatch *, size_t offset, size_t size);
+/* Snapshot after all queries and writers have stopped. */
 NceCodeWatchStats nce_code_watch_stats(const NceCodeWatch *);
 #ifdef __cplusplus
 }

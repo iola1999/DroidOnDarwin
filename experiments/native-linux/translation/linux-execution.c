@@ -265,6 +265,11 @@ static int watch_disk_io(unsigned int index, unsigned int operation, unsigned lo
                          void *buffer, unsigned long size)
 {
     unsigned long start = (uintptr_t)buffer - (base + NCE_USER_SIZE);
+#ifdef NCE_SMP
+    bool writing = operation == 0 && size && start < NCE_RAM_SIZE;
+    if (writing)
+        exclusive_begin();
+#endif
     if (code_watch && operation == 0 && size && start < NCE_RAM_SIZE) {
         REQUIRE(size <= NCE_RAM_SIZE - start);
         unsigned long first = start & ~(PAGE - 1);
@@ -273,9 +278,6 @@ static int watch_disk_io(unsigned int index, unsigned int operation, unsigned lo
         REQUIRE(nce_code_watch_invalidate(code_watch, first, end - first) == 0);
     }
 #ifdef NCE_SMP
-    bool writing = operation == 0 && size && start < NCE_RAM_SIZE;
-    if (writing)
-        exclusive_begin();
     int result = original_disk_io(index, operation, offset, buffer, size);
     if (writing) {
         kernel_written((uintptr_t)buffer, size);
@@ -355,6 +357,9 @@ static void *shmem_map(void *address, unsigned long offset, unsigned long size, 
         REQUIRE(start <= base + RESERVATION && size <= base + RESERVATION - start);
 #ifdef NCE_DIRECT_EXECUTION
         if (code_watch) {
+#ifdef NCE_SMP
+            exclusive_begin();
+#endif
             if (start == base + NCE_USER_SIZE + offset)
                 REQUIRE(nce_code_watch_invalidate(code_watch, offset, size) == 0);
             else
@@ -362,6 +367,10 @@ static void *shmem_map(void *address, unsigned long offset, unsigned long size, 
         }
 #endif
         remap(address, ram + offset, size, prot);
+#ifdef NCE_SMP
+        if (code_watch)
+            exclusive_end();
+#endif
         return address;
     }
     REQUIRE(!translation);
@@ -902,7 +911,7 @@ unsigned long translation_linux_setup(void *kernel, unsigned long copy_user_offs
         execution->direct_engine = nce_direct_create(direct_config);
         REQUIRE(execution->direct_engine);
 #ifdef NCE_SMP
-        REQUIRE(direct_flat && !direct_read_views && !direct_code_watch && native && !retain);
+        REQUIRE(direct_flat && !direct_read_views && native && !retain);
         nce_direct_set_code_guard(execution->direct_engine, (const uint64_t *)translation->code_guard, NCE_RAM_SIZE / PAGE);
 #endif
         printf("{\"cpu\":%u,\"config\":\"translation_execution\",\"engine\":\"direct\",\"direct_cache_bytes\":%lu,\"data_page_bytes\":16384,\"mapping_entries\":%u,\"route_entries\":%u,\"selective_writes\":%s,\"reuse_code_checks\":%s,\"memory\":\"%s\",\"code_watch\":%s,\"cross_page\":%s,\"route_epochs\":%s,\"retain_routes\":%s,\"memory_groups\":%s,\"native_exclusive\":%s,\"vector_table\":%s}\n",
@@ -1013,7 +1022,7 @@ void translation_linux_cleanup(void)
                stats[0], stats[1], stats[2], stats[3], stats[4]);
 #ifdef NCE_DIRECT_EXECUTION
         REQUIRE(!code_watch);
-        printf("{\"cpu\":%u,\"direct_code_watch\":true,\"enabled\":%s,\"queries\":%llu,\"protections\":%llu,\"write_faults\":%llu,\"invalidations\":%llu,\"protection_failures\":%llu,\"excluded_pages\":%llu}\n", execution->index,
+        printf("{\"cpu\":%u,\"direct_code_watch\":true,\"scope\":\"process\",\"enabled\":%s,\"queries\":%llu,\"protections\":%llu,\"write_faults\":%llu,\"invalidations\":%llu,\"protection_failures\":%llu,\"excluded_pages\":%llu}\n", execution->index,
                direct_code_watch ? "true" : "false", code_watch_stats.queries, code_watch_stats.protections,
                code_watch_stats.write_faults, code_watch_stats.invalidations, code_watch_stats.protection_failures, code_watch_stats.excluded_pages);
         printf("{\"cpu\":%u,\"direct_flat_tables\":true,\"enabled\":%s,\"live_virtual_bytes\":%lu,\"peak_virtual_bytes\":%lu,\"updates\":%lu,\"refresh_pages\":%lu}\n", execution->index,

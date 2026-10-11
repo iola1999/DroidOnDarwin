@@ -14,7 +14,7 @@ from probe_lkl_translation import ROOT, WORK, sha, validate
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--repeat', type=int, default=2)
-    parser.add_argument('--comparison', choices=('cache', 'tlb', 'execution', 'direct-mappings', 'direct-cache', 'direct-memory', 'direct-flat', 'direct-code-watch', 'direct-cross-page', 'direct-routes', 'direct-retain-routes', 'direct-memory-groups', 'direct-read-views', 'direct-native-exclusive', 'direct-smp-uaccess', 'direct-vector-table', 'direct-smp-code-cache'), default='cache')
+    parser.add_argument('--comparison', choices=('cache', 'tlb', 'execution', 'direct-mappings', 'direct-cache', 'direct-memory', 'direct-flat', 'direct-code-watch', 'direct-cross-page', 'direct-routes', 'direct-retain-routes', 'direct-memory-groups', 'direct-read-views', 'direct-native-exclusive', 'direct-smp-uaccess', 'direct-vector-table', 'direct-smp-code-cache', 'direct-smp-code-watch'), default='cache')
     parser.add_argument('--workload', choices=('android', 'services', 'desktop'), default='android')
     parser.add_argument('--entry', choices=('both', 'cli', 'gcd', 'window'), default='both')
     parser.add_argument('--output', type=Path)
@@ -41,11 +41,11 @@ def main():
             command += ['--reuse-engine-build']
         if args.comparison != 'cache':
             command += ['--cache-mib', '128', '--linux-fastpath', '1']
-        if args.comparison in ('direct-smp-uaccess', 'direct-vector-table', 'direct-smp-code-cache'):
+        if args.comparison in ('direct-smp-uaccess', 'direct-vector-table', 'direct-smp-code-cache', 'direct-smp-code-watch'):
             command += ['--cpus', '2', '--direct-memory', 'flat', '--direct-native-exclusive', '1',
                         '--direct-cross-page', '1', '--exec-cache', 'pages', '--tlb-invalidation', 'pages',
                         '--linux-fastpath', '0']
-        if args.comparison in ('direct-vector-table', 'direct-smp-code-cache'):
+        if args.comparison in ('direct-vector-table', 'direct-smp-code-cache', 'direct-smp-code-watch'):
             command += ['--smp-uaccess-stop', 'code']
         with (out / f'prepare-{execution}.log').open('w') as log:
             subprocess.run(list(map(str, command)), stdout=log, stderr=subprocess.STDOUT, check=True, timeout=max(600, 480 * len(entries) + 120) if args.workload == 'desktop' else 600)
@@ -172,6 +172,11 @@ def main():
                                                 ('reuse', True, False, 256),
                                                 ('epochs', True, True, 256),
                                                 ('routes', True, True, 4096))}
+    if args.comparison == 'direct-smp-code-watch':
+        configurations = {name: {'execution': 'direct', 'cache_invalidation': 'pages', 'linux_fastpath': 0,
+                                 'cache_mib': 128, 'tlb_invalidation': 'pages', 'uaccess_stop': 'code',
+                                 'direct': {**baseline['configuration']['direct'], 'code_watch': enabled}}
+                          for name, enabled in (('compare', False), ('watch', True))}
     for config in configurations.values():
         if config['execution'] == 'direct' and 'direct' not in config:
             config['direct'] = {'mapping_entries': 256, 'route_entries': 256, 'selective_writes': False, 'reuse_code_checks': False}
