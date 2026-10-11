@@ -49,7 +49,7 @@ def build(out):
         from build_translation_engine import build as build_unicorn
         unicorn = Path(build_unicorn()['path'])
     out.mkdir(parents=True, exist_ok=True)
-    files = [SOURCE / name for name in ('probe.cpp', 'tests.cpp', 'instruction-tests.cpp', 'cross-page-tests.cpp', 'route-tests.cpp', 'memory-group-tests.cpp', 'page-table-tests.cpp', 'benchmark.cpp', 'main.cpp')] + [
+    files = [SOURCE / name for name in ('probe.cpp', 'tests.cpp', 'instruction-tests.cpp', 'cross-page-tests.cpp', 'route-tests.cpp', 'memory-group-tests.cpp', 'page-table-tests.cpp', 'parallel-tests.cpp', 'benchmark.cpp', 'main.cpp')] + [
         ROOT / 'experiments/native-linux/translation/kernels.S',
         ROOT / 'experiments/native-linux/translation/read-view.c',
         ROOT / 'experiments/native-linux/translation/linux-memory.c']
@@ -94,6 +94,10 @@ def validate(rows, mode, interval, config=None):
         expected |= {name + suffix for name in expected if name.startswith('direct_pte_') for suffix in ('_refill', '_flat', '_view')}
         expected |= {'direct_flat_exclusive_pair_and_zva', 'direct_flat_cross_page_table_switch_and_configuration'}
         expected |= {'direct_read_view_handler_ownership_and_forwarding', 'direct_read_view_vector_literal_fault_and_retry'}
+        expected |= {'parallel_private_same_va_compile_and_memory', 'parallel_native_exclusive_all_widths_and_orderings',
+                     'parallel_tls_x18_vectors_and_replaced_code', 'parallel_targeted_stop',
+                     'native_exclusive_host_return_and_remote_aba', 'native_exclusive_clrex_and_address_mismatch',
+                     'native_exclusive_remote_aba_without_host_return', 'native_exclusive_interrupted_retry_fallback'}
         expected |= {'code_version_reuse_and_mutation', 'code_version_backing_permissions_and_fallback',
                      'code_version_owner_and_provider_changes'}
         expected |= {'literal_load_signed_vector_pc_and_permissions', 'simd_lane_replicate_writeback_and_faults',
@@ -120,7 +124,7 @@ def validate(rows, mode, interval, config=None):
     memory = [r for r in rows if 'memory_sample' in r]
     if not interval:
         return not summaries and not memory
-    phases = ['kernel_setup', 'boundaries'] if mode == 'tests' else ['kernel_setup', 'integer', 'memory', 'atomic', 'cleanup']
+    phases = ['kernel_setup', 'boundaries', 'parallel_execution'] if mode == 'tests' else ['kernel_setup', 'integer', 'memory', 'atomic', 'cleanup']
     if [r['memory_statistics'] for r in summaries] != phases:
         return False
     for summary in summaries:

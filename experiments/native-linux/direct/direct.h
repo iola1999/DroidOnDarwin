@@ -23,7 +23,8 @@ typedef struct {
     uint64_t x[31], sp, pc;
     uint32_t nzcv, fpcr, fpsr, access_flags;
     uint64_t tpidr_el0, v[32][2];
-    /* UINT64_MAX clears the software reservation. Single Linux CPU only. */
+    /* UINT64_MAX clears the guest reservation. Native reservations can fail
+     * after any return to the host, including a mapping refill. */
     uint64_t exclusive_address, exclusive_value;
 } NceDirectState;
 
@@ -114,6 +115,11 @@ typedef struct {
     bool retain_routes;
     /* Share one translation for adjacent accesses to the same RAM page. */
     bool memory_groups;
+    /* Use the host exclusive monitor. The default LDAR/CAS approximation
+     * permits ABA and is retained for existing single-CPU comparisons.
+     * If a host return interrupts a reservation, the next exclusive load in
+     * that run returns UNSUPPORTED so a caller can execute its retry elsewhere. */
+    bool native_exclusive;
 } NceDirectConfig;
 
 /* One sequential caller per engine. Code cache is 2..256 MiB, 16 KiB aligned.

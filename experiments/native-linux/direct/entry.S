@@ -5,6 +5,8 @@
 .p2align 2
 .globl _nce_direct_enter
 _nce_direct_enter:
+    // A host call can migrate the thread or execute another guest engine.
+    clrex
     stp x19, x20, [sp, #-176]!
     stp x21, x22, [sp, #16]
     stp x23, x24, [sp, #32]
@@ -65,6 +67,7 @@ _nce_direct_enter:
 .p2align 2
 .globl _nce_direct_leave
 _nce_direct_leave:
+    clrex
     stp x0, x1, [x27]
     stp x2, x3, [x27, #16]
     stp x4, x5, [x27, #32]

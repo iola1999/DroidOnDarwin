@@ -342,6 +342,8 @@ Compilation Page::compile(uint64_t new_page, const void *bytes, size_t entry,
             } else if (kind == Bti) {
                 // This executor exposes no guarded-page feature to Linux.
             } else if (kind == ClearExclusive) {
+                if (flags & CompileNativeExclusive)
+                    c.dw(0xd5033f5f);  // clrex
                 c.MOV(X16, UINT64_MAX);
                 c.STR(X16, X27, DIRECT_EXCLUSIVE_ADDR);
             } else if (kind == Hint) {
@@ -452,8 +454,16 @@ Compilation Page::compile(uint64_t new_page, const void *bytes, size_t entry,
                 exit(pc, Budget);
             } else if (kind == ExclusiveLoad || kind == ExclusiveStore) {
                 bool write = kind == ExclusiveStore;
+                bool native = flags & CompileNativeExclusive;
                 unsigned size = w >> 30, status = (w >> 16) & 31;
                 Label failed, miss, invalid, done, completed;
+                if (native && !write) {
+                    Label ready;
+                    c.LDR(X26, X27, DIRECT_EXCLUSIVE_INTERRUPTED);
+                    c.CBZ(X26, ready);
+                    exit(pc, Fallback);
+                    c.l(ready);
+                }
                 load(rn, X16, true);
                 if (write) {
                     if (w & 0x8000)
@@ -472,25 +482,33 @@ Compilation Page::compile(uint64_t new_page, const void *bytes, size_t entry,
                     c.AND(X17, X16, (1U << size) - 1);
                     c.CBNZ(X17, invalid);
                 }
-                // A software reservation survives mapping callbacks and slice exits.
                 translate(write, miss);
                 if (write) {
-                    c.LDR(X26, X27, DIRECT_EXCLUSIVE_VALUE);
                     load(rd, X30);
-                    c.dw((size << 30) | 0x08e0fc00 | (26 << 16) | (17 << 5) | 30);  // casal
-                    c.LDR(X17, X27, DIRECT_EXCLUSIVE_VALUE);
-                    c.EOR(X17, X17, X26);
-                    c.CBNZ(X17, failed);
-                    c.MOV(X26, 0);
+                    if (native) {
+                        c.dw((size << 30) | 0x08007c00 | (w & 0x8000) | (26 << 16) | (17 << 5) | 30);  // stxr/stlxr
+                    } else {
+                        c.LDR(X26, X27, DIRECT_EXCLUSIVE_VALUE);
+                        c.dw((size << 30) | 0x08e0fc00 | (26 << 16) | (17 << 5) | 30);  // casal
+                        c.LDR(X17, X27, DIRECT_EXCLUSIVE_VALUE);
+                        c.EOR(X17, X17, X26);
+                        c.CBNZ(X17, failed);
+                        c.MOV(X26, 0);
+                    }
                     c.B(completed);
                     c.l(failed);
                     c.MOV(X26, 1);
                     c.l(completed);
+                    if (native)
+                        c.dw(0xd5033f5f);  // Also clear the host monitor on address mismatch.
                     save(status, X26);
                     c.MOV(X26, UINT64_MAX);
                     c.STR(X26, X27, DIRECT_EXCLUSIVE_ADDR);
                 } else {
-                    c.dw((size << 30) | 0x08dffc00 | (17 << 5) | 26);  // ldar, stronger than relaxed LDXR
+                    if (native)
+                        c.dw((size << 30) | 0x085f7c00 | (w & 0x8000) | (17 << 5) | 26);  // ldxr/ldaxr
+                    else
+                        c.dw((size << 30) | 0x08dffc00 | (17 << 5) | 26);  // ldar
                     c.STR(X26, X27, DIRECT_EXCLUSIVE_VALUE);
                     c.MOV(X17, X16);
                     c.STR(X17, X27, DIRECT_EXCLUSIVE_ADDR);

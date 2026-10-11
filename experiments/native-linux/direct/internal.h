@@ -16,6 +16,7 @@ constexpr uint32_t CompilePteReadRefill = 2097152;
 constexpr uint32_t CompileFlat = 4194304;
 constexpr uint32_t CompileMemoryGroups = 8388608;
 constexpr uint32_t CompileReadView = 16777216;
+constexpr uint32_t CompileNativeExclusive = 33554432;
 enum Stop : uint64_t { Budget = 0,
                        Fallback = 1,
                        ReadPage = 2,
@@ -62,6 +63,7 @@ struct Frame {
     uint64_t route_epoch;
     const void *read_view, *flat_pages;
     uint64_t read_view_faults;
+    uint64_t exclusive_interrupted;
 };
 struct Mapping {
     uint64_t read_tag, read_addend, write_tag, write_addend;
@@ -118,6 +120,7 @@ CHECK_OFFSET(pte_refill_mask, DIRECT_PTE_REFILL_MASK);
 CHECK_OFFSET(route_epoch, DIRECT_ROUTE_EPOCH);
 CHECK_OFFSET(read_view, DIRECT_READ_VIEW);
 CHECK_OFFSET(flat_pages, DIRECT_FLAT_PAGES);
+CHECK_OFFSET(exclusive_interrupted, DIRECT_EXCLUSIVE_INTERRUPTED);
 #undef CHECK_OFFSET
 bool begin_read_view(Frame *);
 void end_read_view();

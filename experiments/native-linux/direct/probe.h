@@ -51,6 +51,7 @@ struct Probe {
     void compare(NceDirectState, size_t instructions);
 };
 void direct_tests();
+void direct_parallel_tests();
 void direct_page_table_tests();
 void direct_instruction_tests(Probe &);
 void direct_cross_page_tests(Probe &);

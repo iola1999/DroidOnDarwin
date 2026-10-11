@@ -465,4 +465,5 @@ void direct_tests()
     CHECK(nce_direct_stats(probe.direct).flushes > before_version.flushes);
     report("code_version_owner_and_provider_changes");
     direct_page_table_tests();
+    direct_parallel_tests();
 }

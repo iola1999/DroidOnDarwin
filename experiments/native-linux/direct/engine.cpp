@@ -269,7 +269,9 @@ struct NceDirect {
             flags |= CompileReadView;
         uint32_t allowed = supported & state.access_flags;
         flags |= allowed & (NCE_DIRECT_LSE | NCE_DIRECT_CRC);
-        if (supported & NCE_DIRECT_LSE)
+        if (config.native_exclusive)
+            flags |= CompileExclusive | CompileNativeExclusive;
+        else if (supported & NCE_DIRECT_LSE)
             flags |= CompileExclusive;
         if (allowed & NCE_DIRECT_AES)
             flags |= CompileAes;
@@ -312,6 +314,7 @@ struct NceDirect {
         stop_request.store(0, std::memory_order_release);
         Frame frame{};
         frame.state = state;
+        frame.exclusive_interrupted = config.native_exclusive && state.exclusive_address != UINT64_MAX;
         frame.budget = budget;
         frame.code_routes = routes.data();
         frame.exit_stub = nce_direct_exit_stub;
@@ -339,6 +342,10 @@ struct NceDirect {
                 break;
             nce_direct_enter(&frame, entry, memory.read_view ? memory.read_view : memory.flat_pages ? static_cast<const void *>(memory.flat_pages)
                                                                                                     : mappings.data());
+            // The host monitor cannot survive arbitrary C++ work. Let STXR fail
+            // normally, then return at the next LDXR before a new retry starts.
+            if (config.native_exclusive && frame.state.exclusive_address != UINT64_MAX)
+                frame.exclusive_interrupted = 1;
             if (memory.read_view)
                 end_read_view();
             page = frame.code;

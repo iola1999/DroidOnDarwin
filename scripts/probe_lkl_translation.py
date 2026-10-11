@@ -223,6 +223,7 @@ def main():
     parser.add_argument('--direct-code-watch', type=int, choices=(0, 1), default=0)
     parser.add_argument('--direct-cross-page', type=int, choices=(0, 1), default=0)
     parser.add_argument('--direct-memory-groups', type=int, choices=(0, 1), default=0)
+    parser.add_argument('--direct-native-exclusive', type=int, choices=(0, 1), default=0)
     parser.add_argument('--direct-retain-routes', type=int, choices=(0, 1), default=0)
     parser.add_argument('--direct-route-epochs', type=int, choices=(0, 1), default=0)
     parser.add_argument('--direct-memory', choices=('cached', 'pte', 'refill', 'flat', 'view'), default='cached')
@@ -257,8 +258,8 @@ def main():
     direct_config = {'mapping_entries': args.direct_mapping_entries, 'route_entries': args.direct_route_entries,
                      'selective_writes': bool(args.direct_selective_writes), 'reuse_code_checks': bool(args.direct_reuse_code_checks),
                      'memory': args.direct_memory, 'code_watch': bool(args.direct_code_watch), 'cross_page': bool(args.direct_cross_page),
-                     'route_epochs': bool(args.direct_route_epochs), 'retain_routes': bool(args.direct_retain_routes), 'memory_groups': bool(args.direct_memory_groups)} if args.execution == 'direct' else None
-    if args.execution != 'direct' and (args.direct_mapping_entries != 256 or args.direct_route_entries != 256 or args.direct_selective_writes or args.direct_reuse_code_checks or args.direct_code_watch or args.direct_cross_page or args.direct_route_epochs or args.direct_retain_routes or args.direct_memory_groups or args.direct_memory != 'cached'):
+                     'route_epochs': bool(args.direct_route_epochs), 'retain_routes': bool(args.direct_retain_routes), 'memory_groups': bool(args.direct_memory_groups), 'native_exclusive': bool(args.direct_native_exclusive)} if args.execution == 'direct' else None
+    if args.execution != 'direct' and (args.direct_mapping_entries != 256 or args.direct_route_entries != 256 or args.direct_selective_writes or args.direct_reuse_code_checks or args.direct_code_watch or args.direct_cross_page or args.direct_route_epochs or args.direct_retain_routes or args.direct_memory_groups or args.direct_native_exclusive or args.direct_memory != 'cached'):
         parser.error('Direct 缓存参数需要 --execution direct')
     if args.direct_retain_routes and not (args.direct_route_epochs and args.direct_code_watch and args.direct_memory in ('pte', 'flat', 'view')):
         parser.error('跨调用复用需要跳转序号、代码写入跟踪与 PTE/flat 访存')
@@ -443,7 +444,7 @@ def main():
                        NCE_DIRECT_ROUTE_ENTRIES=str(args.direct_route_entries), NCE_DIRECT_SELECTIVE_WRITES=str(args.direct_selective_writes),
                        NCE_DIRECT_REUSE_CODE_CHECKS=str(args.direct_reuse_code_checks), NCE_DIRECT_MEMORY=args.direct_memory,
                        NCE_DIRECT_CODE_WATCH=str(args.direct_code_watch), NCE_DIRECT_CROSS_PAGE=str(args.direct_cross_page),
-                       NCE_DIRECT_ROUTE_EPOCHS=str(args.direct_route_epochs), NCE_DIRECT_RETAIN_ROUTES=str(args.direct_retain_routes), NCE_DIRECT_MEMORY_GROUPS=str(args.direct_memory_groups))
+                       NCE_DIRECT_ROUTE_EPOCHS=str(args.direct_route_epochs), NCE_DIRECT_RETAIN_ROUTES=str(args.direct_retain_routes), NCE_DIRECT_MEMORY_GROUPS=str(args.direct_memory_groups), NCE_DIRECT_NATIVE_EXCLUSIVE=str(args.direct_native_exclusive))
     for name in ('NCE_DESKTOP', 'NCE_SYSTEM_SERVER_PROBE', 'NCE_DIAGNOSTICS', 'NCE_TRACE_SYSTEMUI'):
         environment.pop(name, None)
     if args.workload == 'desktop':

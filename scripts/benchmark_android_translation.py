@@ -13,7 +13,7 @@ from probe_lkl_translation import ROOT, WORK, sha, validate
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--repeat', type=int, default=2)
-    parser.add_argument('--comparison', choices=('cache', 'tlb', 'execution', 'direct-mappings', 'direct-cache', 'direct-memory', 'direct-flat', 'direct-code-watch', 'direct-cross-page', 'direct-routes', 'direct-retain-routes', 'direct-memory-groups', 'direct-read-views'), default='cache')
+    parser.add_argument('--comparison', choices=('cache', 'tlb', 'execution', 'direct-mappings', 'direct-cache', 'direct-memory', 'direct-flat', 'direct-code-watch', 'direct-cross-page', 'direct-routes', 'direct-retain-routes', 'direct-memory-groups', 'direct-read-views', 'direct-native-exclusive'), default='cache')
     parser.add_argument('--output', type=Path)
     args = parser.parse_args()
     if args.repeat < 2 or args.repeat % 2:
@@ -80,7 +80,7 @@ def main():
     else:
         for config in configurations.values():
             config['execution'] = 'unicorn'
-    if args.comparison in ('direct-memory', 'direct-flat', 'direct-code-watch', 'direct-cross-page', 'direct-routes', 'direct-retain-routes', 'direct-memory-groups', 'direct-read-views'):
+    if args.comparison in ('direct-memory', 'direct-flat', 'direct-code-watch', 'direct-cross-page', 'direct-routes', 'direct-retain-routes', 'direct-memory-groups', 'direct-read-views', 'direct-native-exclusive'):
         configurations = {name: configurations[name] for name in ('full-256', 'mapping-4096')}
         configurations['pte'] = {
             'execution': 'direct', 'cache_invalidation': 'pages', 'linux_fastpath': 1,
@@ -92,7 +92,7 @@ def main():
             'cache_mib': 128, 'tlb_invalidation': 'full',
             'direct': {'mapping_entries': 4096, 'route_entries': 256, 'selective_writes': True,
                        'reuse_code_checks': False, 'memory': 'refill'}}
-    if args.comparison in ('direct-flat', 'direct-code-watch', 'direct-cross-page', 'direct-routes', 'direct-retain-routes', 'direct-memory-groups', 'direct-read-views'):
+    if args.comparison in ('direct-flat', 'direct-code-watch', 'direct-cross-page', 'direct-routes', 'direct-retain-routes', 'direct-memory-groups', 'direct-read-views', 'direct-native-exclusive'):
         configurations = {name: configurations[name] for name in ('mapping-4096', 'refill-4096')}
         configurations['flat'] = {
             'execution': 'direct', 'cache_invalidation': 'pages', 'linux_fastpath': 1,
@@ -134,6 +134,11 @@ def main():
         configurations = {name: {**base, 'direct': {**base['direct'], 'code_watch': True,
                                                    'cross_page': True, 'memory': name}}
                           for name in ('flat', 'view')}
+    if args.comparison == 'direct-native-exclusive':
+        base = configurations['flat']
+        configurations = {name: {**base, 'direct': {**base['direct'], 'code_watch': True,
+                                                   'cross_page': True, 'native_exclusive': enabled}}
+                          for name, enabled in (('cas', False), ('native', True))}
     for config in configurations.values():
         if config['execution'] == 'direct' and 'direct' not in config:
             config['direct'] = {'mapping_entries': 256, 'route_entries': 256, 'selective_writes': False, 'reuse_code_checks': False}
@@ -144,6 +149,7 @@ def main():
             config['direct'].setdefault('route_epochs', False)
             config['direct'].setdefault('retain_routes', False)
             config['direct'].setdefault('memory_groups', False)
+            config['direct'].setdefault('native_exclusive', False)
 
     def check_inputs():
         for path, expected in hashes.items():
@@ -178,7 +184,8 @@ def main():
                                NCE_DIRECT_CROSS_PAGE=str(int(direct['cross_page'])),
                                NCE_DIRECT_ROUTE_EPOCHS=str(int(direct['route_epochs'])),
                                NCE_DIRECT_RETAIN_ROUTES=str(int(direct['retain_routes'])),
-                               NCE_DIRECT_MEMORY_GROUPS=str(int(direct['memory_groups'])))
+                               NCE_DIRECT_MEMORY_GROUPS=str(int(direct['memory_groups'])),
+                               NCE_DIRECT_NATIVE_EXCLUSIVE=str(int(direct['native_exclusive'])))
                 stem = f'{iteration}-{entry}-{name}'
                 with (out / f'{stem}.jsonl').open('w') as stdout, (out / f'{stem}.log').open('w') as stderr:
                     try:

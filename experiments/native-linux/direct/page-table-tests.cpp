@@ -24,7 +24,7 @@ struct Tables {
     uint64_t code_limit = CodeVA + PageBytes;
     NceReadView read_view{};
     std::array<uintptr_t, 3> view_pages{};
-    explicit Tables(unsigned mode, bool cross_page = false, bool retain = false, bool groups = false) : engine(nce_direct_create({2 * 1024 * 1024, 256, 256, mode == 1, false, cross_page, retain, retain, groups})),
+    explicit Tables(unsigned mode, bool cross_page = false, bool retain = false, bool groups = false) : engine(nce_direct_create({2 * 1024 * 1024, 256, 256, mode == 1, false, cross_page, retain, retain, groups, false})),
                                                                                                         table{root.data(), CodeVA, (UINT64_C(1) << 37) - CodeVA, PhysicalBase, ram.data(), ram.size()},
                                                                                                         refill_reads(mode == 1),
                                                                                                         flat(mode >= 2 ? DIRECT_FLAT_BYTES / sizeof(nce_direct_flat_page) : 0)
