@@ -17,8 +17,11 @@
 #ifdef NCE_DIRECT_EXECUTION
 #include "../direct/direct.h"
 #include "code-watch.h"
+#include "read-view.h"
 static NceDirect *direct_engine;
 static bool direct_pte_memory, direct_pte_refill, direct_flat, direct_code_watch;
+static bool direct_read_views;
+static unsigned long read_views_created, read_views_destroyed, read_views_live, read_views_peak, read_view_maps, read_view_revocations;
 static NceCodeWatch *code_watch;
 static NceCodeWatchStats code_watch_stats;
 static void (*original_page_free)(void *, unsigned long);
@@ -120,6 +123,42 @@ static void remap(void *target, void *source, unsigned long size, int prot)
 }
 
 #ifdef NCE_DIRECT_EXECUTION
+static void *read_view_create(unsigned long size)
+{
+    NceReadView *view = calloc(1, sizeof(*view));
+    if (!view)
+        return NULL;
+    if (nce_read_view_create(view, size)) {
+        free(view);
+        return NULL;
+    }
+    ++read_views_created;
+    read_views_live += size;
+    if (read_views_live > read_views_peak)
+        read_views_peak = read_views_live;
+    return view;
+}
+
+static void read_view_update(void *opaque, unsigned long offset, unsigned long source)
+{
+    NceReadView *view = opaque;
+    REQUIRE(!(source ? nce_read_view_map(view, offset, (void *)source, PAGE)
+                     : nce_read_view_revoke(view, offset, PAGE)));
+}
+
+static void read_view_destroy(void *opaque)
+{
+    NceReadView *view = opaque;
+    read_view_maps += view->maps;
+    read_view_revocations += view->revocations;
+    read_views_live -= view->size;
+    REQUIRE(!nce_read_view_destroy(view));
+    if (translation->read_view == view)
+        translation->read_view = NULL;
+    free(view);
+    ++read_views_destroyed;
+}
+
 static int watch_disk_io(unsigned int index, unsigned int operation, unsigned long long offset,
                          void *buffer, unsigned long size)
 {
@@ -364,11 +403,14 @@ static bool direct_execute(Process *p, unsigned long generation)
                          NCE_DIRECT_LSE | NCE_DIRECT_AES | NCE_DIRECT_SHA1 | NCE_DIRECT_SHA256 | NCE_DIRECT_DC_ZVA64;
     NceDirectPageTable table = {(const uint64_t *)translation->pgd, base, NCE_USER_SIZE,
                                 base + NCE_USER_SIZE, ram, NCE_RAM_SIZE};
+    NceReadView *view = direct_read_views ? translation->read_view : NULL;
+    REQUIRE(!direct_read_views || view);
     NceDirectMemory memory = {NULL, direct_map_page, direct_map_code, generation, 14,
                               direct_pte_memory ? &table : NULL, direct_pte_refill,
                               direct_flat ? (const struct nce_direct_flat_page *)translation->flat : NULL,
                               direct_code_watch ? direct_code_version : NULL,
-                              direct_code_watch ? nce_code_watch_epoch(code_watch) : 0};
+                              direct_code_watch ? nce_code_watch_epoch(code_watch) : 0,
+                              view ? view->base : NULL};
     REQUIRE(!direct_flat || memory.flat_pages);
     uint64_t address = 0;
     ++direct_calls;
@@ -714,11 +756,18 @@ unsigned long translation_linux_setup(void *kernel, unsigned long copy_user_offs
     REQUIRE(!retain || (watch && epochs));
     direct_code_watch = watch;
     const char *direct_memory = getenv("NCE_DIRECT_MEMORY");
-    REQUIRE(!direct_memory || !strcmp(direct_memory, "cached") || !strcmp(direct_memory, "pte") || !strcmp(direct_memory, "refill") || !strcmp(direct_memory, "flat"));
+    REQUIRE(!direct_memory || !strcmp(direct_memory, "cached") || !strcmp(direct_memory, "pte") || !strcmp(direct_memory, "refill") || !strcmp(direct_memory, "flat") || !strcmp(direct_memory, "view"));
     direct_pte_memory = direct_memory && strcmp(direct_memory, "cached");
     direct_pte_refill = direct_memory && !strcmp(direct_memory, "refill");
-    direct_flat = direct_memory && !strcmp(direct_memory, "flat");
+    direct_read_views = direct_memory && !strcmp(direct_memory, "view");
+    direct_flat = direct_read_views || (direct_memory && !strcmp(direct_memory, "flat"));
     translation->flat_enabled = direct_flat;
+    if (direct_read_views) {
+        REQUIRE(!nce_direct_install_read_faults());
+        translation->read_view_create = read_view_create;
+        translation->read_view_update = read_view_update;
+        translation->read_view_destroy = read_view_destroy;
+    }
     REQUIRE(selective <= 1 && reuse <= 1);
     NceDirectConfig direct_config = {cache_bytes, direct_setting("NCE_DIRECT_MAPPING_ENTRIES", 256),
                                      direct_setting("NCE_DIRECT_ROUTE_ENTRIES", 256), selective != 0, reuse != 0, crossing != 0, epochs != 0, retain != 0, groups != 0};
@@ -815,6 +864,11 @@ void translation_linux_cleanup(void)
            translation->flat_updates, translation->flat_refresh_pages);
     REQUIRE(!translation->flat_live_bytes);
     NceDirectStats direct = nce_direct_stats(direct_engine);
+    REQUIRE(!read_views_live && read_views_created == read_views_destroyed);
+    printf("{\"direct_read_views\":true,\"enabled\":%s,\"created\":%lu,\"destroyed\":%lu,\"live_virtual_bytes\":%lu,\"peak_virtual_bytes\":%lu,\"maps\":%lu,\"revocations\":%lu,\"read_changes\":%lu,\"write_changes\":%lu,\"compiled_reads\":%llu,\"read_faults\":%llu}\n",
+           direct_read_views ? "true" : "false", read_views_created, read_views_destroyed,
+           read_views_live, read_views_peak, read_view_maps, read_view_revocations,
+           translation->flat_read_changes, translation->flat_write_changes, direct.read_view_sites, direct.read_view_faults);
     printf("{\"direct_memory_groups\":true,\"groups\":%llu,\"instructions\":%llu}\n",
            direct.memory_groups, direct.memory_group_instructions);
     printf("{\"direct_code_routes\":true,\"invalidations\":%llu,\"cleared_entries\":%llu,\"branch_exits\":%llu,\"reused_runs\":%llu}\n",
@@ -832,6 +886,8 @@ void translation_linux_cleanup(void)
         if (direct_missing[i].count)
             printf("{\"direct_fallback\":%u,\"count\":%lu}\n", direct_missing[i].instruction, direct_missing[i].count);
     nce_direct_destroy(direct_engine);
+    if (direct_read_views)
+        REQUIRE(!nce_direct_remove_read_faults());
 #endif
     REQUIRE(allocated == freed);
     checked(uc_context_free(empty_cpu));

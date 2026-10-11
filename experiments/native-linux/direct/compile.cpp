@@ -171,7 +171,19 @@ Compilation Page::compile(uint64_t new_page, const void *bytes, size_t entry,
         if (!resident(rd) && (rd != 31 || dest_sp))
             c.STR(XReg(d), X27, rd * 8);
     };
-    auto translate = [&](bool write, Label &miss) {
+    auto record_read = [&](uint64_t pc) {
+        read_faults.push_back({uintptr_t(c.xptr<void *>()), pc - new_page});
+        ++result.read_view_sites;
+    };
+    auto translate = [&](bool write, Label &miss, bool allow_read_view = false) {
+        if ((flags & CompileReadView) && allow_read_view && !write) {
+            c.LDR(X26, X27, DIRECT_PTE_USER_BASE);
+            c.SUB(X17, X16, X26);
+            c.LSR(X26, X17, DIRECT_FLAT_USER_BITS);
+            c.CBNZ(X26, miss);
+            c.ADD(X17, X28, X17);
+            return;
+        }
         if (flags & CompileFlat) {
             // Keep NZCV intact and validate upper address bits before indexing.
             c.LDR(X26, X27, DIRECT_PTE_USER_BASE);
@@ -179,7 +191,11 @@ Compilation Page::compile(uint64_t new_page, const void *bytes, size_t entry,
             c.LSR(X26, X17, DIRECT_FLAT_USER_BITS);
             c.CBNZ(X26, miss);
             c.LSR(X17, X17, 14);
-            c.ADD(X17, X28, X17, LSL, 4);
+            if (flags & CompileReadView) {
+                c.LDR(X26, X27, DIRECT_FLAT_PAGES);
+                c.ADD(X17, X26, X17, LSL, 4);
+            } else
+                c.ADD(X17, X28, X17, LSL, 4);
             c.LDR(X17, X17, write ? 8 : 0);
             c.CBZ(X17, miss);
             if (write) {
@@ -265,7 +281,7 @@ Compilation Page::compile(uint64_t new_page, const void *bytes, size_t entry,
                     c.EOR(X17, X17, X16);
                     c.LSR(X17, X17, page_bits);
                     c.CBNZ(X17, slow);
-                    translate(group.write, slow);
+                    translate(group.write, slow, true);
                     for (unsigned j = 0; j < group.count; ++j) {
                         uint32_t word = input[i + j];
                         Kind memory_kind = decode(word);
@@ -281,10 +297,14 @@ Compilation Page::compile(uint64_t new_page, const void *bytes, size_t entry,
                             unsigned data2 = vector || resident(rt2) || rt2 == 31 ? rt2 : 30;
                             if (group.write && !vector && data2 == 30)
                                 load(rt2, X30);
+                            if (!group.write && (flags & CompileReadView))
+                                record_read(pc + j * 4);
                             c.dw((word & 0xc4400000) | 0x29000000 | (delta << 15) | (data2 << 10) | (17 << 5) | data);
                             if (!group.write && !vector && data2 == 30)
                                 save(rt2, X30);
                         } else {
+                            if (!group.write && (flags & CompileReadView))
+                                record_read(pc + j * 4);
                             c.dw((word & 0xc4c00000) | 0x39000000 | (delta << 10) | (17 << 5) | data);
                         }
                         if (!group.write && !vector && data == 26)
@@ -543,18 +563,23 @@ Compilation Page::compile(uint64_t new_page, const void *bytes, size_t entry,
                     c.LSR(X17, X17, page_bits);
                     c.CBNZ(X17, crossing);
                 }
-                translate(write, miss);
+                bool read_view = (flags & CompileReadView) && !write && !ordered;
+                translate(write, miss, read_view);
                 unsigned data = vector || resident(rd) || rd == 31 ? rd : 26;
                 if (structure) {
                     // Validate the complete list before issuing the host access.
                     // Guest writeback follows success and retains address tags.
 
+                    if (read_view)
+                        record_read(pc);
                     c.dw((w & ~((1U << 23) | (31U << 16) | (31U << 5))) | (17 << 5));
                 } else if (literal) {
                     unsigned opc = w >> 30;
                     uint32_t load_word = vector     ? (opc == 2 ? 0x3dc00000 : 0xbd400000 | (opc << 30))
                                          : opc == 2 ? 0xb9800000
                                                     : 0xb9400000 | (opc << 30);
+                    if (read_view)
+                        record_read(pc);
                     c.dw(load_word | (17 << 5) | data);
                     if (!vector && data == 26)
                         save(rd, X26);
@@ -578,6 +603,8 @@ Compilation Page::compile(uint64_t new_page, const void *bytes, size_t entry,
                     // Preserve a single architectural pair access after validating
                     // both elements, including their common page boundary.
 
+                    if (read_view)
+                        record_read(pc);
                     c.dw((w & 0xc4400000) | 0x29000000 | (data2 << 10) | (17 << 5) | data);
                     if (!write && !vector) {
                         if (data == 26)
@@ -589,6 +616,8 @@ Compilation Page::compile(uint64_t new_page, const void *bytes, size_t entry,
                     if (write && !vector && data == 26)
                         load(rd, X26);
 
+                    if (read_view)
+                        record_read(pc);
                     c.dw(ordered ? (w & ~1023U) | (17 << 5) | data : (w & 0xc4c00000) | 0x39000000 | (17 << 5) | data);
                     if (!write && !vector && data == 26)
                         save(rd, X26);

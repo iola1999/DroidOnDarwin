@@ -156,6 +156,7 @@ struct NceDirect {
             stats.code_bytes += (compiled.bytes + 15) & ~size_t(15);
             stats.memory_groups += compiled.memory_groups;
             stats.memory_group_instructions += compiled.memory_group_instructions;
+            stats.read_view_sites += compiled.read_view_sites;
             ++stats.compiles;
         }
         auto *page = pages.at(address).get();
@@ -231,6 +232,9 @@ struct NceDirect {
         if (memory.flat_pages && (!memory.page_table || memory.refill_reads ||
                                   memory.page_table->user_size != (UINT64_C(1) << DIRECT_FLAT_USER_BITS)))
             return NCE_DIRECT_ERROR;
+        if (memory.read_view && (!memory.flat_pages || (uintptr_t(memory.read_view) & 16383) ||
+                                 uintptr_t(memory.read_view) > UINTPTR_MAX - (UINT64_C(1) << 32)))
+            return NCE_DIRECT_ERROR;
         if (memory.page_table) {
             const auto &table = *memory.page_table;
             if (memory.page_bits != 14 || !table.root || (uintptr_t(table.root) & 16383) ||
@@ -261,6 +265,8 @@ struct NceDirect {
             flags |= CompileFlat;
         if (config.memory_groups)
             flags |= CompileMemoryGroups;
+        if (memory.read_view)
+            flags |= CompileReadView;
         uint32_t allowed = supported & state.access_flags;
         flags |= allowed & (NCE_DIRECT_LSE | NCE_DIRECT_CRC);
         if (supported & NCE_DIRECT_LSE)
@@ -281,7 +287,8 @@ struct NceDirect {
                       memory.mapping_epoch == previous.mapping_epoch && flags == previous_flags &&
                       memory.opaque == previous.opaque && memory.map_code == previous.map_code &&
                       memory.map_page == previous.map_page && memory.code_version == previous.code_version &&
-                      memory.page_bits == previous.page_bits && !previous.refill_reads && previous.page_table;
+                      memory.page_bits == previous.page_bits && memory.read_view == previous.read_view &&
+                      !previous.refill_reads && previous.page_table;
         if (retain) {
             ++stats.route_reused_runs;
         } else {
@@ -311,6 +318,8 @@ struct NceDirect {
         frame.branch_stub = config.route_epochs ? nce_direct_branch_epoch_stub : nce_direct_branch_stub;
         frame.stop_request = &stop_request;
         frame.route_mask = config.route_entries - 1;
+        frame.read_view = memory.read_view;
+        frame.flat_pages = memory.flat_pages;
         if (memory.page_table) {
             frame.page_table = *memory.page_table;
             frame.code_page_runs = code_page_runs.data();
@@ -326,7 +335,12 @@ struct NceDirect {
             frame.code_page = frame.state.pc & ~UINT64_C(4095);
             frame.code = page;
             frame.route_epoch = route_epoch;
-            nce_direct_enter(&frame, entry, memory.flat_pages ? static_cast<const void *>(memory.flat_pages) : mappings.data());
+            if (memory.read_view && !begin_read_view(&frame))
+                break;
+            nce_direct_enter(&frame, entry, memory.read_view ? memory.read_view : memory.flat_pages ? static_cast<const void *>(memory.flat_pages)
+                                                                                                    : mappings.data());
+            if (memory.read_view)
+                end_read_view();
             page = frame.code;
             if (frame.reason == Budget) {
                 result = NCE_DIRECT_BUDGET;
@@ -410,6 +424,7 @@ struct NceDirect {
             }
             entry = page->entries[(frame.state.pc & 4095) / 4];
         }
+        stats.read_view_faults += frame.read_view_faults;
         if (!page) {
             fault = frame.state.pc;
             result = NCE_DIRECT_FETCH_FAULT;

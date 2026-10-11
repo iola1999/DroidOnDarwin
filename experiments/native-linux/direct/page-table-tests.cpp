@@ -1,6 +1,9 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 #include "probe.h"
 #include "page-table-layout.h"
+#include "../translation/read-view.h"
+#include <cerrno>
+#include <csignal>
 #include <random>
 
 namespace
@@ -19,15 +22,19 @@ struct Tables {
     bool retain_routes = false;
     const void *untracked_code = nullptr;
     uint64_t code_limit = CodeVA + PageBytes;
+    NceReadView read_view{};
+    std::array<uintptr_t, 3> view_pages{};
     explicit Tables(unsigned mode, bool cross_page = false, bool retain = false, bool groups = false) : engine(nce_direct_create({2 * 1024 * 1024, 256, 256, mode == 1, false, cross_page, retain, retain, groups})),
                                                                                                         table{root.data(), CodeVA, (UINT64_C(1) << 37) - CodeVA, PhysicalBase, ram.data(), ram.size()},
                                                                                                         refill_reads(mode == 1),
-                                                                                                        flat(mode == 2 ? DIRECT_FLAT_BYTES / sizeof(nce_direct_flat_page) : 0)
+                                                                                                        flat(mode >= 2 ? DIRECT_FLAT_BYTES / sizeof(nce_direct_flat_page) : 0)
     {
         CHECK(engine);
         retain_routes = retain;
         if (!flat.empty())
             table.user_size = UINT64_C(1) << DIRECT_FLAT_USER_BITS;
+        if (mode == 3)
+            CHECK(!nce_read_view_create(&read_view, table.user_size));
         root[0] = uintptr_t(middle.data()) | ReadWrite;
         middle[0] = uintptr_t(leaves.data()) | ReadWrite;
         leaves[CodeVA >> 14] = PhysicalBase | DIRECT_PTE_READ_REQUIRED | 0x200;
@@ -35,6 +42,7 @@ struct Tables {
     }
     ~Tables()
     {
+        CHECK(!nce_read_view_destroy(&read_view));
         nce_direct_destroy(engine);
     }
     void data_page(unsigned index, uint64_t flags = ReadWrite)
@@ -75,17 +83,27 @@ struct Tables {
     NceDirectExit run(NceDirectState &state, uint64_t &fault)
     {
         if (!flat.empty()) {
-            for (uint64_t address : {CodeVA, DataVA, DataVA + PageBytes})
+            unsigned index = 0;
+            for (uint64_t address : {CodeVA, DataVA, DataVA + PageBytes}) {
                 flat[(address - CodeVA) >> 14] = {uintptr_t(map(this, address, false)), uintptr_t(map(this, address, true))};
+                uintptr_t read = flat[(address - CodeVA) >> 14].read;
+                if (read_view.base && view_pages[index] != read) {
+                    CHECK(!(read ? nce_read_view_map(&read_view, address - CodeVA, (void *)read, PageBytes)
+                                 : nce_read_view_revoke(&read_view, address - CodeVA, PageBytes)));
+                    view_pages[index] = read;
+                }
+                ++index;
+            }
         }
         NceDirectMemory memory{this, map, fetch, epoch, 14, &table, refill_reads, flat.empty() ? nullptr : flat.data(),
-                               retain_routes ? version : nullptr, retain_routes ? code_epoch : 0};
+                               retain_routes ? version : nullptr, retain_routes ? code_epoch : 0, read_view.base};
         return nce_direct_run(engine, &state, memory, 1000, &fault);
     }
 };
 void report(const char *name, unsigned mode)
 {
-    std::printf("{\"test\":\"%s%s\",\"passed\":true}\n", name, mode == 2 ? "_flat" : mode == 1 ? "_refill"
+    std::printf("{\"test\":\"%s%s\",\"passed\":true}\n", name, mode == 3 ? "_view" : mode == 2 ? "_flat"
+                                                                                 : mode == 1   ? "_refill"
                                                                                                : "");
 }
 }  // namespace
@@ -184,6 +202,9 @@ static void check_page_tables(unsigned mode)
     std::memcpy(&value, test.ram.data() + 128, 8);
     CHECK(value == 17);
     CHECK((nce_direct_stats(test.engine).pte_read_refills != 0) == (mode == 1));
+    auto stats = nce_direct_stats(test.engine);
+    CHECK((stats.read_view_sites != 0) == (mode == 3));
+    CHECK((stats.read_view_faults != 0) == (mode == 3));
     report("direct_pte_code_alias_and_next_run_release", mode);
 }
 
@@ -425,15 +446,107 @@ static void check_memory_groups(unsigned mode)
     report("direct_pte_memory_groups_boundaries_remap_and_code_alias", mode);
 }
 
+static volatile sig_atomic_t forwarded_signal;
+static void observe_signal(int number)
+{
+    forwarded_signal = number;
+}
+
+static void check_read_view_handlers()
+{
+    auto holder = std::make_unique<Tables>(3);
+    holder->code(0xf9400001);
+    NceDirectState state{};
+    state.pc = CodeVA;
+    state.x[0] = DataVA;
+    auto before = state;
+    uint64_t fault = 0;
+    CHECK(holder->run(state, fault) == NCE_DIRECT_ERROR);
+    CHECK(!std::memcmp(&state, &before, sizeof(state)));
+
+    struct sigaction observer{}, original[2], installed[2], current{};
+    observer.sa_handler = observe_signal;
+    sigemptyset(&observer.sa_mask);
+    constexpr int signals[] = {SIGBUS, SIGSEGV};
+    for (unsigned i = 0; i < 2; ++i)
+        CHECK(!sigaction(signals[i], &observer, &original[i]));
+    CHECK(!nce_direct_install_read_faults());
+    CHECK(nce_direct_install_read_faults() == -1 && errno == EBUSY);
+    for (unsigned i = 0; i < 2; ++i) {
+        CHECK(!sigaction(signals[i], nullptr, &installed[i]));
+        forwarded_signal = 0;
+        CHECK(!raise(signals[i]) && forwarded_signal == signals[i]);
+    }
+    CHECK(!sigaction(SIGSEGV, &observer, nullptr));
+    CHECK(nce_direct_remove_read_faults() == -1 && errno == EBUSY);
+    CHECK(!sigaction(SIGBUS, nullptr, &current));
+    CHECK(current.sa_sigaction == installed[0].sa_sigaction);
+    CHECK(!sigaction(SIGSEGV, &installed[1], nullptr));
+    CHECK(!nce_direct_remove_read_faults());
+    for (unsigned i = 0; i < 2; ++i) {
+        CHECK(!sigaction(signals[i], nullptr, &current));
+        CHECK(current.sa_handler == observer.sa_handler);
+        CHECK(!sigaction(signals[i], &original[i], nullptr));
+    }
+    report("direct_read_view_handler_ownership_and_forwarding", 0);
+}
+
+static void check_read_view_vectors()
+{
+    auto flat = std::make_unique<Tables>(2), view = std::make_unique<Tables>(3);
+    std::mt19937_64 random(0x76696577);
+    NceDirectState initial{};
+    for (auto &reg : initial.x)
+        reg = random();
+    for (auto &vector : initial.v)
+        for (auto &part : vector)
+            part = random();
+    initial.pc = CodeVA;
+    initial.x[18] = DataVA;
+    initial.sp = DataVA + 512;
+    initial.nzcv = 0xa0000000;
+    initial.access_flags = NCE_DIRECT_UNALIGNED;
+    initial.exclusive_address = UINT64_MAX;
+    for (unsigned i = 0; i < 128; ++i)
+        flat->ram[PageBytes + i] = view->ram[PageBytes + i] = random();
+    const uint32_t words[] = {
+        0x3cc10400 | (18 << 5) | 31,  // ldr q31,[x18],#16
+        0xacc10000 | (18 << 5) | 31,  // ldp q31,q0,[x18],#32
+        0x4cdf7000 | (18 << 5) | 31,  // ld1 {v31.16b},[x18],#16
+        0x0ddf8000 | (18 << 5) | 31,  // ld1 {v31.s}[0],[x18],#4
+        0x9c000000 | ((DataVA - CodeVA) / 4 << 5) | 31  // ldr q31,literal
+    };
+    for (auto word : words) {
+        flat->code(word);
+        view->code(word);
+        auto expected = initial, actual = initial;
+        uint64_t fault = 0;
+        CHECK(flat->run(expected, fault) == NCE_DIRECT_UNSUPPORTED && expected.pc == CodeVA + 4);
+        view->data_page(1, 0);
+        auto faults = nce_direct_stats(view->engine).read_view_faults;
+        CHECK(view->run(actual, fault) == NCE_DIRECT_READ_FAULT && fault == DataVA);
+        CHECK(!std::memcmp(&actual, &initial, sizeof(actual)));
+        CHECK(nce_direct_stats(view->engine).read_view_faults == faults + 1);
+        view->data_page(1);
+        CHECK(view->run(actual, fault) == NCE_DIRECT_UNSUPPORTED);
+        CHECK(!std::memcmp(&actual, &expected, sizeof(actual)));
+    }
+    report("direct_read_view_vector_literal_fault_and_retry", 0);
+}
+
 void direct_page_table_tests()
 {
-    for (unsigned mode = 0; mode < 3; ++mode) {
+    check_read_view_handlers();
+    CHECK(!nce_direct_install_read_faults());
+    for (unsigned mode = 0; mode < 4; ++mode) {
         check_page_tables(mode);
         check_cross_pages(mode);
         check_memory_groups(mode);
         if (mode != 1)
             check_retained_routes(mode);
     }
+    check_read_view_vectors();
+    CHECK(!nce_direct_remove_read_faults());
 
     auto holder = std::make_unique<Tables>(2);
     auto &test = *holder;
@@ -482,7 +595,7 @@ void direct_page_table_tests()
     second[(DataVA - CodeVA) >> 14].read = uintptr_t(test.ram.data() + 2 * PageBytes);
     value = 97;
     std::memcpy(test.ram.data() + 2 * PageBytes, &value, 8);
-    NceDirectMemory memory{&test, Tables::map, Tables::fetch, test.epoch, 14, &test.table, false, second.data(), nullptr, 0};
+    NceDirectMemory memory{&test, Tables::map, Tables::fetch, test.epoch, 14, &test.table, false, second.data(), nullptr, 0, nullptr};
     actual = initial;
     CHECK(nce_direct_run(test.engine, &actual, memory, 1000, &fault) == NCE_DIRECT_UNSUPPORTED);
     CHECK(actual.x[1] == 97);

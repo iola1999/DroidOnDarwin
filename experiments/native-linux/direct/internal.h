@@ -15,6 +15,7 @@ constexpr uint32_t CompilePageTable = 1048576;
 constexpr uint32_t CompilePteReadRefill = 2097152;
 constexpr uint32_t CompileFlat = 4194304;
 constexpr uint32_t CompileMemoryGroups = 8388608;
+constexpr uint32_t CompileReadView = 16777216;
 enum Stop : uint64_t { Budget = 0,
                        Fallback = 1,
                        ReadPage = 2,
@@ -25,6 +26,11 @@ enum Stop : uint64_t { Budget = 0,
 struct Compilation {
     size_t bytes = 0;
     uint64_t memory_groups = 0, memory_group_instructions = 0;
+    uint64_t read_view_sites = 0;
+};
+struct ReadFaultSite {
+    uintptr_t host_pc;
+    uint64_t guest_offset;
 };
 struct Page {
     static constexpr size_t max_bytes = 1024 * 1024;
@@ -34,6 +40,7 @@ struct Page {
     uint64_t validated_run = 0;
     const void *source_pointer = nullptr;
     uint64_t source_version = 0;
+    std::vector<ReadFaultSite> read_faults;
     Compilation compile(uint64_t, const void *, size_t, uint32_t *, uint32_t, void **, unsigned);
 };
 struct Frame {
@@ -53,6 +60,8 @@ struct Frame {
     uint64_t pte_read_refills;
     uint64_t pte_refill_mask;
     uint64_t route_epoch;
+    const void *read_view, *flat_pages;
+    uint64_t read_view_faults;
 };
 struct Mapping {
     uint64_t read_tag, read_addend, write_tag, write_addend;
@@ -107,7 +116,11 @@ CHECK_OFFSET(pte_required, DIRECT_PTE_REQUIRED);
 CHECK_OFFSET(pte_read_refills, DIRECT_PTE_READ_REFILLS);
 CHECK_OFFSET(pte_refill_mask, DIRECT_PTE_REFILL_MASK);
 CHECK_OFFSET(route_epoch, DIRECT_ROUTE_EPOCH);
+CHECK_OFFSET(read_view, DIRECT_READ_VIEW);
+CHECK_OFFSET(flat_pages, DIRECT_FLAT_PAGES);
 #undef CHECK_OFFSET
+bool begin_read_view(Frame *);
+void end_read_view();
 extern "C" void nce_direct_enter(Frame *, void *, const void *);
 extern "C" void nce_direct_leave();
 extern "C" void nce_direct_exit_stub();

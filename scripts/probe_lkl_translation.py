@@ -135,13 +135,27 @@ def validate(rows, memory_interval, mapping="window", workload="core", tlb_inval
                     ('queries', 'protections', 'write_faults', 'invalidations', 'protection_failures', 'excluded_pages')):
                 return False
             flat = [row for row in rows if row.get('direct_flat_tables')]
-            enabled = selected[0].get('memory') == 'flat'
+            enabled = selected[0].get('memory') in ('flat', 'view')
             if len(flat) != 1 or flat[0]['enabled'] != enabled or flat[0]['live_virtual_bytes']:
                 return False
             if enabled and (not flat[0]['updates'] or flat[0]['peak_virtual_bytes'] < 4194304):
                 return False
             if not enabled and any(flat[0][key] for key in ('updates', 'refresh_pages', 'peak_virtual_bytes')):
                 return False
+            views = [row for row in rows if row.get('direct_read_views')]
+            if views or selected[0].get('memory') == 'view':
+                enabled = selected[0].get('memory') == 'view'
+                if len(views) != 1 or views[0]['enabled'] != enabled or views[0]['live_virtual_bytes']:
+                    return False
+                view = views[0]
+                if view['created'] != view['destroyed']:
+                    return False
+                if enabled and (not view['created'] or not view['compiled_reads'] or
+                                view['peak_virtual_bytes'] < 4294967296 or
+                                view['maps'] + view['revocations'] != view['read_changes']):
+                    return False
+                if not enabled and any(view[key] for key in ('created', 'maps', 'revocations', 'compiled_reads', 'read_faults', 'peak_virtual_bytes')):
+                    return False
             if (direct[0]['code_bytes'] > direct[0]['capacity_bytes'] or
                     direct[0]['capacity_bytes'] != selected[0]['direct_cache_bytes'] or
                     direct[0]['fallbacks'] > direct[0]['calls']):
@@ -211,7 +225,7 @@ def main():
     parser.add_argument('--direct-memory-groups', type=int, choices=(0, 1), default=0)
     parser.add_argument('--direct-retain-routes', type=int, choices=(0, 1), default=0)
     parser.add_argument('--direct-route-epochs', type=int, choices=(0, 1), default=0)
-    parser.add_argument('--direct-memory', choices=('cached', 'pte', 'refill', 'flat'), default='cached')
+    parser.add_argument('--direct-memory', choices=('cached', 'pte', 'refill', 'flat', 'view'), default='cached')
     parser.add_argument('--build-only', action='store_true')
     parser.add_argument('--reuse-engine-build', action='store_true', help='校验摘要后复用已构建的 Unicorn，用于执行器成组对照')
     parser.add_argument('--mapping', choices=('window', 'pte'), default='window')
@@ -246,9 +260,9 @@ def main():
                      'route_epochs': bool(args.direct_route_epochs), 'retain_routes': bool(args.direct_retain_routes), 'memory_groups': bool(args.direct_memory_groups)} if args.execution == 'direct' else None
     if args.execution != 'direct' and (args.direct_mapping_entries != 256 or args.direct_route_entries != 256 or args.direct_selective_writes or args.direct_reuse_code_checks or args.direct_code_watch or args.direct_cross_page or args.direct_route_epochs or args.direct_retain_routes or args.direct_memory_groups or args.direct_memory != 'cached'):
         parser.error('Direct 缓存参数需要 --execution direct')
-    if args.direct_retain_routes and not (args.direct_route_epochs and args.direct_code_watch and args.direct_memory in ('pte', 'flat')):
+    if args.direct_retain_routes and not (args.direct_route_epochs and args.direct_code_watch and args.direct_memory in ('pte', 'flat', 'view')):
         parser.error('跨调用复用需要跳转序号、代码写入跟踪与 PTE/flat 访存')
-    if args.direct_memory in ('pte', 'flat') and (args.direct_mapping_entries != 256 or args.direct_selective_writes):
+    if args.direct_memory in ('pte', 'flat', 'view') and (args.direct_mapping_entries != 256 or args.direct_selective_writes):
         parser.error('pte/flat 使用地址表访存，数据缓存参数必须保持默认值')
     out = args.output.resolve()
     if not out.is_relative_to(WORK):
@@ -310,8 +324,9 @@ def main():
         from probe_direct_execution import build_engine as build_direct
         direct_objects, direct_files = build_direct(out / 'direct')
         direct_link = ['-DNCE_DIRECT_EXECUTION', *direct_objects, '-lc++']
-        inputs.append(EXP / 'translation/code-watch.c')
+        inputs += [EXP / 'translation/code-watch.c', EXP / 'translation/read-view.c']
         direct_files.append(EXP / 'translation/code-watch.h')
+        direct_files.append(EXP / 'translation/read-view.h')
     graphics_link, graphics_files = [], []
     if args.workload == 'desktop':
         gfx = ROOT / 'work/gfxstream-src'

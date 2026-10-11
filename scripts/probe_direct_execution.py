@@ -29,7 +29,7 @@ def build_engine(out):
         with tarfile.open(archive) as tar:
             tar.extractall(WORK, filter='data')
     out.mkdir(parents=True, exist_ok=True)
-    inputs = [SOURCE / name for name in ('engine.cpp', 'compile.cpp', 'decode.cpp', 'memory-groups.cpp', 'cross-page.cpp', 'entry.S')]
+    inputs = [SOURCE / name for name in ('engine.cpp', 'compile.cpp', 'decode.cpp', 'memory-groups.cpp', 'read-faults.cpp', 'cross-page.cpp', 'entry.S')]
     objects = []
     for path in inputs:
         obj = out / (path.stem + '.o')
@@ -51,6 +51,7 @@ def build(out):
     out.mkdir(parents=True, exist_ok=True)
     files = [SOURCE / name for name in ('probe.cpp', 'tests.cpp', 'instruction-tests.cpp', 'cross-page-tests.cpp', 'route-tests.cpp', 'memory-group-tests.cpp', 'page-table-tests.cpp', 'benchmark.cpp', 'main.cpp')] + [
         ROOT / 'experiments/native-linux/translation/kernels.S',
+        ROOT / 'experiments/native-linux/translation/read-view.c',
         ROOT / 'experiments/native-linux/translation/linux-memory.c']
     for index, path in enumerate(files):
         obj = out / f'{index}-{path.stem}.o'
@@ -63,7 +64,7 @@ def build(out):
     executable = out / 'probe'
     library = unicorn / 'lib/libunicorn.a'
     subprocess.run(['xcrun', 'clang++', *map(str, objects), str(library), '-o', str(executable)], check=True, timeout=120)
-    inputs = files + core_inputs + [SOURCE / 'probe.h', library, executable]
+    inputs = files + core_inputs + [SOURCE / 'probe.h', ROOT / 'experiments/native-linux/translation/read-view.h', library, executable]
     hashes = {str(p.relative_to(ROOT)): hashlib.sha256(p.read_bytes()).hexdigest() for p in inputs}
     return executable, hashes
 
@@ -90,8 +91,9 @@ def validate(rows, mode, interval, config=None):
             'direct_pte_read_permissions_directories_and_bounds', 'direct_pte_write_permissions_remap_and_retry',
             'direct_pte_code_alias_and_next_run_release', 'direct_pte_cross_page_permissions_retry_and_code_alias',
             'direct_pte_memory_groups_boundaries_remap_and_code_alias'}
-        expected |= {name + suffix for name in expected if name.startswith('direct_pte_') for suffix in ('_refill', '_flat')}
+        expected |= {name + suffix for name in expected if name.startswith('direct_pte_') for suffix in ('_refill', '_flat', '_view')}
         expected |= {'direct_flat_exclusive_pair_and_zva', 'direct_flat_cross_page_table_switch_and_configuration'}
+        expected |= {'direct_read_view_handler_ownership_and_forwarding', 'direct_read_view_vector_literal_fault_and_retry'}
         expected |= {'code_version_reuse_and_mutation', 'code_version_backing_permissions_and_fallback',
                      'code_version_owner_and_provider_changes'}
         expected |= {'literal_load_signed_vector_pc_and_permissions', 'simd_lane_replicate_writeback_and_faults',
@@ -104,7 +106,7 @@ def validate(rows, mode, interval, config=None):
         expected |= {name + suffix for name in (
             'retained_routes_registers_and_cached_target', 'retained_routes_permissions_code_remap_and_flags',
             'retained_routes_untracked_alias_and_zero_epoch', 'retained_routes_cached_target_write_alias')
-            for suffix in ('', '_flat')}
+            for suffix in ('', '_flat', '_view')}
         if not expected <= {r.get('test') for r in rows if r.get('passed')}:
             return False
     else:

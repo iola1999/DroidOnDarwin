@@ -17,6 +17,12 @@ struct nce_translation_state {
     /* Host sets flat_enabled/RAM before boot; Linux owns each mm's table. */
     unsigned long flat_enabled, ram, flat;
     unsigned long flat_live_bytes, flat_peak_bytes, flat_updates, flat_refresh_pages;
+    unsigned long flat_read_changes, flat_write_changes;
+    /* Host callbacks own opaque read aliases; Linux updates them with PTEs. */
+    void *read_view;
+    void *(*read_view_create)(unsigned long size);
+    void (*read_view_update)(void *view, unsigned long offset, unsigned long source);
+    void (*read_view_destroy)(void *view);
     /* One bit per 16 KiB RAM page. The host consumes bits before execution. */
     unsigned long code_pages[NCE_TRANSLATION_CODE_WORDS];
 };

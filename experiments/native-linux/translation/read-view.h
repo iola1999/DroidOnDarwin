@@ -3,6 +3,9 @@
 #define NCE_READ_VIEW_H
 #include <stddef.h>
 #include <stdint.h>
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 typedef struct {
     void *base;
@@ -21,4 +24,7 @@ int nce_read_view_create(NceReadView *, size_t size);
 int nce_read_view_map(NceReadView *, size_t offset, const void *source, size_t size);
 int nce_read_view_revoke(NceReadView *, size_t offset, size_t size);
 int nce_read_view_destroy(NceReadView *);
+#ifdef __cplusplus
+}
+#endif
 #endif

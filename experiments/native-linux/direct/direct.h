@@ -71,6 +71,10 @@ typedef struct {
      * mutation/replacement of previously versioned code, including writes via
      * aliases. Values must not repeat. Zero keeps per-call validation. */
     uint64_t code_epoch;
+    /* Optional read-only 4 GiB alias range matching flat_pages. Requires
+     * installed read-fault handling. Permissions/backing remain stable during
+     * run; the caller updates aliases with every readable PTE change. */
+    const void *read_view;
 } NceDirectMemory;
 
 typedef enum {
@@ -91,6 +95,7 @@ typedef struct {
     uint64_t cross_page_completed, cross_page_fallbacks, cross_page_faults, cross_page_bytes;
     uint64_t route_invalidations, route_cleared_entries, branch_exits, route_reused_runs;
     uint64_t memory_groups, memory_group_instructions;
+    uint64_t read_view_sites, read_view_faults;
     size_t code_bytes, code_capacity, pages;
 } NceDirectStats;
 
@@ -129,6 +134,12 @@ void nce_direct_request_stop(NceDirect *);
 NceDirectExit nce_direct_run(NceDirect *, NceDirectState *, NceDirectMemory,
                              uint64_t budget, uint64_t *fault_address);
 NceDirectStats nce_direct_stats(const NceDirect *);
+/* Process-wide signal ownership, installed before other handlers which may
+ * forward read faults. Remove after those handlers and all guest executions.
+ * Only one read-view execution may be active at a time; unrelated faults are
+ * forwarded to the previous handlers. Returns 0 or -1 with errno. */
+int nce_direct_install_read_faults(void);
+int nce_direct_remove_read_faults(void);
 #ifdef __cplusplus
 }
 #endif

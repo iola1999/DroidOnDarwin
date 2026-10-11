@@ -23,6 +23,7 @@ static unsigned long mapping_mode;''')
     edit('    size_t bytes = NCE_USER_SIZE / PAGE_SIZE / 8;', '''    if (mapping_mode == NCE_MM_TRANSLATED) {
         mm->context.accessed = NULL;
         mm->context.flat = NULL;
+        mm->context.read_view = NULL;
         if (translation->flat_enabled) {
             mm->context.flat = lkl_ops->page_alloc(DIRECT_FLAT_BYTES);
             if (!mm->context.flat)
@@ -30,10 +31,23 @@ static unsigned long mapping_mode;''')
             translation->flat_live_bytes += DIRECT_FLAT_BYTES;
             translation->flat_peak_bytes = max(translation->flat_peak_bytes, translation->flat_live_bytes);
         }
+        if (translation->read_view_create) {
+            mm->context.read_view = translation->read_view_create(NCE_USER_SIZE);
+            if (!mm->context.read_view) {
+                lkl_ops->page_free(mm->context.flat, DIRECT_FLAT_BYTES);
+                translation->flat_live_bytes -= DIRECT_FLAT_BYTES;
+                mm->context.flat = NULL;
+                return -ENOMEM;
+            }
+        }
         return 0;
     }
     size_t bytes = NCE_USER_SIZE / PAGE_SIZE / 8;''')
-    edit('    lkl_ops->mem_free(mm->context.accessed);', '''    if (mapping_mode == NCE_MM_TRANSLATED && mm->context.flat) {
+    edit('    lkl_ops->mem_free(mm->context.accessed);', '''    if (mapping_mode == NCE_MM_TRANSLATED && mm->context.read_view) {
+        translation->read_view_destroy(mm->context.read_view);
+        mm->context.read_view = NULL;
+    }
+    if (mapping_mode == NCE_MM_TRANSLATED && mm->context.flat) {
         lkl_ops->page_free(mm->context.flat, DIRECT_FLAT_BYTES);
         translation->flat_live_bytes -= DIRECT_FLAT_BYTES;
         mm->context.flat = NULL;
@@ -74,6 +88,13 @@ static void flat_update(struct mm_struct *mm, unsigned long address, pte_t pte)
     struct nce_direct_flat_page *entry = &table[(address - USER_BASE) >> PAGE_SHIFT];
     /* Keep untouched anonymous table pages uncommitted. */
     if (entry->read != read || entry->write != write) {
+        if (entry->read != read) {
+            ++translation->flat_read_changes;
+            if (mm->context.read_view)
+                translation->read_view_update(mm->context.read_view, address - USER_BASE, read);
+        }
+        if (entry->write != write)
+            ++translation->flat_write_changes;
         entry->read = read;
         entry->write = write;
         ++translation->flat_updates;
@@ -184,6 +205,7 @@ unsigned long nce_translate_user(unsigned long address, unsigned long permission
     if (mapping_mode == NCE_MM_TRANSLATED) {
         translation->pgd = mm ? (unsigned long)mm->pgd : 0;
         translation->flat = mm ? (unsigned long)mm->context.flat : 0;
+        translation->read_view = mm ? mm->context.read_view : NULL;
     }
 }''')
     edit('    active_mm = next;\n    nce_flush_range(next, USER_BASE, TASK_SIZE);', '''    active_mm = next;
@@ -229,7 +251,11 @@ unsigned long nce_translate_user(unsigned long address, unsigned long permission
         if addition not in content:
             if content.count(marker) != 1:
                 raise RuntimeError('Translation mm context mismatch')
-            context.write_text(content.replace(marker, marker + addition))
+            content = content.replace(marker, marker + addition)
+        if '\n    void *read_view;' not in content:
+            content = content.replace(addition, addition + '\n    void *read_view;')
+        if context.read_text() != content:
+            context.write_text(content)
     header = source / 'arch/lkl/include/asm/nce-translation.h'
     content = (experiment / 'translation/kernel-api.h').read_bytes()
     if not header.exists() or header.read_bytes() != content:
