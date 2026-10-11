@@ -128,9 +128,7 @@ _nce_direct_exit_stub:
     str x17, [x27, #DIRECT_PC]
     b _nce_direct_leave
 
-.p2align 2
-.globl _nce_direct_branch_stub
-_nce_direct_branch_stub:
+.macro direct_branch_router epochs
     and x17, x16, #3
     cbnz x17, Lbranch_miss
     ldr x26, [x27, #DIRECT_CODE_ROUTES]
@@ -141,6 +139,12 @@ _nce_direct_branch_stub:
     ldr x26, [x17]
     eor x26, x26, x16, lsr #12
     cbnz x26, Lbranch_miss
+    .if \epochs
+    ldr x26, [x17, #24]
+    ldr x30, [x27, #DIRECT_ROUTE_EPOCH]
+    eor x26, x26, x30
+    cbnz x26, Lbranch_miss
+    .endif
     ldr x26, [x17, #8]
     and x30, x16, #4095
     add x26, x26, x30, lsl #1
@@ -151,6 +155,15 @@ _nce_direct_branch_stub:
     and x17, x16, #0xfffffffffffff000
     str x17, [x27, #DIRECT_CODE_PAGE]
     br x26
+.endm
+.p2align 2
+.globl _nce_direct_branch_stub
+_nce_direct_branch_stub:
+    direct_branch_router 0
+.p2align 2
+.globl _nce_direct_branch_epoch_stub
+_nce_direct_branch_epoch_stub:
+    direct_branch_router 1
 Lbranch_miss:
     str x16, [x27, #DIRECT_PC]
     mov x17, #5 // CodeBranch

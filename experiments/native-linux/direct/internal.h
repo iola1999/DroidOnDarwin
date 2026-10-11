@@ -47,6 +47,7 @@ struct Frame {
     uint64_t pte_saved_nzcv, pte_saved_link, pte_required;
     uint64_t pte_read_refills;
     uint64_t pte_refill_mask;
+    uint64_t route_epoch;
 };
 struct Mapping {
     uint64_t read_tag, read_addend, write_tag, write_addend;
@@ -59,12 +60,12 @@ struct CodeRoute {
     uint64_t tag;
     void **entries;
     Page *code;
-    uint64_t reserved;
+    uint64_t epoch;
 };
 static_assert(sizeof(NceDirectState) == 816);
 static_assert(sizeof(Mapping) == 32 && offsetof(Mapping, write_tag) == 16);
 static_assert(sizeof(nce_direct_flat_page) == 16 && offsetof(nce_direct_flat_page, write) == 8);
-static_assert(sizeof(CodeRoute) == 32 && offsetof(CodeRoute, code) == 16);
+static_assert(sizeof(CodeRoute) == 32 && offsetof(CodeRoute, code) == 16 && offsetof(CodeRoute, epoch) == 24);
 #define CHECK_OFFSET(field, macro) static_assert(offsetof(Frame, field) == macro)
 CHECK_OFFSET(state.pc, DIRECT_PC);
 CHECK_OFFSET(state.nzcv, DIRECT_NZCV);
@@ -100,11 +101,13 @@ CHECK_OFFSET(pte_saved_link, DIRECT_PTE_SAVED_LINK);
 CHECK_OFFSET(pte_required, DIRECT_PTE_REQUIRED);
 CHECK_OFFSET(pte_read_refills, DIRECT_PTE_READ_REFILLS);
 CHECK_OFFSET(pte_refill_mask, DIRECT_PTE_REFILL_MASK);
+CHECK_OFFSET(route_epoch, DIRECT_ROUTE_EPOCH);
 #undef CHECK_OFFSET
 extern "C" void nce_direct_enter(Frame *, void *, const void *);
 extern "C" void nce_direct_leave();
 extern "C" void nce_direct_exit_stub();
 extern "C" void nce_direct_branch_stub();
+extern "C" void nce_direct_branch_epoch_stub();
 extern "C" void nce_direct_read_pte();
 extern "C" void nce_direct_write_pte();
 }  // namespace nce_direct

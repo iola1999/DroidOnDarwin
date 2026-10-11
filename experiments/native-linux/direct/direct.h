@@ -85,6 +85,7 @@ typedef struct {
     uint64_t code_content_checks, code_version_hits;
     uint64_t alignment_exits, cross_page_exits;
     uint64_t cross_page_completed, cross_page_fallbacks, cross_page_faults, cross_page_bytes;
+    uint64_t route_invalidations, route_cleared_entries, branch_exits;
     size_t code_bytes, code_capacity, pages;
 } NceDirectStats;
 
@@ -96,6 +97,8 @@ typedef struct {
     bool reuse_code_checks;
     /* Ordinary RAM only, with serialized guest execution. */
     bool cross_page;
+    /* Validate route generations instead of clearing every entry on return. */
+    bool route_epochs;
 } NceDirectConfig;
 
 /* One sequential caller per engine. Code cache is 2..256 MiB, 16 KiB aligned.

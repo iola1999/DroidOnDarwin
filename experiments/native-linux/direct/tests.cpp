@@ -30,6 +30,7 @@ void direct_tests()
     auto &probe = *holder;
     direct_instruction_tests(probe);
     direct_cross_page_tests(probe);
+    direct_route_tests();
     std::mt19937_64 random(0x4845534b);
     std::array<uint32_t, 65> words{};
     for (unsigned sample = 0; sample < 1024; ++sample) {

@@ -49,7 +49,7 @@ def build(out):
         from build_translation_engine import build as build_unicorn
         unicorn = Path(build_unicorn()['path'])
     out.mkdir(parents=True, exist_ok=True)
-    files = [SOURCE / name for name in ('probe.cpp', 'tests.cpp', 'instruction-tests.cpp', 'cross-page-tests.cpp', 'page-table-tests.cpp', 'benchmark.cpp', 'main.cpp')] + [
+    files = [SOURCE / name for name in ('probe.cpp', 'tests.cpp', 'instruction-tests.cpp', 'cross-page-tests.cpp', 'route-tests.cpp', 'page-table-tests.cpp', 'benchmark.cpp', 'main.cpp')] + [
         ROOT / 'experiments/native-linux/translation/kernels.S',
         ROOT / 'experiments/native-linux/translation/linux-memory.c']
     for index, path in enumerate(files):
@@ -96,6 +96,7 @@ def validate(rows, mode, interval, config=None):
         expected |= {'literal_load_signed_vector_pc_and_permissions', 'simd_lane_replicate_writeback_and_faults',
                      'fp_fixed_rounding_and_widening', 'new_instruction_reserved_encodings'}
         expected |= {'cross_page_noncontiguous_memory_vectors_faults_12', 'cross_page_noncontiguous_memory_vectors_faults_14'}
+        expected |= {'route_epochs_fetch_permission_and_code_replacement', 'route_epochs_flush_and_return_to_freed_page'}
         if not expected <= {r.get('test') for r in rows if r.get('passed')}:
             return False
     else:
@@ -135,6 +136,7 @@ def main():
     parser.add_argument('--route-entries', type=int, choices=(256, 1024, 4096, 16384, 65536), default=256)
     parser.add_argument('--selective-writes', type=int, choices=(0, 1), default=0)
     parser.add_argument('--reuse-code-checks', type=int, choices=(0, 1), default=0)
+    parser.add_argument('--route-epochs', type=int, choices=(0, 1), default=0)
     args = parser.parse_args()
     if platform.system() != 'Darwin' or platform.machine() != 'arm64':
         parser.error('该原型需要 Apple Silicon Mac')
@@ -149,10 +151,11 @@ def main():
         return
     runs = []
     config = {'mapping_entries': args.mapping_entries, 'route_entries': args.route_entries,
-              'selective_writes': bool(args.selective_writes), 'reuse_code_checks': bool(args.reuse_code_checks)}
+              'selective_writes': bool(args.selective_writes), 'reuse_code_checks': bool(args.reuse_code_checks),
+              'route_epochs': bool(args.route_epochs)}
     environment = dict(os.environ, NCE_DIRECT_MAPPING_ENTRIES=str(args.mapping_entries),
                        NCE_DIRECT_ROUTE_ENTRIES=str(args.route_entries), NCE_DIRECT_SELECTIVE_WRITES=str(args.selective_writes),
-                       NCE_DIRECT_REUSE_CODE_CHECKS=str(args.reuse_code_checks))
+                       NCE_DIRECT_REUSE_CODE_CHECKS=str(args.reuse_code_checks), NCE_DIRECT_ROUTE_EPOCHS=str(args.route_epochs))
     modes = (['tests'] if args.mode != 'bench' else []) + (['native', 'unicorn', 'direct'] if args.mode != 'tests' else [])
     for entry in ('cli', 'gcd'):
         for mode in (modes if entry == 'cli' else list(reversed(modes))):

@@ -24,6 +24,7 @@ struct NceDirect {
     std::unordered_multimap<uintptr_t, unsigned> write_aliases;
     std::vector<uint64_t> code_page_runs;
     uint64_t run_id = 0;
+    uint64_t route_epoch = 0;
     NceDirectMemory previous{};
     std::atomic<uint32_t> stop_request{0};
     static_assert(std::atomic<uint32_t>::is_always_lock_free);
@@ -60,7 +61,12 @@ struct NceDirect {
     }
     void reset_routes()
     {
+        ++stats.route_invalidations;
+        if (config.route_epochs && ++route_epoch)
+            return;
         std::fill(routes.begin(), routes.end(), CodeRoute{UINT64_MAX, nullptr, nullptr, 0});
+        stats.route_cleared_entries += routes.size();
+        route_epoch = 1;
     }
     void clear()
     {
@@ -81,7 +87,7 @@ struct NceDirect {
             item->second->validated_run == run_id && item->second->entries[index]) {
             ++stats.code_validation_hits;
             auto *page = item->second.get();
-            routes[(address >> 12) & (routes.size() - 1)] = {address >> 12, page->branch_entries.data(), page, 0};
+            routes[(address >> 12) & (routes.size() - 1)] = {address >> 12, page->branch_entries.data(), page, route_epoch};
             return page;
         }
         const void *bytes = memory.map_code(memory.opaque, address);
@@ -148,7 +154,7 @@ struct NceDirect {
         page->validated_run = run_id;
         page->source_pointer = bytes;
         page->source_version = version;
-        routes[(address >> 12) & (routes.size() - 1)] = {address >> 12, page->branch_entries.data(), page, 0};
+        routes[(address >> 12) & (routes.size() - 1)] = {address >> 12, page->branch_entries.data(), page, route_epoch};
         return page;
     }
     bool cross_page(Frame &frame, Page *page, NceDirectMemory memory, NceDirectExit &result, uint64_t &fault)
@@ -277,7 +283,7 @@ struct NceDirect {
         frame.budget = budget;
         frame.code_routes = routes.data();
         frame.exit_stub = nce_direct_exit_stub;
-        frame.branch_stub = nce_direct_branch_stub;
+        frame.branch_stub = config.route_epochs ? nce_direct_branch_epoch_stub : nce_direct_branch_stub;
         frame.stop_request = &stop_request;
         frame.route_mask = config.route_entries - 1;
         if (memory.page_table) {
@@ -294,6 +300,7 @@ struct NceDirect {
         while (page) {
             frame.code_page = frame.state.pc & ~UINT64_C(4095);
             frame.code = page;
+            frame.route_epoch = route_epoch;
             nce_direct_enter(&frame, entry, memory.flat_pages ? static_cast<const void *>(memory.flat_pages) : mappings.data());
             page = frame.code;
             if (frame.reason == Budget) {
@@ -320,6 +327,7 @@ struct NceDirect {
                 break;
             }
             if (frame.reason == CodeBranch) {
+                ++stats.branch_exits;
                 if (frame.state.pc & 3) {
                     result = NCE_DIRECT_UNSUPPORTED;
                     break;
