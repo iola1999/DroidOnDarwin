@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 #include "internal.h"
 #include "decode.h"
+#include "memory-groups.h"
 #include <algorithm>
 #include <cstring>
 #include <stdexcept>
@@ -15,8 +16,8 @@ static bool resident(unsigned reg)
 {
     return reg < 16 || (reg >= 19 && reg < 26);
 }
-size_t Page::compile(uint64_t new_page, const void *bytes, size_t entry,
-                     uint32_t *executable, uint32_t flags, void **stable_entries, unsigned mapping_mask)
+Compilation Page::compile(uint64_t new_page, const void *bytes, size_t entry,
+                          uint32_t *executable, uint32_t flags, void **stable_entries, unsigned mapping_mask)
 {
     bool unaligned = flags & 1;
     unsigned page_bits = flags & CompileData16K ? 14 : 12;
@@ -50,6 +51,8 @@ size_t Page::compile(uint64_t new_page, const void *bytes, size_t entry,
     std::vector<Label> labels(limit - first + 1), exhausted(limit - first);
     std::array<bool, 1025> leaders{};
     leaders[1024] = true;
+    Compilation result;
+    size_t grouped_until = 0;
     for (size_t i = first; i < limit; ++i) {
         if (!emit[i])
             continue;
@@ -237,6 +240,65 @@ size_t Page::compile(uint64_t new_page, const void *bytes, size_t entry,
             }
             // Slow-path re-entry already charged this block's execution budget.
             entries[i] = c.xptr<void *>();
+            if ((flags & CompileMemoryGroups) && unaligned && i >= grouped_until) {
+                size_t available = 1;
+                while (available < 8 && i + available < limit && emit[i + available] && !leaders[i + available])
+                    ++available;
+                auto group = plan_memory_group(std::span(input.data() + i, available), page_bits);
+                if (group.count) {
+                    Label slow;
+                    load(group.base, X16, true);
+                    if (group.base == 31) {
+                        c.AND(X17, X16, 15);
+                        c.CBNZ(X17, slow);
+                    }
+                    if (group.offset) {
+                        c.MOV(X17, uint64_t(group.offset));
+                        c.ADD(X16, X16, X17);
+                    }
+                    if (group.bytes - 1 <= 4095)
+                        c.ADD(X17, X16, group.bytes - 1);
+                    else {
+                        c.MOV(X17, group.bytes - 1);
+                        c.ADD(X17, X16, X17);
+                    }
+                    c.EOR(X17, X17, X16);
+                    c.LSR(X17, X17, page_bits);
+                    c.CBNZ(X17, slow);
+                    translate(group.write, slow);
+                    for (unsigned j = 0; j < group.count; ++j) {
+                        uint32_t word = input[i + j];
+                        Kind memory_kind = decode(word);
+                        auto access = memory_access(word, memory_kind);
+                        unsigned delta = unsigned(memory_group_offset(word, memory_kind, access) - group.offset) >> access.element_shift;
+                        bool vector = word & 0x04000000;
+                        unsigned rd = word & 31;
+                        unsigned data = vector || resident(rd) || rd == 31 ? rd : 26;
+                        if (group.write && !vector && data == 26)
+                            load(rd, X26);
+                        if (memory_kind == Pair) {
+                            unsigned rt2 = (word >> 10) & 31;
+                            unsigned data2 = vector || resident(rt2) || rt2 == 31 ? rt2 : 30;
+                            if (group.write && !vector && data2 == 30)
+                                load(rt2, X30);
+                            c.dw((word & 0xc4400000) | 0x29000000 | (delta << 15) | (data2 << 10) | (17 << 5) | data);
+                            if (!group.write && !vector && data2 == 30)
+                                save(rt2, X30);
+                        } else {
+                            c.dw((word & 0xc4c00000) | 0x39000000 | (delta << 10) | (17 << 5) | data);
+                        }
+                        if (!group.write && !vector && data == 26)
+                            save(rd, X26);
+                    }
+                    jump(pc + group.count * 4);
+                    // Keep original entries for faults and indirect jumps into
+                    // the middle of a group; neither may skip earlier effects.
+                    c.l(slow);
+                    grouped_until = i + group.count;
+                    ++result.memory_groups;
+                    result.memory_group_instructions += group.count;
+                }
+            }
             uint32_t w = input[i];
             unsigned rd = w & 31, rn = (w >> 5) & 31;
             Kind kind = decode(w);
@@ -586,6 +648,7 @@ size_t Page::compile(uint64_t new_page, const void *bytes, size_t entry,
     pthread_jit_write_protect_np(1);
     sys_icache_invalidate(executable, output.size() * 4);
     source = input;
-    return output.size() * 4;
+    result.bytes = output.size() * 4;
+    return result;
 }
 }  // namespace nce_direct

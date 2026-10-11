@@ -709,7 +709,8 @@ unsigned long translation_linux_setup(void *kernel, unsigned long copy_user_offs
     unsigned crossing = direct_setting("NCE_DIRECT_CROSS_PAGE", 0);
     unsigned epochs = direct_setting("NCE_DIRECT_ROUTE_EPOCHS", 0);
     unsigned retain = direct_setting("NCE_DIRECT_RETAIN_ROUTES", 0);
-    REQUIRE(watch <= 1 && crossing <= 1 && epochs <= 1 && retain <= 1);
+    unsigned groups = direct_setting("NCE_DIRECT_MEMORY_GROUPS", 0);
+    REQUIRE(watch <= 1 && crossing <= 1 && epochs <= 1 && retain <= 1 && groups <= 1);
     REQUIRE(!retain || (watch && epochs));
     direct_code_watch = watch;
     const char *direct_memory = getenv("NCE_DIRECT_MEMORY");
@@ -720,12 +721,12 @@ unsigned long translation_linux_setup(void *kernel, unsigned long copy_user_offs
     translation->flat_enabled = direct_flat;
     REQUIRE(selective <= 1 && reuse <= 1);
     NceDirectConfig direct_config = {cache_bytes, direct_setting("NCE_DIRECT_MAPPING_ENTRIES", 256),
-                                     direct_setting("NCE_DIRECT_ROUTE_ENTRIES", 256), selective != 0, reuse != 0, crossing != 0, epochs != 0, retain != 0};
+                                     direct_setting("NCE_DIRECT_ROUTE_ENTRIES", 256), selective != 0, reuse != 0, crossing != 0, epochs != 0, retain != 0, groups != 0};
     REQUIRE(!direct_pte_memory || direct_pte_refill || (direct_config.mapping_entries == 256 && !selective));
     direct_engine = nce_direct_create(direct_config);
     REQUIRE(direct_engine);
-    printf("{\"config\":\"translation_execution\",\"engine\":\"direct\",\"direct_cache_bytes\":%lu,\"data_page_bytes\":16384,\"mapping_entries\":%u,\"route_entries\":%u,\"selective_writes\":%s,\"reuse_code_checks\":%s,\"memory\":\"%s\",\"code_watch\":%s,\"cross_page\":%s,\"route_epochs\":%s,\"retain_routes\":%s}\n",
-           cache_bytes, direct_config.mapping_entries, direct_config.route_entries, direct_config.selective_writes ? "true" : "false", direct_config.reuse_code_checks ? "true" : "false", direct_memory ? direct_memory : "cached", direct_code_watch ? "true" : "false", crossing ? "true" : "false", epochs ? "true" : "false", retain ? "true" : "false");
+    printf("{\"config\":\"translation_execution\",\"engine\":\"direct\",\"direct_cache_bytes\":%lu,\"data_page_bytes\":16384,\"mapping_entries\":%u,\"route_entries\":%u,\"selective_writes\":%s,\"reuse_code_checks\":%s,\"memory\":\"%s\",\"code_watch\":%s,\"cross_page\":%s,\"route_epochs\":%s,\"retain_routes\":%s,\"memory_groups\":%s}\n",
+           cache_bytes, direct_config.mapping_entries, direct_config.route_entries, direct_config.selective_writes ? "true" : "false", direct_config.reuse_code_checks ? "true" : "false", direct_memory ? direct_memory : "cached", direct_code_watch ? "true" : "false", crossing ? "true" : "false", epochs ? "true" : "false", retain ? "true" : "false", groups ? "true" : "false");
     if (direct_code_watch) {
         original_page_free = nce_lkl_host.page_free;
         nce_lkl_host.page_free = watch_page_free;
@@ -814,6 +815,8 @@ void translation_linux_cleanup(void)
            translation->flat_updates, translation->flat_refresh_pages);
     REQUIRE(!translation->flat_live_bytes);
     NceDirectStats direct = nce_direct_stats(direct_engine);
+    printf("{\"direct_memory_groups\":true,\"groups\":%llu,\"instructions\":%llu}\n",
+           direct.memory_groups, direct.memory_group_instructions);
     printf("{\"direct_code_routes\":true,\"invalidations\":%llu,\"cleared_entries\":%llu,\"branch_exits\":%llu,\"reused_runs\":%llu}\n",
            direct.route_invalidations, direct.route_cleared_entries, direct.branch_exits, direct.route_reused_runs);
     printf("{\"direct_code_validation\":true,\"content_checks\":%llu,\"version_hits\":%llu}\n", direct.code_content_checks, direct.code_version_hits);

@@ -29,7 +29,7 @@ def build_engine(out):
         with tarfile.open(archive) as tar:
             tar.extractall(WORK, filter='data')
     out.mkdir(parents=True, exist_ok=True)
-    inputs = [SOURCE / name for name in ('engine.cpp', 'compile.cpp', 'decode.cpp', 'cross-page.cpp', 'entry.S')]
+    inputs = [SOURCE / name for name in ('engine.cpp', 'compile.cpp', 'decode.cpp', 'memory-groups.cpp', 'cross-page.cpp', 'entry.S')]
     objects = []
     for path in inputs:
         obj = out / (path.stem + '.o')
@@ -39,7 +39,7 @@ def build_engine(out):
         subprocess.run([*command, '-O2', '-g', '-Wall', '-Wextra', '-Werror', '-I', str(headers / 'include'),
                         '-c', str(path), '-o', str(obj)], check=True, timeout=120)
         objects.append(obj)
-    return objects, inputs + [SOURCE / name for name in ('decode.h', 'direct.h', 'internal.h', 'layout.h', 'page-table-layout.h')] + sorted((headers / 'include').rglob('*.hpp')) + [Path(__file__), archive]
+    return objects, inputs + [SOURCE / name for name in ('decode.h', 'memory-groups.h', 'direct.h', 'internal.h', 'layout.h', 'page-table-layout.h')] + sorted((headers / 'include').rglob('*.hpp')) + [Path(__file__), archive]
 
 
 def build(out):
@@ -49,7 +49,7 @@ def build(out):
         from build_translation_engine import build as build_unicorn
         unicorn = Path(build_unicorn()['path'])
     out.mkdir(parents=True, exist_ok=True)
-    files = [SOURCE / name for name in ('probe.cpp', 'tests.cpp', 'instruction-tests.cpp', 'cross-page-tests.cpp', 'route-tests.cpp', 'page-table-tests.cpp', 'benchmark.cpp', 'main.cpp')] + [
+    files = [SOURCE / name for name in ('probe.cpp', 'tests.cpp', 'instruction-tests.cpp', 'cross-page-tests.cpp', 'route-tests.cpp', 'memory-group-tests.cpp', 'page-table-tests.cpp', 'benchmark.cpp', 'main.cpp')] + [
         ROOT / 'experiments/native-linux/translation/kernels.S',
         ROOT / 'experiments/native-linux/translation/linux-memory.c']
     for index, path in enumerate(files):
@@ -88,7 +88,8 @@ def validate(rows, mode, interval, config=None):
             'dczid_zero_block_alignment_permission_and_prefetch', 'cached_write_alias_becomes_executable',
             'route_collision_reuse_and_next_run_fetch_permission', 'direct_pte_registers_flags_and_post_index',
             'direct_pte_read_permissions_directories_and_bounds', 'direct_pte_write_permissions_remap_and_retry',
-            'direct_pte_code_alias_and_next_run_release', 'direct_pte_cross_page_permissions_retry_and_code_alias'}
+            'direct_pte_code_alias_and_next_run_release', 'direct_pte_cross_page_permissions_retry_and_code_alias',
+            'direct_pte_memory_groups_boundaries_remap_and_code_alias'}
         expected |= {name + suffix for name in expected if name.startswith('direct_pte_') for suffix in ('_refill', '_flat')}
         expected |= {'direct_flat_exclusive_pair_and_zva', 'direct_flat_cross_page_table_switch_and_configuration'}
         expected |= {'code_version_reuse_and_mutation', 'code_version_backing_permissions_and_fallback',
@@ -97,6 +98,9 @@ def validate(rows, mode, interval, config=None):
                      'fp_fixed_rounding_and_widening', 'new_instruction_reserved_encodings'}
         expected |= {'cross_page_noncontiguous_memory_vectors_faults_12', 'cross_page_noncontiguous_memory_vectors_faults_14'}
         expected |= {'route_epochs_fetch_permission_and_code_replacement', 'route_epochs_flush_and_return_to_freed_page'}
+        expected |= {'memory_groups_all_bases_widths_vectors_and_pairs', 'memory_groups_inner_entries_and_partial_page_faults',
+                     'memory_groups_sp_alignment_and_code_write_alias', 'memory_groups_asynchronous_stop',
+                     'memory_groups_fallback_base_changes_and_branch_targets'}
         expected |= {name + suffix for name in (
             'retained_routes_registers_and_cached_target', 'retained_routes_permissions_code_remap_and_flags',
             'retained_routes_untracked_alias_and_zero_epoch', 'retained_routes_cached_target_write_alias')
@@ -142,6 +146,7 @@ def main():
     parser.add_argument('--reuse-code-checks', type=int, choices=(0, 1), default=0)
     parser.add_argument('--route-epochs', type=int, choices=(0, 1), default=0)
     parser.add_argument('--retain-routes', type=int, choices=(0, 1), default=0)
+    parser.add_argument('--memory-groups', type=int, choices=(0, 1), default=0)
     args = parser.parse_args()
     if args.retain_routes and not args.route_epochs:
         parser.error('跨调用复用需要开启跳转序号')
@@ -159,10 +164,10 @@ def main():
     runs = []
     config = {'mapping_entries': args.mapping_entries, 'route_entries': args.route_entries,
               'selective_writes': bool(args.selective_writes), 'reuse_code_checks': bool(args.reuse_code_checks),
-              'route_epochs': bool(args.route_epochs), 'retain_routes': bool(args.retain_routes)}
+              'route_epochs': bool(args.route_epochs), 'retain_routes': bool(args.retain_routes), 'memory_groups': bool(args.memory_groups)}
     environment = dict(os.environ, NCE_DIRECT_MAPPING_ENTRIES=str(args.mapping_entries),
                        NCE_DIRECT_ROUTE_ENTRIES=str(args.route_entries), NCE_DIRECT_SELECTIVE_WRITES=str(args.selective_writes),
-                       NCE_DIRECT_REUSE_CODE_CHECKS=str(args.reuse_code_checks), NCE_DIRECT_ROUTE_EPOCHS=str(args.route_epochs), NCE_DIRECT_RETAIN_ROUTES=str(args.retain_routes))
+                       NCE_DIRECT_REUSE_CODE_CHECKS=str(args.reuse_code_checks), NCE_DIRECT_ROUTE_EPOCHS=str(args.route_epochs), NCE_DIRECT_RETAIN_ROUTES=str(args.retain_routes), NCE_DIRECT_MEMORY_GROUPS=str(args.memory_groups))
     modes = (['tests'] if args.mode != 'bench' else []) + (['native', 'unicorn', 'direct'] if args.mode != 'tests' else [])
     for entry in ('cli', 'gcd'):
         for mode in (modes if entry == 'cli' else list(reversed(modes))):

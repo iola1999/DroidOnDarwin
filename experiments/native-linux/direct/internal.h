@@ -14,6 +14,7 @@ constexpr uint32_t CompileData16K = 262144, CompileZva64 = 524288;
 constexpr uint32_t CompilePageTable = 1048576;
 constexpr uint32_t CompilePteReadRefill = 2097152;
 constexpr uint32_t CompileFlat = 4194304;
+constexpr uint32_t CompileMemoryGroups = 8388608;
 enum Stop : uint64_t { Budget = 0,
                        Fallback = 1,
                        ReadPage = 2,
@@ -21,6 +22,10 @@ enum Stop : uint64_t { Budget = 0,
                        CodeBranch = 5,
                        Alignment = 6,
                        CrossPage = 7 };
+struct Compilation {
+    size_t bytes = 0;
+    uint64_t memory_groups = 0, memory_group_instructions = 0;
+};
 struct Page {
     static constexpr size_t max_bytes = 1024 * 1024;
     std::array<uint32_t, 1024> source{};
@@ -29,7 +34,7 @@ struct Page {
     uint64_t validated_run = 0;
     const void *source_pointer = nullptr;
     uint64_t source_version = 0;
-    size_t compile(uint64_t, const void *, size_t, uint32_t *, uint32_t, void **, unsigned);
+    Compilation compile(uint64_t, const void *, size_t, uint32_t *, uint32_t, void **, unsigned);
 };
 struct Frame {
     NceDirectState state;

@@ -19,10 +19,10 @@ struct Tables {
     bool retain_routes = false;
     const void *untracked_code = nullptr;
     uint64_t code_limit = CodeVA + PageBytes;
-    explicit Tables(unsigned mode, bool cross_page = false, bool retain = false) : engine(nce_direct_create({2 * 1024 * 1024, 256, 256, mode == 1, false, cross_page, retain, retain})),
-                                                                                   table{root.data(), CodeVA, (UINT64_C(1) << 37) - CodeVA, PhysicalBase, ram.data(), ram.size()},
-                                                                                   refill_reads(mode == 1),
-                                                                                   flat(mode == 2 ? DIRECT_FLAT_BYTES / sizeof(nce_direct_flat_page) : 0)
+    explicit Tables(unsigned mode, bool cross_page = false, bool retain = false, bool groups = false) : engine(nce_direct_create({2 * 1024 * 1024, 256, 256, mode == 1, false, cross_page, retain, retain, groups})),
+                                                                                                        table{root.data(), CodeVA, (UINT64_C(1) << 37) - CodeVA, PhysicalBase, ram.data(), ram.size()},
+                                                                                                        refill_reads(mode == 1),
+                                                                                                        flat(mode == 2 ? DIRECT_FLAT_BYTES / sizeof(nce_direct_flat_page) : 0)
     {
         CHECK(engine);
         retain_routes = retain;
@@ -367,11 +367,70 @@ static void check_retained_routes(unsigned mode)
     report("retained_routes_cached_target_write_alias", mode);
 }
 
+static void check_memory_groups(unsigned mode)
+{
+    auto holder = std::make_unique<Tables>(mode, true, false, true);
+    auto &test = *holder;
+    std::mt19937_64 random(0x475250505445);
+    NceDirectState initial{};
+    initial.pc = CodeVA;
+    initial.access_flags = NCE_DIRECT_UNALIGNED;
+    initial.exclusive_address = UINT64_MAX;
+    for (auto &reg : initial.x)
+        reg = random();
+    for (auto &byte : test.ram)
+        byte = random();
+    uint64_t fault = 0;
+    for (bool write : {false, true}) {
+        std::array<uint32_t, 5> code{};
+        for (unsigned i = 0; i < 4; ++i)
+            code[i] = (write ? 0xf9000000 : 0xf9400000) | (i << 10) | (i + 1);
+        test.code(0);
+        std::memcpy(test.ram.data(), code.data(), sizeof(code));
+        for (unsigned physical : {1, 3}) {
+            test.data_page(physical);
+            for (unsigned completed = 1; completed <= 4; ++completed) {
+                initial.x[0] = DataVA + PageBytes - completed * 8;
+                auto actual = initial, expected = initial;
+                auto expected_ram = test.ram;
+                for (unsigned i = 0; i < completed; ++i) {
+                    auto pointer = expected_ram.data() + (physical + 1) * PageBytes - (completed - i) * 8;
+                    if (write)
+                        std::memcpy(pointer, &expected.x[i + 1], 8);
+                    else
+                        std::memcpy(&expected.x[i + 1], pointer, 8);
+                }
+                expected.pc += completed * 4;
+                CHECK(test.run(actual, fault) == (completed == 4 ? NCE_DIRECT_UNSUPPORTED : write ? NCE_DIRECT_WRITE_FAULT
+                                                                                                  : NCE_DIRECT_READ_FAULT));
+                if (completed != 4)
+                    CHECK(fault == DataVA + PageBytes);
+                CHECK(!std::memcmp(&actual, &expected, sizeof(actual)) && expected_ram == test.ram);
+            }
+        }
+        test.data_page(1, 0);
+        auto actual = initial;
+        CHECK(test.run(actual, fault) == (write ? NCE_DIRECT_WRITE_FAULT : NCE_DIRECT_READ_FAULT));
+        CHECK(fault == initial.x[0] && !std::memcmp(&actual, &initial, sizeof(actual)));
+        if (write) {
+            test.data_page(0);
+            actual = initial;
+            auto before = test.ram;
+            CHECK(test.run(actual, fault) == NCE_DIRECT_WRITE_FAULT && fault == initial.x[0]);
+            CHECK(!std::memcmp(&actual, &initial, sizeof(actual)) && before == test.ram);
+        }
+    }
+    auto stats = nce_direct_stats(test.engine);
+    CHECK(stats.memory_groups >= 2 && stats.memory_group_instructions >= 8);
+    report("direct_pte_memory_groups_boundaries_remap_and_code_alias", mode);
+}
+
 void direct_page_table_tests()
 {
     for (unsigned mode = 0; mode < 3; ++mode) {
         check_page_tables(mode);
         check_cross_pages(mode);
+        check_memory_groups(mode);
         if (mode != 1)
             check_retained_routes(mode);
     }

@@ -90,6 +90,7 @@ typedef struct {
     uint64_t alignment_exits, cross_page_exits;
     uint64_t cross_page_completed, cross_page_fallbacks, cross_page_faults, cross_page_bytes;
     uint64_t route_invalidations, route_cleared_entries, branch_exits, route_reused_runs;
+    uint64_t memory_groups, memory_group_instructions;
     size_t code_bytes, code_capacity, pages;
 } NceDirectStats;
 
@@ -106,6 +107,8 @@ typedef struct {
     /* Keep routes across calls with stable mapping/code epochs. Requires
      * route_epochs; reuse applies only to direct page-table/flat memory. */
     bool retain_routes;
+    /* Share one translation for adjacent accesses to the same RAM page. */
+    bool memory_groups;
 } NceDirectConfig;
 
 /* One sequential caller per engine. Code cache is 2..256 MiB, 16 KiB aligned.

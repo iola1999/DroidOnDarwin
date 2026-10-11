@@ -31,6 +31,7 @@ void direct_tests()
     direct_instruction_tests(probe);
     direct_cross_page_tests(probe);
     direct_route_tests();
+    direct_memory_group_tests(probe);
     std::mt19937_64 random(0x4845534b);
     std::array<uint32_t, 65> words{};
     for (unsigned sample = 0; sample < 1024; ++sample) {

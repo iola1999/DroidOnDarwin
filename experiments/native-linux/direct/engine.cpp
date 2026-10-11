@@ -150,10 +150,12 @@ struct NceDirect {
             Page pending = *owner;
             pending.flags = flags;
             auto *destination = arena + stats.code_bytes / 4;
-            size_t bytes_used = pending.compile(address, bytes, index, destination, flags,
-                                                owner->branch_entries.data(), config.mapping_entries - 1);
+            auto compiled = pending.compile(address, bytes, index, destination, flags,
+                                            owner->branch_entries.data(), config.mapping_entries - 1);
             *owner = std::move(pending);
-            stats.code_bytes += (bytes_used + 15) & ~size_t(15);
+            stats.code_bytes += (compiled.bytes + 15) & ~size_t(15);
+            stats.memory_groups += compiled.memory_groups;
+            stats.memory_group_instructions += compiled.memory_group_instructions;
             ++stats.compiles;
         }
         auto *page = pages.at(address).get();
@@ -257,6 +259,8 @@ struct NceDirect {
             flags |= CompilePteReadRefill;
         if (memory.flat_pages)
             flags |= CompileFlat;
+        if (config.memory_groups)
+            flags |= CompileMemoryGroups;
         uint32_t allowed = supported & state.access_flags;
         flags |= allowed & (NCE_DIRECT_LSE | NCE_DIRECT_CRC);
         if (supported & NCE_DIRECT_LSE)
