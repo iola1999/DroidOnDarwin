@@ -11,6 +11,13 @@ import sys
 from probe_lkl_translation import ROOT, WORK, sha, validate
 
 
+def validated_kernel(report):
+    kernels = [ROOT / name for name in report['sha256'] if Path(name).name == 'lkl-image.bin']
+    if len(kernels) != 1:
+        raise ValueError('验证报告必须记录唯一的 Linux 内核')
+    return kernels[0]
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--repeat', type=int, default=2)
@@ -81,6 +88,9 @@ def main():
             subprocess.run(list(map(str, command)), stdout=log, stderr=subprocess.STDOUT, check=True, timeout=max(600, 480 * len(entries) + 120) if args.workload == 'desktop' else 600)
         prepared[execution] = json.loads((folder / 'summary.json').read_text())
     baseline = next(iter(prepared.values()))
+    kernel = validated_kernel(baseline)
+    if any(validated_kernel(report) != kernel for report in prepared.values()):
+        raise ValueError('同组对照的 Linux 内核路径不一致')
     hashes = {str(Path(__file__).resolve().relative_to(ROOT)): sha(Path(__file__))}
     if cached is not None:
         hashes[str(source_report.relative_to(ROOT))] = sha(source_report)
@@ -276,6 +286,7 @@ def main():
                                NCE_DIRECT_MEMORY_GROUPS=str(int(direct['memory_groups'])),
                                NCE_DIRECT_NATIVE_EXCLUSIVE=str(int(direct['native_exclusive'])),
                                NCE_DIRECT_VECTOR_TABLE=str(int(direct['vector_table'])))
+                    env['NCE_DIRECT_SIMD_MATH'] = str(int(direct.get('simd_math', False)))
                 for key in ('NCE_DESKTOP', 'NCE_SYSTEM_SERVER_PROBE', 'NCE_DIAGNOSTICS', 'NCE_TRACE_SYSTEMUI'):
                     env.pop(key, None)
                 if args.workload == 'desktop':
@@ -290,7 +301,7 @@ def main():
                     data = {'path': str(data_path.relative_to(ROOT)), 'initial_sha256': sha(data_path), 'fresh': True}
                 with (out / f'{stem}.jsonl').open('w') as stdout, (out / f'{stem}.log').open('w') as stderr:
                     try:
-                        process = subprocess.run([folder / entry, WORK / ('lkl-translation-smp-kernel' if common['cpus'] == 2 else 'lkl-translation-kernel') / 'lkl-image.bin'],
+                        process = subprocess.run([folder / entry, kernel],
                                                  env=env, stdout=stdout, stderr=stderr, timeout=480 if args.workload == 'desktop' else 120)
                         returncode = process.returncode
                     except subprocess.TimeoutExpired:
