@@ -1,5 +1,5 @@
 {
-  "status": "actual Android drawable presentation not confirmed in first pair; investigating visibility",
+  "status": "Android drawable presentation confirmed after targeted window activation; historical zero-time runs retained; overhead and paired performance still under evaluation",
   "host": {
     "cpu": "Apple M5 Ultra",
     "os": "macOS 27.0 (26A428)",
@@ -369,6 +369,247 @@
         "direct_including_compile": 562.609,
         "unicorn_prepare_and_execute": 443.124
       }
+    },
+    {
+      "runID": "8981A505-8919-4D34-AD21-45A30BA01CAD",
+      "buildID": "0.25.0-Mac-20261012-032422-direct1-dual",
+      "configuration": {
+        "aot": false,
+        "bootImage": false,
+        "diagnostics": false,
+        "directFault": true,
+        "expandedJIT": false,
+        "fastBaseline": false,
+        "faultPrefetch": false,
+        "nterp": true,
+        "performanceLogging": false,
+        "schedulerSliceUS": 0,
+        "sparseScan": true,
+        "translation": {
+          "cacheMiB": 128,
+          "codeWatch": true,
+          "crossPage": true,
+          "linuxFastpath": false,
+          "memoryGroups": false,
+          "onlineCPUs": 1,
+          "retainRoutes": false,
+          "reuseCodeChecks": false,
+          "routeEpochs": false,
+          "simdMath": true,
+          "vectorTable": false
+        }
+      },
+      "hardware": "arm64",
+      "os": "Version 27.0 (Build 26A428)",
+      "failures": [],
+      "host_visibility": {
+        "available": true,
+        "tracking": "Android window AppKit notifications and action boundaries",
+        "all_visible": true,
+        "all_active": true,
+        "all_activity_asserted": true,
+        "events": [
+          {
+            "host_monotonic_ns": 1541069010178000,
+            "event": "action_submitted",
+            "app_visible": true,
+            "display_visible": true,
+            "app_active": true,
+            "benchmark_activity": true
+          },
+          {
+            "host_monotonic_ns": 1541069011051000,
+            "event": "action_started",
+            "app_visible": true,
+            "display_visible": true,
+            "app_active": true,
+            "benchmark_activity": true
+          },
+          {
+            "host_monotonic_ns": 1541069617779000,
+            "event": "action_submitted",
+            "app_visible": true,
+            "display_visible": true,
+            "app_active": true,
+            "benchmark_activity": true
+          },
+          {
+            "host_monotonic_ns": 1541069619151000,
+            "event": "action_started",
+            "app_visible": true,
+            "display_visible": true,
+            "app_active": true,
+            "benchmark_activity": true
+          },
+          {
+            "host_monotonic_ns": 1541070821044000,
+            "event": "action_submitted",
+            "app_visible": true,
+            "display_visible": true,
+            "app_active": true,
+            "benchmark_activity": true
+          },
+          {
+            "host_monotonic_ns": 1541070822486000,
+            "event": "action_started",
+            "app_visible": true,
+            "display_visible": true,
+            "app_active": true,
+            "benchmark_activity": true
+          }
+        ],
+        "scope": "Android window occlusion and App activation; drawable presentation reported separately"
+      },
+      "presentation": {
+        "available": true,
+        "failures": [],
+        "counts": {
+          "captured": 32,
+          "in_window": 32,
+          "pending_acquisition": 0,
+          "drawable_unavailable": 0,
+          "pending_callback": 0,
+          "zero_presented_time": 1,
+          "outside_presentation_window": 0,
+          "presented_in_window": 31
+        },
+        "alignment_offset_ns": -2220678729.5,
+        "alignment_uncertainty_ns": 3979.0,
+        "acquire_wait_ms": {
+          "count": 32,
+          "p50_ms": 0.024,
+          "p95_ms": 0.03504999999999999,
+          "p99_ms": 0.047590000000000014,
+          "max_ms": 0.051,
+          "p95_small_sample": true,
+          "p99_small_sample": true,
+          "tail_count_reference": {
+            "p95": 1,
+            "p99": 0
+          },
+          "percentile_method": "linear interpolation; small-sample flag uses fewer than 10 expected tail observations; frames are not independent runs",
+          "above_ms": {
+            "16.666667": 0,
+            "100": 0,
+            "250": 0,
+            "1000": 0
+          }
+        },
+        "drawable_to_present_ms": {
+          "count": 31,
+          "p50_ms": 24.294146,
+          "p95_ms": 36.834479125,
+          "p99_ms": 41.200304025,
+          "max_ms": 42.116979,
+          "p95_small_sample": true,
+          "p99_small_sample": true,
+          "tail_count_reference": {
+            "p95": 1,
+            "p99": 0
+          },
+          "percentile_method": "linear interpolation; small-sample flag uses fewer than 10 expected tail observations; frames are not independent runs",
+          "above_ms": {
+            "16.666667": 31,
+            "100": 0,
+            "250": 0,
+            "1000": 0
+          }
+        },
+        "unique_presentation_interval_ms": {
+          "count": 30,
+          "p50_ms": 16.680416625,
+          "p95_ms": 33.3608751375,
+          "p99_ms": 33.360904715000004,
+          "max_ms": 33.36091675,
+          "p95_small_sample": true,
+          "p99_small_sample": true,
+          "tail_count_reference": {
+            "p95": 1,
+            "p99": 0
+          },
+          "percentile_method": "linear interpolation; small-sample flag uses fewer than 10 expected tail observations; frames are not independent runs",
+          "above_ms": {
+            "16.666667": 30,
+            "100": 0,
+            "250": 0,
+            "1000": 0
+          }
+        },
+        "layers": [
+          {
+            "layer": "FA4E2C23-56CE-4710-8ED0-9DB5FC9AB2B9",
+            "drawables": 31,
+            "unique_present_times": 31,
+            "interval_ms": {
+              "count": 30,
+              "p50_ms": 16.680416625,
+              "p95_ms": 33.3608751375,
+              "p99_ms": 33.360904715000004,
+              "max_ms": 33.36091675,
+              "p95_small_sample": true,
+              "p99_small_sample": true,
+              "tail_count_reference": {
+                "p95": 1,
+                "p99": 0
+              },
+              "percentile_method": "linear interpolation; small-sample flag uses fewer than 10 expected tail observations; frames are not independent runs",
+              "above_ms": {
+                "16.666667": 30,
+                "100": 0,
+                "250": 0,
+                "1000": 0
+              }
+            }
+          }
+        ],
+        "scope": "host drawable display; repeated content and Android frame identity unmeasured; pending and zero timestamps excluded",
+        "analyzer_sha256": "0fd8ca5b9d250a9a1badd300df41ad78ffcb9390943256f7be98514d12482799"
+      },
+      "frame_counts": {
+        "accepted": 32
+      },
+      "duration": {
+        "count": 32,
+        "p50_ms": 48.767313,
+        "p95_ms": 137.20719279999997,
+        "p99_ms": 155.82414708,
+        "max_ms": 158.03579,
+        "p95_small_sample": true,
+        "p99_small_sample": true,
+        "tail_count_reference": {
+          "p95": 1,
+          "p99": 0
+        },
+        "percentile_method": "linear interpolation; small-sample flag uses fewer than 10 expected tail observations; frames are not independent runs",
+        "above_ms": {
+          "16.666667": 32,
+          "100": 4,
+          "250": 0,
+          "1000": 0
+        }
+      },
+      "alignment_uncertainty_ns": 10000000.0,
+      "source_sha256": {
+        "work/native-linux-nce/benchmarks/interaction/20261012-032623-e57f87/8981A505-8919-4D34-AD21-45A30BA01CAD/request.json": "abc4f984e2c7c32df2bd0eec51a425ab50549bfeb759ac7ca12c411cc7f90dac",
+        "work/native-linux-nce/benchmarks/interaction/20261012-032623-e57f87/8981A505-8919-4D34-AD21-45A30BA01CAD/result.json": "3833b4caf3f49df98caab2ce40059742300023aaedebd05fdd4ae7b4be51d156",
+        "work/native-linux-nce/benchmarks/interaction/20261012-032623-e57f87/8981A505-8919-4D34-AD21-45A30BA01CAD/interaction/clock-pairs.jsonl": "be6503f5ec4c88e1ebc26e3054dcbf4fe7f965c43ca5e5cfc167e0985c2ec1cd",
+        "work/native-linux-nce/benchmarks/interaction/20261012-032623-e57f87/8981A505-8919-4D34-AD21-45A30BA01CAD/interaction/clock.txt": "b21e3b8fcb175197cfbda952dab37a9fa870eb7795f14fa3f7e82fcd37ec69f3",
+        "work/native-linux-nce/benchmarks/interaction/20261012-032623-e57f87/8981A505-8919-4D34-AD21-45A30BA01CAD/interaction/cpu0.txt": "513b3b61d9d704ef0b338ac7f0be082172bc4c9820cb38fd5fd6f7f69cb3c969",
+        "work/native-linux-nce/benchmarks/interaction/20261012-032623-e57f87/8981A505-8919-4D34-AD21-45A30BA01CAD/interaction/execution.json": "4e26efb97943db098791f8f53b2d147d64922cfb329bde17f32c78d9abc8304c",
+        "work/native-linux-nce/benchmarks/interaction/20261012-032623-e57f87/8981A505-8919-4D34-AD21-45A30BA01CAD/interaction/frames.txt": "90071ea7b26178e352d2043ee747124d8b48ed9f67a2e21adacebf21bbba354b",
+        "work/native-linux-nce/benchmarks/interaction/20261012-032623-e57f87/8981A505-8919-4D34-AD21-45A30BA01CAD/interaction/kernel.ftrace": "003589acdd6cdb6b702513df8ba28a0107bef23d5f13aa4e17ab1ccda4ab44b2",
+        "work/native-linux-nce/benchmarks/interaction/20261012-032623-e57f87/8981A505-8919-4D34-AD21-45A30BA01CAD/interaction/presentation.json": "0ec87d2fa968672005391f735e171a38c8be28d8b0b400b51d3e64d24841a86c",
+        "work/native-linux-nce/benchmarks/interaction/20261012-032623-e57f87/8981A505-8919-4D34-AD21-45A30BA01CAD/interaction/threads-after.txt": "bcc002c1d06375107aae9ce85d181808951c1bbb3bda2967d06a37b208b52bdd",
+        "work/native-linux-nce/benchmarks/interaction/20261012-032623-e57f87/8981A505-8919-4D34-AD21-45A30BA01CAD/interaction/threads-before.txt": "7609e40b1c753a62b9b4b7b0623a584d694ff2a395ea99ccb2054fdd3d3f013d"
+      },
+      "analysis": "work/native-linux-nce/interaction-preflight/simd-v2-visual-analysis.json",
+      "analysis_sha256": "cafc5d290027300edf4139c3c33f5e8c40859c532a75c156a23a68c80e45f6e8",
+      "post_capture_scope": "60 second visual inspection interval; CUA screenshot confirmed scrolled Settings; attempted page navigation not confirmed before automatic stop",
+      "execution_stage_cpu_ms": {
+        "kernel_prepare": 2.303,
+        "direct_including_compile": 555.138,
+        "unicorn_prepare_and_execute": 264.529
+      }
     }
   ],
   "control": {
@@ -386,6 +627,8 @@
         "callbacks": 183,
         "positive_presented_time": 182
       }
-    ]
+    ],
+    "source_code": "work/native-linux-nce/interaction-preflight/MetalPresentationProbe.swift",
+    "source_code_sha256": "4e65cefff63048d4c13a18903238538cc0de0e9ab3512c1deaddd23237771047"
   }
 }
