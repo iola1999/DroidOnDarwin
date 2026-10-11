@@ -392,7 +392,70 @@
         "/Users/fan/project/app/husk_hyos/work/native-linux-nce/benchmarks/interaction/20261012-035334-4bb68a/8B62C2EF-7B4D-403E-A44D-777BB445D5E9/interaction/threads-after.txt": "9806039233e64e786c9fc338b857e61317e1e312b04f74cd7dfc4e164267aec3",
         "/Users/fan/project/app/husk_hyos/work/native-linux-nce/benchmarks/interaction/20261012-035334-4bb68a/8B62C2EF-7B4D-403E-A44D-777BB445D5E9/interaction/threads-before.txt": "5d691c29e3dab428ded14071efab7127c3e5c899e4ecb12f901b7e8aa79853af"
       },
-      "visible_comparison_qualified": true
+      "visible_comparison_qualified": true,
+      "hwui_intervals": {
+        "IntendedVsync": {
+          "count": 45,
+          "p50_ms": 16.666666,
+          "p95_ms": 33.333332,
+          "p99_ms": 42.666664960000034,
+          "max_ms": 49.999998,
+          "p95_small_sample": true,
+          "p99_small_sample": true,
+          "tail_count_reference": {
+            "p95": 2,
+            "p99": 0
+          },
+          "percentile_method": "linear interpolation; small-sample flag uses fewer than 10 expected tail observations; frames are not independent runs",
+          "above_ms": {
+            "16.666667": 8,
+            "100": 0,
+            "250": 0,
+            "1000": 0
+          }
+        },
+        "HandleInputStart": {
+          "count": 45,
+          "p50_ms": 19.89,
+          "p95_ms": 29.275,
+          "p99_ms": 35.49260000000001,
+          "max_ms": 37.268,
+          "p95_small_sample": true,
+          "p99_small_sample": true,
+          "tail_count_reference": {
+            "p95": 2,
+            "p99": 0
+          },
+          "percentile_method": "linear interpolation; small-sample flag uses fewer than 10 expected tail observations; frames are not independent runs",
+          "above_ms": {
+            "16.666667": 34,
+            "100": 0,
+            "250": 0,
+            "1000": 0
+          }
+        },
+        "FrameCompleted": {
+          "count": 45,
+          "p50_ms": 18.813,
+          "p95_ms": 29.526799999999998,
+          "p99_ms": 34.60964000000001,
+          "max_ms": 37.225,
+          "p95_small_sample": true,
+          "p99_small_sample": true,
+          "tail_count_reference": {
+            "p95": 2,
+            "p99": 0
+          },
+          "percentile_method": "linear interpolation; small-sample flag uses fewer than 10 expected tail observations; frames are not independent runs",
+          "above_ms": {
+            "16.666667": 31,
+            "100": 0,
+            "250": 0,
+            "1000": 0
+          }
+        },
+        "scope": "intervals between consecutive retained Flags=0 HWUI records; asynchronous completion latency is separate; content-change rate not measured"
+      }
     },
     {
       "runID": "8DA92981-1F1A-47D9-BEF0-DB3CDDB40831",
@@ -777,7 +840,70 @@
         "/Users/fan/project/app/husk_hyos/work/native-linux-nce/benchmarks/interaction/20261012-035334-4bb68a/8DA92981-1F1A-47D9-BEF0-DB3CDDB40831/interaction/threads-after.txt": "4c7354add2ade3903031dbb499999c2fe30415a6d2bb16967f5004f7b0363358",
         "/Users/fan/project/app/husk_hyos/work/native-linux-nce/benchmarks/interaction/20261012-035334-4bb68a/8DA92981-1F1A-47D9-BEF0-DB3CDDB40831/interaction/threads-before.txt": "e308e961356494fbd72249a248e48171658f32b093ac6bc1ec0238681e496b16"
       },
-      "visible_comparison_qualified": true
+      "visible_comparison_qualified": true,
+      "hwui_intervals": {
+        "IntendedVsync": {
+          "count": 50,
+          "p50_ms": 16.666666,
+          "p95_ms": 33.333332,
+          "p99_ms": 33.333332,
+          "max_ms": 33.333332,
+          "p95_small_sample": true,
+          "p99_small_sample": true,
+          "tail_count_reference": {
+            "p95": 2,
+            "p99": 0
+          },
+          "percentile_method": "linear interpolation; small-sample flag uses fewer than 10 expected tail observations; frames are not independent runs",
+          "above_ms": {
+            "16.666667": 5,
+            "100": 0,
+            "250": 0,
+            "1000": 0
+          }
+        },
+        "HandleInputStart": {
+          "count": 50,
+          "p50_ms": 19.3955,
+          "p95_ms": 27.43719999999999,
+          "p99_ms": 29.48855,
+          "max_ms": 29.981,
+          "p95_small_sample": true,
+          "p99_small_sample": true,
+          "tail_count_reference": {
+            "p95": 2,
+            "p99": 0
+          },
+          "percentile_method": "linear interpolation; small-sample flag uses fewer than 10 expected tail observations; frames are not independent runs",
+          "above_ms": {
+            "16.666667": 33,
+            "100": 0,
+            "250": 0,
+            "1000": 0
+          }
+        },
+        "FrameCompleted": {
+          "count": 50,
+          "p50_ms": 19.169,
+          "p95_ms": 28.657699999999995,
+          "p99_ms": 31.128779999999995,
+          "max_ms": 31.706,
+          "p95_small_sample": true,
+          "p99_small_sample": true,
+          "tail_count_reference": {
+            "p95": 2,
+            "p99": 0
+          },
+          "percentile_method": "linear interpolation; small-sample flag uses fewer than 10 expected tail observations; frames are not independent runs",
+          "above_ms": {
+            "16.666667": 31,
+            "100": 0,
+            "250": 0,
+            "1000": 0
+          }
+        },
+        "scope": "intervals between consecutive retained Flags=0 HWUI records; asynchronous completion latency is separate; content-change rate not measured"
+      }
     },
     {
       "runID": "E1C3A38F-1A82-4D54-9593-FF0F78E5F4FC",
@@ -1162,7 +1288,70 @@
         "/Users/fan/project/app/husk_hyos/work/native-linux-nce/benchmarks/interaction/20261012-035334-4bb68a/E1C3A38F-1A82-4D54-9593-FF0F78E5F4FC/interaction/threads-after.txt": "4731f72422856902c8a231ae088701efb0fbc4f1e39128eb14a2b9504092e6c1",
         "/Users/fan/project/app/husk_hyos/work/native-linux-nce/benchmarks/interaction/20261012-035334-4bb68a/E1C3A38F-1A82-4D54-9593-FF0F78E5F4FC/interaction/threads-before.txt": "5048ac42cd31dac54c0bf4744a929b6c58b27b6779e370c6f5c19a42edbc19cc"
       },
-      "visible_comparison_qualified": true
+      "visible_comparison_qualified": true,
+      "hwui_intervals": {
+        "IntendedVsync": {
+          "count": 53,
+          "p50_ms": 16.666666,
+          "p95_ms": 23.333332399999975,
+          "p99_ms": 33.333332,
+          "max_ms": 33.333332,
+          "p95_small_sample": true,
+          "p99_small_sample": true,
+          "tail_count_reference": {
+            "p95": 2,
+            "p99": 0
+          },
+          "percentile_method": "linear interpolation; small-sample flag uses fewer than 10 expected tail observations; frames are not independent runs",
+          "above_ms": {
+            "16.666667": 3,
+            "100": 0,
+            "250": 0,
+            "1000": 0
+          }
+        },
+        "HandleInputStart": {
+          "count": 53,
+          "p50_ms": 18.725,
+          "p95_ms": 24.076599999999996,
+          "p99_ms": 27.98623999999999,
+          "max_ms": 29.228,
+          "p95_small_sample": true,
+          "p99_small_sample": true,
+          "tail_count_reference": {
+            "p95": 2,
+            "p99": 0
+          },
+          "percentile_method": "linear interpolation; small-sample flag uses fewer than 10 expected tail observations; frames are not independent runs",
+          "above_ms": {
+            "16.666667": 36,
+            "100": 0,
+            "250": 0,
+            "1000": 0
+          }
+        },
+        "FrameCompleted": {
+          "count": 53,
+          "p50_ms": 18.793,
+          "p95_ms": 23.978799999999996,
+          "p99_ms": 27.779199999999996,
+          "max_ms": 28.151,
+          "p95_small_sample": true,
+          "p99_small_sample": true,
+          "tail_count_reference": {
+            "p95": 2,
+            "p99": 0
+          },
+          "percentile_method": "linear interpolation; small-sample flag uses fewer than 10 expected tail observations; frames are not independent runs",
+          "above_ms": {
+            "16.666667": 35,
+            "100": 0,
+            "250": 0,
+            "1000": 0
+          }
+        },
+        "scope": "intervals between consecutive retained Flags=0 HWUI records; asynchronous completion latency is separate; content-change rate not measured"
+      }
     },
     {
       "runID": "24DAF29B-8F33-4B60-8823-AEF5465A28DE",
@@ -1547,7 +1736,70 @@
         "/Users/fan/project/app/husk_hyos/work/native-linux-nce/benchmarks/interaction/20261012-035334-4bb68a/24DAF29B-8F33-4B60-8823-AEF5465A28DE/interaction/threads-after.txt": "b164847181a5f62e4f658b0f85e1cd759796f40d4e070a7bd5251728ad778b80",
         "/Users/fan/project/app/husk_hyos/work/native-linux-nce/benchmarks/interaction/20261012-035334-4bb68a/24DAF29B-8F33-4B60-8823-AEF5465A28DE/interaction/threads-before.txt": "9cd6e35747ffaa4a83ae65c0b61cccd5074ec37bcde596bbe742146651b8c4a9"
       },
-      "visible_comparison_qualified": true
+      "visible_comparison_qualified": true,
+      "hwui_intervals": {
+        "IntendedVsync": {
+          "count": 51,
+          "p50_ms": 16.666666,
+          "p95_ms": 33.333332,
+          "p99_ms": 33.333332,
+          "max_ms": 33.333332,
+          "p95_small_sample": true,
+          "p99_small_sample": true,
+          "tail_count_reference": {
+            "p95": 2,
+            "p99": 0
+          },
+          "percentile_method": "linear interpolation; small-sample flag uses fewer than 10 expected tail observations; frames are not independent runs",
+          "above_ms": {
+            "16.666667": 6,
+            "100": 0,
+            "250": 0,
+            "1000": 0
+          }
+        },
+        "HandleInputStart": {
+          "count": 51,
+          "p50_ms": 18.369,
+          "p95_ms": 27.878500000000003,
+          "p99_ms": 29.7405,
+          "max_ms": 30.029,
+          "p95_small_sample": true,
+          "p99_small_sample": true,
+          "tail_count_reference": {
+            "p95": 2,
+            "p99": 0
+          },
+          "percentile_method": "linear interpolation; small-sample flag uses fewer than 10 expected tail observations; frames are not independent runs",
+          "above_ms": {
+            "16.666667": 35,
+            "100": 0,
+            "250": 0,
+            "1000": 0
+          }
+        },
+        "FrameCompleted": {
+          "count": 51,
+          "p50_ms": 17.291,
+          "p95_ms": 27.060499999999998,
+          "p99_ms": 30.6545,
+          "max_ms": 30.915,
+          "p95_small_sample": true,
+          "p99_small_sample": true,
+          "tail_count_reference": {
+            "p95": 2,
+            "p99": 0
+          },
+          "percentile_method": "linear interpolation; small-sample flag uses fewer than 10 expected tail observations; frames are not independent runs",
+          "above_ms": {
+            "16.666667": 31,
+            "100": 0,
+            "250": 0,
+            "1000": 0
+          }
+        },
+        "scope": "intervals between consecutive retained Flags=0 HWUI records; asynchronous completion latency is separate; content-change rate not measured"
+      }
     }
   ],
   "groups": {
