@@ -21,6 +21,8 @@ struct NceDirect {
     std::vector<Mapping> mappings;
     std::vector<CodeRoute> routes;
     std::unordered_set<const void *> active_code;
+    std::unordered_multimap<uintptr_t, unsigned> write_aliases;
+    uint64_t run_id = 0;
     NceDirectMemory previous{};
     std::atomic<uint32_t> stop_request{0};
     static_assert(std::atomic<uint32_t>::is_always_lock_free);
@@ -70,6 +72,17 @@ struct NceDirect {
     {
         ++stats.code_lookups;
         uint64_t address = pc & ~UINT64_C(4095);
+        size_t index = (pc & 4095) / 4;
+        auto item = pages.find(address);
+        // During one run mappings are stable and stores to visited code are
+        // rejected. A route-table collision can therefore reuse this check.
+        if (config.reuse_code_checks && item != pages.end() &&
+            item->second->validated_run == run_id && item->second->entries[index]) {
+            ++stats.code_validation_hits;
+            auto *page = item->second.get();
+            routes[(address >> 12) & (routes.size() - 1)] = {address >> 12, page->branch_entries.data(), page, 0};
+            return page;
+        }
         const void *bytes = memory.map_code(memory.opaque, address);
         if (!bytes || (uintptr_t(bytes) & 4095))
             return nullptr;
@@ -77,24 +90,27 @@ struct NceDirect {
         if (active_code.insert(bytes).second) {
             unsigned page_bits = memory.page_bits ? memory.page_bits : 12;
             uintptr_t physical_page = uintptr_t(bytes) & ~((uintptr_t(1) << page_bits) - 1);
-            for (auto &mapping : mappings) {
-                if (mapping.write_tag == UINT64_MAX)
-                    continue;
-                uintptr_t mapped_page = mapping.write_addend + (mapping.write_tag << page_bits);
-                if (!config.selective_writes || mapped_page == physical_page) {
-                    mapping.write_tag = UINT64_MAX;
+            if (config.selective_writes) {
+                auto [begin, end] = write_aliases.equal_range(physical_page);
+                for (auto it = begin; it != end; ++it) {
+                    mappings[it->second].write_tag = UINT64_MAX;
                     ++stats.write_invalidations;
+                }
+                write_aliases.erase(begin, end);
+            } else {
+                for (auto &mapping : mappings) {
+                    if (mapping.write_tag != UINT64_MAX)
+                        ++stats.write_invalidations;
+                    mapping.write_tag = UINT64_MAX;
                 }
             }
         }
-        auto item = pages.find(address);
         if (item != pages.end() &&
             (item->second->flags != flags || std::memcmp(item->second->source.data(), bytes, 4096))) {
             reset_routes();
             pages.erase(item);
             ++stats.code_changes;
         }
-        size_t index = (pc & 4095) / 4;
         item = pages.find(address);
         if (item == pages.end() || !item->second->entries[index]) {
             if (stats.code_capacity - stats.code_bytes < Page::max_bytes)
@@ -112,6 +128,7 @@ struct NceDirect {
             ++stats.compiles;
         }
         auto *page = pages.at(address).get();
+        page->validated_run = run_id;
         routes[(address >> 12) & (routes.size() - 1)] = {address >> 12, page->branch_entries.data(), page, 0};
         return page;
     }
@@ -125,6 +142,10 @@ struct NceDirect {
         uint64_t page_mask = (UINT64_C(1) << page_bits) - 1;
         if ((state.pc & 3) || (state.fpcr & ~DIRECT_FPCR_MASK))
             return NCE_DIRECT_UNSUPPORTED;
+        if (++run_id == 0) {
+            clear();
+            run_id = 1;
+        }
         uint32_t flags = state.access_flags & NCE_DIRECT_UNALIGNED;
         if (page_bits == 14)
             flags |= CompileData16K;
@@ -143,8 +164,10 @@ struct NceDirect {
         if (state.access_flags & NCE_DIRECT_PAC_HINT_NOP)
             flags |= CompilePauthNop;
         if (!memory.mapping_epoch || memory.mapping_epoch != previous.mapping_epoch ||
-            memory.opaque != previous.opaque || memory.map_page != previous.map_page || memory.page_bits != previous.page_bits)
+            memory.opaque != previous.opaque || memory.map_page != previous.map_page || memory.page_bits != previous.page_bits) {
             std::fill(mappings.begin(), mappings.end(), EmptyMapping);
+            write_aliases.clear();
+        }
         previous = memory;
         reset_routes();
         active_code.clear();
@@ -202,8 +225,22 @@ struct NceDirect {
                 break;
             }
             uint64_t tag = address >> page_bits;
-            auto &mapping = mappings[(tag ^ (tag >> 8)) & (mappings.size() - 1)];
+            unsigned slot = (tag ^ (tag >> 8)) & (mappings.size() - 1);
+            auto &mapping = mappings[slot];
             if (write) {
+                if (config.selective_writes) {
+                    if (mapping.write_tag != UINT64_MAX) {
+                        uintptr_t old_page = mapping.write_addend + (mapping.write_tag << page_bits);
+                        auto [begin, end] = write_aliases.equal_range(old_page);
+                        for (auto it = begin; it != end; ++it) {
+                            if (it->second == slot) {
+                                write_aliases.erase(it);
+                                break;
+                            }
+                        }
+                    }
+                    write_aliases.emplace(uintptr_t(mapped), slot);
+                }
                 mapping.write_tag = tag;
                 mapping.write_addend = uintptr_t(mapped) - address;
             } else {

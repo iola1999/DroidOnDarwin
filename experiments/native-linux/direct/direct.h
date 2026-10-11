@@ -52,6 +52,7 @@ typedef enum {
 typedef struct {
     uint64_t compiles, flushes, code_changes, mapping_misses, code_lookups;
     uint64_t read_mapping_misses, write_mapping_misses, write_invalidations;
+    uint64_t code_validation_hits;
     size_t code_bytes, code_capacity, pages;
 } NceDirectStats;
 
@@ -60,6 +61,7 @@ typedef struct {
     /* Power-of-two entry counts, from 256 through 65536. */
     unsigned mapping_entries, route_entries;
     bool selective_writes;
+    bool reuse_code_checks;
 } NceDirectConfig;
 
 /* One sequential caller per engine. Code cache is 2..256 MiB, 16 KiB aligned.

@@ -83,6 +83,9 @@ def validate(rows, memory_interval, mapping="window", workload="core", tlb_inval
                 return False
             if direct_config is not None and (direct[0]['read_mapping_misses'] + direct[0]['write_mapping_misses'] != direct[0]['mapping_misses']):
                 return False
+            if direct_config is not None and (direct[0]['code_validation_hits'] > direct[0]['code_lookups'] or
+                    (not direct_config['reuse_code_checks'] and direct[0]['code_validation_hits'])):
+                return False
             if (direct[0]['code_bytes'] > direct[0]['capacity_bytes'] or
                     direct[0]['capacity_bytes'] != selected[0]['direct_cache_bytes'] or
                     direct[0]['fallbacks'] > direct[0]['calls']):
@@ -146,6 +149,7 @@ def main():
     parser.add_argument('--direct-mapping-entries', type=int, choices=(256, 1024, 4096, 16384, 65536), default=256)
     parser.add_argument('--direct-route-entries', type=int, choices=(256, 1024, 4096, 16384, 65536), default=256)
     parser.add_argument('--direct-selective-writes', type=int, choices=(0, 1), default=0)
+    parser.add_argument('--direct-reuse-code-checks', type=int, choices=(0, 1), default=0)
     parser.add_argument('--build-only', action='store_true')
     parser.add_argument('--reuse-engine-build', action='store_true', help='校验摘要后复用已构建的 Unicorn，用于执行器成组对照')
     parser.add_argument('--mapping', choices=('window', 'pte'), default='window')
@@ -175,8 +179,8 @@ def main():
     if args.execution == 'direct' and args.mapping != 'pte':
         parser.error('Direct 执行使用 PTE 映射')
     direct_config = {'mapping_entries': args.direct_mapping_entries, 'route_entries': args.direct_route_entries,
-                     'selective_writes': bool(args.direct_selective_writes)} if args.execution == 'direct' else None
-    if args.execution != 'direct' and (args.direct_mapping_entries != 256 or args.direct_route_entries != 256 or args.direct_selective_writes):
+                     'selective_writes': bool(args.direct_selective_writes), 'reuse_code_checks': bool(args.direct_reuse_code_checks)} if args.execution == 'direct' else None
+    if args.execution != 'direct' and (args.direct_mapping_entries != 256 or args.direct_route_entries != 256 or args.direct_selective_writes or args.direct_reuse_code_checks):
         parser.error('Direct 缓存参数需要 --execution direct')
     out = args.output.resolve()
     if not out.is_relative_to(WORK):
@@ -351,7 +355,8 @@ def main():
     environment['NCE_TRANSLATION_LINUX_FASTPATH'] = str(args.linux_fastpath)
     environment['NCE_TRANSLATION_CACHE_MIB'] = str(args.cache_mib)
     environment.update(NCE_DIRECT_MAPPING_ENTRIES=str(args.direct_mapping_entries),
-                       NCE_DIRECT_ROUTE_ENTRIES=str(args.direct_route_entries), NCE_DIRECT_SELECTIVE_WRITES=str(args.direct_selective_writes))
+                       NCE_DIRECT_ROUTE_ENTRIES=str(args.direct_route_entries), NCE_DIRECT_SELECTIVE_WRITES=str(args.direct_selective_writes),
+                       NCE_DIRECT_REUSE_CODE_CHECKS=str(args.direct_reuse_code_checks))
     for name in ('NCE_DESKTOP', 'NCE_SYSTEM_SERVER_PROBE', 'NCE_DIAGNOSTICS', 'NCE_TRACE_SYSTEMUI'):
         environment.pop(name, None)
     if args.workload == 'desktop':

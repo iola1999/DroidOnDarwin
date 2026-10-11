@@ -367,6 +367,24 @@ void direct_tests()
         ++probe.epoch;
     }
     report("cached_write_alias_becomes_executable");
+    const uint32_t collision[] = {0xd63f0040, 0xf1000421, 0x54ffffc1, 0};
+    probe.load(collision, sizeof(collision));
+    probe.code[1024] = 0x91000400;
+    probe.code[1025] = 0xd65f03c0;
+    probe.extra_code_va = CodeVA + 0x10000000;
+    actual = state(random);
+    actual.x[0] = 7;
+    actual.x[1] = 16;
+    actual.x[2] = probe.extra_code_va;
+    CHECK(probe.run(actual) == NCE_DIRECT_UNSUPPORTED && actual.pc == CodeVA + 12 && actual.x[0] == 23);
+    if (probe.config.reuse_code_checks)
+        CHECK(nce_direct_stats(probe.direct).code_validation_hits > 0);
+    probe.executable = false;
+    actual.pc = CodeVA;
+    CHECK(probe.run(actual, 1000, &fault) == NCE_DIRECT_FETCH_FAULT && fault == CodeVA && actual.pc == CodeVA);
+    probe.executable = true;
+    probe.extra_code_va = 0;
+    report("route_collision_reuse_and_next_run_fetch_permission");
     nce_direct_destroy(probe.direct);
     probe.config.cache_bytes = 2 * 1024 * 1024;
     probe.direct = nce_direct_create(probe.config);

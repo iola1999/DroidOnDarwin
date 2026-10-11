@@ -636,13 +636,14 @@ unsigned long translation_linux_setup(void *kernel, unsigned long copy_user_offs
 #ifdef NCE_DIRECT_EXECUTION
     REQUIRE(translation && translate_user);
     unsigned selective = direct_setting("NCE_DIRECT_SELECTIVE_WRITES", 0);
-    REQUIRE(selective <= 1);
+    unsigned reuse = direct_setting("NCE_DIRECT_REUSE_CODE_CHECKS", 0);
+    REQUIRE(selective <= 1 && reuse <= 1);
     NceDirectConfig direct_config = {cache_bytes, direct_setting("NCE_DIRECT_MAPPING_ENTRIES", 256),
-                                     direct_setting("NCE_DIRECT_ROUTE_ENTRIES", 256), selective != 0};
+                                     direct_setting("NCE_DIRECT_ROUTE_ENTRIES", 256), selective != 0, reuse != 0};
     direct_engine = nce_direct_create(direct_config);
     REQUIRE(direct_engine);
-    printf("{\"config\":\"translation_execution\",\"engine\":\"direct\",\"direct_cache_bytes\":%lu,\"data_page_bytes\":16384,\"mapping_entries\":%u,\"route_entries\":%u,\"selective_writes\":%s}\n",
-           cache_bytes, direct_config.mapping_entries, direct_config.route_entries, direct_config.selective_writes ? "true" : "false");
+    printf("{\"config\":\"translation_execution\",\"engine\":\"direct\",\"direct_cache_bytes\":%lu,\"data_page_bytes\":16384,\"mapping_entries\":%u,\"route_entries\":%u,\"selective_writes\":%s,\"reuse_code_checks\":%s}\n",
+           cache_bytes, direct_config.mapping_entries, direct_config.route_entries, direct_config.selective_writes ? "true" : "false", direct_config.reuse_code_checks ? "true" : "false");
 #else
     printf("{\"config\":\"translation_execution\",\"engine\":\"unicorn\"}\n");
 #endif
@@ -717,10 +718,10 @@ void translation_linux_cleanup(void)
            stats[0], stats[1], stats[2], stats[3], stats[4]);
 #ifdef NCE_DIRECT_EXECUTION
     NceDirectStats direct = nce_direct_stats(direct_engine);
-    printf("{\"direct_execution\":true,\"calls\":%lu,\"fallbacks\":%lu,\"compiles\":%llu,\"flushes\":%llu,\"code_changes\":%llu,\"code_bytes\":%zu,\"capacity_bytes\":%zu,\"pages\":%zu,\"mapping_misses\":%llu,\"code_lookups\":%llu,\"read_mapping_misses\":%llu,\"write_mapping_misses\":%llu,\"write_invalidations\":%llu}\n",
+    printf("{\"direct_execution\":true,\"calls\":%lu,\"fallbacks\":%lu,\"compiles\":%llu,\"flushes\":%llu,\"code_changes\":%llu,\"code_bytes\":%zu,\"capacity_bytes\":%zu,\"pages\":%zu,\"mapping_misses\":%llu,\"code_lookups\":%llu,\"read_mapping_misses\":%llu,\"write_mapping_misses\":%llu,\"write_invalidations\":%llu,\"code_validation_hits\":%llu}\n",
            direct_calls, direct_fallbacks, direct.compiles, direct.flushes, direct.code_changes,
            direct.code_bytes, direct.code_capacity, direct.pages, direct.mapping_misses, direct.code_lookups,
-           direct.read_mapping_misses, direct.write_mapping_misses, direct.write_invalidations);
+           direct.read_mapping_misses, direct.write_mapping_misses, direct.write_invalidations, direct.code_validation_hits);
     for (unsigned i = 0; i < 256; ++i)
         if (direct_missing[i].count)
             printf("{\"direct_fallback\":%u,\"count\":%lu}\n", direct_missing[i].instruction, direct_missing[i].count);

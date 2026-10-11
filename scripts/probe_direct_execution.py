@@ -85,7 +85,8 @@ def validate(rows, mode, interval, config=None):
             'changed_cross_page_branch_cache', 'pair_pre_post_index_all_base_registers',
             'exclusive_load_store_all_widths', 'asynchronous_stop_at_block_and_indirect_boundary',
             '16k_data_page_internal_and_external_boundaries', 'bounded_cache_reuse_and_code_replacement',
-            'dczid_zero_block_alignment_permission_and_prefetch', 'cached_write_alias_becomes_executable'}
+            'dczid_zero_block_alignment_permission_and_prefetch', 'cached_write_alias_becomes_executable',
+            'route_collision_reuse_and_next_run_fetch_permission'}
         if not expected <= {r.get('test') for r in rows if r.get('passed')}:
             return False
     else:
@@ -124,6 +125,7 @@ def main():
     parser.add_argument('--mapping-entries', type=int, choices=(256, 1024, 4096, 16384, 65536), default=256)
     parser.add_argument('--route-entries', type=int, choices=(256, 1024, 4096, 16384, 65536), default=256)
     parser.add_argument('--selective-writes', type=int, choices=(0, 1), default=0)
+    parser.add_argument('--reuse-code-checks', type=int, choices=(0, 1), default=0)
     args = parser.parse_args()
     if platform.system() != 'Darwin' or platform.machine() != 'arm64':
         parser.error('该原型需要 Apple Silicon Mac')
@@ -138,9 +140,10 @@ def main():
         return
     runs = []
     config = {'mapping_entries': args.mapping_entries, 'route_entries': args.route_entries,
-              'selective_writes': bool(args.selective_writes)}
+              'selective_writes': bool(args.selective_writes), 'reuse_code_checks': bool(args.reuse_code_checks)}
     environment = dict(os.environ, NCE_DIRECT_MAPPING_ENTRIES=str(args.mapping_entries),
-                       NCE_DIRECT_ROUTE_ENTRIES=str(args.route_entries), NCE_DIRECT_SELECTIVE_WRITES=str(args.selective_writes))
+                       NCE_DIRECT_ROUTE_ENTRIES=str(args.route_entries), NCE_DIRECT_SELECTIVE_WRITES=str(args.selective_writes),
+                       NCE_DIRECT_REUSE_CODE_CHECKS=str(args.reuse_code_checks))
     modes = (['tests'] if args.mode != 'bench' else []) + (['native', 'unicorn', 'direct'] if args.mode != 'tests' else [])
     for entry in ('cli', 'gcd'):
         for mode in (modes if entry == 'cli' else list(reversed(modes))):

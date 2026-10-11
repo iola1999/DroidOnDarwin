@@ -32,7 +32,9 @@ struct Probe {
     NceDirect *direct = nullptr;
     NceDirectConfig config{};
     bool readable = true, writable = true, alias_code = false;
+    bool executable = true;
     size_t alias_offset = 0;
+    uint64_t extra_code_va = 0;
     uint64_t epoch = 1, fills = 0;
     explicit Probe(const char *mode = "tests");
     ~Probe();
