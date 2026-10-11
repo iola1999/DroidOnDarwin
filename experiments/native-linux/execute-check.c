@@ -1,6 +1,9 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 #include "execute-check.h"
 #include <setjmp.h>
+#include <errno.h>
+#include <string.h>
+#include <libkern/OSCacheControl.h>
 #include <signal.h>
 #include <pthread.h>
 #include <stdio.h>
@@ -74,5 +77,31 @@ int nce_check_execute(NceCode code, int expected)
     if (check.signal)
         printf("{\"result\":\"failed\",\"reason\":\"execute_fault\",\"signal\":%d,\"pc\":\"0x%lx\",\"address\":\"0x%lx\"}\n",
                check.signal, (unsigned long)check.pc, (unsigned long)check.address);
+    return result;
+}
+
+int nce_check_code_updates(NceCode code)
+{
+    if (!code.rw || !code.rx || code.size < 8 || (uintptr_t)code.rx % 4) {
+        errno = EINVAL;
+        return -1;
+    }
+    uint32_t original[2];
+    memcpy(original, code.rw, sizeof(original));
+    int result = 0;
+    for (unsigned i = 0; i < 4; ++i) {
+        unsigned value = 42 + i % 2;
+        uint32_t words[] = {0x52800000 | (value << 5), 0xd65f03c0};
+        memcpy(code.rw, words, sizeof(words));
+        sys_dcache_flush(code.rw, sizeof(words));
+        sys_icache_invalidate(code.rx, sizeof(words));
+        if (nce_check_execute(code, (int)value)) {
+            result = -1;
+            break;
+        }
+    }
+    memcpy(code.rw, original, sizeof(original));
+    sys_dcache_flush(code.rw, sizeof(original));
+    sys_icache_invalidate(code.rx, sizeof(original));
     return result;
 }

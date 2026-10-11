@@ -2,6 +2,7 @@
 #include "internal.h"
 #ifdef NCE_DIRECT_DUAL_MAP
 #include "../code-memory.h"
+#include "../execute-check.h"
 #endif
 #include <algorithm>
 #include <cstring>
@@ -81,9 +82,12 @@ struct NceDirect {
     }
     ~NceDirect()
     {
-        if (writable != arena)
-            munmap(writable, stats.code_capacity);
+#ifdef NCE_DIRECT_DUAL_MAP
+        nce_code_release_range(writable, stats.code_capacity, 1);
+        nce_code_release_range(arena, stats.code_capacity, 1);
+#else
         munmap(arena, stats.code_capacity);
+#endif
     }
     void reset_routes()
     {
@@ -530,3 +534,13 @@ extern "C" void nce_direct_set_code_guard(NceDirect *engine, const uint64_t *pag
     engine->shared_code_guard = pages;
     engine->shared_code_pages = count;
 }
+
+#ifdef NCE_DIRECT_DUAL_MAP
+extern "C" int nce_direct_check_code(NceDirect *engine)
+{
+    if (!engine || !engine->pages.empty())
+        return -1;
+    return nce_check_code_updates({reinterpret_cast<unsigned char *>(engine->writable),
+                                   reinterpret_cast<unsigned char *>(engine->arena), engine->stats.code_capacity});
+}
+#endif

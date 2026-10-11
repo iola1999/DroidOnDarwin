@@ -3,6 +3,7 @@
 #include <TargetConditionals.h>
 #include <errno.h>
 #include <mach/mach.h>
+#include <stdio.h>
 #include <sys/mman.h>
 #include <unistd.h>
 #if TARGET_OS_IPHONE
@@ -43,4 +44,24 @@ NceCode nce_code_prepare_range(void *address, size_t size)
     }
     return (NceCode){(void *)rw, address, size};
 #endif
+}
+
+int nce_code_release_range(void *address, size_t size, int prepared)
+{
+    if (!address)
+        return 0;
+    kern_return_t kr = vm_deallocate(mach_task_self(), (uintptr_t)address, size);
+    if (kr == KERN_SUCCESS)
+        return 0;
+#if TARGET_OS_IPHONE
+    /* iOS can retain prepared VM entries until this single-run process exits. */
+    if (prepared && kr == KERN_PROTECTION_FAILURE) {
+        printf("{\"phase\":\"retained_jit_mapping\",\"bytes\":%zu}\n", size);
+        return 0;
+    }
+#else
+    (void)prepared;
+#endif
+    printf("{\"result\":\"failed\",\"reason\":\"vm_deallocate\",\"kr\":%d,\"bytes\":%zu}\n", kr, size);
+    return -1;
 }

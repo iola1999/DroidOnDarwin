@@ -5,6 +5,9 @@
 #include "lkl-host-ops.h"
 #include "lkl-image.h"
 #include "linux-elf.h"
+#ifdef NCE_TRANSLATION_DUAL_MAP
+#include "unicorn-code-memory.h"
+#endif
 #include <errno.h>
 #include <mach/mach.h>
 #include <pthread.h>
@@ -49,7 +52,7 @@ static unsigned long map_generation, code_generation, maps, revocations;
 static unsigned long allocated, freed;
 static bool page_invalidation, retain_exec_cache, page_tlb_invalidation;
 static unsigned long instruction_batch;
-static bool timer_mode, timer_stopping, parallel_profile;
+static bool timer_mode, timer_started, timer_stopping, parallel_profile;
 static uint64_t profile_last_ns, profile_union_ns, profile_overlap_ns;
 static pthread_t timer_thread;
 static pthread_mutex_t timer_lock = PTHREAD_MUTEX_INITIALIZER;
@@ -850,7 +853,12 @@ unsigned long translation_linux_setup(void *kernel, unsigned long copy_user_offs
     printf("{\"config\":\"translation_parallel\",\"cpus\":%u,\"profile\":%s,\"uaccess_stop\":\"%s\"}\n",
            execution_count, parallel_profile ? "true" : "false", code_only ? "code" : "all");
     base = (uintptr_t)mmap(NULL, RESERVATION, PROT_NONE, MAP_PRIVATE | MAP_ANON, -1, 0);
-    REQUIRE((void *)base != MAP_FAILED && base + RESERVATION < NCE_HOST_ADDRESS_LIMIT);
+    if ((void *)base == MAP_FAILED) {
+        base = 0;
+        goto failed;
+    }
+    if (base >= NCE_HOST_ADDRESS_LIMIT || RESERVATION > NCE_HOST_ADDRESS_LIMIT - base)
+        goto failed;
     if (!translation) {
         pages = calloc(NCE_USER_SIZE / PAGE, sizeof(*pages));
         REQUIRE(pages);
@@ -873,9 +881,12 @@ unsigned long translation_linux_setup(void *kernel, unsigned long copy_user_offs
     unsigned long cache_bytes = cache_mib * 1024 * 1024;
     for (unsigned cpu_index = 0; cpu_index < execution_count; ++cpu_index) {
         ExecutionCpu *execution = &executions[cpu_index];
-        checked(uc_open(UC_ARCH_ARM64, UC_MODE_ARM, &execution->engine));
-        checked(uc_ctl_set_cpu_model(execution->engine, UC_CPU_ARM64_MAX));
-        checked(uc_ctl_set_page_size(execution->engine, PAGE));
+        if (uc_open(UC_ARCH_ARM64, UC_MODE_ARM, &execution->engine) != UC_ERR_OK)
+            goto failed;
+        if (uc_ctl_set_cpu_model(execution->engine, UC_CPU_ARM64_MAX) != UC_ERR_OK)
+            goto failed;
+        if (uc_ctl_set_page_size(execution->engine, PAGE) != UC_ERR_OK)
+            goto failed;
 #ifdef NCE_DIRECT_EXECUTION
         REQUIRE(translation && translate_user);
         unsigned selective = direct_setting("NCE_DIRECT_SELECTIVE_WRITES", 0);
@@ -909,7 +920,8 @@ unsigned long translation_linux_setup(void *kernel, unsigned long copy_user_offs
                                          direct_setting("NCE_DIRECT_ROUTE_ENTRIES", 256), selective != 0, reuse != 0, crossing != 0, epochs != 0, retain != 0, groups != 0, native != 0, tables != 0};
         REQUIRE(!direct_pte_memory || direct_pte_refill || (direct_config.mapping_entries == 256 && !selective));
         execution->direct_engine = nce_direct_create(direct_config);
-        REQUIRE(execution->direct_engine);
+        if (!execution->direct_engine)
+            goto failed;
 #ifdef NCE_SMP
         REQUIRE(direct_flat && !direct_read_views && native && !retain);
         nce_direct_set_code_guard(execution->direct_engine, (const uint64_t *)translation->code_guard, NCE_RAM_SIZE / PAGE);
@@ -928,8 +940,17 @@ unsigned long translation_linux_setup(void *kernel, unsigned long copy_user_offs
         printf("{\"cpu\":%u,\"config\":\"translation_execution\",\"engine\":\"unicorn\"}\n", execution->index);
 #endif
         // TLB mode initializes Unicorn; buffer size must be supplied before that call.
-        checked(uc_ctl_set_tcg_buffer_size(execution->engine, (uint32_t)cache_bytes));
-        checked(uc_ctl_tlb_mode(execution->engine, UC_TLB_VIRTUAL));
+        if (uc_ctl_set_tcg_buffer_size(execution->engine, (uint32_t)cache_bytes) != UC_ERR_OK)
+            goto failed;
+#ifdef NCE_TRANSLATION_DUAL_MAP
+        if (nce_uc_code_reserve(cache_bytes))
+            goto failed;
+#endif
+        if (uc_ctl_tlb_mode(execution->engine, UC_TLB_VIRTUAL) != UC_ERR_OK)
+            goto failed;
+#ifdef NCE_TRANSLATION_DUAL_MAP
+        nce_uc_code_cancel_reservation();
+#endif
         const char *fastpath = getenv("NCE_TRANSLATION_LINUX_FASTPATH");
         REQUIRE(!fastpath || !strcmp(fastpath, "0") || !strcmp(fastpath, "1"));
         checked(nce_uc_set_linux_memory(execution->engine, fastpath && !strcmp(fastpath, "1")));
@@ -941,20 +962,29 @@ unsigned long translation_linux_setup(void *kernel, unsigned long copy_user_offs
                fastpath && !strcmp(fastpath, "1") ? "true" : "false");
 #ifdef NCE_DIRECT_EXECUTION
         uc_arm64_cp_reg dczid = {.op0 = 3, .op1 = 3, .crn = 0, .crm = 0, .op2 = 7};
-        checked(uc_reg_read(execution->engine, UC_ARM64_REG_CP_REG, &dczid));
+        if (uc_reg_read(execution->engine, UC_ARM64_REG_CP_REG, &dczid) != UC_ERR_OK)
+            goto failed;
         REQUIRE(dczid.val == 4);
 #endif
-        checked(uc_context_alloc(execution->engine, &execution->empty_cpu));
-        checked(uc_context_save(execution->engine, execution->empty_cpu));
+        if (uc_context_alloc(execution->engine, &execution->empty_cpu) != UC_ERR_OK)
+            goto failed;
+        if (uc_context_save(execution->engine, execution->empty_cpu) != UC_ERR_OK)
+            goto failed;
         uc_hook hook;
-        checked(uc_hook_add(execution->engine, &hook, UC_HOOK_TLB_FILL, fill, NULL, 1, 0));
-        checked(uc_hook_add(execution->engine, &hook, UC_HOOK_INTR, interrupt, NULL, 1, 0));
+        if (uc_hook_add(execution->engine, &hook, UC_HOOK_TLB_FILL, fill, NULL, 1, 0) != UC_ERR_OK)
+            goto failed;
+        if (uc_hook_add(execution->engine, &hook, UC_HOOK_INTR, interrupt, NULL, 1, 0) != UC_ERR_OK)
+            goto failed;
 #ifdef NCE_SMP
-        checked(uc_hook_add(execution->engine, &hook, UC_HOOK_MEM_WRITE, fallback_write, NULL, 1, 0));
+        if (uc_hook_add(execution->engine, &hook, UC_HOOK_MEM_WRITE, fallback_write, NULL, 1, 0) != UC_ERR_OK)
+            goto failed;
 #endif
     }
-    if (timer_mode)
-        REQUIRE(pthread_create(&timer_thread, NULL, preempt_timer, NULL) == 0);
+    if (timer_mode) {
+        if (pthread_create(&timer_thread, NULL, preempt_timer, NULL))
+            goto failed;
+        timer_started = true;
+    }
     nce_lkl_host.shmem_init = shmem_init;
     nce_lkl_host.shmem_reclaim = shmem_reclaim;
     nce_lkl_host.shmem_mmap = shmem_map;
@@ -969,6 +999,10 @@ unsigned long translation_linux_setup(void *kernel, unsigned long copy_user_offs
     nce_lkl_host.user_elf_offset = translation_elf_offset;
     nce_lkl_host.user_reserved = user_reserved;
     return base;
+failed:
+    puts("{\"result\":\"failed\",\"reason\":\"translation_setup\"}");
+    translation_linux_abort_setup();
+    return 0;
 }
 
 void *translation_linux_process(const char *path)
@@ -982,7 +1016,7 @@ void *translation_linux_process(const char *path)
 
 void translation_linux_cleanup(void)
 {
-    if (timer_mode) {
+    if (timer_started) {
         REQUIRE(pthread_mutex_lock(&timer_lock) == 0);
         for (unsigned i = 0; i < execution_count; ++i)
             REQUIRE(!executions[i].timer_active);
@@ -990,6 +1024,7 @@ void translation_linux_cleanup(void)
         REQUIRE(pthread_cond_signal(&timer_condition) == 0);
         REQUIRE(pthread_mutex_unlock(&timer_lock) == 0);
         REQUIRE(pthread_join(timer_thread, NULL) == 0);
+        timer_started = false;
     }
     if (parallel_profile) {
         uint64_t total = 0;
@@ -1066,3 +1101,59 @@ void translation_linux_cleanup(void)
         free(translation->code_guard);
     translation_elf_cleanup();
 }
+
+/* Before kernel init there are no guest contexts, RAM or ELF registrations. */
+void translation_linux_abort_setup(void)
+{
+    if (timer_started) {
+        REQUIRE(!pthread_mutex_lock(&timer_lock));
+        timer_stopping = true;
+        REQUIRE(!pthread_cond_signal(&timer_condition));
+        REQUIRE(!pthread_mutex_unlock(&timer_lock));
+        REQUIRE(!pthread_join(timer_thread, NULL));
+        timer_started = false;
+    }
+#ifdef NCE_TRANSLATION_DUAL_MAP
+    nce_uc_code_cancel_reservation();
+#endif
+    for (unsigned i = 0; i < execution_count; ++i) {
+        ExecutionCpu *execution = &executions[i];
+        if (execution->empty_cpu)
+            checked(uc_context_free(execution->empty_cpu));
+        if (execution->engine)
+            checked(uc_close(execution->engine));
+#ifdef NCE_DIRECT_EXECUTION
+        nce_direct_destroy(execution->direct_engine);
+#endif
+        *execution = (ExecutionCpu){0};
+    }
+#ifdef NCE_DIRECT_EXECUTION
+    if (direct_read_views)
+        REQUIRE(!nce_direct_remove_read_faults());
+    if (original_page_free)
+        nce_lkl_host.page_free = original_page_free;
+    if (original_disk_io)
+        nce_lkl_host.disk_io = original_disk_io;
+#endif
+    if (base)
+        REQUIRE(!munmap((void *)base, RESERVATION));
+    base = 0;
+    free(pages);
+    pages = NULL;
+    if (translation) {
+        free(translation->code_guard);
+        translation->code_guard = NULL;
+    }
+}
+
+#ifdef NCE_TRANSLATION_DUAL_MAP
+int translation_linux_check_code(void)
+{
+#ifdef NCE_DIRECT_EXECUTION
+    for (unsigned i = 0; i < execution_count; ++i)
+        if (nce_direct_check_code(executions[i].direct_engine))
+            return -1;
+#endif
+    return nce_uc_code_check_all();
+}
+#endif

@@ -3,6 +3,7 @@
 #include "lkl-image.h"
 #ifdef NCE_TRANSLATION_DUAL_MAP
 #include "../code-memory.h"
+#include "../execute-check.h"
 #endif
 #include <errno.h>
 #include <libkern/OSCacheControl.h>
@@ -16,14 +17,28 @@
 int translation_kernel_release(TranslationKernelImage *image)
 {
     int result = 0;
+#ifdef NCE_TRANSLATION_DUAL_MAP
+    size_t cursor = 0;
     if (image->code) {
-        for (size_t i = 0; i < SEGMENTS; ++i)
-            if (image->code[i].rw && munmap(image->code[i].rw, image->code[i].size))
-                result = -1;
+        for (size_t i = 0; i < SEGMENTS; ++i) {
+            NceCode code = image->code[i];
+            if (!code.rw)
+                continue;
+            size_t offset = (unsigned char *)code.rx - image->base;
+            if (offset > cursor)
+                result |= nce_code_release_range(image->base + cursor, offset - cursor, 0);
+            result |= nce_code_release_range(code.rw, code.size, 1);
+            result |= nce_code_release_range(code.rx, code.size, 1);
+            cursor = offset + code.size;
+        }
         free(image->code);
     }
+    if (image->base && cursor < LKL_IMAGE_SIZE)
+        result |= nce_code_release_range(image->base + cursor, LKL_IMAGE_SIZE - cursor, 0);
+#else
     if (image->base && munmap(image->base, LKL_IMAGE_SIZE))
         result = -1;
+#endif
     *image = (TranslationKernelImage){0};
     return result;
 }
@@ -104,3 +119,15 @@ failed: {
     return -1;
 }
 }
+
+#ifdef NCE_TRANSLATION_DUAL_MAP
+int translation_kernel_check_code(const TranslationKernelImage *image)
+{
+    if (!image || !image->base || !image->code)
+        return -1;
+    for (size_t i = 0; i < SEGMENTS; ++i)
+        if (image->code[i].rw && nce_check_code_updates(image->code[i]))
+            return -1;
+    return 0;
+}
+#endif

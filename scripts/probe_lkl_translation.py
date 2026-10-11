@@ -32,6 +32,9 @@ def validate(rows, memory_interval, mapping="window", workload="core", tlb_inval
         if settings != [{'config': 'translation_code_memory', 'kernel': 'dual' if code_memory == 'dual' else 'single',
                          'direct': code_memory if execution == 'direct' else 'unused'}]:
             return False
+        if code_memory == 'dual' and [row for row in rows if row.get('test') == 'translation_prepared_code_execution'] != [
+                {'test': 'translation_prepared_code_execution', 'passed': True}]:
+            return False
     if parallel_profile is not None:
         settings = [row for row in rows if row.get('config') == 'translation_parallel']
         if len(settings) != 1 or settings[0] != {'config': 'translation_parallel', 'cpus': cpus,
@@ -386,7 +389,7 @@ def main():
     if args.code_memory == 'dual':
         inputs.append(EXP / 'translation/unicorn-code-memory.c')
         if args.execution != 'direct':
-            inputs.append(EXP / 'code-memory.c')
+            inputs += [EXP / 'code-memory.c', EXP / 'execute-check.c']
     graphics_link, graphics_files = [], []
     if args.workload == 'desktop':
         gfx = ROOT / 'work/gfxstream-src'
@@ -490,11 +493,11 @@ def main():
         raise RuntimeError('客体构建后宿主文件发生变化')
     files = [*inputs, *direct_files, ROOT / 'scripts/build_nce_userspace.py',
              *[EXP / 'userspace' / name for name in BIONIC_TEST_SOURCES],
-             EXP / 'translation/linux-elf.h', EXP / 'translation/linux-execution.h', EXP / 'translation/linux-memory.h', EXP / 'translation/linux-guest.c', Path(__file__),
+             EXP / 'translation/unicorn-code-memory.h', EXP / 'execute-check.h', EXP / 'translation/linux-elf.h', EXP / 'translation/linux-execution.h', EXP / 'translation/linux-memory.h', EXP / 'translation/linux-guest.c', Path(__file__),
              EXP / 'dispatch-test.c', EXP / 'layout.h', EXP / 'guest-registers.h',
              *[EXP / 'userspace' / name for name in guest_sources], *android_files, *graphics_files,
              kernel / 'lkl-image.bin', kernel / 'lkl-image.h', kernel / 'lkl.so', kernel / 'lkl-host-ops.h',
-             EXP / 'translation/kernel-api.h', EXP / 'translation/kernel-image.h', EXP / 'code-memory.h', EXP / 'nce.h',
+             EXP / 'translation/kernel-api.h', EXP / 'translation/kernel-image.h', EXP / 'code-memory.h', EXP / 'nce.h', out / 'translation-symbols.h',
              ROOT / 'scripts/build_translation_engine.py', manifest,
              library / 'lib/libunicorn.a', *[out / name for name in (*build_entries, 'guest.elf', 'late.elf', *runtime_files)]]
     if args.mapping == 'pte':

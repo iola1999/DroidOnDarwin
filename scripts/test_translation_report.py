@@ -26,6 +26,8 @@ def main():
     assert accepted(original)
     if config.get('code_memory'):
         assert not accepted([row for row in original if row.get('config') != 'translation_code_memory'])
+        if config['code_memory'] == 'dual':
+            assert not accepted([row for row in original if row.get('test') != 'translation_prepared_code_execution'])
         for field in ('kernel', 'direct'):
             rows = deepcopy(original)
             next(row for row in rows if row.get('config') == 'translation_code_memory')[field] = 'wrong-variant'

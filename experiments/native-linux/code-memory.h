@@ -12,6 +12,9 @@ extern "C" {
  * must release the RW alias as well as its original mapping after execution.
  * Data adjacent to the supplied range is not remapped or protected. */
 NceCode nce_code_prepare_range(void *address, size_t size);
+/* Release an owned range after all users have stopped. iOS prepared mappings
+ * may remain until this single-run process exits; that case is logged. */
+int nce_code_release_range(void *address, size_t size, int prepared);
 #ifdef __cplusplus
 }
 #endif

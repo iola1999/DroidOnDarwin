@@ -226,32 +226,12 @@ int nce_memory_prepare(void)
     return 0;
 }
 
-static int release_range(void *address, size_t size, int prepared)
-{
-    if (!address)
-        return 0;
-    kern_return_t kr = vm_deallocate(mach_task_self(), (uintptr_t)address, size);
-    if (kr == KERN_SUCCESS)
-        return 0;
-#if TARGET_OS_IPHONE
-    /* iOS can retain prepared VM entries until this single-run process exits. */
-    if (prepared && kr == KERN_PROTECTION_FAILURE) {
-        printf("{\"phase\":\"retained_jit_mapping\",\"bytes\":%zu}\n", size);
-        return 0;
-    }
-#else
-    (void)prepared;
-#endif
-    printf("{\"result\":\"failed\",\"reason\":\"vm_deallocate\",\"kr\":%d,\"bytes\":%zu}\n", kr, size);
-    return -1;
-}
-
 int nce_memory_release(void)
 {
     int result = 0;
-    result |= release_range(pool.rw, pool.size, 1);
+    result |= nce_code_release_range(pool.rw, pool.size, 1);
     if (reservation) {
-        result |= release_range(reservation, NCE_CODE_POOL_SIZE, 1);
+        result |= nce_code_release_range(reservation, NCE_CODE_POOL_SIZE, 1);
         uintptr_t cursor = nce_memory_user_base();
         for (size_t i = 0; i < nce_program_count; ++i) {
             NceProgram *p = &nce_programs[i];
@@ -260,33 +240,33 @@ int nce_memory_release(void)
                 uintptr_t begin = nce_memory_user_base() + p->offset + s->offset;
                 REQUIRE(begin >= cursor);
                 if (begin > cursor)
-                    result |= release_range((void *)cursor, begin - cursor, 0);
-                result |= release_range(s->code.rw, s->size, 1);
+                    result |= nce_code_release_range((void *)cursor, begin - cursor, 0);
+                result |= nce_code_release_range(s->code.rw, s->size, 1);
                 if (s->source_cache)
                     REQUIRE(munmap(s->source_cache, s->size) == 0);
                 free(s->cache_prot);
                 s->source_cache = s->cache_prot = NULL;
-                result |= release_range((void *)begin, s->size, s->code.rx != NULL);
+                result |= nce_code_release_range((void *)begin, s->size, s->code.rx != NULL);
                 cursor = begin + s->size;
                 s->code = (NceCode){0};
             }
             uintptr_t stub_start = nce_memory_user_base() + p->offset + p->span;
             REQUIRE(cursor <= stub_start);
             if (cursor < stub_start)
-                result |= release_range((void *)cursor, stub_start - cursor, 0);
-            result |= release_range(p->stubs.rw, p->stub_size, 1);
-            result |= release_range((void *)stub_start, p->stub_size, p->stubs.rx != NULL);
+                result |= nce_code_release_range((void *)cursor, stub_start - cursor, 0);
+            result |= nce_code_release_range(p->stubs.rw, p->stub_size, 1);
+            result |= nce_code_release_range((void *)stub_start, p->stub_size, p->stubs.rx != NULL);
             cursor = stub_start + p->stub_size;
             p->stubs = (NceCode){0};
         }
         uintptr_t dynamic_start = nce_memory_user_base() + NCE_EXEC_OFFSET;
         REQUIRE(cursor <= dynamic_start);
         if (cursor < dynamic_start)
-            result |= release_range((void *)cursor, dynamic_start - cursor, 0);
-        result |= release_range(dynamic_code.rw, dynamic_code.size, 1);
-        result |= release_range((void *)dynamic_start, NCE_EXEC_SIZE, dynamic_code.rx != NULL);
+            result |= nce_code_release_range((void *)cursor, dynamic_start - cursor, 0);
+        result |= nce_code_release_range(dynamic_code.rw, dynamic_code.size, 1);
+        result |= nce_code_release_range((void *)dynamic_start, NCE_EXEC_SIZE, dynamic_code.rx != NULL);
         cursor = dynamic_start + NCE_EXEC_SIZE;
-        result |= release_range((void *)cursor, (uintptr_t)reservation + RESERVED_BYTES - cursor, 0);
+        result |= nce_code_release_range((void *)cursor, (uintptr_t)reservation + RESERVED_BYTES - cursor, 0);
     }
     reservation = NULL;
     pool = (NceCode){0};

@@ -9,6 +9,11 @@
 #include "lkl-host-ops.h"
 #include "lkl-image.h"
 #include "translation-symbols.h"
+#include <TargetConditionals.h>
+#if TARGET_OS_IPHONE
+#include "ios-jit.h"
+extern int nce_wait_debugger_detach(unsigned timeout_ms);
+#endif
 #ifdef NCE_GRAPHICS
 #include "graphics/host-graphics.h"
 #include "input.h"
@@ -270,6 +275,16 @@ static int run_program(const char *path, int live)
     return waited != pid || status != 0;
 }
 
+static int detach_preparation(void)
+{
+#if TARGET_OS_IPHONE
+    dod_ios_jit_detach();
+    return nce_wait_debugger_detach(5000);
+#else
+    return 0;
+#endif
+}
+
 int nce_lkl_run(const char *path)
 {
     setvbuf(stdout, NULL, _IOLBF, 0);
@@ -297,7 +312,12 @@ int nce_lkl_run(const char *path)
 #endif
     printf("{\"config\":\"translation_code_memory\",\"kernel\":\"%s\",\"direct\":\"%s\"}\n", code_memory, direct_memory);
     TranslationKernelImage loaded = {0};
-    REQUIRE(translation_kernel_load(&loaded, path) == 0);
+    if (translation_kernel_load(&loaded, path)) {
+        printf("{\"result\":\"failed\",\"reason\":\"translation_kernel_load\",\"errno\":%d}\n", errno);
+        detach_preparation();
+        translation_memory_stop();
+        return 1;
+    }
     unsigned char *kernel = loaded.base;
     int (*init)(struct lkl_host_operations *) = (void *)(kernel + LKL_INIT);
     int (*start)(unsigned long, unsigned long *) = (void *)(kernel + NCE_LKL_START);
@@ -307,8 +327,24 @@ int nce_lkl_run(const char *path)
     void (*set_layout)(unsigned long, unsigned long, unsigned long *, unsigned long, void *, unsigned long, unsigned long) = (void *)(kernel + NCE_SET_LAYOUT);
     struct nce_translation_state state = {0};
     unsigned long *views = TRANSLATION_LOOKUP ? (void *)&state : calloc(2 * NCE_USER_SIZE / NCE_PAGE_SIZE, sizeof(*views));
-    REQUIRE(views);
-    unsigned long base = translation_linux_setup(kernel, TRANSLATION_COPY_USER, TRANSLATION_LOOKUP, TRANSLATION_LOOKUP ? &state : NULL);
+    unsigned long base = views ? translation_linux_setup(kernel, TRANSLATION_COPY_USER, TRANSLATION_LOOKUP, TRANSLATION_LOOKUP ? &state : NULL) : 0;
+    int preparation_failed = detach_preparation();
+#ifdef NCE_TRANSLATION_DUAL_MAP
+    if (base && !preparation_failed)
+        preparation_failed = translation_kernel_check_code(&loaded) || translation_linux_check_code();
+    printf("{\"test\":\"translation_prepared_code_execution\",\"passed\":%s}\n",
+           base && !preparation_failed ? "true" : "false");
+#endif
+    if (!base || preparation_failed) {
+        if (base)
+            translation_linux_abort_setup();
+        translation_kernel_release(&loaded);
+        if (!TRANSLATION_LOOKUP)
+            free(views);
+        translation_memory_stop();
+        puts("{\"result\":\"failed\",\"reason\":\"translation_code_preparation\"}");
+        return 1;
+    }
     set_layout(base, TRANSLATION_LOOKUP ? NCE_MM_TRANSLATED : NCE_MM_DEMAND, views, 3, NULL, 1, 0);
     const char *workload = getenv("NCE_TRANSLATION_WORKLOAD");
     REQUIRE(!workload || !strcmp(workload, "core") || !strcmp(workload, "android") || !strcmp(workload, "services") || !strcmp(workload, "desktop"));
@@ -401,7 +437,7 @@ int nce_lkl_run(const char *path)
     return failed;
 }
 
-#ifndef TRANSLATION_DISPATCH
+#if !defined(TRANSLATION_DISPATCH) && !defined(NCE_IOS_APP)
 int main(int argc, char **argv)
 {
     return argc == 2 ? nce_lkl_run(argv[1]) : 2;

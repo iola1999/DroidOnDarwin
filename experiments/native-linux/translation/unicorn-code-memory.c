@@ -1,5 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
+#include "unicorn-code-memory.h"
 #include "../code-memory.h"
+#include "../execute-check.h"
 #include <errno.h>
 #include <pthread.h>
 #include <stdio.h>
@@ -18,6 +20,8 @@ typedef struct CodeRegion {
     struct CodeRegion *next;
 } CodeRegion;
 static CodeRegion *regions;
+static _Thread_local void *reserved;
+static _Thread_local size_t reserved_size;
 static pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 #define CHECK(c) \
     do { \
@@ -35,6 +39,13 @@ void *nce_uc_code_alloc(size_t size)
     if (!size || size % 16384) {
         errno = EINVAL;
         return NULL;
+    }
+    if (reserved) {
+        CHECK(size == reserved_size);
+        void *address = reserved;
+        reserved = NULL;
+        reserved_size = 0;
+        return address;
     }
     CodeRegion *region = calloc(1, sizeof(*region));
     if (!region)
@@ -121,8 +132,43 @@ void nce_uc_code_free(void *address, size_t size)
     CHECK(region && region->code.size == size);
     *link = region->next;
     CHECK(!pthread_mutex_unlock(&lock));
-    CHECK(!munmap(region->code.rw, size));
-    CHECK(!munmap(region->code.rx, size));
+    CHECK(!nce_code_release_range(region->code.rw, size, 1));
+    CHECK(!nce_code_release_range(region->code.rx, size, 1));
     free_metadata(region);
     free(region);
+}
+
+int nce_uc_code_reserve(size_t size)
+{
+    CHECK(!reserved);
+    void *address = nce_uc_code_alloc(size);
+    if (!address)
+        return -1;
+    reserved = address;
+    reserved_size = size;
+    return 0;
+}
+
+void nce_uc_code_cancel_reservation(void)
+{
+    if (!reserved)
+        return;
+    void *address = reserved;
+    size_t size = reserved_size;
+    reserved = NULL;
+    reserved_size = 0;
+    nce_uc_code_free(address, size);
+}
+
+int nce_uc_code_check_all(void)
+{
+    int result = 0;
+    CHECK(!pthread_mutex_lock(&lock));
+    for (CodeRegion *region = regions; region; region = region->next)
+        if (nce_check_code_updates(region->code)) {
+            result = -1;
+            break;
+        }
+    CHECK(!pthread_mutex_unlock(&lock));
+    return result;
 }

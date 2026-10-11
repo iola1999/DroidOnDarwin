@@ -131,6 +131,9 @@ NceDirect *nce_direct_create(NceDirectConfig);
 void nce_direct_destroy(NceDirect *);
 /* Returns "map-jit" or "dual" for the linked engine. */
 const char *nce_direct_code_memory(void);
+/* Dual variant only. Check prepared memory before any guest code is compiled.
+ * The caller serializes all code checks and stops all users of this engine. */
+int nce_direct_check_code(NceDirect *engine);
 /* Request from another thread; consumed at the next block boundary. The owner
  * must exclude engine destruction. An unprepared run clears earlier requests. */
 void nce_direct_request_stop(NceDirect *);

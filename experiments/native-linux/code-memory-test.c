@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 #include "code-memory.h"
+#include "execute-check.h"
 #include <dispatch/dispatch.h>
 #include <errno.h>
 #include <libkern/OSCacheControl.h>
@@ -87,6 +88,18 @@ static void run(void *unused)
     sys_icache_invalidate(first.rx, 16);
     CHECK(((int (*)(void))first.rx)() == 219);
     CHECK(space[0] == 17 && space[2 * PAGE] == 29);
+    unsigned char before[16];
+    memcpy(before, first.rw, sizeof(before));
+    CHECK(!nce_check_code_updates(first));
+    CHECK(!memcmp(first.rw, before, sizeof(before)));
+    CHECK(((int (*)(void))first.rx)() == 219);
+    CHECK(!mprotect(first.rx, first.size, PROT_READ));
+    CHECK(nce_check_code_updates(first) == -1);
+    CHECK(!memcmp(first.rw, before, sizeof(before)));
+    CHECK(!mprotect(first.rx, first.size, PROT_READ | PROT_EXEC));
+    CHECK(((int (*)(void))first.rx)() == 219);
+    CHECK(nce_check_code_updates((NceCode){0}) == -1 && errno == EINVAL);
+    puts("{\"test\":\"code_memory_check_restores_original_after_success_and_fault\",\"passed\":true}");
     CHECK(!munmap(first.rw, first.size) && !munmap(second.rw, second.size));
     CHECK(!munmap(space, 3 * PAGE) && !munmap(other, PAGE));
     puts("{\"test\":\"code_memory_parallel_updates_and_cross_range_branch\",\"passed\":true}");

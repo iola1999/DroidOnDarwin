@@ -18,7 +18,9 @@ OAKNUT = '94c726ce0338b054eb8cb5ea91de8fe6c19f4392'
 ARCHIVE_SHA = 'c404db82002f9a851a412b3d55ac9be8a42a2e319fd2fc8a73e63e6ef5d4f97b'
 
 
-def build_engine(out, code_memory='map-jit'):
+def build_engine(out, code_memory='map-jit', target='macos'):
+    if target not in ('macos', 'ios') or (target == 'ios' and code_memory != 'dual'):
+        raise ValueError('iOS requires dual code memory')
     archive = WORK / 'oaknut-94c726c.tar.gz'
     if not archive.exists():
         urllib.request.urlretrieve(f'https://codeload.github.com/merryhime/oaknut/tar.gz/{OAKNUT}', archive)
@@ -32,7 +34,11 @@ def build_engine(out, code_memory='map-jit'):
     inputs = [SOURCE / name for name in ('engine.cpp', 'compile.cpp', 'decode.cpp', 'memory-groups.cpp', 'read-faults.cpp', 'cross-page.cpp', 'entry.S')]
     flags = ['-DNCE_DIRECT_DUAL_MAP'] if code_memory == 'dual' else []
     if flags:
-        inputs.append(SOURCE.parent / 'code-memory.c')
+        inputs += [SOURCE.parent / name for name in ('code-memory.c', 'execute-check.c')]
+    if target == 'ios':
+        sdk = subprocess.check_output(['xcrun', '--sdk', 'iphoneos', '--show-sdk-path'], text=True).strip()
+        flags += ['-target', 'arm64-apple-ios26.0', '-isysroot', sdk,
+                  '-I', str(ROOT / 'src/ios-jit')]
     objects = []
     for path in inputs:
         obj = out / (path.stem + '.o')
@@ -42,7 +48,7 @@ def build_engine(out, code_memory='map-jit'):
         subprocess.run([*command, *flags, '-O2', '-g', '-Wall', '-Wextra', '-Werror', '-I', str(headers / 'include'),
                         '-c', str(path), '-o', str(obj)], check=True, timeout=120)
         objects.append(obj)
-    return objects, inputs + [SOURCE / name for name in ('decode.h', 'memory-groups.h', 'direct.h', 'internal.h', 'layout.h', 'page-table-layout.h')] + [SOURCE.parent / name for name in ('code-memory.h', 'nce.h', 'guest-registers.h')] + sorted((headers / 'include').rglob('*.hpp')) + [Path(__file__), archive]
+    return objects, inputs + [SOURCE / name for name in ('decode.h', 'memory-groups.h', 'direct.h', 'internal.h', 'layout.h', 'page-table-layout.h')] + [SOURCE.parent / name for name in ('code-memory.h', 'execute-check.h', 'nce.h', 'guest-registers.h')] + sorted((headers / 'include').rglob('*.hpp')) + [Path(__file__), archive]
 
 
 def build(out, code_memory='map-jit'):

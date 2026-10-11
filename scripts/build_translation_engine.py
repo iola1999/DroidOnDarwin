@@ -14,12 +14,15 @@ WORK = ROOT / 'work/native-linux-nce'
 ARCHIVE_SHA = 'ea8863f095a0136388694e5a6063afd9bb7650e30243dd6251af59c5ce5601f4'
 
 
-def build(code_memory='map-jit'):
+def build(code_memory='map-jit', target='macos'):
     if code_memory not in ('map-jit', 'dual'):
         raise ValueError('unknown Unicorn code memory variant')
+    if target not in ('macos', 'ios') or (target == 'ios' and code_memory != 'dual'):
+        raise ValueError('iOS requires the dual code memory variant')
     archive = WORK / 'unicorn-2.1.4.tar.gz'
     source = (WORK if code_memory == 'map-jit' else WORK / 'unicorn-dual-source') / 'unicorn-2.1.4'
-    output = WORK / ('unicorn-tb-stop' if code_memory == 'map-jit' else 'unicorn-tb-stop-dual')
+    output = WORK / (('unicorn-tb-stop' if code_memory == 'map-jit' else 'unicorn-tb-stop-dual') +
+                     ('-ios' if target == 'ios' else ''))
     prefix = output / 'prefix'
     output.mkdir(parents=True, exist_ok=True)
     if not archive.exists():
@@ -176,6 +179,13 @@ void tb_flush(CPUState *cpu)''')
          '-DBUILD_SHARED_LIBS=OFF', '-DUNICORN_BUILD_TESTS=OFF', '-DUNICORN_INSTALL=ON', f'-DCMAKE_INSTALL_PREFIX={prefix}'],
         ['cmake', '--build', output / 'build', '-j8'], ['cmake', '--install', output / 'build']]
     env = os.environ.copy()
+    env['ARCHFLAGS'] = '-arch arm64'
+    sdk = subprocess.check_output(['xcrun', '--sdk', 'iphoneos' if target == 'ios' else 'macosx',
+                                   '--show-sdk-path'], text=True).strip()
+    commands[0] += ['-DCMAKE_OSX_ARCHITECTURES=arm64', f'-DCMAKE_OSX_SYSROOT={sdk}']
+    if target == 'ios':
+        commands[0] += ['-DCMAKE_SYSTEM_NAME=iOS', '-DCMAKE_OSX_DEPLOYMENT_TARGET=26.0',
+                        '-DCMAKE_TRY_COMPILE_TARGET_TYPE=STATIC_LIBRARY']
     if code_memory == 'dual':
         commands[0].append('-DCMAKE_C_FLAGS=-DNCE_TCG_DUAL_MAP')
     env['ZERO_AR_DATE'] = '1'
@@ -187,7 +197,7 @@ void tb_flush(CPUState *cpu)''')
     if code_memory == 'dual':
         files.append(Path(__file__).with_name('unicorn_code_memory_patch.py'))
     manifest = {'version': '2.1.4', 'patch': 'nce-tb-stop', 'path': str(prefix), 'ZERO_AR_DATE': '1',
-                'code_memory': code_memory,
+                'code_memory': code_memory, 'target': target, 'architecture': 'arm64', 'sdk': sdk,
                 'commands': [list(map(str, command)) for command in commands],
                 'sha256': {str(path.relative_to(ROOT)): hashlib.sha256(path.read_bytes()).hexdigest() for path in files}}
     (output / 'build.json').write_text(json.dumps(manifest, indent=2) + '\n')
@@ -197,4 +207,6 @@ void tb_flush(CPUState *cpu)''')
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--code-memory', choices=('map-jit', 'dual'), default='map-jit')
-    print(build(parser.parse_args().code_memory)['path'])
+    parser.add_argument('--target', choices=('macos', 'ios'), default='macos')
+    args = parser.parse_args()
+    print(build(args.code_memory, args.target)['path'])

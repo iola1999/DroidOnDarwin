@@ -20,12 +20,12 @@ def main():
         parser.error('需要 Apple Silicon Mac，产物放在 work/native-linux-nce 下')
     out.mkdir(parents=True, exist_ok=True)
     source = ROOT / 'experiments/native-linux'
-    inputs = [source / name for name in ('code-memory.c', 'code-memory.h', 'code-memory-test.c', 'nce.h', 'guest-registers.h')] + [Path(__file__)]
+    inputs = [source / name for name in ('code-memory.c', 'code-memory.h', 'code-memory-test.c', 'execute-check.c', 'execute-check.h', 'nce.h', 'guest-registers.h')] + [Path(__file__)]
     hashes = {str(path.relative_to(ROOT)): hashlib.sha256(path.read_bytes()).hexdigest() for path in inputs}
     command = ['xcrun', 'clang', '-O2', '-g', '-Wall', '-Wextra', '-Werror',
-               str(source / 'code-memory.c'), str(source / 'code-memory-test.c'), '-o', str(out / 'probe')]
+               str(source / 'code-memory.c'), str(source / 'execute-check.c'), str(source / 'code-memory-test.c'), '-o', str(out / 'probe')]
     subprocess.run(command, check=True, timeout=120)
-    expected = {'permissions_and_bounds', 'parallel_updates_and_cross_range_branch', 'alias_permission_failure'}
+    expected = {'permissions_and_bounds', 'parallel_updates_and_cross_range_branch', 'alias_permission_failure', 'check_restores_original_after_success_and_fault'}
     report = {'platform': platform.platform(), 'command': command, 'sha256': hashes, 'runs': []}
     hashes[str((out / 'probe').relative_to(ROOT))] = hashlib.sha256((out / 'probe').read_bytes()).hexdigest()
     for entry in ('cli', 'gcd'):
