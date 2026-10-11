@@ -16,10 +16,10 @@ struct Tables {
     bool refill_reads;
     std::vector<nce_direct_flat_page> flat;
     uint64_t epoch = 1;
-    explicit Tables(unsigned mode) : engine(nce_direct_create({2 * 1024 * 1024, 256, 256, mode == 1, false})),
-                                     table{root.data(), CodeVA, (UINT64_C(1) << 37) - CodeVA, PhysicalBase, ram.data(), ram.size()},
-                                     refill_reads(mode == 1),
-                                     flat(mode == 2 ? DIRECT_FLAT_BYTES / sizeof(nce_direct_flat_page) : 0)
+    explicit Tables(unsigned mode, bool cross_page = false) : engine(nce_direct_create({2 * 1024 * 1024, 256, 256, mode == 1, false, cross_page})),
+                                                              table{root.data(), CodeVA, (UINT64_C(1) << 37) - CodeVA, PhysicalBase, ram.data(), ram.size()},
+                                                              refill_reads(mode == 1),
+                                                              flat(mode == 2 ? DIRECT_FLAT_BYTES / sizeof(nce_direct_flat_page) : 0)
     {
         CHECK(engine);
         if (!flat.empty())
@@ -46,7 +46,7 @@ struct Tables {
     static void *map(void *opaque, uint64_t address, bool write)
     {
         auto &self = *static_cast<Tables *>(opaque);
-        if (address < CodeVA || address >= DataVA + PageBytes)
+        if (address < CodeVA || address >= DataVA + 2 * PageBytes)
             return nullptr;
         uint64_t value = self.leaves[address >> 14];
         uint64_t required = write ? DIRECT_PTE_WRITE_REQUIRED : DIRECT_PTE_READ_REQUIRED;
@@ -65,7 +65,7 @@ struct Tables {
     NceDirectExit run(NceDirectState &state, uint64_t &fault)
     {
         if (!flat.empty()) {
-            for (uint64_t address : {CodeVA, DataVA})
+            for (uint64_t address : {CodeVA, DataVA, DataVA + PageBytes})
                 flat[(address - CodeVA) >> 14] = {uintptr_t(map(this, address, false)), uintptr_t(map(this, address, true))};
         }
         NceDirectMemory memory{this, map, fetch, epoch, 14, &table, refill_reads, flat.empty() ? nullptr : flat.data(), nullptr};
@@ -176,10 +176,87 @@ static void check_page_tables(unsigned mode)
     report("direct_pte_code_alias_and_next_run_release", mode);
 }
 
+static void check_cross_pages(unsigned mode)
+{
+    auto holder = std::make_unique<Tables>(mode, true);
+    auto &test = *holder;
+    auto second_page = [&](unsigned physical, uint64_t flags) {
+        test.leaves[(DataVA + PageBytes) >> 14] = PhysicalBase + physical * PageBytes + flags;
+        ++test.epoch;
+    };
+    second_page(3, ReadWrite);
+    NceDirectState initial{};
+    initial.pc = CodeVA;
+    initial.x[0] = DataVA + PageBytes - 8;
+    initial.x[1] = UINT64_C(0x123456789abcdef0);
+    initial.x[2] = UINT64_C(0xfedcba9876543210);
+    initial.nzcv = 0xa0000000;
+    initial.access_flags = NCE_DIRECT_UNALIGNED;
+    initial.exclusive_address = UINT64_MAX;
+    uint64_t fault = 0;
+    test.code(0xa8810801);  // stp x1,x2,[x0],#16
+    auto actual = initial, expected = initial;
+    expected.x[0] += 16;
+    expected.pc += 4;
+    CHECK(test.run(actual, fault) == NCE_DIRECT_UNSUPPORTED);
+    CHECK(!std::memcmp(&actual, &expected, sizeof(actual)));
+    CHECK(!std::memcmp(test.ram.data() + 2 * PageBytes - 8, &initial.x[1], 8));
+    CHECK(!std::memcmp(test.ram.data() + 3 * PageBytes, &initial.x[2], 8));
+    test.code(0xa8c10801);  // ldp x1,x2,[x0],#16
+    actual = initial;
+    actual.x[1] = actual.x[2] = 0;
+    CHECK(test.run(actual, fault) == NCE_DIRECT_UNSUPPORTED);
+    CHECK(!std::memcmp(&actual, &expected, sizeof(actual)));
+
+    for (uint64_t flags : {ReadWrite & ~DIRECT_PTE_PRESENT, ReadWrite & ~DIRECT_PTE_USER, ReadWrite | DIRECT_PTE_PROTNONE}) {
+        second_page(3, flags);
+        actual = initial;
+        auto before = test.ram;
+        CHECK(test.run(actual, fault) == NCE_DIRECT_READ_FAULT && fault == DataVA + PageBytes);
+        CHECK(!std::memcmp(&actual, &initial, sizeof(actual)) && before == test.ram);
+    }
+    test.code(0xa8810801);
+    for (uint64_t flags : {ReadWrite & ~DIRECT_PTE_WRITE, ReadWrite & ~DIRECT_PTE_DIRTY}) {
+        second_page(3, flags);
+        actual = initial;
+        actual.x[1] = 71;
+        actual.x[2] = 93;
+        auto before = test.ram;
+        auto before_state = actual;
+        CHECK(test.run(actual, fault) == NCE_DIRECT_WRITE_FAULT && fault == DataVA + PageBytes);
+        CHECK(!std::memcmp(&actual, &before_state, sizeof(actual)) && before == test.ram);
+        second_page(3, ReadWrite);
+        auto resumed = actual;
+        resumed.pc += 4;
+        resumed.x[0] += 16;
+        CHECK(test.run(actual, fault) == NCE_DIRECT_UNSUPPORTED);
+        CHECK(!std::memcmp(&actual, &resumed, sizeof(actual)));
+        CHECK(!std::memcmp(test.ram.data() + 2 * PageBytes - 8, &before_state.x[1], 8));
+        CHECK(!std::memcmp(test.ram.data() + 3 * PageBytes, &before_state.x[2], 8));
+    }
+
+    second_page(0, ReadWrite);
+    actual = initial;
+    auto before = test.ram;
+    CHECK(test.run(actual, fault) == NCE_DIRECT_WRITE_FAULT && fault == DataVA + PageBytes);
+    CHECK(!std::memcmp(&actual, &initial, sizeof(actual)) && before == test.ram);
+    std::memcpy(test.ram.data() + 2 * PageBytes, test.ram.data(), PageBytes);
+    test.leaves[CodeVA >> 14] = PhysicalBase + 2 * PageBytes + DIRECT_PTE_READ_REQUIRED + 0x200;
+    ++test.epoch;
+    CHECK(test.run(actual, fault) == NCE_DIRECT_UNSUPPORTED);
+    CHECK(!std::memcmp(&actual, &expected, sizeof(actual)));
+    CHECK(!std::memcmp(test.ram.data(), &initial.x[2], 8));
+    auto stats = nce_direct_stats(test.engine);
+    CHECK(stats.cross_page_completed == 5 && stats.cross_page_faults == 6 && !stats.cross_page_fallbacks);
+    report("direct_pte_cross_page_permissions_retry_and_code_alias", mode);
+}
+
 void direct_page_table_tests()
 {
-    for (unsigned mode = 0; mode < 3; ++mode)
+    for (unsigned mode = 0; mode < 3; ++mode) {
         check_page_tables(mode);
+        check_cross_pages(mode);
+    }
 
     auto holder = std::make_unique<Tables>(2);
     auto &test = *holder;

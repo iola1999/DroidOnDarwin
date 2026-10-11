@@ -151,6 +151,60 @@ struct NceDirect {
         routes[(address >> 12) & (routes.size() - 1)] = {address >> 12, page->branch_entries.data(), page, 0};
         return page;
     }
+    bool cross_page(Frame &frame, Page *page, NceDirectMemory memory, NceDirectExit &result, uint64_t &fault)
+    {
+        result = NCE_DIRECT_UNSUPPORTED;
+        if (!config.cross_page)
+            return false;
+        uint32_t word = page->source[(frame.state.pc & 4095) / 4];
+        Kind kind = decode(word);
+        if (kind != Memory && kind != Pair && kind != Literal && kind != Structure && kind != StructureLane)
+            return false;
+        auto access = memory_access(word, kind);
+        if (!access.bytes || access.bytes > 64 || frame.address > UINT64_MAX - (access.bytes - 1))
+            return false;
+        unsigned page_bits = memory.page_bits ? memory.page_bits : 12;
+        uint64_t mask = (UINT64_C(1) << page_bits) - 1;
+        unsigned first = unsigned((mask + 1) - (frame.address & mask));
+        if (first >= access.bytes)
+            return false;
+        std::array<unsigned char *, 2> mapped{};
+        uint64_t addresses[] = {frame.address, frame.address + first};
+        for (unsigned index = 0; index < 2; ++index) {
+            auto *ram = static_cast<unsigned char *>(memory.map_page(memory.opaque, addresses[index] & ~mask, access.write));
+            bool valid = ram && !(uintptr_t(ram) & mask);
+            if (valid && memory.page_table && !memory.refill_reads) {
+                uintptr_t offset = uintptr_t(ram) - uintptr_t(memory.page_table->ram);
+                valid = offset < memory.page_table->ram_size;
+                if (valid && access.write)
+                    valid = code_page_runs[offset >> 14] != run_id;
+            } else if (valid && access.write) {
+                for (unsigned offset = 0; offset <= mask; offset += 4096)
+                    valid &= active_code.count(ram + offset) == 0;
+            }
+            if (!valid) {
+                fault = addresses[index];
+                result = access.write ? NCE_DIRECT_WRITE_FAULT : NCE_DIRECT_READ_FAULT;
+                return false;
+            }
+            mapped[index] = ram + (addresses[index] & mask);
+        }
+        // Both pages are ordinary RAM and remain mapped until this run returns.
+        // Validate the second page before a store can change the first one.
+        std::array<unsigned char, 64> bytes{};
+        if (!access.write) {
+            std::memcpy(bytes.data(), mapped[0], first);
+            std::memcpy(bytes.data() + first, mapped[1], access.bytes - first);
+        }
+        transfer_cross_page(word, kind, access, frame.state, bytes.data(), frame.address);
+        if (access.write) {
+            std::memcpy(mapped[0], bytes.data(), first);
+            std::memcpy(mapped[1], bytes.data() + first, access.bytes - first);
+        }
+        frame.state.pc += 4;
+        stats.cross_page_bytes += access.bytes;
+        return true;
+    }
     NceDirectExit run(NceDirectState &state, NceDirectMemory memory, uint64_t budget, uint64_t &fault)
     {
         if (!memory.map_page || !memory.map_code || !budget || budget > INT64_MAX)
@@ -246,9 +300,22 @@ struct NceDirect {
                 result = NCE_DIRECT_BUDGET;
                 break;
             }
-            if (frame.reason == Fallback || frame.reason == Alignment || frame.reason == CrossPage) {
+            if (frame.reason == CrossPage) {
+                ++stats.cross_page_exits;
+                if (cross_page(frame, page, memory, result, fault)) {
+                    ++stats.cross_page_completed;
+                    page = resolve(frame.state.pc, flags, memory);
+                    entry = page ? page->branch_entries[(frame.state.pc & 4095) / 4] : nullptr;
+                    continue;
+                }
+                if (result == NCE_DIRECT_UNSUPPORTED)
+                    ++stats.cross_page_fallbacks;
+                else
+                    ++stats.cross_page_faults;
+                break;
+            }
+            if (frame.reason == Fallback || frame.reason == Alignment) {
                 stats.alignment_exits += frame.reason == Alignment;
-                stats.cross_page_exits += frame.reason == CrossPage;
                 result = NCE_DIRECT_UNSUPPORTED;
                 break;
             }

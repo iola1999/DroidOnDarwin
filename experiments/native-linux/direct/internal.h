@@ -2,6 +2,7 @@
 #pragma once
 #include "direct.h"
 #include "layout.h"
+#include "decode.h"
 #include <array>
 #include <vector>
 namespace nce_direct
@@ -50,6 +51,9 @@ struct Frame {
 struct Mapping {
     uint64_t read_tag, read_addend, write_tag, write_addend;
 };
+// The caller validates both RAM pages before changing memory or registers.
+void transfer_cross_page(uint32_t word, Kind kind, MemoryAccess access,
+                         NceDirectState &, unsigned char *bytes, uint64_t address);
 constexpr Mapping EmptyMapping{UINT64_MAX, 0, UINT64_MAX, 0};
 struct CodeRoute {
     uint64_t tag;

@@ -705,7 +705,8 @@ unsigned long translation_linux_setup(void *kernel, unsigned long copy_user_offs
     unsigned selective = direct_setting("NCE_DIRECT_SELECTIVE_WRITES", 0);
     unsigned reuse = direct_setting("NCE_DIRECT_REUSE_CODE_CHECKS", 0);
     unsigned watch = direct_setting("NCE_DIRECT_CODE_WATCH", 0);
-    REQUIRE(watch <= 1);
+    unsigned crossing = direct_setting("NCE_DIRECT_CROSS_PAGE", 0);
+    REQUIRE(watch <= 1 && crossing <= 1);
     direct_code_watch = watch;
     const char *direct_memory = getenv("NCE_DIRECT_MEMORY");
     REQUIRE(!direct_memory || !strcmp(direct_memory, "cached") || !strcmp(direct_memory, "pte") || !strcmp(direct_memory, "refill") || !strcmp(direct_memory, "flat"));
@@ -715,12 +716,12 @@ unsigned long translation_linux_setup(void *kernel, unsigned long copy_user_offs
     translation->flat_enabled = direct_flat;
     REQUIRE(selective <= 1 && reuse <= 1);
     NceDirectConfig direct_config = {cache_bytes, direct_setting("NCE_DIRECT_MAPPING_ENTRIES", 256),
-                                     direct_setting("NCE_DIRECT_ROUTE_ENTRIES", 256), selective != 0, reuse != 0};
+                                     direct_setting("NCE_DIRECT_ROUTE_ENTRIES", 256), selective != 0, reuse != 0, crossing != 0};
     REQUIRE(!direct_pte_memory || direct_pte_refill || (direct_config.mapping_entries == 256 && !selective));
     direct_engine = nce_direct_create(direct_config);
     REQUIRE(direct_engine);
-    printf("{\"config\":\"translation_execution\",\"engine\":\"direct\",\"direct_cache_bytes\":%lu,\"data_page_bytes\":16384,\"mapping_entries\":%u,\"route_entries\":%u,\"selective_writes\":%s,\"reuse_code_checks\":%s,\"memory\":\"%s\",\"code_watch\":%s}\n",
-           cache_bytes, direct_config.mapping_entries, direct_config.route_entries, direct_config.selective_writes ? "true" : "false", direct_config.reuse_code_checks ? "true" : "false", direct_memory ? direct_memory : "cached", direct_code_watch ? "true" : "false");
+    printf("{\"config\":\"translation_execution\",\"engine\":\"direct\",\"direct_cache_bytes\":%lu,\"data_page_bytes\":16384,\"mapping_entries\":%u,\"route_entries\":%u,\"selective_writes\":%s,\"reuse_code_checks\":%s,\"memory\":\"%s\",\"code_watch\":%s,\"cross_page\":%s}\n",
+           cache_bytes, direct_config.mapping_entries, direct_config.route_entries, direct_config.selective_writes ? "true" : "false", direct_config.reuse_code_checks ? "true" : "false", direct_memory ? direct_memory : "cached", direct_code_watch ? "true" : "false", crossing ? "true" : "false");
     if (direct_code_watch) {
         original_page_free = nce_lkl_host.page_free;
         nce_lkl_host.page_free = watch_page_free;
@@ -811,7 +812,9 @@ void translation_linux_cleanup(void)
     NceDirectStats direct = nce_direct_stats(direct_engine);
     printf("{\"direct_code_validation\":true,\"content_checks\":%llu,\"version_hits\":%llu}\n", direct.code_content_checks, direct.code_version_hits);
     printf("{\"direct_fallback_reasons\":true,\"alignment\":%llu,\"cross_page\":%llu,\"code_write\":%lu}\n",
-           direct.alignment_exits, direct.cross_page_exits, direct_code_writes);
+           direct.alignment_exits, direct.cross_page_fallbacks, direct_code_writes);
+    printf("{\"direct_cross_page\":true,\"exits\":%llu,\"completed\":%llu,\"fallbacks\":%llu,\"faults\":%llu,\"bytes\":%llu}\n",
+           direct.cross_page_exits, direct.cross_page_completed, direct.cross_page_fallbacks, direct.cross_page_faults, direct.cross_page_bytes);
     printf("{\"direct_execution\":true,\"calls\":%lu,\"fallbacks\":%lu,\"compiles\":%llu,\"flushes\":%llu,\"code_changes\":%llu,\"code_bytes\":%zu,\"capacity_bytes\":%zu,\"pages\":%zu,\"mapping_misses\":%llu,\"code_lookups\":%llu,\"read_mapping_misses\":%llu,\"write_mapping_misses\":%llu,\"write_invalidations\":%llu,\"code_validation_hits\":%llu,\"pte_read_refills\":%llu}\n",
            direct_calls, direct_fallbacks, direct.compiles, direct.flushes, direct.code_changes,
            direct.code_bytes, direct.code_capacity, direct.pages, direct.mapping_misses, direct.code_lookups,

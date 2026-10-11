@@ -84,6 +84,7 @@ typedef struct {
     uint64_t pte_read_refills;
     uint64_t code_content_checks, code_version_hits;
     uint64_t alignment_exits, cross_page_exits;
+    uint64_t cross_page_completed, cross_page_fallbacks, cross_page_faults, cross_page_bytes;
     size_t code_bytes, code_capacity, pages;
 } NceDirectStats;
 
@@ -93,6 +94,8 @@ typedef struct {
     unsigned mapping_entries, route_entries;
     bool selective_writes;
     bool reuse_code_checks;
+    /* Ordinary RAM only, with serialized guest execution. */
+    bool cross_page;
 } NceDirectConfig;
 
 /* One sequential caller per engine. Code cache is 2..256 MiB, 16 KiB aligned.
@@ -104,7 +107,8 @@ void nce_direct_destroy(NceDirect *);
 void nce_direct_request_stop(NceDirect *);
 /* Budget is a soft instruction limit, checked at block/indirect-branch entries.
  * Fault/unsupported returns preserve the complete state at the pending PC.
- * Cross-page memory operations return UNSUPPORTED for an external executor.
+ * Cross-page ordinary RAM accesses can be enabled at creation. Otherwise they
+ * return UNSUPPORTED. Ordered and exclusive accesses keep their alignment checks.
  * Writes to code visited during this call return WRITE_FAULT before the store.
  * fault_address is meaningful for FETCH/READ/WRITE_FAULT only. */
 NceDirectExit nce_direct_run(NceDirect *, NceDirectState *, NceDirectMemory,

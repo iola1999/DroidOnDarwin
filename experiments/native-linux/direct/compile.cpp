@@ -430,23 +430,14 @@ size_t Page::compile(uint64_t new_page, const void *bytes, size_t entry,
                 bool literal = kind == Literal;
                 bool ordered = atomic || (!pair && !structure && !literal && (w & 0x3fbffc00) == 0x089ffc00);
                 bool vector = w & 0x04000000;
-                bool write = !literal && (atomic || (pair || vector || ordered ? !(w & (1U << 22)) : ((w >> 22) & 3) == 0));
+                auto access = memory_access(w, kind);
+                bool write = access.write;
                 bool reg_offset = !structure && !pair && !literal && (w & 0x3b200c00) == 0x38200800;
                 bool indexed = !structure && !pair && !literal && !ordered && !reg_offset && (w & 0x3b000000) != 0x39000000;
                 unsigned mode = structure ? ((w >> 23) & 1) : pair  ? (((w >> 23) & 1) ? ((w >> 23) & 3) : 0)
                                                           : indexed ? (w >> 10) & 3
                                                                     : 0;
-                unsigned size_log2 = structure ? (w >> 10) & 3 : pair ? 2 + (vector ? w >> 30 : w >> 31)
-                                                                      : (w >> 30) + (vector ? ((w >> 23) & 1) * 4 : 0);
-                if (literal)
-                    size_log2 = 2 + (vector ? w >> 30 : (w >> 30) & 1);
-                if (structure_lane) {
-                    unsigned scale = (w >> 14) & 3;
-                    size_log2 = scale == 3 ? size_log2 : scale == 2 && (size_log2 & 1) ? 3
-                                                                                       : scale;
-                }
-                unsigned access_bytes = structure_lane ? structure_lane_bytes(w) : structure ? structure_registers(w) * (w & (1U << 30) ? 16 : 8)
-                                                                                             : (pair ? 2U : 1U) << size_log2;
+                unsigned size_log2 = access.element_shift, access_bytes = access.bytes;
                 int64_t offset = structure || literal ? 0 : pair                ? sign_extend((w >> 15) & 127, 7) * (1 << size_log2)
                                                         : reg_offset || ordered ? 0
                                                         : indexed               ? sign_extend((w >> 12) & 511, 9)
@@ -564,6 +555,7 @@ size_t Page::compile(uint64_t new_page, const void *bytes, size_t entry,
                 c.l(invalid);
                 exit(pc, Alignment);
                 c.l(crossing);
+                c.STR(X16, X27, DIRECT_ADDRESS);
                 exit(pc, CrossPage);
                 c.l(done);
             } else {

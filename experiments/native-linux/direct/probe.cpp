@@ -17,7 +17,7 @@ Probe::Probe(const char *mode)
         unsigned reuse = setting("NCE_DIRECT_REUSE_CODE_CHECKS", 0);
         CHECK(selective <= 1 && reuse <= 1);
         config = {16 * 1024 * 1024, setting("NCE_DIRECT_MAPPING_ENTRIES", 256),
-                  setting("NCE_DIRECT_ROUTE_ENTRIES", 256), bool(selective), bool(reuse)};
+                  setting("NCE_DIRECT_ROUTE_ENTRIES", 256), bool(selective), bool(reuse), false};
         direct = nce_direct_create(config);
         CHECK(direct);
         std::printf("{\"direct_config\":true,\"mapping_entries\":%u,\"route_entries\":%u,\"selective_writes\":%s,\"reuse_code_checks\":%s}\n",

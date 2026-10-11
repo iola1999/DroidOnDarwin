@@ -29,7 +29,7 @@ def build_engine(out):
         with tarfile.open(archive) as tar:
             tar.extractall(WORK, filter='data')
     out.mkdir(parents=True, exist_ok=True)
-    inputs = [SOURCE / name for name in ('engine.cpp', 'compile.cpp', 'decode.cpp', 'entry.S')]
+    inputs = [SOURCE / name for name in ('engine.cpp', 'compile.cpp', 'decode.cpp', 'cross-page.cpp', 'entry.S')]
     objects = []
     for path in inputs:
         obj = out / (path.stem + '.o')
@@ -49,7 +49,7 @@ def build(out):
         from build_translation_engine import build as build_unicorn
         unicorn = Path(build_unicorn()['path'])
     out.mkdir(parents=True, exist_ok=True)
-    files = [SOURCE / name for name in ('probe.cpp', 'tests.cpp', 'instruction-tests.cpp', 'page-table-tests.cpp', 'benchmark.cpp', 'main.cpp')] + [
+    files = [SOURCE / name for name in ('probe.cpp', 'tests.cpp', 'instruction-tests.cpp', 'cross-page-tests.cpp', 'page-table-tests.cpp', 'benchmark.cpp', 'main.cpp')] + [
         ROOT / 'experiments/native-linux/translation/kernels.S',
         ROOT / 'experiments/native-linux/translation/linux-memory.c']
     for index, path in enumerate(files):
@@ -88,13 +88,14 @@ def validate(rows, mode, interval, config=None):
             'dczid_zero_block_alignment_permission_and_prefetch', 'cached_write_alias_becomes_executable',
             'route_collision_reuse_and_next_run_fetch_permission', 'direct_pte_registers_flags_and_post_index',
             'direct_pte_read_permissions_directories_and_bounds', 'direct_pte_write_permissions_remap_and_retry',
-            'direct_pte_code_alias_and_next_run_release'}
+            'direct_pte_code_alias_and_next_run_release', 'direct_pte_cross_page_permissions_retry_and_code_alias'}
         expected |= {name + suffix for name in expected if name.startswith('direct_pte_') for suffix in ('_refill', '_flat')}
         expected |= {'direct_flat_exclusive_pair_and_zva', 'direct_flat_cross_page_table_switch_and_configuration'}
         expected |= {'code_version_reuse_and_mutation', 'code_version_backing_permissions_and_fallback',
                      'code_version_owner_and_provider_changes'}
         expected |= {'literal_load_signed_vector_pc_and_permissions', 'simd_lane_replicate_writeback_and_faults',
                      'fp_fixed_rounding_and_widening', 'new_instruction_reserved_encodings'}
+        expected |= {'cross_page_noncontiguous_memory_vectors_faults_12', 'cross_page_noncontiguous_memory_vectors_faults_14'}
         if not expected <= {r.get('test') for r in rows if r.get('passed')}:
             return False
     else:

@@ -24,15 +24,29 @@ unsigned structure_registers(uint32_t word)
             return 0;
     }
 }
-unsigned structure_lane_bytes(uint32_t word)
+MemoryAccess memory_access(uint32_t word, Kind kind)
 {
-    unsigned scale = (word >> 14) & 3, size = (word >> 10) & 3;
-    if (scale == 3)
-        scale = size;
-    else if (scale == 2 && (size & 1))
-        scale = 3;
-    unsigned registers = (((word >> 13) & 1) * 2 + ((word >> 21) & 1)) + 1;
-    return registers << scale;
+    bool vector = word & 0x04000000;
+    bool pair = kind == Pair, literal = kind == Literal;
+    bool ordered = kind == Atomic || (word & 0x3fbffc00) == 0x089ffc00;
+    unsigned shift = pair ? 2 + (vector ? word >> 30 : word >> 31)
+                          : (word >> 30) + (vector ? ((word >> 23) & 1) * 4 : 0);
+    unsigned count = pair ? 2 : 1;
+    if (literal)
+        shift = 2 + (vector ? word >> 30 : (word >> 30) & 1);
+    if (kind == StructureLane) {
+        unsigned scale = (word >> 14) & 3, size = (word >> 10) & 3;
+        shift = scale == 3 ? size : scale == 2 && (size & 1) ? 3
+                                                             : scale;
+        count = (((word >> 13) & 1) * 2 + ((word >> 21) & 1)) + 1;
+    }
+    unsigned bytes = count << shift;
+    if (kind == Structure) {
+        shift = (word >> 10) & 3;
+        bytes = structure_registers(word) * (word & (1U << 30) ? 16 : 8);
+    }
+    bool write = !literal && (kind == Atomic || (pair || vector || ordered ? !(word & (1U << 22)) : ((word >> 22) & 3) == 0));
+    return {shift, bytes, write};
 }
 
 Kind decode(uint32_t w)
