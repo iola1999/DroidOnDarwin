@@ -1,0 +1,18 @@
+{
+  "status": "independent SIMD and single/dual CPU core CLI/GCD passed; full desktop and visible performance pending",
+  "scope": "FCVTZS/FCVTZU scalar/vector FP32/FP64; simdMath default off",
+  "reports": {
+    "direct-simd-math-v4": {
+      "path": "work/native-linux-nce/direct-simd-math-v4/summary.json",
+      "sha256": "25d062f30eefa84ef71ab9004f9d012413239effb70a973ba8fb3addfa77fc01"
+    },
+    "lkl-simd-math-v4-1-core": {
+      "path": "work/native-linux-nce/lkl-simd-math-v4-1-core/summary.json",
+      "sha256": "a789226cfdd29fb05d255afbe047abeaea53de679ec78cb894bd70bf9495a7ce"
+    },
+    "lkl-simd-math-v4-2-core": {
+      "path": "work/native-linux-nce/lkl-simd-math-v4-2-core/summary.json",
+      "sha256": "3eedde82fe3ca5444bfa06d0f1514e5e1a981fe24b0552b217ded9f4c5b8bdc1"
+    }
+  }
+}

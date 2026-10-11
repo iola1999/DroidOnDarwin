@@ -81,6 +81,8 @@ Kind decode(uint32_t w)
         switch (w & 0xbfbffc00) {
             case 0x0e21d800:  // SCVTF
             case 0x2e21d800:  // UCVTF
+            case 0x0ea1b800:  // FCVTZS
+            case 0x2ea1b800:  // FCVTZU
             case 0x0ea0f800:  // FABS
             case 0x2ea0f800:  // FNEG
             case 0x0e218800:  // FRINTN
@@ -97,6 +99,11 @@ Kind decode(uint32_t w)
             case 0x2ea0d800:  // FCMLE zero
                 return VectorMath;
         }
+    }
+    switch (w & 0xffbffc00) {
+        case 0x5ea1b800:  // scalar FCVTZS
+        case 0x7ea1b800:  // scalar FCVTZU
+            return VectorMath;
     }
     switch (w & 0xffa0fc00) {
         case 0x5e20e400:  // scalar FCMEQ

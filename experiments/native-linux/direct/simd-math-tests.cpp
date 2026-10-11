@@ -35,11 +35,17 @@ void direct_simd_math_tests(Probe &probe)
             UINT64_C(0xfff0000000000000), UINT64_C(0xffefffffffffffff),
             UINT64_C(0x8010000000000000), UINT64_C(0x8000000000000001),
             UINT64_C(0x4004000000000000), UINT64_C(0xc004000000000000),
-            UINT64_C(0x3fe0000000000000), UINT64_C(0xbfe0000000000000)};
+            UINT64_C(0x3fe0000000000000), UINT64_C(0xbfe0000000000000),
+            UINT64_C(0x43dfffffffffffff), UINT64_C(0x43e0000000000000), UINT64_C(0x43e0000000000001),
+            UINT64_C(0xc3dfffffffffffff), UINT64_C(0xc3e0000000000000), UINT64_C(0xc3e0000000000001),
+            UINT64_C(0x43efffffffffffff), UINT64_C(0x43f0000000000000), UINT64_C(0x43f0000000000001),
+            UINT64_C(0xc3efffffffffffff), UINT64_C(0xc3f0000000000000), UINT64_C(0xc3f0000000000001)};
         constexpr uint32_t singles[] = {0, 0x80000000, 0x3fc00000, 0xbfc00000, 0x7fc00000,
                                         0x7f800000, 0x7f800001, 0x7f7fffff, 0x00800000, 1,
                                         0xff800000, 0xff7fffff, 0x80800000, 0x80000001,
-                                        0x40200000, 0xc0200000, 0x3f000000, 0xbf000000};
+                                        0x40200000, 0xc0200000, 0x3f000000, 0xbf000000,
+                                        0x4effffff, 0x4f000000, 0x4f000001, 0xceffffff, 0xcf000000, 0xcf000001,
+                                        0x4f7fffff, 0x4f800000, 0x4f800001, 0xcf7fffff, 0xcf800000, 0xcf800001};
         for (unsigned r = 0; r < 32; ++r)
             for (unsigned half = 0; half < 2; ++half) {
                 unsigned index = (r + half + pattern) % std::size(doubles);
@@ -100,6 +106,7 @@ void direct_simd_math_tests(Probe &probe)
     for (uint32_t base : {0x0e20e400U, 0x2e20e400U, 0x2ea0e400U, 0x2ea0d400U,
                           0x5e20e400U, 0x7e20e400U, 0x7ea0e400U, 0x7ea0d400U,
                           0x0e21d800U, 0x2e21d800U, 0x0ea0f800U, 0x2ea0f800U,
+                          0x0ea1b800U, 0x2ea1b800U, 0x5ea1b800U, 0x7ea1b800U,
                           0x0e20c400U, 0x0ea0c400U, 0x0e20f400U, 0x0ea0f400U,
                           0x0e218800U, 0x0e219800U, 0x0ea18800U, 0x0ea19800U,
                           0x2e218800U, 0x2e219800U, 0x2ea19800U,
@@ -132,6 +139,7 @@ void direct_simd_math_tests(Probe &probe)
     for (uint32_t word : {0x5e000400U, 0x5e100400U, 0x7e010400U, 0x5e010c00U,
                           0x0e60e400U, 0x2e60e400U, 0x2ee0e400U, 0x2ee0d400U,
                           0x0e61d800U, 0x2e61d800U, 0x0ee0f800U, 0x2ee0f800U,
+                          0x0ee1b800U, 0x2ee1b800U, 0x0ef9b800U, 0x5ef9b800U,
                           0x1ea00400U, 0x1ee00400U})
         CHECK(nce_direct::decode(word) == nce_direct::Other);
     nce_direct_destroy(enabled);
