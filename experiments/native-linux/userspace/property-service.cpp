@@ -122,6 +122,9 @@ void nce_property_service(int ready)
     CHECK(init && add_property && update_property && init() == 0);
     CHECK(set_property("ro.property_service.version", "2") == PROP_SUCCESS);
     CHECK(set_property("ro.nce.prototype", "1") == PROP_SUCCESS);
+    // libcutils caches this property's address on its first trace query.
+    // It must exist before services initialize, even with tracing disabled.
+    CHECK(set_property("debug.atrace.tags.enableflags", "0") == PROP_SUCCESS);
     CHECK(mkdir("/dev/socket", 0755) == 0);
     int listener = socket(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC, 0);
     CHECK(listener >= 0);

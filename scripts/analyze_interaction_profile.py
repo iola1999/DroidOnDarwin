@@ -120,6 +120,14 @@ def read_thread_map(text):
     return records
 
 
+def trace_event_counts(text):
+    return dict(Counter(re.findall(r'\d+\.\d+: (\w+):', text)))
+
+
+def userspace_begin_count(text):
+    return len(re.findall(r': (?:tracing_mark_write|print):[^\n]*?\bB\|\d+\|', text))
+
+
 def execution_summary(output):
     path = output / 'execution.json'
     if not path.exists():
@@ -267,6 +275,8 @@ def analyze(directory):
     elif result.get('presentation_capture'):
         failures.append('missing requested drawable presentation capture')
     files = [directory / name for name in ('request.json', 'result.json')] + sorted(output.glob('*'))
+    trace = output / 'kernel.ftrace'
+    trace_text = trace.read_text() if trace.exists() else ''
     return {'version': 1, 'analyzer_sha256': hashlib.sha256(Path(__file__).read_bytes()).hexdigest(), 'runID': result['runID'], 'buildID': result['buildID'],
             'configuration': result['configuration'], 'hardware': result['hardware'], 'os': result['os'],
             'benchmark_status': result['status'], 'failures': failures,
@@ -278,6 +288,7 @@ def analyze(directory):
             'presentation': presentation, 'frame_totals': totals, 'frame_counts': dict(counts), 'frames': rows, 'duration': distribution([row['duration_ms'] for row in accepted]),
             'phase_duration': {name: distribution([row['phases_ms'][name] for row in accepted if name in row['phases_ms']]) for name in PHASES},
             'cpu_stats': cpu_stats, 'ring_capacity_known': False, 'execution': execution,
+            'trace_event_counts': trace_event_counts(trace_text), 'userspace_begin_markers': userspace_begin_count(trace_text),
             'source_sha256': {str(path): hashlib.sha256(path.read_bytes()).hexdigest() for path in files if path.is_file()}}
 
 
@@ -287,8 +298,11 @@ def main():
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--trace-processor', type=Path)
     parser.add_argument('--require-visible', action='store_true', help='要求采集期间 Mac App 持续可见且有状态变化记录')
+    parser.add_argument('--require-userspace-trace', action='store_true', help='要求导出的 trace 含用户态标记；旧调度采集可省略')
     args = parser.parse_args()
     report = analyze(args.run)
+    if args.require_userspace_trace and not report['userspace_begin_markers']:
+        report['failures'].append('userspace trace markers missing')
     if args.require_visible:
         visible = report['host_visibility']
         if not visible.get('all_visible') or visible.get('tracking') not in ('AppKit notifications and action boundaries', 'Android window AppKit notifications and action boundaries'):

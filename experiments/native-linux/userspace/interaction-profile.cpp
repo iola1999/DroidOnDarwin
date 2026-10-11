@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 #include "../interaction-profile.h"
 #include "desktop-session.h"
+#include <dlfcn.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
@@ -126,8 +127,46 @@ int nce_interaction_profile_check()
 {
     if (trace_preparation)
         return trace_preparation;
-    int result = userspace_trace(true);
+    void *library = dlopen("/system/lib64/libcutils.so", RTLD_NOW | RTLD_LOCAL);
+    if (!library)
+        return -ENOENT;
+    auto tags = reinterpret_cast<uint64_t (*)()>(dlsym(library, "atrace_get_enabled_tags"));
+    auto begin = reinterpret_cast<void (*)(const char *)>(dlsym(library, "atrace_begin_body"));
+    auto end = reinterpret_cast<void (*)()>(dlsym(library, "atrace_end_body"));
+    // Query before atrace starts so a missing initial property cannot be
+    // hidden by the diagnostic itself creating it before Android services.
+    int result = tags && begin && end && !(tags() & 14) ? 0 : -EIO;
+    if (!result)
+        result = put("/sys/kernel/tracing/trace", "\n");
+    if (!result)
+        result = userspace_trace(true);
+    if (!result && (tags() & 14) != 14)
+        result = -EIO;
+    if (!result)
+        result = put("/sys/kernel/tracing/tracing_on", "1");
+    if (!result) {
+        begin("nce_atrace_control_check");
+        end();
+    }
+    int stopped = put("/sys/kernel/tracing/tracing_on", "0");
+    if (!result)
+        result = stopped;
+    if (!result) {
+        FILE *file = fopen("/sys/kernel/tracing/trace", "re");
+        bool found = false;
+        char line[1024];
+        if (file) {
+            while (fgets(line, sizeof(line), file))
+                found |= strstr(line, "|nce_atrace_control_check") != nullptr;
+            fclose(file);
+        }
+        if (!found)
+            result = -EIO;
+    }
     int cleanup = userspace_trace(false);
+    if (!result && (tags() & 14))
+        result = -EIO;
+    dlclose(library);
     return result ? result : cleanup;
 }
 

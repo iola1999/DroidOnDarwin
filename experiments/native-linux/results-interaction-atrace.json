@@ -1,5 +1,5 @@
 {
-  "status": "native and Direct CLI/GCD passed including atrace control; actual trace export pending",
+  "status": "native and Direct CLI/GCD passed actual libcutils marker production; Mac visible capture blocked by locked desktop",
   "host": {
     "cpu": "Apple M5 Ultra",
     "os": "macOS 27.0 (26A428)",
@@ -25,18 +25,6 @@
       }
     }
   ],
-  "macos": {
-    "app": "work/native-linux-nce/macos-direct-1-atrace-v2/DroidOnDarwin.app",
-    "buildID": "0.25.0-Mac-20261012-043834-direct1-dual",
-    "host_checks": "passed",
-    "host_checks_log": "work/native-linux-nce/interaction-preflight/atrace-mac-host-checks.log"
-  },
-  "ios": {
-    "ipa": "work/native-linux-nce/ios-direct-1/DroidOnDarwin-0.25.0.ipa",
-    "bytes": 473391266,
-    "sha256": "85cd1b2ef2aea7bb4e971e31fa1b9a739881e8dff2699472e910e747f6cd387c",
-    "device_execution": "pending"
-  },
   "failed_capture": {
     "runID": "B5CF0E01-6DA1-4E05-80E0-03BD153486CD",
     "buildID": "0.25.0-Mac-20261012-043834-direct1-dual",
@@ -77,6 +65,121 @@
   },
   "native": {
     "manifest": "work/native-linux-nce/processes/lkl-summary.json",
+    "manifest_sha256": "914da2ae26761ff26f188b58e4d0ca84bd46233a3906c5ed316abb35b1a8ecc3",
+    "system_image_sha256": "a8fd7ebb4b5485723351723e5667e17772051f69898638090570ef5e9ff3e7c3",
+    "configuration": {
+      "NCE_MM_MODE": "demand",
+      "NCE_SYSTEM_SERVER_PROBE": "1",
+      "NCE_ART_NTERP": "1",
+      "NCE_ART_AOT": "0"
+    },
+    "scope": "full native CLI/GCD desktop; actual libcutils cold tag lookup, marker write/read, disable verification",
+    "checks": {
+      "results": {
+        "result": {
+          "result": "passed"
+        },
+        "passed_named_checks": 225,
+        "atrace_control": [
+          {
+            "test": "android_atrace_userspace_control",
+            "passed": true
+          }
+        ]
+      },
+      "dispatch_results": {
+        "result": {
+          "result": "passed"
+        },
+        "passed_named_checks": 225,
+        "atrace_control": [
+          {
+            "test": "android_atrace_userspace_control",
+            "passed": true
+          }
+        ]
+      }
+    },
+    "log": "work/native-linux-nce/interaction-preflight/atrace-property-native.log"
+  },
+  "direct_before_dependency_fix": {
+    "manifest": "work/native-linux-nce/lkl-interaction-atrace-v2-1-desktop/summary.json",
+    "manifest_sha256": "bcff03e5e55fa3f355b401482897963ae56cbdcb576c0c95ae60f6fadfa6fa58",
+    "scope": "full desktop CLI/GCD; simdMath on; functional validation only"
+  },
+  "direct": {
+    "manifest": "work/native-linux-nce/lkl-interaction-atrace-property-1-desktop/summary.json",
+    "manifest_sha256": "9eac6ab8d35b3b88051abc6046a6d3a81719cdac3f184b01188590028ad2c029",
+    "scope": "full desktop CLI/GCD; actual libcutils initial lookup, marker write/read and cleanup; simdMath on"
+  },
+  "macos_before_dependency_fix": {
+    "app": "work/native-linux-nce/macos-direct-1-atrace-v2/DroidOnDarwin.app",
+    "buildID": "0.25.0-Mac-20261012-043834-direct1-dual",
+    "host_checks": "passed",
+    "host_checks_log": "work/native-linux-nce/interaction-preflight/atrace-mac-host-checks.log"
+  },
+  "ios_before_dependency_fix": {
+    "ipa": "work/native-linux-nce/ios-direct-1/DroidOnDarwin-0.25.0.ipa",
+    "bytes": 473391266,
+    "sha256": "85cd1b2ef2aea7bb4e971e31fa1b9a739881e8dff2699472e910e747f6cd387c",
+    "device_execution": "pending"
+  },
+  "macos": {
+    "app": "work/native-linux-nce/macos-direct-1-atrace-property/DroidOnDarwin.app",
+    "buildID": "0.25.0-Mac-20261012-052544-direct1-dual",
+    "host_checks": "passed",
+    "host_checks_log": "work/native-linux-nce/interaction-preflight/atrace-property-mac-host-checks.log"
+  },
+  "ios": {
+    "ipa": "work/native-linux-nce/ios-direct-1/DroidOnDarwin-0.25.0.ipa",
+    "bytes": 473439193,
+    "sha256": "5fba530617128b1a33b29bfdfdd6d026e38f74a02b22453a619066a9229d3d2c",
+    "device_execution": "pending"
+  },
+  "capture_before_property_fix": {
+    "runID": "8F4DF52B-1029-45A9-ADB3-2AD02C7C3AE7",
+    "buildID": "0.25.0-Mac-20261012-050037-direct1-dual",
+    "directory": "work/native-linux-nce/benchmarks/interaction/20261012-050238-1a731a/8F4DF52B-1029-45A9-ADB3-2AD02C7C3AE7",
+    "analyzer_failures": [],
+    "userspace_markers": 0,
+    "events": {
+      "sched_waking": 5403,
+      "sched_switch": 6489,
+      "binder_transaction": 661,
+      "binder_transaction_received": 661
+    },
+    "frame_counts": {
+      "accepted": 54
+    },
+    "presentation_counts": {
+      "captured": 54,
+      "in_window": 54,
+      "pending_acquisition": 0,
+      "drawable_unavailable": 0,
+      "pending_callback": 0,
+      "zero_presented_time": 2,
+      "outside_presentation_window": 0,
+      "presented_in_window": 52,
+      "acquired_before_window_presented_inside": 0
+    },
+    "manual_after_capture": [
+      "opened Display & touch",
+      "scrolled Display & touch",
+      "returned to Settings"
+    ],
+    "manual_scope": "functional desktop observations after capture; response latency unmeasured",
+    "source_sha256": {
+      "work/native-linux-nce/benchmarks/interaction/20261012-050238-1a731a/8F4DF52B-1029-45A9-ADB3-2AD02C7C3AE7/result.json": "698477cb9ccd42d17ba6054f9cd7576afdd677fa1dd12a49fe8814476319b255",
+      "work/native-linux-nce/benchmarks/interaction/20261012-050238-1a731a/8F4DF52B-1029-45A9-ADB3-2AD02C7C3AE7/interaction/kernel.ftrace": "2d121cd2c636a216768f45a49e6a79a7833b476230dd0d18146fd8ca3bc3cce7",
+      "work/native-linux-nce/benchmarks/interaction/20261012-050238-1a731a/8F4DF52B-1029-45A9-ADB3-2AD02C7C3AE7/interaction/execution.json": "9e7e40c1233860dbb6eb985d3bdc69b467c41028d5459d0412d15fa562024090"
+    },
+    "required_userspace_analysis": {
+      "failure": "userspace trace markers missing",
+      "exit_code": 1
+    }
+  },
+  "native_before_property_fix": {
+    "manifest": "work/native-linux-nce/processes/lkl-summary.json",
     "manifest_sha256": "b63be9520ac1c3218b7afb074d3c465b966f4314559d9d9ba5f1f71264128e82",
     "system_image_sha256": "c094ea502fc0beaf0db201c363a126ae19565cfb7aeb7cff998a6f44e2853b5a",
     "configuration": {
@@ -113,14 +216,22 @@
       }
     }
   },
-  "direct_before_dependency_fix": {
-    "manifest": "work/native-linux-nce/lkl-interaction-atrace-v2-1-desktop/summary.json",
-    "manifest_sha256": "bcff03e5e55fa3f355b401482897963ae56cbdcb576c0c95ae60f6fadfa6fa58",
-    "scope": "full desktop CLI/GCD; simdMath on; functional validation only"
-  },
-  "direct": {
+  "direct_before_property_fix": {
     "manifest": "work/native-linux-nce/lkl-interaction-atrace-v3-1-desktop/summary.json",
     "manifest_sha256": "63f905e3bd78a15fc71342e6c2229b0d4dd16ef7668cae927839aeb6ebf3c060",
     "scope": "full desktop CLI/GCD including actual atrace enable/disable; simdMath on; functional validation only"
+  },
+  "macos_before_property_fix": {
+    "app": "work/native-linux-nce/macos-direct-1-atrace-v3/DroidOnDarwin.app",
+    "buildID": "0.25.0-Mac-20261012-050037-direct1-dual",
+    "host_checks": "passed",
+    "host_checks_log": "work/native-linux-nce/interaction-preflight/atrace-v3-mac-host-checks.log"
+  },
+  "locked_desktop_attempt": {
+    "runID": "A6725B98-A47D-442C-B5A5-061258FF21BE",
+    "result": "work/native-linux-nce/benchmarks/interaction/20261012-052703-2cef99/A6725B98-A47D-442C-B5A5-061258FF21BE/result.json",
+    "sha256": "6ca3fd41811057318145d690ea246f0ff7671b2b0298b291b7e5d3b36b9054c8",
+    "failure": "Android window not continuously visible/active within 5 seconds; CUA subsequently confirmed Mac locked",
+    "scope": "no capture; excluded from performance comparisons"
   }
 }

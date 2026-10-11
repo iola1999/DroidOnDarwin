@@ -1,10 +1,19 @@
 #!/usr/bin/env python3
 """检查帧记录缺失、格式错误和时钟采样误差的处理。"""
 import unittest
-from analyze_interaction_profile import read_frames, clock_alignment, distribution, read_frame_totals, read_thread_map, host_visibility
+from analyze_interaction_profile import read_frames, clock_alignment, distribution, read_frame_totals, read_thread_map, host_visibility, trace_event_counts, userspace_begin_count
 
 
 class InteractionProfileTests(unittest.TestCase):
+    def test_scheduler_only_trace_has_no_userspace_markers(self):
+        text = ' app-30 [000] X.... 122.342221: sched_waking: comm=app pid=31\n'
+        self.assertEqual(trace_event_counts(text), {'sched_waking': 1})
+        text += ' app-30 [000] X.... 122.342222: tracing_mark_write: B|1|draw\n'
+        text += ' app-30 [000] X.... 122.342223: tracing_mark_write: E|1\n'
+        self.assertEqual(trace_event_counts(text), {'sched_waking': 1, 'tracing_mark_write': 2})
+        self.assertEqual(userspace_begin_count(text), 1)
+        self.assertEqual(userspace_begin_count(' app-30 [000] X.... 122.342222: print: kernel diagnostic\n'), 0)
+
     def test_android_window_visibility_overrides_app_visibility(self):
         event = {'host_monotonic_ns': 10, 'app_visible': True, 'app_active': True, 'display_visible': False}
         result = {'visibility_tracking': 'Android window AppKit notifications and action boundaries', 'events': [event]}
