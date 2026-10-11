@@ -1,0 +1,959 @@
+{
+  "scope": "macOS Direct UP application integration and persistent restart; iOS package build only",
+  "platform": "macOS-27.0-arm64-arm-64bit-Mach-O",
+  "cpu": "Apple M5 Ultra",
+  "system_build": "26A428",
+  "configuration": {
+    "code_memory": "dual",
+    "execution": "direct",
+    "direct": {
+      "mapping_entries": 256,
+      "route_entries": 256,
+      "selective_writes": false,
+      "reuse_code_checks": false,
+      "memory": "flat",
+      "code_watch": true,
+      "cross_page": true,
+      "route_epochs": false,
+      "retain_routes": false,
+      "memory_groups": false,
+      "native_exclusive": true,
+      "vector_table": false
+    },
+    "mapping": "pte",
+    "sparse_scan": true,
+    "fault_prefetch": false,
+    "guest_page_bytes": 16384,
+    "workload": "desktop",
+    "entries": [
+      "cli",
+      "gcd"
+    ],
+    "art_nterp": 1,
+    "cpus": 1,
+    "uaccess_stop": "all",
+    "parallel_profile": false,
+    "art_expanded_jit": 0,
+    "art_fast_baseline": 0,
+    "cache_invalidation": "pages",
+    "exec_cache": "pages",
+    "tlb_invalidation": "pages",
+    "linux_fastpath": 0,
+    "guest_ram_bytes": 1073741824,
+    "translation_cache_bytes": 134217728,
+    "instruction_batch": 50000,
+    "memory_interval_ms": 100,
+    "preemption": "timer",
+    "timer_interval_ns": 2000000
+  },
+  "data_seed": {
+    "path": "work/native-linux-nce/processes/android-data-seed.img",
+    "sha256": "0387fb300ae1d4145b6fdcf4c878553a2e806b8c8b4918925d3482152fede620"
+  },
+  "desktop_report": {
+    "path": "work/native-linux-nce/lkl-dual-app-up-restart/summary.json",
+    "sha256": "506d104d9873dedf9520e7873a46f4c554690cbd7ba7e4e232b0e602f5aab5a6"
+  },
+  "runs": [
+    {
+      "entry": "cli",
+      "iteration": 0,
+      "returncode": 0,
+      "validated": true,
+      "data_image": {
+        "path": "work/native-linux-nce/lkl-dual-app-up-restart/persistent-data.img",
+        "initial_sha256": "0387fb300ae1d4145b6fdcf4c878553a2e806b8c8b4918925d3482152fede620",
+        "fresh": true,
+        "final_sha256": "5656c8903f6bddf457f79b5d230c9ea51cc1e0655ba024dd9df17516ce2e1ee9",
+        "clean_shutdown": true
+      },
+      "stdout_sha256": "b2464b1bb3ca34140b5f474736c5df5d5584c02aa55a82f9817c6d08741381c1",
+      "stderr_sha256": "df061e3653b83127ad746a3feed69e6027ee92d233657582d18084c4793eb10d",
+      "results": [
+        {
+          "test": "android_keystore_persistence",
+          "passed": true,
+          "restored": false
+        },
+        {
+          "test": "android_system_boot_completed",
+          "passed": true
+        },
+        {
+          "test": "android_desktop_visible_activity",
+          "passed": true,
+          "package": "com.android.launcher3",
+          "sampled_colors": 470
+        },
+        {
+          "test": "android_desktop_visible_activity",
+          "passed": true,
+          "package": "com.android.deskclock",
+          "sampled_colors": 91
+        },
+        {
+          "test": "android_clock_controls_ready",
+          "passed": true
+        },
+        {
+          "test": "android_application_data_persistence",
+          "passed": true,
+          "package": "com.android.deskclock",
+          "row_id": 3,
+          "restored": false
+        },
+        {
+          "test": "android_desktop_visible_activity",
+          "passed": true,
+          "package": "com.android.deskclock",
+          "sampled_colors": 138
+        },
+        {
+          "test": "android_clock_controls_ready",
+          "passed": true
+        },
+        {
+          "test": "android_desktop_visible_activity",
+          "passed": true,
+          "package": "com.google.android.documentsui",
+          "sampled_colors": 34
+        },
+        {
+          "test": "native_graphics_channels_released",
+          "passed": true,
+          "opened": 123,
+          "closed": 123
+        },
+        {
+          "memory_statistics": "desktop_execution",
+          "interval_ms": 100,
+          "samples": 2327,
+          "errors": 0,
+          "duration_ns": 241029685000,
+          "collection_ns": 311883000,
+          "footprint_mean_bytes": 2397177147.324,
+          "footprint_sample_peak_bytes": 3152039440,
+          "footprint_latest_bytes": 2953972856,
+          "resident_mean_bytes": 2300313635.204,
+          "resident_sample_peak_bytes": 2737389568,
+          "resident_latest_bytes": 2598535168,
+          "resident_lifetime_peak_bytes": 2737405952
+        },
+        {
+          "test": "linux_data_readonly_shutdown",
+          "passed": true
+        },
+        {
+          "test": "translated_context_cleanup",
+          "passed": true,
+          "allocated": 1077,
+          "freed": 1077,
+          "maps": 0,
+          "revocations": 0,
+          "tlb_fills": 21421839,
+          "faults": 532337,
+          "syscalls": 5262163,
+          "preemptions": 91264
+        },
+        {
+          "memory_statistics": "cleanup",
+          "interval_ms": 100,
+          "samples": 2,
+          "errors": 0,
+          "duration_ns": 59052000,
+          "collection_ns": 15000,
+          "footprint_mean_bytes": 1774594220.0,
+          "footprint_sample_peak_bytes": 2953972856,
+          "footprint_latest_bytes": 595215584,
+          "resident_mean_bytes": 1447387136.0,
+          "resident_sample_peak_bytes": 2598535168,
+          "resident_latest_bytes": 296239104,
+          "resident_lifetime_peak_bytes": 2737405952
+        }
+      ]
+    },
+    {
+      "entry": "gcd",
+      "iteration": 0,
+      "returncode": 0,
+      "validated": true,
+      "data_image": {
+        "path": "work/native-linux-nce/lkl-dual-app-up-restart/persistent-data.img",
+        "initial_sha256": "5656c8903f6bddf457f79b5d230c9ea51cc1e0655ba024dd9df17516ce2e1ee9",
+        "fresh": false,
+        "final_sha256": "e7fd0a1f5424257ddc9469334b0bcea6195b234ea5be2f1d0b2524311276df31",
+        "clean_shutdown": true
+      },
+      "stdout_sha256": "4807edb7fd3b7a51415f029f1fa28f1f218aefda3754d615d055a68776bec48f",
+      "stderr_sha256": "8da8847348654bd63262760a8973cea513fd28f2a736a03ef9bbf1c834cfdc2d",
+      "results": [
+        {
+          "test": "android_keystore_persistence",
+          "passed": true,
+          "restored": true
+        },
+        {
+          "test": "android_system_boot_completed",
+          "passed": true
+        },
+        {
+          "test": "android_desktop_visible_activity",
+          "passed": true,
+          "package": "com.android.launcher3",
+          "sampled_colors": 470
+        },
+        {
+          "test": "android_desktop_visible_activity",
+          "passed": true,
+          "package": "com.android.deskclock",
+          "sampled_colors": 145
+        },
+        {
+          "test": "android_clock_controls_ready",
+          "passed": true
+        },
+        {
+          "test": "android_application_data_persistence",
+          "passed": true,
+          "package": "com.android.deskclock",
+          "row_id": 3,
+          "restored": true
+        },
+        {
+          "test": "android_desktop_visible_activity",
+          "passed": true,
+          "package": "com.android.deskclock",
+          "sampled_colors": 138
+        },
+        {
+          "test": "android_clock_controls_ready",
+          "passed": true
+        },
+        {
+          "test": "android_desktop_visible_activity",
+          "passed": true,
+          "package": "com.google.android.documentsui",
+          "sampled_colors": 38
+        },
+        {
+          "test": "native_graphics_channels_released",
+          "passed": true,
+          "opened": 129,
+          "closed": 129
+        },
+        {
+          "memory_statistics": "desktop_execution",
+          "interval_ms": 100,
+          "samples": 1665,
+          "errors": 0,
+          "duration_ns": 172483894000,
+          "collection_ns": 213089000,
+          "footprint_mean_bytes": 2356383764.877,
+          "footprint_sample_peak_bytes": 3128659448,
+          "footprint_latest_bytes": 2767686728,
+          "resident_mean_bytes": 2206354971.368,
+          "resident_sample_peak_bytes": 2738339840,
+          "resident_latest_bytes": 2631106560,
+          "resident_lifetime_peak_bytes": 2741075968
+        },
+        {
+          "test": "linux_data_readonly_shutdown",
+          "passed": true
+        },
+        {
+          "test": "translated_context_cleanup",
+          "passed": true,
+          "allocated": 992,
+          "freed": 992,
+          "maps": 0,
+          "revocations": 0,
+          "tlb_fills": 16195943,
+          "faults": 467129,
+          "syscalls": 4289495,
+          "preemptions": 64685
+        },
+        {
+          "memory_statistics": "cleanup",
+          "interval_ms": 100,
+          "samples": 3,
+          "errors": 0,
+          "duration_ns": 57208000,
+          "collection_ns": 64000,
+          "footprint_mean_bytes": 1654567794.667,
+          "footprint_sample_peak_bytes": 2767686728,
+          "footprint_latest_bytes": 369722496,
+          "resident_mean_bytes": 1540532906.667,
+          "resident_sample_peak_bytes": 2631106560,
+          "resident_latest_bytes": 300302336,
+          "resident_lifetime_peak_bytes": 2741075968
+        }
+      ]
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "work/native-linux-nce/macos-direct-1/package.json",
+      "sha256": "427820a13b5998d20d8dada2e1274db37d9f106e62ec43a8fba6e11fcd0a8768"
+    },
+    {
+      "path": "work/native-linux-nce/macos-direct-1/host-checks.json",
+      "sha256": "b2d732e5e1a2bad027eb16e7c666b4075bce6ab31bdfee3280d104aa2ae656b9"
+    },
+    {
+      "path": "work/native-linux-nce/ios-direct-1/package.json",
+      "sha256": "8f0026253bb05b338c55f4836d43461fca69b8b72afdb0e77adcfe9ead7bcf00"
+    }
+  ],
+  "host_checks": {
+    "Storage": "storage checks passed: missing resources, interrupted creation, exclusive lock, persistent data, simulated ENOSPC, symlink and corrupt image",
+    "Display": "display checks passed: initial layer geometry, fixed drawable, scaled coordinates, edge clamping, input readiness and ordered navigation",
+    "app_lifecycle": "app lifecycle checks passed: proportional layout, programmatic size normalization, restoration disabled and deferred stop retry",
+    "devices": "device store checks passed: first-run initialization, independent data, active deletion lock, package version/hash, raw ext4, truncation, symlink, failed import cleanup, empty library persistence",
+    "session": "session checks passed: duplicate launch, stop during preparation/JIT, late boot event, ready log, failure and restart boundary",
+    "benchmark": "benchmark checks passed: configuration, URL validation, IDs, ordered inputs, completed report, input failure and cleanup",
+    "translation_configuration": "translation settings: build compatibility, dependencies, cache capacity, environment and request boundaries passed",
+    "signed_execution": "execute regression: values, instruction/access faults, remap failure, recovery and handler restoration passed",
+    "ad_hoc_library_validation": {
+      "False": {
+        "exit": 1,
+        "message": "dlopen(/Users/fan/project/app/husk_hyos/work/native-linux-nce/macos-direct-1/DroidOnDarwin.app/Contents/Frameworks/libgfxstream_backend.dylib, 0x0006): tried: '/Users/fan/project/app/husk_hyos/work/native-linux-nce/macos-direct-1/DroidOnDarwin.app/Contents/Frameworks/libgfxstream_backend.dylib' (code signature in <9893BA4A-B2A7-3B02-AE57-09DEA880BCDA> '/Users/fan/project/app/husk_hyos/work/native-linux-nce/macos-direct-1/DroidOnDarwin.app/Contents/Frameworks/libgfxstream_backend.dylib' not valid for use in process: mapping process and mapped file (non-platform) have different Team IDs), '/System/Volumes/Preboot/Cryptexes/OS/Users/fan/project/app/husk_hyos/work/native-linux-nce/macos-direct-1/DroidOnDarwin.app/Contents/Frameworks/libgfxstream_backend.dylib' (no such file), '/Users/fan/project/app/husk_hyos/work/native-linux-nce/macos-direct-1/DroidOnDarwin.app/Contents/Frameworks/libgfxstream_backend.dylib' (code signature in <9893BA4A-B2A7-3B02-AE57-09DEA880BCDA> '/Users/fan/project/app/husk_hyos/work/native-linux-nce/macos-direct-1/DroidOnDarwin.app/Contents/Frameworks/libgfxstream_backend.dylib' not valid for use in process: mapping process and mapped file (non-platform) have different Team IDs)"
+      },
+      "True": {
+        "exit": 0,
+        "message": ""
+      }
+    },
+    "benchmark_configuration_query": {
+      "fastBaseline": false,
+      "schedulerSliceUS": 0,
+      "translation": {
+        "reuseCodeChecks": false,
+        "codeWatch": true,
+        "retainRoutes": false,
+        "memoryGroups": false,
+        "routeEpochs": false,
+        "vectorTable": false,
+        "cacheMiB": 128,
+        "crossPage": true
+      },
+      "aot": false,
+      "diagnostics": false,
+      "nterp": true,
+      "directFault": true,
+      "faultPrefetch": false,
+      "sparseScan": true,
+      "bootImage": false,
+      "expandedJIT": false,
+      "performanceLogging": false
+    },
+    "bundle": "signature, package hashes, input hashes, resource sizes and relocatable library paths passed"
+  },
+  "app_runs": [
+    {
+      "path": "work/native-linux-nce/benchmarks/direct-up/20261011-191146-41cdca/summary.json",
+      "sha256": "d82162f61ab74723187616a9414aadd1a38c3dbcb30cca1854ebb6a031e3add8",
+      "scope": "Initial application lifecycle; concurrent iOS build and host checks",
+      "build_id": "0.25.0-Mac-20261011-191108-direct1-dual",
+      "executable_sha256": "aa72fafaa8d472f7d8931b40e0f10f779f60406445bfe4b610cb78bb34477226",
+      "runs": [
+        {
+          "runID": "63D7219E-B92A-40C9-A3B3-4A05B1687530",
+          "request": {
+            "version": 1,
+            "runID": "63D7219E-B92A-40C9-A3B3-4A05B1687530",
+            "deviceID": "6C19F1EA-7230-5B8E-B084-33772701B029",
+            "configuration": {
+              "aot": false,
+              "fastBaseline": false,
+              "schedulerSliceUS": 0,
+              "translation": {
+                "crossPage": true,
+                "reuseCodeChecks": false,
+                "cacheMiB": 128,
+                "vectorTable": false,
+                "retainRoutes": false,
+                "memoryGroups": false,
+                "routeEpochs": false,
+                "codeWatch": true
+              },
+              "directFault": true,
+              "sparseScan": true,
+              "diagnostics": false,
+              "faultPrefetch": false,
+              "performanceLogging": false,
+              "nterp": true,
+              "bootImage": false,
+              "expandedJIT": false
+            },
+            "actions": [
+              {
+                "kind": "wait",
+                "milliseconds": 2000
+              },
+              {
+                "kind": "key",
+                "key": "home"
+              },
+              {
+                "kind": "swipe",
+                "x": 180,
+                "y": 560,
+                "endX": 180,
+                "endY": 120,
+                "milliseconds": 400
+              },
+              {
+                "kind": "wait",
+                "milliseconds": 2000
+              },
+              {
+                "kind": "key",
+                "key": "home"
+              }
+            ],
+            "timeoutSeconds": 600,
+            "memorySampling": true
+          },
+          "metrics": {
+            "start_to_ready_observed_ms": 138044.64120836928,
+            "core_to_ready_observed_ms": 138027.84045832232,
+            "actions_ms": 4545.136708300561,
+            "stop_ms": 9854.602333158255,
+            "memory_overall_compressed_mean_bytes": 0,
+            "memory_overall_compressed_sampled_peak_bytes": 0,
+            "memory_overall_compressed_latest_bytes": 0,
+            "memory_overall_footprint_mean_bytes": 2300216518.2608695,
+            "memory_overall_footprint_sampled_peak_bytes": 3080097608,
+            "memory_overall_footprint_latest_bytes": 391202328,
+            "memory_overall_resident_mean_bytes": 2276615517.8136644,
+            "memory_overall_resident_sampled_peak_bytes": 2781233152,
+            "memory_overall_resident_latest_bytes": 383156224,
+            "memory_overall_virtual_mean_bytes": 508547957855.40375,
+            "memory_overall_virtual_sampled_peak_bytes": 508987195392,
+            "memory_overall_virtual_latest_bytes": 501220540416,
+            "memory_phase_booting_compressed_mean_bytes": 0,
+            "memory_phase_booting_compressed_sampled_peak_bytes": 0,
+            "memory_phase_booting_compressed_latest_bytes": 0,
+            "memory_phase_booting_footprint_mean_bytes": 2305813195.9428573,
+            "memory_phase_booting_footprint_sampled_peak_bytes": 3056652032,
+            "memory_phase_booting_footprint_latest_bytes": 2540212040,
+            "memory_phase_booting_resident_mean_bytes": 2275939708.3428574,
+            "memory_phase_booting_resident_sampled_peak_bytes": 2759917568,
+            "memory_phase_booting_resident_latest_bytes": 2754674688,
+            "memory_phase_booting_virtual_mean_bytes": 508709138080.9143,
+            "memory_phase_booting_virtual_sampled_peak_bytes": 508987195392,
+            "memory_phase_booting_virtual_latest_bytes": 508970745856,
+            "memory_phase_preparing_compressed_mean_bytes": 0,
+            "memory_phase_preparing_compressed_sampled_peak_bytes": 0,
+            "memory_phase_preparing_compressed_latest_bytes": 0,
+            "memory_phase_preparing_footprint_mean_bytes": 34432176,
+            "memory_phase_preparing_footprint_sampled_peak_bytes": 34440368,
+            "memory_phase_preparing_footprint_latest_bytes": 34440368,
+            "memory_phase_preparing_resident_mean_bytes": 107659264,
+            "memory_phase_preparing_resident_sampled_peak_bytes": 107708416,
+            "memory_phase_preparing_resident_latest_bytes": 107708416,
+            "memory_phase_preparing_virtual_mean_bytes": 501183856640,
+            "memory_phase_preparing_virtual_sampled_peak_bytes": 501183856640,
+            "memory_phase_preparing_virtual_latest_bytes": 501183856640,
+            "memory_phase_running_compressed_mean_bytes": 0,
+            "memory_phase_running_compressed_sampled_peak_bytes": 0,
+            "memory_phase_running_compressed_latest_bytes": 0,
+            "memory_phase_running_footprint_mean_bytes": 2540545181.3333335,
+            "memory_phase_running_footprint_sampled_peak_bytes": 2541326152,
+            "memory_phase_running_footprint_latest_bytes": 2541326152,
+            "memory_phase_running_resident_mean_bytes": 2755048789.3333335,
+            "memory_phase_running_resident_sampled_peak_bytes": 2755837952,
+            "memory_phase_running_resident_latest_bytes": 2755837952,
+            "memory_phase_running_virtual_mean_bytes": 508971728896,
+            "memory_phase_running_virtual_sampled_peak_bytes": 508972269568,
+            "memory_phase_running_virtual_latest_bytes": 508972269568,
+            "memory_phase_stopped_compressed_mean_bytes": 0,
+            "memory_phase_stopped_compressed_sampled_peak_bytes": 0,
+            "memory_phase_stopped_compressed_latest_bytes": 0,
+            "memory_phase_stopped_footprint_mean_bytes": 391202328,
+            "memory_phase_stopped_footprint_sampled_peak_bytes": 391202328,
+            "memory_phase_stopped_footprint_latest_bytes": 391202328,
+            "memory_phase_stopped_resident_mean_bytes": 383156224,
+            "memory_phase_stopped_resident_sampled_peak_bytes": 383156224,
+            "memory_phase_stopped_resident_latest_bytes": 383156224,
+            "memory_phase_stopped_virtual_mean_bytes": 501220540416,
+            "memory_phase_stopped_virtual_sampled_peak_bytes": 501220540416,
+            "memory_phase_stopped_virtual_latest_bytes": 501220540416,
+            "memory_phase_stopping_compressed_mean_bytes": 0,
+            "memory_phase_stopping_compressed_sampled_peak_bytes": 0,
+            "memory_phase_stopping_compressed_latest_bytes": 0,
+            "memory_phase_stopping_footprint_mean_bytes": 2856951992,
+            "memory_phase_stopping_footprint_sampled_peak_bytes": 3080097608,
+            "memory_phase_stopping_footprint_latest_bytes": 2794180376,
+            "memory_phase_stopping_resident_mean_bytes": 2762874135.2727275,
+            "memory_phase_stopping_resident_sampled_peak_bytes": 2781233152,
+            "memory_phase_stopping_resident_latest_bytes": 2704867328,
+            "memory_phase_stopping_virtual_mean_bytes": 508936610536.7273,
+            "memory_phase_stopping_virtual_sampled_peak_bytes": 508979101696,
+            "memory_phase_stopping_virtual_latest_bytes": 508532506624,
+            "memory_boot_step_0_compressed_mean_bytes": 0,
+            "memory_boot_step_0_compressed_sampled_peak_bytes": 0,
+            "memory_boot_step_0_compressed_latest_bytes": 0,
+            "memory_boot_step_0_footprint_mean_bytes": 296674708,
+            "memory_boot_step_0_footprint_sampled_peak_bytes": 557368952,
+            "memory_boot_step_0_footprint_latest_bytes": 557368952,
+            "memory_boot_step_0_resident_mean_bytes": 224559104,
+            "memory_boot_step_0_resident_sampled_peak_bytes": 336216064,
+            "memory_boot_step_0_resident_latest_bytes": 336216064,
+            "memory_boot_step_0_virtual_mean_bytes": 504776777728,
+            "memory_boot_step_0_virtual_sampled_peak_bytes": 508369862656,
+            "memory_boot_step_0_virtual_latest_bytes": 508369862656,
+            "memory_boot_step_2_compressed_mean_bytes": 0,
+            "memory_boot_step_2_compressed_sampled_peak_bytes": 0,
+            "memory_boot_step_2_compressed_latest_bytes": 0,
+            "memory_boot_step_2_footprint_mean_bytes": 1878831618.909091,
+            "memory_boot_step_2_footprint_sampled_peak_bytes": 2811006576,
+            "memory_boot_step_2_footprint_latest_bytes": 2811006576,
+            "memory_boot_step_2_resident_mean_bytes": 1881414687.030303,
+            "memory_boot_step_2_resident_sampled_peak_bytes": 2480881664,
+            "memory_boot_step_2_resident_latest_bytes": 2480881664,
+            "memory_boot_step_2_virtual_mean_bytes": 508627272921.2121,
+            "memory_boot_step_2_virtual_sampled_peak_bytes": 508752297984,
+            "memory_boot_step_2_virtual_latest_bytes": 508752297984,
+            "memory_boot_step_3_compressed_mean_bytes": 0,
+            "memory_boot_step_3_compressed_sampled_peak_bytes": 0,
+            "memory_boot_step_3_compressed_latest_bytes": 0,
+            "memory_boot_step_3_footprint_mean_bytes": 2756019706.028169,
+            "memory_boot_step_3_footprint_sampled_peak_bytes": 3056652032,
+            "memory_boot_step_3_footprint_latest_bytes": 2541129544,
+            "memory_boot_step_3_resident_mean_bytes": 2693723900.3943663,
+            "memory_boot_step_3_resident_sampled_peak_bytes": 2759917568,
+            "memory_boot_step_3_resident_latest_bytes": 2755575808,
+            "memory_boot_step_3_virtual_mean_bytes": 508892324186.14087,
+            "memory_boot_step_3_virtual_sampled_peak_bytes": 508987195392,
+            "memory_boot_step_3_virtual_latest_bytes": 508980101120,
+            "memory_boot_step_4_compressed_mean_bytes": 0,
+            "memory_boot_step_4_compressed_sampled_peak_bytes": 0,
+            "memory_boot_step_4_compressed_latest_bytes": 0,
+            "memory_boot_step_4_footprint_mean_bytes": 2540212040,
+            "memory_boot_step_4_footprint_sampled_peak_bytes": 2540212040,
+            "memory_boot_step_4_footprint_latest_bytes": 2540212040,
+            "memory_boot_step_4_resident_mean_bytes": 2754674688,
+            "memory_boot_step_4_resident_sampled_peak_bytes": 2754674688,
+            "memory_boot_step_4_resident_latest_bytes": 2754674688,
+            "memory_boot_step_4_virtual_mean_bytes": 508970745856,
+            "memory_boot_step_4_virtual_sampled_peak_bytes": 508970745856,
+            "memory_boot_step_4_virtual_latest_bytes": 508970745856,
+            "memory_process_lifetime_footprint_peak_bytes": 3081637704,
+            "memory_process_lifetime_resident_peak_bytes": 2784051200
+          },
+          "error": null
+        }
+      ]
+    },
+    {
+      "path": "work/native-linux-nce/benchmarks/direct-up-visual/20261011-191505-cb2020/summary.json",
+      "sha256": "49402eec2aa95ec86605788788e68d390c85e2a4d68106e8a280e549899b3693",
+      "scope": "Restart failure: persistent /data/nce/zygote EEXIST",
+      "build_id": "0.25.0-Mac-20261011-191108-direct1-dual",
+      "executable_sha256": "aa72fafaa8d472f7d8931b40e0f10f779f60406445bfe4b610cb78bb34477226",
+      "runs": [
+        {
+          "runID": "3D0E72B0-BCB9-45D7-9831-840433D48140",
+          "request": {
+            "version": 1,
+            "runID": "3D0E72B0-BCB9-45D7-9831-840433D48140",
+            "deviceID": "6C19F1EA-7230-5B8E-B084-33772701B029",
+            "configuration": {
+              "bootImage": false,
+              "aot": false,
+              "sparseScan": true,
+              "directFault": true,
+              "fastBaseline": false,
+              "nterp": true,
+              "diagnostics": false,
+              "performanceLogging": false,
+              "faultPrefetch": false,
+              "schedulerSliceUS": 0,
+              "expandedJIT": false,
+              "translation": {
+                "crossPage": true,
+                "retainRoutes": false,
+                "reuseCodeChecks": false,
+                "codeWatch": true,
+                "memoryGroups": false,
+                "routeEpochs": false,
+                "cacheMiB": 128,
+                "vectorTable": false
+              }
+            },
+            "actions": [
+              {
+                "kind": "wait",
+                "milliseconds": 60000
+              },
+              {
+                "kind": "key",
+                "key": "home"
+              },
+              {
+                "kind": "wait",
+                "milliseconds": 1000
+              }
+            ],
+            "timeoutSeconds": 600,
+            "memorySampling": true
+          },
+          "metrics": {
+            "memory_overall_compressed_mean_bytes": 0,
+            "memory_overall_compressed_sampled_peak_bytes": 0,
+            "memory_overall_compressed_latest_bytes": 0,
+            "memory_overall_footprint_mean_bytes": 426671883.5555556,
+            "memory_overall_footprint_sampled_peak_bytes": 772704224,
+            "memory_overall_footprint_latest_bytes": 458376536,
+            "memory_overall_resident_mean_bytes": 335369557.3333333,
+            "memory_overall_resident_sampled_peak_bytes": 713801728,
+            "memory_overall_resident_latest_bytes": 233947136,
+            "memory_overall_virtual_mean_bytes": 504410854741.3333,
+            "memory_overall_virtual_sampled_peak_bytes": 508508291072,
+            "memory_overall_virtual_latest_bytes": 501220425728,
+            "memory_phase_booting_compressed_mean_bytes": 0,
+            "memory_phase_booting_compressed_sampled_peak_bytes": 0,
+            "memory_phase_booting_compressed_latest_bytes": 0,
+            "memory_phase_booting_footprint_mean_bytes": 571465908.8,
+            "memory_phase_booting_footprint_sampled_peak_bytes": 772704224,
+            "memory_phase_booting_footprint_latest_bytes": 646793328,
+            "memory_phase_booting_resident_mean_bytes": 467622297.6,
+            "memory_phase_booting_resident_sampled_peak_bytes": 713801728,
+            "memory_phase_booting_resident_latest_bytes": 713801728,
+            "memory_phase_booting_virtual_mean_bytes": 506984385740.8,
+            "memory_phase_booting_virtual_sampled_peak_bytes": 508508291072,
+            "memory_phase_booting_virtual_latest_bytes": 508508291072,
+            "memory_phase_failed_compressed_mean_bytes": 0,
+            "memory_phase_failed_compressed_sampled_peak_bytes": 0,
+            "memory_phase_failed_compressed_latest_bytes": 0,
+            "memory_phase_failed_footprint_mean_bytes": 458376536,
+            "memory_phase_failed_footprint_sampled_peak_bytes": 458376536,
+            "memory_phase_failed_footprint_latest_bytes": 458376536,
+            "memory_phase_failed_resident_mean_bytes": 233947136,
+            "memory_phase_failed_resident_sampled_peak_bytes": 233947136,
+            "memory_phase_failed_resident_latest_bytes": 233947136,
+            "memory_phase_failed_virtual_mean_bytes": 501220425728,
+            "memory_phase_failed_virtual_sampled_peak_bytes": 501220425728,
+            "memory_phase_failed_virtual_latest_bytes": 501220425728,
+            "memory_phase_preparing_compressed_mean_bytes": 0,
+            "memory_phase_preparing_compressed_sampled_peak_bytes": 0,
+            "memory_phase_preparing_compressed_latest_bytes": 0,
+            "memory_phase_preparing_footprint_mean_bytes": 32982168,
+            "memory_phase_preparing_footprint_sampled_peak_bytes": 33014936,
+            "memory_phase_preparing_footprint_latest_bytes": 33014936,
+            "memory_phase_preparing_resident_mean_bytes": 106160128,
+            "memory_phase_preparing_resident_sampled_peak_bytes": 106233856,
+            "memory_phase_preparing_resident_latest_bytes": 106233856,
+            "memory_phase_preparing_virtual_mean_bytes": 501167456256,
+            "memory_phase_preparing_virtual_sampled_peak_bytes": 501167456256,
+            "memory_phase_preparing_virtual_latest_bytes": 501167456256,
+            "memory_boot_step_0_compressed_mean_bytes": 0,
+            "memory_boot_step_0_compressed_sampled_peak_bytes": 0,
+            "memory_boot_step_0_compressed_latest_bytes": 0,
+            "memory_boot_step_0_footprint_mean_bytes": 333088172,
+            "memory_boot_step_0_footprint_sampled_peak_bytes": 631555776,
+            "memory_boot_step_0_footprint_latest_bytes": 631555776,
+            "memory_boot_step_0_resident_mean_bytes": 260931584,
+            "memory_boot_step_0_resident_sampled_peak_bytes": 410386432,
+            "memory_boot_step_0_resident_latest_bytes": 410386432,
+            "memory_boot_step_0_virtual_mean_bytes": 504768831488,
+            "memory_boot_step_0_virtual_sampled_peak_bytes": 508370370560,
+            "memory_boot_step_0_virtual_latest_bytes": 508370370560,
+            "memory_boot_step_2_compressed_mean_bytes": 0,
+            "memory_boot_step_2_compressed_sampled_peak_bytes": 0,
+            "memory_boot_step_2_compressed_latest_bytes": 0,
+            "memory_boot_step_2_footprint_mean_bytes": 730384400,
+            "memory_boot_step_2_footprint_sampled_peak_bytes": 772704224,
+            "memory_boot_step_2_footprint_latest_bytes": 646793328,
+            "memory_boot_step_2_resident_mean_bytes": 605416106.6666666,
+            "memory_boot_step_2_resident_sampled_peak_bytes": 713801728,
+            "memory_boot_step_2_resident_latest_bytes": 713801728,
+            "memory_boot_step_2_virtual_mean_bytes": 508461421909.3333,
+            "memory_boot_step_2_virtual_sampled_peak_bytes": 508508291072,
+            "memory_boot_step_2_virtual_latest_bytes": 508508291072,
+            "memory_process_lifetime_footprint_peak_bytes": 910297032,
+            "memory_process_lifetime_resident_peak_bytes": 761954304
+          },
+          "error": "Android 运行失败，请查看日志"
+        }
+      ]
+    },
+    {
+      "path": "work/native-linux-nce/benchmarks/direct-up-restart/20261011-193358-863308/summary.json",
+      "sha256": "a7926a95e67ffef67d89e5b5bb1b65b91fcb0a3c5ce60a96167100a63a5bec6d",
+      "scope": "Reuses the previously failing data directory; real UI interaction; host checks started after desktop ready",
+      "build_id": "0.25.0-Mac-20261011-193314-direct1-dual",
+      "executable_sha256": "6011cefa71bc746ca286d33dc0aea609da4914e10f0aef3ef1ab70d999928aa3",
+      "runs": [
+        {
+          "runID": "B2689AC1-E725-44BD-B036-96CF62E34389",
+          "request": {
+            "version": 1,
+            "runID": "B2689AC1-E725-44BD-B036-96CF62E34389",
+            "deviceID": "6C19F1EA-7230-5B8E-B084-33772701B029",
+            "configuration": {
+              "translation": {
+                "crossPage": true,
+                "codeWatch": true,
+                "routeEpochs": false,
+                "memoryGroups": false,
+                "retainRoutes": false,
+                "cacheMiB": 128,
+                "vectorTable": false,
+                "reuseCodeChecks": false
+              },
+              "aot": false,
+              "fastBaseline": false,
+              "faultPrefetch": false,
+              "diagnostics": false,
+              "directFault": true,
+              "sparseScan": true,
+              "performanceLogging": false,
+              "expandedJIT": false,
+              "bootImage": false,
+              "schedulerSliceUS": 0,
+              "nterp": true
+            },
+            "actions": [
+              {
+                "kind": "wait",
+                "milliseconds": 60000
+              },
+              {
+                "kind": "wait",
+                "milliseconds": 60000
+              },
+              {
+                "kind": "wait",
+                "milliseconds": 60000
+              },
+              {
+                "kind": "key",
+                "key": "home"
+              }
+            ],
+            "timeoutSeconds": 600,
+            "memorySampling": true
+          },
+          "metrics": {
+            "start_to_ready_observed_ms": 93034.20629166067,
+            "core_to_ready_observed_ms": 93017.2960832715,
+            "actions_ms": 180012.5603750348,
+            "stop_ms": 8773.318874882534,
+            "memory_overall_compressed_mean_bytes": 0,
+            "memory_overall_compressed_sampled_peak_bytes": 0,
+            "memory_overall_compressed_latest_bytes": 0,
+            "memory_overall_footprint_mean_bytes": 2508863919.2551723,
+            "memory_overall_footprint_sampled_peak_bytes": 3140849552,
+            "memory_overall_footprint_latest_bytes": 474433144,
+            "memory_overall_resident_mean_bytes": 2510061455.0068965,
+            "memory_overall_resident_sampled_peak_bytes": 2791833600,
+            "memory_overall_resident_latest_bytes": 405946368,
+            "memory_overall_virtual_mean_bytes": 508765505239.3931,
+            "memory_overall_virtual_sampled_peak_bytes": 509045080064,
+            "memory_overall_virtual_latest_bytes": 501234614272,
+            "memory_phase_booting_compressed_mean_bytes": 0,
+            "memory_phase_booting_compressed_sampled_peak_bytes": 0,
+            "memory_phase_booting_compressed_latest_bytes": 0,
+            "memory_phase_booting_footprint_mean_bytes": 2197928173.5,
+            "memory_phase_booting_footprint_sampled_peak_bytes": 3085029168,
+            "memory_phase_booting_footprint_latest_bytes": 2515406664,
+            "memory_phase_booting_resident_mean_bytes": 2131615573.3333333,
+            "memory_phase_booting_resident_sampled_peak_bytes": 2739044352,
+            "memory_phase_booting_resident_latest_bytes": 2729639936,
+            "memory_phase_booting_virtual_mean_bytes": 508642433194.6667,
+            "memory_phase_booting_virtual_sampled_peak_bytes": 508962488320,
+            "memory_phase_booting_virtual_latest_bytes": 508948742144,
+            "memory_phase_preparing_compressed_mean_bytes": 0,
+            "memory_phase_preparing_compressed_sampled_peak_bytes": 0,
+            "memory_phase_preparing_compressed_latest_bytes": 0,
+            "memory_phase_preparing_footprint_mean_bytes": 33760408,
+            "memory_phase_preparing_footprint_sampled_peak_bytes": 33768600,
+            "memory_phase_preparing_footprint_latest_bytes": 33768600,
+            "memory_phase_preparing_resident_mean_bytes": 106971136,
+            "memory_phase_preparing_resident_sampled_peak_bytes": 107020288,
+            "memory_phase_preparing_resident_latest_bytes": 107020288,
+            "memory_phase_preparing_virtual_mean_bytes": 501170880512,
+            "memory_phase_preparing_virtual_sampled_peak_bytes": 501170880512,
+            "memory_phase_preparing_virtual_latest_bytes": 501170880512,
+            "memory_phase_running_compressed_mean_bytes": 0,
+            "memory_phase_running_compressed_sampled_peak_bytes": 0,
+            "memory_phase_running_compressed_latest_bytes": 0,
+            "memory_phase_running_footprint_mean_bytes": 2701050149.5111113,
+            "memory_phase_running_footprint_sampled_peak_bytes": 3136982904,
+            "memory_phase_running_footprint_latest_bytes": 2550976376,
+            "memory_phase_running_resident_mean_bytes": 2747340481.422222,
+            "memory_phase_running_resident_sampled_peak_bytes": 2788753408,
+            "memory_phase_running_resident_latest_bytes": 2759098368,
+            "memory_phase_running_virtual_mean_bytes": 508988829513.95557,
+            "memory_phase_running_virtual_sampled_peak_bytes": 509043638272,
+            "memory_phase_running_virtual_latest_bytes": 509039820800,
+            "memory_phase_stopped_compressed_mean_bytes": 0,
+            "memory_phase_stopped_compressed_sampled_peak_bytes": 0,
+            "memory_phase_stopped_compressed_latest_bytes": 0,
+            "memory_phase_stopped_footprint_mean_bytes": 474433144,
+            "memory_phase_stopped_footprint_sampled_peak_bytes": 474433144,
+            "memory_phase_stopped_footprint_latest_bytes": 474433144,
+            "memory_phase_stopped_resident_mean_bytes": 405946368,
+            "memory_phase_stopped_resident_sampled_peak_bytes": 405946368,
+            "memory_phase_stopped_resident_latest_bytes": 405946368,
+            "memory_phase_stopped_virtual_mean_bytes": 501234614272,
+            "memory_phase_stopped_virtual_sampled_peak_bytes": 501234614272,
+            "memory_phase_stopped_virtual_latest_bytes": 501234614272,
+            "memory_phase_stopping_compressed_mean_bytes": 0,
+            "memory_phase_stopping_compressed_sampled_peak_bytes": 0,
+            "memory_phase_stopping_compressed_latest_bytes": 0,
+            "memory_phase_stopping_footprint_mean_bytes": 2936401791.2,
+            "memory_phase_stopping_footprint_sampled_peak_bytes": 3140849552,
+            "memory_phase_stopping_footprint_latest_bytes": 2799521536,
+            "memory_phase_stopping_resident_mean_bytes": 2773560524.8,
+            "memory_phase_stopping_resident_sampled_peak_bytes": 2791833600,
+            "memory_phase_stopping_resident_latest_bytes": 2703081472,
+            "memory_phase_stopping_virtual_mean_bytes": 508952263065.6,
+            "memory_phase_stopping_virtual_sampled_peak_bytes": 509045080064,
+            "memory_phase_stopping_virtual_latest_bytes": 508481388544,
+            "memory_boot_step_0_compressed_mean_bytes": 0,
+            "memory_boot_step_0_compressed_sampled_peak_bytes": 0,
+            "memory_boot_step_0_compressed_latest_bytes": 0,
+            "memory_boot_step_0_footprint_mean_bytes": 324265340,
+            "memory_boot_step_0_footprint_sampled_peak_bytes": 612894304,
+            "memory_boot_step_0_footprint_latest_bytes": 612894304,
+            "memory_boot_step_0_resident_mean_bytes": 252190720,
+            "memory_boot_step_0_resident_sampled_peak_bytes": 391806976,
+            "memory_boot_step_0_resident_latest_bytes": 391806976,
+            "memory_boot_step_0_virtual_mean_bytes": 504771854336,
+            "memory_boot_step_0_virtual_sampled_peak_bytes": 508373008384,
+            "memory_boot_step_0_virtual_latest_bytes": 508373008384,
+            "memory_boot_step_2_compressed_mean_bytes": 0,
+            "memory_boot_step_2_compressed_sampled_peak_bytes": 0,
+            "memory_boot_step_2_compressed_latest_bytes": 0,
+            "memory_boot_step_2_footprint_mean_bytes": 1658101623,
+            "memory_boot_step_2_footprint_sampled_peak_bytes": 2677050848,
+            "memory_boot_step_2_footprint_latest_bytes": 2677050848,
+            "memory_boot_step_2_resident_mean_bytes": 1721577130.6666667,
+            "memory_boot_step_2_resident_sampled_peak_bytes": 2347433984,
+            "memory_boot_step_2_resident_latest_bytes": 2347433984,
+            "memory_boot_step_2_virtual_mean_bytes": 508599553365.3333,
+            "memory_boot_step_2_virtual_sampled_peak_bytes": 508732014592,
+            "memory_boot_step_2_virtual_latest_bytes": 508732014592,
+            "memory_boot_step_3_compressed_mean_bytes": 0,
+            "memory_boot_step_3_compressed_sampled_peak_bytes": 0,
+            "memory_boot_step_3_compressed_latest_bytes": 0,
+            "memory_boot_step_3_footprint_mean_bytes": 2849961986.8444443,
+            "memory_boot_step_3_footprint_sampled_peak_bytes": 3085029168,
+            "memory_boot_step_3_footprint_latest_bytes": 2819739464,
+            "memory_boot_step_3_resident_mean_bytes": 2639230475.3777776,
+            "memory_boot_step_3_resident_sampled_peak_bytes": 2739044352,
+            "memory_boot_step_3_resident_latest_bytes": 2729525248,
+            "memory_boot_step_3_virtual_mean_bytes": 508853390540.8,
+            "memory_boot_step_3_virtual_sampled_peak_bytes": 508962488320,
+            "memory_boot_step_3_virtual_latest_bytes": 508948742144,
+            "memory_boot_step_4_compressed_mean_bytes": 0,
+            "memory_boot_step_4_compressed_sampled_peak_bytes": 0,
+            "memory_boot_step_4_compressed_latest_bytes": 0,
+            "memory_boot_step_4_footprint_mean_bytes": 2515406664,
+            "memory_boot_step_4_footprint_sampled_peak_bytes": 2515406664,
+            "memory_boot_step_4_footprint_latest_bytes": 2515406664,
+            "memory_boot_step_4_resident_mean_bytes": 2729639936,
+            "memory_boot_step_4_resident_sampled_peak_bytes": 2729639936,
+            "memory_boot_step_4_resident_latest_bytes": 2729639936,
+            "memory_boot_step_4_virtual_mean_bytes": 508948742144,
+            "memory_boot_step_4_virtual_sampled_peak_bytes": 508948742144,
+            "memory_boot_step_4_virtual_latest_bytes": 508948742144,
+            "memory_process_lifetime_footprint_peak_bytes": 3143651216,
+            "memory_process_lifetime_resident_peak_bytes": 2795618304
+          },
+          "error": null
+        }
+      ]
+    }
+  ],
+  "visual_checks": {
+    "surface": "macOS application through CUA",
+    "passed": [
+      "Launcher first frame",
+      "swipe to application list",
+      "Clock opening",
+      "alarm tab",
+      "host home navigation",
+      "Files Downloads page",
+      "startup settings and defaults"
+    ],
+    "recent_apps": "input sent, session ended before visual confirmation"
+  },
+  "failures": [
+    {
+      "report": {
+        "path": "work/native-linux-nce/lkl-dual-app-up-persistent/summary.json",
+        "sha256": "9db75f360bb853c0d581e94baabd548fec13cd82538928df283fddea82062061"
+      },
+      "reason": "tmpfs child mount still present when unmounting /data; fixed teardown order"
+    },
+    {
+      "path": "work/native-linux-nce/ios-direct-1/build.log",
+      "reason": "First iOS link lacked static library search directory; corrected build later succeeded; current build.log belongs to successful build"
+    }
+  ],
+  "limits": [
+    "No paired product performance claim",
+    "No iOS device execution",
+    "CLI first data and GCD persisted data have different initial states"
+  ],
+  "base_commit": "76c654b",
+  "packages": {
+    "macos": {
+      "build": "0.25.0-Mac-20261011-193314-direct1-dual"
+    },
+    "ios": {
+      "build": "0.25.0-iOS-20261011-193304-direct1-dual",
+      "ipa": "/Users/fan/project/app/husk_hyos/work/native-linux-nce/ios-direct-1/DroidOnDarwin-0.25.0.ipa",
+      "bytes": 473329160,
+      "sha256": "0a65e607c1d287e8bfebd7ec119a6b02d0289dd21386b8d2771511c1a4250dab",
+      "kernel_sha256": "86c2bbf4de239895c709c397df8fa8b0ffefefa3ff1af298aa4804b2cd18111f",
+      "device_execution": "pending",
+      "execution": {
+        "engine": "direct",
+        "cpus": 1,
+        "code_memory": "dual"
+      }
+    }
+  },
+  "preemption": {
+    "path": "work/native-linux-nce/translation-preemption-dual/summary.json",
+    "sha256": "b6fb993cb490082247ace60599601cb0937633d535a3ca1be29ddc2af0e6020d",
+    "scope": "Deterministic stop request from a successful data TLB fill; four ARM64 memory instructions",
+    "modes": {
+      "checked-fault": {
+        "runs": 20,
+        "returncodes": [
+          0
+        ]
+      },
+      "linux-fault": {
+        "runs": 20,
+        "returncodes": [
+          0
+        ]
+      },
+      "linux-stop": {
+        "runs": 20,
+        "returncodes": [
+          0
+        ]
+      },
+      "patched": {
+        "runs": 20,
+        "returncodes": [
+          0
+        ]
+      },
+      "stock": {
+        "runs": 1,
+        "returncodes": [
+          1
+        ]
+      }
+    }
+  }
+}

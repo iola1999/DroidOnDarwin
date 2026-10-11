@@ -7,7 +7,7 @@ struct SettingsView: View {
     let close: () -> Void
     let importRaw: () -> Void
     @AppStorage("performanceLogging") private var performance = false
-    @AppStorage("artNterp") private var nterp = false
+    @AppStorage("artNterp") private var nterp = RunConfiguration.translationCPUs > 0
     @AppStorage("artExpandedJIT") private var expandedJIT = false
     @AppStorage("artFastBaseline") private var fastBaseline = false
     @AppStorage("artAOT") private var aot = true
@@ -51,11 +51,13 @@ struct SettingsView: View {
                                 Toggle("汇编解释器", isOn: $nterp).disabled(session.active)
                                 Toggle("扩展 JIT 编译", isOn: $expandedJIT).disabled(session.active)
                                 Toggle("快速基线编译", isOn: $fastBaseline).disabled(session.active)
-                                Toggle("应用预编译代码", isOn: $aot).disabled(session.active)
-                                Toggle("公共启动镜像", isOn: $bootImage).disabled(session.active)
-                                Toggle("快速恢复数据页", isOn: $directFault).disabled(session.active)
-                                Toggle("连续数据页恢复", isOn: $faultPrefetch).disabled(session.active || !directFault)
-                                Toggle("稀疏页表扫描", isOn: $sparseScan).disabled(session.active)
+                                if RunConfiguration.translationCPUs == 0 {
+                                    Toggle("应用预编译代码", isOn: $aot).disabled(session.active)
+                                    Toggle("公共启动镜像", isOn: $bootImage).disabled(session.active)
+                                    Toggle("快速恢复数据页", isOn: $directFault).disabled(session.active)
+                                    Toggle("连续数据页恢复", isOn: $faultPrefetch).disabled(session.active || !directFault)
+                                    Toggle("稀疏页表扫描", isOn: $sparseScan).disabled(session.active)
+                                }
                                 Picker("调度时间片", selection: $schedulerSliceUS) {
                                     Text("系统默认").tag(0)
                                     ForEach([3000, 6000, 12000, 24000], id: \.self) { value in
@@ -63,8 +65,14 @@ struct SettingsView: View {
                                     }
                                 }.disabled(session.active)
                             } header: { Text("性能实验") } footer: {
-                                Text("汇编解释器使用 ART nterp；扩展 JIT 增加字符串和 MethodHandle 等路径的编译覆盖。快速基线编译优先用单遍编译器处理适用方法。应用预编译代码在包含对应产物时生效，关闭后使用解释器或 JIT。公共启动镜像复用系统类的初始化结果，需要匹配的构建。各项下次启动生效，可分别比较运行速度。")
+                                Text("汇编解释器使用 ART nterp；扩展 JIT 增加字符串和 MethodHandle 等路径的编译覆盖。快速基线编译优先用单遍编译器处理适用方法。各项下次启动生效。")
+                                if RunConfiguration.translationCPUs == 0 {
+                                    Text("应用预编译代码在包含对应产物时生效，关闭后使用解释器或 JIT。公共启动镜像复用系统类的初始化结果，需要匹配的构建。")
+                                }
                                 Text("较长的调度时间片可能减少切换，也可能增加其他任务的等待。")
+                            }
+                            if RunConfiguration.translationCPUs > 0 {
+                                TranslationSettings(active: session.active)
                             }
                             Section {
                                 Toggle("自动化测试", isOn: $automation).disabled(session.active)

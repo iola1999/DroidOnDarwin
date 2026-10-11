@@ -65,17 +65,29 @@ def audit_libraries(path):
 
 
 def main():
+    global OUT
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--rebuild-kernel', action='store_true')
+    parser.add_argument('--translation-report', type=Path, help='使用已验证的 Direct 完整桌面构建')
     parser.add_argument('--replace', action='store_true', help='替换未运行的本机生成包，保留用户数据')
     args = parser.parse_args()
     if platform.system() != 'Darwin' or platform.machine() != 'arm64':
         raise SystemExit('需要 Apple Silicon Mac')
+    if args.translation_report and args.rebuild_kernel:
+        parser.error('翻译变体由桌面验证记录指定内核')
     if args.rebuild_kernel:
         run(['python3', ROOT / 'scripts/probe_lkl.py', '--processes', '--graphics-angle',
              ROOT / 'work/angle-macos/prefix/lib'], timeout=1800,
             env={**os.environ, 'NCE_MM_MODE': 'demand', 'NCE_SYSTEM_SERVER_PROBE': '1'})
-    verified = validate_inputs()
+    translation = None
+    if args.translation_report:
+        from translation_package import prepare
+        cpu_count = json.loads(args.translation_report.read_text())['configuration']['cpus']
+        OUT = ROOT / f'work/native-linux-nce/macos-direct-{cpu_count}'
+        translation = prepare(args.translation_report, OUT, 'macos')
+        verified = translation['verified']
+    else:
+        verified = validate_inputs()
     local = [*[p for p in sorted((EXP / 'macos').glob('*')) if p.suffix in ('.h', '.mm', '.swift') and not p.name.endswith('Tests.mm')],
              *[p for p in sorted((EXP / "app").glob("*")) if p.suffix in (".h", ".mm", ".swift") and not p.name.endswith("Tests.mm")], ROOT / "scripts/package_native_linux_image.py", EXP / 'ios/Bridge.c', EXP / 'ios/Bridge.h', Path(__file__).resolve()]
     local += [ROOT / 'ACKNOWLEDGEMENTS.md', ROOT / 'src/app/Resources/Icon-mac.png']
@@ -87,7 +99,7 @@ def main():
             raise SystemExit(f'输出已存在，重新构建可使用 --replace：{app}')
         info_path = app / 'Contents/Info.plist'
         if app.is_symlink() or not info_path.is_file() or (
-                plistlib.loads(info_path.read_bytes()).get('CFBundleIdentifier') != 'app.droidondarwin.mac'):
+                plistlib.loads(info_path.read_bytes()).get('CFBundleIdentifier') != ('app.droidondarwin.mac' + (f'.direct{cpu_count}' if translation else ''))):
             raise SystemExit('输出目录不属于本工具生成的应用：' + str(app))
         opened = subprocess.run(['lsof', '-t', str(app / 'Contents/MacOS/DroidOnDarwin')],
                                 capture_output=True, text=True, timeout=15)
@@ -106,6 +118,8 @@ def main():
     minimum = max((re.search(r'\bminos (\S+)', subprocess.check_output(
         ['xcrun', 'vtool', '-show-build', lib], text=True)).group(1)
         for lib in libraries), key=lambda value: tuple(map(int, value.split('.'))))
+    if translation:
+        minimum = max((minimum, platform.mac_ver()[0]), key=lambda value: tuple(map(int, value.split('.'))))
     for source in libraries:
         target = frameworks / source.name
         shutil.copyfile(source, target)
@@ -123,7 +137,9 @@ def main():
     sources += [INPUT / 'payload.S', EXP / 'guest.S', EXP / 'graphics/host-graphics.cpp',
                 *[EXP / 'macos' / name for name in ('Display.mm', 'Storage.mm')]]
     sources += [EXP / "app/DeviceStore.mm", EXP / "ios/Bridge.c"]
-    objects = []
+    if translation:
+        sources = [EXP / name for name in ('macos/Display.mm', 'macos/Storage.mm', 'app/DeviceStore.mm', 'ios/Bridge.c')]
+    objects = [translation['library']] if translation else []
     with (OUT / 'build.log').open('w') as log:
         for index, source in enumerate(sources):
             obj = OUT / f'{index}-{source.stem}.o'
@@ -143,12 +159,17 @@ def main():
              '-framework', 'AppKit', '-framework', 'Metal', '-framework', 'QuartzCore',
              '-L', frameworks, '-lgfxstream_backend', '-Xlinker', '-rpath', '-Xlinker', '@executable_path/../Frameworks',
              '-o', executable], stdout=log, stderr=subprocess.STDOUT)
-    for name in ('lkl-image.bin', 'system.img', 'android-data-seed.img'):
-        run(['cp', '-c', INPUT / name, resources / name])
+    if translation:
+        from translation_package import install_resources
+        install_resources(translation, resources)
+    else:
+        for name in ('lkl-image.bin', 'system.img', 'android-data-seed.img'):
+            run(['cp', '-c', INPUT / name, resources / name])
     (resources / 'ResourceSizes.plist').write_bytes(plistlib.dumps({
         name: (resources / name).stat().st_size for name in ('lkl-image.bin', 'system.img', 'android-data-seed.img')}))
     from package_native_linux_image import write_runtime
-    write_runtime(resources)
+    if not translation:
+        write_runtime(resources)
     shutil.copyfile(ROOT / 'ACKNOWLEDGEMENTS.md', resources / 'Acknowledgements.md')
     iconset = OUT / 'AppIcon.iconset'
     iconset.mkdir(exist_ok=True)
@@ -160,6 +181,8 @@ def main():
                  '--out', iconset / f'icon_{size}x{size}{suffix}.png'], stdout=subprocess.DEVNULL)
     run(['iconutil', '-c', 'icns', iconset, '-o', resources / 'AppIcon.icns'])
     build = '0.25.0-Mac-' + datetime.now().astimezone().strftime('%Y%m%d-%H%M%S')
+    if translation:
+        build += f'-direct{cpu_count}-dual'
     info = {'CFBundleIdentifier': 'app.droidondarwin.mac', 'CFBundleExecutable': executable.name,
             'CFBundleName': 'DroidOnDarwin', 'CFBundleDisplayName': 'DroidOnDarwin', 'CFBundlePackageType': 'APPL',
             'CFBundleShortVersionString': '0.25.0', 'CFBundleVersion': '14', 'DroidOnDarwinBuildID': build,
@@ -167,6 +190,9 @@ def main():
             'CFBundleIconFile': 'AppIcon', 'LSMinimumSystemVersion': minimum,
             'LSArchitecturePriority': ['arm64'], 'NSHighResolutionCapable': True,
             'NSSupportsAutomaticTermination': False, 'NSSupportsSuddenTermination': False}
+    if translation:
+        info['CFBundleIdentifier'] += f'.direct{cpu_count}'
+        info['DroidOnDarwinTranslationCPUs'] = cpu_count
     info['UTExportedTypeDeclarations'] = [{'UTTypeIdentifier': 'app.droidondarwin.image', 'UTTypeConformsTo': ['com.apple.package'], 'UTTypeDescription': 'DroidOnDarwin Image', 'UTTypeTagSpecification': {'public.filename-extension': ['droidimage']}}]
     (contents / 'Info.plist').write_bytes(plistlib.dumps(info))
     entitlements = OUT / 'DroidOnDarwin.entitlements'

@@ -81,7 +81,7 @@ final class MacEnvironment {
             return args[index + 1]
         }
         let base = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
-            .appendingPathComponent("app.droidondarwin.mac", isDirectory: true)
+            .appendingPathComponent(Bundle.main.bundleIdentifier ?? "app.droidondarwin.mac", isDirectory: true)
         let root = value("--data-directory").map { URL(fileURLWithPath: $0, isDirectory: true) } ?? base
         let resources = value("--resources").map { URL(fileURLWithPath: $0, isDirectory: true) } ?? Bundle.main.resourceURL!
         libraryPID = value("--library-pid").flatMap(Int32.init)

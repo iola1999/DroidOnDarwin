@@ -281,6 +281,8 @@ def main():
     parser.add_argument('--build-only', action='store_true')
     parser.add_argument('--reuse-engine-build', action='store_true', help='校验摘要后复用已构建的 Unicorn，用于执行器成组对照')
     parser.add_argument('--mapping', choices=('window', 'pte'), default='window')
+    parser.add_argument('--data-seed', type=Path, help='服务和桌面检查使用的初始 ext4 数据盘')
+    parser.add_argument('--persistent-data', action='store_true', help='各入口与重复轮次连续使用同一数据盘，检查重启持久化')
     parser.add_argument('--workload', choices=('core', 'android', 'services', 'desktop'), default='core')
     parser.add_argument('--entry', choices=('both', 'cli', 'gcd', 'window'), default='both')
     parser.add_argument('--art-nterp', type=int, choices=(0, 1), default=1)
@@ -477,16 +479,11 @@ def main():
                              ('ld.config.txt', EXP / 'art/ld.config.txt')]:
             shutil.copyfile(source, out / name)
             android_files.append(out / name)
-        for name in ('art-nterp', 'art-expanded-jit', 'art-fast-baseline'):
-            (out / name).write_text(str(getattr(args, name.replace('-', '_'))))
-            android_files.append(out / name)
         android_files.append(KERNEL / 'system.img')
         if args.workload in ('services', 'desktop'):
             for name in ('nce-policy.cil', 'property_info'):
                 shutil.copyfile(KERNEL / name, out / name)
                 android_files.append(out / name)
-            (out / 'disabled').write_text('0')
-            android_files.append(out / 'disabled')
             (out / 'enabled').write_text('1')
             android_files.append(out / 'enabled')
     if hosts_before != {mode: sha(out / mode) for mode in hosts_before}:
@@ -505,12 +502,24 @@ def main():
                   EXP / 'lkl-nce-mmu.c', kernel / 'build.json']
     if args.cpus == 2:
         files += [EXP / 'translation/smp-guest.c', ROOT / 'scripts/lkl_translation_smp_patch.py']
+    data_seed = None
+    if args.data_seed and args.workload not in ('services', 'desktop'):
+        parser.error('--data-seed 仅用于服务和桌面检查')
+    if args.persistent_data and (args.workload != 'desktop' or args.repeat * len(entries) < 2):
+        parser.error('--persistent-data 需要至少两轮桌面运行')
+    if args.workload in ('services', 'desktop'):
+        data_seed = (args.data_seed or KERNEL / 'android-data-seed.img').resolve()
+        if not data_seed.is_relative_to(WORK) or not data_seed.is_file():
+            parser.error('初始数据盘必须是 work/native-linux-nce 中的文件')
+        files.append(data_seed)
     input_hashes = {str(path.relative_to(ROOT)): sha(path) for path in files}
     if args.build_only:
         print(out)
         return
     environment = os.environ.copy()
     environment['NCE_TRANSLATION_FILES'] = str(out)
+    environment.update(NCE_ART_NTERP=str(args.art_nterp), NCE_ART_EXPANDED_JIT=str(args.art_expanded_jit),
+                       NCE_ART_FAST_BASELINE=str(args.art_fast_baseline), NCE_ART_AOT='0', NCE_ART_BOOT_IMAGE='0', NCE_SCHED_SLICE_US='0')
     environment['NCE_TRANSLATION_BATCH'] = str(args.batch_instructions)
     environment['NCE_TRANSLATION_PARALLEL_PROFILE'] = str(args.parallel_profile)
     environment['NCE_TRANSLATION_UACCESS_STOP'] = args.smp_uaccess_stop
@@ -538,13 +547,16 @@ def main():
             stem = f'{mode}-{iteration}'
             data = None
             if args.workload in ('services', 'desktop'):
-                data_path = out / f'{stem}-data.img'
-                with data_path.open('wb') as image:
-                    image.truncate(512 * 1024 * 1024)
-                run(['/opt/homebrew/opt/e2fsprogs/sbin/mke2fs', '-F', '-q', '-t', 'ext4', '-b', '4096',
-                     '-E', 'lazy_itable_init=0,lazy_journal_init=0', data_path])
+                data_path = out / ('persistent-data.img' if args.persistent_data else f'{stem}-data.img')
+                if data_path.resolve() == data_seed:
+                    parser.error('初始盘不能同时作为运行期间的数据盘')
+                fresh = not args.persistent_data or not results
+                if fresh:
+                    run(['cp', '-c', data_seed, data_path])
                 environment['NCE_TRANSLATION_DATA'] = str(data_path)
-                data = {'path': str(data_path.relative_to(ROOT)), 'initial_sha256': sha(data_path), 'fresh': True}
+                data = {'path': str(data_path.relative_to(ROOT)), 'initial_sha256': sha(data_path), 'fresh': fresh}
+                if not fresh and data['initial_sha256'] != results[-1]['data_image']['final_sha256']:
+                    raise RuntimeError('连续运行的数据盘在两轮之间变化')
             with (out / f'{stem}.jsonl').open('w') as output, (out / f'{stem}.log').open('w') as error:
                 try:
                     process = subprocess.run([out / mode, kernel / 'lkl-image.bin'], env=environment,
@@ -562,6 +574,9 @@ def main():
                                           re.search(r'^Filesystem state:\s+clean$', metadata.stdout, re.M) is not None and
                                           'needs_recovery' not in metadata.stdout and 'orphan_present' not in metadata.stdout)
                 passed = passed and data['clean_shutdown']
+                if not data['fresh']:
+                    persisted = {row.get('test') for row in rows if row.get('passed') and row.get('restored')}
+                    passed = passed and {'android_application_data_persistence', 'android_keystore_persistence'} <= persisted
             results.append({'entry': mode, 'iteration': iteration, 'returncode': returncode, 'results': rows,
                             'validated': passed, 'data_image': data,
                             'stdout_sha256': sha(out / f'{stem}.jsonl'), 'stderr_sha256': sha(out / f'{stem}.log')})
@@ -572,6 +587,7 @@ def main():
     if input_hashes != {str(path.relative_to(ROOT)): sha(path) for path in files}:
         raise SystemExit('本轮验证期间源码或二进制发生变化，请重跑')
     report = {'scope': f'Native {args.cpus}-CPU LKL with translated ARM64 userspace; selected workload only; iPhone unverified',
+              'data_seed': {'path': str(data_seed.relative_to(ROOT)), 'sha256': sha(data_seed)} if data_seed else None,
               'platform': platform.platform(), 'cpu': subprocess.check_output(['sysctl', '-n', 'machdep.cpu.brand_string'], text=True).strip(),
               'system_build': subprocess.check_output(['sw_vers', '-buildVersion'], text=True).strip(),
               'dependency': dependency, 'commands': commands, 'host_unchanged_after_guest_build': True,

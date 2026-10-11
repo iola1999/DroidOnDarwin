@@ -67,6 +67,12 @@ final class LocalRuntime: SessionRuntime {
                     setenv("NCE_SYSTEM_IMAGE", target.resources.appendingPathComponent("system.img").path, 1)
                     setenv("NCE_DESKTOP", "1", 1)
                     setenv("NCE_MM_MODE", "demand", 1)
+                    if configuration.translation != nil {
+                        setenv("NCE_TRANSLATION_FILES", (Bundle.main.resourceURL ?? target.resources).appendingPathComponent("Translation").path, 1)
+                        setenv("NCE_TRANSLATION_SYSTEM", target.resources.appendingPathComponent("system.img").path, 1)
+                        setenv("NCE_TRANSLATION_DATA", prepared.disk.path, 1)
+                        setenv("NCE_TRANSLATION_WORKLOAD", "desktop", 1)
+                    }
                     for key in RunConfiguration.environmentKeys {
                         unsetenv(key)
                     }
@@ -98,8 +104,9 @@ final class LocalRuntime: SessionRuntime {
         jitTimer = nil
         event?(.booting)
         // 客体会切换线程与栈；核心调用始终在 Swift 主线程以外执行。
+        let kernelResources = RunConfiguration.translationCPUs > 0 ? (Bundle.main.resourceURL ?? target.resources) : target.resources
         DispatchQueue.global(qos: .userInitiated).async {
-            let result = nce_lkl_run(target.resources.appendingPathComponent("lkl-image.bin").path)
+            let result = nce_lkl_run(kernelResources.appendingPathComponent("lkl-image.bin").path)
             fflush(stdout)
             fflush(stderr)
             DispatchQueue.main.async { self.finish(result == 0 ? nil : "Android 运行失败，请查看日志") }

@@ -17,6 +17,7 @@ extern int nce_wait_debugger_detach(unsigned timeout_ms);
 #ifdef NCE_GRAPHICS
 #include "graphics/host-graphics.h"
 #include "input.h"
+#include "session.h"
 #endif
 #include <libkern/OSCacheControl.h>
 #include <mach/mach.h>
@@ -78,6 +79,17 @@ static void put_file(const char *guest, const char *file)
     REQUIRE(!ferror(input) && fclose(input) == 0);
     args[0] = fd;
     REQUIRE(call(57, args) == 0);
+}
+
+static void put_text(const char *path, const char *value)
+{
+    long args[6] = {-100, (long)path, 0x241, 0644};
+    long fd = call(56, args);
+    REQUIRE(fd >= 0);
+    args[0] = fd;
+    args[1] = (long)value;
+    args[2] = strlen(value);
+    REQUIRE(call(64, args) == args[2] && call(57, args) == 0);
 }
 
 static void block_device(const char *description, const char *path, unsigned mode)
@@ -151,13 +163,21 @@ static void android_setup(int services, int desktop)
         long permissions[6] = {-100, (long)"/data", 0771};
         REQUIRE(call(53, permissions) == 0);
         directory("/data/nce");
+        /* Session flags and generated fixtures have the same lifetime as the
+         * kernel. Android application data remains on the ext4 mount. */
+        long temporary[6] = {(long)"tmpfs", (long)"/data/nce", (long)"tmpfs", 0, (long)"mode=0755"};
+        REQUIRE(call(40, temporary) == 0);
         directory("/data/dalvik-cache");
         directory("/data/dalvik-cache/arm64");
         put_file("/data/nce/nce-policy.cil", "nce-policy.cil");
         put_file("/data/nce/property_info", "property_info");
-        put_file("/data/nce/art-aot", "disabled");
-        put_file("/data/nce/art-boot-image", "disabled");
-        put_file("/data/nce/art-compiler-profile", "disabled");
+        put_text("/data/nce/art-aot", "0");
+        put_text("/data/nce/art-boot-image", "0");
+        put_text("/data/nce/art-compiler-profile", "0");
+        if (desktop && getenv("NCE_DESKTOP"))
+            put_text("/data/nce/desktop-session", "");
+        if (desktop && getenv("NCE_DIAGNOSTICS"))
+            put_text("/data/nce/diagnostics", "");
         if (desktop) {
             put_file("/data/nce/system-server-probe", "enabled");
             put_file("/data/nce/graphics", "enabled");
@@ -167,10 +187,17 @@ static void android_setup(int services, int desktop)
     put_file("/linkerconfig/ld.config.txt", "ld.config.txt");
     put_file("/data/nce/NceWorkload.dex", "NceWorkload.dex");
     const char *settings[] = {"art-nterp", "art-expanded-jit", "art-fast-baseline"};
+    const char *environment[] = {"NCE_ART_NTERP", "NCE_ART_EXPANDED_JIT", "NCE_ART_FAST_BASELINE"};
+    const char *names[] = {"art_nterp", "art_expanded_jit", "art_fast_baseline"};
     for (unsigned i = 0; i < sizeof(settings) / sizeof(*settings); ++i) {
         char path[128];
         REQUIRE(snprintf(path, sizeof(path), "/data/nce/%s", settings[i]) < (int)sizeof(path));
-        put_file(path, settings[i]);
+        const char *value = getenv(environment[i]);
+        if (!value)
+            value = "0";
+        REQUIRE(!strcmp(value, "0") || !strcmp(value, "1"));
+        put_text(path, value);
+        printf("{\"config\":\"%s\",\"requested\":%s}\n", names[i], value);
     }
 }
 
@@ -288,6 +315,28 @@ static int detach_preparation(void)
 int nce_lkl_run(const char *path)
 {
     setvbuf(stdout, NULL, _IOLBF, 0);
+    unsigned long scheduler_slice_us = 0;
+    const char *slice_text = getenv("NCE_SCHED_SLICE_US");
+    if (slice_text) {
+        char *end;
+        errno = 0;
+        scheduler_slice_us = strtoul(slice_text, &end, 10);
+        if (errno || slice_text[0] < '0' || slice_text[0] > '9' || *end ||
+            (scheduler_slice_us && (scheduler_slice_us < 100 || scheduler_slice_us > 100000))) {
+            puts("{\"result\":\"failed\",\"reason\":\"scheduler_slice_invalid\"}");
+            detach_preparation();
+            return 1;
+        }
+    }
+    const char *art_assets[] = {"NCE_ART_AOT", "NCE_ART_BOOT_IMAGE"};
+    for (unsigned i = 0; i < sizeof(art_assets) / sizeof(*art_assets); ++i) {
+        const char *value = getenv(art_assets[i]);
+        if (value && strcmp(value, "0")) {
+            puts("{\"result\":\"failed\",\"reason\":\"translation_art_assets_unavailable\"}");
+            detach_preparation();
+            return 1;
+        }
+    }
     const char *interval_text = getenv("NCE_TRANSLATION_MEMORY_MS");
     char *end = NULL;
     unsigned long interval = interval_text ? strtoul(interval_text, &end, 10) : 100;
@@ -361,7 +410,9 @@ int nce_lkl_run(const char *path)
     }
     REQUIRE(init(&nce_lkl_host) == 0);
     unsigned long slice;
-    REQUIRE(start(0, &slice) == 0);
+    REQUIRE(start(scheduler_slice_us * 1000, &slice) == 0);
+    REQUIRE(slice && (!scheduler_slice_us || slice == scheduler_slice_us * 1000));
+    printf("{\"config\":\"linux_scheduler_slice\",\"requested_us\":%lu,\"applied_ns\":%lu}\n", scheduler_slice_us, slice);
     printf("{\"phase\":\"translated_linux_boot\",\"slice_ns\":%lu}\n", slice);
     memory_sample("kernel_ready");
     translation_memory_phase("guest_setup");
@@ -392,6 +443,7 @@ int nce_lkl_run(const char *path)
             if (desktop) {
                 REQUIRE(nce_graphics_start(call) == 0);
                 nce_host_input_start(call);
+                nce_session_set_syscall(call);
             }
 #else
             REQUIRE(!desktop);
@@ -400,6 +452,7 @@ int nce_lkl_run(const char *path)
             failed = run_program("/system/bin/android-services-test", 1);
 #ifdef NCE_GRAPHICS
             if (desktop) {
+                nce_session_set_syscall(NULL);
                 nce_host_input_stop();
                 nce_graphics_stop();
             }
@@ -420,6 +473,8 @@ int nce_lkl_run(const char *path)
         // Complete ext4 writes while the Linux worker threads are still running.
         long readonly[6] = {0, (long)"/data", 0, 1 | 32};
         REQUIRE(call(40, readonly) == 0);
+        long temporary[6] = {(long)"/data/nce", 0};
+        REQUIRE(call(39, temporary) == 0);
         long unmount[6] = {(long)"/data", 0};
         REQUIRE(call(39, unmount) == 0);
         puts("{\"test\":\"linux_data_readonly_shutdown\",\"passed\":true}");

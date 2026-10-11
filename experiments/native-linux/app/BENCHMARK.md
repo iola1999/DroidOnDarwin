@@ -96,3 +96,13 @@ ART 编译过滤日志在每类计数达到 1、2、4、8… 时输出，前两�
 脚本从目标 App 查询默认配置，随后覆盖 matrix 指定的参数。Mac 入口为 `--benchmark-configuration`，iPhone 状态文件包含 `configuration_defaults`；脚本没有另一份默认值。新增参数只在支持该参数的构建中运行，旧构建返回明确错误。快速基线编译的配置键为 `fastBaseline`，默认关闭；可与 `nterp`、`expandedJIT` 分别对照。按需开启性能日志时，`NCE_ART_FAST_BASELINE` 按编译线程报告已安装方法数量的下限，分析时不合并不同运行或线程的计数。
 
 iPhone 状态查询可使用 `droidondarwin://benchmark-status?requestID=<UUID>`；响应原样返回规范化的 `requestID`。脚本通过编号确认本次响应，手机与 Mac 的时钟差异不会影响判断。App 仍在加载设备时会在加载完成后写出响应；状态中的 active 包括已接受、尚未开始的实验。
+
+### Direct 构建变体
+
+Direct 应用由 `--translation-report` 指定完整桌面验证记录，macOS/iOS 使用独立构建目录和包标识。`Runtime.json` 的 `execution` 记录 `engine`、`cpus` 和 `code_memory`；CPU 数量与内核构建匹配。当前翻译变体使用平坦地址转换、定时抢占和按页缓存失效，nterp、代码页写入跟踪及跨页访存默认开启。
+
+打包报告须包含 CLI/GCD 完整桌面检查，以及 `probe_lkl_translation.py --persistent-data` 的同一数据盘重启检查。每轮记录初始与最终摘要，第二轮起确认应用数据和密钥已恢复。包内初始盘使用报告的 `data_seed`；首次运行从该盘创建设备数据，后续启动继续使用设备数据盘。
+
+查询该变体的默认配置会额外返回 `translation` 对象，包含 `cacheMiB`、`codeWatch`、`crossPage`、`reuseCodeChecks`、`routeEpochs`、`retainRoutes`、`memoryGroups` 和 `vectorTable`。`cacheMiB` 可取 16、64、128，分别应用到每个 CPU 的 Direct 与 Unicorn 缓存。跨调用复用只用于单核，并要求代码页写入跟踪和跳转序号检查。应用启动前校验依赖，运行期间不能修改。
+
+matrix 可以覆盖 `translation` 中的部分字段，例如 `{"name":"code-watch-off","parameters":{"translation":{"codeWatch":false}}}`。驱动从 App 查询完整默认对象，再覆盖指定字段；未知字段与类型错误在启动前返回。原生构建收到翻译缓存参数时也会返回配置错误。当前翻译变体关闭应用 AOT 和 boot image；开启请求需要匹配产物，现有变体会拒绝此请求。

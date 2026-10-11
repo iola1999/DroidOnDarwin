@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """验证翻译块边界停止，并用原版入口复现指令状态不一致。"""
+import argparse
 import hashlib
 import json
 import subprocess
@@ -9,11 +10,14 @@ from build_translation_engine import build, ROOT, WORK
 
 
 def main():
-    dependency = build()
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--code-memory', choices=('map-jit', 'dual'), default='map-jit')
+    args = parser.parse_args()
+    dependency = build(args.code_memory)
     patched = Path(dependency['path'])
     stock = Path(subprocess.check_output([WORK / 'user-translation-venv/bin/python', '-c',
         'import pathlib,unicorn; assert unicorn.__version__=="2.1.4"; print(pathlib.Path(unicorn.__file__).parent)'], text=True).strip())
-    out = WORK / 'translation-preemption'
+    out = WORK / ('translation-preemption-dual' if args.code_memory == 'dual' else 'translation-preemption')
     out.mkdir(exist_ok=True)
     (out / 'summary.json').unlink(missing_ok=True)
     source = ROOT / 'experiments/native-linux/translation/preemption-test.c'
@@ -23,6 +27,12 @@ def main():
                          ('checked-fault', patched), ('linux-fault', patched)]:
         command = ['xcrun', 'clang', '-O2', '-g', '-Wall', '-Wextra', '-Werror', '-I', prefix / 'include',
                    source, prefix / 'lib/libunicorn.a', '-o', out / mode]
+        if args.code_memory == 'dual' and mode != 'stock':
+            native = ROOT / 'experiments/native-linux'
+            support = [native / name for name in ('translation/unicorn-code-memory.c', 'code-memory.c', 'execute-check.c')]
+            command += ['-I', native, *support]
+            for path in [*support, *[native / name for name in ('translation/unicorn-code-memory.h', 'code-memory.h', 'execute-check.h', 'nce.h', 'guest-registers.h')]]:
+                hashes[str(path.relative_to(ROOT))] = hashlib.sha256(path.read_bytes()).hexdigest()
         if mode == 'stock':
             command += ['-DTEST_STOCK_STOP']
         if mode.startswith('linux-'):

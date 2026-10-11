@@ -90,6 +90,27 @@ def measure(result):
     return metrics
 
 
+def parameter_values_valid(parameters):
+    return isinstance(parameters, dict) and all(
+        (key == 'translation' and isinstance(value, dict) and value and all(type(item) in (bool, int) for item in value.values()))
+        or (key != 'translation' and type(value) in (bool, int)) for key, value in parameters.items())
+
+
+def merge_parameters(defaults, requested):
+    unknown = set(requested) - defaults.keys()
+    if unknown:
+        raise ValueError('App 尚未实现这些参数：' + ', '.join(sorted(unknown)))
+    result = dict(defaults)
+    for key, value in requested.items():
+        if type(value) is not type(defaults[key]):
+            raise ValueError('参数类型与 App 不一致：' + key)
+        if key == 'translation':
+            result[key] = merge_parameters(defaults[key], value)
+        else:
+            result[key] = value
+    return result
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--platform', choices=['macos', 'ios'], default='macos')
@@ -116,7 +137,7 @@ def main():
         if set(variant) != {'name', 'parameters'} or variant['name'] in names:
             parser.error('配置需要唯一 name 和 parameters')
         names.add(variant['name'])
-        if any(type(v) not in (bool, int) for v in variant['parameters'].values()):
+        if not parameter_values_valid(variant['parameters']):
             parser.error('性能参数必须是布尔值或整数')
         if variant['parameters'].get('diagnostics'):
             parser.error('普通桌面性能实验需要关闭 diagnostics')
@@ -150,20 +171,20 @@ def main():
         report['host_cpu'] = subprocess.check_output(['sysctl', '-n', 'machdep.cpu.brand_string'], text=True).strip()
         with (args.app / 'Contents/MacOS/DroidOnDarwin').open('rb') as stream:
             report['executable_sha256'] = hashlib.file_digest(stream, 'sha256').hexdigest()
-    if not isinstance(defaults, dict) or not defaults or any(type(v) not in (bool, int) for v in defaults.values()):
+    if not defaults or not parameter_values_valid(defaults):
         raise SystemExit('App 未返回有效的默认参数；请更新 App 与实验脚本')
     for variant in matrix['configurations']:
-        if unknown := set(variant['parameters']) - defaults.keys():
-            raise SystemExit('App 尚未实现这些参数：' + ', '.join(sorted(unknown)))
-        if mismatched := [name for name, value in variant['parameters'].items() if type(value) is not type(defaults[name])]:
-            raise SystemExit('参数类型与 App 不一致：' + ', '.join(sorted(mismatched)))
+        try:
+            merge_parameters(defaults, variant['parameters'])
+        except ValueError as error:
+            raise SystemExit(str(error)) from error
     report['app_configuration_defaults'] = defaults
     args.device_id = str(uuid.UUID(args.device_id)).upper()
     for repeat in range(args.repeat):
         order = matrix['configurations'] if repeat % 2 == 0 else list(reversed(matrix['configurations']))
         for variant in order:
             run_id = str(uuid.uuid4()).upper()
-            request = dict(version=1, runID=run_id, deviceID=args.device_id, configuration={**defaults, **variant['parameters']},
+            request = dict(version=1, runID=run_id, deviceID=args.device_id, configuration=merge_parameters(defaults, variant['parameters']),
                            actions=matrix['actions'], timeoutSeconds=args.timeout, memorySampling=not args.no_memory_sampling)
             request_file = folder / (run_id + '-request.json')
             save(request_file, request)

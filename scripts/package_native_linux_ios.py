@@ -27,49 +27,65 @@ def plist(path, value):
 
 
 def main():
+    global OUT
     parser = argparse.ArgumentParser()
     parser.add_argument('--rebuild-kernel', action='store_true')
+    parser.add_argument('--translation-report', type=Path, help='使用已验证的 Direct 完整桌面构建')
     args = parser.parse_args()
-    if args.rebuild_kernel or not (INPUT / 'lkl-summary.json').exists():
-        run(['python3', ROOT / 'scripts/probe_lkl.py', '--processes', '--graphics-angle', ROOT / 'work/angle-macos/prefix/lib'],
-            env={**os.environ, 'NCE_MM_MODE': 'demand', 'NCE_SYSTEM_SERVER_PROBE': '1'}, timeout=1800)
-    # A package must contain the kernel and fixtures that passed the host run.
-    summary = json.loads((INPUT / 'lkl-summary.json').read_text())
-    for name, digest in summary['input_sha256'].items():
-        if hashlib.sha256((ROOT / name).read_bytes()).hexdigest() != digest:
-            raise SystemExit(f'{name} changed; run with --rebuild-kernel')
-    if hashlib.sha256((INPUT / 'lkl-image.bin').read_bytes()).hexdigest() != summary['kernel_sha256']:
-        raise SystemExit('Kernel image does not match the validated manifest')
-    for name, digest in summary['generated_sha256'].items():
-        if hashlib.sha256((INPUT / name).read_bytes()).hexdigest() != digest:
-            raise SystemExit(f'{name} does not match the validated manifest')
-    if not any(r.get('test') == 'linux_native_gles_shader_frames' and r.get('passed')
-               for r in summary['results']):
-        raise SystemExit('Run the graphics-enabled Linux probe before packaging')
-    for mode in ('results', 'dispatch_results'):
-        records = summary.get(mode, [])
-        if not any(r.get('phase') == 'linux_mapping_policy' and r.get('mode') == 'demand' for r in records):
-            raise SystemExit('Desktop package requires demand mapping validation: ' + mode)
-        passed = {r.get('test') for r in records if r.get('passed')}
-        required = {'android_vold_user_storage', 'android_system_boot_completed',
-                    'android_application_data_persistence', 'android_keystore_persistence',
-                    'android_desktop_launch_commands', 'android_system_process_groups_stopped',
-                    'linux_data_readonly_shutdown', 'android_clock_controls_ready',
-                    'android_clock_alarm_activity', 'android_preview_clock_data_preserved'}
-        if missing := required - passed:
-            raise SystemExit(f'Desktop validation missing in {mode}: {sorted(missing)}')
-        visible = {r.get('package') for r in records
-                   if r.get('test') == 'android_desktop_visible_activity' and r.get('passed')}
-        if not {'com.android.launcher3', 'com.android.deskclock',
-                'com.google.android.documentsui'} <= visible:
-            raise SystemExit('Desktop application pixels were not checked: ' + mode)
-    for test in ('android_application_data_persistence', 'android_keystore_persistence'):
-        if not any(r.get('test') == test and r.get('passed') and r.get('restored')
-                   for r in summary['dispatch_results']):
-            raise SystemExit('Restart persistence was not checked: ' + test)
-    for name, digest in summary['graphics_libraries_sha256'].items():
-        if hashlib.sha256(Path(name).read_bytes()).hexdigest() != digest:
-            raise SystemExit('Host graphics changed; rerun the graphics probe: ' + name)
+    translation = None
+    if args.translation_report:
+        if args.rebuild_kernel:
+            parser.error('翻译变体由桌面验证记录指定内核')
+        from translation_package import prepare
+        cpu_count = json.loads(args.translation_report.read_text())['configuration']['cpus']
+        OUT = ROOT / f'work/native-linux-nce/ios-direct-{cpu_count}'
+        translation = prepare(args.translation_report, OUT, 'ios')
+        report = json.loads(args.translation_report.read_text())
+        summary = {'kernel_sha256': translation['metadata']['build']['kernel_sha256'],
+                   'generated_sha256': {name: hashlib.sha256(path.read_bytes()).hexdigest() for name, path in translation['files'].items()},
+                   'results': next(run['results'] for run in report['runs'] if run['entry'] == 'cli'),
+                   'dispatch_results': next(run['results'] for run in report['runs'] if run['entry'] == 'gcd')}
+    else:
+        if args.rebuild_kernel or not (INPUT / 'lkl-summary.json').exists():
+            run(['python3', ROOT / 'scripts/probe_lkl.py', '--processes', '--graphics-angle', ROOT / 'work/angle-macos/prefix/lib'],
+                env={**os.environ, 'NCE_MM_MODE': 'demand', 'NCE_SYSTEM_SERVER_PROBE': '1'}, timeout=1800)
+        # A package must contain the kernel and fixtures that passed the host run.
+        summary = json.loads((INPUT / 'lkl-summary.json').read_text())
+        for name, digest in summary['input_sha256'].items():
+            if hashlib.sha256((ROOT / name).read_bytes()).hexdigest() != digest:
+                raise SystemExit(f'{name} changed; run with --rebuild-kernel')
+        if hashlib.sha256((INPUT / 'lkl-image.bin').read_bytes()).hexdigest() != summary['kernel_sha256']:
+            raise SystemExit('Kernel image does not match the validated manifest')
+        for name, digest in summary['generated_sha256'].items():
+            if hashlib.sha256((INPUT / name).read_bytes()).hexdigest() != digest:
+                raise SystemExit(f'{name} does not match the validated manifest')
+        if not any(r.get('test') == 'linux_native_gles_shader_frames' and r.get('passed')
+                   for r in summary['results']):
+            raise SystemExit('Run the graphics-enabled Linux probe before packaging')
+        for mode in ('results', 'dispatch_results'):
+            records = summary.get(mode, [])
+            if not any(r.get('phase') == 'linux_mapping_policy' and r.get('mode') == 'demand' for r in records):
+                raise SystemExit('Desktop package requires demand mapping validation: ' + mode)
+            passed = {r.get('test') for r in records if r.get('passed')}
+            required = {'android_vold_user_storage', 'android_system_boot_completed',
+                        'android_application_data_persistence', 'android_keystore_persistence',
+                        'android_desktop_launch_commands', 'android_system_process_groups_stopped',
+                        'linux_data_readonly_shutdown', 'android_clock_controls_ready',
+                        'android_clock_alarm_activity', 'android_preview_clock_data_preserved'}
+            if missing := required - passed:
+                raise SystemExit(f'Desktop validation missing in {mode}: {sorted(missing)}')
+            visible = {r.get('package') for r in records
+                       if r.get('test') == 'android_desktop_visible_activity' and r.get('passed')}
+            if not {'com.android.launcher3', 'com.android.deskclock',
+                    'com.google.android.documentsui'} <= visible:
+                raise SystemExit('Desktop application pixels were not checked: ' + mode)
+        for test in ('android_application_data_persistence', 'android_keystore_persistence'):
+            if not any(r.get('test') == test and r.get('passed') and r.get('restored')
+                       for r in summary['dispatch_results']):
+                raise SystemExit('Restart persistence was not checked: ' + test)
+        for name, digest in summary['graphics_libraries_sha256'].items():
+            if hashlib.sha256(Path(name).read_bytes()).hexdigest() != digest:
+                raise SystemExit('Host graphics changed; rerun the graphics probe: ' + name)
     angle_build = json.loads((ROOT / 'build/ios-arm64/sysroot/angle-manifest.json').read_text())
     if hashlib.sha256(Path(angle_build['library']).read_bytes()).hexdigest() != angle_build['sha256']:
         raise SystemExit('ANGLE library does not match its build manifest')
@@ -103,9 +119,22 @@ def main():
     with (OUT / 'log-reader-test.log').open('w') as log:
         run([OUT / 'log-reader-test'], stdout=log)
     from package_native_linux_image import write_runtime
-    write_runtime(OUT)
-    plist(OUT / 'ResourceSizes.plist', {name: (INPUT / name).stat().st_size for name in ('lkl-image.bin', 'system.img', 'android-data-seed.img')})
+    resource_input = INPUT
+    if translation:
+        from translation_package import install_resources
+        resource_input = OUT / 'Resources'
+        if resource_input.exists():
+            shutil.rmtree(resource_input)
+        resource_input.mkdir()
+        install_resources(translation, resource_input)
+        shutil.copyfile(resource_input / 'Runtime.json', OUT / 'Runtime.json')
+    else:
+        write_runtime(OUT)
+    plist(OUT / 'ResourceSizes.plist', {name: (resource_input / name).stat().st_size for name in ('lkl-image.bin', 'system.img', 'android-data-seed.img')})
     build_id = REVISION + '-iOS-' + time.strftime('%Y%m%d-%H%M%S')
+    if translation:
+        build_id += f'-direct{cpu_count}-dual'
+    bundle_id = 'app.droidondarwin.ios' + (f'.direct{cpu_count}' if translation else '')
     info = plistlib.loads((ROOT / 'src/app/Info.plist').read_bytes())
     for key in ['CFBundleIcons', 'CFBundleIcons~ipad', 'DroidOnDarwinPerformanceBuild']:
         info.pop(key, None)
@@ -115,6 +144,8 @@ def main():
                     'UIInterfaceOrientationPortraitUpsideDown',
                     'UIInterfaceOrientationLandscapeLeft', 'UIInterfaceOrientationLandscapeRight'],
                 CFBundleShortVersionString='0.25.0', CFBundleVersion='94')
+    if translation:
+        info['DroidOnDarwinTranslationCPUs'] = cpu_count
     info['UTExportedTypeDeclarations'] = [{'UTTypeIdentifier': 'app.droidondarwin.image', 'UTTypeConformsTo': ['com.apple.package'], 'UTTypeDescription': 'DroidOnDarwin Image', 'UTTypeTagSpecification': {'public.filename-extension': ['droidimage']}}]
     info['CFBundleURLTypes'] = [{'CFBundleURLName': 'app.droidondarwin.benchmark', 'CFBundleURLSchemes': ['droidondarwin']}]
     plist(OUT / 'Info.plist', info)
@@ -125,21 +156,29 @@ def main():
     # Deployment entitlements are supplied by iLoader. This ad-hoc signature is
     # for archive integrity; get-task-allow is needed by the in-app JIT helper.
     plist(OUT / 'DroidOnDarwin.entitlements', {'get-task-allow': True})
-    sources = [{'path': str(EXP / name)} for name in
-               ['lkl-main.c', 'lkl-host.c', 'lkl-process-host.c', 'nce-cpu.c', 'programs.c', 'memory.c', 'code-memory.c', 'execute-check.c', 'compute.c', 'input.c', 'session.c', 'nce.c', 'nce-thread.c', 'entry.S',
-                'ios/Bridge.c', 'ios/NativeLinuxApp.swift', 'ios/Display.swift', 'ios/JITSettingsView.swift', 'app/DeviceStore.mm', 'macos/Storage.mm', 'graphics/host-graphics.cpp']]
-    sources += [{'path': str(path)} for path in sorted((EXP / 'app').glob('*.swift'))]
-    sources += [{'path': str(EXP / 'guest.S'), 'compilerFlags': ['-DNATIVE']}]
-    sources += [{'path': str(INPUT / 'payload.S')}]
+    if translation:
+        sources = [{'path': str(EXP / name)} for name in
+                   ('ios/Bridge.c', 'ios/NativeLinuxApp.swift', 'ios/Display.swift', 'ios/JITSettingsView.swift',
+                    'app/DeviceStore.mm', 'macos/Storage.mm')]
+        sources += [{'path': str(path)} for path in sorted((EXP / 'app').glob('*.swift'))]
+    else:
+        sources = [{'path': str(EXP / name)} for name in
+                   ['lkl-main.c', 'lkl-host.c', 'lkl-process-host.c', 'nce-cpu.c', 'programs.c', 'memory.c', 'code-memory.c', 'execute-check.c', 'compute.c', 'input.c', 'session.c', 'nce.c', 'nce-thread.c', 'entry.S',
+                    'ios/Bridge.c', 'ios/NativeLinuxApp.swift', 'ios/Display.swift', 'ios/JITSettingsView.swift', 'app/DeviceStore.mm', 'macos/Storage.mm', 'graphics/host-graphics.cpp']]
+        sources += [{'path': str(path)} for path in sorted((EXP / 'app').glob('*.swift'))]
+        sources += [{'path': str(EXP / 'guest.S'), 'compilerFlags': ['-DNATIVE']}]
+        sources += [{'path': str(INPUT / 'payload.S')}]
     sources += [{'path': str(ROOT / name)} for name in
                 ['src/ios-jit/ios-jit.c', 'src/ios-jit/jit-trap.S',
                  'src/app/JIT/JITBuiltIn.swift', 'src/app/JIT/JITPairingFileStore.swift',
                  'src/app/JITHelper/JITMessages.swift', 'src/app/Resources/Assets.xcassets']]
     sources += [{'path': str(path), 'buildPhase': 'resources'} for path in
-                [OUT / 'Runtime.json', OUT / 'ResourceSizes.plist', INPUT / 'lkl-image.bin', INPUT / 'android-data-seed.img', INPUT / 'system.img', ROOT / 'src/app/Resources/jit.js',
+                [OUT / 'Runtime.json', OUT / 'ResourceSizes.plist', resource_input / 'lkl-image.bin', resource_input / 'android-data-seed.img', resource_input / 'system.img', ROOT / 'src/app/Resources/jit.js',
                  ROOT / 'work/native-linux-nce/musl-1.2.5/COPYRIGHT',
                  ROOT / 'work/native-linux-nce/dash-0.5.12/COPYING',
                  ROOT / 'work/native-linux-nce/compiler-rt-20.1.8.src/LICENSE.TXT']]
+    if translation:
+        sources.append({'path': str(resource_input / 'Translation'), 'type': 'folder', 'buildPhase': 'resources'})
     shutil.copyfile(ROOT / 'ACKNOWLEDGEMENTS.md', OUT / 'Acknowledgements.md')
     sources.append({'path': str(OUT / 'Acknowledgements.md'), 'buildPhase': 'resources'})
     framework = ROOT / 'src/app/Frameworks/StikJIT.xcframework'
@@ -153,7 +192,7 @@ def main():
             'DroidOnDarwin': {
                 'type': 'application', 'platform': 'iOS', 'sources': sources,
                 'settings': {'base': {
-                    'PRODUCT_BUNDLE_IDENTIFIER': 'app.droidondarwin.ios',
+                    'PRODUCT_BUNDLE_IDENTIFIER': bundle_id,
                     'INFOPLIST_FILE': str(OUT / 'Info.plist'),
                     'SWIFT_OBJC_BRIDGING_HEADER': str(EXP / 'ios/Bridge.h'),
                     'CODE_SIGN_ENTITLEMENTS': str(OUT / 'DroidOnDarwin.entitlements'),
@@ -171,11 +210,14 @@ def main():
                 'type': 'app-extension', 'platform': 'iOS',
                 'sources': [{'path': str(ROOT / 'src/app/JITHelper'), 'excludes': ['Info.plist']}],
                 'settings': {'base': {
-                    'PRODUCT_BUNDLE_IDENTIFIER': 'app.droidondarwin.ios.JITHelper',
+                    'PRODUCT_BUNDLE_IDENTIFIER': bundle_id + '.JITHelper',
                     'INFOPLIST_FILE': str(OUT / 'Helper-Info.plist'),
                     'APPLICATION_EXTENSION_API_ONLY': 'YES',
                     'LD_RUNPATH_SEARCH_PATHS': ['$(inherited)', '@executable_path/../../Frameworks']}},
                 'dependencies': [{'framework': str(framework), 'embed': False}]}}}
+    if translation:
+        spec['targets']['DroidOnDarwin']['dependencies'].append({'framework': str(translation['library']), 'embed': False})
+        spec['targets']['DroidOnDarwin']['settings']['base']['LIBRARY_SEARCH_PATHS'].append(str(translation['library'].parent))
     (OUT / 'project.json').write_text(json.dumps(spec, indent=2) + '\n')
     run(['xcodegen', 'generate', '--spec', OUT / 'project.json', '--project', OUT])
     with (OUT / 'build.log').open('w') as log:
@@ -207,6 +249,10 @@ def main():
     with zipfile.ZipFile(package) as archive:
         if archive.testzip() is not None:
             raise SystemExit('IPA archive validation failed')
+    if translation:
+        for path, expected in translation['verified'].items():
+            if hashlib.sha256(path.read_bytes()).hexdigest() != expected:
+                raise SystemExit('打包期间输入变化：' + str(path))
     manifest = {'build': build_id, 'ipa': str(package), 'bytes': package.stat().st_size,
                 'sha256': hashlib.sha256(package.read_bytes()).hexdigest(),
                 'kernel_sha256': summary['kernel_sha256'],
@@ -222,6 +268,9 @@ def main():
                                                *sorted((ROOT / 'src/app/Resources').rglob('*')),  *sorted(EXP.glob('ios/*')),
                                                *[Path(item['path']) for item in sources]] if path.is_file()}}
 
+    if translation:
+        manifest['execution'] = translation['metadata']['execution']
+        manifest['translation_inputs'] = {str(path.relative_to(ROOT)): value for path, value in translation['verified'].items()}
     (OUT / 'package.json').write_text(json.dumps(manifest, indent=2) + '\n')
     print(json.dumps({key: manifest[key] for key in ['build', 'ipa', 'bytes', 'sha256', 'device_execution']}, indent=2))
 

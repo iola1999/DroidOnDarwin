@@ -10,6 +10,23 @@ from urllib.parse import parse_qs, urlparse
 import benchmark_dod
 
 
+class TranslationParametersTests(unittest.TestCase):
+    def test_partial_override_keeps_other_translation_choices(self):
+        defaults = {'nterp': False, 'translation': {'codeWatch': True, 'crossPage': True, 'cacheMiB': 128}}
+        result = benchmark_dod.merge_parameters(defaults, {'translation': {'codeWatch': False}})
+        self.assertEqual(result['translation'], {'codeWatch': False, 'crossPage': True, 'cacheMiB': 128})
+        self.assertTrue(defaults['translation']['codeWatch'])
+
+    def test_unknown_and_wrong_type_do_not_reach_app(self):
+        defaults = {'translation': {'cacheMiB': 128}}
+        for requested in ({'translation': {'missing': True}}, {'translation': {'cacheMiB': True}}, {'translation': False}):
+            with self.assertRaises(ValueError):
+                benchmark_dod.merge_parameters(defaults, requested)
+        self.assertFalse(benchmark_dod.parameter_values_valid({'translation': {'cacheMiB': '128'}}))
+        self.assertFalse(benchmark_dod.parameter_values_valid({'nterp': {}}))
+        self.assertTrue(benchmark_dod.parameter_values_valid({'nterp': True, 'translation': {'cacheMiB': 64}}))
+
+
 class PhoneStatusTests(unittest.TestCase):
     def query(self, active=False, stale_only=False):
         request_id = None

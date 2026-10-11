@@ -9,10 +9,12 @@ from package_native_linux_macos import ROOT, EXP, INPUT, OUT, audit_libraries, d
 
 
 def main():
+    global OUT
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--app', type=Path, default=OUT / 'DroidOnDarwin.app')
     args = parser.parse_args()
     app = args.app.resolve()
+    OUT = app.parent
     contents = app / 'Contents'
     OUT.mkdir(parents=True, exist_ok=True)
     checks = {}
@@ -56,14 +58,20 @@ def main():
     checks['devices'] = run([store_test], capture_output=True, text=True, timeout=30).stdout.strip()
     session_test = OUT / 'session-model-tests'
     run(['xcrun', 'swiftc', '-O', '-parse-as-library', '-import-objc-header', EXP / 'macos/Bridge.h',
-         EXP / 'app/SessionModel.swift', EXP / 'app/ProbeLogReader.swift', EXP / 'app/RunConfiguration.swift',
+         EXP / 'app/SessionModel.swift', EXP / 'app/ProbeLogReader.swift', EXP / 'app/RunConfiguration.swift', EXP / 'app/TranslationConfiguration.swift',
          ROOT / 'tests/ios-jit/SessionModelTests.swift', '-o', session_test])
     checks['session'] = run([session_test], capture_output=True, text=True, timeout=15).stdout.strip()
     benchmark_test = OUT / 'benchmark-tests'
     run(['xcrun', 'swiftc', '-O', '-parse-as-library', '-import-objc-header', EXP / 'macos/Bridge.h',
-         *[EXP / 'app' / name for name in ('RunConfiguration.swift', 'BenchmarkRequest.swift', 'BenchmarkMemory.swift', 'BenchmarkSession.swift', 'SessionModel.swift', 'ProbeLogReader.swift')],
+         *[EXP / 'app' / name for name in ('RunConfiguration.swift', 'TranslationConfiguration.swift', 'BenchmarkRequest.swift', 'BenchmarkMemory.swift', 'BenchmarkSession.swift', 'SessionModel.swift', 'ProbeLogReader.swift')],
          ROOT / 'tests/ios-jit/BenchmarkTests.swift', '-o', benchmark_test])
     checks['benchmark'] = run([benchmark_test], capture_output=True, text=True, timeout=15).stdout.strip()
+    translation_test = OUT / 'translation-configuration-tests'
+    run(['xcrun', 'swiftc', '-O', '-parse-as-library',
+         *[EXP / 'app' / name for name in ('RunConfiguration.swift', 'TranslationConfiguration.swift', 'BenchmarkRequest.swift')],
+         ROOT / 'tests/ios-jit/TranslationConfigurationTests.swift', '-o', translation_test])
+    checks['translation_configuration'] = run([translation_test, OUT / 'translation-configuration-resources'],
+                                               capture_output=True, text=True, timeout=15).stdout.strip()
     execute = OUT / 'signed-execute-test'
     run(['xcrun', 'clang', '-O2', '-Wall', '-Wextra', '-Werror', '-I', EXP, '-I', INPUT,
          *[EXP / name for name in ['execute-check.c', 'memory.c', 'code-memory.c', 'nce.c', 'nce-thread.c', 'entry.S', 'programs.c']],
@@ -104,8 +112,11 @@ def main():
     query = run([contents / 'MacOS/DroidOnDarwin', '--benchmark-configuration'], capture_output=True, text=True, timeout=15)
     defaults = json.loads(query.stdout)
     assert defaults and defaults['schedulerSliceUS'] == 0 and type(defaults['schedulerSliceUS']) is int
-    assert all(type(v) is bool for key, v in defaults.items() if key != 'schedulerSliceUS')
-    assert defaults['fastBaseline'] is False and defaults['nterp'] is False and defaults['bootImage'] is False
+    assert all(type(v) is bool for key, v in defaults.items() if key not in ('schedulerSliceUS', 'translation'))
+    translated = plistlib.loads((contents / 'Info.plist').read_bytes()).get('DroidOnDarwinTranslationCPUs', 0) != 0
+    assert defaults['fastBaseline'] is False and defaults['nterp'] is translated and defaults['bootImage'] is False
+    assert defaults['aot'] is (not translated)
+    assert ('translation' in defaults) is translated
     checks['benchmark_configuration_query'] = defaults
     checks['bundle'] = 'signature, package hashes, input hashes, resource sizes and relocatable library paths passed'
     (OUT / 'host-checks.json').write_text(json.dumps(checks, ensure_ascii=False, indent=2) + '\n')

@@ -14,7 +14,8 @@ from probe_lkl_translation import ROOT, WORK, sha, validate
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--repeat', type=int, default=2)
-    parser.add_argument('--comparison', choices=('cache', 'tlb', 'execution', 'direct-mappings', 'direct-cache', 'direct-memory', 'direct-flat', 'direct-code-watch', 'direct-cross-page', 'direct-routes', 'direct-retain-routes', 'direct-memory-groups', 'direct-read-views', 'direct-native-exclusive', 'direct-smp-uaccess', 'direct-vector-table', 'direct-smp-code-cache', 'direct-smp-code-watch'), default='cache')
+    parser.add_argument('--comparison', choices=('cache', 'tlb', 'execution', 'direct-mappings', 'direct-cache', 'direct-memory', 'direct-flat', 'direct-code-watch', 'direct-cross-page', 'direct-routes', 'direct-retain-routes', 'direct-memory-groups', 'direct-read-views', 'direct-native-exclusive', 'direct-smp-uaccess', 'direct-vector-table', 'direct-smp-code-cache', 'direct-smp-code-watch', 'direct-linux-fastpath', 'direct-smp-linux-fastpath'), default='cache')
+    parser.add_argument('--code-memory', choices=('map-jit', 'dual'), default='map-jit')
     parser.add_argument('--workload', choices=('android', 'services', 'desktop'), default='android')
     parser.add_argument('--entry', choices=('both', 'cli', 'gcd', 'window'), default='both')
     parser.add_argument('--output', type=Path)
@@ -36,17 +37,21 @@ def main():
     prepared = {}
     for execution, folder in folders.items():
         command = [sys.executable, ROOT / 'scripts/probe_lkl_translation.py', '--mapping', 'pte',
-                   '--preemption', 'timer', '--workload', args.workload, '--entry', args.entry, '--output', folder, '--execution', execution]
+                   '--preemption', 'timer', '--workload', args.workload, '--entry', args.entry, '--output', folder, '--execution', execution,
+                   '--code-memory', args.code_memory]
         if prepared or args.reuse_engine_build:
             command += ['--reuse-engine-build']
         if args.comparison != 'cache':
             command += ['--cache-mib', '128', '--linux-fastpath', '1']
-        if args.comparison in ('direct-smp-uaccess', 'direct-vector-table', 'direct-smp-code-cache', 'direct-smp-code-watch'):
+        if args.comparison in ('direct-smp-uaccess', 'direct-vector-table', 'direct-smp-code-cache', 'direct-smp-code-watch', 'direct-smp-linux-fastpath'):
             command += ['--cpus', '2', '--direct-memory', 'flat', '--direct-native-exclusive', '1',
                         '--direct-cross-page', '1', '--exec-cache', 'pages', '--tlb-invalidation', 'pages',
                         '--linux-fastpath', '0']
-        if args.comparison in ('direct-vector-table', 'direct-smp-code-cache', 'direct-smp-code-watch'):
+        if args.comparison in ('direct-vector-table', 'direct-smp-code-cache', 'direct-smp-code-watch', 'direct-smp-linux-fastpath'):
             command += ['--smp-uaccess-stop', 'code']
+        if args.comparison in ('direct-linux-fastpath', 'direct-smp-linux-fastpath'):
+            command += ['--direct-memory', 'flat', '--direct-native-exclusive', '1', '--direct-cross-page', '1',
+                        '--direct-code-watch', '1', '--exec-cache', 'pages', '--tlb-invalidation', 'pages', '--linux-fastpath', '0']
         with (out / f'prepare-{execution}.log').open('w') as log:
             subprocess.run(list(map(str, command)), stdout=log, stderr=subprocess.STDOUT, check=True, timeout=max(600, 480 * len(entries) + 120) if args.workload == 'desktop' else 600)
         prepared[execution] = json.loads((folder / 'summary.json').read_text())
@@ -177,6 +182,11 @@ def main():
                                  'cache_mib': 128, 'tlb_invalidation': 'pages', 'uaccess_stop': 'code',
                                  'direct': {**baseline['configuration']['direct'], 'code_watch': enabled}}
                           for name, enabled in (('compare', False), ('watch', True))}
+    if args.comparison in ('direct-linux-fastpath', 'direct-smp-linux-fastpath'):
+        configurations = {name: {'execution': 'direct', 'cache_invalidation': 'pages', 'linux_fastpath': enabled,
+                                 'cache_mib': 128, 'tlb_invalidation': 'pages', 'uaccess_stop': baseline['configuration']['uaccess_stop'],
+                                 'direct': baseline['configuration']['direct']}
+                          for name, enabled in (('per-access', 0), ('block-entry', 1))}
     for config in configurations.values():
         if config['execution'] == 'direct' and 'direct' not in config:
             config['direct'] = {'mapping_entries': 256, 'route_entries': 256, 'selective_writes': False, 'reuse_code_checks': False}
@@ -205,7 +215,9 @@ def main():
             for name in order:
                 config = configurations[name]
                 folder = folders[config['execution']]
-                env = dict(os.environ, NCE_TRANSLATION_FILES=str(folder), NCE_TRANSLATION_WORKLOAD=args.workload,
+                env = dict(os.environ, NCE_ART_NTERP=str(common['art_nterp']),
+                           NCE_ART_EXPANDED_JIT=str(common['art_expanded_jit']), NCE_ART_FAST_BASELINE=str(common['art_fast_baseline']),
+                           NCE_ART_AOT='0', NCE_ART_BOOT_IMAGE='0', NCE_SCHED_SLICE_US='0', NCE_TRANSLATION_FILES=str(folder), NCE_TRANSLATION_WORKLOAD=args.workload,
                            NCE_TRANSLATION_SYSTEM=str(WORK / 'processes/system.img'),
                            NCE_TRANSLATION_BATCH='50000', NCE_TRANSLATION_PREEMPTION='timer',
                            NCE_TRANSLATION_MEMORY_MS='100', NCE_TRANSLATION_CACHE=config['cache_invalidation'],
@@ -236,10 +248,8 @@ def main():
                 data = None
                 if args.workload in ('services', 'desktop'):
                     data_path = out / f'{stem}-data.img'
-                    with data_path.open('wb') as image:
-                        image.truncate(512 * 1024 * 1024)
-                    subprocess.run(['/opt/homebrew/opt/e2fsprogs/sbin/mke2fs', '-F', '-q', '-t', 'ext4', '-b', '4096',
-                                    '-E', 'lazy_itable_init=0,lazy_journal_init=0', data_path], check=True, timeout=60)
+                    seed = ROOT / baseline['data_seed']['path']
+                    subprocess.run(['cp', '-c', seed, data_path], check=True, timeout=60)
                     env['NCE_TRANSLATION_DATA'] = str(data_path)
                     data = {'path': str(data_path.relative_to(ROOT)), 'initial_sha256': sha(data_path), 'fresh': True}
                 with (out / f'{stem}.jsonl').open('w') as stdout, (out / f'{stem}.log').open('w') as stderr:
@@ -250,7 +260,7 @@ def main():
                     except subprocess.TimeoutExpired:
                         returncode = 'timeout'
                 rows = [json.loads(line) for line in (out / f'{stem}.jsonl').read_text().splitlines() if line.startswith('{')]
-                passed = returncode == 0 and validate(rows, 100, 'pte', args.workload, config['tlb_invalidation'], config['execution'], direct, common['cpus'], False, config.get('uaccess_stop', 'all'))
+                passed = returncode == 0 and validate(rows, 100, 'pte', args.workload, config['tlb_invalidation'], config['execution'], direct, common['cpus'], False, config.get('uaccess_stop', 'all'), code_memory=args.code_memory)
                 if data is not None:
                     data['final_sha256'] = sha(data_path)
                     metadata = subprocess.run(['/opt/homebrew/opt/e2fsprogs/sbin/dumpe2fs', '-h', data_path],

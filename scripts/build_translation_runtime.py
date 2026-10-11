@@ -4,6 +4,7 @@ import argparse
 import hashlib
 import json
 from pathlib import Path
+import platform
 import subprocess
 
 from build_translation_engine import build as build_unicorn
@@ -41,7 +42,7 @@ def build(report_path, out, target):
     unicorn = Path(dependency['path'])
     objects, inputs = build_engine(out / 'direct', 'dual', target)
     sdk = subprocess.check_output(['xcrun', '--sdk', 'iphoneos' if target == 'ios' else 'macosx', '--show-sdk-path'], text=True).strip()
-    flags = ['-target', 'arm64-apple-ios26.0' if target == 'ios' else 'arm64-apple-macos26.0',
+    flags = ['-target', 'arm64-apple-ios26.0' if target == 'ios' else 'arm64-apple-macos' + platform.mac_ver()[0],
              '-isysroot', sdk, '-O2', '-g', '-Wall', '-Wextra', '-Werror', '-DNCE_IOS_APP', '-DNCE_PROCESS',
              f'-DNCE_TRANSLATION_CPUS={config["cpus"]}', '-DNCE_TRANSLATION_DUAL_MAP', '-DNCE_DIRECT_EXECUTION', '-DNCE_GRAPHICS']
     if config['cpus'] == 2:

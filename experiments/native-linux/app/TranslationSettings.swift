@@ -1,0 +1,37 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
+import SwiftUI
+
+struct TranslationSettings: View {
+    let active: Bool
+    @AppStorage("translationCacheMiB") private var cacheMiB = 128
+    @AppStorage("translationCodeWatch") private var codeWatch = true
+    @AppStorage("translationCrossPage") private var crossPage = true
+    @AppStorage("translationReuseCodeChecks") private var reuseCodeChecks = false
+    @AppStorage("translationRouteEpochs") private var routeEpochs = false
+    @AppStorage("translationRetainRoutes") private var retainRoutes = false
+    @AppStorage("translationMemoryGroups") private var memoryGroups = false
+    @AppStorage("translationVectorTable") private var vectorTable = false
+
+    var body: some View {
+        Section {
+            LabeledContent("运行库", value: "Direct · \(RunConfiguration.translationCPUs) CPU")
+            Picker("每类执行器的代码缓存", selection: $cacheMiB) {
+                ForEach([16, 64, 128], id: \.self) { Text("\($0) MiB").tag($0) }
+            }
+            Toggle("代码页写入跟踪", isOn: $codeWatch)
+            Toggle("跨页访存", isOn: $crossPage)
+            Toggle("复用代码内容检查", isOn: $reuseCodeChecks)
+            Toggle("跳转序号检查", isOn: $routeEpochs)
+            if RunConfiguration.translationCPUs == 1 {
+                Toggle("跨调用复用跳转记录", isOn: $retainRoutes)
+            }
+            Toggle("连续访存合并", isOn: $memoryGroups)
+            Toggle("直接执行向量查表", isOn: $vectorTable)
+        } header: { Text("翻译执行实验") } footer: {
+            Text("各项下次启动生效。每个 CPU 的 Direct 与 Unicorn 分别使用所选缓存容量；总内存还包含 Android 系统和应用。")
+            if RunConfiguration.translationCPUs == 1 {
+                Text("跨调用复用需要同时开启代码页写入跟踪和跳转序号检查。")
+            }
+        }.disabled(active)
+    }
+}
