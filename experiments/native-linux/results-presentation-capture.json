@@ -630,5 +630,75 @@
     ],
     "source_code": "work/native-linux-nce/interaction-preflight/MetalPresentationProbe.swift",
     "source_code_sha256": "4e65cefff63048d4c13a18903238538cc0de0e9ab3512c1deaddd23237771047"
+  },
+  "preroll_control": {
+    "scope": "standalone visible Metal clear after three warmup frames; drawable acquired before capture and displayed inside; Android and ANGLE pending",
+    "active": true,
+    "visible": true,
+    "result": {
+      "available": true,
+      "failures": [],
+      "counts": {
+        "captured": 1,
+        "in_window": 0,
+        "pending_acquisition": 0,
+        "drawable_unavailable": 0,
+        "pending_callback": 0,
+        "zero_presented_time": 0,
+        "outside_presentation_window": 0,
+        "presented_in_window": 1,
+        "acquired_before_window_presented_inside": 1
+      },
+      "alignment_offset_ns": -2205274375.25,
+      "alignment_uncertainty_ns": 14708.25,
+      "acquire_wait_ms": {
+        "count": 0
+      },
+      "drawable_to_present_ms": {
+        "count": 1,
+        "p50_ms": 550.01387525,
+        "p95_ms": 550.01387525,
+        "p99_ms": 550.01387525,
+        "max_ms": 550.01387525,
+        "p95_small_sample": true,
+        "p99_small_sample": true,
+        "tail_count_reference": {
+          "p95": 0,
+          "p99": 0
+        },
+        "percentile_method": "linear interpolation; small-sample flag uses fewer than 10 expected tail observations; frames are not independent runs",
+        "above_ms": {
+          "16.666667": 1,
+          "100": 1,
+          "250": 1,
+          "1000": 0
+        }
+      },
+      "unique_presentation_interval_ms": {
+        "count": 0
+      },
+      "layers": [
+        {
+          "layer": "EE2303DF-1DD7-4C51-BF0A-A1B1611473C6",
+          "drawables": 1,
+          "unique_present_times": 1,
+          "first_present_offset_ms": 32.31987525,
+          "last_present_offset_ms": 32.31987525,
+          "trailing_without_present_ms": 1017.61212475,
+          "interval_ms": {
+            "count": 0
+          }
+        }
+      ],
+      "scope": "host drawable display; boundary gaps may include idle time; repeated content and Android frame identity unmeasured; pending and zero timestamps excluded; includes pre-window acquisitions still pending when capture began"
+    },
+    "source_sha256": {
+      "work/native-linux-nce/interaction-preflight/MetalPrerollProbe.swift": "09171f4907469bf29346055c4eb06b8336efaca0d3b3bf58bf60bf1960ebe0b5",
+      "work/native-linux-nce/interaction-preflight/metal-preroll-probe.json": "b38c8c48b1522bb5ce4335fc2f6a7f93a8ee42ac64662509f377233cc03574c2",
+      "work/native-linux-nce/interaction-preflight/metal-preroll-probe-diagnostic.json": "fad6aa04a647ccec14bfe410be6c75f04ce5887701a61e3d00b9e7fc8fb2e35b",
+      "experiments/native-linux/app/DisplayFrameCapture.swift": "b7860b84ae00f962b0c846d6822d81419770d1257526cdc46325e2676478fd56",
+      "scripts/interaction_presentation.py": "9e466e7adc56466243ef4e12a2e78922da6e1873b10c8fc8f3356af4416e824f"
+    },
+    "initial_failure": "first drawable of unprepared window had zero presented_time_seconds; retained diagnostic; warm window succeeded"
   }
 }
