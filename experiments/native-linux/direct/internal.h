@@ -20,7 +20,7 @@ struct Page {
     std::array<uint32_t, 1024> source{};
     std::array<void *, 1024> entries{}, branch_entries{};
     uint32_t flags = 0;
-    size_t compile(uint64_t, const void *, size_t, uint32_t *, uint32_t *, uint32_t, size_t, void **);
+    size_t compile(uint64_t, const void *, size_t, uint32_t *, uint32_t, void **, unsigned);
 };
 struct Frame {
     NceDirectState state;
@@ -30,6 +30,7 @@ struct Frame {
     Page *code;
     void (*exit_stub)(), (*branch_stub)();
     const void *stop_request;
+    uint64_t route_mask;
 };
 struct Mapping {
     uint64_t read_tag, read_addend, write_tag, write_addend;
@@ -63,6 +64,7 @@ CHECK_OFFSET(code, DIRECT_CODE);
 CHECK_OFFSET(exit_stub, DIRECT_EXIT_STUB);
 CHECK_OFFSET(branch_stub, DIRECT_BRANCH_STUB);
 CHECK_OFFSET(stop_request, DIRECT_STOP_REQUEST);
+CHECK_OFFSET(route_mask, DIRECT_ROUTE_MASK);
 #undef CHECK_OFFSET
 extern "C" void nce_direct_enter(Frame *, void *, Mapping *);
 extern "C" void nce_direct_leave();

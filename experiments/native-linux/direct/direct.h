@@ -10,9 +10,7 @@ extern "C" {
 typedef struct NceDirect NceDirect;
 enum {
     NCE_DIRECT_UNALIGNED = 1,
-    NCE_DIRECT_FP_TRAP = 2,
     NCE_DIRECT_LSE = 4,
-    NCE_DIRECT_TBI = 8,
     NCE_DIRECT_CRC = 64,
     NCE_DIRECT_AES = 256,
     NCE_DIRECT_SHA1 = 512,
@@ -53,12 +51,20 @@ typedef enum {
 } NceDirectExit;
 typedef struct {
     uint64_t compiles, flushes, code_changes, mapping_misses, code_lookups;
+    uint64_t read_mapping_misses, write_mapping_misses, write_invalidations;
     size_t code_bytes, code_capacity, pages;
 } NceDirectStats;
 
+typedef struct {
+    size_t cache_bytes;
+    /* Power-of-two entry counts, from 256 through 65536. */
+    unsigned mapping_entries, route_entries;
+    bool selective_writes;
+} NceDirectConfig;
+
 /* One sequential caller per engine. Code cache is 2..256 MiB, 16 KiB aligned.
  * This independent prototype currently prepares MAP_JIT memory on macOS. */
-NceDirect *nce_direct_create(size_t cache_bytes);
+NceDirect *nce_direct_create(NceDirectConfig);
 void nce_direct_destroy(NceDirect *);
 /* Request from another thread; consumed at the next block boundary. The owner
  * must exclude engine destruction. A new run clears earlier requests. */

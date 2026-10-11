@@ -344,8 +344,32 @@ void direct_tests()
     CHECK(nce_direct_run(probe.direct, &actual, large_page, 1000, &fault) == NCE_DIRECT_UNSUPPORTED);
     CHECK(!std::memcmp(&expected, &actual, sizeof(actual)));
     report("16k_data_page_internal_and_external_boundaries");
+    for (unsigned bits : {12U, 14U}) {
+        const uint32_t publish[] = {0xf9000001, 0xd61f0040};  // str x1,[x0]; br x2
+        probe.load(publish, sizeof(publish));
+        probe.alias_code = true;
+        probe.alias_offset = size_t(1) << bits;
+        probe.code[probe.alias_offset / 4] = 0xf9000003;  // str x3,[x0]
+        actual = state(random);
+        actual.x[0] = DataVA + 128;
+        actual.x[1] = 17;
+        actual.x[2] = CodeVA + probe.alias_offset;
+        actual.x[3] = 29;
+        auto memory = probe.memory();
+        memory.page_bits = bits;
+        CHECK(nce_direct_run(probe.direct, &actual, memory, 1000, &fault) == NCE_DIRECT_WRITE_FAULT);
+        CHECK(actual.pc == CodeVA + probe.alias_offset && fault == DataVA + 128);
+        uint64_t written;
+        std::memcpy(&written, (char *)probe.code.data() + probe.alias_offset + 128, sizeof(written));
+        CHECK(written == 17);
+        probe.alias_code = false;
+        probe.alias_offset = 0;
+        ++probe.epoch;
+    }
+    report("cached_write_alias_becomes_executable");
     nce_direct_destroy(probe.direct);
-    probe.direct = nce_direct_create(2 * 1024 * 1024);
+    probe.config.cache_bytes = 2 * 1024 * 1024;
+    probe.direct = nce_direct_create(probe.config);
     CHECK(probe.direct);
     words.fill(0x91000400);  // add x0,x0,#1
     words[64] = 0;

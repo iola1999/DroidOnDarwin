@@ -113,12 +113,6 @@ Kind decode(uint32_t w)
         case 0xd53b4400:
         case 0xd53b4420:
             return SystemRead;
-        case 0xd53be000:
-        case 0xd53be020:
-        case 0xd53be040:
-        case 0xd53be0a0:
-        case 0xd53be0c0:
-            return Assist;
     }
     if ((w & 0x1f000000) == 0x10000000)
         return Adr;

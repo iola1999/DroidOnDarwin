@@ -16,8 +16,7 @@ static bool resident(unsigned reg)
     return reg < 16 || (reg >= 19 && reg < 26);
 }
 size_t Page::compile(uint64_t new_page, const void *bytes, size_t entry,
-                     uint32_t *executable, uint32_t *writable, uint32_t flags,
-                     size_t available, void **stable_entries)
+                     uint32_t *executable, uint32_t flags, void **stable_entries, unsigned mapping_mask)
 {
     bool unaligned = flags & 1;
     unsigned page_bits = flags & CompileData16K ? 14 : 12;
@@ -189,12 +188,6 @@ size_t Page::compile(uint64_t new_page, const void *bytes, size_t entry,
             uint32_t w = input[i];
             unsigned rd = w & 31, rn = (w >> 5) & 31;
             Kind kind = decode(w);
-            bool fp_access = kind == Structure || (kind >= Vector && kind <= GprFromFp) ||
-                             ((kind == Memory || kind == Pair) && (w & 0x04000000)) ||
-                             (kind == SystemRead && ((w & 0xffffffe0) == 0xd53b4400 ||
-                                                     (w & 0xffffffe0) == 0xd53b4420));
-            if ((flags & 2) && fp_access)
-                kind = Other;
             if (kind == Atomic && !(flags & 4))
                 kind = Other;
             if (kind == Crc && !(flags & 64))
@@ -231,7 +224,7 @@ size_t Page::compile(uint64_t new_page, const void *bytes, size_t entry,
                 c.AND(X16, X16, ~UINT64_C(63));
                 c.LSR(X17, X16, page_bits);
                 c.EOR(X17, X17, X17, LSR, 8);
-                c.AND(X17, X17, 255);
+                c.AND(X17, X17, mapping_mask);
                 c.ADD(X17, X28, X17, LSL, 5);
                 c.LDP(X26, X17, X17, 16);
                 c.EOR(X26, X26, X16, LSR, page_bits);
@@ -335,18 +328,10 @@ size_t Page::compile(uint64_t new_page, const void *bytes, size_t entry,
                 unsigned size = w >> 30, status = (w >> 16) & 31;
                 Label failed, miss, invalid, done, completed;
                 load(rn, X16, true);
-                if (flags & 8)
-                    c.TBNZ(X16, 55, invalid);
-                auto clean = [&](XReg to) {
-                    if (flags & 8) {
-                        c.AND(to, X16, UINT64_C(0x00ffffffffffffff));
-                    } else
-                        c.MOV(to, X16);
-                };
                 if (write) {
                     if (w & 0x8000)
                         c.dw(0xd5033bbf);  // release also orders a failed STLXR
-                    clean(X26);
+                    c.MOV(X26, X16);
                     c.LDR(X17, X27, DIRECT_EXCLUSIVE_ADDR);
                     c.EOR(X17, X17, X26);
                     c.CBNZ(X17, failed);
@@ -363,7 +348,7 @@ size_t Page::compile(uint64_t new_page, const void *bytes, size_t entry,
                 // A software reservation survives mapping callbacks and slice exits.
                 c.LSR(X17, X16, page_bits);
                 c.EOR(X17, X17, X17, LSR, 8);
-                c.AND(X17, X17, 255);
+                c.AND(X17, X17, mapping_mask);
                 c.ADD(X17, X28, X17, LSL, 5);
                 c.LDP(X26, X17, X17, write ? 16 : 0);
                 c.EOR(X26, X26, X16, LSR, page_bits);
@@ -387,7 +372,7 @@ size_t Page::compile(uint64_t new_page, const void *bytes, size_t entry,
                 } else {
                     c.dw((size << 30) | 0x08dffc00 | (17 << 5) | 26);  // ldar, stronger than relaxed LDXR
                     c.STR(X26, X27, DIRECT_EXCLUSIVE_VALUE);
-                    clean(X17);
+                    c.MOV(X17, X16);
                     c.STR(X17, X27, DIRECT_EXCLUSIVE_ADDR);
                     save(rd, X26);
                 }
@@ -455,7 +440,7 @@ size_t Page::compile(uint64_t new_page, const void *bytes, size_t entry,
                 }
                 c.LSR(X17, X16, page_bits);
                 c.EOR(X17, X17, X17, LSR, 8);
-                c.AND(X17, X17, 255);
+                c.AND(X17, X17, mapping_mask);
                 c.ADD(X17, X28, X17, LSL, 5);
                 c.LDP(X26, X17, X17, write ? 16 : 0);
                 c.EOR(X26, X26, X16, LSR, page_bits);
@@ -549,12 +534,8 @@ size_t Page::compile(uint64_t new_page, const void *bytes, size_t entry,
     exit(new_page + 4096, CodeBranch);
     if (output.size() * 4 > max_bytes)
         throw std::length_error("direct code page exceeds pool");
-    // The caller compiles into a private metadata copy. A fragmented range
-    // can be too small; report the required size without publishing anything.
-    if (((output.size() * 4 + 15) & ~size_t(15)) > available)
-        return output.size() * 4;
     pthread_jit_write_protect_np(0);
-    std::memcpy(writable, output.data(), output.size() * 4);
+    std::memcpy(executable, output.data(), output.size() * 4);
     pthread_jit_write_protect_np(1);
     sys_icache_invalidate(executable, output.size() * 4);
     source = input;

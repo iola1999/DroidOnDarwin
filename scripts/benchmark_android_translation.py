@@ -13,13 +13,14 @@ from probe_lkl_translation import ROOT, WORK, sha, validate
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--repeat', type=int, default=2)
-    parser.add_argument('--comparison', choices=('cache', 'tlb', 'execution'), default='cache')
+    parser.add_argument('--comparison', choices=('cache', 'tlb', 'execution', 'direct-mappings'), default='cache')
     args = parser.parse_args()
     if args.repeat < 2 or args.repeat % 2:
         parser.error('repeat 必须为至少 2 的偶数，以平衡执行顺序')
     suffix = '' if args.comparison == 'cache' else '-' + args.comparison
     out = WORK / f'android-translation{suffix}-matrix'
-    folders = {name: out / ('runtime-' + name if args.comparison == 'execution' else 'runtime') for name in (('unicorn', 'direct') if args.comparison == 'execution' else ('unicorn',))}
+    engines = ('unicorn', 'direct') if args.comparison == 'execution' else ('direct',) if args.comparison == 'direct-mappings' else ('unicorn',)
+    folders = {name: out / ('runtime-' + name if args.comparison == 'execution' else 'runtime') for name in engines}
     out.mkdir(parents=True, exist_ok=True)
     (out / 'summary.json').unlink(missing_ok=True)
     prepared = {}
@@ -33,7 +34,7 @@ def main():
         with (out / f'prepare-{execution}.log').open('w') as log:
             subprocess.run(list(map(str, command)), stdout=log, stderr=subprocess.STDOUT, check=True, timeout=600)
         prepared[execution] = json.loads((folder / 'summary.json').read_text())
-    baseline = prepared['unicorn']
+    baseline = next(iter(prepared.values()))
     hashes = {str(Path(__file__).resolve().relative_to(ROOT)): sha(Path(__file__))}
     for result in prepared.values():
         for name, digest in result['sha256'].items():
@@ -41,7 +42,7 @@ def main():
                 raise RuntimeError('执行器构建期间输入发生变化：' + name)
             hashes[name] = digest
     common = {key: value for key, value in baseline['configuration'].items()
-              if key not in ('execution', 'cache_invalidation', 'linux_fastpath', 'translation_cache_bytes', 'tlb_invalidation')}
+              if key not in ('execution', 'direct', 'cache_invalidation', 'linux_fastpath', 'translation_cache_bytes', 'tlb_invalidation')}
     configurations = {
         'full-16': {'cache_invalidation': 'full', 'linux_fastpath': 0, 'cache_mib': 16},
         'pages-16': {'cache_invalidation': 'pages', 'linux_fastpath': 0, 'cache_mib': 16},
@@ -58,9 +59,21 @@ def main():
     if args.comparison == 'execution':
         configurations = {name: {'execution': name, 'cache_invalidation': 'pages', 'linux_fastpath': 1,
                                  'cache_mib': 128, 'tlb_invalidation': 'full'} for name in folders}
+    elif args.comparison == 'direct-mappings':
+        configurations = {
+            name: {'execution': 'direct', 'cache_invalidation': 'pages', 'linux_fastpath': 1,
+                   'cache_mib': 128, 'tlb_invalidation': 'full',
+                   'direct': {'mapping_entries': maps, 'route_entries': routes, 'selective_writes': selective}}
+            for name, maps, routes, selective in (
+                ('full-256', 256, 256, False), ('selective-256', 256, 256, True),
+                ('mapping-4096', 4096, 256, True), ('route-4096', 256, 4096, True),
+                ('both-4096', 4096, 4096, True))}
     else:
         for config in configurations.values():
             config['execution'] = 'unicorn'
+    for config in configurations.values():
+        if config['execution'] == 'direct' and 'direct' not in config:
+            config['direct'] = {'mapping_entries': 256, 'route_entries': 256, 'selective_writes': False}
 
     def check_inputs():
         for path, expected in hashes.items():
@@ -85,6 +98,11 @@ def main():
                            NCE_TRANSLATION_TLB=config['tlb_invalidation'],
                            NCE_TRANSLATION_LINUX_FASTPATH=str(config['linux_fastpath']),
                            NCE_TRANSLATION_CACHE_MIB=str(config['cache_mib']))
+                direct = config.get('direct')
+                if direct:
+                    env.update(NCE_DIRECT_MAPPING_ENTRIES=str(direct['mapping_entries']),
+                               NCE_DIRECT_ROUTE_ENTRIES=str(direct['route_entries']),
+                               NCE_DIRECT_SELECTIVE_WRITES=str(int(direct['selective_writes'])))
                 stem = f'{iteration}-{entry}-{name}'
                 with (out / f'{stem}.jsonl').open('w') as stdout, (out / f'{stem}.log').open('w') as stderr:
                     try:
@@ -94,7 +112,7 @@ def main():
                     except subprocess.TimeoutExpired:
                         returncode = 'timeout'
                 rows = [json.loads(line) for line in (out / f'{stem}.jsonl').read_text().splitlines() if line.startswith('{')]
-                passed = returncode == 0 and validate(rows, 100, 'pte', 'android', config['tlb_invalidation'], config['execution'])
+                passed = returncode == 0 and validate(rows, 100, 'pte', 'android', config['tlb_invalidation'], config['execution'], direct)
                 runs.append({'iteration': iteration, 'entry': entry, 'variant': name, 'results': rows,
                              'returncode': returncode, 'validated': passed,
                              'stdout_sha256': sha(out / f'{stem}.jsonl'), 'stderr_sha256': sha(out / f'{stem}.log')})

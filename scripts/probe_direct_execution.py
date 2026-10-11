@@ -3,6 +3,7 @@
 import argparse
 import hashlib
 import json
+import os
 from pathlib import Path
 import platform
 import statistics
@@ -67,9 +68,13 @@ def build(out):
     return executable, hashes
 
 
-def validate(rows, mode, interval):
+def validate(rows, mode, interval, config=None):
     if not rows or rows[-1].get('result') != 'passed' or any(row.get('passed') is False for row in rows):
         return False
+    if mode in ('tests', 'direct') and config is not None:
+        selected = [r for r in rows if r.get('direct_config')]
+        if len(selected) != 1 or any(selected[0].get(key) != value for key, value in config.items()):
+            return False
     if mode == 'tests':
         expected = {
             'integer_gpr_sp_nzcv_65536_instructions', 'memory_all_gpr_930_combinations',
@@ -80,7 +85,7 @@ def validate(rows, mode, interval):
             'changed_cross_page_branch_cache', 'pair_pre_post_index_all_base_registers',
             'exclusive_load_store_all_widths', 'asynchronous_stop_at_block_and_indirect_boundary',
             '16k_data_page_internal_and_external_boundaries', 'bounded_cache_reuse_and_code_replacement',
-            'dczid_zero_block_alignment_permission_and_prefetch'}
+            'dczid_zero_block_alignment_permission_and_prefetch', 'cached_write_alias_becomes_executable'}
         if not expected <= {r.get('test') for r in rows if r.get('passed')}:
             return False
     else:
@@ -116,6 +121,9 @@ def main():
     parser.add_argument('--mode', choices=['tests', 'bench', 'all'], default='all')
     parser.add_argument('--memory-interval-ms', type=int, default=100)
     parser.add_argument('--build-only', action='store_true')
+    parser.add_argument('--mapping-entries', type=int, choices=(256, 1024, 4096, 16384, 65536), default=256)
+    parser.add_argument('--route-entries', type=int, choices=(256, 1024, 4096, 16384, 65536), default=256)
+    parser.add_argument('--selective-writes', type=int, choices=(0, 1), default=0)
     args = parser.parse_args()
     if platform.system() != 'Darwin' or platform.machine() != 'arm64':
         parser.error('该原型需要 Apple Silicon Mac')
@@ -129,16 +137,20 @@ def main():
         print(executable)
         return
     runs = []
+    config = {'mapping_entries': args.mapping_entries, 'route_entries': args.route_entries,
+              'selective_writes': bool(args.selective_writes)}
+    environment = dict(os.environ, NCE_DIRECT_MAPPING_ENTRIES=str(args.mapping_entries),
+                       NCE_DIRECT_ROUTE_ENTRIES=str(args.route_entries), NCE_DIRECT_SELECTIVE_WRITES=str(args.selective_writes))
     modes = (['tests'] if args.mode != 'bench' else []) + (['native', 'unicorn', 'direct'] if args.mode != 'tests' else [])
     for entry in ('cli', 'gcd'):
         for mode in (modes if entry == 'cli' else list(reversed(modes))):
             path = out / f'{entry}-{mode}.jsonl'
             command = [str(executable), mode, entry, str(args.memory_interval_ms)]
             with path.open('w') as stdout, path.with_suffix('.stderr.log').open('w') as stderr:
-                result = subprocess.run(command, stdout=stdout, stderr=stderr, timeout=180)
+                result = subprocess.run(command, env=environment, stdout=stdout, stderr=stderr, timeout=180)
             rows = [json.loads(line) for line in path.read_text().splitlines()]
             runs.append({'entry': entry, 'mode': mode, 'command': command, 'returncode': result.returncode, 'results': rows})
-            if result.returncode or not validate(rows, mode, args.memory_interval_ms):
+            if result.returncode or not validate(rows, mode, args.memory_interval_ms, config):
                 (out / 'failed.json').write_text(json.dumps(runs, indent=2) + '\n')
                 raise SystemExit(f'检查失败：{path}')
     for name, digest in hashes.items():
@@ -149,6 +161,7 @@ def main():
               'system_build': subprocess.check_output(['sw_vers', '-buildVersion'], text=True).strip(),
               'measurement': 'Three warm rounds per engine in separate processes, reversed process order for GCD. Same ARM64 bytes and checked results. Direct includes one-million-instruction slice entries; Unicorn includes register exchange. Memory phases include initialization and result verification, with arithmetic sample mean, sampled peak and latest; lifetime RSS peak is separate.',
               'build_flags': ['-std=c++20', '-O2', '-g', '-Wall', '-Wextra', '-Werror'],
+              'configuration': config,
               'dependency': {'oaknut_revision': OAKNUT, 'oaknut_archive_sha256': ARCHIVE_SHA},
               'sha256': hashes, 'runs': runs, 'comparison': {}}
     for entry in ('cli', 'gcd'):

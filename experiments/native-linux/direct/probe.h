@@ -25,12 +25,14 @@ inline void checked(uc_err error)
     }
 }
 struct Probe {
-    alignas(16384) std::array<uint32_t, 4096> code{};
+    alignas(16384) std::array<uint32_t, 8192> code{};
     alignas(16384) std::array<uint64_t, DataBytes / 8> data{};
     alignas(16384) std::array<uint64_t, DataBytes / 8> reference{};
     uc_engine *uc = nullptr;
     NceDirect *direct = nullptr;
+    NceDirectConfig config{};
     bool readable = true, writable = true, alias_code = false;
+    size_t alias_offset = 0;
     uint64_t epoch = 1, fills = 0;
     explicit Probe(const char *mode = "tests");
     ~Probe();

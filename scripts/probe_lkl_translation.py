@@ -26,7 +26,7 @@ def sha(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def validate(rows, memory_interval, mapping="window", workload="core", tlb_invalidation=None, execution=None):
+def validate(rows, memory_interval, mapping="window", workload="core", tlb_invalidation=None, execution=None, direct_config=None):
     expected = {'linux_dynamic_code', 'linux_signal_suite', 'linux_signal_register_restore',
                 'linux_signal_eintr_restart', 'linux_signal_timer_preemption', 'linux_mm_exchange_integrity',
                 'translated_pthread_tls_mutex', 'translated_signals_protection_restore',
@@ -76,8 +76,12 @@ def validate(rows, memory_interval, mapping="window", workload="core", tlb_inval
         if len(selected) != 1 or selected[0].get('engine') != execution:
             return False
         if execution == 'direct':
+            if direct_config is not None and any(selected[0].get(k) != v for k, v in direct_config.items()):
+                return False
             direct = [row for row in rows if row.get('direct_execution')]
             if len(direct) != 1 or not direct[0]['calls'] or not direct[0]['compiles']:
+                return False
+            if direct_config is not None and (direct[0]['read_mapping_misses'] + direct[0]['write_mapping_misses'] != direct[0]['mapping_misses']):
                 return False
             if (direct[0]['code_bytes'] > direct[0]['capacity_bytes'] or
                     direct[0]['capacity_bytes'] != selected[0]['direct_cache_bytes'] or
@@ -139,6 +143,9 @@ def validate(rows, memory_interval, mapping="window", workload="core", tlb_inval
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--execution', choices=('unicorn', 'direct'), default='unicorn')
+    parser.add_argument('--direct-mapping-entries', type=int, choices=(256, 1024, 4096, 16384, 65536), default=256)
+    parser.add_argument('--direct-route-entries', type=int, choices=(256, 1024, 4096, 16384, 65536), default=256)
+    parser.add_argument('--direct-selective-writes', type=int, choices=(0, 1), default=0)
     parser.add_argument('--build-only', action='store_true')
     parser.add_argument('--reuse-engine-build', action='store_true', help='校验摘要后复用已构建的 Unicorn，用于执行器成组对照')
     parser.add_argument('--mapping', choices=('window', 'pte'), default='window')
@@ -167,6 +174,10 @@ def main():
         parser.error('TLB 按页失效需要 PTE 映射')
     if args.execution == 'direct' and args.mapping != 'pte':
         parser.error('Direct 执行使用 PTE 映射')
+    direct_config = {'mapping_entries': args.direct_mapping_entries, 'route_entries': args.direct_route_entries,
+                     'selective_writes': bool(args.direct_selective_writes)} if args.execution == 'direct' else None
+    if args.execution != 'direct' and (args.direct_mapping_entries != 256 or args.direct_route_entries != 256 or args.direct_selective_writes):
+        parser.error('Direct 缓存参数需要 --execution direct')
     out = args.output.resolve()
     if not out.is_relative_to(WORK):
         parser.error('实验产物必须放在本项目 work/native-linux-nce 下')
@@ -339,6 +350,8 @@ def main():
     environment['NCE_TRANSLATION_TLB'] = args.tlb_invalidation
     environment['NCE_TRANSLATION_LINUX_FASTPATH'] = str(args.linux_fastpath)
     environment['NCE_TRANSLATION_CACHE_MIB'] = str(args.cache_mib)
+    environment.update(NCE_DIRECT_MAPPING_ENTRIES=str(args.direct_mapping_entries),
+                       NCE_DIRECT_ROUTE_ENTRIES=str(args.direct_route_entries), NCE_DIRECT_SELECTIVE_WRITES=str(args.direct_selective_writes))
     for name in ('NCE_DESKTOP', 'NCE_SYSTEM_SERVER_PROBE', 'NCE_DIAGNOSTICS', 'NCE_TRACE_SYSTEMUI'):
         environment.pop(name, None)
     if args.workload == 'desktop':
@@ -364,7 +377,7 @@ def main():
                 except subprocess.TimeoutExpired:
                     returncode = 'timeout'
             rows = [json.loads(line) for line in (out / f'{stem}.jsonl').read_text().splitlines() if line.startswith('{')]
-            passed = returncode == 0 and validate(rows, args.memory_interval_ms, args.mapping, args.workload, args.tlb_invalidation, args.execution)
+            passed = returncode == 0 and validate(rows, args.memory_interval_ms, args.mapping, args.workload, args.tlb_invalidation, args.execution, direct_config)
             if data is not None:
                 data['final_sha256'] = sha(data_path)
                 metadata = subprocess.run(['/opt/homebrew/opt/e2fsprogs/sbin/dumpe2fs', '-h', data_path],
@@ -386,7 +399,7 @@ def main():
               'platform': platform.platform(), 'cpu': subprocess.check_output(['sysctl', '-n', 'machdep.cpu.brand_string'], text=True).strip(),
               'system_build': subprocess.check_output(['sw_vers', '-buildVersion'], text=True).strip(),
               'dependency': dependency, 'commands': commands, 'host_unchanged_after_guest_build': True,
-              'configuration': {'execution': args.execution, 'mapping': args.mapping, 'sparse_scan': True, 'fault_prefetch': False, 'guest_page_bytes': 16384,
+              'configuration': {'execution': args.execution, 'direct': direct_config, 'mapping': args.mapping, 'sparse_scan': True, 'fault_prefetch': False, 'guest_page_bytes': 16384,
                                 'workload': args.workload, 'entries': entries, 'art_nterp': args.art_nterp,
                                 'art_expanded_jit': args.art_expanded_jit, 'art_fast_baseline': args.art_fast_baseline,
                                 'cache_invalidation': args.cache_invalidation,

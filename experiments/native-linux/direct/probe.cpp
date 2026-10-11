@@ -1,10 +1,26 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 #include "probe.h"
+static unsigned setting(const char *name, unsigned fallback)
+{
+    const char *text = std::getenv(name);
+    if (!text)
+        return fallback;
+    char *end;
+    unsigned long value = std::strtoul(text, &end, 10);
+    CHECK(*text >= '0' && *text <= '9' && !*end && value <= UINT32_MAX);
+    return unsigned(value);
+}
 Probe::Probe(const char *mode)
 {
     if (!std::strcmp(mode, "direct") || !std::strcmp(mode, "tests")) {
-        direct = nce_direct_create(16 * 1024 * 1024);
+        unsigned selective = setting("NCE_DIRECT_SELECTIVE_WRITES", 0);
+        CHECK(selective <= 1);
+        config = {16 * 1024 * 1024, setting("NCE_DIRECT_MAPPING_ENTRIES", 256),
+                  setting("NCE_DIRECT_ROUTE_ENTRIES", 256), bool(selective)};
+        direct = nce_direct_create(config);
         CHECK(direct);
+        std::printf("{\"direct_config\":true,\"mapping_entries\":%u,\"route_entries\":%u,\"selective_writes\":%s}\n",
+                    config.mapping_entries, config.route_entries, config.selective_writes ? "true" : "false");
     }
     if (std::strcmp(mode, "tests") && std::strcmp(mode, "unicorn"))
         return;
@@ -29,7 +45,7 @@ void *Probe::Map(void *opaque, uint64_t address, bool write)
     auto &probe = *static_cast<Probe *>(opaque);
     if (address < DataVA || address >= DataVA + DataBytes || (write ? !probe.writable : !probe.readable))
         return nullptr;
-    return probe.alias_code ? (void *)probe.code.data() : (char *)probe.data.data() + address - DataVA;
+    return probe.alias_code ? (char *)probe.code.data() + probe.alias_offset : (char *)probe.data.data() + address - DataVA;
 }
 const void *Probe::Code(void *opaque, uint64_t address)
 {

@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 #include "internal.h"
+#include <algorithm>
 #include <cstring>
 #include <atomic>
 #include <cstdio>
@@ -13,18 +14,27 @@ using namespace nce_direct;
 
 struct NceDirect {
     uint32_t *arena;
+    NceDirectConfig config;
     NceDirectStats stats{};
     uint32_t supported = 0;
     std::unordered_map<uint64_t, std::unique_ptr<Page>> pages;
-    std::array<Mapping, 256> mappings{};
-    std::array<CodeRoute, 256> routes{};
+    std::vector<Mapping> mappings;
+    std::vector<CodeRoute> routes;
     std::unordered_set<const void *> active_code;
     NceDirectMemory previous{};
     std::atomic<uint32_t> stop_request{0};
     static_assert(std::atomic<uint32_t>::is_always_lock_free);
 
-    explicit NceDirect(size_t capacity)
+    static unsigned entries(unsigned count)
     {
+        if (count < 256 || count > 65536 || (count & (count - 1)))
+            throw std::invalid_argument("Direct entry count must be a power of two from 256 through 65536");
+        return count;
+    }
+    explicit NceDirect(NceDirectConfig value)
+        : config(value), mappings(entries(value.mapping_entries), EmptyMapping), routes(entries(value.route_entries))
+    {
+        size_t capacity = config.cache_bytes;
         if (capacity < 2 * Page::max_bytes || capacity > 256 * Page::max_bytes || capacity % 16384)
             throw std::invalid_argument("Direct cache must be 2..256 MiB, aligned to 16 KiB");
         arena = static_cast<uint32_t *>(mmap(nullptr, capacity, PROT_READ | PROT_WRITE | PROT_EXEC,
@@ -32,7 +42,6 @@ struct NceDirect {
         if (arena == MAP_FAILED)
             throw std::bad_alloc();
         stats.code_capacity = capacity;
-        mappings.fill(EmptyMapping);
         const std::pair<const char *, uint32_t> features[] = {
             {"hw.optional.arm.FEAT_LSE", NCE_DIRECT_LSE}, {"hw.optional.armv8_crc32", NCE_DIRECT_CRC}, {"hw.optional.arm.FEAT_AES", NCE_DIRECT_AES}, {"hw.optional.arm.FEAT_SHA1", NCE_DIRECT_SHA1}, {"hw.optional.arm.FEAT_SHA256", NCE_DIRECT_SHA256}};
         for (auto feature : features) {
@@ -48,7 +57,7 @@ struct NceDirect {
     }
     void reset_routes()
     {
-        routes.fill({UINT64_MAX, nullptr, nullptr, 0});
+        std::fill(routes.begin(), routes.end(), CodeRoute{UINT64_MAX, nullptr, nullptr, 0});
     }
     void clear()
     {
@@ -65,9 +74,19 @@ struct NceDirect {
         if (!bytes || (uintptr_t(bytes) & 4095))
             return nullptr;
         // A newly executable alias must not retain a previously writable mapping.
-        if (active_code.insert(bytes).second)
-            for (auto &mapping : mappings)
-                mapping.write_tag = UINT64_MAX;
+        if (active_code.insert(bytes).second) {
+            unsigned page_bits = memory.page_bits ? memory.page_bits : 12;
+            uintptr_t physical_page = uintptr_t(bytes) & ~((uintptr_t(1) << page_bits) - 1);
+            for (auto &mapping : mappings) {
+                if (mapping.write_tag == UINT64_MAX)
+                    continue;
+                uintptr_t mapped_page = mapping.write_addend + (mapping.write_tag << page_bits);
+                if (!config.selective_writes || mapped_page == physical_page) {
+                    mapping.write_tag = UINT64_MAX;
+                    ++stats.write_invalidations;
+                }
+            }
+        }
         auto item = pages.find(address);
         if (item != pages.end() &&
             (item->second->flags != flags || std::memcmp(item->second->source.data(), bytes, 4096))) {
@@ -86,15 +105,14 @@ struct NceDirect {
             Page pending = *owner;
             pending.flags = flags;
             auto *destination = arena + stats.code_bytes / 4;
-            size_t bytes_used = pending.compile(address, bytes, index, destination, destination,
-                                                flags, stats.code_capacity - stats.code_bytes,
-                                                owner->branch_entries.data());
+            size_t bytes_used = pending.compile(address, bytes, index, destination, flags,
+                                                owner->branch_entries.data(), config.mapping_entries - 1);
             *owner = std::move(pending);
             stats.code_bytes += (bytes_used + 15) & ~size_t(15);
             ++stats.compiles;
         }
         auto *page = pages.at(address).get();
-        routes[(address >> 12) % routes.size()] = {address >> 12, page->branch_entries.data(), page, 0};
+        routes[(address >> 12) & (routes.size() - 1)] = {address >> 12, page->branch_entries.data(), page, 0};
         return page;
     }
     NceDirectExit run(NceDirectState &state, NceDirectMemory memory, uint64_t budget, uint64_t &fault)
@@ -107,10 +125,9 @@ struct NceDirect {
         uint64_t page_mask = (UINT64_C(1) << page_bits) - 1;
         if ((state.pc & 3) || (state.fpcr & ~DIRECT_FPCR_MASK))
             return NCE_DIRECT_UNSUPPORTED;
-        uint32_t flags = state.access_flags & 0xf;
+        uint32_t flags = state.access_flags & NCE_DIRECT_UNALIGNED;
         if (page_bits == 14)
             flags |= CompileData16K;
-        flags &= ~uint32_t(NCE_DIRECT_LSE);
         uint32_t allowed = supported & state.access_flags;
         flags |= allowed & (NCE_DIRECT_LSE | NCE_DIRECT_CRC);
         if (supported & NCE_DIRECT_LSE)
@@ -127,7 +144,7 @@ struct NceDirect {
             flags |= CompilePauthNop;
         if (!memory.mapping_epoch || memory.mapping_epoch != previous.mapping_epoch ||
             memory.opaque != previous.opaque || memory.map_page != previous.map_page || memory.page_bits != previous.page_bits)
-            mappings.fill(EmptyMapping);
+            std::fill(mappings.begin(), mappings.end(), EmptyMapping);
         previous = memory;
         reset_routes();
         active_code.clear();
@@ -139,6 +156,7 @@ struct NceDirect {
         frame.exit_stub = nce_direct_exit_stub;
         frame.branch_stub = nce_direct_branch_stub;
         frame.stop_request = &stop_request;
+        frame.route_mask = config.route_entries - 1;
         NceDirectExit result = NCE_DIRECT_ERROR;
         Page *page = resolve(state.pc, flags, memory);
         void *entry = page ? page->branch_entries[(state.pc & 4095) / 4] : nullptr;
@@ -168,6 +186,10 @@ struct NceDirect {
             if (!write && frame.reason != ReadPage)
                 break;
             ++stats.mapping_misses;
+            if (write)
+                ++stats.write_mapping_misses;
+            else
+                ++stats.read_mapping_misses;
             uint64_t address = frame.address & ~page_mask;
             void *mapped = memory.map_page(memory.opaque, address, write);
             bool code_alias = false;
@@ -180,7 +202,7 @@ struct NceDirect {
                 break;
             }
             uint64_t tag = address >> page_bits;
-            auto &mapping = mappings[(tag ^ (tag >> 8)) % mappings.size()];
+            auto &mapping = mappings[(tag ^ (tag >> 8)) & (mappings.size() - 1)];
             if (write) {
                 mapping.write_tag = tag;
                 mapping.write_addend = uintptr_t(mapped) - address;
@@ -198,10 +220,10 @@ struct NceDirect {
         return result;
     }
 };
-extern "C" NceDirect *nce_direct_create(size_t bytes)
+extern "C" NceDirect *nce_direct_create(NceDirectConfig config)
 {
     try {
-        return new NceDirect(bytes);
+        return new NceDirect(config);
     } catch (const std::exception &error) {
         std::fprintf(stderr, "Direct create: %s\n", error.what());
         return nullptr;

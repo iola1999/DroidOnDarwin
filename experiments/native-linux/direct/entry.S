@@ -133,7 +133,9 @@ _nce_direct_branch_stub:
     and x17, x16, #3
     cbnz x17, Lbranch_miss
     ldr x26, [x27, #DIRECT_CODE_ROUTES]
-    ubfx x17, x16, #12, #8
+    lsr x17, x16, #12
+    ldr x30, [x27, #DIRECT_ROUTE_MASK]
+    and x17, x17, x30
     add x17, x26, x17, lsl #5
     ldr x26, [x17]
     eor x26, x26, x16, lsr #12
