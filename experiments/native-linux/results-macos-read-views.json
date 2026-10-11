@@ -1,0 +1,350 @@
+{
+  "scope": "Mac-only two 4 GiB read-only data aliases; no Linux/Direct/iPhone integration or performance claim",
+  "platform": "macOS-27.0-arm64-arm-64bit-Mach-O",
+  "cpu": "Apple M5 Ultra",
+  "system_build": "26A428",
+  "build": [
+    "xcrun",
+    "clang",
+    "-O2",
+    "-g",
+    "-Wall",
+    "-Wextra",
+    "-Werror",
+    "/Users/fan/project/app/husk_hyos/experiments/native-linux/read-view-probe.c",
+    "/Users/fan/project/app/husk_hyos/experiments/native-linux/translation/read-view.c",
+    "/Users/fan/project/app/husk_hyos/experiments/native-linux/translation/linux-memory.c",
+    "-o",
+    "/Users/fan/project/app/husk_hyos/work/native-linux-nce/read-views/probe"
+  ],
+  "sha256": {
+    "experiments/native-linux/read-view-probe.c": "a2684d13f0fdfb3028eb53381ae8cc7f908545d2b212b75556e1ebe50c696612",
+    "experiments/native-linux/translation/read-view.c": "85ad462693b9ff64532bbf2056a2c6b09cefb1bbd4d8fbcf0cb7570697ed3c2a",
+    "experiments/native-linux/translation/linux-memory.c": "0cc6ab6ff8ab7abe76c1c73aaf18fecb200ff27251ea29f0f15b0618a6020e31",
+    "experiments/native-linux/translation/read-view.h": "19a31c62342577034263fe1d8fa3a569b719bc0d5786577a3bad604cbf52e94b",
+    "experiments/native-linux/translation/linux-memory.h": "11b7a1402acaa07152cdb17d43fed3e6effdeb65af902e8b64ae5ea5cded35e9",
+    "scripts/probe_read_views.py": "e4573d679e870b04a46df6d03eb11493be085353e24783a2939e115e10df7117",
+    "work/native-linux-nce/read-views/probe": "2ad80f43fc9233d77a753a140885f7a68752d50b8e557d21d7413739f6c0ed01"
+  },
+  "runs": [
+    {
+      "entry": "cli",
+      "returncode": 0,
+      "validated": true,
+      "results": [
+        {
+          "entry": "cli",
+          "views": 2,
+          "bytes_per_view": 4294967296,
+          "memory_interval_ms": 100
+        },
+        {
+          "memory_sample": "kernel_setup",
+          "monotonic_ns": 1490083542947000,
+          "footprint_bytes": 1671552,
+          "resident_bytes": 2129920,
+          "resident_lifetime_peak_bytes": 2129920
+        },
+        {
+          "memory_sample": "kernel_setup",
+          "monotonic_ns": 1490083542970000,
+          "footprint_bytes": 1687936,
+          "resident_bytes": 2146304,
+          "resident_lifetime_peak_bytes": 2146304
+        },
+        {
+          "memory_statistics": "kernel_setup",
+          "interval_ms": 100,
+          "samples": 2,
+          "errors": 0,
+          "duration_ns": 32000,
+          "collection_ns": 18000,
+          "footprint_mean_bytes": 1679744.0,
+          "footprint_sample_peak_bytes": 1687936,
+          "footprint_latest_bytes": 1687936,
+          "resident_mean_bytes": 2138112.0,
+          "resident_sample_peak_bytes": 2146304,
+          "resident_latest_bytes": 2146304,
+          "resident_lifetime_peak_bytes": 2146304
+        },
+        {
+          "memory_sample": "reserve",
+          "monotonic_ns": 1490083542983000,
+          "footprint_bytes": 1687936,
+          "resident_bytes": 2146304,
+          "resident_lifetime_peak_bytes": 2146304
+        },
+        {
+          "memory_sample": "reserve",
+          "monotonic_ns": 1490083543024000,
+          "footprint_bytes": 1950080,
+          "resident_bytes": 2408448,
+          "resident_lifetime_peak_bytes": 2408448
+        },
+        {
+          "memory_statistics": "reserve",
+          "interval_ms": 100,
+          "samples": 2,
+          "errors": 0,
+          "duration_ns": 48000,
+          "collection_ns": 12000,
+          "footprint_mean_bytes": 1819008.0,
+          "footprint_sample_peak_bytes": 1950080,
+          "footprint_latest_bytes": 1950080,
+          "resident_mean_bytes": 2277376.0,
+          "resident_sample_peak_bytes": 2408448,
+          "resident_latest_bytes": 2408448,
+          "resident_lifetime_peak_bytes": 2408448
+        },
+        {
+          "memory_sample": "aliases",
+          "monotonic_ns": 1490083543034000,
+          "footprint_bytes": 1950080,
+          "resident_bytes": 2408448,
+          "resident_lifetime_peak_bytes": 2408448
+        },
+        {
+          "test": "read_views_private_shared_and_last_page",
+          "passed": true
+        },
+        {
+          "test": "read_views_context_selection_keeps_mappings",
+          "passed": true
+        },
+        {
+          "test": "read_views_replace_revoke_and_write_protection",
+          "passed": true
+        },
+        {
+          "test": "read_views_contiguous_range_and_partial_revoke",
+          "passed": true
+        },
+        {
+          "test": "read_views_invalid_ranges_preserve_mappings",
+          "passed": true
+        },
+        {
+          "memory_sample": "aliases",
+          "monotonic_ns": 1490083543181000,
+          "footprint_bytes": 2327032,
+          "resident_bytes": 2703360,
+          "resident_lifetime_peak_bytes": 2736128
+        },
+        {
+          "memory_statistics": "aliases",
+          "interval_ms": 100,
+          "samples": 2,
+          "errors": 0,
+          "duration_ns": 153000,
+          "collection_ns": 10000,
+          "footprint_mean_bytes": 2138556.0,
+          "footprint_sample_peak_bytes": 2327032,
+          "footprint_latest_bytes": 2327032,
+          "resident_mean_bytes": 2555904.0,
+          "resident_sample_peak_bytes": 2703360,
+          "resident_latest_bytes": 2703360,
+          "resident_lifetime_peak_bytes": 2736128
+        },
+        {
+          "memory_sample": "cleanup",
+          "monotonic_ns": 1490083543191000,
+          "footprint_bytes": 2327032,
+          "resident_bytes": 2703360,
+          "resident_lifetime_peak_bytes": 2736128
+        },
+        {
+          "test": "read_views_destroy_recreate_and_cleanup",
+          "passed": true
+        },
+        {
+          "memory_sample": "cleanup",
+          "monotonic_ns": 1490083543306000,
+          "footprint_bytes": 1671552,
+          "resident_bytes": 2129920,
+          "resident_lifetime_peak_bytes": 2736128
+        },
+        {
+          "memory_statistics": "cleanup",
+          "interval_ms": 100,
+          "samples": 2,
+          "errors": 0,
+          "duration_ns": 150000,
+          "collection_ns": 45000,
+          "footprint_mean_bytes": 1999292.0,
+          "footprint_sample_peak_bytes": 2327032,
+          "footprint_latest_bytes": 1671552,
+          "resident_mean_bytes": 2416640.0,
+          "resident_sample_peak_bytes": 2703360,
+          "resident_latest_bytes": 2129920,
+          "resident_lifetime_peak_bytes": 2736128
+        },
+        {
+          "result": "passed"
+        }
+      ],
+      "stdout_sha256": "fd7fa732a21d43d11ec185bf1ea6a76a8161f474a9eecfc31b20893c73921478",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "entry": "gcd",
+      "returncode": 0,
+      "validated": true,
+      "results": [
+        {
+          "entry": "gcd",
+          "views": 2,
+          "bytes_per_view": 4294967296,
+          "memory_interval_ms": 100
+        },
+        {
+          "memory_sample": "kernel_setup",
+          "monotonic_ns": 1490083551727000,
+          "footprint_bytes": 1671552,
+          "resident_bytes": 2129920,
+          "resident_lifetime_peak_bytes": 2129920
+        },
+        {
+          "memory_sample": "kernel_setup",
+          "monotonic_ns": 1490083551750000,
+          "footprint_bytes": 1687936,
+          "resident_bytes": 2146304,
+          "resident_lifetime_peak_bytes": 2146304
+        },
+        {
+          "memory_statistics": "kernel_setup",
+          "interval_ms": 100,
+          "samples": 2,
+          "errors": 0,
+          "duration_ns": 31000,
+          "collection_ns": 17000,
+          "footprint_mean_bytes": 1679744.0,
+          "footprint_sample_peak_bytes": 1687936,
+          "footprint_latest_bytes": 1687936,
+          "resident_mean_bytes": 2138112.0,
+          "resident_sample_peak_bytes": 2146304,
+          "resident_latest_bytes": 2146304,
+          "resident_lifetime_peak_bytes": 2146304
+        },
+        {
+          "memory_sample": "reserve",
+          "monotonic_ns": 1490083551764000,
+          "footprint_bytes": 1687936,
+          "resident_bytes": 2146304,
+          "resident_lifetime_peak_bytes": 2146304
+        },
+        {
+          "memory_sample": "reserve",
+          "monotonic_ns": 1490083551811000,
+          "footprint_bytes": 1950080,
+          "resident_bytes": 2408448,
+          "resident_lifetime_peak_bytes": 2408448
+        },
+        {
+          "memory_statistics": "reserve",
+          "interval_ms": 100,
+          "samples": 2,
+          "errors": 0,
+          "duration_ns": 54000,
+          "collection_ns": 12000,
+          "footprint_mean_bytes": 1819008.0,
+          "footprint_sample_peak_bytes": 1950080,
+          "footprint_latest_bytes": 1950080,
+          "resident_mean_bytes": 2277376.0,
+          "resident_sample_peak_bytes": 2408448,
+          "resident_latest_bytes": 2408448,
+          "resident_lifetime_peak_bytes": 2408448
+        },
+        {
+          "memory_sample": "aliases",
+          "monotonic_ns": 1490083551822000,
+          "footprint_bytes": 1950080,
+          "resident_bytes": 2408448,
+          "resident_lifetime_peak_bytes": 2408448
+        },
+        {
+          "test": "read_views_private_shared_and_last_page",
+          "passed": true
+        },
+        {
+          "test": "read_views_context_selection_keeps_mappings",
+          "passed": true
+        },
+        {
+          "test": "read_views_replace_revoke_and_write_protection",
+          "passed": true
+        },
+        {
+          "test": "read_views_contiguous_range_and_partial_revoke",
+          "passed": true
+        },
+        {
+          "test": "read_views_invalid_ranges_preserve_mappings",
+          "passed": true
+        },
+        {
+          "memory_sample": "aliases",
+          "monotonic_ns": 1490083551970000,
+          "footprint_bytes": 2327032,
+          "resident_bytes": 2703360,
+          "resident_lifetime_peak_bytes": 2736128
+        },
+        {
+          "memory_statistics": "aliases",
+          "interval_ms": 100,
+          "samples": 2,
+          "errors": 0,
+          "duration_ns": 152000,
+          "collection_ns": 9000,
+          "footprint_mean_bytes": 2138556.0,
+          "footprint_sample_peak_bytes": 2327032,
+          "footprint_latest_bytes": 2327032,
+          "resident_mean_bytes": 2555904.0,
+          "resident_sample_peak_bytes": 2703360,
+          "resident_latest_bytes": 2703360,
+          "resident_lifetime_peak_bytes": 2736128
+        },
+        {
+          "memory_sample": "cleanup",
+          "monotonic_ns": 1490083551977000,
+          "footprint_bytes": 2327032,
+          "resident_bytes": 2703360,
+          "resident_lifetime_peak_bytes": 2736128
+        },
+        {
+          "test": "read_views_destroy_recreate_and_cleanup",
+          "passed": true
+        },
+        {
+          "memory_sample": "cleanup",
+          "monotonic_ns": 1490083552064000,
+          "footprint_bytes": 1671552,
+          "resident_bytes": 2129920,
+          "resident_lifetime_peak_bytes": 2736128
+        },
+        {
+          "memory_statistics": "cleanup",
+          "interval_ms": 100,
+          "samples": 2,
+          "errors": 0,
+          "duration_ns": 116000,
+          "collection_ns": 40000,
+          "footprint_mean_bytes": 1999292.0,
+          "footprint_sample_peak_bytes": 2327032,
+          "footprint_latest_bytes": 1671552,
+          "resident_mean_bytes": 2416640.0,
+          "resident_sample_peak_bytes": 2703360,
+          "resident_latest_bytes": 2129920,
+          "resident_lifetime_peak_bytes": 2736128
+        },
+        {
+          "result": "passed"
+        }
+      ],
+      "stdout_sha256": "17cbb9a744beaea32831c6e43ca8960670abfcfd06018af630e8c2008c09a419",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "recomputed_memory_samples": 16,
+  "base_commit": "2c8af15",
+  "measurement": "Two 4 GiB virtual reservations, 256 KiB primary RAM, a small set of read-only aliases. Memory phases include boundary samples; short checks do not measure sustained memory pressure or Android mapping cost."
+}
