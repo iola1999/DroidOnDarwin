@@ -475,7 +475,19 @@ static void check_read_view_handlers()
     for (unsigned i = 0; i < 2; ++i) {
         CHECK(!sigaction(signals[i], nullptr, &installed[i]));
         forwarded_signal = 0;
-        CHECK(!raise(signals[i]) && forwarded_signal == signals[i]);
+        // Darwin dispatch workers reject software signals with ENOTSUP.
+        // Real read-view faults below still execute on the selected entry thread.
+        pthread_t sender;
+        int number = signals[i];
+        CHECK(!pthread_create(&sender, nullptr, [](void *opaque) -> void * {
+            int number = *static_cast<int *>(opaque);
+            sigset_t mask;
+            sigemptyset(&mask);
+            sigaddset(&mask, number);
+            CHECK(!pthread_sigmask(SIG_UNBLOCK, &mask, nullptr));
+            CHECK(!pthread_kill(pthread_self(), number));
+            return nullptr; }, &number));
+        CHECK(!pthread_join(sender, nullptr) && forwarded_signal == signals[i]);
     }
     CHECK(!sigaction(SIGSEGV, &observer, nullptr));
     CHECK(nce_direct_remove_read_faults() == -1 && errno == EBUSY);

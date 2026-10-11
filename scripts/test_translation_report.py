@@ -20,9 +20,16 @@ def main():
     def accepted(rows):
         return validate(rows, config['memory_interval_ms'], config['mapping'], config['workload'],
                         config['tlb_invalidation'], config['execution'], config['direct'],
-                        config['cpus'], config['parallel_profile'], config['uaccess_stop'])
+                        config['cpus'], config['parallel_profile'], config['uaccess_stop'],
+                        code_memory=config.get('code_memory'))
 
     assert accepted(original)
+    if config.get('code_memory'):
+        assert not accepted([row for row in original if row.get('config') != 'translation_code_memory'])
+        for field in ('kernel', 'direct'):
+            rows = deepcopy(original)
+            next(row for row in rows if row.get('config') == 'translation_code_memory')[field] = 'wrong-variant'
+            assert not accepted(rows), field
     assert not accepted([row for row in original if row.get('cpu') != 1])
     cpu = next(row for row in original if row.get('config') == 'translation_execution')
     assert not accepted([*original[:-1], deepcopy(cpu), original[-1]])

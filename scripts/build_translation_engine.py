@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """为 ARM64 翻译原型构建支持翻译块边界抢占的 Unicorn 2.1.4。"""
 import hashlib
+import argparse
 import json
 import os
 from pathlib import Path
@@ -13,10 +14,12 @@ WORK = ROOT / 'work/native-linux-nce'
 ARCHIVE_SHA = 'ea8863f095a0136388694e5a6063afd9bb7650e30243dd6251af59c5ce5601f4'
 
 
-def build():
+def build(code_memory='map-jit'):
+    if code_memory not in ('map-jit', 'dual'):
+        raise ValueError('unknown Unicorn code memory variant')
     archive = WORK / 'unicorn-2.1.4.tar.gz'
-    source = WORK / 'unicorn-2.1.4'
-    output = WORK / 'unicorn-tb-stop'
+    source = (WORK if code_memory == 'map-jit' else WORK / 'unicorn-dual-source') / 'unicorn-2.1.4'
+    output = WORK / ('unicorn-tb-stop' if code_memory == 'map-jit' else 'unicorn-tb-stop-dual')
     prefix = output / 'prefix'
     output.mkdir(parents=True, exist_ok=True)
     if not archive.exists():
@@ -25,7 +28,8 @@ def build():
         raise RuntimeError('Unicorn 源码压缩包摘要不一致')
     with tarfile.open(archive) as tar:
         if not source.exists():
-            tar.extractall(WORK, filter='data')
+            source.parent.mkdir(parents=True, exist_ok=True)
+            tar.extractall(source.parent, filter='data')
 
         patched = {}
 
@@ -160,6 +164,9 @@ void tb_flush(CPUState *cpu)''')
     }
     TCGv_ptr puc = tcg_const_ptr(tcg_ctx, tcg_ctx->uc);
     TCGv_i32 tmp = tcg_const_i32(tcg_ctx, 2);''')
+        if code_memory == 'dual':
+            from unicorn_code_memory_patch import apply
+            apply(patched, lambda name: tar.extractfile('unicorn-2.1.4/' + name).read().decode())
     for name, content in patched.items():
         path = source / name
         if path.read_text() != content:
@@ -169,16 +176,18 @@ void tb_flush(CPUState *cpu)''')
          '-DBUILD_SHARED_LIBS=OFF', '-DUNICORN_BUILD_TESTS=OFF', '-DUNICORN_INSTALL=ON', f'-DCMAKE_INSTALL_PREFIX={prefix}'],
         ['cmake', '--build', output / 'build', '-j8'], ['cmake', '--install', output / 'build']]
     env = os.environ.copy()
+    if code_memory == 'dual':
+        commands[0].append('-DCMAKE_C_FLAGS=-DNCE_TCG_DUAL_MAP')
     env['ZERO_AR_DATE'] = '1'
     with (output / 'build.log').open('w') as log:
         for command in commands:
             subprocess.run(list(map(str, command)), env=env, check=True, stdout=log, stderr=subprocess.STDOUT, timeout=600)
-    files = [Path(__file__), archive, source / 'include/uc_priv.h', source / 'uc.c',
-             source / 'qemu/accel/tcg/tcg-runtime.c', source / 'qemu/include/exec/gen-icount.h',
-             source / 'qemu/tcg/tcg-op.c',
-             source / 'qemu/accel/tcg/translate-all.c',
+    files = [Path(__file__), archive, *[source / name for name in patched],
              prefix / 'lib/libunicorn.a', prefix / 'include/unicorn/unicorn.h']
+    if code_memory == 'dual':
+        files.append(Path(__file__).with_name('unicorn_code_memory_patch.py'))
     manifest = {'version': '2.1.4', 'patch': 'nce-tb-stop', 'path': str(prefix), 'ZERO_AR_DATE': '1',
+                'code_memory': code_memory,
                 'commands': [list(map(str, command)) for command in commands],
                 'sha256': {str(path.relative_to(ROOT)): hashlib.sha256(path.read_bytes()).hexdigest() for path in files}}
     (output / 'build.json').write_text(json.dumps(manifest, indent=2) + '\n')
@@ -186,4 +195,6 @@ void tb_flush(CPUState *cpu)''')
 
 
 if __name__ == '__main__':
-    print(build()['path'])
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--code-memory', choices=('map-jit', 'dual'), default='map-jit')
+    print(build(parser.parse_args().code_memory)['path'])

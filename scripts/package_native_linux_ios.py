@@ -92,7 +92,7 @@ def main():
     with (OUT / 'detach-test.log').open('w') as log:
         run([OUT / 'detach-test'], stdout=log)
     run(['xcrun', 'clang', '-O2', '-Wall', '-Wextra', '-Werror', '-isysroot', sdk, '-I', EXP, '-I', INPUT,
-         EXP / 'execute-check.c', EXP / 'memory.c', EXP / 'nce.c', EXP / 'nce-thread.c', EXP / 'entry.S',
+         EXP / 'execute-check.c', EXP / 'memory.c', EXP / 'code-memory.c', EXP / 'nce.c', EXP / 'nce-thread.c', EXP / 'entry.S',
          EXP / 'programs.c', INPUT / 'payload.S',
          EXP / 'ios/execute-test.c', '-o', OUT / 'execute-test'])
     with (OUT / 'execute-test.log').open('w') as log:
@@ -126,7 +126,7 @@ def main():
     # for archive integrity; get-task-allow is needed by the in-app JIT helper.
     plist(OUT / 'DroidOnDarwin.entitlements', {'get-task-allow': True})
     sources = [{'path': str(EXP / name)} for name in
-               ['lkl-main.c', 'lkl-host.c', 'lkl-process-host.c', 'nce-cpu.c', 'programs.c', 'memory.c', 'execute-check.c', 'compute.c', 'input.c', 'session.c', 'nce.c', 'nce-thread.c', 'entry.S',
+               ['lkl-main.c', 'lkl-host.c', 'lkl-process-host.c', 'nce-cpu.c', 'programs.c', 'memory.c', 'code-memory.c', 'execute-check.c', 'compute.c', 'input.c', 'session.c', 'nce.c', 'nce-thread.c', 'entry.S',
                 'ios/Bridge.c', 'ios/NativeLinuxApp.swift', 'ios/Display.swift', 'ios/JITSettingsView.swift', 'app/DeviceStore.mm', 'macos/Storage.mm', 'graphics/host-graphics.cpp']]
     sources += [{'path': str(path)} for path in sorted((EXP / 'app').glob('*.swift'))]
     sources += [{'path': str(EXP / 'guest.S'), 'compilerFlags': ['-DNATIVE']}]

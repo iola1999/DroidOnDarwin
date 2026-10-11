@@ -17,7 +17,7 @@ static bool resident(unsigned reg)
     return reg < 16 || (reg >= 19 && reg < 26);
 }
 Compilation Page::compile(uint64_t new_page, const void *bytes, size_t entry,
-                          uint32_t *executable, uint32_t flags, void **stable_entries, unsigned mapping_mask)
+                          uint32_t *executable, uint32_t *writable, uint32_t flags, void **stable_entries, unsigned mapping_mask)
 {
     bool unaligned = flags & 1;
     unsigned page_bits = flags & CompileData16K ? 14 : 12;
@@ -696,9 +696,13 @@ Compilation Page::compile(uint64_t new_page, const void *bytes, size_t entry,
     exit(new_page + 4096, CodeBranch);
     if (output.size() * 4 > max_bytes)
         throw std::length_error("direct code page exceeds pool");
+#ifndef NCE_DIRECT_DUAL_MAP
     pthread_jit_write_protect_np(0);
-    std::memcpy(executable, output.data(), output.size() * 4);
+#endif
+    std::memcpy(writable, output.data(), output.size() * 4);
+#ifndef NCE_DIRECT_DUAL_MAP
     pthread_jit_write_protect_np(1);
+#endif
     sys_icache_invalidate(executable, output.size() * 4);
     source = input;
     result.bytes = output.size() * 4;

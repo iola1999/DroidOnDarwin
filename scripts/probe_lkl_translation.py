@@ -26,7 +26,12 @@ def sha(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def validate(rows, memory_interval, mapping="window", workload="core", tlb_invalidation=None, execution=None, direct_config=None, cpus=1, parallel_profile=None, uaccess_stop=None, code_lookup_limit=None):
+def validate(rows, memory_interval, mapping="window", workload="core", tlb_invalidation=None, execution=None, direct_config=None, cpus=1, parallel_profile=None, uaccess_stop=None, code_lookup_limit=None, code_memory=None):
+    if code_memory is not None:
+        settings = [row for row in rows if row.get('config') == 'translation_code_memory']
+        if settings != [{'config': 'translation_code_memory', 'kernel': 'dual' if code_memory == 'dual' else 'single',
+                         'direct': code_memory if execution == 'direct' else 'unused'}]:
+            return False
     if parallel_profile is not None:
         settings = [row for row in rows if row.get('config') == 'translation_parallel']
         if len(settings) != 1 or settings[0] != {'config': 'translation_parallel', 'cpus': cpus,
@@ -63,7 +68,7 @@ def validate(rows, memory_interval, mapping="window", workload="core", tlb_inval
             code_lookup_limit = sum(row['code_lookups'] for row in rows if row.get('direct_execution'))
         return all(validate([row for row in rows if row.get('cpu', cpu) == cpu], memory_interval,
                             mapping, workload, tlb_invalidation, execution, direct_config,
-                            code_lookup_limit=code_lookup_limit)
+                            code_lookup_limit=code_lookup_limit, code_memory=code_memory)
                    for cpu in range(cpus))
     expected = {'linux_dynamic_code', 'linux_signal_suite', 'linux_signal_register_restore',
                 'linux_signal_eintr_restart', 'linux_signal_timer_preemption', 'linux_mm_exchange_integrity',
@@ -256,6 +261,7 @@ def main():
     parser.add_argument('--parallel-profile', type=int, choices=(0, 1), default=0)
     parser.add_argument('--cpus', type=int, choices=(1, 2), default=1)
     parser.add_argument('--smp-uaccess-stop', choices=('all', 'code'), default='all')
+    parser.add_argument('--code-memory', choices=('map-jit', 'dual'), default='map-jit')
     parser.add_argument('--execution', choices=('unicorn', 'direct'), default='unicorn')
     parser.add_argument('--direct-mapping-entries', type=int, choices=(256, 1024, 4096, 16384, 65536), default=256)
     parser.add_argument('--direct-route-entries', type=int, choices=(256, 1024, 4096, 16384, 65536), default=256)
@@ -321,17 +327,17 @@ def main():
         parser.error('需要 Apple Silicon Mac，repeat 必须为正数')
     if not 1000 <= args.batch_instructions <= 1000000 or not (args.memory_interval_ms == 0 or 10 <= args.memory_interval_ms <= 10000):
         parser.error('指令批次范围 1000…1000000；内存采样间隔为 0 或 10…10000 ms')
+    manifest = WORK / ('unicorn-tb-stop-dual/build.json' if args.code_memory == 'dual' else 'unicorn-tb-stop/build.json')
     if args.reuse_engine_build:
-        manifest = WORK / 'unicorn-tb-stop/build.json'
         dependency = json.loads(manifest.read_text())
-        if dependency.get('version') != '2.1.4' or not dependency.get('sha256'):
+        if dependency.get('version') != '2.1.4' or dependency.get('code_memory') != args.code_memory or not dependency.get('sha256'):
             parser.error('Unicorn 构建记录无效')
         for name, expected in dependency['sha256'].items():
             if sha(ROOT / name) != expected:
                 parser.error('Unicorn 构建输入或产物已变化：' + name)
     else:
         from build_translation_engine import build as build_engine
-        dependency = build_engine()
+        dependency = build_engine(args.code_memory)
     library = Path(dependency['path'])
     out.mkdir(parents=True, exist_ok=True)
     llvm = Path('/opt/homebrew/opt/llvm/bin')
@@ -367,16 +373,20 @@ def main():
             parser.error(name + ' 的 ELF 地址与内核镜像不一致')
         header += f'#define {constant} 0x{symbol:x}UL\n'
     (out / 'translation-symbols.h').write_text(header)
-    inputs = [EXP / 'translation/linux-elf.c', EXP / 'translation/linux-execution.c', EXP / 'translation/linux-runner.c', EXP / 'translation/linux-memory.c', EXP / 'lkl-host.c']
+    inputs = [EXP / 'translation/kernel-image.c', EXP / 'translation/linux-elf.c', EXP / 'translation/linux-execution.c', EXP / 'translation/linux-runner.c', EXP / 'translation/linux-memory.c', EXP / 'lkl-host.c']
     commands = []
     direct_link, direct_files = [], []
     if args.execution == 'direct':
         from probe_direct_execution import build_engine as build_direct
-        direct_objects, direct_files = build_direct(out / 'direct')
+        direct_objects, direct_files = build_direct(out / 'direct', args.code_memory)
         direct_link = ['-DNCE_DIRECT_EXECUTION', *direct_objects, '-lc++']
         inputs += [EXP / 'translation/code-watch.c', EXP / 'translation/read-view.c']
         direct_files.append(EXP / 'translation/code-watch.h')
         direct_files.append(EXP / 'translation/read-view.h')
+    if args.code_memory == 'dual':
+        inputs.append(EXP / 'translation/unicorn-code-memory.c')
+        if args.execution != 'direct':
+            inputs.append(EXP / 'code-memory.c')
     graphics_link, graphics_files = [], []
     if args.workload == 'desktop':
         gfx = ROOT / 'work/gfxstream-src'
@@ -407,6 +417,8 @@ def main():
         command = ['xcrun', 'clang', '-O2', '-g', '-DNCE_PROCESS', f'-DNCE_TRANSLATION_CPUS={args.cpus}', '-Wall', '-Wextra', '-Werror',
                    '-I', EXP, '-I', kernel, '-I', out, '-I', KERNEL / 'host-include', '-I', library / 'include',
                    *inputs, library / 'lib/libunicorn.a', *graphics_link, *[x for x in direct_link if x != '-lc++' or '-lc++' not in graphics_link], '-o', out / mode]
+        if args.code_memory == 'dual':
+            command += ['-DNCE_TRANSLATION_DUAL_MAP']
         if args.cpus == 2:
             command += ['-DNCE_SMP']
         if mode == 'gcd':
@@ -482,8 +494,8 @@ def main():
              EXP / 'dispatch-test.c', EXP / 'layout.h', EXP / 'guest-registers.h',
              *[EXP / 'userspace' / name for name in guest_sources], *android_files, *graphics_files,
              kernel / 'lkl-image.bin', kernel / 'lkl-image.h', kernel / 'lkl.so', kernel / 'lkl-host-ops.h',
-             EXP / 'translation/kernel-api.h',
-             ROOT / 'scripts/build_translation_engine.py', WORK / 'unicorn-tb-stop/build.json',
+             EXP / 'translation/kernel-api.h', EXP / 'translation/kernel-image.h', EXP / 'code-memory.h', EXP / 'nce.h',
+             ROOT / 'scripts/build_translation_engine.py', manifest,
              library / 'lib/libunicorn.a', *[out / name for name in (*build_entries, 'guest.elf', 'late.elf', *runtime_files)]]
     if args.mapping == 'pte':
         files += [ROOT / 'scripts/build_lkl_translation_kernel.py', ROOT / 'scripts/lkl_translation_patch.py',
@@ -538,7 +550,7 @@ def main():
                 except subprocess.TimeoutExpired:
                     returncode = 'timeout'
             rows = [json.loads(line) for line in (out / f'{stem}.jsonl').read_text().splitlines() if line.startswith('{')]
-            passed = returncode == 0 and validate(rows, args.memory_interval_ms, args.mapping, args.workload, args.tlb_invalidation, args.execution, direct_config, args.cpus, bool(args.parallel_profile), args.smp_uaccess_stop)
+            passed = returncode == 0 and validate(rows, args.memory_interval_ms, args.mapping, args.workload, args.tlb_invalidation, args.execution, direct_config, args.cpus, bool(args.parallel_profile), args.smp_uaccess_stop, code_memory=args.code_memory)
             if data is not None:
                 data['final_sha256'] = sha(data_path)
                 metadata = subprocess.run(['/opt/homebrew/opt/e2fsprogs/sbin/dumpe2fs', '-h', data_path],
@@ -560,7 +572,7 @@ def main():
               'platform': platform.platform(), 'cpu': subprocess.check_output(['sysctl', '-n', 'machdep.cpu.brand_string'], text=True).strip(),
               'system_build': subprocess.check_output(['sw_vers', '-buildVersion'], text=True).strip(),
               'dependency': dependency, 'commands': commands, 'host_unchanged_after_guest_build': True,
-              'configuration': {'execution': args.execution, 'direct': direct_config, 'mapping': args.mapping, 'sparse_scan': True, 'fault_prefetch': False, 'guest_page_bytes': 16384,
+              'configuration': {'code_memory': args.code_memory, 'execution': args.execution, 'direct': direct_config, 'mapping': args.mapping, 'sparse_scan': True, 'fault_prefetch': False, 'guest_page_bytes': 16384,
                                 'workload': args.workload, 'entries': entries, 'art_nterp': args.art_nterp,
                                 'cpus': args.cpus, 'uaccess_stop': args.smp_uaccess_stop, 'parallel_profile': bool(args.parallel_profile), 'art_expanded_jit': args.art_expanded_jit, 'art_fast_baseline': args.art_fast_baseline,
                                 'cache_invalidation': args.cache_invalidation,

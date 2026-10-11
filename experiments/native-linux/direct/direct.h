@@ -126,9 +126,11 @@ typedef struct {
 } NceDirectConfig;
 
 /* One sequential caller per engine. Code cache is 2..256 MiB, 16 KiB aligned.
- * This independent prototype currently prepares MAP_JIT memory on macOS. */
+ * The executable-memory model is selected at build time. */
 NceDirect *nce_direct_create(NceDirectConfig);
 void nce_direct_destroy(NceDirect *);
+/* Returns "map-jit" or "dual" for the linked engine. */
+const char *nce_direct_code_memory(void);
 /* Request from another thread; consumed at the next block boundary. The owner
  * must exclude engine destruction. An unprepared run clears earlier requests. */
 void nce_direct_request_stop(NceDirect *);

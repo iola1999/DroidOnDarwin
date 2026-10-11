@@ -18,7 +18,7 @@ OAKNUT = '94c726ce0338b054eb8cb5ea91de8fe6c19f4392'
 ARCHIVE_SHA = 'c404db82002f9a851a412b3d55ac9be8a42a2e319fd2fc8a73e63e6ef5d4f97b'
 
 
-def build_engine(out):
+def build_engine(out, code_memory='map-jit'):
     archive = WORK / 'oaknut-94c726c.tar.gz'
     if not archive.exists():
         urllib.request.urlretrieve(f'https://codeload.github.com/merryhime/oaknut/tar.gz/{OAKNUT}', archive)
@@ -30,29 +30,42 @@ def build_engine(out):
             tar.extractall(WORK, filter='data')
     out.mkdir(parents=True, exist_ok=True)
     inputs = [SOURCE / name for name in ('engine.cpp', 'compile.cpp', 'decode.cpp', 'memory-groups.cpp', 'read-faults.cpp', 'cross-page.cpp', 'entry.S')]
+    flags = ['-DNCE_DIRECT_DUAL_MAP'] if code_memory == 'dual' else []
+    if flags:
+        inputs.append(SOURCE.parent / 'code-memory.c')
     objects = []
     for path in inputs:
         obj = out / (path.stem + '.o')
         command = ['xcrun', 'clang++' if path.suffix == '.cpp' else 'clang']
         if path.suffix == '.cpp':
             command += ['-std=c++20']
-        subprocess.run([*command, '-O2', '-g', '-Wall', '-Wextra', '-Werror', '-I', str(headers / 'include'),
+        subprocess.run([*command, *flags, '-O2', '-g', '-Wall', '-Wextra', '-Werror', '-I', str(headers / 'include'),
                         '-c', str(path), '-o', str(obj)], check=True, timeout=120)
         objects.append(obj)
-    return objects, inputs + [SOURCE / name for name in ('decode.h', 'memory-groups.h', 'direct.h', 'internal.h', 'layout.h', 'page-table-layout.h')] + sorted((headers / 'include').rglob('*.hpp')) + [Path(__file__), archive]
+    return objects, inputs + [SOURCE / name for name in ('decode.h', 'memory-groups.h', 'direct.h', 'internal.h', 'layout.h', 'page-table-layout.h')] + [SOURCE.parent / name for name in ('code-memory.h', 'nce.h', 'guest-registers.h')] + sorted((headers / 'include').rglob('*.hpp')) + [Path(__file__), archive]
 
 
-def build(out):
-    objects, core_inputs = build_engine(out)
-    unicorn = WORK / 'unicorn-tb-stop/prefix'
-    if not (unicorn / 'lib/libunicorn.a').exists():
+def build(out, code_memory='map-jit'):
+    objects, core_inputs = build_engine(out, code_memory)
+    unicorn = WORK / ('unicorn-tb-stop/prefix' if code_memory == 'map-jit' else 'unicorn-tb-stop-dual/prefix')
+    manifest_path = unicorn.parent / 'build.json'
+    dependency = json.loads(manifest_path.read_text()) if manifest_path.exists() else {}
+    valid = (dependency.get('version') == '2.1.4' and dependency.get('code_memory') == code_memory
+             and dependency.get('sha256') and all((ROOT / name).is_file() and
+                 hashlib.sha256((ROOT / name).read_bytes()).hexdigest() == expected
+                 for name, expected in dependency['sha256'].items()))
+    if not valid:
         from build_translation_engine import build as build_unicorn
-        unicorn = Path(build_unicorn()['path'])
+        dependency = build_unicorn(code_memory)
+        unicorn = Path(dependency['path'])
+    core_inputs += [manifest_path, *[ROOT / name for name in dependency['sha256']]]
     out.mkdir(parents=True, exist_ok=True)
-    files = [SOURCE / name for name in ('probe.cpp', 'tests.cpp', 'instruction-tests.cpp', 'cross-page-tests.cpp', 'route-tests.cpp', 'memory-group-tests.cpp', 'page-table-tests.cpp', 'parallel-tests.cpp', 'benchmark.cpp', 'main.cpp')] + [
+    files = [SOURCE / name for name in ('probe.cpp', 'tests.cpp', 'instruction-tests.cpp', 'cross-page-tests.cpp', 'route-tests.cpp', 'memory-group-tests.cpp', 'page-table-tests.cpp', 'parallel-tests.cpp', 'unicorn-hook-tests.cpp', 'benchmark.cpp', 'main.cpp')] + [
         ROOT / 'experiments/native-linux/translation/kernels.S',
         ROOT / 'experiments/native-linux/translation/read-view.c',
         ROOT / 'experiments/native-linux/translation/linux-memory.c']
+    if code_memory == 'dual':
+        files.append(ROOT / 'experiments/native-linux/translation/unicorn-code-memory.c')
     for index, path in enumerate(files):
         obj = out / f'{index}-{path.stem}.o'
         command = ['xcrun', 'clang++' if path.suffix == '.cpp' else 'clang']
@@ -105,6 +118,7 @@ def validate(rows, mode, interval, config=None):
         expected |= {'literal_load_signed_vector_pc_and_permissions', 'simd_lane_replicate_writeback_and_faults',
                      'fp_fixed_rounding_and_widening', 'new_instruction_reserved_encodings', 'simd_table_alias_wrap_indices_and_setting'}
         expected |= {'cross_page_noncontiguous_memory_vectors_faults_12', 'cross_page_noncontiguous_memory_vectors_faults_14'}
+        expected.add('unicorn_hook_state_cache_reset_and_independent_close')
         expected |= {'route_epochs_fetch_permission_and_code_replacement', 'route_epochs_flush_and_return_to_freed_page'}
         expected |= {'memory_groups_all_bases_widths_vectors_and_pairs', 'memory_groups_inner_entries_and_partial_page_faults',
                      'memory_groups_sp_alignment_and_code_write_alias', 'memory_groups_asynchronous_stop',
@@ -148,6 +162,7 @@ def main():
     parser.add_argument('--mode', choices=['tests', 'bench', 'all'], default='all')
     parser.add_argument('--memory-interval-ms', type=int, default=100)
     parser.add_argument('--build-only', action='store_true')
+    parser.add_argument('--code-memory', choices=('map-jit', 'dual'), default='map-jit')
     parser.add_argument('--mapping-entries', type=int, choices=(256, 1024, 4096, 16384, 65536), default=256)
     parser.add_argument('--route-entries', type=int, choices=(256, 1024, 4096, 16384, 65536), default=256)
     parser.add_argument('--selective-writes', type=int, choices=(0, 1), default=0)
@@ -166,7 +181,7 @@ def main():
     out = args.output.resolve()
     if not out.is_relative_to(WORK):
         parser.error('实验产物必须放在本项目 work/native-linux-nce 下')
-    executable, hashes = build(out)
+    executable, hashes = build(out, args.code_memory)
     if args.build_only:
         print(executable)
         return
@@ -185,6 +200,8 @@ def main():
             with path.open('w') as stdout, path.with_suffix('.stderr.log').open('w') as stderr:
                 result = subprocess.run(command, env=environment, stdout=stdout, stderr=stderr, timeout=180)
             rows = [json.loads(line) for line in path.read_text().splitlines()]
+            if [r['direct_code_memory'] for r in rows if 'direct_code_memory' in r] != [args.code_memory]:
+                raise RuntimeError('Direct 执行内存变体与请求不一致')
             runs.append({'entry': entry, 'mode': mode, 'command': command, 'returncode': result.returncode, 'results': rows})
             if result.returncode or not validate(rows, mode, args.memory_interval_ms, config):
                 (out / 'failed.json').write_text(json.dumps(runs, indent=2) + '\n')
@@ -196,7 +213,8 @@ def main():
               'platform': platform.platform(), 'cpu': subprocess.check_output(['sysctl', '-n', 'machdep.cpu.brand_string'], text=True).strip(),
               'system_build': subprocess.check_output(['sw_vers', '-buildVersion'], text=True).strip(),
               'measurement': 'Three warm rounds per engine in separate processes, reversed process order for GCD. Same ARM64 bytes and checked results. Direct includes one-million-instruction slice entries; Unicorn includes register exchange. Memory phases include initialization and result verification, with arithmetic sample mean, sampled peak and latest; lifetime RSS peak is separate.',
-              'build_flags': ['-std=c++20', '-O2', '-g', '-Wall', '-Wextra', '-Werror'],
+              'build_flags': ['-std=c++20', '-O2', '-g', '-Wall', '-Wextra', '-Werror'] + (['-DNCE_DIRECT_DUAL_MAP'] if args.code_memory == 'dual' else []),
+              'direct_code_memory': args.code_memory, 'unicorn_code_memory': args.code_memory,
               'configuration': config,
               'dependency': {'oaknut_revision': OAKNUT, 'oaknut_archive_sha256': ARCHIVE_SHA},
               'sha256': hashes, 'runs': runs, 'comparison': {}}

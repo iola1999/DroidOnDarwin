@@ -1,5 +1,8 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 #include "internal.h"
+#ifdef NCE_DIRECT_DUAL_MAP
+#include "../code-memory.h"
+#endif
 #include <algorithm>
 #include <cstring>
 #include <atomic>
@@ -14,6 +17,7 @@ using namespace nce_direct;
 
 struct NceDirect {
     uint32_t *arena;
+    uint32_t *writable;
     NceDirectConfig config;
     NceDirectStats stats{};
     uint32_t supported = 0;
@@ -48,10 +52,23 @@ struct NceDirect {
         size_t capacity = config.cache_bytes;
         if (capacity < 2 * Page::max_bytes || capacity > 256 * Page::max_bytes || capacity % 16384)
             throw std::invalid_argument("Direct cache must be 2..256 MiB, aligned to 16 KiB");
+#ifdef NCE_DIRECT_DUAL_MAP
+        arena = static_cast<uint32_t *>(mmap(nullptr, capacity, PROT_NONE, MAP_PRIVATE | MAP_ANON, -1, 0));
+        if (arena == MAP_FAILED)
+            throw std::bad_alloc();
+        NceCode code = nce_code_prepare_range(arena, capacity);
+        if (!code.rw) {
+            munmap(arena, capacity);
+            throw std::bad_alloc();
+        }
+        writable = reinterpret_cast<uint32_t *>(code.rw);
+#else
         arena = static_cast<uint32_t *>(mmap(nullptr, capacity, PROT_READ | PROT_WRITE | PROT_EXEC,
                                              MAP_PRIVATE | MAP_ANON | MAP_JIT, -1, 0));
         if (arena == MAP_FAILED)
             throw std::bad_alloc();
+        writable = arena;
+#endif
         stats.code_capacity = capacity;
         const std::pair<const char *, uint32_t> features[] = {
             {"hw.optional.arm.FEAT_LSE", NCE_DIRECT_LSE}, {"hw.optional.armv8_crc32", NCE_DIRECT_CRC}, {"hw.optional.arm.FEAT_AES", NCE_DIRECT_AES}, {"hw.optional.arm.FEAT_SHA1", NCE_DIRECT_SHA1}, {"hw.optional.arm.FEAT_SHA256", NCE_DIRECT_SHA256}};
@@ -64,6 +81,8 @@ struct NceDirect {
     }
     ~NceDirect()
     {
+        if (writable != arena)
+            munmap(writable, stats.code_capacity);
         munmap(arena, stats.code_capacity);
     }
     void reset_routes()
@@ -153,7 +172,7 @@ struct NceDirect {
             Page pending = *owner;
             pending.flags = flags;
             auto *destination = arena + stats.code_bytes / 4;
-            auto compiled = pending.compile(address, bytes, index, destination, flags,
+            auto compiled = pending.compile(address, bytes, index, destination, writable + stats.code_bytes / 4, flags,
                                             owner->branch_entries.data(), config.mapping_entries - 1);
             *owner = std::move(pending);
             stats.code_bytes += (compiled.bytes + 15) & ~size_t(15);
@@ -464,6 +483,14 @@ extern "C" NceDirect *nce_direct_create(NceDirectConfig config)
 extern "C" void nce_direct_destroy(NceDirect *engine)
 {
     delete engine;
+}
+extern "C" const char *nce_direct_code_memory(void)
+{
+#ifdef NCE_DIRECT_DUAL_MAP
+    return "dual";
+#else
+    return "map-jit";
+#endif
 }
 extern "C" NceDirectExit nce_direct_run(NceDirect *engine, NceDirectState *state, NceDirectMemory memory,
                                         uint64_t budget, uint64_t *fault)

@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 #include "memory.h"
+#include "code-memory.h"
 #include "execute-check.h"
 #include "layout.h"
 #include "programs.h"
@@ -75,27 +76,6 @@ int nce_memory_remap(void *target, void *source, size_t size, int protection)
         return -1;
     }
     return 0;
-}
-
-/* Prepare only executable ranges. Data VM entries must remain replaceable. */
-static NceCode prepare_code(unsigned char *rx, size_t size)
-{
-    if (mprotect(rx, size, PROT_READ | PROT_EXEC)) {
-        printf("{\"result\":\"failed\",\"reason\":\"prepare_rx\",\"errno\":%d}\n", errno);
-        return (NceCode){0};
-    }
-#if TARGET_OS_IPHONE
-    JITDualMapping code = dod_ios_jit_prepare_range(rx, size);
-    return (NceCode){code.rw_addr, code.rx_addr, code.size};
-#else
-    vm_address_t rw = 0;
-    vm_prot_t current, maximum;
-    kern_return_t kr = vm_remap(mach_task_self(), &rw, size, 0, VM_FLAGS_ANYWHERE,
-                                mach_task_self(), (uintptr_t)rx, FALSE, &current,
-                                &maximum, VM_INHERIT_NONE);
-    REQUIRE(kr == KERN_SUCCESS && mprotect((void *)rw, size, PROT_READ | PROT_WRITE) == 0);
-    return (NceCode){(void *)rw, rx, size};
-#endif
 }
 
 static int verify_memory(void)
@@ -212,17 +192,17 @@ int nce_memory_prepare(void)
     if (prefix)
         REQUIRE(munmap(raw, prefix) == 0);
     REQUIRE(munmap(reservation + RESERVED_BYTES, alignment - prefix) == 0);
-    pool = prepare_code(reservation, NCE_CODE_POOL_SIZE);
-    dynamic_code = prepare_code((void *)(nce_memory_user_base() + NCE_EXEC_OFFSET), NCE_EXEC_SIZE);
+    pool = nce_code_prepare_range(reservation, NCE_CODE_POOL_SIZE);
+    dynamic_code = nce_code_prepare_range((void *)(nce_memory_user_base() + NCE_EXEC_OFFSET), NCE_EXEC_SIZE);
     int valid = pool.rw != NULL && dynamic_code.rw != NULL;
     for (size_t i = 0; valid && i < nce_program_count; ++i) {
         NceProgram *p = &nce_programs[i];
         p->base = nce_memory_user_base() + p->offset;
-        p->stubs = prepare_code((void *)(p->base + p->span), p->stub_size);
+        p->stubs = nce_code_prepare_range((void *)(p->base + p->span), p->stub_size);
         valid = p->stubs.rw != NULL;
         for (size_t j = 0; valid && j < p->segment_count; ++j) {
             NceSegment *s = &p->segments[j];
-            s->code = prepare_code((void *)(p->base + s->offset), s->size);
+            s->code = nce_code_prepare_range((void *)(p->base + s->offset), s->size);
             valid = s->code.rw != NULL;
         }
     }

@@ -1,5 +1,9 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 #include "linux-execution.h"
+#include "kernel-image.h"
+#ifdef NCE_DIRECT_EXECUTION
+#include "../direct/direct.h"
+#endif
 #include "linux-memory.h"
 #include "layout.h"
 #include "lkl-host-ops.h"
@@ -276,16 +280,25 @@ int nce_lkl_run(const char *path)
     REQUIRE(interval == 0 || (interval >= 10 && interval <= 10000));
     translation_memory_start((unsigned)interval);
     memory_sample("before_kernel");
-    unsigned char *kernel = mmap(NULL, LKL_IMAGE_SIZE, PROT_READ | PROT_WRITE, MAP_ANON | MAP_PRIVATE, -1, 0);
-    REQUIRE(kernel != MAP_FAILED);
-    FILE *input = fopen(path, "rb");
-    REQUIRE(input && fread(kernel, 1, LKL_IMAGE_SIZE, input) == LKL_IMAGE_SIZE && fgetc(input) == EOF);
-    REQUIRE(fclose(input) == 0);
-    for (size_t i = 0; i < sizeof(lkl_relocations) / sizeof(*lkl_relocations); ++i)
-        *(uintptr_t *)(kernel + lkl_relocations[i][0]) = (uintptr_t)kernel + lkl_relocations[i][1];
-    for (size_t i = 0; i < sizeof(lkl_segments) / sizeof(*lkl_segments); ++i)
-        REQUIRE(mprotect(kernel + lkl_segments[i][0], lkl_segments[i][1], lkl_segments[i][2]) == 0);
-    sys_icache_invalidate(kernel, LKL_IMAGE_SIZE);
+#ifdef NCE_TRANSLATION_DUAL_MAP
+    const char *code_memory = "dual";
+#else
+    const char *code_memory = "single";
+#endif
+#ifdef NCE_DIRECT_EXECUTION
+    const char *direct_memory = nce_direct_code_memory();
+#ifdef NCE_TRANSLATION_DUAL_MAP
+    REQUIRE(!strcmp(direct_memory, "dual"));
+#else
+    REQUIRE(!strcmp(direct_memory, "map-jit"));
+#endif
+#else
+    const char *direct_memory = "unused";
+#endif
+    printf("{\"config\":\"translation_code_memory\",\"kernel\":\"%s\",\"direct\":\"%s\"}\n", code_memory, direct_memory);
+    TranslationKernelImage loaded = {0};
+    REQUIRE(translation_kernel_load(&loaded, path) == 0);
+    unsigned char *kernel = loaded.base;
     int (*init)(struct lkl_host_operations *) = (void *)(kernel + LKL_INIT);
     int (*start)(unsigned long, unsigned long *) = (void *)(kernel + NCE_LKL_START);
     long (*halt)(void) = (void *)(kernel + LKL_SYS_HALT);
@@ -379,7 +392,7 @@ int nce_lkl_run(const char *path)
     cleanup();
     nce_disk_close();
     translation_linux_cleanup();
-    REQUIRE(munmap(kernel, LKL_IMAGE_SIZE) == 0);
+    REQUIRE(translation_kernel_release(&loaded) == 0);
     if (!TRANSLATION_LOOKUP)
         free(views);
     memory_sample("cleaned");

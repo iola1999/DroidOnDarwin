@@ -43,7 +43,7 @@ struct Page {
     const void *source_pointer = nullptr;
     uint64_t source_version = 0;
     std::vector<ReadFaultSite> read_faults;
-    Compilation compile(uint64_t, const void *, size_t, uint32_t *, uint32_t, void **, unsigned);
+    Compilation compile(uint64_t, const void *, size_t, uint32_t *, uint32_t *, uint32_t, void **, unsigned);
 };
 struct Frame {
     NceDirectState state;
