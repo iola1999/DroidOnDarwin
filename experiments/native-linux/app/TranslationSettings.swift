@@ -11,6 +11,7 @@ struct TranslationSettings: View {
     @AppStorage("translationRetainRoutes") private var retainRoutes = false
     @AppStorage("translationMemoryGroups") private var memoryGroups = false
     @AppStorage("translationVectorTable") private var vectorTable = false
+    @AppStorage("translationLinuxFastpath") private var linuxFastpath = false
 
     var body: some View {
         Section {
@@ -24,6 +25,7 @@ struct TranslationSettings: View {
             Toggle("跳转序号检查", isOn: $routeEpochs)
             if RunConfiguration.translationCPUs == 1 {
                 Toggle("跨调用复用跳转记录", isOn: $retainRoutes)
+                Toggle("访存快速路径", isOn: $linuxFastpath)
             }
             Toggle("连续访存合并", isOn: $memoryGroups)
             Toggle("直接执行向量查表", isOn: $vectorTable)
@@ -31,6 +33,7 @@ struct TranslationSettings: View {
             Text("各项下次启动生效。每个 CPU 的 Direct 与 Unicorn 分别使用所选缓存容量；总内存还包含 Android 系统和应用。")
             if RunConfiguration.translationCPUs == 1 {
                 Text("跨调用复用需要同时开启代码页写入跟踪和跳转序号检查。")
+                Text("访存快速路径减少 Unicorn 回退中的退出检查，缺页仍立即处理。")
             }
         }.disabled(active)
     }

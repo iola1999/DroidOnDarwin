@@ -19,6 +19,13 @@ struct TranslationConfigurationChecks {
         try manifest(["execution": ["engine": "direct", "cpus": 2]])
         try config.validateResources(directory)
         precondition(RunConfiguration.fromEnvironment(config.environment) == config)
+        config.translation!.linuxFastpath = true
+        rejected { try config.validateResources(directory) }
+        try manifest(["execution": ["engine": "direct", "cpus": 1]])
+        try config.validateResources(directory)
+        precondition(RunConfiguration.fromEnvironment(config.environment) == config)
+        config.translation!.linuxFastpath = false
+        try manifest(["execution": ["engine": "direct", "cpus": 2]])
         config.faultPrefetch = true
         rejected { try config.validateResources(directory) }
         config.faultPrefetch = false

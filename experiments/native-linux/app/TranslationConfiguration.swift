@@ -10,11 +10,16 @@ struct TranslationConfiguration: Codable, Equatable, Sendable {
     var retainRoutes = false
     var memoryGroups = false
     var vectorTable = false
+    var linuxFastpath = false
 
-    static let keys: Set<String> = ["cacheMiB", "codeWatch", "crossPage", "reuseCodeChecks", "routeEpochs", "retainRoutes", "memoryGroups", "vectorTable"]
+    static let keys: Set<String> = ["cacheMiB", "codeWatch", "crossPage", "reuseCodeChecks", "routeEpochs", "retainRoutes", "memoryGroups", "vectorTable", "linuxFastpath"]
     static let environmentKeys = ["NCE_TRANSLATION_APP", "NCE_TRANSLATION_BATCH", "NCE_TRANSLATION_LINUX_FASTPATH", "NCE_DIRECT_MAPPING_ENTRIES", "NCE_DIRECT_ROUTE_ENTRIES", "NCE_DIRECT_SELECTIVE_WRITES", "NCE_TRANSLATION_CACHE_MIB", "NCE_TRANSLATION_CACHE", "NCE_TRANSLATION_EXEC_CACHE", "NCE_TRANSLATION_TLB", "NCE_TRANSLATION_PREEMPTION", "NCE_TRANSLATION_MEMORY_MS", "NCE_TRANSLATION_PARALLEL_PROFILE", "NCE_TRANSLATION_UACCESS_STOP", "NCE_DIRECT_MEMORY", "NCE_DIRECT_NATIVE_EXCLUSIVE", "NCE_DIRECT_CODE_WATCH", "NCE_DIRECT_CROSS_PAGE", "NCE_DIRECT_REUSE_CODE_CHECKS", "NCE_DIRECT_ROUTE_EPOCHS", "NCE_DIRECT_RETAIN_ROUTES", "NCE_DIRECT_MEMORY_GROUPS", "NCE_DIRECT_VECTOR_TABLE"]
 
     func validate(cpus: Int) throws {
+        guard !linuxFastpath || cpus == 1 else {
+            throw NSError(domain: "DroidOnDarwin.Configuration", code: 7,
+                          userInfo: [NSLocalizedDescriptionKey: "访存快速路径当前需要单核运行库。"])
+        }
         guard [1, 2].contains(cpus), [16, 64, 128].contains(cacheMiB),
               !retainRoutes || (cpus == 1 && codeWatch && routeEpochs) else {
             throw NSError(domain: "DroidOnDarwin.Configuration", code: 3,
@@ -27,11 +32,11 @@ struct TranslationConfiguration: Codable, Equatable, Sendable {
              codeWatch: defaults.object(forKey: "translationCodeWatch") as? Bool ?? true, crossPage: defaults.object(forKey: "translationCrossPage") as? Bool ?? true,
              reuseCodeChecks: defaults.bool(forKey: "translationReuseCodeChecks"), routeEpochs: defaults.bool(forKey: "translationRouteEpochs"),
              retainRoutes: defaults.bool(forKey: "translationRetainRoutes"), memoryGroups: defaults.bool(forKey: "translationMemoryGroups"),
-             vectorTable: defaults.bool(forKey: "translationVectorTable"))
+             vectorTable: defaults.bool(forKey: "translationVectorTable"), linuxFastpath: defaults.bool(forKey: "translationLinuxFastpath"))
     }
 
     var environment: [String: String] {
-        ["NCE_TRANSLATION_APP": "1", "NCE_TRANSLATION_BATCH": "50000", "NCE_TRANSLATION_LINUX_FASTPATH": "0",
+        ["NCE_TRANSLATION_APP": "1", "NCE_TRANSLATION_BATCH": "50000", "NCE_TRANSLATION_LINUX_FASTPATH": linuxFastpath ? "1" : "0",
          "NCE_DIRECT_MAPPING_ENTRIES": "256", "NCE_DIRECT_ROUTE_ENTRIES": "256", "NCE_DIRECT_SELECTIVE_WRITES": "0",
          "NCE_TRANSLATION_CACHE_MIB": String(cacheMiB), "NCE_TRANSLATION_CACHE": "pages",
          "NCE_TRANSLATION_EXEC_CACHE": "pages", "NCE_TRANSLATION_TLB": "pages", "NCE_TRANSLATION_PREEMPTION": "timer",
@@ -47,6 +52,6 @@ struct TranslationConfiguration: Codable, Equatable, Sendable {
              codeWatch: values["NCE_DIRECT_CODE_WATCH"] == "1", crossPage: values["NCE_DIRECT_CROSS_PAGE"] == "1",
              reuseCodeChecks: values["NCE_DIRECT_REUSE_CODE_CHECKS"] == "1", routeEpochs: values["NCE_DIRECT_ROUTE_EPOCHS"] == "1",
              retainRoutes: values["NCE_DIRECT_RETAIN_ROUTES"] == "1", memoryGroups: values["NCE_DIRECT_MEMORY_GROUPS"] == "1",
-             vectorTable: values["NCE_DIRECT_VECTOR_TABLE"] == "1")
+             vectorTable: values["NCE_DIRECT_VECTOR_TABLE"] == "1", linuxFastpath: values["NCE_TRANSLATION_LINUX_FASTPATH"] == "1")
     }
 }

@@ -1,0 +1,508 @@
+{
+  "scope": "macOS Direct UP dual mapping; balanced configuration order; iOS execution unverified",
+  "host": {
+    "cpu": "Apple M5 Ultra",
+    "os": "macOS-27.0-arm64-arm-64bit-Mach-O"
+  },
+  "app_build": "0.25.0-Mac-20261011-194824-direct1-dual",
+  "sources": {
+    "work/native-linux-nce/dual-up-linux-fastpath-android/summary.json": "747d4476dc17375cd6e37abaf5133ee65f76768a79010adecd3607e32b0170c5",
+    "work/native-linux-nce/dual-up-linux-fastpath-services/summary.json": "c071142c1e71ffffd067868e937df049ba35cab74f9c0e0092ae8b9adab59871",
+    "work/native-linux-nce/benchmarks/direct-fastpath/20261011-194841-899a26/summary.json": "8fbc5f918916e497ff20b4072445fbc36876dfc7d777812ed13e2bb8d19db8d2"
+  },
+  "functional": {
+    "android": {
+      "configuration": {
+        "code_memory": "dual",
+        "mapping": "pte",
+        "sparse_scan": true,
+        "fault_prefetch": false,
+        "guest_page_bytes": 16384,
+        "workload": "android",
+        "entries": [
+          "cli",
+          "gcd"
+        ],
+        "art_nterp": 1,
+        "cpus": 1,
+        "uaccess_stop": "all",
+        "parallel_profile": false,
+        "art_expanded_jit": 0,
+        "art_fast_baseline": 0,
+        "exec_cache": "pages",
+        "guest_ram_bytes": 1073741824,
+        "instruction_batch": 50000,
+        "memory_interval_ms": 100,
+        "preemption": "timer",
+        "timer_interval_ns": 2000000
+      },
+      "variants": {
+        "per-access": {
+          "execution": "direct",
+          "cache_invalidation": "pages",
+          "linux_fastpath": 0,
+          "cache_mib": 128,
+          "tlb_invalidation": "pages",
+          "uaccess_stop": "all",
+          "direct": {
+            "mapping_entries": 256,
+            "route_entries": 256,
+            "selective_writes": false,
+            "reuse_code_checks": false,
+            "memory": "flat",
+            "code_watch": true,
+            "cross_page": true,
+            "route_epochs": false,
+            "retain_routes": false,
+            "memory_groups": false,
+            "native_exclusive": true,
+            "vector_table": false
+          }
+        },
+        "block-entry": {
+          "execution": "direct",
+          "cache_invalidation": "pages",
+          "linux_fastpath": 1,
+          "cache_mib": 128,
+          "tlb_invalidation": "pages",
+          "uaccess_stop": "all",
+          "direct": {
+            "mapping_entries": 256,
+            "route_entries": 256,
+            "selective_writes": false,
+            "reuse_code_checks": false,
+            "memory": "flat",
+            "code_watch": true,
+            "cross_page": true,
+            "route_epochs": false,
+            "retain_routes": false,
+            "memory_groups": false,
+            "native_exclusive": true,
+            "vector_table": false
+          }
+        }
+      },
+      "results": {
+        "per-access": {
+          "all_validated": true,
+          "runs": 4,
+          "seconds": {
+            "bionic_execution": {
+              "values": [
+                0.811916,
+                0.854623,
+                0.843714,
+                0.90523
+              ],
+              "median": 0.8491685
+            },
+            "art_execution": {
+              "values": [
+                1.585485,
+                1.550842,
+                1.546535,
+                1.636389
+              ],
+              "median": 1.5681635
+            }
+          }
+        },
+        "block-entry": {
+          "all_validated": true,
+          "runs": 4,
+          "seconds": {
+            "bionic_execution": {
+              "values": [
+                0.708422,
+                0.76475,
+                0.753356,
+                0.7635
+              ],
+              "median": 0.758428
+            },
+            "art_execution": {
+              "values": [
+                1.54465,
+                1.553966,
+                1.533021,
+                1.680509
+              ],
+              "median": 1.549308
+            }
+          }
+        }
+      }
+    },
+    "services": {
+      "configuration": {
+        "code_memory": "dual",
+        "mapping": "pte",
+        "sparse_scan": true,
+        "fault_prefetch": false,
+        "guest_page_bytes": 16384,
+        "workload": "services",
+        "entries": [
+          "cli",
+          "gcd"
+        ],
+        "art_nterp": 1,
+        "cpus": 1,
+        "uaccess_stop": "all",
+        "parallel_profile": false,
+        "art_expanded_jit": 0,
+        "art_fast_baseline": 0,
+        "exec_cache": "pages",
+        "guest_ram_bytes": 1073741824,
+        "instruction_batch": 50000,
+        "memory_interval_ms": 100,
+        "preemption": "timer",
+        "timer_interval_ns": 2000000
+      },
+      "variants": {
+        "per-access": {
+          "execution": "direct",
+          "cache_invalidation": "pages",
+          "linux_fastpath": 0,
+          "cache_mib": 128,
+          "tlb_invalidation": "pages",
+          "uaccess_stop": "all",
+          "direct": {
+            "mapping_entries": 256,
+            "route_entries": 256,
+            "selective_writes": false,
+            "reuse_code_checks": false,
+            "memory": "flat",
+            "code_watch": true,
+            "cross_page": true,
+            "route_epochs": false,
+            "retain_routes": false,
+            "memory_groups": false,
+            "native_exclusive": true,
+            "vector_table": false
+          }
+        },
+        "block-entry": {
+          "execution": "direct",
+          "cache_invalidation": "pages",
+          "linux_fastpath": 1,
+          "cache_mib": 128,
+          "tlb_invalidation": "pages",
+          "uaccess_stop": "all",
+          "direct": {
+            "mapping_entries": 256,
+            "route_entries": 256,
+            "selective_writes": false,
+            "reuse_code_checks": false,
+            "memory": "flat",
+            "code_watch": true,
+            "cross_page": true,
+            "route_epochs": false,
+            "retain_routes": false,
+            "memory_groups": false,
+            "native_exclusive": true,
+            "vector_table": false
+          }
+        }
+      },
+      "results": {
+        "per-access": {
+          "all_validated": true,
+          "runs": 4,
+          "seconds": {
+            "services_execution": {
+              "values": [
+                15.421633,
+                15.498081,
+                15.005917,
+                15.553231
+              ],
+              "median": 15.459857
+            }
+          }
+        },
+        "block-entry": {
+          "all_validated": true,
+          "runs": 4,
+          "seconds": {
+            "services_execution": {
+              "values": [
+                15.107707,
+                15.751956,
+                15.279495,
+                15.809611
+              ],
+              "median": 15.5157255
+            }
+          }
+        }
+      }
+    }
+  },
+  "app_runs": [
+    {
+      "configuration": "per-access",
+      "status": "completed",
+      "error": null,
+      "request": {
+        "version": 1,
+        "runID": "BDB5B753-A751-4CF1-B011-05BB17442604",
+        "deviceID": "6C19F1EA-7230-5B8E-B084-33772701B029",
+        "configuration": {
+          "fastBaseline": false,
+          "nterp": true,
+          "bootImage": false,
+          "expandedJIT": false,
+          "schedulerSliceUS": 0,
+          "aot": false,
+          "directFault": true,
+          "sparseScan": true,
+          "diagnostics": false,
+          "performanceLogging": false,
+          "translation": {
+            "reuseCodeChecks": false,
+            "routeEpochs": false,
+            "vectorTable": false,
+            "retainRoutes": false,
+            "cacheMiB": 128,
+            "linuxFastpath": false,
+            "crossPage": true,
+            "codeWatch": true,
+            "memoryGroups": false
+          },
+          "faultPrefetch": false
+        },
+        "actions": [
+          {
+            "kind": "wait",
+            "milliseconds": 2000
+          },
+          {
+            "kind": "key",
+            "key": "home"
+          },
+          {
+            "kind": "swipe",
+            "x": 180,
+            "y": 560,
+            "endX": 180,
+            "endY": 120,
+            "milliseconds": 400
+          },
+          {
+            "kind": "wait",
+            "milliseconds": 2000
+          },
+          {
+            "kind": "key",
+            "key": "home"
+          }
+        ],
+        "timeoutSeconds": 600,
+        "memorySampling": true
+      },
+      "startup_ms": 101045.96591670997,
+      "stop_ms": 10187.943291617557,
+      "footprint_peak_bytes": 3094466376
+    },
+    {
+      "configuration": "block-entry",
+      "status": "completed",
+      "error": null,
+      "request": {
+        "version": 1,
+        "runID": "85794379-D3A2-463B-AFC1-FE6226247D3B",
+        "deviceID": "6C19F1EA-7230-5B8E-B084-33772701B029",
+        "configuration": {
+          "fastBaseline": false,
+          "nterp": true,
+          "bootImage": false,
+          "expandedJIT": false,
+          "schedulerSliceUS": 0,
+          "aot": false,
+          "directFault": true,
+          "sparseScan": true,
+          "diagnostics": false,
+          "performanceLogging": false,
+          "translation": {
+            "reuseCodeChecks": false,
+            "routeEpochs": false,
+            "vectorTable": false,
+            "retainRoutes": false,
+            "cacheMiB": 128,
+            "linuxFastpath": true,
+            "crossPage": true,
+            "codeWatch": true,
+            "memoryGroups": false
+          },
+          "faultPrefetch": false
+        },
+        "actions": [
+          {
+            "kind": "wait",
+            "milliseconds": 2000
+          },
+          {
+            "kind": "key",
+            "key": "home"
+          },
+          {
+            "kind": "swipe",
+            "x": 180,
+            "y": 560,
+            "endX": 180,
+            "endY": 120,
+            "milliseconds": 400
+          },
+          {
+            "kind": "wait",
+            "milliseconds": 2000
+          },
+          {
+            "kind": "key",
+            "key": "home"
+          }
+        ],
+        "timeoutSeconds": 600,
+        "memorySampling": true
+      },
+      "startup_ms": 94009.67408320867,
+      "stop_ms": 8939.627500018105,
+      "footprint_peak_bytes": 3100741448
+    },
+    {
+      "configuration": "block-entry",
+      "status": "completed",
+      "error": null,
+      "request": {
+        "version": 1,
+        "runID": "DC270613-7BC2-4BA2-AA7A-22B8D1CEC263",
+        "deviceID": "6C19F1EA-7230-5B8E-B084-33772701B029",
+        "configuration": {
+          "fastBaseline": false,
+          "nterp": true,
+          "bootImage": false,
+          "expandedJIT": false,
+          "schedulerSliceUS": 0,
+          "aot": false,
+          "directFault": true,
+          "sparseScan": true,
+          "diagnostics": false,
+          "performanceLogging": false,
+          "translation": {
+            "reuseCodeChecks": false,
+            "routeEpochs": false,
+            "vectorTable": false,
+            "retainRoutes": false,
+            "cacheMiB": 128,
+            "linuxFastpath": true,
+            "crossPage": true,
+            "codeWatch": true,
+            "memoryGroups": false
+          },
+          "faultPrefetch": false
+        },
+        "actions": [
+          {
+            "kind": "wait",
+            "milliseconds": 2000
+          },
+          {
+            "kind": "key",
+            "key": "home"
+          },
+          {
+            "kind": "swipe",
+            "x": 180,
+            "y": 560,
+            "endX": 180,
+            "endY": 120,
+            "milliseconds": 400
+          },
+          {
+            "kind": "wait",
+            "milliseconds": 2000
+          },
+          {
+            "kind": "key",
+            "key": "home"
+          }
+        ],
+        "timeoutSeconds": 600,
+        "memorySampling": true
+      },
+      "startup_ms": 86037.46658330783,
+      "stop_ms": 9955.286708427593,
+      "footprint_peak_bytes": 3108294448
+    },
+    {
+      "configuration": "per-access",
+      "status": "completed",
+      "error": null,
+      "request": {
+        "version": 1,
+        "runID": "1450B497-6DAB-40DA-89AA-B522E71F6C06",
+        "deviceID": "6C19F1EA-7230-5B8E-B084-33772701B029",
+        "configuration": {
+          "fastBaseline": false,
+          "nterp": true,
+          "bootImage": false,
+          "expandedJIT": false,
+          "schedulerSliceUS": 0,
+          "aot": false,
+          "directFault": true,
+          "sparseScan": true,
+          "diagnostics": false,
+          "performanceLogging": false,
+          "translation": {
+            "reuseCodeChecks": false,
+            "routeEpochs": false,
+            "vectorTable": false,
+            "retainRoutes": false,
+            "cacheMiB": 128,
+            "linuxFastpath": false,
+            "crossPage": true,
+            "codeWatch": true,
+            "memoryGroups": false
+          },
+          "faultPrefetch": false
+        },
+        "actions": [
+          {
+            "kind": "wait",
+            "milliseconds": 2000
+          },
+          {
+            "kind": "key",
+            "key": "home"
+          },
+          {
+            "kind": "swipe",
+            "x": 180,
+            "y": 560,
+            "endX": 180,
+            "endY": 120,
+            "milliseconds": 400
+          },
+          {
+            "kind": "wait",
+            "milliseconds": 2000
+          },
+          {
+            "kind": "key",
+            "key": "home"
+          }
+        ],
+        "timeoutSeconds": 600,
+        "memorySampling": true
+      },
+      "startup_ms": 92025.02066665329,
+      "stop_ms": 9087.748291669413,
+      "footprint_peak_bytes": 3097677616
+    }
+  ],
+  "app_medians_ms": {
+    "per-access": 96535.49329168163,
+    "block-entry": 90023.57033325825
+  },
+  "interpretation": "Four successful app rounds on one persistent data image; startup variability remains; keep default disabled. SystemUI SystemActions takes 29.636-39.469 s in logged component timings and needs a separate diagnosis. These nested component durations are not additive CPU time."
+}
