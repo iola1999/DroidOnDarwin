@@ -87,6 +87,14 @@ config LKL_FUZZING''')
     edit(arch + 'kernel/cpu.c', '#include <linux/cpu.h>', '#include <linux/cpu.h>\n#include <linux/tick.h>')
     edit(arch + 'kernel/cpu.c', '} cpu;',
          '} cpus[NR_CPUS];\n#define cpu cpus[raw_smp_processor_id()]')
+    # A previously woken idle host task can be the last runnable task after
+    # shutdown. It must schedule the Linux idle task, which acknowledges stop;
+    # releasing CPU ownership would leave it asleep with IRQ delivery disabled.
+    edit(arch + 'kernel/cpu.c',
+         '!single_task_running() && cpu.count == 1 && !(idle_handoff && cpu.sleepers))',
+         'cpu.count == 1 &&\n'
+         '\t    (READ_ONCE(cpu.shutdown_gate) >= MAX_THREADS ||\n'
+         '\t     (!single_task_running() && !(idle_handoff && cpu.sleepers))))')
     edit(arch + 'kernel/cpu.c', '\t__sync_fetch_and_add(&cpu.shutdown_gate, MAX_THREADS);',
          '\tunsigned int index;\n\tfor_each_online_cpu(index) {\n'
          '\t\t__sync_fetch_and_add(&cpus[index].shutdown_gate, MAX_THREADS);\n'

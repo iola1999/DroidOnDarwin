@@ -1,0 +1,1582 @@
+{
+  "status": "CPU ownership boundary, six services runs, CLI/GCD core and full visible desktop passed",
+  "scope": "macOS functional shutdown checks, including the preserved timeout; no performance or iPhone conclusion",
+  "source_commit_before_changes": "d21be84",
+  "reports": [
+    {
+      "report": "work/native-linux-nce/lkl-direct-smp-services-resume/summary.json",
+      "sha256": "32729f3e3bf6462f6f04d61bb5b4df60ac6b255fc53f6338ad33aea186983137",
+      "configuration": {
+        "execution": "direct",
+        "direct": {
+          "mapping_entries": 256,
+          "route_entries": 256,
+          "selective_writes": false,
+          "reuse_code_checks": false,
+          "memory": "flat",
+          "code_watch": false,
+          "cross_page": true,
+          "route_epochs": false,
+          "retain_routes": false,
+          "memory_groups": false,
+          "native_exclusive": true
+        },
+        "mapping": "pte",
+        "sparse_scan": true,
+        "fault_prefetch": false,
+        "guest_page_bytes": 16384,
+        "workload": "services",
+        "entries": [
+          "cli"
+        ],
+        "art_nterp": 1,
+        "cpus": 2,
+        "uaccess_stop": "code",
+        "parallel_profile": false,
+        "art_expanded_jit": 0,
+        "art_fast_baseline": 0,
+        "cache_invalidation": "pages",
+        "exec_cache": "pages",
+        "tlb_invalidation": "pages",
+        "linux_fastpath": 0,
+        "guest_ram_bytes": 1073741824,
+        "translation_cache_bytes": 134217728,
+        "instruction_batch": 50000,
+        "memory_interval_ms": 100,
+        "preemption": "timer",
+        "timer_interval_ns": 2000000
+      },
+      "platform": "macOS-27.0-arm64-arm-64bit-Mach-O",
+      "cpu": "Apple M5 Ultra",
+      "system_build": "26A428",
+      "runs": [
+        {
+          "entry": "cli",
+          "iteration": 0,
+          "returncode": 0,
+          "validated": true,
+          "data_image": {
+            "path": "work/native-linux-nce/lkl-direct-smp-services-resume/cli-0-data.img",
+            "initial_sha256": "d4ca87747b299fafae7b3a540f81ee314a9891b598b509e985de63a3208941a4",
+            "fresh": true,
+            "final_sha256": "922ed8980349f719ed583df43b1cb3a49c9033f626d1500e657aadaeaa894804",
+            "clean_shutdown": true
+          },
+          "stdout_sha256": "325288ba2b61e46c0d8934f0f1007aefb2b003024f3c4ff8da2bd90976837522",
+          "stderr_sha256": "89a3b1c20056bd62a196a7ed1ee36468a5d0f2dad088b6f3f04747cccf4cffb0",
+          "memory_statistics": [
+            {
+              "memory_statistics": "services_execution",
+              "interval_ms": 100,
+              "samples": 260,
+              "errors": 0,
+              "duration_ns": 26746291000,
+              "collection_ns": 12271000,
+              "footprint_mean_bytes": 440726407.908,
+              "footprint_sample_peak_bytes": 948422240,
+              "footprint_latest_bytes": 948422240,
+              "resident_mean_bytes": 442384447.015,
+              "resident_sample_peak_bytes": 949813248,
+              "resident_latest_bytes": 949813248,
+              "resident_lifetime_peak_bytes": 950714368
+            },
+            {
+              "memory_statistics": "cleanup",
+              "interval_ms": 100,
+              "samples": 9,
+              "errors": 0,
+              "duration_ns": 725184000,
+              "collection_ns": 409000,
+              "footprint_mean_bytes": 837466036.444,
+              "footprint_sample_peak_bytes": 948422240,
+              "footprint_latest_bytes": 41501344,
+              "resident_mean_bytes": 853850339.556,
+              "resident_sample_peak_bytes": 949813248,
+              "resident_latest_bytes": 177782784,
+              "resident_lifetime_peak_bytes": 950714368
+            }
+          ],
+          "contexts": [
+            {
+              "test": "translated_context_cleanup",
+              "passed": true,
+              "allocated": 77,
+              "freed": 77,
+              "maps": 0,
+              "revocations": 0,
+              "tlb_fills": 352000,
+              "faults": 36292,
+              "syscalls": 704562,
+              "preemptions": 24654
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "report": "work/native-linux-nce/lkl-direct-smp-services-resume-repeat/summary.json",
+      "sha256": "dd7d464f9b889d59a4c6f246a8557bc2b5d2b1da8de6212d21cece218adbca9f",
+      "configuration": {
+        "execution": "direct",
+        "direct": {
+          "mapping_entries": 256,
+          "route_entries": 256,
+          "selective_writes": false,
+          "reuse_code_checks": false,
+          "memory": "flat",
+          "code_watch": false,
+          "cross_page": true,
+          "route_epochs": false,
+          "retain_routes": false,
+          "memory_groups": false,
+          "native_exclusive": true
+        },
+        "mapping": "pte",
+        "sparse_scan": true,
+        "fault_prefetch": false,
+        "guest_page_bytes": 16384,
+        "workload": "services",
+        "entries": [
+          "cli",
+          "gcd"
+        ],
+        "art_nterp": 1,
+        "cpus": 2,
+        "uaccess_stop": "code",
+        "parallel_profile": false,
+        "art_expanded_jit": 0,
+        "art_fast_baseline": 0,
+        "cache_invalidation": "pages",
+        "exec_cache": "pages",
+        "tlb_invalidation": "pages",
+        "linux_fastpath": 0,
+        "guest_ram_bytes": 1073741824,
+        "translation_cache_bytes": 134217728,
+        "instruction_batch": 50000,
+        "memory_interval_ms": 100,
+        "preemption": "timer",
+        "timer_interval_ns": 2000000
+      },
+      "platform": "macOS-27.0-arm64-arm-64bit-Mach-O",
+      "cpu": "Apple M5 Ultra",
+      "system_build": "26A428",
+      "runs": [
+        {
+          "entry": "cli",
+          "iteration": 0,
+          "returncode": 0,
+          "validated": true,
+          "data_image": {
+            "path": "work/native-linux-nce/lkl-direct-smp-services-resume-repeat/cli-0-data.img",
+            "initial_sha256": "5d44df1aa86fc8982a4c33075a3cc77bd82dd763cb330c744ee851b59f2e40af",
+            "fresh": true,
+            "final_sha256": "e90ba16f21662c9d2b8ce7744a424c5d51d787a607205c443f79a8bc8d1808cb",
+            "clean_shutdown": true
+          },
+          "stdout_sha256": "97b4963ce6ffaa59f43096c48168d7d34f56f0889b922cd7a1f6e624b8a8cbd7",
+          "stderr_sha256": "bdc5fffc759d92c2ec4832cc8e494bba7c0722f3e6b3aca233635f70bda3acb5",
+          "memory_statistics": [
+            {
+              "memory_statistics": "services_execution",
+              "interval_ms": 100,
+              "samples": 245,
+              "errors": 0,
+              "duration_ns": 25216024000,
+              "collection_ns": 12118000,
+              "footprint_mean_bytes": 420589735.739,
+              "footprint_sample_peak_bytes": 909116976,
+              "footprint_latest_bytes": 909116976,
+              "resident_mean_bytes": 422293654.465,
+              "resident_sample_peak_bytes": 910540800,
+              "resident_latest_bytes": 910540800,
+              "resident_lifetime_peak_bytes": 911867904
+            },
+            {
+              "memory_statistics": "cleanup",
+              "interval_ms": 100,
+              "samples": 12,
+              "errors": 0,
+              "duration_ns": 1055054000,
+              "collection_ns": 777000,
+              "footprint_mean_bytes": 826013132.0,
+              "footprint_sample_peak_bytes": 909116976,
+              "footprint_latest_bytes": 25117344,
+              "resident_mean_bytes": 838751573.333,
+              "resident_sample_peak_bytes": 910540800,
+              "resident_latest_bytes": 162119680,
+              "resident_lifetime_peak_bytes": 911867904
+            }
+          ],
+          "contexts": [
+            {
+              "test": "translated_context_cleanup",
+              "passed": true,
+              "allocated": 76,
+              "freed": 76,
+              "maps": 0,
+              "revocations": 0,
+              "tlb_fills": 348194,
+              "faults": 36144,
+              "syscalls": 711071,
+              "preemptions": 22105
+            }
+          ]
+        },
+        {
+          "entry": "gcd",
+          "iteration": 0,
+          "returncode": 0,
+          "validated": true,
+          "data_image": {
+            "path": "work/native-linux-nce/lkl-direct-smp-services-resume-repeat/gcd-0-data.img",
+            "initial_sha256": "4fc8acc1b493aa31e93abcf3d65efd8ffb998630e2441d94d07c927a01d72460",
+            "fresh": true,
+            "final_sha256": "4ae099d83c516218b98920e8937ca74b885f2a11187147b74653173f5aa25205",
+            "clean_shutdown": true
+          },
+          "stdout_sha256": "84f111f665a2039debcdb96c4852d139dcbaa7309a6f54a8a8921ed03c89daa5",
+          "stderr_sha256": "9fa3e6b476d069d19c577d3b63df0aaec7b0636f5baebd7648c3fce1ccea8459",
+          "memory_statistics": [
+            {
+              "memory_statistics": "services_execution",
+              "interval_ms": 100,
+              "samples": 273,
+              "errors": 0,
+              "duration_ns": 28173915000,
+              "collection_ns": 14201000,
+              "footprint_mean_bytes": 436950637.216,
+              "footprint_sample_peak_bytes": 951010864,
+              "footprint_latest_bytes": 951010864,
+              "resident_mean_bytes": 438627766.857,
+              "resident_sample_peak_bytes": 952434688,
+              "resident_latest_bytes": 952434688,
+              "resident_lifetime_peak_bytes": 957808640
+            },
+            {
+              "memory_statistics": "cleanup",
+              "interval_ms": 100,
+              "samples": 5,
+              "errors": 0,
+              "duration_ns": 298588000,
+              "collection_ns": 206000,
+              "footprint_mean_bytes": 764881883.2,
+              "footprint_sample_peak_bytes": 951010864,
+              "footprint_latest_bytes": 37634696,
+              "resident_mean_bytes": 793198592.0,
+              "resident_sample_peak_bytes": 952434688,
+              "resident_latest_bytes": 173522944,
+              "resident_lifetime_peak_bytes": 957808640
+            }
+          ],
+          "contexts": [
+            {
+              "test": "translated_context_cleanup",
+              "passed": true,
+              "allocated": 76,
+              "freed": 76,
+              "maps": 0,
+              "revocations": 0,
+              "tlb_fills": 308304,
+              "faults": 36330,
+              "syscalls": 710759,
+              "preemptions": 24642
+            }
+          ]
+        },
+        {
+          "entry": "cli",
+          "iteration": 1,
+          "returncode": 0,
+          "validated": true,
+          "data_image": {
+            "path": "work/native-linux-nce/lkl-direct-smp-services-resume-repeat/cli-1-data.img",
+            "initial_sha256": "bdbcf085724979df489d0a8b1d631de6b262f13de28beceb12f91f56e4d57be5",
+            "fresh": true,
+            "final_sha256": "b95eb64486d57c4316498d458941f289202f89598fee7bf120c64c7cd22a11b6",
+            "clean_shutdown": true
+          },
+          "stdout_sha256": "b8e45056efbe755279f90ee52ff4998c53e729a0e9a2cbd02f9954fec65e6cde",
+          "stderr_sha256": "958c40cc062f3acfbd6bf35fe67c9596bf2b4cb97b7fd8df78509ba181b2dce5",
+          "memory_statistics": [
+            {
+              "memory_statistics": "services_execution",
+              "interval_ms": 100,
+              "samples": 282,
+              "errors": 0,
+              "duration_ns": 29003795000,
+              "collection_ns": 14096000,
+              "footprint_mean_bytes": 423105707.092,
+              "footprint_sample_peak_bytes": 936445536,
+              "footprint_latest_bytes": 936445536,
+              "resident_mean_bytes": 424742999.149,
+              "resident_sample_peak_bytes": 937836544,
+              "resident_latest_bytes": 937836544,
+              "resident_lifetime_peak_bytes": 940605440
+            },
+            {
+              "memory_statistics": "cleanup",
+              "interval_ms": 100,
+              "samples": 12,
+              "errors": 0,
+              "duration_ns": 978027000,
+              "collection_ns": 841000,
+              "footprint_mean_bytes": 851491685.333,
+              "footprint_sample_peak_bytes": 936445536,
+              "footprint_latest_bytes": 38126240,
+              "resident_mean_bytes": 864190464.0,
+              "resident_sample_peak_bytes": 937836544,
+              "resident_latest_bytes": 175210496,
+              "resident_lifetime_peak_bytes": 940605440
+            }
+          ],
+          "contexts": [
+            {
+              "test": "translated_context_cleanup",
+              "passed": true,
+              "allocated": 76,
+              "freed": 76,
+              "maps": 0,
+              "revocations": 0,
+              "tlb_fills": 418978,
+              "faults": 36323,
+              "syscalls": 699974,
+              "preemptions": 22831
+            }
+          ]
+        },
+        {
+          "entry": "gcd",
+          "iteration": 1,
+          "returncode": 0,
+          "validated": true,
+          "data_image": {
+            "path": "work/native-linux-nce/lkl-direct-smp-services-resume-repeat/gcd-1-data.img",
+            "initial_sha256": "5b1abdc5eacd3e46a3a35a705509afce779b09969f03991cb8777363e4e46c06",
+            "fresh": true,
+            "final_sha256": "ea585d81ab6275bfa26ffc45c6da3ff4440d235e363eb363b3ed944990a4ea02",
+            "clean_shutdown": true
+          },
+          "stdout_sha256": "857410222ecd383c402101574b4fe74fc876bb3afcf68e6076d9ad7da7f45d6b",
+          "stderr_sha256": "03c2a667f7131f2b99967fe695f7ee68c2518ccd0af053194f81d6ae4d545b29",
+          "memory_statistics": [
+            {
+              "memory_statistics": "services_execution",
+              "interval_ms": 100,
+              "samples": 254,
+              "errors": 0,
+              "duration_ns": 26099734000,
+              "collection_ns": 14951000,
+              "footprint_mean_bytes": 435611317.008,
+              "footprint_sample_peak_bytes": 940164608,
+              "footprint_latest_bytes": 940164608,
+              "resident_mean_bytes": 437324888.693,
+              "resident_sample_peak_bytes": 941621248,
+              "resident_latest_bytes": 941621248,
+              "resident_lifetime_peak_bytes": 946110464
+            },
+            {
+              "memory_statistics": "cleanup",
+              "interval_ms": 100,
+              "samples": 5,
+              "errors": 0,
+              "duration_ns": 286884000,
+              "collection_ns": 118000,
+              "footprint_mean_bytes": 664103760.0,
+              "footprint_sample_peak_bytes": 940164608,
+              "footprint_latest_bytes": 37864096,
+              "resident_mean_bytes": 692597555.2,
+              "resident_sample_peak_bytes": 941621248,
+              "resident_latest_bytes": 174145536,
+              "resident_lifetime_peak_bytes": 946110464
+            }
+          ],
+          "contexts": [
+            {
+              "test": "translated_context_cleanup",
+              "passed": true,
+              "allocated": 75,
+              "freed": 75,
+              "maps": 0,
+              "revocations": 0,
+              "tlb_fills": 429471,
+              "faults": 36331,
+              "syscalls": 693575,
+              "preemptions": 22797
+            }
+          ]
+        },
+        {
+          "entry": "cli",
+          "iteration": 2,
+          "returncode": 0,
+          "validated": true,
+          "data_image": {
+            "path": "work/native-linux-nce/lkl-direct-smp-services-resume-repeat/cli-2-data.img",
+            "initial_sha256": "60d397584a842103341848687da09608938913d06e1c5a6102fbfc8cc1319ffb",
+            "fresh": true,
+            "final_sha256": "ff1621f09c9347135d2d4f805b3de5ec41aa40da26dabb6020de3d74f1a096ec",
+            "clean_shutdown": true
+          },
+          "stdout_sha256": "c230a6c2ad64fee966c3bd43a040af0faccff3508bc933f3839fef4747a6f2b2",
+          "stderr_sha256": "87fa77dde34edbd0cac9d184d00633559dc6c6ec6d1dcc39ddb2806eb7214367",
+          "memory_statistics": [
+            {
+              "memory_statistics": "services_execution",
+              "interval_ms": 100,
+              "samples": 274,
+              "errors": 0,
+              "duration_ns": 28248172000,
+              "collection_ns": 16337000,
+              "footprint_mean_bytes": 433708341.168,
+              "footprint_sample_peak_bytes": 933758464,
+              "footprint_latest_bytes": 933758464,
+              "resident_mean_bytes": 435418552.993,
+              "resident_sample_peak_bytes": 935215104,
+              "resident_latest_bytes": 935215104,
+              "resident_lifetime_peak_bytes": 938475520
+            },
+            {
+              "memory_statistics": "cleanup",
+              "interval_ms": 100,
+              "samples": 7,
+              "errors": 0,
+              "duration_ns": 439179000,
+              "collection_ns": 261000,
+              "footprint_mean_bytes": 729931942.857,
+              "footprint_sample_peak_bytes": 933758464,
+              "footprint_latest_bytes": 36373152,
+              "resident_mean_bytes": 750700836.571,
+              "resident_sample_peak_bytes": 935215104,
+              "resident_latest_bytes": 172654592,
+              "resident_lifetime_peak_bytes": 938475520
+            }
+          ],
+          "contexts": [
+            {
+              "test": "translated_context_cleanup",
+              "passed": true,
+              "allocated": 77,
+              "freed": 77,
+              "maps": 0,
+              "revocations": 0,
+              "tlb_fills": 328913,
+              "faults": 36181,
+              "syscalls": 697861,
+              "preemptions": 23962
+            }
+          ]
+        },
+        {
+          "entry": "gcd",
+          "iteration": 2,
+          "returncode": 0,
+          "validated": true,
+          "data_image": {
+            "path": "work/native-linux-nce/lkl-direct-smp-services-resume-repeat/gcd-2-data.img",
+            "initial_sha256": "6e5650fab143302e75622ff77bf30d1e5b67e957d7ada9970ce196984d9e7832",
+            "fresh": true,
+            "final_sha256": "e41af76576447b28b288ded0d6678223498bfe652f861d958bf2c3a3624e0f5d",
+            "clean_shutdown": true
+          },
+          "stdout_sha256": "b60e3bb7aab0143e0c78eb9f24ca3f3cf2dcd0b6c49c186d3b81b0dae486ad91",
+          "stderr_sha256": "46ea07e19a0de0ad6de67cd6ebf16c843f138836e102c4012be0dfb1983076ee",
+          "memory_statistics": [
+            {
+              "memory_statistics": "services_execution",
+              "interval_ms": 100,
+              "samples": 263,
+              "errors": 0,
+              "duration_ns": 27104794000,
+              "collection_ns": 13054000,
+              "footprint_mean_bytes": 409387386.525,
+              "footprint_sample_peak_bytes": 934217336,
+              "footprint_latest_bytes": 934217336,
+              "resident_mean_bytes": 411058113.703,
+              "resident_sample_peak_bytes": 935591936,
+              "resident_latest_bytes": 935591936,
+              "resident_lifetime_peak_bytes": 935690240
+            },
+            {
+              "memory_statistics": "cleanup",
+              "interval_ms": 100,
+              "samples": 8,
+              "errors": 0,
+              "duration_ns": 612550000,
+              "collection_ns": 407000,
+              "footprint_mean_bytes": 809143766.0,
+              "footprint_sample_peak_bytes": 934217336,
+              "footprint_latest_bytes": 34472584,
+              "resident_mean_bytes": 827480064.0,
+              "resident_sample_peak_bytes": 935591936,
+              "resident_latest_bytes": 171343872,
+              "resident_lifetime_peak_bytes": 935690240
+            }
+          ],
+          "contexts": [
+            {
+              "test": "translated_context_cleanup",
+              "passed": true,
+              "allocated": 75,
+              "freed": 75,
+              "maps": 0,
+              "revocations": 0,
+              "tlb_fills": 329769,
+              "faults": 36325,
+              "syscalls": 707182,
+              "preemptions": 21610
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "report": "work/native-linux-nce/lkl-direct-smp-services-resume-profile/summary.json",
+      "sha256": "df2b784b6abd5eddf761c9a763deb57d7004caa2ab5c159b59562712353e6c6a",
+      "configuration": {
+        "execution": "direct",
+        "direct": {
+          "mapping_entries": 256,
+          "route_entries": 256,
+          "selective_writes": false,
+          "reuse_code_checks": false,
+          "memory": "flat",
+          "code_watch": false,
+          "cross_page": true,
+          "route_epochs": false,
+          "retain_routes": false,
+          "memory_groups": false,
+          "native_exclusive": true
+        },
+        "mapping": "pte",
+        "sparse_scan": true,
+        "fault_prefetch": false,
+        "guest_page_bytes": 16384,
+        "workload": "services",
+        "entries": [
+          "cli",
+          "gcd"
+        ],
+        "art_nterp": 1,
+        "cpus": 2,
+        "uaccess_stop": "code",
+        "parallel_profile": true,
+        "art_expanded_jit": 0,
+        "art_fast_baseline": 0,
+        "cache_invalidation": "pages",
+        "exec_cache": "pages",
+        "tlb_invalidation": "pages",
+        "linux_fastpath": 0,
+        "guest_ram_bytes": 1073741824,
+        "translation_cache_bytes": 134217728,
+        "instruction_batch": 50000,
+        "memory_interval_ms": 100,
+        "preemption": "timer",
+        "timer_interval_ns": 2000000
+      },
+      "platform": "macOS-27.0-arm64-arm-64bit-Mach-O",
+      "cpu": "Apple M5 Ultra",
+      "system_build": "26A428",
+      "runs": [
+        {
+          "entry": "cli",
+          "iteration": 0,
+          "returncode": 0,
+          "validated": true,
+          "data_image": {
+            "path": "work/native-linux-nce/lkl-direct-smp-services-resume-profile/cli-0-data.img",
+            "initial_sha256": "9c568eb8921c2d3864a72e3b7d3cbc43b192ecfacdd517e938a452a3ef03c28a",
+            "fresh": true,
+            "final_sha256": "a57ef6d95dd373c1766db673b9817ddd28f4d86d1e7ea413b68c7205200988d3",
+            "clean_shutdown": true
+          },
+          "stdout_sha256": "732faaedaa2902f8180e18fe1611f948e8feeb064ee6d22eb4af72fbb96c25e8",
+          "stderr_sha256": "169bc2d6b346e32f8af4d12a1df98166af345d0252b2fcda2ddb2686fe47b49d",
+          "memory_statistics": [
+            {
+              "memory_statistics": "services_execution",
+              "interval_ms": 100,
+              "samples": 267,
+              "errors": 0,
+              "duration_ns": 27417590000,
+              "collection_ns": 13562000,
+              "footprint_mean_bytes": 423700193.798,
+              "footprint_sample_peak_bytes": 950863408,
+              "footprint_latest_bytes": 950863408,
+              "resident_mean_bytes": 425381166.981,
+              "resident_sample_peak_bytes": 952287232,
+              "resident_latest_bytes": 952287232,
+              "resident_lifetime_peak_bytes": 952713216
+            },
+            {
+              "memory_statistics": "cleanup",
+              "interval_ms": 100,
+              "samples": 9,
+              "errors": 0,
+              "duration_ns": 783907000,
+              "collection_ns": 454000,
+              "footprint_mean_bytes": 840404188.444,
+              "footprint_sample_peak_bytes": 950863408,
+              "footprint_latest_bytes": 36897368,
+              "resident_mean_bytes": 856766691.556,
+              "resident_sample_peak_bytes": 952287232,
+              "resident_latest_bytes": 172752896,
+              "resident_lifetime_peak_bytes": 952713216
+            }
+          ],
+          "contexts": [
+            {
+              "test": "translated_context_cleanup",
+              "passed": true,
+              "allocated": 76,
+              "freed": 76,
+              "maps": 0,
+              "revocations": 0,
+              "tlb_fills": 390430,
+              "faults": 36251,
+              "syscalls": 700308,
+              "preemptions": 23547
+            }
+          ]
+        },
+        {
+          "entry": "gcd",
+          "iteration": 0,
+          "returncode": 0,
+          "validated": true,
+          "data_image": {
+            "path": "work/native-linux-nce/lkl-direct-smp-services-resume-profile/gcd-0-data.img",
+            "initial_sha256": "55ef1acf84a541f61276e57314b62e7cc525542640361ca5f2a3773d2eb4498e",
+            "fresh": true,
+            "final_sha256": "86f3bb50975252bd510cd6c89c570506947a86519a29f575dad2a1e339227b1f",
+            "clean_shutdown": true
+          },
+          "stdout_sha256": "108a376bf2eaee8a9232f7a6f3900638ad9bb6cf740bef2ed87640e94fa1c305",
+          "stderr_sha256": "811447d74400218adc9517eb7ba0173f0a4909318dbe0b3763a1837f53b073b5",
+          "memory_statistics": [
+            {
+              "memory_statistics": "services_execution",
+              "interval_ms": 100,
+              "samples": 242,
+              "errors": 0,
+              "duration_ns": 24900129000,
+              "collection_ns": 12331000,
+              "footprint_mean_bytes": 474842457.884,
+              "footprint_sample_peak_bytes": 938427976,
+              "footprint_latest_bytes": 936281672,
+              "resident_mean_bytes": 476506839.802,
+              "resident_sample_peak_bytes": 939835392,
+              "resident_latest_bytes": 937689088,
+              "resident_lifetime_peak_bytes": 945045504
+            },
+            {
+              "memory_statistics": "cleanup",
+              "interval_ms": 100,
+              "samples": 8,
+              "errors": 0,
+              "duration_ns": 635428000,
+              "collection_ns": 405000,
+              "footprint_mean_bytes": 817456538.0,
+              "footprint_sample_peak_bytes": 936281672,
+              "footprint_latest_bytes": 37388936,
+              "resident_mean_bytes": 835710976.0,
+              "resident_sample_peak_bytes": 937689088,
+              "resident_latest_bytes": 173277184,
+              "resident_lifetime_peak_bytes": 945045504
+            }
+          ],
+          "contexts": [
+            {
+              "test": "translated_context_cleanup",
+              "passed": true,
+              "allocated": 75,
+              "freed": 75,
+              "maps": 0,
+              "revocations": 0,
+              "tlb_fills": 433176,
+              "faults": 36174,
+              "syscalls": 700362,
+              "preemptions": 26929
+            }
+          ]
+        },
+        {
+          "entry": "cli",
+          "iteration": 1,
+          "returncode": "timeout",
+          "validated": false,
+          "data_image": {
+            "path": "work/native-linux-nce/lkl-direct-smp-services-resume-profile/cli-1-data.img",
+            "initial_sha256": "852ba74693cdb86453196f98857333daf60ac8c929468eb1d772e3515934f96e",
+            "fresh": true,
+            "final_sha256": "5d3f6402c72e504421f260de8ac14fe9c59e82ba18be8409b6071be30ddd120a",
+            "clean_shutdown": true
+          },
+          "stdout_sha256": "59c55963836cc47116308042fb273d06b96af0007b0cf09babbf0f630c2c6c24",
+          "stderr_sha256": "84cbdbd355e383cc5b1caae5d7c415af6f1b5aff92381fdeac3451ce4764de91",
+          "memory_statistics": [
+            {
+              "memory_statistics": "services_execution",
+              "interval_ms": 100,
+              "samples": 282,
+              "errors": 0,
+              "duration_ns": 29082968000,
+              "collection_ns": 14266000,
+              "footprint_mean_bytes": 455555120.511,
+              "footprint_sample_peak_bytes": 933152304,
+              "footprint_latest_bytes": 924026392,
+              "resident_mean_bytes": 457222361.872,
+              "resident_sample_peak_bytes": 934576128,
+              "resident_latest_bytes": 925466624,
+              "resident_lifetime_peak_bytes": 937377792
+            }
+          ],
+          "contexts": []
+        }
+      ]
+    },
+    {
+      "report": "work/native-linux-nce/lkl-direct-smp-services-shutdown-handoff/summary.json",
+      "sha256": "55d4aa063e2f54d4e50bb2a865b872f505226bc918839cd42391b28d3c88ea25",
+      "configuration": {
+        "execution": "direct",
+        "direct": {
+          "mapping_entries": 256,
+          "route_entries": 256,
+          "selective_writes": false,
+          "reuse_code_checks": false,
+          "memory": "flat",
+          "code_watch": false,
+          "cross_page": true,
+          "route_epochs": false,
+          "retain_routes": false,
+          "memory_groups": false,
+          "native_exclusive": true
+        },
+        "mapping": "pte",
+        "sparse_scan": true,
+        "fault_prefetch": false,
+        "guest_page_bytes": 16384,
+        "workload": "services",
+        "entries": [
+          "cli",
+          "gcd"
+        ],
+        "art_nterp": 1,
+        "cpus": 2,
+        "uaccess_stop": "code",
+        "parallel_profile": true,
+        "art_expanded_jit": 0,
+        "art_fast_baseline": 0,
+        "cache_invalidation": "pages",
+        "exec_cache": "pages",
+        "tlb_invalidation": "pages",
+        "linux_fastpath": 0,
+        "guest_ram_bytes": 1073741824,
+        "translation_cache_bytes": 134217728,
+        "instruction_batch": 50000,
+        "memory_interval_ms": 100,
+        "preemption": "timer",
+        "timer_interval_ns": 2000000
+      },
+      "platform": "macOS-27.0-arm64-arm-64bit-Mach-O",
+      "cpu": "Apple M5 Ultra",
+      "system_build": "26A428",
+      "runs": [
+        {
+          "entry": "cli",
+          "iteration": 0,
+          "returncode": 0,
+          "validated": true,
+          "data_image": {
+            "path": "work/native-linux-nce/lkl-direct-smp-services-shutdown-handoff/cli-0-data.img",
+            "initial_sha256": "97440d8e228c69b74fc9506cf48afed113cb9556c13cb553ee273a0234cb59ca",
+            "fresh": true,
+            "final_sha256": "d8bcaa3e7bc1d48a6cb1fca1670503967285fb59690860156811cfbf3780a44a",
+            "clean_shutdown": true
+          },
+          "stdout_sha256": "9f49d95e6ba819755f1e7a87b1e8d3df33e25d70b7977be7fc475360dced6a9d",
+          "stderr_sha256": "d9a40078050e7750f595d098646c8f72ea41f047061ae59942a7fa38dadc325a",
+          "memory_statistics": [
+            {
+              "memory_statistics": "services_execution",
+              "interval_ms": 100,
+              "samples": 255,
+              "errors": 0,
+              "duration_ns": 26235461000,
+              "collection_ns": 9957000,
+              "footprint_mean_bytes": 406727756.392,
+              "footprint_sample_peak_bytes": 934659608,
+              "footprint_latest_bytes": 933856792,
+              "resident_mean_bytes": 408440526.808,
+              "resident_sample_peak_bytes": 936099840,
+              "resident_latest_bytes": 935297024,
+              "resident_lifetime_peak_bytes": 941195264
+            },
+            {
+              "memory_statistics": "cleanup",
+              "interval_ms": 100,
+              "samples": 22,
+              "errors": 0,
+              "duration_ns": 2051973000,
+              "collection_ns": 937000,
+              "footprint_mean_bytes": 887563740.0,
+              "footprint_sample_peak_bytes": 933856792,
+              "footprint_latest_bytes": 34472584,
+              "resident_mean_bytes": 895104093.091,
+              "resident_sample_peak_bytes": 935297024,
+              "resident_latest_bytes": 169836544,
+              "resident_lifetime_peak_bytes": 941195264
+            }
+          ],
+          "contexts": [
+            {
+              "test": "translated_context_cleanup",
+              "passed": true,
+              "allocated": 75,
+              "freed": 75,
+              "maps": 0,
+              "revocations": 0,
+              "tlb_fills": 337122,
+              "faults": 36435,
+              "syscalls": 724937,
+              "preemptions": 23295
+            }
+          ]
+        },
+        {
+          "entry": "gcd",
+          "iteration": 0,
+          "returncode": 0,
+          "validated": true,
+          "data_image": {
+            "path": "work/native-linux-nce/lkl-direct-smp-services-shutdown-handoff/gcd-0-data.img",
+            "initial_sha256": "d2943173d7aa7c81082de41cf2d5a7e4bd79a21d1c29812cf236a4d9c6024cff",
+            "fresh": true,
+            "final_sha256": "43577b57ef2da6f9c48cad5060de261bb4f96fb8cd865e5d0a005be289b227c1",
+            "clean_shutdown": true
+          },
+          "stdout_sha256": "bd3f366dde70fd842284d6bcbe0844582f5897a48123395c8cb3c2de4eafe959",
+          "stderr_sha256": "e732078be2fad338bd93cceecfd084fce47f1dd721a9af90ad2f8af379976425",
+          "memory_statistics": [
+            {
+              "memory_statistics": "services_execution",
+              "interval_ms": 100,
+              "samples": 255,
+              "errors": 0,
+              "duration_ns": 26160463000,
+              "collection_ns": 9932000,
+              "footprint_mean_bytes": 435597758.808,
+              "footprint_sample_peak_bytes": 942589392,
+              "footprint_latest_bytes": 942589392,
+              "resident_mean_bytes": 437332329.412,
+              "resident_sample_peak_bytes": 944078848,
+              "resident_latest_bytes": 944078848,
+              "resident_lifetime_peak_bytes": 944586752
+            },
+            {
+              "memory_statistics": "cleanup",
+              "interval_ms": 100,
+              "samples": 6,
+              "errors": 0,
+              "duration_ns": 476921000,
+              "collection_ns": 188000,
+              "footprint_mean_bytes": 781417105.333,
+              "footprint_sample_peak_bytes": 942589392,
+              "footprint_latest_bytes": 38568536,
+              "resident_mean_bytes": 805287253.333,
+              "resident_sample_peak_bytes": 944078848,
+              "resident_latest_bytes": 174342144,
+              "resident_lifetime_peak_bytes": 944586752
+            }
+          ],
+          "contexts": [
+            {
+              "test": "translated_context_cleanup",
+              "passed": true,
+              "allocated": 75,
+              "freed": 75,
+              "maps": 0,
+              "revocations": 0,
+              "tlb_fills": 355575,
+              "faults": 36289,
+              "syscalls": 710808,
+              "preemptions": 26190
+            }
+          ]
+        },
+        {
+          "entry": "cli",
+          "iteration": 1,
+          "returncode": 0,
+          "validated": true,
+          "data_image": {
+            "path": "work/native-linux-nce/lkl-direct-smp-services-shutdown-handoff/cli-1-data.img",
+            "initial_sha256": "b9d5a85622d1fd7568c9b86bb9cf407fbfbbf2af5caddfbcda3b6bd9b9297c0c",
+            "fresh": true,
+            "final_sha256": "92bbffee5b1347f2c554f15b382ac44ef64355f76b18453ac2c4805bf548bee5",
+            "clean_shutdown": true
+          },
+          "stdout_sha256": "e1d204125f97367b28394efcf9cc1689083f03f61d4c22fd346260524e78dcfd",
+          "stderr_sha256": "d9414d99a1aeed361e2f7e2b4af45e84bfbaa7cf76433bfc7c205ff9e953b0e5",
+          "memory_statistics": [
+            {
+              "memory_statistics": "services_execution",
+              "interval_ms": 100,
+              "samples": 264,
+              "errors": 0,
+              "duration_ns": 27133165000,
+              "collection_ns": 11871000,
+              "footprint_mean_bytes": 427580136.636,
+              "footprint_sample_peak_bytes": 950404608,
+              "footprint_latest_bytes": 950404608,
+              "resident_mean_bytes": 429261730.909,
+              "resident_sample_peak_bytes": 951861248,
+              "resident_latest_bytes": 951861248,
+              "resident_lifetime_peak_bytes": 952320000
+            },
+            {
+              "memory_statistics": "cleanup",
+              "interval_ms": 100,
+              "samples": 11,
+              "errors": 0,
+              "duration_ns": 922022000,
+              "collection_ns": 352000,
+              "footprint_mean_bytes": 856923339.636,
+              "footprint_sample_peak_bytes": 950404608,
+              "footprint_latest_bytes": 44860016,
+              "resident_mean_bytes": 870565329.455,
+              "resident_sample_peak_bytes": 951861248,
+              "resident_latest_bytes": 180060160,
+              "resident_lifetime_peak_bytes": 952320000
+            }
+          ],
+          "contexts": [
+            {
+              "test": "translated_context_cleanup",
+              "passed": true,
+              "allocated": 76,
+              "freed": 76,
+              "maps": 0,
+              "revocations": 0,
+              "tlb_fills": 403999,
+              "faults": 36358,
+              "syscalls": 725738,
+              "preemptions": 23960
+            }
+          ]
+        },
+        {
+          "entry": "gcd",
+          "iteration": 1,
+          "returncode": 0,
+          "validated": true,
+          "data_image": {
+            "path": "work/native-linux-nce/lkl-direct-smp-services-shutdown-handoff/gcd-1-data.img",
+            "initial_sha256": "f783da7601eb97c1f64c66d52ab5f1f07d61a48a6047a641827f261f4ab84fec",
+            "fresh": true,
+            "final_sha256": "151146bbeaad6d980fde1635a78969c283a5f4fa9bca32d1e2b3f84234f87bf8",
+            "clean_shutdown": true
+          },
+          "stdout_sha256": "32324612ac10e9e39f6294c86d00d14a4e8444d2a4857cd13df98f0ed88dfbc5",
+          "stderr_sha256": "7c1a6d25b0d23c72939870e1bfc343a1e8750cf9c72dc73e17054bd9ad0386da",
+          "memory_statistics": [
+            {
+              "memory_statistics": "services_execution",
+              "interval_ms": 100,
+              "samples": 283,
+              "errors": 0,
+              "duration_ns": 29127143000,
+              "collection_ns": 12678000,
+              "footprint_mean_bytes": 463063449.781,
+              "footprint_sample_peak_bytes": 946243048,
+              "footprint_latest_bytes": 946243048,
+              "resident_mean_bytes": 464745012.466,
+              "resident_sample_peak_bytes": 947716096,
+              "resident_latest_bytes": 947716096,
+              "resident_lifetime_peak_bytes": 947830784
+            },
+            {
+              "memory_statistics": "cleanup",
+              "interval_ms": 100,
+              "samples": 10,
+              "errors": 0,
+              "duration_ns": 768696000,
+              "collection_ns": 304000,
+              "footprint_mean_bytes": 797943116.0,
+              "footprint_sample_peak_bytes": 946243048,
+              "footprint_latest_bytes": 43876976,
+              "resident_mean_bytes": 812824985.6,
+              "resident_sample_peak_bytes": 947716096,
+              "resident_latest_bytes": 178978816,
+              "resident_lifetime_peak_bytes": 947830784
+            }
+          ],
+          "contexts": [
+            {
+              "test": "translated_context_cleanup",
+              "passed": true,
+              "allocated": 76,
+              "freed": 76,
+              "maps": 0,
+              "revocations": 0,
+              "tlb_fills": 355547,
+              "faults": 36327,
+              "syscalls": 683859,
+              "preemptions": 24613
+            }
+          ]
+        },
+        {
+          "entry": "cli",
+          "iteration": 2,
+          "returncode": 0,
+          "validated": true,
+          "data_image": {
+            "path": "work/native-linux-nce/lkl-direct-smp-services-shutdown-handoff/cli-2-data.img",
+            "initial_sha256": "cc025e7e0ecc4f25c458c7191f08bd0432274c1e753d05dc736d5256fa0ee500",
+            "fresh": true,
+            "final_sha256": "90e1334bce926a40d845b6106be08467d835ad510b0ac06185fea81cbd18ff29",
+            "clean_shutdown": true
+          },
+          "stdout_sha256": "a501b073cf46c878bd18f86b796f80b98e9366cb74b44697850814c55d825dd3",
+          "stderr_sha256": "d0e5f6665d577d29427c7dd52d0f195a4bcb23c212dffa6af2337e0e3ea8baf6",
+          "memory_statistics": [
+            {
+              "memory_statistics": "services_execution",
+              "interval_ms": 100,
+              "samples": 267,
+              "errors": 0,
+              "duration_ns": 27443230000,
+              "collection_ns": 10695000,
+              "footprint_mean_bytes": 431766235.895,
+              "footprint_sample_peak_bytes": 938722864,
+              "footprint_latest_bytes": 938624560,
+              "resident_mean_bytes": 433427858.697,
+              "resident_sample_peak_bytes": 940146688,
+              "resident_latest_bytes": 940048384,
+              "resident_lifetime_peak_bytes": 945389568
+            },
+            {
+              "memory_statistics": "cleanup",
+              "interval_ms": 100,
+              "samples": 6,
+              "errors": 0,
+              "duration_ns": 382524000,
+              "collection_ns": 192000,
+              "footprint_mean_bytes": 780780924.0,
+              "footprint_sample_peak_bytes": 938624560,
+              "footprint_latest_bytes": 38404768,
+              "resident_mean_bytes": 804765696.0,
+              "resident_sample_peak_bytes": 940048384,
+              "resident_latest_bytes": 175079424,
+              "resident_lifetime_peak_bytes": 945389568
+            }
+          ],
+          "contexts": [
+            {
+              "test": "translated_context_cleanup",
+              "passed": true,
+              "allocated": 75,
+              "freed": 75,
+              "maps": 0,
+              "revocations": 0,
+              "tlb_fills": 309683,
+              "faults": 36468,
+              "syscalls": 720267,
+              "preemptions": 25431
+            }
+          ]
+        },
+        {
+          "entry": "gcd",
+          "iteration": 2,
+          "returncode": 0,
+          "validated": true,
+          "data_image": {
+            "path": "work/native-linux-nce/lkl-direct-smp-services-shutdown-handoff/gcd-2-data.img",
+            "initial_sha256": "2fca755109219b9526da6bdb990f71e09fb9a4180e9d98c0e9c55d9c0ebe0e7c",
+            "fresh": true,
+            "final_sha256": "167ea9c5710b9e4b3254ea13e2e463a4eb0f1601a5b496dea19ca9091cd81c74",
+            "clean_shutdown": true
+          },
+          "stdout_sha256": "9cdd7c333cbab63c89108ad0644e8671987d7d8dbcc303218cddd4891c65348b",
+          "stderr_sha256": "814cf48fdbc3f57ffddafd3cc752340af3ad06a88dfbc166222199aef410bff6",
+          "memory_statistics": [
+            {
+              "memory_statistics": "services_execution",
+              "interval_ms": 100,
+              "samples": 255,
+              "errors": 0,
+              "duration_ns": 26169197000,
+              "collection_ns": 10333000,
+              "footprint_mean_bytes": 470750084.8,
+              "footprint_sample_peak_bytes": 938853912,
+              "footprint_latest_bytes": 938853912,
+              "resident_mean_bytes": 472431419.231,
+              "resident_sample_peak_bytes": 940294144,
+              "resident_latest_bytes": 940294144,
+              "resident_lifetime_peak_bytes": 940687360
+            },
+            {
+              "memory_statistics": "cleanup",
+              "interval_ms": 100,
+              "samples": 7,
+              "errors": 0,
+              "duration_ns": 526372000,
+              "collection_ns": 214000,
+              "footprint_mean_bytes": 798611381.714,
+              "footprint_sample_peak_bytes": 938853912,
+              "footprint_latest_bytes": 38044248,
+              "resident_mean_bytes": 819310006.857,
+              "resident_sample_peak_bytes": 940294144,
+              "resident_latest_bytes": 174129152,
+              "resident_lifetime_peak_bytes": 940687360
+            }
+          ],
+          "contexts": [
+            {
+              "test": "translated_context_cleanup",
+              "passed": true,
+              "allocated": 75,
+              "freed": 75,
+              "maps": 0,
+              "revocations": 0,
+              "tlb_fills": 421199,
+              "faults": 36416,
+              "syscalls": 718529,
+              "preemptions": 25848
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "report": "work/native-linux-nce/lkl-direct-smp-core-shutdown-handoff/summary.json",
+      "sha256": "2c842b5580a065258ca2f612cacee3f621c2cfc9c673bd8b09604c8f53b0971a",
+      "configuration": {
+        "execution": "direct",
+        "direct": {
+          "mapping_entries": 256,
+          "route_entries": 256,
+          "selective_writes": false,
+          "reuse_code_checks": false,
+          "memory": "flat",
+          "code_watch": false,
+          "cross_page": true,
+          "route_epochs": false,
+          "retain_routes": false,
+          "memory_groups": false,
+          "native_exclusive": true
+        },
+        "mapping": "pte",
+        "sparse_scan": true,
+        "fault_prefetch": false,
+        "guest_page_bytes": 16384,
+        "workload": "core",
+        "entries": [
+          "cli",
+          "gcd"
+        ],
+        "art_nterp": 1,
+        "cpus": 2,
+        "uaccess_stop": "code",
+        "parallel_profile": true,
+        "art_expanded_jit": 0,
+        "art_fast_baseline": 0,
+        "cache_invalidation": "pages",
+        "exec_cache": "pages",
+        "tlb_invalidation": "pages",
+        "linux_fastpath": 0,
+        "guest_ram_bytes": 1073741824,
+        "translation_cache_bytes": 134217728,
+        "instruction_batch": 50000,
+        "memory_interval_ms": 100,
+        "preemption": "timer",
+        "timer_interval_ns": 2000000
+      },
+      "platform": "macOS-27.0-arm64-arm-64bit-Mach-O",
+      "cpu": "Apple M5 Ultra",
+      "system_build": "26A428",
+      "runs": [
+        {
+          "entry": "cli",
+          "iteration": 0,
+          "returncode": 0,
+          "validated": true,
+          "data_image": null,
+          "stdout_sha256": "3692909236ad1605d4b08401432cf5e269fe213e567dd61392d2e3102ee31264",
+          "stderr_sha256": "3d175b18e6483a3782ff0644ea0bf343363e6cfa95760ae40a55dd49b75d5c16",
+          "memory_statistics": [
+            {
+              "memory_statistics": "kernel_setup",
+              "interval_ms": 100,
+              "samples": 2,
+              "errors": 0,
+              "duration_ns": 72343000,
+              "collection_ns": 36000,
+              "footprint_mean_bytes": 18186744.0,
+              "footprint_sample_peak_bytes": 34685552,
+              "footprint_latest_bytes": 34685552,
+              "resident_mean_bytes": 19226624.0,
+              "resident_sample_peak_bytes": 36257792,
+              "resident_latest_bytes": 36257792,
+              "resident_lifetime_peak_bytes": 36274176
+            },
+            {
+              "memory_statistics": "guest_setup",
+              "interval_ms": 100,
+              "samples": 2,
+              "errors": 0,
+              "duration_ns": 540000,
+              "collection_ns": 13000,
+              "footprint_mean_bytes": 35652208.0,
+              "footprint_sample_peak_bytes": 36618864,
+              "footprint_latest_bytes": 36618864,
+              "resident_mean_bytes": 37224448.0,
+              "resident_sample_peak_bytes": 38191104,
+              "resident_latest_bytes": 38191104,
+              "resident_lifetime_peak_bytes": 38191104
+            },
+            {
+              "memory_statistics": "guest_execution",
+              "interval_ms": 100,
+              "samples": 26,
+              "errors": 0,
+              "duration_ns": 2414207000,
+              "collection_ns": 1147000,
+              "footprint_mean_bytes": 336417336.308,
+              "footprint_sample_peak_bytes": 1418036904,
+              "footprint_latest_bytes": 1413613224,
+              "resident_mean_bytes": 338076908.308,
+              "resident_sample_peak_bytes": 1419231232,
+              "resident_latest_bytes": 1414807552,
+              "resident_lifetime_peak_bytes": 1423163392
+            },
+            {
+              "memory_statistics": "cleanup",
+              "interval_ms": 100,
+              "samples": 18,
+              "errors": 0,
+              "duration_ns": 1646928000,
+              "collection_ns": 652000,
+              "footprint_mean_bytes": 1257440789.333,
+              "footprint_sample_peak_bytes": 1413613224,
+              "footprint_latest_bytes": 11289056,
+              "resident_mean_bytes": 1258735388.444,
+              "resident_sample_peak_bytes": 1414807552,
+              "resident_latest_bytes": 13320192,
+              "resident_lifetime_peak_bytes": 1423163392
+            }
+          ],
+          "checks": [
+            {
+              "test": "translated_context_cleanup",
+              "passed": true,
+              "allocated": 69,
+              "freed": 69,
+              "maps": 0,
+              "revocations": 0,
+              "tlb_fills": 70575,
+              "faults": 153223,
+              "syscalls": 61008,
+              "preemptions": 4734
+            }
+          ]
+        },
+        {
+          "entry": "gcd",
+          "iteration": 0,
+          "returncode": 0,
+          "validated": true,
+          "data_image": null,
+          "stdout_sha256": "489855433d98fe8a27ce700a9431b46305cb78b1ea49184ce07d82d90e4dc4b2",
+          "stderr_sha256": "5df883f496f0da0dc67e9cf51a9d2d91b219d81b3ed6e471f82d811454661313",
+          "memory_statistics": [
+            {
+              "memory_statistics": "kernel_setup",
+              "interval_ms": 100,
+              "samples": 2,
+              "errors": 0,
+              "duration_ns": 85772000,
+              "collection_ns": 16000,
+              "footprint_mean_bytes": 18301432.0,
+              "footprint_sample_peak_bytes": 34816600,
+              "footprint_latest_bytes": 34816600,
+              "resident_mean_bytes": 19365888.0,
+              "resident_sample_peak_bytes": 36421632,
+              "resident_latest_bytes": 36421632,
+              "resident_lifetime_peak_bytes": 36438016
+            },
+            {
+              "memory_statistics": "guest_setup",
+              "interval_ms": 100,
+              "samples": 2,
+              "errors": 0,
+              "duration_ns": 597000,
+              "collection_ns": 13000,
+              "footprint_mean_bytes": 35775064.0,
+              "footprint_sample_peak_bytes": 36733528,
+              "footprint_latest_bytes": 36733528,
+              "resident_mean_bytes": 37380096.0,
+              "resident_sample_peak_bytes": 38338560,
+              "resident_latest_bytes": 38338560,
+              "resident_lifetime_peak_bytes": 38338560
+            },
+            {
+              "memory_statistics": "guest_execution",
+              "interval_ms": 100,
+              "samples": 39,
+              "errors": 0,
+              "duration_ns": 3821998000,
+              "collection_ns": 1146000,
+              "footprint_mean_bytes": 217842036.513,
+              "footprint_sample_peak_bytes": 1412335224,
+              "footprint_latest_bytes": 1412335224,
+              "resident_mean_bytes": 219557362.872,
+              "resident_sample_peak_bytes": 1413562368,
+              "resident_latest_bytes": 1413562368,
+              "resident_lifetime_peak_bytes": 1421967360
+            },
+            {
+              "memory_statistics": "cleanup",
+              "interval_ms": 100,
+              "samples": 14,
+              "errors": 0,
+              "duration_ns": 1258801000,
+              "collection_ns": 428000,
+              "footprint_mean_bytes": 516257405.714,
+              "footprint_sample_peak_bytes": 1412335224,
+              "footprint_latest_bytes": 12206536,
+              "resident_mean_bytes": 517880685.714,
+              "resident_sample_peak_bytes": 1413562368,
+              "resident_latest_bytes": 14254080,
+              "resident_lifetime_peak_bytes": 1421967360
+            }
+          ],
+          "checks": [
+            {
+              "test": "translated_context_cleanup",
+              "passed": true,
+              "allocated": 69,
+              "freed": 69,
+              "maps": 0,
+              "revocations": 0,
+              "tlb_fills": 70561,
+              "faults": 153223,
+              "syscalls": 51487,
+              "preemptions": 4610
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "report": "work/native-linux-nce/lkl-direct-smp-desktop-shutdown-handoff/summary.json",
+      "sha256": "5c6fde7e9a0a5c04017256c75a3342e6b847515293834f89af8e76ac2bf3f89d",
+      "configuration": {
+        "execution": "direct",
+        "direct": {
+          "mapping_entries": 256,
+          "route_entries": 256,
+          "selective_writes": false,
+          "reuse_code_checks": false,
+          "memory": "flat",
+          "code_watch": false,
+          "cross_page": true,
+          "route_epochs": false,
+          "retain_routes": false,
+          "memory_groups": false,
+          "native_exclusive": true
+        },
+        "mapping": "pte",
+        "sparse_scan": true,
+        "fault_prefetch": false,
+        "guest_page_bytes": 16384,
+        "workload": "desktop",
+        "entries": [
+          "window"
+        ],
+        "art_nterp": 1,
+        "cpus": 2,
+        "uaccess_stop": "code",
+        "parallel_profile": false,
+        "art_expanded_jit": 0,
+        "art_fast_baseline": 0,
+        "cache_invalidation": "pages",
+        "exec_cache": "pages",
+        "tlb_invalidation": "pages",
+        "linux_fastpath": 0,
+        "guest_ram_bytes": 1073741824,
+        "translation_cache_bytes": 134217728,
+        "instruction_batch": 50000,
+        "memory_interval_ms": 100,
+        "preemption": "timer",
+        "timer_interval_ns": 2000000
+      },
+      "platform": "macOS-27.0-arm64-arm-64bit-Mach-O",
+      "cpu": "Apple M5 Ultra",
+      "system_build": "26A428",
+      "runs": [
+        {
+          "entry": "window",
+          "iteration": 0,
+          "returncode": 0,
+          "validated": true,
+          "data_image": {
+            "path": "work/native-linux-nce/lkl-direct-smp-desktop-shutdown-handoff/window-0-data.img",
+            "initial_sha256": "0cccfd8b7b607defcc429f9d9fecc6bcdd7cf7ddfbc6b0151ca4e26c80b4e0fb",
+            "fresh": true,
+            "final_sha256": "98d9800b97f177f18d32df5664242140d3cbf64f9aa866b0cf64d4609e8bbb8e",
+            "clean_shutdown": true
+          },
+          "stdout_sha256": "d2b4010fc71fa2921e597eb73a6c921803b7ffaf1bd59ff425634aef94af30ba",
+          "stderr_sha256": "f16af7d252bc815690f523c8d1065da7102d7526ff571bf70ed22e34cb79dbfc",
+          "memory_statistics": [
+            {
+              "memory_statistics": "kernel_setup",
+              "interval_ms": 100,
+              "samples": 3,
+              "errors": 0,
+              "duration_ns": 125463000,
+              "collection_ns": 55000,
+              "footprint_mean_bytes": 44221584.0,
+              "footprint_sample_peak_bytes": 59901200,
+              "footprint_latest_bytes": 59901200,
+              "resident_mean_bytes": 110575616.0,
+              "resident_sample_peak_bytes": 142295040,
+              "resident_latest_bytes": 142295040,
+              "resident_lifetime_peak_bytes": 142311424
+            },
+            {
+              "memory_statistics": "guest_setup",
+              "interval_ms": 100,
+              "samples": 4,
+              "errors": 0,
+              "duration_ns": 211290000,
+              "collection_ns": 88000,
+              "footprint_mean_bytes": 293324078.0,
+              "footprint_sample_peak_bytes": 372802904,
+              "footprint_latest_bytes": 372802904,
+              "resident_mean_bytes": 153571328.0,
+              "resident_sample_peak_bytes": 160399360,
+              "resident_latest_bytes": 160399360,
+              "resident_lifetime_peak_bytes": 160399360
+            },
+            {
+              "memory_statistics": "desktop_execution",
+              "interval_ms": 100,
+              "samples": 2806,
+              "errors": 0,
+              "duration_ns": 292446387000,
+              "collection_ns": 324212000,
+              "footprint_mean_bytes": 2743387917.195,
+              "footprint_sample_peak_bytes": 3485896640,
+              "footprint_latest_bytes": 2920976056,
+              "resident_mean_bytes": 2716831017.055,
+              "resident_sample_peak_bytes": 3208560640,
+              "resident_latest_bytes": 2959065088,
+              "resident_lifetime_peak_bytes": 3211673600
+            },
+            {
+              "memory_statistics": "cleanup",
+              "interval_ms": 100,
+              "samples": 6,
+              "errors": 0,
+              "duration_ns": 419715000,
+              "collection_ns": 157000,
+              "footprint_mean_bytes": 2509786480.0,
+              "footprint_sample_peak_bytes": 2920976056,
+              "footprint_latest_bytes": 476104456,
+              "resident_mean_bytes": 2548776960.0,
+              "resident_sample_peak_bytes": 2959065088,
+              "resident_latest_bytes": 516554752,
+              "resident_lifetime_peak_bytes": 3211673600
+            }
+          ],
+          "checks": [
+            {
+              "test": "android_desktop_visible_activity",
+              "passed": true,
+              "package": "com.android.launcher3",
+              "sampled_colors": 470
+            },
+            {
+              "test": "android_desktop_visible_activity",
+              "passed": true,
+              "package": "com.android.deskclock",
+              "sampled_colors": 109
+            },
+            {
+              "test": "android_application_data_persistence",
+              "passed": true,
+              "package": "com.android.deskclock",
+              "row_id": 3,
+              "restored": false
+            },
+            {
+              "test": "android_desktop_visible_activity",
+              "passed": true,
+              "package": "com.android.deskclock",
+              "sampled_colors": 138
+            },
+            {
+              "test": "android_clock_alarm_activity",
+              "passed": true
+            },
+            {
+              "test": "android_desktop_visible_activity",
+              "passed": true,
+              "package": "com.google.android.documentsui",
+              "sampled_colors": 38
+            },
+            {
+              "test": "android_framework_shutdown",
+              "passed": true
+            },
+            {
+              "test": "native_graphics_channels_released",
+              "passed": true,
+              "opened": 134,
+              "closed": 134
+            },
+            {
+              "test": "linux_data_readonly_shutdown",
+              "passed": true
+            },
+            {
+              "test": "translated_context_cleanup",
+              "passed": true,
+              "allocated": 1091,
+              "freed": 1091,
+              "maps": 0,
+              "revocations": 0,
+              "tlb_fills": 29188191,
+              "faults": 546714,
+              "syscalls": 5703860,
+              "preemptions": 2211933
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "regression": {
+    "source": "work/native-linux-nce/lkl-translation-smp-kernel/source/arch/lkl/kernel/cpu.c",
+    "source_sha256": "249f7dc13020608c30fa6fabc337591c8dd3542b57703fa814133d07bec17995",
+    "scope": "CPU ownership handoff boundaries; real Linux service and desktop tests are separate",
+    "runs": [
+      {
+        "variant": "fixed",
+        "returncode": 0,
+        "stdout": "shutdown handoff and normal ownership boundaries passed\n",
+        "stderr": ""
+      },
+      {
+        "variant": "negative-control",
+        "returncode": 1,
+        "stdout": "",
+        "stderr": "shutdown left the last host task without scheduling idle\n"
+      }
+    ]
+  }
+}
