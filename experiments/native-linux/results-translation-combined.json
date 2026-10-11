@@ -671,5 +671,86 @@
       "start_ms": 78034.93447904475,
       "footprint_peak_bytes": 2938875492.0
     }
+  },
+  "reuse_without_fastpath_desktop": {
+    "source": "work/native-linux-nce/lkl-dual-reuse64-desktop/summary.json",
+    "sha256": "c14856c6b520a85c6c3648e0aa51995696208e44583eb42b99bc533f514a15b3",
+    "scope": "CLI/GCD functional and persistence checks; CLI overlapped a settings-only App inspection; not a performance comparison",
+    "configuration": {
+      "code_memory": "dual",
+      "execution": "direct",
+      "direct": {
+        "mapping_entries": 256,
+        "route_entries": 256,
+        "selective_writes": false,
+        "reuse_code_checks": true,
+        "memory": "flat",
+        "code_watch": true,
+        "cross_page": true,
+        "route_epochs": true,
+        "retain_routes": true,
+        "memory_groups": false,
+        "native_exclusive": true,
+        "vector_table": false
+      },
+      "mapping": "pte",
+      "sparse_scan": true,
+      "fault_prefetch": false,
+      "guest_page_bytes": 16384,
+      "workload": "desktop",
+      "entries": [
+        "cli",
+        "gcd"
+      ],
+      "art_nterp": 1,
+      "cpus": 1,
+      "online_cpus": 1,
+      "uaccess_stop": "all",
+      "parallel_profile": false,
+      "art_expanded_jit": 0,
+      "art_fast_baseline": 0,
+      "cache_invalidation": "pages",
+      "exec_cache": "pages",
+      "tlb_invalidation": "pages",
+      "linux_fastpath": 0,
+      "guest_ram_bytes": 1073741824,
+      "translation_cache_bytes": 67108864,
+      "instruction_batch": 50000,
+      "memory_interval_ms": 100,
+      "preemption": "timer",
+      "timer_interval_ns": 2000000
+    },
+    "runs": [
+      {
+        "entry": "cli",
+        "iteration": 0,
+        "returncode": 0,
+        "validated": true,
+        "data_image": {
+          "path": "work/native-linux-nce/lkl-dual-reuse64-desktop/persistent-data.img",
+          "initial_sha256": "0387fb300ae1d4145b6fdcf4c878553a2e806b8c8b4918925d3482152fede620",
+          "fresh": true,
+          "final_sha256": "21199a800a87d089d02d0d4ddcdb87dea426cf5d44518fe1579aca33376ad091",
+          "clean_shutdown": true
+        },
+        "stdout_sha256": "6978b615882b8858a03f98248af1935d10f21935b12238d598ed54f0e5f357c4",
+        "stderr_sha256": "0654a5f4ddfff6c5746df8285faab52aa9eff134df79dfedf201fed406a203a0"
+      },
+      {
+        "entry": "gcd",
+        "iteration": 0,
+        "returncode": 0,
+        "validated": true,
+        "data_image": {
+          "path": "work/native-linux-nce/lkl-dual-reuse64-desktop/persistent-data.img",
+          "initial_sha256": "21199a800a87d089d02d0d4ddcdb87dea426cf5d44518fe1579aca33376ad091",
+          "fresh": false,
+          "final_sha256": "a750ecc3d3d50abe8e8f5d7b572c1ca7e423efdffb6b6af4370b25b3d8043360",
+          "clean_shutdown": true
+        },
+        "stdout_sha256": "d1966faaef24b3a8b84d62fc4cea4cf0c7b228aad1023e24b488592069259a4a",
+        "stderr_sha256": "76e5267200be51189a5aed6e14f56792df6f5955e3cb15099ecf4c80ed61fcf5"
+      }
+    ]
   }
 }

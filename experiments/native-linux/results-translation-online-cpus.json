@@ -1322,7 +1322,23 @@
     "macos": "0.25.0-Mac-20261011-204318-direct2-dual",
     "ios_ipa": "work/native-linux-nce/ios-direct-2/DroidOnDarwin-0.25.0.ipa",
     "ios_ipa_sha256": "5d28ec6efd2a76ff2eefb8935c5bc4248c4f3b826943f19c16d3713bb59b6033",
-    "ios_device_execution": "pending"
+    "ios_device_execution": "pending",
+    "macos_settings_ui": {
+      "checked_at": "2026-10-11T21:23:42.652362+08:00",
+      "build_id": "0.25.0-Mac-20261011-204318-direct2-dual",
+      "runtime_label": "Direct · 2 CPU",
+      "online_cpu_options": [
+        1,
+        2
+      ],
+      "selected_online_cpus": 2,
+      "selected_cache_mib": 128,
+      "nterp": true,
+      "code_watch": true,
+      "cross_page": true,
+      "guest_started": false,
+      "app_closed": true
+    }
   },
   "fixed_slice_desktop": {
     "source": "work/native-linux-nce/smp-online-desktop-fixed-slice/summary.json",
