@@ -1,0 +1,8 @@
+{
+  "C_Cpp.files.exclude": {
+    "**/work": true,
+    "**/build": true,
+    "**/.build": true,
+    "**/third_party/gpu": true
+  }
+}
