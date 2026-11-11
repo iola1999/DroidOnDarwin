@@ -542,7 +542,10 @@ static uint32_t cache_instruction(uc_engine *uc, uc_arm64_reg reg, const uc_arm6
         operation->crm != 5 || operation->op2 != 1)
         return 0;
     ++execution->icache_operations;
-    unsigned long value = translate_user(operation->val, LKL_PROT_READ);
+    unsigned long address = operation->val;
+    if (data_tbi)
+        address &= UINT64_C(0x00ffffffffffffff);
+    unsigned long value = translate_user(address, LKL_PROT_READ);
     /* A missing PTE is installed through a later Linux fault, which already
      * invalidates its physical code page. Present aliases need an explicit
      * invalidation: kernel writes do not pass through Unicorn's guest stores.

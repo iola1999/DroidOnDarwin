@@ -8,19 +8,23 @@ from pathlib import Path
 from probe_lkl_translation import validate_standard_jit
 
 
-def check(rows):
-    assert validate_standard_jit(rows)
+def check(rows, data_tbi=False):
+    def accepted(values):
+        return validate_standard_jit(values, data_tbi)
+
+    assert accepted(rows)
+    assert not validate_standard_jit(rows, not data_tbi)
     relevant = [row for row in rows if row.get('test') == 'linux_standard_jit' or row.get('config') == 'linux_standard_jit']
     rejected = 0
     for original in relevant:
-        assert not validate_standard_jit([row for row in rows if row is not original])
-        assert not validate_standard_jit([*rows, deepcopy(original)])
+        assert not accepted([row for row in rows if row is not original])
+        assert not accepted([*rows, deepcopy(original)])
         rejected += 2
         for field in original:
             mutated = deepcopy(rows)
             index = next(i for i, row in enumerate(rows) if row is original)
             del mutated[index][field]
-            assert not validate_standard_jit(mutated), field
+            assert not accepted(mutated), field
             rejected += 1
         index = next(i for i, row in enumerate(rows) if row is original)
         for field, value in original.items():
@@ -34,16 +38,16 @@ def check(rows):
                 continue
             mutated = deepcopy(rows)
             mutated[index][field] = changed
-            assert not validate_standard_jit(mutated), (field, changed)
+            assert not accepted(mutated), (field, changed)
             rejected += 1
             if type(value) == int:
                 mutated[index][field] = True
-                assert not validate_standard_jit(mutated), (field, 'bool')
+                assert not accepted(mutated), (field, 'bool')
                 rejected += 1
     failed = deepcopy(relevant[-1])
     failed['passed'] = False
-    assert not validate_standard_jit([*rows, failed])
-    return rejected + 1
+    assert not accepted([*rows, failed])
+    return rejected + 2
 
 
 def main():
@@ -51,7 +55,7 @@ def main():
     parser.add_argument('report', type=Path)
     args = parser.parse_args()
     result = json.loads(args.report.read_text())
-    rejected = sum(check(run['results']) for run in result['runs'])
+    rejected = sum(check(run['results'], result['configuration'].get('data_tbi', False)) for run in result['runs'])
     print(f'standard JIT report: {len(result["runs"])} actual runs accepted, {rejected} invalid variants rejected')
 
 
