@@ -16,6 +16,14 @@ def main():
     args = parser.parse_args()
     source = args.output.resolve()
     original = verify(source)
+    libraries = {Path(name).name for name in original['inputs'] if name.endswith('.so')}
+    public = source / 'root/system/etc/public.libraries.txt'
+    assert original['files']['/system/etc/public.libraries.txt']['kind'] == 'original'
+    for line in public.read_text().splitlines():
+        fields = line.split('#', 1)[0].split()
+        if fields and not {'nopreload', '32'} & set(fields[1:]):
+            assert fields[0] in libraries, fields[0]
+    assert all(set(record.get('needed', ())) <= libraries for record in original['inputs'].values())
     tests = []
     with tempfile.TemporaryDirectory(prefix='stock-art-input-test-', dir=source.parent) as temporary:
         target = Path(temporary)
@@ -40,6 +48,14 @@ def main():
         rejected('missing_original')
         file.write_bytes(initial)
         file.chmod(mode)
+        for name, relative in [('missing_public_library_list', 'etc/public.libraries.txt'),
+                               ('missing_preloaded_library', 'lib64/libcamera2ndk.so')]:
+            required = target / 'root/system' / relative
+            saved, permissions = required.read_bytes(), required.stat().st_mode & 0o777
+            required.unlink()
+            rejected(name)
+            required.write_bytes(saved)
+            required.chmod(permissions)
         file.write_bytes(bytes([initial[0] ^ 1]) + initial[1:])
         rejected('changed_original')
         modified = json.loads(json.dumps(original))
