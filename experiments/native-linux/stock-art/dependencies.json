@@ -1,0 +1,684 @@
+{
+  "scope": "Static DT_NEEDED closure from libart/JNI libraries plus palette-system and ICU/JVM runtime inputs; actual namespace and runtime dependencies remain unverified",
+  "source_manifest": "work/native-linux-nce/android/android36-runtime.json",
+  "manifest_sha256": "4b1a45b0ee51725c68f1c29765958d0b60b45a5f2325bedfc61764cd49232249",
+  "search_order": [
+    "work/native-linux-nce/android/android36/com.android.art/lib64",
+    "work/native-linux-nce/android/android36/com.android.runtime/lib64/bionic",
+    "work/native-linux-nce/android/android36/com.android.i18n/lib64",
+    "work/native-linux-nce/android/android36/com.android.os.statsd/lib64",
+    "work/native-linux-nce/android/android36/lib64"
+  ],
+  "roots": [
+    "libart.so",
+    "libopenjdk.so",
+    "libjavacore.so",
+    "libandroidio.so",
+    "libartpalette-system.so",
+    "libicu_jni.so",
+    "libopenjdkjvm.so"
+  ],
+  "libraries": {
+    "libart.so": {
+      "path": "work/native-linux-nce/android/android36/com.android.art/lib64/libart.so",
+      "sha256": "72d5d4b78d8b6cead8d5bddb1ba4a44113f4450c12c239d7530407e8f5bef989",
+      "bytes": 12888792,
+      "needed": [
+        "libartpalette.so",
+        "libbase.so",
+        "liblog.so",
+        "liblz4.so",
+        "liblzma.so",
+        "libnativebridge.so",
+        "libnativeloader.so",
+        "libsigchain.so",
+        "libunwindstack.so",
+        "libartbase.so",
+        "libdexfile.so",
+        "libprofile.so",
+        "libdl_android.so",
+        "libstatspull.so",
+        "libstatssocket.so",
+        "libz.so",
+        "heapprofd_client_api.so",
+        "libc++.so",
+        "libc.so",
+        "libm.so",
+        "libdl.so"
+      ],
+      "other_locations": []
+    },
+    "libopenjdk.so": {
+      "path": "work/native-linux-nce/android/android36/com.android.art/lib64/libopenjdk.so",
+      "sha256": "2916625006ac3fc83a61f53a7656292bb855c668fa0a175700b841bfc252c37a",
+      "bytes": 255344,
+      "needed": [
+        "libbase.so",
+        "liblog.so",
+        "libnativehelper.so",
+        "libandroidio.so",
+        "libicu.so",
+        "libz.so",
+        "libopenjdkjvm.so",
+        "libdl_android.so",
+        "libc++.so",
+        "libc.so",
+        "libm.so",
+        "libdl.so"
+      ],
+      "other_locations": []
+    },
+    "libjavacore.so": {
+      "path": "work/native-linux-nce/android/android36/com.android.art/lib64/libjavacore.so",
+      "sha256": "b3f49c55966779271fac59ab891adc7b1771c030581e88b0c8b8d38c2f2477ee",
+      "bytes": 308752,
+      "needed": [
+        "libbase.so",
+        "liblog.so",
+        "libnativehelper.so",
+        "libandroidio.so",
+        "libicu.so",
+        "libexpat.so",
+        "libz.so",
+        "libc++.so",
+        "libc.so",
+        "libm.so",
+        "libdl.so"
+      ],
+      "other_locations": []
+    },
+    "libandroidio.so": {
+      "path": "work/native-linux-nce/android/android36/com.android.art/lib64/libandroidio.so",
+      "sha256": "101d594b817be817bf889a43afbfcf486e1f57724b13511e1fdb4d4ea43126be",
+      "bytes": 51536,
+      "needed": [
+        "liblog.so",
+        "libc++.so",
+        "libc.so",
+        "libm.so",
+        "libdl.so"
+      ],
+      "other_locations": []
+    },
+    "libartpalette-system.so": {
+      "path": "work/native-linux-nce/android/android36/lib64/libartpalette-system.so",
+      "sha256": "20620415fd87be072798fb9d1ed80f67f1acfcb81ed3f98d40d3bbedc6bb8ff6",
+      "bytes": 51800,
+      "needed": [
+        "libbase.so",
+        "libcutils.so",
+        "libdebugstore_cxx.so",
+        "liblog.so",
+        "libprocessgroup.so",
+        "libtombstoned_client.so",
+        "libselinux.so",
+        "libc++.so",
+        "libc.so",
+        "libm.so",
+        "libdl.so"
+      ],
+      "other_locations": []
+    },
+    "libicu_jni.so": {
+      "path": "work/native-linux-nce/android/android36/com.android.i18n/lib64/libicu_jni.so",
+      "sha256": "66934b880ca4237a40fc9653a2a584c126a41f11dc9c39875c88e7e55a7a7165",
+      "bytes": 137728,
+      "needed": [
+        "libbase.so",
+        "libicuuc.so",
+        "libicui18n.so",
+        "liblog.so",
+        "libnativehelper.so",
+        "libc++.so",
+        "libc.so",
+        "libm.so",
+        "libdl.so"
+      ],
+      "other_locations": []
+    },
+    "libopenjdkjvm.so": {
+      "path": "work/native-linux-nce/android/android36/com.android.art/lib64/libopenjdkjvm.so",
+      "sha256": "198bd0d54d9087deb037b7f44eb0c831a0dd1429327cdb5eb1905e1d3ae278fe",
+      "bytes": 51800,
+      "needed": [
+        "libbase.so",
+        "libart.so",
+        "libartbase.so",
+        "libc++.so",
+        "libc.so",
+        "libm.so",
+        "libdl.so"
+      ],
+      "other_locations": []
+    },
+    "libartpalette.so": {
+      "path": "work/native-linux-nce/android/android36/com.android.art/lib64/libartpalette.so",
+      "sha256": "bd3027c80d07ebb3f1da062697ca6257ce992a45cb878a3ffc19c6bf8556341f",
+      "bytes": 51376,
+      "needed": [
+        "liblog.so",
+        "libc++.so",
+        "libc.so",
+        "libm.so",
+        "libdl.so"
+      ],
+      "other_locations": []
+    },
+    "libbase.so": {
+      "path": "work/native-linux-nce/android/android36/com.android.art/lib64/libbase.so",
+      "sha256": "025a1c793543c73887e386d888aa3de247af4492ec53ca750a8c985b6ab8c865",
+      "bytes": 218592,
+      "needed": [
+        "liblog.so",
+        "libc++.so",
+        "libc.so",
+        "libm.so",
+        "libdl.so"
+      ],
+      "other_locations": [
+        "work/native-linux-nce/android/android36/lib64/libbase.so"
+      ]
+    },
+    "liblog.so": {
+      "path": "work/native-linux-nce/android/android36/lib64/liblog.so",
+      "sha256": "efcce90970ed85d61b9c05791ad76ff5f573035b1c0f7d2a3839063c7db5d1a0",
+      "bytes": 102544,
+      "needed": [
+        "libc++.so",
+        "libc.so",
+        "libm.so",
+        "libdl.so"
+      ],
+      "other_locations": []
+    },
+    "liblz4.so": {
+      "path": "work/native-linux-nce/android/android36/com.android.art/lib64/liblz4.so",
+      "sha256": "95d5ea8a700891fe02e6f1025407908767e0b9cf26b2fe454f84d88cc0b15906",
+      "bytes": 167008,
+      "needed": [
+        "libc++.so",
+        "libc.so",
+        "libm.so",
+        "libdl.so"
+      ],
+      "other_locations": [
+        "work/native-linux-nce/android/android36/lib64/liblz4.so"
+      ]
+    },
+    "liblzma.so": {
+      "path": "work/native-linux-nce/android/android36/com.android.art/lib64/liblzma.so",
+      "sha256": "81d33cdc631497f631e551ff793809401edd2b836e35e18af84ecfac435fc9bb",
+      "bytes": 200168,
+      "needed": [
+        "libc.so",
+        "libm.so",
+        "libdl.so"
+      ],
+      "other_locations": [
+        "work/native-linux-nce/android/android36/lib64/liblzma.so"
+      ]
+    },
+    "libnativebridge.so": {
+      "path": "work/native-linux-nce/android/android36/com.android.art/lib64/libnativebridge.so",
+      "sha256": "fbc1a7490bb6c4daa0e41815495beb0933ffcc3078bfee7eba01f57cd9cf46e9",
+      "bytes": 51328,
+      "needed": [
+        "liblog.so",
+        "libdl_android.so",
+        "libc++.so",
+        "libc.so",
+        "libm.so",
+        "libdl.so"
+      ],
+      "other_locations": []
+    },
+    "libnativeloader.so": {
+      "path": "work/native-linux-nce/android/android36/com.android.art/lib64/libnativeloader.so",
+      "sha256": "371bf2e4a7ea85b98e96907d099b9f2a00978bfe807de533af792bff6b5b3e48",
+      "bytes": 170536,
+      "needed": [
+        "libnativebridge.so",
+        "libbase.so",
+        "liblog.so",
+        "libdl_android.so",
+        "libc++.so",
+        "libc.so",
+        "libm.so",
+        "libdl.so"
+      ],
+      "other_locations": []
+    },
+    "libsigchain.so": {
+      "path": "work/native-linux-nce/android/android36/com.android.art/lib64/libsigchain.so",
+      "sha256": "c81519d1f71385581536ea80f2d9a2e588273e49068424b06b7207b8ad4ff14a",
+      "bytes": 68280,
+      "needed": [
+        "libunwindstack.so",
+        "libc++.so",
+        "libc.so",
+        "libm.so",
+        "libdl.so"
+      ],
+      "other_locations": []
+    },
+    "libunwindstack.so": {
+      "path": "work/native-linux-nce/android/android36/com.android.art/lib64/libunwindstack.so",
+      "sha256": "aefbcc5f51a7f70289f334059e843a98a75fb82512ae972834fe30494cc5a102",
+      "bytes": 721784,
+      "needed": [
+        "libbase.so",
+        "liblog.so",
+        "liblzma.so",
+        "libz.so",
+        "libc++.so",
+        "libc.so",
+        "libm.so",
+        "libdl.so"
+      ],
+      "other_locations": [
+        "work/native-linux-nce/android/android36/lib64/libunwindstack.so"
+      ]
+    },
+    "libartbase.so": {
+      "path": "work/native-linux-nce/android/android36/com.android.art/lib64/libartbase.so",
+      "sha256": "09e948e865ffa5c4c0077308be46ec87e13efd13d28e63145a220797bd3551b4",
+      "bytes": 385080,
+      "needed": [
+        "libz.so",
+        "liblog.so",
+        "libartpalette.so",
+        "libbase.so",
+        "libc++.so",
+        "libc.so",
+        "libm.so",
+        "libdl.so"
+      ],
+      "other_locations": []
+    },
+    "libdexfile.so": {
+      "path": "work/native-linux-nce/android/android36/com.android.art/lib64/libdexfile.so",
+      "sha256": "9a71d4131f0c0dcee538570bd58b8ca066f9ba57f0aaa356b89ff5d4c7ddf266",
+      "bytes": 266672,
+      "needed": [
+        "libz.so",
+        "libartpalette.so",
+        "liblog.so",
+        "libbase.so",
+        "libartbase.so",
+        "libc++.so",
+        "libc.so",
+        "libm.so",
+        "libdl.so"
+      ],
+      "other_locations": []
+    },
+    "libprofile.so": {
+      "path": "work/native-linux-nce/android/android36/com.android.art/lib64/libprofile.so",
+      "sha256": "6abb1628676553db6d5c529690726da57360adcc53069600a870bf0e495ebb69",
+      "bytes": 184352,
+      "needed": [
+        "libartpalette.so",
+        "libbase.so",
+        "libz.so",
+        "libartbase.so",
+        "libdexfile.so",
+        "libc++.so",
+        "libc.so",
+        "libm.so",
+        "libdl.so"
+      ],
+      "other_locations": []
+    },
+    "libdl_android.so": {
+      "path": "work/native-linux-nce/android/android36/com.android.runtime/lib64/bionic/libdl_android.so",
+      "sha256": "739c5716653bcff6700501d98f576957fc299e4f2483c3ad2bd1c0f641e96422",
+      "bytes": 34672,
+      "needed": [
+        "ld-android.so"
+      ],
+      "other_locations": []
+    },
+    "libstatspull.so": {
+      "path": "work/native-linux-nce/android/android36/com.android.os.statsd/lib64/libstatspull.so",
+      "sha256": "3f1d20e98732ab6bd115329ced52f1ac0a21a9060e56bfe662dd5959100d2249",
+      "bytes": 155736,
+      "needed": [
+        "libbinder_ndk.so",
+        "liblog.so",
+        "libstatssocket.so",
+        "libc.so",
+        "libm.so",
+        "libdl.so"
+      ],
+      "other_locations": []
+    },
+    "libstatssocket.so": {
+      "path": "work/native-linux-nce/android/android36/com.android.os.statsd/lib64/libstatssocket.so",
+      "sha256": "b110b076e11d1d9a5f4b2163565f8a71cdf5c27c85559b3d26c00740272734db",
+      "bytes": 87320,
+      "needed": [
+        "libc.so",
+        "libm.so",
+        "libdl.so"
+      ],
+      "other_locations": []
+    },
+    "libz.so": {
+      "path": "work/native-linux-nce/android/android36/lib64/libz.so",
+      "sha256": "45f9234190e46eac2484944def75893cadbed4f751deaed674ed0341c7a229b1",
+      "bytes": 118008,
+      "needed": [
+        "libc.so",
+        "libm.so",
+        "libdl.so"
+      ],
+      "other_locations": []
+    },
+    "heapprofd_client_api.so": {
+      "path": "work/native-linux-nce/android/android36/lib64/heapprofd_client_api.so",
+      "sha256": "379d9a6f503d30bc9350546f23834ab069fda80c2d968c6186e8bd2473f4f726",
+      "bytes": 86056,
+      "needed": [
+        "libbase.so",
+        "libprocinfo.so",
+        "libunwindstack.so",
+        "libc++.so",
+        "libc.so",
+        "libm.so",
+        "libdl.so"
+      ],
+      "other_locations": []
+    },
+    "libc++.so": {
+      "path": "work/native-linux-nce/android/android36/com.android.art/lib64/libc++.so",
+      "sha256": "2267f93b8b3c9d1967f1833d5f71c7312213c43bb291250cf772800763037fb9",
+      "bytes": 1049704,
+      "needed": [
+        "libc.so",
+        "libm.so",
+        "libdl.so"
+      ],
+      "other_locations": [
+        "work/native-linux-nce/android/android36/lib64/libc++.so"
+      ]
+    },
+    "libc.so": {
+      "path": "work/native-linux-nce/android/android36/com.android.runtime/lib64/bionic/libc.so",
+      "sha256": "d3f8599b8b3f00101a31f94ac170ceb5875ee8446c201cb18382b2e02df84301",
+      "bytes": 1209648,
+      "needed": [
+        "ld-android.so",
+        "libdl.so"
+      ],
+      "other_locations": []
+    },
+    "libm.so": {
+      "path": "work/native-linux-nce/android/android36/com.android.runtime/lib64/bionic/libm.so",
+      "sha256": "44433149f62eeb8f09f38ecd3566683fac01a0f89de6ea6d15f6e4deca1ba4bc",
+      "bytes": 248968,
+      "needed": [
+        "libc.so"
+      ],
+      "other_locations": []
+    },
+    "libdl.so": {
+      "path": "work/native-linux-nce/android/android36/com.android.runtime/lib64/bionic/libdl.so",
+      "sha256": "9f6447d910742a57b398a6a3f31746e02302ee9547da6d02757f001058a69df3",
+      "bytes": 50760,
+      "needed": [
+        "ld-android.so"
+      ],
+      "other_locations": []
+    },
+    "libnativehelper.so": {
+      "path": "work/native-linux-nce/android/android36/com.android.art/lib64/libnativehelper.so",
+      "sha256": "abb6588edf914b8d3db0cd3d6c653549956558a354bde80a72305f54abcd989e",
+      "bytes": 51360,
+      "needed": [
+        "liblog.so",
+        "libc.so",
+        "libm.so",
+        "libdl.so"
+      ],
+      "other_locations": []
+    },
+    "libicu.so": {
+      "path": "work/native-linux-nce/android/android36/com.android.i18n/lib64/libicu.so",
+      "sha256": "7a6a0e8f8e55dfae5a2c789c95eda01e05dfa6ad5ae599e567e40b9ffb0c50f9",
+      "bytes": 70520,
+      "needed": [
+        "libicuuc.so",
+        "libicui18n.so",
+        "libc++.so",
+        "libc.so",
+        "libm.so",
+        "libdl.so"
+      ],
+      "other_locations": []
+    },
+    "libexpat.so": {
+      "path": "work/native-linux-nce/android/android36/com.android.art/lib64/libexpat.so",
+      "sha256": "59dbb47baf289a1dac892030fb55c42654038f3dcd45bbe2e5be6eccdacfcfc4",
+      "bytes": 184864,
+      "needed": [
+        "libc.so",
+        "libm.so",
+        "libdl.so"
+      ],
+      "other_locations": [
+        "work/native-linux-nce/android/android36/lib64/libexpat.so"
+      ]
+    },
+    "libcutils.so": {
+      "path": "work/native-linux-nce/android/android36/lib64/libcutils.so",
+      "sha256": "64469e5439f24119bec0de038a756f4c40232f10e23082d7aa2fbba755328e6c",
+      "bytes": 118232,
+      "needed": [
+        "liblog.so",
+        "libbase.so",
+        "libc++.so",
+        "libc.so",
+        "libm.so",
+        "libdl.so"
+      ],
+      "other_locations": []
+    },
+    "libdebugstore_cxx.so": {
+      "path": "work/native-linux-nce/android/android36/lib64/libdebugstore_cxx.so",
+      "sha256": "8c125a96288a3220863ec80bbc5c91a2a7b53aea5cf63e504ba488cc6ac8de2d",
+      "bytes": 202000,
+      "needed": [
+        "libutils.so",
+        "libc++.so",
+        "libc.so",
+        "libm.so",
+        "libdl.so"
+      ],
+      "other_locations": []
+    },
+    "libprocessgroup.so": {
+      "path": "work/native-linux-nce/android/android36/lib64/libprocessgroup.so",
+      "sha256": "8eb04e16e15ead98a1c364bd985e8adea91bdc1ba778c2d3cdc8d176c0fe336e",
+      "bytes": 367144,
+      "needed": [
+        "libbase.so",
+        "libc++.so",
+        "libc.so",
+        "libm.so",
+        "libdl.so"
+      ],
+      "other_locations": []
+    },
+    "libtombstoned_client.so": {
+      "path": "work/native-linux-nce/android/android36/lib64/libtombstoned_client.so",
+      "sha256": "06339d19c5bf4f512a0c6ed0485d84c63649054965487e5f55716c9aa8b85676",
+      "bytes": 36408,
+      "needed": [
+        "libbase.so",
+        "libcutils.so",
+        "libc++.so",
+        "libc.so",
+        "libm.so",
+        "libdl.so"
+      ],
+      "other_locations": []
+    },
+    "libselinux.so": {
+      "path": "work/native-linux-nce/android/android36/lib64/libselinux.so",
+      "sha256": "0bf7e49120bcd2bde1851ede4e0fe0d69909f29ed51a87e8ba25121c4a154400",
+      "bytes": 135432,
+      "needed": [
+        "libpcre2.so",
+        "liblog.so",
+        "libpackagelistparser.so",
+        "libc.so"
+      ],
+      "other_locations": []
+    },
+    "libicuuc.so": {
+      "path": "work/native-linux-nce/android/android36/com.android.i18n/lib64/libicuuc.so",
+      "sha256": "5debc915cfaf951334d1cf07074012a7ca27c092953993a645659530e0788e21",
+      "bytes": 2019160,
+      "needed": [
+        "libbase.so",
+        "liblog.so",
+        "libc++.so",
+        "libc.so",
+        "libm.so",
+        "libdl.so"
+      ],
+      "other_locations": []
+    },
+    "libicui18n.so": {
+      "path": "work/native-linux-nce/android/android36/com.android.i18n/lib64/libicui18n.so",
+      "sha256": "bda604af8a96bf0859e393e75d5c48f7873efbaf6f6bfaa32a24a29362628d73",
+      "bytes": 2796704,
+      "needed": [
+        "libicuuc.so",
+        "libc++.so",
+        "libc.so",
+        "libm.so",
+        "libdl.so"
+      ],
+      "other_locations": []
+    },
+    "ld-android.so": {
+      "path": "work/native-linux-nce/android/android36/lib64/ld-android.so",
+      "sha256": "39f9d2d397dc43df40d6d52432c15946bb2797d5907dbd0605cee28e26a43502",
+      "bytes": 34080,
+      "needed": [],
+      "other_locations": []
+    },
+    "libbinder_ndk.so": {
+      "path": "work/native-linux-nce/android/android36/lib64/libbinder_ndk.so",
+      "sha256": "3eed4eb5a9adba460f510abd749559fb499f8d95aed84cdbe50c55cb722d79c6",
+      "bytes": 187728,
+      "needed": [
+        "libbinder.so",
+        "liblog.so",
+        "libutils.so",
+        "libc++.so",
+        "libc.so",
+        "libm.so",
+        "libdl.so"
+      ],
+      "other_locations": []
+    },
+    "libprocinfo.so": {
+      "path": "work/native-linux-nce/android/android36/lib64/libprocinfo.so",
+      "sha256": "3ad2e28345100ba18b39d493617a35ca507ac9cda5a8d003fe010ffc22356e51",
+      "bytes": 35936,
+      "needed": [
+        "libbase.so",
+        "libc++.so",
+        "libc.so",
+        "libm.so",
+        "libdl.so"
+      ],
+      "other_locations": []
+    },
+    "libutils.so": {
+      "path": "work/native-linux-nce/android/android36/lib64/libutils.so",
+      "sha256": "9326154900b3746e2cdd174e32a0e8277655b9367d311c1f77f0f312ef395d0d",
+      "bytes": 168336,
+      "needed": [
+        "libcutils.so",
+        "liblog.so",
+        "libvndksupport.so",
+        "libc++.so",
+        "libc.so",
+        "libm.so",
+        "libdl.so"
+      ],
+      "other_locations": []
+    },
+    "libpcre2.so": {
+      "path": "work/native-linux-nce/android/android36/lib64/libpcre2.so",
+      "sha256": "12a084f2c1ff272aa4b7107d9c1c020256a3864f14c9a3689c5fc6ec52ae8f1c",
+      "bytes": 379632,
+      "needed": [
+        "libc.so"
+      ],
+      "other_locations": []
+    },
+    "libpackagelistparser.so": {
+      "path": "work/native-linux-nce/android/android36/lib64/libpackagelistparser.so",
+      "sha256": "923610095a9d6cb44ebe354e4332159cc293d3f1629f5a93dc491cdcf78c3401",
+      "bytes": 51576,
+      "needed": [
+        "liblog.so",
+        "libc++.so",
+        "libc.so",
+        "libm.so",
+        "libdl.so"
+      ],
+      "other_locations": []
+    },
+    "libbinder.so": {
+      "path": "work/native-linux-nce/android/android36/lib64/libbinder.so",
+      "sha256": "9b5800819be6fe3f7b66c9507cc408b9d2a8daf5dc7af63baaea940d1a43c009",
+      "bytes": 852000,
+      "needed": [
+        "libcutils.so",
+        "liblog.so",
+        "libutils.so",
+        "libapexsupport.so",
+        "libvndksupport.so",
+        "libc++.so",
+        "libc.so",
+        "libm.so",
+        "libdl.so"
+      ],
+      "other_locations": []
+    },
+    "libvndksupport.so": {
+      "path": "work/native-linux-nce/android/android36/lib64/libvndksupport.so",
+      "sha256": "c932627a6c9a37b0f92fbb66f081152cc2bee0ad7655a2ba1be6b8da53201cde",
+      "bytes": 51352,
+      "needed": [
+        "libdl_android.so",
+        "liblog.so",
+        "libc++.so",
+        "libc.so",
+        "libm.so",
+        "libdl.so"
+      ],
+      "other_locations": []
+    },
+    "libapexsupport.so": {
+      "path": "work/native-linux-nce/android/android36/lib64/libapexsupport.so",
+      "sha256": "8dd03a6843753884bdaa6a95f25c04c4051bc5ab5f9ea6e7343012f2a0384c3c",
+      "bytes": 186048,
+      "needed": [
+        "libdl_android.so",
+        "liblog.so",
+        "libc++.so",
+        "libc.so",
+        "libm.so",
+        "libdl.so"
+      ],
+      "other_locations": []
+    }
+  },
+  "missing": []
+}

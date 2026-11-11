@@ -1,0 +1,608 @@
+{
+  "scope": "Compilation and original SDK36 component input validation only. No ART or fixture execution.",
+  "base_commit": "b9102031794d3acdff4759d0a4d932206004cec8",
+  "worktree": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-art",
+  "prepared_manifest": "work/stock-art-prepared-final/manifest.json",
+  "manifest_sha256": "0e0cb41c454185e50be2c5863c97cac3625adeb9ee520d8e81919470b8f69934",
+  "identity": {
+    "url": "https://dl.google.com/android/repository/sys-img/google_apis/arm64-v8a-ps16k-36_r07.zip",
+    "archive_sha1": "dda632745023567113d9954101709c6526a3c250"
+  },
+  "runtime_manifest_sha256": "4b1a45b0ee51725c68f1c29765958d0b60b45a5f2325bedfc61764cd49232249",
+  "dependencies_sha256": "c9462a396acb6d39d8052d01220a534ae8483ab6d3977f82413d401ff7e40e5f",
+  "source_sha256": {
+    "experiments/native-linux/stock-art/probe.c": "e568d875d7fa2d9ee0cf8c00fe04f098c9b81e9f081c2b466296ff83e3bb9ccb",
+    "experiments/native-linux/stock-art/StockArtProbe.java": "09b7cb53bb801194e1f629f3d7074d7dbcf7f86582164be5185fd589ce88a83b",
+    "experiments/native-linux/stock-art/dependencies.json": "c9462a396acb6d39d8052d01220a534ae8483ab6d3977f82413d401ff7e40e5f",
+    "scripts/prepare_stock_art.py": "331a5dd89a3caf390690a849e7e9822a35e65c1ceaf66ff9f72c0a9eb0cbbb65",
+    "scripts/build_apk_fixture.py": "426f9ac9644ba8296aac8d44a8ef032025f65df452eb00b0a8bd6eed9bdf73f7"
+  },
+  "tools": {
+    "ndk": "Pkg.Desc = Android NDK\nPkg.Revision = 29.0.14206865\nPkg.BaseRevision = 29.0.14206865\nPkg.ReleaseName = r29\n",
+    "fixture_min_api": 35,
+    "javac": "javac 17.0.19",
+    "clang": "Android (13989888, +pgo, -bolt, +lto, -mlgo, based on r563880c) clang version 21.0.0 (https://android.googlesource.com/toolchain/llvm-project 5e96669f06077099aa41290cdb4c5e6fa0f59349)\nTarget: arm64-apple-darwin27.0.0\nThread model: posix\nInstalledDir: /opt/homebrew/Caskroom/android-ndk/29/AndroidNDK14206865.app/Contents/NDK/toolchains/llvm/prebuilt/darwin-x86_64/bin",
+    "d8_sha256": "4097ff9c46c185c6e7214da7fe9b1befb5adeea5cc9ca349270e0249904f9240",
+    "android_jar_sha256": "4566663c3876e022b4fa4ced8c8697c4ab1688267f090114fd92d027b32e619b",
+    "jni_header_sha256": "5df9074457c041b372f2c68ff646d6e8600cd673a223885e8df21c44c94ec667"
+  },
+  "runtime_executed": false,
+  "jit_execution_confirmed": false,
+  "input_libraries": 47,
+  "original_unique_inputs": 58,
+  "staged_files": 62,
+  "original_staged_bytes": 73899648,
+  "fixture_elf": {
+    "loads": [
+      {
+        "offset": 0,
+        "vaddr": 0,
+        "filesz": 5312,
+        "memsz": 5312,
+        "alignment": 16384,
+        "flags": 4
+      },
+      {
+        "offset": 5312,
+        "vaddr": 21696,
+        "filesz": 6864,
+        "memsz": 6864,
+        "alignment": 16384,
+        "flags": 5
+      },
+      {
+        "offset": 12224,
+        "vaddr": 44992,
+        "filesz": 776,
+        "memsz": 4160,
+        "alignment": 16384,
+        "flags": 6
+      },
+      {
+        "offset": 13000,
+        "vaddr": 62152,
+        "filesz": 24,
+        "memsz": 32,
+        "alignment": 16384,
+        "flags": 6
+      }
+    ],
+    "needed": [
+      "libdl.so",
+      "liblog.so",
+      "libc.so"
+    ],
+    "interpreter": "/system/bin/linker64"
+  },
+  "files": {
+    "/apex/com.android.art/lib64/libart.so": {
+      "kind": "original",
+      "source_relative": "com.android.art/lib64/libart.so",
+      "sha256": "72d5d4b78d8b6cead8d5bddb1ba4a44113f4450c12c239d7530407e8f5bef989",
+      "bytes": 12888792,
+      "mode": 420
+    },
+    "/apex/com.android.art/lib64/libopenjdk.so": {
+      "kind": "original",
+      "source_relative": "com.android.art/lib64/libopenjdk.so",
+      "sha256": "2916625006ac3fc83a61f53a7656292bb855c668fa0a175700b841bfc252c37a",
+      "bytes": 255344,
+      "mode": 420
+    },
+    "/apex/com.android.art/lib64/libjavacore.so": {
+      "kind": "original",
+      "source_relative": "com.android.art/lib64/libjavacore.so",
+      "sha256": "b3f49c55966779271fac59ab891adc7b1771c030581e88b0c8b8d38c2f2477ee",
+      "bytes": 308752,
+      "mode": 420
+    },
+    "/apex/com.android.art/lib64/libandroidio.so": {
+      "kind": "original",
+      "source_relative": "com.android.art/lib64/libandroidio.so",
+      "sha256": "101d594b817be817bf889a43afbfcf486e1f57724b13511e1fdb4d4ea43126be",
+      "bytes": 51536,
+      "mode": 420
+    },
+    "/system/lib64/libartpalette-system.so": {
+      "kind": "original",
+      "source_relative": "lib64/libartpalette-system.so",
+      "sha256": "20620415fd87be072798fb9d1ed80f67f1acfcb81ed3f98d40d3bbedc6bb8ff6",
+      "bytes": 51800,
+      "mode": 420
+    },
+    "/apex/com.android.i18n/lib64/libicu_jni.so": {
+      "kind": "original",
+      "source_relative": "com.android.i18n/lib64/libicu_jni.so",
+      "sha256": "66934b880ca4237a40fc9653a2a584c126a41f11dc9c39875c88e7e55a7a7165",
+      "bytes": 137728,
+      "mode": 420
+    },
+    "/apex/com.android.art/lib64/libopenjdkjvm.so": {
+      "kind": "original",
+      "source_relative": "com.android.art/lib64/libopenjdkjvm.so",
+      "sha256": "198bd0d54d9087deb037b7f44eb0c831a0dd1429327cdb5eb1905e1d3ae278fe",
+      "bytes": 51800,
+      "mode": 420
+    },
+    "/apex/com.android.art/lib64/libartpalette.so": {
+      "kind": "original",
+      "source_relative": "com.android.art/lib64/libartpalette.so",
+      "sha256": "bd3027c80d07ebb3f1da062697ca6257ce992a45cb878a3ffc19c6bf8556341f",
+      "bytes": 51376,
+      "mode": 420
+    },
+    "/apex/com.android.art/lib64/libbase.so": {
+      "kind": "original",
+      "source_relative": "com.android.art/lib64/libbase.so",
+      "sha256": "025a1c793543c73887e386d888aa3de247af4492ec53ca750a8c985b6ab8c865",
+      "bytes": 218592,
+      "mode": 420
+    },
+    "/system/lib64/liblog.so": {
+      "kind": "original",
+      "source_relative": "lib64/liblog.so",
+      "sha256": "efcce90970ed85d61b9c05791ad76ff5f573035b1c0f7d2a3839063c7db5d1a0",
+      "bytes": 102544,
+      "mode": 420
+    },
+    "/apex/com.android.art/lib64/liblz4.so": {
+      "kind": "original",
+      "source_relative": "com.android.art/lib64/liblz4.so",
+      "sha256": "95d5ea8a700891fe02e6f1025407908767e0b9cf26b2fe454f84d88cc0b15906",
+      "bytes": 167008,
+      "mode": 420
+    },
+    "/apex/com.android.art/lib64/liblzma.so": {
+      "kind": "original",
+      "source_relative": "com.android.art/lib64/liblzma.so",
+      "sha256": "81d33cdc631497f631e551ff793809401edd2b836e35e18af84ecfac435fc9bb",
+      "bytes": 200168,
+      "mode": 420
+    },
+    "/apex/com.android.art/lib64/libnativebridge.so": {
+      "kind": "original",
+      "source_relative": "com.android.art/lib64/libnativebridge.so",
+      "sha256": "fbc1a7490bb6c4daa0e41815495beb0933ffcc3078bfee7eba01f57cd9cf46e9",
+      "bytes": 51328,
+      "mode": 420
+    },
+    "/apex/com.android.art/lib64/libnativeloader.so": {
+      "kind": "original",
+      "source_relative": "com.android.art/lib64/libnativeloader.so",
+      "sha256": "371bf2e4a7ea85b98e96907d099b9f2a00978bfe807de533af792bff6b5b3e48",
+      "bytes": 170536,
+      "mode": 420
+    },
+    "/apex/com.android.art/lib64/libsigchain.so": {
+      "kind": "original",
+      "source_relative": "com.android.art/lib64/libsigchain.so",
+      "sha256": "c81519d1f71385581536ea80f2d9a2e588273e49068424b06b7207b8ad4ff14a",
+      "bytes": 68280,
+      "mode": 420
+    },
+    "/apex/com.android.art/lib64/libunwindstack.so": {
+      "kind": "original",
+      "source_relative": "com.android.art/lib64/libunwindstack.so",
+      "sha256": "aefbcc5f51a7f70289f334059e843a98a75fb82512ae972834fe30494cc5a102",
+      "bytes": 721784,
+      "mode": 420
+    },
+    "/apex/com.android.art/lib64/libartbase.so": {
+      "kind": "original",
+      "source_relative": "com.android.art/lib64/libartbase.so",
+      "sha256": "09e948e865ffa5c4c0077308be46ec87e13efd13d28e63145a220797bd3551b4",
+      "bytes": 385080,
+      "mode": 420
+    },
+    "/apex/com.android.art/lib64/libdexfile.so": {
+      "kind": "original",
+      "source_relative": "com.android.art/lib64/libdexfile.so",
+      "sha256": "9a71d4131f0c0dcee538570bd58b8ca066f9ba57f0aaa356b89ff5d4c7ddf266",
+      "bytes": 266672,
+      "mode": 420
+    },
+    "/apex/com.android.art/lib64/libprofile.so": {
+      "kind": "original",
+      "source_relative": "com.android.art/lib64/libprofile.so",
+      "sha256": "6abb1628676553db6d5c529690726da57360adcc53069600a870bf0e495ebb69",
+      "bytes": 184352,
+      "mode": 420
+    },
+    "/apex/com.android.runtime/lib64/bionic/libdl_android.so": {
+      "kind": "original",
+      "source_relative": "com.android.runtime/lib64/bionic/libdl_android.so",
+      "sha256": "739c5716653bcff6700501d98f576957fc299e4f2483c3ad2bd1c0f641e96422",
+      "bytes": 34672,
+      "mode": 420
+    },
+    "/apex/com.android.os.statsd/lib64/libstatspull.so": {
+      "kind": "original",
+      "source_relative": "com.android.os.statsd/lib64/libstatspull.so",
+      "sha256": "3f1d20e98732ab6bd115329ced52f1ac0a21a9060e56bfe662dd5959100d2249",
+      "bytes": 155736,
+      "mode": 420
+    },
+    "/apex/com.android.os.statsd/lib64/libstatssocket.so": {
+      "kind": "original",
+      "source_relative": "com.android.os.statsd/lib64/libstatssocket.so",
+      "sha256": "b110b076e11d1d9a5f4b2163565f8a71cdf5c27c85559b3d26c00740272734db",
+      "bytes": 87320,
+      "mode": 420
+    },
+    "/system/lib64/libz.so": {
+      "kind": "original",
+      "source_relative": "lib64/libz.so",
+      "sha256": "45f9234190e46eac2484944def75893cadbed4f751deaed674ed0341c7a229b1",
+      "bytes": 118008,
+      "mode": 420
+    },
+    "/system/lib64/heapprofd_client_api.so": {
+      "kind": "original",
+      "source_relative": "lib64/heapprofd_client_api.so",
+      "sha256": "379d9a6f503d30bc9350546f23834ab069fda80c2d968c6186e8bd2473f4f726",
+      "bytes": 86056,
+      "mode": 420
+    },
+    "/apex/com.android.art/lib64/libc++.so": {
+      "kind": "original",
+      "source_relative": "com.android.art/lib64/libc++.so",
+      "sha256": "2267f93b8b3c9d1967f1833d5f71c7312213c43bb291250cf772800763037fb9",
+      "bytes": 1049704,
+      "mode": 420
+    },
+    "/apex/com.android.runtime/lib64/bionic/libc.so": {
+      "kind": "original",
+      "source_relative": "com.android.runtime/lib64/bionic/libc.so",
+      "sha256": "d3f8599b8b3f00101a31f94ac170ceb5875ee8446c201cb18382b2e02df84301",
+      "bytes": 1209648,
+      "mode": 420
+    },
+    "/apex/com.android.runtime/lib64/bionic/libm.so": {
+      "kind": "original",
+      "source_relative": "com.android.runtime/lib64/bionic/libm.so",
+      "sha256": "44433149f62eeb8f09f38ecd3566683fac01a0f89de6ea6d15f6e4deca1ba4bc",
+      "bytes": 248968,
+      "mode": 420
+    },
+    "/apex/com.android.runtime/lib64/bionic/libdl.so": {
+      "kind": "original",
+      "source_relative": "com.android.runtime/lib64/bionic/libdl.so",
+      "sha256": "9f6447d910742a57b398a6a3f31746e02302ee9547da6d02757f001058a69df3",
+      "bytes": 50760,
+      "mode": 420
+    },
+    "/apex/com.android.art/lib64/libnativehelper.so": {
+      "kind": "original",
+      "source_relative": "com.android.art/lib64/libnativehelper.so",
+      "sha256": "abb6588edf914b8d3db0cd3d6c653549956558a354bde80a72305f54abcd989e",
+      "bytes": 51360,
+      "mode": 420
+    },
+    "/apex/com.android.i18n/lib64/libicu.so": {
+      "kind": "original",
+      "source_relative": "com.android.i18n/lib64/libicu.so",
+      "sha256": "7a6a0e8f8e55dfae5a2c789c95eda01e05dfa6ad5ae599e567e40b9ffb0c50f9",
+      "bytes": 70520,
+      "mode": 420
+    },
+    "/apex/com.android.art/lib64/libexpat.so": {
+      "kind": "original",
+      "source_relative": "com.android.art/lib64/libexpat.so",
+      "sha256": "59dbb47baf289a1dac892030fb55c42654038f3dcd45bbe2e5be6eccdacfcfc4",
+      "bytes": 184864,
+      "mode": 420
+    },
+    "/system/lib64/libcutils.so": {
+      "kind": "original",
+      "source_relative": "lib64/libcutils.so",
+      "sha256": "64469e5439f24119bec0de038a756f4c40232f10e23082d7aa2fbba755328e6c",
+      "bytes": 118232,
+      "mode": 420
+    },
+    "/system/lib64/libdebugstore_cxx.so": {
+      "kind": "original",
+      "source_relative": "lib64/libdebugstore_cxx.so",
+      "sha256": "8c125a96288a3220863ec80bbc5c91a2a7b53aea5cf63e504ba488cc6ac8de2d",
+      "bytes": 202000,
+      "mode": 420
+    },
+    "/system/lib64/libprocessgroup.so": {
+      "kind": "original",
+      "source_relative": "lib64/libprocessgroup.so",
+      "sha256": "8eb04e16e15ead98a1c364bd985e8adea91bdc1ba778c2d3cdc8d176c0fe336e",
+      "bytes": 367144,
+      "mode": 420
+    },
+    "/system/lib64/libtombstoned_client.so": {
+      "kind": "original",
+      "source_relative": "lib64/libtombstoned_client.so",
+      "sha256": "06339d19c5bf4f512a0c6ed0485d84c63649054965487e5f55716c9aa8b85676",
+      "bytes": 36408,
+      "mode": 420
+    },
+    "/system/lib64/libselinux.so": {
+      "kind": "original",
+      "source_relative": "lib64/libselinux.so",
+      "sha256": "0bf7e49120bcd2bde1851ede4e0fe0d69909f29ed51a87e8ba25121c4a154400",
+      "bytes": 135432,
+      "mode": 420
+    },
+    "/apex/com.android.i18n/lib64/libicuuc.so": {
+      "kind": "original",
+      "source_relative": "com.android.i18n/lib64/libicuuc.so",
+      "sha256": "5debc915cfaf951334d1cf07074012a7ca27c092953993a645659530e0788e21",
+      "bytes": 2019160,
+      "mode": 420
+    },
+    "/apex/com.android.i18n/lib64/libicui18n.so": {
+      "kind": "original",
+      "source_relative": "com.android.i18n/lib64/libicui18n.so",
+      "sha256": "bda604af8a96bf0859e393e75d5c48f7873efbaf6f6bfaa32a24a29362628d73",
+      "bytes": 2796704,
+      "mode": 420
+    },
+    "/system/lib64/ld-android.so": {
+      "kind": "original",
+      "source_relative": "lib64/ld-android.so",
+      "sha256": "39f9d2d397dc43df40d6d52432c15946bb2797d5907dbd0605cee28e26a43502",
+      "bytes": 34080,
+      "mode": 420
+    },
+    "/system/lib64/libbinder_ndk.so": {
+      "kind": "original",
+      "source_relative": "lib64/libbinder_ndk.so",
+      "sha256": "3eed4eb5a9adba460f510abd749559fb499f8d95aed84cdbe50c55cb722d79c6",
+      "bytes": 187728,
+      "mode": 420
+    },
+    "/system/lib64/libprocinfo.so": {
+      "kind": "original",
+      "source_relative": "lib64/libprocinfo.so",
+      "sha256": "3ad2e28345100ba18b39d493617a35ca507ac9cda5a8d003fe010ffc22356e51",
+      "bytes": 35936,
+      "mode": 420
+    },
+    "/system/lib64/libutils.so": {
+      "kind": "original",
+      "source_relative": "lib64/libutils.so",
+      "sha256": "9326154900b3746e2cdd174e32a0e8277655b9367d311c1f77f0f312ef395d0d",
+      "bytes": 168336,
+      "mode": 420
+    },
+    "/system/lib64/libpcre2.so": {
+      "kind": "original",
+      "source_relative": "lib64/libpcre2.so",
+      "sha256": "12a084f2c1ff272aa4b7107d9c1c020256a3864f14c9a3689c5fc6ec52ae8f1c",
+      "bytes": 379632,
+      "mode": 420
+    },
+    "/system/lib64/libpackagelistparser.so": {
+      "kind": "original",
+      "source_relative": "lib64/libpackagelistparser.so",
+      "sha256": "923610095a9d6cb44ebe354e4332159cc293d3f1629f5a93dc491cdcf78c3401",
+      "bytes": 51576,
+      "mode": 420
+    },
+    "/system/lib64/libbinder.so": {
+      "kind": "original",
+      "source_relative": "lib64/libbinder.so",
+      "sha256": "9b5800819be6fe3f7b66c9507cc408b9d2a8daf5dc7af63baaea940d1a43c009",
+      "bytes": 852000,
+      "mode": 420
+    },
+    "/system/lib64/libvndksupport.so": {
+      "kind": "original",
+      "source_relative": "lib64/libvndksupport.so",
+      "sha256": "c932627a6c9a37b0f92fbb66f081152cc2bee0ad7655a2ba1be6b8da53201cde",
+      "bytes": 51352,
+      "mode": 420
+    },
+    "/system/lib64/libapexsupport.so": {
+      "kind": "original",
+      "source_relative": "lib64/libapexsupport.so",
+      "sha256": "8dd03a6843753884bdaa6a95f25c04c4051bc5ab5f9ea6e7343012f2a0384c3c",
+      "bytes": 186048,
+      "mode": 420
+    },
+    "/apex/com.android.runtime/bin/linker64": {
+      "kind": "original",
+      "source_relative": "com.android.runtime/bin/linker64",
+      "sha256": "30ed9bea070250e0b080c8a84d8398baab1b4eb95a90bfced82a94d5f235144b",
+      "bytes": 2249480,
+      "mode": 493
+    },
+    "/apex/com.android.art/javalib/core-oj.jar": {
+      "kind": "original",
+      "source_relative": "com.android.art/javalib/core-oj.jar",
+      "sha256": "56c90b6040e16f058cde9e892cb698f81d074a850c6582673bed1ddd60b8f7ff",
+      "bytes": 5924492,
+      "mode": 420
+    },
+    "/apex/com.android.art/javalib/core-libart.jar": {
+      "kind": "original",
+      "source_relative": "com.android.art/javalib/core-libart.jar",
+      "sha256": "199dca2c6e183b6e6c6106984cf04927d14a4882d96c7deb47de13f5d0724b0c",
+      "bytes": 626597,
+      "mode": 420
+    },
+    "/apex/com.android.art/javalib/okhttp.jar": {
+      "kind": "original",
+      "source_relative": "com.android.art/javalib/okhttp.jar",
+      "sha256": "5d97195ed09ebb6d067f4d57dd962c2c896a411c5e82dc0179f529ecbc08d3f7",
+      "bytes": 370833,
+      "mode": 420
+    },
+    "/apex/com.android.art/javalib/bouncycastle.jar": {
+      "kind": "original",
+      "source_relative": "com.android.art/javalib/bouncycastle.jar",
+      "sha256": "d81b892d71b1090263fc3b5c0b7c8140d04391e4ef4e5acf51af452939542a42",
+      "bytes": 1032817,
+      "mode": 420
+    },
+    "/apex/com.android.art/javalib/apache-xml.jar": {
+      "kind": "original",
+      "source_relative": "com.android.art/javalib/apache-xml.jar",
+      "sha256": "22c920c95d866ffd90b8e0cd93d1069199ff3973dcbb2a66dff0074dee721cc0",
+      "bytes": 1058255,
+      "mode": 420
+    },
+    "/apex/com.android.i18n/javalib/core-icu4j.jar": {
+      "kind": "original",
+      "source_relative": "com.android.i18n/javalib/core-icu4j.jar",
+      "sha256": "f649d9357d00e94dc7820cc41bea24125b8410e00c3e33ee9e7c0dba0ad9047c",
+      "bytes": 3041917,
+      "mode": 420
+    },
+    "/apex/com.android.conscrypt/javalib/conscrypt.jar": {
+      "kind": "original",
+      "source_relative": "com.android.conscrypt/javalib/conscrypt.jar",
+      "sha256": "cf2025886539841b5b8a4691a5f8f4831e7aa1304268ea8d7f481f36b0b49823",
+      "bytes": 541561,
+      "mode": 420
+    },
+    "/apex/com.android.i18n/etc/icu/icudt76l.dat": {
+      "kind": "original",
+      "source_relative": "com.android.i18n/etc/icu/icudt76l.dat",
+      "sha256": "c5450087565eb20ca37d70af5ef53a99a4c8e2e3da17c9140582b685f06d980f",
+      "bytes": 29094000,
+      "mode": 420
+    },
+    "/apex/com.android.tzdata/etc/tz/tzdata": {
+      "kind": "original",
+      "source_relative": "com.android.tzdata/etc/tz/tzdata",
+      "sha256": "479e83ca4d289b2ae3d08eb222a5167a3c8bff185f2ccac932458e96bd6489ee",
+      "bytes": 407343,
+      "mode": 420
+    },
+    "/apex/com.android.tzdata/etc/tz/tz_version": {
+      "kind": "original",
+      "source_relative": "com.android.tzdata/etc/tz/tz_version",
+      "sha256": "d23e2e7eef347e6ada675cd4c5ff1a1946d8e81d9a8777357b06212b1990b2fd",
+      "bytes": 17,
+      "mode": 420
+    },
+    "/linkerconfig/ld.config.txt": {
+      "kind": "fixture",
+      "sha256": "8749163e47598c35f969477c5c8a7fed6af747532ed6acfd9dbb195d8fd78a15",
+      "bytes": 1215,
+      "mode": 420
+    },
+    "/system/bin/stock-art-probe": {
+      "kind": "fixture",
+      "sha256": "ef31e7f6fceec7f97079f963011487a190212ddcbf0ea863aa1b519710e4b5e3",
+      "bytes": 61368,
+      "mode": 493
+    },
+    "/data/stock-art/StockArtProbe.dex": {
+      "kind": "fixture",
+      "sha256": "264469d1bc89a2df416042faec29cfc2f6726a5b36a666afd7bf24057d456470",
+      "bytes": 5280,
+      "mode": 420
+    },
+    "/system/bin/linker64": {
+      "kind": "original",
+      "source_relative": "com.android.runtime/bin/linker64",
+      "sha256": "30ed9bea070250e0b080c8a84d8398baab1b4eb95a90bfced82a94d5f235144b",
+      "bytes": 2249480,
+      "mode": 493
+    }
+  },
+  "guest_command": [
+    "/system/bin/stock-art-probe",
+    "/apex/com.android.art/javalib/core-oj.jar:/apex/com.android.art/javalib/core-libart.jar:/apex/com.android.art/javalib/okhttp.jar:/apex/com.android.art/javalib/bouncycastle.jar:/apex/com.android.art/javalib/apache-xml.jar:/apex/com.android.i18n/javalib/core-icu4j.jar:/apex/com.android.conscrypt/javalib/conscrypt.jar"
+  ],
+  "directories": [
+    "/apex",
+    "/apex/com.android.art",
+    "/apex/com.android.art/javalib",
+    "/apex/com.android.art/lib64",
+    "/apex/com.android.conscrypt",
+    "/apex/com.android.conscrypt/javalib",
+    "/apex/com.android.i18n",
+    "/apex/com.android.i18n/etc",
+    "/apex/com.android.i18n/etc/icu",
+    "/apex/com.android.i18n/javalib",
+    "/apex/com.android.i18n/lib64",
+    "/apex/com.android.os.statsd",
+    "/apex/com.android.os.statsd/lib64",
+    "/apex/com.android.runtime",
+    "/apex/com.android.runtime/bin",
+    "/apex/com.android.runtime/lib64",
+    "/apex/com.android.runtime/lib64/bionic",
+    "/apex/com.android.tzdata",
+    "/apex/com.android.tzdata/etc",
+    "/apex/com.android.tzdata/etc/tz",
+    "/data",
+    "/data/dalvik-cache",
+    "/data/dalvik-cache/arm64",
+    "/data/stock-art",
+    "/linkerconfig",
+    "/system",
+    "/system/bin",
+    "/system/lib64",
+    "/tmp"
+  ],
+  "required_guest_services": [
+    "Linux procfs mounted at /proc",
+    "readable /dev/null and /dev/urandom",
+    "writable staging /data and /tmp",
+    "sparse guest address range beyond 8.25 GiB"
+  ],
+  "limitations": [
+    "Relaxed component linker namespaces; product namespace policy untested",
+    "Static dependencies only; further dynamic loads and property requirements untested",
+    "JIT requested; compilation and execution of generated Java code unverified"
+  ],
+  "input_tests": {
+    "actual_manifest_accepted": true,
+    "negative_cases": [
+      {
+        "case": "missing_original",
+        "rejected": true,
+        "error": "组件文件缺失或摘要不匹配：/apex/com.android.art/lib64/libartpalette.so"
+      },
+      {
+        "case": "changed_original",
+        "rejected": true,
+        "error": "组件文件缺失或摘要不匹配：/apex/com.android.art/lib64/libartpalette.so"
+      },
+      {
+        "case": "changed_original_and_output_manifest",
+        "rejected": true,
+        "error": "组件文件与原始 manifest 摘要不匹配：/apex/com.android.art/lib64/libartpalette.so"
+      },
+      {
+        "case": "changed_mode",
+        "rejected": true,
+        "error": "组件文件权限不匹配：/apex/com.android.art/lib64/libartpalette.so"
+      },
+      {
+        "case": "extra_file",
+        "rejected": true,
+        "error": "组件文件集合与 manifest 不一致"
+      },
+      {
+        "case": "wrong_runtime_manifest_identity",
+        "rejected": true,
+        "error": "组件 manifest 身份或阶段不匹配"
+      },
+      {
+        "case": "wrong_stage",
+        "rejected": true,
+        "error": "组件 manifest 身份或阶段不匹配"
+      }
+    ]
+  },
+  "validation_source_sha256": {
+    "scripts/test_stock_art_inputs.py": "15151c8db0ca610bd4caab0d916e34a036158d21ff9ca825798661c58da60218"
+  },
+  "checks": {
+    "C_compilation": true,
+    "Java_compilation": true,
+    "DEX_generation": true,
+    "original_bytes_and_DT_NEEDED": true,
+    "ELF_16KiB_LOAD_alignment": true,
+    "private_ART_imports_absent": true,
+    "format_and_python_syntax": true
+  }
+}
