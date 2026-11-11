@@ -80,6 +80,12 @@ typedef struct {
      * installed read-fault handling. Permissions/backing remain stable during
      * run; the caller updates aliases with every readable PTE change. */
     const void *read_view;
+    /* Optional diagnostic output, valid until run returns. UINT64_MAX means
+     * no supported integer instruction was observed completing in this call.
+     * Otherwise this is that instruction's PC, not its successor. Only the
+     * last observation is retained; branches, memory and fallback are omitted.
+     * Enabling this adds generated instructions and changes timing. */
+    uint64_t *completed_integer_pc;
 } NceDirectMemory;
 
 typedef enum {

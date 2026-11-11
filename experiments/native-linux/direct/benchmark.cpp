@@ -215,7 +215,7 @@ struct MemoryBenchmark {
         state.exclusive_address = UINT64_MAX;
         auto &pages = flat[active];
         NceDirectMemory memory{this, map, code, mapping_epoch, 14, pages.empty() ? nullptr : &table,
-                               false, pages.empty() ? nullptr : pages.data(), version, code_epoch, views[active].base};
+                               false, pages.empty() ? nullptr : pages.data(), version, code_epoch, views[active].base, nullptr};
         uint64_t fault = 0;
         NceDirectExit result;
         do {

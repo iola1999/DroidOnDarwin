@@ -56,7 +56,7 @@ struct Crossing {
     }
     NceDirectExit run(NceDirectState &state, uint64_t &fault)
     {
-        NceDirectMemory memory{this, map, code, epoch, bits, nullptr, false, nullptr, nullptr, 0, nullptr};
+        NceDirectMemory memory{this, map, code, epoch, bits, nullptr, false, nullptr, nullptr, 0, nullptr, nullptr};
         return nce_direct_run(engine, &state, memory, 1000, &fault);
     }
     void compare(uint32_t word, NceDirectState initial)

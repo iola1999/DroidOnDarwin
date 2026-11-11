@@ -6,10 +6,12 @@
 #include <inttypes.h>
 #include <jni.h>
 #include <pthread.h>
+#include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/prctl.h>
 #include <unistd.h>
 
 #define TOKEN INT64_C(0x1122334455667788)
@@ -119,8 +121,9 @@ static void *attached_thread(void *opaque)
 int main(int argc, char **argv)
 {
     setvbuf(stdout, NULL, _IOLBF, 0);
-    CHECK(NULL, "arguments", argc == 2 && argv[1][0] == '/');
-    printf("{\"stock_art_config\":true,\"jni_version\":%d,\"jvalue_bytes\":%zu,\"jit_requested\":true}\n", JNI_VERSION_1_6, sizeof(jvalue));
+    CHECK(NULL, "arguments", (argc == 2 || (argc == 3 && !strcmp(argv[2], "jit-first-use"))) && argv[1][0] == '/');
+    bool first_use = argc == 3;
+    printf("{\"stock_art_config\":true,\"jni_version\":%d,\"jvalue_bytes\":%zu,\"jit_requested\":true,\"jit_first_use\":%s}\n", JNI_VERSION_1_6, sizeof(jvalue), first_use ? "true" : "false");
     const char *environment[][2] = {
         {"ANDROID_ROOT", "/system"},
         {"ANDROID_DATA", "/data"},
@@ -156,8 +159,9 @@ int main(int argc, char **argv)
         {.optionString = "-Djava.class.path=/data/stock-art/StockArtProbe.dex"},
         {.optionString = "-Djava.library.path=/system/lib64"},
         {.optionString = "-verbose:gc"},
+        {.optionString = "-Xjitthreshold:0"},
     };
-    JavaVMInitArgs args = {.version = JNI_VERSION_1_6, .nOptions = sizeof(options) / sizeof(*options), .options = options, .ignoreUnrecognized = JNI_FALSE};
+    JavaVMInitArgs args = {.version = JNI_VERSION_1_6, .nOptions = sizeof(options) / sizeof(*options) - !first_use, .options = options, .ignoreUnrecognized = JNI_FALSE};
     JavaVM *vm = NULL;
     JNIEnv *env = NULL;
     puts("{\"stock_art_stage\":\"create_vm\"}");
@@ -275,6 +279,8 @@ int main(int argc, char **argv)
     passed("java_exception", 1);
 
     const jint iterations = 200000;
+    CHECK(NULL, "observation", prctl(PR_SET_NAME, "art-jit-begin", 0, 0, 0) == 0);
+    snapshot("before-warmup");
     jvalue warmup_argument = {.i = iterations};
     jlong warmed = (*env)->CallStaticLongMethodA(env, type, method(env, type, "warmup", "(I)J"), &warmup_argument);
     no_exception(env, "warmup_result");
@@ -285,6 +291,7 @@ int main(int argc, char **argv)
     passed("warmup_result", warmed);
     printf("{\"stock_art_jit\":\"unverified\",\"warmup_calls\":%d}\n", iterations);
     snapshot("after-warmup");
+    CHECK(NULL, "observation", prctl(PR_SET_NAME, "art-jit-end", 0, 0, 0) == 0);
     (*env)->DeleteWeakGlobalRef(env, weak);
     (*env)->DeleteGlobalRef(env, strong);
     CHECK(env, "unregister_natives", (*env)->UnregisterNatives(env, type) == JNI_OK);

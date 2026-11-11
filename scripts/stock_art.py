@@ -4,7 +4,7 @@ from pathlib import Path
 
 from prepare_stock_art import verify, sha
 
-MAPS = ('before-vm', 'after-vm', 'after-gc', 'after-warmup')
+MAPS = ('before-vm', 'after-vm', 'after-gc', 'before-warmup', 'after-warmup')
 TOKEN = 0x1122334455667788
 VALUES = {'vm_absent': 0, 'create_vm': 0, 'load_dex': 1, 'primitive_arguments': TOKEN,
           'registered_natives': TOKEN, 'gc_observed': None, 'global_reference': TOKEN,
@@ -40,7 +40,7 @@ def unchanged(identity):
         return False
 
 
-def validate(rows, guest_page_bytes=16384):
+def validate(rows, guest_page_bytes=16384, jit_first_use=False):
     if guest_page_bytes not in (4096, 16384):
         return False
     events = [row for row in rows if any(key.startswith('stock_art_') for key in row) or
@@ -74,9 +74,9 @@ def validate(rows, guest_page_bytes=16384):
         return False
     expected = [
         {'stock_art_supervisor': True, 'page_size': guest_page_bytes, 'timeout_seconds': 90},
-        {'stock_art_config': True, 'jni_version': 0x10006, 'jvalue_bytes': 8, 'jit_requested': True},
+        {'stock_art_config': True, 'jni_version': 0x10006, 'jvalue_bytes': 8, 'jit_requested': True, 'jit_first_use': jit_first_use},
         maps[0], checks[0], {'stock_art_stage': 'create_vm'}, checks[1], maps[1], *checks[2:7], maps[2],
-        array, *checks[7:12], {'stock_art_jit': 'unverified', 'warmup_calls': 200000}, maps[3],
+        array, *checks[7:11], maps[3], checks[11], {'stock_art_jit': 'unverified', 'warmup_calls': 200000}, maps[4],
         {'stock_art_stage': 'destroy_vm'}, checks[12],
         {'test': 'stock_art_standard_jni', 'passed': True, 'jit_execution_confirmed': False},
         {'stock_art_exit': True, 'success': True, 'exec_errno': 0, 'exit_code': 0, 'signal': 0, 'timed_out': False},

@@ -32,6 +32,7 @@ static void stock_art_setup(void)
     REQUIRE(!ferror(input) && fclose(input) == 0);
     REQUIRE(snprintf(path, sizeof(path), "%s/stock-art-boot-classpath", files) < (int)sizeof(path));
     put_host_file("/data/stock-art/boot-classpath", path, 0644);
+    put_file("/data/stock-art/jit-first-use", "stock-art-jit-first-use");
     directory("/dev");
     const char *devices[] = {"/dev/null", "/dev/random", "/dev/urandom"};
     const unsigned numbers[] = {259, 264, 265};
@@ -46,7 +47,7 @@ static void stock_art_export(void)
 {
     const char *output = getenv("NCE_STOCK_ART_RESULT_DIR");
     REQUIRE(output && output[0] == '/');
-    const char *names[] = {"before-vm", "after-vm", "after-gc", "after-warmup"};
+    const char *names[] = {"before-vm", "after-vm", "after-gc", "before-warmup", "after-warmup"};
     for (unsigned i = 0; i < sizeof(names) / sizeof(*names); ++i) {
         char guest[128], host[4096];
         REQUIRE(snprintf(guest, sizeof(guest), "/data/stock-art/maps-%s.txt", names[i]) < (int)sizeof(guest));

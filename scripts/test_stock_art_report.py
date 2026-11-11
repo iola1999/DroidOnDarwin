@@ -13,13 +13,13 @@ def rows():
     maps = lambda name: {'stock_art_maps': name, 'bytes': 123}
     return [
         {'stock_art_supervisor': True, 'page_size': 16384, 'timeout_seconds': 90},
-        {'stock_art_config': True, 'jni_version': 0x10006, 'jvalue_bytes': 8, 'jit_requested': True},
+        {'stock_art_config': True, 'jni_version': 0x10006, 'jvalue_bytes': 8, 'jit_requested': True, 'jit_first_use': False},
         maps('before-vm'), check('vm_absent', 0), {'stock_art_stage': 'create_vm'}, check('create_vm', 0),
         maps('after-vm'), check('load_dex', 1), check('primitive_arguments', TOKEN),
         check('registered_natives', TOKEN), check('gc_observed', 3), check('global_reference', TOKEN),
         maps('after-gc'), {'stock_art_array_storage': True, 'address': 0x1234000, 'is_copy': False},
         check('array_storage', 47), check('java_threads', 2000), check('native_thread', 58),
-        check('java_exception', 1), check('warmup_result', sum(((i * 17) ^ (i >> 3)) + 9 for i in range(200000))),
+        check('java_exception', 1), maps('before-warmup'), check('warmup_result', sum(((i * 17) ^ (i >> 3)) + 9 for i in range(200000))),
         {'stock_art_jit': 'unverified', 'warmup_calls': 200000}, maps('after-warmup'),
         {'stock_art_stage': 'destroy_vm'}, check('destroy_vm', 0),
         {'test': 'stock_art_standard_jni', 'passed': True, 'jit_execution_confirmed': False},
@@ -37,7 +37,11 @@ def main():
     assert not validate(changed_page)
     assert not validate(original, guest_page_bytes=4096)
     assert not validate(original, guest_page_bytes=8192)
-    rejected = 3
+    first_use = deepcopy(original)
+    next(row for row in first_use if 'stock_art_config' in row)['jit_first_use'] = True
+    assert validate(first_use, jit_first_use=True)
+    assert not validate(first_use) and not validate(original, jit_first_use=True)
+    rejected = 5
     for index, row in enumerate(original):
         assert not validate(original[:index] + original[index + 1:])
         assert not validate([*original, row])

@@ -66,7 +66,7 @@ def build(out, code_memory='map-jit'):
         unicorn = Path(dependency['path'])
     core_inputs += [manifest_path, *[ROOT / name for name in dependency['sha256']]]
     out.mkdir(parents=True, exist_ok=True)
-    files = [SOURCE / name for name in ('probe.cpp', 'tests.cpp', 'instruction-tests.cpp', 'simd-math-tests.cpp', 'cross-page-tests.cpp', 'route-tests.cpp', 'memory-group-tests.cpp', 'page-table-tests.cpp', 'parallel-tests.cpp', 'unicorn-hook-tests.cpp', 'benchmark.cpp', 'main.cpp')] + [
+    files = [SOURCE / name for name in ('probe.cpp', 'tests.cpp', 'instruction-tests.cpp', 'simd-math-tests.cpp', 'cross-page-tests.cpp', 'route-tests.cpp', 'observation-tests.cpp', 'memory-group-tests.cpp', 'page-table-tests.cpp', 'parallel-tests.cpp', 'unicorn-hook-tests.cpp', 'benchmark.cpp', 'main.cpp')] + [
         ROOT / 'experiments/native-linux/translation/kernels.S',
         ROOT / 'experiments/native-linux/translation/read-view.c',
         ROOT / 'experiments/native-linux/translation/linux-memory.c']
@@ -185,6 +185,7 @@ def validate(rows, mode, interval, config=None, entry=None):
                      'fp_fixed_rounding_and_widening', 'new_instruction_reserved_encodings', 'simd_table_alias_wrap_indices_and_setting', 'simd_math'}
         expected |= {'cross_page_noncontiguous_memory_vectors_faults_12', 'cross_page_noncontiguous_memory_vectors_faults_14'}
         expected.add('unicorn_hook_state_cache_reset_and_independent_close')
+        expected |= {'completed_integer_fault_stop_budget_and_flags', 'completed_integer_link_alias_and_unexecuted_mapping'}
         expected |= {'route_epochs_fetch_permission_and_code_replacement', 'route_epochs_flush_and_return_to_freed_page'}
         expected |= {'memory_groups_all_bases_widths_vectors_and_pairs', 'memory_groups_inner_entries_and_partial_page_faults',
                      'memory_groups_sp_alignment_and_code_write_alias', 'memory_groups_asynchronous_stop',
