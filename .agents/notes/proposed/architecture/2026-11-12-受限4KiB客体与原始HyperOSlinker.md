@@ -118,7 +118,29 @@ LKL 测试从成功构建的真实 `mm/vmalloc.c` 生成单个测试对象，故
 
 复杂度审查保留一个仅由 4 KiB 构建调用的生成补丁，使用方为现有 `vmalloc`、`vmap`、范围同步与宿主 alias。普通 PTE 和 `struct page` 数组继续保存映射与释放信息，未增加另一份 alias 表。去掉 order 2 分配会重新产生宿主页内非连续 backing；去掉范围通知会恢复首次 4 KiB alias 失败；去掉 guard 检查可能扩大宿主撤销范围。故障注入保留在独立测试对象，产品没有新增测试开关。测试脚本沿用已有构建清单、链接命令和 ELF 打包函数，未新增内核构建框架。
 
-Python 编译、格式检查、`git diff --check` 与 Bionic 解析 7 项回归成功。原始 HyperOS/SDK linker 的 4 KiB 对照将在下一阶段执行，本节没有组件运行或 iOS 验收结论。
+Python 编译、格式检查、`git diff --check` 与 Bionic 解析 7 项回归成功。原始 HyperOS/SDK linker 的 4 KiB 对照见下一节；本节没有 iOS 验收结论。
+
+### 原始组件的 4 KiB 对照（2026-11-12）
+
+在 `ee745ce0c23c6cda3972468a625e843b0114b00d` 上完成原始 HyperOS 与 SDK36 r07 四文件的 CLI/GCD 运行。[完整结果](../../../../experiments/native-linux/results-guest-4k-stock-bionic-20261112.json)包含两份报告、四轮原始 stdout/stderr、命令与摘要，372296 字节，SHA256 为 `c19159cd3647d944c6c83ab84407270b855a94f7e654f02ba8ab210b15d7ec38`。环境与上一阶段相同，配置仍为 4 KiB、单 CPU、Unicorn/PTE、low 4 GiB、1 GiB RAM、dual JIT 映射；没有性能比较。
+
+| 原始 runtime | 入口 | linker 帮助入口 | 动态阶段 | `main` 与五项检查 |
+| --- | --- | --- | --- | --- |
+| HyperOS | CLI、GCD | `exit_code=0`、`usage=true` | Scudo 预留失败，`signal=6` | 未到达 |
+| SDK36 r07 | CLI、GCD | `exit_code=0`、`usage=true` | Scudo 预留失败，`signal=6` | 未到达 |
+
+HyperOS 先前在 `0x190610` 的取指失败没有在本轮出现，原始 linker 已执行到帮助入口正常退出。该结果支持继续沿 4 KiB 页粒度处理这份 ELF。动态阶段已经装入原始 libc，但四轮均请求 `mmap(0, 8858370048, PROT_NONE, 16418, -1, 0)`，返回 `-12`；stderr 输出 `Scudo ERROR: internal map failure (error desc=Out of memory) requesting 8650752KB`，随后 `SIGABRT`。请求长度为 8.25 GiB，超过当前低 4 GiB 客体范围。HyperOS 与 SDK 的动态阶段均继续受地址容量限制，原始 Bionic 功能检查仍未完成。
+
+四轮宿主均 `returncode=0`、`validated=true`，该字段表示监督程序完整保存并通过失败结果的格式与顺序检查。组件是否成功以 `component_stage.success`、退出/信号及 `component_main`、五项 `component_check` 为准；本轮动态阶段的 `success` 均为 false，后两类记录均缺失。
+
+HyperOS 输入来自既有第三方 `NEORUAA/HyperOS-AVD` 的 `v0.1.0-a16-hyperos3-fuxi-r1`，来源提交与文件身份由原清单记录；SDK 为固定 `arm64-v8a-ps16k-36_r07.zip`。两份清单摘要分别为 `c9ec384e1eee4c754152fddaae8d351ff5f1adaafb86e5cdc88fb02f5f712d0a`、`4b1a45b0ee51725c68f1c29765958d0b60b45a5f2325bedfc61764cd49232249`。每份报告的 64 项输入摘要、原四文件和清单在运行结束后再次逐项匹配；本轮没有修改原始 ELF 字节。完整 Android、Direct、SMP 和 iOS 继续未验证。
+
+复现命令如下，输入路径使用原工作区已校验文件：
+
+```sh
+python3 -B scripts/probe_lkl_translation.py --guest-page-bytes 4096 --guest-layout low --mapping pte --execution unicorn --code-memory dual --reuse-engine-build --workload bionic --entry both --runtime-source hyperos --runtime-directory /Users/fan/project/github.com/iola1999/DroidOnDarwin/work/project-audit-2026-11-12/references/hyperos3-input/core-scan-v4/files/system/apex/com.android.runtime.apex.contents/files --runtime-manifest /Users/fan/project/github.com/iola1999/DroidOnDarwin/experiments/native-linux/results-hyperos-input-20261112.json --output work/native-linux-nce/guest-4k-hyperos
+python3 -B scripts/probe_lkl_translation.py --guest-page-bytes 4096 --guest-layout low --mapping pte --execution unicorn --code-memory dual --reuse-engine-build --workload bionic --entry both --runtime-source sdk36 --runtime-directory /Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/com.android.runtime --runtime-manifest /Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36-runtime.json --output work/native-linux-nce/guest-4k-sdk36
+```
 
 ## 风险
 
