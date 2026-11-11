@@ -10,7 +10,7 @@ import re
 import shutil
 import struct
 import subprocess
-from apk_fixture_validation import inputs_unchanged as apk_inputs_unchanged, read_fixture, validate_results as validate_apk_results
+from apk_fixture_validation import inputs_unchanged as apk_inputs_unchanged, read_fixture, unobserved_creations, validate_results as validate_apk_results
 
 ROOT = Path(__file__).resolve().parents[1]
 EXP = ROOT / 'experiments/native-linux'
@@ -778,7 +778,8 @@ def main():
                             'validated': passed, 'data_image': data,
                             'stdout_sha256': sha(out / f'{stem}.jsonl'), 'stderr_sha256': sha(out / f'{stem}.log')})
             if apk_fixture:
-                results[-1]['apk_fixture'] = {'stage': apk_stage, 'validated': apk_validated}
+                results[-1]['apk_fixture'] = {'stage': apk_stage, 'validated': apk_validated,
+                                            'unobserved_creations': unobserved_creations(rows, previous) if apk_validated else None}
             if not passed:
                 break
         if not results[-1]['validated']:

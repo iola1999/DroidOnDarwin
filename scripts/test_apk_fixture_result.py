@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""使用标准 AVD 的应用结果检查 APK 阶段、摘要和数据持久化解析边界。"""
+"""使用 AVD 结果和 Direct 重建日志检查 APK 阶段、摘要与私有数据。"""
 import copy
 import json
 from pathlib import Path
 
-from apk_fixture_validation import validate_results
+from apk_fixture_validation import unobserved_creations, validate_results
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -28,6 +28,7 @@ def main():
     restarted = samples[4:] + [{'test': 'android_apk_fixture_stage', 'stage': 'verify-restart', 'installs': 0, 'passed': True}]
     assert validate_results(first, 'install-update', fixture)
     assert validate_results(restarted, 'verify-restart', fixture, first)
+    assert unobserved_creations(first) == [] and unobserved_creations(restarted, first) == []
     rejected = 0
 
     def reject(rows, stage, mutation, previous=()):
@@ -54,7 +55,68 @@ def main():
     reject(restarted, 'verify-restart', lambda items: items[0]['application'].__setitem__('marker', '00000000-0000-0000-0000-000000000000'), first)
     reject(restarted, 'verify-restart', lambda items: items[0]['application'].__setitem__('launch_count', 2), first)
     assert not validate_results(restarted, 'verify-restart', fixture)
-    print(json.dumps({'accepted_stages': 2, 'rejected_mutations': rejected, 'missing_baseline_rejected': True, 'passed': True}))
+
+    # These two JNI records are unchanged excerpts from the failing Direct run.
+    source = json.loads((ROOT / 'tests/native-linux/fixtures/apk-activity-recreation.json').read_text())
+    observed = [json.loads(row['text'].split('DroidApkFixture: ', 1)[1]) for row in source['lines']
+                if 'DroidApkFixture: ' in row['text']]
+    assert len(observed) == 2 and [row['launch_count'] for row in observed] == [1, 2]
+    recreated = copy.deepcopy(first)
+    recreated[1]['application'] = observed[0]
+    second = copy.deepcopy(recreated[1])
+    second['application'] = observed[1]
+    recreated.insert(2, second)
+    recreated[4]['application'].update(marker=observed[0]['marker'], launch_count=3)
+    after_restart = copy.deepcopy(restarted)
+    after_restart[1]['application'].update(marker=observed[0]['marker'], launch_count=4)
+    assert validate_results(recreated, 'install-update', fixture)
+    assert validate_results(after_restart, 'verify-restart', fixture, recreated)
+    assert unobserved_creations(recreated) == [] and unobserved_creations(after_restart, recreated) == []
+
+    reject(recreated, 'install-update', lambda items: items.insert(4, items.pop(2)))
+    reject(recreated, 'install-update', lambda items: items.insert(4, copy.deepcopy(items[1])))
+    reject(recreated, 'install-update', lambda items: items.insert(2, items.pop()))
+    reject(recreated, 'install-update', lambda items: items.__setitem__(slice(0, 3), [items[1], items[2], items[0]]))
+    reject(recreated, 'install-update', lambda items: items.pop(1))
+    reject(recreated, 'install-update', lambda items: items.insert(2, copy.deepcopy(items[1])))
+    for key, value in (('launch_count', 1), ('launch_count', 3), ('launch_count', True), ('launch_count', 1 << 31),
+                       ('created_now', True), ('created_version', 2), ('status', 'failed'),
+                       ('marker', '00000000-0000-0000-0000-000000000000'),
+                       ('version', 2), ('value', 102), ('package', 'wrong.package')):
+        reject(recreated, 'install-update', lambda items, k=key, v=value: items[2]['application'].__setitem__(k, v))
+
+    # Update and restart windows may also contain several observed onCreate calls.
+    update_multiple = copy.deepcopy(recreated)
+    extra = copy.deepcopy(update_multiple[3])
+    extra['application']['launch_count'] = 3
+    update_multiple.insert(4, extra)
+    restart_multiple = copy.deepcopy(after_restart)
+    restart_multiple[0]['application']['launch_count'] = 4
+    extra = copy.deepcopy(restart_multiple[1])
+    extra['application']['launch_count'] = 5
+    restart_multiple.insert(2, extra)
+    assert validate_results(update_multiple, 'install-update', fixture)
+    assert validate_results(restart_multiple, 'verify-restart', fixture, update_multiple)
+    reject(update_multiple, 'install-update', lambda items: items[4]['application'].__setitem__('created_now', True))
+    reject(update_multiple, 'install-update', lambda items: items[4]['application'].__setitem__('launch_count', 4))
+    reject(restart_multiple, 'verify-restart', lambda items: items[2]['application'].__setitem__('created_now', True), update_multiple)
+    reject(restart_multiple, 'verify-restart', lambda items: items[2]['application'].__setitem__('launch_count', 4), update_multiple)
+    reject(restart_multiple, 'verify-restart', lambda items: items[0]['application'].__setitem__('created_now', True), update_multiple)
+
+    gaps = copy.deepcopy(recreated)
+    gaps[4]['application']['launch_count'] = 6
+    gap_restart = copy.deepcopy(after_restart)
+    gap_restart[1]['application']['launch_count'] = 9
+    assert validate_results(gaps, 'install-update', fixture)
+    assert validate_results(gap_restart, 'verify-restart', fixture, gaps)
+    assert unobserved_creations(gaps) == [{'mode': 'jni', 'after_stage': 'fresh-v1', 'before_stage': 'updated-v2',
+                                         'first_launch_count': 3, 'last_launch_count': 5, 'count': 3}]
+    assert unobserved_creations(gap_restart, gaps) == [{'mode': 'jni', 'after_stage': 'updated-v2', 'before_stage': 'restarted-v2',
+                                                      'first_launch_count': 7, 'last_launch_count': 8, 'count': 2}]
+    print(json.dumps({'accepted_stages': 8, 'rejected_mutations': rejected, 'missing_baseline_rejected': True,
+                      'real_recreation_records': len(observed), 'cross_window_gaps_reported': True,
+                      'scope': 'Parser checks; update/restart multi-record sequences are constructed, not new Android runs.',
+                      'passed': True}))
 
 
 if __name__ == '__main__':

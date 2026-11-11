@@ -1,0 +1,120 @@
+{
+  "scope": "APK helper compilation, original signed APK input validation, host log-file boundary checks and parser regression only. No Android execution.",
+  "base_commit": "4a584597323c759ab4d19075748df1fa4034b565",
+  "worktree": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-apk-recreation",
+  "source_sha256": {
+    "experiments/native-linux/services/NceApkInstall.java": "51b8cc02b9bec7f642a0db4dc0e7ed6325d24b1d73396eca15e9146127e26456",
+    "scripts/apk_fixture_validation.py": "53cdf7003982c11d476c1c57bc73076aa2550477dfa720c40665dc3b38387730",
+    "scripts/probe_lkl_translation.py": "e89c07d71c5a55d26a2b6bb4633ecf659447267d0711dfd2b800915aa354956a",
+    "scripts/test_apk_fixture_result.py": "e28f32fa4477ffb8733c206c4fc1aeafc6bee073b8e2564f909f1abb93fc3970",
+    "scripts/test_apk_log_reader.py": "ab4eb36931313861f2d64f654ed7e5881aa3a904323da2c4d495a9a968641c3a",
+    "tests/native-linux/NceApkLogTest.java": "eac382d084e5516263910aa946bf1c8c4358997a879f5a1d9ee2c1d5ac283b2d",
+    "tests/native-linux/fixtures/apk-activity-recreation.json": "6dbdfaa67c9262b337de0478830ec2beda4d1f759a12bce1289d9deb5806ff0b"
+  },
+  "build": {
+    "scope": "Production helper compilation and original signed APK input validation only; no Android execution.",
+    "commands": [
+      [
+        "/opt/homebrew/opt/openjdk@17/bin/javac",
+        "-Xlint:all",
+        "-Werror",
+        "-source",
+        "8",
+        "-target",
+        "8",
+        "-bootclasspath",
+        "/opt/homebrew/share/android-commandlinetools/platforms/android-35/android.jar",
+        "-d",
+        "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-apk-recreation/work/native-linux-nce/apk-recreation-build/classes",
+        "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-apk-recreation/experiments/native-linux/services/NceApkInstall.java"
+      ],
+      [
+        "/opt/homebrew/opt/openjdk@17/bin/java",
+        "-cp",
+        "/opt/homebrew/share/android-commandlinetools/build-tools/36.0.0/lib/d8.jar",
+        "com.android.tools.r8.D8",
+        "--min-api",
+        "35",
+        "--lib",
+        "/opt/homebrew/share/android-commandlinetools/platforms/android-35/android.jar",
+        "--output",
+        "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-apk-recreation/work/native-linux-nce/apk-recreation-build/dex",
+        "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-apk-recreation/work/native-linux-nce/apk-recreation-build/classes/NceApkInstall.class"
+      ]
+    ],
+    "helper_sha256": "51b8cc02b9bec7f642a0db4dc0e7ed6325d24b1d73396eca15e9146127e26456",
+    "dex_sha256": "3143fcdb2ebda4ea0c465dfc7ce677f07eac0eb68b1213dda7ff0538ed145a19",
+    "dex_bytes": 12928,
+    "fixture_sha256": {
+      "manifest.json": "ff9af0046a14d3033f6f71f784822eaffc8c6930775eb0765fc8479c70d69eb7",
+      "java-v1.apk": "c39c5ca4db331513759e4e98417a643c81df76062e593bae631562b415063527",
+      "java-v2.apk": "cf8c7053d6a71bbfc7a460f00f5a6107813e77de89a8dcb3b18ea1cf02c41611",
+      "jni-v1.apk": "13fd15bbaf90d5c58daff8be487438f8937eed728faaaf21ab8e209921d50c3e",
+      "jni-v2.apk": "8cfeb77e0460a794bbb686d550ea825052da5ead78225b29798feacab4ad1dc4"
+    },
+    "fixture_certificates": [
+      "95683d4ebe560fab6c66da0d5a5f77d1cb152d3f506db981e3044eb4295418e1"
+    ],
+    "inputs_unchanged": true
+  },
+  "replay": {
+    "scope": "Real two-record JNI window inserted into constructed complete-stage context; no new Android execution.",
+    "baseline": "4a58459",
+    "baseline_accepted": false,
+    "changed_accepted": true,
+    "real_application_records": [
+      {
+        "status": "passed",
+        "package": "app.droidondarwin.fixture.jni",
+        "mode": "jni",
+        "version": 1,
+        "value": 101,
+        "marker": "120af153-df69-4e31-a08b-6c3f576787f5",
+        "created_now": true,
+        "created_version": 1,
+        "launch_count": 1
+      },
+      {
+        "status": "passed",
+        "package": "app.droidondarwin.fixture.jni",
+        "mode": "jni",
+        "version": 1,
+        "value": 101,
+        "marker": "120af153-df69-4e31-a08b-6c3f576787f5",
+        "created_now": false,
+        "created_version": 1,
+        "launch_count": 2
+      }
+    ],
+    "source_sha256": "bd9a37b3bad2c7adc684ee426bfa0c8dcb486d5da15746b38899ce52a28769f3"
+  },
+  "checks": {
+    "parser": {
+      "command": [
+        "python3",
+        "scripts/test_apk_fixture_result.py"
+      ],
+      "exit_code": 0,
+      "stdout": "{\"accepted_stages\": 8, \"rejected_mutations\": 62, \"missing_baseline_rejected\": true, \"real_recreation_records\": 2, \"cross_window_gaps_reported\": true, \"scope\": \"Parser checks; update/restart multi-record sequences are constructed, not new Android runs.\", \"passed\": true}\n",
+      "stderr": ""
+    },
+    "log_reader": {
+      "command": [
+        "python3",
+        "scripts/test_apk_log_reader.py"
+      ],
+      "exit_code": 0,
+      "stdout": "APK log boundary checks passed\n",
+      "stderr": ""
+    },
+    "image_inputs": {
+      "command": [
+        "python3",
+        "scripts/test_translation_image_inputs.py"
+      ],
+      "exit_code": 0,
+      "tests": 6,
+      "scope": "Source identity invalidation, including the APK helper."
+    }
+  }
+}
