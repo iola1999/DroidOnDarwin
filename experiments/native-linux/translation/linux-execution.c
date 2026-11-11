@@ -359,7 +359,6 @@ static void shmem_init(unsigned long size)
     ram = sparse_guest_layout ? sparse_host_mapping(guest_end, size, VM_PROT_READ | VM_PROT_WRITE)
                               : mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANON, -1, 0);
     REQUIRE(ram != MAP_FAILED);
-    REQUIRE(!sparse_guest_layout || (uintptr_t)ram >= guest_end);
     if (translation)
         translation->ram = (uintptr_t)ram;
     printf("{\"config\":\"translation_guest_layout\",\"mode\":\"%s\",\"guest_base\":%lu,\"guest_end\":%lu,\"guest_span_bytes\":%lu,\"flat_coverage_bytes\":%lu,\"physical_base\":%lu,\"ram_base\":%lu,\"ram_bytes\":%lu,\"reservation_base\":%lu,\"reservation_bytes\":%lu}\n",
@@ -412,8 +411,9 @@ static void *shmem_map(void *address, unsigned long offset, unsigned long size, 
     unsigned long start = (uintptr_t)address;
     REQUIRE(!(start % PAGE) && !(offset % PAGE) && !(size % PAGE));
     REQUIRE(offset <= NCE_RAM_SIZE && size <= NCE_RAM_SIZE - offset);
-    if (start >= physical_base) {
-        REQUIRE(start <= reservation_base + reservation_size && size <= reservation_base + reservation_size - start);
+    /* Translated user PTE updates never call this host mapping callback. */
+    if (translation || start >= physical_base) {
+        REQUIRE(start >= physical_base && start <= reservation_base + reservation_size && size <= reservation_base + reservation_size - start);
 #ifdef NCE_DIRECT_EXECUTION
         if (code_watch) {
 #ifdef NCE_SMP
@@ -453,8 +453,7 @@ static int revoke_pages(void *address, unsigned long size)
 {
     unsigned long start = (uintptr_t)address;
     REQUIRE(!(start % PAGE) && !(size % PAGE));
-    if (start >= guest_base && start < guest_end) {
-        REQUIRE(!translation);
+    if (!translation && start >= guest_base && start < guest_end) {
         unsigned long length = size < guest_end - start ? size : guest_end - start;
         for (unsigned long i = 0; i < length; i += PAGE) {
             unsigned long index = (start + i - guest_base) / PAGE;
@@ -1037,7 +1036,7 @@ unsigned long translation_linux_setup(void *kernel, unsigned long copy_user_offs
     guest_end = sparse_guest_layout ? 1UL << 36 : low_guest_layout ? NCE_USER_SIZE
                                                                    : guest_base + NCE_USER_SIZE;
     physical_base = reservation_base + (separate_guest ? 0 : NCE_USER_SIZE);
-    if (physical_base < guest_end) {
+    if (!translation && physical_base < guest_end) {
         fprintf(stderr, "translation reservation overlaps guest: physical=%lx guest_end=%lx\n", physical_base, guest_end);
         goto failed;
     }

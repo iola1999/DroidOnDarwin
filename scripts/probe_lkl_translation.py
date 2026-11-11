@@ -44,9 +44,9 @@ def validate_android_image(root, directory):
         raise ValueError('Android 系统镜像与当前用户态源码不一致，请先通过 scripts/probe_lkl.py 重建并验证：' + ', '.join(stale))
 
 
-def validate_guest_layout(rows, requested, flat=False, guest_page_bytes=16384):
+def validate_guest_layout(rows, requested, flat=False, guest_page_bytes=16384, *, sparse_end=1 << 36):
     records = [row for row in rows if row.get('config') == 'translation_guest_layout']
-    if len(records) != 1 or requested not in ('host', 'low', 'sparse') or guest_page_bytes not in (4096, 16384):
+    if len(records) != 1 or requested not in ('host', 'low', 'sparse') or guest_page_bytes not in (4096, 16384) or type(sparse_end) is not int or sparse_end not in (1 << 36, 1 << 39):
         return False
     row = records[0]
     fields = ('guest_base', 'guest_end', 'guest_span_bytes', 'flat_coverage_bytes',
@@ -60,14 +60,14 @@ def validate_guest_layout(rows, requested, flat=False, guest_page_bytes=16384):
     coverage = 1 << 32
     if (not base or end <= base or row['guest_span_bytes'] != end - base or
             row['flat_coverage_bytes'] != (coverage if flat else 0) or ram_size != 1 << 30 or
-            not ram or any(row[key] % 16384 for key in fields) or physical < end or
+            not ram or any(row[key] % 16384 for key in fields) or
             not reserve or reserve >= 1 << (39 if guest_page_bytes == 4096 else 40) or
             reserve_size > (1 << (39 if guest_page_bytes == 4096 else 40)) - reserve or
-            ram_size > (1 << 64) - ram or (ram < end and base < ram + ram_size) or
+            ram_size > (1 << 64) - ram or (requested == 'host' and ram < end and base < ram + ram_size) or
             (ram < reserve + reserve_size and reserve < ram + ram_size)):
         return False
     if requested in ('low', 'sparse'):
-        return ((flat if guest_page_bytes == 16384 else not flat) and base == 0x10000 and end == (1 << 36 if requested == 'sparse' else coverage) and physical == reserve and
+        return ((flat if guest_page_bytes == 16384 else not flat) and base == 0x10000 and end == (sparse_end if requested == 'sparse' else coverage) and physical == reserve and
                 reserve_size == ram_size + (64 << 20))
     return (base == reserve and end == base + coverage and physical == end and
             reserve_size == coverage + ram_size + (64 << 20))
@@ -107,7 +107,7 @@ def validate_standard_jit(rows, data_tbi=False, *, guest_page_bytes=16384):
     return True
 
 
-def validate(rows, memory_interval, mapping="window", workload="core", tlb_invalidation=None, execution=None, direct_config=None, cpus=1, parallel_profile=None, uaccess_stop=None, code_lookup_limit=None, code_memory=None, online_cpus=None, guest_layout=None, guest_page_bytes=16384, data_tbi=None, stock_art_jit=False):
+def validate(rows, memory_interval, mapping="window", workload="core", tlb_invalidation=None, execution=None, direct_config=None, cpus=1, parallel_profile=None, uaccess_stop=None, code_lookup_limit=None, code_memory=None, online_cpus=None, guest_layout=None, guest_page_bytes=16384, data_tbi=None, stock_art_jit=False, *, sparse_end=1 << 36):
     if guest_page_bytes not in (4096, 16384):
         return False
     if guest_page_bytes == 4096:
@@ -118,7 +118,7 @@ def validate(rows, memory_interval, mapping="window", workload="core", tlb_inval
                  'host_page_bytes': 16384, 'host_address_limit': 1 << 39}]:
             return False
         layouts = [row for row in rows if row.get('config') == 'translation_guest_layout']
-        if len(layouts) != 1 or not validate_guest_layout(rows, guest_layout, False, guest_page_bytes):
+        if len(layouts) != 1 or not validate_guest_layout(rows, guest_layout, False, guest_page_bytes, sparse_end=sparse_end):
             return False
         layout = layouts[0]
         physical = layout['physical_base']
@@ -159,7 +159,7 @@ def validate(rows, memory_interval, mapping="window", workload="core", tlb_inval
             return False
     if guest_layout is not None:
         flat = execution == 'direct' and direct_config is not None and direct_config['memory'] in ('flat', 'view')
-        if not validate_guest_layout(rows, guest_layout, flat, guest_page_bytes):
+        if not validate_guest_layout(rows, guest_layout, flat, guest_page_bytes, sparse_end=sparse_end):
             return False
         if guest_layout in ('low', 'sparse') and (mapping != 'pte' or cpus != 1 or
                 (guest_page_bytes == 16384 and (execution != 'direct' or direct_config['memory'] != 'flat')) or
@@ -178,12 +178,12 @@ def validate(rows, memory_interval, mapping="window", workload="core", tlb_inval
                     return False
             if guest_layout == 'sparse':
                 if not {'translated_sparse_host_pointer_sources', 'translated_sparse_pte_cow_shared_uaccess',
-                        'translated_sparse_reservation_materialization'} <= {row.get('test') for row in rows if row.get('passed')}:
+                        'translated_sparse_reservation_materialization', 'translated_same_host_va_cow_shared'} <= {row.get('test') for row in rows if row.get('passed')}:
                     return False
                 pointers = [row for row in rows if row.get('config') == 'translation_host_pointer_sources']
                 if (len(pointers) != 1 or set(pointers[0]) != {'config', 'low', 'high', 'stack', 'text'} or
                         any(type(pointers[0][k]) is not int or not 0 < pointers[0][k] < 1 << 64 for k in ('low', 'high', 'stack', 'text')) or
-                        not 0x10000 <= pointers[0]['low'] <= (1 << 36) - guest_page_bytes or pointers[0]['high'] < 1 << 36):
+                        not 0x10000 <= pointers[0]['low'] <= sparse_end - guest_page_bytes or pointers[0]['high'] < sparse_end):
                     return False
             if [row for row in rows if row.get('test') == 'translated_guest_layout_boundaries'] != [
                     {'test': 'translated_guest_layout_boundaries', 'passed': True, 'layout': guest_layout}]:
