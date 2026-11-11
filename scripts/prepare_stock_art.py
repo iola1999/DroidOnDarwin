@@ -29,7 +29,8 @@ BOOT_JARS = (
     'com.android.i18n/javalib/core-icu4j.jar',
     'com.android.conscrypt/javalib/conscrypt.jar',
 )
-DATA_FILES = ('com.android.runtime/bin/linker64', *BOOT_JARS,
+PUBLIC_LIBRARIES = 'etc/public.libraries.txt'
+DATA_FILES = ('com.android.runtime/bin/linker64', PUBLIC_LIBRARIES, *BOOT_JARS,
               'com.android.i18n/etc/icu/icudt76l.dat',
               'com.android.tzdata/etc/tz/tzdata', 'com.android.tzdata/etc/tz/tz_version')
 SEARCH_PATHS = ('/apex/com.android.art/lib64', '/apex/com.android.runtime/lib64/bionic',
@@ -51,7 +52,7 @@ def run(command, commands):
 def guest_path(relative):
     if relative.startswith('com.android.'):
         return '/apex/' + relative
-    if relative.startswith('lib64/'):
+    if relative.startswith(('lib64/', 'etc/')):
         return '/system/' + relative
     raise ValueError('未定义 guest 路径：' + relative)
 
@@ -77,6 +78,39 @@ def inputs(runtime, manifest_path, commands):
         records[relative] = dict(library)
     for relative in DATA_FILES:
         records[relative] = {'sha256': manifest['files'][relative]}
+    public = runtime / PUBLIC_LIBRARIES
+    if sha(public) != manifest['files'][PUBLIC_LIBRARIES]:
+        raise ValueError('原始公共库清单摘要不匹配')
+    preload = []
+    for line in public.read_text().splitlines():
+        fields = line.split('#', 1)[0].split()
+        if fields and not {'nopreload', '32'} & set(fields[1:]):
+            preload.append(fields[0])
+    # NativeLoader preloads this original list during JNI_CreateJavaVM.
+    # Resolve its DT_NEEDED closure using the component's actual search order.
+    libraries = {Path(relative).name: relative for relative in records if relative.endswith('.so')}
+    search = [path.removeprefix('/apex/').removeprefix('/system/') for path in SEARCH_PATHS]
+    pending, visited = list(preload), set()
+    while pending:
+        name = pending.pop()
+        if name in visited:
+            continue
+        visited.add(name)
+        if name not in libraries:
+            candidates = [path + '/' + name for path in search if path + '/' + name in manifest['files']]
+            if not candidates:
+                raise ValueError('公共库预加载依赖缺失：' + name)
+            relative = candidates[0]
+            libraries[name] = relative
+            records[relative] = {'sha256': manifest['files'][relative]}
+        relative = libraries[name]
+        if 'needed' not in records[relative]:
+            path = runtime / relative
+            if sha(path) != records[relative]['sha256']:
+                raise ValueError('公共库预加载依赖摘要不匹配：' + relative)
+            dynamic = run([TOOL / 'bin/llvm-readelf', '--dynamic', path], commands)
+            records[relative]['needed'] = re.findall(r'Shared library: \[([^]]+)\]', dynamic)
+        pending.extend(records[relative]['needed'])
     for relative, record in records.items():
         path = runtime / relative
         if sha(path) != record['sha256']:
