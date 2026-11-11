@@ -250,6 +250,8 @@ struct NceDirect {
     }
     NceDirectExit run(NceDirectState &state, NceDirectMemory memory, uint64_t budget, uint64_t &fault)
     {
+        if (memory.completed_integer_pc)
+            *memory.completed_integer_pc = UINT64_MAX;
         bool prepared = prepared_run;
         prepared_run = false;
         if (!prepared)
@@ -290,6 +292,8 @@ struct NceDirect {
         if (memory.code_version != previous.code_version || memory.opaque != previous.opaque)
             clear();
         uint32_t flags = state.access_flags & NCE_DIRECT_UNALIGNED;
+        if (memory.completed_integer_pc)
+            flags |= CompileObserveInteger;
         if (state.access_flags & NCE_DIRECT_DATA_TBI)
             flags |= CompileDataTbi;
         if (page_bits == 14)
@@ -351,9 +355,11 @@ struct NceDirect {
             write_aliases.clear();
         }
         previous = memory;
+        previous.completed_integer_pc = nullptr;
         previous_flags = flags;
         active_code.clear();
         Frame frame{};
+        frame.completed_integer_pc = UINT64_MAX;
         frame.state = state;
         frame.exclusive_interrupted = config.native_exclusive && state.exclusive_address != UINT64_MAX;
         frame.budget = budget;
@@ -479,6 +485,8 @@ struct NceDirect {
             result = NCE_DIRECT_FETCH_FAULT;
         }
         stats.pte_read_refills += frame.pte_read_refills;
+        if (memory.completed_integer_pc)
+            *memory.completed_integer_pc = frame.completed_integer_pc;
         state = frame.state;
         return result;
     }

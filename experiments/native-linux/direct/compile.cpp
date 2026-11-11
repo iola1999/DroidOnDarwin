@@ -355,6 +355,11 @@ Compilation Page::compile(uint64_t new_page, const void *bytes, size_t entry,
                 kind = Other;
             if (integer_kind(kind)) {
                 integer(w, kind, 26);
+                if (flags & CompileObserveInteger) {
+                    // Preserve guest NZCV and record only after result writeback.
+                    relative_address(X16, pc - new_page, X17);
+                    c.STR(X16, X27, offsetof(Frame, completed_integer_pc));
+                }
             } else if (kind == Pauth && (flags & CompilePauthNop)) {
                 // Only the architectural HINT encodings become NOPs.
             } else if (kind == Barrier) {

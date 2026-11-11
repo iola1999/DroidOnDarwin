@@ -107,7 +107,7 @@ struct Tables {
             }
         }
         NceDirectMemory memory{this, map, fetch, epoch, 14, use_page_table ? &table : nullptr, refill_reads, flat.empty() ? nullptr : flat.data(),
-                               retain_routes ? version : nullptr, retain_routes ? code_epoch : 0, read_view.base};
+                               retain_routes ? version : nullptr, retain_routes ? code_epoch : 0, read_view.base, nullptr};
         return nce_direct_run(engine, &state, memory, 1000, &fault);
     }
 };
@@ -737,10 +737,21 @@ static void check_data_tbi(unsigned mode, bool native)
         std::memcpy(test.ram.data(), words, sizeof(words));
         uint64_t value = 41;
         std::memcpy(test.ram.data() + physical * PageBytes, &value, 8);
-        state = initial;
-        state.x[0] = address | UINT64_C(0x0200000000000000);
-        state.x[3] = address | UINT64_C(0xb400000000000000);
-        CHECK(test.run(state, fault) == NCE_DIRECT_UNSUPPORTED && state.pc == CodeVA + 12 && state.x[2] == 0);
+        unsigned retries = 0;
+        for (;;) {
+            state = initial;
+            state.x[0] = address | UINT64_C(0x0200000000000000);
+            state.x[3] = address | UINT64_C(0xb400000000000000);
+            CHECK(test.run(state, fault) == NCE_DIRECT_UNSUPPORTED && state.pc == CodeVA + 12);
+            if (!state.x[2])
+                break;
+            // A host interruption can clear the native monitor between LDXR
+            // and STXR. Failed stores must preserve the original memory value.
+            std::memcpy(&value, test.ram.data() + physical * PageBytes, 8);
+            CHECK(native && state.x[2] == 1 && value == 41 && state.nzcv == initial.nzcv && ++retries < 100);
+        }
+        if (retries)
+            std::printf("{\"data_tbi_exclusive_retries\":%u,\"mode\":%u,\"address\":%llu}\n", retries, mode, (unsigned long long)address);
         std::memcpy(&value, test.ram.data() + physical * PageBytes, 8);
         CHECK(value == 42 && state.nzcv == initial.nzcv);
         test.code(0xd50b7420);  // dc zva,x0
@@ -846,7 +857,7 @@ void direct_page_table_tests()
     second[(DataVA - CodeVA) >> 14].read = uintptr_t(test.ram.data() + 2 * PageBytes);
     value = 97;
     std::memcpy(test.ram.data() + 2 * PageBytes, &value, 8);
-    NceDirectMemory memory{&test, Tables::map, Tables::fetch, test.epoch, 14, &test.table, false, second.data(), nullptr, 0, nullptr};
+    NceDirectMemory memory{&test, Tables::map, Tables::fetch, test.epoch, 14, &test.table, false, second.data(), nullptr, 0, nullptr, nullptr};
     actual = initial;
     CHECK(nce_direct_run(test.engine, &actual, memory, 1000, &fault) == NCE_DIRECT_UNSUPPORTED);
     CHECK(actual.x[1] == 97);

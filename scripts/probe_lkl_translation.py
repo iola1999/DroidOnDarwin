@@ -106,7 +106,7 @@ def validate_standard_jit(rows, data_tbi=False):
     return True
 
 
-def validate(rows, memory_interval, mapping="window", workload="core", tlb_invalidation=None, execution=None, direct_config=None, cpus=1, parallel_profile=None, uaccess_stop=None, code_lookup_limit=None, code_memory=None, online_cpus=None, guest_layout=None, data_tbi=None):
+def validate(rows, memory_interval, mapping="window", workload="core", tlb_invalidation=None, execution=None, direct_config=None, cpus=1, parallel_profile=None, uaccess_stop=None, code_lookup_limit=None, code_memory=None, online_cpus=None, guest_layout=None, data_tbi=None, stock_art_jit=False):
     if data_tbi is not None:
         tbi_config = [row for row in rows if row.get('config') == 'translation_data_tbi']
         if (tbi_config != [{'config': 'translation_data_tbi', 'data': data_tbi, 'fetch': False, 'tagged_syscall_abi': False}] or
@@ -226,7 +226,7 @@ def validate(rows, memory_interval, mapping="window", workload="core", tlb_inval
             return False
     elif workload == 'stock-art':
         from stock_art import validate as validate_stock_art
-        if not validate_stock_art(rows):
+        if not validate_stock_art(rows, jit_first_use=stock_art_jit):
             return False
         expected = {'stock_art_standard_jni', 'translated_context_cleanup'}
     elif workload == 'bionic':
@@ -457,10 +457,13 @@ def main():
     parser.add_argument('--cache-mib', type=int, choices=(16, 64, 128), default=16)
     parser.add_argument('--repeat', type=int, default=1)
     parser.add_argument('--batch-instructions', type=int, default=50000)
+    parser.add_argument('--stock-art-observe-jit', type=int, choices=(0, 1), default=0)
     parser.add_argument('--preemption', choices=('instructions', 'timer'), default='instructions')
     parser.add_argument('--output', type=Path, default=DEFAULT_OUT)
     parser.add_argument('--memory-interval-ms', type=int, default=100)
     args = parser.parse_args()
+    if args.stock_art_observe_jit and (args.workload != 'stock-art' or args.execution != 'direct' or args.cpus != 1):
+        parser.error('JIT 执行观测需要单 CPU 的 Direct stock-art')
     if args.guest_layout in ('low', 'sparse') and (args.mapping != 'pte' or args.execution != 'direct' or args.direct_memory != 'flat' or args.cpus != 1):
         parser.error('低客体地址实验需要单 CPU 的 pte/direct/flat')
     if args.data_tbi and args.execution == 'direct' and args.direct_memory == 'view':
@@ -538,6 +541,7 @@ def main():
             parser.error('stock-art 需要已准备目录和单核 PTE CLI/GCD')
         from stock_art import attach
         stock_art = attach(args.stock_art_directory, out)
+        (out / 'stock-art-jit-first-use').write_text(str(args.stock_art_observe_jit) + '\n')
     elif args.stock_art_directory:
         parser.error('--stock-art-directory 仅用于 stock-art')
     stock_runtime = None
@@ -726,12 +730,12 @@ def main():
              EXP / 'translation/kernel-api.h', EXP / 'translation/kernel-image.h', EXP / 'code-memory.h', EXP / 'nce.h', out / 'translation-symbols.h',
              ROOT / 'scripts/build_translation_engine.py', manifest,
              library / 'lib/libunicorn.a', *[out / name for name in (*build_entries, 'guest.elf', 'late.elf', *runtime_files)]]
-    files += [EXP / 'translation/stock-art-runner.h']
+    files += [EXP / 'translation/stock-art-runner.h', EXP / 'translation/execution-observation.h']
     if stock_runtime or stock_art:
         files.append(EXP / 'translation/component-supervisor.h')
     if stock_art:
-        files += [ROOT / 'scripts/stock_art.py', ROOT / 'scripts/prepare_stock_art.py',
-                  out / 'stock-art-files.tsv', out / 'stock-art-boot-classpath']
+        files += [ROOT / 'scripts/stock_art.py', ROOT / 'scripts/stock_art_jit.py', ROOT / 'scripts/prepare_stock_art.py',
+                  out / 'stock-art-files.tsv', out / 'stock-art-boot-classpath', out / 'stock-art-jit-first-use']
     if stock_runtime:
         from stock_bionic import FILES
         files += [ROOT / 'scripts/stock_bionic.py', EXP / 'translation/stock-bionic-guest.c',
@@ -770,6 +774,7 @@ def main():
     environment['NCE_TRANSLATION_FILES'] = str(out)
     environment['NCE_TRANSLATION_GUEST_LAYOUT'] = args.guest_layout
     environment['NCE_TRANSLATION_DATA_TBI'] = str(args.data_tbi)
+    environment['NCE_STOCK_ART_OBSERVE_JIT'] = str(args.stock_art_observe_jit)
     environment['NCE_TRANSLATION_ONLINE_CPUS'] = str(args.online_cpus)
     environment.update(NCE_ART_NTERP=str(args.art_nterp), NCE_ART_EXPANDED_JIT=str(args.art_expanded_jit),
                        NCE_ART_FAST_BASELINE=str(args.art_fast_baseline), NCE_ART_AOT='0', NCE_ART_BOOT_IMAGE='0', NCE_SCHED_SLICE_US='0')
@@ -839,7 +844,7 @@ def main():
                     if not stock_art:
                         raise
                     parse_errors.append({'line': line_number, 'error': str(error)})
-            passed = not parse_errors and returncode == 0 and validate(rows, args.memory_interval_ms, args.mapping, args.workload, args.tlb_invalidation, args.execution, direct_config, args.cpus, bool(args.parallel_profile), args.smp_uaccess_stop, code_memory=args.code_memory, online_cpus=args.online_cpus, guest_layout=args.guest_layout, data_tbi=bool(args.data_tbi))
+            passed = not parse_errors and returncode == 0 and validate(rows, args.memory_interval_ms, args.mapping, args.workload, args.tlb_invalidation, args.execution, direct_config, args.cpus, bool(args.parallel_profile), args.smp_uaccess_stop, code_memory=args.code_memory, online_cpus=args.online_cpus, guest_layout=args.guest_layout, data_tbi=bool(args.data_tbi), stock_art_jit=bool(args.stock_art_observe_jit))
             apk_validated = None
             if apk_fixture:
                 previous = [row for result in results for row in result['results']]
@@ -866,6 +871,10 @@ def main():
                 results[-1]['stock_art_inputs_unchanged'] = stock_art_unchanged(stock_art)
                 passed = passed and results[-1]['stock_art_inputs_unchanged'] and all(
                     item['validated'] and item['present'] for item in results[-1]['stock_art_maps'])
+                if args.stock_art_observe_jit:
+                    from stock_art_jit import observe
+                    results[-1]['stock_art_jit_observation'] = observe(component_output, rows)
+                    passed = passed and results[-1]['stock_art_jit_observation']['jit_execution_confirmed']
                 results[-1]['validated'] = passed
             if apk_fixture:
                 results[-1]['apk_fixture'] = {'stage': apk_stage, 'validated': apk_validated}
@@ -895,7 +904,8 @@ def main():
     if stock_art:
         report['stock_art'] = stock_art
         report['stock_art']['execution_attempted'] = True
-        report['measurement'] = 'Original ART component functionality only; no JIT execution or performance claim.'
+        report['stock_art']['observe_jit'] = bool(args.stock_art_observe_jit)
+        report['measurement'] = 'Original ART component functionality; JIT execution requires completed-PC correlation; no performance comparison.'
     if stock_runtime:
         from stock_bionic import unchanged
         if not unchanged(stock_runtime):

@@ -20,6 +20,7 @@ constexpr uint32_t CompileNativeExclusive = 33554432;
 constexpr uint32_t CompileVectorTable = 67108864;
 constexpr uint32_t CompileSimdMath = 134217728;
 constexpr uint32_t CompileDataTbi = 268435456;
+constexpr uint32_t CompileObserveInteger = 536870912;
 enum Stop : uint64_t { Budget = 0,
                        Fallback = 1,
                        ReadPage = 2,
@@ -67,6 +68,7 @@ struct Frame {
     const void *read_view, *flat_pages;
     uint64_t read_view_faults;
     uint64_t exclusive_interrupted;
+    uint64_t completed_integer_pc;
 };
 struct Mapping {
     uint64_t read_tag, read_addend, write_tag, write_addend;

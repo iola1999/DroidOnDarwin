@@ -49,6 +49,8 @@ typedef struct {
     const char *path;
     NceExecutionProfile *profile;
     uint32_t fallback_instruction;
+    long observed_pid, observed_tid;
+    bool observed_window;
 } Process;
 static unsigned char *ram;
 static unsigned long guest_base, guest_end, physical_base, reservation_base, reservation_size, *pages;
@@ -121,6 +123,7 @@ typedef struct {
 static ExecutionCpu executions[NCE_TRANSLATION_MAX_CPUS];
 /* Linux invokes user_switch after scheduling, including task migration. */
 static _Thread_local ExecutionCpu *execution = &executions[0];
+#include "execution-observation.h"
 #ifdef NCE_SMP
 /* IRQ-disabled registration retains all directory pages. Read each parent
  * once because Linux may clear a parent before its RCU reclamation. */
@@ -629,17 +632,19 @@ static bool direct_execute(Process *p, unsigned long generation)
                                 physical_base, ram, NCE_RAM_SIZE};
     NceReadView *view = direct_read_views ? execution->view->read_view : NULL;
     REQUIRE(!direct_read_views || view);
+    uint64_t completed = UINT64_MAX;
     NceDirectMemory memory = {NULL, direct_map_page, direct_map_code, generation, 14,
                               direct_pte_memory ? &table : NULL, direct_pte_refill,
                               direct_flat ? (const struct nce_direct_flat_page *)execution->view->flat : NULL,
                               direct_code_watch ? direct_code_version : NULL,
                               direct_code_watch ? nce_code_watch_epoch(code_watch) : 0,
-                              view ? view->base : NULL};
+                              view ? view->base : NULL, observe_integer && p->observed_window ? &completed : NULL};
     REQUIRE(!direct_flat || memory.flat_pages);
     uint64_t address = 0;
     ++execution->direct_calls;
     NceDirectExit result = nce_direct_run(execution->direct_engine, &state, memory,
                                           timer_mode ? (UINT64_C(1) << 60) : instruction_batch, &address);
+    observe_pc(p, completed, state.pc);
     memcpy(p->regs.x, state.x, sizeof(state.x));
     memcpy(p->regs.vector, state.v, sizeof(state.v));
     p->regs.pc = state.pc;
@@ -686,6 +691,8 @@ static void *user_clone(void *parent, unsigned long sp, unsigned long tls, unsig
     Process *p = calloc(1, sizeof(*p));
     REQUIRE(p);
     *p = *(Process *)parent;
+    p->observed_pid = p->observed_tid = 0;
+    p->observed_window = false;
     p->path = NULL;
     p->profile = NULL;
     p->regs.x[0] = 0;
@@ -799,6 +806,7 @@ static void user_run(void *opaque)
         p->path = NULL;
     }
     for (;;) {
+        observe_identity(p);
         if (!p->profile && nce_execution_profile_enabled()) {
             long args[6] = {0};
             long pid = run_syscall(172, args), tid = run_syscall(178, args);
@@ -854,7 +862,13 @@ static void user_run(void *opaque)
             memcpy(args, p->regs.x, sizeof(args));
             long number = p->regs.x[8];
             ++execution->calls;
+            bool observed_vm = observe_vm(p, number, args);
             long result = run_syscall(number, args);
+            if (observed_vm) {
+                REQUIRE(observation_vm_pending);
+                --observation_vm_pending;
+            }
+            observe_marker(p, number, args, result);
             if (component_vm_trace && (number == 222 || number == 226 || number == 216)) {
                 long pid_args[6] = {0};
                 printf("{\"component_vm\":%ld,\"pid\":%ld,\"pc\":%lu,\"args\":[%lu,%lu,%lu,%lu,%lu,%lu],\"result\":%ld}\n",
@@ -903,6 +917,7 @@ unsigned long translation_linux_setup(void *kernel, unsigned long copy_user_offs
     translation = state;
     printf("{\"config\":\"translation_data_tbi\",\"data\":%s,\"fetch\":false,\"tagged_syscall_abi\":false}\n", data_tbi ? "true" : "false");
     const char *workload = getenv("NCE_TRANSLATION_WORKLOAD");
+    observe_setup(workload);
     component_vm_trace = workload && !strcmp(workload, "bionic");
     const char *layout = getenv("NCE_TRANSLATION_GUEST_LAYOUT");
     REQUIRE(!layout || !strcmp(layout, "host") || !strcmp(layout, "low") || !strcmp(layout, "sparse"));

@@ -53,7 +53,7 @@ struct Executor {
     }
     NceDirectMemory memory()
     {
-        return {this, map, code, 0, 14, &table, false, flat.data(), nullptr, 0, nullptr};
+        return {this, map, code, 0, 14, &table, false, flat.data(), nullptr, 0, nullptr, nullptr};
     }
     static void *map(void *opaque, uint64_t address, bool write)
     {
