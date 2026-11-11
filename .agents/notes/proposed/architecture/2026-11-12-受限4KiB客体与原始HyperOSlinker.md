@@ -142,6 +142,10 @@ python3 -B scripts/probe_lkl_translation.py --guest-page-bytes 4096 --guest-layo
 python3 -B scripts/probe_lkl_translation.py --guest-page-bytes 4096 --guest-layout low --mapping pte --execution unicorn --code-memory dual --reuse-engine-build --workload bionic --entry both --runtime-source sdk36 --runtime-directory /Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/com.android.runtime --runtime-manifest /Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36-runtime.json --output work/native-linux-nce/guest-4k-sdk36
 ```
 
+### 下一阶段的集成基础
+
+独立树合入主树 `4439e996f3fa90b1afc2b486ff370cca2a54774f` 的 sparse、TBI、原始 ART 与标准动态映射实现。合并保留 4 KiB 构建及现有 low/Unicorn 限制，后续组合范围在新增实现前继续记录。合并冲突涉及运行器配置、结果校验和已有标准 JIT 记录；原始组件结果继续对应 `ee745ce`，不改写其构建身份。
+
 ## 风险
 
 当前 VMALLOC 只接受完整宿主页组，组内非连续或不同权限请求会被拒绝；`__GFP_NOFAIL` 会主动停止。4 KiB 三级页表仅覆盖 39 位地址，现有 `2^40` 宿主上界必须收紧；地址申请无法满足上界则明确失败。4 KiB 会改变分配碎片、页缓存、COW 和回收统计，本轮结果仅用于功能与页权限分析。Direct flat、宿主 code-watch 的四客体页分组失效、read-view 任意物理页别名及 SMP 仍需后续独立实现。

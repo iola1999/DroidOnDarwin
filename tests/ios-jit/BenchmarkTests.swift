@@ -122,7 +122,8 @@ struct BenchmarkChecks {
             } catch {}
         }
         for keys in [["capture-end"], ["trace-start"], ["frames-start", "trace-start", "capture-end"],
-                     ["frames-start", "settings", "capture-end"], ["shell"], ["trace-start", "capture-end", "capture-end"]] {
+                     ["settings", "frames-start", "settings", "capture-end"], ["frames-start", "settings", "settings", "capture-end"],
+                     ["shell"], ["trace-start", "capture-end", "capture-end"]] {
             invalid = object
             invalid["actions"] = keys.map { ["kind": "profile", "key": $0] }
             do { _ = try BenchmarkRequest.decode(encoded(invalid))
@@ -132,7 +133,14 @@ struct BenchmarkChecks {
         for mode in ["frames-start", "trace-start"] {
             var valid = object
             valid["actions"] = ["settings", mode, "capture-end"].map { ["kind": "profile", "key": $0] }
-            _ = try BenchmarkRequest.decode(encoded(valid))
+            let scrolling = try BenchmarkRequest.decode(encoded(valid))
+            precondition(!scrolling.capturesSettingsOpen)
+            valid["actions"] = ["settings", "settings", mode, "capture-end"].map { ["kind": "profile", "key": $0] }
+            let repeatedPreparation = try BenchmarkRequest.decode(encoded(valid))
+            precondition(!repeatedPreparation.capturesSettingsOpen)
+            valid["actions"] = [mode, "settings", "capture-end"].map { ["kind": "profile", "key": $0] }
+            let opening = try BenchmarkRequest.decode(encoded(valid))
+            precondition(opening.capturesSettingsOpen)
         }
         let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)

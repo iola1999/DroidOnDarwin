@@ -416,8 +416,18 @@ final class BenchmarkSession {
             if action.key == "capture-end" {
                 try finishDisplayCapture()
             }
+            let prepareSettings = request.capturesSettingsOpen && (action.key == "frames-start" || action.key == "trace-start")
             let result: Int32 = await withCheckedContinuation { continuation in
-                input.async { continuation.resume(returning: nce_session_profile(command, output.path)) }
+                input.async {
+                    if prepareSettings {
+                        let prepared = nce_session_profile(Int32(NCE_PROFILE_SETTINGS_PREPARE), output.path)
+                        if prepared != 0 {
+                            continuation.resume(returning: prepared)
+                            return
+                        }
+                    }
+                    continuation.resume(returning: nce_session_profile(command, output.path))
+                }
             }
             guard result == 0 else {
                 throw BenchmarkError.invalid("交互采集失败：\(result)")

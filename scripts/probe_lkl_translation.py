@@ -10,7 +10,7 @@ import re
 import shutil
 import struct
 import subprocess
-from apk_fixture_validation import inputs_unchanged as apk_inputs_unchanged, read_fixture, validate_results as validate_apk_results
+from apk_fixture_validation import inputs_unchanged as apk_inputs_unchanged, read_fixture, unobserved_creations, validate_results as validate_apk_results
 
 ROOT = Path(__file__).resolve().parents[1]
 EXP = ROOT / 'experiments/native-linux'
@@ -46,7 +46,7 @@ def validate_android_image(root, directory):
 
 def validate_guest_layout(rows, requested, flat=False, guest_page_bytes=16384):
     records = [row for row in rows if row.get('config') == 'translation_guest_layout']
-    if len(records) != 1 or requested not in ('host', 'low'):
+    if len(records) != 1 or requested not in ('host', 'low', 'sparse'):
         return False
     row = records[0]
     fields = ('guest_base', 'guest_end', 'guest_span_bytes', 'flat_coverage_bytes',
@@ -66,8 +66,8 @@ def validate_guest_layout(rows, requested, flat=False, guest_page_bytes=16384):
             ram_size > (1 << 64) - ram or (ram < end and base < ram + ram_size) or
             (ram < reserve + reserve_size and reserve < ram + ram_size)):
         return False
-    if requested == 'low':
-        return ((flat or guest_page_bytes == 4096) and base == 0x10000 and end == coverage and physical == reserve and
+    if requested in ('low', 'sparse'):
+        return ((flat or (requested == 'low' and guest_page_bytes == 4096)) and base == 0x10000 and end == (1 << 36 if requested == 'sparse' else coverage) and physical == reserve and
                 reserve_size == ram_size + (64 << 20))
     return (base == reserve and end == base + coverage and physical == end and
             reserve_size == coverage + ram_size + (64 << 20))
@@ -105,7 +105,7 @@ def validate_standard_jit(rows, guest_page_bytes=16384):
     return True
 
 
-def validate(rows, memory_interval, mapping="window", workload="core", tlb_invalidation=None, execution=None, direct_config=None, cpus=1, parallel_profile=None, uaccess_stop=None, code_lookup_limit=None, code_memory=None, online_cpus=None, guest_layout=None, guest_page_bytes=16384):
+def validate(rows, memory_interval, mapping="window", workload="core", tlb_invalidation=None, execution=None, direct_config=None, cpus=1, parallel_profile=None, uaccess_stop=None, code_lookup_limit=None, code_memory=None, online_cpus=None, guest_layout=None, guest_page_bytes=16384, data_tbi=None):
     if guest_page_bytes not in (4096, 16384):
         return False
     if guest_page_bytes == 4096:
@@ -144,15 +144,45 @@ def validate(rows, memory_interval, mapping="window", workload="core", tlb_inval
         if requests[0] != {'host_alias_request': 'map', 'target': physical, 'source': ram,
                             'bytes': 1 << 30, 'accepted': True}:
             return False
+    if data_tbi is not None:
+        tbi_config = [row for row in rows if row.get('config') == 'translation_data_tbi']
+        if (tbi_config != [{'config': 'translation_data_tbi', 'data': data_tbi, 'fetch': False, 'tagged_syscall_abi': False}] or
+                any(type(row[key]) is not bool for row in tbi_config for key in ('data', 'fetch', 'tagged_syscall_abi')) or
+                (data_tbi and (cpus != 1 or (direct_config and direct_config['memory'] == 'view')))):
+            return False
+        tbi_stats = [row for row in rows if row.get('translation_data_tbi')]
+        if (len(tbi_stats) != cpus or {row.get('cpu') for row in tbi_stats} != set(range(cpus)) or
+                any(type(row.get(key)) is not int or row[key] < 0 or (not data_tbi and row[key] != 0)
+                    for row in tbi_stats for key in ('unicorn_tagged_fills', 'alias_flushes'))):
+            return False
     if guest_layout is not None:
         flat = execution == 'direct' and direct_config is not None and direct_config['memory'] in ('flat', 'view')
         if not validate_guest_layout(rows, guest_layout, flat, guest_page_bytes):
             return False
-        if guest_layout == 'low' and (mapping != 'pte' or cpus != 1 or
+        if guest_layout in ('low', 'sparse') and (mapping != 'pte' or cpus != 1 or
                 (guest_page_bytes == 16384 and (execution != 'direct' or direct_config['memory'] != 'flat')) or
                 (guest_page_bytes == 4096 and execution != 'unicorn')):
             return False
         if workload == 'core' and mapping == 'pte':
+            if data_tbi:
+                for name in ('translated_data_tbi_and_unicorn_alias_invalidation', 'translated_tagged_syscall_abi_rejected', 'translated_tagged_fetch_rejected'):
+                    if [row for row in rows if row.get('test') == name] != [{'test': name, 'passed': True}]:
+                        return False
+                tbi = [row for row in rows if row.get('translation_data_tbi')]
+                if (len(tbi) != cpus or any(type(row.get(key)) is not int or row[key] <= 0
+                                           for row in tbi for key in ('unicorn_tagged_fills', 'alias_flushes'))):
+                    return False
+                if execution == 'direct' and not {0xf8400949, 0xf8000949} <= {row.get('direct_fallback') for row in rows if row.get('count', 0) > 0}:
+                    return False
+            if guest_layout == 'sparse':
+                if not {'translated_sparse_host_pointer_sources', 'translated_sparse_pte_cow_shared_uaccess',
+                        'translated_sparse_reservation_materialization'} <= {row.get('test') for row in rows if row.get('passed')}:
+                    return False
+                pointers = [row for row in rows if row.get('config') == 'translation_host_pointer_sources']
+                if (len(pointers) != 1 or set(pointers[0]) != {'config', 'low', 'high', 'stack', 'text'} or
+                        any(type(pointers[0][k]) is not int or not 0 < pointers[0][k] < 1 << 64 for k in ('low', 'high', 'stack', 'text')) or
+                        not 0x10000 <= pointers[0]['low'] <= (1 << 36) - 16384 or pointers[0]['high'] < 1 << 36):
+                    return False
             if [row for row in rows if row.get('test') == 'translated_guest_layout_boundaries'] != [
                     {'test': 'translated_guest_layout_boundaries', 'passed': True, 'layout': guest_layout}]:
                 return False
@@ -233,7 +263,12 @@ def validate(rows, memory_interval, mapping="window", workload="core", tlb_inval
         expected.remove('linux_dynamic_code')
         if not validate_standard_jit(rows, guest_page_bytes):
             return False
-    if workload == 'bionic':
+    elif workload == 'stock-art':
+        from stock_art import validate as validate_stock_art
+        if not validate_stock_art(rows):
+            return False
+        expected = {'stock_art_standard_jni', 'translated_context_cleanup'}
+    elif workload == 'bionic':
         from stock_bionic import validate as validate_stock
         if not validate_stock(rows, guest_page_bytes):
             return False
@@ -440,12 +475,14 @@ def main():
     parser.add_argument('--build-only', action='store_true')
     parser.add_argument('--reuse-engine-build', action='store_true', help='校验摘要后复用已构建的 Unicorn，用于执行器成组对照')
     parser.add_argument('--mapping', choices=('window', 'pte'), default='window')
-    parser.add_argument('--guest-layout', choices=('host', 'low'), default='host')
+    parser.add_argument('--data-tbi', type=int, choices=(0, 1), default=0)
+    parser.add_argument('--guest-layout', choices=('host', 'low', 'sparse'), default='host')
     parser.add_argument('--guest-page-bytes', type=int, choices=(4096, 16384), default=16384)
     parser.add_argument('--data-seed', type=Path, help='服务和桌面检查使用的初始 ext4 数据盘')
     parser.add_argument('--persistent-data', action='store_true', help='各入口与重复轮次连续使用同一数据盘，检查重启持久化')
     parser.add_argument('--apk-fixture-dir', type=Path, help='运行时传入同签名 Java/JNI APK，首轮安装更新，后续启动只检查已安装 v2')
-    parser.add_argument('--workload', choices=('core', 'bionic', 'android', 'services', 'desktop'), default='core')
+    parser.add_argument('--workload', choices=('core', 'bionic', 'stock-art', 'android', 'services', 'desktop'), default='core')
+    parser.add_argument('--stock-art-directory', type=Path, help='prepare_stock_art.py 已核对的原始 ART 组件目录')
     parser.add_argument('--runtime-source', choices=('sdk36', 'hyperos'))
     parser.add_argument('--runtime-directory', type=Path)
     parser.add_argument('--runtime-manifest', type=Path)
@@ -467,8 +504,12 @@ def main():
     if args.guest_page_bytes == 4096 and (args.mapping != 'pte' or args.execution != 'unicorn' or
             args.guest_layout != 'low' or args.cpus != 1 or args.workload not in ('core', 'bionic')):
         parser.error('4 KiB 实验需要单 CPU 的 low/pte/unicorn，负载仅限 core/bionic')
-    if args.guest_page_bytes == 16384 and args.guest_layout == 'low' and (args.mapping != 'pte' or args.execution != 'direct' or args.direct_memory != 'flat' or args.cpus != 1):
+    if args.guest_page_bytes == 16384 and args.guest_layout in ('low', 'sparse') and (args.mapping != 'pte' or args.execution != 'direct' or args.direct_memory != 'flat' or args.cpus != 1):
         parser.error('低客体地址实验需要单 CPU 的 pte/direct/flat')
+    if args.data_tbi and args.execution == 'direct' and args.direct_memory == 'view':
+        parser.error('用户数据 TBI 暂不支持 read-view')
+    if args.data_tbi and args.cpus != 1:
+        parser.error('用户数据 TBI 当前仅验证单 CPU')
     if args.high_res_timers and args.mapping != 'pte':
         parser.error('高分辨率定时器变体需要 --mapping pte')
     args.online_cpus = args.cpus if args.online_cpus is None else args.online_cpus
@@ -534,6 +575,14 @@ def main():
         dependency = build_engine(args.code_memory)
     library = Path(dependency['path'])
     out.mkdir(parents=True, exist_ok=True)
+    stock_art = None
+    if args.workload == 'stock-art':
+        if not args.stock_art_directory or args.mapping != 'pte' or args.cpus != 1 or args.entry == 'window':
+            parser.error('stock-art 需要已准备目录和单核 PTE CLI/GCD')
+        from stock_art import attach
+        stock_art = attach(args.stock_art_directory, out)
+    elif args.stock_art_directory:
+        parser.error('--stock-art-directory 仅用于 stock-art')
     stock_runtime = None
     if args.workload == 'bionic':
         if (not all((args.runtime_source, args.runtime_directory, args.runtime_manifest)) or
@@ -637,12 +686,13 @@ def main():
     hosts_before = {mode: sha(out / mode) for mode in build_entries}
     libc = WORK / 'musl-build/install'
     resource = Path(subprocess.check_output([llvm / 'clang', '-print-resource-dir'], text=True).strip()) / 'include'
-    guest_main = EXP / 'translation' / ('stock-bionic-supervisor.c' if stock_runtime else 'linux-guest.c')
+    guest_main = (EXP / 'stock-art/supervisor.c' if stock_art else
+                  EXP / 'translation' / ('stock-bionic-supervisor.c' if stock_runtime else 'linux-guest.c'))
     command = [llvm / 'clang', '--target=aarch64-linux-musl', '-mno-outline-atomics', '-fPIE', '-O2', '-g',
                '-Wall', '-Wextra', '-Werror', '-nostdinc', '-isystem', libc / 'include', '-isystem', resource,
                f'-DNCE_TRANSLATION_CPUS={args.cpus}', f'-DNCE_TRANSLATION_HIGH_RES_TIMERS={int(args.high_res_timers)}', page_flag,
                '-c', guest_main, '-o', out / 'guest.o']
-    if args.mapping == 'pte' and not stock_runtime:
+    if args.mapping == 'pte' and not stock_runtime and not stock_art:
         command.append('-DNCE_TRANSLATION_STANDARD_JIT')
     run(command)
     commands.append(list(map(str, command)))
@@ -650,7 +700,9 @@ def main():
     guest_sources = [EXP / 'userspace' / name for name in
                      ('signal-tests.c', 'signal-registers.S', 'code-tests.c', 'mm-bench.c', 'mm-tests.c', 'file-tests.c')]
     guest_sources.append(EXP / 'translation/timer-tests.c')
-    if stock_runtime:
+    guest_sources.append(EXP / 'translation/sparse-guest.c')
+    guest_sources.append(EXP / 'translation/tbi-guest.c')
+    if stock_runtime or stock_art:
         guest_sources = []
     elif args.mapping == 'pte':
         guest_sources.append(EXP / 'translation/jit-guest.c')
@@ -690,9 +742,10 @@ def main():
                    page_flag, EXP / 'translation/stock-bionic-guest.c', '-ldl', '-o', out / 'bionic-test.elf']
         run(command)
         commands.append(list(map(str, command)))
-    else:
+    elif not stock_art:
         commands.append(build_bionic_test(out))
-    runtime_files += ('bionic-test.elf',)
+    if not stock_art:
+        runtime_files += ('bionic-test.elf',)
     android_files = []
     if args.workload in ('android', 'services', 'desktop'):
         for name, source in [('NceWorkload.dex', KERNEL / 'java-classes/classes.dex'),
@@ -717,6 +770,12 @@ def main():
              EXP / 'translation/kernel-api.h', EXP / 'translation/kernel-image.h', EXP / 'code-memory.h', EXP / 'nce.h', out / 'translation-symbols.h',
              ROOT / 'scripts/build_translation_engine.py', manifest,
              library / 'lib/libunicorn.a', *[out / name for name in (*build_entries, 'guest.elf', 'late.elf', *runtime_files)]]
+    files += [EXP / 'translation/stock-art-runner.h']
+    if stock_runtime or stock_art:
+        files.append(EXP / 'translation/component-supervisor.h')
+    if stock_art:
+        files += [ROOT / 'scripts/stock_art.py', ROOT / 'scripts/prepare_stock_art.py',
+                  out / 'stock-art-files.tsv', out / 'stock-art-boot-classpath']
     if stock_runtime:
         from stock_bionic import FILES
         files += [ROOT / 'scripts/stock_bionic.py', EXP / 'translation/stock-bionic-guest.c',
@@ -750,8 +809,13 @@ def main():
         environment.pop(name, None)
     if apk_fixture:
         environment['NCE_APK_FIXTURE_DIR'] = apk_fixture['directory']
+    environment.pop('NCE_STOCK_ART_DIRECTORY', None)
+    environment.pop('NCE_STOCK_ART_RESULT_DIR', None)
+    if stock_art:
+        environment['NCE_STOCK_ART_DIRECTORY'] = stock_art['directory']
     environment['NCE_TRANSLATION_FILES'] = str(out)
     environment['NCE_TRANSLATION_GUEST_LAYOUT'] = args.guest_layout
+    environment['NCE_TRANSLATION_DATA_TBI'] = str(args.data_tbi)
     environment['NCE_TRANSLATION_ONLINE_CPUS'] = str(args.online_cpus)
     environment.update(NCE_ART_NTERP=str(args.art_nterp), NCE_ART_EXPANDED_JIT=str(args.art_expanded_jit),
                        NCE_ART_FAST_BASELINE=str(args.art_fast_baseline), NCE_ART_AOT='0', NCE_ART_BOOT_IMAGE='0', NCE_SCHED_SLICE_US='0')
@@ -785,6 +849,13 @@ def main():
                 if not apk_inputs_unchanged(apk_fixture):
                     raise RuntimeError('APK 输入在运行前发生变化')
                 environment['NCE_APK_FIXTURE_STAGE'] = apk_stage
+            if stock_art:
+                from stock_art import unchanged as stock_art_unchanged
+                if not stock_art_unchanged(stock_art):
+                    raise RuntimeError('原始 ART 输入在运行前发生变化')
+                component_output = out / (stem + '-art')
+                component_output.mkdir(exist_ok=False)
+                environment['NCE_STOCK_ART_RESULT_DIR'] = str(component_output)
             data = None
             if args.workload in ('services', 'desktop'):
                 data_path = out / ('persistent-data.img' if args.persistent_data else f'{stem}-data.img')
@@ -804,8 +875,17 @@ def main():
                     returncode = process.returncode
                 except subprocess.TimeoutExpired:
                     returncode = 'timeout'
-            rows = [json.loads(line) for line in (out / f'{stem}.jsonl').read_text().splitlines() if line.startswith('{')]
-            passed = returncode == 0 and validate(rows, args.memory_interval_ms, args.mapping, args.workload, args.tlb_invalidation, args.execution, direct_config, args.cpus, bool(args.parallel_profile), args.smp_uaccess_stop, code_memory=args.code_memory, online_cpus=args.online_cpus, guest_layout=args.guest_layout, guest_page_bytes=args.guest_page_bytes)
+            rows, parse_errors = [], []
+            for line_number, line in enumerate((out / f'{stem}.jsonl').read_text().splitlines(), 1):
+                if not line.startswith('{'):
+                    continue
+                try:
+                    rows.append(json.loads(line))
+                except json.JSONDecodeError as error:
+                    if not stock_art:
+                        raise
+                    parse_errors.append({'line': line_number, 'error': str(error)})
+            passed = not parse_errors and returncode == 0 and validate(rows, args.memory_interval_ms, args.mapping, args.workload, args.tlb_invalidation, args.execution, direct_config, args.cpus, bool(args.parallel_profile), args.smp_uaccess_stop, code_memory=args.code_memory, online_cpus=args.online_cpus, guest_layout=args.guest_layout, data_tbi=bool(args.data_tbi), guest_page_bytes=args.guest_page_bytes)
             apk_validated = None
             if apk_fixture:
                 previous = [row for result in results for row in result['results']]
@@ -825,8 +905,17 @@ def main():
             results.append({'entry': mode, 'iteration': iteration, 'returncode': returncode, 'results': rows,
                             'validated': passed, 'data_image': data,
                             'stdout_sha256': sha(out / f'{stem}.jsonl'), 'stderr_sha256': sha(out / f'{stem}.log')})
+            if stock_art:
+                from stock_art import artifacts, unchanged as stock_art_unchanged
+                results[-1]['parse_errors'] = parse_errors
+                results[-1]['stock_art_maps'] = artifacts(component_output, rows)
+                results[-1]['stock_art_inputs_unchanged'] = stock_art_unchanged(stock_art)
+                passed = passed and results[-1]['stock_art_inputs_unchanged'] and all(
+                    item['validated'] and item['present'] for item in results[-1]['stock_art_maps'])
+                results[-1]['validated'] = passed
             if apk_fixture:
-                results[-1]['apk_fixture'] = {'stage': apk_stage, 'validated': apk_validated}
+                results[-1]['apk_fixture'] = {'stage': apk_stage, 'validated': apk_validated,
+                                            'unobserved_creations': unobserved_creations(rows, previous) if apk_validated else None}
             if not passed:
                 break
         if not results[-1]['validated']:
@@ -838,7 +927,7 @@ def main():
               'platform': platform.platform(), 'cpu': subprocess.check_output(['sysctl', '-n', 'machdep.cpu.brand_string'], text=True).strip(),
               'system_build': subprocess.check_output(['sw_vers', '-buildVersion'], text=True).strip(),
               'dependency': dependency, 'commands': commands, 'host_unchanged_after_guest_build': True,
-              'configuration': {'guest_layout': args.guest_layout, 'code_memory': args.code_memory, 'execution': args.execution, 'direct': direct_config, 'mapping': args.mapping, 'sparse_scan': True, 'fault_prefetch': False, 'guest_page_bytes': args.guest_page_bytes, 'host_page_bytes': 16384,
+              'configuration': {'data_tbi': bool(args.data_tbi), 'guest_layout': args.guest_layout, 'code_memory': args.code_memory, 'execution': args.execution, 'direct': direct_config, 'mapping': args.mapping, 'sparse_scan': True, 'fault_prefetch': False, 'guest_page_bytes': args.guest_page_bytes, 'host_page_bytes': 16384,
                                 'workload': args.workload, 'entries': entries, 'art_nterp': args.art_nterp,
                                 'cpus': args.cpus, 'high_res_timers': args.high_res_timers, 'online_cpus': args.online_cpus, 'uaccess_stop': args.smp_uaccess_stop, 'parallel_profile': bool(args.parallel_profile), 'art_expanded_jit': args.art_expanded_jit, 'art_fast_baseline': args.art_fast_baseline,
                                 'cache_invalidation': args.cache_invalidation,
@@ -850,6 +939,10 @@ def main():
                                 'preemption': args.preemption, 'timer_interval_ns': 2000000},
               'measurement': 'Guest clock times 128 pipe round trips per memory case; excludes initial COW materialization. Selected preemption, translation and selected Linux mapping implementation included. Memory means are arithmetic sample means, including phase boundaries; sampled peaks can miss short peaks. Resident lifetime peak is separate.',
               'sha256': input_hashes, 'runs': results}
+    if stock_art:
+        report['stock_art'] = stock_art
+        report['stock_art']['execution_attempted'] = True
+        report['measurement'] = 'Original ART component functionality only; no JIT execution or performance claim.'
     if stock_runtime:
         from stock_bionic import unchanged
         if not unchanged(stock_runtime):

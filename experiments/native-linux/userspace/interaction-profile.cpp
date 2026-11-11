@@ -2,9 +2,11 @@
 #include "../interaction-profile.h"
 #include "desktop-session.h"
 #include <dlfcn.h>
+#include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <signal.h>
 #include <string.h>
@@ -17,6 +19,8 @@
 
 static bool tracing;
 static bool capturing;
+static bool first_open;
+static bool settings_opened;
 static int trace_preparation = -EAGAIN;
 
 static int put(const char *path, const char *value)
@@ -69,14 +73,16 @@ static int copy(const char *source, const char *name)
     return result;
 }
 
-static int frames(bool reset)
+static int frames(bool reset, const char *name = "frames.txt")
 {
     pid_t child = fork();
     if (child < 0)
         return -errno;
     if (!child) {
         alarm(25);
-        int fd = open(NCE_PROFILE_OUTPUT "frames.txt", O_WRONLY | O_CREAT | O_TRUNC | O_CLOEXEC, 0600);
+        char path[160];
+        snprintf(path, sizeof(path), NCE_PROFILE_OUTPUT "%s", name);
+        int fd = open(path, O_WRONLY | O_CREAT | O_TRUNC | O_CLOEXEC, 0600);
         if (fd < 0 || dup2(fd, STDOUT_FILENO) < 0)
             _exit(120);
         close(fd);
@@ -84,6 +90,142 @@ static int frames(bool reset)
         _exit(121);
     }
     int status = nce_wait_desktop_child(child, true);
+    return status == 0 ? 0 : -EIO;
+}
+
+static uint64_t monotonic_ns()
+{
+    timespec now;
+    return clock_gettime(CLOCK_MONOTONIC, &now) ? 0 : uint64_t(now.tv_sec) * 1000000000 + now.tv_nsec;
+}
+
+static int settings_process(pid_t *pid = nullptr, uint64_t *starttime = nullptr)
+{
+    DIR *directory = opendir("/proc");
+    if (!directory)
+        return -errno;
+    int result = 0;
+    bool found = false;
+    for (;;) {
+        errno = 0;
+        dirent *entry = readdir(directory);
+        if (!entry) {
+            result = -errno;
+            break;
+        }
+        char *end;
+        long number = strtol(entry->d_name, &end, 10);
+        if (*end || number <= 0 || number > INT32_MAX)
+            continue;
+        char path[128], name[128] = {};
+        snprintf(path, sizeof(path), "/proc/%ld/cmdline", number);
+        int fd = open(path, O_RDONLY | O_CLOEXEC);
+        if (fd < 0) {
+            if (errno == ENOENT)
+                continue;
+            result = -errno;
+            break;
+        }
+        ssize_t count = read(fd, name, sizeof(name) - 1);
+        int error = errno;
+        close(fd);
+        if (count < 0) {
+            result = -error;
+            break;
+        }
+        constexpr char package[] = "com.android.settings";
+        if (strncmp(name, package, sizeof(package) - 1) || (name[sizeof(package) - 1] && name[sizeof(package) - 1] != ':'))
+            continue;
+        if (!pid) {
+            result = -EBUSY;
+            break;
+        }
+        if (name[sizeof(package) - 1] == ':')
+            continue;
+        if (found) {
+            result = -EEXIST;
+            break;
+        }
+        snprintf(path, sizeof(path), "/proc/%ld/stat", number);
+        FILE *file = fopen(path, "re");
+        char stat[4096];
+        if (!file) {
+            result = -errno;
+            break;
+        }
+        bool complete = fgets(stat, sizeof(stat), file) && strchr(stat, '\n');
+        fclose(file);
+        // comm can contain spaces and parentheses; field 22 follows its last ')'.
+        char *field = complete ? strrchr(stat, ')') : nullptr;
+        char *save = nullptr;
+        for (int index = 3; index <= 22 && field; ++index)
+            field = strtok_r(index == 3 ? field + 1 : nullptr, " \n", &save);
+        errno = 0;
+        unsigned long long ticks = field ? strtoull(field, &end, 10) : 0;
+        if (!ticks || errno || *end) {
+            result = -EIO;
+            break;
+        }
+        *pid = static_cast<pid_t>(number);
+        *starttime = ticks;
+        found = true;
+    }
+    closedir(directory);
+    return result ? result : pid && !found ? -ESRCH
+                                           : 0;
+}
+
+static int launch_record(const char *phase, uint64_t instant, pid_t pid = 0, uint64_t starttime = 0, uint64_t snapshot_end = 0)
+{
+    if (!instant)
+        return -EIO;
+    FILE *file = fopen(NCE_PROFILE_OUTPUT "launch.jsonl", "ae");
+    if (!file)
+        return -errno;
+    int count = fprintf(file, "{\"phase\":\"%s\",\"mode\":\"force_stopped_process\",\"guest_ns\":%llu,\"pid\":%d,\"starttime_ticks\":%llu,\"snapshot_end_ns\":%llu}\n",
+                        phase, static_cast<unsigned long long>(instant), pid,
+                        static_cast<unsigned long long>(starttime), static_cast<unsigned long long>(snapshot_end));
+    int closed = fclose(file);
+    return count < 0 || closed ? -EIO : 0;
+}
+
+static int settings_command(bool prepare)
+{
+    // Existing command helpers abort on failure; isolate them from Android init.
+    pid_t child = fork();
+    if (child < 0)
+        return -errno;
+    if (!child) {
+        if (setpgid(0, 0) < 0)
+            _exit(123);
+        alarm(45);
+        if (prepare) {
+            nce_android_command({"activity", "force-stop", "com.android.settings"});
+            _exit(!settings_process() && !launch_record("prepared", monotonic_ns()) ? 0 : 122);
+        }
+        if (first_open && (settings_process() || launch_record("begin", monotonic_ns())))
+            _exit(122);
+        nce_android_command({"activity", "start-activity", "-a", "android.settings.SETTINGS"}, "Starting:");
+        if (!nce_surface_check("com.android.settings", "--ready", true))
+            _exit(122);
+        if (first_open) {
+            uint64_t ready = monotonic_ns(), starttime, after_starttime;
+            pid_t pid, after_pid;
+            if (settings_process(&pid, &starttime) || frames(false, "launch-frames.txt") ||
+                settings_process(&after_pid, &after_starttime) || pid != after_pid || starttime != after_starttime ||
+                launch_record("ready", ready, pid, starttime, monotonic_ns()))
+                _exit(122);
+        }
+        _exit(0);
+    }
+    if (setpgid(child, child) < 0 && errno != EACCES && errno != ESRCH)
+        dprintf(2, "interaction helper setpgid: %s\n", strerror(errno));
+    int status = nce_wait_desktop_child(child, true);
+    // Reap helper descendants after cancellation or an alarm. Android init
+    // adopts them when their parent exits; they must not retain Binder work.
+    kill(-child, SIGKILL);
+    while (waitpid(-child, nullptr, 0) > 0 || errno == EINTR) {
+    }
     return status == 0 ? 0 : -EIO;
 }
 
@@ -226,46 +368,8 @@ static int start_trace()
     return result;
 }
 
-static int perform(int command)
+static int finish_capture(bool collect_frames)
 {
-    if (command == NCE_PROFILE_SETTINGS) {
-        if (capturing)
-            return -EBUSY;
-        // Existing command helpers abort on failure; isolate them from Android init.
-        pid_t child = fork();
-        if (child < 0)
-            return -errno;
-        if (!child) {
-            if (setpgid(0, 0) < 0)
-                _exit(123);
-            alarm(45);
-            nce_android_command({"activity", "start-activity", "-a", "android.settings.SETTINGS"}, "Starting:");
-            _exit(nce_surface_check("com.android.settings", "--ready", true) ? 0 : 122);
-        }
-        if (setpgid(child, child) < 0 && errno != EACCES && errno != ESRCH)
-            dprintf(2, "interaction helper setpgid: %s\n", strerror(errno));
-        int status = nce_wait_desktop_child(child, true);
-        // Reap helper descendants after cancellation or an alarm. Android init
-        // adopts them when their parent exits; they must not retain Binder work.
-        kill(-child, SIGKILL);
-        while (waitpid(-child, nullptr, 0) > 0 || errno == EINTR) {
-        }
-        return status == 0 ? 0 : -EIO;
-    }
-    if (command == NCE_PROFILE_FRAMES || command == NCE_PROFILE_SCHEDULER) {
-        if (capturing)
-            return -EBUSY;
-        int result = frames(true);
-        if (!result && command == NCE_PROFILE_SCHEDULER)
-            result = start_trace();
-        if (!result) {
-            capturing = true;
-            tracing = command == NCE_PROFILE_SCHEDULER;
-        }
-        return result;
-    }
-    if (command != NCE_PROFILE_END || !capturing)
-        return -EINVAL;
     int result = 0;
     if (tracing) {
         result = put("/sys/kernel/tracing/tracing_on", "0");
@@ -287,9 +391,71 @@ static int perform(int command)
         if (!result)
             result = status;
     }
-    int status = frames(false);
-    capturing = tracing = false;
+    int status = collect_frames ? frames(false) : 0;
+    if (!status && first_open && collect_frames) {
+        pid_t pid;
+        uint64_t starttime;
+        status = settings_opened ? settings_process(&pid, &starttime) : -EINVAL;
+        if (!status)
+            status = launch_record("end", monotonic_ns(), pid, starttime);
+    }
+    if (first_open && !collect_frames) {
+        int recorded = launch_record("failed", monotonic_ns());
+        if (!status)
+            status = recorded;
+    }
+    capturing = tracing = first_open = settings_opened = false;
     return result ? result : status;
+}
+
+static int perform(int command)
+{
+    if (command == NCE_PROFILE_SETTINGS_PREPARE) {
+        if (capturing || first_open)
+            return -EBUSY;
+        for (const char *name : {"launch.jsonl", "launch-frames.txt", "frames.txt", "kernel.ftrace", "cpu0.txt", "cpu1.txt", "clock.txt"}) {
+            char path[160];
+            snprintf(path, sizeof(path), NCE_PROFILE_OUTPUT "%s", name);
+            if (unlink(path) && errno != ENOENT)
+                return -errno;
+        }
+        int result = settings_command(true);
+        if (result)
+            launch_record("prepare_failed", monotonic_ns());
+        first_open = !result;
+        settings_opened = false;
+        return result;
+    }
+    if (command == NCE_PROFILE_SETTINGS) {
+        if ((capturing && (!first_open || settings_opened)) || (!capturing && first_open))
+            return -EBUSY;
+        settings_opened = capturing;
+        int result = settings_command(false);
+        if (result && capturing) {
+            int cleanup = finish_capture(false);
+            dprintf(2, "{\"interaction_failed_capture_cleanup\":%d}\n", cleanup);
+        }
+        return result;
+    }
+    if (command == NCE_PROFILE_FRAMES || command == NCE_PROFILE_SCHEDULER) {
+        if (capturing)
+            return -EBUSY;
+        if (!first_open) {
+            unlink(NCE_PROFILE_OUTPUT "launch.jsonl");
+            unlink(NCE_PROFILE_OUTPUT "launch-frames.txt");
+        }
+        int result = first_open ? settings_process() : frames(true);
+        if (!result && command == NCE_PROFILE_SCHEDULER)
+            result = start_trace();
+        if (!result) {
+            capturing = true;
+            tracing = command == NCE_PROFILE_SCHEDULER;
+        }
+        return result;
+    }
+    if (command != NCE_PROFILE_END || !capturing)
+        return -EINVAL;
+    return finish_capture(true);
 }
 
 void nce_interaction_profile_poll()

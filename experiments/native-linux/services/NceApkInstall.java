@@ -86,23 +86,22 @@ public final class NceApkInstall {
         return output.substring("package:".length());
     }
 
-    private static JSONObject application(String packageName, String mode, JSONObject artifact, long offset) throws Exception {
+    private static JSONArray application(String packageName, String mode, JSONObject artifact, String phase, long offset) throws Exception {
         long deadline = SystemClock.uptimeMillis() + 60_000;
         try (RandomAccessFile log = new RandomAccessFile("/stderr", "r")) {
             log.seek(offset);
-            JSONObject observed = null;
+            JSONArray observed = new JSONArray();
             long scanEnd = -1;
             while (SystemClock.uptimeMillis() < deadline) {
                 if (log.length() < offset) throw new AssertionError("Application log was truncated");
-                String line = readCompleteLine(log, observed == null ? log.length() : scanEnd);
+                String line = readCompleteLine(log, observed.length() == 0 ? log.length() : scanEnd);
                 if (line == null) {
-                    if (observed != null) return observed;
+                    if (observed.length() != 0) return observed;
                     SystemClock.sleep(50);
                     continue;
                 }
                 Matcher match = APPLICATION_LOG.matcher(line);
                 if (!match.matches()) continue;
-                if (observed != null) throw new AssertionError("Duplicate application JSON after launch");
                 JSONObject result = new JSONObject(match.group(1));
                 if (!"passed".equals(result.opt("status"))) throw new AssertionError("Application failure: " + result);
                 Set<String> keys = new HashSet<>();
@@ -117,11 +116,23 @@ public final class NceApkInstall {
                         || !result.getString("marker").matches("[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}")) {
                     throw new AssertionError("Unexpected application result: " + result);
                 }
-                observed = result;
+                boolean firstCreation = phase.equals("fresh-v1") && observed.length() == 0;
+                if (result.getBoolean("created_now") != firstCreation
+                        || (firstCreation && integer(result, "launch_count") != 1)) {
+                    throw new AssertionError("Unexpected private data creation: " + result);
+                }
+                if (observed.length() != 0) {
+                    JSONObject previous = observed.getJSONObject(observed.length() - 1);
+                    if (!result.getString("marker").equals(previous.getString("marker"))
+                            || integer(result, "launch_count") != (long) integer(previous, "launch_count") + 1) {
+                        throw new AssertionError("Activity creation sequence changed: " + result);
+                    }
+                }
+                observed.put(result);
                 // Check complete records already present; unrelated later writes must not extend the scan.
-                scanEnd = log.length();
+                if (scanEnd < 0) scanEnd = log.length();
             }
-            if (observed != null) throw new AssertionError("Application log snapshot validation timed out: " + packageName);
+            if (observed.length() != 0) throw new AssertionError("Application log snapshot validation timed out: " + packageName);
         }
         throw new AssertionError("Application JSON did not arrive: " + packageName);
     }
@@ -163,13 +174,15 @@ public final class NceApkInstall {
         String started = command(true, "activity", "start-activity", "-W", "--user", "0", "-n",
                 packageName + "/app.droidondarwin.fixture.MainActivity");
         if (!Arrays.asList(started.split("\\R")).contains("Status: ok")) throw new AssertionError("Activity did not start: " + started);
-        JSONObject result = application(packageName, mode, artifact, offset);
+        JSONArray results = application(packageName, mode, artifact, phase, offset);
         String path = installedPath(packageName, true);
         String hash = digest(new File(path));
         if (!hash.equals(artifact.getString("sha256"))) throw new AssertionError("Installed APK bytes differ: " + path);
-        System.out.println(new JSONObject().put("test", "android_apk_fixture")
-                .put("stage", phase).put("artifact", artifact.getString("apk"))
-                .put("installed_sha256", hash).put("application", result).put("passed", true));
+        for (int index = 0; index < results.length(); ++index) {
+            System.out.println(new JSONObject().put("test", "android_apk_fixture")
+                    .put("stage", phase).put("artifact", artifact.getString("apk"))
+                    .put("installed_sha256", hash).put("application", results.getJSONObject(index)).put("passed", true));
+        }
     }
 
     private static void install(JSONObject artifact, boolean update) throws Exception {

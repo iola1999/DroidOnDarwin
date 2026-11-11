@@ -17,6 +17,7 @@
 
 static pthread_mutex_t profile_mutex = PTHREAD_MUTEX_INITIALIZER;
 static int profile_scheduler;
+static int profile_first_open;
 
 static uint64_t monotonic_ns(void)
 {
@@ -170,7 +171,7 @@ static int profile_threads(const char *directory, const char *name)
 
 int nce_session_profile(int command, const char *directory)
 {
-    if (command < NCE_PROFILE_SETTINGS || command > NCE_PROFILE_END || !directory)
+    if (command < NCE_PROFILE_SETTINGS || command > NCE_PROFILE_SETTINGS_PREPARE || !directory)
         return -EINVAL;
     if (pthread_mutex_trylock(&profile_mutex))
         return -EBUSY;
@@ -201,7 +202,10 @@ int nce_session_profile(int command, const char *directory)
     }
     if (!result)
         result = (int)nce_session_call(38, -100, (long)NCE_PROFILE_REQUEST ".tmp", -100, (long)NCE_PROFILE_REQUEST);
-    uint64_t deadline = monotonic_ns() + UINT64_C(60000000000);
+    // First-open failure can spend 45 seconds in its helper and 25 more
+    // disabling atrace before replying with the original failure.
+    uint64_t limit = command == NCE_PROFILE_SETTINGS && profile_first_open ? UINT64_C(90000000000) : UINT64_C(60000000000);
+    uint64_t deadline = monotonic_ns() + limit;
     while (!result) {
         fd = nce_session_call(56, -100, (long)"/data/nce/session-stop", 0x80000, 0);
         if (fd >= 0) {
@@ -259,15 +263,34 @@ int nce_session_profile(int command, const char *directory)
 #ifdef NCE_DIRECT_EXECUTION
     if (!result && command == NCE_PROFILE_SCHEDULER)
         result = nce_execution_profile_control(true, directory);
+    if (result && profile_scheduler)
+        nce_execution_profile_control(false, directory);
 #endif
     if (!result && (command == NCE_PROFILE_FRAMES || command == NCE_PROFILE_SCHEDULER))
         profile_scheduler = command == NCE_PROFILE_SCHEDULER;
-    if (command == NCE_PROFILE_END) {
+    if (!result && command == NCE_PROFILE_SETTINGS_PREPARE)
+        profile_first_open = 1;
+    if (command == NCE_PROFILE_SETTINGS_PREPARE) {
+        int status = export_profile(directory, "launch.jsonl", result != 0);
+        if (!result)
+            result = status;
+    }
+    int failed_open = result && (profile_first_open || command == NCE_PROFILE_SETTINGS_PREPARE);
+    if (command == NCE_PROFILE_END || failed_open) {
         const char *files[] = {"frames.txt", "kernel.ftrace", "cpu0.txt", "cpu1.txt", "clock.txt"};
         for (unsigned i = 0; i < sizeof(files) / sizeof(files[0]); ++i) {
             if (i && !profile_scheduler)
                 continue;
-            int status = export_profile(directory, files[i], i == 3);
+            int status = export_profile(directory, files[i], failed_open || i == 3);
+            if (status)
+                fprintf(stderr, "interaction export %s failed: %d\n", files[i], status);
+            if (!result)
+                result = status;
+        }
+        for (unsigned i = 0; i < 2; ++i) {
+            int status = export_profile(directory, i ? "launch-frames.txt" : "launch.jsonl", 1);
+            if (status)
+                fprintf(stderr, "interaction launch export failed: %d\n", status);
             if (!result)
                 result = status;
         }
@@ -277,6 +300,8 @@ int nce_session_profile(int command, const char *directory)
         if (!result)
             result = status;
     }
+    if (command == NCE_PROFILE_END || failed_open)
+        profile_first_open = 0;
     pthread_mutex_unlock(&profile_mutex);
     return result;
 }

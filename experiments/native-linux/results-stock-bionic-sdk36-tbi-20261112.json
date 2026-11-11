@@ -1,0 +1,5598 @@
+{
+  "scope": "Native 1-CPU LKL with translated ARM64 userspace; selected workload only; iPhone unverified",
+  "data_seed": null,
+  "platform": "macOS-27.0-arm64-arm-64bit-Mach-O",
+  "cpu": "Apple M5 Ultra",
+  "system_build": "26A428",
+  "dependency": {
+    "version": "2.1.4",
+    "patch": "nce-tb-stop",
+    "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/work/native-linux-nce/unicorn-tb-stop-dual/prefix",
+    "ZERO_AR_DATE": "1",
+    "code_memory": "dual",
+    "target": "macos",
+    "architecture": "arm64",
+    "sdk": "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX27.0.sdk",
+    "commands": [
+      [
+        "cmake",
+        "-S",
+        "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/unicorn-dual-source/unicorn-2.1.4",
+        "-B",
+        "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/unicorn-tb-stop-dual/build",
+        "-DCMAKE_BUILD_TYPE=Release",
+        "-DUNICORN_ARCH=aarch64",
+        "-DBUILD_SHARED_LIBS=OFF",
+        "-DUNICORN_BUILD_TESTS=OFF",
+        "-DUNICORN_INSTALL=ON",
+        "-DCMAKE_INSTALL_PREFIX=/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/unicorn-tb-stop-dual/prefix",
+        "-DCMAKE_OSX_ARCHITECTURES=arm64",
+        "-DCMAKE_OSX_SYSROOT=/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX27.0.sdk",
+        "-DCMAKE_C_FLAGS=-DNCE_TCG_DUAL_MAP"
+      ],
+      [
+        "cmake",
+        "--build",
+        "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/unicorn-tb-stop-dual/build",
+        "-j8"
+      ],
+      [
+        "cmake",
+        "--install",
+        "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/unicorn-tb-stop-dual/build"
+      ]
+    ],
+    "sha256": {
+      "scripts/build_translation_engine.py": "e5ab4173a424f834a739d0d31e14b9fa75a89074716d5f5c5a49e1358b1a1b59",
+      "work/native-linux-nce/unicorn-2.1.4.tar.gz": "ea8863f095a0136388694e5a6063afd9bb7650e30243dd6251af59c5ce5601f4",
+      "work/native-linux-nce/unicorn-dual-source/unicorn-2.1.4/include/uc_priv.h": "c8c854d73a5f40727ebf733d0545a9ff5434b9f295a2c2d1cb1867f5a161394c",
+      "work/native-linux-nce/unicorn-dual-source/unicorn-2.1.4/uc.c": "7b676b8268f24611aabb17aa935aca5334b852d48dabd4175b954f200bcb2404",
+      "work/native-linux-nce/unicorn-dual-source/unicorn-2.1.4/qemu/tcg/tcg-op.c": "7e926c8f1f7bdadef1b2a9d45a44468067d2347563cca1efa253d496583a7cbb",
+      "work/native-linux-nce/unicorn-dual-source/unicorn-2.1.4/qemu/accel/tcg/translate-all.c": "23766182056ceb72d0d7bacf2de33fddc0530902f7af6b4ef84e13960d109867",
+      "work/native-linux-nce/unicorn-dual-source/unicorn-2.1.4/qemu/accel/tcg/tcg-runtime.c": "9442f7d2e5271eae1e409cfd7cdb9dc3c88decc03272a46a9250cdc3e68ddbe6",
+      "work/native-linux-nce/unicorn-dual-source/unicorn-2.1.4/qemu/include/exec/gen-icount.h": "ff2c3cb1adef7c2b558c27b57820b36bc126fae8ba572ae40537a4a0de892a1a",
+      "work/native-linux-nce/unicorn-dual-source/unicorn-2.1.4/qemu/include/qemu/osdep.h": "853abe20ca8d18875ccc976977fe2dbe507ec2ba12f0a07eb0ca968f9a8202d9",
+      "work/native-linux-nce/unicorn-dual-source/unicorn-2.1.4/qemu/include/tcg/tcg.h": "0ceda033af1687582281b9a10684800da978d7a1fadf3a4703ac66364142e3fc",
+      "work/native-linux-nce/unicorn-dual-source/unicorn-2.1.4/qemu/tcg/tcg.c": "0c11bfcf407c8f3b5c404dfdd75f4b2ba532d84905dcbc36a576ca371405a345",
+      "work/native-linux-nce/unicorn-dual-source/unicorn-2.1.4/qemu/include/exec/exec-all.h": "a5640cf45b01812b7b72c68d152adf3d10ca3f366c1361bebf6b5767eae49465",
+      "work/native-linux-nce/unicorn-dual-source/unicorn-2.1.4/qemu/tcg/aarch64/tcg-target.inc.c": "75610364d152a540a6cfa1284564d61458100eaaa6e6acaea845570a8da4c555",
+      "work/native-linux-nce/unicorn-dual-source/unicorn-2.1.4/qemu/tcg/tcg-pool.inc.c": "8583f84c95511ffe48ed1e1b0ad93f997c7aeeca8a6882232b311e3221fe21f4",
+      "work/native-linux-nce/unicorn-tb-stop-dual/prefix/lib/libunicorn.a": "a69c2949b8c277ac32701b40c382f00190e533270d41dbb1cf1b7f7fd3250c57",
+      "work/native-linux-nce/unicorn-tb-stop-dual/prefix/include/unicorn/unicorn.h": "66fdf8f39df34e507a163eb550549669cec3399c2103b8dc84bc4131f600e55a",
+      "scripts/unicorn_code_memory_patch.py": "924d3d1a7b5b1688197733f322f6956edf5aef96a854c9d24a8693d62485656f"
+    },
+    "reuse": {
+      "source_manifest": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-low-guest/work/native-linux-nce/unicorn-tb-stop-dual/build.json",
+      "source_manifest_sha256": "aa7a76552b17329b901d879df1fe7bc7e47b4ed84380127af9e1b890c873c58a",
+      "commands": "Original build provenance; not executed in this worktree."
+    }
+  },
+  "commands": [
+    [
+      "xcrun",
+      "clang",
+      "-O2",
+      "-g",
+      "-DNCE_PROCESS",
+      "-DNCE_TRANSLATION_CPUS=1",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-I",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/experiments/native-linux",
+      "-I",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/work/native-linux-nce/lkl-translation-kernel",
+      "-I",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/work/native-linux-nce/tbi-sdk36-final",
+      "-I",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/work/native-linux-nce/processes/host-include",
+      "-I",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/work/native-linux-nce/unicorn-tb-stop-dual/prefix/include",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/experiments/native-linux/translation/kernel-image.c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/experiments/native-linux/translation/linux-elf.c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/experiments/native-linux/translation/linux-execution.c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/experiments/native-linux/translation/interaction-profile.c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/experiments/native-linux/translation/linux-runner.c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/experiments/native-linux/translation/linux-memory.c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/experiments/native-linux/lkl-host.c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/experiments/native-linux/translation/code-watch.c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/experiments/native-linux/translation/read-view.c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/experiments/native-linux/translation/unicorn-code-memory.c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/work/native-linux-nce/unicorn-tb-stop-dual/prefix/lib/libunicorn.a",
+      "-DNCE_DIRECT_EXECUTION",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/work/native-linux-nce/tbi-sdk36-final/direct/engine.o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/work/native-linux-nce/tbi-sdk36-final/direct/compile.o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/work/native-linux-nce/tbi-sdk36-final/direct/decode.o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/work/native-linux-nce/tbi-sdk36-final/direct/memory-groups.o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/work/native-linux-nce/tbi-sdk36-final/direct/read-faults.o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/work/native-linux-nce/tbi-sdk36-final/direct/cross-page.o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/work/native-linux-nce/tbi-sdk36-final/direct/entry.o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/work/native-linux-nce/tbi-sdk36-final/direct/code-memory.o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/work/native-linux-nce/tbi-sdk36-final/direct/execute-check.o",
+      "-lc++",
+      "-o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/work/native-linux-nce/tbi-sdk36-final/cli",
+      "-DNCE_TRANSLATION_DUAL_MAP"
+    ],
+    [
+      "xcrun",
+      "clang",
+      "-O2",
+      "-g",
+      "-DNCE_PROCESS",
+      "-DNCE_TRANSLATION_CPUS=1",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-I",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/experiments/native-linux",
+      "-I",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/work/native-linux-nce/lkl-translation-kernel",
+      "-I",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/work/native-linux-nce/tbi-sdk36-final",
+      "-I",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/work/native-linux-nce/processes/host-include",
+      "-I",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/work/native-linux-nce/unicorn-tb-stop-dual/prefix/include",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/experiments/native-linux/translation/kernel-image.c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/experiments/native-linux/translation/linux-elf.c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/experiments/native-linux/translation/linux-execution.c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/experiments/native-linux/translation/interaction-profile.c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/experiments/native-linux/translation/linux-runner.c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/experiments/native-linux/translation/linux-memory.c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/experiments/native-linux/lkl-host.c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/experiments/native-linux/translation/code-watch.c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/experiments/native-linux/translation/read-view.c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/experiments/native-linux/translation/unicorn-code-memory.c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/work/native-linux-nce/unicorn-tb-stop-dual/prefix/lib/libunicorn.a",
+      "-DNCE_DIRECT_EXECUTION",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/work/native-linux-nce/tbi-sdk36-final/direct/engine.o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/work/native-linux-nce/tbi-sdk36-final/direct/compile.o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/work/native-linux-nce/tbi-sdk36-final/direct/decode.o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/work/native-linux-nce/tbi-sdk36-final/direct/memory-groups.o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/work/native-linux-nce/tbi-sdk36-final/direct/read-faults.o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/work/native-linux-nce/tbi-sdk36-final/direct/cross-page.o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/work/native-linux-nce/tbi-sdk36-final/direct/entry.o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/work/native-linux-nce/tbi-sdk36-final/direct/code-memory.o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/work/native-linux-nce/tbi-sdk36-final/direct/execute-check.o",
+      "-lc++",
+      "-o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/work/native-linux-nce/tbi-sdk36-final/gcd",
+      "-DNCE_TRANSLATION_DUAL_MAP",
+      "-DTRANSLATION_DISPATCH",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/experiments/native-linux/dispatch-test.c"
+    ],
+    [
+      "/opt/homebrew/opt/llvm/bin/clang",
+      "--target=aarch64-linux-musl",
+      "-mno-outline-atomics",
+      "-fPIE",
+      "-O2",
+      "-g",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-nostdinc",
+      "-isystem",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/work/native-linux-nce/musl-build/install/include",
+      "-isystem",
+      "/opt/homebrew/Cellar/llvm/22.1.7_1/lib/clang/22/include",
+      "-DNCE_TRANSLATION_CPUS=1",
+      "-DNCE_TRANSLATION_HIGH_RES_TIMERS=0",
+      "-c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/experiments/native-linux/translation/stock-bionic-supervisor.c",
+      "-o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/work/native-linux-nce/tbi-sdk36-final/guest.o"
+    ],
+    [
+      "/opt/homebrew/bin/ld.lld",
+      "-pie",
+      "--gc-sections",
+      "--no-dynamic-linker",
+      "-z",
+      "max-page-size=16384",
+      "-z",
+      "common-page-size=16384",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/work/native-linux-nce/musl-build/install/lib/rcrt1.o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/work/native-linux-nce/musl-build/install/lib/crti.o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/work/native-linux-nce/tbi-sdk36-final/guest.o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/work/native-linux-nce/musl-build/install/lib/libc.a",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/work/native-linux-nce/compiler-rt-build/libbuiltins.a",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/work/native-linux-nce/musl-build/install/lib/crtn.o",
+      "-o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/work/native-linux-nce/tbi-sdk36-final/guest.elf"
+    ],
+    [
+      "/opt/homebrew/share/android-ndk/toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android35-clang",
+      "-O2",
+      "-g",
+      "-mno-outline-atomics",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-Wl,-z,max-page-size=16384,-z,common-page-size=16384",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/experiments/native-linux/translation/stock-bionic-guest.c",
+      "-ldl",
+      "-o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/work/native-linux-nce/tbi-sdk36-final/bionic-test.elf"
+    ]
+  ],
+  "host_unchanged_after_guest_build": true,
+  "configuration": {
+    "data_tbi": true,
+    "guest_layout": "sparse",
+    "code_memory": "dual",
+    "execution": "direct",
+    "direct": {
+      "mapping_entries": 256,
+      "route_entries": 256,
+      "selective_writes": false,
+      "reuse_code_checks": false,
+      "memory": "flat",
+      "code_watch": true,
+      "cross_page": true,
+      "route_epochs": false,
+      "retain_routes": false,
+      "memory_groups": false,
+      "native_exclusive": true,
+      "vector_table": false,
+      "simd_math": false
+    },
+    "mapping": "pte",
+    "sparse_scan": true,
+    "fault_prefetch": false,
+    "guest_page_bytes": 16384,
+    "workload": "bionic",
+    "entries": [
+      "cli",
+      "gcd"
+    ],
+    "art_nterp": 1,
+    "cpus": 1,
+    "high_res_timers": false,
+    "online_cpus": 1,
+    "uaccess_stop": "all",
+    "parallel_profile": false,
+    "art_expanded_jit": 0,
+    "art_fast_baseline": 0,
+    "cache_invalidation": "pages",
+    "exec_cache": "pages",
+    "tlb_invalidation": "pages",
+    "linux_fastpath": 0,
+    "guest_ram_bytes": 1073741824,
+    "translation_cache_bytes": 134217728,
+    "instruction_batch": 50000,
+    "memory_interval_ms": 100,
+    "preemption": "timer",
+    "timer_interval_ns": 2000000
+  },
+  "measurement": "Component compatibility observation only; concurrent builds allowed; no performance comparison.",
+  "sha256": {
+    "experiments/native-linux/translation/kernel-image.c": "33792252482c0c6be81d1009a45f1a12f17233a7fd472d12a7f394afd136217f",
+    "experiments/native-linux/translation/linux-elf.c": "e3557d2945b3e6dc0b9c1b4ae7041a6dd21a785e4981f97ddff1ea9837d68365",
+    "experiments/native-linux/translation/linux-execution.c": "4c0ffd6add3e6976691a999c06a68e6108e92788b80f2bc19c3358589df48e87",
+    "experiments/native-linux/translation/interaction-profile.c": "8016783f7a3f0087f0dc369b0316655d95bd612a1fc49547b8c7eada4501881c",
+    "experiments/native-linux/translation/linux-runner.c": "7d9796b356576767fd601fccca6ed8d8564682b446f9b418b622d298469cacec",
+    "experiments/native-linux/translation/linux-memory.c": "0cc6ab6ff8ab7abe76c1c73aaf18fecb200ff27251ea29f0f15b0618a6020e31",
+    "experiments/native-linux/lkl-host.c": "49c63f1be4112408bbe5bdced53cf8bd0314eedaf770fe4d869d30edf3a6c671",
+    "experiments/native-linux/translation/code-watch.c": "1bfa90873b4e52f1ca0766e169999f948cbff313eccffba14be0e76e7dd1305e",
+    "experiments/native-linux/translation/read-view.c": "85ad462693b9ff64532bbf2056a2c6b09cefb1bbd4d8fbcf0cb7570697ed3c2a",
+    "experiments/native-linux/translation/unicorn-code-memory.c": "f7fe3981500192267b25ae33cb4aeb5ef38f31c674ddb3cb0ebfa0a0edb43d6e",
+    "experiments/native-linux/direct/engine.cpp": "0607f7d542d538a1a71cd680af83e622c4a7d74fcf06d041220168ff02074ce9",
+    "experiments/native-linux/direct/compile.cpp": "c32e01524598365c98b19a4db7058a7e7be89bf5bc58ebe87423cc908a29bf9c",
+    "experiments/native-linux/direct/decode.cpp": "e2ce2940d0c5d5c1658c45d8a4beee40f9dbb662f960eabb0cad96b0ce84efc1",
+    "experiments/native-linux/direct/memory-groups.cpp": "6447bb9544d9cfbc9f872e6e721b17854aae3a1f88fcedcd9767831aaf1ae9a6",
+    "experiments/native-linux/direct/read-faults.cpp": "6e514b9e0f8b9675e2eaad955440fd4909b8f19e6e1637ea16d083d2a9809348",
+    "experiments/native-linux/direct/cross-page.cpp": "ab2aea50c200cb993fbbad08a2c26423391a428a1359225669a30d2baf8f622d",
+    "experiments/native-linux/direct/entry.S": "14896f395d465d65aff18e22598c804e2faa8740fdb72128b2b86c25e6defab4",
+    "experiments/native-linux/code-memory.c": "8215ac2a2564049be0b45a80b3774ec994d6e51b6eb2057ed00cd515ef682981",
+    "experiments/native-linux/execute-check.c": "2e5a080e11bb3ec9407be2495c30a0391d2e8a858f1fe1a01a624eed3a8dd3c5",
+    "experiments/native-linux/direct/decode.h": "eafddef33888746adfc25306f6b2ab7903ff9f50adce3b0cf55e43f1e8cba5a9",
+    "experiments/native-linux/direct/memory-groups.h": "c6250a511c45dd7bbd5733ff43b55dd8a0eb6501d9759bb12a413f9c121a6b31",
+    "experiments/native-linux/direct/direct.h": "4351504d06862b40034e66e06520950a910c2df8eed0c662d1ecf8b2fcf85b53",
+    "experiments/native-linux/direct/internal.h": "e95d84decb560e0e6e94e6e40ed41fff6b94aec16e4be9336472e631df75678e",
+    "experiments/native-linux/direct/layout.h": "bea63a67f1145501152a6eaf400e9d1393badc55871c7b61e365a4bd2782bb23",
+    "experiments/native-linux/direct/page-table-layout.h": "500897ffde014c17c73d03a92b34b07a9990e52695c369d9228c01d5d4600109",
+    "experiments/native-linux/code-memory.h": "b76ec86c799b073a58b08dc04300d091cb63531d31289ea22fdfb16d4495870a",
+    "experiments/native-linux/execute-check.h": "db1decd5ee536b58b9974ff03951d79dddfc3f74c1205ad34b7c725de4bf6883",
+    "experiments/native-linux/nce.h": "7bcdc5e777e10e1d70f0bf1838a2160e87c70613a44b90b16c3e07aedf4a9f58",
+    "experiments/native-linux/guest-registers.h": "90a4d5b6e613ce4f2cda359dcd05f6e8d876a788bc437c2c1e13e05403e4627a",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/code_block.hpp": "c1b59e9d8a37775f8558fb3a0f7b34a6b7dbd2b2c13c088be65253c2223faa8a",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/dual_code_block.hpp": "619a01b3c69e107cc1c13c79b0dfbe97b09395e70a6c705b77e0531894a69620",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/feature_detection/cpu_feature.hpp": "2ae6e67bd4af85bd7d6d6eb7585f73cbdc237183167bb265a0427b74807e0a02",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/feature_detection/feature_detection.hpp": "4d13c256d5028d1ca3e5a0ad59382e888b79e033b72cffe7dae4c3e9ecc8d97e",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/feature_detection/feature_detection_apple.hpp": "99d88802080a50bd7d73a07020c18eee44417e193ff5515cbad8f6972890bbc6",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/feature_detection/feature_detection_freebsd.hpp": "84a10ab44c7c566523705703fb118904156c39b6b93148d458e2ab77a80a2c2d",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/feature_detection/feature_detection_generic.hpp": "4b78fafbb988a18b25b1aeb04c5ebff6b3a675f502e315fd8430f2d3f61f0fd2",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/feature_detection/feature_detection_hwcaps.hpp": "5839e027d9145f182149586fc30f129f33d5b482ffa174ed4ac6f9bb3b5a3b3f",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/feature_detection/feature_detection_idregs.hpp": "f759c5fd02bb2d2bafe45376e3856fa9371737282b22f66101fd4ae8db5f7b96",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/feature_detection/feature_detection_linux.hpp": "a49f3c60ad2cae71c158fd9207fdbad5e40837793f57289490603455302299c6",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/feature_detection/feature_detection_netbsd.hpp": "1315afa43ea61ffb7beb1102bf090d24d1285f2340028b5da50c3d31491dd09c",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/feature_detection/feature_detection_openbsd.hpp": "941dd25a778b8153e3e98aa9b7795a2c54359d24d8337f56a8658993f3fecb96",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/feature_detection/feature_detection_w32.hpp": "f228126514f482b43c0304a1f9dfb5942b93afabfc4372662af1193679c503de",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/feature_detection/id_registers.hpp": "ed83ce3fdaa0bea503dbdd9c0e728e8cb4eb0307fdf3bc60192fc0dfa130d1c8",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/feature_detection/read_id_registers_directly.hpp": "ff2e769fabf6f43d6e12939072e6cd911694f7966d2bd8c4ce6c3075aad34020",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/arm64_encode_helpers.inc.hpp": "55576102b1774f7f7b681857a3d2c6843776045cccd24fa09b8c4713929adbaf",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/cpu_feature.inc.hpp": "5919c8d8b32ae0899d04a888d8e852a79c604b33f9b6cffe632234437f57ab67",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/enum.hpp": "603697b7a7e16795219a74fa2d735e8bd442c79cdcb539ed0abed2b83417fd26",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/imm.hpp": "268b0414bf57c82cddb3de6b286e8e1ce52fb2b413aaecaa1f0cf9099b7e7cc1",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/list.hpp": "0592b31d29a6f1bfbee46cdb0aa5ce778edc9643db90a39d42215970357328e9",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/mnemonics_fpsimd_v8.0.inc.hpp": "3ecdfd1ff46ff749b2525e1a75acbabc6022848f700a6f16b36f480ab954a266",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/mnemonics_fpsimd_v8.1.inc.hpp": "404268b9e0e3b4708d5018fd1fbf3ea1339c641382e7cfd15534af56a7672e69",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/mnemonics_fpsimd_v8.2.inc.hpp": "52e7a48b969badf327c00c2ea4556353c61950a0c452adeaee37c6820926261f",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/mnemonics_fpsimd_v8.3.inc.hpp": "84bcced18fe10c753ec5ea1c84e9531ab1ceb4e08b046519e75788a14b814ae4",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/mnemonics_generic_v8.0.inc.hpp": "8ffd907bb38b27700022e29d40111fe72e640d003ad6aa3e372c4d8a7ebd3f6c",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/mnemonics_generic_v8.1.inc.hpp": "9f60f325c392e907dd9d2cbab62e1f8cfc7ab95c88e54df75b1a1f64bc7fa93b",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/mnemonics_generic_v8.2.inc.hpp": "1b53f462d1ed7e0a763236dbef9c4bfc70f6430cf5f8b420b2acc4dd2e8884ab",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/mnemonics_generic_v8.3.inc.hpp": "4b775baed83b1bb32b7bd339433175ce09b4bbc6da33d887bc9ca989d42b5d76",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/multi_typed_name.hpp": "a4322bfdb95f8477e6f92b31194110ef860c7402d50ce18daae6e016d4fa9aac",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/oaknut_exception.inc.hpp": "48629c93b468527c440dad30f8044818aa202caff67e73f45a246a3e96f8ad28",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/offset.hpp": "cb48c0eface8f5458a89402a090084690d3f999ff562e63870a1b16f438a7d52",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/overloaded.hpp": "03f0f551fa10b0b3d8d2c75130c1023ddcc5e8a3566629470408aad370d87fc2",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/reg.hpp": "352456b9b9ea1fb8cb5637e82169e16f08189579da9645ad5a5c1992f95ed198",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/string_literal.hpp": "96dce09750c24842a88e8eb3dfdafe047a5ab94c9398c94ea41cca8e1434e1bb",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/oaknut.hpp": "e25f4222f8f7d17b683d5ea8ff2851f88a3b40c478fcdc6046fe962cfcab2f37",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/oaknut_exception.hpp": "8277ac5a6cf6697305fd169d817d6786b0011027d66962fc9d982ffbce2c19a0",
+    "scripts/probe_direct_execution.py": "efee85b25893505ef4e2600f82f57cb9b177959290f53036e11872fabdd47f95",
+    "work/native-linux-nce/oaknut-94c726c.tar.gz": "c404db82002f9a851a412b3d55ac9be8a42a2e319fd2fc8a73e63e6ef5d4f97b",
+    "experiments/native-linux/translation/code-watch.h": "1ec6e739e1a542c52a2ed54b7310d1cc0a3317dfa25d1d59aeb971e972ea0747",
+    "experiments/native-linux/translation/read-view.h": "40a09185089ab8a02a76a6789b7b2149ffdb9dc225c7b1c5b4532d6022307488",
+    "scripts/build_nce_userspace.py": "4fafb283fdc1babe0d62ef949eeffd50d2018fddb3420694ab9fb64a60d82149",
+    "experiments/native-linux/userspace/bionic-test.c": "ffa10bd0d16dd15edddb368a0435d9d94b529270c13a89f6b3c5536dc40c0b76",
+    "experiments/native-linux/userspace/proc-exit-tests.c": "58c79b40b0fabaf40707baf80d3cca4883311f33c00139ed8db6f3d02d5353df",
+    "experiments/native-linux/userspace/file-tests.c": "e260e5222cf7efea3140941404100a05be3b383299f2da4cc174a531cc166b8b",
+    "experiments/native-linux/userspace/seccomp-tests.c": "7ac584c36df43561ad7c947eeec40ba0c39188a28d1a79245100b4f683626931",
+    "experiments/native-linux/userspace/signal-tests.c": "43b86323b4dd66c98db20065b8cc41d868fb7ab538135d6eba9d7c65a263a549",
+    "experiments/native-linux/userspace/signal-registers.S": "68e13063df3b1a82a0b5805eb98082204b7ee6e29e7c020cc452ef5199f6d257",
+    "experiments/native-linux/translation/unicorn-code-memory.h": "03e9a24ca9133e989426ca621ad9962c327be47ce889e845f4b668b657243ed7",
+    "experiments/native-linux/translation/linux-elf.h": "faec3fcc8a93eafc0a140830836881e8f2447f20b9b59ec26b7b8230f8b0489b",
+    "experiments/native-linux/translation/linux-execution.h": "ea490ee46e90df3ee0664815dc45e0f58f071378e2b0af333b498d134644ecc2",
+    "experiments/native-linux/translation/interaction-profile.h": "39700898fbcd32c4d4060dad1e494826d50109ab7c5efed50daaf02603938e5a",
+    "experiments/native-linux/translation/linux-memory.h": "11b7a1402acaa07152cdb17d43fed3e6effdeb65af902e8b64ae5ea5cded35e9",
+    "experiments/native-linux/translation/stock-bionic-supervisor.c": "c230f12d73a7470665b50238d9c2b8493a7513b0c0d90760e96e9ba1a542422a",
+    "scripts/probe_lkl_translation.py": "0fbd209ee3890ec23ef9472eed343df88eea20b4d0f1de3a667b4c472fe3bbb0",
+    "experiments/native-linux/dispatch-test.c": "5211698bd58018aae173d4c6d75daeeb0e4eb357fb2742c4c08d595bc9d7b55b",
+    "experiments/native-linux/layout.h": "9ecb6dc474edfc516284effcbd1999ba445ba88372233636391771a0715deaa5",
+    "work/native-linux-nce/lkl-translation-kernel/lkl-image.bin": "289128f342cbfb46278e3cb8e9daf9d51825c0aa804a7d71cd96c3e65316c722",
+    "work/native-linux-nce/lkl-translation-kernel/lkl-image.h": "d7e639764146492d2c0ecd210df0a3f691a3a6f15e8a4c81690c158b9262b3be",
+    "work/native-linux-nce/lkl-translation-kernel/lkl.so": "0ea6312f7114a650ba1c992b2f1c7494b91cfc168efe92a5287032526bd1b6f2",
+    "work/native-linux-nce/lkl-translation-kernel/lkl-host-ops.h": "54bf2a775fa582ca2bc04fb6a25dc85525b6c69da1cde54f610c4a35e0c1a833",
+    "experiments/native-linux/translation/kernel-api.h": "6acf8b846b78e4e493bd8dd97b42140b28747deac2a367dc7926f924e1c12076",
+    "experiments/native-linux/translation/kernel-image.h": "6946b1a5ce89be9b55634e25115185af009bff2b126f5a10ac4e0690b70b1528",
+    "work/native-linux-nce/tbi-sdk36-final/translation-symbols.h": "ce1d4a012212ab755375a62d1dd27a6123940c4e9567ea74e275be67c0bb3b4a",
+    "scripts/build_translation_engine.py": "e5ab4173a424f834a739d0d31e14b9fa75a89074716d5f5c5a49e1358b1a1b59",
+    "work/native-linux-nce/unicorn-tb-stop-dual/build.json": "008f5ba03dc90024205d8aabbc5dbd62da49413e976fa3c5595d9f98211d19b1",
+    "work/native-linux-nce/unicorn-tb-stop-dual/prefix/lib/libunicorn.a": "a69c2949b8c277ac32701b40c382f00190e533270d41dbb1cf1b7f7fd3250c57",
+    "work/native-linux-nce/tbi-sdk36-final/cli": "9e7497c546193e8dbc07a3427b08060ef12653f647567893e1bc8d537548a338",
+    "work/native-linux-nce/tbi-sdk36-final/gcd": "b3a06b0975201152e8a6380d0d9a872c41c5e77f806f6862491db9c90de83f2c",
+    "work/native-linux-nce/tbi-sdk36-final/guest.elf": "a44487175962f85b97be7a59e4a9372cad651dae1af99fe673505850211cda3e",
+    "work/native-linux-nce/tbi-sdk36-final/late.elf": "4efc8ff4b91c23437a5ff0daf85c72eea2685dd9cfc4e7e996487ee2b468f012",
+    "work/native-linux-nce/tbi-sdk36-final/sigreturn.elf": "795d053b14585230d5f6ec0d09fdd5d91b8685c9fb6acdd0935d3d9359baf271",
+    "work/native-linux-nce/tbi-sdk36-final/dynamic.elf": "c7be9a096eacbde4ddf2166fbe57392a730f01497a439ecc96acff66f79da571",
+    "work/native-linux-nce/tbi-sdk36-final/libc.so": "13e5a9fcf04c9e9f89f0dba662fe6fde2ca7b8d8201eb622d42edc4a28d5f515",
+    "work/native-linux-nce/tbi-sdk36-final/dependency.so": "878d6795ecc3afcf6f3bcbf34119e8ec106dbd734b9c216b1352b426b31f06da",
+    "work/native-linux-nce/tbi-sdk36-final/plugin.so": "4646ac0f0191552449161c2b5b61bcac054ebc0427d559503ec8547e38077fe9",
+    "work/native-linux-nce/tbi-sdk36-final/dash.elf": "8b38ef10487508f46b683f6ef7a747520d5c5c88da1783ce697596f60d4d7851",
+    "work/native-linux-nce/tbi-sdk36-final/bionic-test.elf": "45bb5e3ce5cae39c3a8940e10e929de9517d7fa9b4a53732cc9a201cd4e8ca44",
+    "scripts/stock_bionic.py": "a104557d77590996145c2a803afdbfd72f52f7cd9fc96762e6fbd2ecbc3ff94f",
+    "experiments/native-linux/translation/stock-bionic-guest.c": "52edb1f45320ce1c6c4ebf200390049e773829bcbaf6d8c02377cb43c5f23e8a",
+    "work/native-linux-nce/tbi-sdk36-final/stock-ld.config.txt": "13f787f6a186bf8f9b4786794574d4bcd4927ecae4562e220d4e77b0befedb66",
+    "work/native-linux-nce/tbi-sdk36-final/stock-runtime/source-manifest.json": "4b1a45b0ee51725c68f1c29765958d0b60b45a5f2325bedfc61764cd49232249",
+    "work/native-linux-nce/tbi-sdk36-final/stock-runtime/bin/linker64": "30ed9bea070250e0b080c8a84d8398baab1b4eb95a90bfced82a94d5f235144b",
+    "work/native-linux-nce/tbi-sdk36-final/stock-runtime/lib64/bionic/libc.so": "d3f8599b8b3f00101a31f94ac170ceb5875ee8446c201cb18382b2e02df84301",
+    "work/native-linux-nce/tbi-sdk36-final/stock-runtime/lib64/bionic/libdl.so": "9f6447d910742a57b398a6a3f31746e02302ee9547da6d02757f001058a69df3",
+    "work/native-linux-nce/tbi-sdk36-final/stock-runtime/lib64/bionic/libm.so": "44433149f62eeb8f09f38ecd3566683fac01a0f89de6ea6d15f6e4deca1ba4bc",
+    "scripts/build_lkl_translation_kernel.py": "56f3801c26bdd90450fe273ca5661b0485da713fc08e90b8099155acedd5c1ba",
+    "scripts/lkl_translation_patch.py": "42a1b63f3e4a3233ad3b031ba388a3b10684806ad2c72592dec7b3b092f7353b",
+    "experiments/native-linux/lkl-nce-mmu.c": "d0ee874b00e58100cfd982c1ecbed136f98a85af4e96c7a252009ebc44edf075",
+    "work/native-linux-nce/lkl-translation-kernel/build.json": "c9a267a7d242b4e1d05c81be239f8998b629f4a19fa5986b8089f1a7c026d42f"
+  },
+  "runs": [
+    {
+      "entry": "cli",
+      "iteration": 0,
+      "returncode": 0,
+      "results": [
+        {
+          "config": "translation_code_memory",
+          "kernel": "dual",
+          "direct": "dual"
+        },
+        {
+          "config": "translation_data_tbi",
+          "data": true,
+          "fetch": false,
+          "tagged_syscall_abi": false
+        },
+        {
+          "config": "translation_exec_cache",
+          "mode": "pages"
+        },
+        {
+          "config": "translation_tlb_invalidation",
+          "mode": "pages",
+          "range_limit_pages": 64
+        },
+        {
+          "config": "translation_preemption",
+          "mode": "timer",
+          "instructions": 50000,
+          "timer_interval_ns": 2000000
+        },
+        {
+          "config": "translation_parallel",
+          "cpus": 1,
+          "profile": false,
+          "uaccess_stop": "all"
+        },
+        {
+          "cpu": 0,
+          "config": "translation_execution",
+          "engine": "direct",
+          "direct_cache_bytes": 134217728,
+          "data_page_bytes": 16384,
+          "mapping_entries": 256,
+          "route_entries": 256,
+          "selective_writes": false,
+          "reuse_code_checks": false,
+          "memory": "flat",
+          "code_watch": true,
+          "cross_page": true,
+          "route_epochs": false,
+          "retain_routes": false,
+          "memory_groups": false,
+          "native_exclusive": true,
+          "vector_table": false,
+          "simd_math": false
+        },
+        {
+          "cpu": 0,
+          "config": "translation_cache_settings",
+          "cache_bytes": 134217728,
+          "actual_cache_bytes": 134201268,
+          "invalidation": "pages",
+          "linux_fastpath": false
+        },
+        {
+          "test": "translation_prepared_code_execution",
+          "passed": true
+        },
+        {
+          "config": "translation_guest_layout",
+          "mode": "sparse",
+          "guest_base": 65536,
+          "guest_end": 68719476736,
+          "guest_span_bytes": 68719411200,
+          "flat_coverage_bytes": 4294967296,
+          "physical_base": 481036337152,
+          "ram_base": 482177187840,
+          "ram_bytes": 1073741824,
+          "reservation_base": 481036337152,
+          "reservation_bytes": 1140850688
+        },
+        {
+          "config": "linux_scheduler_slice",
+          "requested_us": 0,
+          "applied_ns": 750000
+        },
+        {
+          "config": "translation_online_cpus",
+          "capacity": 1,
+          "requested": 1,
+          "online_mask": 1
+        },
+        {
+          "phase": "runtime_elf",
+          "path": "/probe-guest",
+          "base": 262144,
+          "span_bytes": 98304
+        },
+        {
+          "phase": "runtime_elf",
+          "path": "/lib/nce-sigreturn.so",
+          "base": 524288,
+          "span_bytes": 16384
+        },
+        {
+          "phase": "runtime_elf",
+          "path": "/apex/com.android.runtime/bin/linker64",
+          "base": 786432,
+          "span_bytes": 1769472
+        },
+        {
+          "component_vm": 222,
+          "pid": 2,
+          "pc": 1198088,
+          "args": [
+            0,
+            16384,
+            3,
+            34,
+            4294967295,
+            0
+          ],
+          "result": 738263040
+        },
+        {
+          "component_vm": 222,
+          "pid": 2,
+          "pc": 1198088,
+          "args": [
+            0,
+            1104,
+            3,
+            34,
+            4294967295,
+            0
+          ],
+          "result": 738279424
+        },
+        {
+          "component_vm": 222,
+          "pid": 2,
+          "pc": 1198088,
+          "args": [
+            0,
+            49152,
+            3,
+            34,
+            4294967295,
+            0
+          ],
+          "result": 738295808
+        },
+        {
+          "component_vm": 226,
+          "pid": 2,
+          "pc": 1195080,
+          "args": [
+            738295808,
+            16384,
+            0,
+            34,
+            4294967295,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 222,
+          "pid": 2,
+          "pc": 1198088,
+          "args": [
+            0,
+            16777216,
+            0,
+            34,
+            4294967295,
+            0
+          ],
+          "result": 738344960
+        },
+        {
+          "component_vm": 226,
+          "pid": 2,
+          "pc": 1195080,
+          "args": [
+            745848832,
+            16384,
+            3,
+            34,
+            4294967295,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 2,
+          "pc": 1195080,
+          "args": [
+            2375680,
+            49152,
+            1,
+            34,
+            4294967295,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 2,
+          "pc": 1195080,
+          "args": [
+            2473984,
+            16384,
+            1,
+            2490240,
+            2490368,
+            4
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 2,
+          "pc": 1195080,
+          "args": [
+            2473984,
+            16384,
+            3,
+            2490240,
+            2490368,
+            4
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 2,
+          "pc": 1195080,
+          "args": [
+            2473984,
+            16384,
+            1,
+            1,
+            738279564,
+            738279560
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 222,
+          "pid": 2,
+          "pc": 1198088,
+          "args": [
+            0,
+            16384,
+            3,
+            34,
+            4294967295,
+            0
+          ],
+          "result": 755122176
+        },
+        {
+          "component_vm": 222,
+          "pid": 2,
+          "pc": 1198088,
+          "args": [
+            0,
+            16384,
+            3,
+            34,
+            4294967295,
+            0
+          ],
+          "result": 755138560
+        },
+        {
+          "component_vm": 222,
+          "pid": 2,
+          "pc": 1198088,
+          "args": [
+            0,
+            16384,
+            3,
+            34,
+            4294967295,
+            0
+          ],
+          "result": 755154944
+        },
+        {
+          "component_vm": 226,
+          "pid": 2,
+          "pc": 1195080,
+          "args": [
+            755154944,
+            16384,
+            1,
+            16384,
+            828932,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 2,
+          "pc": 1195080,
+          "args": [
+            755154944,
+            16384,
+            3,
+            16384,
+            828932,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 2,
+          "pc": 1195080,
+          "args": [
+            755154944,
+            16384,
+            1,
+            16384,
+            828932,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 2,
+          "pc": 1195080,
+          "args": [
+            755154944,
+            16384,
+            3,
+            16384,
+            828932,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 2,
+          "pc": 1195080,
+          "args": [
+            755154944,
+            16384,
+            1,
+            16384,
+            828932,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 2,
+          "pc": 1195080,
+          "args": [
+            755154944,
+            16384,
+            3,
+            16384,
+            828932,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 2,
+          "pc": 1195080,
+          "args": [
+            755154944,
+            16384,
+            1,
+            16384,
+            828932,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 2,
+          "pc": 1195080,
+          "args": [
+            755154944,
+            16384,
+            3,
+            16384,
+            828932,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 2,
+          "pc": 1195080,
+          "args": [
+            755154944,
+            16384,
+            1,
+            16384,
+            828932,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 2,
+          "pc": 1195080,
+          "args": [
+            755154944,
+            16384,
+            3,
+            16384,
+            828932,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 2,
+          "pc": 1195080,
+          "args": [
+            755154944,
+            16384,
+            1,
+            16384,
+            828932,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 2,
+          "pc": 1195080,
+          "args": [
+            755154944,
+            16384,
+            3,
+            16384,
+            828932,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 2,
+          "pc": 1195080,
+          "args": [
+            755154944,
+            16384,
+            1,
+            16384,
+            828932,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 2,
+          "pc": 1195080,
+          "args": [
+            755154944,
+            16384,
+            3,
+            16384,
+            828932,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 2,
+          "pc": 1195080,
+          "args": [
+            755154944,
+            16384,
+            1,
+            16384,
+            828932,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 2,
+          "pc": 1195080,
+          "args": [
+            755154944,
+            16384,
+            3,
+            16384,
+            828932,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 2,
+          "pc": 1195080,
+          "args": [
+            755154944,
+            16384,
+            1,
+            16384,
+            828932,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 2,
+          "pc": 1195080,
+          "args": [
+            755154944,
+            16384,
+            3,
+            16384,
+            828932,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 2,
+          "pc": 1195080,
+          "args": [
+            755154944,
+            16384,
+            1,
+            16384,
+            828932,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 2,
+          "pc": 1195080,
+          "args": [
+            755154944,
+            16384,
+            3,
+            16384,
+            828932,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 2,
+          "pc": 1195080,
+          "args": [
+            755154944,
+            16384,
+            1,
+            16384,
+            828932,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 2,
+          "pc": 1195080,
+          "args": [
+            755154944,
+            16384,
+            3,
+            16384,
+            828932,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 2,
+          "pc": 1195080,
+          "args": [
+            755154944,
+            16384,
+            1,
+            16384,
+            828932,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 2,
+          "pc": 1195080,
+          "args": [
+            755154944,
+            16384,
+            3,
+            16384,
+            828932,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 2,
+          "pc": 1195080,
+          "args": [
+            755154944,
+            16384,
+            1,
+            16384,
+            828932,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 2,
+          "pc": 1195080,
+          "args": [
+            755154944,
+            16384,
+            3,
+            16384,
+            828932,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 2,
+          "pc": 1195080,
+          "args": [
+            755154944,
+            16384,
+            1,
+            16384,
+            828932,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 2,
+          "pc": 1195080,
+          "args": [
+            755154944,
+            16384,
+            3,
+            16384,
+            828932,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 2,
+          "pc": 1195080,
+          "args": [
+            755154944,
+            16384,
+            1,
+            16384,
+            828932,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "phase": "runtime_elf",
+          "path": "/system/bin/stock-bionic",
+          "base": 2621440,
+          "span_bytes": 81920
+        },
+        {
+          "component_vm": 222,
+          "pid": 3,
+          "pc": 1198088,
+          "args": [
+            0,
+            16384,
+            3,
+            34,
+            4294967295,
+            0
+          ],
+          "result": 738263040
+        },
+        {
+          "component_vm": 222,
+          "pid": 3,
+          "pc": 1198088,
+          "args": [
+            0,
+            1104,
+            3,
+            34,
+            4294967295,
+            0
+          ],
+          "result": 738279424
+        },
+        {
+          "component_vm": 222,
+          "pid": 3,
+          "pc": 1198088,
+          "args": [
+            0,
+            49152,
+            3,
+            34,
+            4294967295,
+            0
+          ],
+          "result": 738295808
+        },
+        {
+          "component_vm": 226,
+          "pid": 3,
+          "pc": 1195080,
+          "args": [
+            738295808,
+            16384,
+            0,
+            34,
+            4294967295,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 222,
+          "pid": 3,
+          "pc": 1198088,
+          "args": [
+            0,
+            16777216,
+            0,
+            34,
+            4294967295,
+            0
+          ],
+          "result": 738344960
+        },
+        {
+          "component_vm": 226,
+          "pid": 3,
+          "pc": 1195080,
+          "args": [
+            741687296,
+            16384,
+            3,
+            34,
+            4294967295,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 3,
+          "pc": 1195080,
+          "args": [
+            2375680,
+            49152,
+            1,
+            34,
+            4294967295,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 3,
+          "pc": 1195080,
+          "args": [
+            2473984,
+            16384,
+            1,
+            2490240,
+            2490368,
+            4
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 3,
+          "pc": 1195080,
+          "args": [
+            2473984,
+            16384,
+            3,
+            2490240,
+            2490368,
+            4
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 3,
+          "pc": 1195080,
+          "args": [
+            2473984,
+            16384,
+            1,
+            1,
+            738279564,
+            738279560
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 222,
+          "pid": 3,
+          "pc": 1198088,
+          "args": [
+            0,
+            16384,
+            3,
+            34,
+            4294967295,
+            0
+          ],
+          "result": 755122176
+        },
+        {
+          "component_vm": 222,
+          "pid": 3,
+          "pc": 1198088,
+          "args": [
+            0,
+            16384,
+            3,
+            34,
+            4294967295,
+            0
+          ],
+          "result": 755138560
+        },
+        {
+          "component_vm": 222,
+          "pid": 3,
+          "pc": 1198088,
+          "args": [
+            0,
+            16384,
+            3,
+            34,
+            4294967295,
+            0
+          ],
+          "result": 755154944
+        },
+        {
+          "component_vm": 226,
+          "pid": 3,
+          "pc": 1195080,
+          "args": [
+            755154944,
+            16384,
+            1,
+            16384,
+            828932,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 3,
+          "pc": 1195080,
+          "args": [
+            755154944,
+            16384,
+            3,
+            16384,
+            828932,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 3,
+          "pc": 1195080,
+          "args": [
+            755154944,
+            16384,
+            1,
+            16384,
+            828932,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 3,
+          "pc": 1195080,
+          "args": [
+            755154944,
+            16384,
+            3,
+            16384,
+            828932,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 3,
+          "pc": 1195080,
+          "args": [
+            755154944,
+            16384,
+            1,
+            16384,
+            828932,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 3,
+          "pc": 1195080,
+          "args": [
+            755154944,
+            16384,
+            3,
+            16384,
+            828932,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 3,
+          "pc": 1195080,
+          "args": [
+            755154944,
+            16384,
+            1,
+            16384,
+            828932,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 3,
+          "pc": 1195080,
+          "args": [
+            755154944,
+            16384,
+            3,
+            16384,
+            828932,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 3,
+          "pc": 1195080,
+          "args": [
+            755154944,
+            16384,
+            1,
+            16384,
+            828932,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 3,
+          "pc": 1195080,
+          "args": [
+            755154944,
+            16384,
+            3,
+            16384,
+            828932,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 3,
+          "pc": 1195080,
+          "args": [
+            755154944,
+            16384,
+            1,
+            16384,
+            828932,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 3,
+          "pc": 1195080,
+          "args": [
+            755154944,
+            16384,
+            3,
+            16384,
+            828932,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 3,
+          "pc": 1195080,
+          "args": [
+            755154944,
+            16384,
+            1,
+            16384,
+            828932,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 3,
+          "pc": 1195080,
+          "args": [
+            755154944,
+            16384,
+            3,
+            16384,
+            828932,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 3,
+          "pc": 1195080,
+          "args": [
+            755154944,
+            16384,
+            1,
+            16384,
+            828932,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 3,
+          "pc": 1195080,
+          "args": [
+            755154944,
+            16384,
+            3,
+            16384,
+            828932,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 3,
+          "pc": 1195080,
+          "args": [
+            755154944,
+            16384,
+            1,
+            16384,
+            828932,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 3,
+          "pc": 1195080,
+          "args": [
+            755154944,
+            16384,
+            3,
+            16384,
+            828932,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 3,
+          "pc": 1195080,
+          "args": [
+            755154944,
+            16384,
+            1,
+            16384,
+            828932,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 3,
+          "pc": 1195080,
+          "args": [
+            755154944,
+            16384,
+            3,
+            16384,
+            828932,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 3,
+          "pc": 1195080,
+          "args": [
+            755154944,
+            16384,
+            1,
+            16384,
+            828932,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 3,
+          "pc": 1195080,
+          "args": [
+            755154944,
+            16384,
+            3,
+            16384,
+            828932,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 3,
+          "pc": 1195080,
+          "args": [
+            755154944,
+            16384,
+            1,
+            16384,
+            828932,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 3,
+          "pc": 1195080,
+          "args": [
+            755154944,
+            16384,
+            3,
+            16384,
+            828932,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 3,
+          "pc": 1195080,
+          "args": [
+            755154944,
+            16384,
+            1,
+            16384,
+            828932,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 3,
+          "pc": 1195080,
+          "args": [
+            755154944,
+            16384,
+            3,
+            16384,
+            828932,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 3,
+          "pc": 1195080,
+          "args": [
+            755154944,
+            16384,
+            1,
+            16384,
+            828932,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 3,
+          "pc": 1195080,
+          "args": [
+            755154944,
+            16384,
+            3,
+            16384,
+            828932,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 3,
+          "pc": 1195080,
+          "args": [
+            755154944,
+            16384,
+            1,
+            16384,
+            828932,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 222,
+          "pid": 3,
+          "pc": 1198088,
+          "args": [
+            0,
+            16384,
+            3,
+            34,
+            4294967295,
+            0
+          ],
+          "result": 755171328
+        },
+        {
+          "component_vm": 222,
+          "pid": 3,
+          "pc": 1198088,
+          "args": [
+            0,
+            393216,
+            3,
+            34,
+            4294967295,
+            0
+          ],
+          "result": 755187712
+        },
+        {
+          "component_vm": 226,
+          "pid": 3,
+          "pc": 1195080,
+          "args": [
+            755187712,
+            393216,
+            3,
+            0,
+            755187760,
+            755187760
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 222,
+          "pid": 3,
+          "pc": 1198088,
+          "args": [
+            0,
+            163840,
+            0,
+            34,
+            4294967295,
+            0
+          ],
+          "result": 755580928
+        },
+        {
+          "component_vm": 226,
+          "pid": 3,
+          "pc": 1195080,
+          "args": [
+            755597312,
+            131072,
+            3,
+            34,
+            4294967295,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 222,
+          "pid": 3,
+          "pc": 1198088,
+          "args": [
+            0,
+            393216,
+            3,
+            34,
+            4294967295,
+            0
+          ],
+          "result": 755744768
+        },
+        {
+          "component_supervisor": true,
+          "page_size": 16384
+        },
+        {
+          "component_start": "linker_help"
+        },
+        {
+          "component_stage": "linker_help",
+          "started": true,
+          "success": true,
+          "exec_errno": 0,
+          "exit_code": 0,
+          "signal": 0,
+          "usage": true
+        },
+        {
+          "component_start": "dynamic"
+        },
+        {
+          "component_vm": 222,
+          "pid": 3,
+          "pc": 1198088,
+          "args": [
+            0,
+            16384,
+            3,
+            34,
+            4294967295,
+            0
+          ],
+          "result": 756137984
+        },
+        {
+          "component_vm": 222,
+          "pid": 3,
+          "pc": 1198088,
+          "args": [
+            0,
+            16384,
+            3,
+            34,
+            4294967295,
+            0
+          ],
+          "result": 756154368
+        },
+        {
+          "component_vm": 226,
+          "pid": 3,
+          "pc": 1195080,
+          "args": [
+            755154944,
+            16384,
+            3,
+            28548142780605472,
+            0,
+            9223372036854775808
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 3,
+          "pc": 1195080,
+          "args": [
+            755154944,
+            16384,
+            1,
+            28548142780605472,
+            0,
+            9223372036854775808
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 3,
+          "pc": 1195080,
+          "args": [
+            755154944,
+            16384,
+            3,
+            28548142780605472,
+            0,
+            9223372036854775808
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 3,
+          "pc": 1195080,
+          "args": [
+            755154944,
+            16384,
+            1,
+            28548142780605472,
+            0,
+            9223372036854775808
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 222,
+          "pid": 3,
+          "pc": 1198088,
+          "args": [
+            0,
+            393216,
+            3,
+            34,
+            4294967295,
+            0
+          ],
+          "result": 756170752
+        },
+        {
+          "component_vm": 222,
+          "pid": 3,
+          "pc": 1198088,
+          "args": [
+            0,
+            16384,
+            3,
+            34,
+            4294967295,
+            0
+          ],
+          "result": 756563968
+        },
+        {
+          "phase": "runtime_elf",
+          "path": "/apex/com.android.runtime/lib64/bionic/libdl.so",
+          "base": 2883584,
+          "span_bytes": 65536
+        },
+        {
+          "component_vm": 222,
+          "pid": 3,
+          "pc": 1198088,
+          "args": [
+            0,
+            688,
+            1,
+            2,
+            3,
+            0
+          ],
+          "result": 756580352
+        },
+        {
+          "component_vm": 222,
+          "pid": 3,
+          "pc": 1198088,
+          "args": [
+            0,
+            2000,
+            1,
+            2,
+            3,
+            49152
+          ],
+          "result": 756596736
+        },
+        {
+          "component_vm": 222,
+          "pid": 3,
+          "pc": 1198088,
+          "args": [
+            0,
+            272,
+            1,
+            2,
+            3,
+            32768
+          ],
+          "result": 756613120
+        },
+        {
+          "component_vm": 222,
+          "pid": 3,
+          "pc": 1198088,
+          "args": [
+            0,
+            3927,
+            1,
+            2,
+            3,
+            0
+          ],
+          "result": 756629504
+        },
+        {
+          "phase": "runtime_elf",
+          "path": "/apex/com.android.runtime/lib64/bionic/libc.so",
+          "base": 3145728,
+          "span_bytes": 1114112
+        },
+        {
+          "component_vm": 222,
+          "pid": 3,
+          "pc": 1198088,
+          "args": [
+            0,
+            744,
+            1,
+            2,
+            4,
+            0
+          ],
+          "result": 756645888
+        },
+        {
+          "component_vm": 222,
+          "pid": 3,
+          "pc": 1198088,
+          "args": [
+            0,
+            25184,
+            1,
+            2,
+            4,
+            1196032
+          ],
+          "result": 756662272
+        },
+        {
+          "component_vm": 222,
+          "pid": 3,
+          "pc": 1198088,
+          "args": [
+            0,
+            22432,
+            1,
+            2,
+            4,
+            950272
+          ],
+          "result": 756695040
+        },
+        {
+          "component_vm": 222,
+          "pid": 3,
+          "pc": 1198088,
+          "args": [
+            0,
+            22667,
+            1,
+            2,
+            4,
+            49152
+          ],
+          "result": 756727808
+        },
+        {
+          "component_vm": 222,
+          "pid": 3,
+          "pc": 1198088,
+          "args": [
+            0,
+            507904,
+            0,
+            34,
+            4294967295,
+            0
+          ],
+          "result": 756760576
+        },
+        {
+          "component_vm": 222,
+          "pid": 3,
+          "pc": 1198088,
+          "args": [
+            756858880,
+            3272,
+            1,
+            18,
+            3,
+            0
+          ],
+          "result": 756858880
+        },
+        {
+          "component_vm": 222,
+          "pid": 3,
+          "pc": 1198088,
+          "args": [
+            756875264,
+            704,
+            5,
+            18,
+            3,
+            16384
+          ],
+          "result": 756875264
+        },
+        {
+          "component_vm": 222,
+          "pid": 3,
+          "pc": 1198088,
+          "args": [
+            756891648,
+            392,
+            3,
+            18,
+            3,
+            32768
+          ],
+          "result": 756891648
+        },
+        {
+          "component_vm": 222,
+          "pid": 3,
+          "pc": 1198088,
+          "args": [
+            756908032,
+            16384,
+            3,
+            50,
+            4294967295,
+            0
+          ],
+          "result": 756908032
+        },
+        {
+          "component_vm": 222,
+          "pid": 3,
+          "pc": 1198088,
+          "args": [
+            0,
+            1556480,
+            0,
+            34,
+            4294967295,
+            0
+          ],
+          "result": 756924416
+        },
+        {
+          "component_vm": 222,
+          "pid": 3,
+          "pc": 1198088,
+          "args": [
+            757268480,
+            352692,
+            1,
+            18,
+            4,
+            0
+          ],
+          "result": 757268480
+        },
+        {
+          "component_vm": 222,
+          "pid": 3,
+          "pc": 1198088,
+          "args": [
+            757628928,
+            582704,
+            5,
+            18,
+            4,
+            360448
+          ],
+          "result": 757628928
+        },
+        {
+          "component_vm": 222,
+          "pid": 3,
+          "pc": 1198088,
+          "args": [
+            758218752,
+            16128,
+            3,
+            18,
+            4,
+            950272
+          ],
+          "result": 758218752
+        },
+        {
+          "component_vm": 222,
+          "pid": 3,
+          "pc": 1198088,
+          "args": [
+            758235136,
+            1440,
+            3,
+            18,
+            4,
+            966656
+          ],
+          "result": 758235136
+        },
+        {
+          "component_vm": 222,
+          "pid": 3,
+          "pc": 1198088,
+          "args": [
+            758251520,
+            131072,
+            3,
+            50,
+            4294967295,
+            0
+          ],
+          "result": 758251520
+        },
+        {
+          "component_vm": 222,
+          "pid": 3,
+          "pc": 1198088,
+          "args": [
+            0,
+            393216,
+            3,
+            34,
+            4294967295,
+            0
+          ],
+          "result": 758382592
+        },
+        {
+          "component_vm": 226,
+          "pid": 3,
+          "pc": 1195080,
+          "args": [
+            2654208,
+            16384,
+            1,
+            756138496,
+            756138624,
+            21056844
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 3,
+          "pc": 1195080,
+          "args": [
+            756891648,
+            16384,
+            1,
+            756154752,
+            756154880,
+            4
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 222,
+          "pid": 3,
+          "pc": 1198088,
+          "args": [
+            0,
+            16384,
+            3,
+            34,
+            4294967295,
+            0
+          ],
+          "result": 756760576
+        },
+        {
+          "component_vm": 226,
+          "pid": 3,
+          "pc": 1195080,
+          "args": [
+            758218752,
+            16384,
+            1,
+            756762496,
+            756762624,
+            4
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 222,
+          "pid": 3,
+          "pc": 1198088,
+          "args": [
+            0,
+            49152,
+            0,
+            16418,
+            4294967295,
+            0
+          ],
+          "result": 756580352
+        },
+        {
+          "component_vm": 226,
+          "pid": 3,
+          "pc": 1195080,
+          "args": [
+            756596736,
+            16384,
+            3,
+            16418,
+            4294967295,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 3,
+          "pc": 758132424,
+          "args": [
+            758333440,
+            16384,
+            1,
+            758349696,
+            758349824,
+            4
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 3,
+          "pc": 758132424,
+          "args": [
+            758333440,
+            16384,
+            3,
+            758349696,
+            758349824,
+            4
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 222,
+          "pid": 3,
+          "pc": 758135432,
+          "args": [
+            0,
+            1104,
+            3,
+            34,
+            4294967295,
+            0
+          ],
+          "result": 738263040
+        },
+        {
+          "component_vm": 226,
+          "pid": 3,
+          "pc": 758132424,
+          "args": [
+            758333440,
+            16384,
+            1,
+            1,
+            738263168,
+            738263164
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 3,
+          "pc": 758132424,
+          "args": [
+            758333440,
+            16384,
+            3,
+            8,
+            19,
+            4
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 3,
+          "pc": 758132424,
+          "args": [
+            758333440,
+            16384,
+            1,
+            8,
+            19,
+            4
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 222,
+          "pid": 3,
+          "pc": 758135432,
+          "args": [
+            0,
+            8858370048,
+            0,
+            16418,
+            4294967295,
+            0
+          ],
+          "result": 758775808
+        },
+        {
+          "component_vm": 222,
+          "pid": 3,
+          "pc": 758135432,
+          "args": [
+            2101116928,
+            262144,
+            3,
+            50,
+            4294967295,
+            0
+          ],
+          "result": 2101116928
+        },
+        {
+          "component_vm": 222,
+          "pid": 3,
+          "pc": 758135432,
+          "args": [
+            6664470528,
+            262144,
+            3,
+            50,
+            4294967295,
+            0
+          ],
+          "result": 6664470528
+        },
+        {
+          "component_vm": 226,
+          "pid": 3,
+          "pc": 758132424,
+          "args": [
+            758333440,
+            16384,
+            3,
+            0,
+            0,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 3,
+          "pc": 758132424,
+          "args": [
+            758333440,
+            16384,
+            1,
+            0,
+            738263169,
+            68717929601
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 3,
+          "pc": 1195080,
+          "args": [
+            755744768,
+            393216,
+            1,
+            16,
+            755171456,
+            755171440
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 3,
+          "pc": 1195080,
+          "args": [
+            755187712,
+            393216,
+            1,
+            16,
+            755171456,
+            755171440
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 222,
+          "pid": 3,
+          "pc": 758135432,
+          "args": [
+            7469875200,
+            262144,
+            3,
+            50,
+            4294967295,
+            0
+          ],
+          "result": 7469875200
+        },
+        {
+          "component_vm": 222,
+          "pid": 3,
+          "pc": 758135432,
+          "args": [
+            5053808640,
+            262144,
+            3,
+            50,
+            4294967295,
+            0
+          ],
+          "result": 5053808640
+        },
+        {
+          "component_vm": 222,
+          "pid": 3,
+          "pc": 758135432,
+          "args": [
+            3174711296,
+            262144,
+            3,
+            50,
+            4294967295,
+            0
+          ],
+          "result": 3174711296
+        },
+        {
+          "component_vm": 222,
+          "pid": 3,
+          "pc": 758135432,
+          "args": [
+            0,
+            1064960,
+            0,
+            16418,
+            4294967295,
+            0
+          ],
+          "result": 9617145856
+        },
+        {
+          "component_vm": 226,
+          "pid": 3,
+          "pc": 758132424,
+          "args": [
+            9617162240,
+            1032192,
+            3,
+            16418,
+            4294967295,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 222,
+          "pid": 3,
+          "pc": 758135432,
+          "args": [
+            0,
+            49152,
+            3,
+            34,
+            4294967295,
+            0
+          ],
+          "result": 756170752
+        },
+        {
+          "component_vm": 226,
+          "pid": 3,
+          "pc": 758132424,
+          "args": [
+            756170752,
+            16384,
+            0,
+            34,
+            4294967295,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 222,
+          "pid": 3,
+          "pc": 758135432,
+          "args": [
+            0,
+            16777216,
+            0,
+            34,
+            4294967295,
+            0
+          ],
+          "result": 9618210816
+        },
+        {
+          "component_vm": 226,
+          "pid": 3,
+          "pc": 758132424,
+          "args": [
+            9624125440,
+            16384,
+            3,
+            34,
+            4294967295,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 3,
+          "pc": 1195080,
+          "args": [
+            755744768,
+            393216,
+            3,
+            755122752,
+            755122816,
+            21056844
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 3,
+          "pc": 1195080,
+          "args": [
+            755187712,
+            393216,
+            3,
+            755122752,
+            755122816,
+            21056844
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 222,
+          "pid": 3,
+          "pc": 1198088,
+          "args": [
+            0,
+            393216,
+            3,
+            34,
+            4294967295,
+            0
+          ],
+          "result": 756170752
+        },
+        {
+          "phase": "runtime_elf",
+          "path": "/apex/com.android.runtime/lib64/bionic/libm.so",
+          "base": 4456448,
+          "span_bytes": 262144
+        },
+        {
+          "component_vm": 222,
+          "pid": 3,
+          "pc": 1198088,
+          "args": [
+            0,
+            688,
+            1,
+            2,
+            3,
+            0
+          ],
+          "result": 756629504
+        },
+        {
+          "component_vm": 222,
+          "pid": 3,
+          "pc": 1198088,
+          "args": [
+            0,
+            4624,
+            1,
+            2,
+            3,
+            245760
+          ],
+          "result": 756645888
+        },
+        {
+          "component_vm": 222,
+          "pid": 3,
+          "pc": 1198088,
+          "args": [
+            0,
+            480,
+            1,
+            2,
+            3,
+            229376
+          ],
+          "result": 756662272
+        },
+        {
+          "component_vm": 222,
+          "pid": 3,
+          "pc": 1198088,
+          "args": [
+            0,
+            22792,
+            1,
+            2,
+            3,
+            0
+          ],
+          "result": 756678656
+        },
+        {
+          "component_vm": 222,
+          "pid": 3,
+          "pc": 1198088,
+          "args": [
+            0,
+            507904,
+            0,
+            34,
+            4294967295,
+            0
+          ],
+          "result": 9617145856
+        },
+        {
+          "component_vm": 222,
+          "pid": 3,
+          "pc": 1198088,
+          "args": [
+            9617276928,
+            74840,
+            1,
+            18,
+            3,
+            0
+          ],
+          "result": 9617276928
+        },
+        {
+          "component_vm": 222,
+          "pid": 3,
+          "pc": 1198088,
+          "args": [
+            9617358848,
+            143552,
+            5,
+            18,
+            3,
+            81920
+          ],
+          "result": 9617358848
+        },
+        {
+          "component_vm": 222,
+          "pid": 3,
+          "pc": 1198088,
+          "args": [
+            9617506304,
+            720,
+            3,
+            18,
+            3,
+            229376
+          ],
+          "result": 9617506304
+        },
+        {
+          "component_vm": 222,
+          "pid": 3,
+          "pc": 1198088,
+          "args": [
+            9617522688,
+            128,
+            3,
+            18,
+            3,
+            245760
+          ],
+          "result": 9617522688
+        },
+        {
+          "component_vm": 226,
+          "pid": 3,
+          "pc": 1195080,
+          "args": [
+            9617506304,
+            16384,
+            1,
+            756138496,
+            756138624,
+            21056844
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 3,
+          "pc": 1195080,
+          "args": [
+            755744768,
+            393216,
+            1,
+            756138496,
+            756138624,
+            21056844
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 3,
+          "pc": 1195080,
+          "args": [
+            755187712,
+            393216,
+            1,
+            756138496,
+            756138624,
+            21056844
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 3,
+          "pc": 1195080,
+          "args": [
+            755744768,
+            393216,
+            3,
+            0,
+            758382624,
+            758382624
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 3,
+          "pc": 1195080,
+          "args": [
+            755187712,
+            393216,
+            3,
+            0,
+            758382624,
+            758382624
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 3,
+          "pc": 1195080,
+          "args": [
+            755744768,
+            393216,
+            1,
+            0,
+            755188096,
+            755188096
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 3,
+          "pc": 1195080,
+          "args": [
+            755187712,
+            393216,
+            1,
+            0,
+            755188096,
+            755188096
+          ],
+          "result": 0
+        },
+        {
+          "component_main": true,
+          "aux_page_size": 16384,
+          "page_size": 16384
+        },
+        {
+          "component_object": "/system/bin/linker64",
+          "base": 786432
+        },
+        {
+          "component_object": "/system/bin/stock-bionic",
+          "base": 2621440
+        },
+        {
+          "component_object": "/apex/com.android.runtime/lib64/bionic/libdl.so",
+          "base": 756858880
+        },
+        {
+          "component_object": "/apex/com.android.runtime/lib64/bionic/libc.so",
+          "base": 757268480
+        },
+        {
+          "component_check": "page_bss",
+          "success": true
+        },
+        {
+          "component_check": "allocation",
+          "success": true
+        },
+        {
+          "component_check": "allocation_contents",
+          "success": true
+        },
+        {
+          "component_check": "thread_tls",
+          "success": true
+        },
+        {
+          "component_check": "dynamic_libm",
+          "success": true
+        },
+        {
+          "component_stage": "dynamic",
+          "started": true,
+          "success": true,
+          "exec_errno": 0,
+          "exit_code": 0,
+          "signal": 0,
+          "usage": false
+        },
+        {
+          "test": "stock_bionic_observation_complete",
+          "passed": true
+        },
+        {
+          "test": "translated_linux_process",
+          "path": "/probe-guest",
+          "passed": true,
+          "waited": 25,
+          "status": 0
+        },
+        {
+          "test": "translated_context_cleanup",
+          "passed": true,
+          "allocated": 4,
+          "freed": 4,
+          "maps": 0,
+          "revocations": 0,
+          "tlb_fills": 108,
+          "faults": 110,
+          "syscalls": 491,
+          "preemptions": 10
+        },
+        {
+          "cpu": 0,
+          "translation_data_tbi": true,
+          "unicorn_tagged_fills": 0,
+          "alias_flushes": 0
+        },
+        {
+          "cpu": 0,
+          "direct_fallback": 3575369800,
+          "count": 1
+        },
+        {
+          "cpu": 0,
+          "direct_fallback": 3575369792,
+          "count": 1
+        },
+        {
+          "cpu": 0,
+          "direct_fallback": 3575369812,
+          "count": 2
+        },
+        {
+          "cpu": 0,
+          "direct_fallback": 2287991872,
+          "count": 1
+        },
+        {
+          "result": "passed"
+        }
+      ],
+      "validated": true,
+      "data_image": null,
+      "stdout_sha256": "bfd50627236d99f7db19235fb796aa9a4f192fe977415b4088701489485df507",
+      "stderr_sha256": "8ae3262942a28411c5eda14b66e8b9f4432932b86d1c858b8803e6bd7b9039d4",
+      "component_compatible": true,
+      "component_stderr": "00080000-00084000 r-xp 00000000 00:02 9                                  /lib/nce-sigreturn.so\n000c0000-0010c000 r--p 00000000 00:02 29                                 /apex/com.android.runtime/bin/linker64\n0010c000-00244000 r-xp 0004c000 00:02 29                                 /apex/com.android.runtime/bin/linker64\n00244000-00250000 r--p 00184000 00:02 29                                 /apex/com.android.runtime/bin/linker64\n00250000-00254000 rw-p 00190000 00:02 29                                 /apex/com.android.runtime/bin/linker64\n00254000-0025c000 rw-p 00000000 00:00 0 \n0025c000-00260000 r--p 00000000 00:00 0 \n00260000-00270000 rw-p 00000000 00:00 0 \n00280000-00284000 r--p 00000000 00:02 34                                 /system/bin/stock-bionic\n00284000-00288000 r-xp 00000000 00:02 34                                 /system/bin/stock-bionic\n00288000-0028c000 r--p 00000000 00:02 34                                 /system/bin/stock-bionic\n0028c000-00290000 rw-p 00000000 00:02 34                                 /system/bin/stock-bionic\n00290000-00294000 rw-p 00000000 00:00 0 \n2c010000-2c018000 rw-p 00000000 00:00 0 \n2c018000-2c01c000 ---p 00000000 00:00 0 \n2c01c000-2c024000 rw-p 00000000 00:00 0 \n2c024000-2c354000 ---p 00000000 00:00 0 \n2c354000-2c358000 rw-p 00000000 00:00 0 \n2c358000-2d024000 ---p 00000000 00:00 0 \n2d024000-2d02c000 rw-p 00000000 00:00 0 \n2d02c000-2d030000 r--p 00000000 00:00 0 \n2d030000-2d034000 rw-p 00000000 00:00 0 \n2d034000-2d094000 r--p 00000000 00:00 0 \n2d094000-2d098000 ---p 00000000 00:00 0 \n2d098000-2d0b8000 rw-p 00000000 00:00 0 \n2d0b8000-2d0bc000 ---p 00000000 00:00 0 \n2d0bc000-2d11c000 r--p 00000000 00:00 0 \n2d11c000-2d124000 rw-p 00000000 00:00 0 \n2d184000-2d188000 rw-p 00000000 00:00 0 \n2d188000-2d18c000 ---p 00000000 00:00 0 \n2d18c000-2d190000 rw-p 00000000 00:00 0 \n2d190000-2d194000 ---p 00000000 00:00 0 \n2d1b4000-2d1b8000 rw-p 00000000 00:00 0 \n2d1cc000-2d1d0000 r--p 00000000 00:02 31                                 /apex/com.android.runtime/lib64/bionic/libdl.so\n2d1d0000-2d1d4000 r-xp 00004000 00:02 31                                 /apex/com.android.runtime/lib64/bionic/libdl.so\n2d1d4000-2d1d8000 r--p 00008000 00:02 31                                 /apex/com.android.runtime/lib64/bionic/libdl.so\n2d1d8000-2d1dc000 rw-p 00000000 00:00 0 \n2d230000-2d288000 r--p 00000000 00:02 30                                 /apex/com.android.runtime/lib64/bionic/libc.so\n2d288000-2d318000 r-xp 00058000 00:02 30                                 /apex/com.android.runtime/lib64/bionic/libc.so\n2d318000-2d31c000 r--p 000e8000 00:02 30                                 /apex/com.android.runtime/lib64/bionic/libc.so\n2d31c000-2d320000 rw-p 000ec000 00:02 30                                 /apex/com.android.runtime/lib64/bionic/libc.so\n2d320000-2d334000 rw-p 00000000 00:00 0 \n2d334000-2d338000 r--p 00000000 00:00 0 \n2d338000-2d3a0000 rw-p 00000000 00:00 0 \n2d3a0000-7d3c8000 ---p 00000000 00:00 0 \n7d3c8000-7d408000 rw-p 00000000 00:00 0 \n7d408000-12d3b0000 ---p 00000000 00:00 0 \n12d3b0000-12d3f0000 rw-p 00000000 00:00 0 \n12d3f0000-18d3bc000 ---p 00000000 00:00 0 \n18d3bc000-18d3fc000 rw-p 00000000 00:00 0 \n18d3fc000-1bd3d4000 ---p 00000000 00:00 0 \n1bd3d4000-1bd414000 rw-p 00000000 00:00 0 \n1bd414000-23d3a0000 ---p 00000000 00:00 0 \nfffe64000-fffe88000 rw-p 00000000 00:00 0                                [stack]\n",
+      "stderr": "00080000-00084000 r-xp 00000000 00:02 9                                  /lib/nce-sigreturn.so\n000c0000-0010c000 r--p 00000000 00:02 29                                 /apex/com.android.runtime/bin/linker64\n0010c000-00244000 r-xp 0004c000 00:02 29                                 /apex/com.android.runtime/bin/linker64\n00244000-00250000 r--p 00184000 00:02 29                                 /apex/com.android.runtime/bin/linker64\n00250000-00254000 rw-p 00190000 00:02 29                                 /apex/com.android.runtime/bin/linker64\n00254000-0025c000 rw-p 00000000 00:00 0 \n0025c000-00260000 r--p 00000000 00:00 0 \n00260000-00270000 rw-p 00000000 00:00 0 \n00280000-00284000 r--p 00000000 00:02 34                                 /system/bin/stock-bionic\n00284000-00288000 r-xp 00000000 00:02 34                                 /system/bin/stock-bionic\n00288000-0028c000 r--p 00000000 00:02 34                                 /system/bin/stock-bionic\n0028c000-00290000 rw-p 00000000 00:02 34                                 /system/bin/stock-bionic\n00290000-00294000 rw-p 00000000 00:00 0 \n2c010000-2c018000 rw-p 00000000 00:00 0 \n2c018000-2c01c000 ---p 00000000 00:00 0 \n2c01c000-2c024000 rw-p 00000000 00:00 0 \n2c024000-2c354000 ---p 00000000 00:00 0 \n2c354000-2c358000 rw-p 00000000 00:00 0 \n2c358000-2d024000 ---p 00000000 00:00 0 \n2d024000-2d02c000 rw-p 00000000 00:00 0 \n2d02c000-2d030000 r--p 00000000 00:00 0 \n2d030000-2d034000 rw-p 00000000 00:00 0 \n2d034000-2d094000 r--p 00000000 00:00 0 \n2d094000-2d098000 ---p 00000000 00:00 0 \n2d098000-2d0b8000 rw-p 00000000 00:00 0 \n2d0b8000-2d0bc000 ---p 00000000 00:00 0 \n2d0bc000-2d11c000 r--p 00000000 00:00 0 \n2d11c000-2d124000 rw-p 00000000 00:00 0 \n2d184000-2d188000 rw-p 00000000 00:00 0 \n2d188000-2d18c000 ---p 00000000 00:00 0 \n2d18c000-2d190000 rw-p 00000000 00:00 0 \n2d190000-2d194000 ---p 00000000 00:00 0 \n2d1b4000-2d1b8000 rw-p 00000000 00:00 0 \n2d1cc000-2d1d0000 r--p 00000000 00:02 31                                 /apex/com.android.runtime/lib64/bionic/libdl.so\n2d1d0000-2d1d4000 r-xp 00004000 00:02 31                                 /apex/com.android.runtime/lib64/bionic/libdl.so\n2d1d4000-2d1d8000 r--p 00008000 00:02 31                                 /apex/com.android.runtime/lib64/bionic/libdl.so\n2d1d8000-2d1dc000 rw-p 00000000 00:00 0 \n2d230000-2d288000 r--p 00000000 00:02 30                                 /apex/com.android.runtime/lib64/bionic/libc.so\n2d288000-2d318000 r-xp 00058000 00:02 30                                 /apex/com.android.runtime/lib64/bionic/libc.so\n2d318000-2d31c000 r--p 000e8000 00:02 30                                 /apex/com.android.runtime/lib64/bionic/libc.so\n2d31c000-2d320000 rw-p 000ec000 00:02 30                                 /apex/com.android.runtime/lib64/bionic/libc.so\n2d320000-2d334000 rw-p 00000000 00:00 0 \n2d334000-2d338000 r--p 00000000 00:00 0 \n2d338000-2d3a0000 rw-p 00000000 00:00 0 \n2d3a0000-7d3c8000 ---p 00000000 00:00 0 \n7d3c8000-7d408000 rw-p 00000000 00:00 0 \n7d408000-12d3b0000 ---p 00000000 00:00 0 \n12d3b0000-12d3f0000 rw-p 00000000 00:00 0 \n12d3f0000-18d3bc000 ---p 00000000 00:00 0 \n18d3bc000-18d3fc000 rw-p 00000000 00:00 0 \n18d3fc000-1bd3d4000 ---p 00000000 00:00 0 \n1bd3d4000-1bd414000 rw-p 00000000 00:00 0 \n1bd414000-23d3a0000 ---p 00000000 00:00 0 \nfffe64000-fffe88000 rw-p 00000000 00:00 0                                [stack]\n"
+    },
+    {
+      "entry": "gcd",
+      "iteration": 0,
+      "returncode": 0,
+      "results": [
+        {
+          "test": "dispatch_signal_mask",
+          "sigusr2_blocked": 1
+        },
+        {
+          "config": "translation_code_memory",
+          "kernel": "dual",
+          "direct": "dual"
+        },
+        {
+          "config": "translation_data_tbi",
+          "data": true,
+          "fetch": false,
+          "tagged_syscall_abi": false
+        },
+        {
+          "config": "translation_exec_cache",
+          "mode": "pages"
+        },
+        {
+          "config": "translation_tlb_invalidation",
+          "mode": "pages",
+          "range_limit_pages": 64
+        },
+        {
+          "config": "translation_preemption",
+          "mode": "timer",
+          "instructions": 50000,
+          "timer_interval_ns": 2000000
+        },
+        {
+          "config": "translation_parallel",
+          "cpus": 1,
+          "profile": false,
+          "uaccess_stop": "all"
+        },
+        {
+          "cpu": 0,
+          "config": "translation_execution",
+          "engine": "direct",
+          "direct_cache_bytes": 134217728,
+          "data_page_bytes": 16384,
+          "mapping_entries": 256,
+          "route_entries": 256,
+          "selective_writes": false,
+          "reuse_code_checks": false,
+          "memory": "flat",
+          "code_watch": true,
+          "cross_page": true,
+          "route_epochs": false,
+          "retain_routes": false,
+          "memory_groups": false,
+          "native_exclusive": true,
+          "vector_table": false,
+          "simd_math": false
+        },
+        {
+          "cpu": 0,
+          "config": "translation_cache_settings",
+          "cache_bytes": 134217728,
+          "actual_cache_bytes": 134201268,
+          "invalidation": "pages",
+          "linux_fastpath": false
+        },
+        {
+          "test": "translation_prepared_code_execution",
+          "passed": true
+        },
+        {
+          "config": "translation_guest_layout",
+          "mode": "sparse",
+          "guest_base": 65536,
+          "guest_end": 68719476736,
+          "guest_span_bytes": 68719411200,
+          "flat_coverage_bytes": 4294967296,
+          "physical_base": 481036337152,
+          "ram_base": 482177187840,
+          "ram_bytes": 1073741824,
+          "reservation_base": 481036337152,
+          "reservation_bytes": 1140850688
+        },
+        {
+          "config": "linux_scheduler_slice",
+          "requested_us": 0,
+          "applied_ns": 750000
+        },
+        {
+          "config": "translation_online_cpus",
+          "capacity": 1,
+          "requested": 1,
+          "online_mask": 1
+        },
+        {
+          "phase": "runtime_elf",
+          "path": "/probe-guest",
+          "base": 262144,
+          "span_bytes": 98304
+        },
+        {
+          "phase": "runtime_elf",
+          "path": "/lib/nce-sigreturn.so",
+          "base": 524288,
+          "span_bytes": 16384
+        },
+        {
+          "phase": "runtime_elf",
+          "path": "/apex/com.android.runtime/bin/linker64",
+          "base": 786432,
+          "span_bytes": 1769472
+        },
+        {
+          "component_vm": 222,
+          "pid": 2,
+          "pc": 1198088,
+          "args": [
+            0,
+            16384,
+            3,
+            34,
+            4294967295,
+            0
+          ],
+          "result": 738263040
+        },
+        {
+          "component_vm": 222,
+          "pid": 2,
+          "pc": 1198088,
+          "args": [
+            0,
+            1104,
+            3,
+            34,
+            4294967295,
+            0
+          ],
+          "result": 738279424
+        },
+        {
+          "component_vm": 222,
+          "pid": 2,
+          "pc": 1198088,
+          "args": [
+            0,
+            49152,
+            3,
+            34,
+            4294967295,
+            0
+          ],
+          "result": 738295808
+        },
+        {
+          "component_vm": 226,
+          "pid": 2,
+          "pc": 1195080,
+          "args": [
+            738295808,
+            16384,
+            0,
+            34,
+            4294967295,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 222,
+          "pid": 2,
+          "pc": 1198088,
+          "args": [
+            0,
+            16777216,
+            0,
+            34,
+            4294967295,
+            0
+          ],
+          "result": 738344960
+        },
+        {
+          "component_vm": 226,
+          "pid": 2,
+          "pc": 1195080,
+          "args": [
+            749551616,
+            16384,
+            3,
+            34,
+            4294967295,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 2,
+          "pc": 1195080,
+          "args": [
+            2375680,
+            49152,
+            1,
+            34,
+            4294967295,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 2,
+          "pc": 1195080,
+          "args": [
+            2473984,
+            16384,
+            1,
+            2490240,
+            2490368,
+            4
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 2,
+          "pc": 1195080,
+          "args": [
+            2473984,
+            16384,
+            3,
+            2490240,
+            2490368,
+            4
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 2,
+          "pc": 1195080,
+          "args": [
+            2473984,
+            16384,
+            1,
+            1,
+            738279564,
+            738279560
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 222,
+          "pid": 2,
+          "pc": 1198088,
+          "args": [
+            0,
+            16384,
+            3,
+            34,
+            4294967295,
+            0
+          ],
+          "result": 755122176
+        },
+        {
+          "component_vm": 222,
+          "pid": 2,
+          "pc": 1198088,
+          "args": [
+            0,
+            16384,
+            3,
+            34,
+            4294967295,
+            0
+          ],
+          "result": 755138560
+        },
+        {
+          "component_vm": 222,
+          "pid": 2,
+          "pc": 1198088,
+          "args": [
+            0,
+            16384,
+            3,
+            34,
+            4294967295,
+            0
+          ],
+          "result": 755154944
+        },
+        {
+          "component_vm": 226,
+          "pid": 2,
+          "pc": 1195080,
+          "args": [
+            755154944,
+            16384,
+            1,
+            16384,
+            828932,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 2,
+          "pc": 1195080,
+          "args": [
+            755154944,
+            16384,
+            3,
+            16384,
+            828932,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 2,
+          "pc": 1195080,
+          "args": [
+            755154944,
+            16384,
+            1,
+            16384,
+            828932,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 2,
+          "pc": 1195080,
+          "args": [
+            755154944,
+            16384,
+            3,
+            16384,
+            828932,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 2,
+          "pc": 1195080,
+          "args": [
+            755154944,
+            16384,
+            1,
+            16384,
+            828932,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 2,
+          "pc": 1195080,
+          "args": [
+            755154944,
+            16384,
+            3,
+            16384,
+            828932,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 2,
+          "pc": 1195080,
+          "args": [
+            755154944,
+            16384,
+            1,
+            16384,
+            828932,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 2,
+          "pc": 1195080,
+          "args": [
+            755154944,
+            16384,
+            3,
+            16384,
+            828932,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 2,
+          "pc": 1195080,
+          "args": [
+            755154944,
+            16384,
+            1,
+            16384,
+            828932,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 2,
+          "pc": 1195080,
+          "args": [
+            755154944,
+            16384,
+            3,
+            16384,
+            828932,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 2,
+          "pc": 1195080,
+          "args": [
+            755154944,
+            16384,
+            1,
+            16384,
+            828932,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 2,
+          "pc": 1195080,
+          "args": [
+            755154944,
+            16384,
+            3,
+            16384,
+            828932,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 2,
+          "pc": 1195080,
+          "args": [
+            755154944,
+            16384,
+            1,
+            16384,
+            828932,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 2,
+          "pc": 1195080,
+          "args": [
+            755154944,
+            16384,
+            3,
+            16384,
+            828932,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 2,
+          "pc": 1195080,
+          "args": [
+            755154944,
+            16384,
+            1,
+            16384,
+            828932,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 2,
+          "pc": 1195080,
+          "args": [
+            755154944,
+            16384,
+            3,
+            16384,
+            828932,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 2,
+          "pc": 1195080,
+          "args": [
+            755154944,
+            16384,
+            1,
+            16384,
+            828932,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 2,
+          "pc": 1195080,
+          "args": [
+            755154944,
+            16384,
+            3,
+            16384,
+            828932,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 2,
+          "pc": 1195080,
+          "args": [
+            755154944,
+            16384,
+            1,
+            16384,
+            828932,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 2,
+          "pc": 1195080,
+          "args": [
+            755154944,
+            16384,
+            3,
+            16384,
+            828932,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 2,
+          "pc": 1195080,
+          "args": [
+            755154944,
+            16384,
+            1,
+            16384,
+            828932,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 2,
+          "pc": 1195080,
+          "args": [
+            755154944,
+            16384,
+            3,
+            16384,
+            828932,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 2,
+          "pc": 1195080,
+          "args": [
+            755154944,
+            16384,
+            1,
+            16384,
+            828932,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 2,
+          "pc": 1195080,
+          "args": [
+            755154944,
+            16384,
+            3,
+            16384,
+            828932,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 2,
+          "pc": 1195080,
+          "args": [
+            755154944,
+            16384,
+            1,
+            16384,
+            828932,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 2,
+          "pc": 1195080,
+          "args": [
+            755154944,
+            16384,
+            3,
+            16384,
+            828932,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 2,
+          "pc": 1195080,
+          "args": [
+            755154944,
+            16384,
+            1,
+            16384,
+            828932,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 2,
+          "pc": 1195080,
+          "args": [
+            755154944,
+            16384,
+            3,
+            16384,
+            828932,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 2,
+          "pc": 1195080,
+          "args": [
+            755154944,
+            16384,
+            1,
+            16384,
+            828932,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "phase": "runtime_elf",
+          "path": "/system/bin/stock-bionic",
+          "base": 2621440,
+          "span_bytes": 81920
+        },
+        {
+          "component_vm": 222,
+          "pid": 3,
+          "pc": 1198088,
+          "args": [
+            0,
+            16384,
+            3,
+            34,
+            4294967295,
+            0
+          ],
+          "result": 738263040
+        },
+        {
+          "component_vm": 222,
+          "pid": 3,
+          "pc": 1198088,
+          "args": [
+            0,
+            1104,
+            3,
+            34,
+            4294967295,
+            0
+          ],
+          "result": 738279424
+        },
+        {
+          "component_vm": 222,
+          "pid": 3,
+          "pc": 1198088,
+          "args": [
+            0,
+            49152,
+            3,
+            34,
+            4294967295,
+            0
+          ],
+          "result": 738295808
+        },
+        {
+          "component_vm": 226,
+          "pid": 3,
+          "pc": 1195080,
+          "args": [
+            738295808,
+            16384,
+            0,
+            34,
+            4294967295,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 222,
+          "pid": 3,
+          "pc": 1198088,
+          "args": [
+            0,
+            16777216,
+            0,
+            34,
+            4294967295,
+            0
+          ],
+          "result": 738344960
+        },
+        {
+          "component_vm": 226,
+          "pid": 3,
+          "pc": 1195080,
+          "args": [
+            750452736,
+            16384,
+            3,
+            34,
+            4294967295,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 3,
+          "pc": 1195080,
+          "args": [
+            2375680,
+            49152,
+            1,
+            34,
+            4294967295,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 3,
+          "pc": 1195080,
+          "args": [
+            2473984,
+            16384,
+            1,
+            2490240,
+            2490368,
+            4
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 3,
+          "pc": 1195080,
+          "args": [
+            2473984,
+            16384,
+            3,
+            2490240,
+            2490368,
+            4
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 3,
+          "pc": 1195080,
+          "args": [
+            2473984,
+            16384,
+            1,
+            1,
+            738279564,
+            738279560
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 222,
+          "pid": 3,
+          "pc": 1198088,
+          "args": [
+            0,
+            16384,
+            3,
+            34,
+            4294967295,
+            0
+          ],
+          "result": 755122176
+        },
+        {
+          "component_vm": 222,
+          "pid": 3,
+          "pc": 1198088,
+          "args": [
+            0,
+            16384,
+            3,
+            34,
+            4294967295,
+            0
+          ],
+          "result": 755138560
+        },
+        {
+          "component_vm": 222,
+          "pid": 3,
+          "pc": 1198088,
+          "args": [
+            0,
+            16384,
+            3,
+            34,
+            4294967295,
+            0
+          ],
+          "result": 755154944
+        },
+        {
+          "component_vm": 226,
+          "pid": 3,
+          "pc": 1195080,
+          "args": [
+            755154944,
+            16384,
+            1,
+            16384,
+            828932,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 3,
+          "pc": 1195080,
+          "args": [
+            755154944,
+            16384,
+            3,
+            16384,
+            828932,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 3,
+          "pc": 1195080,
+          "args": [
+            755154944,
+            16384,
+            1,
+            16384,
+            828932,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 3,
+          "pc": 1195080,
+          "args": [
+            755154944,
+            16384,
+            3,
+            16384,
+            828932,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 3,
+          "pc": 1195080,
+          "args": [
+            755154944,
+            16384,
+            1,
+            16384,
+            828932,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 3,
+          "pc": 1195080,
+          "args": [
+            755154944,
+            16384,
+            3,
+            16384,
+            828932,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 3,
+          "pc": 1195080,
+          "args": [
+            755154944,
+            16384,
+            1,
+            16384,
+            828932,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 3,
+          "pc": 1195080,
+          "args": [
+            755154944,
+            16384,
+            3,
+            16384,
+            828932,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 3,
+          "pc": 1195080,
+          "args": [
+            755154944,
+            16384,
+            1,
+            16384,
+            828932,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 3,
+          "pc": 1195080,
+          "args": [
+            755154944,
+            16384,
+            3,
+            16384,
+            828932,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 3,
+          "pc": 1195080,
+          "args": [
+            755154944,
+            16384,
+            1,
+            16384,
+            828932,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 3,
+          "pc": 1195080,
+          "args": [
+            755154944,
+            16384,
+            3,
+            16384,
+            828932,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 3,
+          "pc": 1195080,
+          "args": [
+            755154944,
+            16384,
+            1,
+            16384,
+            828932,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 3,
+          "pc": 1195080,
+          "args": [
+            755154944,
+            16384,
+            3,
+            16384,
+            828932,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 3,
+          "pc": 1195080,
+          "args": [
+            755154944,
+            16384,
+            1,
+            16384,
+            828932,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 3,
+          "pc": 1195080,
+          "args": [
+            755154944,
+            16384,
+            3,
+            16384,
+            828932,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 3,
+          "pc": 1195080,
+          "args": [
+            755154944,
+            16384,
+            1,
+            16384,
+            828932,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 3,
+          "pc": 1195080,
+          "args": [
+            755154944,
+            16384,
+            3,
+            16384,
+            828932,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 3,
+          "pc": 1195080,
+          "args": [
+            755154944,
+            16384,
+            1,
+            16384,
+            828932,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 3,
+          "pc": 1195080,
+          "args": [
+            755154944,
+            16384,
+            3,
+            16384,
+            828932,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 3,
+          "pc": 1195080,
+          "args": [
+            755154944,
+            16384,
+            1,
+            16384,
+            828932,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 3,
+          "pc": 1195080,
+          "args": [
+            755154944,
+            16384,
+            3,
+            16384,
+            828932,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 3,
+          "pc": 1195080,
+          "args": [
+            755154944,
+            16384,
+            1,
+            16384,
+            828932,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 3,
+          "pc": 1195080,
+          "args": [
+            755154944,
+            16384,
+            3,
+            16384,
+            828932,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 3,
+          "pc": 1195080,
+          "args": [
+            755154944,
+            16384,
+            1,
+            16384,
+            828932,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 3,
+          "pc": 1195080,
+          "args": [
+            755154944,
+            16384,
+            3,
+            16384,
+            828932,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 3,
+          "pc": 1195080,
+          "args": [
+            755154944,
+            16384,
+            1,
+            16384,
+            828932,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 3,
+          "pc": 1195080,
+          "args": [
+            755154944,
+            16384,
+            3,
+            16384,
+            828932,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 3,
+          "pc": 1195080,
+          "args": [
+            755154944,
+            16384,
+            1,
+            16384,
+            828932,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 222,
+          "pid": 3,
+          "pc": 1198088,
+          "args": [
+            0,
+            16384,
+            3,
+            34,
+            4294967295,
+            0
+          ],
+          "result": 755171328
+        },
+        {
+          "component_vm": 222,
+          "pid": 3,
+          "pc": 1198088,
+          "args": [
+            0,
+            393216,
+            3,
+            34,
+            4294967295,
+            0
+          ],
+          "result": 755187712
+        },
+        {
+          "component_vm": 226,
+          "pid": 3,
+          "pc": 1195080,
+          "args": [
+            755187712,
+            393216,
+            3,
+            0,
+            755187760,
+            755187760
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 222,
+          "pid": 3,
+          "pc": 1198088,
+          "args": [
+            0,
+            163840,
+            0,
+            34,
+            4294967295,
+            0
+          ],
+          "result": 755580928
+        },
+        {
+          "component_vm": 226,
+          "pid": 3,
+          "pc": 1195080,
+          "args": [
+            755597312,
+            131072,
+            3,
+            34,
+            4294967295,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 222,
+          "pid": 3,
+          "pc": 1198088,
+          "args": [
+            0,
+            393216,
+            3,
+            34,
+            4294967295,
+            0
+          ],
+          "result": 755744768
+        },
+        {
+          "component_supervisor": true,
+          "page_size": 16384
+        },
+        {
+          "component_start": "linker_help"
+        },
+        {
+          "component_stage": "linker_help",
+          "started": true,
+          "success": true,
+          "exec_errno": 0,
+          "exit_code": 0,
+          "signal": 0,
+          "usage": true
+        },
+        {
+          "component_start": "dynamic"
+        },
+        {
+          "component_vm": 222,
+          "pid": 3,
+          "pc": 1198088,
+          "args": [
+            0,
+            16384,
+            3,
+            34,
+            4294967295,
+            0
+          ],
+          "result": 756137984
+        },
+        {
+          "component_vm": 222,
+          "pid": 3,
+          "pc": 1198088,
+          "args": [
+            0,
+            16384,
+            3,
+            34,
+            4294967295,
+            0
+          ],
+          "result": 756154368
+        },
+        {
+          "component_vm": 226,
+          "pid": 3,
+          "pc": 1195080,
+          "args": [
+            755154944,
+            16384,
+            3,
+            28548142780605472,
+            0,
+            9223372036854775808
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 3,
+          "pc": 1195080,
+          "args": [
+            755154944,
+            16384,
+            1,
+            28548142780605472,
+            0,
+            9223372036854775808
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 3,
+          "pc": 1195080,
+          "args": [
+            755154944,
+            16384,
+            3,
+            28548142780605472,
+            0,
+            9223372036854775808
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 3,
+          "pc": 1195080,
+          "args": [
+            755154944,
+            16384,
+            1,
+            28548142780605472,
+            0,
+            9223372036854775808
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 222,
+          "pid": 3,
+          "pc": 1198088,
+          "args": [
+            0,
+            393216,
+            3,
+            34,
+            4294967295,
+            0
+          ],
+          "result": 756170752
+        },
+        {
+          "component_vm": 222,
+          "pid": 3,
+          "pc": 1198088,
+          "args": [
+            0,
+            16384,
+            3,
+            34,
+            4294967295,
+            0
+          ],
+          "result": 756563968
+        },
+        {
+          "phase": "runtime_elf",
+          "path": "/apex/com.android.runtime/lib64/bionic/libdl.so",
+          "base": 2883584,
+          "span_bytes": 65536
+        },
+        {
+          "component_vm": 222,
+          "pid": 3,
+          "pc": 1198088,
+          "args": [
+            0,
+            688,
+            1,
+            2,
+            3,
+            0
+          ],
+          "result": 756580352
+        },
+        {
+          "component_vm": 222,
+          "pid": 3,
+          "pc": 1198088,
+          "args": [
+            0,
+            2000,
+            1,
+            2,
+            3,
+            49152
+          ],
+          "result": 756596736
+        },
+        {
+          "component_vm": 222,
+          "pid": 3,
+          "pc": 1198088,
+          "args": [
+            0,
+            272,
+            1,
+            2,
+            3,
+            32768
+          ],
+          "result": 756613120
+        },
+        {
+          "component_vm": 222,
+          "pid": 3,
+          "pc": 1198088,
+          "args": [
+            0,
+            3927,
+            1,
+            2,
+            3,
+            0
+          ],
+          "result": 756629504
+        },
+        {
+          "phase": "runtime_elf",
+          "path": "/apex/com.android.runtime/lib64/bionic/libc.so",
+          "base": 3145728,
+          "span_bytes": 1114112
+        },
+        {
+          "component_vm": 222,
+          "pid": 3,
+          "pc": 1198088,
+          "args": [
+            0,
+            744,
+            1,
+            2,
+            4,
+            0
+          ],
+          "result": 756645888
+        },
+        {
+          "component_vm": 222,
+          "pid": 3,
+          "pc": 1198088,
+          "args": [
+            0,
+            25184,
+            1,
+            2,
+            4,
+            1196032
+          ],
+          "result": 756662272
+        },
+        {
+          "component_vm": 222,
+          "pid": 3,
+          "pc": 1198088,
+          "args": [
+            0,
+            22432,
+            1,
+            2,
+            4,
+            950272
+          ],
+          "result": 756695040
+        },
+        {
+          "component_vm": 222,
+          "pid": 3,
+          "pc": 1198088,
+          "args": [
+            0,
+            22667,
+            1,
+            2,
+            4,
+            49152
+          ],
+          "result": 756727808
+        },
+        {
+          "component_vm": 222,
+          "pid": 3,
+          "pc": 1198088,
+          "args": [
+            0,
+            1556480,
+            0,
+            34,
+            4294967295,
+            0
+          ],
+          "result": 756760576
+        },
+        {
+          "component_vm": 222,
+          "pid": 3,
+          "pc": 1198088,
+          "args": [
+            0,
+            58703872,
+            0,
+            34,
+            4294967295,
+            0
+          ],
+          "result": 756760576
+        },
+        {
+          "component_vm": 222,
+          "pid": 3,
+          "pc": 1198088,
+          "args": [
+            757891072,
+            352692,
+            1,
+            18,
+            4,
+            0
+          ],
+          "result": 757891072
+        },
+        {
+          "component_vm": 222,
+          "pid": 3,
+          "pc": 1198088,
+          "args": [
+            758251520,
+            582704,
+            5,
+            18,
+            4,
+            360448
+          ],
+          "result": 758251520
+        },
+        {
+          "component_vm": 222,
+          "pid": 3,
+          "pc": 1198088,
+          "args": [
+            758841344,
+            16128,
+            3,
+            18,
+            4,
+            950272
+          ],
+          "result": 758841344
+        },
+        {
+          "component_vm": 222,
+          "pid": 3,
+          "pc": 1198088,
+          "args": [
+            758857728,
+            1440,
+            3,
+            18,
+            4,
+            966656
+          ],
+          "result": 758857728
+        },
+        {
+          "component_vm": 222,
+          "pid": 3,
+          "pc": 1198088,
+          "args": [
+            758874112,
+            131072,
+            3,
+            50,
+            4294967295,
+            0
+          ],
+          "result": 758874112
+        },
+        {
+          "component_vm": 222,
+          "pid": 3,
+          "pc": 1198088,
+          "args": [
+            0,
+            507904,
+            0,
+            34,
+            4294967295,
+            0
+          ],
+          "result": 756760576
+        },
+        {
+          "component_vm": 222,
+          "pid": 3,
+          "pc": 1198088,
+          "args": [
+            756809728,
+            3272,
+            1,
+            18,
+            3,
+            0
+          ],
+          "result": 756809728
+        },
+        {
+          "component_vm": 222,
+          "pid": 3,
+          "pc": 1198088,
+          "args": [
+            756826112,
+            704,
+            5,
+            18,
+            3,
+            16384
+          ],
+          "result": 756826112
+        },
+        {
+          "component_vm": 222,
+          "pid": 3,
+          "pc": 1198088,
+          "args": [
+            756842496,
+            392,
+            3,
+            18,
+            3,
+            32768
+          ],
+          "result": 756842496
+        },
+        {
+          "component_vm": 222,
+          "pid": 3,
+          "pc": 1198088,
+          "args": [
+            756858880,
+            16384,
+            3,
+            50,
+            4294967295,
+            0
+          ],
+          "result": 756858880
+        },
+        {
+          "component_vm": 222,
+          "pid": 3,
+          "pc": 1198088,
+          "args": [
+            0,
+            393216,
+            3,
+            34,
+            4294967295,
+            0
+          ],
+          "result": 756875264
+        },
+        {
+          "component_vm": 226,
+          "pid": 3,
+          "pc": 1195080,
+          "args": [
+            2654208,
+            16384,
+            1,
+            756138496,
+            756138624,
+            21056844
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 3,
+          "pc": 1195080,
+          "args": [
+            756842496,
+            16384,
+            1,
+            756154752,
+            756154880,
+            4
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 222,
+          "pid": 3,
+          "pc": 1198088,
+          "args": [
+            0,
+            16384,
+            3,
+            34,
+            4294967295,
+            0
+          ],
+          "result": 756760576
+        },
+        {
+          "component_vm": 226,
+          "pid": 3,
+          "pc": 1195080,
+          "args": [
+            758841344,
+            16384,
+            1,
+            756762496,
+            756762624,
+            4
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 222,
+          "pid": 3,
+          "pc": 1198088,
+          "args": [
+            0,
+            49152,
+            0,
+            16418,
+            4294967295,
+            0
+          ],
+          "result": 756580352
+        },
+        {
+          "component_vm": 226,
+          "pid": 3,
+          "pc": 1195080,
+          "args": [
+            756596736,
+            16384,
+            3,
+            16418,
+            4294967295,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 3,
+          "pc": 758755016,
+          "args": [
+            758956032,
+            16384,
+            1,
+            758972288,
+            758972416,
+            4
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 3,
+          "pc": 758755016,
+          "args": [
+            758956032,
+            16384,
+            3,
+            758972288,
+            758972416,
+            4
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 222,
+          "pid": 3,
+          "pc": 758758024,
+          "args": [
+            0,
+            1104,
+            3,
+            34,
+            4294967295,
+            0
+          ],
+          "result": 738263040
+        },
+        {
+          "component_vm": 226,
+          "pid": 3,
+          "pc": 758755016,
+          "args": [
+            758956032,
+            16384,
+            1,
+            1,
+            738263168,
+            738263164
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 3,
+          "pc": 758755016,
+          "args": [
+            758956032,
+            16384,
+            3,
+            8,
+            19,
+            4
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 3,
+          "pc": 758755016,
+          "args": [
+            758956032,
+            16384,
+            1,
+            8,
+            19,
+            4
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 222,
+          "pid": 3,
+          "pc": 758758024,
+          "args": [
+            0,
+            8858370048,
+            0,
+            16418,
+            4294967295,
+            0
+          ],
+          "result": 813694976
+        },
+        {
+          "component_vm": 222,
+          "pid": 3,
+          "pc": 758758024,
+          "args": [
+            8867020800,
+            262144,
+            3,
+            50,
+            4294967295,
+            0
+          ],
+          "result": 8867020800
+        },
+        {
+          "component_vm": 222,
+          "pid": 3,
+          "pc": 758758024,
+          "args": [
+            8329953280,
+            262144,
+            3,
+            50,
+            4294967295,
+            0
+          ],
+          "result": 8329953280
+        },
+        {
+          "component_vm": 226,
+          "pid": 3,
+          "pc": 758755016,
+          "args": [
+            758956032,
+            16384,
+            3,
+            0,
+            0,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 3,
+          "pc": 758755016,
+          "args": [
+            758956032,
+            16384,
+            1,
+            0,
+            738263169,
+            68718912641
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 3,
+          "pc": 1195080,
+          "args": [
+            755744768,
+            393216,
+            1,
+            16,
+            755171456,
+            755171440
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 3,
+          "pc": 1195080,
+          "args": [
+            755187712,
+            393216,
+            1,
+            16,
+            755171456,
+            755171440
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 222,
+          "pid": 3,
+          "pc": 758758024,
+          "args": [
+            4571807744,
+            262144,
+            3,
+            50,
+            4294967295,
+            0
+          ],
+          "result": 4571807744
+        },
+        {
+          "component_vm": 222,
+          "pid": 3,
+          "pc": 758758024,
+          "args": [
+            2424569856,
+            262144,
+            3,
+            50,
+            4294967295,
+            0
+          ],
+          "result": 2424569856
+        },
+        {
+          "component_vm": 222,
+          "pid": 3,
+          "pc": 758758024,
+          "args": [
+            7524696064,
+            262144,
+            3,
+            50,
+            4294967295,
+            0
+          ],
+          "result": 7524696064
+        },
+        {
+          "component_vm": 222,
+          "pid": 3,
+          "pc": 758758024,
+          "args": [
+            0,
+            1064960,
+            0,
+            16418,
+            4294967295,
+            0
+          ],
+          "result": 9672065024
+        },
+        {
+          "component_vm": 226,
+          "pid": 3,
+          "pc": 758755016,
+          "args": [
+            9672081408,
+            1032192,
+            3,
+            16418,
+            4294967295,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 222,
+          "pid": 3,
+          "pc": 758758024,
+          "args": [
+            0,
+            49152,
+            3,
+            34,
+            4294967295,
+            0
+          ],
+          "result": 756170752
+        },
+        {
+          "component_vm": 226,
+          "pid": 3,
+          "pc": 758755016,
+          "args": [
+            756170752,
+            16384,
+            0,
+            34,
+            4294967295,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 222,
+          "pid": 3,
+          "pc": 758758024,
+          "args": [
+            0,
+            16777216,
+            0,
+            34,
+            4294967295,
+            0
+          ],
+          "result": 9673129984
+        },
+        {
+          "component_vm": 226,
+          "pid": 3,
+          "pc": 758755016,
+          "args": [
+            9686548480,
+            16384,
+            3,
+            34,
+            4294967295,
+            0
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 3,
+          "pc": 1195080,
+          "args": [
+            755744768,
+            393216,
+            3,
+            755122752,
+            755122816,
+            21056844
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 3,
+          "pc": 1195080,
+          "args": [
+            755187712,
+            393216,
+            3,
+            755122752,
+            755122816,
+            21056844
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 222,
+          "pid": 3,
+          "pc": 1198088,
+          "args": [
+            0,
+            393216,
+            3,
+            34,
+            4294967295,
+            0
+          ],
+          "result": 756170752
+        },
+        {
+          "phase": "runtime_elf",
+          "path": "/apex/com.android.runtime/lib64/bionic/libm.so",
+          "base": 4456448,
+          "span_bytes": 262144
+        },
+        {
+          "component_vm": 222,
+          "pid": 3,
+          "pc": 1198088,
+          "args": [
+            0,
+            688,
+            1,
+            2,
+            3,
+            0
+          ],
+          "result": 756629504
+        },
+        {
+          "component_vm": 222,
+          "pid": 3,
+          "pc": 1198088,
+          "args": [
+            0,
+            4624,
+            1,
+            2,
+            3,
+            245760
+          ],
+          "result": 756645888
+        },
+        {
+          "component_vm": 222,
+          "pid": 3,
+          "pc": 1198088,
+          "args": [
+            0,
+            480,
+            1,
+            2,
+            3,
+            229376
+          ],
+          "result": 756662272
+        },
+        {
+          "component_vm": 222,
+          "pid": 3,
+          "pc": 1198088,
+          "args": [
+            0,
+            22792,
+            1,
+            2,
+            3,
+            0
+          ],
+          "result": 756678656
+        },
+        {
+          "component_vm": 222,
+          "pid": 3,
+          "pc": 1198088,
+          "args": [
+            0,
+            507904,
+            0,
+            34,
+            4294967295,
+            0
+          ],
+          "result": 757268480
+        },
+        {
+          "component_vm": 222,
+          "pid": 3,
+          "pc": 1198088,
+          "args": [
+            757334016,
+            74840,
+            1,
+            18,
+            3,
+            0
+          ],
+          "result": 757334016
+        },
+        {
+          "component_vm": 222,
+          "pid": 3,
+          "pc": 1198088,
+          "args": [
+            757415936,
+            143552,
+            5,
+            18,
+            3,
+            81920
+          ],
+          "result": 757415936
+        },
+        {
+          "component_vm": 222,
+          "pid": 3,
+          "pc": 1198088,
+          "args": [
+            757563392,
+            720,
+            3,
+            18,
+            3,
+            229376
+          ],
+          "result": 757563392
+        },
+        {
+          "component_vm": 222,
+          "pid": 3,
+          "pc": 1198088,
+          "args": [
+            757579776,
+            128,
+            3,
+            18,
+            3,
+            245760
+          ],
+          "result": 757579776
+        },
+        {
+          "component_vm": 226,
+          "pid": 3,
+          "pc": 1195080,
+          "args": [
+            757563392,
+            16384,
+            1,
+            756138496,
+            756138624,
+            21056844
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 3,
+          "pc": 1195080,
+          "args": [
+            755744768,
+            393216,
+            1,
+            756138496,
+            756138624,
+            21056844
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 3,
+          "pc": 1195080,
+          "args": [
+            755187712,
+            393216,
+            1,
+            756138496,
+            756138624,
+            21056844
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 3,
+          "pc": 1195080,
+          "args": [
+            755744768,
+            393216,
+            3,
+            0,
+            756875296,
+            756875296
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 3,
+          "pc": 1195080,
+          "args": [
+            755187712,
+            393216,
+            3,
+            0,
+            756875296,
+            756875296
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 3,
+          "pc": 1195080,
+          "args": [
+            755744768,
+            393216,
+            1,
+            0,
+            755188096,
+            755188096
+          ],
+          "result": 0
+        },
+        {
+          "component_vm": 226,
+          "pid": 3,
+          "pc": 1195080,
+          "args": [
+            755187712,
+            393216,
+            1,
+            0,
+            755188096,
+            755188096
+          ],
+          "result": 0
+        },
+        {
+          "component_main": true,
+          "aux_page_size": 16384,
+          "page_size": 16384
+        },
+        {
+          "component_object": "/system/bin/linker64",
+          "base": 786432
+        },
+        {
+          "component_object": "/system/bin/stock-bionic",
+          "base": 2621440
+        },
+        {
+          "component_object": "/apex/com.android.runtime/lib64/bionic/libdl.so",
+          "base": 756809728
+        },
+        {
+          "component_object": "/apex/com.android.runtime/lib64/bionic/libc.so",
+          "base": 757891072
+        },
+        {
+          "component_check": "page_bss",
+          "success": true
+        },
+        {
+          "component_check": "allocation",
+          "success": true
+        },
+        {
+          "component_check": "allocation_contents",
+          "success": true
+        },
+        {
+          "component_check": "thread_tls",
+          "success": true
+        },
+        {
+          "component_check": "dynamic_libm",
+          "success": true
+        },
+        {
+          "component_stage": "dynamic",
+          "started": true,
+          "success": true,
+          "exec_errno": 0,
+          "exit_code": 0,
+          "signal": 0,
+          "usage": false
+        },
+        {
+          "test": "stock_bionic_observation_complete",
+          "passed": true
+        },
+        {
+          "test": "translated_linux_process",
+          "path": "/probe-guest",
+          "passed": true,
+          "waited": 25,
+          "status": 0
+        },
+        {
+          "test": "translated_context_cleanup",
+          "passed": true,
+          "allocated": 4,
+          "freed": 4,
+          "maps": 0,
+          "revocations": 0,
+          "tlb_fills": 108,
+          "faults": 112,
+          "syscalls": 495,
+          "preemptions": 8
+        },
+        {
+          "cpu": 0,
+          "translation_data_tbi": true,
+          "unicorn_tagged_fills": 0,
+          "alias_flushes": 0
+        },
+        {
+          "cpu": 0,
+          "direct_fallback": 3575369800,
+          "count": 1
+        },
+        {
+          "cpu": 0,
+          "direct_fallback": 3575369792,
+          "count": 1
+        },
+        {
+          "cpu": 0,
+          "direct_fallback": 3575369812,
+          "count": 2
+        },
+        {
+          "cpu": 0,
+          "direct_fallback": 2287991872,
+          "count": 1
+        },
+        {
+          "result": "passed"
+        }
+      ],
+      "validated": true,
+      "data_image": null,
+      "stdout_sha256": "f5159e4a8845b861ade8c8d2d983e5befac82ef0b6bfb5351cc9e7ec6514ec1f",
+      "stderr_sha256": "26413b29412714f7546c680989754d654c0f6b92f73f87b3bf7c92c5563702a3",
+      "component_compatible": true,
+      "component_stderr": "00080000-00084000 r-xp 00000000 00:02 9                                  /lib/nce-sigreturn.so\n000c0000-0010c000 r--p 00000000 00:02 29                                 /apex/com.android.runtime/bin/linker64\n0010c000-00244000 r-xp 0004c000 00:02 29                                 /apex/com.android.runtime/bin/linker64\n00244000-00250000 r--p 00184000 00:02 29                                 /apex/com.android.runtime/bin/linker64\n00250000-00254000 rw-p 00190000 00:02 29                                 /apex/com.android.runtime/bin/linker64\n00254000-0025c000 rw-p 00000000 00:00 0 \n0025c000-00260000 r--p 00000000 00:00 0 \n00260000-00270000 rw-p 00000000 00:00 0 \n00280000-00284000 r--p 00000000 00:02 34                                 /system/bin/stock-bionic\n00284000-00288000 r-xp 00000000 00:02 34                                 /system/bin/stock-bionic\n00288000-0028c000 r--p 00000000 00:02 34                                 /system/bin/stock-bionic\n0028c000-00290000 rw-p 00000000 00:02 34                                 /system/bin/stock-bionic\n00290000-00294000 rw-p 00000000 00:00 0 \n2c010000-2c018000 rw-p 00000000 00:00 0 \n2c018000-2c01c000 ---p 00000000 00:00 0 \n2c01c000-2c024000 rw-p 00000000 00:00 0 \n2c024000-2cbb0000 ---p 00000000 00:00 0 \n2cbb0000-2cbb4000 rw-p 00000000 00:00 0 \n2cbb4000-2d024000 ---p 00000000 00:00 0 \n2d024000-2d02c000 rw-p 00000000 00:00 0 \n2d02c000-2d030000 r--p 00000000 00:00 0 \n2d030000-2d034000 rw-p 00000000 00:00 0 \n2d034000-2d094000 r--p 00000000 00:00 0 \n2d094000-2d098000 ---p 00000000 00:00 0 \n2d098000-2d0b8000 rw-p 00000000 00:00 0 \n2d0b8000-2d0bc000 ---p 00000000 00:00 0 \n2d0bc000-2d11c000 r--p 00000000 00:00 0 \n2d11c000-2d124000 rw-p 00000000 00:00 0 \n2d184000-2d188000 rw-p 00000000 00:00 0 \n2d188000-2d18c000 ---p 00000000 00:00 0 \n2d18c000-2d190000 rw-p 00000000 00:00 0 \n2d190000-2d194000 ---p 00000000 00:00 0 \n2d1b4000-2d1b8000 rw-p 00000000 00:00 0 \n2d1c0000-2d1c4000 r--p 00000000 00:02 31                                 /apex/com.android.runtime/lib64/bionic/libdl.so\n2d1c4000-2d1c8000 r-xp 00004000 00:02 31                                 /apex/com.android.runtime/lib64/bionic/libdl.so\n2d1c8000-2d1cc000 r--p 00008000 00:02 31                                 /apex/com.android.runtime/lib64/bionic/libdl.so\n2d1cc000-2d230000 rw-p 00000000 00:00 0 \n2d2c8000-2d320000 r--p 00000000 00:02 30                                 /apex/com.android.runtime/lib64/bionic/libc.so\n2d320000-2d3b0000 r-xp 00058000 00:02 30                                 /apex/com.android.runtime/lib64/bionic/libc.so\n2d3b0000-2d3b4000 r--p 000e8000 00:02 30                                 /apex/com.android.runtime/lib64/bionic/libc.so\n2d3b4000-2d3b8000 rw-p 000ec000 00:02 30                                 /apex/com.android.runtime/lib64/bionic/libc.so\n2d3b8000-2d3cc000 rw-p 00000000 00:00 0 \n2d3cc000-2d3d0000 r--p 00000000 00:00 0 \n2d3d0000-2d3d8000 rw-p 00000000 00:00 0 \n2d400000-30800000 ---p 00000000 00:00 0 \n30800000-90840000 ---p 00000000 00:00 0 \n90840000-90880000 rw-p 00000000 00:00 0 \n90880000-110804000 ---p 00000000 00:00 0 \n110804000-110844000 rw-p 00000000 00:00 0 \n110844000-1f0810000 ---p 00000000 00:00 0 \n1f0810000-1f0850000 rw-p 00000000 00:00 0 \n1f0850000-210840000 ---p 00000000 00:00 0 \n210840000-210880000 rw-p 00000000 00:00 0 \n210880000-240800000 ---p 00000000 00:00 0 \nffff54000-ffff78000 rw-p 00000000 00:00 0                                [stack]\n",
+      "stderr": "00080000-00084000 r-xp 00000000 00:02 9                                  /lib/nce-sigreturn.so\n000c0000-0010c000 r--p 00000000 00:02 29                                 /apex/com.android.runtime/bin/linker64\n0010c000-00244000 r-xp 0004c000 00:02 29                                 /apex/com.android.runtime/bin/linker64\n00244000-00250000 r--p 00184000 00:02 29                                 /apex/com.android.runtime/bin/linker64\n00250000-00254000 rw-p 00190000 00:02 29                                 /apex/com.android.runtime/bin/linker64\n00254000-0025c000 rw-p 00000000 00:00 0 \n0025c000-00260000 r--p 00000000 00:00 0 \n00260000-00270000 rw-p 00000000 00:00 0 \n00280000-00284000 r--p 00000000 00:02 34                                 /system/bin/stock-bionic\n00284000-00288000 r-xp 00000000 00:02 34                                 /system/bin/stock-bionic\n00288000-0028c000 r--p 00000000 00:02 34                                 /system/bin/stock-bionic\n0028c000-00290000 rw-p 00000000 00:02 34                                 /system/bin/stock-bionic\n00290000-00294000 rw-p 00000000 00:00 0 \n2c010000-2c018000 rw-p 00000000 00:00 0 \n2c018000-2c01c000 ---p 00000000 00:00 0 \n2c01c000-2c024000 rw-p 00000000 00:00 0 \n2c024000-2cbb0000 ---p 00000000 00:00 0 \n2cbb0000-2cbb4000 rw-p 00000000 00:00 0 \n2cbb4000-2d024000 ---p 00000000 00:00 0 \n2d024000-2d02c000 rw-p 00000000 00:00 0 \n2d02c000-2d030000 r--p 00000000 00:00 0 \n2d030000-2d034000 rw-p 00000000 00:00 0 \n2d034000-2d094000 r--p 00000000 00:00 0 \n2d094000-2d098000 ---p 00000000 00:00 0 \n2d098000-2d0b8000 rw-p 00000000 00:00 0 \n2d0b8000-2d0bc000 ---p 00000000 00:00 0 \n2d0bc000-2d11c000 r--p 00000000 00:00 0 \n2d11c000-2d124000 rw-p 00000000 00:00 0 \n2d184000-2d188000 rw-p 00000000 00:00 0 \n2d188000-2d18c000 ---p 00000000 00:00 0 \n2d18c000-2d190000 rw-p 00000000 00:00 0 \n2d190000-2d194000 ---p 00000000 00:00 0 \n2d1b4000-2d1b8000 rw-p 00000000 00:00 0 \n2d1c0000-2d1c4000 r--p 00000000 00:02 31                                 /apex/com.android.runtime/lib64/bionic/libdl.so\n2d1c4000-2d1c8000 r-xp 00004000 00:02 31                                 /apex/com.android.runtime/lib64/bionic/libdl.so\n2d1c8000-2d1cc000 r--p 00008000 00:02 31                                 /apex/com.android.runtime/lib64/bionic/libdl.so\n2d1cc000-2d230000 rw-p 00000000 00:00 0 \n2d2c8000-2d320000 r--p 00000000 00:02 30                                 /apex/com.android.runtime/lib64/bionic/libc.so\n2d320000-2d3b0000 r-xp 00058000 00:02 30                                 /apex/com.android.runtime/lib64/bionic/libc.so\n2d3b0000-2d3b4000 r--p 000e8000 00:02 30                                 /apex/com.android.runtime/lib64/bionic/libc.so\n2d3b4000-2d3b8000 rw-p 000ec000 00:02 30                                 /apex/com.android.runtime/lib64/bionic/libc.so\n2d3b8000-2d3cc000 rw-p 00000000 00:00 0 \n2d3cc000-2d3d0000 r--p 00000000 00:00 0 \n2d3d0000-2d3d8000 rw-p 00000000 00:00 0 \n2d400000-30800000 ---p 00000000 00:00 0 \n30800000-90840000 ---p 00000000 00:00 0 \n90840000-90880000 rw-p 00000000 00:00 0 \n90880000-110804000 ---p 00000000 00:00 0 \n110804000-110844000 rw-p 00000000 00:00 0 \n110844000-1f0810000 ---p 00000000 00:00 0 \n1f0810000-1f0850000 rw-p 00000000 00:00 0 \n1f0850000-210840000 ---p 00000000 00:00 0 \n210840000-210880000 rw-p 00000000 00:00 0 \n210880000-240800000 ---p 00000000 00:00 0 \nffff54000-ffff78000 rw-p 00000000 00:00 0                                [stack]\n"
+    }
+  ],
+  "stock_runtime": {
+    "source": "sdk36",
+    "directory": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/com.android.runtime",
+    "manifest": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36-runtime.json",
+    "manifest_sha256": "4b1a45b0ee51725c68f1c29765958d0b60b45a5f2325bedfc61764cd49232249",
+    "identity": {
+      "url": "https://dl.google.com/android/repository/sys-img/google_apis/arm64-v8a-ps16k-36_r07.zip",
+      "archive_sha1": "dda632745023567113d9954101709c6526a3c250"
+    },
+    "files": {
+      "bin/linker64": {
+        "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/com.android.runtime/bin/linker64",
+        "sha256": "30ed9bea070250e0b080c8a84d8398baab1b4eb95a90bfced82a94d5f235144b",
+        "bytes": 2249480
+      },
+      "lib64/bionic/libc.so": {
+        "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/com.android.runtime/lib64/bionic/libc.so",
+        "sha256": "d3f8599b8b3f00101a31f94ac170ceb5875ee8446c201cb18382b2e02df84301",
+        "bytes": 1209648
+      },
+      "lib64/bionic/libdl.so": {
+        "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/com.android.runtime/lib64/bionic/libdl.so",
+        "sha256": "9f6447d910742a57b398a6a3f31746e02302ee9547da6d02757f001058a69df3",
+        "bytes": 50760
+      },
+      "lib64/bionic/libm.so": {
+        "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/com.android.runtime/lib64/bionic/libm.so",
+        "sha256": "44433149f62eeb8f09f38ecd3566683fac01a0f89de6ea6d15f6e4deca1ba4bc",
+        "bytes": 248968
+      }
+    }
+  },
+  "archive": {
+    "source_summary": "work/native-linux-nce/tbi-sdk36-final/summary.json",
+    "source_bytes": 160115,
+    "source_sha256": "06a0bcf7c9951d392559d0dc4d2f3ceca289c6363014026d73dc38fdbdbe7148",
+    "retained_rows": "All component_*, config/mode, runtime_elf, test and final result rows; TBI and Direct fallback counters. Memory samples/statistics and other execution counters remain in source_summary."
+  }
+}

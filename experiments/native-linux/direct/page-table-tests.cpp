@@ -16,18 +16,19 @@ struct Tables {
     alignas(PageBytes) std::array<unsigned char, 4 * PageBytes> ram{};
     NceDirect *engine;
     NceDirectPageTable table;
-    bool refill_reads;
+    bool refill_reads, use_page_table;
     std::vector<nce_direct_flat_page> flat;
     uint64_t epoch = 1, code_epoch = 1;
     bool retain_routes = false;
     const void *untracked_code = nullptr;
-    uint64_t code_limit = CodeVA + PageBytes;
+    uint64_t code_start = CodeVA, code_limit = CodeVA + PageBytes;
     NceReadView read_view{};
     std::array<uintptr_t, 3> view_pages{};
-    explicit Tables(unsigned mode, bool cross_page = false, bool retain = false, bool groups = false) : engine(nce_direct_create({2 * 1024 * 1024, 256, 256, mode == 1, false, cross_page, retain, retain, groups, false, false, false})),
-                                                                                                        table{root.data(), CodeVA, (UINT64_C(1) << 37) - CodeVA, PhysicalBase, ram.data(), ram.size()},
-                                                                                                        refill_reads(mode == 1),
-                                                                                                        flat(mode >= 2 ? DIRECT_FLAT_BYTES / sizeof(nce_direct_flat_page) : 0)
+    explicit Tables(unsigned mode, bool cross_page = false, bool retain = false, bool groups = false, bool native = false) : engine(nce_direct_create({2 * 1024 * 1024, 256, 256, mode == 1, false, cross_page, retain, retain, groups, native, false, false})),
+                                                                                                                             table{root.data(), CodeVA, (UINT64_C(1) << 37) - CodeVA, PhysicalBase, ram.data(), ram.size()},
+                                                                                                                             refill_reads(mode == 1),
+                                                                                                                             use_page_table(mode != 4),
+                                                                                                                             flat((mode == 2 || mode == 3) ? DIRECT_FLAT_BYTES / sizeof(nce_direct_flat_page) : 0)
     {
         CHECK(engine);
         retain_routes = retain;
@@ -59,9 +60,15 @@ struct Tables {
     static void *map(void *opaque, uint64_t address, bool write)
     {
         auto &self = *static_cast<Tables *>(opaque);
-        if (address < CodeVA || address >= DataVA + 2 * PageBytes)
+        if (address < self.table.user_base || address - self.table.user_base >= self.table.user_size)
             return nullptr;
-        uint64_t value = self.leaves[address >> 14];
+        auto *middle = reinterpret_cast<const uint64_t *>(self.root[(address >> 36) & 2047] & ~UINT64_C(16383));
+        if (!middle)
+            return nullptr;
+        auto *leaves = reinterpret_cast<const uint64_t *>(middle[(address >> 25) & 2047] & ~UINT64_C(16383));
+        if (!leaves)
+            return nullptr;
+        uint64_t value = leaves[(address >> 14) & 2047];
         uint64_t required = write ? DIRECT_PTE_WRITE_REQUIRED : DIRECT_PTE_READ_REQUIRED;
         if ((value & required) != required || (value & DIRECT_PTE_PROTNONE))
             return nullptr;
@@ -71,9 +78,13 @@ struct Tables {
     static const void *fetch(void *opaque, uint64_t address)
     {
         auto &self = *static_cast<Tables *>(opaque);
-        if (address < CodeVA || address >= self.code_limit || !(self.leaves[address >> 14] & 0x200))
+        if (address < self.code_start || address >= self.code_limit)
             return nullptr;
-        return map(opaque, address, false);
+        auto *middle = reinterpret_cast<const uint64_t *>(self.root[(address >> 36) & 2047] & ~UINT64_C(16383));
+        if (!middle)
+            return nullptr;
+        auto *leaves = reinterpret_cast<const uint64_t *>(middle[(address >> 25) & 2047] & ~UINT64_C(16383));
+        return leaves && (leaves[(address >> 14) & 2047] & 0x200) ? map(opaque, address, false) : nullptr;
     }
     static uint64_t version(void *opaque, const void *address)
     {
@@ -95,16 +106,17 @@ struct Tables {
                 ++index;
             }
         }
-        NceDirectMemory memory{this, map, fetch, epoch, 14, &table, refill_reads, flat.empty() ? nullptr : flat.data(),
+        NceDirectMemory memory{this, map, fetch, epoch, 14, use_page_table ? &table : nullptr, refill_reads, flat.empty() ? nullptr : flat.data(),
                                retain_routes ? version : nullptr, retain_routes ? code_epoch : 0, read_view.base};
         return nce_direct_run(engine, &state, memory, 1000, &fault);
     }
 };
 void report(const char *name, unsigned mode)
 {
-    std::printf("{\"test\":\"%s%s\",\"passed\":true}\n", name, mode == 3 ? "_view" : mode == 2 ? "_flat"
-                                                                                 : mode == 1   ? "_refill"
-                                                                                               : "");
+    std::printf("{\"test\":\"%s%s\",\"passed\":true}\n", name, mode == 4 ? "_cached" : mode == 3 ? "_view"
+                                                                                   : mode == 2   ? "_flat"
+                                                                                   : mode == 1   ? "_refill"
+                                                                                                 : "");
 }
 }  // namespace
 
@@ -546,8 +558,235 @@ static void check_read_view_vectors()
     report("direct_read_view_vector_literal_fault_and_retry", 0);
 }
 
+static void check_sparse_flat(bool native)
+{
+    auto holder = std::make_unique<Tables>(2, true, false, false, native);
+    auto &test = *holder;
+    alignas(PageBytes) std::array<uint64_t, 2048> high_leaves{};
+    const uint64_t high = DataVA + (UINT64_C(1) << 32);
+    test.table.user_size = (UINT64_C(1) << 36) - CodeVA;
+    test.middle[high >> 25] = uintptr_t(high_leaves.data()) | ReadWrite;
+    high_leaves[(high >> 14) & 2047] = PhysicalBase + 2 * PageBytes + ReadWrite;
+    high_leaves[((high >> 14) + 1) & 2047] = PhysicalBase + 3 * PageBytes + ReadWrite;
+    uint64_t low_value = 17, high_value = 29, fault = 0;
+    std::memcpy(test.ram.data() + PageBytes, &low_value, 8);
+    std::memcpy(test.ram.data() + 2 * PageBytes, &high_value, 8);
+    NceDirectState initial{};
+    initial.pc = CodeVA;
+    initial.x[0] = high;
+    initial.nzcv = 0xf0000000;
+    initial.access_flags = NCE_DIRECT_UNALIGNED;
+    initial.exclusive_address = UINT64_MAX;
+    test.code(0xf9400001);  // ldr x1,[x0]
+    auto state = initial;
+    auto misses = nce_direct_stats(test.engine).mapping_misses;
+    CHECK(test.run(state, fault) == NCE_DIRECT_UNSUPPORTED && state.x[1] == high_value);
+    CHECK(state.pc == CodeVA + 4 && state.nzcv == initial.nzcv && state.x[0] == high);
+    CHECK(nce_direct_stats(test.engine).mapping_misses == misses);
+    for (uint64_t address : {high + 2 * PageBytes, UINT64_C(1) << 36, DataVA + (UINT64_C(1) << 48), UINT64_MAX - 7}) {
+        state = initial;
+        state.x[0] = address;
+        auto before = state;
+        CHECK(test.run(state, fault) == NCE_DIRECT_READ_FAULT && fault == address);
+        CHECK(!std::memcmp(&state, &before, sizeof(state)));
+    }
+    test.code(0xf9000001);  // str x1,[x0]
+    state = initial;
+    state.x[1] = 41;
+    CHECK(test.run(state, fault) == NCE_DIRECT_UNSUPPORTED && state.nzcv == initial.nzcv);
+    std::memcpy(&high_value, test.ram.data() + 2 * PageBytes, 8);
+    std::memcpy(&low_value, test.ram.data() + PageBytes, 8);
+    CHECK(high_value == 41 && low_value == 17);
+    high_leaves[(high >> 14) & 2047] &= ~DIRECT_PTE_WRITE;
+    ++test.epoch;
+    state = initial;
+    auto before = state;
+    CHECK(test.run(state, fault) == NCE_DIRECT_WRITE_FAULT && fault == high);
+    CHECK(!std::memcmp(&state, &before, sizeof(state)));
+    high_leaves[(high >> 14) & 2047] |= DIRECT_PTE_WRITE;
+    ++test.epoch;
+    state = initial;
+    state.x[0] = high + PageBytes - 4;
+    state.x[1] = UINT64_C(0x123456789abcdef0);
+    CHECK(test.run(state, fault) == NCE_DIRECT_UNSUPPORTED);
+    test.code(0xf9400001);
+    state.pc = CodeVA;
+    state.x[1] = 0;
+    CHECK(test.run(state, fault) == NCE_DIRECT_UNSUPPORTED && state.x[1] == UINT64_C(0x123456789abcdef0));
+    const uint32_t exclusive[] = {0xc85ffc01, 0x91000421, 0xc802fc01, 0};
+    test.code(exclusive[0]);
+    std::memcpy(test.ram.data(), exclusive, sizeof(exclusive));
+    state = initial;
+    CHECK(test.run(state, fault) == NCE_DIRECT_UNSUPPORTED && state.pc == CodeVA + 12);
+    CHECK(state.x[1] == 42 && state.x[2] == 0 && state.nzcv == initial.nzcv);
+
+    const uint64_t boundary = CodeVA + (UINT64_C(1) << 32);
+    high_leaves[((boundary - PageBytes) >> 14) & 2047] = PhysicalBase + PageBytes + ReadWrite;
+    high_leaves[(boundary >> 14) & 2047] = PhysicalBase + 2 * PageBytes + ReadWrite;
+    test.flat.back() = {uintptr_t(test.ram.data() + PageBytes), uintptr_t(test.ram.data() + PageBytes)};
+    ++test.epoch;
+    test.code(0xf9000001);
+    state = initial;
+    state.x[0] = boundary - 4;
+    state.x[1] = UINT64_C(0x183956bcae120043);
+    CHECK(test.run(state, fault) == NCE_DIRECT_UNSUPPORTED);
+    test.code(0xf9400001);
+    state.pc = CodeVA;
+    state.x[1] = 0;
+    CHECK(test.run(state, fault) == NCE_DIRECT_UNSUPPORTED && state.x[1] == UINT64_C(0x183956bcae120043));
+
+    high_leaves[(high >> 14) & 2047] = PhysicalBase + ReadWrite;
+    ++test.epoch;
+    test.code(0xf9000001);
+    state = initial;
+    before = state;
+    CHECK(test.run(state, fault) == NCE_DIRECT_WRITE_FAULT && fault == high);
+    CHECK(!std::memcmp(&state, &before, sizeof(state)));
+    high_leaves[(high >> 14) & 2047] |= 0x200;
+    test.code_start = high;
+    test.code_limit = high + PageBytes;
+    test.code(0x91000400);  // add x0,x0,#1
+    state = initial;
+    state.pc = high;
+    CHECK(test.run(state, fault) == NCE_DIRECT_UNSUPPORTED && state.pc == high + 4 && state.x[0] == high + 1);
+    test.code(0x91000800);  // add x0,x0,#2
+    state = initial;
+    state.pc = high;
+    CHECK(test.run(state, fault) == NCE_DIRECT_UNSUPPORTED && state.pc == high + 4 && state.x[0] == high + 2);
+    report(native ? "direct_sparse_flat_pte_native_exclusive" : "direct_sparse_flat_pte_boundaries", 0);
+}
+
+static void check_data_tbi(unsigned mode, bool native)
+{
+    auto holder = std::make_unique<Tables>(mode, true, false, false, native);
+    auto &test = *holder;
+    alignas(PageBytes) std::array<uint64_t, 2048> high_leaves{};
+    const uint64_t high = DataVA + (UINT64_C(1) << 32);
+    test.table.user_size = (UINT64_C(1) << 36) - CodeVA;
+    test.middle[high >> 25] = uintptr_t(high_leaves.data()) | ReadWrite;
+    high_leaves[(high >> 14) & 2047] = PhysicalBase + 2 * PageBytes + ReadWrite;
+    high_leaves[((high >> 14) + 1) & 2047] = PhysicalBase + 3 * PageBytes + ReadWrite;
+    test.leaves[(DataVA + PageBytes) >> 14] = PhysicalBase + 3 * PageBytes + ReadWrite;
+    NceDirectState initial{};
+    initial.pc = CodeVA;
+    initial.nzcv = 0xa0000000;
+    initial.access_flags = NCE_DIRECT_UNALIGNED | NCE_DIRECT_DATA_TBI;
+    initial.exclusive_address = UINT64_MAX;
+    uint64_t fault = 0;
+    for (uint64_t address : {DataVA, high}) {
+        unsigned physical = address == DataVA ? 1 : 2;
+        for (uint64_t tag : {UINT64_C(0x02), UINT64_C(0xb4), UINT64_C(0xff)}) {
+            uint64_t tagged = address | (tag << 56), value = 0x13579;
+            std::memcpy(test.ram.data() + physical * PageBytes, &value, 8);
+            test.code(0xf8408401);  // ldr x1,[x0],#8
+            auto state = initial;
+            state.x[0] = tagged;
+            auto expected = state;
+            expected.x[0] += 8;
+            expected.x[1] = value;
+            expected.pc += 4;
+            CHECK(test.run(state, fault) == NCE_DIRECT_UNSUPPORTED);
+            CHECK(!std::memcmp(&state, &expected, sizeof(state)));
+            test.code(0xf8008401);  // str x1,[x0],#8
+            state = initial;
+            state.x[0] = tagged;
+            state.x[1] = 31;
+            CHECK(test.run(state, fault) == NCE_DIRECT_UNSUPPORTED && state.x[0] == tagged + 8 && state.nzcv == initial.nzcv);
+            std::memcpy(&value, test.ram.data() + physical * PageBytes, 8);
+            CHECK(value == 31);
+            state = initial;
+            state.x[0] = tagged + PageBytes - 4;
+            state.x[1] = UINT64_C(0x123456789abcdef0);
+            CHECK(test.run(state, fault) == NCE_DIRECT_UNSUPPORTED && state.x[0] == tagged + PageBytes + 4);
+            test.code(0xf9400001);  // ldr x1,[x0]
+            state.pc = CodeVA;
+            state.x[0] = tagged + PageBytes - 4;
+            state.x[1] = 0;
+            CHECK(test.run(state, fault) == NCE_DIRECT_UNSUPPORTED && state.x[1] == UINT64_C(0x123456789abcdef0));
+            // A previously cached tagged page must become invalid with TBI off.
+            state = initial;
+            state.access_flags &= ~NCE_DIRECT_DATA_TBI;
+            state.x[0] = tagged;
+            expected = state;
+            CHECK(test.run(state, fault) == NCE_DIRECT_READ_FAULT && fault == tagged);
+            CHECK(!std::memcmp(&state, &expected, sizeof(state)));
+            for (uint64_t invalid : {tagged | (UINT64_C(1) << 48), tagged | (UINT64_C(1) << 55),
+                                     (tag << 56) | (UINT64_C(1) << 36), (tag << 56) | (CodeVA - PageBytes)}) {
+                state = initial;
+                state.x[0] = invalid;
+                expected = state;
+                CHECK(test.run(state, fault) == NCE_DIRECT_READ_FAULT && fault == invalid);
+                CHECK(!std::memcmp(&state, &expected, sizeof(state)));
+            }
+        }
+        auto &pte = address == DataVA ? test.leaves[DataVA >> 14] : high_leaves[(high >> 14) & 2047];
+        pte &= ~DIRECT_PTE_WRITE;
+        ++test.epoch;
+        test.code(0xf9000001);
+        auto state = initial;
+        state.x[0] = address | UINT64_C(0xb400000000000000);
+        auto expected = state;
+        CHECK(test.run(state, fault) == NCE_DIRECT_WRITE_FAULT && fault == state.x[0]);
+        CHECK(!std::memcmp(&state, &expected, sizeof(state)));
+        pte |= DIRECT_PTE_WRITE;
+        ++test.epoch;
+        // Different tags refer to the same exclusive address. Native mode is
+        // tested with PTE/flat so the sequence does not leave for a cache fill.
+        const uint32_t words[] = {0xc85ffc01, 0x91000421, 0xc802fc61, 0};
+        test.code(words[0]);
+        std::memcpy(test.ram.data(), words, sizeof(words));
+        uint64_t value = 41;
+        std::memcpy(test.ram.data() + physical * PageBytes, &value, 8);
+        state = initial;
+        state.x[0] = address | UINT64_C(0x0200000000000000);
+        state.x[3] = address | UINT64_C(0xb400000000000000);
+        CHECK(test.run(state, fault) == NCE_DIRECT_UNSUPPORTED && state.pc == CodeVA + 12 && state.x[2] == 0);
+        std::memcpy(&value, test.ram.data() + physical * PageBytes, 8);
+        CHECK(value == 42 && state.nzcv == initial.nzcv);
+        test.code(0xd50b7420);  // dc zva,x0
+        state = initial;
+        state.access_flags |= NCE_DIRECT_DC_ZVA64;
+        state.x[0] = address | UINT64_C(0xff00000000000000);
+        CHECK(test.run(state, fault) == NCE_DIRECT_UNSUPPORTED);
+        for (unsigned i = 0; i < 64; ++i)
+            CHECK(test.ram[physical * PageBytes + i] == 0);
+    }
+    if (mode == 2) {
+        const uint64_t boundary = CodeVA + (UINT64_C(1) << 32);
+        high_leaves[((boundary - PageBytes) >> 14) & 2047] = PhysicalBase + PageBytes + ReadWrite;
+        high_leaves[(boundary >> 14) & 2047] = PhysicalBase + 2 * PageBytes + ReadWrite;
+        test.flat.back() = {uintptr_t(test.ram.data() + PageBytes), uintptr_t(test.ram.data() + PageBytes)};
+        ++test.epoch;
+        test.code(0xf9000001);
+        auto state = initial;
+        state.x[0] = (boundary - 4) | UINT64_C(0xb400000000000000);
+        state.x[1] = UINT64_C(0xfedcba9876543210);
+        CHECK(test.run(state, fault) == NCE_DIRECT_UNSUPPORTED);
+        test.code(0xf9400001);
+        state.pc = CodeVA;
+        state.x[1] = 0;
+        CHECK(test.run(state, fault) == NCE_DIRECT_UNSUPPORTED && state.x[1] == UINT64_C(0xfedcba9876543210));
+    }
+    test.code(0xf9400001);
+    auto state = initial;
+    state.pc = CodeVA | UINT64_C(0x0200000000000000);
+    CHECK(test.run(state, fault) == NCE_DIRECT_FETCH_FAULT && fault == state.pc);
+    test.code(0xd61f0000);  // br x0
+    state = initial;
+    state.x[0] = CodeVA | UINT64_C(0xb400000000000000);
+    CHECK(test.run(state, fault) == NCE_DIRECT_FETCH_FAULT && fault == state.x[0]);
+    report(native ? "direct_data_tbi_native_exclusive" : "direct_data_tbi_registers_permissions_bounds_and_cache", mode);
+}
+
 void direct_page_table_tests()
 {
+    for (unsigned mode : {0U, 1U, 2U, 4U}) {
+        check_data_tbi(mode, false);
+        if (mode != 1 && mode != 4)
+            check_data_tbi(mode, true);
+    }
+    check_sparse_flat(false);
+    check_sparse_flat(true);
     check_read_view_handlers();
     CHECK(!nce_direct_install_read_faults());
     for (unsigned mode = 0; mode < 4; ++mode) {

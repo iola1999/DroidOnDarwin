@@ -24,7 +24,7 @@ def main():
     if not all(run['validated'] for run in report['runs']):
         parser.error('核心检查尚未成功')
     layout = config.get('guest_layout', 'host')
-    if layout not in ('host', 'low') or (layout == 'low' and (
+    if layout not in ('host', 'low', 'sparse') or (layout in ('low', 'sparse') and (
             config['mapping'] != 'pte' or config['cpus'] != 1 or config['direct']['memory'] != 'flat')):
         parser.error('客体布局与核心检查配置不兼容')
     for name, digest in report['sha256'].items():
@@ -42,6 +42,7 @@ def main():
     execution = out / 'linux-execution.c'
     execution.write_text('#define mmap nce_test_reservation_mmap\n'
                          '#define munmap nce_test_reservation_munmap\n'
+                         '#define mach_vm_map nce_test_reservation_mach_vm_map\n'
                          '#include ' + json.dumps(str(EXP / 'translation/linux-execution.c')) + '\n')
     environment = {**{key: value for key, value in os.environ.items() if not key.startswith('NCE_')}, 'NCE_TRANSLATION_CACHE_MIB': '16', 'NCE_TRANSLATION_PREEMPTION': 'timer',
                    'NCE_TRANSLATION_GUEST_LAYOUT': layout, 'NCE_DIRECT_MEMORY': 'flat',
@@ -80,8 +81,8 @@ def main():
             reservations = [row for row in rows if row.get('test') == 'partial_reservation_cleanup']
             created = attempt > 1
             address = reservations[0].get('address') if len(reservations) == 1 else None
-            size = (1 << 30) + (64 << 20) + (0 if layout == 'low' else 1 << 32)
-            valid_address = type(address) is int and (address >= 1 << 32 and address % 16384 == 0 if created else address == 0)
+            size = (1 << 30) + (64 << 20) + (1 << 32 if layout == 'host' else 0)
+            valid_address = type(address) is int and (address >= 1 << (36 if layout == 'sparse' else 32) and address % 16384 == 0 if created else address == 0)
             expected_reservation = {'test': 'partial_reservation_cleanup', 'passed': not retain_tail,
                                     'layout': layout, 'created': created, 'address': address,
                                     'bytes': size if created else 0, 'releases': int(created),

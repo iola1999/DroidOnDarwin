@@ -7,6 +7,7 @@ enum {
     NCE_PROFILE_FRAMES = 2,
     NCE_PROFILE_SCHEDULER = 3,
     NCE_PROFILE_END = 4,
+    NCE_PROFILE_SETTINGS_PREPARE = 5,
 };
 #define NCE_PROFILE_REQUEST "/data/nce/interaction-request"
 #define NCE_PROFILE_RESPONSE "/data/nce/interaction-response"

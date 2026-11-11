@@ -1,0 +1,2982 @@
+{
+  "scope": "Functional main-worktree integration of sparse guest layout, opt-in data TBI, standard VM/JIT and stock ART runner. No performance claim; no iPhone execution.",
+  "runs": {
+    "host": {
+      "platform": "macOS-27.0-arm64-arm-64bit-Mach-O",
+      "cpu": "Apple M5 Ultra",
+      "system_build": "26A428",
+      "configuration": {
+        "data_tbi": false,
+        "guest_layout": "host",
+        "code_memory": "dual",
+        "execution": "direct",
+        "direct": {
+          "mapping_entries": 256,
+          "route_entries": 256,
+          "selective_writes": false,
+          "reuse_code_checks": false,
+          "memory": "flat",
+          "code_watch": true,
+          "cross_page": true,
+          "route_epochs": false,
+          "retain_routes": false,
+          "memory_groups": false,
+          "native_exclusive": true,
+          "vector_table": false,
+          "simd_math": false
+        },
+        "mapping": "pte",
+        "sparse_scan": true,
+        "fault_prefetch": false,
+        "guest_page_bytes": 16384,
+        "workload": "core",
+        "entries": [
+          "cli",
+          "gcd"
+        ],
+        "art_nterp": 1,
+        "cpus": 1,
+        "high_res_timers": false,
+        "online_cpus": 1,
+        "uaccess_stop": "all",
+        "parallel_profile": false,
+        "art_expanded_jit": 0,
+        "art_fast_baseline": 0,
+        "cache_invalidation": "pages",
+        "exec_cache": "pages",
+        "tlb_invalidation": "pages",
+        "linux_fastpath": 0,
+        "guest_ram_bytes": 1073741824,
+        "translation_cache_bytes": 134217728,
+        "instruction_batch": 50000,
+        "memory_interval_ms": 100,
+        "preemption": "timer",
+        "timer_interval_ns": 2000000
+      },
+      "sha256": {
+        "experiments/native-linux/translation/kernel-image.c": "33792252482c0c6be81d1009a45f1a12f17233a7fd472d12a7f394afd136217f",
+        "experiments/native-linux/translation/linux-elf.c": "e3557d2945b3e6dc0b9c1b4ae7041a6dd21a785e4981f97ddff1ea9837d68365",
+        "experiments/native-linux/translation/linux-execution.c": "35a48a92529a5f7c2de173968f146f3d6fb0a00e525bac1faf43caa4d802a056",
+        "experiments/native-linux/translation/interaction-profile.c": "8016783f7a3f0087f0dc369b0316655d95bd612a1fc49547b8c7eada4501881c",
+        "experiments/native-linux/translation/linux-runner.c": "5fa9e4fc32d237290415c7ec79ac0f68e96872b1ddc22c705a2a870e05beaecf",
+        "experiments/native-linux/translation/linux-memory.c": "0cc6ab6ff8ab7abe76c1c73aaf18fecb200ff27251ea29f0f15b0618a6020e31",
+        "experiments/native-linux/lkl-host.c": "49c63f1be4112408bbe5bdced53cf8bd0314eedaf770fe4d869d30edf3a6c671",
+        "experiments/native-linux/translation/code-watch.c": "1bfa90873b4e52f1ca0766e169999f948cbff313eccffba14be0e76e7dd1305e",
+        "experiments/native-linux/translation/read-view.c": "85ad462693b9ff64532bbf2056a2c6b09cefb1bbd4d8fbcf0cb7570697ed3c2a",
+        "experiments/native-linux/translation/unicorn-code-memory.c": "f7fe3981500192267b25ae33cb4aeb5ef38f31c674ddb3cb0ebfa0a0edb43d6e",
+        "experiments/native-linux/direct/engine.cpp": "0607f7d542d538a1a71cd680af83e622c4a7d74fcf06d041220168ff02074ce9",
+        "experiments/native-linux/direct/compile.cpp": "c32e01524598365c98b19a4db7058a7e7be89bf5bc58ebe87423cc908a29bf9c",
+        "experiments/native-linux/direct/decode.cpp": "e2ce2940d0c5d5c1658c45d8a4beee40f9dbb662f960eabb0cad96b0ce84efc1",
+        "experiments/native-linux/direct/memory-groups.cpp": "6447bb9544d9cfbc9f872e6e721b17854aae3a1f88fcedcd9767831aaf1ae9a6",
+        "experiments/native-linux/direct/read-faults.cpp": "6e514b9e0f8b9675e2eaad955440fd4909b8f19e6e1637ea16d083d2a9809348",
+        "experiments/native-linux/direct/cross-page.cpp": "ab2aea50c200cb993fbbad08a2c26423391a428a1359225669a30d2baf8f622d",
+        "experiments/native-linux/direct/entry.S": "14896f395d465d65aff18e22598c804e2faa8740fdb72128b2b86c25e6defab4",
+        "experiments/native-linux/code-memory.c": "8215ac2a2564049be0b45a80b3774ec994d6e51b6eb2057ed00cd515ef682981",
+        "experiments/native-linux/execute-check.c": "2e5a080e11bb3ec9407be2495c30a0391d2e8a858f1fe1a01a624eed3a8dd3c5",
+        "experiments/native-linux/direct/decode.h": "eafddef33888746adfc25306f6b2ab7903ff9f50adce3b0cf55e43f1e8cba5a9",
+        "experiments/native-linux/direct/memory-groups.h": "c6250a511c45dd7bbd5733ff43b55dd8a0eb6501d9759bb12a413f9c121a6b31",
+        "experiments/native-linux/direct/direct.h": "4351504d06862b40034e66e06520950a910c2df8eed0c662d1ecf8b2fcf85b53",
+        "experiments/native-linux/direct/internal.h": "e95d84decb560e0e6e94e6e40ed41fff6b94aec16e4be9336472e631df75678e",
+        "experiments/native-linux/direct/layout.h": "bea63a67f1145501152a6eaf400e9d1393badc55871c7b61e365a4bd2782bb23",
+        "experiments/native-linux/direct/page-table-layout.h": "500897ffde014c17c73d03a92b34b07a9990e52695c369d9228c01d5d4600109",
+        "experiments/native-linux/code-memory.h": "b76ec86c799b073a58b08dc04300d091cb63531d31289ea22fdfb16d4495870a",
+        "experiments/native-linux/execute-check.h": "db1decd5ee536b58b9974ff03951d79dddfc3f74c1205ad34b7c725de4bf6883",
+        "experiments/native-linux/nce.h": "7bcdc5e777e10e1d70f0bf1838a2160e87c70613a44b90b16c3e07aedf4a9f58",
+        "experiments/native-linux/guest-registers.h": "90a4d5b6e613ce4f2cda359dcd05f6e8d876a788bc437c2c1e13e05403e4627a",
+        "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/code_block.hpp": "c1b59e9d8a37775f8558fb3a0f7b34a6b7dbd2b2c13c088be65253c2223faa8a",
+        "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/dual_code_block.hpp": "619a01b3c69e107cc1c13c79b0dfbe97b09395e70a6c705b77e0531894a69620",
+        "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/feature_detection/cpu_feature.hpp": "2ae6e67bd4af85bd7d6d6eb7585f73cbdc237183167bb265a0427b74807e0a02",
+        "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/feature_detection/feature_detection.hpp": "4d13c256d5028d1ca3e5a0ad59382e888b79e033b72cffe7dae4c3e9ecc8d97e",
+        "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/feature_detection/feature_detection_apple.hpp": "99d88802080a50bd7d73a07020c18eee44417e193ff5515cbad8f6972890bbc6",
+        "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/feature_detection/feature_detection_freebsd.hpp": "84a10ab44c7c566523705703fb118904156c39b6b93148d458e2ab77a80a2c2d",
+        "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/feature_detection/feature_detection_generic.hpp": "4b78fafbb988a18b25b1aeb04c5ebff6b3a675f502e315fd8430f2d3f61f0fd2",
+        "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/feature_detection/feature_detection_hwcaps.hpp": "5839e027d9145f182149586fc30f129f33d5b482ffa174ed4ac6f9bb3b5a3b3f",
+        "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/feature_detection/feature_detection_idregs.hpp": "f759c5fd02bb2d2bafe45376e3856fa9371737282b22f66101fd4ae8db5f7b96",
+        "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/feature_detection/feature_detection_linux.hpp": "a49f3c60ad2cae71c158fd9207fdbad5e40837793f57289490603455302299c6",
+        "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/feature_detection/feature_detection_netbsd.hpp": "1315afa43ea61ffb7beb1102bf090d24d1285f2340028b5da50c3d31491dd09c",
+        "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/feature_detection/feature_detection_openbsd.hpp": "941dd25a778b8153e3e98aa9b7795a2c54359d24d8337f56a8658993f3fecb96",
+        "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/feature_detection/feature_detection_w32.hpp": "f228126514f482b43c0304a1f9dfb5942b93afabfc4372662af1193679c503de",
+        "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/feature_detection/id_registers.hpp": "ed83ce3fdaa0bea503dbdd9c0e728e8cb4eb0307fdf3bc60192fc0dfa130d1c8",
+        "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/feature_detection/read_id_registers_directly.hpp": "ff2e769fabf6f43d6e12939072e6cd911694f7966d2bd8c4ce6c3075aad34020",
+        "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/arm64_encode_helpers.inc.hpp": "55576102b1774f7f7b681857a3d2c6843776045cccd24fa09b8c4713929adbaf",
+        "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/cpu_feature.inc.hpp": "5919c8d8b32ae0899d04a888d8e852a79c604b33f9b6cffe632234437f57ab67",
+        "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/enum.hpp": "603697b7a7e16795219a74fa2d735e8bd442c79cdcb539ed0abed2b83417fd26",
+        "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/imm.hpp": "268b0414bf57c82cddb3de6b286e8e1ce52fb2b413aaecaa1f0cf9099b7e7cc1",
+        "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/list.hpp": "0592b31d29a6f1bfbee46cdb0aa5ce778edc9643db90a39d42215970357328e9",
+        "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/mnemonics_fpsimd_v8.0.inc.hpp": "3ecdfd1ff46ff749b2525e1a75acbabc6022848f700a6f16b36f480ab954a266",
+        "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/mnemonics_fpsimd_v8.1.inc.hpp": "404268b9e0e3b4708d5018fd1fbf3ea1339c641382e7cfd15534af56a7672e69",
+        "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/mnemonics_fpsimd_v8.2.inc.hpp": "52e7a48b969badf327c00c2ea4556353c61950a0c452adeaee37c6820926261f",
+        "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/mnemonics_fpsimd_v8.3.inc.hpp": "84bcced18fe10c753ec5ea1c84e9531ab1ceb4e08b046519e75788a14b814ae4",
+        "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/mnemonics_generic_v8.0.inc.hpp": "8ffd907bb38b27700022e29d40111fe72e640d003ad6aa3e372c4d8a7ebd3f6c",
+        "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/mnemonics_generic_v8.1.inc.hpp": "9f60f325c392e907dd9d2cbab62e1f8cfc7ab95c88e54df75b1a1f64bc7fa93b",
+        "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/mnemonics_generic_v8.2.inc.hpp": "1b53f462d1ed7e0a763236dbef9c4bfc70f6430cf5f8b420b2acc4dd2e8884ab",
+        "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/mnemonics_generic_v8.3.inc.hpp": "4b775baed83b1bb32b7bd339433175ce09b4bbc6da33d887bc9ca989d42b5d76",
+        "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/multi_typed_name.hpp": "a4322bfdb95f8477e6f92b31194110ef860c7402d50ce18daae6e016d4fa9aac",
+        "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/oaknut_exception.inc.hpp": "48629c93b468527c440dad30f8044818aa202caff67e73f45a246a3e96f8ad28",
+        "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/offset.hpp": "cb48c0eface8f5458a89402a090084690d3f999ff562e63870a1b16f438a7d52",
+        "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/overloaded.hpp": "03f0f551fa10b0b3d8d2c75130c1023ddcc5e8a3566629470408aad370d87fc2",
+        "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/reg.hpp": "352456b9b9ea1fb8cb5637e82169e16f08189579da9645ad5a5c1992f95ed198",
+        "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/string_literal.hpp": "96dce09750c24842a88e8eb3dfdafe047a5ab94c9398c94ea41cca8e1434e1bb",
+        "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/oaknut.hpp": "e25f4222f8f7d17b683d5ea8ff2851f88a3b40c478fcdc6046fe962cfcab2f37",
+        "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/oaknut_exception.hpp": "8277ac5a6cf6697305fd169d817d6786b0011027d66962fc9d982ffbce2c19a0",
+        "scripts/probe_direct_execution.py": "efee85b25893505ef4e2600f82f57cb9b177959290f53036e11872fabdd47f95",
+        "work/native-linux-nce/oaknut-94c726c.tar.gz": "c404db82002f9a851a412b3d55ac9be8a42a2e319fd2fc8a73e63e6ef5d4f97b",
+        "experiments/native-linux/translation/code-watch.h": "1ec6e739e1a542c52a2ed54b7310d1cc0a3317dfa25d1d59aeb971e972ea0747",
+        "experiments/native-linux/translation/read-view.h": "40a09185089ab8a02a76a6789b7b2149ffdb9dc225c7b1c5b4532d6022307488",
+        "scripts/build_nce_userspace.py": "4fafb283fdc1babe0d62ef949eeffd50d2018fddb3420694ab9fb64a60d82149",
+        "experiments/native-linux/userspace/bionic-test.c": "ffa10bd0d16dd15edddb368a0435d9d94b529270c13a89f6b3c5536dc40c0b76",
+        "experiments/native-linux/userspace/proc-exit-tests.c": "58c79b40b0fabaf40707baf80d3cca4883311f33c00139ed8db6f3d02d5353df",
+        "experiments/native-linux/userspace/file-tests.c": "e260e5222cf7efea3140941404100a05be3b383299f2da4cc174a531cc166b8b",
+        "experiments/native-linux/userspace/seccomp-tests.c": "7ac584c36df43561ad7c947eeec40ba0c39188a28d1a79245100b4f683626931",
+        "experiments/native-linux/userspace/signal-tests.c": "43b86323b4dd66c98db20065b8cc41d868fb7ab538135d6eba9d7c65a263a549",
+        "experiments/native-linux/userspace/signal-registers.S": "68e13063df3b1a82a0b5805eb98082204b7ee6e29e7c020cc452ef5199f6d257",
+        "experiments/native-linux/translation/unicorn-code-memory.h": "03e9a24ca9133e989426ca621ad9962c327be47ce889e845f4b668b657243ed7",
+        "experiments/native-linux/translation/linux-elf.h": "faec3fcc8a93eafc0a140830836881e8f2447f20b9b59ec26b7b8230f8b0489b",
+        "experiments/native-linux/translation/linux-execution.h": "ea490ee46e90df3ee0664815dc45e0f58f071378e2b0af333b498d134644ecc2",
+        "experiments/native-linux/translation/interaction-profile.h": "39700898fbcd32c4d4060dad1e494826d50109ab7c5efed50daaf02603938e5a",
+        "experiments/native-linux/translation/linux-memory.h": "11b7a1402acaa07152cdb17d43fed3e6effdeb65af902e8b64ae5ea5cded35e9",
+        "experiments/native-linux/translation/linux-guest.c": "0ecc7f41b093d2f3bfd43cb290e132b8f92dd222a6f24936997bc001c4d19896",
+        "scripts/probe_lkl_translation.py": "3f5f6ef896a36ee6fa3ce1889d3b93d5aaa5f0d3663200553f0ba2ec89eb1eed",
+        "experiments/native-linux/dispatch-test.c": "5211698bd58018aae173d4c6d75daeeb0e4eb357fb2742c4c08d595bc9d7b55b",
+        "experiments/native-linux/layout.h": "9ecb6dc474edfc516284effcbd1999ba445ba88372233636391771a0715deaa5",
+        "experiments/native-linux/userspace/code-tests.c": "5fc06f7a1ca7a4b3e9789fafc06303fc8524a21a8430e15a678b3e2941266e5c",
+        "experiments/native-linux/userspace/mm-bench.c": "27beca8aea863ceedf2698524346cbbbc20134fe005a3e5dd4c623dbcf1c8674",
+        "experiments/native-linux/userspace/mm-tests.c": "527d6c94abaf861909f891f54651dd6fa3ec07f4e20263c730767863e3405357",
+        "experiments/native-linux/translation/timer-tests.c": "b54bcf839dcfe5c929a9935fb616104f688e75a6551892caa0ab4ec73246146f",
+        "experiments/native-linux/translation/sparse-guest.c": "583baccc27e530b3d4dfb366425df427c69d59b3784cf32a3457395f6a048304",
+        "experiments/native-linux/translation/tbi-guest.c": "43587e3635725d5e2a06bf34fe98494a012778a504a4a67c1c23e1a8a2b6f09e",
+        "experiments/native-linux/translation/jit-guest.c": "85ec5039a9d03ec1440b33f63d7d4ae9ac6d974252348b17929a2c6e8b442e1e",
+        "work/native-linux-nce/lkl-translation-kernel/lkl-image.bin": "4656cc8c6c0a978925e0259dd3df379665fced108886e9218590c755a733b08d",
+        "work/native-linux-nce/lkl-translation-kernel/lkl-image.h": "472eccea15b54eb288128065cde67b5a87a5ec07fd2e577566e5a79c619c50e0",
+        "work/native-linux-nce/lkl-translation-kernel/lkl.so": "fe37fa148f405043f46f172c75f2f56061b9fa4f2eff0cad16fa52796968f974",
+        "work/native-linux-nce/lkl-translation-kernel/lkl-host-ops.h": "54bf2a775fa582ca2bc04fb6a25dc85525b6c69da1cde54f610c4a35e0c1a833",
+        "experiments/native-linux/translation/kernel-api.h": "6acf8b846b78e4e493bd8dd97b42140b28747deac2a367dc7926f924e1c12076",
+        "experiments/native-linux/translation/kernel-image.h": "6946b1a5ce89be9b55634e25115185af009bff2b126f5a10ac4e0690b70b1528",
+        "work/native-linux-nce/sparse-tbi-art-integrated-host/translation-symbols.h": "7c91d6575a6616121471782d671bf90ed447ae2bf410621110c2cbe4f29859be",
+        "scripts/build_translation_engine.py": "e5ab4173a424f834a739d0d31e14b9fa75a89074716d5f5c5a49e1358b1a1b59",
+        "work/native-linux-nce/unicorn-tb-stop-dual/build.json": "276c122f121cfafc8d068a311b542742757144b2beecb495b7688f2c4390952f",
+        "work/native-linux-nce/unicorn-tb-stop-dual/prefix/lib/libunicorn.a": "a69c2949b8c277ac32701b40c382f00190e533270d41dbb1cf1b7f7fd3250c57",
+        "work/native-linux-nce/sparse-tbi-art-integrated-host/cli": "efe84a798055dfc5339cf813157933ae234848a5fbfb926523617c2a32708cd7",
+        "work/native-linux-nce/sparse-tbi-art-integrated-host/gcd": "6943b8e4143d79f2a0aea141f0f525a90aafb48f0db413d5d520d3a1cdb1bfa6",
+        "work/native-linux-nce/sparse-tbi-art-integrated-host/guest.elf": "d5d25e6bd28a91a1848581e47e8cef54bc213596986b8fe03c2c14a6b7bfca81",
+        "work/native-linux-nce/sparse-tbi-art-integrated-host/late.elf": "8fde8e75809bcdc28970f2cdae4b3749065fdb582f9f97271e709041582923c2",
+        "work/native-linux-nce/sparse-tbi-art-integrated-host/sigreturn.elf": "795d053b14585230d5f6ec0d09fdd5d91b8685c9fb6acdd0935d3d9359baf271",
+        "work/native-linux-nce/sparse-tbi-art-integrated-host/dynamic.elf": "c7be9a096eacbde4ddf2166fbe57392a730f01497a439ecc96acff66f79da571",
+        "work/native-linux-nce/sparse-tbi-art-integrated-host/libc.so": "13e5a9fcf04c9e9f89f0dba662fe6fde2ca7b8d8201eb622d42edc4a28d5f515",
+        "work/native-linux-nce/sparse-tbi-art-integrated-host/dependency.so": "878d6795ecc3afcf6f3bcbf34119e8ec106dbd734b9c216b1352b426b31f06da",
+        "work/native-linux-nce/sparse-tbi-art-integrated-host/plugin.so": "4646ac0f0191552449161c2b5b61bcac054ebc0427d559503ec8547e38077fe9",
+        "work/native-linux-nce/sparse-tbi-art-integrated-host/dash.elf": "8b38ef10487508f46b683f6ef7a747520d5c5c88da1783ce697596f60d4d7851",
+        "work/native-linux-nce/sparse-tbi-art-integrated-host/bionic-test.elf": "6443f090d40abdd5cee148eab52e9efc917ea744efb10a337d4ef4664896d7da",
+        "experiments/native-linux/translation/stock-art-runner.h": "ebed39c589b31a6856fbd71557e94c4ec5737f97fd4208f1eb3a70a02e9de88b",
+        "scripts/build_lkl_translation_kernel.py": "56f3801c26bdd90450fe273ca5661b0485da713fc08e90b8099155acedd5c1ba",
+        "scripts/lkl_translation_patch.py": "cab799a0eaddd47ed985307c54b7f4383f1d852bb3d4cb9e1cd8fa9e10c45ff1",
+        "experiments/native-linux/lkl-nce-mmu.c": "d0ee874b00e58100cfd982c1ecbed136f98a85af4e96c7a252009ebc44edf075",
+        "work/native-linux-nce/lkl-translation-kernel/build.json": "f4e03ee7b2d15d66312ddf51dfb6376b58e3ba5d0375614e2bf8a95b6d322c24"
+      },
+      "commands": [
+        [
+          "xcrun",
+          "clang",
+          "-O2",
+          "-g",
+          "-DNCE_PROCESS",
+          "-DNCE_TRANSLATION_CPUS=1",
+          "-Wall",
+          "-Wextra",
+          "-Werror",
+          "-I",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/experiments/native-linux",
+          "-I",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/lkl-translation-kernel",
+          "-I",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sparse-tbi-art-integrated-host",
+          "-I",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/processes/host-include",
+          "-I",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/unicorn-tb-stop-dual/prefix/include",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/experiments/native-linux/translation/kernel-image.c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/experiments/native-linux/translation/linux-elf.c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/experiments/native-linux/translation/linux-execution.c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/experiments/native-linux/translation/interaction-profile.c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/experiments/native-linux/translation/linux-runner.c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/experiments/native-linux/translation/linux-memory.c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/experiments/native-linux/lkl-host.c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/experiments/native-linux/translation/code-watch.c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/experiments/native-linux/translation/read-view.c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/experiments/native-linux/translation/unicorn-code-memory.c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/unicorn-tb-stop-dual/prefix/lib/libunicorn.a",
+          "-DNCE_DIRECT_EXECUTION",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sparse-tbi-art-integrated-host/direct/engine.o",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sparse-tbi-art-integrated-host/direct/compile.o",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sparse-tbi-art-integrated-host/direct/decode.o",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sparse-tbi-art-integrated-host/direct/memory-groups.o",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sparse-tbi-art-integrated-host/direct/read-faults.o",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sparse-tbi-art-integrated-host/direct/cross-page.o",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sparse-tbi-art-integrated-host/direct/entry.o",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sparse-tbi-art-integrated-host/direct/code-memory.o",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sparse-tbi-art-integrated-host/direct/execute-check.o",
+          "-lc++",
+          "-o",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sparse-tbi-art-integrated-host/cli",
+          "-DNCE_TRANSLATION_DUAL_MAP"
+        ],
+        [
+          "xcrun",
+          "clang",
+          "-O2",
+          "-g",
+          "-DNCE_PROCESS",
+          "-DNCE_TRANSLATION_CPUS=1",
+          "-Wall",
+          "-Wextra",
+          "-Werror",
+          "-I",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/experiments/native-linux",
+          "-I",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/lkl-translation-kernel",
+          "-I",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sparse-tbi-art-integrated-host",
+          "-I",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/processes/host-include",
+          "-I",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/unicorn-tb-stop-dual/prefix/include",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/experiments/native-linux/translation/kernel-image.c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/experiments/native-linux/translation/linux-elf.c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/experiments/native-linux/translation/linux-execution.c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/experiments/native-linux/translation/interaction-profile.c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/experiments/native-linux/translation/linux-runner.c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/experiments/native-linux/translation/linux-memory.c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/experiments/native-linux/lkl-host.c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/experiments/native-linux/translation/code-watch.c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/experiments/native-linux/translation/read-view.c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/experiments/native-linux/translation/unicorn-code-memory.c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/unicorn-tb-stop-dual/prefix/lib/libunicorn.a",
+          "-DNCE_DIRECT_EXECUTION",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sparse-tbi-art-integrated-host/direct/engine.o",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sparse-tbi-art-integrated-host/direct/compile.o",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sparse-tbi-art-integrated-host/direct/decode.o",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sparse-tbi-art-integrated-host/direct/memory-groups.o",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sparse-tbi-art-integrated-host/direct/read-faults.o",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sparse-tbi-art-integrated-host/direct/cross-page.o",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sparse-tbi-art-integrated-host/direct/entry.o",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sparse-tbi-art-integrated-host/direct/code-memory.o",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sparse-tbi-art-integrated-host/direct/execute-check.o",
+          "-lc++",
+          "-o",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sparse-tbi-art-integrated-host/gcd",
+          "-DNCE_TRANSLATION_DUAL_MAP",
+          "-DTRANSLATION_DISPATCH",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/experiments/native-linux/dispatch-test.c"
+        ],
+        [
+          "/opt/homebrew/opt/llvm/bin/clang",
+          "--target=aarch64-linux-musl",
+          "-mno-outline-atomics",
+          "-fPIE",
+          "-O2",
+          "-g",
+          "-Wall",
+          "-Wextra",
+          "-Werror",
+          "-nostdinc",
+          "-isystem",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/musl-build/install/include",
+          "-isystem",
+          "/opt/homebrew/Cellar/llvm/22.1.7_1/lib/clang/22/include",
+          "-DNCE_TRANSLATION_CPUS=1",
+          "-DNCE_TRANSLATION_HIGH_RES_TIMERS=0",
+          "-c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/experiments/native-linux/translation/linux-guest.c",
+          "-o",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sparse-tbi-art-integrated-host/guest.o",
+          "-DNCE_TRANSLATION_STANDARD_JIT"
+        ],
+        [
+          "/opt/homebrew/opt/llvm/bin/clang",
+          "--target=aarch64-linux-musl",
+          "-mno-outline-atomics",
+          "-fPIE",
+          "-O2",
+          "-g",
+          "-Wall",
+          "-Wextra",
+          "-Werror",
+          "-ffunction-sections",
+          "-Dmain=unused_mm_main",
+          "-nostdinc",
+          "-isystem",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/musl-build/install/include",
+          "-isystem",
+          "/opt/homebrew/Cellar/llvm/22.1.7_1/lib/clang/22/include",
+          "-c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/experiments/native-linux/userspace/signal-tests.c",
+          "-o",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sparse-tbi-art-integrated-host/signal-tests.o"
+        ],
+        [
+          "/opt/homebrew/opt/llvm/bin/clang",
+          "--target=aarch64-linux-musl",
+          "-mno-outline-atomics",
+          "-fPIE",
+          "-O2",
+          "-g",
+          "-Wall",
+          "-Wextra",
+          "-Werror",
+          "-ffunction-sections",
+          "-Dmain=unused_mm_main",
+          "-nostdinc",
+          "-isystem",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/musl-build/install/include",
+          "-isystem",
+          "/opt/homebrew/Cellar/llvm/22.1.7_1/lib/clang/22/include",
+          "-c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/experiments/native-linux/userspace/signal-registers.S",
+          "-o",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sparse-tbi-art-integrated-host/signal-registers.o"
+        ],
+        [
+          "/opt/homebrew/opt/llvm/bin/clang",
+          "--target=aarch64-linux-musl",
+          "-mno-outline-atomics",
+          "-fPIE",
+          "-O2",
+          "-g",
+          "-Wall",
+          "-Wextra",
+          "-Werror",
+          "-ffunction-sections",
+          "-Dmain=unused_mm_main",
+          "-nostdinc",
+          "-isystem",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/musl-build/install/include",
+          "-isystem",
+          "/opt/homebrew/Cellar/llvm/22.1.7_1/lib/clang/22/include",
+          "-c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/experiments/native-linux/userspace/code-tests.c",
+          "-o",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sparse-tbi-art-integrated-host/code-tests.o"
+        ],
+        [
+          "/opt/homebrew/opt/llvm/bin/clang",
+          "--target=aarch64-linux-musl",
+          "-mno-outline-atomics",
+          "-fPIE",
+          "-O2",
+          "-g",
+          "-Wall",
+          "-Wextra",
+          "-Werror",
+          "-ffunction-sections",
+          "-Dmain=unused_mm_main",
+          "-nostdinc",
+          "-isystem",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/musl-build/install/include",
+          "-isystem",
+          "/opt/homebrew/Cellar/llvm/22.1.7_1/lib/clang/22/include",
+          "-c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/experiments/native-linux/userspace/mm-bench.c",
+          "-o",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sparse-tbi-art-integrated-host/mm-bench.o"
+        ],
+        [
+          "/opt/homebrew/opt/llvm/bin/clang",
+          "--target=aarch64-linux-musl",
+          "-mno-outline-atomics",
+          "-fPIE",
+          "-O2",
+          "-g",
+          "-Wall",
+          "-Wextra",
+          "-Werror",
+          "-ffunction-sections",
+          "-Dmain=unused_mm_main",
+          "-nostdinc",
+          "-isystem",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/musl-build/install/include",
+          "-isystem",
+          "/opt/homebrew/Cellar/llvm/22.1.7_1/lib/clang/22/include",
+          "-c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/experiments/native-linux/userspace/mm-tests.c",
+          "-o",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sparse-tbi-art-integrated-host/mm-tests.o"
+        ],
+        [
+          "/opt/homebrew/opt/llvm/bin/clang",
+          "--target=aarch64-linux-musl",
+          "-mno-outline-atomics",
+          "-fPIE",
+          "-O2",
+          "-g",
+          "-Wall",
+          "-Wextra",
+          "-Werror",
+          "-ffunction-sections",
+          "-Dmain=unused_mm_main",
+          "-nostdinc",
+          "-isystem",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/musl-build/install/include",
+          "-isystem",
+          "/opt/homebrew/Cellar/llvm/22.1.7_1/lib/clang/22/include",
+          "-c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/experiments/native-linux/userspace/file-tests.c",
+          "-o",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sparse-tbi-art-integrated-host/file-tests.o"
+        ],
+        [
+          "/opt/homebrew/opt/llvm/bin/clang",
+          "--target=aarch64-linux-musl",
+          "-mno-outline-atomics",
+          "-fPIE",
+          "-O2",
+          "-g",
+          "-Wall",
+          "-Wextra",
+          "-Werror",
+          "-ffunction-sections",
+          "-Dmain=unused_mm_main",
+          "-nostdinc",
+          "-isystem",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/musl-build/install/include",
+          "-isystem",
+          "/opt/homebrew/Cellar/llvm/22.1.7_1/lib/clang/22/include",
+          "-c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/experiments/native-linux/translation/timer-tests.c",
+          "-o",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sparse-tbi-art-integrated-host/timer-tests.o"
+        ],
+        [
+          "/opt/homebrew/opt/llvm/bin/clang",
+          "--target=aarch64-linux-musl",
+          "-mno-outline-atomics",
+          "-fPIE",
+          "-O2",
+          "-g",
+          "-Wall",
+          "-Wextra",
+          "-Werror",
+          "-ffunction-sections",
+          "-Dmain=unused_mm_main",
+          "-nostdinc",
+          "-isystem",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/musl-build/install/include",
+          "-isystem",
+          "/opt/homebrew/Cellar/llvm/22.1.7_1/lib/clang/22/include",
+          "-c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/experiments/native-linux/translation/sparse-guest.c",
+          "-o",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sparse-tbi-art-integrated-host/sparse-guest.o"
+        ],
+        [
+          "/opt/homebrew/opt/llvm/bin/clang",
+          "--target=aarch64-linux-musl",
+          "-mno-outline-atomics",
+          "-fPIE",
+          "-O2",
+          "-g",
+          "-Wall",
+          "-Wextra",
+          "-Werror",
+          "-ffunction-sections",
+          "-Dmain=unused_mm_main",
+          "-nostdinc",
+          "-isystem",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/musl-build/install/include",
+          "-isystem",
+          "/opt/homebrew/Cellar/llvm/22.1.7_1/lib/clang/22/include",
+          "-c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/experiments/native-linux/translation/tbi-guest.c",
+          "-o",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sparse-tbi-art-integrated-host/tbi-guest.o"
+        ],
+        [
+          "/opt/homebrew/opt/llvm/bin/clang",
+          "--target=aarch64-linux-musl",
+          "-mno-outline-atomics",
+          "-fPIE",
+          "-O2",
+          "-g",
+          "-Wall",
+          "-Wextra",
+          "-Werror",
+          "-ffunction-sections",
+          "-Dmain=unused_mm_main",
+          "-nostdinc",
+          "-isystem",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/musl-build/install/include",
+          "-isystem",
+          "/opt/homebrew/Cellar/llvm/22.1.7_1/lib/clang/22/include",
+          "-c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/experiments/native-linux/translation/jit-guest.c",
+          "-o",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sparse-tbi-art-integrated-host/jit-guest.o"
+        ],
+        [
+          "/opt/homebrew/bin/ld.lld",
+          "-pie",
+          "--gc-sections",
+          "--no-dynamic-linker",
+          "-z",
+          "max-page-size=16384",
+          "-z",
+          "common-page-size=16384",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/musl-build/install/lib/rcrt1.o",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/musl-build/install/lib/crti.o",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sparse-tbi-art-integrated-host/guest.o",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sparse-tbi-art-integrated-host/signal-tests.o",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sparse-tbi-art-integrated-host/signal-registers.o",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sparse-tbi-art-integrated-host/code-tests.o",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sparse-tbi-art-integrated-host/mm-bench.o",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sparse-tbi-art-integrated-host/mm-tests.o",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sparse-tbi-art-integrated-host/file-tests.o",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sparse-tbi-art-integrated-host/timer-tests.o",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sparse-tbi-art-integrated-host/sparse-guest.o",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sparse-tbi-art-integrated-host/tbi-guest.o",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sparse-tbi-art-integrated-host/jit-guest.o",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/musl-build/install/lib/libc.a",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/compiler-rt-build/libbuiltins.a",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/musl-build/install/lib/crtn.o",
+          "-o",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sparse-tbi-art-integrated-host/guest.elf"
+        ],
+        [
+          "/opt/homebrew/share/android-ndk/toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android35-clang",
+          "-ffixed-x18",
+          "-mno-outline-atomics",
+          "-g",
+          "-O2",
+          "-Wall",
+          "-Wextra",
+          "-Werror",
+          "-Wl,-z,max-page-size=16384,-z,common-page-size=16384",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/experiments/native-linux/userspace/bionic-test.c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/experiments/native-linux/userspace/proc-exit-tests.c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/experiments/native-linux/userspace/file-tests.c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/experiments/native-linux/userspace/seccomp-tests.c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/experiments/native-linux/userspace/signal-tests.c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/experiments/native-linux/userspace/signal-registers.S",
+          "-o",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sparse-tbi-art-integrated-host/bionic-test.elf"
+        ]
+      ],
+      "host_unchanged_after_guest_build": true,
+      "report": {
+        "path": "work/native-linux-nce/sparse-tbi-art-integrated-host/summary.json",
+        "bytes": 104925,
+        "sha256": "76400fd2033eabd01a2fa75738ba2722937a84dc82afbbde00e7a40d475aa65a"
+      },
+      "runs": [
+        {
+          "entry": "cli",
+          "returncode": 0,
+          "validated": true,
+          "results": [
+            {
+              "config": "translation_code_memory",
+              "kernel": "dual",
+              "direct": "dual"
+            },
+            {
+              "config": "translation_data_tbi",
+              "data": false,
+              "fetch": false,
+              "tagged_syscall_abi": false
+            },
+            {
+              "config": "translation_exec_cache",
+              "mode": "pages"
+            },
+            {
+              "config": "translation_tlb_invalidation",
+              "mode": "pages",
+              "range_limit_pages": 64
+            },
+            {
+              "config": "translation_preemption",
+              "mode": "timer",
+              "instructions": 50000,
+              "timer_interval_ns": 2000000
+            },
+            {
+              "config": "translation_parallel",
+              "cpus": 1,
+              "profile": false,
+              "uaccess_stop": "all"
+            },
+            {
+              "cpu": 0,
+              "config": "translation_execution",
+              "engine": "direct",
+              "direct_cache_bytes": 134217728,
+              "data_page_bytes": 16384,
+              "mapping_entries": 256,
+              "route_entries": 256,
+              "selective_writes": false,
+              "reuse_code_checks": false,
+              "memory": "flat",
+              "code_watch": true,
+              "cross_page": true,
+              "route_epochs": false,
+              "retain_routes": false,
+              "memory_groups": false,
+              "native_exclusive": true,
+              "vector_table": false,
+              "simd_math": false
+            },
+            {
+              "cpu": 0,
+              "config": "translation_cache_settings",
+              "cache_bytes": 134217728,
+              "actual_cache_bytes": 134201268,
+              "invalidation": "pages",
+              "linux_fastpath": false
+            },
+            {
+              "test": "translation_prepared_code_execution",
+              "passed": true
+            },
+            {
+              "config": "translation_guest_layout",
+              "mode": "host",
+              "guest_base": 481036337152,
+              "guest_end": 485331304448,
+              "guest_span_bytes": 4294967296,
+              "flat_coverage_bytes": 4294967296,
+              "physical_base": 485331304448,
+              "ram_base": 486472155136,
+              "ram_bytes": 1073741824,
+              "reservation_base": 481036337152,
+              "reservation_bytes": 5435817984
+            },
+            {
+              "config": "linux_scheduler_slice",
+              "requested_us": 0,
+              "applied_ns": 750000
+            },
+            {
+              "config": "translation_online_cpus",
+              "capacity": 1,
+              "requested": 1,
+              "online_mask": 1
+            },
+            {
+              "test": "translated_guest_layout_boundaries",
+              "passed": true,
+              "layout": "host"
+            },
+            {
+              "config": "linux_standard_jit",
+              "page_bytes": 16384
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "anon_rw_rx",
+              "passed": true,
+              "observed": 42
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "anon_rewrite",
+              "passed": true,
+              "observed": 91
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "rx_write",
+              "passed": true,
+              "signal": 11,
+              "si_code": 2,
+              "address": 481774534656,
+              "expected_address": 481774534656
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "remove_execute",
+              "passed": true,
+              "signal": 11,
+              "si_code": 2,
+              "address": 481774534656,
+              "expected_address": 481774534656
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "mremap_move",
+              "passed": true,
+              "observed": 91
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "mremap_old_unmapped",
+              "passed": true,
+              "signal": 11,
+              "si_code": 1,
+              "address": 481774534656,
+              "expected_address": 481774534656
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unmapped_execute",
+              "passed": true,
+              "signal": 11,
+              "si_code": 1,
+              "address": 481774551040,
+              "expected_address": 481774551040
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "anon_rx_map",
+              "passed": true,
+              "observed": 1
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "anon_rwx",
+              "passed": true,
+              "observed": 74
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "exec_only_vma",
+              "passed": true,
+              "observed": 58
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "ordinary_file_rx",
+              "passed": true,
+              "observed": 57
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "readonly_shared_write",
+              "passed": true,
+              "observed": 13
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "noexec_mmap",
+              "passed": true,
+              "observed": 1
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "noexec_mprotect",
+              "passed": true,
+              "observed": 13
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unpopulated_exec_alias",
+              "passed": true,
+              "observed": 59
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "private_cow_parent",
+              "passed": true,
+              "observed": 41
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "private_file_cow",
+              "passed": true,
+              "observed": 41
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "memfd_alias_updates",
+              "passed": true,
+              "observed": 16
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "memfd_pwrite",
+              "passed": true,
+              "observed": 97
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "memfd_shared_fork",
+              "passed": true,
+              "observed": 111
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "memfd_mremap_clone",
+              "passed": true,
+              "observed": 111
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unicorn_alias_update",
+              "passed": true,
+              "observed": 201
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unicorn_pwrite_update",
+              "passed": true,
+              "observed": 202
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unicorn_unseen_pwrite",
+              "passed": true,
+              "observed": 203
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "same_va_new_backing",
+              "passed": true,
+              "observed": 87
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "sealed_write",
+              "passed": true,
+              "observed": 1
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unicorn_self_page_flush",
+              "passed": true,
+              "observed": 67
+            },
+            {
+              "test": "linux_simd_fallback_continuation",
+              "passed": true
+            },
+            {
+              "test": "translated_timer_boundaries",
+              "passed": true,
+              "high_res_timers": false,
+              "resolution_ns": 10000000
+            },
+            {
+              "test": "linux_signal_mask_altstack_nested",
+              "passed": true
+            },
+            {
+              "test": "linux_signal_register_restore",
+              "passed": true
+            },
+            {
+              "test": "linux_signal_eintr_restart",
+              "passed": true
+            },
+            {
+              "test": "linux_signal_fault_recovery",
+              "passed": true
+            },
+            {
+              "test": "linux_signal_frame_validation_stop_exit",
+              "passed": true
+            },
+            {
+              "test": "linux_pthread_cancel_signal",
+              "passed": true
+            },
+            {
+              "test": "linux_signal_timer_preemption",
+              "passed": true
+            },
+            {
+              "test": "linux_signal_suite",
+              "passed": true,
+              "libc": "musl-translated"
+            },
+            {
+              "test": "linux_brk_growth_cow",
+              "passed": true
+            },
+            {
+              "test": "linux_fault_contiguous_data_boundaries",
+              "passed": true
+            },
+            {
+              "test": "linux_user_string_boundaries",
+              "passed": true,
+              "libc": "musl"
+            },
+            {
+              "test": "linux_exec_symlink",
+              "passed": true,
+              "libc": "musl"
+            },
+            {
+              "test": "linux_aarch64_file_open_flags",
+              "passed": true,
+              "libc": "musl"
+            },
+            {
+              "test": "linux_stack_growth_and_limit",
+              "passed": true
+            },
+            {
+              "test": "linux_android_elf_reservation_boundaries",
+              "passed": true
+            },
+            {
+              "test": "linux_sparse_reservation_cow",
+              "passed": true,
+              "reserved_bytes": 2147483648
+            },
+            {
+              "test": "linux_mmap_byte_offset",
+              "passed": true
+            },
+            {
+              "test": "linux_fault_register_state",
+              "passed": true,
+              "switches": 64
+            },
+            {
+              "test": "linux_user_memory_boundaries",
+              "passed": true,
+              "reuse_rounds": 64
+            },
+            {
+              "test": "linux_ram_capacity_cow",
+              "passed": true,
+              "bytes": 671088640
+            },
+            {
+              "test": "linux_mm_exchange_integrity",
+              "passed": true,
+              "cases": 28
+            },
+            {
+              "test": "translated_pthread_tls_mutex",
+              "passed": true
+            },
+            {
+              "test": "translated_signals_protection_restore",
+              "passed": true
+            },
+            {
+              "test": "translated_runtime_elf_exec",
+              "passed": true
+            },
+            {
+              "test": "linux_dynamic_link_dlopen_constructors",
+              "passed": true
+            },
+            {
+              "test": "linux_dynamic_tls_threads",
+              "passed": true
+            },
+            {
+              "test": "linux_dynamic_fork_signal",
+              "passed": true
+            },
+            {
+              "test": "translated_runtime_libraries",
+              "passed": true
+            },
+            {
+              "test": "translated_linux_process",
+              "path": "/probe-guest",
+              "passed": true,
+              "waited": 25,
+              "status": 0
+            },
+            {
+              "test": "translated_host_pointer_copy",
+              "passed": true
+            },
+            {
+              "test": "translated_context_cleanup",
+              "passed": true,
+              "allocated": 68,
+              "freed": 68,
+              "maps": 0,
+              "revocations": 0,
+              "tlb_fills": 70024,
+              "faults": 152333,
+              "syscalls": 16939,
+              "preemptions": 25
+            },
+            {
+              "cpu": 0,
+              "translation_data_tbi": true,
+              "unicorn_tagged_fills": 0,
+              "alias_flushes": 0
+            },
+            {
+              "result": "passed"
+            }
+          ]
+        },
+        {
+          "entry": "gcd",
+          "returncode": 0,
+          "validated": true,
+          "results": [
+            {
+              "test": "dispatch_signal_mask",
+              "sigusr2_blocked": 1
+            },
+            {
+              "config": "translation_code_memory",
+              "kernel": "dual",
+              "direct": "dual"
+            },
+            {
+              "config": "translation_data_tbi",
+              "data": false,
+              "fetch": false,
+              "tagged_syscall_abi": false
+            },
+            {
+              "config": "translation_exec_cache",
+              "mode": "pages"
+            },
+            {
+              "config": "translation_tlb_invalidation",
+              "mode": "pages",
+              "range_limit_pages": 64
+            },
+            {
+              "config": "translation_preemption",
+              "mode": "timer",
+              "instructions": 50000,
+              "timer_interval_ns": 2000000
+            },
+            {
+              "config": "translation_parallel",
+              "cpus": 1,
+              "profile": false,
+              "uaccess_stop": "all"
+            },
+            {
+              "cpu": 0,
+              "config": "translation_execution",
+              "engine": "direct",
+              "direct_cache_bytes": 134217728,
+              "data_page_bytes": 16384,
+              "mapping_entries": 256,
+              "route_entries": 256,
+              "selective_writes": false,
+              "reuse_code_checks": false,
+              "memory": "flat",
+              "code_watch": true,
+              "cross_page": true,
+              "route_epochs": false,
+              "retain_routes": false,
+              "memory_groups": false,
+              "native_exclusive": true,
+              "vector_table": false,
+              "simd_math": false
+            },
+            {
+              "cpu": 0,
+              "config": "translation_cache_settings",
+              "cache_bytes": 134217728,
+              "actual_cache_bytes": 134201268,
+              "invalidation": "pages",
+              "linux_fastpath": false
+            },
+            {
+              "test": "translation_prepared_code_execution",
+              "passed": true
+            },
+            {
+              "config": "translation_guest_layout",
+              "mode": "host",
+              "guest_base": 481036337152,
+              "guest_end": 485331304448,
+              "guest_span_bytes": 4294967296,
+              "flat_coverage_bytes": 4294967296,
+              "physical_base": 485331304448,
+              "ram_base": 486472155136,
+              "ram_bytes": 1073741824,
+              "reservation_base": 481036337152,
+              "reservation_bytes": 5435817984
+            },
+            {
+              "config": "linux_scheduler_slice",
+              "requested_us": 0,
+              "applied_ns": 750000
+            },
+            {
+              "config": "translation_online_cpus",
+              "capacity": 1,
+              "requested": 1,
+              "online_mask": 1
+            },
+            {
+              "test": "translated_guest_layout_boundaries",
+              "passed": true,
+              "layout": "host"
+            },
+            {
+              "config": "linux_standard_jit",
+              "page_bytes": 16384
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "anon_rw_rx",
+              "passed": true,
+              "observed": 42
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "anon_rewrite",
+              "passed": true,
+              "observed": 91
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "rx_write",
+              "passed": true,
+              "signal": 11,
+              "si_code": 2,
+              "address": 481774534656,
+              "expected_address": 481774534656
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "remove_execute",
+              "passed": true,
+              "signal": 11,
+              "si_code": 2,
+              "address": 481774534656,
+              "expected_address": 481774534656
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "mremap_move",
+              "passed": true,
+              "observed": 91
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "mremap_old_unmapped",
+              "passed": true,
+              "signal": 11,
+              "si_code": 1,
+              "address": 481774534656,
+              "expected_address": 481774534656
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unmapped_execute",
+              "passed": true,
+              "signal": 11,
+              "si_code": 1,
+              "address": 481774551040,
+              "expected_address": 481774551040
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "anon_rx_map",
+              "passed": true,
+              "observed": 1
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "anon_rwx",
+              "passed": true,
+              "observed": 74
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "exec_only_vma",
+              "passed": true,
+              "observed": 58
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "ordinary_file_rx",
+              "passed": true,
+              "observed": 57
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "readonly_shared_write",
+              "passed": true,
+              "observed": 13
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "noexec_mmap",
+              "passed": true,
+              "observed": 1
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "noexec_mprotect",
+              "passed": true,
+              "observed": 13
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unpopulated_exec_alias",
+              "passed": true,
+              "observed": 59
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "private_cow_parent",
+              "passed": true,
+              "observed": 41
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "private_file_cow",
+              "passed": true,
+              "observed": 41
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "memfd_alias_updates",
+              "passed": true,
+              "observed": 16
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "memfd_pwrite",
+              "passed": true,
+              "observed": 97
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "memfd_shared_fork",
+              "passed": true,
+              "observed": 111
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "memfd_mremap_clone",
+              "passed": true,
+              "observed": 111
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unicorn_alias_update",
+              "passed": true,
+              "observed": 201
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unicorn_pwrite_update",
+              "passed": true,
+              "observed": 202
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unicorn_unseen_pwrite",
+              "passed": true,
+              "observed": 203
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "same_va_new_backing",
+              "passed": true,
+              "observed": 87
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "sealed_write",
+              "passed": true,
+              "observed": 1
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unicorn_self_page_flush",
+              "passed": true,
+              "observed": 67
+            },
+            {
+              "test": "linux_simd_fallback_continuation",
+              "passed": true
+            },
+            {
+              "test": "translated_timer_boundaries",
+              "passed": true,
+              "high_res_timers": false,
+              "resolution_ns": 10000000
+            },
+            {
+              "test": "linux_signal_mask_altstack_nested",
+              "passed": true
+            },
+            {
+              "test": "linux_signal_register_restore",
+              "passed": true
+            },
+            {
+              "test": "linux_signal_eintr_restart",
+              "passed": true
+            },
+            {
+              "test": "linux_signal_fault_recovery",
+              "passed": true
+            },
+            {
+              "test": "linux_signal_frame_validation_stop_exit",
+              "passed": true
+            },
+            {
+              "test": "linux_pthread_cancel_signal",
+              "passed": true
+            },
+            {
+              "test": "linux_signal_timer_preemption",
+              "passed": true
+            },
+            {
+              "test": "linux_signal_suite",
+              "passed": true,
+              "libc": "musl-translated"
+            },
+            {
+              "test": "linux_brk_growth_cow",
+              "passed": true
+            },
+            {
+              "test": "linux_fault_contiguous_data_boundaries",
+              "passed": true
+            },
+            {
+              "test": "linux_user_string_boundaries",
+              "passed": true,
+              "libc": "musl"
+            },
+            {
+              "test": "linux_exec_symlink",
+              "passed": true,
+              "libc": "musl"
+            },
+            {
+              "test": "linux_aarch64_file_open_flags",
+              "passed": true,
+              "libc": "musl"
+            },
+            {
+              "test": "linux_stack_growth_and_limit",
+              "passed": true
+            },
+            {
+              "test": "linux_android_elf_reservation_boundaries",
+              "passed": true
+            },
+            {
+              "test": "linux_sparse_reservation_cow",
+              "passed": true,
+              "reserved_bytes": 2147483648
+            },
+            {
+              "test": "linux_mmap_byte_offset",
+              "passed": true
+            },
+            {
+              "test": "linux_fault_register_state",
+              "passed": true,
+              "switches": 64
+            },
+            {
+              "test": "linux_user_memory_boundaries",
+              "passed": true,
+              "reuse_rounds": 64
+            },
+            {
+              "test": "linux_ram_capacity_cow",
+              "passed": true,
+              "bytes": 671088640
+            },
+            {
+              "test": "linux_mm_exchange_integrity",
+              "passed": true,
+              "cases": 28
+            },
+            {
+              "test": "translated_pthread_tls_mutex",
+              "passed": true
+            },
+            {
+              "test": "translated_signals_protection_restore",
+              "passed": true
+            },
+            {
+              "test": "translated_runtime_elf_exec",
+              "passed": true
+            },
+            {
+              "test": "linux_dynamic_link_dlopen_constructors",
+              "passed": true
+            },
+            {
+              "test": "linux_dynamic_tls_threads",
+              "passed": true
+            },
+            {
+              "test": "linux_dynamic_fork_signal",
+              "passed": true
+            },
+            {
+              "test": "translated_runtime_libraries",
+              "passed": true
+            },
+            {
+              "test": "translated_linux_process",
+              "path": "/probe-guest",
+              "passed": true,
+              "waited": 25,
+              "status": 0
+            },
+            {
+              "test": "translated_host_pointer_copy",
+              "passed": true
+            },
+            {
+              "test": "translated_context_cleanup",
+              "passed": true,
+              "allocated": 68,
+              "freed": 68,
+              "maps": 0,
+              "revocations": 0,
+              "tlb_fills": 70024,
+              "faults": 152333,
+              "syscalls": 16939,
+              "preemptions": 27
+            },
+            {
+              "cpu": 0,
+              "translation_data_tbi": true,
+              "unicorn_tagged_fills": 0,
+              "alias_flushes": 0
+            },
+            {
+              "result": "passed"
+            }
+          ]
+        }
+      ]
+    },
+    "sparse": {
+      "platform": "macOS-27.0-arm64-arm-64bit-Mach-O",
+      "cpu": "Apple M5 Ultra",
+      "system_build": "26A428",
+      "configuration": {
+        "data_tbi": true,
+        "guest_layout": "sparse",
+        "code_memory": "dual",
+        "execution": "direct",
+        "direct": {
+          "mapping_entries": 256,
+          "route_entries": 256,
+          "selective_writes": false,
+          "reuse_code_checks": false,
+          "memory": "flat",
+          "code_watch": true,
+          "cross_page": true,
+          "route_epochs": false,
+          "retain_routes": false,
+          "memory_groups": false,
+          "native_exclusive": true,
+          "vector_table": false,
+          "simd_math": false
+        },
+        "mapping": "pte",
+        "sparse_scan": true,
+        "fault_prefetch": false,
+        "guest_page_bytes": 16384,
+        "workload": "core",
+        "entries": [
+          "cli",
+          "gcd"
+        ],
+        "art_nterp": 1,
+        "cpus": 1,
+        "high_res_timers": false,
+        "online_cpus": 1,
+        "uaccess_stop": "all",
+        "parallel_profile": false,
+        "art_expanded_jit": 0,
+        "art_fast_baseline": 0,
+        "cache_invalidation": "pages",
+        "exec_cache": "pages",
+        "tlb_invalidation": "pages",
+        "linux_fastpath": 0,
+        "guest_ram_bytes": 1073741824,
+        "translation_cache_bytes": 134217728,
+        "instruction_batch": 50000,
+        "memory_interval_ms": 100,
+        "preemption": "timer",
+        "timer_interval_ns": 2000000
+      },
+      "sha256": {
+        "experiments/native-linux/translation/kernel-image.c": "33792252482c0c6be81d1009a45f1a12f17233a7fd472d12a7f394afd136217f",
+        "experiments/native-linux/translation/linux-elf.c": "e3557d2945b3e6dc0b9c1b4ae7041a6dd21a785e4981f97ddff1ea9837d68365",
+        "experiments/native-linux/translation/linux-execution.c": "35a48a92529a5f7c2de173968f146f3d6fb0a00e525bac1faf43caa4d802a056",
+        "experiments/native-linux/translation/interaction-profile.c": "8016783f7a3f0087f0dc369b0316655d95bd612a1fc49547b8c7eada4501881c",
+        "experiments/native-linux/translation/linux-runner.c": "5fa9e4fc32d237290415c7ec79ac0f68e96872b1ddc22c705a2a870e05beaecf",
+        "experiments/native-linux/translation/linux-memory.c": "0cc6ab6ff8ab7abe76c1c73aaf18fecb200ff27251ea29f0f15b0618a6020e31",
+        "experiments/native-linux/lkl-host.c": "49c63f1be4112408bbe5bdced53cf8bd0314eedaf770fe4d869d30edf3a6c671",
+        "experiments/native-linux/translation/code-watch.c": "1bfa90873b4e52f1ca0766e169999f948cbff313eccffba14be0e76e7dd1305e",
+        "experiments/native-linux/translation/read-view.c": "85ad462693b9ff64532bbf2056a2c6b09cefb1bbd4d8fbcf0cb7570697ed3c2a",
+        "experiments/native-linux/translation/unicorn-code-memory.c": "f7fe3981500192267b25ae33cb4aeb5ef38f31c674ddb3cb0ebfa0a0edb43d6e",
+        "experiments/native-linux/direct/engine.cpp": "0607f7d542d538a1a71cd680af83e622c4a7d74fcf06d041220168ff02074ce9",
+        "experiments/native-linux/direct/compile.cpp": "c32e01524598365c98b19a4db7058a7e7be89bf5bc58ebe87423cc908a29bf9c",
+        "experiments/native-linux/direct/decode.cpp": "e2ce2940d0c5d5c1658c45d8a4beee40f9dbb662f960eabb0cad96b0ce84efc1",
+        "experiments/native-linux/direct/memory-groups.cpp": "6447bb9544d9cfbc9f872e6e721b17854aae3a1f88fcedcd9767831aaf1ae9a6",
+        "experiments/native-linux/direct/read-faults.cpp": "6e514b9e0f8b9675e2eaad955440fd4909b8f19e6e1637ea16d083d2a9809348",
+        "experiments/native-linux/direct/cross-page.cpp": "ab2aea50c200cb993fbbad08a2c26423391a428a1359225669a30d2baf8f622d",
+        "experiments/native-linux/direct/entry.S": "14896f395d465d65aff18e22598c804e2faa8740fdb72128b2b86c25e6defab4",
+        "experiments/native-linux/code-memory.c": "8215ac2a2564049be0b45a80b3774ec994d6e51b6eb2057ed00cd515ef682981",
+        "experiments/native-linux/execute-check.c": "2e5a080e11bb3ec9407be2495c30a0391d2e8a858f1fe1a01a624eed3a8dd3c5",
+        "experiments/native-linux/direct/decode.h": "eafddef33888746adfc25306f6b2ab7903ff9f50adce3b0cf55e43f1e8cba5a9",
+        "experiments/native-linux/direct/memory-groups.h": "c6250a511c45dd7bbd5733ff43b55dd8a0eb6501d9759bb12a413f9c121a6b31",
+        "experiments/native-linux/direct/direct.h": "4351504d06862b40034e66e06520950a910c2df8eed0c662d1ecf8b2fcf85b53",
+        "experiments/native-linux/direct/internal.h": "e95d84decb560e0e6e94e6e40ed41fff6b94aec16e4be9336472e631df75678e",
+        "experiments/native-linux/direct/layout.h": "bea63a67f1145501152a6eaf400e9d1393badc55871c7b61e365a4bd2782bb23",
+        "experiments/native-linux/direct/page-table-layout.h": "500897ffde014c17c73d03a92b34b07a9990e52695c369d9228c01d5d4600109",
+        "experiments/native-linux/code-memory.h": "b76ec86c799b073a58b08dc04300d091cb63531d31289ea22fdfb16d4495870a",
+        "experiments/native-linux/execute-check.h": "db1decd5ee536b58b9974ff03951d79dddfc3f74c1205ad34b7c725de4bf6883",
+        "experiments/native-linux/nce.h": "7bcdc5e777e10e1d70f0bf1838a2160e87c70613a44b90b16c3e07aedf4a9f58",
+        "experiments/native-linux/guest-registers.h": "90a4d5b6e613ce4f2cda359dcd05f6e8d876a788bc437c2c1e13e05403e4627a",
+        "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/code_block.hpp": "c1b59e9d8a37775f8558fb3a0f7b34a6b7dbd2b2c13c088be65253c2223faa8a",
+        "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/dual_code_block.hpp": "619a01b3c69e107cc1c13c79b0dfbe97b09395e70a6c705b77e0531894a69620",
+        "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/feature_detection/cpu_feature.hpp": "2ae6e67bd4af85bd7d6d6eb7585f73cbdc237183167bb265a0427b74807e0a02",
+        "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/feature_detection/feature_detection.hpp": "4d13c256d5028d1ca3e5a0ad59382e888b79e033b72cffe7dae4c3e9ecc8d97e",
+        "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/feature_detection/feature_detection_apple.hpp": "99d88802080a50bd7d73a07020c18eee44417e193ff5515cbad8f6972890bbc6",
+        "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/feature_detection/feature_detection_freebsd.hpp": "84a10ab44c7c566523705703fb118904156c39b6b93148d458e2ab77a80a2c2d",
+        "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/feature_detection/feature_detection_generic.hpp": "4b78fafbb988a18b25b1aeb04c5ebff6b3a675f502e315fd8430f2d3f61f0fd2",
+        "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/feature_detection/feature_detection_hwcaps.hpp": "5839e027d9145f182149586fc30f129f33d5b482ffa174ed4ac6f9bb3b5a3b3f",
+        "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/feature_detection/feature_detection_idregs.hpp": "f759c5fd02bb2d2bafe45376e3856fa9371737282b22f66101fd4ae8db5f7b96",
+        "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/feature_detection/feature_detection_linux.hpp": "a49f3c60ad2cae71c158fd9207fdbad5e40837793f57289490603455302299c6",
+        "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/feature_detection/feature_detection_netbsd.hpp": "1315afa43ea61ffb7beb1102bf090d24d1285f2340028b5da50c3d31491dd09c",
+        "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/feature_detection/feature_detection_openbsd.hpp": "941dd25a778b8153e3e98aa9b7795a2c54359d24d8337f56a8658993f3fecb96",
+        "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/feature_detection/feature_detection_w32.hpp": "f228126514f482b43c0304a1f9dfb5942b93afabfc4372662af1193679c503de",
+        "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/feature_detection/id_registers.hpp": "ed83ce3fdaa0bea503dbdd9c0e728e8cb4eb0307fdf3bc60192fc0dfa130d1c8",
+        "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/feature_detection/read_id_registers_directly.hpp": "ff2e769fabf6f43d6e12939072e6cd911694f7966d2bd8c4ce6c3075aad34020",
+        "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/arm64_encode_helpers.inc.hpp": "55576102b1774f7f7b681857a3d2c6843776045cccd24fa09b8c4713929adbaf",
+        "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/cpu_feature.inc.hpp": "5919c8d8b32ae0899d04a888d8e852a79c604b33f9b6cffe632234437f57ab67",
+        "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/enum.hpp": "603697b7a7e16795219a74fa2d735e8bd442c79cdcb539ed0abed2b83417fd26",
+        "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/imm.hpp": "268b0414bf57c82cddb3de6b286e8e1ce52fb2b413aaecaa1f0cf9099b7e7cc1",
+        "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/list.hpp": "0592b31d29a6f1bfbee46cdb0aa5ce778edc9643db90a39d42215970357328e9",
+        "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/mnemonics_fpsimd_v8.0.inc.hpp": "3ecdfd1ff46ff749b2525e1a75acbabc6022848f700a6f16b36f480ab954a266",
+        "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/mnemonics_fpsimd_v8.1.inc.hpp": "404268b9e0e3b4708d5018fd1fbf3ea1339c641382e7cfd15534af56a7672e69",
+        "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/mnemonics_fpsimd_v8.2.inc.hpp": "52e7a48b969badf327c00c2ea4556353c61950a0c452adeaee37c6820926261f",
+        "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/mnemonics_fpsimd_v8.3.inc.hpp": "84bcced18fe10c753ec5ea1c84e9531ab1ceb4e08b046519e75788a14b814ae4",
+        "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/mnemonics_generic_v8.0.inc.hpp": "8ffd907bb38b27700022e29d40111fe72e640d003ad6aa3e372c4d8a7ebd3f6c",
+        "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/mnemonics_generic_v8.1.inc.hpp": "9f60f325c392e907dd9d2cbab62e1f8cfc7ab95c88e54df75b1a1f64bc7fa93b",
+        "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/mnemonics_generic_v8.2.inc.hpp": "1b53f462d1ed7e0a763236dbef9c4bfc70f6430cf5f8b420b2acc4dd2e8884ab",
+        "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/mnemonics_generic_v8.3.inc.hpp": "4b775baed83b1bb32b7bd339433175ce09b4bbc6da33d887bc9ca989d42b5d76",
+        "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/multi_typed_name.hpp": "a4322bfdb95f8477e6f92b31194110ef860c7402d50ce18daae6e016d4fa9aac",
+        "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/oaknut_exception.inc.hpp": "48629c93b468527c440dad30f8044818aa202caff67e73f45a246a3e96f8ad28",
+        "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/offset.hpp": "cb48c0eface8f5458a89402a090084690d3f999ff562e63870a1b16f438a7d52",
+        "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/overloaded.hpp": "03f0f551fa10b0b3d8d2c75130c1023ddcc5e8a3566629470408aad370d87fc2",
+        "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/reg.hpp": "352456b9b9ea1fb8cb5637e82169e16f08189579da9645ad5a5c1992f95ed198",
+        "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/string_literal.hpp": "96dce09750c24842a88e8eb3dfdafe047a5ab94c9398c94ea41cca8e1434e1bb",
+        "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/oaknut.hpp": "e25f4222f8f7d17b683d5ea8ff2851f88a3b40c478fcdc6046fe962cfcab2f37",
+        "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/oaknut_exception.hpp": "8277ac5a6cf6697305fd169d817d6786b0011027d66962fc9d982ffbce2c19a0",
+        "scripts/probe_direct_execution.py": "efee85b25893505ef4e2600f82f57cb9b177959290f53036e11872fabdd47f95",
+        "work/native-linux-nce/oaknut-94c726c.tar.gz": "c404db82002f9a851a412b3d55ac9be8a42a2e319fd2fc8a73e63e6ef5d4f97b",
+        "experiments/native-linux/translation/code-watch.h": "1ec6e739e1a542c52a2ed54b7310d1cc0a3317dfa25d1d59aeb971e972ea0747",
+        "experiments/native-linux/translation/read-view.h": "40a09185089ab8a02a76a6789b7b2149ffdb9dc225c7b1c5b4532d6022307488",
+        "scripts/build_nce_userspace.py": "4fafb283fdc1babe0d62ef949eeffd50d2018fddb3420694ab9fb64a60d82149",
+        "experiments/native-linux/userspace/bionic-test.c": "ffa10bd0d16dd15edddb368a0435d9d94b529270c13a89f6b3c5536dc40c0b76",
+        "experiments/native-linux/userspace/proc-exit-tests.c": "58c79b40b0fabaf40707baf80d3cca4883311f33c00139ed8db6f3d02d5353df",
+        "experiments/native-linux/userspace/file-tests.c": "e260e5222cf7efea3140941404100a05be3b383299f2da4cc174a531cc166b8b",
+        "experiments/native-linux/userspace/seccomp-tests.c": "7ac584c36df43561ad7c947eeec40ba0c39188a28d1a79245100b4f683626931",
+        "experiments/native-linux/userspace/signal-tests.c": "43b86323b4dd66c98db20065b8cc41d868fb7ab538135d6eba9d7c65a263a549",
+        "experiments/native-linux/userspace/signal-registers.S": "68e13063df3b1a82a0b5805eb98082204b7ee6e29e7c020cc452ef5199f6d257",
+        "experiments/native-linux/translation/unicorn-code-memory.h": "03e9a24ca9133e989426ca621ad9962c327be47ce889e845f4b668b657243ed7",
+        "experiments/native-linux/translation/linux-elf.h": "faec3fcc8a93eafc0a140830836881e8f2447f20b9b59ec26b7b8230f8b0489b",
+        "experiments/native-linux/translation/linux-execution.h": "ea490ee46e90df3ee0664815dc45e0f58f071378e2b0af333b498d134644ecc2",
+        "experiments/native-linux/translation/interaction-profile.h": "39700898fbcd32c4d4060dad1e494826d50109ab7c5efed50daaf02603938e5a",
+        "experiments/native-linux/translation/linux-memory.h": "11b7a1402acaa07152cdb17d43fed3e6effdeb65af902e8b64ae5ea5cded35e9",
+        "experiments/native-linux/translation/linux-guest.c": "0ecc7f41b093d2f3bfd43cb290e132b8f92dd222a6f24936997bc001c4d19896",
+        "scripts/probe_lkl_translation.py": "3f5f6ef896a36ee6fa3ce1889d3b93d5aaa5f0d3663200553f0ba2ec89eb1eed",
+        "experiments/native-linux/dispatch-test.c": "5211698bd58018aae173d4c6d75daeeb0e4eb357fb2742c4c08d595bc9d7b55b",
+        "experiments/native-linux/layout.h": "9ecb6dc474edfc516284effcbd1999ba445ba88372233636391771a0715deaa5",
+        "experiments/native-linux/userspace/code-tests.c": "5fc06f7a1ca7a4b3e9789fafc06303fc8524a21a8430e15a678b3e2941266e5c",
+        "experiments/native-linux/userspace/mm-bench.c": "27beca8aea863ceedf2698524346cbbbc20134fe005a3e5dd4c623dbcf1c8674",
+        "experiments/native-linux/userspace/mm-tests.c": "527d6c94abaf861909f891f54651dd6fa3ec07f4e20263c730767863e3405357",
+        "experiments/native-linux/translation/timer-tests.c": "b54bcf839dcfe5c929a9935fb616104f688e75a6551892caa0ab4ec73246146f",
+        "experiments/native-linux/translation/sparse-guest.c": "583baccc27e530b3d4dfb366425df427c69d59b3784cf32a3457395f6a048304",
+        "experiments/native-linux/translation/tbi-guest.c": "43587e3635725d5e2a06bf34fe98494a012778a504a4a67c1c23e1a8a2b6f09e",
+        "experiments/native-linux/translation/jit-guest.c": "85ec5039a9d03ec1440b33f63d7d4ae9ac6d974252348b17929a2c6e8b442e1e",
+        "work/native-linux-nce/lkl-translation-kernel/lkl-image.bin": "4656cc8c6c0a978925e0259dd3df379665fced108886e9218590c755a733b08d",
+        "work/native-linux-nce/lkl-translation-kernel/lkl-image.h": "472eccea15b54eb288128065cde67b5a87a5ec07fd2e577566e5a79c619c50e0",
+        "work/native-linux-nce/lkl-translation-kernel/lkl.so": "fe37fa148f405043f46f172c75f2f56061b9fa4f2eff0cad16fa52796968f974",
+        "work/native-linux-nce/lkl-translation-kernel/lkl-host-ops.h": "54bf2a775fa582ca2bc04fb6a25dc85525b6c69da1cde54f610c4a35e0c1a833",
+        "experiments/native-linux/translation/kernel-api.h": "6acf8b846b78e4e493bd8dd97b42140b28747deac2a367dc7926f924e1c12076",
+        "experiments/native-linux/translation/kernel-image.h": "6946b1a5ce89be9b55634e25115185af009bff2b126f5a10ac4e0690b70b1528",
+        "work/native-linux-nce/sparse-tbi-art-integrated-sparse/translation-symbols.h": "7c91d6575a6616121471782d671bf90ed447ae2bf410621110c2cbe4f29859be",
+        "scripts/build_translation_engine.py": "e5ab4173a424f834a739d0d31e14b9fa75a89074716d5f5c5a49e1358b1a1b59",
+        "work/native-linux-nce/unicorn-tb-stop-dual/build.json": "276c122f121cfafc8d068a311b542742757144b2beecb495b7688f2c4390952f",
+        "work/native-linux-nce/unicorn-tb-stop-dual/prefix/lib/libunicorn.a": "a69c2949b8c277ac32701b40c382f00190e533270d41dbb1cf1b7f7fd3250c57",
+        "work/native-linux-nce/sparse-tbi-art-integrated-sparse/cli": "64434c130e40a6ab4e1401274188e595983600147b44a8b12e27537a09c86746",
+        "work/native-linux-nce/sparse-tbi-art-integrated-sparse/gcd": "afa418c804f45c5f194956b61c7b3d00f79b2f55f32d2072051eb817e9951136",
+        "work/native-linux-nce/sparse-tbi-art-integrated-sparse/guest.elf": "d5d25e6bd28a91a1848581e47e8cef54bc213596986b8fe03c2c14a6b7bfca81",
+        "work/native-linux-nce/sparse-tbi-art-integrated-sparse/late.elf": "8fde8e75809bcdc28970f2cdae4b3749065fdb582f9f97271e709041582923c2",
+        "work/native-linux-nce/sparse-tbi-art-integrated-sparse/sigreturn.elf": "795d053b14585230d5f6ec0d09fdd5d91b8685c9fb6acdd0935d3d9359baf271",
+        "work/native-linux-nce/sparse-tbi-art-integrated-sparse/dynamic.elf": "c7be9a096eacbde4ddf2166fbe57392a730f01497a439ecc96acff66f79da571",
+        "work/native-linux-nce/sparse-tbi-art-integrated-sparse/libc.so": "13e5a9fcf04c9e9f89f0dba662fe6fde2ca7b8d8201eb622d42edc4a28d5f515",
+        "work/native-linux-nce/sparse-tbi-art-integrated-sparse/dependency.so": "878d6795ecc3afcf6f3bcbf34119e8ec106dbd734b9c216b1352b426b31f06da",
+        "work/native-linux-nce/sparse-tbi-art-integrated-sparse/plugin.so": "4646ac0f0191552449161c2b5b61bcac054ebc0427d559503ec8547e38077fe9",
+        "work/native-linux-nce/sparse-tbi-art-integrated-sparse/dash.elf": "8b38ef10487508f46b683f6ef7a747520d5c5c88da1783ce697596f60d4d7851",
+        "work/native-linux-nce/sparse-tbi-art-integrated-sparse/bionic-test.elf": "6443f090d40abdd5cee148eab52e9efc917ea744efb10a337d4ef4664896d7da",
+        "experiments/native-linux/translation/stock-art-runner.h": "ebed39c589b31a6856fbd71557e94c4ec5737f97fd4208f1eb3a70a02e9de88b",
+        "scripts/build_lkl_translation_kernel.py": "56f3801c26bdd90450fe273ca5661b0485da713fc08e90b8099155acedd5c1ba",
+        "scripts/lkl_translation_patch.py": "cab799a0eaddd47ed985307c54b7f4383f1d852bb3d4cb9e1cd8fa9e10c45ff1",
+        "experiments/native-linux/lkl-nce-mmu.c": "d0ee874b00e58100cfd982c1ecbed136f98a85af4e96c7a252009ebc44edf075",
+        "work/native-linux-nce/lkl-translation-kernel/build.json": "f4e03ee7b2d15d66312ddf51dfb6376b58e3ba5d0375614e2bf8a95b6d322c24"
+      },
+      "commands": [
+        [
+          "xcrun",
+          "clang",
+          "-O2",
+          "-g",
+          "-DNCE_PROCESS",
+          "-DNCE_TRANSLATION_CPUS=1",
+          "-Wall",
+          "-Wextra",
+          "-Werror",
+          "-I",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/experiments/native-linux",
+          "-I",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/lkl-translation-kernel",
+          "-I",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sparse-tbi-art-integrated-sparse",
+          "-I",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/processes/host-include",
+          "-I",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/unicorn-tb-stop-dual/prefix/include",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/experiments/native-linux/translation/kernel-image.c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/experiments/native-linux/translation/linux-elf.c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/experiments/native-linux/translation/linux-execution.c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/experiments/native-linux/translation/interaction-profile.c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/experiments/native-linux/translation/linux-runner.c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/experiments/native-linux/translation/linux-memory.c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/experiments/native-linux/lkl-host.c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/experiments/native-linux/translation/code-watch.c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/experiments/native-linux/translation/read-view.c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/experiments/native-linux/translation/unicorn-code-memory.c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/unicorn-tb-stop-dual/prefix/lib/libunicorn.a",
+          "-DNCE_DIRECT_EXECUTION",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sparse-tbi-art-integrated-sparse/direct/engine.o",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sparse-tbi-art-integrated-sparse/direct/compile.o",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sparse-tbi-art-integrated-sparse/direct/decode.o",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sparse-tbi-art-integrated-sparse/direct/memory-groups.o",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sparse-tbi-art-integrated-sparse/direct/read-faults.o",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sparse-tbi-art-integrated-sparse/direct/cross-page.o",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sparse-tbi-art-integrated-sparse/direct/entry.o",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sparse-tbi-art-integrated-sparse/direct/code-memory.o",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sparse-tbi-art-integrated-sparse/direct/execute-check.o",
+          "-lc++",
+          "-o",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sparse-tbi-art-integrated-sparse/cli",
+          "-DNCE_TRANSLATION_DUAL_MAP"
+        ],
+        [
+          "xcrun",
+          "clang",
+          "-O2",
+          "-g",
+          "-DNCE_PROCESS",
+          "-DNCE_TRANSLATION_CPUS=1",
+          "-Wall",
+          "-Wextra",
+          "-Werror",
+          "-I",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/experiments/native-linux",
+          "-I",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/lkl-translation-kernel",
+          "-I",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sparse-tbi-art-integrated-sparse",
+          "-I",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/processes/host-include",
+          "-I",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/unicorn-tb-stop-dual/prefix/include",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/experiments/native-linux/translation/kernel-image.c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/experiments/native-linux/translation/linux-elf.c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/experiments/native-linux/translation/linux-execution.c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/experiments/native-linux/translation/interaction-profile.c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/experiments/native-linux/translation/linux-runner.c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/experiments/native-linux/translation/linux-memory.c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/experiments/native-linux/lkl-host.c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/experiments/native-linux/translation/code-watch.c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/experiments/native-linux/translation/read-view.c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/experiments/native-linux/translation/unicorn-code-memory.c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/unicorn-tb-stop-dual/prefix/lib/libunicorn.a",
+          "-DNCE_DIRECT_EXECUTION",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sparse-tbi-art-integrated-sparse/direct/engine.o",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sparse-tbi-art-integrated-sparse/direct/compile.o",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sparse-tbi-art-integrated-sparse/direct/decode.o",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sparse-tbi-art-integrated-sparse/direct/memory-groups.o",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sparse-tbi-art-integrated-sparse/direct/read-faults.o",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sparse-tbi-art-integrated-sparse/direct/cross-page.o",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sparse-tbi-art-integrated-sparse/direct/entry.o",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sparse-tbi-art-integrated-sparse/direct/code-memory.o",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sparse-tbi-art-integrated-sparse/direct/execute-check.o",
+          "-lc++",
+          "-o",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sparse-tbi-art-integrated-sparse/gcd",
+          "-DNCE_TRANSLATION_DUAL_MAP",
+          "-DTRANSLATION_DISPATCH",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/experiments/native-linux/dispatch-test.c"
+        ],
+        [
+          "/opt/homebrew/opt/llvm/bin/clang",
+          "--target=aarch64-linux-musl",
+          "-mno-outline-atomics",
+          "-fPIE",
+          "-O2",
+          "-g",
+          "-Wall",
+          "-Wextra",
+          "-Werror",
+          "-nostdinc",
+          "-isystem",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/musl-build/install/include",
+          "-isystem",
+          "/opt/homebrew/Cellar/llvm/22.1.7_1/lib/clang/22/include",
+          "-DNCE_TRANSLATION_CPUS=1",
+          "-DNCE_TRANSLATION_HIGH_RES_TIMERS=0",
+          "-c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/experiments/native-linux/translation/linux-guest.c",
+          "-o",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sparse-tbi-art-integrated-sparse/guest.o",
+          "-DNCE_TRANSLATION_STANDARD_JIT"
+        ],
+        [
+          "/opt/homebrew/opt/llvm/bin/clang",
+          "--target=aarch64-linux-musl",
+          "-mno-outline-atomics",
+          "-fPIE",
+          "-O2",
+          "-g",
+          "-Wall",
+          "-Wextra",
+          "-Werror",
+          "-ffunction-sections",
+          "-Dmain=unused_mm_main",
+          "-nostdinc",
+          "-isystem",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/musl-build/install/include",
+          "-isystem",
+          "/opt/homebrew/Cellar/llvm/22.1.7_1/lib/clang/22/include",
+          "-c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/experiments/native-linux/userspace/signal-tests.c",
+          "-o",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sparse-tbi-art-integrated-sparse/signal-tests.o"
+        ],
+        [
+          "/opt/homebrew/opt/llvm/bin/clang",
+          "--target=aarch64-linux-musl",
+          "-mno-outline-atomics",
+          "-fPIE",
+          "-O2",
+          "-g",
+          "-Wall",
+          "-Wextra",
+          "-Werror",
+          "-ffunction-sections",
+          "-Dmain=unused_mm_main",
+          "-nostdinc",
+          "-isystem",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/musl-build/install/include",
+          "-isystem",
+          "/opt/homebrew/Cellar/llvm/22.1.7_1/lib/clang/22/include",
+          "-c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/experiments/native-linux/userspace/signal-registers.S",
+          "-o",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sparse-tbi-art-integrated-sparse/signal-registers.o"
+        ],
+        [
+          "/opt/homebrew/opt/llvm/bin/clang",
+          "--target=aarch64-linux-musl",
+          "-mno-outline-atomics",
+          "-fPIE",
+          "-O2",
+          "-g",
+          "-Wall",
+          "-Wextra",
+          "-Werror",
+          "-ffunction-sections",
+          "-Dmain=unused_mm_main",
+          "-nostdinc",
+          "-isystem",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/musl-build/install/include",
+          "-isystem",
+          "/opt/homebrew/Cellar/llvm/22.1.7_1/lib/clang/22/include",
+          "-c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/experiments/native-linux/userspace/code-tests.c",
+          "-o",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sparse-tbi-art-integrated-sparse/code-tests.o"
+        ],
+        [
+          "/opt/homebrew/opt/llvm/bin/clang",
+          "--target=aarch64-linux-musl",
+          "-mno-outline-atomics",
+          "-fPIE",
+          "-O2",
+          "-g",
+          "-Wall",
+          "-Wextra",
+          "-Werror",
+          "-ffunction-sections",
+          "-Dmain=unused_mm_main",
+          "-nostdinc",
+          "-isystem",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/musl-build/install/include",
+          "-isystem",
+          "/opt/homebrew/Cellar/llvm/22.1.7_1/lib/clang/22/include",
+          "-c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/experiments/native-linux/userspace/mm-bench.c",
+          "-o",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sparse-tbi-art-integrated-sparse/mm-bench.o"
+        ],
+        [
+          "/opt/homebrew/opt/llvm/bin/clang",
+          "--target=aarch64-linux-musl",
+          "-mno-outline-atomics",
+          "-fPIE",
+          "-O2",
+          "-g",
+          "-Wall",
+          "-Wextra",
+          "-Werror",
+          "-ffunction-sections",
+          "-Dmain=unused_mm_main",
+          "-nostdinc",
+          "-isystem",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/musl-build/install/include",
+          "-isystem",
+          "/opt/homebrew/Cellar/llvm/22.1.7_1/lib/clang/22/include",
+          "-c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/experiments/native-linux/userspace/mm-tests.c",
+          "-o",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sparse-tbi-art-integrated-sparse/mm-tests.o"
+        ],
+        [
+          "/opt/homebrew/opt/llvm/bin/clang",
+          "--target=aarch64-linux-musl",
+          "-mno-outline-atomics",
+          "-fPIE",
+          "-O2",
+          "-g",
+          "-Wall",
+          "-Wextra",
+          "-Werror",
+          "-ffunction-sections",
+          "-Dmain=unused_mm_main",
+          "-nostdinc",
+          "-isystem",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/musl-build/install/include",
+          "-isystem",
+          "/opt/homebrew/Cellar/llvm/22.1.7_1/lib/clang/22/include",
+          "-c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/experiments/native-linux/userspace/file-tests.c",
+          "-o",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sparse-tbi-art-integrated-sparse/file-tests.o"
+        ],
+        [
+          "/opt/homebrew/opt/llvm/bin/clang",
+          "--target=aarch64-linux-musl",
+          "-mno-outline-atomics",
+          "-fPIE",
+          "-O2",
+          "-g",
+          "-Wall",
+          "-Wextra",
+          "-Werror",
+          "-ffunction-sections",
+          "-Dmain=unused_mm_main",
+          "-nostdinc",
+          "-isystem",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/musl-build/install/include",
+          "-isystem",
+          "/opt/homebrew/Cellar/llvm/22.1.7_1/lib/clang/22/include",
+          "-c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/experiments/native-linux/translation/timer-tests.c",
+          "-o",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sparse-tbi-art-integrated-sparse/timer-tests.o"
+        ],
+        [
+          "/opt/homebrew/opt/llvm/bin/clang",
+          "--target=aarch64-linux-musl",
+          "-mno-outline-atomics",
+          "-fPIE",
+          "-O2",
+          "-g",
+          "-Wall",
+          "-Wextra",
+          "-Werror",
+          "-ffunction-sections",
+          "-Dmain=unused_mm_main",
+          "-nostdinc",
+          "-isystem",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/musl-build/install/include",
+          "-isystem",
+          "/opt/homebrew/Cellar/llvm/22.1.7_1/lib/clang/22/include",
+          "-c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/experiments/native-linux/translation/sparse-guest.c",
+          "-o",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sparse-tbi-art-integrated-sparse/sparse-guest.o"
+        ],
+        [
+          "/opt/homebrew/opt/llvm/bin/clang",
+          "--target=aarch64-linux-musl",
+          "-mno-outline-atomics",
+          "-fPIE",
+          "-O2",
+          "-g",
+          "-Wall",
+          "-Wextra",
+          "-Werror",
+          "-ffunction-sections",
+          "-Dmain=unused_mm_main",
+          "-nostdinc",
+          "-isystem",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/musl-build/install/include",
+          "-isystem",
+          "/opt/homebrew/Cellar/llvm/22.1.7_1/lib/clang/22/include",
+          "-c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/experiments/native-linux/translation/tbi-guest.c",
+          "-o",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sparse-tbi-art-integrated-sparse/tbi-guest.o"
+        ],
+        [
+          "/opt/homebrew/opt/llvm/bin/clang",
+          "--target=aarch64-linux-musl",
+          "-mno-outline-atomics",
+          "-fPIE",
+          "-O2",
+          "-g",
+          "-Wall",
+          "-Wextra",
+          "-Werror",
+          "-ffunction-sections",
+          "-Dmain=unused_mm_main",
+          "-nostdinc",
+          "-isystem",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/musl-build/install/include",
+          "-isystem",
+          "/opt/homebrew/Cellar/llvm/22.1.7_1/lib/clang/22/include",
+          "-c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/experiments/native-linux/translation/jit-guest.c",
+          "-o",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sparse-tbi-art-integrated-sparse/jit-guest.o"
+        ],
+        [
+          "/opt/homebrew/bin/ld.lld",
+          "-pie",
+          "--gc-sections",
+          "--no-dynamic-linker",
+          "-z",
+          "max-page-size=16384",
+          "-z",
+          "common-page-size=16384",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/musl-build/install/lib/rcrt1.o",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/musl-build/install/lib/crti.o",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sparse-tbi-art-integrated-sparse/guest.o",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sparse-tbi-art-integrated-sparse/signal-tests.o",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sparse-tbi-art-integrated-sparse/signal-registers.o",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sparse-tbi-art-integrated-sparse/code-tests.o",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sparse-tbi-art-integrated-sparse/mm-bench.o",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sparse-tbi-art-integrated-sparse/mm-tests.o",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sparse-tbi-art-integrated-sparse/file-tests.o",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sparse-tbi-art-integrated-sparse/timer-tests.o",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sparse-tbi-art-integrated-sparse/sparse-guest.o",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sparse-tbi-art-integrated-sparse/tbi-guest.o",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sparse-tbi-art-integrated-sparse/jit-guest.o",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/musl-build/install/lib/libc.a",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/compiler-rt-build/libbuiltins.a",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/musl-build/install/lib/crtn.o",
+          "-o",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sparse-tbi-art-integrated-sparse/guest.elf"
+        ],
+        [
+          "/opt/homebrew/share/android-ndk/toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android35-clang",
+          "-ffixed-x18",
+          "-mno-outline-atomics",
+          "-g",
+          "-O2",
+          "-Wall",
+          "-Wextra",
+          "-Werror",
+          "-Wl,-z,max-page-size=16384,-z,common-page-size=16384",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/experiments/native-linux/userspace/bionic-test.c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/experiments/native-linux/userspace/proc-exit-tests.c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/experiments/native-linux/userspace/file-tests.c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/experiments/native-linux/userspace/seccomp-tests.c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/experiments/native-linux/userspace/signal-tests.c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/experiments/native-linux/userspace/signal-registers.S",
+          "-o",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sparse-tbi-art-integrated-sparse/bionic-test.elf"
+        ]
+      ],
+      "host_unchanged_after_guest_build": true,
+      "report": {
+        "path": "work/native-linux-nce/sparse-tbi-art-integrated-sparse/summary.json",
+        "bytes": 107390,
+        "sha256": "80fd43b641e5a84ffd70ee281d76cca8837c2da9c47211de9a5f5dbc6a88b004"
+      },
+      "runs": [
+        {
+          "entry": "cli",
+          "returncode": 0,
+          "validated": true,
+          "results": [
+            {
+              "config": "translation_code_memory",
+              "kernel": "dual",
+              "direct": "dual"
+            },
+            {
+              "config": "translation_data_tbi",
+              "data": true,
+              "fetch": false,
+              "tagged_syscall_abi": false
+            },
+            {
+              "config": "translation_exec_cache",
+              "mode": "pages"
+            },
+            {
+              "config": "translation_tlb_invalidation",
+              "mode": "pages",
+              "range_limit_pages": 64
+            },
+            {
+              "config": "translation_preemption",
+              "mode": "timer",
+              "instructions": 50000,
+              "timer_interval_ns": 2000000
+            },
+            {
+              "config": "translation_parallel",
+              "cpus": 1,
+              "profile": false,
+              "uaccess_stop": "all"
+            },
+            {
+              "cpu": 0,
+              "config": "translation_execution",
+              "engine": "direct",
+              "direct_cache_bytes": 134217728,
+              "data_page_bytes": 16384,
+              "mapping_entries": 256,
+              "route_entries": 256,
+              "selective_writes": false,
+              "reuse_code_checks": false,
+              "memory": "flat",
+              "code_watch": true,
+              "cross_page": true,
+              "route_epochs": false,
+              "retain_routes": false,
+              "memory_groups": false,
+              "native_exclusive": true,
+              "vector_table": false,
+              "simd_math": false
+            },
+            {
+              "cpu": 0,
+              "config": "translation_cache_settings",
+              "cache_bytes": 134217728,
+              "actual_cache_bytes": 134201268,
+              "invalidation": "pages",
+              "linux_fastpath": false
+            },
+            {
+              "test": "translation_prepared_code_execution",
+              "passed": true
+            },
+            {
+              "config": "translation_guest_layout",
+              "mode": "sparse",
+              "guest_base": 65536,
+              "guest_end": 68719476736,
+              "guest_span_bytes": 68719411200,
+              "flat_coverage_bytes": 4294967296,
+              "physical_base": 481036337152,
+              "ram_base": 482177187840,
+              "ram_bytes": 1073741824,
+              "reservation_base": 481036337152,
+              "reservation_bytes": 1140850688
+            },
+            {
+              "config": "linux_scheduler_slice",
+              "requested_us": 0,
+              "applied_ns": 750000
+            },
+            {
+              "config": "translation_online_cpus",
+              "capacity": 1,
+              "requested": 1,
+              "online_mask": 1
+            },
+            {
+              "config": "translation_host_pointer_sources",
+              "low": 4371316736,
+              "high": 483250929664,
+              "stack": 6098664680,
+              "text": 4368143956
+            },
+            {
+              "test": "translated_sparse_host_pointer_sources",
+              "passed": true
+            },
+            {
+              "test": "translated_sparse_pte_cow_shared_uaccess",
+              "passed": true
+            },
+            {
+              "test": "translated_sparse_reservation_materialization",
+              "passed": true
+            },
+            {
+              "test": "translated_data_tbi_and_unicorn_alias_invalidation",
+              "passed": true
+            },
+            {
+              "test": "translated_tagged_syscall_abi_rejected",
+              "passed": true
+            },
+            {
+              "test": "translated_tagged_fetch_rejected",
+              "passed": true
+            },
+            {
+              "test": "translated_guest_layout_boundaries",
+              "passed": true,
+              "layout": "sparse"
+            },
+            {
+              "config": "linux_standard_jit",
+              "page_bytes": 16384
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "anon_rw_rx",
+              "passed": true,
+              "observed": 42
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "anon_rewrite",
+              "passed": true,
+              "observed": 91
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "rx_write",
+              "passed": true,
+              "signal": 11,
+              "si_code": 2,
+              "address": 738263040,
+              "expected_address": 738263040
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "remove_execute",
+              "passed": true,
+              "signal": 11,
+              "si_code": 2,
+              "address": 738263040,
+              "expected_address": 738263040
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "mremap_move",
+              "passed": true,
+              "observed": 91
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "mremap_old_unmapped",
+              "passed": true,
+              "signal": 11,
+              "si_code": 1,
+              "address": 738263040,
+              "expected_address": 738263040
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unmapped_execute",
+              "passed": true,
+              "signal": 11,
+              "si_code": 1,
+              "address": 738279424,
+              "expected_address": 738279424
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "anon_rx_map",
+              "passed": true,
+              "observed": 1
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "anon_rwx",
+              "passed": true,
+              "observed": 74
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "exec_only_vma",
+              "passed": true,
+              "observed": 58
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "ordinary_file_rx",
+              "passed": true,
+              "observed": 57
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "readonly_shared_write",
+              "passed": true,
+              "observed": 13
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "noexec_mmap",
+              "passed": true,
+              "observed": 1
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "noexec_mprotect",
+              "passed": true,
+              "observed": 13
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unpopulated_exec_alias",
+              "passed": true,
+              "observed": 59
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "private_cow_parent",
+              "passed": true,
+              "observed": 41
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "private_file_cow",
+              "passed": true,
+              "observed": 41
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "memfd_alias_updates",
+              "passed": true,
+              "observed": 16
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "memfd_pwrite",
+              "passed": true,
+              "observed": 97
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "memfd_shared_fork",
+              "passed": true,
+              "observed": 111
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "memfd_mremap_clone",
+              "passed": true,
+              "observed": 111
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unicorn_alias_update",
+              "passed": true,
+              "observed": 201
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unicorn_pwrite_update",
+              "passed": true,
+              "observed": 202
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unicorn_unseen_pwrite",
+              "passed": true,
+              "observed": 203
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "same_va_new_backing",
+              "passed": true,
+              "observed": 87
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "sealed_write",
+              "passed": true,
+              "observed": 1
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unicorn_self_page_flush",
+              "passed": true,
+              "observed": 67
+            },
+            {
+              "test": "linux_simd_fallback_continuation",
+              "passed": true
+            },
+            {
+              "test": "translated_timer_boundaries",
+              "passed": true,
+              "high_res_timers": false,
+              "resolution_ns": 10000000
+            },
+            {
+              "test": "linux_signal_mask_altstack_nested",
+              "passed": true
+            },
+            {
+              "test": "linux_signal_register_restore",
+              "passed": true
+            },
+            {
+              "test": "linux_signal_eintr_restart",
+              "passed": true
+            },
+            {
+              "test": "linux_signal_fault_recovery",
+              "passed": true
+            },
+            {
+              "test": "linux_signal_frame_validation_stop_exit",
+              "passed": true
+            },
+            {
+              "test": "linux_pthread_cancel_signal",
+              "passed": true
+            },
+            {
+              "test": "linux_signal_timer_preemption",
+              "passed": true
+            },
+            {
+              "test": "linux_signal_suite",
+              "passed": true,
+              "libc": "musl-translated"
+            },
+            {
+              "test": "linux_brk_growth_cow",
+              "passed": true
+            },
+            {
+              "test": "linux_fault_contiguous_data_boundaries",
+              "passed": true
+            },
+            {
+              "test": "linux_user_string_boundaries",
+              "passed": true,
+              "libc": "musl"
+            },
+            {
+              "test": "linux_exec_symlink",
+              "passed": true,
+              "libc": "musl"
+            },
+            {
+              "test": "linux_aarch64_file_open_flags",
+              "passed": true,
+              "libc": "musl"
+            },
+            {
+              "test": "linux_stack_growth_and_limit",
+              "passed": true
+            },
+            {
+              "test": "linux_android_elf_reservation_boundaries",
+              "passed": true
+            },
+            {
+              "test": "linux_sparse_reservation_cow",
+              "passed": true,
+              "reserved_bytes": 2147483648
+            },
+            {
+              "test": "linux_mmap_byte_offset",
+              "passed": true
+            },
+            {
+              "test": "linux_fault_register_state",
+              "passed": true,
+              "switches": 64
+            },
+            {
+              "test": "linux_user_memory_boundaries",
+              "passed": true,
+              "reuse_rounds": 64
+            },
+            {
+              "test": "linux_ram_capacity_cow",
+              "passed": true,
+              "bytes": 671088640
+            },
+            {
+              "test": "linux_mm_exchange_integrity",
+              "passed": true,
+              "cases": 28
+            },
+            {
+              "test": "translated_pthread_tls_mutex",
+              "passed": true
+            },
+            {
+              "test": "translated_signals_protection_restore",
+              "passed": true
+            },
+            {
+              "test": "translated_runtime_elf_exec",
+              "passed": true
+            },
+            {
+              "test": "linux_dynamic_link_dlopen_constructors",
+              "passed": true
+            },
+            {
+              "test": "linux_dynamic_tls_threads",
+              "passed": true
+            },
+            {
+              "test": "linux_dynamic_fork_signal",
+              "passed": true
+            },
+            {
+              "test": "translated_runtime_libraries",
+              "passed": true
+            },
+            {
+              "test": "translated_linux_process",
+              "path": "/probe-guest",
+              "passed": true,
+              "waited": 25,
+              "status": 0
+            },
+            {
+              "test": "translated_host_pointer_copy",
+              "passed": true
+            },
+            {
+              "test": "translated_context_cleanup",
+              "passed": true,
+              "allocated": 69,
+              "freed": 69,
+              "maps": 0,
+              "revocations": 0,
+              "tlb_fills": 70243,
+              "faults": 152405,
+              "syscalls": 17167,
+              "preemptions": 34
+            },
+            {
+              "cpu": 0,
+              "translation_data_tbi": true,
+              "unicorn_tagged_fills": 43,
+              "alias_flushes": 23
+            },
+            {
+              "result": "passed"
+            }
+          ]
+        },
+        {
+          "entry": "gcd",
+          "returncode": 0,
+          "validated": true,
+          "results": [
+            {
+              "test": "dispatch_signal_mask",
+              "sigusr2_blocked": 1
+            },
+            {
+              "config": "translation_code_memory",
+              "kernel": "dual",
+              "direct": "dual"
+            },
+            {
+              "config": "translation_data_tbi",
+              "data": true,
+              "fetch": false,
+              "tagged_syscall_abi": false
+            },
+            {
+              "config": "translation_exec_cache",
+              "mode": "pages"
+            },
+            {
+              "config": "translation_tlb_invalidation",
+              "mode": "pages",
+              "range_limit_pages": 64
+            },
+            {
+              "config": "translation_preemption",
+              "mode": "timer",
+              "instructions": 50000,
+              "timer_interval_ns": 2000000
+            },
+            {
+              "config": "translation_parallel",
+              "cpus": 1,
+              "profile": false,
+              "uaccess_stop": "all"
+            },
+            {
+              "cpu": 0,
+              "config": "translation_execution",
+              "engine": "direct",
+              "direct_cache_bytes": 134217728,
+              "data_page_bytes": 16384,
+              "mapping_entries": 256,
+              "route_entries": 256,
+              "selective_writes": false,
+              "reuse_code_checks": false,
+              "memory": "flat",
+              "code_watch": true,
+              "cross_page": true,
+              "route_epochs": false,
+              "retain_routes": false,
+              "memory_groups": false,
+              "native_exclusive": true,
+              "vector_table": false,
+              "simd_math": false
+            },
+            {
+              "cpu": 0,
+              "config": "translation_cache_settings",
+              "cache_bytes": 134217728,
+              "actual_cache_bytes": 134201268,
+              "invalidation": "pages",
+              "linux_fastpath": false
+            },
+            {
+              "test": "translation_prepared_code_execution",
+              "passed": true
+            },
+            {
+              "config": "translation_guest_layout",
+              "mode": "sparse",
+              "guest_base": 65536,
+              "guest_end": 68719476736,
+              "guest_span_bytes": 68719411200,
+              "flat_coverage_bytes": 4294967296,
+              "physical_base": 481036337152,
+              "ram_base": 482177187840,
+              "ram_bytes": 1073741824,
+              "reservation_base": 481036337152,
+              "reservation_bytes": 1140850688
+            },
+            {
+              "config": "linux_scheduler_slice",
+              "requested_us": 0,
+              "applied_ns": 750000
+            },
+            {
+              "config": "translation_online_cpus",
+              "capacity": 1,
+              "requested": 1,
+              "online_mask": 1
+            },
+            {
+              "config": "translation_host_pointer_sources",
+              "low": 4348411904,
+              "high": 483250929664,
+              "stack": 6122132536,
+              "text": 4345239124
+            },
+            {
+              "test": "translated_sparse_host_pointer_sources",
+              "passed": true
+            },
+            {
+              "test": "translated_sparse_pte_cow_shared_uaccess",
+              "passed": true
+            },
+            {
+              "test": "translated_sparse_reservation_materialization",
+              "passed": true
+            },
+            {
+              "test": "translated_data_tbi_and_unicorn_alias_invalidation",
+              "passed": true
+            },
+            {
+              "test": "translated_tagged_syscall_abi_rejected",
+              "passed": true
+            },
+            {
+              "test": "translated_tagged_fetch_rejected",
+              "passed": true
+            },
+            {
+              "test": "translated_guest_layout_boundaries",
+              "passed": true,
+              "layout": "sparse"
+            },
+            {
+              "config": "linux_standard_jit",
+              "page_bytes": 16384
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "anon_rw_rx",
+              "passed": true,
+              "observed": 42
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "anon_rewrite",
+              "passed": true,
+              "observed": 91
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "rx_write",
+              "passed": true,
+              "signal": 11,
+              "si_code": 2,
+              "address": 738263040,
+              "expected_address": 738263040
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "remove_execute",
+              "passed": true,
+              "signal": 11,
+              "si_code": 2,
+              "address": 738263040,
+              "expected_address": 738263040
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "mremap_move",
+              "passed": true,
+              "observed": 91
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "mremap_old_unmapped",
+              "passed": true,
+              "signal": 11,
+              "si_code": 1,
+              "address": 738263040,
+              "expected_address": 738263040
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unmapped_execute",
+              "passed": true,
+              "signal": 11,
+              "si_code": 1,
+              "address": 738279424,
+              "expected_address": 738279424
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "anon_rx_map",
+              "passed": true,
+              "observed": 1
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "anon_rwx",
+              "passed": true,
+              "observed": 74
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "exec_only_vma",
+              "passed": true,
+              "observed": 58
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "ordinary_file_rx",
+              "passed": true,
+              "observed": 57
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "readonly_shared_write",
+              "passed": true,
+              "observed": 13
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "noexec_mmap",
+              "passed": true,
+              "observed": 1
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "noexec_mprotect",
+              "passed": true,
+              "observed": 13
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unpopulated_exec_alias",
+              "passed": true,
+              "observed": 59
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "private_cow_parent",
+              "passed": true,
+              "observed": 41
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "private_file_cow",
+              "passed": true,
+              "observed": 41
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "memfd_alias_updates",
+              "passed": true,
+              "observed": 16
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "memfd_pwrite",
+              "passed": true,
+              "observed": 97
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "memfd_shared_fork",
+              "passed": true,
+              "observed": 111
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "memfd_mremap_clone",
+              "passed": true,
+              "observed": 111
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unicorn_alias_update",
+              "passed": true,
+              "observed": 201
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unicorn_pwrite_update",
+              "passed": true,
+              "observed": 202
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unicorn_unseen_pwrite",
+              "passed": true,
+              "observed": 203
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "same_va_new_backing",
+              "passed": true,
+              "observed": 87
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "sealed_write",
+              "passed": true,
+              "observed": 1
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unicorn_self_page_flush",
+              "passed": true,
+              "observed": 67
+            },
+            {
+              "test": "linux_simd_fallback_continuation",
+              "passed": true
+            },
+            {
+              "test": "translated_timer_boundaries",
+              "passed": true,
+              "high_res_timers": false,
+              "resolution_ns": 10000000
+            },
+            {
+              "test": "linux_signal_mask_altstack_nested",
+              "passed": true
+            },
+            {
+              "test": "linux_signal_register_restore",
+              "passed": true
+            },
+            {
+              "test": "linux_signal_eintr_restart",
+              "passed": true
+            },
+            {
+              "test": "linux_signal_fault_recovery",
+              "passed": true
+            },
+            {
+              "test": "linux_signal_frame_validation_stop_exit",
+              "passed": true
+            },
+            {
+              "test": "linux_pthread_cancel_signal",
+              "passed": true
+            },
+            {
+              "test": "linux_signal_timer_preemption",
+              "passed": true
+            },
+            {
+              "test": "linux_signal_suite",
+              "passed": true,
+              "libc": "musl-translated"
+            },
+            {
+              "test": "linux_brk_growth_cow",
+              "passed": true
+            },
+            {
+              "test": "linux_fault_contiguous_data_boundaries",
+              "passed": true
+            },
+            {
+              "test": "linux_user_string_boundaries",
+              "passed": true,
+              "libc": "musl"
+            },
+            {
+              "test": "linux_exec_symlink",
+              "passed": true,
+              "libc": "musl"
+            },
+            {
+              "test": "linux_aarch64_file_open_flags",
+              "passed": true,
+              "libc": "musl"
+            },
+            {
+              "test": "linux_stack_growth_and_limit",
+              "passed": true
+            },
+            {
+              "test": "linux_android_elf_reservation_boundaries",
+              "passed": true
+            },
+            {
+              "test": "linux_sparse_reservation_cow",
+              "passed": true,
+              "reserved_bytes": 2147483648
+            },
+            {
+              "test": "linux_mmap_byte_offset",
+              "passed": true
+            },
+            {
+              "test": "linux_fault_register_state",
+              "passed": true,
+              "switches": 64
+            },
+            {
+              "test": "linux_user_memory_boundaries",
+              "passed": true,
+              "reuse_rounds": 64
+            },
+            {
+              "test": "linux_ram_capacity_cow",
+              "passed": true,
+              "bytes": 671088640
+            },
+            {
+              "test": "linux_mm_exchange_integrity",
+              "passed": true,
+              "cases": 28
+            },
+            {
+              "test": "translated_pthread_tls_mutex",
+              "passed": true
+            },
+            {
+              "test": "translated_signals_protection_restore",
+              "passed": true
+            },
+            {
+              "test": "translated_runtime_elf_exec",
+              "passed": true
+            },
+            {
+              "test": "linux_dynamic_link_dlopen_constructors",
+              "passed": true
+            },
+            {
+              "test": "linux_dynamic_tls_threads",
+              "passed": true
+            },
+            {
+              "test": "linux_dynamic_fork_signal",
+              "passed": true
+            },
+            {
+              "test": "translated_runtime_libraries",
+              "passed": true
+            },
+            {
+              "test": "translated_linux_process",
+              "path": "/probe-guest",
+              "passed": true,
+              "waited": 25,
+              "status": 0
+            },
+            {
+              "test": "translated_host_pointer_copy",
+              "passed": true
+            },
+            {
+              "test": "translated_context_cleanup",
+              "passed": true,
+              "allocated": 69,
+              "freed": 69,
+              "maps": 0,
+              "revocations": 0,
+              "tlb_fills": 70243,
+              "faults": 152405,
+              "syscalls": 17167,
+              "preemptions": 27
+            },
+            {
+              "cpu": 0,
+              "translation_data_tbi": true,
+              "unicorn_tagged_fills": 43,
+              "alias_flushes": 23
+            },
+            {
+              "result": "passed"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "checks": {
+    "apk_result": "8 accepted stages and 62 rejected mutations",
+    "apk_log_reader": "passed",
+    "component_supervisor": "6 real subprocess checks passed",
+    "stock_art_parser": "255 rejected mutations; missing/changed maps checked",
+    "guest_layout": "198 negative cases passed",
+    "data_tbi": "4 actual runs, 74 negative cases passed",
+    "standard_jit": "2 actual runs, 682 invalid variants rejected"
+  }
+}

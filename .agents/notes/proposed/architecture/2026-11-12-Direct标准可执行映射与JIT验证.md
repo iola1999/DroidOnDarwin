@@ -4,7 +4,7 @@
 
 ## 问题
 
-完整 Android 与原始签名 APK 需要通过标准 Linux 接口加载、生成和更新 ARM64 代码。实施前 Direct 的 `--mapping pte` 内核沿用原生 NCE 的普通内存系统调用限制：匿名可执行映射、普通 memfd 的 RW→RX、专用窗口之外新增执行权限，以及移动可执行 VMA 均可能提前返回 `EACCES`。这些限制会阻止依赖标准 JIT 接口的 JNI 库。真实标准 JIT 程序已复现匿名 RW→RX 的 `EACCES`，本轮独立工作树已恢复 PTE 内核的普通映射语义；完整 Android 集成仍待主会话重建。
+完整 Android 与原始签名 APK 需要通过标准 Linux 接口加载、生成和更新 ARM64 代码。实施前 Direct 的 `--mapping pte` 内核沿用原生 NCE 的普通内存系统调用限制：匿名可执行映射、普通 memfd 的 RW→RX、专用窗口之外新增执行权限，以及移动可执行 VMA 均可能提前返回 `EACCES`。这些限制会阻止依赖标准 JIT 接口的 JNI 库。真实标准 JIT 程序已复现匿名 RW→RX 的 `EACCES`，本轮独立工作树已恢复 PTE 内核的普通映射语义；主工作区完整桌面集成结果见后文，原始 APK 在本次变更上的完整验收仍待完成。
 
 初次调查期间产品源码处于基线冻结阶段。静态调查以主工作区 `b5cace0df3db3caad6ec15fda7228f6a885639f7` 的相关源码为依据，并核对 `work/offline-low-guest` 中基于 `934deca289da8086a36adf17fd4d4c93385363da` 的未提交低地址候选。初次调查只读取源码；后续实施与本机功能结果记录如下。低地址方案见[Android 地址空间与执行架构重选](2026-11-12-Android地址空间与执行架构重选.md)。
 
@@ -154,9 +154,27 @@ python3 scripts/probe_lkl_translation.py --mapping pte --execution unicorn --gue
 
 独立 ARM64 ELF 与 core 使用同一 `jit-guest.c`。独立 ELF 完成编译与反汇编，实际运行来自 core 集成入口。iOS 只使用 iPhoneOS 27.1 SDK、`arm64-apple-ios26.0` 目标，分别编译 1/2 CPU 的 `linux-execution.c` 对象；未链接运行库，也没有设备执行。原生 NCE Android、完整 Direct Android、ART JIT 与原始 Java/JNI APK 尚未在本次普通 VM 变更上验收，由主会话合并后统一重建。
 
+### 主工作区集成检查
+
+2026-11-12 合并标准 VM/IC 修复与原始 Bionic 探针，解决 `probe_lkl_translation.py` 的工作负载分支冲突。core/PTE 运行标准 JIT fixture，bionic 使用独立 supervisor，Android 工作负载继续使用完整系统输入。主工作区 low、单 CPU、Direct/PTE/flat、dual、128 MiB、timer、pages、code-watch、跨页与原生独占配置的 CLI/GCD 均成功，各有 62 条成功检查，其中标准 JIT 27 条。报告为 `work/native-linux-nce/standard-jit-integrated-core/summary.json`，102210 字节，SHA-256 `ef7941d3b65622a6ba7c5164e7952f9ba1a07639c1f92a8018643d26330a378c`。本轮与原生构建并行，只验证功能；原始组件基线保持原构建含义。
+
+同时合入 Settings 首次打开采集，需要重新生成完整 Android 镜像。首轮原生命令误设置 `NCE_DESKTOP=1`，进入持续交互模式，另启用 nterp 并使用新数据盘；Android 未在 240 秒轮询窗口完成启动，framework helper 以 109 退出，数据盘只读卸载成功。首轮失败的 JSONL、控制台及产物摘要保存在 `work/native-linux-nce/native-standard-jit-profile-failed/`，GCD 未执行，该目录外已有 GCD 日志来自上轮。该结果没有确认源码回归原因。后续改用 `NCE_SYSTEM_SERVER_PROBE=1`、清除 `NCE_DESKTOP`、沿用原生基线的 nterp=0，在新的数据盘执行有限桌面回归；Direct 的 nterp=1 完整 Android/APK 检查随后进行。
+
+第二轮有限桌面检查也未在启动窗口内完成。实际输出为 `linux_mapping_policy.mode=lazy`，命令漏设 `NCE_MM_MODE=demand`，与此前成功原生基线不一致；首轮同样未指定该变量。第二轮 CLI 结果、控制台与产物摘要保存在 `work/native-linux-nce/native-standard-jit-profile-failed-v2/`，GCD 未执行。独立 2 秒宿主采样位于 `work/project-audit-2026-11-12/native-standard-jit-v2.sample.txt`，包含 `vm_remap`、`mmap`、`mprotect`；该采样不足以单独解释整个启动耗时。第三轮显式设置 `NCE_MM_MODE=demand`，保持有限回归、nterp=0 和新数据盘，重新核对实际映射配置后继续。没有延长原有启动时限。
+
+第三轮原生 NCE 完整 Android 回归已成功。实际配置为 `demand`、nterp=0，CLI/GCD 各完成 225 次成功检查，包含 Launcher、Clock、Files 的实际画面、时钟数据与 Keystore 重启恢复，以及数据盘只读卸载。报告原位置为 `work/native-linux-nce/processes/lkl-summary.json`，本阶段结束后连同 CLI/GCD 原始日志移动至 `work/native-linux-nce/native-standard-jit-profile-passed/`，1,227,936 字节，SHA-256 `83aaef41304c37d7f5711ba8d2c776e074e5cc2e6cbff4ba9cf9a8a63212cd4e`；系统镜像 SHA-256 `8dc537809d7f76798fec1b690ca78857dbe206c68a11d18be8f0cec924aadff3`，190 个源码输入均在报告中。iOS 核心交叉编译与现有用户态检查成功。此次完整执行与其他组件实验并行，只验证功能。Direct host 布局、nterp=1 的完整 Android/APK 回归继续运行，使用新的独立数据盘。
+
+Direct 完整 Android/APK 首轮在安装助手处失败，未运行 GCD。CLI 已通过 Launcher 画面，Java v1 的原始 APK 检查成功；日志确认 JNI v1 原库加载并返回 101，随后 Android 配置更新重建 Activity，同一打开请求输出 `launch_count=1` 与 `2`、相同 marker 的两条结果。`NceApkInstall.application()` 抛出 `Duplicate application JSON after launch`。本轮保留在 `work/native-linux-nce/standard-jit-profile-desktop-apk/`，该结果不能作为完整 APK 回归成功。安装助手的 Activity 生命周期假设由独立修复处理；本阶段继续用已正常卸载的原生回归数据盘检查 Direct 完整桌面，以生成 Settings 采集所需的 App。该桌面轮次未运行 APK 安装助手，APK 验收继续保留失败状态。
+
+Direct host、单 CPU、PTE/flat、dual 128 MiB、nterp=1、timer、pages、code-watch、跨页与原生独占的完整桌面 CLI/GCD 随后成功，各完成 58 条检查，创建与释放的上下文分别为 1003/1003 和 1004/1004，数据盘均正常卸载。该轮未运行 APK 安装助手。报告为 `work/native-linux-nce/standard-jit-profile-desktop/summary.json`，1,218,579 字节，SHA-256 `f24798750c261625dbe997266a3459684de935681ad0fd2c792923664ec3c68d`。
+
+根据这份完整桌面报告生成 macOS 构建 `0.25.0-Mac-20261112-042712-direct1-dual` 和 iOS 构建 `0.25.0-iOS-20261112-042848-direct1-dual`。IPA 为 `work/native-linux-nce/ios-direct-1/DroidOnDarwin-0.25.0.ipa`，476,096,176 字节，SHA-256 `7f51fef3d43997a7618b534359d10821e0e330c6f9342941e5ff1e21f2c7a53b`；该生成路径中的旧包已被本次构建替换，旧包需按原记录重新构建。iOS 未安装或执行。Mac Settings 首开采集在窗口可见性检查处失败，未取得有效帧或 trace，详见[交互记录](../testing/2026-10-11-交互卡顿测量与优化流程.md#本次集成与可见采集边界)。
+
+[主工作区集成归档](../../../../experiments/native-linux/results-standard-jit-integration-20261112.json)保留 core、原生 Android、Direct 桌面、APK 失败、两端包清单与可见性失败的配置和摘要。原始 APK 的 Activity 重建检查由独立修复继续处理。本阶段交付标准 VM 和指令缓存修复；完整原始 ART、HyperOS、实际交互性能及 iPhone 执行继续验证。
+
 ## 风险
 
-本机 core 已验证标准动态代码与本次缓存修复，完整 Android 应用域、ART JIT 和复杂并发写入仍需后续验证。单核和 SMP 的通知生命周期不同；本次两 CPU core 包含共享代码更新与 COW，但没有覆盖所有线程调度和并发发布顺序。
+本机 core 已验证标准动态代码与本次缓存修复，完整 Android 桌面已完成两入口功能检查，标准 JIT 在真实 APK 应用域中的执行及复杂并发写入仍需后续验证。单核和 SMP 的通知生命周期不同；本次两 CPU core 包含共享代码更新与 COW，但没有覆盖所有线程调度和并发发布顺序。
 
 普通文件映射不再强制注册地址，当前适配 linker 的 245 路径仍保持原地址来源。musl 动态装载、CFI、ART 及 sigreturn 必须随本阶段检查，故障按实际调用区分，不通过恢复普通 mmap 的全局 ELF 限制来跳过问题。
 

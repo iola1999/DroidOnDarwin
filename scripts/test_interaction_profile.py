@@ -204,6 +204,117 @@ class InteractionWindowTests(unittest.TestCase):
         self.assertEqual(report['frames'][1]['window_boundary'], 'crosses_end')
         self.assertFalse(report['exported_frame_window_complete'])
 
+    def make_first_open(self):
+        directory = self.make_run([(0, 1_200_000_000, 1_210_000_000)])
+        (directory / 'request.json').write_text(json.dumps({'actions': [
+            {'key': 'frames-start'}, {'key': 'settings'}, {'key': 'capture-end'}]}))
+        result_path = directory / 'result.json'
+        result = json.loads(result_path.read_text())
+        result['events'][-1]['action'] = 2
+        result_path.write_text(json.dumps(result))
+        output = directory / 'interaction'
+        frames = (output / 'frames.txt').read_text().replace('Window: Settings\n',
+            'Stats since: 1105000000ns\nTotal frames rendered: 1\nWindow: Settings\nStats since: 1110000000ns\nTotal frames rendered: 1\n')
+        (output / 'frames.txt').write_text(frames)
+        (output / 'launch-frames.txt').write_text(frames)
+        records = [{'phase': phase, 'mode': 'force_stopped_process', 'guest_ns': instant,
+                    'pid': 42 if phase in ('ready', 'end') else 0,
+                    'starttime_ticks': 111 if phase in ('ready', 'end') else 0,
+                    'snapshot_end_ns': 1_600_000_000 if phase == 'ready' else 0}
+                   for phase, instant in (('prepared', 900_000_000), ('begin', 1_100_000_000),
+                                          ('ready', 1_500_000_000), ('end', 3_200_000_000))]
+        self.write_launch(directory, records)
+        return directory, records
+
+    @staticmethod
+    def write_launch(directory, records):
+        (directory / 'interaction/launch.jsonl').write_text('\n'.join(json.dumps(row) for row in records) + '\n')
+
+    def test_new_window_after_force_stop_is_accepted(self):
+        directory, _ = self.make_first_open()
+        report = analyze(directory)
+        self.assertEqual(report['failures'], [])
+        self.assertTrue(report['exported_frame_window_complete'])
+        self.assertEqual(report['settings_launch']['begin_to_ready_ms'], 400)
+        self.assertEqual(report['settings_launch']['ready_snapshot_ms'], 100)
+        self.assertEqual(report['duration']['max_ms'], 10)
+
+    def test_late_window_still_fails_without_first_open(self):
+        directory, _ = self.make_first_open()
+        (directory / 'request.json').write_text(json.dumps({'actions': [
+            {'key': 'frames-start'}, {'kind': 'wait'}, {'key': 'capture-end'}]}))
+        (directory / 'interaction/launch.jsonl').unlink()
+        report = analyze(directory)
+        self.assertFalse(report['settings_launch']['requested'])
+        self.assertIn('window statistics restarted during capture: Settings', report['failures'])
+
+    def test_first_open_identity_and_timing_must_match(self):
+        cases = [(3, 'pid', 43), (3, 'starttime_ticks', 112), (1, 'guest_ns', 800_000_000),
+                 (1, 'guest_ns', 1_150_000_000), (2, 'snapshot_end_ns', 3_100_000_000),
+                 (0, 'mode', 'fresh_install'), (2, 'pid', True)]
+        for index, key, value in cases:
+            with self.subTest(index=index, key=key):
+                directory, records = self.make_first_open()
+                records[index][key] = value
+                self.write_launch(directory, records)
+                report = analyze(directory)
+                self.assertTrue(report['settings_launch']['failures'])
+                self.assertFalse(report['exported_frame_window_complete'])
+
+    def test_first_open_metadata_cannot_be_missing_or_repeated(self):
+        for variant in ('missing', 'repeated', 'prepared_open'):
+            with self.subTest(variant=variant):
+                directory, records = self.make_first_open()
+                if variant == 'missing':
+                    (directory / 'interaction/launch.jsonl').unlink()
+                elif variant == 'repeated':
+                    self.write_launch(directory, [*records[:2], records[1], *records[2:]])
+                else:
+                    request = json.loads((directory / 'request.json').read_text())
+                    request['actions'].append({'key': 'settings'})
+                    (directory / 'request.json').write_text(json.dumps(request))
+                self.assertTrue(analyze(directory)['settings_launch']['failures'])
+
+    def test_first_open_window_recreation_and_lost_frames_fail(self):
+        for old, new in [('1110000000ns', '1600000000ns'), ('Window: Settings', 'Window: Recreated'),
+                         ('Total frames rendered: 1\nWindow:', 'Total frames rendered: 2\nWindow:')]:
+            with self.subTest(new=new):
+                directory, _ = self.make_first_open()
+                path = directory / 'interaction/frames.txt'
+                path.write_text(path.read_text().replace(old, new))
+                report = analyze(directory)
+                self.assertTrue(report['failures'])
+                self.assertFalse(report['exported_frame_window_complete'])
+
+    def test_first_open_retains_long_frame_failure(self):
+        directory, _ = self.make_first_open()
+        path = directory / 'interaction/frames.txt'
+        path.write_text(path.read_text().replace('1210000000,', '3300000000,'))
+        report = analyze(directory)
+        self.assertEqual(report['duration']['max_ms'], 2100)
+        self.assertIn('frame crosses capture window boundary', report['failures'])
+
+    def test_failed_first_open_saves_analysis_with_partial_files(self):
+        directory, records = self.make_first_open()
+        self.write_launch(directory, [records[0], {'phase': 'failed'}])
+        for name in ('frames.txt', 'launch-frames.txt', 'clock-pairs.jsonl'):
+            (directory / 'interaction' / name).unlink()
+        (directory / 'interaction/kernel.ftrace').write_text('partial failed trace\n')
+        result_path = directory / 'result.json'
+        result = json.loads(result_path.read_text())
+        result.update(status='failed', events=[])
+        result_path.write_text(json.dumps(result))
+        output = directory / 'analysis.json'
+        command = [sys.executable, '-B', str(Path(__file__).with_name('analyze_interaction_profile.py')),
+                   str(directory), '--output', str(output), '--trace-processor', '/unused-on-failed-window']
+        completed = subprocess.run(command, text=True, capture_output=True, timeout=10)
+        self.assertEqual(completed.returncode, 1, completed.stderr)
+        report = json.loads(output.read_text())
+        self.assertIn('benchmark did not complete', report['failures'])
+        self.assertEqual(report['settings_launch']['records'][-1]['phase'], 'failed')
+        self.assertEqual(report['duration'], {'count': 0})
+        self.assertFalse(report['exported_frame_window_complete'])
+
 
 if __name__ == '__main__':
     unittest.main()

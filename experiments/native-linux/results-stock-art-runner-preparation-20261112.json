@@ -1,0 +1,312 @@
+{
+  "scope": "Runner compilation and host subprocess lifecycle checks only. No ART, JNI fixture, or LKL component execution.",
+  "base_commit": "981fba8bb544f6fcf2a3c05466d15aea52a3d032",
+  "prepared_commit": "0294294633701f84399454e94191660d35bc9207",
+  "worktree": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-art",
+  "host": {
+    "platform": "macOS-27.0-arm64-arm-64bit-Mach-O",
+    "machine": "arm64"
+  },
+  "configuration": {
+    "mapping": "pte",
+    "execution": "direct",
+    "direct_memory": "flat",
+    "guest_layout": "low",
+    "cpus": 1,
+    "code_memory": "dual",
+    "entry": [
+      "cli",
+      "gcd"
+    ],
+    "build_only": true
+  },
+  "art_runtime_executed": false,
+  "jni_behavior_validated": false,
+  "jit_execution_confirmed": false,
+  "source_sha256": {
+    "experiments/native-linux/translation/linux-runner.c": "4839503d0a970c3bb3ec43b4149cf2cc3cd2132648d683ab20b8ec2424e73f14",
+    "experiments/native-linux/translation/stock-bionic-supervisor.c": "bef1f72d28456502bbb8cd8f1a6b9abd7fb0b0a3b16a8afdcf61fde3e318ed86",
+    "experiments/native-linux/translation/component-supervisor.h": "781c95ff693aa49ba412ad800e5b835b059b0538f7285fa0129e024e6f065378",
+    "experiments/native-linux/translation/stock-art-runner.h": "ebed39c589b31a6856fbd71557e94c4ec5737f97fd4208f1eb3a70a02e9de88b",
+    "experiments/native-linux/stock-art/supervisor.c": "9ca06d7bebc4833e9f84a23469ef6dfafa05a047d171686ddc9f75f92d88ac73",
+    "scripts/probe_lkl_translation.py": "49b9f90cde09661bbef54a254c862721203553a74533119c8d54a17b8f55f801",
+    "scripts/stock_art.py": "5dd3326f0bfe0eb82d9fecfb7ac2cad148c9dc6bd2bb423f0b89ae7baeabd542",
+    "scripts/test_component_supervisor.py": "8a698ddf35477bff24085896404ab4bc6ce87311a3cab2c326fd9ab155867674",
+    "scripts/test_stock_art_report.py": "9ac04cb01aaab8e2155e2b8625008da764ca89fdcbe68753015d9bc818f96c84",
+    "tests/native-linux/component-supervisor.c": "3b82ec964b485bb891ca0b9601a783246a44784c76ffb1ace70f8e314699b759"
+  },
+  "prepared_manifest": {
+    "path": "work/stock-art-prepared-final/manifest.json",
+    "sha256": "0e0cb41c454185e50be2c5863c97cac3625adeb9ee520d8e81919470b8f69934"
+  },
+  "builds": [
+    {
+      "workload": "stock-art",
+      "exit_code": 0,
+      "reproduction_command": [
+        "python3",
+        "scripts/probe_lkl_translation.py",
+        "--build-only",
+        "--mapping",
+        "pte",
+        "--execution",
+        "direct",
+        "--direct-memory",
+        "flat",
+        "--guest-layout",
+        "low",
+        "--cpus",
+        "1",
+        "--code-memory",
+        "dual",
+        "--reuse-engine-build",
+        "--entry",
+        "both",
+        "--workload",
+        "stock-art",
+        "--stock-art-directory",
+        "work/stock-art-prepared-final",
+        "--output",
+        "work/native-linux-nce/stock-art-runner-final-v2"
+      ],
+      "log": "work/stock-art-runner-final-v2.log"
+    },
+    {
+      "workload": "bionic",
+      "exit_code": 0,
+      "reproduction_command": [
+        "python3",
+        "scripts/probe_lkl_translation.py",
+        "--build-only",
+        "--mapping",
+        "pte",
+        "--execution",
+        "direct",
+        "--direct-memory",
+        "flat",
+        "--guest-layout",
+        "low",
+        "--cpus",
+        "1",
+        "--code-memory",
+        "dual",
+        "--reuse-engine-build",
+        "--entry",
+        "both",
+        "--workload",
+        "bionic",
+        "--runtime-source",
+        "sdk36",
+        "--runtime-directory",
+        "../../work/native-linux-nce/android/android36/com.android.runtime",
+        "--runtime-manifest",
+        "../../work/native-linux-nce/android/android36-runtime.json",
+        "--output",
+        "work/native-linux-nce/stock-bionic-supervisor-build"
+      ],
+      "log": "work/stock-bionic-supervisor-build.log"
+    }
+  ],
+  "artifacts": {
+    "work/native-linux-nce/stock-art-runner-final-v2/cli": {
+      "sha256": "48f62c1c990138fdd9a9af5a9d351f4bf2491cd172386e9faeef497c012091fe",
+      "bytes": 2938464
+    },
+    "work/native-linux-nce/stock-art-runner-final-v2/gcd": {
+      "sha256": "ecead488556a6b5f98cc5da81f250dbfc942f2263225024e329ce193e17492e6",
+      "bytes": 2939008
+    },
+    "work/native-linux-nce/stock-art-runner-final-v2/guest.elf": {
+      "sha256": "9fb444097e95e7f95ad2a9035194f90d24a99c95a1ca0ad7526669baa4c7b89c",
+      "bytes": 75376
+    },
+    "work/native-linux-nce/stock-art-runner-final-v2/late.elf": {
+      "sha256": "f07fdf689840e45464dcd4d436c30e6dc3d67f06139abb7fd0492a378982c6a3",
+      "bytes": 45752
+    },
+    "work/native-linux-nce/stock-art-runner-final-v2/stock-art-files.tsv": {
+      "sha256": "2748c3aa05c4787576efb84369cc545f8694ad279fdcf32f712320251c5ebad4",
+      "bytes": 3595
+    },
+    "work/native-linux-nce/stock-art-runner-final-v2/stock-art-boot-classpath": {
+      "sha256": "11d830161f81803f69da1daea122af392721d47e12c9ba984a499521762b6d28",
+      "bytes": 317
+    },
+    "work/native-linux-nce/stock-bionic-supervisor-build/cli": {
+      "sha256": "7b7637b55767bd9ccf0137fe6c7ec3921b22d3028775ce3d8eb8a674a656f044",
+      "bytes": 2938496
+    },
+    "work/native-linux-nce/stock-bionic-supervisor-build/gcd": {
+      "sha256": "b744bc2bc59d0e7bfddad151aa930cfa6fc638ad0bc48b8bc39f2036c3ae8bea",
+      "bytes": 2939040
+    },
+    "work/native-linux-nce/stock-bionic-supervisor-build/guest.elf": {
+      "sha256": "c29508108d5cd048965d4ba4a45c7dc4992a865018eab8a5c30148eea16b106c",
+      "bytes": 64200
+    },
+    "work/native-linux-nce/stock-bionic-supervisor-build/late.elf": {
+      "sha256": "8e655c2d327c0ba793fe3cdeaf3489d0bd9bf7b24a71451ae1ac22edfb1fd6a5",
+      "bytes": 37824
+    },
+    "work/native-linux-nce/stock-bionic-supervisor-build/bionic-test.elf": {
+      "sha256": "0fc1e97d036f37c07407b61179e7d90f022241dc3106a2c2db7d4e34a2a2888f",
+      "bytes": 17440
+    },
+    "work/native-linux-nce/stock-bionic-supervisor-build/stock-runtime/source-manifest.json": {
+      "sha256": "4b1a45b0ee51725c68f1c29765958d0b60b45a5f2325bedfc61764cd49232249",
+      "bytes": 309723
+    },
+    "work/native-linux-nce/lkl-translation-kernel/lkl.so": {
+      "sha256": "9b8f5cc9641fb3042fcd64b2e1f5ae47d0d4d90e3e4a67ab60e54e6d56557e5b",
+      "bytes": 11728192
+    },
+    "work/native-linux-nce/lkl-translation-kernel/lkl-image.bin": {
+      "sha256": "8453aa1ac7b9feece610828186b4c6ab653c86cf071aee8c67753103e1356a55",
+      "bytes": 10141696
+    },
+    "work/native-linux-nce/lkl-translation-kernel/lkl-image.h": {
+      "sha256": "73d0fd249f9966acd33cdb7be6404e9dcc11ee24b35f6774dee4bdb434c51c9b",
+      "bytes": 754475
+    },
+    "work/native-linux-nce/lkl-translation-kernel/lkl-host-ops.h": {
+      "sha256": "54bf2a775fa582ca2bc04fb6a25dc85525b6c69da1cde54f610c4a35e0c1a833",
+      "bytes": 9217
+    },
+    "work/native-linux-nce/lkl-translation-kernel/build.json": {
+      "sha256": "736baab74e5202ae766742dca357a22ccc0bad6660bc8e93745e204094c3344f",
+      "bytes": 7669
+    }
+  },
+  "host_subprocess_checks": {
+    "command": [
+      "python3",
+      "scripts/test_component_supervisor.py"
+    ],
+    "result_path": "work/component-supervisor-test/results.json",
+    "result_sha256": "de0d8c2a56160efd4ed67b4f3b96f2019767abcb678afc8ebc052ea8582f0e8b",
+    "results": {
+      "compile": [
+        "cc",
+        "-std=gnu11",
+        "-Wall",
+        "-Wextra",
+        "-Werror",
+        "-O2",
+        "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-art/tests/native-linux/component-supervisor.c",
+        "-o",
+        "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-art/work/component-supervisor-test/supervisor-test"
+      ],
+      "checks": [
+        {
+          "case": "output",
+          "passed": true,
+          "result": {
+            "exit_code": 0,
+            "signal": 0,
+            "exec_errno": 0,
+            "usage": 1,
+            "timed_out": 0
+          }
+        },
+        {
+          "case": "failure",
+          "passed": true,
+          "result": {
+            "exit_code": 7,
+            "signal": 0,
+            "exec_errno": 0,
+            "usage": 0,
+            "timed_out": 0
+          }
+        },
+        {
+          "case": "signal",
+          "passed": true,
+          "result": {
+            "exit_code": -1,
+            "signal": 15,
+            "exec_errno": 0,
+            "usage": 0,
+            "timed_out": 0
+          }
+        },
+        {
+          "case": "exec_failure",
+          "passed": true,
+          "result": {
+            "exit_code": 127,
+            "signal": 0,
+            "exec_errno": 2,
+            "usage": 0,
+            "timed_out": 0
+          }
+        },
+        {
+          "case": "timeout_open_pipe",
+          "passed": true,
+          "result": {
+            "exit_code": -1,
+            "signal": 9,
+            "exec_errno": 0,
+            "usage": 0,
+            "timed_out": 1
+          }
+        },
+        {
+          "case": "timeout_after_eof",
+          "passed": true,
+          "result": {
+            "exit_code": -1,
+            "signal": 9,
+            "exec_errno": 0,
+            "usage": 0,
+            "timed_out": 1
+          }
+        }
+      ]
+    },
+    "lifecycle_scope": "Kill and reap direct child only. Both current fixtures create threads and do not create child processes."
+  },
+  "parser_checks": {
+    "command": [
+      "python3",
+      "scripts/test_stock_art_report.py"
+    ],
+    "passed": true,
+    "rejected_records": 255,
+    "missing_and_changed_maps_checked": true,
+    "scope": "Constructed log contract only; no ART execution."
+  },
+  "bionic_contract_checks": {
+    "command": [
+      "python3",
+      "scripts/test_stock_bionic.py"
+    ],
+    "passed": true,
+    "checks": 7
+  },
+  "input_checks": {
+    "command": [
+      "python3",
+      "scripts/test_stock_art_inputs.py",
+      "work/stock-art-prepared-final"
+    ],
+    "passed": true,
+    "negative_cases": 7
+  },
+  "limits": [
+    "Prepared low guest binaries are compile-only; original Bionic needs sparse virtual address capacity and tagged pointer support before ART runtime checks.",
+    "Map export requires the host runner to reach stock_art_export; host crash or outer host timeout can prevent export. Raw stdout and stderr remain in the run directory.",
+    "JIT warmup return values do not establish compiled method execution.",
+    "Dex2oat or Java Process paths require descendant process lifecycle handling before enabling them."
+  ],
+  "preparation_failures": [
+    {
+      "command_argument": "--runtime-directory ../../work/native-linux-nce/android/android36",
+      "reason": "Bionic component expects the com.android.runtime root; bin/linker64 was absent in the provided parent directory.",
+      "exit_code": 1,
+      "log": "work/stock-bionic-supervisor-wrong-directory.log",
+      "resolution": "Passed android36/com.android.runtime and repeated the Bionic build successfully."
+    }
+  ]
+}
