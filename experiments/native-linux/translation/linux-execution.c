@@ -52,7 +52,7 @@ typedef struct {
 } Process;
 static unsigned char *ram;
 static unsigned long guest_base, guest_end, physical_base, reservation_base, reservation_size, *pages;
-static bool component_vm_trace;
+static bool component_vm_trace, data_tbi;
 static bool low_guest_layout, sparse_guest_layout;
 static unsigned long map_generation, code_generation, maps, revocations;
 static unsigned long allocated, freed;
@@ -100,6 +100,8 @@ typedef struct {
     bool timer_active;
     uint64_t run_started_cpu_ns, run_cpu_ns;
     unsigned long fills, faults, calls, preemptions;
+    unsigned long tagged_data_fills, tagged_tlb_flushes;
+    bool tagged_tlb_active;
     unsigned long cache_flushes, cache_pages, tlb_flushes, tlb_pages, tlb_inactive_skips;
     unsigned long icache_operations, icache_invalidations;
     unsigned long seen_maps, seen_code, seen_kernel_code;
@@ -461,16 +463,25 @@ static bool fill(uc_engine *uc, uint64_t address, uc_mem_type access, uc_tlb_ent
     ++execution->fills;
     unsigned permission = access == UC_MEM_WRITE ? UC_PROT_WRITE : access == UC_MEM_FETCH ? UC_PROT_EXEC
                                                                                           : UC_PROT_READ;
+    uint64_t original_address = address;
+    if (data_tbi && access != UC_MEM_FETCH)
+        address &= UINT64_C(0x00ffffffffffffff);
     if (address >= guest_base && address < guest_end) {
         unsigned long value = translate_user ? translate_user(address, permission) : pages[(address - guest_base) / PAGE];
         if (value & permission) {
+            if (address != original_address) {
+                ++execution->tagged_data_fills;
+                execution->tagged_tlb_active = true;
+            }
             REQUIRE((value & ~(PAGE - 1)) < NCE_RAM_SIZE);
             entry->paddr = value & ~(PAGE - 1);
             entry->perms = value & UC_PROT_ALL;
+            if (address != original_address)
+                entry->perms &= ~UC_PROT_EXEC;
             return true;
         }
     }
-    fault_event(address, access);
+    fault_event(original_address, access);
     return false;
 }
 
@@ -567,6 +578,8 @@ static void *direct_map_page(void *opaque, uint64_t address, bool write)
 {
     (void)opaque;
     ++execution->fills;
+    if (data_tbi)
+        address &= UINT64_C(0x00ffffffffffffff);
     unsigned permission = write ? LKL_PROT_WRITE : LKL_PROT_READ;
     unsigned long value = translate_user(address, permission);
     if (!(value & permission))
@@ -607,6 +620,8 @@ static bool direct_execute(Process *p, unsigned long generation)
     state.exclusive_address = UINT64_MAX;
     state.access_flags = NCE_DIRECT_UNALIGNED | NCE_DIRECT_PAC_HINT_NOP | NCE_DIRECT_CRC |
                          NCE_DIRECT_LSE | NCE_DIRECT_AES | NCE_DIRECT_SHA1 | NCE_DIRECT_SHA256 | NCE_DIRECT_DC_ZVA64;
+    if (data_tbi)
+        state.access_flags |= NCE_DIRECT_DATA_TBI;
     NceDirectPageTable table = {(const uint64_t *)execution->view->pgd, guest_base, sparse_guest_layout ? guest_end - guest_base : NCE_USER_SIZE,
                                 physical_base, ram, NCE_RAM_SIZE};
     NceReadView *view = direct_read_views ? execution->view->read_view : NULL;
@@ -739,12 +754,15 @@ static void prepare_unicorn(unsigned long current_maps)
         unsigned long length = translation ? execution->view->tlb_end - execution->view->tlb_start : 0;
         if (page_tlb_invalidation && !length) {
             ++execution->tlb_inactive_skips;
-        } else if (page_tlb_invalidation && length <= 64 * PAGE) {
+        } else if (page_tlb_invalidation && !execution->tagged_tlb_active && length <= 64 * PAGE) {
             checked(nce_uc_invalidate_tlb(execution->engine, execution->view->tlb_start, length));
             execution->tlb_pages += length / PAGE;
         } else {
+            /* Tagged TLB keys fall outside the untagged invalidation interval. */
             checked(uc_ctl_flush_tlb(execution->engine));
             ++execution->tlb_flushes;
+            execution->tagged_tlb_flushes += execution->tagged_tlb_active;
+            execution->tagged_tlb_active = false;
         }
         if (translation)
             execution->view->tlb_start = execution->view->tlb_end = 0;
@@ -767,6 +785,8 @@ static void user_run(void *opaque)
         strcpy((char *)storage + 192, "NCE_TEST=translation");
         storage[0] = address + 128;
         storage[2] = address + 192;
+        strcpy((char *)storage + 224, data_tbi ? "NCE_DATA_TBI=1" : "NCE_DATA_TBI=0");
+        storage[3] = address + 224;
         REQUIRE(copy_user(storage, address, sizeof(storage), 1) == 0);
         long args[6] = {address + 128, address, address + 16};
         long result = run_syscall(221, args);
@@ -844,7 +864,8 @@ static void user_run(void *opaque)
             user_return(number, result, args[0]);
         } else if (kind == 2) {
             ++execution->faults;
-            int result = page_fault(address, access);
+            unsigned long translated_address = data_tbi && access != NCE_FAULT_EXEC ? address & UINT64_C(0x00ffffffffffffff) : address;
+            int result = page_fault(translated_address, access);
             if (result) {
                 fprintf(stderr, "guest fault pc=%lx address=%lx access=%d result=%d\n", p->regs.pc, address, access, result);
                 user_fault(address, 0);
@@ -872,7 +893,12 @@ unsigned long translation_linux_setup(void *kernel, unsigned long copy_user_offs
                                       unsigned long translate_offset, struct nce_translation_state *state)
 {
     REQUIRE((translate_offset != 0) == (state != NULL));
+    const char *tbi_option = getenv("NCE_TRANSLATION_DATA_TBI");
+    REQUIRE(!tbi_option || !strcmp(tbi_option, "0") || !strcmp(tbi_option, "1"));
+    data_tbi = tbi_option && !strcmp(tbi_option, "1");
+    REQUIRE(!data_tbi || execution_count == 1);
     translation = state;
+    printf("{\"config\":\"translation_data_tbi\",\"data\":%s,\"fetch\":false,\"tagged_syscall_abi\":false}\n", data_tbi ? "true" : "false");
     const char *workload = getenv("NCE_TRANSLATION_WORKLOAD");
     component_vm_trace = workload && !strcmp(workload, "bionic");
     const char *layout = getenv("NCE_TRANSLATION_GUEST_LAYOUT");
@@ -1015,6 +1041,7 @@ unsigned long translation_linux_setup(void *kernel, unsigned long copy_user_offs
         direct_pte_memory = direct_memory && strcmp(direct_memory, "cached");
         direct_pte_refill = direct_memory && !strcmp(direct_memory, "refill");
         direct_read_views = direct_memory && !strcmp(direct_memory, "view");
+        REQUIRE(!data_tbi || !direct_read_views);
         direct_flat = direct_read_views || (direct_memory && !strcmp(direct_memory, "flat"));
         translation->flat_enabled = direct_flat;
         if (direct_read_views && cpu_index == 0) {
@@ -1163,6 +1190,8 @@ void translation_linux_cleanup(void)
         printf("{\"cpu\":%u,\"translation_tlb\":\"%s\",\"full_flushes\":%lu,\"invalidated_pages\":%lu,\"inactive_skips\":%lu,\"mm_switches\":%lu,\"inactive_mapping_changes\":%lu}\n", execution->index,
                page_tlb_invalidation ? "pages" : "full", execution->tlb_flushes, execution->tlb_pages, execution->tlb_inactive_skips,
                translation ? execution->view->mm_switches : 0, translation ? execution->view->inactive_mapping_changes : 0);
+        printf("{\"cpu\":%u,\"translation_data_tbi\":true,\"unicorn_tagged_fills\":%lu,\"alias_flushes\":%lu}\n",
+               execution->index, execution->tagged_data_fills, execution->tagged_tlb_flushes);
         uint64_t stats[5];
         nce_uc_cache_stats_aarch64(execution->engine, stats);
         printf("{\"cpu\":%u,\"translation_engine_cache\":true,\"total_flushes\":%llu,\"invalidated_blocks\":%llu,\"current_blocks\":%llu,\"used_bytes\":%llu,\"capacity_bytes\":%llu}\n", execution->index,

@@ -104,7 +104,18 @@ def validate_standard_jit(rows):
     return True
 
 
-def validate(rows, memory_interval, mapping="window", workload="core", tlb_invalidation=None, execution=None, direct_config=None, cpus=1, parallel_profile=None, uaccess_stop=None, code_lookup_limit=None, code_memory=None, online_cpus=None, guest_layout=None):
+def validate(rows, memory_interval, mapping="window", workload="core", tlb_invalidation=None, execution=None, direct_config=None, cpus=1, parallel_profile=None, uaccess_stop=None, code_lookup_limit=None, code_memory=None, online_cpus=None, guest_layout=None, data_tbi=None):
+    if data_tbi is not None:
+        tbi_config = [row for row in rows if row.get('config') == 'translation_data_tbi']
+        if (tbi_config != [{'config': 'translation_data_tbi', 'data': data_tbi, 'fetch': False, 'tagged_syscall_abi': False}] or
+                any(type(row[key]) is not bool for row in tbi_config for key in ('data', 'fetch', 'tagged_syscall_abi')) or
+                (data_tbi and (cpus != 1 or (direct_config and direct_config['memory'] == 'view')))):
+            return False
+        tbi_stats = [row for row in rows if row.get('translation_data_tbi')]
+        if (len(tbi_stats) != cpus or {row.get('cpu') for row in tbi_stats} != set(range(cpus)) or
+                any(type(row.get(key)) is not int or row[key] < 0 or (not data_tbi and row[key] != 0)
+                    for row in tbi_stats for key in ('unicorn_tagged_fills', 'alias_flushes'))):
+            return False
     if guest_layout is not None:
         flat = execution == 'direct' and direct_config is not None and direct_config['memory'] in ('flat', 'view')
         if not validate_guest_layout(rows, guest_layout, flat):
@@ -112,6 +123,16 @@ def validate(rows, memory_interval, mapping="window", workload="core", tlb_inval
         if guest_layout in ('low', 'sparse') and (mapping != 'pte' or execution != 'direct' or cpus != 1 or direct_config['memory'] != 'flat'):
             return False
         if workload == 'core' and mapping == 'pte':
+            if data_tbi:
+                for name in ('translated_data_tbi_and_unicorn_alias_invalidation', 'translated_tagged_syscall_abi_rejected', 'translated_tagged_fetch_rejected'):
+                    if [row for row in rows if row.get('test') == name] != [{'test': name, 'passed': True}]:
+                        return False
+                tbi = [row for row in rows if row.get('translation_data_tbi')]
+                if (len(tbi) != cpus or any(type(row.get(key)) is not int or row[key] <= 0
+                                           for row in tbi for key in ('unicorn_tagged_fills', 'alias_flushes'))):
+                    return False
+                if execution == 'direct' and not {0xf8400949, 0xf8000949} <= {row.get('direct_fallback') for row in rows if row.get('count', 0) > 0}:
+                    return False
             if guest_layout == 'sparse':
                 if not {'translated_sparse_host_pointer_sources', 'translated_sparse_pte_cow_shared_uaccess',
                         'translated_sparse_reservation_materialization'} <= {row.get('test') for row in rows if row.get('passed')}:
@@ -413,6 +434,7 @@ def main():
     parser.add_argument('--build-only', action='store_true')
     parser.add_argument('--reuse-engine-build', action='store_true', help='校验摘要后复用已构建的 Unicorn，用于执行器成组对照')
     parser.add_argument('--mapping', choices=('window', 'pte'), default='window')
+    parser.add_argument('--data-tbi', type=int, choices=(0, 1), default=0)
     parser.add_argument('--guest-layout', choices=('host', 'low', 'sparse'), default='host')
     parser.add_argument('--data-seed', type=Path, help='服务和桌面检查使用的初始 ext4 数据盘')
     parser.add_argument('--persistent-data', action='store_true', help='各入口与重复轮次连续使用同一数据盘，检查重启持久化')
@@ -439,6 +461,10 @@ def main():
     args = parser.parse_args()
     if args.guest_layout in ('low', 'sparse') and (args.mapping != 'pte' or args.execution != 'direct' or args.direct_memory != 'flat' or args.cpus != 1):
         parser.error('低客体地址实验需要单 CPU 的 pte/direct/flat')
+    if args.data_tbi and args.execution == 'direct' and args.direct_memory == 'view':
+        parser.error('用户数据 TBI 暂不支持 read-view')
+    if args.data_tbi and args.cpus != 1:
+        parser.error('用户数据 TBI 当前仅验证单 CPU')
     if args.high_res_timers and args.mapping != 'pte':
         parser.error('高分辨率定时器变体需要 --mapping pte')
     args.online_cpus = args.cpus if args.online_cpus is None else args.online_cpus
@@ -629,6 +655,7 @@ def main():
                      ('signal-tests.c', 'signal-registers.S', 'code-tests.c', 'mm-bench.c', 'mm-tests.c', 'file-tests.c')]
     guest_sources.append(EXP / 'translation/timer-tests.c')
     guest_sources.append(EXP / 'translation/sparse-guest.c')
+    guest_sources.append(EXP / 'translation/tbi-guest.c')
     if stock_runtime or stock_art:
         guest_sources = []
     elif args.mapping == 'pte':
@@ -740,6 +767,7 @@ def main():
         environment['NCE_STOCK_ART_DIRECTORY'] = stock_art['directory']
     environment['NCE_TRANSLATION_FILES'] = str(out)
     environment['NCE_TRANSLATION_GUEST_LAYOUT'] = args.guest_layout
+    environment['NCE_TRANSLATION_DATA_TBI'] = str(args.data_tbi)
     environment['NCE_TRANSLATION_ONLINE_CPUS'] = str(args.online_cpus)
     environment.update(NCE_ART_NTERP=str(args.art_nterp), NCE_ART_EXPANDED_JIT=str(args.art_expanded_jit),
                        NCE_ART_FAST_BASELINE=str(args.art_fast_baseline), NCE_ART_AOT='0', NCE_ART_BOOT_IMAGE='0', NCE_SCHED_SLICE_US='0')
@@ -809,7 +837,7 @@ def main():
                     if not stock_art:
                         raise
                     parse_errors.append({'line': line_number, 'error': str(error)})
-            passed = not parse_errors and returncode == 0 and validate(rows, args.memory_interval_ms, args.mapping, args.workload, args.tlb_invalidation, args.execution, direct_config, args.cpus, bool(args.parallel_profile), args.smp_uaccess_stop, code_memory=args.code_memory, online_cpus=args.online_cpus, guest_layout=args.guest_layout)
+            passed = not parse_errors and returncode == 0 and validate(rows, args.memory_interval_ms, args.mapping, args.workload, args.tlb_invalidation, args.execution, direct_config, args.cpus, bool(args.parallel_profile), args.smp_uaccess_stop, code_memory=args.code_memory, online_cpus=args.online_cpus, guest_layout=args.guest_layout, data_tbi=bool(args.data_tbi))
             apk_validated = None
             if apk_fixture:
                 previous = [row for result in results for row in result['results']]
@@ -850,7 +878,7 @@ def main():
               'platform': platform.platform(), 'cpu': subprocess.check_output(['sysctl', '-n', 'machdep.cpu.brand_string'], text=True).strip(),
               'system_build': subprocess.check_output(['sw_vers', '-buildVersion'], text=True).strip(),
               'dependency': dependency, 'commands': commands, 'host_unchanged_after_guest_build': True,
-              'configuration': {'guest_layout': args.guest_layout, 'code_memory': args.code_memory, 'execution': args.execution, 'direct': direct_config, 'mapping': args.mapping, 'sparse_scan': True, 'fault_prefetch': False, 'guest_page_bytes': 16384,
+              'configuration': {'data_tbi': bool(args.data_tbi), 'guest_layout': args.guest_layout, 'code_memory': args.code_memory, 'execution': args.execution, 'direct': direct_config, 'mapping': args.mapping, 'sparse_scan': True, 'fault_prefetch': False, 'guest_page_bytes': 16384,
                                 'workload': args.workload, 'entries': entries, 'art_nterp': args.art_nterp,
                                 'cpus': args.cpus, 'high_res_timers': args.high_res_timers, 'online_cpus': args.online_cpus, 'uaccess_stop': args.smp_uaccess_stop, 'parallel_profile': bool(args.parallel_profile), 'art_expanded_jit': args.art_expanded_jit, 'art_fast_baseline': args.art_fast_baseline,
                                 'cache_invalidation': args.cache_invalidation,

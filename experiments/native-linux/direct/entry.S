@@ -189,8 +189,13 @@ Lpte_walk:
     str x30, [x27, #DIRECT_PTE_SAVED_LINK]
     mrs x17, nzcv
     str x17, [x27, #DIRECT_PTE_SAVED_NZCV]
+    mov x26, x16
+    ldr w17, [x27, #DIRECT_ACCESS_FLAGS]
+    tbz w17, #13, Lpte_user_address
+    and x26, x26, #0x00ffffffffffffff
+Lpte_user_address:
     ldr x17, [x27, #DIRECT_PTE_USER_BASE]
-    sub x26, x16, x17
+    sub x26, x26, x17
     ldr x17, [x27, #DIRECT_PTE_USER_SIZE]
     cmp x26, x17
     b.hs Lpte_miss

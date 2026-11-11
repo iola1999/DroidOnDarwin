@@ -144,6 +144,11 @@ static void layout_tests(void)
     }
     CHECK(!close(fd));
     CHECK(!sigaction(SIGSEGV, &previous, NULL));
+    extern void translation_tbi_tests(int);
+    const char *tbi = getenv("NCE_DATA_TBI");
+    CHECK(tbi && (!strcmp(tbi, "0") || !strcmp(tbi, "1")));
+    if (!strcmp(tbi, "1"))
+        translation_tbi_tests(sparse);
     printf("{\"test\":\"translated_guest_layout_boundaries\",\"passed\":true,\"layout\":\"%s\"}\n", layout);
 }
 

@@ -197,7 +197,11 @@ Compilation Page::compile(uint64_t new_page, const void *bytes, size_t entry,
             Label flat, done;
             // Keep NZCV intact and validate upper address bits before indexing.
             c.LDR(X26, X27, DIRECT_PTE_USER_BASE);
-            c.SUB(X17, X16, X26);
+            if (flags & CompileDataTbi) {
+                c.AND(X17, X16, UINT64_C(0x00ffffffffffffff));
+                c.SUB(X17, X17, X26);
+            } else
+                c.SUB(X17, X16, X26);
             c.LSR(X26, X17, DIRECT_FLAT_USER_BITS);
             c.CBZ(X26, flat);
             c.LDR(X26, X27, write ? DIRECT_PTE_WRITE_STUB : DIRECT_PTE_READ_STUB);
@@ -484,7 +488,10 @@ Compilation Page::compile(uint64_t new_page, const void *bytes, size_t entry,
                 if (write) {
                     if (w & 0x8000)
                         c.dw(0xd5033bbf);  // release also orders a failed STLXR
-                    c.MOV(X26, X16);
+                    if (flags & CompileDataTbi)
+                        c.AND(X26, X16, UINT64_C(0x00ffffffffffffff));
+                    else
+                        c.MOV(X26, X16);
                     c.LDR(X17, X27, DIRECT_EXCLUSIVE_ADDR);
                     c.EOR(X17, X17, X26);
                     c.CBNZ(X17, failed);
@@ -526,7 +533,10 @@ Compilation Page::compile(uint64_t new_page, const void *bytes, size_t entry,
                     else
                         c.dw((size << 30) | 0x08dffc00 | (17 << 5) | 26);  // ldar
                     c.STR(X26, X27, DIRECT_EXCLUSIVE_VALUE);
-                    c.MOV(X17, X16);
+                    if (flags & CompileDataTbi)
+                        c.AND(X17, X16, UINT64_C(0x00ffffffffffffff));
+                    else
+                        c.MOV(X17, X16);
                     c.STR(X17, X27, DIRECT_EXCLUSIVE_ADDR);
                     save(rd, X26);
                 }
