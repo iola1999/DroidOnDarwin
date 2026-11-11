@@ -47,7 +47,9 @@ final class LocalRuntime: SessionRuntime {
         queue.async {
             do {
                 // Executable layouts and embedded ART assets belong to the installed runtime.
-                try configuration.validateResources(Bundle.main.resourceURL ?? target.resources)
+                let runtimeResources = Bundle.main.resourceURL ?? target.resources
+                try NceDeviceStore.validateDevice(atDirectory: target.directory, resources: target.resources, runtimeResources: runtimeResources)
+                try configuration.validateResources(runtimeResources)
                 try prepared.prepareResources(target.resources, directory: target.directory)
                 DispatchQueue.main.async {
                     self.storage = prepared
@@ -91,7 +93,10 @@ final class LocalRuntime: SessionRuntime {
                         self.run()
                     #endif
                 }
-            } catch { DispatchQueue.main.async { self.finish(error.localizedDescription) } }
+            } catch {
+                fputs("DroidOnDarwin: \(error.localizedDescription)\n", stderr)
+                DispatchQueue.main.async { self.finish(error.localizedDescription) }
+            }
         }
     }
     private func run() {

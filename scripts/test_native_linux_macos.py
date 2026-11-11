@@ -4,8 +4,43 @@ import argparse
 import json
 from pathlib import Path
 import plistlib
+import shutil
 import subprocess
 from package_native_linux_macos import ROOT, EXP, INPUT, OUT, audit_libraries, digest, run
+
+
+def check_imported_runtime(smoke, output):
+    resources = smoke / 'Resources'
+    binary = smoke / 'MacOS/HostChecks'
+    directory = output / 'import-runtime-data'
+    images = directory / 'Images'
+    images.mkdir(parents=True, exist_ok=True)
+    for name in ('lkl-image.bin', 'system.img', 'android-data-seed.img', 'ResourceSizes.plist'):
+        shutil.copyfile(resources / name, images / name)
+    record = {'id': directory.name, 'name': 'Runtime check', 'image': 'Test image',
+              'builtin': False, 'runtime': 'host-check-runtime'}
+    metadata = directory / 'device.json'
+    metadata.write_text(json.dumps(record))
+    command = [binary, '--run-device', '--data-directory', directory, '--resources', images]
+    run(command, capture_output=True, text=True, timeout=45)
+    disk = directory / 'android-data.img'
+    original = digest(disk)
+    logs = sorted((directory / 'Logs').glob('*'))
+    assert logs and logs[-1].read_text().splitlines()[-1].startswith('app lifecycle checks passed:')
+    for identity, expected in [('older-runtime', '版本不匹配'), (None, '缺少运行组件版本')]:
+        if identity is None:
+            record.pop('runtime')
+        else:
+            record['runtime'] = identity
+        metadata.write_text(json.dumps(record))
+        result = subprocess.run(command, capture_output=True, text=True, timeout=15)
+        assert result.returncode == 1 and expected in result.stderr, result
+        assert digest(disk) == original
+        assert sorted((directory / 'Logs').glob('*')) == logs
+        assert 'android_desktop_running' not in result.stdout
+    record['runtime'] = 'host-check-runtime'
+    metadata.write_text(json.dumps(record))
+    return 'matching import started; changed and missing runtime rejected before core/log creation; data preserved'
 
 
 def main():
@@ -37,6 +72,7 @@ def main():
         fixture[1024 + 0x38:1024 + 0x3a] = b'\x53\xef'
         (smoke / 'Resources' / name).write_bytes(fixture)
     (smoke / 'Resources/ResourceSizes.plist').write_bytes(plistlib.dumps(sizes))
+    (smoke / 'Resources/Runtime.json').write_text(json.dumps({'runtime': 'host-check-runtime'}))
     objects = []
     for source in [EXP / 'macos/Display.mm', EXP / 'macos/Storage.mm', EXP / 'macos/AppSmokeTests.mm', EXP / 'app/DeviceStore.mm', EXP / 'ios/Bridge.c']:
         obj = OUT / ('smoke-' + source.stem + '.o')
@@ -53,6 +89,7 @@ def main():
     line = log.read_text().splitlines()[-1]
     assert line.startswith('app lifecycle checks passed:')
     checks['app_lifecycle'] = line
+    checks['import_runtime'] = check_imported_runtime(smoke, OUT)
     store_test = OUT / 'device-store-tests'
     run(['xcrun', 'clang++', '-std=c++17', '-O2', '-fobjc-arc', '-Wall', '-Wextra', '-Werror', '-framework', 'Foundation', EXP / 'app/DeviceStore.mm', EXP / 'app/DeviceStoreTests.mm', EXP / 'macos/Storage.mm', '-o', store_test])
     checks['devices'] = run([store_test], capture_output=True, text=True, timeout=30).stdout.strip()

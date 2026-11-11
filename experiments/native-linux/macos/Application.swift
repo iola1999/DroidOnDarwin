@@ -11,6 +11,13 @@ final class ProcessRuntime: SessionRuntime {
     }
     func start(_ target: RunTarget, configuration: RunConfiguration, event: @escaping (RuntimeEvent) -> Void) {
         stopping = false
+        do {
+            try NceDeviceStore.validateDevice(atDirectory: target.directory, resources: target.resources,
+                                              runtimeResources: Bundle.main.resourceURL ?? target.resources)
+        } catch {
+            event(.finished(error.localizedDescription))
+            return
+        }
         let process = Process()
         self.process = process
         process.executableURL = Bundle.main.executableURL

@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 #import "DeviceStore.h"
 #include <CommonCrypto/CommonDigest.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <sys/file.h>
 #include <sys/stat.h>
@@ -31,6 +32,11 @@ static BOOL regular(NSURL *url)
 {
     struct stat st;
     return lstat(url.fileSystemRepresentation, &st) == 0 && S_ISREG(st.st_mode);
+}
+static BOOL validRuntime(id value)
+{
+    return [value isKindOfClass:NSString.class] &&
+           [[value stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceAndNewlineCharacterSet] length] > 0;
 }
 static NSDictionary *json(NSURL *url, NSError **error)
 {
@@ -128,6 +134,34 @@ static NSString *sha256(NSURL *url, NSError **error)
     NSData *data = [NSJSONSerialization dataWithJSONObject:record options:NSJSONWritingPrettyPrinted error:error];
     return data && [data writeToURL:[directory URLByAppendingPathComponent:@"device.json"] options:NSDataWritingAtomic error:error];
 }
++ (BOOL)validateDeviceAtDirectory:(NSURL *)directory resources:(NSURL *)resources runtimeResources:(NSURL *)runtimeResources error:(NSError **)error
+{
+    NSURL *recordURL = [directory URLByAppendingPathComponent:@"device.json"];
+    BOOL bundled = [resources.URLByResolvingSymlinksInPath.path isEqual:runtimeResources.URLByResolvingSymlinksInPath.path];
+    struct stat st;
+    // 独立 CLI 使用包内资源及新数据目录，无需先创建设备列表记录。
+    if (lstat(recordURL.fileSystemRepresentation, &st) && errno == ENOENT && bundled)
+        return YES;
+    NSDictionary *record = json(recordURL, error);
+    if (!record)
+        return NO;
+    if (![record[@"builtin"] isKindOfClass:NSNumber.class])
+        return fail(error, @"设备记录损坏，请检查设备数据目录。");
+    if ([record[@"builtin"] boolValue])
+        return bundled || fail(error, @"内置设备需要使用当前应用的系统资源。");
+    NSURL *images = [directory URLByAppendingPathComponent:@"Images"];
+    if (![resources.URLByResolvingSymlinksInPath.path isEqual:images.URLByResolvingSymlinksInPath.path])
+        return fail(error, @"导入设备的系统资源目录与设备记录不匹配。");
+    NSString *identifier = record[@"runtime"];
+    if (!validRuntime(identifier))
+        return fail(error, @"此导入设备缺少运行组件版本，请重新导入匹配的镜像。原设备数据已保留。");
+    NSDictionary *runtime = json([runtimeResources URLByAppendingPathComponent:@"Runtime.json"], error);
+    if (!runtime)
+        return NO;
+    if (!validRuntime(runtime[@"runtime"]) || ![identifier isEqual:runtime[@"runtime"]])
+        return fail(error, @"此导入设备与当前应用的运行组件版本不匹配。请使用匹配的应用版本或重新导入镜像，原设备数据已保留。");
+    return YES;
+}
 - (NSArray<NceDevice *> *)load:(NSError **)error
 {
     if (![_files createDirectoryAtURL:self.devicesURL withIntermediateDirectories:YES attributes:nil error:error])
@@ -203,6 +237,10 @@ static NSString *sha256(NSURL *url, NSError **error)
     NSDictionary *runtime = json([_resources URLByAppendingPathComponent:@"Runtime.json"], error);
     if (!runtime)
         return nil;
+    if (!validRuntime(runtime[@"runtime"])) {
+        fail(error, @"当前应用缺少有效的运行组件版本，无法导入镜像。");
+        return nil;
+    }
     if (!raw && (!manifest || ![manifest[@"format"] isEqual:@1] ||
                  ![manifest[@"runtime"] isEqual:runtime[@"runtime"]] ||
                  ![manifest[@"name"] isKindOfClass:NSString.class] || ![manifest[@"files"] isKindOfClass:NSDictionary.class])) {
@@ -244,7 +282,7 @@ static NSString *sha256(NSURL *url, NSError **error)
         NSString *name = raw ? source.lastPathComponent.stringByDeletingPathExtension : manifest[@"name"];
         if (!name.length || name.length > 128)
             name = @"Android";
-        NSDictionary *record = @{@"id" : identifier, @"name" : name, @"image" : raw ? @"导入的 system.img" : name, @"builtin" : @NO};
+        NSDictionary *record = @{@"id" : identifier, @"name" : name, @"image" : raw ? @"导入的 system.img" : name, @"builtin" : @NO, @"runtime" : runtime[@"runtime"]};
         if (![self writeRecord:record directory:temporary error:error])
             return nil;
         NSURL *directory = [self.devicesURL URLByAppendingPathComponent:identifier];

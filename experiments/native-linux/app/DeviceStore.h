@@ -14,6 +14,8 @@ NS_ASSUME_NONNULL_BEGIN
 @interface NceDeviceStore : NSObject
 @property(nonatomic, readonly) NSURL *root;
 - (instancetype)initWithRoot:(NSURL *)root resources:(NSURL *)resources;
+// 启动前核对导入记录与当前运行组件；失败保留设备目录与数据。
++ (BOOL)validateDeviceAtDirectory:(NSURL *)directory resources:(NSURL *)resources runtimeResources:(NSURL *)runtimeResources error:(NSError **)error;
 - (nullable NSArray<NceDevice *> *)load:(NSError **)error;
 - (nullable NceDevice *)createBuiltinNamed:(NSString *)name error:(NSError **)error;
 - (nullable NceDevice *)importImage:(NSURL *)source raw:(BOOL)raw error:(NSError **)error;
