@@ -78,7 +78,7 @@ static void reserved_stubs(void)
     puts("{\"test\":\"linux_reserved_branch_stubs\",\"passed\":true}");
 }
 
-static void simd_fallback_tests(void);
+void simd_fallback_tests(void);
 
 void dynamic_code_tests(void)
 {
@@ -166,7 +166,7 @@ void dynamic_code_tests(void)
 /* These instructions enter Unicorn when the Direct SIMD group is uncovered.
  * The following stores check continuation, including an interrupted exclusive
  * sequence whose retry must execute through its successful store. */
-static void simd_fallback_tests(void)
+void simd_fallback_tests(void)
 {
     const float scale[2] = {2, 3}, input[2] = {4, 5};
     float product[2] = {0};

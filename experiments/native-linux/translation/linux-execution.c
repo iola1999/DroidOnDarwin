@@ -87,6 +87,7 @@ typedef struct {
     uint64_t run_started_cpu_ns, run_cpu_ns;
     unsigned long fills, faults, calls, preemptions;
     unsigned long cache_flushes, cache_pages, tlb_flushes, tlb_pages, tlb_inactive_skips;
+    unsigned long icache_operations, icache_invalidations;
     unsigned long seen_maps, seen_code, seen_kernel_code;
     struct {
         int kind, access;
@@ -475,6 +476,36 @@ static void interrupt(uc_engine *uc, uint32_t number, void *opaque)
     (void)opaque;
     execution->event.kind = number == 2 ? 1 : 3;
     checked(uc_emu_stop(uc));
+}
+
+static uint32_t cache_instruction(uc_engine *uc, uc_arm64_reg reg, const uc_arm64_cp_reg *operation, void *opaque)
+{
+    (void)reg;
+    (void)opaque;
+    if (operation->op0 != 1 || operation->op1 != 3 || operation->crn != 7 ||
+        operation->crm != 5 || operation->op2 != 1)
+        return 0;
+    ++execution->icache_operations;
+    unsigned long value = translate_user(operation->val, LKL_PROT_READ);
+    /* A missing PTE is installed through a later Linux fault, which already
+     * invalidates its physical code page. Present aliases need an explicit
+     * invalidation: kernel writes do not pass through Unicorn's guest stores.
+     * SMP fallback holds the writer lock and has stopped other executors. */
+    if (value & LKL_PROT_READ) {
+        unsigned long offset = value & ~(PAGE - 1);
+        REQUIRE(offset < NCE_RAM_SIZE);
+        checked(nce_uc_invalidate_ram(uc, offset, PAGE));
+        ++execution->icache_invalidations;
+        for (unsigned cpu = 0; cpu < execution_count; ++cpu) {
+            if (cpu == execution->index)
+                continue;
+            struct nce_translation_cpu *view = &translation->cpus[cpu];
+            unsigned long index = offset / PAGE;
+            view->code_pages[index / 64] |= 1UL << (index % 64);
+            ++view->code;
+        }
+    }
+    return 0;
 }
 
 static void registers(Process *p, bool save)
@@ -1017,6 +1048,8 @@ unsigned long translation_linux_setup(void *kernel, unsigned long copy_user_offs
             goto failed;
         if (uc_hook_add(execution->engine, &hook, UC_HOOK_INTR, interrupt, NULL, 1, 0) != UC_ERR_OK)
             goto failed;
+        if (translation && uc_hook_add(execution->engine, &hook, UC_HOOK_INSN, cache_instruction, NULL, 1, 0, UC_ARM64_INS_SYS) != UC_ERR_OK)
+            goto failed;
 #ifdef NCE_SMP
         if (uc_hook_add(execution->engine, &hook, UC_HOOK_MEM_WRITE, fallback_write, NULL, 1, 0) != UC_ERR_OK)
             goto failed;
@@ -1090,6 +1123,8 @@ void translation_linux_cleanup(void)
         ExecutionCpu *execution = &executions[i];
         printf("{\"cpu\":%u,\"translation_cache\":\"%s\",\"full_flushes\":%lu,\"invalidated_pages\":%lu,\"tlb_flushes\":%lu}\n", execution->index,
                page_invalidation ? "pages" : "full", execution->cache_flushes, execution->cache_pages, execution->tlb_flushes);
+        printf("{\"cpu\":%u,\"translation_icache\":true,\"operations\":%lu,\"invalidations\":%lu}\n",
+               execution->index, execution->icache_operations, execution->icache_invalidations);
         printf("{\"cpu\":%u,\"translation_tlb\":\"%s\",\"full_flushes\":%lu,\"invalidated_pages\":%lu,\"inactive_skips\":%lu,\"mm_switches\":%lu,\"inactive_mapping_changes\":%lu}\n", execution->index,
                page_tlb_invalidation ? "pages" : "full", execution->tlb_flushes, execution->tlb_pages, execution->tlb_inactive_skips,
                translation ? execution->view->mm_switches : 0, translation ? execution->view->inactive_mapping_changes : 0);
