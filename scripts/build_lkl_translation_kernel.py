@@ -18,12 +18,16 @@ EXP = ROOT / 'experiments/native-linux'
 OUT = WORK / 'lkl-translation-kernel'
 
 
-def build(cpus=1, high_res_timers=False):
+def build(cpus=1, high_res_timers=False, guest_page_bytes=16384):
+    if guest_page_bytes not in (4096, 16384) or (guest_page_bytes == 4096 and cpus != 1):
+        raise ValueError("4 KiB translation requires one CPU")
     if cpus not in (1, 2):
         raise ValueError('translation CPU count must be 1 or 2')
     out = OUT if cpus == 1 else WORK / 'lkl-translation-smp-kernel'
     if high_res_timers:
         out = out.with_name(out.name + '-highres')
+    if guest_page_bytes == 4096:
+        out = out.with_name(out.name + '-4k')
     base = WORK / 'lkl-source'
     source = out / 'source'
     build_dir = out / 'build'
@@ -32,17 +36,17 @@ def build(cpus=1, high_res_timers=False):
         raise RuntimeError('需要先准备当前单核 LKL 源码')
     patch_files = [Path(__file__), Path(probe_lkl.__file__), Path(lkl_translation_patch.__file__),
                    ROOT / 'scripts/lkl_nce_patch.py', EXP / 'lkl-nce-mmu.c', EXP / 'lkl-nce-elf.c',
-                   EXP / 'translation/kernel-api.h', EXP / 'direct/page-table-layout.h']
+                   EXP / 'translation/kernel-api.h', EXP / 'direct/page-table-layout.h', EXP / 'layout.h']
     if cpus == 2:
         patch_files += [ROOT / ('scripts/' + name + '.py') for name in
                         ('lkl_smp_patch', 'lkl_smp_mmu_patch', 'lkl_translation_smp_patch')]
         patch_files += sorted((EXP / 'smp').glob('*.[ch]'))
-    patch_digest = hashlib.sha256(b''.join(path.read_bytes() for path in patch_files)).hexdigest()
+    patch_digest = hashlib.sha256(str(guest_page_bytes).encode() + b''.join(path.read_bytes() for path in patch_files)).hexdigest()
     stamp = out / 'source-inputs.sha256'
     prepared = source.exists() and stamp.exists() and stamp.read_text().strip() == patch_digest
     if not prepared:
         # This directory contains only generated sources; build objects stay separate.
-        if source.exists() and cpus == 2:
+        if source.exists() and (cpus == 2 or guest_page_bytes == 4096):
             shutil.rmtree(source)
         if not source.exists():
             probe_lkl.run(['/bin/cp', '-cR', base, source], timeout=120)
@@ -52,7 +56,7 @@ def build(cpus=1, high_res_timers=False):
         if cpus == 2:
             import lkl_smp_patch
             lkl_smp_patch.apply(source, EXP, tests=False)
-        lkl_translation_patch.apply(source, EXP)
+        lkl_translation_patch.apply(source, EXP, guest_page_bytes)
         if cpus == 2:
             import lkl_smp_mmu_patch
             import lkl_translation_smp_patch
@@ -73,7 +77,8 @@ def build(cpus=1, high_res_timers=False):
     llvm = Path(subprocess.check_output(['brew', '--prefix', 'llvm'], text=True).strip()) / 'bin'
     sdk = subprocess.check_output(['xcrun', '--sdk', 'macosx', '--show-sdk-path'], text=True).strip()
     clang = subprocess.check_output(['xcrun', '--find', 'clang'], text=True).strip()
-    target = [llvm / 'clang', '--target=aarch64-linux-gnu', '-ffixed-x18', '-mno-outline-atomics']
+    target = [llvm / 'clang', '--target=aarch64-linux-gnu', '-ffixed-x18', '-mno-outline-atomics',
+              f'-DNCE_GUEST_PAGE_SHIFT={guest_page_bytes.bit_length() - 1}']
     env = os.environ.copy()
     env.update(KBUILD_BUILD_TIMESTAMP='1970-01-01 00:00:00 UTC', KBUILD_BUILD_VERSION='1',
                KBUILD_BUILD_USER='droidondarwin', KBUILD_BUILD_HOST='local')
@@ -114,7 +119,8 @@ def build(cpus=1, high_res_timers=False):
     probe_lkl.package_elf(out / 'lkl.so', smp_exports={'nce_translation_enter', 'nce_translation_leave', 'nce_translation_exclusive', 'nce_window_unlock', 'nce_translation_written'})
     files = [Path(__file__), Path(lkl_translation_patch.__file__), Path(probe_lkl.__file__),
              ROOT / 'scripts/lkl_nce_patch.py', EXP / 'lkl-nce-mmu.c', EXP / 'lkl-nce-elf.c', EXP / 'translation/kernel-api.h',
-             EXP / 'lkl-bridge.c', EXP / 'direct/page-table-layout.h', config, build_dir / '.config',
+             EXP / 'lkl-bridge.c', EXP / 'layout.h', EXP / 'direct/page-table-layout.h', config, build_dir / '.config',
+             source / 'arch/lkl/include/asm/page-mmu.h', source / 'arch/lkl/include/asm/nce-layout.h',
              source / 'arch/lkl/mm/nce_mmu.c', source / 'arch/lkl/kernel/nce_elf.c',
              source / 'arch/lkl/include/asm/pgtable-mmu-3level.h', source / 'arch/lkl/include/asm/nce-translation.h',
              source / 'arch/lkl/include/asm/mmu.h', source / 'arch/lkl/kernel/threads.c',
@@ -122,7 +128,7 @@ def build(cpus=1, high_res_timers=False):
     if cpus == 2:
         files += [ROOT / ('scripts/' + name + '.py') for name in ('lkl_smp_patch', 'lkl_smp_mmu_patch', 'lkl_translation_smp_patch')]
         files += list((EXP / 'smp').glob('*.[ch]'))
-    manifest = {'cpus': cpus, 'high_res_timers': high_res_timers, 'status': 'built; functional validation belongs to probe_lkl_translation.py',
+    manifest = {'cpus': cpus, 'guest_page_bytes': guest_page_bytes, 'host_page_bytes': 16384, 'high_res_timers': high_res_timers, 'status': 'built; functional validation belongs to probe_lkl_translation.py',
                 'build_identity': {key: env[key] for key in env if key.startswith('KBUILD_BUILD_')},
                 'revision': probe_lkl.REVISION, 'commands': commands,
                 'sha256': {str(path.relative_to(ROOT)): hashlib.sha256(path.read_bytes()).hexdigest() for path in files}}
@@ -135,5 +141,6 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--cpus', type=int, choices=(1, 2), default=1)
     parser.add_argument('--high-res-timers', action='store_true')
+    parser.add_argument('--guest-page-bytes', type=int, choices=(4096, 16384), default=16384)
     args = parser.parse_args()
-    print(build(args.cpus, args.high_res_timers))
+    print(build(args.cpus, args.high_res_timers, args.guest_page_bytes))

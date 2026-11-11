@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 #define _GNU_SOURCE
+#include "../layout.h"
 #include <dlfcn.h>
 #include <link.h>
 #include <pthread.h>
@@ -50,7 +51,7 @@ int main(void)
     int cleared = 1;
     for (unsigned i = 0; i < sizeof(zeroes); ++i)
         cleared &= zeroes[i] == 0;
-    if (!check("page_bss", cleared && getauxval(AT_PAGESZ) == 16384 && sysconf(_SC_PAGESIZE) == 16384))
+    if (!check("page_bss", cleared && getauxval(AT_PAGESZ) == NCE_PAGE_SIZE && sysconf(_SC_PAGESIZE) == NCE_PAGE_SIZE))
         return 1;
     unsigned char *memory = malloc(65536);
     if (!check("allocation", memory != NULL))

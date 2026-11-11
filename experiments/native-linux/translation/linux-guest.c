@@ -24,7 +24,8 @@
             _exit(95); \
         } \
     } while (0)
-#define PAGE 16384
+#include "../layout.h"
+#define PAGE NCE_PAGE_SIZE
 static _Thread_local unsigned tls = 7;
 static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 static unsigned counter;

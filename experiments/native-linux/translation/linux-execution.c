@@ -224,6 +224,30 @@ static void mark_executing(bool active)
     REQUIRE(pthread_mutex_unlock(&timer_lock) == 0);
 }
 
+static void host_alias_request(const char *operation, unsigned long target, unsigned long source, unsigned long size)
+{
+#if NCE_GUEST_PAGE_SHIFT == 12
+    bool valid = size && !((target | source | size) & (NCE_HOST_PAGE_SIZE - 1)) &&
+                 target >= physical_base && target <= reservation_base + reservation_size &&
+                 size <= reservation_base + reservation_size - target &&
+                 (!source || (source >= (uintptr_t)ram && source <= (uintptr_t)ram + NCE_RAM_SIZE &&
+                              size <= (uintptr_t)ram + NCE_RAM_SIZE - source));
+    printf("{\"host_alias_request\":\"%s\",\"target\":%lu,\"source\":%lu,\"bytes\":%lu,\"accepted\":%s}\n",
+           operation, target, source, size, valid ? "true" : "false");
+    if (!valid) {
+        fprintf(stderr, "4 KiB guest rejected host alias: operation=%s target=%lx source=%lx bytes=%lu host_page_bytes=%lu\n",
+                operation, target, source, size, NCE_HOST_PAGE_SIZE);
+        fflush(stdout);
+        abort();
+    }
+#else
+    (void)operation;
+    (void)target;
+    (void)source;
+    (void)size;
+#endif
+}
+
 static void remap(void *target, void *source, unsigned long size, int prot)
 {
     vm_address_t address = (uintptr_t)target;
@@ -341,6 +365,7 @@ static int shmem_reclaim(unsigned long offset, unsigned long size)
     if (code_watch)
         REQUIRE(nce_code_watch_invalidate(code_watch, offset, size) == 0);
 #endif
+    host_alias_request("reclaim", physical_base + offset, (uintptr_t)ram + offset, size);
     REQUIRE(mmap(ram + offset, size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANON | MAP_FIXED, -1, 0) == ram + offset);
     remap((void *)(physical_base + offset), ram + offset, size, PROT_READ | PROT_WRITE);
     if (translation) {
@@ -378,6 +403,7 @@ static void *shmem_map(void *address, unsigned long offset, unsigned long size, 
                 REQUIRE(nce_code_watch_exclude(code_watch, offset, size) == 0);
         }
 #endif
+        host_alias_request("map", start, (uintptr_t)ram + offset, size);
         remap(address, ram + offset, size, prot);
 #ifdef NCE_SMP
         if (code_watch)
@@ -424,6 +450,7 @@ static int revoke_pages(void *address, unsigned long size)
     if (size) {
         REQUIRE(start >= physical_base && start <= reservation_base + reservation_size &&
                 size <= reservation_base + reservation_size - start);
+        host_alias_request("revoke", start, 0, size);
         REQUIRE(mmap((void *)start, size, PROT_NONE, MAP_PRIVATE | MAP_ANON | MAP_FIXED, -1, 0) == (void *)start);
     }
     return 0;
@@ -855,6 +882,14 @@ unsigned long translation_linux_setup(void *kernel, unsigned long copy_user_offs
                                       unsigned long translate_offset, struct nce_translation_state *state)
 {
     REQUIRE((translate_offset != 0) == (state != NULL));
+#if NCE_GUEST_PAGE_SHIFT == 12
+#ifdef NCE_DIRECT_EXECUTION
+#error The 4 KiB experiment requires Unicorn
+#endif
+    REQUIRE(state && execution_count == 1 && getpagesize() == NCE_HOST_PAGE_SIZE);
+    printf("{\"config\":\"translation_page_sizes\",\"guest_page_bytes\":%lu,\"host_page_bytes\":%lu,\"host_address_limit\":%lu}\n",
+           PAGE, NCE_HOST_PAGE_SIZE, NCE_HOST_ADDRESS_LIMIT);
+#endif
     translation = state;
     const char *workload = getenv("NCE_TRANSLATION_WORKLOAD");
     component_vm_trace = workload && !strcmp(workload, "bionic");
@@ -866,7 +901,7 @@ unsigned long translation_linux_setup(void *kernel, unsigned long copy_user_offs
     const char *layout_memory = getenv("NCE_DIRECT_MEMORY");
     REQUIRE(!low_guest_layout || (layout_memory && !strcmp(layout_memory, "flat")));
 #else
-    REQUIRE(!low_guest_layout);
+    REQUIRE(!low_guest_layout || NCE_GUEST_PAGE_SHIFT == 12);
 #endif
 #ifdef NCE_SMP
     REQUIRE(translation && execution_count == 2);

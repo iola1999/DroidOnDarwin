@@ -59,13 +59,13 @@ def unchanged(identity):
         sha(Path(record['path'])) == record['sha256'] for record in identity['files'].values())
 
 
-def validate(rows):
+def validate(rows, guest_page_bytes=16384):
     stages = [r for r in rows if 'component_stage' in r]
     starts = [r for r in rows if 'component_start' in r]
     main = [r for r in rows if 'component_main' in r]
     checks = [r for r in rows if 'component_check' in r]
     objects = [r for r in rows if 'component_object' in r]
-    supervisor = {'component_supervisor': True, 'page_size': 16384}
+    supervisor = {'component_supervisor': True, 'page_size': guest_page_bytes}
     complete = {'test': 'stock_bionic_observation_complete', 'passed': True}
     if [r.get('component_stage') for r in stages] != ['linker_help', 'dynamic']:
         return False
@@ -110,7 +110,7 @@ def validate(rows):
         return False
     if len(main) > 1 or ((checks or objects) and not main):
         return False
-    if main and main != [{'component_main': True, 'aux_page_size': 16384, 'page_size': 16384}]:
+    if main and main != [{'component_main': True, 'aux_page_size': guest_page_bytes, 'page_size': guest_page_bytes}]:
         return False
     if [r.get('component_check') for r in checks] != list(CHECKS[:len(checks)]):
         return False
