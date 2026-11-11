@@ -30,12 +30,30 @@
 
 本阶段不改 iOS App、打包流程或默认 runtime，也不安排手机运行。宿主头文件和可编译的公共对象可做 iOS 编译检查，但本机的地址摆放、Unicorn JIT 条件与 VMALLOC 路径不能据此确认 iOS 可运行。首阶段无性能结论。
 
+### 后续 VMALLOC 试验
+
+首次失败来自 `pcpu_alloc_chunk()` 的 `obj_exts` 元数据分配，实际请求为 65536 字节。当前生成配置已有 `CONFIG_NEED_PER_CPU_KM=y`，`mm/percpu.c` 包含 `percpu-km.c`，数据块由连续 `alloc_pages()` 分配。本轮只需继续处理元数据使用的通用 `vmalloc`；`percpu-vm.c` 的逐页映射留在未来 SMP 范围。
+
+下一阶段仍限定 4 KiB、单 CPU、Unicorn/PTE 和低 4 GiB，在独立生成的 LKL 源码内调整以下行为。默认 16 KiB overlay 保持原行为。
+
+- `__vmalloc_node_range_noprof()` 在申请 VM area 前，将该次实际分配长度和地址对齐提高到 16 KiB，并检查加法溢出及 RAM 上界。请求长度继续保留给原有对象大小统计。物理 backing 通过 `vm_area_alloc_pages()` 以 order 2 为最小单位分配，再沿用 `split_page()` 和逐 4 KiB `struct page` 数组及释放循环。页表仍使用普通 4 KiB PTE；不为该实验声明 PMD huge-vmap 支持，也不增加另一份持久页分组状态。order 2 分配失败必须释放已分配的页面；不能退回不满足宿主页条件的 order 0。`__GFP_NOFAIL` 的高阶失败处理必须单独验证，受限实现若无法保留其重试契约，就在入口明确停止并保存参数。
+- `init_mm` 的 map/revoke 从单个 PTE 写入前通知，移到完整范围的 PTE 写入或清除后通知。优先复用 `ARCH_PAGE_TABLE_SYNC_MASK` 与 `arch_sync_kernel_mappings()`：`mm/vmalloc.c` 已在范围结束后调用；`mm/memory.c` 的 `apply_to_page_range()` 也会调用，需要限定实际 `init_mm`，用户 mm 继续采用现有失效通知。映射失败的范围只清理已写入 PTE，完整映射成功后才建立宿主 alias；前面已经成功的组在后续失败清理中全部撤销。回调返回前完成宿主操作，调用者随后才能使用或释放对应页面。
+- 每个完整 16 KiB 目标组只有两种可执行状态：四个 PTE 都无映射，或者四页物理地址依次连续、首地址按 16 KiB 对齐且有效权限一致。前者撤销该完整组，后者使用真实共享 alias。混合状态、物理范围越界、非连续页及不同权限均明确失败。现有宿主 alias 检查继续执行，不改变其允许的范围。
+- `vmap()`、`vm_map_ram()` 和范围映射入口在写 PTE 前检查目标长度、地址、物理页排列及权限。通用 page 数组可以由多个各自连续的 16 KiB 组组成；组内非连续的数组返回明确失败，不复制、重排或替换调用方的页面。当前配置以外的 `init_mm` 直接页表修改路径先记录为未覆盖，不能仅靠单页通知返回就宣称支持。
+- 保留现有 VM area guard page 的含义。`free_unmap_vmap_area()` 会连同尾部 4 KiB guard 一起清 PTE，范围通知只能撤销请求内部的完整 16 KiB 组。边界不足一组且整组 PTE 都无映射时不调用宿主操作；边界组仍有映射则明确失败。不得扩大撤销范围覆盖相邻区域。partial map 失败、尚未建立宿主 alias 的清理和尾部 guard 分别检查。
+
+实施前先保存原内核、运行器与诊断输入的摘要，候选使用新的内核输出目录。先在真实 LKL 内验证两组 16 KiB 的共享别名：逐个 4 KiB 页写入，经另一地址读回，再反向写入；撤销第一组后第二组的地址、权限和字节保持不变。非连续、错位、部分组、不同权限及分配/映射中途失败分别检查返回、PTE 与宿主映射释放。随后重跑 core CLI/GCD，通过后继续原始 HyperOS linker 和 SDK 对照。原始四文件的摘要与此前记录一致。
+
+复杂度审查把此改动限定为一种既定宿主页分组条件。真实使用方是当前 `pcpu` 元数据和后续 `vmalloc` 调用者；PTE、页面数组与宿主 alias 各保留原有职责。没有增加运行期开关、通用内存模型、复制层或与 PTE 平行的已安装映射表。若现有范围通知无法覆盖实际失败清理，先保存失败，再按具体调用增加必要处理。
+
 ## 曾考虑的替代方案
 
 - 同时扩到 64 GiB。会同时改变页大小与地址容量，本轮保留低 4 GiB，后续根据两个独立结果决定组合。
 - 先改 Direct flat。需要同步汇编 PTE 掩码、代码页索引与每 mm 表容量；已有 Unicorn 通过软件 TLB 获取 LKL 页权限，适合作为首个页粒度对照。
 - 把所有 16 KiB 常量改为 4 KiB。宿主映射与 JIT 仍受 16 KiB 约束，会混淆两种页大小；本轮按实际使用方区分。
 - 将 4 KiB kernel alias 请求向外取整。可能覆盖同宿主页中的其他映射或拼接不连续物理页，本轮保留严格拒绝。
+- 关闭 `CONFIG_MEMCG` 或仅将 `pcpu` 元数据改用大块连续分配。可以改变首次分配路径，通用 `vmalloc` 的页粒度约束仍然存在；下一阶段保留当前配置并处理实际映射条件。
+- 启用 `CONFIG_HAVE_ARCH_HUGE_VMALLOC` 取得分组字段。该配置依赖 `HAVE_ARCH_HUGE_VMAP`，上游说明要求 PMD 级支持；本轮仍使用 4 KiB PTE，只提高 backing 分配 order，避免声明额外架构条件。
 
 ## 验收标准
 
@@ -64,6 +82,16 @@ python3 -B scripts/test_guest_pages.py
 依赖使用 APFS clone 复制 LKL 源码、基础构建配置、宿主/Linux 头文件、musl install、compiler-rt、小型运行 ELF 和 Unicorn 所需文件。17 项 Unicorn 摘要匹配。独立 `work/native-linux-nce` 的 `du -sh` 为 3.4 GiB，其中包含两份 Linux 源码树；该数值未扣除 APFS 共享区块，未复制完整 Android 镜像。
 
 复杂度审查保留一个构建期页大小参数；运行器、内核与客体从该值取得页大小，宿主映射页单独保持 16 KiB。私有 alias 检查集中于三处实际宿主操作之前，测试直接调用该函数；没有引入替代内存模型或通用 VMALLOC 适配层。现阶段只增加严格拒绝和诊断，后续共享别名处理按已出现的实际请求继续调查。
+
+### 首次 VMALLOC 调用者诊断（2026-11-12）
+
+在 `bdadae8a7e82874142bc4b254136ea703acef534` 上，临时宿主 `abort` 替代函数打印了调用帧与栈内 kernel 地址候选；当前内核关闭 frame pointer，候选地址不能还原完整调用栈。原镜像的两个返回位置已与反汇编对应：`0x24281c` 的前一条指令调用 `__vmalloc_noprof`，`0x266d28` 的前一条指令调用 `mmap_pages_for_ptes`。
+
+随后只在 `work/native-linux-nce/guest-4k-vmalloc-trace/caller/` 中重编 `percpu.c` 和 `vmalloc.c` 两个诊断对象，保留原归档的其他对象及顺序，并链接独立镜像。`lkl_printf` 实际输出 `NCE_VMALLOC_CALLER obj_exts bytes=65536 nr_pages=8`，紧接 `NCE_VMALLOC_REQUEST bytes=65536 align=1`。首个 alias 仍为 `target=0x7040800000`、`source=0x7044811000`、`bytes=4096`，原检查继续拒绝。诊断退出码 86 由替代 `abort` 主动返回；客体尚未启动。环境与受限阶段相同，运行期间有其他本机功能验证，无性能结论。
+
+[调用者诊断结果](../../../../experiments/native-linux/results-guest-4k-vmalloc-caller-20261112.json)保存实际配置、两个打印补丁、编译/链接命令、原始输出及摘要。原受限内核的 24 项清单输入再次校验一致。生成源码中的关键位置为 `mm/percpu.c:504`、`:1466`，`mm/percpu-km.c:53`，`mm/vmalloc.c:3001`、`:3600`、`:3743`；内核固定提交仍为 `d0f76a77e8c2ca68bd7d96190b8da09040eab072`，补丁输入由既有内核清单记录。
+
+本次只完成调用者确认与后续方案，分组分配和范围通知尚未实现。下一阶段验收还需覆盖实际 alias 双向共享、尾部 guard、相邻组保护、部分失败释放与不兼容通用 `vmap` 拒绝；这些内容不能由当前参数检查结果替代。
 
 ## 风险
 
