@@ -413,16 +413,16 @@ int nce_lkl_run(const char *path)
     void (*set_layout)(unsigned long, unsigned long, unsigned long *, unsigned long, void *, unsigned long, unsigned long) = (void *)(kernel + NCE_SET_LAYOUT);
     struct nce_translation_state state = {0};
     unsigned long *views = TRANSLATION_LOOKUP ? (void *)&state : calloc(2 * NCE_USER_SIZE / NCE_PAGE_SIZE, sizeof(*views));
-    unsigned long base = views ? translation_linux_setup(kernel, TRANSLATION_COPY_USER, TRANSLATION_LOOKUP, TRANSLATION_LOOKUP ? &state : NULL) : 0;
+    unsigned long guest_base = views ? translation_linux_setup(kernel, TRANSLATION_COPY_USER, TRANSLATION_LOOKUP, TRANSLATION_LOOKUP ? &state : NULL) : 0;
     int preparation_failed = detach_preparation();
 #ifdef NCE_TRANSLATION_DUAL_MAP
-    if (base && !preparation_failed)
+    if (guest_base && !preparation_failed)
         preparation_failed = translation_kernel_check_code(&loaded) || translation_linux_check_code();
     printf("{\"test\":\"translation_prepared_code_execution\",\"passed\":%s}\n",
-           base && !preparation_failed ? "true" : "false");
+           guest_base && !preparation_failed ? "true" : "false");
 #endif
-    if (!base || preparation_failed) {
-        if (base)
+    if (!guest_base || preparation_failed) {
+        if (guest_base)
             translation_linux_abort_setup();
         translation_kernel_release(&loaded);
         if (!TRANSLATION_LOOKUP)
@@ -431,7 +431,7 @@ int nce_lkl_run(const char *path)
         puts("{\"result\":\"failed\",\"reason\":\"translation_code_preparation\"}");
         return 1;
     }
-    set_layout(base, TRANSLATION_LOOKUP ? NCE_MM_TRANSLATED : NCE_MM_DEMAND, views, 3, NULL, 1, 0);
+    set_layout(guest_base, TRANSLATION_LOOKUP ? NCE_MM_TRANSLATED : NCE_MM_DEMAND, views, 3, NULL, 1, 0);
     const char *workload = getenv("NCE_TRANSLATION_WORKLOAD");
     REQUIRE(!workload || !strcmp(workload, "core") || !strcmp(workload, "android") || !strcmp(workload, "services") || !strcmp(workload, "desktop"));
     int desktop = workload && !strcmp(workload, "desktop");
@@ -495,6 +495,25 @@ int nce_lkl_run(const char *path)
     put_file("/lib/ld-musl-aarch64.so.1", "libc.so");
     put_file("/lib/dependency.so", "dependency.so");
     put_file("/lib/plugin.so", "plugin.so");
+    unsigned long host_value = 0x7d2a9314UL;
+    if (TRANSLATION_LOOKUP && !android) {
+        char text[256];
+        const char *layout = getenv("NCE_TRANSLATION_GUEST_LAYOUT");
+        REQUIRE(snprintf(text, sizeof(text), "%s %lu %lu %lu %lu %lu\n", layout ? layout : "host",
+                         guest_base, state.guest_end, state.physical_base, state.ram, (unsigned long)&host_value) < (int)sizeof(text));
+        put_text("/probe-layout", text);
+        long pointer_args[6] = {-100, (long)"/host-pointer", 0x242, 0600};
+        long pointer_fd = call(56, pointer_args);
+        REQUIRE(pointer_fd >= 0);
+        pointer_args[0] = pointer_fd;
+        pointer_args[1] = (long)&host_value;
+        pointer_args[2] = sizeof(host_value);
+        REQUIRE(call(64, pointer_args) == (long)sizeof(host_value));
+        unsigned long copied = 0;
+        pointer_args[1] = (long)&copied;
+        pointer_args[3] = 0;
+        REQUIRE(call(67, pointer_args) == (long)sizeof(copied) && copied == host_value && call(57, pointer_args) == 0);
+    }
     int failed = 0;
     if (android) {
         android_setup(services, desktop);
@@ -528,6 +547,10 @@ int nce_lkl_run(const char *path)
     } else {
         translation_memory_phase("guest_execution");
         failed = run_program("/probe-guest", 0);
+    }
+    if (TRANSLATION_LOOKUP && !android) {
+        REQUIRE(host_value == 0x7d2a9314UL);
+        puts("{\"test\":\"translated_host_pointer_copy\",\"passed\":true}");
     }
     memory_sample("guest_finished");
     translation_memory_phase("cleanup");

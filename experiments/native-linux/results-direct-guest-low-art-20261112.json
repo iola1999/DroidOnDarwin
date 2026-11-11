@@ -1,0 +1,3357 @@
+{
+  "scope": "Native 1-CPU LKL with translated ARM64 userspace; selected workload only; iPhone unverified",
+  "data_seed": null,
+  "platform": "macOS-27.0-arm64-arm-64bit-Mach-O",
+  "cpu": "Apple M5 Ultra",
+  "system_build": "26A428",
+  "dependency": {
+    "version": "2.1.4",
+    "patch": "nce-tb-stop",
+    "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/unicorn-tb-stop-dual/prefix",
+    "ZERO_AR_DATE": "1",
+    "code_memory": "dual",
+    "target": "macos",
+    "architecture": "arm64",
+    "sdk": "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX27.0.sdk",
+    "commands": [
+      [
+        "cmake",
+        "-S",
+        "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/unicorn-dual-source/unicorn-2.1.4",
+        "-B",
+        "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/unicorn-tb-stop-dual/build",
+        "-DCMAKE_BUILD_TYPE=Release",
+        "-DUNICORN_ARCH=aarch64",
+        "-DBUILD_SHARED_LIBS=OFF",
+        "-DUNICORN_BUILD_TESTS=OFF",
+        "-DUNICORN_INSTALL=ON",
+        "-DCMAKE_INSTALL_PREFIX=/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/unicorn-tb-stop-dual/prefix",
+        "-DCMAKE_OSX_ARCHITECTURES=arm64",
+        "-DCMAKE_OSX_SYSROOT=/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX27.0.sdk",
+        "-DCMAKE_C_FLAGS=-DNCE_TCG_DUAL_MAP"
+      ],
+      [
+        "cmake",
+        "--build",
+        "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/unicorn-tb-stop-dual/build",
+        "-j8"
+      ],
+      [
+        "cmake",
+        "--install",
+        "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/unicorn-tb-stop-dual/build"
+      ]
+    ],
+    "sha256": {
+      "scripts/build_translation_engine.py": "e5ab4173a424f834a739d0d31e14b9fa75a89074716d5f5c5a49e1358b1a1b59",
+      "work/native-linux-nce/unicorn-2.1.4.tar.gz": "ea8863f095a0136388694e5a6063afd9bb7650e30243dd6251af59c5ce5601f4",
+      "work/native-linux-nce/unicorn-dual-source/unicorn-2.1.4/include/uc_priv.h": "c8c854d73a5f40727ebf733d0545a9ff5434b9f295a2c2d1cb1867f5a161394c",
+      "work/native-linux-nce/unicorn-dual-source/unicorn-2.1.4/uc.c": "7b676b8268f24611aabb17aa935aca5334b852d48dabd4175b954f200bcb2404",
+      "work/native-linux-nce/unicorn-dual-source/unicorn-2.1.4/qemu/tcg/tcg-op.c": "7e926c8f1f7bdadef1b2a9d45a44468067d2347563cca1efa253d496583a7cbb",
+      "work/native-linux-nce/unicorn-dual-source/unicorn-2.1.4/qemu/accel/tcg/translate-all.c": "23766182056ceb72d0d7bacf2de33fddc0530902f7af6b4ef84e13960d109867",
+      "work/native-linux-nce/unicorn-dual-source/unicorn-2.1.4/qemu/accel/tcg/tcg-runtime.c": "9442f7d2e5271eae1e409cfd7cdb9dc3c88decc03272a46a9250cdc3e68ddbe6",
+      "work/native-linux-nce/unicorn-dual-source/unicorn-2.1.4/qemu/include/exec/gen-icount.h": "ff2c3cb1adef7c2b558c27b57820b36bc126fae8ba572ae40537a4a0de892a1a",
+      "work/native-linux-nce/unicorn-dual-source/unicorn-2.1.4/qemu/include/qemu/osdep.h": "853abe20ca8d18875ccc976977fe2dbe507ec2ba12f0a07eb0ca968f9a8202d9",
+      "work/native-linux-nce/unicorn-dual-source/unicorn-2.1.4/qemu/include/tcg/tcg.h": "0ceda033af1687582281b9a10684800da978d7a1fadf3a4703ac66364142e3fc",
+      "work/native-linux-nce/unicorn-dual-source/unicorn-2.1.4/qemu/tcg/tcg.c": "0c11bfcf407c8f3b5c404dfdd75f4b2ba532d84905dcbc36a576ca371405a345",
+      "work/native-linux-nce/unicorn-dual-source/unicorn-2.1.4/qemu/include/exec/exec-all.h": "a5640cf45b01812b7b72c68d152adf3d10ca3f366c1361bebf6b5767eae49465",
+      "work/native-linux-nce/unicorn-dual-source/unicorn-2.1.4/qemu/tcg/aarch64/tcg-target.inc.c": "75610364d152a540a6cfa1284564d61458100eaaa6e6acaea845570a8da4c555",
+      "work/native-linux-nce/unicorn-dual-source/unicorn-2.1.4/qemu/tcg/tcg-pool.inc.c": "8583f84c95511ffe48ed1e1b0ad93f997c7aeeca8a6882232b311e3221fe21f4",
+      "work/native-linux-nce/unicorn-tb-stop-dual/prefix/lib/libunicorn.a": "a69c2949b8c277ac32701b40c382f00190e533270d41dbb1cf1b7f7fd3250c57",
+      "work/native-linux-nce/unicorn-tb-stop-dual/prefix/include/unicorn/unicorn.h": "66fdf8f39df34e507a163eb550549669cec3399c2103b8dc84bc4131f600e55a",
+      "scripts/unicorn_code_memory_patch.py": "924d3d1a7b5b1688197733f322f6956edf5aef96a854c9d24a8693d62485656f"
+    }
+  },
+  "commands": [
+    [
+      "xcrun",
+      "clang",
+      "-O2",
+      "-g",
+      "-DNCE_PROCESS",
+      "-DNCE_TRANSLATION_CPUS=1",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-I",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/experiments/native-linux",
+      "-I",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/lkl-translation-kernel",
+      "-I",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/guest-layout-low-art",
+      "-I",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/processes/host-include",
+      "-I",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/unicorn-tb-stop-dual/prefix/include",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/experiments/native-linux/translation/kernel-image.c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/experiments/native-linux/translation/linux-elf.c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/experiments/native-linux/translation/linux-execution.c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/experiments/native-linux/translation/interaction-profile.c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/experiments/native-linux/translation/linux-runner.c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/experiments/native-linux/translation/linux-memory.c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/experiments/native-linux/lkl-host.c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/experiments/native-linux/translation/code-watch.c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/experiments/native-linux/translation/read-view.c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/experiments/native-linux/translation/unicorn-code-memory.c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/unicorn-tb-stop-dual/prefix/lib/libunicorn.a",
+      "-DNCE_DIRECT_EXECUTION",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/guest-layout-low-art/direct/engine.o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/guest-layout-low-art/direct/compile.o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/guest-layout-low-art/direct/decode.o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/guest-layout-low-art/direct/memory-groups.o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/guest-layout-low-art/direct/read-faults.o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/guest-layout-low-art/direct/cross-page.o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/guest-layout-low-art/direct/entry.o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/guest-layout-low-art/direct/code-memory.o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/guest-layout-low-art/direct/execute-check.o",
+      "-lc++",
+      "-o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/guest-layout-low-art/cli",
+      "-DNCE_TRANSLATION_DUAL_MAP"
+    ],
+    [
+      "xcrun",
+      "clang",
+      "-O2",
+      "-g",
+      "-DNCE_PROCESS",
+      "-DNCE_TRANSLATION_CPUS=1",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-I",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/experiments/native-linux",
+      "-I",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/lkl-translation-kernel",
+      "-I",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/guest-layout-low-art",
+      "-I",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/processes/host-include",
+      "-I",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/unicorn-tb-stop-dual/prefix/include",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/experiments/native-linux/translation/kernel-image.c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/experiments/native-linux/translation/linux-elf.c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/experiments/native-linux/translation/linux-execution.c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/experiments/native-linux/translation/interaction-profile.c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/experiments/native-linux/translation/linux-runner.c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/experiments/native-linux/translation/linux-memory.c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/experiments/native-linux/lkl-host.c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/experiments/native-linux/translation/code-watch.c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/experiments/native-linux/translation/read-view.c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/experiments/native-linux/translation/unicorn-code-memory.c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/unicorn-tb-stop-dual/prefix/lib/libunicorn.a",
+      "-DNCE_DIRECT_EXECUTION",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/guest-layout-low-art/direct/engine.o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/guest-layout-low-art/direct/compile.o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/guest-layout-low-art/direct/decode.o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/guest-layout-low-art/direct/memory-groups.o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/guest-layout-low-art/direct/read-faults.o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/guest-layout-low-art/direct/cross-page.o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/guest-layout-low-art/direct/entry.o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/guest-layout-low-art/direct/code-memory.o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/guest-layout-low-art/direct/execute-check.o",
+      "-lc++",
+      "-o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/guest-layout-low-art/gcd",
+      "-DNCE_TRANSLATION_DUAL_MAP",
+      "-DTRANSLATION_DISPATCH",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/experiments/native-linux/dispatch-test.c"
+    ],
+    [
+      "/opt/homebrew/opt/llvm/bin/clang",
+      "--target=aarch64-linux-musl",
+      "-mno-outline-atomics",
+      "-fPIE",
+      "-O2",
+      "-g",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-nostdinc",
+      "-isystem",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/musl-build/install/include",
+      "-isystem",
+      "/opt/homebrew/Cellar/llvm/22.1.7_1/lib/clang/22/include",
+      "-DNCE_TRANSLATION_CPUS=1",
+      "-DNCE_TRANSLATION_HIGH_RES_TIMERS=0",
+      "-c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/experiments/native-linux/translation/linux-guest.c",
+      "-o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/guest-layout-low-art/guest.o"
+    ],
+    [
+      "/opt/homebrew/opt/llvm/bin/clang",
+      "--target=aarch64-linux-musl",
+      "-mno-outline-atomics",
+      "-fPIE",
+      "-O2",
+      "-g",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-ffunction-sections",
+      "-Dmain=unused_mm_main",
+      "-nostdinc",
+      "-isystem",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/musl-build/install/include",
+      "-isystem",
+      "/opt/homebrew/Cellar/llvm/22.1.7_1/lib/clang/22/include",
+      "-c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/experiments/native-linux/userspace/signal-tests.c",
+      "-o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/guest-layout-low-art/signal-tests.o"
+    ],
+    [
+      "/opt/homebrew/opt/llvm/bin/clang",
+      "--target=aarch64-linux-musl",
+      "-mno-outline-atomics",
+      "-fPIE",
+      "-O2",
+      "-g",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-ffunction-sections",
+      "-Dmain=unused_mm_main",
+      "-nostdinc",
+      "-isystem",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/musl-build/install/include",
+      "-isystem",
+      "/opt/homebrew/Cellar/llvm/22.1.7_1/lib/clang/22/include",
+      "-c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/experiments/native-linux/userspace/signal-registers.S",
+      "-o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/guest-layout-low-art/signal-registers.o"
+    ],
+    [
+      "/opt/homebrew/opt/llvm/bin/clang",
+      "--target=aarch64-linux-musl",
+      "-mno-outline-atomics",
+      "-fPIE",
+      "-O2",
+      "-g",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-ffunction-sections",
+      "-Dmain=unused_mm_main",
+      "-nostdinc",
+      "-isystem",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/musl-build/install/include",
+      "-isystem",
+      "/opt/homebrew/Cellar/llvm/22.1.7_1/lib/clang/22/include",
+      "-c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/experiments/native-linux/userspace/code-tests.c",
+      "-o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/guest-layout-low-art/code-tests.o"
+    ],
+    [
+      "/opt/homebrew/opt/llvm/bin/clang",
+      "--target=aarch64-linux-musl",
+      "-mno-outline-atomics",
+      "-fPIE",
+      "-O2",
+      "-g",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-ffunction-sections",
+      "-Dmain=unused_mm_main",
+      "-nostdinc",
+      "-isystem",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/musl-build/install/include",
+      "-isystem",
+      "/opt/homebrew/Cellar/llvm/22.1.7_1/lib/clang/22/include",
+      "-c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/experiments/native-linux/userspace/mm-bench.c",
+      "-o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/guest-layout-low-art/mm-bench.o"
+    ],
+    [
+      "/opt/homebrew/opt/llvm/bin/clang",
+      "--target=aarch64-linux-musl",
+      "-mno-outline-atomics",
+      "-fPIE",
+      "-O2",
+      "-g",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-ffunction-sections",
+      "-Dmain=unused_mm_main",
+      "-nostdinc",
+      "-isystem",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/musl-build/install/include",
+      "-isystem",
+      "/opt/homebrew/Cellar/llvm/22.1.7_1/lib/clang/22/include",
+      "-c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/experiments/native-linux/userspace/mm-tests.c",
+      "-o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/guest-layout-low-art/mm-tests.o"
+    ],
+    [
+      "/opt/homebrew/opt/llvm/bin/clang",
+      "--target=aarch64-linux-musl",
+      "-mno-outline-atomics",
+      "-fPIE",
+      "-O2",
+      "-g",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-ffunction-sections",
+      "-Dmain=unused_mm_main",
+      "-nostdinc",
+      "-isystem",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/musl-build/install/include",
+      "-isystem",
+      "/opt/homebrew/Cellar/llvm/22.1.7_1/lib/clang/22/include",
+      "-c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/experiments/native-linux/userspace/file-tests.c",
+      "-o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/guest-layout-low-art/file-tests.o"
+    ],
+    [
+      "/opt/homebrew/opt/llvm/bin/clang",
+      "--target=aarch64-linux-musl",
+      "-mno-outline-atomics",
+      "-fPIE",
+      "-O2",
+      "-g",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-ffunction-sections",
+      "-Dmain=unused_mm_main",
+      "-nostdinc",
+      "-isystem",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/musl-build/install/include",
+      "-isystem",
+      "/opt/homebrew/Cellar/llvm/22.1.7_1/lib/clang/22/include",
+      "-c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/experiments/native-linux/translation/timer-tests.c",
+      "-o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/guest-layout-low-art/timer-tests.o"
+    ],
+    [
+      "/opt/homebrew/bin/ld.lld",
+      "-pie",
+      "--gc-sections",
+      "--no-dynamic-linker",
+      "-z",
+      "max-page-size=16384",
+      "-z",
+      "common-page-size=16384",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/musl-build/install/lib/rcrt1.o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/musl-build/install/lib/crti.o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/guest-layout-low-art/guest.o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/guest-layout-low-art/signal-tests.o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/guest-layout-low-art/signal-registers.o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/guest-layout-low-art/code-tests.o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/guest-layout-low-art/mm-bench.o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/guest-layout-low-art/mm-tests.o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/guest-layout-low-art/file-tests.o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/guest-layout-low-art/timer-tests.o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/musl-build/install/lib/libc.a",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/compiler-rt-build/libbuiltins.a",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/musl-build/install/lib/crtn.o",
+      "-o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/guest-layout-low-art/guest.elf"
+    ],
+    [
+      "/opt/homebrew/share/android-ndk/toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android35-clang",
+      "-ffixed-x18",
+      "-mno-outline-atomics",
+      "-g",
+      "-O2",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-Wl,-z,max-page-size=16384,-z,common-page-size=16384",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/experiments/native-linux/userspace/bionic-test.c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/experiments/native-linux/userspace/proc-exit-tests.c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/experiments/native-linux/userspace/file-tests.c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/experiments/native-linux/userspace/seccomp-tests.c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/experiments/native-linux/userspace/signal-tests.c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/experiments/native-linux/userspace/signal-registers.S",
+      "-o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/guest-layout-low-art/bionic-test.elf"
+    ]
+  ],
+  "host_unchanged_after_guest_build": true,
+  "configuration": {
+    "guest_layout": "low",
+    "code_memory": "dual",
+    "execution": "direct",
+    "direct": {
+      "mapping_entries": 256,
+      "route_entries": 256,
+      "selective_writes": false,
+      "reuse_code_checks": false,
+      "memory": "flat",
+      "code_watch": true,
+      "cross_page": true,
+      "route_epochs": false,
+      "retain_routes": false,
+      "memory_groups": false,
+      "native_exclusive": true,
+      "vector_table": false,
+      "simd_math": false
+    },
+    "mapping": "pte",
+    "sparse_scan": true,
+    "fault_prefetch": false,
+    "guest_page_bytes": 16384,
+    "workload": "android",
+    "entries": [
+      "cli",
+      "gcd"
+    ],
+    "art_nterp": 1,
+    "cpus": 1,
+    "high_res_timers": false,
+    "online_cpus": 1,
+    "uaccess_stop": "all",
+    "parallel_profile": false,
+    "art_expanded_jit": 0,
+    "art_fast_baseline": 0,
+    "cache_invalidation": "pages",
+    "exec_cache": "pages",
+    "tlb_invalidation": "pages",
+    "linux_fastpath": 0,
+    "guest_ram_bytes": 1073741824,
+    "translation_cache_bytes": 134217728,
+    "instruction_batch": 50000,
+    "memory_interval_ms": 100,
+    "preemption": "timer",
+    "timer_interval_ns": 2000000
+  },
+  "measurement": "Guest clock times 128 pipe round trips per memory case; excludes initial COW materialization. Selected preemption, translation and selected Linux mapping implementation included. Memory means are arithmetic sample means, including phase boundaries; sampled peaks can miss short peaks. Resident lifetime peak is separate.",
+  "sha256": {
+    "experiments/native-linux/translation/kernel-image.c": "33792252482c0c6be81d1009a45f1a12f17233a7fd472d12a7f394afd136217f",
+    "experiments/native-linux/translation/linux-elf.c": "e3557d2945b3e6dc0b9c1b4ae7041a6dd21a785e4981f97ddff1ea9837d68365",
+    "experiments/native-linux/translation/linux-execution.c": "71ce4252c888dc981c105a6c2dca0518320a1854ee92c490ccababff9f8eb3af",
+    "experiments/native-linux/translation/interaction-profile.c": "8016783f7a3f0087f0dc369b0316655d95bd612a1fc49547b8c7eada4501881c",
+    "experiments/native-linux/translation/linux-runner.c": "3efe27d91da23e303009e62930d39c3fa9272065d41d41dacd0015218ae281f9",
+    "experiments/native-linux/translation/linux-memory.c": "0cc6ab6ff8ab7abe76c1c73aaf18fecb200ff27251ea29f0f15b0618a6020e31",
+    "experiments/native-linux/lkl-host.c": "49c63f1be4112408bbe5bdced53cf8bd0314eedaf770fe4d869d30edf3a6c671",
+    "experiments/native-linux/translation/code-watch.c": "1bfa90873b4e52f1ca0766e169999f948cbff313eccffba14be0e76e7dd1305e",
+    "experiments/native-linux/translation/read-view.c": "85ad462693b9ff64532bbf2056a2c6b09cefb1bbd4d8fbcf0cb7570697ed3c2a",
+    "experiments/native-linux/translation/unicorn-code-memory.c": "f7fe3981500192267b25ae33cb4aeb5ef38f31c674ddb3cb0ebfa0a0edb43d6e",
+    "experiments/native-linux/direct/engine.cpp": "dd99ddbbb8436cc6b97e6eb63c8cf908499c849ee3110c64efa40ee22a7adb33",
+    "experiments/native-linux/direct/compile.cpp": "30a269413ba85c1aecf58e695a3dc88ea20460fe8e18801fa69adfe4b6eaac2c",
+    "experiments/native-linux/direct/decode.cpp": "e2ce2940d0c5d5c1658c45d8a4beee40f9dbb662f960eabb0cad96b0ce84efc1",
+    "experiments/native-linux/direct/memory-groups.cpp": "6447bb9544d9cfbc9f872e6e721b17854aae3a1f88fcedcd9767831aaf1ae9a6",
+    "experiments/native-linux/direct/read-faults.cpp": "6e514b9e0f8b9675e2eaad955440fd4909b8f19e6e1637ea16d083d2a9809348",
+    "experiments/native-linux/direct/cross-page.cpp": "ab2aea50c200cb993fbbad08a2c26423391a428a1359225669a30d2baf8f622d",
+    "experiments/native-linux/direct/entry.S": "0a1f01ba0e41cc631dfb62008260b921f9c85a01b44b33d16be76fd8567923b7",
+    "experiments/native-linux/code-memory.c": "8215ac2a2564049be0b45a80b3774ec994d6e51b6eb2057ed00cd515ef682981",
+    "experiments/native-linux/execute-check.c": "2e5a080e11bb3ec9407be2495c30a0391d2e8a858f1fe1a01a624eed3a8dd3c5",
+    "experiments/native-linux/direct/decode.h": "eafddef33888746adfc25306f6b2ab7903ff9f50adce3b0cf55e43f1e8cba5a9",
+    "experiments/native-linux/direct/memory-groups.h": "c6250a511c45dd7bbd5733ff43b55dd8a0eb6501d9759bb12a413f9c121a6b31",
+    "experiments/native-linux/direct/direct.h": "454493a2a093afe3e47c3b07311c06d8db6d01450e78b8f2b251c4443401b3f1",
+    "experiments/native-linux/direct/internal.h": "01076e612a07315d6c9af5dd0b1c90eb1c7cddbb9fe15eb8f370e67202f2e125",
+    "experiments/native-linux/direct/layout.h": "bea63a67f1145501152a6eaf400e9d1393badc55871c7b61e365a4bd2782bb23",
+    "experiments/native-linux/direct/page-table-layout.h": "500897ffde014c17c73d03a92b34b07a9990e52695c369d9228c01d5d4600109",
+    "experiments/native-linux/code-memory.h": "b76ec86c799b073a58b08dc04300d091cb63531d31289ea22fdfb16d4495870a",
+    "experiments/native-linux/execute-check.h": "db1decd5ee536b58b9974ff03951d79dddfc3f74c1205ad34b7c725de4bf6883",
+    "experiments/native-linux/nce.h": "7bcdc5e777e10e1d70f0bf1838a2160e87c70613a44b90b16c3e07aedf4a9f58",
+    "experiments/native-linux/guest-registers.h": "90a4d5b6e613ce4f2cda359dcd05f6e8d876a788bc437c2c1e13e05403e4627a",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/code_block.hpp": "c1b59e9d8a37775f8558fb3a0f7b34a6b7dbd2b2c13c088be65253c2223faa8a",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/dual_code_block.hpp": "619a01b3c69e107cc1c13c79b0dfbe97b09395e70a6c705b77e0531894a69620",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/feature_detection/cpu_feature.hpp": "2ae6e67bd4af85bd7d6d6eb7585f73cbdc237183167bb265a0427b74807e0a02",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/feature_detection/feature_detection.hpp": "4d13c256d5028d1ca3e5a0ad59382e888b79e033b72cffe7dae4c3e9ecc8d97e",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/feature_detection/feature_detection_apple.hpp": "99d88802080a50bd7d73a07020c18eee44417e193ff5515cbad8f6972890bbc6",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/feature_detection/feature_detection_freebsd.hpp": "84a10ab44c7c566523705703fb118904156c39b6b93148d458e2ab77a80a2c2d",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/feature_detection/feature_detection_generic.hpp": "4b78fafbb988a18b25b1aeb04c5ebff6b3a675f502e315fd8430f2d3f61f0fd2",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/feature_detection/feature_detection_hwcaps.hpp": "5839e027d9145f182149586fc30f129f33d5b482ffa174ed4ac6f9bb3b5a3b3f",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/feature_detection/feature_detection_idregs.hpp": "f759c5fd02bb2d2bafe45376e3856fa9371737282b22f66101fd4ae8db5f7b96",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/feature_detection/feature_detection_linux.hpp": "a49f3c60ad2cae71c158fd9207fdbad5e40837793f57289490603455302299c6",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/feature_detection/feature_detection_netbsd.hpp": "1315afa43ea61ffb7beb1102bf090d24d1285f2340028b5da50c3d31491dd09c",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/feature_detection/feature_detection_openbsd.hpp": "941dd25a778b8153e3e98aa9b7795a2c54359d24d8337f56a8658993f3fecb96",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/feature_detection/feature_detection_w32.hpp": "f228126514f482b43c0304a1f9dfb5942b93afabfc4372662af1193679c503de",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/feature_detection/id_registers.hpp": "ed83ce3fdaa0bea503dbdd9c0e728e8cb4eb0307fdf3bc60192fc0dfa130d1c8",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/feature_detection/read_id_registers_directly.hpp": "ff2e769fabf6f43d6e12939072e6cd911694f7966d2bd8c4ce6c3075aad34020",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/arm64_encode_helpers.inc.hpp": "55576102b1774f7f7b681857a3d2c6843776045cccd24fa09b8c4713929adbaf",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/cpu_feature.inc.hpp": "5919c8d8b32ae0899d04a888d8e852a79c604b33f9b6cffe632234437f57ab67",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/enum.hpp": "603697b7a7e16795219a74fa2d735e8bd442c79cdcb539ed0abed2b83417fd26",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/imm.hpp": "268b0414bf57c82cddb3de6b286e8e1ce52fb2b413aaecaa1f0cf9099b7e7cc1",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/list.hpp": "0592b31d29a6f1bfbee46cdb0aa5ce778edc9643db90a39d42215970357328e9",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/mnemonics_fpsimd_v8.0.inc.hpp": "3ecdfd1ff46ff749b2525e1a75acbabc6022848f700a6f16b36f480ab954a266",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/mnemonics_fpsimd_v8.1.inc.hpp": "404268b9e0e3b4708d5018fd1fbf3ea1339c641382e7cfd15534af56a7672e69",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/mnemonics_fpsimd_v8.2.inc.hpp": "52e7a48b969badf327c00c2ea4556353c61950a0c452adeaee37c6820926261f",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/mnemonics_fpsimd_v8.3.inc.hpp": "84bcced18fe10c753ec5ea1c84e9531ab1ceb4e08b046519e75788a14b814ae4",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/mnemonics_generic_v8.0.inc.hpp": "8ffd907bb38b27700022e29d40111fe72e640d003ad6aa3e372c4d8a7ebd3f6c",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/mnemonics_generic_v8.1.inc.hpp": "9f60f325c392e907dd9d2cbab62e1f8cfc7ab95c88e54df75b1a1f64bc7fa93b",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/mnemonics_generic_v8.2.inc.hpp": "1b53f462d1ed7e0a763236dbef9c4bfc70f6430cf5f8b420b2acc4dd2e8884ab",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/mnemonics_generic_v8.3.inc.hpp": "4b775baed83b1bb32b7bd339433175ce09b4bbc6da33d887bc9ca989d42b5d76",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/multi_typed_name.hpp": "a4322bfdb95f8477e6f92b31194110ef860c7402d50ce18daae6e016d4fa9aac",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/oaknut_exception.inc.hpp": "48629c93b468527c440dad30f8044818aa202caff67e73f45a246a3e96f8ad28",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/offset.hpp": "cb48c0eface8f5458a89402a090084690d3f999ff562e63870a1b16f438a7d52",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/overloaded.hpp": "03f0f551fa10b0b3d8d2c75130c1023ddcc5e8a3566629470408aad370d87fc2",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/reg.hpp": "352456b9b9ea1fb8cb5637e82169e16f08189579da9645ad5a5c1992f95ed198",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/string_literal.hpp": "96dce09750c24842a88e8eb3dfdafe047a5ab94c9398c94ea41cca8e1434e1bb",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/oaknut.hpp": "e25f4222f8f7d17b683d5ea8ff2851f88a3b40c478fcdc6046fe962cfcab2f37",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/oaknut_exception.hpp": "8277ac5a6cf6697305fd169d817d6786b0011027d66962fc9d982ffbce2c19a0",
+    "scripts/probe_direct_execution.py": "b3dcc78791e1c90687091a4ced2fa8f8fc1bacb272165e33045f3567fb0d8c43",
+    "work/native-linux-nce/oaknut-94c726c.tar.gz": "c404db82002f9a851a412b3d55ac9be8a42a2e319fd2fc8a73e63e6ef5d4f97b",
+    "experiments/native-linux/translation/code-watch.h": "1ec6e739e1a542c52a2ed54b7310d1cc0a3317dfa25d1d59aeb971e972ea0747",
+    "experiments/native-linux/translation/read-view.h": "40a09185089ab8a02a76a6789b7b2149ffdb9dc225c7b1c5b4532d6022307488",
+    "scripts/build_nce_userspace.py": "4fafb283fdc1babe0d62ef949eeffd50d2018fddb3420694ab9fb64a60d82149",
+    "experiments/native-linux/userspace/bionic-test.c": "ffa10bd0d16dd15edddb368a0435d9d94b529270c13a89f6b3c5536dc40c0b76",
+    "experiments/native-linux/userspace/proc-exit-tests.c": "58c79b40b0fabaf40707baf80d3cca4883311f33c00139ed8db6f3d02d5353df",
+    "experiments/native-linux/userspace/file-tests.c": "e260e5222cf7efea3140941404100a05be3b383299f2da4cc174a531cc166b8b",
+    "experiments/native-linux/userspace/seccomp-tests.c": "7ac584c36df43561ad7c947eeec40ba0c39188a28d1a79245100b4f683626931",
+    "experiments/native-linux/userspace/signal-tests.c": "43b86323b4dd66c98db20065b8cc41d868fb7ab538135d6eba9d7c65a263a549",
+    "experiments/native-linux/userspace/signal-registers.S": "68e13063df3b1a82a0b5805eb98082204b7ee6e29e7c020cc452ef5199f6d257",
+    "experiments/native-linux/translation/unicorn-code-memory.h": "03e9a24ca9133e989426ca621ad9962c327be47ce889e845f4b668b657243ed7",
+    "experiments/native-linux/translation/linux-elf.h": "faec3fcc8a93eafc0a140830836881e8f2447f20b9b59ec26b7b8230f8b0489b",
+    "experiments/native-linux/translation/linux-execution.h": "ea490ee46e90df3ee0664815dc45e0f58f071378e2b0af333b498d134644ecc2",
+    "experiments/native-linux/translation/interaction-profile.h": "39700898fbcd32c4d4060dad1e494826d50109ab7c5efed50daaf02603938e5a",
+    "experiments/native-linux/translation/linux-memory.h": "11b7a1402acaa07152cdb17d43fed3e6effdeb65af902e8b64ae5ea5cded35e9",
+    "experiments/native-linux/translation/linux-guest.c": "116ddd974331e62ce9d2e2b97c8a4267a956c7cd57b9b95f2dbc24f448aaa102",
+    "scripts/probe_lkl_translation.py": "4ae171af9f5fb6d69cb48ca1850aa6c044536c95de3c8eec7a6cbae399e701fb",
+    "experiments/native-linux/dispatch-test.c": "5211698bd58018aae173d4c6d75daeeb0e4eb357fb2742c4c08d595bc9d7b55b",
+    "experiments/native-linux/layout.h": "9ecb6dc474edfc516284effcbd1999ba445ba88372233636391771a0715deaa5",
+    "experiments/native-linux/userspace/code-tests.c": "91b2720827b7d3bf5d685a39679f766f03d72d17119ffe697479c30465f58fbb",
+    "experiments/native-linux/userspace/mm-bench.c": "27beca8aea863ceedf2698524346cbbbc20134fe005a3e5dd4c623dbcf1c8674",
+    "experiments/native-linux/userspace/mm-tests.c": "527d6c94abaf861909f891f54651dd6fa3ec07f4e20263c730767863e3405357",
+    "experiments/native-linux/translation/timer-tests.c": "b54bcf839dcfe5c929a9935fb616104f688e75a6551892caa0ab4ec73246146f",
+    "work/native-linux-nce/guest-layout-low-art/NceWorkload.dex": "449cf8dabec3e4869093cf7915672e78f6e0aa6ac5b6d3bd15467538dadb939f",
+    "work/native-linux-nce/guest-layout-low-art/ld.config.txt": "dc106c5021978b80e002a74cb56941b4e8381a66a2f00ffc7116dbabc946d89b",
+    "work/native-linux-nce/processes/system.img": "0f12b08215ab47c82e17e0c29caf26e756368594a211f895160421c19250bc38",
+    "work/native-linux-nce/processes/lkl-summary.json": "9ffdeca8fcc8deadf4e49e271fbc48258ac93977666f1ac98e931fbfdeeb3bf8",
+    "work/native-linux-nce/lkl-translation-kernel/lkl-image.bin": "db6bc6011f3b7dafed0562c5b9a7545c5b9fd65ae101e457b5a19272eac5a50f",
+    "work/native-linux-nce/lkl-translation-kernel/lkl-image.h": "8d1b2b02d36b77d8f993a1f32970afc632e7c836857961afaa41f39fba33f9f2",
+    "work/native-linux-nce/lkl-translation-kernel/lkl.so": "22494764a248184cae89c67a4b459c6b2202fee2b82c202e722ed5b89d133138",
+    "work/native-linux-nce/lkl-translation-kernel/lkl-host-ops.h": "54bf2a775fa582ca2bc04fb6a25dc85525b6c69da1cde54f610c4a35e0c1a833",
+    "experiments/native-linux/translation/kernel-api.h": "6acf8b846b78e4e493bd8dd97b42140b28747deac2a367dc7926f924e1c12076",
+    "experiments/native-linux/translation/kernel-image.h": "6946b1a5ce89be9b55634e25115185af009bff2b126f5a10ac4e0690b70b1528",
+    "work/native-linux-nce/guest-layout-low-art/translation-symbols.h": "91d95a6169572e6fb7377323cd12830e8478ba278a1910c6f0ee309c684e7928",
+    "scripts/build_translation_engine.py": "e5ab4173a424f834a739d0d31e14b9fa75a89074716d5f5c5a49e1358b1a1b59",
+    "work/native-linux-nce/unicorn-tb-stop-dual/build.json": "276c122f121cfafc8d068a311b542742757144b2beecb495b7688f2c4390952f",
+    "work/native-linux-nce/unicorn-tb-stop-dual/prefix/lib/libunicorn.a": "a69c2949b8c277ac32701b40c382f00190e533270d41dbb1cf1b7f7fd3250c57",
+    "work/native-linux-nce/guest-layout-low-art/cli": "02de800027cc4c4797d8270376dbe1acb3296abe4372d9e4e45dd49fcd931c5d",
+    "work/native-linux-nce/guest-layout-low-art/gcd": "d41330a2aa9701adcc4a3aafca9b82382f316009d650010559f87b6720e7fde1",
+    "work/native-linux-nce/guest-layout-low-art/guest.elf": "e187ac32a5b92ce4f7d56172f1ac375002c1de1c1a57b724f698639d16509a9c",
+    "work/native-linux-nce/guest-layout-low-art/late.elf": "44a2708b91efb771c654fd47d569d59698f0ad0c915cb16b069f72b5a9e06304",
+    "work/native-linux-nce/guest-layout-low-art/sigreturn.elf": "795d053b14585230d5f6ec0d09fdd5d91b8685c9fb6acdd0935d3d9359baf271",
+    "work/native-linux-nce/guest-layout-low-art/dynamic.elf": "c7be9a096eacbde4ddf2166fbe57392a730f01497a439ecc96acff66f79da571",
+    "work/native-linux-nce/guest-layout-low-art/libc.so": "13e5a9fcf04c9e9f89f0dba662fe6fde2ca7b8d8201eb622d42edc4a28d5f515",
+    "work/native-linux-nce/guest-layout-low-art/dependency.so": "878d6795ecc3afcf6f3bcbf34119e8ec106dbd734b9c216b1352b426b31f06da",
+    "work/native-linux-nce/guest-layout-low-art/plugin.so": "4646ac0f0191552449161c2b5b61bcac054ebc0427d559503ec8547e38077fe9",
+    "work/native-linux-nce/guest-layout-low-art/dash.elf": "8b38ef10487508f46b683f6ef7a747520d5c5c88da1783ce697596f60d4d7851",
+    "work/native-linux-nce/guest-layout-low-art/bionic-test.elf": "6443f090d40abdd5cee148eab52e9efc917ea744efb10a337d4ef4664896d7da",
+    "scripts/build_lkl_translation_kernel.py": "56f3801c26bdd90450fe273ca5661b0485da713fc08e90b8099155acedd5c1ba",
+    "scripts/lkl_translation_patch.py": "a1cfb5092ee71a1b9709943f3d7e973c6e3281fb11001c653be06ef037c6d583",
+    "experiments/native-linux/lkl-nce-mmu.c": "d0ee874b00e58100cfd982c1ecbed136f98a85af4e96c7a252009ebc44edf075",
+    "work/native-linux-nce/lkl-translation-kernel/build.json": "7ca92eb7090bc2e999f1890278b7b0de9ec872b68e8102af5d511172c5dd786c"
+  },
+  "runs": [
+    {
+      "entry": "cli",
+      "iteration": 0,
+      "returncode": 0,
+      "results": [
+        {
+          "memory_sample": "kernel_setup",
+          "monotonic_ns": 2511610230795000,
+          "footprint_bytes": 1737112,
+          "resident_bytes": 2228224,
+          "resident_lifetime_peak_bytes": 2228224
+        },
+        {
+          "phase": "before_kernel",
+          "footprint_bytes": 1753496,
+          "resident_bytes": 2260992,
+          "resident_peak_bytes": 2260992
+        },
+        {
+          "config": "translation_code_memory",
+          "kernel": "dual",
+          "direct": "dual"
+        },
+        {
+          "config": "translation_exec_cache",
+          "mode": "pages"
+        },
+        {
+          "config": "translation_tlb_invalidation",
+          "mode": "pages",
+          "range_limit_pages": 64
+        },
+        {
+          "config": "translation_preemption",
+          "mode": "timer",
+          "instructions": 50000,
+          "timer_interval_ns": 2000000
+        },
+        {
+          "config": "translation_parallel",
+          "cpus": 1,
+          "profile": false,
+          "uaccess_stop": "all"
+        },
+        {
+          "cpu": 0,
+          "config": "translation_execution",
+          "engine": "direct",
+          "direct_cache_bytes": 134217728,
+          "data_page_bytes": 16384,
+          "mapping_entries": 256,
+          "route_entries": 256,
+          "selective_writes": false,
+          "reuse_code_checks": false,
+          "memory": "flat",
+          "code_watch": true,
+          "cross_page": true,
+          "route_epochs": false,
+          "retain_routes": false,
+          "memory_groups": false,
+          "native_exclusive": true,
+          "vector_table": false,
+          "simd_math": false
+        },
+        {
+          "cpu": 0,
+          "config": "translation_cache_settings",
+          "cache_bytes": 134217728,
+          "actual_cache_bytes": 134201268,
+          "invalidation": "pages",
+          "linux_fastpath": false
+        },
+        {
+          "test": "translation_prepared_code_execution",
+          "passed": true
+        },
+        {
+          "config": "translation_guest_layout",
+          "mode": "low",
+          "guest_base": 65536,
+          "guest_end": 4294967296,
+          "guest_span_bytes": 4294901760,
+          "flat_coverage_bytes": 4294967296,
+          "physical_base": 481036337152,
+          "ram_base": 482177187840,
+          "ram_bytes": 1073741824,
+          "reservation_base": 481036337152,
+          "reservation_bytes": 1140850688
+        },
+        {
+          "config": "linux_scheduler_slice",
+          "requested_us": 0,
+          "applied_ns": 750000
+        },
+        {
+          "phase": "translated_linux_boot",
+          "slice_ns": 750000
+        },
+        {
+          "phase": "kernel_ready",
+          "footprint_bytes": 43844232,
+          "resident_bytes": 45383680,
+          "resident_peak_bytes": 45400064
+        },
+        {
+          "memory_sample": "kernel_setup",
+          "monotonic_ns": 2511610277468000,
+          "footprint_bytes": 43844232,
+          "resident_bytes": 45383680,
+          "resident_lifetime_peak_bytes": 45400064
+        },
+        {
+          "memory_statistics": "kernel_setup",
+          "interval_ms": 100,
+          "samples": 2,
+          "errors": 0,
+          "duration_ns": 46679000,
+          "collection_ns": 67000,
+          "footprint_mean_bytes": 22790672.0,
+          "footprint_sample_peak_bytes": 43844232,
+          "footprint_latest_bytes": 43844232,
+          "resident_mean_bytes": 23805952.0,
+          "resident_sample_peak_bytes": 45383680,
+          "resident_latest_bytes": 45383680,
+          "resident_lifetime_peak_bytes": 45400064
+        },
+        {
+          "memory_sample": "guest_setup",
+          "monotonic_ns": 2511610277480000,
+          "footprint_bytes": 43844232,
+          "resident_bytes": 45383680,
+          "resident_lifetime_peak_bytes": 45400064
+        },
+        {
+          "config": "translation_online_cpus",
+          "capacity": 1,
+          "requested": 1,
+          "online_mask": 1
+        },
+        {
+          "test": "android_system_image_readonly",
+          "passed": true
+        },
+        {
+          "config": "art_nterp",
+          "requested": 1
+        },
+        {
+          "config": "art_expanded_jit",
+          "requested": 0
+        },
+        {
+          "config": "art_fast_baseline",
+          "requested": 0
+        },
+        {
+          "memory_sample": "guest_setup",
+          "monotonic_ns": 2511610278744000,
+          "footprint_bytes": 46580360,
+          "resident_bytes": 48119808,
+          "resident_lifetime_peak_bytes": 48119808
+        },
+        {
+          "memory_statistics": "guest_setup",
+          "interval_ms": 100,
+          "samples": 2,
+          "errors": 0,
+          "duration_ns": 1269000,
+          "collection_ns": 18000,
+          "footprint_mean_bytes": 45212296.0,
+          "footprint_sample_peak_bytes": 46580360,
+          "footprint_latest_bytes": 46580360,
+          "resident_mean_bytes": 46751744.0,
+          "resident_sample_peak_bytes": 48119808,
+          "resident_latest_bytes": 48119808,
+          "resident_lifetime_peak_bytes": 48119808
+        },
+        {
+          "memory_sample": "bionic_execution",
+          "monotonic_ns": 2511610278754000,
+          "footprint_bytes": 46580360,
+          "resident_bytes": 48119808,
+          "resident_lifetime_peak_bytes": 48119808
+        },
+        {
+          "phase": "runtime_elf",
+          "path": "/bionic-test",
+          "base": 262144,
+          "span_bytes": 81920
+        },
+        {
+          "phase": "runtime_elf",
+          "path": "/system/bin/linker64",
+          "base": 524288,
+          "span_bytes": 983040
+        },
+        {
+          "phase": "runtime_elf",
+          "path": "/lib/nce-sigreturn.so",
+          "base": 1572864,
+          "span_bytes": 16384
+        },
+        {
+          "phase": "runtime_elf",
+          "path": "/system/lib64/libdl.so",
+          "base": 1835008,
+          "span_bytes": 81920
+        },
+        {
+          "phase": "runtime_elf",
+          "path": "/system/lib64/libc.so",
+          "base": 2097152,
+          "span_bytes": 1048576
+        },
+        {
+          "phase": "runtime_elf",
+          "path": "/system/lib64/libnetd_client.so",
+          "base": 3145728,
+          "span_bytes": 65536
+        },
+        {
+          "phase": "runtime_elf",
+          "path": "/system/lib64/libc++.so",
+          "base": 3407872,
+          "span_bytes": 1130496
+        },
+        {
+          "phase": "runtime_elf",
+          "path": "/system/lib64/libm.so",
+          "base": 4718592,
+          "span_bytes": 262144
+        },
+        {
+          "phase": "runtime_elf",
+          "path": "/bin/sh",
+          "base": 4980736,
+          "span_bytes": 180224
+        },
+        {
+          "phase": "runtime_elf",
+          "path": "/lib/ld-musl-aarch64.so.1",
+          "base": 5242880,
+          "span_bytes": 753664
+        },
+        {
+          "memory_sample": "bionic_execution",
+          "monotonic_ns": 2511610339245000,
+          "footprint_bytes": 76366520,
+          "resident_bytes": 78233600,
+          "resident_lifetime_peak_bytes": 81870848
+        },
+        {
+          "memory_sample": "bionic_execution",
+          "monotonic_ns": 2511610448502000,
+          "footprint_bytes": 211157784,
+          "resident_bytes": 212959232,
+          "resident_lifetime_peak_bytes": 212959232
+        },
+        {
+          "memory_sample": "bionic_execution",
+          "monotonic_ns": 2511610552798000,
+          "footprint_bytes": 211157784,
+          "resident_bytes": 212959232,
+          "resident_lifetime_peak_bytes": 212959232
+        },
+        {
+          "memory_sample": "bionic_execution",
+          "monotonic_ns": 2511610660293000,
+          "footprint_bytes": 211157784,
+          "resident_bytes": 212959232,
+          "resident_lifetime_peak_bytes": 212959232
+        },
+        {
+          "memory_sample": "bionic_execution",
+          "monotonic_ns": 2511610762226000,
+          "footprint_bytes": 211157784,
+          "resident_bytes": 212959232,
+          "resident_lifetime_peak_bytes": 212959232
+        },
+        {
+          "memory_sample": "bionic_execution",
+          "monotonic_ns": 2511610870223000,
+          "footprint_bytes": 211206960,
+          "resident_bytes": 212992000,
+          "resident_lifetime_peak_bytes": 212992000
+        },
+        {
+          "memory_sample": "bionic_execution",
+          "monotonic_ns": 2511610976895000,
+          "footprint_bytes": 211223344,
+          "resident_bytes": 213008384,
+          "resident_lifetime_peak_bytes": 213008384
+        },
+        {
+          "memory_sample": "bionic_execution",
+          "monotonic_ns": 2511611079178000,
+          "footprint_bytes": 211223344,
+          "resident_bytes": 213008384,
+          "resident_lifetime_peak_bytes": 213008384
+        },
+        {
+          "memory_sample": "bionic_execution",
+          "monotonic_ns": 2511611189243000,
+          "footprint_bytes": 211256112,
+          "resident_bytes": 213041152,
+          "resident_lifetime_peak_bytes": 213041152
+        },
+        {
+          "memory_sample": "bionic_execution",
+          "monotonic_ns": 2511611299294000,
+          "footprint_bytes": 211256112,
+          "resident_bytes": 213041152,
+          "resident_lifetime_peak_bytes": 213041152
+        },
+        {
+          "memory_sample": "bionic_execution",
+          "monotonic_ns": 2511611409358000,
+          "footprint_bytes": 211256112,
+          "resident_bytes": 213041152,
+          "resident_lifetime_peak_bytes": 213041152
+        },
+        {
+          "memory_sample": "bionic_execution",
+          "monotonic_ns": 2511611510474000,
+          "footprint_bytes": 211256112,
+          "resident_bytes": 213041152,
+          "resident_lifetime_peak_bytes": 213041152
+        },
+        {
+          "memory_sample": "bionic_execution",
+          "monotonic_ns": 2511611616535000,
+          "footprint_bytes": 211256112,
+          "resident_bytes": 213041152,
+          "resident_lifetime_peak_bytes": 213041152
+        },
+        {
+          "memory_sample": "bionic_execution",
+          "monotonic_ns": 2511611725895000,
+          "footprint_bytes": 211256112,
+          "resident_bytes": 213041152,
+          "resident_lifetime_peak_bytes": 213041152
+        },
+        {
+          "memory_sample": "bionic_execution",
+          "monotonic_ns": 2511611826501000,
+          "footprint_bytes": 211256112,
+          "resident_bytes": 213041152,
+          "resident_lifetime_peak_bytes": 213041152
+        },
+        {
+          "memory_sample": "bionic_execution",
+          "monotonic_ns": 2511611929286000,
+          "footprint_bytes": 213467976,
+          "resident_bytes": 215236608,
+          "resident_lifetime_peak_bytes": 218382336
+        },
+        {
+          "memory_sample": "bionic_execution",
+          "monotonic_ns": 2511612039351000,
+          "footprint_bytes": 213566280,
+          "resident_bytes": 215334912,
+          "resident_lifetime_peak_bytes": 219086848
+        },
+        {
+          "memory_sample": "bionic_execution",
+          "monotonic_ns": 2511612145053000,
+          "footprint_bytes": 215925576,
+          "resident_bytes": 217694208,
+          "resident_lifetime_peak_bytes": 221413376
+        },
+        {
+          "memory_sample": "bionic_execution",
+          "monotonic_ns": 2511612248221000,
+          "footprint_bytes": 216056648,
+          "resident_bytes": 217825280,
+          "resident_lifetime_peak_bytes": 221577216
+        },
+        {
+          "memory_sample": "bionic_execution",
+          "monotonic_ns": 2511612350842000,
+          "footprint_bytes": 216154952,
+          "resident_bytes": 217923584,
+          "resident_lifetime_peak_bytes": 221642752
+        },
+        {
+          "memory_sample": "bionic_execution",
+          "monotonic_ns": 2511612457729000,
+          "footprint_bytes": 216744800,
+          "resident_bytes": 218497024,
+          "resident_lifetime_peak_bytes": 221839360
+        },
+        {
+          "memory_sample": "bionic_execution",
+          "monotonic_ns": 2511612564255000,
+          "footprint_bytes": 216908640,
+          "resident_bytes": 218660864,
+          "resident_lifetime_peak_bytes": 222412800
+        },
+        {
+          "memory_sample": "bionic_execution",
+          "monotonic_ns": 2511612673220000,
+          "footprint_bytes": 218252104,
+          "resident_bytes": 220020736,
+          "resident_lifetime_peak_bytes": 224215040
+        },
+        {
+          "test": "linux_user_string_boundaries",
+          "passed": true,
+          "libc": "bionic"
+        },
+        {
+          "test": "linux_exec_symlink",
+          "passed": true,
+          "libc": "bionic"
+        },
+        {
+          "test": "linux_aarch64_file_open_flags",
+          "passed": true,
+          "libc": "bionic"
+        },
+        {
+          "test": "linux_signal_mask_altstack_nested",
+          "passed": true
+        },
+        {
+          "test": "linux_signal_register_restore",
+          "passed": true
+        },
+        {
+          "test": "linux_signal_eintr_restart",
+          "passed": true
+        },
+        {
+          "test": "linux_signal_fault_recovery",
+          "passed": true
+        },
+        {
+          "test": "linux_signal_frame_validation_stop_exit",
+          "passed": true
+        },
+        {
+          "test": "linux_signal_timer_preemption",
+          "passed": true
+        },
+        {
+          "test": "linux_signal_suite",
+          "passed": true,
+          "libc": "bionic"
+        },
+        {
+          "test": "linux_seccomp_filter",
+          "passed": true,
+          "fork_inheritance": true,
+          "thread_sync": true,
+          "trap_metadata": true
+        },
+        {
+          "test": "android_scudo_class_growth",
+          "passed": true,
+          "allocated_bytes": 50331648
+        },
+        {
+          "test": "android_bionic_many_threads",
+          "passed": true,
+          "threads": 128,
+          "reserved_kib": 133120
+        },
+        {
+          "test": "linux_proc_concurrent_exit",
+          "passed": true,
+          "processes": 32,
+          "threads": 256,
+          "stat_reads": 203955
+        },
+        {
+          "test": "android_bionic_threads_allocator_tls",
+          "passed": true,
+          "page_size": 16384
+        },
+        {
+          "test": "translated_linux_process",
+          "path": "/bionic-test",
+          "passed": true,
+          "waited": 26,
+          "status": 0
+        },
+        {
+          "memory_sample": "bionic_execution",
+          "monotonic_ns": 2511612758999000,
+          "footprint_bytes": 214090544,
+          "resident_bytes": 215875584,
+          "resident_lifetime_peak_bytes": 224346112
+        },
+        {
+          "memory_statistics": "bionic_execution",
+          "interval_ms": 100,
+          "samples": 25,
+          "errors": 0,
+          "duration_ns": 2480250000,
+          "collection_ns": 1337000,
+          "footprint_mean_bytes": 200847678.72,
+          "footprint_sample_peak_bytes": 218252104,
+          "footprint_latest_bytes": 214090544,
+          "resident_mean_bytes": 202622238.72,
+          "resident_sample_peak_bytes": 220020736,
+          "resident_latest_bytes": 215875584,
+          "resident_lifetime_peak_bytes": 224346112
+        },
+        {
+          "memory_sample": "cfi_execution",
+          "monotonic_ns": 2511612759007000,
+          "footprint_bytes": 214090544,
+          "resident_bytes": 215875584,
+          "resident_lifetime_peak_bytes": 224346112
+        },
+        {
+          "phase": "runtime_elf",
+          "path": "/system/bin/cfi-test",
+          "base": 6029312,
+          "span_bytes": 65536
+        },
+        {
+          "phase": "runtime_elf",
+          "path": "/system/lib64/libnce-cfi-a.so",
+          "base": 6291456,
+          "span_bytes": 49152
+        },
+        {
+          "phase": "runtime_elf",
+          "path": "/system/lib64/libnce-cfi-b.so",
+          "base": 6553600,
+          "span_bytes": 49152
+        },
+        {
+          "phase": "runtime_elf",
+          "path": "/system/etc/nce-native-libraries.apk",
+          "base": 6815744,
+          "span_bytes": 49152
+        },
+        {
+          "phase": "runtime_elf",
+          "path": "/system/etc/nce-native-libraries.apk",
+          "base": 7077888,
+          "span_bytes": 49152
+        },
+        {
+          "test": "android_apk_native_libraries",
+          "passed": true,
+          "libraries": 2,
+          "fork_reload": true,
+          "invalid_offset_rejected": true
+        },
+        {
+          "test": "android_cfi_library_reload",
+          "passed": true,
+          "reloads": 16,
+          "wrong_type_rejected": true
+        },
+        {
+          "test": "translated_linux_process",
+          "path": "/system/bin/cfi-test",
+          "passed": true,
+          "waited": 461,
+          "status": 0
+        },
+        {
+          "memory_sample": "cfi_execution",
+          "monotonic_ns": 2511612773834000,
+          "footprint_bytes": 215221040,
+          "resident_bytes": 217006080,
+          "resident_lifetime_peak_bytes": 225427456
+        },
+        {
+          "memory_statistics": "cfi_execution",
+          "interval_ms": 100,
+          "samples": 2,
+          "errors": 0,
+          "duration_ns": 14833000,
+          "collection_ns": 19000,
+          "footprint_mean_bytes": 214655792.0,
+          "footprint_sample_peak_bytes": 215221040,
+          "footprint_latest_bytes": 215221040,
+          "resident_mean_bytes": 216440832.0,
+          "resident_sample_peak_bytes": 217006080,
+          "resident_latest_bytes": 217006080,
+          "resident_lifetime_peak_bytes": 225427456
+        },
+        {
+          "memory_sample": "art_execution",
+          "monotonic_ns": 2511612773845000,
+          "footprint_bytes": 215221040,
+          "resident_bytes": 217006080,
+          "resident_lifetime_peak_bytes": 225427456
+        },
+        {
+          "phase": "runtime_elf",
+          "path": "/system/bin/art-test",
+          "base": 7340032,
+          "span_bytes": 81920
+        },
+        {
+          "memory_sample": "art_execution",
+          "monotonic_ns": 2511612775969000,
+          "footprint_bytes": 215302984,
+          "resident_bytes": 217071616,
+          "resident_lifetime_peak_bytes": 225427456
+        },
+        {
+          "phase": "runtime_elf",
+          "path": "/system/lib64/libart.so",
+          "base": 7602176,
+          "span_bytes": 11206656
+        },
+        {
+          "phase": "runtime_elf",
+          "path": "/system/lib64/libz.so",
+          "base": 18874368,
+          "span_bytes": 131072
+        },
+        {
+          "phase": "runtime_elf",
+          "path": "/system/lib64/liblog.so",
+          "base": 19136512,
+          "span_bytes": 114688
+        },
+        {
+          "phase": "runtime_elf",
+          "path": "/system/lib64/libartpalette.so",
+          "base": 19398656,
+          "span_bytes": 65536
+        },
+        {
+          "phase": "runtime_elf",
+          "path": "/system/lib64/libbase.so",
+          "base": 19660800,
+          "span_bytes": 229376
+        },
+        {
+          "phase": "runtime_elf",
+          "path": "/system/lib64/libziparchive.so",
+          "base": 19922944,
+          "span_bytes": 131072
+        },
+        {
+          "phase": "runtime_elf",
+          "path": "/system/lib64/libdl_android.so",
+          "base": 20185088,
+          "span_bytes": 49152
+        },
+        {
+          "phase": "runtime_elf",
+          "path": "/system/lib64/libartbase.so",
+          "base": 20447232,
+          "span_bytes": 573440
+        },
+        {
+          "phase": "runtime_elf",
+          "path": "/system/lib64/libdexfile.so",
+          "base": 21233664,
+          "span_bytes": 278528
+        },
+        {
+          "phase": "runtime_elf",
+          "path": "/system/lib64/libprofile.so",
+          "base": 21757952,
+          "span_bytes": 196608
+        },
+        {
+          "phase": "runtime_elf",
+          "path": "/system/lib64/libnativebridge.so",
+          "base": 22020096,
+          "span_bytes": 65536
+        },
+        {
+          "phase": "runtime_elf",
+          "path": "/system/lib64/libnativeloader.so",
+          "base": 22282240,
+          "span_bytes": 180224
+        },
+        {
+          "phase": "runtime_elf",
+          "path": "/system/lib64/libsigchain.so",
+          "base": 22544384,
+          "span_bytes": 81920
+        },
+        {
+          "phase": "runtime_elf",
+          "path": "/system/lib64/libunwindstack.so",
+          "base": 22806528,
+          "span_bytes": 720896
+        },
+        {
+          "phase": "runtime_elf",
+          "path": "/system/lib64/liblz4.so",
+          "base": 23592960,
+          "span_bytes": 180224
+        },
+        {
+          "phase": "runtime_elf",
+          "path": "/system/lib64/liblzma.so",
+          "base": 23855104,
+          "span_bytes": 245760
+        },
+        {
+          "phase": "runtime_elf",
+          "path": "/system/lib64/heapprofd_client_api.so",
+          "base": 24117248,
+          "span_bytes": 131072
+        },
+        {
+          "phase": "runtime_elf",
+          "path": "/system/lib64/libprocinfo.so",
+          "base": 24379392,
+          "span_bytes": 49152
+        },
+        {
+          "phase": "runtime_elf",
+          "path": "/system/lib64/libartpalette-system.so",
+          "base": 24641536,
+          "span_bytes": 65536
+        },
+        {
+          "phase": "runtime_elf",
+          "path": "/system/lib64/libcutils.so",
+          "base": 24903680,
+          "span_bytes": 131072
+        },
+        {
+          "phase": "runtime_elf",
+          "path": "/system/lib64/libdebugstore_cxx.so",
+          "base": 25165824,
+          "span_bytes": 212992
+        },
+        {
+          "phase": "runtime_elf",
+          "path": "/system/lib64/libprocessgroup.so",
+          "base": 25427968,
+          "span_bytes": 376832
+        },
+        {
+          "phase": "runtime_elf",
+          "path": "/system/lib64/libtombstoned_client.so",
+          "base": 25952256,
+          "span_bytes": 49152
+        },
+        {
+          "phase": "runtime_elf",
+          "path": "/system/lib64/libselinux.so",
+          "base": 26214400,
+          "span_bytes": 147456
+        },
+        {
+          "phase": "runtime_elf",
+          "path": "/system/lib64/libutils.so",
+          "base": 26476544,
+          "span_bytes": 180224
+        },
+        {
+          "phase": "runtime_elf",
+          "path": "/system/lib64/libpcre2.so",
+          "base": 26738688,
+          "span_bytes": 393216
+        },
+        {
+          "phase": "runtime_elf",
+          "path": "/system/lib64/libpackagelistparser.so",
+          "base": 27262976,
+          "span_bytes": 65536
+        },
+        {
+          "phase": "runtime_elf",
+          "path": "/system/lib64/libvndksupport.so",
+          "base": 27525120,
+          "span_bytes": 65536
+        },
+        {
+          "memory_sample": "art_execution",
+          "monotonic_ns": 2511612882482000,
+          "footprint_bytes": 237732728,
+          "resident_bytes": 239534080,
+          "resident_lifetime_peak_bytes": 239534080
+        },
+        {
+          "memory_sample": "art_execution",
+          "monotonic_ns": 2511612992561000,
+          "footprint_bytes": 252527480,
+          "resident_bytes": 254328832,
+          "resident_lifetime_peak_bytes": 254328832
+        },
+        {
+          "phase": "runtime_elf",
+          "path": "/system/lib64/libicu_jni.so",
+          "base": 27787264,
+          "span_bytes": 147456
+        },
+        {
+          "phase": "runtime_elf",
+          "path": "/system/lib64/libicuuc.so",
+          "base": 28049408,
+          "span_bytes": 2015232
+        },
+        {
+          "phase": "runtime_elf",
+          "path": "/system/lib64/libicui18n.so",
+          "base": 30146560,
+          "span_bytes": 2785280
+        },
+        {
+          "phase": "runtime_elf",
+          "path": "/system/lib64/libnativehelper.so",
+          "base": 33030144,
+          "span_bytes": 65536
+        },
+        {
+          "phase": "runtime_elf",
+          "path": "/system/lib64/libjavacore.so",
+          "base": 33292288,
+          "span_bytes": 311296
+        },
+        {
+          "phase": "runtime_elf",
+          "path": "/system/lib64/libandroidio.so",
+          "base": 33816576,
+          "span_bytes": 65536
+        },
+        {
+          "phase": "runtime_elf",
+          "path": "/system/lib64/libicu.so",
+          "base": 34078720,
+          "span_bytes": 81920
+        },
+        {
+          "phase": "runtime_elf",
+          "path": "/system/lib64/libexpat.so",
+          "base": 34340864,
+          "span_bytes": 196608
+        },
+        {
+          "phase": "runtime_elf",
+          "path": "/system/lib64/libopenjdk.so",
+          "base": 34603008,
+          "span_bytes": 262144
+        },
+        {
+          "phase": "runtime_elf",
+          "path": "/system/lib64/libopenjdkjvm.so",
+          "base": 34865152,
+          "span_bytes": 65536
+        },
+        {
+          "memory_sample": "art_execution",
+          "monotonic_ns": 2511613100723000,
+          "footprint_bytes": 269828984,
+          "resident_bytes": 271630336,
+          "resident_lifetime_peak_bytes": 271630336
+        },
+        {
+          "memory_sample": "art_execution",
+          "monotonic_ns": 2511613209597000,
+          "footprint_bytes": 275956600,
+          "resident_bytes": 277757952,
+          "resident_lifetime_peak_bytes": 277774336
+        },
+        {
+          "memory_sample": "art_execution",
+          "monotonic_ns": 2511613309696000,
+          "footprint_bytes": 291652520,
+          "resident_bytes": 293421056,
+          "resident_lifetime_peak_bytes": 293421056
+        },
+        {
+          "memory_sample": "art_execution",
+          "monotonic_ns": 2511613416043000,
+          "footprint_bytes": 302121920,
+          "resident_bytes": 303890432,
+          "resident_lifetime_peak_bytes": 303890432
+        },
+        {
+          "memory_sample": "art_execution",
+          "monotonic_ns": 2511613526052000,
+          "footprint_bytes": 303285184,
+          "resident_bytes": 305102848,
+          "resident_lifetime_peak_bytes": 305102848
+        },
+        {
+          "memory_sample": "art_execution",
+          "monotonic_ns": 2511613636113000,
+          "footprint_bytes": 304382912,
+          "resident_bytes": 306200576,
+          "resident_lifetime_peak_bytes": 306200576
+        },
+        {
+          "memory_sample": "art_execution",
+          "monotonic_ns": 2511613746096000,
+          "footprint_bytes": 305431488,
+          "resident_bytes": 307249152,
+          "resident_lifetime_peak_bytes": 307249152
+        },
+        {
+          "memory_sample": "art_execution",
+          "monotonic_ns": 2511613856158000,
+          "footprint_bytes": 306856896,
+          "resident_bytes": 308674560,
+          "resident_lifetime_peak_bytes": 308723712
+        },
+        {
+          "memory_sample": "art_execution",
+          "monotonic_ns": 2511613965321000,
+          "footprint_bytes": 308724672,
+          "resident_bytes": 310542336,
+          "resident_lifetime_peak_bytes": 310542336
+        },
+        {
+          "memory_sample": "art_execution",
+          "monotonic_ns": 2511614072843000,
+          "footprint_bytes": 309642176,
+          "resident_bytes": 311459840,
+          "resident_lifetime_peak_bytes": 311459840
+        },
+        {
+          "memory_sample": "art_execution",
+          "monotonic_ns": 2511614182926000,
+          "footprint_bytes": 309674944,
+          "resident_bytes": 311492608,
+          "resident_lifetime_peak_bytes": 311492608
+        },
+        {
+          "memory_sample": "art_execution",
+          "monotonic_ns": 2511614286107000,
+          "footprint_bytes": 309904320,
+          "resident_bytes": 311721984,
+          "resident_lifetime_peak_bytes": 311721984
+        },
+        {
+          "memory_sample": "art_execution",
+          "monotonic_ns": 2511614396246000,
+          "footprint_bytes": 310084544,
+          "resident_bytes": 311902208,
+          "resident_lifetime_peak_bytes": 311902208
+        },
+        {
+          "memory_sample": "art_execution",
+          "monotonic_ns": 2511614506097000,
+          "footprint_bytes": 311985088,
+          "resident_bytes": 313802752,
+          "resident_lifetime_peak_bytes": 313802752
+        },
+        {
+          "test": "android_art_library_loaded",
+          "passed": true
+        },
+        {
+          "test": "android_cfi_bounded_shadow",
+          "passed": true,
+          "shadow_bytes": 8388607
+        },
+        {
+          "phase": "android_art_create_vm"
+        },
+        {
+          "test": "android_art_interpreter_references",
+          "passed": true,
+          "method_handles": 3,
+          "var_handles": 4,
+          "exceptions": 3
+        },
+        {
+          "test": "android_art_interpreter_entry",
+          "passed": true,
+          "nterp": true
+        },
+        {
+          "phase": "android_art_java_workload"
+        },
+        {
+          "test": "android_art_java_workload",
+          "passed": true,
+          "allocated_bytes": 16777216,
+          "gc_weak_reference_cleared": true,
+          "retained_cycle_nodes": 64,
+          "threads": 2,
+          "exceptions": 3,
+          "sum": 4002000
+        },
+        {
+          "test": "android_art_proxy_references",
+          "passed": true,
+          "annotation": true,
+          "gc_requests": 3,
+          "stack_arguments": true,
+          "exception": true
+        },
+        {
+          "phase": "android_art_compile_method"
+        },
+        {
+          "test": "android_art_jit_arithmetic",
+          "passed": true,
+          "iterations": 2000000,
+          "compile_ms": 12.486,
+          "interpreter_ms": 103.096,
+          "jit_ms": 2.911,
+          "checksum": "de0adba4164b790e"
+        },
+        {
+          "phase": "android_art_jit_objects"
+        },
+        {
+          "test": "android_art_jit_objects",
+          "passed": true,
+          "array_updates": 32768,
+          "field_traversals": 20000000,
+          "gc_requests": 8,
+          "retained_cycle_nodes": 64,
+          "exceptions": 2
+        },
+        {
+          "phase": "android_art_jit_calls"
+        },
+        {
+          "test": "android_art_jit_calls",
+          "passed": true,
+          "reference_returns": 5,
+          "null_returns": 4
+        },
+        {
+          "test": "android_art_jit_allocations",
+          "passed": true,
+          "object_array_pairs": 40000,
+          "virtual_targets": 2,
+          "exceptions": 2
+        },
+        {
+          "test": "android_art_jit_patterns",
+          "passed": true,
+          "installed_patterns": 11
+        },
+        {
+          "phase": "android_art_jit_runtime_features"
+        },
+        {
+          "test": "android_art_jit_runtime_features",
+          "passed": true,
+          "reference_elements": 256,
+          "interface_targets": 2,
+          "monitor_calls": 4000,
+          "monitor_updates": 20001,
+          "exceptions": 6
+        },
+        {
+          "phase": "android_art_jit_strings_classes"
+        },
+        {
+          "test": "android_art_jit_strings_classes",
+          "passed": true,
+          "strings": 8,
+          "combined_iterations": 100000,
+          "gc_requests": 8,
+          "initialization_errors": 2,
+          "string_exceptions": 5,
+          "large_offset_strings": 2
+        },
+        {
+          "test": "android_art_jit_intrinsics",
+          "passed": true,
+          "integer_inputs": 264,
+          "floating_inputs": 15,
+          "string_cases": 28
+        },
+        {
+          "test": "android_art_jit_volatile_floating",
+          "passed": true,
+          "compiled_methods": 8,
+          "bit_patterns": 16,
+          "null_exceptions": 4
+        },
+        {
+          "test": "android_art_fast_baseline_paths",
+          "passed": true,
+          "gc_requests": 64,
+          "exceptions": 12
+        },
+        {
+          "test": "android_art_compiler_paths",
+          "passed": true,
+          "gc_requests": 10,
+          "exceptions": 3
+        },
+        {
+          "test": "android_art_intrinsic_recompile_identity",
+          "passed": true,
+          "attempts": 2
+        },
+        {
+          "test": "android_art_intrinsics_benchmark",
+          "passed": true,
+          "iterations": 200000,
+          "interpreter_ms": 43.59,
+          "jit_ms": 1.285,
+          "checksum": "0771c65354c7f465"
+        },
+        {
+          "test": "android_art_fast_baseline_entries",
+          "passed": true,
+          "enabled": false,
+          "methods": 20,
+          "fast_methods": 0,
+          "compile_ms": 4.54
+        },
+        {
+          "test": "android_art_expanded_jit_entries",
+          "passed": true,
+          "enabled": false,
+          "methods": 10
+        },
+        {
+          "phase": "android_art_jit_types"
+        },
+        {
+          "test": "android_art_jit_types",
+          "passed": true,
+          "instanceof_calls": 12012,
+          "casts": 41,
+          "rejected": 79,
+          "caught": 64
+        },
+        {
+          "test": "android_art_jit_automatic",
+          "passed": true,
+          "warmup_calls": 200000,
+          "string_constructor_compiled": false
+        },
+        {
+          "test": "android_art_vm_destroyed",
+          "passed": true,
+          "elapsed_ms": 1701.212
+        },
+        {
+          "test": "translated_linux_process",
+          "path": "/system/bin/art-test",
+          "passed": true,
+          "waited": 464,
+          "status": 0
+        },
+        {
+          "phase": "guest_finished",
+          "footprint_bytes": 308069288,
+          "resident_bytes": 309903360,
+          "resident_peak_bytes": 314097664
+        },
+        {
+          "memory_sample": "art_execution",
+          "monotonic_ns": 2511614508364000,
+          "footprint_bytes": 308069288,
+          "resident_bytes": 309903360,
+          "resident_lifetime_peak_bytes": 314097664
+        },
+        {
+          "memory_statistics": "art_execution",
+          "interval_ms": 100,
+          "samples": 19,
+          "errors": 0,
+          "duration_ns": 1734523000,
+          "collection_ns": 1088000,
+          "footprint_mean_bytes": 286757145.684,
+          "footprint_sample_peak_bytes": 311985088,
+          "footprint_latest_bytes": 308069288,
+          "resident_mean_bytes": 288562768.842,
+          "resident_sample_peak_bytes": 313802752,
+          "resident_latest_bytes": 309903360,
+          "resident_lifetime_peak_bytes": 314097664
+        },
+        {
+          "memory_sample": "cleanup",
+          "monotonic_ns": 2511614508372000,
+          "footprint_bytes": 308069288,
+          "resident_bytes": 309903360,
+          "resident_lifetime_peak_bytes": 314097664
+        },
+        {
+          "test": "translated_context_cleanup",
+          "passed": true,
+          "allocated": 452,
+          "freed": 452,
+          "maps": 0,
+          "revocations": 0,
+          "tlb_fills": 17031,
+          "faults": 12272,
+          "syscalls": 816567,
+          "preemptions": 1210
+        },
+        {
+          "cpu": 0,
+          "translation_cache": "pages",
+          "full_flushes": 0,
+          "invalidated_pages": 61081,
+          "tlb_flushes": 33
+        },
+        {
+          "cpu": 0,
+          "translation_tlb": "pages",
+          "full_flushes": 33,
+          "invalidated_pages": 13,
+          "inactive_skips": 0,
+          "mm_switches": 192,
+          "inactive_mapping_changes": 70637
+        },
+        {
+          "cpu": 0,
+          "translation_engine_cache": true,
+          "total_flushes": 1,
+          "invalidated_blocks": 76,
+          "current_blocks": 6877,
+          "used_bytes": 5971140,
+          "capacity_bytes": 134201268
+        },
+        {
+          "cpu": 0,
+          "direct_code_watch": true,
+          "scope": "process",
+          "enabled": true,
+          "queries": 64185266,
+          "protections": 649,
+          "write_faults": 28,
+          "invalidations": 0,
+          "protection_failures": 0,
+          "excluded_pages": 14
+        },
+        {
+          "cpu": 0,
+          "direct_flat_tables": true,
+          "enabled": true,
+          "live_virtual_bytes": 0,
+          "peak_virtual_bytes": 16777216,
+          "updates": 37686,
+          "refresh_pages": 27275641
+        },
+        {
+          "cpu": 0,
+          "direct_read_views": true,
+          "enabled": false,
+          "created": 0,
+          "destroyed": 0,
+          "live_virtual_bytes": 0,
+          "peak_virtual_bytes": 0,
+          "maps": 0,
+          "revocations": 0,
+          "read_changes": 34601,
+          "write_changes": 18892,
+          "compiled_reads": 0,
+          "read_faults": 0
+        },
+        {
+          "cpu": 0,
+          "direct_memory_groups": true,
+          "groups": 0,
+          "instructions": 0
+        },
+        {
+          "cpu": 0,
+          "direct_code_routes": true,
+          "invalidations": 830083,
+          "cleared_entries": 212501248,
+          "branch_exits": 63354015,
+          "reused_runs": 0
+        },
+        {
+          "cpu": 0,
+          "direct_code_validation": true,
+          "content_checks": 53,
+          "version_hits": 64183452
+        },
+        {
+          "cpu": 0,
+          "direct_fallback_reasons": true,
+          "alignment": 0,
+          "cross_page": 0,
+          "code_write": 0
+        },
+        {
+          "cpu": 0,
+          "direct_cross_page": true,
+          "exits": 1793,
+          "completed": 1760,
+          "fallbacks": 0,
+          "faults": 33,
+          "bytes": 48856
+        },
+        {
+          "cpu": 0,
+          "direct_execution": true,
+          "calls": 830052,
+          "fallbacks": 111,
+          "compiles": 13912,
+          "flushes": 1,
+          "code_changes": 30,
+          "code_bytes": 47771456,
+          "capacity_bytes": 134217728,
+          "pages": 1761,
+          "mapping_misses": 11670,
+          "code_lookups": 64185827,
+          "read_mapping_misses": 2963,
+          "write_mapping_misses": 8707,
+          "write_invalidations": 0,
+          "code_validation_hits": 0,
+          "pte_read_refills": 0
+        },
+        {
+          "cpu": 0,
+          "direct_fallback": 0,
+          "count": 1
+        },
+        {
+          "cpu": 0,
+          "direct_fallback": 3575369792,
+          "count": 8
+        },
+        {
+          "cpu": 0,
+          "direct_fallback": 3575333898,
+          "count": 1
+        },
+        {
+          "cpu": 0,
+          "direct_fallback": 3575333919,
+          "count": 1
+        },
+        {
+          "cpu": 0,
+          "direct_fallback": 3361701129,
+          "count": 2
+        },
+        {
+          "cpu": 0,
+          "direct_fallback": 3558866976,
+          "count": 1
+        },
+        {
+          "cpu": 0,
+          "direct_fallback": 3559563328,
+          "count": 1
+        },
+        {
+          "cpu": 0,
+          "direct_fallback": 1315035136,
+          "count": 6
+        },
+        {
+          "cpu": 0,
+          "direct_fallback": 1765936289,
+          "count": 6
+        },
+        {
+          "cpu": 0,
+          "direct_fallback": 2287992425,
+          "count": 9
+        },
+        {
+          "cpu": 0,
+          "direct_fallback": 1592899584,
+          "count": 61
+        },
+        {
+          "cpu": 0,
+          "direct_fallback": 2287959689,
+          "count": 14
+        },
+        {
+          "phase": "cleaned",
+          "footprint_bytes": 66208296,
+          "resident_bytes": 68304896,
+          "resident_peak_bytes": 314097664
+        },
+        {
+          "memory_sample": "cleanup",
+          "monotonic_ns": 2511614514613000,
+          "footprint_bytes": 66191912,
+          "resident_bytes": 68288512,
+          "resident_lifetime_peak_bytes": 314097664
+        },
+        {
+          "memory_statistics": "cleanup",
+          "interval_ms": 100,
+          "samples": 2,
+          "errors": 0,
+          "duration_ns": 6251000,
+          "collection_ns": 16000,
+          "footprint_mean_bytes": 187130600.0,
+          "footprint_sample_peak_bytes": 308069288,
+          "footprint_latest_bytes": 66191912,
+          "resident_mean_bytes": 189095936.0,
+          "resident_sample_peak_bytes": 309903360,
+          "resident_latest_bytes": 68288512,
+          "resident_lifetime_peak_bytes": 314097664
+        },
+        {
+          "result": "passed"
+        }
+      ],
+      "validated": true,
+      "data_image": null,
+      "stdout_sha256": "10859a7e0b8b7ab1368bf5a2ae55c0358c2a522829d743d8165ab2ed8a2eb07d",
+      "stderr_sha256": "758009e6468f427a2d6ab94833397bd3f5ae000ec88b038a4b13d35331cc5b94"
+    },
+    {
+      "entry": "gcd",
+      "iteration": 0,
+      "returncode": 0,
+      "results": [
+        {
+          "test": "dispatch_signal_mask",
+          "sigusr2_blocked": 1
+        },
+        {
+          "memory_sample": "kernel_setup",
+          "monotonic_ns": 2511614560159000,
+          "footprint_bytes": 1819056,
+          "resident_bytes": 2326528,
+          "resident_lifetime_peak_bytes": 2326528
+        },
+        {
+          "phase": "before_kernel",
+          "footprint_bytes": 1835440,
+          "resident_bytes": 2359296,
+          "resident_peak_bytes": 2359296
+        },
+        {
+          "config": "translation_code_memory",
+          "kernel": "dual",
+          "direct": "dual"
+        },
+        {
+          "config": "translation_exec_cache",
+          "mode": "pages"
+        },
+        {
+          "config": "translation_tlb_invalidation",
+          "mode": "pages",
+          "range_limit_pages": 64
+        },
+        {
+          "config": "translation_preemption",
+          "mode": "timer",
+          "instructions": 50000,
+          "timer_interval_ns": 2000000
+        },
+        {
+          "config": "translation_parallel",
+          "cpus": 1,
+          "profile": false,
+          "uaccess_stop": "all"
+        },
+        {
+          "cpu": 0,
+          "config": "translation_execution",
+          "engine": "direct",
+          "direct_cache_bytes": 134217728,
+          "data_page_bytes": 16384,
+          "mapping_entries": 256,
+          "route_entries": 256,
+          "selective_writes": false,
+          "reuse_code_checks": false,
+          "memory": "flat",
+          "code_watch": true,
+          "cross_page": true,
+          "route_epochs": false,
+          "retain_routes": false,
+          "memory_groups": false,
+          "native_exclusive": true,
+          "vector_table": false,
+          "simd_math": false
+        },
+        {
+          "cpu": 0,
+          "config": "translation_cache_settings",
+          "cache_bytes": 134217728,
+          "actual_cache_bytes": 134201268,
+          "invalidation": "pages",
+          "linux_fastpath": false
+        },
+        {
+          "test": "translation_prepared_code_execution",
+          "passed": true
+        },
+        {
+          "config": "translation_guest_layout",
+          "mode": "low",
+          "guest_base": 65536,
+          "guest_end": 4294967296,
+          "guest_span_bytes": 4294901760,
+          "flat_coverage_bytes": 4294967296,
+          "physical_base": 4649041920,
+          "ram_base": 481170554880,
+          "ram_bytes": 1073741824,
+          "reservation_base": 4649041920,
+          "reservation_bytes": 1140850688
+        },
+        {
+          "config": "linux_scheduler_slice",
+          "requested_us": 0,
+          "applied_ns": 750000
+        },
+        {
+          "phase": "translated_linux_boot",
+          "slice_ns": 750000
+        },
+        {
+          "phase": "kernel_ready",
+          "footprint_bytes": 43942536,
+          "resident_bytes": 45481984,
+          "resident_peak_bytes": 45498368
+        },
+        {
+          "memory_sample": "kernel_setup",
+          "monotonic_ns": 2511614594104000,
+          "footprint_bytes": 43942536,
+          "resident_bytes": 45481984,
+          "resident_lifetime_peak_bytes": 45498368
+        },
+        {
+          "memory_statistics": "kernel_setup",
+          "interval_ms": 100,
+          "samples": 2,
+          "errors": 0,
+          "duration_ns": 33953000,
+          "collection_ns": 25000,
+          "footprint_mean_bytes": 22880796.0,
+          "footprint_sample_peak_bytes": 43942536,
+          "footprint_latest_bytes": 43942536,
+          "resident_mean_bytes": 23904256.0,
+          "resident_sample_peak_bytes": 45481984,
+          "resident_latest_bytes": 45481984,
+          "resident_lifetime_peak_bytes": 45498368
+        },
+        {
+          "memory_sample": "guest_setup",
+          "monotonic_ns": 2511614594117000,
+          "footprint_bytes": 43942536,
+          "resident_bytes": 45481984,
+          "resident_lifetime_peak_bytes": 45498368
+        },
+        {
+          "config": "translation_online_cpus",
+          "capacity": 1,
+          "requested": 1,
+          "online_mask": 1
+        },
+        {
+          "test": "android_system_image_readonly",
+          "passed": true
+        },
+        {
+          "config": "art_nterp",
+          "requested": 1
+        },
+        {
+          "config": "art_expanded_jit",
+          "requested": 0
+        },
+        {
+          "config": "art_fast_baseline",
+          "requested": 0
+        },
+        {
+          "memory_sample": "guest_setup",
+          "monotonic_ns": 2511614595320000,
+          "footprint_bytes": 46678664,
+          "resident_bytes": 48218112,
+          "resident_lifetime_peak_bytes": 48218112
+        },
+        {
+          "memory_statistics": "guest_setup",
+          "interval_ms": 100,
+          "samples": 2,
+          "errors": 0,
+          "duration_ns": 1209000,
+          "collection_ns": 14000,
+          "footprint_mean_bytes": 45310600.0,
+          "footprint_sample_peak_bytes": 46678664,
+          "footprint_latest_bytes": 46678664,
+          "resident_mean_bytes": 46850048.0,
+          "resident_sample_peak_bytes": 48218112,
+          "resident_latest_bytes": 48218112,
+          "resident_lifetime_peak_bytes": 48218112
+        },
+        {
+          "memory_sample": "bionic_execution",
+          "monotonic_ns": 2511614595330000,
+          "footprint_bytes": 46678664,
+          "resident_bytes": 48218112,
+          "resident_lifetime_peak_bytes": 48218112
+        },
+        {
+          "phase": "runtime_elf",
+          "path": "/bionic-test",
+          "base": 262144,
+          "span_bytes": 81920
+        },
+        {
+          "phase": "runtime_elf",
+          "path": "/system/bin/linker64",
+          "base": 524288,
+          "span_bytes": 983040
+        },
+        {
+          "phase": "runtime_elf",
+          "path": "/lib/nce-sigreturn.so",
+          "base": 1572864,
+          "span_bytes": 16384
+        },
+        {
+          "phase": "runtime_elf",
+          "path": "/system/lib64/libdl.so",
+          "base": 1835008,
+          "span_bytes": 81920
+        },
+        {
+          "phase": "runtime_elf",
+          "path": "/system/lib64/libc.so",
+          "base": 2097152,
+          "span_bytes": 1048576
+        },
+        {
+          "phase": "runtime_elf",
+          "path": "/system/lib64/libnetd_client.so",
+          "base": 3145728,
+          "span_bytes": 65536
+        },
+        {
+          "phase": "runtime_elf",
+          "path": "/system/lib64/libc++.so",
+          "base": 3407872,
+          "span_bytes": 1130496
+        },
+        {
+          "phase": "runtime_elf",
+          "path": "/system/lib64/libm.so",
+          "base": 4718592,
+          "span_bytes": 262144
+        },
+        {
+          "phase": "runtime_elf",
+          "path": "/bin/sh",
+          "base": 4980736,
+          "span_bytes": 180224
+        },
+        {
+          "phase": "runtime_elf",
+          "path": "/lib/ld-musl-aarch64.so.1",
+          "base": 5242880,
+          "span_bytes": 753664
+        },
+        {
+          "memory_sample": "bionic_execution",
+          "monotonic_ns": 2511614670213000,
+          "footprint_bytes": 76694248,
+          "resident_bytes": 78528512,
+          "resident_lifetime_peak_bytes": 82083840
+        },
+        {
+          "memory_sample": "bionic_execution",
+          "monotonic_ns": 2511614776637000,
+          "footprint_bytes": 211583840,
+          "resident_bytes": 213336064,
+          "resident_lifetime_peak_bytes": 213336064
+        },
+        {
+          "memory_sample": "bionic_execution",
+          "monotonic_ns": 2511614883863000,
+          "footprint_bytes": 211583840,
+          "resident_bytes": 213336064,
+          "resident_lifetime_peak_bytes": 213336064
+        },
+        {
+          "memory_sample": "bionic_execution",
+          "monotonic_ns": 2511614993935000,
+          "footprint_bytes": 211583840,
+          "resident_bytes": 213336064,
+          "resident_lifetime_peak_bytes": 213336064
+        },
+        {
+          "memory_sample": "bionic_execution",
+          "monotonic_ns": 2511615098706000,
+          "footprint_bytes": 211583840,
+          "resident_bytes": 213336064,
+          "resident_lifetime_peak_bytes": 213336064
+        },
+        {
+          "memory_sample": "bionic_execution",
+          "monotonic_ns": 2511615203976000,
+          "footprint_bytes": 211845984,
+          "resident_bytes": 213598208,
+          "resident_lifetime_peak_bytes": 213598208
+        },
+        {
+          "memory_sample": "bionic_execution",
+          "monotonic_ns": 2511615308554000,
+          "footprint_bytes": 211878752,
+          "resident_bytes": 213630976,
+          "resident_lifetime_peak_bytes": 213630976
+        },
+        {
+          "memory_sample": "bionic_execution",
+          "monotonic_ns": 2511615414978000,
+          "footprint_bytes": 211878752,
+          "resident_bytes": 213630976,
+          "resident_lifetime_peak_bytes": 213630976
+        },
+        {
+          "memory_sample": "bionic_execution",
+          "monotonic_ns": 2511615521656000,
+          "footprint_bytes": 211895136,
+          "resident_bytes": 213647360,
+          "resident_lifetime_peak_bytes": 213647360
+        },
+        {
+          "memory_sample": "bionic_execution",
+          "monotonic_ns": 2511615624223000,
+          "footprint_bytes": 211911520,
+          "resident_bytes": 213663744,
+          "resident_lifetime_peak_bytes": 213663744
+        },
+        {
+          "memory_sample": "bionic_execution",
+          "monotonic_ns": 2511615729782000,
+          "footprint_bytes": 211911520,
+          "resident_bytes": 213663744,
+          "resident_lifetime_peak_bytes": 213663744
+        },
+        {
+          "memory_sample": "bionic_execution",
+          "monotonic_ns": 2511615832346000,
+          "footprint_bytes": 211911520,
+          "resident_bytes": 213663744,
+          "resident_lifetime_peak_bytes": 213663744
+        },
+        {
+          "memory_sample": "bionic_execution",
+          "monotonic_ns": 2511615939058000,
+          "footprint_bytes": 211911520,
+          "resident_bytes": 213663744,
+          "resident_lifetime_peak_bytes": 213663744
+        },
+        {
+          "memory_sample": "bionic_execution",
+          "monotonic_ns": 2511616046036000,
+          "footprint_bytes": 211911520,
+          "resident_bytes": 213663744,
+          "resident_lifetime_peak_bytes": 213663744
+        },
+        {
+          "memory_sample": "bionic_execution",
+          "monotonic_ns": 2511616156086000,
+          "footprint_bytes": 211911520,
+          "resident_bytes": 213663744,
+          "resident_lifetime_peak_bytes": 213663744
+        },
+        {
+          "memory_sample": "bionic_execution",
+          "monotonic_ns": 2511616258784000,
+          "footprint_bytes": 213762912,
+          "resident_bytes": 215515136,
+          "resident_lifetime_peak_bytes": 219283456
+        },
+        {
+          "memory_sample": "bionic_execution",
+          "monotonic_ns": 2511616363353000,
+          "footprint_bytes": 213697376,
+          "resident_bytes": 215449600,
+          "resident_lifetime_peak_bytes": 219398144
+        },
+        {
+          "memory_sample": "bionic_execution",
+          "monotonic_ns": 2511616472635000,
+          "footprint_bytes": 215073632,
+          "resident_bytes": 216825856,
+          "resident_lifetime_peak_bytes": 219594752
+        },
+        {
+          "memory_sample": "bionic_execution",
+          "monotonic_ns": 2511616574520000,
+          "footprint_bytes": 216220512,
+          "resident_bytes": 217972736,
+          "resident_lifetime_peak_bytes": 221495296
+        },
+        {
+          "memory_sample": "bionic_execution",
+          "monotonic_ns": 2511616675313000,
+          "footprint_bytes": 216384352,
+          "resident_bytes": 218136576,
+          "resident_lifetime_peak_bytes": 221855744
+        },
+        {
+          "memory_sample": "bionic_execution",
+          "monotonic_ns": 2511616781069000,
+          "footprint_bytes": 216859488,
+          "resident_bytes": 218611712,
+          "resident_lifetime_peak_bytes": 222019584
+        },
+        {
+          "memory_sample": "bionic_execution",
+          "monotonic_ns": 2511616890677000,
+          "footprint_bytes": 217334648,
+          "resident_bytes": 219070464,
+          "resident_lifetime_peak_bytes": 222527488
+        },
+        {
+          "test": "linux_user_string_boundaries",
+          "passed": true,
+          "libc": "bionic"
+        },
+        {
+          "test": "linux_exec_symlink",
+          "passed": true,
+          "libc": "bionic"
+        },
+        {
+          "test": "linux_aarch64_file_open_flags",
+          "passed": true,
+          "libc": "bionic"
+        },
+        {
+          "test": "linux_signal_mask_altstack_nested",
+          "passed": true
+        },
+        {
+          "test": "linux_signal_register_restore",
+          "passed": true
+        },
+        {
+          "test": "linux_signal_eintr_restart",
+          "passed": true
+        },
+        {
+          "test": "linux_signal_fault_recovery",
+          "passed": true
+        },
+        {
+          "test": "linux_signal_frame_validation_stop_exit",
+          "passed": true
+        },
+        {
+          "test": "linux_signal_timer_preemption",
+          "passed": true
+        },
+        {
+          "test": "linux_signal_suite",
+          "passed": true,
+          "libc": "bionic"
+        },
+        {
+          "test": "linux_seccomp_filter",
+          "passed": true,
+          "fork_inheritance": true,
+          "thread_sync": true,
+          "trap_metadata": true
+        },
+        {
+          "test": "android_scudo_class_growth",
+          "passed": true,
+          "allocated_bytes": 50331648
+        },
+        {
+          "test": "android_bionic_many_threads",
+          "passed": true,
+          "threads": 128,
+          "reserved_kib": 133120
+        },
+        {
+          "test": "linux_proc_concurrent_exit",
+          "passed": true,
+          "processes": 32,
+          "threads": 256,
+          "stat_reads": 153052
+        },
+        {
+          "test": "android_bionic_threads_allocator_tls",
+          "passed": true,
+          "page_size": 16384
+        },
+        {
+          "test": "translated_linux_process",
+          "path": "/bionic-test",
+          "passed": true,
+          "waited": 26,
+          "status": 0
+        },
+        {
+          "memory_sample": "bionic_execution",
+          "monotonic_ns": 2511616961510000,
+          "footprint_bytes": 214516600,
+          "resident_bytes": 216252416,
+          "resident_lifetime_peak_bytes": 224690176
+        },
+        {
+          "memory_statistics": "bionic_execution",
+          "interval_ms": 100,
+          "samples": 24,
+          "errors": 0,
+          "duration_ns": 2366185000,
+          "collection_ns": 1320000,
+          "footprint_mean_bytes": 200521897.333,
+          "footprint_sample_peak_bytes": 217334648,
+          "footprint_latest_bytes": 214516600,
+          "resident_mean_bytes": 202267306.667,
+          "resident_sample_peak_bytes": 219070464,
+          "resident_latest_bytes": 216252416,
+          "resident_lifetime_peak_bytes": 224690176
+        },
+        {
+          "memory_sample": "cfi_execution",
+          "monotonic_ns": 2511616961518000,
+          "footprint_bytes": 214516600,
+          "resident_bytes": 216252416,
+          "resident_lifetime_peak_bytes": 224690176
+        },
+        {
+          "phase": "runtime_elf",
+          "path": "/system/bin/cfi-test",
+          "base": 6029312,
+          "span_bytes": 65536
+        },
+        {
+          "phase": "runtime_elf",
+          "path": "/system/lib64/libnce-cfi-a.so",
+          "base": 6291456,
+          "span_bytes": 49152
+        },
+        {
+          "phase": "runtime_elf",
+          "path": "/system/lib64/libnce-cfi-b.so",
+          "base": 6553600,
+          "span_bytes": 49152
+        },
+        {
+          "phase": "runtime_elf",
+          "path": "/system/etc/nce-native-libraries.apk",
+          "base": 6815744,
+          "span_bytes": 49152
+        },
+        {
+          "phase": "runtime_elf",
+          "path": "/system/etc/nce-native-libraries.apk",
+          "base": 7077888,
+          "span_bytes": 49152
+        },
+        {
+          "test": "android_apk_native_libraries",
+          "passed": true,
+          "libraries": 2,
+          "fork_reload": true,
+          "invalid_offset_rejected": true
+        },
+        {
+          "test": "android_cfi_library_reload",
+          "passed": true,
+          "reloads": 16,
+          "wrong_type_rejected": true
+        },
+        {
+          "test": "translated_linux_process",
+          "path": "/system/bin/cfi-test",
+          "passed": true,
+          "waited": 461,
+          "status": 0
+        },
+        {
+          "memory_sample": "cfi_execution",
+          "monotonic_ns": 2511616975922000,
+          "footprint_bytes": 215663480,
+          "resident_bytes": 217399296,
+          "resident_lifetime_peak_bytes": 225820672
+        },
+        {
+          "memory_statistics": "cfi_execution",
+          "interval_ms": 100,
+          "samples": 2,
+          "errors": 0,
+          "duration_ns": 14409000,
+          "collection_ns": 18000,
+          "footprint_mean_bytes": 215090040.0,
+          "footprint_sample_peak_bytes": 215663480,
+          "footprint_latest_bytes": 215663480,
+          "resident_mean_bytes": 216825856.0,
+          "resident_sample_peak_bytes": 217399296,
+          "resident_latest_bytes": 217399296,
+          "resident_lifetime_peak_bytes": 225820672
+        },
+        {
+          "memory_sample": "art_execution",
+          "monotonic_ns": 2511616975931000,
+          "footprint_bytes": 215663480,
+          "resident_bytes": 217399296,
+          "resident_lifetime_peak_bytes": 225820672
+        },
+        {
+          "phase": "runtime_elf",
+          "path": "/system/bin/art-test",
+          "base": 7340032,
+          "span_bytes": 81920
+        },
+        {
+          "phase": "runtime_elf",
+          "path": "/system/lib64/libart.so",
+          "base": 7602176,
+          "span_bytes": 11206656
+        },
+        {
+          "phase": "runtime_elf",
+          "path": "/system/lib64/libz.so",
+          "base": 18874368,
+          "span_bytes": 131072
+        },
+        {
+          "phase": "runtime_elf",
+          "path": "/system/lib64/liblog.so",
+          "base": 19136512,
+          "span_bytes": 114688
+        },
+        {
+          "phase": "runtime_elf",
+          "path": "/system/lib64/libartpalette.so",
+          "base": 19398656,
+          "span_bytes": 65536
+        },
+        {
+          "phase": "runtime_elf",
+          "path": "/system/lib64/libbase.so",
+          "base": 19660800,
+          "span_bytes": 229376
+        },
+        {
+          "phase": "runtime_elf",
+          "path": "/system/lib64/libziparchive.so",
+          "base": 19922944,
+          "span_bytes": 131072
+        },
+        {
+          "phase": "runtime_elf",
+          "path": "/system/lib64/libdl_android.so",
+          "base": 20185088,
+          "span_bytes": 49152
+        },
+        {
+          "phase": "runtime_elf",
+          "path": "/system/lib64/libartbase.so",
+          "base": 20447232,
+          "span_bytes": 573440
+        },
+        {
+          "phase": "runtime_elf",
+          "path": "/system/lib64/libdexfile.so",
+          "base": 21233664,
+          "span_bytes": 278528
+        },
+        {
+          "phase": "runtime_elf",
+          "path": "/system/lib64/libprofile.so",
+          "base": 21757952,
+          "span_bytes": 196608
+        },
+        {
+          "phase": "runtime_elf",
+          "path": "/system/lib64/libnativebridge.so",
+          "base": 22020096,
+          "span_bytes": 65536
+        },
+        {
+          "phase": "runtime_elf",
+          "path": "/system/lib64/libnativeloader.so",
+          "base": 22282240,
+          "span_bytes": 180224
+        },
+        {
+          "phase": "runtime_elf",
+          "path": "/system/lib64/libsigchain.so",
+          "base": 22544384,
+          "span_bytes": 81920
+        },
+        {
+          "phase": "runtime_elf",
+          "path": "/system/lib64/libunwindstack.so",
+          "base": 22806528,
+          "span_bytes": 720896
+        },
+        {
+          "phase": "runtime_elf",
+          "path": "/system/lib64/liblz4.so",
+          "base": 23592960,
+          "span_bytes": 180224
+        },
+        {
+          "phase": "runtime_elf",
+          "path": "/system/lib64/liblzma.so",
+          "base": 23855104,
+          "span_bytes": 245760
+        },
+        {
+          "phase": "runtime_elf",
+          "path": "/system/lib64/heapprofd_client_api.so",
+          "base": 24117248,
+          "span_bytes": 131072
+        },
+        {
+          "phase": "runtime_elf",
+          "path": "/system/lib64/libprocinfo.so",
+          "base": 24379392,
+          "span_bytes": 49152
+        },
+        {
+          "memory_sample": "art_execution",
+          "monotonic_ns": 2511616992840000,
+          "footprint_bytes": 221381496,
+          "resident_bytes": 223117312,
+          "resident_lifetime_peak_bytes": 225820672
+        },
+        {
+          "phase": "runtime_elf",
+          "path": "/system/lib64/libartpalette-system.so",
+          "base": 24641536,
+          "span_bytes": 65536
+        },
+        {
+          "phase": "runtime_elf",
+          "path": "/system/lib64/libcutils.so",
+          "base": 24903680,
+          "span_bytes": 131072
+        },
+        {
+          "phase": "runtime_elf",
+          "path": "/system/lib64/libdebugstore_cxx.so",
+          "base": 25165824,
+          "span_bytes": 212992
+        },
+        {
+          "phase": "runtime_elf",
+          "path": "/system/lib64/libprocessgroup.so",
+          "base": 25427968,
+          "span_bytes": 376832
+        },
+        {
+          "phase": "runtime_elf",
+          "path": "/system/lib64/libtombstoned_client.so",
+          "base": 25952256,
+          "span_bytes": 49152
+        },
+        {
+          "phase": "runtime_elf",
+          "path": "/system/lib64/libselinux.so",
+          "base": 26214400,
+          "span_bytes": 147456
+        },
+        {
+          "phase": "runtime_elf",
+          "path": "/system/lib64/libutils.so",
+          "base": 26476544,
+          "span_bytes": 180224
+        },
+        {
+          "phase": "runtime_elf",
+          "path": "/system/lib64/libpcre2.so",
+          "base": 26738688,
+          "span_bytes": 393216
+        },
+        {
+          "phase": "runtime_elf",
+          "path": "/system/lib64/libpackagelistparser.so",
+          "base": 27262976,
+          "span_bytes": 65536
+        },
+        {
+          "phase": "runtime_elf",
+          "path": "/system/lib64/libvndksupport.so",
+          "base": 27525120,
+          "span_bytes": 65536
+        },
+        {
+          "memory_sample": "art_execution",
+          "monotonic_ns": 2511617097857000,
+          "footprint_bytes": 239207288,
+          "resident_bytes": 241008640,
+          "resident_lifetime_peak_bytes": 241008640
+        },
+        {
+          "memory_sample": "art_execution",
+          "monotonic_ns": 2511617207923000,
+          "footprint_bytes": 252887952,
+          "resident_bytes": 254672896,
+          "resident_lifetime_peak_bytes": 254672896
+        },
+        {
+          "phase": "runtime_elf",
+          "path": "/system/lib64/libicu_jni.so",
+          "base": 27787264,
+          "span_bytes": 147456
+        },
+        {
+          "phase": "runtime_elf",
+          "path": "/system/lib64/libicuuc.so",
+          "base": 28049408,
+          "span_bytes": 2015232
+        },
+        {
+          "phase": "runtime_elf",
+          "path": "/system/lib64/libicui18n.so",
+          "base": 30146560,
+          "span_bytes": 2785280
+        },
+        {
+          "phase": "runtime_elf",
+          "path": "/system/lib64/libnativehelper.so",
+          "base": 33030144,
+          "span_bytes": 65536
+        },
+        {
+          "phase": "runtime_elf",
+          "path": "/system/lib64/libjavacore.so",
+          "base": 33292288,
+          "span_bytes": 311296
+        },
+        {
+          "phase": "runtime_elf",
+          "path": "/system/lib64/libandroidio.so",
+          "base": 33816576,
+          "span_bytes": 65536
+        },
+        {
+          "phase": "runtime_elf",
+          "path": "/system/lib64/libicu.so",
+          "base": 34078720,
+          "span_bytes": 81920
+        },
+        {
+          "phase": "runtime_elf",
+          "path": "/system/lib64/libexpat.so",
+          "base": 34340864,
+          "span_bytes": 196608
+        },
+        {
+          "phase": "runtime_elf",
+          "path": "/system/lib64/libopenjdk.so",
+          "base": 34603008,
+          "span_bytes": 262144
+        },
+        {
+          "phase": "runtime_elf",
+          "path": "/system/lib64/libopenjdkjvm.so",
+          "base": 34865152,
+          "span_bytes": 65536
+        },
+        {
+          "memory_sample": "art_execution",
+          "monotonic_ns": 2511617317720000,
+          "footprint_bytes": 269697960,
+          "resident_bytes": 271466496,
+          "resident_lifetime_peak_bytes": 271466496
+        },
+        {
+          "memory_sample": "art_execution",
+          "monotonic_ns": 2511617427788000,
+          "footprint_bytes": 276333480,
+          "resident_bytes": 278102016,
+          "resident_lifetime_peak_bytes": 278102016
+        },
+        {
+          "memory_sample": "art_execution",
+          "monotonic_ns": 2511617537852000,
+          "footprint_bytes": 293848024,
+          "resident_bytes": 295600128,
+          "resident_lifetime_peak_bytes": 295600128
+        },
+        {
+          "memory_sample": "art_execution",
+          "monotonic_ns": 2511617647916000,
+          "footprint_bytes": 302466008,
+          "resident_bytes": 304218112,
+          "resident_lifetime_peak_bytes": 304218112
+        },
+        {
+          "memory_sample": "art_execution",
+          "monotonic_ns": 2511617754433000,
+          "footprint_bytes": 303317976,
+          "resident_bytes": 305119232,
+          "resident_lifetime_peak_bytes": 305119232
+        },
+        {
+          "memory_sample": "art_execution",
+          "monotonic_ns": 2511617859885000,
+          "footprint_bytes": 303940568,
+          "resident_bytes": 305741824,
+          "resident_lifetime_peak_bytes": 305741824
+        },
+        {
+          "memory_sample": "art_execution",
+          "monotonic_ns": 2511617961845000,
+          "footprint_bytes": 306283480,
+          "resident_bytes": 308084736,
+          "resident_lifetime_peak_bytes": 308084736
+        },
+        {
+          "memory_sample": "art_execution",
+          "monotonic_ns": 2511618068559000,
+          "footprint_bytes": 306529240,
+          "resident_bytes": 308330496,
+          "resident_lifetime_peak_bytes": 308330496
+        },
+        {
+          "memory_sample": "art_execution",
+          "monotonic_ns": 2511618175471000,
+          "footprint_bytes": 308986840,
+          "resident_bytes": 310788096,
+          "resident_lifetime_peak_bytes": 310788096
+        },
+        {
+          "memory_sample": "art_execution",
+          "monotonic_ns": 2511618280871000,
+          "footprint_bytes": 309199832,
+          "resident_bytes": 311001088,
+          "resident_lifetime_peak_bytes": 311001088
+        },
+        {
+          "memory_sample": "art_execution",
+          "monotonic_ns": 2511618389848000,
+          "footprint_bytes": 309232600,
+          "resident_bytes": 311033856,
+          "resident_lifetime_peak_bytes": 311033856
+        },
+        {
+          "memory_sample": "art_execution",
+          "monotonic_ns": 2511618492996000,
+          "footprint_bytes": 309396440,
+          "resident_bytes": 311197696,
+          "resident_lifetime_peak_bytes": 311197696
+        },
+        {
+          "memory_sample": "art_execution",
+          "monotonic_ns": 2511618603043000,
+          "footprint_bytes": 309953496,
+          "resident_bytes": 311754752,
+          "resident_lifetime_peak_bytes": 311754752
+        },
+        {
+          "memory_sample": "art_execution",
+          "monotonic_ns": 2511618711657000,
+          "footprint_bytes": 311149528,
+          "resident_bytes": 312950784,
+          "resident_lifetime_peak_bytes": 312950784
+        },
+        {
+          "test": "android_art_library_loaded",
+          "passed": true
+        },
+        {
+          "test": "android_cfi_bounded_shadow",
+          "passed": true,
+          "shadow_bytes": 8388607
+        },
+        {
+          "phase": "android_art_create_vm"
+        },
+        {
+          "test": "android_art_interpreter_references",
+          "passed": true,
+          "method_handles": 3,
+          "var_handles": 4,
+          "exceptions": 3
+        },
+        {
+          "test": "android_art_interpreter_entry",
+          "passed": true,
+          "nterp": true
+        },
+        {
+          "phase": "android_art_java_workload"
+        },
+        {
+          "test": "android_art_java_workload",
+          "passed": true,
+          "allocated_bytes": 16777216,
+          "gc_weak_reference_cleared": true,
+          "retained_cycle_nodes": 64,
+          "threads": 2,
+          "exceptions": 3,
+          "sum": 4002000
+        },
+        {
+          "test": "android_art_proxy_references",
+          "passed": true,
+          "annotation": true,
+          "gc_requests": 3,
+          "stack_arguments": true,
+          "exception": true
+        },
+        {
+          "phase": "android_art_compile_method"
+        },
+        {
+          "test": "android_art_jit_arithmetic",
+          "passed": true,
+          "iterations": 2000000,
+          "compile_ms": 15.365,
+          "interpreter_ms": 100.841,
+          "jit_ms": 2.983,
+          "checksum": "de0adba4164b790e"
+        },
+        {
+          "phase": "android_art_jit_objects"
+        },
+        {
+          "test": "android_art_jit_objects",
+          "passed": true,
+          "array_updates": 32768,
+          "field_traversals": 20000000,
+          "gc_requests": 8,
+          "retained_cycle_nodes": 64,
+          "exceptions": 2
+        },
+        {
+          "phase": "android_art_jit_calls"
+        },
+        {
+          "test": "android_art_jit_calls",
+          "passed": true,
+          "reference_returns": 5,
+          "null_returns": 4
+        },
+        {
+          "test": "android_art_jit_allocations",
+          "passed": true,
+          "object_array_pairs": 40000,
+          "virtual_targets": 2,
+          "exceptions": 2
+        },
+        {
+          "test": "android_art_jit_patterns",
+          "passed": true,
+          "installed_patterns": 11
+        },
+        {
+          "phase": "android_art_jit_runtime_features"
+        },
+        {
+          "test": "android_art_jit_runtime_features",
+          "passed": true,
+          "reference_elements": 256,
+          "interface_targets": 2,
+          "monitor_calls": 4000,
+          "monitor_updates": 20001,
+          "exceptions": 6
+        },
+        {
+          "phase": "android_art_jit_strings_classes"
+        },
+        {
+          "test": "android_art_jit_strings_classes",
+          "passed": true,
+          "strings": 8,
+          "combined_iterations": 100000,
+          "gc_requests": 8,
+          "initialization_errors": 2,
+          "string_exceptions": 5,
+          "large_offset_strings": 2
+        },
+        {
+          "test": "android_art_jit_intrinsics",
+          "passed": true,
+          "integer_inputs": 264,
+          "floating_inputs": 15,
+          "string_cases": 28
+        },
+        {
+          "test": "android_art_jit_volatile_floating",
+          "passed": true,
+          "compiled_methods": 8,
+          "bit_patterns": 16,
+          "null_exceptions": 4
+        },
+        {
+          "test": "android_art_fast_baseline_paths",
+          "passed": true,
+          "gc_requests": 64,
+          "exceptions": 12
+        },
+        {
+          "test": "android_art_compiler_paths",
+          "passed": true,
+          "gc_requests": 10,
+          "exceptions": 3
+        },
+        {
+          "test": "android_art_intrinsic_recompile_identity",
+          "passed": true,
+          "attempts": 2
+        },
+        {
+          "test": "android_art_intrinsics_benchmark",
+          "passed": true,
+          "iterations": 200000,
+          "interpreter_ms": 45.81,
+          "jit_ms": 1.368,
+          "checksum": "0771c65354c7f465"
+        },
+        {
+          "test": "android_art_fast_baseline_entries",
+          "passed": true,
+          "enabled": false,
+          "methods": 20,
+          "fast_methods": 0,
+          "compile_ms": 4.995
+        },
+        {
+          "test": "android_art_expanded_jit_entries",
+          "passed": true,
+          "enabled": false,
+          "methods": 10
+        },
+        {
+          "phase": "android_art_jit_types"
+        },
+        {
+          "test": "android_art_jit_types",
+          "passed": true,
+          "instanceof_calls": 12012,
+          "casts": 41,
+          "rejected": 79,
+          "caught": 64
+        },
+        {
+          "test": "android_art_jit_automatic",
+          "passed": true,
+          "warmup_calls": 200000,
+          "string_constructor_compiled": false
+        },
+        {
+          "test": "android_art_vm_destroyed",
+          "passed": true,
+          "elapsed_ms": 1711.221
+        },
+        {
+          "test": "translated_linux_process",
+          "path": "/system/bin/art-test",
+          "passed": true,
+          "waited": 464,
+          "status": 0
+        },
+        {
+          "phase": "guest_finished",
+          "footprint_bytes": 307774424,
+          "resident_bytes": 309575680,
+          "resident_peak_bytes": 313769984
+        },
+        {
+          "memory_sample": "art_execution",
+          "monotonic_ns": 2511618717050000,
+          "footprint_bytes": 307774424,
+          "resident_bytes": 309575680,
+          "resident_lifetime_peak_bytes": 313769984
+        },
+        {
+          "memory_statistics": "art_execution",
+          "interval_ms": 100,
+          "samples": 19,
+          "errors": 0,
+          "duration_ns": 1741122000,
+          "collection_ns": 904000,
+          "footprint_mean_bytes": 287223690.105,
+          "footprint_sample_peak_bytes": 311149528,
+          "footprint_latest_bytes": 307774424,
+          "resident_mean_bytes": 289008586.105,
+          "resident_sample_peak_bytes": 312950784,
+          "resident_latest_bytes": 309575680,
+          "resident_lifetime_peak_bytes": 313769984
+        },
+        {
+          "memory_sample": "cleanup",
+          "monotonic_ns": 2511618717057000,
+          "footprint_bytes": 307774424,
+          "resident_bytes": 309575680,
+          "resident_lifetime_peak_bytes": 313769984
+        },
+        {
+          "test": "translated_context_cleanup",
+          "passed": true,
+          "allocated": 452,
+          "freed": 452,
+          "maps": 0,
+          "revocations": 0,
+          "tlb_fills": 16496,
+          "faults": 12334,
+          "syscalls": 681339,
+          "preemptions": 1212
+        },
+        {
+          "cpu": 0,
+          "translation_cache": "pages",
+          "full_flushes": 0,
+          "invalidated_pages": 60153,
+          "tlb_flushes": 34
+        },
+        {
+          "cpu": 0,
+          "translation_tlb": "pages",
+          "full_flushes": 34,
+          "invalidated_pages": 29,
+          "inactive_skips": 0,
+          "mm_switches": 188,
+          "inactive_mapping_changes": 70572
+        },
+        {
+          "cpu": 0,
+          "translation_engine_cache": true,
+          "total_flushes": 1,
+          "invalidated_blocks": 81,
+          "current_blocks": 7223,
+          "used_bytes": 6338468,
+          "capacity_bytes": 134201268
+        },
+        {
+          "cpu": 0,
+          "direct_code_watch": true,
+          "scope": "process",
+          "enabled": true,
+          "queries": 62529373,
+          "protections": 651,
+          "write_faults": 30,
+          "invalidations": 0,
+          "protection_failures": 0,
+          "excluded_pages": 14
+        },
+        {
+          "cpu": 0,
+          "direct_flat_tables": true,
+          "enabled": true,
+          "live_virtual_bytes": 0,
+          "peak_virtual_bytes": 16777216,
+          "updates": 37803,
+          "refresh_pages": 27275698
+        },
+        {
+          "cpu": 0,
+          "direct_read_views": true,
+          "enabled": false,
+          "created": 0,
+          "destroyed": 0,
+          "live_virtual_bytes": 0,
+          "peak_virtual_bytes": 0,
+          "maps": 0,
+          "revocations": 0,
+          "read_changes": 34721,
+          "write_changes": 19008,
+          "compiled_reads": 0,
+          "read_faults": 0
+        },
+        {
+          "cpu": 0,
+          "direct_memory_groups": true,
+          "groups": 0,
+          "instructions": 0
+        },
+        {
+          "cpu": 0,
+          "direct_code_routes": true,
+          "invalidations": 694920,
+          "cleared_entries": 177899520,
+          "branch_exits": 61833351,
+          "reused_runs": 0
+        },
+        {
+          "cpu": 0,
+          "direct_code_validation": true,
+          "content_checks": 56,
+          "version_hits": 62527557
+        },
+        {
+          "cpu": 0,
+          "direct_fallback_reasons": true,
+          "alignment": 0,
+          "cross_page": 0,
+          "code_write": 0
+        },
+        {
+          "cpu": 0,
+          "direct_cross_page": true,
+          "exits": 1728,
+          "completed": 1699,
+          "fallbacks": 0,
+          "faults": 29,
+          "bytes": 47648
+        },
+        {
+          "cpu": 0,
+          "direct_execution": true,
+          "calls": 694888,
+          "fallbacks": 109,
+          "compiles": 13831,
+          "flushes": 1,
+          "code_changes": 31,
+          "code_bytes": 47591088,
+          "capacity_bytes": 134217728,
+          "pages": 1760,
+          "mapping_misses": 11732,
+          "code_lookups": 62529938,
+          "read_mapping_misses": 2963,
+          "write_mapping_misses": 8769,
+          "write_invalidations": 0,
+          "code_validation_hits": 0,
+          "pte_read_refills": 0
+        },
+        {
+          "cpu": 0,
+          "direct_fallback": 0,
+          "count": 1
+        },
+        {
+          "cpu": 0,
+          "direct_fallback": 3575369792,
+          "count": 7
+        },
+        {
+          "cpu": 0,
+          "direct_fallback": 3575333898,
+          "count": 1
+        },
+        {
+          "cpu": 0,
+          "direct_fallback": 3575333919,
+          "count": 1
+        },
+        {
+          "cpu": 0,
+          "direct_fallback": 3361701129,
+          "count": 2
+        },
+        {
+          "cpu": 0,
+          "direct_fallback": 3558866976,
+          "count": 1
+        },
+        {
+          "cpu": 0,
+          "direct_fallback": 3559563328,
+          "count": 1
+        },
+        {
+          "cpu": 0,
+          "direct_fallback": 1315035136,
+          "count": 6
+        },
+        {
+          "cpu": 0,
+          "direct_fallback": 1765936289,
+          "count": 6
+        },
+        {
+          "cpu": 0,
+          "direct_fallback": 2287992425,
+          "count": 9
+        },
+        {
+          "cpu": 0,
+          "direct_fallback": 1592899584,
+          "count": 60
+        },
+        {
+          "cpu": 0,
+          "direct_fallback": 2287959689,
+          "count": 14
+        },
+        {
+          "phase": "cleaned",
+          "footprint_bytes": 66159144,
+          "resident_bytes": 68255744,
+          "resident_peak_bytes": 313769984
+        },
+        {
+          "memory_sample": "cleanup",
+          "monotonic_ns": 2511618724019000,
+          "footprint_bytes": 66142760,
+          "resident_bytes": 68239360,
+          "resident_lifetime_peak_bytes": 313769984
+        },
+        {
+          "memory_statistics": "cleanup",
+          "interval_ms": 100,
+          "samples": 2,
+          "errors": 0,
+          "duration_ns": 6985000,
+          "collection_ns": 27000,
+          "footprint_mean_bytes": 186958592.0,
+          "footprint_sample_peak_bytes": 307774424,
+          "footprint_latest_bytes": 66142760,
+          "resident_mean_bytes": 188907520.0,
+          "resident_sample_peak_bytes": 309575680,
+          "resident_latest_bytes": 68239360,
+          "resident_lifetime_peak_bytes": 313769984
+        },
+        {
+          "result": "passed"
+        }
+      ],
+      "validated": true,
+      "data_image": null,
+      "stdout_sha256": "ea5c5a13f51fb0645b73d4ce4a12d5db2ebb21d31c2162e16b011c452ee1e9f5",
+      "stderr_sha256": "04bf315e296f0bacb0275ce162a9fb8e845f75416b0343f5d3e3ee12552fea9d"
+    }
+  ]
+}

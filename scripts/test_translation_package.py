@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""检查完整桌面报告与 App 固定的用户复制策略一致。"""
+"""检查完整桌面报告与 App 的客体布局、用户复制策略一致。"""
 import json
 from pathlib import Path
 import tempfile
@@ -9,6 +9,17 @@ from translation_package import prepare
 
 
 class PackageConfiguration(unittest.TestCase):
+    def test_unimplemented_guest_layout_is_rejected_before_build(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            report = root / 'summary.json'
+            config = {'workload': 'desktop', 'execution': 'direct', 'code_memory': 'dual',
+                      'cpus': 1, 'uaccess_stop': 'all', 'guest_layout': 'low'}
+            report.write_text(json.dumps({'configuration': config}))
+            with self.assertRaisesRegex(ValueError, 'App 尚未传递客体地址布局'):
+                prepare(report, root / 'output', 'macos')
+            self.assertFalse((root / 'output').exists())
+
     def test_mismatched_or_missing_uaccess_is_rejected_before_build(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)

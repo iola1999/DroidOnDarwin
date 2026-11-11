@@ -1,0 +1,1010 @@
+{
+  "source_report": "experiments/native-linux/results-direct-guest-low-core-20261112.json",
+  "source_report_sha256": "e815addc8eb7c548c5be10b2d2b3d0a4bd5c2a7331658a2118873745fbaba02c",
+  "platform": "macOS-27.0-arm64-arm-64bit-Mach-O",
+  "cpu": "Apple M5 Ultra",
+  "system_build": "26A428",
+  "source_configuration": {
+    "guest_layout": "low",
+    "code_memory": "dual",
+    "execution": "direct",
+    "direct": {
+      "mapping_entries": 256,
+      "route_entries": 256,
+      "selective_writes": false,
+      "reuse_code_checks": false,
+      "memory": "flat",
+      "code_watch": true,
+      "cross_page": true,
+      "route_epochs": false,
+      "retain_routes": false,
+      "memory_groups": false,
+      "native_exclusive": true,
+      "vector_table": false,
+      "simd_math": false
+    },
+    "mapping": "pte",
+    "sparse_scan": true,
+    "fault_prefetch": false,
+    "guest_page_bytes": 16384,
+    "workload": "core",
+    "entries": [
+      "cli",
+      "gcd"
+    ],
+    "art_nterp": 1,
+    "cpus": 1,
+    "high_res_timers": false,
+    "online_cpus": 1,
+    "uaccess_stop": "all",
+    "parallel_profile": false,
+    "art_expanded_jit": 0,
+    "art_fast_baseline": 0,
+    "cache_invalidation": "pages",
+    "exec_cache": "pages",
+    "tlb_invalidation": "pages",
+    "linux_fastpath": 0,
+    "guest_ram_bytes": 1073741824,
+    "translation_cache_bytes": 134217728,
+    "instruction_batch": 50000,
+    "memory_interval_ms": 100,
+    "preemption": "timer",
+    "timer_interval_ns": 2000000
+  },
+  "test_environment": {
+    "NCE_TRANSLATION_CACHE_MIB": "16",
+    "NCE_TRANSLATION_PREEMPTION": "timer",
+    "NCE_TRANSLATION_GUEST_LAYOUT": "low",
+    "NCE_DIRECT_MEMORY": "flat",
+    "NCE_DIRECT_NATIVE_EXCLUSIVE": "1",
+    "NCE_DIRECT_CROSS_PAGE": "1"
+  },
+  "commands": [
+    [
+      "xcrun",
+      "clang",
+      "-O2",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-Dnce_code_prepare_range=real_prepare_range",
+      "-Dnce_code_release_range=real_release_range",
+      "-c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-low-guest/experiments/native-linux/code-memory.c",
+      "-o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-low-guest/work/native-linux-nce/guest-layout-low-preparation/code-memory.o"
+    ],
+    [
+      "xcrun",
+      "clang",
+      "-O2",
+      "-g",
+      "-DNCE_PROCESS",
+      "-DNCE_TRANSLATION_CPUS=1",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-I",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-low-guest/experiments/native-linux",
+      "-I",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-low-guest/work/native-linux-nce/lkl-translation-kernel",
+      "-I",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-low-guest/work/native-linux-nce/guest-layout-low-core-v2",
+      "-I",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-low-guest/work/native-linux-nce/processes/host-include",
+      "-I",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-low-guest/work/native-linux-nce/unicorn-tb-stop-dual/prefix/include",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-low-guest/experiments/native-linux/translation/kernel-image.c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-low-guest/experiments/native-linux/translation/linux-elf.c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-low-guest/work/native-linux-nce/guest-layout-low-preparation/linux-execution.c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-low-guest/experiments/native-linux/translation/interaction-profile.c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-low-guest/experiments/native-linux/translation/linux-runner.c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-low-guest/experiments/native-linux/translation/linux-memory.c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-low-guest/experiments/native-linux/lkl-host.c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-low-guest/experiments/native-linux/translation/code-watch.c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-low-guest/experiments/native-linux/translation/read-view.c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-low-guest/experiments/native-linux/translation/unicorn-code-memory.c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-low-guest/work/native-linux-nce/unicorn-tb-stop-dual/prefix/lib/libunicorn.a",
+      "-DNCE_DIRECT_EXECUTION",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-low-guest/work/native-linux-nce/guest-layout-low-core-v2/direct/engine.o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-low-guest/work/native-linux-nce/guest-layout-low-core-v2/direct/compile.o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-low-guest/work/native-linux-nce/guest-layout-low-core-v2/direct/decode.o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-low-guest/work/native-linux-nce/guest-layout-low-core-v2/direct/memory-groups.o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-low-guest/work/native-linux-nce/guest-layout-low-core-v2/direct/read-faults.o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-low-guest/work/native-linux-nce/guest-layout-low-core-v2/direct/cross-page.o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-low-guest/work/native-linux-nce/guest-layout-low-core-v2/direct/entry.o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-low-guest/work/native-linux-nce/guest-layout-low-preparation/code-memory.o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-low-guest/work/native-linux-nce/guest-layout-low-core-v2/direct/execute-check.o",
+      "-lc++",
+      "-o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-low-guest/work/native-linux-nce/guest-layout-low-preparation/cli",
+      "-DNCE_TRANSLATION_DUAL_MAP",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-low-guest/experiments/native-linux/translation/preparation-failure-test.c"
+    ],
+    [
+      "xcrun",
+      "clang",
+      "-O2",
+      "-g",
+      "-DNCE_PROCESS",
+      "-DNCE_TRANSLATION_CPUS=1",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-I",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-low-guest/experiments/native-linux",
+      "-I",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-low-guest/work/native-linux-nce/lkl-translation-kernel",
+      "-I",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-low-guest/work/native-linux-nce/guest-layout-low-core-v2",
+      "-I",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-low-guest/work/native-linux-nce/processes/host-include",
+      "-I",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-low-guest/work/native-linux-nce/unicorn-tb-stop-dual/prefix/include",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-low-guest/experiments/native-linux/translation/kernel-image.c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-low-guest/experiments/native-linux/translation/linux-elf.c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-low-guest/work/native-linux-nce/guest-layout-low-preparation/linux-execution.c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-low-guest/experiments/native-linux/translation/interaction-profile.c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-low-guest/experiments/native-linux/translation/linux-runner.c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-low-guest/experiments/native-linux/translation/linux-memory.c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-low-guest/experiments/native-linux/lkl-host.c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-low-guest/experiments/native-linux/translation/code-watch.c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-low-guest/experiments/native-linux/translation/read-view.c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-low-guest/experiments/native-linux/translation/unicorn-code-memory.c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-low-guest/work/native-linux-nce/unicorn-tb-stop-dual/prefix/lib/libunicorn.a",
+      "-DNCE_DIRECT_EXECUTION",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-low-guest/work/native-linux-nce/guest-layout-low-core-v2/direct/engine.o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-low-guest/work/native-linux-nce/guest-layout-low-core-v2/direct/compile.o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-low-guest/work/native-linux-nce/guest-layout-low-core-v2/direct/decode.o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-low-guest/work/native-linux-nce/guest-layout-low-core-v2/direct/memory-groups.o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-low-guest/work/native-linux-nce/guest-layout-low-core-v2/direct/read-faults.o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-low-guest/work/native-linux-nce/guest-layout-low-core-v2/direct/cross-page.o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-low-guest/work/native-linux-nce/guest-layout-low-core-v2/direct/entry.o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-low-guest/work/native-linux-nce/guest-layout-low-preparation/code-memory.o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-low-guest/work/native-linux-nce/guest-layout-low-core-v2/direct/execute-check.o",
+      "-lc++",
+      "-o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-low-guest/work/native-linux-nce/guest-layout-low-preparation/gcd",
+      "-DNCE_TRANSLATION_DUAL_MAP",
+      "-DTRANSLATION_DISPATCH",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-low-guest/experiments/native-linux/dispatch-test.c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-low-guest/experiments/native-linux/translation/preparation-failure-test.c"
+    ]
+  ],
+  "runs": [
+    {
+      "entry": "cli",
+      "failure_at": 1,
+      "case": "complete",
+      "returncode": 1,
+      "validated": true,
+      "results": [
+        {
+          "memory_sample": "kernel_setup",
+          "monotonic_ns": 2511478627898000,
+          "footprint_bytes": 1753496,
+          "resident_bytes": 2277376,
+          "resident_lifetime_peak_bytes": 2277376
+        },
+        {
+          "phase": "before_kernel",
+          "footprint_bytes": 1769880,
+          "resident_bytes": 2310144,
+          "resident_peak_bytes": 2310144
+        },
+        {
+          "config": "translation_code_memory",
+          "kernel": "dual",
+          "direct": "dual"
+        },
+        {
+          "result": "failed",
+          "reason": "translation_kernel_load",
+          "errno": 13
+        },
+        {
+          "memory_sample": "kernel_setup",
+          "monotonic_ns": 2511478630038000,
+          "footprint_bytes": 11911576,
+          "resident_bytes": 12484608,
+          "resident_lifetime_peak_bytes": 22642688
+        },
+        {
+          "memory_statistics": "kernel_setup",
+          "interval_ms": 100,
+          "samples": 2,
+          "errors": 0,
+          "duration_ns": 2144000,
+          "collection_ns": 22000,
+          "footprint_mean_bytes": 6832536.0,
+          "footprint_sample_peak_bytes": 11911576,
+          "footprint_latest_bytes": 11911576,
+          "resident_mean_bytes": 7380992.0,
+          "resident_sample_peak_bytes": 12484608,
+          "resident_latest_bytes": 12484608,
+          "resident_lifetime_peak_bytes": 22642688
+        },
+        {
+          "test": "partial_preparation_cleanup",
+          "passed": true,
+          "attempts": 1,
+          "prepared": 0
+        },
+        {
+          "test": "partial_reservation_cleanup",
+          "passed": true,
+          "layout": "low",
+          "created": false,
+          "address": 0,
+          "bytes": 0,
+          "releases": 0,
+          "unmapped": false
+        }
+      ]
+    },
+    {
+      "entry": "cli",
+      "failure_at": 2,
+      "case": "complete",
+      "returncode": 1,
+      "validated": true,
+      "results": [
+        {
+          "memory_sample": "kernel_setup",
+          "monotonic_ns": 2511478635473000,
+          "footprint_bytes": 1737112,
+          "resident_bytes": 2260992,
+          "resident_lifetime_peak_bytes": 2260992
+        },
+        {
+          "phase": "before_kernel",
+          "footprint_bytes": 1753496,
+          "resident_bytes": 2293760,
+          "resident_peak_bytes": 2293760
+        },
+        {
+          "config": "translation_code_memory",
+          "kernel": "dual",
+          "direct": "dual"
+        },
+        {
+          "config": "translation_exec_cache",
+          "mode": "full"
+        },
+        {
+          "config": "translation_tlb_invalidation",
+          "mode": "full",
+          "range_limit_pages": 64
+        },
+        {
+          "config": "translation_preemption",
+          "mode": "timer",
+          "instructions": 50000,
+          "timer_interval_ns": 2000000
+        },
+        {
+          "config": "translation_parallel",
+          "cpus": 1,
+          "profile": false,
+          "uaccess_stop": "all"
+        },
+        {
+          "result": "failed",
+          "reason": "translation_setup"
+        },
+        {
+          "test": "translation_prepared_code_execution",
+          "passed": false
+        },
+        {
+          "memory_sample": "kernel_setup",
+          "monotonic_ns": 2511478640754000,
+          "footprint_bytes": 11960728,
+          "resident_bytes": 13221888,
+          "resident_lifetime_peak_bytes": 29130752
+        },
+        {
+          "memory_statistics": "kernel_setup",
+          "interval_ms": 100,
+          "samples": 2,
+          "errors": 0,
+          "duration_ns": 5286000,
+          "collection_ns": 15000,
+          "footprint_mean_bytes": 6848920.0,
+          "footprint_sample_peak_bytes": 11960728,
+          "footprint_latest_bytes": 11960728,
+          "resident_mean_bytes": 7741440.0,
+          "resident_sample_peak_bytes": 13221888,
+          "resident_latest_bytes": 13221888,
+          "resident_lifetime_peak_bytes": 29130752
+        },
+        {
+          "result": "failed",
+          "reason": "translation_code_preparation"
+        },
+        {
+          "test": "partial_preparation_cleanup",
+          "passed": true,
+          "attempts": 2,
+          "prepared": 1
+        },
+        {
+          "test": "partial_reservation_cleanup",
+          "passed": true,
+          "layout": "low",
+          "created": true,
+          "address": 481036337152,
+          "bytes": 1140850688,
+          "releases": 1,
+          "unmapped": true
+        }
+      ]
+    },
+    {
+      "entry": "cli",
+      "failure_at": 3,
+      "case": "complete",
+      "returncode": 1,
+      "validated": true,
+      "results": [
+        {
+          "memory_sample": "kernel_setup",
+          "monotonic_ns": 2511478645351000,
+          "footprint_bytes": 1737112,
+          "resident_bytes": 2260992,
+          "resident_lifetime_peak_bytes": 2260992
+        },
+        {
+          "phase": "before_kernel",
+          "footprint_bytes": 1753496,
+          "resident_bytes": 2293760,
+          "resident_peak_bytes": 2293760
+        },
+        {
+          "config": "translation_code_memory",
+          "kernel": "dual",
+          "direct": "dual"
+        },
+        {
+          "config": "translation_exec_cache",
+          "mode": "full"
+        },
+        {
+          "config": "translation_tlb_invalidation",
+          "mode": "full",
+          "range_limit_pages": 64
+        },
+        {
+          "config": "translation_preemption",
+          "mode": "timer",
+          "instructions": 50000,
+          "timer_interval_ns": 2000000
+        },
+        {
+          "config": "translation_parallel",
+          "cpus": 1,
+          "profile": false,
+          "uaccess_stop": "all"
+        },
+        {
+          "cpu": 0,
+          "config": "translation_execution",
+          "engine": "direct",
+          "direct_cache_bytes": 16777216,
+          "data_page_bytes": 16384,
+          "mapping_entries": 256,
+          "route_entries": 256,
+          "selective_writes": false,
+          "reuse_code_checks": false,
+          "memory": "flat",
+          "code_watch": false,
+          "cross_page": true,
+          "route_epochs": false,
+          "retain_routes": false,
+          "memory_groups": false,
+          "native_exclusive": true,
+          "vector_table": false,
+          "simd_math": false
+        },
+        {
+          "result": "failed",
+          "reason": "translation_setup"
+        },
+        {
+          "test": "translation_prepared_code_execution",
+          "passed": false
+        },
+        {
+          "memory_sample": "kernel_setup",
+          "monotonic_ns": 2511478650249000,
+          "footprint_bytes": 11927960,
+          "resident_bytes": 13189120,
+          "resident_lifetime_peak_bytes": 29097984
+        },
+        {
+          "memory_statistics": "kernel_setup",
+          "interval_ms": 100,
+          "samples": 2,
+          "errors": 0,
+          "duration_ns": 4905000,
+          "collection_ns": 15000,
+          "footprint_mean_bytes": 6832536.0,
+          "footprint_sample_peak_bytes": 11927960,
+          "footprint_latest_bytes": 11927960,
+          "resident_mean_bytes": 7725056.0,
+          "resident_sample_peak_bytes": 13189120,
+          "resident_latest_bytes": 13189120,
+          "resident_lifetime_peak_bytes": 29097984
+        },
+        {
+          "result": "failed",
+          "reason": "translation_code_preparation"
+        },
+        {
+          "test": "partial_preparation_cleanup",
+          "passed": true,
+          "attempts": 3,
+          "prepared": 2
+        },
+        {
+          "test": "partial_reservation_cleanup",
+          "passed": true,
+          "layout": "low",
+          "created": true,
+          "address": 481036337152,
+          "bytes": 1140850688,
+          "releases": 1,
+          "unmapped": true
+        }
+      ]
+    },
+    {
+      "entry": "cli",
+      "failure_at": 3,
+      "case": "retained-tail",
+      "returncode": 1,
+      "validated": true,
+      "results": [
+        {
+          "memory_sample": "kernel_setup",
+          "monotonic_ns": 2511478655573000,
+          "footprint_bytes": 1737112,
+          "resident_bytes": 2260992,
+          "resident_lifetime_peak_bytes": 2260992
+        },
+        {
+          "phase": "before_kernel",
+          "footprint_bytes": 1753496,
+          "resident_bytes": 2293760,
+          "resident_peak_bytes": 2293760
+        },
+        {
+          "config": "translation_code_memory",
+          "kernel": "dual",
+          "direct": "dual"
+        },
+        {
+          "config": "translation_exec_cache",
+          "mode": "full"
+        },
+        {
+          "config": "translation_tlb_invalidation",
+          "mode": "full",
+          "range_limit_pages": 64
+        },
+        {
+          "config": "translation_preemption",
+          "mode": "timer",
+          "instructions": 50000,
+          "timer_interval_ns": 2000000
+        },
+        {
+          "config": "translation_parallel",
+          "cpus": 1,
+          "profile": false,
+          "uaccess_stop": "all"
+        },
+        {
+          "cpu": 0,
+          "config": "translation_execution",
+          "engine": "direct",
+          "direct_cache_bytes": 16777216,
+          "data_page_bytes": 16384,
+          "mapping_entries": 256,
+          "route_entries": 256,
+          "selective_writes": false,
+          "reuse_code_checks": false,
+          "memory": "flat",
+          "code_watch": false,
+          "cross_page": true,
+          "route_epochs": false,
+          "retain_routes": false,
+          "memory_groups": false,
+          "native_exclusive": true,
+          "vector_table": false,
+          "simd_math": false
+        },
+        {
+          "result": "failed",
+          "reason": "translation_setup"
+        },
+        {
+          "test": "translation_prepared_code_execution",
+          "passed": false
+        },
+        {
+          "memory_sample": "kernel_setup",
+          "monotonic_ns": 2511478661019000,
+          "footprint_bytes": 11944344,
+          "resident_bytes": 13205504,
+          "resident_lifetime_peak_bytes": 29114368
+        },
+        {
+          "memory_statistics": "kernel_setup",
+          "interval_ms": 100,
+          "samples": 2,
+          "errors": 0,
+          "duration_ns": 5453000,
+          "collection_ns": 17000,
+          "footprint_mean_bytes": 6840728.0,
+          "footprint_sample_peak_bytes": 11944344,
+          "footprint_latest_bytes": 11944344,
+          "resident_mean_bytes": 7733248.0,
+          "resident_sample_peak_bytes": 13205504,
+          "resident_latest_bytes": 13205504,
+          "resident_lifetime_peak_bytes": 29114368
+        },
+        {
+          "result": "failed",
+          "reason": "translation_code_preparation"
+        },
+        {
+          "test": "partial_preparation_cleanup",
+          "passed": true,
+          "attempts": 3,
+          "prepared": 2
+        },
+        {
+          "test": "partial_reservation_cleanup",
+          "passed": false,
+          "layout": "low",
+          "created": true,
+          "address": 481036337152,
+          "bytes": 1140850688,
+          "releases": 1,
+          "unmapped": false
+        }
+      ]
+    },
+    {
+      "entry": "gcd",
+      "failure_at": 1,
+      "case": "complete",
+      "returncode": 1,
+      "validated": true,
+      "results": [
+        {
+          "test": "dispatch_signal_mask",
+          "sigusr2_blocked": 1
+        },
+        {
+          "memory_sample": "kernel_setup",
+          "monotonic_ns": 2511479497854000,
+          "footprint_bytes": 1868208,
+          "resident_bytes": 2392064,
+          "resident_lifetime_peak_bytes": 2392064
+        },
+        {
+          "phase": "before_kernel",
+          "footprint_bytes": 1884592,
+          "resident_bytes": 2424832,
+          "resident_peak_bytes": 2424832
+        },
+        {
+          "config": "translation_code_memory",
+          "kernel": "dual",
+          "direct": "dual"
+        },
+        {
+          "result": "failed",
+          "reason": "translation_kernel_load",
+          "errno": 13
+        },
+        {
+          "memory_sample": "kernel_setup",
+          "monotonic_ns": 2511479499983000,
+          "footprint_bytes": 12026288,
+          "resident_bytes": 12582912,
+          "resident_lifetime_peak_bytes": 22740992
+        },
+        {
+          "memory_statistics": "kernel_setup",
+          "interval_ms": 100,
+          "samples": 2,
+          "errors": 0,
+          "duration_ns": 2148000,
+          "collection_ns": 49000,
+          "footprint_mean_bytes": 6947248.0,
+          "footprint_sample_peak_bytes": 12026288,
+          "footprint_latest_bytes": 12026288,
+          "resident_mean_bytes": 7487488.0,
+          "resident_sample_peak_bytes": 12582912,
+          "resident_latest_bytes": 12582912,
+          "resident_lifetime_peak_bytes": 22740992
+        },
+        {
+          "test": "partial_preparation_cleanup",
+          "passed": true,
+          "attempts": 1,
+          "prepared": 0
+        },
+        {
+          "test": "partial_reservation_cleanup",
+          "passed": true,
+          "layout": "low",
+          "created": false,
+          "address": 0,
+          "bytes": 0,
+          "releases": 0,
+          "unmapped": false
+        }
+      ]
+    },
+    {
+      "entry": "gcd",
+      "failure_at": 2,
+      "case": "complete",
+      "returncode": 1,
+      "validated": true,
+      "results": [
+        {
+          "test": "dispatch_signal_mask",
+          "sigusr2_blocked": 1
+        },
+        {
+          "memory_sample": "kernel_setup",
+          "monotonic_ns": 2511479505700000,
+          "footprint_bytes": 1868208,
+          "resident_bytes": 2392064,
+          "resident_lifetime_peak_bytes": 2392064
+        },
+        {
+          "phase": "before_kernel",
+          "footprint_bytes": 1884592,
+          "resident_bytes": 2424832,
+          "resident_peak_bytes": 2424832
+        },
+        {
+          "config": "translation_code_memory",
+          "kernel": "dual",
+          "direct": "dual"
+        },
+        {
+          "config": "translation_exec_cache",
+          "mode": "full"
+        },
+        {
+          "config": "translation_tlb_invalidation",
+          "mode": "full",
+          "range_limit_pages": 64
+        },
+        {
+          "config": "translation_preemption",
+          "mode": "timer",
+          "instructions": 50000,
+          "timer_interval_ns": 2000000
+        },
+        {
+          "config": "translation_parallel",
+          "cpus": 1,
+          "profile": false,
+          "uaccess_stop": "all"
+        },
+        {
+          "result": "failed",
+          "reason": "translation_setup"
+        },
+        {
+          "test": "translation_prepared_code_execution",
+          "passed": false
+        },
+        {
+          "memory_sample": "kernel_setup",
+          "monotonic_ns": 2511479512375000,
+          "footprint_bytes": 12124592,
+          "resident_bytes": 13369344,
+          "resident_lifetime_peak_bytes": 29278208
+        },
+        {
+          "memory_statistics": "kernel_setup",
+          "interval_ms": 100,
+          "samples": 2,
+          "errors": 0,
+          "duration_ns": 6685000,
+          "collection_ns": 22000,
+          "footprint_mean_bytes": 6996400.0,
+          "footprint_sample_peak_bytes": 12124592,
+          "footprint_latest_bytes": 12124592,
+          "resident_mean_bytes": 7880704.0,
+          "resident_sample_peak_bytes": 13369344,
+          "resident_latest_bytes": 13369344,
+          "resident_lifetime_peak_bytes": 29278208
+        },
+        {
+          "result": "failed",
+          "reason": "translation_code_preparation"
+        },
+        {
+          "test": "partial_preparation_cleanup",
+          "passed": true,
+          "attempts": 2,
+          "prepared": 1
+        },
+        {
+          "test": "partial_reservation_cleanup",
+          "passed": true,
+          "layout": "low",
+          "created": true,
+          "address": 481036337152,
+          "bytes": 1140850688,
+          "releases": 1,
+          "unmapped": true
+        }
+      ]
+    },
+    {
+      "entry": "gcd",
+      "failure_at": 3,
+      "case": "complete",
+      "returncode": 1,
+      "validated": true,
+      "results": [
+        {
+          "test": "dispatch_signal_mask",
+          "sigusr2_blocked": 1
+        },
+        {
+          "memory_sample": "kernel_setup",
+          "monotonic_ns": 2511479518724000,
+          "footprint_bytes": 1884592,
+          "resident_bytes": 2408448,
+          "resident_lifetime_peak_bytes": 2408448
+        },
+        {
+          "phase": "before_kernel",
+          "footprint_bytes": 1900976,
+          "resident_bytes": 2441216,
+          "resident_peak_bytes": 2441216
+        },
+        {
+          "config": "translation_code_memory",
+          "kernel": "dual",
+          "direct": "dual"
+        },
+        {
+          "config": "translation_exec_cache",
+          "mode": "full"
+        },
+        {
+          "config": "translation_tlb_invalidation",
+          "mode": "full",
+          "range_limit_pages": 64
+        },
+        {
+          "config": "translation_preemption",
+          "mode": "timer",
+          "instructions": 50000,
+          "timer_interval_ns": 2000000
+        },
+        {
+          "config": "translation_parallel",
+          "cpus": 1,
+          "profile": false,
+          "uaccess_stop": "all"
+        },
+        {
+          "cpu": 0,
+          "config": "translation_execution",
+          "engine": "direct",
+          "direct_cache_bytes": 16777216,
+          "data_page_bytes": 16384,
+          "mapping_entries": 256,
+          "route_entries": 256,
+          "selective_writes": false,
+          "reuse_code_checks": false,
+          "memory": "flat",
+          "code_watch": false,
+          "cross_page": true,
+          "route_epochs": false,
+          "retain_routes": false,
+          "memory_groups": false,
+          "native_exclusive": true,
+          "vector_table": false,
+          "simd_math": false
+        },
+        {
+          "result": "failed",
+          "reason": "translation_setup"
+        },
+        {
+          "test": "translation_prepared_code_execution",
+          "passed": false
+        },
+        {
+          "memory_sample": "kernel_setup",
+          "monotonic_ns": 2511479524304000,
+          "footprint_bytes": 12059056,
+          "resident_bytes": 13303808,
+          "resident_lifetime_peak_bytes": 29212672
+        },
+        {
+          "memory_statistics": "kernel_setup",
+          "interval_ms": 100,
+          "samples": 2,
+          "errors": 0,
+          "duration_ns": 5589000,
+          "collection_ns": 17000,
+          "footprint_mean_bytes": 6971824.0,
+          "footprint_sample_peak_bytes": 12059056,
+          "footprint_latest_bytes": 12059056,
+          "resident_mean_bytes": 7856128.0,
+          "resident_sample_peak_bytes": 13303808,
+          "resident_latest_bytes": 13303808,
+          "resident_lifetime_peak_bytes": 29212672
+        },
+        {
+          "result": "failed",
+          "reason": "translation_code_preparation"
+        },
+        {
+          "test": "partial_preparation_cleanup",
+          "passed": true,
+          "attempts": 3,
+          "prepared": 2
+        },
+        {
+          "test": "partial_reservation_cleanup",
+          "passed": true,
+          "layout": "low",
+          "created": true,
+          "address": 481036337152,
+          "bytes": 1140850688,
+          "releases": 1,
+          "unmapped": true
+        }
+      ]
+    },
+    {
+      "entry": "gcd",
+      "failure_at": 3,
+      "case": "retained-tail",
+      "returncode": 1,
+      "validated": true,
+      "results": [
+        {
+          "test": "dispatch_signal_mask",
+          "sigusr2_blocked": 1
+        },
+        {
+          "memory_sample": "kernel_setup",
+          "monotonic_ns": 2511479529653000,
+          "footprint_bytes": 1868208,
+          "resident_bytes": 2392064,
+          "resident_lifetime_peak_bytes": 2392064
+        },
+        {
+          "phase": "before_kernel",
+          "footprint_bytes": 1884592,
+          "resident_bytes": 2424832,
+          "resident_peak_bytes": 2424832
+        },
+        {
+          "config": "translation_code_memory",
+          "kernel": "dual",
+          "direct": "dual"
+        },
+        {
+          "config": "translation_exec_cache",
+          "mode": "full"
+        },
+        {
+          "config": "translation_tlb_invalidation",
+          "mode": "full",
+          "range_limit_pages": 64
+        },
+        {
+          "config": "translation_preemption",
+          "mode": "timer",
+          "instructions": 50000,
+          "timer_interval_ns": 2000000
+        },
+        {
+          "config": "translation_parallel",
+          "cpus": 1,
+          "profile": false,
+          "uaccess_stop": "all"
+        },
+        {
+          "cpu": 0,
+          "config": "translation_execution",
+          "engine": "direct",
+          "direct_cache_bytes": 16777216,
+          "data_page_bytes": 16384,
+          "mapping_entries": 256,
+          "route_entries": 256,
+          "selective_writes": false,
+          "reuse_code_checks": false,
+          "memory": "flat",
+          "code_watch": false,
+          "cross_page": true,
+          "route_epochs": false,
+          "retain_routes": false,
+          "memory_groups": false,
+          "native_exclusive": true,
+          "vector_table": false,
+          "simd_math": false
+        },
+        {
+          "result": "failed",
+          "reason": "translation_setup"
+        },
+        {
+          "test": "translation_prepared_code_execution",
+          "passed": false
+        },
+        {
+          "memory_sample": "kernel_setup",
+          "monotonic_ns": 2511479535763000,
+          "footprint_bytes": 12059056,
+          "resident_bytes": 13303808,
+          "resident_lifetime_peak_bytes": 29212672
+        },
+        {
+          "memory_statistics": "kernel_setup",
+          "interval_ms": 100,
+          "samples": 2,
+          "errors": 0,
+          "duration_ns": 6116000,
+          "collection_ns": 13000,
+          "footprint_mean_bytes": 6963632.0,
+          "footprint_sample_peak_bytes": 12059056,
+          "footprint_latest_bytes": 12059056,
+          "resident_mean_bytes": 7847936.0,
+          "resident_sample_peak_bytes": 13303808,
+          "resident_latest_bytes": 13303808,
+          "resident_lifetime_peak_bytes": 29212672
+        },
+        {
+          "result": "failed",
+          "reason": "translation_code_preparation"
+        },
+        {
+          "test": "partial_preparation_cleanup",
+          "passed": true,
+          "attempts": 3,
+          "prepared": 2
+        },
+        {
+          "test": "partial_reservation_cleanup",
+          "passed": false,
+          "layout": "low",
+          "created": true,
+          "address": 481036337152,
+          "bytes": 1140850688,
+          "releases": 1,
+          "unmapped": false
+        }
+      ]
+    }
+  ],
+  "sha256": {
+    "scripts/test_translation_preparation.py": "3cf55df4b402cec2bf5f1f740cb4afdc17b37cf3c1db93a89e3a307c4ba839c3",
+    "experiments/native-linux/translation/preparation-failure-test.c": "000a4386475793ad423014bd411b75a8aa3fad6555a26092ce61c095ab45a624",
+    "experiments/native-linux/code-memory.c": "8215ac2a2564049be0b45a80b3774ec994d6e51b6eb2057ed00cd515ef682981",
+    "experiments/native-linux/layout.h": "9ecb6dc474edfc516284effcbd1999ba445ba88372233636391771a0715deaa5",
+    "work/native-linux-nce/guest-layout-low-preparation/linux-execution.c": "92fd8405092a13ce5d5e6ca868021f05d99dc923a04d0164481b40e8d1a89d98",
+    "work/native-linux-nce/guest-layout-low-preparation/code-memory.o": "d5140abe009d26f7b24af5c7b407892622a579028c50044f441184e675e091f1",
+    "work/native-linux-nce/guest-layout-low-preparation/cli": "e25fb7513839e04fc4a5e99aa48ed7f14c02a1c022675d42ff47e107b828408b",
+    "work/native-linux-nce/guest-layout-low-preparation/gcd": "6d24a99d8e8b9cff66d597fbb4303d4beadabdd2e0df0aaafc8f43354b1042ee"
+  }
+}

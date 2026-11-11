@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 #define _GNU_SOURCE
 #include <errno.h>
+#include <fcntl.h>
 #include <pthread.h>
 #include <sched.h>
 #include <setjmp.h>
@@ -11,6 +12,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/mman.h>
+#include <sys/syscall.h>
 #include <sys/wait.h>
 #include <time.h>
 #include <unistd.h>
@@ -35,6 +37,108 @@ static void handler(int signal)
     delivered = signal;
     if (signal == SIGSEGV)
         siglongjmp(fault_jump, 1);
+}
+
+static void inaccessible(unsigned long address, int write_access)
+{
+    delivered = 0;
+    if (!sigsetjmp(fault_jump, 1)) {
+        if (write_access)
+            *(volatile unsigned char *)address = 0x53;
+        else
+            (void)*(volatile unsigned char *)address;
+        CHECK(0);
+    }
+    CHECK(delivered == SIGSEGV);
+}
+
+static void layout_tests(void)
+{
+    FILE *input = fopen("/probe-layout", "r");
+    if (!input) {
+        CHECK(errno == ENOENT);
+        return;
+    }
+    char layout[8];
+    unsigned long base, end, physical, ram, host_pointer;
+    CHECK(fscanf(input, "%7s %lu %lu %lu %lu %lu", layout, &base, &end, &physical, &ram, &host_pointer) == 6);
+    CHECK(!fclose(input));
+    int low = !strcmp(layout, "low");
+    CHECK(low || !strcmp(layout, "host"));
+    CHECK(base && end > base && physical >= end);
+    CHECK(!low || (base == 0x10000 && end == 0x100000000UL));
+    unsigned long stack_address = (unsigned long)&input;
+    CHECK((unsigned long)&layout_tests >= base && (unsigned long)&layout_tests < end);
+    CHECK(stack_address >= base && stack_address < end && (unsigned long)&tls >= base && (unsigned long)&tls < end);
+    struct sigaction action = {.sa_handler = handler}, previous;
+    sigemptyset(&action.sa_mask);
+    CHECK(!sigaction(SIGSEGV, &action, &previous));
+    int fd = open("/host-pointer", O_RDWR);
+    CHECK(fd >= 0);
+    const unsigned long forbidden[] = {0, base - PAGE, end, end + 3 * PAGE, physical, ram, host_pointer, UINTPTR_MAX - 7};
+    for (unsigned i = 0; i < sizeof(forbidden) / sizeof(*forbidden); ++i) {
+        unsigned long address = forbidden[i];
+        CHECK(address < base || address >= end);
+        inaccessible(address, 0);
+        inaccessible(address, 1);
+        CHECK(syscall(SYS_write, fd, address, 1) == -1 && errno == EFAULT);
+        CHECK(syscall(SYS_pread64, fd, address, 1, 0) == -1 && errno == EFAULT);
+        CHECK(syscall(SYS_openat, AT_FDCWD, address, O_RDONLY, 0) == -1 && errno == EFAULT);
+    }
+    if (low) {
+        unsigned char *mapped = mmap(NULL, PAGE, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+        CHECK(mapped != MAP_FAILED && (unsigned long)mapped >= base && (unsigned long)mapped <= end - PAGE);
+        const char path[] = "/host-pointer";
+        memcpy(mapped, path, sizeof(path));
+        const unsigned long high_bits[] = {1UL << 32, 1UL << 48};
+        for (unsigned i = 0; i < sizeof(high_bits) / sizeof(*high_bits); ++i) {
+            unsigned long address = (unsigned long)mapped + high_bits[i];
+            CHECK(address >= end && (uint32_t)address == (unsigned long)mapped);
+            inaccessible(address, 0);
+            inaccessible(address, 1);
+            CHECK(!memcmp(mapped, path, sizeof(path)));
+            CHECK(syscall(SYS_write, fd, address, 1) == -1 && errno == EFAULT);
+            CHECK(syscall(SYS_pread64, fd, address, 1, 0) == -1 && errno == EFAULT);
+            CHECK(!memcmp(mapped, path, sizeof(path)));
+            CHECK(syscall(SYS_openat, AT_FDCWD, address, O_RDONLY, 0) == -1 && errno == EFAULT);
+            CHECK(!memcmp(mapped, path, sizeof(path)));
+        }
+        CHECK(!munmap(mapped, PAGE));
+        void *last = mmap((void *)(end - PAGE), PAGE, 3, MAP_PRIVATE | MAP_ANONYMOUS | MAP_FIXED_NOREPLACE, -1, 0);
+        CHECK(last == (void *)(end - PAGE));
+        *(volatile unsigned char *)(end - 1) = 0x4b;
+        CHECK(*(volatile unsigned char *)(end - 1) == 0x4b);
+        if (!sigsetjmp(fault_jump, 1)) {
+            (void)*(volatile unsigned long *)(end - 4);
+            CHECK(0);
+        }
+        CHECK(delivered == SIGSEGV);
+        const unsigned long outside[] = {0, PAGE, base - PAGE, end, end + 3 * PAGE};
+        const int fixed[] = {MAP_FIXED, MAP_FIXED_NOREPLACE};
+        for (unsigned i = 0; i < sizeof(outside) / sizeof(*outside); ++i) {
+            for (unsigned j = 0; j < sizeof(fixed) / sizeof(*fixed); ++j) {
+                CHECK(mmap((void *)outside[i], PAGE, 3, MAP_PRIVATE | MAP_ANONYMOUS | fixed[j], -1, 0) == MAP_FAILED);
+                CHECK(errno == EACCES);
+            }
+            CHECK(mprotect((void *)outside[i], PAGE, PROT_READ) == -1 && errno == EACCES);
+            CHECK(mremap(last, PAGE, PAGE, MREMAP_MAYMOVE | MREMAP_FIXED, (void *)outside[i]) == MAP_FAILED);
+            CHECK(errno == EACCES);
+        }
+        CHECK(mmap((void *)(end - PAGE), 2 * PAGE, 3, MAP_PRIVATE | MAP_ANONYMOUS | MAP_FIXED, -1, 0) == MAP_FAILED && errno == EACCES);
+        CHECK(munmap(last, PAGE) == 0);
+        void *hint = mmap((void *)PAGE, PAGE, 3, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+        CHECK(hint != MAP_FAILED && (unsigned long)hint >= base && (unsigned long)hint <= end - PAGE);
+        CHECK(munmap(hint, PAGE) == 0);
+        void *growing = mmap((void *)(base + PAGE), PAGE, 3, MAP_PRIVATE | MAP_ANONYMOUS | MAP_FIXED_NOREPLACE | MAP_GROWSDOWN, -1, 0);
+        CHECK(growing == (void *)(base + PAGE));
+        *(volatile unsigned char *)base = 0x39;
+        CHECK(*(volatile unsigned char *)base == 0x39);
+        inaccessible(base - PAGE, 0);
+        CHECK(munmap((void *)base, 2 * PAGE) == 0);
+    }
+    CHECK(!close(fd));
+    CHECK(!sigaction(SIGSEGV, &previous, NULL));
+    printf("{\"test\":\"translated_guest_layout_boundaries\",\"passed\":true,\"layout\":\"%s\"}\n", layout);
 }
 
 static void *thread(void *argument)
@@ -84,6 +188,7 @@ int main(int argc, char **argv)
         translation_smp_guest_test();
     }
 #endif
+    layout_tests();
     dynamic_code_tests();
     translation_timer_tests(NCE_TRANSLATION_HIGH_RES_TIMERS);
     signal_tests("musl-translated");

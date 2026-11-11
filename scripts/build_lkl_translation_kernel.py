@@ -31,7 +31,7 @@ def build(cpus=1, high_res_timers=False):
     if (base / '.droidondarwin-source-revision').read_text().strip() != probe_lkl.REVISION:
         raise RuntimeError('需要先准备当前单核 LKL 源码')
     patch_files = [Path(__file__), Path(probe_lkl.__file__), Path(lkl_translation_patch.__file__),
-                   ROOT / 'scripts/lkl_nce_patch.py', EXP / 'lkl-nce-mmu.c',
+                   ROOT / 'scripts/lkl_nce_patch.py', EXP / 'lkl-nce-mmu.c', EXP / 'lkl-nce-elf.c',
                    EXP / 'translation/kernel-api.h', EXP / 'direct/page-table-layout.h']
     if cpus == 2:
         patch_files += [ROOT / ('scripts/' + name + '.py') for name in
@@ -113,9 +113,11 @@ def build(cpus=1, high_res_timers=False):
     probe_lkl.SMP = cpus == 2
     probe_lkl.package_elf(out / 'lkl.so', smp_exports={'nce_translation_enter', 'nce_translation_leave', 'nce_translation_exclusive', 'nce_window_unlock', 'nce_translation_written'})
     files = [Path(__file__), Path(lkl_translation_patch.__file__), Path(probe_lkl.__file__),
-             ROOT / 'scripts/lkl_nce_patch.py', EXP / 'lkl-nce-mmu.c', EXP / 'translation/kernel-api.h',
+             ROOT / 'scripts/lkl_nce_patch.py', EXP / 'lkl-nce-mmu.c', EXP / 'lkl-nce-elf.c', EXP / 'translation/kernel-api.h',
              EXP / 'lkl-bridge.c', EXP / 'direct/page-table-layout.h', config, build_dir / '.config',
-             source / 'arch/lkl/mm/nce_mmu.c', source / 'arch/lkl/include/asm/mmu.h', source / 'arch/lkl/kernel/threads.c',
+             source / 'arch/lkl/mm/nce_mmu.c', source / 'arch/lkl/kernel/nce_elf.c',
+             source / 'arch/lkl/include/asm/pgtable-mmu-3level.h', source / 'arch/lkl/include/asm/nce-translation.h',
+             source / 'arch/lkl/include/asm/mmu.h', source / 'arch/lkl/kernel/threads.c',
              *[out / name for name in ('lkl.so', 'lkl-image.bin', 'lkl-image.h', 'lkl-host-ops.h')]]
     if cpus == 2:
         files += [ROOT / ('scripts/' + name + '.py') for name in ('lkl_smp_patch', 'lkl_smp_mmu_patch', 'lkl_translation_smp_patch')]

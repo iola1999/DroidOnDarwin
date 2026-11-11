@@ -23,9 +23,20 @@ static struct nce_translation_cpu *cpu_translation(void)
     return &translation->cpus[raw_smp_processor_id()];
 }
 static unsigned long mapping_mode;''')
-    edit('    installed = views;\n    desired = views + NCE_USER_SIZE / PAGE_SIZE;', '''    BUG_ON(mode != NCE_MM_TRANSLATED);
+    edit('''    nce_task_size = base + NCE_USER_SIZE;
+    nce_memory_start = nce_task_size;
+    installed = views;
+    desired = views + NCE_USER_SIZE / PAGE_SIZE;''', '''    BUG_ON(mode != NCE_MM_TRANSLATED || !views);
     translation = (void *)views;
     BUG_ON(!translation->cpu_count || translation->cpu_count > NCE_TRANSLATION_MAX_CPUS);
+    BUG_ON(!base || offset_in_page(base) || base > ~0UL - NCE_USER_SIZE);
+    BUG_ON(translation->guest_end <= base || translation->guest_end - base > NCE_USER_SIZE ||
+           offset_in_page(translation->guest_end));
+    BUG_ON(translation->physical_base < translation->guest_end || offset_in_page(translation->physical_base) ||
+           translation->physical_base >= NCE_HOST_ADDRESS_LIMIT ||
+           NCE_RAM_SIZE + NCE_VMALLOC_SIZE > NCE_HOST_ADDRESS_LIMIT - translation->physical_base);
+    nce_task_size = translation->guest_end;
+    nce_memory_start = translation->physical_base;
     installed = desired = NULL;''')
     edit('    size_t bytes = NCE_USER_SIZE / PAGE_SIZE / 8;', '''    if (mapping_mode == NCE_MM_TRANSLATED) {
         INIT_LIST_HEAD(&mm->context.translation_node);
@@ -311,3 +322,23 @@ void nce_translation_cleanup(void)
     content = (experiment / 'direct/page-table-layout.h').read_bytes()
     if not header.exists() or header.read_bytes() != content:
         header.write_bytes(content)
+
+    # The translated allocator must keep the whole low-address hole unmapped.
+    elf = source / 'arch/lkl/kernel/nce_elf.c'
+    if elf.exists():
+        content = (experiment / 'lkl-nce-elf.c').read_text()
+        marker = '    result = ksys_mmap_pgoff(addr, len, prot, flags, fd, offset >> PAGE_SHIFT);'
+        replacement = ('    if (!(flags & (MAP_FIXED | MAP_FIXED_NOREPLACE)) && addr < nce_user_base)\n'
+                       '        addr = 0;\n' + marker)
+        if content.count(marker) != 1:
+            raise RuntimeError('Translation mmap hint source mismatch')
+        elf.write_text(content.replace(marker, replacement))
+    pgtable = source / 'arch/lkl/include/asm/pgtable-mmu-3level.h'
+    if pgtable.exists():
+        content = pgtable.read_text()
+        marker = '#define FIRST_USER_ADDRESS\t0UL'
+        replacement = 'extern unsigned long nce_user_base;\n#define FIRST_USER_ADDRESS\t(nce_user_base)'
+        if replacement not in content:
+            if content.count(marker) != 1:
+                raise RuntimeError('Translation first user address mismatch')
+            pgtable.write_text(content.replace(marker, replacement))
