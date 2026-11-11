@@ -8,6 +8,7 @@ import shutil
 import tempfile
 
 from prepare_stock_art import verify
+from stock_art import attach
 
 
 def main():
@@ -79,8 +80,31 @@ def main():
         modified['runtime_executed'] = True
         manifest.write_text(json.dumps(modified))
         rejected('wrong_stage')
+        if original.get('runtime_source') == 'hyperos':
+            modified = json.loads(json.dumps(original))
+            del modified['files'][selected]
+            manifest.write_text(json.dumps(modified))
+            file.unlink()
+            rejected('missing_original_and_manifest_entry')
+            file.write_bytes(initial)
+            file.chmod(mode)
+        page_bytes = original.get('guest_page_bytes', 16384)
+        wrong_page_bytes = 4096 if page_bytes == 16384 else 16384
+        wrong_source = 'sdk36' if original.get('runtime_source') == 'hyperos' else 'hyperos'
+        for key, value in [('runtime_source', wrong_source), ('guest_page_bytes', wrong_page_bytes), ('dependencies_sha256', '0' * 64)]:
+            modified = json.loads(json.dumps(original))
+            modified[key] = value
+            manifest.write_text(json.dumps(modified))
+            rejected('wrong_' + key)
         manifest.write_text(json.dumps(original))
         assert verify(target)
+        assert attach(target, target, guest_page_bytes=page_bytes)
+        try:
+            attach(target, target, guest_page_bytes=wrong_page_bytes)
+        except ValueError as error:
+            tests.append({'case': 'runtime_page_mismatch', 'rejected': True, 'error': str(error)})
+        else:
+            raise AssertionError('runtime_page_mismatch')
     print(json.dumps({'actual_manifest_accepted': True, 'negative_cases': tests}, ensure_ascii=False))
 
 

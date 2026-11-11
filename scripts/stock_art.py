@@ -12,9 +12,11 @@ VALUES = {'vm_absent': 0, 'create_vm': 0, 'load_dex': 1, 'primitive_arguments': 
           'warmup_result': sum(((i * 17) ^ (i >> 3)) + 9 for i in range(200000)), 'destroy_vm': 0}
 
 
-def attach(directory, output):
+def attach(directory, output, *, guest_page_bytes=16384):
     directory = directory.resolve()
     report = verify(directory)
+    if report.get('guest_page_bytes', 16384) != guest_page_bytes:
+        raise ValueError('ART 准备目录与客体页大小不匹配')
     lines = []
     for path in report['directories']:
         if any(c.isspace() for c in path) or '..' in Path(path).parts:
@@ -38,7 +40,9 @@ def unchanged(identity):
         return False
 
 
-def validate(rows):
+def validate(rows, guest_page_bytes=16384):
+    if guest_page_bytes not in (4096, 16384):
+        return False
     events = [row for row in rows if any(key.startswith('stock_art_') for key in row) or
               row.get('test') == 'stock_art_standard_jni']
     checks = [row for row in events if 'stock_art_check' in row]
@@ -69,7 +73,7 @@ def validate(rows):
             array['address'] % 4 or type(array['is_copy']) is not bool):
         return False
     expected = [
-        {'stock_art_supervisor': True, 'page_size': 16384, 'timeout_seconds': 90},
+        {'stock_art_supervisor': True, 'page_size': guest_page_bytes, 'timeout_seconds': 90},
         {'stock_art_config': True, 'jni_version': 0x10006, 'jvalue_bytes': 8, 'jit_requested': True},
         maps[0], checks[0], {'stock_art_stage': 'create_vm'}, checks[1], maps[1], *checks[2:7], maps[2],
         array, *checks[7:12], {'stock_art_jit': 'unverified', 'warmup_calls': 200000}, maps[3],

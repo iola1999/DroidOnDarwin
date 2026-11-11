@@ -31,7 +31,13 @@ def rows():
 def main():
     original = rows()
     assert validate(original)
-    rejected = 0
+    changed_page = deepcopy(original)
+    changed_page[0]['page_size'] = 4096
+    assert validate(changed_page, guest_page_bytes=4096)
+    assert not validate(changed_page)
+    assert not validate(original, guest_page_bytes=4096)
+    assert not validate(original, guest_page_bytes=8192)
+    rejected = 3
     for index, row in enumerate(original):
         assert not validate(original[:index] + original[index + 1:])
         assert not validate([*original, row])

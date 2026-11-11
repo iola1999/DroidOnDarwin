@@ -267,7 +267,7 @@ def validate(rows, memory_interval, mapping="window", workload="core", tlb_inval
             return False
     elif workload == 'stock-art':
         from stock_art import validate as validate_stock_art
-        if not validate_stock_art(rows):
+        if not validate_stock_art(rows, guest_page_bytes=guest_page_bytes):
             return False
         expected = {'stock_art_standard_jni', 'translated_context_cleanup'}
     elif workload == 'bionic':
@@ -504,8 +504,8 @@ def main():
     parser.add_argument('--memory-interval-ms', type=int, default=100)
     args = parser.parse_args()
     if args.guest_page_bytes == 4096 and (args.mapping != 'pte' or args.execution != 'unicorn' or
-            args.guest_layout not in ('low', 'sparse') or args.cpus != 1 or args.workload not in ('core', 'bionic')):
-        parser.error('4 KiB 实验需要单 CPU 的 low或sparse/pte/unicorn，负载仅限 core/bionic')
+            args.guest_layout not in ('low', 'sparse') or args.cpus != 1 or args.workload not in ('core', 'bionic', 'stock-art')):
+        parser.error('4 KiB 实验需要单 CPU 的 low或sparse/pte/unicorn，负载仅限 core/bionic/stock-art')
     if args.guest_page_bytes == 16384 and args.guest_layout in ('low', 'sparse') and (args.mapping != 'pte' or args.execution != 'direct' or args.direct_memory != 'flat' or args.cpus != 1):
         parser.error('低客体地址实验需要单 CPU 的 pte/direct/flat')
     if args.data_tbi and args.execution == 'direct' and args.direct_memory == 'view':
@@ -582,7 +582,7 @@ def main():
         if not args.stock_art_directory or args.mapping != 'pte' or args.cpus != 1 or args.entry == 'window':
             parser.error('stock-art 需要已准备目录和单核 PTE CLI/GCD')
         from stock_art import attach
-        stock_art = attach(args.stock_art_directory, out)
+        stock_art = attach(args.stock_art_directory, out, guest_page_bytes=args.guest_page_bytes)
     elif args.stock_art_directory:
         parser.error('--stock-art-directory 仅用于 stock-art')
     stock_runtime = None
