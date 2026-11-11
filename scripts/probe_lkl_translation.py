@@ -43,7 +43,48 @@ def validate_android_image(root, directory):
         raise ValueError('Android 系统镜像与当前用户态源码不一致，请先通过 scripts/probe_lkl.py 重建并验证：' + ', '.join(stale))
 
 
-def validate(rows, memory_interval, mapping="window", workload="core", tlb_invalidation=None, execution=None, direct_config=None, cpus=1, parallel_profile=None, uaccess_stop=None, code_lookup_limit=None, code_memory=None, online_cpus=None):
+def validate_guest_layout(rows, requested, flat=False):
+    records = [row for row in rows if row.get('config') == 'translation_guest_layout']
+    if len(records) != 1 or requested not in ('host', 'low'):
+        return False
+    row = records[0]
+    fields = ('guest_base', 'guest_end', 'guest_span_bytes', 'flat_coverage_bytes',
+              'physical_base', 'ram_base', 'ram_bytes', 'reservation_base', 'reservation_bytes')
+    if (set(row) != {'config', 'mode', *fields} or row['mode'] != requested or
+            any(type(row.get(key)) != int or not 0 <= row[key] < 1 << 64 for key in fields)):
+        return False
+    base, end, reserve = row['guest_base'], row['guest_end'], row['reservation_base']
+    physical, ram = row['physical_base'], row['ram_base']
+    ram_size, reserve_size = row['ram_bytes'], row['reservation_bytes']
+    coverage = 1 << 32
+    if (not base or end <= base or row['guest_span_bytes'] != end - base or
+            row['flat_coverage_bytes'] != (coverage if flat else 0) or ram_size != 1 << 30 or
+            not ram or any(row[key] % 16384 for key in fields) or physical < end or
+            not reserve or reserve >= 1 << 40 or reserve_size > (1 << 40) - reserve or
+            ram_size > (1 << 64) - ram or (ram < end and base < ram + ram_size) or
+            (ram < reserve + reserve_size and reserve < ram + ram_size)):
+        return False
+    if requested == 'low':
+        return (flat and base == 0x10000 and end == coverage and physical == reserve and
+                reserve_size == ram_size + (64 << 20))
+    return (base == reserve and end == base + coverage and physical == end and
+            reserve_size == coverage + ram_size + (64 << 20))
+
+
+def validate(rows, memory_interval, mapping="window", workload="core", tlb_invalidation=None, execution=None, direct_config=None, cpus=1, parallel_profile=None, uaccess_stop=None, code_lookup_limit=None, code_memory=None, online_cpus=None, guest_layout=None):
+    if guest_layout is not None:
+        flat = execution == 'direct' and direct_config is not None and direct_config['memory'] in ('flat', 'view')
+        if not validate_guest_layout(rows, guest_layout, flat):
+            return False
+        if guest_layout == 'low' and (mapping != 'pte' or execution != 'direct' or cpus != 1 or direct_config['memory'] != 'flat'):
+            return False
+        if workload == 'core' and mapping == 'pte':
+            if [row for row in rows if row.get('test') == 'translated_guest_layout_boundaries'] != [
+                    {'test': 'translated_guest_layout_boundaries', 'passed': True, 'layout': guest_layout}]:
+                return False
+            if [row for row in rows if row.get('test') == 'translated_host_pointer_copy'] != [
+                    {'test': 'translated_host_pointer_copy', 'passed': True}]:
+                return False
     if online_cpus is not None:
         if not 1 <= online_cpus <= cpus:
             return False
@@ -316,6 +357,7 @@ def main():
     parser.add_argument('--build-only', action='store_true')
     parser.add_argument('--reuse-engine-build', action='store_true', help='校验摘要后复用已构建的 Unicorn，用于执行器成组对照')
     parser.add_argument('--mapping', choices=('window', 'pte'), default='window')
+    parser.add_argument('--guest-layout', choices=('host', 'low'), default='host')
     parser.add_argument('--data-seed', type=Path, help='服务和桌面检查使用的初始 ext4 数据盘')
     parser.add_argument('--persistent-data', action='store_true', help='各入口与重复轮次连续使用同一数据盘，检查重启持久化')
     parser.add_argument('--workload', choices=('core', 'android', 'services', 'desktop'), default='core')
@@ -334,6 +376,8 @@ def main():
     parser.add_argument('--output', type=Path, default=DEFAULT_OUT)
     parser.add_argument('--memory-interval-ms', type=int, default=100)
     args = parser.parse_args()
+    if args.guest_layout == 'low' and (args.mapping != 'pte' or args.execution != 'direct' or args.direct_memory != 'flat' or args.cpus != 1):
+        parser.error('低客体地址实验需要单 CPU 的 pte/direct/flat')
     if args.high_res_timers and args.mapping != 'pte':
         parser.error('高分辨率定时器变体需要 --mapping pte')
     args.online_cpus = args.cpus if args.online_cpus is None else args.online_cpus
@@ -566,6 +610,7 @@ def main():
         return
     environment = os.environ.copy()
     environment['NCE_TRANSLATION_FILES'] = str(out)
+    environment['NCE_TRANSLATION_GUEST_LAYOUT'] = args.guest_layout
     environment['NCE_TRANSLATION_ONLINE_CPUS'] = str(args.online_cpus)
     environment.update(NCE_ART_NTERP=str(args.art_nterp), NCE_ART_EXPANDED_JIT=str(args.art_expanded_jit),
                        NCE_ART_FAST_BASELINE=str(args.art_fast_baseline), NCE_ART_AOT='0', NCE_ART_BOOT_IMAGE='0', NCE_SCHED_SLICE_US='0')
@@ -614,7 +659,7 @@ def main():
                 except subprocess.TimeoutExpired:
                     returncode = 'timeout'
             rows = [json.loads(line) for line in (out / f'{stem}.jsonl').read_text().splitlines() if line.startswith('{')]
-            passed = returncode == 0 and validate(rows, args.memory_interval_ms, args.mapping, args.workload, args.tlb_invalidation, args.execution, direct_config, args.cpus, bool(args.parallel_profile), args.smp_uaccess_stop, code_memory=args.code_memory, online_cpus=args.online_cpus)
+            passed = returncode == 0 and validate(rows, args.memory_interval_ms, args.mapping, args.workload, args.tlb_invalidation, args.execution, direct_config, args.cpus, bool(args.parallel_profile), args.smp_uaccess_stop, code_memory=args.code_memory, online_cpus=args.online_cpus, guest_layout=args.guest_layout)
             if data is not None:
                 data['final_sha256'] = sha(data_path)
                 metadata = subprocess.run(['/opt/homebrew/opt/e2fsprogs/sbin/dumpe2fs', '-h', data_path],
@@ -640,7 +685,7 @@ def main():
               'platform': platform.platform(), 'cpu': subprocess.check_output(['sysctl', '-n', 'machdep.cpu.brand_string'], text=True).strip(),
               'system_build': subprocess.check_output(['sw_vers', '-buildVersion'], text=True).strip(),
               'dependency': dependency, 'commands': commands, 'host_unchanged_after_guest_build': True,
-              'configuration': {'code_memory': args.code_memory, 'execution': args.execution, 'direct': direct_config, 'mapping': args.mapping, 'sparse_scan': True, 'fault_prefetch': False, 'guest_page_bytes': 16384,
+              'configuration': {'guest_layout': args.guest_layout, 'code_memory': args.code_memory, 'execution': args.execution, 'direct': direct_config, 'mapping': args.mapping, 'sparse_scan': True, 'fault_prefetch': False, 'guest_page_bytes': 16384,
                                 'workload': args.workload, 'entries': entries, 'art_nterp': args.art_nterp,
                                 'cpus': args.cpus, 'high_res_timers': args.high_res_timers, 'online_cpus': args.online_cpus, 'uaccess_stop': args.smp_uaccess_stop, 'parallel_profile': bool(args.parallel_profile), 'art_expanded_jit': args.art_expanded_jit, 'art_fast_baseline': args.art_fast_baseline,
                                 'cache_invalidation': args.cache_invalidation,

@@ -21,6 +21,8 @@ struct nce_translation_cpu {
 };
 
 struct nce_translation_state {
+    /* Guest limits and the host RAM alias are independent of RAM backing. */
+    unsigned long guest_end, physical_base;
     unsigned long cpu_count;
     struct nce_translation_cpu cpus[NCE_TRANSLATION_MAX_CPUS];
     /* Host sets flat_enabled/RAM before boot; Linux owns each mm's table. */

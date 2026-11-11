@@ -71,7 +71,7 @@ static unsigned long elf_layout_locked(const char *path, unsigned long offset, c
     layouts[index].base = start;
     layouts[index].span = span;
     cursor = start - base + span;
-    printf("{\"phase\":\"runtime_elf\",\"path\":\"%s\",\"span_bytes\":%lu}\n", path, span);
+    printf("{\"phase\":\"runtime_elf\",\"path\":\"%s\",\"base\":%lu,\"span_bytes\":%lu}\n", path, start, span);
     return layouts[index].base;
 }
 

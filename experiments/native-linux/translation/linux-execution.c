@@ -50,7 +50,8 @@ typedef struct {
     uint32_t fallback_instruction;
 } Process;
 static unsigned char *ram;
-static unsigned long base, *pages;
+static unsigned long guest_base, guest_end, physical_base, reservation_base, reservation_size, *pages;
+static bool low_guest_layout;
 static unsigned long map_generation, code_generation, maps, revocations;
 static unsigned long allocated, freed;
 static bool page_invalidation, retain_exec_cache, page_tlb_invalidation;
@@ -108,7 +109,7 @@ static _Thread_local ExecutionCpu *execution = &executions[0];
  * once because Linux may clear a parent before its RCU reclamation. */
 static unsigned long lookup_guest(unsigned long address, unsigned long permission)
 {
-    if (address < base || address - base >= NCE_USER_SIZE)
+    if (address < guest_base || address >= guest_end)
         return 0;
     const unsigned long *table = (void *)execution->view->pgd;
     unsigned shifts[] = {36, 25, 14};
@@ -124,7 +125,7 @@ static unsigned long lookup_guest(unsigned long address, unsigned long permissio
     }
     if ((value & 0x0d1) != 0x0c1)
         return 0;
-    unsigned long offset = (value & ~(PAGE - 1)) - (base + NCE_USER_SIZE);
+    unsigned long offset = (value & ~(PAGE - 1)) - physical_base;
     if (offset >= NCE_RAM_SIZE)
         return 0;
     unsigned long prot = LKL_PROT_READ;
@@ -270,7 +271,7 @@ static void read_view_destroy(void *opaque)
 static int watch_disk_io(unsigned int index, unsigned int operation, unsigned long long offset,
                          void *buffer, unsigned long size)
 {
-    unsigned long start = (uintptr_t)buffer - (base + NCE_USER_SIZE);
+    unsigned long start = (uintptr_t)buffer - physical_base;
 #ifdef NCE_SMP
     bool writing = operation == 0 && size && start < NCE_RAM_SIZE;
     if (writing)
@@ -297,7 +298,7 @@ static int watch_disk_io(unsigned int index, unsigned int operation, unsigned lo
 
 static void watch_page_free(void *address, unsigned long size)
 {
-    if (code_watch && address == (void *)(base + NCE_USER_SIZE)) {
+    if (code_watch && address == (void *)physical_base) {
         /* LKL calls this after joining all task threads and before unmapping RAM. */
         REQUIRE(size == NCE_RAM_SIZE);
         code_watch_stats = nce_code_watch_stats(code_watch);
@@ -315,11 +316,14 @@ static void shmem_init(unsigned long size)
     REQUIRE(ram != MAP_FAILED);
     if (translation)
         translation->ram = (uintptr_t)ram;
+    printf("{\"config\":\"translation_guest_layout\",\"mode\":\"%s\",\"guest_base\":%lu,\"guest_end\":%lu,\"guest_span_bytes\":%lu,\"flat_coverage_bytes\":%lu,\"physical_base\":%lu,\"ram_base\":%lu,\"ram_bytes\":%lu,\"reservation_base\":%lu,\"reservation_bytes\":%lu}\n",
+           low_guest_layout ? "low" : "host", guest_base, guest_end, guest_end - guest_base,
+           translation && translation->flat_enabled ? NCE_USER_SIZE : 0UL, physical_base, (unsigned long)ram, NCE_RAM_SIZE, reservation_base, reservation_size);
     for (unsigned i = 0; i < execution_count; ++i)
         checked(uc_mem_map_ptr(executions[i].engine, 0, size, UC_PROT_ALL, ram));
 #ifdef NCE_DIRECT_EXECUTION
     if (direct_code_watch) {
-        code_watch = nce_code_watch_create(ram, (void *)(base + NCE_USER_SIZE), size);
+        code_watch = nce_code_watch_create(ram, (void *)physical_base, size);
         REQUIRE(code_watch);
     }
 #endif
@@ -336,7 +340,7 @@ static int shmem_reclaim(unsigned long offset, unsigned long size)
         REQUIRE(nce_code_watch_invalidate(code_watch, offset, size) == 0);
 #endif
     REQUIRE(mmap(ram + offset, size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANON | MAP_FIXED, -1, 0) == ram + offset);
-    remap((void *)(base + NCE_USER_SIZE + offset), ram + offset, size, PROT_READ | PROT_WRITE);
+    remap((void *)(physical_base + offset), ram + offset, size, PROT_READ | PROT_WRITE);
     if (translation) {
         for (unsigned cpu = 0; cpu < execution_count; ++cpu) {
             ExecutionCpu *execution = &executions[cpu];
@@ -357,16 +361,16 @@ static int shmem_reclaim(unsigned long offset, unsigned long size)
 static void *shmem_map(void *address, unsigned long offset, unsigned long size, enum lkl_prot prot)
 {
     unsigned long start = (uintptr_t)address;
-    REQUIRE(start >= base && !(start % PAGE) && !(offset % PAGE) && !(size % PAGE));
+    REQUIRE(!(start % PAGE) && !(offset % PAGE) && !(size % PAGE));
     REQUIRE(offset <= NCE_RAM_SIZE && size <= NCE_RAM_SIZE - offset);
-    if (start >= base + NCE_USER_SIZE) {
-        REQUIRE(start <= base + RESERVATION && size <= base + RESERVATION - start);
+    if (start >= physical_base) {
+        REQUIRE(start <= reservation_base + reservation_size && size <= reservation_base + reservation_size - start);
 #ifdef NCE_DIRECT_EXECUTION
         if (code_watch) {
 #ifdef NCE_SMP
             exclusive_begin();
 #endif
-            if (start == base + NCE_USER_SIZE + offset)
+            if (start == physical_base + offset)
                 REQUIRE(nce_code_watch_invalidate(code_watch, offset, size) == 0);
             else
                 REQUIRE(nce_code_watch_exclude(code_watch, offset, size) == 0);
@@ -380,9 +384,9 @@ static void *shmem_map(void *address, unsigned long offset, unsigned long size, 
         return address;
     }
     REQUIRE(!translation);
-    REQUIRE(size <= base + NCE_USER_SIZE - start);
+    REQUIRE(start >= guest_base && start <= guest_end && size <= guest_end - start);
     for (unsigned long i = 0; i < size; i += PAGE) {
-        unsigned long index = (start + i - base) / PAGE;
+        unsigned long index = (start + i - guest_base) / PAGE;
         unsigned long value = (offset + i) | 8 | prot;
         if (pages[index] != value) {
             if ((pages[index] | value) & LKL_PROT_EXEC)
@@ -398,13 +402,12 @@ static void *shmem_map(void *address, unsigned long offset, unsigned long size, 
 static int revoke_pages(void *address, unsigned long size)
 {
     unsigned long start = (uintptr_t)address;
-    REQUIRE(start >= base && !(start % PAGE) && !(size % PAGE));
-    REQUIRE(start <= base + RESERVATION && size <= base + RESERVATION - start);
-    if (start < base + NCE_USER_SIZE) {
+    REQUIRE(!(start % PAGE) && !(size % PAGE));
+    if (start >= guest_base && start < guest_end) {
         REQUIRE(!translation);
-        unsigned long length = size < base + NCE_USER_SIZE - start ? size : base + NCE_USER_SIZE - start;
+        unsigned long length = size < guest_end - start ? size : guest_end - start;
         for (unsigned long i = 0; i < length; i += PAGE) {
-            unsigned long index = (start + i - base) / PAGE;
+            unsigned long index = (start + i - guest_base) / PAGE;
             if (pages[index]) {
                 if (pages[index] & LKL_PROT_EXEC)
                     ++code_generation;
@@ -416,8 +419,11 @@ static int revoke_pages(void *address, unsigned long size)
         size -= length;
         ++revocations;
     }
-    if (size)
+    if (size) {
+        REQUIRE(start >= physical_base && start <= reservation_base + reservation_size &&
+                size <= reservation_base + reservation_size - start);
         REQUIRE(mmap((void *)start, size, PROT_NONE, MAP_PRIVATE | MAP_ANON | MAP_FIXED, -1, 0) == (void *)start);
+    }
     return 0;
 }
 
@@ -436,8 +442,8 @@ static bool fill(uc_engine *uc, uint64_t address, uc_mem_type access, uc_tlb_ent
     ++execution->fills;
     unsigned permission = access == UC_MEM_WRITE ? UC_PROT_WRITE : access == UC_MEM_FETCH ? UC_PROT_EXEC
                                                                                           : UC_PROT_READ;
-    if (address >= base && address < base + NCE_USER_SIZE) {
-        unsigned long value = translate_user ? translate_user(address, permission) : pages[(address - base) / PAGE];
+    if (address >= guest_base && address < guest_end) {
+        unsigned long value = translate_user ? translate_user(address, permission) : pages[(address - guest_base) / PAGE];
         if (value & permission) {
             REQUIRE((value & ~(PAGE - 1)) < NCE_RAM_SIZE);
             entry->paddr = value & ~(PAGE - 1);
@@ -460,7 +466,7 @@ static void fallback_write(uc_engine *uc, uc_mem_type type, uint64_t address, in
      * This engine maps its shared RAM block at physical address zero. */
     if (size <= 0 || address >= NCE_RAM_SIZE || (unsigned)size > NCE_RAM_SIZE - address)
         return;
-    kernel_written(base + NCE_USER_SIZE + address, (unsigned)size);
+    kernel_written(physical_base + address, (unsigned)size);
 }
 #endif
 
@@ -552,8 +558,8 @@ static bool direct_execute(Process *p, unsigned long generation)
     state.exclusive_address = UINT64_MAX;
     state.access_flags = NCE_DIRECT_UNALIGNED | NCE_DIRECT_PAC_HINT_NOP | NCE_DIRECT_CRC |
                          NCE_DIRECT_LSE | NCE_DIRECT_AES | NCE_DIRECT_SHA1 | NCE_DIRECT_SHA256 | NCE_DIRECT_DC_ZVA64;
-    NceDirectPageTable table = {(const uint64_t *)execution->view->pgd, base, NCE_USER_SIZE,
-                                base + NCE_USER_SIZE, ram, NCE_RAM_SIZE};
+    NceDirectPageTable table = {(const uint64_t *)execution->view->pgd, guest_base, NCE_USER_SIZE,
+                                physical_base, ram, NCE_RAM_SIZE};
     NceReadView *view = direct_read_views ? execution->view->read_view : NULL;
     REQUIRE(!direct_read_views || view);
     NceDirectMemory memory = {NULL, direct_map_page, direct_map_code, generation, 14,
@@ -701,7 +707,7 @@ static void user_run(void *opaque)
 {
     Process *p = opaque;
     if (!p->regs.sp) {
-        long args[6] = {base + NCE_USER_SIZE - 65536, 65536, 3, 0x32, -1, 0};
+        long args[6] = {guest_end - 65536, 65536, 3, 0x32, -1, 0};
         REQUIRE(run_syscall(222, args) == args[0]);
         p->regs.sp = args[0] + args[1];
     }
@@ -802,9 +808,8 @@ static void user_run(void *opaque)
 
 static int user_reserved(unsigned long address, unsigned long size)
 {
-    (void)address;
-    (void)size;
-    return 0;
+    return low_guest_layout && size &&
+           (address < guest_base || address >= guest_end || size > guest_end - address);
 }
 
 unsigned long translation_linux_setup(void *kernel, unsigned long copy_user_offset,
@@ -812,6 +817,16 @@ unsigned long translation_linux_setup(void *kernel, unsigned long copy_user_offs
 {
     REQUIRE((translate_offset != 0) == (state != NULL));
     translation = state;
+    const char *layout = getenv("NCE_TRANSLATION_GUEST_LAYOUT");
+    REQUIRE(!layout || !strcmp(layout, "host") || !strcmp(layout, "low"));
+    low_guest_layout = layout && !strcmp(layout, "low");
+    REQUIRE(!low_guest_layout || (translation && execution_count == 1));
+#ifdef NCE_DIRECT_EXECUTION
+    const char *layout_memory = getenv("NCE_DIRECT_MEMORY");
+    REQUIRE(!low_guest_layout || (layout_memory && !strcmp(layout_memory, "flat")));
+#else
+    REQUIRE(!low_guest_layout);
+#endif
 #ifdef NCE_SMP
     REQUIRE(translation && execution_count == 2);
     enter_guest = kernel + NCE_TRANSLATION_ENTER;
@@ -868,13 +883,23 @@ unsigned long translation_linux_setup(void *kernel, unsigned long copy_user_offs
         translation->uaccess_code_only = code_only;
     printf("{\"config\":\"translation_parallel\",\"cpus\":%u,\"profile\":%s,\"uaccess_stop\":\"%s\"}\n",
            execution_count, parallel_profile ? "true" : "false", code_only ? "code" : "all");
-    base = (uintptr_t)mmap(NULL, RESERVATION, PROT_NONE, MAP_PRIVATE | MAP_ANON, -1, 0);
-    if ((void *)base == MAP_FAILED) {
-        base = 0;
+    reservation_size = low_guest_layout ? NCE_RAM_SIZE + NCE_VMALLOC_SIZE : RESERVATION;
+    reservation_base = (uintptr_t)mmap(NULL, reservation_size, PROT_NONE, MAP_PRIVATE | MAP_ANON, -1, 0);
+    if ((void *)reservation_base == MAP_FAILED) {
+        reservation_base = 0;
         goto failed;
     }
-    if (base >= NCE_HOST_ADDRESS_LIMIT || RESERVATION > NCE_HOST_ADDRESS_LIMIT - base)
+    if (reservation_base >= NCE_HOST_ADDRESS_LIMIT || reservation_size > NCE_HOST_ADDRESS_LIMIT - reservation_base)
         goto failed;
+    guest_base = low_guest_layout ? 0x10000UL : reservation_base;
+    guest_end = low_guest_layout ? NCE_USER_SIZE : guest_base + NCE_USER_SIZE;
+    physical_base = reservation_base + (low_guest_layout ? 0 : NCE_USER_SIZE);
+    if (physical_base < guest_end)
+        goto failed;
+    if (translation) {
+        translation->guest_end = guest_end;
+        translation->physical_base = physical_base;
+    }
     if (!translation) {
         pages = calloc(NCE_USER_SIZE / PAGE, sizeof(*pages));
         REQUIRE(pages);
@@ -1011,11 +1036,11 @@ unsigned long translation_linux_setup(void *kernel, unsigned long copy_user_offs
     nce_lkl_host.user_switch = user_switch;
     nce_lkl_host.user_run = user_run;
     nce_lkl_host.user_exec = user_exec;
-    translation_elf_initialize(base);
+    translation_elf_initialize(guest_base);
     nce_lkl_host.user_elf = translation_elf_layout;
     nce_lkl_host.user_elf_offset = translation_elf_offset;
     nce_lkl_host.user_reserved = user_reserved;
-    return base;
+    return guest_base;
 failed:
     puts("{\"result\":\"failed\",\"reason\":\"translation_setup\"}");
     translation_linux_abort_setup();
@@ -1112,7 +1137,7 @@ void translation_linux_cleanup(void)
         checked(uc_close(execution->engine));
     }
     REQUIRE(munmap(ram, NCE_RAM_SIZE) == 0);
-    REQUIRE(munmap((void *)base, RESERVATION) == 0);
+    REQUIRE(munmap((void *)reservation_base, reservation_size) == 0);
     free(pages);
     if (translation)
         free(translation->code_guard);
@@ -1152,9 +1177,9 @@ void translation_linux_abort_setup(void)
     if (original_disk_io)
         nce_lkl_host.disk_io = original_disk_io;
 #endif
-    if (base)
-        REQUIRE(!munmap((void *)base, RESERVATION));
-    base = 0;
+    if (reservation_base)
+        REQUIRE(!munmap((void *)reservation_base, reservation_size));
+    guest_base = guest_end = physical_base = reservation_base = reservation_size = 0;
     free(pages);
     pages = NULL;
     if (translation) {
