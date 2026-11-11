@@ -21,6 +21,7 @@ extern int nce_wait_debugger_detach(unsigned timeout_ms);
 #endif
 #include <libkern/OSCacheControl.h>
 #include <mach/mach.h>
+#include <mach/mach_vm.h>
 #include <errno.h>
 #include <pthread.h>
 #include <stdatomic.h>
@@ -40,6 +41,7 @@ extern struct lkl_host_operations nce_lkl_host;
 extern int nce_disk_open(unsigned index, const char *path);
 extern void nce_disk_close(void);
 static long (*call)(long, long *);
+static unsigned char host_low_source[NCE_PAGE_SIZE] __attribute__((aligned(NCE_PAGE_SIZE)));
 
 static void directory(const char *path)
 {
@@ -533,6 +535,7 @@ int nce_lkl_run(const char *path)
     put_file("/lib/dependency.so", "dependency.so");
     put_file("/lib/plugin.so", "plugin.so");
     unsigned long host_value = 0x7d2a9314UL;
+    void *host_sources[2] = {0};
     if (TRANSLATION_LOOKUP && !android && !stock_bionic && !stock_art) {
         char text[256];
         const char *layout = getenv("NCE_TRANSLATION_GUEST_LAYOUT");
@@ -550,6 +553,34 @@ int nce_lkl_run(const char *path)
         pointer_args[1] = (long)&copied;
         pointer_args[3] = 0;
         REQUIRE(call(67, pointer_args) == (long)sizeof(copied) && copied == host_value && call(57, pointer_args) == 0);
+        if (layout && !strcmp(layout, "sparse")) {
+            for (unsigned i = 0; i < 2; ++i) {
+                mach_vm_address_t high = state.guest_end;
+                if (i)
+                    REQUIRE(mach_vm_map(mach_task_self(), &high, NCE_PAGE_SIZE, 0, VM_FLAGS_ANYWHERE,
+                                        MEMORY_OBJECT_NULL, 0, FALSE, VM_PROT_READ | VM_PROT_WRITE, VM_PROT_ALL, VM_INHERIT_DEFAULT) == KERN_SUCCESS);
+                host_sources[i] = i ? (void *)high : host_low_source;
+                unsigned long address = (unsigned long)host_sources[i];
+                REQUIRE(i ? address >= state.guest_end : address >= guest_base && address <= state.guest_end - NCE_PAGE_SIZE);
+                REQUIRE(snprintf(host_sources[i], NCE_PAGE_SIZE, "/host-source-%u", i) > 0);
+                memcpy(host_sources[i] + 128, &host_value, sizeof(host_value));
+                long args[6] = {-100, (long)host_sources[i], 0x242, 0600};
+                long fd = call(56, args);
+                REQUIRE(fd >= 0);
+                args[0] = fd;
+                args[1] = (long)host_sources[i] + 128;
+                args[2] = sizeof(host_value);
+                REQUIRE(call(64, args) == (long)sizeof(host_value));
+                args[1] = (long)host_sources[i] + 256;
+                args[3] = 0;
+                REQUIRE(call(67, args) == (long)sizeof(host_value) && call(57, args) == 0);
+                REQUIRE(!memcmp(host_sources[i] + 256, &host_value, sizeof(host_value)));
+            }
+            REQUIRE(snprintf(text, sizeof(text), "%lu %lu\n", (unsigned long)host_sources[0], (unsigned long)host_sources[1]) < (int)sizeof(text));
+            put_text("/probe-host-sources", text);
+            printf("{\"config\":\"translation_host_pointer_sources\",\"low\":%lu,\"high\":%lu,\"stack\":%lu,\"text\":%lu}\n",
+                   (unsigned long)host_sources[0], (unsigned long)host_sources[1], (unsigned long)&host_value, (unsigned long)&nce_lkl_run);
+        }
     }
     int failed = 0;
     if (stock_art) {
@@ -596,6 +627,17 @@ int nce_lkl_run(const char *path)
     }
     if (TRANSLATION_LOOKUP && !android && !stock_bionic && !stock_art) {
         REQUIRE(host_value == 0x7d2a9314UL);
+        for (unsigned i = 0; i < 2; ++i) {
+            if (host_sources[i]) {
+                char expected[32];
+                REQUIRE(snprintf(expected, sizeof(expected), "/host-source-%u", i) > 0);
+                REQUIRE(!strcmp(host_sources[i], expected));
+                REQUIRE(!memcmp(host_sources[i] + 128, &host_value, sizeof(host_value)));
+                REQUIRE(!memcmp(host_sources[i] + 256, &host_value, sizeof(host_value)));
+                if (i)
+                    REQUIRE(!munmap(host_sources[i], NCE_PAGE_SIZE));
+            }
+        }
         puts("{\"test\":\"translated_host_pointer_copy\",\"passed\":true}");
     }
     memory_sample("guest_finished");

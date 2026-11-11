@@ -41,6 +41,25 @@ void *nce_test_reservation_mmap(void *address, size_t size, int protection, int 
     return result;
 }
 
+kern_return_t nce_test_reservation_mach_vm_map(vm_map_t task, mach_vm_address_t *address, mach_vm_size_t size,
+                                               mach_vm_offset_t mask, int flags, mem_entry_name_port_t object,
+                                               memory_object_offset_t offset, boolean_t copy, vm_prot_t protection,
+                                               vm_prot_t maximum, vm_inherit_t inheritance)
+{
+    const char *layout = getenv("NCE_TRANSLATION_GUEST_LAYOUT");
+    if (!layout || strcmp(layout, "sparse") || reservation || task != mach_task_self() ||
+        *address != 1UL << 36 || size != NCE_RAM_SIZE + NCE_VMALLOC_SIZE || mask ||
+        flags != VM_FLAGS_ANYWHERE || object != MEMORY_OBJECT_NULL || offset || copy ||
+        protection != VM_PROT_NONE || maximum != VM_PROT_ALL || inheritance != VM_INHERIT_DEFAULT)
+        abort();
+    kern_return_t result = mach_vm_map(task, address, size, mask, flags, object, offset, copy, protection, maximum, inheritance);
+    if (result == KERN_SUCCESS) {
+        reservation = (void *)*address;
+        reservation_size = size;
+    }
+    return result;
+}
+
 int nce_test_reservation_munmap(void *address, size_t size)
 {
     if (!reservation || address != reservation || size != reservation_size || reservation_releases++)

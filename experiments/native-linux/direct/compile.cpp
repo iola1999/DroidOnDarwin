@@ -194,11 +194,17 @@ Compilation Page::compile(uint64_t new_page, const void *bytes, size_t entry,
             return;
         }
         if (flags & CompileFlat) {
+            Label flat, done;
             // Keep NZCV intact and validate upper address bits before indexing.
             c.LDR(X26, X27, DIRECT_PTE_USER_BASE);
             c.SUB(X17, X16, X26);
             c.LSR(X26, X17, DIRECT_FLAT_USER_BITS);
-            c.CBNZ(X26, miss);
+            c.CBZ(X26, flat);
+            c.LDR(X26, X27, write ? DIRECT_PTE_WRITE_STUB : DIRECT_PTE_READ_STUB);
+            c.BLR(X26);
+            c.CBZ(X17, miss);
+            c.B(done);
+            c.l(flat);
             c.LSR(X17, X17, 14);
             if (flags & CompileReadView) {
                 c.LDR(X26, X27, DIRECT_FLAT_PAGES);
@@ -219,6 +225,7 @@ Compilation Page::compile(uint64_t new_page, const void *bytes, size_t entry,
             }
             c.AND(X26, X16, 16383);
             c.ADD(X17, X17, X26);
+            c.l(done);
             return;
         }
         if ((flags & CompilePageTable) && !(flags & CompilePteReadRefill)) {

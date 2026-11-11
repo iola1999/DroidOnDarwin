@@ -58,8 +58,8 @@ typedef struct {
     /* With page_table, use the table walker only to refill read-cache misses.
      * Writes keep map_page and the writable-code-alias checks. */
     bool refill_reads;
-    /* Optional Linux-maintained table, one entry per 16 KiB page in the 4 GiB
-     * user range. Requires page_table and excludes refill_reads. Nonzero
+    /* Optional Linux-maintained table covering the first 4 GiB from user_base.
+     * Higher addresses use page_table. Requires page_table and excludes refill_reads. Nonzero
      * entries must be aligned pointers inside its RAM; only Linux updates them
      * while affected CPUs are outside run. */
     const struct nce_direct_flat_page *flat_pages;

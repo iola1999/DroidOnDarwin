@@ -46,7 +46,7 @@ def validate_android_image(root, directory):
 
 def validate_guest_layout(rows, requested, flat=False):
     records = [row for row in rows if row.get('config') == 'translation_guest_layout']
-    if len(records) != 1 or requested not in ('host', 'low'):
+    if len(records) != 1 or requested not in ('host', 'low', 'sparse'):
         return False
     row = records[0]
     fields = ('guest_base', 'guest_end', 'guest_span_bytes', 'flat_coverage_bytes',
@@ -65,8 +65,8 @@ def validate_guest_layout(rows, requested, flat=False):
             ram_size > (1 << 64) - ram or (ram < end and base < ram + ram_size) or
             (ram < reserve + reserve_size and reserve < ram + ram_size)):
         return False
-    if requested == 'low':
-        return (flat and base == 0x10000 and end == coverage and physical == reserve and
+    if requested in ('low', 'sparse'):
+        return (flat and base == 0x10000 and end == (1 << 36 if requested == 'sparse' else coverage) and physical == reserve and
                 reserve_size == ram_size + (64 << 20))
     return (base == reserve and end == base + coverage and physical == end and
             reserve_size == coverage + ram_size + (64 << 20))
@@ -109,9 +109,18 @@ def validate(rows, memory_interval, mapping="window", workload="core", tlb_inval
         flat = execution == 'direct' and direct_config is not None and direct_config['memory'] in ('flat', 'view')
         if not validate_guest_layout(rows, guest_layout, flat):
             return False
-        if guest_layout == 'low' and (mapping != 'pte' or execution != 'direct' or cpus != 1 or direct_config['memory'] != 'flat'):
+        if guest_layout in ('low', 'sparse') and (mapping != 'pte' or execution != 'direct' or cpus != 1 or direct_config['memory'] != 'flat'):
             return False
         if workload == 'core' and mapping == 'pte':
+            if guest_layout == 'sparse':
+                if not {'translated_sparse_host_pointer_sources', 'translated_sparse_pte_cow_shared_uaccess',
+                        'translated_sparse_reservation_materialization'} <= {row.get('test') for row in rows if row.get('passed')}:
+                    return False
+                pointers = [row for row in rows if row.get('config') == 'translation_host_pointer_sources']
+                if (len(pointers) != 1 or set(pointers[0]) != {'config', 'low', 'high', 'stack', 'text'} or
+                        any(type(pointers[0][k]) is not int or not 0 < pointers[0][k] < 1 << 64 for k in ('low', 'high', 'stack', 'text')) or
+                        not 0x10000 <= pointers[0]['low'] <= (1 << 36) - 16384 or pointers[0]['high'] < 1 << 36):
+                    return False
             if [row for row in rows if row.get('test') == 'translated_guest_layout_boundaries'] != [
                     {'test': 'translated_guest_layout_boundaries', 'passed': True, 'layout': guest_layout}]:
                 return False
@@ -404,7 +413,7 @@ def main():
     parser.add_argument('--build-only', action='store_true')
     parser.add_argument('--reuse-engine-build', action='store_true', help='校验摘要后复用已构建的 Unicorn，用于执行器成组对照')
     parser.add_argument('--mapping', choices=('window', 'pte'), default='window')
-    parser.add_argument('--guest-layout', choices=('host', 'low'), default='host')
+    parser.add_argument('--guest-layout', choices=('host', 'low', 'sparse'), default='host')
     parser.add_argument('--data-seed', type=Path, help='服务和桌面检查使用的初始 ext4 数据盘')
     parser.add_argument('--persistent-data', action='store_true', help='各入口与重复轮次连续使用同一数据盘，检查重启持久化')
     parser.add_argument('--apk-fixture-dir', type=Path, help='运行时传入同签名 Java/JNI APK，首轮安装更新，后续启动只检查已安装 v2')
@@ -428,7 +437,7 @@ def main():
     parser.add_argument('--output', type=Path, default=DEFAULT_OUT)
     parser.add_argument('--memory-interval-ms', type=int, default=100)
     args = parser.parse_args()
-    if args.guest_layout == 'low' and (args.mapping != 'pte' or args.execution != 'direct' or args.direct_memory != 'flat' or args.cpus != 1):
+    if args.guest_layout in ('low', 'sparse') and (args.mapping != 'pte' or args.execution != 'direct' or args.direct_memory != 'flat' or args.cpus != 1):
         parser.error('低客体地址实验需要单 CPU 的 pte/direct/flat')
     if args.high_res_timers and args.mapping != 'pte':
         parser.error('高分辨率定时器变体需要 --mapping pte')
@@ -619,6 +628,7 @@ def main():
     guest_sources = [EXP / 'userspace' / name for name in
                      ('signal-tests.c', 'signal-registers.S', 'code-tests.c', 'mm-bench.c', 'mm-tests.c', 'file-tests.c')]
     guest_sources.append(EXP / 'translation/timer-tests.c')
+    guest_sources.append(EXP / 'translation/sparse-guest.c')
     if stock_runtime or stock_art:
         guest_sources = []
     elif args.mapping == 'pte':

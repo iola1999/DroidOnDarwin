@@ -30,7 +30,7 @@ static unsigned long mapping_mode;''')
     translation = (void *)views;
     BUG_ON(!translation->cpu_count || translation->cpu_count > NCE_TRANSLATION_MAX_CPUS);
     BUG_ON(!base || offset_in_page(base) || base > ~0UL - NCE_USER_SIZE);
-    BUG_ON(translation->guest_end <= base || translation->guest_end - base > NCE_USER_SIZE ||
+    BUG_ON(translation->guest_end <= base || translation->guest_end > (1UL << 47) ||
            offset_in_page(translation->guest_end));
     BUG_ON(translation->physical_base < translation->guest_end || offset_in_page(translation->physical_base) ||
            translation->physical_base >= NCE_HOST_ADDRESS_LIMIT ||
@@ -109,7 +109,7 @@ static unsigned long mapping_mode;''')
 static void flat_update(struct mm_struct *mm, unsigned long address, pte_t pte)
 {
     struct nce_direct_flat_page *table = mm->context.flat;
-    if (!table || address < USER_BASE || address >= TASK_SIZE)
+    if (!table || address < USER_BASE || address >= TASK_SIZE || address - USER_BASE >= NCE_USER_SIZE)
         return;
     unsigned long read = 0, write = 0;
     unsigned long offset = (pte_val(pte) & PAGE_MASK) - memory_start;
@@ -139,7 +139,7 @@ static void flat_refresh(struct mm_struct *mm, unsigned long start, unsigned lon
     if (!mm->context.flat)
         return;
     start = max(start & PAGE_MASK, USER_BASE);
-    end = min(PAGE_ALIGN(end), TASK_SIZE);
+    end = min(PAGE_ALIGN(end), min(TASK_SIZE, USER_BASE + NCE_USER_SIZE));
     for (unsigned long address = start; address < end; address += PAGE_SIZE) {
         flat_update(mm, address, lookup(mm, address));
         ++translation->flat_refresh_pages;

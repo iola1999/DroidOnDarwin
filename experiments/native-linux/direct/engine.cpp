@@ -263,9 +263,10 @@ struct NceDirect {
         if (memory.refill_reads && !memory.page_table)
             return NCE_DIRECT_ERROR;
         if (memory.flat_pages && (!memory.page_table || memory.refill_reads ||
-                                  memory.page_table->user_size != (UINT64_C(1) << DIRECT_FLAT_USER_BITS)))
+                                  memory.page_table->user_size < (UINT64_C(1) << DIRECT_FLAT_USER_BITS)))
             return NCE_DIRECT_ERROR;
         if (memory.read_view && (!memory.flat_pages || (uintptr_t(memory.read_view) & 16383) ||
+                                 memory.page_table->user_size != (UINT64_C(1) << DIRECT_FLAT_USER_BITS) ||
                                  uintptr_t(memory.read_view) > UINTPTR_MAX - (UINT64_C(1) << 32)))
             return NCE_DIRECT_ERROR;
         if (memory.page_table) {
