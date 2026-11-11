@@ -213,34 +213,77 @@ def analyze(directory):
         if total['window'] and total.get('total_frames', 0) > sum(row['window'] == total['window'] for row in rows):
             failures.append('window frame history is shorter than its rendered total: ' + total['window'])
     counts, seen, accepted = Counter(), set(), []
+    frame_failures = set()
+    valid_window = beginning is not None and ending is not None and beginning < ending
+    window_start = beginning + offset if valid_window else None
+    window_end = ending + offset if valid_window else None
     for row in rows:
         values = row['values']
         identity = (row['window'], values.get('FrameTimelineVsyncId'), values['IntendedVsync'])
         start, end = values['IntendedVsync'], values['FrameCompleted']
+        valid_start = 0 < start < 2**63 - 1
+        completed = valid_start and start <= end < 2**63 - 1
+        row['completion_status'] = ('completed' if completed else
+                                    'unreported' if valid_start and end in (0, 2**63 - 1) else 'invalid')
+        if completed:
+            row['duration_ms'] = (end - start) / 1e6
+        if not valid_start or not valid_window:
+            boundary = 'unknown'
+        elif start < window_start:
+            boundary = ('overlap_unknown' if not completed else
+                        'crosses_start' if end > window_start else 'before_window')
+        elif start >= window_end:
+            boundary = 'after_window'
+        elif not completed:
+            boundary = 'completion_unavailable'
+            # An unavailable or invalid completion timestamp cannot establish
+            # a duration bound; retain only the interval to the window end.
+            row['elapsed_to_window_end_ms'] = (window_end - start) / 1e6
+        else:
+            boundary = 'crosses_end' if end > window_end else 'within_window'
+        row['window_boundary'] = boundary
+        start_uncertain = bool(valid_window and valid_start and uncertainty and
+                               any(abs(start - bound) < uncertainty for bound in (window_start, window_end)))
+        end_uncertain = bool(valid_window and completed and uncertainty and
+                             start < window_end + uncertainty and end > window_start - uncertainty and
+                             any(abs(end - bound) < uncertainty for bound in (window_start, window_end)))
+        row['clock_boundary_uncertain'] = start_uncertain or end_uncertain
+        if identity not in seen:
+            if boundary in ('crosses_start', 'crosses_end'):
+                frame_failures.add('frame crosses capture window boundary')
+            if boundary == 'completion_unavailable':
+                frame_failures.add('frame starting in capture window has no valid completion timestamp')
+            if boundary == 'overlap_unknown':
+                frame_failures.add('frame starting before capture window has unknown overlap')
+            if not valid_start:
+                frame_failures.add('frame has no valid start timestamp')
+            if row['clock_boundary_uncertain']:
+                frame_failures.add('frame capture window boundary is uncertain')
         reason = None
         if identity in seen:
             reason = 'duplicate'
         elif values['Flags'] != 0:
             reason = 'nonzero_flags'
-        elif not (0 < start <= end < 2**63 - 1):
+        elif not completed:
             reason = 'incomplete_or_invalid_time'
-        elif beginning is None or ending is None:
+        elif not valid_window:
             reason = 'unknown_window'
-        elif start < beginning + offset or end > ending + offset:
-            reason = 'outside_or_crossing_window'
-        if reason is None and uncertainty is not None and (start < beginning + offset + uncertainty or end > ending + offset - uncertainty):
+        elif not window_start <= start < window_end:
+            reason = 'outside_start_window'
+        elif start_uncertain:
             reason = 'clock_uncertainty_boundary'
         seen.add(identity)
         row['excluded'] = reason
         counts[reason or 'accepted'] += 1
         if reason:
             continue
-        row['duration_ms'] = (end - start) / 1e6
         row['phases_ms'] = {name: (values[b] - values[a]) / 1e6 for name, (a, b) in PHASES.items()
                             if a in values and b in values and 0 < values[a] <= values[b] < 2**63 - 1}
         accepted.append(row)
     if not accepted:
-        failures.append('no valid frames entirely within the operation window')
+        failures.append('no completed frames with unambiguous start in the operation window')
+    failures.extend(sorted(frame_failures))
+    exported_frame_window_complete = not failures
     cpu_stats = {}
     for path in sorted(output.glob('cpu*.txt')):
         values = {}
@@ -277,7 +320,7 @@ def analyze(directory):
     files = [directory / name for name in ('request.json', 'result.json')] + sorted(output.glob('*'))
     trace = output / 'kernel.ftrace'
     trace_text = trace.read_text() if trace.exists() else ''
-    return {'version': 1, 'analyzer_sha256': hashlib.sha256(Path(__file__).read_bytes()).hexdigest(), 'runID': result['runID'], 'buildID': result['buildID'],
+    return {'version': 2, 'analyzer_sha256': hashlib.sha256(Path(__file__).read_bytes()).hexdigest(), 'runID': result['runID'], 'buildID': result['buildID'],
             'configuration': result['configuration'], 'hardware': result['hardware'], 'os': result['os'],
             'benchmark_status': result['status'], 'failures': failures,
             'host_visibility': host_visibility(result, beginning, ending),
@@ -285,6 +328,8 @@ def analyze(directory):
             'clocks': clocks, 'alignment_uncertainty_ns': uncertainty if selected and all(c['resolution_known'] for c in selected) else None,
             'alignment_bracket_half_width_ns': uncertainty,
             'host_window_ns': [beginning, ending], 'guest_window_ns': [value + offset if value is not None else None for value in (beginning, ending)],
+            'exported_frame_window_complete': exported_frame_window_complete,
+            'duration_scope': 'exported zero-flag completed frames with unambiguous IntendedVsync in [start,end); full duration including completion after end; missing frames and unavailable completions are not in quantiles',
             'presentation': presentation, 'frame_totals': totals, 'frame_counts': dict(counts), 'frames': rows, 'duration': distribution([row['duration_ms'] for row in accepted]),
             'phase_duration': {name: distribution([row['phases_ms'][name] for row in accepted if name in row['phases_ms']]) for name in PHASES},
             'cpu_stats': cpu_stats, 'ring_capacity_known': False, 'execution': execution,
