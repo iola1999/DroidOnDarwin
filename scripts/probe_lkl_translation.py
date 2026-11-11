@@ -72,7 +72,7 @@ def validate_guest_layout(rows, requested, flat=False):
             reserve_size == coverage + ram_size + (64 << 20))
 
 
-def validate_standard_jit(rows):
+def validate_standard_jit(rows, data_tbi=False):
     if [row for row in rows if row.get('config') == 'linux_standard_jit'] != [
             {'config': 'linux_standard_jit', 'page_bytes': 16384}]:
         return False
@@ -84,6 +84,8 @@ def validate_standard_jit(rows):
               'unicorn_pwrite_update': 202, 'unicorn_unseen_pwrite': 203,
               'same_va_new_backing': 87, 'sealed_write': 1, 'unicorn_self_page_flush': 67,
               'exec_only_vma': 58, 'noexec_mmap': 1, 'noexec_mprotect': 13, 'unpopulated_exec_alias': 59}
+    if data_tbi:
+        values['unicorn_tagged_pwrite_updates'] = 3
     faults = {'rx_write': 2, 'remove_execute': 2, 'mremap_old_unmapped': 1, 'unmapped_execute': 1}
     records = [row for row in rows if row.get('test') == 'linux_standard_jit']
     if len(records) != len(values) + len(faults) or {row.get('case') for row in records} != values.keys() | faults.keys():
@@ -220,7 +222,7 @@ def validate(rows, memory_interval, mapping="window", workload="core", tlb_inval
                 'linux_dynamic_link_dlopen_constructors', 'linux_dynamic_tls_threads', 'linux_dynamic_fork_signal'}
     if workload == 'core' and mapping == 'pte':
         expected.remove('linux_dynamic_code')
-        if not validate_standard_jit(rows):
+        if not validate_standard_jit(rows, data_tbi):
             return False
     elif workload == 'stock-art':
         from stock_art import validate as validate_stock_art
