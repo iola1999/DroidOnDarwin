@@ -64,9 +64,11 @@ static void layout_tests(void)
     CHECK(fscanf(input, "%7s %lu %lu %lu %lu %lu", layout, &base, &end, &physical, &ram, &host_pointer) == 6);
     CHECK(!fclose(input));
     int low = !strcmp(layout, "low");
-    CHECK(low || !strcmp(layout, "host"));
+    int sparse = !strcmp(layout, "sparse");
+    CHECK(low || sparse || !strcmp(layout, "host"));
     CHECK(base && end > base && physical >= end);
     CHECK(!low || (base == 0x10000 && end == 0x100000000UL));
+    CHECK(!sparse || (base == 0x10000 && end == 1UL << 36));
     unsigned long stack_address = (unsigned long)&input;
     CHECK((unsigned long)&layout_tests >= base && (unsigned long)&layout_tests < end);
     CHECK(stack_address >= base && stack_address < end && (unsigned long)&tls >= base && (unsigned long)&tls < end);
@@ -78,14 +80,14 @@ static void layout_tests(void)
     const unsigned long forbidden[] = {0, base - PAGE, end, end + 3 * PAGE, physical, ram, host_pointer, UINTPTR_MAX - 7};
     for (unsigned i = 0; i < sizeof(forbidden) / sizeof(*forbidden); ++i) {
         unsigned long address = forbidden[i];
-        CHECK(address < base || address >= end);
+        CHECK(sparse || address < base || address >= end);
         inaccessible(address, 0);
         inaccessible(address, 1);
         CHECK(syscall(SYS_write, fd, address, 1) == -1 && errno == EFAULT);
         CHECK(syscall(SYS_pread64, fd, address, 1, 0) == -1 && errno == EFAULT);
         CHECK(syscall(SYS_openat, AT_FDCWD, address, O_RDONLY, 0) == -1 && errno == EFAULT);
     }
-    if (low) {
+    if (low || sparse) {
         unsigned char *mapped = mmap(NULL, PAGE, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
         CHECK(mapped != MAP_FAILED && (unsigned long)mapped >= base && (unsigned long)mapped <= end - PAGE);
         const char path[] = "/host-pointer";
@@ -93,7 +95,7 @@ static void layout_tests(void)
         const unsigned long high_bits[] = {1UL << 32, 1UL << 48};
         for (unsigned i = 0; i < sizeof(high_bits) / sizeof(*high_bits); ++i) {
             unsigned long address = (unsigned long)mapped + high_bits[i];
-            CHECK(address >= end && (uint32_t)address == (unsigned long)mapped);
+            CHECK((!low || address >= end) && (uint32_t)address == (unsigned long)mapped);
             inaccessible(address, 0);
             inaccessible(address, 1);
             CHECK(!memcmp(mapped, path, sizeof(path)));
@@ -136,8 +138,17 @@ static void layout_tests(void)
         inaccessible(base - PAGE, 0);
         CHECK(munmap((void *)base, 2 * PAGE) == 0);
     }
+    if (sparse) {
+        extern void translation_sparse_tests(void (*)(unsigned long, int));
+        translation_sparse_tests(inaccessible);
+    }
     CHECK(!close(fd));
     CHECK(!sigaction(SIGSEGV, &previous, NULL));
+    extern void translation_tbi_tests(int);
+    const char *tbi = getenv("NCE_DATA_TBI");
+    CHECK(tbi && (!strcmp(tbi, "0") || !strcmp(tbi, "1")));
+    if (!strcmp(tbi, "1"))
+        translation_tbi_tests(sparse);
     printf("{\"test\":\"translated_guest_layout_boundaries\",\"passed\":true,\"layout\":\"%s\"}\n", layout);
 }
 

@@ -21,6 +21,7 @@ extern int nce_wait_debugger_detach(unsigned timeout_ms);
 #endif
 #include <libkern/OSCacheControl.h>
 #include <mach/mach.h>
+#include <mach/mach_vm.h>
 #include <errno.h>
 #include <pthread.h>
 #include <stdatomic.h>
@@ -40,6 +41,7 @@ extern struct lkl_host_operations nce_lkl_host;
 extern int nce_disk_open(unsigned index, const char *path);
 extern void nce_disk_close(void);
 static long (*call)(long, long *);
+static unsigned char host_low_source[NCE_PAGE_SIZE] __attribute__((aligned(NCE_PAGE_SIZE)));
 
 static void directory(const char *path)
 {
@@ -146,6 +148,8 @@ static void stock_bionic_setup(void)
     put_file("/system/bin/stock-bionic", "bionic-test.elf");
     put_file("/linkerconfig/ld.config.txt", "stock-ld.config.txt");
 }
+
+#include "stock-art-runner.h"
 
 static void apk_fixture_setup(int desktop)
 {
@@ -465,8 +469,9 @@ int nce_lkl_run(const char *path)
     }
     set_layout(guest_base, TRANSLATION_LOOKUP ? NCE_MM_TRANSLATED : NCE_MM_DEMAND, views, 3, NULL, 1, 0);
     const char *workload = getenv("NCE_TRANSLATION_WORKLOAD");
-    REQUIRE(!workload || !strcmp(workload, "core") || !strcmp(workload, "bionic") || !strcmp(workload, "android") || !strcmp(workload, "services") || !strcmp(workload, "desktop"));
+    REQUIRE(!workload || !strcmp(workload, "core") || !strcmp(workload, "bionic") || !strcmp(workload, "stock-art") || !strcmp(workload, "android") || !strcmp(workload, "services") || !strcmp(workload, "desktop"));
     int stock_bionic = workload && !strcmp(workload, "bionic");
+    int stock_art = workload && !strcmp(workload, "stock-art");
     int desktop = workload && !strcmp(workload, "desktop");
     int services = desktop || (workload && !strcmp(workload, "services"));
     int android = services || (workload && !strcmp(workload, "android"));
@@ -524,12 +529,14 @@ int nce_lkl_run(const char *path)
     put_file("/probe-after-build", "late.elf");
     put_file("/dynamic", "dynamic.elf");
     put_file("/bin/sh", "dash.elf");
-    put_file("/bionic-test", "bionic-test.elf");
+    if (!stock_art)
+        put_file("/bionic-test", "bionic-test.elf");
     put_file("/lib/ld-musl-aarch64.so.1", "libc.so");
     put_file("/lib/dependency.so", "dependency.so");
     put_file("/lib/plugin.so", "plugin.so");
     unsigned long host_value = 0x7d2a9314UL;
-    if (TRANSLATION_LOOKUP && !android && !stock_bionic) {
+    void *host_sources[2] = {0};
+    if (TRANSLATION_LOOKUP && !android && !stock_bionic && !stock_art) {
         char text[256];
         const char *layout = getenv("NCE_TRANSLATION_GUEST_LAYOUT");
         REQUIRE(snprintf(text, sizeof(text), "%s %lu %lu %lu %lu %lu\n", layout ? layout : "host",
@@ -546,9 +553,42 @@ int nce_lkl_run(const char *path)
         pointer_args[1] = (long)&copied;
         pointer_args[3] = 0;
         REQUIRE(call(67, pointer_args) == (long)sizeof(copied) && copied == host_value && call(57, pointer_args) == 0);
+        if (layout && !strcmp(layout, "sparse")) {
+            for (unsigned i = 0; i < 2; ++i) {
+                mach_vm_address_t high = state.guest_end;
+                if (i)
+                    REQUIRE(mach_vm_map(mach_task_self(), &high, NCE_PAGE_SIZE, 0, VM_FLAGS_ANYWHERE,
+                                        MEMORY_OBJECT_NULL, 0, FALSE, VM_PROT_READ | VM_PROT_WRITE, VM_PROT_ALL, VM_INHERIT_DEFAULT) == KERN_SUCCESS);
+                host_sources[i] = i ? (void *)high : host_low_source;
+                unsigned long address = (unsigned long)host_sources[i];
+                REQUIRE(i ? address >= state.guest_end : address >= guest_base && address <= state.guest_end - NCE_PAGE_SIZE);
+                REQUIRE(snprintf(host_sources[i], NCE_PAGE_SIZE, "/host-source-%u", i) > 0);
+                memcpy(host_sources[i] + 128, &host_value, sizeof(host_value));
+                long args[6] = {-100, (long)host_sources[i], 0x242, 0600};
+                long fd = call(56, args);
+                REQUIRE(fd >= 0);
+                args[0] = fd;
+                args[1] = (long)host_sources[i] + 128;
+                args[2] = sizeof(host_value);
+                REQUIRE(call(64, args) == (long)sizeof(host_value));
+                args[1] = (long)host_sources[i] + 256;
+                args[3] = 0;
+                REQUIRE(call(67, args) == (long)sizeof(host_value) && call(57, args) == 0);
+                REQUIRE(!memcmp(host_sources[i] + 256, &host_value, sizeof(host_value)));
+            }
+            REQUIRE(snprintf(text, sizeof(text), "%lu %lu\n", (unsigned long)host_sources[0], (unsigned long)host_sources[1]) < (int)sizeof(text));
+            put_text("/probe-host-sources", text);
+            printf("{\"config\":\"translation_host_pointer_sources\",\"low\":%lu,\"high\":%lu,\"stack\":%lu,\"text\":%lu}\n",
+                   (unsigned long)host_sources[0], (unsigned long)host_sources[1], (unsigned long)&host_value, (unsigned long)&nce_lkl_run);
+        }
     }
     int failed = 0;
-    if (stock_bionic) {
+    if (stock_art) {
+        stock_art_setup();
+        translation_memory_phase("guest_execution");
+        failed = run_program("/probe-guest", 1);
+        stock_art_export();
+    } else if (stock_bionic) {
         stock_bionic_setup();
         translation_memory_phase("guest_execution");
         failed = run_program("/probe-guest", 1);
@@ -585,8 +625,19 @@ int nce_lkl_run(const char *path)
         translation_memory_phase("guest_execution");
         failed = run_program("/probe-guest", 0);
     }
-    if (TRANSLATION_LOOKUP && !android && !stock_bionic) {
+    if (TRANSLATION_LOOKUP && !android && !stock_bionic && !stock_art) {
         REQUIRE(host_value == 0x7d2a9314UL);
+        for (unsigned i = 0; i < 2; ++i) {
+            if (host_sources[i]) {
+                char expected[32];
+                REQUIRE(snprintf(expected, sizeof(expected), "/host-source-%u", i) > 0);
+                REQUIRE(!strcmp(host_sources[i], expected));
+                REQUIRE(!memcmp(host_sources[i] + 128, &host_value, sizeof(host_value)));
+                REQUIRE(!memcmp(host_sources[i] + 256, &host_value, sizeof(host_value)));
+                if (i)
+                    REQUIRE(!munmap(host_sources[i], NCE_PAGE_SIZE));
+            }
+        }
         puts("{\"test\":\"translated_host_pointer_copy\",\"passed\":true}");
     }
     memory_sample("guest_finished");

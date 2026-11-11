@@ -213,7 +213,8 @@ struct NceDirect {
         std::array<unsigned char *, 2> mapped{};
         uint64_t addresses[] = {frame.address, frame.address + first};
         for (unsigned index = 0; index < 2; ++index) {
-            auto *ram = static_cast<unsigned char *>(memory.map_page(memory.opaque, addresses[index] & ~mask, access.write));
+            uint64_t translated = frame.state.access_flags & NCE_DIRECT_DATA_TBI ? addresses[index] & UINT64_C(0x00ffffffffffffff) : addresses[index];
+            auto *ram = static_cast<unsigned char *>(memory.map_page(memory.opaque, translated & ~mask, access.write));
             bool valid = ram && !(uintptr_t(ram) & mask);
             if (valid && memory.page_table && !memory.refill_reads) {
                 uintptr_t offset = uintptr_t(ram) - uintptr_t(memory.page_table->ram);
@@ -263,9 +264,10 @@ struct NceDirect {
         if (memory.refill_reads && !memory.page_table)
             return NCE_DIRECT_ERROR;
         if (memory.flat_pages && (!memory.page_table || memory.refill_reads ||
-                                  memory.page_table->user_size != (UINT64_C(1) << DIRECT_FLAT_USER_BITS)))
+                                  memory.page_table->user_size < (UINT64_C(1) << DIRECT_FLAT_USER_BITS)))
             return NCE_DIRECT_ERROR;
-        if (memory.read_view && (!memory.flat_pages || (uintptr_t(memory.read_view) & 16383) ||
+        if (memory.read_view && (!memory.flat_pages || (state.access_flags & NCE_DIRECT_DATA_TBI) || (uintptr_t(memory.read_view) & 16383) ||
+                                 memory.page_table->user_size != (UINT64_C(1) << DIRECT_FLAT_USER_BITS) ||
                                  uintptr_t(memory.read_view) > UINTPTR_MAX - (UINT64_C(1) << 32)))
             return NCE_DIRECT_ERROR;
         if (memory.page_table) {
@@ -288,6 +290,8 @@ struct NceDirect {
         if (memory.code_version != previous.code_version || memory.opaque != previous.opaque)
             clear();
         uint32_t flags = state.access_flags & NCE_DIRECT_UNALIGNED;
+        if (state.access_flags & NCE_DIRECT_DATA_TBI)
+            flags |= CompileDataTbi;
         if (page_bits == 14)
             flags |= CompileData16K;
         if (memory.page_table)
@@ -341,6 +345,7 @@ struct NceDirect {
         // A retained validation interval keeps its visited physical pages
         // write-protected by the generated checks, including cached branches.
         if (!memory.mapping_epoch || memory.mapping_epoch != previous.mapping_epoch ||
+            ((flags ^ previous_flags) & CompileDataTbi) ||
             memory.opaque != previous.opaque || memory.map_page != previous.map_page || memory.page_bits != previous.page_bits) {
             std::fill(mappings.begin(), mappings.end(), EmptyMapping);
             write_aliases.clear();
@@ -432,7 +437,8 @@ struct NceDirect {
                 break;
             }
             uint64_t address = frame.address & ~page_mask;
-            void *mapped = memory.map_page(memory.opaque, address, write);
+            uint64_t translated = frame.state.access_flags & NCE_DIRECT_DATA_TBI ? address & UINT64_C(0x00ffffffffffffff) : address;
+            void *mapped = memory.map_page(memory.opaque, translated, write);
             bool code_alias = false;
             if (mapped && write)
                 for (unsigned offset = 0; offset <= page_mask; offset += 4096)

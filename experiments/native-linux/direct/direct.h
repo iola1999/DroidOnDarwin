@@ -17,14 +17,18 @@ enum {
     NCE_DIRECT_SHA1 = 512,
     NCE_DIRECT_SHA256 = 1024,
     NCE_DIRECT_PAC_HINT_NOP = 2048,
-    NCE_DIRECT_DC_ZVA64 = 4096
+    NCE_DIRECT_DC_ZVA64 = 4096,
+    /* Ignore bits 63:56 for data translation; preserve registers and faults.
+     * map_page receives the translated address. map_code remains unchanged. */
+    NCE_DIRECT_DATA_TBI = 8192
 };
 typedef struct {
     uint64_t x[31], sp, pc;
     uint32_t nzcv, fpcr, fpsr, access_flags;
     uint64_t tpidr_el0, v[32][2];
     /* UINT64_MAX clears the guest reservation. Native reservations can fail
-     * after any return to the host, including a mapping refill. */
+     * after any return to the host, including a mapping refill. DATA_TBI stores
+     * the untagged reservation address; x[] and fault addresses retain tags. */
     uint64_t exclusive_address, exclusive_value;
 } NceDirectState;
 
@@ -58,8 +62,8 @@ typedef struct {
     /* With page_table, use the table walker only to refill read-cache misses.
      * Writes keep map_page and the writable-code-alias checks. */
     bool refill_reads;
-    /* Optional Linux-maintained table, one entry per 16 KiB page in the 4 GiB
-     * user range. Requires page_table and excludes refill_reads. Nonzero
+    /* Optional Linux-maintained table covering the first 4 GiB from user_base.
+     * Higher addresses use page_table. Requires page_table and excludes refill_reads. Nonzero
      * entries must be aligned pointers inside its RAM; only Linux updates them
      * while affected CPUs are outside run. */
     const struct nce_direct_flat_page *flat_pages;

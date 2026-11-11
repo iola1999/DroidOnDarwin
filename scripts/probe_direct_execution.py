@@ -172,7 +172,8 @@ def validate(rows, mode, interval, config=None, entry=None):
             'direct_pte_code_alias_and_next_run_release', 'direct_pte_cross_page_permissions_retry_and_code_alias',
             'direct_pte_memory_groups_boundaries_remap_and_code_alias'}
         expected |= {name + suffix for name in expected if name.startswith('direct_pte_') for suffix in ('_refill', '_flat', '_view')}
-        expected |= {'direct_flat_exclusive_pair_and_zva', 'direct_flat_cross_page_table_switch_and_configuration'}
+        expected |= {'direct_flat_exclusive_pair_and_zva', 'direct_flat_cross_page_table_switch_and_configuration',
+                     'direct_sparse_flat_pte_boundaries', 'direct_sparse_flat_pte_native_exclusive'}
         expected |= {'direct_read_view_handler_ownership_and_forwarding', 'direct_read_view_vector_literal_fault_and_retry'}
         expected |= {'parallel_private_same_va_compile_and_memory', 'parallel_native_exclusive_all_widths_and_orderings',
                      'parallel_tls_x18_vectors_and_replaced_code', 'parallel_targeted_stop',
