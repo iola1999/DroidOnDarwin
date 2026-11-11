@@ -104,6 +104,49 @@ static void put_text(const char *path, const char *value)
     REQUIRE(call(64, args) == args[2] && call(57, args) == 0);
 }
 
+static void seed_entropy(void)
+{
+    struct {
+        int entropy_bits, bytes;
+        unsigned char data[32];
+    } entropy = {256, 32, {0}};
+    arc4random_buf(entropy.data, sizeof(entropy.data));
+    long random[6] = {-100, (long)"/dev/random", 2};
+    long fd = call(56, random);
+    REQUIRE(fd >= 0);
+    random[0] = fd;
+    random[1] = 0x40085203;
+    random[2] = (long)&entropy;
+    REQUIRE(call(29, random) == 0 && call(57, random) == 0);
+}
+
+static void stock_bionic_setup(void)
+{
+    const char *directories[] = {"/dev", "/apex", "/apex/com.android.runtime", "/apex/com.android.runtime/bin",
+                                 "/apex/com.android.runtime/lib64", "/apex/com.android.runtime/lib64/bionic",
+                                 "/system", "/system/bin", "/linkerconfig"};
+    for (unsigned i = 0; i < sizeof(directories) / sizeof(*directories); ++i)
+        directory(directories[i]);
+    const char *devices[] = {"/dev/null", "/dev/random", "/dev/urandom"};
+    const unsigned numbers[] = {259, 264, 265};
+    for (unsigned i = 0; i < sizeof(devices) / sizeof(*devices); ++i) {
+        long create[6] = {-100, (long)devices[i], 0020666, numbers[i]};
+        REQUIRE(call(33, create) == 0);
+    }
+    seed_entropy();
+    const char *files[] = {"bin/linker64", "lib64/bionic/libc.so", "lib64/bionic/libdl.so", "lib64/bionic/libm.so"};
+    for (unsigned i = 0; i < sizeof(files) / sizeof(*files); ++i) {
+        char guest[128], input[128];
+        REQUIRE(snprintf(guest, sizeof(guest), "/apex/com.android.runtime/%s", files[i]) < (int)sizeof(guest));
+        REQUIRE(snprintf(input, sizeof(input), "stock-runtime/%s", files[i]) < (int)sizeof(input));
+        put_file(guest, input);
+    }
+    long link[6] = {(long)"/apex/com.android.runtime/bin/linker64", -100, (long)"/system/bin/linker64"};
+    REQUIRE(call(36, link) == 0);
+    put_file("/system/bin/stock-bionic", "bionic-test.elf");
+    put_file("/linkerconfig/ld.config.txt", "stock-ld.config.txt");
+}
+
 static void apk_fixture_setup(int desktop)
 {
     const char *input = getenv("NCE_APK_FIXTURE_DIR");
@@ -169,18 +212,7 @@ static void android_setup(int services, int desktop)
         long permissions[6] = {-100, (long)devices[i], 0666};
         REQUIRE(call(53, permissions) == 0);
     }
-    struct {
-        int entropy_bits, bytes;
-        unsigned char data[32];
-    } entropy = {256, 32, {0}};
-    arc4random_buf(entropy.data, sizeof(entropy.data));
-    long random[6] = {-100, (long)"/dev/random", 2};
-    long fd = call(56, random);
-    REQUIRE(fd >= 0);
-    random[0] = fd;
-    random[1] = 0x40085203;
-    random[2] = (long)&entropy;
-    REQUIRE(call(29, random) == 0 && call(57, random) == 0);
+    seed_entropy();
     if (services) {
         const char *filesystems[][2] = {{"selinuxfs", "/sys/fs/selinux"}, {"fusectl", "/sys/fs/fuse/connections"}};
         for (unsigned i = 0; i < sizeof(filesystems) / sizeof(*filesystems); ++i) {
@@ -433,7 +465,8 @@ int nce_lkl_run(const char *path)
     }
     set_layout(guest_base, TRANSLATION_LOOKUP ? NCE_MM_TRANSLATED : NCE_MM_DEMAND, views, 3, NULL, 1, 0);
     const char *workload = getenv("NCE_TRANSLATION_WORKLOAD");
-    REQUIRE(!workload || !strcmp(workload, "core") || !strcmp(workload, "android") || !strcmp(workload, "services") || !strcmp(workload, "desktop"));
+    REQUIRE(!workload || !strcmp(workload, "core") || !strcmp(workload, "bionic") || !strcmp(workload, "android") || !strcmp(workload, "services") || !strcmp(workload, "desktop"));
+    int stock_bionic = workload && !strcmp(workload, "bionic");
     int desktop = workload && !strcmp(workload, "desktop");
     int services = desktop || (workload && !strcmp(workload, "services"));
     int android = services || (workload && !strcmp(workload, "android"));
@@ -496,7 +529,7 @@ int nce_lkl_run(const char *path)
     put_file("/lib/dependency.so", "dependency.so");
     put_file("/lib/plugin.so", "plugin.so");
     unsigned long host_value = 0x7d2a9314UL;
-    if (TRANSLATION_LOOKUP && !android) {
+    if (TRANSLATION_LOOKUP && !android && !stock_bionic) {
         char text[256];
         const char *layout = getenv("NCE_TRANSLATION_GUEST_LAYOUT");
         REQUIRE(snprintf(text, sizeof(text), "%s %lu %lu %lu %lu %lu\n", layout ? layout : "host",
@@ -515,7 +548,11 @@ int nce_lkl_run(const char *path)
         REQUIRE(call(67, pointer_args) == (long)sizeof(copied) && copied == host_value && call(57, pointer_args) == 0);
     }
     int failed = 0;
-    if (android) {
+    if (stock_bionic) {
+        stock_bionic_setup();
+        translation_memory_phase("guest_execution");
+        failed = run_program("/probe-guest", 1);
+    } else if (android) {
         android_setup(services, desktop);
         const char *programs[] = {"/bionic-test", "/system/bin/cfi-test", "/system/bin/art-test"};
         const char *phases[] = {"bionic_execution", "cfi_execution", "art_execution"};
@@ -548,7 +585,7 @@ int nce_lkl_run(const char *path)
         translation_memory_phase("guest_execution");
         failed = run_program("/probe-guest", 0);
     }
-    if (TRANSLATION_LOOKUP && !android) {
+    if (TRANSLATION_LOOKUP && !android && !stock_bionic) {
         REQUIRE(host_value == 0x7d2a9314UL);
         puts("{\"test\":\"translated_host_pointer_copy\",\"passed\":true}");
     }

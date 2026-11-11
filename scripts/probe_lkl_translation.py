@@ -156,7 +156,12 @@ def validate(rows, memory_interval, mapping="window", workload="core", tlb_inval
                 'linux_android_elf_reservation_boundaries', 'linux_sparse_reservation_cow',
                 'linux_mmap_byte_offset', 'linux_fault_register_state', 'linux_user_memory_boundaries',
                 'linux_dynamic_link_dlopen_constructors', 'linux_dynamic_tls_threads', 'linux_dynamic_fork_signal'}
-    if workload == 'android':
+    if workload == 'bionic':
+        from stock_bionic import validate as validate_stock
+        if not validate_stock(rows):
+            return False
+        expected = {'stock_bionic_observation_complete', 'translated_context_cleanup'}
+    elif workload == 'android':
         expected = {'android_system_image_readonly', 'android_bionic_threads_allocator_tls',
                     'android_bionic_many_threads', 'android_scudo_class_growth', 'linux_proc_concurrent_exit',
                     'android_cfi_library_reload', 'android_apk_native_libraries', 'android_cfi_bounded_shadow',
@@ -362,7 +367,10 @@ def main():
     parser.add_argument('--data-seed', type=Path, help='服务和桌面检查使用的初始 ext4 数据盘')
     parser.add_argument('--persistent-data', action='store_true', help='各入口与重复轮次连续使用同一数据盘，检查重启持久化')
     parser.add_argument('--apk-fixture-dir', type=Path, help='运行时传入同签名 Java/JNI APK，首轮安装更新，后续启动只检查已安装 v2')
-    parser.add_argument('--workload', choices=('core', 'android', 'services', 'desktop'), default='core')
+    parser.add_argument('--workload', choices=('core', 'bionic', 'android', 'services', 'desktop'), default='core')
+    parser.add_argument('--runtime-source', choices=('sdk36', 'hyperos'))
+    parser.add_argument('--runtime-directory', type=Path)
+    parser.add_argument('--runtime-manifest', type=Path)
     parser.add_argument('--entry', choices=('both', 'cli', 'gcd', 'window'), default='both')
     parser.add_argument('--art-nterp', type=int, choices=(0, 1), default=1)
     parser.add_argument('--art-expanded-jit', type=int, choices=(0, 1), default=0)
@@ -427,7 +435,7 @@ def main():
         parser.error('需要 Apple Silicon Mac，repeat 必须为正数')
     if not 1000 <= args.batch_instructions <= 1000000 or not (args.memory_interval_ms == 0 or 10 <= args.memory_interval_ms <= 10000):
         parser.error('指令批次范围 1000…1000000；内存采样间隔为 0 或 10…10000 ms')
-    if args.workload != 'core':
+    if args.workload in ('android', 'services', 'desktop'):
         try:
             validate_android_image(ROOT, KERNEL)
         except (OSError, ValueError, KeyError) as error:
@@ -445,6 +453,15 @@ def main():
         dependency = build_engine(args.code_memory)
     library = Path(dependency['path'])
     out.mkdir(parents=True, exist_ok=True)
+    stock_runtime = None
+    if args.workload == 'bionic':
+        if (not all((args.runtime_source, args.runtime_directory, args.runtime_manifest)) or
+                args.mapping != 'pte' or args.cpus != 1 or args.entry == 'window'):
+            parser.error('bionic 需要原始 runtime 的来源、目录与清单，以及单核 PTE CLI/GCD')
+        from stock_bionic import prepare as prepare_stock
+        stock_runtime = prepare_stock(args.runtime_source, args.runtime_directory, args.runtime_manifest, out)
+    elif any((args.runtime_source, args.runtime_directory, args.runtime_manifest)):
+        parser.error('runtime 输入仅用于 bionic 组件检查')
     llvm = Path('/opt/homebrew/opt/llvm/bin')
     kernel = KERNEL
     if args.mapping == 'pte':
@@ -538,16 +555,19 @@ def main():
     hosts_before = {mode: sha(out / mode) for mode in build_entries}
     libc = WORK / 'musl-build/install'
     resource = Path(subprocess.check_output([llvm / 'clang', '-print-resource-dir'], text=True).strip()) / 'include'
+    guest_main = EXP / 'translation' / ('stock-bionic-supervisor.c' if stock_runtime else 'linux-guest.c')
     command = [llvm / 'clang', '--target=aarch64-linux-musl', '-mno-outline-atomics', '-fPIE', '-O2', '-g',
                '-Wall', '-Wextra', '-Werror', '-nostdinc', '-isystem', libc / 'include', '-isystem', resource,
                f'-DNCE_TRANSLATION_CPUS={args.cpus}', f'-DNCE_TRANSLATION_HIGH_RES_TIMERS={int(args.high_res_timers)}',
-               '-c', EXP / 'translation/linux-guest.c', '-o', out / 'guest.o']
+               '-c', guest_main, '-o', out / 'guest.o']
     run(command)
     commands.append(list(map(str, command)))
     guest_objects = []
     guest_sources = [EXP / 'userspace' / name for name in
                      ('signal-tests.c', 'signal-registers.S', 'code-tests.c', 'mm-bench.c', 'mm-tests.c', 'file-tests.c')]
     guest_sources.append(EXP / 'translation/timer-tests.c')
+    if stock_runtime:
+        guest_sources = []
     for source in guest_sources:
         obj = out / (source.stem + '.o')
         compile_command = [llvm / 'clang', '--target=aarch64-linux-musl', '-mno-outline-atomics', '-fPIE', '-O2', '-g',
@@ -574,10 +594,21 @@ def main():
     for name in runtime_files:
         shutil.copyfile(KERNEL / name, out / name)
     from build_nce_userspace import BIONIC_TEST_SOURCES, build_bionic_test
-    commands.append(build_bionic_test(out))
+    if stock_runtime:
+        ndk = Path('/opt/homebrew/share/android-ndk')
+        if 'Pkg.Revision = 29.0.14206865' not in (ndk / 'source.properties').read_text():
+            raise RuntimeError('组件检查需要 NDK 29.0.14206865')
+        command = [ndk / 'toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android35-clang',
+                   '-O2', '-g', '-mno-outline-atomics', '-Wall', '-Wextra', '-Werror',
+                   '-Wl,-z,max-page-size=16384,-z,common-page-size=16384',
+                   EXP / 'translation/stock-bionic-guest.c', '-ldl', '-o', out / 'bionic-test.elf']
+        run(command)
+        commands.append(list(map(str, command)))
+    else:
+        commands.append(build_bionic_test(out))
     runtime_files += ('bionic-test.elf',)
     android_files = []
-    if args.workload != 'core':
+    if args.workload in ('android', 'services', 'desktop'):
         for name, source in [('NceWorkload.dex', KERNEL / 'java-classes/classes.dex'),
                              ('ld.config.txt', EXP / 'art/ld.config.txt')]:
             shutil.copyfile(source, out / name)
@@ -593,13 +624,18 @@ def main():
         raise RuntimeError('客体构建后宿主文件发生变化')
     files = [*inputs, *direct_files, ROOT / 'scripts/build_nce_userspace.py',
              *[EXP / 'userspace' / name for name in BIONIC_TEST_SOURCES],
-             EXP / 'translation/unicorn-code-memory.h', EXP / 'execute-check.h', EXP / 'translation/linux-elf.h', EXP / 'translation/linux-execution.h', EXP / 'translation/interaction-profile.h', EXP / 'translation/linux-memory.h', EXP / 'translation/linux-guest.c', Path(__file__),
+             EXP / 'translation/unicorn-code-memory.h', EXP / 'execute-check.h', EXP / 'translation/linux-elf.h', EXP / 'translation/linux-execution.h', EXP / 'translation/interaction-profile.h', EXP / 'translation/linux-memory.h', guest_main, Path(__file__),
              EXP / 'dispatch-test.c', EXP / 'layout.h', EXP / 'guest-registers.h',
              *guest_sources, *android_files, *graphics_files,
              kernel / 'lkl-image.bin', kernel / 'lkl-image.h', kernel / 'lkl.so', kernel / 'lkl-host-ops.h',
              EXP / 'translation/kernel-api.h', EXP / 'translation/kernel-image.h', EXP / 'code-memory.h', EXP / 'nce.h', out / 'translation-symbols.h',
              ROOT / 'scripts/build_translation_engine.py', manifest,
              library / 'lib/libunicorn.a', *[out / name for name in (*build_entries, 'guest.elf', 'late.elf', *runtime_files)]]
+    if stock_runtime:
+        from stock_bionic import FILES
+        files += [ROOT / 'scripts/stock_bionic.py', EXP / 'translation/stock-bionic-guest.c',
+                  out / 'stock-ld.config.txt', out / 'stock-runtime/source-manifest.json',
+                  *[out / 'stock-runtime' / name for name in FILES]]
     if apk_fixture:
         files += [ROOT / 'scripts/apk_fixture_validation.py', ROOT / 'scripts/build_apk_fixture.py']
     if args.mapping == 'pte':
@@ -726,6 +762,16 @@ def main():
                                 'preemption': args.preemption, 'timer_interval_ns': 2000000},
               'measurement': 'Guest clock times 128 pipe round trips per memory case; excludes initial COW materialization. Selected preemption, translation and selected Linux mapping implementation included. Memory means are arithmetic sample means, including phase boundaries; sampled peaks can miss short peaks. Resident lifetime peak is separate.',
               'sha256': input_hashes, 'runs': results}
+    if stock_runtime:
+        from stock_bionic import unchanged
+        if not unchanged(stock_runtime):
+            raise RuntimeError('原始 runtime 输入在运行期间发生变化')
+        report['stock_runtime'] = stock_runtime
+        report['measurement'] = 'Component compatibility observation only; concurrent builds allowed; no performance comparison.'
+        for result in results:
+            stages = [row for row in result['results'] if row.get('component_stage') == 'dynamic']
+            result['component_compatible'] = result['validated'] and len(stages) == 1 and stages[0].get('success') is True
+            result['component_stderr'] = (out / f"{result['entry']}-{result['iteration']}.log").read_text()
     if apk_fixture:
         report['apk_fixture'] = apk_fixture
         report['apk_fixture']['scope'] = 'Original signed Java/JNI fixture installation, update and cold restart in Direct Android; no performance claim'

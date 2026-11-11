@@ -1,0 +1,773 @@
+{
+  "scope": "Native 1-CPU LKL with translated ARM64 userspace; selected workload only; iPhone unverified",
+  "data_seed": null,
+  "platform": "macOS-27.0-arm64-arm-64bit-Mach-O",
+  "cpu": "Apple M5 Ultra",
+  "system_build": "26A428",
+  "dependency": {
+    "version": "2.1.4",
+    "patch": "nce-tb-stop",
+    "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/work/native-linux-nce/unicorn-tb-stop-dual/prefix",
+    "ZERO_AR_DATE": "1",
+    "code_memory": "dual",
+    "target": "macos",
+    "architecture": "arm64",
+    "sdk": "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX27.0.sdk",
+    "commands": [
+      [
+        "cmake",
+        "-S",
+        "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/unicorn-dual-source/unicorn-2.1.4",
+        "-B",
+        "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/unicorn-tb-stop-dual/build",
+        "-DCMAKE_BUILD_TYPE=Release",
+        "-DUNICORN_ARCH=aarch64",
+        "-DBUILD_SHARED_LIBS=OFF",
+        "-DUNICORN_BUILD_TESTS=OFF",
+        "-DUNICORN_INSTALL=ON",
+        "-DCMAKE_INSTALL_PREFIX=/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/unicorn-tb-stop-dual/prefix",
+        "-DCMAKE_OSX_ARCHITECTURES=arm64",
+        "-DCMAKE_OSX_SYSROOT=/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX27.0.sdk",
+        "-DCMAKE_C_FLAGS=-DNCE_TCG_DUAL_MAP"
+      ],
+      [
+        "cmake",
+        "--build",
+        "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/unicorn-tb-stop-dual/build",
+        "-j8"
+      ],
+      [
+        "cmake",
+        "--install",
+        "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/unicorn-tb-stop-dual/build"
+      ]
+    ],
+    "sha256": {
+      "scripts/build_translation_engine.py": "e5ab4173a424f834a739d0d31e14b9fa75a89074716d5f5c5a49e1358b1a1b59",
+      "work/native-linux-nce/unicorn-2.1.4.tar.gz": "ea8863f095a0136388694e5a6063afd9bb7650e30243dd6251af59c5ce5601f4",
+      "work/native-linux-nce/unicorn-dual-source/unicorn-2.1.4/include/uc_priv.h": "c8c854d73a5f40727ebf733d0545a9ff5434b9f295a2c2d1cb1867f5a161394c",
+      "work/native-linux-nce/unicorn-dual-source/unicorn-2.1.4/uc.c": "7b676b8268f24611aabb17aa935aca5334b852d48dabd4175b954f200bcb2404",
+      "work/native-linux-nce/unicorn-dual-source/unicorn-2.1.4/qemu/tcg/tcg-op.c": "7e926c8f1f7bdadef1b2a9d45a44468067d2347563cca1efa253d496583a7cbb",
+      "work/native-linux-nce/unicorn-dual-source/unicorn-2.1.4/qemu/accel/tcg/translate-all.c": "23766182056ceb72d0d7bacf2de33fddc0530902f7af6b4ef84e13960d109867",
+      "work/native-linux-nce/unicorn-dual-source/unicorn-2.1.4/qemu/accel/tcg/tcg-runtime.c": "9442f7d2e5271eae1e409cfd7cdb9dc3c88decc03272a46a9250cdc3e68ddbe6",
+      "work/native-linux-nce/unicorn-dual-source/unicorn-2.1.4/qemu/include/exec/gen-icount.h": "ff2c3cb1adef7c2b558c27b57820b36bc126fae8ba572ae40537a4a0de892a1a",
+      "work/native-linux-nce/unicorn-dual-source/unicorn-2.1.4/qemu/include/qemu/osdep.h": "853abe20ca8d18875ccc976977fe2dbe507ec2ba12f0a07eb0ca968f9a8202d9",
+      "work/native-linux-nce/unicorn-dual-source/unicorn-2.1.4/qemu/include/tcg/tcg.h": "0ceda033af1687582281b9a10684800da978d7a1fadf3a4703ac66364142e3fc",
+      "work/native-linux-nce/unicorn-dual-source/unicorn-2.1.4/qemu/tcg/tcg.c": "0c11bfcf407c8f3b5c404dfdd75f4b2ba532d84905dcbc36a576ca371405a345",
+      "work/native-linux-nce/unicorn-dual-source/unicorn-2.1.4/qemu/include/exec/exec-all.h": "a5640cf45b01812b7b72c68d152adf3d10ca3f366c1361bebf6b5767eae49465",
+      "work/native-linux-nce/unicorn-dual-source/unicorn-2.1.4/qemu/tcg/aarch64/tcg-target.inc.c": "75610364d152a540a6cfa1284564d61458100eaaa6e6acaea845570a8da4c555",
+      "work/native-linux-nce/unicorn-dual-source/unicorn-2.1.4/qemu/tcg/tcg-pool.inc.c": "8583f84c95511ffe48ed1e1b0ad93f997c7aeeca8a6882232b311e3221fe21f4",
+      "work/native-linux-nce/unicorn-tb-stop-dual/prefix/lib/libunicorn.a": "a69c2949b8c277ac32701b40c382f00190e533270d41dbb1cf1b7f7fd3250c57",
+      "work/native-linux-nce/unicorn-tb-stop-dual/prefix/include/unicorn/unicorn.h": "66fdf8f39df34e507a163eb550549669cec3399c2103b8dc84bc4131f600e55a",
+      "scripts/unicorn_code_memory_patch.py": "924d3d1a7b5b1688197733f322f6956edf5aef96a854c9d24a8693d62485656f"
+    },
+    "reuse": {
+      "source_manifest": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-low-guest/work/native-linux-nce/unicorn-tb-stop-dual/build.json",
+      "source_manifest_sha256": "aa7a76552b17329b901d879df1fe7bc7e47b4ed84380127af9e1b890c873c58a",
+      "commands": "Original build provenance; not executed in this worktree."
+    }
+  },
+  "commands": [
+    [
+      "xcrun",
+      "clang",
+      "-O2",
+      "-g",
+      "-DNCE_PROCESS",
+      "-DNCE_TRANSLATION_CPUS=1",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-I",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/experiments/native-linux",
+      "-I",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/work/native-linux-nce/lkl-translation-kernel",
+      "-I",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/work/native-linux-nce/stock-bionic-hyperos-final",
+      "-I",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/work/native-linux-nce/processes/host-include",
+      "-I",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/work/native-linux-nce/unicorn-tb-stop-dual/prefix/include",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/experiments/native-linux/translation/kernel-image.c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/experiments/native-linux/translation/linux-elf.c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/experiments/native-linux/translation/linux-execution.c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/experiments/native-linux/translation/interaction-profile.c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/experiments/native-linux/translation/linux-runner.c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/experiments/native-linux/translation/linux-memory.c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/experiments/native-linux/lkl-host.c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/experiments/native-linux/translation/code-watch.c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/experiments/native-linux/translation/read-view.c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/experiments/native-linux/translation/unicorn-code-memory.c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/work/native-linux-nce/unicorn-tb-stop-dual/prefix/lib/libunicorn.a",
+      "-DNCE_DIRECT_EXECUTION",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/work/native-linux-nce/stock-bionic-hyperos-final/direct/engine.o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/work/native-linux-nce/stock-bionic-hyperos-final/direct/compile.o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/work/native-linux-nce/stock-bionic-hyperos-final/direct/decode.o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/work/native-linux-nce/stock-bionic-hyperos-final/direct/memory-groups.o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/work/native-linux-nce/stock-bionic-hyperos-final/direct/read-faults.o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/work/native-linux-nce/stock-bionic-hyperos-final/direct/cross-page.o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/work/native-linux-nce/stock-bionic-hyperos-final/direct/entry.o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/work/native-linux-nce/stock-bionic-hyperos-final/direct/code-memory.o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/work/native-linux-nce/stock-bionic-hyperos-final/direct/execute-check.o",
+      "-lc++",
+      "-o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/work/native-linux-nce/stock-bionic-hyperos-final/cli",
+      "-DNCE_TRANSLATION_DUAL_MAP"
+    ],
+    [
+      "xcrun",
+      "clang",
+      "-O2",
+      "-g",
+      "-DNCE_PROCESS",
+      "-DNCE_TRANSLATION_CPUS=1",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-I",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/experiments/native-linux",
+      "-I",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/work/native-linux-nce/lkl-translation-kernel",
+      "-I",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/work/native-linux-nce/stock-bionic-hyperos-final",
+      "-I",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/work/native-linux-nce/processes/host-include",
+      "-I",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/work/native-linux-nce/unicorn-tb-stop-dual/prefix/include",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/experiments/native-linux/translation/kernel-image.c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/experiments/native-linux/translation/linux-elf.c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/experiments/native-linux/translation/linux-execution.c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/experiments/native-linux/translation/interaction-profile.c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/experiments/native-linux/translation/linux-runner.c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/experiments/native-linux/translation/linux-memory.c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/experiments/native-linux/lkl-host.c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/experiments/native-linux/translation/code-watch.c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/experiments/native-linux/translation/read-view.c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/experiments/native-linux/translation/unicorn-code-memory.c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/work/native-linux-nce/unicorn-tb-stop-dual/prefix/lib/libunicorn.a",
+      "-DNCE_DIRECT_EXECUTION",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/work/native-linux-nce/stock-bionic-hyperos-final/direct/engine.o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/work/native-linux-nce/stock-bionic-hyperos-final/direct/compile.o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/work/native-linux-nce/stock-bionic-hyperos-final/direct/decode.o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/work/native-linux-nce/stock-bionic-hyperos-final/direct/memory-groups.o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/work/native-linux-nce/stock-bionic-hyperos-final/direct/read-faults.o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/work/native-linux-nce/stock-bionic-hyperos-final/direct/cross-page.o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/work/native-linux-nce/stock-bionic-hyperos-final/direct/entry.o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/work/native-linux-nce/stock-bionic-hyperos-final/direct/code-memory.o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/work/native-linux-nce/stock-bionic-hyperos-final/direct/execute-check.o",
+      "-lc++",
+      "-o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/work/native-linux-nce/stock-bionic-hyperos-final/gcd",
+      "-DNCE_TRANSLATION_DUAL_MAP",
+      "-DTRANSLATION_DISPATCH",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/experiments/native-linux/dispatch-test.c"
+    ],
+    [
+      "/opt/homebrew/opt/llvm/bin/clang",
+      "--target=aarch64-linux-musl",
+      "-mno-outline-atomics",
+      "-fPIE",
+      "-O2",
+      "-g",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-nostdinc",
+      "-isystem",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/work/native-linux-nce/musl-build/install/include",
+      "-isystem",
+      "/opt/homebrew/Cellar/llvm/22.1.7_1/lib/clang/22/include",
+      "-DNCE_TRANSLATION_CPUS=1",
+      "-DNCE_TRANSLATION_HIGH_RES_TIMERS=0",
+      "-c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/experiments/native-linux/translation/stock-bionic-supervisor.c",
+      "-o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/work/native-linux-nce/stock-bionic-hyperos-final/guest.o"
+    ],
+    [
+      "/opt/homebrew/bin/ld.lld",
+      "-pie",
+      "--gc-sections",
+      "--no-dynamic-linker",
+      "-z",
+      "max-page-size=16384",
+      "-z",
+      "common-page-size=16384",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/work/native-linux-nce/musl-build/install/lib/rcrt1.o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/work/native-linux-nce/musl-build/install/lib/crti.o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/work/native-linux-nce/stock-bionic-hyperos-final/guest.o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/work/native-linux-nce/musl-build/install/lib/libc.a",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/work/native-linux-nce/compiler-rt-build/libbuiltins.a",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/work/native-linux-nce/musl-build/install/lib/crtn.o",
+      "-o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/work/native-linux-nce/stock-bionic-hyperos-final/guest.elf"
+    ],
+    [
+      "/opt/homebrew/share/android-ndk/toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android35-clang",
+      "-O2",
+      "-g",
+      "-mno-outline-atomics",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-Wl,-z,max-page-size=16384,-z,common-page-size=16384",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/experiments/native-linux/translation/stock-bionic-guest.c",
+      "-ldl",
+      "-o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/work/native-linux-nce/stock-bionic-hyperos-final/bionic-test.elf"
+    ]
+  ],
+  "host_unchanged_after_guest_build": true,
+  "configuration": {
+    "guest_layout": "low",
+    "code_memory": "dual",
+    "execution": "direct",
+    "direct": {
+      "mapping_entries": 256,
+      "route_entries": 256,
+      "selective_writes": false,
+      "reuse_code_checks": false,
+      "memory": "flat",
+      "code_watch": true,
+      "cross_page": true,
+      "route_epochs": false,
+      "retain_routes": false,
+      "memory_groups": false,
+      "native_exclusive": true,
+      "vector_table": false,
+      "simd_math": false
+    },
+    "mapping": "pte",
+    "sparse_scan": true,
+    "fault_prefetch": false,
+    "guest_page_bytes": 16384,
+    "workload": "bionic",
+    "entries": [
+      "cli",
+      "gcd"
+    ],
+    "art_nterp": 1,
+    "cpus": 1,
+    "high_res_timers": false,
+    "online_cpus": 1,
+    "uaccess_stop": "all",
+    "parallel_profile": false,
+    "art_expanded_jit": 0,
+    "art_fast_baseline": 0,
+    "cache_invalidation": "pages",
+    "exec_cache": "pages",
+    "tlb_invalidation": "pages",
+    "linux_fastpath": 0,
+    "guest_ram_bytes": 1073741824,
+    "translation_cache_bytes": 134217728,
+    "instruction_batch": 50000,
+    "memory_interval_ms": 100,
+    "preemption": "timer",
+    "timer_interval_ns": 2000000
+  },
+  "measurement": "Component compatibility observation only; concurrent builds allowed; no performance comparison.",
+  "sha256": {
+    "experiments/native-linux/translation/kernel-image.c": "33792252482c0c6be81d1009a45f1a12f17233a7fd472d12a7f394afd136217f",
+    "experiments/native-linux/translation/linux-elf.c": "e3557d2945b3e6dc0b9c1b4ae7041a6dd21a785e4981f97ddff1ea9837d68365",
+    "experiments/native-linux/translation/linux-execution.c": "5b0eb7d4cf21f1572e200e8598a772bace6b70a16860d6b22c19e6def787da13",
+    "experiments/native-linux/translation/interaction-profile.c": "8016783f7a3f0087f0dc369b0316655d95bd612a1fc49547b8c7eada4501881c",
+    "experiments/native-linux/translation/linux-runner.c": "4f988816f7ef435d699919ca32a3bec8c383cf09d4fa0db23e2ace2049ba8c96",
+    "experiments/native-linux/translation/linux-memory.c": "0cc6ab6ff8ab7abe76c1c73aaf18fecb200ff27251ea29f0f15b0618a6020e31",
+    "experiments/native-linux/lkl-host.c": "49c63f1be4112408bbe5bdced53cf8bd0314eedaf770fe4d869d30edf3a6c671",
+    "experiments/native-linux/translation/code-watch.c": "1bfa90873b4e52f1ca0766e169999f948cbff313eccffba14be0e76e7dd1305e",
+    "experiments/native-linux/translation/read-view.c": "85ad462693b9ff64532bbf2056a2c6b09cefb1bbd4d8fbcf0cb7570697ed3c2a",
+    "experiments/native-linux/translation/unicorn-code-memory.c": "f7fe3981500192267b25ae33cb4aeb5ef38f31c674ddb3cb0ebfa0a0edb43d6e",
+    "experiments/native-linux/direct/engine.cpp": "dd99ddbbb8436cc6b97e6eb63c8cf908499c849ee3110c64efa40ee22a7adb33",
+    "experiments/native-linux/direct/compile.cpp": "30a269413ba85c1aecf58e695a3dc88ea20460fe8e18801fa69adfe4b6eaac2c",
+    "experiments/native-linux/direct/decode.cpp": "e2ce2940d0c5d5c1658c45d8a4beee40f9dbb662f960eabb0cad96b0ce84efc1",
+    "experiments/native-linux/direct/memory-groups.cpp": "6447bb9544d9cfbc9f872e6e721b17854aae3a1f88fcedcd9767831aaf1ae9a6",
+    "experiments/native-linux/direct/read-faults.cpp": "6e514b9e0f8b9675e2eaad955440fd4909b8f19e6e1637ea16d083d2a9809348",
+    "experiments/native-linux/direct/cross-page.cpp": "ab2aea50c200cb993fbbad08a2c26423391a428a1359225669a30d2baf8f622d",
+    "experiments/native-linux/direct/entry.S": "0a1f01ba0e41cc631dfb62008260b921f9c85a01b44b33d16be76fd8567923b7",
+    "experiments/native-linux/code-memory.c": "8215ac2a2564049be0b45a80b3774ec994d6e51b6eb2057ed00cd515ef682981",
+    "experiments/native-linux/execute-check.c": "2e5a080e11bb3ec9407be2495c30a0391d2e8a858f1fe1a01a624eed3a8dd3c5",
+    "experiments/native-linux/direct/decode.h": "eafddef33888746adfc25306f6b2ab7903ff9f50adce3b0cf55e43f1e8cba5a9",
+    "experiments/native-linux/direct/memory-groups.h": "c6250a511c45dd7bbd5733ff43b55dd8a0eb6501d9759bb12a413f9c121a6b31",
+    "experiments/native-linux/direct/direct.h": "454493a2a093afe3e47c3b07311c06d8db6d01450e78b8f2b251c4443401b3f1",
+    "experiments/native-linux/direct/internal.h": "01076e612a07315d6c9af5dd0b1c90eb1c7cddbb9fe15eb8f370e67202f2e125",
+    "experiments/native-linux/direct/layout.h": "bea63a67f1145501152a6eaf400e9d1393badc55871c7b61e365a4bd2782bb23",
+    "experiments/native-linux/direct/page-table-layout.h": "500897ffde014c17c73d03a92b34b07a9990e52695c369d9228c01d5d4600109",
+    "experiments/native-linux/code-memory.h": "b76ec86c799b073a58b08dc04300d091cb63531d31289ea22fdfb16d4495870a",
+    "experiments/native-linux/execute-check.h": "db1decd5ee536b58b9974ff03951d79dddfc3f74c1205ad34b7c725de4bf6883",
+    "experiments/native-linux/nce.h": "7bcdc5e777e10e1d70f0bf1838a2160e87c70613a44b90b16c3e07aedf4a9f58",
+    "experiments/native-linux/guest-registers.h": "90a4d5b6e613ce4f2cda359dcd05f6e8d876a788bc437c2c1e13e05403e4627a",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/code_block.hpp": "c1b59e9d8a37775f8558fb3a0f7b34a6b7dbd2b2c13c088be65253c2223faa8a",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/dual_code_block.hpp": "619a01b3c69e107cc1c13c79b0dfbe97b09395e70a6c705b77e0531894a69620",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/feature_detection/cpu_feature.hpp": "2ae6e67bd4af85bd7d6d6eb7585f73cbdc237183167bb265a0427b74807e0a02",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/feature_detection/feature_detection.hpp": "4d13c256d5028d1ca3e5a0ad59382e888b79e033b72cffe7dae4c3e9ecc8d97e",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/feature_detection/feature_detection_apple.hpp": "99d88802080a50bd7d73a07020c18eee44417e193ff5515cbad8f6972890bbc6",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/feature_detection/feature_detection_freebsd.hpp": "84a10ab44c7c566523705703fb118904156c39b6b93148d458e2ab77a80a2c2d",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/feature_detection/feature_detection_generic.hpp": "4b78fafbb988a18b25b1aeb04c5ebff6b3a675f502e315fd8430f2d3f61f0fd2",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/feature_detection/feature_detection_hwcaps.hpp": "5839e027d9145f182149586fc30f129f33d5b482ffa174ed4ac6f9bb3b5a3b3f",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/feature_detection/feature_detection_idregs.hpp": "f759c5fd02bb2d2bafe45376e3856fa9371737282b22f66101fd4ae8db5f7b96",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/feature_detection/feature_detection_linux.hpp": "a49f3c60ad2cae71c158fd9207fdbad5e40837793f57289490603455302299c6",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/feature_detection/feature_detection_netbsd.hpp": "1315afa43ea61ffb7beb1102bf090d24d1285f2340028b5da50c3d31491dd09c",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/feature_detection/feature_detection_openbsd.hpp": "941dd25a778b8153e3e98aa9b7795a2c54359d24d8337f56a8658993f3fecb96",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/feature_detection/feature_detection_w32.hpp": "f228126514f482b43c0304a1f9dfb5942b93afabfc4372662af1193679c503de",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/feature_detection/id_registers.hpp": "ed83ce3fdaa0bea503dbdd9c0e728e8cb4eb0307fdf3bc60192fc0dfa130d1c8",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/feature_detection/read_id_registers_directly.hpp": "ff2e769fabf6f43d6e12939072e6cd911694f7966d2bd8c4ce6c3075aad34020",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/arm64_encode_helpers.inc.hpp": "55576102b1774f7f7b681857a3d2c6843776045cccd24fa09b8c4713929adbaf",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/cpu_feature.inc.hpp": "5919c8d8b32ae0899d04a888d8e852a79c604b33f9b6cffe632234437f57ab67",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/enum.hpp": "603697b7a7e16795219a74fa2d735e8bd442c79cdcb539ed0abed2b83417fd26",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/imm.hpp": "268b0414bf57c82cddb3de6b286e8e1ce52fb2b413aaecaa1f0cf9099b7e7cc1",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/list.hpp": "0592b31d29a6f1bfbee46cdb0aa5ce778edc9643db90a39d42215970357328e9",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/mnemonics_fpsimd_v8.0.inc.hpp": "3ecdfd1ff46ff749b2525e1a75acbabc6022848f700a6f16b36f480ab954a266",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/mnemonics_fpsimd_v8.1.inc.hpp": "404268b9e0e3b4708d5018fd1fbf3ea1339c641382e7cfd15534af56a7672e69",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/mnemonics_fpsimd_v8.2.inc.hpp": "52e7a48b969badf327c00c2ea4556353c61950a0c452adeaee37c6820926261f",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/mnemonics_fpsimd_v8.3.inc.hpp": "84bcced18fe10c753ec5ea1c84e9531ab1ceb4e08b046519e75788a14b814ae4",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/mnemonics_generic_v8.0.inc.hpp": "8ffd907bb38b27700022e29d40111fe72e640d003ad6aa3e372c4d8a7ebd3f6c",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/mnemonics_generic_v8.1.inc.hpp": "9f60f325c392e907dd9d2cbab62e1f8cfc7ab95c88e54df75b1a1f64bc7fa93b",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/mnemonics_generic_v8.2.inc.hpp": "1b53f462d1ed7e0a763236dbef9c4bfc70f6430cf5f8b420b2acc4dd2e8884ab",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/mnemonics_generic_v8.3.inc.hpp": "4b775baed83b1bb32b7bd339433175ce09b4bbc6da33d887bc9ca989d42b5d76",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/multi_typed_name.hpp": "a4322bfdb95f8477e6f92b31194110ef860c7402d50ce18daae6e016d4fa9aac",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/oaknut_exception.inc.hpp": "48629c93b468527c440dad30f8044818aa202caff67e73f45a246a3e96f8ad28",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/offset.hpp": "cb48c0eface8f5458a89402a090084690d3f999ff562e63870a1b16f438a7d52",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/overloaded.hpp": "03f0f551fa10b0b3d8d2c75130c1023ddcc5e8a3566629470408aad370d87fc2",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/reg.hpp": "352456b9b9ea1fb8cb5637e82169e16f08189579da9645ad5a5c1992f95ed198",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/string_literal.hpp": "96dce09750c24842a88e8eb3dfdafe047a5ab94c9398c94ea41cca8e1434e1bb",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/oaknut.hpp": "e25f4222f8f7d17b683d5ea8ff2851f88a3b40c478fcdc6046fe962cfcab2f37",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/oaknut_exception.hpp": "8277ac5a6cf6697305fd169d817d6786b0011027d66962fc9d982ffbce2c19a0",
+    "scripts/probe_direct_execution.py": "b3dcc78791e1c90687091a4ced2fa8f8fc1bacb272165e33045f3567fb0d8c43",
+    "work/native-linux-nce/oaknut-94c726c.tar.gz": "c404db82002f9a851a412b3d55ac9be8a42a2e319fd2fc8a73e63e6ef5d4f97b",
+    "experiments/native-linux/translation/code-watch.h": "1ec6e739e1a542c52a2ed54b7310d1cc0a3317dfa25d1d59aeb971e972ea0747",
+    "experiments/native-linux/translation/read-view.h": "40a09185089ab8a02a76a6789b7b2149ffdb9dc225c7b1c5b4532d6022307488",
+    "scripts/build_nce_userspace.py": "4fafb283fdc1babe0d62ef949eeffd50d2018fddb3420694ab9fb64a60d82149",
+    "experiments/native-linux/userspace/bionic-test.c": "ffa10bd0d16dd15edddb368a0435d9d94b529270c13a89f6b3c5536dc40c0b76",
+    "experiments/native-linux/userspace/proc-exit-tests.c": "58c79b40b0fabaf40707baf80d3cca4883311f33c00139ed8db6f3d02d5353df",
+    "experiments/native-linux/userspace/file-tests.c": "e260e5222cf7efea3140941404100a05be3b383299f2da4cc174a531cc166b8b",
+    "experiments/native-linux/userspace/seccomp-tests.c": "7ac584c36df43561ad7c947eeec40ba0c39188a28d1a79245100b4f683626931",
+    "experiments/native-linux/userspace/signal-tests.c": "43b86323b4dd66c98db20065b8cc41d868fb7ab538135d6eba9d7c65a263a549",
+    "experiments/native-linux/userspace/signal-registers.S": "68e13063df3b1a82a0b5805eb98082204b7ee6e29e7c020cc452ef5199f6d257",
+    "experiments/native-linux/translation/unicorn-code-memory.h": "03e9a24ca9133e989426ca621ad9962c327be47ce889e845f4b668b657243ed7",
+    "experiments/native-linux/translation/linux-elf.h": "faec3fcc8a93eafc0a140830836881e8f2447f20b9b59ec26b7b8230f8b0489b",
+    "experiments/native-linux/translation/linux-execution.h": "ea490ee46e90df3ee0664815dc45e0f58f071378e2b0af333b498d134644ecc2",
+    "experiments/native-linux/translation/interaction-profile.h": "39700898fbcd32c4d4060dad1e494826d50109ab7c5efed50daaf02603938e5a",
+    "experiments/native-linux/translation/linux-memory.h": "11b7a1402acaa07152cdb17d43fed3e6effdeb65af902e8b64ae5ea5cded35e9",
+    "experiments/native-linux/translation/stock-bionic-supervisor.c": "c230f12d73a7470665b50238d9c2b8493a7513b0c0d90760e96e9ba1a542422a",
+    "scripts/probe_lkl_translation.py": "c473bea92764062d0ba4e4706c6ec36d420996b1755d837379d439f23da1aab3",
+    "experiments/native-linux/dispatch-test.c": "5211698bd58018aae173d4c6d75daeeb0e4eb357fb2742c4c08d595bc9d7b55b",
+    "experiments/native-linux/layout.h": "9ecb6dc474edfc516284effcbd1999ba445ba88372233636391771a0715deaa5",
+    "work/native-linux-nce/lkl-translation-kernel/lkl-image.bin": "2e7be6160538430541a8434b89956bfbe6e84db562056953c47cb28b290475e7",
+    "work/native-linux-nce/lkl-translation-kernel/lkl-image.h": "154e7dd22ae5e5b49da3a8f1a705ec9ed122956b12df2446251c0430ff6ce498",
+    "work/native-linux-nce/lkl-translation-kernel/lkl.so": "ffd187df1e086799cad19a60e724c3cd84c814b1f0c9b9150898c08bb6c6943d",
+    "work/native-linux-nce/lkl-translation-kernel/lkl-host-ops.h": "54bf2a775fa582ca2bc04fb6a25dc85525b6c69da1cde54f610c4a35e0c1a833",
+    "experiments/native-linux/translation/kernel-api.h": "6acf8b846b78e4e493bd8dd97b42140b28747deac2a367dc7926f924e1c12076",
+    "experiments/native-linux/translation/kernel-image.h": "6946b1a5ce89be9b55634e25115185af009bff2b126f5a10ac4e0690b70b1528",
+    "work/native-linux-nce/stock-bionic-hyperos-final/translation-symbols.h": "91d95a6169572e6fb7377323cd12830e8478ba278a1910c6f0ee309c684e7928",
+    "scripts/build_translation_engine.py": "e5ab4173a424f834a739d0d31e14b9fa75a89074716d5f5c5a49e1358b1a1b59",
+    "work/native-linux-nce/unicorn-tb-stop-dual/build.json": "008f5ba03dc90024205d8aabbc5dbd62da49413e976fa3c5595d9f98211d19b1",
+    "work/native-linux-nce/unicorn-tb-stop-dual/prefix/lib/libunicorn.a": "a69c2949b8c277ac32701b40c382f00190e533270d41dbb1cf1b7f7fd3250c57",
+    "work/native-linux-nce/stock-bionic-hyperos-final/cli": "56536193e6374c9b657cc8aecfd428eb0664b45744c6f4833361552c7f693d95",
+    "work/native-linux-nce/stock-bionic-hyperos-final/gcd": "66a9d77aa749323505204e56d0d96315f57423efe953d02506ce6b87365e2560",
+    "work/native-linux-nce/stock-bionic-hyperos-final/guest.elf": "a44487175962f85b97be7a59e4a9372cad651dae1af99fe673505850211cda3e",
+    "work/native-linux-nce/stock-bionic-hyperos-final/late.elf": "4efc8ff4b91c23437a5ff0daf85c72eea2685dd9cfc4e7e996487ee2b468f012",
+    "work/native-linux-nce/stock-bionic-hyperos-final/sigreturn.elf": "795d053b14585230d5f6ec0d09fdd5d91b8685c9fb6acdd0935d3d9359baf271",
+    "work/native-linux-nce/stock-bionic-hyperos-final/dynamic.elf": "c7be9a096eacbde4ddf2166fbe57392a730f01497a439ecc96acff66f79da571",
+    "work/native-linux-nce/stock-bionic-hyperos-final/libc.so": "13e5a9fcf04c9e9f89f0dba662fe6fde2ca7b8d8201eb622d42edc4a28d5f515",
+    "work/native-linux-nce/stock-bionic-hyperos-final/dependency.so": "878d6795ecc3afcf6f3bcbf34119e8ec106dbd734b9c216b1352b426b31f06da",
+    "work/native-linux-nce/stock-bionic-hyperos-final/plugin.so": "4646ac0f0191552449161c2b5b61bcac054ebc0427d559503ec8547e38077fe9",
+    "work/native-linux-nce/stock-bionic-hyperos-final/dash.elf": "8b38ef10487508f46b683f6ef7a747520d5c5c88da1783ce697596f60d4d7851",
+    "work/native-linux-nce/stock-bionic-hyperos-final/bionic-test.elf": "45bb5e3ce5cae39c3a8940e10e929de9517d7fa9b4a53732cc9a201cd4e8ca44",
+    "scripts/stock_bionic.py": "a104557d77590996145c2a803afdbfd72f52f7cd9fc96762e6fbd2ecbc3ff94f",
+    "experiments/native-linux/translation/stock-bionic-guest.c": "52edb1f45320ce1c6c4ebf200390049e773829bcbaf6d8c02377cb43c5f23e8a",
+    "work/native-linux-nce/stock-bionic-hyperos-final/stock-ld.config.txt": "13f787f6a186bf8f9b4786794574d4bcd4927ecae4562e220d4e77b0befedb66",
+    "work/native-linux-nce/stock-bionic-hyperos-final/stock-runtime/source-manifest.json": "c9ec384e1eee4c754152fddaae8d351ff5f1adaafb86e5cdc88fb02f5f712d0a",
+    "work/native-linux-nce/stock-bionic-hyperos-final/stock-runtime/bin/linker64": "78150127479cdc4f403eb038da465c8a56959f0d1fd323ed6e24b4de9f5e3d8b",
+    "work/native-linux-nce/stock-bionic-hyperos-final/stock-runtime/lib64/bionic/libc.so": "60745837a8560e1d20de8e581fed8fcd10fb50878ce8bcaf86529bb9bb6a5d22",
+    "work/native-linux-nce/stock-bionic-hyperos-final/stock-runtime/lib64/bionic/libdl.so": "e32913b439727002d665a72a78c86f837b41bc963b369438df8aa4d2ca1fdfb9",
+    "work/native-linux-nce/stock-bionic-hyperos-final/stock-runtime/lib64/bionic/libm.so": "8eac3daf8a9fb0957d77a24e9fa8a3528afcb557d4e4b86ceee27a4211b0d53d",
+    "scripts/build_lkl_translation_kernel.py": "56f3801c26bdd90450fe273ca5661b0485da713fc08e90b8099155acedd5c1ba",
+    "scripts/lkl_translation_patch.py": "a1cfb5092ee71a1b9709943f3d7e973c6e3281fb11001c653be06ef037c6d583",
+    "experiments/native-linux/lkl-nce-mmu.c": "d0ee874b00e58100cfd982c1ecbed136f98a85af4e96c7a252009ebc44edf075",
+    "work/native-linux-nce/lkl-translation-kernel/build.json": "89398e3a4da97a14647dcf408e2cd2ee91bd5c7d10b71cab2ab0954d4d858de8"
+  },
+  "runs": [
+    {
+      "entry": "cli",
+      "iteration": 0,
+      "returncode": 0,
+      "results": [
+        {
+          "config": "translation_code_memory",
+          "kernel": "dual",
+          "direct": "dual"
+        },
+        {
+          "config": "translation_exec_cache",
+          "mode": "pages"
+        },
+        {
+          "config": "translation_tlb_invalidation",
+          "mode": "pages",
+          "range_limit_pages": 64
+        },
+        {
+          "config": "translation_preemption",
+          "mode": "timer",
+          "instructions": 50000,
+          "timer_interval_ns": 2000000
+        },
+        {
+          "config": "translation_parallel",
+          "cpus": 1,
+          "profile": false,
+          "uaccess_stop": "all"
+        },
+        {
+          "cpu": 0,
+          "config": "translation_execution",
+          "engine": "direct",
+          "direct_cache_bytes": 134217728,
+          "data_page_bytes": 16384,
+          "mapping_entries": 256,
+          "route_entries": 256,
+          "selective_writes": false,
+          "reuse_code_checks": false,
+          "memory": "flat",
+          "code_watch": true,
+          "cross_page": true,
+          "route_epochs": false,
+          "retain_routes": false,
+          "memory_groups": false,
+          "native_exclusive": true,
+          "vector_table": false,
+          "simd_math": false
+        },
+        {
+          "cpu": 0,
+          "config": "translation_cache_settings",
+          "cache_bytes": 134217728,
+          "actual_cache_bytes": 134201268,
+          "invalidation": "pages",
+          "linux_fastpath": false
+        },
+        {
+          "test": "translation_prepared_code_execution",
+          "passed": true
+        },
+        {
+          "config": "translation_guest_layout",
+          "mode": "low",
+          "guest_base": 65536,
+          "guest_end": 4294967296,
+          "guest_span_bytes": 4294901760,
+          "flat_coverage_bytes": 4294967296,
+          "physical_base": 481036337152,
+          "ram_base": 482177187840,
+          "ram_bytes": 1073741824,
+          "reservation_base": 481036337152,
+          "reservation_bytes": 1140850688
+        },
+        {
+          "config": "linux_scheduler_slice",
+          "requested_us": 0,
+          "applied_ns": 750000
+        },
+        {
+          "config": "translation_online_cpus",
+          "capacity": 1,
+          "requested": 1,
+          "online_mask": 1
+        },
+        {
+          "phase": "runtime_elf",
+          "path": "/probe-guest",
+          "base": 262144,
+          "span_bytes": 98304
+        },
+        {
+          "phase": "runtime_elf",
+          "path": "/lib/nce-sigreturn.so",
+          "base": 524288,
+          "span_bytes": 16384
+        },
+        {
+          "phase": "runtime_elf",
+          "path": "/apex/com.android.runtime/bin/linker64",
+          "base": 786432,
+          "span_bytes": 1769472
+        },
+        {
+          "component_supervisor": true,
+          "page_size": 16384
+        },
+        {
+          "component_start": "linker_help"
+        },
+        {
+          "component_stage": "linker_help",
+          "started": true,
+          "success": false,
+          "exec_errno": 0,
+          "exit_code": -1,
+          "signal": 11,
+          "usage": false
+        },
+        {
+          "component_stage": "dynamic",
+          "started": false,
+          "reason": "linker_failed"
+        },
+        {
+          "test": "stock_bionic_observation_complete",
+          "passed": true
+        },
+        {
+          "test": "translated_linux_process",
+          "path": "/probe-guest",
+          "passed": true,
+          "waited": 25,
+          "status": 0
+        },
+        {
+          "test": "translated_context_cleanup",
+          "passed": true,
+          "allocated": 2,
+          "freed": 2,
+          "maps": 0,
+          "revocations": 0,
+          "tlb_fills": 12,
+          "faults": 15,
+          "syscalls": 32,
+          "preemptions": 0
+        },
+        {
+          "result": "passed"
+        }
+      ],
+      "validated": true,
+      "data_image": null,
+      "stdout_sha256": "555b8cfde7130b760231b523ef0531c716b540122e61399da6108af66e39779e",
+      "stderr_sha256": "38002eef46535a144cdb10e911ad6030111753e8ac28fc884b67381dcba10318",
+      "component_compatible": false,
+      "component_stderr": "guest fault pc=250610 address=250610 access=2 result=-14\n"
+    },
+    {
+      "entry": "gcd",
+      "iteration": 0,
+      "returncode": 0,
+      "results": [
+        {
+          "test": "dispatch_signal_mask",
+          "sigusr2_blocked": 1
+        },
+        {
+          "config": "translation_code_memory",
+          "kernel": "dual",
+          "direct": "dual"
+        },
+        {
+          "config": "translation_exec_cache",
+          "mode": "pages"
+        },
+        {
+          "config": "translation_tlb_invalidation",
+          "mode": "pages",
+          "range_limit_pages": 64
+        },
+        {
+          "config": "translation_preemption",
+          "mode": "timer",
+          "instructions": 50000,
+          "timer_interval_ns": 2000000
+        },
+        {
+          "config": "translation_parallel",
+          "cpus": 1,
+          "profile": false,
+          "uaccess_stop": "all"
+        },
+        {
+          "cpu": 0,
+          "config": "translation_execution",
+          "engine": "direct",
+          "direct_cache_bytes": 134217728,
+          "data_page_bytes": 16384,
+          "mapping_entries": 256,
+          "route_entries": 256,
+          "selective_writes": false,
+          "reuse_code_checks": false,
+          "memory": "flat",
+          "code_watch": true,
+          "cross_page": true,
+          "route_epochs": false,
+          "retain_routes": false,
+          "memory_groups": false,
+          "native_exclusive": true,
+          "vector_table": false,
+          "simd_math": false
+        },
+        {
+          "cpu": 0,
+          "config": "translation_cache_settings",
+          "cache_bytes": 134217728,
+          "actual_cache_bytes": 134201268,
+          "invalidation": "pages",
+          "linux_fastpath": false
+        },
+        {
+          "test": "translation_prepared_code_execution",
+          "passed": true
+        },
+        {
+          "config": "translation_guest_layout",
+          "mode": "low",
+          "guest_base": 65536,
+          "guest_end": 4294967296,
+          "guest_span_bytes": 4294901760,
+          "flat_coverage_bytes": 4294967296,
+          "physical_base": 481036337152,
+          "ram_base": 482177187840,
+          "ram_bytes": 1073741824,
+          "reservation_base": 481036337152,
+          "reservation_bytes": 1140850688
+        },
+        {
+          "config": "linux_scheduler_slice",
+          "requested_us": 0,
+          "applied_ns": 750000
+        },
+        {
+          "config": "translation_online_cpus",
+          "capacity": 1,
+          "requested": 1,
+          "online_mask": 1
+        },
+        {
+          "phase": "runtime_elf",
+          "path": "/probe-guest",
+          "base": 262144,
+          "span_bytes": 98304
+        },
+        {
+          "phase": "runtime_elf",
+          "path": "/lib/nce-sigreturn.so",
+          "base": 524288,
+          "span_bytes": 16384
+        },
+        {
+          "phase": "runtime_elf",
+          "path": "/apex/com.android.runtime/bin/linker64",
+          "base": 786432,
+          "span_bytes": 1769472
+        },
+        {
+          "component_supervisor": true,
+          "page_size": 16384
+        },
+        {
+          "component_start": "linker_help"
+        },
+        {
+          "component_stage": "linker_help",
+          "started": true,
+          "success": false,
+          "exec_errno": 0,
+          "exit_code": -1,
+          "signal": 11,
+          "usage": false
+        },
+        {
+          "component_stage": "dynamic",
+          "started": false,
+          "reason": "linker_failed"
+        },
+        {
+          "test": "stock_bionic_observation_complete",
+          "passed": true
+        },
+        {
+          "test": "translated_linux_process",
+          "path": "/probe-guest",
+          "passed": true,
+          "waited": 25,
+          "status": 0
+        },
+        {
+          "test": "translated_context_cleanup",
+          "passed": true,
+          "allocated": 2,
+          "freed": 2,
+          "maps": 0,
+          "revocations": 0,
+          "tlb_fills": 12,
+          "faults": 15,
+          "syscalls": 32,
+          "preemptions": 1
+        },
+        {
+          "result": "passed"
+        }
+      ],
+      "validated": true,
+      "data_image": null,
+      "stdout_sha256": "6ce4dec091782240113498572ef58970638065df3b2637de21741a2dd7232e33",
+      "stderr_sha256": "38002eef46535a144cdb10e911ad6030111753e8ac28fc884b67381dcba10318",
+      "component_compatible": false,
+      "component_stderr": "guest fault pc=250610 address=250610 access=2 result=-14\n"
+    }
+  ],
+  "stock_runtime": {
+    "source": "hyperos",
+    "directory": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/project-audit-2026-11-12/references/hyperos3-input/core-scan-v4/files/system/apex/com.android.runtime.apex.contents/files",
+    "manifest": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/experiments/native-linux/results-hyperos-input-20261112.json",
+    "manifest_sha256": "c9ec384e1eee4c754152fddaae8d351ff5f1adaafb86e5cdc88fb02f5f712d0a",
+    "identity": {
+      "repository": "NEORUAA/HyperOS-AVD",
+      "commit": "9d7ddd3f046e89d33cb205b5fbbf6dc5b728155c",
+      "release": "v0.1.0-a16-hyperos3-fuxi-r1",
+      "provenance": "Third-party MysticGSI port",
+      "manifest_sha256": "7785f61d0e1846fa14d9f3af9db49c905a02604128747a0d617eeff381504ceb",
+      "parts": [
+        {
+          "name": "HyperOS-AVD-v0.1.0-macos-arm64.tar.gz.part001",
+          "size": 1610612736,
+          "sha256": "5ef3d16c8f02088d60b01024a39065398dd669ab50100ea9547cb64b83db95e9"
+        },
+        {
+          "name": "HyperOS-AVD-v0.1.0-macos-arm64.tar.gz.part002",
+          "size": 1610612736,
+          "sha256": "9ba2b360d0a28f95ba1e1fe4cd135706498a1ada75caa64ff6596b366c2c4b07"
+        },
+        {
+          "name": "HyperOS-AVD-v0.1.0-macos-arm64.tar.gz.part003",
+          "size": 493624687,
+          "sha256": "1b9fe789439b784e13303818faa568739f49ee45bed1389d12e9aec99f64888f"
+        }
+      ]
+    },
+    "files": {
+      "bin/linker64": {
+        "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/project-audit-2026-11-12/references/hyperos3-input/core-scan-v4/files/system/apex/com.android.runtime.apex.contents/files/bin/linker64",
+        "sha256": "78150127479cdc4f403eb038da465c8a56959f0d1fd323ed6e24b4de9f5e3d8b",
+        "bytes": 2304120
+      },
+      "lib64/bionic/libc.so": {
+        "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/project-audit-2026-11-12/references/hyperos3-input/core-scan-v4/files/system/apex/com.android.runtime.apex.contents/files/lib64/bionic/libc.so",
+        "sha256": "60745837a8560e1d20de8e581fed8fcd10fb50878ce8bcaf86529bb9bb6a5d22",
+        "bytes": 1218152
+      },
+      "lib64/bionic/libdl.so": {
+        "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/project-audit-2026-11-12/references/hyperos3-input/core-scan-v4/files/system/apex/com.android.runtime.apex.contents/files/lib64/bionic/libdl.so",
+        "sha256": "e32913b439727002d665a72a78c86f837b41bc963b369438df8aa4d2ca1fdfb9",
+        "bytes": 13976
+      },
+      "lib64/bionic/libm.so": {
+        "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/project-audit-2026-11-12/references/hyperos3-input/core-scan-v4/files/system/apex/com.android.runtime.apex.contents/files/lib64/bionic/libm.so",
+        "sha256": "8eac3daf8a9fb0957d77a24e9fa8a3528afcb557d4e4b86ceee27a4211b0d53d",
+        "bytes": 232688
+      }
+    }
+  },
+  "archive": {
+    "source_summary": "work/native-linux-nce/stock-bionic-hyperos-final/summary.json",
+    "source_bytes": 62438,
+    "source_sha256": "20bf8d7f7743580e7f25b63df6518208baf403fd7fcdb13628ffd98fd3425b87",
+    "retained_rows": "All component_* and config records; runtime_elf phases; test records; final result. Memory samples/statistics and execution counters remain in source_summary."
+  }
+}

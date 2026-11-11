@@ -51,6 +51,7 @@ typedef struct {
 } Process;
 static unsigned char *ram;
 static unsigned long guest_base, guest_end, physical_base, reservation_base, reservation_size, *pages;
+static bool component_vm_trace;
 static bool low_guest_layout;
 static unsigned long map_generation, code_generation, maps, revocations;
 static unsigned long allocated, freed;
@@ -783,6 +784,13 @@ static void user_run(void *opaque)
             long number = p->regs.x[8];
             ++execution->calls;
             long result = run_syscall(number, args);
+            if (component_vm_trace && (number == 222 || number == 226 || number == 216)) {
+                long pid_args[6] = {0};
+                printf("{\"component_vm\":%ld,\"pid\":%ld,\"pc\":%lu,\"args\":[%lu,%lu,%lu,%lu,%lu,%lu],\"result\":%ld}\n",
+                       number, run_syscall(172, pid_args), p->regs.pc,
+                       (unsigned long)args[0], (unsigned long)args[1], (unsigned long)args[2],
+                       (unsigned long)args[3], (unsigned long)args[4], (unsigned long)args[5], result);
+            }
             if (number == NCE_SYS_PUBLISH_CODE && !translation)
                 ++code_generation;
             user_return(number, result, args[0]);
@@ -817,6 +825,8 @@ unsigned long translation_linux_setup(void *kernel, unsigned long copy_user_offs
 {
     REQUIRE((translate_offset != 0) == (state != NULL));
     translation = state;
+    const char *workload = getenv("NCE_TRANSLATION_WORKLOAD");
+    component_vm_trace = workload && !strcmp(workload, "bionic");
     const char *layout = getenv("NCE_TRANSLATION_GUEST_LAYOUT");
     REQUIRE(!layout || !strcmp(layout, "host") || !strcmp(layout, "low"));
     low_guest_layout = layout && !strcmp(layout, "low");
