@@ -147,6 +147,8 @@ static void stock_bionic_setup(void)
     put_file("/linkerconfig/ld.config.txt", "stock-ld.config.txt");
 }
 
+#include "stock-art-runner.h"
+
 static void apk_fixture_setup(int desktop)
 {
     const char *input = getenv("NCE_APK_FIXTURE_DIR");
@@ -465,8 +467,9 @@ int nce_lkl_run(const char *path)
     }
     set_layout(guest_base, TRANSLATION_LOOKUP ? NCE_MM_TRANSLATED : NCE_MM_DEMAND, views, 3, NULL, 1, 0);
     const char *workload = getenv("NCE_TRANSLATION_WORKLOAD");
-    REQUIRE(!workload || !strcmp(workload, "core") || !strcmp(workload, "bionic") || !strcmp(workload, "android") || !strcmp(workload, "services") || !strcmp(workload, "desktop"));
+    REQUIRE(!workload || !strcmp(workload, "core") || !strcmp(workload, "bionic") || !strcmp(workload, "stock-art") || !strcmp(workload, "android") || !strcmp(workload, "services") || !strcmp(workload, "desktop"));
     int stock_bionic = workload && !strcmp(workload, "bionic");
+    int stock_art = workload && !strcmp(workload, "stock-art");
     int desktop = workload && !strcmp(workload, "desktop");
     int services = desktop || (workload && !strcmp(workload, "services"));
     int android = services || (workload && !strcmp(workload, "android"));
@@ -524,12 +527,13 @@ int nce_lkl_run(const char *path)
     put_file("/probe-after-build", "late.elf");
     put_file("/dynamic", "dynamic.elf");
     put_file("/bin/sh", "dash.elf");
-    put_file("/bionic-test", "bionic-test.elf");
+    if (!stock_art)
+        put_file("/bionic-test", "bionic-test.elf");
     put_file("/lib/ld-musl-aarch64.so.1", "libc.so");
     put_file("/lib/dependency.so", "dependency.so");
     put_file("/lib/plugin.so", "plugin.so");
     unsigned long host_value = 0x7d2a9314UL;
-    if (TRANSLATION_LOOKUP && !android && !stock_bionic) {
+    if (TRANSLATION_LOOKUP && !android && !stock_bionic && !stock_art) {
         char text[256];
         const char *layout = getenv("NCE_TRANSLATION_GUEST_LAYOUT");
         REQUIRE(snprintf(text, sizeof(text), "%s %lu %lu %lu %lu %lu\n", layout ? layout : "host",
@@ -548,7 +552,12 @@ int nce_lkl_run(const char *path)
         REQUIRE(call(67, pointer_args) == (long)sizeof(copied) && copied == host_value && call(57, pointer_args) == 0);
     }
     int failed = 0;
-    if (stock_bionic) {
+    if (stock_art) {
+        stock_art_setup();
+        translation_memory_phase("guest_execution");
+        failed = run_program("/probe-guest", 1);
+        stock_art_export();
+    } else if (stock_bionic) {
         stock_bionic_setup();
         translation_memory_phase("guest_execution");
         failed = run_program("/probe-guest", 1);
@@ -585,7 +594,7 @@ int nce_lkl_run(const char *path)
         translation_memory_phase("guest_execution");
         failed = run_program("/probe-guest", 0);
     }
-    if (TRANSLATION_LOOKUP && !android && !stock_bionic) {
+    if (TRANSLATION_LOOKUP && !android && !stock_bionic && !stock_art) {
         REQUIRE(host_value == 0x7d2a9314UL);
         puts("{\"test\":\"translated_host_pointer_copy\",\"passed\":true}");
     }

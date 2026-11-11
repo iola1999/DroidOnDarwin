@@ -192,6 +192,11 @@ def validate(rows, memory_interval, mapping="window", workload="core", tlb_inval
         expected.remove('linux_dynamic_code')
         if not validate_standard_jit(rows):
             return False
+    elif workload == 'stock-art':
+        from stock_art import validate as validate_stock_art
+        if not validate_stock_art(rows):
+            return False
+        expected = {'stock_art_standard_jni', 'translated_context_cleanup'}
     elif workload == 'bionic':
         from stock_bionic import validate as validate_stock
         if not validate_stock(rows):
@@ -403,7 +408,8 @@ def main():
     parser.add_argument('--data-seed', type=Path, help='服务和桌面检查使用的初始 ext4 数据盘')
     parser.add_argument('--persistent-data', action='store_true', help='各入口与重复轮次连续使用同一数据盘，检查重启持久化')
     parser.add_argument('--apk-fixture-dir', type=Path, help='运行时传入同签名 Java/JNI APK，首轮安装更新，后续启动只检查已安装 v2')
-    parser.add_argument('--workload', choices=('core', 'bionic', 'android', 'services', 'desktop'), default='core')
+    parser.add_argument('--workload', choices=('core', 'bionic', 'stock-art', 'android', 'services', 'desktop'), default='core')
+    parser.add_argument('--stock-art-directory', type=Path, help='prepare_stock_art.py 已核对的原始 ART 组件目录')
     parser.add_argument('--runtime-source', choices=('sdk36', 'hyperos'))
     parser.add_argument('--runtime-directory', type=Path)
     parser.add_argument('--runtime-manifest', type=Path)
@@ -489,6 +495,14 @@ def main():
         dependency = build_engine(args.code_memory)
     library = Path(dependency['path'])
     out.mkdir(parents=True, exist_ok=True)
+    stock_art = None
+    if args.workload == 'stock-art':
+        if not args.stock_art_directory or args.mapping != 'pte' or args.cpus != 1 or args.entry == 'window':
+            parser.error('stock-art 需要已准备目录和单核 PTE CLI/GCD')
+        from stock_art import attach
+        stock_art = attach(args.stock_art_directory, out)
+    elif args.stock_art_directory:
+        parser.error('--stock-art-directory 仅用于 stock-art')
     stock_runtime = None
     if args.workload == 'bionic':
         if (not all((args.runtime_source, args.runtime_directory, args.runtime_manifest)) or
@@ -591,12 +605,13 @@ def main():
     hosts_before = {mode: sha(out / mode) for mode in build_entries}
     libc = WORK / 'musl-build/install'
     resource = Path(subprocess.check_output([llvm / 'clang', '-print-resource-dir'], text=True).strip()) / 'include'
-    guest_main = EXP / 'translation' / ('stock-bionic-supervisor.c' if stock_runtime else 'linux-guest.c')
+    guest_main = (EXP / 'stock-art/supervisor.c' if stock_art else
+                  EXP / 'translation' / ('stock-bionic-supervisor.c' if stock_runtime else 'linux-guest.c'))
     command = [llvm / 'clang', '--target=aarch64-linux-musl', '-mno-outline-atomics', '-fPIE', '-O2', '-g',
                '-Wall', '-Wextra', '-Werror', '-nostdinc', '-isystem', libc / 'include', '-isystem', resource,
                f'-DNCE_TRANSLATION_CPUS={args.cpus}', f'-DNCE_TRANSLATION_HIGH_RES_TIMERS={int(args.high_res_timers)}',
                '-c', guest_main, '-o', out / 'guest.o']
-    if args.mapping == 'pte' and not stock_runtime:
+    if args.mapping == 'pte' and not stock_runtime and not stock_art:
         command.append('-DNCE_TRANSLATION_STANDARD_JIT')
     run(command)
     commands.append(list(map(str, command)))
@@ -604,7 +619,7 @@ def main():
     guest_sources = [EXP / 'userspace' / name for name in
                      ('signal-tests.c', 'signal-registers.S', 'code-tests.c', 'mm-bench.c', 'mm-tests.c', 'file-tests.c')]
     guest_sources.append(EXP / 'translation/timer-tests.c')
-    if stock_runtime:
+    if stock_runtime or stock_art:
         guest_sources = []
     elif args.mapping == 'pte':
         guest_sources.append(EXP / 'translation/jit-guest.c')
@@ -644,9 +659,10 @@ def main():
                    EXP / 'translation/stock-bionic-guest.c', '-ldl', '-o', out / 'bionic-test.elf']
         run(command)
         commands.append(list(map(str, command)))
-    else:
+    elif not stock_art:
         commands.append(build_bionic_test(out))
-    runtime_files += ('bionic-test.elf',)
+    if not stock_art:
+        runtime_files += ('bionic-test.elf',)
     android_files = []
     if args.workload in ('android', 'services', 'desktop'):
         for name, source in [('NceWorkload.dex', KERNEL / 'java-classes/classes.dex'),
@@ -671,6 +687,12 @@ def main():
              EXP / 'translation/kernel-api.h', EXP / 'translation/kernel-image.h', EXP / 'code-memory.h', EXP / 'nce.h', out / 'translation-symbols.h',
              ROOT / 'scripts/build_translation_engine.py', manifest,
              library / 'lib/libunicorn.a', *[out / name for name in (*build_entries, 'guest.elf', 'late.elf', *runtime_files)]]
+    files += [EXP / 'translation/stock-art-runner.h']
+    if stock_runtime or stock_art:
+        files.append(EXP / 'translation/component-supervisor.h')
+    if stock_art:
+        files += [ROOT / 'scripts/stock_art.py', ROOT / 'scripts/prepare_stock_art.py',
+                  out / 'stock-art-files.tsv', out / 'stock-art-boot-classpath']
     if stock_runtime:
         from stock_bionic import FILES
         files += [ROOT / 'scripts/stock_bionic.py', EXP / 'translation/stock-bionic-guest.c',
@@ -702,6 +724,10 @@ def main():
         environment.pop(name, None)
     if apk_fixture:
         environment['NCE_APK_FIXTURE_DIR'] = apk_fixture['directory']
+    environment.pop('NCE_STOCK_ART_DIRECTORY', None)
+    environment.pop('NCE_STOCK_ART_RESULT_DIR', None)
+    if stock_art:
+        environment['NCE_STOCK_ART_DIRECTORY'] = stock_art['directory']
     environment['NCE_TRANSLATION_FILES'] = str(out)
     environment['NCE_TRANSLATION_GUEST_LAYOUT'] = args.guest_layout
     environment['NCE_TRANSLATION_ONLINE_CPUS'] = str(args.online_cpus)
@@ -737,6 +763,13 @@ def main():
                 if not apk_inputs_unchanged(apk_fixture):
                     raise RuntimeError('APK 输入在运行前发生变化')
                 environment['NCE_APK_FIXTURE_STAGE'] = apk_stage
+            if stock_art:
+                from stock_art import unchanged as stock_art_unchanged
+                if not stock_art_unchanged(stock_art):
+                    raise RuntimeError('原始 ART 输入在运行前发生变化')
+                component_output = out / (stem + '-art')
+                component_output.mkdir(exist_ok=False)
+                environment['NCE_STOCK_ART_RESULT_DIR'] = str(component_output)
             data = None
             if args.workload in ('services', 'desktop'):
                 data_path = out / ('persistent-data.img' if args.persistent_data else f'{stem}-data.img')
@@ -756,8 +789,17 @@ def main():
                     returncode = process.returncode
                 except subprocess.TimeoutExpired:
                     returncode = 'timeout'
-            rows = [json.loads(line) for line in (out / f'{stem}.jsonl').read_text().splitlines() if line.startswith('{')]
-            passed = returncode == 0 and validate(rows, args.memory_interval_ms, args.mapping, args.workload, args.tlb_invalidation, args.execution, direct_config, args.cpus, bool(args.parallel_profile), args.smp_uaccess_stop, code_memory=args.code_memory, online_cpus=args.online_cpus, guest_layout=args.guest_layout)
+            rows, parse_errors = [], []
+            for line_number, line in enumerate((out / f'{stem}.jsonl').read_text().splitlines(), 1):
+                if not line.startswith('{'):
+                    continue
+                try:
+                    rows.append(json.loads(line))
+                except json.JSONDecodeError as error:
+                    if not stock_art:
+                        raise
+                    parse_errors.append({'line': line_number, 'error': str(error)})
+            passed = not parse_errors and returncode == 0 and validate(rows, args.memory_interval_ms, args.mapping, args.workload, args.tlb_invalidation, args.execution, direct_config, args.cpus, bool(args.parallel_profile), args.smp_uaccess_stop, code_memory=args.code_memory, online_cpus=args.online_cpus, guest_layout=args.guest_layout)
             apk_validated = None
             if apk_fixture:
                 previous = [row for result in results for row in result['results']]
@@ -777,6 +819,14 @@ def main():
             results.append({'entry': mode, 'iteration': iteration, 'returncode': returncode, 'results': rows,
                             'validated': passed, 'data_image': data,
                             'stdout_sha256': sha(out / f'{stem}.jsonl'), 'stderr_sha256': sha(out / f'{stem}.log')})
+            if stock_art:
+                from stock_art import artifacts, unchanged as stock_art_unchanged
+                results[-1]['parse_errors'] = parse_errors
+                results[-1]['stock_art_maps'] = artifacts(component_output, rows)
+                results[-1]['stock_art_inputs_unchanged'] = stock_art_unchanged(stock_art)
+                passed = passed and results[-1]['stock_art_inputs_unchanged'] and all(
+                    item['validated'] and item['present'] for item in results[-1]['stock_art_maps'])
+                results[-1]['validated'] = passed
             if apk_fixture:
                 results[-1]['apk_fixture'] = {'stage': apk_stage, 'validated': apk_validated}
             if not passed:
@@ -802,6 +852,10 @@ def main():
                                 'preemption': args.preemption, 'timer_interval_ns': 2000000},
               'measurement': 'Guest clock times 128 pipe round trips per memory case; excludes initial COW materialization. Selected preemption, translation and selected Linux mapping implementation included. Memory means are arithmetic sample means, including phase boundaries; sampled peaks can miss short peaks. Resident lifetime peak is separate.',
               'sha256': input_hashes, 'runs': results}
+    if stock_art:
+        report['stock_art'] = stock_art
+        report['stock_art']['execution_attempted'] = True
+        report['measurement'] = 'Original ART component functionality only; no JIT execution or performance claim.'
     if stock_runtime:
         from stock_bionic import unchanged
         if not unchanged(stock_runtime):
