@@ -1,0 +1,927 @@
+{
+  "version": 1,
+  "verified_on": "2026-11-12",
+  "scope": "Downloaded archive contents against fixed Git trees; excludes subsequent local build patches and Android runtime validation",
+  "baseline_commit": "35d3d7f39d2cda17e46e52d3ae9d5b5db28ae3ef",
+  "baseline_manifest_sha256": "baa0cd4e5fed6b7aa12533561e027e07b53a32725c4a98f212d2da238d64e12e",
+  "updated_manifest_sha256": "ef66e190b55e0c0520e43ceb4665c909d7db3bb291e6fea0f768749ce19d8626",
+  "verification_script": "work/project-audit-2026-11-12/verify_android_sources.py",
+  "verification_script_sha256": "5c7f6b69febb1ec1b5165efc4ed98ecd1aa627244ed9433fa4599bbd7366abb6",
+  "method": [
+    "Fetch each exact revision with git fetch --depth=1.",
+    "Enumerate all non-directory entries using git ls-tree -rz --full-tree.",
+    "Require identical archive and Git path sets with no duplicate archive paths.",
+    "Compare SHA-1 Git blob IDs computed from original file bytes or symlink target bytes.",
+    "Require identical regular/executable/symlink types and regular-file permission bits. Symlink permissions are not stored by Git.",
+    "Validate the core header raw bytes against its fixed Git blob and existing SHA-256."
+  ],
+  "archives": [
+    {
+      "name": "scudo",
+      "repository": "https://android.googlesource.com/platform/external/scudo",
+      "revision": "e3a9ec51431e8a7afdba4004c3e4fde3d0ca8544",
+      "archive": "work/native-linux-nce/android/scudo.tar.gz",
+      "previous_sha256": "93dace5f3fbdac5c70c81ac34990772d8d37a37666ca4e841979c7b82992eb9c",
+      "archive_sha256": "7fdde5ce14bafb569aafe128532a8215e9e1eefa198752bcdba22814ba60316a",
+      "git_tree": "2d211391d21a1f59759a99417f204e4e65e1c50c",
+      "files": 118,
+      "archive_entries": 118,
+      "comparison": "all non-directory paths, Git blob IDs (raw bytes/symlink targets), types and modes",
+      "failures": []
+    },
+    {
+      "name": "bionic-source",
+      "repository": "https://android.googlesource.com/platform/bionic",
+      "revision": "09a271af557444c9a6b3f3146d6d474156fd6cdb",
+      "archive": "work/native-linux-nce/android/bionic-android16.tar.gz",
+      "previous_sha256": "c6b44c308dc593edd98da7b3b6e65ad6226a47516287cfab1821defaf1c385a0",
+      "archive_sha256": "e383d0d96aa096d257f37771eab23574e778a34656c7fe5663b5d602b43e1517",
+      "git_tree": "1bac74d22fb909b11f577743371b34bcc4966d15",
+      "files": 3455,
+      "archive_entries": 3455,
+      "comparison": "all non-directory paths, Git blob IDs (raw bytes/symlink targets), types and modes",
+      "failures": []
+    },
+    {
+      "name": "libbase",
+      "repository": "https://android.googlesource.com/platform/system/libbase",
+      "revision": "0ac7ea4a65d981166d6e5617e1e4ef0572f774e5",
+      "archive": "work/native-linux-nce/android/libbase.tar.gz",
+      "previous_sha256": "b743cdcc57981480d45d70ee6dcb3897d10427a262b34f716b1a0a12aa9a8412",
+      "archive_sha256": "badb6f4ac36a8622873cb5d25c6a7d6f2c5c3ce36f9d21ad26502836e0103413",
+      "git_tree": "9358979d34b763e206b47c370e2ad08fd29190e0",
+      "files": 96,
+      "archive_entries": 96,
+      "comparison": "all non-directory paths, Git blob IDs (raw bytes/symlink targets), types and modes",
+      "failures": []
+    },
+    {
+      "name": "libziparchive",
+      "repository": "https://android.googlesource.com/platform/system/libziparchive",
+      "revision": "8c51527debf9394dfa515f7e6c7941d2720c6d01",
+      "archive": "work/native-linux-nce/android/libziparchive.tar.gz",
+      "previous_sha256": "36b31c106bafa305dec6d41f5fa78c63446b75ead312620adf6b78099186f9ab",
+      "archive_sha256": "0e5545659a06d267d20b01c54d86cabdf679130edbaf5d68d87ad3d94cae79c6",
+      "git_tree": "ec90603179b014abf479ec803638204531ecea60",
+      "files": 46,
+      "archive_entries": 46,
+      "comparison": "all non-directory paths, Git blob IDs (raw bytes/symlink targets), types and modes",
+      "failures": []
+    },
+    {
+      "name": "liblog",
+      "repository": "https://android.googlesource.com/platform/system/logging",
+      "revision": "d78b713380007d3c0dde14712cbcbec27f491ad9",
+      "archive": "work/native-linux-nce/android/liblog.tar.gz",
+      "previous_sha256": "b116dff4b55258118142cb6a4d5ae175f342c32aab825b3453c61d982018a40c",
+      "archive_sha256": "0119a5574e4233a9c43aee463cfed0fe52b7efbf7f3fedb4519d641377a51f2e",
+      "git_tree": "0ae00e20c933202462a9a3a3cf329635507bf93f",
+      "files": 196,
+      "archive_entries": 196,
+      "comparison": "all non-directory paths, Git blob IDs (raw bytes/symlink targets), types and modes",
+      "failures": []
+    }
+  ],
+  "core_header": {
+    "name": "core-header",
+    "repository": "https://android.googlesource.com/platform/system/core",
+    "revision": "68be0c2c0006a0740d0b1809abe4717308f90d15",
+    "path": "libcutils/include/private/android_filesystem_config.h",
+    "git_tree": "4764fb7af8b29a350fd2ed2b60d0772dbeebb58f",
+    "git_blob": "b6aded0c78c73f81f2c625713198d1d4054264e9",
+    "sha256": "ef3a353440f0a1d215d84030577b0a9f6357fa528e9a5495cd4057e7e64b5ea9",
+    "files": 1,
+    "comparison": "raw file bytes against fixed Git blob and manifest SHA-256",
+    "failures": []
+  },
+  "verified_archive_files": 3911,
+  "failures": [],
+  "build": {
+    "status": "passed",
+    "command": "python3 -B scripts/build_android_linker.py",
+    "returncode": 0,
+    "platform": "macOS-27.0-arm64-arm-64bit-Mach-O",
+    "python": "3.14.6",
+    "ndk_version": "29.0.14206865",
+    "script_sha256": "8df4e3342c2948021e2b247bd67e48e3a2117e45e5d790f697c620e3367817fc",
+    "log": "work/project-audit-2026-11-12/linker-source-recovery-build.log",
+    "log_sha256": "5b6c19d9665ca5ae88f39e29c9ed9c325283afe43e3054b6d6fd16020e346248",
+    "manifest": "work/native-linux-nce/android/linker-build/manifest.json",
+    "manifest_sha256": "bdca5aac399c4e83896b8fac7e5085387dd428845e8e63a86692c2a2ca48a5ed",
+    "build_inputs": "e2c3be8b4b008c7c896f48332f0297de130fa16fccdd181913fa47bb77d93a9c",
+    "outputs": {
+      "work/native-linux-nce/android/linker-build/linker64": {
+        "sha256": "c51e686199f0145cfd440658eb5e8e09e90b771e6a746218049e5cd651a1450f",
+        "bytes": 1221896
+      },
+      "work/native-linux-nce/android/linker-build/libdl.so": {
+        "sha256": "1f05fe7000cc8b8c6de0910996ec42a490ef527e5f5ba8c8e0d2120ad08b8131",
+        "bytes": 19784
+      }
+    },
+    "scope": "Existing archive checks, source extraction, local linker patches, compilation and linking succeeded; Android process startup remains untested in this task"
+  },
+  "crypto": {
+    "archives": [
+      {
+        "name": "boringssl",
+        "repository": "https://android.googlesource.com/platform/external/boringssl",
+        "revision": "ecc1358826150d6a1851c517c325b0e6c0e1b8be",
+        "subtree": "",
+        "archive": "work/native-linux-nce/android/boringssl-ecc1358826150d6a1851c517c325b0e6c0e1b8be.tar.gz",
+        "previous_sha256": "e1208516f7419fdcb4ebcb8d0afd7153d0abba7d4eee52bc57a5136cb1263557",
+        "archive_sha256": "34a5d415ddf59e6b5938ffe5037ede453c0bd3806c17eeef17796cd20438ad55",
+        "git_tree": "cb920d76df247d1b99c7a80d9cef2540cfe1eabf",
+        "archive_tree": "cb920d76df247d1b99c7a80d9cef2540cfe1eabf",
+        "files": 1770,
+        "archive_entries": 1770,
+        "gitlinks": [],
+        "comparison": "all non-directory paths, Git blob IDs (raw bytes/symlink targets), types and modes",
+        "failures": []
+      },
+      {
+        "name": "cronet-boringssl",
+        "repository": "https://android.googlesource.com/platform/external/cronet",
+        "revision": "3d00a6f18075427606068c038ea2695053213440",
+        "subtree": "stable/third_party/boringssl",
+        "archive": "work/native-linux-nce/android/cronet-boringssl-3d00a6f18075427606068c038ea2695053213440.tar.gz",
+        "previous_sha256": "a8d924f47399862907a59125c6c61a9b5f3702da5b0bc9f31d929c9e90be78c6",
+        "archive_sha256": "d59efc3c377960134534768277170633ff116d45228332ab1466c8c5d3d6a301",
+        "git_tree": "8331af53b6af782927d3eb393a1c0b4e61ecef1f",
+        "archive_tree": "cdcf2ddd45915a259f90418bfc5e3bcef8f2e7ec",
+        "files": 7325,
+        "archive_entries": 7325,
+        "gitlinks": [],
+        "comparison": "all non-directory paths, Git blob IDs (raw bytes/symlink targets), types and modes",
+        "failures": []
+      }
+    ],
+    "verification_script": "work/project-audit-2026-11-12/verify_android_extra_sources.py",
+    "verification_script_sha256": "35492e79fed69ddf136bae4abf8b3569dc8381dfe4cfff52ab5a0d68ac39a009",
+    "builds": {
+      "crypto": {
+        "name": "crypto",
+        "returncode": 0,
+        "command": [
+          "/opt/homebrew/opt/python@3.14/bin/python3.14",
+          "-B",
+          "-c",
+          "import sys; sys.path.insert(0,\"scripts\"); from build_android_crypto import build; print(build(cronet=False))"
+        ],
+        "log": "work/project-audit-2026-11-12/crypto-source-recovery-build.log",
+        "status": "passed",
+        "platform": "macOS-27.0-arm64-arm-64bit-Mach-O",
+        "python": "3.14.6",
+        "ndk_version": "29.0.14206865",
+        "script_sha256": "facf7873c5e5644bcbdbec2f9f5216932dce65bdfd55363044fd797c0dd95cbf",
+        "manifest": "work/native-linux-nce/android/crypto-build/manifest.json",
+        "manifest_sha256": "ce48b8e48f89e46e1cb4a8d2a4df421f1a9d18e2606bacec8e31fdff0529b218",
+        "build_inputs": "578bbf38a563168559014163e3efac1d4532e1c641c460c337058448f9f0d9f4",
+        "outputs": {
+          "work/native-linux-nce/android/crypto-build/libcrypto.so": {
+            "sha256": "4892e2213659e552b4741b6cbaf77996a69a5e90a564795502a2ebe78455c971",
+            "bytes": 1994976
+          },
+          "work/native-linux-nce/android/crypto-build/libssl.so": {
+            "sha256": "e42c291762b135829d907a0042a7f5efc56d0279aa8513bc25a63b6137d23373",
+            "bytes": 981120
+          }
+        },
+        "log_sha256": "af39af3547291557258c72bcc08577f99bdd11bd4eb354d33fa8078db46c1a49",
+        "scope": "Fixed-source checksum, CMake build and link completed; runtime not tested"
+      },
+      "cronet-crypto": {
+        "name": "cronet-crypto",
+        "returncode": 0,
+        "command": [
+          "/opt/homebrew/opt/python@3.14/bin/python3.14",
+          "-B",
+          "-c",
+          "import sys; sys.path.insert(0,\"scripts\"); from build_android_crypto import build; print(build(cronet=True))"
+        ],
+        "log": "work/project-audit-2026-11-12/cronet-crypto-source-recovery-build.log",
+        "status": "passed",
+        "platform": "macOS-27.0-arm64-arm-64bit-Mach-O",
+        "python": "3.14.6",
+        "ndk_version": "29.0.14206865",
+        "script_sha256": "facf7873c5e5644bcbdbec2f9f5216932dce65bdfd55363044fd797c0dd95cbf",
+        "manifest": "work/native-linux-nce/android/cronet-crypto-build/manifest.json",
+        "manifest_sha256": "d5c1493ac000ee46407bb809fd4a41a6890eed444cba309d23b3d87520e2e0b3",
+        "build_inputs": "fe3a1594bc187f57056e032c687634ba38b9be623f934a596f45dfda113864ad",
+        "outputs": {
+          "work/native-linux-nce/android/cronet-crypto-build/stable_cronet_libcrypto.so": {
+            "sha256": "207bbc29b71c8f7b756e9548a7f220fe3a90e90bf4f60a8a15fc5720f3af8084",
+            "bytes": 1891072
+          },
+          "work/native-linux-nce/android/cronet-crypto-build/stable_cronet_libssl.so": {
+            "sha256": "8e000654f5635e95a6c53e83c606e8e9a8e62a01b31099d84981d30084b45e16",
+            "bytes": 965000
+          }
+        },
+        "log_sha256": "94f11a554378812ee652ef2679ef7f64015835a9ecee15ca519a05dd5e9ed7e8",
+        "scope": "Fixed-source checksum, CMake build and link completed; runtime not tested"
+      }
+    }
+  },
+  "art": {
+    "archives": [
+      {
+        "name": "art",
+        "repository": "https://android.googlesource.com/platform/art",
+        "revision": "ed6c006bd06ae060bd9698fd2cb25c4865512ec3",
+        "subtree": "",
+        "archive": "work/native-linux-nce/android/art.tar.gz",
+        "previous_sha256": "56b8df0269ede57ea781b6c8226d1804bd64d1c68d41d3c51a62eae6190e6b11",
+        "archive_sha256": "dd5e4212878ea51e90efc5d04ab70e4e2119efcad6293182ab362a3d5d10c560",
+        "git_tree": "02de2aa9879933d7f7f689fec47c41485f66c5ff",
+        "archive_tree": "02de2aa9879933d7f7f689fec47c41485f66c5ff",
+        "files": 10517,
+        "archive_entries": 10517,
+        "gitlinks": [],
+        "comparison": "all non-directory paths, Git blob IDs (raw bytes/symlink targets), types and modes",
+        "failures": []
+      },
+      {
+        "name": "fmt",
+        "repository": "https://android.googlesource.com/platform/external/fmtlib",
+        "revision": "b94c6ae0bc963c4f38bce355fe74bec30eaf0be2",
+        "subtree": "",
+        "archive": "work/native-linux-nce/android/fmt.tar.gz",
+        "previous_sha256": "f59c483a17eeb43612b0927cc6ee210ffdec4960919531ebfd89a49df7b14cc0",
+        "archive_sha256": "3439d4c240a8129bf5ca98e840ee4c57e3bc5bec57d00f7067134870ac2432c4",
+        "git_tree": "a07c98f7895ff34751cf729f3ad08b461ecb2260",
+        "archive_tree": "a07c98f7895ff34751cf729f3ad08b461ecb2260",
+        "files": 138,
+        "archive_entries": 138,
+        "gitlinks": [],
+        "comparison": "all non-directory paths, Git blob IDs (raw bytes/symlink targets), types and modes",
+        "failures": []
+      },
+      {
+        "name": "dlmalloc",
+        "repository": "https://android.googlesource.com/platform/external/dlmalloc",
+        "revision": "2b0d5c4ab4e2c677384c02f3eb04cce63b6f10f0",
+        "subtree": "",
+        "archive": "work/native-linux-nce/android/dlmalloc.tar.gz",
+        "previous_sha256": "7297f4bc1e9c198c8d2b8be88e2ee067b2a2581525ca3e079349ea6abc418e1e",
+        "archive_sha256": "ddc67f57fc2c6b310b7a0f56519dd9368f669f6eb8cd81f226aa78e45edaf67c",
+        "git_tree": "a9eff6587eb6bcdef832c1bf7be66d98f40fe821",
+        "archive_tree": "a9eff6587eb6bcdef832c1bf7be66d98f40fe821",
+        "files": 9,
+        "archive_entries": 9,
+        "gitlinks": [],
+        "comparison": "all non-directory paths, Git blob IDs (raw bytes/symlink targets), types and modes",
+        "failures": []
+      },
+      {
+        "name": "libnativehelper",
+        "repository": "https://android.googlesource.com/platform/libnativehelper",
+        "revision": "5c36ece5ac42b20f0e384d9e57400f2f22aad9fb",
+        "subtree": "",
+        "archive": "work/native-linux-nce/android/libnativehelper.tar.gz",
+        "previous_sha256": "4e44c5b7fb4afddb0df38bbdabc6b010f4ce85e872b8fe67de325a10d30abfa1",
+        "archive_sha256": "aebc0192d211d2ae66a43bd403cb65e2d1b94a55aca0241832a425adbf471422",
+        "git_tree": "6e2c5f30d8fb68dbfa7b0e36388a10697b755743",
+        "archive_tree": "6e2c5f30d8fb68dbfa7b0e36388a10697b755743",
+        "files": 71,
+        "archive_entries": 71,
+        "gitlinks": [],
+        "comparison": "all non-directory paths, Git blob IDs (raw bytes/symlink targets), types and modes",
+        "failures": []
+      },
+      {
+        "name": "cpu_features",
+        "repository": "https://android.googlesource.com/platform/external/cpu_features",
+        "revision": "3aed778c722edb68321d66a5e1cd7b35ae2c891c",
+        "subtree": "",
+        "archive": "work/native-linux-nce/android/cpu_features.tar.gz",
+        "previous_sha256": "7d89f0d07142e1ec99d3ebe976539e64de7ff22e4fa2d1d365d7050f90c00829",
+        "archive_sha256": "eda776e9e954a98abb848f0915213546310c4edd703b8cda6273adf84ff484d0",
+        "git_tree": "762b7ae4a1fbccaab1dbb93e94c6910487a1bf59",
+        "archive_tree": "762b7ae4a1fbccaab1dbb93e94c6910487a1bf59",
+        "files": 115,
+        "archive_entries": 115,
+        "gitlinks": [],
+        "comparison": "all non-directory paths, Git blob IDs (raw bytes/symlink targets), types and modes",
+        "failures": []
+      },
+      {
+        "name": "tinyxml2",
+        "repository": "https://android.googlesource.com/platform/external/tinyxml2",
+        "revision": "7485b22521f577cf944e5687361548d8993d8d2c",
+        "subtree": "",
+        "archive": "work/native-linux-nce/android/tinyxml2.tar.gz",
+        "previous_sha256": "7a786555b5f49b6c386d99a2193c18783d8266849dd50beaba3ba00690eb855f",
+        "archive_sha256": "f66dac6fdef943d6c47d585a33370fc9687216e08bc3e742b59b7a3cf6c130ca",
+        "git_tree": "b74d1ad1ac3cfceb456b4d8e19a4091ef73706db",
+        "archive_tree": "b74d1ad1ac3cfceb456b4d8e19a4091ef73706db",
+        "files": 279,
+        "archive_entries": 279,
+        "gitlinks": [],
+        "comparison": "all non-directory paths, Git blob IDs (raw bytes/symlink targets), types and modes",
+        "failures": []
+      },
+      {
+        "name": "unwinding",
+        "repository": "https://android.googlesource.com/platform/system/unwinding",
+        "revision": "525f941b6ccdba2f9df02de8ab7a83aea883d952",
+        "subtree": "",
+        "archive": "work/native-linux-nce/android/unwinding.tar.gz",
+        "previous_sha256": "300aca72ec071872fd72430fdd01a3b014078e0415b79d120bf0d4776d6edb4b",
+        "archive_sha256": "898e3e5822edbb2215f69817e54c98761db3811a9e0b046fb617afc13d0538fe",
+        "git_tree": "42193e45f3f1af85ad2967c8679f84d17bc4061b",
+        "archive_tree": "42193e45f3f1af85ad2967c8679f84d17bc4061b",
+        "files": 564,
+        "archive_entries": 564,
+        "gitlinks": [],
+        "comparison": "all non-directory paths, Git blob IDs (raw bytes/symlink targets), types and modes",
+        "failures": []
+      },
+      {
+        "name": "modules-utils",
+        "repository": "https://android.googlesource.com/platform/frameworks/libs/modules-utils",
+        "revision": "7f0ae25f0e410849caf643da36c9a1ba161caca7",
+        "subtree": "",
+        "archive": "work/native-linux-nce/android/modules-utils.tar.gz",
+        "previous_sha256": "d92b5c8c3041f98d86f563a5260ee8be3daa122981ba6b8af21b4d15612d19e9",
+        "archive_sha256": "da58dc7d593114cc431a2da432b985c6057e055f7591a1d5615f3b86a1905630",
+        "git_tree": "d84a1344b35652f98574ba7e861e13cb4fabe152",
+        "archive_tree": "d84a1344b35652f98574ba7e861e13cb4fabe152",
+        "files": 218,
+        "archive_entries": 218,
+        "gitlinks": [],
+        "comparison": "all non-directory paths, Git blob IDs (raw bytes/symlink targets), types and modes",
+        "failures": []
+      },
+      {
+        "name": "lz4",
+        "repository": "https://android.googlesource.com/platform/external/lz4",
+        "revision": "f072532f6846b40417438d29daa8183a8e53b63c",
+        "subtree": "",
+        "archive": "work/native-linux-nce/android/lz4.tar.gz",
+        "previous_sha256": "fcdbdd958216e93308025085e776afc88a8086cced6600b8aa271f65000a3f63",
+        "archive_sha256": "f09f4e833ac22e40de27723c104f703edc72ec619330989e8651e987680b8717",
+        "git_tree": "85985f1627221aa31072e86fe6729e4990e92166",
+        "archive_tree": "85985f1627221aa31072e86fe6729e4990e92166",
+        "files": 214,
+        "archive_entries": 214,
+        "gitlinks": [],
+        "comparison": "all non-directory paths, Git blob IDs (raw bytes/symlink targets), types and modes",
+        "failures": []
+      },
+      {
+        "name": "lzma",
+        "repository": "https://android.googlesource.com/platform/external/lzma",
+        "revision": "c1bc713526e9740aec88f0f18e0bca0b0c54f1f9",
+        "subtree": "",
+        "archive": "work/native-linux-nce/android/lzma.tar.gz",
+        "previous_sha256": "222558ca5e5180e09bfed41fde2e988735b5dff0221badb8ab7d0babae605a0d",
+        "archive_sha256": "7e089c6787a2d3dfd061ba1eeafea7a1eadbb46e51d01d6d063fec21fa599b6d",
+        "git_tree": "7abbbda1c0c49b49b1bff29e2445dfbc22742301",
+        "archive_tree": "7abbbda1c0c49b49b1bff29e2445dfbc22742301",
+        "files": 1296,
+        "archive_entries": 1296,
+        "gitlinks": [],
+        "comparison": "all non-directory paths, Git blob IDs (raw bytes/symlink targets), types and modes",
+        "failures": []
+      },
+      {
+        "name": "vixl",
+        "repository": "https://android.googlesource.com/platform/external/vixl",
+        "revision": "e685e67c8f41596dad341b086a649e9f4a7d6062",
+        "subtree": "",
+        "archive": "work/native-linux-nce/android/vixl.tar.gz",
+        "previous_sha256": "d6ff6bec242705e66ad8e0fd8e99b71c21ee5f2c8f6cf8d92382b41ed538ae0f",
+        "archive_sha256": "5d5ec2661250892010bc8c0ca318bdd1b31a674026eab4cb8ccf0b8a04024bc7",
+        "git_tree": "a31a2400045cfb4b2bb14bedf5417414d740a696",
+        "archive_tree": "a31a2400045cfb4b2bb14bedf5417414d740a696",
+        "files": 3160,
+        "archive_entries": 3160,
+        "gitlinks": [],
+        "comparison": "all non-directory paths, Git blob IDs (raw bytes/symlink targets), types and modes",
+        "failures": []
+      }
+    ],
+    "headers": [
+      {
+        "name": "perfetto-header",
+        "repository": "https://android.googlesource.com/platform/external/perfetto",
+        "revision": "94a71474cc396db2b0fcff6755b8f2d3f7e304d0",
+        "path": "src/profiling/memory/include/perfetto/heap_profile.h",
+        "git_tree": "b7ef010a0fe366666cfeb207a4bb9b98c78a3927",
+        "git_blob": "b4e0e62ab3872fbe02c5651b4de92ca5b2a982d6",
+        "sha256": "a56248243d481b25e8c93b08d1cc8103dcaf589dcbba8b17139f4db7953f51de",
+        "previous_sha256": "a56248243d481b25e8c93b08d1cc8103dcaf589dcbba8b17139f4db7953f51de",
+        "files": 1,
+        "comparison": "raw file bytes against fixed Git blob",
+        "failures": []
+      }
+    ],
+    "verified_archive_files": 16581,
+    "baseline_manifest_sha256": "a66d085c58d109c16e99205fe83514cf5a41a60ed372fd924e374007b947f82b",
+    "updated_manifest_sha256": "ce730a2455492c440b69aebf92248b2625a2477213ea87e8c7c58031dc215d05",
+    "verification_script": "work/project-audit-2026-11-12/verify_android_extra_sources.py",
+    "verification_script_sha256": "35492e79fed69ddf136bae4abf8b3569dc8381dfe4cfff52ab5a0d68ac39a009",
+    "download_retries": {
+      "libnativehelper": "first TLS handshake ended with UNEXPECTED_EOF_WHILE_READING; same URL retry succeeded",
+      "cpu_features": "first TLS handshake ended with UNEXPECTED_EOF_WHILE_READING; same URL retry succeeded"
+    },
+    "build": {
+      "command": "python3 -B scripts/build_android_art.py",
+      "returncode": 0,
+      "log": "work/project-audit-2026-11-12/art-source-recovery-build.log",
+      "status": "passed",
+      "include_compiler": false,
+      "platform": "macOS-27.0-arm64-arm-64bit-Mach-O",
+      "python": "3.14.6",
+      "ndk_version": "29.0.14206865",
+      "script_sha256": "4b987c8b6fd5d3af28e90af6fdfd4a67e49bb3a2bb1e12206651bb1971b83dae",
+      "manifest": "work/native-linux-nce/android/art-build/manifest.json",
+      "manifest_sha256": "56214ae41aee0fe6870d8b78de6ec4dce2ecc2f8bda572ec963481510df8aa5e",
+      "build_inputs": "87856d58bd7335fedfda667516e0682cab3807271430731c5ac14f2d76350a34",
+      "outputs": {
+        "work/native-linux-nce/android/art-build/libart.so": {
+          "sha256": "9e11099abcf8169eb6814061e84dabe6e1147b9d598b95ba956baafe7a910a36",
+          "bytes": 14173376
+        },
+        "work/native-linux-nce/android/art-build/libartbase.so": {
+          "sha256": "124f199670a22e0660122e64199c276c96b12f2f932073691ce5024d9816ef8c",
+          "bytes": 611928
+        }
+      },
+      "log_sha256": "5e19f71784c3b3a12a8fc6911d46dec82ddbf346eb8857aed518293c04a4f5ce",
+      "warnings": [
+        "upstream generate_operator_out.py uses deprecated codecs.open under Python 3.14"
+      ],
+      "scope": "Existing source checks, patches, compilation and linking succeeded; nce-dex2oat and Android runtime execution were not included"
+    }
+  },
+  "total_verified_archive_files": 29607,
+  "services": {
+    "archives": [
+      {
+        "name": "property-service",
+        "repository": "https://android.googlesource.com/platform/system/core",
+        "revision": "68be0c2c0006a0740d0b1809abe4717308f90d15",
+        "subtree": "property_service",
+        "archive": "work/native-linux-nce/android/property-service.tar.gz",
+        "previous_sha256": "3aa340c056435d9302ae2deaacc82b445b4cbc94770eadb4039aa307f4e5e8e0",
+        "archive_sha256": "18fad3482f7a05eff797f283beb9714e10fb85e53ece9de2a38026cf31d4875a",
+        "git_tree": "4764fb7af8b29a350fd2ed2b60d0772dbeebb58f",
+        "archive_tree": "e7d599ccba9871355262e38970e222da90d91198",
+        "files": 20,
+        "archive_entries": 20,
+        "gitlinks": [],
+        "comparison": "all non-directory paths, Git blob IDs (raw bytes/symlink targets), types and modes",
+        "failures": []
+      }
+    ],
+    "baseline_manifest_sha256": "b4bf7da997e6fe7011d03eb26eca434ca084cc16f761f4d18d55c12a09853ade",
+    "updated_manifest_sha256": "73ec12cb83baf7144a9ee0eb9a3984c61ae1c4cfeef76fc04581c2ebcb51bafe",
+    "verification_script": "work/project-audit-2026-11-12/verify_android_extra_sources.py",
+    "verification_script_sha256": "35492e79fed69ddf136bae4abf8b3569dc8381dfe4cfff52ab5a0d68ac39a009",
+    "scope": "property_service fixed Git subtree verification, existing checksums for subsequent userspace inputs, and isolated host property serializer build",
+    "preflight": {
+      "checks": [
+        {
+          "group": "native-archive",
+          "path": "work/native-linux-nce/musl-1.2.5.tar.gz",
+          "sha256": "a9a118bbe84d8764da0ea0d28b3ab3fae8477fc7e4085d90102b8596fc7c75e4",
+          "expected_sha256": "a9a118bbe84d8764da0ea0d28b3ab3fae8477fc7e4085d90102b8596fc7c75e4",
+          "match": true
+        },
+        {
+          "group": "native-archive",
+          "path": "work/native-linux-nce/compiler-rt-20.1.8.src.tar.xz",
+          "sha256": "15277402f6fd63397c0917a5c7171cda82d16d226094b828c1ed0f58f73b9c69",
+          "expected_sha256": "15277402f6fd63397c0917a5c7171cda82d16d226094b828c1ed0f58f73b9c69",
+          "match": true
+        },
+        {
+          "group": "native-archive",
+          "path": "work/native-linux-nce/dash-0.5.12.tar.gz",
+          "sha256": "6a474ac46e8b0b32916c4c60df694c82058d3297d8b385b74508030ca4a8f28a",
+          "expected_sha256": "6a474ac46e8b0b32916c4c60df694c82058d3297d8b385b74508030ca4a8f28a",
+          "match": true
+        },
+        {
+          "group": "service-interface",
+          "path": "experiments/native-linux/services/apex/android/apex/ApexInfo.aidl",
+          "sha256": "51aa1cbc7671889f24002d7d4503dce43157056770498ff1f99a8bae12b27013",
+          "expected_sha256": "51aa1cbc7671889f24002d7d4503dce43157056770498ff1f99a8bae12b27013",
+          "match": true
+        },
+        {
+          "group": "service-interface",
+          "path": "experiments/native-linux/services/apex/android/apex/ApexInfoList.aidl",
+          "sha256": "5e49deb7d235b098ab6ffc19006ae0c57158e478e940ceaa3d290d041a057dd6",
+          "expected_sha256": "5e49deb7d235b098ab6ffc19006ae0c57158e478e940ceaa3d290d041a057dd6",
+          "match": true
+        },
+        {
+          "group": "service-interface",
+          "path": "experiments/native-linux/services/apex/android/apex/ApexSessionInfo.aidl",
+          "sha256": "c4283eb43c806c138be969a570ae2c2c73182fd4b05909860c1bdaefe4022242",
+          "expected_sha256": "c4283eb43c806c138be969a570ae2c2c73182fd4b05909860c1bdaefe4022242",
+          "match": true
+        },
+        {
+          "group": "service-interface",
+          "path": "experiments/native-linux/services/apex/android/apex/ApexSessionParams.aidl",
+          "sha256": "496a2dc5ff4b3cb1a3eb65e3d1ac7973dfbd67f888777d22e602d9b6fee567a5",
+          "expected_sha256": "496a2dc5ff4b3cb1a3eb65e3d1ac7973dfbd67f888777d22e602d9b6fee567a5",
+          "match": true
+        },
+        {
+          "group": "service-interface",
+          "path": "experiments/native-linux/services/apex/android/apex/CompressedApexInfo.aidl",
+          "sha256": "664f80e6481a1911b6a779c40c502a8f8e0c505ea3878953133cc7877355436f",
+          "expected_sha256": "664f80e6481a1911b6a779c40c502a8f8e0c505ea3878953133cc7877355436f",
+          "match": true
+        },
+        {
+          "group": "service-interface",
+          "path": "experiments/native-linux/services/apex/android/apex/CompressedApexInfoList.aidl",
+          "sha256": "c41afe66ea75a92c4a847454489c897a023b2ff3e15053189f35dc29f83676f1",
+          "expected_sha256": "c41afe66ea75a92c4a847454489c897a023b2ff3e15053189f35dc29f83676f1",
+          "match": true
+        },
+        {
+          "group": "service-interface",
+          "path": "experiments/native-linux/services/apex/android/apex/IApexService.aidl",
+          "sha256": "453ea41d5ce6afe1437f5cc6c1e90fa7a552007e1e9ec47c5b1b717d488bb2e3",
+          "expected_sha256": "453ea41d5ce6afe1437f5cc6c1e90fa7a552007e1e9ec47c5b1b717d488bb2e3",
+          "match": true
+        },
+        {
+          "group": "service-interface",
+          "path": "experiments/native-linux/services/apex/apex_manifest.proto",
+          "sha256": "e9505454f5fa759c6364e8680542f48b219f1b57d394a63deadfcfc6e8268ce7",
+          "expected_sha256": "e9505454f5fa759c6364e8680542f48b219f1b57d394a63deadfcfc6e8268ce7",
+          "match": true
+        },
+        {
+          "group": "service-interface",
+          "path": "experiments/native-linux/services/suspend/android/system/suspend/ISystemSuspend.aidl",
+          "sha256": "4ef9b85fbdf5fb18fc9e7cc50d184a2d9aa003b624ddcc12d128477b63e6062d",
+          "expected_sha256": "4ef9b85fbdf5fb18fc9e7cc50d184a2d9aa003b624ddcc12d128477b63e6062d",
+          "match": true
+        },
+        {
+          "group": "service-interface",
+          "path": "experiments/native-linux/services/suspend/android/system/suspend/IWakeLock.aidl",
+          "sha256": "663fb611a9b421168ed9d74b96a4fc67d16ed7c371fd5e39f2ab199f1575716c",
+          "expected_sha256": "663fb611a9b421168ed9d74b96a4fc67d16ed7c371fd5e39f2ab199f1575716c",
+          "match": true
+        },
+        {
+          "group": "service-interface",
+          "path": "experiments/native-linux/services/suspend/android/system/suspend/WakeLockType.aidl",
+          "sha256": "fcd5e48f11ad311cd10dcae0689d6f64ae5db74b07357b23edad14015ad8f019",
+          "expected_sha256": "fcd5e48f11ad311cd10dcae0689d6f64ae5db74b07357b23edad14015ad8f019",
+          "match": true
+        },
+        {
+          "group": "service-interface",
+          "path": "experiments/native-linux/services/installd/android/os/CreateAppDataArgs.aidl",
+          "sha256": "395f48daec3b728c2b7b9949ed0dc1d5de34192971475fb2b2eba348d7cb9819",
+          "expected_sha256": "395f48daec3b728c2b7b9949ed0dc1d5de34192971475fb2b2eba348d7cb9819",
+          "match": true
+        },
+        {
+          "group": "service-interface",
+          "path": "experiments/native-linux/services/installd/android/os/CreateAppDataResult.aidl",
+          "sha256": "131dcd1af2b29d48490033b494432cda834d9b98ebdf199c82406cb948a8cd07",
+          "expected_sha256": "131dcd1af2b29d48490033b494432cda834d9b98ebdf199c82406cb948a8cd07",
+          "match": true
+        },
+        {
+          "group": "service-interface",
+          "path": "experiments/native-linux/services/installd/android/os/IInstalld.aidl",
+          "sha256": "a29f74f099ba5aa224a901c3f236e60a17d6d4c3c7999694f9e090bb7fcf8784",
+          "expected_sha256": "a29f74f099ba5aa224a901c3f236e60a17d6d4c3c7999694f9e090bb7fcf8784",
+          "match": true
+        },
+        {
+          "group": "service-interface",
+          "path": "experiments/native-linux/services/installd/android/os/ReconcileSdkDataArgs.aidl",
+          "sha256": "85b1a6ca20cd53b156b44aaa1444aa54bf02679e50017b48c2d06705b64f3bfe",
+          "expected_sha256": "85b1a6ca20cd53b156b44aaa1444aa54bf02679e50017b48c2d06705b64f3bfe",
+          "match": true
+        },
+        {
+          "group": "service-interface",
+          "path": "experiments/native-linux/services/installd/android/os/storage/CrateMetadata.aidl",
+          "sha256": "292d89d237a5292d25399d722b13177a9263c5e21d5e39ca86ffa12d14be09da",
+          "expected_sha256": "292d89d237a5292d25399d722b13177a9263c5e21d5e39ca86ffa12d14be09da",
+          "match": true
+        },
+        {
+          "group": "graphics-protocol",
+          "path": "experiments/native-linux/graphics/protocol/renderControl_opcodes.h",
+          "sha256": "cdfe0e627071592e0176c03a7e75cea86caac82e8750d57befd2a3c2868e4627",
+          "expected_sha256": "cdfe0e627071592e0176c03a7e75cea86caac82e8750d57befd2a3c2868e4627",
+          "match": true
+        },
+        {
+          "group": "graphics-protocol",
+          "path": "experiments/native-linux/graphics/protocol/gles2_opcodes.h",
+          "sha256": "006c946813dd6e35a7093b5f752e9637fcf1cb97d8fb0c9552a2fd86c0ff8526",
+          "expected_sha256": "006c946813dd6e35a7093b5f752e9637fcf1cb97d8fb0c9552a2fd86c0ff8526",
+          "match": true
+        },
+        {
+          "group": "binder-header",
+          "path": "work/native-linux-nce/android/binder-include/android/binder_manager.h",
+          "sha256": "8421f0e031b078d9161a692ccda2e3acd145db2f1fb37aa97bb41e97d636f066",
+          "expected_sha256": "8421f0e031b078d9161a692ccda2e3acd145db2f1fb37aa97bb41e97d636f066",
+          "match": true
+        },
+        {
+          "group": "binder-header",
+          "path": "work/native-linux-nce/android/binder-include/android/binder_process.h",
+          "sha256": "fe9626e20b24d32cfc1c0dc1dc5de1cb80c07489cbb38afc563fa5082bf4a00a",
+          "expected_sha256": "fe9626e20b24d32cfc1c0dc1dc5de1cb80c07489cbb38afc563fa5082bf4a00a",
+          "match": true
+        },
+        {
+          "group": "binder-header",
+          "path": "work/native-linux-nce/android/binder-include/android/binder_auto_utils.h",
+          "sha256": "8de4018f17330e3cb68eacd66ef2f10da19ae22b2da0e7f6f6ad4d100607a5f4",
+          "expected_sha256": "8de4018f17330e3cb68eacd66ef2f10da19ae22b2da0e7f6f6ad4d100607a5f4",
+          "match": true
+        },
+        {
+          "group": "binder-header",
+          "path": "work/native-linux-nce/android/binder-include/android/binder_enums.h",
+          "sha256": "a4f3b34f5478d5ad820e93eabfa0d5fe82e53a71727ad6f48b5932a043060189",
+          "expected_sha256": "a4f3b34f5478d5ad820e93eabfa0d5fe82e53a71727ad6f48b5932a043060189",
+          "match": true
+        },
+        {
+          "group": "binder-header",
+          "path": "work/native-linux-nce/android/binder-include/android/binder_interface_utils.h",
+          "sha256": "9898e1d9b7e35072cc411a4ef419d1fa2d498b356e1c45943b23381497b8e8e3",
+          "expected_sha256": "9898e1d9b7e35072cc411a4ef419d1fa2d498b356e1c45943b23381497b8e8e3",
+          "match": true
+        },
+        {
+          "group": "binder-header",
+          "path": "work/native-linux-nce/android/binder-include/android/binder_internal_logging.h",
+          "sha256": "b3dc27d60e3c75629f231f94ab24779af9faeede2c4d605401179265d6d5eea8",
+          "expected_sha256": "b3dc27d60e3c75629f231f94ab24779af9faeede2c4d605401179265d6d5eea8",
+          "match": true
+        },
+        {
+          "group": "binder-header",
+          "path": "work/native-linux-nce/android/binder-include/android/binder_parcel_utils.h",
+          "sha256": "8a2171d1b7259a39326e7475f481e54bddbe4d48e7f21e6b865cd8ebb0479dcd",
+          "expected_sha256": "8a2171d1b7259a39326e7475f481e54bddbe4d48e7f21e6b865cd8ebb0479dcd",
+          "match": true
+        },
+        {
+          "group": "binder-header",
+          "path": "work/native-linux-nce/android/binder-include/android/binder_parcelable_utils.h",
+          "sha256": "9c330de3ef09843d69d54116616efb52e7f442fb3bca28dc7d22f26c8f0fb869",
+          "expected_sha256": "9c330de3ef09843d69d54116616efb52e7f442fb3bca28dc7d22f26c8f0fb869",
+          "match": true
+        },
+        {
+          "group": "binder-header",
+          "path": "work/native-linux-nce/android/binder-include/android/binder_to_string.h",
+          "sha256": "f5333debafd787a6dd0ad000fa08f8a0e585764bf994e75dc15a6fe7dd7da6da",
+          "expected_sha256": "f5333debafd787a6dd0ad000fa08f8a0e585764bf994e75dc15a6fe7dd7da6da",
+          "match": true
+        },
+        {
+          "group": "binder-header",
+          "path": "work/native-linux-nce/android/binder-include/android/binder_stability.h",
+          "sha256": "f62817c8812f73e006675cd3b9ba0293cfa1a36c14cfbe5ea8d38c9f27c0882a",
+          "expected_sha256": "f62817c8812f73e006675cd3b9ba0293cfa1a36c14cfbe5ea8d38c9f27c0882a",
+          "match": true
+        },
+        {
+          "group": "binder-header",
+          "path": "work/native-linux-nce/android/binder-include/android/binder_shell.h",
+          "sha256": "9ad33163a5849625869264748224c425980b96581346de55602f8b89733d8821",
+          "expected_sha256": "9ad33163a5849625869264748224c425980b96581346de55602f8b89733d8821",
+          "match": true
+        },
+        {
+          "group": "network-source",
+          "path": "work/native-linux-nce/android/network-source/bpf/headers/include/bpf/BpfUtils.h",
+          "sha256": "8b6d4156a845d321cf5b4a17b1ac983f6ca92a4919570a2b98b3c4ccc4d0ca19",
+          "expected_sha256": "8b6d4156a845d321cf5b4a17b1ac983f6ca92a4919570a2b98b3c4ccc4d0ca19",
+          "match": true
+        },
+        {
+          "group": "network-source",
+          "path": "work/native-linux-nce/android/network-source/bpf/headers/include/bpf/KernelUtils.h",
+          "sha256": "8485a4d1afa39264b09dea6efe8fbf13de446bdd409ab207d8c959397027b8f0",
+          "expected_sha256": "8485a4d1afa39264b09dea6efe8fbf13de446bdd409ab207d8c959397027b8f0",
+          "match": true
+        },
+        {
+          "group": "network-source",
+          "path": "work/native-linux-nce/android/network-source/bpf/headers/include/bpf_map_def.h",
+          "sha256": "c333b89f6fa6d640cc3fc4397b2f8a6db0339e6abc22aaae04d4d6addf71668a",
+          "expected_sha256": "c333b89f6fa6d640cc3fc4397b2f8a6db0339e6abc22aaae04d4d6addf71668a",
+          "match": true
+        },
+        {
+          "group": "network-source",
+          "path": "work/native-linux-nce/android/network-source/bpf/loader/NetBpfLoad.cpp",
+          "sha256": "03d6adf9bf499cc23ef170dafa23a86c8a5ecb1e2c182dea940c0cdfba650254",
+          "expected_sha256": "03d6adf9bf499cc23ef170dafa23a86c8a5ecb1e2c182dea940c0cdfba650254",
+          "match": true
+        },
+        {
+          "group": "network-source",
+          "path": "work/native-linux-nce/android/network-source/bpf/syscall_wrappers/include/BpfSyscallWrappers.h",
+          "sha256": "7b5917f302fd30011541d5c51c31cc87b668cdb93a5db76bec64b7b353a3e8ce",
+          "expected_sha256": "7b5917f302fd30011541d5c51c31cc87b668cdb93a5db76bec64b7b353a3e8ce",
+          "match": true
+        },
+        {
+          "group": "network-source",
+          "path": "work/native-linux-nce/android/network-source/libbpf/bpf/bpf.h",
+          "sha256": "0535f5f4d6ba6464040a66f835b57d54caa361646351c94730f8630cc78ece03",
+          "expected_sha256": "0535f5f4d6ba6464040a66f835b57d54caa361646351c94730f8630cc78ece03",
+          "match": true
+        },
+        {
+          "group": "network-source",
+          "path": "work/native-linux-nce/android/network-source/libbpf/bpf/btf.h",
+          "sha256": "e28e5bca81a5d782e27088da750712c747acb9ab1764bd944bf3e7fc15d4b503",
+          "expected_sha256": "e28e5bca81a5d782e27088da750712c747acb9ab1764bd944bf3e7fc15d4b503",
+          "match": true
+        },
+        {
+          "group": "network-source",
+          "path": "work/native-linux-nce/android/network-source/libbpf/bpf/libbpf.h",
+          "sha256": "3f9b47dfe559a32372f720230bdf72bd5b736189ac9022660d0a41aca2c4c687",
+          "expected_sha256": "3f9b47dfe559a32372f720230bdf72bd5b736189ac9022660d0a41aca2c4c687",
+          "match": true
+        },
+        {
+          "group": "network-source",
+          "path": "work/native-linux-nce/android/network-source/libbpf/bpf/libbpf_common.h",
+          "sha256": "d58d7044c3e30f322614da76e3832c5b31e61469d31c29c53ee8abf736664414",
+          "expected_sha256": "d58d7044c3e30f322614da76e3832c5b31e61469d31c29c53ee8abf736664414",
+          "match": true
+        },
+        {
+          "group": "network-source",
+          "path": "work/native-linux-nce/android/network-source/libbpf/bpf/libbpf_legacy.h",
+          "sha256": "4b09b8535b0eb9da94e8eafba8edcb2abc742bb07dd870bd216c3eea955a18d8",
+          "expected_sha256": "4b09b8535b0eb9da94e8eafba8edcb2abc742bb07dd870bd216c3eea955a18d8",
+          "match": true
+        },
+        {
+          "group": "network-source",
+          "path": "work/native-linux-nce/android/network-source/libbpf/bpf/libbpf_version.h",
+          "sha256": "5bddef31f66a9be5643442b9bfd3838199b654d0a8700b9c546449c11f38e702",
+          "expected_sha256": "5bddef31f66a9be5643442b9bfd3838199b654d0a8700b9c546449c11f38e702",
+          "match": true
+        },
+        {
+          "group": "gralloc-archive",
+          "name": "common-interfaces",
+          "revision": "5688f7eb1e117ed26e642a695de300b7683acb87",
+          "subtree": "common",
+          "path": "work/native-linux-nce/graphics-source/common-interfaces.tar.gz",
+          "sha256": "c61d381bac6caf62f79da2be2e807484fa1a8a63548b7ebeae6018f1eb701a6c",
+          "tree_sha256": "482f44548cb9fcc68433a1524021f48260cc2c9aca14aacc5c4515e6e42ca9c7",
+          "match": true,
+          "comparison": "existing build_android_gralloc.prepare_sources content tree checksum"
+        },
+        {
+          "group": "gralloc-archive",
+          "name": "gfxstream-guest",
+          "revision": "fc0dca02291e1d5ba1d2dad1d0b58b4f2ef255d0",
+          "subtree": "guest",
+          "path": "work/native-linux-nce/graphics-source/gfxstream-guest.tar.gz",
+          "sha256": "22819f5b6510b8bafd050f60d1518ff9abc6d039fbe73f50cfd6c70b092b7e49",
+          "tree_sha256": "15d7886bf67819a40a0c25740ba23b0abaf50e4dda8fb25e822b273eb93e44e7",
+          "match": true,
+          "comparison": "existing build_android_gralloc.prepare_sources content tree checksum"
+        },
+        {
+          "group": "gralloc-archive",
+          "name": "goldfish-debug",
+          "revision": "40f1fffd800a519f942320f2c265bb7abfa5681f",
+          "subtree": "libdebug",
+          "path": "work/native-linux-nce/graphics-source/goldfish-debug.tar.gz",
+          "sha256": "934e50d8bed499565ab37ac50d00a684e84ec7b80e726e326d396667fece050e",
+          "tree_sha256": "8f516cc252a584abe810422f81524c19a1a52e6341e841c7fd9cacf6fcd2da5d",
+          "match": true,
+          "comparison": "existing build_android_gralloc.prepare_sources content tree checksum"
+        },
+        {
+          "group": "gralloc-archive",
+          "name": "goldfish-hals",
+          "revision": "40f1fffd800a519f942320f2c265bb7abfa5681f",
+          "subtree": "hals",
+          "path": "work/native-linux-nce/graphics-source/goldfish-hals.tar.gz",
+          "sha256": "f8dd1f42e4f674ba314981cc97490df771db42a501bd95809c6429ffae915bc8",
+          "tree_sha256": "45dc1ebd89c4669234cee24bf544e9725df35071915170b36316eae1bce86f38",
+          "match": true,
+          "comparison": "existing build_android_gralloc.prepare_sources content tree checksum"
+        },
+        {
+          "group": "gralloc-archive",
+          "name": "graphics-interfaces",
+          "revision": "5688f7eb1e117ed26e642a695de300b7683acb87",
+          "subtree": "graphics",
+          "path": "work/native-linux-nce/graphics-source/graphics-interfaces.tar.gz",
+          "sha256": "42621779b5a5ceff19d554a1d4bfa04e897289ca06e57ff4b9bf80373191c8a0",
+          "tree_sha256": "2cfe80de4e9ed3db5d1f4f22e91182189699f1be401bf0df68195f33c32c3920",
+          "match": true,
+          "comparison": "existing build_android_gralloc.prepare_sources content tree checksum"
+        },
+        {
+          "group": "gralloc-archive",
+          "name": "mesa-android",
+          "revision": "1ab807486dbc8cd2a1bb6c10d2ebebc5e545faca",
+          "subtree": "src/gfxstream/guest/android",
+          "path": "work/native-linux-nce/graphics-source/mesa-android.tar.gz",
+          "sha256": "d7ecc83d614ba382a535c9732b6894ec6d4d1f9c29e50b5c3d8782b43465574f",
+          "tree_sha256": "b4d7922084479dee67e9b05329fd6173beecaca18da27a7fd6eabca89fee919a",
+          "match": true,
+          "comparison": "existing build_android_gralloc.prepare_sources content tree checksum"
+        },
+        {
+          "group": "gralloc-archive",
+          "name": "mesa-iostream",
+          "revision": "1ab807486dbc8cd2a1bb6c10d2ebebc5e545faca",
+          "subtree": "src/gfxstream/guest/iostream",
+          "path": "work/native-linux-nce/graphics-source/mesa-iostream.tar.gz",
+          "sha256": "ec0c515107c5070721823d905aee6b1f4aeb050ec32058e86b27806cefe5be45",
+          "tree_sha256": "6288f3e9cddfd79b7c8b2bcfbca0e906291f5bd25d9b7be45a151804fb53b4b3",
+          "match": true,
+          "comparison": "existing build_android_gralloc.prepare_sources content tree checksum"
+        },
+        {
+          "group": "gralloc-archive",
+          "name": "mesa-platform",
+          "revision": "1ab807486dbc8cd2a1bb6c10d2ebebc5e545faca",
+          "subtree": "src/gfxstream/guest/platform",
+          "path": "work/native-linux-nce/graphics-source/mesa-platform.tar.gz",
+          "sha256": "4a2fd459eaff04083253082165df24f1b51c25c66b131674f84bf86cdb6a3834",
+          "tree_sha256": "e69273fc92b2377fe42bed0e805c13aaf575755e698e8dd69432d35aaf44ed46",
+          "match": true,
+          "comparison": "existing build_android_gralloc.prepare_sources content tree checksum"
+        },
+        {
+          "group": "gralloc-archive",
+          "name": "cutils-include",
+          "revision": "68be0c2c0006a0740d0b1809abe4717308f90d15",
+          "subtree": "libcutils/include",
+          "path": "work/native-linux-nce/graphics-source/cutils-include.tar.gz",
+          "sha256": "db2f6da8d1c5bb9e01dc382139263dfda4fac7fbb3d5ed93d6ecb1de8c30d898",
+          "tree_sha256": "7938aa22890b2ce17ca3d4b8229f64018e5ecb783db621719469ac042694b620",
+          "match": true,
+          "comparison": "existing build_android_gralloc.prepare_sources content tree checksum"
+        },
+        {
+          "group": "gralloc-archive",
+          "name": "sync-include",
+          "revision": "68be0c2c0006a0740d0b1809abe4717308f90d15",
+          "subtree": "libsync/include",
+          "path": "work/native-linux-nce/graphics-source/sync-include.tar.gz",
+          "sha256": "c68e501f2640199c25d93ddb333430e4e7b61846c5d7f972d017eeeceffe4856",
+          "tree_sha256": "a3e7e9e233474eb42c520cb55ca33a0c84e4cc3991382066ce3d17e6bbb38334",
+          "match": true,
+          "comparison": "existing build_android_gralloc.prepare_sources content tree checksum"
+        }
+      ],
+      "scope": "Existing checksum contracts; excludes Android SDK/APEX downloads already validated or left to full build",
+      "result_path": "work/project-audit-2026-11-12/userspace-source-preflight.json",
+      "result_sha256": "7e1f2a546a13bb24a7151831bf1e6ac322f268340c09d5fe002681fb10d00a07"
+    },
+    "build": {
+      "status": "passed",
+      "command": [
+        "python3",
+        "-B",
+        "-c",
+        "import sys; from pathlib import Path; sys.path.insert(0, 'scripts'); import build_nce_userspace; output = Path('work/project-audit-2026-11-12/property-info-build').resolve(); output.mkdir(exist_ok=True); build_nce_userspace.android_property_info(output)"
+      ],
+      "returncode": 0,
+      "script_sha256": "b0df7e6763b015ca4e3dadf127cef121d9b8f94470a1f24b6dfd6a62075df6b7",
+      "outputs": [
+        {
+          "path": "work/project-audit-2026-11-12/property-info-build/property-info-builder",
+          "sha256": "5090c305a65e4bda704ac0d3266707cebd6e7644c2268200756d51c99915b36b",
+          "bytes": 105320
+        },
+        {
+          "path": "work/project-audit-2026-11-12/property-info-build/property_info",
+          "sha256": "0e69219aa8f9b509bea139a2ec04319618454e462021237e48bae46147c0cbdd",
+          "bytes": 128
+        }
+      ],
+      "scope": "Host property serializer compilation and generation; excludes full Android userspace build and runtime"
+    }
+  }
+}

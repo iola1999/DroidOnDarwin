@@ -8,7 +8,7 @@
 
 ## 构建
 
-使用 Apple Silicon Mac、Xcode 命令行工具，以及 Python 3、Node.js、CMake、Ninja、XcodeGen、LLVM/LLD、GNU Make、GNU sed、e2fsprogs、Java 17 和 Android SDK 36。各构建脚本固定上游版本，下载与生成物位于 `work/`、`build/` 和被忽略的 `third_party/gpu/`。首次构建会下载源码与系统组件。
+使用 Apple Silicon Mac、Xcode 命令行工具，以及 Python 3、Node.js、CMake、Ninja、XcodeGen、LLVM/LLD、GNU Make、GNU sed、e2fsprogs、Java 17 和 Android SDK 36。各构建脚本固定上游版本，下载、缓存和原始日志位于 `work/`，iOS 打包依赖还会生成到 `build/ios-arm64/sysroot/`。首次构建会下载源码与系统组件。
 
 ```sh
 bash scripts/build_angle_ios.sh iphoneos

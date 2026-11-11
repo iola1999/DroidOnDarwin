@@ -3,7 +3,7 @@
 set -euo pipefail
 
 DOD_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-GPU="$DOD_ROOT/third_party/gpu"
+GPU="$DOD_ROOT/work/gpu"
 WK="$GPU/webkit"
 REVISION=2edaa071178a43a44dfaa4c37716247c43642c66
 SDK="${1:-iphoneos}"
@@ -12,7 +12,7 @@ case "$SDK" in
     macosx) PREFIX="$DOD_ROOT/work/angle-macos/prefix" ;;
     *) echo "Usage: $0 [iphoneos|macosx]" >&2; exit 2 ;;
 esac
-LOG="$DOD_ROOT/build/logs/angle-build-$SDK.log"
+LOG="$DOD_ROOT/work/angle-logs/angle-build-$SDK.log"
 mkdir -p "$GPU" "$(dirname "$LOG")"
 if [ ! -d "$WK" ]; then
     git init "$WK"
@@ -33,6 +33,7 @@ angle_build () {
     fi
     # This sparse source tree does not generate WebKit's availability overlay.
     env -i PATH="$PATH" HOME="$HOME" xcodebuild archive \
+        -derivedDataPath "$GPU/angle-derived-$SDK" \
         -archivePath "ANGLE-$SDK" -scheme ANGLE -sdk "$SDK" -arch arm64 -configuration Release \
         WEBCORE_LIBRARY_DIR=/usr/local/lib NORMAL_UMBRELLA_FRAMEWORKS_DIR="" \
         CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO ANGLE_ALLOWABLE_CLIENTS="" \

@@ -60,6 +60,6 @@
   "property_service": {
     "url": "https://android.googlesource.com/platform/system/core/+archive/68be0c2c0006a0740d0b1809abe4717308f90d15/property_service.tar.gz",
     "revision": "68be0c2c0006a0740d0b1809abe4717308f90d15",
-    "sha256": "3aa340c056435d9302ae2deaacc82b445b4cbc94770eadb4039aa307f4e5e8e0"
+    "sha256": "18fad3482f7a05eff797f283beb9714e10fb85e53ece9de2a38026cf31d4875a"
   }
 }

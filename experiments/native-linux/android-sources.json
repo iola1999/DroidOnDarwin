@@ -4,32 +4,32 @@
       "name": "scudo",
       "repo": "platform/external/scudo",
       "revision": "e3a9ec51431e8a7afdba4004c3e4fde3d0ca8544",
-      "sha256": "93dace5f3fbdac5c70c81ac34990772d8d37a37666ca4e841979c7b82992eb9c"
+      "sha256": "7fdde5ce14bafb569aafe128532a8215e9e1eefa198752bcdba22814ba60316a"
     },
     {
       "name": "bionic-source",
       "repo": "platform/bionic",
       "revision": "09a271af557444c9a6b3f3146d6d474156fd6cdb",
-      "sha256": "c6b44c308dc593edd98da7b3b6e65ad6226a47516287cfab1821defaf1c385a0",
+      "sha256": "e383d0d96aa096d257f37771eab23574e778a34656c7fe5663b5d602b43e1517",
       "archive": "bionic-android16.tar.gz"
     },
     {
       "name": "libbase",
       "repo": "platform/system/libbase",
       "revision": "0ac7ea4a65d981166d6e5617e1e4ef0572f774e5",
-      "sha256": "b743cdcc57981480d45d70ee6dcb3897d10427a262b34f716b1a0a12aa9a8412"
+      "sha256": "badb6f4ac36a8622873cb5d25c6a7d6f2c5c3ce36f9d21ad26502836e0103413"
     },
     {
       "name": "libziparchive",
       "repo": "platform/system/libziparchive",
       "revision": "8c51527debf9394dfa515f7e6c7941d2720c6d01",
-      "sha256": "36b31c106bafa305dec6d41f5fa78c63446b75ead312620adf6b78099186f9ab"
+      "sha256": "0e5545659a06d267d20b01c54d86cabdf679130edbaf5d68d87ad3d94cae79c6"
     },
     {
       "name": "liblog",
       "repo": "platform/system/logging",
       "revision": "d78b713380007d3c0dde14712cbcbec27f491ad9",
-      "sha256": "b116dff4b55258118142cb6a4d5ae175f342c32aab825b3453c61d982018a40c"
+      "sha256": "0119a5574e4233a9c43aee463cfed0fe52b7efbf7f3fedb4519d641377a51f2e"
     }
   ],
   "core_header": {
