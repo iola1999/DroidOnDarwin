@@ -1,0 +1,4128 @@
+{
+  "scope": "Mac core functional validation of standard Linux ARM64 executable mappings. Concurrent task activity allowed. No performance comparison, Android application validation or iOS runtime claim.",
+  "base_commit": "c0406bafb650f84b65cb4af0046781398534db2c",
+  "worktree": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-standard-jit",
+  "environment": {
+    "platform": "macOS-27.0-arm64-arm-64bit-Mach-O",
+    "cpu": "Apple M5 Ultra",
+    "system_build": "26A428"
+  },
+  "source_sha256": {
+    "experiments/native-linux/translation/linux-execution.c": "7a092631efa01e31d09eb4fbf4f76daef0baa964af19205acc45c9ba702bfabb",
+    "experiments/native-linux/translation/linux-guest.c": "2d0d6050679977a7c08005e07a1ac16f98cf63d1c4a7f1d0445c16dac195d201",
+    "experiments/native-linux/translation/jit-guest.c": "85ec5039a9d03ec1440b33f63d7d4ae9ac6d974252348b17929a2c6e8b442e1e",
+    "experiments/native-linux/userspace/code-tests.c": "5fc06f7a1ca7a4b3e9789fafc06303fc8524a21a8430e15a678b3e2941266e5c",
+    "scripts/lkl_translation_patch.py": "80c21592424cbb10b489d3107ac6c0c50601445166bdaaebfd2dbe973ce2cecb",
+    "scripts/probe_lkl_translation.py": "43bb73536ea54385b938005a1b73ec3111433ba4ee69765556e44b2910c8a091",
+    "scripts/test_standard_jit_report.py": "3353a79a70ddc966403037368785382eccd22a4abc84bf106fde57413d18dad1"
+  },
+  "failures_before_fix": [
+    {
+      "summary": "work/native-linux-nce/jit-permission-before-v2/summary.json",
+      "summary_sha256": "986d338a30caf8ac40eb5dcfa565b22e57d6d502a6ce9f56b2c38136af11a035",
+      "input_sha256": {
+        "experiments/native-linux/translation/linux-execution.c": "71ce4252c888dc981c105a6c2dca0518320a1854ee92c490ccababff9f8eb3af",
+        "experiments/native-linux/translation/linux-guest.c": "2d0d6050679977a7c08005e07a1ac16f98cf63d1c4a7f1d0445c16dac195d201",
+        "scripts/probe_lkl_translation.py": "4f381e51fc6a3f277d560a7622a9910743f4a27a9a29ca31e279d46fbb6c2892",
+        "experiments/native-linux/userspace/code-tests.c": "5fc06f7a1ca7a4b3e9789fafc06303fc8524a21a8430e15a678b3e2941266e5c",
+        "experiments/native-linux/translation/jit-guest.c": "5eab11e76c08f8ffc7779d96b5ab842f499417f6a163c592af4c1414527c02ba",
+        "work/native-linux-nce/lkl-translation-kernel/lkl-image.bin": "2e7be6160538430541a8434b89956bfbe6e84db562056953c47cb28b290475e7",
+        "work/native-linux-nce/jit-permission-before-v2/guest.elf": "3e3b5e93909f54197ac1bf4fcba9c3dff367aee1537bc1a7419e6eb6c9d8e616",
+        "scripts/lkl_translation_patch.py": "a1cfb5092ee71a1b9709943f3d7e973c6e3281fb11001c653be06ef037c6d583"
+      },
+      "runs": [
+        {
+          "entry": "cli",
+          "returncode": 1,
+          "validated": false,
+          "stdout_sha256": "458085195665a3b87fd2039121ce7767e2fc9c98d9c89d5633876cf1a3723b71",
+          "stderr_sha256": "dfc7616e941ad94e2266311c5265c822e5005744f60ab5454db97dcda52cc852",
+          "failure": [
+            {
+              "test": "linux_standard_jit",
+              "case": "anon_rw_rx",
+              "passed": false,
+              "line": 62,
+              "errno": 13
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "summary": "work/native-linux-nce/jit-stale-before/summary.json",
+      "summary_sha256": "c7c5541f15c72a60f9d6faa0e3d7d6db7c53b7d8a63788072b7b14546891a215",
+      "input_sha256": {
+        "experiments/native-linux/translation/linux-execution.c": "71ce4252c888dc981c105a6c2dca0518320a1854ee92c490ccababff9f8eb3af",
+        "experiments/native-linux/translation/linux-guest.c": "2d0d6050679977a7c08005e07a1ac16f98cf63d1c4a7f1d0445c16dac195d201",
+        "scripts/probe_lkl_translation.py": "8236f7db2b89c3b689640998c1c69f6d64d93c4958af41cf27e2421590afab38",
+        "experiments/native-linux/userspace/code-tests.c": "5fc06f7a1ca7a4b3e9789fafc06303fc8524a21a8430e15a678b3e2941266e5c",
+        "experiments/native-linux/translation/jit-guest.c": "f342229d07eb8af0efbb9ed0a6216323dbe8c1434219518a3493a55a4447b74a",
+        "work/native-linux-nce/lkl-translation-kernel/lkl-image.bin": "8453aa1ac7b9feece610828186b4c6ab653c86cf071aee8c67753103e1356a55",
+        "work/native-linux-nce/jit-stale-before/guest.elf": "8b6e8660b5ad67abdecc4b1123fa1c3297b6afac2ad6b3613b8b0820cf959800",
+        "scripts/lkl_translation_patch.py": "80c21592424cbb10b489d3107ac6c0c50601445166bdaaebfd2dbe973ce2cecb"
+      },
+      "runs": [
+        {
+          "entry": "cli",
+          "returncode": 1,
+          "validated": false,
+          "stdout_sha256": "b58c5523e9746963746d7b45dfe06b7bc46adf3a00686017490cec6ebc4f2dad",
+          "stderr_sha256": "1f0d3ffb452efa0a7e0d4bdfcd34485c3fe239acd0a5bcf75a526629f0c7a84e",
+          "failure": [
+            {
+              "test": "linux_standard_jit",
+              "case": "unicorn_pwrite_update",
+              "passed": false,
+              "observed": 201,
+              "expected": 202
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "matrix": [
+    {
+      "name": "low-complete",
+      "command": [
+        "python3",
+        "scripts/probe_lkl_translation.py",
+        "--mapping",
+        "pte",
+        "--cpus",
+        "1",
+        "--code-memory",
+        "dual",
+        "--reuse-engine-build",
+        "--workload",
+        "core",
+        "--entry",
+        "both",
+        "--execution",
+        "direct",
+        "--direct-memory",
+        "flat",
+        "--guest-layout",
+        "low",
+        "--direct-code-watch",
+        "1",
+        "--direct-retain-routes",
+        "1",
+        "--direct-route-epochs",
+        "1",
+        "--output",
+        "work/native-linux-nce/jit-low-complete"
+      ],
+      "summary": "work/native-linux-nce/jit-low-complete/summary.json",
+      "summary_sha256": "13f5f25350635cf0c2c13476dd7c67281125bc8dda54f5005d645fbbf03485c6",
+      "configuration": {
+        "guest_layout": "low",
+        "code_memory": "dual",
+        "execution": "direct",
+        "direct": {
+          "mapping_entries": 256,
+          "route_entries": 256,
+          "selective_writes": false,
+          "reuse_code_checks": false,
+          "memory": "flat",
+          "code_watch": true,
+          "cross_page": false,
+          "route_epochs": true,
+          "retain_routes": true,
+          "memory_groups": false,
+          "native_exclusive": false,
+          "vector_table": false,
+          "simd_math": false
+        },
+        "mapping": "pte",
+        "sparse_scan": true,
+        "fault_prefetch": false,
+        "guest_page_bytes": 16384,
+        "workload": "core",
+        "entries": [
+          "cli",
+          "gcd"
+        ],
+        "art_nterp": 1,
+        "cpus": 1,
+        "high_res_timers": false,
+        "online_cpus": 1,
+        "uaccess_stop": "all",
+        "parallel_profile": false,
+        "art_expanded_jit": 0,
+        "art_fast_baseline": 0,
+        "cache_invalidation": "pages",
+        "exec_cache": "full",
+        "tlb_invalidation": "full",
+        "linux_fastpath": 0,
+        "guest_ram_bytes": 1073741824,
+        "translation_cache_bytes": 16777216,
+        "instruction_batch": 50000,
+        "memory_interval_ms": 100,
+        "preemption": "instructions",
+        "timer_interval_ns": 2000000
+      },
+      "artifact_sha256": {
+        "work/native-linux-nce/lkl-translation-kernel/lkl-image.bin": "8453aa1ac7b9feece610828186b4c6ab653c86cf071aee8c67753103e1356a55",
+        "work/native-linux-nce/unicorn-tb-stop-dual/build.json": "10571dc03484262efd6497c15490d98d03f6a34b3fb067ac6ea837f132fd5816",
+        "work/native-linux-nce/jit-low-complete/cli": "ceb6de99e64f044aa68d6e8cf757ce265411e0f2ce1bd597a904d16fe752323b",
+        "work/native-linux-nce/jit-low-complete/gcd": "09f4b03953a0f1b6b53827a79d491a8ce594f1d82b231e4adbdeaeb64e7959e9",
+        "work/native-linux-nce/jit-low-complete/guest.elf": "8c0c3c86eb80b9adf66d12bd6b6b0c902596f4d32ce964f1b822ed01eddee674",
+        "work/native-linux-nce/lkl-translation-kernel/build.json": "d39d0d6613b6361668256e2094b78c520a52b876fa7f52a4e8b654be2a72fc3a"
+      },
+      "runs": [
+        {
+          "entry": "cli",
+          "returncode": 0,
+          "validated": true,
+          "stdout_sha256": "d22c548e996d8a80b594f23f5fb9651bde13933528e158523372a2e53a663059",
+          "stderr_sha256": "979ff5eb356d886b6b4b1f70213be4aae67da85221f8210806b9f72cb488108b",
+          "rejected_parser_variants": 341,
+          "results": [
+            {
+              "cpu": 0,
+              "config": "translation_execution",
+              "engine": "direct",
+              "direct_cache_bytes": 16777216,
+              "data_page_bytes": 16384,
+              "mapping_entries": 256,
+              "route_entries": 256,
+              "selective_writes": false,
+              "reuse_code_checks": false,
+              "memory": "flat",
+              "code_watch": true,
+              "cross_page": false,
+              "route_epochs": true,
+              "retain_routes": true,
+              "memory_groups": false,
+              "native_exclusive": false,
+              "vector_table": false,
+              "simd_math": false
+            },
+            {
+              "config": "linux_standard_jit",
+              "page_bytes": 16384
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "anon_rw_rx",
+              "passed": true,
+              "observed": 42
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "anon_rewrite",
+              "passed": true,
+              "observed": 91
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "rx_write",
+              "passed": true,
+              "signal": 11,
+              "si_code": 2,
+              "address": 738263040,
+              "expected_address": 738263040
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "remove_execute",
+              "passed": true,
+              "signal": 11,
+              "si_code": 2,
+              "address": 738263040,
+              "expected_address": 738263040
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "mremap_move",
+              "passed": true,
+              "observed": 91
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "mremap_old_unmapped",
+              "passed": true,
+              "signal": 11,
+              "si_code": 1,
+              "address": 738263040,
+              "expected_address": 738263040
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unmapped_execute",
+              "passed": true,
+              "signal": 11,
+              "si_code": 1,
+              "address": 738279424,
+              "expected_address": 738279424
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "anon_rx_map",
+              "passed": true,
+              "observed": 1
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "anon_rwx",
+              "passed": true,
+              "observed": 74
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "exec_only_vma",
+              "passed": true,
+              "observed": 58
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "ordinary_file_rx",
+              "passed": true,
+              "observed": 57
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "readonly_shared_write",
+              "passed": true,
+              "observed": 13
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "noexec_mmap",
+              "passed": true,
+              "observed": 1
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "noexec_mprotect",
+              "passed": true,
+              "observed": 13
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unpopulated_exec_alias",
+              "passed": true,
+              "observed": 59
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "private_cow_parent",
+              "passed": true,
+              "observed": 41
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "private_file_cow",
+              "passed": true,
+              "observed": 41
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "memfd_alias_updates",
+              "passed": true,
+              "observed": 16
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "memfd_pwrite",
+              "passed": true,
+              "observed": 97
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "memfd_shared_fork",
+              "passed": true,
+              "observed": 111
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "memfd_mremap_clone",
+              "passed": true,
+              "observed": 111
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unicorn_alias_update",
+              "passed": true,
+              "observed": 201
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unicorn_pwrite_update",
+              "passed": true,
+              "observed": 202
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unicorn_unseen_pwrite",
+              "passed": true,
+              "observed": 203
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "same_va_new_backing",
+              "passed": true,
+              "observed": 87
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "sealed_write",
+              "passed": true,
+              "observed": 1
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unicorn_self_page_flush",
+              "passed": true,
+              "observed": 67
+            },
+            {
+              "cpu": 0,
+              "translation_icache": true,
+              "operations": 34,
+              "invalidations": 31
+            },
+            {
+              "cpu": 0,
+              "direct_execution": true,
+              "calls": 170050,
+              "fallbacks": 121,
+              "compiles": 707,
+              "code_changes": 31
+            }
+          ]
+        },
+        {
+          "entry": "gcd",
+          "returncode": 0,
+          "validated": true,
+          "stdout_sha256": "d75937629e368a705c3b0215addc249d27fec46f503a85a83b3b02b3ce044afc",
+          "stderr_sha256": "9602b7120dd15755598ffd649afb5a10c3fb568495341dcd5feb973bd85a47dd",
+          "rejected_parser_variants": 341,
+          "results": [
+            {
+              "cpu": 0,
+              "config": "translation_execution",
+              "engine": "direct",
+              "direct_cache_bytes": 16777216,
+              "data_page_bytes": 16384,
+              "mapping_entries": 256,
+              "route_entries": 256,
+              "selective_writes": false,
+              "reuse_code_checks": false,
+              "memory": "flat",
+              "code_watch": true,
+              "cross_page": false,
+              "route_epochs": true,
+              "retain_routes": true,
+              "memory_groups": false,
+              "native_exclusive": false,
+              "vector_table": false,
+              "simd_math": false
+            },
+            {
+              "config": "linux_standard_jit",
+              "page_bytes": 16384
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "anon_rw_rx",
+              "passed": true,
+              "observed": 42
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "anon_rewrite",
+              "passed": true,
+              "observed": 91
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "rx_write",
+              "passed": true,
+              "signal": 11,
+              "si_code": 2,
+              "address": 738263040,
+              "expected_address": 738263040
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "remove_execute",
+              "passed": true,
+              "signal": 11,
+              "si_code": 2,
+              "address": 738263040,
+              "expected_address": 738263040
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "mremap_move",
+              "passed": true,
+              "observed": 91
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "mremap_old_unmapped",
+              "passed": true,
+              "signal": 11,
+              "si_code": 1,
+              "address": 738263040,
+              "expected_address": 738263040
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unmapped_execute",
+              "passed": true,
+              "signal": 11,
+              "si_code": 1,
+              "address": 738279424,
+              "expected_address": 738279424
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "anon_rx_map",
+              "passed": true,
+              "observed": 1
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "anon_rwx",
+              "passed": true,
+              "observed": 74
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "exec_only_vma",
+              "passed": true,
+              "observed": 58
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "ordinary_file_rx",
+              "passed": true,
+              "observed": 57
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "readonly_shared_write",
+              "passed": true,
+              "observed": 13
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "noexec_mmap",
+              "passed": true,
+              "observed": 1
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "noexec_mprotect",
+              "passed": true,
+              "observed": 13
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unpopulated_exec_alias",
+              "passed": true,
+              "observed": 59
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "private_cow_parent",
+              "passed": true,
+              "observed": 41
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "private_file_cow",
+              "passed": true,
+              "observed": 41
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "memfd_alias_updates",
+              "passed": true,
+              "observed": 16
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "memfd_pwrite",
+              "passed": true,
+              "observed": 97
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "memfd_shared_fork",
+              "passed": true,
+              "observed": 111
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "memfd_mremap_clone",
+              "passed": true,
+              "observed": 111
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unicorn_alias_update",
+              "passed": true,
+              "observed": 201
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unicorn_pwrite_update",
+              "passed": true,
+              "observed": 202
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unicorn_unseen_pwrite",
+              "passed": true,
+              "observed": 203
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "same_va_new_backing",
+              "passed": true,
+              "observed": 87
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "sealed_write",
+              "passed": true,
+              "observed": 1
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unicorn_self_page_flush",
+              "passed": true,
+              "observed": 67
+            },
+            {
+              "cpu": 0,
+              "translation_icache": true,
+              "operations": 34,
+              "invalidations": 31
+            },
+            {
+              "cpu": 0,
+              "direct_execution": true,
+              "calls": 169747,
+              "fallbacks": 121,
+              "compiles": 707,
+              "code_changes": 31
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "host-complete",
+      "command": [
+        "python3",
+        "scripts/probe_lkl_translation.py",
+        "--mapping",
+        "pte",
+        "--cpus",
+        "1",
+        "--code-memory",
+        "dual",
+        "--reuse-engine-build",
+        "--workload",
+        "core",
+        "--entry",
+        "both",
+        "--execution",
+        "direct",
+        "--direct-memory",
+        "flat",
+        "--guest-layout",
+        "host",
+        "--direct-code-watch",
+        "1",
+        "--direct-retain-routes",
+        "1",
+        "--direct-route-epochs",
+        "1",
+        "--output",
+        "work/native-linux-nce/jit-host-complete"
+      ],
+      "summary": "work/native-linux-nce/jit-host-complete/summary.json",
+      "summary_sha256": "b384861a8f42be8718e8d3cc7f6f7f13347cbdfcc2566948c9ef34e841019cf8",
+      "configuration": {
+        "guest_layout": "host",
+        "code_memory": "dual",
+        "execution": "direct",
+        "direct": {
+          "mapping_entries": 256,
+          "route_entries": 256,
+          "selective_writes": false,
+          "reuse_code_checks": false,
+          "memory": "flat",
+          "code_watch": true,
+          "cross_page": false,
+          "route_epochs": true,
+          "retain_routes": true,
+          "memory_groups": false,
+          "native_exclusive": false,
+          "vector_table": false,
+          "simd_math": false
+        },
+        "mapping": "pte",
+        "sparse_scan": true,
+        "fault_prefetch": false,
+        "guest_page_bytes": 16384,
+        "workload": "core",
+        "entries": [
+          "cli",
+          "gcd"
+        ],
+        "art_nterp": 1,
+        "cpus": 1,
+        "high_res_timers": false,
+        "online_cpus": 1,
+        "uaccess_stop": "all",
+        "parallel_profile": false,
+        "art_expanded_jit": 0,
+        "art_fast_baseline": 0,
+        "cache_invalidation": "pages",
+        "exec_cache": "full",
+        "tlb_invalidation": "full",
+        "linux_fastpath": 0,
+        "guest_ram_bytes": 1073741824,
+        "translation_cache_bytes": 16777216,
+        "instruction_batch": 50000,
+        "memory_interval_ms": 100,
+        "preemption": "instructions",
+        "timer_interval_ns": 2000000
+      },
+      "artifact_sha256": {
+        "work/native-linux-nce/lkl-translation-kernel/lkl-image.bin": "8453aa1ac7b9feece610828186b4c6ab653c86cf071aee8c67753103e1356a55",
+        "work/native-linux-nce/unicorn-tb-stop-dual/build.json": "10571dc03484262efd6497c15490d98d03f6a34b3fb067ac6ea837f132fd5816",
+        "work/native-linux-nce/jit-host-complete/cli": "9f69f71bcc17a839e503069e3c35e4bcdf23b6db66cbd9034f0d80dfd82ed7a9",
+        "work/native-linux-nce/jit-host-complete/gcd": "ee44d4475ee1e4b8574f6150caf971edf255fddd7868d391164204619f4f5a35",
+        "work/native-linux-nce/jit-host-complete/guest.elf": "8c0c3c86eb80b9adf66d12bd6b6b0c902596f4d32ce964f1b822ed01eddee674",
+        "work/native-linux-nce/lkl-translation-kernel/build.json": "d39d0d6613b6361668256e2094b78c520a52b876fa7f52a4e8b654be2a72fc3a"
+      },
+      "runs": [
+        {
+          "entry": "cli",
+          "returncode": 0,
+          "validated": true,
+          "stdout_sha256": "ac057da351de195eb112fa5c415a6c5184e4c03165901de1f24ddc6c2fc3b1a4",
+          "stderr_sha256": "79a5e0f0fd81eae9adc8a26c621ac138add7e40a725386e4b9d1bc90f3893f50",
+          "rejected_parser_variants": 341,
+          "results": [
+            {
+              "cpu": 0,
+              "config": "translation_execution",
+              "engine": "direct",
+              "direct_cache_bytes": 16777216,
+              "data_page_bytes": 16384,
+              "mapping_entries": 256,
+              "route_entries": 256,
+              "selective_writes": false,
+              "reuse_code_checks": false,
+              "memory": "flat",
+              "code_watch": true,
+              "cross_page": false,
+              "route_epochs": true,
+              "retain_routes": true,
+              "memory_groups": false,
+              "native_exclusive": false,
+              "vector_table": false,
+              "simd_math": false
+            },
+            {
+              "config": "linux_standard_jit",
+              "page_bytes": 16384
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "anon_rw_rx",
+              "passed": true,
+              "observed": 42
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "anon_rewrite",
+              "passed": true,
+              "observed": 91
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "rx_write",
+              "passed": true,
+              "signal": 11,
+              "si_code": 2,
+              "address": 481774534656,
+              "expected_address": 481774534656
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "remove_execute",
+              "passed": true,
+              "signal": 11,
+              "si_code": 2,
+              "address": 481774534656,
+              "expected_address": 481774534656
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "mremap_move",
+              "passed": true,
+              "observed": 91
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "mremap_old_unmapped",
+              "passed": true,
+              "signal": 11,
+              "si_code": 1,
+              "address": 481774534656,
+              "expected_address": 481774534656
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unmapped_execute",
+              "passed": true,
+              "signal": 11,
+              "si_code": 1,
+              "address": 481774551040,
+              "expected_address": 481774551040
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "anon_rx_map",
+              "passed": true,
+              "observed": 1
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "anon_rwx",
+              "passed": true,
+              "observed": 74
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "exec_only_vma",
+              "passed": true,
+              "observed": 58
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "ordinary_file_rx",
+              "passed": true,
+              "observed": 57
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "readonly_shared_write",
+              "passed": true,
+              "observed": 13
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "noexec_mmap",
+              "passed": true,
+              "observed": 1
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "noexec_mprotect",
+              "passed": true,
+              "observed": 13
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unpopulated_exec_alias",
+              "passed": true,
+              "observed": 59
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "private_cow_parent",
+              "passed": true,
+              "observed": 41
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "private_file_cow",
+              "passed": true,
+              "observed": 41
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "memfd_alias_updates",
+              "passed": true,
+              "observed": 16
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "memfd_pwrite",
+              "passed": true,
+              "observed": 97
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "memfd_shared_fork",
+              "passed": true,
+              "observed": 111
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "memfd_mremap_clone",
+              "passed": true,
+              "observed": 111
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unicorn_alias_update",
+              "passed": true,
+              "observed": 201
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unicorn_pwrite_update",
+              "passed": true,
+              "observed": 202
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unicorn_unseen_pwrite",
+              "passed": true,
+              "observed": 203
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "same_va_new_backing",
+              "passed": true,
+              "observed": 87
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "sealed_write",
+              "passed": true,
+              "observed": 1
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unicorn_self_page_flush",
+              "passed": true,
+              "observed": 67
+            },
+            {
+              "cpu": 0,
+              "translation_icache": true,
+              "operations": 34,
+              "invalidations": 31
+            },
+            {
+              "cpu": 0,
+              "direct_execution": true,
+              "calls": 169736,
+              "fallbacks": 120,
+              "compiles": 707,
+              "code_changes": 31
+            }
+          ]
+        },
+        {
+          "entry": "gcd",
+          "returncode": 0,
+          "validated": true,
+          "stdout_sha256": "c190750d35bea8e5b4bc13e09f7ddb983748993c92ab55de25690bbfb17720ec",
+          "stderr_sha256": "ac0a5438934576e61117799127ea2feea51825322a37bd678fee5c043699df78",
+          "rejected_parser_variants": 341,
+          "results": [
+            {
+              "cpu": 0,
+              "config": "translation_execution",
+              "engine": "direct",
+              "direct_cache_bytes": 16777216,
+              "data_page_bytes": 16384,
+              "mapping_entries": 256,
+              "route_entries": 256,
+              "selective_writes": false,
+              "reuse_code_checks": false,
+              "memory": "flat",
+              "code_watch": true,
+              "cross_page": false,
+              "route_epochs": true,
+              "retain_routes": true,
+              "memory_groups": false,
+              "native_exclusive": false,
+              "vector_table": false,
+              "simd_math": false
+            },
+            {
+              "config": "linux_standard_jit",
+              "page_bytes": 16384
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "anon_rw_rx",
+              "passed": true,
+              "observed": 42
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "anon_rewrite",
+              "passed": true,
+              "observed": 91
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "rx_write",
+              "passed": true,
+              "signal": 11,
+              "si_code": 2,
+              "address": 481774534656,
+              "expected_address": 481774534656
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "remove_execute",
+              "passed": true,
+              "signal": 11,
+              "si_code": 2,
+              "address": 481774534656,
+              "expected_address": 481774534656
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "mremap_move",
+              "passed": true,
+              "observed": 91
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "mremap_old_unmapped",
+              "passed": true,
+              "signal": 11,
+              "si_code": 1,
+              "address": 481774534656,
+              "expected_address": 481774534656
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unmapped_execute",
+              "passed": true,
+              "signal": 11,
+              "si_code": 1,
+              "address": 481774551040,
+              "expected_address": 481774551040
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "anon_rx_map",
+              "passed": true,
+              "observed": 1
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "anon_rwx",
+              "passed": true,
+              "observed": 74
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "exec_only_vma",
+              "passed": true,
+              "observed": 58
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "ordinary_file_rx",
+              "passed": true,
+              "observed": 57
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "readonly_shared_write",
+              "passed": true,
+              "observed": 13
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "noexec_mmap",
+              "passed": true,
+              "observed": 1
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "noexec_mprotect",
+              "passed": true,
+              "observed": 13
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unpopulated_exec_alias",
+              "passed": true,
+              "observed": 59
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "private_cow_parent",
+              "passed": true,
+              "observed": 41
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "private_file_cow",
+              "passed": true,
+              "observed": 41
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "memfd_alias_updates",
+              "passed": true,
+              "observed": 16
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "memfd_pwrite",
+              "passed": true,
+              "observed": 97
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "memfd_shared_fork",
+              "passed": true,
+              "observed": 111
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "memfd_mremap_clone",
+              "passed": true,
+              "observed": 111
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unicorn_alias_update",
+              "passed": true,
+              "observed": 201
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unicorn_pwrite_update",
+              "passed": true,
+              "observed": 202
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unicorn_unseen_pwrite",
+              "passed": true,
+              "observed": 203
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "same_va_new_backing",
+              "passed": true,
+              "observed": 87
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "sealed_write",
+              "passed": true,
+              "observed": 1
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unicorn_self_page_flush",
+              "passed": true,
+              "observed": 67
+            },
+            {
+              "cpu": 0,
+              "translation_icache": true,
+              "operations": 34,
+              "invalidations": 31
+            },
+            {
+              "cpu": 0,
+              "direct_execution": true,
+              "calls": 170015,
+              "fallbacks": 120,
+              "compiles": 708,
+              "code_changes": 31
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "unicorn-complete",
+      "command": [
+        "python3",
+        "scripts/probe_lkl_translation.py",
+        "--mapping",
+        "pte",
+        "--cpus",
+        "1",
+        "--code-memory",
+        "dual",
+        "--reuse-engine-build",
+        "--workload",
+        "core",
+        "--entry",
+        "both",
+        "--execution",
+        "unicorn",
+        "--guest-layout",
+        "host",
+        "--output",
+        "work/native-linux-nce/jit-unicorn-complete"
+      ],
+      "summary": "work/native-linux-nce/jit-unicorn-complete/summary.json",
+      "summary_sha256": "84a00b00f14935e179a12dd577aa9a0ff6717b909c928b08f476a8595b1f2fc6",
+      "configuration": {
+        "guest_layout": "host",
+        "code_memory": "dual",
+        "execution": "unicorn",
+        "direct": null,
+        "mapping": "pte",
+        "sparse_scan": true,
+        "fault_prefetch": false,
+        "guest_page_bytes": 16384,
+        "workload": "core",
+        "entries": [
+          "cli",
+          "gcd"
+        ],
+        "art_nterp": 1,
+        "cpus": 1,
+        "high_res_timers": false,
+        "online_cpus": 1,
+        "uaccess_stop": "all",
+        "parallel_profile": false,
+        "art_expanded_jit": 0,
+        "art_fast_baseline": 0,
+        "cache_invalidation": "pages",
+        "exec_cache": "full",
+        "tlb_invalidation": "full",
+        "linux_fastpath": 0,
+        "guest_ram_bytes": 1073741824,
+        "translation_cache_bytes": 16777216,
+        "instruction_batch": 50000,
+        "memory_interval_ms": 100,
+        "preemption": "instructions",
+        "timer_interval_ns": 2000000
+      },
+      "artifact_sha256": {
+        "work/native-linux-nce/lkl-translation-kernel/lkl-image.bin": "8453aa1ac7b9feece610828186b4c6ab653c86cf071aee8c67753103e1356a55",
+        "work/native-linux-nce/unicorn-tb-stop-dual/build.json": "10571dc03484262efd6497c15490d98d03f6a34b3fb067ac6ea837f132fd5816",
+        "work/native-linux-nce/jit-unicorn-complete/cli": "aeddca0c0416d4388292f786cc49c909fd57e0eb36019f74899eeb00f3eb7636",
+        "work/native-linux-nce/jit-unicorn-complete/gcd": "a29d4b2a250ceacbbf6f97266eb963becbc971e63198b85326cfe20958600a34",
+        "work/native-linux-nce/jit-unicorn-complete/guest.elf": "8c0c3c86eb80b9adf66d12bd6b6b0c902596f4d32ce964f1b822ed01eddee674",
+        "work/native-linux-nce/lkl-translation-kernel/build.json": "d39d0d6613b6361668256e2094b78c520a52b876fa7f52a4e8b654be2a72fc3a"
+      },
+      "runs": [
+        {
+          "entry": "cli",
+          "returncode": 0,
+          "validated": true,
+          "stdout_sha256": "1ce33c98a20b2f2ac8774a6ac9c8f557266ff52ef9004fd71bd36398bd794b08",
+          "stderr_sha256": "5286d81074a40019cb0ed69adfcc014d48c3ec390936b62ab3376624b9b9858b",
+          "rejected_parser_variants": 341,
+          "results": [
+            {
+              "cpu": 0,
+              "config": "translation_execution",
+              "engine": "unicorn"
+            },
+            {
+              "config": "linux_standard_jit",
+              "page_bytes": 16384
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "anon_rw_rx",
+              "passed": true,
+              "observed": 42
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "anon_rewrite",
+              "passed": true,
+              "observed": 91
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "rx_write",
+              "passed": true,
+              "signal": 11,
+              "si_code": 2,
+              "address": 481774534656,
+              "expected_address": 481774534656
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "remove_execute",
+              "passed": true,
+              "signal": 11,
+              "si_code": 2,
+              "address": 481774534656,
+              "expected_address": 481774534656
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "mremap_move",
+              "passed": true,
+              "observed": 91
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "mremap_old_unmapped",
+              "passed": true,
+              "signal": 11,
+              "si_code": 1,
+              "address": 481774534656,
+              "expected_address": 481774534656
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unmapped_execute",
+              "passed": true,
+              "signal": 11,
+              "si_code": 1,
+              "address": 481774551040,
+              "expected_address": 481774551040
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "anon_rx_map",
+              "passed": true,
+              "observed": 1
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "anon_rwx",
+              "passed": true,
+              "observed": 74
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "exec_only_vma",
+              "passed": true,
+              "observed": 58
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "ordinary_file_rx",
+              "passed": true,
+              "observed": 57
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "readonly_shared_write",
+              "passed": true,
+              "observed": 13
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "noexec_mmap",
+              "passed": true,
+              "observed": 1
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "noexec_mprotect",
+              "passed": true,
+              "observed": 13
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unpopulated_exec_alias",
+              "passed": true,
+              "observed": 59
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "private_cow_parent",
+              "passed": true,
+              "observed": 41
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "private_file_cow",
+              "passed": true,
+              "observed": 41
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "memfd_alias_updates",
+              "passed": true,
+              "observed": 16
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "memfd_pwrite",
+              "passed": true,
+              "observed": 97
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "memfd_shared_fork",
+              "passed": true,
+              "observed": 111
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "memfd_mremap_clone",
+              "passed": true,
+              "observed": 111
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unicorn_alias_update",
+              "passed": true,
+              "observed": 201
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unicorn_pwrite_update",
+              "passed": true,
+              "observed": 202
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unicorn_unseen_pwrite",
+              "passed": true,
+              "observed": 203
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "same_va_new_backing",
+              "passed": true,
+              "observed": 87
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "sealed_write",
+              "passed": true,
+              "observed": 1
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unicorn_self_page_flush",
+              "passed": true,
+              "observed": 67
+            },
+            {
+              "cpu": 0,
+              "translation_icache": true,
+              "operations": 34,
+              "invalidations": 31
+            }
+          ]
+        },
+        {
+          "entry": "gcd",
+          "returncode": 0,
+          "validated": true,
+          "stdout_sha256": "eff3c1def9544d9e5d5da8de7c76c6303a03da1d80edbda370b148a0df86ae8a",
+          "stderr_sha256": "5963c2b3bcfe712d60504172855c77439e852f15fc6187196fd15cbae114fbee",
+          "rejected_parser_variants": 341,
+          "results": [
+            {
+              "cpu": 0,
+              "config": "translation_execution",
+              "engine": "unicorn"
+            },
+            {
+              "config": "linux_standard_jit",
+              "page_bytes": 16384
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "anon_rw_rx",
+              "passed": true,
+              "observed": 42
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "anon_rewrite",
+              "passed": true,
+              "observed": 91
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "rx_write",
+              "passed": true,
+              "signal": 11,
+              "si_code": 2,
+              "address": 481774534656,
+              "expected_address": 481774534656
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "remove_execute",
+              "passed": true,
+              "signal": 11,
+              "si_code": 2,
+              "address": 481774534656,
+              "expected_address": 481774534656
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "mremap_move",
+              "passed": true,
+              "observed": 91
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "mremap_old_unmapped",
+              "passed": true,
+              "signal": 11,
+              "si_code": 1,
+              "address": 481774534656,
+              "expected_address": 481774534656
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unmapped_execute",
+              "passed": true,
+              "signal": 11,
+              "si_code": 1,
+              "address": 481774551040,
+              "expected_address": 481774551040
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "anon_rx_map",
+              "passed": true,
+              "observed": 1
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "anon_rwx",
+              "passed": true,
+              "observed": 74
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "exec_only_vma",
+              "passed": true,
+              "observed": 58
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "ordinary_file_rx",
+              "passed": true,
+              "observed": 57
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "readonly_shared_write",
+              "passed": true,
+              "observed": 13
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "noexec_mmap",
+              "passed": true,
+              "observed": 1
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "noexec_mprotect",
+              "passed": true,
+              "observed": 13
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unpopulated_exec_alias",
+              "passed": true,
+              "observed": 59
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "private_cow_parent",
+              "passed": true,
+              "observed": 41
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "private_file_cow",
+              "passed": true,
+              "observed": 41
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "memfd_alias_updates",
+              "passed": true,
+              "observed": 16
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "memfd_pwrite",
+              "passed": true,
+              "observed": 97
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "memfd_shared_fork",
+              "passed": true,
+              "observed": 111
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "memfd_mremap_clone",
+              "passed": true,
+              "observed": 111
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unicorn_alias_update",
+              "passed": true,
+              "observed": 201
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unicorn_pwrite_update",
+              "passed": true,
+              "observed": 202
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unicorn_unseen_pwrite",
+              "passed": true,
+              "observed": 203
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "same_va_new_backing",
+              "passed": true,
+              "observed": 87
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "sealed_write",
+              "passed": true,
+              "observed": 1
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unicorn_self_page_flush",
+              "passed": true,
+              "observed": 67
+            },
+            {
+              "cpu": 0,
+              "translation_icache": true,
+              "operations": 34,
+              "invalidations": 31
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "no-retain-complete",
+      "command": [
+        "python3",
+        "scripts/probe_lkl_translation.py",
+        "--mapping",
+        "pte",
+        "--cpus",
+        "1",
+        "--code-memory",
+        "dual",
+        "--reuse-engine-build",
+        "--workload",
+        "core",
+        "--entry",
+        "both",
+        "--execution",
+        "direct",
+        "--direct-memory",
+        "flat",
+        "--guest-layout",
+        "low",
+        "--direct-code-watch",
+        "1",
+        "--direct-route-epochs",
+        "1",
+        "--output",
+        "work/native-linux-nce/jit-no-retain-complete"
+      ],
+      "summary": "work/native-linux-nce/jit-no-retain-complete/summary.json",
+      "summary_sha256": "408a41786523c8f4b4305f9b2ea3f6db13034326cdeb0ee061654afd7797a3c5",
+      "configuration": {
+        "guest_layout": "low",
+        "code_memory": "dual",
+        "execution": "direct",
+        "direct": {
+          "mapping_entries": 256,
+          "route_entries": 256,
+          "selective_writes": false,
+          "reuse_code_checks": false,
+          "memory": "flat",
+          "code_watch": true,
+          "cross_page": false,
+          "route_epochs": true,
+          "retain_routes": false,
+          "memory_groups": false,
+          "native_exclusive": false,
+          "vector_table": false,
+          "simd_math": false
+        },
+        "mapping": "pte",
+        "sparse_scan": true,
+        "fault_prefetch": false,
+        "guest_page_bytes": 16384,
+        "workload": "core",
+        "entries": [
+          "cli",
+          "gcd"
+        ],
+        "art_nterp": 1,
+        "cpus": 1,
+        "high_res_timers": false,
+        "online_cpus": 1,
+        "uaccess_stop": "all",
+        "parallel_profile": false,
+        "art_expanded_jit": 0,
+        "art_fast_baseline": 0,
+        "cache_invalidation": "pages",
+        "exec_cache": "full",
+        "tlb_invalidation": "full",
+        "linux_fastpath": 0,
+        "guest_ram_bytes": 1073741824,
+        "translation_cache_bytes": 16777216,
+        "instruction_batch": 50000,
+        "memory_interval_ms": 100,
+        "preemption": "instructions",
+        "timer_interval_ns": 2000000
+      },
+      "artifact_sha256": {
+        "work/native-linux-nce/lkl-translation-kernel/lkl-image.bin": "8453aa1ac7b9feece610828186b4c6ab653c86cf071aee8c67753103e1356a55",
+        "work/native-linux-nce/unicorn-tb-stop-dual/build.json": "10571dc03484262efd6497c15490d98d03f6a34b3fb067ac6ea837f132fd5816",
+        "work/native-linux-nce/jit-no-retain-complete/cli": "65d707212721d5c61c2c97983ef1b22d4ea095461d6e8bf2fe3608732e1fbaec",
+        "work/native-linux-nce/jit-no-retain-complete/gcd": "25265d495886b2c3a863b8cd67ba285bd0a6f376b9dd556e153820bc1c86f3cd",
+        "work/native-linux-nce/jit-no-retain-complete/guest.elf": "8c0c3c86eb80b9adf66d12bd6b6b0c902596f4d32ce964f1b822ed01eddee674",
+        "work/native-linux-nce/lkl-translation-kernel/build.json": "d39d0d6613b6361668256e2094b78c520a52b876fa7f52a4e8b654be2a72fc3a"
+      },
+      "runs": [
+        {
+          "entry": "cli",
+          "returncode": 0,
+          "validated": true,
+          "stdout_sha256": "cf0f2329f0973dfd1059f948aba0eccb9acae2075902f3eeb762df8de0350f77",
+          "stderr_sha256": "cc79748405390061802cf41f78a2f7b960700de68de4660c8372a644677f4d6a",
+          "rejected_parser_variants": 341,
+          "results": [
+            {
+              "cpu": 0,
+              "config": "translation_execution",
+              "engine": "direct",
+              "direct_cache_bytes": 16777216,
+              "data_page_bytes": 16384,
+              "mapping_entries": 256,
+              "route_entries": 256,
+              "selective_writes": false,
+              "reuse_code_checks": false,
+              "memory": "flat",
+              "code_watch": true,
+              "cross_page": false,
+              "route_epochs": true,
+              "retain_routes": false,
+              "memory_groups": false,
+              "native_exclusive": false,
+              "vector_table": false,
+              "simd_math": false
+            },
+            {
+              "config": "linux_standard_jit",
+              "page_bytes": 16384
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "anon_rw_rx",
+              "passed": true,
+              "observed": 42
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "anon_rewrite",
+              "passed": true,
+              "observed": 91
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "rx_write",
+              "passed": true,
+              "signal": 11,
+              "si_code": 2,
+              "address": 738263040,
+              "expected_address": 738263040
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "remove_execute",
+              "passed": true,
+              "signal": 11,
+              "si_code": 2,
+              "address": 738263040,
+              "expected_address": 738263040
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "mremap_move",
+              "passed": true,
+              "observed": 91
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "mremap_old_unmapped",
+              "passed": true,
+              "signal": 11,
+              "si_code": 1,
+              "address": 738263040,
+              "expected_address": 738263040
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unmapped_execute",
+              "passed": true,
+              "signal": 11,
+              "si_code": 1,
+              "address": 738279424,
+              "expected_address": 738279424
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "anon_rx_map",
+              "passed": true,
+              "observed": 1
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "anon_rwx",
+              "passed": true,
+              "observed": 74
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "exec_only_vma",
+              "passed": true,
+              "observed": 58
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "ordinary_file_rx",
+              "passed": true,
+              "observed": 57
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "readonly_shared_write",
+              "passed": true,
+              "observed": 13
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "noexec_mmap",
+              "passed": true,
+              "observed": 1
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "noexec_mprotect",
+              "passed": true,
+              "observed": 13
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unpopulated_exec_alias",
+              "passed": true,
+              "observed": 59
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "private_cow_parent",
+              "passed": true,
+              "observed": 41
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "private_file_cow",
+              "passed": true,
+              "observed": 41
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "memfd_alias_updates",
+              "passed": true,
+              "observed": 16
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "memfd_pwrite",
+              "passed": true,
+              "observed": 97
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "memfd_shared_fork",
+              "passed": true,
+              "observed": 111
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "memfd_mremap_clone",
+              "passed": true,
+              "observed": 111
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unicorn_alias_update",
+              "passed": true,
+              "observed": 201
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unicorn_pwrite_update",
+              "passed": true,
+              "observed": 202
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unicorn_unseen_pwrite",
+              "passed": true,
+              "observed": 203
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "same_va_new_backing",
+              "passed": true,
+              "observed": 87
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "sealed_write",
+              "passed": true,
+              "observed": 1
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unicorn_self_page_flush",
+              "passed": true,
+              "observed": 67
+            },
+            {
+              "cpu": 0,
+              "translation_icache": true,
+              "operations": 34,
+              "invalidations": 31
+            },
+            {
+              "cpu": 0,
+              "direct_execution": true,
+              "calls": 170166,
+              "fallbacks": 121,
+              "compiles": 707,
+              "code_changes": 31
+            }
+          ]
+        },
+        {
+          "entry": "gcd",
+          "returncode": 0,
+          "validated": true,
+          "stdout_sha256": "082ec0cb2e402903151c318e38e1f86da4a4b69e57a30e3b28996360a88c349c",
+          "stderr_sha256": "6daca51aa446731becad6d2db98fdd134b483f57dd4c4a8f4b253ac5ec0537c9",
+          "rejected_parser_variants": 341,
+          "results": [
+            {
+              "cpu": 0,
+              "config": "translation_execution",
+              "engine": "direct",
+              "direct_cache_bytes": 16777216,
+              "data_page_bytes": 16384,
+              "mapping_entries": 256,
+              "route_entries": 256,
+              "selective_writes": false,
+              "reuse_code_checks": false,
+              "memory": "flat",
+              "code_watch": true,
+              "cross_page": false,
+              "route_epochs": true,
+              "retain_routes": false,
+              "memory_groups": false,
+              "native_exclusive": false,
+              "vector_table": false,
+              "simd_math": false
+            },
+            {
+              "config": "linux_standard_jit",
+              "page_bytes": 16384
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "anon_rw_rx",
+              "passed": true,
+              "observed": 42
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "anon_rewrite",
+              "passed": true,
+              "observed": 91
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "rx_write",
+              "passed": true,
+              "signal": 11,
+              "si_code": 2,
+              "address": 738263040,
+              "expected_address": 738263040
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "remove_execute",
+              "passed": true,
+              "signal": 11,
+              "si_code": 2,
+              "address": 738263040,
+              "expected_address": 738263040
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "mremap_move",
+              "passed": true,
+              "observed": 91
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "mremap_old_unmapped",
+              "passed": true,
+              "signal": 11,
+              "si_code": 1,
+              "address": 738263040,
+              "expected_address": 738263040
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unmapped_execute",
+              "passed": true,
+              "signal": 11,
+              "si_code": 1,
+              "address": 738279424,
+              "expected_address": 738279424
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "anon_rx_map",
+              "passed": true,
+              "observed": 1
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "anon_rwx",
+              "passed": true,
+              "observed": 74
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "exec_only_vma",
+              "passed": true,
+              "observed": 58
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "ordinary_file_rx",
+              "passed": true,
+              "observed": 57
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "readonly_shared_write",
+              "passed": true,
+              "observed": 13
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "noexec_mmap",
+              "passed": true,
+              "observed": 1
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "noexec_mprotect",
+              "passed": true,
+              "observed": 13
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unpopulated_exec_alias",
+              "passed": true,
+              "observed": 59
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "private_cow_parent",
+              "passed": true,
+              "observed": 41
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "private_file_cow",
+              "passed": true,
+              "observed": 41
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "memfd_alias_updates",
+              "passed": true,
+              "observed": 16
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "memfd_pwrite",
+              "passed": true,
+              "observed": 97
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "memfd_shared_fork",
+              "passed": true,
+              "observed": 111
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "memfd_mremap_clone",
+              "passed": true,
+              "observed": 111
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unicorn_alias_update",
+              "passed": true,
+              "observed": 201
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unicorn_pwrite_update",
+              "passed": true,
+              "observed": 202
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unicorn_unseen_pwrite",
+              "passed": true,
+              "observed": 203
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "same_va_new_backing",
+              "passed": true,
+              "observed": 87
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "sealed_write",
+              "passed": true,
+              "observed": 1
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unicorn_self_page_flush",
+              "passed": true,
+              "observed": 67
+            },
+            {
+              "cpu": 0,
+              "translation_icache": true,
+              "operations": 34,
+              "invalidations": 31
+            },
+            {
+              "cpu": 0,
+              "direct_execution": true,
+              "calls": 169896,
+              "fallbacks": 121,
+              "compiles": 708,
+              "code_changes": 31
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "no-watch-complete",
+      "command": [
+        "python3",
+        "scripts/probe_lkl_translation.py",
+        "--mapping",
+        "pte",
+        "--cpus",
+        "1",
+        "--code-memory",
+        "dual",
+        "--reuse-engine-build",
+        "--workload",
+        "core",
+        "--entry",
+        "both",
+        "--execution",
+        "direct",
+        "--direct-memory",
+        "flat",
+        "--guest-layout",
+        "low",
+        "--output",
+        "work/native-linux-nce/jit-no-watch-complete"
+      ],
+      "summary": "work/native-linux-nce/jit-no-watch-complete/summary.json",
+      "summary_sha256": "aac4a6b51e8dee89795260be52bf847063d347492ab4ee629645a6f36be0d31e",
+      "configuration": {
+        "guest_layout": "low",
+        "code_memory": "dual",
+        "execution": "direct",
+        "direct": {
+          "mapping_entries": 256,
+          "route_entries": 256,
+          "selective_writes": false,
+          "reuse_code_checks": false,
+          "memory": "flat",
+          "code_watch": false,
+          "cross_page": false,
+          "route_epochs": false,
+          "retain_routes": false,
+          "memory_groups": false,
+          "native_exclusive": false,
+          "vector_table": false,
+          "simd_math": false
+        },
+        "mapping": "pte",
+        "sparse_scan": true,
+        "fault_prefetch": false,
+        "guest_page_bytes": 16384,
+        "workload": "core",
+        "entries": [
+          "cli",
+          "gcd"
+        ],
+        "art_nterp": 1,
+        "cpus": 1,
+        "high_res_timers": false,
+        "online_cpus": 1,
+        "uaccess_stop": "all",
+        "parallel_profile": false,
+        "art_expanded_jit": 0,
+        "art_fast_baseline": 0,
+        "cache_invalidation": "pages",
+        "exec_cache": "full",
+        "tlb_invalidation": "full",
+        "linux_fastpath": 0,
+        "guest_ram_bytes": 1073741824,
+        "translation_cache_bytes": 16777216,
+        "instruction_batch": 50000,
+        "memory_interval_ms": 100,
+        "preemption": "instructions",
+        "timer_interval_ns": 2000000
+      },
+      "artifact_sha256": {
+        "work/native-linux-nce/lkl-translation-kernel/lkl-image.bin": "8453aa1ac7b9feece610828186b4c6ab653c86cf071aee8c67753103e1356a55",
+        "work/native-linux-nce/unicorn-tb-stop-dual/build.json": "10571dc03484262efd6497c15490d98d03f6a34b3fb067ac6ea837f132fd5816",
+        "work/native-linux-nce/jit-no-watch-complete/cli": "2d47bb4514462041e44887b5d0f67a6c305ac16f7e4b4f123b557da82f675ef3",
+        "work/native-linux-nce/jit-no-watch-complete/gcd": "93a0c77e9653a55c797786521f2ab2d9524187703e95457a6976b1a7b414343b",
+        "work/native-linux-nce/jit-no-watch-complete/guest.elf": "8c0c3c86eb80b9adf66d12bd6b6b0c902596f4d32ce964f1b822ed01eddee674",
+        "work/native-linux-nce/lkl-translation-kernel/build.json": "d39d0d6613b6361668256e2094b78c520a52b876fa7f52a4e8b654be2a72fc3a"
+      },
+      "runs": [
+        {
+          "entry": "cli",
+          "returncode": 0,
+          "validated": true,
+          "stdout_sha256": "59bbd62f3a3a53462e27e2c78b4d7dd04b0528d1965e07881d11f3efff3ce471",
+          "stderr_sha256": "6ddaf6069320fb966bd8b3127cd395661a2303833817b1ea7badf754bb1643db",
+          "rejected_parser_variants": 341,
+          "results": [
+            {
+              "cpu": 0,
+              "config": "translation_execution",
+              "engine": "direct",
+              "direct_cache_bytes": 16777216,
+              "data_page_bytes": 16384,
+              "mapping_entries": 256,
+              "route_entries": 256,
+              "selective_writes": false,
+              "reuse_code_checks": false,
+              "memory": "flat",
+              "code_watch": false,
+              "cross_page": false,
+              "route_epochs": false,
+              "retain_routes": false,
+              "memory_groups": false,
+              "native_exclusive": false,
+              "vector_table": false,
+              "simd_math": false
+            },
+            {
+              "config": "linux_standard_jit",
+              "page_bytes": 16384
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "anon_rw_rx",
+              "passed": true,
+              "observed": 42
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "anon_rewrite",
+              "passed": true,
+              "observed": 91
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "rx_write",
+              "passed": true,
+              "signal": 11,
+              "si_code": 2,
+              "address": 738263040,
+              "expected_address": 738263040
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "remove_execute",
+              "passed": true,
+              "signal": 11,
+              "si_code": 2,
+              "address": 738263040,
+              "expected_address": 738263040
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "mremap_move",
+              "passed": true,
+              "observed": 91
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "mremap_old_unmapped",
+              "passed": true,
+              "signal": 11,
+              "si_code": 1,
+              "address": 738263040,
+              "expected_address": 738263040
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unmapped_execute",
+              "passed": true,
+              "signal": 11,
+              "si_code": 1,
+              "address": 738279424,
+              "expected_address": 738279424
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "anon_rx_map",
+              "passed": true,
+              "observed": 1
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "anon_rwx",
+              "passed": true,
+              "observed": 74
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "exec_only_vma",
+              "passed": true,
+              "observed": 58
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "ordinary_file_rx",
+              "passed": true,
+              "observed": 57
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "readonly_shared_write",
+              "passed": true,
+              "observed": 13
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "noexec_mmap",
+              "passed": true,
+              "observed": 1
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "noexec_mprotect",
+              "passed": true,
+              "observed": 13
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unpopulated_exec_alias",
+              "passed": true,
+              "observed": 59
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "private_cow_parent",
+              "passed": true,
+              "observed": 41
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "private_file_cow",
+              "passed": true,
+              "observed": 41
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "memfd_alias_updates",
+              "passed": true,
+              "observed": 16
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "memfd_pwrite",
+              "passed": true,
+              "observed": 97
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "memfd_shared_fork",
+              "passed": true,
+              "observed": 111
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "memfd_mremap_clone",
+              "passed": true,
+              "observed": 111
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unicorn_alias_update",
+              "passed": true,
+              "observed": 201
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unicorn_pwrite_update",
+              "passed": true,
+              "observed": 202
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unicorn_unseen_pwrite",
+              "passed": true,
+              "observed": 203
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "same_va_new_backing",
+              "passed": true,
+              "observed": 87
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "sealed_write",
+              "passed": true,
+              "observed": 1
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unicorn_self_page_flush",
+              "passed": true,
+              "observed": 67
+            },
+            {
+              "cpu": 0,
+              "translation_icache": true,
+              "operations": 34,
+              "invalidations": 31
+            },
+            {
+              "cpu": 0,
+              "direct_execution": true,
+              "calls": 169865,
+              "fallbacks": 121,
+              "compiles": 707,
+              "code_changes": 31
+            }
+          ]
+        },
+        {
+          "entry": "gcd",
+          "returncode": 0,
+          "validated": true,
+          "stdout_sha256": "80dc83dc77f37bfd91a2cdbbf0e7e4e7a1ba7276ad321f67f43b95bc200a0b4c",
+          "stderr_sha256": "074ba6d3f76a416d62898edc93a6f4c0c6ba270943f49e6124a15f629b55f526",
+          "rejected_parser_variants": 341,
+          "results": [
+            {
+              "cpu": 0,
+              "config": "translation_execution",
+              "engine": "direct",
+              "direct_cache_bytes": 16777216,
+              "data_page_bytes": 16384,
+              "mapping_entries": 256,
+              "route_entries": 256,
+              "selective_writes": false,
+              "reuse_code_checks": false,
+              "memory": "flat",
+              "code_watch": false,
+              "cross_page": false,
+              "route_epochs": false,
+              "retain_routes": false,
+              "memory_groups": false,
+              "native_exclusive": false,
+              "vector_table": false,
+              "simd_math": false
+            },
+            {
+              "config": "linux_standard_jit",
+              "page_bytes": 16384
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "anon_rw_rx",
+              "passed": true,
+              "observed": 42
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "anon_rewrite",
+              "passed": true,
+              "observed": 91
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "rx_write",
+              "passed": true,
+              "signal": 11,
+              "si_code": 2,
+              "address": 738263040,
+              "expected_address": 738263040
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "remove_execute",
+              "passed": true,
+              "signal": 11,
+              "si_code": 2,
+              "address": 738263040,
+              "expected_address": 738263040
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "mremap_move",
+              "passed": true,
+              "observed": 91
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "mremap_old_unmapped",
+              "passed": true,
+              "signal": 11,
+              "si_code": 1,
+              "address": 738263040,
+              "expected_address": 738263040
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unmapped_execute",
+              "passed": true,
+              "signal": 11,
+              "si_code": 1,
+              "address": 738279424,
+              "expected_address": 738279424
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "anon_rx_map",
+              "passed": true,
+              "observed": 1
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "anon_rwx",
+              "passed": true,
+              "observed": 74
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "exec_only_vma",
+              "passed": true,
+              "observed": 58
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "ordinary_file_rx",
+              "passed": true,
+              "observed": 57
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "readonly_shared_write",
+              "passed": true,
+              "observed": 13
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "noexec_mmap",
+              "passed": true,
+              "observed": 1
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "noexec_mprotect",
+              "passed": true,
+              "observed": 13
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unpopulated_exec_alias",
+              "passed": true,
+              "observed": 59
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "private_cow_parent",
+              "passed": true,
+              "observed": 41
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "private_file_cow",
+              "passed": true,
+              "observed": 41
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "memfd_alias_updates",
+              "passed": true,
+              "observed": 16
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "memfd_pwrite",
+              "passed": true,
+              "observed": 97
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "memfd_shared_fork",
+              "passed": true,
+              "observed": 111
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "memfd_mremap_clone",
+              "passed": true,
+              "observed": 111
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unicorn_alias_update",
+              "passed": true,
+              "observed": 201
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unicorn_pwrite_update",
+              "passed": true,
+              "observed": 202
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unicorn_unseen_pwrite",
+              "passed": true,
+              "observed": 203
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "same_va_new_backing",
+              "passed": true,
+              "observed": 87
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "sealed_write",
+              "passed": true,
+              "observed": 1
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unicorn_self_page_flush",
+              "passed": true,
+              "observed": 67
+            },
+            {
+              "cpu": 0,
+              "translation_icache": true,
+              "operations": 34,
+              "invalidations": 31
+            },
+            {
+              "cpu": 0,
+              "direct_execution": true,
+              "calls": 169658,
+              "fallbacks": 121,
+              "compiles": 707,
+              "code_changes": 31
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "fastpath-complete",
+      "command": [
+        "python3",
+        "scripts/probe_lkl_translation.py",
+        "--mapping",
+        "pte",
+        "--code-memory",
+        "dual",
+        "--reuse-engine-build",
+        "--workload",
+        "core",
+        "--entry",
+        "both",
+        "--execution",
+        "direct",
+        "--direct-memory",
+        "flat",
+        "--guest-layout",
+        "low",
+        "--cpus",
+        "1",
+        "--direct-code-watch",
+        "1",
+        "--direct-retain-routes",
+        "1",
+        "--direct-route-epochs",
+        "1",
+        "--linux-fastpath",
+        "1",
+        "--exec-cache",
+        "pages",
+        "--tlb-invalidation",
+        "pages",
+        "--preemption",
+        "timer",
+        "--output",
+        "work/native-linux-nce/jit-fastpath-complete"
+      ],
+      "summary": "work/native-linux-nce/jit-fastpath-complete/summary.json",
+      "summary_sha256": "94adcdb5ada9b84430d0a4908df28eb07f2cbd3832a801d3f1b84a2670be8ac4",
+      "configuration": {
+        "guest_layout": "low",
+        "code_memory": "dual",
+        "execution": "direct",
+        "direct": {
+          "mapping_entries": 256,
+          "route_entries": 256,
+          "selective_writes": false,
+          "reuse_code_checks": false,
+          "memory": "flat",
+          "code_watch": true,
+          "cross_page": false,
+          "route_epochs": true,
+          "retain_routes": true,
+          "memory_groups": false,
+          "native_exclusive": false,
+          "vector_table": false,
+          "simd_math": false
+        },
+        "mapping": "pte",
+        "sparse_scan": true,
+        "fault_prefetch": false,
+        "guest_page_bytes": 16384,
+        "workload": "core",
+        "entries": [
+          "cli",
+          "gcd"
+        ],
+        "art_nterp": 1,
+        "cpus": 1,
+        "high_res_timers": false,
+        "online_cpus": 1,
+        "uaccess_stop": "all",
+        "parallel_profile": false,
+        "art_expanded_jit": 0,
+        "art_fast_baseline": 0,
+        "cache_invalidation": "pages",
+        "exec_cache": "pages",
+        "tlb_invalidation": "pages",
+        "linux_fastpath": 1,
+        "guest_ram_bytes": 1073741824,
+        "translation_cache_bytes": 16777216,
+        "instruction_batch": 50000,
+        "memory_interval_ms": 100,
+        "preemption": "timer",
+        "timer_interval_ns": 2000000
+      },
+      "artifact_sha256": {
+        "work/native-linux-nce/lkl-translation-kernel/lkl-image.bin": "8453aa1ac7b9feece610828186b4c6ab653c86cf071aee8c67753103e1356a55",
+        "work/native-linux-nce/unicorn-tb-stop-dual/build.json": "10571dc03484262efd6497c15490d98d03f6a34b3fb067ac6ea837f132fd5816",
+        "work/native-linux-nce/jit-fastpath-complete/cli": "f5cb07b4fad9ecc0572d8857815e419b422aa3ae9968ca3f06b4e07117995c6b",
+        "work/native-linux-nce/jit-fastpath-complete/gcd": "2dec3419db9558c19fa12440ab70ed00d105ef455c1121b6c431b6cd019a7b79",
+        "work/native-linux-nce/jit-fastpath-complete/guest.elf": "8c0c3c86eb80b9adf66d12bd6b6b0c902596f4d32ce964f1b822ed01eddee674",
+        "work/native-linux-nce/lkl-translation-kernel/build.json": "d39d0d6613b6361668256e2094b78c520a52b876fa7f52a4e8b654be2a72fc3a"
+      },
+      "runs": [
+        {
+          "entry": "cli",
+          "returncode": 0,
+          "validated": true,
+          "stdout_sha256": "78edbe5c63f1880be444bfa50fcf4417c892a91c81bc2823cb5352a384ccfb13",
+          "stderr_sha256": "02224494e52130a098c618f083c4c26cecfaa988146317e600d2db7cd1bcce45",
+          "rejected_parser_variants": 341,
+          "results": [
+            {
+              "cpu": 0,
+              "config": "translation_execution",
+              "engine": "direct",
+              "direct_cache_bytes": 16777216,
+              "data_page_bytes": 16384,
+              "mapping_entries": 256,
+              "route_entries": 256,
+              "selective_writes": false,
+              "reuse_code_checks": false,
+              "memory": "flat",
+              "code_watch": true,
+              "cross_page": false,
+              "route_epochs": true,
+              "retain_routes": true,
+              "memory_groups": false,
+              "native_exclusive": false,
+              "vector_table": false,
+              "simd_math": false
+            },
+            {
+              "config": "linux_standard_jit",
+              "page_bytes": 16384
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "anon_rw_rx",
+              "passed": true,
+              "observed": 42
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "anon_rewrite",
+              "passed": true,
+              "observed": 91
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "rx_write",
+              "passed": true,
+              "signal": 11,
+              "si_code": 2,
+              "address": 738263040,
+              "expected_address": 738263040
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "remove_execute",
+              "passed": true,
+              "signal": 11,
+              "si_code": 2,
+              "address": 738263040,
+              "expected_address": 738263040
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "mremap_move",
+              "passed": true,
+              "observed": 91
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "mremap_old_unmapped",
+              "passed": true,
+              "signal": 11,
+              "si_code": 1,
+              "address": 738263040,
+              "expected_address": 738263040
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unmapped_execute",
+              "passed": true,
+              "signal": 11,
+              "si_code": 1,
+              "address": 738279424,
+              "expected_address": 738279424
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "anon_rx_map",
+              "passed": true,
+              "observed": 1
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "anon_rwx",
+              "passed": true,
+              "observed": 74
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "exec_only_vma",
+              "passed": true,
+              "observed": 58
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "ordinary_file_rx",
+              "passed": true,
+              "observed": 57
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "readonly_shared_write",
+              "passed": true,
+              "observed": 13
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "noexec_mmap",
+              "passed": true,
+              "observed": 1
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "noexec_mprotect",
+              "passed": true,
+              "observed": 13
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unpopulated_exec_alias",
+              "passed": true,
+              "observed": 59
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "private_cow_parent",
+              "passed": true,
+              "observed": 41
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "private_file_cow",
+              "passed": true,
+              "observed": 41
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "memfd_alias_updates",
+              "passed": true,
+              "observed": 16
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "memfd_pwrite",
+              "passed": true,
+              "observed": 97
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "memfd_shared_fork",
+              "passed": true,
+              "observed": 111
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "memfd_mremap_clone",
+              "passed": true,
+              "observed": 111
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unicorn_alias_update",
+              "passed": true,
+              "observed": 201
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unicorn_pwrite_update",
+              "passed": true,
+              "observed": 202
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unicorn_unseen_pwrite",
+              "passed": true,
+              "observed": 203
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "same_va_new_backing",
+              "passed": true,
+              "observed": 87
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "sealed_write",
+              "passed": true,
+              "observed": 1
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unicorn_self_page_flush",
+              "passed": true,
+              "observed": 67
+            },
+            {
+              "cpu": 0,
+              "translation_icache": true,
+              "operations": 34,
+              "invalidations": 31
+            },
+            {
+              "cpu": 0,
+              "direct_execution": true,
+              "calls": 169318,
+              "fallbacks": 122,
+              "compiles": 708,
+              "code_changes": 31
+            }
+          ]
+        },
+        {
+          "entry": "gcd",
+          "returncode": 0,
+          "validated": true,
+          "stdout_sha256": "4d41d4f0085b187b38958c799e10e24ae416b152c0258e570b10c2b206714ed1",
+          "stderr_sha256": "fc0d5465782506de9530ceb3a2f211a2a9b721ada92205fa1d5120d0789c0cfc",
+          "rejected_parser_variants": 341,
+          "results": [
+            {
+              "cpu": 0,
+              "config": "translation_execution",
+              "engine": "direct",
+              "direct_cache_bytes": 16777216,
+              "data_page_bytes": 16384,
+              "mapping_entries": 256,
+              "route_entries": 256,
+              "selective_writes": false,
+              "reuse_code_checks": false,
+              "memory": "flat",
+              "code_watch": true,
+              "cross_page": false,
+              "route_epochs": true,
+              "retain_routes": true,
+              "memory_groups": false,
+              "native_exclusive": false,
+              "vector_table": false,
+              "simd_math": false
+            },
+            {
+              "config": "linux_standard_jit",
+              "page_bytes": 16384
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "anon_rw_rx",
+              "passed": true,
+              "observed": 42
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "anon_rewrite",
+              "passed": true,
+              "observed": 91
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "rx_write",
+              "passed": true,
+              "signal": 11,
+              "si_code": 2,
+              "address": 738263040,
+              "expected_address": 738263040
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "remove_execute",
+              "passed": true,
+              "signal": 11,
+              "si_code": 2,
+              "address": 738263040,
+              "expected_address": 738263040
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "mremap_move",
+              "passed": true,
+              "observed": 91
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "mremap_old_unmapped",
+              "passed": true,
+              "signal": 11,
+              "si_code": 1,
+              "address": 738263040,
+              "expected_address": 738263040
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unmapped_execute",
+              "passed": true,
+              "signal": 11,
+              "si_code": 1,
+              "address": 738279424,
+              "expected_address": 738279424
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "anon_rx_map",
+              "passed": true,
+              "observed": 1
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "anon_rwx",
+              "passed": true,
+              "observed": 74
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "exec_only_vma",
+              "passed": true,
+              "observed": 58
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "ordinary_file_rx",
+              "passed": true,
+              "observed": 57
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "readonly_shared_write",
+              "passed": true,
+              "observed": 13
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "noexec_mmap",
+              "passed": true,
+              "observed": 1
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "noexec_mprotect",
+              "passed": true,
+              "observed": 13
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unpopulated_exec_alias",
+              "passed": true,
+              "observed": 59
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "private_cow_parent",
+              "passed": true,
+              "observed": 41
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "private_file_cow",
+              "passed": true,
+              "observed": 41
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "memfd_alias_updates",
+              "passed": true,
+              "observed": 16
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "memfd_pwrite",
+              "passed": true,
+              "observed": 97
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "memfd_shared_fork",
+              "passed": true,
+              "observed": 111
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "memfd_mremap_clone",
+              "passed": true,
+              "observed": 111
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unicorn_alias_update",
+              "passed": true,
+              "observed": 201
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unicorn_pwrite_update",
+              "passed": true,
+              "observed": 202
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unicorn_unseen_pwrite",
+              "passed": true,
+              "observed": 203
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "same_va_new_backing",
+              "passed": true,
+              "observed": 87
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "sealed_write",
+              "passed": true,
+              "observed": 1
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unicorn_self_page_flush",
+              "passed": true,
+              "observed": 67
+            },
+            {
+              "cpu": 0,
+              "translation_icache": true,
+              "operations": 34,
+              "invalidations": 31
+            },
+            {
+              "cpu": 0,
+              "direct_execution": true,
+              "calls": 169330,
+              "fallbacks": 123,
+              "compiles": 709,
+              "code_changes": 31
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "smp-complete",
+      "command": [
+        "python3",
+        "scripts/probe_lkl_translation.py",
+        "--mapping",
+        "pte",
+        "--code-memory",
+        "dual",
+        "--reuse-engine-build",
+        "--workload",
+        "core",
+        "--entry",
+        "both",
+        "--execution",
+        "direct",
+        "--direct-memory",
+        "flat",
+        "--guest-layout",
+        "host",
+        "--cpus",
+        "2",
+        "--direct-code-watch",
+        "1",
+        "--direct-native-exclusive",
+        "1",
+        "--exec-cache",
+        "pages",
+        "--preemption",
+        "timer",
+        "--output",
+        "work/native-linux-nce/jit-smp-complete"
+      ],
+      "summary": "work/native-linux-nce/jit-smp-complete/summary.json",
+      "summary_sha256": "e4f44e839e615e5ac67175558ffb4b97c85a7ff84aeea7fa959d6d4585f557b7",
+      "configuration": {
+        "guest_layout": "host",
+        "code_memory": "dual",
+        "execution": "direct",
+        "direct": {
+          "mapping_entries": 256,
+          "route_entries": 256,
+          "selective_writes": false,
+          "reuse_code_checks": false,
+          "memory": "flat",
+          "code_watch": true,
+          "cross_page": false,
+          "route_epochs": false,
+          "retain_routes": false,
+          "memory_groups": false,
+          "native_exclusive": true,
+          "vector_table": false,
+          "simd_math": false
+        },
+        "mapping": "pte",
+        "sparse_scan": true,
+        "fault_prefetch": false,
+        "guest_page_bytes": 16384,
+        "workload": "core",
+        "entries": [
+          "cli",
+          "gcd"
+        ],
+        "art_nterp": 1,
+        "cpus": 2,
+        "high_res_timers": false,
+        "online_cpus": 2,
+        "uaccess_stop": "all",
+        "parallel_profile": false,
+        "art_expanded_jit": 0,
+        "art_fast_baseline": 0,
+        "cache_invalidation": "pages",
+        "exec_cache": "pages",
+        "tlb_invalidation": "full",
+        "linux_fastpath": 0,
+        "guest_ram_bytes": 1073741824,
+        "translation_cache_bytes": 16777216,
+        "instruction_batch": 50000,
+        "memory_interval_ms": 100,
+        "preemption": "timer",
+        "timer_interval_ns": 2000000
+      },
+      "artifact_sha256": {
+        "work/native-linux-nce/lkl-translation-smp-kernel/lkl-image.bin": "bf3aa7db1a36a81fa5c9737f33623c1e327a0b1743326cb3fea9c443ac757426",
+        "work/native-linux-nce/unicorn-tb-stop-dual/build.json": "10571dc03484262efd6497c15490d98d03f6a34b3fb067ac6ea837f132fd5816",
+        "work/native-linux-nce/jit-smp-complete/cli": "fb6507aa0c11241895f2d9e3ec2bb4f5577313a34f108c31d28858b1ecf6f4dd",
+        "work/native-linux-nce/jit-smp-complete/gcd": "633d8ebef7f29ed9176c1e0b750648bf4528d9d42a8a6910bcdb568629cc5879",
+        "work/native-linux-nce/jit-smp-complete/guest.elf": "8cda9c6677678893ec9aba32cc4044a526ac60acfd92507147274a213faae9e1",
+        "work/native-linux-nce/lkl-translation-smp-kernel/build.json": "80ed26232cc494c48c2133631608ec9cdf290293c5a51c5764dcf2c453569f91"
+      },
+      "runs": [
+        {
+          "entry": "cli",
+          "returncode": 0,
+          "validated": true,
+          "stdout_sha256": "1c068ff85282454bd9046c69a976bd4fb54c3cfcf98f813c9cd1ae38396b37e4",
+          "stderr_sha256": "e03ba727abc26e26c16c89307a18b3cb3da738e9566e7db8b13ddf55e2d08909",
+          "rejected_parser_variants": 341,
+          "results": [
+            {
+              "cpu": 0,
+              "config": "translation_execution",
+              "engine": "direct",
+              "direct_cache_bytes": 16777216,
+              "data_page_bytes": 16384,
+              "mapping_entries": 256,
+              "route_entries": 256,
+              "selective_writes": false,
+              "reuse_code_checks": false,
+              "memory": "flat",
+              "code_watch": true,
+              "cross_page": false,
+              "route_epochs": false,
+              "retain_routes": false,
+              "memory_groups": false,
+              "native_exclusive": true,
+              "vector_table": false,
+              "simd_math": false
+            },
+            {
+              "cpu": 1,
+              "config": "translation_execution",
+              "engine": "direct",
+              "direct_cache_bytes": 16777216,
+              "data_page_bytes": 16384,
+              "mapping_entries": 256,
+              "route_entries": 256,
+              "selective_writes": false,
+              "reuse_code_checks": false,
+              "memory": "flat",
+              "code_watch": true,
+              "cross_page": false,
+              "route_epochs": false,
+              "retain_routes": false,
+              "memory_groups": false,
+              "native_exclusive": true,
+              "vector_table": false,
+              "simd_math": false
+            },
+            {
+              "config": "linux_standard_jit",
+              "page_bytes": 16384
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "anon_rw_rx",
+              "passed": true,
+              "observed": 42
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "anon_rewrite",
+              "passed": true,
+              "observed": 91
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "rx_write",
+              "passed": true,
+              "signal": 11,
+              "si_code": 2,
+              "address": 481774534656,
+              "expected_address": 481774534656
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "remove_execute",
+              "passed": true,
+              "signal": 11,
+              "si_code": 2,
+              "address": 481774534656,
+              "expected_address": 481774534656
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "mremap_move",
+              "passed": true,
+              "observed": 91
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "mremap_old_unmapped",
+              "passed": true,
+              "signal": 11,
+              "si_code": 1,
+              "address": 481774534656,
+              "expected_address": 481774534656
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unmapped_execute",
+              "passed": true,
+              "signal": 11,
+              "si_code": 1,
+              "address": 481774551040,
+              "expected_address": 481774551040
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "anon_rx_map",
+              "passed": true,
+              "observed": 1
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "anon_rwx",
+              "passed": true,
+              "observed": 74
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "exec_only_vma",
+              "passed": true,
+              "observed": 58
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "ordinary_file_rx",
+              "passed": true,
+              "observed": 57
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "readonly_shared_write",
+              "passed": true,
+              "observed": 13
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "noexec_mmap",
+              "passed": true,
+              "observed": 1
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "noexec_mprotect",
+              "passed": true,
+              "observed": 13
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unpopulated_exec_alias",
+              "passed": true,
+              "observed": 59
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "private_cow_parent",
+              "passed": true,
+              "observed": 41
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "private_file_cow",
+              "passed": true,
+              "observed": 41
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "memfd_alias_updates",
+              "passed": true,
+              "observed": 16
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "memfd_pwrite",
+              "passed": true,
+              "observed": 97
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "memfd_shared_fork",
+              "passed": true,
+              "observed": 111
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "memfd_mremap_clone",
+              "passed": true,
+              "observed": 111
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unicorn_alias_update",
+              "passed": true,
+              "observed": 201
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unicorn_pwrite_update",
+              "passed": true,
+              "observed": 202
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unicorn_unseen_pwrite",
+              "passed": true,
+              "observed": 203
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "same_va_new_backing",
+              "passed": true,
+              "observed": 87
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "sealed_write",
+              "passed": true,
+              "observed": 1
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unicorn_self_page_flush",
+              "passed": true,
+              "observed": 67
+            },
+            {
+              "cpu": 0,
+              "translation_icache": true,
+              "operations": 31,
+              "invalidations": 29
+            },
+            {
+              "cpu": 1,
+              "translation_icache": true,
+              "operations": 3,
+              "invalidations": 2
+            },
+            {
+              "cpu": 0,
+              "direct_execution": true,
+              "calls": 64739,
+              "fallbacks": 175,
+              "compiles": 379,
+              "code_changes": 154
+            },
+            {
+              "cpu": 1,
+              "direct_execution": true,
+              "calls": 169635,
+              "fallbacks": 141,
+              "compiles": 597,
+              "code_changes": 1
+            }
+          ]
+        },
+        {
+          "entry": "gcd",
+          "returncode": 0,
+          "validated": true,
+          "stdout_sha256": "921a16191758006a98aa2cb52eff872827be0fb62959087134be3567c6fc5bfb",
+          "stderr_sha256": "790c6b8f4e08e8eb67763822057b0471fd9ceb98697e83d1aff10440e7699c3a",
+          "rejected_parser_variants": 341,
+          "results": [
+            {
+              "cpu": 0,
+              "config": "translation_execution",
+              "engine": "direct",
+              "direct_cache_bytes": 16777216,
+              "data_page_bytes": 16384,
+              "mapping_entries": 256,
+              "route_entries": 256,
+              "selective_writes": false,
+              "reuse_code_checks": false,
+              "memory": "flat",
+              "code_watch": true,
+              "cross_page": false,
+              "route_epochs": false,
+              "retain_routes": false,
+              "memory_groups": false,
+              "native_exclusive": true,
+              "vector_table": false,
+              "simd_math": false
+            },
+            {
+              "cpu": 1,
+              "config": "translation_execution",
+              "engine": "direct",
+              "direct_cache_bytes": 16777216,
+              "data_page_bytes": 16384,
+              "mapping_entries": 256,
+              "route_entries": 256,
+              "selective_writes": false,
+              "reuse_code_checks": false,
+              "memory": "flat",
+              "code_watch": true,
+              "cross_page": false,
+              "route_epochs": false,
+              "retain_routes": false,
+              "memory_groups": false,
+              "native_exclusive": true,
+              "vector_table": false,
+              "simd_math": false
+            },
+            {
+              "config": "linux_standard_jit",
+              "page_bytes": 16384
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "anon_rw_rx",
+              "passed": true,
+              "observed": 42
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "anon_rewrite",
+              "passed": true,
+              "observed": 91
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "rx_write",
+              "passed": true,
+              "signal": 11,
+              "si_code": 2,
+              "address": 481774534656,
+              "expected_address": 481774534656
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "remove_execute",
+              "passed": true,
+              "signal": 11,
+              "si_code": 2,
+              "address": 481774534656,
+              "expected_address": 481774534656
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "mremap_move",
+              "passed": true,
+              "observed": 91
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "mremap_old_unmapped",
+              "passed": true,
+              "signal": 11,
+              "si_code": 1,
+              "address": 481774534656,
+              "expected_address": 481774534656
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unmapped_execute",
+              "passed": true,
+              "signal": 11,
+              "si_code": 1,
+              "address": 481774551040,
+              "expected_address": 481774551040
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "anon_rx_map",
+              "passed": true,
+              "observed": 1
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "anon_rwx",
+              "passed": true,
+              "observed": 74
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "exec_only_vma",
+              "passed": true,
+              "observed": 58
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "ordinary_file_rx",
+              "passed": true,
+              "observed": 57
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "readonly_shared_write",
+              "passed": true,
+              "observed": 13
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "noexec_mmap",
+              "passed": true,
+              "observed": 1
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "noexec_mprotect",
+              "passed": true,
+              "observed": 13
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unpopulated_exec_alias",
+              "passed": true,
+              "observed": 59
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "private_cow_parent",
+              "passed": true,
+              "observed": 41
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "private_file_cow",
+              "passed": true,
+              "observed": 41
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "memfd_alias_updates",
+              "passed": true,
+              "observed": 16
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "memfd_pwrite",
+              "passed": true,
+              "observed": 97
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "memfd_shared_fork",
+              "passed": true,
+              "observed": 111
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "memfd_mremap_clone",
+              "passed": true,
+              "observed": 111
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unicorn_alias_update",
+              "passed": true,
+              "observed": 201
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unicorn_pwrite_update",
+              "passed": true,
+              "observed": 202
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unicorn_unseen_pwrite",
+              "passed": true,
+              "observed": 203
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "same_va_new_backing",
+              "passed": true,
+              "observed": 87
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "sealed_write",
+              "passed": true,
+              "observed": 1
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unicorn_self_page_flush",
+              "passed": true,
+              "observed": 67
+            },
+            {
+              "cpu": 0,
+              "translation_icache": true,
+              "operations": 31,
+              "invalidations": 29
+            },
+            {
+              "cpu": 1,
+              "translation_icache": true,
+              "operations": 3,
+              "invalidations": 2
+            },
+            {
+              "cpu": 0,
+              "direct_execution": true,
+              "calls": 135823,
+              "fallbacks": 176,
+              "compiles": 418,
+              "code_changes": 155
+            },
+            {
+              "cpu": 1,
+              "direct_execution": true,
+              "calls": 147735,
+              "fallbacks": 145,
+              "compiles": 608,
+              "code_changes": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "window-complete",
+      "command": [
+        "python3",
+        "scripts/probe_lkl_translation.py",
+        "--mapping",
+        "window",
+        "--execution",
+        "unicorn",
+        "--guest-layout",
+        "host",
+        "--cpus",
+        "1",
+        "--code-memory",
+        "dual",
+        "--reuse-engine-build",
+        "--workload",
+        "core",
+        "--entry",
+        "both",
+        "--output",
+        "work/native-linux-nce/jit-window-complete"
+      ],
+      "summary": "work/native-linux-nce/jit-window-complete/summary.json",
+      "summary_sha256": "c5767eff40c210f7d14e85ec216a463d2c74b5a6a8759406b92f2665c4ec3081",
+      "configuration": {
+        "guest_layout": "host",
+        "code_memory": "dual",
+        "execution": "unicorn",
+        "direct": null,
+        "mapping": "window",
+        "sparse_scan": true,
+        "fault_prefetch": false,
+        "guest_page_bytes": 16384,
+        "workload": "core",
+        "entries": [
+          "cli",
+          "gcd"
+        ],
+        "art_nterp": 1,
+        "cpus": 1,
+        "high_res_timers": false,
+        "online_cpus": 1,
+        "uaccess_stop": "all",
+        "parallel_profile": false,
+        "art_expanded_jit": 0,
+        "art_fast_baseline": 0,
+        "cache_invalidation": "pages",
+        "exec_cache": "full",
+        "tlb_invalidation": "full",
+        "linux_fastpath": 0,
+        "guest_ram_bytes": 1073741824,
+        "translation_cache_bytes": 16777216,
+        "instruction_batch": 50000,
+        "memory_interval_ms": 100,
+        "preemption": "instructions",
+        "timer_interval_ns": 2000000
+      },
+      "artifact_sha256": {
+        "work/native-linux-nce/processes/lkl-image.bin": "2b3eb89c618fd2127770939ec3e3f88866775fe338600496df54100f27a4f519",
+        "work/native-linux-nce/unicorn-tb-stop-dual/build.json": "10571dc03484262efd6497c15490d98d03f6a34b3fb067ac6ea837f132fd5816",
+        "work/native-linux-nce/jit-window-complete/cli": "449951749860b7100b277f92a6a80ae705669c3a691b131c1e3be7324beeb7ac",
+        "work/native-linux-nce/jit-window-complete/gcd": "f9223b1378b7717802b01a6758f38152e57c7471858d7b26749f077d8ef56f77",
+        "work/native-linux-nce/jit-window-complete/guest.elf": "320fd473bffa281e46eac4cb456c3313794834300f6f15c5584b973d69ba3c2b"
+      },
+      "runs": [
+        {
+          "entry": "cli",
+          "returncode": 0,
+          "validated": true,
+          "stdout_sha256": "f4cb6f91cb8e612e33867bc2cdf8512575a1c6a762dcf4fc4c7a5521df0539c0",
+          "stderr_sha256": "ee53ed9ecff3b52c92e1da00fa0cb65ecfdb4f809ad314d4188e4b9faaae7e03",
+          "rejected_parser_variants": 0,
+          "results": [
+            {
+              "cpu": 0,
+              "config": "translation_execution",
+              "engine": "unicorn"
+            },
+            {
+              "test": "linux_dynamic_code",
+              "passed": true,
+              "updates": 128,
+              "sum_iterations": 10000000
+            },
+            {
+              "cpu": 0,
+              "translation_icache": true,
+              "operations": 0,
+              "invalidations": 0
+            }
+          ]
+        },
+        {
+          "entry": "gcd",
+          "returncode": 0,
+          "validated": true,
+          "stdout_sha256": "d50ffd7f1c49fb38981c7f9564d42fac45911c9d3bf2fe925223cee67d8563e7",
+          "stderr_sha256": "4ae5b9cd51d10b0ff0eb438f7f274986da573b33883c5421a1e410911ebea613",
+          "rejected_parser_variants": 0,
+          "results": [
+            {
+              "cpu": 0,
+              "config": "translation_execution",
+              "engine": "unicorn"
+            },
+            {
+              "test": "linux_dynamic_code",
+              "passed": true,
+              "updates": 128,
+              "sum_iterations": 10000000
+            },
+            {
+              "cpu": 0,
+              "translation_icache": true,
+              "operations": 0,
+              "invalidations": 0
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "ios_compile": {
+    "manifest": "work/native-linux-nce/jit-ios-compile/build.json",
+    "manifest_sha256": "0ad576b176b14c668a4e278cf46822f012f2c76a05a2579a9949c33c9b1dd7b5",
+    "result": {
+      "scope": "Compile translation execution source only; no iOS linking or execution",
+      "sdk": "/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS27.1.sdk",
+      "source_sha256": "7a092631efa01e31d09eb4fbf4f76daef0baa964af19205acc45c9ba702bfabb",
+      "checks": [
+        {
+          "cpus": 1,
+          "command": [
+            "xcrun",
+            "clang",
+            "-target",
+            "arm64-apple-ios26.0",
+            "-isysroot",
+            "/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS27.1.sdk",
+            "-O2",
+            "-g",
+            "-Wall",
+            "-Wextra",
+            "-Werror",
+            "-DNCE_IOS_APP",
+            "-DNCE_PROCESS",
+            "-DNCE_TRANSLATION_CPUS=1",
+            "-DNCE_TRANSLATION_DUAL_MAP",
+            "-DNCE_DIRECT_EXECUTION",
+            "-DNCE_GRAPHICS",
+            "-I",
+            "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-standard-jit/experiments/native-linux",
+            "-I",
+            "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-standard-jit/work/native-linux-nce/lkl-translation-kernel",
+            "-I",
+            "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-standard-jit/work/native-linux-nce/jit-standard-fastpath",
+            "-I",
+            "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-standard-jit/work/native-linux-nce/processes/host-include",
+            "-I",
+            "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-standard-jit/work/native-linux-nce/unicorn-tb-stop-dual/prefix/include",
+            "-I",
+            "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-standard-jit/src/ios-jit",
+            "-c",
+            "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-standard-jit/experiments/native-linux/translation/linux-execution.c",
+            "-o",
+            "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-standard-jit/work/native-linux-nce/jit-ios-compile/linux-execution-1.o"
+          ],
+          "returncode": 0,
+          "object_sha256": "22d5314020a5a6092d01f8dc7401839904edb5a9cd39665c021030a2598e1736"
+        },
+        {
+          "cpus": 2,
+          "command": [
+            "xcrun",
+            "clang",
+            "-target",
+            "arm64-apple-ios26.0",
+            "-isysroot",
+            "/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS27.1.sdk",
+            "-O2",
+            "-g",
+            "-Wall",
+            "-Wextra",
+            "-Werror",
+            "-DNCE_IOS_APP",
+            "-DNCE_PROCESS",
+            "-DNCE_TRANSLATION_CPUS=2",
+            "-DNCE_TRANSLATION_DUAL_MAP",
+            "-DNCE_DIRECT_EXECUTION",
+            "-DNCE_GRAPHICS",
+            "-DNCE_SMP",
+            "-I",
+            "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-standard-jit/experiments/native-linux",
+            "-I",
+            "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-standard-jit/work/native-linux-nce/lkl-translation-smp-kernel",
+            "-I",
+            "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-standard-jit/work/native-linux-nce/jit-standard-smp",
+            "-I",
+            "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-standard-jit/work/native-linux-nce/processes/host-include",
+            "-I",
+            "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-standard-jit/work/native-linux-nce/unicorn-tb-stop-dual/prefix/include",
+            "-I",
+            "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-standard-jit/src/ios-jit",
+            "-c",
+            "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-standard-jit/experiments/native-linux/translation/linux-execution.c",
+            "-o",
+            "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-standard-jit/work/native-linux-nce/jit-ios-compile/linux-execution-2.o"
+          ],
+          "returncode": 0,
+          "object_sha256": "11c41b0ddbe86a5d2d8041bfff901d02273336830e5ad9399ec8f13d6a463614"
+        }
+      ]
+    }
+  },
+  "standalone_build": {
+    "manifest": "work/native-linux-nce/jit-standalone/build.json",
+    "manifest_sha256": "ea922e2e79ef5558c64e3165c6d11e3a6d883942fdd730651de416d9f83241b3",
+    "result": {
+      "scope": "Standalone standard Linux ARM64 fixture built and disassembled; runtime validation uses the same source linked into core. noexec case requires mount permission.",
+      "commands": [
+        [
+          "/opt/homebrew/opt/llvm/bin/clang",
+          "--target=aarch64-linux-musl",
+          "-mno-outline-atomics",
+          "-fPIE",
+          "-O2",
+          "-g",
+          "-Wall",
+          "-Wextra",
+          "-Werror",
+          "-ffunction-sections",
+          "-DNCE_JIT_STANDALONE",
+          "-nostdinc",
+          "-isystem",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-standard-jit/work/native-linux-nce/musl-build/install/include",
+          "-isystem",
+          "/opt/homebrew/Cellar/llvm/22.1.7_1/lib/clang/22/include",
+          "-c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-standard-jit/experiments/native-linux/translation/jit-guest.c",
+          "-o",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-standard-jit/work/native-linux-nce/jit-standalone/jit-guest.o"
+        ],
+        [
+          "/opt/homebrew/bin/ld.lld",
+          "-pie",
+          "--gc-sections",
+          "--no-dynamic-linker",
+          "-z",
+          "max-page-size=16384",
+          "-z",
+          "common-page-size=16384",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-standard-jit/work/native-linux-nce/musl-build/install/lib/rcrt1.o",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-standard-jit/work/native-linux-nce/musl-build/install/lib/crti.o",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-standard-jit/work/native-linux-nce/jit-standalone/jit-guest.o",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-standard-jit/work/native-linux-nce/musl-build/install/lib/libc.a",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-standard-jit/work/native-linux-nce/compiler-rt-build/libbuiltins.a",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-standard-jit/work/native-linux-nce/musl-build/install/lib/crtn.o",
+          "-o",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-standard-jit/work/native-linux-nce/jit-standalone/standard-jit.elf"
+        ],
+        [
+          "/opt/homebrew/opt/llvm/bin/llvm-objdump",
+          "-d",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-standard-jit/work/native-linux-nce/jit-standalone/standard-jit.elf"
+        ]
+      ],
+      "sha256": {
+        "experiments/native-linux/translation/jit-guest.c": "85ec5039a9d03ec1440b33f63d7d4ae9ac6d974252348b17929a2c6e8b442e1e",
+        "work/native-linux-nce/jit-standalone/standard-jit.elf": "acde9e11d050f6f1fa04ef5b0e0ba0b46c86240b710684007dc02fab6fbc7225",
+        "work/native-linux-nce/jit-standalone/disassembly.txt": "09a568d8d4525410f15f75ae647c48e99ee2c20d0b3e098ee6a3e6eff23bf557"
+      },
+      "instruction_checks": {
+        "CTR_EL0": true,
+        "dc\tcvau": true,
+        "ic\tivau": true,
+        "dsb\tish": true,
+        "isb": true
+      }
+    }
+  },
+  "other_checks": [
+    "scripts/test_translation_flat.py: passed",
+    "py_compile lkl_translation_patch.py, probe_lkl_translation.py, test_standard_jit_report.py: passed",
+    "scripts/format.sh --check for four changed C sources: passed",
+    "git diff --check: passed"
+  ],
+  "limits": [
+    "Current LKL maps VM_EXEC to readable executable PTEs; strict execute-only data isolation is not implemented.",
+    "Missing executable PTE is handled by the later Linux instruction fault; invalid cache operand hardware fault semantics remain unverified.",
+    "SMP core exercises shared code updates and private COW but does not exhaust concurrent publication and scheduling orders.",
+    "Window core uses the existing native kernel artifact and validates its private code interface; native NCE Android is not rebuilt here.",
+    "iOS checks compile linux-execution.c objects only, without linking or running.",
+    "The permission-failure fixture snapshot remains in work; the intermediate stale-code stage has input hashes and raw logs but no saved complete source snapshot."
+  ]
+}

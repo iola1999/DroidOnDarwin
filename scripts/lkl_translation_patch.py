@@ -323,16 +323,61 @@ void nce_translation_cleanup(void)
     if not header.exists() or header.read_bytes() != content:
         header.write_bytes(content)
 
-    # The translated allocator must keep the whole low-address hole unmapped.
+    # Linux owns executable mappings in the translated address space. Native
+    # ELF registration and private code syscalls remain available to ART/linker.
     elf = source / 'arch/lkl/kernel/nce_elf.c'
     if elf.exists():
         content = (experiment / 'lkl-nce-elf.c').read_text()
-        marker = '    result = ksys_mmap_pgoff(addr, len, prot, flags, fd, offset >> PAGE_SHIFT);'
-        replacement = ('    if (!(flags & (MAP_FIXED | MAP_FIXED_NOREPLACE)) && addr < nce_user_base)\n'
-                       '        addr = 0;\n' + marker)
+        start = content.index('static bool overlaps_dynamic(')
+        end = content.index('\n}', start) + 2
+        content = content[:start] + content[end:]
+        marker = '/* Keep ordinary VM operations from replacing prepared host entries or'
         if content.count(marker) != 1:
-            raise RuntimeError('Translation mmap hint source mismatch')
-        elf.write_text(content.replace(marker, replacement))
+            raise RuntimeError('Translation memory syscall source mismatch')
+        content = content[:content.index(marker)] + '''/* The host can translate only this guest range. Linux retains ownership of
+ * VMA permissions, file checks, security policy and mapping placement. */
+static long translated_range(unsigned long start, unsigned long length)
+{
+    if (!length)
+        return 0;
+    if (length > ULONG_MAX - (PAGE_SIZE - 1))
+        return -EINVAL;
+    length = PAGE_ALIGN(length);
+    if (start < nce_user_base || start >= nce_task_size || length > nce_task_size - start ||
+        lkl_ops->user_reserved(start, length))
+        return -EACCES;
+    return 0;
+}
+
+long nce_check_memory_syscall(long number, long *params)
+{
+    unsigned long length = params[1];
+    if (number == 216 && !length)
+        length = PAGE_SIZE;
+    long result = translated_range(params[0], length);
+    if (!result && number == 216 && (params[3] & MREMAP_FIXED))
+        result = translated_range(params[4], params[2]);
+    return result;
+}
+
+SYSCALL_DEFINE6(nce_mmap, unsigned long, addr, unsigned long, len,
+                unsigned long, prot, unsigned long, flags, unsigned long, fd,
+                unsigned long, offset)
+{
+    /* AArch64 mmap takes a byte offset; the generic helper takes pages. */
+    if (offset & ~PAGE_MASK)
+        return -EINVAL;
+    if (flags & (MAP_FIXED | MAP_FIXED_NOREPLACE)) {
+        long result = translated_range(addr, len);
+        if (result)
+            return result;
+    } else if (addr < nce_user_base) {
+        addr = 0;
+    }
+    return ksys_mmap_pgoff(addr, len, prot, flags, fd, offset >> PAGE_SHIFT);
+}
+'''
+        elf.write_text(content)
     pgtable = source / 'arch/lkl/include/asm/pgtable-mmu-3level.h'
     if pgtable.exists():
         content = pgtable.read_text()

@@ -189,7 +189,13 @@ int main(int argc, char **argv)
     }
 #endif
     layout_tests();
+#ifdef NCE_TRANSLATION_STANDARD_JIT
+    extern void standard_jit_tests(void), simd_fallback_tests(void);
+    standard_jit_tests();
+    simd_fallback_tests();
+#else
     dynamic_code_tests();
+#endif
     translation_timer_tests(NCE_TRANSLATION_HIGH_RES_TIMERS);
     signal_tests("musl-translated");
     memory_tests();

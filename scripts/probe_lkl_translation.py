@@ -72,6 +72,38 @@ def validate_guest_layout(rows, requested, flat=False):
             reserve_size == coverage + ram_size + (64 << 20))
 
 
+def validate_standard_jit(rows):
+    if [row for row in rows if row.get('config') == 'linux_standard_jit'] != [
+            {'config': 'linux_standard_jit', 'page_bytes': 16384}]:
+        return False
+    values = {'anon_rw_rx': 42, 'anon_rewrite': 91, 'mremap_move': 91,
+              'anon_rx_map': 1, 'anon_rwx': 74, 'ordinary_file_rx': 57,
+              'readonly_shared_write': 13, 'private_cow_parent': 41, 'private_file_cow': 41,
+              'memfd_alias_updates': 16, 'memfd_pwrite': 97, 'memfd_shared_fork': 111,
+              'memfd_mremap_clone': 111, 'unicorn_alias_update': 201,
+              'unicorn_pwrite_update': 202, 'unicorn_unseen_pwrite': 203,
+              'same_va_new_backing': 87, 'sealed_write': 1, 'unicorn_self_page_flush': 67,
+              'exec_only_vma': 58, 'noexec_mmap': 1, 'noexec_mprotect': 13, 'unpopulated_exec_alias': 59}
+    faults = {'rx_write': 2, 'remove_execute': 2, 'mremap_old_unmapped': 1, 'unmapped_execute': 1}
+    records = [row for row in rows if row.get('test') == 'linux_standard_jit']
+    if len(records) != len(values) + len(faults) or {row.get('case') for row in records} != values.keys() | faults.keys():
+        return False
+    for row in records:
+        name = row['case']
+        if row.get('passed') is not True:
+            return False
+        if name in values:
+            if set(row) != {'test', 'case', 'passed', 'observed'} or type(row['observed']) != int or row['observed'] != values[name]:
+                return False
+        else:
+            if (set(row) != {'test', 'case', 'passed', 'signal', 'si_code', 'address', 'expected_address'} or
+                    any(type(row[key]) != int for key in ('signal', 'si_code', 'address', 'expected_address')) or
+                    row['signal'] != 11 or row['si_code'] != faults[name] or
+                    not 0 < row['address'] < 1 << 64 or row['address'] % 4 or row['address'] != row['expected_address']):
+                return False
+    return True
+
+
 def validate(rows, memory_interval, mapping="window", workload="core", tlb_invalidation=None, execution=None, direct_config=None, cpus=1, parallel_profile=None, uaccess_stop=None, code_lookup_limit=None, code_memory=None, online_cpus=None, guest_layout=None):
     if guest_layout is not None:
         flat = execution == 'direct' and direct_config is not None and direct_config['memory'] in ('flat', 'view')
@@ -156,6 +188,10 @@ def validate(rows, memory_interval, mapping="window", workload="core", tlb_inval
                 'linux_android_elf_reservation_boundaries', 'linux_sparse_reservation_cow',
                 'linux_mmap_byte_offset', 'linux_fault_register_state', 'linux_user_memory_boundaries',
                 'linux_dynamic_link_dlopen_constructors', 'linux_dynamic_tls_threads', 'linux_dynamic_fork_signal'}
+    if workload == 'core' and mapping == 'pte':
+        expected.remove('linux_dynamic_code')
+        if not validate_standard_jit(rows):
+            return False
     if workload == 'bionic':
         from stock_bionic import validate as validate_stock
         if not validate_stock(rows):
@@ -560,6 +596,8 @@ def main():
                '-Wall', '-Wextra', '-Werror', '-nostdinc', '-isystem', libc / 'include', '-isystem', resource,
                f'-DNCE_TRANSLATION_CPUS={args.cpus}', f'-DNCE_TRANSLATION_HIGH_RES_TIMERS={int(args.high_res_timers)}',
                '-c', guest_main, '-o', out / 'guest.o']
+    if args.mapping == 'pte' and not stock_runtime:
+        command.append('-DNCE_TRANSLATION_STANDARD_JIT')
     run(command)
     commands.append(list(map(str, command)))
     guest_objects = []
@@ -568,6 +606,8 @@ def main():
     guest_sources.append(EXP / 'translation/timer-tests.c')
     if stock_runtime:
         guest_sources = []
+    elif args.mapping == 'pte':
+        guest_sources.append(EXP / 'translation/jit-guest.c')
     for source in guest_sources:
         obj = out / (source.stem + '.o')
         compile_command = [llvm / 'clang', '--target=aarch64-linux-musl', '-mno-outline-atomics', '-fPIE', '-O2', '-g',
