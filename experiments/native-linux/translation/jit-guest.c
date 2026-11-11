@@ -357,6 +357,19 @@ static void shared_code(void)
     expect_value(fallback_call(execute), 202);
     report(202);
 
+    const char *tbi = getenv("NCE_DATA_TBI");
+    if (tbi && !strcmp(tbi, "1")) {
+        jit_case = "unicorn_tagged_pwrite_updates";
+        const uint64_t tags[] = {0x02, 0xb4, 0xff};
+        for (unsigned index = 0; index < sizeof(tags) / sizeof(tags[0]); ++index) {
+            constant(words, 205 + index);
+            CHECK(pwrite(fd, words, sizeof(words), page) == sizeof(words));
+            clear_code(write, (void *)((uintptr_t)execute | (tags[index] << 56)));
+            expect_value(fallback_call(execute), 205 + index);
+        }
+        report(3);
+    }
+
     jit_case = "unicorn_unseen_pwrite";
     void *unseen_write = mmap(NULL, page, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 2 * page);
     void *unseen_execute = mmap(NULL, page, PROT_READ | PROT_EXEC, MAP_SHARED, fd, 2 * page);
