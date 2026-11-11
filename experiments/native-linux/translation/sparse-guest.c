@@ -44,8 +44,37 @@ void translation_sparse_tests(void (*inaccessible)(unsigned long, int))
     strcpy(same + 128, "guest-pte");
     CHECK(write(guest_file, same + 128, 10) == 10);
     CHECK(pread(guest_file, same + 256, 10, 0) == 10 && !strcmp(same + 256, "guest-pte"));
-    CHECK(!close(guest_file) && !munmap(same, PAGE));
+    CHECK(!close(guest_file));
+    pid_t same_child = fork();
+    CHECK(same_child >= 0);
+    if (!same_child) {
+        CHECK(!strcmp(same + 128, "guest-pte"));
+        strcpy(same + 128, "child-cow");
+        CHECK(!strcmp(same + 128, "child-cow"));
+        _exit(0);
+    }
+    int same_status;
+    CHECK(waitpid(same_child, &same_status, 0) == same_child && WIFEXITED(same_status) && !WEXITSTATUS(same_status));
+    CHECK(!strcmp(same + 128, "guest-pte") && !munmap(same, PAGE));
+    int same_fd = syscall(SYS_memfd_create, "same-host-address", 0);
+    CHECK(same_fd >= 0 && !ftruncate(same_fd, PAGE));
+    same = mmap((void *)host[0], PAGE, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_FIXED_NOREPLACE, same_fd, 0);
+    CHECK(same == (void *)host[0]);
+    strcpy(same + 128, "shared-before");
+    same_child = fork();
+    CHECK(same_child >= 0);
+    if (!same_child) {
+        CHECK(!strcmp(same + 128, "shared-before"));
+        strcpy(same + 128, "shared-after");
+        _exit(0);
+    }
+    CHECK(waitpid(same_child, &same_status, 0) == same_child && WIFEXITED(same_status) && !WEXITSTATUS(same_status));
+    CHECK(!strcmp(same + 128, "shared-after"));
+    CHECK(!munmap(same, PAGE) && !close(same_fd));
+    inaccessible(host[0], 0);
+    inaccessible(host[0], 1);
     puts("{\"test\":\"translated_sparse_host_pointer_sources\",\"passed\":true}");
+    puts("{\"test\":\"translated_same_host_va_cow_shared\",\"passed\":true}");
 
     volatile unsigned long *low = mmap(NULL, PAGE, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
     CHECK(low != MAP_FAILED && (unsigned long)low < 1UL << 32);

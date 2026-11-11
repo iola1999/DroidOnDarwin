@@ -32,7 +32,7 @@ static unsigned long mapping_mode;''')
     BUG_ON(!base || offset_in_page(base) || base > ~0UL - NCE_USER_SIZE);
     BUG_ON(translation->guest_end <= base || translation->guest_end > (1UL << 47) ||
            offset_in_page(translation->guest_end));
-    BUG_ON(translation->physical_base < translation->guest_end || offset_in_page(translation->physical_base) ||
+    BUG_ON(!translation->physical_base || offset_in_page(translation->physical_base) ||
            translation->physical_base >= NCE_HOST_ADDRESS_LIMIT ||
            NCE_RAM_SIZE + NCE_VMALLOC_SIZE > NCE_HOST_ADDRESS_LIMIT - translation->physical_base);
     nce_task_size = translation->guest_end;

@@ -66,7 +66,7 @@ static void layout_tests(void)
     int low = !strcmp(layout, "low");
     int sparse = !strcmp(layout, "sparse");
     CHECK(low || sparse || !strcmp(layout, "host"));
-    CHECK(base && end > base && physical >= end);
+    CHECK(base && end > base && (low || sparse || physical >= end));
     CHECK(!low || (base == 0x10000 && end == 0x100000000UL));
     CHECK(!sparse || (base == 0x10000 && end == 1UL << 36));
     unsigned long stack_address = (unsigned long)&input;
@@ -80,7 +80,7 @@ static void layout_tests(void)
     const unsigned long forbidden[] = {0, base - PAGE, end, end + 3 * PAGE, physical, ram, host_pointer, UINTPTR_MAX - 7};
     for (unsigned i = 0; i < sizeof(forbidden) / sizeof(*forbidden); ++i) {
         unsigned long address = forbidden[i];
-        CHECK(sparse || address < base || address >= end);
+        CHECK(low || sparse || address < base || address >= end);
         inaccessible(address, 0);
         inaccessible(address, 1);
         CHECK(syscall(SYS_write, fd, address, 1) == -1 && errno == EFAULT);

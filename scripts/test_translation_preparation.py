@@ -16,6 +16,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('report', type=Path)
     parser.add_argument('--output', type=Path, required=True)
+    parser.add_argument('--host-address-overlap', action='store_true', help='测试副本使用 512 GiB 客体范围覆盖宿主预留')
     args = parser.parse_args()
     report = json.loads(args.report.read_text())
     config = report['configuration']
@@ -27,6 +28,8 @@ def main():
     if layout not in ('host', 'low', 'sparse') or (layout in ('low', 'sparse') and (
             config['mapping'] != 'pte' or config['cpus'] != 1 or config['direct']['memory'] != 'flat')):
         parser.error('客体布局与核心检查配置不兼容')
+    if args.host_address_overlap and layout != 'sparse':
+        parser.error('宿主地址重叠检查需要 sparse 核心结果')
     for name, digest in report['sha256'].items():
         if hashlib.sha256((ROOT / name).read_bytes()).hexdigest() != digest:
             parser.error('输入已变化：' + name)
@@ -40,10 +43,16 @@ def main():
                        '-c', str(EXP / 'code-memory.c'), '-o', str(renamed)]
     subprocess.run(prepare_command, check=True, timeout=60)
     execution = out / 'linux-execution.c'
+    execution_source = (EXP / 'translation/linux-execution.c').read_text()
+    if args.host_address_overlap:
+        original = 'guest_end = sparse_guest_layout ? 1UL << 36'
+        if execution_source.count(original) != 1:
+            raise ValueError('稀疏客体上界源码不匹配')
+        execution_source = execution_source.replace(original, 'guest_end = sparse_guest_layout ? 1UL << 39')
     execution.write_text('#define mmap nce_test_reservation_mmap\n'
                          '#define munmap nce_test_reservation_munmap\n'
                          '#define mach_vm_map nce_test_reservation_mach_vm_map\n'
-                         '#include ' + json.dumps(str(EXP / 'translation/linux-execution.c')) + '\n')
+                         + execution_source)
     environment = {**{key: value for key, value in os.environ.items() if not key.startswith('NCE_')}, 'NCE_TRANSLATION_CACHE_MIB': '16', 'NCE_TRANSLATION_PREEMPTION': 'timer',
                    'NCE_TRANSLATION_GUEST_LAYOUT': layout, 'NCE_DIRECT_MEMORY': 'flat',
                    'NCE_DIRECT_NATIVE_EXCLUSIVE': '1', 'NCE_DIRECT_CROSS_PAGE': '1'}
@@ -51,7 +60,7 @@ def main():
               'platform': platform.platform(),
               'cpu': subprocess.check_output(['sysctl', '-n', 'machdep.cpu.brand_string'], text=True).strip(),
               'system_build': subprocess.check_output(['sw_vers', '-buildVersion'], text=True).strip(),
-              'source_configuration': config, 'test_environment': {key: value for key, value in environment.items() if key.startswith('NCE_')},
+              'source_configuration': config, 'test_guest_end': (1 << 39) if args.host_address_overlap else None, 'test_environment': {key: value for key, value in environment.items() if key.startswith('NCE_')},
               'commands': [prepare_command], 'runs': [], 'sha256': {str(path.relative_to(ROOT)): hashlib.sha256(path.read_bytes()).hexdigest()
                   for path in (Path(__file__).resolve(), EXP / 'translation/preparation-failure-test.c',
                                EXP / 'code-memory.c', EXP / 'layout.h', execution, renamed)}}
@@ -63,7 +72,7 @@ def main():
         command[command.index(original)] = str(renamed)
         command[command.index(str(EXP / 'translation/linux-execution.c'))] = str(execution)
         command[command.index('-o') + 1] = str(out / entry)
-        command.append(str(EXP / 'translation/preparation-failure-test.c'))
+        command.extend(['-iquote', str(EXP / 'translation'), str(EXP / 'translation/preparation-failure-test.c')])
         subprocess.run(command, check=True, timeout=120)
         result['commands'].append(command)
         result['sha256'][str((out / entry).relative_to(ROOT))] = hashlib.sha256((out / entry).read_bytes()).hexdigest()
@@ -83,6 +92,8 @@ def main():
             address = reservations[0].get('address') if len(reservations) == 1 else None
             size = (1 << 30) + (64 << 20) + (1 << 32 if layout == 'host' else 0)
             valid_address = type(address) is int and (address >= 1 << (36 if layout == 'sparse' else 32) and address % 16384 == 0 if created else address == 0)
+            if args.host_address_overlap and created:
+                valid_address = type(address) is int and 0x10000 <= address <= (1 << 39) - size and address % 16384 == 0
             expected_reservation = {'test': 'partial_reservation_cleanup', 'passed': not retain_tail,
                                     'layout': layout, 'created': created, 'address': address,
                                     'bytes': size if created else 0, 'releases': int(created),
