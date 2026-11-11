@@ -1,0 +1,5488 @@
+{
+  "scope": "Selected offline files; no boot, installation, runtime dependency or performance validation",
+  "source": {
+    "repository": "NEORUAA/HyperOS-AVD",
+    "commit": "9d7ddd3f046e89d33cb205b5fbbf6dc5b728155c",
+    "release": "v0.1.0-a16-hyperos3-fuxi-r1",
+    "provenance": "Third-party MysticGSI port",
+    "manifest_sha256": "7785f61d0e1846fa14d9f3af9db49c905a02604128747a0d617eeff381504ceb",
+    "parts": [
+      {
+        "name": "HyperOS-AVD-v0.1.0-macos-arm64.tar.gz.part001",
+        "size": 1610612736,
+        "sha256": "5ef3d16c8f02088d60b01024a39065398dd669ab50100ea9547cb64b83db95e9"
+      },
+      {
+        "name": "HyperOS-AVD-v0.1.0-macos-arm64.tar.gz.part002",
+        "size": 1610612736,
+        "sha256": "9ba2b360d0a28f95ba1e1fe4cd135706498a1ada75caa64ff6596b366c2c4b07"
+      },
+      {
+        "name": "HyperOS-AVD-v0.1.0-macos-arm64.tar.gz.part003",
+        "size": 493624687,
+        "sha256": "1b9fe789439b784e13303818faa568739f49ee45bed1389d12e9aec99f64888f"
+      }
+    ]
+  },
+  "partitions": {
+    "system.ext4": {
+      "source_sha256": "61a6011155548708075cb2a69969e689b253881cd5610b911c2df68878304cca",
+      "source_bytes": 6792675328,
+      "path": "work/project-audit-2026-11-12/references/hyperos3-input/extracted/system.ext4",
+      "bytes": 6724648960,
+      "sha256": "dd65f33741bfce77b22b5c58b8d696b16da52f15a825acafcbcede47a3cfa3ca",
+      "partitions": [
+        {
+          "name": "system",
+          "attributes": 1,
+          "group": 1,
+          "size": 6724648960,
+          "ranges": [
+            {
+              "source": 3145728,
+              "length": 6724648960,
+              "target": 0
+            }
+          ]
+        },
+        {
+          "name": "vendor",
+          "attributes": 1,
+          "group": 1,
+          "size": 52797440,
+          "ranges": [
+            {
+              "source": 6728712192,
+              "length": 52797440,
+              "target": 0
+            }
+          ]
+        },
+        {
+          "name": "system_dlkm",
+          "attributes": 1,
+          "group": 1,
+          "size": 7393280,
+          "ranges": [
+            {
+              "source": 6782189568,
+              "length": 7393280,
+              "target": 0
+            }
+          ]
+        }
+      ]
+    },
+    "vendor.erofs": {
+      "source_sha256": "61a6011155548708075cb2a69969e689b253881cd5610b911c2df68878304cca",
+      "source_bytes": 6792675328,
+      "path": "work/project-audit-2026-11-12/references/hyperos3-input/logical-vendor/vendor.erofs",
+      "bytes": 52797440,
+      "sha256": "0549061f9afe13c94baaa942eb08319b0498b66ac38b2cfd73cbbba541153fbd",
+      "partitions": [
+        {
+          "name": "system",
+          "attributes": 1,
+          "group": 1,
+          "size": 6724648960,
+          "ranges": [
+            {
+              "source": 3145728,
+              "length": 6724648960,
+              "target": 0
+            }
+          ]
+        },
+        {
+          "name": "vendor",
+          "attributes": 1,
+          "group": 1,
+          "size": 52797440,
+          "ranges": [
+            {
+              "source": 6728712192,
+              "length": 52797440,
+              "target": 0
+            }
+          ]
+        },
+        {
+          "name": "system_dlkm",
+          "attributes": 1,
+          "group": 1,
+          "size": 7393280,
+          "ranges": [
+            {
+              "source": 6782189568,
+              "length": 7393280,
+              "target": 0
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "scan": {
+    "passed": true,
+    "script_sha256": "b5a465460f2de46f6ee7f9fefff75b9462fe0df38d32209bc7c527d7eba18c63",
+    "raw_report": "work/project-audit-2026-11-12/references/hyperos3-input/core-scan-v4/scan.json",
+    "raw_report_sha256": "bfa0564789255476b36d361810ee23f42b5b99ffae77eb6743778377850bc370",
+    "file_count": 471,
+    "extracted_bytes": 502063943,
+    "command_count": 554,
+    "failed_commands": [],
+    "missing": [
+      "/system/bin/mediaserver"
+    ],
+    "skipped": [
+      {
+        "path": "/system/etc/init/hw/init.boringssl.no_zygote.rc",
+        "mode": 41380
+      },
+      {
+        "path": "/system/etc/init/hw/init.boringssl.zygote32.rc",
+        "mode": 41380
+      }
+    ]
+  },
+  "files": {
+    "/init.environ.rc": {
+      "bytes": 621,
+      "sha256": "460eecf019489a02ad7be82a9cc2234784f561b644f8f2bf1741e43514593060"
+    },
+    "/system/build.prop": {
+      "bytes": 14159,
+      "sha256": "f437029088dc85a2cde0a3cf293de900eb03179977f6252dcd259005b9b1acc4"
+    },
+    "/system_ext/etc/build.prop": {
+      "bytes": 4888,
+      "sha256": "c8e3df1444d1c7702c8b9029f287f277ccb8869e7f39884fd11ebdff11a4a2af"
+    },
+    "/product/etc/build.prop": {
+      "bytes": 10281,
+      "sha256": "f781e43010c0932ff20e778246348249a51535609ccb91138be59ede918507f3"
+    },
+    "/system/bin/app_process64": {
+      "bytes": 23096,
+      "sha256": "99e624bc6ec9083abfd40417972e6458ced3303892e0a24f81872e5bfe9e74ea"
+    },
+    "/system/bin/app_process32": {
+      "bytes": 11228,
+      "sha256": "26ab1f5467e1ce09e5f6945bde04c6e0a3cdc58ab86a5ebf37faf809a8539632"
+    },
+    "/system/bin/surfaceflinger": {
+      "bytes": 641904,
+      "sha256": "49db308f61113f8277a89074d373fb2823fd8bc24c2689624ea54f7c273b3b0b"
+    },
+    "/system/bin/mediaserver64": {
+      "bytes": 23368,
+      "sha256": "2b11cb5c138654001606aa38424ae9bdd29ddcc603118bcb48643f2bef649193"
+    },
+    "/system/bin/drmserver": {
+      "bytes": 103832,
+      "sha256": "fac41cf7fb7d256df06417c671defa8761f6e96222851a33da3195097938e409"
+    },
+    "/system/lib64/libandroid_runtime.so": {
+      "bytes": 3300312,
+      "sha256": "ee74b1268580d83a237b03db05d4f2cd9e6a103bae1113e4fae04254dbc82821"
+    },
+    "/system/lib64/libbinder.so": {
+      "bytes": 1654920,
+      "sha256": "8679aebf8c193bfeac7afdf039df7a6bde8d178efed164ddfcde57ca77cbe529"
+    },
+    "/system/lib64/libgui.so": {
+      "bytes": 3851344,
+      "sha256": "a6180280ca1886f8030551d32958921725e64ac7241dba865f60df2209f0f36b"
+    },
+    "/system/lib64/libEGL.so": {
+      "bytes": 254416,
+      "sha256": "037c77026f3cf068d420502a46cdf0c887a28deb8e41b3237b4ad50f3b7e3994"
+    },
+    "/system/lib64/libui.so": {
+      "bytes": 923312,
+      "sha256": "a6f21ce2e1f0b1d21e45e1b9ca05d48040af051e9ebe663fefc058b89a16a68f"
+    },
+    "/system/framework/framework.jar": {
+      "bytes": 48585696,
+      "sha256": "5b89ccb13a464e2cd4357347d0fef9c194bd8fde01c0ff29b5ea7e151bc908b4"
+    },
+    "/system/framework/services.jar": {
+      "bytes": 35440693,
+      "sha256": "2f1e82bed03940c695d1989f1968642c390d039804c0009dfc27120ccd23200a"
+    },
+    "/system/framework/framework-res.apk": {
+      "bytes": 25929719,
+      "sha256": "4c7a46c12cdedc3832743b43a9a42367487a4f98fa017253dd69e89e7c4e34dd"
+    },
+    "/system_ext/framework/miui-framework.jar": {
+      "bytes": 6842890,
+      "sha256": "803c7620aabf86f07cb25daa66705e455c24a2a6a66c7b21acdb6185d6d0dbe1"
+    },
+    "/system_ext/framework/xiaomi-framework.jar": {
+      "bytes": 738241,
+      "sha256": "6a20daaacc8b5cfd4136cb3430d8596bcacb90dfb3f8f0ad89bddd71e539798d"
+    },
+    "/system_ext/framework/miui-services.jar": {
+      "bytes": 11768970,
+      "sha256": "4678ff0855c6cbf0ef3dd679312f602a0195e53133fc6027dae1905e7c2a7b4d"
+    },
+    "/system/priv-app/SettingsProvider/SettingsProvider.apk": {
+      "bytes": 545076,
+      "sha256": "2d8a841de864a1b269f00cde8f83c475d5857713530d44a1bfeaaccafcd9617b"
+    },
+    "/system_ext/priv-app/MiuiSystemUI/MiuiSystemUI.apk": {
+      "bytes": 49825458,
+      "sha256": "9905ce11380c26e95899523d21155f7f992cf90edefed6fffd6db92323412346"
+    },
+    "/system_ext/priv-app/Settings/Settings.apk": {
+      "bytes": 124484606,
+      "sha256": "f8f781ab8a99e0f8216a47ff94a4b8726af2f930978d026876cfc87a615a608b"
+    },
+    "/product/priv-app/MiuiHome/MiuiHome.apk": {
+      "bytes": 24860320,
+      "sha256": "b875544f3f66557193ac5b897f355c1d8b38c2c6959df6a5b95a41cb9e716d2a"
+    },
+    "/system/apex/com.android.art.capex": {
+      "bytes": 20668968,
+      "sha256": "7161d67dd40732b3adcc872dec51042711a60d73f5d127127a02f829ebf8dfaa"
+    },
+    "/system/apex/com.android.art.capex!original_apex": {
+      "bytes": 44949504,
+      "sha256": "95ccc5bc7e67a2e45252d37e17ffd426b77ecd794615e79e17bfa4a36b512543"
+    },
+    "/system/apex/com.android.art.capex!original_apex!apex_manifest.pb": {
+      "bytes": 400,
+      "sha256": "f4faa54c9e6400846d0ce596075d6042aa88c50ec2fa7581d5471ba08cea13a8"
+    },
+    "/system/apex/com.android.art.capex!original_apex!apex_pubkey": {
+      "bytes": 1032,
+      "sha256": "0c8afbc898277bb4654702f1f9e8f533f9b2fb981c909a4d4468a9c03c9d4819"
+    },
+    "/system/apex/com.android.art.capex!original_apex!apex_payload.img": {
+      "bytes": 44781568,
+      "sha256": "62b74c80506918d88ade0c23492701993df8263caf9115f6d895df0fb200762f"
+    },
+    "/system/apex/com.android.art.capex!original_apex!apex_payload.img/lib64/libart.so": {
+      "bytes": 12934120,
+      "sha256": "bc853e5574df75a348ca4e3e3f332d5a61673aa5d89b22a43908a49315e7895a"
+    },
+    "/system/apex/com.android.art.capex!original_apex!apex_payload.img/lib64/libartbase.so": {
+      "bytes": 747768,
+      "sha256": "c6e0f1c9a3827c16c783ec157606bfd09b229759d907313fec9227e00cc3c12e"
+    },
+    "/system/apex/com.android.art.capex!original_apex!apex_payload.img/bin/dex2oat64": {
+      "bytes": 1242216,
+      "sha256": "448d5b492c81e4e56c57e59441f7ccd2f155850a3983b4b957220ee2ab00bfe1"
+    },
+    "/system/apex/com.android.art.capex!original_apex!apex_payload.img/bin/artd": {
+      "bytes": 340776,
+      "sha256": "2db679557d4ad51e1070be9a060e7b5360bbbdc00c7fb0127f12b1e76b50cce1"
+    },
+    "/system/apex/com.android.art.capex!apex_manifest.pb": {
+      "bytes": 468,
+      "sha256": "a5c5a63d63f3fb474cfce0388ed33213e5dc564a46936f846e8d8a62ddbde454"
+    },
+    "/system/apex/com.android.art.capex!apex_pubkey": {
+      "bytes": 1032,
+      "sha256": "0c8afbc898277bb4654702f1f9e8f533f9b2fb981c909a4d4468a9c03c9d4819"
+    },
+    "/system/apex/com.android.runtime.apex": {
+      "bytes": 11640832,
+      "sha256": "e8c9266af6d5bbbb63117b19e0cf538e0c29f59ef930af1fb16dadc5de3a1483"
+    },
+    "/system/apex/com.android.runtime.apex!apex_manifest.pb": {
+      "bytes": 143,
+      "sha256": "48e74bbf3dead7386e9a16ba8ff51cd9983c5d5ab6973bb7fb8c445a9653d0d9"
+    },
+    "/system/apex/com.android.runtime.apex!apex_pubkey": {
+      "bytes": 1032,
+      "sha256": "5d4f0f9d7356ddf9bafd5b77c7264d340263f28d3e408441d289db120d04cc99"
+    },
+    "/system/apex/com.android.runtime.apex!apex_payload.img": {
+      "bytes": 11530240,
+      "sha256": "8223cf2c95b7e68be8f4d1c18ae73247224a4ddb88f22c92229e5507d975396d"
+    },
+    "/system/apex/com.android.runtime.apex!apex_payload.img/bin/linker64": {
+      "bytes": 2304120,
+      "sha256": "78150127479cdc4f403eb038da465c8a56959f0d1fd323ed6e24b4de9f5e3d8b"
+    },
+    "/system/apex/com.android.runtime.apex!apex_payload.img/lib64/bionic/libc.so": {
+      "bytes": 1218152,
+      "sha256": "60745837a8560e1d20de8e581fed8fcd10fb50878ce8bcaf86529bb9bb6a5d22"
+    },
+    "/system/apex/com.android.runtime.apex!apex_payload.img/lib64/bionic/libdl.so": {
+      "bytes": 13976,
+      "sha256": "e32913b439727002d665a72a78c86f837b41bc963b369438df8aa4d2ca1fdfb9"
+    },
+    "/system/apex/com.android.runtime.apex!apex_payload.img/lib64/bionic/libm.so": {
+      "bytes": 232688,
+      "sha256": "8eac3daf8a9fb0957d77a24e9fa8a3528afcb557d4e4b86ceee27a4211b0d53d"
+    },
+    "/system/etc/init/aconfigd.rc": {
+      "bytes": 940,
+      "sha256": "aebb9d75e9ae5bf3571ddd0c09d8a7f934bbd8f9f12f0dab82b9521485291a09"
+    },
+    "/system/etc/init/android.system.suspend-service.rc": {
+      "bytes": 162,
+      "sha256": "ba2068dad761c4a681c48fdad42ba1102d1491789328d0eb583899e0dcf18d4e"
+    },
+    "/system/etc/init/apexd.rc": {
+      "bytes": 1092,
+      "sha256": "dc8279fd9727f9cf6a3eeae5b1b4850d69068ab67a377525f2283ff5efa82c37"
+    },
+    "/system/etc/init/atrace.rc": {
+      "bytes": 30288,
+      "sha256": "ae9e23aa6d387fc58fb1123912d8757eb23e762a0efaf5fbac00dcb3a7fdddca"
+    },
+    "/system/etc/init/audioserver.rc": {
+      "bytes": 3582,
+      "sha256": "777e6eff1638c9d1fdae32d22c0a2da862d88aaad4e78a6f676c595485a2d5cb"
+    },
+    "/system/etc/init/blank_screen.rc": {
+      "bytes": 113,
+      "sha256": "1e4d509471f2f88e46a15c1247bb0e5d8a4732b2dcc066eaa09aa70019e525be"
+    },
+    "/system/etc/init/bootanim.rc": {
+      "bytes": 397,
+      "sha256": "169b5b22d43b16d05423c2def447077183d329cc41c02f1f3da84ecdfbbd26c8"
+    },
+    "/system/etc/init/bootstat.rc": {
+      "bytes": 4119,
+      "sha256": "fddcd823ddcde967e358a8412eb6ea8ce66a0051e608fc5939dd03075338a55d"
+    },
+    "/system/etc/init/cameraserver.rc": {
+      "bytes": 718,
+      "sha256": "bd552918c8aa1995d4f13a45738acd32b7a3c29980ce38fd68c95f546e00bcd5"
+    },
+    "/system/etc/init/credstore.rc": {
+      "bytes": 115,
+      "sha256": "438e38856cdf410379144d7dfacff0f37a961007b238a0acba1d442bc900faac"
+    },
+    "/system/etc/init/dmesgd.rc": {
+      "bytes": 647,
+      "sha256": "fb3c26e424a78839070c6fa79c6b35bc426b9218972ceed883308424d7b34301"
+    },
+    "/system/etc/init/drmserver.rc": {
+      "bytes": 256,
+      "sha256": "e35d0f49ea371744d2acfda7305112ed5d72d1f59401fb1518a99bbe4b3cb4de"
+    },
+    "/system/etc/init/dumpstate.rc": {
+      "bytes": 1334,
+      "sha256": "bd432c982f409851370c2c076bd2d59d2734ebf335173cd9323a73111f64e6e9"
+    },
+    "/system/etc/init/flags_health_check.rc": {
+      "bytes": 504,
+      "sha256": "76c3bf64f41057bc9c9ce0ca433f71c5d6a0f42cd4bd17c0b696debb97763239"
+    },
+    "/system/etc/init/gatekeeperd.rc": {
+      "bytes": 140,
+      "sha256": "d03a1ca16e4db87a11d47d03433f5d31cce5c9251f3cf8f5bd52f74bf3a9ae64"
+    },
+    "/system/etc/init/gpuservice.rc": {
+      "bytes": 102,
+      "sha256": "a4f71d84d4c830c08aae58a434727691fa972a40a2b5cb8e2288d2d80d42f7de"
+    },
+    "/system/etc/init/gsid.rc": {
+      "bytes": 800,
+      "sha256": "891aa13d00c847784594e2f24ed25763a1778a3a57fae8fff5d25cd81759992f"
+    },
+    "/system/etc/init/heapprofd.rc": {
+      "bytes": 2121,
+      "sha256": "325c7e57909523e3c617a4d28311f5f15c575b69c0ccbf96c99d6d657b0a6475"
+    },
+    "/system/etc/init/hw/init.boringssl.zygote64.rc": {
+      "bytes": 196,
+      "sha256": "dbad9c5c5b6dbb16615f893c03ccb3be700e1054ebd90ad92bac82c1e50a1284"
+    },
+    "/system/etc/init/hw/init.boringssl.zygote64_32.rc": {
+      "bytes": 392,
+      "sha256": "afeaef2628f6ab1e7352f49274aa8e745ea2ceb4555f7216e732856b56b61c32"
+    },
+    "/system/etc/init/hw/init.rc": {
+      "bytes": 74023,
+      "sha256": "b4d2374823da392114c72c1576a121de3e521c3423fb1eda0c06b5a3f6a3e03a"
+    },
+    "/system/etc/init/hw/init.usb.configfs.rc": {
+      "bytes": 13017,
+      "sha256": "b261028bb09eb04e38679d5036165dbdb18eb6ffd0687afbacc78e41b8f7e867"
+    },
+    "/system/etc/init/hw/init.usb.rc": {
+      "bytes": 5932,
+      "sha256": "b42a64eab42cdb0cbdce037348696b5169e50007109d3dca32acbbcebbb6c4c5"
+    },
+    "/system/etc/init/hw/init.zygote32.rc": {
+      "bytes": 979,
+      "sha256": "cbd70a574593ff8e6b0a6d988a8c23c60912072a60aabf2bd7258468721766b0"
+    },
+    "/system/etc/init/hw/init.zygote64.rc": {
+      "bytes": 1002,
+      "sha256": "9c527b9a09adfe7ddf3af18dde9e8981e3508ee5734ef51eb34e42a2a913278a"
+    },
+    "/system/etc/init/hw/init.zygote64_32.rc": {
+      "bytes": 450,
+      "sha256": "ebefc5059d679d689e1b455f40deaff51be4d444a6c2690451f80a938d7417ec"
+    },
+    "/system/etc/init/hw/mediaserver.64bit_false.rc": {
+      "bytes": 216,
+      "sha256": "923dd57f8ae4c13197bca38308d32652e83e520d3d2335a78a939f9c4d802121"
+    },
+    "/system/etc/init/hw/mediaserver.64bit_true.rc": {
+      "bytes": 216,
+      "sha256": "026b42f822df68b4758b5bc6a7f802df4e845277670a47f997fed86f3d08ab5e"
+    },
+    "/system/etc/init/idmap2d.rc": {
+      "bytes": 84,
+      "sha256": "4dc195022f473d4b93770b441997d7086dfa07de82f73a713167bf6d62596779"
+    },
+    "/system/etc/init/incidentd.rc": {
+      "bytes": 851,
+      "sha256": "a989c870659f49b09f9fa618513cab952878326142331af9b7d2a2e59629c7ca"
+    },
+    "/system/etc/init/init-mmd-prop.rc": {
+      "bytes": 1135,
+      "sha256": "f24dbe181dfa97841d7f6f4c4c0ba1cdfebceed6c6c5f28812790446f4779882"
+    },
+    "/system/etc/init/init.offline.log.rc": {
+      "bytes": 2287,
+      "sha256": "51cecea2cf02b9fb02b7a172ffa66f9f9fec40a39d5e90f91cbf3bea96c95d42"
+    },
+    "/system/etc/init/installd.rc": {
+      "bytes": 4783,
+      "sha256": "fcb59d1c3f8e49c5348d383805ca287b54c24d8f8fc3b70378078736676ed4a2"
+    },
+    "/system/etc/init/kcmdlinectrl.rc": {
+      "bytes": 944,
+      "sha256": "690982e3b0b3dd0153903b0e463d8c60f7855cc92d9926e9d9a5d921ef6a0730"
+    },
+    "/system/etc/init/keystore2.rc": {
+      "bytes": 732,
+      "sha256": "8e8688ddc5841d25436100e96cc564715438745623087391f4b4894fc15ce465"
+    },
+    "/system/etc/init/llkd.rc": {
+      "bytes": 1217,
+      "sha256": "915ed69cf1cca279e4a0a8ce03d9b79fd4e274f688cd07d47bdb85e13e93a5c3"
+    },
+    "/system/etc/init/lmkd.rc": {
+      "bytes": 2745,
+      "sha256": "0d91c6a2e95acffa56a54fdad971908480f7111be35a7f1d7d171ea448a671b7"
+    },
+    "/system/etc/init/logd.rc": {
+      "bytes": 1006,
+      "sha256": "26378c0ea5f8d424616760c16522d6c3f300daaca75929720dd6b8383cab6e56"
+    },
+    "/system/etc/init/lpdumpd.rc": {
+      "bytes": 1346,
+      "sha256": "8bc75276337f68cbf977e1bb732e95cde28d5a928f4d3a96155c52c3f5b73b5a"
+    },
+    "/system/etc/init/mdnsd.rc": {
+      "bytes": 142,
+      "sha256": "6dcc3f787ed0bb94abb3843504604625c62852072219d8bf15e8628baef2cb95"
+    },
+    "/system/etc/init/mediaextractor.rc": {
+      "bytes": 162,
+      "sha256": "679f6722ee487f9ea335754f74198ff5969e57b163830ccd8fb31ae4401321b4"
+    },
+    "/system/etc/init/mediametrics.rc": {
+      "bytes": 162,
+      "sha256": "9a5101b1399525b66ace536a371dd48ee3513c4976f842fef544ed7e52ef2130"
+    },
+    "/system/etc/init/mediaserver_dynamic_QCOM.rc": {
+      "bytes": 162,
+      "sha256": "96b0835c2bb764535991871a7b104fa8bcf870c2277d80a868627f38f2395279"
+    },
+    "/system/etc/init/misctrl.rc": {
+      "bytes": 105,
+      "sha256": "7cc878b32487f411a158cf1442bfbfaf9fdfe68f2cc1db1fa90c62bc5d1f7d6e"
+    },
+    "/system/etc/init/mtectrl.rc": {
+      "bytes": 1885,
+      "sha256": "29eac36d897e17ab5d960bf27950e4086f94cdd368f73c5578c9598b1308a6cc"
+    },
+    "/system/etc/init/mystic.rc": {
+      "bytes": 228,
+      "sha256": "37c5e88ad05f7b7ab67466088bee24b893c85d23b4ec4bf5c1ddb33c9758057d"
+    },
+    "/system/etc/init/netbpfload.rc": {
+      "bytes": 3907,
+      "sha256": "b084ef36f4410b92ebf71ba6644baa989b84267b0d773661ecaebb7ea5a3c270"
+    },
+    "/system/etc/init/netd.rc": {
+      "bytes": 1602,
+      "sha256": "f3649dbb95b5e57b7543213a07079d1e900d5cdbcf498f28334a2981a940c96e"
+    },
+    "/system/etc/init/odsign.rc": {
+      "bytes": 517,
+      "sha256": "050034426570b9e084accefd20e69d636e3fe9cf4d043e75ca067b467d4e36e5"
+    },
+    "/system/etc/init/perfetto.rc": {
+      "bytes": 8896,
+      "sha256": "55ddf2d62c381b446efd630ae8941968c75a94fbc88b00c64b0f5ecda74ded4d"
+    },
+    "/system/etc/init/permissiver.rc": {
+      "bytes": 41,
+      "sha256": "2efafda14066204785ab13d35ca025cdcf07a003c717cc822738dc5c0ce7b6e2"
+    },
+    "/system/etc/init/phh-remotectl.rc": {
+      "bytes": 321,
+      "sha256": "73b284ca417a64dc48dc48f150940e88beb3fa534b26a418131b10fc92dad03a"
+    },
+    "/system/etc/init/prefetch.rc": {
+      "bytes": 1251,
+      "sha256": "6205f0483cfd63b43150c2bed9238329f06ee4dfa9456e1a18097286116347be"
+    },
+    "/system/etc/init/prng_seeder.rc": {
+      "bytes": 307,
+      "sha256": "6c4763c65ab372e459e5b1558e733fa08a85615198d2555a4112276b47cb71d4"
+    },
+    "/system/etc/init/rss_hwm_reset.rc": {
+      "bytes": 900,
+      "sha256": "22e991061614907864fc59838b0eea34037e6497ac356b4ba3c196af961eb4e5"
+    },
+    "/system/etc/init/servicemanager.rc": {
+      "bytes": 614,
+      "sha256": "7e2f32be948a07de4434fa47c7d59974bc65fc773366e888270a9818599db3f7"
+    },
+    "/system/etc/init/simpleperf.rc": {
+      "bytes": 480,
+      "sha256": "526982501006570fd3e39855e3d8265cf0094178c9d7cb1e0e1ee28ec97c15cd"
+    },
+    "/system/etc/init/snapuserd.rc": {
+      "bytes": 537,
+      "sha256": "3a6966f87823b2726a231e7244adf78ad91d581bf4e8b1580630ebb82cc6c498"
+    },
+    "/system/etc/init/storaged.rc": {
+      "bytes": 176,
+      "sha256": "91bbdb0a4b307a9edac822cc8503e6fafa10544eeca8f5d7a24c7dce964f801c"
+    },
+    "/system/etc/init/surfaceflinger.rc": {
+      "bytes": 557,
+      "sha256": "0bc629c807208079dbc7b524e71696b22194c3f530b164055f092a5b23797a9b"
+    },
+    "/system/etc/init/tombstoned.rc": {
+      "bytes": 297,
+      "sha256": "fc4a4486332af51be3fa98e77ab4cd6cb4e13d738c061e3e6ad47aafdf4490d4"
+    },
+    "/system/etc/init/traced_perf.rc": {
+      "bytes": 2137,
+      "sha256": "757876dc3c2c849394c600b5b823d7a1cd45cb8ba63923c90020be45525341eb"
+    },
+    "/system/etc/init/tradeinmode.rc": {
+      "bytes": 431,
+      "sha256": "2d17e7087250a77ecdc31c9583210b83cb12b963a96e71c2d095c1f3c74d4c83"
+    },
+    "/system/etc/init/uncrypt.rc": {
+      "bytes": 607,
+      "sha256": "0bccee18a0683bb35df2ff8047052694775c9e063192b9f8dded2400e0e22053"
+    },
+    "/system/etc/init/usbd.rc": {
+      "bytes": 103,
+      "sha256": "772b27f3affb6e67d1a6bc83a2b201cbdc053854789326ac9833ab84277ff995"
+    },
+    "/system/etc/init/vdc.rc": {
+      "bytes": 601,
+      "sha256": "51e20689b446f6d05a15a1a3179914cb6ccb2768e7f63dab6b2df5ddbb27d937"
+    },
+    "/system/etc/init/virtual_camera.hal.rc": {
+      "bytes": 350,
+      "sha256": "d7e11a4db117dc8e685676b53b3b38a49d9098fa4767c1f71b5c8edcb9becf54"
+    },
+    "/system/etc/init/vndk.rc": {
+      "bytes": 4592,
+      "sha256": "a2b91fe454b07a2e3d6e1f3c78ad327641a2bf6382ef922bacf3fdb158af408a"
+    },
+    "/system/etc/init/vold.rc": {
+      "bytes": 348,
+      "sha256": "8992fe697a6c256f356c263fc220cf5c2f03076638bad7838f92dcf17250ef56"
+    },
+    "/system/etc/init/wifi.rc": {
+      "bytes": 5821,
+      "sha256": "1d2b56a4610d0ba3a02b0abe0ab05fc99b2fb8a1ce59346f16137e35de636236"
+    },
+    "/system/etc/init/wificond.rc": {
+      "bytes": 135,
+      "sha256": "7ec3ef548e88bcd13577b59239ca88b594454622818e4a9190ad274b1aadee38"
+    },
+    "/system/etc/permissions/CellBroadcastServiceModulePlatform.xml": {
+      "bytes": 1018,
+      "sha256": "2a4bf8f65cf400a05fe5f728fdf1dc9588256133c70c5a731f9423e7d66b06ac"
+    },
+    "/system/etc/permissions/GoogleDocumentsUIMiuiCn_permissions.xml": {
+      "bytes": 1313,
+      "sha256": "fd470308df4abf137a4bc83386dbd9528c13ffdbd8d20e95cd309ab4c1a21e99"
+    },
+    "/system/etc/permissions/android.software.credentials.xml": {
+      "bytes": 752,
+      "sha256": "d2e9c5bd64d53c88b14497fcaa25392097b288017fb7b46038fed88838145728"
+    },
+    "/system/etc/permissions/android.software.live_wallpaper.xml": {
+      "bytes": 1050,
+      "sha256": "055df9cecfb48a0d39dd572f695db812d032d81f68c83e76a8bab16b274caf7a"
+    },
+    "/system/etc/permissions/android.software.webview.xml": {
+      "bytes": 748,
+      "sha256": "2e293ff6ea02063ea3835e42e7a5c17fc5a15a46fff0af486c19dcb5b92fe821"
+    },
+    "/system/etc/permissions/android.software.window_magnification.xml": {
+      "bytes": 895,
+      "sha256": "b3e89beac4f407f1b3acef0788fb6829993a24e0c3035e0e6e00fc266fe92dbd"
+    },
+    "/system/etc/permissions/android.test.base.xml": {
+      "bytes": 797,
+      "sha256": "449eb0b5787d87d8abfaf3a3d00b6b7c908c043ccb9c8120c231ca2fbc7722bc"
+    },
+    "/system/etc/permissions/android.test.mock.xml": {
+      "bytes": 797,
+      "sha256": "58303c4148747f0cdbb6d45445d55fbdf93b99818403ef71ddaf3c79ef29c964"
+    },
+    "/system/etc/permissions/android.test.runner.xml": {
+      "bytes": 801,
+      "sha256": "c388d758b7405b8dcbaafd459a57c9f5b403f0bb3227028842e8453c9d21cdee"
+    },
+    "/system/etc/permissions/com.android.future.usb.accessory.xml": {
+      "bytes": 827,
+      "sha256": "41a19713a08483fd81f5611456c8868c6e631b2fcadbfff435098f5ee3372159"
+    },
+    "/system/etc/permissions/com.android.intentresolver.xml": {
+      "bytes": 1199,
+      "sha256": "866f730bf08e562c55f583eb1066ce13d36383aecdbc852ccd226a18961c63ab"
+    },
+    "/system/etc/permissions/com.android.location.provider.xml": {
+      "bytes": 821,
+      "sha256": "4ec4ab50c51a27a1be9d2dbe9209f35e86a0af73716aef89ff48158c5a6e338d"
+    },
+    "/system/etc/permissions/com.android.media.remotedisplay.xml": {
+      "bytes": 825,
+      "sha256": "0aa455a4959424c5d4c568b5df06f529e7496a4df723b45024522fa2ed2ba48d"
+    },
+    "/system/etc/permissions/com.android.mediadrm.signer.xml": {
+      "bytes": 817,
+      "sha256": "bf033af8111f75db7ab6ccfc4bb93dc89b15636e8add6048bdf234059cbe7fb8"
+    },
+    "/system/etc/permissions/com.android.networkstack.xml": {
+      "bytes": 2064,
+      "sha256": "28b9855a457e416aa51dedcd22edc1eacb1d04286adeb45cf3852a2e7044846e"
+    },
+    "/system/etc/permissions/com.android.nfc_extras.xml": {
+      "bytes": 807,
+      "sha256": "dc7cf40870a1f652ab1068d65973ba2ad7c06ebe06baccb9fd662182b56813c4"
+    },
+    "/system/etc/permissions/com.wapi.wapicertstore.xml": {
+      "bytes": 313,
+      "sha256": "3485ed5c0f527b8f49d285859fc832bedb1eb6e47de7e3b3a06063c9919fb75d"
+    },
+    "/system/etc/permissions/javax.obex.xml": {
+      "bytes": 783,
+      "sha256": "81c400bb23b9345d46a7c51b011bdfcfdeafbd6b60d4c0f2caafcff644f06916"
+    },
+    "/system/etc/permissions/org.apache.http.legacy.xml": {
+      "bytes": 807,
+      "sha256": "708e3464888f4211456eea7b80d9a6f134628e47c2b8a92a850277cbdee123d2"
+    },
+    "/system/etc/permissions/platform.xml": {
+      "bytes": 19441,
+      "sha256": "4e29eb9fee54a8095417b384d3a057caa77b57f61e37cb05ef3f8f3f57595082"
+    },
+    "/system/etc/permissions/privapp-permissions-miui-system.xml": {
+      "bytes": 7387,
+      "sha256": "f3a3af9106f9b06874d380b772d6dc58815a552816f56e72ba01eae6e2eab1eb"
+    },
+    "/system/etc/permissions/privapp-permissions-platform.xml": {
+      "bytes": 44919,
+      "sha256": "2c36f1f9b342436aebe87bfccb1dfb3f4510ea0d3b31f5474160b39b2e810c1f"
+    },
+    "/system/etc/permissions/privapp-permissions-qti.xml": {
+      "bytes": 4339,
+      "sha256": "243f5fc524026ec578114fd370396bf4706ae61a637eda7d2ac1bbb73d8e401b"
+    },
+    "/system/etc/permissions/privapp-permissions-system-miext.xml": {
+      "bytes": 68,
+      "sha256": "b8ca9034c66866b0ae9be3e50b1ba6a10fc94d39a424303fcf80a388c4fb0042"
+    },
+    "/system/etc/permissions/signature-permissions-miui-system.xml": {
+      "bytes": 1853,
+      "sha256": "065ea8950de2dc5a50a764a1811a0ffa57d07d2a5a6cc8b9fb5eeb529abe55ce"
+    },
+    "/system/etc/permissions/uimremoteclient.xml": {
+      "bytes": 328,
+      "sha256": "51e59df550ea01f59e7ff83135b1e6dd25970978e4c14e5b2a57d523617e8c84"
+    },
+    "/system/etc/permissions/uimremoteserver.xml": {
+      "bytes": 329,
+      "sha256": "37b87531ba2b2950bd6c3e784b45dcd01aab75758914b2a81bb5d2c6b3323116"
+    },
+    "/system/etc/sysconfig/com.google.android.mainline.patchlevel.2.xml": {
+      "bytes": 943,
+      "sha256": "9736774ae5d2f4a742349fe36f86c69b11684a969c5438ab7fa2518b7b5d8895"
+    },
+    "/system/etc/sysconfig/enhanced-confirmation.xml": {
+      "bytes": 3438,
+      "sha256": "9386ea02f5ddc68279438d2f2754eac3cb176bbfaf2b2107431710b75db1bab3"
+    },
+    "/system/etc/sysconfig/framework-sysconfig.xml": {
+      "bytes": 3829,
+      "sha256": "6b872619ec2a5e3cb79edfcce3ffd2614317c71c35b222acf662eb98cc73e4d3"
+    },
+    "/system/etc/sysconfig/google-hiddenapi-package-allowlist.xml": {
+      "bytes": 4585,
+      "sha256": "80ba59281084f8ba869e55003401f1d2cd9166f9db2eecc13b4b17e38101c6c6"
+    },
+    "/system/etc/sysconfig/hiddenapi-package-whitelist.xml": {
+      "bytes": 4057,
+      "sha256": "e334c4b65bab721c1b3086cf66d6633dbd1719b13cda1cd5429b88c51788b5e3"
+    },
+    "/system/etc/sysconfig/initial-package-stopped-states.xml": {
+      "bytes": 1871,
+      "sha256": "2a86c51b69f2f9c377ca4c1bc51164540c6ed8d4aa826473742eb29689da30a7"
+    },
+    "/system/etc/sysconfig/package-shareduid-allowlist.xml": {
+      "bytes": 1663,
+      "sha256": "5641a621d0940c1db1e5284fa334a2feb0adf5cb422a272ab123db6ebb5968a9"
+    },
+    "/system/etc/sysconfig/preinstalled-packages-asl-files.xml": {
+      "bytes": 938,
+      "sha256": "650164b60cbc310815347062304c7cc8458288c4681e8c0b5a0aa710eca8d560"
+    },
+    "/system/etc/sysconfig/preinstalled-packages-com.android.providers.media.module.xml": {
+      "bytes": 952,
+      "sha256": "9cf3c9d5243e93159db9ef1c326279d1837a045d8f856a5a36e8a4496b4f14f0"
+    },
+    "/system/etc/sysconfig/preinstalled-packages-platform-full-base.xml": {
+      "bytes": 994,
+      "sha256": "6788db7b7ffce5774c89bc39d33dda250200eec9ce0f93d566dca1e0c8757b43"
+    },
+    "/system/etc/sysconfig/preinstalled-packages-platform-generic-system.xml": {
+      "bytes": 1329,
+      "sha256": "b8d6004e73425eb00118012599dc59fe9423fab37ef48b8f3b22d80284b38645"
+    },
+    "/system/etc/sysconfig/preinstalled-packages-platform-handheld-system.xml": {
+      "bytes": 1546,
+      "sha256": "dd8a853b0b7ef4bda76cce935315679e19098b9e51ade3770e8cb23ee7598480"
+    },
+    "/system/etc/sysconfig/preinstalled-packages-platform.xml": {
+      "bytes": 6461,
+      "sha256": "8c0d950608b50c8a478961158c0c0da790ebaf9b6608be937de3fe44344c6536"
+    },
+    "/system/etc/sysconfig/preinstalled-packages-strict-signature.xml": {
+      "bytes": 1004,
+      "sha256": "a9ae17219fa9c7446c2a67a7a389e7cb743ba021d0a1e8a8b874afc09e3efefe"
+    },
+    "/system/etc/sysconfig/qti_whitelist.xml": {
+      "bytes": 6135,
+      "sha256": "7fb43862d7d359202be3011115126715087223a0a4123ab4f6e6e6e9cb865cea"
+    },
+    "/system/etc/vintf/compatibility_matrix.202404.xml": {
+      "bytes": 98998,
+      "sha256": "7eb522c1655f5b0c748119afbf567db86c9e86c3fee3fe7526b7e3d268cea626"
+    },
+    "/system/etc/vintf/compatibility_matrix.202504.xml": {
+      "bytes": 60855,
+      "sha256": "a21eba5d7ccf35458f3ca2e8205ea0be5105c4206537b4c95eb32ec4ca10d3c8"
+    },
+    "/system/etc/vintf/compatibility_matrix.5.xml": {
+      "bytes": 124003,
+      "sha256": "57545df6180d3a10f1567d828014a8f5289b3c017db191bff84dbf0b1728c308"
+    },
+    "/system/etc/vintf/compatibility_matrix.6.xml": {
+      "bytes": 130590,
+      "sha256": "af269f992b7d78cbdc67b2555b9ee35ce4f382c96f7b73464b02e44d0d82256d"
+    },
+    "/system/etc/vintf/compatibility_matrix.7.xml": {
+      "bytes": 103316,
+      "sha256": "3740dd04a9b7ef04671da0b47aac1485f7ef10ce6e4f1cd0be8828983769d4e5"
+    },
+    "/system/etc/vintf/compatibility_matrix.8.xml": {
+      "bytes": 100852,
+      "sha256": "a0f9136237b82bcd55da59c933f6bed9c8bfeadc88ccceff6c3fbb2563969c29"
+    },
+    "/system/etc/vintf/compatibility_matrix.device.xml": {
+      "bytes": 92514,
+      "sha256": "95d3c61ab59af151b025a0a5d7516b8b8b03f2a2bb9307c7cdcfcf8e4e874d11"
+    },
+    "/system/etc/vintf/manifest/android.frameworks.stats-service.xml": {
+      "bytes": 483,
+      "sha256": "895ff115df7cd358c573335989a5c005874a4ec5eaa3ee4eb5b70cbe5b19b2e9"
+    },
+    "/system/etc/vintf/manifest/android.system.keystore2-service.xml": {
+      "bytes": 305,
+      "sha256": "d6721ece03ccc4924e7ba3b5f2679cb6453e2368f89b95a6243b84be15525a40"
+    },
+    "/system/etc/vintf/manifest/android.system.net.netd-service.xml": {
+      "bytes": 256,
+      "sha256": "341b514fec4eba4685925ac4e6734bae6061f2a4f9d0254b88ae39ee004f218f"
+    },
+    "/system/etc/vintf/manifest/android.system.suspend-service.xml": {
+      "bytes": 478,
+      "sha256": "1653a85ea1a7be52399855cd6f6dd19e56074799ff2f108bb6890ed5b138d723"
+    },
+    "/system/etc/vintf/manifest/android.system.vold-service.xml": {
+      "bytes": 241,
+      "sha256": "a211b21a679093c11afde045b54113268af6135edfa0d70ecb806a93e5fddd93"
+    },
+    "/system/etc/vintf/manifest/manifest_android.frameworks.cameraservice.service.xml": {
+      "bytes": 549,
+      "sha256": "997a729b5836499a0d4e6387a6019916070264fcf85645035e3b426b7a344d56"
+    },
+    "/system/etc/vintf/manifest/manifest_media_c2_software.xml": {
+      "bytes": 469,
+      "sha256": "8bc11b2f7f66def981ddb15909ade5015b4bff394d135c7c4e207da6073c1126"
+    },
+    "/system/etc/vintf/manifest/manifest_services_android.frameworks.devicestate.xml": {
+      "bytes": 300,
+      "sha256": "cc09de50d211dfc2e707ffc9148c85bb854f350c212b94ab8fb0972d254ad898"
+    },
+    "/system/etc/vintf/manifest/manifest_services_android.frameworks.location.xml": {
+      "bytes": 329,
+      "sha256": "fd47c69a3f5298243fcfc21ff33dbf6cc24a68cd28eb219ddf75c3123323ece9"
+    },
+    "/system/etc/vintf/manifest/manifest_services_android.frameworks.vibrator.xml": {
+      "bytes": 298,
+      "sha256": "7cb3d23f37270e284f3979bb8c39316e4b3d58518cfd337d3fe5dd4718fdae85"
+    },
+    "/system/etc/vintf/manifest/virtualizationservice.xml": {
+      "bytes": 348,
+      "sha256": "118a2e6959ec86c1b910932298e1483348c339dda3471e67007a7e130fc08e75"
+    },
+    "/system/etc/vintf/manifest.xml": {
+      "bytes": 2467,
+      "sha256": "e838f91226e1bf6e5be24ba254c4939427535a59d1f97ba50c5a9cb2eb2f8857"
+    },
+    "/system/etc/selinux/bug_map": {
+      "bytes": 1481,
+      "sha256": "30cf3d6b915d8d1382246aac8e5554f2bd413e51f3f3e82745efe9508d095b19"
+    },
+    "/system/etc/selinux/mapping/202404.cil": {
+      "bytes": 167299,
+      "sha256": "43db2e1852dc8b2e15e8f1efabcfd73c963626814c8dd7bf111b41ecfb97a6a7"
+    },
+    "/system/etc/selinux/mapping/202404.compat.cil": {
+      "bytes": 160,
+      "sha256": "08183a9922da778f9a097e2ddb545e6d3ef386f201b0df198a9d0d9d8aa04beb"
+    },
+    "/system/etc/selinux/mapping/202504.cil": {
+      "bytes": 229372,
+      "sha256": "4a8e7712c941ee0fff52a13bf2187284d93a7966cec979f2d324f7ed841ceb3e"
+    },
+    "/system/etc/selinux/mapping/29.0.cil": {
+      "bytes": 113147,
+      "sha256": "54c1c50c362bc8a1ff59178ad2b9dfc6985c7f4966daff5671a57868125338f3"
+    },
+    "/system/etc/selinux/mapping/29.0.compat.cil": {
+      "bytes": 2470,
+      "sha256": "db46612f24c75bcd5ddf6d574fa62a7163bc4951620217973d1000a91371d38e"
+    },
+    "/system/etc/selinux/mapping/30.0.cil": {
+      "bytes": 126395,
+      "sha256": "50dcffe218ab56ed6a4701a10d00d242bba373b35b263af68b7a2668f0cce2c2"
+    },
+    "/system/etc/selinux/mapping/30.0.compat.cil": {
+      "bytes": 2849,
+      "sha256": "ba1b503300c418ddff935d31dfe4591aa70f99edad07046278dfadfc90f8d566"
+    },
+    "/system/etc/selinux/mapping/31.0.cil": {
+      "bytes": 142238,
+      "sha256": "746607e38a0fc41a9a9a85c2f227efad8d18747e8229870e3850fb5b630ead0b"
+    },
+    "/system/etc/selinux/mapping/31.0.compat.cil": {
+      "bytes": 156,
+      "sha256": "adddc30714cef2ec2beb4eecdc24df86acb145e390a708bd2ae5ac41b6fd7630"
+    },
+    "/system/etc/selinux/mapping/32.0.cil": {
+      "bytes": 142346,
+      "sha256": "afa462ca99016f0fd7dcd87d93cb65854613030f78d0a9d01fcfd018c6471544"
+    },
+    "/system/etc/selinux/mapping/32.0.compat.cil": {
+      "bytes": 478,
+      "sha256": "3f4a3409340174f71a95c112799343a41f1cbaf05af2dccc5ac782ff2acbda90"
+    },
+    "/system/etc/selinux/mapping/33.0.cil": {
+      "bytes": 150231,
+      "sha256": "541aa7499e98667beb826ca49bc3b6376619f78e13b9ff936f476014d1e20556"
+    },
+    "/system/etc/selinux/mapping/33.0.compat.cil": {
+      "bytes": 677,
+      "sha256": "d0ee2e4d2d5f0171091425f40b89e1371cb890ccbf78487c717e2d66f460c247"
+    },
+    "/system/etc/selinux/mapping/34.0.cil": {
+      "bytes": 156480,
+      "sha256": "d094569b0fc72c578cb5c2422ec426b6d7d54af5ae02a33d846fd4082f1e08bb"
+    },
+    "/system/etc/selinux/mapping/34.0.compat.cil": {
+      "bytes": 905,
+      "sha256": "869e218c107cd6a5e2acb3f8e1f608f9089574889689c7b50cf99c07f33a0e3a"
+    },
+    "/system/etc/selinux/plat_file_contexts": {
+      "bytes": 48989,
+      "sha256": "40f4a16f32dba595e031b3eb5f354a01c404414d7a46f2242e9b64a1945540bc"
+    },
+    "/system/etc/selinux/plat_hwservice_contexts": {
+      "bytes": 8865,
+      "sha256": "e9f9f83ce1dfec4b036e09baa3b5cedeb27e8855b59164d42979ef5903f10668"
+    },
+    "/system/etc/selinux/plat_keystore2_key_contexts": {
+      "bytes": 2184,
+      "sha256": "ece08d255fca87084a49288aa059bad5106c9d24ec1af25ebb5487140bba8c97"
+    },
+    "/system/etc/selinux/plat_mac_permissions.xml": {
+      "bytes": 15254,
+      "sha256": "efc89b340fc8e5b6c6d0eb00c6f2f99c6497dc1b252c271d6ac509e0a0af23fe"
+    },
+    "/system/etc/selinux/plat_property_contexts": {
+      "bytes": 120690,
+      "sha256": "9f7f7d185ce72693d209e49cc0850c2a752efe1f9c77b49d476dc492cf23eee4"
+    },
+    "/system/etc/selinux/plat_seapp_contexts": {
+      "bytes": 4242,
+      "sha256": "48d9443f9634197b7c3c704677161ab8f6b71dae0e899657e96d5ecb5e351611"
+    },
+    "/system/etc/selinux/plat_sepolicy.cil": {
+      "bytes": 2338385,
+      "sha256": "c3fac12444098ff6a4ed2aaabcc8e1ae255197fdd2e19383320e69eaf46be3da"
+    },
+    "/system/etc/selinux/plat_sepolicy_and_mapping.sha256": {
+      "bytes": 65,
+      "sha256": "56bd7c22434fbd3c21fcf2d42362ba22375f273535c5b5f66617cfbd7ecf24f6"
+    },
+    "/system/etc/selinux/plat_sepolicy_genfs_202504.cil": {
+      "bytes": 142,
+      "sha256": "480d503e7730236b659230d16b3946b628394d529dabfef67c679281fd98357b"
+    },
+    "/system/etc/selinux/plat_sepolicy_genfs_202604.cil": {
+      "bytes": 142,
+      "sha256": "480d503e7730236b659230d16b3946b628394d529dabfef67c679281fd98357b"
+    },
+    "/system/etc/selinux/plat_service_contexts": {
+      "bytes": 42334,
+      "sha256": "effdccb1acbc67a1efd6a856c6e02a1c629d5aa5722f2b62efbb346b1582a163"
+    },
+    "/system/etc/selinux/plat_tee_service_contexts": {
+      "bytes": 1469,
+      "sha256": "dfdf3105d7d699fc6868b642172f224b47b37d139e63cb0012dcf1747e4e2554"
+    },
+    "/system/etc/classpaths/bootclasspath.pb": {
+      "bytes": 2166,
+      "sha256": "e5e07c8fd307502559957c2f7d91ca02899297da4560e5cf5c91e6babe51a10f"
+    },
+    "/system/etc/classpaths/systemserverclasspath.pb": {
+      "bytes": 194,
+      "sha256": "320dec2bc93cd81c0f0c218aee27afb94c1051f0e098e2d93893136c9c798f8b"
+    },
+    "/system_ext/etc/init/android.hidl.allocator@1.0-service.rc": {
+      "bytes": 187,
+      "sha256": "2daefa28c9013feb1d6b17e366bcb2dfbd5b904e239b644d93a16df01b15c29d"
+    },
+    "/system_ext/etc/init/bpf_service.rc": {
+      "bytes": 510,
+      "sha256": "23115eab7271983827cadfafbe3857eba7ee6a23d89724fa708f3a4161727c66"
+    },
+    "/system_ext/etc/init/checknv.rc": {
+      "bytes": 89,
+      "sha256": "affb67f20e20f8c2d2b57db75297f5ab72fcb104730c75c10831f72e08dda6f4"
+    },
+    "/system_ext/etc/init/com.qualcomm.qti.sigma_miracast@1.0-service.rc": {
+      "bytes": 401,
+      "sha256": "4facb8d31d4bf4ca95d1f506673a8b0259e218181413906cbb4ebcf172a6f72d"
+    },
+    "/system_ext/etc/init/com.qualcomm.qti.sigma_miracast_aidl-service.rc": {
+      "bytes": 130,
+      "sha256": "9041e9381a632286aaf553108acb66e166f7916e4ba4c8a7caad12c84b33ca86"
+    },
+    "/system_ext/etc/init/config/skip_mount.cfg": {
+      "bytes": 160,
+      "sha256": "6cc5a15a36436429d79f2fa3f3f0fe643acf129ca8844160d148c1692f75a1b5"
+    },
+    "/system_ext/etc/init/dpmd.rc": {
+      "bytes": 683,
+      "sha256": "f2b68252ae6086ebeb67ef5885f83c63cdd4faf2fe6f00024beb678bd0ae6261"
+    },
+    "/system_ext/etc/init/f2fs.dfc.native@1.0-service.rc": {
+      "bytes": 371,
+      "sha256": "8616db9a58c378d5a6b9bc5a85b1f305bc2266b56aeb81698787bc668ea6d949"
+    },
+    "/system_ext/etc/init/gppservice.rc": {
+      "bytes": 533,
+      "sha256": "0791d5401a713cb81baf1d2faad85f6ddf8048319940d79e3a55cf04d2927904"
+    },
+    "/system_ext/etc/init/hwservicemanager.rc": {
+      "bytes": 497,
+      "sha256": "fec3f3312b7cb0f5c22438b62cca189964878874f8aabd47396ae1f4faf8c4f9"
+    },
+    "/system_ext/etc/init/hyper_bpfloader.rc": {
+      "bytes": 5303,
+      "sha256": "861162a23c8d04c21d1eb572fe64724e455d5930c82790ccad6e69ba8022c321"
+    },
+    "/system_ext/etc/init/hypsys_system.rc": {
+      "bytes": 2288,
+      "sha256": "8b92c021ca532ed5a0b193a550cf427580147b6e9468bdb77e7ea19fc0341e2e"
+    },
+    "/system_ext/etc/init/init.gsi.rc": {
+      "bytes": 58,
+      "sha256": "245afaa4229777ccc4686e0f093fdadac098a14e5daf27e57c5d7e386a2c7da7"
+    },
+    "/system_ext/etc/init/init.launch_boost.rc": {
+      "bytes": 766,
+      "sha256": "fc8952d3a009c795dced757f865e4629969b9c8ad1696cd9fa7b7c776d211002"
+    },
+    "/system_ext/etc/init/init.midfs.rc": {
+      "bytes": 373,
+      "sha256": "ef8599a17bae666b2911202dedd2effefedae62f26cfc786f1806d5804232c86"
+    },
+    "/system_ext/etc/init/init.milletmonitor.rc": {
+      "bytes": 1676,
+      "sha256": "aa83caf10abcddd4eedb00f96bee7a9681673cce2b57f4fa951f0b63dff79317"
+    },
+    "/system_ext/etc/init/init.misight.rc": {
+      "bytes": 303,
+      "sha256": "6ec3668c6ed8aae56e02e2bd477d3eba0c6b79e542722936023a5f00d3cfc43a"
+    },
+    "/system_ext/etc/init/init.miui.cameraopt.rc": {
+      "bytes": 10216,
+      "sha256": "16cdf5cfd35f013c3f5ac1ed41c27c677601d32c10a89dc942e9436592f549cd"
+    },
+    "/system_ext/etc/init/init.miui.cust.rc": {
+      "bytes": 1191,
+      "sha256": "ad7fd6685f7064a914bfc324a719e9c0ca42ef7475fac625a0f5733d30b9f82b"
+    },
+    "/system_ext/etc/init/init.miui.dumpaudiobinderInfo.rc": {
+      "bytes": 647,
+      "sha256": "40f3d2d5e09bb37623ce1948fe3c61810861cf8a971037f5354abfa3d3659fa7"
+    },
+    "/system_ext/etc/init/init.miui.ext.rc": {
+      "bytes": 16613,
+      "sha256": "e109c267ec397ff3553e649b17dd2ef5e5637bf8e9a126c4031307da187e5e3f"
+    },
+    "/system_ext/etc/init/init.nativedebug.rc": {
+      "bytes": 1311,
+      "sha256": "57197c44c25a0ac329b995fb246b8d30c0b8dce6a81eccee76cb39c8f4235c1f"
+    },
+    "/system_ext/etc/init/init.qadaemon.rc": {
+      "bytes": 103,
+      "sha256": "c52c65d549d01a0dd983a1ef6ffdcacd88ef96c966fab2f121601a4608628aef"
+    },
+    "/system_ext/etc/init/init.qseelogd.rc": {
+      "bytes": 316,
+      "sha256": "1db70b42aa4dbe9d1e79da4ef60978a5f9a867bdbbdd5b69e7d2b0911941e890"
+    },
+    "/system_ext/etc/init/init.secureboot.rc": {
+      "bytes": 366,
+      "sha256": "3829c9335828dd0bf0590058bb0358ca7262c9d70f07be7dc7e423222199e117"
+    },
+    "/system_ext/etc/init/init.xiaomi.cammsger.rc": {
+      "bytes": 3151,
+      "sha256": "dd12ee41525399c3a1dc65d3f5a6e8a4613d6d16613a01ab13eb2c9f39c1c898"
+    },
+    "/system_ext/etc/init/memory.fbo.native@1.0-service.rc": {
+      "bytes": 277,
+      "sha256": "dd87a76db2812923a0ff05855720677912446d9a4c59ae19818b754c7f959c4a"
+    },
+    "/system_ext/etc/init/memory.swap.native@1.0-service.rc": {
+      "bytes": 291,
+      "sha256": "aec4313a9573742e9ddd6c4731485db1616d59aaa177723a0868b596a3c59d8f"
+    },
+    "/system_ext/etc/init/miuibooster.rc": {
+      "bytes": 964,
+      "sha256": "f2a7451afa0a6ec89430c4400e18f74280c657be0c475eab50487344d707a4ec"
+    },
+    "/system_ext/etc/init/miupdater.rc": {
+      "bytes": 908,
+      "sha256": "030e86607e7da128d39c2b1906a62145402fd2e991c265219a63c09a8e9305e4"
+    },
+    "/system_ext/etc/init/miuserfs.rc": {
+      "bytes": 660,
+      "sha256": "ab275e451576d2e5c40379424f68b74030a101d19a13d13a888f1dda424cb3d0"
+    },
+    "/system_ext/etc/init/native.hang@1.0-service.rc": {
+      "bytes": 431,
+      "sha256": "5fbcc70511566be14f3cd17e7e511287603c336d5ed3f5b4e3e1ce015e7db991"
+    },
+    "/system_ext/etc/init/perfservice.rc": {
+      "bytes": 377,
+      "sha256": "ef8fbaebcd0827084623d3589f5af453c1f3c760db59f7bb1529813bf8e06043"
+    },
+    "/system_ext/etc/init/qsguard.rc": {
+      "bytes": 259,
+      "sha256": "e311262e32531cf5a795f2506690ad81cfdf75a3a44115a4a7e94db9f35b80fc"
+    },
+    "/system_ext/etc/init/qspa_system.rc": {
+      "bytes": 190,
+      "sha256": "a1231b13364f2334e96da7343cca4f13fa814bf804919f704e8786de86a5595c"
+    },
+    "/system_ext/etc/init/qspmsvc.rc": {
+      "bytes": 485,
+      "sha256": "3db57f00c534742ac9f5516ee9d14a4e7e8d6d9feb0b082f06ed599846afb2a9"
+    },
+    "/system_ext/etc/init/samba.rc": {
+      "bytes": 903,
+      "sha256": "08376417e9861d96f8490e6214c2a02c03ec38278234065acd4772f4801a0b1e"
+    },
+    "/system_ext/etc/init/sxrauxd_ext.rc": {
+      "bytes": 675,
+      "sha256": "16548c6448c0e0dc14f3867ccaa6796bc56cebe06639e141a61a024d954e5062"
+    },
+    "/system_ext/etc/init/tcmd.rc": {
+      "bytes": 445,
+      "sha256": "d52fc9bb4b57ef51a67e8b0732fe75c905c4ee1c84f981b4aad4f5106e30e437"
+    },
+    "/system_ext/etc/init/vendor.qti.hardware.qccsyshal@1.2-service.rc": {
+      "bytes": 1824,
+      "sha256": "3daa56322240ee649dded8f60baaa908b706af9cd5080dae420be4f413847414"
+    },
+    "/system_ext/etc/init/vendor.qti.qccsyshal_aidl-service.rc": {
+      "bytes": 1839,
+      "sha256": "9347a3dedc604e7e8bbcd7579e0a19fc37cdd13ef009575da1106c6f84e49663"
+    },
+    "/system_ext/etc/init/wfdservice.rc": {
+      "bytes": 595,
+      "sha256": "cfd2a1aaf71fbe26d00faa0943827e14adaa197d860d498e8d40285de5a05fe1"
+    },
+    "/system_ext/etc/init/init.hyperos_avd.rc": {
+      "bytes": 630,
+      "sha256": "c3f197aaef00ed0c9775cb45b3e39e16b659215d08aa3126691b7fe67e5773bb"
+    },
+    "/system_ext/etc/permissions/CellBroadcastAppPlatform.xml": {
+      "bytes": 1441,
+      "sha256": "bcc4c7166d0d28570548de9b4951be146060826ec04cbdc036029b4456fafcdb"
+    },
+    "/system_ext/etc/permissions/StNfcExtensionService.xml": {
+      "bytes": 1012,
+      "sha256": "b441c518413ec37e3384ad0e8f83537bf6e3dfc62ff27ceded8e03735c9ac7ab"
+    },
+    "/system_ext/etc/permissions/android.hardware.telephony.gsm.xml": {
+      "bytes": 1224,
+      "sha256": "eb4e03a14d2004e88bc55072780b9996bce93c96db8ce2465e755f3749c4a145"
+    },
+    "/system_ext/etc/permissions/android.hardware.telephony.ims.xml": {
+      "bytes": 821,
+      "sha256": "6f0d8f1e1dc0657e39ff63129b1633fdd9971417dcc9982271f089024666dadd"
+    },
+    "/system_ext/etc/permissions/android.software.credentials.xml": {
+      "bytes": 752,
+      "sha256": "d2e9c5bd64d53c88b14497fcaa25392097b288017fb7b46038fed88838145728"
+    },
+    "/system_ext/etc/permissions/android.software.verified_boot.xml": {
+      "bytes": 753,
+      "sha256": "a9d903b0239520d91fc9a525361944d8022ec9b4cd39361a821ba63390d7890f"
+    },
+    "/system_ext/etc/permissions/androidx.window.extensions.xml": {
+      "bytes": 830,
+      "sha256": "e649efa502e3b67e894c5aded59b1b2de4dad4e1303f0d3e7fae29fe4a43b9ac"
+    },
+    "/system_ext/etc/permissions/androidx.window.sidecar.xml": {
+      "bytes": 824,
+      "sha256": "2ff1b4ad3a4f54659bc6a30a7026fe8b6a90b09e6723988ca0aff261944a8e89"
+    },
+    "/system_ext/etc/permissions/appfunctions.extension.xml": {
+      "bytes": 847,
+      "sha256": "984a00c22113937e4a5a5f23d04100b4bf95f3353ff2a07885f52dc06598ef0a"
+    },
+    "/system_ext/etc/permissions/audiosphere.xml": {
+      "bytes": 352,
+      "sha256": "29da8a24c50a0087f3fec99a7f7fddc6377b02c049dcca044b8fd04e94efab47"
+    },
+    "/system_ext/etc/permissions/com.android.carrierconfig.xml": {
+      "bytes": 869,
+      "sha256": "248978a11956f56667e3b4708603c811defa4eea2e069a7459d03473fbb2ea95"
+    },
+    "/system_ext/etc/permissions/com.android.emergency.xml": {
+      "bytes": 1352,
+      "sha256": "c3c967d81eaee7095e46944d52e98033abc84ea16e56d28c744c37423c5cf096"
+    },
+    "/system_ext/etc/permissions/com.android.extensions.appfunctions.xml": {
+      "bytes": 837,
+      "sha256": "765622459ec7c8718eb1277944f2b678cc6ee75d626dc9d4e9bf25836e43827c"
+    },
+    "/system_ext/etc/permissions/com.android.hotwordenrollment.common.util.xml": {
+      "bytes": 849,
+      "sha256": "8d962466733e9c7b44d65f0a4ea86c48ffa29490bc67dfceac7a44e3a8eeaa10"
+    },
+    "/system_ext/etc/permissions/com.android.provision.xml": {
+      "bytes": 998,
+      "sha256": "84acd1e425b17d5a0368b49eb21b1785d058b06a9f5509ae31568e603007d4a5"
+    },
+    "/system_ext/etc/permissions/com.android.settings.xml": {
+      "bytes": 4674,
+      "sha256": "c4ebc506d249797444b6b447777c606384980b255488e507cf2199e134956684"
+    },
+    "/system_ext/etc/permissions/com.android.settingslib.search.xml": {
+      "bytes": 242,
+      "sha256": "cb0c708e61a6551e0393ae2c48bb9fd311471ed6681697fe40861e5ac35a216e"
+    },
+    "/system_ext/etc/permissions/com.android.statementservice.xml": {
+      "bytes": 1021,
+      "sha256": "45eaa72fb7ce52f13c973849e907f73260bad21e7661016ac224fdb209a1b930"
+    },
+    "/system_ext/etc/permissions/com.android.storagemanager.xml": {
+      "bytes": 1265,
+      "sha256": "4258f90f65190a6cded85ba2d4f06234084f7c85c9b8563289dc5af66e05add0"
+    },
+    "/system_ext/etc/permissions/com.android.systemui.libpag.xml": {
+      "bytes": 237,
+      "sha256": "85159306df030f15fc842ccf6c14acd7f6489c2f8198a5a711b4d41b3b024085"
+    },
+    "/system_ext/etc/permissions/com.android.systemui.xml": {
+      "bytes": 7169,
+      "sha256": "e048f444ace2cecaadf7d57a805efc376f87cf5ad701114d642f6ebc16e4f659"
+    },
+    "/system_ext/etc/permissions/com.nxp.nfc.nq.xml": {
+      "bytes": 289,
+      "sha256": "b4b36c9c0b7efb9a60cc8e3779cd92c3c5527643db00e21dbe74dd2e9bf42ca9"
+    },
+    "/system_ext/etc/permissions/com.nxp.nfc.xml": {
+      "bytes": 284,
+      "sha256": "870baab91f9eea885f9b6238341a6a1da8336964a7b5f45f541cd1ffa077004b"
+    },
+    "/system_ext/etc/permissions/com.qti.dpmframework.xml": {
+      "bytes": 559,
+      "sha256": "f0f06e0ffbe31064be2639ca338f0f944df96835e934ba60778a62d6ef9142c9"
+    },
+    "/system_ext/etc/permissions/com.qti.location.sdk.xml": {
+      "bytes": 682,
+      "sha256": "101ed3492b33b1682092fcc64bdad11e870a0e426eecb46cbd0d9adf0d1ff209"
+    },
+    "/system_ext/etc/permissions/com.qti.media.secureprocessor.xml": {
+      "bytes": 335,
+      "sha256": "92b03ae9add44669ba69767cf88fbe986203d7692257e85b203854154d92e543"
+    },
+    "/system_ext/etc/permissions/com.qti.qcc.vendor_qcc.xml": {
+      "bytes": 337,
+      "sha256": "e53f1f4a505c44741dd6e9cc588c4401c82c6f868c0c1ba0f8b3f870c2ef21a5"
+    },
+    "/system_ext/etc/permissions/com.qualcomm.location.xml": {
+      "bytes": 744,
+      "sha256": "5b45afda6071348e0fb7b5d60f702fc00431f7197c42485966ec90924f854eae"
+    },
+    "/system_ext/etc/permissions/com.qualcomm.qmapbridge.xml": {
+      "bytes": 913,
+      "sha256": "819aeee076112b8a5dd14aa39dc234cf4be3ad54341ee79e25ec52dc020029b1"
+    },
+    "/system_ext/etc/permissions/com.qualcomm.qti.VENDORSSGTZD.xml": {
+      "bytes": 539,
+      "sha256": "26cc7d53487e2cfb84bba07621ec6623fb379a7ee20c4e525a7794b86e46ce8c"
+    },
+    "/system_ext/etc/permissions/com.qualcomm.qti.imscmservice-V2.0-java.xml": {
+      "bytes": 376,
+      "sha256": "9a9fba139afa1c8f2fe4dd8b9defe1e9802264a37f0a02aebd5291f2e3d7674e"
+    },
+    "/system_ext/etc/permissions/com.qualcomm.qti.imscmservice-V2.1-java.xml": {
+      "bytes": 366,
+      "sha256": "f5953f5561d123bfe30b5b2f3e8bb81decc263e1f8b05c21606bd24e3f36b2b4"
+    },
+    "/system_ext/etc/permissions/com.qualcomm.qti.imscmservice-V2.2-java.xml": {
+      "bytes": 366,
+      "sha256": "73cc3466c2d4e9558674ade3d8f703c86fb3764a2e4a4f7481bd1514f27f282e"
+    },
+    "/system_ext/etc/permissions/com.qualcomm.qti.izattools.xml": {
+      "bytes": 542,
+      "sha256": "e26061e61623860588a9388108ae67f55eb422d87e6c27fe327ac9c6f403a84d"
+    },
+    "/system_ext/etc/permissions/com.st.android.nfc_extensions.xml": {
+      "bytes": 203,
+      "sha256": "dd63f1a776c1eab2d72d967f7cdd06e1eb961d50ad73ac1186b55d5f44ead250"
+    },
+    "/system_ext/etc/permissions/com.st.android.nfc_extensions_16.xml": {
+      "bytes": 214,
+      "sha256": "98c4518cf1e55edbc939b199008ebdcb0fecc581c0f41be64e4de550ca6c2dfa"
+    },
+    "/system_ext/etc/permissions/com.xiaomi.NetworkBoost.xml": {
+      "bytes": 247,
+      "sha256": "99ede0fd69df45278d92527e6ae92701a8237842bae4fb9b8d16234129de6716"
+    },
+    "/system_ext/etc/permissions/com.xiaomi.hardware.camera.companion.xml": {
+      "bytes": 335,
+      "sha256": "7f8be37f7a76c1a2311c26362716612fefe4a2ebac41a2b13fe410f4a2044ca1"
+    },
+    "/system_ext/etc/permissions/com.xiaomi.hypercomm.xml": {
+      "bytes": 231,
+      "sha256": "4c79d340024e3204d20c8534ce1f53709711a535515c845a8a9aef0916e1bec0"
+    },
+    "/system_ext/etc/permissions/com.xiaomi.nfc.xml": {
+      "bytes": 290,
+      "sha256": "6080bca4bba7a810f72e30fb03d873babce3f488bd67441aa78742ab40c95147"
+    },
+    "/system_ext/etc/permissions/com.xiaomi.okhttp.xml": {
+      "bytes": 343,
+      "sha256": "75d81ffca2bfc6bcdaad194d835a5a8a585a7771c88a61d20fc3ed822228484c"
+    },
+    "/system_ext/etc/permissions/com.xiaomi.org.conscrypt.xml": {
+      "bytes": 302,
+      "sha256": "f726c54fcd3959631683c51c03e1814517f3446c645d6b1544ca0eafa6f2a9a8"
+    },
+    "/system_ext/etc/permissions/com.xiaomi.phone.xml": {
+      "bytes": 641,
+      "sha256": "699065f77bc7f0716ea4990598d53bf48240b5be381a4bb533b7e74cc9deabec"
+    },
+    "/system_ext/etc/permissions/com.xiaomi.slalib.xml": {
+      "bytes": 235,
+      "sha256": "33545a53d8e69067c1b57f49c058bd715a52df9d5a3ada02c96032e61817b928"
+    },
+    "/system_ext/etc/permissions/datachannellib.xml": {
+      "bytes": 302,
+      "sha256": "f0eb9775d265473c53fb6e6a6cb86219c22bfef5f3c146c4a952e6d82645665b"
+    },
+    "/system_ext/etc/permissions/dpmapi.xml": {
+      "bytes": 305,
+      "sha256": "0bf8828848835c7dc65a3566ecfa65177c9ec61fcaaec0a03e964bcb435225dc"
+    },
+    "/system_ext/etc/permissions/embms-noship_product_privapp_permissions_qti.xml": {
+      "bytes": 1381,
+      "sha256": "048828dee843fd53cd5432aca6012ee8ecac07b3a35f850c4d45b69465c7f52c"
+    },
+    "/system_ext/etc/permissions/extphonelib.xml": {
+      "bytes": 1695,
+      "sha256": "378892e6d1dccb6228c81229ec424867f10b29c695d220a42a9565b015ce6308"
+    },
+    "/system_ext/etc/permissions/miui-cameraopt.xml": {
+      "bytes": 797,
+      "sha256": "5088b9b19d251e3a2c24ce435c02a3c4f0fd6ce3d81a68d1a6c1c435598c2371"
+    },
+    "/system_ext/etc/permissions/package-shareduid-allowlist-miui-system-ext.xml": {
+      "bytes": 2337,
+      "sha256": "3bf817df7e1f0e81f4af543c2ebc37bded8ecf9d1e65910f53b78476c2500ae3"
+    },
+    "/system_ext/etc/permissions/platform-miui.xml": {
+      "bytes": 2597,
+      "sha256": "96da583654521934b27e6a4ce4eba994fa709a20864cd5117338bf1537a488d6"
+    },
+    "/system_ext/etc/permissions/privapp-permission-xpan.xml": {
+      "bytes": 1812,
+      "sha256": "a4034aafce4313e644883804a13b5b25ea6d40e98b0bc03bcae5b80502b4f50d"
+    },
+    "/system_ext/etc/permissions/privapp-permissions-aptxui.xml": {
+      "bytes": 556,
+      "sha256": "60235dc80c0ac7dd79ca1ce79c3690c2f38fb07ae310736bffe2b7056d0f96cd"
+    },
+    "/system_ext/etc/permissions/privapp-permissions-com.qualcomm.location.xml": {
+      "bytes": 1263,
+      "sha256": "2cc696664071a19b189ce7810f878e889d51aeef9f2aba37456646509da7d69d"
+    },
+    "/system_ext/etc/permissions/privapp-permissions-com.xiaomi.polaris.xml": {
+      "bytes": 265,
+      "sha256": "26634c4c395d48b96dc3928ae497389e7e2d52bf4328595f552239d70af5d5f5"
+    },
+    "/system_ext/etc/permissions/privapp-permissions-gms-cn-system-ext.xml": {
+      "bytes": 1518,
+      "sha256": "6fb1ebb3c38e810dda27d881cf0011c11aace5d2b9f2349ea4b0e6182098ba71"
+    },
+    "/system_ext/etc/permissions/privapp-permissions-miui-system-ext.xml": {
+      "bytes": 10910,
+      "sha256": "bf421b15d16f1810b09ef2d62b11dcc5d5b5607de2c6bba2e87747983ae048f2"
+    },
+    "/system_ext/etc/permissions/privapp-permissions-qti-system-ext.xml": {
+      "bytes": 1476,
+      "sha256": "9630fc3199fd6c0d7f17c3a30fc78d82c9aab30a0c5fa4c1376eb9cfafc53a78"
+    },
+    "/system_ext/etc/permissions/privapp_allowlist_com.xiaomi.bluetooth.xml": {
+      "bytes": 357,
+      "sha256": "590b087b19b3c105020e11174419950b32d0701ddad001962c730af398ac3886"
+    },
+    "/system_ext/etc/permissions/qcrilhook.xml": {
+      "bytes": 234,
+      "sha256": "30f2d18283025a215e823cd286a89673280077791d22ce5ccabcbb5a6e71bf5f"
+    },
+    "/system_ext/etc/permissions/qti_libpermissions.xml": {
+      "bytes": 341,
+      "sha256": "78b94d836339b46d88b6aec68f49fa009dc4be3b9836d82b1417c1437e7169a0"
+    },
+    "/system_ext/etc/permissions/qti_permissions.xml": {
+      "bytes": 400,
+      "sha256": "888a73574ad91867ad2b0f6b48fddf0a98d2b9aebaa3fa6f0760c1d3970836c8"
+    },
+    "/system_ext/etc/permissions/qti_telephony_hidl_wrapper.xml": {
+      "bytes": 1704,
+      "sha256": "9c77a1f474bec0104854e92fcbeef3b03640cb2491bd5bb3355c937a41e0c0ce"
+    },
+    "/system_ext/etc/permissions/qti_telephony_utils.xml": {
+      "bytes": 1688,
+      "sha256": "e7d6f08e08a293c14c5f810ae3cd3c36ab1ef798605de663617476bb90b424ac"
+    },
+    "/system_ext/etc/permissions/system-ext-permissions-xiaomi.xml": {
+      "bytes": 2133,
+      "sha256": "5b2e68738c1bccd5910fcc7bf408b3f8bab6c603ee72edbcb63411d54f091412"
+    },
+    "/system_ext/etc/permissions/telephony_system-ext_privapp-permissions-qti.xml": {
+      "bytes": 3460,
+      "sha256": "7f5f554b4115201eb47d08fd313eac1b449ec1c4481ab71a549263c9ae98547e"
+    },
+    "/system_ext/etc/permissions/vendor.qti.hardware.c2pa-V1-java.xml": {
+      "bytes": 364,
+      "sha256": "a9f7ade5b4f426ad5dc76dfd63768cb04976b9f7c00c4daa6d6a11b48e9967d3"
+    },
+    "/system_ext/etc/permissions/vendor.qti.ims.rcsservice.xml": {
+      "bytes": 2192,
+      "sha256": "5872de69f4ca9fde586564af5b5c22dd85e8655f3e0ece22a1c28bb5f2245c92"
+    },
+    "/system_ext/etc/permissions/vendor.qti.imsdatachannel.xml": {
+      "bytes": 324,
+      "sha256": "c1b1fb89626a7caef272aeaa5d87421d76119e8f2e0a3bd3e7fbc891713be9bf"
+    },
+    "/system_ext/etc/permissions/vendor.qti.imsdcservice.xml": {
+      "bytes": 460,
+      "sha256": "0bd10a66e96a41297ed717fc73cc0790d60432e1f6bb40fca5287c99bd7e1a65"
+    },
+    "/system_ext/etc/permissions/vendor.xiaomi.hardware.aidl.intentaware-V1-java-permission.xml": {
+      "bytes": 200,
+      "sha256": "3b0d3e3efb2dfc5653dd837b819308c5df4840cf3ca70aa547d136e5606515f5"
+    },
+    "/system_ext/etc/permissions/vendor.xiaomi.hardware.aidlbgservice-V1.0-java-permission.xml": {
+      "bytes": 188,
+      "sha256": "2c928e1cd339ea37fa0fad6f4c82344904075638310fdaa4928cf9f475b4fdd0"
+    },
+    "/system_ext/etc/permissions/vendor.xiaomi.hardware.misys-V1.0-java-permission.xml": {
+      "bytes": 175,
+      "sha256": "096377f40031904d1b8e62580b8114224c96fb75a6344ec8213cbeb0611c047c"
+    },
+    "/system_ext/etc/permissions/vendor.xiaomi.hardware.misys-V2.0-java-permission.xml": {
+      "bytes": 175,
+      "sha256": "77035d86c2788aa53725c20554c920fdab62b75242b2a043a0bb2dd20064934a"
+    },
+    "/system_ext/etc/permissions/vendor.xiaomi.hardware.misys-V4.0-java-permission.xml": {
+      "bytes": 175,
+      "sha256": "31218d1c91b72392b613fdf6a93b83640ff9109455a093201b89a9a8cac49865"
+    },
+    "/system_ext/etc/permissions/vendor.xiaomi.hardware.misys.V3_0-permission.xml": {
+      "bytes": 165,
+      "sha256": "2535688ee7e67cc83a2e4c6fbccfbf501f45e0d698c6a06af492fb5f2b997bb9"
+    },
+    "/system_ext/etc/permissions/vendor.xiaomi.hardware.postprocservice-V1-java-permission.xml": {
+      "bytes": 188,
+      "sha256": "3a22f4bfe89ad6388a67bf7d2f985ae285b602270f7b95cc116b9d46e8236bd7"
+    },
+    "/system_ext/etc/permissions/vendor.xiaomi.hardware.videoservice-V8-java-permission.xml": {
+      "bytes": 189,
+      "sha256": "178b0301eb14a3bf38d81cfa9b8f0bb0dc09f502ae62aa71299a6093ad795806"
+    },
+    "/system_ext/etc/permissions/wfd-system-ext-privapp-permissions-qti.xml": {
+      "bytes": 559,
+      "sha256": "fe7e731cf496fa66233d7bae11db1ff3d08beba11150dbe726cb9048aad5aa28"
+    },
+    "/system_ext/etc/sysconfig/android.software.freeform_window_management.xml": {
+      "bytes": 767,
+      "sha256": "7437ae88332d6ae95214f7df29e9910ee41dc6f062bc46af1641a48dbd26e764"
+    },
+    "/system_ext/etc/sysconfig/android.telephony.satellite.xml": {
+      "bytes": 141,
+      "sha256": "5207711b38b9daef012eec3609210669916afc94d0a1af951e2afd98cfad875a"
+    },
+    "/system_ext/etc/sysconfig/miui_whitelist.xml": {
+      "bytes": 1771,
+      "sha256": "11177d1deac3d8230558f7b0a9872e966964d52c8088874708221bf4f565dbb7"
+    },
+    "/system_ext/etc/sysconfig/power-save-conf.xml": {
+      "bytes": 423,
+      "sha256": "2aa330e031365e3713c81a10c99795a4f77b14eca3dcf4f84b30ff38166de2fb"
+    },
+    "/system_ext/etc/sysconfig/qti-initial-package-stopped-states.xml": {
+      "bytes": 2106,
+      "sha256": "eae4516b0d373a2de334783b267449e9027d44d49d2e576fc172f21f18c3d15b"
+    },
+    "/system_ext/etc/sysconfig/qti_telephony_system_packages_config.xml": {
+      "bytes": 5551,
+      "sha256": "d7036a3d7c62d850b8768647ac5fdeb98f13abd044e4250d41debec0ef9259b9"
+    },
+    "/system_ext/etc/sysconfig/qti_whitelist_system_ext.xml": {
+      "bytes": 2368,
+      "sha256": "5dd4637d13a8b7579f3d261955ef1079b1b495ca7cb2f3d73057c5ec1b4115fe"
+    },
+    "/system_ext/etc/sysconfig/whitelist_com.qualcomm.qti.uceShimService.xml": {
+      "bytes": 420,
+      "sha256": "29d715875b35a23ac38d35e4ad90aefa87f4ee791c67e5fdc3cfb4bc572d21ca"
+    },
+    "/system_ext/etc/sysconfig/xiaomi_app_link_whitelist.xml": {
+      "bytes": 224,
+      "sha256": "ca3929b80307b04cc407c2197e081db15ce01da63096eb8d02e2b76fec766c5d"
+    },
+    "/system_ext/etc/vintf/manifest/android.hidl.allocator@1.0-service.xml": {
+      "bytes": 350,
+      "sha256": "b0444198fcfedc428719034c6fcb926a66fa00e866ce5b857c1e2a0de47751f4"
+    },
+    "/system_ext/etc/vintf/manifest/atcmdfwd-saidl.xml": {
+      "bytes": 295,
+      "sha256": "dd0a3b224f4b3ae206219dcf002250032fbf1f7e45599f77e603fe3e84fac017"
+    },
+    "/system_ext/etc/vintf/manifest/manifest_hypsys_system.xml": {
+      "bytes": 355,
+      "sha256": "0a340d63e498f47acd83187c367e8491a5d7bc84d4adec42d197b31eb8bb98fc"
+    },
+    "/system_ext/etc/vintf/manifest/vendor.qti.hardware.sigma_miracast.xml": {
+      "bytes": 468,
+      "sha256": "77cfd4787e87a394fa178cb343b47954b42289a23bc7aa2bf5591cc94f64260d"
+    },
+    "/system_ext/etc/vintf/manifest/vendor.qti.hardware.sigma_miracast_aidl.xml": {
+      "bytes": 347,
+      "sha256": "2753999b5d500f0362544ee07021cb7ac2b44901a9528cf71507dd9bbfe07873"
+    },
+    "/system_ext/etc/vintf/manifest/vendor.qti.hardware.systemhelperaidl.xml": {
+      "bytes": 444,
+      "sha256": "d33cb0b6c0f208eb30f633dd61691e24f1bbda26dcd874bf8bdf5f1e0c2a31ae"
+    },
+    "/system_ext/etc/vintf/manifest/vendor.qti.qccsyshal_aidl-service.xml": {
+      "bytes": 308,
+      "sha256": "05251536915bb7727df26541eda2a75b6a5c3e147c373afad622e1b3024a81de"
+    },
+    "/system_ext/etc/vintf/manifest/vendor.qti.qesdsys.service.xml": {
+      "bytes": 298,
+      "sha256": "f85d88ae972197fae6796a899baaf2572bc899e179d628d6ffac9cb5675e6127"
+    },
+    "/system_ext/etc/vintf/manifest.xml": {
+      "bytes": 885,
+      "sha256": "6a0ba8db62519cc63ad78c9aa9b5227c4007a6e8617152aeb88d6f1762a95b48"
+    },
+    "/system_ext/etc/selinux/bug_map": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "/system_ext/etc/selinux/system_ext_file_contexts": {
+      "bytes": 15036,
+      "sha256": "c013ab2c2985ed2c3b9532f8408a0902dcc8059477a39c5f0d1068ce01cbc260"
+    },
+    "/system_ext/etc/selinux/system_ext_hwservice_contexts": {
+      "bytes": 433,
+      "sha256": "05151cf8e83257565e5c434aea1bdf369109455f11e1fe346bfb613999f4dad9"
+    },
+    "/system_ext/etc/selinux/system_ext_keystore2_key_contexts": {
+      "bytes": 930,
+      "sha256": "ec8bcb6f35acc73f810ee1e03f2127261852c0cbcd69da5afeffb39b04295077"
+    },
+    "/system_ext/etc/selinux/system_ext_mac_permissions.xml": {
+      "bytes": 101,
+      "sha256": "9fc6e3bc49b67055ec3e2059f5fce7c7e5b72069697d82f963aec4dd2d61fcf0"
+    },
+    "/system_ext/etc/selinux/system_ext_property_contexts": {
+      "bytes": 28351,
+      "sha256": "bd5031d4334d971571b1627432b9d3499c635f6e13be9546302fda9a248bc7e9"
+    },
+    "/system_ext/etc/selinux/system_ext_seapp_contexts": {
+      "bytes": 7090,
+      "sha256": "58d98d572af27865eb65a4f2f06d617969fcebbc612b89a2037e268599e304ae"
+    },
+    "/system_ext/etc/selinux/system_ext_sepolicy.cil": {
+      "bytes": 578283,
+      "sha256": "c4ec77a5f47a2893bfb088c9f3911b2e5f60c6f837af8b56836ed12da32aa7a9"
+    },
+    "/system_ext/etc/selinux/system_ext_sepolicy_and_mapping.sha256": {
+      "bytes": 65,
+      "sha256": "b959985e8bb75f9e15b44d171087e6e678761130e115eb85f403679bcdac7218"
+    },
+    "/system_ext/etc/selinux/system_ext_service_contexts": {
+      "bytes": 10849,
+      "sha256": "af54d52ddd95033516823eb7140abae2b60c35c556ba0a068d95b9d72ccb311f"
+    },
+    "/system_ext/etc/selinux/system_ext_tee_service_contexts": {
+      "bytes": 928,
+      "sha256": "d0a45807aed645a26d32d4623451588b7ed148d20fe3cb892b217229e739ab9e"
+    },
+    "/system_ext/etc/selinux/userdebug_plat_sepolicy.cil": {
+      "bytes": 2438928,
+      "sha256": "5405782b36d1d941213752882345db38327a0136b4bcf60f27a86ebea2304b3e"
+    },
+    "/product/etc/init/init.miui.opconfig.rc": {
+      "bytes": 695,
+      "sha256": "ca5719c9d107e39a0780363c2419d2ab108468d9023554bf7b00bcd274206f62"
+    },
+    "/product/etc/init/init.qti.display.rc": {
+      "bytes": 556,
+      "sha256": "42d8d3fd727f02a2c6618555f5b3bacb6f2935376a984cef9f6b5cf83e5be747"
+    },
+    "/product/etc/init/qvirtmgr.rc": {
+      "bytes": 155,
+      "sha256": "f19db51cd3d2bfc915231c2cc70b9c6f79d24af78c132d9049a6517780b02097"
+    },
+    "/product/etc/permissions/RemoteSimlock.xml": {
+      "bytes": 355,
+      "sha256": "6a628fda8f62ec4baf7b0cc153bee8b7da076e27c4859150cf67a2113c1dbb7a"
+    },
+    "/product/etc/permissions/RemoteSimlockManager.xml": {
+      "bytes": 449,
+      "sha256": "a5f1438262c59fce43aefd08a3ffc9c1827a4126e6f60295cb7f1edee53b2816"
+    },
+    "/product/etc/permissions/UimGba.xml": {
+      "bytes": 327,
+      "sha256": "137a7d3bbf496f19b63571517329edc8c5575a5238c272a55c5f04720102c31c"
+    },
+    "/product/etc/permissions/UimGbaManager.xml": {
+      "bytes": 403,
+      "sha256": "5bb9e15ddd1462e19f80f95025137b8141227dd1e09ceb53ce4c06c7d7819508"
+    },
+    "/product/etc/permissions/UimService.xml": {
+      "bytes": 387,
+      "sha256": "a58cd0fa2cf73fe082bd62987fe5a94377d2ec54db6600a253f818da121a3edc"
+    },
+    "/product/etc/permissions/cn.google.services.xml": {
+      "bytes": 265,
+      "sha256": "3f9c09dc1e73783e7960876bdfe19a64f97f0a388f3509db6d055e001f001004"
+    },
+    "/product/etc/permissions/com.android.imsserviceentitlement.xml": {
+      "bytes": 944,
+      "sha256": "87d0208385f62ae7e16a0bcd7839996a293d1cefe0ef1ed4b6a7dab5136d3aba"
+    },
+    "/product/etc/permissions/com.android.settings.intelligence.xml": {
+      "bytes": 1083,
+      "sha256": "cb076b195cb1cc75b3c3f7b897fec79d33d7e5dfc305c0d920289123b1024144"
+    },
+    "/product/etc/permissions/com.qti.snapdragon.sdk.display.xml": {
+      "bytes": 548,
+      "sha256": "8c2791fbc4c7044b0987bebaddd4e2789cd36b53ca03feb9811a2423e07f3341"
+    },
+    "/product/etc/permissions/extphonelib_product.xml": {
+      "bytes": 1708,
+      "sha256": "7684e49d9927bd57c9be6eb75d9ad5d30bfc84b3e992f9abc23758964f2a0468"
+    },
+    "/product/etc/permissions/ims_ext_common.xml": {
+      "bytes": 1675,
+      "sha256": "2d0231984a8b68c24f312f5b3ee227354e5cc706371476eff5cf67d892e8c3c0"
+    },
+    "/product/etc/permissions/lpa.xml": {
+      "bytes": 325,
+      "sha256": "ba92e2bba470ce8ed0dd38c23edce525c3fc7ea7451ab75adda1255dba7c976c"
+    },
+    "/product/etc/permissions/privapp-permissions-gms-cn-product.xml": {
+      "bytes": 12829,
+      "sha256": "9ee3fc96d6ec085c96456c3116fde07693c96700799708272903ceced19e6db7"
+    },
+    "/product/etc/permissions/privapp-permissions-miui-product.xml": {
+      "bytes": 1898,
+      "sha256": "557b410463c29bee010385d4655973cb698d18edb51ec3c3685325070b7e5d8c"
+    },
+    "/product/etc/permissions/privapp-permissions-product-miext.xml": {
+      "bytes": 68,
+      "sha256": "b8ca9034c66866b0ae9be3e50b1ba6a10fc94d39a424303fcf80a388c4fb0042"
+    },
+    "/product/etc/permissions/privapp-permissions-product.xml": {
+      "bytes": 20238,
+      "sha256": "84e86c91b2e3533e04f7af4b723867db4bdc2e72a88f17d0e71763e3211a73c4"
+    },
+    "/product/etc/permissions/qti_telephony_hidl_wrapper_prd.xml": {
+      "bytes": 1709,
+      "sha256": "95380e79e973ffff35bf5c590e717f917435aaa118111d98128261c352c14c20"
+    },
+    "/product/etc/permissions/qti_telephony_utils_prd.xml": {
+      "bytes": 1693,
+      "sha256": "a755c7def0b0673cad113e36d06fae0708ec08f4c609ffb8c243786aae0b0d88"
+    },
+    "/product/etc/permissions/signature-permissions-mx_virtualsim.xml": {
+      "bytes": 795,
+      "sha256": "3fd55b46e1bd536ecb5599d0e06c31aad2893d1844c5b09b485ccbfc604726aa"
+    },
+    "/product/etc/permissions/split-permissions-google.xml": {
+      "bytes": 288,
+      "sha256": "259cae2124ee93641d38812f0d25b62785d40ad514f78faad45473a984aad8dd"
+    },
+    "/product/etc/permissions/system_launcher_private_permission.xml": {
+      "bytes": 368,
+      "sha256": "6e57416ded6e754b28cf69cf89af64f91c05624d1725435379707891731a5949"
+    },
+    "/product/etc/permissions/telephony_product_privapp-permissions-qti.xml": {
+      "bytes": 1311,
+      "sha256": "9921d90257c6f721f01627660b94992ffe1642af40abec900a3c044ecb00e8fe"
+    },
+    "/product/etc/permissions/vendor.qti.hardware.data.connection-V1.0-java.xml": {
+      "bytes": 385,
+      "sha256": "e7348251d6b120b9daad9ba1bf2ff09b63c16cbf6e20eb5cf827820468a55b77"
+    },
+    "/product/etc/permissions/vendor.qti.hardware.data.connection-V1.1-java.xml": {
+      "bytes": 380,
+      "sha256": "723ff9e69ca971ffc4e6540b82274cfa481eedcf424b69052319d45a5b0002fa"
+    },
+    "/product/etc/permissions/vendor.qti.hardware.data.connectionaidl-V1-java.xml": {
+      "bytes": 384,
+      "sha256": "1f1aabcee2403f5aa2892352704ef15f1d4c617daa07da3ddd68a257cd0586cb"
+    },
+    "/product/etc/sysconfig/google.xml": {
+      "bytes": 6520,
+      "sha256": "dfa7953b6b41ee4bae85d888859ca580e562b401dbfdfd00ba03e96556008395"
+    },
+    "/product/etc/sysconfig/initial-package-stopped-states-aosp.xml": {
+      "bytes": 2460,
+      "sha256": "3168845a133a653741933cbfc70e6cac468d16d618e5f9a4f92f9a4efe50da6f"
+    },
+    "/product/etc/sysconfig/preinstalled-packages-platform-aosp-product.xml": {
+      "bytes": 1423,
+      "sha256": "d28c3fb06b526a567f018eda1f288f3ef725d6e4cc1a1c9e5cd0d49d14b33dbd"
+    },
+    "/product/etc/sysconfig/preinstalled-packages-platform-handheld-product.xml": {
+      "bytes": 3308,
+      "sha256": "ee6292c7f70d0c49848cbc6aaed8d0d0e80f1afbbb7a37d0d2742d94ff69a771"
+    },
+    "/product/etc/sysconfig/preinstalled-packages-platform-overlays.xml": {
+      "bytes": 12454,
+      "sha256": "c33fa588bd5b3bf8fd9e014053d2111218bd8b5e11ef145c8adc992905f5676e"
+    },
+    "/product/etc/sysconfig/preinstalled-packages-platform-telephony-product.xml": {
+      "bytes": 1323,
+      "sha256": "023ba7916569022b24bd01ee02727f1fbad7c8823a1509d37ab68a60d4f9ed31"
+    },
+    "/product/etc/sysconfig/xmscore.config.xml": {
+      "bytes": 119,
+      "sha256": "094755cf47e5fa829438f8c6348b25c4b073e60af955d87e4a0f584ca4222f02"
+    },
+    "/product/etc/vintf/compatibility_matrix.xml": {
+      "bytes": 3642,
+      "sha256": "a56f43004218cca09e4cd11c97df8a8f9636a3965f3f05b52fba1af346fdea49"
+    },
+    "/product/etc/selinux/product_file_contexts": {
+      "bytes": 887,
+      "sha256": "da32db7137cac8c19facb5102162ebc5a206590acce28b6182117a9a73912973"
+    },
+    "/product/etc/selinux/product_hwservice_contexts": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "/product/etc/selinux/product_keystore2_key_contexts": {
+      "bytes": 927,
+      "sha256": "a708a40f934fac0cc21d3a0c068333f45767adfe54ee54f675fc00398c51c92e"
+    },
+    "/product/etc/selinux/product_mac_permissions.xml": {
+      "bytes": 101,
+      "sha256": "9fc6e3bc49b67055ec3e2059f5fce7c7e5b72069697d82f963aec4dd2d61fcf0"
+    },
+    "/product/etc/selinux/product_property_contexts": {
+      "bytes": 2838,
+      "sha256": "9f12378492fc215b2bd91620299c62780133b8332336caf4d3cd5f4c5219228a"
+    },
+    "/product/etc/selinux/product_seapp_contexts": {
+      "bytes": 702,
+      "sha256": "2fd04f9d730e073a00621765150741958e02e9ba6a4aa4079d3ac68908aadbf0"
+    },
+    "/product/etc/selinux/product_sepolicy.cil": {
+      "bytes": 74279,
+      "sha256": "c338c089ba2629a71403acf3d95be78d03d9fdf1a26f03b9ee0c545a1d546287"
+    },
+    "/product/etc/selinux/product_sepolicy_and_mapping.sha256": {
+      "bytes": 65,
+      "sha256": "6407b6b06361d251016ba4f50b575f3a0c9a40df5a360f131bc02e54274897ae"
+    },
+    "/product/etc/selinux/product_service_contexts": {
+      "bytes": 103,
+      "sha256": "26dbd3f533249aa2c3bb2c72f516d271a0950ee4a4e262498b394fa3d14e2076"
+    },
+    "/product/etc/selinux/product_tee_service_contexts": {
+      "bytes": 925,
+      "sha256": "d90998d5b338d2ce4365411fe8570e344439abb21700c7d546b6d3c9c2f18b18"
+    },
+    "/vendor/etc/fstab.ranchu": {
+      "bytes": 1615,
+      "sha256": "2475ac4e88c4c2f513d3d1f09949226d284b8acadc33f21f1824715f581c7af3"
+    },
+    "/vendor/build.prop": {
+      "bytes": 3875,
+      "sha256": "8d4e2ee39877f44b452c2f5c3290811598f7032e7d3c4d768909c62a0d5e25b7"
+    },
+    "/vendor/etc/init/android.hardware.audio.service.rc": {
+      "bytes": 524,
+      "sha256": "52681678233c58f2c5511d50e1228c678ae04e35b628a62afa4156038ae04c42"
+    },
+    "/vendor/etc/init/android.hardware.biometrics.fingerprint-service.ranchu.rc": {
+      "bytes": 323,
+      "sha256": "1063d504d08bfe86fceb0451a8c2de193cb161b2a6e5d46f3c2c86d32b9461be"
+    },
+    "/vendor/etc/init/android.hardware.camera.provider.ranchu.rc": {
+      "bytes": 255,
+      "sha256": "b0d78ec8683d79e3e18f120cdddbaebf8aad144e42865371a22dfb713b3a79d0"
+    },
+    "/vendor/etc/init/android.hardware.camera.provider@2.7-service-google.rc": {
+      "bytes": 271,
+      "sha256": "34cdf7ab57ae32023cd7cb4ad3604fc067c1330d32f860d8c65ce5eb201723c4"
+    },
+    "/vendor/etc/init/android.hardware.drm-service-lazy.clearkey.rc": {
+      "bytes": 288,
+      "sha256": "cf7bac7cff48d263afaf86ca11efe11a0b1ab8171e018a4f282c99eed22adbdf"
+    },
+    "/vendor/etc/init/android.hardware.gnss-service.ranchu.rc": {
+      "bytes": 213,
+      "sha256": "7b7eee883d53105b0b23b2d1d9d46fc666aca05840441b9f84648ad7a48e6106"
+    },
+    "/vendor/etc/init/android.hardware.graphics.allocator-service.ranchu.rc": {
+      "bytes": 266,
+      "sha256": "74085591d7da4ee3015170f239197871aa4531ce374bbf4e39be5c281be50df1"
+    },
+    "/vendor/etc/init/android.hardware.health-service.example.rc": {
+      "bytes": 545,
+      "sha256": "c1a8a66c52719cdce5d0d6d88b39b3e453e7f1133405371162c7b86031cb63cc"
+    },
+    "/vendor/etc/init/android.hardware.media.c2@1.0-service-goldfish.rc": {
+      "bytes": 222,
+      "sha256": "59ff1df6972774d61a6b8abdd3b04c85fd782e2612ca6368649d4df871187694"
+    },
+    "/vendor/etc/init/android.hardware.radio.ranchu.rc": {
+      "bytes": 207,
+      "sha256": "cabafbdb1bca549a835c5d248ef62a6c6d39719320ace4f60b523a9658259f4a"
+    },
+    "/vendor/etc/init/android.hardware.security.keymint-service.rc": {
+      "bytes": 124,
+      "sha256": "045cd6b62ddcadcc86eb0eac6b94c343eec1588ce45450d6aa592a45ddedd722"
+    },
+    "/vendor/etc/init/android.hardware.sensors-service-multihal.rc": {
+      "bytes": 334,
+      "sha256": "3532538143ef7722abaf4d77d37aa4142772fa17292348e732c5df6e29e69c03"
+    },
+    "/vendor/etc/init/android.hardware.usb-service.example.rc": {
+      "bytes": 126,
+      "sha256": "f45a655978dcfee8c68022063746369d3c2f7501aa9c093d06c5307bea55036e"
+    },
+    "/vendor/etc/init/android.hardware.wifi-service.rc": {
+      "bytes": 224,
+      "sha256": "392ddaa25fcf242c88368e6a59e261c0074215dce02d0eddda60340b804e52bd"
+    },
+    "/vendor/etc/init/bluetooth-service-default.rc": {
+      "bytes": 228,
+      "sha256": "cc28dbff649cf1f6191e5a508a0aa0af9b24db4f3a26184d5e7aa49044c972b2"
+    },
+    "/vendor/etc/init/boringssl_self_test.rc": {
+      "bytes": 640,
+      "sha256": "a30ca035b49329cd72994ca3a75125990bca7fcfa9ef00c39632cc200d7caa48"
+    },
+    "/vendor/etc/init/health-storage-default.rc": {
+      "bytes": 241,
+      "sha256": "f8bb6414ab45a6591838753a42b7cf5d92a45d5444db657ab6ab0b77c263ac84"
+    },
+    "/vendor/etc/init/hostapd.android.rc": {
+      "bytes": 599,
+      "sha256": "a09021175637f73d790f1015b849e3a6c441dba05477fbcde33fa35ce64fb1b6"
+    },
+    "/vendor/etc/init/hw/init.ranchu.rc": {
+      "bytes": 6370,
+      "sha256": "4395b0e2bd9a06c58a02059322130f510684b0cef8fde2cc731f6cbccd188672"
+    },
+    "/vendor/etc/init/hwc3.rc": {
+      "bytes": 259,
+      "sha256": "4ebfc0c9606ebaa5191c487d28c51226b1bd5b1ade0e711d8d8643a5b1e1821c"
+    },
+    "/vendor/etc/init/identity-default.rc": {
+      "bytes": 119,
+      "sha256": "df3a944789141eac5ec326ace9253ff152e503a7c03ae7ccbe9e13941a5cc07e"
+    },
+    "/vendor/etc/init/lights-default.rc": {
+      "bytes": 153,
+      "sha256": "8c628bd4dadc54ec1732326d73e0b14ce464f74a86c4f87077e2b84183d240bb"
+    },
+    "/vendor/etc/vintf/compatibility_matrix.xml": {
+      "bytes": 464,
+      "sha256": "ac5bce978030483ca5de1f141ecd07a2dcb344b59103e54fb6d72f3a706743c3"
+    },
+    "/vendor/etc/vintf/manifest/android.hardware.audio@7.1-impl.ranchu.xml": {
+      "bytes": 331,
+      "sha256": "6916d299d7e741199d2bd2f7a89ad66dc804fd56c908b43326a2597723d7db49"
+    },
+    "/vendor/etc/vintf/manifest/android.hardware.biometrics.fingerprint-service.ranchu.xml": {
+      "bytes": 350,
+      "sha256": "c94bb01e634fdb15f1ff78b41ec80ed1bf7a65cef7b2b160685aa1d15877c6e6"
+    },
+    "/vendor/etc/vintf/manifest/android.hardware.camera.provider.ranchu.xml": {
+      "bytes": 300,
+      "sha256": "5b8bd9feefa4a490931aa20c482357f070ec9670f16d74a3e9b690f7aada91ab"
+    },
+    "/vendor/etc/vintf/manifest/android.hardware.camera.provider@2.7-service-google.xml": {
+      "bytes": 352,
+      "sha256": "4d5ecfc1dd462ee7d6ef279c7f521aa59f65d93a2e4232324d81fe32cf4562f2"
+    },
+    "/vendor/etc/vintf/manifest/android.hardware.drm-service.clearkey.xml": {
+      "bytes": 293,
+      "sha256": "61d138658fc2deed1ae0913b20ddb94414a60101ce0bbbbd2e63ab994fe9983a"
+    },
+    "/vendor/etc/vintf/manifest/android.hardware.gnss-service.ranchu.xml": {
+      "bytes": 300,
+      "sha256": "fe8c11dec97c36e6814b3390cecf09313848211be697bd5c793928abe47db6d2"
+    },
+    "/vendor/etc/vintf/manifest/android.hardware.graphics.gralloc.ranchu.xml": {
+      "bytes": 428,
+      "sha256": "8fbb0aca4988757ecbd19a066047e504e7d53b2ebb731a1284e2bb040dd926f4"
+    },
+    "/vendor/etc/vintf/manifest/android.hardware.health-service.example.xml": {
+      "bytes": 313,
+      "sha256": "6b9d7cc55c693c8ddd00fc1d972c1a878801765b4d13f18eb23e953db4c19f5e"
+    },
+    "/vendor/etc/vintf/manifest/android.hardware.media.c2@1.0-service-goldfish.xml": {
+      "bytes": 363,
+      "sha256": "66b625765a215b68be443794c4bc9b1972076b365c931e81cf5a573ce33e5e23"
+    },
+    "/vendor/etc/vintf/manifest/android.hardware.radio.ranchu.xml": {
+      "bytes": 1690,
+      "sha256": "7952ee9b1f2e643976d4af84d382c070ee0f048406d697ce5f1b4e2eae280aa1"
+    },
+    "/vendor/etc/vintf/manifest/android.hardware.security.keymint-service.xml": {
+      "bytes": 524,
+      "sha256": "e32fd51f82182845253d9cac4539ad0078317c864ad1614f7edf19685138db9b"
+    },
+    "/vendor/etc/vintf/manifest/android.hardware.security.secureclock-service.xml": {
+      "bytes": 319,
+      "sha256": "f46ca5fbae32a642f89d4dfaa4b6623781a3df42d3608d29308c301f18c2c70b"
+    },
+    "/vendor/etc/vintf/manifest/android.hardware.security.sharedsecret-service.xml": {
+      "bytes": 322,
+      "sha256": "4a695ea68f735c7501a4ee885a28ed0dee8f533b1975c4d297c896a28766b9ff"
+    },
+    "/vendor/etc/vintf/manifest/android.hardware.sensors-multihal.xml": {
+      "bytes": 311,
+      "sha256": "fcc6446c3f5a1255e423a58305924c094990acbc34c297469a0d52b097108ed3"
+    },
+    "/vendor/etc/vintf/manifest/android.hardware.usb-service.example.xml": {
+      "bytes": 301,
+      "sha256": "4443e8d6b6f583d8f100eeae94968de23385ec34ac0ea21b44b386211713377a"
+    },
+    "/vendor/etc/vintf/manifest/android.hardware.wifi-service.xml": {
+      "bytes": 297,
+      "sha256": "b0244c7741b58325669b372154776f5b800f6c19c73f08688ad1aaa45ba596a8"
+    },
+    "/vendor/etc/vintf/manifest/android.hardware.wifi.hostapd.xml": {
+      "bytes": 304,
+      "sha256": "2bb8b7148536575a9022ad2bb008a02ed2f0fbcec341b0efbbc5f59e470e8881"
+    },
+    "/vendor/etc/vintf/manifest/android.hardware.wifi.supplicant.xml": {
+      "bytes": 332,
+      "sha256": "caf23fceed52948fa0b76895e181c0245f7d3e4ec62c81cc1236dd24f66b46c2"
+    },
+    "/vendor/etc/vintf/manifest/bluetooth-service-default.xml": {
+      "bytes": 282,
+      "sha256": "eac01f03d104748b5fdf42ed475981b7318aecc358dd189b229f505df5423e62"
+    },
+    "/vendor/etc/vintf/manifest/bluetooth_audio.xml": {
+      "bytes": 330,
+      "sha256": "2a0e267800e97c8b18c3482535dfc7ed87ad64b4463e17e4bf6a0376f6e586b8"
+    },
+    "/vendor/etc/vintf/manifest/health-storage-default.xml": {
+      "bytes": 284,
+      "sha256": "b0ef896b1a15c860f0c1eb338891ae93c051041c8fcdc8b9a3c5a2f684c9b371"
+    },
+    "/vendor/etc/vintf/manifest/hwc3.xml": {
+      "bytes": 295,
+      "sha256": "c52fbb9867de90f7aab598b11b78eef4ba93fa3d9161d210e33680d437b88e75"
+    },
+    "/vendor/etc/vintf/manifest/identity-default.xml": {
+      "bytes": 311,
+      "sha256": "58375445dd5cb31c9bea43123b7fc85ff56cab185e3809ae5014cb2276ebc938"
+    },
+    "/vendor/etc/vintf/manifest/lights-default.xml": {
+      "bytes": 286,
+      "sha256": "1c57b66e61cf14a8470276025540c2ac11d32ee62e2a64b53c2908b115b1495f"
+    },
+    "/vendor/etc/vintf/manifest.xml": {
+      "bytes": 461,
+      "sha256": "576892119e981582299110b2f3539082f4cdee3f2005d4ba4dbf3469bfa86daf"
+    },
+    "/vendor/etc/selinux/genfs_labels_version.txt": {
+      "bytes": 7,
+      "sha256": "ce5b095f33cfad2ece2557566ec55c87dcb81fb1a275fdc6f032369f1ea4fb9d"
+    },
+    "/vendor/etc/selinux/plat_pub_versioned.cil": {
+      "bytes": 373531,
+      "sha256": "4b82a8099e2108fd448ac1a038705590171099daa6cd8ffc706a99b54ea9e16b"
+    },
+    "/vendor/etc/selinux/plat_sepolicy_vers.txt": {
+      "bytes": 7,
+      "sha256": "ce5b095f33cfad2ece2557566ec55c87dcb81fb1a275fdc6f032369f1ea4fb9d"
+    },
+    "/vendor/etc/selinux/precompiled_sepolicy": {
+      "bytes": 718772,
+      "sha256": "3b166e6e9b17a497727921d7ccabd72acdf85cd473c351a4491044d1cecb5927"
+    },
+    "/vendor/etc/selinux/precompiled_sepolicy.plat_sepolicy_and_mapping.sha256": {
+      "bytes": 65,
+      "sha256": "e2284f5de0b8d4ef3f219bc20a5fa22fdc98a10a0225e30f5faef1db5e350107"
+    },
+    "/vendor/etc/selinux/precompiled_sepolicy.product_sepolicy_and_mapping.sha256": {
+      "bytes": 65,
+      "sha256": "c94f4b432da8b59c46dc555a91b033ff28fca1e2b5a1ecdadf56fd59f96e2c1e"
+    },
+    "/vendor/etc/selinux/precompiled_sepolicy.system_ext_sepolicy_and_mapping.sha256": {
+      "bytes": 65,
+      "sha256": "8167aeb28b574763b10fcb6709980f62c0e6f3b1907990ef13890d4b2252431c"
+    },
+    "/vendor/etc/selinux/selinux_denial_metadata": {
+      "bytes": 42,
+      "sha256": "4025cc1505b02185b3a48b93b4472ced048bbbd5b241492ad0959b543edf0ebd"
+    },
+    "/vendor/etc/selinux/vendor_file_contexts": {
+      "bytes": 28437,
+      "sha256": "6ba564ead97465bfc401d46d3e387953ff635aaf50cdaae13cf9c31dd24fde7f"
+    },
+    "/vendor/etc/selinux/vendor_hwservice_contexts": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "/vendor/etc/selinux/vendor_keystore2_key_contexts": {
+      "bytes": 927,
+      "sha256": "ad30432e8a4612a6dc6d26272b0015dc52e8cdd0d4cb9172e721dd044faec060"
+    },
+    "/vendor/etc/selinux/vendor_mac_permissions.xml": {
+      "bytes": 1971,
+      "sha256": "c72674cc9501d9088ab07ae7f71b032982f9aaccbd883bfc06d47671f48d3734"
+    },
+    "/vendor/etc/selinux/vendor_property_contexts": {
+      "bytes": 3754,
+      "sha256": "69faa7bbc15fc0205a0fcd0d13e6a8e008ad5e688ec2a8c628e194bd68546719"
+    },
+    "/vendor/etc/selinux/vendor_seapp_contexts": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "/vendor/etc/selinux/vendor_sepolicy.cil": {
+      "bytes": 178839,
+      "sha256": "f3328ba1ca05e2f1efaff107b1ee80841748e9891e4206dd0af31f90dc8bca07"
+    },
+    "/vendor/etc/selinux/vendor_service_contexts": {
+      "bytes": 686,
+      "sha256": "a132b8acb737afefc1d1e086a6d133d7f4a1108a988c372d0431eb7e6aac50c3"
+    },
+    "/vendor/etc/selinux/vendor_tee_service_contexts": {
+      "bytes": 925,
+      "sha256": "b19469092e2a7d4119358c2bf4459a17a74c51d93465ba4436d03929eafc2be5"
+    },
+    "/vendor/etc/selinux/vndservice_contexts": {
+      "bytes": 1211,
+      "sha256": "b353850880c1c447de288bbaa2f8c2d36148683e836e021cc82b77d8b13c58dd"
+    }
+  },
+  "elf_samples": {
+    "/system/bin/app_process64": {
+      "elf": {
+        "bits": 64,
+        "machine": 183,
+        "loads": [
+          {
+            "offset": 0,
+            "address": 0,
+            "filesz": 7524,
+            "memsz": 7524,
+            "flags": 4,
+            "align": 4096,
+            "congruent_16k": true
+          },
+          {
+            "offset": 8192,
+            "address": 8192,
+            "filesz": 5128,
+            "memsz": 5128,
+            "flags": 5,
+            "align": 4096,
+            "congruent_16k": true
+          },
+          {
+            "offset": 16384,
+            "address": 16384,
+            "filesz": 1200,
+            "memsz": 4096,
+            "flags": 6,
+            "align": 4096,
+            "congruent_16k": true
+          },
+          {
+            "offset": 20480,
+            "address": 20480,
+            "filesz": 24,
+            "memsz": 24,
+            "flags": 6,
+            "align": 4096,
+            "congruent_16k": true
+          }
+        ],
+        "permission_overlap_16k": [
+          {
+            "segments": [
+              0,
+              1
+            ],
+            "first_page": 0,
+            "pages": 1
+          }
+        ]
+      },
+      "needed": [
+        "libandroid_runtime.so",
+        "libbinder.so",
+        "libcutils.so",
+        "libhidlbase.so",
+        "liblog.so",
+        "libnativeloader.so",
+        "libsigchain.so",
+        "libutils.so",
+        "libwilhelm.so",
+        "libbase.so",
+        "libc++.so",
+        "libc.so",
+        "libm.so",
+        "libdl.so"
+      ],
+      "readelf_exit": 0
+    },
+    "/system/bin/app_process32": {
+      "elf": {
+        "bits": 32,
+        "machine": 40,
+        "loads": [
+          {
+            "offset": 0,
+            "address": 0,
+            "filesz": 4766,
+            "memsz": 4766,
+            "flags": 4,
+            "align": 4096,
+            "congruent_16k": true
+          },
+          {
+            "offset": 4768,
+            "address": 8864,
+            "filesz": 3552,
+            "memsz": 3552,
+            "flags": 5,
+            "align": 4096,
+            "congruent_16k": false
+          },
+          {
+            "offset": 8320,
+            "address": 16512,
+            "filesz": 596,
+            "memsz": 3968,
+            "flags": 6,
+            "align": 4096,
+            "congruent_16k": false
+          },
+          {
+            "offset": 8916,
+            "address": 21204,
+            "filesz": 12,
+            "memsz": 12,
+            "flags": 6,
+            "align": 4096,
+            "congruent_16k": false
+          }
+        ],
+        "permission_overlap_16k": [
+          {
+            "segments": [
+              0,
+              1
+            ],
+            "first_page": 0,
+            "pages": 1
+          }
+        ]
+      },
+      "needed": [
+        "libandroid_runtime.so",
+        "libbinder.so",
+        "libcutils.so",
+        "libhidlbase.so",
+        "liblog.so",
+        "libnativeloader.so",
+        "libsigchain.so",
+        "libutils.so",
+        "libwilhelm.so",
+        "libbase.so",
+        "libc++.so",
+        "libc.so",
+        "libm.so",
+        "libdl.so"
+      ],
+      "readelf_exit": 0
+    },
+    "/system/bin/surfaceflinger": {
+      "elf": {
+        "bits": 64,
+        "machine": 183,
+        "loads": [
+          {
+            "offset": 0,
+            "address": 0,
+            "filesz": 269388,
+            "memsz": 269388,
+            "flags": 4,
+            "align": 4096,
+            "congruent_16k": true
+          },
+          {
+            "offset": 270336,
+            "address": 270336,
+            "filesz": 279504,
+            "memsz": 279504,
+            "flags": 5,
+            "align": 4096,
+            "congruent_16k": true
+          },
+          {
+            "offset": 552960,
+            "address": 552960,
+            "filesz": 72512,
+            "memsz": 73728,
+            "flags": 6,
+            "align": 4096,
+            "congruent_16k": true
+          },
+          {
+            "offset": 626688,
+            "address": 626688,
+            "filesz": 1208,
+            "memsz": 3720,
+            "flags": 6,
+            "align": 4096,
+            "congruent_16k": true
+          }
+        ],
+        "permission_overlap_16k": [
+          {
+            "segments": [
+              0,
+              1
+            ],
+            "first_page": 16,
+            "pages": 1
+          },
+          {
+            "segments": [
+              1,
+              2
+            ],
+            "first_page": 33,
+            "pages": 1
+          }
+        ]
+      },
+      "needed": [
+        "libdisplayconfig.system.qti.so",
+        "vendor.qti.hardware.display.composer@3.0.so",
+        "vendor.qti.hardware.display.composer@3.1.so",
+        "vendor.qti.hardware.display.config-V11-ndk.so",
+        "vendor.qti.hardware.display.composer3-V1-ndk.so",
+        "libgralloc.system.qti.so",
+        "libdolbyeffect.so",
+        "libpowermanager.so",
+        "android.adpf.sessionmanager_aidl-ndk.so",
+        "libtimestats_atoms_proto.so",
+        "libtracing_perfetto.so",
+        "server_configurable_flags.so",
+        "libpng.so",
+        "libz.so",
+        "libcrypto.so",
+        "libutilscallstack.so",
+        "android.hardware.common-V2-ndk.so",
+        "android.hardware.common.fmq-V1-ndk.so",
+        "android.hardware.configstore@1.1.so",
+        "android.hardware.graphics.common@1.2.so",
+        "android.hardware.graphics.composer@2.1.so",
+        "android.hardware.graphics.composer@2.2.so",
+        "android.hardware.graphics.composer@2.3.so",
+        "android.hardware.graphics.composer@2.4.so",
+        "android.os.flags-aconfig-cc-host.so",
+        "libGLESv1_CM.so",
+        "libaconfig_storage_read_api_cc.so",
+        "libbase.so",
+        "libfmq.so",
+        "libgui.so",
+        "libprotobuf-cpp-lite.so",
+        "libstatslog_surfaceflinger.so",
+        "libui.so",
+        "libfolme.so",
+        "libvndksupport.so",
+        "android.hardware.configstore-utils.so",
+        "android.hardware.configstore@1.0.so",
+        "android.hardware.graphics.allocator@2.0.so",
+        "android.hardware.graphics.allocator@3.0.so",
+        "libbinder.so",
+        "libcutils.so",
+        "libhidlbase.so",
+        "liblog.so",
+        "libprocessgroup.so",
+        "libsync.so",
+        "libsurfaceflinger.so",
+        "libSurfaceFlingerProp.so",
+        "android.hardware.graphics.common-V6-ndk.so",
+        "android.hardware.graphics.allocator-V2-ndk.so",
+        "android.hardware.drm.common-V1-ndk.so",
+        "android.hardware.graphics.composer3-V4-ndk.so",
+        "libEGL.so",
+        "libGLESv2.so",
+        "libvulkan.so",
+        "libnativewindow.so",
+        "libjpeg-hyper.so",
+        "libutils.so",
+        "libbinder_ndk.so",
+        "libdmabufheap.so",
+        "libc++.so",
+        "libc.so",
+        "libm.so",
+        "libdl.so"
+      ],
+      "readelf_exit": 0
+    },
+    "/system/bin/mediaserver64": {
+      "elf": {
+        "bits": 64,
+        "machine": 183,
+        "loads": [
+          {
+            "offset": 0,
+            "address": 0,
+            "filesz": 5396,
+            "memsz": 5396,
+            "flags": 4,
+            "align": 4096,
+            "congruent_16k": true
+          },
+          {
+            "offset": 8192,
+            "address": 8192,
+            "filesz": 6736,
+            "memsz": 6736,
+            "flags": 5,
+            "align": 4096,
+            "congruent_16k": true
+          },
+          {
+            "offset": 16384,
+            "address": 16384,
+            "filesz": 1048,
+            "memsz": 4096,
+            "flags": 6,
+            "align": 4096,
+            "congruent_16k": true
+          },
+          {
+            "offset": 20480,
+            "address": 20480,
+            "filesz": 24,
+            "memsz": 40,
+            "flags": 6,
+            "align": 4096,
+            "congruent_16k": true
+          }
+        ],
+        "permission_overlap_16k": [
+          {
+            "segments": [
+              0,
+              1
+            ],
+            "first_page": 0,
+            "pages": 1
+          }
+        ]
+      },
+      "needed": [
+        "libbase.so",
+        "server_configurable_flags.so",
+        "libaconfig_storage_read_api_cc.so",
+        "android.hardware.media.omx@1.0.so",
+        "libicu.so",
+        "libfmq.so",
+        "libbinder.so",
+        "libbinder_ndk.so",
+        "libhidlbase.so",
+        "liblog.so",
+        "libmediaplayerservice.so",
+        "libresourcemanagerservice.so",
+        "libutils.so",
+        "libc++.so",
+        "libc.so",
+        "libm.so",
+        "libdl.so"
+      ],
+      "readelf_exit": 0
+    },
+    "/system/bin/drmserver": {
+      "elf": {
+        "bits": 64,
+        "machine": 183,
+        "loads": [
+          {
+            "offset": 0,
+            "address": 0,
+            "filesz": 26972,
+            "memsz": 26972,
+            "flags": 4,
+            "align": 16384,
+            "congruent_16k": true
+          },
+          {
+            "offset": 32768,
+            "address": 32768,
+            "filesz": 35904,
+            "memsz": 35904,
+            "flags": 5,
+            "align": 16384,
+            "congruent_16k": true
+          },
+          {
+            "offset": 81920,
+            "address": 81920,
+            "filesz": 5984,
+            "memsz": 8192,
+            "flags": 6,
+            "align": 16384,
+            "congruent_16k": true
+          },
+          {
+            "offset": 98304,
+            "address": 98304,
+            "filesz": 24,
+            "memsz": 120,
+            "flags": 6,
+            "align": 16384,
+            "congruent_16k": true
+          }
+        ],
+        "permission_overlap_16k": []
+      },
+      "needed": [
+        "libmediametrics.so",
+        "libmediautils.so",
+        "libcutils.so",
+        "libutils.so",
+        "liblog.so",
+        "libbinder.so",
+        "libdrmframeworkcommon.so",
+        "libselinux.so",
+        "libstagefright_foundation.so",
+        "libc++.so",
+        "libc.so",
+        "libm.so",
+        "libdl.so"
+      ],
+      "readelf_exit": 0
+    },
+    "/system/lib64/libandroid_runtime.so": {
+      "elf": {
+        "bits": 64,
+        "machine": 183,
+        "loads": [
+          {
+            "offset": 0,
+            "address": 0,
+            "filesz": 1032472,
+            "memsz": 1032472,
+            "flags": 4,
+            "align": 4096,
+            "congruent_16k": true
+          },
+          {
+            "offset": 1036288,
+            "address": 1036288,
+            "filesz": 1955000,
+            "memsz": 1955000,
+            "flags": 5,
+            "align": 4096,
+            "congruent_16k": true
+          },
+          {
+            "offset": 2994176,
+            "address": 2994176,
+            "filesz": 145688,
+            "memsz": 147456,
+            "flags": 6,
+            "align": 4096,
+            "congruent_16k": true
+          },
+          {
+            "offset": 3141632,
+            "address": 3141632,
+            "filesz": 4600,
+            "memsz": 18040,
+            "flags": 6,
+            "align": 4096,
+            "congruent_16k": true
+          }
+        ],
+        "permission_overlap_16k": [
+          {
+            "segments": [
+              0,
+              1
+            ],
+            "first_page": 63,
+            "pages": 1
+          },
+          {
+            "segments": [
+              1,
+              2
+            ],
+            "first_page": 182,
+            "pages": 1
+          }
+        ]
+      },
+      "needed": [
+        "libtinyxml2.so",
+        "android.media.audio.common.types-V4-cpp.so",
+        "libbase.so",
+        "libharfbuzz_ng.so",
+        "liblog.so",
+        "libmediautils.so",
+        "libminikin.so",
+        "libz.so",
+        "android.database.sqlite-aconfig-cc.so",
+        "android.media.audiopolicy-aconfig-cc.so",
+        "audioclient-types-aidl-cpp.so",
+        "audioflinger-aidl-cpp.so",
+        "audiopolicy-types-aidl-cpp.so",
+        "spatializer-aidl-cpp.so",
+        "volumegroupcallback-aidl-cpp.so",
+        "av-types-aidl-cpp.so",
+        "android.hardware.camera.device@3.2.so",
+        "camera_platform_flags_c_lib.so",
+        "android.hardware.common.fmq-V1-cpp.so",
+        "android.hardware.common-V2-cpp.so",
+        "android.hardware.common.fmq-V1-ndk.so",
+        "android.hardware.common-V2-ndk.so",
+        "libandroid_net.so",
+        "libfmq.so",
+        "libbattery.so",
+        "libnetdutils.so",
+        "libmemtrack.so",
+        "libandroidfw.so",
+        "libappfuse.so",
+        "libcrypto.so",
+        "libcutils.so",
+        "libdebuggerd_client.so",
+        "libdebugstore_cxx.so",
+        "libutils.so",
+        "libbinder.so",
+        "libbinderdebug.so",
+        "libbinder_ndk.so",
+        "libui.so",
+        "libgraphicsenv.so",
+        "libgui.so",
+        "libhwui.so",
+        "libmediandk.so",
+        "libpermission.so",
+        "libPlatformProperties.so",
+        "libsensor.so",
+        "libinput.so",
+        "libicu.so",
+        "libcamera_client.so",
+        "libcamera_metadata.so",
+        "libprocinfo.so",
+        "libsqlite.so",
+        "libEGL.so",
+        "libGLESv1_CM.so",
+        "libGLESv2.so",
+        "libGLESv3.so",
+        "libincfs.so",
+        "libdataloader.so",
+        "libvulkan.so",
+        "libETC1.so",
+        "libjpeg.so",
+        "libhardware.so",
+        "libhardware_legacy.so",
+        "libselinux.so",
+        "libmedia.so",
+        "libmedia_helper.so",
+        "libmediametrics.so",
+        "libmeminfo.so",
+        "libaudioclient.so",
+        "libaudioclient_aidl_conversion.so",
+        "libaudiofoundation.so",
+        "libaudiopolicy.so",
+        "libusbhost.so",
+        "libpdfium.so",
+        "libimg_utils.so",
+        "libnetd_client.so",
+        "libprocessgroup.so",
+        "libnativebridge_lazy.so",
+        "libnativeloader_lazy.so",
+        "libmemunreachable.so",
+        "libhidlbase.so",
+        "libnativedisplay.so",
+        "libnativewindow.so",
+        "libdl_android.so",
+        "libtimeinstate.so",
+        "server_configurable_flags.so",
+        "libaconfig_storage_read_api_cc.so",
+        "libimage_io.so",
+        "libultrahdr.so",
+        "libxqos.so",
+        "libperfetto_c.so",
+        "libtracing_perfetto.so",
+        "soc_flags_lib_cc.so",
+        "libc++.so",
+        "libc.so",
+        "libm.so",
+        "libdl.so"
+      ],
+      "readelf_exit": 0
+    },
+    "/system/lib64/libbinder.so": {
+      "elf": {
+        "bits": 64,
+        "machine": 183,
+        "loads": [
+          {
+            "offset": 0,
+            "address": 0,
+            "filesz": 301092,
+            "memsz": 301092,
+            "flags": 4,
+            "align": 4096,
+            "congruent_16k": true
+          },
+          {
+            "offset": 303104,
+            "address": 303104,
+            "filesz": 469080,
+            "memsz": 469080,
+            "flags": 5,
+            "align": 4096,
+            "congruent_16k": true
+          },
+          {
+            "offset": 774144,
+            "address": 774144,
+            "filesz": 58568,
+            "memsz": 61440,
+            "flags": 6,
+            "align": 4096,
+            "congruent_16k": true
+          },
+          {
+            "offset": 835584,
+            "address": 835584,
+            "filesz": 780,
+            "memsz": 1872,
+            "flags": 6,
+            "align": 4096,
+            "congruent_16k": true
+          },
+          {
+            "offset": 851968,
+            "address": 851968,
+            "filesz": 773656,
+            "memsz": 773656,
+            "flags": 5,
+            "align": 65536,
+            "congruent_16k": true
+          }
+        ],
+        "permission_overlap_16k": [
+          {
+            "segments": [
+              0,
+              1
+            ],
+            "first_page": 18,
+            "pages": 1
+          },
+          {
+            "segments": [
+              1,
+              2
+            ],
+            "first_page": 47,
+            "pages": 1
+          }
+        ]
+      },
+      "needed": [
+        "libcutils.so",
+        "liblog.so",
+        "libutils.so",
+        "libutilscallstack.so",
+        "libapexsupport.so",
+        "libvndksupport.so",
+        "libc++.so",
+        "libc.so",
+        "libm.so",
+        "libdl.so"
+      ],
+      "readelf_exit": 0
+    },
+    "/system/lib64/libgui.so": {
+      "elf": {
+        "bits": 64,
+        "machine": 183,
+        "loads": [
+          {
+            "offset": 0,
+            "address": 0,
+            "filesz": 771072,
+            "memsz": 771072,
+            "flags": 4,
+            "align": 4096,
+            "congruent_16k": true
+          },
+          {
+            "offset": 774144,
+            "address": 774144,
+            "filesz": 1082192,
+            "memsz": 1082192,
+            "flags": 5,
+            "align": 4096,
+            "congruent_16k": true
+          },
+          {
+            "offset": 1859584,
+            "address": 1859584,
+            "filesz": 174856,
+            "memsz": 176128,
+            "flags": 6,
+            "align": 4096,
+            "congruent_16k": true
+          },
+          {
+            "offset": 2035712,
+            "address": 2035712,
+            "filesz": 1856,
+            "memsz": 6936,
+            "flags": 6,
+            "align": 4096,
+            "congruent_16k": true
+          },
+          {
+            "offset": 2097152,
+            "address": 2097152,
+            "filesz": 1703716,
+            "memsz": 1703716,
+            "flags": 5,
+            "align": 65536,
+            "congruent_16k": true
+          }
+        ],
+        "permission_overlap_16k": [
+          {
+            "segments": [
+              0,
+              1
+            ],
+            "first_page": 47,
+            "pages": 1
+          },
+          {
+            "segments": [
+              1,
+              2
+            ],
+            "first_page": 113,
+            "pages": 1
+          }
+        ]
+      },
+      "needed": [
+        "libvndksupport.so",
+        "libgralloctypes.so",
+        "android.hardware.graphics.mapper@4.0.so",
+        "android.hardware.graphics.bufferqueue@1.0.so",
+        "android.hardware.graphics.bufferqueue@2.0.so",
+        "android.hardware.graphics.common@1.1.so",
+        "android.hardware.graphics.common@1.2.so",
+        "android.hidl.token@1.0-utils.so",
+        "libbase.so",
+        "libcutils.so",
+        "libEGL.so",
+        "libhidlbase.so",
+        "liblog.so",
+        "libnativewindow.so",
+        "libsync.so",
+        "libui.so",
+        "libutils.so",
+        "libbinder.so",
+        "libGLESv2.so",
+        "android.hardware.graphics.common-V6-ndk.so",
+        "libc++.so",
+        "libc.so",
+        "libm.so",
+        "libdl.so"
+      ],
+      "readelf_exit": 0
+    },
+    "/system/lib64/libEGL.so": {
+      "elf": {
+        "bits": 64,
+        "machine": 183,
+        "loads": [
+          {
+            "offset": 0,
+            "address": 0,
+            "filesz": 88664,
+            "memsz": 88664,
+            "flags": 4,
+            "align": 4096,
+            "congruent_16k": true
+          },
+          {
+            "offset": 90112,
+            "address": 90112,
+            "filesz": 134608,
+            "memsz": 134608,
+            "flags": 5,
+            "align": 4096,
+            "congruent_16k": true
+          },
+          {
+            "offset": 225280,
+            "address": 225280,
+            "filesz": 18648,
+            "memsz": 20480,
+            "flags": 6,
+            "align": 4096,
+            "congruent_16k": true
+          },
+          {
+            "offset": 245760,
+            "address": 245760,
+            "filesz": 4,
+            "memsz": 32976,
+            "flags": 6,
+            "align": 4096,
+            "congruent_16k": true
+          }
+        ],
+        "permission_overlap_16k": [
+          {
+            "segments": [
+              0,
+              1
+            ],
+            "first_page": 5,
+            "pages": 1
+          },
+          {
+            "segments": [
+              1,
+              2
+            ],
+            "first_page": 13,
+            "pages": 1
+          }
+        ]
+      },
+      "needed": [
+        "libcutils.so",
+        "libgraphicsenv.so",
+        "libnativewindow.so",
+        "libaconfig_storage_read_api_cc.so",
+        "liblog.so",
+        "libvndksupport.so",
+        "android.hardware.configstore@1.0.so",
+        "android.hardware.configstore-utils.so",
+        "libbase.so",
+        "libegl_flags.so",
+        "libhidlbase.so",
+        "libnativebridge_lazy.so",
+        "libnativeloader_lazy.so",
+        "libutils.so",
+        "libSurfaceFlingerProp.so",
+        "libunwindstack.so",
+        "libz.so",
+        "libc++.so",
+        "libc.so",
+        "libm.so",
+        "libdl.so"
+      ],
+      "readelf_exit": 0
+    },
+    "/system/lib64/libui.so": {
+      "elf": {
+        "bits": 64,
+        "machine": 183,
+        "loads": [
+          {
+            "offset": 0,
+            "address": 0,
+            "filesz": 181800,
+            "memsz": 181800,
+            "flags": 4,
+            "align": 4096,
+            "congruent_16k": true
+          },
+          {
+            "offset": 184320,
+            "address": 184320,
+            "filesz": 248384,
+            "memsz": 248384,
+            "flags": 5,
+            "align": 4096,
+            "congruent_16k": true
+          },
+          {
+            "offset": 434176,
+            "address": 434176,
+            "filesz": 8776,
+            "memsz": 12288,
+            "flags": 6,
+            "align": 4096,
+            "congruent_16k": true
+          },
+          {
+            "offset": 446464,
+            "address": 446464,
+            "filesz": 0,
+            "memsz": 8072,
+            "flags": 6,
+            "align": 4096,
+            "congruent_16k": true
+          },
+          {
+            "offset": 458752,
+            "address": 458752,
+            "filesz": 443452,
+            "memsz": 443452,
+            "flags": 5,
+            "align": 65536,
+            "congruent_16k": true
+          }
+        ],
+        "permission_overlap_16k": [
+          {
+            "segments": [
+              0,
+              1
+            ],
+            "first_page": 11,
+            "pages": 1
+          },
+          {
+            "segments": [
+              1,
+              2
+            ],
+            "first_page": 26,
+            "pages": 1
+          }
+        ]
+      },
+      "needed": [
+        "android.hardware.graphics.allocator@2.0.so",
+        "android.hardware.graphics.allocator@3.0.so",
+        "android.hardware.graphics.allocator@4.0.so",
+        "android.hardware.graphics.common@1.2.so",
+        "android.hardware.graphics.mapper@2.0.so",
+        "android.hardware.graphics.mapper@2.1.so",
+        "android.hardware.graphics.mapper@3.0.so",
+        "android.hardware.graphics.mapper@4.0.so",
+        "libbase.so",
+        "libbinder_ndk.so",
+        "libcutils.so",
+        "libgralloctypes.so",
+        "libhidlbase.so",
+        "libsync.so",
+        "libutils.so",
+        "liblog.so",
+        "libvndksupport.so",
+        "android.hardware.graphics.common-V6-ndk.so",
+        "android.hardware.graphics.allocator-V2-ndk.so",
+        "libc++.so",
+        "libc.so",
+        "libm.so",
+        "libdl.so"
+      ],
+      "readelf_exit": 0
+    },
+    "/system/apex/com.android.art.capex!original_apex!apex_payload.img/lib64/libart.so": {
+      "elf": {
+        "bits": 64,
+        "machine": 183,
+        "loads": [
+          {
+            "offset": 0,
+            "address": 0,
+            "filesz": 1710260,
+            "memsz": 1710260,
+            "flags": 4,
+            "align": 2097152,
+            "congruent_16k": true
+          },
+          {
+            "offset": 2097152,
+            "address": 2097152,
+            "filesz": 7997456,
+            "memsz": 7997456,
+            "flags": 5,
+            "align": 2097152,
+            "congruent_16k": true
+          },
+          {
+            "offset": 10485760,
+            "address": 10485760,
+            "filesz": 221528,
+            "memsz": 225280,
+            "flags": 6,
+            "align": 2097152,
+            "congruent_16k": true
+          },
+          {
+            "offset": 12582912,
+            "address": 12582912,
+            "filesz": 12881,
+            "memsz": 157144,
+            "flags": 6,
+            "align": 2097152,
+            "congruent_16k": true
+          }
+        ],
+        "permission_overlap_16k": []
+      },
+      "needed": [
+        "libartpalette.so",
+        "libbase.so",
+        "liblog.so",
+        "liblz4.so",
+        "liblzma.so",
+        "libnativebridge.so",
+        "libnativeloader.so",
+        "libsigchain.so",
+        "libunwindstack.so",
+        "libartbase.so",
+        "libdexfile.so",
+        "libprofile.so",
+        "libdl_android.so",
+        "libstatspull.so",
+        "libstatssocket.so",
+        "libz.so",
+        "heapprofd_client_api.so",
+        "libc++.so",
+        "libc.so",
+        "libm.so",
+        "libdl.so"
+      ],
+      "readelf_exit": 0
+    },
+    "/system/apex/com.android.art.capex!original_apex!apex_payload.img/lib64/libartbase.so": {
+      "elf": {
+        "bits": 64,
+        "machine": 183,
+        "loads": [
+          {
+            "offset": 0,
+            "address": 0,
+            "filesz": 155300,
+            "memsz": 155300,
+            "flags": 4,
+            "align": 4096,
+            "congruent_16k": true
+          },
+          {
+            "offset": 155648,
+            "address": 155648,
+            "filesz": 197968,
+            "memsz": 197968,
+            "flags": 5,
+            "align": 4096,
+            "congruent_16k": true
+          },
+          {
+            "offset": 356352,
+            "address": 356352,
+            "filesz": 9864,
+            "memsz": 12288,
+            "flags": 6,
+            "align": 4096,
+            "congruent_16k": true
+          },
+          {
+            "offset": 368640,
+            "address": 368640,
+            "filesz": 200,
+            "memsz": 2736,
+            "flags": 6,
+            "align": 4096,
+            "congruent_16k": true
+          },
+          {
+            "offset": 393216,
+            "address": 393216,
+            "filesz": 332612,
+            "memsz": 332612,
+            "flags": 5,
+            "align": 65536,
+            "congruent_16k": true
+          }
+        ],
+        "permission_overlap_16k": [
+          {
+            "segments": [
+              0,
+              1
+            ],
+            "first_page": 9,
+            "pages": 1
+          },
+          {
+            "segments": [
+              1,
+              2
+            ],
+            "first_page": 21,
+            "pages": 1
+          }
+        ]
+      },
+      "needed": [
+        "libz.so",
+        "liblog.so",
+        "libartpalette.so",
+        "libbase.so",
+        "libc++.so",
+        "libc.so",
+        "libm.so",
+        "libdl.so"
+      ],
+      "readelf_exit": 0
+    },
+    "/system/apex/com.android.art.capex!original_apex!apex_payload.img/bin/dex2oat64": {
+      "elf": {
+        "bits": 64,
+        "machine": 183,
+        "loads": [
+          {
+            "offset": 0,
+            "address": 0,
+            "filesz": 192260,
+            "memsz": 192260,
+            "flags": 4,
+            "align": 4096,
+            "congruent_16k": true
+          },
+          {
+            "offset": 192512,
+            "address": 192512,
+            "filesz": 1005648,
+            "memsz": 1005648,
+            "flags": 5,
+            "align": 4096,
+            "congruent_16k": true
+          },
+          {
+            "offset": 1200128,
+            "address": 1200128,
+            "filesz": 15168,
+            "memsz": 16384,
+            "flags": 6,
+            "align": 4096,
+            "congruent_16k": true
+          },
+          {
+            "offset": 1216512,
+            "address": 1216512,
+            "filesz": 24,
+            "memsz": 3928,
+            "flags": 6,
+            "align": 4096,
+            "congruent_16k": true
+          }
+        ],
+        "permission_overlap_16k": [
+          {
+            "segments": [
+              0,
+              1
+            ],
+            "first_page": 11,
+            "pages": 1
+          },
+          {
+            "segments": [
+              1,
+              2
+            ],
+            "first_page": 73,
+            "pages": 1
+          }
+        ]
+      },
+      "needed": [
+        "libartpalette.so",
+        "libbase.so",
+        "liblz4.so",
+        "liblog.so",
+        "libsigchain.so",
+        "libz.so",
+        "libart.so",
+        "libartbase.so",
+        "libdexfile.so",
+        "libprofile.so",
+        "libc++.so",
+        "libc.so",
+        "libm.so",
+        "libdl.so"
+      ],
+      "readelf_exit": 0
+    },
+    "/system/apex/com.android.art.capex!original_apex!apex_payload.img/bin/artd": {
+      "elf": {
+        "bits": 64,
+        "machine": 183,
+        "loads": [
+          {
+            "offset": 0,
+            "address": 0,
+            "filesz": 70176,
+            "memsz": 70176,
+            "flags": 4,
+            "align": 4096,
+            "congruent_16k": true
+          },
+          {
+            "offset": 73728,
+            "address": 73728,
+            "filesz": 243336,
+            "memsz": 243336,
+            "flags": 5,
+            "align": 4096,
+            "congruent_16k": true
+          },
+          {
+            "offset": 319488,
+            "address": 319488,
+            "filesz": 6536,
+            "memsz": 8192,
+            "flags": 6,
+            "align": 4096,
+            "congruent_16k": true
+          },
+          {
+            "offset": 327680,
+            "address": 327680,
+            "filesz": 344,
+            "memsz": 600,
+            "flags": 6,
+            "align": 4096,
+            "congruent_16k": true
+          }
+        ],
+        "permission_overlap_16k": [
+          {
+            "segments": [
+              0,
+              1
+            ],
+            "first_page": 4,
+            "pages": 1
+          },
+          {
+            "segments": [
+              1,
+              2
+            ],
+            "first_page": 19,
+            "pages": 1
+          }
+        ]
+      },
+      "needed": [
+        "libbinder_ndk.so",
+        "libselinux.so",
+        "libart.so",
+        "libartbase.so",
+        "libartservice.so",
+        "libarttools.so",
+        "libbase.so",
+        "libziparchive.so",
+        "libdexfile.so",
+        "libc++.so",
+        "libc.so",
+        "libm.so",
+        "libdl.so"
+      ],
+      "readelf_exit": 0
+    },
+    "/system/apex/com.android.runtime.apex!apex_payload.img/bin/linker64": {
+      "elf": {
+        "bits": 64,
+        "machine": 183,
+        "loads": [
+          {
+            "offset": 0,
+            "address": 0,
+            "filesz": 310048,
+            "memsz": 310048,
+            "flags": 4,
+            "align": 4096,
+            "congruent_16k": true
+          },
+          {
+            "offset": 311296,
+            "address": 311296,
+            "filesz": 1328736,
+            "memsz": 1328736,
+            "flags": 5,
+            "align": 4096,
+            "congruent_16k": true
+          },
+          {
+            "offset": 1642496,
+            "address": 1642496,
+            "filesz": 40152,
+            "memsz": 40960,
+            "flags": 6,
+            "align": 4096,
+            "congruent_16k": true
+          },
+          {
+            "offset": 1683456,
+            "address": 1683456,
+            "filesz": 4080,
+            "memsz": 78976,
+            "flags": 6,
+            "align": 4096,
+            "congruent_16k": true
+          }
+        ],
+        "permission_overlap_16k": [
+          {
+            "segments": [
+              1,
+              2
+            ],
+            "first_page": 100,
+            "pages": 1
+          }
+        ]
+      },
+      "needed": [],
+      "readelf_exit": 0
+    },
+    "/system/apex/com.android.runtime.apex!apex_payload.img/lib64/bionic/libc.so": {
+      "elf": {
+        "bits": 64,
+        "machine": 183,
+        "loads": [
+          {
+            "offset": 0,
+            "address": 0,
+            "filesz": 357832,
+            "memsz": 357832,
+            "flags": 4,
+            "align": 4096,
+            "congruent_16k": true
+          },
+          {
+            "offset": 360448,
+            "address": 360448,
+            "filesz": 595632,
+            "memsz": 595632,
+            "flags": 5,
+            "align": 4096,
+            "congruent_16k": true
+          },
+          {
+            "offset": 958464,
+            "address": 958464,
+            "filesz": 16112,
+            "memsz": 16384,
+            "flags": 6,
+            "align": 4096,
+            "congruent_16k": true
+          },
+          {
+            "offset": 974848,
+            "address": 974848,
+            "filesz": 1440,
+            "memsz": 107777,
+            "flags": 6,
+            "align": 4096,
+            "congruent_16k": true
+          }
+        ],
+        "permission_overlap_16k": [
+          {
+            "segments": [
+              1,
+              2
+            ],
+            "first_page": 58,
+            "pages": 1
+          }
+        ]
+      },
+      "needed": [
+        "ld-android.so",
+        "libdl.so"
+      ],
+      "readelf_exit": 0
+    },
+    "/system/apex/com.android.runtime.apex!apex_payload.img/lib64/bionic/libdl.so": {
+      "elf": {
+        "bits": 64,
+        "machine": 183,
+        "loads": [
+          {
+            "offset": 0,
+            "address": 0,
+            "filesz": 3464,
+            "memsz": 3464,
+            "flags": 4,
+            "align": 4096,
+            "congruent_16k": true
+          },
+          {
+            "offset": 4096,
+            "address": 4096,
+            "filesz": 928,
+            "memsz": 928,
+            "flags": 5,
+            "align": 4096,
+            "congruent_16k": true
+          },
+          {
+            "offset": 8192,
+            "address": 8192,
+            "filesz": 408,
+            "memsz": 4096,
+            "flags": 6,
+            "align": 4096,
+            "congruent_16k": true
+          },
+          {
+            "offset": 12288,
+            "address": 12288,
+            "filesz": 0,
+            "memsz": 4096,
+            "flags": 6,
+            "align": 4096,
+            "congruent_16k": true
+          }
+        ],
+        "permission_overlap_16k": [
+          {
+            "segments": [
+              0,
+              1
+            ],
+            "first_page": 0,
+            "pages": 1
+          },
+          {
+            "segments": [
+              0,
+              2
+            ],
+            "first_page": 0,
+            "pages": 1
+          },
+          {
+            "segments": [
+              0,
+              3
+            ],
+            "first_page": 0,
+            "pages": 1
+          },
+          {
+            "segments": [
+              1,
+              2
+            ],
+            "first_page": 0,
+            "pages": 1
+          },
+          {
+            "segments": [
+              1,
+              3
+            ],
+            "first_page": 0,
+            "pages": 1
+          }
+        ]
+      },
+      "needed": [
+        "ld-android.so"
+      ],
+      "readelf_exit": 0
+    },
+    "/system/apex/com.android.runtime.apex!apex_payload.img/lib64/bionic/libm.so": {
+      "elf": {
+        "bits": 64,
+        "machine": 183,
+        "loads": [
+          {
+            "offset": 0,
+            "address": 0,
+            "filesz": 75828,
+            "memsz": 75828,
+            "flags": 4,
+            "align": 4096,
+            "congruent_16k": true
+          },
+          {
+            "offset": 77824,
+            "address": 77824,
+            "filesz": 146152,
+            "memsz": 146152,
+            "flags": 5,
+            "align": 4096,
+            "congruent_16k": true
+          },
+          {
+            "offset": 225280,
+            "address": 225280,
+            "filesz": 736,
+            "memsz": 4096,
+            "flags": 6,
+            "align": 4096,
+            "congruent_16k": true
+          },
+          {
+            "offset": 229376,
+            "address": 229376,
+            "filesz": 128,
+            "memsz": 160,
+            "flags": 6,
+            "align": 4096,
+            "congruent_16k": true
+          }
+        ],
+        "permission_overlap_16k": [
+          {
+            "segments": [
+              0,
+              1
+            ],
+            "first_page": 4,
+            "pages": 1
+          },
+          {
+            "segments": [
+              1,
+              2
+            ],
+            "first_page": 13,
+            "pages": 1
+          }
+        ]
+      },
+      "needed": [
+        "libc.so"
+      ],
+      "readelf_exit": 0
+    }
+  },
+  "packages": {
+    "/system/framework/framework-res.apk": {
+      "signature_exit": 0,
+      "certificate_sha256": [
+        "c9009d01ebf9f5d0302bc71b2fe9aa9a47a432bba17308a3111b75d7b2149025"
+      ],
+      "native": [],
+      "package_line": "package: name='android' versionCode='36' versionName='16'",
+      "badging_exit": 0,
+      "manifest_exit": 0,
+      "manifest_log": "logs/0036-manifest.txt"
+    },
+    "/system/priv-app/SettingsProvider/SettingsProvider.apk": {
+      "signature_exit": 0,
+      "certificate_sha256": [
+        "c9009d01ebf9f5d0302bc71b2fe9aa9a47a432bba17308a3111b75d7b2149025"
+      ],
+      "native": [],
+      "package_line": "package: name='com.android.providers.settings' versionCode='36' versionName='16' platformBuildVersionName='16' platformBuildVersionCode='36' compileSdkVersion='36' compileSdkVersionCodename='16'",
+      "badging_exit": 0,
+      "manifest_exit": 0,
+      "manifest_log": "logs/0045-manifest.txt"
+    },
+    "/system_ext/priv-app/MiuiSystemUI/MiuiSystemUI.apk": {
+      "signature_exit": 0,
+      "certificate_sha256": [
+        "c9009d01ebf9f5d0302bc71b2fe9aa9a47a432bba17308a3111b75d7b2149025"
+      ],
+      "native": [],
+      "package_line": "package: name='com.android.systemui' versionCode='202501210' versionName='20250121.0' platformBuildVersionName='16' platformBuildVersionCode='36' compileSdkVersion='36' compileSdkVersionCodename='16'",
+      "badging_exit": 0,
+      "manifest_exit": 0,
+      "manifest_log": "logs/0050-manifest.txt"
+    },
+    "/system_ext/priv-app/Settings/Settings.apk": {
+      "signature_exit": 0,
+      "certificate_sha256": [
+        "c9009d01ebf9f5d0302bc71b2fe9aa9a47a432bba17308a3111b75d7b2149025"
+      ],
+      "native": [],
+      "package_line": "package: name='com.android.settings' versionCode='36' versionName='16' platformBuildVersionName='16' platformBuildVersionCode='36' compileSdkVersion='36' compileSdkVersionCodename='16'",
+      "badging_exit": 0,
+      "manifest_exit": 0,
+      "manifest_log": "logs/0055-manifest.txt"
+    },
+    "/product/priv-app/MiuiHome/MiuiHome.apk": {
+      "signature_exit": 0,
+      "certificate_sha256": [
+        "c9009d01ebf9f5d0302bc71b2fe9aa9a47a432bba17308a3111b75d7b2149025"
+      ],
+      "native": [
+        {
+          "path": "lib/arm64-v8a/libfilament-jni.so",
+          "sha256": "1884b54413097ee039bcb1e40a2333f3a65927f5158e3c8a75a2ea9138bdf126",
+          "compressed": false,
+          "zip_offset": 16384,
+          "zip_aligned_16k": true,
+          "elf": {
+            "bits": 64,
+            "machine": 183,
+            "loads": [
+              {
+                "offset": 0,
+                "address": 0,
+                "filesz": 967172,
+                "memsz": 967172,
+                "flags": 5,
+                "align": 4096,
+                "congruent_16k": true
+              },
+              {
+                "offset": 968744,
+                "address": 972840,
+                "filesz": 18472,
+                "memsz": 21080,
+                "flags": 6,
+                "align": 4096,
+                "congruent_16k": false
+              }
+            ],
+            "permission_overlap_16k": [
+              {
+                "segments": [
+                  0,
+                  1
+                ],
+                "first_page": 59,
+                "pages": 1
+              }
+            ]
+          }
+        },
+        {
+          "path": "lib/arm64-v8a/libfilament-utils-jni.so",
+          "sha256": "068746408f09eacac3c93fa02bf8de1cfad38fc1765c9ef907d14461bea2bc05",
+          "compressed": false,
+          "zip_offset": 1015808,
+          "zip_aligned_16k": true,
+          "elf": {
+            "bits": 64,
+            "machine": 183,
+            "loads": [
+              {
+                "offset": 0,
+                "address": 0,
+                "filesz": 185660,
+                "memsz": 185660,
+                "flags": 5,
+                "align": 4096,
+                "congruent_16k": true
+              },
+              {
+                "offset": 186304,
+                "address": 190400,
+                "filesz": 10376,
+                "memsz": 11728,
+                "flags": 6,
+                "align": 4096,
+                "congruent_16k": false
+              }
+            ],
+            "permission_overlap_16k": [
+              {
+                "segments": [
+                  0,
+                  1
+                ],
+                "first_page": 11,
+                "pages": 1
+              }
+            ]
+          }
+        },
+        {
+          "path": "lib/arm64-v8a/libgltfio-jni.so",
+          "sha256": "66134ed55c56b2aa2a5fedbc30058c560c9019ca83b0ffd67c8b0b0f5f7ca839",
+          "compressed": false,
+          "zip_offset": 1228800,
+          "zip_aligned_16k": true,
+          "elf": {
+            "bits": 64,
+            "machine": 183,
+            "loads": [
+              {
+                "offset": 0,
+                "address": 0,
+                "filesz": 2266656,
+                "memsz": 2266656,
+                "flags": 5,
+                "align": 4096,
+                "congruent_16k": true
+              },
+              {
+                "offset": 2269576,
+                "address": 2273672,
+                "filesz": 16104,
+                "memsz": 17608,
+                "flags": 6,
+                "align": 4096,
+                "congruent_16k": false
+              }
+            ],
+            "permission_overlap_16k": [
+              {
+                "segments": [
+                  0,
+                  1
+                ],
+                "first_page": 138,
+                "pages": 1
+              }
+            ]
+          }
+        },
+        {
+          "path": "lib/arm64-v8a/libjniLibs.so",
+          "sha256": "ad8c4013f57c7056a596ce48d307a3a3241a46f0b9030ded91b8596fc9e9d225",
+          "compressed": false,
+          "zip_offset": 3522560,
+          "zip_aligned_16k": true,
+          "elf": {
+            "bits": 64,
+            "machine": 183,
+            "loads": [
+              {
+                "offset": 0,
+                "address": 0,
+                "filesz": 3048,
+                "memsz": 3048,
+                "flags": 5,
+                "align": 4096,
+                "congruent_16k": true
+              },
+              {
+                "offset": 3488,
+                "address": 7584,
+                "filesz": 608,
+                "memsz": 608,
+                "flags": 6,
+                "align": 4096,
+                "congruent_16k": false
+              }
+            ],
+            "permission_overlap_16k": [
+              {
+                "segments": [
+                  0,
+                  1
+                ],
+                "first_page": 0,
+                "pages": 1
+              }
+            ]
+          }
+        }
+      ],
+      "package_line": "package: name='com.miui.home' versionCode='601021833' versionName='RELEASE-6.01.02.1833-11182047' platformBuildVersionName='15' platformBuildVersionCode='35' compileSdkVersion='35' compileSdkVersionCodename='15'",
+      "badging_exit": 0,
+      "manifest_exit": 0,
+      "manifest_log": "logs/0060-manifest.txt"
+    },
+    "/system/apex/com.android.art.capex": {
+      "signature_exit": 0,
+      "certificate_sha256": [
+        "c9009d01ebf9f5d0302bc71b2fe9aa9a47a432bba17308a3111b75d7b2149025"
+      ],
+      "native": [],
+      "apex_manifest.pb_sha256": "a5c5a63d63f3fb474cfce0388ed33213e5dc564a46936f846e8d8a62ddbde454",
+      "apex_pubkey_sha256": "0c8afbc898277bb4654702f1f9e8f533f9b2fb981c909a4d4468a9c03c9d4819",
+      "manifest_decode_exit": 0,
+      "manifest_decoded": "1: \"com.android.art\"\n2: 360499999\n7: \"libjdwp.so\"\n7: \"libandroidio.so\"\n7: \"libdexfile.so\"\n7: \"libnativebridge.so\"\n7: \"libnativehelper.so\"\n7: \"libnativeloader.so\"\n7: \"libsigchain.so\"\n8: \"libicu_jni.so\"\n8: \"heapprofd_client_api.so\"\n8: \"libadbconnection_client.so\"\n8: \"libartpalette-system.so\"\n8: \"libbinder_ndk.so\"\n8: \"libc.so\"\n8: \"libdl.so\"\n8: \"libdl_android.so\"\n8: \"libicu.so\"\n8: \"liblog.so\"\n8: \"libm.so\"\n8: \"libselinux.so\"\n8: \"libstatspull.so\"\n8: \"libstatssocket.so\"\n8: \"libz.so\"\n9: \"libartservice.so\"\n12 {\n  1: \"b6bc02842073e54f67c96b2e5fb6eef8f8a354f2b13e820b29dc92f7e5df96d6\"\n}\n"
+    },
+    "/system/apex/com.android.art.capex!original_apex": {
+      "signature_exit": 0,
+      "certificate_sha256": [
+        "c9009d01ebf9f5d0302bc71b2fe9aa9a47a432bba17308a3111b75d7b2149025"
+      ],
+      "native": [],
+      "apex_manifest.pb_sha256": "f4faa54c9e6400846d0ce596075d6042aa88c50ec2fa7581d5471ba08cea13a8",
+      "apex_pubkey_sha256": "0c8afbc898277bb4654702f1f9e8f533f9b2fb981c909a4d4468a9c03c9d4819",
+      "manifest_decode_exit": 0,
+      "manifest_decoded": "1: \"com.android.art\"\n2: 360499999\n7: \"libjdwp.so\"\n7: \"libandroidio.so\"\n7: \"libdexfile.so\"\n7: \"libnativebridge.so\"\n7: \"libnativehelper.so\"\n7: \"libnativeloader.so\"\n7: \"libsigchain.so\"\n8: \"libicu_jni.so\"\n8: \"heapprofd_client_api.so\"\n8: \"libadbconnection_client.so\"\n8: \"libartpalette-system.so\"\n8: \"libbinder_ndk.so\"\n8: \"libc.so\"\n8: \"libdl.so\"\n8: \"libdl_android.so\"\n8: \"libicu.so\"\n8: \"liblog.so\"\n8: \"libm.so\"\n8: \"libselinux.so\"\n8: \"libstatspull.so\"\n8: \"libstatssocket.so\"\n8: \"libz.so\"\n9: \"libartservice.so\"\n"
+    },
+    "/system/apex/com.android.runtime.apex": {
+      "signature_exit": 0,
+      "certificate_sha256": [
+        "c9009d01ebf9f5d0302bc71b2fe9aa9a47a432bba17308a3111b75d7b2149025"
+      ],
+      "native": [],
+      "apex_manifest.pb_sha256": "48e74bbf3dead7386e9a16ba8ff51cd9983c5d5ab6973bb7fb8c445a9653d0d9",
+      "apex_pubkey_sha256": "5d4f0f9d7356ddf9bafd5b77c7264d340263f28d3e408441d289db120d04cc99",
+      "manifest_decode_exit": 0,
+      "manifest_decoded": "1: \"com.android.runtime\"\n2: 1\n8: \"libc.so\"\n8: \"libclang_rt.hwasan-aarch64-android.so\"\n8: \"libdexfile.so\"\n8: \"libdl.so\"\n8: \"libdl_android.so\"\n8: \"liblog.so\"\n8: \"libm.so\"\n8: \"libz.so\"\n"
+    }
+  },
+  "properties": {
+    "/system/build.prop": {
+      "ro.system.product.cpu.abilist": "arm64-v8a",
+      "ro.system.product.cpu.abilist32": "",
+      "ro.system.product.cpu.abilist64": "arm64-v8a",
+      "ro.system.build.fingerprint": "Xiaomi/missi/missi:16/BP2A.250605.031.A3/OS3.0.2.0.WMCCNXM:user/release-keys",
+      "ro.system.build.version.incremental": "OS3.0.2.0.WMCCNXM",
+      "ro.system.build.version.sdk": "36",
+      "ro.system.build.version.sdk_full": "36.0",
+      "ro.build.version.incremental": "OS3.0.2.0.WMCCNXM",
+      "ro.build.version.sdk": "36",
+      "ro.build.version.sdk_full": "36.0",
+      "ro.build.version.preview_sdk_fingerprint": "REL",
+      "ro.build.version.security_patch": "2025-11-01",
+      "persist.sys.force_sw_gles": "1",
+      "ro.kernel.qemu.gles": "0",
+      "dalvik.vm.usejit": "true",
+      "ro.apex.updatable": "true",
+      "ro.control_privapp_permissions": "disable",
+      "ro.mi.os.version.incremental": "OS3.0.2.0.WMCCNXM",
+      "ro.mediaserver.64b.enable": "true"
+    },
+    "/system_ext/etc/build.prop": {
+      "ro.system_ext.build.fingerprint": "Xiaomi/missi/missi:16/BP2A.250605.031.A3/OS3.0.2.0.WMCCNXM:user/release-keys",
+      "ro.system_ext.build.version.incremental": "OS3.0.2.0.WMCCNXM",
+      "ro.system_ext.build.version.sdk": "36",
+      "ro.system_ext.build.version.sdk_full": "36.0",
+      "ro.control_privapp_permissions": "disable"
+    },
+    "/product/etc/build.prop": {
+      "ro.product.build.fingerprint": "Xiaomi/fuxi/missi:16/BP2A.250605.031.A3/OS3.0.2.0.WMCCNXM:user/release-keys",
+      "ro.product.build.version.incremental": "OS3.0.2.0.WMCCNXM",
+      "ro.product.build.version.sdk": "36",
+      "ro.product.build.version.sdk_full": "36.0",
+      "ro.control_privapp_permissions": "disable"
+    },
+    "/vendor/build.prop": {
+      "ro.vendor.product.cpu.abilist": "arm64-v8a",
+      "ro.vendor.product.cpu.abilist32": "",
+      "ro.vendor.product.cpu.abilist64": "arm64-v8a",
+      "ro.vendor.build.fingerprint": "google/sdk_gphone64_arm64/emu64a:16/BE2A.250530.026.D1/13818094:user/release-keys",
+      "ro.vendor.build.version.incremental": "13818094",
+      "ro.vendor.build.version.sdk": "36",
+      "ro.vendor.build.version.sdk_full": "36.0",
+      "ro.zygote": "zygote64",
+      "ro.control_privapp_permissions": "enforce",
+      "ro.zygote.disable_gl_preload": "1"
+    }
+  },
+  "classpaths": {
+    "bootclasspath": "1 {\n  1: \"/system/framework/framework.jar\"\n  2: 1\n}\n1 {\n  1: \"/system/framework/framework.jar\"\n  2: 3\n}\n1 {\n  1: \"/system/framework/framework-graphics.jar\"\n  2: 1\n  3: \"36\"\n}\n1 {\n  1: \"/system/framework/framework-graphics.jar\"\n  2: 3\n  3: \"36\"\n}\n1 {\n  1: \"/system/framework/framework-location.jar\"\n  2: 1\n  3: \"36\"\n}\n1 {\n  1: \"/system/framework/framework-location.jar\"\n  2: 3\n  3: \"36\"\n}\n1 {\n  1: \"/system/framework/ext.jar\"\n  2: 1\n}\n1 {\n  1: \"/system/framework/ext.jar\"\n  2: 3\n}\n1 {\n  1: \"/system/framework/telephony-common.jar\"\n  2: 1\n}\n1 {\n  1: \"/system/framework/telephony-common.jar\"\n  2: 3\n}\n1 {\n  1: \"/system/framework/voip-common.jar\"\n  2: 1\n}\n1 {\n  1: \"/system/framework/voip-common.jar\"\n  2: 3\n}\n1 {\n  1: \"/system/framework/ims-common.jar\"\n  2: 1\n}\n1 {\n  1: \"/system/framework/ims-common.jar\"\n  2: 3\n}\n1 {\n  1: \"/system/framework/framework-ondeviceintelligence-platform.jar\"\n  2: 1\n  3: \"36\"\n}\n1 {\n  1: \"/system/framework/framework-ondeviceintelligence-platform.jar\"\n  2: 3\n  3: \"36\"\n}\n1 {\n  1: \"/system/framework/framework-nfc.jar\"\n  2: 1\n  3: \"36\"\n}\n1 {\n  1: \"/system/framework/framework-nfc.jar\"\n  2: 3\n  3: \"36\"\n}\n1 {\n  1: \"/system/framework/tcmiface.jar\"\n  2: 1\n}\n1 {\n  1: \"/system/framework/tcmiface.jar\"\n  2: 3\n}\n1 {\n  1: \"/system/framework/telephony-ext.jar\"\n  2: 1\n}\n1 {\n  1: \"/system/framework/telephony-ext.jar\"\n  2: 3\n}\n1 {\n  1: \"/system/framework/QPerformance.jar\"\n  2: 1\n}\n1 {\n  1: \"/system/framework/QPerformance.jar\"\n  2: 3\n}\n1 {\n  1: \"/system/framework/UxPerformance.jar\"\n  2: 1\n}\n1 {\n  1: \"/system/framework/UxPerformance.jar\"\n  2: 3\n}\n1 {\n  1: \"/system/framework/WfdCommon.jar\"\n  2: 1\n}\n1 {\n  1: \"/system/framework/WfdCommon.jar\"\n  2: 3\n}\n1 {\n  1: \"/system_ext/framework/miui-framework.jar\"\n  2: 1\n}\n1 {\n  1: \"/system_ext/framework/miui-framework.jar\"\n  2: 3\n}\n1 {\n  1: \"/system_ext/framework/miui-telephony-common.jar\"\n  2: 1\n}\n1 {\n  1: \"/system_ext/framework/miui-telephony-common.jar\"\n  2: 3\n}\n1 {\n  1: \"/system_ext/framework/miui-enterprise-sdk.jar\"\n  2: 1\n}\n1 {\n  1: \"/system_ext/framework/miui-enterprise-sdk.jar\"\n  2: 3\n}\n1 {\n  1: \"/system_ext/framework/xiaomi-framework.jar\"\n  2: 1\n}\n1 {\n  1: \"/system_ext/framework/xiaomi-framework.jar\"\n  2: 3\n}\n1 {\n  1: \"/system_ext/framework/xm-telephony-common.jar\"\n  2: 1\n}\n1 {\n  1: \"/system_ext/framework/xm-telephony-common.jar\"\n  2: 3\n}\n1 {\n  1: \"/system_ext/framework/xm-telephony-base.jar\"\n  2: 1\n}\n1 {\n  1: \"/system_ext/framework/xm-telephony-base.jar\"\n  2: 3\n}\n1 {\n  1: \"/system_ext/framework/xm-framework-telephony-aidl.jar\"\n  2: 1\n}\n1 {\n  1: \"/system_ext/framework/xm-framework-telephony-aidl.jar\"\n  2: 3\n}\n1 {\n  1: \"/system_ext/framework/vendor.xiaomi.hardware.videoservice-V8-java.jar\"\n  2: 1\n}\n1 {\n  1: \"/system_ext/framework/vendor.xiaomi.hardware.videoservice-V8-java.jar\"\n  2: 3\n}\n1 {\n  1: \"/apex/com.android.i18n/javalib/core-icu4j.jar\"\n  2: 1\n}\n1 {\n  1: \"/apex/com.android.i18n/javalib/core-icu4j.jar\"\n  2: 3\n}\n",
+    "systemserverclasspath": "1 {\n  1: \"/system/framework/com.android.location.provider.jar\"\n  2: 2\n}\n1 {\n  1: \"/system/framework/services.jar\"\n  2: 2\n}\n1 {\n  1: \"/system_ext/framework/miui-services.jar\"\n  2: 2\n}\n1 {\n  1: \"/system_ext/framework/apprecovery.proinstaller.jar\"\n  2: 2\n}\n"
+  },
+  "declared_services": [
+    {
+      "path": "/system/etc/init/aconfigd.rc",
+      "line": 1,
+      "declaration": "service system_aconfigd_mainline_init /system/bin/aconfigd-system mainline-init"
+    },
+    {
+      "path": "/system/etc/init/aconfigd.rc",
+      "line": 9,
+      "declaration": "service system_aconfigd_platform_init /system/bin/aconfigd-system platform-init"
+    },
+    {
+      "path": "/system/etc/init/aconfigd.rc",
+      "line": 17,
+      "declaration": "service system_aconfigd_socket_service /system/bin/aconfigd-system start-socket"
+    },
+    {
+      "path": "/system/etc/init/android.system.suspend-service.rc",
+      "line": 1,
+      "declaration": "service system_suspend /system/bin/hw/android.system.suspend-service"
+    },
+    {
+      "path": "/system/etc/init/apexd.rc",
+      "line": 1,
+      "declaration": "service apexd /system/bin/apexd"
+    },
+    {
+      "path": "/system/etc/init/apexd.rc",
+      "line": 12,
+      "declaration": "service apexd-bootstrap /system/bin/apexd --bootstrap"
+    },
+    {
+      "path": "/system/etc/init/apexd.rc",
+      "line": 21,
+      "declaration": "service apexd-snapshotde /system/bin/apexd --snapshotde"
+    },
+    {
+      "path": "/system/etc/init/atrace.rc",
+      "line": 476,
+      "declaration": "service boottrace /system/bin/atrace --async_start -f /data/misc/boottrace/categories"
+    },
+    {
+      "path": "/system/etc/init/audioserver.rc",
+      "line": 1,
+      "declaration": "service audioserver /system/bin/audioserver"
+    },
+    {
+      "path": "/system/etc/init/blank_screen.rc",
+      "line": 1,
+      "declaration": "service blank_screen /system/bin/blank_screen"
+    },
+    {
+      "path": "/system/etc/init/bootanim.rc",
+      "line": 1,
+      "declaration": "service bootanim /system/bin/bootanimation"
+    },
+    {
+      "path": "/system/etc/init/cameraserver.rc",
+      "line": 1,
+      "declaration": "service cameraserver /system/bin/cameraserver"
+    },
+    {
+      "path": "/system/etc/init/credstore.rc",
+      "line": 1,
+      "declaration": "service credstore /system/bin/credstore /data/misc/credstore"
+    },
+    {
+      "path": "/system/etc/init/dmesgd.rc",
+      "line": 16,
+      "declaration": "service dmesgd /system/bin/dmesgd"
+    },
+    {
+      "path": "/system/etc/init/drmserver.rc",
+      "line": 1,
+      "declaration": "service drm /system/bin/drmserver"
+    },
+    {
+      "path": "/system/etc/init/dumpstate.rc",
+      "line": 6,
+      "declaration": "service dumpstate /system/bin/dumpstate -s"
+    },
+    {
+      "path": "/system/etc/init/dumpstate.rc",
+      "line": 15,
+      "declaration": "service dumpstatez /system/bin/dumpstate -S"
+    },
+    {
+      "path": "/system/etc/init/dumpstate.rc",
+      "line": 23,
+      "declaration": "service bugreportd /system/bin/dumpstate -w"
+    },
+    {
+      "path": "/system/etc/init/dumpstate.rc",
+      "line": 32,
+      "declaration": "service miuibmdump /system/bin/dumpstate -b -f ${sys.miui.bm_zip}"
+    },
+    {
+      "path": "/system/etc/init/dumpstate.rc",
+      "line": 40,
+      "declaration": "service hyperBugreportState /system/bin/dumpstate -M"
+    },
+    {
+      "path": "/system/etc/init/gatekeeperd.rc",
+      "line": 1,
+      "declaration": "service gatekeeperd /system/bin/gatekeeperd /data/misc/gatekeeper"
+    },
+    {
+      "path": "/system/etc/init/gpuservice.rc",
+      "line": 1,
+      "declaration": "service gpu /system/bin/gpuservice"
+    },
+    {
+      "path": "/system/etc/init/gsid.rc",
+      "line": 1,
+      "declaration": "service gsid /system/bin/gsid"
+    },
+    {
+      "path": "/system/etc/init/heapprofd.rc",
+      "line": 14,
+      "declaration": "service heapprofd /system/bin/heapprofd"
+    },
+    {
+      "path": "/system/etc/init/heapprofd.rc",
+      "line": 30,
+      "declaration": "service heapprofd_secondary /system/bin/heapprofd"
+    },
+    {
+      "path": "/system/etc/init/hw/init.rc",
+      "line": 546,
+      "declaration": "service boringssl_self_test32 /system/bin/boringssl_self_test32"
+    },
+    {
+      "path": "/system/etc/init/hw/init.rc",
+      "line": 552,
+      "declaration": "service boringssl_self_test64 /system/bin/boringssl_self_test64"
+    },
+    {
+      "path": "/system/etc/init/hw/init.rc",
+      "line": 558,
+      "declaration": "service boringssl_self_test_apex32 /apex/com.android.conscrypt/bin/boringssl_self_test32"
+    },
+    {
+      "path": "/system/etc/init/hw/init.rc",
+      "line": 564,
+      "declaration": "service boringssl_self_test_apex64 /apex/com.android.conscrypt/bin/boringssl_self_test64"
+    },
+    {
+      "path": "/system/etc/init/hw/init.rc",
+      "line": 1582,
+      "declaration": "service ueventd /system/bin/ueventd"
+    },
+    {
+      "path": "/system/etc/init/hw/init.rc",
+      "line": 1613,
+      "declaration": "service audioshell_system /system_ext/bin/audioshell_system"
+    },
+    {
+      "path": "/system/etc/init/hw/init.usb.rc",
+      "line": 15,
+      "declaration": "service adbd /system/bin/adbd --root_seclabel=u:r:su:s0"
+    },
+    {
+      "path": "/system/etc/init/hw/init.zygote32.rc",
+      "line": 1,
+      "declaration": "service zygote /system/bin/app_process -Xzygote /system/bin --zygote --start-system-server"
+    },
+    {
+      "path": "/system/etc/init/hw/init.zygote64.rc",
+      "line": 1,
+      "declaration": "service zygote /system/bin/app_process64 -Xzygote /system/bin --zygote --start-system-server --socket-name=zygote"
+    },
+    {
+      "path": "/system/etc/init/hw/init.zygote64_32.rc",
+      "line": 3,
+      "declaration": "service zygote_secondary /system/bin/app_process32 -Xzygote /system/bin --zygote --socket-name=zygote_secondary --enable-lazy-preload"
+    },
+    {
+      "path": "/system/etc/init/hw/mediaserver.64bit_false.rc",
+      "line": 1,
+      "declaration": "service media /system/bin/mediaserver32"
+    },
+    {
+      "path": "/system/etc/init/hw/mediaserver.64bit_true.rc",
+      "line": 1,
+      "declaration": "service media /system/bin/mediaserver64"
+    },
+    {
+      "path": "/system/etc/init/idmap2d.rc",
+      "line": 1,
+      "declaration": "service idmap2d /system/bin/idmap2d"
+    },
+    {
+      "path": "/system/etc/init/incidentd.rc",
+      "line": 15,
+      "declaration": "service incidentd /system/bin/incidentd"
+    },
+    {
+      "path": "/system/etc/init/init.offline.log.rc",
+      "line": 15,
+      "declaration": "service logcatkernel /system/bin/sh /system/bin/logcatkernel.sh"
+    },
+    {
+      "path": "/system/etc/init/init.offline.log.rc",
+      "line": 23,
+      "declaration": "service bootlog /system/bin/sh /system/bin/bootlog.sh"
+    },
+    {
+      "path": "/system/etc/init/init.offline.log.rc",
+      "line": 32,
+      "declaration": "service logcatlog /system/bin/sh /system/bin/logcatlog.sh"
+    },
+    {
+      "path": "/system/etc/init/init.offline.log.rc",
+      "line": 40,
+      "declaration": "service poweroff_charger_log /system/bin/sh /system/bin/poweroff_charger_log.sh"
+    },
+    {
+      "path": "/system/etc/init/init.offline.log.rc",
+      "line": 49,
+      "declaration": "service mtdoopslog /system/bin/sh /system/bin/mtdoopslog.sh"
+    },
+    {
+      "path": "/system/etc/init/installd.rc",
+      "line": 2,
+      "declaration": "service installd /system/bin/installd"
+    },
+    {
+      "path": "/system/etc/init/keystore2.rc",
+      "line": 9,
+      "declaration": "service keystore2 /system/bin/keystore2 /data/misc/keystore"
+    },
+    {
+      "path": "/system/etc/init/llkd.rc",
+      "line": 37,
+      "declaration": "service llkd-0 /system/bin/llkd"
+    },
+    {
+      "path": "/system/etc/init/lmkd.rc",
+      "line": 1,
+      "declaration": "service lmkd /system/bin/lmkd"
+    },
+    {
+      "path": "/system/etc/init/logd.rc",
+      "line": 1,
+      "declaration": "service logd /system/bin/logd"
+    },
+    {
+      "path": "/system/etc/init/logd.rc",
+      "line": 14,
+      "declaration": "service logd-reinit /system/bin/logd --reinit"
+    },
+    {
+      "path": "/system/etc/init/logd.rc",
+      "line": 22,
+      "declaration": "service logd-auditctl /system/bin/auditctl -r ${persist.logd.audit.rate:-5}"
+    },
+    {
+      "path": "/system/etc/init/lpdumpd.rc",
+      "line": 17,
+      "declaration": "service lpdumpd /system/bin/lpdumpd"
+    },
+    {
+      "path": "/system/etc/init/mdnsd.rc",
+      "line": 1,
+      "declaration": "service mdnsd /system/bin/mdnsd"
+    },
+    {
+      "path": "/system/etc/init/mediaextractor.rc",
+      "line": 1,
+      "declaration": "service mediaextractor /system/bin/mediaextractor"
+    },
+    {
+      "path": "/system/etc/init/mediametrics.rc",
+      "line": 1,
+      "declaration": "service mediametrics /system/bin/mediametrics"
+    },
+    {
+      "path": "/system/etc/init/misctrl.rc",
+      "line": 1,
+      "declaration": "service misctrl /system/bin/misctrl"
+    },
+    {
+      "path": "/system/etc/init/mystic.rc",
+      "line": 8,
+      "declaration": "service boot_lc_main /system/bin/logcat -f /data/boot_lc_main.txt"
+    },
+    {
+      "path": "/system/etc/init/netbpfload.rc",
+      "line": 6,
+      "declaration": "service bpfloader /system/bin/false"
+    },
+    {
+      "path": "/system/etc/init/netd.rc",
+      "line": 1,
+      "declaration": "service netd /system/bin/netd"
+    },
+    {
+      "path": "/system/etc/init/odsign.rc",
+      "line": 1,
+      "declaration": "service odsign /system/bin/odsign"
+    },
+    {
+      "path": "/system/etc/init/perfetto.rc",
+      "line": 15,
+      "declaration": "service traced /system/bin/traced"
+    },
+    {
+      "path": "/system/etc/init/perfetto.rc",
+      "line": 31,
+      "declaration": "service traced_relay /system/bin/traced_relay"
+    },
+    {
+      "path": "/system/etc/init/perfetto.rc",
+      "line": 39,
+      "declaration": "service traced_probes /system/bin/traced_probes"
+    },
+    {
+      "path": "/system/etc/init/perfetto.rc",
+      "line": 131,
+      "declaration": "service perfetto_trace_on_boot /system/bin/perfetto -c /data/misc/perfetto-configs/boottrace.pbtxt --txt -o /data/misc/perfetto-traces/boottrace.perfetto-trace"
+    },
+    {
+      "path": "/system/etc/init/perfetto.rc",
+      "line": 203,
+      "declaration": "service perfetto_persistent_sysui_tracing_for_bugreport /system/bin/perfetto -c /system/etc/perfetto/persistent_cfg.pbtxt --txt -o /dev/null"
+    },
+    {
+      "path": "/system/etc/init/phh-remotectl.rc",
+      "line": 12,
+      "declaration": "service phh-remotectl /system/bin/phh-remotectl.sh"
+    },
+    {
+      "path": "/system/etc/init/prefetch.rc",
+      "line": 27,
+      "declaration": "service prefetch_record /system/bin/prefetch record --duration ${ro.prefetch_boot.duration_s:-0}"
+    },
+    {
+      "path": "/system/etc/init/prefetch.rc",
+      "line": 33,
+      "declaration": "service prefetch_replay /system/bin/prefetch replay --io-depth ${ro.prefetch_boot.io_depth:-2} --max-fds ${ro.prefetch_boot.max_fds:-1024}"
+    },
+    {
+      "path": "/system/etc/init/prng_seeder.rc",
+      "line": 8,
+      "declaration": "service prng_seeder /system/bin/prng_seeder"
+    },
+    {
+      "path": "/system/etc/init/rss_hwm_reset.rc",
+      "line": 15,
+      "declaration": "service rss_hwm_reset /system/bin/rss_hwm_reset"
+    },
+    {
+      "path": "/system/etc/init/servicemanager.rc",
+      "line": 1,
+      "declaration": "service servicemanager /system/bin/servicemanager"
+    },
+    {
+      "path": "/system/etc/init/snapuserd.rc",
+      "line": 1,
+      "declaration": "service snapuserd /system/bin/snapuserd"
+    },
+    {
+      "path": "/system/etc/init/snapuserd.rc",
+      "line": 10,
+      "declaration": "service snapuserd_proxy /system/bin/snapuserd -socket-handoff"
+    },
+    {
+      "path": "/system/etc/init/storaged.rc",
+      "line": 1,
+      "declaration": "service storaged /system/bin/storaged"
+    },
+    {
+      "path": "/system/etc/init/surfaceflinger.rc",
+      "line": 1,
+      "declaration": "service surfaceflinger /system/bin/surfaceflinger"
+    },
+    {
+      "path": "/system/etc/init/tombstoned.rc",
+      "line": 1,
+      "declaration": "service tombstoned /system/bin/tombstoned"
+    },
+    {
+      "path": "/system/etc/init/traced_perf.rc",
+      "line": 23,
+      "declaration": "service traced_perf /system/bin/traced_perf"
+    },
+    {
+      "path": "/system/etc/init/uncrypt.rc",
+      "line": 1,
+      "declaration": "service uncrypt /system/bin/uncrypt"
+    },
+    {
+      "path": "/system/etc/init/uncrypt.rc",
+      "line": 9,
+      "declaration": "service cust_data_keeper /system/bin/uncrypt --cust-data-keeper"
+    },
+    {
+      "path": "/system/etc/init/uncrypt.rc",
+      "line": 15,
+      "declaration": "service setup-bcb /system/bin/uncrypt --setup-bcb"
+    },
+    {
+      "path": "/system/etc/init/uncrypt.rc",
+      "line": 22,
+      "declaration": "service clear-bcb /system/bin/uncrypt --clear-bcb"
+    },
+    {
+      "path": "/system/etc/init/usbd.rc",
+      "line": 1,
+      "declaration": "service usbd /system/bin/usbd"
+    },
+    {
+      "path": "/system/etc/init/virtual_camera.hal.rc",
+      "line": 1,
+      "declaration": "service virtual_camera /system/bin/virtual_camera"
+    },
+    {
+      "path": "/system/etc/init/vndk.rc",
+      "line": 13,
+      "declaration": "service phh_on_boot /system/bin/phh-on-boot.sh"
+    },
+    {
+      "path": "/system/etc/init/vndk.rc",
+      "line": 107,
+      "declaration": "service watchdogd-gsi /system/bin/watchdogd 10 20"
+    },
+    {
+      "path": "/system/etc/init/vold.rc",
+      "line": 1,
+      "declaration": "service vold /system/bin/vold \\"
+    },
+    {
+      "path": "/system/etc/init/wificond.rc",
+      "line": 1,
+      "declaration": "service wificond /system/bin/wificond"
+    },
+    {
+      "path": "/system_ext/etc/init/android.hidl.allocator@1.0-service.rc",
+      "line": 1,
+      "declaration": "service hidl_memory /system/system_ext/bin/hw/android.hidl.allocator@1.0-service"
+    },
+    {
+      "path": "/system_ext/etc/init/bpf_service.rc",
+      "line": 12,
+      "declaration": "service miuibpfservice /system_ext/bin/miuibpfservice"
+    },
+    {
+      "path": "/system_ext/etc/init/checknv.rc",
+      "line": 1,
+      "declaration": "service checknv /system_ext/bin/checknv"
+    },
+    {
+      "path": "/system_ext/etc/init/com.qualcomm.qti.sigma_miracast@1.0-service.rc",
+      "line": 1,
+      "declaration": "service sigmahal /system_ext/bin/sigma_miracasthalservice"
+    },
+    {
+      "path": "/system_ext/etc/init/com.qualcomm.qti.sigma_miracast@1.0-service.rc",
+      "line": 9,
+      "declaration": "service sigmahal64 /system_ext/bin/sigma_miracasthalservice64"
+    },
+    {
+      "path": "/system_ext/etc/init/com.qualcomm.qti.sigma_miracast_aidl-service.rc",
+      "line": 1,
+      "declaration": "service sigmahal_aidl /system_ext/bin/sigma_miracasthalservice_aidl"
+    },
+    {
+      "path": "/system_ext/etc/init/dpmd.rc",
+      "line": 12,
+      "declaration": "service dpmd /system/system_ext/bin/dpmd"
+    },
+    {
+      "path": "/system_ext/etc/init/f2fs.dfc.native@1.0-service.rc",
+      "line": 1,
+      "declaration": "service dfc-installd /system_ext/bin/DfcNativeService"
+    },
+    {
+      "path": "/system_ext/etc/init/gppservice.rc",
+      "line": 12,
+      "declaration": "service vendor.gppservice /system_ext/bin/gppservice"
+    },
+    {
+      "path": "/system_ext/etc/init/hwservicemanager.rc",
+      "line": 1,
+      "declaration": "service hwservicemanager /system/system_ext/bin/hwservicemanager"
+    },
+    {
+      "path": "/system_ext/etc/init/hyper_bpfloader.rc",
+      "line": 27,
+      "declaration": "service hyper_bpfloader /system_ext/bin/hyper_bpfloader"
+    },
+    {
+      "path": "/system_ext/etc/init/hyper_bpfloader.rc",
+      "line": 95,
+      "declaration": "service dynbpfloader /system_ext/bin/hyper_bpfloader --monitor-mode"
+    },
+    {
+      "path": "/system_ext/etc/init/hypsys_system.rc",
+      "line": 14,
+      "declaration": "service hypsys_system /system_ext/bin/hypsys_system"
+    },
+    {
+      "path": "/system_ext/etc/init/init.launch_boost.rc",
+      "line": 1,
+      "declaration": "service iorapd /system_ext/bin/iorapd"
+    },
+    {
+      "path": "/system_ext/etc/init/init.midfs.rc",
+      "line": 5,
+      "declaration": "service midfs system_ext/bin/midfs"
+    },
+    {
+      "path": "/system_ext/etc/init/init.milletmonitor.rc",
+      "line": 20,
+      "declaration": "service millet_sig /system_ext/bin/millet_monitor SIG"
+    },
+    {
+      "path": "/system_ext/etc/init/init.milletmonitor.rc",
+      "line": 27,
+      "declaration": "service millet_binder /system_ext/bin/millet_monitor BINDER"
+    },
+    {
+      "path": "/system_ext/etc/init/init.milletmonitor.rc",
+      "line": 34,
+      "declaration": "service millet_pkg /system_ext/bin/millet_monitor PKG"
+    },
+    {
+      "path": "/system_ext/etc/init/init.misight.rc",
+      "line": 2,
+      "declaration": "service misight /system_ext/bin/misight"
+    },
+    {
+      "path": "/system_ext/etc/init/init.miui.dumpaudiobinderInfo.rc",
+      "line": 11,
+      "declaration": "service captureAudioBinderInfo /system_ext/bin/init.dumpaudiobinderInfo.sh \"captureAudioBinderInfo\""
+    },
+    {
+      "path": "/system_ext/etc/init/init.miui.ext.rc",
+      "line": 134,
+      "declaration": "service mqsasd /system_ext/xbin/mqsasd daemon"
+    },
+    {
+      "path": "/system_ext/etc/init/init.miui.ext.rc",
+      "line": 143,
+      "declaration": "service system_perf_init /system_ext/xbin/system_perf_init"
+    },
+    {
+      "path": "/system_ext/etc/init/init.miui.ext.rc",
+      "line": 150,
+      "declaration": "service inject_mgr /system_ext/bin/inject_mgr"
+    },
+    {
+      "path": "/system_ext/etc/init/init.miui.ext.rc",
+      "line": 155,
+      "declaration": "service stability_setup /system_ext/bin/init.stabilitysetup.sh"
+    },
+    {
+      "path": "/system_ext/etc/init/init.miui.ext.rc",
+      "line": 230,
+      "declaration": "service copy_bugreport_file /system/bin/sh /system_ext/bin/copy_bugreport_file.sh ${sys.miui.bugreport_file} ${sys.miui.dest_path}"
+    },
+    {
+      "path": "/system_ext/etc/init/init.miui.ext.rc",
+      "line": 238,
+      "declaration": "service fdpp /system_ext/bin/fdpp daemon"
+    },
+    {
+      "path": "/system_ext/etc/init/init.miui.ext.rc",
+      "line": 243,
+      "declaration": "service shelld /system_ext/bin/shelld"
+    },
+    {
+      "path": "/system_ext/etc/init/init.miui.ext.rc",
+      "line": 288,
+      "declaration": "service mcd_init /system_ext/bin/mcd init"
+    },
+    {
+      "path": "/system_ext/etc/init/init.miui.ext.rc",
+      "line": 300,
+      "declaration": "service mcd_service /system_ext/bin/mcd"
+    },
+    {
+      "path": "/system_ext/etc/init/init.miui.ext.rc",
+      "line": 318,
+      "declaration": "service su_daemon /system/xbin/su --daemon"
+    },
+    {
+      "path": "/system_ext/etc/init/init.miui.ext.rc",
+      "line": 382,
+      "declaration": "service pubcert_download /system/bin/sh /system_ext/bin/init.rootpub.sh"
+    },
+    {
+      "path": "/system_ext/etc/init/init.miui.ext.rc",
+      "line": 393,
+      "declaration": "service rotatekey_download /system/bin/sh /system_ext/bin/init.rotatekey.sh"
+    },
+    {
+      "path": "/system_ext/etc/init/init.miui.ext.rc",
+      "line": 404,
+      "declaration": "service socid_provision /system/bin/sh /system_ext/bin/init.socid.sh"
+    },
+    {
+      "path": "/system_ext/etc/init/init.miui.ext.rc",
+      "line": 420,
+      "declaration": "service dump_lightweight_trace /system/bin/sh /system_ext/bin/dump_lightweight_trace.sh"
+    },
+    {
+      "path": "/system_ext/etc/init/init.miui.ext.rc",
+      "line": 427,
+      "declaration": "service check_lightweight_trace /system/bin/sh /system_ext/bin/check_lightweight_trace.sh"
+    },
+    {
+      "path": "/system_ext/etc/init/init.qadaemon.rc",
+      "line": 3,
+      "declaration": "service qadaemon /system_ext/bin/qadaemon"
+    },
+    {
+      "path": "/system_ext/etc/init/init.qseelogd.rc",
+      "line": 4,
+      "declaration": "service qseelogd /system_ext/bin/qseelogd -num 5 -size 4194304"
+    },
+    {
+      "path": "/system_ext/etc/init/memory.fbo.native@1.0-service.rc",
+      "line": 1,
+      "declaration": "service fbo-installd /system_ext/bin/FboNativeService"
+    },
+    {
+      "path": "/system_ext/etc/init/memory.swap.native@1.0-service.rc",
+      "line": 1,
+      "declaration": "service swap-installd /system_ext/bin/SwapNativeService"
+    },
+    {
+      "path": "/system_ext/etc/init/miuibooster.rc",
+      "line": 1,
+      "declaration": "service miuibooster /system_ext/xbin/miuibooster"
+    },
+    {
+      "path": "/system_ext/etc/init/miupdater.rc",
+      "line": 3,
+      "declaration": "service miupdater_opcust /system_ext/bin/miupdater"
+    },
+    {
+      "path": "/system_ext/etc/init/miupdater.rc",
+      "line": 16,
+      "declaration": "service miupdater_opconfig /system_ext/bin/miupdater"
+    },
+    {
+      "path": "/system_ext/etc/init/miupdater.rc",
+      "line": 29,
+      "declaration": "service miupdater_md1img /system_ext/bin/miupdater /dev/block/bootdevice/by-name/md1img_a md1img.img"
+    },
+    {
+      "path": "/system_ext/etc/init/miuserfs.rc",
+      "line": 16,
+      "declaration": "service miuserfsd /system_ext/bin/miuserfsd"
+    },
+    {
+      "path": "/system_ext/etc/init/native.hang@1.0-service.rc",
+      "line": 1,
+      "declaration": "service nativehang-dumpstate /system_ext/bin/NativeHangService"
+    },
+    {
+      "path": "/system_ext/etc/init/perfservice.rc",
+      "line": 7,
+      "declaration": "service vendor.perfservice /system_ext/bin/perfservice"
+    },
+    {
+      "path": "/system_ext/etc/init/qsguard.rc",
+      "line": 5,
+      "declaration": "service qsguard /system_ext/bin/qsguard"
+    },
+    {
+      "path": "/system_ext/etc/init/qspmsvc.rc",
+      "line": 8,
+      "declaration": "service vendor.qspmsvc /system_ext/bin/qspmsvc"
+    },
+    {
+      "path": "/system_ext/etc/init/samba.rc",
+      "line": 16,
+      "declaration": "service smbd /system_ext/bin/smbd -D"
+    },
+    {
+      "path": "/system_ext/etc/init/sxrauxd_ext.rc",
+      "line": 10,
+      "declaration": "service vendor.sxrauxd /system_ext/bin/qxrsplitauxservice"
+    },
+    {
+      "path": "/system_ext/etc/init/tcmd.rc",
+      "line": 6,
+      "declaration": "service tcmd /system/system_ext/bin/tcmd"
+    },
+    {
+      "path": "/system_ext/etc/init/vendor.qti.hardware.qccsyshal@1.2-service.rc",
+      "line": 46,
+      "declaration": "service qccsyshal@1.2-service /system/system_ext/bin/qccsyshal@1.2-service"
+    },
+    {
+      "path": "/system_ext/etc/init/vendor.qti.qccsyshal_aidl-service.rc",
+      "line": 46,
+      "declaration": "service qccsyshal_aidl-service /system_ext/bin/qccsyshal_aidl-service"
+    },
+    {
+      "path": "/system_ext/etc/init/wfdservice.rc",
+      "line": 6,
+      "declaration": "service wfdservice /system_ext/bin/wfdservice"
+    },
+    {
+      "path": "/system_ext/etc/init/wfdservice.rc",
+      "line": 12,
+      "declaration": "service wfdservice64 /system_ext/bin/wfdservice64"
+    },
+    {
+      "path": "/product/etc/init/init.qti.display.rc",
+      "line": 8,
+      "declaration": "service vendor_sys_qti_display /product/bin/init.qti.display.sh"
+    },
+    {
+      "path": "/product/etc/init/qvirtmgr.rc",
+      "line": 2,
+      "declaration": "service vendor.qvirtmgr /product/bin/qvirtmgr"
+    },
+    {
+      "path": "/vendor/etc/init/android.hardware.audio.service.rc",
+      "line": 1,
+      "declaration": "service vendor.audio-hal /vendor/bin/hw/android.hardware.audio.service"
+    },
+    {
+      "path": "/vendor/etc/init/android.hardware.biometrics.fingerprint-service.ranchu.rc",
+      "line": 1,
+      "declaration": "service vendor.biometrics.fingerprint-service.ranchu /vendor/bin/hw/android.hardware.biometrics.fingerprint-service.ranchu"
+    },
+    {
+      "path": "/vendor/etc/init/android.hardware.camera.provider.ranchu.rc",
+      "line": 1,
+      "declaration": "service vendor.camera-provider-ranchu /vendor/bin/hw/android.hardware.camera.provider.ranchu"
+    },
+    {
+      "path": "/vendor/etc/init/android.hardware.camera.provider@2.7-service-google.rc",
+      "line": 1,
+      "declaration": "service vendor.camera-provider-2-7-google /vendor/bin/hw/android.hardware.camera.provider@2.7-service-google"
+    },
+    {
+      "path": "/vendor/etc/init/android.hardware.drm-service-lazy.clearkey.rc",
+      "line": 1,
+      "declaration": "service vendor.drm-clearkey-service /vendor/bin/hw/android.hardware.drm-service-lazy.clearkey"
+    },
+    {
+      "path": "/vendor/etc/init/android.hardware.gnss-service.ranchu.rc",
+      "line": 1,
+      "declaration": "service vendor.gnss.ranchu /vendor/bin/hw/android.hardware.gnss-service.ranchu"
+    },
+    {
+      "path": "/vendor/etc/init/android.hardware.graphics.allocator-service.ranchu.rc",
+      "line": 1,
+      "declaration": "service vendor.graphics.allocator /vendor/bin/hw/android.hardware.graphics.allocator-service.ranchu"
+    },
+    {
+      "path": "/vendor/etc/init/android.hardware.health-service.example.rc",
+      "line": 1,
+      "declaration": "service vendor.health-default /vendor/bin/hw/android.hardware.health-service.example"
+    },
+    {
+      "path": "/vendor/etc/init/android.hardware.health-service.example.rc",
+      "line": 8,
+      "declaration": "service vendor.charger /vendor/bin/hw/android.hardware.health-service.example --charger"
+    },
+    {
+      "path": "/vendor/etc/init/android.hardware.media.c2@1.0-service-goldfish.rc",
+      "line": 1,
+      "declaration": "service android-hardware-media-c2-goldfish-hal-1-0 /vendor/bin/hw/android.hardware.media.c2@1.0-service-goldfish"
+    },
+    {
+      "path": "/vendor/etc/init/android.hardware.radio.ranchu.rc",
+      "line": 1,
+      "declaration": "service vendor.radio-ranchu /vendor/bin/hw/android.hardware.radio-service.ranchu"
+    },
+    {
+      "path": "/vendor/etc/init/android.hardware.security.keymint-service.rc",
+      "line": 1,
+      "declaration": "service vendor.keymint-default /vendor/bin/hw/android.hardware.security.keymint-service"
+    },
+    {
+      "path": "/vendor/etc/init/android.hardware.sensors-service-multihal.rc",
+      "line": 4,
+      "declaration": "service vendor.sensors-hal-multihal /vendor/bin/hw/android.hardware.sensors-service.multihal"
+    },
+    {
+      "path": "/vendor/etc/init/android.hardware.usb-service.example.rc",
+      "line": 1,
+      "declaration": "service vendor.usb_default /vendor/bin/hw/android.hardware.usb-service.example"
+    },
+    {
+      "path": "/vendor/etc/init/android.hardware.wifi-service.rc",
+      "line": 1,
+      "declaration": "service vendor.wifi_hal_legacy /vendor/bin/hw/android.hardware.wifi-service"
+    },
+    {
+      "path": "/vendor/etc/init/bluetooth-service-default.rc",
+      "line": 1,
+      "declaration": "service vendor.bluetooth-default /vendor/bin/hw/android.hardware.bluetooth-service.default"
+    },
+    {
+      "path": "/vendor/etc/init/boringssl_self_test.rc",
+      "line": 4,
+      "declaration": "service boringssl_self_test32_vendor /vendor/bin/boringssl_self_test32"
+    },
+    {
+      "path": "/vendor/etc/init/boringssl_self_test.rc",
+      "line": 10,
+      "declaration": "service boringssl_self_test64_vendor /vendor/bin/boringssl_self_test64"
+    },
+    {
+      "path": "/vendor/etc/init/health-storage-default.rc",
+      "line": 1,
+      "declaration": "service vendor.health-storage-default /vendor/bin/hw/android.hardware.health.storage-service.default"
+    },
+    {
+      "path": "/vendor/etc/init/hostapd.android.rc",
+      "line": 14,
+      "declaration": "service hostapd /vendor/bin/hw/hostapd"
+    },
+    {
+      "path": "/vendor/etc/init/hw/init.ranchu.rc",
+      "line": 89,
+      "declaration": "service vendor.dlkm_loader /vendor/bin/dlkm_loader"
+    },
+    {
+      "path": "/vendor/etc/init/hw/init.ranchu.rc",
+      "line": 96,
+      "declaration": "service ranchu-setup /vendor/bin/init.ranchu-core.sh"
+    },
+    {
+      "path": "/vendor/etc/init/hw/init.ranchu.rc",
+      "line": 102,
+      "declaration": "service ranchu-adb-setup /system_ext/bin/init.ranchu.adb.setup.sh"
+    },
+    {
+      "path": "/vendor/etc/init/hw/init.ranchu.rc",
+      "line": 124,
+      "declaration": "service ranchu-net /vendor/bin/init.ranchu-net.sh"
+    },
+    {
+      "path": "/vendor/etc/init/hw/init.ranchu.rc",
+      "line": 137,
+      "declaration": "service qemu-props /vendor/bin/qemu-props"
+    },
+    {
+      "path": "/vendor/etc/init/hw/init.ranchu.rc",
+      "line": 143,
+      "declaration": "service qemu-props-bootcomplete /vendor/bin/qemu-props \"bootcomplete\""
+    },
+    {
+      "path": "/vendor/etc/init/hw/init.ranchu.rc",
+      "line": 149,
+      "declaration": "service qemu-device-state /vendor/bin/init_ranchu_device_state.sh"
+    },
+    {
+      "path": "/vendor/etc/init/hw/init.ranchu.rc",
+      "line": 156,
+      "declaration": "service goldfish-logcat /system/bin/logcat -f /dev/hvc1 ${ro.boot.logcat}"
+    },
+    {
+      "path": "/vendor/etc/init/hw/init.ranchu.rc",
+      "line": 161,
+      "declaration": "service bugreport /system/bin/dumpstate -d -p -z"
+    },
+    {
+      "path": "/vendor/etc/init/hw/init.ranchu.rc",
+      "line": 168,
+      "declaration": "service wpa_supplicant /vendor/bin/hw/wpa_supplicant -Dnl80211 -iwlan0 -c/vendor/etc/wifi/wpa_supplicant.conf -g@android:wpa_wlan0"
+    },
+    {
+      "path": "/vendor/etc/init/hw/init.ranchu.rc",
+      "line": 179,
+      "declaration": "service bt_vhci_forwarder /vendor/bin/bt_vhci_forwarder -virtio_console_dev=/dev/bluetooth0"
+    },
+    {
+      "path": "/vendor/etc/init/hw/init.ranchu.rc",
+      "line": 188,
+      "declaration": "service vendor.uwb_hal /vendor/bin/hw/android.hardware.uwb-service /dev/hvc2"
+    },
+    {
+      "path": "/vendor/etc/init/hwc3.rc",
+      "line": 1,
+      "declaration": "service vendor.hwcomposer-3 /vendor/bin/hw/android.hardware.graphics.composer3-service.ranchu"
+    },
+    {
+      "path": "/vendor/etc/init/identity-default.rc",
+      "line": 1,
+      "declaration": "service vendor.identity-default /vendor/bin/hw/android.hardware.identity-service.example"
+    },
+    {
+      "path": "/vendor/etc/init/lights-default.rc",
+      "line": 1,
+      "declaration": "service vendor.light-default /vendor/bin/hw/android.hardware.lights-service.example"
+    }
+  ],
+  "manifest_hal_declarations": [
+    {
+      "path": "/system/etc/vintf/manifest/android.frameworks.stats-service.xml",
+      "name": "android.frameworks.stats",
+      "format": "hidl",
+      "versions": [],
+      "fqnames": [
+        "@1.0::IStats/default"
+      ]
+    },
+    {
+      "path": "/system/etc/vintf/manifest/android.frameworks.stats-service.xml",
+      "name": "android.frameworks.stats",
+      "format": "aidl",
+      "versions": [
+        "2"
+      ],
+      "fqnames": [
+        "IStats/default"
+      ]
+    },
+    {
+      "path": "/system/etc/vintf/manifest/android.system.keystore2-service.xml",
+      "name": "android.system.keystore2",
+      "format": "aidl",
+      "versions": [
+        "5"
+      ],
+      "fqnames": [
+        "IKeystoreService/default"
+      ]
+    },
+    {
+      "path": "/system/etc/vintf/manifest/android.system.net.netd-service.xml",
+      "name": "android.system.net.netd",
+      "format": "aidl",
+      "versions": [],
+      "fqnames": [
+        "INetd/default"
+      ]
+    },
+    {
+      "path": "/system/etc/vintf/manifest/android.system.suspend-service.xml",
+      "name": "android.system.suspend",
+      "format": "hidl",
+      "versions": [],
+      "fqnames": [
+        "@1.0::ISystemSuspend/default"
+      ]
+    },
+    {
+      "path": "/system/etc/vintf/manifest/android.system.suspend-service.xml",
+      "name": "android.system.suspend",
+      "format": "aidl",
+      "versions": [],
+      "fqnames": [
+        "ISystemSuspend/default"
+      ]
+    },
+    {
+      "path": "/system/etc/vintf/manifest/android.system.vold-service.xml",
+      "name": "android.system.vold",
+      "format": "aidl",
+      "versions": [],
+      "fqnames": [
+        "IVold/default"
+      ]
+    },
+    {
+      "path": "/system/etc/vintf/manifest/manifest_android.frameworks.cameraservice.service.xml",
+      "name": "android.frameworks.cameraservice.service",
+      "format": "hidl",
+      "versions": [],
+      "fqnames": [
+        "@2.2::ICameraService/default"
+      ]
+    },
+    {
+      "path": "/system/etc/vintf/manifest/manifest_android.frameworks.cameraservice.service.xml",
+      "name": "android.frameworks.cameraservice.service",
+      "format": "aidl",
+      "versions": [
+        "3"
+      ],
+      "fqnames": [
+        "ICameraService/default"
+      ]
+    },
+    {
+      "path": "/system/etc/vintf/manifest/manifest_media_c2_software.xml",
+      "name": "android.hardware.media.c2",
+      "format": "hidl",
+      "versions": [],
+      "fqnames": [
+        "@1.2::IComponentStore/software"
+      ]
+    },
+    {
+      "path": "/system/etc/vintf/manifest/manifest_media_c2_software.xml",
+      "name": "android.hardware.media.c2",
+      "format": "aidl",
+      "versions": [],
+      "fqnames": [
+        "IComponentStore/software"
+      ]
+    },
+    {
+      "path": "/system/etc/vintf/manifest/manifest_services_android.frameworks.devicestate.xml",
+      "name": "android.frameworks.devicestate",
+      "format": "aidl",
+      "versions": [],
+      "fqnames": [
+        "IDeviceStateService/default"
+      ]
+    },
+    {
+      "path": "/system/etc/vintf/manifest/manifest_services_android.frameworks.location.xml",
+      "name": "android.frameworks.location.altitude",
+      "format": "aidl",
+      "versions": [
+        "2"
+      ],
+      "fqnames": [
+        "IAltitudeService/default"
+      ]
+    },
+    {
+      "path": "/system/etc/vintf/manifest/manifest_services_android.frameworks.vibrator.xml",
+      "name": "android.frameworks.vibrator",
+      "format": "aidl",
+      "versions": [],
+      "fqnames": [
+        "IVibratorControlService/default"
+      ]
+    },
+    {
+      "path": "/system/etc/vintf/manifest/virtualizationservice.xml",
+      "name": "android.hardware.security.keymint",
+      "format": "aidl",
+      "versions": [
+        "3"
+      ],
+      "fqnames": [
+        "IRemotelyProvisionedComponent/avf"
+      ]
+    },
+    {
+      "path": "/system/etc/vintf/manifest.xml",
+      "name": "android.frameworks.displayservice",
+      "format": "hidl",
+      "versions": [],
+      "fqnames": [
+        "@1.0::IDisplayService/default"
+      ]
+    },
+    {
+      "path": "/system/etc/vintf/manifest.xml",
+      "name": "android.frameworks.schedulerservice",
+      "format": "hidl",
+      "versions": [],
+      "fqnames": [
+        "@1.0::ISchedulingPolicyService/default"
+      ]
+    },
+    {
+      "path": "/system/etc/vintf/manifest.xml",
+      "name": "android.frameworks.sensorservice",
+      "format": "aidl",
+      "versions": [],
+      "fqnames": [
+        "ISensorManager/default"
+      ]
+    },
+    {
+      "path": "/system/etc/vintf/manifest.xml",
+      "name": "android.frameworks.sensorservice",
+      "format": "hidl",
+      "versions": [],
+      "fqnames": [
+        "@1.0::ISensorManager/default"
+      ]
+    },
+    {
+      "path": "/system/etc/vintf/manifest.xml",
+      "name": "android.hidl.memory",
+      "format": "hidl",
+      "versions": [],
+      "fqnames": [
+        "@1.0::IMapper/ashmem"
+      ]
+    },
+    {
+      "path": "/system/etc/vintf/manifest.xml",
+      "name": "android.system.net.netd",
+      "format": "hidl",
+      "versions": [],
+      "fqnames": [
+        "@1.1::INetd/default"
+      ]
+    },
+    {
+      "path": "/system/etc/vintf/manifest.xml",
+      "name": "android.system.wifi.keystore",
+      "format": "hidl",
+      "versions": [],
+      "fqnames": [
+        "@1.0::IKeystore/default"
+      ]
+    },
+    {
+      "path": "/system/etc/vintf/manifest.xml",
+      "name": "netutils-wrapper",
+      "format": "native",
+      "versions": [
+        "1.0"
+      ],
+      "fqnames": []
+    },
+    {
+      "path": "/system/etc/vintf/manifest.xml",
+      "name": "vendor.qti.hardware.qccsyshal",
+      "format": "hidl",
+      "versions": [],
+      "fqnames": [
+        "@1.2::IQccsyshal/qccsyshal"
+      ]
+    },
+    {
+      "path": "/system/etc/vintf/manifest.xml",
+      "name": "vendor.qti.hardware.radio.atcmdfwd",
+      "format": "hidl",
+      "versions": [],
+      "fqnames": [
+        "@1.0::IAtCmdFwd/AtCmdFwdService"
+      ]
+    },
+    {
+      "path": "/system/etc/vintf/manifest.xml",
+      "name": "vendor.qti.hardware.systemhelper",
+      "format": "hidl",
+      "versions": [],
+      "fqnames": [
+        "@1.0::ISystemEvent/default",
+        "@1.0::ISystemResource/default"
+      ]
+    },
+    {
+      "path": "/system_ext/etc/vintf/manifest/android.hidl.allocator@1.0-service.xml",
+      "name": "android.hidl.allocator",
+      "format": "hidl",
+      "versions": [],
+      "fqnames": [
+        "@1.0::IAllocator/ashmem"
+      ]
+    },
+    {
+      "path": "/system_ext/etc/vintf/manifest/atcmdfwd-saidl.xml",
+      "name": "vendor.qti.hardware.radio.atcmdfwd",
+      "format": "aidl",
+      "versions": [],
+      "fqnames": [
+        "IAtCmdFwd/AtCmdFwdAidl"
+      ]
+    },
+    {
+      "path": "/system_ext/etc/vintf/manifest/manifest_hypsys_system.xml",
+      "name": "xiaomi.system.hypsys.common",
+      "format": "aidl",
+      "versions": [],
+      "fqnames": [
+        "IHypSysSsi/default",
+        "IHypSysSsiIntl/default"
+      ]
+    },
+    {
+      "path": "/system_ext/etc/vintf/manifest/vendor.qti.hardware.sigma_miracast.xml",
+      "name": "vendor.qti.hardware.sigma_miracast",
+      "format": "hidl",
+      "versions": [],
+      "fqnames": [
+        "@1.0::Isigma_miracast/sigmahal",
+        "@1.0::Isigma_miracast/sigmahal64"
+      ]
+    },
+    {
+      "path": "/system_ext/etc/vintf/manifest/vendor.qti.hardware.sigma_miracast_aidl.xml",
+      "name": "vendor.qti.hardware.sigma_miracast_aidl",
+      "format": "aidl",
+      "versions": [],
+      "fqnames": [
+        "ISigma_miracast/default"
+      ]
+    },
+    {
+      "path": "/system_ext/etc/vintf/manifest/vendor.qti.hardware.systemhelperaidl.xml",
+      "name": "vendor.qti.hardware.systemhelperaidl",
+      "format": "aidl",
+      "versions": [],
+      "fqnames": [
+        "ISystemEvent/default",
+        "ISystemResource/default",
+        "ISystemTUICallback/default"
+      ]
+    },
+    {
+      "path": "/system_ext/etc/vintf/manifest/vendor.qti.qccsyshal_aidl-service.xml",
+      "name": "vendor.qti.qccsyshal_aidl",
+      "format": "aidl",
+      "versions": [],
+      "fqnames": [
+        "IQccsyshal/default"
+      ]
+    },
+    {
+      "path": "/system_ext/etc/vintf/manifest/vendor.qti.qesdsys.service.xml",
+      "name": "vendor.qti.qesdsys",
+      "format": "aidl",
+      "versions": [],
+      "fqnames": [
+        "IQesdSys/default"
+      ]
+    },
+    {
+      "path": "/system_ext/etc/vintf/manifest.xml",
+      "name": "android.hidl.manager",
+      "format": "hidl",
+      "versions": [],
+      "fqnames": [
+        "@1.2::IServiceManager/default"
+      ]
+    },
+    {
+      "path": "/system_ext/etc/vintf/manifest.xml",
+      "name": "android.hidl.token",
+      "format": "hidl",
+      "versions": [],
+      "fqnames": [
+        "@1.0::ITokenManager/default"
+      ]
+    },
+    {
+      "path": "/vendor/etc/vintf/manifest/android.hardware.audio@7.1-impl.ranchu.xml",
+      "name": "android.hardware.audio",
+      "format": "hidl",
+      "versions": [],
+      "fqnames": [
+        "@7.1::IDevicesFactory/default"
+      ]
+    },
+    {
+      "path": "/vendor/etc/vintf/manifest/android.hardware.biometrics.fingerprint-service.ranchu.xml",
+      "name": "android.hardware.biometrics.fingerprint",
+      "format": "aidl",
+      "versions": [
+        "3"
+      ],
+      "fqnames": [
+        "IFingerprint/default"
+      ]
+    },
+    {
+      "path": "/vendor/etc/vintf/manifest/android.hardware.camera.provider.ranchu.xml",
+      "name": "android.hardware.camera.provider",
+      "format": "aidl",
+      "versions": [],
+      "fqnames": [
+        "ICameraProvider/internal/1"
+      ]
+    },
+    {
+      "path": "/vendor/etc/vintf/manifest/android.hardware.camera.provider@2.7-service-google.xml",
+      "name": "android.hardware.camera.provider",
+      "format": "aidl",
+      "versions": [
+        "3"
+      ],
+      "fqnames": [
+        "ICameraProvider/internal/0"
+      ]
+    },
+    {
+      "path": "/vendor/etc/vintf/manifest/android.hardware.drm-service.clearkey.xml",
+      "name": "android.hardware.drm",
+      "format": "aidl",
+      "versions": [],
+      "fqnames": [
+        "IDrmFactory/clearkey"
+      ]
+    },
+    {
+      "path": "/vendor/etc/vintf/manifest/android.hardware.gnss-service.ranchu.xml",
+      "name": "android.hardware.gnss",
+      "format": "aidl",
+      "versions": [
+        "2"
+      ],
+      "fqnames": [
+        "IGnss/default"
+      ]
+    },
+    {
+      "path": "/vendor/etc/vintf/manifest/android.hardware.graphics.gralloc.ranchu.xml",
+      "name": "android.hardware.graphics.allocator",
+      "format": "aidl",
+      "versions": [
+        "2"
+      ],
+      "fqnames": [
+        "IAllocator/default"
+      ]
+    },
+    {
+      "path": "/vendor/etc/vintf/manifest/android.hardware.graphics.gralloc.ranchu.xml",
+      "name": "mapper",
+      "format": "native",
+      "versions": [],
+      "fqnames": [
+        "@5.0/ranchu"
+      ]
+    },
+    {
+      "path": "/vendor/etc/vintf/manifest/android.hardware.health-service.example.xml",
+      "name": "android.hardware.health",
+      "format": "aidl",
+      "versions": [
+        "4"
+      ],
+      "fqnames": [
+        "IHealth/default"
+      ]
+    },
+    {
+      "path": "/vendor/etc/vintf/manifest/android.hardware.media.c2@1.0-service-goldfish.xml",
+      "name": "android.hardware.media.c2",
+      "format": "hidl",
+      "versions": [],
+      "fqnames": [
+        "@1.0::IComponentStore/default"
+      ]
+    },
+    {
+      "path": "/vendor/etc/vintf/manifest/android.hardware.radio.ranchu.xml",
+      "name": "android.hardware.radio.config",
+      "format": "aidl",
+      "versions": [
+        "3"
+      ],
+      "fqnames": [
+        "IRadioConfig/default"
+      ]
+    },
+    {
+      "path": "/vendor/etc/vintf/manifest/android.hardware.radio.ranchu.xml",
+      "name": "android.hardware.radio.data",
+      "format": "aidl",
+      "versions": [
+        "3"
+      ],
+      "fqnames": [
+        "IRadioData/slot1"
+      ]
+    },
+    {
+      "path": "/vendor/etc/vintf/manifest/android.hardware.radio.ranchu.xml",
+      "name": "android.hardware.radio.ims",
+      "format": "aidl",
+      "versions": [
+        "2"
+      ],
+      "fqnames": [
+        "IRadioIms/slot1"
+      ]
+    },
+    {
+      "path": "/vendor/etc/vintf/manifest/android.hardware.radio.ranchu.xml",
+      "name": "android.hardware.radio.ims.media",
+      "format": "aidl",
+      "versions": [
+        "2"
+      ],
+      "fqnames": [
+        "IImsMedia/default"
+      ]
+    },
+    {
+      "path": "/vendor/etc/vintf/manifest/android.hardware.radio.ranchu.xml",
+      "name": "android.hardware.radio.messaging",
+      "format": "aidl",
+      "versions": [
+        "3"
+      ],
+      "fqnames": [
+        "IRadioMessaging/slot1"
+      ]
+    },
+    {
+      "path": "/vendor/etc/vintf/manifest/android.hardware.radio.ranchu.xml",
+      "name": "android.hardware.radio.modem",
+      "format": "aidl",
+      "versions": [
+        "3"
+      ],
+      "fqnames": [
+        "IRadioModem/slot1"
+      ]
+    },
+    {
+      "path": "/vendor/etc/vintf/manifest/android.hardware.radio.ranchu.xml",
+      "name": "android.hardware.radio.network",
+      "format": "aidl",
+      "versions": [
+        "3"
+      ],
+      "fqnames": [
+        "IRadioNetwork/slot1"
+      ]
+    },
+    {
+      "path": "/vendor/etc/vintf/manifest/android.hardware.radio.ranchu.xml",
+      "name": "android.hardware.radio.sap",
+      "format": "aidl",
+      "versions": [],
+      "fqnames": [
+        "ISap/slot1"
+      ]
+    },
+    {
+      "path": "/vendor/etc/vintf/manifest/android.hardware.radio.ranchu.xml",
+      "name": "android.hardware.radio.sim",
+      "format": "aidl",
+      "versions": [
+        "3"
+      ],
+      "fqnames": [
+        "IRadioSim/slot1"
+      ]
+    },
+    {
+      "path": "/vendor/etc/vintf/manifest/android.hardware.radio.ranchu.xml",
+      "name": "android.hardware.radio.voice",
+      "format": "aidl",
+      "versions": [
+        "3"
+      ],
+      "fqnames": [
+        "IRadioVoice/slot1"
+      ]
+    },
+    {
+      "path": "/vendor/etc/vintf/manifest/android.hardware.security.keymint-service.xml",
+      "name": "android.hardware.security.keymint",
+      "format": "aidl",
+      "versions": [
+        "4"
+      ],
+      "fqnames": [
+        "IKeyMintDevice/default"
+      ]
+    },
+    {
+      "path": "/vendor/etc/vintf/manifest/android.hardware.security.keymint-service.xml",
+      "name": "android.hardware.security.keymint",
+      "format": "aidl",
+      "versions": [
+        "3"
+      ],
+      "fqnames": [
+        "IRemotelyProvisionedComponent/default"
+      ]
+    },
+    {
+      "path": "/vendor/etc/vintf/manifest/android.hardware.security.secureclock-service.xml",
+      "name": "android.hardware.security.secureclock",
+      "format": "aidl",
+      "versions": [],
+      "fqnames": [
+        "ISecureClock/default"
+      ]
+    },
+    {
+      "path": "/vendor/etc/vintf/manifest/android.hardware.security.sharedsecret-service.xml",
+      "name": "android.hardware.security.sharedsecret",
+      "format": "aidl",
+      "versions": [],
+      "fqnames": [
+        "ISharedSecret/default"
+      ]
+    },
+    {
+      "path": "/vendor/etc/vintf/manifest/android.hardware.sensors-multihal.xml",
+      "name": "android.hardware.sensors",
+      "format": "aidl",
+      "versions": [
+        "3"
+      ],
+      "fqnames": [
+        "ISensors/default"
+      ]
+    },
+    {
+      "path": "/vendor/etc/vintf/manifest/android.hardware.usb-service.example.xml",
+      "name": "android.hardware.usb",
+      "format": "aidl",
+      "versions": [
+        "3"
+      ],
+      "fqnames": [
+        "IUsb/default"
+      ]
+    },
+    {
+      "path": "/vendor/etc/vintf/manifest/android.hardware.wifi-service.xml",
+      "name": "android.hardware.wifi",
+      "format": "aidl",
+      "versions": [
+        "3"
+      ],
+      "fqnames": [
+        "IWifi/default"
+      ]
+    },
+    {
+      "path": "/vendor/etc/vintf/manifest/android.hardware.wifi.hostapd.xml",
+      "name": "android.hardware.wifi.hostapd",
+      "format": "aidl",
+      "versions": [
+        "3"
+      ],
+      "fqnames": [
+        "IHostapd/default"
+      ]
+    },
+    {
+      "path": "/vendor/etc/vintf/manifest/android.hardware.wifi.supplicant.xml",
+      "name": "android.hardware.wifi.supplicant",
+      "format": "aidl",
+      "versions": [
+        "4"
+      ],
+      "fqnames": [
+        "ISupplicant/default"
+      ]
+    },
+    {
+      "path": "/vendor/etc/vintf/manifest/bluetooth-service-default.xml",
+      "name": "android.hardware.bluetooth",
+      "format": "aidl",
+      "versions": [],
+      "fqnames": [
+        "IBluetoothHci/default"
+      ]
+    },
+    {
+      "path": "/vendor/etc/vintf/manifest/bluetooth_audio.xml",
+      "name": "android.hardware.bluetooth.audio",
+      "format": "aidl",
+      "versions": [
+        "5"
+      ],
+      "fqnames": [
+        "IBluetoothAudioProviderFactory/default"
+      ]
+    },
+    {
+      "path": "/vendor/etc/vintf/manifest/health-storage-default.xml",
+      "name": "android.hardware.health.storage",
+      "format": "aidl",
+      "versions": [],
+      "fqnames": [
+        "IStorage/default"
+      ]
+    },
+    {
+      "path": "/vendor/etc/vintf/manifest/hwc3.xml",
+      "name": "android.hardware.graphics.composer3",
+      "format": "aidl",
+      "versions": [
+        "4"
+      ],
+      "fqnames": [
+        "IComposer/default"
+      ]
+    },
+    {
+      "path": "/vendor/etc/vintf/manifest/identity-default.xml",
+      "name": "android.hardware.identity",
+      "format": "aidl",
+      "versions": [
+        "5"
+      ],
+      "fqnames": [
+        "IIdentityCredentialStore/default"
+      ]
+    },
+    {
+      "path": "/vendor/etc/vintf/manifest/lights-default.xml",
+      "name": "android.hardware.light",
+      "format": "aidl",
+      "versions": [
+        "2"
+      ],
+      "fqnames": [
+        "ILights/default"
+      ]
+    },
+    {
+      "path": "/vendor/etc/vintf/manifest.xml",
+      "name": "android.hardware.audio.effect",
+      "format": "hidl",
+      "versions": [],
+      "fqnames": [
+        "@7.0::IEffectsFactory/default"
+      ]
+    }
+  ],
+  "validation_limits": [
+    "Selected files only; no full image ELF or APK inventory",
+    "No runtime linker namespace or symbol compatibility validation",
+    "No HyperOS boot or DroidOnDarwin APK execution",
+    "APEX archive signatures checked; payload AVB verification, activation and updates untested",
+    "Original OEM APK signing identity not established",
+    "No performance measurement"
+  ],
+  "sdk_framework_res": {
+    "path": "work/native-linux-nce/android/android36/framework/framework-res.apk",
+    "sha256": "d142244639705e7bebc2c8634b63744171354aa50586ff3353b716104a96737a",
+    "certificate_sha256": "301aa3cb081134501c45f1422abc66c24224fd5ded5fdc8f17e697176fd866aa",
+    "signature_exit": 0,
+    "signature_output": "Verifies\nVerified using v1 scheme (JAR signing): false\nVerified using v2 scheme (APK Signature Scheme v2): false\nVerified using v3 scheme (APK Signature Scheme v3): true\nVerified using v3.1 scheme (APK Signature Scheme v3.1): false\nVerified using v4 scheme (APK Signature Scheme v4): false\nVerified for SourceStamp: false\nNumber of signers: 1\nSigner #1 certificate DN: EMAILADDRESS=android@android.com, CN=Android, OU=Android, O=Android, L=Mountain View, ST=California, C=US\nSigner #1 certificate SHA-256 digest: 301aa3cb081134501c45f1422abc66c24224fd5ded5fdc8f17e697176fd866aa\nSigner #1 certificate SHA-1 digest: cd21ab22d1d1b6388aaceaa52b82be3fa4e60c58\nSigner #1 certificate MD5 digest: 2213f191edbc92e7441b349e4590ab76\nSigner #1 key algorithm: RSA\nSigner #1 key size (bits): 2048\nSigner #1 public key SHA-256 digest: 126cdee5f44ebe8371958ce2d399376c68af636cce5e1ee34edf7d91df743e8f\nSigner #1 public key SHA-1 digest: 2153efb169f424fb0c8233e6d0e3b91231f17d06\nSigner #1 public key MD5 digest: cb0e62b4c85e5db3ded8e891c12aa9e9\n"
+  },
+  "validation": {
+    "boundary_command": "python3 scripts/test_hyperos_input.py",
+    "boundary_tests": 6,
+    "boundary_tests_passed": true,
+    "test_source_sha256": "161823214cff4486a3e03c92886bdce2ea2a0a98d0c694a001c107966e389508",
+    "independent_review": "ELF 16 KiB permission overlap and APEX archive/payload validation scope reviewed; no required corrections"
+  }
+}

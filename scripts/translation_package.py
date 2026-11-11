@@ -21,6 +21,8 @@ def prepare(report_path, out, target):
     config = report['configuration']
     if config['workload'] != 'desktop' or config['execution'] != 'direct' or config['code_memory'] != 'dual':
         raise ValueError('翻译应用需要双映射 Direct 完整桌面验证')
+    if config.get('guest_layout', 'host') != 'host':
+        raise ValueError('App 尚未传递客体地址布局，打包需要 host 布局的完整桌面验证')
     if config.get('online_cpus', config['cpus']) != config['cpus']:
         raise ValueError('翻译应用默认启用全部 CPU，需要对应的完整桌面验证')
     expected_uaccess = 'code' if config['cpus'] == 2 else 'all'

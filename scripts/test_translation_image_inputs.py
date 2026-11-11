@@ -18,7 +18,8 @@ class ImageInputs(unittest.TestCase):
         self.source = self.root / 'experiments/native-linux/userspace/interaction-profile.cpp'
         names = [self.source, self.root / 'scripts/build_nce_userspace.py',
                  self.root / 'experiments/native-linux/input.h',
-                 self.root / 'experiments/native-linux/interaction-profile.h']
+                 self.root / 'experiments/native-linux/interaction-profile.h',
+                 self.root / 'experiments/native-linux/services/NceApkInstall.java']
         for path in names:
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_text('original')
@@ -33,6 +34,12 @@ class ImageInputs(unittest.TestCase):
     def test_edited_guest_is_rejected(self):
         self.source.write_text('updated')
         with self.assertRaisesRegex(ValueError, 'interaction-profile.cpp'):
+            validate_android_image(self.root, self.directory)
+
+    def test_edited_apk_helper_is_rejected(self):
+        helper = self.root / 'experiments/native-linux/services/NceApkInstall.java'
+        helper.write_text('updated')
+        with self.assertRaisesRegex(ValueError, 'NceApkInstall.java'):
             validate_android_image(self.root, self.directory)
 
     def test_added_and_removed_sources_are_rejected(self):

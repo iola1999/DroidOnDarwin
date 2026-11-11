@@ -98,6 +98,8 @@ bool nce_desktop_start(bool interactive)
     if (interactive && access("/data/nce/session-stop", F_OK) == 0)
         return false;
     trace_systemui();
+    if (access("/data/nce/apk-fixture/stage", F_OK) == 0)
+        nce_framework_check("NceApkInstall", 360);
     if (interactive) {
         puts("{\"session\":\"android_desktop_ready\"}");
         dprintf(2, "{\"phase\":\"android_desktop_running\"}\n");
