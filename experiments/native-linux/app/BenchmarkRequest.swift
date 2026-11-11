@@ -19,6 +19,13 @@ struct BenchmarkRequest: Codable, Sendable {
     let timeoutSeconds: Int
     let memorySampling: Bool?
 
+    var capturesSettingsOpen: Bool {
+        guard let start = actions.firstIndex(where: { $0.kind == "profile" && ($0.key == "frames-start" || $0.key == "trace-start") }) else {
+            return false
+        }
+        return actions.dropFirst(start + 1).contains { $0.kind == "profile" && $0.key == "settings" }
+    }
+
     static func decode(_ data: Data) throws -> Self {
         guard data.count <= 32768,
               let object = try JSONSerialization.jsonObject(with: data) as? [String: Any],
@@ -60,15 +67,17 @@ struct BenchmarkRequest: Codable, Sendable {
         }
         var profileStarted = false
         var profileEnded = false
+        var settingsOpened = false
         for action in request.actions {
             if action.kind == "profile" {
                 guard let key = action.key, ["settings", "frames-start", "trace-start", "capture-end"].contains(key), !profileEnded else {
                     throw BenchmarkError.invalid("采集命令无效或窗口已经结束")
                 }
                 if key == "settings" {
-                    guard !profileStarted else {
-                        throw BenchmarkError.invalid("采集期间不能切换准备场景")
+                    guard !profileStarted || !settingsOpened else {
+                        throw BenchmarkError.invalid("首次打开采集不能预热或重复打开 Settings")
                     }
+                    settingsOpened = true
                 } else if key == "capture-end" {
                     guard profileStarted else {
                         throw BenchmarkError.invalid("采集尚未开始")

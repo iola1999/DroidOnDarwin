@@ -171,11 +171,79 @@ def host_visibility(result, beginning, ending):
             'scope': ('Android window occlusion and App activation; drawable presentation reported separately' if window_tracking else 'App-wide occlusion and activation; Android drawable visibility not confirmed')}
 
 
+def settings_launch(output, actions, start, end, window_start, window_end, uncertainty, totals):
+    opened = [i for i, action in enumerate(actions) if action.get('key') == 'settings']
+    requested = start is not None and end is not None and any(start < i < end for i in opened)
+    report = {'requested': requested, 'available': False, 'failures': []}
+    if not requested:
+        if (output / 'launch.jsonl').exists():
+            report['failures'].append('unexpected first-open metadata')
+        return report, set()
+    failures = report['failures']
+    if len(opened) != 1:
+        failures.append('first-open capture contains a prepared or repeated Settings launch')
+    try:
+        records = [json.loads(line) for line in (output / 'launch.jsonl').read_text().splitlines()]
+        report.update(available=True, records=records)
+        if [item['phase'] for item in records] != ['prepared', 'begin', 'ready', 'end']:
+            raise ValueError('invalid first-open phase sequence')
+        if any(item['mode'] != 'force_stopped_process' or type(item['guest_ns']) is not int or item['guest_ns'] <= 0 for item in records):
+            raise ValueError('invalid first-open mode or time')
+        prepared, begin, ready, final = records
+        if any(type(prepared[key]) is not int or prepared[key] != 0 for key in ('pid', 'starttime_ticks')):
+            raise ValueError('Settings process was present after force-stop')
+        for item in (ready, final):
+            if any(type(item[key]) is not int or item[key] <= 0 for key in ('pid', 'starttime_ticks')):
+                raise ValueError('missing first-open process identity')
+        if type(ready['snapshot_end_ns']) is not int or not prepared['guest_ns'] <= begin['guest_ns'] <= ready['guest_ns'] <= ready['snapshot_end_ns'] <= final['guest_ns']:
+            raise ValueError('invalid first-open time order')
+        if window_start is None or window_end is None or begin['guest_ns'] < window_start - uncertainty or ready['snapshot_end_ns'] > window_end + uncertainty:
+            raise ValueError('first-open operation is outside capture window')
+        if any(ready[key] != final[key] for key in ('pid', 'starttime_ticks')):
+            raise ValueError('Settings process identity changed during capture')
+        snapshot = (output / 'launch-frames.txt').read_text()
+        snapshot_rows, errors = read_frames(snapshot)
+        if errors:
+            raise ValueError('malformed first-open frame snapshot')
+        snapshot_totals = read_frame_totals(snapshot)
+        report.update(available=True, records=records, ready_frame_totals=snapshot_totals,
+                      begin_to_ready_ms=(ready['guest_ns'] - begin['guest_ns']) / 1e6,
+                      ready_snapshot_ms=(ready['snapshot_end_ns'] - ready['guest_ns']) / 1e6,
+                      scope='force-stop followed by process launch; existing app data and ART caches retained; ready includes polling and dumps; no first-install claim',
+                      window_lifecycle_scope='ready/end HWUI snapshots and process totals; unrendered windows before ready are unobserved')
+        allowed = set()
+        previous = {item['window']: item for item in snapshot_totals}
+        current = {item['window']: item for item in totals}
+        if len(previous) != len(snapshot_totals) or len(current) != len(totals) or previous.keys() != current.keys() or None not in previous or len(previous) < 2:
+            raise ValueError('first-open frame windows are missing, duplicated or changed')
+        for name, item in previous.items():
+            final_item = current[name]
+            if (not begin['guest_ns'] <= item['since_ns'] <= ready['snapshot_end_ns'] or
+                    item['since_ns'] != final_item['since_ns'] or
+                    'total_frames' not in item or final_item.get('total_frames', -1) < item['total_frames']):
+                raise ValueError('first-open statistics restarted or predate launch')
+            if name:
+                if item['total_frames'] > sum(row['window'] == name for row in snapshot_rows):
+                    raise ValueError('first-open ready frame history is incomplete')
+                allowed.add((name, item['since_ns']))
+        if previous[None]['total_frames'] != sum(item['total_frames'] for name, item in previous.items() if name):
+            raise ValueError('first-open ready process and window totals differ')
+        if current[None]['total_frames'] != sum(item['total_frames'] for name, item in current.items() if name):
+            raise ValueError('first-open final process and window totals differ')
+        if failures:
+            return report, set()
+        return report, allowed
+    except (OSError, ValueError, KeyError, TypeError) as error:
+        failures.append('first-open validation: ' + str(error))
+        return report, set()
+
+
 def analyze(directory):
     request = json.loads((directory / 'request.json').read_text())
     result = json.loads((directory / 'result.json').read_text())
     output = directory / 'interaction'
-    pairs = [json.loads(line) for line in (output / 'clock-pairs.jsonl').read_text().splitlines()]
+    pair_file = output / 'clock-pairs.jsonl'
+    pairs = [json.loads(line) for line in pair_file.read_text().splitlines()] if pair_file.exists() else []
     clocks = clock_alignment(pairs)
     starts = [item for item in clocks if item['command'] in (2, 3)]
     ends = [item for item in clocks if item['command'] == 4]
@@ -195,12 +263,17 @@ def analyze(directory):
                    if event['event'] == 'action_started' and event.get('action') == action_end), None)
     if beginning is None or ending is None or beginning >= ending:
         failures.append('missing completed capture window')
-    frame_text = (output / 'frames.txt').read_text()
+    frame_file = output / 'frames.txt'
+    frame_text = frame_file.read_text() if frame_file.exists() else ''
     rows, errors = read_frames(frame_text)
     totals = read_frame_totals(frame_text)
+    launch, new_windows = settings_launch(output, request['actions'], action_start, action_end,
+                                         beginning + offset if beginning is not None else None,
+                                         ending + offset if ending is not None else None, uncertainty or 0, totals)
+    failures.extend(launch['failures'])
     if beginning is not None:
         for total in totals:
-            if total['window'] and total['since_ns'] > beginning + offset + (uncertainty or 0):
+            if total['window'] and total['since_ns'] > beginning + offset + (uncertainty or 0) and (total['window'], total['since_ns']) not in new_windows:
                 failures.append('window statistics restarted during capture: ' + total['window'])
     process_total = next((total.get('total_frames') for total in totals if total['window'] is None), None)
     window_total = sum(total.get('total_frames', 0) for total in totals if total['window'])
@@ -329,6 +402,7 @@ def analyze(directory):
             'alignment_bracket_half_width_ns': uncertainty,
             'host_window_ns': [beginning, ending], 'guest_window_ns': [value + offset if value is not None else None for value in (beginning, ending)],
             'exported_frame_window_complete': exported_frame_window_complete,
+            'settings_launch': launch,
             'duration_scope': 'exported zero-flag completed frames with unambiguous IntendedVsync in [start,end); full duration including completion after end; missing frames and unavailable completions are not in quantiles',
             'presentation': presentation, 'frame_totals': totals, 'frame_counts': dict(counts), 'frames': rows, 'duration': distribution([row['duration_ms'] for row in accepted]),
             'phase_duration': {name: distribution([row['phases_ms'][name] for row in accepted if name in row['phases_ms']]) for name in PHASES},
@@ -354,7 +428,10 @@ def main():
             report['failures'].append('continuous visible Mac capture not confirmed')
         if report['presentation'].get('available') and not report['presentation'].get('counts', {}).get('presented_in_window'):
             report['failures'].append('no drawable presentation in visible capture window')
-    if args.trace_processor and (args.run / 'interaction/kernel.ftrace').exists():
+    trace_window_known = all(value is not None for value in report['guest_window_ns']) and report['guest_window_ns'][0] < report['guest_window_ns'][1]
+    if args.trace_processor and not trace_window_known:
+        report['failures'].append('trace processor requires a completed capture window')
+    if args.trace_processor and trace_window_known and (args.run / 'interaction/kernel.ftrace').exists():
         begin, end = (int(value) for value in report['guest_window_ns'])
         overlap = f"max(0,min(ts+dur,{end})-max(ts,{begin}))"
         query = f"""select name,value,severity from stats where value != 0 and severity != 'info';
