@@ -27,7 +27,7 @@ def build(cpus=1, high_res_timers=False, guest_page_bytes=16384):
     if high_res_timers:
         out = out.with_name(out.name + '-highres')
     if guest_page_bytes == 4096:
-        out = out.with_name(out.name + '-4k')
+        out = out.with_name(out.name + '-4k-vmalloc')
     base = WORK / 'lkl-source'
     source = out / 'source'
     build_dir = out / 'build'
@@ -37,6 +37,8 @@ def build(cpus=1, high_res_timers=False, guest_page_bytes=16384):
     patch_files = [Path(__file__), Path(probe_lkl.__file__), Path(lkl_translation_patch.__file__),
                    ROOT / 'scripts/lkl_nce_patch.py', EXP / 'lkl-nce-mmu.c', EXP / 'lkl-nce-elf.c',
                    EXP / 'translation/kernel-api.h', EXP / 'direct/page-table-layout.h', EXP / 'layout.h']
+    if guest_page_bytes == 4096:
+        patch_files.append(ROOT / 'scripts/lkl_4k_vmalloc_patch.py')
     if cpus == 2:
         patch_files += [ROOT / ('scripts/' + name + '.py') for name in
                         ('lkl_smp_patch', 'lkl_smp_mmu_patch', 'lkl_translation_smp_patch')]
@@ -125,6 +127,8 @@ def build(cpus=1, high_res_timers=False, guest_page_bytes=16384):
              source / 'arch/lkl/include/asm/pgtable-mmu-3level.h', source / 'arch/lkl/include/asm/nce-translation.h',
              source / 'arch/lkl/include/asm/mmu.h', source / 'arch/lkl/kernel/threads.c',
              *[out / name for name in ('lkl.so', 'lkl-image.bin', 'lkl-image.h', 'lkl-host-ops.h')]]
+    if guest_page_bytes == 4096:
+        files += [ROOT / 'scripts/lkl_4k_vmalloc_patch.py', source / 'mm/vmalloc.c', source / 'mm/memory.c', source / 'arch/lkl/include/asm/vmalloc.h']
     if cpus == 2:
         files += [ROOT / ('scripts/' + name + '.py') for name in ('lkl_smp_patch', 'lkl_smp_mmu_patch', 'lkl_translation_smp_patch')]
         files += list((EXP / 'smp').glob('*.[ch]'))

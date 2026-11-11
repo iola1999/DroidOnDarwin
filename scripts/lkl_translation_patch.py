@@ -406,3 +406,6 @@ SYSCALL_DEFINE6(nce_mmap, unsigned long, addr, unsigned long, len,
                     raise RuntimeError('4 KiB kernel source mismatch: ' + name)
                 content = content.replace(before, after)
             path.write_text(content)
+
+        import lkl_4k_vmalloc_patch
+        lkl_4k_vmalloc_patch.apply(source)

@@ -727,6 +727,8 @@ def main():
     if args.mapping == 'pte':
         files += [ROOT / 'scripts/build_lkl_translation_kernel.py', ROOT / 'scripts/lkl_translation_patch.py',
                   EXP / 'lkl-nce-mmu.c', kernel / 'build.json']
+    if args.guest_page_bytes == 4096:
+        files.append(ROOT / 'scripts/lkl_4k_vmalloc_patch.py')
     if args.cpus == 2:
         files += [EXP / 'translation/smp-guest.c', ROOT / 'scripts/lkl_translation_smp_patch.py']
     data_seed = None

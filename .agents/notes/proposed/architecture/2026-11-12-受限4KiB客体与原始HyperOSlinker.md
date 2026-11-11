@@ -30,11 +30,11 @@
 
 本阶段不改 iOS App、打包流程或默认 runtime，也不安排手机运行。宿主头文件和可编译的公共对象可做 iOS 编译检查，但本机的地址摆放、Unicorn JIT 条件与 VMALLOC 路径不能据此确认 iOS 可运行。首阶段无性能结论。
 
-### 后续 VMALLOC 试验
+### VMALLOC 分组实现
 
 首次失败来自 `pcpu_alloc_chunk()` 的 `obj_exts` 元数据分配，实际请求为 65536 字节。当前生成配置已有 `CONFIG_NEED_PER_CPU_KM=y`，`mm/percpu.c` 包含 `percpu-km.c`，数据块由连续 `alloc_pages()` 分配。本轮只需继续处理元数据使用的通用 `vmalloc`；`percpu-vm.c` 的逐页映射留在未来 SMP 范围。
 
-下一阶段仍限定 4 KiB、单 CPU、Unicorn/PTE 和低 4 GiB，在独立生成的 LKL 源码内调整以下行为。默认 16 KiB overlay 保持原行为。
+该阶段仍限定 4 KiB、单 CPU、Unicorn/PTE 和低 4 GiB，已在独立生成的 LKL 源码内实现以下行为。默认 16 KiB overlay 保持原行为。
 
 - `__vmalloc_node_range_noprof()` 在申请 VM area 前，将该次实际分配长度和地址对齐提高到 16 KiB，并检查加法溢出及 RAM 上界。请求长度继续保留给原有对象大小统计。物理 backing 通过 `vm_area_alloc_pages()` 以 order 2 为最小单位分配，再沿用 `split_page()` 和逐 4 KiB `struct page` 数组及释放循环。页表仍使用普通 4 KiB PTE；不为该实验声明 PMD huge-vmap 支持，也不增加另一份持久页分组状态。order 2 分配失败必须释放已分配的页面；不能退回不满足宿主页条件的 order 0。`__GFP_NOFAIL` 的高阶失败处理必须单独验证，受限实现若无法保留其重试契约，就在入口明确停止并保存参数。
 - `init_mm` 的 map/revoke 从单个 PTE 写入前通知，移到完整范围的 PTE 写入或清除后通知。优先复用 `ARCH_PAGE_TABLE_SYNC_MASK` 与 `arch_sync_kernel_mappings()`：`mm/vmalloc.c` 已在范围结束后调用；`mm/memory.c` 的 `apply_to_page_range()` 也会调用，需要限定实际 `init_mm`，用户 mm 继续采用现有失效通知。映射失败的范围只清理已写入 PTE，完整映射成功后才建立宿主 alias；前面已经成功的组在后续失败清理中全部撤销。回调返回前完成宿主操作，调用者随后才能使用或释放对应页面。
@@ -91,8 +91,35 @@ python3 -B scripts/test_guest_pages.py
 
 [调用者诊断结果](../../../../experiments/native-linux/results-guest-4k-vmalloc-caller-20261112.json)保存实际配置、两个打印补丁、编译/链接命令、原始输出及摘要。原受限内核的 24 项清单输入再次校验一致。生成源码中的关键位置为 `mm/percpu.c:504`、`:1466`，`mm/percpu-km.c:53`，`mm/vmalloc.c:3001`、`:3600`、`:3743`；内核固定提交仍为 `d0f76a77e8c2ca68bd7d96190b8da09040eab072`，补丁输入由既有内核清单记录。
 
-本次只完成调用者确认与后续方案，分组分配和范围通知尚未实现。下一阶段验收还需覆盖实际 alias 双向共享、尾部 guard、相邻组保护、部分失败释放与不兼容通用 `vmap` 拒绝；这些内容不能由当前参数检查结果替代。
+该诊断提交只完成调用者确认与后续方案。分组分配、范围通知及对应实际映射和失败回归在下一节记录。
+
+### VMALLOC 与 core 阶段结果（2026-11-12）
+
+[完整结果](../../../../experiments/native-linux/results-guest-4k-vmalloc-20261112.json)保存 4 KiB core、默认 16 KiB core、宿主 alias 与实际 LKL VMALLOC 测试四份报告，合计 1048448 字节，SHA256 为 `7bc151287383ce9ab590d800601324ea0f131aea18dc061937892a1e8f4b0ea5`。基础提交为 `84ecca1dde444699a4646287b91ab11c196d64ad`，实际源码和生成物由各报告的摘要记录。宿主仍为 Apple M5 Ultra、macOS 27.0 / `26A428`、16 KiB 页。运行与其他本机功能构建有重叠，本节只验收功能。
+
+4 KiB core 使用单 CPU、Unicorn/PTE、low 4 GiB、1 GiB RAM、dual JIT 映射；CLI/GCD 均 `returncode=0`、`validated=true`，各 62 条 `passed=true`，各 68 个上下文分配并回收。每轮实际收到 6 次 host map、1 次 revoke、0 次 reclaim，全部通过严格范围检查；6 次 map 包含完整 RAM 映射和 5 个 VMALLOC 组。默认 16 KiB core 使用同一执行后端及 host 地址布局，两入口也各 62 条成功、68/68 上下文回收。两份报告分别 61、60 项输入摘要与运行结束后的文件一致。
+
+```sh
+python3 -B scripts/probe_lkl_translation.py --guest-page-bytes 4096 --guest-layout low --mapping pte --execution unicorn --code-memory dual --reuse-engine-build --workload core --entry both --output work/native-linux-nce/guest-4k-vmalloc-core-v4
+python3 -B scripts/probe_lkl_translation.py --guest-page-bytes 16384 --guest-layout host --mapping pte --execution unicorn --code-memory dual --reuse-engine-build --workload core --entry both --output work/native-linux-nce/guest-16k-vmalloc-regression-v2
+python3 -B scripts/test_guest_pages.py
+python3 -B scripts/test_guest_vmalloc.py work/native-linux-nce/guest-4k-vmalloc-core-v4/summary.json
+```
+
+宿主测试的 26 项检查成功，覆盖原有范围与参数拒绝，以及新增的真实 `shmem_map`、只读权限变更和撤销。两个 16 KiB 组逐 4 KiB 检查双向共享；第一组撤销后，其宿主权限为 `PROT_NONE`，第二组仍为读写且字节不变。测试直接包含产品 `linux-execution.c`，权限来自 `mach_vm_region` 查询。
+
+LKL 测试从成功构建的真实 `mm/vmalloc.c` 生成单个测试对象，故障计数只作用于当前测试 task；其余内核对象保持原归档顺序。normal CLI/GCD 各 9 条内核检查成功，并继续执行 core 至正常退出。检查覆盖 1 字节请求实际取得 16 KiB backing 和 4 KiB guard、真实 alias 双向共享与相邻组保留、非连续/错位/部分组/NULL 页拒绝。order 2 第 0/1 组分配失败分别分配并释放 0/0、4/4 页；写入第 1/3/5 个 PTE 后失败均分配并释放 8/8 页，PTE 清空、VMALLOC 页面计数复原，先前 alias 的字节保留。报告的 27 项测试输入摘要一致，原内核清单在测试前后均一致。
+
+当前 `CONFIG_HAVE_ARCH_HUGE_VMALLOC` 与 `CONFIG_HAVE_ARCH_HUGE_VMAP` 均关闭。受限补丁额外使用编译期检查拒绝开启任意一项，两个真实编译用例均失败并输出 `4 KiB LKL VMALLOC requires ordinary PTE mappings`。这是必要条件：原 `__vmalloc_node_range_noprof()` 的 huge 分支会重新使用 `real_size`/`real_align`，可能覆盖本实验的 16 KiB 分组条件。
+
+`__GFP_NOFAIL` 在本实验入口打印参数并调用 `BUG()`，改变了上游持续重试契约。普通 core 和 normal 测试均未触发该条件；单独 CLI/GCD 用例实际请求 1 字节、`gfp=8cc0`，均在客体启动前退出 86。混合权限用例先创建真实共享 alias，再修改组内一个 PTE，两入口也均在范围通知处退出 86。退出 86 来自测试宿主对 `abort` 的替代，产品路径仍主动停止。这四个用例的 `validated=true` 只表示识别到预定拒绝，不能作为相应调用成功的结论。本阶段只提供受限 4 KiB 实验，完整 Android、其他 VMALLOC 调用者、Direct、SMP 与 iOS 仍未验证。
+
+初次测试对象构建已通过 9 条内核检查，进入 guest 后发生 `SIGSEGV`。该测试镜像改变了内核函数地址，宿主却复用原 core 的 `translation-symbols.h`。测试脚本现从测试 ELF 重新提取 `nce_copy_user`、`nce_translate_user`，并核对 ELF 可执行段与 image 中的字节；随后六次 CLI/GCD 运行按预期结束。原失败日志保留在 `work/native-linux-nce/guest-4k-vmalloc-tests-initial/`，这次失败属于测试构建身份错误。
+
+复杂度审查保留一个仅由 4 KiB 构建调用的生成补丁，使用方为现有 `vmalloc`、`vmap`、范围同步与宿主 alias。普通 PTE 和 `struct page` 数组继续保存映射与释放信息，未增加另一份 alias 表。去掉 order 2 分配会重新产生宿主页内非连续 backing；去掉范围通知会恢复首次 4 KiB alias 失败；去掉 guard 检查可能扩大宿主撤销范围。故障注入保留在独立测试对象，产品没有新增测试开关。测试脚本沿用已有构建清单、链接命令和 ELF 打包函数，未新增内核构建框架。
+
+Python 编译、格式检查、`git diff --check` 与 Bionic 解析 7 项回归成功。原始 HyperOS/SDK linker 的 4 KiB 对照将在下一阶段执行，本节没有组件运行或 iOS 验收结论。
 
 ## 风险
 
-首次运行可能在原生内核 VMALLOC 路径停止，这属于本阶段需要定位的依赖。4 KiB 三级页表仅覆盖 39 位地址，现有 `2^40` 宿主上界必须收紧；地址申请无法满足上界则明确失败。4 KiB 会改变分配碎片、页缓存、COW 和回收统计，本轮结果仅用于功能与页权限分析。Direct flat、宿主 code-watch 的四客体页分组失效、read-view 任意物理页别名及 SMP 仍需后续独立实现。
+当前 VMALLOC 只接受完整宿主页组，组内非连续或不同权限请求会被拒绝；`__GFP_NOFAIL` 会主动停止。4 KiB 三级页表仅覆盖 39 位地址，现有 `2^40` 宿主上界必须收紧；地址申请无法满足上界则明确失败。4 KiB 会改变分配碎片、页缓存、COW 和回收统计，本轮结果仅用于功能与页权限分析。Direct flat、宿主 code-watch 的四客体页分组失效、read-view 任意物理页别名及 SMP 仍需后续独立实现。

@@ -55,6 +55,14 @@ def main():
                   (not process.stderr if accepted else '4 KiB guest rejected host alias:' in process.stderr))
         results.append({'case': name, 'validated': passed, 'returncode': process.returncode,
                         'stdout': process.stdout, 'stderr': process.stderr})
+    process = subprocess.run([out / 'test', 'mapping'], text=True, capture_output=True, timeout=10)
+    rows = [json.loads(line) for line in process.stdout.splitlines()]
+    passed = (process.returncode == 0 and not process.stderr and len(rows) == 5 and
+              rows[-1] == {'test': 'host_alias_shared_permissions_revoke', 'passed': True} and
+              [row.get('host_alias_request') for row in rows[:-1]] == ['map', 'map', 'map', 'revoke'] and
+              all(row['accepted'] for row in rows[:-1]))
+    results.append({'case': 'actual-shared-mapping', 'validated': passed, 'returncode': process.returncode,
+                    'stdout': process.stdout, 'stderr': process.stderr})
     base = [sys.executable, '-B', str(ROOT / 'scripts/probe_lkl_translation.py'), '--guest-page-bytes', '4096',
             '--mapping', 'pte', '--execution', 'unicorn', '--guest-layout', 'low', '--build-only']
     invalid_options = [('--cpus', '2'), ('--mapping', 'window'), ('--execution', 'direct'),
@@ -67,7 +75,7 @@ def main():
     files = [Path(__file__).resolve(), harness, EXP / 'translation/linux-execution.c', EXP / 'layout.h',
              ROOT / 'scripts/probe_lkl_translation.py',
              EXP / 'translation/kernel-api.h', kernel / 'lkl-image.h', kernel / 'lkl-host-ops.h', out / 'test']
-    report = {'scope': 'Actual host alias precondition; no mappings or Linux execution',
+    report = {'scope': 'Actual host alias preconditions and shared map/protection/revoke; no Linux execution',
               'command': list(map(str, command)), 'runs': results,
               'sha256': {str(path.relative_to(ROOT)): hashlib.sha256(path.read_bytes()).hexdigest() for path in files}}
     (out / 'summary.json').write_text(json.dumps(report, indent=2) + '\n')
