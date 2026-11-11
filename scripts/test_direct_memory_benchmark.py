@@ -15,7 +15,7 @@ def main():
     report = json.loads(args.report.read_text())
     runs = report['runs']
     expected = {(entry, f'memory-check-{backend}')
-                for entry in ('cli', 'gcd') for backend in ('native', 'cached', 'flat')}
+                for entry in ('cli', 'gcd') for backend in ('native', 'cached', 'flat', 'view')}
     assert len(runs) == len(expected) and {(run['entry'], run['mode']) for run in runs} == expected
     rejected = 0
     for run in runs:
@@ -47,6 +47,28 @@ def main():
         reject(lambda altered: next(row for row in altered if 'memory_kernel' in row).__setitem__('thread_cpu_ns', 1))
         reject(lambda altered: altered.remove(next(row for row in altered if row.get('test') == 'memory_benchmark_same_va_private_shared_switch')))
         reject(lambda altered: next(row for row in altered if 'memory_kernel' in row).__setitem__('passed', False))
+        if mode.endswith('-view'):
+            def field(marker, key, value):
+                return lambda altered: next(row for row in altered if marker in row).__setitem__(key, value)
+
+            reject(field('memory_benchmark_config', 'read_memory', 'flat'))
+            reject(field('memory_benchmark_config', 'write_memory', 'view'))
+            reject(lambda altered: altered.remove(next(row for row in altered if 'memory_benchmark_view_setup' in row)))
+            reject(lambda altered: altered.insert(0, copy.deepcopy(next(row for row in altered if 'memory_benchmark_view_setup' in row))))
+            reject(field('memory_benchmark_view_setup', 'maps', 0))
+            reject(field('memory_benchmark_view_setup', 'mapped_bytes', 65536))
+            reject(field('memory_benchmark_view_setup', 'reserved_bytes', 1 << 32))
+            reject(field('memory_benchmark_view_setup', 'wall_ns', 1))
+            reject(field('memory_benchmark_view_setup', 'thread_cpu_ns', 1))
+            reject(field('memory_benchmark_view_setup', 'check_only', False))
+            reject(field('memory_kernel', 'read_view_sites', 0))
+            reject(field('memory_kernel', 'read_view_faults', 1))
+            reject(field('memory_kernel', 'view_maps', 13))
+            reject(field('memory_kernel', 'view_revocations', 1))
+            reject(lambda altered: altered.remove(next(row for row in altered if 'memory_benchmark_view_cleanup' in row)))
+            reject(field('memory_benchmark_view_cleanup', 'destroyed', 1))
+            reject(field('memory_benchmark_view_cleanup', 'live_reserved_bytes', 1 << 32))
+            reject(field('memory_benchmark_view_cleanup', 'maps', 13))
     print(json.dumps({'valid_runs': len(runs), 'rejected_mutations': rejected, 'passed': True}))
 
 

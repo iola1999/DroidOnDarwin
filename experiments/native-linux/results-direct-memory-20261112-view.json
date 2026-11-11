@@ -1,0 +1,2816 @@
+{
+  "scope": "Independent runtime ARM64 blocks; no Linux/Android/iPhone integration",
+  "platform": "macOS-27.0-arm64-arm-64bit-Mach-O",
+  "cpu": "Apple M5 Ultra",
+  "system_build": "26A428",
+  "measurement": "Three timed samples after one warmup per backend in separate processes; GCD reverses backend order. Same ARM64 bytes, 16 KiB pages and checked complete data arrays; warmup touches every private data page. Timed execution stays in context 0 and includes one-million-instruction slice entries; initialization, table/view setup, context-switch checks and result verification are excluded. No Linux scheduling, page updates, fallback or device measurement.",
+  "build_flags": [
+    "-std=c++20",
+    "-O2",
+    "-g",
+    "-Wall",
+    "-Wextra",
+    "-Werror",
+    "-DNCE_DIRECT_DUAL_MAP"
+  ],
+  "direct_code_memory": "dual",
+  "unicorn_code_memory": "dual",
+  "configuration": [
+    {
+      "memory_benchmark_config": true,
+      "backend": "native",
+      "page_bits": 14,
+      "contexts": 2,
+      "private_bytes": 65536,
+      "shared_bytes": 16384,
+      "cache_bytes": 0,
+      "mapping_entries": 256,
+      "route_entries": 256,
+      "cross_page": true,
+      "native_exclusive": true,
+      "code_versions": "fixture",
+      "check_scope": "independent"
+    },
+    {
+      "memory_benchmark_config": true,
+      "backend": "cached",
+      "page_bits": 14,
+      "contexts": 2,
+      "private_bytes": 65536,
+      "shared_bytes": 16384,
+      "cache_bytes": 134217728,
+      "mapping_entries": 256,
+      "route_entries": 256,
+      "cross_page": true,
+      "native_exclusive": true,
+      "code_versions": "fixture",
+      "check_scope": "independent"
+    },
+    {
+      "memory_benchmark_config": true,
+      "backend": "flat",
+      "page_bits": 14,
+      "contexts": 2,
+      "private_bytes": 65536,
+      "shared_bytes": 16384,
+      "cache_bytes": 134217728,
+      "mapping_entries": 256,
+      "route_entries": 256,
+      "cross_page": true,
+      "native_exclusive": true,
+      "code_versions": "fixture",
+      "check_scope": "independent"
+    },
+    {
+      "memory_benchmark_config": true,
+      "backend": "view",
+      "page_bits": 14,
+      "contexts": 2,
+      "private_bytes": 65536,
+      "shared_bytes": 16384,
+      "cache_bytes": 134217728,
+      "mapping_entries": 256,
+      "route_entries": 256,
+      "cross_page": true,
+      "native_exclusive": true,
+      "code_versions": "fixture",
+      "check_scope": "independent",
+      "read_memory": "premapped_view",
+      "write_memory": "flat",
+      "view_reserved_bytes": 8589934592,
+      "view_mapped_bytes": 196608
+    }
+  ],
+  "dependency": {
+    "oaknut_revision": "94c726ce0338b054eb8cb5ea91de8fe6c19f4392",
+    "oaknut_archive_sha256": "c404db82002f9a851a412b3d55ac9be8a42a2e319fd2fc8a73e63e6ef5d4f97b"
+  },
+  "sha256": {
+    "experiments/native-linux/direct/probe.cpp": "b5a9b58ae459f494a4c988c5703ff34904d6dfe75e6f3afdef143be7c6d1d058",
+    "experiments/native-linux/direct/tests.cpp": "b0db26efa62abc42b6c32b9cc0d7d0f4cd4a2677b6113e0d33bd4ea38c13b417",
+    "experiments/native-linux/direct/instruction-tests.cpp": "ece72080521e15681f9fc8d69b22ef1c9cb56f37d04b03fddfd19e236adfa606",
+    "experiments/native-linux/direct/simd-math-tests.cpp": "117189eba9700c61289edac92b364dd89ddeee0861d97b0daf944d5425c4dfcb",
+    "experiments/native-linux/direct/cross-page-tests.cpp": "9ec9263c1a608787524f1276c0da30360b8c4a0ff9cb8647557c15d53d0b3a99",
+    "experiments/native-linux/direct/route-tests.cpp": "4a82008809919fdabc892bb2cd7737eab1281f833286127c82211ad17db7c60a",
+    "experiments/native-linux/direct/memory-group-tests.cpp": "bfc864c3c2aafa39f173570688cc2de201f3168e94cfc36604c527e4d7558ff6",
+    "experiments/native-linux/direct/page-table-tests.cpp": "241d7bd934727b373cc7d5a30e662cbb3bb5f58083feb0ea21602c3e8301e7df",
+    "experiments/native-linux/direct/parallel-tests.cpp": "0103bdd273c85fca9396093662f743b5890a5aadfb144d42b8ec86c39525281f",
+    "experiments/native-linux/direct/unicorn-hook-tests.cpp": "d66f2837b6eeaa3b1f5994e0b479d8a406f942136fefd10e7045435e84a4e4d7",
+    "experiments/native-linux/direct/benchmark.cpp": "83302e01f8d0fadc7bfd89a77267a2eafa66e24112a413b5ddfd100c7287ba93",
+    "experiments/native-linux/direct/main.cpp": "81bc56f5a11b7e3f29cf3b6e6d9cf5388553b2e0610d823ee198a56645401479",
+    "experiments/native-linux/translation/kernels.S": "ef9cdea4f3b3ad6122caa7b781de29e1d535e600511e0e497be43c5bd77081b7",
+    "experiments/native-linux/translation/read-view.c": "85ad462693b9ff64532bbf2056a2c6b09cefb1bbd4d8fbcf0cb7570697ed3c2a",
+    "experiments/native-linux/translation/linux-memory.c": "0cc6ab6ff8ab7abe76c1c73aaf18fecb200ff27251ea29f0f15b0618a6020e31",
+    "experiments/native-linux/translation/unicorn-code-memory.c": "f7fe3981500192267b25ae33cb4aeb5ef38f31c674ddb3cb0ebfa0a0edb43d6e",
+    "experiments/native-linux/direct/engine.cpp": "dd99ddbbb8436cc6b97e6eb63c8cf908499c849ee3110c64efa40ee22a7adb33",
+    "experiments/native-linux/direct/compile.cpp": "30a269413ba85c1aecf58e695a3dc88ea20460fe8e18801fa69adfe4b6eaac2c",
+    "experiments/native-linux/direct/decode.cpp": "e2ce2940d0c5d5c1658c45d8a4beee40f9dbb662f960eabb0cad96b0ce84efc1",
+    "experiments/native-linux/direct/memory-groups.cpp": "6447bb9544d9cfbc9f872e6e721b17854aae3a1f88fcedcd9767831aaf1ae9a6",
+    "experiments/native-linux/direct/read-faults.cpp": "6e514b9e0f8b9675e2eaad955440fd4909b8f19e6e1637ea16d083d2a9809348",
+    "experiments/native-linux/direct/cross-page.cpp": "ab2aea50c200cb993fbbad08a2c26423391a428a1359225669a30d2baf8f622d",
+    "experiments/native-linux/direct/entry.S": "0a1f01ba0e41cc631dfb62008260b921f9c85a01b44b33d16be76fd8567923b7",
+    "experiments/native-linux/code-memory.c": "8215ac2a2564049be0b45a80b3774ec994d6e51b6eb2057ed00cd515ef682981",
+    "experiments/native-linux/execute-check.c": "2e5a080e11bb3ec9407be2495c30a0391d2e8a858f1fe1a01a624eed3a8dd3c5",
+    "experiments/native-linux/direct/decode.h": "eafddef33888746adfc25306f6b2ab7903ff9f50adce3b0cf55e43f1e8cba5a9",
+    "experiments/native-linux/direct/memory-groups.h": "c6250a511c45dd7bbd5733ff43b55dd8a0eb6501d9759bb12a413f9c121a6b31",
+    "experiments/native-linux/direct/direct.h": "454493a2a093afe3e47c3b07311c06d8db6d01450e78b8f2b251c4443401b3f1",
+    "experiments/native-linux/direct/internal.h": "01076e612a07315d6c9af5dd0b1c90eb1c7cddbb9fe15eb8f370e67202f2e125",
+    "experiments/native-linux/direct/layout.h": "bea63a67f1145501152a6eaf400e9d1393badc55871c7b61e365a4bd2782bb23",
+    "experiments/native-linux/direct/page-table-layout.h": "500897ffde014c17c73d03a92b34b07a9990e52695c369d9228c01d5d4600109",
+    "experiments/native-linux/code-memory.h": "b76ec86c799b073a58b08dc04300d091cb63531d31289ea22fdfb16d4495870a",
+    "experiments/native-linux/execute-check.h": "db1decd5ee536b58b9974ff03951d79dddfc3f74c1205ad34b7c725de4bf6883",
+    "experiments/native-linux/nce.h": "7bcdc5e777e10e1d70f0bf1838a2160e87c70613a44b90b16c3e07aedf4a9f58",
+    "experiments/native-linux/guest-registers.h": "90a4d5b6e613ce4f2cda359dcd05f6e8d876a788bc437c2c1e13e05403e4627a",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/code_block.hpp": "c1b59e9d8a37775f8558fb3a0f7b34a6b7dbd2b2c13c088be65253c2223faa8a",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/dual_code_block.hpp": "619a01b3c69e107cc1c13c79b0dfbe97b09395e70a6c705b77e0531894a69620",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/feature_detection/cpu_feature.hpp": "2ae6e67bd4af85bd7d6d6eb7585f73cbdc237183167bb265a0427b74807e0a02",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/feature_detection/feature_detection.hpp": "4d13c256d5028d1ca3e5a0ad59382e888b79e033b72cffe7dae4c3e9ecc8d97e",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/feature_detection/feature_detection_apple.hpp": "99d88802080a50bd7d73a07020c18eee44417e193ff5515cbad8f6972890bbc6",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/feature_detection/feature_detection_freebsd.hpp": "84a10ab44c7c566523705703fb118904156c39b6b93148d458e2ab77a80a2c2d",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/feature_detection/feature_detection_generic.hpp": "4b78fafbb988a18b25b1aeb04c5ebff6b3a675f502e315fd8430f2d3f61f0fd2",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/feature_detection/feature_detection_hwcaps.hpp": "5839e027d9145f182149586fc30f129f33d5b482ffa174ed4ac6f9bb3b5a3b3f",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/feature_detection/feature_detection_idregs.hpp": "f759c5fd02bb2d2bafe45376e3856fa9371737282b22f66101fd4ae8db5f7b96",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/feature_detection/feature_detection_linux.hpp": "a49f3c60ad2cae71c158fd9207fdbad5e40837793f57289490603455302299c6",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/feature_detection/feature_detection_netbsd.hpp": "1315afa43ea61ffb7beb1102bf090d24d1285f2340028b5da50c3d31491dd09c",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/feature_detection/feature_detection_openbsd.hpp": "941dd25a778b8153e3e98aa9b7795a2c54359d24d8337f56a8658993f3fecb96",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/feature_detection/feature_detection_w32.hpp": "f228126514f482b43c0304a1f9dfb5942b93afabfc4372662af1193679c503de",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/feature_detection/id_registers.hpp": "ed83ce3fdaa0bea503dbdd9c0e728e8cb4eb0307fdf3bc60192fc0dfa130d1c8",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/feature_detection/read_id_registers_directly.hpp": "ff2e769fabf6f43d6e12939072e6cd911694f7966d2bd8c4ce6c3075aad34020",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/arm64_encode_helpers.inc.hpp": "55576102b1774f7f7b681857a3d2c6843776045cccd24fa09b8c4713929adbaf",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/cpu_feature.inc.hpp": "5919c8d8b32ae0899d04a888d8e852a79c604b33f9b6cffe632234437f57ab67",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/enum.hpp": "603697b7a7e16795219a74fa2d735e8bd442c79cdcb539ed0abed2b83417fd26",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/imm.hpp": "268b0414bf57c82cddb3de6b286e8e1ce52fb2b413aaecaa1f0cf9099b7e7cc1",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/list.hpp": "0592b31d29a6f1bfbee46cdb0aa5ce778edc9643db90a39d42215970357328e9",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/mnemonics_fpsimd_v8.0.inc.hpp": "3ecdfd1ff46ff749b2525e1a75acbabc6022848f700a6f16b36f480ab954a266",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/mnemonics_fpsimd_v8.1.inc.hpp": "404268b9e0e3b4708d5018fd1fbf3ea1339c641382e7cfd15534af56a7672e69",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/mnemonics_fpsimd_v8.2.inc.hpp": "52e7a48b969badf327c00c2ea4556353c61950a0c452adeaee37c6820926261f",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/mnemonics_fpsimd_v8.3.inc.hpp": "84bcced18fe10c753ec5ea1c84e9531ab1ceb4e08b046519e75788a14b814ae4",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/mnemonics_generic_v8.0.inc.hpp": "8ffd907bb38b27700022e29d40111fe72e640d003ad6aa3e372c4d8a7ebd3f6c",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/mnemonics_generic_v8.1.inc.hpp": "9f60f325c392e907dd9d2cbab62e1f8cfc7ab95c88e54df75b1a1f64bc7fa93b",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/mnemonics_generic_v8.2.inc.hpp": "1b53f462d1ed7e0a763236dbef9c4bfc70f6430cf5f8b420b2acc4dd2e8884ab",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/mnemonics_generic_v8.3.inc.hpp": "4b775baed83b1bb32b7bd339433175ce09b4bbc6da33d887bc9ca989d42b5d76",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/multi_typed_name.hpp": "a4322bfdb95f8477e6f92b31194110ef860c7402d50ce18daae6e016d4fa9aac",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/oaknut_exception.inc.hpp": "48629c93b468527c440dad30f8044818aa202caff67e73f45a246a3e96f8ad28",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/offset.hpp": "cb48c0eface8f5458a89402a090084690d3f999ff562e63870a1b16f438a7d52",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/overloaded.hpp": "03f0f551fa10b0b3d8d2c75130c1023ddcc5e8a3566629470408aad370d87fc2",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/reg.hpp": "352456b9b9ea1fb8cb5637e82169e16f08189579da9645ad5a5c1992f95ed198",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/string_literal.hpp": "96dce09750c24842a88e8eb3dfdafe047a5ab94c9398c94ea41cca8e1434e1bb",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/oaknut.hpp": "e25f4222f8f7d17b683d5ea8ff2851f88a3b40c478fcdc6046fe962cfcab2f37",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/oaknut_exception.hpp": "8277ac5a6cf6697305fd169d817d6786b0011027d66962fc9d982ffbce2c19a0",
+    "scripts/probe_direct_execution.py": "b3dcc78791e1c90687091a4ced2fa8f8fc1bacb272165e33045f3567fb0d8c43",
+    "work/native-linux-nce/oaknut-94c726c.tar.gz": "c404db82002f9a851a412b3d55ac9be8a42a2e319fd2fc8a73e63e6ef5d4f97b",
+    "work/native-linux-nce/unicorn-tb-stop-dual/build.json": "276c122f121cfafc8d068a311b542742757144b2beecb495b7688f2c4390952f",
+    "scripts/build_translation_engine.py": "e5ab4173a424f834a739d0d31e14b9fa75a89074716d5f5c5a49e1358b1a1b59",
+    "work/native-linux-nce/unicorn-2.1.4.tar.gz": "ea8863f095a0136388694e5a6063afd9bb7650e30243dd6251af59c5ce5601f4",
+    "work/native-linux-nce/unicorn-dual-source/unicorn-2.1.4/include/uc_priv.h": "c8c854d73a5f40727ebf733d0545a9ff5434b9f295a2c2d1cb1867f5a161394c",
+    "work/native-linux-nce/unicorn-dual-source/unicorn-2.1.4/uc.c": "7b676b8268f24611aabb17aa935aca5334b852d48dabd4175b954f200bcb2404",
+    "work/native-linux-nce/unicorn-dual-source/unicorn-2.1.4/qemu/tcg/tcg-op.c": "7e926c8f1f7bdadef1b2a9d45a44468067d2347563cca1efa253d496583a7cbb",
+    "work/native-linux-nce/unicorn-dual-source/unicorn-2.1.4/qemu/accel/tcg/translate-all.c": "23766182056ceb72d0d7bacf2de33fddc0530902f7af6b4ef84e13960d109867",
+    "work/native-linux-nce/unicorn-dual-source/unicorn-2.1.4/qemu/accel/tcg/tcg-runtime.c": "9442f7d2e5271eae1e409cfd7cdb9dc3c88decc03272a46a9250cdc3e68ddbe6",
+    "work/native-linux-nce/unicorn-dual-source/unicorn-2.1.4/qemu/include/exec/gen-icount.h": "ff2c3cb1adef7c2b558c27b57820b36bc126fae8ba572ae40537a4a0de892a1a",
+    "work/native-linux-nce/unicorn-dual-source/unicorn-2.1.4/qemu/include/qemu/osdep.h": "853abe20ca8d18875ccc976977fe2dbe507ec2ba12f0a07eb0ca968f9a8202d9",
+    "work/native-linux-nce/unicorn-dual-source/unicorn-2.1.4/qemu/include/tcg/tcg.h": "0ceda033af1687582281b9a10684800da978d7a1fadf3a4703ac66364142e3fc",
+    "work/native-linux-nce/unicorn-dual-source/unicorn-2.1.4/qemu/tcg/tcg.c": "0c11bfcf407c8f3b5c404dfdd75f4b2ba532d84905dcbc36a576ca371405a345",
+    "work/native-linux-nce/unicorn-dual-source/unicorn-2.1.4/qemu/include/exec/exec-all.h": "a5640cf45b01812b7b72c68d152adf3d10ca3f366c1361bebf6b5767eae49465",
+    "work/native-linux-nce/unicorn-dual-source/unicorn-2.1.4/qemu/tcg/aarch64/tcg-target.inc.c": "75610364d152a540a6cfa1284564d61458100eaaa6e6acaea845570a8da4c555",
+    "work/native-linux-nce/unicorn-dual-source/unicorn-2.1.4/qemu/tcg/tcg-pool.inc.c": "8583f84c95511ffe48ed1e1b0ad93f997c7aeeca8a6882232b311e3221fe21f4",
+    "work/native-linux-nce/unicorn-tb-stop-dual/prefix/lib/libunicorn.a": "a69c2949b8c277ac32701b40c382f00190e533270d41dbb1cf1b7f7fd3250c57",
+    "work/native-linux-nce/unicorn-tb-stop-dual/prefix/include/unicorn/unicorn.h": "66fdf8f39df34e507a163eb550549669cec3399c2103b8dc84bc4131f600e55a",
+    "scripts/unicorn_code_memory_patch.py": "924d3d1a7b5b1688197733f322f6956edf5aef96a854c9d24a8693d62485656f",
+    "experiments/native-linux/direct/probe.h": "af3bb3250a030401ec2674b8ef20ff8da6724fe22ea4d3fce6894fa3ffefce17",
+    "experiments/native-linux/translation/read-view.h": "40a09185089ab8a02a76a6789b7b2149ffdb9dc225c7b1c5b4532d6022307488",
+    "work/native-linux-nce/direct-memory-bench-20261112-view/probe": "4b05ef2be8ca420382bf3510a2c8f19469726cc18ac993e5920f1729109eaca0"
+  },
+  "runs": [
+    {
+      "entry": "cli",
+      "mode": "memory-bench-native",
+      "command": [
+        "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/direct-memory-bench-20261112-view/probe",
+        "memory-bench-native",
+        "cli",
+        "100"
+      ],
+      "returncode": 0,
+      "results": [
+        {
+          "direct_code_memory": "dual"
+        },
+        {
+          "mode": "memory-bench-native",
+          "entry": "cli",
+          "memory_interval_ms": 100
+        },
+        {
+          "memory_sample": "kernel_setup",
+          "monotonic_ns": 2508160610527000,
+          "footprint_bytes": 1704344,
+          "resident_bytes": 2228224,
+          "resident_lifetime_peak_bytes": 2228224
+        },
+        {
+          "memory_benchmark_config": true,
+          "backend": "native",
+          "page_bits": 14,
+          "contexts": 2,
+          "private_bytes": 65536,
+          "shared_bytes": 16384,
+          "cache_bytes": 0,
+          "mapping_entries": 256,
+          "route_entries": 256,
+          "cross_page": true,
+          "native_exclusive": true,
+          "code_versions": "fixture",
+          "check_scope": "independent"
+        },
+        {
+          "memory_sample": "kernel_setup",
+          "monotonic_ns": 2508160610618000,
+          "footprint_bytes": 1950104,
+          "resident_bytes": 2490368,
+          "resident_lifetime_peak_bytes": 2490368
+        },
+        {
+          "memory_statistics": "kernel_setup",
+          "interval_ms": 100,
+          "samples": 2,
+          "errors": 0,
+          "duration_ns": 100000,
+          "collection_ns": 24000,
+          "footprint_mean_bytes": 1827224.0,
+          "footprint_sample_peak_bytes": 1950104,
+          "footprint_latest_bytes": 1950104,
+          "resident_mean_bytes": 2359296.0,
+          "resident_sample_peak_bytes": 2490368,
+          "resident_latest_bytes": 2490368,
+          "resident_lifetime_peak_bytes": 2490368
+        },
+        {
+          "memory_sample": "boundaries",
+          "monotonic_ns": 2508160610635000,
+          "footprint_bytes": 1950104,
+          "resident_bytes": 2490368,
+          "resident_lifetime_peak_bytes": 2490368
+        },
+        {
+          "test": "memory_benchmark_same_va_private_shared_switch",
+          "passed": true
+        },
+        {
+          "memory_sample": "boundaries",
+          "monotonic_ns": 2508160610759000,
+          "footprint_bytes": 2064792,
+          "resident_bytes": 2621440,
+          "resident_lifetime_peak_bytes": 2621440
+        },
+        {
+          "memory_statistics": "boundaries",
+          "interval_ms": 100,
+          "samples": 2,
+          "errors": 0,
+          "duration_ns": 134000,
+          "collection_ns": 17000,
+          "footprint_mean_bytes": 2007448.0,
+          "footprint_sample_peak_bytes": 2064792,
+          "footprint_latest_bytes": 2064792,
+          "resident_mean_bytes": 2555904.0,
+          "resident_sample_peak_bytes": 2621440,
+          "resident_latest_bytes": 2621440,
+          "resident_lifetime_peak_bytes": 2621440
+        },
+        {
+          "memory_sample": "integer",
+          "monotonic_ns": 2508160610776000,
+          "footprint_bytes": 2064792,
+          "resident_bytes": 2621440,
+          "resident_lifetime_peak_bytes": 2621440
+        },
+        {
+          "memory_sample": "integer",
+          "monotonic_ns": 2508160715636000,
+          "footprint_bytes": 2064792,
+          "resident_bytes": 2621440,
+          "resident_lifetime_peak_bytes": 2621440
+        },
+        {
+          "memory_kernel": "integer",
+          "backend": "native",
+          "check_only": false,
+          "round": 0,
+          "iterations": 64000000,
+          "code_bytes": 0,
+          "compiles": 0,
+          "mapping_misses": 0,
+          "passed": true,
+          "wall_ns": 92323000,
+          "thread_cpu_ns": 90709125
+        },
+        {
+          "memory_sample": "integer",
+          "monotonic_ns": 2508160820698000,
+          "footprint_bytes": 2064792,
+          "resident_bytes": 2621440,
+          "resident_lifetime_peak_bytes": 2621440
+        },
+        {
+          "memory_sample": "integer",
+          "monotonic_ns": 2508160921041000,
+          "footprint_bytes": 2064792,
+          "resident_bytes": 2621440,
+          "resident_lifetime_peak_bytes": 2621440
+        },
+        {
+          "memory_kernel": "integer",
+          "backend": "native",
+          "check_only": false,
+          "round": 1,
+          "iterations": 64000000,
+          "code_bytes": 0,
+          "compiles": 0,
+          "mapping_misses": 0,
+          "passed": true,
+          "wall_ns": 90763000,
+          "thread_cpu_ns": 90218125
+        },
+        {
+          "memory_sample": "integer",
+          "monotonic_ns": 2508161026117000,
+          "footprint_bytes": 2064792,
+          "resident_bytes": 2621440,
+          "resident_lifetime_peak_bytes": 2621440
+        },
+        {
+          "memory_sample": "integer",
+          "monotonic_ns": 2508161131175000,
+          "footprint_bytes": 2064792,
+          "resident_bytes": 2621440,
+          "resident_lifetime_peak_bytes": 2621440
+        },
+        {
+          "memory_kernel": "integer",
+          "backend": "native",
+          "check_only": false,
+          "round": 2,
+          "iterations": 64000000,
+          "code_bytes": 0,
+          "compiles": 0,
+          "mapping_misses": 0,
+          "passed": true,
+          "wall_ns": 90648000,
+          "thread_cpu_ns": 90220666
+        },
+        {
+          "memory_sample": "integer",
+          "monotonic_ns": 2508161162637000,
+          "footprint_bytes": 2064792,
+          "resident_bytes": 2621440,
+          "resident_lifetime_peak_bytes": 2621440
+        },
+        {
+          "memory_statistics": "integer",
+          "interval_ms": 100,
+          "samples": 7,
+          "errors": 0,
+          "duration_ns": 551866000,
+          "collection_ns": 251000,
+          "footprint_mean_bytes": 2064792.0,
+          "footprint_sample_peak_bytes": 2064792,
+          "footprint_latest_bytes": 2064792,
+          "resident_mean_bytes": 2621440.0,
+          "resident_sample_peak_bytes": 2621440,
+          "resident_latest_bytes": 2621440,
+          "resident_lifetime_peak_bytes": 2621440
+        },
+        {
+          "memory_sample": "memory",
+          "monotonic_ns": 2508161162648000,
+          "footprint_bytes": 2064792,
+          "resident_bytes": 2621440,
+          "resident_lifetime_peak_bytes": 2621440
+        },
+        {
+          "memory_kernel": "memory",
+          "backend": "native",
+          "check_only": false,
+          "round": 0,
+          "iterations": 32000000,
+          "code_bytes": 0,
+          "compiles": 0,
+          "mapping_misses": 0,
+          "passed": true,
+          "wall_ns": 22694000,
+          "thread_cpu_ns": 22646417
+        },
+        {
+          "memory_sample": "memory",
+          "monotonic_ns": 2508161236026000,
+          "footprint_bytes": 2064792,
+          "resident_bytes": 2621440,
+          "resident_lifetime_peak_bytes": 2621440
+        },
+        {
+          "memory_kernel": "memory",
+          "backend": "native",
+          "check_only": false,
+          "round": 1,
+          "iterations": 32000000,
+          "code_bytes": 0,
+          "compiles": 0,
+          "mapping_misses": 0,
+          "passed": true,
+          "wall_ns": 22884000,
+          "thread_cpu_ns": 22732708
+        },
+        {
+          "memory_kernel": "memory",
+          "backend": "native",
+          "check_only": false,
+          "round": 2,
+          "iterations": 32000000,
+          "code_bytes": 0,
+          "compiles": 0,
+          "mapping_misses": 0,
+          "passed": true,
+          "wall_ns": 23017000,
+          "thread_cpu_ns": 22814500
+        },
+        {
+          "memory_sample": "memory",
+          "monotonic_ns": 2508161300108000,
+          "footprint_bytes": 2064792,
+          "resident_bytes": 2621440,
+          "resident_lifetime_peak_bytes": 2621440
+        },
+        {
+          "memory_statistics": "memory",
+          "interval_ms": 100,
+          "samples": 3,
+          "errors": 0,
+          "duration_ns": 137463000,
+          "collection_ns": 46000,
+          "footprint_mean_bytes": 2064792.0,
+          "footprint_sample_peak_bytes": 2064792,
+          "footprint_latest_bytes": 2064792,
+          "resident_mean_bytes": 2621440.0,
+          "resident_sample_peak_bytes": 2621440,
+          "resident_latest_bytes": 2621440,
+          "resident_lifetime_peak_bytes": 2621440
+        },
+        {
+          "memory_sample": "cleanup",
+          "monotonic_ns": 2508161300115000,
+          "footprint_bytes": 2064792,
+          "resident_bytes": 2621440,
+          "resident_lifetime_peak_bytes": 2621440
+        },
+        {
+          "memory_sample": "cleanup",
+          "monotonic_ns": 2508161300158000,
+          "footprint_bytes": 2048408,
+          "resident_bytes": 2605056,
+          "resident_lifetime_peak_bytes": 2637824
+        },
+        {
+          "memory_statistics": "cleanup",
+          "interval_ms": 100,
+          "samples": 2,
+          "errors": 0,
+          "duration_ns": 54000,
+          "collection_ns": 17000,
+          "footprint_mean_bytes": 2056600.0,
+          "footprint_sample_peak_bytes": 2064792,
+          "footprint_latest_bytes": 2048408,
+          "resident_mean_bytes": 2613248.0,
+          "resident_sample_peak_bytes": 2621440,
+          "resident_latest_bytes": 2605056,
+          "resident_lifetime_peak_bytes": 2637824
+        },
+        {
+          "result": "passed"
+        }
+      ]
+    },
+    {
+      "entry": "cli",
+      "mode": "memory-bench-cached",
+      "command": [
+        "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/direct-memory-bench-20261112-view/probe",
+        "memory-bench-cached",
+        "cli",
+        "100"
+      ],
+      "returncode": 0,
+      "results": [
+        {
+          "direct_code_memory": "dual"
+        },
+        {
+          "mode": "memory-bench-cached",
+          "entry": "cli",
+          "memory_interval_ms": 100
+        },
+        {
+          "memory_sample": "kernel_setup",
+          "monotonic_ns": 2508161339141000,
+          "footprint_bytes": 1704344,
+          "resident_bytes": 2228224,
+          "resident_lifetime_peak_bytes": 2228224
+        },
+        {
+          "memory_benchmark_config": true,
+          "backend": "cached",
+          "page_bits": 14,
+          "contexts": 2,
+          "private_bytes": 65536,
+          "shared_bytes": 16384,
+          "cache_bytes": 134217728,
+          "mapping_entries": 256,
+          "route_entries": 256,
+          "cross_page": true,
+          "native_exclusive": true,
+          "code_versions": "fixture",
+          "check_scope": "independent"
+        },
+        {
+          "memory_sample": "kernel_setup",
+          "monotonic_ns": 2508161339213000,
+          "footprint_bytes": 1982872,
+          "resident_bytes": 2539520,
+          "resident_lifetime_peak_bytes": 2539520
+        },
+        {
+          "memory_statistics": "kernel_setup",
+          "interval_ms": 100,
+          "samples": 2,
+          "errors": 0,
+          "duration_ns": 78000,
+          "collection_ns": 11000,
+          "footprint_mean_bytes": 1843608.0,
+          "footprint_sample_peak_bytes": 1982872,
+          "footprint_latest_bytes": 1982872,
+          "resident_mean_bytes": 2383872.0,
+          "resident_sample_peak_bytes": 2539520,
+          "resident_latest_bytes": 2539520,
+          "resident_lifetime_peak_bytes": 2539520
+        },
+        {
+          "memory_sample": "boundaries",
+          "monotonic_ns": 2508161339222000,
+          "footprint_bytes": 1982872,
+          "resident_bytes": 2539520,
+          "resident_lifetime_peak_bytes": 2539520
+        },
+        {
+          "test": "memory_benchmark_same_va_private_shared_switch",
+          "passed": true
+        },
+        {
+          "memory_sample": "boundaries",
+          "monotonic_ns": 2508161339390000,
+          "footprint_bytes": 2195888,
+          "resident_bytes": 2785280,
+          "resident_lifetime_peak_bytes": 2785280
+        },
+        {
+          "memory_statistics": "boundaries",
+          "interval_ms": 100,
+          "samples": 2,
+          "errors": 0,
+          "duration_ns": 171000,
+          "collection_ns": 7000,
+          "footprint_mean_bytes": 2089380.0,
+          "footprint_sample_peak_bytes": 2195888,
+          "footprint_latest_bytes": 2195888,
+          "resident_mean_bytes": 2662400.0,
+          "resident_sample_peak_bytes": 2785280,
+          "resident_latest_bytes": 2785280,
+          "resident_lifetime_peak_bytes": 2785280
+        },
+        {
+          "memory_sample": "integer",
+          "monotonic_ns": 2508161339396000,
+          "footprint_bytes": 2195888,
+          "resident_bytes": 2785280,
+          "resident_lifetime_peak_bytes": 2785280
+        },
+        {
+          "memory_sample": "integer",
+          "monotonic_ns": 2508161441306000,
+          "footprint_bytes": 2212272,
+          "resident_bytes": 2801664,
+          "resident_lifetime_peak_bytes": 2801664
+        },
+        {
+          "memory_kernel": "integer",
+          "backend": "cached",
+          "check_only": false,
+          "round": 0,
+          "iterations": 64000000,
+          "code_bytes": 816,
+          "compiles": 4,
+          "mapping_misses": 40,
+          "passed": true,
+          "wall_ns": 91259000,
+          "thread_cpu_ns": 90661875
+        },
+        {
+          "memory_sample": "integer",
+          "monotonic_ns": 2508161546375000,
+          "footprint_bytes": 2212272,
+          "resident_bytes": 2801664,
+          "resident_lifetime_peak_bytes": 2801664
+        },
+        {
+          "memory_sample": "integer",
+          "monotonic_ns": 2508161647505000,
+          "footprint_bytes": 2212272,
+          "resident_bytes": 2801664,
+          "resident_lifetime_peak_bytes": 2801664
+        },
+        {
+          "memory_kernel": "integer",
+          "backend": "cached",
+          "check_only": false,
+          "round": 1,
+          "iterations": 64000000,
+          "code_bytes": 816,
+          "compiles": 4,
+          "mapping_misses": 40,
+          "passed": true,
+          "wall_ns": 96243000,
+          "thread_cpu_ns": 93011208
+        },
+        {
+          "memory_sample": "integer",
+          "monotonic_ns": 2508161752000000,
+          "footprint_bytes": 2212272,
+          "resident_bytes": 2801664,
+          "resident_lifetime_peak_bytes": 2801664
+        },
+        {
+          "memory_sample": "integer",
+          "monotonic_ns": 2508161854759000,
+          "footprint_bytes": 2212272,
+          "resident_bytes": 2801664,
+          "resident_lifetime_peak_bytes": 2801664
+        },
+        {
+          "memory_kernel": "integer",
+          "backend": "cached",
+          "check_only": false,
+          "round": 2,
+          "iterations": 64000000,
+          "code_bytes": 816,
+          "compiles": 4,
+          "mapping_misses": 40,
+          "passed": true,
+          "wall_ns": 91355000,
+          "thread_cpu_ns": 90653041
+        },
+        {
+          "memory_sample": "integer",
+          "monotonic_ns": 2508161894386000,
+          "footprint_bytes": 2212272,
+          "resident_bytes": 2801664,
+          "resident_lifetime_peak_bytes": 2801664
+        },
+        {
+          "memory_statistics": "integer",
+          "interval_ms": 100,
+          "samples": 7,
+          "errors": 0,
+          "duration_ns": 555003000,
+          "collection_ns": 213000,
+          "footprint_mean_bytes": 2209931.429,
+          "footprint_sample_peak_bytes": 2212272,
+          "footprint_latest_bytes": 2212272,
+          "resident_mean_bytes": 2799323.429,
+          "resident_sample_peak_bytes": 2801664,
+          "resident_latest_bytes": 2801664,
+          "resident_lifetime_peak_bytes": 2801664
+        },
+        {
+          "memory_sample": "memory",
+          "monotonic_ns": 2508161894404000,
+          "footprint_bytes": 2212272,
+          "resident_bytes": 2801664,
+          "resident_lifetime_peak_bytes": 2801664
+        },
+        {
+          "memory_sample": "memory",
+          "monotonic_ns": 2508161959802000,
+          "footprint_bytes": 2245040,
+          "resident_bytes": 2834432,
+          "resident_lifetime_peak_bytes": 2834432
+        },
+        {
+          "memory_kernel": "memory",
+          "backend": "cached",
+          "check_only": false,
+          "round": 0,
+          "iterations": 32000000,
+          "code_bytes": 1344,
+          "compiles": 6,
+          "mapping_misses": 1073,
+          "passed": true,
+          "wall_ns": 47884000,
+          "thread_cpu_ns": 47411917
+        },
+        {
+          "memory_kernel": "memory",
+          "backend": "cached",
+          "check_only": false,
+          "round": 1,
+          "iterations": 32000000,
+          "code_bytes": 1344,
+          "compiles": 6,
+          "mapping_misses": 2098,
+          "passed": true,
+          "wall_ns": 47057000,
+          "thread_cpu_ns": 46676917
+        },
+        {
+          "memory_sample": "memory",
+          "monotonic_ns": 2508162064862000,
+          "footprint_bytes": 2245040,
+          "resident_bytes": 2834432,
+          "resident_lifetime_peak_bytes": 2834432
+        },
+        {
+          "memory_kernel": "memory",
+          "backend": "cached",
+          "check_only": false,
+          "round": 2,
+          "iterations": 32000000,
+          "code_bytes": 1344,
+          "compiles": 6,
+          "mapping_misses": 3123,
+          "passed": true,
+          "wall_ns": 46897000,
+          "thread_cpu_ns": 46551542
+        },
+        {
+          "memory_sample": "memory",
+          "monotonic_ns": 2508162105469000,
+          "footprint_bytes": 2245040,
+          "resident_bytes": 2834432,
+          "resident_lifetime_peak_bytes": 2834432
+        },
+        {
+          "memory_statistics": "memory",
+          "interval_ms": 100,
+          "samples": 4,
+          "errors": 0,
+          "duration_ns": 211069000,
+          "collection_ns": 89000,
+          "footprint_mean_bytes": 2236848.0,
+          "footprint_sample_peak_bytes": 2245040,
+          "footprint_latest_bytes": 2245040,
+          "resident_mean_bytes": 2826240.0,
+          "resident_sample_peak_bytes": 2834432,
+          "resident_latest_bytes": 2834432,
+          "resident_lifetime_peak_bytes": 2834432
+        },
+        {
+          "memory_sample": "cleanup",
+          "monotonic_ns": 2508162105477000,
+          "footprint_bytes": 2245040,
+          "resident_bytes": 2834432,
+          "resident_lifetime_peak_bytes": 2834432
+        },
+        {
+          "memory_sample": "cleanup",
+          "monotonic_ns": 2508162105545000,
+          "footprint_bytes": 2195864,
+          "resident_bytes": 2801664,
+          "resident_lifetime_peak_bytes": 2834432
+        },
+        {
+          "memory_statistics": "cleanup",
+          "interval_ms": 100,
+          "samples": 2,
+          "errors": 0,
+          "duration_ns": 82000,
+          "collection_ns": 20000,
+          "footprint_mean_bytes": 2220452.0,
+          "footprint_sample_peak_bytes": 2245040,
+          "footprint_latest_bytes": 2195864,
+          "resident_mean_bytes": 2818048.0,
+          "resident_sample_peak_bytes": 2834432,
+          "resident_latest_bytes": 2801664,
+          "resident_lifetime_peak_bytes": 2834432
+        },
+        {
+          "result": "passed"
+        }
+      ]
+    },
+    {
+      "entry": "cli",
+      "mode": "memory-bench-flat",
+      "command": [
+        "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/direct-memory-bench-20261112-view/probe",
+        "memory-bench-flat",
+        "cli",
+        "100"
+      ],
+      "returncode": 0,
+      "results": [
+        {
+          "direct_code_memory": "dual"
+        },
+        {
+          "mode": "memory-bench-flat",
+          "entry": "cli",
+          "memory_interval_ms": 100
+        },
+        {
+          "memory_sample": "kernel_setup",
+          "monotonic_ns": 2508162127503000,
+          "footprint_bytes": 1704344,
+          "resident_bytes": 2228224,
+          "resident_lifetime_peak_bytes": 2228224
+        },
+        {
+          "memory_benchmark_config": true,
+          "backend": "flat",
+          "page_bits": 14,
+          "contexts": 2,
+          "private_bytes": 65536,
+          "shared_bytes": 16384,
+          "cache_bytes": 134217728,
+          "mapping_entries": 256,
+          "route_entries": 256,
+          "cross_page": true,
+          "native_exclusive": true,
+          "code_versions": "fixture",
+          "check_scope": "independent"
+        },
+        {
+          "memory_sample": "kernel_setup",
+          "monotonic_ns": 2508162128010000,
+          "footprint_bytes": 10404248,
+          "resident_bytes": 10960896,
+          "resident_lifetime_peak_bytes": 10960896
+        },
+        {
+          "memory_statistics": "kernel_setup",
+          "interval_ms": 100,
+          "samples": 2,
+          "errors": 0,
+          "duration_ns": 513000,
+          "collection_ns": 11000,
+          "footprint_mean_bytes": 6054296.0,
+          "footprint_sample_peak_bytes": 10404248,
+          "footprint_latest_bytes": 10404248,
+          "resident_mean_bytes": 6594560.0,
+          "resident_sample_peak_bytes": 10960896,
+          "resident_latest_bytes": 10960896,
+          "resident_lifetime_peak_bytes": 10960896
+        },
+        {
+          "memory_sample": "boundaries",
+          "monotonic_ns": 2508162128020000,
+          "footprint_bytes": 10404248,
+          "resident_bytes": 10960896,
+          "resident_lifetime_peak_bytes": 10960896
+        },
+        {
+          "test": "memory_benchmark_same_va_private_shared_switch",
+          "passed": true
+        },
+        {
+          "memory_sample": "boundaries",
+          "monotonic_ns": 2508162128166000,
+          "footprint_bytes": 10600880,
+          "resident_bytes": 11190272,
+          "resident_lifetime_peak_bytes": 11190272
+        },
+        {
+          "memory_statistics": "boundaries",
+          "interval_ms": 100,
+          "samples": 2,
+          "errors": 0,
+          "duration_ns": 150000,
+          "collection_ns": 9000,
+          "footprint_mean_bytes": 10502564.0,
+          "footprint_sample_peak_bytes": 10600880,
+          "footprint_latest_bytes": 10600880,
+          "resident_mean_bytes": 11075584.0,
+          "resident_sample_peak_bytes": 11190272,
+          "resident_latest_bytes": 11190272,
+          "resident_lifetime_peak_bytes": 11190272
+        },
+        {
+          "memory_sample": "integer",
+          "monotonic_ns": 2508162128173000,
+          "footprint_bytes": 10600880,
+          "resident_bytes": 11190272,
+          "resident_lifetime_peak_bytes": 11190272
+        },
+        {
+          "memory_sample": "integer",
+          "monotonic_ns": 2508162228255000,
+          "footprint_bytes": 10600880,
+          "resident_bytes": 11190272,
+          "resident_lifetime_peak_bytes": 11190272
+        },
+        {
+          "memory_kernel": "integer",
+          "backend": "flat",
+          "check_only": false,
+          "round": 0,
+          "iterations": 64000000,
+          "code_bytes": 864,
+          "compiles": 4,
+          "mapping_misses": 0,
+          "passed": true,
+          "wall_ns": 90871000,
+          "thread_cpu_ns": 90398250
+        },
+        {
+          "memory_sample": "integer",
+          "monotonic_ns": 2508162333323000,
+          "footprint_bytes": 10600880,
+          "resident_bytes": 11190272,
+          "resident_lifetime_peak_bytes": 11190272
+        },
+        {
+          "memory_sample": "integer",
+          "monotonic_ns": 2508162438387000,
+          "footprint_bytes": 10600880,
+          "resident_bytes": 11190272,
+          "resident_lifetime_peak_bytes": 11190272
+        },
+        {
+          "memory_kernel": "integer",
+          "backend": "flat",
+          "check_only": false,
+          "round": 1,
+          "iterations": 64000000,
+          "code_bytes": 864,
+          "compiles": 4,
+          "mapping_misses": 0,
+          "passed": true,
+          "wall_ns": 91334000,
+          "thread_cpu_ns": 90759292
+        },
+        {
+          "memory_sample": "integer",
+          "monotonic_ns": 2508162542476000,
+          "footprint_bytes": 10600880,
+          "resident_bytes": 11190272,
+          "resident_lifetime_peak_bytes": 11190272
+        },
+        {
+          "memory_sample": "integer",
+          "monotonic_ns": 2508162644689000,
+          "footprint_bytes": 10600880,
+          "resident_bytes": 11190272,
+          "resident_lifetime_peak_bytes": 11190272
+        },
+        {
+          "memory_kernel": "integer",
+          "backend": "flat",
+          "check_only": false,
+          "round": 2,
+          "iterations": 64000000,
+          "code_bytes": 864,
+          "compiles": 4,
+          "mapping_misses": 0,
+          "passed": true,
+          "wall_ns": 91541000,
+          "thread_cpu_ns": 90656792
+        },
+        {
+          "memory_sample": "integer",
+          "monotonic_ns": 2508162677239000,
+          "footprint_bytes": 10600880,
+          "resident_bytes": 11190272,
+          "resident_lifetime_peak_bytes": 11190272
+        },
+        {
+          "memory_statistics": "integer",
+          "interval_ms": 100,
+          "samples": 7,
+          "errors": 0,
+          "duration_ns": 549073000,
+          "collection_ns": 228000,
+          "footprint_mean_bytes": 10600880.0,
+          "footprint_sample_peak_bytes": 10600880,
+          "footprint_latest_bytes": 10600880,
+          "resident_mean_bytes": 11190272.0,
+          "resident_sample_peak_bytes": 11190272,
+          "resident_latest_bytes": 11190272,
+          "resident_lifetime_peak_bytes": 11190272
+        },
+        {
+          "memory_sample": "memory",
+          "monotonic_ns": 2508162677252000,
+          "footprint_bytes": 10600880,
+          "resident_bytes": 11190272,
+          "resident_lifetime_peak_bytes": 11190272
+        },
+        {
+          "memory_kernel": "memory",
+          "backend": "flat",
+          "check_only": false,
+          "round": 0,
+          "iterations": 32000000,
+          "code_bytes": 1440,
+          "compiles": 6,
+          "mapping_misses": 0,
+          "passed": true,
+          "wall_ns": 46612000,
+          "thread_cpu_ns": 46317417
+        },
+        {
+          "memory_sample": "memory",
+          "monotonic_ns": 2508162749637000,
+          "footprint_bytes": 10617264,
+          "resident_bytes": 11206656,
+          "resident_lifetime_peak_bytes": 11206656
+        },
+        {
+          "memory_kernel": "memory",
+          "backend": "flat",
+          "check_only": false,
+          "round": 1,
+          "iterations": 32000000,
+          "code_bytes": 1440,
+          "compiles": 6,
+          "mapping_misses": 0,
+          "passed": true,
+          "wall_ns": 47130000,
+          "thread_cpu_ns": 46655708
+        },
+        {
+          "memory_sample": "memory",
+          "monotonic_ns": 2508162854677000,
+          "footprint_bytes": 10617264,
+          "resident_bytes": 11206656,
+          "resident_lifetime_peak_bytes": 11206656
+        },
+        {
+          "memory_kernel": "memory",
+          "backend": "flat",
+          "check_only": false,
+          "round": 2,
+          "iterations": 32000000,
+          "code_bytes": 1440,
+          "compiles": 6,
+          "mapping_misses": 0,
+          "passed": true,
+          "wall_ns": 46120000,
+          "thread_cpu_ns": 45871792
+        },
+        {
+          "memory_sample": "memory",
+          "monotonic_ns": 2508162886574000,
+          "footprint_bytes": 10617264,
+          "resident_bytes": 11206656,
+          "resident_lifetime_peak_bytes": 11206656
+        },
+        {
+          "memory_statistics": "memory",
+          "interval_ms": 100,
+          "samples": 4,
+          "errors": 0,
+          "duration_ns": 209330000,
+          "collection_ns": 80000,
+          "footprint_mean_bytes": 10613168.0,
+          "footprint_sample_peak_bytes": 10617264,
+          "footprint_latest_bytes": 10617264,
+          "resident_mean_bytes": 11202560.0,
+          "resident_sample_peak_bytes": 11206656,
+          "resident_latest_bytes": 11206656,
+          "resident_lifetime_peak_bytes": 11206656
+        },
+        {
+          "memory_sample": "cleanup",
+          "monotonic_ns": 2508162886589000,
+          "footprint_bytes": 10617264,
+          "resident_bytes": 11206656,
+          "resident_lifetime_peak_bytes": 11206656
+        },
+        {
+          "memory_sample": "cleanup",
+          "monotonic_ns": 2508162886655000,
+          "footprint_bytes": 10568088,
+          "resident_bytes": 11173888,
+          "resident_lifetime_peak_bytes": 11206656
+        },
+        {
+          "memory_statistics": "cleanup",
+          "interval_ms": 100,
+          "samples": 2,
+          "errors": 0,
+          "duration_ns": 3937000,
+          "collection_ns": 3878000,
+          "footprint_mean_bytes": 10592676.0,
+          "footprint_sample_peak_bytes": 10617264,
+          "footprint_latest_bytes": 10568088,
+          "resident_mean_bytes": 11190272.0,
+          "resident_sample_peak_bytes": 11206656,
+          "resident_latest_bytes": 11173888,
+          "resident_lifetime_peak_bytes": 11206656
+        },
+        {
+          "result": "passed"
+        }
+      ]
+    },
+    {
+      "entry": "cli",
+      "mode": "memory-bench-view",
+      "command": [
+        "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/direct-memory-bench-20261112-view/probe",
+        "memory-bench-view",
+        "cli",
+        "100"
+      ],
+      "returncode": 0,
+      "results": [
+        {
+          "direct_code_memory": "dual"
+        },
+        {
+          "mode": "memory-bench-view",
+          "entry": "cli",
+          "memory_interval_ms": 100
+        },
+        {
+          "memory_sample": "kernel_setup",
+          "monotonic_ns": 2508162900941000,
+          "footprint_bytes": 1704344,
+          "resident_bytes": 2228224,
+          "resident_lifetime_peak_bytes": 2228224
+        },
+        {
+          "memory_benchmark_config": true,
+          "backend": "view",
+          "page_bits": 14,
+          "contexts": 2,
+          "private_bytes": 65536,
+          "shared_bytes": 16384,
+          "cache_bytes": 134217728,
+          "mapping_entries": 256,
+          "route_entries": 256,
+          "cross_page": true,
+          "native_exclusive": true,
+          "code_versions": "fixture",
+          "check_scope": "independent",
+          "read_memory": "premapped_view",
+          "write_memory": "flat",
+          "view_reserved_bytes": 8589934592,
+          "view_mapped_bytes": 196608
+        },
+        {
+          "memory_benchmark_view_setup": true,
+          "check_only": false,
+          "maps": 12,
+          "revocations": 0,
+          "reserved_bytes": 8589934592,
+          "mapped_bytes": 196608,
+          "wall_ns": 40000,
+          "thread_cpu_ns": 40208
+        },
+        {
+          "memory_sample": "kernel_setup",
+          "monotonic_ns": 2508162901489000,
+          "footprint_bytes": 10404248,
+          "resident_bytes": 10960896,
+          "resident_lifetime_peak_bytes": 10960896
+        },
+        {
+          "memory_statistics": "kernel_setup",
+          "interval_ms": 100,
+          "samples": 2,
+          "errors": 0,
+          "duration_ns": 554000,
+          "collection_ns": 11000,
+          "footprint_mean_bytes": 6054296.0,
+          "footprint_sample_peak_bytes": 10404248,
+          "footprint_latest_bytes": 10404248,
+          "resident_mean_bytes": 6594560.0,
+          "resident_sample_peak_bytes": 10960896,
+          "resident_latest_bytes": 10960896,
+          "resident_lifetime_peak_bytes": 10960896
+        },
+        {
+          "memory_sample": "boundaries",
+          "monotonic_ns": 2508162901499000,
+          "footprint_bytes": 10404248,
+          "resident_bytes": 10960896,
+          "resident_lifetime_peak_bytes": 10960896
+        },
+        {
+          "test": "memory_benchmark_same_va_private_shared_switch",
+          "passed": true
+        },
+        {
+          "memory_sample": "boundaries",
+          "monotonic_ns": 2508162901652000,
+          "footprint_bytes": 10797536,
+          "resident_bytes": 11354112,
+          "resident_lifetime_peak_bytes": 11354112
+        },
+        {
+          "memory_statistics": "boundaries",
+          "interval_ms": 100,
+          "samples": 2,
+          "errors": 0,
+          "duration_ns": 157000,
+          "collection_ns": 9000,
+          "footprint_mean_bytes": 10600892.0,
+          "footprint_sample_peak_bytes": 10797536,
+          "footprint_latest_bytes": 10797536,
+          "resident_mean_bytes": 11157504.0,
+          "resident_sample_peak_bytes": 11354112,
+          "resident_latest_bytes": 11354112,
+          "resident_lifetime_peak_bytes": 11354112
+        },
+        {
+          "memory_sample": "integer",
+          "monotonic_ns": 2508162901659000,
+          "footprint_bytes": 10797536,
+          "resident_bytes": 11354112,
+          "resident_lifetime_peak_bytes": 11354112
+        },
+        {
+          "memory_sample": "integer",
+          "monotonic_ns": 2508163001931000,
+          "footprint_bytes": 10797536,
+          "resident_bytes": 11354112,
+          "resident_lifetime_peak_bytes": 11354112
+        },
+        {
+          "memory_kernel": "integer",
+          "backend": "view",
+          "check_only": false,
+          "round": 0,
+          "iterations": 64000000,
+          "code_bytes": 848,
+          "compiles": 4,
+          "mapping_misses": 0,
+          "passed": true,
+          "read_view_sites": 1,
+          "read_view_faults": 0,
+          "view_maps": 12,
+          "view_revocations": 0,
+          "wall_ns": 91354000,
+          "thread_cpu_ns": 90679000
+        },
+        {
+          "memory_sample": "integer",
+          "monotonic_ns": 2508163106980000,
+          "footprint_bytes": 10797536,
+          "resident_bytes": 11354112,
+          "resident_lifetime_peak_bytes": 11354112
+        },
+        {
+          "memory_sample": "integer",
+          "monotonic_ns": 2508163207167000,
+          "footprint_bytes": 10797536,
+          "resident_bytes": 11354112,
+          "resident_lifetime_peak_bytes": 11354112
+        },
+        {
+          "memory_kernel": "integer",
+          "backend": "view",
+          "check_only": false,
+          "round": 1,
+          "iterations": 64000000,
+          "code_bytes": 848,
+          "compiles": 4,
+          "mapping_misses": 0,
+          "passed": true,
+          "read_view_sites": 1,
+          "read_view_faults": 0,
+          "view_maps": 12,
+          "view_revocations": 0,
+          "wall_ns": 93663000,
+          "thread_cpu_ns": 91983083
+        },
+        {
+          "memory_sample": "integer",
+          "monotonic_ns": 2508163312218000,
+          "footprint_bytes": 10797536,
+          "resident_bytes": 11354112,
+          "resident_lifetime_peak_bytes": 11354112
+        },
+        {
+          "memory_sample": "integer",
+          "monotonic_ns": 2508163412480000,
+          "footprint_bytes": 10797536,
+          "resident_bytes": 11354112,
+          "resident_lifetime_peak_bytes": 11354112
+        },
+        {
+          "memory_kernel": "integer",
+          "backend": "view",
+          "check_only": false,
+          "round": 2,
+          "iterations": 64000000,
+          "code_bytes": 848,
+          "compiles": 4,
+          "mapping_misses": 0,
+          "passed": true,
+          "read_view_sites": 1,
+          "read_view_faults": 0,
+          "view_maps": 12,
+          "view_revocations": 0,
+          "wall_ns": 92796000,
+          "thread_cpu_ns": 91416209
+        },
+        {
+          "memory_sample": "integer",
+          "monotonic_ns": 2508163458054000,
+          "footprint_bytes": 10797536,
+          "resident_bytes": 11354112,
+          "resident_lifetime_peak_bytes": 11354112
+        },
+        {
+          "memory_statistics": "integer",
+          "interval_ms": 100,
+          "samples": 7,
+          "errors": 0,
+          "duration_ns": 556401000,
+          "collection_ns": 202000,
+          "footprint_mean_bytes": 10797536.0,
+          "footprint_sample_peak_bytes": 10797536,
+          "footprint_latest_bytes": 10797536,
+          "resident_mean_bytes": 11354112.0,
+          "resident_sample_peak_bytes": 11354112,
+          "resident_latest_bytes": 11354112,
+          "resident_lifetime_peak_bytes": 11354112
+        },
+        {
+          "memory_sample": "memory",
+          "monotonic_ns": 2508163458072000,
+          "footprint_bytes": 10797536,
+          "resident_bytes": 11354112,
+          "resident_lifetime_peak_bytes": 11354112
+        },
+        {
+          "memory_sample": "memory",
+          "monotonic_ns": 2508163513619000,
+          "footprint_bytes": 10830304,
+          "resident_bytes": 11386880,
+          "resident_lifetime_peak_bytes": 11386880
+        },
+        {
+          "memory_kernel": "memory",
+          "backend": "view",
+          "check_only": false,
+          "round": 0,
+          "iterations": 32000000,
+          "code_bytes": 1408,
+          "compiles": 6,
+          "mapping_misses": 0,
+          "passed": true,
+          "read_view_sites": 2,
+          "read_view_faults": 0,
+          "view_maps": 12,
+          "view_revocations": 0,
+          "wall_ns": 41126000,
+          "thread_cpu_ns": 40926917
+        },
+        {
+          "memory_kernel": "memory",
+          "backend": "view",
+          "check_only": false,
+          "round": 1,
+          "iterations": 32000000,
+          "code_bytes": 1408,
+          "compiles": 6,
+          "mapping_misses": 0,
+          "passed": true,
+          "read_view_sites": 2,
+          "read_view_faults": 0,
+          "view_maps": 12,
+          "view_revocations": 0,
+          "wall_ns": 41478000,
+          "thread_cpu_ns": 41171167
+        },
+        {
+          "memory_sample": "memory",
+          "monotonic_ns": 2508163614821000,
+          "footprint_bytes": 10830304,
+          "resident_bytes": 11386880,
+          "resident_lifetime_peak_bytes": 11386880
+        },
+        {
+          "memory_kernel": "memory",
+          "backend": "view",
+          "check_only": false,
+          "round": 2,
+          "iterations": 32000000,
+          "code_bytes": 1408,
+          "compiles": 6,
+          "mapping_misses": 0,
+          "passed": true,
+          "read_view_sites": 2,
+          "read_view_faults": 0,
+          "view_maps": 12,
+          "view_revocations": 0,
+          "wall_ns": 41488000,
+          "thread_cpu_ns": 41244625
+        },
+        {
+          "memory_sample": "memory",
+          "monotonic_ns": 2508163650718000,
+          "footprint_bytes": 10830304,
+          "resident_bytes": 11386880,
+          "resident_lifetime_peak_bytes": 11386880
+        },
+        {
+          "memory_statistics": "memory",
+          "interval_ms": 100,
+          "samples": 4,
+          "errors": 0,
+          "duration_ns": 192651000,
+          "collection_ns": 66000,
+          "footprint_mean_bytes": 10822112.0,
+          "footprint_sample_peak_bytes": 10830304,
+          "footprint_latest_bytes": 10830304,
+          "resident_mean_bytes": 11378688.0,
+          "resident_sample_peak_bytes": 11386880,
+          "resident_latest_bytes": 11386880,
+          "resident_lifetime_peak_bytes": 11386880
+        },
+        {
+          "memory_sample": "cleanup",
+          "monotonic_ns": 2508163650727000,
+          "footprint_bytes": 10830304,
+          "resident_bytes": 11386880,
+          "resident_lifetime_peak_bytes": 11386880
+        },
+        {
+          "memory_benchmark_view_cleanup": true,
+          "maps": 12,
+          "revocations": 0,
+          "destroyed": 2,
+          "live_reserved_bytes": 0,
+          "passed": true
+        },
+        {
+          "memory_sample": "cleanup",
+          "monotonic_ns": 2508163650828000,
+          "footprint_bytes": 10584472,
+          "resident_bytes": 11190272,
+          "resident_lifetime_peak_bytes": 11386880
+        },
+        {
+          "memory_statistics": "cleanup",
+          "interval_ms": 100,
+          "samples": 2,
+          "errors": 0,
+          "duration_ns": 111000,
+          "collection_ns": 15000,
+          "footprint_mean_bytes": 10707388.0,
+          "footprint_sample_peak_bytes": 10830304,
+          "footprint_latest_bytes": 10584472,
+          "resident_mean_bytes": 11288576.0,
+          "resident_sample_peak_bytes": 11386880,
+          "resident_latest_bytes": 11190272,
+          "resident_lifetime_peak_bytes": 11386880
+        },
+        {
+          "result": "passed"
+        }
+      ]
+    },
+    {
+      "entry": "gcd",
+      "mode": "memory-bench-view",
+      "command": [
+        "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/direct-memory-bench-20261112-view/probe",
+        "memory-bench-view",
+        "gcd",
+        "100"
+      ],
+      "returncode": 0,
+      "results": [
+        {
+          "direct_code_memory": "dual"
+        },
+        {
+          "mode": "memory-bench-view",
+          "entry": "gcd",
+          "memory_interval_ms": 100
+        },
+        {
+          "memory_sample": "kernel_setup",
+          "monotonic_ns": 2508163678956000,
+          "footprint_bytes": 1704344,
+          "resident_bytes": 2228224,
+          "resident_lifetime_peak_bytes": 2228224
+        },
+        {
+          "memory_benchmark_config": true,
+          "backend": "view",
+          "page_bits": 14,
+          "contexts": 2,
+          "private_bytes": 65536,
+          "shared_bytes": 16384,
+          "cache_bytes": 134217728,
+          "mapping_entries": 256,
+          "route_entries": 256,
+          "cross_page": true,
+          "native_exclusive": true,
+          "code_versions": "fixture",
+          "check_scope": "independent",
+          "read_memory": "premapped_view",
+          "write_memory": "flat",
+          "view_reserved_bytes": 8589934592,
+          "view_mapped_bytes": 196608
+        },
+        {
+          "memory_benchmark_view_setup": true,
+          "check_only": false,
+          "maps": 12,
+          "revocations": 0,
+          "reserved_bytes": 8589934592,
+          "mapped_bytes": 196608,
+          "wall_ns": 36000,
+          "thread_cpu_ns": 36167
+        },
+        {
+          "memory_sample": "kernel_setup",
+          "monotonic_ns": 2508163679544000,
+          "footprint_bytes": 10486192,
+          "resident_bytes": 11026432,
+          "resident_lifetime_peak_bytes": 11026432
+        },
+        {
+          "memory_statistics": "kernel_setup",
+          "interval_ms": 100,
+          "samples": 2,
+          "errors": 0,
+          "duration_ns": 594000,
+          "collection_ns": 12000,
+          "footprint_mean_bytes": 6095268.0,
+          "footprint_sample_peak_bytes": 10486192,
+          "footprint_latest_bytes": 10486192,
+          "resident_mean_bytes": 6627328.0,
+          "resident_sample_peak_bytes": 11026432,
+          "resident_latest_bytes": 11026432,
+          "resident_lifetime_peak_bytes": 11026432
+        },
+        {
+          "memory_sample": "boundaries",
+          "monotonic_ns": 2508163679555000,
+          "footprint_bytes": 10486192,
+          "resident_bytes": 11026432,
+          "resident_lifetime_peak_bytes": 11026432
+        },
+        {
+          "test": "memory_benchmark_same_va_private_shared_switch",
+          "passed": true
+        },
+        {
+          "memory_sample": "boundaries",
+          "monotonic_ns": 2508163679709000,
+          "footprint_bytes": 10928656,
+          "resident_bytes": 11452416,
+          "resident_lifetime_peak_bytes": 11452416
+        },
+        {
+          "memory_statistics": "boundaries",
+          "interval_ms": 100,
+          "samples": 2,
+          "errors": 0,
+          "duration_ns": 159000,
+          "collection_ns": 10000,
+          "footprint_mean_bytes": 10707424.0,
+          "footprint_sample_peak_bytes": 10928656,
+          "footprint_latest_bytes": 10928656,
+          "resident_mean_bytes": 11239424.0,
+          "resident_sample_peak_bytes": 11452416,
+          "resident_latest_bytes": 11452416,
+          "resident_lifetime_peak_bytes": 11452416
+        },
+        {
+          "memory_sample": "integer",
+          "monotonic_ns": 2508163679718000,
+          "footprint_bytes": 10928656,
+          "resident_bytes": 11452416,
+          "resident_lifetime_peak_bytes": 11452416
+        },
+        {
+          "memory_sample": "integer",
+          "monotonic_ns": 2508163781741000,
+          "footprint_bytes": 10928656,
+          "resident_bytes": 11452416,
+          "resident_lifetime_peak_bytes": 11452416
+        },
+        {
+          "memory_kernel": "integer",
+          "backend": "view",
+          "check_only": false,
+          "round": 0,
+          "iterations": 64000000,
+          "code_bytes": 848,
+          "compiles": 4,
+          "mapping_misses": 0,
+          "passed": true,
+          "read_view_sites": 1,
+          "read_view_faults": 0,
+          "view_maps": 12,
+          "view_revocations": 0,
+          "wall_ns": 92840000,
+          "thread_cpu_ns": 91462584
+        },
+        {
+          "memory_sample": "integer",
+          "monotonic_ns": 2508163882301000,
+          "footprint_bytes": 10928656,
+          "resident_bytes": 11452416,
+          "resident_lifetime_peak_bytes": 11452416
+        },
+        {
+          "memory_sample": "integer",
+          "monotonic_ns": 2508163983455000,
+          "footprint_bytes": 10928656,
+          "resident_bytes": 11452416,
+          "resident_lifetime_peak_bytes": 11452416
+        },
+        {
+          "memory_kernel": "integer",
+          "backend": "view",
+          "check_only": false,
+          "round": 1,
+          "iterations": 64000000,
+          "code_bytes": 848,
+          "compiles": 4,
+          "mapping_misses": 0,
+          "passed": true,
+          "read_view_sites": 1,
+          "read_view_faults": 0,
+          "view_maps": 12,
+          "view_revocations": 0,
+          "wall_ns": 93703000,
+          "thread_cpu_ns": 91846333
+        },
+        {
+          "memory_sample": "integer",
+          "monotonic_ns": 2508164088521000,
+          "footprint_bytes": 10928656,
+          "resident_bytes": 11452416,
+          "resident_lifetime_peak_bytes": 11452416
+        },
+        {
+          "memory_sample": "integer",
+          "monotonic_ns": 2508164188878000,
+          "footprint_bytes": 10928656,
+          "resident_bytes": 11452416,
+          "resident_lifetime_peak_bytes": 11452416
+        },
+        {
+          "memory_kernel": "integer",
+          "backend": "view",
+          "check_only": false,
+          "round": 2,
+          "iterations": 64000000,
+          "code_bytes": 848,
+          "compiles": 4,
+          "mapping_misses": 0,
+          "passed": true,
+          "read_view_sites": 1,
+          "read_view_faults": 0,
+          "view_maps": 12,
+          "view_revocations": 0,
+          "wall_ns": 92235000,
+          "thread_cpu_ns": 91201125
+        },
+        {
+          "memory_sample": "integer",
+          "monotonic_ns": 2508164236717000,
+          "footprint_bytes": 10928656,
+          "resident_bytes": 11452416,
+          "resident_lifetime_peak_bytes": 11452416
+        },
+        {
+          "memory_statistics": "integer",
+          "interval_ms": 100,
+          "samples": 7,
+          "errors": 0,
+          "duration_ns": 557005000,
+          "collection_ns": 222000,
+          "footprint_mean_bytes": 10928656.0,
+          "footprint_sample_peak_bytes": 10928656,
+          "footprint_latest_bytes": 10928656,
+          "resident_mean_bytes": 11452416.0,
+          "resident_sample_peak_bytes": 11452416,
+          "resident_latest_bytes": 11452416,
+          "resident_lifetime_peak_bytes": 11452416
+        },
+        {
+          "memory_sample": "memory",
+          "monotonic_ns": 2508164236734000,
+          "footprint_bytes": 10928656,
+          "resident_bytes": 11452416,
+          "resident_lifetime_peak_bytes": 11452416
+        },
+        {
+          "memory_sample": "memory",
+          "monotonic_ns": 2508164289062000,
+          "footprint_bytes": 10945040,
+          "resident_bytes": 11468800,
+          "resident_lifetime_peak_bytes": 11468800
+        },
+        {
+          "memory_kernel": "memory",
+          "backend": "view",
+          "check_only": false,
+          "round": 0,
+          "iterations": 32000000,
+          "code_bytes": 1408,
+          "compiles": 6,
+          "mapping_misses": 0,
+          "passed": true,
+          "read_view_sites": 2,
+          "read_view_faults": 0,
+          "view_maps": 12,
+          "view_revocations": 0,
+          "wall_ns": 42061000,
+          "thread_cpu_ns": 41623292
+        },
+        {
+          "memory_kernel": "memory",
+          "backend": "view",
+          "check_only": false,
+          "round": 1,
+          "iterations": 32000000,
+          "code_bytes": 1408,
+          "compiles": 6,
+          "mapping_misses": 0,
+          "passed": true,
+          "read_view_sites": 2,
+          "read_view_faults": 0,
+          "view_maps": 12,
+          "view_revocations": 0,
+          "wall_ns": 41018000,
+          "thread_cpu_ns": 40845542
+        },
+        {
+          "memory_sample": "memory",
+          "monotonic_ns": 2508164389201000,
+          "footprint_bytes": 10945040,
+          "resident_bytes": 11468800,
+          "resident_lifetime_peak_bytes": 11468800
+        },
+        {
+          "memory_kernel": "memory",
+          "backend": "view",
+          "check_only": false,
+          "round": 2,
+          "iterations": 32000000,
+          "code_bytes": 1408,
+          "compiles": 6,
+          "mapping_misses": 0,
+          "passed": true,
+          "read_view_sites": 2,
+          "read_view_faults": 0,
+          "view_maps": 12,
+          "view_revocations": 0,
+          "wall_ns": 41068000,
+          "thread_cpu_ns": 40902917
+        },
+        {
+          "memory_sample": "memory",
+          "monotonic_ns": 2508164429606000,
+          "footprint_bytes": 10945040,
+          "resident_bytes": 11468800,
+          "resident_lifetime_peak_bytes": 11468800
+        },
+        {
+          "memory_statistics": "memory",
+          "interval_ms": 100,
+          "samples": 4,
+          "errors": 0,
+          "duration_ns": 192877000,
+          "collection_ns": 84000,
+          "footprint_mean_bytes": 10940944.0,
+          "footprint_sample_peak_bytes": 10945040,
+          "footprint_latest_bytes": 10945040,
+          "resident_mean_bytes": 11464704.0,
+          "resident_sample_peak_bytes": 11468800,
+          "resident_latest_bytes": 11468800,
+          "resident_lifetime_peak_bytes": 11468800
+        },
+        {
+          "memory_sample": "cleanup",
+          "monotonic_ns": 2508164429615000,
+          "footprint_bytes": 10945040,
+          "resident_bytes": 11468800,
+          "resident_lifetime_peak_bytes": 11468800
+        },
+        {
+          "memory_benchmark_view_cleanup": true,
+          "maps": 12,
+          "revocations": 0,
+          "destroyed": 2,
+          "live_reserved_bytes": 0,
+          "passed": true
+        },
+        {
+          "memory_sample": "cleanup",
+          "monotonic_ns": 2508164429809000,
+          "footprint_bytes": 10682800,
+          "resident_bytes": 11272192,
+          "resident_lifetime_peak_bytes": 11468800
+        },
+        {
+          "memory_statistics": "cleanup",
+          "interval_ms": 100,
+          "samples": 2,
+          "errors": 0,
+          "duration_ns": 200000,
+          "collection_ns": 11000,
+          "footprint_mean_bytes": 10813920.0,
+          "footprint_sample_peak_bytes": 10945040,
+          "footprint_latest_bytes": 10682800,
+          "resident_mean_bytes": 11370496.0,
+          "resident_sample_peak_bytes": 11468800,
+          "resident_latest_bytes": 11272192,
+          "resident_lifetime_peak_bytes": 11468800
+        },
+        {
+          "result": "passed"
+        }
+      ]
+    },
+    {
+      "entry": "gcd",
+      "mode": "memory-bench-flat",
+      "command": [
+        "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/direct-memory-bench-20261112-view/probe",
+        "memory-bench-flat",
+        "gcd",
+        "100"
+      ],
+      "returncode": 0,
+      "results": [
+        {
+          "direct_code_memory": "dual"
+        },
+        {
+          "mode": "memory-bench-flat",
+          "entry": "gcd",
+          "memory_interval_ms": 100
+        },
+        {
+          "memory_sample": "kernel_setup",
+          "monotonic_ns": 2508164486852000,
+          "footprint_bytes": 1704344,
+          "resident_bytes": 2228224,
+          "resident_lifetime_peak_bytes": 2228224
+        },
+        {
+          "memory_benchmark_config": true,
+          "backend": "flat",
+          "page_bits": 14,
+          "contexts": 2,
+          "private_bytes": 65536,
+          "shared_bytes": 16384,
+          "cache_bytes": 134217728,
+          "mapping_entries": 256,
+          "route_entries": 256,
+          "cross_page": true,
+          "native_exclusive": true,
+          "code_versions": "fixture",
+          "check_scope": "independent"
+        },
+        {
+          "memory_sample": "kernel_setup",
+          "monotonic_ns": 2508164487406000,
+          "footprint_bytes": 10486192,
+          "resident_bytes": 11026432,
+          "resident_lifetime_peak_bytes": 11026432
+        },
+        {
+          "memory_statistics": "kernel_setup",
+          "interval_ms": 100,
+          "samples": 2,
+          "errors": 0,
+          "duration_ns": 559000,
+          "collection_ns": 12000,
+          "footprint_mean_bytes": 6095268.0,
+          "footprint_sample_peak_bytes": 10486192,
+          "footprint_latest_bytes": 10486192,
+          "resident_mean_bytes": 6627328.0,
+          "resident_sample_peak_bytes": 11026432,
+          "resident_latest_bytes": 11026432,
+          "resident_lifetime_peak_bytes": 11026432
+        },
+        {
+          "memory_sample": "boundaries",
+          "monotonic_ns": 2508164487416000,
+          "footprint_bytes": 10486192,
+          "resident_bytes": 11026432,
+          "resident_lifetime_peak_bytes": 11026432
+        },
+        {
+          "test": "memory_benchmark_same_va_private_shared_switch",
+          "passed": true
+        },
+        {
+          "memory_sample": "boundaries",
+          "monotonic_ns": 2508164487570000,
+          "footprint_bytes": 10732000,
+          "resident_bytes": 11288576,
+          "resident_lifetime_peak_bytes": 11288576
+        },
+        {
+          "memory_statistics": "boundaries",
+          "interval_ms": 100,
+          "samples": 2,
+          "errors": 0,
+          "duration_ns": 159000,
+          "collection_ns": 9000,
+          "footprint_mean_bytes": 10609096.0,
+          "footprint_sample_peak_bytes": 10732000,
+          "footprint_latest_bytes": 10732000,
+          "resident_mean_bytes": 11157504.0,
+          "resident_sample_peak_bytes": 11288576,
+          "resident_latest_bytes": 11288576,
+          "resident_lifetime_peak_bytes": 11288576
+        },
+        {
+          "memory_sample": "integer",
+          "monotonic_ns": 2508164487580000,
+          "footprint_bytes": 10732000,
+          "resident_bytes": 11288576,
+          "resident_lifetime_peak_bytes": 11288576
+        },
+        {
+          "memory_sample": "integer",
+          "monotonic_ns": 2508164590762000,
+          "footprint_bytes": 10732000,
+          "resident_bytes": 11288576,
+          "resident_lifetime_peak_bytes": 11288576
+        },
+        {
+          "memory_kernel": "integer",
+          "backend": "flat",
+          "check_only": false,
+          "round": 0,
+          "iterations": 64000000,
+          "code_bytes": 864,
+          "compiles": 4,
+          "mapping_misses": 0,
+          "passed": true,
+          "wall_ns": 90915000,
+          "thread_cpu_ns": 90392167
+        },
+        {
+          "memory_sample": "integer",
+          "monotonic_ns": 2508164690993000,
+          "footprint_bytes": 10732000,
+          "resident_bytes": 11288576,
+          "resident_lifetime_peak_bytes": 11288576
+        },
+        {
+          "memory_sample": "integer",
+          "monotonic_ns": 2508164796040000,
+          "footprint_bytes": 10732000,
+          "resident_bytes": 11288576,
+          "resident_lifetime_peak_bytes": 11288576
+        },
+        {
+          "memory_kernel": "integer",
+          "backend": "flat",
+          "check_only": false,
+          "round": 1,
+          "iterations": 64000000,
+          "code_bytes": 864,
+          "compiles": 4,
+          "mapping_misses": 0,
+          "passed": true,
+          "wall_ns": 91787000,
+          "thread_cpu_ns": 90861750
+        },
+        {
+          "memory_sample": "integer",
+          "monotonic_ns": 2508164898239000,
+          "footprint_bytes": 10732000,
+          "resident_bytes": 11288576,
+          "resident_lifetime_peak_bytes": 11288576
+        },
+        {
+          "memory_sample": "integer",
+          "monotonic_ns": 2508165002781000,
+          "footprint_bytes": 10732000,
+          "resident_bytes": 11288576,
+          "resident_lifetime_peak_bytes": 11288576
+        },
+        {
+          "memory_kernel": "integer",
+          "backend": "flat",
+          "check_only": false,
+          "round": 2,
+          "iterations": 64000000,
+          "code_bytes": 864,
+          "compiles": 4,
+          "mapping_misses": 0,
+          "passed": true,
+          "wall_ns": 91587000,
+          "thread_cpu_ns": 90957084
+        },
+        {
+          "memory_sample": "integer",
+          "monotonic_ns": 2508165036157000,
+          "footprint_bytes": 10732000,
+          "resident_bytes": 11288576,
+          "resident_lifetime_peak_bytes": 11288576
+        },
+        {
+          "memory_statistics": "integer",
+          "interval_ms": 100,
+          "samples": 7,
+          "errors": 0,
+          "duration_ns": 548581000,
+          "collection_ns": 222000,
+          "footprint_mean_bytes": 10732000.0,
+          "footprint_sample_peak_bytes": 10732000,
+          "footprint_latest_bytes": 10732000,
+          "resident_mean_bytes": 11288576.0,
+          "resident_sample_peak_bytes": 11288576,
+          "resident_latest_bytes": 11288576,
+          "resident_lifetime_peak_bytes": 11288576
+        },
+        {
+          "memory_sample": "memory",
+          "monotonic_ns": 2508165036166000,
+          "footprint_bytes": 10732000,
+          "resident_bytes": 11288576,
+          "resident_lifetime_peak_bytes": 11288576
+        },
+        {
+          "memory_kernel": "memory",
+          "backend": "flat",
+          "check_only": false,
+          "round": 0,
+          "iterations": 32000000,
+          "code_bytes": 1440,
+          "compiles": 6,
+          "mapping_misses": 0,
+          "passed": true,
+          "wall_ns": 46279000,
+          "thread_cpu_ns": 46086125
+        },
+        {
+          "memory_sample": "memory",
+          "monotonic_ns": 2508165107855000,
+          "footprint_bytes": 10748384,
+          "resident_bytes": 11304960,
+          "resident_lifetime_peak_bytes": 11304960
+        },
+        {
+          "memory_kernel": "memory",
+          "backend": "flat",
+          "check_only": false,
+          "round": 1,
+          "iterations": 32000000,
+          "code_bytes": 1440,
+          "compiles": 6,
+          "mapping_misses": 0,
+          "passed": true,
+          "wall_ns": 46356000,
+          "thread_cpu_ns": 46028250
+        },
+        {
+          "memory_sample": "memory",
+          "monotonic_ns": 2508165209157000,
+          "footprint_bytes": 10748384,
+          "resident_bytes": 11304960,
+          "resident_lifetime_peak_bytes": 11304960
+        },
+        {
+          "memory_kernel": "memory",
+          "backend": "flat",
+          "check_only": false,
+          "round": 2,
+          "iterations": 32000000,
+          "code_bytes": 1440,
+          "compiles": 6,
+          "mapping_misses": 0,
+          "passed": true,
+          "wall_ns": 46261000,
+          "thread_cpu_ns": 46001250
+        },
+        {
+          "memory_sample": "memory",
+          "monotonic_ns": 2508165243441000,
+          "footprint_bytes": 10748384,
+          "resident_bytes": 11304960,
+          "resident_lifetime_peak_bytes": 11304960
+        },
+        {
+          "memory_statistics": "memory",
+          "interval_ms": 100,
+          "samples": 4,
+          "errors": 0,
+          "duration_ns": 207281000,
+          "collection_ns": 80000,
+          "footprint_mean_bytes": 10744288.0,
+          "footprint_sample_peak_bytes": 10748384,
+          "footprint_latest_bytes": 10748384,
+          "resident_mean_bytes": 11300864.0,
+          "resident_sample_peak_bytes": 11304960,
+          "resident_latest_bytes": 11304960,
+          "resident_lifetime_peak_bytes": 11304960
+        },
+        {
+          "memory_sample": "cleanup",
+          "monotonic_ns": 2508165243452000,
+          "footprint_bytes": 10748384,
+          "resident_bytes": 11304960,
+          "resident_lifetime_peak_bytes": 11304960
+        },
+        {
+          "memory_sample": "cleanup",
+          "monotonic_ns": 2508165243545000,
+          "footprint_bytes": 10682800,
+          "resident_bytes": 11272192,
+          "resident_lifetime_peak_bytes": 11304960
+        },
+        {
+          "memory_statistics": "cleanup",
+          "interval_ms": 100,
+          "samples": 2,
+          "errors": 0,
+          "duration_ns": 104000,
+          "collection_ns": 17000,
+          "footprint_mean_bytes": 10715592.0,
+          "footprint_sample_peak_bytes": 10748384,
+          "footprint_latest_bytes": 10682800,
+          "resident_mean_bytes": 11288576.0,
+          "resident_sample_peak_bytes": 11304960,
+          "resident_latest_bytes": 11272192,
+          "resident_lifetime_peak_bytes": 11304960
+        },
+        {
+          "result": "passed"
+        }
+      ]
+    },
+    {
+      "entry": "gcd",
+      "mode": "memory-bench-cached",
+      "command": [
+        "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/direct-memory-bench-20261112-view/probe",
+        "memory-bench-cached",
+        "gcd",
+        "100"
+      ],
+      "returncode": 0,
+      "results": [
+        {
+          "direct_code_memory": "dual"
+        },
+        {
+          "mode": "memory-bench-cached",
+          "entry": "gcd",
+          "memory_interval_ms": 100
+        },
+        {
+          "memory_sample": "kernel_setup",
+          "monotonic_ns": 2508165253771000,
+          "footprint_bytes": 1704344,
+          "resident_bytes": 2228224,
+          "resident_lifetime_peak_bytes": 2228224
+        },
+        {
+          "memory_benchmark_config": true,
+          "backend": "cached",
+          "page_bits": 14,
+          "contexts": 2,
+          "private_bytes": 65536,
+          "shared_bytes": 16384,
+          "cache_bytes": 134217728,
+          "mapping_entries": 256,
+          "route_entries": 256,
+          "cross_page": true,
+          "native_exclusive": true,
+          "code_versions": "fixture",
+          "check_scope": "independent"
+        },
+        {
+          "memory_sample": "kernel_setup",
+          "monotonic_ns": 2508165253868000,
+          "footprint_bytes": 2064816,
+          "resident_bytes": 2605056,
+          "resident_lifetime_peak_bytes": 2605056
+        },
+        {
+          "memory_statistics": "kernel_setup",
+          "interval_ms": 100,
+          "samples": 2,
+          "errors": 0,
+          "duration_ns": 104000,
+          "collection_ns": 14000,
+          "footprint_mean_bytes": 1884580.0,
+          "footprint_sample_peak_bytes": 2064816,
+          "footprint_latest_bytes": 2064816,
+          "resident_mean_bytes": 2416640.0,
+          "resident_sample_peak_bytes": 2605056,
+          "resident_latest_bytes": 2605056,
+          "resident_lifetime_peak_bytes": 2605056
+        },
+        {
+          "memory_sample": "boundaries",
+          "monotonic_ns": 2508165253880000,
+          "footprint_bytes": 2064816,
+          "resident_bytes": 2605056,
+          "resident_lifetime_peak_bytes": 2605056
+        },
+        {
+          "test": "memory_benchmark_same_va_private_shared_switch",
+          "passed": true
+        },
+        {
+          "memory_sample": "boundaries",
+          "monotonic_ns": 2508165254041000,
+          "footprint_bytes": 2294240,
+          "resident_bytes": 2850816,
+          "resident_lifetime_peak_bytes": 2850816
+        },
+        {
+          "memory_statistics": "boundaries",
+          "interval_ms": 100,
+          "samples": 2,
+          "errors": 0,
+          "duration_ns": 164000,
+          "collection_ns": 9000,
+          "footprint_mean_bytes": 2179528.0,
+          "footprint_sample_peak_bytes": 2294240,
+          "footprint_latest_bytes": 2294240,
+          "resident_mean_bytes": 2727936.0,
+          "resident_sample_peak_bytes": 2850816,
+          "resident_latest_bytes": 2850816,
+          "resident_lifetime_peak_bytes": 2850816
+        },
+        {
+          "memory_sample": "integer",
+          "monotonic_ns": 2508165254048000,
+          "footprint_bytes": 2294240,
+          "resident_bytes": 2850816,
+          "resident_lifetime_peak_bytes": 2850816
+        },
+        {
+          "memory_sample": "integer",
+          "monotonic_ns": 2508165354156000,
+          "footprint_bytes": 2310624,
+          "resident_bytes": 2867200,
+          "resident_lifetime_peak_bytes": 2867200
+        },
+        {
+          "memory_kernel": "integer",
+          "backend": "cached",
+          "check_only": false,
+          "round": 0,
+          "iterations": 64000000,
+          "code_bytes": 816,
+          "compiles": 4,
+          "mapping_misses": 40,
+          "passed": true,
+          "wall_ns": 93278000,
+          "thread_cpu_ns": 91731500
+        },
+        {
+          "memory_sample": "integer",
+          "monotonic_ns": 2508165454289000,
+          "footprint_bytes": 2310624,
+          "resident_bytes": 2867200,
+          "resident_lifetime_peak_bytes": 2867200
+        },
+        {
+          "memory_sample": "integer",
+          "monotonic_ns": 2508165559323000,
+          "footprint_bytes": 2310624,
+          "resident_bytes": 2867200,
+          "resident_lifetime_peak_bytes": 2867200
+        },
+        {
+          "memory_kernel": "integer",
+          "backend": "cached",
+          "check_only": false,
+          "round": 1,
+          "iterations": 64000000,
+          "code_bytes": 816,
+          "compiles": 4,
+          "mapping_misses": 40,
+          "passed": true,
+          "wall_ns": 92506000,
+          "thread_cpu_ns": 91439458
+        },
+        {
+          "memory_sample": "integer",
+          "monotonic_ns": 2508165661416000,
+          "footprint_bytes": 2310624,
+          "resident_bytes": 2867200,
+          "resident_lifetime_peak_bytes": 2867200
+        },
+        {
+          "memory_sample": "integer",
+          "monotonic_ns": 2508165766464000,
+          "footprint_bytes": 2310624,
+          "resident_bytes": 2867200,
+          "resident_lifetime_peak_bytes": 2867200
+        },
+        {
+          "memory_kernel": "integer",
+          "backend": "cached",
+          "check_only": false,
+          "round": 2,
+          "iterations": 64000000,
+          "code_bytes": 816,
+          "compiles": 4,
+          "mapping_misses": 40,
+          "passed": true,
+          "wall_ns": 92298000,
+          "thread_cpu_ns": 91333083
+        },
+        {
+          "memory_sample": "integer",
+          "monotonic_ns": 2508165807503000,
+          "footprint_bytes": 2310624,
+          "resident_bytes": 2867200,
+          "resident_lifetime_peak_bytes": 2867200
+        },
+        {
+          "memory_statistics": "integer",
+          "interval_ms": 100,
+          "samples": 7,
+          "errors": 0,
+          "duration_ns": 553462000,
+          "collection_ns": 166000,
+          "footprint_mean_bytes": 2308283.429,
+          "footprint_sample_peak_bytes": 2310624,
+          "footprint_latest_bytes": 2310624,
+          "resident_mean_bytes": 2864859.429,
+          "resident_sample_peak_bytes": 2867200,
+          "resident_latest_bytes": 2867200,
+          "resident_lifetime_peak_bytes": 2867200
+        },
+        {
+          "memory_sample": "memory",
+          "monotonic_ns": 2508165807514000,
+          "footprint_bytes": 2310624,
+          "resident_bytes": 2867200,
+          "resident_lifetime_peak_bytes": 2867200
+        },
+        {
+          "memory_sample": "memory",
+          "monotonic_ns": 2508165869822000,
+          "footprint_bytes": 2327008,
+          "resident_bytes": 2883584,
+          "resident_lifetime_peak_bytes": 2883584
+        },
+        {
+          "memory_kernel": "memory",
+          "backend": "cached",
+          "check_only": false,
+          "round": 0,
+          "iterations": 32000000,
+          "code_bytes": 1344,
+          "compiles": 6,
+          "mapping_misses": 1073,
+          "passed": true,
+          "wall_ns": 47078000,
+          "thread_cpu_ns": 46770584
+        },
+        {
+          "memory_kernel": "memory",
+          "backend": "cached",
+          "check_only": false,
+          "round": 1,
+          "iterations": 32000000,
+          "code_bytes": 1344,
+          "compiles": 6,
+          "mapping_misses": 2098,
+          "passed": true,
+          "wall_ns": 46840000,
+          "thread_cpu_ns": 46523333
+        },
+        {
+          "memory_sample": "memory",
+          "monotonic_ns": 2508165973280000,
+          "footprint_bytes": 2327008,
+          "resident_bytes": 2883584,
+          "resident_lifetime_peak_bytes": 2883584
+        },
+        {
+          "memory_kernel": "memory",
+          "backend": "cached",
+          "check_only": false,
+          "round": 2,
+          "iterations": 32000000,
+          "code_bytes": 1344,
+          "compiles": 6,
+          "mapping_misses": 3123,
+          "passed": true,
+          "wall_ns": 46583000,
+          "thread_cpu_ns": 46263667
+        },
+        {
+          "memory_sample": "memory",
+          "monotonic_ns": 2508166017037000,
+          "footprint_bytes": 2327008,
+          "resident_bytes": 2883584,
+          "resident_lifetime_peak_bytes": 2883584
+        },
+        {
+          "memory_statistics": "memory",
+          "interval_ms": 100,
+          "samples": 4,
+          "errors": 0,
+          "duration_ns": 209527000,
+          "collection_ns": 203000,
+          "footprint_mean_bytes": 2322912.0,
+          "footprint_sample_peak_bytes": 2327008,
+          "footprint_latest_bytes": 2327008,
+          "resident_mean_bytes": 2879488.0,
+          "resident_sample_peak_bytes": 2883584,
+          "resident_latest_bytes": 2883584,
+          "resident_lifetime_peak_bytes": 2883584
+        },
+        {
+          "memory_sample": "cleanup",
+          "monotonic_ns": 2508166017046000,
+          "footprint_bytes": 2327008,
+          "resident_bytes": 2883584,
+          "resident_lifetime_peak_bytes": 2883584
+        },
+        {
+          "memory_sample": "cleanup",
+          "monotonic_ns": 2508166017132000,
+          "footprint_bytes": 2261424,
+          "resident_bytes": 2850816,
+          "resident_lifetime_peak_bytes": 2883584
+        },
+        {
+          "memory_statistics": "cleanup",
+          "interval_ms": 100,
+          "samples": 2,
+          "errors": 0,
+          "duration_ns": 92000,
+          "collection_ns": 11000,
+          "footprint_mean_bytes": 2294216.0,
+          "footprint_sample_peak_bytes": 2327008,
+          "footprint_latest_bytes": 2261424,
+          "resident_mean_bytes": 2867200.0,
+          "resident_sample_peak_bytes": 2883584,
+          "resident_latest_bytes": 2850816,
+          "resident_lifetime_peak_bytes": 2883584
+        },
+        {
+          "result": "passed"
+        }
+      ]
+    },
+    {
+      "entry": "gcd",
+      "mode": "memory-bench-native",
+      "command": [
+        "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/direct-memory-bench-20261112-view/probe",
+        "memory-bench-native",
+        "gcd",
+        "100"
+      ],
+      "returncode": 0,
+      "results": [
+        {
+          "direct_code_memory": "dual"
+        },
+        {
+          "mode": "memory-bench-native",
+          "entry": "gcd",
+          "memory_interval_ms": 100
+        },
+        {
+          "memory_sample": "kernel_setup",
+          "monotonic_ns": 2508166074226000,
+          "footprint_bytes": 1704344,
+          "resident_bytes": 2228224,
+          "resident_lifetime_peak_bytes": 2228224
+        },
+        {
+          "memory_benchmark_config": true,
+          "backend": "native",
+          "page_bits": 14,
+          "contexts": 2,
+          "private_bytes": 65536,
+          "shared_bytes": 16384,
+          "cache_bytes": 0,
+          "mapping_entries": 256,
+          "route_entries": 256,
+          "cross_page": true,
+          "native_exclusive": true,
+          "code_versions": "fixture",
+          "check_scope": "independent"
+        },
+        {
+          "memory_sample": "kernel_setup",
+          "monotonic_ns": 2508166074305000,
+          "footprint_bytes": 2032048,
+          "resident_bytes": 2555904,
+          "resident_lifetime_peak_bytes": 2555904
+        },
+        {
+          "memory_statistics": "kernel_setup",
+          "interval_ms": 100,
+          "samples": 2,
+          "errors": 0,
+          "duration_ns": 87000,
+          "collection_ns": 15000,
+          "footprint_mean_bytes": 1868196.0,
+          "footprint_sample_peak_bytes": 2032048,
+          "footprint_latest_bytes": 2032048,
+          "resident_mean_bytes": 2392064.0,
+          "resident_sample_peak_bytes": 2555904,
+          "resident_latest_bytes": 2555904,
+          "resident_lifetime_peak_bytes": 2555904
+        },
+        {
+          "memory_sample": "boundaries",
+          "monotonic_ns": 2508166074316000,
+          "footprint_bytes": 2032048,
+          "resident_bytes": 2555904,
+          "resident_lifetime_peak_bytes": 2555904
+        },
+        {
+          "test": "memory_benchmark_same_va_private_shared_switch",
+          "passed": true
+        },
+        {
+          "memory_sample": "boundaries",
+          "monotonic_ns": 2508166074409000,
+          "footprint_bytes": 2163120,
+          "resident_bytes": 2703360,
+          "resident_lifetime_peak_bytes": 2703360
+        },
+        {
+          "memory_statistics": "boundaries",
+          "interval_ms": 100,
+          "samples": 2,
+          "errors": 0,
+          "duration_ns": 98000,
+          "collection_ns": 11000,
+          "footprint_mean_bytes": 2097584.0,
+          "footprint_sample_peak_bytes": 2163120,
+          "footprint_latest_bytes": 2163120,
+          "resident_mean_bytes": 2629632.0,
+          "resident_sample_peak_bytes": 2703360,
+          "resident_latest_bytes": 2703360,
+          "resident_lifetime_peak_bytes": 2703360
+        },
+        {
+          "memory_sample": "integer",
+          "monotonic_ns": 2508166074417000,
+          "footprint_bytes": 2163120,
+          "resident_bytes": 2703360,
+          "resident_lifetime_peak_bytes": 2703360
+        },
+        {
+          "memory_sample": "integer",
+          "monotonic_ns": 2508166175749000,
+          "footprint_bytes": 2163120,
+          "resident_bytes": 2703360,
+          "resident_lifetime_peak_bytes": 2703360
+        },
+        {
+          "memory_kernel": "integer",
+          "backend": "native",
+          "check_only": false,
+          "round": 0,
+          "iterations": 64000000,
+          "code_bytes": 0,
+          "compiles": 0,
+          "mapping_misses": 0,
+          "passed": true,
+          "wall_ns": 91151000,
+          "thread_cpu_ns": 90559042
+        },
+        {
+          "memory_sample": "integer",
+          "monotonic_ns": 2508166280817000,
+          "footprint_bytes": 2163120,
+          "resident_bytes": 2703360,
+          "resident_lifetime_peak_bytes": 2703360
+        },
+        {
+          "memory_sample": "integer",
+          "monotonic_ns": 2508166381439000,
+          "footprint_bytes": 2163120,
+          "resident_bytes": 2703360,
+          "resident_lifetime_peak_bytes": 2703360
+        },
+        {
+          "memory_kernel": "integer",
+          "backend": "native",
+          "check_only": false,
+          "round": 1,
+          "iterations": 64000000,
+          "code_bytes": 0,
+          "compiles": 0,
+          "mapping_misses": 0,
+          "passed": true,
+          "wall_ns": 91235000,
+          "thread_cpu_ns": 90555209
+        },
+        {
+          "memory_sample": "integer",
+          "monotonic_ns": 2508166483406000,
+          "footprint_bytes": 2163120,
+          "resident_bytes": 2703360,
+          "resident_lifetime_peak_bytes": 2703360
+        },
+        {
+          "memory_sample": "integer",
+          "monotonic_ns": 2508166588479000,
+          "footprint_bytes": 2163120,
+          "resident_bytes": 2703360,
+          "resident_lifetime_peak_bytes": 2703360
+        },
+        {
+          "memory_kernel": "integer",
+          "backend": "native",
+          "check_only": false,
+          "round": 2,
+          "iterations": 64000000,
+          "code_bytes": 0,
+          "compiles": 0,
+          "mapping_misses": 0,
+          "passed": true,
+          "wall_ns": 90674000,
+          "thread_cpu_ns": 90212209
+        },
+        {
+          "memory_sample": "integer",
+          "monotonic_ns": 2508166621496000,
+          "footprint_bytes": 2163120,
+          "resident_bytes": 2703360,
+          "resident_lifetime_peak_bytes": 2703360
+        },
+        {
+          "memory_statistics": "integer",
+          "interval_ms": 100,
+          "samples": 7,
+          "errors": 0,
+          "duration_ns": 547084000,
+          "collection_ns": 212000,
+          "footprint_mean_bytes": 2163120.0,
+          "footprint_sample_peak_bytes": 2163120,
+          "footprint_latest_bytes": 2163120,
+          "resident_mean_bytes": 2703360.0,
+          "resident_sample_peak_bytes": 2703360,
+          "resident_latest_bytes": 2703360,
+          "resident_lifetime_peak_bytes": 2703360
+        },
+        {
+          "memory_sample": "memory",
+          "monotonic_ns": 2508166621508000,
+          "footprint_bytes": 2163120,
+          "resident_bytes": 2703360,
+          "resident_lifetime_peak_bytes": 2703360
+        },
+        {
+          "memory_kernel": "memory",
+          "backend": "native",
+          "check_only": false,
+          "round": 0,
+          "iterations": 32000000,
+          "code_bytes": 0,
+          "compiles": 0,
+          "mapping_misses": 0,
+          "passed": true,
+          "wall_ns": 23079000,
+          "thread_cpu_ns": 22892209
+        },
+        {
+          "memory_sample": "memory",
+          "monotonic_ns": 2508166689108000,
+          "footprint_bytes": 2163120,
+          "resident_bytes": 2703360,
+          "resident_lifetime_peak_bytes": 2703360
+        },
+        {
+          "memory_kernel": "memory",
+          "backend": "native",
+          "check_only": false,
+          "round": 1,
+          "iterations": 32000000,
+          "code_bytes": 0,
+          "compiles": 0,
+          "mapping_misses": 0,
+          "passed": true,
+          "wall_ns": 22950000,
+          "thread_cpu_ns": 22784334
+        },
+        {
+          "memory_kernel": "memory",
+          "backend": "native",
+          "check_only": false,
+          "round": 2,
+          "iterations": 32000000,
+          "code_bytes": 0,
+          "compiles": 0,
+          "mapping_misses": 0,
+          "passed": true,
+          "wall_ns": 23120000,
+          "thread_cpu_ns": 22943333
+        },
+        {
+          "memory_sample": "memory",
+          "monotonic_ns": 2508166760252000,
+          "footprint_bytes": 2163120,
+          "resident_bytes": 2703360,
+          "resident_lifetime_peak_bytes": 2703360
+        },
+        {
+          "memory_statistics": "memory",
+          "interval_ms": 100,
+          "samples": 3,
+          "errors": 0,
+          "duration_ns": 138748000,
+          "collection_ns": 28000,
+          "footprint_mean_bytes": 2163120.0,
+          "footprint_sample_peak_bytes": 2163120,
+          "footprint_latest_bytes": 2163120,
+          "resident_mean_bytes": 2703360.0,
+          "resident_sample_peak_bytes": 2703360,
+          "resident_latest_bytes": 2703360,
+          "resident_lifetime_peak_bytes": 2703360
+        },
+        {
+          "memory_sample": "cleanup",
+          "monotonic_ns": 2508166760261000,
+          "footprint_bytes": 2163120,
+          "resident_bytes": 2703360,
+          "resident_lifetime_peak_bytes": 2703360
+        },
+        {
+          "memory_sample": "cleanup",
+          "monotonic_ns": 2508166760307000,
+          "footprint_bytes": 2146736,
+          "resident_bytes": 2686976,
+          "resident_lifetime_peak_bytes": 2719744
+        },
+        {
+          "memory_statistics": "cleanup",
+          "interval_ms": 100,
+          "samples": 2,
+          "errors": 0,
+          "duration_ns": 55000,
+          "collection_ns": 15000,
+          "footprint_mean_bytes": 2154928.0,
+          "footprint_sample_peak_bytes": 2163120,
+          "footprint_latest_bytes": 2146736,
+          "resident_mean_bytes": 2695168.0,
+          "resident_sample_peak_bytes": 2703360,
+          "resident_latest_bytes": 2686976,
+          "resident_lifetime_peak_bytes": 2719744
+        },
+        {
+          "result": "passed"
+        }
+      ]
+    }
+  ],
+  "comparison": {
+    "cli": {
+      "integer": {
+        "memory-bench-native": 90763000,
+        "memory-bench-cached": 91355000,
+        "memory-bench-flat": 91334000,
+        "memory-bench-view": 92796000
+      },
+      "memory": {
+        "memory-bench-native": 22884000,
+        "memory-bench-cached": 47057000,
+        "memory-bench-flat": 46612000,
+        "memory-bench-view": 41478000
+      }
+    },
+    "gcd": {
+      "integer": {
+        "memory-bench-view": 92840000,
+        "memory-bench-flat": 91587000,
+        "memory-bench-cached": 92506000,
+        "memory-bench-native": 91151000
+      },
+      "memory": {
+        "memory-bench-view": 41068000,
+        "memory-bench-flat": 46279000,
+        "memory-bench-cached": 46840000,
+        "memory-bench-native": 23079000
+      }
+    }
+  },
+  "statistics_scope": "Direct counters are cumulative, including correctness checks and warmup. Optional footprint phases include initialization, warmup and native result verification; their arithmetic sample mean, sampled peak and latest cover different work from wall/thread CPU execution timing.",
+  "view_scope": "Each of two 4 GiB reserved ranges has six 16 KiB read-only page aliases prepared before execution; writes use flat. Separate setup timing covers view reservation, twelve page mappings and signal-handler installation, excluding flat tables and engine creation. Kernel samples require zero read-view faults and unchanged mapping counts. Cleanup destroys both ranges and restores the signal handlers. No lazy mapping, Linux PTE lifecycle or writable view is measured."
+}

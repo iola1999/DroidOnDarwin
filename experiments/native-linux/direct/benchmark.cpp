@@ -5,6 +5,7 @@
 #include <vector>
 extern "C" {
 #include "../translation/linux-memory.h"
+#include "../translation/read-view.h"
 extern uint64_t translation_integer(uint64_t *, uint64_t), translation_integer_end[];
 extern uint64_t translation_memory(uint64_t *, uint64_t), translation_memory_end[];
 extern uint64_t translation_atomic(uint64_t *, uint64_t), translation_atomic_end[];
@@ -89,15 +90,17 @@ struct MemoryBenchmark {
     alignas(MemoryPageBytes) std::array<uint64_t, 10 * MemoryPageBytes / 8> ram{};
     alignas(MemoryPageBytes) std::array<uint64_t, 2048> root{};
     std::array<std::vector<nce_direct_flat_page>, 2> flat;
+    std::array<NceReadView, 2> views{};
     NceDirectPageTable table{root.data(), CodeVA, UINT64_C(1) << 32, 0x500000000, ram.data(), sizeof(ram)};
     NceDirect *engine = nullptr;
     unsigned active = 0;
     uint64_t mapping_epoch = 1, code_epoch = 1;
     size_t code_size = 0;
-    explicit MemoryBenchmark(const char *mode)
+    explicit MemoryBenchmark(const char *mode, bool check_only)
     {
-        CHECK(!std::strcmp(mode, "native") || !std::strcmp(mode, "cached") || !std::strcmp(mode, "flat"));
-        if (!std::strcmp(mode, "flat")) {
+        bool read_view = !std::strcmp(mode, "view");
+        CHECK(!std::strcmp(mode, "native") || !std::strcmp(mode, "cached") || !std::strcmp(mode, "flat") || read_view);
+        if (!std::strcmp(mode, "flat") || read_view) {
             for (unsigned context = 0; context < 2; ++context) {
                 auto &pages = flat[context];
                 pages.resize(DIRECT_FLAT_BYTES / sizeof(nce_direct_flat_page));
@@ -113,11 +116,45 @@ struct MemoryBenchmark {
             engine = nce_direct_create({MemoryCacheBytes, 256, 256, false, false, true, false, false, false, true, false, false});
             CHECK(engine);
         }
-        std::printf("{\"memory_benchmark_config\":true,\"backend\":\"%s\",\"page_bits\":14,\"contexts\":2,\"private_bytes\":65536,\"shared_bytes\":16384,\"cache_bytes\":%zu,\"mapping_entries\":256,\"route_entries\":256,\"cross_page\":true,\"native_exclusive\":true,\"code_versions\":\"fixture\",\"check_scope\":\"independent\"}\n", mode, engine ? MemoryCacheBytes : 0);
+        std::printf("{\"memory_benchmark_config\":true,\"backend\":\"%s\",\"page_bits\":14,\"contexts\":2,\"private_bytes\":65536,\"shared_bytes\":16384,\"cache_bytes\":%zu,\"mapping_entries\":256,\"route_entries\":256,\"cross_page\":true,\"native_exclusive\":true,\"code_versions\":\"fixture\",\"check_scope\":\"independent\"", mode, engine ? MemoryCacheBytes : 0);
+        if (read_view)
+            std::printf(",\"read_memory\":\"premapped_view\",\"write_memory\":\"flat\",\"view_reserved_bytes\":%llu,\"view_mapped_bytes\":%zu", 2 * table.user_size, 12 * MemoryPageBytes);
+        std::puts("}");
+        if (read_view) {
+            uint64_t cpu = check_only ? 0 : now(CLOCK_THREAD_CPUTIME_ID);
+            uint64_t wall = check_only ? 0 : now(CLOCK_MONOTONIC);
+            CHECK(!nce_direct_install_read_faults());
+            for (unsigned context = 0; context < views.size(); ++context) {
+                auto &view = views[context];
+                CHECK(!nce_read_view_create(&view, table.user_size));
+                CHECK(!nce_read_view_map(&view, 0, ram.data(), MemoryPageBytes));
+                for (size_t page = 0; page < DataBytes / MemoryPageBytes; ++page)
+                    CHECK(!nce_read_view_map(&view, DataVA - CodeVA + page * MemoryPageBytes,
+                                             data(context) + page * MemoryPageBytes / 8, MemoryPageBytes));
+                CHECK(!nce_read_view_map(&view, SharedVA - CodeVA, shared(), MemoryPageBytes));
+            }
+            if (!check_only) {
+                wall = now(CLOCK_MONOTONIC) - wall;
+                cpu = now(CLOCK_THREAD_CPUTIME_ID) - cpu;
+            }
+            std::printf("{\"memory_benchmark_view_setup\":true,\"check_only\":%s,\"maps\":%llu,\"revocations\":0,\"reserved_bytes\":%llu,\"mapped_bytes\":%zu",
+                        check_only ? "true" : "false", views[0].maps + views[1].maps, 2 * table.user_size, 12 * MemoryPageBytes);
+            if (!check_only)
+                std::printf(",\"wall_ns\":%llu,\"thread_cpu_ns\":%llu", wall, cpu);
+            std::puts("}");
+        }
     }
     ~MemoryBenchmark()
     {
         nce_direct_destroy(engine);
+        if (views[0].base) {
+            uint64_t maps = views[0].maps + views[1].maps;
+            uint64_t revocations = views[0].revocations + views[1].revocations;
+            for (auto &view : views)
+                CHECK(!nce_read_view_destroy(&view) && !view.base && !view.size);
+            CHECK(!nce_direct_remove_read_faults());
+            std::printf("{\"memory_benchmark_view_cleanup\":true,\"maps\":%llu,\"revocations\":%llu,\"destroyed\":2,\"live_reserved_bytes\":0,\"passed\":true}\n", maps, revocations);
+        }
     }
     uint64_t *data(unsigned context)
     {
@@ -178,7 +215,7 @@ struct MemoryBenchmark {
         state.exclusive_address = UINT64_MAX;
         auto &pages = flat[active];
         NceDirectMemory memory{this, map, code, mapping_epoch, 14, pages.empty() ? nullptr : &table,
-                               false, pages.empty() ? nullptr : pages.data(), version, code_epoch, nullptr};
+                               false, pages.empty() ? nullptr : pages.data(), version, code_epoch, views[active].base};
         uint64_t fault = 0;
         NceDirectExit result;
         do {
@@ -216,7 +253,7 @@ struct MemoryBenchmark {
 
 void direct_memory_benchmark(const char *memory, bool check_only)
 {
-    auto fixture = std::make_unique<MemoryBenchmark>(memory);
+    auto fixture = std::make_unique<MemoryBenchmark>(memory, check_only);
     translation_memory_phase("boundaries");
     fixture->check_contexts();
     struct Kernel {
@@ -257,6 +294,10 @@ void direct_memory_benchmark(const char *memory, bool check_only)
             auto stats = nce_direct_stats(fixture->engine);
             std::printf("{\"memory_kernel\":\"%s\",\"backend\":\"%s\",\"check_only\":%s,\"round\":%u,\"iterations\":%llu,\"code_bytes\":%zu,\"compiles\":%llu,\"mapping_misses\":%llu,\"passed\":true",
                         kernel.name, memory, check_only ? "true" : "false", round, iterations, stats.code_bytes, stats.compiles, stats.mapping_misses);
+            if (fixture->views[0].base)
+                std::printf(",\"read_view_sites\":%llu,\"read_view_faults\":%llu,\"view_maps\":%llu,\"view_revocations\":%llu",
+                            stats.read_view_sites, stats.read_view_faults,
+                            fixture->views[0].maps + fixture->views[1].maps, fixture->views[0].revocations + fixture->views[1].revocations);
             if (!check_only)
                 std::printf(",\"wall_ns\":%llu,\"thread_cpu_ns\":%llu", wall, cpu);
             std::puts("}");

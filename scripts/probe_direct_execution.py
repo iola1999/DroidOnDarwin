@@ -107,7 +107,29 @@ def validate(rows, mode, interval, config=None, entry=None):
                            'cache_bytes': 0 if backend == 'native' else 128 * 1024 * 1024,
                            'mapping_entries': 256, 'route_entries': 256, 'cross_page': True,
                            'native_exclusive': True, 'code_versions': 'fixture', 'check_scope': 'independent'}
-        if backend not in ('native', 'cached', 'flat') or [r for r in rows if r.get('memory_benchmark_config')] != [expected_config]:
+        if backend == 'view':
+            expected_config.update(read_memory='premapped_view', write_memory='flat',
+                                   view_reserved_bytes=2 * (1 << 32), view_mapped_bytes=12 * 16384)
+        if backend not in ('native', 'cached', 'flat', 'view') or [r for r in rows if r.get('memory_benchmark_config')] != [expected_config]:
+            return False
+        setups = [r for r in rows if r.get('memory_benchmark_view_setup')]
+        cleanups = [r for r in rows if r.get('memory_benchmark_view_cleanup')]
+        if backend == 'view':
+            expected_setup = {'memory_benchmark_view_setup': True, 'check_only': check_only,
+                              'maps': 12, 'revocations': 0, 'reserved_bytes': 2 * (1 << 32),
+                              'mapped_bytes': 12 * 16384}
+            if len(setups) != 1:
+                return False
+            if not check_only:
+                for key in ('wall_ns', 'thread_cpu_ns'):
+                    if type(setups[0].get(key)) is not int or setups[0][key] <= 0:
+                        return False
+                    expected_setup[key] = setups[0][key]
+            if setups != [expected_setup] or cleanups != [
+                    {'memory_benchmark_view_cleanup': True, 'maps': 12, 'revocations': 0,
+                     'destroyed': 2, 'live_reserved_bytes': 0, 'passed': True}]:
+                return False
+        elif setups or cleanups:
             return False
         if [r for r in rows if r.get('test') == 'memory_benchmark_same_va_private_shared_switch'] != [
                 {'test': 'memory_benchmark_same_va_private_shared_switch', 'passed': True}]:
@@ -127,6 +149,10 @@ def validate(rows, mode, interval, config=None, entry=None):
             elif any(type(row.get(key)) is not int or row[key] <= 0 for key in ('wall_ns', 'thread_cpu_ns')):
                 return False
             if row.get('passed') is not True or (backend != 'native' and not row.get('compiles')):
+                return False
+            if backend == 'view' and (type(row.get('read_view_sites')) is not int or row['read_view_sites'] <= 0
+                                      or row.get('read_view_faults') != 0 or row.get('view_maps') != 12
+                                      or row.get('view_revocations') != 0):
                 return False
     elif mode == 'tests':
         expected = {
@@ -243,7 +269,7 @@ def main():
                        NCE_DIRECT_REUSE_CODE_CHECKS=str(args.reuse_code_checks), NCE_DIRECT_ROUTE_EPOCHS=str(args.route_epochs), NCE_DIRECT_RETAIN_ROUTES=str(args.retain_routes), NCE_DIRECT_MEMORY_GROUPS=str(args.memory_groups), NCE_DIRECT_VECTOR_TABLE=str(args.vector_table), NCE_DIRECT_SIMD_MATH=str(args.simd_math))
     modes = (['tests'] if args.mode != 'bench' else []) + (['native', 'unicorn', 'direct'] if args.mode != 'tests' else [])
     if memory_mode:
-        modes = [args.mode + '-' + backend for backend in ('native', 'cached', 'flat')]
+        modes = [args.mode + '-' + backend for backend in ('native', 'cached', 'flat', 'view')]
     for entry in ('cli', 'gcd'):
         for mode in (modes if entry == 'cli' else list(reversed(modes))):
             path = out / f'{entry}-{mode}.jsonl'
@@ -271,8 +297,9 @@ def main():
               'sha256': hashes, 'runs': runs, 'comparison': {}}
     if memory_mode:
         report['measurement'] = ('Short correctness checks without timed execution.' if args.mode == 'memory-check' else
-                                 'Three warm rounds per backend in separate processes; GCD reverses backend order. Same ARM64 bytes, 16 KiB pages and checked complete data arrays; warmup touches every private data page. Timed execution stays in context 0 and includes one-million-instruction slice entries; initialization, table setup, context-switch checks and result verification are excluded. No Linux scheduling, page updates, fallback or device measurement.')
+                                 'Three timed samples after one warmup per backend in separate processes; GCD reverses backend order. Same ARM64 bytes, 16 KiB pages and checked complete data arrays; warmup touches every private data page. Timed execution stays in context 0 and includes one-million-instruction slice entries; initialization, table/view setup, context-switch checks and result verification are excluded. No Linux scheduling, page updates, fallback or device measurement.')
         report['statistics_scope'] = 'Direct counters are cumulative, including correctness checks and warmup. Optional footprint phases include initialization, warmup and native result verification; their arithmetic sample mean, sampled peak and latest cover different work from wall/thread CPU execution timing.'
+        report['view_scope'] = 'Each of two 4 GiB reserved ranges has six 16 KiB read-only page aliases prepared before execution; writes use flat. Separate setup timing covers view reservation, twelve page mappings and signal-handler installation, excluding flat tables and engine creation. Kernel samples require zero read-view faults and unchanged mapping counts. Cleanup destroys both ranges and restores the signal handlers. No lazy mapping, Linux PTE lifecycle or writable view is measured.'
         report['configuration'] = [row for run in runs if run['entry'] == 'cli'
                                    for row in run['results'] if row.get('memory_benchmark_config')]
     for entry in ('cli', 'gcd'):
