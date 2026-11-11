@@ -387,7 +387,8 @@ def android_data(out):
          '-bootclasspath', sdk / 'platforms/android-35/android.jar',
          '-d', framework_classes, EXP / 'services/NceFramework.java', EXP / 'services/NceZygoteChild.java',
          EXP / 'services/NceSurface.java', EXP / 'services/NceShutdown.java', EXP / 'services/NceKeystore.java',
-         EXP / 'services/NceAppData.java', EXP / 'services/NceStorage.java', EXP / 'services/NceClockUi.java'])
+         EXP / 'services/NceAppData.java', EXP / 'services/NceStorage.java', EXP / 'services/NceClockUi.java',
+         EXP / 'services/NceApkInstall.java'])
     run([java / 'java', '-cp', sdk / 'build-tools/36.0.0/lib/d8.jar', 'com.android.tools.r8.D8',
          '--min-api', '35', '--lib', sdk / 'platforms/android-35/android.jar', '--output', framework_classes,
          *sorted(framework_classes.glob('*.class'))])
@@ -1007,6 +1008,7 @@ def build(out, llvm, art_compiler=False, art_oat=None, art_desktop=False, art_bo
         programs.append(('/system/bin/nce-dex2oat', art.pop('nce-dex2oat')))
     replacements = {**art, **crypto}
     prepare_android_desktop()
+    apex_generated = android_service_interfaces(out)
     assets = android_data(out) + [native_library_zip(out)]
     art_aot.generate_header(out / 'art-aot-targets.h')
     if art_compiler or art_boot:
@@ -1103,7 +1105,6 @@ def build(out, llvm, art_compiler=False, art_oat=None, art_desktop=False, art_bo
          '-Wl,-z,max-page-size=16384,-z,common-page-size=16384',
          EXP / 'services/framework-log.c', '-llog', '-ldl', '-o', out / 'libnce-framework-log.so'])
     programs.append(('/system/lib64/libnce-framework-log.so', out / 'libnce-framework-log.so'))
-    apex_generated = android_service_interfaces(out)
     run([ndk / 'toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android35-clang++',
          '-ffixed-x18', '-mno-outline-atomics', '-g', '-O2', '-Wall', '-Wextra', '-Werror',
          '-std=c++17', '-nostdlib++', '-include', WORK / 'android/art-build/platform-libcxx-config.h',

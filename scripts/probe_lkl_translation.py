@@ -10,6 +10,7 @@ import re
 import shutil
 import struct
 import subprocess
+from apk_fixture_validation import inputs_unchanged as apk_inputs_unchanged, read_fixture, validate_results as validate_apk_results
 
 ROOT = Path(__file__).resolve().parents[1]
 EXP = ROOT / 'experiments/native-linux'
@@ -31,7 +32,7 @@ def validate_android_image(root, directory):
     manifest = json.loads((directory / 'lkl-summary.json').read_text())
     prefix = 'experiments/native-linux/userspace/'
     fixed = {'scripts/build_nce_userspace.py', 'experiments/native-linux/input.h',
-             'experiments/native-linux/interaction-profile.h'}
+             'experiments/native-linux/interaction-profile.h', 'experiments/native-linux/services/NceApkInstall.java'}
     expected = manifest['input_sha256']
     current = {str(p.relative_to(root)) for p in (root / prefix).glob('*') if p.is_file()}
     names = current | fixed | {name for name in expected if name.startswith(prefix)}
@@ -318,6 +319,7 @@ def main():
     parser.add_argument('--mapping', choices=('window', 'pte'), default='window')
     parser.add_argument('--data-seed', type=Path, help='服务和桌面检查使用的初始 ext4 数据盘')
     parser.add_argument('--persistent-data', action='store_true', help='各入口与重复轮次连续使用同一数据盘，检查重启持久化')
+    parser.add_argument('--apk-fixture-dir', type=Path, help='运行时传入同签名 Java/JNI APK，首轮安装更新，后续启动只检查已安装 v2')
     parser.add_argument('--workload', choices=('core', 'android', 'services', 'desktop'), default='core')
     parser.add_argument('--entry', choices=('both', 'cli', 'gcd', 'window'), default='both')
     parser.add_argument('--art-nterp', type=int, choices=(0, 1), default=1)
@@ -347,6 +349,15 @@ def main():
     if args.cpus == 1 and args.smp_uaccess_stop != 'all':
         parser.error('用户复制的停止策略仅用于双核原型')
     entries = ('cli', 'gcd') if args.entry == 'both' else (args.entry,)
+    apk_fixture = None
+    if args.apk_fixture_dir:
+        if (args.execution != 'direct' or args.workload != 'desktop' or not args.persistent_data
+                or args.repeat * len(entries) < 2 or args.build_only):
+            parser.error('APK 检查需要 Direct desktop、persistent-data 和至少两轮实际启动')
+        directory = args.apk_fixture_dir.resolve()
+        if not directory.is_relative_to(WORK):
+            parser.error('APK fixture 目录需要位于 work/native-linux-nce 中')
+        apk_fixture = read_fixture(directory)
     if args.entry == 'window' and args.workload != 'desktop':
         parser.error('可见窗口用于 desktop 负载')
     if args.exec_cache == 'pages' and (args.mapping != 'pte' or args.cache_invalidation != 'pages'):
@@ -545,6 +556,8 @@ def main():
              EXP / 'translation/kernel-api.h', EXP / 'translation/kernel-image.h', EXP / 'code-memory.h', EXP / 'nce.h', out / 'translation-symbols.h',
              ROOT / 'scripts/build_translation_engine.py', manifest,
              library / 'lib/libunicorn.a', *[out / name for name in (*build_entries, 'guest.elf', 'late.elf', *runtime_files)]]
+    if apk_fixture:
+        files += [ROOT / 'scripts/apk_fixture_validation.py', ROOT / 'scripts/build_apk_fixture.py']
     if args.mapping == 'pte':
         files += [ROOT / 'scripts/build_lkl_translation_kernel.py', ROOT / 'scripts/lkl_translation_patch.py',
                   EXP / 'lkl-nce-mmu.c', kernel / 'build.json']
@@ -565,6 +578,10 @@ def main():
         print(out)
         return
     environment = os.environ.copy()
+    for name in ('NCE_APK_FIXTURE_DIR', 'NCE_APK_FIXTURE_STAGE'):
+        environment.pop(name, None)
+    if apk_fixture:
+        environment['NCE_APK_FIXTURE_DIR'] = apk_fixture['directory']
     environment['NCE_TRANSLATION_FILES'] = str(out)
     environment['NCE_TRANSLATION_ONLINE_CPUS'] = str(args.online_cpus)
     environment.update(NCE_ART_NTERP=str(args.art_nterp), NCE_ART_EXPANDED_JIT=str(args.art_expanded_jit),
@@ -594,6 +611,11 @@ def main():
     for iteration in range(args.repeat):
         for mode in entries:
             stem = f'{mode}-{iteration}'
+            apk_stage = 'verify-restart' if results else 'install-update'
+            if apk_fixture:
+                if not apk_inputs_unchanged(apk_fixture):
+                    raise RuntimeError('APK 输入在运行前发生变化')
+                environment['NCE_APK_FIXTURE_STAGE'] = apk_stage
             data = None
             if args.workload in ('services', 'desktop'):
                 data_path = out / ('persistent-data.img' if args.persistent_data else f'{stem}-data.img')
@@ -615,6 +637,11 @@ def main():
                     returncode = 'timeout'
             rows = [json.loads(line) for line in (out / f'{stem}.jsonl').read_text().splitlines() if line.startswith('{')]
             passed = returncode == 0 and validate(rows, args.memory_interval_ms, args.mapping, args.workload, args.tlb_invalidation, args.execution, direct_config, args.cpus, bool(args.parallel_profile), args.smp_uaccess_stop, code_memory=args.code_memory, online_cpus=args.online_cpus)
+            apk_validated = None
+            if apk_fixture:
+                previous = [row for result in results for row in result['results']]
+                apk_validated = apk_inputs_unchanged(apk_fixture) and validate_apk_results(rows, apk_stage, apk_fixture, previous)
+                passed = passed and apk_validated
             if data is not None:
                 data['final_sha256'] = sha(data_path)
                 metadata = subprocess.run(['/opt/homebrew/opt/e2fsprogs/sbin/dumpe2fs', '-h', data_path],
@@ -629,6 +656,8 @@ def main():
             results.append({'entry': mode, 'iteration': iteration, 'returncode': returncode, 'results': rows,
                             'validated': passed, 'data_image': data,
                             'stdout_sha256': sha(out / f'{stem}.jsonl'), 'stderr_sha256': sha(out / f'{stem}.log')})
+            if apk_fixture:
+                results[-1]['apk_fixture'] = {'stage': apk_stage, 'validated': apk_validated}
             if not passed:
                 break
         if not results[-1]['validated']:
@@ -652,6 +681,9 @@ def main():
                                 'preemption': args.preemption, 'timer_interval_ns': 2000000},
               'measurement': 'Guest clock times 128 pipe round trips per memory case; excludes initial COW materialization. Selected preemption, translation and selected Linux mapping implementation included. Memory means are arithmetic sample means, including phase boundaries; sampled peaks can miss short peaks. Resident lifetime peak is separate.',
               'sha256': input_hashes, 'runs': results}
+    if apk_fixture:
+        report['apk_fixture'] = apk_fixture
+        report['apk_fixture']['scope'] = 'Original signed Java/JNI fixture installation, update and cold restart in Direct Android; no performance claim'
     (out / 'summary.json').write_text(json.dumps(report, indent=2) + '\n')
     print(out / 'summary.json')
     if len(results) != args.repeat * len(entries) or any(not row['validated'] for row in results):

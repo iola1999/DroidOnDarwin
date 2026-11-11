@@ -57,28 +57,40 @@ static void memory_sample(const char *phase)
            phase, info.phys_footprint, info.resident_size, info.resident_size_peak);
 }
 
+static void put_host_file(const char *guest, const char *path, unsigned mode)
+{
+    FILE *input = fopen(path, "rb");
+    REQUIRE(input);
+    long args[6] = {-100, (long)guest, 0x241, mode};
+    long fd = call(56, args);
+    REQUIRE(fd >= 0);
+    unsigned char buffer[65536];
+    size_t size;
+    while ((size = fread(buffer, 1, sizeof(buffer), input))) {
+        size_t done = 0;
+        while (done < size) {
+            args[0] = fd;
+            args[1] = (long)(buffer + done);
+            args[2] = size - done;
+            long written = call(64, args);
+            if (written == -4)
+                continue;
+            REQUIRE(written > 0 && (size_t)written <= size - done);
+            done += written;
+        }
+    }
+    REQUIRE(!ferror(input) && fclose(input) == 0);
+    args[0] = fd;
+    REQUIRE(call(57, args) == 0);
+}
+
 static void put_file(const char *guest, const char *file)
 {
     const char *directory = getenv("NCE_TRANSLATION_FILES");
     REQUIRE(directory);
     char path[4096];
     REQUIRE(snprintf(path, sizeof(path), "%s/%s", directory, file) < (int)sizeof(path));
-    FILE *input = fopen(path, "rb");
-    REQUIRE(input);
-    long args[6] = {-100, (long)guest, 0x241, 0755};
-    long fd = call(56, args);
-    REQUIRE(fd >= 0);
-    unsigned char buffer[65536];
-    size_t size;
-    while ((size = fread(buffer, 1, sizeof(buffer), input))) {
-        args[0] = fd;
-        args[1] = (long)buffer;
-        args[2] = size;
-        REQUIRE(call(64, args) == (long)size);
-    }
-    REQUIRE(!ferror(input) && fclose(input) == 0);
-    args[0] = fd;
-    REQUIRE(call(57, args) == 0);
+    put_host_file(guest, path, 0755);
 }
 
 static void put_text(const char *path, const char *value)
@@ -90,6 +102,26 @@ static void put_text(const char *path, const char *value)
     args[1] = (long)value;
     args[2] = strlen(value);
     REQUIRE(call(64, args) == args[2] && call(57, args) == 0);
+}
+
+static void apk_fixture_setup(int desktop)
+{
+    const char *input = getenv("NCE_APK_FIXTURE_DIR");
+    const char *stage = getenv("NCE_APK_FIXTURE_STAGE");
+    if (!input && !stage)
+        return;
+    REQUIRE(desktop && input && input[0] == '/' && stage);
+    REQUIRE(!strcmp(stage, "install-update") || !strcmp(stage, "verify-restart"));
+    directory("/data/nce/apk-fixture");
+    const char *files[] = {"manifest.json", "java-v1.apk", "java-v2.apk", "jni-v1.apk", "jni-v2.apk"};
+    for (unsigned i = 0; i < sizeof(files) / sizeof(*files); ++i) {
+        char guest[128], host[4096];
+        REQUIRE(snprintf(guest, sizeof(guest), "/data/nce/apk-fixture/%s", files[i]) < (int)sizeof(guest));
+        REQUIRE(snprintf(host, sizeof(host), "%s/%s", input, files[i]) < (int)sizeof(host));
+        put_host_file(guest, host, 0600);
+    }
+    // Publish the stage after every input is available to the Android helper.
+    put_text("/data/nce/apk-fixture/stage", stage);
 }
 
 static void block_device(const char *description, const char *path, unsigned mode)
@@ -182,6 +214,7 @@ static void android_setup(int services, int desktop)
             put_file("/data/nce/system-server-probe", "enabled");
             put_file("/data/nce/graphics", "enabled");
         }
+        apk_fixture_setup(desktop);
         puts("{\"test\":\"android_data_ext4_mounted\",\"passed\":true}");
     }
     put_file("/linkerconfig/ld.config.txt", "ld.config.txt");
