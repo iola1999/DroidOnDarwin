@@ -1,0 +1,990 @@
+{
+  "scope": "Standard Android 35 fixture behavior only; DroidOnDarwin installation and execution remain unverified",
+  "performance_measured": false,
+  "serial": "emulator-5580",
+  "environment": {
+    "ANDROID_AVD_HOME": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/apk-fixture-avd/avd",
+    "ANDROID_HOME": "/Users/fan/project/toolchain/android-sdk",
+    "ANDROID_SDK_ROOT": "/Users/fan/project/toolchain/android-sdk",
+    "ANDROID_USER_HOME": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/apk-fixture-avd/user",
+    "ANDROID_EMULATOR_HOME": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/apk-fixture-avd/user",
+    "ANDROID_ADB_SERVER_PORT": "5038",
+    "ADB_SERVER_SOCKET": "tcp:localhost:5038"
+  },
+  "commands": [
+    {
+      "command": [
+        "/Users/fan/project/toolchain/android-sdk/emulator/emulator",
+        "-version"
+      ],
+      "returncode": 0,
+      "output": "Android emulator version 37.3.2.0 (build_id 16433917) (CL:N/A)\nCopyright (C) 2006-2024 The Android Open Source Project and many others.\nThis program is a derivative of the QEMU CPU emulator (www.qemu.org).\n\n  This software is licensed under the terms of the GNU General Public\n  License version 2, as published by the Free Software Foundation, and\n  may be copied, distributed, and modified under those terms.\n\n  This program is distributed in the hope that it will be useful,\n  but WITHOUT ANY WARRANTY; without even the implied warranty of\n  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\n  GNU General Public License for more details.\n\n"
+    },
+    {
+      "command": [
+        "/Users/fan/project/toolchain/android-sdk/platform-tools/adb",
+        "-P",
+        "5038",
+        "start-server"
+      ],
+      "returncode": 0,
+      "output": "* daemon not running; starting now at tcp:5038\n* daemon started successfully\n"
+    },
+    {
+      "command": [
+        "/Users/fan/project/toolchain/android-sdk/platform-tools/adb",
+        "-P",
+        "5038",
+        "-s",
+        "emulator-5580",
+        "shell",
+        "input",
+        "keyevent",
+        "82"
+      ],
+      "returncode": 0,
+      "output": ""
+    },
+    {
+      "command": [
+        "/Users/fan/project/toolchain/android-sdk/platform-tools/adb",
+        "-P",
+        "5038",
+        "-s",
+        "emulator-5580",
+        "shell",
+        "getprop",
+        "ro.build.fingerprint"
+      ],
+      "returncode": 0,
+      "output": "google/sdk_gphone64_arm64/emu64a:15/AE3A.240806.043/12960925:userdebug/dev-keys\n"
+    },
+    {
+      "command": [
+        "/Users/fan/project/toolchain/android-sdk/platform-tools/adb",
+        "-P",
+        "5038",
+        "-s",
+        "emulator-5580",
+        "shell",
+        "getprop",
+        "ro.build.version.release"
+      ],
+      "returncode": 0,
+      "output": "15\n"
+    },
+    {
+      "command": [
+        "/Users/fan/project/toolchain/android-sdk/platform-tools/adb",
+        "-P",
+        "5038",
+        "-s",
+        "emulator-5580",
+        "shell",
+        "getprop",
+        "ro.build.version.sdk"
+      ],
+      "returncode": 0,
+      "output": "35\n"
+    },
+    {
+      "command": [
+        "/Users/fan/project/toolchain/android-sdk/platform-tools/adb",
+        "-P",
+        "5038",
+        "-s",
+        "emulator-5580",
+        "shell",
+        "getprop",
+        "ro.product.cpu.abi"
+      ],
+      "returncode": 0,
+      "output": "arm64-v8a\n"
+    },
+    {
+      "command": [
+        "/Users/fan/project/toolchain/android-sdk/platform-tools/adb",
+        "-P",
+        "5038",
+        "-s",
+        "emulator-5580",
+        "shell",
+        "getconf",
+        "PAGE_SIZE"
+      ],
+      "returncode": 0,
+      "output": "4096\n"
+    },
+    {
+      "command": [
+        "/Users/fan/project/toolchain/android-sdk/platform-tools/adb",
+        "-P",
+        "5038",
+        "-s",
+        "emulator-5580",
+        "shell",
+        "uname",
+        "-a"
+      ],
+      "returncode": 0,
+      "output": "Linux localhost 6.6.30-android15-8-gdd9c02ccfe27-ab11987101-4k #1 SMP PREEMPT Tue Jun 18 20:50:32 UTC 2024 aarch64 Toybox\n"
+    },
+    {
+      "command": [
+        "/Users/fan/project/toolchain/android-sdk/platform-tools/adb",
+        "-P",
+        "5038",
+        "-s",
+        "emulator-5580",
+        "shell",
+        "pm",
+        "path",
+        "app.droidondarwin.fixture.java"
+      ],
+      "returncode": 1,
+      "output": ""
+    },
+    {
+      "command": [
+        "/Users/fan/project/toolchain/android-sdk/platform-tools/adb",
+        "-P",
+        "5038",
+        "-s",
+        "emulator-5580",
+        "install",
+        "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/apk-fixture/java-v1.apk"
+      ],
+      "returncode": 0,
+      "output": "Performing Streamed Install\nSuccess\n"
+    },
+    {
+      "command": [
+        "/Users/fan/project/toolchain/android-sdk/platform-tools/adb",
+        "-P",
+        "5038",
+        "-s",
+        "emulator-5580",
+        "shell",
+        "am",
+        "force-stop",
+        "app.droidondarwin.fixture.java"
+      ],
+      "returncode": 0,
+      "output": ""
+    },
+    {
+      "command": [
+        "/Users/fan/project/toolchain/android-sdk/platform-tools/adb",
+        "-P",
+        "5038",
+        "-s",
+        "emulator-5580",
+        "logcat",
+        "-c"
+      ],
+      "returncode": 0,
+      "output": ""
+    },
+    {
+      "command": [
+        "/Users/fan/project/toolchain/android-sdk/platform-tools/adb",
+        "-P",
+        "5038",
+        "-s",
+        "emulator-5580",
+        "shell",
+        "am",
+        "start",
+        "-W",
+        "-n",
+        "app.droidondarwin.fixture.java/app.droidondarwin.fixture.MainActivity"
+      ],
+      "returncode": 0,
+      "output": "Starting: Intent { cmp=app.droidondarwin.fixture.java/app.droidondarwin.fixture.MainActivity }\nStatus: ok\nLaunchState: COLD\nActivity: app.droidondarwin.fixture.java/app.droidondarwin.fixture.MainActivity\nTotalTime: 1001\nWaitTime: 1009\nComplete\n"
+    },
+    {
+      "command": [
+        "/Users/fan/project/toolchain/android-sdk/platform-tools/adb",
+        "-P",
+        "5038",
+        "-s",
+        "emulator-5580",
+        "logcat",
+        "-d",
+        "-v",
+        "raw",
+        "-s",
+        "DroidApkFixture:I",
+        "*:S"
+      ],
+      "returncode": 0,
+      "output": "--------- beginning of main\n{\"status\":\"passed\",\"package\":\"app.droidondarwin.fixture.java\",\"mode\":\"java\",\"version\":1,\"value\":101,\"marker\":\"f59547b3-fd91-4173-89c0-2583021b63f9\",\"created_now\":true,\"created_version\":1,\"launch_count\":1}\n"
+    },
+    {
+      "command": [
+        "/Users/fan/project/toolchain/android-sdk/platform-tools/adb",
+        "-P",
+        "5038",
+        "-s",
+        "emulator-5580",
+        "shell",
+        "pm",
+        "path",
+        "app.droidondarwin.fixture.java"
+      ],
+      "returncode": 0,
+      "output": "package:/data/app/~~dSiO4uiFI8OE5jfF-vyaNQ==/app.droidondarwin.fixture.java-rSGjorUQiH66xMbZ3VCqug==/base.apk\n"
+    },
+    {
+      "command": [
+        "/Users/fan/project/toolchain/android-sdk/platform-tools/adb",
+        "-P",
+        "5038",
+        "-s",
+        "emulator-5580",
+        "shell",
+        "sha256sum",
+        "/data/app/~~dSiO4uiFI8OE5jfF-vyaNQ==/app.droidondarwin.fixture.java-rSGjorUQiH66xMbZ3VCqug==/base.apk"
+      ],
+      "returncode": 0,
+      "output": "c39c5ca4db331513759e4e98417a643c81df76062e593bae631562b415063527  /data/app/~~dSiO4uiFI8OE5jfF-vyaNQ==/app.droidondarwin.fixture.java-rSGjorUQiH66xMbZ3VCqug==/base.apk\n"
+    },
+    {
+      "command": [
+        "/Users/fan/project/toolchain/android-sdk/platform-tools/adb",
+        "-P",
+        "5038",
+        "-s",
+        "emulator-5580",
+        "shell",
+        "pm",
+        "path",
+        "app.droidondarwin.fixture.jni"
+      ],
+      "returncode": 1,
+      "output": ""
+    },
+    {
+      "command": [
+        "/Users/fan/project/toolchain/android-sdk/platform-tools/adb",
+        "-P",
+        "5038",
+        "-s",
+        "emulator-5580",
+        "install",
+        "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/apk-fixture/jni-v1.apk"
+      ],
+      "returncode": 0,
+      "output": "Performing Streamed Install\nSuccess\n"
+    },
+    {
+      "command": [
+        "/Users/fan/project/toolchain/android-sdk/platform-tools/adb",
+        "-P",
+        "5038",
+        "-s",
+        "emulator-5580",
+        "shell",
+        "am",
+        "force-stop",
+        "app.droidondarwin.fixture.jni"
+      ],
+      "returncode": 0,
+      "output": ""
+    },
+    {
+      "command": [
+        "/Users/fan/project/toolchain/android-sdk/platform-tools/adb",
+        "-P",
+        "5038",
+        "-s",
+        "emulator-5580",
+        "logcat",
+        "-c"
+      ],
+      "returncode": 0,
+      "output": ""
+    },
+    {
+      "command": [
+        "/Users/fan/project/toolchain/android-sdk/platform-tools/adb",
+        "-P",
+        "5038",
+        "-s",
+        "emulator-5580",
+        "shell",
+        "am",
+        "start",
+        "-W",
+        "-n",
+        "app.droidondarwin.fixture.jni/app.droidondarwin.fixture.MainActivity"
+      ],
+      "returncode": 0,
+      "output": "Starting: Intent { cmp=app.droidondarwin.fixture.jni/app.droidondarwin.fixture.MainActivity }\nStatus: ok\nLaunchState: COLD\nActivity: app.droidondarwin.fixture.jni/app.droidondarwin.fixture.MainActivity\nTotalTime: 1142\nWaitTime: 1144\nComplete\n"
+    },
+    {
+      "command": [
+        "/Users/fan/project/toolchain/android-sdk/platform-tools/adb",
+        "-P",
+        "5038",
+        "-s",
+        "emulator-5580",
+        "logcat",
+        "-d",
+        "-v",
+        "raw",
+        "-s",
+        "DroidApkFixture:I",
+        "*:S"
+      ],
+      "returncode": 0,
+      "output": "--------- beginning of main\n{\"status\":\"passed\",\"package\":\"app.droidondarwin.fixture.jni\",\"mode\":\"jni\",\"version\":1,\"value\":101,\"marker\":\"b98a81ca-d1bf-43c2-b10a-3214442859cc\",\"created_now\":true,\"created_version\":1,\"launch_count\":1}\n"
+    },
+    {
+      "command": [
+        "/Users/fan/project/toolchain/android-sdk/platform-tools/adb",
+        "-P",
+        "5038",
+        "-s",
+        "emulator-5580",
+        "shell",
+        "pm",
+        "path",
+        "app.droidondarwin.fixture.jni"
+      ],
+      "returncode": 0,
+      "output": "package:/data/app/~~2nlcQIY50M3vcKvjw4d61Q==/app.droidondarwin.fixture.jni-tNIsX0jyCsPE3LocOjBpjg==/base.apk\n"
+    },
+    {
+      "command": [
+        "/Users/fan/project/toolchain/android-sdk/platform-tools/adb",
+        "-P",
+        "5038",
+        "-s",
+        "emulator-5580",
+        "shell",
+        "sha256sum",
+        "/data/app/~~2nlcQIY50M3vcKvjw4d61Q==/app.droidondarwin.fixture.jni-tNIsX0jyCsPE3LocOjBpjg==/base.apk"
+      ],
+      "returncode": 0,
+      "output": "13fd15bbaf90d5c58daff8be487438f8937eed728faaaf21ab8e209921d50c3e  /data/app/~~2nlcQIY50M3vcKvjw4d61Q==/app.droidondarwin.fixture.jni-tNIsX0jyCsPE3LocOjBpjg==/base.apk\n"
+    },
+    {
+      "command": [
+        "/Users/fan/project/toolchain/android-sdk/platform-tools/adb",
+        "-P",
+        "5038",
+        "-s",
+        "emulator-5580",
+        "install",
+        "-r",
+        "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/apk-fixture/java-v2.apk"
+      ],
+      "returncode": 0,
+      "output": "Performing Streamed Install\nSuccess\n"
+    },
+    {
+      "command": [
+        "/Users/fan/project/toolchain/android-sdk/platform-tools/adb",
+        "-P",
+        "5038",
+        "-s",
+        "emulator-5580",
+        "shell",
+        "am",
+        "force-stop",
+        "app.droidondarwin.fixture.java"
+      ],
+      "returncode": 0,
+      "output": ""
+    },
+    {
+      "command": [
+        "/Users/fan/project/toolchain/android-sdk/platform-tools/adb",
+        "-P",
+        "5038",
+        "-s",
+        "emulator-5580",
+        "logcat",
+        "-c"
+      ],
+      "returncode": 0,
+      "output": ""
+    },
+    {
+      "command": [
+        "/Users/fan/project/toolchain/android-sdk/platform-tools/adb",
+        "-P",
+        "5038",
+        "-s",
+        "emulator-5580",
+        "shell",
+        "am",
+        "start",
+        "-W",
+        "-n",
+        "app.droidondarwin.fixture.java/app.droidondarwin.fixture.MainActivity"
+      ],
+      "returncode": 0,
+      "output": "Starting: Intent { cmp=app.droidondarwin.fixture.java/app.droidondarwin.fixture.MainActivity }\nStatus: ok\nLaunchState: COLD\nActivity: app.droidondarwin.fixture.java/app.droidondarwin.fixture.MainActivity\nTotalTime: 2053\nWaitTime: 2099\nComplete\n"
+    },
+    {
+      "command": [
+        "/Users/fan/project/toolchain/android-sdk/platform-tools/adb",
+        "-P",
+        "5038",
+        "-s",
+        "emulator-5580",
+        "logcat",
+        "-d",
+        "-v",
+        "raw",
+        "-s",
+        "DroidApkFixture:I",
+        "*:S"
+      ],
+      "returncode": 0,
+      "output": "--------- beginning of main\n{\"status\":\"passed\",\"package\":\"app.droidondarwin.fixture.java\",\"mode\":\"java\",\"version\":2,\"value\":102,\"marker\":\"f59547b3-fd91-4173-89c0-2583021b63f9\",\"created_now\":false,\"created_version\":1,\"launch_count\":2}\n"
+    },
+    {
+      "command": [
+        "/Users/fan/project/toolchain/android-sdk/platform-tools/adb",
+        "-P",
+        "5038",
+        "-s",
+        "emulator-5580",
+        "shell",
+        "pm",
+        "path",
+        "app.droidondarwin.fixture.java"
+      ],
+      "returncode": 0,
+      "output": "package:/data/app/~~rJ6FRFL47lK4-Ir9R6eisg==/app.droidondarwin.fixture.java-1iWcYxJ5m56fJDou778s7A==/base.apk\n"
+    },
+    {
+      "command": [
+        "/Users/fan/project/toolchain/android-sdk/platform-tools/adb",
+        "-P",
+        "5038",
+        "-s",
+        "emulator-5580",
+        "shell",
+        "sha256sum",
+        "/data/app/~~rJ6FRFL47lK4-Ir9R6eisg==/app.droidondarwin.fixture.java-1iWcYxJ5m56fJDou778s7A==/base.apk"
+      ],
+      "returncode": 0,
+      "output": "cf8c7053d6a71bbfc7a460f00f5a6107813e77de89a8dcb3b18ea1cf02c41611  /data/app/~~rJ6FRFL47lK4-Ir9R6eisg==/app.droidondarwin.fixture.java-1iWcYxJ5m56fJDou778s7A==/base.apk\n"
+    },
+    {
+      "command": [
+        "/Users/fan/project/toolchain/android-sdk/platform-tools/adb",
+        "-P",
+        "5038",
+        "-s",
+        "emulator-5580",
+        "install",
+        "-r",
+        "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/apk-fixture/jni-v2.apk"
+      ],
+      "returncode": 0,
+      "output": "Performing Streamed Install\nSuccess\n"
+    },
+    {
+      "command": [
+        "/Users/fan/project/toolchain/android-sdk/platform-tools/adb",
+        "-P",
+        "5038",
+        "-s",
+        "emulator-5580",
+        "shell",
+        "am",
+        "force-stop",
+        "app.droidondarwin.fixture.jni"
+      ],
+      "returncode": 0,
+      "output": ""
+    },
+    {
+      "command": [
+        "/Users/fan/project/toolchain/android-sdk/platform-tools/adb",
+        "-P",
+        "5038",
+        "-s",
+        "emulator-5580",
+        "logcat",
+        "-c"
+      ],
+      "returncode": 0,
+      "output": ""
+    },
+    {
+      "command": [
+        "/Users/fan/project/toolchain/android-sdk/platform-tools/adb",
+        "-P",
+        "5038",
+        "-s",
+        "emulator-5580",
+        "shell",
+        "am",
+        "start",
+        "-W",
+        "-n",
+        "app.droidondarwin.fixture.jni/app.droidondarwin.fixture.MainActivity"
+      ],
+      "returncode": 0,
+      "output": "Starting: Intent { cmp=app.droidondarwin.fixture.jni/app.droidondarwin.fixture.MainActivity }\nStatus: ok\nLaunchState: COLD\nActivity: app.droidondarwin.fixture.jni/app.droidondarwin.fixture.MainActivity\nTotalTime: 800\nWaitTime: 835\nComplete\n"
+    },
+    {
+      "command": [
+        "/Users/fan/project/toolchain/android-sdk/platform-tools/adb",
+        "-P",
+        "5038",
+        "-s",
+        "emulator-5580",
+        "logcat",
+        "-d",
+        "-v",
+        "raw",
+        "-s",
+        "DroidApkFixture:I",
+        "*:S"
+      ],
+      "returncode": 0,
+      "output": "--------- beginning of main\n{\"status\":\"passed\",\"package\":\"app.droidondarwin.fixture.jni\",\"mode\":\"jni\",\"version\":2,\"value\":102,\"marker\":\"b98a81ca-d1bf-43c2-b10a-3214442859cc\",\"created_now\":false,\"created_version\":1,\"launch_count\":2}\n"
+    },
+    {
+      "command": [
+        "/Users/fan/project/toolchain/android-sdk/platform-tools/adb",
+        "-P",
+        "5038",
+        "-s",
+        "emulator-5580",
+        "shell",
+        "pm",
+        "path",
+        "app.droidondarwin.fixture.jni"
+      ],
+      "returncode": 0,
+      "output": "package:/data/app/~~Fe-JdbFv4EPogdVHQ0Zm4g==/app.droidondarwin.fixture.jni-RmHbynweAvYeUFH6TuHnSw==/base.apk\n"
+    },
+    {
+      "command": [
+        "/Users/fan/project/toolchain/android-sdk/platform-tools/adb",
+        "-P",
+        "5038",
+        "-s",
+        "emulator-5580",
+        "shell",
+        "sha256sum",
+        "/data/app/~~Fe-JdbFv4EPogdVHQ0Zm4g==/app.droidondarwin.fixture.jni-RmHbynweAvYeUFH6TuHnSw==/base.apk"
+      ],
+      "returncode": 0,
+      "output": "8cfeb77e0460a794bbb686d550ea825052da5ead78225b29798feacab4ad1dc4  /data/app/~~Fe-JdbFv4EPogdVHQ0Zm4g==/app.droidondarwin.fixture.jni-RmHbynweAvYeUFH6TuHnSw==/base.apk\n"
+    },
+    {
+      "command": [
+        "/Users/fan/project/toolchain/android-sdk/platform-tools/adb",
+        "-P",
+        "5038",
+        "-s",
+        "emulator-5580",
+        "shell",
+        "sync"
+      ],
+      "returncode": 0,
+      "output": ""
+    },
+    {
+      "command": [
+        "/Users/fan/project/toolchain/android-sdk/platform-tools/adb",
+        "-P",
+        "5038",
+        "-s",
+        "emulator-5580",
+        "emu",
+        "kill"
+      ],
+      "returncode": 0,
+      "output": "OK: killing emulator, bye bye\nOK\n"
+    },
+    {
+      "command": [
+        "/Users/fan/project/toolchain/android-sdk/platform-tools/adb",
+        "-P",
+        "5038",
+        "-s",
+        "emulator-5580",
+        "shell",
+        "input",
+        "keyevent",
+        "82"
+      ],
+      "returncode": 0,
+      "output": ""
+    },
+    {
+      "command": [
+        "/Users/fan/project/toolchain/android-sdk/platform-tools/adb",
+        "-P",
+        "5038",
+        "-s",
+        "emulator-5580",
+        "shell",
+        "am",
+        "force-stop",
+        "app.droidondarwin.fixture.java"
+      ],
+      "returncode": 0,
+      "output": ""
+    },
+    {
+      "command": [
+        "/Users/fan/project/toolchain/android-sdk/platform-tools/adb",
+        "-P",
+        "5038",
+        "-s",
+        "emulator-5580",
+        "logcat",
+        "-c"
+      ],
+      "returncode": 0,
+      "output": ""
+    },
+    {
+      "command": [
+        "/Users/fan/project/toolchain/android-sdk/platform-tools/adb",
+        "-P",
+        "5038",
+        "-s",
+        "emulator-5580",
+        "shell",
+        "am",
+        "start",
+        "-W",
+        "-n",
+        "app.droidondarwin.fixture.java/app.droidondarwin.fixture.MainActivity"
+      ],
+      "returncode": 0,
+      "output": "Starting: Intent { cmp=app.droidondarwin.fixture.java/app.droidondarwin.fixture.MainActivity }\nStatus: ok\nLaunchState: COLD\nActivity: app.droidondarwin.fixture.java/app.droidondarwin.fixture.MainActivity\nTotalTime: 907\nWaitTime: 953\nComplete\n"
+    },
+    {
+      "command": [
+        "/Users/fan/project/toolchain/android-sdk/platform-tools/adb",
+        "-P",
+        "5038",
+        "-s",
+        "emulator-5580",
+        "logcat",
+        "-d",
+        "-v",
+        "raw",
+        "-s",
+        "DroidApkFixture:I",
+        "*:S"
+      ],
+      "returncode": 0,
+      "output": "--------- beginning of main\n{\"status\":\"passed\",\"package\":\"app.droidondarwin.fixture.java\",\"mode\":\"java\",\"version\":2,\"value\":102,\"marker\":\"f59547b3-fd91-4173-89c0-2583021b63f9\",\"created_now\":false,\"created_version\":1,\"launch_count\":3}\n"
+    },
+    {
+      "command": [
+        "/Users/fan/project/toolchain/android-sdk/platform-tools/adb",
+        "-P",
+        "5038",
+        "-s",
+        "emulator-5580",
+        "shell",
+        "pm",
+        "path",
+        "app.droidondarwin.fixture.java"
+      ],
+      "returncode": 0,
+      "output": "package:/data/app/~~rJ6FRFL47lK4-Ir9R6eisg==/app.droidondarwin.fixture.java-1iWcYxJ5m56fJDou778s7A==/base.apk\n"
+    },
+    {
+      "command": [
+        "/Users/fan/project/toolchain/android-sdk/platform-tools/adb",
+        "-P",
+        "5038",
+        "-s",
+        "emulator-5580",
+        "shell",
+        "sha256sum",
+        "/data/app/~~rJ6FRFL47lK4-Ir9R6eisg==/app.droidondarwin.fixture.java-1iWcYxJ5m56fJDou778s7A==/base.apk"
+      ],
+      "returncode": 0,
+      "output": "cf8c7053d6a71bbfc7a460f00f5a6107813e77de89a8dcb3b18ea1cf02c41611  /data/app/~~rJ6FRFL47lK4-Ir9R6eisg==/app.droidondarwin.fixture.java-1iWcYxJ5m56fJDou778s7A==/base.apk\n"
+    },
+    {
+      "command": [
+        "/Users/fan/project/toolchain/android-sdk/platform-tools/adb",
+        "-P",
+        "5038",
+        "-s",
+        "emulator-5580",
+        "shell",
+        "am",
+        "force-stop",
+        "app.droidondarwin.fixture.jni"
+      ],
+      "returncode": 0,
+      "output": ""
+    },
+    {
+      "command": [
+        "/Users/fan/project/toolchain/android-sdk/platform-tools/adb",
+        "-P",
+        "5038",
+        "-s",
+        "emulator-5580",
+        "logcat",
+        "-c"
+      ],
+      "returncode": 0,
+      "output": ""
+    },
+    {
+      "command": [
+        "/Users/fan/project/toolchain/android-sdk/platform-tools/adb",
+        "-P",
+        "5038",
+        "-s",
+        "emulator-5580",
+        "shell",
+        "am",
+        "start",
+        "-W",
+        "-n",
+        "app.droidondarwin.fixture.jni/app.droidondarwin.fixture.MainActivity"
+      ],
+      "returncode": 0,
+      "output": "Starting: Intent { cmp=app.droidondarwin.fixture.jni/app.droidondarwin.fixture.MainActivity }\nStatus: ok\nLaunchState: COLD\nActivity: app.droidondarwin.fixture.jni/app.droidondarwin.fixture.MainActivity\nTotalTime: 451\nWaitTime: 459\nComplete\n"
+    },
+    {
+      "command": [
+        "/Users/fan/project/toolchain/android-sdk/platform-tools/adb",
+        "-P",
+        "5038",
+        "-s",
+        "emulator-5580",
+        "logcat",
+        "-d",
+        "-v",
+        "raw",
+        "-s",
+        "DroidApkFixture:I",
+        "*:S"
+      ],
+      "returncode": 0,
+      "output": "--------- beginning of main\n{\"status\":\"passed\",\"package\":\"app.droidondarwin.fixture.jni\",\"mode\":\"jni\",\"version\":2,\"value\":102,\"marker\":\"b98a81ca-d1bf-43c2-b10a-3214442859cc\",\"created_now\":false,\"created_version\":1,\"launch_count\":3}\n"
+    },
+    {
+      "command": [
+        "/Users/fan/project/toolchain/android-sdk/platform-tools/adb",
+        "-P",
+        "5038",
+        "-s",
+        "emulator-5580",
+        "shell",
+        "pm",
+        "path",
+        "app.droidondarwin.fixture.jni"
+      ],
+      "returncode": 0,
+      "output": "package:/data/app/~~Fe-JdbFv4EPogdVHQ0Zm4g==/app.droidondarwin.fixture.jni-RmHbynweAvYeUFH6TuHnSw==/base.apk\n"
+    },
+    {
+      "command": [
+        "/Users/fan/project/toolchain/android-sdk/platform-tools/adb",
+        "-P",
+        "5038",
+        "-s",
+        "emulator-5580",
+        "shell",
+        "sha256sum",
+        "/data/app/~~Fe-JdbFv4EPogdVHQ0Zm4g==/app.droidondarwin.fixture.jni-RmHbynweAvYeUFH6TuHnSw==/base.apk"
+      ],
+      "returncode": 0,
+      "output": "8cfeb77e0460a794bbb686d550ea825052da5ead78225b29798feacab4ad1dc4  /data/app/~~Fe-JdbFv4EPogdVHQ0Zm4g==/app.droidondarwin.fixture.jni-RmHbynweAvYeUFH6TuHnSw==/base.apk\n"
+    },
+    {
+      "command": [
+        "/Users/fan/project/toolchain/android-sdk/platform-tools/adb",
+        "-P",
+        "5038",
+        "-s",
+        "emulator-5580",
+        "emu",
+        "kill"
+      ],
+      "returncode": 0,
+      "output": "OK: killing emulator, bye bye\nOK\n"
+    },
+    {
+      "command": [
+        "/Users/fan/project/toolchain/android-sdk/platform-tools/adb",
+        "-P",
+        "5038",
+        "kill-server"
+      ],
+      "returncode": 0,
+      "output": ""
+    }
+  ],
+  "results": [
+    {
+      "stage": "fresh-v1",
+      "application": {
+        "status": "passed",
+        "package": "app.droidondarwin.fixture.java",
+        "mode": "java",
+        "version": 1,
+        "value": 101,
+        "marker": "f59547b3-fd91-4173-89c0-2583021b63f9",
+        "created_now": true,
+        "created_version": 1,
+        "launch_count": 1
+      },
+      "installed_apk": "/data/app/~~dSiO4uiFI8OE5jfF-vyaNQ==/app.droidondarwin.fixture.java-rSGjorUQiH66xMbZ3VCqug==/base.apk",
+      "installed_apk_sha256": "c39c5ca4db331513759e4e98417a643c81df76062e593bae631562b415063527"
+    },
+    {
+      "stage": "fresh-v1",
+      "application": {
+        "status": "passed",
+        "package": "app.droidondarwin.fixture.jni",
+        "mode": "jni",
+        "version": 1,
+        "value": 101,
+        "marker": "b98a81ca-d1bf-43c2-b10a-3214442859cc",
+        "created_now": true,
+        "created_version": 1,
+        "launch_count": 1
+      },
+      "installed_apk": "/data/app/~~2nlcQIY50M3vcKvjw4d61Q==/app.droidondarwin.fixture.jni-tNIsX0jyCsPE3LocOjBpjg==/base.apk",
+      "installed_apk_sha256": "13fd15bbaf90d5c58daff8be487438f8937eed728faaaf21ab8e209921d50c3e"
+    },
+    {
+      "stage": "updated-v2",
+      "application": {
+        "status": "passed",
+        "package": "app.droidondarwin.fixture.java",
+        "mode": "java",
+        "version": 2,
+        "value": 102,
+        "marker": "f59547b3-fd91-4173-89c0-2583021b63f9",
+        "created_now": false,
+        "created_version": 1,
+        "launch_count": 2
+      },
+      "installed_apk": "/data/app/~~rJ6FRFL47lK4-Ir9R6eisg==/app.droidondarwin.fixture.java-1iWcYxJ5m56fJDou778s7A==/base.apk",
+      "installed_apk_sha256": "cf8c7053d6a71bbfc7a460f00f5a6107813e77de89a8dcb3b18ea1cf02c41611"
+    },
+    {
+      "stage": "updated-v2",
+      "application": {
+        "status": "passed",
+        "package": "app.droidondarwin.fixture.jni",
+        "mode": "jni",
+        "version": 2,
+        "value": 102,
+        "marker": "b98a81ca-d1bf-43c2-b10a-3214442859cc",
+        "created_now": false,
+        "created_version": 1,
+        "launch_count": 2
+      },
+      "installed_apk": "/data/app/~~Fe-JdbFv4EPogdVHQ0Zm4g==/app.droidondarwin.fixture.jni-RmHbynweAvYeUFH6TuHnSw==/base.apk",
+      "installed_apk_sha256": "8cfeb77e0460a794bbb686d550ea825052da5ead78225b29798feacab4ad1dc4"
+    },
+    {
+      "stage": "restarted-v2",
+      "application": {
+        "status": "passed",
+        "package": "app.droidondarwin.fixture.java",
+        "mode": "java",
+        "version": 2,
+        "value": 102,
+        "marker": "f59547b3-fd91-4173-89c0-2583021b63f9",
+        "created_now": false,
+        "created_version": 1,
+        "launch_count": 3
+      },
+      "installed_apk": "/data/app/~~rJ6FRFL47lK4-Ir9R6eisg==/app.droidondarwin.fixture.java-1iWcYxJ5m56fJDou778s7A==/base.apk",
+      "installed_apk_sha256": "cf8c7053d6a71bbfc7a460f00f5a6107813e77de89a8dcb3b18ea1cf02c41611"
+    },
+    {
+      "stage": "restarted-v2",
+      "application": {
+        "status": "passed",
+        "package": "app.droidondarwin.fixture.jni",
+        "mode": "jni",
+        "version": 2,
+        "value": 102,
+        "marker": "b98a81ca-d1bf-43c2-b10a-3214442859cc",
+        "created_now": false,
+        "created_version": 1,
+        "launch_count": 3
+      },
+      "installed_apk": "/data/app/~~Fe-JdbFv4EPogdVHQ0Zm4g==/app.droidondarwin.fixture.jni-RmHbynweAvYeUFH6TuHnSw==/base.apk",
+      "installed_apk_sha256": "8cfeb77e0460a794bbb686d550ea825052da5ead78225b29798feacab4ad1dc4"
+    }
+  ],
+  "passed": true,
+  "config_sha256": "98cd0c378c3b6129fb54658fefc28094f4377da4b1f81c6b380227296f77e154",
+  "input_manifest_sha256": "ff9af0046a14d3033f6f71f784822eaffc8c6930775eb0765fc8479c70d69eb7",
+  "image_source_properties": "Pkg.Desc=System Image arm64-v8a with Google APIs.\nPkg.Revision=9\nPkg.Dependencies=emulator#33.1.24\nAndroidVersion.ApiLevel=35\nAndroidVersion.ExtensionLevel=13\nAndroidVersion.IsBaseSdk=true\nSystemImage.Abi=arm64-v8a\nSystemImage.TagId=google_apis\nSystemImage.TagDisplay=Google APIs\nSystemImage.GpuSupport=true\nAddon.VendorId=google\nAddon.VendorDisplay=Google Inc.\n\n",
+  "emulator_version": "Android emulator version 37.3.2.0 (build_id 16433917) (CL:N/A)\nCopyright (C) 2006-2024 The Android Open Source Project and many others.\nThis program is a derivative of the QEMU CPU emulator (www.qemu.org).\n\n  This software is licensed under the terms of the GNU General Public\n  License version 2, as published by the Free Software Foundation, and\n  may be copied, distributed, and modified under those terms.\n\n  This program is distributed in the hope that it will be useful,\n  but WITHOUT ANY WARRANTY; without even the implied warranty of\n  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\n  GNU General Public License for more details.\n\n",
+  "emulator_commands": [
+    [
+      "/Users/fan/project/toolchain/android-sdk/emulator/emulator",
+      "-avd",
+      "dod_apk_fixture_api35",
+      "-port",
+      "5580",
+      "-no-snapshot",
+      "-no-audio",
+      "-no-boot-anim",
+      "-cores",
+      "2",
+      "-memory",
+      "2048",
+      "-gpu",
+      "host",
+      "-no-metrics",
+      "-verbose"
+    ],
+    [
+      "/Users/fan/project/toolchain/android-sdk/emulator/emulator",
+      "-avd",
+      "dod_apk_fixture_api35",
+      "-port",
+      "5580",
+      "-no-snapshot",
+      "-no-audio",
+      "-no-boot-anim",
+      "-cores",
+      "2",
+      "-memory",
+      "2048",
+      "-gpu",
+      "host",
+      "-no-metrics",
+      "-verbose"
+    ]
+  ],
+  "emulator_pids": [
+    16312,
+    19129
+  ],
+  "guest_properties": {
+    "ro.build.fingerprint": "google/sdk_gphone64_arm64/emu64a:15/AE3A.240806.043/12960925:userdebug/dev-keys",
+    "ro.build.version.release": "15",
+    "ro.build.version.sdk": "35",
+    "ro.product.cpu.abi": "arm64-v8a"
+  },
+  "guest_page_size": "4096",
+  "guest_kernel": "Linux localhost 6.6.30-android15-8-gdd9c02ccfe27-ab11987101-4k #1 SMP PREEMPT Tue Jun 18 20:50:32 UTC 2024 aarch64 Toybox",
+  "emulator_exits": [
+    -9,
+    0
+  ]
+}
