@@ -46,6 +46,18 @@ def main():
     reject([sparse], 'sparse', False)
     reject([dict(low, guest_end=(1 << 32) + 0x10000, guest_span_bytes=1 << 32)], 'low')
     reject([dict(low, reservation_base=(1 << 40) - 16384, physical_base=(1 << 40) - 16384)], 'low')
+    for original in (low, sparse):
+        row = dict(original, flat_coverage_bytes=0)
+        mode = row['mode']
+        assert validate_guest_layout([row], mode, False, 4096)
+        for changed in (dict(row, flat_coverage_bytes=1 << 32),
+                        dict(row, reservation_base=(1 << 39) - 16384, physical_base=(1 << 39) - 16384),
+                        dict(row, guest_end=1 << 39, guest_span_bytes=(1 << 39) - 0x10000),
+                        dict(row, ram_base=row['guest_base'])):
+            assert not validate_guest_layout([changed], mode, False, 4096)
+            rejected += 1
+        assert not validate_guest_layout([original], mode, True, 4096)
+        rejected += 1
     script = Path(__file__).with_name('probe_lkl_translation.py')
     common = [sys.executable, script, '--guest-layout', 'low', '--mapping', 'pte',
               '--execution', 'direct', '--direct-memory', 'flat', '--cpus', '1', '--build-only']

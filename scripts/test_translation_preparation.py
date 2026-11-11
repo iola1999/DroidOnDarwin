@@ -19,13 +19,15 @@ def main():
     args = parser.parse_args()
     report = json.loads(args.report.read_text())
     config = report['configuration']
-    if config['code_memory'] != 'dual' or config['workload'] != 'core' or config['execution'] != 'direct':
-        parser.error('需要双映射 Direct 核心检查结果')
+    direct = config['execution'] == 'direct'
+    unicorn_4k = config['execution'] == 'unicorn' and config.get('guest_page_bytes') == 4096
+    if config['code_memory'] != 'dual' or config['workload'] != 'core' or not (direct or unicorn_4k):
+        parser.error('需要双映射 Direct 或受限 4 KiB Unicorn 核心检查结果')
     if not all(run['validated'] for run in report['runs']):
         parser.error('核心检查尚未成功')
     layout = config.get('guest_layout', 'host')
     if layout not in ('host', 'low', 'sparse') or (layout in ('low', 'sparse') and (
-            config['mapping'] != 'pte' or config['cpus'] != 1 or config['direct']['memory'] != 'flat')):
+            config['mapping'] != 'pte' or config['cpus'] != 1 or (direct and config['direct']['memory'] != 'flat'))):
         parser.error('客体布局与核心检查配置不兼容')
     for name, digest in report['sha256'].items():
         if hashlib.sha256((ROOT / name).read_bytes()).hexdigest() != digest:
@@ -45,8 +47,9 @@ def main():
                          '#define mach_vm_map nce_test_reservation_mach_vm_map\n'
                          '#include ' + json.dumps(str(EXP / 'translation/linux-execution.c')) + '\n')
     environment = {**{key: value for key, value in os.environ.items() if not key.startswith('NCE_')}, 'NCE_TRANSLATION_CACHE_MIB': '16', 'NCE_TRANSLATION_PREEMPTION': 'timer',
-                   'NCE_TRANSLATION_GUEST_LAYOUT': layout, 'NCE_DIRECT_MEMORY': 'flat',
-                   'NCE_DIRECT_NATIVE_EXCLUSIVE': '1', 'NCE_DIRECT_CROSS_PAGE': '1'}
+                   'NCE_TRANSLATION_GUEST_LAYOUT': layout, 'NCE_TRANSLATION_DATA_TBI': str(int(config.get('data_tbi', False)))}
+    if direct:
+        environment.update(NCE_DIRECT_MEMORY='flat', NCE_DIRECT_NATIVE_EXCLUSIVE='1', NCE_DIRECT_CROSS_PAGE='1')
     result = {'source_report': str(args.report), 'source_report_sha256': hashlib.sha256(args.report.read_bytes()).hexdigest(),
               'platform': platform.platform(),
               'cpu': subprocess.check_output(['sysctl', '-n', 'machdep.cpu.brand_string'], text=True).strip(),
@@ -59,7 +62,7 @@ def main():
         command = next(list(cmd) for cmd in report['commands'] if '-o' in cmd and Path(cmd[cmd.index('-o') + 1]).name == entry)
         includes = [command[i + 1] for i, flag in enumerate(command[:-1]) if flag == '-I']
         kernel = next(Path(path) / 'lkl-image.bin' for path in includes if (Path(path) / 'lkl-image.bin').is_file())
-        original = next(path for path in command if path.endswith('/direct/code-memory.o'))
+        original = next(path for path in command if path.endswith('/direct/code-memory.o')) if direct else str(EXP / 'code-memory.c')
         command[command.index(original)] = str(renamed)
         command[command.index(str(EXP / 'translation/linux-execution.c'))] = str(execution)
         command[command.index('-o') + 1] = str(out / entry)
@@ -67,7 +70,7 @@ def main():
         subprocess.run(command, check=True, timeout=120)
         result['commands'].append(command)
         result['sha256'][str((out / entry).relative_to(ROOT))] = hashlib.sha256((out / entry).read_bytes()).hexdigest()
-        last_attempt = 1 + 2 * config['cpus']
+        last_attempt = 1 + (2 if direct else 1) * config['cpus']
         cases = [(attempt, False) for attempt in range(1, last_attempt + 1)] + [(last_attempt, True)]
         for attempt, retain_tail in cases:
             case = 'retained-tail' if retain_tail else 'complete'

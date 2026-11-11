@@ -949,7 +949,7 @@ unsigned long translation_linux_setup(void *kernel, unsigned long copy_user_offs
     const char *layout_memory = getenv("NCE_DIRECT_MEMORY");
     REQUIRE(!separate_guest || (layout_memory && !strcmp(layout_memory, "flat")));
 #else
-    REQUIRE(!separate_guest || (low_guest_layout && NCE_GUEST_PAGE_SHIFT == 12));
+    REQUIRE(!separate_guest || NCE_GUEST_PAGE_SHIFT == 12);
 #endif
 #ifdef NCE_SMP
     REQUIRE(translation && execution_count == 2);

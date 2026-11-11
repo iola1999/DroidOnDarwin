@@ -146,6 +146,46 @@ python3 -B scripts/probe_lkl_translation.py --guest-page-bytes 4096 --guest-layo
 
 独立树合入主树 `4439e996f3fa90b1afc2b486ff370cca2a54774f` 的 sparse、TBI、原始 ART 与标准动态映射实现。合并保留 4 KiB 构建及现有 low/Unicorn 限制，后续组合范围在新增实现前继续记录。合并冲突涉及运行器配置、结果校验和已有标准 JIT 记录；原始组件结果继续对应 `ee745ce`，不改写其构建身份。
 
+### 4 KiB、64 GiB 与 TBI 组合提案
+
+低 4 GiB 对照已确认原始 HyperOS linker 可以在 4 KiB 下执行，随后遇到 8.25 GiB Scudo 预留。主树 `4439e99` 已实现 sparse 与用户数据 TBI，并完成原始 SDK Bionic 与标准 JNI 检查。下一阶段组合这些已验证条件，仍限定 Mac、单 CPU、Unicorn/PTE、core/Bionic；原始四文件继续逐项校验，默认 16 KiB、Direct 和 SMP 的接受条件保持现状。
+
+4 KiB 页表的位移为 12/21/30，每级 9 位，覆盖 `[0, 2^39)`；64 GiB 的客体上界 `2^36` 在其范围内。RAM 别名与 VMALLOC 的完整宿主 reservation 必须位于客体数值范围外且低于 `2^39`；backing 继续与客体及 reservation 分离。Unicorn 使用 PTE，`flat_enabled` 保持关闭，报告要求 `flat_coverage_bytes=0`。VMALLOC 保留完整 16 KiB 组、连续物理页和同权限条件，NOFAIL 与 huge-vmap 的受限处理不变。
+
+新增 sparse/TBI guest 检查中的 `PAGE` 将取现有构建参数，实际覆盖相邻 4 KiB 权限、跨页、fork/COW、高地址共享、9 GiB 预留与末页物化。宿主 sparse 测试缓冲的分配和释放继续使用 16 KiB；同值宿主/客体指针的来源检查保持原接口。结果验证按实际 guest 页大小调用已有布局、标准 JIT 与 TBI 校验；标准 JIT 使用命名参数分别传入 `data_tbi` 和 `guest_page_bytes`，拒绝 flat、错误上界、页大小和缺失配置。继续拒绝带标签取指和 tagged syscall ABI。
+
+先执行 sparse core CLI/GCD，再复用准备失败回归覆盖 kernel/Unicorn 两个执行内存准备点，核对完整 1.0625 GiB reservation 释放，并用保留最后一个宿主页的负对照检查遗漏。随后执行原始 HyperOS Bionic CLI/GCD；成功标准为帮助入口、动态 `main` 和五项组件检查全部成功。若仍失败，保存第一个实际故障与完整输入，按具体条件继续调查。当前组合没有完整 Android、原始 ART 或 iOS 验收结论。
+
+本轮复用 sparse 配置和 TBI 实现，不增加任意地址容量参数或新的地址转换表。独立依赖先合并为 `1d4e099`，再通过 `c8df64e` 合入主树 `fd063ca` 的 tagged IC 修复；后续交付只提供该基础之上的实现与结果提交。临时关闭 TBI 可用于确认 tagged 访问边界；修改原始 libc 或重建 Scudo 会改变本轮输入条件，未采用。
+
+### 组合阶段结果（2026-11-12）
+
+[完整归档](../../../../experiments/native-linux/results-guest-4k-sparse-tbi-20261112.json)为 601621 字节，SHA256 `66d1b2032448aebcda22bdf5fcdd9a7ffc5b27c56e59ebe10b87364bda6f2d08`，保存 4 KiB core、默认 16 KiB 回归、HyperOS 原始 Bionic、准备失败与宿主 alias 五份报告，以及三组实际运行的 stdout/stderr。基础为依赖合并 `c8df64e`；环境仍为 Apple M5 Ultra、macOS 27.0 / `26A428`、16 KiB 宿主页。运行与其他本机功能验证有重叠，不作性能比较。
+
+| 检查 | CLI | GCD | 配置与范围 |
+| --- | --- | --- | --- |
+| 4 KiB sparse core | 69 条成功，69/69 上下文回收 | 69 条成功，69/69 上下文回收 | 64 GiB、单 CPU、Unicorn/PTE、TBI 开启、28 项标准 JIT |
+| 默认 16 KiB core | 66 条成功，68/68 上下文回收 | 66 条成功，68/68 上下文回收 | host、同一执行后端、TBI 开启、28 项标准 JIT |
+| 4 KiB sparse 准备失败 | 两个失败点及末页负对照通过 | 两个失败点及末页负对照通过 | kernel/Unicorn 执行内存；完整 1.0625 GiB reservation |
+| HyperOS 原始 Bionic | linker、`main`、五项组件检查成功 | linker、`main`、五项组件检查成功 | 原四文件，4 KiB、64 GiB、TBI 开启 |
+
+两轮 4 KiB core 的 `guest_base=65536`、`guest_end=68719476736`、`flat_coverage_bytes=0`，RAM 别名为 `481036337152`、backing 为 `482177187840`，reservation 长度 `1140850688`。实际地址满足客体与宿主 RAM 分离，以及 4 KiB 三级页表的 `2^39` 上界。两入口各产生 47 次 tagged TLB fill 和 23 次 alias flush；`unicorn_tagged_pwrite_updates` 均为 3，覆盖 `0x02`、`0xB4`、`0xFF`。高位非法别名新增 `2^39` 检查，现有 `2^32`、`2^48` 与未映射用户复制检查继续执行。
+
+原始 HyperOS linker 帮助入口和动态程序均退出 0。`component_main` 同时报告 `aux_page_size=4096`、`page_size=4096`，`page_bss`、`allocation`、`allocation_contents`、`thread_tls`、`dynamic_libm` 五项均为 true；两个入口的 `component_compatible=true`，上下文各 4/4 回收。Scudo 的 8858370048 字节预留在 CLI 返回 `822083584`，GCD 返回 `794820608`，随后分配内容与线程 TLS 检查成功。原始四文件及清单在运行结束后重新核对一致。本轮完成该 runtime 的组件验收；完整 HyperOS、原始 HyperOS ART、Direct 4 KiB、SMP 和 iOS 仍待后续检查。
+
+准备失败复用现有 C 包装和 Mach VM 查询。第一个失败点尚未创建 reservation，第二个失败点创建并完整释放 1140850688 字节。两轮末页负对照故意保留最后 16384 字节，实际 `passed=false`、`unmapped=false`，验证器据此确认检查能发现释放遗漏。宿主 alias 26 项也重新通过。五份报告分别 64、63、66、8、9 项摘要与最终文件匹配。
+
+```sh
+python3 -B scripts/probe_lkl_translation.py --guest-page-bytes 4096 --guest-layout sparse --data-tbi 1 --mapping pte --execution unicorn --code-memory dual --reuse-engine-build --workload core --entry both --output work/native-linux-nce/guest-4k-sparse-tbi-core
+python3 -B scripts/test_translation_preparation.py work/native-linux-nce/guest-4k-sparse-tbi-core/summary.json --output work/native-linux-nce/guest-4k-sparse-preparation
+python3 -B scripts/probe_lkl_translation.py --guest-page-bytes 4096 --guest-layout sparse --data-tbi 1 --mapping pte --execution unicorn --code-memory dual --reuse-engine-build --workload bionic --entry both --runtime-source hyperos --runtime-directory /Users/fan/project/github.com/iola1999/DroidOnDarwin/work/project-audit-2026-11-12/references/hyperos3-input/core-scan-v4/files/system/apex/com.android.runtime.apex.contents/files --runtime-manifest /Users/fan/project/github.com/iola1999/DroidOnDarwin/experiments/native-linux/results-hyperos-input-20261112.json --output work/native-linux-nce/guest-4k-sparse-hyperos
+python3 -B scripts/probe_lkl_translation.py --guest-page-bytes 16384 --guest-layout host --data-tbi 1 --mapping pte --execution unicorn --code-memory dual --reuse-engine-build --workload core --entry both --output work/native-linux-nce/guest-16k-combined-regression
+```
+
+实际报告通过 124 项 TBI 负例，两份 core 的标准 JIT 各拒绝 706 个错误变体；布局与参数 208 项负例、Bionic 解析 7 项检查、Python 语法、格式和差异检查成功。标准 JIT 验证保留 `data_tbi` 的第二位置参数，`guest_page_bytes` 使用仅关键字参数；运行器和测试均按名字传入两维配置。
+
+复杂度审查确认本轮复用 sparse 地址准备、PTE 查询、TBI 与原有释放流程。新增接受条件只覆盖明确的 4 KiB Unicorn 组合，fixture 的页大小来自已有构建参数；宿主测试缓冲单独使用宿主页大小。准备失败脚本按实际执行后端选择两个或三个准备点，没有增加产品注入接口。删除上述 guest 页参数化会让跨页与权限测试继续覆盖 16 KiB 而遗漏相邻 4 KiB 边界；新增 `2^39` 高位用例检查三级页表截断边界。没有改变原始库、增加映射副本或扩展任意容量参数。
+
 ## 风险
 
 当前 VMALLOC 只接受完整宿主页组，组内非连续或不同权限请求会被拒绝；`__GFP_NOFAIL` 会主动停止。4 KiB 三级页表仅覆盖 39 位地址，现有 `2^40` 宿主上界必须收紧；地址申请无法满足上界则明确失败。4 KiB 会改变分配碎片、页缓存、COW 和回收统计，本轮结果仅用于功能与页权限分析。Direct flat、宿主 code-watch 的四客体页分组失效、read-view 任意物理页别名及 SMP 仍需后续独立实现。

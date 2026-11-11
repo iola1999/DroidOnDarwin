@@ -18,7 +18,8 @@
             _exit(94); \
         } \
     } while (0)
-#define PAGE 16384
+#include "../layout.h"
+#define PAGE NCE_PAGE_SIZE
 static sigjmp_buf recovery;
 static volatile sig_atomic_t delivered;
 

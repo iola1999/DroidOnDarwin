@@ -46,7 +46,7 @@ def validate_android_image(root, directory):
 
 def validate_guest_layout(rows, requested, flat=False, guest_page_bytes=16384):
     records = [row for row in rows if row.get('config') == 'translation_guest_layout']
-    if len(records) != 1 or requested not in ('host', 'low', 'sparse'):
+    if len(records) != 1 or requested not in ('host', 'low', 'sparse') or guest_page_bytes not in (4096, 16384):
         return False
     row = records[0]
     fields = ('guest_base', 'guest_end', 'guest_span_bytes', 'flat_coverage_bytes',
@@ -67,7 +67,7 @@ def validate_guest_layout(rows, requested, flat=False, guest_page_bytes=16384):
             (ram < reserve + reserve_size and reserve < ram + ram_size)):
         return False
     if requested in ('low', 'sparse'):
-        return ((flat or (requested == 'low' and guest_page_bytes == 4096)) and base == 0x10000 and end == (1 << 36 if requested == 'sparse' else coverage) and physical == reserve and
+        return ((flat if guest_page_bytes == 16384 else not flat) and base == 0x10000 and end == (1 << 36 if requested == 'sparse' else coverage) and physical == reserve and
                 reserve_size == ram_size + (64 << 20))
     return (base == reserve and end == base + coverage and physical == end and
             reserve_size == coverage + ram_size + (64 << 20))
@@ -111,7 +111,7 @@ def validate(rows, memory_interval, mapping="window", workload="core", tlb_inval
     if guest_page_bytes not in (4096, 16384):
         return False
     if guest_page_bytes == 4096:
-        if mapping != 'pte' or execution != 'unicorn' or cpus != 1 or guest_layout != 'low':
+        if mapping != 'pte' or execution != 'unicorn' or cpus != 1 or guest_layout not in ('low', 'sparse'):
             return False
         if [row for row in rows if row.get('config') == 'translation_page_sizes'] != [
                 {'config': 'translation_page_sizes', 'guest_page_bytes': 4096,
@@ -183,7 +183,7 @@ def validate(rows, memory_interval, mapping="window", workload="core", tlb_inval
                 pointers = [row for row in rows if row.get('config') == 'translation_host_pointer_sources']
                 if (len(pointers) != 1 or set(pointers[0]) != {'config', 'low', 'high', 'stack', 'text'} or
                         any(type(pointers[0][k]) is not int or not 0 < pointers[0][k] < 1 << 64 for k in ('low', 'high', 'stack', 'text')) or
-                        not 0x10000 <= pointers[0]['low'] <= (1 << 36) - 16384 or pointers[0]['high'] < 1 << 36):
+                        not 0x10000 <= pointers[0]['low'] <= (1 << 36) - guest_page_bytes or pointers[0]['high'] < 1 << 36):
                     return False
             if [row for row in rows if row.get('test') == 'translated_guest_layout_boundaries'] != [
                     {'test': 'translated_guest_layout_boundaries', 'passed': True, 'layout': guest_layout}]:
@@ -504,8 +504,8 @@ def main():
     parser.add_argument('--memory-interval-ms', type=int, default=100)
     args = parser.parse_args()
     if args.guest_page_bytes == 4096 and (args.mapping != 'pte' or args.execution != 'unicorn' or
-            args.guest_layout != 'low' or args.cpus != 1 or args.workload not in ('core', 'bionic')):
-        parser.error('4 KiB 实验需要单 CPU 的 low/pte/unicorn，负载仅限 core/bionic')
+            args.guest_layout not in ('low', 'sparse') or args.cpus != 1 or args.workload not in ('core', 'bionic')):
+        parser.error('4 KiB 实验需要单 CPU 的 low或sparse/pte/unicorn，负载仅限 core/bionic')
     if args.guest_page_bytes == 16384 and args.guest_layout in ('low', 'sparse') and (args.mapping != 'pte' or args.execution != 'direct' or args.direct_memory != 'flat' or args.cpus != 1):
         parser.error('低客体地址实验需要单 CPU 的 pte/direct/flat')
     if args.data_tbi and args.execution == 'direct' and args.direct_memory == 'view':
