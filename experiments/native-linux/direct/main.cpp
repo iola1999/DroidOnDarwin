@@ -11,7 +11,10 @@ int main(int argc, char **argv)
     CHECK(!std::strcmp(argv[2], "cli") || !std::strcmp(argv[2], "gcd"));
     setbuf(stdout, nullptr);
     std::printf("{\"direct_code_memory\":\"%s\"}\n", nce_direct_code_memory());
-    std::printf("{\"mode\":\"%s\",\"entry\":\"%s\",\"memory_interval_ms\":%s,\"cache_bytes\":16777216}\n", argv[1], argv[2], argv[3]);
+    if (!std::strncmp(argv[1], "memory-", 7))
+        std::printf("{\"mode\":\"%s\",\"entry\":\"%s\",\"memory_interval_ms\":%s}\n", argv[1], argv[2], argv[3]);
+    else
+        std::printf("{\"mode\":\"%s\",\"entry\":\"%s\",\"memory_interval_ms\":%s,\"cache_bytes\":16777216}\n", argv[1], argv[2], argv[3]);
     translation_memory_start((unsigned)std::strtoul(argv[3], nullptr, 10));
     struct Invocation {
         const char *mode;
@@ -24,6 +27,10 @@ int main(int argc, char **argv)
         if (!std::strcmp(mode, "tests")) {
             translation_memory_phase("boundaries");
             direct_tests();
+        } else if (!std::strncmp(mode, "memory-check-", 13)) {
+            direct_memory_benchmark(mode + 13, true);
+        } else if (!std::strncmp(mode, "memory-bench-", 13)) {
+            direct_memory_benchmark(mode + 13, false);
         } else
             direct_benchmark(mode);
     };

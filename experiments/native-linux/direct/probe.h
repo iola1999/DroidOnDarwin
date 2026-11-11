@@ -60,3 +60,4 @@ void direct_cross_page_tests(Probe &);
 void direct_route_tests();
 void direct_memory_group_tests(Probe &);
 void direct_benchmark(const char *engine);
+void direct_memory_benchmark(const char *memory, bool check_only);

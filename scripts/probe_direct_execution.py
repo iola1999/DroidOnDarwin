@@ -88,14 +88,47 @@ def build(out, code_memory='map-jit'):
     return executable, hashes
 
 
-def validate(rows, mode, interval, config=None):
+def validate(rows, mode, interval, config=None, entry=None):
     if not rows or rows[-1].get('result') != 'passed' or any(row.get('passed') is False for row in rows):
         return False
     if mode in ('tests', 'direct') and config is not None:
         selected = [r for r in rows if r.get('direct_config')]
         if len(selected) != 1 or any(selected[0].get(key) != value for key, value in config.items()):
             return False
-    if mode == 'tests':
+    memory_mode = mode.startswith(('memory-check-', 'memory-bench-'))
+    if memory_mode:
+        backend = mode.rsplit('-', 1)[1]
+        check_only = mode.startswith('memory-check-')
+        if entry not in ('cli', 'gcd') or [r for r in rows if 'mode' in r] != [
+                {'mode': mode, 'entry': entry, 'memory_interval_ms': interval}]:
+            return False
+        expected_config = {'memory_benchmark_config': True, 'backend': backend, 'page_bits': 14,
+                           'contexts': 2, 'private_bytes': 65536, 'shared_bytes': 16384,
+                           'cache_bytes': 0 if backend == 'native' else 128 * 1024 * 1024,
+                           'mapping_entries': 256, 'route_entries': 256, 'cross_page': True,
+                           'native_exclusive': True, 'code_versions': 'fixture', 'check_scope': 'independent'}
+        if backend not in ('native', 'cached', 'flat') or [r for r in rows if r.get('memory_benchmark_config')] != [expected_config]:
+            return False
+        if [r for r in rows if r.get('test') == 'memory_benchmark_same_va_private_shared_switch'] != [
+                {'test': 'memory_benchmark_same_va_private_shared_switch', 'passed': True}]:
+            return False
+        iterations = {'integer': 64, 'memory': 8192} if check_only else {
+            'integer': 64000000, 'memory': 32000000}
+        samples = [r for r in rows if 'memory_kernel' in r]
+        expected = {(kernel, round) for kernel in iterations for round in range(1 if check_only else 3)}
+        if len(samples) != len(expected) or {(r.get('memory_kernel'), r.get('round')) for r in samples} != expected:
+            return False
+        for row in samples:
+            if row.get('backend') != backend or row.get('check_only') is not check_only or row.get('iterations') != iterations[row['memory_kernel']]:
+                return False
+            if check_only:
+                if 'wall_ns' in row or 'thread_cpu_ns' in row:
+                    return False
+            elif any(type(row.get(key)) is not int or row[key] <= 0 for key in ('wall_ns', 'thread_cpu_ns')):
+                return False
+            if row.get('passed') is not True or (backend != 'native' and not row.get('compiles')):
+                return False
+    elif mode == 'tests':
         expected = {
             'integer_gpr_sp_nzcv_65536_instructions', 'memory_all_gpr_930_combinations',
             'fp_simd_rounding_fpsr_32768_instructions', 'tls_x18_vectors',
@@ -147,6 +180,8 @@ def validate(rows, mode, interval, config=None):
     if not interval:
         return not summaries and not memory
     phases = ['kernel_setup', 'boundaries', 'parallel_execution'] if mode == 'tests' else ['kernel_setup', 'integer', 'memory', 'atomic', 'cleanup']
+    if memory_mode:
+        phases = ['kernel_setup', 'boundaries', 'integer', 'memory', 'cleanup']
     if [r['memory_statistics'] for r in summaries] != phases:
         return False
     for summary in summaries:
@@ -165,8 +200,8 @@ def validate(rows, mode, interval, config=None):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--output', type=Path, default=WORK / 'direct-execution')
-    parser.add_argument('--mode', choices=['tests', 'bench', 'all'], default='all')
-    parser.add_argument('--memory-interval-ms', type=int, default=100)
+    parser.add_argument('--mode', choices=['tests', 'bench', 'all', 'memory-check', 'memory-bench'], default='all')
+    parser.add_argument('--memory-interval-ms', type=int)
     parser.add_argument('--build-only', action='store_true')
     parser.add_argument('--code-memory', choices=('map-jit', 'dual'), default='map-jit')
     parser.add_argument('--mapping-entries', type=int, choices=(256, 1024, 4096, 16384, 65536), default=256)
@@ -179,6 +214,13 @@ def main():
     parser.add_argument('--simd-math', type=int, choices=(0, 1), default=0)
     parser.add_argument('--vector-table', type=int, choices=(0, 1), default=0)
     args = parser.parse_args()
+    memory_mode = args.mode in ('memory-check', 'memory-bench')
+    if args.memory_interval_ms is None:
+        args.memory_interval_ms = 0 if args.mode == 'memory-check' else 100
+    if memory_mode and (args.mapping_entries != 256 or args.route_entries != 256 or any((
+            args.selective_writes, args.reuse_code_checks, args.route_epochs, args.retain_routes,
+            args.memory_groups, args.simd_math, args.vector_table))):
+        parser.error('独立访存对照使用固定配置，不接受执行器实验选项')
     if args.retain_routes and not args.route_epochs:
         parser.error('跨调用复用需要开启跳转序号')
     if platform.system() != 'Darwin' or platform.machine() != 'arm64':
@@ -200,6 +242,8 @@ def main():
                        NCE_DIRECT_ROUTE_ENTRIES=str(args.route_entries), NCE_DIRECT_SELECTIVE_WRITES=str(args.selective_writes),
                        NCE_DIRECT_REUSE_CODE_CHECKS=str(args.reuse_code_checks), NCE_DIRECT_ROUTE_EPOCHS=str(args.route_epochs), NCE_DIRECT_RETAIN_ROUTES=str(args.retain_routes), NCE_DIRECT_MEMORY_GROUPS=str(args.memory_groups), NCE_DIRECT_VECTOR_TABLE=str(args.vector_table), NCE_DIRECT_SIMD_MATH=str(args.simd_math))
     modes = (['tests'] if args.mode != 'bench' else []) + (['native', 'unicorn', 'direct'] if args.mode != 'tests' else [])
+    if memory_mode:
+        modes = [args.mode + '-' + backend for backend in ('native', 'cached', 'flat')]
     for entry in ('cli', 'gcd'):
         for mode in (modes if entry == 'cli' else list(reversed(modes))):
             path = out / f'{entry}-{mode}.jsonl'
@@ -210,7 +254,7 @@ def main():
             if [r['direct_code_memory'] for r in rows if 'direct_code_memory' in r] != [args.code_memory]:
                 raise RuntimeError('Direct 执行内存变体与请求不一致')
             runs.append({'entry': entry, 'mode': mode, 'command': command, 'returncode': result.returncode, 'results': rows})
-            if result.returncode or not validate(rows, mode, args.memory_interval_ms, config):
+            if result.returncode or not validate(rows, mode, args.memory_interval_ms, config, entry):
                 (out / 'failed.json').write_text(json.dumps(runs, indent=2) + '\n')
                 raise SystemExit(f'检查失败：{path}')
     for name, digest in hashes.items():
@@ -225,12 +269,19 @@ def main():
               'configuration': config,
               'dependency': {'oaknut_revision': OAKNUT, 'oaknut_archive_sha256': ARCHIVE_SHA},
               'sha256': hashes, 'runs': runs, 'comparison': {}}
+    if memory_mode:
+        report['measurement'] = ('Short correctness checks without timed execution.' if args.mode == 'memory-check' else
+                                 'Three warm rounds per backend in separate processes; GCD reverses backend order. Same ARM64 bytes, 16 KiB pages and checked complete data arrays; warmup touches every private data page. Timed execution stays in context 0 and includes one-million-instruction slice entries; initialization, table setup, context-switch checks and result verification are excluded. No Linux scheduling, page updates, fallback or device measurement.')
+        report['statistics_scope'] = 'Direct counters are cumulative, including correctness checks and warmup. Optional footprint phases include initialization, warmup and native result verification; their arithmetic sample mean, sampled peak and latest cover different work from wall/thread CPU execution timing.'
+        report['configuration'] = [row for run in runs if run['entry'] == 'cli'
+                                   for row in run['results'] if row.get('memory_benchmark_config')]
     for entry in ('cli', 'gcd'):
         report['comparison'][entry] = {}
-        for kernel in ('integer', 'memory', 'atomic'):
+        for kernel in (('integer', 'memory') if memory_mode else ('integer', 'memory', 'atomic')):
             values = {}
             for run in runs:
-                samples = [r['wall_ns'] for r in run['results'] if r.get('kernel') == kernel]
+                samples = [r['wall_ns'] for r in run['results']
+                           if r.get('memory_kernel' if memory_mode else 'kernel') == kernel and 'wall_ns' in r]
                 if run['entry'] == entry and samples:
                     values[run['mode']] = statistics.median(samples)
             report['comparison'][entry][kernel] = values
