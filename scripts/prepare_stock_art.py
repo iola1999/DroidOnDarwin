@@ -253,7 +253,8 @@ def prepare(runtime, manifest_path, output, source_kind='sdk36'):
     dex.mkdir()
     android_jar = SDK / 'platforms/android-35/android.jar'
     javac = [JAVA / 'javac', '-encoding', 'UTF-8', '-source', '8', '-target', '8',
-             '-bootclasspath', android_jar, '-d', classes, SOURCE / 'StockArtProbe.java']
+             '-bootclasspath', android_jar, '-d', classes,
+             SOURCE / 'StockArtProbe.java', SOURCE / 'StockArtExceptions.java']
     run(javac, commands)
     d8 = [JAVA / 'java', '-cp', SDK / 'build-tools/36.0.0/lib/d8.jar', 'com.android.tools.r8.D8',
           '--min-api', '35', '--lib', android_jar, '--output', dex, *sorted(classes.rglob('*.class'))]
@@ -302,7 +303,7 @@ def prepare(runtime, manifest_path, output, source_kind='sdk36'):
         'input_manifest_sha256': sha(manifest_path), 'dependencies_sha256': sha(lock_path),
         'identity': manifest['source'] if source_kind == 'hyperos' else {key: manifest[key] for key in ('url', 'archive_sha1')},
         'source_sha256': {str(p.relative_to(ROOT)): sha(p) for p in
-                          [SOURCE / 'probe.c', SOURCE / 'StockArtProbe.java', lock_path,
+                          [SOURCE / 'probe.c', SOURCE / 'StockArtProbe.java', SOURCE / 'StockArtExceptions.java', lock_path,
                            Path(__file__), ROOT / 'scripts/build_apk_fixture.py']},
         'tools': {'ndk': (NDK / 'source.properties').read_text(), 'fixture_min_api': 35,
                   'javac': run([JAVA / 'javac', '-version'], commands).strip(),

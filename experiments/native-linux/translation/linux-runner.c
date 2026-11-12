@@ -21,7 +21,7 @@ extern int nce_wait_debugger_detach(unsigned timeout_ms);
 #endif
 #include <libkern/OSCacheControl.h>
 #include <mach/mach.h>
-#include <mach/mach_vm.h>
+#include <mach/vm_map.h>
 #include <errno.h>
 #include <pthread.h>
 #include <stdatomic.h>
@@ -555,10 +555,10 @@ int nce_lkl_run(const char *path)
         REQUIRE(call(67, pointer_args) == (long)sizeof(copied) && copied == host_value && call(57, pointer_args) == 0);
         if (layout && !strcmp(layout, "sparse")) {
             for (unsigned i = 0; i < 2; ++i) {
-                mach_vm_address_t high = state.guest_end;
+                vm_address_t high = state.guest_end;
                 if (i)
-                    REQUIRE(mach_vm_map(mach_task_self(), &high, NCE_HOST_PAGE_SIZE, 0, VM_FLAGS_ANYWHERE,
-                                        MEMORY_OBJECT_NULL, 0, FALSE, VM_PROT_READ | VM_PROT_WRITE, VM_PROT_ALL, VM_INHERIT_DEFAULT) == KERN_SUCCESS);
+                    REQUIRE(vm_map(mach_task_self(), &high, NCE_HOST_PAGE_SIZE, 0, VM_FLAGS_ANYWHERE,
+                                   MEMORY_OBJECT_NULL, 0, FALSE, VM_PROT_READ | VM_PROT_WRITE, VM_PROT_ALL, VM_INHERIT_DEFAULT) == KERN_SUCCESS);
                 host_sources[i] = i ? (void *)high : host_low_source;
                 unsigned long address = (unsigned long)host_sources[i];
                 REQUIRE(i ? address >= state.guest_end : address >= guest_base && address <= state.guest_end - NCE_PAGE_SIZE);

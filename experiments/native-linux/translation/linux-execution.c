@@ -9,9 +9,14 @@
 #ifdef NCE_TRANSLATION_DUAL_MAP
 #include "unicorn-code-memory.h"
 #endif
+#include <TargetConditionals.h>
 #include <errno.h>
 #include <mach/mach.h>
+#if TARGET_OS_IPHONE
+#include <mach/vm_map.h>
+#else
 #include <mach/mach_vm.h>
+#endif
 #include <pthread.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -75,9 +80,15 @@ static struct nce_translation_state *translation;
 
 static void *sparse_host_mapping(unsigned long address, unsigned long size, vm_prot_t protection)
 {
+#if TARGET_OS_IPHONE
+    vm_address_t target = address;
+    kern_return_t result = vm_map(mach_task_self(), &target, size, 0, VM_FLAGS_ANYWHERE,
+                                  MEMORY_OBJECT_NULL, 0, FALSE, protection, VM_PROT_ALL, VM_INHERIT_DEFAULT);
+#else
     mach_vm_address_t target = address;
     kern_return_t result = mach_vm_map(mach_task_self(), &target, size, 0, VM_FLAGS_ANYWHERE,
                                        MEMORY_OBJECT_NULL, 0, FALSE, protection, VM_PROT_ALL, VM_INHERIT_DEFAULT);
+#endif
     if (result != KERN_SUCCESS) {
         fprintf(stderr, "sparse host mapping failed: base=%lx size=%lx result=%d\n", address, size, result);
         return MAP_FAILED;
@@ -910,6 +921,7 @@ static void user_run(void *opaque)
             unsigned long translated_address = data_tbi && access != NCE_FAULT_EXEC ? address & UINT64_C(0x00ffffffffffffff) : address;
             int result = page_fault(translated_address, access);
             if (result) {
+                observe_fault(p, address, access, result);
                 fprintf(stderr, "guest fault pc=%lx address=%lx access=%d result=%d\n", p->regs.pc, address, access, result);
                 user_fault(address, 0);
             }

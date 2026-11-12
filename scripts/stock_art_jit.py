@@ -41,7 +41,7 @@ def may_replace(event, candidate):
 
 def observe(directory, rows):
     result = {'jit_execution_confirmed': False, 'scope': 'Completed integer instruction within a stable ART JIT RX mapping; method identity unverified',
-              'error': None, 'samples': 0, 'candidates': [], 'confirmed': []}
+              'error': None, 'samples': 0, 'guest_faults': [], 'candidates': [], 'confirmed': []}
     try:
         events = [row for row in rows if 'execution_observation' in row]
         if not events:
@@ -54,6 +54,12 @@ def observe(directory, rows):
             if kind == 'integer_completed':
                 if set(row) != common | {'pc', 'next_pc'} or any(type(row[key]) is not int or not 0 <= row[key] < 1 << 64 or row[key] % 4 for key in ('pc', 'next_pc')):
                     raise ValueError('已完成指令 PC 格式错误')
+            elif kind == 'guest_fault':
+                if (set(row) != common | {'pc', 'address', 'access', 'result'} or
+                        any(type(row[key]) is not int or not 0 <= row[key] < 1 << 64 for key in ('pc', 'address')) or
+                        row['pc'] % 4 or type(row['access']) is not int or row['access'] not in (0, 1, 2) or
+                        type(row['result']) is not int or row['result'] == 0):
+                    raise ValueError('客体访存故障格式错误')
             elif kind == 'marker':
                 if (set(row) != common | {'name', 'pending_vm_calls'} or row['name'] not in ('art-jit-begin', 'art-jit-end') or
                         type(row['pending_vm_calls']) is not int or row['pending_vm_calls'] != 0):
@@ -75,8 +81,9 @@ def observe(directory, rows):
             raise ValueError('观测窗口进程或地址空间发生变化')
         window = [row for row in events if begin['sequence'] < row['sequence'] < end['sequence']]
         samples = [row for row in events if row['execution_observation'] == 'integer_completed']
+        faults = [row for row in events if row['execution_observation'] == 'guest_fault']
         if any(not begin['sequence'] < row['sequence'] < end['sequence'] or
-               any(row[key] != value for key, value in identity.items()) for row in samples):
+               any(row[key] != value for key, value in identity.items()) for row in samples + faults):
             raise ValueError('指令观测超出目标线程或窗口')
         changes = [row for row in window if row['execution_observation'] == 'vm_call']
         if any(row['pid'] == begin['pid'] and row['mm'] != begin['mm'] for row in changes):
@@ -86,7 +93,7 @@ def observe(directory, rows):
         after = mappings(directory / 'maps-after-warmup.txt')
         candidates = [row for row in before if row['name'] == '/memfd:jit-cache (deleted)' and
                       row['permissions'] == 'r-xs' and row['inode'] > 0 and row in after]
-        result.update(identity=identity, window=[begin['sequence'], end['sequence']], samples=len(samples))
+        result.update(identity=identity, window=[begin['sequence'], end['sequence']], samples=len(samples), guest_faults=faults)
         for candidate in candidates:
             mutations = [row['sequence'] for row in changes if may_replace(row, candidate)]
             hits = [row for row in samples if candidate['start'] <= row['pc'] < candidate['end']]

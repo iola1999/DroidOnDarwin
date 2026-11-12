@@ -25,6 +25,7 @@ def build(report_path, out, target):
         raise ValueError('需要 macos/ios 目标，输出必须在 work/native-linux-nce')
     report = json.loads(report_path.read_text())
     config = report['configuration']
+    guest_page_bytes = config.get('guest_page_bytes', 16384)
     if config['execution'] != 'direct' or config['code_memory'] != 'dual' or not report['runs'] or not all(
             run['validated'] for run in report['runs']):
         raise ValueError('需要已成功验证的 Direct 双映射构建')
@@ -40,11 +41,12 @@ def build(report_path, out, target):
                                                for name, value in dependency['sha256'].items())):
         dependency = build_unicorn('dual', target)
     unicorn = Path(dependency['path'])
-    objects, inputs = build_engine(out / 'direct', 'dual', target)
+    objects, inputs = build_engine(out / 'direct', 'dual', target, guest_page_bytes=guest_page_bytes)
     sdk = subprocess.check_output(['xcrun', '--sdk', 'iphoneos' if target == 'ios' else 'macosx', '--show-sdk-path'], text=True).strip()
     flags = ['-target', 'arm64-apple-ios26.0' if target == 'ios' else 'arm64-apple-macos' + platform.mac_ver()[0],
              '-isysroot', sdk, '-O2', '-g', '-Wall', '-Wextra', '-Werror', '-DNCE_IOS_APP', '-DNCE_PROCESS',
-             f'-DNCE_TRANSLATION_CPUS={config["cpus"]}', '-DNCE_TRANSLATION_DUAL_MAP', '-DNCE_DIRECT_EXECUTION', '-DNCE_GRAPHICS']
+             f'-DNCE_TRANSLATION_CPUS={config["cpus"]}', f'-DNCE_GUEST_PAGE_SHIFT={guest_page_bytes.bit_length() - 1}',
+             '-DNCE_TRANSLATION_DUAL_MAP', '-DNCE_DIRECT_EXECUTION', '-DNCE_GRAPHICS']
     if config['cpus'] == 2:
         flags.append('-DNCE_SMP')
     for include in (EXP, kernel, fixtures, WORK / 'processes/host-include', unicorn / 'include', ROOT / 'src/ios-jit'):

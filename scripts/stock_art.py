@@ -9,7 +9,8 @@ TOKEN = 0x1122334455667788
 VALUES = {'vm_absent': 0, 'create_vm': 0, 'load_dex': 1, 'primitive_arguments': TOKEN,
           'registered_natives': TOKEN, 'gc_observed': None, 'global_reference': TOKEN,
           'array_storage': 47, 'java_threads': 2000, 'native_thread': 58, 'java_exception': 1,
-          'warmup_result': sum(((i * 17) ^ (i >> 3)) + 9 for i in range(200000)), 'destroy_vm': 0}
+          'warmup_result': sum(((i * 17) ^ (i >> 3)) + 9 for i in range(200000)),
+          'implicit_null': 47, 'stack_overflow': 47, 'gc_live_references': 8386560, 'destroy_vm': 0}
 
 
 def attach(directory, output, *, guest_page_bytes=16384):
@@ -79,8 +80,8 @@ def validate(rows, guest_page_bytes=16384, jit_mode="default"):
         array, *checks[7:11], maps[3],
         *[{'stock_art_warmup': round, 'calls': 200000, 'wait_before_ms': 200 if round else 0,
            'observed': VALUES['warmup_result']} for round in range(10 if jit_mode == 'background' else 1)],
-        checks[11], {'stock_art_jit': 'unverified', 'warmup_calls': 200000 * (10 if jit_mode == 'background' else 1)}, maps[4],
-        {'stock_art_stage': 'destroy_vm'}, checks[12],
+        *checks[11:15], {'stock_art_jit': 'unverified', 'warmup_calls': 200000 * (10 if jit_mode == 'background' else 1)}, maps[4],
+        {'stock_art_stage': 'destroy_vm'}, checks[15],
         {'test': 'stock_art_standard_jni', 'passed': True, 'jit_execution_confirmed': False},
         {'stock_art_exit': True, 'success': True, 'exec_errno': 0, 'exit_code': 0, 'signal': 0, 'timed_out': False},
         *exports,
