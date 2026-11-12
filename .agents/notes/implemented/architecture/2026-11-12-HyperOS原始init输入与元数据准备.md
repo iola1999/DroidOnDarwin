@@ -71,6 +71,12 @@ env PYTHONPYCACHEPREFIX=work/native-linux-nce/hyperos-init-metadata-regression-v
 
 准备失败目录保留：v2 的 debugfs `Mode:` 原输出有多个空格，初始表达式只接受一个，已修正；v3 将 SDK 风格 `/system/bin/linkerconfig` 列为必要输入，核对原 init 字节后改用实际 APEX 路径。v5 保留 `validation-failed.json`，该验证脚本误要求独立 `--blkid_context` token，原 token 为 `--blkid_context=u:r:blkid:s0`，修改验证条件后完成复核。上述失败发生在准备或验证工具中，HyperOS init 尚无实际启动结果。
 
+### 主线接受检查
+
+准备提交 `9c4b394` 作为 `55730fc` 合入主线。主线重新核对固定 v6 清单的 524 个文件、40 个 APEX、3 个分区、6,780 份命令日志与全部读取器源码摘要，内容、文件大小和保存模式均一致，manifest SHA256 保持 `1ece2c7f87a9064a28a823309476d10044a795bad25b887e5e07a8859137ad06`。该检查直接读取 `work/continue-hyperos-jit/work/native-linux-nce/hyperos-init-input-v6` 的固定产物，结果保存在主线 `work/native-linux-nce/hyperos-init-input-main-accept-v1/summary.json`，没有再次提取发布包。
+
+主线使用新的 `read_partition_metadata` 从已提取的固定 SDK36 原分区读取，156 项与 `stock-init-main-root-etc-v1` 保存的原 metadata 完全一致；内容摘要不符和普通文件按原链接读取继续被拒绝。三类 newc/rc 回归成功。接受结果见[主线归档](../../../../experiments/native-linux/results-hyperos-init-input-main-20261112.json)。本次仍只交付输入准备，实际 HyperOS 原盘挂载和 init 启动由独立工作树继续实施。
+
 ### 复杂度审查与偏离
 
 按 reclaim-code-entropy 核对实际使用方：SDK metadata wrapper 与 HyperOS 固定读取器都需要 ext4 原 inode 读取，抽出该函数可保留 SDK 契约并复用已有校验。EROFS 与 newc 各自有格式边界和资源管理，单独脚本用于对应原输入，未新增 provider 注册、通用镜像配置或重复标签状态。移除独立读取函数会重新耦合 GPT/liblp 与 raw ext4；移除原 metadata 或静态缺项会丢失后续 init 所需信息。APEX 样本与 legacy staging 分开，以保留原激活阶段。

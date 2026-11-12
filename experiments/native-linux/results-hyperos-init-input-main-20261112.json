@@ -1,0 +1,31 @@
+{
+  "scope": "HyperOS 固定输入的主线接受检查；完整 init 启动继续验证",
+  "source_commit": "55730fc",
+  "manifest": "work/continue-hyperos-jit/work/native-linux-nce/hyperos-init-input-v6/manifest.json",
+  "manifest_sha256": "1ece2c7f87a9064a28a823309476d10044a795bad25b887e5e07a8859137ad06",
+  "files": 524,
+  "apex": 40,
+  "partitions": 3,
+  "logs": 6780,
+  "reader_sources": {
+    "prepare_hyperos_init.py": "236bb8aedb732eb080fd7f7ec96b0d1d74b5ec4c00c083e2f02d3ac28d424983",
+    "hyperos_erofs_metadata.py": "8df030b8aa1a6468185cd2f68fff255afafc249d8925083d19c9dc8c2230466f",
+    "hyperos_ramdisk.py": "e95e98751dd66854fa843f6f5adae1d43c3f0b25da1b1025b050c950b096487c",
+    "stock_init_metadata.py": "626c70985318be9f1518fedff93871acf84c3dd8409c726edd47bc123f0b222f",
+    "inspect_hyperos_input.py": "6df27c29102752b190b1f783b9931abcaff1761b605ad5d00b5e73b795d576b4",
+    "inspect_hyperos_files.py": "b5a465460f2de46f6ee7f9fefff75b9462fe0df38d32209bc7c527d7eba18c63",
+    "build_apk_fixture.py": "f6e68422728141240efdafacf6d49743b277f71894de1e79f950b7019c96c863"
+  },
+  "sdk_metadata_entries": 156,
+  "sdk_metadata_matches": true,
+  "sdk_rejections": {
+    "content-hash-mismatch": "元数据镜像文件与已校验原输入不同：/system/bin/init",
+    "regular-file-as-original-link": "原路径必须为 fast symlink：/system/bin/init"
+  },
+  "validated": true,
+  "report": {
+    "path": "work/native-linux-nce/hyperos-init-input-main-accept-v1/summary.json",
+    "sha256": "b14acf361bcc777674720f9058ba34977f6d097ded41e57b5ca4faa4caaa176b",
+    "bytes": 1392
+  }
+}
