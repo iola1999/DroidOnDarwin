@@ -120,6 +120,10 @@ static void seed_entropy(void)
     random[1] = 0x40085203;
     random[2] = (long)&entropy;
     REQUIRE(call(29, random) == 0 && call(57, random) == 0);
+    unsigned char ready[32];
+    long getrandom[6] = {(long)ready, sizeof(ready), 1};
+    REQUIRE(call(278, getrandom) == (long)sizeof(ready));
+    printf("{\"config\":\"linux_random_source\",\"seed_bits\":256,\"getrandom_bytes\":32,\"flags\":1}\n");
 }
 
 static void stock_bionic_setup(void)
@@ -622,6 +626,10 @@ int nce_lkl_run(const char *path)
             }
         }
     } else {
+        directory("/dev");
+        long random_device[6] = {-100, (long)"/dev/random", 0020666, 264};
+        REQUIRE(call(33, random_device) == 0);
+        seed_entropy();
         translation_memory_phase("guest_execution");
         failed = run_program("/probe-guest", 0);
     }

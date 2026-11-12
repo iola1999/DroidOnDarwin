@@ -49,6 +49,7 @@ static void stock_init_trace_security(long number, const long *args, long result
         !strstr((char *)path, "selinux/") &&
         strcmp((char *)path, "/system/bin/init") &&
         strcmp((char *)path, "/system/bin/bootstrap/linker64") &&
+        strcmp((char *)path, "/proc/sys/vm/mmap_rnd_bits") &&
         strcmp((char *)path, "/dev/null") && strcmp((char *)path, "/dev/kmsg"))
         return;
     unsigned char name[128] = {0}, value[256] = {0};

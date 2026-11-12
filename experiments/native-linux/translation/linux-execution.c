@@ -1043,8 +1043,8 @@ unsigned long translation_linux_setup(void *kernel, unsigned long copy_user_offs
         goto failed;
     }
     guest_base = separate_guest ? 0x10000UL : reservation_base;
-    guest_end = sparse_guest_layout ? 1UL << 36 : low_guest_layout ? NCE_USER_SIZE
-                                                                   : guest_base + NCE_USER_SIZE;
+    guest_end = sparse_guest_layout ? NCE_SPARSE_GUEST_END : low_guest_layout ? NCE_USER_SIZE
+                                                                              : guest_base + NCE_USER_SIZE;
     physical_base = reservation_base + (separate_guest ? 0 : NCE_USER_SIZE);
     if (!translation && physical_base < guest_end) {
         fprintf(stderr, "translation reservation overlaps guest: physical=%lx guest_end=%lx\n", physical_base, guest_end);

@@ -69,7 +69,7 @@ static void layout_tests(void)
     CHECK(low || sparse || !strcmp(layout, "host"));
     CHECK(base && end > base && (low || sparse || physical >= end));
     CHECK(!low || (base == 0x10000 && end == 0x100000000UL));
-    CHECK(!sparse || (base == 0x10000 && end == 1UL << 36));
+    CHECK(!sparse || (base == 0x10000 && end == NCE_SPARSE_GUEST_END));
     unsigned long stack_address = (unsigned long)&input;
     CHECK((unsigned long)&layout_tests >= base && (unsigned long)&layout_tests < end);
     CHECK(stack_address >= base && stack_address < end && (unsigned long)&tls >= base && (unsigned long)&tls < end);
@@ -89,8 +89,9 @@ static void layout_tests(void)
         CHECK(syscall(SYS_openat, AT_FDCWD, address, O_RDONLY, 0) == -1 && errno == EFAULT);
     }
     if (low || sparse) {
-        unsigned char *mapped = mmap(NULL, PAGE, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
-        CHECK(mapped != MAP_FAILED && (unsigned long)mapped >= base && (unsigned long)mapped <= end - PAGE);
+        unsigned char *mapped = mmap((void *)(base + NCE_MMAP_OFFSET), PAGE, PROT_READ | PROT_WRITE,
+                                     MAP_PRIVATE | MAP_ANONYMOUS | MAP_FIXED_NOREPLACE, -1, 0);
+        CHECK(mapped == (void *)(base + NCE_MMAP_OFFSET));
         const char path[] = "/host-pointer";
         memcpy(mapped, path, sizeof(path));
         const unsigned long high_bits[] = {1UL << 32, 1UL << 39, 1UL << 48};
@@ -188,6 +189,12 @@ static void *thread(void *argument)
 
 int main(int argc, char **argv)
 {
+#ifdef NCE_TRANSLATION_STANDARD_JIT
+    extern int translation_aslr_sample(int fd, const char *mode);
+    extern void translation_aslr_tests(void);
+    if (argc == 4 && !strcmp(argv[1], "aslr-sample"))
+        return translation_aslr_sample(atoi(argv[2]), argv[3]);
+#endif
     if (argc == 2 && !strcmp(argv[1], "after-build")) {
         CHECK(getpid() > 1 && tls == 7);
         return 0;
@@ -196,6 +203,9 @@ int main(int argc, char **argv)
     CHECK(sysconf(_SC_PAGESIZE) == PAGE);
     CHECK(getenv("NCE_TEST") && !strcmp(getenv("NCE_TEST"), "translation"));
     setvbuf(stdout, NULL, _IOLBF, 0);
+#ifdef NCE_TRANSLATION_STANDARD_JIT
+    translation_aslr_tests();
+#endif
     extern void signal_tests(const char *libc), dynamic_code_tests(void), memory_exchange_benchmarks(void);
     extern void memory_tests(void), memory_capacity_test(void);
     extern void translation_timer_tests(int high_resolution);

@@ -38,7 +38,7 @@ def build(cpus=1, high_res_timers=False, guest_page_bytes=16384):
     # 复制文件与补丁脚本共同决定生成源码，缺少任一来源会复用过期内核。
     copied = [EXP / name for name, _ in lkl_nce_patch.COPIED_SOURCES]
     patch_files = [Path(__file__), Path(probe_lkl.__file__), Path(lkl_translation_patch.__file__),
-                   ROOT / 'scripts/lkl_nce_patch.py', *copied,
+                   ROOT / 'scripts/lkl_nce_patch.py', ROOT / 'scripts/lkl_translation_aslr_patch.py', *copied,
                    EXP / 'translation/kernel-api.h', EXP / 'direct/page-table-layout.h']
     if guest_page_bytes == 4096:
         patch_files.append(ROOT / 'scripts/lkl_4k_vmalloc_patch.py')
@@ -101,13 +101,20 @@ def build(cpus=1, high_res_timers=False, guest_page_bytes=16384):
         probe_lkl.run(command, env=env, stdout=log, stderr=subprocess.STDOUT, timeout=600)
 
     with (out / 'build.log').open('w') as log:
+        minimum, maximum = {16384: (16, 24), 4096: (18, 26)}[guest_page_bytes]
         run([source / 'scripts/config', '--file', build_dir / '.config',
-             *[argument for name in probe_lkl.BLOCK_OPTIONS for argument in ('-e', name)]], log)
+             *[argument for name in probe_lkl.BLOCK_OPTIONS for argument in ('-e', name)],
+             '--set-val', 'ARCH_MMAP_RND_BITS', str(maximum)], log)
         run([*make, 'olddefconfig'], log)
         if any('CONFIG_' + name + '=y\n' not in (build_dir / '.config').read_text() for name in probe_lkl.BLOCK_OPTIONS):
             raise RuntimeError('生成的翻译内核配置缺少 Android 块设备支持')
         if ('CONFIG_HIGH_RES_TIMERS=y' in (build_dir / '.config').read_text()) != high_res_timers:
             raise RuntimeError('生成的内核配置与请求的定时器变体不一致')
+        aslr = ('ARCH_WANT_DEFAULT_TOPDOWN_MMAP_LAYOUT=y', 'HAVE_ARCH_MMAP_RND_BITS=y',
+                f'ARCH_MMAP_RND_BITS_MIN={minimum}', f'ARCH_MMAP_RND_BITS_MAX={maximum}',
+                f'ARCH_MMAP_RND_BITS={maximum}')
+        if any('CONFIG_' + value + '\n' not in (build_dir / '.config').read_text() for value in aslr):
+            raise RuntimeError('生成的翻译内核配置与 mmap 随机位数不一致')
         run([*make, '-j8', 'all'], log)
         shutil.copyfile(source / 'arch/lkl/include/uapi/asm/host_ops.h', out / 'lkl-host-ops.h')
         run([*target, '-fPIC', '-fno-stack-protector', '-O2', '-I', out, '-I', EXP,
@@ -127,13 +134,14 @@ def build(cpus=1, high_res_timers=False, guest_page_bytes=16384):
     probe_lkl.SMP = cpus == 2
     probe_lkl.package_elf(out / 'lkl.so', smp_exports={'nce_translation_enter', 'nce_translation_leave', 'nce_translation_exclusive', 'nce_window_unlock', 'nce_translation_written'})
     files = [Path(__file__), Path(lkl_translation_patch.__file__), Path(probe_lkl.__file__),
-             ROOT / 'scripts/lkl_nce_patch.py', *copied, EXP / 'translation/kernel-api.h',
+             ROOT / 'scripts/lkl_nce_patch.py', ROOT / 'scripts/lkl_translation_aslr_patch.py', *copied, EXP / 'translation/kernel-api.h',
              EXP / 'lkl-bridge.c', EXP / 'direct/page-table-layout.h', config, build_dir / '.config',
              source / 'arch/lkl/include/asm/page-mmu.h', source / 'arch/lkl/include/asm/nce-layout.h',
              source / 'arch/lkl/mm/nce_mmu.c', source / 'arch/lkl/kernel/nce_elf.c',
              source / 'arch/lkl/include/asm/pgtable-mmu-3level.h', source / 'arch/lkl/include/asm/nce-translation.h',
              source / 'arch/lkl/include/asm/mmu.h', source / 'arch/lkl/kernel/threads.c',
-             source / 'mm/mmap.c',
+             source / 'arch/lkl/Kconfig', source / 'arch/lkl/include/asm/processor.h',
+             source / 'mm/util.c', source / 'mm/mmap.c', source / 'kernel/sysctl.c',
              *[out / name for name in ('lkl.so', 'lkl-image.bin', 'lkl-image.h', 'lkl-host-ops.h')]]
     if guest_page_bytes == 4096:
         files += [ROOT / 'scripts/lkl_4k_vmalloc_patch.py', source / 'mm/vmalloc.c', source / 'mm/memory.c', source / 'arch/lkl/include/asm/vmalloc.h', source / 'kernel/bpf/ringbuf.c']

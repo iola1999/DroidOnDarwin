@@ -8,6 +8,8 @@ from pathlib import Path
 import platform
 import subprocess
 
+from probe_lkl_translation import SPARSE_GUEST_END
+
 ROOT = Path(__file__).resolve().parents[1]
 EXP = ROOT / 'experiments/native-linux'
 
@@ -16,7 +18,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('report', type=Path)
     parser.add_argument('--output', type=Path, required=True)
-    parser.add_argument('--host-address-overlap', action='store_true', help='测试副本使用 512 GiB 客体范围覆盖宿主预留')
+    parser.add_argument('--host-address-overlap', action='store_true', help='检查宿主预留与正式 512 GiB 客体范围的实际重叠')
     args = parser.parse_args()
     report = json.loads(args.report.read_text())
     config = report['configuration']
@@ -46,11 +48,6 @@ def main():
     subprocess.run(prepare_command, check=True, timeout=60)
     execution = out / 'linux-execution.c'
     execution_source = (EXP / 'translation/linux-execution.c').read_text()
-    if args.host_address_overlap:
-        original = 'guest_end = sparse_guest_layout ? 1UL << 36'
-        if execution_source.count(original) != 1:
-            raise ValueError('稀疏客体上界源码不匹配')
-        execution_source = execution_source.replace(original, 'guest_end = sparse_guest_layout ? 1UL << 39')
     execution.write_text('#define mmap nce_test_reservation_mmap\n'
                          '#define munmap nce_test_reservation_munmap\n'
                          '#define mach_vm_map nce_test_reservation_mach_vm_map\n'
@@ -63,7 +60,7 @@ def main():
               'platform': platform.platform(),
               'cpu': subprocess.check_output(['sysctl', '-n', 'machdep.cpu.brand_string'], text=True).strip(),
               'system_build': subprocess.check_output(['sw_vers', '-buildVersion'], text=True).strip(),
-              'source_configuration': config, 'test_guest_end': (1 << 39) if args.host_address_overlap else None, 'test_environment': {key: value for key, value in environment.items() if key.startswith('NCE_')},
+              'source_configuration': config, 'test_guest_end': SPARSE_GUEST_END if layout == 'sparse' else None, 'test_environment': {key: value for key, value in environment.items() if key.startswith('NCE_')},
               'commands': [prepare_command], 'runs': [], 'sha256': {str(path.relative_to(ROOT)): hashlib.sha256(path.read_bytes()).hexdigest()
                   for path in (Path(__file__).resolve(), EXP / 'translation/preparation-failure-test.c',
                                EXP / 'code-memory.c', EXP / 'layout.h', execution, renamed)}}
@@ -96,7 +93,7 @@ def main():
             size = (1 << 30) + (64 << 20) + (1 << 32 if layout == 'host' else 0)
             valid_address = type(address) is int and (address >= 1 << (36 if layout == 'sparse' else 32) and address % 16384 == 0 if created else address == 0)
             if args.host_address_overlap and created:
-                valid_address = type(address) is int and 0x10000 <= address <= (1 << 39) - size and address % 16384 == 0
+                valid_address = type(address) is int and 0x10000 <= address <= SPARSE_GUEST_END - size and address % 16384 == 0
             expected_reservation = {'test': 'partial_reservation_cleanup', 'passed': not retain_tail,
                                     'layout': layout, 'created': created, 'address': address,
                                     'bytes': size if created else 0, 'releases': int(created),

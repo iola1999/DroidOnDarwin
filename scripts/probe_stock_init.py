@@ -8,6 +8,7 @@ from pathlib import Path
 import re
 import shutil
 import subprocess
+from probe_lkl_translation import validate_guest_layout
 
 ROOT = Path(__file__).resolve().parents[1]
 EXP = ROOT / 'experiments/native-linux'
@@ -99,9 +100,12 @@ def prepare(runtime, desktop, metadata, out, system_image=None):
                             'The runner supplies mounted partition directories; first-stage init and original fstab mounts are untested.']}
 
 
-def validate(rows, mode, original_system=False, *, kernel_log=''):
+def validate(rows, mode, original_system=False, *, guest_page_bytes=16384, kernel_log=''):
     if 'BUG: non-zero pgtables_bytes on freeing mm:' in kernel_log:
         return False
+    if not validate_guest_layout(rows, 'sparse', True, guest_page_bytes):
+        return False
+    guest = next(row for row in rows if row.get('config') == 'translation_guest_layout')
     observations = [r for r in rows if 'stock_init_observation' in r]
     cleanup = [r for r in rows if r.get('test') == 'translated_context_cleanup']
     logs = [r for r in rows if 'stock_init_kernel_log' in r]
@@ -143,7 +147,7 @@ def validate(rows, mode, original_system=False, *, kernel_log=''):
                 any(type(value) is not int or not 0 <= value < 1 << 64 for value in row['args']) or
                 (reboot and row['stock_init_reboot'] is not True) or
                 (not reboot and (type(row['stock_init_syscall']) is not int or type(row['result']) is not int or
-                                 type(row['pc']) is not int or not 0 <= row['pc'] < 1 << 36))):
+                                 type(row['pc']) is not int or not guest['guest_base'] <= row['pc'] < guest['guest_end']))):
             return False
     for row in (r for r in rows if 'stock_init_block' in r):
         counts = {29: 0, 33: 1, 40: 3, 56: 1}
@@ -199,9 +203,9 @@ def main():
     config = base['configuration']
     if (config['guest_layout'] != 'sparse' or config['workload'] != 'core' or config['cpus'] != 1 or
             config['execution'] != 'direct' or config['direct']['memory'] != 'flat' or not config['data_tbi'] or
-            config.get('guest_page_bytes', 16384) != 16384 or config['mapping'] != 'pte' or config['code_memory'] != 'dual' or
+            config.get('guest_page_bytes', 16384) not in (4096, 16384) or config['mapping'] != 'pte' or config['code_memory'] != 'dual' or
             not base['runs'] or not all(r['validated'] for r in base['runs'])):
-        parser.error('需要成功的 sparse 16 KiB 单 CPU Direct flat/TBI 核心构建')
+        parser.error('需要成功的 sparse 单 CPU Direct flat/TBI 核心构建')
     for name, expected in base['sha256'].items():
         if sha(ROOT / name) != expected:
             raise ValueError('基准输入变化：' + name)
@@ -301,7 +305,7 @@ def main():
                     returncode = 'timeout'
             rows = [json.loads(line) for line in (out / (label + '.jsonl')).read_text().splitlines() if line.startswith('{')]
             stderr = (out / (label + '.log')).read_text()
-            valid = returncode == 0 and validate(rows, mode, bool(args.system_image), kernel_log=stderr) and 'stock_init_exec_errno' not in stderr
+            valid = returncode == 0 and validate(rows, mode, bool(args.system_image), guest_page_bytes=config.get('guest_page_bytes', 16384), kernel_log=stderr) and 'stock_init_exec_errno' not in stderr
             guest_writes = ''.join(bytes.fromhex(row['hex']).decode('utf-8', errors='replace') for row in rows
                                    if 'stock_init_write' in row and bytes.fromhex(row['hex']).startswith(b'<'))
             result['runs'].append({'entry': entry, 'mode': mode, 'returncode': returncode, 'observation_validated': valid,

@@ -25,7 +25,7 @@ void translation_sparse_tests(void (*inaccessible)(unsigned long, int))
     FILE *input = fopen("/probe-host-sources", "r");
     unsigned long host[2];
     CHECK(input && fscanf(input, "%lu %lu", &host[0], &host[1]) == 2 && !fclose(input));
-    CHECK(host[0] >= 0x10000 && host[0] < 1UL << 36 && host[1] >= 1UL << 36);
+    CHECK(host[0] >= 0x10000 && host[0] < NCE_SPARSE_GUEST_END && host[1] >= NCE_SPARSE_GUEST_END);
     int file = open("/host-pointer", O_RDWR);
     CHECK(file >= 0);
     for (unsigned i = 0; i < 2; ++i) {
@@ -77,8 +77,9 @@ void translation_sparse_tests(void (*inaccessible)(unsigned long, int))
     puts("{\"test\":\"translated_sparse_host_pointer_sources\",\"passed\":true}");
     puts("{\"test\":\"translated_same_host_va_cow_shared\",\"passed\":true}");
 
-    volatile unsigned long *low = mmap(NULL, PAGE, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
-    CHECK(low != MAP_FAILED && (unsigned long)low < 1UL << 32);
+    volatile unsigned long *low = mmap((void *)(0x10000 + NCE_MMAP_OFFSET), PAGE, PROT_READ | PROT_WRITE,
+                                       MAP_PRIVATE | MAP_ANONYMOUS | MAP_FIXED_NOREPLACE, -1, 0);
+    CHECK(low == (void *)(0x10000 + NCE_MMAP_OFFSET));
     unsigned long high_address = (unsigned long)low + (1UL << 32);
     volatile unsigned long *high = mmap((void *)high_address, 2 * PAGE, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS | MAP_FIXED_NOREPLACE, -1, 0);
     CHECK(high == (void *)high_address);
@@ -126,7 +127,7 @@ void translation_sparse_tests(void (*inaccessible)(unsigned long, int))
     const unsigned long reservation_size = 9UL << 30;
     void *reservation = mmap(NULL, reservation_size, PROT_NONE, MAP_PRIVATE | MAP_ANONYMOUS | MAP_NORESERVE, -1, 0);
     CHECK(reservation != MAP_FAILED);
-    CHECK((unsigned long)reservation >= 0x10000 && (unsigned long)reservation <= (1UL << 36) - reservation_size);
+    CHECK((unsigned long)reservation >= 0x10000 && (unsigned long)reservation <= NCE_SPARSE_GUEST_END - reservation_size);
     volatile unsigned long *last = reservation + reservation_size - PAGE;
     CHECK(!mprotect((void *)last, PAGE, PROT_READ | PROT_WRITE));
     *last = 83;

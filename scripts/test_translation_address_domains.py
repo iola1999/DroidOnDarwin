@@ -4,11 +4,10 @@ import argparse
 import hashlib
 import json
 import os
-import shutil
 from pathlib import Path
 import subprocess
 
-from probe_lkl_translation import validate
+from probe_lkl_translation import SPARSE_GUEST_END, validate
 from stock_bionic import unchanged
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -19,12 +18,13 @@ def sha(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def validate_domains(rows, config):
+def validate_domains(rows, config, *, kernel_log=''):
     product_rows = [row for row in rows if 'address_domain_region' not in row and row.get('test') != 'translated_host_guest_numeric_overlap']
     if not validate(product_rows, config['memory_interval_ms'], config['mapping'], config['workload'],
                     config['tlb_invalidation'], config['execution'], config['direct'], config['cpus'], config['parallel_profile'],
                     config['uaccess_stop'], code_memory=config['code_memory'], online_cpus=config['online_cpus'],
-                    guest_layout=config['guest_layout'], data_tbi=config['data_tbi'], sparse_end=1 << 39):
+                    guest_layout=config['guest_layout'], data_tbi=config['data_tbi'],
+                    guest_page_bytes=config.get('guest_page_bytes', 16384), kernel_log=kernel_log):
         return False
     layouts = [row for row in rows if row.get('config') == 'translation_guest_layout']
     regions = [row for row in rows if 'address_domain_region' in row]
@@ -72,10 +72,6 @@ def main():
     out.mkdir(parents=True, exist_ok=True)
     execution = out / 'linux-execution.c'
     execution_source = (EXP / 'translation/linux-execution.c').read_text()
-    original = 'guest_end = sparse_guest_layout ? 1UL << 36'
-    if execution_source.count(original) != 1:
-        raise ValueError('稀疏客体上界源码不匹配')
-    execution_source = execution_source.replace(original, 'guest_end = sparse_guest_layout ? 1UL << 39')
     execution.write_text('#define mach_vm_map nce_test_domain_map\n'
                          '#define vm_remap nce_test_domain_remap\n'
                          '#define mmap nce_test_domain_mmap\n'
@@ -94,8 +90,8 @@ def main():
     result = {key: report[key] for key in ('platform', 'cpu', 'system_build', 'configuration', 'dependency')}
     if 'stock_runtime' in report:
         result['stock_runtime'] = report['stock_runtime']
-    result.update(scope='Generated 512 GiB guest-bound and host-lifecycle test inputs; product sparse remains 64 GiB; functional checks only; iOS unverified',
-                  test_guest_end=1 << 39,
+    result.update(scope='Formal 512 GiB sparse guest with host-lifecycle test inputs; functional checks only; iOS unverified',
+                  test_guest_end=SPARSE_GUEST_END,
                   source_report=str(source), source_report_sha256=sha(source), test_environment=selected,
                   commands=[], runs=[], sha256=dict(report['sha256']))
     for path in (Path(__file__).resolve(), EXP / 'translation/address-domain-test.c', execution):
@@ -105,31 +101,6 @@ def main():
             target = out / path.name
             if not target.exists():
                 target.symlink_to(path)
-    if config['workload'] == 'core':
-        guest = out / 'linux-guest.c'
-        guest_source = (EXP / 'translation/linux-guest.c').read_text()
-        before = 'CHECK(!sparse || (base == 0x10000 && end == 1UL << 36));'
-        if guest_source.count(before) != 1:
-            raise ValueError('稀疏客体检查上界源码不匹配')
-        guest.write_text(guest_source.replace(before, 'CHECK(!sparse || (base == 0x10000 && end == 1UL << 39));'))
-        compile_guest = next(list(cmd) for cmd in report['commands'] if '-c' in cmd and str(EXP / 'translation/linux-guest.c') in cmd)
-        compile_guest[compile_guest.index(str(EXP / 'translation/linux-guest.c'))] = str(guest)
-        compile_guest[compile_guest.index('-o') + 1] = str(out / 'guest.o')
-        compile_guest += ['-iquote', str(EXP / 'translation')]
-        link_guest = next(list(cmd) for cmd in report['commands'] if '-o' in cmd and cmd[cmd.index('-o') + 1] == str(source.parent / 'guest.elf'))
-        link_guest[link_guest.index(str(source.parent / 'guest.o'))] = str(out / 'guest.o')
-        link_guest[link_guest.index('-o') + 1] = str(out / 'guest.elf')
-        (out / 'guest.elf').unlink()
-        (out / 'late.elf').unlink()
-        for command in (compile_guest, link_guest):
-            subprocess.run(command, check=True, timeout=120)
-            result['commands'].append(command)
-            for item in command:
-                path = Path(item)
-                if path.is_absolute() and path.is_relative_to(ROOT) and path.is_file():
-                    result['sha256'][str(path.relative_to(ROOT))] = sha(path)
-        shutil.copyfile(out / 'guest.elf', out / 'late.elf')
-        result['sha256'][str((out / 'late.elf').relative_to(ROOT))] = sha(out / 'late.elf')
     for entry in ('cli', 'gcd'):
         command = next(list(cmd) for cmd in report['commands'] if '-o' in cmd and Path(cmd[cmd.index('-o') + 1]).name == entry)
         includes = [command[i + 1] for i, value in enumerate(command[:-1]) if value == '-I']
@@ -147,9 +118,10 @@ def main():
             except subprocess.TimeoutExpired:
                 returncode = 'timeout'
         rows = [json.loads(line) for line in (out / f'{entry}.jsonl').read_text().splitlines() if line.startswith('{')]
-        valid = returncode == 0 and validate_domains(rows, config)
+        stderr = (out / f'{entry}.log').read_text()
+        valid = returncode == 0 and validate_domains(rows, config, kernel_log=stderr)
         run = {'entry': entry, 'returncode': returncode, 'validated': valid, 'results': rows,
-               'stderr': (out / f'{entry}.log').read_text(), 'stdout_sha256': sha(out / f'{entry}.jsonl'), 'stderr_sha256': sha(out / f'{entry}.log')}
+               'stderr': stderr, 'stdout_sha256': sha(out / f'{entry}.jsonl'), 'stderr_sha256': sha(out / f'{entry}.log')}
         if 'stock_runtime' in report:
             stages = [row for row in rows if row.get('component_stage') == 'dynamic']
             run['component_compatible'] = valid and len(stages) == 1 and stages[0].get('success') is True

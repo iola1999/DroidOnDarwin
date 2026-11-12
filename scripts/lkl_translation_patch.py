@@ -428,3 +428,6 @@ SYSCALL_DEFINE6(nce_mmap, unsigned long, addr, unsigned long, len,
 
         import lkl_4k_vmalloc_patch
         lkl_4k_vmalloc_patch.apply(source)
+
+    import lkl_translation_aslr_patch
+    lkl_translation_aslr_patch.apply(source, guest_page_bytes)

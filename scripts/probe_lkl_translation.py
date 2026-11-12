@@ -17,6 +17,7 @@ EXP = ROOT / 'experiments/native-linux'
 WORK = ROOT / 'work/native-linux-nce'
 KERNEL = WORK / 'processes'
 DEFAULT_OUT = WORK / 'lkl-translation'
+SPARSE_GUEST_END = 1 << 39
 
 
 def run(command, **kwargs):
@@ -44,9 +45,9 @@ def validate_android_image(root, directory):
         raise ValueError('Android 系统镜像与当前用户态源码不一致，请先通过 scripts/probe_lkl.py 重建并验证：' + ', '.join(stale))
 
 
-def validate_guest_layout(rows, requested, flat=False, guest_page_bytes=16384, *, sparse_end=1 << 36):
+def validate_guest_layout(rows, requested, flat=False, guest_page_bytes=16384):
     records = [row for row in rows if row.get('config') == 'translation_guest_layout']
-    if len(records) != 1 or requested not in ('host', 'low', 'sparse') or guest_page_bytes not in (4096, 16384) or type(sparse_end) is not int or sparse_end not in (1 << 36, 1 << 39):
+    if len(records) != 1 or requested not in ('host', 'low', 'sparse') or guest_page_bytes not in (4096, 16384):
         return False
     row = records[0]
     fields = ('guest_base', 'guest_end', 'guest_span_bytes', 'flat_coverage_bytes',
@@ -67,7 +68,7 @@ def validate_guest_layout(rows, requested, flat=False, guest_page_bytes=16384, *
             (ram < reserve + reserve_size and reserve < ram + ram_size)):
         return False
     if requested in ('low', 'sparse'):
-        return ((flat or guest_page_bytes == 4096) and base == 0x10000 and end == (sparse_end if requested == 'sparse' else coverage) and physical == reserve and
+        return ((flat or guest_page_bytes == 4096) and base == 0x10000 and end == (SPARSE_GUEST_END if requested == 'sparse' else coverage) and physical == reserve and
                 reserve_size == ram_size + (64 << 20))
     return (base == reserve and end == base + coverage and physical == end and
             reserve_size == coverage + ram_size + (64 << 20))
@@ -107,7 +108,67 @@ def validate_standard_jit(rows, data_tbi=False, *, guest_page_bytes=16384):
     return True
 
 
-def validate(rows, memory_interval, mapping="window", workload="core", tlb_invalidation=None, execution=None, direct_config=None, cpus=1, parallel_profile=None, uaccess_stop=None, code_lookup_limit=None, code_memory=None, online_cpus=None, guest_layout=None, guest_page_bytes=16384, data_tbi=None, stock_art_jit_mode="default", *, sparse_end=1 << 36, kernel_log=""):
+def validate_aslr(rows, guest_page_bytes):
+    guest = next(row for row in rows if row.get('config') == 'translation_guest_layout')
+    minimum = 16 if guest_page_bytes == 16384 else 18
+    maximum = minimum + (8 if guest['mode'] == 'sparse' else 1)
+    if [row for row in rows if row.get('config') == 'linux_random_source'] != [
+            {'config': 'linux_random_source', 'seed_bits': 256, 'getrandom_bytes': 32, 'flags': 1}]:
+        return False
+    if [row for row in rows if row.get('config') == 'linux_mmap_aslr'] != [
+            {'config': 'linux_mmap_aslr', 'min_bits': minimum, 'max_bits': maximum,
+             'guest_base': guest['guest_base'], 'guest_end': guest['guest_end']}]:
+        return False
+    for name in ('linux_mmap_aslr_sysctl_bounds', 'linux_mmap_aslr_fork_same_mm'):
+        if [row for row in rows if row.get('test') == name] != [{'test': name, 'passed': True}]:
+            return False
+    modes = {'minimum': (minimum, 0, 8 << 20, 8, False),
+             'maximum': (maximum, 0, 8 << 20, 8, False),
+             'no_randomize': (maximum, 0x40000, 8 << 20, 4, False),
+             'compat_layout': (maximum, 0x200000, 8 << 20, 4, True),
+             'infinite_stack': (maximum, 0, (1 << 64) - 1, 4, True),
+             'large_stack': (maximum, 0, (1 << 64) - 2, 8, False),
+             'large_no_randomize': (maximum, 0x40000, (1 << 64) - 2, 4, False),
+             'legacy_sysctl': (maximum, 0, 8 << 20, 4, True),
+             'fallback': (maximum, 0x40000, 8 << 20, 1, False)}
+    results = [row for row in rows if row.get('test') == 'linux_mmap_aslr']
+    if results != [{'test': 'linux_mmap_aslr', 'case': name, 'passed': True} for name in modes]:
+        return False
+    samples = [row for row in rows if 'linux_mmap_aslr_sample' in row]
+    if len(samples) != sum(mode[3] for mode in modes.values()):
+        return False
+    for name, (bits, personality, limit, count, legacy) in modes.items():
+        selected = [row for row in samples if row.get('case') == name]
+        if len(selected) != count:
+            return False
+        for iteration, row in enumerate(selected):
+            fields = ('iteration', 'bits', 'first', 'second', 'stack', 'personality', 'stack_limit', 'lower', 'fallback')
+            if (set(row) != {'linux_mmap_aslr_sample', 'case', *fields} or row['linux_mmap_aslr_sample'] is not True or
+                    any(type(row[key]) is not int or not 0 <= row[key] < 1 << 64 for key in fields) or
+                    row['iteration'] != iteration or row['bits'] != bits or row['personality'] != personality or row['stack_limit'] != limit or
+                    any(not guest['guest_base'] <= row[key] <= guest['guest_end'] - guest_page_bytes or row[key] % guest_page_bytes
+                        for key in ('first', 'second')) or
+                    not guest['guest_base'] <= row['stack'] < guest['guest_end'] or
+                    row['second'] != row['first'] + (guest_page_bytes if legacy else -guest_page_bytes)):
+                return False
+            if name == 'fallback':
+                if (not guest['guest_base'] <= row['lower'] < row['first'] or row['lower'] % guest_page_bytes or
+                        (guest['mode'] != 'host' and row['lower'] != guest['guest_base']) or
+                        not row['first'] < row['fallback'] <= guest['guest_end'] - guest_page_bytes or
+                        row['fallback'] % guest_page_bytes):
+                    return False
+            elif row['lower'] or row['fallback']:
+                return False
+        unique = (len({row[key] for row in selected}) for key in ('first', 'stack'))
+        if personality & 0x40000:
+            if any(value != 1 for value in unique):
+                return False
+        elif any(value < 2 for value in unique):
+            return False
+    return True
+
+
+def validate(rows, memory_interval, mapping="window", workload="core", tlb_invalidation=None, execution=None, direct_config=None, cpus=1, parallel_profile=None, uaccess_stop=None, code_lookup_limit=None, code_memory=None, online_cpus=None, guest_layout=None, guest_page_bytes=16384, data_tbi=None, stock_art_jit_mode="default", *, kernel_log=""):
     if 'BUG: non-zero pgtables_bytes on freeing mm:' in kernel_log:
         return False
     if guest_page_bytes not in (4096, 16384):
@@ -120,7 +181,7 @@ def validate(rows, memory_interval, mapping="window", workload="core", tlb_inval
                  'host_page_bytes': 16384, 'host_address_limit': 1 << 39}]:
             return False
         layouts = [row for row in rows if row.get('config') == 'translation_guest_layout']
-        if len(layouts) != 1 or not validate_guest_layout(rows, guest_layout, execution == 'direct' and direct_config['memory'] == 'flat', guest_page_bytes, sparse_end=sparse_end):
+        if len(layouts) != 1 or not validate_guest_layout(rows, guest_layout, execution == 'direct' and direct_config['memory'] == 'flat', guest_page_bytes):
             return False
         layout = layouts[0]
         physical = layout['physical_base']
@@ -161,13 +222,15 @@ def validate(rows, memory_interval, mapping="window", workload="core", tlb_inval
             return False
     if guest_layout is not None:
         flat = execution == 'direct' and direct_config is not None and direct_config['memory'] in ('flat', 'view')
-        if not validate_guest_layout(rows, guest_layout, flat, guest_page_bytes, sparse_end=sparse_end):
+        if not validate_guest_layout(rows, guest_layout, flat, guest_page_bytes):
             return False
         if guest_layout in ('low', 'sparse') and (mapping != 'pte' or cpus != 1 or
                 (guest_page_bytes == 16384 and (execution != 'direct' or direct_config['memory'] != 'flat')) or
                 (guest_page_bytes == 4096 and execution == 'direct' and direct_config['memory'] not in ('pte', 'flat'))):
             return False
         if workload == 'core' and mapping == 'pte':
+            if not validate_aslr(rows, guest_page_bytes):
+                return False
             if data_tbi:
                 for name in ('translated_data_tbi_and_unicorn_alias_invalidation', 'translated_tagged_syscall_abi_rejected', 'translated_tagged_fetch_rejected'):
                     if [row for row in rows if row.get('test') == name] != [{'test': name, 'passed': True}]:
@@ -185,7 +248,7 @@ def validate(rows, memory_interval, mapping="window", workload="core", tlb_inval
                 pointers = [row for row in rows if row.get('config') == 'translation_host_pointer_sources']
                 if (len(pointers) != 1 or set(pointers[0]) != {'config', 'low', 'high', 'stack', 'text'} or
                         any(type(pointers[0][k]) is not int or not 0 < pointers[0][k] < 1 << 64 for k in ('low', 'high', 'stack', 'text')) or
-                        not 0x10000 <= pointers[0]['low'] <= sparse_end - guest_page_bytes or pointers[0]['high'] < sparse_end):
+                        not 0x10000 <= pointers[0]['low'] <= SPARSE_GUEST_END - guest_page_bytes or pointers[0]['high'] < SPARSE_GUEST_END):
                     return False
             if [row for row in rows if row.get('test') == 'translated_guest_layout_boundaries'] != [
                     {'test': 'translated_guest_layout_boundaries', 'passed': True, 'layout': guest_layout}]:
@@ -739,6 +802,7 @@ def main():
     if stock_runtime or stock_art:
         guest_sources = []
     elif args.mapping == 'pte':
+        guest_sources.append(EXP / 'translation/aslr-guest.c')
         guest_sources.append(EXP / 'translation/jit-guest.c')
     for source in guest_sources:
         obj = out / (source.stem + '.o')

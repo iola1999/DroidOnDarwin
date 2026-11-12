@@ -11,6 +11,7 @@
 #define NCE_HOST_PAGE_SIZE 16384UL
 #define NCE_CODE_POOL_SIZE (16UL * 1024 * 1024)
 #define NCE_USER_SIZE (4UL * 1024 * 1024 * 1024)
+#define NCE_SPARSE_GUEST_END (1UL << 39)
 /* Linker and libdl size their CFI shadow for this Darwin address range. */
 #define NCE_HOST_ADDRESS_LIMIT (1UL << (NCE_GUEST_PAGE_SHIFT == 12 ? 39 : 40))
 #define NCE_RAM_SIZE 0x40000000UL
