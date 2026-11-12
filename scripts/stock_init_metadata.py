@@ -11,6 +11,18 @@ LIB = Path('/opt/homebrew/opt/e2fsprogs/lib')
 
 
 def metadata(image, records, directories, output):
+    partition = output / 'original-system-metadata.img'
+    system_partition(image, partition, 'system')
+    paths = {'/etc', *{path for path in [*records, *directories] if path == '/system' or path.startswith('/system/')}}
+    items = read_partition_metadata(partition, records, paths, links={'/etc'})
+    target = items['/etc']['link_target']
+    if target != '/system/etc':
+        raise ValueError('原 /etc 链接目标不同：' + target)
+    return items
+
+
+def read_partition_metadata(partition, records, paths, *, links=()):
+    """从 raw ext4 读取标签并校验 records；links 中路径保留最终符号链接。"""
     c.CDLL(str(LIB / 'libcom_err.1.1.dylib'), mode=c.RTLD_GLOBAL)
     lib = c.CDLL(str(LIB / 'libext2fs.2.1.dylib'))
     pointer = c.c_void_p
@@ -41,17 +53,14 @@ def metadata(image, records, directories, output):
         if result:
             raise ValueError(f'ext4 元数据读取失败：{operation}，错误码 {result}')
 
-    partition = output / 'original-system-metadata.img'
-    system_partition(image, partition, 'system')
     fs = pointer()
     check(lib.ext2fs_open(str(partition).encode(), 0, 0, 0,
                          pointer.in_dll(lib, 'unix_io_manager'), c.byref(fs)), 'open')
     items = {}
     try:
-        paths = sorted({'/etc', *{path for path in [*records, *directories] if path == '/system' or path.startswith('/system/')}})
-        for path in paths:
+        for path in sorted(set(paths)):
             ino = ino_type()
-            namei = lib.ext2fs_namei if path == '/etc' else lib.ext2fs_namei_follow
+            namei = lib.ext2fs_namei if path in links else lib.ext2fs_namei_follow
             check(namei(fs, 2, 2, path.encode(), c.byref(ino)), path)
             inode = c.create_string_buffer(128)
             check(lib.ext2fs_read_inode(fs, ino, inode), path)
@@ -74,6 +83,8 @@ def metadata(image, records, directories, output):
             if not context.startswith('u:object_r:') or '\t' in context or '\n' in context:
                 raise ValueError('原 SELinux 标签格式无效：' + path)
             if path in records:
+                if path in links:
+                    raise ValueError('内容校验要求解析符号链接：' + path)
                 file = pointer()
                 check(lib.ext2fs_file_open(fs, ino, 0, c.byref(file)), path)
                 digest = hashlib.sha256()
@@ -93,14 +104,12 @@ def metadata(image, records, directories, output):
                     raise ValueError('元数据镜像文件与已校验原输入不同：' + path)
             items[path] = {'mode': mode & 0o7777, 'uid': uid, 'gid': gid, 'selinux': context,
                            'selinux_xattr_hex': label.hex(), 'original_inode': ino.value}
-            if path == '/etc':
+            if path in links:
                 size = struct.unpack_from('<I', inode.raw, 4)[0]
                 blocks = struct.unpack_from('<I', inode.raw, 28)[0]
                 if mode & 0o170000 != 0o120000 or blocks or not 0 < size <= 60:
-                    raise ValueError('原 /etc 必须为 fast symlink')
+                    raise ValueError('原 /etc 必须为 fast symlink' if path == '/etc' else '原路径必须为 fast symlink：' + path)
                 target = inode.raw[40:40 + size].decode('ascii')
-                if target != '/system/etc':
-                    raise ValueError('原 /etc 链接目标不同：' + target)
                 items[path]['link_target'] = target
     finally:
         check(lib.ext2fs_close(fs), 'close')

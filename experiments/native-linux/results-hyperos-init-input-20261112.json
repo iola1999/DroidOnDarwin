@@ -1,0 +1,3677 @@
+{
+  "scope": "Fixed original HyperOS init input preparation and static metadata/dependency verification",
+  "base_commit": "2dea3bf1c93844a2f219a2f947e4526a4db31c3d",
+  "worktree": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-hyperos-jit",
+  "environment": {
+    "cpu": "Apple M5 Ultra",
+    "macos": "27.0",
+    "macos_build": "26A428",
+    "xcode": "27.1",
+    "xcode_build": "27A9275"
+  },
+  "source_identity": {
+    "manifest": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/project-audit-2026-11-12/references/hyperos3-input/manifest.json",
+    "manifest_sha256": "7785f61d0e1846fa14d9f3af9db49c905a02604128747a0d617eeff381504ceb",
+    "scan": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/project-audit-2026-11-12/references/hyperos3-input/core-scan-v4/scan.json",
+    "scan_sha256": "bfa0564789255476b36d361810ee23f42b5b99ffae77eb6743778377850bc370",
+    "repository": "NEORUAA/HyperOS-AVD",
+    "source_commit": "9d7ddd3f046e89d33cb205b5fbbf6dc5b728155c",
+    "release": "v0.1.0-a16-hyperos3-fuxi-r1",
+    "hyperos": "3.0.2.0.WMCCNXM",
+    "source": "Third-party MysticGSI assembly of HyperOS system and ranchu vendor/system_dlkm",
+    "parts": [
+      {
+        "name": "HyperOS-AVD-v0.1.0-macos-arm64.tar.gz.part001",
+        "size": 1610612736,
+        "sha256": "5ef3d16c8f02088d60b01024a39065398dd669ab50100ea9547cb64b83db95e9"
+      },
+      {
+        "name": "HyperOS-AVD-v0.1.0-macos-arm64.tar.gz.part002",
+        "size": 1610612736,
+        "sha256": "9ba2b360d0a28f95ba1e1fe4cd135706498a1ada75caa64ff6596b366c2c4b07"
+      },
+      {
+        "name": "HyperOS-AVD-v0.1.0-macos-arm64.tar.gz.part003",
+        "size": 493624687,
+        "sha256": "1b9fe789439b784e13303818faa568739f49ee45bed1389d12e9aec99f64888f"
+      }
+    ],
+    "archive_inputs": {
+      "images/kernel-ranchu": {
+        "source_sha256": "b950027375a82427604eba65f41de7188737e444b01cb625c61056ffd14cf427",
+        "source_bytes": 14489771,
+        "path": "work/native-linux-nce/hyperos-init-input-v6/kernel-ranchu",
+        "bytes": 14489771,
+        "sha256": "b950027375a82427604eba65f41de7188737e444b01cb625c61056ffd14cf427",
+        "partitions": null
+      },
+      "images/ramdisk.img": {
+        "source_sha256": "15760b3106f9cf92f4acd00aeaaab47151dd802aeed7fe19231ba1d918b29d51",
+        "source_bytes": 2285114,
+        "path": "work/native-linux-nce/hyperos-init-input-v6/ramdisk.img",
+        "bytes": 2285114,
+        "sha256": "15760b3106f9cf92f4acd00aeaaab47151dd802aeed7fe19231ba1d918b29d51",
+        "partitions": null
+      },
+      "images/system.img": {
+        "source_sha256": "61a6011155548708075cb2a69969e689b253881cd5610b911c2df68878304cca",
+        "source_bytes": 6792675328,
+        "path": "work/native-linux-nce/hyperos-init-input-v6/system_dlkm.erofs",
+        "bytes": 7393280,
+        "sha256": "dd55dc42d416bcbd1510fc5a91d8e2fb1b08752b4d87e6de73afacae96ee6639",
+        "partitions": [
+          {
+            "name": "system",
+            "attributes": 1,
+            "group": 1,
+            "size": 6724648960,
+            "ranges": [
+              {
+                "source": 3145728,
+                "length": 6724648960,
+                "target": 0
+              }
+            ]
+          },
+          {
+            "name": "vendor",
+            "attributes": 1,
+            "group": 1,
+            "size": 52797440,
+            "ranges": [
+              {
+                "source": 6728712192,
+                "length": 52797440,
+                "target": 0
+              }
+            ]
+          },
+          {
+            "name": "system_dlkm",
+            "attributes": 1,
+            "group": 1,
+            "size": 7393280,
+            "ranges": [
+              {
+                "source": 6782189568,
+                "length": 7393280,
+                "target": 0
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "source_identity_sha256": "c1f59742a3856cb9ec16ea6aec51e8eb5d28650861ebbe74d74e1ce81af177c5",
+  "prepared_manifest": {
+    "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-hyperos-jit/work/native-linux-nce/hyperos-init-input-v6/manifest.json",
+    "bytes": 4683214,
+    "sha256": "1ece2c7f87a9064a28a823309476d10044a795bad25b887e5e07a8859137ad06"
+  },
+  "images": {
+    "system": {
+      "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/project-audit-2026-11-12/references/hyperos3-input/extracted/system.ext4",
+      "bytes": 6724648960,
+      "sha256": "dd65f33741bfce77b22b5c58b8d696b16da52f15a825acafcbcede47a3cfa3ca"
+    },
+    "vendor": {
+      "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/project-audit-2026-11-12/references/hyperos3-input/logical-vendor/vendor.erofs",
+      "bytes": 52797440,
+      "sha256": "0549061f9afe13c94baaa942eb08319b0498b66ac38b2cfd73cbbba541153fbd"
+    },
+    "system_dlkm": {
+      "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-hyperos-jit/work/native-linux-nce/hyperos-init-input-v6/system_dlkm.erofs",
+      "bytes": 7393280,
+      "sha256": "dd55dc42d416bcbd1510fc5a91d8e2fb1b08752b4d87e6de73afacae96ee6639"
+    }
+  },
+  "ramdisk": {
+    "image": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-hyperos-jit/work/native-linux-nce/hyperos-init-input-v6/ramdisk.img",
+    "image_bytes": 2285114,
+    "image_sha256": "15760b3106f9cf92f4acd00aeaaab47151dd802aeed7fe19231ba1d918b29d51",
+    "compression": "lz4-legacy",
+    "archive_count": 1,
+    "cpio_bytes": 4463912,
+    "cpio_sha256": "9d39b17bdf772eadc9042b0af200cad96deb6321c2ddec9263272b2dbeda9a0f",
+    "entry_count": 31
+  },
+  "counts": {
+    "partition_files": 438,
+    "partition_file_bytes": 101096395,
+    "apex_sample_files": 86,
+    "apex_sample_file_bytes": 31486748,
+    "rc_files": 139,
+    "selinux_files": 68,
+    "original_service_declarations": 179,
+    "original_apex_containers": 40,
+    "ext4_apex_payloads": 39,
+    "erofs_apex_payloads": 1
+  },
+  "bootstrap_closure": {
+    "files": [
+      "/system/bin/apexd",
+      "/system/bin/bootstrap/linker64",
+      "/system/bin/init",
+      "/system/bin/secilc",
+      "/system/bin/ueventd",
+      "/system/lib64/apex_aidl_interface-cpp.so",
+      "/system/lib64/apexd_flags_c_lib.so",
+      "/system/lib64/bootstrap/libc.so",
+      "/system/lib64/bootstrap/libdl.so",
+      "/system/lib64/bootstrap/libdl_android.so",
+      "/system/lib64/bootstrap/libm.so",
+      "/system/lib64/ld-android.so",
+      "/system/lib64/libPlatformProperties.so",
+      "/system/lib64/lib_cust_mount_helper.so",
+      "/system/lib64/libaconfig_storage_read_api_cc.so",
+      "/system/lib64/libapexsupport.so",
+      "/system/lib64/libbase.so",
+      "/system/lib64/libbinder.so",
+      "/system/lib64/libc++.so",
+      "/system/lib64/libcrypto.so",
+      "/system/lib64/libcrypto_utils.so",
+      "/system/lib64/libcutils.so",
+      "/system/lib64/libext2_uuid.so",
+      "/system/lib64/libext4_utils.so",
+      "/system/lib64/libfec.so",
+      "/system/lib64/libfs_mgr.so",
+      "/system/lib64/libgsi.so",
+      "/system/lib64/libjsoncpp.so",
+      "/system/lib64/libkeyutils.so",
+      "/system/lib64/liblog.so",
+      "/system/lib64/liblogwrap.so",
+      "/system/lib64/liblp.so",
+      "/system/lib64/liblzma.so",
+      "/system/lib64/libpackagelistparser.so",
+      "/system/lib64/libpcre2.so",
+      "/system/lib64/libprocessgroup.so",
+      "/system/lib64/libprocessgroup_setup.so",
+      "/system/lib64/libprotobuf-cpp-full.so",
+      "/system/lib64/libselinux.so",
+      "/system/lib64/libsparse.so",
+      "/system/lib64/libsquashfs_utils.so",
+      "/system/lib64/libssl.so",
+      "/system/lib64/libtinyxml2.so",
+      "/system/lib64/libunwindstack.so",
+      "/system/lib64/libutils.so",
+      "/system/lib64/libutilscallstack.so",
+      "/system/lib64/libvendorsupport.so",
+      "/system/lib64/libvintf.so",
+      "/system/lib64/libvndksupport.so",
+      "/system/lib64/libz.so",
+      "/system/lib64/libziparchive.so",
+      "/system/lib64/server_configurable_flags.so",
+      "/system/lib64/soc_flags_lib_cc.so"
+    ],
+    "unresolved": []
+  },
+  "activation_dependent_closure": {
+    "files": [
+      "/apex/com.android.runtime/bin/linkerconfig",
+      "/apex/com.android.runtime/lib64/bionic/libc.so",
+      "/apex/com.android.runtime/lib64/bionic/libdl.so",
+      "/apex/com.android.runtime/lib64/bionic/libm.so",
+      "/apex/com.android.runtime/lib64/ld-android.so",
+      "/apex/com.android.runtime/lib64/libbase.so",
+      "/apex/com.android.runtime/lib64/libc++.so"
+    ],
+    "activation_observed": false
+  },
+  "init_helper_paths": {
+    "linkerconfig": "/apex/com.android.runtime/bin/linkerconfig",
+    "secilc": "/system/bin/secilc"
+  },
+  "missing_service_binaries": [
+    "/system/bin/adbd",
+    "/system/bin/traced_relay",
+    "/system_ext/bin/miuibpfservice",
+    "/system_ext/xbin/mqsasd",
+    "/system/xbin/su",
+    "/vendor/bin/boringssl_self_test32"
+  ],
+  "aarch32_partition_services": [
+    {
+      "name": "boringssl_self_test32",
+      "binary": "/system/bin/boringssl_self_test32",
+      "rc": "/system/etc/init/hw/init.rc",
+      "line": 546,
+      "declaration": "service boringssl_self_test32 /system/bin/boringssl_self_test32",
+      "arguments": [],
+      "classes": [
+        "default"
+      ],
+      "disabled": false,
+      "options": [
+        {
+          "line": 547,
+          "text": "stdio_to_kmsg"
+        },
+        {
+          "line": 549,
+          "text": "capabilities"
+        },
+        {
+          "line": 550,
+          "text": "user nobody"
+        }
+      ],
+      "declared_actions": [
+        {
+          "rc": "/system/etc/init/hw/init.boringssl.zygote64_32.rc",
+          "line": 1,
+          "trigger": "on init && property:ro.product.cpu.abilist32=*",
+          "commands": [
+            {
+              "line": 2,
+              "text": "exec_start boringssl_self_test32"
+            }
+          ]
+        }
+      ],
+      "needed": [
+        "libcrypto.so",
+        "libc++.so",
+        "libc.so",
+        "libm.so",
+        "libdl.so"
+      ],
+      "interpreter": "/system/bin/linker",
+      "interpreter_present": true,
+      "execution_supported_by_current_runner": false,
+      "dependency_namespace_resolution_observed": false,
+      "file": {
+        "bytes": 2768,
+        "sha256": "de6d7e52a1e58440c30496a1f2f0f3e54eaa4f887cbbe24cf2530fe93564fa8a",
+        "original_metadata": {
+          "mode": 493,
+          "uid": 0,
+          "gid": 2000,
+          "selinux": "u:object_r:boringssl_self_test_exec:s0",
+          "selinux_xattr_hex": "753a6f626a6563745f723a626f72696e6773736c5f73656c665f746573745f657865633a733000",
+          "original_inode": 2404
+        },
+        "elf": {
+          "bits": 32,
+          "machine": 40,
+          "loads": [
+            {
+              "offset": 0,
+              "address": 0,
+              "filesz": 768,
+              "memsz": 768,
+              "flags": 4,
+              "align": 4096,
+              "congruent_16k": true
+            },
+            {
+              "offset": 768,
+              "address": 4864,
+              "filesz": 224,
+              "memsz": 224,
+              "flags": 5,
+              "align": 4096,
+              "congruent_16k": false
+            },
+            {
+              "offset": 992,
+              "address": 9184,
+              "filesz": 224,
+              "memsz": 3104,
+              "flags": 6,
+              "align": 4096,
+              "congruent_16k": false
+            },
+            {
+              "offset": 1216,
+              "address": 13504,
+              "filesz": 12,
+              "memsz": 12,
+              "flags": 6,
+              "align": 4096,
+              "congruent_16k": false
+            }
+          ],
+          "permission_overlap_16k": [
+            {
+              "segments": [
+                0,
+                1
+              ],
+              "first_page": 0,
+              "pages": 1
+            },
+            {
+              "segments": [
+                0,
+                2
+              ],
+              "first_page": 0,
+              "pages": 1
+            },
+            {
+              "segments": [
+                0,
+                3
+              ],
+              "first_page": 0,
+              "pages": 1
+            },
+            {
+              "segments": [
+                1,
+                2
+              ],
+              "first_page": 0,
+              "pages": 1
+            },
+            {
+              "segments": [
+                1,
+                3
+              ],
+              "first_page": 0,
+              "pages": 1
+            }
+          ],
+          "type": 3
+        },
+        "guest_4k_address_congruent": true
+      },
+      "dependencies": [
+        {
+          "needed": "libcrypto.so",
+          "present": true,
+          "all_candidates_aarch32": true,
+          "candidates": [
+            "/system/lib/libcrypto.so",
+            "/apex/com.android.adbd/lib/libcrypto.so",
+            "/apex/com.android.art.compatible/lib/libcrypto.so",
+            "/apex/com.android.conscrypt/lib/libcrypto.so",
+            "/apex/com.android.vndk.v30/lib/libcrypto.so",
+            "/apex/com.android.vndk.v31/lib/libcrypto.so",
+            "/apex/com.android.vndk.v32/lib/libcrypto.so",
+            "/apex/com.android.vndk.v33/lib/libcrypto.so",
+            "/apex/com.android.vndk.v34/lib/libcrypto.so"
+          ]
+        },
+        {
+          "needed": "libc++.so",
+          "present": true,
+          "all_candidates_aarch32": true,
+          "candidates": [
+            "/system/lib/libc++.so",
+            "/product/lib/libc++.so",
+            "/apex/com.android.adbd/lib/libc++.so",
+            "/apex/com.android.art/lib/libc++.so",
+            "/apex/com.android.art.compatible/lib/libc++.so",
+            "/apex/com.android.conscrypt/lib/libc++.so",
+            "/apex/com.android.i18n/lib/libc++.so",
+            "/apex/com.android.media/lib/libc++.so",
+            "/apex/com.android.mediaprovider/lib/libc++.so",
+            "/apex/com.android.runtime/lib/libc++.so",
+            "/apex/com.android.tethering/lib/libc++.so",
+            "/apex/com.android.vndk.v30/lib/libc++.so",
+            "/apex/com.android.vndk.v31/lib/libc++.so",
+            "/apex/com.android.vndk.v32/lib/libc++.so",
+            "/apex/com.android.vndk.v33/lib/libc++.so",
+            "/apex/com.android.vndk.v34/lib/libc++.so"
+          ]
+        },
+        {
+          "needed": "libc.so",
+          "present": true,
+          "all_candidates_aarch32": true,
+          "candidates": [
+            "/system/lib/bootstrap/libc.so",
+            "/system/lib/libc.so",
+            "/apex/com.android.runtime/lib/bionic/libc.so"
+          ]
+        },
+        {
+          "needed": "libm.so",
+          "present": true,
+          "all_candidates_aarch32": true,
+          "candidates": [
+            "/system/lib/bootstrap/libm.so",
+            "/system/lib/libm.so",
+            "/apex/com.android.runtime/lib/bionic/libm.so"
+          ]
+        },
+        {
+          "needed": "libdl.so",
+          "present": true,
+          "all_candidates_aarch32": true,
+          "candidates": [
+            "/system/lib/bootstrap/libdl.so",
+            "/system/lib/libdl.so",
+            "/apex/com.android.runtime/lib/bionic/libdl.so"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "zygote_secondary",
+      "binary": "/system/bin/app_process32",
+      "rc": "/system/etc/init/hw/init.zygote64_32.rc",
+      "line": 3,
+      "declaration": "service zygote_secondary /system/bin/app_process32 -Xzygote /system/bin --zygote --socket-name=zygote_secondary --enable-lazy-preload",
+      "arguments": [
+        "-Xzygote",
+        "/system/bin",
+        "--zygote",
+        "--socket-name=zygote_secondary",
+        "--enable-lazy-preload"
+      ],
+      "classes": [
+        "main"
+      ],
+      "disabled": false,
+      "options": [
+        {
+          "line": 4,
+          "text": "class main"
+        },
+        {
+          "line": 5,
+          "text": "priority -20"
+        },
+        {
+          "line": 6,
+          "text": "user root"
+        },
+        {
+          "line": 7,
+          "text": "group root readproc reserved_disk"
+        },
+        {
+          "line": 8,
+          "text": "socket zygote_secondary stream 660 root system"
+        },
+        {
+          "line": 9,
+          "text": "socket usap_pool_secondary stream 660 root system"
+        },
+        {
+          "line": 10,
+          "text": "onrestart restart zygote"
+        },
+        {
+          "line": 11,
+          "text": "task_profiles ProcessCapacityHigh MaxPerformance"
+        }
+      ],
+      "declared_actions": [
+        {
+          "rc": "/system/etc/init/hw/init.rc",
+          "line": 1300,
+          "trigger": "on zygote-start",
+          "commands": [
+            {
+              "line": 1309,
+              "text": "start zygote_secondary"
+            }
+          ]
+        },
+        {
+          "rc": "/system/etc/init/hw/init.rc",
+          "line": 1480,
+          "trigger": "on nonencrypted",
+          "commands": [
+            {
+              "line": 1481,
+              "text": "class_start main"
+            }
+          ]
+        }
+      ],
+      "needed": [
+        "libandroid_runtime.so",
+        "libbinder.so",
+        "libcutils.so",
+        "libhidlbase.so",
+        "liblog.so",
+        "libnativeloader.so",
+        "libsigchain.so",
+        "libutils.so",
+        "libwilhelm.so",
+        "libbase.so",
+        "libc++.so",
+        "libc.so",
+        "libm.so",
+        "libdl.so"
+      ],
+      "interpreter": "/system/bin/linker",
+      "interpreter_present": true,
+      "execution_supported_by_current_runner": false,
+      "dependency_namespace_resolution_observed": false,
+      "file": {
+        "bytes": 11228,
+        "sha256": "26ab1f5467e1ce09e5f6945bde04c6e0a3cdc58ab86a5ebf37faf809a8539632",
+        "original_metadata": {
+          "mode": 493,
+          "uid": 0,
+          "gid": 2000,
+          "selinux": "u:object_r:zygote_exec:s0",
+          "selinux_xattr_hex": "753a6f626a6563745f723a7a79676f74655f657865633a733000",
+          "original_inode": 2377
+        },
+        "elf": {
+          "bits": 32,
+          "machine": 40,
+          "loads": [
+            {
+              "offset": 0,
+              "address": 0,
+              "filesz": 4766,
+              "memsz": 4766,
+              "flags": 4,
+              "align": 4096,
+              "congruent_16k": true
+            },
+            {
+              "offset": 4768,
+              "address": 8864,
+              "filesz": 3552,
+              "memsz": 3552,
+              "flags": 5,
+              "align": 4096,
+              "congruent_16k": false
+            },
+            {
+              "offset": 8320,
+              "address": 16512,
+              "filesz": 596,
+              "memsz": 3968,
+              "flags": 6,
+              "align": 4096,
+              "congruent_16k": false
+            },
+            {
+              "offset": 8916,
+              "address": 21204,
+              "filesz": 12,
+              "memsz": 12,
+              "flags": 6,
+              "align": 4096,
+              "congruent_16k": false
+            }
+          ],
+          "permission_overlap_16k": [
+            {
+              "segments": [
+                0,
+                1
+              ],
+              "first_page": 0,
+              "pages": 1
+            }
+          ],
+          "type": 3
+        },
+        "guest_4k_address_congruent": true
+      },
+      "dependencies": [
+        {
+          "needed": "libandroid_runtime.so",
+          "present": true,
+          "all_candidates_aarch32": true,
+          "candidates": [
+            "/system/lib/libandroid_runtime.so"
+          ]
+        },
+        {
+          "needed": "libbinder.so",
+          "present": true,
+          "all_candidates_aarch32": true,
+          "candidates": [
+            "/system/lib/libbinder.so",
+            "/apex/com.android.vndk.v30/lib/libbinder.so",
+            "/apex/com.android.vndk.v31/lib/libbinder.so",
+            "/apex/com.android.vndk.v32/lib/libbinder.so",
+            "/apex/com.android.vndk.v33/lib/libbinder.so",
+            "/apex/com.android.vndk.v34/lib/libbinder.so"
+          ]
+        },
+        {
+          "needed": "libcutils.so",
+          "present": true,
+          "all_candidates_aarch32": true,
+          "candidates": [
+            "/system/lib/libcutils.so",
+            "/product/lib/libcutils.so",
+            "/apex/com.android.adbd/lib/libcutils.so",
+            "/apex/com.android.media/lib/libcutils.so",
+            "/apex/com.android.tethering/lib/libcutils.so",
+            "/apex/com.android.vndk.v30/lib/libcutils.so",
+            "/apex/com.android.vndk.v31/lib/libcutils.so",
+            "/apex/com.android.vndk.v32/lib/libcutils.so",
+            "/apex/com.android.vndk.v33/lib/libcutils.so",
+            "/apex/com.android.vndk.v34/lib/libcutils.so"
+          ]
+        },
+        {
+          "needed": "libhidlbase.so",
+          "present": true,
+          "all_candidates_aarch32": true,
+          "candidates": [
+            "/system/lib/libhidlbase.so",
+            "/product/lib/libhidlbase.so",
+            "/apex/com.android.vndk.v30/lib/libhidlbase.so",
+            "/apex/com.android.vndk.v31/lib/libhidlbase.so",
+            "/apex/com.android.vndk.v32/lib/libhidlbase.so",
+            "/apex/com.android.vndk.v33/lib/libhidlbase.so",
+            "/apex/com.android.vndk.v34/lib/libhidlbase.so"
+          ]
+        },
+        {
+          "needed": "liblog.so",
+          "present": true,
+          "all_candidates_aarch32": true,
+          "candidates": [
+            "/system/lib/liblog.so"
+          ]
+        },
+        {
+          "needed": "libnativeloader.so",
+          "present": true,
+          "all_candidates_aarch32": true,
+          "candidates": [
+            "/apex/com.android.art/lib/libnativeloader.so",
+            "/apex/com.android.art.compatible/lib/libnativeloader.so"
+          ]
+        },
+        {
+          "needed": "libsigchain.so",
+          "present": true,
+          "all_candidates_aarch32": true,
+          "candidates": [
+            "/apex/com.android.art/lib/libsigchain.so",
+            "/apex/com.android.art.compatible/lib/libsigchain.so"
+          ]
+        },
+        {
+          "needed": "libutils.so",
+          "present": true,
+          "all_candidates_aarch32": true,
+          "candidates": [
+            "/system/lib/libutils.so",
+            "/product/lib/libutils.so",
+            "/apex/com.android.media/lib/libutils.so",
+            "/apex/com.android.vndk.v30/lib/libutils.so",
+            "/apex/com.android.vndk.v31/lib/libutils.so",
+            "/apex/com.android.vndk.v32/lib/libutils.so",
+            "/apex/com.android.vndk.v33/lib/libutils.so",
+            "/apex/com.android.vndk.v34/lib/libutils.so"
+          ]
+        },
+        {
+          "needed": "libwilhelm.so",
+          "present": true,
+          "all_candidates_aarch32": true,
+          "candidates": [
+            "/system/lib/libwilhelm.so"
+          ]
+        },
+        {
+          "needed": "libbase.so",
+          "present": true,
+          "all_candidates_aarch32": true,
+          "candidates": [
+            "/system/lib/libbase.so",
+            "/product/lib/libbase.so",
+            "/apex/com.android.adbd/lib/libbase.so",
+            "/apex/com.android.art/lib/libbase.so",
+            "/apex/com.android.art.compatible/lib/libbase.so",
+            "/apex/com.android.i18n/lib/libbase.so",
+            "/apex/com.android.media/lib/libbase.so",
+            "/apex/com.android.runtime/lib/libbase.so",
+            "/apex/com.android.tethering/lib/libbase.so",
+            "/apex/com.android.vndk.v30/lib/libbase.so",
+            "/apex/com.android.vndk.v31/lib/libbase.so",
+            "/apex/com.android.vndk.v32/lib/libbase.so",
+            "/apex/com.android.vndk.v33/lib/libbase.so",
+            "/apex/com.android.vndk.v34/lib/libbase.so"
+          ]
+        },
+        {
+          "needed": "libc++.so",
+          "present": true,
+          "all_candidates_aarch32": true,
+          "candidates": [
+            "/system/lib/libc++.so",
+            "/product/lib/libc++.so",
+            "/apex/com.android.adbd/lib/libc++.so",
+            "/apex/com.android.art/lib/libc++.so",
+            "/apex/com.android.art.compatible/lib/libc++.so",
+            "/apex/com.android.conscrypt/lib/libc++.so",
+            "/apex/com.android.i18n/lib/libc++.so",
+            "/apex/com.android.media/lib/libc++.so",
+            "/apex/com.android.mediaprovider/lib/libc++.so",
+            "/apex/com.android.runtime/lib/libc++.so",
+            "/apex/com.android.tethering/lib/libc++.so",
+            "/apex/com.android.vndk.v30/lib/libc++.so",
+            "/apex/com.android.vndk.v31/lib/libc++.so",
+            "/apex/com.android.vndk.v32/lib/libc++.so",
+            "/apex/com.android.vndk.v33/lib/libc++.so",
+            "/apex/com.android.vndk.v34/lib/libc++.so"
+          ]
+        },
+        {
+          "needed": "libc.so",
+          "present": true,
+          "all_candidates_aarch32": true,
+          "candidates": [
+            "/system/lib/bootstrap/libc.so",
+            "/system/lib/libc.so",
+            "/apex/com.android.runtime/lib/bionic/libc.so"
+          ]
+        },
+        {
+          "needed": "libm.so",
+          "present": true,
+          "all_candidates_aarch32": true,
+          "candidates": [
+            "/system/lib/bootstrap/libm.so",
+            "/system/lib/libm.so",
+            "/apex/com.android.runtime/lib/bionic/libm.so"
+          ]
+        },
+        {
+          "needed": "libdl.so",
+          "present": true,
+          "all_candidates_aarch32": true,
+          "candidates": [
+            "/system/lib/bootstrap/libdl.so",
+            "/system/lib/libdl.so",
+            "/apex/com.android.runtime/lib/bionic/libdl.so"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "media",
+      "binary": "/system/bin/mediaserver32",
+      "rc": "/system/etc/init/hw/mediaserver.64bit_false.rc",
+      "line": 1,
+      "declaration": "service media /system/bin/mediaserver32",
+      "arguments": [],
+      "classes": [
+        "main"
+      ],
+      "disabled": false,
+      "options": [
+        {
+          "line": 2,
+          "text": "class main"
+        },
+        {
+          "line": 3,
+          "text": "user media"
+        },
+        {
+          "line": 4,
+          "text": "group audio camera inet net_bt net_bt_admin net_bw_acct drmrpc mediadrm"
+        },
+        {
+          "line": 5,
+          "text": "ioprio rt 4"
+        },
+        {
+          "line": 6,
+          "text": "task_profiles ProcessCapacityHigh HighPerformance"
+        }
+      ],
+      "declared_actions": [
+        {
+          "rc": "/system/etc/init/hw/init.rc",
+          "line": 1480,
+          "trigger": "on nonencrypted",
+          "commands": [
+            {
+              "line": 1481,
+              "text": "class_start main"
+            }
+          ]
+        }
+      ],
+      "needed": [
+        "libbase.so",
+        "server_configurable_flags.so",
+        "libaconfig_storage_read_api_cc.so",
+        "android.hardware.media.omx@1.0.so",
+        "libicu.so",
+        "libfmq.so",
+        "libbinder.so",
+        "libbinder_ndk.so",
+        "libhidlbase.so",
+        "liblog.so",
+        "libmediaplayerservice.so",
+        "libresourcemanagerservice.so",
+        "libutils.so",
+        "libc++.so",
+        "libc.so",
+        "libm.so",
+        "libdl.so"
+      ],
+      "interpreter": "/system/bin/linker",
+      "interpreter_present": true,
+      "execution_supported_by_current_runner": false,
+      "dependency_namespace_resolution_observed": false,
+      "file": {
+        "bytes": 12952,
+        "sha256": "daa74b04ceea20ecfb360fbc6252c4fb6f796d8638e5d169c420397fa1d23451",
+        "original_metadata": {
+          "mode": 493,
+          "uid": 0,
+          "gid": 2000,
+          "selinux": "u:object_r:mediaserver_exec:s0",
+          "selinux_xattr_hex": "753a6f626a6563745f723a6d656469617365727665725f657865633a733000",
+          "original_inode": 2593
+        },
+        "elf": {
+          "bits": 32,
+          "machine": 40,
+          "loads": [
+            {
+              "offset": 0,
+              "address": 0,
+              "filesz": 3543,
+              "memsz": 3543,
+              "flags": 4,
+              "align": 4096,
+              "congruent_16k": true
+            },
+            {
+              "offset": 4096,
+              "address": 8192,
+              "filesz": 5952,
+              "memsz": 5952,
+              "flags": 5,
+              "align": 4096,
+              "congruent_16k": false
+            },
+            {
+              "offset": 10048,
+              "address": 18240,
+              "filesz": 520,
+              "memsz": 2240,
+              "flags": 6,
+              "align": 4096,
+              "congruent_16k": false
+            },
+            {
+              "offset": 10568,
+              "address": 22856,
+              "filesz": 12,
+              "memsz": 20,
+              "flags": 6,
+              "align": 4096,
+              "congruent_16k": false
+            }
+          ],
+          "permission_overlap_16k": [
+            {
+              "segments": [
+                0,
+                1
+              ],
+              "first_page": 0,
+              "pages": 1
+            }
+          ],
+          "type": 3
+        },
+        "guest_4k_address_congruent": true
+      },
+      "dependencies": [
+        {
+          "needed": "libbase.so",
+          "present": true,
+          "all_candidates_aarch32": true,
+          "candidates": [
+            "/system/lib/libbase.so",
+            "/product/lib/libbase.so",
+            "/apex/com.android.adbd/lib/libbase.so",
+            "/apex/com.android.art/lib/libbase.so",
+            "/apex/com.android.art.compatible/lib/libbase.so",
+            "/apex/com.android.i18n/lib/libbase.so",
+            "/apex/com.android.media/lib/libbase.so",
+            "/apex/com.android.runtime/lib/libbase.so",
+            "/apex/com.android.tethering/lib/libbase.so",
+            "/apex/com.android.vndk.v30/lib/libbase.so",
+            "/apex/com.android.vndk.v31/lib/libbase.so",
+            "/apex/com.android.vndk.v32/lib/libbase.so",
+            "/apex/com.android.vndk.v33/lib/libbase.so",
+            "/apex/com.android.vndk.v34/lib/libbase.so"
+          ]
+        },
+        {
+          "needed": "server_configurable_flags.so",
+          "present": true,
+          "all_candidates_aarch32": true,
+          "candidates": [
+            "/system/lib/server_configurable_flags.so"
+          ]
+        },
+        {
+          "needed": "libaconfig_storage_read_api_cc.so",
+          "present": true,
+          "all_candidates_aarch32": true,
+          "candidates": [
+            "/system/lib/libaconfig_storage_read_api_cc.so"
+          ]
+        },
+        {
+          "needed": "android.hardware.media.omx@1.0.so",
+          "present": true,
+          "all_candidates_aarch32": true,
+          "candidates": [
+            "/system/lib/android.hardware.media.omx@1.0.so",
+            "/apex/com.android.vndk.v30/lib/android.hardware.media.omx@1.0.so",
+            "/apex/com.android.vndk.v31/lib/android.hardware.media.omx@1.0.so",
+            "/apex/com.android.vndk.v32/lib/android.hardware.media.omx@1.0.so",
+            "/apex/com.android.vndk.v33/lib/android.hardware.media.omx@1.0.so",
+            "/apex/com.android.vndk.v34/lib/android.hardware.media.omx@1.0.so"
+          ]
+        },
+        {
+          "needed": "libicu.so",
+          "present": true,
+          "all_candidates_aarch32": true,
+          "candidates": [
+            "/apex/com.android.i18n/lib/libicu.so"
+          ]
+        },
+        {
+          "needed": "libfmq.so",
+          "present": true,
+          "all_candidates_aarch32": true,
+          "candidates": [
+            "/system/lib/libfmq.so",
+            "/apex/com.android.vndk.v30/lib/libfmq.so",
+            "/apex/com.android.vndk.v31/lib/libfmq.so",
+            "/apex/com.android.vndk.v32/lib/libfmq.so",
+            "/apex/com.android.vndk.v33/lib/libfmq.so",
+            "/apex/com.android.vndk.v34/lib/libfmq.so"
+          ]
+        },
+        {
+          "needed": "libbinder.so",
+          "present": true,
+          "all_candidates_aarch32": true,
+          "candidates": [
+            "/system/lib/libbinder.so",
+            "/apex/com.android.vndk.v30/lib/libbinder.so",
+            "/apex/com.android.vndk.v31/lib/libbinder.so",
+            "/apex/com.android.vndk.v32/lib/libbinder.so",
+            "/apex/com.android.vndk.v33/lib/libbinder.so",
+            "/apex/com.android.vndk.v34/lib/libbinder.so"
+          ]
+        },
+        {
+          "needed": "libbinder_ndk.so",
+          "present": true,
+          "all_candidates_aarch32": true,
+          "candidates": [
+            "/system/lib/libbinder_ndk.so"
+          ]
+        },
+        {
+          "needed": "libhidlbase.so",
+          "present": true,
+          "all_candidates_aarch32": true,
+          "candidates": [
+            "/system/lib/libhidlbase.so",
+            "/product/lib/libhidlbase.so",
+            "/apex/com.android.vndk.v30/lib/libhidlbase.so",
+            "/apex/com.android.vndk.v31/lib/libhidlbase.so",
+            "/apex/com.android.vndk.v32/lib/libhidlbase.so",
+            "/apex/com.android.vndk.v33/lib/libhidlbase.so",
+            "/apex/com.android.vndk.v34/lib/libhidlbase.so"
+          ]
+        },
+        {
+          "needed": "liblog.so",
+          "present": true,
+          "all_candidates_aarch32": true,
+          "candidates": [
+            "/system/lib/liblog.so"
+          ]
+        },
+        {
+          "needed": "libmediaplayerservice.so",
+          "present": true,
+          "all_candidates_aarch32": true,
+          "candidates": [
+            "/system/lib/libmediaplayerservice.so"
+          ]
+        },
+        {
+          "needed": "libresourcemanagerservice.so",
+          "present": true,
+          "all_candidates_aarch32": true,
+          "candidates": [
+            "/system/lib/libresourcemanagerservice.so"
+          ]
+        },
+        {
+          "needed": "libutils.so",
+          "present": true,
+          "all_candidates_aarch32": true,
+          "candidates": [
+            "/system/lib/libutils.so",
+            "/product/lib/libutils.so",
+            "/apex/com.android.media/lib/libutils.so",
+            "/apex/com.android.vndk.v30/lib/libutils.so",
+            "/apex/com.android.vndk.v31/lib/libutils.so",
+            "/apex/com.android.vndk.v32/lib/libutils.so",
+            "/apex/com.android.vndk.v33/lib/libutils.so",
+            "/apex/com.android.vndk.v34/lib/libutils.so"
+          ]
+        },
+        {
+          "needed": "libc++.so",
+          "present": true,
+          "all_candidates_aarch32": true,
+          "candidates": [
+            "/system/lib/libc++.so",
+            "/product/lib/libc++.so",
+            "/apex/com.android.adbd/lib/libc++.so",
+            "/apex/com.android.art/lib/libc++.so",
+            "/apex/com.android.art.compatible/lib/libc++.so",
+            "/apex/com.android.conscrypt/lib/libc++.so",
+            "/apex/com.android.i18n/lib/libc++.so",
+            "/apex/com.android.media/lib/libc++.so",
+            "/apex/com.android.mediaprovider/lib/libc++.so",
+            "/apex/com.android.runtime/lib/libc++.so",
+            "/apex/com.android.tethering/lib/libc++.so",
+            "/apex/com.android.vndk.v30/lib/libc++.so",
+            "/apex/com.android.vndk.v31/lib/libc++.so",
+            "/apex/com.android.vndk.v32/lib/libc++.so",
+            "/apex/com.android.vndk.v33/lib/libc++.so",
+            "/apex/com.android.vndk.v34/lib/libc++.so"
+          ]
+        },
+        {
+          "needed": "libc.so",
+          "present": true,
+          "all_candidates_aarch32": true,
+          "candidates": [
+            "/system/lib/bootstrap/libc.so",
+            "/system/lib/libc.so",
+            "/apex/com.android.runtime/lib/bionic/libc.so"
+          ]
+        },
+        {
+          "needed": "libm.so",
+          "present": true,
+          "all_candidates_aarch32": true,
+          "candidates": [
+            "/system/lib/bootstrap/libm.so",
+            "/system/lib/libm.so",
+            "/apex/com.android.runtime/lib/bionic/libm.so"
+          ]
+        },
+        {
+          "needed": "libdl.so",
+          "present": true,
+          "all_candidates_aarch32": true,
+          "candidates": [
+            "/system/lib/bootstrap/libdl.so",
+            "/system/lib/libdl.so",
+            "/apex/com.android.runtime/lib/bionic/libdl.so"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "sigmahal",
+      "binary": "/system_ext/bin/sigma_miracasthalservice",
+      "rc": "/system_ext/etc/init/com.qualcomm.qti.sigma_miracast@1.0-service.rc",
+      "line": 1,
+      "declaration": "service sigmahal /system_ext/bin/sigma_miracasthalservice",
+      "arguments": [],
+      "classes": [
+        "main"
+      ],
+      "disabled": true,
+      "options": [
+        {
+          "line": 2,
+          "text": "interface vendor.qti.hardware.sigma_miracast@1.0::Isigma_miracast sigmahal"
+        },
+        {
+          "line": 3,
+          "text": "class main"
+        },
+        {
+          "line": 4,
+          "text": "user system"
+        },
+        {
+          "line": 5,
+          "text": "group audio"
+        },
+        {
+          "line": 6,
+          "text": "oneshot"
+        },
+        {
+          "line": 7,
+          "text": "disabled"
+        }
+      ],
+      "declared_actions": [
+        {
+          "rc": "/system/etc/init/hw/init.rc",
+          "line": 1480,
+          "trigger": "on nonencrypted",
+          "commands": [
+            {
+              "line": 1481,
+              "text": "class_start main"
+            }
+          ]
+        }
+      ],
+      "needed": [
+        "vendor.qti.hardware.sigma_miracast@1.0.so",
+        "vendor.qti.hardware.sigma_miracast@1.0-halimpl.so",
+        "libhidlbase.so",
+        "libutils.so",
+        "liblog.so",
+        "libbinder.so",
+        "libc++.so",
+        "libc.so",
+        "libm.so",
+        "libdl.so"
+      ],
+      "interpreter": "/system/bin/linker",
+      "interpreter_present": true,
+      "execution_supported_by_current_runner": false,
+      "dependency_namespace_resolution_observed": false,
+      "file": {
+        "bytes": 16128,
+        "sha256": "b3fae98bd041c5a59f8ad5cec5f7a9df929b02c38f289e6e614ad5110c4abab1",
+        "original_metadata": {
+          "mode": 493,
+          "uid": 0,
+          "gid": 2000,
+          "selinux": "u:object_r:vendor_sigmahal_qti_exec:s0",
+          "selinux_xattr_hex": "753a6f626a6563745f723a76656e646f725f7369676d6168616c5f7174695f657865633a733000",
+          "original_inode": 6783
+        },
+        "elf": {
+          "bits": 32,
+          "machine": 40,
+          "loads": [
+            {
+              "offset": 0,
+              "address": 0,
+              "filesz": 5104,
+              "memsz": 5104,
+              "flags": 4,
+              "align": 4096,
+              "congruent_16k": true
+            },
+            {
+              "offset": 8192,
+              "address": 12288,
+              "filesz": 4816,
+              "memsz": 4816,
+              "flags": 5,
+              "align": 4096,
+              "congruent_16k": false
+            },
+            {
+              "offset": 13024,
+              "address": 21216,
+              "filesz": 536,
+              "memsz": 3360,
+              "flags": 6,
+              "align": 4096,
+              "congruent_16k": false
+            },
+            {
+              "offset": 13560,
+              "address": 25848,
+              "filesz": 12,
+              "memsz": 24,
+              "flags": 6,
+              "align": 4096,
+              "congruent_16k": false
+            }
+          ],
+          "permission_overlap_16k": [
+            {
+              "segments": [
+                0,
+                1
+              ],
+              "first_page": 0,
+              "pages": 1
+            },
+            {
+              "segments": [
+                1,
+                2
+              ],
+              "first_page": 1,
+              "pages": 1
+            },
+            {
+              "segments": [
+                1,
+                3
+              ],
+              "first_page": 1,
+              "pages": 1
+            }
+          ],
+          "type": 3
+        },
+        "guest_4k_address_congruent": true
+      },
+      "dependencies": [
+        {
+          "needed": "vendor.qti.hardware.sigma_miracast@1.0.so",
+          "present": true,
+          "all_candidates_aarch32": true,
+          "candidates": [
+            "/system_ext/lib/vendor.qti.hardware.sigma_miracast@1.0.so"
+          ]
+        },
+        {
+          "needed": "vendor.qti.hardware.sigma_miracast@1.0-halimpl.so",
+          "present": true,
+          "all_candidates_aarch32": true,
+          "candidates": [
+            "/system_ext/lib/vendor.qti.hardware.sigma_miracast@1.0-halimpl.so"
+          ]
+        },
+        {
+          "needed": "libhidlbase.so",
+          "present": true,
+          "all_candidates_aarch32": true,
+          "candidates": [
+            "/system/lib/libhidlbase.so",
+            "/product/lib/libhidlbase.so",
+            "/apex/com.android.vndk.v30/lib/libhidlbase.so",
+            "/apex/com.android.vndk.v31/lib/libhidlbase.so",
+            "/apex/com.android.vndk.v32/lib/libhidlbase.so",
+            "/apex/com.android.vndk.v33/lib/libhidlbase.so",
+            "/apex/com.android.vndk.v34/lib/libhidlbase.so"
+          ]
+        },
+        {
+          "needed": "libutils.so",
+          "present": true,
+          "all_candidates_aarch32": true,
+          "candidates": [
+            "/system/lib/libutils.so",
+            "/product/lib/libutils.so",
+            "/apex/com.android.media/lib/libutils.so",
+            "/apex/com.android.vndk.v30/lib/libutils.so",
+            "/apex/com.android.vndk.v31/lib/libutils.so",
+            "/apex/com.android.vndk.v32/lib/libutils.so",
+            "/apex/com.android.vndk.v33/lib/libutils.so",
+            "/apex/com.android.vndk.v34/lib/libutils.so"
+          ]
+        },
+        {
+          "needed": "liblog.so",
+          "present": true,
+          "all_candidates_aarch32": true,
+          "candidates": [
+            "/system/lib/liblog.so"
+          ]
+        },
+        {
+          "needed": "libbinder.so",
+          "present": true,
+          "all_candidates_aarch32": true,
+          "candidates": [
+            "/system/lib/libbinder.so",
+            "/apex/com.android.vndk.v30/lib/libbinder.so",
+            "/apex/com.android.vndk.v31/lib/libbinder.so",
+            "/apex/com.android.vndk.v32/lib/libbinder.so",
+            "/apex/com.android.vndk.v33/lib/libbinder.so",
+            "/apex/com.android.vndk.v34/lib/libbinder.so"
+          ]
+        },
+        {
+          "needed": "libc++.so",
+          "present": true,
+          "all_candidates_aarch32": true,
+          "candidates": [
+            "/system/lib/libc++.so",
+            "/product/lib/libc++.so",
+            "/apex/com.android.adbd/lib/libc++.so",
+            "/apex/com.android.art/lib/libc++.so",
+            "/apex/com.android.art.compatible/lib/libc++.so",
+            "/apex/com.android.conscrypt/lib/libc++.so",
+            "/apex/com.android.i18n/lib/libc++.so",
+            "/apex/com.android.media/lib/libc++.so",
+            "/apex/com.android.mediaprovider/lib/libc++.so",
+            "/apex/com.android.runtime/lib/libc++.so",
+            "/apex/com.android.tethering/lib/libc++.so",
+            "/apex/com.android.vndk.v30/lib/libc++.so",
+            "/apex/com.android.vndk.v31/lib/libc++.so",
+            "/apex/com.android.vndk.v32/lib/libc++.so",
+            "/apex/com.android.vndk.v33/lib/libc++.so",
+            "/apex/com.android.vndk.v34/lib/libc++.so"
+          ]
+        },
+        {
+          "needed": "libc.so",
+          "present": true,
+          "all_candidates_aarch32": true,
+          "candidates": [
+            "/system/lib/bootstrap/libc.so",
+            "/system/lib/libc.so",
+            "/apex/com.android.runtime/lib/bionic/libc.so"
+          ]
+        },
+        {
+          "needed": "libm.so",
+          "present": true,
+          "all_candidates_aarch32": true,
+          "candidates": [
+            "/system/lib/bootstrap/libm.so",
+            "/system/lib/libm.so",
+            "/apex/com.android.runtime/lib/bionic/libm.so"
+          ]
+        },
+        {
+          "needed": "libdl.so",
+          "present": true,
+          "all_candidates_aarch32": true,
+          "candidates": [
+            "/system/lib/bootstrap/libdl.so",
+            "/system/lib/libdl.so",
+            "/apex/com.android.runtime/lib/bionic/libdl.so"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "wfdservice",
+      "binary": "/system_ext/bin/wfdservice",
+      "rc": "/system_ext/etc/init/wfdservice.rc",
+      "line": 6,
+      "declaration": "service wfdservice /system_ext/bin/wfdservice",
+      "arguments": [],
+      "classes": [
+        "main"
+      ],
+      "disabled": true,
+      "options": [
+        {
+          "line": 7,
+          "text": "class main"
+        },
+        {
+          "line": 8,
+          "text": "user system"
+        },
+        {
+          "line": 9,
+          "text": "disabled"
+        },
+        {
+          "line": 10,
+          "text": "oneshot"
+        }
+      ],
+      "declared_actions": [
+        {
+          "rc": "/system/etc/init/hw/init.rc",
+          "line": 1480,
+          "trigger": "on nonencrypted",
+          "commands": [
+            {
+              "line": 1481,
+              "text": "class_start main"
+            }
+          ]
+        },
+        {
+          "rc": "/system_ext/etc/init/wfdservice.rc",
+          "line": 18,
+          "trigger": "on property:vendor.wfdservice=enable",
+          "commands": [
+            {
+              "line": 19,
+              "text": "start wfdservice"
+            }
+          ]
+        },
+        {
+          "rc": "/system_ext/etc/init/wfdservice.rc",
+          "line": 24,
+          "trigger": "on property:vendor.wfdservice=disable",
+          "commands": [
+            {
+              "line": 25,
+              "text": "stop wfdservice"
+            }
+          ]
+        }
+      ],
+      "needed": [
+        "liblog.so",
+        "libutils.so",
+        "libcutils.so",
+        "libbinder.so",
+        "libwfdservice.so",
+        "libmmosal.so",
+        "libwfdcommonutils.so",
+        "libwfdconfigutils.so",
+        "libhidlbase.so",
+        "libavservices_minijail.so",
+        "libc++.so",
+        "libc.so",
+        "libm.so",
+        "libdl.so"
+      ],
+      "interpreter": "/system/bin/linker",
+      "interpreter_present": true,
+      "execution_supported_by_current_runner": false,
+      "dependency_namespace_resolution_observed": false,
+      "file": {
+        "bytes": 11200,
+        "sha256": "101386416e6b92fee64158e9054bcbd60af76449c23a1109b360ad482305304a",
+        "original_metadata": {
+          "mode": 493,
+          "uid": 0,
+          "gid": 2000,
+          "selinux": "u:object_r:vendor_wfdservice_exec:s0",
+          "selinux_xattr_hex": "753a6f626a6563745f723a76656e646f725f776664736572766963655f657865633a733000",
+          "original_inode": 6790
+        },
+        "elf": {
+          "bits": 32,
+          "machine": 40,
+          "loads": [
+            {
+              "offset": 0,
+              "address": 0,
+              "filesz": 2888,
+              "memsz": 2888,
+              "flags": 4,
+              "align": 4096,
+              "congruent_16k": true
+            },
+            {
+              "offset": 4096,
+              "address": 8192,
+              "filesz": 4640,
+              "memsz": 4640,
+              "flags": 5,
+              "align": 4096,
+              "congruent_16k": false
+            },
+            {
+              "offset": 8736,
+              "address": 16928,
+              "filesz": 404,
+              "memsz": 3552,
+              "flags": 6,
+              "align": 4096,
+              "congruent_16k": false
+            },
+            {
+              "offset": 9140,
+              "address": 21428,
+              "filesz": 12,
+              "memsz": 12,
+              "flags": 6,
+              "align": 4096,
+              "congruent_16k": false
+            }
+          ],
+          "permission_overlap_16k": [
+            {
+              "segments": [
+                0,
+                1
+              ],
+              "first_page": 0,
+              "pages": 1
+            }
+          ],
+          "type": 3
+        },
+        "guest_4k_address_congruent": true
+      },
+      "dependencies": [
+        {
+          "needed": "liblog.so",
+          "present": true,
+          "all_candidates_aarch32": true,
+          "candidates": [
+            "/system/lib/liblog.so"
+          ]
+        },
+        {
+          "needed": "libutils.so",
+          "present": true,
+          "all_candidates_aarch32": true,
+          "candidates": [
+            "/system/lib/libutils.so",
+            "/product/lib/libutils.so",
+            "/apex/com.android.media/lib/libutils.so",
+            "/apex/com.android.vndk.v30/lib/libutils.so",
+            "/apex/com.android.vndk.v31/lib/libutils.so",
+            "/apex/com.android.vndk.v32/lib/libutils.so",
+            "/apex/com.android.vndk.v33/lib/libutils.so",
+            "/apex/com.android.vndk.v34/lib/libutils.so"
+          ]
+        },
+        {
+          "needed": "libcutils.so",
+          "present": true,
+          "all_candidates_aarch32": true,
+          "candidates": [
+            "/system/lib/libcutils.so",
+            "/product/lib/libcutils.so",
+            "/apex/com.android.adbd/lib/libcutils.so",
+            "/apex/com.android.media/lib/libcutils.so",
+            "/apex/com.android.tethering/lib/libcutils.so",
+            "/apex/com.android.vndk.v30/lib/libcutils.so",
+            "/apex/com.android.vndk.v31/lib/libcutils.so",
+            "/apex/com.android.vndk.v32/lib/libcutils.so",
+            "/apex/com.android.vndk.v33/lib/libcutils.so",
+            "/apex/com.android.vndk.v34/lib/libcutils.so"
+          ]
+        },
+        {
+          "needed": "libbinder.so",
+          "present": true,
+          "all_candidates_aarch32": true,
+          "candidates": [
+            "/system/lib/libbinder.so",
+            "/apex/com.android.vndk.v30/lib/libbinder.so",
+            "/apex/com.android.vndk.v31/lib/libbinder.so",
+            "/apex/com.android.vndk.v32/lib/libbinder.so",
+            "/apex/com.android.vndk.v33/lib/libbinder.so",
+            "/apex/com.android.vndk.v34/lib/libbinder.so"
+          ]
+        },
+        {
+          "needed": "libwfdservice.so",
+          "present": true,
+          "all_candidates_aarch32": true,
+          "candidates": [
+            "/system_ext/lib/libwfdservice.so"
+          ]
+        },
+        {
+          "needed": "libmmosal.so",
+          "present": true,
+          "all_candidates_aarch32": true,
+          "candidates": [
+            "/system_ext/lib/libmmosal.so"
+          ]
+        },
+        {
+          "needed": "libwfdcommonutils.so",
+          "present": true,
+          "all_candidates_aarch32": true,
+          "candidates": [
+            "/system_ext/lib/libwfdcommonutils.so"
+          ]
+        },
+        {
+          "needed": "libwfdconfigutils.so",
+          "present": true,
+          "all_candidates_aarch32": true,
+          "candidates": [
+            "/system_ext/lib/libwfdconfigutils.so"
+          ]
+        },
+        {
+          "needed": "libhidlbase.so",
+          "present": true,
+          "all_candidates_aarch32": true,
+          "candidates": [
+            "/system/lib/libhidlbase.so",
+            "/product/lib/libhidlbase.so",
+            "/apex/com.android.vndk.v30/lib/libhidlbase.so",
+            "/apex/com.android.vndk.v31/lib/libhidlbase.so",
+            "/apex/com.android.vndk.v32/lib/libhidlbase.so",
+            "/apex/com.android.vndk.v33/lib/libhidlbase.so",
+            "/apex/com.android.vndk.v34/lib/libhidlbase.so"
+          ]
+        },
+        {
+          "needed": "libavservices_minijail.so",
+          "present": true,
+          "all_candidates_aarch32": true,
+          "candidates": [
+            "/system/lib/libavservices_minijail.so"
+          ]
+        },
+        {
+          "needed": "libc++.so",
+          "present": true,
+          "all_candidates_aarch32": true,
+          "candidates": [
+            "/system/lib/libc++.so",
+            "/product/lib/libc++.so",
+            "/apex/com.android.adbd/lib/libc++.so",
+            "/apex/com.android.art/lib/libc++.so",
+            "/apex/com.android.art.compatible/lib/libc++.so",
+            "/apex/com.android.conscrypt/lib/libc++.so",
+            "/apex/com.android.i18n/lib/libc++.so",
+            "/apex/com.android.media/lib/libc++.so",
+            "/apex/com.android.mediaprovider/lib/libc++.so",
+            "/apex/com.android.runtime/lib/libc++.so",
+            "/apex/com.android.tethering/lib/libc++.so",
+            "/apex/com.android.vndk.v30/lib/libc++.so",
+            "/apex/com.android.vndk.v31/lib/libc++.so",
+            "/apex/com.android.vndk.v32/lib/libc++.so",
+            "/apex/com.android.vndk.v33/lib/libc++.so",
+            "/apex/com.android.vndk.v34/lib/libc++.so"
+          ]
+        },
+        {
+          "needed": "libc.so",
+          "present": true,
+          "all_candidates_aarch32": true,
+          "candidates": [
+            "/system/lib/bootstrap/libc.so",
+            "/system/lib/libc.so",
+            "/apex/com.android.runtime/lib/bionic/libc.so"
+          ]
+        },
+        {
+          "needed": "libm.so",
+          "present": true,
+          "all_candidates_aarch32": true,
+          "candidates": [
+            "/system/lib/bootstrap/libm.so",
+            "/system/lib/libm.so",
+            "/apex/com.android.runtime/lib/bionic/libm.so"
+          ]
+        },
+        {
+          "needed": "libdl.so",
+          "present": true,
+          "all_candidates_aarch32": true,
+          "candidates": [
+            "/system/lib/bootstrap/libdl.so",
+            "/system/lib/libdl.so",
+            "/apex/com.android.runtime/lib/bionic/libdl.so"
+          ]
+        }
+      ]
+    }
+  ],
+  "apex_service_boundaries": [
+    {
+      "service": {
+        "rc": "/system/etc/init/hw/init.rc",
+        "line": 558,
+        "name": "boringssl_self_test_apex32",
+        "binary": "/apex/com.android.conscrypt/bin/boringssl_self_test32",
+        "arguments": [],
+        "declaration": "service boringssl_self_test_apex32 /apex/com.android.conscrypt/bin/boringssl_self_test32",
+        "options": [
+          {
+            "line": 559,
+            "text": "stdio_to_kmsg"
+          },
+          {
+            "line": 561,
+            "text": "capabilities"
+          },
+          {
+            "line": 562,
+            "text": "user nobody"
+          }
+        ],
+        "classes": [
+          "default"
+        ],
+        "disabled": false,
+        "declared_actions": [
+          {
+            "rc": "/system/etc/init/hw/init.boringssl.zygote64_32.rc",
+            "line": 5,
+            "trigger": "on property:apexd.status=ready && property:ro.product.cpu.abilist32=*",
+            "commands": [
+              {
+                "line": 6,
+                "text": "exec_start boringssl_self_test_apex32"
+              }
+            ]
+          }
+        ],
+        "binary_present": true,
+        "static_candidate": "/apex/com.android.conscrypt/bin/boringssl_self_test32",
+        "relative_path_resolution_unverified": false,
+        "apex_activation_required": true,
+        "needed": [
+          "libcrypto.so",
+          "libc++.so",
+          "libc.so",
+          "libm.so",
+          "libdl.so"
+        ],
+        "interpreter": "/system/bin/linker",
+        "execution_supported_by_current_runner": false,
+        "aarch32_dependency_presence": [
+          {
+            "needed": "libcrypto.so",
+            "present": true,
+            "candidates": [
+              "/system/lib/libcrypto.so",
+              "/apex/com.android.adbd/lib/libcrypto.so",
+              "/apex/com.android.art.compatible/lib/libcrypto.so",
+              "/apex/com.android.conscrypt/lib/libcrypto.so",
+              "/apex/com.android.vndk.v30/lib/libcrypto.so",
+              "/apex/com.android.vndk.v31/lib/libcrypto.so",
+              "/apex/com.android.vndk.v32/lib/libcrypto.so",
+              "/apex/com.android.vndk.v33/lib/libcrypto.so",
+              "/apex/com.android.vndk.v34/lib/libcrypto.so"
+            ],
+            "all_candidates_aarch32": true
+          },
+          {
+            "needed": "libc++.so",
+            "present": true,
+            "candidates": [
+              "/system/lib/libc++.so",
+              "/product/lib/libc++.so",
+              "/apex/com.android.adbd/lib/libc++.so",
+              "/apex/com.android.art/lib/libc++.so",
+              "/apex/com.android.art.compatible/lib/libc++.so",
+              "/apex/com.android.conscrypt/lib/libc++.so",
+              "/apex/com.android.i18n/lib/libc++.so",
+              "/apex/com.android.media/lib/libc++.so",
+              "/apex/com.android.mediaprovider/lib/libc++.so",
+              "/apex/com.android.runtime/lib/libc++.so",
+              "/apex/com.android.tethering/lib/libc++.so",
+              "/apex/com.android.vndk.v30/lib/libc++.so",
+              "/apex/com.android.vndk.v31/lib/libc++.so",
+              "/apex/com.android.vndk.v32/lib/libc++.so",
+              "/apex/com.android.vndk.v33/lib/libc++.so",
+              "/apex/com.android.vndk.v34/lib/libc++.so"
+            ],
+            "all_candidates_aarch32": true
+          },
+          {
+            "needed": "libc.so",
+            "present": true,
+            "candidates": [
+              "/system/lib/bootstrap/libc.so",
+              "/system/lib/libc.so",
+              "/apex/com.android.runtime/lib/bionic/libc.so"
+            ],
+            "all_candidates_aarch32": true
+          },
+          {
+            "needed": "libm.so",
+            "present": true,
+            "candidates": [
+              "/system/lib/bootstrap/libm.so",
+              "/system/lib/libm.so",
+              "/apex/com.android.runtime/lib/bionic/libm.so"
+            ],
+            "all_candidates_aarch32": true
+          },
+          {
+            "needed": "libdl.so",
+            "present": true,
+            "candidates": [
+              "/system/lib/bootstrap/libdl.so",
+              "/system/lib/libdl.so",
+              "/apex/com.android.runtime/lib/bionic/libdl.so"
+            ],
+            "all_candidates_aarch32": true
+          }
+        ],
+        "interpreter_present": true,
+        "dependency_namespace_resolution_observed": false
+      },
+      "file": {
+        "bytes": 2768,
+        "sha256": "de6d7e52a1e58440c30496a1f2f0f3e54eaa4f887cbbe24cf2530fe93564fa8a",
+        "original_metadata": {
+          "mode": 493,
+          "uid": 0,
+          "gid": 2000,
+          "selinux": "u:object_r:boringssl_self_test_exec:s0",
+          "selinux_xattr_hex": "753a6f626a6563745f723a626f72696e6773736c5f73656c665f746573745f657865633a733000",
+          "original_inode": 13
+        },
+        "elf": {
+          "bits": 32,
+          "machine": 40,
+          "loads": [
+            {
+              "offset": 0,
+              "address": 0,
+              "filesz": 768,
+              "memsz": 768,
+              "flags": 4,
+              "align": 4096,
+              "congruent_16k": true
+            },
+            {
+              "offset": 768,
+              "address": 4864,
+              "filesz": 224,
+              "memsz": 224,
+              "flags": 5,
+              "align": 4096,
+              "congruent_16k": false
+            },
+            {
+              "offset": 992,
+              "address": 9184,
+              "filesz": 224,
+              "memsz": 3104,
+              "flags": 6,
+              "align": 4096,
+              "congruent_16k": false
+            },
+            {
+              "offset": 1216,
+              "address": 13504,
+              "filesz": 12,
+              "memsz": 12,
+              "flags": 6,
+              "align": 4096,
+              "congruent_16k": false
+            }
+          ],
+          "permission_overlap_16k": [
+            {
+              "segments": [
+                0,
+                1
+              ],
+              "first_page": 0,
+              "pages": 1
+            },
+            {
+              "segments": [
+                0,
+                2
+              ],
+              "first_page": 0,
+              "pages": 1
+            },
+            {
+              "segments": [
+                0,
+                3
+              ],
+              "first_page": 0,
+              "pages": 1
+            },
+            {
+              "segments": [
+                1,
+                2
+              ],
+              "first_page": 0,
+              "pages": 1
+            },
+            {
+              "segments": [
+                1,
+                3
+              ],
+              "first_page": 0,
+              "pages": 1
+            }
+          ],
+          "type": 3
+        }
+      }
+    },
+    {
+      "service": {
+        "rc": "/system/etc/init/hw/init.rc",
+        "line": 564,
+        "name": "boringssl_self_test_apex64",
+        "binary": "/apex/com.android.conscrypt/bin/boringssl_self_test64",
+        "arguments": [],
+        "declaration": "service boringssl_self_test_apex64 /apex/com.android.conscrypt/bin/boringssl_self_test64",
+        "options": [
+          {
+            "line": 565,
+            "text": "stdio_to_kmsg"
+          },
+          {
+            "line": 567,
+            "text": "capabilities"
+          },
+          {
+            "line": 568,
+            "text": "user nobody"
+          }
+        ],
+        "classes": [
+          "default"
+        ],
+        "disabled": false,
+        "declared_actions": [
+          {
+            "rc": "/system/etc/init/hw/init.boringssl.zygote64.rc",
+            "line": 3,
+            "trigger": "on property:apexd.status=ready && property:ro.product.cpu.abilist64=*",
+            "commands": [
+              {
+                "line": 4,
+                "text": "exec_start boringssl_self_test_apex64"
+              }
+            ]
+          },
+          {
+            "rc": "/system/etc/init/hw/init.boringssl.zygote64_32.rc",
+            "line": 7,
+            "trigger": "on property:apexd.status=ready && property:ro.product.cpu.abilist64=*",
+            "commands": [
+              {
+                "line": 8,
+                "text": "exec_start boringssl_self_test_apex64"
+              }
+            ]
+          }
+        ],
+        "binary_present": true,
+        "static_candidate": "/apex/com.android.conscrypt/bin/boringssl_self_test64",
+        "relative_path_resolution_unverified": false,
+        "apex_activation_required": true,
+        "needed": [
+          "libcrypto.so",
+          "libc++.so",
+          "libc.so",
+          "libm.so",
+          "libdl.so"
+        ],
+        "interpreter": "/system/bin/linker64",
+        "execution_supported_by_current_runner": true
+      },
+      "file": {
+        "bytes": 14368,
+        "sha256": "dedaf2d435a57e9a683a23c6ccb6db7944cb1bbd8fd44aad6acd8483fa891b8d",
+        "original_metadata": {
+          "mode": 493,
+          "uid": 0,
+          "gid": 2000,
+          "selinux": "u:object_r:boringssl_self_test_exec:s0",
+          "selinux_xattr_hex": "753a6f626a6563745f723a626f72696e6773736c5f73656c665f746573745f657865633a733000",
+          "original_inode": 14
+        },
+        "elf": {
+          "bits": 64,
+          "machine": 183,
+          "loads": [
+            {
+              "offset": 0,
+              "address": 0,
+              "filesz": 1436,
+              "memsz": 1436,
+              "flags": 4,
+              "align": 4096,
+              "congruent_16k": true
+            },
+            {
+              "offset": 4096,
+              "address": 4096,
+              "filesz": 320,
+              "memsz": 320,
+              "flags": 5,
+              "align": 4096,
+              "congruent_16k": true
+            },
+            {
+              "offset": 8192,
+              "address": 8192,
+              "filesz": 464,
+              "memsz": 4096,
+              "flags": 6,
+              "align": 4096,
+              "congruent_16k": true
+            },
+            {
+              "offset": 12288,
+              "address": 12288,
+              "filesz": 24,
+              "memsz": 24,
+              "flags": 6,
+              "align": 4096,
+              "congruent_16k": true
+            }
+          ],
+          "permission_overlap_16k": [
+            {
+              "segments": [
+                0,
+                1
+              ],
+              "first_page": 0,
+              "pages": 1
+            },
+            {
+              "segments": [
+                0,
+                2
+              ],
+              "first_page": 0,
+              "pages": 1
+            },
+            {
+              "segments": [
+                0,
+                3
+              ],
+              "first_page": 0,
+              "pages": 1
+            },
+            {
+              "segments": [
+                1,
+                2
+              ],
+              "first_page": 0,
+              "pages": 1
+            },
+            {
+              "segments": [
+                1,
+                3
+              ],
+              "first_page": 0,
+              "pages": 1
+            }
+          ],
+          "type": 3
+        }
+      }
+    }
+  ],
+  "relative_service_paths": [
+    {
+      "rc": "/system_ext/etc/init/init.midfs.rc",
+      "line": 5,
+      "name": "midfs",
+      "binary": "system_ext/bin/midfs",
+      "arguments": [],
+      "declaration": "service midfs system_ext/bin/midfs",
+      "options": [
+        {
+          "line": 6,
+          "text": "socket midfs stream 0660 system system"
+        },
+        {
+          "line": 7,
+          "text": "class main"
+        },
+        {
+          "line": 8,
+          "text": "user system"
+        },
+        {
+          "line": 9,
+          "text": "disabled"
+        },
+        {
+          "line": 10,
+          "text": "group system media_rw"
+        },
+        {
+          "line": 11,
+          "text": "capabilities SYS_ADMIN"
+        }
+      ],
+      "classes": [
+        "main"
+      ],
+      "disabled": true,
+      "declared_actions": [
+        {
+          "rc": "/system/etc/init/hw/init.rc",
+          "line": 1480,
+          "trigger": "on nonencrypted",
+          "commands": [
+            {
+              "line": 1481,
+              "text": "class_start main"
+            }
+          ]
+        },
+        {
+          "rc": "/system_ext/etc/init/init.midfs.rc",
+          "line": 13,
+          "trigger": "on property:sys.dfs.server.ctrl=true",
+          "commands": [
+            {
+              "line": 14,
+              "text": "start midfs"
+            }
+          ]
+        },
+        {
+          "rc": "/system_ext/etc/init/init.midfs.rc",
+          "line": 15,
+          "trigger": "on property:sys.dfs.server.ctrl=false",
+          "commands": [
+            {
+              "line": 16,
+              "text": "stop midfs"
+            }
+          ]
+        }
+      ],
+      "binary_present": true,
+      "static_candidate": "/system_ext/bin/midfs",
+      "relative_path_resolution_unverified": true,
+      "apex_activation_required": false,
+      "needed": [
+        "liblog.so",
+        "libbase.so",
+        "libbinder_ndk.so",
+        "libutils.so",
+        "libcutils.so",
+        "liblogwrap.so",
+        "xiaomi.midfs-ndk.so",
+        "libc++.so",
+        "libc.so",
+        "libm.so",
+        "libdl.so"
+      ],
+      "interpreter": "/system/bin/linker64",
+      "execution_supported_by_current_runner": true
+    }
+  ],
+  "selinux_compatibility": {
+    "vendor_platform_policy_version": "202504",
+    "precompiled_hashes": {
+      "plat": {
+        "system_hash": "fb42b1b70848be4332dfdff6445c9f810bcf295a56ce1fa159f8d34056cdbe1b",
+        "vendor_precompiled_hash": "fddc0e4da7a2d17397296654378a3cc175087a2e765af3414bb80343c275d45e",
+        "matches": false
+      },
+      "system_ext": {
+        "system_hash": "f846ac7f41bf541b4227d72e04e959366285ee35a12289be314db27cbe669672",
+        "vendor_precompiled_hash": "cad3a10bd19bea8a7775ed71a4a0bd00e164d14c4cbcd0e5b1e914a58162012f",
+        "matches": false
+      },
+      "product": {
+        "system_hash": "25c6f819c8c3d10f403f19891b3aa1f3af84afb6c60ec3570c55acff11f07848",
+        "vendor_precompiled_hash": "75a11da44c802486bc6f65640aa48a730f0f684c5c07a42ba3cd1735eb3fb070",
+        "matches": false
+      }
+    },
+    "system_mapping_files": [
+      "/system/etc/selinux/mapping/202404.cil",
+      "/system/etc/selinux/mapping/202404.compat.cil",
+      "/system/etc/selinux/mapping/202504.cil",
+      "/system/etc/selinux/mapping/29.0.cil",
+      "/system/etc/selinux/mapping/29.0.compat.cil",
+      "/system/etc/selinux/mapping/30.0.cil",
+      "/system/etc/selinux/mapping/30.0.compat.cil",
+      "/system/etc/selinux/mapping/31.0.cil",
+      "/system/etc/selinux/mapping/31.0.compat.cil",
+      "/system/etc/selinux/mapping/32.0.cil",
+      "/system/etc/selinux/mapping/32.0.compat.cil",
+      "/system/etc/selinux/mapping/33.0.cil",
+      "/system/etc/selinux/mapping/33.0.compat.cil",
+      "/system/etc/selinux/mapping/34.0.cil",
+      "/system/etc/selinux/mapping/34.0.compat.cil"
+    ],
+    "requested_system_mapping_present": true,
+    "selinux_setup_observed": false
+  },
+  "files_tsv_sha256": "af2a26f975dc8b32766017fecdc215d521ebba54163bdca0150efeb902db223b",
+  "reader_sources": {
+    "prepare_hyperos_init.py": "236bb8aedb732eb080fd7f7ec96b0d1d74b5ec4c00c083e2f02d3ac28d424983",
+    "hyperos_erofs_metadata.py": "8df030b8aa1a6468185cd2f68fff255afafc249d8925083d19c9dc8c2230466f",
+    "hyperos_ramdisk.py": "e95e98751dd66854fa843f6f5adae1d43c3f0b25da1b1025b050c950b096487c",
+    "stock_init_metadata.py": "626c70985318be9f1518fedff93871acf84c3dd8409c726edd47bc123f0b222f",
+    "inspect_hyperos_input.py": "6df27c29102752b190b1f783b9931abcaff1761b605ad5d00b5e73b795d576b4",
+    "inspect_hyperos_files.py": "b5a465460f2de46f6ee7f9fefff75b9462fe0df38d32209bc7c527d7eba18c63",
+    "build_apk_fixture.py": "f6e68422728141240efdafacf6d49743b277f71894de1e79f950b7019c96c863"
+  },
+  "validation": {
+    "manifest": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-hyperos-jit/work/native-linux-nce/hyperos-init-input-v6/manifest.json",
+    "manifest_sha256": "1ece2c7f87a9064a28a823309476d10044a795bad25b887e5e07a8859137ad06",
+    "verified_files": 524,
+    "files_matching_initial_preparation": 400,
+    "verified_apex_containers": 40,
+    "verified_images": 3,
+    "verified_command_logs": 6780,
+    "ramdisk_entries": 31,
+    "original_ramdisk_metadata_matches": true,
+    "rc_service_count_preserved": true,
+    "aarch32_root_services": 5,
+    "aarch32_direct_needed_occurrences": 60,
+    "aarch32_direct_dependencies_present": true,
+    "exec_start_and_vold_continuation_checked": true,
+    "original_init_helper_strings_checked": true,
+    "apex_samples_excluded_from_legacy_staging": true,
+    "validator_sha256": "a558e768453f2a6d7d123c6ee6aca6ea9a6c56f6a30bbe5befe5fc7f25c489a5",
+    "validated": true
+  },
+  "sdk_metadata_regression": {
+    "summary": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-hyperos-jit/work/native-linux-nce/hyperos-init-metadata-regression-v2/summary.json",
+    "summary_sha256": "8e1c17c447685432eea481ed666113c85aa2dca803a0d49637b86435b31e74cc",
+    "sdk_summary": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/stock-init-main-root-etc-v1/summary.json",
+    "sdk_summary_sha256": "a4f91b518571b893601c65eef64a716837ecf70d81e2d3f39140793188af24c1",
+    "system_image_sha256": "54a96f82a138e0919686cefffead8861e10c6189bf94188fef4fa08e24dc3ed1",
+    "partition_sha256": "993193cfffd9b1a2ea034bfce5ec18fbb2856e259398ad6c1eb10b689b524e7d",
+    "metadata_entries": 156,
+    "matches_saved_metadata": true,
+    "reader_sha256": "626c70985318be9f1518fedff93871acf84c3dd8409c726edd47bc123f0b222f",
+    "rejections": {
+      "content-hash-mismatch": "元数据镜像文件与已校验原输入不同：/system/bin/init",
+      "regular-file-as-original-link": "原路径必须为 fast symlink：/system/bin/init"
+    },
+    "validated": true
+  },
+  "existing_output_rejection": {
+    "output": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-hyperos-jit/work/native-linux-nce/hyperos-init-input-v6",
+    "returncode": 1,
+    "existing_output_rejected": true,
+    "manifest_unchanged": true,
+    "failure_marker_absent": true,
+    "generator_sha256": "236bb8aedb732eb080fd7f7ec96b0d1d74b5ec4c00c083e2f02d3ac28d424983"
+  },
+  "regression_tests": {
+    "command": [
+      "python3",
+      "scripts/test_hyperos_init.py"
+    ],
+    "test_cases": 3,
+    "invalid_newc_cases": 6,
+    "passed": true
+  },
+  "retained_failures": [
+    {
+      "directory": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-hyperos-jit/work/native-linux-nce/hyperos-init-input-v2",
+      "stage": "preparation",
+      "reason": "debugfs Mode output used multiple spaces; inode expression corrected"
+    },
+    {
+      "directory": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-hyperos-jit/work/native-linux-nce/hyperos-init-input-v3",
+      "stage": "preparation",
+      "reason": "SDK linkerconfig path missing; original init references runtime APEX path"
+    },
+    {
+      "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-hyperos-jit/work/native-linux-nce/hyperos-init-input-v5/validation-failed.json",
+      "stage": "validation",
+      "reason": "Validator expected separate blkid_context token; original argument contains equals sign; corrected validation passed"
+    }
+  ],
+  "execution": {
+    "hyperos_init_run": false,
+    "selinux_setup_run": false,
+    "original_apex_activation_run": false,
+    "aarch32_execution_run": false,
+    "ios_build_run": false,
+    "iphone_run": false,
+    "system_performance_measured": false
+  },
+  "pipeline_changes_needed": [
+    "Fixed HyperOS manifest identity and 4096-byte guest core selection",
+    "Raw system ext4 input with original product and system_ext directory binds",
+    "Original EROFS vendor mount and retained uid/gid/mode/SELinux xattrs",
+    "Original apexd activation of containers, runtime EROFS, and referenced APEX linkerconfig path",
+    "Original ramdisk/fstab/modules/device prerequisite checks and explicit ASLR/NCE_EXEC review"
+  ],
+  "limitations": [
+    "Static AArch32 library presence does not validate linker namespaces or execution.",
+    "Original APEX container bytes and payload samples retained; activation not executed.",
+    "Legacy files.tsv records staging modes; raw mounts are needed to retain original filesystem labels and owners.",
+    "Root symlink modes, first-stage ramdisk/modules/devices and full enforcing init remain untested."
+  ],
+  "prepared": true,
+  "validated": true,
+  "aarch32_original_libraries": {
+    "/apex/com.android.adbd/lib/libbase.so": {
+      "bytes": 134492,
+      "sha256": "821fcb05177fdfdd59ae773e109825a572b4e926c4a0e5a29a7a80190c9e6258",
+      "original_metadata": {
+        "mode": 420,
+        "uid": 1000,
+        "gid": 1000,
+        "selinux": "u:object_r:system_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f66696c653a733000",
+        "original_inode": 21
+      }
+    },
+    "/apex/com.android.adbd/lib/libc++.so": {
+      "bytes": 769828,
+      "sha256": "238a0bacd6ad699a88988a36881817452690d238bea31d4ac31f257a1afbc1a2",
+      "original_metadata": {
+        "mode": 420,
+        "uid": 1000,
+        "gid": 1000,
+        "selinux": "u:object_r:system_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f66696c653a733000",
+        "original_inode": 22
+      }
+    },
+    "/apex/com.android.adbd/lib/libcrypto.so": {
+      "bytes": 1013140,
+      "sha256": "4df306329d1af7e534755f9f4d411c113d14757e4c7565c394ec8f29916bf7e1",
+      "original_metadata": {
+        "mode": 420,
+        "uid": 1000,
+        "gid": 1000,
+        "selinux": "u:object_r:system_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f66696c653a733000",
+        "original_inode": 23
+      }
+    },
+    "/apex/com.android.adbd/lib/libcutils.so": {
+      "bytes": 58392,
+      "sha256": "fc7d8f46e79b765e6c36d52baa10a980617bec872077adbee918bcbd653189d5",
+      "original_metadata": {
+        "mode": 420,
+        "uid": 1000,
+        "gid": 1000,
+        "selinux": "u:object_r:system_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f66696c653a733000",
+        "original_inode": 25
+      }
+    },
+    "/apex/com.android.art.compatible/lib/libbase.so": {
+      "bytes": 175132,
+      "sha256": "514449697f107d1324eaeb3191699ee37df3b3ad4cc2b0bd5d4395c2fa42771d",
+      "original_metadata": {
+        "mode": 420,
+        "uid": 1000,
+        "gid": 1000,
+        "selinux": "u:object_r:system_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f6c69625f66696c653a733000",
+        "original_inode": 56
+      }
+    },
+    "/apex/com.android.art.compatible/lib/libc++.so": {
+      "bytes": 492164,
+      "sha256": "22cb29f0923aaf10d186c84ec904d1a6acad491bdb988423489b5c40ec4fa405",
+      "original_metadata": {
+        "mode": 420,
+        "uid": 1000,
+        "gid": 1000,
+        "selinux": "u:object_r:system_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f6c69625f66696c653a733000",
+        "original_inode": 57
+      }
+    },
+    "/apex/com.android.art.compatible/lib/libcrypto.so": {
+      "bytes": 917312,
+      "sha256": "b6938599a655b5b8d3df1e73a86aeb28a6359c2e1449a57f157d54762e8cf251",
+      "original_metadata": {
+        "mode": 420,
+        "uid": 1000,
+        "gid": 1000,
+        "selinux": "u:object_r:system_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f6c69625f66696c653a733000",
+        "original_inode": 58
+      }
+    },
+    "/apex/com.android.art.compatible/lib/libnativeloader.so": {
+      "bytes": 109104,
+      "sha256": "03e632595b9097affc583ab14b35b282eb44a8963291ff4fabb52f2378ca5008",
+      "original_metadata": {
+        "mode": 420,
+        "uid": 1000,
+        "gid": 1000,
+        "selinux": "u:object_r:system_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f6c69625f66696c653a733000",
+        "original_inode": 70
+      }
+    },
+    "/apex/com.android.art.compatible/lib/libsigchain.so": {
+      "bytes": 18960,
+      "sha256": "deeb72781f211cb41f342b6c00aa7bb52db657a4645591f015e514afbde8f19d",
+      "original_metadata": {
+        "mode": 420,
+        "uid": 1000,
+        "gid": 1000,
+        "selinux": "u:object_r:system_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f6c69625f66696c653a733000",
+        "original_inode": 77
+      }
+    },
+    "/apex/com.android.art/lib/libbase.so": {
+      "bytes": 134492,
+      "sha256": "821fcb05177fdfdd59ae773e109825a572b4e926c4a0e5a29a7a80190c9e6258",
+      "original_metadata": {
+        "mode": 420,
+        "uid": 1000,
+        "gid": 1000,
+        "selinux": "u:object_r:system_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f6c69625f66696c653a733000",
+        "original_inode": 60
+      }
+    },
+    "/apex/com.android.art/lib/libc++.so": {
+      "bytes": 769828,
+      "sha256": "238a0bacd6ad699a88988a36881817452690d238bea31d4ac31f257a1afbc1a2",
+      "original_metadata": {
+        "mode": 420,
+        "uid": 1000,
+        "gid": 1000,
+        "selinux": "u:object_r:system_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f6c69625f66696c653a733000",
+        "original_inode": 61
+      }
+    },
+    "/apex/com.android.art/lib/libnativeloader.so": {
+      "bytes": 103648,
+      "sha256": "2766d1212bd2285ba2423aae2b9928a5c6b0c23f1ac6c4f2ddbc933c0658a561",
+      "original_metadata": {
+        "mode": 420,
+        "uid": 1000,
+        "gid": 1000,
+        "selinux": "u:object_r:system_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f6c69625f66696c653a733000",
+        "original_inode": 72
+      }
+    },
+    "/apex/com.android.art/lib/libsigchain.so": {
+      "bytes": 22128,
+      "sha256": "09ee54b0caab5b316a510789a0f3026423004e03aae3728a4def9d558401d16e",
+      "original_metadata": {
+        "mode": 420,
+        "uid": 1000,
+        "gid": 1000,
+        "selinux": "u:object_r:system_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f6c69625f66696c653a733000",
+        "original_inode": 79
+      }
+    },
+    "/apex/com.android.conscrypt/lib/libc++.so": {
+      "bytes": 769828,
+      "sha256": "238a0bacd6ad699a88988a36881817452690d238bea31d4ac31f257a1afbc1a2",
+      "original_metadata": {
+        "mode": 420,
+        "uid": 1000,
+        "gid": 1000,
+        "selinux": "u:object_r:system_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f6c69625f66696c653a733000",
+        "original_inode": 178
+      }
+    },
+    "/apex/com.android.conscrypt/lib/libcrypto.so": {
+      "bytes": 1013140,
+      "sha256": "4df306329d1af7e534755f9f4d411c113d14757e4c7565c394ec8f29916bf7e1",
+      "original_metadata": {
+        "mode": 420,
+        "uid": 1000,
+        "gid": 1000,
+        "selinux": "u:object_r:system_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f6c69625f66696c653a733000",
+        "original_inode": 179
+      }
+    },
+    "/apex/com.android.i18n/lib/libbase.so": {
+      "bytes": 134492,
+      "sha256": "821fcb05177fdfdd59ae773e109825a572b4e926c4a0e5a29a7a80190c9e6258",
+      "original_metadata": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f6c69625f66696c653a733000",
+        "original_inode": 4673
+      }
+    },
+    "/apex/com.android.i18n/lib/libc++.so": {
+      "bytes": 769828,
+      "sha256": "238a0bacd6ad699a88988a36881817452690d238bea31d4ac31f257a1afbc1a2",
+      "original_metadata": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f6c69625f66696c653a733000",
+        "original_inode": 4690
+      }
+    },
+    "/apex/com.android.i18n/lib/libicu.so": {
+      "bytes": 44932,
+      "sha256": "4a227da65491b245e3e39b4067ff9a48849b9607493b2ab251477f6f8ed1231e",
+      "original_metadata": {
+        "mode": 420,
+        "uid": 1000,
+        "gid": 1000,
+        "selinux": "u:object_r:system_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f6c69625f66696c653a733000",
+        "original_inode": 26
+      }
+    },
+    "/apex/com.android.media/lib/libbase.so": {
+      "bytes": 134492,
+      "sha256": "821fcb05177fdfdd59ae773e109825a572b4e926c4a0e5a29a7a80190c9e6258",
+      "original_metadata": {
+        "mode": 420,
+        "uid": 1000,
+        "gid": 1000,
+        "selinux": "u:object_r:system_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f6c69625f66696c653a733000",
+        "original_inode": 35
+      }
+    },
+    "/apex/com.android.media/lib/libc++.so": {
+      "bytes": 769828,
+      "sha256": "238a0bacd6ad699a88988a36881817452690d238bea31d4ac31f257a1afbc1a2",
+      "original_metadata": {
+        "mode": 420,
+        "uid": 1000,
+        "gid": 1000,
+        "selinux": "u:object_r:system_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f6c69625f66696c653a733000",
+        "original_inode": 36
+      }
+    },
+    "/apex/com.android.media/lib/libcutils.so": {
+      "bytes": 58392,
+      "sha256": "fc7d8f46e79b765e6c36d52baa10a980617bec872077adbee918bcbd653189d5",
+      "original_metadata": {
+        "mode": 420,
+        "uid": 1000,
+        "gid": 1000,
+        "selinux": "u:object_r:system_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f6c69625f66696c653a733000",
+        "original_inode": 37
+      }
+    },
+    "/apex/com.android.media/lib/libutils.so": {
+      "bytes": 80124,
+      "sha256": "af29db6964ec90b4334c69b33feb0fa8592fbbb30b715a554a0a325b9e7179d7",
+      "original_metadata": {
+        "mode": 420,
+        "uid": 1000,
+        "gid": 1000,
+        "selinux": "u:object_r:system_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f6c69625f66696c653a733000",
+        "original_inode": 40
+      }
+    },
+    "/apex/com.android.mediaprovider/lib/libc++.so": {
+      "bytes": 769828,
+      "sha256": "238a0bacd6ad699a88988a36881817452690d238bea31d4ac31f257a1afbc1a2",
+      "original_metadata": {
+        "mode": 420,
+        "uid": 1000,
+        "gid": 1000,
+        "selinux": "u:object_r:system_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f6c69625f66696c653a733000",
+        "original_inode": 35
+      }
+    },
+    "/apex/com.android.runtime/lib/bionic/libc.so": {
+      "bytes": 989480,
+      "sha256": "9f8c7a3d1126cd11506c0bb4d780c2f93cfc49a7dd1e185953433ed6ab855a73",
+      "original_metadata": {
+        "mode": 420,
+        "uid": 1000,
+        "gid": 1000,
+        "selinux": "u:object_r:system_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f6c69625f66696c653a7330",
+        "original_nid": 204672,
+        "inode_type": 32768
+      }
+    },
+    "/apex/com.android.runtime/lib/bionic/libdl.so": {
+      "bytes": 5452,
+      "sha256": "b76ecfd9550e9b22a2853fcb46a334dd4cd3edfe4cc4168e10dcdfe6d9cdfb15",
+      "original_metadata": {
+        "mode": 420,
+        "uid": 1000,
+        "gid": 1000,
+        "selinux": "u:object_r:system_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f6c69625f66696c653a7330",
+        "original_nid": 84,
+        "inode_type": 32768
+      }
+    },
+    "/apex/com.android.runtime/lib/bionic/libm.so": {
+      "bytes": 128220,
+      "sha256": "66b937e4a3aa2a39c7d5c63b6efc1a2aa76601a2d2cb5ee381514e6fe044b856",
+      "original_metadata": {
+        "mode": 420,
+        "uid": 1000,
+        "gid": 1000,
+        "selinux": "u:object_r:system_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f6c69625f66696c653a7330",
+        "original_nid": 204747,
+        "inode_type": 32768
+      }
+    },
+    "/apex/com.android.runtime/lib/libbase.so": {
+      "bytes": 134492,
+      "sha256": "821fcb05177fdfdd59ae773e109825a572b4e926c4a0e5a29a7a80190c9e6258",
+      "original_metadata": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f6c69625f66696c653a733000",
+        "original_inode": 4673
+      }
+    },
+    "/apex/com.android.runtime/lib/libc++.so": {
+      "bytes": 769828,
+      "sha256": "238a0bacd6ad699a88988a36881817452690d238bea31d4ac31f257a1afbc1a2",
+      "original_metadata": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f6c69625f66696c653a733000",
+        "original_inode": 4690
+      }
+    },
+    "/apex/com.android.tethering/lib/libbase.so": {
+      "bytes": 134492,
+      "sha256": "821fcb05177fdfdd59ae773e109825a572b4e926c4a0e5a29a7a80190c9e6258",
+      "original_metadata": {
+        "mode": 420,
+        "uid": 1000,
+        "gid": 1000,
+        "selinux": "u:object_r:system_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f6c69625f66696c653a733000",
+        "original_inode": 53
+      }
+    },
+    "/apex/com.android.tethering/lib/libc++.so": {
+      "bytes": 769828,
+      "sha256": "238a0bacd6ad699a88988a36881817452690d238bea31d4ac31f257a1afbc1a2",
+      "original_metadata": {
+        "mode": 420,
+        "uid": 1000,
+        "gid": 1000,
+        "selinux": "u:object_r:system_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f6c69625f66696c653a733000",
+        "original_inode": 54
+      }
+    },
+    "/apex/com.android.tethering/lib/libcutils.so": {
+      "bytes": 58392,
+      "sha256": "fc7d8f46e79b765e6c36d52baa10a980617bec872077adbee918bcbd653189d5",
+      "original_metadata": {
+        "mode": 420,
+        "uid": 1000,
+        "gid": 1000,
+        "selinux": "u:object_r:system_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f6c69625f66696c653a733000",
+        "original_inode": 55
+      }
+    },
+    "/apex/com.android.vndk.v30/lib/android.hardware.media.omx@1.0.so": {
+      "bytes": 283496,
+      "sha256": "8dfa686c93e74aa5786e30eaf5df8aacc150e0904e9fd35c3eebc03126a5670c",
+      "original_metadata": {
+        "mode": 420,
+        "uid": 1000,
+        "gid": 1000,
+        "selinux": "u:object_r:system_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f6c69625f66696c653a733000",
+        "original_inode": 138
+      }
+    },
+    "/apex/com.android.vndk.v30/lib/libbase.so": {
+      "bytes": 175812,
+      "sha256": "89bd7471473e85343ec877cab6787e4a1d76567039bc7bc0fcec447613fc99ab",
+      "original_metadata": {
+        "mode": 420,
+        "uid": 1000,
+        "gid": 1000,
+        "selinux": "u:object_r:system_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f6c69625f66696c653a733000",
+        "original_inode": 232
+      }
+    },
+    "/apex/com.android.vndk.v30/lib/libbinder.so": {
+      "bytes": 383776,
+      "sha256": "ee5694245d6b7ef7b388edbdceaf352747b1f14a3295460ba551a841e45aa0ab",
+      "original_metadata": {
+        "mode": 420,
+        "uid": 1000,
+        "gid": 1000,
+        "selinux": "u:object_r:system_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f6c69625f66696c653a733000",
+        "original_inode": 234
+      }
+    },
+    "/apex/com.android.vndk.v30/lib/libc++.so": {
+      "bytes": 491484,
+      "sha256": "9771877705582df31d61d3a4fefa76cf60eff1b93461f13b7296ab17aac8f3a1",
+      "original_metadata": {
+        "mode": 420,
+        "uid": 1000,
+        "gid": 1000,
+        "selinux": "u:object_r:system_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f6c69625f66696c653a733000",
+        "original_inode": 237
+      }
+    },
+    "/apex/com.android.vndk.v30/lib/libcrypto.so": {
+      "bytes": 823360,
+      "sha256": "ee08446c675c4b5b19464abcffe0e0ae9687a9f4b335882b171af796854d5bca",
+      "original_metadata": {
+        "mode": 420,
+        "uid": 1000,
+        "gid": 1000,
+        "selinux": "u:object_r:system_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f6c69625f66696c653a733000",
+        "original_inode": 246
+      }
+    },
+    "/apex/com.android.vndk.v30/lib/libcutils.so": {
+      "bytes": 48300,
+      "sha256": "75b9867b688f585e87b9ad1969aec562ad30456e427620f21591e367edb037aa",
+      "original_metadata": {
+        "mode": 420,
+        "uid": 1000,
+        "gid": 1000,
+        "selinux": "u:object_r:system_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f6c69625f66696c653a733000",
+        "original_inode": 249
+      }
+    },
+    "/apex/com.android.vndk.v30/lib/libfmq.so": {
+      "bytes": 11160,
+      "sha256": "b5d592f017ec6cc232119c05c1003088ca4a4a33f5a40cf91cbe042549b325ff",
+      "original_metadata": {
+        "mode": 420,
+        "uid": 1000,
+        "gid": 1000,
+        "selinux": "u:object_r:system_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f6c69625f66696c653a733000",
+        "original_inode": 255
+      }
+    },
+    "/apex/com.android.vndk.v30/lib/libhidlbase.so": {
+      "bytes": 497772,
+      "sha256": "902bf57682dc9ecbe799524ec9a7ffe566898175912014d019f46cfd338dfe61",
+      "original_metadata": {
+        "mode": 420,
+        "uid": 1000,
+        "gid": 1000,
+        "selinux": "u:object_r:system_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f6c69625f66696c653a733000",
+        "original_inode": 262
+      }
+    },
+    "/apex/com.android.vndk.v30/lib/libutils.so": {
+      "bytes": 84496,
+      "sha256": "f8970f791afcbcabf1bd127f51bd16f63bc909cf678a363a7c33986475453bf1",
+      "original_metadata": {
+        "mode": 420,
+        "uid": 1000,
+        "gid": 1000,
+        "selinux": "u:object_r:system_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f6c69625f66696c653a733000",
+        "original_inode": 300
+      }
+    },
+    "/apex/com.android.vndk.v31/lib/android.hardware.media.omx@1.0.so": {
+      "bytes": 284128,
+      "sha256": "513982f7996909d22c814db38bfaf7b0758ce1c1fcc7006616f6f2b762a046b3",
+      "original_metadata": {
+        "mode": 420,
+        "uid": 1000,
+        "gid": 1000,
+        "selinux": "u:object_r:system_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f6c69625f66696c653a733000",
+        "original_inode": 47
+      }
+    },
+    "/apex/com.android.vndk.v31/lib/libbase.so": {
+      "bytes": 170912,
+      "sha256": "519dd80645e87cca06ac19ea9b5580c59d17e714df32904c889596eed1b826ac",
+      "original_metadata": {
+        "mode": 420,
+        "uid": 1000,
+        "gid": 1000,
+        "selinux": "u:object_r:system_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f6c69625f66696c653a733000",
+        "original_inode": 78
+      }
+    },
+    "/apex/com.android.vndk.v31/lib/libbinder.so": {
+      "bytes": 391304,
+      "sha256": "35b5d53fe277f3cae390d311dd8ad36a021c10e16f1452b1c46bdc6006c467a0",
+      "original_metadata": {
+        "mode": 420,
+        "uid": 1000,
+        "gid": 1000,
+        "selinux": "u:object_r:system_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f6c69625f66696c653a733000",
+        "original_inode": 80
+      }
+    },
+    "/apex/com.android.vndk.v31/lib/libc++.so": {
+      "bytes": 485848,
+      "sha256": "024166a8d757124c2c6f32ba7b3f2425c29206971d0a243a2783b1607ed590cc",
+      "original_metadata": {
+        "mode": 420,
+        "uid": 1000,
+        "gid": 1000,
+        "selinux": "u:object_r:system_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f6c69625f66696c653a733000",
+        "original_inode": 83
+      }
+    },
+    "/apex/com.android.vndk.v31/lib/libcrypto.so": {
+      "bytes": 895436,
+      "sha256": "98e1fdb77561507d39cf9f910158501c0cfe2d4e7e9fb522336cb6731870490a",
+      "original_metadata": {
+        "mode": 420,
+        "uid": 1000,
+        "gid": 1000,
+        "selinux": "u:object_r:system_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f6c69625f66696c653a733000",
+        "original_inode": 92
+      }
+    },
+    "/apex/com.android.vndk.v31/lib/libcutils.so": {
+      "bytes": 47336,
+      "sha256": "c9db502c28b9a21c6fe29d9b69c5d68132fa0ac3c918cce8a4eb68f8a58240f4",
+      "original_metadata": {
+        "mode": 420,
+        "uid": 1000,
+        "gid": 1000,
+        "selinux": "u:object_r:system_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f6c69625f66696c653a733000",
+        "original_inode": 95
+      }
+    },
+    "/apex/com.android.vndk.v31/lib/libfmq.so": {
+      "bytes": 10824,
+      "sha256": "6b1bad0e920179067e98713748373de3ce4e44bfc96214d5fc007516d0142a2d",
+      "original_metadata": {
+        "mode": 420,
+        "uid": 1000,
+        "gid": 1000,
+        "selinux": "u:object_r:system_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f6c69625f66696c653a733000",
+        "original_inode": 102
+      }
+    },
+    "/apex/com.android.vndk.v31/lib/libhidlbase.so": {
+      "bytes": 496772,
+      "sha256": "918b26da7485e2c3afd1938e5c25c0a2c9122ae4c39bd24980bb0875cfa01a37",
+      "original_metadata": {
+        "mode": 420,
+        "uid": 1000,
+        "gid": 1000,
+        "selinux": "u:object_r:system_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f6c69625f66696c653a733000",
+        "original_inode": 109
+      }
+    },
+    "/apex/com.android.vndk.v31/lib/libutils.so": {
+      "bytes": 76044,
+      "sha256": "7fe89829aae5b92a98e0587082d75a860990287aea5036e2aca4a4aa320a396a",
+      "original_metadata": {
+        "mode": 420,
+        "uid": 1000,
+        "gid": 1000,
+        "selinux": "u:object_r:system_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f6c69625f66696c653a733000",
+        "original_inode": 147
+      }
+    },
+    "/apex/com.android.vndk.v32/lib/android.hardware.media.omx@1.0.so": {
+      "bytes": 284128,
+      "sha256": "e3141ad3652b1b784df5f823828f19b77640ba27d3c909ef882cd3c22a61475a",
+      "original_metadata": {
+        "mode": 420,
+        "uid": 1000,
+        "gid": 1000,
+        "selinux": "u:object_r:system_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f6c69625f66696c653a733000",
+        "original_inode": 47
+      }
+    },
+    "/apex/com.android.vndk.v32/lib/libbase.so": {
+      "bytes": 170912,
+      "sha256": "685c1e1133469bc7ffcec8b0d39cddd96987cc32360d742918048ed823c8c7b8",
+      "original_metadata": {
+        "mode": 420,
+        "uid": 1000,
+        "gid": 1000,
+        "selinux": "u:object_r:system_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f6c69625f66696c653a733000",
+        "original_inode": 78
+      }
+    },
+    "/apex/com.android.vndk.v32/lib/libbinder.so": {
+      "bytes": 391304,
+      "sha256": "5b4eee3438aee660c41b721d84b6cfc1519114f3d3a2184200930d003c4a8179",
+      "original_metadata": {
+        "mode": 420,
+        "uid": 1000,
+        "gid": 1000,
+        "selinux": "u:object_r:system_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f6c69625f66696c653a733000",
+        "original_inode": 80
+      }
+    },
+    "/apex/com.android.vndk.v32/lib/libc++.so": {
+      "bytes": 485848,
+      "sha256": "d3bfe63b2de0c9fb7f2d0a504e7848bb5535f9f7200cfa0f211ac8f53fde4ff1",
+      "original_metadata": {
+        "mode": 420,
+        "uid": 1000,
+        "gid": 1000,
+        "selinux": "u:object_r:system_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f6c69625f66696c653a733000",
+        "original_inode": 83
+      }
+    },
+    "/apex/com.android.vndk.v32/lib/libcrypto.so": {
+      "bytes": 895156,
+      "sha256": "54dd199a66f611eb42696cdd979f428bd18f3befef8a00396c578d886922cac0",
+      "original_metadata": {
+        "mode": 420,
+        "uid": 1000,
+        "gid": 1000,
+        "selinux": "u:object_r:system_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f6c69625f66696c653a733000",
+        "original_inode": 92
+      }
+    },
+    "/apex/com.android.vndk.v32/lib/libcutils.so": {
+      "bytes": 47384,
+      "sha256": "36a73af135dedcaf6b7e8e5967942b7e172803a03314334ce96d45400835db8a",
+      "original_metadata": {
+        "mode": 420,
+        "uid": 1000,
+        "gid": 1000,
+        "selinux": "u:object_r:system_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f6c69625f66696c653a733000",
+        "original_inode": 95
+      }
+    },
+    "/apex/com.android.vndk.v32/lib/libfmq.so": {
+      "bytes": 10824,
+      "sha256": "d3b9dfd304f6cebb0491ed2f4632131548f36570d25aad3cab4d1993720a4aa8",
+      "original_metadata": {
+        "mode": 420,
+        "uid": 1000,
+        "gid": 1000,
+        "selinux": "u:object_r:system_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f6c69625f66696c653a733000",
+        "original_inode": 102
+      }
+    },
+    "/apex/com.android.vndk.v32/lib/libhidlbase.so": {
+      "bytes": 496772,
+      "sha256": "b332890006d9ac1ca8fff21ccd615de47753c7ad99894da7d61d907b48098d7a",
+      "original_metadata": {
+        "mode": 420,
+        "uid": 1000,
+        "gid": 1000,
+        "selinux": "u:object_r:system_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f6c69625f66696c653a733000",
+        "original_inode": 109
+      }
+    },
+    "/apex/com.android.vndk.v32/lib/libutils.so": {
+      "bytes": 75856,
+      "sha256": "47168bb6b453162023efab52c2f14910f1e53444f3785626dc9a9f63f8f0920d",
+      "original_metadata": {
+        "mode": 420,
+        "uid": 1000,
+        "gid": 1000,
+        "selinux": "u:object_r:system_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f6c69625f66696c653a733000",
+        "original_inode": 147
+      }
+    },
+    "/apex/com.android.vndk.v33/lib/android.hardware.media.omx@1.0.so": {
+      "bytes": 283876,
+      "sha256": "2012fd51be966f4e52b455a3987b2f5af0d465e76042fcf56cba00acc9beb260",
+      "original_metadata": {
+        "mode": 420,
+        "uid": 1000,
+        "gid": 1000,
+        "selinux": "u:object_r:system_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f6c69625f66696c653a733000",
+        "original_inode": 59
+      }
+    },
+    "/apex/com.android.vndk.v33/lib/libbase.so": {
+      "bytes": 171772,
+      "sha256": "2f5067075cb2233de94bfb155ee62dfd496febcb4058e1c44ad6c8ed8b2eb690",
+      "original_metadata": {
+        "mode": 420,
+        "uid": 1000,
+        "gid": 1000,
+        "selinux": "u:object_r:system_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f6c69625f66696c653a733000",
+        "original_inode": 109
+      }
+    },
+    "/apex/com.android.vndk.v33/lib/libbinder.so": {
+      "bytes": 512568,
+      "sha256": "21c3695e981404a1340f0f57d5f0d277afa59ac76105933a14e6e9cbbfb3f748",
+      "original_metadata": {
+        "mode": 420,
+        "uid": 1000,
+        "gid": 1000,
+        "selinux": "u:object_r:system_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f6c69625f66696c653a733000",
+        "original_inode": 111
+      }
+    },
+    "/apex/com.android.vndk.v33/lib/libc++.so": {
+      "bytes": 485884,
+      "sha256": "02ce798651715e0552c759d972cba88f783a03f43aec0e79225b3dd0b008b830",
+      "original_metadata": {
+        "mode": 420,
+        "uid": 1000,
+        "gid": 1000,
+        "selinux": "u:object_r:system_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f6c69625f66696c653a733000",
+        "original_inode": 114
+      }
+    },
+    "/apex/com.android.vndk.v33/lib/libcrypto.so": {
+      "bytes": 898496,
+      "sha256": "3baa09cb02e5f04e01a12391c528ac17d3094c0b1bcb25946dc86f649497fcc5",
+      "original_metadata": {
+        "mode": 420,
+        "uid": 1000,
+        "gid": 1000,
+        "selinux": "u:object_r:system_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f6c69625f66696c653a733000",
+        "original_inode": 121
+      }
+    },
+    "/apex/com.android.vndk.v33/lib/libcutils.so": {
+      "bytes": 60468,
+      "sha256": "e85caa8da2148fe829b8e494c2f03a21909f62978218183565a82b23015a3f66",
+      "original_metadata": {
+        "mode": 420,
+        "uid": 1000,
+        "gid": 1000,
+        "selinux": "u:object_r:system_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f6c69625f66696c653a733000",
+        "original_inode": 124
+      }
+    },
+    "/apex/com.android.vndk.v33/lib/libfmq.so": {
+      "bytes": 9904,
+      "sha256": "04a1dec6b340ed55f5a711f8dc934ab86734469be8135c7250fe77db424b1e74",
+      "original_metadata": {
+        "mode": 420,
+        "uid": 1000,
+        "gid": 1000,
+        "selinux": "u:object_r:system_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f6c69625f66696c653a733000",
+        "original_inode": 131
+      }
+    },
+    "/apex/com.android.vndk.v33/lib/libhidlbase.so": {
+      "bytes": 481416,
+      "sha256": "ba5cfb9ec62d904ecacddbed76fddc930b98bb06568b906e20b0da2acd22f3e9",
+      "original_metadata": {
+        "mode": 420,
+        "uid": 1000,
+        "gid": 1000,
+        "selinux": "u:object_r:system_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f6c69625f66696c653a733000",
+        "original_inode": 138
+      }
+    },
+    "/apex/com.android.vndk.v33/lib/libutils.so": {
+      "bytes": 78748,
+      "sha256": "60bb72edb26548ca4f745bc2f9b8894fa69c75e88305ca002ed25af18c78e45c",
+      "original_metadata": {
+        "mode": 420,
+        "uid": 1000,
+        "gid": 1000,
+        "selinux": "u:object_r:system_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f6c69625f66696c653a733000",
+        "original_inode": 176
+      }
+    },
+    "/apex/com.android.vndk.v34/lib/android.hardware.media.omx@1.0.so": {
+      "bytes": 282272,
+      "sha256": "6699c95a1dcd8c72deafef92efc28212dc453402799edb2779119414acdc4674",
+      "original_metadata": {
+        "mode": 420,
+        "uid": 1000,
+        "gid": 1000,
+        "selinux": "u:object_r:system_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f6c69625f66696c653a733000",
+        "original_inode": 45
+      }
+    },
+    "/apex/com.android.vndk.v34/lib/libbase.so": {
+      "bytes": 175140,
+      "sha256": "814b90c31ad17665d5811118110485b33ac1cb15482bc08ce0cf245f79575b82",
+      "original_metadata": {
+        "mode": 420,
+        "uid": 1000,
+        "gid": 1000,
+        "selinux": "u:object_r:system_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f6c69625f66696c653a733000",
+        "original_inode": 66
+      }
+    },
+    "/apex/com.android.vndk.v34/lib/libbinder.so": {
+      "bytes": 560888,
+      "sha256": "e8e0aa88764f007e8cd112d803311aca9f7de52542ac77cd22aa633f9224d078",
+      "original_metadata": {
+        "mode": 420,
+        "uid": 1000,
+        "gid": 1000,
+        "selinux": "u:object_r:system_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f6c69625f66696c653a733000",
+        "original_inode": 68
+      }
+    },
+    "/apex/com.android.vndk.v34/lib/libc++.so": {
+      "bytes": 492172,
+      "sha256": "00bcebc49109476967567757ecef16e1598e3a6fc5e7d00d38d97077454e7443",
+      "original_metadata": {
+        "mode": 420,
+        "uid": 1000,
+        "gid": 1000,
+        "selinux": "u:object_r:system_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f6c69625f66696c653a733000",
+        "original_inode": 71
+      }
+    },
+    "/apex/com.android.vndk.v34/lib/libcrypto.so": {
+      "bytes": 917372,
+      "sha256": "a21bafc92f74cc5b628ecf27270e26b17506261deddeae116dabfc42f69e5594",
+      "original_metadata": {
+        "mode": 420,
+        "uid": 1000,
+        "gid": 1000,
+        "selinux": "u:object_r:system_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f6c69625f66696c653a733000",
+        "original_inode": 78
+      }
+    },
+    "/apex/com.android.vndk.v34/lib/libcutils.so": {
+      "bytes": 62688,
+      "sha256": "1e0de25f0e4711f90a4723155ceede29eec57fd581c20b6d378c400e95f66208",
+      "original_metadata": {
+        "mode": 420,
+        "uid": 1000,
+        "gid": 1000,
+        "selinux": "u:object_r:system_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f6c69625f66696c653a733000",
+        "original_inode": 81
+      }
+    },
+    "/apex/com.android.vndk.v34/lib/libfmq.so": {
+      "bytes": 9980,
+      "sha256": "abef73b50c121d6d7a7f65ea4be2b34701555121fba0ccc8a2ae535f91171288",
+      "original_metadata": {
+        "mode": 420,
+        "uid": 1000,
+        "gid": 1000,
+        "selinux": "u:object_r:system_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f6c69625f66696c653a733000",
+        "original_inode": 88
+      }
+    },
+    "/apex/com.android.vndk.v34/lib/libhidlbase.so": {
+      "bytes": 475912,
+      "sha256": "c17e6cce1dceb5c7215b3a28e7e1f966606802d2a13c37367865ced1d3f1ede4",
+      "original_metadata": {
+        "mode": 420,
+        "uid": 1000,
+        "gid": 1000,
+        "selinux": "u:object_r:system_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f6c69625f66696c653a733000",
+        "original_inode": 95
+      }
+    },
+    "/apex/com.android.vndk.v34/lib/libutils.so": {
+      "bytes": 79928,
+      "sha256": "436e1e6380dfbaa536f5e36ba3f0ca19202cc17360bd23995f9228172cdd02c5",
+      "original_metadata": {
+        "mode": 420,
+        "uid": 1000,
+        "gid": 1000,
+        "selinux": "u:object_r:system_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f6c69625f66696c653a733000",
+        "original_inode": 133
+      }
+    },
+    "/product/lib/libbase.so": {
+      "bytes": 134492,
+      "sha256": "c42696d71a3e2ff74cf0768b6f2168014d95867af77abe5a5db7589f4023dd2d",
+      "original_metadata": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f6c69625f66696c653a733000",
+        "original_inode": 1058
+      }
+    },
+    "/product/lib/libc++.so": {
+      "bytes": 769828,
+      "sha256": "238a0bacd6ad699a88988a36881817452690d238bea31d4ac31f257a1afbc1a2",
+      "original_metadata": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f6c69625f66696c653a733000",
+        "original_inode": 1059
+      }
+    },
+    "/product/lib/libcutils.so": {
+      "bytes": 57344,
+      "sha256": "4b83773aa9012bed5cc631583f44f71dd4bb391e98c5fcb7f33136d925d41a7a",
+      "original_metadata": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f6c69625f66696c653a733000",
+        "original_inode": 1060
+      }
+    },
+    "/product/lib/libhidlbase.so": {
+      "bytes": 475304,
+      "sha256": "40d59a1683f7663a808f831b8028ea620c89b930960e62340c51d774b762dca9",
+      "original_metadata": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f6c69625f66696c653a733000",
+        "original_inode": 1063
+      }
+    },
+    "/product/lib/libutils.so": {
+      "bytes": 80124,
+      "sha256": "47f55b37a236f040bc7322cf9be0976d8b0fdfff57a70afba9cdad79f0261ecb",
+      "original_metadata": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f6c69625f66696c653a733000",
+        "original_inode": 1065
+      }
+    },
+    "/system/lib/android.hardware.media.omx@1.0.so": {
+      "bytes": 381440,
+      "sha256": "22c8cb466576343826de6ba300b74462aa2889a22ad672b254ed5a6a50d702fc",
+      "original_metadata": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f6c69625f66696c653a733000",
+        "original_inode": 4458
+      }
+    },
+    "/system/lib/bootstrap/libc.so": {
+      "bytes": 989480,
+      "sha256": "9f8c7a3d1126cd11506c0bb4d780c2f93cfc49a7dd1e185953433ed6ab855a73",
+      "original_metadata": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_bootstrap_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f626f6f7473747261705f6c69625f66696c653a733000",
+        "original_inode": 4549
+      }
+    },
+    "/system/lib/bootstrap/libdl.so": {
+      "bytes": 5452,
+      "sha256": "b76ecfd9550e9b22a2853fcb46a334dd4cd3edfe4cc4168e10dcdfe6d9cdfb15",
+      "original_metadata": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_bootstrap_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f626f6f7473747261705f6c69625f66696c653a733000",
+        "original_inode": 4551
+      }
+    },
+    "/system/lib/bootstrap/libm.so": {
+      "bytes": 128220,
+      "sha256": "66b937e4a3aa2a39c7d5c63b6efc1a2aa76601a2d2cb5ee381514e6fe044b856",
+      "original_metadata": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_bootstrap_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f626f6f7473747261705f6c69625f66696c653a733000",
+        "original_inode": 4555
+      }
+    },
+    "/system/lib/libaconfig_storage_read_api_cc.so": {
+      "bytes": 67196,
+      "sha256": "4f0bd08955f7c0d1f91ec88939146cbad0b1a1adb36ba6c2e51c950888154943",
+      "original_metadata": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f6c69625f66696c653a733000",
+        "original_inode": 4612
+      }
+    },
+    "/system/lib/libandroid_runtime.so": {
+      "bytes": 2178872,
+      "sha256": "a08d3f016dae74c73d8fcb7d914b0a3df66de64dd4df36d357d5a506720a0de4",
+      "original_metadata": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f6c69625f66696c653a733000",
+        "original_inode": 4627
+      }
+    },
+    "/system/lib/libavservices_minijail.so": {
+      "bytes": 11800,
+      "sha256": "d2e16ddb3550870655c2cc4f080cb995c33c33636d61703c591e7e083c74d527",
+      "original_metadata": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f6c69625f66696c653a733000",
+        "original_inode": 4672
+      }
+    },
+    "/system/lib/libbase.so": {
+      "bytes": 134492,
+      "sha256": "821fcb05177fdfdd59ae773e109825a572b4e926c4a0e5a29a7a80190c9e6258",
+      "original_metadata": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f6c69625f66696c653a733000",
+        "original_inode": 4673
+      }
+    },
+    "/system/lib/libbinder.so": {
+      "bytes": 524460,
+      "sha256": "902712bad2021110c4ab7d0c5e4619e3b5e126a204eab6feec6948fa9c8f5b91",
+      "original_metadata": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f6c69625f66696c653a733000",
+        "original_inode": 4679
+      }
+    },
+    "/system/lib/libbinder_ndk.so": {
+      "bytes": 101128,
+      "sha256": "7a10b60d2c50ba3916951912ddb27b30649f7be52733090e2ba9f710f075a7c5",
+      "original_metadata": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f6c69625f66696c653a733000",
+        "original_inode": 4681
+      }
+    },
+    "/system/lib/libc++.so": {
+      "bytes": 769828,
+      "sha256": "238a0bacd6ad699a88988a36881817452690d238bea31d4ac31f257a1afbc1a2",
+      "original_metadata": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f6c69625f66696c653a733000",
+        "original_inode": 4690
+      }
+    },
+    "/system/lib/libc.so": {
+      "bytes": 989480,
+      "sha256": "9f8c7a3d1126cd11506c0bb4d780c2f93cfc49a7dd1e185953433ed6ab855a73",
+      "original_metadata": {
+        "mode": 420,
+        "uid": 1000,
+        "gid": 1000,
+        "selinux": "u:object_r:system_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f6c69625f66696c653a7330",
+        "original_nid": 204672,
+        "inode_type": 32768
+      }
+    },
+    "/system/lib/libcrypto.so": {
+      "bytes": 1013140,
+      "sha256": "4df306329d1af7e534755f9f4d411c113d14757e4c7565c394ec8f29916bf7e1",
+      "original_metadata": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f6c69625f66696c653a733000",
+        "original_inode": 4728
+      }
+    },
+    "/system/lib/libcutils.so": {
+      "bytes": 58392,
+      "sha256": "fc7d8f46e79b765e6c36d52baa10a980617bec872077adbee918bcbd653189d5",
+      "original_metadata": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f6c69625f66696c653a733000",
+        "original_inode": 4731
+      }
+    },
+    "/system/lib/libdl.so": {
+      "bytes": 5452,
+      "sha256": "b76ecfd9550e9b22a2853fcb46a334dd4cd3edfe4cc4168e10dcdfe6d9cdfb15",
+      "original_metadata": {
+        "mode": 420,
+        "uid": 1000,
+        "gid": 1000,
+        "selinux": "u:object_r:system_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f6c69625f66696c653a7330",
+        "original_nid": 84,
+        "inode_type": 32768
+      }
+    },
+    "/system/lib/libfmq.so": {
+      "bytes": 9884,
+      "sha256": "b852aa4e3bd15f0856e24f14f09a62ce8bccbba9c3b03b7ad4e973df7c82355e",
+      "original_metadata": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f6c69625f66696c653a733000",
+        "original_inode": 4763
+      }
+    },
+    "/system/lib/libhidlbase.so": {
+      "bytes": 475568,
+      "sha256": "0e980ef6e09f811bee3bf0493191cb63da8f2e42d33828bc61778d8a7d569cd9",
+      "original_metadata": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f6c69625f66696c653a733000",
+        "original_inode": 4785
+      }
+    },
+    "/system/lib/liblog.so": {
+      "bytes": 43956,
+      "sha256": "198919f2f558bae8f6a85bcc8aadfe7deebc0d53a35a6c84a921979b855b262c",
+      "original_metadata": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f6c69625f66696c653a733000",
+        "original_inode": 4823
+      }
+    },
+    "/system/lib/libm.so": {
+      "bytes": 128220,
+      "sha256": "66b937e4a3aa2a39c7d5c63b6efc1a2aa76601a2d2cb5ee381514e6fe044b856",
+      "original_metadata": {
+        "mode": 420,
+        "uid": 1000,
+        "gid": 1000,
+        "selinux": "u:object_r:system_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f6c69625f66696c653a7330",
+        "original_nid": 204747,
+        "inode_type": 32768
+      }
+    },
+    "/system/lib/libmediaplayerservice.so": {
+      "bytes": 1182152,
+      "sha256": "14d9a25d7b7ee03a49e392b16c97bb96edf573cf7c12ff4e34c5c7a0d1a55ebe",
+      "original_metadata": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f6c69625f66696c653a733000",
+        "original_inode": 4860
+      }
+    },
+    "/system/lib/libresourcemanagerservice.so": {
+      "bytes": 230328,
+      "sha256": "71833827ee83466cd3ae43eac87b7ff5186f365db2c799fe79752d2b71e969e3",
+      "original_metadata": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f6c69625f66696c653a733000",
+        "original_inode": 4937
+      }
+    },
+    "/system/lib/libutils.so": {
+      "bytes": 80124,
+      "sha256": "af29db6964ec90b4334c69b33feb0fa8592fbbb30b715a554a0a325b9e7179d7",
+      "original_metadata": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f6c69625f66696c653a733000",
+        "original_inode": 5032
+      }
+    },
+    "/system/lib/libwilhelm.so": {
+      "bytes": 204624,
+      "sha256": "7ea83d0288225fe10a779ac48c0ea7ba9d79599c2815d23e292e1b6947f7dbac",
+      "original_metadata": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f6c69625f66696c653a733000",
+        "original_inode": 5049
+      }
+    },
+    "/system/lib/server_configurable_flags.so": {
+      "bytes": 11588,
+      "sha256": "efead04cdb9c2800115d508ae08af6d7715bed69f29d0115209769135608a40b",
+      "original_metadata": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f6c69625f66696c653a733000",
+        "original_inode": 5067
+      }
+    },
+    "/system_ext/lib/libmmosal.so": {
+      "bytes": 34984,
+      "sha256": "0086058bf80465c52a9da53fae6439d3377ff72942d136b760d234d4d168477e",
+      "original_metadata": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f6c69625f66696c653a733000",
+        "original_inode": 8693
+      }
+    },
+    "/system_ext/lib/libwfdcommonutils.so": {
+      "bytes": 44656,
+      "sha256": "a77da095a49a0ea06d7ff80be1e3eecd7281be44bb508dd36702fd31d0437ca7",
+      "original_metadata": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f6c69625f66696c653a733000",
+        "original_inode": 8780
+      }
+    },
+    "/system_ext/lib/libwfdconfigutils.so": {
+      "bytes": 82088,
+      "sha256": "794177a65cbf6d7ebd26307a133a1e87d2281fe665a4cb058a89d537e4f60211",
+      "original_metadata": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f6c69625f66696c653a733000",
+        "original_inode": 8781
+      }
+    },
+    "/system_ext/lib/libwfdservice.so": {
+      "bytes": 193936,
+      "sha256": "599f134d4460fa97b91718fde9e7fec043508c53e4d2c72c67767d16ef791e5e",
+      "original_metadata": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f6c69625f66696c653a733000",
+        "original_inode": 8788
+      }
+    },
+    "/system_ext/lib/vendor.qti.hardware.sigma_miracast@1.0-halimpl.so": {
+      "bytes": 15792,
+      "sha256": "163bdd9fc84918a1fbd9fe5c4faa5750a1f3014c35aed9c7abcc8d4df6ad77f1",
+      "original_metadata": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f6c69625f66696c653a733000",
+        "original_inode": 8945
+      }
+    },
+    "/system_ext/lib/vendor.qti.hardware.sigma_miracast@1.0.so": {
+      "bytes": 83400,
+      "sha256": "f6a9a10f31dffba5a3b56d8d494517a527344ea672e8704049fff3b71f618c80",
+      "original_metadata": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f6c69625f66696c653a733000",
+        "original_inode": 8946
+      }
+    }
+  }
+}
