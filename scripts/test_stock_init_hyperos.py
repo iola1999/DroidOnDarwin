@@ -25,7 +25,8 @@ def main():
     for run in report['runs']:
         assert run['observation_validated'] and validate(run['results'], run['mode'], True,
                                                        guest_page_bytes=page_bytes, kernel_log=run['stderr'],
-                                                       original_input=report['input'] if report['input'].get('sdk_partitions') else None)
+                                                       original_input=report['input'] if report['input'].get('sdk_partitions') else None,
+                                                       exec_elf_images=report['input'].get('exec_elf_images'))
     tests.append('actual_sdk36_four_entries')
 
     with tempfile.TemporaryDirectory(prefix='hyperos-init-contract-', dir=ROOT / 'work/native-linux-nce') as temporary:

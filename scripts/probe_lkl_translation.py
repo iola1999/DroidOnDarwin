@@ -381,7 +381,10 @@ def validate(rows, memory_interval, mapping="window", workload="core", tlb_inval
     if not expected <= {row.get('test') for row in rows if row.get('passed')}:
         return False
     cleanup = [row for row in rows if row.get('test') == 'translated_context_cleanup']
-    if len(cleanup) != 1 or (mapping == 'pte' and (cleanup[0]['maps'] or cleanup[0]['revocations'])):
+    if (len(cleanup) != 1 or cleanup[0].get('passed') is not True or
+            type(cleanup[0].get('allocated')) is not int or cleanup[0]['allocated'] <= 0 or
+            type(cleanup[0].get('freed')) is not int or cleanup[0]['allocated'] != cleanup[0]['freed'] or
+            (mapping == 'pte' and (cleanup[0].get('maps') != 0 or cleanup[0].get('revocations') != 0))):
         return False
     if execution is not None:
         selected = [row for row in rows if row.get('config') == 'translation_execution']
@@ -450,9 +453,18 @@ def validate(rows, memory_interval, mapping="window", workload="core", tlb_inval
                 return False
             flat = [row for row in rows if row.get('direct_flat_tables')]
             enabled = selected[0].get('memory') in ('flat', 'view')
-            if len(flat) != 1 or flat[0]['enabled'] != enabled or flat[0]['live_virtual_bytes']:
+            if len(flat) != 1:
                 return False
-            if enabled and (not flat[0]['updates'] or flat[0]['peak_virtual_bytes'] < 4194304):
+            fields = ('live_virtual_bytes', 'peak_virtual_bytes', 'updates', 'refresh_pages')
+            if (set(flat[0]) != {'cpu', 'direct_flat_tables', 'enabled', *fields} or
+                    flat[0]['direct_flat_tables'] is not True or flat[0]['enabled'] is not enabled or
+                    type(flat[0]['cpu']) is not int or flat[0]['cpu'] != selected[0].get('cpu') or
+                    any(type(flat[0][key]) is not int or not 0 <= flat[0][key] < 1 << 64 for key in fields) or
+                    flat[0]['live_virtual_bytes']):
+                return False
+            table_bytes = (1 << 32) // guest_page_bytes * 16
+            if enabled and (not flat[0]['refresh_pages'] or flat[0]['peak_virtual_bytes'] < table_bytes or
+                            flat[0]['peak_virtual_bytes'] % table_bytes):
                 return False
             if not enabled and any(flat[0][key] for key in ('updates', 'refresh_pages', 'peak_virtual_bytes')):
                 return False

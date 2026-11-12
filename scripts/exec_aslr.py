@@ -30,7 +30,8 @@ def elf_spec(path):
                 phdr_vaddr = vaddr + phoff - offset
     if not loads or phdr_vaddr is None or len(loads) > 16:
         raise ValueError('缺少可核对的 PT_LOAD/AT_PHDR：' + str(path))
-    return {'type': kind, 'entry': entry, 'phdr_vaddr': phdr_vaddr, 'interpreter': interpreter, 'loads': loads}
+    return {'type': kind, 'entry': entry, 'phdr_vaddr': phdr_vaddr, 'phnum': phnum,
+            'phentsize': phsize, 'interpreter': interpreter, 'loads': loads}
 
 
 def build(out, libc, guest_page_bytes):
@@ -93,6 +94,52 @@ def image_valid(actual, expected, guest, page):
                load['memsz'] <= guest['guest_end'] - load['address'] and
                load['filesz'] <= load['memsz'] and load['address'] % page == load['offset'] % page and
                (load['align'] <= 1 or not bias % load['align']) for load in loads)
+
+
+def validate_exec_layout(rows, images, guest, page):
+    if not images or '/system/bin/init' not in images:
+        return False
+    program = images['/system/bin/init']
+    interpreter = images.get(program['interpreter'])
+    if not interpreter or program['type'] != 3 or interpreter['type'] != 3:
+        return False
+    events = [row for row in rows if 'stock_init_exec_layout' in row or
+              (row.get('stock_init_security') == 221 and
+               row.get('path_hex') == '/system/bin/init'.encode().hex() and row.get('result') == 0)]
+    if not events or len(events) % 2 or any('stock_init_exec_layout' in events[i] or
+                                          'stock_init_exec_layout' not in events[i + 1]
+                                          for i in range(0, len(events), 2)):
+        return False
+    samples = events[1::2]
+    if not any(row.get('pid') == 1 for row in samples):
+        return False
+    fields = ('pid', 'sp', 'pc', 'phdr', 'entry', 'at_base', 'page_bytes', 'phnum', 'phentsize',
+              'phdr_mapping', 'entry_mapping', 'pc_mapping')
+    for row in samples:
+        if (set(row) != {'stock_init_exec_layout', 'read_result', *fields} or
+                row['stock_init_exec_layout'] is not True or type(row['read_result']) is not int or row['read_result'] != 0 or
+                any(type(row[key]) is not int or not 0 <= row[key] < 1 << 64 for key in fields) or row['pid'] <= 0 or
+                row['page_bytes'] != page or row['phnum'] != program['phnum'] or row['phentsize'] != program['phentsize'] or
+                not guest['guest_base'] <= row['sp'] < guest['guest_end'] or row['sp'] % 16 or
+                row['entry'] < program['entry'] or row['pc'] != row['at_base'] + interpreter['entry']):
+            return False
+        bias = row['entry'] - program['entry']
+        if row['phdr'] != bias + program['phdr_vaddr']:
+            return False
+        for spec, base in ((program, bias), (interpreter, row['at_base'])):
+            if any(not guest['guest_base'] <= base + load['vaddr'] < guest['guest_end'] or
+                   load['memsz'] > guest['guest_end'] - base - load['vaddr'] or
+                   (load['align'] > 1 and base % load['align']) for load in spec['loads']):
+                return False
+        for address, mapping, spec, base in ((row['phdr'], row['phdr_mapping'], program, bias),
+                                             (row['entry'], row['entry_mapping'], program, bias),
+                                             (row['pc'], row['pc_mapping'], interpreter, row['at_base'])):
+            load = next((load for load in spec['loads'] if base + load['vaddr'] <= address < base + load['vaddr'] + load['memsz']), None)
+            prot = mapping & (page - 1)
+            if (load is None or not mapping or mapping & -page >= 1 << 30 or prot & ~7 or not prot & 1 or
+                    bool(prot & 4) != bool(load['flags'] & 1) or (prot & 2 and not load['flags'] & 2)):
+                return False
+    return True
 
 
 def validate(rows, fixtures, guest, page):

@@ -30,19 +30,21 @@ def main():
     cases = []
     for run in report['runs']:
         assert run['observation_validated'] and validate(run['results'], run['mode'], True,
-                                                       guest_page_bytes=page_bytes, kernel_log=run['stderr'], original_input=prepared)
+                                                       guest_page_bytes=page_bytes, kernel_log=run['stderr'], original_input=prepared,
+                                                       exec_elf_images=prepared.get('exec_elf_images'))
     cases.append('actual_sdk36_entries_and_readonly_dm')
     original = next(run for run in report['runs'] if run['mode'] == 'lifecycle')
 
     def rejected(name, key, field=None, value=None):
         rows = deepcopy(original['results'])
-        row = next(row for row in rows if key in row)
+        row = next(row for row in rows if key in row or row.get('test') == key)
         if field is None:
             rows.remove(row)
         else:
             row[field] = value
         assert not validate(rows, 'lifecycle', True, guest_page_bytes=page_bytes,
-                            kernel_log=original['stderr'], original_input=prepared), name
+                            kernel_log=original['stderr'], original_input=prepared,
+                            exec_elf_images=prepared.get('exec_elf_images')), name
         cases.append(name)
 
     rejected('missing_dm', 'stock_init_sdk_dm')
@@ -64,6 +66,9 @@ def main():
     rejected('failed_halt', 'stock_init_shutdown', 'halt_result', -1)
     rejected('unclosed_host_disks', 'stock_init_shutdown', 'host_disks_closed', False)
     rejected('numeric_halt', 'stock_init_shutdown', 'halt_result', False)
+    rejected('missing_context_cleanup', 'translated_context_cleanup')
+    rejected('failed_context_cleanup', 'translated_context_cleanup', 'passed', False)
+    rejected('incomplete_context_cleanup', 'translated_context_cleanup', 'freed', 1)
     originals = [run for run in report['runs'] if run['mode'] == 'original']
     for run in originals:
         rows = run['results']
@@ -87,12 +92,42 @@ def main():
                        for line in run['guest_write_text'].splitlines())
         for key, field, value in (('stock_init_sdk_cleanup_deferred', 'unmount_result', -5),
                                   ('stock_init_sdk_cleanup_deferred', 'closed_partition_fds', 0),
-                                  ('stock_init_shutdown', 'host_disks_closed', False)):
+                                  ('stock_init_shutdown', 'host_disks_closed', False),
+                                  ('translated_context_cleanup', 'passed', False),
+                                  ('translated_context_cleanup', 'freed', 0)):
             rows = deepcopy(run['results'])
-            row = next(row for row in rows if key in row)
+            row = next(row for row in rows if key in row or row.get('test') == key)
             row[field] = value
             assert not validate(rows, 'original', True, guest_page_bytes=page_bytes,
+                                kernel_log=run['stderr'], original_input=prepared,
+                                exec_elf_images=prepared.get('exec_elf_images'))
+        if prepared.get('exec_elf_images'):
+            layout = next(row for row in run['results'] if 'stock_init_exec_layout' in row)
+            variants = [([row for row in run['results'] if row is not layout], 'missing_actual_exec_layout'),
+                        (run['results'] + [deepcopy(layout)], 'duplicate_actual_exec_layout'),
+                        ([row for row in run['results'] if row is not layout] + [deepcopy(layout)],
+                         'missing_exec_layout_replaced_by_later_duplicate'),
+                        ([deepcopy(layout)] + [row for row in run['results'] if row is not layout],
+                         'layout_before_successful_exec')]
+            for field, value in (('phdr', 0), ('entry', layout['entry'] + 4), ('pc', layout['pc'] + 4),
+                                 ('at_base', layout['at_base'] + page_bytes), ('page_bytes', 1), ('phnum', 1),
+                                 ('read_result', -14), ('phdr_mapping', 0), ('entry_mapping', 1), ('pc_mapping', 3),
+                                 ('entry_mapping', (1 << 30) | 5)):
+                changed = deepcopy(run['results'])
+                next(row for row in changed if 'stock_init_exec_layout' in row)[field] = value
+                variants.append((changed, 'invalid_actual_exec_' + field))
+            changed = deepcopy(run['results'])
+            for row in changed:
+                if row.get('stock_init_security') == 221 and row.get('path_hex') == '/system/bin/init'.encode().hex():
+                    row['result'] = -13
+            variants.append((changed, 'failed_original_init_exec'))
+            for rows, name in variants:
+                assert not validate(rows, 'original', True, guest_page_bytes=page_bytes,
+                                    kernel_log=run['stderr'], original_input=prepared,
+                                    exec_elf_images=prepared['exec_elf_images']), name
+            assert not validate(run['results'], 'original', True, guest_page_bytes=page_bytes,
                                 kernel_log=run['stderr'], original_input=prepared)
+            cases += sorted({name for _, name in variants}) + ['missing_original_elf_input']
     if originals:
         cases.append('original_property_read_keymint_and_vintf')
         cases.append('rejected_incomplete_original_shutdown')
