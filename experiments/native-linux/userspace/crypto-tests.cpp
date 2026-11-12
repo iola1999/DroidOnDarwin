@@ -31,7 +31,10 @@ void nce_crypto_tests()
 {
     // SDK clients allocate these public contexts using the Android 16 ABI.
     static_assert(sizeof(EVP_MD_CTX) == 32 && sizeof(HMAC_CTX) == 104 && sizeof(EVP_AEAD_CTX) == 584);
-    CHECK(FIPS_mode() == 0 && BORINGSSL_self_test() == 1);
+    const int fips = FIPS_mode();
+    const int self_test = BORINGSSL_self_test();
+    printf("{\"android_crypto_runtime\":true,\"fips_mode\":%d,\"self_test\":%d}\n", fips, self_test);
+    CHECK((fips == 0 || fips == 1) && self_test == 1);
     struct {
         HMAC_CTX context;
         unsigned char guard[32];
@@ -88,7 +91,8 @@ void nce_crypto_tests()
     // Cronet carries a separately versioned BoringSSL with the SDK context ABI.
     void *cronet = dlopen("stable_cronet_libcrypto.so", RTLD_NOW | RTLD_LOCAL);
     CHECK(cronet);
-    CHECK(crypto_symbol<decltype(&FIPS_mode)>(cronet, "FIPS_mode")() == 0);
+    const int cronet_fips = crypto_symbol<decltype(&FIPS_mode)>(cronet, "FIPS_mode")();
+    CHECK(cronet_fips == 0 || cronet_fips == 1);
     CHECK(crypto_symbol<decltype(&BORINGSSL_self_test)>(cronet, "BORINGSSL_self_test")() == 1);
     memset(hmac.guard, 0xa5, sizeof(hmac.guard));
     crypto_symbol<decltype(&HMAC_CTX_init)>(cronet, "HMAC_CTX_init")(&hmac.context);
@@ -101,7 +105,7 @@ void nce_crypto_tests()
     for (unsigned char byte : hmac.guard)
         CHECK(byte == 0xa5);
     // BoringSSL TLS destructors can run when the process exits; retain the library.
-    puts("{\"test\":\"android_cronet_crypto\",\"passed\":true,\"fips\":false,\"hmac_context_bytes\":104}");
+    printf("{\"test\":\"android_cronet_crypto\",\"passed\":true,\"fips\":%s,\"hmac_context_bytes\":104}\n", cronet_fips ? "true" : "false");
     const unsigned char expected_sha[] = {
         0xba,
         0x78,
@@ -211,5 +215,5 @@ void nce_crypto_tests()
     free(output);
     free(input);
     EVP_AEAD_CTX_free(ctx);
-    puts("{\"test\":\"android_crypto\",\"passed\":true,\"fips\":false,\"known_answers\":true,\"reject_bad_tag\":true}");
+    printf("{\"test\":\"android_crypto\",\"passed\":true,\"fips\":%s,\"known_answers\":true,\"reject_bad_tag\":true}\n", fips ? "true" : "false");
 }

@@ -24,6 +24,8 @@ def identity(path):
 
 
 def replacements(prepared):
+    if prepared.get('runtime_source') != 'sdk36' or prepared.get('guest_page_bytes') != 16384:
+        raise ValueError('桌面候选需要 SDK36 的 16 KiB 原始运行库输入')
     files = {}
     for guest, record in prepared['files'].items():
         if record['kind'] != 'original':

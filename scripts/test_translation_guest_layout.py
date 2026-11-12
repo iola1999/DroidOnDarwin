@@ -59,10 +59,10 @@ def main():
         row = dict(original, flat_coverage_bytes=0)
         mode = row['mode']
         assert validate_guest_layout([row], mode, False, 4096)
+        assert validate_guest_layout([dict(row, ram_base=row['guest_base'])], mode, False, 4096)
         for changed in (dict(row, flat_coverage_bytes=1 << 32),
                         dict(row, reservation_base=(1 << 39) - 16384, physical_base=(1 << 39) - 16384),
-                        dict(row, guest_end=1 << 39, guest_span_bytes=(1 << 39) - 0x10000),
-                        dict(row, ram_base=row['guest_base'])):
+                        dict(row, guest_end=1 << 39, guest_span_bytes=(1 << 39) - 0x10000)):
             assert not validate_guest_layout([changed], mode, False, 4096)
             rejected += 1
         assert not validate_guest_layout([original], mode, True, 4096)

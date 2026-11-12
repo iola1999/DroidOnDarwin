@@ -53,7 +53,7 @@ Direct 使用单 CPU、host 布局、16 KiB、TBI 关闭、flat、dual、128 MiB
 
 本次实际运行没有再次出现窗口内双重创建，两个阶段的 unobserved_creations 均为空。合法重建的接受行为由原始失败日志回放和助手文件读取检查覆盖；本次完整运行覆盖修复后助手的实际安装、更新与重启流程。首次失败输出继续保留，成功结果没有覆盖失败。
 
-[结构化集成结果](../../../../experiments/native-linux/results-apk-recreation-integration-20261112.json)保存配置、源码与二进制摘要、每条功能检查、APK 行及完整原始报告摘要。原始报告位于 `work/native-linux-nce/processes/lkl-summary.json` 与 `work/native-linux-nce/apk-recreation-integrated-desktop/summary.json`。测试使用项目重建运行库，原始 SDK36 运行库桌面由独立候选继续验证。本轮没有交互性能、完整 HyperOS 或 iPhone 运行结论。
+[结构化集成结果](../../../../experiments/native-linux/results-apk-recreation-integration-20261112.json)保存配置、源码与二进制摘要、每条功能检查、APK 行及完整原始报告摘要。原生报告及日志已归档到 `work/native-linux-nce/native-apk-recreation-passed/`，Direct 报告位于 `work/native-linux-nce/apk-recreation-integrated-desktop/summary.json`。测试使用项目重建运行库，原始 SDK36 运行库桌面由独立候选继续验证。本轮没有交互性能、完整 HyperOS 或 iPhone 运行结论。
 
 ### 复杂度审查与范围差异
 
