@@ -26,11 +26,13 @@ int main(void)
     CHECK(input && fgets(classpath, sizeof(classpath), input));
     CHECK(strchr(classpath, '\n') && fgetc(input) == EOF && !ferror(input) && fclose(input) == 0);
     *strchr(classpath, '\n') = 0;
-    input = fopen("/data/stock-art/jit-first-use", "r");
-    CHECK(input);
-    int first_use = fgetc(input);
-    CHECK((first_use == '0' || first_use == '1') && fgetc(input) == '\n' && fgetc(input) == EOF && !ferror(input) && fclose(input) == 0);
-    char *arguments[] = {"/system/bin/stock-art-probe", classpath, first_use == '1' ? "jit-first-use" : NULL, NULL};
+    char mode[32];
+    input = fopen("/data/stock-art/jit-mode", "r");
+    CHECK(input && fgets(mode, sizeof(mode), input));
+    CHECK(strchr(mode, '\n') && fgetc(input) == EOF && !ferror(input) && fclose(input) == 0);
+    *strchr(mode, '\n') = 0;
+    CHECK(!strcmp(mode, "default") || !strcmp(mode, "first-use") || !strcmp(mode, "background"));
+    char *arguments[] = {"/system/bin/stock-art-probe", classpath, mode, NULL};
     char *environment[] = {"LD_LIBRARY_PATH=/apex/com.android.art/lib64:/apex/com.android.runtime/lib64/bionic:/apex/com.android.i18n/lib64:/apex/com.android.os.statsd/lib64:/system/lib64", NULL};
     printf("{\"stock_art_supervisor\":true,\"page_size\":%ld,\"timeout_seconds\":90}\n", sysconf(_SC_PAGESIZE));
     struct ComponentResult result = component_run(arguments, environment, 90);

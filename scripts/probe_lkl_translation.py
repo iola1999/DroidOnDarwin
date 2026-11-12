@@ -107,7 +107,7 @@ def validate_standard_jit(rows, data_tbi=False, *, guest_page_bytes=16384):
     return True
 
 
-def validate(rows, memory_interval, mapping="window", workload="core", tlb_invalidation=None, execution=None, direct_config=None, cpus=1, parallel_profile=None, uaccess_stop=None, code_lookup_limit=None, code_memory=None, online_cpus=None, guest_layout=None, guest_page_bytes=16384, data_tbi=None, stock_art_jit=False, *, sparse_end=1 << 36):
+def validate(rows, memory_interval, mapping="window", workload="core", tlb_invalidation=None, execution=None, direct_config=None, cpus=1, parallel_profile=None, uaccess_stop=None, code_lookup_limit=None, code_memory=None, online_cpus=None, guest_layout=None, guest_page_bytes=16384, data_tbi=None, stock_art_jit_mode="default", *, sparse_end=1 << 36):
     if guest_page_bytes not in (4096, 16384):
         return False
     if guest_page_bytes == 4096:
@@ -267,7 +267,7 @@ def validate(rows, memory_interval, mapping="window", workload="core", tlb_inval
             return False
     elif workload == 'stock-art':
         from stock_art import validate as validate_stock_art
-        if not validate_stock_art(rows, guest_page_bytes=guest_page_bytes, jit_first_use=stock_art_jit):
+        if not validate_stock_art(rows, guest_page_bytes=guest_page_bytes, jit_mode=stock_art_jit_mode):
             return False
         expected = {'stock_art_standard_jni', 'translated_context_cleanup'}
     elif workload == 'bionic':
@@ -503,10 +503,13 @@ def main():
     parser.add_argument('--repeat', type=int, default=1)
     parser.add_argument('--batch-instructions', type=int, default=50000)
     parser.add_argument('--stock-art-observe-jit', type=int, choices=(0, 1), default=0)
+    parser.add_argument('--stock-art-jit-mode', choices=('default', 'first-use', 'background'), default='default')
     parser.add_argument('--preemption', choices=('instructions', 'timer'), default='instructions')
     parser.add_argument('--output', type=Path, default=DEFAULT_OUT)
     parser.add_argument('--memory-interval-ms', type=int, default=100)
     args = parser.parse_args()
+    if args.stock_art_jit_mode != 'default' and args.workload != 'stock-art':
+        parser.error('JIT 诊断模式仅用于 stock-art')
     if args.stock_art_observe_jit and (args.workload != 'stock-art' or args.execution != 'direct' or args.cpus != 1 or args.guest_page_bytes != 16384):
         parser.error('JIT 执行观测需要单 CPU、16 KiB 的 Direct stock-art')
     if args.guest_page_bytes == 4096 and (args.mapping != 'pte' or args.execution not in ('unicorn', 'direct') or
@@ -608,7 +611,7 @@ def main():
             parser.error('stock-art 需要已准备目录和单核 PTE CLI/GCD')
         from stock_art import attach
         stock_art = attach(args.stock_art_directory, out, guest_page_bytes=args.guest_page_bytes)
-        (out / 'stock-art-jit-first-use').write_text(str(args.stock_art_observe_jit) + '\n')
+        (out / 'stock-art-jit-mode').write_text(args.stock_art_jit_mode + '\n')
     elif args.stock_art_directory:
         parser.error('--stock-art-directory 仅用于 stock-art')
     stock_runtime = None
@@ -806,7 +809,7 @@ def main():
         files.append(EXP / 'translation/component-supervisor.h')
     if stock_art:
         files += [ROOT / 'scripts/stock_art.py', ROOT / 'scripts/stock_art_jit.py', ROOT / 'scripts/prepare_stock_art.py',
-                  out / 'stock-art-files.tsv', out / 'stock-art-boot-classpath', out / 'stock-art-jit-first-use']
+                  out / 'stock-art-files.tsv', out / 'stock-art-boot-classpath', out / 'stock-art-jit-mode']
     if stock_runtime:
         from stock_bionic import FILES
         files += [ROOT / 'scripts/stock_bionic.py', EXP / 'translation/stock-bionic-guest.c',
@@ -919,7 +922,7 @@ def main():
                     if not stock_art:
                         raise
                     parse_errors.append({'line': line_number, 'error': str(error)})
-            passed = not parse_errors and returncode == 0 and validate(rows, args.memory_interval_ms, args.mapping, args.workload, args.tlb_invalidation, args.execution, direct_config, args.cpus, bool(args.parallel_profile), args.smp_uaccess_stop, code_memory=args.code_memory, online_cpus=args.online_cpus, guest_layout=args.guest_layout, data_tbi=bool(args.data_tbi), guest_page_bytes=args.guest_page_bytes, stock_art_jit=bool(args.stock_art_observe_jit))
+            passed = not parse_errors and returncode == 0 and validate(rows, args.memory_interval_ms, args.mapping, args.workload, args.tlb_invalidation, args.execution, direct_config, args.cpus, bool(args.parallel_profile), args.smp_uaccess_stop, code_memory=args.code_memory, online_cpus=args.online_cpus, guest_layout=args.guest_layout, data_tbi=bool(args.data_tbi), guest_page_bytes=args.guest_page_bytes, stock_art_jit_mode=args.stock_art_jit_mode)
             apk_validated = None
             if apk_fixture:
                 previous = [row for result in results for row in result['results']]
@@ -986,6 +989,7 @@ def main():
         report['stock_art'] = stock_art
         report['stock_art']['execution_attempted'] = True
         report['stock_art']['observe_jit'] = bool(args.stock_art_observe_jit)
+        report['stock_art']['jit_mode'] = args.stock_art_jit_mode
         report['measurement'] = 'Original ART component functionality; JIT execution requires completed-PC correlation; no performance comparison.'
     if stock_runtime:
         from stock_bionic import unchanged
