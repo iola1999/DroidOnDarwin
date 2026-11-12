@@ -1,0 +1,2925 @@
+{
+  "scope": "原生NCE项目运行库的Android桌面、信号、数据重启与iOS核心编译；原始init和整机性能继续验证",
+  "source_parent": "0ae5f6fd969e9abb97dde73591d0749f41a780a7",
+  "platform": "macOS-27.0-arm64-arm-64bit-Mach-O",
+  "cpu": "Apple M5 Ultra",
+  "system_build": "26A428",
+  "command": [
+    "NCE_MM_MODE=demand",
+    "NCE_SYSTEM_SERVER_PROBE=1",
+    "NCE_ART_NTERP=0",
+    "python3",
+    "-B",
+    "work/native-linux-nce/native-full-special-mapping-main-v1/run.py"
+  ],
+  "driver": {
+    "path": "work/native-linux-nce/native-full-special-mapping-main-v1/run.py",
+    "bytes": 1066,
+    "sha256": "66d09294b2141f1ea2d6aad9c1731fffd8baa2f8aa7a3bfc99a6275004e27462"
+  },
+  "driver_inputs": {
+    "argv": [
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/scripts/probe_lkl.py",
+      "--processes",
+      "--graphics-angle",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/angle-macos/prefix/lib",
+      "--storage-image",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/native-full-special-mapping-main-v1/native-data.img"
+    ],
+    "input_sha256": {
+      "work/native-linux-nce/native-full-special-mapping-main-v1/run.py": "66d09294b2141f1ea2d6aad9c1731fffd8baa2f8aa7a3bfc99a6275004e27462",
+      "scripts/probe_lkl.py": "ab04b2a44ee3d18a096146e2ffd344698f8b12c776db3e7935663be3bfa57aef"
+    }
+  },
+  "configuration": {
+    "execution": "native",
+    "guest_page_bytes": 16384,
+    "cpus": 1,
+    "mapping": "demand",
+    "system_server_probe": true,
+    "graphics": "gfxstream/ANGLE Metal",
+    "window_requested": false,
+    "guest_libraries": "project-built Bionic/linker/ART"
+  },
+  "source_report": {
+    "path": "work/native-linux-nce/native-full-special-mapping-main-v1/processes/lkl-summary.json",
+    "bytes": 1228962,
+    "sha256": "35c4101672488ed5438afefe60784f771f1fee0d6cc9a29419059e109b7f8e00"
+  },
+  "source_revision": "d0f76a77e8c2ca68bd7d96190b8da09040eab072",
+  "config": {
+    "path": "work/native-linux-nce/native-full-special-mapping-main-v1/lkl-process-build/.config",
+    "bytes": 42727,
+    "sha256": "db6d55a8535e14cb505e135c56ce942c4b73cc8c28961943ac735db358bdd50a"
+  },
+  "kernel": {
+    "path": "work/native-linux-nce/native-full-special-mapping-main-v1/processes/lkl-image.bin",
+    "bytes": 10141696,
+    "sha256": "4294044f8f0209e5f77af5df66dd16576325e2cc802d7c52298205707bb61b23"
+  },
+  "source_inputs": {
+    "experiments/native-linux/lkl-main.c": "2468eed93c765a4040fb4c40161e35e1bbef5e0b35cced279b61c140a4b3caaf",
+    "experiments/native-linux/lkl-host.c": "49c63f1be4112408bbe5bdced53cf8bd0314eedaf770fe4d869d30edf3a6c671",
+    "experiments/native-linux/nce.c": "fac0dff4a7e683a47a3fafa3877f69f279a816115b81ca4f1d9dad709a7e402d",
+    "experiments/native-linux/nce-thread.c": "f9f7ddedf2d640ddbab6d0700409c9ba43da4017991b42aeb7e0a4f17034be4e",
+    "experiments/native-linux/entry.S": "7c18477d050befc16c1f749c591f3aa88ec9955a281bd368fff32a73c76f8102",
+    "experiments/native-linux/lkl-process-host.c": "7427cc1542412d02c73995a8259ae46fcbad0c59943976a26830c36230371d38",
+    "experiments/native-linux/nce-cpu.c": "96cd6ef41c130a58c36e958c57ba5c1f6b204ab92924fea250d4d386136e23df",
+    "experiments/native-linux/programs.c": "53555eab1fc4fbc7a86f0b37a944cfc09ab3c9b604fbec1a99fc12c4bc2ad7ca",
+    "experiments/native-linux/memory.c": "752cf14d2f85a4bebb0b4bea95508d8d425b039eff1880b6c922a3335d776376",
+    "experiments/native-linux/code-memory.c": "8215ac2a2564049be0b45a80b3774ec994d6e51b6eb2057ed00cd515ef682981",
+    "experiments/native-linux/execute-check.c": "2e5a080e11bb3ec9407be2495c30a0391d2e8a858f1fe1a01a624eed3a8dd3c5",
+    "experiments/native-linux/compute.c": "dbd8e347a783f3d94525abb8ab01cf96491710d5d4f373d39343d259de53f985",
+    "experiments/native-linux/input.c": "d72144756d85e75d3b6e9667a22a927690c97f4d0b3e24ae0c75656499ae07b3",
+    "experiments/native-linux/session.c": "67a0502d7cfa67a3102128a90827ad818f5aa25947a8a1c2e9387aa23596fc9e",
+    "experiments/native-linux/session-profile.c": "4880502b366bf596eb402da1384f7015d41d9eb23623f8684537898cd842970e",
+    "experiments/native-linux/lkl-bridge.c": "03db6e0a384ac151d7294eb47f6e147964c29a3f47b5ae443957495a014aed50",
+    "experiments/native-linux/nce.h": "7bcdc5e777e10e1d70f0bf1838a2160e87c70613a44b90b16c3e07aedf4a9f58",
+    "experiments/native-linux/nce-thread.h": "4b289193a10b16ae74982c0d986f949ef61b4fffb84211b4033e05c43deddeff",
+    "experiments/native-linux/guest-registers.h": "90a4d5b6e613ce4f2cda359dcd05f6e8d876a788bc437c2c1e13e05403e4627a",
+    "experiments/native-linux/guest.S": "0e1e3def0151e5d1fc605378f3e55ef65fc0b0364b83dfd7b65df7d1d482e372",
+    "scripts/probe_lkl.py": "ab04b2a44ee3d18a096146e2ffd344698f8b12c776db3e7935663be3bfa57aef",
+    "experiments/native-linux/nce-cpu.h": "4eab0d9848c5c713b6dc07819d13529af1fcf04b46ce0fbd4139428be76c1340",
+    "experiments/native-linux/memory.h": "aeaaf612df0a787fbfd6411a45f539807bc49e1c766625bede5e31e87159ddd5",
+    "experiments/native-linux/code-memory.h": "b76ec86c799b073a58b08dc04300d091cb63531d31289ea22fdfb16d4495870a",
+    "experiments/native-linux/layout.h": "7a801b3f98095c6967a13e71d128a39efb5f206ab1144dcfdf060d964f02ff91",
+    "experiments/native-linux/execute-check.h": "db1decd5ee536b58b9974ff03951d79dddfc3f74c1205ad34b7c725de4bf6883",
+    "experiments/native-linux/input.h": "b8d3898313e7833e7f2f26aa27d4fb0a8aa7050e1b4679cfadc052ef440172b5",
+    "experiments/native-linux/session.h": "bced33d9242c30033d8012ec7770007b0a5a30b7d035dc6acf766f67e42af7df",
+    "experiments/native-linux/session-internal.h": "f66d7523cbe4bb0675d9bae03d1ff88fd80e482f03e12d8ce66c5b5210fb8e77",
+    "experiments/native-linux/interaction-profile.h": "e6410dc58ccf25d1a95023e909716a825b2d862d74ea35a4127f90548b0bcfce",
+    "scripts/lkl_nce_patch.py": "9421fc0caa35b99c1c7c933e3a2c86db289f59a679523eb6fcf6e30d0710e861",
+    "experiments/native-linux/lkl-elf.h": "addf40a6adc1a51ddb68bffa315f1c74afed260508cc154be1d696b149ceb99b",
+    "experiments/native-linux/lkl-fcntl.h": "a93dbe60bbed231461aead2289756e46996e8486b50e895a5b4af798ee98da47",
+    "experiments/native-linux/lkl-mmu-context.h": "38b62f9a8056956cf41752467a9b6ff4ee0a31f9e339013600c23bd87e5c56d0",
+    "experiments/native-linux/lkl-mmu-profile.h": "c6410a8ac3d795c136b00c8108e698ac7a7f04e0ec3cf85cfbc4a01a60fa48aa",
+    "experiments/native-linux/lkl-mmu.h": "a38bb934c2e33959d92c1bde7ad2aebd1bf6c77343956669bb59da6c8e11f2ca",
+    "experiments/native-linux/lkl-seccomp.h": "95aa047dcb9ececaa38898eeebab120953c65448e05331cc079eae32807de7ac",
+    "experiments/native-linux/lkl-signal.h": "d16a7718ab952a7f2f53adc6b6381a0cb2fd6b352f47cefb1ec72f0d862d1491",
+    "experiments/native-linux/lkl-syscall.h": "a895d2f1e7aa6a34b5645d21b6fcedbcd2952dd69ad6b6067724d51f47c1cfac",
+    "experiments/native-linux/lkl-tlbflush.h": "e9140c9203d073e3a46d2c2f0e3f88b816c8ddc652fba53bca1196b31b173eea",
+    "experiments/native-linux/lkl-uaccess.h": "8db32d1ad3dc5261c267d1c50d1be741daca9c2a68e64aaebc06779ab6e8e64f",
+    "experiments/native-linux/lkl-nce-block.c": "2a8d0356c87a73575f760755d4666a53ecacca3d55eb33dea797f1ebbb8e3b60",
+    "experiments/native-linux/lkl-nce-elf.c": "31fa92e6d1615e78517769889353ef008d244089d6cb064eb1102d86ba2ba784",
+    "experiments/native-linux/lkl-nce-mmu.c": "d0ee874b00e58100cfd982c1ecbed136f98a85af4e96c7a252009ebc44edf075",
+    "experiments/native-linux/lkl-nce-process.c": "0fe64668ed5c77a84f3c4cd1440b451908913eaed1c25cad4f2fc093581b8d22",
+    "experiments/native-linux/lkl-nce-reclaim.c": "0341deb0311e7262427e4d0d6e5c0f335cb19af018ab227e4615840c736be293",
+    "experiments/native-linux/lkl-nce-schedule.c": "32dbb6b603eafb65cc9bd512a926ace0f9d9bd093601c3bf29f40f557d40af4e",
+    "experiments/native-linux/lkl-nce-signal.c": "fc7f6867c5f7f4965ce9674ab2e2643430ac0af88daafa2ec75767799a51435c",
+    "experiments/native-linux/exec-guest.S": "833d10bd1b10f0b3a35c7324aaec8a24b1774a42200c24389bd772facb0244e8",
+    "experiments/native-linux/programs.h": "f2efaea1dde37afa4ef1f58c8a41ba09a53293cd8ddfcbbad799de7a8db5ec8b",
+    "scripts/build_nce_userspace.py": "4fafb283fdc1babe0d62ef949eeffd50d2018fddb3420694ab9fb64a60d82149",
+    "experiments/native-linux/dispatch-test.c": "5211698bd58018aae173d4c6d75daeeb0e4eb357fb2742c4c08d595bc9d7b55b",
+    "experiments/native-linux/host-context-test.c": "d2f604cbb13bde655de4a930d89f08e348c979f74f9dfc049da4d30796b1f072",
+    "scripts/prepare_art_test_dex.py": "0ad0452fe3855c87bfc034a6de87fbc700f01677bfc5781d2730fea313cbfb6f",
+    "scripts/art_aot.py": "c8980024e79ac0ad809b6406578e08922aa260c2934d7b5ea7b63f228cfc7e13",
+    "scripts/prepare_android_runtime.py": "d18f79cbe9e97ce69d80be7ef22e50dde40eb166525d0c8c991ed8d80f31c6b0",
+    "scripts/prepare_android_modules.py": "661c32667048fad3b371e95a5dcf47726d4ab2242727db51ef38731764c9adc4",
+    "scripts/prepare_android_desktop.py": "0ab4eedb447d2e1b124d3e1df0982f99c05dcbde715087553fe25ebf8d799cba",
+    "scripts/build_android_linker.py": "8df4e3342c2948021e2b247bd67e48e3a2117e45e5d790f697c620e3367817fc",
+    "scripts/build_android_libc.py": "00e7a51f553911f71983a86df8d5ff3da1885fcd407c0dd9dc1ee837a0aa6ae5",
+    "scripts/build_android_art.py": "4b987c8b6fd5d3af28e90af6fdfd4a67e49bb3a2bb1e12206651bb1971b83dae",
+    "scripts/build_android_crypto.py": "facf7873c5e5644bcbdbec2f9f5216932dce65bdfd55363044fd797c0dd95cbf",
+    "scripts/build_android_gralloc.py": "d5e9fddfe4d5da96f93fa790cec2f491645d1e0da80ab9ebf653f4fc9d6efd8c",
+    "scripts/build_android_network.py": "74d6062ea085af21780553d27ec64e320900a0b0e1f7adc3e1c8cdf47483bde4",
+    "patches/nce-gralloc-memfd.patch": "9bec559a3604f40ce6cf292e9680e0baa99f5d1e5fe90f86f6a634f10226ffb7",
+    "experiments/native-linux/android-sources.json": "ef66e190b55e0c0520e43ceb4665c909d7db3bb291e6fea0f768749ce19d8626",
+    "experiments/native-linux/art/NceCompilerPaths.java": "1dee0707d42a26ad467f3a27510d7237ae63ed0f2477b1b8ae00eea017c0a5df",
+    "experiments/native-linux/art/NceFastBaseline.java": "529588f56c35c9ed222c4cafa281cd8d376c26a842317f803c1e43405bc138cf",
+    "experiments/native-linux/art/NceInlining.java": "41442df9b97a4b1c6fa5d7f82c7f35269b5af0c67714a76e8469d1ccebf57d89",
+    "experiments/native-linux/art/NceInterpreter.java": "ba5e2ee3da9990b10d8ac887fb3cc72026c72b6039c52d091be6ce1e2bb919db",
+    "experiments/native-linux/art/NceIntrinsics.java": "254a658f02b51c9fb59e12760d82555fcd8d23ebf46f76a859a9b01b1f69158f",
+    "experiments/native-linux/art/NceProxy.java": "2f5b363c069ee1ea19768457e9cb7931917381fd9cd183f65812b9279e450b40",
+    "experiments/native-linux/art/NceTestDex.java": "5bf3c0f51b3e2db0d057aaa01fdcb384a074e5ef603412c73eb4f0d9e2cb922e",
+    "experiments/native-linux/art/NceVolatile.java": "28863b49b1e1f71f015f10b6c45ebf04393e718de45ccad35a5e23070e9a6b26",
+    "experiments/native-linux/art/NceWorkload.java": "2ab0909f3a0e99d3a4bce911f959062b9f7a25abf53463f4e45865323e0a6d90",
+    "experiments/native-linux/art/android16.patch": "342182ccf23877d0be817d5b3df3828249732e450e15abda33e700ec02c5bf1e",
+    "experiments/native-linux/art/boot-image.patch": "9256ec9f11d843479bf0d69e6f6e77b45edf5041c5e7aaeb2fd980a4eaf79be4",
+    "experiments/native-linux/art/compiler-profile.patch": "7a62ddd525c76c9744bc48689255913e06b4695332f601e10436d4e7fd559609",
+    "experiments/native-linux/art/dex2oat-main.cc": "554ed561de73913dbd0172bab8a0843a4f38c03c09f388eb2ccf87eb47bdac3c",
+    "experiments/native-linux/art/expanded-jit.patch": "3cb1b6b0b115b8687d81c9340283093422fa3005768143a6ddd86063f843331a",
+    "experiments/native-linux/art/fast-baseline.patch": "47c55e913eeb1c62c698a7f6838dc2533e24ddd4307ab40c3650b261aa5031c0",
+    "experiments/native-linux/art/jit_control.cc": "71d5e980f4745202bd6aa0f60e9e5ba8f79d42900b605d7ac84bccc0ce8ac123",
+    "experiments/native-linux/art/ld.config.txt": "dc106c5021978b80e002a74cb56941b4e8381a66a2f00ffc7116dbabc946d89b",
+    "experiments/native-linux/art/nterp.patch": "5623b75f44d6e51647966b660de4d6410308b982cda1c9a4d7c843bcea7f8bcc",
+    "experiments/native-linux/art/offline-compiler.patch": "bbab5fbab3d21958d952a94749093dd3322f9ad20b7ceba679fbeec8554ba1e8",
+    "experiments/native-linux/art/public.libraries.txt": "366951154ef964f6e055ac1071d6dba9d6dd692360b7b9d4a66def1036727c66",
+    "experiments/native-linux/art/reference_heap.c": "a10220f756efd4891930521667bcbf6e86b9e6a3d646d910c934884f57782be2",
+    "experiments/native-linux/art/reference_heap.h": "c814b35b45c201f3893f3e8739f0ea5a0d309facbf70a9ba1f2fd8bb9ddaf71f",
+    "experiments/native-linux/art/reference_heap_test.c": "8c33dc74cff193951e5243cdbbb1f401ad69a1d3963134bbde0e54bbada0d84e",
+    "experiments/native-linux/art/relocatable-code.patch": "9168fe720e7e1d728ff3b67c37e24b8f0954a70d7fc81a1de15dd268024e6b05",
+    "experiments/native-linux/art/sources.json": "ce730a2455492c440b69aebf92248b2625a2477213ea87e8c7c58031dc215d05",
+    "experiments/native-linux/userspace/android-services-test.cpp": "0765402a68c9a99e97815b3003d29f7965a1168df694b545ba0e4698bd3a8d63",
+    "experiments/native-linux/userspace/apex-service.cpp": "40f22ed6571cdfd0fe5441540f8e4e1eb3e6b59c0ea4e05a0244c3b006fe7200",
+    "experiments/native-linux/userspace/art-compiler-test.c": "59a4bb0396589dcf30f72a5d3c79fb0ecc6f8156d12f89c83c0bedb1cbc5b2c4",
+    "experiments/native-linux/userspace/art-test.c": "139bb5452d27bf3551fdb10173f1a38dec0894e6fc262f2f8c011bc24566784b",
+    "experiments/native-linux/userspace/binder-test.c": "65b1157ce3ad45c30d3a225f9ecbade4eac5db870b639af683ac3870772e3502",
+    "experiments/native-linux/userspace/bionic-test.c": "ffa10bd0d16dd15edddb368a0435d9d94b529270c13a89f6b3c5536dc40c0b76",
+    "experiments/native-linux/userspace/bpf-ringbuf-test.c": "9f030de5cf1b556b57929dc9545d7841d3df50c4df182546787e1b4091de43df",
+    "experiments/native-linux/userspace/cfi-library.c": "c6c1dbfa7a6e6f84283f9881f421b264227d51a9bd74ffd6aca8ad6e27b3f04a",
+    "experiments/native-linux/userspace/cfi-test.c": "425798dbd9b56d37ceddd945e87bfc5a762cd0c7acc90243b06c74e190de1aa1",
+    "experiments/native-linux/userspace/cgroup-test.cpp": "500cc19577709255ef4db79d03d5ab60b9c2f135407da638be236eb930537dc8",
+    "experiments/native-linux/userspace/code-tests.c": "5fc06f7a1ca7a4b3e9789fafc06303fc8524a21a8430e15a678b3e2941266e5c",
+    "experiments/native-linux/userspace/crypto-tests.cpp": "11f795e422da2db4ded1eddc8ff207c5aa9b40027afcf40fe6c424df752c49e9",
+    "experiments/native-linux/userspace/dependency.c": "753a84c1ae29ab3dd1d8f7b77c741cf8cb3784feb72aa601d358a19f12a0b721",
+    "experiments/native-linux/userspace/desktop-session.cpp": "e52ce9447ef8b454b21bdd4b9898b070be6ba682f478e8e02fd036aabbe80653",
+    "experiments/native-linux/userspace/desktop-session.h": "8a8156b544c92bc600d4564f3094ce3b5037933eb5e4cd733a770b3ff5549367",
+    "experiments/native-linux/userspace/diagnostics.h": "c57d0bf3754256d7e24811deb972873c6cfd5e76bd9542480b8777bd0d0a4359",
+    "experiments/native-linux/userspace/display-service-test.cpp": "690c7823bdcc69a67e1bbc943895b8c8c4e34fd5ba9f083c21b8384482ea0b38",
+    "experiments/native-linux/userspace/dynamic.c": "ab07423aaa383f7903dddb9e06ad34aca0d8d6c2c8a10e0b844e38b21146759b",
+    "experiments/native-linux/userspace/egl-test.c": "f2b9c5c92ef6be72d495a852e580637348b84c814eb004eac655f2d28fc14269",
+    "experiments/native-linux/userspace/fault-race-test.c": "3b5821b300b30d795025563d9c9d92eaf1798dd8106543be245eeac4fa763175",
+    "experiments/native-linux/userspace/file-tests.c": "e260e5222cf7efea3140941404100a05be3b383299f2da4cc174a531cc166b8b",
+    "experiments/native-linux/userspace/framework-test.cpp": "a252da131e0ad156e153216f315eaee9f141a233fafd7845788de5db5d457eb8",
+    "experiments/native-linux/userspace/gpu-test.c": "4321a0539fd8dff9ca2b06ac9029f6537f210022e694334891caf03ef191c4da",
+    "experiments/native-linux/userspace/gralloc-test.c": "7c292e14e894caa903a02a6bc23598ece6367b5b3da446ea47d1ed1e8174ff62",
+    "experiments/native-linux/userspace/host-poll-test.c": "b66c7e6f260f206ebc67a414cc28d74224e3bf8ec84ef00de14e77489bd19110",
+    "experiments/native-linux/userspace/init.c": "45eeb139957be97bd9a3ca4b72509e8b5de85463b231e7e4236be0f9b4e11356",
+    "experiments/native-linux/userspace/input-service.cpp": "82dec8b835b4c35a7f918a51b6f3f35338a84ca09f4d4febb19ba46199d4cccd",
+    "experiments/native-linux/userspace/installd-test.cpp": "23937ec41275a537533db1f4194931b5972d450fa39435530431f4621c5566e9",
+    "experiments/native-linux/userspace/interaction-profile.cpp": "16827a7b48bf78958169e29e0e47c1ee4de8ddaf77052152f4ff4cc7dda51a4f",
+    "experiments/native-linux/userspace/mm-bench.c": "27beca8aea863ceedf2698524346cbbbc20134fe005a3e5dd4c623dbcf1c8674",
+    "experiments/native-linux/userspace/mm-tests.c": "ce794b6b9c8cb63679c88c056dfbbed16e37ab270cdea9812fc6246038b95e18",
+    "experiments/native-linux/userspace/parallel-compute.c": "c9b25acbabb411c819a02c39880a16abf59b71ab0c4c705cc92fd26100b13905",
+    "experiments/native-linux/userspace/plugin.c": "d7724184a5ae48178c3b96badd6a5a37d8585df30efb07d53b6a5d2ec20afbf1",
+    "experiments/native-linux/userspace/proc-exit-tests.c": "58c79b40b0fabaf40707baf80d3cca4883311f33c00139ed8db6f3d02d5353df",
+    "experiments/native-linux/userspace/property-service.cpp": "594b91707b49e3170de97ade9e6b256c2fa5779048dcec2cb9ede26ee0d7654f",
+    "experiments/native-linux/userspace/reclaim-test.c": "c93ec8238aec1aa8d988abde28eb5c57c7418893479fd403f6c8ee36de9f3bb6",
+    "experiments/native-linux/userspace/schedule-test.c": "f427333c163035338f2755878ff8a67c38d837c6d8843f18bb55b6dc43d23df6",
+    "experiments/native-linux/userspace/seccomp-tests.c": "7ac584c36df43561ad7c947eeec40ba0c39188a28d1a79245100b4f683626931",
+    "experiments/native-linux/userspace/shell-tests.sh": "52c1cc230ccf2f9d02d4b5c5502bf460ae71f211d97d39f87a5da113160eb4bd",
+    "experiments/native-linux/userspace/signal-registers.S": "bfa6f7f9a8cb361dec04c67b8a7203cd89dca2aab56e6772ebe9dac3d834bef5",
+    "experiments/native-linux/userspace/signal-tests.c": "16b8e5d60a78c99099336d0d7177770f5792ee46e83a6d73bb808bf65b886a9a",
+    "experiments/native-linux/userspace/sigreturn.S": "38d3d7dcfb32d84698bd3a7733e34bfbb8c534c1bb8cbfc00d0031a24db3ed7b",
+    "experiments/native-linux/userspace/sigreturn.ld": "68da814c0446db7c9e4c5dbd6b670b82274dd6d749aca93fe5324aacf49cfc27",
+    "experiments/native-linux/userspace/storage-layout.cpp": "e2bd2bba3aba767fb492cad600de06883810e16dedf0b6584d1d37714679721a",
+    "experiments/native-linux/userspace/storage-test.c": "1b5a8b10384d9c591df6f989e8cdd8aea21b2407b220496c131cdbb5ed3f6de7",
+    "experiments/native-linux/userspace/suspend-test.cpp": "8c6fb5cd92091cc95acbce5a3cbdc4e528a0ff39c1f73e929e3b3429257a57d8",
+    "experiments/native-linux/userspace/worker.c": "7fde14d029471084016690a5e5a7804cd41380eee825bee8121536f778928f78",
+    "experiments/native-linux/services/NCE_Touch.idc": "181ae37a4a3fcf919b7df72d97218c33df2dfdd4c4a1924a34a038758c6f7aec",
+    "experiments/native-linux/services/NCE_Touch.kl": "7165057ef302448aaaa997b0661ff5c1e3d748ef9ff7420689c2dbaab2fb3a1a",
+    "experiments/native-linux/services/NceApkInstall.java": "51b8cc02b9bec7f642a0db4dc0e7ed6325d24b1d73396eca15e9146127e26456",
+    "experiments/native-linux/services/NceAppData.java": "575a0cbc97f0168bdcd7f637ef0b87a2eb5d049dc29c1af0bde162cf62b76d1a",
+    "experiments/native-linux/services/NceClockUi.java": "0d4ee189f42d8c72972e9c86a7aaa24608fdb03a23cdf74c4d9879c1aabe3f8b",
+    "experiments/native-linux/services/NceFramework.java": "c20379a865976e243126445e1d004f82cd9d9d346b8acb3ccbfb99f7c725d3f6",
+    "experiments/native-linux/services/NceKeystore.java": "61bef9906203975cc1a66a086c84fc93c612b2053c14837a5621cb8198378b69",
+    "experiments/native-linux/services/NceShutdown.java": "003bd83c76e51431b203934a3912013ff14cbdb453e9f677cb26480268cda137",
+    "experiments/native-linux/services/NceStorage.java": "fcbceaff92eb161ac8042236757f51f0ce124c3c9f1eab8127fec17a006f281e",
+    "experiments/native-linux/services/NceSurface.java": "49b7665108752d939e91eb4b72fd8a8311632f383a6778bbdd090091c9c7e052",
+    "experiments/native-linux/services/NceZygoteChild.java": "e96207a7e67abd3e9651aec88885dc8e4e35d8ee2bd1766321df2374ce001c5a",
+    "experiments/native-linux/services/apex/android/apex/ApexInfo.aidl": "51aa1cbc7671889f24002d7d4503dce43157056770498ff1f99a8bae12b27013",
+    "experiments/native-linux/services/apex/android/apex/ApexInfoList.aidl": "5e49deb7d235b098ab6ffc19006ae0c57158e478e940ceaa3d290d041a057dd6",
+    "experiments/native-linux/services/apex/android/apex/ApexSessionInfo.aidl": "c4283eb43c806c138be969a570ae2c2c73182fd4b05909860c1bdaefe4022242",
+    "experiments/native-linux/services/apex/android/apex/ApexSessionParams.aidl": "496a2dc5ff4b3cb1a3eb65e3d1ac7973dfbd67f888777d22e602d9b6fee567a5",
+    "experiments/native-linux/services/apex/android/apex/CompressedApexInfo.aidl": "664f80e6481a1911b6a779c40c502a8f8e0c505ea3878953133cc7877355436f",
+    "experiments/native-linux/services/apex/android/apex/CompressedApexInfoList.aidl": "c41afe66ea75a92c4a847454489c897a023b2ff3e15053189f35dc29f83676f1",
+    "experiments/native-linux/services/apex/android/apex/IApexService.aidl": "453ea41d5ce6afe1437f5cc6c1e90fa7a552007e1e9ec47c5b1b717d488bb2e3",
+    "experiments/native-linux/services/apex/apex_manifest.proto": "e9505454f5fa759c6364e8680542f48b219f1b57d394a63deadfcfc6e8268ce7",
+    "experiments/native-linux/services/apex/sources.json": "7f41436e5d00c75a388c3b649b8a02e9245fc3edd43685acee21b4ba315d82f5",
+    "experiments/native-linux/services/cgroups.json": "5f3af0749bf377db4a5187b619166894bb609653b5161b349abaa7306cdcd516",
+    "experiments/native-linux/services/file_contexts": "d2c49eb3064a96ab435492f22481d0a7b980a86233ce19e7014a5e9c80815de8",
+    "experiments/native-linux/services/framework-log.c": "b4c79827cbe40c4f1b2efdab8a0e93808d2aa0889e55bbeafa0a9d2d03e68802",
+    "experiments/native-linux/services/fstab.nce": "6d23d4618d00071e903d8d93ce8972a61e1527787c299fb44e0fc1c2b7d22cf8",
+    "experiments/native-linux/services/installd/android/os/CreateAppDataArgs.aidl": "395f48daec3b728c2b7b9949ed0dc1d5de34192971475fb2b2eba348d7cb9819",
+    "experiments/native-linux/services/installd/android/os/CreateAppDataResult.aidl": "131dcd1af2b29d48490033b494432cda834d9b98ebdf199c82406cb948a8cd07",
+    "experiments/native-linux/services/installd/android/os/IInstalld.aidl": "a29f74f099ba5aa224a901c3f236e60a17d6d4c3c7999694f9e090bb7fcf8784",
+    "experiments/native-linux/services/installd/android/os/ReconcileSdkDataArgs.aidl": "85b1a6ca20cd53b156b44aaa1444aa54bf02679e50017b48c2d06705b64f3bfe",
+    "experiments/native-linux/services/installd/android/os/storage/CrateMetadata.aidl": "292d89d237a5292d25399d722b13177a9263c5e21d5e39ca86ffa12d14be09da",
+    "experiments/native-linux/services/installd/sources.json": "dccabdbdd9b56efc85ec815f23bfb0c537e1feaa32371e779f135a76b73b9572",
+    "experiments/native-linux/services/nce-features.xml": "3a4d73896e1abd736daa031da2797101307023dbd23c47b2fbbf10b1d133c704",
+    "experiments/native-linux/services/nce-policy.cil": "723b75c76a9f5a4799d170bbbb5e535ea0d9decc94123e3ae76a69bb6ba0addc",
+    "experiments/native-linux/services/network-sources.json": "c47b7f8166ed712c356b454233dbb38886f4b3228aa0f660beb8816350b8835e",
+    "experiments/native-linux/services/property-info.cpp": "53e933824b647db3f64b6cc610aebf8e4e181a0ee8c3f215303c9e74856bd982",
+    "experiments/native-linux/services/seapp_contexts": "ea5539cd26de26ae1b375b01ca8e3707ed24d23d7e32770bc4b692074046b3c2",
+    "experiments/native-linux/services/service_contexts": "8b3ffe1f8497bb9755aafb8397e420e69d149e52f47157fa5c29c42096ef93ec",
+    "experiments/native-linux/services/sources.json": "73ec12cb83baf7144a9ee0eb9a3984c61ae1c4cfeef76fc04581c2ebcb51bafe",
+    "experiments/native-linux/services/suspend/android/system/suspend/ISystemSuspend.aidl": "4ef9b85fbdf5fb18fc9e7cc50d184a2d9aa003b624ddcc12d128477b63e6062d",
+    "experiments/native-linux/services/suspend/android/system/suspend/IWakeLock.aidl": "663fb611a9b421168ed9d74b96a4fc67d16ed7c371fd5e39f2ab199f1575716c",
+    "experiments/native-linux/services/suspend/android/system/suspend/WakeLockType.aidl": "fcd5e48f11ad311cd10dcae0689d6f64ae5db74b07357b23edad14015ad8f019",
+    "experiments/native-linux/services/suspend/sources.json": "7a42ce14ef2f78f6698e1bc0b71f26726f0fa335423ab3dd185df77d63f084dd",
+    "experiments/native-linux/services/task_profiles.json": "d61e618ce83f7587860f0b36a152795f1f3bf5f4f12c938ccb5b3db1bf4a8dc1",
+    "experiments/native-linux/services/vendor-manifest.xml": "1eb0d66f9e783bf168a111d468d46620a7b114ecd55794f63b5ab684f5173ca7",
+    "experiments/native-linux/graphics/android-sources.json": "8918989ae7b6703e6301809107dfc4b83af4ef04183d9450c9a16008519260f6",
+    "experiments/native-linux/graphics/channel-test.cpp": "7bc4e9c42067855f8cd198d7d9357eeb62dff907a0492bbe4656783602ef2a15",
+    "experiments/native-linux/graphics/guest-pipe.c": "ced626792fde7984dd4f6ccf09e4acebbce7bc86898c783e5583dc025260ebda",
+    "experiments/native-linux/graphics/host-graphics.cpp": "099e66814a919cd08ade810e281a96166845118711255a4371596d5361631ac0",
+    "experiments/native-linux/graphics/host-graphics.h": "b2ed42bd0bd016faeb36d34175b85c2e759f63ad95c2cce8752db02cc890ac8c",
+    "experiments/native-linux/graphics/protocol/gles2_opcodes.h": "006c946813dd6e35a7093b5f752e9637fcf1cb97d8fb0c9552a2fd86c0ff8526",
+    "experiments/native-linux/graphics/protocol/renderControl_opcodes.h": "cdfe0e627071592e0176c03a7e75cea86caac82e8750d57befd2a3c2868e4627",
+    "experiments/native-linux/graphics/protocol/sources.json": "f60961e22969d99dbfeeb11a8564479f5eb6b9089b6dec7f53490be7643f2f28",
+    "experiments/native-linux/graphics/window-test.mm": "66bf780302a2f81e4b62e4b180de61dc909f1990f51e5e8ce582d5f5e4c6c6aa",
+    "scripts/test_nce_userspace.py": "930ecd68b38c64381e4e2348db81edff7ebda6100a6aea74ddc2a3a06ae536b2"
+  },
+  "generated_inputs": {
+    "system.img": "892f17b1462efc5bbd152ea4bf310d580ec32d087fb0095afdd4c47f12847262",
+    "art-aot-targets.h": "a04d0bd867b8510b5605bf4fb4332b01176e27789fb5f63c30681c9220d89f49",
+    "android-data-seed.img": "8cde9aaa410e2058efeed8739e8185f61658a7a7b21cfb5ff7f5950f00725e9b",
+    "storage-test.elf": "e73dd52cc61cd615645253703e12ec7b12aeb3fe7e4bad5a197b30d432c2f9cd",
+    "program-images.h": "89e0c0e6c263dc18b22cd78b3f9c07f04aabc1d4b9b49bb60d56e560f64c0f71",
+    "user-scripts.h": "f140b1ab80d5a1aec1206e69aff6a2af2786ddfc24a3a10ac346cb335a1f2799",
+    "payload.S": "826402c35dac6d2c203de7724f8856b700aca146a8ea9d9fb564cc9960b41e3a",
+    "payload.bin": "a9434ba6ec6b405b7cc1caa7407ee76706e385f3cadca83328a06b8a1e18b505",
+    "lkl-image.h": "8778affd887302ca9e919d9caa0e41282355853467603c73f1869058db14ccc8",
+    "lkl-host-ops.h": "54bf2a775fa582ca2bc04fb6a25dc85525b6c69da1cde54f610c4a35e0c1a833",
+    "guest-image.h": "e5c4e5cddfc16b459f9e480134dc102e4811a5c9121d0a7ac9d52d933e94a5ba",
+    "exec-guest.elf": "2653f70b168f2c2b58e048b5fe81137ebf36d6a8e6e13a37f4d579b02f6c3e9d",
+    "sigreturn.elf": "795d053b14585230d5f6ec0d09fdd5d91b8685c9fb6acdd0935d3d9359baf271",
+    "init.elf": "f458fee6f95ede6580646ca8c4b1cd716c8e08ab783af7b4663c20e6ecb417c5",
+    "worker.elf": "117b3cd17b0f0652728739f200903a0abcc45ff8f5dec28e3f977a3b0b842ef3",
+    "mm-bench.elf": "bb1a8e43c94ad002f8049d6069db9340cf18945a7c66d197955f8320899eca5a",
+    "dash.elf": "8b38ef10487508f46b683f6ef7a747520d5c5c88da1783ce697596f60d4d7851",
+    "libc.so": "13e5a9fcf04c9e9f89f0dba662fe6fde2ca7b8d8201eb622d42edc4a28d5f515",
+    "dependency.so": "878d6795ecc3afcf6f3bcbf34119e8ec106dbd734b9c216b1352b426b31f06da",
+    "plugin.so": "4646ac0f0191552449161c2b5b61bcac054ebc0427d559503ec8547e38077fe9",
+    "dynamic.elf": "c7be9a096eacbde4ddf2166fbe57392a730f01497a439ecc96acff66f79da571",
+    "binder-test.elf": "15ce978d67c323473761c5b6727f65348a5d7899386fcaccd6f3536b73b0bd6d",
+    "gpu-test.elf": "1e467763344bccbf1c64782bbd32eaed7a9617bf9e1f942a233c2e08de5fc7fc",
+    "egl-test.elf": "d7c16fe16620e1867914a6136713a60b93e6b7041cd9dfa4a38a5788e067762e",
+    "gralloc-test.elf": "ee9780c3e48cb31874d8d7c6bd9d11b3a918e8b35d0951ca1c4b23fedd70b0cb",
+    "libnce-qemupipe.so": "f912df14f4564f948b43a63d8a2b9f79511e99f19ea4a9ac7240921c893899f2",
+    "bionic-test.elf": "160ae7742e9826dd61838289d547b7c9e6611780807464e94334bfef7f32d51d",
+    "cfi-test.elf": "d606373b52eecd252a4e09fbf3787770b84fc1c26ccbe7728858a82e6691a1d0",
+    "libnce-cfi-a.so": "7a1ef4df03ef6760fe3b0d419d8c4d180086e13ffd65c463b993f1ffcb8f3ec5",
+    "libnce-cfi-b.so": "27784ed119a6f2204d9fe60c42b540ae163253a76837ff5e11abdc7719436e40",
+    "nce-native-libraries.apk": "69179bd1c67f3a15814c8ebf99c21d48a031108865bb81332b271df25da788a3",
+    "art-test.elf": "b3f633d21dd4c7b05ce7af7a41b7ddaf4b85ac0e8eb1aaa3395614d3ad8f2190",
+    "art-heap-test.elf": "ddd4122c19867c9d7894db4c4762562113b7126b78030d54e8409abf3008fe7f",
+    "android-services-test.elf": "c6ea3b8ba6694c070033a13e13e537b81df177984caf57bb252b5f21ba592fc4"
+  },
+  "input_hash_checks": {
+    "sources": 191,
+    "generated": 34,
+    "all_match": true
+  },
+  "system_image": {
+    "path": "work/native-linux-nce/native-full-special-mapping-main-v1/processes/system.img",
+    "bytes": 1207959552,
+    "sha256": "892f17b1462efc5bbd152ea4bf310d580ec32d087fb0095afdd4c47f12847262"
+  },
+  "system_image_current_userspace_inputs_match": true,
+  "runs": [
+    {
+      "entry": "cli",
+      "returncode": 0,
+      "validated": true,
+      "stdout": {
+        "path": "work/native-linux-nce/native-full-special-mapping-main-v1/processes/lkl-results.jsonl",
+        "bytes": 395544,
+        "sha256": "13c16699b4736292246a04f008b7ea0aa89b4ef0bab53916d5fe37c6ccd8e7b2"
+      },
+      "stderr": {
+        "path": "work/native-linux-nce/native-full-special-mapping-main-v1/processes/lkl-console.log",
+        "bytes": 5097040,
+        "sha256": "2890c6dadafb28266f5389c2866cff436123851354af614d83b536d03315af90"
+      },
+      "checks": [
+        {
+          "test": "prepared_fixed_address_code_updates",
+          "passed": true,
+          "ranges": 682,
+          "updates_per_range": 8
+        },
+        {
+          "test": "prepared_code_permission_restore",
+          "passed": true,
+          "available": true
+        },
+        {
+          "test": "data_fixed_remap_after_detach",
+          "passed": true,
+          "targets": 2,
+          "switches_per_target": 8
+        },
+        {
+          "test": "linux_ram_remap",
+          "passed": true,
+          "bytes": 1073741824
+        },
+        {
+          "test": "native_program_range_index",
+          "passed": true,
+          "programs": 680
+        },
+        {
+          "test": "native_linux_boot",
+          "passed": true,
+          "ms": 57.314
+        },
+        {
+          "test": "linux_uname",
+          "sysname": "Linux",
+          "release": "6.12.0"
+        },
+        {
+          "test": "linux_random_initialized",
+          "passed": true
+        },
+        {
+          "test": "android_system_image_readonly",
+          "passed": true
+        },
+        {
+          "test": "linux_host_input_thread_protocol",
+          "passed": true
+        },
+        {
+          "test": "linux_nce_fork_cow_shared_futex_pipe_exec_wait",
+          "passed": true,
+          "rounds": 32,
+          "faults": 288,
+          "elapsed_ms": 16.448
+        },
+        {
+          "test": "linux_exec_then_fork_cow_wait",
+          "passed": true
+        },
+        {
+          "test": "linux_exec_file_unchanged",
+          "passed": true
+        },
+        {
+          "test": "linux_syscall_bounds",
+          "passed": true
+        },
+        {
+          "test": "linux_musl_static_pie_processes",
+          "passed": true,
+          "commands": 8,
+          "cow_bytes_per_command": 2097152
+        },
+        {
+          "test": "linux_compiled_elf_files_unchanged",
+          "passed": true
+        },
+        {
+          "test": "linux_musl_threads_preemption",
+          "passed": true,
+          "threads": 56,
+          "stackless_exits": 8,
+          "elapsed_ms": 177.511
+        },
+        {
+          "test": "linux_musl_static_pie_processes",
+          "passed": true,
+          "commands": 8,
+          "cow_bytes_per_command": 2097152
+        },
+        {
+          "test": "linux_compiled_elf_files_unchanged",
+          "passed": true
+        },
+        {
+          "test": "linux_musl_threads_preemption",
+          "passed": true,
+          "threads": 56,
+          "stackless_exits": 8,
+          "elapsed_ms": 156.84
+        },
+        {
+          "test": "linux_musl_static_pie_processes",
+          "passed": true,
+          "commands": 8,
+          "cow_bytes_per_command": 2097152
+        },
+        {
+          "test": "linux_compiled_elf_files_unchanged",
+          "passed": true
+        },
+        {
+          "test": "linux_musl_threads_preemption",
+          "passed": true,
+          "threads": 56,
+          "stackless_exits": 8,
+          "elapsed_ms": 154.503
+        },
+        {
+          "test": "linux_musl_static_pie_processes",
+          "passed": true,
+          "commands": 8,
+          "cow_bytes_per_command": 2097152
+        },
+        {
+          "test": "linux_compiled_elf_files_unchanged",
+          "passed": true
+        },
+        {
+          "test": "linux_musl_threads_preemption",
+          "passed": true,
+          "threads": 56,
+          "stackless_exits": 8,
+          "elapsed_ms": 146.945
+        },
+        {
+          "test": "linux_musl_static_pie_processes",
+          "passed": true,
+          "commands": 8,
+          "cow_bytes_per_command": 2097152
+        },
+        {
+          "test": "linux_compiled_elf_files_unchanged",
+          "passed": true
+        },
+        {
+          "test": "linux_musl_threads_preemption",
+          "passed": true,
+          "threads": 56,
+          "stackless_exits": 8,
+          "elapsed_ms": 156.633
+        },
+        {
+          "test": "linux_musl_static_pie_processes",
+          "passed": true,
+          "commands": 8,
+          "cow_bytes_per_command": 2097152
+        },
+        {
+          "test": "linux_compiled_elf_files_unchanged",
+          "passed": true
+        },
+        {
+          "test": "linux_musl_threads_preemption",
+          "passed": true,
+          "threads": 56,
+          "stackless_exits": 8,
+          "elapsed_ms": 155.371
+        },
+        {
+          "test": "linux_musl_static_pie_processes",
+          "passed": true,
+          "commands": 8,
+          "cow_bytes_per_command": 2097152
+        },
+        {
+          "test": "linux_compiled_elf_files_unchanged",
+          "passed": true
+        },
+        {
+          "test": "linux_musl_threads_preemption",
+          "passed": true,
+          "threads": 56,
+          "stackless_exits": 8,
+          "elapsed_ms": 147.054
+        },
+        {
+          "test": "linux_musl_static_pie_processes",
+          "passed": true,
+          "commands": 8,
+          "cow_bytes_per_command": 2097152
+        },
+        {
+          "test": "linux_compiled_elf_files_unchanged",
+          "passed": true
+        },
+        {
+          "test": "linux_musl_threads_preemption",
+          "passed": true,
+          "threads": 56,
+          "stackless_exits": 8,
+          "elapsed_ms": 153.367
+        },
+        {
+          "test": "linux_musl_static_pie_processes",
+          "passed": true,
+          "commands": 8,
+          "cow_bytes_per_command": 2097152
+        },
+        {
+          "test": "linux_compiled_elf_files_unchanged",
+          "passed": true
+        },
+        {
+          "test": "linux_musl_threads_preemption",
+          "passed": true,
+          "threads": 56,
+          "stackless_exits": 8,
+          "elapsed_ms": 147.805
+        },
+        {
+          "test": "linux_musl_static_pie_processes",
+          "passed": true,
+          "commands": 8,
+          "cow_bytes_per_command": 2097152
+        },
+        {
+          "test": "linux_compiled_elf_files_unchanged",
+          "passed": true
+        },
+        {
+          "test": "linux_musl_threads_preemption",
+          "passed": true,
+          "threads": 56,
+          "stackless_exits": 8,
+          "elapsed_ms": 153.093
+        },
+        {
+          "test": "linux_musl_static_pie_processes",
+          "passed": true,
+          "commands": 8,
+          "cow_bytes_per_command": 2097152
+        },
+        {
+          "test": "linux_compiled_elf_files_unchanged",
+          "passed": true
+        },
+        {
+          "test": "linux_musl_threads_preemption",
+          "passed": true,
+          "threads": 56,
+          "stackless_exits": 8,
+          "elapsed_ms": 147.105
+        },
+        {
+          "test": "linux_musl_static_pie_processes",
+          "passed": true,
+          "commands": 8,
+          "cow_bytes_per_command": 2097152
+        },
+        {
+          "test": "linux_compiled_elf_files_unchanged",
+          "passed": true
+        },
+        {
+          "test": "linux_musl_threads_preemption",
+          "passed": true,
+          "threads": 56,
+          "stackless_exits": 8,
+          "elapsed_ms": 149.808
+        },
+        {
+          "test": "linux_musl_static_pie_processes",
+          "passed": true,
+          "commands": 8,
+          "cow_bytes_per_command": 2097152
+        },
+        {
+          "test": "linux_compiled_elf_files_unchanged",
+          "passed": true
+        },
+        {
+          "test": "linux_musl_threads_preemption",
+          "passed": true,
+          "threads": 56,
+          "stackless_exits": 8,
+          "elapsed_ms": 151.604
+        },
+        {
+          "test": "linux_musl_static_pie_processes",
+          "passed": true,
+          "commands": 8,
+          "cow_bytes_per_command": 2097152
+        },
+        {
+          "test": "linux_compiled_elf_files_unchanged",
+          "passed": true
+        },
+        {
+          "test": "linux_musl_threads_preemption",
+          "passed": true,
+          "threads": 56,
+          "stackless_exits": 8,
+          "elapsed_ms": 150.896
+        },
+        {
+          "test": "linux_musl_static_pie_processes",
+          "passed": true,
+          "commands": 8,
+          "cow_bytes_per_command": 2097152
+        },
+        {
+          "test": "linux_compiled_elf_files_unchanged",
+          "passed": true
+        },
+        {
+          "test": "linux_musl_threads_preemption",
+          "passed": true,
+          "threads": 56,
+          "stackless_exits": 8,
+          "elapsed_ms": 150.463
+        },
+        {
+          "test": "linux_musl_static_pie_processes",
+          "passed": true,
+          "commands": 8,
+          "cow_bytes_per_command": 2097152
+        },
+        {
+          "test": "linux_compiled_elf_files_unchanged",
+          "passed": true
+        },
+        {
+          "test": "linux_musl_threads_preemption",
+          "passed": true,
+          "threads": 56,
+          "stackless_exits": 8,
+          "elapsed_ms": 150.307
+        },
+        {
+          "test": "linux_userspace_stress",
+          "passed": true,
+          "rounds": 16,
+          "commands": 128,
+          "threads": 896
+        },
+        {
+          "test": "linux_reserved_branch_stubs",
+          "passed": true
+        },
+        {
+          "test": "linux_simd_fallback_continuation",
+          "passed": true
+        },
+        {
+          "test": "linux_dynamic_code",
+          "passed": true,
+          "updates": 128,
+          "sum_iterations": 10000000
+        },
+        {
+          "test": "linux_signal_mask_altstack_nested",
+          "passed": true
+        },
+        {
+          "test": "linux_signal_register_restore",
+          "passed": true
+        },
+        {
+          "test": "linux_signal_kernel_restorer",
+          "passed": true,
+          "pid": 1
+        },
+        {
+          "test": "linux_signal_eintr_restart",
+          "passed": true
+        },
+        {
+          "test": "linux_signal_fault_recovery",
+          "passed": true
+        },
+        {
+          "test": "linux_signal_context_redirect",
+          "passed": true
+        },
+        {
+          "test": "linux_signal_frame_validation_stop_exit",
+          "passed": true
+        },
+        {
+          "test": "linux_pthread_cancel_signal",
+          "passed": true
+        },
+        {
+          "test": "linux_signal_timer_preemption",
+          "passed": true
+        },
+        {
+          "test": "linux_signal_suite",
+          "passed": true,
+          "libc": "musl"
+        },
+        {
+          "test": "linux_brk_growth_cow",
+          "passed": true
+        },
+        {
+          "test": "linux_fault_contiguous_data_boundaries",
+          "passed": true
+        },
+        {
+          "test": "linux_user_string_boundaries",
+          "passed": true,
+          "libc": "musl"
+        },
+        {
+          "test": "linux_exec_symlink",
+          "passed": true,
+          "libc": "musl"
+        },
+        {
+          "test": "linux_aarch64_file_open_flags",
+          "passed": true,
+          "libc": "musl"
+        },
+        {
+          "test": "linux_stack_growth_and_limit",
+          "passed": true
+        },
+        {
+          "test": "linux_android_elf_reservation_boundaries",
+          "passed": true
+        },
+        {
+          "test": "linux_sparse_reservation_cow",
+          "passed": true,
+          "reserved_bytes": 2147483648
+        },
+        {
+          "test": "linux_mmap_byte_offset",
+          "passed": true
+        },
+        {
+          "test": "linux_fault_register_state",
+          "passed": true,
+          "switches": 64
+        },
+        {
+          "test": "linux_user_memory_boundaries",
+          "passed": true,
+          "reuse_rounds": 64
+        },
+        {
+          "test": "linux_ram_capacity_cow",
+          "passed": true,
+          "bytes": 671088640
+        },
+        {
+          "test": "linux_mm_exchange_integrity",
+          "passed": true,
+          "cases": 28
+        },
+        {
+          "test": "linux_mm_host_operations",
+          "data_maps": 962128,
+          "code_copy_bytes": 2818048,
+          "revocations": 169661
+        },
+        {
+          "test": "linux_dash_pipeline_redirection",
+          "passed": true
+        },
+        {
+          "test": "linux_dash_fork_exec_environment",
+          "passed": true
+        },
+        {
+          "test": "linux_dash_trap_background_wait",
+          "passed": true
+        },
+        {
+          "test": "linux_dash_shell_suite",
+          "passed": true
+        },
+        {
+          "test": "linux_dynamic_link_dlopen_constructors",
+          "passed": true
+        },
+        {
+          "test": "linux_dynamic_tls_threads",
+          "passed": true
+        },
+        {
+          "test": "linux_dynamic_fork_signal",
+          "passed": true
+        },
+        {
+          "test": "linux_ext4_persistence",
+          "generation": 1,
+          "bytes": 1048576,
+          "passed": true
+        },
+        {
+          "test": "android_data_ext4_mounted",
+          "passed": true
+        },
+        {
+          "test": "linux_user_parallel_compute_integrity",
+          "passed": true,
+          "rounds": 3
+        },
+        {
+          "test": "linux_private_file_discard_cow",
+          "passes": 432,
+          "passed": true
+        },
+        {
+          "test": "linux_truncated_file_fault",
+          "passed": true
+        },
+        {
+          "test": "linux_runnable_sampling",
+          "mode": 0,
+          "enabled": false,
+          "samples": 0,
+          "same_mm_samples": 0,
+          "other_mm_samples": 0,
+          "passed": true
+        },
+        {
+          "test": "linux_runnable_sampling",
+          "mode": 1,
+          "enabled": false,
+          "samples": 0,
+          "same_mm_samples": 0,
+          "other_mm_samples": 0,
+          "passed": true
+        },
+        {
+          "test": "linux_runnable_sampling",
+          "mode": 2,
+          "enabled": false,
+          "samples": 0,
+          "same_mm_samples": 0,
+          "other_mm_samples": 0,
+          "passed": true
+        },
+        {
+          "test": "linux_session_stop_lifecycle",
+          "passed": true
+        },
+        {
+          "test": "linux_busy_guest_host_requests",
+          "passed": true,
+          "rounds": 32
+        },
+        {
+          "test": "linux_binder_cross_process_roundtrip",
+          "passed": true,
+          "rounds": 32,
+          "max_payload": 65536
+        },
+        {
+          "test": "linux_binder_fd_transfer",
+          "passed": true
+        },
+        {
+          "test": "linux_binder_invalid_handle_cleanup",
+          "passed": true
+        },
+        {
+          "test": "linux_user_string_boundaries",
+          "passed": true,
+          "libc": "bionic"
+        },
+        {
+          "test": "linux_exec_symlink",
+          "passed": true,
+          "libc": "bionic"
+        },
+        {
+          "test": "linux_aarch64_file_open_flags",
+          "passed": true,
+          "libc": "bionic"
+        },
+        {
+          "test": "linux_signal_mask_altstack_nested",
+          "passed": true
+        },
+        {
+          "test": "linux_signal_register_restore",
+          "passed": true
+        },
+        {
+          "test": "linux_signal_kernel_restorer",
+          "passed": true,
+          "pid": 1
+        },
+        {
+          "test": "linux_signal_eintr_restart",
+          "passed": true
+        },
+        {
+          "test": "linux_signal_fault_recovery",
+          "passed": true
+        },
+        {
+          "test": "linux_signal_context_redirect",
+          "passed": true
+        },
+        {
+          "test": "linux_signal_frame_validation_stop_exit",
+          "passed": true
+        },
+        {
+          "test": "linux_signal_timer_preemption",
+          "passed": true
+        },
+        {
+          "test": "linux_signal_suite",
+          "passed": true,
+          "libc": "bionic"
+        },
+        {
+          "test": "linux_seccomp_filter",
+          "passed": true,
+          "fork_inheritance": true,
+          "thread_sync": true,
+          "trap_metadata": true
+        },
+        {
+          "test": "android_scudo_class_growth",
+          "passed": true,
+          "allocated_bytes": 50331648
+        },
+        {
+          "test": "android_bionic_many_threads",
+          "passed": true,
+          "threads": 128,
+          "reserved_kib": 133120
+        },
+        {
+          "test": "linux_proc_concurrent_exit",
+          "passed": true,
+          "processes": 32,
+          "threads": 256,
+          "stat_reads": 1735638
+        },
+        {
+          "test": "android_bionic_threads_allocator_tls",
+          "passed": true,
+          "page_size": 16384
+        },
+        {
+          "test": "linux_native_gles_color_buffer",
+          "passed": true,
+          "pixels": 230400,
+          "max_channel_delta": 0
+        },
+        {
+          "test": "linux_native_gles_shader_frames",
+          "passed": true,
+          "width": 360,
+          "height": 640,
+          "frames": 120,
+          "draw_and_post_ms": 119.923,
+          "ms_per_frame": 0.999
+        },
+        {
+          "test": "linux_native_gles_metal",
+          "passed": true,
+          "connections": 5,
+          "pixels_per_connection": 6144
+        },
+        {
+          "test": "android_sdk_gles_shader_texture",
+          "passed": true,
+          "pixels": 4096
+        },
+        {
+          "test": "android_sdk_egl_shared_texture",
+          "passed": true
+        },
+        {
+          "test": "android_sdk_egl_driver_pixels",
+          "passed": true,
+          "pixels": 4096
+        },
+        {
+          "test": "android_apk_native_libraries",
+          "passed": true,
+          "libraries": 2,
+          "fork_reload": true,
+          "invalid_offset_rejected": true
+        },
+        {
+          "test": "android_cfi_library_reload",
+          "passed": true,
+          "reloads": 16,
+          "wrong_type_rejected": true
+        },
+        {
+          "test": "art_high_reference_heap",
+          "passed": true
+        },
+        {
+          "test": "android_art_library_loaded",
+          "passed": true
+        },
+        {
+          "test": "android_cfi_bounded_shadow",
+          "passed": true,
+          "shadow_bytes": 8388607
+        },
+        {
+          "test": "android_art_interpreter_references",
+          "passed": true,
+          "method_handles": 3,
+          "var_handles": 4,
+          "exceptions": 3
+        },
+        {
+          "test": "android_art_interpreter_entry",
+          "passed": true,
+          "nterp": false
+        },
+        {
+          "test": "android_art_java_workload",
+          "passed": true,
+          "allocated_bytes": 16777216,
+          "gc_weak_reference_cleared": true,
+          "retained_cycle_nodes": 64,
+          "threads": 2,
+          "exceptions": 3,
+          "sum": 4002000
+        },
+        {
+          "test": "android_art_proxy_references",
+          "passed": true,
+          "annotation": true,
+          "gc_requests": 3,
+          "stack_arguments": true,
+          "exception": true
+        },
+        {
+          "test": "android_art_jit_arithmetic",
+          "passed": true,
+          "iterations": 2000000,
+          "compile_ms": 0.057,
+          "interpreter_ms": 57.277,
+          "jit_ms": 2.685,
+          "checksum": "de0adba4164b790e"
+        },
+        {
+          "test": "android_art_jit_objects",
+          "passed": true,
+          "array_updates": 32768,
+          "field_traversals": 20000000,
+          "gc_requests": 8,
+          "retained_cycle_nodes": 64,
+          "exceptions": 2
+        },
+        {
+          "test": "android_art_jit_calls",
+          "passed": true,
+          "reference_returns": 5,
+          "null_returns": 4
+        },
+        {
+          "test": "android_art_jit_allocations",
+          "passed": true,
+          "object_array_pairs": 40000,
+          "virtual_targets": 2,
+          "exceptions": 2
+        },
+        {
+          "test": "android_art_jit_patterns",
+          "passed": true,
+          "installed_patterns": 11
+        },
+        {
+          "test": "android_art_jit_runtime_features",
+          "passed": true,
+          "reference_elements": 256,
+          "interface_targets": 2,
+          "monitor_calls": 4000,
+          "monitor_updates": 20001,
+          "exceptions": 6
+        },
+        {
+          "test": "android_art_jit_strings_classes",
+          "passed": true,
+          "strings": 8,
+          "combined_iterations": 100000,
+          "gc_requests": 8,
+          "initialization_errors": 2,
+          "string_exceptions": 5,
+          "large_offset_strings": 2
+        },
+        {
+          "test": "android_art_jit_intrinsics",
+          "passed": true,
+          "integer_inputs": 264,
+          "floating_inputs": 15,
+          "string_cases": 28
+        },
+        {
+          "test": "android_art_jit_volatile_floating",
+          "passed": true,
+          "compiled_methods": 8,
+          "bit_patterns": 16,
+          "null_exceptions": 4
+        },
+        {
+          "test": "android_art_fast_baseline_paths",
+          "passed": true,
+          "gc_requests": 64,
+          "exceptions": 12
+        },
+        {
+          "test": "android_art_compiler_paths",
+          "passed": true,
+          "gc_requests": 10,
+          "exceptions": 3
+        },
+        {
+          "test": "android_art_intrinsic_recompile_identity",
+          "passed": true,
+          "attempts": 2
+        },
+        {
+          "test": "android_art_intrinsics_benchmark",
+          "passed": true,
+          "iterations": 200000,
+          "interpreter_ms": 19.79,
+          "jit_ms": 1.068,
+          "checksum": "0771c65354c7f465"
+        },
+        {
+          "test": "android_art_fast_baseline_entries",
+          "passed": true,
+          "enabled": false,
+          "methods": 20,
+          "fast_methods": 0,
+          "compile_ms": 0.401
+        },
+        {
+          "test": "android_art_expanded_jit_entries",
+          "passed": true,
+          "enabled": false,
+          "methods": 10
+        },
+        {
+          "test": "android_art_jit_types",
+          "passed": true,
+          "instanceof_calls": 12012,
+          "casts": 41,
+          "rejected": 79,
+          "caught": 64
+        },
+        {
+          "test": "android_art_jit_automatic",
+          "passed": true,
+          "warmup_calls": 200000,
+          "string_constructor_compiled": false
+        },
+        {
+          "test": "android_art_vm_destroyed",
+          "passed": true,
+          "elapsed_ms": 433.575
+        },
+        {
+          "test": "android_art_library_loaded",
+          "passed": true
+        },
+        {
+          "test": "android_cfi_bounded_shadow",
+          "passed": true,
+          "shadow_bytes": 8388607
+        },
+        {
+          "test": "android_art_interpreter_references",
+          "passed": true,
+          "method_handles": 3,
+          "var_handles": 4,
+          "exceptions": 3
+        },
+        {
+          "test": "android_art_interpreter_entry",
+          "passed": true,
+          "nterp": false
+        },
+        {
+          "test": "android_art_jit_inlining",
+          "passed": true,
+          "enabled": false,
+          "inline_depth": 0,
+          "gc_requests": 16,
+          "exception_frames": 3,
+          "iterations": 1000000,
+          "elapsed_ms": 1.575,
+          "checksum": 62504000000
+        },
+        {
+          "test": "android_art_vm_destroyed",
+          "passed": true,
+          "elapsed_ms": 73.634
+        },
+        {
+          "test": "android_art_library_loaded",
+          "passed": true
+        },
+        {
+          "test": "android_cfi_bounded_shadow",
+          "passed": true,
+          "shadow_bytes": 8388607
+        },
+        {
+          "test": "android_art_interpreter_references",
+          "passed": true,
+          "method_handles": 3,
+          "var_handles": 4,
+          "exceptions": 3
+        },
+        {
+          "test": "android_art_interpreter_entry",
+          "passed": true,
+          "nterp": false
+        },
+        {
+          "test": "android_art_jit_inlining",
+          "passed": true,
+          "enabled": true,
+          "inline_depth": 2,
+          "gc_requests": 16,
+          "exception_frames": 3,
+          "iterations": 1000000,
+          "elapsed_ms": 0.647,
+          "checksum": 62504000000
+        },
+        {
+          "test": "android_art_vm_destroyed",
+          "passed": true,
+          "elapsed_ms": 75.664
+        },
+        {
+          "test": "android_proc_pid_namespace",
+          "passed": true
+        },
+        {
+          "test": "linux_unix_socket_credentials_fd",
+          "passed": true
+        },
+        {
+          "test": "android_network_stats_rcu_socket",
+          "passed": true
+        },
+        {
+          "test": "linux_selinux_service_policy",
+          "passed": true,
+          "enforcing": true
+        },
+        {
+          "test": "android_atrace_userspace_control",
+          "passed": true
+        },
+        {
+          "test": "android_property_shared_area",
+          "passed": true
+        },
+        {
+          "test": "android_property_writer_credentials",
+          "passed": true
+        },
+        {
+          "test": "android_property_protocol_wait",
+          "passed": true,
+          "rejected_requests": 6
+        },
+        {
+          "test": "android_platform_servicemanager_registration",
+          "passed": true
+        },
+        {
+          "test": "android_gralloc_process_transfer",
+          "passed": true
+        },
+        {
+          "test": "android_gralloc_cpu_gpu_roundtrip",
+          "passed": true,
+          "width": 37,
+          "height": 23
+        },
+        {
+          "test": "android_apex_registry",
+          "passed": true,
+          "modules": 30,
+          "mutation_rejected": true
+        },
+        {
+          "test": "android_platform_binder_roundtrip",
+          "passed": true,
+          "rounds": 32,
+          "max_payload": 65536
+        },
+        {
+          "test": "android_platform_binder_fd_transfer",
+          "passed": true
+        },
+        {
+          "test": "linux_uinput_touch_navigation",
+          "passed": true,
+          "frames": 5
+        },
+        {
+          "test": "android_crypto_sdk_context_abi",
+          "passed": true,
+          "hmac_context_bytes": 104,
+          "aead_context_bytes": 584
+        },
+        {
+          "test": "android_cronet_crypto",
+          "passed": true,
+          "fips": false,
+          "hmac_context_bytes": 104
+        },
+        {
+          "test": "android_crypto",
+          "passed": true,
+          "fips": false,
+          "known_answers": true,
+          "reject_bad_tag": true
+        },
+        {
+          "test": "android_aconfig_storage",
+          "passed": true,
+          "containers": 26,
+          "initializations": 2
+        },
+        {
+          "test": "android_derived_classpaths",
+          "passed": true,
+          "variables": 4
+        },
+        {
+          "test": "android_kernel_configuration_query",
+          "passed": true,
+          "vmap_stack": false
+        },
+        {
+          "test": "android_vintf_build_consistency",
+          "passed": true
+        },
+        {
+          "test": "android_framework_jca",
+          "passed": true
+        },
+        {
+          "test": "android_framework_file_observer",
+          "passed": true
+        },
+        {
+          "test": "android_framework_graphics",
+          "passed": true,
+          "canvas": true,
+          "png_roundtrip": true
+        },
+        {
+          "test": "android_framework_runtime",
+          "passed": true,
+          "parcel": true,
+          "looper": true,
+          "shared_memory": true,
+          "binder": true
+        },
+        {
+          "test": "android_surfaceflinger_registered",
+          "passed": true
+        },
+        {
+          "test": "android_system_suspend_wakelocks",
+          "passed": true,
+          "acquisitions": 3,
+          "repeat_release": true
+        },
+        {
+          "test": "android_app_data_mount_layout",
+          "passed": true
+        },
+        {
+          "test": "android_installd_app_data",
+          "passed": true,
+          "packages": 2,
+          "storage_types": 2,
+          "caller_uid": 1000
+        },
+        {
+          "test": "android_surfaceflinger_composed_pixels",
+          "passed": true,
+          "frames": 3
+        },
+        {
+          "test": "android_cgroup_cross_uid_permissions",
+          "passed": true,
+          "unprivileged_denied": true
+        },
+        {
+          "test": "android_vold_user_storage",
+          "passed": true,
+          "user": 0,
+          "flags": 3
+        },
+        {
+          "test": "android_network_bpf_loaded",
+          "passed": true
+        },
+        {
+          "test": "android_keystore_persistence",
+          "passed": true,
+          "restored": false
+        },
+        {
+          "test": "android_system_server_services",
+          "passed": true
+        },
+        {
+          "test": "android_system_boot_completed",
+          "passed": true
+        },
+        {
+          "test": "android_desktop_visible_activity",
+          "passed": true,
+          "package": "com.android.launcher3",
+          "sampled_colors": 470
+        },
+        {
+          "test": "android_desktop_visible_activity",
+          "passed": true,
+          "package": "com.android.deskclock",
+          "sampled_colors": 121
+        },
+        {
+          "test": "android_clock_controls_ready",
+          "passed": true
+        },
+        {
+          "test": "android_preview_clock_data_preserved",
+          "passed": true,
+          "present": false
+        },
+        {
+          "test": "android_application_data_persistence",
+          "passed": true,
+          "package": "com.android.deskclock",
+          "row_id": 3,
+          "restored": false
+        },
+        {
+          "test": "android_desktop_visible_activity",
+          "passed": true,
+          "package": "com.android.deskclock",
+          "sampled_colors": 138
+        },
+        {
+          "test": "android_clock_controls_ready",
+          "passed": true
+        },
+        {
+          "test": "android_clock_alarm_activity",
+          "passed": true
+        },
+        {
+          "test": "android_home_navigation",
+          "passed": true
+        },
+        {
+          "test": "android_desktop_visible_activity",
+          "passed": true,
+          "package": "com.google.android.documentsui",
+          "sampled_colors": 45
+        },
+        {
+          "test": "android_desktop_launch_commands",
+          "passed": true,
+          "applications": 2
+        },
+        {
+          "test": "android_framework_shutdown",
+          "passed": true
+        },
+        {
+          "test": "android_system_process_groups_stopped",
+          "passed": true
+        },
+        {
+          "test": "android_platform_binder_cleanup",
+          "passed": true,
+          "death_notifications": 1
+        },
+        {
+          "test": "native_graphics_channels_released",
+          "passed": true,
+          "opened": 145,
+          "closed": 145
+        },
+        {
+          "test": "android_system_cache_reclaim",
+          "before_kib": 372352,
+          "after_kib": 12080,
+          "passed": true
+        },
+        {
+          "test": "linux_reclaimed_ram_reuse",
+          "passed": true,
+          "bytes_per_round": 67108864,
+          "rounds": 2
+        },
+        {
+          "test": "linux_dynamic_elf_files_unchanged",
+          "passed": true
+        },
+        {
+          "test": "linux_kernel_warnings",
+          "passed": true
+        },
+        {
+          "test": "linux_data_readonly_shutdown",
+          "passed": true
+        },
+        {
+          "test": "fixed_linux_code_view",
+          "copies": 65945,
+          "passed": true
+        },
+        {
+          "test": "linux_retained_code_bytes",
+          "bytes": 139331928064
+        },
+        {
+          "test": "linux_host_mapping_totals",
+          "data_maps": 22107594,
+          "data_bytes": 367833038848,
+          "code_copy_bytes": 1080442880,
+          "revocations": 14188596
+        },
+        {
+          "test": "linux_nce_context_lifetime",
+          "allocated": 2951,
+          "freed": 2951
+        },
+        {
+          "test": "linux_guest_events",
+          "preemptions": 9328,
+          "deferred_faults": 2699064,
+          "stack_resumes": 161156,
+          "stack_calls": 2451
+        },
+        {
+          "test": "guest_preemption_signal_mask",
+          "inherited_blocked_threads": 0,
+          "passed": true
+        }
+      ],
+      "result": {
+        "result": "passed"
+      },
+      "page_table_warning": false
+    },
+    {
+      "entry": "gcd",
+      "returncode": 0,
+      "validated": true,
+      "stdout": {
+        "path": "work/native-linux-nce/native-full-special-mapping-main-v1/processes/dispatch-results.jsonl",
+        "bytes": 395640,
+        "sha256": "5af41fb373237c94f0ff99cf13529ea1850b7c88e185c0db6630c9433864bb9d"
+      },
+      "stderr": {
+        "path": "work/native-linux-nce/native-full-special-mapping-main-v1/processes/dispatch-console.log",
+        "bytes": 4800603,
+        "sha256": "bc87bc16eb3d1235ce2cae96ca178b9c229fc7768e77eb72f12c0802fca7a21c"
+      },
+      "checks": [
+        {
+          "test": "dispatch_signal_mask",
+          "sigusr2_blocked": 1
+        },
+        {
+          "test": "prepared_fixed_address_code_updates",
+          "passed": true,
+          "ranges": 682,
+          "updates_per_range": 8
+        },
+        {
+          "test": "prepared_code_permission_restore",
+          "passed": true,
+          "available": true
+        },
+        {
+          "test": "data_fixed_remap_after_detach",
+          "passed": true,
+          "targets": 2,
+          "switches_per_target": 8
+        },
+        {
+          "test": "linux_ram_remap",
+          "passed": true,
+          "bytes": 1073741824
+        },
+        {
+          "test": "native_program_range_index",
+          "passed": true,
+          "programs": 680
+        },
+        {
+          "test": "native_linux_boot",
+          "passed": true,
+          "ms": 71.727
+        },
+        {
+          "test": "linux_uname",
+          "sysname": "Linux",
+          "release": "6.12.0"
+        },
+        {
+          "test": "linux_random_initialized",
+          "passed": true
+        },
+        {
+          "test": "android_system_image_readonly",
+          "passed": true
+        },
+        {
+          "test": "linux_host_input_thread_protocol",
+          "passed": true
+        },
+        {
+          "test": "linux_nce_fork_cow_shared_futex_pipe_exec_wait",
+          "passed": true,
+          "rounds": 32,
+          "faults": 288,
+          "elapsed_ms": 16.603
+        },
+        {
+          "test": "linux_exec_then_fork_cow_wait",
+          "passed": true
+        },
+        {
+          "test": "linux_exec_file_unchanged",
+          "passed": true
+        },
+        {
+          "test": "linux_syscall_bounds",
+          "passed": true
+        },
+        {
+          "test": "linux_musl_static_pie_processes",
+          "passed": true,
+          "commands": 8,
+          "cow_bytes_per_command": 2097152
+        },
+        {
+          "test": "linux_compiled_elf_files_unchanged",
+          "passed": true
+        },
+        {
+          "test": "linux_musl_threads_preemption",
+          "passed": true,
+          "threads": 56,
+          "stackless_exits": 8,
+          "elapsed_ms": 177.413
+        },
+        {
+          "test": "linux_musl_static_pie_processes",
+          "passed": true,
+          "commands": 8,
+          "cow_bytes_per_command": 2097152
+        },
+        {
+          "test": "linux_compiled_elf_files_unchanged",
+          "passed": true
+        },
+        {
+          "test": "linux_musl_threads_preemption",
+          "passed": true,
+          "threads": 56,
+          "stackless_exits": 8,
+          "elapsed_ms": 152.06
+        },
+        {
+          "test": "linux_musl_static_pie_processes",
+          "passed": true,
+          "commands": 8,
+          "cow_bytes_per_command": 2097152
+        },
+        {
+          "test": "linux_compiled_elf_files_unchanged",
+          "passed": true
+        },
+        {
+          "test": "linux_musl_threads_preemption",
+          "passed": true,
+          "threads": 56,
+          "stackless_exits": 8,
+          "elapsed_ms": 147.172
+        },
+        {
+          "test": "linux_musl_static_pie_processes",
+          "passed": true,
+          "commands": 8,
+          "cow_bytes_per_command": 2097152
+        },
+        {
+          "test": "linux_compiled_elf_files_unchanged",
+          "passed": true
+        },
+        {
+          "test": "linux_musl_threads_preemption",
+          "passed": true,
+          "threads": 56,
+          "stackless_exits": 8,
+          "elapsed_ms": 151.801
+        },
+        {
+          "test": "linux_musl_static_pie_processes",
+          "passed": true,
+          "commands": 8,
+          "cow_bytes_per_command": 2097152
+        },
+        {
+          "test": "linux_compiled_elf_files_unchanged",
+          "passed": true
+        },
+        {
+          "test": "linux_musl_threads_preemption",
+          "passed": true,
+          "threads": 56,
+          "stackless_exits": 8,
+          "elapsed_ms": 147.314
+        },
+        {
+          "test": "linux_musl_static_pie_processes",
+          "passed": true,
+          "commands": 8,
+          "cow_bytes_per_command": 2097152
+        },
+        {
+          "test": "linux_compiled_elf_files_unchanged",
+          "passed": true
+        },
+        {
+          "test": "linux_musl_threads_preemption",
+          "passed": true,
+          "threads": 56,
+          "stackless_exits": 8,
+          "elapsed_ms": 154.153
+        },
+        {
+          "test": "linux_musl_static_pie_processes",
+          "passed": true,
+          "commands": 8,
+          "cow_bytes_per_command": 2097152
+        },
+        {
+          "test": "linux_compiled_elf_files_unchanged",
+          "passed": true
+        },
+        {
+          "test": "linux_musl_threads_preemption",
+          "passed": true,
+          "threads": 56,
+          "stackless_exits": 8,
+          "elapsed_ms": 148.073
+        },
+        {
+          "test": "linux_musl_static_pie_processes",
+          "passed": true,
+          "commands": 8,
+          "cow_bytes_per_command": 2097152
+        },
+        {
+          "test": "linux_compiled_elf_files_unchanged",
+          "passed": true
+        },
+        {
+          "test": "linux_musl_threads_preemption",
+          "passed": true,
+          "threads": 56,
+          "stackless_exits": 8,
+          "elapsed_ms": 152.316
+        },
+        {
+          "test": "linux_musl_static_pie_processes",
+          "passed": true,
+          "commands": 8,
+          "cow_bytes_per_command": 2097152
+        },
+        {
+          "test": "linux_compiled_elf_files_unchanged",
+          "passed": true
+        },
+        {
+          "test": "linux_musl_threads_preemption",
+          "passed": true,
+          "threads": 56,
+          "stackless_exits": 8,
+          "elapsed_ms": 146.639
+        },
+        {
+          "test": "linux_musl_static_pie_processes",
+          "passed": true,
+          "commands": 8,
+          "cow_bytes_per_command": 2097152
+        },
+        {
+          "test": "linux_compiled_elf_files_unchanged",
+          "passed": true
+        },
+        {
+          "test": "linux_musl_threads_preemption",
+          "passed": true,
+          "threads": 56,
+          "stackless_exits": 8,
+          "elapsed_ms": 151.221
+        },
+        {
+          "test": "linux_musl_static_pie_processes",
+          "passed": true,
+          "commands": 8,
+          "cow_bytes_per_command": 2097152
+        },
+        {
+          "test": "linux_compiled_elf_files_unchanged",
+          "passed": true
+        },
+        {
+          "test": "linux_musl_threads_preemption",
+          "passed": true,
+          "threads": 56,
+          "stackless_exits": 8,
+          "elapsed_ms": 150.404
+        },
+        {
+          "test": "linux_musl_static_pie_processes",
+          "passed": true,
+          "commands": 8,
+          "cow_bytes_per_command": 2097152
+        },
+        {
+          "test": "linux_compiled_elf_files_unchanged",
+          "passed": true
+        },
+        {
+          "test": "linux_musl_threads_preemption",
+          "passed": true,
+          "threads": 56,
+          "stackless_exits": 8,
+          "elapsed_ms": 150.391
+        },
+        {
+          "test": "linux_musl_static_pie_processes",
+          "passed": true,
+          "commands": 8,
+          "cow_bytes_per_command": 2097152
+        },
+        {
+          "test": "linux_compiled_elf_files_unchanged",
+          "passed": true
+        },
+        {
+          "test": "linux_musl_threads_preemption",
+          "passed": true,
+          "threads": 56,
+          "stackless_exits": 8,
+          "elapsed_ms": 150.846
+        },
+        {
+          "test": "linux_musl_static_pie_processes",
+          "passed": true,
+          "commands": 8,
+          "cow_bytes_per_command": 2097152
+        },
+        {
+          "test": "linux_compiled_elf_files_unchanged",
+          "passed": true
+        },
+        {
+          "test": "linux_musl_threads_preemption",
+          "passed": true,
+          "threads": 56,
+          "stackless_exits": 8,
+          "elapsed_ms": 150.733
+        },
+        {
+          "test": "linux_musl_static_pie_processes",
+          "passed": true,
+          "commands": 8,
+          "cow_bytes_per_command": 2097152
+        },
+        {
+          "test": "linux_compiled_elf_files_unchanged",
+          "passed": true
+        },
+        {
+          "test": "linux_musl_threads_preemption",
+          "passed": true,
+          "threads": 56,
+          "stackless_exits": 8,
+          "elapsed_ms": 148.661
+        },
+        {
+          "test": "linux_musl_static_pie_processes",
+          "passed": true,
+          "commands": 8,
+          "cow_bytes_per_command": 2097152
+        },
+        {
+          "test": "linux_compiled_elf_files_unchanged",
+          "passed": true
+        },
+        {
+          "test": "linux_musl_threads_preemption",
+          "passed": true,
+          "threads": 56,
+          "stackless_exits": 8,
+          "elapsed_ms": 149.082
+        },
+        {
+          "test": "linux_userspace_stress",
+          "passed": true,
+          "rounds": 16,
+          "commands": 128,
+          "threads": 896
+        },
+        {
+          "test": "linux_reserved_branch_stubs",
+          "passed": true
+        },
+        {
+          "test": "linux_simd_fallback_continuation",
+          "passed": true
+        },
+        {
+          "test": "linux_dynamic_code",
+          "passed": true,
+          "updates": 128,
+          "sum_iterations": 10000000
+        },
+        {
+          "test": "linux_signal_mask_altstack_nested",
+          "passed": true
+        },
+        {
+          "test": "linux_signal_register_restore",
+          "passed": true
+        },
+        {
+          "test": "linux_signal_kernel_restorer",
+          "passed": true,
+          "pid": 1
+        },
+        {
+          "test": "linux_signal_eintr_restart",
+          "passed": true
+        },
+        {
+          "test": "linux_signal_fault_recovery",
+          "passed": true
+        },
+        {
+          "test": "linux_signal_context_redirect",
+          "passed": true
+        },
+        {
+          "test": "linux_signal_frame_validation_stop_exit",
+          "passed": true
+        },
+        {
+          "test": "linux_pthread_cancel_signal",
+          "passed": true
+        },
+        {
+          "test": "linux_signal_timer_preemption",
+          "passed": true
+        },
+        {
+          "test": "linux_signal_suite",
+          "passed": true,
+          "libc": "musl"
+        },
+        {
+          "test": "linux_brk_growth_cow",
+          "passed": true
+        },
+        {
+          "test": "linux_fault_contiguous_data_boundaries",
+          "passed": true
+        },
+        {
+          "test": "linux_user_string_boundaries",
+          "passed": true,
+          "libc": "musl"
+        },
+        {
+          "test": "linux_exec_symlink",
+          "passed": true,
+          "libc": "musl"
+        },
+        {
+          "test": "linux_aarch64_file_open_flags",
+          "passed": true,
+          "libc": "musl"
+        },
+        {
+          "test": "linux_stack_growth_and_limit",
+          "passed": true
+        },
+        {
+          "test": "linux_android_elf_reservation_boundaries",
+          "passed": true
+        },
+        {
+          "test": "linux_sparse_reservation_cow",
+          "passed": true,
+          "reserved_bytes": 2147483648
+        },
+        {
+          "test": "linux_mmap_byte_offset",
+          "passed": true
+        },
+        {
+          "test": "linux_fault_register_state",
+          "passed": true,
+          "switches": 64
+        },
+        {
+          "test": "linux_user_memory_boundaries",
+          "passed": true,
+          "reuse_rounds": 64
+        },
+        {
+          "test": "linux_ram_capacity_cow",
+          "passed": true,
+          "bytes": 671088640
+        },
+        {
+          "test": "linux_mm_exchange_integrity",
+          "passed": true,
+          "cases": 28
+        },
+        {
+          "test": "linux_mm_host_operations",
+          "data_maps": 962641,
+          "code_copy_bytes": 2818048,
+          "revocations": 169929
+        },
+        {
+          "test": "linux_dash_pipeline_redirection",
+          "passed": true
+        },
+        {
+          "test": "linux_dash_fork_exec_environment",
+          "passed": true
+        },
+        {
+          "test": "linux_dash_trap_background_wait",
+          "passed": true
+        },
+        {
+          "test": "linux_dash_shell_suite",
+          "passed": true
+        },
+        {
+          "test": "linux_dynamic_link_dlopen_constructors",
+          "passed": true
+        },
+        {
+          "test": "linux_dynamic_tls_threads",
+          "passed": true
+        },
+        {
+          "test": "linux_dynamic_fork_signal",
+          "passed": true
+        },
+        {
+          "test": "linux_ext4_persistence",
+          "generation": 2,
+          "bytes": 1048576,
+          "passed": true
+        },
+        {
+          "test": "android_data_ext4_mounted",
+          "passed": true
+        },
+        {
+          "test": "linux_user_parallel_compute_integrity",
+          "passed": true,
+          "rounds": 3
+        },
+        {
+          "test": "linux_private_file_discard_cow",
+          "passes": 668,
+          "passed": true
+        },
+        {
+          "test": "linux_truncated_file_fault",
+          "passed": true
+        },
+        {
+          "test": "linux_runnable_sampling",
+          "mode": 0,
+          "enabled": false,
+          "samples": 0,
+          "same_mm_samples": 0,
+          "other_mm_samples": 0,
+          "passed": true
+        },
+        {
+          "test": "linux_runnable_sampling",
+          "mode": 1,
+          "enabled": false,
+          "samples": 0,
+          "same_mm_samples": 0,
+          "other_mm_samples": 0,
+          "passed": true
+        },
+        {
+          "test": "linux_runnable_sampling",
+          "mode": 2,
+          "enabled": false,
+          "samples": 0,
+          "same_mm_samples": 0,
+          "other_mm_samples": 0,
+          "passed": true
+        },
+        {
+          "test": "linux_session_stop_lifecycle",
+          "passed": true
+        },
+        {
+          "test": "linux_busy_guest_host_requests",
+          "passed": true,
+          "rounds": 32
+        },
+        {
+          "test": "linux_binder_cross_process_roundtrip",
+          "passed": true,
+          "rounds": 32,
+          "max_payload": 65536
+        },
+        {
+          "test": "linux_binder_fd_transfer",
+          "passed": true
+        },
+        {
+          "test": "linux_binder_invalid_handle_cleanup",
+          "passed": true
+        },
+        {
+          "test": "linux_user_string_boundaries",
+          "passed": true,
+          "libc": "bionic"
+        },
+        {
+          "test": "linux_exec_symlink",
+          "passed": true,
+          "libc": "bionic"
+        },
+        {
+          "test": "linux_aarch64_file_open_flags",
+          "passed": true,
+          "libc": "bionic"
+        },
+        {
+          "test": "linux_signal_mask_altstack_nested",
+          "passed": true
+        },
+        {
+          "test": "linux_signal_register_restore",
+          "passed": true
+        },
+        {
+          "test": "linux_signal_kernel_restorer",
+          "passed": true,
+          "pid": 1
+        },
+        {
+          "test": "linux_signal_eintr_restart",
+          "passed": true
+        },
+        {
+          "test": "linux_signal_fault_recovery",
+          "passed": true
+        },
+        {
+          "test": "linux_signal_context_redirect",
+          "passed": true
+        },
+        {
+          "test": "linux_signal_frame_validation_stop_exit",
+          "passed": true
+        },
+        {
+          "test": "linux_signal_timer_preemption",
+          "passed": true
+        },
+        {
+          "test": "linux_signal_suite",
+          "passed": true,
+          "libc": "bionic"
+        },
+        {
+          "test": "linux_seccomp_filter",
+          "passed": true,
+          "fork_inheritance": true,
+          "thread_sync": true,
+          "trap_metadata": true
+        },
+        {
+          "test": "android_scudo_class_growth",
+          "passed": true,
+          "allocated_bytes": 50331648
+        },
+        {
+          "test": "android_bionic_many_threads",
+          "passed": true,
+          "threads": 128,
+          "reserved_kib": 133120
+        },
+        {
+          "test": "linux_proc_concurrent_exit",
+          "passed": true,
+          "processes": 32,
+          "threads": 256,
+          "stat_reads": 1647185
+        },
+        {
+          "test": "android_bionic_threads_allocator_tls",
+          "passed": true,
+          "page_size": 16384
+        },
+        {
+          "test": "linux_native_gles_color_buffer",
+          "passed": true,
+          "pixels": 230400,
+          "max_channel_delta": 0
+        },
+        {
+          "test": "linux_native_gles_shader_frames",
+          "passed": true,
+          "width": 360,
+          "height": 640,
+          "frames": 120,
+          "draw_and_post_ms": 22.073,
+          "ms_per_frame": 0.184
+        },
+        {
+          "test": "linux_native_gles_metal",
+          "passed": true,
+          "connections": 5,
+          "pixels_per_connection": 6144
+        },
+        {
+          "test": "android_sdk_gles_shader_texture",
+          "passed": true,
+          "pixels": 4096
+        },
+        {
+          "test": "android_sdk_egl_shared_texture",
+          "passed": true
+        },
+        {
+          "test": "android_sdk_egl_driver_pixels",
+          "passed": true,
+          "pixels": 4096
+        },
+        {
+          "test": "android_apk_native_libraries",
+          "passed": true,
+          "libraries": 2,
+          "fork_reload": true,
+          "invalid_offset_rejected": true
+        },
+        {
+          "test": "android_cfi_library_reload",
+          "passed": true,
+          "reloads": 16,
+          "wrong_type_rejected": true
+        },
+        {
+          "test": "art_high_reference_heap",
+          "passed": true
+        },
+        {
+          "test": "android_art_library_loaded",
+          "passed": true
+        },
+        {
+          "test": "android_cfi_bounded_shadow",
+          "passed": true,
+          "shadow_bytes": 8388607
+        },
+        {
+          "test": "android_art_interpreter_references",
+          "passed": true,
+          "method_handles": 3,
+          "var_handles": 4,
+          "exceptions": 3
+        },
+        {
+          "test": "android_art_interpreter_entry",
+          "passed": true,
+          "nterp": false
+        },
+        {
+          "test": "android_art_java_workload",
+          "passed": true,
+          "allocated_bytes": 16777216,
+          "gc_weak_reference_cleared": true,
+          "retained_cycle_nodes": 64,
+          "threads": 2,
+          "exceptions": 3,
+          "sum": 4002000
+        },
+        {
+          "test": "android_art_proxy_references",
+          "passed": true,
+          "annotation": true,
+          "gc_requests": 3,
+          "stack_arguments": true,
+          "exception": true
+        },
+        {
+          "test": "android_art_jit_arithmetic",
+          "passed": true,
+          "iterations": 2000000,
+          "compile_ms": 0.084,
+          "interpreter_ms": 55.615,
+          "jit_ms": 2.719,
+          "checksum": "de0adba4164b790e"
+        },
+        {
+          "test": "android_art_jit_objects",
+          "passed": true,
+          "array_updates": 32768,
+          "field_traversals": 20000000,
+          "gc_requests": 8,
+          "retained_cycle_nodes": 64,
+          "exceptions": 2
+        },
+        {
+          "test": "android_art_jit_calls",
+          "passed": true,
+          "reference_returns": 5,
+          "null_returns": 4
+        },
+        {
+          "test": "android_art_jit_allocations",
+          "passed": true,
+          "object_array_pairs": 40000,
+          "virtual_targets": 2,
+          "exceptions": 2
+        },
+        {
+          "test": "android_art_jit_patterns",
+          "passed": true,
+          "installed_patterns": 11
+        },
+        {
+          "test": "android_art_jit_runtime_features",
+          "passed": true,
+          "reference_elements": 256,
+          "interface_targets": 2,
+          "monitor_calls": 4000,
+          "monitor_updates": 20001,
+          "exceptions": 6
+        },
+        {
+          "test": "android_art_jit_strings_classes",
+          "passed": true,
+          "strings": 8,
+          "combined_iterations": 100000,
+          "gc_requests": 8,
+          "initialization_errors": 2,
+          "string_exceptions": 5,
+          "large_offset_strings": 2
+        },
+        {
+          "test": "android_art_jit_intrinsics",
+          "passed": true,
+          "integer_inputs": 264,
+          "floating_inputs": 15,
+          "string_cases": 28
+        },
+        {
+          "test": "android_art_jit_volatile_floating",
+          "passed": true,
+          "compiled_methods": 8,
+          "bit_patterns": 16,
+          "null_exceptions": 4
+        },
+        {
+          "test": "android_art_fast_baseline_paths",
+          "passed": true,
+          "gc_requests": 64,
+          "exceptions": 12
+        },
+        {
+          "test": "android_art_compiler_paths",
+          "passed": true,
+          "gc_requests": 10,
+          "exceptions": 3
+        },
+        {
+          "test": "android_art_intrinsic_recompile_identity",
+          "passed": true,
+          "attempts": 2
+        },
+        {
+          "test": "android_art_intrinsics_benchmark",
+          "passed": true,
+          "iterations": 200000,
+          "interpreter_ms": 18.897,
+          "jit_ms": 1.03,
+          "checksum": "0771c65354c7f465"
+        },
+        {
+          "test": "android_art_fast_baseline_entries",
+          "passed": true,
+          "enabled": false,
+          "methods": 20,
+          "fast_methods": 0,
+          "compile_ms": 1.089
+        },
+        {
+          "test": "android_art_expanded_jit_entries",
+          "passed": true,
+          "enabled": false,
+          "methods": 10
+        },
+        {
+          "test": "android_art_jit_types",
+          "passed": true,
+          "instanceof_calls": 12012,
+          "casts": 41,
+          "rejected": 79,
+          "caught": 64
+        },
+        {
+          "test": "android_art_jit_automatic",
+          "passed": true,
+          "warmup_calls": 200000,
+          "string_constructor_compiled": false
+        },
+        {
+          "test": "android_art_vm_destroyed",
+          "passed": true,
+          "elapsed_ms": 435.991
+        },
+        {
+          "test": "android_art_library_loaded",
+          "passed": true
+        },
+        {
+          "test": "android_cfi_bounded_shadow",
+          "passed": true,
+          "shadow_bytes": 8388607
+        },
+        {
+          "test": "android_art_interpreter_references",
+          "passed": true,
+          "method_handles": 3,
+          "var_handles": 4,
+          "exceptions": 3
+        },
+        {
+          "test": "android_art_interpreter_entry",
+          "passed": true,
+          "nterp": false
+        },
+        {
+          "test": "android_art_jit_inlining",
+          "passed": true,
+          "enabled": false,
+          "inline_depth": 0,
+          "gc_requests": 16,
+          "exception_frames": 3,
+          "iterations": 1000000,
+          "elapsed_ms": 1.546,
+          "checksum": 62504000000
+        },
+        {
+          "test": "android_art_vm_destroyed",
+          "passed": true,
+          "elapsed_ms": 71.237
+        },
+        {
+          "test": "android_art_library_loaded",
+          "passed": true
+        },
+        {
+          "test": "android_cfi_bounded_shadow",
+          "passed": true,
+          "shadow_bytes": 8388607
+        },
+        {
+          "test": "android_art_interpreter_references",
+          "passed": true,
+          "method_handles": 3,
+          "var_handles": 4,
+          "exceptions": 3
+        },
+        {
+          "test": "android_art_interpreter_entry",
+          "passed": true,
+          "nterp": false
+        },
+        {
+          "test": "android_art_jit_inlining",
+          "passed": true,
+          "enabled": true,
+          "inline_depth": 2,
+          "gc_requests": 16,
+          "exception_frames": 3,
+          "iterations": 1000000,
+          "elapsed_ms": 0.627,
+          "checksum": 62504000000
+        },
+        {
+          "test": "android_art_vm_destroyed",
+          "passed": true,
+          "elapsed_ms": 65.982
+        },
+        {
+          "test": "android_proc_pid_namespace",
+          "passed": true
+        },
+        {
+          "test": "linux_unix_socket_credentials_fd",
+          "passed": true
+        },
+        {
+          "test": "android_network_stats_rcu_socket",
+          "passed": true
+        },
+        {
+          "test": "linux_selinux_service_policy",
+          "passed": true,
+          "enforcing": true
+        },
+        {
+          "test": "android_atrace_userspace_control",
+          "passed": true
+        },
+        {
+          "test": "android_property_shared_area",
+          "passed": true
+        },
+        {
+          "test": "android_property_writer_credentials",
+          "passed": true
+        },
+        {
+          "test": "android_property_protocol_wait",
+          "passed": true,
+          "rejected_requests": 6
+        },
+        {
+          "test": "android_platform_servicemanager_registration",
+          "passed": true
+        },
+        {
+          "test": "android_gralloc_process_transfer",
+          "passed": true
+        },
+        {
+          "test": "android_gralloc_cpu_gpu_roundtrip",
+          "passed": true,
+          "width": 37,
+          "height": 23
+        },
+        {
+          "test": "android_apex_registry",
+          "passed": true,
+          "modules": 30,
+          "mutation_rejected": true
+        },
+        {
+          "test": "android_platform_binder_roundtrip",
+          "passed": true,
+          "rounds": 32,
+          "max_payload": 65536
+        },
+        {
+          "test": "android_platform_binder_fd_transfer",
+          "passed": true
+        },
+        {
+          "test": "linux_uinput_touch_navigation",
+          "passed": true,
+          "frames": 5
+        },
+        {
+          "test": "android_crypto_sdk_context_abi",
+          "passed": true,
+          "hmac_context_bytes": 104,
+          "aead_context_bytes": 584
+        },
+        {
+          "test": "android_cronet_crypto",
+          "passed": true,
+          "fips": false,
+          "hmac_context_bytes": 104
+        },
+        {
+          "test": "android_crypto",
+          "passed": true,
+          "fips": false,
+          "known_answers": true,
+          "reject_bad_tag": true
+        },
+        {
+          "test": "android_aconfig_storage",
+          "passed": true,
+          "containers": 26,
+          "initializations": 2
+        },
+        {
+          "test": "android_derived_classpaths",
+          "passed": true,
+          "variables": 4
+        },
+        {
+          "test": "android_kernel_configuration_query",
+          "passed": true,
+          "vmap_stack": false
+        },
+        {
+          "test": "android_vintf_build_consistency",
+          "passed": true
+        },
+        {
+          "test": "android_framework_jca",
+          "passed": true
+        },
+        {
+          "test": "android_framework_file_observer",
+          "passed": true
+        },
+        {
+          "test": "android_framework_graphics",
+          "passed": true,
+          "canvas": true,
+          "png_roundtrip": true
+        },
+        {
+          "test": "android_framework_runtime",
+          "passed": true,
+          "parcel": true,
+          "looper": true,
+          "shared_memory": true,
+          "binder": true
+        },
+        {
+          "test": "android_surfaceflinger_registered",
+          "passed": true
+        },
+        {
+          "test": "android_system_suspend_wakelocks",
+          "passed": true,
+          "acquisitions": 3,
+          "repeat_release": true
+        },
+        {
+          "test": "android_app_data_mount_layout",
+          "passed": true
+        },
+        {
+          "test": "android_installd_app_data",
+          "passed": true,
+          "packages": 2,
+          "storage_types": 2,
+          "caller_uid": 1000
+        },
+        {
+          "test": "android_surfaceflinger_composed_pixels",
+          "passed": true,
+          "frames": 3
+        },
+        {
+          "test": "android_cgroup_cross_uid_permissions",
+          "passed": true,
+          "unprivileged_denied": true
+        },
+        {
+          "test": "android_vold_user_storage",
+          "passed": true,
+          "user": 0,
+          "flags": 3
+        },
+        {
+          "test": "android_network_bpf_loaded",
+          "passed": true
+        },
+        {
+          "test": "android_keystore_persistence",
+          "passed": true,
+          "restored": true
+        },
+        {
+          "test": "android_system_server_services",
+          "passed": true
+        },
+        {
+          "test": "android_system_boot_completed",
+          "passed": true
+        },
+        {
+          "test": "android_desktop_visible_activity",
+          "passed": true,
+          "package": "com.android.launcher3",
+          "sampled_colors": 470
+        },
+        {
+          "test": "android_desktop_visible_activity",
+          "passed": true,
+          "package": "com.android.deskclock",
+          "sampled_colors": 145
+        },
+        {
+          "test": "android_clock_controls_ready",
+          "passed": true
+        },
+        {
+          "test": "android_preview_clock_data_preserved",
+          "passed": true,
+          "present": false
+        },
+        {
+          "test": "android_application_data_persistence",
+          "passed": true,
+          "package": "com.android.deskclock",
+          "row_id": 3,
+          "restored": true
+        },
+        {
+          "test": "android_desktop_visible_activity",
+          "passed": true,
+          "package": "com.android.deskclock",
+          "sampled_colors": 138
+        },
+        {
+          "test": "android_clock_controls_ready",
+          "passed": true
+        },
+        {
+          "test": "android_clock_alarm_activity",
+          "passed": true
+        },
+        {
+          "test": "android_home_navigation",
+          "passed": true
+        },
+        {
+          "test": "android_desktop_visible_activity",
+          "passed": true,
+          "package": "com.google.android.documentsui",
+          "sampled_colors": 45
+        },
+        {
+          "test": "android_desktop_launch_commands",
+          "passed": true,
+          "applications": 2
+        },
+        {
+          "test": "android_framework_shutdown",
+          "passed": true
+        },
+        {
+          "test": "android_system_process_groups_stopped",
+          "passed": true
+        },
+        {
+          "test": "android_platform_binder_cleanup",
+          "passed": true,
+          "death_notifications": 1
+        },
+        {
+          "test": "native_graphics_channels_released",
+          "passed": true,
+          "opened": 136,
+          "closed": 136
+        },
+        {
+          "test": "android_system_cache_reclaim",
+          "before_kib": 374096,
+          "after_kib": 11792,
+          "passed": true
+        },
+        {
+          "test": "linux_reclaimed_ram_reuse",
+          "passed": true,
+          "bytes_per_round": 67108864,
+          "rounds": 2
+        },
+        {
+          "test": "linux_dynamic_elf_files_unchanged",
+          "passed": true
+        },
+        {
+          "test": "linux_kernel_warnings",
+          "passed": true
+        },
+        {
+          "test": "linux_data_readonly_shutdown",
+          "passed": true
+        },
+        {
+          "test": "fixed_linux_code_view",
+          "copies": 53527,
+          "passed": true
+        },
+        {
+          "test": "linux_retained_code_bytes",
+          "bytes": 114921439232
+        },
+        {
+          "test": "linux_host_mapping_totals",
+          "data_maps": 17236816,
+          "data_bytes": 287211438080,
+          "code_copy_bytes": 876986368,
+          "revocations": 10674058
+        },
+        {
+          "test": "linux_nce_context_lifetime",
+          "allocated": 2858,
+          "freed": 2858
+        },
+        {
+          "test": "linux_guest_events",
+          "preemptions": 7705,
+          "deferred_faults": 1933724,
+          "stack_resumes": 134469,
+          "stack_calls": 2396
+        },
+        {
+          "test": "guest_preemption_signal_mask",
+          "inherited_blocked_threads": 69,
+          "passed": true
+        }
+      ],
+      "result": {
+        "result": "passed"
+      },
+      "page_table_warning": false
+    }
+  ],
+  "ios": {
+    "scope": "core compiled for iOS; graphics integration and device execution pending",
+    "target": "arm64-apple-ios17.0",
+    "sdk": "/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS27.1.sdk",
+    "compiled_objects": [
+      {
+        "path": "work/native-linux-nce/native-full-special-mapping-main-v1/processes/ios-lkl-host.o",
+        "bytes": 46504,
+        "sha256": "55c8ae7ed615e00ddf8c9900aa7e17af5015d080f7565825228a8eaeebe03a8f"
+      },
+      {
+        "path": "work/native-linux-nce/native-full-special-mapping-main-v1/processes/ios-lkl-process-host.o",
+        "bytes": 348536,
+        "sha256": "052f30d853c547c7f13bb3ec4f9acda0f0f675bfbfcdc5544a846dffd435c373"
+      },
+      {
+        "path": "work/native-linux-nce/native-full-special-mapping-main-v1/processes/ios-payload.o",
+        "bytes": 3185680,
+        "sha256": "c26dab39dd668849bfabc6235c43c1daeece7615dfca85dbb60c9bf0bc6902cc"
+      }
+    ]
+  },
+  "userspace_fixture_tests": {
+    "command": [
+      "python3",
+      "scripts/test_nce_userspace.py",
+      "--fixtures",
+      "work/native-linux-nce/native-full-special-mapping-main-v1/processes"
+    ],
+    "tests": 21,
+    "passed": true
+  },
+  "data_image": {
+    "path": "work/native-linux-nce/native-full-special-mapping-main-v1/native-data.img",
+    "bytes": 536870912,
+    "sha256": "4220f878e56058cf8dbd8e4c78545bdecbb190c5a8bdf377f95b78e6bf506bf4"
+  },
+  "filesystem_checks": "Both kernel shutdown superblocks clean; e2fsck -fn returned 0",
+  "preparation_rejection": {
+    "directory": "work/stock-art-main-integrated-v2",
+    "error": "fixture 构建源码摘要不匹配：experiments/native-linux/stock-art/probe.c"
+  },
+  "uncovered": [
+    "原始init/rc完整启动",
+    "原始SDK36 Bionic的原生执行",
+    "4KiB原生执行",
+    "应用任意覆盖与整机性能",
+    "iOS图形链接与设备运行",
+    "设备资源、JIT授权与持续热状态"
+  ],
+  "passed": true
+}
