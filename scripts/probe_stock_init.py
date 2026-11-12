@@ -105,7 +105,7 @@ def validate(rows, mode, original_system=False, *, kernel_log=''):
     observations = [r for r in rows if 'stock_init_observation' in r]
     cleanup = [r for r in rows if r.get('test') == 'translated_context_cleanup']
     logs = [r for r in rows if 'stock_init_kernel_log' in r]
-    endings = [r for r in rows if 'result' in r and 'component_vm' not in r and 'stock_init_write' not in r and 'stock_init_security' not in r and 'stock_init_syscall' not in r]
+    endings = [r for r in rows if 'result' in r and 'component_vm' not in r and 'stock_init_write' not in r and 'stock_init_security' not in r and 'stock_init_syscall' not in r and 'stock_init_block' not in r]
     if len(observations) != 1 or len(cleanup) != 1 or len(logs) != 1 or endings != [{'result': 'passed'}]:
         return False
     o, c, log = observations[0], cleanup[0], logs[0]
@@ -144,6 +144,17 @@ def validate(rows, mode, original_system=False, *, kernel_log=''):
                 (reboot and row['stock_init_reboot'] is not True) or
                 (not reboot and (type(row['stock_init_syscall']) is not int or type(row['result']) is not int or
                                  type(row['pc']) is not int or not 0 <= row['pc'] < 1 << 36))):
+            return False
+    for row in (r for r in rows if 'stock_init_block' in r):
+        counts = {29: 0, 33: 1, 40: 3, 56: 1}
+        if (set(row) != {'stock_init_block', 'pid', 'result', 'args', 'paths_hex'} or
+                type(row['stock_init_block']) is not int or row['stock_init_block'] not in counts or
+                type(row['pid']) is not int or row['pid'] <= 0 or type(row['result']) is not int or
+                type(row['args']) is not list or len(row['args']) != 6 or
+                any(type(value) is not int or not 0 <= value < 1 << 64 for value in row['args']) or
+                type(row['paths_hex']) is not list or len(row['paths_hex']) != counts[row['stock_init_block']] or
+                any(type(value) is not str or len(value) > 510 or re.fullmatch('(?:[0-9a-f]{2})*', value) is None
+                    for value in row['paths_hex'])):
             return False
     contexts = [r for r in rows if 'stock_init_task_context' in r]
     for row in contexts:
@@ -230,6 +241,7 @@ def main():
                 + before + '\n'
                 '            stock_init_trace_write(number, args, result);\n'
                 '            stock_init_trace_security(number, args, result, exec_path);\n'
+                '            stock_init_trace_block(number, args, result);\n'
                 '            stock_init_trace_result(number, args, result, p->regs.pc);\n')
     execution_text = execution_text.replace(before, observed)
     execution.write_text(execution_text)

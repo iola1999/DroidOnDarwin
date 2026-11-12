@@ -84,3 +84,32 @@ static void stock_init_trace_result(long number, const long *args, long result, 
            number, pc, (unsigned long)args[0], (unsigned long)args[1], (unsigned long)args[2],
            (unsigned long)args[3], (unsigned long)args[4], (unsigned long)args[5], result);
 }
+
+static void stock_init_trace_block(long number, const long *args, long result)
+{
+    if (number != 29 && number != 33 && number != 40 && number != 56)
+        return;
+    unsigned char paths[3][256] = {{0}};
+    unsigned count = number == 40 ? 3 : number == 29 ? 0
+                                                     : 1;
+    for (unsigned i = 0; i < count; ++i) {
+        unsigned long address = number == 40 ? args[i] : args[1];
+        if (address && stock_init_trace_string(paths[i], address, sizeof(paths[i])))
+            return;
+    }
+    if ((number == 33 || number == 56) && !strstr((char *)paths[0], "loop") &&
+        !strstr((char *)paths[0], "device-mapper") && !strstr((char *)paths[0], "/dev/dm-"))
+        return;
+    long pid_args[6] = {0};
+    printf("{\"stock_init_block\":%ld,\"pid\":%ld,\"result\":%ld,\"args\":[%lu,%lu,%lu,%lu,%lu,%lu],\"paths_hex\":[",
+           number, run_syscall(172, pid_args), result,
+           (unsigned long)args[0], (unsigned long)args[1], (unsigned long)args[2],
+           (unsigned long)args[3], (unsigned long)args[4], (unsigned long)args[5]);
+    for (unsigned i = 0; i < count; ++i) {
+        printf("%s\"", i ? "," : "");
+        for (size_t j = 0; j < strlen((char *)paths[i]); ++j)
+            printf("%02x", paths[i][j]);
+        putchar('"');
+    }
+    puts("]}");
+}

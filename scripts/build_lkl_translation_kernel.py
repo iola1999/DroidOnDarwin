@@ -101,7 +101,11 @@ def build(cpus=1, high_res_timers=False, guest_page_bytes=16384):
         probe_lkl.run(command, env=env, stdout=log, stderr=subprocess.STDOUT, timeout=600)
 
     with (out / 'build.log').open('w') as log:
+        run([source / 'scripts/config', '--file', build_dir / '.config',
+             *[argument for name in probe_lkl.BLOCK_OPTIONS for argument in ('-e', name)]], log)
         run([*make, 'olddefconfig'], log)
+        if any('CONFIG_' + name + '=y\n' not in (build_dir / '.config').read_text() for name in probe_lkl.BLOCK_OPTIONS):
+            raise RuntimeError('生成的翻译内核配置缺少 Android 块设备支持')
         if ('CONFIG_HIGH_RES_TIMERS=y' in (build_dir / '.config').read_text()) != high_res_timers:
             raise RuntimeError('生成的内核配置与请求的定时器变体不一致')
         run([*make, '-j8', 'all'], log)

@@ -25,6 +25,7 @@ BUILD = OUT / "lkl-build"
 EXPERIMENT = ROOT / "experiments/native-linux"
 REVISION = "d0f76a77e8c2ca68bd7d96190b8da09040eab072"
 SMP = False
+BLOCK_OPTIONS = ("BLOCK", "BLK_DEV", "BLK_DEV_LOOP", "BLK_DEV_WRITE_MOUNTED", "MD", "BLK_DEV_DM", "DM_VERITY", "CRYPTO_SHA256")
 
 
 def run(args, **kwargs):
@@ -256,7 +257,8 @@ def main():
             options += ["MMU", "PRINTK", "NAMESPACES", "PID_NS", "POSIX_TIMERS", "ANDROID_BINDER_IPC", "ANDROID_BINDERFS", "MEMFD_CREATE", "TMPFS", "TMPFS_XATTR",
                         "NET", "UNIX", "INET", "AUDIT", "SECURITY", "SECURITY_NETWORK",
                         "SECURITY_SELINUX", "SECURITY_SELINUX_DEVELOP"]
-            options += ["BLOCK", "EXT4_FS", "EXT4_FS_SECURITY", "EXT4_FS_POSIX_ACL", "TMPFS_POSIX_ACL", "FUSE_FS", "CGROUPS", "MEMCG", "CGROUP_CPUACCT", "CGROUP_SCHED", "FAIR_GROUP_SCHED", "SECCOMP", "SECCOMP_FILTER", "PAGE_REPORTING", "INOTIFY_USER"]
+            options += list(BLOCK_OPTIONS)
+            options += ["EXT4_FS", "EXT4_FS_SECURITY", "EXT4_FS_POSIX_ACL", "TMPFS_POSIX_ACL", "FUSE_FS", "CGROUPS", "MEMCG", "CGROUP_CPUACCT", "CGROUP_SCHED", "FAIR_GROUP_SCHED", "SECCOMP", "SECCOMP_FILTER", "PAGE_REPORTING", "INOTIFY_USER"]
             options += ["INPUT", "INPUT_EVDEV", "INPUT_MISC", "INPUT_UINPUT"]
             options += ["PSI", "BPF_SYSCALL", "CGROUP_BPF", "NETFILTER", "NETFILTER_ADVANCED",
                         "NETFILTER_NETLINK_LOG", "IP_ADVANCED_ROUTER", "IP_MULTIPLE_TABLES",
@@ -283,6 +285,8 @@ def main():
         switches += [arg for name in ("KALLSYMS", "DEBUG_INFO", "SLUB_DEBUG", *([] if PROCESS else ["BLOCK"])) for arg in ("-d", name)]
         run([SOURCE / "scripts/config", "--file", BUILD / ".config", *switches], env=env)
         run([*make, "olddefconfig"], env=env, stdout=log, stderr=subprocess.STDOUT)
+        if PROCESS and any("CONFIG_" + name + "=y\n" not in (BUILD / ".config").read_text() for name in BLOCK_OPTIONS):
+            raise RuntimeError("生成的内核配置缺少 Android 块设备支持")
         if SMP:
             config = (BUILD / ".config").read_text()
             assert all(name + "=y\n" in config for name in ("CONFIG_SMP", "CONFIG_MMU", "CONFIG_MMU_GATHER_RCU_TABLE_FREE"))
