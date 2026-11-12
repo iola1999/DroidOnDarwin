@@ -1,0 +1,1529 @@
+{
+  "scope": "Fixed original HyperOS default-threshold JIT observation; single-call misses retained, bounded background load confirms execution; no whole-system performance claim",
+  "base_commit": "4e1b510f43a39730d0c400ccc01a3f9accaae963",
+  "worktree": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-hyperos-jit",
+  "environment": {
+    "cpu": "Apple M5 Ultra",
+    "macos": "ProductName:\t\tmacOS\nProductVersion:\t\t27.0\nBuildVersion:\t\t26A428\n",
+    "xcode": "Xcode 27.1\nBuild version 27A9275\n",
+    "parallel_functional_builds": true,
+    "performance_comparison": false
+  },
+  "existing_default_reference": {
+    "source_report": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/hyperos-art-main-exceptions-v2/summary.json",
+    "source_report_sha256": "73b59bdb287129769b10eda51485831888836b4ed487667afb742a579cfe0aa3",
+    "observe_jit": false,
+    "jit_mode": "default",
+    "guest_page_bytes": 4096,
+    "successful_entries": [
+      "cli",
+      "gcd"
+    ]
+  },
+  "prepared": {
+    "manifest": "work/hyperos-art-jit-prepared-v1/manifest.json",
+    "sha256": "69e26349d1a5028467ab395f196796065e71a4d097808d06882bda91a4fafc4c",
+    "input_manifest_sha256": "c9ec384e1eee4c754152fddaae8d351ff5f1adaafb86e5cdc88fb02f5f712d0a",
+    "dependencies_sha256": "3f10c62550991d55de0e7b2c67b8967c1cf1a75dcb019497f3f2d8e6043bb655",
+    "identity": {
+      "repository": "NEORUAA/HyperOS-AVD",
+      "commit": "9d7ddd3f046e89d33cb205b5fbbf6dc5b728155c",
+      "release": "v0.1.0-a16-hyperos3-fuxi-r1",
+      "provenance": "Third-party MysticGSI port",
+      "manifest_sha256": "7785f61d0e1846fa14d9f3af9db49c905a02604128747a0d617eeff381504ceb",
+      "parts": [
+        {
+          "name": "HyperOS-AVD-v0.1.0-macos-arm64.tar.gz.part001",
+          "size": 1610612736,
+          "sha256": "5ef3d16c8f02088d60b01024a39065398dd669ab50100ea9547cb64b83db95e9"
+        },
+        {
+          "name": "HyperOS-AVD-v0.1.0-macos-arm64.tar.gz.part002",
+          "size": 1610612736,
+          "sha256": "9ba2b360d0a28f95ba1e1fe4cd135706498a1ada75caa64ff6596b366c2c4b07"
+        },
+        {
+          "name": "HyperOS-AVD-v0.1.0-macos-arm64.tar.gz.part003",
+          "size": 493624687,
+          "sha256": "1b9fe789439b784e13303818faa568739f49ee45bed1389d12e9aec99f64888f"
+        }
+      ]
+    },
+    "original_files": 299,
+    "staging_files": 303,
+    "original_bytes": 166946345,
+    "source_files_hashes_verified": 299
+  },
+  "cases": [
+    {
+      "mode": "default",
+      "probe_returncode": 1,
+      "requested_entries": [
+        "cli",
+        "gcd"
+      ],
+      "completed_entries": [
+        "cli"
+      ],
+      "source_report": "work/native-linux-nce/hyperos-art-jit-default-observed-v1/summary.json",
+      "source_report_sha256": "a90d7c2258968931b15bc612f8b7d2422a93749a8c0ae65dbc6e3b075c45d155",
+      "source_and_build_hashes_verified": 119,
+      "configuration": {
+        "data_tbi": true,
+        "guest_layout": "sparse",
+        "code_memory": "dual",
+        "execution": "direct",
+        "direct": {
+          "mapping_entries": 256,
+          "route_entries": 256,
+          "selective_writes": false,
+          "reuse_code_checks": false,
+          "memory": "flat",
+          "code_watch": true,
+          "cross_page": true,
+          "route_epochs": false,
+          "retain_routes": false,
+          "memory_groups": false,
+          "native_exclusive": true,
+          "vector_table": false,
+          "simd_math": false
+        },
+        "mapping": "pte",
+        "sparse_scan": true,
+        "fault_prefetch": false,
+        "guest_page_bytes": 4096,
+        "host_page_bytes": 16384,
+        "workload": "stock-art",
+        "entries": [
+          "cli",
+          "gcd"
+        ],
+        "art_nterp": 1,
+        "cpus": 1,
+        "high_res_timers": false,
+        "online_cpus": 1,
+        "uaccess_stop": "all",
+        "parallel_profile": false,
+        "art_expanded_jit": 0,
+        "art_fast_baseline": 0,
+        "cache_invalidation": "pages",
+        "exec_cache": "full",
+        "tlb_invalidation": "full",
+        "linux_fastpath": 0,
+        "guest_ram_bytes": 1073741824,
+        "translation_cache_bytes": 16777216,
+        "instruction_batch": 50000,
+        "memory_interval_ms": 100,
+        "preemption": "instructions",
+        "timer_interval_ns": 2000000
+      },
+      "runs": [
+        {
+          "entry": "cli",
+          "iteration": 0,
+          "returncode": 0,
+          "validated": false,
+          "standard_jni_contract_validated": true,
+          "stock_art_inputs_unchanged": true,
+          "checks": [
+            {
+              "stock_art_check": "vm_absent",
+              "passed": true,
+              "observed": 0
+            },
+            {
+              "stock_art_check": "create_vm",
+              "passed": true,
+              "observed": 0
+            },
+            {
+              "stock_art_check": "load_dex",
+              "passed": true,
+              "observed": 1
+            },
+            {
+              "stock_art_check": "primitive_arguments",
+              "passed": true,
+              "observed": 1234605616436508552
+            },
+            {
+              "stock_art_check": "registered_natives",
+              "passed": true,
+              "observed": 1234605616436508552
+            },
+            {
+              "stock_art_check": "gc_observed",
+              "passed": true,
+              "observed": 1
+            },
+            {
+              "stock_art_check": "global_reference",
+              "passed": true,
+              "observed": 1234605616436508552
+            },
+            {
+              "stock_art_check": "array_storage",
+              "passed": true,
+              "observed": 47
+            },
+            {
+              "stock_art_check": "java_threads",
+              "passed": true,
+              "observed": 2000
+            },
+            {
+              "stock_art_check": "native_thread",
+              "passed": true,
+              "observed": 58
+            },
+            {
+              "stock_art_check": "java_exception",
+              "passed": true,
+              "observed": 1
+            },
+            {
+              "stock_art_check": "warmup_result",
+              "passed": true,
+              "observed": 340011506336
+            },
+            {
+              "stock_art_check": "implicit_null",
+              "passed": true,
+              "observed": 47
+            },
+            {
+              "stock_art_check": "stack_overflow",
+              "passed": true,
+              "observed": 47
+            },
+            {
+              "stock_art_check": "gc_live_references",
+              "passed": true,
+              "observed": 8386560
+            },
+            {
+              "stock_art_check": "destroy_vm",
+              "passed": true,
+              "observed": 0
+            }
+          ],
+          "warmup_rounds": [
+            {
+              "stock_art_warmup": 0,
+              "calls": 200000,
+              "wait_before_ms": 0,
+              "observed": 340011506336
+            }
+          ],
+          "exit": {
+            "stock_art_exit": true,
+            "success": true,
+            "exec_errno": 0,
+            "exit_code": 0,
+            "signal": 0,
+            "timed_out": false
+          },
+          "cleanup": {
+            "test": "translated_context_cleanup",
+            "passed": true,
+            "allocated": 12,
+            "freed": 12,
+            "maps": 0,
+            "revocations": 0,
+            "tlb_fills": 24511,
+            "faults": 11998,
+            "syscalls": 40732,
+            "preemptions": 11215
+          },
+          "markers": [
+            {
+              "execution_observation": "marker",
+              "sequence": 1,
+              "pid": 2,
+              "tid": 2,
+              "mm": 481047101440,
+              "name": "art-jit-begin",
+              "pending_vm_calls": 0
+            },
+            {
+              "execution_observation": "marker",
+              "sequence": 3675,
+              "pid": 2,
+              "tid": 2,
+              "mm": 481047101440,
+              "name": "art-jit-end",
+              "pending_vm_calls": 0
+            }
+          ],
+          "stock_art_jit_observation": {
+            "jit_execution_confirmed": false,
+            "scope": "Completed integer instruction within a stable ART JIT RX mapping; method identity unverified",
+            "error": null,
+            "samples": 3623,
+            "guest_faults": [],
+            "candidates": [
+              {
+                "start": 507236352,
+                "end": 540790784,
+                "permissions": "r-xs",
+                "offset": 33554432,
+                "device": "00:01",
+                "inode": 2,
+                "name": "/memfd:jit-cache (deleted)",
+                "invalidating_calls": [],
+                "completed_samples": 0
+              }
+            ],
+            "confirmed": [],
+            "identity": {
+              "pid": 2,
+              "tid": 2,
+              "mm": 481047101440
+            },
+            "window": [
+              1,
+              3675
+            ]
+          },
+          "stock_art_maps": [
+            {
+              "name": "before-vm",
+              "present": true,
+              "path": "work/native-linux-nce/hyperos-art-jit-default-observed-v1/cli-0-art/maps-before-vm.txt",
+              "bytes": 5899,
+              "sha256": "8ee41367d8d5995cea5f77317633cd770ef8817faad98f90c40a2b79ac2b2ed9",
+              "validated": true
+            },
+            {
+              "name": "after-vm",
+              "present": true,
+              "path": "work/native-linux-nce/hyperos-art-jit-default-observed-v1/cli-0-art/maps-after-vm.txt",
+              "bytes": 131634,
+              "sha256": "b05ccda903ae13d27fab0e7de7bc484f80f5a3061663f03c314ed3713443609f",
+              "validated": true
+            },
+            {
+              "name": "after-gc",
+              "present": true,
+              "path": "work/native-linux-nce/hyperos-art-jit-default-observed-v1/cli-0-art/maps-after-gc.txt",
+              "bytes": 132537,
+              "sha256": "501a9c55682e48cae5393feb99c25f89b35fd06ddf216e62004f164e416ad9be",
+              "validated": true
+            },
+            {
+              "name": "before-warmup",
+              "present": true,
+              "path": "work/native-linux-nce/hyperos-art-jit-default-observed-v1/cli-0-art/maps-before-warmup.txt",
+              "bytes": 132537,
+              "sha256": "501a9c55682e48cae5393feb99c25f89b35fd06ddf216e62004f164e416ad9be",
+              "validated": true
+            },
+            {
+              "name": "after-warmup",
+              "present": true,
+              "path": "work/native-linux-nce/hyperos-art-jit-default-observed-v1/cli-0-art/maps-after-warmup.txt",
+              "bytes": 132537,
+              "sha256": "501a9c55682e48cae5393feb99c25f89b35fd06ddf216e62004f164e416ad9be",
+              "validated": true
+            }
+          ],
+          "compiled_methods": [],
+          "jit_shutdown_statistics": [],
+          "stdout": {
+            "path": "work/native-linux-nce/hyperos-art-jit-default-observed-v1/cli-0.jsonl",
+            "sha256": "6aa300807041a0a0056aebee9eff9728613a2e2c23741b78af8a7fd60921b9b5"
+          },
+          "stderr": {
+            "path": "work/native-linux-nce/hyperos-art-jit-default-observed-v1/cli-0.log",
+            "sha256": "6b63d4439b607d284a2351289d05ca165a1bf56fca3c991ad7fc5958fd3c029d"
+          }
+        }
+      ],
+      "probe_command": [
+        "python3",
+        "-B",
+        "scripts/probe_lkl_translation.py",
+        "--guest-page-bytes",
+        "4096",
+        "--guest-layout",
+        "sparse",
+        "--data-tbi",
+        "1",
+        "--mapping",
+        "pte",
+        "--execution",
+        "direct",
+        "--direct-memory",
+        "flat",
+        "--direct-code-watch",
+        "1",
+        "--direct-cross-page",
+        "1",
+        "--direct-native-exclusive",
+        "1",
+        "--code-memory",
+        "dual",
+        "--reuse-engine-build",
+        "--workload",
+        "stock-art",
+        "--stock-art-directory",
+        "work/hyperos-art-jit-prepared-v1",
+        "--stock-art-observe-jit",
+        "1",
+        "--stock-art-jit-mode",
+        "default",
+        "--entry",
+        "both",
+        "--output",
+        "work/native-linux-nce/hyperos-art-jit-default-observed-v1"
+      ]
+    },
+    {
+      "mode": "default",
+      "probe_returncode": 1,
+      "requested_entries": [
+        "gcd"
+      ],
+      "completed_entries": [
+        "gcd"
+      ],
+      "source_report": "work/native-linux-nce/hyperos-art-jit-default-observed-gcd-v1/summary.json",
+      "source_report_sha256": "8c0266acd04ed6a1c5ecbe6df6ddbc84be72bc25cd714624a8586f0e45b38561",
+      "source_and_build_hashes_verified": 119,
+      "configuration": {
+        "data_tbi": true,
+        "guest_layout": "sparse",
+        "code_memory": "dual",
+        "execution": "direct",
+        "direct": {
+          "mapping_entries": 256,
+          "route_entries": 256,
+          "selective_writes": false,
+          "reuse_code_checks": false,
+          "memory": "flat",
+          "code_watch": true,
+          "cross_page": true,
+          "route_epochs": false,
+          "retain_routes": false,
+          "memory_groups": false,
+          "native_exclusive": true,
+          "vector_table": false,
+          "simd_math": false
+        },
+        "mapping": "pte",
+        "sparse_scan": true,
+        "fault_prefetch": false,
+        "guest_page_bytes": 4096,
+        "host_page_bytes": 16384,
+        "workload": "stock-art",
+        "entries": [
+          "gcd"
+        ],
+        "art_nterp": 1,
+        "cpus": 1,
+        "high_res_timers": false,
+        "online_cpus": 1,
+        "uaccess_stop": "all",
+        "parallel_profile": false,
+        "art_expanded_jit": 0,
+        "art_fast_baseline": 0,
+        "cache_invalidation": "pages",
+        "exec_cache": "full",
+        "tlb_invalidation": "full",
+        "linux_fastpath": 0,
+        "guest_ram_bytes": 1073741824,
+        "translation_cache_bytes": 16777216,
+        "instruction_batch": 50000,
+        "memory_interval_ms": 100,
+        "preemption": "instructions",
+        "timer_interval_ns": 2000000
+      },
+      "runs": [
+        {
+          "entry": "gcd",
+          "iteration": 0,
+          "returncode": 0,
+          "validated": false,
+          "standard_jni_contract_validated": true,
+          "stock_art_inputs_unchanged": true,
+          "checks": [
+            {
+              "stock_art_check": "vm_absent",
+              "passed": true,
+              "observed": 0
+            },
+            {
+              "stock_art_check": "create_vm",
+              "passed": true,
+              "observed": 0
+            },
+            {
+              "stock_art_check": "load_dex",
+              "passed": true,
+              "observed": 1
+            },
+            {
+              "stock_art_check": "primitive_arguments",
+              "passed": true,
+              "observed": 1234605616436508552
+            },
+            {
+              "stock_art_check": "registered_natives",
+              "passed": true,
+              "observed": 1234605616436508552
+            },
+            {
+              "stock_art_check": "gc_observed",
+              "passed": true,
+              "observed": 1
+            },
+            {
+              "stock_art_check": "global_reference",
+              "passed": true,
+              "observed": 1234605616436508552
+            },
+            {
+              "stock_art_check": "array_storage",
+              "passed": true,
+              "observed": 47
+            },
+            {
+              "stock_art_check": "java_threads",
+              "passed": true,
+              "observed": 2000
+            },
+            {
+              "stock_art_check": "native_thread",
+              "passed": true,
+              "observed": 58
+            },
+            {
+              "stock_art_check": "java_exception",
+              "passed": true,
+              "observed": 1
+            },
+            {
+              "stock_art_check": "warmup_result",
+              "passed": true,
+              "observed": 340011506336
+            },
+            {
+              "stock_art_check": "implicit_null",
+              "passed": true,
+              "observed": 47
+            },
+            {
+              "stock_art_check": "stack_overflow",
+              "passed": true,
+              "observed": 47
+            },
+            {
+              "stock_art_check": "gc_live_references",
+              "passed": true,
+              "observed": 8386560
+            },
+            {
+              "stock_art_check": "destroy_vm",
+              "passed": true,
+              "observed": 0
+            }
+          ],
+          "warmup_rounds": [
+            {
+              "stock_art_warmup": 0,
+              "calls": 200000,
+              "wait_before_ms": 0,
+              "observed": 340011506336
+            }
+          ],
+          "exit": {
+            "stock_art_exit": true,
+            "success": true,
+            "exec_errno": 0,
+            "exit_code": 0,
+            "signal": 0,
+            "timed_out": false
+          },
+          "cleanup": {
+            "test": "translated_context_cleanup",
+            "passed": true,
+            "allocated": 12,
+            "freed": 12,
+            "maps": 0,
+            "revocations": 0,
+            "tlb_fills": 24753,
+            "faults": 11910,
+            "syscalls": 2562665,
+            "preemptions": 11224
+          },
+          "markers": [
+            {
+              "execution_observation": "marker",
+              "sequence": 1,
+              "pid": 2,
+              "tid": 2,
+              "mm": 481047101440,
+              "name": "art-jit-begin",
+              "pending_vm_calls": 0
+            },
+            {
+              "execution_observation": "marker",
+              "sequence": 3681,
+              "pid": 2,
+              "tid": 2,
+              "mm": 481047101440,
+              "name": "art-jit-end",
+              "pending_vm_calls": 0
+            }
+          ],
+          "stock_art_jit_observation": {
+            "jit_execution_confirmed": false,
+            "scope": "Completed integer instruction within a stable ART JIT RX mapping; method identity unverified",
+            "error": null,
+            "samples": 3628,
+            "guest_faults": [],
+            "candidates": [
+              {
+                "start": 335544320,
+                "end": 369098752,
+                "permissions": "r-xs",
+                "offset": 33554432,
+                "device": "00:01",
+                "inode": 2,
+                "name": "/memfd:jit-cache (deleted)",
+                "invalidating_calls": [],
+                "completed_samples": 0
+              }
+            ],
+            "confirmed": [],
+            "identity": {
+              "pid": 2,
+              "tid": 2,
+              "mm": 481047101440
+            },
+            "window": [
+              1,
+              3681
+            ]
+          },
+          "stock_art_maps": [
+            {
+              "name": "before-vm",
+              "present": true,
+              "path": "work/native-linux-nce/hyperos-art-jit-default-observed-gcd-v1/gcd-0-art/maps-before-vm.txt",
+              "bytes": 5899,
+              "sha256": "3b31522e7f69b59ab1676983db8e8e64558551c58be7fe617bbcc6b7918ac567",
+              "validated": true
+            },
+            {
+              "name": "after-vm",
+              "present": true,
+              "path": "work/native-linux-nce/hyperos-art-jit-default-observed-gcd-v1/gcd-0-art/maps-after-vm.txt",
+              "bytes": 131681,
+              "sha256": "610d0462c9b209eb49e0c78efd20acadde41e188b561d21e0b6ac7cb9953046e",
+              "validated": true
+            },
+            {
+              "name": "after-gc",
+              "present": true,
+              "path": "work/native-linux-nce/hyperos-art-jit-default-observed-gcd-v1/gcd-0-art/maps-after-gc.txt",
+              "bytes": 132627,
+              "sha256": "e9f05d1c3a21503833760b523be738e21e99c6afa617783b76afecbbdb6d6b4a",
+              "validated": true
+            },
+            {
+              "name": "before-warmup",
+              "present": true,
+              "path": "work/native-linux-nce/hyperos-art-jit-default-observed-gcd-v1/gcd-0-art/maps-before-warmup.txt",
+              "bytes": 132627,
+              "sha256": "e9f05d1c3a21503833760b523be738e21e99c6afa617783b76afecbbdb6d6b4a",
+              "validated": true
+            },
+            {
+              "name": "after-warmup",
+              "present": true,
+              "path": "work/native-linux-nce/hyperos-art-jit-default-observed-gcd-v1/gcd-0-art/maps-after-warmup.txt",
+              "bytes": 132627,
+              "sha256": "e9f05d1c3a21503833760b523be738e21e99c6afa617783b76afecbbdb6d6b4a",
+              "validated": true
+            }
+          ],
+          "compiled_methods": [],
+          "jit_shutdown_statistics": [],
+          "stdout": {
+            "path": "work/native-linux-nce/hyperos-art-jit-default-observed-gcd-v1/gcd-0.jsonl",
+            "sha256": "8c4c752fa7a649adc7ac5ef7bf6766ca06c3c2a3f5083eccff89077c655de6d8"
+          },
+          "stderr": {
+            "path": "work/native-linux-nce/hyperos-art-jit-default-observed-gcd-v1/gcd-0.log",
+            "sha256": "a047df81f0e45e962b9a84fab2ad63aa36d6ccef82de73da4156fc6383a03151"
+          }
+        }
+      ],
+      "probe_command": [
+        "python3",
+        "-B",
+        "scripts/probe_lkl_translation.py",
+        "--guest-page-bytes",
+        "4096",
+        "--guest-layout",
+        "sparse",
+        "--data-tbi",
+        "1",
+        "--mapping",
+        "pte",
+        "--execution",
+        "direct",
+        "--direct-memory",
+        "flat",
+        "--direct-code-watch",
+        "1",
+        "--direct-cross-page",
+        "1",
+        "--direct-native-exclusive",
+        "1",
+        "--code-memory",
+        "dual",
+        "--reuse-engine-build",
+        "--workload",
+        "stock-art",
+        "--stock-art-directory",
+        "work/hyperos-art-jit-prepared-v1",
+        "--stock-art-observe-jit",
+        "1",
+        "--stock-art-jit-mode",
+        "default",
+        "--entry",
+        "gcd",
+        "--output",
+        "work/native-linux-nce/hyperos-art-jit-default-observed-gcd-v1"
+      ]
+    },
+    {
+      "mode": "background",
+      "probe_returncode": 0,
+      "requested_entries": [
+        "cli",
+        "gcd"
+      ],
+      "completed_entries": [
+        "cli",
+        "gcd"
+      ],
+      "source_report": "work/native-linux-nce/hyperos-art-jit-background-observed-v1/summary.json",
+      "source_report_sha256": "cbabe1d8d47b05959a100ec6f42cf2a6929c46126e0092bd7551c12f5c26b567",
+      "source_and_build_hashes_verified": 119,
+      "configuration": {
+        "data_tbi": true,
+        "guest_layout": "sparse",
+        "code_memory": "dual",
+        "execution": "direct",
+        "direct": {
+          "mapping_entries": 256,
+          "route_entries": 256,
+          "selective_writes": false,
+          "reuse_code_checks": false,
+          "memory": "flat",
+          "code_watch": true,
+          "cross_page": true,
+          "route_epochs": false,
+          "retain_routes": false,
+          "memory_groups": false,
+          "native_exclusive": true,
+          "vector_table": false,
+          "simd_math": false
+        },
+        "mapping": "pte",
+        "sparse_scan": true,
+        "fault_prefetch": false,
+        "guest_page_bytes": 4096,
+        "host_page_bytes": 16384,
+        "workload": "stock-art",
+        "entries": [
+          "cli",
+          "gcd"
+        ],
+        "art_nterp": 1,
+        "cpus": 1,
+        "high_res_timers": false,
+        "online_cpus": 1,
+        "uaccess_stop": "all",
+        "parallel_profile": false,
+        "art_expanded_jit": 0,
+        "art_fast_baseline": 0,
+        "cache_invalidation": "pages",
+        "exec_cache": "full",
+        "tlb_invalidation": "full",
+        "linux_fastpath": 0,
+        "guest_ram_bytes": 1073741824,
+        "translation_cache_bytes": 16777216,
+        "instruction_batch": 50000,
+        "memory_interval_ms": 100,
+        "preemption": "instructions",
+        "timer_interval_ns": 2000000
+      },
+      "runs": [
+        {
+          "entry": "cli",
+          "iteration": 0,
+          "returncode": 0,
+          "validated": true,
+          "standard_jni_contract_validated": true,
+          "stock_art_inputs_unchanged": true,
+          "checks": [
+            {
+              "stock_art_check": "vm_absent",
+              "passed": true,
+              "observed": 0
+            },
+            {
+              "stock_art_check": "create_vm",
+              "passed": true,
+              "observed": 0
+            },
+            {
+              "stock_art_check": "load_dex",
+              "passed": true,
+              "observed": 1
+            },
+            {
+              "stock_art_check": "primitive_arguments",
+              "passed": true,
+              "observed": 1234605616436508552
+            },
+            {
+              "stock_art_check": "registered_natives",
+              "passed": true,
+              "observed": 1234605616436508552
+            },
+            {
+              "stock_art_check": "gc_observed",
+              "passed": true,
+              "observed": 1
+            },
+            {
+              "stock_art_check": "global_reference",
+              "passed": true,
+              "observed": 1234605616436508552
+            },
+            {
+              "stock_art_check": "array_storage",
+              "passed": true,
+              "observed": 47
+            },
+            {
+              "stock_art_check": "java_threads",
+              "passed": true,
+              "observed": 2000
+            },
+            {
+              "stock_art_check": "native_thread",
+              "passed": true,
+              "observed": 58
+            },
+            {
+              "stock_art_check": "java_exception",
+              "passed": true,
+              "observed": 1
+            },
+            {
+              "stock_art_check": "warmup_result",
+              "passed": true,
+              "observed": 340011506336
+            },
+            {
+              "stock_art_check": "implicit_null",
+              "passed": true,
+              "observed": 47
+            },
+            {
+              "stock_art_check": "stack_overflow",
+              "passed": true,
+              "observed": 47
+            },
+            {
+              "stock_art_check": "gc_live_references",
+              "passed": true,
+              "observed": 8386560
+            },
+            {
+              "stock_art_check": "destroy_vm",
+              "passed": true,
+              "observed": 0
+            }
+          ],
+          "warmup_rounds": [
+            {
+              "stock_art_warmup": 0,
+              "calls": 200000,
+              "wait_before_ms": 0,
+              "observed": 340011506336
+            },
+            {
+              "stock_art_warmup": 1,
+              "calls": 200000,
+              "wait_before_ms": 200,
+              "observed": 340011506336
+            },
+            {
+              "stock_art_warmup": 2,
+              "calls": 200000,
+              "wait_before_ms": 200,
+              "observed": 340011506336
+            },
+            {
+              "stock_art_warmup": 3,
+              "calls": 200000,
+              "wait_before_ms": 200,
+              "observed": 340011506336
+            },
+            {
+              "stock_art_warmup": 4,
+              "calls": 200000,
+              "wait_before_ms": 200,
+              "observed": 340011506336
+            },
+            {
+              "stock_art_warmup": 5,
+              "calls": 200000,
+              "wait_before_ms": 200,
+              "observed": 340011506336
+            },
+            {
+              "stock_art_warmup": 6,
+              "calls": 200000,
+              "wait_before_ms": 200,
+              "observed": 340011506336
+            },
+            {
+              "stock_art_warmup": 7,
+              "calls": 200000,
+              "wait_before_ms": 200,
+              "observed": 340011506336
+            },
+            {
+              "stock_art_warmup": 8,
+              "calls": 200000,
+              "wait_before_ms": 200,
+              "observed": 340011506336
+            },
+            {
+              "stock_art_warmup": 9,
+              "calls": 200000,
+              "wait_before_ms": 200,
+              "observed": 340011506336
+            }
+          ],
+          "exit": {
+            "stock_art_exit": true,
+            "success": true,
+            "exec_errno": 0,
+            "exit_code": 0,
+            "signal": 0,
+            "timed_out": false
+          },
+          "cleanup": {
+            "test": "translated_context_cleanup",
+            "passed": true,
+            "allocated": 12,
+            "freed": 12,
+            "maps": 0,
+            "revocations": 0,
+            "tlb_fills": 25743,
+            "faults": 12034,
+            "syscalls": 41201,
+            "preemptions": 11592
+          },
+          "markers": [
+            {
+              "execution_observation": "marker",
+              "sequence": 1,
+              "pid": 2,
+              "tid": 2,
+              "mm": 481047101440,
+              "name": "art-jit-begin",
+              "pending_vm_calls": 0
+            },
+            {
+              "execution_observation": "marker",
+              "sequence": 4019,
+              "pid": 2,
+              "tid": 2,
+              "mm": 481047101440,
+              "name": "art-jit-end",
+              "pending_vm_calls": 0
+            }
+          ],
+          "stock_art_jit_observation": {
+            "jit_execution_confirmed": true,
+            "scope": "Completed integer instruction within a stable ART JIT RX mapping; method identity unverified",
+            "error": null,
+            "samples": 3961,
+            "guest_faults": [],
+            "candidates": [
+              {
+                "start": 677498880,
+                "end": 711053312,
+                "permissions": "r-xs",
+                "offset": 33554432,
+                "device": "00:01",
+                "inode": 2,
+                "name": "/memfd:jit-cache (deleted)",
+                "invalidating_calls": [],
+                "completed_samples": 324
+              }
+            ],
+            "confirmed": [
+              {
+                "start": 677498880,
+                "end": 711053312,
+                "permissions": "r-xs",
+                "offset": 33554432,
+                "device": "00:01",
+                "inode": 2,
+                "name": "/memfd:jit-cache (deleted)",
+                "invalidating_calls": [],
+                "completed_samples": 324,
+                "first": {
+                  "execution_observation": "integer_completed",
+                  "sequence": 1169,
+                  "pid": 2,
+                  "tid": 2,
+                  "mm": 481047101440,
+                  "pc": 677502500,
+                  "next_pc": 677502508
+                },
+                "last": {
+                  "execution_observation": "integer_completed",
+                  "sequence": 1508,
+                  "pid": 2,
+                  "tid": 2,
+                  "mm": 481047101440,
+                  "pc": 677502500,
+                  "next_pc": 677502508
+                }
+              }
+            ],
+            "identity": {
+              "pid": 2,
+              "tid": 2,
+              "mm": 481047101440
+            },
+            "window": [
+              1,
+              4019
+            ]
+          },
+          "stock_art_maps": [
+            {
+              "name": "before-vm",
+              "present": true,
+              "path": "work/native-linux-nce/hyperos-art-jit-background-observed-v1/cli-0-art/maps-before-vm.txt",
+              "bytes": 5891,
+              "sha256": "538f05c50c0476c661f2a246e50f1aba74831461c01345dbd7ac29f7db3accb4",
+              "validated": true
+            },
+            {
+              "name": "after-vm",
+              "present": true,
+              "path": "work/native-linux-nce/hyperos-art-jit-background-observed-v1/cli-0-art/maps-after-vm.txt",
+              "bytes": 131595,
+              "sha256": "e2d0e14b1949946a7d7d8d92a05e402e6398cd77cf827e0ec0548325b3aa4cfd",
+              "validated": true
+            },
+            {
+              "name": "after-gc",
+              "present": true,
+              "path": "work/native-linux-nce/hyperos-art-jit-background-observed-v1/cli-0-art/maps-after-gc.txt",
+              "bytes": 132498,
+              "sha256": "3af81710af3a947b4fb43c5fa15b29edf1e98d89def33ac80cdf19158edca400",
+              "validated": true
+            },
+            {
+              "name": "before-warmup",
+              "present": true,
+              "path": "work/native-linux-nce/hyperos-art-jit-background-observed-v1/cli-0-art/maps-before-warmup.txt",
+              "bytes": 132498,
+              "sha256": "3af81710af3a947b4fb43c5fa15b29edf1e98d89def33ac80cdf19158edca400",
+              "validated": true
+            },
+            {
+              "name": "after-warmup",
+              "present": true,
+              "path": "work/native-linux-nce/hyperos-art-jit-background-observed-v1/cli-0-art/maps-after-warmup.txt",
+              "bytes": 132498,
+              "sha256": "3af81710af3a947b4fb43c5fa15b29edf1e98d89def33ac80cdf19158edca400",
+              "validated": true
+            }
+          ],
+          "compiled_methods": [
+            {
+              "method": "StockArtProbe.warmup",
+              "range": [
+                677502480,
+                677502544
+              ],
+              "completed_samples": 324,
+              "first_completed": {
+                "execution_observation": "integer_completed",
+                "sequence": 1169,
+                "pid": 2,
+                "tid": 2,
+                "mm": 481047101440,
+                "pc": 677502500,
+                "next_pc": 677502508
+              },
+              "last_completed": {
+                "execution_observation": "integer_completed",
+                "sequence": 1508,
+                "pid": 2,
+                "tid": 2,
+                "mm": 481047101440,
+                "pc": 677502500,
+                "next_pc": 677502508
+              },
+              "log": [
+                "01-30 19:04:06.298     2     3 I stock-art-probe: jit.cc:236 Compiling method long StockArtProbe.warmup(int) kind=Baseline",
+                "01-30 19:04:06.299     2     3 I stock-art-probe: jit_code_cache.cc:944 JIT added (kind=Optimized) long StockArtProbe.warmup(int)@0x2c72a11e0 ccache_size=2576B:  dcache_size=15KB: 0x2861de10,0x2861de50",
+                "01-30 19:04:06.299     2     3 I stock-art-probe: jit_compiler.cc:215 Compilation of long StockArtProbe.warmup(int) took 1.919ms"
+              ]
+            },
+            {
+              "method": "StockArtProbe.hot",
+              "range": [
+                677502576,
+                677502600
+              ],
+              "completed_samples": 0,
+              "first_completed": null,
+              "last_completed": null,
+              "log": [
+                "01-30 19:04:06.300     2     3 I stock-art-probe: jit.cc:236 Compiling method int StockArtProbe.hot(int) kind=Baseline",
+                "01-30 19:04:06.300     2     3 I stock-art-probe: jit_code_cache.cc:944 JIT added (kind=Optimized) int StockArtProbe.hot(int)@0x2c72a10a0 ccache_size=2616B:  dcache_size=16KB: 0x2861de70,0x2861de88",
+                "01-30 19:04:06.300     2     3 I stock-art-probe: jit_compiler.cc:215 Compilation of int StockArtProbe.hot(int) took 296us"
+              ]
+            }
+          ],
+          "jit_shutdown_statistics": [
+            "Total number of JIT baseline compilations: 2",
+            "Total number of JIT optimized compilations: 25",
+            "Total number of JIT compilations for on stack replacement: 0",
+            "Total number of JIT code cache collections: 0"
+          ],
+          "stdout": {
+            "path": "work/native-linux-nce/hyperos-art-jit-background-observed-v1/cli-0.jsonl",
+            "sha256": "d43b0750da78aa344198cca96bb5495abde644e3fdd7dd66abee8787f43e80b9"
+          },
+          "stderr": {
+            "path": "work/native-linux-nce/hyperos-art-jit-background-observed-v1/cli-0.log",
+            "sha256": "80e99a2b68ef0606d96dee6d1e712939743a0036de4791e7adbb93b5d906c2bc"
+          }
+        },
+        {
+          "entry": "gcd",
+          "iteration": 0,
+          "returncode": 0,
+          "validated": true,
+          "standard_jni_contract_validated": true,
+          "stock_art_inputs_unchanged": true,
+          "checks": [
+            {
+              "stock_art_check": "vm_absent",
+              "passed": true,
+              "observed": 0
+            },
+            {
+              "stock_art_check": "create_vm",
+              "passed": true,
+              "observed": 0
+            },
+            {
+              "stock_art_check": "load_dex",
+              "passed": true,
+              "observed": 1
+            },
+            {
+              "stock_art_check": "primitive_arguments",
+              "passed": true,
+              "observed": 1234605616436508552
+            },
+            {
+              "stock_art_check": "registered_natives",
+              "passed": true,
+              "observed": 1234605616436508552
+            },
+            {
+              "stock_art_check": "gc_observed",
+              "passed": true,
+              "observed": 1
+            },
+            {
+              "stock_art_check": "global_reference",
+              "passed": true,
+              "observed": 1234605616436508552
+            },
+            {
+              "stock_art_check": "array_storage",
+              "passed": true,
+              "observed": 47
+            },
+            {
+              "stock_art_check": "java_threads",
+              "passed": true,
+              "observed": 2000
+            },
+            {
+              "stock_art_check": "native_thread",
+              "passed": true,
+              "observed": 58
+            },
+            {
+              "stock_art_check": "java_exception",
+              "passed": true,
+              "observed": 1
+            },
+            {
+              "stock_art_check": "warmup_result",
+              "passed": true,
+              "observed": 340011506336
+            },
+            {
+              "stock_art_check": "implicit_null",
+              "passed": true,
+              "observed": 47
+            },
+            {
+              "stock_art_check": "stack_overflow",
+              "passed": true,
+              "observed": 47
+            },
+            {
+              "stock_art_check": "gc_live_references",
+              "passed": true,
+              "observed": 8386560
+            },
+            {
+              "stock_art_check": "destroy_vm",
+              "passed": true,
+              "observed": 0
+            }
+          ],
+          "warmup_rounds": [
+            {
+              "stock_art_warmup": 0,
+              "calls": 200000,
+              "wait_before_ms": 0,
+              "observed": 340011506336
+            },
+            {
+              "stock_art_warmup": 1,
+              "calls": 200000,
+              "wait_before_ms": 200,
+              "observed": 340011506336
+            },
+            {
+              "stock_art_warmup": 2,
+              "calls": 200000,
+              "wait_before_ms": 200,
+              "observed": 340011506336
+            },
+            {
+              "stock_art_warmup": 3,
+              "calls": 200000,
+              "wait_before_ms": 200,
+              "observed": 340011506336
+            },
+            {
+              "stock_art_warmup": 4,
+              "calls": 200000,
+              "wait_before_ms": 200,
+              "observed": 340011506336
+            },
+            {
+              "stock_art_warmup": 5,
+              "calls": 200000,
+              "wait_before_ms": 200,
+              "observed": 340011506336
+            },
+            {
+              "stock_art_warmup": 6,
+              "calls": 200000,
+              "wait_before_ms": 200,
+              "observed": 340011506336
+            },
+            {
+              "stock_art_warmup": 7,
+              "calls": 200000,
+              "wait_before_ms": 200,
+              "observed": 340011506336
+            },
+            {
+              "stock_art_warmup": 8,
+              "calls": 200000,
+              "wait_before_ms": 200,
+              "observed": 340011506336
+            },
+            {
+              "stock_art_warmup": 9,
+              "calls": 200000,
+              "wait_before_ms": 200,
+              "observed": 340011506336
+            }
+          ],
+          "exit": {
+            "stock_art_exit": true,
+            "success": true,
+            "exec_errno": 0,
+            "exit_code": 0,
+            "signal": 0,
+            "timed_out": false
+          },
+          "cleanup": {
+            "test": "translated_context_cleanup",
+            "passed": true,
+            "allocated": 12,
+            "freed": 12,
+            "maps": 0,
+            "revocations": 0,
+            "tlb_fills": 25842,
+            "faults": 11933,
+            "syscalls": 2358433,
+            "preemptions": 11590
+          },
+          "markers": [
+            {
+              "execution_observation": "marker",
+              "sequence": 1,
+              "pid": 2,
+              "tid": 2,
+              "mm": 481047101440,
+              "name": "art-jit-begin",
+              "pending_vm_calls": 0
+            },
+            {
+              "execution_observation": "marker",
+              "sequence": 4021,
+              "pid": 2,
+              "tid": 2,
+              "mm": 481047101440,
+              "name": "art-jit-end",
+              "pending_vm_calls": 0
+            }
+          ],
+          "stock_art_jit_observation": {
+            "jit_execution_confirmed": true,
+            "scope": "Completed integer instruction within a stable ART JIT RX mapping; method identity unverified",
+            "error": null,
+            "samples": 3964,
+            "guest_faults": [],
+            "candidates": [
+              {
+                "start": 335544320,
+                "end": 369098752,
+                "permissions": "r-xs",
+                "offset": 33554432,
+                "device": "00:01",
+                "inode": 2,
+                "name": "/memfd:jit-cache (deleted)",
+                "invalidating_calls": [],
+                "completed_samples": 324
+              }
+            ],
+            "confirmed": [
+              {
+                "start": 335544320,
+                "end": 369098752,
+                "permissions": "r-xs",
+                "offset": 33554432,
+                "device": "00:01",
+                "inode": 2,
+                "name": "/memfd:jit-cache (deleted)",
+                "invalidating_calls": [],
+                "completed_samples": 324,
+                "first": {
+                  "execution_observation": "integer_completed",
+                  "sequence": 1168,
+                  "pid": 2,
+                  "tid": 2,
+                  "mm": 481047101440,
+                  "pc": 335547940,
+                  "next_pc": 335547948
+                },
+                "last": {
+                  "execution_observation": "integer_completed",
+                  "sequence": 1507,
+                  "pid": 2,
+                  "tid": 2,
+                  "mm": 481047101440,
+                  "pc": 335547940,
+                  "next_pc": 335547948
+                }
+              }
+            ],
+            "identity": {
+              "pid": 2,
+              "tid": 2,
+              "mm": 481047101440
+            },
+            "window": [
+              1,
+              4021
+            ]
+          },
+          "stock_art_maps": [
+            {
+              "name": "before-vm",
+              "present": true,
+              "path": "work/native-linux-nce/hyperos-art-jit-background-observed-v1/gcd-0-art/maps-before-vm.txt",
+              "bytes": 5809,
+              "sha256": "4c132313d8bee3c6310a39cbbbf08c45751fe1a423e242c52ffe6422e01a5545",
+              "validated": true
+            },
+            {
+              "name": "after-vm",
+              "present": true,
+              "path": "work/native-linux-nce/hyperos-art-jit-background-observed-v1/gcd-0-art/maps-after-vm.txt",
+              "bytes": 131376,
+              "sha256": "48fc5442018d136a1f694d7cf3c0e3d8cc4b3fc6b1cfb3e47e00c12f91afc650",
+              "validated": true
+            },
+            {
+              "name": "after-gc",
+              "present": true,
+              "path": "work/native-linux-nce/hyperos-art-jit-background-observed-v1/gcd-0-art/maps-after-gc.txt",
+              "bytes": 132279,
+              "sha256": "7d86cee7b73d989e722b8ad0e260aecc41df50f6ecf1553a15871da6855998c0",
+              "validated": true
+            },
+            {
+              "name": "before-warmup",
+              "present": true,
+              "path": "work/native-linux-nce/hyperos-art-jit-background-observed-v1/gcd-0-art/maps-before-warmup.txt",
+              "bytes": 132279,
+              "sha256": "7d86cee7b73d989e722b8ad0e260aecc41df50f6ecf1553a15871da6855998c0",
+              "validated": true
+            },
+            {
+              "name": "after-warmup",
+              "present": true,
+              "path": "work/native-linux-nce/hyperos-art-jit-background-observed-v1/gcd-0-art/maps-after-warmup.txt",
+              "bytes": 132279,
+              "sha256": "7d86cee7b73d989e722b8ad0e260aecc41df50f6ecf1553a15871da6855998c0",
+              "validated": true
+            }
+          ],
+          "compiled_methods": [
+            {
+              "method": "StockArtProbe.warmup",
+              "range": [
+                335547920,
+                335547984
+              ],
+              "completed_samples": 324,
+              "first_completed": {
+                "execution_observation": "integer_completed",
+                "sequence": 1168,
+                "pid": 2,
+                "tid": 2,
+                "mm": 481047101440,
+                "pc": 335547940,
+                "next_pc": 335547948
+              },
+              "last_completed": {
+                "execution_observation": "integer_completed",
+                "sequence": 1507,
+                "pid": 2,
+                "tid": 2,
+                "mm": 481047101440,
+                "pc": 335547940,
+                "next_pc": 335547948
+              },
+              "log": [
+                "01-30 19:04:11.189     2     3 I stock-art-probe: jit.cc:236 Compiling method long StockArtProbe.warmup(int) kind=Baseline",
+                "01-30 19:04:11.191     2     3 I stock-art-probe: jit_code_cache.cc:944 JIT added (kind=Optimized) long StockArtProbe.warmup(int)@0x2c86a41e0 ccache_size=2576B:  dcache_size=15KB: 0x14000e10,0x14000e50",
+                "01-30 19:04:11.191     2     3 I stock-art-probe: jit_compiler.cc:215 Compilation of long StockArtProbe.warmup(int) took 2.153ms"
+              ]
+            },
+            {
+              "method": "StockArtProbe.hot",
+              "range": [
+                335548016,
+                335548040
+              ],
+              "completed_samples": 0,
+              "first_completed": null,
+              "last_completed": null,
+              "log": [
+                "01-30 19:04:11.191     2     3 I stock-art-probe: jit.cc:236 Compiling method int StockArtProbe.hot(int) kind=Baseline",
+                "01-30 19:04:11.192     2     3 I stock-art-probe: jit_code_cache.cc:944 JIT added (kind=Optimized) int StockArtProbe.hot(int)@0x2c86a40a0 ccache_size=2616B:  dcache_size=16KB: 0x14000e70,0x14000e88",
+                "01-30 19:04:11.192     2     3 I stock-art-probe: jit_compiler.cc:215 Compilation of int StockArtProbe.hot(int) took 342us"
+              ]
+            }
+          ],
+          "jit_shutdown_statistics": [
+            "Total number of JIT baseline compilations: 2",
+            "Total number of JIT optimized compilations: 25",
+            "Total number of JIT compilations for on stack replacement: 0",
+            "Total number of JIT code cache collections: 0"
+          ],
+          "stdout": {
+            "path": "work/native-linux-nce/hyperos-art-jit-background-observed-v1/gcd-0.jsonl",
+            "sha256": "8b3010a3f03864ebcad09992a801ef69436b4d3684d3fe391d7793429656bc6d"
+          },
+          "stderr": {
+            "path": "work/native-linux-nce/hyperos-art-jit-background-observed-v1/gcd-0.log",
+            "sha256": "9bd4e8a4f15a77335acca925bdd3461ed85ff4b13090700d842830cb8fe60e28"
+          }
+        }
+      ],
+      "probe_command": [
+        "python3",
+        "-B",
+        "scripts/probe_lkl_translation.py",
+        "--guest-page-bytes",
+        "4096",
+        "--guest-layout",
+        "sparse",
+        "--data-tbi",
+        "1",
+        "--mapping",
+        "pte",
+        "--execution",
+        "direct",
+        "--direct-memory",
+        "flat",
+        "--direct-code-watch",
+        "1",
+        "--direct-cross-page",
+        "1",
+        "--direct-native-exclusive",
+        "1",
+        "--code-memory",
+        "dual",
+        "--reuse-engine-build",
+        "--workload",
+        "stock-art",
+        "--stock-art-directory",
+        "work/hyperos-art-jit-prepared-v1",
+        "--stock-art-observe-jit",
+        "1",
+        "--stock-art-jit-mode",
+        "background",
+        "--entry",
+        "both",
+        "--output",
+        "work/native-linux-nce/hyperos-art-jit-background-observed-v1"
+      ]
+    }
+  ],
+  "source_changes": false,
+  "fixture_changes": false,
+  "observation_window_changes": false,
+  "limitations": [
+    "One final completed integer PC per Direct run can miss executed code",
+    "Default single-call completed samples do not confirm JIT RX execution",
+    "Background mode adds ten calls and nine requested 200 ms waits plus verbose logging",
+    "Fixed warmup compiled range correlated manually; general method attribution and internal code address reuse untracked",
+    "iPhone execution, default-policy application behavior, system boot and sustained thermal/performance behavior unverified"
+  ]
+}
