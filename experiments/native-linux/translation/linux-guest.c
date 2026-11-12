@@ -137,7 +137,22 @@ static void layout_tests(void)
         *(volatile unsigned char *)base = 0x39;
         CHECK(*(volatile unsigned char *)base == 0x39);
         inaccessible(base - PAGE, 0);
+        int process_memory = open("/proc/self/mem", O_RDONLY | O_CLOEXEC);
+        CHECK(process_memory >= 0);
+        unsigned char stack_value = 0;
+        CHECK(pread(process_memory, &stack_value, 1, base) == 1 && stack_value == 0x39);
+        CHECK(pread(process_memory, &stack_value, 1, base - PAGE) == -1 && errno == EIO);
         CHECK(munmap((void *)base, 2 * PAGE) == 0);
+        void *first = mmap((void *)base, PAGE, 3, MAP_PRIVATE | MAP_ANONYMOUS | MAP_FIXED_NOREPLACE, -1, 0);
+        void *second = mmap((void *)(base + 2 * PAGE), PAGE, 3, MAP_PRIVATE | MAP_ANONYMOUS | MAP_FIXED_NOREPLACE, -1, 0);
+        CHECK(first == (void *)base && second == (void *)(base + 2 * PAGE));
+        *(volatile unsigned char *)first = 0x52;
+        *(volatile unsigned char *)second = 0x6d;
+        CHECK(munmap(first, PAGE) == 0);
+        CHECK(*(volatile unsigned char *)second == 0x6d);
+        CHECK(pread(process_memory, &stack_value, 1, (unsigned long)second) == 1 && stack_value == 0x6d);
+        CHECK(munmap(second, PAGE) == 0);
+        CHECK(close(process_memory) == 0);
     }
     if (sparse) {
         extern void translation_sparse_tests(void (*)(unsigned long, int));

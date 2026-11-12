@@ -99,7 +99,9 @@ def prepare(runtime, desktop, metadata, out, system_image=None):
                             'The runner supplies mounted partition directories; first-stage init and original fstab mounts are untested.']}
 
 
-def validate(rows, mode, original_system=False):
+def validate(rows, mode, original_system=False, *, kernel_log=''):
+    if 'BUG: non-zero pgtables_bytes on freeing mm:' in kernel_log:
+        return False
     observations = [r for r in rows if 'stock_init_observation' in r]
     cleanup = [r for r in rows if r.get('test') == 'translated_context_cleanup']
     logs = [r for r in rows if 'stock_init_kernel_log' in r]
@@ -275,7 +277,7 @@ def main():
                     returncode = 'timeout'
             rows = [json.loads(line) for line in (out / (label + '.jsonl')).read_text().splitlines() if line.startswith('{')]
             stderr = (out / (label + '.log')).read_text()
-            valid = returncode == 0 and validate(rows, mode, bool(args.system_image)) and 'stock_init_exec_errno' not in stderr
+            valid = returncode == 0 and validate(rows, mode, bool(args.system_image), kernel_log=stderr) and 'stock_init_exec_errno' not in stderr
             guest_writes = ''.join(bytes.fromhex(row['hex']).decode('utf-8', errors='replace') for row in rows
                                    if 'stock_init_write' in row and bytes.fromhex(row['hex']).startswith(b'<'))
             result['runs'].append({'entry': entry, 'mode': mode, 'returncode': returncode, 'observation_validated': valid,

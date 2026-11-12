@@ -1,0 +1,2351 @@
+{
+  "scope": "低地址页表释放、部分unmap与NCE栈下界；Mac功能和iOS编译，无真机或持续资源测量",
+  "source_parent": "544e15d6195b3e70a10bbf5d2c928f23b3ff4d71",
+  "platform": "macOS-27.0-arm64-arm-64bit-Mach-O",
+  "core": [
+    {
+      "report": {
+        "path": "work/native-linux-nce/page-tables-16k-core-v2/summary.json",
+        "bytes": 108298,
+        "sha256": "2a29b96f7a7cd826f2ef12081c46010b3d7697a4c500fa9ba5888ae02aeca16b"
+      },
+      "cpu": "Apple M5 Ultra",
+      "system_build": "26A428",
+      "configuration": {
+        "data_tbi": true,
+        "guest_layout": "sparse",
+        "code_memory": "dual",
+        "execution": "direct",
+        "direct": {
+          "mapping_entries": 256,
+          "route_entries": 256,
+          "selective_writes": false,
+          "reuse_code_checks": false,
+          "memory": "flat",
+          "code_watch": true,
+          "cross_page": true,
+          "route_epochs": false,
+          "retain_routes": false,
+          "memory_groups": false,
+          "native_exclusive": true,
+          "vector_table": false,
+          "simd_math": false
+        },
+        "mapping": "pte",
+        "sparse_scan": true,
+        "fault_prefetch": false,
+        "guest_page_bytes": 16384,
+        "host_page_bytes": 16384,
+        "workload": "core",
+        "entries": [
+          "cli",
+          "gcd"
+        ],
+        "art_nterp": 1,
+        "cpus": 1,
+        "high_res_timers": false,
+        "online_cpus": 1,
+        "uaccess_stop": "all",
+        "parallel_profile": false,
+        "art_expanded_jit": 0,
+        "art_fast_baseline": 0,
+        "cache_invalidation": "pages",
+        "exec_cache": "pages",
+        "tlb_invalidation": "pages",
+        "linux_fastpath": 0,
+        "guest_ram_bytes": 1073741824,
+        "translation_cache_bytes": 134217728,
+        "instruction_batch": 50000,
+        "memory_interval_ms": 100,
+        "preemption": "timer",
+        "timer_interval_ns": 2000000
+      },
+      "runs": [
+        {
+          "entry": "cli",
+          "returncode": 0,
+          "validated": true,
+          "checks": [
+            {
+              "test": "translation_prepared_code_execution",
+              "passed": true
+            },
+            {
+              "test": "translated_sparse_host_pointer_sources",
+              "passed": true
+            },
+            {
+              "test": "translated_same_host_va_cow_shared",
+              "passed": true
+            },
+            {
+              "test": "translated_sparse_pte_cow_shared_uaccess",
+              "passed": true
+            },
+            {
+              "test": "translated_sparse_reservation_materialization",
+              "passed": true
+            },
+            {
+              "test": "translated_data_tbi_and_unicorn_alias_invalidation",
+              "passed": true
+            },
+            {
+              "test": "translated_tagged_syscall_abi_rejected",
+              "passed": true
+            },
+            {
+              "test": "translated_tagged_fetch_rejected",
+              "passed": true
+            },
+            {
+              "test": "translated_guest_layout_boundaries",
+              "passed": true,
+              "layout": "sparse"
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "anon_rw_rx",
+              "passed": true,
+              "observed": 42
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "anon_rewrite",
+              "passed": true,
+              "observed": 91
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "rx_write",
+              "passed": true,
+              "signal": 11,
+              "si_code": 2,
+              "address": 738263040,
+              "expected_address": 738263040
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "remove_execute",
+              "passed": true,
+              "signal": 11,
+              "si_code": 2,
+              "address": 738263040,
+              "expected_address": 738263040
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "mremap_move",
+              "passed": true,
+              "observed": 91
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "mremap_old_unmapped",
+              "passed": true,
+              "signal": 11,
+              "si_code": 1,
+              "address": 738263040,
+              "expected_address": 738263040
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unmapped_execute",
+              "passed": true,
+              "signal": 11,
+              "si_code": 1,
+              "address": 738279424,
+              "expected_address": 738279424
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "anon_rx_map",
+              "passed": true,
+              "observed": 1
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "anon_rwx",
+              "passed": true,
+              "observed": 74
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "exec_only_vma",
+              "passed": true,
+              "observed": 58
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "ordinary_file_rx",
+              "passed": true,
+              "observed": 57
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "readonly_shared_write",
+              "passed": true,
+              "observed": 13
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "noexec_mmap",
+              "passed": true,
+              "observed": 1
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "noexec_mprotect",
+              "passed": true,
+              "observed": 13
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unpopulated_exec_alias",
+              "passed": true,
+              "observed": 59
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "private_cow_parent",
+              "passed": true,
+              "observed": 41
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "private_file_cow",
+              "passed": true,
+              "observed": 41
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "memfd_alias_updates",
+              "passed": true,
+              "observed": 16
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "memfd_pwrite",
+              "passed": true,
+              "observed": 97
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "memfd_shared_fork",
+              "passed": true,
+              "observed": 111
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "memfd_mremap_clone",
+              "passed": true,
+              "observed": 111
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unicorn_alias_update",
+              "passed": true,
+              "observed": 201
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unicorn_pwrite_update",
+              "passed": true,
+              "observed": 202
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unicorn_tagged_pwrite_updates",
+              "passed": true,
+              "observed": 3
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unicorn_unseen_pwrite",
+              "passed": true,
+              "observed": 203
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "same_va_new_backing",
+              "passed": true,
+              "observed": 87
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "sealed_write",
+              "passed": true,
+              "observed": 1
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unicorn_self_page_flush",
+              "passed": true,
+              "observed": 67
+            },
+            {
+              "test": "linux_simd_fallback_continuation",
+              "passed": true
+            },
+            {
+              "test": "translated_timer_boundaries",
+              "passed": true,
+              "high_res_timers": false,
+              "resolution_ns": 10000000
+            },
+            {
+              "test": "linux_signal_mask_altstack_nested",
+              "passed": true
+            },
+            {
+              "test": "linux_signal_register_restore",
+              "passed": true
+            },
+            {
+              "test": "linux_signal_eintr_restart",
+              "passed": true
+            },
+            {
+              "test": "linux_signal_fault_recovery",
+              "passed": true
+            },
+            {
+              "test": "linux_signal_context_redirect",
+              "passed": true
+            },
+            {
+              "test": "linux_signal_frame_validation_stop_exit",
+              "passed": true
+            },
+            {
+              "test": "linux_pthread_cancel_signal",
+              "passed": true
+            },
+            {
+              "test": "linux_signal_timer_preemption",
+              "passed": true
+            },
+            {
+              "test": "linux_signal_suite",
+              "passed": true,
+              "libc": "musl-translated"
+            },
+            {
+              "test": "linux_brk_growth_cow",
+              "passed": true
+            },
+            {
+              "test": "linux_fault_contiguous_data_boundaries",
+              "passed": true
+            },
+            {
+              "test": "linux_user_string_boundaries",
+              "passed": true,
+              "libc": "musl"
+            },
+            {
+              "test": "linux_exec_symlink",
+              "passed": true,
+              "libc": "musl"
+            },
+            {
+              "test": "linux_aarch64_file_open_flags",
+              "passed": true,
+              "libc": "musl"
+            },
+            {
+              "test": "linux_stack_growth_and_limit",
+              "passed": true
+            },
+            {
+              "test": "linux_android_elf_reservation_boundaries",
+              "passed": true
+            },
+            {
+              "test": "linux_sparse_reservation_cow",
+              "passed": true,
+              "reserved_bytes": 2147483648
+            },
+            {
+              "test": "linux_mmap_byte_offset",
+              "passed": true
+            },
+            {
+              "test": "linux_fault_register_state",
+              "passed": true,
+              "switches": 64
+            },
+            {
+              "test": "linux_user_memory_boundaries",
+              "passed": true,
+              "reuse_rounds": 64
+            },
+            {
+              "test": "linux_ram_capacity_cow",
+              "passed": true,
+              "bytes": 671088640
+            },
+            {
+              "test": "linux_mm_exchange_integrity",
+              "passed": true,
+              "cases": 28
+            },
+            {
+              "test": "translated_pthread_tls_mutex",
+              "passed": true
+            },
+            {
+              "test": "translated_signals_protection_restore",
+              "passed": true
+            },
+            {
+              "test": "translated_runtime_elf_exec",
+              "passed": true
+            },
+            {
+              "test": "linux_dynamic_link_dlopen_constructors",
+              "passed": true
+            },
+            {
+              "test": "linux_dynamic_tls_threads",
+              "passed": true
+            },
+            {
+              "test": "linux_dynamic_fork_signal",
+              "passed": true
+            },
+            {
+              "test": "translated_runtime_libraries",
+              "passed": true
+            },
+            {
+              "test": "translated_linux_process",
+              "path": "/probe-guest",
+              "passed": true,
+              "waited": 25,
+              "status": 0
+            },
+            {
+              "test": "translated_host_pointer_copy",
+              "passed": true
+            },
+            {
+              "test": "translated_context_cleanup",
+              "passed": true,
+              "allocated": 70,
+              "freed": 70,
+              "maps": 0,
+              "revocations": 0,
+              "tlb_fills": 70253,
+              "faults": 152427,
+              "syscalls": 17205,
+              "preemptions": 28
+            },
+            {
+              "result": "passed"
+            }
+          ],
+          "stderr": {
+            "path": "work/native-linux-nce/page-tables-16k-core-v2/cli-0.log",
+            "bytes": 4356,
+            "sha256": "aaa8cc8b138131499899898586ab77c1a462d79c255658ebe5d8a68e3e4a42c0"
+          },
+          "page_table_warning": false
+        },
+        {
+          "entry": "gcd",
+          "returncode": 0,
+          "validated": true,
+          "checks": [
+            {
+              "test": "dispatch_signal_mask",
+              "sigusr2_blocked": 1
+            },
+            {
+              "test": "translation_prepared_code_execution",
+              "passed": true
+            },
+            {
+              "test": "translated_sparse_host_pointer_sources",
+              "passed": true
+            },
+            {
+              "test": "translated_same_host_va_cow_shared",
+              "passed": true
+            },
+            {
+              "test": "translated_sparse_pte_cow_shared_uaccess",
+              "passed": true
+            },
+            {
+              "test": "translated_sparse_reservation_materialization",
+              "passed": true
+            },
+            {
+              "test": "translated_data_tbi_and_unicorn_alias_invalidation",
+              "passed": true
+            },
+            {
+              "test": "translated_tagged_syscall_abi_rejected",
+              "passed": true
+            },
+            {
+              "test": "translated_tagged_fetch_rejected",
+              "passed": true
+            },
+            {
+              "test": "translated_guest_layout_boundaries",
+              "passed": true,
+              "layout": "sparse"
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "anon_rw_rx",
+              "passed": true,
+              "observed": 42
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "anon_rewrite",
+              "passed": true,
+              "observed": 91
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "rx_write",
+              "passed": true,
+              "signal": 11,
+              "si_code": 2,
+              "address": 738263040,
+              "expected_address": 738263040
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "remove_execute",
+              "passed": true,
+              "signal": 11,
+              "si_code": 2,
+              "address": 738263040,
+              "expected_address": 738263040
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "mremap_move",
+              "passed": true,
+              "observed": 91
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "mremap_old_unmapped",
+              "passed": true,
+              "signal": 11,
+              "si_code": 1,
+              "address": 738263040,
+              "expected_address": 738263040
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unmapped_execute",
+              "passed": true,
+              "signal": 11,
+              "si_code": 1,
+              "address": 738279424,
+              "expected_address": 738279424
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "anon_rx_map",
+              "passed": true,
+              "observed": 1
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "anon_rwx",
+              "passed": true,
+              "observed": 74
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "exec_only_vma",
+              "passed": true,
+              "observed": 58
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "ordinary_file_rx",
+              "passed": true,
+              "observed": 57
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "readonly_shared_write",
+              "passed": true,
+              "observed": 13
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "noexec_mmap",
+              "passed": true,
+              "observed": 1
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "noexec_mprotect",
+              "passed": true,
+              "observed": 13
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unpopulated_exec_alias",
+              "passed": true,
+              "observed": 59
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "private_cow_parent",
+              "passed": true,
+              "observed": 41
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "private_file_cow",
+              "passed": true,
+              "observed": 41
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "memfd_alias_updates",
+              "passed": true,
+              "observed": 16
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "memfd_pwrite",
+              "passed": true,
+              "observed": 97
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "memfd_shared_fork",
+              "passed": true,
+              "observed": 111
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "memfd_mremap_clone",
+              "passed": true,
+              "observed": 111
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unicorn_alias_update",
+              "passed": true,
+              "observed": 201
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unicorn_pwrite_update",
+              "passed": true,
+              "observed": 202
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unicorn_tagged_pwrite_updates",
+              "passed": true,
+              "observed": 3
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unicorn_unseen_pwrite",
+              "passed": true,
+              "observed": 203
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "same_va_new_backing",
+              "passed": true,
+              "observed": 87
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "sealed_write",
+              "passed": true,
+              "observed": 1
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unicorn_self_page_flush",
+              "passed": true,
+              "observed": 67
+            },
+            {
+              "test": "linux_simd_fallback_continuation",
+              "passed": true
+            },
+            {
+              "test": "translated_timer_boundaries",
+              "passed": true,
+              "high_res_timers": false,
+              "resolution_ns": 10000000
+            },
+            {
+              "test": "linux_signal_mask_altstack_nested",
+              "passed": true
+            },
+            {
+              "test": "linux_signal_register_restore",
+              "passed": true
+            },
+            {
+              "test": "linux_signal_eintr_restart",
+              "passed": true
+            },
+            {
+              "test": "linux_signal_fault_recovery",
+              "passed": true
+            },
+            {
+              "test": "linux_signal_context_redirect",
+              "passed": true
+            },
+            {
+              "test": "linux_signal_frame_validation_stop_exit",
+              "passed": true
+            },
+            {
+              "test": "linux_pthread_cancel_signal",
+              "passed": true
+            },
+            {
+              "test": "linux_signal_timer_preemption",
+              "passed": true
+            },
+            {
+              "test": "linux_signal_suite",
+              "passed": true,
+              "libc": "musl-translated"
+            },
+            {
+              "test": "linux_brk_growth_cow",
+              "passed": true
+            },
+            {
+              "test": "linux_fault_contiguous_data_boundaries",
+              "passed": true
+            },
+            {
+              "test": "linux_user_string_boundaries",
+              "passed": true,
+              "libc": "musl"
+            },
+            {
+              "test": "linux_exec_symlink",
+              "passed": true,
+              "libc": "musl"
+            },
+            {
+              "test": "linux_aarch64_file_open_flags",
+              "passed": true,
+              "libc": "musl"
+            },
+            {
+              "test": "linux_stack_growth_and_limit",
+              "passed": true
+            },
+            {
+              "test": "linux_android_elf_reservation_boundaries",
+              "passed": true
+            },
+            {
+              "test": "linux_sparse_reservation_cow",
+              "passed": true,
+              "reserved_bytes": 2147483648
+            },
+            {
+              "test": "linux_mmap_byte_offset",
+              "passed": true
+            },
+            {
+              "test": "linux_fault_register_state",
+              "passed": true,
+              "switches": 64
+            },
+            {
+              "test": "linux_user_memory_boundaries",
+              "passed": true,
+              "reuse_rounds": 64
+            },
+            {
+              "test": "linux_ram_capacity_cow",
+              "passed": true,
+              "bytes": 671088640
+            },
+            {
+              "test": "linux_mm_exchange_integrity",
+              "passed": true,
+              "cases": 28
+            },
+            {
+              "test": "translated_pthread_tls_mutex",
+              "passed": true
+            },
+            {
+              "test": "translated_signals_protection_restore",
+              "passed": true
+            },
+            {
+              "test": "translated_runtime_elf_exec",
+              "passed": true
+            },
+            {
+              "test": "linux_dynamic_link_dlopen_constructors",
+              "passed": true
+            },
+            {
+              "test": "linux_dynamic_tls_threads",
+              "passed": true
+            },
+            {
+              "test": "linux_dynamic_fork_signal",
+              "passed": true
+            },
+            {
+              "test": "translated_runtime_libraries",
+              "passed": true
+            },
+            {
+              "test": "translated_linux_process",
+              "path": "/probe-guest",
+              "passed": true,
+              "waited": 25,
+              "status": 0
+            },
+            {
+              "test": "translated_host_pointer_copy",
+              "passed": true
+            },
+            {
+              "test": "translated_context_cleanup",
+              "passed": true,
+              "allocated": 70,
+              "freed": 70,
+              "maps": 0,
+              "revocations": 0,
+              "tlb_fills": 70253,
+              "faults": 152427,
+              "syscalls": 17205,
+              "preemptions": 35
+            },
+            {
+              "result": "passed"
+            }
+          ],
+          "stderr": {
+            "path": "work/native-linux-nce/page-tables-16k-core-v2/gcd-0.log",
+            "bytes": 4356,
+            "sha256": "5a602b194ec84936be76ba4af9978e1a7fb84e63155b38151881d3e11f80ae4f"
+          },
+          "page_table_warning": false
+        }
+      ]
+    },
+    {
+      "report": {
+        "path": "work/native-linux-nce/page-tables-4k-core-v2/summary.json",
+        "bytes": 111331,
+        "sha256": "9db1d8cc6a5bf482cc4d15551ddf070a926bf25a629cb095f85d8f58655225df"
+      },
+      "cpu": "Apple M5 Ultra",
+      "system_build": "26A428",
+      "configuration": {
+        "data_tbi": true,
+        "guest_layout": "sparse",
+        "code_memory": "dual",
+        "execution": "direct",
+        "direct": {
+          "mapping_entries": 256,
+          "route_entries": 256,
+          "selective_writes": false,
+          "reuse_code_checks": false,
+          "memory": "flat",
+          "code_watch": true,
+          "cross_page": true,
+          "route_epochs": false,
+          "retain_routes": false,
+          "memory_groups": false,
+          "native_exclusive": true,
+          "vector_table": false,
+          "simd_math": false
+        },
+        "mapping": "pte",
+        "sparse_scan": true,
+        "fault_prefetch": false,
+        "guest_page_bytes": 4096,
+        "host_page_bytes": 16384,
+        "workload": "core",
+        "entries": [
+          "cli",
+          "gcd"
+        ],
+        "art_nterp": 1,
+        "cpus": 1,
+        "high_res_timers": false,
+        "online_cpus": 1,
+        "uaccess_stop": "all",
+        "parallel_profile": false,
+        "art_expanded_jit": 0,
+        "art_fast_baseline": 0,
+        "cache_invalidation": "pages",
+        "exec_cache": "pages",
+        "tlb_invalidation": "pages",
+        "linux_fastpath": 0,
+        "guest_ram_bytes": 1073741824,
+        "translation_cache_bytes": 134217728,
+        "instruction_batch": 50000,
+        "memory_interval_ms": 100,
+        "preemption": "timer",
+        "timer_interval_ns": 2000000
+      },
+      "runs": [
+        {
+          "entry": "cli",
+          "returncode": 0,
+          "validated": true,
+          "checks": [
+            {
+              "test": "translation_prepared_code_execution",
+              "passed": true
+            },
+            {
+              "test": "translated_sparse_host_pointer_sources",
+              "passed": true
+            },
+            {
+              "test": "translated_same_host_va_cow_shared",
+              "passed": true
+            },
+            {
+              "test": "translated_sparse_pte_cow_shared_uaccess",
+              "passed": true
+            },
+            {
+              "test": "translated_sparse_reservation_materialization",
+              "passed": true
+            },
+            {
+              "test": "translated_data_tbi_and_unicorn_alias_invalidation",
+              "passed": true
+            },
+            {
+              "test": "translated_tagged_syscall_abi_rejected",
+              "passed": true
+            },
+            {
+              "test": "translated_tagged_fetch_rejected",
+              "passed": true
+            },
+            {
+              "test": "translated_guest_layout_boundaries",
+              "passed": true,
+              "layout": "sparse"
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "anon_rw_rx",
+              "passed": true,
+              "observed": 42
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "anon_rewrite",
+              "passed": true,
+              "observed": 91
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "rx_write",
+              "passed": true,
+              "signal": 11,
+              "si_code": 2,
+              "address": 738263040,
+              "expected_address": 738263040
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "remove_execute",
+              "passed": true,
+              "signal": 11,
+              "si_code": 2,
+              "address": 738263040,
+              "expected_address": 738263040
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "mremap_move",
+              "passed": true,
+              "observed": 91
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "mremap_old_unmapped",
+              "passed": true,
+              "signal": 11,
+              "si_code": 1,
+              "address": 738263040,
+              "expected_address": 738263040
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unmapped_execute",
+              "passed": true,
+              "signal": 11,
+              "si_code": 1,
+              "address": 738267136,
+              "expected_address": 738267136
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "anon_rx_map",
+              "passed": true,
+              "observed": 1
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "anon_rwx",
+              "passed": true,
+              "observed": 74
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "exec_only_vma",
+              "passed": true,
+              "observed": 58
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "ordinary_file_rx",
+              "passed": true,
+              "observed": 57
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "readonly_shared_write",
+              "passed": true,
+              "observed": 13
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "noexec_mmap",
+              "passed": true,
+              "observed": 1
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "noexec_mprotect",
+              "passed": true,
+              "observed": 13
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unpopulated_exec_alias",
+              "passed": true,
+              "observed": 59
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "private_cow_parent",
+              "passed": true,
+              "observed": 41
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "private_file_cow",
+              "passed": true,
+              "observed": 41
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "memfd_alias_updates",
+              "passed": true,
+              "observed": 16
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "memfd_pwrite",
+              "passed": true,
+              "observed": 97
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "memfd_shared_fork",
+              "passed": true,
+              "observed": 111
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "memfd_mremap_clone",
+              "passed": true,
+              "observed": 111
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unicorn_alias_update",
+              "passed": true,
+              "observed": 201
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unicorn_pwrite_update",
+              "passed": true,
+              "observed": 202
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unicorn_tagged_pwrite_updates",
+              "passed": true,
+              "observed": 3
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unicorn_unseen_pwrite",
+              "passed": true,
+              "observed": 203
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "same_va_new_backing",
+              "passed": true,
+              "observed": 87
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "sealed_write",
+              "passed": true,
+              "observed": 1
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unicorn_self_page_flush",
+              "passed": true,
+              "observed": 67
+            },
+            {
+              "test": "linux_simd_fallback_continuation",
+              "passed": true
+            },
+            {
+              "test": "translated_timer_boundaries",
+              "passed": true,
+              "high_res_timers": false,
+              "resolution_ns": 10000000
+            },
+            {
+              "test": "linux_signal_mask_altstack_nested",
+              "passed": true
+            },
+            {
+              "test": "linux_signal_register_restore",
+              "passed": true
+            },
+            {
+              "test": "linux_signal_eintr_restart",
+              "passed": true
+            },
+            {
+              "test": "linux_signal_fault_recovery",
+              "passed": true
+            },
+            {
+              "test": "linux_signal_context_redirect",
+              "passed": true
+            },
+            {
+              "test": "linux_signal_frame_validation_stop_exit",
+              "passed": true
+            },
+            {
+              "test": "linux_pthread_cancel_signal",
+              "passed": true
+            },
+            {
+              "test": "linux_signal_timer_preemption",
+              "passed": true
+            },
+            {
+              "test": "linux_signal_suite",
+              "passed": true,
+              "libc": "musl-translated"
+            },
+            {
+              "test": "linux_brk_growth_cow",
+              "passed": true
+            },
+            {
+              "test": "linux_fault_contiguous_data_boundaries",
+              "passed": true
+            },
+            {
+              "test": "linux_user_string_boundaries",
+              "passed": true,
+              "libc": "musl"
+            },
+            {
+              "test": "linux_exec_symlink",
+              "passed": true,
+              "libc": "musl"
+            },
+            {
+              "test": "linux_aarch64_file_open_flags",
+              "passed": true,
+              "libc": "musl"
+            },
+            {
+              "test": "linux_stack_growth_and_limit",
+              "passed": true
+            },
+            {
+              "test": "linux_android_elf_reservation_boundaries",
+              "passed": true
+            },
+            {
+              "test": "linux_sparse_reservation_cow",
+              "passed": true,
+              "reserved_bytes": 2147483648
+            },
+            {
+              "test": "linux_mmap_byte_offset",
+              "passed": true
+            },
+            {
+              "test": "linux_fault_register_state",
+              "passed": true,
+              "switches": 64
+            },
+            {
+              "test": "linux_user_memory_boundaries",
+              "passed": true,
+              "reuse_rounds": 64
+            },
+            {
+              "test": "linux_ram_capacity_cow",
+              "passed": true,
+              "bytes": 671088640
+            },
+            {
+              "test": "linux_mm_exchange_integrity",
+              "passed": true,
+              "cases": 28
+            },
+            {
+              "test": "translated_pthread_tls_mutex",
+              "passed": true
+            },
+            {
+              "test": "translated_signals_protection_restore",
+              "passed": true
+            },
+            {
+              "test": "translated_runtime_elf_exec",
+              "passed": true
+            },
+            {
+              "test": "linux_dynamic_link_dlopen_constructors",
+              "passed": true
+            },
+            {
+              "test": "linux_dynamic_tls_threads",
+              "passed": true
+            },
+            {
+              "test": "linux_dynamic_fork_signal",
+              "passed": true
+            },
+            {
+              "test": "translated_runtime_libraries",
+              "passed": true
+            },
+            {
+              "test": "translated_linux_process",
+              "path": "/probe-guest",
+              "passed": true,
+              "waited": 25,
+              "status": 0
+            },
+            {
+              "test": "translated_host_pointer_copy",
+              "passed": true
+            },
+            {
+              "test": "translated_context_cleanup",
+              "passed": true,
+              "allocated": 70,
+              "freed": 70,
+              "maps": 0,
+              "revocations": 0,
+              "tlb_fills": 70359,
+              "faults": 152515,
+              "syscalls": 17207,
+              "preemptions": 17
+            },
+            {
+              "result": "passed"
+            }
+          ],
+          "stderr": {
+            "path": "work/native-linux-nce/page-tables-4k-core-v2/cli-0.log",
+            "bytes": 4356,
+            "sha256": "b5134ff2c8b6937789d1414e613a8915f3eab0df311c0775caf7fba17449e1b6"
+          },
+          "page_table_warning": false
+        },
+        {
+          "entry": "gcd",
+          "returncode": 0,
+          "validated": true,
+          "checks": [
+            {
+              "test": "dispatch_signal_mask",
+              "sigusr2_blocked": 1
+            },
+            {
+              "test": "translation_prepared_code_execution",
+              "passed": true
+            },
+            {
+              "test": "translated_sparse_host_pointer_sources",
+              "passed": true
+            },
+            {
+              "test": "translated_same_host_va_cow_shared",
+              "passed": true
+            },
+            {
+              "test": "translated_sparse_pte_cow_shared_uaccess",
+              "passed": true
+            },
+            {
+              "test": "translated_sparse_reservation_materialization",
+              "passed": true
+            },
+            {
+              "test": "translated_data_tbi_and_unicorn_alias_invalidation",
+              "passed": true
+            },
+            {
+              "test": "translated_tagged_syscall_abi_rejected",
+              "passed": true
+            },
+            {
+              "test": "translated_tagged_fetch_rejected",
+              "passed": true
+            },
+            {
+              "test": "translated_guest_layout_boundaries",
+              "passed": true,
+              "layout": "sparse"
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "anon_rw_rx",
+              "passed": true,
+              "observed": 42
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "anon_rewrite",
+              "passed": true,
+              "observed": 91
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "rx_write",
+              "passed": true,
+              "signal": 11,
+              "si_code": 2,
+              "address": 738263040,
+              "expected_address": 738263040
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "remove_execute",
+              "passed": true,
+              "signal": 11,
+              "si_code": 2,
+              "address": 738263040,
+              "expected_address": 738263040
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "mremap_move",
+              "passed": true,
+              "observed": 91
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "mremap_old_unmapped",
+              "passed": true,
+              "signal": 11,
+              "si_code": 1,
+              "address": 738263040,
+              "expected_address": 738263040
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unmapped_execute",
+              "passed": true,
+              "signal": 11,
+              "si_code": 1,
+              "address": 738267136,
+              "expected_address": 738267136
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "anon_rx_map",
+              "passed": true,
+              "observed": 1
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "anon_rwx",
+              "passed": true,
+              "observed": 74
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "exec_only_vma",
+              "passed": true,
+              "observed": 58
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "ordinary_file_rx",
+              "passed": true,
+              "observed": 57
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "readonly_shared_write",
+              "passed": true,
+              "observed": 13
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "noexec_mmap",
+              "passed": true,
+              "observed": 1
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "noexec_mprotect",
+              "passed": true,
+              "observed": 13
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unpopulated_exec_alias",
+              "passed": true,
+              "observed": 59
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "private_cow_parent",
+              "passed": true,
+              "observed": 41
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "private_file_cow",
+              "passed": true,
+              "observed": 41
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "memfd_alias_updates",
+              "passed": true,
+              "observed": 16
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "memfd_pwrite",
+              "passed": true,
+              "observed": 97
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "memfd_shared_fork",
+              "passed": true,
+              "observed": 111
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "memfd_mremap_clone",
+              "passed": true,
+              "observed": 111
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unicorn_alias_update",
+              "passed": true,
+              "observed": 201
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unicorn_pwrite_update",
+              "passed": true,
+              "observed": 202
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unicorn_tagged_pwrite_updates",
+              "passed": true,
+              "observed": 3
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unicorn_unseen_pwrite",
+              "passed": true,
+              "observed": 203
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "same_va_new_backing",
+              "passed": true,
+              "observed": 87
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "sealed_write",
+              "passed": true,
+              "observed": 1
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unicorn_self_page_flush",
+              "passed": true,
+              "observed": 67
+            },
+            {
+              "test": "linux_simd_fallback_continuation",
+              "passed": true
+            },
+            {
+              "test": "translated_timer_boundaries",
+              "passed": true,
+              "high_res_timers": false,
+              "resolution_ns": 10000000
+            },
+            {
+              "test": "linux_signal_mask_altstack_nested",
+              "passed": true
+            },
+            {
+              "test": "linux_signal_register_restore",
+              "passed": true
+            },
+            {
+              "test": "linux_signal_eintr_restart",
+              "passed": true
+            },
+            {
+              "test": "linux_signal_fault_recovery",
+              "passed": true
+            },
+            {
+              "test": "linux_signal_context_redirect",
+              "passed": true
+            },
+            {
+              "test": "linux_signal_frame_validation_stop_exit",
+              "passed": true
+            },
+            {
+              "test": "linux_pthread_cancel_signal",
+              "passed": true
+            },
+            {
+              "test": "linux_signal_timer_preemption",
+              "passed": true
+            },
+            {
+              "test": "linux_signal_suite",
+              "passed": true,
+              "libc": "musl-translated"
+            },
+            {
+              "test": "linux_brk_growth_cow",
+              "passed": true
+            },
+            {
+              "test": "linux_fault_contiguous_data_boundaries",
+              "passed": true
+            },
+            {
+              "test": "linux_user_string_boundaries",
+              "passed": true,
+              "libc": "musl"
+            },
+            {
+              "test": "linux_exec_symlink",
+              "passed": true,
+              "libc": "musl"
+            },
+            {
+              "test": "linux_aarch64_file_open_flags",
+              "passed": true,
+              "libc": "musl"
+            },
+            {
+              "test": "linux_stack_growth_and_limit",
+              "passed": true
+            },
+            {
+              "test": "linux_android_elf_reservation_boundaries",
+              "passed": true
+            },
+            {
+              "test": "linux_sparse_reservation_cow",
+              "passed": true,
+              "reserved_bytes": 2147483648
+            },
+            {
+              "test": "linux_mmap_byte_offset",
+              "passed": true
+            },
+            {
+              "test": "linux_fault_register_state",
+              "passed": true,
+              "switches": 64
+            },
+            {
+              "test": "linux_user_memory_boundaries",
+              "passed": true,
+              "reuse_rounds": 64
+            },
+            {
+              "test": "linux_ram_capacity_cow",
+              "passed": true,
+              "bytes": 671088640
+            },
+            {
+              "test": "linux_mm_exchange_integrity",
+              "passed": true,
+              "cases": 28
+            },
+            {
+              "test": "translated_pthread_tls_mutex",
+              "passed": true
+            },
+            {
+              "test": "translated_signals_protection_restore",
+              "passed": true
+            },
+            {
+              "test": "translated_runtime_elf_exec",
+              "passed": true
+            },
+            {
+              "test": "linux_dynamic_link_dlopen_constructors",
+              "passed": true
+            },
+            {
+              "test": "linux_dynamic_tls_threads",
+              "passed": true
+            },
+            {
+              "test": "linux_dynamic_fork_signal",
+              "passed": true
+            },
+            {
+              "test": "translated_runtime_libraries",
+              "passed": true
+            },
+            {
+              "test": "translated_linux_process",
+              "path": "/probe-guest",
+              "passed": true,
+              "waited": 25,
+              "status": 0
+            },
+            {
+              "test": "translated_host_pointer_copy",
+              "passed": true
+            },
+            {
+              "test": "translated_context_cleanup",
+              "passed": true,
+              "allocated": 70,
+              "freed": 70,
+              "maps": 0,
+              "revocations": 0,
+              "tlb_fills": 70359,
+              "faults": 152515,
+              "syscalls": 17207,
+              "preemptions": 22
+            },
+            {
+              "result": "passed"
+            }
+          ],
+          "stderr": {
+            "path": "work/native-linux-nce/page-tables-4k-core-v2/gcd-0.log",
+            "bytes": 4356,
+            "sha256": "7ee9a3850bd4c66bfd3204b15438adee1ce90adc79854ecb6fbc8217eba8ba2b"
+          },
+          "page_table_warning": false
+        }
+      ]
+    }
+  ],
+  "stock_init": {
+    "report": {
+      "path": "work/native-linux-nce/page-tables-stock-init-v1/summary.json",
+      "bytes": 2427337,
+      "sha256": "f73eb0d1c35206ce6ed5a9c062e87d671156fa11d23743827d19082e54107a59"
+    },
+    "source_report": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/page-tables-16k-core-v2/summary.json",
+    "source_report_sha256": "2a29b96f7a7cd826f2ef12081c46010b3d7697a4c500fa9ba5888ae02aeca16b",
+    "source_configuration": {
+      "data_tbi": true,
+      "guest_layout": "sparse",
+      "code_memory": "dual",
+      "execution": "direct",
+      "direct": {
+        "mapping_entries": 256,
+        "route_entries": 256,
+        "selective_writes": false,
+        "reuse_code_checks": false,
+        "memory": "flat",
+        "code_watch": true,
+        "cross_page": true,
+        "route_epochs": false,
+        "retain_routes": false,
+        "memory_groups": false,
+        "native_exclusive": true,
+        "vector_table": false,
+        "simd_math": false
+      },
+      "mapping": "pte",
+      "sparse_scan": true,
+      "fault_prefetch": false,
+      "guest_page_bytes": 16384,
+      "host_page_bytes": 16384,
+      "workload": "core",
+      "entries": [
+        "cli",
+        "gcd"
+      ],
+      "art_nterp": 1,
+      "cpus": 1,
+      "high_res_timers": false,
+      "online_cpus": 1,
+      "uaccess_stop": "all",
+      "parallel_profile": false,
+      "art_expanded_jit": 0,
+      "art_fast_baseline": 0,
+      "cache_invalidation": "pages",
+      "exec_cache": "pages",
+      "tlb_invalidation": "pages",
+      "linux_fastpath": 0,
+      "guest_ram_bytes": 1073741824,
+      "translation_cache_bytes": 134217728,
+      "instruction_batch": 50000,
+      "memory_interval_ms": 100,
+      "preemption": "timer",
+      "timer_interval_ns": 2000000
+    },
+    "runs": [
+      {
+        "entry": "cli",
+        "mode": "lifecycle",
+        "returncode": 0,
+        "observation_validated": true,
+        "checks": [
+          {
+            "test": "translation_prepared_code_execution",
+            "passed": true
+          },
+          {
+            "stock_init_observation": true,
+            "mode": "lifecycle",
+            "ancestor_pid": 26,
+            "waited": 26,
+            "status": 9,
+            "deadline_stop": true,
+            "kill_result": 0
+          },
+          {
+            "test": "translated_context_cleanup",
+            "passed": true,
+            "allocated": 2,
+            "freed": 2,
+            "maps": 0,
+            "revocations": 0,
+            "tlb_fills": 6,
+            "faults": 9,
+            "syscalls": 28,
+            "preemptions": 0
+          },
+          {
+            "result": "passed"
+          }
+        ],
+        "stderr": {
+          "path": "work/native-linux-nce/page-tables-stock-init-v1/cli-lifecycle.log",
+          "bytes": 3565,
+          "sha256": "15f47279f5f87e0d93ee6b5b29cfbf60a299eb9af1e6e7c547015adb5e650fa2"
+        },
+        "page_table_warning": false
+      },
+      {
+        "entry": "gcd",
+        "mode": "lifecycle",
+        "returncode": 0,
+        "observation_validated": true,
+        "checks": [
+          {
+            "test": "dispatch_signal_mask",
+            "sigusr2_blocked": 1
+          },
+          {
+            "test": "translation_prepared_code_execution",
+            "passed": true
+          },
+          {
+            "stock_init_observation": true,
+            "mode": "lifecycle",
+            "ancestor_pid": 26,
+            "waited": 26,
+            "status": 9,
+            "deadline_stop": true,
+            "kill_result": 0
+          },
+          {
+            "test": "translated_context_cleanup",
+            "passed": true,
+            "allocated": 2,
+            "freed": 2,
+            "maps": 0,
+            "revocations": 0,
+            "tlb_fills": 6,
+            "faults": 9,
+            "syscalls": 28,
+            "preemptions": 1
+          },
+          {
+            "result": "passed"
+          }
+        ],
+        "stderr": {
+          "path": "work/native-linux-nce/page-tables-stock-init-v1/gcd-lifecycle.log",
+          "bytes": 3565,
+          "sha256": "e1ed58bbd15110e95c16859f25da62676c22d9fe77415dc0e753de0bd340410e"
+        },
+        "page_table_warning": false
+      },
+      {
+        "entry": "cli",
+        "mode": "original",
+        "returncode": 0,
+        "observation_validated": true,
+        "checks": [
+          {
+            "test": "translation_prepared_code_execution",
+            "passed": true
+          },
+          {
+            "stock_init_exec": true,
+            "pid": 1,
+            "argument": "selinux_setup"
+          },
+          {
+            "stock_init_observation": true,
+            "mode": "original",
+            "ancestor_pid": 26,
+            "waited": 26,
+            "status": 1,
+            "deadline_stop": false,
+            "kill_result": 0
+          },
+          {
+            "test": "translated_context_cleanup",
+            "passed": true,
+            "allocated": 12,
+            "freed": 12,
+            "maps": 0,
+            "revocations": 0,
+            "tlb_fills": 3139,
+            "faults": 2747,
+            "syscalls": 11328,
+            "preemptions": 80
+          },
+          {
+            "result": "passed"
+          }
+        ],
+        "stderr": {
+          "path": "work/native-linux-nce/page-tables-stock-init-v1/cli-original.log",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "page_table_warning": false
+      },
+      {
+        "entry": "gcd",
+        "mode": "original",
+        "returncode": 0,
+        "observation_validated": true,
+        "checks": [
+          {
+            "test": "dispatch_signal_mask",
+            "sigusr2_blocked": 1
+          },
+          {
+            "test": "translation_prepared_code_execution",
+            "passed": true
+          },
+          {
+            "stock_init_exec": true,
+            "pid": 1,
+            "argument": "selinux_setup"
+          },
+          {
+            "stock_init_observation": true,
+            "mode": "original",
+            "ancestor_pid": 26,
+            "waited": 26,
+            "status": 1,
+            "deadline_stop": false,
+            "kill_result": 0
+          },
+          {
+            "test": "translated_context_cleanup",
+            "passed": true,
+            "allocated": 14,
+            "freed": 14,
+            "maps": 0,
+            "revocations": 0,
+            "tlb_fills": 3445,
+            "faults": 2894,
+            "syscalls": 11383,
+            "preemptions": 69
+          },
+          {
+            "result": "passed"
+          }
+        ],
+        "stderr": {
+          "path": "work/native-linux-nce/page-tables-stock-init-v1/gcd-original.log",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "page_table_warning": false
+      }
+    ]
+  },
+  "ios": [
+    {
+      "report": {
+        "path": "work/native-linux-nce/page-tables-16k-ios-v1/build.json",
+        "bytes": 42139,
+        "sha256": "8e1fabca327da9661b46c3d8f4e71a9386c673365a3638ff406a418994b88210"
+      },
+      "scope": "Cross compilation; device execution pending",
+      "target": "ios",
+      "sdk": "/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS27.1.sdk",
+      "source_report": "work/native-linux-nce/page-tables-16k-core-v2/summary.json",
+      "library": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/page-tables-16k-ios-v1/libtranslation.a",
+      "library_sha256": "0687bab8ff920d62e62747f047b340a2525a4dc1136177f823ba24e52f2a6d17"
+    },
+    {
+      "report": {
+        "path": "work/native-linux-nce/page-tables-4k-ios-v1/build.json",
+        "bytes": 42258,
+        "sha256": "64f31212e5211c3b4796ae101901714f6a3683de730b071bdabfc79dd7e8a9b5"
+      },
+      "scope": "Cross compilation; device execution pending",
+      "target": "ios",
+      "sdk": "/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS27.1.sdk",
+      "source_report": "work/native-linux-nce/page-tables-4k-core-v2/summary.json",
+      "library": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/page-tables-4k-ios-v1/libtranslation.a",
+      "library_sha256": "53550ad0fc350032e556d1ae65ac4cfe418334d5ccb3fa2bf6b442bcfb85ce96"
+    },
+    {
+      "report": {
+        "path": "work/native-linux-nce/page-tables-stock-init-ios-v1/init-copy-build.json",
+        "bytes": 4159,
+        "sha256": "b764ab6ed090ddaa7e21057943b92b09bba9dbedae7e7f7ac01b46f067925dcb"
+      },
+      "scope": "Compile actual stock-init generated runner and execution copies for iOS; no device execution",
+      "target": "ios",
+      "source_report": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/page-tables-stock-init-v1/summary.json",
+      "source_report_sha256": "f73eb0d1c35206ce6ed5a9c062e87d671156fa11d23743827d19082e54107a59"
+    }
+  ],
+  "kernel": [
+    {
+      "report": {
+        "path": "work/native-linux-nce/lkl-translation-kernel/build.json",
+        "bytes": 9832,
+        "sha256": "e23c3d009459513d635cf20a85a2b77a27839c189940fe8a74e2e3a80fd6b635"
+      },
+      "cpus": 1,
+      "guest_page_bytes": 16384,
+      "build_identity": {
+        "KBUILD_BUILD_TIMESTAMP": "1970-01-01 00:00:00 UTC",
+        "KBUILD_BUILD_VERSION": "1",
+        "KBUILD_BUILD_USER": "droidondarwin",
+        "KBUILD_BUILD_HOST": "local"
+      },
+      "generated_source_sha256": {
+        "work/native-linux-nce/lkl-translation-kernel/source/arch/lkl/include/asm/pgtable-mmu-3level.h": "e37cc7fe331477e8ac6b5a3b669866d8f8575e2a29f2943f7a5c23c1d2e9e14f",
+        "work/native-linux-nce/lkl-translation-kernel/source/mm/mmap.c": "1a1f7003a906a93574cf2280455c115458208e11a1cac9989eb3aa06231360f2"
+      },
+      "image_sha256": "4bb7d593dcc5990ef38766aef2d127103a5ab8bf67d7a6a2e0e18ae78fe3ab0c"
+    },
+    {
+      "report": {
+        "path": "work/native-linux-nce/lkl-translation-kernel-4k-vmalloc/build.json",
+        "bytes": 10842,
+        "sha256": "d777c263f3e30ff727ec98b66d6e4e432bc26fcbd2263ccb7cb6d002f4972f8d"
+      },
+      "cpus": 1,
+      "guest_page_bytes": 4096,
+      "build_identity": {
+        "KBUILD_BUILD_TIMESTAMP": "1970-01-01 00:00:00 UTC",
+        "KBUILD_BUILD_VERSION": "1",
+        "KBUILD_BUILD_USER": "droidondarwin",
+        "KBUILD_BUILD_HOST": "local"
+      },
+      "generated_source_sha256": {
+        "work/native-linux-nce/lkl-translation-kernel-4k-vmalloc/source/arch/lkl/include/asm/pgtable-mmu-3level.h": "2e88319b3e7862eaf9f1dd7e19241e38425386ca1f538121a20e2aacc4448518",
+        "work/native-linux-nce/lkl-translation-kernel-4k-vmalloc/source/mm/mmap.c": "1a1f7003a906a93574cf2280455c115458208e11a1cac9989eb3aa06231360f2"
+      },
+      "image_sha256": "e49c4ed40a0ffb09f6fe86baac0ac3557aad54fe915b3fa55676101e5873f5e0"
+    }
+  ],
+  "migration": {
+    "report": {
+      "path": "work/page-tables-patch-migration-v1/summary.json",
+      "bytes": 1151,
+      "sha256": "55d7ea1a06500cf640e3e78f1aa78d27830a94d564d2971f73efd1d73066178b"
+    },
+    "test": "translation_page_table_migration",
+    "passed": true,
+    "guest_page_bytes": 16384,
+    "previous_generated_definition_migrated": true,
+    "stack_check_migrated": true,
+    "processor_include_added": true,
+    "repeated_migration_identical": true,
+    "scope": "Actual 16 KiB apply on generated source; only migrated pgtable/mmap files compared. 4 KiB builder regenerates source.",
+    "before_sha256": {
+      "arch/lkl/include/asm/pgtable-mmu-3level.h": "7a6b9c2172373b9ef2922564b02bb88b4479fc3f43b05ac2e7a52686beb928f7",
+      "mm/mmap.c": "590721f62c718c191496173fa34cf1187c39f5043a272afd1065fb7358ab9f7d"
+    },
+    "after_sha256": {
+      "arch/lkl/include/asm/pgtable-mmu-3level.h": "e37cc7fe331477e8ac6b5a3b669866d8f8575e2a29f2943f7a5c23c1d2e9e14f",
+      "mm/mmap.c": "1a1f7003a906a93574cf2280455c115458208e11a1cac9989eb3aa06231360f2"
+    },
+    "repeat_sha256": {
+      "arch/lkl/include/asm/pgtable-mmu-3level.h": "e37cc7fe331477e8ac6b5a3b669866d8f8575e2a29f2943f7a5c23c1d2e9e14f",
+      "mm/mmap.c": "1a1f7003a906a93574cf2280455c115458208e11a1cac9989eb3aa06231360f2"
+    },
+    "patch_sha256": "28ba030652c60f366359ac56b12467e78addc57c4a28a394c1647279b61bd74f"
+  },
+  "warning_regression": {
+    "report": {
+      "path": "work/page-tables-patch-migration-v1/warning-regression.json",
+      "bytes": 198,
+      "sha256": "fc1da8e187e956d41ebf25dfbcee1bb8215b4ef3de46f7a3a12a28d0b1947985"
+    },
+    "test": "kernel_page_table_release",
+    "passed": true,
+    "accepted_runs": 8,
+    "original_warning_rejections": 8,
+    "failure_log_sha256": "105f4bf3014e19ce3ebc19666fc8c31abbd4019b1d647afb271d1cbba05bf912"
+  },
+  "stack_floor": {
+    "report": {
+      "path": "work/stack-floor-128k-v1/runs/1794487315459826000/summary.json",
+      "bytes": 35906,
+      "sha256": "685f25ef08d22eb125226811e7d290c6d439b96cc818597a1e745c91610d7757"
+    },
+    "prepared_inputs": {
+      "path": "work/stack-floor-128k-v1/inputs.json",
+      "bytes": 208690,
+      "sha256": "6eb213c77ddfc4e4a35955c1407887ba540243460df21c6647e895c0520a146a"
+    },
+    "scope": "Mac 16 KiB 栈下界专项；iPhone 与完整系统未验证",
+    "config_identical": true,
+    "prepared_kernel_and_dependency_inputs_unchanged": true,
+    "diagnostic_script_prepared_sha256": "e7f38b4a10b9edb83843d7bf744c897b6de1e14ef0b3c5c7d31d00e07a1afdbc",
+    "diagnostic_script_run_sha256": "9e0d77e9220ebbdc2ca53910e02019fcf276535b946fc690552e87b872236f07",
+    "contracts": {
+      "with-check": "合法读取成功，越界读取 EIO，guest 合同成功",
+      "without-check": "移除检查后越界扩展发生，guest 合同失败，清理完成"
+    },
+    "selected_variants": [
+      "with-check"
+    ],
+    "ablation_verified": false,
+    "passed": true,
+    "runs": [
+      {
+        "variant": "with-check",
+        "entry": "cli",
+        "command": [
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/stack-floor-128k-v1/probes/with-check/cli",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/stack-floor-128k-v1/kernels/with-check/lkl-image.bin"
+        ],
+        "shell": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/stack-floor-128k-v1/probes/with-check/cli /Users/fan/project/github.com/iola1999/DroidOnDarwin/work/stack-floor-128k-v1/kernels/with-check/lkl-image.bin",
+        "cwd": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/stack-floor-128k-v1",
+        "timeout_seconds": 120,
+        "environment_changes": {
+          "PATH": "/opt/homebrew/opt/gnu-sed/libexec/gnubin:/opt/homebrew/opt/llvm/bin:/Applications/ChatGPT.app/Contents/Resources/codex-cli/codex-path:/Users/fan/project/toolchain/android-sdk/emulator:/Users/fan/project/toolchain/android-sdk/platform-tools:/Users/fan/project/toolchain/android-sdk/cmdline-tools/latest/bin:/Users/fan/.darkbloom/bin:/Users/fan/.kimi-webbridge/bin:/Users/fan/.bun/bin:/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home/bin:/opt/homebrew/opt/rustup/bin:/Users/fan/.cargo/bin:/Users/fan/.antigravity/antigravity/bin:/opt/homebrew/opt/node@22/bin:/opt/homebrew/bin:/opt/homebrew/sbin:/usr/local/bin:/System/Cryptexes/App/usr/bin:/usr/bin:/bin:/usr/sbin:/sbin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/local/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin:/pkg/env/global/bin:/Library/Apple/usr/bin:/Applications/VMware Fusion.app/Contents/Public:/Users/fan/.codex/tmp/arg0-macos/codex-arg0DUSbGp:/Applications/ChatGPT.app/Contents/Resources/codex-cli/codex-path:/Users/fan/.cache/codex-runtimes/codex-primary-runtime/dependencies/bin/override:/Users/fan/project/toolchain/android-sdk/emulator:/Users/fan/project/toolchain/android-sdk/platform-tools:/Users/fan/project/toolchain/android-sdk/cmdline-tools/latest/bin:/Users/fan/.darkbloom/bin:/Users/fan/.kimi-webbridge/bin:/Users/fan/.bun/bin:/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home/bin:/opt/homebrew/opt/rustup/bin:/Users/fan/.cargo/bin:/Users/fan/.antigravity/antigravity/bin:/Users/fan/.local/bin:/Users/fan/miniconda3/bin:/Users/fan/miniconda3/condabin:/Users/fan/Library/pnpm/bin:/opt/homebrew/opt/node@22/bin:/opt/homebrew/bin:/opt/homebrew/sbin:/Users/fan/.orbstack/bin:/Users/fan/.cache/codex-runtimes/codex-primary-runtime/dependencies/bin/fallback:/Applications/ChatGPT.app/Contents/Resources:/Applications/ChatGPT.app/Contents/Resources/codex-cli/CodexCLI.app/Contents/MacOS:/Users/fan/.orbstack/bin",
+          "NCE_TRANSLATION_FILES": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/stack-floor-128k-v1/runtime",
+          "NCE_TRANSLATION_GUEST_LAYOUT": "sparse",
+          "NCE_TRANSLATION_DATA_TBI": "1",
+          "NCE_TRANSLATION_ONLINE_CPUS": "1",
+          "NCE_ART_NTERP": "1",
+          "NCE_ART_EXPANDED_JIT": "0",
+          "NCE_ART_FAST_BASELINE": "0",
+          "NCE_ART_AOT": "0",
+          "NCE_ART_BOOT_IMAGE": "0",
+          "NCE_SCHED_SLICE_US": "0",
+          "NCE_TRANSLATION_BATCH": "50000",
+          "NCE_TRANSLATION_PARALLEL_PROFILE": "0",
+          "NCE_TRANSLATION_UACCESS_STOP": "all",
+          "NCE_TRANSLATION_PREEMPTION": "timer",
+          "NCE_TRANSLATION_MEMORY_MS": "100",
+          "NCE_TRANSLATION_WORKLOAD": "core",
+          "NCE_TRANSLATION_CACHE": "pages",
+          "NCE_TRANSLATION_EXEC_CACHE": "pages",
+          "NCE_TRANSLATION_TLB": "pages",
+          "NCE_TRANSLATION_LINUX_FASTPATH": "0",
+          "NCE_TRANSLATION_CACHE_MIB": "128",
+          "NCE_DIRECT_MAPPING_ENTRIES": "256",
+          "NCE_DIRECT_ROUTE_ENTRIES": "256",
+          "NCE_DIRECT_SELECTIVE_WRITES": "0",
+          "NCE_DIRECT_REUSE_CODE_CHECKS": "0",
+          "NCE_DIRECT_MEMORY": "flat",
+          "NCE_DIRECT_CODE_WATCH": "1",
+          "NCE_DIRECT_CROSS_PAGE": "1",
+          "NCE_DIRECT_ROUTE_EPOCHS": "0",
+          "NCE_DIRECT_RETAIN_ROUTES": "0",
+          "NCE_DIRECT_MEMORY_GROUPS": "0",
+          "NCE_DIRECT_NATIVE_EXCLUSIVE": "1",
+          "NCE_DIRECT_VECTOR_TABLE": "0",
+          "NCE_DIRECT_SIMD_MATH": "0"
+        },
+        "stdout": "logs/1794487315459967000-run-with-check-cli.stdout",
+        "stderr": "logs/1794487315459967000-run-with-check-cli.stderr",
+        "started_ns": 1794487315460063000,
+        "status": "finished",
+        "pid": 81763,
+        "returncode": 0,
+        "finished_ns": 1794487315532769000,
+        "stdout_sha256": "41980dd03a47eab7c350c8fee19d237152da12ebd2a4355f63c926ef37e6a332",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "results": [
+          {
+            "test": "translation_prepared_code_execution",
+            "passed": true
+          },
+          {
+            "config": "translation_guest_layout",
+            "mode": "sparse",
+            "guest_base": 131072,
+            "guest_end": 68719476736,
+            "guest_span_bytes": 68719345664,
+            "flat_coverage_bytes": 4294967296,
+            "physical_base": 481036337152,
+            "ram_base": 482177187840,
+            "ram_bytes": 1073741824,
+            "reservation_base": 481036337152,
+            "reservation_bytes": 1140850688
+          },
+          {
+            "test": "stack_lower_bound_probe",
+            "passed": true,
+            "guest_base": 131072,
+            "page_bytes": 16384,
+            "outside_address": 114688,
+            "legal_read": 1,
+            "legal_errno": 0,
+            "legal_value": 57,
+            "legal_vma_start": 131072,
+            "outside_read": -1,
+            "outside_errno": 5,
+            "outside_value": 127,
+            "after_vma_start": 131072,
+            "close_result": 0,
+            "unmap_result": 0
+          },
+          {
+            "test": "translated_linux_process",
+            "path": "/probe-guest",
+            "passed": true,
+            "waited": 25,
+            "status": 0
+          },
+          {
+            "test": "translated_context_cleanup",
+            "passed": true,
+            "allocated": 1,
+            "freed": 1,
+            "maps": 0,
+            "revocations": 0,
+            "tlb_fills": 8,
+            "faults": 6,
+            "syscalls": 32,
+            "preemptions": 0
+          },
+          {
+            "result": "passed"
+          }
+        ],
+        "input_sha256": {
+          "probe_stack_floor.py": "9e0d77e9220ebbdc2ca53910e02019fcf276535b946fc690552e87b872236f07",
+          "stack-floor-guest.c": "14960a6a3ab498e1a092a5329bc531be7dbc3c1dd5d90e2f776f4c58f51c9c5f",
+          "runtime/guest.elf": "6f201381d4b65145e1f326d6b1fa7c39e2ab6009a66a2963a7dde34434dc7a81",
+          "probes/with-check/cli": "22d5ce4f0fa9ee0db6660f60d9a4fd8eea6f8e6edbd7aad16b179fd7a138fa1f",
+          "probes/with-check/translation-symbols.h": "f4cc8114773aeeae06468b3a5eb136d095ad750ccc11d554863812a16cec268e",
+          "kernels/with-check/lkl-image.bin": "4bb7d593dcc5990ef38766aef2d127103a5ab8bf67d7a6a2e0e18ae78fe3ab0c"
+        },
+        "expected_behavior_observed": true,
+        "pgtables_warning": false,
+        "validated": true
+      },
+      {
+        "variant": "with-check",
+        "entry": "gcd",
+        "command": [
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/stack-floor-128k-v1/probes/with-check/gcd",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/stack-floor-128k-v1/kernels/with-check/lkl-image.bin"
+        ],
+        "shell": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/stack-floor-128k-v1/probes/with-check/gcd /Users/fan/project/github.com/iola1999/DroidOnDarwin/work/stack-floor-128k-v1/kernels/with-check/lkl-image.bin",
+        "cwd": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/stack-floor-128k-v1",
+        "timeout_seconds": 120,
+        "environment_changes": {
+          "PATH": "/opt/homebrew/opt/gnu-sed/libexec/gnubin:/opt/homebrew/opt/llvm/bin:/Applications/ChatGPT.app/Contents/Resources/codex-cli/codex-path:/Users/fan/project/toolchain/android-sdk/emulator:/Users/fan/project/toolchain/android-sdk/platform-tools:/Users/fan/project/toolchain/android-sdk/cmdline-tools/latest/bin:/Users/fan/.darkbloom/bin:/Users/fan/.kimi-webbridge/bin:/Users/fan/.bun/bin:/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home/bin:/opt/homebrew/opt/rustup/bin:/Users/fan/.cargo/bin:/Users/fan/.antigravity/antigravity/bin:/opt/homebrew/opt/node@22/bin:/opt/homebrew/bin:/opt/homebrew/sbin:/usr/local/bin:/System/Cryptexes/App/usr/bin:/usr/bin:/bin:/usr/sbin:/sbin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/local/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin:/pkg/env/global/bin:/Library/Apple/usr/bin:/Applications/VMware Fusion.app/Contents/Public:/Users/fan/.codex/tmp/arg0-macos/codex-arg0DUSbGp:/Applications/ChatGPT.app/Contents/Resources/codex-cli/codex-path:/Users/fan/.cache/codex-runtimes/codex-primary-runtime/dependencies/bin/override:/Users/fan/project/toolchain/android-sdk/emulator:/Users/fan/project/toolchain/android-sdk/platform-tools:/Users/fan/project/toolchain/android-sdk/cmdline-tools/latest/bin:/Users/fan/.darkbloom/bin:/Users/fan/.kimi-webbridge/bin:/Users/fan/.bun/bin:/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home/bin:/opt/homebrew/opt/rustup/bin:/Users/fan/.cargo/bin:/Users/fan/.antigravity/antigravity/bin:/Users/fan/.local/bin:/Users/fan/miniconda3/bin:/Users/fan/miniconda3/condabin:/Users/fan/Library/pnpm/bin:/opt/homebrew/opt/node@22/bin:/opt/homebrew/bin:/opt/homebrew/sbin:/Users/fan/.orbstack/bin:/Users/fan/.cache/codex-runtimes/codex-primary-runtime/dependencies/bin/fallback:/Applications/ChatGPT.app/Contents/Resources:/Applications/ChatGPT.app/Contents/Resources/codex-cli/CodexCLI.app/Contents/MacOS:/Users/fan/.orbstack/bin",
+          "NCE_TRANSLATION_FILES": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/stack-floor-128k-v1/runtime",
+          "NCE_TRANSLATION_GUEST_LAYOUT": "sparse",
+          "NCE_TRANSLATION_DATA_TBI": "1",
+          "NCE_TRANSLATION_ONLINE_CPUS": "1",
+          "NCE_ART_NTERP": "1",
+          "NCE_ART_EXPANDED_JIT": "0",
+          "NCE_ART_FAST_BASELINE": "0",
+          "NCE_ART_AOT": "0",
+          "NCE_ART_BOOT_IMAGE": "0",
+          "NCE_SCHED_SLICE_US": "0",
+          "NCE_TRANSLATION_BATCH": "50000",
+          "NCE_TRANSLATION_PARALLEL_PROFILE": "0",
+          "NCE_TRANSLATION_UACCESS_STOP": "all",
+          "NCE_TRANSLATION_PREEMPTION": "timer",
+          "NCE_TRANSLATION_MEMORY_MS": "100",
+          "NCE_TRANSLATION_WORKLOAD": "core",
+          "NCE_TRANSLATION_CACHE": "pages",
+          "NCE_TRANSLATION_EXEC_CACHE": "pages",
+          "NCE_TRANSLATION_TLB": "pages",
+          "NCE_TRANSLATION_LINUX_FASTPATH": "0",
+          "NCE_TRANSLATION_CACHE_MIB": "128",
+          "NCE_DIRECT_MAPPING_ENTRIES": "256",
+          "NCE_DIRECT_ROUTE_ENTRIES": "256",
+          "NCE_DIRECT_SELECTIVE_WRITES": "0",
+          "NCE_DIRECT_REUSE_CODE_CHECKS": "0",
+          "NCE_DIRECT_MEMORY": "flat",
+          "NCE_DIRECT_CODE_WATCH": "1",
+          "NCE_DIRECT_CROSS_PAGE": "1",
+          "NCE_DIRECT_ROUTE_EPOCHS": "0",
+          "NCE_DIRECT_RETAIN_ROUTES": "0",
+          "NCE_DIRECT_MEMORY_GROUPS": "0",
+          "NCE_DIRECT_NATIVE_EXCLUSIVE": "1",
+          "NCE_DIRECT_VECTOR_TABLE": "0",
+          "NCE_DIRECT_SIMD_MATH": "0"
+        },
+        "stdout": "logs/1794487315539293000-run-with-check-gcd.stdout",
+        "stderr": "logs/1794487315539293000-run-with-check-gcd.stderr",
+        "started_ns": 1794487315539408000,
+        "status": "finished",
+        "pid": 81782,
+        "returncode": 0,
+        "finished_ns": 1794487315615656000,
+        "stdout_sha256": "37214cb304a2ea28fbf1ff06108161f219148b3c60876b89e42904a63c67f3a1",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "results": [
+          {
+            "test": "dispatch_signal_mask",
+            "sigusr2_blocked": 1
+          },
+          {
+            "test": "translation_prepared_code_execution",
+            "passed": true
+          },
+          {
+            "config": "translation_guest_layout",
+            "mode": "sparse",
+            "guest_base": 131072,
+            "guest_end": 68719476736,
+            "guest_span_bytes": 68719345664,
+            "flat_coverage_bytes": 4294967296,
+            "physical_base": 481036337152,
+            "ram_base": 482177187840,
+            "ram_bytes": 1073741824,
+            "reservation_base": 481036337152,
+            "reservation_bytes": 1140850688
+          },
+          {
+            "test": "stack_lower_bound_probe",
+            "passed": true,
+            "guest_base": 131072,
+            "page_bytes": 16384,
+            "outside_address": 114688,
+            "legal_read": 1,
+            "legal_errno": 0,
+            "legal_value": 57,
+            "legal_vma_start": 131072,
+            "outside_read": -1,
+            "outside_errno": 5,
+            "outside_value": 127,
+            "after_vma_start": 131072,
+            "close_result": 0,
+            "unmap_result": 0
+          },
+          {
+            "test": "translated_linux_process",
+            "path": "/probe-guest",
+            "passed": true,
+            "waited": 25,
+            "status": 0
+          },
+          {
+            "test": "translated_context_cleanup",
+            "passed": true,
+            "allocated": 1,
+            "freed": 1,
+            "maps": 0,
+            "revocations": 0,
+            "tlb_fills": 8,
+            "faults": 6,
+            "syscalls": 32,
+            "preemptions": 1
+          },
+          {
+            "result": "passed"
+          }
+        ],
+        "input_sha256": {
+          "probe_stack_floor.py": "9e0d77e9220ebbdc2ca53910e02019fcf276535b946fc690552e87b872236f07",
+          "stack-floor-guest.c": "14960a6a3ab498e1a092a5329bc531be7dbc3c1dd5d90e2f776f4c58f51c9c5f",
+          "runtime/guest.elf": "6f201381d4b65145e1f326d6b1fa7c39e2ab6009a66a2963a7dde34434dc7a81",
+          "probes/with-check/gcd": "9e6b244152a1e293ca1caf1ecac70414c91422b444eee80901fda503c0ec4a1b",
+          "probes/with-check/translation-symbols.h": "f4cc8114773aeeae06468b3a5eb136d095ad750ccc11d554863812a16cec268e",
+          "kernels/with-check/lkl-image.bin": "4bb7d593dcc5990ef38766aef2d127103a5ab8bf67d7a6a2e0e18ae78fe3ab0c"
+        },
+        "expected_behavior_observed": true,
+        "pgtables_warning": false,
+        "validated": true
+      }
+    ],
+    "ablation_analysis": "移除NCE条件后，112KiB输入通过mmap_min_addr检查；后续栈扩展仍受stack_guard_gap、限额和访问路径约束。实际移除检查的内核未运行，不能给出其最终返回结果。"
+  }
+}

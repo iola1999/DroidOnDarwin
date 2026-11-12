@@ -107,7 +107,9 @@ def validate_standard_jit(rows, data_tbi=False, *, guest_page_bytes=16384):
     return True
 
 
-def validate(rows, memory_interval, mapping="window", workload="core", tlb_invalidation=None, execution=None, direct_config=None, cpus=1, parallel_profile=None, uaccess_stop=None, code_lookup_limit=None, code_memory=None, online_cpus=None, guest_layout=None, guest_page_bytes=16384, data_tbi=None, stock_art_jit_mode="default", *, sparse_end=1 << 36):
+def validate(rows, memory_interval, mapping="window", workload="core", tlb_invalidation=None, execution=None, direct_config=None, cpus=1, parallel_profile=None, uaccess_stop=None, code_lookup_limit=None, code_memory=None, online_cpus=None, guest_layout=None, guest_page_bytes=16384, data_tbi=None, stock_art_jit_mode="default", *, sparse_end=1 << 36, kernel_log=""):
+    if 'BUG: non-zero pgtables_bytes on freeing mm:' in kernel_log:
+        return False
     if guest_page_bytes not in (4096, 16384):
         return False
     if guest_page_bytes == 4096:
@@ -923,7 +925,8 @@ def main():
                     if not stock_art:
                         raise
                     parse_errors.append({'line': line_number, 'error': str(error)})
-            passed = not parse_errors and returncode == 0 and validate(rows, args.memory_interval_ms, args.mapping, args.workload, args.tlb_invalidation, args.execution, direct_config, args.cpus, bool(args.parallel_profile), args.smp_uaccess_stop, code_memory=args.code_memory, online_cpus=args.online_cpus, guest_layout=args.guest_layout, data_tbi=bool(args.data_tbi), guest_page_bytes=args.guest_page_bytes, stock_art_jit_mode=args.stock_art_jit_mode)
+            kernel_log = (out / f'{stem}.log').read_text()
+            passed = not parse_errors and returncode == 0 and validate(rows, args.memory_interval_ms, args.mapping, args.workload, args.tlb_invalidation, args.execution, direct_config, args.cpus, bool(args.parallel_profile), args.smp_uaccess_stop, code_memory=args.code_memory, online_cpus=args.online_cpus, guest_layout=args.guest_layout, data_tbi=bool(args.data_tbi), guest_page_bytes=args.guest_page_bytes, stock_art_jit_mode=args.stock_art_jit_mode, kernel_log=kernel_log)
             apk_validated = None
             if apk_fixture:
                 previous = [row for result in results for row in result['results']]

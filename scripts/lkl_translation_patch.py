@@ -384,11 +384,30 @@ SYSCALL_DEFINE6(nce_mmap, unsigned long, addr, unsigned long, len,
     if pgtable.exists():
         content = pgtable.read_text()
         marker = '#define FIRST_USER_ADDRESS\t0UL'
-        replacement = 'extern unsigned long nce_user_base;\n#define FIRST_USER_ADDRESS\t(nce_user_base)'
-        if replacement not in content:
-            if content.count(marker) != 1:
-                raise RuntimeError('Translation first user address mismatch')
-            pgtable.write_text(content.replace(marker, replacement))
+        previous = 'extern unsigned long nce_user_base;\n#define FIRST_USER_ADDRESS\t(nce_user_base)'
+        # Each mm owns tables covering the zero-aligned PMD as well as its VMAs.
+        content = content.replace(previous, marker)
+        if content.count(marker) != 1:
+            raise RuntimeError('Translation first user address mismatch')
+        if pgtable.read_text() != content:
+            pgtable.write_text(content)
+    mmap = source / 'mm/mmap.c'
+    content = mmap.read_text()
+    marker = 'address < mmap_min_addr || address < FIRST_USER_ADDRESS'
+    replacement = 'address < mmap_min_addr || address < nce_user_base'
+    # access_remote_vm can expand a stack without an NCE page fault.
+    if replacement not in content:
+        if content.count(marker) != 1:
+            raise RuntimeError('Translation stack lower bound mismatch')
+        content = content.replace(marker, replacement)
+    include = '#include <asm/processor.h>'
+    if include not in content:
+        marker = '#include <asm/mmu_context.h>'
+        if content.count(marker) != 1:
+            raise RuntimeError('Translation mmap processor include mismatch')
+        content = content.replace(marker, marker + '\n' + include)
+    if mmap.read_text() != content:
+        mmap.write_text(content)
 
     if guest_page_bytes == 4096:
         replacements = {
