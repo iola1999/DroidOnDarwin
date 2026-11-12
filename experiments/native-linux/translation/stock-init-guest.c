@@ -25,9 +25,11 @@
 
 void signal_kernel_restorer_tests(void);
 
-static void data_checks(void)
+static void volume_checks(const char *name, const char *node_path)
 {
-    FILE *input = fopen("/stock-init-data", "r");
+    char path[96];
+    CHECK(snprintf(path, sizeof(path), "/stock-init-%s", name) < (int)sizeof(path));
+    FILE *input = fopen(path, "r");
     if (!input) {
         CHECK(errno == ENOENT);
         return;
@@ -37,15 +39,17 @@ static void data_checks(void)
     CHECK(fscanf(input, "%d %llu", &held, &device) == 2 && fclose(input) == 0);
     /* /probe-guest 的 exec 已关闭父任务目录 fd 的 CLOEXEC 副本。 */
     CHECK(held >= 3 && fcntl(held, F_GETFD) == -1 && errno == EBADF);
-    held = open("/data", O_RDONLY | O_DIRECTORY | O_CLOEXEC);
+    CHECK(snprintf(path, sizeof(path), "/%s", name) < (int)sizeof(path));
+    held = open(path, O_RDONLY | O_DIRECTORY | O_CLOEXEC);
     struct stat status, node;
     struct statfs filesystem;
     CHECK(held >= 3 && fcntl(held, F_GETFD) == FD_CLOEXEC && fstat(held, &status) == 0);
-    CHECK(stat("/dev/block/vdc", &node) == 0 && status.st_dev == node.st_rdev);
+    CHECK(stat(node_path, &node) == 0 && status.st_dev == node.st_rdev);
     uint64_t actual_device = ((uint64_t)major(status.st_dev) << 32) | minor(status.st_dev);
     CHECK(actual_device == device);
     CHECK(fstatfs(held, &filesystem) == 0 && filesystem.f_type == 0xef53);
-    int fd = open("/data/.nce-init-generation", O_RDONLY | O_CLOEXEC);
+    CHECK(snprintf(path, sizeof(path), "/%s/.nce-init-generation", name) < (int)sizeof(path));
+    int fd = open(path, O_RDONLY | O_CLOEXEC);
     unsigned long long previous = 0;
     char text[128] = {0};
     if (fd >= 0) {
@@ -57,10 +61,10 @@ static void data_checks(void)
     CHECK(previous < UINT64_MAX);
     int bytes = snprintf(text, sizeof(text), "DroidOnDarwin stock-init generation %llu\n", previous + 1);
     CHECK(bytes > 0 && bytes < (int)sizeof(text));
-    fd = open("/data/.nce-init-generation", O_WRONLY | O_CREAT | O_TRUNC | O_CLOEXEC, 0600);
+    fd = open(path, O_WRONLY | O_CREAT | O_TRUNC | O_CLOEXEC, 0600);
     CHECK(fd >= 0 && write(fd, text, bytes) == bytes && fsync(fd) == 0 && close(fd) == 0);
     CHECK(fsync(held) == 0 && close(held) == 0);
-    printf("{\"stock_init_data_generation\":true,\"previous\":%llu,\"generation\":%llu,\"device\":%llu,\"inherited_fd_closed\":true,\"file_fsync\":0,\"directory_fsync\":0}\n", previous, previous + 1, (unsigned long long)actual_device);
+    printf("{\"stock_init_%s_generation\":true,\"previous\":%llu,\"generation\":%llu,\"device\":%llu,\"inherited_fd_closed\":true,\"file_fsync\":0,\"directory_fsync\":0}\n", name, previous, previous + 1, (unsigned long long)actual_device);
 }
 
 static void original_metadata_checks(void)
@@ -116,7 +120,8 @@ int main(int argc, char **argv)
     CHECK(readlink("/proc/self", self, sizeof(self) - 1) > 0 && atoi(self) == 1);
     original_metadata_checks();
     signal_kernel_restorer_tests();
-    data_checks();
+    volume_checks("data", "/dev/block/vdc");
+    volume_checks("metadata", "/dev/block/vdd");
     int fd = open("/stock-init-mode", O_RDONLY);
     char mode[32] = {0};
     CHECK(fd >= 0 && read(fd, mode, sizeof(mode) - 1) > 0 && close(fd) == 0);

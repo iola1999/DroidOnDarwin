@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""检查宿主磁盘失败后的关闭、锁释放和实际宿主代码的 iOS 编译。"""
+"""检查显式磁盘模式、失败后的关闭与锁释放，并编译实际 iOS 宿主代码。"""
 import argparse
 from collections import Counter
 import errno
@@ -31,7 +31,8 @@ def main():
     out.mkdir(parents=True, exist_ok=False)
     host, fixture = EXP / 'lkl-host.c', EXP / 'host-context-test.c'
     inputs = [host, fixture, EXP / 'layout.h', header, Path(__file__).resolve()]
-    report = {'test': 'host_disk_close_failures', 'passed': False, 'host': platform.platform(),
+    report = {'test': 'host_disk_close_failures', 'writable_mode_contract': 1,
+              'passed': False, 'host': platform.platform(),
               'sha256': {str(path): sha(path) for path in inputs}, 'commands': []}
     mac_sdk = subprocess.check_output(['xcrun', '--sdk', 'macosx', '--show-sdk-path'], text=True).strip()
     ios_sdk = subprocess.check_output(['xcrun', '--sdk', 'iphoneos', '--show-sdk-path'], text=True).strip()
@@ -57,23 +58,44 @@ def main():
         report['returncode'] = process.returncode
         rows = [json.loads(line) for line in (out / 'stdout.jsonl').read_text().splitlines()]
         tests = [row for row in rows if 'test' in row]
+        mode_cases = (
+            ('metadata_sync_error', (2,), {2: -errno.EIO}, {}),
+            ('second_writable_sync_error', (0, 2), {2: -errno.EIO}, {}),
+            ('readonly_close_then_metadata_sync_error', (2,), {2: -errno.EIO}, {0: -errno.EINTR}),
+            ('multiple_writable_success', (0, 2), {}, {}),
+        )
         expected = Counter([('host_disk_bounds_readonly_and_locking', ''),
+                            ('host_disk_explicit_writable_modes', ''),
                             ('host_context_preserves_thread_masks', '')] +
                            [('host_disk_failure_closes_all_slots', name)
-                            for name in ('sync_error', 'sync_and_close_error', 'close_error')])
+                            for name in ('sync_error', 'sync_and_close_error', 'close_error')] +
+                           [('host_disk_writable_modes_close', case[0]) for case in mode_cases])
         actual = Counter((row['test'], row.get('case', '')) for row in tests)
         closes = [row for row in rows if row.get('host_disk_close') is True]
-        expected_closes = []
-        for sync_result, close_result in ((0, 0), (-errno.EIO, 0),
-                                          (-errno.EIO, -errno.EINTR), (0, -errno.EINTR)):
+        expected_closes = [{'host_disk_close': True, 'slot': slot, 'sync_attempted': slot == 0,
+                            'sync_result': 0, 'close_result': 0} for slot in range(4)]
+        expected_closes += [{'host_disk_close': True, 'slot': slot, 'sync_attempted': slot == 2,
+                            'sync_result': 0, 'close_result': 0} for slot in (0, 1, 2)]
+        for sync_result, close_result in ((-errno.EIO, 0), (-errno.EIO, -errno.EINTR), (0, -errno.EINTR)):
             expected_closes += [{'host_disk_close': True, 'slot': slot, 'sync_attempted': slot == 0,
                                 'sync_result': sync_result if slot == 0 else 0,
                                 'close_result': close_result if slot == 0 else 0} for slot in range(4)]
+        for _, writable_slots, sync_results, close_results in mode_cases:
+            expected_closes += [{'host_disk_close': True, 'slot': slot, 'sync_attempted': slot in writable_slots,
+                                'sync_result': sync_results.get(slot, 0),
+                                'close_result': close_results.get(slot, 0)} for slot in range(4)]
+        expected_mode_tests = [{'test': 'host_disk_writable_modes_close', 'case': name, 'passed': True,
+                                'locks_released': 4, 'writable_mask': sum(1 << slot for slot in slots),
+                                'sync_calls': len(slots), 'close_calls': 4}
+                               for name, slots, _, _ in mode_cases]
+        actual_mode_tests = [row for row in tests if row['test'] == 'host_disk_writable_modes_close']
         report['results'] = rows
         report['ios_compiled'] = True
         report['inputs_unchanged'] = all(sha(Path(path)) == digest for path, digest in report['sha256'].items())
         report['passed'] = (process.returncode == 0 and actual == expected and
                             all(row.get('passed') is True for row in tests) and closes == expected_closes and
+                            all(type(row['sync_attempted']) is bool for row in closes) and
+                            actual_mode_tests == expected_mode_tests and
                             report['inputs_unchanged'])
     except (OSError, ValueError, subprocess.SubprocessError) as error:
         report['error'] = str(error)

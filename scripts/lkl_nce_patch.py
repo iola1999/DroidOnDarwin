@@ -163,6 +163,11 @@ static void free_host_syscall_state(void)
          "\tint (*disk_io)(unsigned int index, unsigned int operation, unsigned long long offset, void *buffer, unsigned long length);",
          "\tint (*disk_io)(unsigned int index, unsigned int operation, unsigned long long offset, void *buffer, unsigned long length);\n"
          "\tint (*shmem_reclaim)(unsigned long offset, unsigned long length);")
+    edit(arch + "include/uapi/asm/host_ops.h",
+         "\tint (*shmem_reclaim)(unsigned long offset, unsigned long length);",
+         "\tint (*shmem_reclaim)(unsigned long offset, unsigned long length);\n"
+         "\t/* Disk access mode is fixed before Linux starts: 0 read-only, 1 writable. */\n"
+         "\tint (*disk_writable)(unsigned int index);")
     edit("include/linux/shmem_fs.h", "\tunsigned int\t\tseals;\t\t/* shmem seals */",
          "\tunsigned int\t\tseals;\t\t/* shmem seals */\n\tbool nce_memfd;")
     edit("mm/memfd.c", "\tfile->f_mode |= FMODE_LSEEK | FMODE_PREAD | FMODE_PWRITE;",

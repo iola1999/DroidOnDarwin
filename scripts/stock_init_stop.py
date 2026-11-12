@@ -80,6 +80,7 @@ def validate(rows, observation, mode, required=False):
                 rows.index(boundaries[0]) < rows.index(owned[0]) < rows.index(requests[0])):
             return False
         for index, row in enumerate(rows):
-            if 'stock_init_data_cleanup' in row and index <= reaped_at:
+            if any(kind in row for kind in ('stock_init_data_cleanup', 'stock_init_metadata_directory',
+                                           'stock_init_metadata_directory_sync', 'stock_init_metadata_cleanup')) and index <= reaped_at:
                 return False
     return True

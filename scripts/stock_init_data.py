@@ -13,9 +13,9 @@ DEBUGFS = '/opt/homebrew/opt/e2fsprogs/sbin/debugfs'
 SQLITE_NAMES = tuple('persistent.sqlite' + suffix for suffix in ('', '-wal', '-journal', '-shm'))
 
 
-def inspect(path):
+def inspect(path, offset=0):
     with path.open('rb') as disk:
-        disk.seek(1024)
+        disk.seek(offset + 1024)
         block = disk.read(1024)
         disk.seek(0)
         digest = hashlib.file_digest(disk, 'sha256').hexdigest()
@@ -41,30 +41,16 @@ def inspect(path):
             'uuid': block[0x68:0x78].hex()}
 
 
-def validate(rows, enabled, mode):
-    kinds = ('stock_init_data_mount', 'stock_init_data_open', 'stock_init_data_retained', 'stock_init_data_generation', 'stock_init_data_cleanup')
+def validate_volume(rows, name, enabled, mode):
+    kinds = tuple('stock_init_' + name + '_' + suffix for suffix in ('mount', 'open', 'retained', 'generation', 'cleanup'))
     groups = [[row for row in rows if kind in row] for kind in kinds]
     if not enabled:
         return not any(groups)
     if any(len(group) != 1 for group in groups):
         return False
     mount, opened, held, generation, cleanup = [group[0] for group in groups]
-    disks = [row for row in rows if 'host_disk_close' in row]
-    contexts = [row for row in rows if row.get('test') == 'translated_context_cleanup']
-    shutdown = [row for row in rows if 'stock_init_shutdown' in row]
-    expected_disks = [{'host_disk_close': True, 'slot': slot, 'sync_attempted': slot == 0,
-                       'sync_result': 0, 'close_result': 0} for slot in (0, 1)]
-    if (disks != expected_disks or any(row['host_disk_close'] is not True or
-                                     type(row['sync_attempted']) is not bool or
-                                     any(type(row[key]) is not int for key in ('slot', 'sync_result', 'close_result')) for row in disks) or
-            len(contexts) != 1 or len(shutdown) != 1):
-        return False
-    ordered = (mount, opened, held, generation, cleanup, *disks, contexts[0], shutdown[0])
-    positions = [rows.index(row) for row in ordered]
+    positions = [rows.index(row) for row in (mount, opened, held, generation, cleanup)]
     if any(before >= after for before, after in zip(positions, positions[1:])):
-        return False
-    sdk_cleanup = [row for row in rows if 'stock_init_sdk_dm_removed' in row or 'stock_init_sdk_cleanup_deferred' in row]
-    if any(not positions[4] < rows.index(row) < positions[5] for row in sdk_cleanup):
         return False
     fields = ({'device', 'flags', 'mount_result'}, {'fd', 'flags'}, {'fd', 'device', 'filesystem_type', 'cloexec'},
               {'previous', 'generation', 'device', 'inherited_fd_closed', 'file_fsync', 'directory_fsync'},
@@ -73,15 +59,49 @@ def validate(rows, enabled, mode):
         if set(row) != keys | {kind} or row[kind] is not True or any(type(value) is not int for key, value in row.items()
                                      if key not in (kind, 'cloexec', 'inherited_fd_closed')):
             return False
+    identity = (cleanup['held_stat_result'] == cleanup['path_stat_result'] == 0 and
+                cleanup['held_device'] == cleanup['path_device'] == mount['device'])
+    denied = (name == 'metadata' and mode == 'original' and
+              cleanup['held_stat_result'] == cleanup['path_stat_result'] == -13 and
+              cleanup['held_device'] == cleanup['path_device'] == 0)
     return (mount['mount_result'] == 0 and mount['flags'] == 1030 and mount['device'] > 0 and
             opened['fd'] == held['fd'] >= 3 and opened['flags'] == 0x84000 and
             held['cloexec'] is True and held['filesystem_type'] == 0xef53 and
-            held['device'] == generation['device'] == cleanup['held_device'] == cleanup['path_device'] == mount['device'] and
+            held['device'] == generation['device'] == mount['device'] and (identity or denied) and
             0 <= generation['previous'] < (1 << 64) - 1 and generation['generation'] == generation['previous'] + 1 and
             generation['inherited_fd_closed'] is True and
             generation['file_fsync'] == generation['directory_fsync'] == 0 and
-            cleanup['held_stat_result'] == cleanup['path_stat_result'] == cleanup['sync_result'] == cleanup['close_result'] == 0 and
+            cleanup['sync_result'] == cleanup['close_result'] == 0 and
             cleanup['unmount_result'] in ((0,) if mode == 'lifecycle' else (0, -1, -13)))
+
+
+def validate_disk_cleanup(rows, data_enabled, metadata_enabled):
+    disks = [row for row in rows if 'host_disk_close' in row]
+    contexts = [row for row in rows if row.get('test') == 'translated_context_cleanup']
+    shutdown = [row for row in rows if 'stock_init_shutdown' in row]
+    slots = ((0,) if data_enabled else ()) + (1,) + ((2,) if metadata_enabled else ())
+    expected_disks = [{'host_disk_close': True, 'slot': slot, 'sync_attempted': slot in (0, 2),
+                       'sync_result': 0, 'close_result': 0} for slot in slots]
+    if (disks != expected_disks or any(row['host_disk_close'] is not True or
+                                     type(row['sync_attempted']) is not bool or
+                                     any(type(row[key]) is not int for key in ('slot', 'sync_result', 'close_result')) for row in disks) or
+            len(contexts) != 1 or len(shutdown) != 1):
+        return False
+    ordered = (*disks, contexts[0], shutdown[0])
+    positions = [rows.index(row) for row in ordered]
+    if any(before >= after for before, after in zip(positions, positions[1:])):
+        return False
+    volume_cleanup = [row for row in rows if 'stock_init_data_cleanup' in row or 'stock_init_metadata_cleanup' in row]
+    sdk_cleanup = [row for row in rows if 'stock_init_sdk_dm_removed' in row or 'stock_init_sdk_cleanup_deferred' in row]
+    if (not volume_cleanup or any(rows.index(row) >= positions[0] for row in volume_cleanup) or
+            any(not max(rows.index(item) for item in volume_cleanup) < rows.index(row) < positions[0] for row in sdk_cleanup)):
+        return False
+    return True
+
+
+def validate(rows, enabled, mode, metadata_enabled=False):
+    return (validate_volume(rows, 'data', enabled, mode) and
+            (not enabled or validate_disk_cleanup(rows, True, metadata_enabled)))
 
 
 def _sqlite_files(directory):

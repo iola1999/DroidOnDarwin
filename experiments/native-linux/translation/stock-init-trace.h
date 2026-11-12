@@ -104,7 +104,9 @@ static void stock_init_trace_block(long number, const long *args, long result)
             return;
     }
     if ((number == 33 || number == 56) && !strstr((char *)paths[0], "loop") &&
-        !strstr((char *)paths[0], "device-mapper") && !strstr((char *)paths[0], "/dev/dm-"))
+        !strstr((char *)paths[0], "device-mapper") && !strstr((char *)paths[0], "/dev/dm-") &&
+        strcmp((char *)paths[0], "/metadata") && strcmp((char *)paths[0], "/metadata/vold") &&
+        strcmp((char *)paths[0], "/metadata/apex") && strcmp((char *)paths[0], "/metadata/apex/sessions"))
         return;
     long pid_args[6] = {0};
     long pid = run_syscall(172, pid_args);

@@ -28,6 +28,7 @@ static void stock_init_dump_kernel_log(void)
 static double stock_init_now(void);
 #include "stock-init-partitions.h"
 #include "stock-init-data.h"
+#include "stock-init-metadata.h"
 #include "stock-init-stop.h"
 
 static void stock_init_setup(void)
@@ -202,6 +203,7 @@ static void stock_init_setup(void)
     REQUIRE(mode && (!strcmp(mode, "lifecycle") || !strcmp(mode, "original")));
     put_text("/stock-init-mode", mode);
     stock_init_data_mount();
+    stock_init_metadata_mount();
 }
 
 static double stock_init_now(void)
@@ -248,7 +250,8 @@ static int stock_init_run(void)
             REQUIRE(call(24, dup) == fd && call(57, dup) == 0);
         }
     }
-    stock_init_data_retain();
+    stock_init_volume_retain(&stock_init_data);
+    stock_init_volume_retain(&stock_init_metadata);
     long launch[6] = {(long)translation_linux_process("/probe-guest"), 1};
     long pid = call(246, launch);
     REQUIRE(pid > 1);
@@ -283,8 +286,9 @@ static int stock_init_run(void)
     long reaped_result = call(247, reaped);
     printf("{\"stock_init_host_stop_reaped\":true,\"ancestor_pid\":%ld,\"result\":%ld}\n", pid, reaped_result);
     REQUIRE(reaped_result == -3);
-    int data_failed = stock_init_data_cleanup(lifecycle);
+    int metadata_failed = stock_init_metadata_finish(lifecycle);
+    int data_failed = stock_init_volume_cleanup(&stock_init_data, lifecycle);
     if (getenv("NCE_STOCK_INIT_LP") && !strcmp(getenv("NCE_STOCK_INIT_LP"), "1"))
         stock_init_sdk_cleanup(lifecycle);
-    return data_failed || (lifecycle && (!stopped || status != 9));
+    return metadata_failed || data_failed || (lifecycle && (!stopped || status != 9));
 }
