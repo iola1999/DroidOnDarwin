@@ -15,7 +15,7 @@ def main():
     out = WORK / 'guest-4k-alias-test'
     out.mkdir(parents=True, exist_ok=True)
     harness = ROOT / 'tests/native-linux/guest-pages.c'
-    kernel = WORK / 'lkl-translation-kernel-4k'
+    kernel = WORK / 'lkl-translation-kernel-4k-vmalloc'
     command = ['xcrun', 'clang', '-O2', '-g', '-Wall', '-Wextra', '-Werror',
                '-DNCE_GUEST_PAGE_SHIFT=12', '-Wl,-dead_strip', '-I', EXP, '-I', kernel,
                '-I', WORK / 'processes/host-include', '-I', WORK / 'unicorn-tb-stop-dual/prefix/include',

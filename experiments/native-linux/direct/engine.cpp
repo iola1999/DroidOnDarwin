@@ -131,7 +131,7 @@ struct NceDirect {
             uintptr_t offset = uintptr_t(bytes) - uintptr_t(table.ram);
             if (offset >= table.ram_size)
                 return nullptr;
-            code_page_runs[offset >> 14] = run_id;
+            code_page_runs[offset >> DIRECT_PTE_PAGE_SHIFT] = run_id;
         } else if (active_code.insert(bytes).second) {
             unsigned page_bits = memory.page_bits ? memory.page_bits : 12;
             uintptr_t physical_page = uintptr_t(bytes) & ~((uintptr_t(1) << page_bits) - 1);
@@ -220,7 +220,7 @@ struct NceDirect {
                 uintptr_t offset = uintptr_t(ram) - uintptr_t(memory.page_table->ram);
                 valid = offset < memory.page_table->ram_size;
                 if (valid && access.write)
-                    valid = shared_code_guard ? !shared_code_guard[offset >> 14] : code_page_runs[offset >> 14] != run_id;
+                    valid = shared_code_guard ? !shared_code_guard[offset >> DIRECT_PTE_PAGE_SHIFT] : code_page_runs[offset >> DIRECT_PTE_PAGE_SHIFT] != run_id;
             } else if (valid && access.write) {
                 for (unsigned offset = 0; offset <= mask; offset += 4096)
                     valid &= active_code.count(ram + offset) == 0;
@@ -255,7 +255,7 @@ struct NceDirect {
         if (!prepared)
             stop_request.store(0, std::memory_order_release);
         if (shared_code_guard && (!memory.page_table || memory.refill_reads || memory.read_view ||
-                                  shared_code_pages != memory.page_table->ram_size / 16384))
+                                  shared_code_pages != memory.page_table->ram_size / DIRECT_PTE_PAGE_BYTES))
             return NCE_DIRECT_ERROR;
         if (!memory.map_page || !memory.map_code || !budget || budget > INT64_MAX)
             return NCE_DIRECT_ERROR;
@@ -266,22 +266,22 @@ struct NceDirect {
         if (memory.flat_pages && (!memory.page_table || memory.refill_reads ||
                                   memory.page_table->user_size < (UINT64_C(1) << DIRECT_FLAT_USER_BITS)))
             return NCE_DIRECT_ERROR;
-        if (memory.read_view && (!memory.flat_pages || (state.access_flags & NCE_DIRECT_DATA_TBI) || (uintptr_t(memory.read_view) & 16383) ||
+        if (memory.read_view && (DIRECT_PTE_PAGE_SHIFT != 14 || !memory.flat_pages || (state.access_flags & NCE_DIRECT_DATA_TBI) || (uintptr_t(memory.read_view) & 16383) ||
                                  memory.page_table->user_size != (UINT64_C(1) << DIRECT_FLAT_USER_BITS) ||
                                  uintptr_t(memory.read_view) > UINTPTR_MAX - (UINT64_C(1) << 32)))
             return NCE_DIRECT_ERROR;
         if (memory.page_table) {
             const auto &table = *memory.page_table;
-            if (memory.page_bits != 14 || !table.root || (uintptr_t(table.root) & 16383) ||
-                !table.ram || (uintptr_t(table.ram) & 16383) || (table.physical_base & 16383) ||
-                !table.ram_size || (table.ram_size & 16383) || table.ram_size > (UINT64_C(1) << 32) ||
+            if (memory.page_bits != DIRECT_PTE_PAGE_SHIFT || !table.root || (uintptr_t(table.root) & DIRECT_PTE_PAGE_MASK) ||
+                !table.ram || (uintptr_t(table.ram) & DIRECT_PTE_PAGE_MASK) || (table.physical_base & DIRECT_PTE_PAGE_MASK) ||
+                !table.ram_size || (table.ram_size & DIRECT_PTE_PAGE_MASK) || table.ram_size > (UINT64_C(1) << 32) ||
                 !table.user_size || table.user_size > UINT64_MAX - table.user_base ||
-                table.user_base >= (UINT64_C(1) << 47) || table.user_size > (UINT64_C(1) << 47) - table.user_base ||
-                (table.user_base & 16383) || (table.user_size & 16383) ||
+                table.user_base >= (UINT64_C(1) << DIRECT_PTE_ADDRESS_BITS) || table.user_size > (UINT64_C(1) << DIRECT_PTE_ADDRESS_BITS) - table.user_base ||
+                (table.user_base & DIRECT_PTE_PAGE_MASK) || (table.user_size & DIRECT_PTE_PAGE_MASK) ||
                 table.ram_size > UINT64_MAX - table.physical_base || table.ram_size > UINTPTR_MAX - uintptr_t(table.ram))
                 return NCE_DIRECT_ERROR;
             if (!memory.refill_reads)
-                code_page_runs.resize(table.ram_size >> 14);
+                code_page_runs.resize(table.ram_size >> DIRECT_PTE_PAGE_SHIFT);
         }
         unsigned page_bits = memory.page_bits ? memory.page_bits : 12;
         uint64_t page_mask = (UINT64_C(1) << page_bits) - 1;

@@ -33,7 +33,7 @@ typedef struct {
 } NceDirectState;
 
 typedef struct {
-    /* LKL 16 KiB page tables; directory entries contain host pointers.
+    /* LKL page tables using DIRECT_PTE_PAGE_SHIFT; directory entries contain host pointers.
      * Leaf physical addresses in [physical_base, physical_base + ram_size)
      * correspond to the contiguous host RAM range starting at ram.
      * The caller keeps all tables and RAM alive throughout a run. */
@@ -56,7 +56,7 @@ typedef struct {
     /* Data page size is 1 << page_bits, with 0 selecting 12. Supports 12/14.
      * Code callbacks always validate 4 KiB. */
     unsigned page_bits;
-    /* Optional direct table walk. Requires 16 KiB data pages and aligned RAM.
+    /* Optional direct table walk. Requires the build-time data page size and aligned RAM.
      * map_code must return pointers into this RAM range. */
     const NceDirectPageTable *page_table;
     /* With page_table, use the table walker only to refill read-cache misses.

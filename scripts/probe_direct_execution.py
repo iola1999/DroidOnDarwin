@@ -18,7 +18,9 @@ OAKNUT = '94c726ce0338b054eb8cb5ea91de8fe6c19f4392'
 ARCHIVE_SHA = 'c404db82002f9a851a412b3d55ac9be8a42a2e319fd2fc8a73e63e6ef5d4f97b'
 
 
-def build_engine(out, code_memory='map-jit', target='macos'):
+def build_engine(out, code_memory='map-jit', target='macos', *, guest_page_bytes=16384):
+    if guest_page_bytes not in (4096, 16384):
+        raise ValueError('Unsupported guest page size')
     if target not in ('macos', 'ios') or (target == 'ios' and code_memory != 'dual'):
         raise ValueError('iOS requires dual code memory')
     archive = WORK / 'oaknut-94c726c.tar.gz'
@@ -35,6 +37,7 @@ def build_engine(out, code_memory='map-jit', target='macos'):
     flags = ['-DNCE_DIRECT_DUAL_MAP'] if code_memory == 'dual' else []
     if flags:
         inputs += [SOURCE.parent / name for name in ('code-memory.c', 'execute-check.c')]
+    flags += [f'-DNCE_GUEST_PAGE_SHIFT={guest_page_bytes.bit_length() - 1}']
     if target == 'ios':
         sdk = subprocess.check_output(['xcrun', '--sdk', 'iphoneos', '--show-sdk-path'], text=True).strip()
         flags += ['-target', 'arm64-apple-ios26.0', '-isysroot', sdk,

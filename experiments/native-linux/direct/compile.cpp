@@ -209,7 +209,7 @@ Compilation Page::compile(uint64_t new_page, const void *bytes, size_t entry,
             c.CBZ(X17, miss);
             c.B(done);
             c.l(flat);
-            c.LSR(X17, X17, 14);
+            c.LSR(X17, X17, page_bits);
             if (flags & CompileReadView) {
                 c.LDR(X26, X27, DIRECT_FLAT_PAGES);
                 c.ADD(X17, X26, X17, LSL, 4);
@@ -220,14 +220,14 @@ Compilation Page::compile(uint64_t new_page, const void *bytes, size_t entry,
             if (write) {
                 c.LDR(X26, X27, DIRECT_PTE_RAM);
                 c.SUB(X26, X17, X26);
-                c.LSR(X26, X26, 14);
+                c.LSR(X26, X26, page_bits);
                 c.LDR(X30, X27, DIRECT_PTE_CODE_RUNS);
                 c.LDR(X26, X30, X26, LSL, 3);
                 c.LDR(X30, X27, DIRECT_RUN_ID);
                 c.EOR(X26, X26, X30);
                 c.CBZ(X26, miss);
             }
-            c.AND(X26, X16, 16383);
+            c.AND(X26, X16, (UINT64_C(1) << page_bits) - 1);
             c.ADD(X17, X17, X26);
             c.l(done);
             return;

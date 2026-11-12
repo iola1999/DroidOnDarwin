@@ -320,8 +320,8 @@ static int watch_disk_io(unsigned int index, unsigned int operation, unsigned lo
 #endif
     if (code_watch && operation == 0 && size && start < NCE_RAM_SIZE) {
         REQUIRE(size <= NCE_RAM_SIZE - start);
-        unsigned long first = start & ~(PAGE - 1);
-        unsigned long end = (start + size + PAGE - 1) & ~(PAGE - 1);
+        unsigned long first = start & ~(NCE_HOST_PAGE_SIZE - 1);
+        unsigned long end = (start + size + NCE_HOST_PAGE_SIZE - 1) & ~(NCE_HOST_PAGE_SIZE - 1);
         /* Kernel copyout from pread reports EFAULT instead of a user write fault. */
         REQUIRE(nce_code_watch_invalidate(code_watch, first, end - first) == 0);
     }
@@ -656,7 +656,7 @@ static bool direct_execute(Process *p, unsigned long generation)
                                 physical_base, ram, NCE_RAM_SIZE};
     NceReadView *view = direct_read_views ? execution->view->read_view : NULL;
     REQUIRE(!direct_read_views || view);
-    NceDirectMemory memory = {NULL, direct_map_page, direct_map_code, generation, 14,
+    NceDirectMemory memory = {NULL, direct_map_page, direct_map_code, generation, NCE_GUEST_PAGE_SHIFT,
                               direct_pte_memory ? &table : NULL, direct_pte_refill,
                               direct_flat ? (const struct nce_direct_flat_page *)execution->view->flat : NULL,
                               direct_code_watch ? direct_code_version : NULL,
@@ -924,9 +924,6 @@ unsigned long translation_linux_setup(void *kernel, unsigned long copy_user_offs
 {
     REQUIRE((translate_offset != 0) == (state != NULL));
 #if NCE_GUEST_PAGE_SHIFT == 12
-#ifdef NCE_DIRECT_EXECUTION
-#error The 4 KiB experiment requires Unicorn
-#endif
     REQUIRE(state && execution_count == 1 && getpagesize() == NCE_HOST_PAGE_SIZE);
     printf("{\"config\":\"translation_page_sizes\",\"guest_page_bytes\":%lu,\"host_page_bytes\":%lu,\"host_address_limit\":%lu}\n",
            PAGE, NCE_HOST_PAGE_SIZE, NCE_HOST_ADDRESS_LIMIT);
@@ -947,7 +944,8 @@ unsigned long translation_linux_setup(void *kernel, unsigned long copy_user_offs
     REQUIRE(!separate_guest || (translation && execution_count == 1));
 #ifdef NCE_DIRECT_EXECUTION
     const char *layout_memory = getenv("NCE_DIRECT_MEMORY");
-    REQUIRE(!separate_guest || (layout_memory && !strcmp(layout_memory, "flat")));
+    REQUIRE(!separate_guest || (layout_memory && (!strcmp(layout_memory, "flat") ||
+                                                  (NCE_GUEST_PAGE_SHIFT == 12 && !strcmp(layout_memory, "pte")))));
 #else
     REQUIRE(!separate_guest || NCE_GUEST_PAGE_SHIFT == 12);
 #endif
@@ -1079,7 +1077,7 @@ unsigned long translation_linux_setup(void *kernel, unsigned long copy_user_offs
         direct_pte_memory = direct_memory && strcmp(direct_memory, "cached");
         direct_pte_refill = direct_memory && !strcmp(direct_memory, "refill");
         direct_read_views = direct_memory && !strcmp(direct_memory, "view");
-        REQUIRE(!data_tbi || !direct_read_views);
+        REQUIRE((!data_tbi && NCE_GUEST_PAGE_SHIFT == 14) || !direct_read_views);
         direct_flat = direct_read_views || (direct_memory && !strcmp(direct_memory, "flat"));
         translation->flat_enabled = direct_flat;
         if (direct_read_views && cpu_index == 0) {
@@ -1099,8 +1097,8 @@ unsigned long translation_linux_setup(void *kernel, unsigned long copy_user_offs
         REQUIRE(direct_flat && !direct_read_views && native && !retain);
         nce_direct_set_code_guard(execution->direct_engine, (const uint64_t *)translation->code_guard, NCE_RAM_SIZE / PAGE);
 #endif
-        printf("{\"cpu\":%u,\"config\":\"translation_execution\",\"engine\":\"direct\",\"direct_cache_bytes\":%lu,\"data_page_bytes\":16384,\"mapping_entries\":%u,\"route_entries\":%u,\"selective_writes\":%s,\"reuse_code_checks\":%s,\"memory\":\"%s\",\"code_watch\":%s,\"cross_page\":%s,\"route_epochs\":%s,\"retain_routes\":%s,\"memory_groups\":%s,\"native_exclusive\":%s,\"vector_table\":%s,\"simd_math\":%s}\n",
-               execution->index, cache_bytes, direct_config.mapping_entries, direct_config.route_entries, direct_config.selective_writes ? "true" : "false", direct_config.reuse_code_checks ? "true" : "false", direct_memory ? direct_memory : "cached", direct_code_watch ? "true" : "false", crossing ? "true" : "false", epochs ? "true" : "false", retain ? "true" : "false", groups ? "true" : "false", native ? "true" : "false", tables ? "true" : "false", math ? "true" : "false");
+        printf("{\"cpu\":%u,\"config\":\"translation_execution\",\"engine\":\"direct\",\"direct_cache_bytes\":%lu,\"data_page_bytes\":%lu,\"mapping_entries\":%u,\"route_entries\":%u,\"selective_writes\":%s,\"reuse_code_checks\":%s,\"memory\":\"%s\",\"code_watch\":%s,\"cross_page\":%s,\"route_epochs\":%s,\"retain_routes\":%s,\"memory_groups\":%s,\"native_exclusive\":%s,\"vector_table\":%s,\"simd_math\":%s}\n",
+               execution->index, cache_bytes, PAGE, direct_config.mapping_entries, direct_config.route_entries, direct_config.selective_writes ? "true" : "false", direct_config.reuse_code_checks ? "true" : "false", direct_memory ? direct_memory : "cached", direct_code_watch ? "true" : "false", crossing ? "true" : "false", epochs ? "true" : "false", retain ? "true" : "false", groups ? "true" : "false", native ? "true" : "false", tables ? "true" : "false", math ? "true" : "false");
         if (direct_code_watch && cpu_index == 0) {
             original_page_free = nce_lkl_host.page_free;
             nce_lkl_host.page_free = watch_page_free;

@@ -67,7 +67,7 @@ def validate_guest_layout(rows, requested, flat=False, guest_page_bytes=16384):
             (ram < reserve + reserve_size and reserve < ram + ram_size)):
         return False
     if requested in ('low', 'sparse'):
-        return ((flat if guest_page_bytes == 16384 else not flat) and base == 0x10000 and end == (1 << 36 if requested == 'sparse' else coverage) and physical == reserve and
+        return ((flat or guest_page_bytes == 4096) and base == 0x10000 and end == (1 << 36 if requested == 'sparse' else coverage) and physical == reserve and
                 reserve_size == ram_size + (64 << 20))
     return (base == reserve and end == base + coverage and physical == end and
             reserve_size == coverage + ram_size + (64 << 20))
@@ -111,14 +111,14 @@ def validate(rows, memory_interval, mapping="window", workload="core", tlb_inval
     if guest_page_bytes not in (4096, 16384):
         return False
     if guest_page_bytes == 4096:
-        if mapping != 'pte' or execution != 'unicorn' or cpus != 1 or guest_layout not in ('low', 'sparse'):
+        if mapping != 'pte' or execution not in ('unicorn', 'direct') or cpus != 1 or guest_layout not in ('low', 'sparse') or (execution == 'direct' and (not direct_config or direct_config['memory'] not in ('pte', 'flat'))):
             return False
         if [row for row in rows if row.get('config') == 'translation_page_sizes'] != [
                 {'config': 'translation_page_sizes', 'guest_page_bytes': 4096,
                  'host_page_bytes': 16384, 'host_address_limit': 1 << 39}]:
             return False
         layouts = [row for row in rows if row.get('config') == 'translation_guest_layout']
-        if len(layouts) != 1 or not validate_guest_layout(rows, guest_layout, False, guest_page_bytes):
+        if len(layouts) != 1 or not validate_guest_layout(rows, guest_layout, execution == 'direct' and direct_config['memory'] == 'flat', guest_page_bytes):
             return False
         layout = layouts[0]
         physical = layout['physical_base']
@@ -163,7 +163,7 @@ def validate(rows, memory_interval, mapping="window", workload="core", tlb_inval
             return False
         if guest_layout in ('low', 'sparse') and (mapping != 'pte' or cpus != 1 or
                 (guest_page_bytes == 16384 and (execution != 'direct' or direct_config['memory'] != 'flat')) or
-                (guest_page_bytes == 4096 and execution != 'unicorn')):
+                (guest_page_bytes == 4096 and execution == 'direct' and direct_config['memory'] not in ('pte', 'flat'))):
             return False
         if workload == 'core' and mapping == 'pte':
             if data_tbi:
@@ -315,6 +315,8 @@ def validate(rows, memory_interval, mapping="window", workload="core", tlb_inval
         if len(selected) != 1 or selected[0].get('engine') != execution:
             return False
         if execution == 'direct':
+            if selected[0].get('data_page_bytes') != guest_page_bytes:
+                return False
             if direct_config is not None and any(selected[0].get(k) != v for k, v in direct_config.items()):
                 return False
             direct = [row for row in rows if row.get('direct_execution')]
@@ -503,9 +505,10 @@ def main():
     parser.add_argument('--output', type=Path, default=DEFAULT_OUT)
     parser.add_argument('--memory-interval-ms', type=int, default=100)
     args = parser.parse_args()
-    if args.guest_page_bytes == 4096 and (args.mapping != 'pte' or args.execution != 'unicorn' or
+    if args.guest_page_bytes == 4096 and (args.mapping != 'pte' or args.execution not in ('unicorn', 'direct') or
+            (args.execution == 'direct' and args.direct_memory not in ('pte', 'flat')) or
             args.guest_layout not in ('low', 'sparse') or args.cpus != 1 or args.workload not in ('core', 'bionic', 'stock-art')):
-        parser.error('4 KiB 实验需要单 CPU 的 low或sparse/pte/unicorn，负载仅限 core/bionic/stock-art')
+        parser.error('4 KiB 实验需要单 CPU 的 low或sparse/pte，Direct 使用 pte/flat 访存，负载仅限 core/bionic/stock-art')
     if args.guest_page_bytes == 16384 and args.guest_layout in ('low', 'sparse') and (args.mapping != 'pte' or args.execution != 'direct' or args.direct_memory != 'flat' or args.cpus != 1):
         parser.error('低客体地址实验需要单 CPU 的 pte/direct/flat')
     if args.data_tbi and args.execution == 'direct' and args.direct_memory == 'view':
@@ -633,7 +636,7 @@ def main():
     direct_link, direct_files = [], []
     if args.execution == 'direct':
         from probe_direct_execution import build_engine as build_direct
-        direct_objects, direct_files = build_direct(out / 'direct', args.code_memory)
+        direct_objects, direct_files = build_direct(out / 'direct', args.code_memory, guest_page_bytes=args.guest_page_bytes)
         direct_link = ['-DNCE_DIRECT_EXECUTION', *direct_objects, '-lc++']
         inputs += [EXP / 'translation/code-watch.c', EXP / 'translation/read-view.c']
         direct_files.append(EXP / 'translation/code-watch.h')

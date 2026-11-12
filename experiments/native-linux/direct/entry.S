@@ -202,11 +202,11 @@ Lpte_user_address:
     ldr x17, [x27, #DIRECT_PTE_ROOT]
     ubfx x26, x16, #DIRECT_PTE_PGD_SHIFT, #DIRECT_PTE_INDEX_BITS
     ldr x17, [x17, x26, lsl #3]
-    and x17, x17, #0xffffffffffffc000
+    and x17, x17, #~DIRECT_PTE_PAGE_MASK
     cbz x17, Lpte_miss
     ubfx x26, x16, #DIRECT_PTE_PMD_SHIFT, #DIRECT_PTE_INDEX_BITS
     ldr x17, [x17, x26, lsl #3]
-    and x17, x17, #0xffffffffffffc000
+    and x17, x17, #~DIRECT_PTE_PAGE_MASK
     cbz x17, Lpte_miss
     ubfx x26, x16, #DIRECT_PTE_PAGE_SHIFT, #DIRECT_PTE_INDEX_BITS
     ldr x17, [x17, x26, lsl #3]
@@ -215,7 +215,7 @@ Lpte_user_address:
     and x30, x17, x26
     cmp x30, x26
     b.ne Lpte_miss
-    and x17, x17, #0xffffffffffffc000
+    and x17, x17, #~DIRECT_PTE_PAGE_MASK
     ldr x26, [x27, #DIRECT_PTE_PHYSICAL_BASE]
     sub x17, x17, x26
     ldr x26, [x27, #DIRECT_PTE_RAM_SIZE]
@@ -232,7 +232,7 @@ Lpte_user_address:
 Lpte_address:
     ldr x26, [x27, #DIRECT_PTE_RAM]
     add x17, x17, x26
-    and x26, x16, #16383
+    and x26, x16, #DIRECT_PTE_PAGE_MASK
     add x17, x17, x26
     b Lpte_return
 Lpte_miss:

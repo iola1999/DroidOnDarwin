@@ -56,8 +56,7 @@ def main():
                         dict(row, ram_base=row['guest_base'])):
             assert not validate_guest_layout([changed], mode, False, 4096)
             rejected += 1
-        assert not validate_guest_layout([original], mode, True, 4096)
-        rejected += 1
+        assert validate_guest_layout([original], mode, True, 4096)
     script = Path(__file__).with_name('probe_lkl_translation.py')
     common = [sys.executable, script, '--guest-layout', 'low', '--mapping', 'pte',
               '--execution', 'direct', '--direct-memory', 'flat', '--cpus', '1', '--build-only']
