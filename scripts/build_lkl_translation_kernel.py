@@ -51,7 +51,7 @@ def build(cpus=1, high_res_timers=False, guest_page_bytes=16384):
     prepared = source.exists() and stamp.exists() and stamp.read_text().strip() == patch_digest
     if not prepared:
         # This directory contains only generated sources; build objects stay separate.
-        if source.exists() and (cpus == 2 or guest_page_bytes == 4096):
+        if source.exists():
             shutil.rmtree(source)
         if not source.exists():
             probe_lkl.run(['/bin/cp', '-cR', base, source], timeout=120)
@@ -142,6 +142,7 @@ def build(cpus=1, high_res_timers=False, guest_page_bytes=16384):
              source / 'arch/lkl/include/asm/mmu.h', source / 'arch/lkl/kernel/threads.c',
              source / 'arch/lkl/kernel/setup.c',
              source / 'arch/lkl/Kconfig', source / 'arch/lkl/include/asm/processor.h',
+             source / 'arch/lkl/include/asm/elf.h', source / 'fs/binfmt_elf.c',
              source / 'mm/util.c', source / 'mm/mmap.c', source / 'kernel/sysctl.c',
              *[out / name for name in ('lkl.so', 'lkl-image.bin', 'lkl-image.h', 'lkl-host-ops.h')]]
     if guest_page_bytes == 4096:

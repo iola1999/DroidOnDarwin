@@ -30,7 +30,8 @@ def main():
                                      c['tlb_invalidation'], c['execution'], c['direct'], c['cpus'],
                                      c['parallel_profile'], c['uaccess_stop'], code_memory=c['code_memory'],
                                      online_cpus=c['online_cpus'], guest_layout=c['guest_layout'],
-                                     guest_page_bytes=c['guest_page_bytes'], data_tbi=c['data_tbi'], kernel_log=log)
+                                     guest_page_bytes=c['guest_page_bytes'], data_tbi=c['data_tbi'], kernel_log=log,
+                                     exec_aslr_fixtures=report.get('exec_aslr_fixtures'))
 
             assert run['validated'] and valid(log_path.read_text())
             assert not valid(failure)

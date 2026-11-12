@@ -541,6 +541,13 @@ int nce_lkl_run(const char *path)
     unsigned long host_value = 0x7d2a9314UL;
     void *host_sources[2] = {0};
     if (TRANSLATION_LOOKUP && !android && !stock_bionic && !stock_art) {
+        const char *fixtures[] = {"static", "static-2m", "pie", "pie-256k", "pie-2m", "pie-nonzero", "exec", "exec-near-end"};
+        for (unsigned i = 0; i < sizeof(fixtures) / sizeof(*fixtures); ++i) {
+            char guest[64], filename[64];
+            REQUIRE(snprintf(guest, sizeof(guest), "/exec-aslr-%s", fixtures[i]) > 0);
+            REQUIRE(snprintf(filename, sizeof(filename), "exec-aslr-%s.elf", fixtures[i]) > 0);
+            put_file(guest, filename);
+        }
         char text[256];
         const char *layout = getenv("NCE_TRANSLATION_GUEST_LAYOUT");
         REQUIRE(snprintf(text, sizeof(text), "%s %lu %lu %lu %lu %lu\n", layout ? layout : "host",

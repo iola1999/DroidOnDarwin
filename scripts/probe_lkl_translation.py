@@ -150,7 +150,8 @@ def validate_aslr(rows, guest_page_bytes):
                     any(not guest['guest_base'] <= row[key] <= guest['guest_end'] - guest_page_bytes or row[key] % guest_page_bytes
                         for key in ('first', 'second')) or
                     not guest['guest_base'] <= row['stack'] < guest['guest_end'] or
-                    row['second'] != row['first'] + (guest_page_bytes if legacy else -guest_page_bytes)):
+                    (row['second'] < row['first'] + guest_page_bytes if legacy else
+                     row['second'] + guest_page_bytes > row['first'])):
                 return False
             if name == 'fallback':
                 if (not guest['guest_base'] <= row['lower'] < row['first'] or row['lower'] % guest_page_bytes or
@@ -169,7 +170,7 @@ def validate_aslr(rows, guest_page_bytes):
     return True
 
 
-def validate(rows, memory_interval, mapping="window", workload="core", tlb_invalidation=None, execution=None, direct_config=None, cpus=1, parallel_profile=None, uaccess_stop=None, code_lookup_limit=None, code_memory=None, online_cpus=None, guest_layout=None, guest_page_bytes=16384, data_tbi=None, stock_art_jit_mode="default", *, kernel_log=""):
+def validate(rows, memory_interval, mapping="window", workload="core", tlb_invalidation=None, execution=None, direct_config=None, cpus=1, parallel_profile=None, uaccess_stop=None, code_lookup_limit=None, code_memory=None, online_cpus=None, guest_layout=None, guest_page_bytes=16384, data_tbi=None, stock_art_jit_mode="default", *, kernel_log="", exec_aslr_fixtures=None):
     if 'BUG: non-zero pgtables_bytes on freeing mm:' in kernel_log:
         return False
     if guest_page_bytes not in (4096, 16384):
@@ -232,6 +233,11 @@ def validate(rows, memory_interval, mapping="window", workload="core", tlb_inval
         if workload == 'core' and mapping == 'pte':
             if not validate_aslr(rows, guest_page_bytes):
                 return False
+            if exec_aslr_fixtures is not None or any(row.get('config') == 'linux_exec_aslr' for row in rows):
+                from exec_aslr import validate as validate_exec_aslr
+                guest = next(row for row in rows if row.get('config') == 'translation_guest_layout')
+                if not validate_exec_aslr(rows, exec_aslr_fixtures, guest, guest_page_bytes):
+                    return False
             if data_tbi:
                 for name in ('translated_data_tbi_and_unicorn_alias_invalidation', 'translated_tagged_syscall_abi_rejected', 'translated_tagged_fetch_rejected'):
                     if [row for row in rows if row.get('test') == name] != [{'test': name, 'passed': True}]:
@@ -804,6 +810,7 @@ def main():
         guest_sources = []
     elif args.mapping == 'pte':
         guest_sources.append(EXP / 'translation/aslr-guest.c')
+        guest_sources.append(EXP / 'translation/exec-aslr-image.c')
         guest_sources.append(EXP / 'translation/jit-guest.c')
     for source in guest_sources:
         obj = out / (source.stem + '.o')
@@ -829,7 +836,12 @@ def main():
     run([llvm / 'llvm-strip', '--strip-all', out / 'guest.elf', '-o', out / 'late.elf'])
     runtime_files = ('sigreturn.elf', 'dynamic.elf', 'libc.so', 'dependency.so', 'plugin.so', 'dash.elf')
     for name in runtime_files:
-        shutil.copyfile(KERNEL / name, out / name)
+        subprocess.run(['cp', '-c', KERNEL / name, out / name], check=True, timeout=30)
+    exec_aslr_fixtures, exec_aslr_files = None, []
+    if args.mapping == 'pte' and args.workload == 'core':
+        from exec_aslr import build as build_exec_aslr
+        exec_aslr_fixtures, fixture_commands, exec_aslr_files = build_exec_aslr(out, libc, args.guest_page_bytes)
+        commands.extend(fixture_commands)
     from build_nce_userspace import BIONIC_TEST_SOURCES, build_bionic_test
     if stock_runtime:
         ndk = Path('/opt/homebrew/share/android-ndk')
@@ -849,7 +861,7 @@ def main():
     if args.workload in ('android', 'services', 'desktop'):
         for name, source in [('NceWorkload.dex', KERNEL / 'java-classes/classes.dex'),
                              ('ld.config.txt', EXP / 'art/ld.config.txt')]:
-            shutil.copyfile(source, out / name)
+            subprocess.run(['cp', '-c', source, out / name], check=True, timeout=30)
             android_files.append(out / name)
         android_files.extend([KERNEL / 'system.img', KERNEL / 'lkl-summary.json'])
         if system_candidate:
@@ -857,7 +869,7 @@ def main():
                                   ROOT / 'scripts/prepare_stock_android.py'])
         if args.workload in ('services', 'desktop'):
             for name in ('nce-policy.cil', 'property_info'):
-                shutil.copyfile(KERNEL / name, out / name)
+                subprocess.run(['cp', '-c', KERNEL / name, out / name], check=True, timeout=30)
                 android_files.append(out / name)
             (out / 'enabled').write_text('1')
             android_files.append(out / 'enabled')
@@ -867,7 +879,7 @@ def main():
              *[EXP / 'userspace' / name for name in BIONIC_TEST_SOURCES],
              EXP / 'translation/unicorn-code-memory.h', EXP / 'execute-check.h', EXP / 'translation/linux-elf.h', EXP / 'translation/linux-execution.h', EXP / 'translation/interaction-profile.h', EXP / 'translation/linux-memory.h', guest_main, Path(__file__),
              EXP / 'dispatch-test.c', EXP / 'layout.h', EXP / 'guest-registers.h',
-             *guest_sources, *android_files, *graphics_files,
+             *guest_sources, *android_files, *graphics_files, *exec_aslr_files,
              kernel / 'lkl-image.bin', kernel / 'lkl-image.h', kernel / 'lkl.so', kernel / 'lkl-host-ops.h',
              EXP / 'translation/kernel-api.h', EXP / 'translation/kernel-image.h', EXP / 'code-memory.h', EXP / 'nce.h', out / 'translation-symbols.h',
              ROOT / 'scripts/build_translation_engine.py', manifest,
@@ -887,7 +899,7 @@ def main():
         files += [ROOT / 'scripts/apk_fixture_validation.py', ROOT / 'scripts/build_apk_fixture.py']
     if args.mapping == 'pte':
         files += [ROOT / 'scripts/build_lkl_translation_kernel.py', ROOT / 'scripts/lkl_translation_patch.py',
-                  EXP / 'lkl-nce-mmu.c', kernel / 'build.json']
+                  EXP / 'lkl-nce-mmu.c', kernel / 'build.json', EXP / 'translation/exec-aslr.h']
     if args.guest_page_bytes == 4096:
         files.append(ROOT / 'scripts/lkl_4k_vmalloc_patch.py')
     if args.cpus == 2:
@@ -991,7 +1003,7 @@ def main():
                         raise
                     parse_errors.append({'line': line_number, 'error': str(error)})
             kernel_log = (out / f'{stem}.log').read_text()
-            passed = not parse_errors and returncode == 0 and validate(rows, args.memory_interval_ms, args.mapping, args.workload, args.tlb_invalidation, args.execution, direct_config, args.cpus, bool(args.parallel_profile), args.smp_uaccess_stop, code_memory=args.code_memory, online_cpus=args.online_cpus, guest_layout=args.guest_layout, data_tbi=bool(args.data_tbi), guest_page_bytes=args.guest_page_bytes, stock_art_jit_mode=args.stock_art_jit_mode, kernel_log=kernel_log)
+            passed = not parse_errors and returncode == 0 and validate(rows, args.memory_interval_ms, args.mapping, args.workload, args.tlb_invalidation, args.execution, direct_config, args.cpus, bool(args.parallel_profile), args.smp_uaccess_stop, code_memory=args.code_memory, online_cpus=args.online_cpus, guest_layout=args.guest_layout, data_tbi=bool(args.data_tbi), guest_page_bytes=args.guest_page_bytes, stock_art_jit_mode=args.stock_art_jit_mode, kernel_log=kernel_log, exec_aslr_fixtures=exec_aslr_fixtures)
             apk_validated = None
             if apk_fixture:
                 previous = [row for result in results for row in result['results']]
@@ -1070,6 +1082,8 @@ def main():
             stages = [row for row in result['results'] if row.get('component_stage') == 'dynamic']
             result['component_compatible'] = result['validated'] and len(stages) == 1 and stages[0].get('success') is True
             result['component_stderr'] = (out / f"{result['entry']}-{result['iteration']}.log").read_text()
+    if exec_aslr_fixtures:
+        report['exec_aslr_fixtures'] = exec_aslr_fixtures
     if apk_fixture:
         report['apk_fixture'] = apk_fixture
         report['apk_fixture']['scope'] = 'Original signed Java/JNI fixture installation, update and cold restart in Direct Android; no performance claim'
