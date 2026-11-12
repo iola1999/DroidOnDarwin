@@ -443,6 +443,7 @@ def main():
     parser.add_argument('--apk-fixture-dir', type=Path, help='运行时传入同签名 Java/JNI APK，首轮安装更新，后续启动只检查已安装 v2')
     parser.add_argument('--workload', choices=('core', 'bionic', 'stock-art', 'android', 'services', 'desktop'), default='core')
     parser.add_argument('--stock-art-directory', type=Path, help='prepare_stock_art.py 已核对的原始 ART 组件目录')
+    parser.add_argument('--system-image-directory', type=Path, help='prepare_stock_android.py 已核对的原始运行库系统盘目录')
     parser.add_argument('--runtime-source', choices=('sdk36', 'hyperos'))
     parser.add_argument('--runtime-directory', type=Path)
     parser.add_argument('--runtime-manifest', type=Path)
@@ -514,6 +515,24 @@ def main():
         parser.error('需要 Apple Silicon Mac，repeat 必须为正数')
     if not 1000 <= args.batch_instructions <= 1000000 or not (args.memory_interval_ms == 0 or 10 <= args.memory_interval_ms <= 10000):
         parser.error('指令批次范围 1000…1000000；内存采样间隔为 0 或 10…10000 ms')
+    system_image = KERNEL / 'system.img'
+    system_candidate = None
+    if args.system_image_directory:
+        if (args.workload not in ('services', 'desktop') or args.mapping != 'pte' or
+                args.execution != 'direct' or args.guest_layout != 'sparse' or
+                not args.data_tbi or args.cpus != 1):
+            parser.error('原始运行库系统盘需要单 CPU、sparse、TBI、Direct/PTE 的 services 或 desktop')
+        args.system_image_directory = args.system_image_directory.resolve()
+        if not args.system_image_directory.is_relative_to(WORK):
+            parser.error('候选系统盘必须在 work/native-linux-nce 内')
+        from prepare_stock_android import verify as verify_system_candidate
+        try:
+            system_candidate = verify_system_candidate(args.system_image_directory)
+        except (OSError, ValueError, KeyError) as error:
+            parser.error(str(error))
+        if Path(system_candidate['base_image']['path']) != system_image:
+            parser.error('候选系统盘必须使用当前探针的基准镜像')
+        system_image = args.system_image_directory / 'system.img'
     if args.workload in ('android', 'services', 'desktop'):
         try:
             validate_android_image(ROOT, KERNEL)
@@ -709,6 +728,9 @@ def main():
             shutil.copyfile(source, out / name)
             android_files.append(out / name)
         android_files.extend([KERNEL / 'system.img', KERNEL / 'lkl-summary.json'])
+        if system_candidate:
+            android_files.extend([system_image, args.system_image_directory / 'manifest.json',
+                                  ROOT / 'scripts/prepare_stock_android.py'])
         if args.workload in ('services', 'desktop'):
             for name in ('nce-policy.cil', 'property_info'):
                 shutil.copyfile(KERNEL / name, out / name)
@@ -779,7 +801,7 @@ def main():
     environment['NCE_TRANSLATION_PREEMPTION'] = args.preemption
     environment['NCE_TRANSLATION_MEMORY_MS'] = str(args.memory_interval_ms)
     environment['NCE_TRANSLATION_WORKLOAD'] = args.workload
-    environment['NCE_TRANSLATION_SYSTEM'] = str(KERNEL / 'system.img')
+    environment['NCE_TRANSLATION_SYSTEM'] = str(system_image)
     environment['NCE_TRANSLATION_CACHE'] = args.cache_invalidation
     environment['NCE_TRANSLATION_EXEC_CACHE'] = args.exec_cache
     environment['NCE_TRANSLATION_TLB'] = args.tlb_invalidation
@@ -798,6 +820,8 @@ def main():
     for iteration in range(args.repeat):
         for mode in entries:
             stem = f'{mode}-{iteration}'
+            if system_candidate and verify_system_candidate(args.system_image_directory) != system_candidate:
+                raise RuntimeError('原始运行库系统盘在运行前发生变化')
             apk_stage = 'verify-restart' if results else 'install-update'
             if apk_fixture:
                 if not apk_inputs_unchanged(apk_fixture):
@@ -876,6 +900,8 @@ def main():
             break
     if input_hashes != {str(path.relative_to(ROOT)): sha(path) for path in files}:
         raise SystemExit('本轮验证期间源码或二进制发生变化，请重跑')
+    if system_candidate and verify_system_candidate(args.system_image_directory) != system_candidate:
+        raise RuntimeError('原始运行库系统盘在运行期间发生变化')
     report = {'scope': f'Native {args.cpus}-CPU LKL with translated ARM64 userspace; selected workload only; iPhone unverified',
               'data_seed': {'path': str(data_seed.relative_to(ROOT)), 'sha256': sha(data_seed)} if data_seed else None,
               'platform': platform.platform(), 'cpu': subprocess.check_output(['sysctl', '-n', 'machdep.cpu.brand_string'], text=True).strip(),
@@ -893,6 +919,9 @@ def main():
                                 'preemption': args.preemption, 'timer_interval_ns': 2000000},
               'measurement': 'Guest clock times 128 pipe round trips per memory case; excludes initial COW materialization. Selected preemption, translation and selected Linux mapping implementation included. Memory means are arithmetic sample means, including phase boundaries; sampled peaks can miss short peaks. Resident lifetime peak is separate.',
               'sha256': input_hashes, 'runs': results}
+    if system_candidate:
+        report['system_candidate'] = system_candidate
+        report['measurement'] = 'Original SDK36 runtime service/desktop compatibility only; no performance comparison.'
     if stock_art:
         report['stock_art'] = stock_art
         report['stock_art']['execution_attempted'] = True
