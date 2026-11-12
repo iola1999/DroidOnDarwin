@@ -36,44 +36,75 @@ def digest(path, algorithm='sha256'):
         return hashlib.file_digest(stream, algorithm).hexdigest()
 
 
-def system_partition(image, output, name="system"):
+def partition_extents(image):
     # This pinned SDK image contains GPT, then a single-device linear LP layout.
+    image_bytes = image.stat().st_size
     with image.open('rb') as source:
         source.seek(512)
         header = source.read(92)
-        if header[:8] != b'EFI PART':
+        if len(header) != 92 or header[:8] != b'EFI PART':
             raise RuntimeError('Expected GPT system image')
         offset, count, size = struct.unpack_from('<QII', header, 72)
+        if size < 128 or size % 8 or not count or offset * 512 + count * size > image_bytes:
+            raise RuntimeError('Invalid GPT entry range')
         source.seek(offset * 512)
         entries = [source.read(size) for _ in range(count)]
-        super_entry = next(e for e in entries if e[56:].decode('utf-16-le').rstrip('\0') == 'super')
+        matches = [e for e in entries if e[56:128].decode('utf-16-le').rstrip('\0') == 'super']
+        if len(matches) != 1:
+            raise RuntimeError('Expected one GPT super partition')
+        super_entry = matches[0]
         base = struct.unpack_from('<Q', super_entry, 32)[0] * 512
+        end = (struct.unpack_from('<Q', super_entry, 40)[0] + 1) * 512
+        if not 0 <= base < base + 12288 + 128 <= end <= image_bytes:
+            raise RuntimeError('Invalid GPT super range')
         source.seek(base + 12288)
         header = bytearray(source.read(128))
         expected = bytes(header[12:44])
         header[12:44] = bytes(32)
         if header[:4] != b'0PLA' or hashlib.sha256(header).digest() != expected:
             raise RuntimeError('Invalid LP header')
-        tables = source.read(struct.unpack_from('<I', header, 44)[0])
+        table_bytes = struct.unpack_from('<I', header, 44)[0]
+        if not table_bytes or base + 12288 + 128 + table_bytes > end:
+            raise RuntimeError('Invalid LP table range')
+        tables = source.read(table_bytes)
         if hashlib.sha256(tables).digest() != header[48:80]:
             raise RuntimeError('Invalid LP tables')
         po, pn, ps = struct.unpack_from('<III', header, 80)
-        eo, _, es = struct.unpack_from('<III', header, 92)
+        eo, en, es = struct.unpack_from('<III', header, 92)
+        if ps < 52 or es < 24 or po + pn * ps > len(tables) or eo + en * es > len(tables):
+            raise RuntimeError('Invalid LP table descriptors')
         partitions = [struct.unpack_from('<36sIIII', tables, po + i * ps) for i in range(pn)]
-        partition = next(p for p in partitions if p[0].rstrip(b'\0') == name.encode())
-        with output.open('wb') as target:
+        result = {}
+        for partition in partitions:
+            name = partition[0].rstrip(b'\0').decode('ascii')
+            if not name or name in result or partition[2] + partition[3] > en:
+                raise RuntimeError('Invalid LP partition extent index')
+            extents = []
             for i in range(partition[2], partition[2] + partition[3]):
                 sectors, kind, start, device = struct.unpack_from('<QIQI', tables, eo + i * es)
                 if kind or device:
                     raise RuntimeError('Expected a linear extent on device zero')
-                source.seek(base + start * 512)
-                remaining = sectors * 512
-                while remaining:
-                    chunk = source.read(min(remaining, 4 * 1024 * 1024))
-                    if not chunk:
-                        raise RuntimeError('Truncated system extent')
-                    target.write(chunk)
-                    remaining -= len(chunk)
+                absolute, extent_bytes = base + start * 512, sectors * 512
+                if not extent_bytes or not base <= absolute < absolute + extent_bytes <= end:
+                    raise RuntimeError('LP extent exceeds the original super partition')
+                extents.append({'offset': absolute, 'bytes': extent_bytes, 'start_sector': start, 'sectors': sectors})
+            result[name] = extents
+    return {'image_bytes': image_bytes, 'super_offset': base, 'lp_header_sha256': expected.hex(),
+            'lp_tables_sha256': bytes(header[48:80]).hex(), 'partitions': result}
+
+
+def system_partition(image, output, name="system"):
+    extents = partition_extents(image)['partitions'][name]
+    with image.open('rb') as source, output.open('wb') as target:
+        for extent in extents:
+            source.seek(extent['offset'])
+            remaining = extent['bytes']
+            while remaining:
+                chunk = source.read(min(remaining, 4 * 1024 * 1024))
+                if not chunk:
+                    raise RuntimeError('Truncated system extent')
+                target.write(chunk)
+                remaining -= len(chunk)
 
 
 def main():

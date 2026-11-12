@@ -20,9 +20,11 @@ def main():
     tests = []
     source = args.manifest.resolve()
     report = json.loads(args.sdk_init_report.read_text())
+    page_bytes = report['source_configuration'].get('guest_page_bytes', 16384)
+    assert page_bytes == 4096
     for run in report['runs']:
         assert run['observation_validated'] and validate(run['results'], run['mode'], True,
-                                                       guest_page_bytes=report['source_configuration'].get('guest_page_bytes', 16384), kernel_log=run['stderr'])
+                                                       guest_page_bytes=page_bytes, kernel_log=run['stderr'])
     tests.append('actual_sdk36_four_entries')
 
     with tempfile.TemporaryDirectory(prefix='hyperos-init-contract-', dir=ROOT / 'work/native-linux-nce') as temporary:
@@ -74,11 +76,11 @@ def main():
         rows.append(trace)
 
         def observed(candidate, **kwargs):
-            return validate(candidate, 'lifecycle', True, guest_page_bytes=4096, hyperos_input=prepared, **kwargs)
+            return validate(candidate, 'lifecycle', True, guest_page_bytes=4096, original_input=prepared, **kwargs)
 
         assert observed(rows)
-        assert not validate(rows, 'lifecycle', True, hyperos_input=prepared)
-        assert not validate(rows, 'lifecycle', False, guest_page_bytes=4096, hyperos_input=prepared)
+        assert not validate(rows, 'lifecycle', True, original_input=prepared)
+        assert not validate(rows, 'lifecycle', False, guest_page_bytes=4096, original_input=prepared)
         low_rows = deepcopy(rows)
         low_layout = next(row for row in low_rows if row.get('config') == 'translation_guest_layout')
         low_layout['guest_end'] = 1 << 36

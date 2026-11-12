@@ -21,14 +21,16 @@ def metadata(image, records, directories, output):
     return items
 
 
-def read_partition_metadata(partition, records, paths, *, links=()):
-    """从 raw ext4 读取标签并校验 records；links 中路径保留最终符号链接。"""
+def read_partition_metadata(partition, records, paths, *, links=(), offset=0):
+    """从字节偏移 offset 处的 ext4 读取标签并校验 records；links 保留最终符号链接。"""
+    if type(offset) is not int or offset < 0 or offset % 512:
+        raise ValueError('ext4 原盘偏移必须为非负且按 512 bytes 对齐的整数')
     c.CDLL(str(LIB / 'libcom_err.1.1.dylib'), mode=c.RTLD_GLOBAL)
     lib = c.CDLL(str(LIB / 'libext2fs.2.1.dylib'))
     pointer = c.c_void_p
     ino_type = c.c_uint
     declarations = {
-        'ext2fs_open': [c.c_char_p, c.c_int, c.c_int, c.c_int, pointer, c.POINTER(pointer)],
+        'ext2fs_open2': [c.c_char_p, c.c_char_p, c.c_int, c.c_int, c.c_int, pointer, c.POINTER(pointer)],
         'ext2fs_close': [pointer],
         'ext2fs_namei': [pointer, ino_type, ino_type, c.c_char_p, c.POINTER(ino_type)],
         'ext2fs_namei_follow': [pointer, ino_type, ino_type, c.c_char_p, c.POINTER(ino_type)],
@@ -54,7 +56,7 @@ def read_partition_metadata(partition, records, paths, *, links=()):
             raise ValueError(f'ext4 元数据读取失败：{operation}，错误码 {result}')
 
     fs = pointer()
-    check(lib.ext2fs_open(str(partition).encode(), 0, 0, 0,
+    check(lib.ext2fs_open2(str(partition).encode(), ('offset=' + str(offset)).encode(), 0, 0, 0,
                          pointer.in_dll(lib, 'unix_io_manager'), c.byref(fs)), 'open')
     items = {}
     try:

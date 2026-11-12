@@ -29,7 +29,7 @@ static void original_metadata_checks(void)
     CHECK(fd >= 0 && read(fd, profile, sizeof(profile) - 1) > 0 && close(fd) == 0);
     if (!strcmp(profile, "sdk36"))
         return;
-    CHECK(!strcmp(profile, "hyperos"));
+    CHECK(!strcmp(profile, "hyperos") || !strcmp(profile, "sdk36-lp"));
     FILE *input = fopen("/stock-init-original-metadata.tsv", "r");
     CHECK(input);
     char line[2048];
