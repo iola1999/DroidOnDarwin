@@ -94,7 +94,7 @@ def prepare(runtime, desktop, metadata, out, system_image=None):
             'closure': closure, 'files': records, 'original_system_metadata': original_metadata,
             'original_system_image': {'path': str(system_image), 'sha256': SYSTEM_IMAGE_SHA} if system_image else None,
             'deployed_system_partition': {'path': str(out / 'original-system-metadata.img'), 'sha256': sha(out / 'original-system-metadata.img')} if system_image else None,
-            'limitations': [('Original system partition mounted read-only; vendor/product/system_ext service binaries and original APEX activation are not deployed.' if system_image else
+            'limitations': [('Original system partition mounted read-only; vendor/product/system_ext service binaries are not deployed.' if system_image else
                               'Original rc files retained; service binaries beyond init/ueventd and APEX containers are not staged.'),
                             'The runner supplies mounted partition directories; first-stage init and original fstab mounts are untested.']}
 
@@ -162,6 +162,10 @@ def validate(rows, mode, original_system=False, *, kernel_log=''):
         return False
     lifecycle = [r for r in rows if 'stock_init_lifecycle' in r]
     original = [r for r in rows if 'stock_init_exec' in r]
+    restorer = [r for r in rows if r.get('test') == 'linux_signal_kernel_restorer']
+    if restorer != [{'test': 'linux_signal_kernel_restorer', 'passed': True, 'pid': pid}
+                    for pid in ((1, 2) if mode == 'lifecycle' else (1,))]:
+        return False
     if mode == 'lifecycle':
         return (lifecycle == [{'stock_init_lifecycle': True, 'pid': 1, 'child': 2}] and not original and
                 o['deadline_stop'] and o['status'] == 9 and c['allocated'] == 2 and log['read_result'] >= 0)
@@ -199,7 +203,7 @@ def main():
     result.update(scope='Original SDK36 init selinux_setup/second_stage observation; full rc retained; first-stage and system boot unverified',
                   source_report=str(source), source_report_sha256=sha(source), source_configuration=config,
                   input=prepared, commands=[], runs=[], sha256=dict(base['sha256']))
-    for path in (Path(__file__).resolve(), EXP / 'translation/stock-init-guest.c', EXP / 'translation/stock-init-runner.h', EXP / 'translation/stock-init-trace.h', ROOT / 'scripts/stock_init_metadata.py'):
+    for path in (Path(__file__).resolve(), EXP / 'translation/stock-init-guest.c', EXP / 'translation/stock-init-runner.h', EXP / 'translation/stock-init-trace.h', EXP / 'userspace/signal-tests.c', EXP / 'userspace/signal-registers.S', ROOT / 'scripts/stock_init_metadata.py'):
         result['sha256'][str(path.relative_to(ROOT))] = sha(path)
     runner_source = (EXP / 'translation/linux-runner.c').read_text()
     start = runner_source.index('static void stock_bionic_setup(void)')
@@ -241,7 +245,15 @@ def main():
     link_guest = [value for value in link_guest if not (str(source.parent) in value and value.endswith('.o'))]
     link_guest.insert(link_guest.index('-o'), str(out / 'guest.o'))
     link_guest[link_guest.index('-o') + 1] = str(out / 'guest.elf')
-    for command in (compile_guest, link_guest):
+    signal_commands = []
+    for name in ('signal-tests.c', 'signal-registers.S'):
+        signal_source = str(EXP / 'userspace' / name)
+        command = next(list(cmd) for cmd in base['commands'] if '-c' in cmd and signal_source in cmd)
+        output = out / (Path(name).stem + '.o')
+        command[command.index('-o') + 1] = str(output)
+        signal_commands.append(command)
+        link_guest.insert(link_guest.index('-o'), str(output))
+    for command in (compile_guest, *signal_commands, link_guest):
         subprocess.run(command, check=True, timeout=120)
         result['commands'].append(command)
     (out / 'late.elf').symlink_to(out / 'guest.elf')

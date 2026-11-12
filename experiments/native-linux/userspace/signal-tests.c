@@ -7,6 +7,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/mman.h>
 #include <sys/syscall.h>
 #include <sys/time.h>
@@ -30,6 +31,55 @@ int signal_register_test(pid_t pid);
 uintptr_t signal_redirect_fault(const volatile uint32_t *address);
 extern const char signal_redirect_load[], signal_redirect_landing[];
 #define REDIRECT_ADDRESS 12
+
+static volatile sig_atomic_t kernel_returned;
+static volatile uintptr_t kernel_return_address;
+
+static void kernel_return_handler(int signal)
+{
+    CHECK(signal == SIGUSR1);
+    kernel_return_address = (uintptr_t)__builtin_return_address(0);
+    ++kernel_returned;
+}
+
+void signal_kernel_restorer_tests(void)
+{
+    /* rt_sigaction uses the kernel's one-word mask and field order. Libc may
+     * supply SA_RESTORER, so install this action directly to exercise mm.sigreturn. */
+    struct kernel_sigaction {
+        uintptr_t handler;
+        unsigned long flags;
+        uintptr_t restorer;
+        unsigned long mask;
+    } original, installed, action = {.handler = (uintptr_t)kernel_return_handler};
+    CHECK(syscall(SYS_rt_sigaction, SIGUSR1, NULL, &original, sizeof(original.mask)) == 0);
+    CHECK(syscall(SYS_rt_sigaction, SIGUSR1, &action, NULL, sizeof(action.mask)) == 0);
+    CHECK(syscall(SYS_rt_sigaction, SIGUSR1, NULL, &installed, sizeof(installed.mask)) == 0);
+    CHECK(installed.handler == action.handler && installed.flags == 0 && installed.restorer == 0);
+    sig_atomic_t before = kernel_returned;
+    CHECK(signal_register_test(getpid()) == 0 && kernel_returned == before + 1);
+
+    FILE *maps = fopen("/proc/self/maps", "r");
+    CHECK(maps);
+    char line[256], permissions[5] = {0};
+    unsigned long start = 0, end = 0;
+    while (fgets(line, sizeof(line), maps)) {
+        if (strstr(line, "[nce-sigreturn]")) {
+            CHECK(sscanf(line, "%lx-%lx %4s", &start, &end, permissions) == 3);
+            break;
+        }
+    }
+    CHECK(fclose(maps) == 0 && start && end - start == (unsigned long)sysconf(_SC_PAGESIZE));
+    CHECK(!strcmp(permissions, "r-xp") && kernel_return_address >= start && kernel_return_address < end);
+    CHECK(mprotect((void *)start, end - start, PROT_READ | PROT_WRITE) == -1 && errno == EACCES);
+    void *destination = mmap(NULL, end - start, PROT_NONE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+    CHECK(destination != MAP_FAILED);
+    CHECK(mremap((void *)start, end - start, end - start, MREMAP_MAYMOVE | MREMAP_FIXED, destination) == MAP_FAILED &&
+          (errno == EINVAL || errno == EACCES));
+    CHECK(munmap(destination, end - start) == 0);
+    CHECK(syscall(SYS_rt_sigaction, SIGUSR1, &original, NULL, sizeof(original.mask)) == 0);
+    printf("{\"test\":\"linux_signal_kernel_restorer\",\"passed\":true,\"pid\":%d}\n", getpid());
+}
 
 static void handler(int signal, siginfo_t *info, void *context)
 {
@@ -160,6 +210,7 @@ void signal_tests(const char *libc)
     puts("{\"test\":\"linux_signal_mask_altstack_nested\",\"passed\":true}");
     CHECK(signal_register_test(getpid()) == 0);
     puts("{\"test\":\"linux_signal_register_restore\",\"passed\":true}");
+    signal_kernel_restorer_tests();
 
     interrupted_read(0);
     interrupted_read(1);

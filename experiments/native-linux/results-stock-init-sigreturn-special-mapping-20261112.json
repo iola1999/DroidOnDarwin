@@ -1,0 +1,3434 @@
+{
+  "scope": "Kernel special signal-return mapping under original SDK36 SELinux policy; local Direct core and original init CLI/GCD; complete Android boot remains incomplete.",
+  "base_commit": "8c524f3",
+  "branch": "codex/offline-address-domains",
+  "environment": {
+    "platform": "macOS-27.0-arm64-arm-64bit-Mach-O",
+    "cpu": "Apple M5 Ultra",
+    "system_build": "26A428"
+  },
+  "configuration": {
+    "data_tbi": true,
+    "guest_layout": "sparse",
+    "code_memory": "dual",
+    "execution": "direct",
+    "direct": {
+      "mapping_entries": 256,
+      "route_entries": 256,
+      "selective_writes": false,
+      "reuse_code_checks": false,
+      "memory": "flat",
+      "code_watch": true,
+      "cross_page": true,
+      "route_epochs": false,
+      "retain_routes": false,
+      "memory_groups": false,
+      "native_exclusive": true,
+      "vector_table": false,
+      "simd_math": false
+    },
+    "mapping": "pte",
+    "sparse_scan": true,
+    "fault_prefetch": false,
+    "guest_page_bytes": 16384,
+    "workload": "core",
+    "entries": [
+      "cli",
+      "gcd"
+    ],
+    "art_nterp": 1,
+    "cpus": 1,
+    "high_res_timers": false,
+    "online_cpus": 1,
+    "uaccess_stop": "all",
+    "parallel_profile": false,
+    "art_expanded_jit": 0,
+    "art_fast_baseline": 0,
+    "cache_invalidation": "pages",
+    "exec_cache": "pages",
+    "tlb_invalidation": "pages",
+    "linux_fastpath": 0,
+    "guest_ram_bytes": 1073741824,
+    "translation_cache_bytes": 134217728,
+    "instruction_batch": 50000,
+    "memory_interval_ms": 100,
+    "preemption": "timer",
+    "timer_interval_ns": 2000000
+  },
+  "sources_sha256": {
+    "experiments/native-linux/lkl-nce-elf.c": "31fa92e6d1615e78517769889353ef008d244089d6cb064eb1102d86ba2ba784",
+    "experiments/native-linux/userspace/signal-tests.c": "d7d3df2614b2e907c2c81ffc57644ac00d36b7ff44b41b6cab100a05814d2a23",
+    "experiments/native-linux/translation/stock-init-guest.c": "2bf8727e204bdc84fd7479a058d3fa81b2a97fea9f84b762b0208d975cf8d68a",
+    "scripts/probe_stock_init.py": "0afe7abaa7fd6cee73a820f8a02bb04dd57091fcb8ca5e16626b138a70bfdb2b",
+    "scripts/probe_lkl_translation.py": "6440c8385c61afbb37accadca15fb56cf9eb73aefbc2b02a1ddcb1d27ec2685e"
+  },
+  "kernel": {
+    "manifest": "work/native-linux-nce/stock-init-special-mapping-kernel/build.json",
+    "manifest_sha256": "cb00a6535534773ddd8588f5a35167725af54a5317b69362b077786fc6a2541d",
+    "image_sha256": "6826242b63e84f445ca5dd30f0041db5fac7659470ee519200f52cbbf3e70fb8",
+    "lkl_header_sha256": "5286e8329e6e53b3005881bee153c4731ba17e4d22a0545fb0bc28fe363ae226",
+    "translation_header_sha256": "68790846d503876ae712b4333acb3b9fb67f1c17f3375c8837c079b6337ce03c"
+  },
+  "diagnostic_baseline": {
+    "report": "work/native-linux-nce/stock-init-sigreturn-open-v23/summary.json",
+    "sha256": "89c04d4aa74d1f184fe77fe0efde175560f0dad57070a75f99b92d0ff75b6201",
+    "actual_denials": {
+      "u:r:vendor_init:s0": "filp_open=-13",
+      "u:r:apexd:s0": "filp_open=-13",
+      "u:r:ueventd:s0": "filp_open=0; RX vm_mmap=-13"
+    },
+    "inode_label": "u:object_r:rootfs:s0"
+  },
+  "reports": [
+    {
+      "path": "work/native-linux-nce/stock-init-special-mapping-core-v2/summary.json",
+      "bytes": 111044,
+      "sha256": "af5f51379decc0e0ac85b9750ede7fe363679898b110e50a58f2d25345b544c1",
+      "runs": [
+        {
+          "entry": "cli",
+          "mode": "core",
+          "returncode": 0,
+          "validated": true,
+          "signal_checks": [
+            {
+              "test": "linux_signal_register_restore",
+              "passed": true
+            },
+            {
+              "test": "linux_signal_kernel_restorer",
+              "passed": true,
+              "pid": 1
+            },
+            {
+              "test": "linux_signal_suite",
+              "passed": true,
+              "libc": "musl-translated"
+            }
+          ],
+          "cleanup": [
+            {
+              "test": "translated_context_cleanup",
+              "passed": true,
+              "allocated": 71,
+              "freed": 71,
+              "maps": 0,
+              "revocations": 0,
+              "tlb_fills": 70256,
+              "faults": 152434,
+              "syscalls": 17215,
+              "preemptions": 37
+            }
+          ],
+          "exec": [],
+          "policy_writes": [],
+          "selinux_files": [],
+          "observation": [],
+          "log_messages": [],
+          "service_sigsegv_log_count": 0
+        },
+        {
+          "entry": "gcd",
+          "mode": "core",
+          "returncode": 0,
+          "validated": true,
+          "signal_checks": [
+            {
+              "test": "linux_signal_register_restore",
+              "passed": true
+            },
+            {
+              "test": "linux_signal_kernel_restorer",
+              "passed": true,
+              "pid": 1
+            },
+            {
+              "test": "linux_signal_suite",
+              "passed": true,
+              "libc": "musl-translated"
+            }
+          ],
+          "cleanup": [
+            {
+              "test": "translated_context_cleanup",
+              "passed": true,
+              "allocated": 71,
+              "freed": 71,
+              "maps": 0,
+              "revocations": 0,
+              "tlb_fills": 70258,
+              "faults": 152434,
+              "syscalls": 17216,
+              "preemptions": 30
+            }
+          ],
+          "exec": [],
+          "policy_writes": [],
+          "selinux_files": [],
+          "observation": [],
+          "log_messages": [],
+          "service_sigsegv_log_count": 0
+        }
+      ]
+    },
+    {
+      "path": "work/native-linux-nce/stock-init-special-mapping-original-v3/summary.json",
+      "bytes": 7135603,
+      "sha256": "e92309c51b47879dabcd05eee44711ba5363a24d3978249ac5c1e3027e223260",
+      "runs": [
+        {
+          "entry": "cli",
+          "mode": "lifecycle",
+          "returncode": 0,
+          "validated": true,
+          "signal_checks": [
+            {
+              "test": "linux_signal_kernel_restorer",
+              "passed": true,
+              "pid": 1
+            },
+            {
+              "test": "linux_signal_kernel_restorer",
+              "passed": true,
+              "pid": 2
+            }
+          ],
+          "cleanup": [
+            {
+              "test": "translated_context_cleanup",
+              "passed": true,
+              "allocated": 2,
+              "freed": 2,
+              "maps": 0,
+              "revocations": 0,
+              "tlb_fills": 21,
+              "faults": 19,
+              "syscalls": 69,
+              "preemptions": 1
+            }
+          ],
+          "exec": [],
+          "policy_writes": [],
+          "selinux_files": [],
+          "observation": [
+            {
+              "stock_init_observation": true,
+              "mode": "lifecycle",
+              "ancestor_pid": 26,
+              "waited": 26,
+              "status": 9,
+              "deadline_stop": true,
+              "kill_result": 0
+            }
+          ],
+          "log_messages": [],
+          "service_sigsegv_log_count": 0
+        },
+        {
+          "entry": "gcd",
+          "mode": "lifecycle",
+          "returncode": 0,
+          "validated": true,
+          "signal_checks": [
+            {
+              "test": "linux_signal_kernel_restorer",
+              "passed": true,
+              "pid": 1
+            },
+            {
+              "test": "linux_signal_kernel_restorer",
+              "passed": true,
+              "pid": 2
+            }
+          ],
+          "cleanup": [
+            {
+              "test": "translated_context_cleanup",
+              "passed": true,
+              "allocated": 2,
+              "freed": 2,
+              "maps": 0,
+              "revocations": 0,
+              "tlb_fills": 21,
+              "faults": 19,
+              "syscalls": 69,
+              "preemptions": 1
+            }
+          ],
+          "exec": [],
+          "policy_writes": [],
+          "selinux_files": [],
+          "observation": [
+            {
+              "stock_init_observation": true,
+              "mode": "lifecycle",
+              "ancestor_pid": 26,
+              "waited": 26,
+              "status": 9,
+              "deadline_stop": true,
+              "kill_result": 0
+            }
+          ],
+          "log_messages": [],
+          "service_sigsegv_log_count": 0
+        },
+        {
+          "entry": "cli",
+          "mode": "original",
+          "returncode": 0,
+          "validated": true,
+          "signal_checks": [
+            {
+              "test": "linux_signal_kernel_restorer",
+              "passed": true,
+              "pid": 1
+            }
+          ],
+          "cleanup": [
+            {
+              "test": "translated_context_cleanup",
+              "passed": true,
+              "allocated": 48,
+              "freed": 48,
+              "maps": 0,
+              "revocations": 0,
+              "tlb_fills": 15070,
+              "faults": 4174,
+              "syscalls": 30494,
+              "preemptions": 213
+            }
+          ],
+          "exec": [
+            {
+              "path": "/system/bin/init",
+              "result": 0
+            },
+            {
+              "path": "/system/bin/init",
+              "result": 0
+            },
+            {
+              "path": "/system/bin/init",
+              "result": 0
+            },
+            {
+              "path": "/system/bin/ueventd",
+              "result": 0
+            },
+            {
+              "path": "/system/bin/apexd",
+              "result": 0
+            }
+          ],
+          "policy_writes": [
+            {
+              "requested_bytes": 752915,
+              "result": 752915
+            }
+          ],
+          "selinux_files": [
+            {
+              "stock_init_security": 56,
+              "result": 4,
+              "fd": -1,
+              "path_hex": "2f7379732f66732f73656c696e75782f6c6f6164",
+              "name_hex": "",
+              "value_hex": ""
+            },
+            {
+              "stock_init_security": 56,
+              "result": 4,
+              "fd": -1,
+              "path_hex": "2f7379732f66732f73656c696e75782f656e666f726365",
+              "name_hex": "",
+              "value_hex": ""
+            },
+            {
+              "stock_init_security": 56,
+              "result": 4,
+              "fd": -1,
+              "path_hex": "2f7379732f66732f73656c696e75782f656e666f726365",
+              "name_hex": "",
+              "value_hex": ""
+            },
+            {
+              "stock_init_security": 56,
+              "result": 4,
+              "fd": -1,
+              "path_hex": "2f7379732f66732f73656c696e75782f656e666f726365",
+              "name_hex": "",
+              "value_hex": ""
+            },
+            {
+              "stock_init_security": 56,
+              "result": 17,
+              "fd": -1,
+              "path_hex": "2f7379732f66732f73656c696e75782f656e666f726365",
+              "name_hex": "",
+              "value_hex": ""
+            }
+          ],
+          "observation": [
+            {
+              "stock_init_observation": true,
+              "mode": "original",
+              "ancestor_pid": 26,
+              "waited": 26,
+              "status": 1,
+              "deadline_stop": false,
+              "kill_result": 0
+            }
+          ],
+          "log_messages": [
+            "<6>init: Loading SELinux policy",
+            "<6>init: init second stage started!",
+            "<6>init: SetupMountNamespaces done",
+            "<6>init: Forked subcontext for 'u:r:vendor_init:s0' with pid 4",
+            "<6>ueventd: ueventd started!",
+            "<6>ueventd: Coldboot took 0.067 seconds",
+            "<6>apexd: Started. subcommand = --bootstrap",
+            "<6>apexd-bootstrap: Found bootstrap APEX /system/apex/com.android.runtime.apex",
+            "<6>apexd-bootstrap: Found bootstrap APEX /system/apex/com.android.i18n.apex",
+            "<6>apexd-bootstrap: Found bootstrap APEX /system/apex/com.android.virt.apex",
+            "<6>apexd-bootstrap: Found bootstrap APEX /system/apex/com.google.android.tzdata6.apex",
+            "<6>apexd-bootstrap: Need to pre-allocate 39 loop devices",
+            "<3>apexd-bootstrap: Failed to pre-allocate loop devices : wait for '/dev/loop-control' timed out and took 20001ms: No such file or directory",
+            "<3>apexd-bootstrap: Failed to open device-mapper: No such file or directory",
+            "<3>apexd-bootstrap: Failed to activate apexes: Failed to activate 4 APEX packages. One of the errors: Failed to activate /system/apex/com.android.i18n.apex(com.android.i18n@1): Could not create loop device for /system/apex/com.android.i18n.apex: Failed to open loop-control: No such file or directory",
+            "<3>init: Service apexd-bootstrap has 'reboot_on_failure' option and failed, shutting down system.",
+            "<6>init: Got shutdown_command 'reboot,bootloader,bootstrap-apexd-failed' Calling HandlePowerctlMessage()"
+          ],
+          "service_sigsegv_log_count": 0
+        },
+        {
+          "entry": "gcd",
+          "mode": "original",
+          "returncode": 0,
+          "validated": true,
+          "signal_checks": [
+            {
+              "test": "linux_signal_kernel_restorer",
+              "passed": true,
+              "pid": 1
+            }
+          ],
+          "cleanup": [
+            {
+              "test": "translated_context_cleanup",
+              "passed": true,
+              "allocated": 48,
+              "freed": 48,
+              "maps": 0,
+              "revocations": 0,
+              "tlb_fills": 14089,
+              "faults": 4197,
+              "syscalls": 30519,
+              "preemptions": 177
+            }
+          ],
+          "exec": [
+            {
+              "path": "/system/bin/init",
+              "result": 0
+            },
+            {
+              "path": "/system/bin/init",
+              "result": 0
+            },
+            {
+              "path": "/system/bin/init",
+              "result": 0
+            },
+            {
+              "path": "/system/bin/ueventd",
+              "result": 0
+            },
+            {
+              "path": "/system/bin/apexd",
+              "result": 0
+            }
+          ],
+          "policy_writes": [
+            {
+              "requested_bytes": 752915,
+              "result": 752915
+            }
+          ],
+          "selinux_files": [
+            {
+              "stock_init_security": 56,
+              "result": 4,
+              "fd": -1,
+              "path_hex": "2f7379732f66732f73656c696e75782f6c6f6164",
+              "name_hex": "",
+              "value_hex": ""
+            },
+            {
+              "stock_init_security": 56,
+              "result": 4,
+              "fd": -1,
+              "path_hex": "2f7379732f66732f73656c696e75782f656e666f726365",
+              "name_hex": "",
+              "value_hex": ""
+            },
+            {
+              "stock_init_security": 56,
+              "result": 4,
+              "fd": -1,
+              "path_hex": "2f7379732f66732f73656c696e75782f656e666f726365",
+              "name_hex": "",
+              "value_hex": ""
+            },
+            {
+              "stock_init_security": 56,
+              "result": 4,
+              "fd": -1,
+              "path_hex": "2f7379732f66732f73656c696e75782f656e666f726365",
+              "name_hex": "",
+              "value_hex": ""
+            },
+            {
+              "stock_init_security": 56,
+              "result": 17,
+              "fd": -1,
+              "path_hex": "2f7379732f66732f73656c696e75782f656e666f726365",
+              "name_hex": "",
+              "value_hex": ""
+            }
+          ],
+          "observation": [
+            {
+              "stock_init_observation": true,
+              "mode": "original",
+              "ancestor_pid": 26,
+              "waited": 26,
+              "status": 1,
+              "deadline_stop": false,
+              "kill_result": 0
+            }
+          ],
+          "log_messages": [
+            "<6>init: Loading SELinux policy",
+            "<6>init: init second stage started!",
+            "<6>init: SetupMountNamespaces done",
+            "<6>init: Forked subcontext for 'u:r:vendor_init:s0' with pid 4",
+            "<6>ueventd: ueventd started!",
+            "<6>ueventd: Coldboot took 0.07 seconds",
+            "<6>apexd: Started. subcommand = --bootstrap",
+            "<6>apexd-bootstrap: Found bootstrap APEX /system/apex/com.android.runtime.apex",
+            "<6>apexd-bootstrap: Found bootstrap APEX /system/apex/com.android.i18n.apex",
+            "<6>apexd-bootstrap: Found bootstrap APEX /system/apex/com.android.virt.apex",
+            "<6>apexd-bootstrap: Found bootstrap APEX /system/apex/com.google.android.tzdata6.apex",
+            "<6>apexd-bootstrap: Need to pre-allocate 39 loop devices",
+            "<3>apexd-bootstrap: Failed to pre-allocate loop devices : wait for '/dev/loop-control' timed out and took 20005ms: No such file or directory",
+            "<3>apexd-bootstrap: Failed to open device-mapper: No such file or directory",
+            "<3>apexd-bootstrap: Failed to activate apexes: Failed to activate 4 APEX packages. One of the errors: Failed to activate /system/apex/com.android.runtime.apex(com.android.runtime@1): Could not create loop device for /system/apex/com.android.runtime.apex: Failed to open loop-control: No such file or directory",
+            "<3>init: Service apexd-bootstrap has 'reboot_on_failure' option and failed, shutting down system.",
+            "<6>init: Got shutdown_command 'reboot,bootloader,bootstrap-apexd-failed' Calling HandlePowerctlMessage()"
+          ],
+          "service_sigsegv_log_count": 0
+        }
+      ]
+    }
+  ],
+  "original_input": {
+    "runtime_manifest": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36-runtime.json",
+    "runtime_manifest_sha256": "4b1a45b0ee51725c68f1c29765958d0b60b45a5f2325bedfc61764cd49232249",
+    "desktop_manifest": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36-desktop/manifest.json",
+    "desktop_manifest_sha256": "515c9fe37032c16e01048a9a63f83708b314558d5322de2eb41773db09179772",
+    "closure": {
+      "files": 34,
+      "bytes": 13810664
+    },
+    "files": {
+      "/system/bin/init": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/bin/init",
+        "sha256": "c27d13897025ad72d68f5d9a57e3c76cd250f53e82817cf2b5eb04d3e01ec12a",
+        "bytes": 3170752,
+        "mode": 493
+      },
+      "/system/bin/bootstrap/linker64": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/bin/bootstrap/linker64",
+        "sha256": "69accdc2bd8a964b7747709fdfba4145a390bcfeb0395710e93fb471723b81f9",
+        "bytes": 2250352,
+        "mode": 493
+      },
+      "/system/lib64/libbase.so": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/lib64/libbase.so",
+        "sha256": "025a1c793543c73887e386d888aa3de247af4492ec53ca750a8c985b6ab8c865",
+        "bytes": 218592,
+        "mode": 420
+      },
+      "/system/lib64/libcutils.so": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/lib64/libcutils.so",
+        "sha256": "64469e5439f24119bec0de038a756f4c40232f10e23082d7aa2fbba755328e6c",
+        "bytes": 118232,
+        "mode": 420
+      },
+      "/system/lib64/libext4_utils.so": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/lib64/libext4_utils.so",
+        "sha256": "0a250c483e10350420c3d1739edab45094783ab60b5c1d079dc891ecd33af096",
+        "bytes": 51376,
+        "mode": 420
+      },
+      "/system/lib64/libfs_mgr.so": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/lib64/libfs_mgr.so",
+        "sha256": "395563992296dcf49d6f5549507ecdae585fddf899b43ab8902f2a0b46ef8093",
+        "bytes": 631032,
+        "mode": 420
+      },
+      "/system/lib64/libgsi.so": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/lib64/libgsi.so",
+        "sha256": "20a010ab27431c3bc14ed83c18cdb12cb3ac33bffad8db7807a4f5b39ac0fa04",
+        "bytes": 35752,
+        "mode": 420
+      },
+      "/system/lib64/liblog.so": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/lib64/liblog.so",
+        "sha256": "efcce90970ed85d61b9c05791ad76ff5f573035b1c0f7d2a3839063c7db5d1a0",
+        "bytes": 102544,
+        "mode": 420
+      },
+      "/system/lib64/liblogwrap.so": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/lib64/liblogwrap.so",
+        "sha256": "34124b64fa7437cf995f0976fde773d61905bd3f32d49a1318a1c314c632a309",
+        "bytes": 51504,
+        "mode": 420
+      },
+      "/system/lib64/liblp.so": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/lib64/liblp.so",
+        "sha256": "ea22adb4884dd92711b6eed23dcfc9e79c8c2ba71e5298492bf291758fd28d3f",
+        "bytes": 201080,
+        "mode": 420
+      },
+      "/system/lib64/libprocessgroup.so": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/lib64/libprocessgroup.so",
+        "sha256": "8eb04e16e15ead98a1c364bd985e8adea91bdc1ba778c2d3cdc8d176c0fe336e",
+        "bytes": 367144,
+        "mode": 420
+      },
+      "/system/lib64/libprocessgroup_setup.so": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/lib64/libprocessgroup_setup.so",
+        "sha256": "8e4d037b892a3f907c325e2eb6de580726e8134f8f0c1eb0d3e7bb0610ed7d46",
+        "bytes": 53184,
+        "mode": 420
+      },
+      "/system/lib64/libselinux.so": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/lib64/libselinux.so",
+        "sha256": "0bf7e49120bcd2bde1851ede4e0fe0d69909f29ed51a87e8ba25121c4a154400",
+        "bytes": 135432,
+        "mode": 420
+      },
+      "/system/lib64/libunwindstack.so": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/lib64/libunwindstack.so",
+        "sha256": "11f4f68d5fb644823d0dd129aa88d0dafbef22ff97a8e90f6c99b8ab850279bf",
+        "bytes": 721784,
+        "mode": 420
+      },
+      "/system/lib64/libutils.so": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/lib64/libutils.so",
+        "sha256": "9326154900b3746e2cdd174e32a0e8277655b9367d311c1f77f0f312ef395d0d",
+        "bytes": 168336,
+        "mode": 420
+      },
+      "/system/lib64/libvendorsupport.so": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/lib64/libvendorsupport.so",
+        "sha256": "cb2d74b7e8399ff647b262eb0a89797cbc22e5261e99258c8fa801df79db00d7",
+        "bytes": 35296,
+        "mode": 420
+      },
+      "/system/lib64/libc++.so": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/lib64/libc++.so",
+        "sha256": "2267f93b8b3c9d1967f1833d5f71c7312213c43bb291250cf772800763037fb9",
+        "bytes": 1049704,
+        "mode": 420
+      },
+      "/system/lib64/bootstrap/libc.so": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/lib64/bootstrap/libc.so",
+        "sha256": "d3f8599b8b3f00101a31f94ac170ceb5875ee8446c201cb18382b2e02df84301",
+        "bytes": 1209648,
+        "mode": 420
+      },
+      "/system/lib64/bootstrap/libm.so": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/lib64/bootstrap/libm.so",
+        "sha256": "44433149f62eeb8f09f38ecd3566683fac01a0f89de6ea6d15f6e4deca1ba4bc",
+        "bytes": 248968,
+        "mode": 420
+      },
+      "/system/lib64/bootstrap/libdl.so": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/lib64/bootstrap/libdl.so",
+        "sha256": "9f6447d910742a57b398a6a3f31746e02302ee9547da6d02757f001058a69df3",
+        "bytes": 50760,
+        "mode": 420
+      },
+      "/system/lib64/libz.so": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/lib64/libz.so",
+        "sha256": "45f9234190e46eac2484944def75893cadbed4f751deaed674ed0341c7a229b1",
+        "bytes": 118008,
+        "mode": 420
+      },
+      "/system/lib64/libext2_uuid.so": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/lib64/libext2_uuid.so",
+        "sha256": "8edfc4fc33a83299194caf2ecdbc10c78c08b0feca1566ebf7700f14283e9f2e",
+        "bytes": 51368,
+        "mode": 420
+      },
+      "/system/lib64/libcrypto.so": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/lib64/libcrypto.so",
+        "sha256": "6847fe73621441cc1b18113f41fe84f26f83a610d38f7f2531d7757200eb7602",
+        "bytes": 1592832,
+        "mode": 420
+      },
+      "/system/lib64/libcrypto_utils.so": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/lib64/libcrypto_utils.so",
+        "sha256": "9511423fdf3fd4e2f4efbae592314b59fb5135928a008d8e38a5fdcd357e643f",
+        "bytes": 35328,
+        "mode": 420
+      },
+      "/system/lib64/libfec.so": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/lib64/libfec.so",
+        "sha256": "ec7db164dd1d16394ee628df8f8bdb5a4a73d47ba8bf46391798c1b99e07a390",
+        "bytes": 101944,
+        "mode": 420
+      },
+      "/system/lib64/libsparse.so": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/lib64/libsparse.so",
+        "sha256": "4fa5ad9450b2c13ded46e4b12e64c66f70235cd02f23d0eb57cef81ae0384882",
+        "bytes": 52376,
+        "mode": 420
+      },
+      "/system/lib64/libjsoncpp.so": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/lib64/libjsoncpp.so",
+        "sha256": "565f1b67c0e0c3f7eb912ceb56277f6625483bcc82f0e4539f9815387af7bb8f",
+        "bytes": 200536,
+        "mode": 420
+      },
+      "/system/lib64/libpcre2.so": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/lib64/libpcre2.so",
+        "sha256": "12a084f2c1ff272aa4b7107d9c1c020256a3864f14c9a3689c5fc6ec52ae8f1c",
+        "bytes": 379632,
+        "mode": 420
+      },
+      "/system/lib64/libpackagelistparser.so": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/lib64/libpackagelistparser.so",
+        "sha256": "923610095a9d6cb44ebe354e4332159cc293d3f1629f5a93dc491cdcf78c3401",
+        "bytes": 51576,
+        "mode": 420
+      },
+      "/system/lib64/liblzma.so": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/lib64/liblzma.so",
+        "sha256": "4267ed645d3ba551a8f0b49004c2b80547cceca147f0f7b234ac7a800c69ae97",
+        "bytes": 200184,
+        "mode": 420
+      },
+      "/system/lib64/libvndksupport.so": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/lib64/libvndksupport.so",
+        "sha256": "c932627a6c9a37b0f92fbb66f081152cc2bee0ad7655a2ba1be6b8da53201cde",
+        "bytes": 51352,
+        "mode": 420
+      },
+      "/system/lib64/ld-android.so": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/lib64/ld-android.so",
+        "sha256": "39f9d2d397dc43df40d6d52432c15946bb2797d5907dbd0605cee28e26a43502",
+        "bytes": 34080,
+        "mode": 420
+      },
+      "/system/lib64/libsquashfs_utils.so": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/lib64/libsquashfs_utils.so",
+        "sha256": "d67c33b5f51648df42efde3c560be020c01fb6790197f1770f5f5ef64bbd8f76",
+        "bytes": 35304,
+        "mode": 420
+      },
+      "/system/lib64/bootstrap/libdl_android.so": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/lib64/bootstrap/libdl_android.so",
+        "sha256": "739c5716653bcff6700501d98f576957fc299e4f2483c3ad2bd1c0f641e96422",
+        "bytes": 34672,
+        "mode": 420
+      },
+      "/system/etc/init/aconfigd.rc": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/etc/init/aconfigd.rc",
+        "sha256": "aebb9d75e9ae5bf3571ddd0c09d8a7f934bbd8f9f12f0dab82b9521485291a09",
+        "bytes": 940,
+        "mode": 420
+      },
+      "/system/etc/init/android.system.suspend-service.rc": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/etc/init/android.system.suspend-service.rc",
+        "sha256": "ba2068dad761c4a681c48fdad42ba1102d1491789328d0eb583899e0dcf18d4e",
+        "bytes": 162,
+        "mode": 420
+      },
+      "/system/etc/init/apexd.rc": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/etc/init/apexd.rc",
+        "sha256": "1f4fc2d8195da261dddcbbc3cf0759ef48b2d14c4e98c445be0bb50a4ac077ba",
+        "bytes": 1197,
+        "mode": 420
+      },
+      "/system/etc/init/atrace.rc": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/etc/init/atrace.rc",
+        "sha256": "20d480d8accef65e3c60f4f874b8c6ea5e6456b2ad4d4c91f795f2ab8edfd55f",
+        "bytes": 26913,
+        "mode": 420
+      },
+      "/system/etc/init/atrace_userdebug.rc": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/etc/init/atrace_userdebug.rc",
+        "sha256": "eea193467ec478fb461586e3e1114c6e9676e812bb4d9c8cca5c273c25d538a5",
+        "bytes": 1500,
+        "mode": 420
+      },
+      "/system/etc/init/audioserver.rc": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/etc/init/audioserver.rc",
+        "sha256": "0007967a7c056469794143f459872805b34a7abd584b055036dbaf2048d64834",
+        "bytes": 2435,
+        "mode": 420
+      },
+      "/system/etc/init/blank_screen.rc": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/etc/init/blank_screen.rc",
+        "sha256": "1e4d509471f2f88e46a15c1247bb0e5d8a4732b2dcc066eaa09aa70019e525be",
+        "bytes": 113,
+        "mode": 420
+      },
+      "/system/etc/init/bootanim.rc": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/etc/init/bootanim.rc",
+        "sha256": "d7854acbd566ba7985fefa5aa87602c42814ed5a7ea5904d2628ac4f9444f77f",
+        "bytes": 185,
+        "mode": 420
+      },
+      "/system/etc/init/bootstat-debug.rc": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/etc/init/bootstat-debug.rc",
+        "sha256": "18ffe824e55a6caba58f72b7ad6cee05bd4bec5aebf4b6e030a3c24a7ea3f440",
+        "bytes": 322,
+        "mode": 420
+      },
+      "/system/etc/init/bootstat.rc": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/etc/init/bootstat.rc",
+        "sha256": "fddcd823ddcde967e358a8412eb6ea8ce66a0051e608fc5939dd03075338a55d",
+        "bytes": 4119,
+        "mode": 420
+      },
+      "/system/etc/init/cameraserver.rc": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/etc/init/cameraserver.rc",
+        "sha256": "2e447573575421f8531fef9f8c119c86429d64dd71cced7af3ca2c22f6851e28",
+        "bytes": 366,
+        "mode": 420
+      },
+      "/system/etc/init/clean_scratch_files.rc": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/etc/init/clean_scratch_files.rc",
+        "sha256": "608a19e643c0da854b9de0de1e8ceb396a33be5567debbb1702a5218e29df7d2",
+        "bytes": 155,
+        "mode": 420
+      },
+      "/system/etc/init/cppreopts.rc": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/etc/init/cppreopts.rc",
+        "sha256": "0e236c52663a4126a2c1b1aec315d6cb52e4f117d585fb5b4a0be5274ec83476",
+        "bytes": 1690,
+        "mode": 420
+      },
+      "/system/etc/init/credstore.rc": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/etc/init/credstore.rc",
+        "sha256": "438e38856cdf410379144d7dfacff0f37a961007b238a0acba1d442bc900faac",
+        "bytes": 115,
+        "mode": 420
+      },
+      "/system/etc/init/dmesgd.rc": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/etc/init/dmesgd.rc",
+        "sha256": "fb3c26e424a78839070c6fa79c6b35bc426b9218972ceed883308424d7b34301",
+        "bytes": 647,
+        "mode": 420
+      },
+      "/system/etc/init/drmserver.rc": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/etc/init/drmserver.rc",
+        "sha256": "e35d0f49ea371744d2acfda7305112ed5d72d1f59401fb1518a99bbe4b3cb4de",
+        "bytes": 256,
+        "mode": 420
+      },
+      "/system/etc/init/dumpstate.rc": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/etc/init/dumpstate.rc",
+        "sha256": "3702ad3e5e0af660f67d6b48310d73921e55feb30826d51f72be3e72b309b3fe",
+        "bytes": 761,
+        "mode": 420
+      },
+      "/system/etc/init/flags_health_check.rc": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/etc/init/flags_health_check.rc",
+        "sha256": "76c3bf64f41057bc9c9ce0ca433f71c5d6a0f42cd4bd17c0b696debb97763239",
+        "bytes": 504,
+        "mode": 420
+      },
+      "/system/etc/init/gatekeeperd.rc": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/etc/init/gatekeeperd.rc",
+        "sha256": "d03a1ca16e4db87a11d47d03433f5d31cce5c9251f3cf8f5bd52f74bf3a9ae64",
+        "bytes": 140,
+        "mode": 420
+      },
+      "/system/etc/init/gpuservice.rc": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/etc/init/gpuservice.rc",
+        "sha256": "a4f71d84d4c830c08aae58a434727691fa972a40a2b5cb8e2288d2d80d42f7de",
+        "bytes": 102,
+        "mode": 420
+      },
+      "/system/etc/init/gsid.rc": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/etc/init/gsid.rc",
+        "sha256": "891aa13d00c847784594e2f24ed25763a1778a3a57fae8fff5d25cd81759992f",
+        "bytes": 800,
+        "mode": 420
+      },
+      "/system/etc/init/heapprofd.rc": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/etc/init/heapprofd.rc",
+        "sha256": "325c7e57909523e3c617a4d28311f5f15c575b69c0ccbf96c99d6d657b0a6475",
+        "bytes": 2121,
+        "mode": 420
+      },
+      "/system/etc/init/hw/init.boringssl.no_zygote.rc": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/etc/init/hw/init.boringssl.no_zygote.rc",
+        "sha256": "afeaef2628f6ab1e7352f49274aa8e745ea2ceb4555f7216e732856b56b61c32",
+        "bytes": 392,
+        "mode": 420,
+        "source_link_target": "init.boringssl.zygote64_32.rc",
+        "verified_target": "etc/init/hw/init.boringssl.zygote64_32.rc",
+        "staged_as": "regular-file"
+      },
+      "/system/etc/init/hw/init.boringssl.zygote32.rc": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/etc/init/hw/init.boringssl.zygote32.rc",
+        "sha256": "afeaef2628f6ab1e7352f49274aa8e745ea2ceb4555f7216e732856b56b61c32",
+        "bytes": 392,
+        "mode": 420,
+        "source_link_target": "init.boringssl.zygote64_32.rc",
+        "verified_target": "etc/init/hw/init.boringssl.zygote64_32.rc",
+        "staged_as": "regular-file"
+      },
+      "/system/etc/init/hw/init.boringssl.zygote64.rc": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/etc/init/hw/init.boringssl.zygote64.rc",
+        "sha256": "dbad9c5c5b6dbb16615f893c03ccb3be700e1054ebd90ad92bac82c1e50a1284",
+        "bytes": 196,
+        "mode": 420
+      },
+      "/system/etc/init/hw/init.boringssl.zygote64_32.rc": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/etc/init/hw/init.boringssl.zygote64_32.rc",
+        "sha256": "afeaef2628f6ab1e7352f49274aa8e745ea2ceb4555f7216e732856b56b61c32",
+        "bytes": 392,
+        "mode": 420
+      },
+      "/system/etc/init/hw/init.rc": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/etc/init/hw/init.rc",
+        "sha256": "133923deca1bb776b83856eba406441849fb1903f8aa2f96940183ae976e205d",
+        "bytes": 58047,
+        "mode": 420
+      },
+      "/system/etc/init/hw/init.usb.configfs.rc": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/etc/init/hw/init.usb.configfs.rc",
+        "sha256": "1384154db54fe5a8b3fb62f9c8e9c6732c379066c941364c25d853ac55aa994b",
+        "bytes": 7690,
+        "mode": 420
+      },
+      "/system/etc/init/hw/init.usb.rc": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/etc/init/hw/init.usb.rc",
+        "sha256": "b42a64eab42cdb0cbdce037348696b5169e50007109d3dca32acbbcebbb6c4c5",
+        "bytes": 5932,
+        "mode": 420
+      },
+      "/system/etc/init/hw/init.zygote32.rc": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/etc/init/hw/init.zygote32.rc",
+        "sha256": "52e22565937423dd454c509f8ac7d16c6321f5af37a76a60443e0463ac8a4099",
+        "bytes": 878,
+        "mode": 420
+      },
+      "/system/etc/init/hw/init.zygote64.rc": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/etc/init/hw/init.zygote64.rc",
+        "sha256": "7be8fde03ec2cc4417aecf1a79163e0e4088fdff02ee6cd2426d02f91127e479",
+        "bytes": 901,
+        "mode": 420
+      },
+      "/system/etc/init/hw/init.zygote64_32.rc": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/etc/init/hw/init.zygote64_32.rc",
+        "sha256": "ebefc5059d679d689e1b455f40deaff51be4d444a6c2690451f80a938d7417ec",
+        "bytes": 450,
+        "mode": 420
+      },
+      "/system/etc/init/idmap2d.rc": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/etc/init/idmap2d.rc",
+        "sha256": "4dc195022f473d4b93770b441997d7086dfa07de82f73a713167bf6d62596779",
+        "bytes": 84,
+        "mode": 420
+      },
+      "/system/etc/init/incidentd.rc": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/etc/init/incidentd.rc",
+        "sha256": "a989c870659f49b09f9fa618513cab952878326142331af9b7d2a2e59629c7ca",
+        "bytes": 851,
+        "mode": 420
+      },
+      "/system/etc/init/init-debug.rc": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/etc/init/init-debug.rc",
+        "sha256": "765aa7ca0a86d80cf16b04c6e9daa6fae0a8f8abd6da23075c95db702046bf74",
+        "bytes": 659,
+        "mode": 420
+      },
+      "/system/etc/init/init-mmd-prop.rc": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/etc/init/init-mmd-prop.rc",
+        "sha256": "f24dbe181dfa97841d7f6f4c4c0ba1cdfebceed6c6c5f28812790446f4779882",
+        "bytes": 1135,
+        "mode": 420
+      },
+      "/system/etc/init/installd.rc": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/etc/init/installd.rc",
+        "sha256": "fcb59d1c3f8e49c5348d383805ca287b54c24d8f8fc3b70378078736676ed4a2",
+        "bytes": 4783,
+        "mode": 420
+      },
+      "/system/etc/init/kcmdlinectrl.rc": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/etc/init/kcmdlinectrl.rc",
+        "sha256": "690982e3b0b3dd0153903b0e463d8c60f7855cc92d9926e9d9a5d921ef6a0730",
+        "bytes": 944,
+        "mode": 420
+      },
+      "/system/etc/init/keystore2.rc": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/etc/init/keystore2.rc",
+        "sha256": "8e8688ddc5841d25436100e96cc564715438745623087391f4b4894fc15ce465",
+        "bytes": 732,
+        "mode": 420
+      },
+      "/system/etc/init/llkd-debuggable.rc": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/etc/init/llkd-debuggable.rc",
+        "sha256": "dba4be8eb941e222f97bc441561c27f6edbd5c0dae9e154bf0ff2c4c5fe6b540",
+        "bytes": 545,
+        "mode": 420
+      },
+      "/system/etc/init/llkd.rc": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/etc/init/llkd.rc",
+        "sha256": "915ed69cf1cca279e4a0a8ce03d9b79fd4e274f688cd07d47bdb85e13e93a5c3",
+        "bytes": 1217,
+        "mode": 420
+      },
+      "/system/etc/init/lmkd.rc": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/etc/init/lmkd.rc",
+        "sha256": "d00c4bffca5d490901428cb5e83eb5df444879c952ee2c2421e9a0d033272928",
+        "bytes": 2486,
+        "mode": 420
+      },
+      "/system/etc/init/logcatd.rc": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/etc/init/logcatd.rc",
+        "sha256": "bbc8cfbc09753346af822ccb99b9c5160f4235537043c593fd925052d47b0295",
+        "bytes": 2495,
+        "mode": 420
+      },
+      "/system/etc/init/logd.rc": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/etc/init/logd.rc",
+        "sha256": "26378c0ea5f8d424616760c16522d6c3f300daaca75929720dd6b8383cab6e56",
+        "bytes": 1006,
+        "mode": 420
+      },
+      "/system/etc/init/logtagd.rc": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/etc/init/logtagd.rc",
+        "sha256": "a510559d0c95d2f084389a15aa27138c7ec1eef458e8a60b06868f680436a737",
+        "bytes": 291,
+        "mode": 420
+      },
+      "/system/etc/init/lpdumpd.rc": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/etc/init/lpdumpd.rc",
+        "sha256": "8bc75276337f68cbf977e1bb732e95cde28d5a928f4d3a96155c52c3f5b73b5a",
+        "bytes": 1346,
+        "mode": 420
+      },
+      "/system/etc/init/mdnsd.rc": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/etc/init/mdnsd.rc",
+        "sha256": "6dcc3f787ed0bb94abb3843504604625c62852072219d8bf15e8628baef2cb95",
+        "bytes": 142,
+        "mode": 420
+      },
+      "/system/etc/init/mediaextractor.rc": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/etc/init/mediaextractor.rc",
+        "sha256": "679f6722ee487f9ea335754f74198ff5969e57b163830ccd8fb31ae4401321b4",
+        "bytes": 162,
+        "mode": 420
+      },
+      "/system/etc/init/mediametrics.rc": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/etc/init/mediametrics.rc",
+        "sha256": "9a5101b1399525b66ace536a371dd48ee3513c4976f842fef544ed7e52ef2130",
+        "bytes": 162,
+        "mode": 420
+      },
+      "/system/etc/init/mediaserver.rc": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/etc/init/mediaserver.rc",
+        "sha256": "73c95a8e8e10fcbb3d4d0c92ce87ec920c1c7f26096edf0320fab77a7ac00c39",
+        "bytes": 292,
+        "mode": 420
+      },
+      "/system/etc/init/misctrl.rc": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/etc/init/misctrl.rc",
+        "sha256": "7cc878b32487f411a158cf1442bfbfaf9fdfe68f2cc1db1fa90c62bc5d1f7d6e",
+        "bytes": 105,
+        "mode": 420
+      },
+      "/system/etc/init/mtectrl.rc": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/etc/init/mtectrl.rc",
+        "sha256": "29eac36d897e17ab5d960bf27950e4086f94cdd368f73c5578c9598b1308a6cc",
+        "bytes": 1885,
+        "mode": 420
+      },
+      "/system/etc/init/netbpfload.rc": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/etc/init/netbpfload.rc",
+        "sha256": "b084ef36f4410b92ebf71ba6644baa989b84267b0d773661ecaebb7ea5a3c270",
+        "bytes": 3907,
+        "mode": 420
+      },
+      "/system/etc/init/netd.rc": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/etc/init/netd.rc",
+        "sha256": "f3649dbb95b5e57b7543213a07079d1e900d5cdbcf498f28334a2981a940c96e",
+        "bytes": 1602,
+        "mode": 420
+      },
+      "/system/etc/init/odsign.rc": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/etc/init/odsign.rc",
+        "sha256": "050034426570b9e084accefd20e69d636e3fe9cf4d043e75ca067b467d4e36e5",
+        "bytes": 517,
+        "mode": 420
+      },
+      "/system/etc/init/otapreopt.rc": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/etc/init/otapreopt.rc",
+        "sha256": "d707a32d43b672c168fc086903fc86d750dbfc42388b1a990f4b4bec5931458f",
+        "bytes": 564,
+        "mode": 420
+      },
+      "/system/etc/init/perfetto.rc": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/etc/init/perfetto.rc",
+        "sha256": "85a7ffb11f78534f77d0c96863ef9dd47fe95900d231d258da6bc589b539d389",
+        "bytes": 8318,
+        "mode": 420
+      },
+      "/system/etc/init/prefetch.rc": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/etc/init/prefetch.rc",
+        "sha256": "6205f0483cfd63b43150c2bed9238329f06ee4dfa9456e1a18097286116347be",
+        "bytes": 1251,
+        "mode": 420
+      },
+      "/system/etc/init/prng_seeder.rc": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/etc/init/prng_seeder.rc",
+        "sha256": "6c4763c65ab372e459e5b1558e733fa08a85615198d2555a4112276b47cb71d4",
+        "bytes": 307,
+        "mode": 420
+      },
+      "/system/etc/init/profcollectd.rc": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/etc/init/profcollectd.rc",
+        "sha256": "62d60eaa73600f2a58624b07243218b96d61e8b604a9717ab2745ed183bd2873",
+        "bytes": 731,
+        "mode": 420
+      },
+      "/system/etc/init/recovery-persist.rc": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/etc/init/recovery-persist.rc",
+        "sha256": "0c5e3bee4329907791a861067722bbea0d56ad6639cd796fba2526c26bc975fa",
+        "bytes": 127,
+        "mode": 420
+      },
+      "/system/etc/init/recovery-refresh.rc": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/etc/init/recovery-refresh.rc",
+        "sha256": "0f6e0fb90d9d9d964fcc29b299f60c292b56882b06676136758e015e849839fa",
+        "bytes": 76,
+        "mode": 420
+      },
+      "/system/etc/init/rss_hwm_reset.rc": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/etc/init/rss_hwm_reset.rc",
+        "sha256": "22e991061614907864fc59838b0eea34037e6497ac356b4ba3c196af961eb4e5",
+        "bytes": 900,
+        "mode": 420
+      },
+      "/system/etc/init/servicemanager.rc": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/etc/init/servicemanager.rc",
+        "sha256": "36b87b60901affd28b0c500190fac30f1b7ebb9c8db63c0d14a08094ed756460",
+        "bytes": 522,
+        "mode": 420
+      },
+      "/system/etc/init/simpleperf.rc": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/etc/init/simpleperf.rc",
+        "sha256": "526982501006570fd3e39855e3d8265cf0094178c9d7cb1e0e1ee28ec97c15cd",
+        "bytes": 480,
+        "mode": 420
+      },
+      "/system/etc/init/snapuserd.rc": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/etc/init/snapuserd.rc",
+        "sha256": "3a6966f87823b2726a231e7244adf78ad91d581bf4e8b1580630ebb82cc6c498",
+        "bytes": 537,
+        "mode": 420
+      },
+      "/system/etc/init/storaged.rc": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/etc/init/storaged.rc",
+        "sha256": "91bbdb0a4b307a9edac822cc8503e6fafa10544eeca8f5d7a24c7dce964f801c",
+        "bytes": 176,
+        "mode": 420
+      },
+      "/system/etc/init/surfaceflinger.rc": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/etc/init/surfaceflinger.rc",
+        "sha256": "c6f8279f4fff66ff9add26a521a01dbd563a38576c0f85e2c7d88de78e2c167d",
+        "bytes": 233,
+        "mode": 420
+      },
+      "/system/etc/init/tombstoned.rc": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/etc/init/tombstoned.rc",
+        "sha256": "fc4a4486332af51be3fa98e77ab4cd6cb4e13d738c061e3e6ad47aafdf4490d4",
+        "bytes": 297,
+        "mode": 420
+      },
+      "/system/etc/init/traced_perf.rc": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/etc/init/traced_perf.rc",
+        "sha256": "757876dc3c2c849394c600b5b823d7a1cd45cb8ba63923c90020be45525341eb",
+        "bytes": 2137,
+        "mode": 420
+      },
+      "/system/etc/init/tradeinmode.rc": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/etc/init/tradeinmode.rc",
+        "sha256": "2d17e7087250a77ecdc31c9583210b83cb12b963a96e71c2d095c1f3c74d4c83",
+        "bytes": 431,
+        "mode": 420
+      },
+      "/system/etc/init/uncrypt.rc": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/etc/init/uncrypt.rc",
+        "sha256": "f81c7bd365484cc37a1dff173b0963782c4e1134a80feec07ef169bc2773477f",
+        "bytes": 432,
+        "mode": 420
+      },
+      "/system/etc/init/update_engine.rc": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/etc/init/update_engine.rc",
+        "sha256": "ddd600b1c1a5bc8b683d959bbe38b1978ab327929b95241641ff44e98f06e098",
+        "bytes": 336,
+        "mode": 420
+      },
+      "/system/etc/init/update_verifier.rc": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/etc/init/update_verifier.rc",
+        "sha256": "adeed811f2d98f272cb95bfb378f5f27b85df28d942fb74d52c4bd32f56e9b07",
+        "bytes": 122,
+        "mode": 420
+      },
+      "/system/etc/init/usbd.rc": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/etc/init/usbd.rc",
+        "sha256": "772b27f3affb6e67d1a6bc83a2b201cbdc053854789326ac9833ab84277ff995",
+        "bytes": 103,
+        "mode": 420
+      },
+      "/system/etc/init/virtual_camera.hal.rc": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/etc/init/virtual_camera.hal.rc",
+        "sha256": "d7e11a4db117dc8e685676b53b3b38a49d9098fa4767c1f71b5c8edcb9becf54",
+        "bytes": 350,
+        "mode": 420
+      },
+      "/system/etc/init/vold.rc": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/etc/init/vold.rc",
+        "sha256": "655dabdfc2899115be32ff7ca923070c76443caced6923996fb0a07d42e2097b",
+        "bytes": 377,
+        "mode": 420
+      },
+      "/system/etc/init/wifi.rc": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/etc/init/wifi.rc",
+        "sha256": "d2c32a50b7ed4c7b5b83e70f56f7ecb04c649f89d04b92ab12b43dc7432701c4",
+        "bytes": 5715,
+        "mode": 420
+      },
+      "/system/etc/init/wificond.rc": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/etc/init/wificond.rc",
+        "sha256": "7ec3ef548e88bcd13577b59239ca88b594454622818e4a9190ad274b1aadee38",
+        "bytes": 135,
+        "mode": 420
+      },
+      "/system/etc/selinux/bug_map": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/etc/selinux/bug_map",
+        "sha256": "30cf3d6b915d8d1382246aac8e5554f2bd413e51f3f3e82745efe9508d095b19",
+        "bytes": 1481,
+        "mode": 420
+      },
+      "/system/etc/selinux/mapping/202404.cil": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/etc/selinux/mapping/202404.cil",
+        "sha256": "43db2e1852dc8b2e15e8f1efabcfd73c963626814c8dd7bf111b41ecfb97a6a7",
+        "bytes": 167299,
+        "mode": 420
+      },
+      "/system/etc/selinux/mapping/202404.compat.cil": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/etc/selinux/mapping/202404.compat.cil",
+        "sha256": "08183a9922da778f9a097e2ddb545e6d3ef386f201b0df198a9d0d9d8aa04beb",
+        "bytes": 160,
+        "mode": 420
+      },
+      "/system/etc/selinux/mapping/202504.cil": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/etc/selinux/mapping/202504.cil",
+        "sha256": "a98f4b8479aa64e7d2b5a4146e6edc89fc50d62c80d37200258ff719dfced03b",
+        "bytes": 229237,
+        "mode": 420
+      },
+      "/system/etc/selinux/mapping/29.0.cil": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/etc/selinux/mapping/29.0.cil",
+        "sha256": "1ce42f28f66ef66bd0630996fc82f631b6aafaa0412daf1a91cf50acc4520d35",
+        "bytes": 112994,
+        "mode": 420
+      },
+      "/system/etc/selinux/mapping/29.0.compat.cil": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/etc/selinux/mapping/29.0.compat.cil",
+        "sha256": "db46612f24c75bcd5ddf6d574fa62a7163bc4951620217973d1000a91371d38e",
+        "bytes": 2470,
+        "mode": 420
+      },
+      "/system/etc/selinux/mapping/30.0.cil": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/etc/selinux/mapping/30.0.cil",
+        "sha256": "cce8ac9873128c2138b38772e0ea5ce097f98d7e1efba3ecc5a6c1b52288aa74",
+        "bytes": 126242,
+        "mode": 420
+      },
+      "/system/etc/selinux/mapping/30.0.compat.cil": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/etc/selinux/mapping/30.0.compat.cil",
+        "sha256": "2b40198379e1bb65ca2af156b25562381273144d94c5ae223b5ed9905d7437cc",
+        "bytes": 2526,
+        "mode": 420
+      },
+      "/system/etc/selinux/mapping/31.0.cil": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/etc/selinux/mapping/31.0.cil",
+        "sha256": "00302fa35d30571876193f10fe059875290badc49b29e33b6aeea664cb9a5d93",
+        "bytes": 142085,
+        "mode": 420
+      },
+      "/system/etc/selinux/mapping/31.0.compat.cil": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/etc/selinux/mapping/31.0.compat.cil",
+        "sha256": "adddc30714cef2ec2beb4eecdc24df86acb145e390a708bd2ae5ac41b6fd7630",
+        "bytes": 156,
+        "mode": 420
+      },
+      "/system/etc/selinux/mapping/32.0.cil": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/etc/selinux/mapping/32.0.cil",
+        "sha256": "45765bb51769f948a0eddaea70f074530ef4a46ba822e16fd36962533fc668e5",
+        "bytes": 142193,
+        "mode": 420
+      },
+      "/system/etc/selinux/mapping/32.0.compat.cil": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/etc/selinux/mapping/32.0.compat.cil",
+        "sha256": "59648b120ec76f9e4540b9d656e58a353ead9ebac3c69be778532354f84d0c9d",
+        "bytes": 156,
+        "mode": 420
+      },
+      "/system/etc/selinux/mapping/33.0.cil": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/etc/selinux/mapping/33.0.cil",
+        "sha256": "a55e059905dc57a9b4364ff1e91caf92e4fc10c1d0343f5c1538493d315422d2",
+        "bytes": 150078,
+        "mode": 420
+      },
+      "/system/etc/selinux/mapping/33.0.compat.cil": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/etc/selinux/mapping/33.0.compat.cil",
+        "sha256": "d0ee2e4d2d5f0171091425f40b89e1371cb890ccbf78487c717e2d66f460c247",
+        "bytes": 677,
+        "mode": 420
+      },
+      "/system/etc/selinux/mapping/34.0.cil": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/etc/selinux/mapping/34.0.cil",
+        "sha256": "d9b465ce5cc85158517d5167ab8abc12acf8defdeddea4c8234a5d16bd6f2279",
+        "bytes": 156327,
+        "mode": 420
+      },
+      "/system/etc/selinux/mapping/34.0.compat.cil": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/etc/selinux/mapping/34.0.compat.cil",
+        "sha256": "869e218c107cd6a5e2acb3f8e1f608f9089574889689c7b50cf99c07f33a0e3a",
+        "bytes": 905,
+        "mode": 420
+      },
+      "/system/etc/selinux/plat_file_contexts": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/etc/selinux/plat_file_contexts",
+        "sha256": "3fa009af19d9bd316143728d535f60b4baa176835b62bb8bd52cbf184a2b9dec",
+        "bytes": 48790,
+        "mode": 420
+      },
+      "/system/etc/selinux/plat_hwservice_contexts": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/etc/selinux/plat_hwservice_contexts",
+        "sha256": "e9f9f83ce1dfec4b036e09baa3b5cedeb27e8855b59164d42979ef5903f10668",
+        "bytes": 8865,
+        "mode": 420
+      },
+      "/system/etc/selinux/plat_keystore2_key_contexts": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/etc/selinux/plat_keystore2_key_contexts",
+        "sha256": "ece08d255fca87084a49288aa059bad5106c9d24ec1af25ebb5487140bba8c97",
+        "bytes": 2184,
+        "mode": 420
+      },
+      "/system/etc/selinux/plat_mac_permissions.xml": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/etc/selinux/plat_mac_permissions.xml",
+        "sha256": "2fd5ca8e7157079fed9bd3595c83918c71017edfb8d08d765727e86fead78bc3",
+        "bytes": 17554,
+        "mode": 420
+      },
+      "/system/etc/selinux/plat_property_contexts": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/etc/selinux/plat_property_contexts",
+        "sha256": "2e7612fb0d44ff41bde9d166ecee1e39bd8bb66a50b2f1b7f3137eadc20d1cba",
+        "bytes": 120579,
+        "mode": 420
+      },
+      "/system/etc/selinux/plat_seapp_contexts": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/etc/selinux/plat_seapp_contexts",
+        "sha256": "48d9443f9634197b7c3c704677161ab8f6b71dae0e899657e96d5ecb5e351611",
+        "bytes": 4242,
+        "mode": 420
+      },
+      "/system/etc/selinux/plat_sepolicy.cil": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/etc/selinux/plat_sepolicy.cil",
+        "sha256": "c3390caf754eb7924b638c9f1a156336e80391fae12afbccb56ba01faa790883",
+        "bytes": 2434687,
+        "mode": 420
+      },
+      "/system/etc/selinux/plat_sepolicy_and_mapping.sha256": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/etc/selinux/plat_sepolicy_and_mapping.sha256",
+        "sha256": "ceebec5f9850ab8f854ffaaaef5b974dc93836a7fca3572acbd91cc10390f6d8",
+        "bytes": 65,
+        "mode": 420
+      },
+      "/system/etc/selinux/plat_sepolicy_genfs_202504.cil": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/etc/selinux/plat_sepolicy_genfs_202504.cil",
+        "sha256": "480d503e7730236b659230d16b3946b628394d529dabfef67c679281fd98357b",
+        "bytes": 142,
+        "mode": 420
+      },
+      "/system/etc/selinux/plat_sepolicy_genfs_202604.cil": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/etc/selinux/plat_sepolicy_genfs_202604.cil",
+        "sha256": "480d503e7730236b659230d16b3946b628394d529dabfef67c679281fd98357b",
+        "bytes": 142,
+        "mode": 420
+      },
+      "/system/etc/selinux/plat_service_contexts": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/etc/selinux/plat_service_contexts",
+        "sha256": "23aea4c316afd8814d965d9315b14658f063f1173dd475ae1d5dfe114d11b849",
+        "bytes": 42257,
+        "mode": 420
+      },
+      "/system/etc/selinux/plat_tee_service_contexts": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/etc/selinux/plat_tee_service_contexts",
+        "sha256": "dfdf3105d7d699fc6868b642172f224b47b37d139e63cb0012dcf1747e4e2554",
+        "bytes": 1469,
+        "mode": 420
+      },
+      "/vendor/etc/init/android.hardware.audio.service.rc": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36-desktop/vendor/etc/init/android.hardware.audio.service.rc",
+        "sha256": "52681678233c58f2c5511d50e1228c678ae04e35b628a62afa4156038ae04c42",
+        "bytes": 524,
+        "mode": 420
+      },
+      "/vendor/etc/init/android.hardware.biometrics.fingerprint-service.ranchu.rc": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36-desktop/vendor/etc/init/android.hardware.biometrics.fingerprint-service.ranchu.rc",
+        "sha256": "1063d504d08bfe86fceb0451a8c2de193cb161b2a6e5d46f3c2c86d32b9461be",
+        "bytes": 323,
+        "mode": 420
+      },
+      "/vendor/etc/init/android.hardware.camera.provider.ranchu.rc": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36-desktop/vendor/etc/init/android.hardware.camera.provider.ranchu.rc",
+        "sha256": "b0d78ec8683d79e3e18f120cdddbaebf8aad144e42865371a22dfb713b3a79d0",
+        "bytes": 255,
+        "mode": 420
+      },
+      "/vendor/etc/init/android.hardware.camera.provider@2.7-service-google.rc": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36-desktop/vendor/etc/init/android.hardware.camera.provider@2.7-service-google.rc",
+        "sha256": "34cdf7ab57ae32023cd7cb4ad3604fc067c1330d32f860d8c65ce5eb201723c4",
+        "bytes": 271,
+        "mode": 420
+      },
+      "/vendor/etc/init/android.hardware.drm-service-lazy.clearkey.rc": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36-desktop/vendor/etc/init/android.hardware.drm-service-lazy.clearkey.rc",
+        "sha256": "cf7bac7cff48d263afaf86ca11efe11a0b1ab8171e018a4f282c99eed22adbdf",
+        "bytes": 288,
+        "mode": 420
+      },
+      "/vendor/etc/init/android.hardware.gnss-service.ranchu.rc": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36-desktop/vendor/etc/init/android.hardware.gnss-service.ranchu.rc",
+        "sha256": "7b7eee883d53105b0b23b2d1d9d46fc666aca05840441b9f84648ad7a48e6106",
+        "bytes": 213,
+        "mode": 420
+      },
+      "/vendor/etc/init/android.hardware.graphics.allocator-service.ranchu.rc": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36-desktop/vendor/etc/init/android.hardware.graphics.allocator-service.ranchu.rc",
+        "sha256": "74085591d7da4ee3015170f239197871aa4531ce374bbf4e39be5c281be50df1",
+        "bytes": 266,
+        "mode": 420
+      },
+      "/vendor/etc/init/android.hardware.health-service.example.rc": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36-desktop/vendor/etc/init/android.hardware.health-service.example.rc",
+        "sha256": "c1a8a66c52719cdce5d0d6d88b39b3e453e7f1133405371162c7b86031cb63cc",
+        "bytes": 545,
+        "mode": 420
+      },
+      "/vendor/etc/init/android.hardware.media.c2@1.0-service-goldfish.rc": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36-desktop/vendor/etc/init/android.hardware.media.c2@1.0-service-goldfish.rc",
+        "sha256": "59ff1df6972774d61a6b8abdd3b04c85fd782e2612ca6368649d4df871187694",
+        "bytes": 222,
+        "mode": 420
+      },
+      "/vendor/etc/init/android.hardware.radio.ranchu.rc": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36-desktop/vendor/etc/init/android.hardware.radio.ranchu.rc",
+        "sha256": "cabafbdb1bca549a835c5d248ef62a6c6d39719320ace4f60b523a9658259f4a",
+        "bytes": 207,
+        "mode": 420
+      },
+      "/vendor/etc/init/android.hardware.security.keymint-service.rc": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36-desktop/vendor/etc/init/android.hardware.security.keymint-service.rc",
+        "sha256": "045cd6b62ddcadcc86eb0eac6b94c343eec1588ce45450d6aa592a45ddedd722",
+        "bytes": 124,
+        "mode": 420
+      },
+      "/vendor/etc/init/android.hardware.sensors-service-multihal.rc": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36-desktop/vendor/etc/init/android.hardware.sensors-service-multihal.rc",
+        "sha256": "3532538143ef7722abaf4d77d37aa4142772fa17292348e732c5df6e29e69c03",
+        "bytes": 334,
+        "mode": 420
+      },
+      "/vendor/etc/init/android.hardware.usb-service.example.rc": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36-desktop/vendor/etc/init/android.hardware.usb-service.example.rc",
+        "sha256": "f45a655978dcfee8c68022063746369d3c2f7501aa9c093d06c5307bea55036e",
+        "bytes": 126,
+        "mode": 420
+      },
+      "/vendor/etc/init/android.hardware.wifi-service.rc": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36-desktop/vendor/etc/init/android.hardware.wifi-service.rc",
+        "sha256": "392ddaa25fcf242c88368e6a59e261c0074215dce02d0eddda60340b804e52bd",
+        "bytes": 224,
+        "mode": 420
+      },
+      "/vendor/etc/init/bluetooth-service-default.rc": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36-desktop/vendor/etc/init/bluetooth-service-default.rc",
+        "sha256": "cc28dbff649cf1f6191e5a508a0aa0af9b24db4f3a26184d5e7aa49044c972b2",
+        "bytes": 228,
+        "mode": 420
+      },
+      "/vendor/etc/init/boringssl_self_test.rc": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36-desktop/vendor/etc/init/boringssl_self_test.rc",
+        "sha256": "a30ca035b49329cd72994ca3a75125990bca7fcfa9ef00c39632cc200d7caa48",
+        "bytes": 640,
+        "mode": 420
+      },
+      "/vendor/etc/init/health-storage-default.rc": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36-desktop/vendor/etc/init/health-storage-default.rc",
+        "sha256": "f8bb6414ab45a6591838753a42b7cf5d92a45d5444db657ab6ab0b77c263ac84",
+        "bytes": 241,
+        "mode": 420
+      },
+      "/vendor/etc/init/hostapd.android.rc": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36-desktop/vendor/etc/init/hostapd.android.rc",
+        "sha256": "a09021175637f73d790f1015b849e3a6c441dba05477fbcde33fa35ce64fb1b6",
+        "bytes": 599,
+        "mode": 420
+      },
+      "/vendor/etc/init/hw/init.ranchu.rc": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36-desktop/vendor/etc/init/hw/init.ranchu.rc",
+        "sha256": "4395b0e2bd9a06c58a02059322130f510684b0cef8fde2cc731f6cbccd188672",
+        "bytes": 6370,
+        "mode": 420
+      },
+      "/vendor/etc/init/hwc3.rc": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36-desktop/vendor/etc/init/hwc3.rc",
+        "sha256": "4ebfc0c9606ebaa5191c487d28c51226b1bd5b1ade0e711d8d8643a5b1e1821c",
+        "bytes": 259,
+        "mode": 420
+      },
+      "/vendor/etc/init/identity-default.rc": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36-desktop/vendor/etc/init/identity-default.rc",
+        "sha256": "df3a944789141eac5ec326ace9253ff152e503a7c03ae7ccbe9e13941a5cc07e",
+        "bytes": 119,
+        "mode": 420
+      },
+      "/vendor/etc/init/lights-default.rc": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36-desktop/vendor/etc/init/lights-default.rc",
+        "sha256": "8c628bd4dadc54ec1732326d73e0b14ce464f74a86c4f87077e2b84183d240bb",
+        "bytes": 153,
+        "mode": 420
+      },
+      "/vendor/etc/selinux/genfs_labels_version.txt": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36-desktop/vendor/etc/selinux/genfs_labels_version.txt",
+        "sha256": "ce5b095f33cfad2ece2557566ec55c87dcb81fb1a275fdc6f032369f1ea4fb9d",
+        "bytes": 7,
+        "mode": 420
+      },
+      "/vendor/etc/selinux/plat_pub_versioned.cil": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36-desktop/vendor/etc/selinux/plat_pub_versioned.cil",
+        "sha256": "44cc55d7c4971675f0d05214205c902857ab275195dc62204a5b118f9ff33ca9",
+        "bytes": 376583,
+        "mode": 420
+      },
+      "/vendor/etc/selinux/plat_sepolicy_vers.txt": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36-desktop/vendor/etc/selinux/plat_sepolicy_vers.txt",
+        "sha256": "ce5b095f33cfad2ece2557566ec55c87dcb81fb1a275fdc6f032369f1ea4fb9d",
+        "bytes": 7,
+        "mode": 420
+      },
+      "/vendor/etc/selinux/precompiled_sepolicy": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36-desktop/vendor/etc/selinux/precompiled_sepolicy",
+        "sha256": "2ba00834f56ea900ac80657912e17639898eeaf17ce3ba716d7fd652a0783073",
+        "bytes": 752915,
+        "mode": 420
+      },
+      "/vendor/etc/selinux/precompiled_sepolicy.plat_sepolicy_and_mapping.sha256": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36-desktop/vendor/etc/selinux/precompiled_sepolicy.plat_sepolicy_and_mapping.sha256",
+        "sha256": "ceebec5f9850ab8f854ffaaaef5b974dc93836a7fca3572acbd91cc10390f6d8",
+        "bytes": 65,
+        "mode": 420
+      },
+      "/vendor/etc/selinux/precompiled_sepolicy.product_sepolicy_and_mapping.sha256": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36-desktop/vendor/etc/selinux/precompiled_sepolicy.product_sepolicy_and_mapping.sha256",
+        "sha256": "c94f4b432da8b59c46dc555a91b033ff28fca1e2b5a1ecdadf56fd59f96e2c1e",
+        "bytes": 65,
+        "mode": 420
+      },
+      "/vendor/etc/selinux/precompiled_sepolicy.system_ext_sepolicy_and_mapping.sha256": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36-desktop/vendor/etc/selinux/precompiled_sepolicy.system_ext_sepolicy_and_mapping.sha256",
+        "sha256": "8167aeb28b574763b10fcb6709980f62c0e6f3b1907990ef13890d4b2252431c",
+        "bytes": 65,
+        "mode": 420
+      },
+      "/vendor/etc/selinux/selinux_denial_metadata": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36-desktop/vendor/etc/selinux/selinux_denial_metadata",
+        "sha256": "4025cc1505b02185b3a48b93b4472ced048bbbd5b241492ad0959b543edf0ebd",
+        "bytes": 42,
+        "mode": 420
+      },
+      "/vendor/etc/selinux/vendor_file_contexts": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36-desktop/vendor/etc/selinux/vendor_file_contexts",
+        "sha256": "6ba564ead97465bfc401d46d3e387953ff635aaf50cdaae13cf9c31dd24fde7f",
+        "bytes": 28437,
+        "mode": 420
+      },
+      "/vendor/etc/selinux/vendor_hwservice_contexts": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36-desktop/vendor/etc/selinux/vendor_hwservice_contexts",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0,
+        "mode": 420
+      },
+      "/vendor/etc/selinux/vendor_keystore2_key_contexts": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36-desktop/vendor/etc/selinux/vendor_keystore2_key_contexts",
+        "sha256": "26188d8afee50f31bdc8f7e322b29f5230251c7d9edcbe3d612ce53ad7482dfd",
+        "bytes": 930,
+        "mode": 420
+      },
+      "/vendor/etc/selinux/vendor_mac_permissions.xml": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36-desktop/vendor/etc/selinux/vendor_mac_permissions.xml",
+        "sha256": "5dd587b84d7db230355c039d84f381367af4338725a21e9a7c71c2baeb582c44",
+        "bytes": 2549,
+        "mode": 420
+      },
+      "/vendor/etc/selinux/vendor_property_contexts": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36-desktop/vendor/etc/selinux/vendor_property_contexts",
+        "sha256": "8254b47981be19612564e425c84a39b8d03a66126f7b291acf88e355b52d1fd0",
+        "bytes": 3763,
+        "mode": 420
+      },
+      "/vendor/etc/selinux/vendor_seapp_contexts": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36-desktop/vendor/etc/selinux/vendor_seapp_contexts",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0,
+        "mode": 420
+      },
+      "/vendor/etc/selinux/vendor_sepolicy.cil": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36-desktop/vendor/etc/selinux/vendor_sepolicy.cil",
+        "sha256": "f0b7e103058ea550ba6402425ec337aae811e09d19a4a79963ebf2b6f98681fc",
+        "bytes": 179773,
+        "mode": 420
+      },
+      "/vendor/etc/selinux/vendor_service_contexts": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36-desktop/vendor/etc/selinux/vendor_service_contexts",
+        "sha256": "a132b8acb737afefc1d1e086a6d133d7f4a1108a988c372d0431eb7e6aac50c3",
+        "bytes": 686,
+        "mode": 420
+      },
+      "/vendor/etc/selinux/vendor_tee_service_contexts": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36-desktop/vendor/etc/selinux/vendor_tee_service_contexts",
+        "sha256": "12a54078279e3f820b8f488fe7c56de8e22edadabf435ebd1ada156f2aafd45c",
+        "bytes": 928,
+        "mode": 420
+      },
+      "/vendor/etc/selinux/vndservice_contexts": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36-desktop/vendor/etc/selinux/vndservice_contexts",
+        "sha256": "489df887df160f7f2f76d27a30a00429b8961b2cca8fea7037a0af3c103d222a",
+        "bytes": 1217,
+        "mode": 420
+      },
+      "/system_ext/etc/init/android.hidl.allocator@1.0-service.rc": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36-desktop/system_ext/etc/init/android.hidl.allocator@1.0-service.rc",
+        "sha256": "2daefa28c9013feb1d6b17e366bcb2dfbd5b904e239b644d93a16df01b15c29d",
+        "bytes": 187,
+        "mode": 420
+      },
+      "/system_ext/etc/init/hwservicemanager.rc": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36-desktop/system_ext/etc/init/hwservicemanager.rc",
+        "sha256": "fec3f3312b7cb0f5c22438b62cca189964878874f8aabd47396ae1f4faf8c4f9",
+        "bytes": 497,
+        "mode": 420
+      },
+      "/system_ext/etc/init/init.system_ext.radio.rc": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36-desktop/system_ext/etc/init/init.system_ext.radio.rc",
+        "sha256": "72f5cb03e720a3c659d086808db1a9a655e02198be8c557d91f5a3989b192185",
+        "bytes": 185,
+        "mode": 420
+      },
+      "/system_ext/etc/init/init.system_ext.rc": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36-desktop/system_ext/etc/init/init.system_ext.rc",
+        "sha256": "91164922ff878eea83f478254080c9e807d516a5469ac6b7e70011f6bb7c637a",
+        "bytes": 444,
+        "mode": 420
+      },
+      "/system_ext/etc/selinux/bug_map": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36-desktop/system_ext/etc/selinux/bug_map",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0,
+        "mode": 420
+      },
+      "/system_ext/etc/selinux/mapping/202404.cil": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36-desktop/system_ext/etc/selinux/mapping/202404.cil",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0,
+        "mode": 420
+      },
+      "/system_ext/etc/selinux/mapping/202404.compat.cil": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36-desktop/system_ext/etc/selinux/mapping/202404.compat.cil",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0,
+        "mode": 420
+      },
+      "/system_ext/etc/selinux/mapping/202504.cil": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36-desktop/system_ext/etc/selinux/mapping/202504.cil",
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+        "bytes": 1,
+        "mode": 420
+      },
+      "/system_ext/etc/selinux/mapping/29.0.cil": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36-desktop/system_ext/etc/selinux/mapping/29.0.cil",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0,
+        "mode": 420
+      },
+      "/system_ext/etc/selinux/mapping/29.0.compat.cil": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36-desktop/system_ext/etc/selinux/mapping/29.0.compat.cil",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0,
+        "mode": 420
+      },
+      "/system_ext/etc/selinux/mapping/30.0.cil": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36-desktop/system_ext/etc/selinux/mapping/30.0.cil",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0,
+        "mode": 420
+      },
+      "/system_ext/etc/selinux/mapping/30.0.compat.cil": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36-desktop/system_ext/etc/selinux/mapping/30.0.compat.cil",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0,
+        "mode": 420
+      },
+      "/system_ext/etc/selinux/mapping/31.0.cil": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36-desktop/system_ext/etc/selinux/mapping/31.0.cil",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0,
+        "mode": 420
+      },
+      "/system_ext/etc/selinux/mapping/31.0.compat.cil": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36-desktop/system_ext/etc/selinux/mapping/31.0.compat.cil",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0,
+        "mode": 420
+      },
+      "/system_ext/etc/selinux/mapping/32.0.cil": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36-desktop/system_ext/etc/selinux/mapping/32.0.cil",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0,
+        "mode": 420
+      },
+      "/system_ext/etc/selinux/mapping/32.0.compat.cil": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36-desktop/system_ext/etc/selinux/mapping/32.0.compat.cil",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0,
+        "mode": 420
+      },
+      "/system_ext/etc/selinux/mapping/33.0.cil": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36-desktop/system_ext/etc/selinux/mapping/33.0.cil",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0,
+        "mode": 420
+      },
+      "/system_ext/etc/selinux/mapping/33.0.compat.cil": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36-desktop/system_ext/etc/selinux/mapping/33.0.compat.cil",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0,
+        "mode": 420
+      },
+      "/system_ext/etc/selinux/mapping/34.0.cil": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36-desktop/system_ext/etc/selinux/mapping/34.0.cil",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0,
+        "mode": 420
+      },
+      "/system_ext/etc/selinux/mapping/34.0.compat.cil": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36-desktop/system_ext/etc/selinux/mapping/34.0.compat.cil",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0,
+        "mode": 420
+      },
+      "/system_ext/etc/selinux/system_ext_file_contexts": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36-desktop/system_ext/etc/selinux/system_ext_file_contexts",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0,
+        "mode": 420
+      },
+      "/system_ext/etc/selinux/system_ext_hwservice_contexts": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36-desktop/system_ext/etc/selinux/system_ext_hwservice_contexts",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0,
+        "mode": 420
+      },
+      "/system_ext/etc/selinux/system_ext_keystore2_key_contexts": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36-desktop/system_ext/etc/selinux/system_ext_keystore2_key_contexts",
+        "sha256": "aaa050d4a9146bff005a5f401c367332dada033b2e1f28344ce20a5ba6e9b226",
+        "bytes": 934,
+        "mode": 420
+      },
+      "/system_ext/etc/selinux/system_ext_mac_permissions.xml": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36-desktop/system_ext/etc/selinux/system_ext_mac_permissions.xml",
+        "sha256": "9fc6e3bc49b67055ec3e2059f5fce7c7e5b72069697d82f963aec4dd2d61fcf0",
+        "bytes": 101,
+        "mode": 420
+      },
+      "/system_ext/etc/selinux/system_ext_property_contexts": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36-desktop/system_ext/etc/selinux/system_ext_property_contexts",
+        "sha256": "ddfa4848b3e523f8f14979cbc8e3afbbbb1b648520882d008c15f01bf1f0b675",
+        "bytes": 929,
+        "mode": 420
+      },
+      "/system_ext/etc/selinux/system_ext_seapp_contexts": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36-desktop/system_ext/etc/selinux/system_ext_seapp_contexts",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0,
+        "mode": 420
+      },
+      "/system_ext/etc/selinux/system_ext_sepolicy.cil": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36-desktop/system_ext/etc/selinux/system_ext_sepolicy.cil",
+        "sha256": "bb7a6678018416df269e9314a42122aaa045689759bdf894a8da43f1f3b12be8",
+        "bytes": 215,
+        "mode": 420
+      },
+      "/system_ext/etc/selinux/system_ext_sepolicy_and_mapping.sha256": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36-desktop/system_ext/etc/selinux/system_ext_sepolicy_and_mapping.sha256",
+        "sha256": "8167aeb28b574763b10fcb6709980f62c0e6f3b1907990ef13890d4b2252431c",
+        "bytes": 65,
+        "mode": 420
+      },
+      "/system_ext/etc/selinux/system_ext_service_contexts": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36-desktop/system_ext/etc/selinux/system_ext_service_contexts",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0,
+        "mode": 420
+      },
+      "/system_ext/etc/selinux/system_ext_tee_service_contexts": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36-desktop/system_ext/etc/selinux/system_ext_tee_service_contexts",
+        "sha256": "facb8ac870bae46bc4f250816aee3cb2a35581ef20e57dabe844a062ede9249f",
+        "bytes": 932,
+        "mode": 420
+      },
+      "/product/etc/selinux/mapping/202404.cil": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36-desktop/product/etc/selinux/mapping/202404.cil",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0,
+        "mode": 420
+      },
+      "/product/etc/selinux/mapping/202504.cil": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36-desktop/product/etc/selinux/mapping/202504.cil",
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+        "bytes": 1,
+        "mode": 420
+      },
+      "/product/etc/selinux/mapping/29.0.cil": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36-desktop/product/etc/selinux/mapping/29.0.cil",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0,
+        "mode": 420
+      },
+      "/product/etc/selinux/mapping/30.0.cil": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36-desktop/product/etc/selinux/mapping/30.0.cil",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0,
+        "mode": 420
+      },
+      "/product/etc/selinux/mapping/31.0.cil": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36-desktop/product/etc/selinux/mapping/31.0.cil",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0,
+        "mode": 420
+      },
+      "/product/etc/selinux/mapping/32.0.cil": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36-desktop/product/etc/selinux/mapping/32.0.cil",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0,
+        "mode": 420
+      },
+      "/product/etc/selinux/mapping/33.0.cil": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36-desktop/product/etc/selinux/mapping/33.0.cil",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0,
+        "mode": 420
+      },
+      "/product/etc/selinux/mapping/34.0.cil": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36-desktop/product/etc/selinux/mapping/34.0.cil",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0,
+        "mode": 420
+      },
+      "/product/etc/selinux/product_file_contexts": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36-desktop/product/etc/selinux/product_file_contexts",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0,
+        "mode": 420
+      },
+      "/product/etc/selinux/product_hwservice_contexts": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36-desktop/product/etc/selinux/product_hwservice_contexts",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0,
+        "mode": 420
+      },
+      "/product/etc/selinux/product_keystore2_key_contexts": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36-desktop/product/etc/selinux/product_keystore2_key_contexts",
+        "sha256": "3510b8d0f016e8891e5493c0da0401599b3200abda8b1d2b1c5ac6fc4aeb664b",
+        "bytes": 931,
+        "mode": 420
+      },
+      "/product/etc/selinux/product_mac_permissions.xml": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36-desktop/product/etc/selinux/product_mac_permissions.xml",
+        "sha256": "9fc6e3bc49b67055ec3e2059f5fce7c7e5b72069697d82f963aec4dd2d61fcf0",
+        "bytes": 101,
+        "mode": 420
+      },
+      "/product/etc/selinux/product_property_contexts": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36-desktop/product/etc/selinux/product_property_contexts",
+        "sha256": "c2a7b5283c4ec617ee871e37bc8db9aefa75cfda86d7440a70d44ff88c9fac29",
+        "bytes": 926,
+        "mode": 420
+      },
+      "/product/etc/selinux/product_seapp_contexts": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36-desktop/product/etc/selinux/product_seapp_contexts",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0,
+        "mode": 420
+      },
+      "/product/etc/selinux/product_sepolicy.cil": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36-desktop/product/etc/selinux/product_sepolicy.cil",
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+        "bytes": 1,
+        "mode": 420
+      },
+      "/product/etc/selinux/product_sepolicy_and_mapping.sha256": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36-desktop/product/etc/selinux/product_sepolicy_and_mapping.sha256",
+        "sha256": "c94f4b432da8b59c46dc555a91b033ff28fca1e2b5a1ecdadf56fd59f96e2c1e",
+        "bytes": 65,
+        "mode": 420
+      },
+      "/product/etc/selinux/product_service_contexts": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36-desktop/product/etc/selinux/product_service_contexts",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0,
+        "mode": 420
+      },
+      "/product/etc/selinux/product_tee_service_contexts": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36-desktop/product/etc/selinux/product_tee_service_contexts",
+        "sha256": "47253619242b00d4e032f94c50410f338a8d8229807ecb93208e1ca127b79280",
+        "bytes": 929,
+        "mode": 420
+      },
+      "/system/bin/ueventd": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/bin/ueventd",
+        "sha256": "c27d13897025ad72d68f5d9a57e3c76cd250f53e82817cf2b5eb04d3e01ec12a",
+        "bytes": 3170752,
+        "mode": 493,
+        "source_link_target": "init",
+        "verified_target": "bin/init",
+        "staged_as": "regular-file"
+      },
+      "/system/etc/cgroups.json": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/etc/cgroups.json",
+        "sha256": "ab2ed667ff45958843fb0c6ee953a5512def0ae87470c4358aa9576a6a4b2e22",
+        "bytes": 804,
+        "mode": 420
+      },
+      "/system/etc/task_profiles.json": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/etc/task_profiles.json",
+        "sha256": "bee4c6181381d3e41c115475abcc3962e809a6fc2a97276e14c23db85e3e2ec9",
+        "bytes": 14502,
+        "mode": 420
+      },
+      "/vendor/etc/fstab.ranchu": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36-desktop/vendor/etc/fstab.ranchu",
+        "sha256": "b4572d0245a6bd33fec9b3fcee224a314e4ad62d44dd4f88d636983e6d47b144",
+        "bytes": 1615,
+        "mode": 420
+      },
+      "/system_ext/etc/build.prop": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36-desktop/system_ext/etc/build.prop",
+        "sha256": "127602e62d8187d964383744edf8888c5b14f69c45d7e3609e3eea6a918dd5c5",
+        "bytes": 1627,
+        "mode": 420
+      },
+      "/product/etc/build.prop": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36-desktop/product/etc/build.prop",
+        "sha256": "0d3721df3c589ec6527c46aba3138dc7296ed72cc120e9c1fa75c584e6a4a49e",
+        "bytes": 3337,
+        "mode": 420
+      },
+      "/init.environ.rc": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/work/init-investigation/system-root/init.environ.rc",
+        "sha256": "460eecf019489a02ad7be82a9cc2234784f561b644f8f2bf1741e43514593060",
+        "bytes": 621,
+        "mode": 420
+      },
+      "/system/build.prop": {
+        "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/work/init-investigation/system-root/system/build.prop",
+        "sha256": "e7ece731169cc37c759dd827c206a0c3c3c24fde6937dd96982a4b83d70dfc66",
+        "bytes": 5292,
+        "mode": 420
+      }
+    },
+    "original_system_metadata": {
+      "/etc": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:rootfs:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a726f6f7466733a733000",
+        "original_inode": 24,
+        "link_target": "/system/etc"
+      },
+      "/system": {
+        "mode": 493,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f66696c653a733000",
+        "original_inode": 51
+      },
+      "/system/bin": {
+        "mode": 489,
+        "uid": 0,
+        "gid": 2000,
+        "selinux": "u:object_r:system_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f66696c653a733000",
+        "original_inode": 224
+      },
+      "/system/bin/bootstrap": {
+        "mode": 489,
+        "uid": 0,
+        "gid": 2000,
+        "selinux": "u:object_r:system_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f66696c653a733000",
+        "original_inode": 258
+      },
+      "/system/bin/bootstrap/linker64": {
+        "mode": 493,
+        "uid": 0,
+        "gid": 2000,
+        "selinux": "u:object_r:system_linker_exec:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f6c696e6b65725f657865633a733000",
+        "original_inode": 259
+      },
+      "/system/bin/init": {
+        "mode": 493,
+        "uid": 0,
+        "gid": 2000,
+        "selinux": "u:object_r:init_exec:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a696e69745f657865633a733000",
+        "original_inode": 389
+      },
+      "/system/bin/ueventd": {
+        "mode": 493,
+        "uid": 0,
+        "gid": 2000,
+        "selinux": "u:object_r:init_exec:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a696e69745f657865633a733000",
+        "original_inode": 389
+      },
+      "/system/build.prop": {
+        "mode": 384,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f66696c653a733000",
+        "original_inode": 679
+      },
+      "/system/etc": {
+        "mode": 493,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f66696c653a733000",
+        "original_inode": 680
+      },
+      "/system/etc/cgroups.json": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:cgroup_desc_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a6367726f75705f646573635f66696c653a733000",
+        "original_inode": 701
+      },
+      "/system/etc/init": {
+        "mode": 493,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f66696c653a733000",
+        "original_inode": 731
+      },
+      "/system/etc/init/aconfigd.rc": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f66696c653a733000",
+        "original_inode": 732
+      },
+      "/system/etc/init/android.system.suspend-service.rc": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f66696c653a733000",
+        "original_inode": 733
+      },
+      "/system/etc/init/apexd.rc": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f66696c653a733000",
+        "original_inode": 734
+      },
+      "/system/etc/init/atrace.rc": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f66696c653a733000",
+        "original_inode": 735
+      },
+      "/system/etc/init/atrace_userdebug.rc": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f66696c653a733000",
+        "original_inode": 736
+      },
+      "/system/etc/init/audioserver.rc": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f66696c653a733000",
+        "original_inode": 737
+      },
+      "/system/etc/init/blank_screen.rc": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f66696c653a733000",
+        "original_inode": 738
+      },
+      "/system/etc/init/bootanim.rc": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f66696c653a733000",
+        "original_inode": 739
+      },
+      "/system/etc/init/bootstat-debug.rc": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f66696c653a733000",
+        "original_inode": 740
+      },
+      "/system/etc/init/bootstat.rc": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f66696c653a733000",
+        "original_inode": 741
+      },
+      "/system/etc/init/cameraserver.rc": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f66696c653a733000",
+        "original_inode": 742
+      },
+      "/system/etc/init/clean_scratch_files.rc": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f66696c653a733000",
+        "original_inode": 743
+      },
+      "/system/etc/init/cppreopts.rc": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f66696c653a733000",
+        "original_inode": 744
+      },
+      "/system/etc/init/credstore.rc": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f66696c653a733000",
+        "original_inode": 745
+      },
+      "/system/etc/init/dmesgd.rc": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f66696c653a733000",
+        "original_inode": 746
+      },
+      "/system/etc/init/drmserver.rc": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f66696c653a733000",
+        "original_inode": 747
+      },
+      "/system/etc/init/dumpstate.rc": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f66696c653a733000",
+        "original_inode": 748
+      },
+      "/system/etc/init/flags_health_check.rc": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f66696c653a733000",
+        "original_inode": 749
+      },
+      "/system/etc/init/gatekeeperd.rc": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f66696c653a733000",
+        "original_inode": 750
+      },
+      "/system/etc/init/gpuservice.rc": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f66696c653a733000",
+        "original_inode": 751
+      },
+      "/system/etc/init/gsid.rc": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f66696c653a733000",
+        "original_inode": 752
+      },
+      "/system/etc/init/heapprofd.rc": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f66696c653a733000",
+        "original_inode": 753
+      },
+      "/system/etc/init/hw": {
+        "mode": 493,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f66696c653a733000",
+        "original_inode": 754
+      },
+      "/system/etc/init/hw/init.boringssl.no_zygote.rc": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f66696c653a733000",
+        "original_inode": 758
+      },
+      "/system/etc/init/hw/init.boringssl.zygote32.rc": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f66696c653a733000",
+        "original_inode": 758
+      },
+      "/system/etc/init/hw/init.boringssl.zygote64.rc": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f66696c653a733000",
+        "original_inode": 757
+      },
+      "/system/etc/init/hw/init.boringssl.zygote64_32.rc": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f66696c653a733000",
+        "original_inode": 758
+      },
+      "/system/etc/init/hw/init.rc": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f66696c653a733000",
+        "original_inode": 759
+      },
+      "/system/etc/init/hw/init.usb.configfs.rc": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f66696c653a733000",
+        "original_inode": 760
+      },
+      "/system/etc/init/hw/init.usb.rc": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f66696c653a733000",
+        "original_inode": 761
+      },
+      "/system/etc/init/hw/init.zygote32.rc": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f66696c653a733000",
+        "original_inode": 762
+      },
+      "/system/etc/init/hw/init.zygote64.rc": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f66696c653a733000",
+        "original_inode": 763
+      },
+      "/system/etc/init/hw/init.zygote64_32.rc": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f66696c653a733000",
+        "original_inode": 764
+      },
+      "/system/etc/init/idmap2d.rc": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f66696c653a733000",
+        "original_inode": 765
+      },
+      "/system/etc/init/incidentd.rc": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f66696c653a733000",
+        "original_inode": 766
+      },
+      "/system/etc/init/init-debug.rc": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f66696c653a733000",
+        "original_inode": 767
+      },
+      "/system/etc/init/init-mmd-prop.rc": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f66696c653a733000",
+        "original_inode": 768
+      },
+      "/system/etc/init/installd.rc": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f66696c653a733000",
+        "original_inode": 769
+      },
+      "/system/etc/init/kcmdlinectrl.rc": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f66696c653a733000",
+        "original_inode": 770
+      },
+      "/system/etc/init/keystore2.rc": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f66696c653a733000",
+        "original_inode": 771
+      },
+      "/system/etc/init/llkd-debuggable.rc": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f66696c653a733000",
+        "original_inode": 772
+      },
+      "/system/etc/init/llkd.rc": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f66696c653a733000",
+        "original_inode": 773
+      },
+      "/system/etc/init/lmkd.rc": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f66696c653a733000",
+        "original_inode": 774
+      },
+      "/system/etc/init/logcatd.rc": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f66696c653a733000",
+        "original_inode": 775
+      },
+      "/system/etc/init/logd.rc": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f66696c653a733000",
+        "original_inode": 776
+      },
+      "/system/etc/init/logtagd.rc": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f66696c653a733000",
+        "original_inode": 777
+      },
+      "/system/etc/init/lpdumpd.rc": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f66696c653a733000",
+        "original_inode": 778
+      },
+      "/system/etc/init/mdnsd.rc": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f66696c653a733000",
+        "original_inode": 779
+      },
+      "/system/etc/init/mediaextractor.rc": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f66696c653a733000",
+        "original_inode": 780
+      },
+      "/system/etc/init/mediametrics.rc": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f66696c653a733000",
+        "original_inode": 781
+      },
+      "/system/etc/init/mediaserver.rc": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f66696c653a733000",
+        "original_inode": 782
+      },
+      "/system/etc/init/misctrl.rc": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f66696c653a733000",
+        "original_inode": 783
+      },
+      "/system/etc/init/mtectrl.rc": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f66696c653a733000",
+        "original_inode": 784
+      },
+      "/system/etc/init/netbpfload.rc": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f66696c653a733000",
+        "original_inode": 785
+      },
+      "/system/etc/init/netd.rc": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f66696c653a733000",
+        "original_inode": 786
+      },
+      "/system/etc/init/odsign.rc": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f66696c653a733000",
+        "original_inode": 787
+      },
+      "/system/etc/init/otapreopt.rc": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f66696c653a733000",
+        "original_inode": 788
+      },
+      "/system/etc/init/perfetto.rc": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f66696c653a733000",
+        "original_inode": 789
+      },
+      "/system/etc/init/prefetch.rc": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f66696c653a733000",
+        "original_inode": 790
+      },
+      "/system/etc/init/prng_seeder.rc": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f66696c653a733000",
+        "original_inode": 791
+      },
+      "/system/etc/init/profcollectd.rc": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f66696c653a733000",
+        "original_inode": 792
+      },
+      "/system/etc/init/recovery-persist.rc": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f66696c653a733000",
+        "original_inode": 793
+      },
+      "/system/etc/init/recovery-refresh.rc": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f66696c653a733000",
+        "original_inode": 794
+      },
+      "/system/etc/init/rss_hwm_reset.rc": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f66696c653a733000",
+        "original_inode": 795
+      },
+      "/system/etc/init/servicemanager.rc": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f66696c653a733000",
+        "original_inode": 796
+      },
+      "/system/etc/init/simpleperf.rc": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f66696c653a733000",
+        "original_inode": 797
+      },
+      "/system/etc/init/snapuserd.rc": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f66696c653a733000",
+        "original_inode": 798
+      },
+      "/system/etc/init/storaged.rc": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f66696c653a733000",
+        "original_inode": 799
+      },
+      "/system/etc/init/surfaceflinger.rc": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f66696c653a733000",
+        "original_inode": 800
+      },
+      "/system/etc/init/tombstoned.rc": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f66696c653a733000",
+        "original_inode": 801
+      },
+      "/system/etc/init/traced_perf.rc": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f66696c653a733000",
+        "original_inode": 802
+      },
+      "/system/etc/init/tradeinmode.rc": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f66696c653a733000",
+        "original_inode": 803
+      },
+      "/system/etc/init/uncrypt.rc": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f66696c653a733000",
+        "original_inode": 804
+      },
+      "/system/etc/init/update_engine.rc": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f66696c653a733000",
+        "original_inode": 805
+      },
+      "/system/etc/init/update_verifier.rc": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f66696c653a733000",
+        "original_inode": 806
+      },
+      "/system/etc/init/usbd.rc": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f66696c653a733000",
+        "original_inode": 807
+      },
+      "/system/etc/init/virtual_camera.hal.rc": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f66696c653a733000",
+        "original_inode": 808
+      },
+      "/system/etc/init/vold.rc": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f66696c653a733000",
+        "original_inode": 809
+      },
+      "/system/etc/init/wifi.rc": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f66696c653a733000",
+        "original_inode": 810
+      },
+      "/system/etc/init/wificond.rc": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f66696c653a733000",
+        "original_inode": 811
+      },
+      "/system/etc/selinux": {
+        "mode": 493,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f66696c653a733000",
+        "original_inode": 1024
+      },
+      "/system/etc/selinux/bug_map": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f66696c653a733000",
+        "original_inode": 1025
+      },
+      "/system/etc/selinux/mapping": {
+        "mode": 493,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f66696c653a733000",
+        "original_inode": 1026
+      },
+      "/system/etc/selinux/mapping/202404.cil": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f66696c653a733000",
+        "original_inode": 1027
+      },
+      "/system/etc/selinux/mapping/202404.compat.cil": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f66696c653a733000",
+        "original_inode": 1028
+      },
+      "/system/etc/selinux/mapping/202504.cil": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f66696c653a733000",
+        "original_inode": 1029
+      },
+      "/system/etc/selinux/mapping/29.0.cil": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:sepolicy_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a7365706f6c6963795f66696c653a733000",
+        "original_inode": 1030
+      },
+      "/system/etc/selinux/mapping/29.0.compat.cil": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:sepolicy_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a7365706f6c6963795f66696c653a733000",
+        "original_inode": 1031
+      },
+      "/system/etc/selinux/mapping/30.0.cil": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:sepolicy_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a7365706f6c6963795f66696c653a733000",
+        "original_inode": 1032
+      },
+      "/system/etc/selinux/mapping/30.0.compat.cil": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:sepolicy_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a7365706f6c6963795f66696c653a733000",
+        "original_inode": 1033
+      },
+      "/system/etc/selinux/mapping/31.0.cil": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:sepolicy_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a7365706f6c6963795f66696c653a733000",
+        "original_inode": 1034
+      },
+      "/system/etc/selinux/mapping/31.0.compat.cil": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:sepolicy_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a7365706f6c6963795f66696c653a733000",
+        "original_inode": 1035
+      },
+      "/system/etc/selinux/mapping/32.0.cil": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:sepolicy_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a7365706f6c6963795f66696c653a733000",
+        "original_inode": 1036
+      },
+      "/system/etc/selinux/mapping/32.0.compat.cil": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:sepolicy_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a7365706f6c6963795f66696c653a733000",
+        "original_inode": 1037
+      },
+      "/system/etc/selinux/mapping/33.0.cil": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:sepolicy_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a7365706f6c6963795f66696c653a733000",
+        "original_inode": 1038
+      },
+      "/system/etc/selinux/mapping/33.0.compat.cil": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:sepolicy_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a7365706f6c6963795f66696c653a733000",
+        "original_inode": 1039
+      },
+      "/system/etc/selinux/mapping/34.0.cil": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:sepolicy_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a7365706f6c6963795f66696c653a733000",
+        "original_inode": 1040
+      },
+      "/system/etc/selinux/mapping/34.0.compat.cil": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:sepolicy_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a7365706f6c6963795f66696c653a733000",
+        "original_inode": 1041
+      },
+      "/system/etc/selinux/plat_file_contexts": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:file_contexts_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a66696c655f636f6e74657874735f66696c653a733000",
+        "original_inode": 1042
+      },
+      "/system/etc/selinux/plat_hwservice_contexts": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:hwservice_contexts_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a6877736572766963655f636f6e74657874735f66696c653a733000",
+        "original_inode": 1043
+      },
+      "/system/etc/selinux/plat_keystore2_key_contexts": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:keystore2_key_contexts_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a6b657973746f7265325f6b65795f636f6e74657874735f66696c653a733000",
+        "original_inode": 1044
+      },
+      "/system/etc/selinux/plat_mac_permissions.xml": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:mac_perms_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a6d61635f7065726d735f66696c653a733000",
+        "original_inode": 1045
+      },
+      "/system/etc/selinux/plat_property_contexts": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:property_contexts_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a70726f70657274795f636f6e74657874735f66696c653a733000",
+        "original_inode": 1046
+      },
+      "/system/etc/selinux/plat_seapp_contexts": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:seapp_contexts_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73656170705f636f6e74657874735f66696c653a733000",
+        "original_inode": 1047
+      },
+      "/system/etc/selinux/plat_sepolicy.cil": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:sepolicy_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a7365706f6c6963795f66696c653a733000",
+        "original_inode": 1048
+      },
+      "/system/etc/selinux/plat_sepolicy_and_mapping.sha256": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f66696c653a733000",
+        "original_inode": 1049
+      },
+      "/system/etc/selinux/plat_sepolicy_genfs_202504.cil": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f66696c653a733000",
+        "original_inode": 1050
+      },
+      "/system/etc/selinux/plat_sepolicy_genfs_202604.cil": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f66696c653a733000",
+        "original_inode": 1051
+      },
+      "/system/etc/selinux/plat_service_contexts": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:service_contexts_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a736572766963655f636f6e74657874735f66696c653a733000",
+        "original_inode": 1052
+      },
+      "/system/etc/selinux/plat_tee_service_contexts": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:tee_service_contexts_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a7465655f736572766963655f636f6e74657874735f66696c653a733000",
+        "original_inode": 1053
+      },
+      "/system/etc/task_profiles.json": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:task_profiles_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a7461736b5f70726f66696c65735f66696c653a733000",
+        "original_inode": 1066
+      },
+      "/system/lib64": {
+        "mode": 493,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f6c69625f66696c653a733000",
+        "original_inode": 1508
+      },
+      "/system/lib64/bootstrap": {
+        "mode": 493,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_bootstrap_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f626f6f7473747261705f6c69625f66696c653a733000",
+        "original_inode": 1703
+      },
+      "/system/lib64/bootstrap/libc.so": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_bootstrap_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f626f6f7473747261705f6c69625f66696c653a733000",
+        "original_inode": 1706
+      },
+      "/system/lib64/bootstrap/libdl.so": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_bootstrap_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f626f6f7473747261705f6c69625f66696c653a733000",
+        "original_inode": 1708
+      },
+      "/system/lib64/bootstrap/libdl_android.so": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_bootstrap_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f626f6f7473747261705f6c69625f66696c653a733000",
+        "original_inode": 1709
+      },
+      "/system/lib64/bootstrap/libm.so": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_bootstrap_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f626f6f7473747261705f6c69625f66696c653a733000",
+        "original_inode": 1710
+      },
+      "/system/lib64/ld-android.so": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f6c69625f66696c653a733000",
+        "original_inode": 1733
+      },
+      "/system/lib64/libbase.so": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f6c69625f66696c653a733000",
+        "original_inode": 1829
+      },
+      "/system/lib64/libc++.so": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f6c69625f66696c653a733000",
+        "original_inode": 1857
+      },
+      "/system/lib64/libcrypto.so": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f6c69625f66696c653a733000",
+        "original_inode": 1890
+      },
+      "/system/lib64/libcrypto_utils.so": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f6c69625f66696c653a733000",
+        "original_inode": 1891
+      },
+      "/system/lib64/libcutils.so": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f6c69625f66696c653a733000",
+        "original_inode": 1895
+      },
+      "/system/lib64/libext2_uuid.so": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f6c69625f66696c653a733000",
+        "original_inode": 1928
+      },
+      "/system/lib64/libext4_utils.so": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f6c69625f66696c653a733000",
+        "original_inode": 1930
+      },
+      "/system/lib64/libfec.so": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f6c69625f66696c653a733000",
+        "original_inode": 1934
+      },
+      "/system/lib64/libfs_mgr.so": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f6c69625f66696c653a733000",
+        "original_inode": 1939
+      },
+      "/system/lib64/libgsi.so": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f6c69625f66696c653a733000",
+        "original_inode": 1949
+      },
+      "/system/lib64/libjsoncpp.so": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f6c69625f66696c653a733000",
+        "original_inode": 1989
+      },
+      "/system/lib64/liblog.so": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f6c69625f66696c653a733000",
+        "original_inode": 2011
+      },
+      "/system/lib64/liblogwrap.so": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f6c69625f66696c653a733000",
+        "original_inode": 2014
+      },
+      "/system/lib64/liblp.so": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f6c69625f66696c653a733000",
+        "original_inode": 2015
+      },
+      "/system/lib64/liblzma.so": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f6c69625f66696c653a733000",
+        "original_inode": 2019
+      },
+      "/system/lib64/libpackagelistparser.so": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f6c69625f66696c653a733000",
+        "original_inode": 2073
+      },
+      "/system/lib64/libpcre2.so": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f6c69625f66696c653a733000",
+        "original_inode": 2076
+      },
+      "/system/lib64/libprocessgroup.so": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f6c69625f66696c653a733000",
+        "original_inode": 2090
+      },
+      "/system/lib64/libprocessgroup_setup.so": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f6c69625f66696c653a733000",
+        "original_inode": 2091
+      },
+      "/system/lib64/libselinux.so": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f6c69625f66696c653a733000",
+        "original_inode": 2115
+      },
+      "/system/lib64/libsparse.so": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f6c69625f66696c653a733000",
+        "original_inode": 2138
+      },
+      "/system/lib64/libsquashfs_utils.so": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f6c69625f66696c653a733000",
+        "original_inode": 2141
+      },
+      "/system/lib64/libunwindstack.so": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f6c69625f66696c653a733000",
+        "original_inode": 2184
+      },
+      "/system/lib64/libutils.so": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f6c69625f66696c653a733000",
+        "original_inode": 2187
+      },
+      "/system/lib64/libvendorsupport.so": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f6c69625f66696c653a733000",
+        "original_inode": 2190
+      },
+      "/system/lib64/libvndksupport.so": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f6c69625f66696c653a733000",
+        "original_inode": 2195
+      },
+      "/system/lib64/libz.so": {
+        "mode": 420,
+        "uid": 0,
+        "gid": 0,
+        "selinux": "u:object_r:system_lib_file:s0",
+        "selinux_xattr_hex": "753a6f626a6563745f723a73797374656d5f6c69625f66696c653a733000",
+        "original_inode": 2206
+      }
+    },
+    "original_system_image": {
+      "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android-reference/sdk/system-images/android-36/google_apis_ps16k/arm64-v8a/system.img",
+      "sha256": "54a96f82a138e0919686cefffead8861e10c6189bf94188fef4fa08e24dc3ed1"
+    },
+    "deployed_system_partition": {
+      "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/work/native-linux-nce/stock-init-special-mapping-original-v3/original-system-metadata.img",
+      "sha256": "993193cfffd9b1a2ea034bfce5ec18fbb2856e259398ad6c1eb10b689b524e7d"
+    },
+    "limitations": [
+      "Original system partition mounted read-only; vendor/product/system_ext service binaries are not deployed.",
+      "The runner supplies mounted partition directories; first-stage init and original fstab mounts are untested."
+    ]
+  },
+  "compile_commands": [
+    [
+      "/opt/homebrew/opt/llvm/bin/clang",
+      "--target=aarch64-linux-musl",
+      "-mno-outline-atomics",
+      "-fPIE",
+      "-O2",
+      "-g",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-nostdinc",
+      "-isystem",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/work/native-linux-nce/musl-build/install/include",
+      "-isystem",
+      "/opt/homebrew/Cellar/llvm/22.1.7_1/lib/clang/22/include",
+      "-DNCE_TRANSLATION_CPUS=1",
+      "-DNCE_TRANSLATION_HIGH_RES_TIMERS=0",
+      "-c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/experiments/native-linux/translation/stock-init-guest.c",
+      "-o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/work/native-linux-nce/stock-init-special-mapping-original-v3/guest.o",
+      "-DNCE_TRANSLATION_STANDARD_JIT",
+      "-D_GNU_SOURCE"
+    ],
+    [
+      "/opt/homebrew/opt/llvm/bin/clang",
+      "--target=aarch64-linux-musl",
+      "-mno-outline-atomics",
+      "-fPIE",
+      "-O2",
+      "-g",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-ffunction-sections",
+      "-Dmain=unused_mm_main",
+      "-nostdinc",
+      "-isystem",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/work/native-linux-nce/musl-build/install/include",
+      "-isystem",
+      "/opt/homebrew/Cellar/llvm/22.1.7_1/lib/clang/22/include",
+      "-c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/experiments/native-linux/userspace/signal-tests.c",
+      "-o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/work/native-linux-nce/stock-init-special-mapping-original-v3/signal-tests.o"
+    ],
+    [
+      "/opt/homebrew/opt/llvm/bin/clang",
+      "--target=aarch64-linux-musl",
+      "-mno-outline-atomics",
+      "-fPIE",
+      "-O2",
+      "-g",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-ffunction-sections",
+      "-Dmain=unused_mm_main",
+      "-nostdinc",
+      "-isystem",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/work/native-linux-nce/musl-build/install/include",
+      "-isystem",
+      "/opt/homebrew/Cellar/llvm/22.1.7_1/lib/clang/22/include",
+      "-c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/experiments/native-linux/userspace/signal-registers.S",
+      "-o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/work/native-linux-nce/stock-init-special-mapping-original-v3/signal-registers.o"
+    ],
+    [
+      "/opt/homebrew/bin/ld.lld",
+      "-pie",
+      "--gc-sections",
+      "--no-dynamic-linker",
+      "-z",
+      "max-page-size=16384",
+      "-z",
+      "common-page-size=16384",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/work/native-linux-nce/musl-build/install/lib/rcrt1.o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/work/native-linux-nce/musl-build/install/lib/crti.o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/work/native-linux-nce/musl-build/install/lib/libc.a",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/work/native-linux-nce/compiler-rt-build/libbuiltins.a",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/work/native-linux-nce/musl-build/install/lib/crtn.o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/work/native-linux-nce/stock-init-special-mapping-original-v3/guest.o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/work/native-linux-nce/stock-init-special-mapping-original-v3/signal-tests.o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/work/native-linux-nce/stock-init-special-mapping-original-v3/signal-registers.o",
+      "-o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/work/native-linux-nce/stock-init-special-mapping-original-v3/guest.elf"
+    ],
+    [
+      "xcrun",
+      "clang",
+      "-O2",
+      "-g",
+      "-DNCE_PROCESS",
+      "-DNCE_TRANSLATION_CPUS=1",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-I",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/experiments/native-linux",
+      "-I",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/work/native-linux-nce/stock-init-special-mapping-kernel",
+      "-I",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/work/native-linux-nce/stock-init-special-mapping-core-v2",
+      "-I",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/work/native-linux-nce/processes/host-include",
+      "-I",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/work/native-linux-nce/unicorn-tb-stop-dual/prefix/include",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/experiments/native-linux/translation/kernel-image.c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/experiments/native-linux/translation/linux-elf.c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/work/native-linux-nce/stock-init-special-mapping-original-v3/linux-execution.c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/experiments/native-linux/translation/interaction-profile.c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/work/native-linux-nce/stock-init-special-mapping-original-v3/linux-runner.c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/experiments/native-linux/translation/linux-memory.c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/experiments/native-linux/lkl-host.c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/experiments/native-linux/translation/code-watch.c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/experiments/native-linux/translation/read-view.c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/experiments/native-linux/translation/unicorn-code-memory.c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/work/native-linux-nce/unicorn-tb-stop-dual/prefix/lib/libunicorn.a",
+      "-DNCE_DIRECT_EXECUTION",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/work/native-linux-nce/stock-init-special-mapping-core-v2/direct/engine.o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/work/native-linux-nce/stock-init-special-mapping-core-v2/direct/compile.o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/work/native-linux-nce/stock-init-special-mapping-core-v2/direct/decode.o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/work/native-linux-nce/stock-init-special-mapping-core-v2/direct/memory-groups.o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/work/native-linux-nce/stock-init-special-mapping-core-v2/direct/read-faults.o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/work/native-linux-nce/stock-init-special-mapping-core-v2/direct/cross-page.o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/work/native-linux-nce/stock-init-special-mapping-core-v2/direct/entry.o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/work/native-linux-nce/stock-init-special-mapping-core-v2/direct/code-memory.o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/work/native-linux-nce/stock-init-special-mapping-core-v2/direct/execute-check.o",
+      "-lc++",
+      "-o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/work/native-linux-nce/stock-init-special-mapping-original-v3/cli",
+      "-DNCE_TRANSLATION_DUAL_MAP",
+      "-iquote",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/experiments/native-linux/translation"
+    ],
+    [
+      "xcrun",
+      "clang",
+      "-O2",
+      "-g",
+      "-DNCE_PROCESS",
+      "-DNCE_TRANSLATION_CPUS=1",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-I",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/experiments/native-linux",
+      "-I",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/work/native-linux-nce/stock-init-special-mapping-kernel",
+      "-I",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/work/native-linux-nce/stock-init-special-mapping-core-v2",
+      "-I",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/work/native-linux-nce/processes/host-include",
+      "-I",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/work/native-linux-nce/unicorn-tb-stop-dual/prefix/include",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/experiments/native-linux/translation/kernel-image.c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/experiments/native-linux/translation/linux-elf.c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/work/native-linux-nce/stock-init-special-mapping-original-v3/linux-execution.c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/experiments/native-linux/translation/interaction-profile.c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/work/native-linux-nce/stock-init-special-mapping-original-v3/linux-runner.c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/experiments/native-linux/translation/linux-memory.c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/experiments/native-linux/lkl-host.c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/experiments/native-linux/translation/code-watch.c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/experiments/native-linux/translation/read-view.c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/experiments/native-linux/translation/unicorn-code-memory.c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/work/native-linux-nce/unicorn-tb-stop-dual/prefix/lib/libunicorn.a",
+      "-DNCE_DIRECT_EXECUTION",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/work/native-linux-nce/stock-init-special-mapping-core-v2/direct/engine.o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/work/native-linux-nce/stock-init-special-mapping-core-v2/direct/compile.o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/work/native-linux-nce/stock-init-special-mapping-core-v2/direct/decode.o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/work/native-linux-nce/stock-init-special-mapping-core-v2/direct/memory-groups.o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/work/native-linux-nce/stock-init-special-mapping-core-v2/direct/read-faults.o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/work/native-linux-nce/stock-init-special-mapping-core-v2/direct/cross-page.o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/work/native-linux-nce/stock-init-special-mapping-core-v2/direct/entry.o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/work/native-linux-nce/stock-init-special-mapping-core-v2/direct/code-memory.o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/work/native-linux-nce/stock-init-special-mapping-core-v2/direct/execute-check.o",
+      "-lc++",
+      "-o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/work/native-linux-nce/stock-init-special-mapping-original-v3/gcd",
+      "-DNCE_TRANSLATION_DUAL_MAP",
+      "-DTRANSLATION_DISPATCH",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/experiments/native-linux/dispatch-test.c",
+      "-iquote",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-bionic/experiments/native-linux/translation"
+    ]
+  ],
+  "limitations": [
+    "This signal-return fix preserves existing guest file modes and labels. Original /system inode metadata remains intact; /etc original mode 0644 and created mode 0777 are recorded in the prior stage.",
+    "Loop-control and device-mapper are missing; original bootstrap APEX activation fails and requests reboot.",
+    "Independent kernel uses the checkpoint executor and page-table implementation; current main integration will rebuild and rerun.",
+    "iPhone installation, JIT authorization, memory limits, sustained performance and thermal state remain unverified."
+  ]
+}

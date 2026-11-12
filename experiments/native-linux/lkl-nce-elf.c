@@ -3,6 +3,7 @@
 #include <linux/file.h>
 #include <linux/mm.h>
 #include <linux/mman.h>
+#include <linux/mutex.h>
 #include <linux/slab.h>
 #include <linux/syscalls.h>
 #include <linux/security.h>
@@ -105,32 +106,116 @@ int nce_populate_code(unsigned long address, unsigned long length)
     return 0;
 }
 
-/* AArch64 libc may leave sa_restorer unset. Every ELF process receives the
- * same registered return stub, with its mapping owned by the Linux mm. */
+static DEFINE_MUTEX(sigreturn_mutex);
+static struct page *sigreturn_pages[2];
+static unsigned long sigreturn_base, sigreturn_entry;
+
+static int sigreturn_mremap(const struct vm_special_mapping *mapping,
+                            struct vm_area_struct *vma)
+{
+    return vma->vm_start == sigreturn_base && vma->vm_end - vma->vm_start == PAGE_SIZE ? 0 : -EINVAL;
+}
+
+/* The descriptor, page array and initial page reference live until the kernel
+ * RAM is released. Each mm owns only the references acquired by its PTEs. */
+static const struct vm_special_mapping sigreturn_mapping = {
+    .name = "[nce-sigreturn]",
+    .pages = sigreturn_pages,
+    .mremap = sigreturn_mremap,
+};
+
+static int init_sigreturn_page(void)
+{
+    struct file *file;
+    struct page *page = NULL;
+    const struct elfhdr *header;
+    const struct elf_phdr *load;
+    unsigned long base;
+    loff_t size, position = 0;
+    int error;
+
+    error = mutex_lock_killable(&sigreturn_mutex);
+    if (error)
+        return error;
+    if (sigreturn_pages[0]) {
+        error = 0;
+        goto unlock;
+    }
+    file = filp_open("/lib/nce-sigreturn.so", O_RDONLY, 0);
+    if (IS_ERR(file)) {
+        error = PTR_ERR(file);
+        goto unlock;
+    }
+    error = -ENOEXEC;
+    size = i_size_read(file_inode(file));
+    if (size < sizeof(*header) + sizeof(*load) || size > PAGE_SIZE)
+        goto close;
+    page = alloc_page(GFP_KERNEL | __GFP_ZERO);
+    if (!page) {
+        error = -ENOMEM;
+        goto close;
+    }
+    if (kernel_read(file, page_address(page), size, &position) != size)
+        goto close;
+    header = page_address(page);
+    if (memcmp(header->e_ident, "\177ELF\2\1\1", 7) || header->e_type != ET_DYN ||
+        header->e_machine != EM_AARCH64 || header->e_version != EV_CURRENT ||
+        header->e_ehsize != sizeof(*header) || header->e_phentsize != sizeof(*load) ||
+        header->e_phnum != 1 || header->e_phoff < sizeof(*header) ||
+        header->e_phoff > size - sizeof(*load) || header->e_phoff % __alignof__(*load))
+        goto close;
+    load = (const void *)header + header->e_phoff;
+    if (load->p_type != PT_LOAD || load->p_flags != (PF_R | PF_X) ||
+        load->p_offset || load->p_vaddr || load->p_memsz != load->p_filesz ||
+        load->p_filesz > size || load->p_filesz < header->e_phoff + sizeof(*load) ||
+        header->e_entry < header->e_phoff + sizeof(*load) ||
+        header->e_entry >= load->p_filesz || (header->e_entry & 3))
+        goto close;
+    base = nce_elf_file_layout(file, 0, header, load);
+    if (!base || offset_in_page(base) || base < nce_user_base || base > TASK_SIZE - PAGE_SIZE)
+        goto close;
+    error = 0;
+close:
+    fput(file);
+    if (!error) {
+        sigreturn_base = base;
+        sigreturn_entry = base + header->e_entry;
+        /* Publish after reading the complete file and matching its registered
+         * layout. Later execs use the kernel page under their new SELinux domain. */
+        sigreturn_pages[0] = page;
+        page = NULL;
+    }
+    if (page)
+        __free_page(page);
+unlock:
+    mutex_unlock(&sigreturn_mutex);
+    return error;
+}
+
+/* AArch64 libc may leave sa_restorer unset. Supply the registered stub with
+ * a kernel special-mapping lifetime and no permission to acquire write access. */
 int arch_setup_additional_pages(struct linux_binprm *bprm, int uses_interp)
 {
-    struct file *file = filp_open("/lib/nce-sigreturn.so", O_RDONLY, 0);
-    struct elfhdr header;
-    unsigned long base, length = 0;
-    loff_t position = 0;
-    int error = -ENOEXEC;
-    if (IS_ERR(file))
-        return PTR_ERR(file);
-    base = file_layout(file, 0, &length);
-    if (!base || kernel_read(file, &header, sizeof(header), &position) != sizeof(header) ||
-        header.e_entry >= length)
-        goto out;
-    unsigned long mapped = vm_mmap(file, base, length, PROT_READ | PROT_EXEC,
-                                   MAP_PRIVATE | MAP_FIXED_NOREPLACE, 0);
-    if (IS_ERR_VALUE(mapped)) {
-        error = mapped;
-        goto out;
+    struct mm_struct *mm = current->mm;
+    struct vm_area_struct *vma;
+    int error = init_sigreturn_page();
+    if (error)
+        return error;
+    if (mmap_write_lock_killable(mm))
+        return -EINTR;
+    if (find_vma_intersection(mm, sigreturn_base, sigreturn_base + PAGE_SIZE))
+        error = -EEXIST;
+    else {
+        vma = _install_special_mapping(mm, sigreturn_base, PAGE_SIZE,
+                                       VM_READ | VM_EXEC | VM_MAYREAD | VM_MAYEXEC,
+                                       &sigreturn_mapping);
+        error = PTR_ERR_OR_ZERO(vma);
     }
-    error = nce_populate_code(mapped, length);
+    mmap_write_unlock(mm);
     if (!error)
-        current->mm->context.sigreturn = base + header.e_entry;
-out:
-    fput(file);
+        error = nce_populate_code(sigreturn_base, PAGE_SIZE);
+    if (!error)
+        mm->context.sigreturn = sigreturn_entry;
     return error;
 }
 

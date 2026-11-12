@@ -18,6 +18,8 @@
         } \
     } while (0)
 
+void signal_kernel_restorer_tests(void);
+
 int main(void)
 {
     setvbuf(stdout, NULL, _IONBF, 0);
@@ -27,6 +29,7 @@ int main(void)
     CHECK(mount("proc", "/proc", "proc", MS_NOSUID | MS_NODEV | MS_NOEXEC, NULL) == 0);
     char self[32] = {0};
     CHECK(readlink("/proc/self", self, sizeof(self) - 1) > 0 && atoi(self) == 1);
+    signal_kernel_restorer_tests();
     int fd = open("/stock-init-mode", O_RDONLY);
     char mode[32] = {0};
     CHECK(fd >= 0 && read(fd, mode, sizeof(mode) - 1) > 0 && close(fd) == 0);
@@ -36,6 +39,7 @@ int main(void)
         pid_t child = fork();
         CHECK(child >= 0);
         if (!child) {
+            signal_kernel_restorer_tests();
             CHECK(close(ready[0]) == 0 && write(ready[1], "r", 1) == 1 && close(ready[1]) == 0);
             for (;;)
                 pause();
