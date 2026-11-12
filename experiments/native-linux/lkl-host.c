@@ -74,17 +74,26 @@ int nce_disk_open(unsigned index, const char *path)
     return 0;
 }
 
-void nce_disk_close(void)
+/* Linux workers must stop before closing their host block devices. */
+int nce_disk_close(void)
 {
+    int first_error = 0;
     for (unsigned index = 0; index < NCE_DISK_COUNT; ++index) {
         if (disks[index].fd < 0)
             continue;
-        if (!index)
-            REQUIRE(fsync(disks[index].fd) == 0);
-        REQUIRE(close(disks[index].fd) == 0);
+        int sync_result = 0;
+        if (!index && fsync(disks[index].fd))
+            sync_result = -errno;
+        int close_result = close(disks[index].fd) ? -errno : 0;
+        if (!first_error)
+            first_error = sync_result ? sync_result : close_result;
+        /* A failed close has an unspecified fd state; its number must not be retried. */
         disks[index].fd = -1;
         disks[index].bytes = 0;
+        printf("{\"host_disk_close\":true,\"slot\":%u,\"sync_attempted\":%s,\"sync_result\":%d,\"close_result\":%d}\n",
+               index, index ? "false" : "true", sync_result, close_result);
     }
+    return first_error;
 }
 
 static unsigned long long disk_size(unsigned int index)

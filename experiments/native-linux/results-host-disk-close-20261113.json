@@ -1,0 +1,866 @@
+{
+  "scope": "宿主磁盘同步失败后的实际关闭、锁释放与 Mac/iOS 编译；原 init 数据与完整系统由主线组合验收",
+  "source_base_commit": "0dffcbb4b03c3d4b4de1d6f639e084cd809015ba",
+  "reports": {
+    "original-failure": {
+      "path": "work/native-linux-nce/host-disk-close-old-v1/result.json",
+      "bytes": 4296,
+      "sha256": "41308493761986fc56888c2a187d07883f781522fd43146da2b04dfdbf5a8609",
+      "data": {
+        "test": "old_host_disk_sync_failure_aborts",
+        "source_commit": "0dffcbb4b03c3d4b4de1d6f639e084cd809015ba",
+        "returncode": -6,
+        "expected_failure_reproduced": true,
+        "commands": [
+          [
+            "xcrun",
+            "clang",
+            "-O2",
+            "-Wall",
+            "-Wextra",
+            "-Werror",
+            "-I",
+            "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/stock-init-keymint/experiments/native-linux",
+            "-I",
+            "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/stock-init-keymint/work/native-linux-nce/lkl-translation-kernel",
+            "-Dfsync=nce_host_test_fsync",
+            "-c",
+            "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/stock-init-keymint/work/native-linux-nce/host-disk-close-old-v1/old-lkl-host.c",
+            "-o",
+            "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/stock-init-keymint/work/native-linux-nce/host-disk-close-old-v1/old-host.o"
+          ],
+          [
+            "xcrun",
+            "clang",
+            "-O2",
+            "-Wall",
+            "-Wextra",
+            "-Werror",
+            "-I",
+            "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/stock-init-keymint/experiments/native-linux",
+            "-I",
+            "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/stock-init-keymint/work/native-linux-nce/lkl-translation-kernel",
+            "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/stock-init-keymint/work/native-linux-nce/host-disk-close-old-v1/old-close-failure.c",
+            "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/stock-init-keymint/work/native-linux-nce/host-disk-close-old-v1/old-host.o",
+            "-o",
+            "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/stock-init-keymint/work/native-linux-nce/host-disk-close-old-v1/old-close-failure"
+          ],
+          [
+            "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/stock-init-keymint/work/native-linux-nce/host-disk-close-old-v1/old-close-failure",
+            "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/stock-init-keymint/work/native-linux-nce/host-disk-close-old-v1/data.img",
+            "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/stock-init-keymint/work/native-linux-nce/host-disk-close-old-v1/system.img"
+          ]
+        ],
+        "sha256": {
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/stock-init-keymint/work/native-linux-nce/host-disk-close-old-v1/old-lkl-host.c": "0d162a35edff2a800a1162d5e51da6a18cf80254cf67266b5ff82c538a60b845",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/stock-init-keymint/work/native-linux-nce/host-disk-close-old-v1/old-close-failure.c": "ac91b52e77d1725863a2e6da2226d7cf612f95502afa362b71df1960fc1f24cb",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/stock-init-keymint/work/native-linux-nce/lkl-translation-kernel/lkl-host-ops.h": "54bf2a775fa582ca2bc04fb6a25dc85525b6c69da1cde54f610c4a35e0c1a833",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/stock-init-keymint/experiments/native-linux/layout.h": "ffb3067b856643b5df887242441aff94a7d88da4be6ae833ae9ca25aeae8139b"
+        },
+        "stderr": "LKL host failure: fsync(disks[index].fd) == 0\n",
+        "artifacts": {
+          "old-host.o": {
+            "bytes": 16144,
+            "sha256": "df92512d65057badfe70480767491b150b51a4ff503255925a0dbee5782c15ed"
+          },
+          "old-lkl-host.c": {
+            "bytes": 9531,
+            "sha256": "0d162a35edff2a800a1162d5e51da6a18cf80254cf67266b5ff82c538a60b845"
+          },
+          "old-close-failure.c": {
+            "bytes": 343,
+            "sha256": "ac91b52e77d1725863a2e6da2226d7cf612f95502afa362b71df1960fc1f24cb"
+          },
+          "stderr.log": {
+            "bytes": 46,
+            "sha256": "384f7139d609bf5b8fcf5c549a0df13c071503e553b5c5187c61d6f502c163d3"
+          },
+          "data.img": {
+            "bytes": 1024,
+            "sha256": "5f70bf18a086007016e948b04aed3b82103a36bea41755b6cddfaf10ace3c6ef"
+          },
+          "stdout.log": {
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "system.img": {
+            "bytes": 1024,
+            "sha256": "5f70bf18a086007016e948b04aed3b82103a36bea41755b6cddfaf10ace3c6ef"
+          },
+          "old-close-failure": {
+            "bytes": 55680,
+            "sha256": "35ea082c0de361ef5e56bc58f1914ea0039af9f0044a2f2f5aa33d80d7f494ee"
+          },
+          "build.log": {
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        "fixture_source": "#include <errno.h>\n#include <unistd.h>\nextern int nce_disk_open(unsigned, const char *);\nextern void nce_disk_close(void);\nint nce_host_test_fsync(int fd) { (void)fd; errno = EIO; return -1; }\nint main(int argc, char **argv) {\n if (argc != 3 || nce_disk_open(0, argv[1]) || nce_disk_open(1, argv[2])) return 2;\n nce_disk_close();\n return 3;\n}\n"
+      }
+    },
+    "initial-regression": {
+      "path": "work/native-linux-nce/host-disk-close-v1/result.json",
+      "bytes": 7828,
+      "sha256": "49249766cc66df90460eafed83fe2e3486832fde9d8f227fe2d8768cba1142cd",
+      "data": {
+        "test": "host_disk_close_failures",
+        "passed": true,
+        "host": "macOS-27.0-arm64-arm-64bit-Mach-O",
+        "sha256": {
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/stock-init-keymint/experiments/native-linux/lkl-host.c": "3265b0cc1ccdd3a6878e23a7d762b541b0097adb18bcb907ae4603a8dd00852f",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/stock-init-keymint/experiments/native-linux/host-context-test.c": "c308c9ef446231a08b32bf14c59505a80dfa3610cdb7d63b8ee0df5a1f1de028",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/stock-init-keymint/experiments/native-linux/layout.h": "ffb3067b856643b5df887242441aff94a7d88da4be6ae833ae9ca25aeae8139b",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/stock-init-keymint/work/native-linux-nce/lkl-translation-kernel/lkl-host-ops.h": "54bf2a775fa582ca2bc04fb6a25dc85525b6c69da1cde54f610c4a35e0c1a833",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/stock-init-keymint/scripts/test_host_disk_close.py": "3f39acedf31af0a24827d008ba0c90d126b8cfca3b0c1409d21ff3912f28f9e2"
+        },
+        "commands": [
+          [
+            "xcrun",
+            "clang",
+            "-O2",
+            "-Wall",
+            "-Wextra",
+            "-Werror",
+            "-I",
+            "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/stock-init-keymint/experiments/native-linux",
+            "-I",
+            "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/stock-init-keymint/work/native-linux-nce/lkl-translation-kernel",
+            "-isysroot",
+            "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX27.0.sdk",
+            "-Dfsync=nce_host_test_fsync",
+            "-Dclose=nce_host_test_close",
+            "-c",
+            "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/stock-init-keymint/experiments/native-linux/lkl-host.c",
+            "-o",
+            "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/stock-init-keymint/work/native-linux-nce/host-disk-close-v1/host-failure.o"
+          ],
+          [
+            "xcrun",
+            "clang",
+            "-O2",
+            "-Wall",
+            "-Wextra",
+            "-Werror",
+            "-I",
+            "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/stock-init-keymint/experiments/native-linux",
+            "-I",
+            "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/stock-init-keymint/work/native-linux-nce/lkl-translation-kernel",
+            "-isysroot",
+            "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX27.0.sdk",
+            "-DNCE_HOST_DISK_FAILURE_TEST",
+            "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/stock-init-keymint/experiments/native-linux/host-context-test.c",
+            "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/stock-init-keymint/work/native-linux-nce/host-disk-close-v1/host-failure.o",
+            "-o",
+            "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/stock-init-keymint/work/native-linux-nce/host-disk-close-v1/host-context-test"
+          ],
+          [
+            "xcrun",
+            "clang",
+            "-O2",
+            "-Wall",
+            "-Wextra",
+            "-Werror",
+            "-I",
+            "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/stock-init-keymint/experiments/native-linux",
+            "-I",
+            "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/stock-init-keymint/work/native-linux-nce/lkl-translation-kernel",
+            "-target",
+            "arm64-apple-ios26.0",
+            "-isysroot",
+            "/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS27.1.sdk",
+            "-c",
+            "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/stock-init-keymint/experiments/native-linux/lkl-host.c",
+            "-o",
+            "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/stock-init-keymint/work/native-linux-nce/host-disk-close-v1/ios-lkl-host.o"
+          ],
+          [
+            "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/stock-init-keymint/work/native-linux-nce/host-disk-close-v1/host-context-test"
+          ]
+        ],
+        "returncode": 0,
+        "results": [
+          {
+            "host_disk_close": true,
+            "slot": 0,
+            "sync_attempted": true,
+            "sync_result": 0,
+            "close_result": 0
+          },
+          {
+            "host_disk_close": true,
+            "slot": 1,
+            "sync_attempted": false,
+            "sync_result": 0,
+            "close_result": 0
+          },
+          {
+            "host_disk_close": true,
+            "slot": 2,
+            "sync_attempted": false,
+            "sync_result": 0,
+            "close_result": 0
+          },
+          {
+            "host_disk_close": true,
+            "slot": 3,
+            "sync_attempted": false,
+            "sync_result": 0,
+            "close_result": 0
+          },
+          {
+            "test": "host_disk_bounds_readonly_and_locking",
+            "passed": true
+          },
+          {
+            "host_disk_close": true,
+            "slot": 0,
+            "sync_attempted": true,
+            "sync_result": -5,
+            "close_result": 0
+          },
+          {
+            "host_disk_close": true,
+            "slot": 1,
+            "sync_attempted": false,
+            "sync_result": 0,
+            "close_result": 0
+          },
+          {
+            "host_disk_close": true,
+            "slot": 2,
+            "sync_attempted": false,
+            "sync_result": 0,
+            "close_result": 0
+          },
+          {
+            "host_disk_close": true,
+            "slot": 3,
+            "sync_attempted": false,
+            "sync_result": 0,
+            "close_result": 0
+          },
+          {
+            "test": "host_disk_failure_closes_all_slots",
+            "case": "sync_error",
+            "passed": true,
+            "locks_released": 4,
+            "sync_calls": 1,
+            "close_calls": 4
+          },
+          {
+            "host_disk_close": true,
+            "slot": 0,
+            "sync_attempted": true,
+            "sync_result": -5,
+            "close_result": -4
+          },
+          {
+            "host_disk_close": true,
+            "slot": 1,
+            "sync_attempted": false,
+            "sync_result": 0,
+            "close_result": 0
+          },
+          {
+            "host_disk_close": true,
+            "slot": 2,
+            "sync_attempted": false,
+            "sync_result": 0,
+            "close_result": 0
+          },
+          {
+            "host_disk_close": true,
+            "slot": 3,
+            "sync_attempted": false,
+            "sync_result": 0,
+            "close_result": 0
+          },
+          {
+            "test": "host_disk_failure_closes_all_slots",
+            "case": "sync_and_close_error",
+            "passed": true,
+            "locks_released": 4,
+            "sync_calls": 1,
+            "close_calls": 4
+          },
+          {
+            "host_disk_close": true,
+            "slot": 0,
+            "sync_attempted": true,
+            "sync_result": 0,
+            "close_result": -4
+          },
+          {
+            "host_disk_close": true,
+            "slot": 1,
+            "sync_attempted": false,
+            "sync_result": 0,
+            "close_result": 0
+          },
+          {
+            "host_disk_close": true,
+            "slot": 2,
+            "sync_attempted": false,
+            "sync_result": 0,
+            "close_result": 0
+          },
+          {
+            "host_disk_close": true,
+            "slot": 3,
+            "sync_attempted": false,
+            "sync_result": 0,
+            "close_result": 0
+          },
+          {
+            "test": "host_disk_failure_closes_all_slots",
+            "case": "close_error",
+            "passed": true,
+            "locks_released": 4,
+            "sync_calls": 1,
+            "close_calls": 4
+          },
+          {
+            "test": "host_context_preserves_thread_masks",
+            "passed": true
+          }
+        ],
+        "ios_compiled": true,
+        "inputs_unchanged": true,
+        "artifacts": {
+          "stderr.log": {
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "ios-lkl-host.o": {
+            "bytes": 16312,
+            "sha256": "5de8b8253f49f4a416f7d7af35e53a08d530fa37f554117e77a4f372c839458d"
+          },
+          "host-context-test": {
+            "bytes": 58112,
+            "sha256": "a7e1bc3678376e4f81859e5256430fb399f4eab0191c59de4ba942bef3f77662"
+          },
+          "host-failure.o": {
+            "bytes": 16344,
+            "sha256": "14e1882fbc0c0baca274d3d8c272c3720eb78dd9abe3bede92ab0b313dd21db8"
+          },
+          "stdout.jsonl": {
+            "bytes": 1965,
+            "sha256": "7bafa60d4ad81a0b177154ad65087ba584bc0a532e8c5dc9bd1b1cce1dea0ed7"
+          },
+          "build.log": {
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        }
+      }
+    },
+    "fixed-regression": {
+      "path": "work/native-linux-nce/host-disk-close-v2/result.json",
+      "bytes": 7851,
+      "sha256": "965732d83dac85769dc1ff74b9d775ad37ca5e9149959281fbdf6d785577236a",
+      "data": {
+        "test": "host_disk_close_failures",
+        "passed": true,
+        "host": "macOS-27.0-arm64-arm-64bit-Mach-O",
+        "sha256": {
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/stock-init-keymint/experiments/native-linux/lkl-host.c": "3265b0cc1ccdd3a6878e23a7d762b541b0097adb18bcb907ae4603a8dd00852f",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/stock-init-keymint/experiments/native-linux/host-context-test.c": "c308c9ef446231a08b32bf14c59505a80dfa3610cdb7d63b8ee0df5a1f1de028",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/stock-init-keymint/experiments/native-linux/layout.h": "ffb3067b856643b5df887242441aff94a7d88da4be6ae833ae9ca25aeae8139b",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/stock-init-keymint/work/native-linux-nce/lkl-translation-kernel/lkl-host-ops.h": "54bf2a775fa582ca2bc04fb6a25dc85525b6c69da1cde54f610c4a35e0c1a833",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/stock-init-keymint/scripts/test_host_disk_close.py": "a2c2a12b8ddeeb4e608e9a61c7bf811463e2e9def5c966c818efeaa745b9abd9"
+        },
+        "commands": [
+          [
+            "xcrun",
+            "clang",
+            "-O2",
+            "-Wall",
+            "-Wextra",
+            "-Werror",
+            "-I",
+            "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/stock-init-keymint/experiments/native-linux",
+            "-I",
+            "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/stock-init-keymint/work/native-linux-nce/lkl-translation-kernel",
+            "-isysroot",
+            "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX27.0.sdk",
+            "-Dfsync=nce_host_test_fsync",
+            "-Dclose=nce_host_test_close",
+            "-c",
+            "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/stock-init-keymint/experiments/native-linux/lkl-host.c",
+            "-o",
+            "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/stock-init-keymint/work/native-linux-nce/host-disk-close-v2/host-failure.o"
+          ],
+          [
+            "xcrun",
+            "clang",
+            "-O2",
+            "-Wall",
+            "-Wextra",
+            "-Werror",
+            "-I",
+            "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/stock-init-keymint/experiments/native-linux",
+            "-I",
+            "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/stock-init-keymint/work/native-linux-nce/lkl-translation-kernel",
+            "-isysroot",
+            "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX27.0.sdk",
+            "-DNCE_HOST_DISK_FAILURE_TEST",
+            "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/stock-init-keymint/experiments/native-linux/host-context-test.c",
+            "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/stock-init-keymint/work/native-linux-nce/host-disk-close-v2/host-failure.o",
+            "-o",
+            "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/stock-init-keymint/work/native-linux-nce/host-disk-close-v2/host-context-test"
+          ],
+          [
+            "xcrun",
+            "clang",
+            "-O2",
+            "-Wall",
+            "-Wextra",
+            "-Werror",
+            "-I",
+            "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/stock-init-keymint/experiments/native-linux",
+            "-I",
+            "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/stock-init-keymint/work/native-linux-nce/lkl-translation-kernel",
+            "-DNCE_PROCESS",
+            "-target",
+            "arm64-apple-ios26.0",
+            "-isysroot",
+            "/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS27.1.sdk",
+            "-c",
+            "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/stock-init-keymint/experiments/native-linux/lkl-host.c",
+            "-o",
+            "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/stock-init-keymint/work/native-linux-nce/host-disk-close-v2/ios-lkl-host.o"
+          ],
+          [
+            "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/stock-init-keymint/work/native-linux-nce/host-disk-close-v2/host-context-test"
+          ]
+        ],
+        "returncode": 0,
+        "results": [
+          {
+            "host_disk_close": true,
+            "slot": 0,
+            "sync_attempted": true,
+            "sync_result": 0,
+            "close_result": 0
+          },
+          {
+            "host_disk_close": true,
+            "slot": 1,
+            "sync_attempted": false,
+            "sync_result": 0,
+            "close_result": 0
+          },
+          {
+            "host_disk_close": true,
+            "slot": 2,
+            "sync_attempted": false,
+            "sync_result": 0,
+            "close_result": 0
+          },
+          {
+            "host_disk_close": true,
+            "slot": 3,
+            "sync_attempted": false,
+            "sync_result": 0,
+            "close_result": 0
+          },
+          {
+            "test": "host_disk_bounds_readonly_and_locking",
+            "passed": true
+          },
+          {
+            "host_disk_close": true,
+            "slot": 0,
+            "sync_attempted": true,
+            "sync_result": -5,
+            "close_result": 0
+          },
+          {
+            "host_disk_close": true,
+            "slot": 1,
+            "sync_attempted": false,
+            "sync_result": 0,
+            "close_result": 0
+          },
+          {
+            "host_disk_close": true,
+            "slot": 2,
+            "sync_attempted": false,
+            "sync_result": 0,
+            "close_result": 0
+          },
+          {
+            "host_disk_close": true,
+            "slot": 3,
+            "sync_attempted": false,
+            "sync_result": 0,
+            "close_result": 0
+          },
+          {
+            "test": "host_disk_failure_closes_all_slots",
+            "case": "sync_error",
+            "passed": true,
+            "locks_released": 4,
+            "sync_calls": 1,
+            "close_calls": 4
+          },
+          {
+            "host_disk_close": true,
+            "slot": 0,
+            "sync_attempted": true,
+            "sync_result": -5,
+            "close_result": -4
+          },
+          {
+            "host_disk_close": true,
+            "slot": 1,
+            "sync_attempted": false,
+            "sync_result": 0,
+            "close_result": 0
+          },
+          {
+            "host_disk_close": true,
+            "slot": 2,
+            "sync_attempted": false,
+            "sync_result": 0,
+            "close_result": 0
+          },
+          {
+            "host_disk_close": true,
+            "slot": 3,
+            "sync_attempted": false,
+            "sync_result": 0,
+            "close_result": 0
+          },
+          {
+            "test": "host_disk_failure_closes_all_slots",
+            "case": "sync_and_close_error",
+            "passed": true,
+            "locks_released": 4,
+            "sync_calls": 1,
+            "close_calls": 4
+          },
+          {
+            "host_disk_close": true,
+            "slot": 0,
+            "sync_attempted": true,
+            "sync_result": 0,
+            "close_result": -4
+          },
+          {
+            "host_disk_close": true,
+            "slot": 1,
+            "sync_attempted": false,
+            "sync_result": 0,
+            "close_result": 0
+          },
+          {
+            "host_disk_close": true,
+            "slot": 2,
+            "sync_attempted": false,
+            "sync_result": 0,
+            "close_result": 0
+          },
+          {
+            "host_disk_close": true,
+            "slot": 3,
+            "sync_attempted": false,
+            "sync_result": 0,
+            "close_result": 0
+          },
+          {
+            "test": "host_disk_failure_closes_all_slots",
+            "case": "close_error",
+            "passed": true,
+            "locks_released": 4,
+            "sync_calls": 1,
+            "close_calls": 4
+          },
+          {
+            "test": "host_context_preserves_thread_masks",
+            "passed": true
+          }
+        ],
+        "ios_compiled": true,
+        "inputs_unchanged": true,
+        "artifacts": {
+          "stderr.log": {
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "ios-lkl-host.o": {
+            "bytes": 16344,
+            "sha256": "b460de72b7f870821d22ed9ab06c9732cb3337271c5c3b938e2bd25601aa6987"
+          },
+          "host-context-test": {
+            "bytes": 58112,
+            "sha256": "a7e1bc3678376e4f81859e5256430fb399f4eab0191c59de4ba942bef3f77662"
+          },
+          "host-failure.o": {
+            "bytes": 16344,
+            "sha256": "14e1882fbc0c0baca274d3d8c272c3720eb78dd9abe3bede92ab0b313dd21db8"
+          },
+          "stdout.jsonl": {
+            "bytes": 1965,
+            "sha256": "7bafa60d4ad81a0b177154ad65087ba584bc0a532e8c5dc9bd1b1cce1dea0ed7"
+          },
+          "build.log": {
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        }
+      }
+    },
+    "initial-caller-failure": {
+      "path": "work/native-linux-nce/host-disk-close-caller-v1/result.json",
+      "bytes": 3942,
+      "sha256": "5bce57b756a52419737154c1322b897ea5b2eda0add827061d457bf5a66f048c",
+      "data": {
+        "test": "native_host_disk_close_caller_compile",
+        "passed": false,
+        "commands": [
+          {
+            "command": [
+              "xcrun",
+              "clang",
+              "-O2",
+              "-Wall",
+              "-Wextra",
+              "-Werror",
+              "-DNCE_PROCESS",
+              "-I",
+              "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/stock-init-keymint/experiments/native-linux",
+              "-I",
+              "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce",
+              "-MMD",
+              "-fsyntax-only",
+              "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/stock-init-keymint/experiments/native-linux/lkl-main.c",
+              "-isysroot",
+              "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX27.0.sdk",
+              "-MF",
+              "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/stock-init-keymint/work/native-linux-nce/host-disk-close-caller-v1/mac.d"
+            ],
+            "returncode": 1
+          },
+          {
+            "command": [
+              "xcrun",
+              "clang",
+              "-O2",
+              "-Wall",
+              "-Wextra",
+              "-Werror",
+              "-DNCE_PROCESS",
+              "-I",
+              "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/stock-init-keymint/experiments/native-linux",
+              "-I",
+              "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce",
+              "-MMD",
+              "-fsyntax-only",
+              "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/stock-init-keymint/experiments/native-linux/lkl-main.c",
+              "-DNCE_IOS_APP",
+              "-target",
+              "arm64-apple-ios26.0",
+              "-isysroot",
+              "/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS27.1.sdk",
+              "-MF",
+              "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/stock-init-keymint/work/native-linux-nce/host-disk-close-caller-v1/ios.d"
+            ],
+            "returncode": 1
+          }
+        ],
+        "sha256": {
+          "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX27.0.sdk/SDKSettings.json": "7b93ad7e534cc4b31c6a4e39d19b5e0288acf2168c2649479a796d1cb51939fb",
+          "/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS27.1.sdk/SDKSettings.json": "569805cc3f63c4b414a7dcc2766d9ff780caba748a5526ee6b785a56a7a0417d",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/guest-image.h": "e5c4e5cddfc16b459f9e480134dc102e4811a5c9121d0a7ac9d52d933e94a5ba",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/lkl-host-ops.h": "a5ee5cf1d2410c81245975570f57fb65d939f2522bacf371d3565ee47e4e326e",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/lkl-image.h": "ba421e5b549ba4150da419d9803276db52ace3044cb6fa7e08cd06c7eda6d83c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/stock-init-keymint/experiments/native-linux/guest-registers.h": "90a4d5b6e613ce4f2cda359dcd05f6e8d876a788bc437c2c1e13e05403e4627a",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/stock-init-keymint/experiments/native-linux/layout.h": "ffb3067b856643b5df887242441aff94a7d88da4be6ae833ae9ca25aeae8139b",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/stock-init-keymint/experiments/native-linux/lkl-main.c": "b4d8e9aa53520a23fbe44d30814148d4b3be6c117ac3bebc0440e108ac6b282a",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/stock-init-keymint/experiments/native-linux/lkl-mmu-profile.h": "c6410a8ac3d795c136b00c8108e698ac7a7f04e0ec3cf85cfbc4a01a60fa48aa",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/stock-init-keymint/experiments/native-linux/memory.h": "aeaaf612df0a787fbfd6411a45f539807bc49e1c766625bede5e31e87159ddd5",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/stock-init-keymint/experiments/native-linux/nce.h": "7bcdc5e777e10e1d70f0bf1838a2160e87c70613a44b90b16c3e07aedf4a9f58"
+        }
+      }
+    },
+    "fixed-caller": {
+      "path": "work/native-linux-nce/host-disk-close-caller-v2/result.json",
+      "bytes": 5311,
+      "sha256": "7cb7826b26a3e0aed1021fc7e38af2c1e42890d0feef4b2bfec34b9a23a9a762",
+      "data": {
+        "test": "native_host_disk_close_caller_compile",
+        "passed": true,
+        "commands": [
+          {
+            "command": [
+              "xcrun",
+              "clang",
+              "-O2",
+              "-Wall",
+              "-Wextra",
+              "-Werror",
+              "-DNCE_PROCESS",
+              "-I",
+              "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/stock-init-keymint/experiments/native-linux",
+              "-I",
+              "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/stock-init-keymint/work/native-linux-nce/lkl-translation-kernel",
+              "-I",
+              "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce",
+              "-MMD",
+              "-c",
+              "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/stock-init-keymint/experiments/native-linux/lkl-main.c",
+              "-isysroot",
+              "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX27.0.sdk",
+              "-MF",
+              "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/stock-init-keymint/work/native-linux-nce/host-disk-close-caller-v2/mac.d",
+              "-o",
+              "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/stock-init-keymint/work/native-linux-nce/host-disk-close-caller-v2/mac-lkl-main.o"
+            ],
+            "returncode": 0
+          },
+          {
+            "command": [
+              "xcrun",
+              "clang",
+              "-O2",
+              "-Wall",
+              "-Wextra",
+              "-Werror",
+              "-DNCE_PROCESS",
+              "-I",
+              "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/stock-init-keymint/experiments/native-linux",
+              "-I",
+              "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/stock-init-keymint/work/native-linux-nce/lkl-translation-kernel",
+              "-I",
+              "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce",
+              "-MMD",
+              "-c",
+              "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/stock-init-keymint/experiments/native-linux/lkl-main.c",
+              "-DNCE_IOS_APP",
+              "-target",
+              "arm64-apple-ios26.0",
+              "-isysroot",
+              "/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS27.1.sdk",
+              "-MF",
+              "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/stock-init-keymint/work/native-linux-nce/host-disk-close-caller-v2/ios.d",
+              "-o",
+              "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/stock-init-keymint/work/native-linux-nce/host-disk-close-caller-v2/ios-lkl-main.o"
+            ],
+            "returncode": 0
+          }
+        ],
+        "sha256": {
+          "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX27.0.sdk/SDKSettings.json": "7b93ad7e534cc4b31c6a4e39d19b5e0288acf2168c2649479a796d1cb51939fb",
+          "/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS27.1.sdk/SDKSettings.json": "569805cc3f63c4b414a7dcc2766d9ff780caba748a5526ee6b785a56a7a0417d",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/guest-image.h": "e5c4e5cddfc16b459f9e480134dc102e4811a5c9121d0a7ac9d52d933e94a5ba",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/stock-init-keymint/experiments/native-linux/guest-registers.h": "90a4d5b6e613ce4f2cda359dcd05f6e8d876a788bc437c2c1e13e05403e4627a",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/stock-init-keymint/experiments/native-linux/layout.h": "ffb3067b856643b5df887242441aff94a7d88da4be6ae833ae9ca25aeae8139b",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/stock-init-keymint/experiments/native-linux/lkl-main.c": "b4d8e9aa53520a23fbe44d30814148d4b3be6c117ac3bebc0440e108ac6b282a",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/stock-init-keymint/experiments/native-linux/lkl-mmu-profile.h": "c6410a8ac3d795c136b00c8108e698ac7a7f04e0ec3cf85cfbc4a01a60fa48aa",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/stock-init-keymint/experiments/native-linux/memory.h": "aeaaf612df0a787fbfd6411a45f539807bc49e1c766625bede5e31e87159ddd5",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/stock-init-keymint/experiments/native-linux/nce.h": "7bcdc5e777e10e1d70f0bf1838a2160e87c70613a44b90b16c3e07aedf4a9f58",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/stock-init-keymint/work/native-linux-nce/lkl-translation-kernel/lkl-host-ops.h": "54bf2a775fa582ca2bc04fb6a25dc85525b6c69da1cde54f610c4a35e0c1a833",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/stock-init-keymint/work/native-linux-nce/lkl-translation-kernel/lkl-image.h": "793c17725c4f75342b457f94484e81cc31378b8c729ac28b25712a826ff5f567"
+        },
+        "artifacts": {
+          "mac.d": {
+            "bytes": 1340,
+            "sha256": "25ecfb011c350d5e57bbf297d5bdda1bd7d5c6eee747a0cc003b5142a16eca26"
+          },
+          "ios-lkl-main.o": {
+            "bytes": 657880,
+            "sha256": "0778a59cf717d5d2a24ea2f4dbe74be7237163c3506070b82a0a8067d0f6b64e"
+          },
+          "ios.d": {
+            "bytes": 1344,
+            "sha256": "f1da66f30df7ee5b5950f0a8fc10b3fbe920ef48302bebc37795bf5cfdff4d58"
+          },
+          "mac-lkl-main.o": {
+            "bytes": 658208,
+            "sha256": "99ea6a04b9475a5da0d7d77c9d21cb3d8368e78e4dbd7f63e95aa5e75e99fa39"
+          },
+          "build.log": {
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        }
+      }
+    }
+  },
+  "verified_inputs": {
+    "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/stock-init-keymint/experiments/native-linux/lkl-host.c": {
+      "sha256": "3265b0cc1ccdd3a6878e23a7d762b541b0097adb18bcb907ae4603a8dd00852f",
+      "matches": true
+    },
+    "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/stock-init-keymint/experiments/native-linux/host-context-test.c": {
+      "sha256": "c308c9ef446231a08b32bf14c59505a80dfa3610cdb7d63b8ee0df5a1f1de028",
+      "matches": true
+    },
+    "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/stock-init-keymint/experiments/native-linux/layout.h": {
+      "sha256": "ffb3067b856643b5df887242441aff94a7d88da4be6ae833ae9ca25aeae8139b",
+      "matches": true
+    },
+    "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/stock-init-keymint/work/native-linux-nce/lkl-translation-kernel/lkl-host-ops.h": {
+      "sha256": "54bf2a775fa582ca2bc04fb6a25dc85525b6c69da1cde54f610c4a35e0c1a833",
+      "matches": true
+    },
+    "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/stock-init-keymint/scripts/test_host_disk_close.py": {
+      "sha256": "a2c2a12b8ddeeb4e608e9a61c7bf811463e2e9def5c966c818efeaa745b9abd9",
+      "matches": true
+    },
+    "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX27.0.sdk/SDKSettings.json": {
+      "sha256": "7b93ad7e534cc4b31c6a4e39d19b5e0288acf2168c2649479a796d1cb51939fb",
+      "matches": true
+    },
+    "/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS27.1.sdk/SDKSettings.json": {
+      "sha256": "569805cc3f63c4b414a7dcc2766d9ff780caba748a5526ee6b785a56a7a0417d",
+      "matches": true
+    },
+    "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/guest-image.h": {
+      "sha256": "e5c4e5cddfc16b459f9e480134dc102e4811a5c9121d0a7ac9d52d933e94a5ba",
+      "matches": true
+    },
+    "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/stock-init-keymint/experiments/native-linux/guest-registers.h": {
+      "sha256": "90a4d5b6e613ce4f2cda359dcd05f6e8d876a788bc437c2c1e13e05403e4627a",
+      "matches": true
+    },
+    "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/stock-init-keymint/experiments/native-linux/lkl-main.c": {
+      "sha256": "b4d8e9aa53520a23fbe44d30814148d4b3be6c117ac3bebc0440e108ac6b282a",
+      "matches": true
+    },
+    "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/stock-init-keymint/experiments/native-linux/lkl-mmu-profile.h": {
+      "sha256": "c6410a8ac3d795c136b00c8108e698ac7a7f04e0ec3cf85cfbc4a01a60fa48aa",
+      "matches": true
+    },
+    "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/stock-init-keymint/experiments/native-linux/memory.h": {
+      "sha256": "aeaaf612df0a787fbfd6411a45f539807bc49e1c766625bede5e31e87159ddd5",
+      "matches": true
+    },
+    "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/stock-init-keymint/experiments/native-linux/nce.h": {
+      "sha256": "7bcdc5e777e10e1d70f0bf1838a2160e87c70613a44b90b16c3e07aedf4a9f58",
+      "matches": true
+    },
+    "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/stock-init-keymint/work/native-linux-nce/lkl-translation-kernel/lkl-image.h": {
+      "sha256": "793c17725c4f75342b457f94484e81cc31378b8c729ac28b25712a826ff5f567",
+      "matches": true
+    },
+    "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/stock-init-keymint/scripts/probe_lkl.py": {
+      "sha256": "61b704adb7d4030c7a958f321f608b7331b91f92a8623590d8029c861929fba3",
+      "matches": true
+    }
+  },
+  "boundaries": [
+    "fsync/close 故障由测试编译注入；close wrapper 先执行真实 close，再返回指定错误。",
+    "Darwin 实际 close/EINTR 后的描述符状态尚未确认；每槽实际返回与错误传播分别保留。",
+    "调用方完成 Mac/iOS 对象编译，完整原 init CLI/GCD 持久数据组合尚未运行。",
+    "fsync 保持已有同步接口，本阶段不验证断电持久性。"
+  ],
+  "unique_input_count": 15,
+  "cleanup_manifest": {
+    "path": "work/cleanup-2026-11-13/host-disk-close-v1.json",
+    "bytes": 2426,
+    "sha256": "08b995ec44a048cb0f2498ab0fcbb264f1ed8e6c5a36ead8a1cf289620513580"
+  }
+}

@@ -14,6 +14,7 @@ import shlex
 import shutil
 import struct
 import subprocess
+import sys
 import tarfile
 import time
 import urllib.request
@@ -400,10 +401,8 @@ def main():
              "-c", EXPERIMENT / "lkl-process-host.c", "-o", OUT / "ios-lkl-process-host.o"])
     dispatch_results = None
     if PROCESS:
-        run([clang, "-O2", "-Wall", "-Wextra", "-Werror", "-isysroot", sdk, "-I", OUT,
-             EXPERIMENT / "host-context-test.c", EXPERIMENT / "lkl-host.c",
-             "-o", OUT / "host-context-test"])
-        run([OUT / "host-context-test"])
+        run([sys.executable, Path(__file__).with_name("test_host_disk_close.py"),
+             "--host-ops", OUT / "lkl-host-ops.h", "--output", OUT / f"host-disk-close-{started_ns}"])
         run([clang, *flags, "-DNCE_IOS_APP", "-isysroot", sdk, *inputs, *payload, OUT / "native.o",
              EXPERIMENT / "dispatch-test.c", *graphics_link, "-o", OUT / "dispatch-probe"])
         with (OUT / "dispatch-results.jsonl").open("w") as output, (OUT / "dispatch-console.log").open("w") as log:
@@ -487,7 +486,7 @@ def main():
         sources += [EXPERIMENT / "nce-cpu.h", EXPERIMENT / "memory.h", EXPERIMENT / "code-memory.h", EXPERIMENT / "layout.h", EXPERIMENT / "execute-check.h", EXPERIMENT / "input.h", EXPERIMENT / "session.h", EXPERIMENT / "session-internal.h", EXPERIMENT / "interaction-profile.h", Path(__file__).with_name("lkl_nce_patch.py"),
                     *sorted(EXPERIMENT.glob("lkl-*.h")),
                     *sorted(EXPERIMENT.glob("lkl-nce-*.c")), EXPERIMENT / "exec-guest.S", EXPERIMENT / "programs.h",
-                    Path(__file__).with_name("build_nce_userspace.py"), EXPERIMENT / "dispatch-test.c", EXPERIMENT / "host-context-test.c",
+                    Path(__file__).with_name("build_nce_userspace.py"), Path(__file__).with_name("test_host_disk_close.py"), EXPERIMENT / "dispatch-test.c", EXPERIMENT / "host-context-test.c",
                     Path(__file__).with_name("prepare_art_test_dex.py"), Path(__file__).with_name("art_aot.py"),
                     Path(__file__).with_name("prepare_android_runtime.py"), Path(__file__).with_name("prepare_android_modules.py"),
                     Path(__file__).with_name("prepare_android_desktop.py"), Path(__file__).with_name("build_android_linker.py"),

@@ -30,7 +30,7 @@ void nce_compute_benchmark(void);
     } while (0)
 extern struct lkl_host_operations nce_lkl_host;
 int nce_disk_open(unsigned index, const char *path);
-void nce_disk_close(void);
+int nce_disk_close(void);
 static long (*kernel_syscall)(long, long *);
 
 #ifndef NCE_PROCESS
@@ -338,7 +338,9 @@ int nce_lkl_run(const char *image_path)
 #endif
     REQUIRE(halt() == 0);
     cleanup();
-    nce_disk_close();
+    int disk_close_result = nce_disk_close();
+    if (disk_close_result)
+        result = 1;
 #ifdef NCE_PROCESS
     nce_process_cleanup();
     free(views);
