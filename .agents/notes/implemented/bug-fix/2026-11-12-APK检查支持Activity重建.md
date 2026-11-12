@@ -1,6 +1,6 @@
 # 决策记录: APK 检查支持 Activity 重建
 
-状态: proposed
+状态: implemented
 
 ## 问题
 
@@ -8,7 +8,7 @@
 
 fixture 在 `MainActivity.onCreate()` 中每次同步保存 `launch_count + 1`。该字段实际统计 Activity 的 `onCreate` 次数，一次启动命令可能产生多次创建。现有助手要求每次命令只产生一条应用 JSON；宿主也固定每个 phase/artifact 只有一条，两个假设均需修改。原始签名 APK 和 fixture 源码保持不变。
 
-## 提案
+## 决策
 
 在独立工作树 `work/offline-apk-recreation`、分支 `codex/offline-apk-recreation` 基于 `4a58459` 实现，主工作区仅新增本记录，不修改产品源码或启动完整系统。
 
@@ -24,11 +24,11 @@ fixture 在 `MainActivity.onCreate()` 中每次同步保存 `launch_count + 1`�
 - 为每轮结果增加 applications 数组，同时保留 application。两种表示需要持续保持一致；本次沿用每条应用记录一行的现有格式。
 - 修改 fixture 的 Manifest 来屏蔽重建。该方式改变原签名 APK，也削弱 Android 生命周期覆盖，未采用。
 
-## 验收标准
+## 影响
 
 从实际失败日志提取两条成功 JSON 及对应上下文，回归接受这一窗口，保留来源路径、行号和摘要。宿主回归覆盖旧单条格式、新多条格式、更新和重启，拒绝重复、窗口内计数跳变、缺少阶段、不同 marker/创建版本、错误版本或返回值、首条创建标记错误及后续数据重建。跨窗口的合法计数间隔必须保留为未采集范围。编译生产 Java 助手与 DEX，继续运行现有真实文件追加边界检查。
 
-完整 Android 安装更新及重启由主会话合并后复验。本阶段不声称完成整机修复验收。
+完整 Android 安装更新及重启已由主会话合并后复验，结果见下文。
 
 ### 本机修复结果
 
@@ -43,7 +43,17 @@ python3 scripts/test_apk_log_reader.py
 
 本机解析检查接受八组阶段输入，拒绝 62 个错误变体，并检查缺少首次阶段的重启失败。覆盖旧单条结果、实际 JNI 双记录、更新与重启多记录、组顺序、组重复、结束记录位置、计数重复/跳变/溢出、错误 marker/版本/返回值/创建标记，以及跨窗口未采集范围。现有真实文件并发追加、固定快照、UTF-8 与行长边界检查成功。镜像输入来源检查的六项回归成功，包含修改 APK 助手后拒绝旧镜像。
 
-OpenJDK 17 使用 SDK35 `android.jar` 对生产助手执行 `javac -Xlint:all -Werror -source 8 -target 8` 成功，build-tools36 D8 编译成功，DEX 为 12,928 字节。四个现存 APK 的摘要、包名版本及签名证书重新核对成功；fixture 源码、构建脚本与 APK 字节均未修改。[结构化回归结果](../../../../experiments/native-linux/results-apk-recreation-regression-20261112.json)保存编译命令、来源与产物摘要、旧解析器拒绝及新解析器接受的回放、宿主检查输出。工作产物为 `work/offline-apk-recreation/work/native-linux-nce/apk-recreation-build/`。本机检查没有执行 Android 助手主循环，整机验证仍待合并后进行。
+OpenJDK 17 使用 SDK35 `android.jar` 对生产助手执行 `javac -Xlint:all -Werror -source 8 -target 8` 成功，build-tools36 D8 编译成功，DEX 为 12,928 字节。四个现存 APK 的摘要、包名版本及签名证书重新核对成功；fixture 源码、构建脚本与 APK 字节均未修改。[结构化回归结果](../../../../experiments/native-linux/results-apk-recreation-regression-20261112.json)保存编译命令、来源与产物摘要、旧解析器拒绝及新解析器接受的回放、宿主检查输出。工作产物为 `work/offline-apk-recreation/work/native-linux-nce/apk-recreation-build/`。上述独立检查没有执行 Android 助手主循环，合并后的实际 Android 运行结果见下文。
+
+### 主工作区完整 Android 回归
+
+修复合入后，主工作区在 Apple M5 Ultra、macOS 27.0（26A428）重新构建并验证用户态镜像。原生 NCE 使用 demand 模式、关闭 nterp，CLI/GCD 分别完成 231/232 条检查，最终结果均为 passed；上下文分别 3002/3002、2900/2900 回收。iOS 核心交叉编译成功，图形集成与设备执行不在该检查范围。
+
+Direct 使用单 CPU、host 布局、16 KiB、TBI 关闭、flat、dual、128 MiB 缓存、timer 抢占，开启 code-watch/cross-page/native-exclusive，nterp 开启。CLI 完成四份原始 APK 的首次安装与 v2 更新，GCD 重新启动 kernel 后验证已安装的两个 v2 应用；分别完成 63/62 条检查，上下文 1316/1316、1122/1122 回收。Java 与 JNI 的返回值依次为 101、102、102，marker 和 created_version=1 保留，launch_count 为 1、2、3。四份已安装 APK 的 SHA256 与原始输入逐份一致，两轮数据盘均干净卸载，第二轮输入摘要等于第一轮输出摘要。
+
+本次实际运行没有再次出现窗口内双重创建，两个阶段的 unobserved_creations 均为空。合法重建的接受行为由原始失败日志回放和助手文件读取检查覆盖；本次完整运行覆盖修复后助手的实际安装、更新与重启流程。首次失败输出继续保留，成功结果没有覆盖失败。
+
+[结构化集成结果](../../../../experiments/native-linux/results-apk-recreation-integration-20261112.json)保存配置、源码与二进制摘要、每条功能检查、APK 行及完整原始报告摘要。原始报告位于 `work/native-linux-nce/processes/lkl-summary.json` 与 `work/native-linux-nce/apk-recreation-integrated-desktop/summary.json`。测试使用项目重建运行库，原始 SDK36 运行库桌面由独立候选继续验证。本轮没有交互性能、完整 HyperOS 或 iPhone 运行结论。
 
 ### 复杂度审查与范围差异
 
