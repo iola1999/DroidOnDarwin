@@ -60,15 +60,28 @@ struct RunConfiguration: Codable, Equatable, Sendable {
         return values
     }
 
-    func validateResources(_ resources: URL) throws {
+    func environment(validating resources: URL) throws -> [String: String] {
         guard schedulerSliceIsValid else {
             throw NSError(domain: "DroidOnDarwin.Configuration", code: 2,
                           userInfo: [NSLocalizedDescriptionKey: "调度时间片需要为 0 或 100–100000 微秒"])
         }
         let url = resources.appendingPathComponent("Runtime.json")
         let metadata = (try? Data(contentsOf: url)).flatMap { try? JSONSerialization.jsonObject(with: $0) as? [String: Any] }
+        var values = environment
         if let execution = metadata?["execution"] as? [String: Any], execution["engine"] as? String == "direct" {
-            guard let translation, let cpus = execution["cpus"] as? Int, !aot, !bootImage else {
+            let runtime: TranslationRuntimeExecution
+            do {
+                runtime = try JSONDecoder().decode(TranslationRuntimeExecution.self, from: JSONSerialization.data(withJSONObject: execution))
+            } catch {
+                throw NSError(domain: "DroidOnDarwin.Configuration", code: 9,
+                              userInfo: [NSLocalizedDescriptionKey: "安装包的翻译运行参数格式无效。"])
+            }
+            guard ["host", "low", "sparse"].contains(runtime.guestLayout),
+                  (runtime.guestLayout == "host" && !runtime.dataTBI) || runtime.cpus == 1 else {
+                throw NSError(domain: "DroidOnDarwin.Configuration", code: 9,
+                              userInfo: [NSLocalizedDescriptionKey: "安装包的客体地址布局、数据 TBI 或 CPU 组合无效。"])
+            }
+            guard let translation, !aot, !bootImage else {
                 throw NSError(domain: "DroidOnDarwin.Configuration", code: 4,
                               userInfo: [NSLocalizedDescriptionKey: "当前翻译运行库需要对应的缓存配置，预编译代码与公共启动镜像尚无匹配产物。"])
             }
@@ -76,13 +89,15 @@ struct RunConfiguration: Codable, Equatable, Sendable {
                 throw NSError(domain: "DroidOnDarwin.Configuration", code: 6,
                               userInfo: [NSLocalizedDescriptionKey: "当前翻译运行库使用独立访存设置，请保持原生数据页选项的默认值"])
             }
-            try translation.validate(cpus: cpus)
+            try translation.validate(cpus: runtime.cpus)
+            values["NCE_TRANSLATION_GUEST_LAYOUT"] = runtime.guestLayout
+            values["NCE_TRANSLATION_DATA_TBI"] = runtime.dataTBI ? "1" : "0"
         } else if translation != nil {
             throw NSError(domain: "DroidOnDarwin.Configuration", code: 5,
                           userInfo: [NSLocalizedDescriptionKey: "当前运行库无法应用翻译缓存配置"])
         }
         guard bootImage else {
-            return
+            return values
         }
         guard let build = metadata?["build"] as? [String: Any],
               let image = build["art_boot"] as? [String: Any],
@@ -91,6 +106,7 @@ struct RunConfiguration: Codable, Equatable, Sendable {
             throw NSError(domain: "DroidOnDarwin.Configuration", code: 1,
                           userInfo: [NSLocalizedDescriptionKey: "当前构建缺少公共启动镜像，请关闭该选项或安装包含镜像的版本"])
         }
+        return values
     }
 
     static func fromEnvironment(_ values: [String: String]) -> Self {
@@ -99,5 +115,25 @@ struct RunConfiguration: Codable, Equatable, Sendable {
                     faultPrefetch: values["NCE_FAULT_PREFETCH"] == "1", sparseScan: values["NCE_SPARSE_SCAN"] != "0", performanceLogging: values["NCE_MAP_PROFILE"] == "1",
                     diagnostics: values["NCE_DIAGNOSTICS"] == "1", schedulerSliceUS: slice,
                     translation: values["NCE_TRANSLATION_APP"] == "1" ? .fromEnvironment(values) : nil)
+    }
+}
+
+private struct TranslationRuntimeExecution: Decodable {
+    let cpus: Int
+    let guestLayout: String
+    let dataTBI: Bool
+
+    private enum CodingKeys: String, CodingKey {
+        case cpus
+        case guestLayout = "guest_layout"
+        case dataTBI = "data_tbi"
+    }
+
+    init(from decoder: any Decoder) throws {
+        let values = try decoder.container(keyedBy: CodingKeys.self)
+        cpus = try values.decode(Int.self, forKey: .cpus)
+        // 已有包缺少这两个字段；显式提供的字段仍按实际类型检查。
+        guestLayout = values.contains(.guestLayout) ? try values.decode(String.self, forKey: .guestLayout) : "host"
+        dataTBI = values.contains(.dataTBI) ? try values.decode(Bool.self, forKey: .dataTBI) : false
     }
 }

@@ -11,9 +11,11 @@ final class ProcessRuntime: SessionRuntime {
     }
     func start(_ target: RunTarget, configuration: RunConfiguration, event: @escaping (RuntimeEvent) -> Void) {
         stopping = false
+        let runtimeEnvironment: [String: String]
         do {
             try NceDeviceStore.validateDevice(atDirectory: target.directory, resources: target.resources,
                                               runtimeResources: Bundle.main.resourceURL ?? target.resources)
+            runtimeEnvironment = try configuration.environment(validating: Bundle.main.resourceURL ?? target.resources)
         } catch {
             event(.finished(error.localizedDescription))
             return
@@ -29,7 +31,7 @@ final class ProcessRuntime: SessionRuntime {
         for key in RunConfiguration.environmentKeys {
             environment.removeValue(forKey: key)
         }
-        environment.merge(configuration.environment) { _, requested in requested }
+        environment.merge(runtimeEnvironment) { _, requested in requested }
         process.environment = environment
         process.terminationHandler = { task in
             DispatchQueue.main.async {

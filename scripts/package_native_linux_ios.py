@@ -31,7 +31,13 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--rebuild-kernel', action='store_true')
     parser.add_argument('--translation-report', type=Path, help='使用已验证的 Direct 完整桌面构建')
+    parser.add_argument('--output', type=Path, help='独立应用变体的构建目录，位于 work/native-linux-nce 下')
     args = parser.parse_args()
+    if args.output:
+        OUT = args.output.resolve()
+        work = ROOT / 'work/native-linux-nce'
+        if OUT == work or not OUT.is_relative_to(work):
+            parser.error('独立变体的输出需要位于 work/native-linux-nce 的子目录')
     translation = None
     if args.translation_report:
         if args.rebuild_kernel:
@@ -39,7 +45,8 @@ def main():
         from translation_package import prepare
         variant = json.loads(args.translation_report.read_text())['configuration']
         cpu_count = variant['cpus']
-        OUT = ROOT / (f'work/native-linux-nce/ios-direct-{cpu_count}' + ('-highres' if variant.get('high_res_timers') else ''))
+        if not args.output:
+            OUT = ROOT / (f'work/native-linux-nce/ios-direct-{cpu_count}' + ('-highres' if variant.get('high_res_timers') else ''))
         translation = prepare(args.translation_report, OUT, 'ios')
         report = json.loads(args.translation_report.read_text())
         summary = {'kernel_sha256': translation['metadata']['build']['kernel_sha256'],

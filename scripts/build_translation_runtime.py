@@ -75,7 +75,8 @@ def build(report_path, out, target):
     commands.append(command)
     inputs += [Path(__file__), report_path, dependency_path, *[ROOT / name for name in dependency['sha256']],
                kernel / 'lkl-image.h', kernel / 'lkl-host-ops.h', fixtures / 'translation-symbols.h',
-               *sorted((EXP / 'translation').glob('*.h')), EXP / 'lkl-host-ops.h', EXP / 'layout.h', EXP / 'session.h', EXP / 'session-internal.h', EXP / 'interaction-profile.h']
+               *sorted((EXP / 'translation').glob('*.h')), *sorted((WORK / 'processes/host-include').glob('*.h')),
+               EXP / 'lkl-host-ops.h', EXP / 'layout.h', EXP / 'session.h', EXP / 'session-internal.h', EXP / 'interaction-profile.h']
     inputs = sorted(set(path for path in inputs if path.is_file()))
     result = {'scope': 'Cross compilation; device execution pending', 'target': target, 'sdk': sdk,
               'configuration': config, 'source_report': str(report_path.relative_to(ROOT)),

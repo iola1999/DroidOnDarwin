@@ -49,7 +49,7 @@ final class LocalRuntime: SessionRuntime {
                 // Executable layouts and embedded ART assets belong to the installed runtime.
                 let runtimeResources = Bundle.main.resourceURL ?? target.resources
                 try NceDeviceStore.validateDevice(atDirectory: target.directory, resources: target.resources, runtimeResources: runtimeResources)
-                try configuration.validateResources(runtimeResources)
+                let environment = try configuration.environment(validating: runtimeResources)
                 try prepared.prepareResources(target.resources, directory: target.directory)
                 DispatchQueue.main.async {
                     self.storage = prepared
@@ -78,7 +78,7 @@ final class LocalRuntime: SessionRuntime {
                     for key in RunConfiguration.environmentKeys {
                         unsetenv(key)
                     }
-                    for (key, value) in configuration.environment {
+                    for (key, value) in environment {
                         setenv(key, value, 1)
                     }
                     if let data = try? JSONEncoder().encode(configuration), let json = String(data: data, encoding: .utf8) {

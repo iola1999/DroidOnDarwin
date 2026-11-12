@@ -99,7 +99,7 @@ iPhone 状态查询可使用 `droidondarwin://benchmark-status?requestID=<UUID>`
 
 ### Direct 构建变体
 
-Direct 应用由 `--translation-report` 指定完整桌面验证记录，macOS/iOS 使用独立构建目录和包标识。`Runtime.json` 的 `execution` 记录 `engine`、`cpus`、`code_memory` 和 `high_res_timers`；CPU 数量与定时器选择由内核构建确定。`probe_lkl_translation.py --high-res-timers` 使用独立高分辨率内核目录，生成的 Mac/iOS 默认输出目录与构建编号带 `-highres`，普通应用启动设置无法切换该编译选项。当前翻译变体使用平坦地址转换、定时抢占和按页缓存失效，nterp、代码页写入跟踪及跨页访存默认开启。
+Direct 应用由 `--translation-report` 指定完整桌面验证记录，macOS/iOS 使用独立构建目录和包标识。`Runtime.json` 的 `execution` 记录 `engine`、`cpus`、`code_memory`、`high_res_timers`、`guest_layout` 和 `data_tbi`；CPU 数量与定时器选择由内核构建确定，地址布局和数据 TBI 从已验证桌面报告取得并参与运行组件标识。宿主在准备数据盘前读取包内参数；已有 metadata 缺少后两个字段时使用 host 和关闭数据 TBI 的默认值。`probe_lkl_translation.py --high-res-timers` 使用独立高分辨率内核目录，生成的 Mac/iOS 默认输出目录与构建编号带 `-highres`，普通应用启动设置无法切换该编译选项。当前翻译变体使用平坦地址转换、定时抢占和按页缓存失效，nterp、代码页写入跟踪及跨页访存默认开启。
 
 打包报告须包含 CLI/GCD 完整桌面检查，以及 `probe_lkl_translation.py --persistent-data` 的同一数据盘重启检查。每轮记录初始与最终摘要，第二轮起确认应用数据和密钥已恢复。包内初始盘使用报告的 `data_seed`；首次运行从该盘创建设备数据，后续启动继续使用设备数据盘。
 

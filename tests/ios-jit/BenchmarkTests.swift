@@ -145,17 +145,17 @@ struct BenchmarkChecks {
         let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(at: root) }
-        try RunConfiguration().validateResources(root)
-        do { try configuration.validateResources(root)
+        _ = try RunConfiguration().environment(validating: root)
+        do { _ = try configuration.environment(validating: root)
             preconditionFailure("missing boot image accepted")
         } catch {}
         let metadataURL = root.appendingPathComponent("Runtime.json")
         for files in [["boot.art": "image"], ["boot.art": "image", "boot.oat": "code", "boot.vdex": "dex"]] {
             try JSONSerialization.data(withJSONObject: ["build": ["art_boot": ["files": files]]]).write(to: metadataURL)
             if files.count == 3 {
-                try configuration.validateResources(root)
+                _ = try configuration.environment(validating: root)
             } else {
-                do { try configuration.validateResources(root)
+                do { _ = try configuration.environment(validating: root)
                     preconditionFailure("incomplete boot image accepted")
                 } catch {}
             }
