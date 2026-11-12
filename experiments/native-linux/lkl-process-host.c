@@ -500,9 +500,15 @@ static void fault(int signal, siginfo_t *info, void *opaque)
     int is_write = (u->uc_mcontext->__es.__esr & (1u << 6)) != 0;
     Process *p = this_process;
     if (p) {
-        if (signal != SIGUSR2 && pc == (uintptr_t)nce_restore_stack) {
+        int unaligned_resume = signal == SIGBUS && (u->uc_mcontext->__es.__esr >> 26) == 0x26 &&
+                               pc == p->state.resume && (p->state.regs.sp & 15) &&
+                               __darwin_arm_thread_state64_get_sp(u->uc_mcontext->__ss) == p->state.regs.sp - 16 &&
+                               *(const uint32_t *)pc == 0xa8c147f0;
+        if (signal != SIGUSR2 && (pc == (uintptr_t)nce_restore_stack || unaligned_resume)) {
             /* The guest may legally unmap its own stack before SYS_exit.
-             * Signal return can restore every register without stack scratch. */
+             * Linux also restores unaligned SP values used by ART's signal
+             * exception entry. Darwin signal return restores all registers
+             * without the resume stub's aligned stack scratch. */
             if (!atomic_exchange_explicit(&logged_stack_restore, 1, memory_order_relaxed)) {
                 static const char message[] = "{\"phase\":\"signal_restore_without_guest_stack\"}\n";
                 write(STDOUT_FILENO, message, sizeof(message) - 1);

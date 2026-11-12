@@ -24,9 +24,12 @@
     } while (0)
 static volatile sig_atomic_t received, nested, faulted, alarmed;
 static unsigned char *alternate, *guard;
-static int bad_frame;
+static int bad_frame, redirect;
 static pthread_t main_thread;
 int signal_register_test(pid_t pid);
+uintptr_t signal_redirect_fault(const volatile uint32_t *address);
+extern const char signal_redirect_load[], signal_redirect_landing[];
+#define REDIRECT_ADDRESS 12
 
 static void handler(int signal, siginfo_t *info, void *context)
 {
@@ -47,13 +50,22 @@ static void handler(int signal, siginfo_t *info, void *context)
             fp->head.magic = 0;
         else if (bad_frame == 3)
             ((struct _aarch64_ctx *)(fp + 1))->size = 16;
-        else if (bad_frame == 4)
-            uc->uc_mcontext.sp |= 1;
         else
             CHECK(raise(SIGUSR2) == 0);
     } else if (signal == SIGUSR2)
         ++nested;
-    else if (signal == SIGSEGV) {
+    else if (signal == SIGSEGV && redirect) {
+        /* ART's implicit null check returns through a context whose sp is 8
+         * below the interrupted sp; Linux restores it without alignment checks. */
+        CHECK((uintptr_t)info->si_addr == REDIRECT_ADDRESS && info->si_code == SEGV_MAPERR);
+        CHECK(uc->uc_mcontext.fault_address == REDIRECT_ADDRESS);
+        CHECK(uc->uc_mcontext.pc == (uintptr_t)signal_redirect_load);
+        uc->uc_mcontext.sp -= sizeof(uintptr_t);
+        *(uintptr_t *)uc->uc_mcontext.sp = uc->uc_mcontext.pc + 4;
+        uc->uc_mcontext.regs[30] = (uintptr_t)info->si_addr;
+        uc->uc_mcontext.pc = (uintptr_t)signal_redirect_landing;
+        ++faulted;
+    } else if (signal == SIGSEGV) {
         CHECK(info->si_addr == guard && info->si_code == SEGV_ACCERR);
         CHECK(mprotect(guard, 16384, PROT_READ | PROT_WRITE) == 0);
         ++faulted;
@@ -176,8 +188,13 @@ void signal_tests(const char *libc)
     CHECK(munmap(guard, 16384) == 0);
     puts("{\"test\":\"linux_signal_fault_recovery\",\"passed\":true}");
 
+    redirect = 1;
+    CHECK(signal_redirect_fault((void *)REDIRECT_ADDRESS) == REDIRECT_ADDRESS && faulted == 3);
+    redirect = 0;
+    puts("{\"test\":\"linux_signal_context_redirect\",\"passed\":true}");
+
     int status;
-    for (int invalid = 1; invalid <= 4; ++invalid) {
+    for (int invalid = 1; invalid <= 3; ++invalid) {
         pid_t child = fork();
         CHECK(child >= 0);
         if (!child) {

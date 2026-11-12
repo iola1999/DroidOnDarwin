@@ -70,4 +70,50 @@ fault_register_test:
     cbnz w2, 1f
     check_registers
 .size fault_register_test, .-fault_register_test
+
+// Returns the fault address after the handler redirects the load, 1 when the
+// load completes, 2 when the pushed return address differs, 3 when the scratch
+// registers were not restored.
+.global signal_redirect_fault
+.type signal_redirect_fault, %function
+signal_redirect_fault:
+    stp x29, x30, [sp, #-16]!
+    mov x29, sp
+    mov x16, #0x1616
+    mov x17, #0x1717
+.global signal_redirect_load
+signal_redirect_load:
+    ldr w1, [x0]
+    mov x0, #1
+    ldp x29, x30, [sp], #16
+    ret
+.size signal_redirect_fault, .-signal_redirect_fault
+
+// Entered from rt_sigreturn with sp 8 below the interrupted sp, the return
+// address stored at [sp] and the fault address in x30. sp must become 16-byte
+// aligned before the first stack access.
+.global signal_redirect_landing
+.type signal_redirect_landing, %function
+signal_redirect_landing:
+    sub sp, sp, #8
+    ldr x1, [sp, #8]
+    add sp, sp, #16
+    adr x2, signal_redirect_load
+    add x2, x2, #4
+    mov x0, x30
+    cmp x1, x2
+    b.ne 2f
+    mov x2, #0x1616
+    cmp x16, x2
+    b.ne 3f
+    mov x2, #0x1717
+    cmp x17, x2
+    b.eq 1f
+3:  mov x0, #3
+    b 1f
+2:
+    mov x0, #2
+1:  ldp x29, x30, [sp], #16
+    ret
+.size signal_redirect_landing, .-signal_redirect_landing
 .section .note.GNU-stack,"",%progbits

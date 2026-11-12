@@ -85,10 +85,11 @@ SYSCALL_DEFINE0(rt_sigreturn)
     fp = (void *)frame->uc.uc_mcontext.__reserved;
     end = (void *)(fp + 1);
     /* The signal frame carries FPSIMD only. Reject unsupported records
-     * before changing registers, so host-only execution fields stay private. */
+     * before changing registers, so host-only execution fields stay private.
+     * The restored sp is taken as is, as arm64 Linux does: ART's implicit null
+     * check returns with sp 8 below the interrupted value. */
     if (fp->head.magic != FPSIMD_MAGIC || fp->head.size != sizeof(*fp) ||
-        end->magic || end->size || (frame->uc.uc_mcontext.sp & 15) ||
-        (frame->uc.uc_mcontext.pc & 3) || !access_ok((void *)frame->uc.uc_mcontext.pc, 4) ||
+        end->magic || end->size || (frame->uc.uc_mcontext.pc & 3) || !access_ok((void *)frame->uc.uc_mcontext.pc, 4) ||
         (frame->uc.uc_mcontext.pstate & ~0xf0000000UL))
         goto free_bad;
     if (restore_altstack(&user->uc.uc_stack))

@@ -9,6 +9,7 @@ import shlex
 import shutil
 import subprocess
 
+import lkl_nce_patch
 import lkl_translation_patch
 import probe_lkl
 
@@ -34,9 +35,11 @@ def build(cpus=1, high_res_timers=False, guest_page_bytes=16384):
     out.mkdir(parents=True, exist_ok=True)
     if (base / '.droidondarwin-source-revision').read_text().strip() != probe_lkl.REVISION:
         raise RuntimeError('需要先准备当前单核 LKL 源码')
+    # 复制文件与补丁脚本共同决定生成源码，缺少任一来源会复用过期内核。
+    copied = [EXP / name for name, _ in lkl_nce_patch.COPIED_SOURCES]
     patch_files = [Path(__file__), Path(probe_lkl.__file__), Path(lkl_translation_patch.__file__),
-                   ROOT / 'scripts/lkl_nce_patch.py', EXP / 'lkl-nce-mmu.c', EXP / 'lkl-nce-elf.c',
-                   EXP / 'translation/kernel-api.h', EXP / 'direct/page-table-layout.h', EXP / 'layout.h']
+                   ROOT / 'scripts/lkl_nce_patch.py', *copied,
+                   EXP / 'translation/kernel-api.h', EXP / 'direct/page-table-layout.h']
     if guest_page_bytes == 4096:
         patch_files.append(ROOT / 'scripts/lkl_4k_vmalloc_patch.py')
     if cpus == 2:
@@ -120,8 +123,8 @@ def build(cpus=1, high_res_timers=False, guest_page_bytes=16384):
     probe_lkl.SMP = cpus == 2
     probe_lkl.package_elf(out / 'lkl.so', smp_exports={'nce_translation_enter', 'nce_translation_leave', 'nce_translation_exclusive', 'nce_window_unlock', 'nce_translation_written'})
     files = [Path(__file__), Path(lkl_translation_patch.__file__), Path(probe_lkl.__file__),
-             ROOT / 'scripts/lkl_nce_patch.py', EXP / 'lkl-nce-mmu.c', EXP / 'lkl-nce-elf.c', EXP / 'translation/kernel-api.h',
-             EXP / 'lkl-bridge.c', EXP / 'layout.h', EXP / 'direct/page-table-layout.h', config, build_dir / '.config',
+             ROOT / 'scripts/lkl_nce_patch.py', *copied, EXP / 'translation/kernel-api.h',
+             EXP / 'lkl-bridge.c', EXP / 'direct/page-table-layout.h', config, build_dir / '.config',
              source / 'arch/lkl/include/asm/page-mmu.h', source / 'arch/lkl/include/asm/nce-layout.h',
              source / 'arch/lkl/mm/nce_mmu.c', source / 'arch/lkl/kernel/nce_elf.c',
              source / 'arch/lkl/include/asm/pgtable-mmu-3level.h', source / 'arch/lkl/include/asm/nce-translation.h',

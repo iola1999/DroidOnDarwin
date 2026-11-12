@@ -2,6 +2,27 @@
 """为固定版本的 LKL 应用 N2 原型所需的架构修改。"""
 from pathlib import Path
 
+# 直接复制进源码树的文件，构建身份与内核源码重放的判断都以这份清单为准。
+COPIED_SOURCES = (("layout.h", "include/asm/nce-layout.h"),
+                  ("lkl-mmu-profile.h", "include/asm/nce-mmu-profile.h"),
+                  ("lkl-syscall.h", "include/asm/syscall.h"),
+                  ("lkl-seccomp.h", "include/asm/seccomp.h"),
+                  ("guest-registers.h", "include/asm/guest-registers.h"),
+                  ("lkl-signal.h", "include/asm/signal.h"),
+                  ("lkl-nce-mmu.c", "mm/nce_mmu.c"),
+                  ("lkl-nce-process.c", "kernel/nce_process.c"),
+                  ("lkl-nce-signal.c", "kernel/nce_signal.c"),
+                  ("lkl-nce-schedule.c", "kernel/nce_schedule.c"),
+                  ("lkl-nce-elf.c", "kernel/nce_elf.c"),
+                  ("lkl-nce-block.c", "kernel/nce_block.c"),
+                  ("lkl-nce-reclaim.c", "kernel/nce_reclaim.c"),
+                  ("lkl-mmu-context.h", "include/asm/mmu_context.h"),
+                  ("lkl-mmu.h", "include/asm/mmu.h"),
+                  ("lkl-uaccess.h", "include/asm/uaccess.h"),
+                  ("lkl-elf.h", "include/asm/elf.h"),
+                  ("lkl-fcntl.h", "include/uapi/asm/fcntl.h"),
+                  ("lkl-tlbflush.h", "include/asm/tlbflush.h"))
+
 
 def apply(source: Path, experiment: Path):
     def edit(name, before, after):
@@ -261,25 +282,7 @@ static void free_host_syscall_state(void)
          "obj-$(CONFIG_BLOCK) += nce_block.o\nobj-$(CONFIG_PAGE_REPORTING) += nce_reclaim.o")
     edit(arch + "kernel/Makefile", "obj-$(CONFIG_PAGE_REPORTING) += nce_reclaim.o",
          "obj-$(CONFIG_PAGE_REPORTING) += nce_reclaim.o\nobj-$(CONFIG_MMU) += nce_schedule.o")
-    for local, destination in (("layout.h", "include/asm/nce-layout.h"),
-                               ("lkl-mmu-profile.h", "include/asm/nce-mmu-profile.h"),
-                               ("lkl-syscall.h", "include/asm/syscall.h"),
-                               ("lkl-seccomp.h", "include/asm/seccomp.h"),
-                               ("guest-registers.h", "include/asm/guest-registers.h"),
-                               ("lkl-signal.h", "include/asm/signal.h"),
-                               ("lkl-nce-mmu.c", "mm/nce_mmu.c"),
-                               ("lkl-nce-process.c", "kernel/nce_process.c"),
-                               ("lkl-nce-signal.c", "kernel/nce_signal.c"),
-                               ("lkl-nce-schedule.c", "kernel/nce_schedule.c"),
-                               ("lkl-nce-elf.c", "kernel/nce_elf.c"),
-                               ("lkl-nce-block.c", "kernel/nce_block.c"),
-                               ("lkl-nce-reclaim.c", "kernel/nce_reclaim.c"),
-                               ("lkl-mmu-context.h", "include/asm/mmu_context.h"),
-                               ("lkl-mmu.h", "include/asm/mmu.h"),
-                               ("lkl-uaccess.h", "include/asm/uaccess.h"),
-                               ("lkl-elf.h", "include/asm/elf.h"),
-                               ("lkl-fcntl.h", "include/uapi/asm/fcntl.h"),
-                               ("lkl-tlbflush.h", "include/asm/tlbflush.h")):
+    for local, destination in COPIED_SOURCES:
         target = source / arch / destination
         content = (experiment / local).read_bytes()
         if not target.exists() or target.read_bytes() != content:
