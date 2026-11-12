@@ -19,30 +19,32 @@ def mappings(path):
     return result
 
 
-def overlaps(address, length, candidate):
-    # Linux rounds these VM lengths to its 16 KiB page size.
-    length = (length + 16383) & ~16383
+def overlaps(address, length, candidate, guest_page_bytes):
+    # Linux rounds these VM lengths to the guest page size.
+    length = (length + guest_page_bytes - 1) & ~(guest_page_bytes - 1)
     return address < candidate['end'] and candidate['start'] < address + length
 
 
-def may_replace(event, candidate):
+def may_replace(event, candidate, guest_page_bytes):
     number, args = event['number'], event['args']
     if number in (215, 226, 233, 234, 288):
-        return overlaps(args[0], args[1], candidate)
+        return overlaps(args[0], args[1], candidate, guest_page_bytes)
     if number == 222:
-        return bool(args[3] & (0x10 | 0x100000)) and overlaps(args[0], args[1], candidate)
+        return bool(args[3] & (0x10 | 0x100000)) and overlaps(args[0], args[1], candidate, guest_page_bytes)
     if number == 216:
-        return (overlaps(args[0], max(args[1], 1), candidate) or
-                bool(args[3] & 2) and overlaps(args[4], args[2], candidate))
+        return (overlaps(args[0], max(args[1], 1), candidate, guest_page_bytes) or
+                bool(args[3] & 2) and overlaps(args[4], args[2], candidate, guest_page_bytes))
     # brk cannot replace an existing memfd mapping. Other supported operations
     # have no sufficient range contract here and invalidate every candidate.
     return number != 214
 
 
-def observe(directory, rows):
+def observe(directory, rows, *, guest_page_bytes=16384):
     result = {'jit_execution_confirmed': False, 'scope': 'Completed integer instruction within a stable ART JIT RX mapping; method identity unverified',
               'error': None, 'samples': 0, 'guest_faults': [], 'candidates': [], 'confirmed': []}
     try:
+        if type(guest_page_bytes) is not int or guest_page_bytes not in (4096, 16384):
+            raise ValueError('JIT 观测客体页大小必须为 4096 或 16384 字节')
         events = [row for row in rows if 'execution_observation' in row]
         if not events:
             raise ValueError('缺少宿主执行观测')
@@ -95,7 +97,7 @@ def observe(directory, rows):
                       row['permissions'] == 'r-xs' and row['inode'] > 0 and row in after]
         result.update(identity=identity, window=[begin['sequence'], end['sequence']], samples=len(samples), guest_faults=faults)
         for candidate in candidates:
-            mutations = [row['sequence'] for row in changes if may_replace(row, candidate)]
+            mutations = [row['sequence'] for row in changes if may_replace(row, candidate, guest_page_bytes)]
             hits = [row for row in samples if candidate['start'] <= row['pc'] < candidate['end']]
             item = dict(candidate, invalidating_calls=mutations, completed_samples=len(hits))
             result['candidates'].append(item)

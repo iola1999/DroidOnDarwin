@@ -76,10 +76,42 @@ def main():
         changed = [rows[0], rows[1], rows[2], dict(fault, sequence=4)]
         assert observe(directory, changed)['error'] is not None
         rejected += 1
+        for page_bytes in (0, 8192, True, '4096'):
+            observed = observe(directory, rows, guest_page_bytes=page_bytes)
+            assert observed['error'] and not observed['jit_execution_confirmed']
+            rejected += 1
+        adjacent = line.replace('00010000-00014000', '00011000-00012000')
+        for name in ('before-warmup', 'after-warmup'):
+            (directory / f'maps-{name}.txt').write_text(adjacent)
+        page_rows = deepcopy(rows)
+        page_rows[1]['pc'] = 0x11004
+        boundaries = 0
+        for number, remap_destination in ((215, False), (226, False), (233, False), (234, False),
+                                          (288, False), (222, False), (216, False), (216, True)):
+            for address, length, invalidated in ((0x10000, 1, False), (0x10000, 0x1000, False),
+                                                  (0x10000, 0x1001, True), (0x11000, 1, True),
+                                                  (0x12000, 1, False)):
+                args = [address, length, 5, 0x12, 9, 0]
+                if number == 216:
+                    args = ([0x30000, 0x1000, length, 3, address, 0] if remap_destination else
+                            [address, length, 0x1000, 1, 0, 0])
+                changed = [page_rows[0], dict(base, execution_observation='vm_call', sequence=2,
+                                             number=number, args=args),
+                           dict(page_rows[1], sequence=3), dict(page_rows[-1], sequence=4)]
+                observed = observe(directory, changed, guest_page_bytes=4096)
+                assert observed['error'] is None and observed['samples'] == 1
+                assert observed['candidates'][0]['invalidating_calls'] == ([2] if invalidated else []), (number, args)
+                assert observed['jit_execution_confirmed'] == (not invalidated), (number, args)
+                # The default keeps the existing 16 KiB range contract.
+                default = observe(directory, changed)
+                explicit = observe(directory, changed, guest_page_bytes=16384)
+                assert default == explicit
+                assert default['candidates'][0]['invalidating_calls'] == ([2] if address < 0x12000 else [])
+                boundaries += 1
         (directory / 'maps-before-warmup.txt').unlink()
         assert not observe(directory, rows)['jit_execution_confirmed']
         rejected += 1
-    print(f'JIT observation parser: {rejected} rejection cases passed; no ART execution')
+    print(f'JIT observation parser: {rejected} rejection cases and {boundaries} page boundary cases passed; no ART execution')
 
 
 if __name__ == '__main__':

@@ -513,8 +513,8 @@ def main():
     args = parser.parse_args()
     if args.stock_art_jit_mode != 'default' and args.workload != 'stock-art':
         parser.error('JIT 诊断模式仅用于 stock-art')
-    if args.stock_art_observe_jit and (args.workload != 'stock-art' or args.execution != 'direct' or args.cpus != 1 or args.guest_page_bytes != 16384):
-        parser.error('JIT 执行观测需要单 CPU、16 KiB 的 Direct stock-art')
+    if args.stock_art_observe_jit and (args.workload != 'stock-art' or args.execution != 'direct' or args.cpus != 1):
+        parser.error('JIT 执行观测需要单 CPU 的 Direct stock-art')
     if args.guest_page_bytes == 4096 and (args.mapping != 'pte' or args.execution not in ('unicorn', 'direct') or
             (args.execution == 'direct' and args.direct_memory not in ('pte', 'flat')) or
             args.guest_layout not in ('low', 'sparse') or args.cpus != 1 or args.workload not in ('core', 'bionic', 'stock-art')):
@@ -955,7 +955,7 @@ def main():
                     item['validated'] and item['present'] for item in results[-1]['stock_art_maps'])
                 if args.stock_art_observe_jit:
                     from stock_art_jit import observe
-                    results[-1]['stock_art_jit_observation'] = observe(component_output, rows)
+                    results[-1]['stock_art_jit_observation'] = observe(component_output, rows, guest_page_bytes=args.guest_page_bytes)
                     passed = passed and results[-1]['stock_art_jit_observation']['jit_execution_confirmed']
                 results[-1]['validated'] = passed
             if apk_fixture:
