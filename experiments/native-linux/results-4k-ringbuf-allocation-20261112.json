@@ -1,0 +1,848 @@
+{
+  "scope": "macOS 4KiB Linux BPF ringbuf syscall, mmap and producer-consumer semantics; original system loader not run",
+  "source_revision": "e750ca0 plus this stage tracked changes",
+  "platform": "macOS-27.0-arm64-arm-64bit-Mach-O",
+  "system_build": "26A428",
+  "configuration": {
+    "guest_page_bytes": 4096,
+    "host_page_bytes": 16384,
+    "cpus": 1,
+    "ram_bytes": 1073741824,
+    "guest_layout": "sparse64GiB",
+    "execution": "Direct flat",
+    "code_watch": true,
+    "code_memory": "dual",
+    "cache_bytes": 16777216,
+    "preemption": "instructions50000"
+  },
+  "manifest_sha256": "be19fabc7bb2b4efaf0c612f29ebd7e5e45e23e7f91fe42225b2f0659db82d93",
+  "final_report_sha256": "1cd5b4165a71ce5b60791d757501a2e069cc695cadaafefa1c6e350ebbc46cdb",
+  "inputs_unchanged": true,
+  "sha256": {
+    "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-4k-ringbuf/experiments/native-linux/userspace/bpf-ringbuf-test.c": "9f030de5cf1b556b57929dc9545d7841d3df50c4df182546787e1b4091de43df",
+    "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-4k-ringbuf/scripts/probe_4k_ringbuf.py": "1c247c6bbc1b566eba273c3abeb1214a644f04bface535fced2dc3108c390157",
+    "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-4k-ringbuf/scripts/lkl_4k_vmalloc_patch.py": "07879d62b115d9b02927e43d5844cebc6b2e7d454a65594f8c41cba99cf00ecc",
+    "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-4k-ringbuf/work/native-linux-nce/lkl-translation-kernel-4k-vmalloc/source/kernel/bpf/ringbuf.c": "7ed585ece0752677238b2d8f7781d8d6bee5e08cd9c09db1cab5bcf3ab5a1e85",
+    "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-4k-ringbuf/work/native-linux-nce/lkl-translation-kernel-4k-vmalloc/build.json": "be19fabc7bb2b4efaf0c612f29ebd7e5e45e23e7f91fe42225b2f0659db82d93",
+    "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-4k-ringbuf/work/native-linux-nce/lkl-translation-kernel-4k-vmalloc/lkl-image.bin": "bad0e23bd4036b7df002c08390dc04cea726638ccb66bdd6063801549b21e700",
+    "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-4k-ringbuf/work/native-linux-nce/lkl-translation-kernel-4k-vmalloc/lkl-image.h": "e2d844f0a2389f833ba635629998d3ba137de39690c68b4570ad0e90896bd521",
+    "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-4k-ringbuf/work/native-linux-nce/ringbuf-functional-reviewed/guest.elf": "e27eb0b31911b88d26ca768111c574846e7ffdae89304e2ae27b83cea7f321a6",
+    "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-4k-ringbuf/work/native-linux-nce/ringbuf-functional-reviewed/cli": "0a459e67e60af8e6bb27c5d33f953caac267a4810751f6b16fa7689413489257",
+    "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-4k-ringbuf/work/native-linux-nce/ringbuf-functional-reviewed/gcd": "c27797fcf390335816160a2e0c16b75edd09c468418841274150a354b6f05980",
+    "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-4k-ringbuf/experiments/native-linux/translation/kernel-image.c": "33792252482c0c6be81d1009a45f1a12f17233a7fd472d12a7f394afd136217f",
+    "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-4k-ringbuf/experiments/native-linux/translation/linux-elf.c": "e3557d2945b3e6dc0b9c1b4ae7041a6dd21a785e4981f97ddff1ea9837d68365",
+    "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-4k-ringbuf/experiments/native-linux/translation/linux-execution.c": "03018238bdf4622c859fabcc365531ce8b98d8069040f7b24247ef5557e6ff8e",
+    "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-4k-ringbuf/experiments/native-linux/translation/interaction-profile.c": "8016783f7a3f0087f0dc369b0316655d95bd612a1fc49547b8c7eada4501881c",
+    "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-4k-ringbuf/experiments/native-linux/translation/linux-runner.c": "305b875fbdaf41424ddbe7c6691178998eb1c8e08eae8f2e2456436f227339e5",
+    "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-4k-ringbuf/experiments/native-linux/translation/linux-memory.c": "0cc6ab6ff8ab7abe76c1c73aaf18fecb200ff27251ea29f0f15b0618a6020e31",
+    "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-4k-ringbuf/experiments/native-linux/lkl-host.c": "49c63f1be4112408bbe5bdced53cf8bd0314eedaf770fe4d869d30edf3a6c671",
+    "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-4k-ringbuf/experiments/native-linux/translation/code-watch.c": "1bfa90873b4e52f1ca0766e169999f948cbff313eccffba14be0e76e7dd1305e",
+    "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-4k-ringbuf/experiments/native-linux/translation/read-view.c": "85ad462693b9ff64532bbf2056a2c6b09cefb1bbd4d8fbcf0cb7570697ed3c2a",
+    "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-4k-ringbuf/experiments/native-linux/translation/unicorn-code-memory.c": "f7fe3981500192267b25ae33cb4aeb5ef38f31c674ddb3cb0ebfa0a0edb43d6e",
+    "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-4k-ringbuf/experiments/native-linux/direct/engine.cpp": "91ac7d0d4b681626961c34e5ae2f91427ef62b6552508bbf954eb5007206d7a5",
+    "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-4k-ringbuf/experiments/native-linux/direct/compile.cpp": "396b9de7fd0f542f979415eedfba5fc50fd2d63366f1709424ce65ca612763dc",
+    "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-4k-ringbuf/experiments/native-linux/direct/decode.cpp": "e2ce2940d0c5d5c1658c45d8a4beee40f9dbb662f960eabb0cad96b0ce84efc1",
+    "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-4k-ringbuf/experiments/native-linux/direct/memory-groups.cpp": "6447bb9544d9cfbc9f872e6e721b17854aae3a1f88fcedcd9767831aaf1ae9a6",
+    "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-4k-ringbuf/experiments/native-linux/direct/read-faults.cpp": "6e514b9e0f8b9675e2eaad955440fd4909b8f19e6e1637ea16d083d2a9809348",
+    "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-4k-ringbuf/experiments/native-linux/direct/cross-page.cpp": "ab2aea50c200cb993fbbad08a2c26423391a428a1359225669a30d2baf8f622d",
+    "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-4k-ringbuf/experiments/native-linux/direct/entry.S": "97f6f661ad263b0a4248a591601b9e4c956e7c552cdbb18aa8f96851e889d2b8",
+    "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-4k-ringbuf/experiments/native-linux/code-memory.c": "8215ac2a2564049be0b45a80b3774ec994d6e51b6eb2057ed00cd515ef682981",
+    "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-4k-ringbuf/experiments/native-linux/execute-check.c": "2e5a080e11bb3ec9407be2495c30a0391d2e8a858f1fe1a01a624eed3a8dd3c5",
+    "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-4k-ringbuf/experiments/native-linux/direct/decode.h": "eafddef33888746adfc25306f6b2ab7903ff9f50adce3b0cf55e43f1e8cba5a9",
+    "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-4k-ringbuf/experiments/native-linux/direct/memory-groups.h": "c6250a511c45dd7bbd5733ff43b55dd8a0eb6501d9759bb12a413f9c121a6b31",
+    "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-4k-ringbuf/experiments/native-linux/direct/direct.h": "2335a09ff1af653bcb3f19c5d5505b23e5f68d22bdfdbb8bee94cf6aab0985de",
+    "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-4k-ringbuf/experiments/native-linux/direct/internal.h": "d23624be4246b0b1e21c831aeb9359989ea3647fbcb88486639c0e1f436f2173",
+    "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-4k-ringbuf/experiments/native-linux/direct/layout.h": "bea63a67f1145501152a6eaf400e9d1393badc55871c7b61e365a4bd2782bb23",
+    "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-4k-ringbuf/experiments/native-linux/direct/page-table-layout.h": "98a362870aa832698cf9aaf5d43d4cfacf3b51e60638a631296cabdeba4fd4ff",
+    "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-4k-ringbuf/experiments/native-linux/code-memory.h": "b76ec86c799b073a58b08dc04300d091cb63531d31289ea22fdfb16d4495870a",
+    "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-4k-ringbuf/experiments/native-linux/execute-check.h": "db1decd5ee536b58b9974ff03951d79dddfc3f74c1205ad34b7c725de4bf6883",
+    "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-4k-ringbuf/experiments/native-linux/nce.h": "7bcdc5e777e10e1d70f0bf1838a2160e87c70613a44b90b16c3e07aedf4a9f58",
+    "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-4k-ringbuf/experiments/native-linux/guest-registers.h": "90a4d5b6e613ce4f2cda359dcd05f6e8d876a788bc437c2c1e13e05403e4627a",
+    "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-4k-ringbuf/experiments/native-linux/translation/code-watch.h": "1ec6e739e1a542c52a2ed54b7310d1cc0a3317dfa25d1d59aeb971e972ea0747",
+    "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-4k-ringbuf/experiments/native-linux/translation/read-view.h": "40a09185089ab8a02a76a6789b7b2149ffdb9dc225c7b1c5b4532d6022307488",
+    "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-4k-ringbuf/experiments/native-linux/userspace/bionic-test.c": "ffa10bd0d16dd15edddb368a0435d9d94b529270c13a89f6b3c5536dc40c0b76",
+    "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-4k-ringbuf/experiments/native-linux/userspace/proc-exit-tests.c": "58c79b40b0fabaf40707baf80d3cca4883311f33c00139ed8db6f3d02d5353df",
+    "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-4k-ringbuf/experiments/native-linux/userspace/file-tests.c": "e260e5222cf7efea3140941404100a05be3b383299f2da4cc174a531cc166b8b",
+    "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-4k-ringbuf/experiments/native-linux/userspace/seccomp-tests.c": "7ac584c36df43561ad7c947eeec40ba0c39188a28d1a79245100b4f683626931",
+    "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-4k-ringbuf/experiments/native-linux/userspace/signal-tests.c": "43b86323b4dd66c98db20065b8cc41d868fb7ab538135d6eba9d7c65a263a549",
+    "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-4k-ringbuf/experiments/native-linux/userspace/signal-registers.S": "68e13063df3b1a82a0b5805eb98082204b7ee6e29e7c020cc452ef5199f6d257",
+    "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-4k-ringbuf/experiments/native-linux/translation/unicorn-code-memory.h": "03e9a24ca9133e989426ca621ad9962c327be47ce889e845f4b668b657243ed7",
+    "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-4k-ringbuf/experiments/native-linux/translation/linux-elf.h": "faec3fcc8a93eafc0a140830836881e8f2447f20b9b59ec26b7b8230f8b0489b",
+    "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-4k-ringbuf/experiments/native-linux/translation/linux-execution.h": "ea490ee46e90df3ee0664815dc45e0f58f071378e2b0af333b498d134644ecc2",
+    "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-4k-ringbuf/experiments/native-linux/translation/interaction-profile.h": "39700898fbcd32c4d4060dad1e494826d50109ab7c5efed50daaf02603938e5a",
+    "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-4k-ringbuf/experiments/native-linux/translation/linux-memory.h": "11b7a1402acaa07152cdb17d43fed3e6effdeb65af902e8b64ae5ea5cded35e9",
+    "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-4k-ringbuf/experiments/native-linux/translation/linux-guest.c": "afe7f051999cd5b80ce61fe7b8ecc8a296cf3687d6b2f58a4f87e2d69af336e3",
+    "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-4k-ringbuf/experiments/native-linux/dispatch-test.c": "5211698bd58018aae173d4c6d75daeeb0e4eb357fb2742c4c08d595bc9d7b55b",
+    "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-4k-ringbuf/experiments/native-linux/layout.h": "7a801b3f98095c6967a13e71d128a39efb5f206ab1144dcfdf060d964f02ff91",
+    "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-4k-ringbuf/experiments/native-linux/userspace/code-tests.c": "5fc06f7a1ca7a4b3e9789fafc06303fc8524a21a8430e15a678b3e2941266e5c",
+    "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-4k-ringbuf/experiments/native-linux/userspace/mm-bench.c": "27beca8aea863ceedf2698524346cbbbc20134fe005a3e5dd4c623dbcf1c8674",
+    "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-4k-ringbuf/experiments/native-linux/userspace/mm-tests.c": "ce794b6b9c8cb63679c88c056dfbbed16e37ab270cdea9812fc6246038b95e18",
+    "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-4k-ringbuf/experiments/native-linux/translation/timer-tests.c": "b54bcf839dcfe5c929a9935fb616104f688e75a6551892caa0ab4ec73246146f",
+    "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-4k-ringbuf/experiments/native-linux/translation/sparse-guest.c": "f52ba38ae63b24faff6b36c9c1cb13cfcc812d1078d75259f4c4fc4d8a914964",
+    "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-4k-ringbuf/experiments/native-linux/translation/tbi-guest.c": "6dde6dbbd87cb8de650d9f33e60b3e8101c82b66e1e7c0e16603e8d127188bb7",
+    "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-4k-ringbuf/experiments/native-linux/translation/jit-guest.c": "fb578bedfe928884a8ce0bd85ad5ccdb2457eb8751e6ab51fa579522d1e1400f",
+    "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-4k-ringbuf/experiments/native-linux/translation/kernel-api.h": "38e8a8fcdadaebd85a495de219e79e014122ad554be7c940cf40ff950db7a44a",
+    "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-4k-ringbuf/experiments/native-linux/translation/kernel-image.h": "6946b1a5ce89be9b55634e25115185af009bff2b126f5a10ac4e0690b70b1528",
+    "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-4k-ringbuf/experiments/native-linux/translation/stock-art-runner.h": "79e9e0ce529900deeb2bb398e0ecc1d11cc1a6130e83fef0b58e0933b2cfcca2",
+    "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-4k-ringbuf/experiments/native-linux/lkl-nce-mmu.c": "d0ee874b00e58100cfd982c1ecbed136f98a85af4e96c7a252009ebc44edf075"
+  },
+  "base_report_sha256": "950a6730aba8a46de7d5e8271009c97050d1d0e9707e323cffa04ff88251a0d1",
+  "commands": [
+    [
+      "xcrun",
+      "clang",
+      "-O2",
+      "-g",
+      "-DNCE_PROCESS",
+      "-DNCE_TRANSLATION_CPUS=1",
+      "-DNCE_GUEST_PAGE_SHIFT=12",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-I",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-4k-ringbuf/experiments/native-linux",
+      "-I",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-4k-ringbuf/work/native-linux-nce/lkl-translation-kernel-4k-vmalloc",
+      "-I",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-4k-guest/work/native-linux-nce/guest-4k-direct-core",
+      "-I",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-4k-guest/work/native-linux-nce/processes/host-include",
+      "-I",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-4k-guest/work/native-linux-nce/unicorn-tb-stop-dual/prefix/include",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-4k-ringbuf/experiments/native-linux/translation/kernel-image.c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-4k-ringbuf/experiments/native-linux/translation/linux-elf.c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-4k-ringbuf/experiments/native-linux/translation/linux-execution.c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-4k-ringbuf/experiments/native-linux/translation/interaction-profile.c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-4k-ringbuf/experiments/native-linux/translation/linux-runner.c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-4k-ringbuf/experiments/native-linux/translation/linux-memory.c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-4k-ringbuf/experiments/native-linux/lkl-host.c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-4k-ringbuf/experiments/native-linux/translation/code-watch.c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-4k-ringbuf/experiments/native-linux/translation/read-view.c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-4k-ringbuf/experiments/native-linux/translation/unicorn-code-memory.c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-4k-guest/work/native-linux-nce/unicorn-tb-stop-dual/prefix/lib/libunicorn.a",
+      "-DNCE_DIRECT_EXECUTION",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-4k-guest/work/native-linux-nce/guest-4k-direct-core/direct/engine.o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-4k-guest/work/native-linux-nce/guest-4k-direct-core/direct/compile.o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-4k-guest/work/native-linux-nce/guest-4k-direct-core/direct/decode.o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-4k-guest/work/native-linux-nce/guest-4k-direct-core/direct/memory-groups.o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-4k-guest/work/native-linux-nce/guest-4k-direct-core/direct/read-faults.o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-4k-guest/work/native-linux-nce/guest-4k-direct-core/direct/cross-page.o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-4k-guest/work/native-linux-nce/guest-4k-direct-core/direct/entry.o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-4k-guest/work/native-linux-nce/guest-4k-direct-core/direct/code-memory.o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-4k-guest/work/native-linux-nce/guest-4k-direct-core/direct/execute-check.o",
+      "-lc++",
+      "-o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-4k-ringbuf/work/native-linux-nce/ringbuf-functional-reviewed/cli",
+      "-DNCE_TRANSLATION_DUAL_MAP"
+    ],
+    [
+      "xcrun",
+      "clang",
+      "-O2",
+      "-g",
+      "-DNCE_PROCESS",
+      "-DNCE_TRANSLATION_CPUS=1",
+      "-DNCE_GUEST_PAGE_SHIFT=12",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-I",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-4k-ringbuf/experiments/native-linux",
+      "-I",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-4k-ringbuf/work/native-linux-nce/lkl-translation-kernel-4k-vmalloc",
+      "-I",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-4k-guest/work/native-linux-nce/guest-4k-direct-core",
+      "-I",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-4k-guest/work/native-linux-nce/processes/host-include",
+      "-I",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-4k-guest/work/native-linux-nce/unicorn-tb-stop-dual/prefix/include",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-4k-ringbuf/experiments/native-linux/translation/kernel-image.c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-4k-ringbuf/experiments/native-linux/translation/linux-elf.c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-4k-ringbuf/experiments/native-linux/translation/linux-execution.c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-4k-ringbuf/experiments/native-linux/translation/interaction-profile.c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-4k-ringbuf/experiments/native-linux/translation/linux-runner.c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-4k-ringbuf/experiments/native-linux/translation/linux-memory.c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-4k-ringbuf/experiments/native-linux/lkl-host.c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-4k-ringbuf/experiments/native-linux/translation/code-watch.c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-4k-ringbuf/experiments/native-linux/translation/read-view.c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-4k-ringbuf/experiments/native-linux/translation/unicorn-code-memory.c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-4k-guest/work/native-linux-nce/unicorn-tb-stop-dual/prefix/lib/libunicorn.a",
+      "-DNCE_DIRECT_EXECUTION",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-4k-guest/work/native-linux-nce/guest-4k-direct-core/direct/engine.o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-4k-guest/work/native-linux-nce/guest-4k-direct-core/direct/compile.o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-4k-guest/work/native-linux-nce/guest-4k-direct-core/direct/decode.o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-4k-guest/work/native-linux-nce/guest-4k-direct-core/direct/memory-groups.o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-4k-guest/work/native-linux-nce/guest-4k-direct-core/direct/read-faults.o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-4k-guest/work/native-linux-nce/guest-4k-direct-core/direct/cross-page.o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-4k-guest/work/native-linux-nce/guest-4k-direct-core/direct/entry.o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-4k-guest/work/native-linux-nce/guest-4k-direct-core/direct/code-memory.o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-4k-guest/work/native-linux-nce/guest-4k-direct-core/direct/execute-check.o",
+      "-lc++",
+      "-o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-4k-ringbuf/work/native-linux-nce/ringbuf-functional-reviewed/gcd",
+      "-DNCE_TRANSLATION_DUAL_MAP",
+      "-DTRANSLATION_DISPATCH",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-4k-ringbuf/experiments/native-linux/dispatch-test.c"
+    ],
+    [
+      "/opt/homebrew/opt/llvm/bin/clang",
+      "--target=aarch64-linux-musl",
+      "-mno-outline-atomics",
+      "-fPIE",
+      "-O2",
+      "-g",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-nostdinc",
+      "-isystem",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-4k-guest/work/native-linux-nce/musl-build/install/include",
+      "-isystem",
+      "/opt/homebrew/Cellar/llvm/22.1.7_1/lib/clang/22/include",
+      "-DNCE_TRANSLATION_CPUS=1",
+      "-DNCE_TRANSLATION_HIGH_RES_TIMERS=0",
+      "-DNCE_GUEST_PAGE_SHIFT=12",
+      "-c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-4k-ringbuf/experiments/native-linux/userspace/bpf-ringbuf-test.c",
+      "-o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-4k-ringbuf/work/native-linux-nce/ringbuf-functional-reviewed/guest.o",
+      "-DNCE_TRANSLATION_STANDARD_JIT",
+      "-idirafter",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-4k-guest/work/native-linux-nce/processes/linux-uapi/include"
+    ],
+    [
+      "/opt/homebrew/bin/ld.lld",
+      "-pie",
+      "--gc-sections",
+      "--no-dynamic-linker",
+      "-z",
+      "max-page-size=16384",
+      "-z",
+      "common-page-size=16384",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-4k-guest/work/native-linux-nce/musl-build/install/lib/rcrt1.o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-4k-guest/work/native-linux-nce/musl-build/install/lib/crti.o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-4k-ringbuf/work/native-linux-nce/ringbuf-functional-reviewed/guest.o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-4k-guest/work/native-linux-nce/musl-build/install/lib/libc.a",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-4k-guest/work/native-linux-nce/compiler-rt-build/libbuiltins.a",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-4k-guest/work/native-linux-nce/musl-build/install/lib/crtn.o",
+      "-o",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-4k-ringbuf/work/native-linux-nce/ringbuf-functional-reviewed/guest.elf"
+    ],
+    [
+      "cp",
+      "-c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-4k-guest/work/native-linux-nce/guest-4k-direct-core/sigreturn.elf",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-4k-ringbuf/work/native-linux-nce/ringbuf-functional-reviewed/sigreturn.elf"
+    ],
+    [
+      "cp",
+      "-c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-4k-guest/work/native-linux-nce/guest-4k-direct-core/dynamic.elf",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-4k-ringbuf/work/native-linux-nce/ringbuf-functional-reviewed/dynamic.elf"
+    ],
+    [
+      "cp",
+      "-c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-4k-guest/work/native-linux-nce/guest-4k-direct-core/libc.so",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-4k-ringbuf/work/native-linux-nce/ringbuf-functional-reviewed/libc.so"
+    ],
+    [
+      "cp",
+      "-c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-4k-guest/work/native-linux-nce/guest-4k-direct-core/dependency.so",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-4k-ringbuf/work/native-linux-nce/ringbuf-functional-reviewed/dependency.so"
+    ],
+    [
+      "cp",
+      "-c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-4k-guest/work/native-linux-nce/guest-4k-direct-core/plugin.so",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-4k-ringbuf/work/native-linux-nce/ringbuf-functional-reviewed/plugin.so"
+    ],
+    [
+      "cp",
+      "-c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-4k-guest/work/native-linux-nce/guest-4k-direct-core/dash.elf",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-4k-ringbuf/work/native-linux-nce/ringbuf-functional-reviewed/dash.elf"
+    ],
+    [
+      "cp",
+      "-c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-4k-guest/work/native-linux-nce/guest-4k-direct-core/bionic-test.elf",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-4k-ringbuf/work/native-linux-nce/ringbuf-functional-reviewed/bionic-test.elf"
+    ],
+    [
+      "cp",
+      "-c",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-4k-ringbuf/work/native-linux-nce/ringbuf-functional-reviewed/guest.elf",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-4k-ringbuf/work/native-linux-nce/ringbuf-functional-reviewed/late.elf"
+    ],
+    [
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-4k-ringbuf/work/native-linux-nce/ringbuf-functional-reviewed/cli",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-4k-ringbuf/work/native-linux-nce/lkl-translation-kernel-4k-vmalloc/lkl-image.bin"
+    ],
+    [
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-4k-ringbuf/work/native-linux-nce/ringbuf-functional-reviewed/gcd",
+      "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-4k-ringbuf/work/native-linux-nce/lkl-translation-kernel-4k-vmalloc/lkl-image.bin"
+    ]
+  ],
+  "environment": {
+    "NCE_TRANSLATION_FILES": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-4k-ringbuf/work/native-linux-nce/ringbuf-functional-reviewed",
+    "NCE_TRANSLATION_GUEST_LAYOUT": "sparse",
+    "NCE_TRANSLATION_DATA_TBI": "1",
+    "NCE_TRANSLATION_ONLINE_CPUS": "1",
+    "NCE_TRANSLATION_BATCH": "50000",
+    "NCE_TRANSLATION_PARALLEL_PROFILE": "0",
+    "NCE_TRANSLATION_UACCESS_STOP": "all",
+    "NCE_TRANSLATION_PREEMPTION": "instructions",
+    "NCE_TRANSLATION_MEMORY_MS": "100",
+    "NCE_TRANSLATION_WORKLOAD": "core",
+    "NCE_TRANSLATION_CACHE": "pages",
+    "NCE_TRANSLATION_EXEC_CACHE": "full",
+    "NCE_TRANSLATION_TLB": "full",
+    "NCE_TRANSLATION_LINUX_FASTPATH": "0",
+    "NCE_TRANSLATION_CACHE_MIB": "16",
+    "NCE_DIRECT_MEMORY": "flat",
+    "NCE_DIRECT_CODE_WATCH": "1",
+    "NCE_DIRECT_CROSS_PAGE": "1",
+    "NCE_DIRECT_NATIVE_EXCLUSIVE": "1"
+  },
+  "runs": [
+    {
+      "entry": "cli",
+      "returncode": 0,
+      "validated": true,
+      "rows": [
+        {
+          "test": "bpf_ringbuf_kernel_producer",
+          "passed": true,
+          "bytes": 16384,
+          "cross_tail_start": 16360,
+          "discard_records": 409
+        },
+        {
+          "test": "bpf_ringbuf_user_producer_mappings",
+          "passed": true,
+          "bytes": 16384,
+          "cross_tail_start": 16376
+        },
+        {
+          "test": "bpf_ringbuf_kernel_producer",
+          "passed": true,
+          "bytes": 32768,
+          "cross_tail_start": 32760,
+          "discard_records": 819
+        },
+        {
+          "test": "bpf_ringbuf_user_producer_mappings",
+          "passed": true,
+          "bytes": 32768,
+          "cross_tail_start": 32760
+        },
+        {
+          "test": "bpf_ringbuf_kernel_producer",
+          "passed": true,
+          "bytes": 4194304,
+          "cross_tail_start": 4194280,
+          "discard_records": 104857
+        },
+        {
+          "test": "bpf_ringbuf_user_producer_mappings",
+          "passed": true,
+          "bytes": 4194304,
+          "cross_tail_start": 4194296
+        },
+        {
+          "test": "bpf_ringbuf_cleanup",
+          "passed": true,
+          "round": 0,
+          "vmalloc_before_kib": 80,
+          "vmalloc_after_kib": 64
+        },
+        {
+          "test": "bpf_ringbuf_kernel_producer",
+          "passed": true,
+          "bytes": 16384,
+          "cross_tail_start": 16360,
+          "discard_records": 409
+        },
+        {
+          "test": "bpf_ringbuf_user_producer_mappings",
+          "passed": true,
+          "bytes": 16384,
+          "cross_tail_start": 16376
+        },
+        {
+          "test": "bpf_ringbuf_kernel_producer",
+          "passed": true,
+          "bytes": 32768,
+          "cross_tail_start": 32760,
+          "discard_records": 819
+        },
+        {
+          "test": "bpf_ringbuf_user_producer_mappings",
+          "passed": true,
+          "bytes": 32768,
+          "cross_tail_start": 32760
+        },
+        {
+          "test": "bpf_ringbuf_kernel_producer",
+          "passed": true,
+          "bytes": 4194304,
+          "cross_tail_start": 4194280,
+          "discard_records": 104857
+        },
+        {
+          "test": "bpf_ringbuf_user_producer_mappings",
+          "passed": true,
+          "bytes": 4194304,
+          "cross_tail_start": 4194296
+        },
+        {
+          "test": "bpf_ringbuf_cleanup",
+          "passed": true,
+          "round": 1,
+          "vmalloc_before_kib": 64,
+          "vmalloc_after_kib": 64
+        },
+        {
+          "test": "bpf_ringbuf_kernel_producer",
+          "passed": true,
+          "bytes": 16384,
+          "cross_tail_start": 16360,
+          "discard_records": 409
+        },
+        {
+          "test": "bpf_ringbuf_user_producer_mappings",
+          "passed": true,
+          "bytes": 16384,
+          "cross_tail_start": 16376
+        },
+        {
+          "test": "bpf_ringbuf_kernel_producer",
+          "passed": true,
+          "bytes": 32768,
+          "cross_tail_start": 32760,
+          "discard_records": 819
+        },
+        {
+          "test": "bpf_ringbuf_user_producer_mappings",
+          "passed": true,
+          "bytes": 32768,
+          "cross_tail_start": 32760
+        },
+        {
+          "test": "bpf_ringbuf_kernel_producer",
+          "passed": true,
+          "bytes": 4194304,
+          "cross_tail_start": 4194280,
+          "discard_records": 104857
+        },
+        {
+          "test": "bpf_ringbuf_user_producer_mappings",
+          "passed": true,
+          "bytes": 4194304,
+          "cross_tail_start": 4194296
+        },
+        {
+          "test": "bpf_ringbuf_cleanup",
+          "passed": true,
+          "round": 2,
+          "vmalloc_before_kib": 64,
+          "vmalloc_after_kib": 64
+        },
+        {
+          "test": "bpf_ringbuf_kernel_producer",
+          "passed": true,
+          "bytes": 16384,
+          "cross_tail_start": 16360,
+          "discard_records": 409
+        },
+        {
+          "test": "bpf_ringbuf_user_producer_mappings",
+          "passed": true,
+          "bytes": 16384,
+          "cross_tail_start": 16376
+        },
+        {
+          "test": "bpf_ringbuf_kernel_producer",
+          "passed": true,
+          "bytes": 32768,
+          "cross_tail_start": 32760,
+          "discard_records": 819
+        },
+        {
+          "test": "bpf_ringbuf_user_producer_mappings",
+          "passed": true,
+          "bytes": 32768,
+          "cross_tail_start": 32760
+        },
+        {
+          "test": "bpf_ringbuf_kernel_producer",
+          "passed": true,
+          "bytes": 4194304,
+          "cross_tail_start": 4194280,
+          "discard_records": 104857
+        },
+        {
+          "test": "bpf_ringbuf_user_producer_mappings",
+          "passed": true,
+          "bytes": 4194304,
+          "cross_tail_start": 4194296
+        },
+        {
+          "test": "bpf_ringbuf_cleanup",
+          "passed": true,
+          "round": 3,
+          "vmalloc_before_kib": 64,
+          "vmalloc_after_kib": 64
+        },
+        {
+          "test": "translated_context_cleanup",
+          "passed": true,
+          "allocated": 1,
+          "freed": 1,
+          "maps": 0,
+          "revocations": 0,
+          "tlb_fills": 136,
+          "faults": 74,
+          "syscalls": 422,
+          "preemptions": 4056
+        },
+        {
+          "result": "passed"
+        }
+      ],
+      "stdout_sha256": "300f1396f2eaa6e28e915a5b96244d1a516ba8abcb161663ca90a72d949447f0",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "entry": "gcd",
+      "returncode": 0,
+      "validated": true,
+      "rows": [
+        {
+          "test": "bpf_ringbuf_kernel_producer",
+          "passed": true,
+          "bytes": 16384,
+          "cross_tail_start": 16360,
+          "discard_records": 409
+        },
+        {
+          "test": "bpf_ringbuf_user_producer_mappings",
+          "passed": true,
+          "bytes": 16384,
+          "cross_tail_start": 16376
+        },
+        {
+          "test": "bpf_ringbuf_kernel_producer",
+          "passed": true,
+          "bytes": 32768,
+          "cross_tail_start": 32760,
+          "discard_records": 819
+        },
+        {
+          "test": "bpf_ringbuf_user_producer_mappings",
+          "passed": true,
+          "bytes": 32768,
+          "cross_tail_start": 32760
+        },
+        {
+          "test": "bpf_ringbuf_kernel_producer",
+          "passed": true,
+          "bytes": 4194304,
+          "cross_tail_start": 4194280,
+          "discard_records": 104857
+        },
+        {
+          "test": "bpf_ringbuf_user_producer_mappings",
+          "passed": true,
+          "bytes": 4194304,
+          "cross_tail_start": 4194296
+        },
+        {
+          "test": "bpf_ringbuf_cleanup",
+          "passed": true,
+          "round": 0,
+          "vmalloc_before_kib": 80,
+          "vmalloc_after_kib": 64
+        },
+        {
+          "test": "bpf_ringbuf_kernel_producer",
+          "passed": true,
+          "bytes": 16384,
+          "cross_tail_start": 16360,
+          "discard_records": 409
+        },
+        {
+          "test": "bpf_ringbuf_user_producer_mappings",
+          "passed": true,
+          "bytes": 16384,
+          "cross_tail_start": 16376
+        },
+        {
+          "test": "bpf_ringbuf_kernel_producer",
+          "passed": true,
+          "bytes": 32768,
+          "cross_tail_start": 32760,
+          "discard_records": 819
+        },
+        {
+          "test": "bpf_ringbuf_user_producer_mappings",
+          "passed": true,
+          "bytes": 32768,
+          "cross_tail_start": 32760
+        },
+        {
+          "test": "bpf_ringbuf_kernel_producer",
+          "passed": true,
+          "bytes": 4194304,
+          "cross_tail_start": 4194280,
+          "discard_records": 104857
+        },
+        {
+          "test": "bpf_ringbuf_user_producer_mappings",
+          "passed": true,
+          "bytes": 4194304,
+          "cross_tail_start": 4194296
+        },
+        {
+          "test": "bpf_ringbuf_cleanup",
+          "passed": true,
+          "round": 1,
+          "vmalloc_before_kib": 64,
+          "vmalloc_after_kib": 64
+        },
+        {
+          "test": "bpf_ringbuf_kernel_producer",
+          "passed": true,
+          "bytes": 16384,
+          "cross_tail_start": 16360,
+          "discard_records": 409
+        },
+        {
+          "test": "bpf_ringbuf_user_producer_mappings",
+          "passed": true,
+          "bytes": 16384,
+          "cross_tail_start": 16376
+        },
+        {
+          "test": "bpf_ringbuf_kernel_producer",
+          "passed": true,
+          "bytes": 32768,
+          "cross_tail_start": 32760,
+          "discard_records": 819
+        },
+        {
+          "test": "bpf_ringbuf_user_producer_mappings",
+          "passed": true,
+          "bytes": 32768,
+          "cross_tail_start": 32760
+        },
+        {
+          "test": "bpf_ringbuf_kernel_producer",
+          "passed": true,
+          "bytes": 4194304,
+          "cross_tail_start": 4194280,
+          "discard_records": 104857
+        },
+        {
+          "test": "bpf_ringbuf_user_producer_mappings",
+          "passed": true,
+          "bytes": 4194304,
+          "cross_tail_start": 4194296
+        },
+        {
+          "test": "bpf_ringbuf_cleanup",
+          "passed": true,
+          "round": 2,
+          "vmalloc_before_kib": 64,
+          "vmalloc_after_kib": 64
+        },
+        {
+          "test": "bpf_ringbuf_kernel_producer",
+          "passed": true,
+          "bytes": 16384,
+          "cross_tail_start": 16360,
+          "discard_records": 409
+        },
+        {
+          "test": "bpf_ringbuf_user_producer_mappings",
+          "passed": true,
+          "bytes": 16384,
+          "cross_tail_start": 16376
+        },
+        {
+          "test": "bpf_ringbuf_kernel_producer",
+          "passed": true,
+          "bytes": 32768,
+          "cross_tail_start": 32760,
+          "discard_records": 819
+        },
+        {
+          "test": "bpf_ringbuf_user_producer_mappings",
+          "passed": true,
+          "bytes": 32768,
+          "cross_tail_start": 32760
+        },
+        {
+          "test": "bpf_ringbuf_kernel_producer",
+          "passed": true,
+          "bytes": 4194304,
+          "cross_tail_start": 4194280,
+          "discard_records": 104857
+        },
+        {
+          "test": "bpf_ringbuf_user_producer_mappings",
+          "passed": true,
+          "bytes": 4194304,
+          "cross_tail_start": 4194296
+        },
+        {
+          "test": "bpf_ringbuf_cleanup",
+          "passed": true,
+          "round": 3,
+          "vmalloc_before_kib": 64,
+          "vmalloc_after_kib": 64
+        },
+        {
+          "test": "translated_context_cleanup",
+          "passed": true,
+          "allocated": 1,
+          "freed": 1,
+          "maps": 0,
+          "revocations": 0,
+          "tlb_fills": 136,
+          "faults": 74,
+          "syscalls": 422,
+          "preemptions": 4056
+        },
+        {
+          "result": "passed"
+        }
+      ],
+      "stdout_sha256": "aacf19dc2c640b8954818a44e7bc1046fe2f5df77b3be9014a68accb255f41ea",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "failures": [
+    {
+      "directory": "work/native-linux-nce/ringbuf-functional-v1",
+      "report_sha256": "a0cc30b72463b68fbf6c917ed272d21644136efda3354c3a9c7aa6bdb33a103c",
+      "runs": [
+        {
+          "entry": "cli",
+          "returncode": -10,
+          "stderr": "",
+          "stdout_sha256": "f4556be6e9bbab18546a27cd0bab8576c3cca03a8044bf11376e9c88ffc93c01",
+          "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "entry": "gcd",
+          "returncode": 1,
+          "stderr": "BPF load errno=22: 0: R1=ctx() R10=fp0\n0: (18) r1 = 0x7000828500             ; R1_w=map_ptr(ks=0,vs=0)\n2: (18) r2 = 0x5\nmissing btf func_info\nprocessed 2 insns (limit 1000000) max_states_per_insn 0 total_states 0 peak_states 0 mark_read 0\n\nringbuf check line=55 errno=22\n",
+          "stdout_sha256": "346be13bfa3739f1fb7ae2b2e2a5048825991eeabb631e103007f67603345bd9",
+          "stderr_sha256": "06dbf89f7003ac8fa24c5b41fcb175dbd005d5547809207ce7d6e11fd64685b2"
+        }
+      ]
+    },
+    {
+      "directory": "work/native-linux-nce/ringbuf-functional-v2",
+      "report_sha256": "f1f2af949d513076474815b28260e08baa19a52a020fc706c3c190c73933a28b",
+      "runs": [
+        {
+          "entry": "cli",
+          "returncode": 1,
+          "stderr": "BTF load errno=22: magic: 0xeb9f\nversion: 1\nflags: 0x0\nhdr_len: 24\ntype_off: 0\ntype_len: 104\nstr_off: 104\nstr_len: 30\nbtf_total_size: 160\nUnsupported section found\nringbuf check line=69 errno=22\n",
+          "stdout_sha256": "8332a382029e932fafa40c3a7861fbd8986a0fdce44d3a42e1d54501b25086d6",
+          "stderr_sha256": "7c8961572495ffb092297380bf12d5b26cfa8bfd8e149bbacd71b110ecad9ce0"
+        },
+        {
+          "entry": "gcd",
+          "returncode": 1,
+          "stderr": "BTF load errno=22: magic: 0xeb9f\nversion: 1\nflags: 0x0\nhdr_len: 24\ntype_off: 0\ntype_len: 104\nstr_off: 104\nstr_len: 30\nbtf_total_size: 160\nUnsupported section found\nringbuf check line=69 errno=22\n",
+          "stdout_sha256": "5f475e74a5b47743c97f46cdeb1cf3c9a8a868de066e8348b4485c0cdc43af30",
+          "stderr_sha256": "7c8961572495ffb092297380bf12d5b26cfa8bfd8e149bbacd71b110ecad9ce0"
+        }
+      ]
+    },
+    {
+      "directory": "work/native-linux-nce/ringbuf-functional-v3",
+      "report_sha256": "70b0bd68cc7c193ccaef2737090fbdceab781fbb76bef43517dca820954e1a99",
+      "runs": [
+        {
+          "entry": "cli",
+          "returncode": 1,
+          "stderr": "BPF load errno=22: callbacks are not allowed in non-JITed programs\nprocessed 9 insns (limit 1000000) max_states_per_insn 0 total_states 1 peak_states 1 mark_read 1\n\nringbuf check line=91 errno=22\n",
+          "stdout_sha256": "7339cbde955e613a66a04ea161eac53eb9e2200da4feaeac4d3ba7592e93b8d1",
+          "stderr_sha256": "47245fcc628781b3f81821bcd71da8b589ea981eba12aa9a2d0d08e0dd53c94a"
+        },
+        {
+          "entry": "gcd",
+          "returncode": 1,
+          "stderr": "BPF load errno=22: callbacks are not allowed in non-JITed programs\nprocessed 9 insns (limit 1000000) max_states_per_insn 0 total_states 1 peak_states 1 mark_read 1\n\nringbuf check line=91 errno=22\n",
+          "stdout_sha256": "cb0ea6939d2c90e23ecad03499b5043223ef998530bc23cd7ea2872d562deb45",
+          "stderr_sha256": "47245fcc628781b3f81821bcd71da8b589ea981eba12aa9a2d0d08e0dd53c94a"
+        }
+      ]
+    },
+    {
+      "directory": "work/native-linux-nce/ringbuf-functional-v4",
+      "report_sha256": "99a5bfaa3f0012ab222b5480e97bd31a4e5dadcc9da1570ff09b6b3db27facce",
+      "runs": [
+        {
+          "entry": "cli",
+          "returncode": -10,
+          "stderr": "",
+          "stdout_sha256": "e90cd522810346473d6e766bc4006167bc84d71c72e60eec07cb62fc6bdabdf8",
+          "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "entry": "gcd",
+          "returncode": -10,
+          "stderr": "",
+          "stdout_sha256": "7cc48a7dcebd828616c6e09c72a99075c80a724537149af095d364ff6d28af6c",
+          "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      ]
+    },
+    {
+      "directory": "work/native-linux-nce/ringbuf-functional-v6",
+      "report_sha256": "ca11137711ff7fb2cbd57884ac73a8c6d4373b9bbcb7f9b35ecb3809e5b1c833",
+      "runs": [
+        {
+          "entry": "cli",
+          "returncode": -10,
+          "stderr": "kernel_base=0x109af0000\nfault pc=0000000109ca16a0 address=000000704082c010 esr=0000000092000007\n",
+          "stdout_sha256": "1f50fc1cbc70dcd40ab8f7017d04394140a3214f234263ed65eb53b5a04f0448",
+          "stderr_sha256": "0830d370cf22a46ac9b78eef1e3a4fc6129351783f37ec9bfef29131583e3965"
+        },
+        {
+          "entry": "gcd",
+          "returncode": -10,
+          "stderr": "kernel_base=0x118800000\nfault pc=00000001189b16a0 address=000000704082c010 esr=0000000092000007\n",
+          "stdout_sha256": "55b6dd37662746652d0e31be61c847d638e175a40e7347a7224e0d3afd43266f",
+          "stderr_sha256": "321d813889e0ad7d6f06433ae71e6d90cf723a54c384dd0c00d5765bfccad56c"
+        }
+      ]
+    }
+  ],
+  "unsupported_callback_fixture": "/* SPDX-License-Identifier: GPL-2.0-or-later */\n#define _GNU_SOURCE\n#include <errno.h>\n#include <linux/bpf.h>\n#include <linux/btf.h>\n#include <poll.h>\n#include <stdint.h>\n#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\n#include <sys/mman.h>\n#include <sys/resource.h>\n#include <sys/syscall.h>\n#include <unistd.h>\n\n#define CHECK(test) \\\n    do { \\\n        if (!(test)) { \\\n            fprintf(stderr, \"ringbuf check line=%d errno=%d\\n\", __LINE__, errno); \\\n            exit(90); \\\n        } \\\n    } while (0)\n#define PAGE 4096\n#define PAYLOAD 32\n#define RECORD (PAYLOAD + 8)\n#define DISCARD (1U << 30)\n#define BUSY (1U << 31)\n#define I(code_, dst_, src_, off_, imm_) ((struct bpf_insn){.code = (code_), .dst_reg = (dst_), .src_reg = (src_), .off = (off_), .imm = (imm_)})\n#define MOVI(r, v) I(BPF_ALU64 | BPF_MOV | BPF_K, r, 0, 0, v)\n#define MOVR(d, s) I(BPF_ALU64 | BPF_MOV | BPF_X, d, s, 0, 0)\n#define CALL(fn) I(BPF_JMP | BPF_CALL, 0, 0, 0, fn)\n#define EXIT I(BPF_JMP | BPF_EXIT, 0, 0, 0, 0)\n\nstatic int bpf(int command, union bpf_attr *attr)\n{\n    return syscall(SYS_bpf, command, attr, sizeof(*attr));\n}\n\nstatic int map_create(unsigned type, unsigned bytes)\n{\n    union bpf_attr attr = {.map_type = type, .max_entries = bytes};\n    if (type == BPF_MAP_TYPE_ARRAY) {\n        attr.key_size = 4;\n        attr.value_size = 4;\n    }\n    return bpf(BPF_MAP_CREATE, &attr);\n}\n\nstatic int callback_btf(void)\n{\n    struct {\n        struct btf_header header;\n        uint32_t types[25];\n        char strings[30];\n    } raw = {.header = {.magic = BTF_MAGIC, .version = BTF_VERSION, .hdr_len = sizeof(struct btf_header), .type_off = 0, .type_len = 100, .str_off = 100, .str_len = 30},\n             .types = {\n                 1, BTF_KIND_INT << 24, 4, (BTF_INT_SIGNED << 24) | 32,\n                 0, BTF_KIND_PTR << 24, 0,\n                 0, (BTF_KIND_FUNC_PROTO << 24) | 1, 1, 5, 2,\n                 16, (BTF_KIND_FUNC << 24) | BTF_FUNC_GLOBAL, 3,\n                 0, (BTF_KIND_FUNC_PROTO << 24) | 2, 1, 9, 2, 5, 2,\n                 21, BTF_KIND_FUNC << 24, 5},\n             .strings = \"\\0int\\0ctx\\0sample\\0main\\0callback\\0\"};\n    char log[4096] = {0};\n    union bpf_attr attr = {.btf = (uintptr_t)&raw, .btf_size = sizeof(raw.header) + sizeof(raw.types) + sizeof(raw.strings), .btf_log_buf = (uintptr_t)log, .btf_log_size = sizeof(log), .btf_log_level = 1};\n    int fd = bpf(BPF_BTF_LOAD, &attr);\n    if (fd < 0)\n        fprintf(stderr, \"BTF load errno=%d: %s\\n\", errno, log);\n    CHECK(fd >= 0);\n    return fd;\n}\n\nstatic int load(struct bpf_insn *instructions, unsigned count, int callback)\n{\n    char log[65536] = {0};\n    union bpf_attr attr = {.prog_type = BPF_PROG_TYPE_SOCKET_FILTER, .insn_cnt = count, .insns = (uintptr_t)instructions, .license = (uintptr_t)\"GPL\", .log_buf = (uintptr_t)log, .log_size = sizeof(log), .log_level = 1};\n    struct bpf_func_info info[] = {{.insn_off = 0, .type_id = 4}, {.insn_off = 8, .type_id = 6}};\n    int btf = -1;\n    if (callback) {\n        btf = callback_btf();\n        attr.prog_btf_fd = btf;\n        attr.func_info = (uintptr_t)info;\n        attr.func_info_cnt = 2;\n        attr.func_info_rec_size = sizeof(info[0]);\n    }\n    int fd = bpf(BPF_PROG_LOAD, &attr);\n    if (btf >= 0)\n        CHECK(close(btf) == 0);\n    if (fd < 0)\n        fprintf(stderr, \"BPF load errno=%d: %s\\n\", errno, log);\n    CHECK(fd >= 0);\n    return fd;\n}\n\nstatic int producer(int map, int discard)\n{\n    struct bpf_insn instructions[32];\n    unsigned n = 0;\n    instructions[n++] = I(BPF_LD | BPF_DW | BPF_IMM, 1, BPF_PSEUDO_MAP_FD, 0, map);\n    instructions[n++] = I(0, 0, 0, 0, 0);\n    instructions[n++] = MOVI(2, PAYLOAD);\n    instructions[n++] = MOVI(3, 0);\n    instructions[n++] = CALL(BPF_FUNC_ringbuf_reserve);\n    unsigned branch = n;\n    instructions[n++] = I(BPF_JMP | BPF_JEQ | BPF_K, 0, 0, 0, 0);\n    for (unsigned i = 0; i < PAYLOAD / 4; i++)\n        instructions[n++] = I(BPF_ST | BPF_MEM | BPF_W, 0, 0, i * 4, 0x12345600 + i);\n    instructions[n++] = MOVR(1, 0);\n    instructions[n++] = MOVI(2, 0);\n    instructions[n++] = CALL(discard ? BPF_FUNC_ringbuf_discard : BPF_FUNC_ringbuf_submit);\n    instructions[n++] = MOVI(0, 0);\n    instructions[n++] = EXIT;\n    instructions[branch].off = n - branch - 1;\n    instructions[n++] = MOVI(0, 1);\n    instructions[n++] = EXIT;\n    return load(instructions, n, 0);\n}\n\nstatic int drainer(int map)\n{\n    struct bpf_insn instructions[] = {\n        I(BPF_LD | BPF_DW | BPF_IMM, 1, BPF_PSEUDO_MAP_FD, 0, map), I(0, 0, 0, 0, 0),\n        I(BPF_LD | BPF_DW | BPF_IMM, 2, BPF_PSEUDO_FUNC, 0, 5), I(0, 0, 0, 0, 0),\n        MOVI(3, 0), MOVI(4, 0), CALL(BPF_FUNC_user_ringbuf_drain), EXIT,\n        MOVI(0, 0), EXIT};\n    return load(instructions, sizeof(instructions) / sizeof(instructions[0]), 1);\n}\n\nstatic unsigned run(int program, unsigned repeat)\n{\n    unsigned char packet[64] = {0};\n    union bpf_attr attr = {0};\n    attr.test.prog_fd = program;\n    attr.test.data_in = (uintptr_t)packet;\n    attr.test.data_size_in = sizeof(packet);\n    attr.test.repeat = repeat;\n    CHECK(bpf(BPF_PROG_TEST_RUN, &attr) == 0);\n    return attr.test.retval;\n}\n\nstatic void rejected_write(void *mapping, size_t bytes)\n{\n    errno = 0;\n    CHECK(mprotect(mapping, bytes, PROT_READ | PROT_WRITE) == -1 && errno == EACCES);\n}\n\nstatic void kernel_producer(unsigned bytes)\n{\n    int map = map_create(BPF_MAP_TYPE_RINGBUF, bytes);\n    CHECK(map >= 0);\n    volatile uint64_t *consumer = mmap(NULL, PAGE, PROT_READ | PROT_WRITE, MAP_SHARED, map, 0);\n    unsigned char *mapping = mmap(NULL, PAGE + 2 * bytes, PROT_READ, MAP_SHARED, map, PAGE);\n    CHECK(consumer != MAP_FAILED && mapping != MAP_FAILED);\n    volatile uint64_t *position = (void *)mapping;\n    unsigned char *data = mapping + PAGE;\n    CHECK(*consumer == 0 && *position == 0);\n    errno = 0;\n    CHECK(mmap(NULL, PAGE, PROT_READ | PROT_WRITE, MAP_SHARED, map, PAGE) == MAP_FAILED && errno == EPERM);\n    errno = 0;\n    CHECK(mmap(NULL, 2 * PAGE, PROT_READ | PROT_WRITE, MAP_SHARED, map, 0) == MAP_FAILED && errno == EPERM);\n    rejected_write(mapping, PAGE + 2 * bytes);\n    int discard = producer(map, 1), submit = producer(map, 0);\n    unsigned count = bytes / RECORD;\n    CHECK(run(discard, count) == 0 && *position == (uint64_t)count * RECORD);\n    CHECK(*(uint32_t *)data == (PAYLOAD | DISCARD));\n    unsigned long offset = *position;\n    CHECK(*(uint32_t *)(data + offset - RECORD) == (PAYLOAD | DISCARD));\n    *consumer = offset;\n    CHECK(run(submit, 1) == 0 && *position == offset + RECORD);\n    CHECK(*(uint32_t *)(data + offset) == PAYLOAD);\n    for (unsigned i = 0; i < PAYLOAD / 4; i++)\n        CHECK(*(uint32_t *)(data + offset + 8 + i * 4) == 0x12345600 + i);\n    CHECK(offset + RECORD > bytes && memcmp(data, data + bytes, bytes) == 0);\n    struct pollfd pollfd = {.fd = map, .events = POLLIN};\n    CHECK(poll(&pollfd, 1, 0) == 1 && (pollfd.revents & POLLIN));\n    *consumer = *position;\n    CHECK(run(submit, bytes / RECORD + 1) == 1);\n    CHECK(*position - *consumer <= bytes - 1);\n    CHECK(close(discard) == 0 && close(submit) == 0);\n    CHECK(munmap((void *)consumer, PAGE) == 0 && munmap(mapping, PAGE + 2 * bytes) == 0 && close(map) == 0);\n    printf(\"{\\\"test\\\":\\\"bpf_ringbuf_kernel_producer\\\",\\\"passed\\\":true,\\\"bytes\\\":%u,\\\"cross_tail_start\\\":%lu,\\\"discard_records\\\":%u}\\n\", bytes, offset, count);\n}\n\nstatic void user_producer(unsigned bytes)\n{\n    int map = map_create(BPF_MAP_TYPE_USER_RINGBUF, bytes);\n    CHECK(map >= 0);\n    volatile uint64_t *consumer = mmap(NULL, PAGE, PROT_READ, MAP_SHARED, map, 0);\n    unsigned char *mapping = mmap(NULL, PAGE + 2 * bytes, PROT_READ | PROT_WRITE, MAP_SHARED, map, PAGE);\n    CHECK(consumer != MAP_FAILED && mapping != MAP_FAILED);\n    volatile uint64_t *position = (void *)mapping;\n    unsigned char *data = mapping + PAGE;\n    errno = 0;\n    CHECK(mmap(NULL, PAGE, PROT_READ | PROT_WRITE, MAP_SHARED, map, 0) == MAP_FAILED && errno == EPERM);\n    rejected_write((void *)consumer, PAGE);\n    int drain = drainer(map);\n    /* One large discarded record advances both positions to eight bytes\n     * before the tail. The next payload uses both aliases. */\n    *(uint32_t *)data = (bytes - 16) | DISCARD;\n    *position = bytes - 8;\n    CHECK(run(drain, 1) == 0 && *consumer == bytes - 8);\n    unsigned long offset = *position;\n    *(uint32_t *)(data + offset) = PAYLOAD | BUSY;\n    *(uint32_t *)(data + offset + 4) = 0;\n    for (unsigned i = 0; i < PAYLOAD / 4; i++)\n        *(uint32_t *)(data + offset + 8 + i * 4) = 0x56781200 + i;\n    *position = offset + RECORD;\n    CHECK(memcmp(data, data + bytes, bytes) == 0);\n    CHECK(run(drain, 1) == 0 && *consumer == offset);\n    *(uint32_t *)(data + offset) = PAYLOAD;\n    CHECK(run(drain, 1) == 1 && *consumer == offset + RECORD);\n    CHECK(close(drain) == 0);\n    CHECK(munmap((void *)consumer, PAGE) == 0 && munmap(mapping, PAGE + 2 * bytes) == 0 && close(map) == 0);\n    printf(\"{\\\"test\\\":\\\"bpf_ringbuf_user_producer\\\",\\\"passed\\\":true,\\\"bytes\\\":%u,\\\"cross_tail_start\\\":%lu,\\\"busy_record_deferred\\\":true}\\n\", bytes, offset);\n}\n\nstatic long memory(const char *key)\n{\n    FILE *file = fopen(\"/proc/meminfo\", \"r\");\n    CHECK(file);\n    char line[256];\n    long value = -1;\n    while (fgets(line, sizeof(line), file)) {\n        if (!strncmp(line, key, strlen(key))) {\n            CHECK(sscanf(line + strlen(key), \"%ld\", &value) == 1);\n            break;\n        }\n    }\n    CHECK(fclose(file) == 0 && value >= 0);\n    return value;\n}\n\nint main(void)\n{\n    setbuf(stdout, NULL);\n    CHECK(sysconf(_SC_PAGESIZE) == PAGE);\n    struct rlimit limit = {1UL << 30, 1UL << 30};\n    CHECK(setrlimit(RLIMIT_MEMLOCK, &limit) == 0);\n    int control = map_create(BPF_MAP_TYPE_ARRAY, 2);\n    CHECK(control >= 0 && close(control) == 0);\n    for (unsigned type = BPF_MAP_TYPE_RINGBUF; type <= BPF_MAP_TYPE_USER_RINGBUF; type += 4) {\n        for (unsigned bytes = PAGE; bytes < 16384; bytes *= 2) {\n            errno = 0;\n            CHECK(map_create(type, bytes) == -1 && errno == ENOMEM);\n        }\n    }\n    for (unsigned round = 0; round < 4; round++) {\n        long before = memory(\"VmallocUsed:\");\n        for (unsigned i = 0; i < 3; i++) {\n            unsigned sizes[] = {16384, 32768, 4194304};\n            kernel_producer(sizes[i]);\n            user_producer(sizes[i]);\n        }\n        CHECK(usleep(10000) == 0);\n        long after = memory(\"VmallocUsed:\");\n        printf(\"{\\\"test\\\":\\\"bpf_ringbuf_cleanup\\\",\\\"passed\\\":true,\\\"round\\\":%u,\\\"vmalloc_before_kib\\\":%ld,\\\"vmalloc_after_kib\\\":%ld}\\n\", round, before, after);\n        CHECK(round == 0 || after <= before);\n    }\n    control = map_create(BPF_MAP_TYPE_ARRAY, 2);\n    CHECK(control >= 0 && close(control) == 0);\n    return 0;\n}\n",
+  "patch_replay": {
+    "passed": true,
+    "sha256": {
+      "work/native-linux-nce/lkl-translation-kernel-4k-vmalloc/source/arch/lkl/include/asm/vmalloc.h": "42d260bd3a3e170e508445ab751abab4df03d3ea22f0fffc51c68853d366cf81",
+      "work/native-linux-nce/lkl-translation-kernel-4k-vmalloc/source/arch/lkl/mm/nce_mmu.c": "0e6f548bfad3d6c578cef9243ae8a52efe16cdbe510bf0fafbf6d12443e3109a",
+      "work/native-linux-nce/lkl-translation-kernel-4k-vmalloc/source/mm/memory.c": "0b4d12ec483e437176a82b424435ecfe599a6ae4b777d2f97b350b41295e5995",
+      "work/native-linux-nce/lkl-translation-kernel-4k-vmalloc/source/mm/vmalloc.c": "0aecdffd391df92ab51bf134160e02cca0495249d68543ff841b3b67b7a79701",
+      "work/native-linux-nce/lkl-translation-kernel-4k-vmalloc/source/kernel/bpf/ringbuf.c": "7ed585ece0752677238b2d8f7781d8d6bee5e08cd9c09db1cab5bcf3ab5a1e85"
+    }
+  },
+  "unverified": [
+    "4KiB and 8KiB maps",
+    "type31 kernel drain and callback consumption",
+    "allocation/vmap failure injection at every group",
+    "original BPF object loader",
+    "complete Android and HyperOS services",
+    "iOS device execution and performance"
+  ]
+}

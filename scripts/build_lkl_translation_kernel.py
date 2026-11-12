@@ -131,7 +131,7 @@ def build(cpus=1, high_res_timers=False, guest_page_bytes=16384):
              source / 'arch/lkl/include/asm/mmu.h', source / 'arch/lkl/kernel/threads.c',
              *[out / name for name in ('lkl.so', 'lkl-image.bin', 'lkl-image.h', 'lkl-host-ops.h')]]
     if guest_page_bytes == 4096:
-        files += [ROOT / 'scripts/lkl_4k_vmalloc_patch.py', source / 'mm/vmalloc.c', source / 'mm/memory.c', source / 'arch/lkl/include/asm/vmalloc.h']
+        files += [ROOT / 'scripts/lkl_4k_vmalloc_patch.py', source / 'mm/vmalloc.c', source / 'mm/memory.c', source / 'arch/lkl/include/asm/vmalloc.h', source / 'kernel/bpf/ringbuf.c']
     if cpus == 2:
         files += [ROOT / ('scripts/' + name + '.py') for name in ('lkl_smp_patch', 'lkl_smp_mmu_patch', 'lkl_translation_smp_patch')]
         files += list((EXP / 'smp').glob('*.[ch]'))

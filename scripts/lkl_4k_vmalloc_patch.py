@@ -7,6 +7,8 @@ def apply(source: Path):
     def edit(name, before, after):
         path = source / name
         text = path.read_text()
+        if text.count(after) == 1:
+            return
         if text.count(before) != 1:
             raise RuntimeError('4 KiB VMALLOC source mismatch: ' + name + ': ' + before[:80])
         path.write_text(text.replace(before, after))
@@ -22,7 +24,7 @@ def apply(source: Path):
          'void munmap_page_for_pte(struct mm_struct *mm, unsigned long addr, pte_t *xp)\n{',
          'void munmap_page_for_pte(struct mm_struct *mm, unsigned long addr, pte_t *xp)\n{\n    if (mm == &init_mm)\n        return;')
     path = source / 'arch/lkl/mm/nce_mmu.c'
-    path.write_text(path.read_text() + '''
+    mapping_sync = '''
 /* A completed init_mm range owns every mapped host group. The guard tail
  * can cover part of an empty group; it never authorizes a wider host revoke. */
 void arch_sync_kernel_mappings(unsigned long start, unsigned long end)
@@ -48,7 +50,10 @@ void arch_sync_kernel_mappings(unsigned long start, unsigned long end)
         map_view(addr, group, first);
     }
 }
-''')
+'''
+    text = path.read_text()
+    if mapping_sync not in text:
+        path.write_text(text + mapping_sync)
     edit('mm/memory.c',
          '\tif (mask & ARCH_PAGE_TABLE_SYNC_MASK)\n\t\tarch_sync_kernel_mappings(start, start + size);',
          '\tif (mm == &init_mm && !err && (mask & ARCH_PAGE_TABLE_SYNC_MASK))\n\t\tarch_sync_kernel_mappings(start, start + size);')
@@ -114,3 +119,30 @@ void arch_sync_kernel_mappings(unsigned long start, unsigned long end)
     edit('mm/vmalloc.c',
          '\tarea = __get_vm_area_node(real_size, align, shift, VM_ALLOC |',
          '\tarea = __get_vm_area_node(size, align, shift, VM_ALLOC |')
+
+    edit('kernel/bpf/ringbuf.c', '#include <linux/vmalloc.h>',
+         '#include <linux/vmalloc.h>\n#include <asm/nce-layout.h>')
+    # The position pages keep their 4 KiB mmap offsets. Padding before them
+    # makes the data and repeated data start at full host-page boundaries.
+    edit('kernel/bpf/ringbuf.c',
+         '\tunsigned long consumer_pos __aligned(PAGE_SIZE);',
+         '\tunsigned long consumer_pos __aligned(NCE_HOST_PAGE_SIZE / 2);')
+    edit('kernel/bpf/ringbuf.c', '\tint i;\n\n\t/* Each data page',
+         '\tint i, j;\n\n\tBUILD_BUG_ON(RINGBUF_NR_META_PAGES * PAGE_SIZE != NCE_HOST_PAGE_SIZE);\n'
+         '\tif (data_sz < NCE_HOST_PAGE_SIZE)\n\t\treturn NULL;\n\n\t/* Each data page')
+    edit('kernel/bpf/ringbuf.c',
+         '\tfor (i = 0; i < nr_pages; i++) {\n\t\tpage = alloc_pages_node(numa_node, flags, 0);',
+         '\tfor (i = 0; i < nr_pages; i += NCE_HOST_PAGE_SIZE / PAGE_SIZE) {\n'
+         '\t\tpage = alloc_pages_node(numa_node, flags, get_order(NCE_HOST_PAGE_SIZE));')
+    edit('kernel/bpf/ringbuf.c',
+         '\t\tpages[i] = page;\n\t\tif (i >= nr_meta_pages)\n\t\t\tpages[nr_data_pages + i] = page;',
+         '\t\tsplit_page(page, get_order(NCE_HOST_PAGE_SIZE));\n'
+         '\t\tfor (j = 0; j < NCE_HOST_PAGE_SIZE / PAGE_SIZE; j++) {\n'
+         '\t\t\tpages[i + j] = page + j;\n'
+         '\t\t\tif (i >= nr_meta_pages)\n'
+         '\t\t\t\tpages[nr_data_pages + i + j] = page + j;\n\t\t}')
+
+    edit('kernel/bpf/ringbuf.c', '\tint i, nr_pages = rb->nr_pages;\n\n\tvunmap(rb);',
+         '\tint i, nr_pages = rb->nr_pages;\n\n'
+         '\t/* LKL can defer IRQ work until timer delivery. Keep its storage mapped. */\n'
+         '\tirq_work_sync(&rb->work);\n\tvunmap(rb);')
