@@ -1,0 +1,1624 @@
+{
+  "date": "2026-11-12",
+  "scope": "原生 NCE 共享内核信号返回页专项回归；工作目录诊断使用原 signal suite 与寄存器汇编。",
+  "revisions": {
+    "baseline": "9e93f1216f334012d355c91399dedeec373e6f58",
+    "signal_fix": "646ac08385d2f8eeb2f991fe28dab703b3b6aca3",
+    "built_tree": "103490a0e9ccc901077adfd3e662756adb7e3abb"
+  },
+  "worktree": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal",
+  "additional_product_source_changes": false,
+  "configuration": {
+    "execution": "native",
+    "guest_page_bytes": 16384,
+    "cpus": 1,
+    "mapping": "demand",
+    "sparse_scan": true,
+    "fault_prefetch": false,
+    "guest_libraries": [
+      "musl",
+      "project-built Bionic"
+    ],
+    "android_framework": false
+  },
+  "source_review": {
+    "rt_sigaction": {
+      "field_order": [
+        "handler",
+        "flags",
+        "restorer",
+        "mask"
+      ],
+      "action_bytes": 32,
+      "mask_bytes": 8,
+      "SA_RESTORER_defined": true,
+      "runtime_checked_flags_and_restorer_zero": true,
+      "original_action_restored": true
+    },
+    "fork": "dup_mm 复制 mm，nce_init_mm 只重建 accessed；context.sigreturn 和标准特殊 VMA/PTE 由原 fork 处理保留。",
+    "exec": "每次 exec 安装特殊映射，nce_populate_code 成功后设置 context.sigreturn。",
+    "page_references": "标准 fault 为页面取得引用；Linux 回收 PTE 引用，缓存初始页面引用和描述符保留至本次内核 RAM 释放。",
+    "mremap": "回调约束原 base 和单页长度；改址必须失败，测试允许 EINVAL 或 EACCES。",
+    "native_code": "从真实 Linux RAM 向登记的宿主执行段复制并处理 SVC；缓存页面保留原 ELF 字节。"
+  },
+  "final_build": {
+    "file": {
+      "path": "work/native-signal-check-v1/build-v3.json",
+      "bytes": 38796,
+      "sha256": "ae36180f028aa8d0f53d36262cb0a322c38f07dd039d12b4f79572c1f3fc0edf"
+    },
+    "report": {
+      "scope": "Native signal helper and original signal suite; no Android framework or device execution",
+      "revision": "103490a0e9ccc901077adfd3e662756adb7e3abb",
+      "commands": [
+        [
+          "gmake",
+          "-C",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/work/native-signal-check-v1/kernel-source",
+          "O=/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/work/native-signal-check-v1/kernel-build",
+          "ARCH=lkl",
+          "CLANG_TARGET_FLAGS_lkl=aarch64-linux-gnu",
+          "CC=/opt/homebrew/opt/llvm/bin/clang --target=aarch64-linux-gnu -ffixed-x18",
+          "HOSTCC=/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX27.0.sdk -I /Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/work/native-signal-check-v1/host-include -idirafter /Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/work/native-signal-check-v1/uapi-include",
+          "LD=/opt/homebrew/bin/ld.lld",
+          "AR=llvm-ar",
+          "NM=llvm-nm",
+          "OBJCOPY=llvm-objcopy",
+          "OBJDUMP=llvm-objdump",
+          "STRIP=llvm-strip",
+          "olddefconfig"
+        ],
+        [
+          "gmake",
+          "-C",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/work/native-signal-check-v1/kernel-source",
+          "O=/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/work/native-signal-check-v1/kernel-build",
+          "ARCH=lkl",
+          "CLANG_TARGET_FLAGS_lkl=aarch64-linux-gnu",
+          "CC=/opt/homebrew/opt/llvm/bin/clang --target=aarch64-linux-gnu -ffixed-x18",
+          "HOSTCC=/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX27.0.sdk -I /Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/work/native-signal-check-v1/host-include -idirafter /Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/work/native-signal-check-v1/uapi-include",
+          "LD=/opt/homebrew/bin/ld.lld",
+          "AR=llvm-ar",
+          "NM=llvm-nm",
+          "OBJCOPY=llvm-objcopy",
+          "OBJDUMP=llvm-objdump",
+          "STRIP=llvm-strip",
+          "-j8",
+          "all"
+        ],
+        [
+          "/opt/homebrew/opt/llvm/bin/clang",
+          "--target=aarch64-linux-gnu",
+          "-ffixed-x18",
+          "-fPIC",
+          "-fno-stack-protector",
+          "-O2",
+          "-I",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/work/native-signal-check-v1",
+          "-I",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/experiments/native-linux",
+          "-c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/experiments/native-linux/lkl-bridge.c",
+          "-o",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/work/native-signal-check-v1/lkl-bridge.o"
+        ],
+        [
+          "/opt/homebrew/opt/llvm/bin/llvm-objcopy",
+          "--globalize-symbol=vsnprintf",
+          "--globalize-symbol=lkl_ops",
+          "--globalize-symbol=sysctl_sched_base_slice",
+          "--globalize-symbol=nce_run_syscall",
+          "--globalize-symbol=nce_page_fault",
+          "--globalize-symbol=nce_set_layout",
+          "--globalize-symbol=nce_user_return",
+          "--globalize-symbol=nce_user_fault",
+          "--globalize-symbol=nce_user_preempt",
+          "--globalize-symbol=nce_prepare_user",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/work/native-signal-check-v1/kernel-build/lkl.o",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/work/native-signal-check-v1/lkl-exports.o"
+        ],
+        [
+          "/opt/homebrew/bin/ld.lld",
+          "-shared",
+          "-Bsymbolic",
+          "--no-undefined",
+          "-z",
+          "max-page-size=16384",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/work/native-signal-check-v1/lkl-exports.o",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/work/native-signal-check-v1/lkl-bridge.o",
+          "-o",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/work/native-signal-check-v1/lkl.so"
+        ],
+        [
+          "/opt/homebrew/opt/llvm/bin/clang",
+          "--target=aarch64-linux-musl",
+          "-nostdinc",
+          "-isystem",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/work/native-signal-check-v1/musl/include",
+          "-isystem",
+          "/opt/homebrew/Cellar/llvm/22.1.7_1/lib/clang/22/include",
+          "-ffixed-x18",
+          "-mno-outline-atomics",
+          "-fPIE",
+          "-O2",
+          "-g",
+          "-Wall",
+          "-Wextra",
+          "-Werror",
+          "-c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/work/native-signal-check-v1/guest.c",
+          "-o",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/work/native-signal-check-v1/musl-helper.o"
+        ],
+        [
+          "/opt/homebrew/opt/llvm/bin/clang",
+          "--target=aarch64-linux-musl",
+          "-nostdinc",
+          "-isystem",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/work/native-signal-check-v1/musl/include",
+          "-isystem",
+          "/opt/homebrew/Cellar/llvm/22.1.7_1/lib/clang/22/include",
+          "-ffixed-x18",
+          "-mno-outline-atomics",
+          "-fPIE",
+          "-O2",
+          "-g",
+          "-Wall",
+          "-Wextra",
+          "-Werror",
+          "-c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/experiments/native-linux/userspace/signal-tests.c",
+          "-o",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/work/native-signal-check-v1/musl-signals.o"
+        ],
+        [
+          "/opt/homebrew/opt/llvm/bin/clang",
+          "--target=aarch64-linux-musl",
+          "-nostdinc",
+          "-isystem",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/work/native-signal-check-v1/musl/include",
+          "-isystem",
+          "/opt/homebrew/Cellar/llvm/22.1.7_1/lib/clang/22/include",
+          "-ffixed-x18",
+          "-mno-outline-atomics",
+          "-fPIE",
+          "-O2",
+          "-g",
+          "-Wall",
+          "-Wextra",
+          "-Werror",
+          "-c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/experiments/native-linux/userspace/signal-registers.S",
+          "-o",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/work/native-signal-check-v1/musl-registers.o"
+        ],
+        [
+          "/opt/homebrew/bin/ld.lld",
+          "-pie",
+          "--no-dynamic-linker",
+          "-z",
+          "max-page-size=16384",
+          "-z",
+          "common-page-size=16384",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/work/native-signal-check-v1/musl/lib/rcrt1.o",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/work/native-signal-check-v1/musl/lib/crti.o",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/work/native-signal-check-v1/musl-helper.o",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/work/native-signal-check-v1/musl-signals.o",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/work/native-signal-check-v1/musl-registers.o",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/work/native-signal-check-v1/musl/lib/libc.a",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/work/native-signal-check-v1/libbuiltins.a",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/work/native-signal-check-v1/musl/lib/crtn.o",
+          "-o",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/work/native-signal-check-v1/signal-musl.elf"
+        ],
+        [
+          "/opt/homebrew/share/android-ndk/toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android35-clang",
+          "-ffixed-x18",
+          "-mno-outline-atomics",
+          "-fPIE",
+          "-O2",
+          "-g",
+          "-Wall",
+          "-Wextra",
+          "-Werror",
+          "-c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/work/native-signal-check-v1/guest.c",
+          "-o",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/work/native-signal-check-v1/bionic-helper.o"
+        ],
+        [
+          "/opt/homebrew/share/android-ndk/toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android35-clang",
+          "-ffixed-x18",
+          "-mno-outline-atomics",
+          "-fPIE",
+          "-O2",
+          "-g",
+          "-Wall",
+          "-Wextra",
+          "-Werror",
+          "-c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/experiments/native-linux/userspace/signal-tests.c",
+          "-o",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/work/native-signal-check-v1/bionic-signals.o"
+        ],
+        [
+          "/opt/homebrew/share/android-ndk/toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android35-clang",
+          "-ffixed-x18",
+          "-mno-outline-atomics",
+          "-fPIE",
+          "-O2",
+          "-g",
+          "-Wall",
+          "-Wextra",
+          "-Werror",
+          "-c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/experiments/native-linux/userspace/signal-registers.S",
+          "-o",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/work/native-signal-check-v1/bionic-registers.o"
+        ],
+        [
+          "/opt/homebrew/share/android-ndk/toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android35-clang",
+          "-Wl,-z,max-page-size=16384,-z,common-page-size=16384",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/work/native-signal-check-v1/bionic-helper.o",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/work/native-signal-check-v1/bionic-signals.o",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/work/native-signal-check-v1/bionic-registers.o",
+          "-o",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/work/native-signal-check-v1/signal-bionic.elf"
+        ],
+        [
+          "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang",
+          "-O2",
+          "-g",
+          "-Wall",
+          "-Wextra",
+          "-Werror",
+          "-Wno-unused-function",
+          "-DNCE_PROCESS",
+          "-I",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/work/native-signal-check-v1",
+          "-I",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/experiments/native-linux",
+          "-isysroot",
+          "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX27.0.sdk",
+          "-DNATIVE",
+          "-c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/experiments/native-linux/guest.S",
+          "-o",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/work/native-signal-check-v1/native.o"
+        ],
+        [
+          "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang",
+          "-O2",
+          "-g",
+          "-Wall",
+          "-Wextra",
+          "-Werror",
+          "-Wno-unused-function",
+          "-DNCE_PROCESS",
+          "-I",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/work/native-signal-check-v1",
+          "-I",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/experiments/native-linux",
+          "-isysroot",
+          "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX27.0.sdk",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/experiments/native-linux/lkl-main.c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/experiments/native-linux/lkl-host.c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/experiments/native-linux/nce.c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/experiments/native-linux/nce-thread.c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/experiments/native-linux/entry.S",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/experiments/native-linux/nce-cpu.c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/experiments/native-linux/programs.c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/experiments/native-linux/memory.c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/experiments/native-linux/code-memory.c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/experiments/native-linux/execute-check.c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/experiments/native-linux/compute.c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/experiments/native-linux/input.c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/experiments/native-linux/session.c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/experiments/native-linux/session-profile.c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/work/native-signal-check-v1/lkl-process-host.c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/work/native-signal-check-v1/payload.S",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/work/native-signal-check-v1/native.o",
+          "-o",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/work/native-signal-check-v1/cli"
+        ],
+        [
+          "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang",
+          "-O2",
+          "-g",
+          "-Wall",
+          "-Wextra",
+          "-Werror",
+          "-Wno-unused-function",
+          "-DNCE_PROCESS",
+          "-I",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/work/native-signal-check-v1",
+          "-I",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/experiments/native-linux",
+          "-DNCE_IOS_APP",
+          "-isysroot",
+          "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX27.0.sdk",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/experiments/native-linux/lkl-main.c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/experiments/native-linux/lkl-host.c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/experiments/native-linux/nce.c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/experiments/native-linux/nce-thread.c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/experiments/native-linux/entry.S",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/experiments/native-linux/nce-cpu.c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/experiments/native-linux/programs.c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/experiments/native-linux/memory.c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/experiments/native-linux/code-memory.c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/experiments/native-linux/execute-check.c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/experiments/native-linux/compute.c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/experiments/native-linux/input.c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/experiments/native-linux/session.c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/experiments/native-linux/session-profile.c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/work/native-signal-check-v1/lkl-process-host.c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/work/native-signal-check-v1/payload.S",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/work/native-signal-check-v1/native.o",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/experiments/native-linux/dispatch-test.c",
+          "-o",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/work/native-signal-check-v1/gcd"
+        ],
+        [
+          "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang",
+          "-O2",
+          "-g",
+          "-Wall",
+          "-Wextra",
+          "-Werror",
+          "-Wno-unused-function",
+          "-DNCE_PROCESS",
+          "-I",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/work/native-signal-check-v1",
+          "-I",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/experiments/native-linux",
+          "-target",
+          "arm64-apple-ios17.0",
+          "-isysroot",
+          "/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS27.1.sdk",
+          "-c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/experiments/native-linux/lkl-host.c",
+          "-o",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/work/native-signal-check-v1/ios-lkl-host.o"
+        ],
+        [
+          "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang",
+          "-O2",
+          "-g",
+          "-Wall",
+          "-Wextra",
+          "-Werror",
+          "-Wno-unused-function",
+          "-DNCE_PROCESS",
+          "-I",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/work/native-signal-check-v1",
+          "-I",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/experiments/native-linux",
+          "-target",
+          "arm64-apple-ios17.0",
+          "-isysroot",
+          "/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS27.1.sdk",
+          "-c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/experiments/native-linux/lkl-process-host.c",
+          "-o",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/work/native-signal-check-v1/ios-lkl-process-host.o"
+        ],
+        [
+          "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang",
+          "-O2",
+          "-g",
+          "-Wall",
+          "-Wextra",
+          "-Werror",
+          "-Wno-unused-function",
+          "-DNCE_PROCESS",
+          "-I",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/work/native-signal-check-v1",
+          "-I",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/experiments/native-linux",
+          "-target",
+          "arm64-apple-ios17.0",
+          "-isysroot",
+          "/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS27.1.sdk",
+          "-c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/work/native-signal-check-v1/lkl-process-host.c",
+          "-o",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/work/native-signal-check-v1/ios-diagnostic.o"
+        ],
+        [
+          "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang",
+          "-O2",
+          "-g",
+          "-Wall",
+          "-Wextra",
+          "-Werror",
+          "-Wno-unused-function",
+          "-DNCE_PROCESS",
+          "-I",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/work/native-signal-check-v1",
+          "-I",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/experiments/native-linux",
+          "-isysroot",
+          "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX27.0.sdk",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/experiments/native-linux/lkl-main.c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/experiments/native-linux/lkl-host.c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/experiments/native-linux/nce.c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/experiments/native-linux/nce-thread.c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/experiments/native-linux/entry.S",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/experiments/native-linux/nce-cpu.c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/experiments/native-linux/programs.c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/experiments/native-linux/memory.c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/experiments/native-linux/code-memory.c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/experiments/native-linux/execute-check.c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/experiments/native-linux/compute.c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/experiments/native-linux/input.c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/experiments/native-linux/session.c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/experiments/native-linux/session-profile.c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/work/native-signal-check-v1/lkl-process-host.c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/work/native-signal-check-v1/payload.S",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/work/native-signal-check-v1/native.o",
+          "-o",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/work/native-signal-check-v1/cli"
+        ],
+        [
+          "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang",
+          "-O2",
+          "-g",
+          "-Wall",
+          "-Wextra",
+          "-Werror",
+          "-Wno-unused-function",
+          "-DNCE_PROCESS",
+          "-I",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/work/native-signal-check-v1",
+          "-I",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/experiments/native-linux",
+          "-DNCE_IOS_APP",
+          "-isysroot",
+          "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX27.0.sdk",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/experiments/native-linux/lkl-main.c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/experiments/native-linux/lkl-host.c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/experiments/native-linux/nce.c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/experiments/native-linux/nce-thread.c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/experiments/native-linux/entry.S",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/experiments/native-linux/nce-cpu.c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/experiments/native-linux/programs.c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/experiments/native-linux/memory.c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/experiments/native-linux/code-memory.c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/experiments/native-linux/execute-check.c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/experiments/native-linux/compute.c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/experiments/native-linux/input.c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/experiments/native-linux/session.c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/experiments/native-linux/session-profile.c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/work/native-signal-check-v1/lkl-process-host.c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/work/native-signal-check-v1/payload.S",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/work/native-signal-check-v1/native.o",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/experiments/native-linux/dispatch-test.c",
+          "-o",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/work/native-signal-check-v1/gcd"
+        ],
+        [
+          "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang",
+          "-O2",
+          "-g",
+          "-Wall",
+          "-Wextra",
+          "-Werror",
+          "-Wno-unused-function",
+          "-DNCE_PROCESS",
+          "-I",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/work/native-signal-check-v1",
+          "-I",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/experiments/native-linux",
+          "-target",
+          "arm64-apple-ios17.0",
+          "-isysroot",
+          "/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS27.1.sdk",
+          "-c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/work/native-signal-check-v1/lkl-process-host.c",
+          "-o",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/work/native-signal-check-v1/ios-diagnostic.o"
+        ],
+        [
+          "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang",
+          "-O2",
+          "-g",
+          "-Wall",
+          "-Wextra",
+          "-Werror",
+          "-Wno-unused-function",
+          "-DNCE_PROCESS",
+          "-I",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/work/native-signal-check-v1",
+          "-I",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/experiments/native-linux",
+          "-isysroot",
+          "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX27.0.sdk",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/experiments/native-linux/lkl-main.c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/experiments/native-linux/lkl-host.c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/experiments/native-linux/nce.c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/experiments/native-linux/nce-thread.c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/experiments/native-linux/entry.S",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/experiments/native-linux/nce-cpu.c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/experiments/native-linux/programs.c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/experiments/native-linux/memory.c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/experiments/native-linux/code-memory.c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/experiments/native-linux/execute-check.c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/experiments/native-linux/compute.c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/experiments/native-linux/input.c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/experiments/native-linux/session.c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/experiments/native-linux/session-profile.c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/work/native-signal-check-v1/lkl-process-host.c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/work/native-signal-check-v1/payload.S",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/work/native-signal-check-v1/native.o",
+          "-o",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/work/native-signal-check-v1/cli"
+        ],
+        [
+          "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang",
+          "-O2",
+          "-g",
+          "-Wall",
+          "-Wextra",
+          "-Werror",
+          "-Wno-unused-function",
+          "-DNCE_PROCESS",
+          "-I",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/work/native-signal-check-v1",
+          "-I",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/experiments/native-linux",
+          "-DNCE_IOS_APP",
+          "-isysroot",
+          "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX27.0.sdk",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/experiments/native-linux/lkl-main.c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/experiments/native-linux/lkl-host.c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/experiments/native-linux/nce.c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/experiments/native-linux/nce-thread.c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/experiments/native-linux/entry.S",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/experiments/native-linux/nce-cpu.c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/experiments/native-linux/programs.c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/experiments/native-linux/memory.c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/experiments/native-linux/code-memory.c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/experiments/native-linux/execute-check.c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/experiments/native-linux/compute.c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/experiments/native-linux/input.c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/experiments/native-linux/session.c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/experiments/native-linux/session-profile.c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/work/native-signal-check-v1/lkl-process-host.c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/work/native-signal-check-v1/payload.S",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/work/native-signal-check-v1/native.o",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/experiments/native-linux/dispatch-test.c",
+          "-o",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/work/native-signal-check-v1/gcd"
+        ],
+        [
+          "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang",
+          "-O2",
+          "-g",
+          "-Wall",
+          "-Wextra",
+          "-Werror",
+          "-Wno-unused-function",
+          "-DNCE_PROCESS",
+          "-I",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/work/native-signal-check-v1",
+          "-I",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/experiments/native-linux",
+          "-target",
+          "arm64-apple-ios17.0",
+          "-isysroot",
+          "/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS27.1.sdk",
+          "-c",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/work/native-signal-check-v1/lkl-process-host.c",
+          "-o",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/work/native-signal-check-v1/ios-diagnostic.o"
+        ]
+      ],
+      "sha256": {
+        "experiments/native-linux/lkl-main.c": "2468eed93c765a4040fb4c40161e35e1bbef5e0b35cced279b61c140a4b3caaf",
+        "experiments/native-linux/lkl-host.c": "49c63f1be4112408bbe5bdced53cf8bd0314eedaf770fe4d869d30edf3a6c671",
+        "experiments/native-linux/nce.c": "fac0dff4a7e683a47a3fafa3877f69f279a816115b81ca4f1d9dad709a7e402d",
+        "experiments/native-linux/nce-thread.c": "f9f7ddedf2d640ddbab6d0700409c9ba43da4017991b42aeb7e0a4f17034be4e",
+        "experiments/native-linux/entry.S": "7c18477d050befc16c1f749c591f3aa88ec9955a281bd368fff32a73c76f8102",
+        "experiments/native-linux/nce-cpu.c": "96cd6ef41c130a58c36e958c57ba5c1f6b204ab92924fea250d4d386136e23df",
+        "experiments/native-linux/programs.c": "53555eab1fc4fbc7a86f0b37a944cfc09ab3c9b604fbec1a99fc12c4bc2ad7ca",
+        "experiments/native-linux/memory.c": "752cf14d2f85a4bebb0b4bea95508d8d425b039eff1880b6c922a3335d776376",
+        "experiments/native-linux/code-memory.c": "8215ac2a2564049be0b45a80b3774ec994d6e51b6eb2057ed00cd515ef682981",
+        "experiments/native-linux/execute-check.c": "2e5a080e11bb3ec9407be2495c30a0391d2e8a858f1fe1a01a624eed3a8dd3c5",
+        "experiments/native-linux/compute.c": "dbd8e347a783f3d94525abb8ab01cf96491710d5d4f373d39343d259de53f985",
+        "experiments/native-linux/input.c": "d72144756d85e75d3b6e9667a22a927690c97f4d0b3e24ae0c75656499ae07b3",
+        "experiments/native-linux/session.c": "67a0502d7cfa67a3102128a90827ad818f5aa25947a8a1c2e9387aa23596fc9e",
+        "experiments/native-linux/session-profile.c": "4880502b366bf596eb402da1384f7015d41d9eb23623f8684537898cd842970e",
+        "work/native-signal-check-v1/lkl-process-host.c": "4b3b096e596653c79f65abe5b7c645ac810432f000a8a7d11af3037a8ed9f18f",
+        "experiments/native-linux/lkl-nce-elf.c": "31fa92e6d1615e78517769889353ef008d244089d6cb064eb1102d86ba2ba784",
+        "experiments/native-linux/lkl-nce-signal.c": "fc7f6867c5f7f4965ce9674ab2e2643430ac0af88daafa2ec75767799a51435c",
+        "experiments/native-linux/lkl-nce-mmu.c": "d0ee874b00e58100cfd982c1ecbed136f98a85af4e96c7a252009ebc44edf075",
+        "experiments/native-linux/userspace/signal-tests.c": "16b8e5d60a78c99099336d0d7177770f5792ee46e83a6d73bb808bf65b886a9a",
+        "experiments/native-linux/userspace/signal-registers.S": "bfa6f7f9a8cb361dec04c67b8a7203cd89dca2aab56e6772ebe9dac3d834bef5",
+        "work/native-signal-check-v1/guest.c": "b0cfcfaa3b3ed9e3f333e125dd13121400b4a763789218127219b7b7b59ca7ba",
+        "work/native-signal-check-v1/build.py": "75f4cd728aaf93172fd925e4f4b27b613fe1392b7b9b9ac74276d69859d285d0",
+        "work/native-signal-check-v1/lkl.so": "f41b6cc9f9d1ff0e99a27d42af20bc088ba954891843739e6b7014354a3dd530",
+        "work/native-signal-check-v1/lkl-image.bin": "8202d6c16eb2ee102582c4b3a6a06acd0e012f7dc01a6302284b1b197fbf1323",
+        "work/native-signal-check-v1/lkl-image.h": "b96d7ad385256d0898dc8ac0faab8639655926ee8740074a1c532672e78ca866",
+        "work/native-signal-check-v1/program-images.h": "8477fb363be14eb37022baeb4735b6daeaa03fb4aaa781314004fe9ee5dca28e",
+        "work/native-signal-check-v1/payload.bin": "718817b7429cea47ade820a22ad8b0df818c2098b478e6a0f4a8e963ee3817b8",
+        "work/native-signal-check-v1/sigreturn.elf": "795d053b14585230d5f6ec0d09fdd5d91b8685c9fb6acdd0935d3d9359baf271",
+        "work/native-signal-check-v1/signal-musl.elf": "9d7576a35bdf5cff1fc4d563bd836444247e741499707491f7e573ff23e3518a",
+        "work/native-signal-check-v1/signal-bionic.elf": "6417a9a18f20666a8cfa5c7653b8b3cc9ac717cbe33f0c454699bfe1850b056b",
+        "work/native-signal-check-v1/linker64": "c51e686199f0145cfd440658eb5e8e09e90b771e6a746218049e5cd651a1450f",
+        "work/native-signal-check-v1/bionic-libc.so": "adb0a4e155107fa9c56e84d20e41af48fca1c40dcd332e2316fd87c9b1e6c00a",
+        "work/native-signal-check-v1/libdl.so": "1f05fe7000cc8b8c6de0910996ec42a490ef527e5f5ba8c8e0d2120ad08b8131",
+        "work/native-signal-check-v1/cli": "b891e06c464e7ccb33a8760c972854fe1578fb9f48b49a1a8b44b1cbda150510",
+        "work/native-signal-check-v1/gcd": "364f9067cbee935a33c22efef251a9940dae1e883e478abfdec07e66fe0141e6",
+        "work/native-signal-check-v1/ios-lkl-host.o": "f7a97d3363655434f0420c7eaf9c3dfd963c172d025a47d522067e95024f5427",
+        "work/native-signal-check-v1/ios-lkl-process-host.o": "d750bbb431ac7725574c858efea2c58aaac941f3be0452647807d1151bbeda39",
+        "work/native-signal-check-v1/ios-diagnostic.o": "4c7c74e23529f03f326061dfbf62409721d64347a76f56c2d426bb5e4eae493f",
+        "experiments/native-linux/art/ld.config.txt": "dc106c5021978b80e002a74cb56941b4e8381a66a2f00ffc7116dbabc946d89b"
+      }
+    }
+  },
+  "final_runtime": {
+    "file": {
+      "path": "work/native-signal-check-v1/summary-v3.json",
+      "bytes": 13161,
+      "sha256": "3d938b5e09364af9bd8899bd7fdcaa6bcb22ed549e244442277ddcbcab85ed55"
+    },
+    "report": {
+      "scope": "Native NCE original signal suite, raw restorer, fork/reexec; isolated helper diagnostic. No Android framework or device execution.",
+      "platform": "macOS-27.0-arm64-arm-64bit-Mach-O",
+      "cpu": "Apple M5 Ultra",
+      "system_build": "26A428",
+      "configuration": {
+        "execution": "native",
+        "guest_page_bytes": 16384,
+        "cpus": 1,
+        "mapping": "demand",
+        "android_framework": false,
+        "guest_library": "musl and project-built Bionic"
+      },
+      "build_report_sha256": "ae36180f028aa8d0f53d36262cb0a322c38f07dd039d12b4f79572c1f3fc0edf",
+      "runs": [
+        {
+          "entry": "cli",
+          "command": [
+            "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/work/native-signal-check-v1/cli",
+            "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/work/native-signal-check-v1/lkl-image.bin"
+          ],
+          "returncode": 0,
+          "validated": true,
+          "checks": [
+            {
+              "test": "prepared_fixed_address_code_updates",
+              "passed": true,
+              "ranges": 9,
+              "updates_per_range": 8
+            },
+            {
+              "test": "prepared_code_permission_restore",
+              "passed": true,
+              "available": true
+            },
+            {
+              "test": "data_fixed_remap_after_detach",
+              "passed": true,
+              "targets": 2,
+              "switches_per_target": 8
+            },
+            {
+              "test": "linux_ram_remap",
+              "passed": true,
+              "bytes": 1073741824
+            },
+            {
+              "test": "native_program_range_index",
+              "passed": true,
+              "programs": 7
+            },
+            {
+              "test": "native_linux_boot",
+              "passed": true,
+              "ms": 56.844
+            },
+            {
+              "test": "linux_uname",
+              "sysname": "Linux",
+              "release": "6.12.0"
+            },
+            {
+              "test": "android_data_ext4_mounted",
+              "passed": true
+            },
+            {
+              "test": "linux_random_initialized",
+              "passed": true
+            },
+            {
+              "test": "linux_signal_mask_altstack_nested",
+              "passed": true
+            },
+            {
+              "test": "linux_signal_register_restore",
+              "passed": true
+            },
+            {
+              "test": "linux_signal_kernel_restorer",
+              "passed": true,
+              "pid": 1
+            },
+            {
+              "test": "linux_signal_eintr_restart",
+              "passed": true
+            },
+            {
+              "test": "linux_signal_fault_recovery",
+              "passed": true
+            },
+            {
+              "test": "linux_signal_context_redirect",
+              "passed": true
+            },
+            {
+              "test": "linux_signal_frame_validation_stop_exit",
+              "passed": true
+            },
+            {
+              "test": "linux_pthread_cancel_signal",
+              "passed": true
+            },
+            {
+              "test": "linux_signal_timer_preemption",
+              "passed": true
+            },
+            {
+              "test": "linux_signal_suite",
+              "passed": true,
+              "libc": "diagnostic"
+            },
+            {
+              "test": "linux_signal_kernel_restorer",
+              "passed": true,
+              "pid": 11
+            },
+            {
+              "test": "linux_signal_kernel_restorer",
+              "passed": true,
+              "pid": 11
+            },
+            {
+              "test": "native_signal_reexec",
+              "passed": true,
+              "pid": 11
+            },
+            {
+              "test": "linux_signal_kernel_restorer",
+              "passed": true,
+              "pid": 1
+            },
+            {
+              "test": "native_signal_fork_exec",
+              "passed": true
+            },
+            {
+              "test": "linux_signal_mask_altstack_nested",
+              "passed": true
+            },
+            {
+              "test": "linux_signal_register_restore",
+              "passed": true
+            },
+            {
+              "test": "linux_signal_kernel_restorer",
+              "passed": true,
+              "pid": 1
+            },
+            {
+              "test": "linux_signal_eintr_restart",
+              "passed": true
+            },
+            {
+              "test": "linux_signal_fault_recovery",
+              "passed": true
+            },
+            {
+              "test": "linux_signal_context_redirect",
+              "passed": true
+            },
+            {
+              "test": "linux_signal_frame_validation_stop_exit",
+              "passed": true
+            },
+            {
+              "test": "linux_signal_timer_preemption",
+              "passed": true
+            },
+            {
+              "test": "linux_signal_suite",
+              "passed": true,
+              "libc": "diagnostic"
+            },
+            {
+              "test": "linux_signal_kernel_restorer",
+              "passed": true,
+              "pid": 10
+            },
+            {
+              "test": "linux_signal_kernel_restorer",
+              "passed": true,
+              "pid": 10
+            },
+            {
+              "test": "native_signal_reexec",
+              "passed": true,
+              "pid": 10
+            },
+            {
+              "test": "linux_signal_kernel_restorer",
+              "passed": true,
+              "pid": 1
+            },
+            {
+              "test": "native_signal_fork_exec",
+              "passed": true
+            },
+            {
+              "test": "linux_kernel_warnings",
+              "passed": true
+            },
+            {
+              "test": "linux_data_readonly_shutdown",
+              "passed": true
+            },
+            {
+              "test": "fixed_linux_code_view",
+              "copies": 87,
+              "passed": true
+            },
+            {
+              "test": "linux_retained_code_bytes",
+              "bytes": 8503296
+            },
+            {
+              "test": "linux_host_mapping_totals",
+              "data_maps": 630,
+              "data_bytes": 1084047360,
+              "code_copy_bytes": 1425408,
+              "revocations": 822
+            },
+            {
+              "test": "linux_nce_context_lifetime",
+              "allocated": 21,
+              "freed": 21
+            },
+            {
+              "test": "linux_guest_events",
+              "preemptions": 10,
+              "deferred_faults": 424,
+              "stack_resumes": 118,
+              "stack_calls": 27
+            },
+            {
+              "test": "guest_preemption_signal_mask",
+              "inherited_blocked_threads": 0,
+              "passed": true
+            }
+          ],
+          "programs": [
+            {
+              "phase": "native_signal_program",
+              "path": "/signal-musl"
+            },
+            {
+              "phase": "native_signal_program",
+              "path": "/signal-bionic"
+            }
+          ],
+          "stdout": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/work/native-signal-check-v1/cli-v3.jsonl",
+          "stderr": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/work/native-signal-check-v1/cli-v3.log",
+          "stdout_sha256": "ad95e53ea256f75e441dd74b0414a2d98be3f29f5465d696c0829768dc4faf1e",
+          "stderr_sha256": "10c2ab3bb32bdf54a28d742c441361399b77923f4045b31ec016fed59fe6a2dc"
+        },
+        {
+          "entry": "gcd",
+          "command": [
+            "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/work/native-signal-check-v1/gcd",
+            "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/work/native-signal-check-v1/lkl-image.bin"
+          ],
+          "returncode": 0,
+          "validated": true,
+          "checks": [
+            {
+              "test": "dispatch_signal_mask",
+              "sigusr2_blocked": 1
+            },
+            {
+              "test": "prepared_fixed_address_code_updates",
+              "passed": true,
+              "ranges": 9,
+              "updates_per_range": 8
+            },
+            {
+              "test": "prepared_code_permission_restore",
+              "passed": true,
+              "available": true
+            },
+            {
+              "test": "data_fixed_remap_after_detach",
+              "passed": true,
+              "targets": 2,
+              "switches_per_target": 8
+            },
+            {
+              "test": "linux_ram_remap",
+              "passed": true,
+              "bytes": 1073741824
+            },
+            {
+              "test": "native_program_range_index",
+              "passed": true,
+              "programs": 7
+            },
+            {
+              "test": "native_linux_boot",
+              "passed": true,
+              "ms": 47.001
+            },
+            {
+              "test": "linux_uname",
+              "sysname": "Linux",
+              "release": "6.12.0"
+            },
+            {
+              "test": "android_data_ext4_mounted",
+              "passed": true
+            },
+            {
+              "test": "linux_random_initialized",
+              "passed": true
+            },
+            {
+              "test": "linux_signal_mask_altstack_nested",
+              "passed": true
+            },
+            {
+              "test": "linux_signal_register_restore",
+              "passed": true
+            },
+            {
+              "test": "linux_signal_kernel_restorer",
+              "passed": true,
+              "pid": 1
+            },
+            {
+              "test": "linux_signal_eintr_restart",
+              "passed": true
+            },
+            {
+              "test": "linux_signal_fault_recovery",
+              "passed": true
+            },
+            {
+              "test": "linux_signal_context_redirect",
+              "passed": true
+            },
+            {
+              "test": "linux_signal_frame_validation_stop_exit",
+              "passed": true
+            },
+            {
+              "test": "linux_pthread_cancel_signal",
+              "passed": true
+            },
+            {
+              "test": "linux_signal_timer_preemption",
+              "passed": true
+            },
+            {
+              "test": "linux_signal_suite",
+              "passed": true,
+              "libc": "diagnostic"
+            },
+            {
+              "test": "linux_signal_kernel_restorer",
+              "passed": true,
+              "pid": 11
+            },
+            {
+              "test": "linux_signal_kernel_restorer",
+              "passed": true,
+              "pid": 11
+            },
+            {
+              "test": "native_signal_reexec",
+              "passed": true,
+              "pid": 11
+            },
+            {
+              "test": "linux_signal_kernel_restorer",
+              "passed": true,
+              "pid": 1
+            },
+            {
+              "test": "native_signal_fork_exec",
+              "passed": true
+            },
+            {
+              "test": "linux_signal_mask_altstack_nested",
+              "passed": true
+            },
+            {
+              "test": "linux_signal_register_restore",
+              "passed": true
+            },
+            {
+              "test": "linux_signal_kernel_restorer",
+              "passed": true,
+              "pid": 1
+            },
+            {
+              "test": "linux_signal_eintr_restart",
+              "passed": true
+            },
+            {
+              "test": "linux_signal_fault_recovery",
+              "passed": true
+            },
+            {
+              "test": "linux_signal_context_redirect",
+              "passed": true
+            },
+            {
+              "test": "linux_signal_frame_validation_stop_exit",
+              "passed": true
+            },
+            {
+              "test": "linux_signal_timer_preemption",
+              "passed": true
+            },
+            {
+              "test": "linux_signal_suite",
+              "passed": true,
+              "libc": "diagnostic"
+            },
+            {
+              "test": "linux_signal_kernel_restorer",
+              "passed": true,
+              "pid": 10
+            },
+            {
+              "test": "linux_signal_kernel_restorer",
+              "passed": true,
+              "pid": 10
+            },
+            {
+              "test": "native_signal_reexec",
+              "passed": true,
+              "pid": 10
+            },
+            {
+              "test": "linux_signal_kernel_restorer",
+              "passed": true,
+              "pid": 1
+            },
+            {
+              "test": "native_signal_fork_exec",
+              "passed": true
+            },
+            {
+              "test": "linux_kernel_warnings",
+              "passed": true
+            },
+            {
+              "test": "linux_data_readonly_shutdown",
+              "passed": true
+            },
+            {
+              "test": "fixed_linux_code_view",
+              "copies": 87,
+              "passed": true
+            },
+            {
+              "test": "linux_retained_code_bytes",
+              "bytes": 8536064
+            },
+            {
+              "test": "linux_host_mapping_totals",
+              "data_maps": 631,
+              "data_bytes": 1084063744,
+              "code_copy_bytes": 1425408,
+              "revocations": 821
+            },
+            {
+              "test": "linux_nce_context_lifetime",
+              "allocated": 21,
+              "freed": 21
+            },
+            {
+              "test": "linux_guest_events",
+              "preemptions": 8,
+              "deferred_faults": 423,
+              "stack_resumes": 118,
+              "stack_calls": 27
+            },
+            {
+              "test": "guest_preemption_signal_mask",
+              "inherited_blocked_threads": 2,
+              "passed": true
+            }
+          ],
+          "programs": [
+            {
+              "phase": "native_signal_program",
+              "path": "/signal-musl"
+            },
+            {
+              "phase": "native_signal_program",
+              "path": "/signal-bionic"
+            }
+          ],
+          "stdout": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/work/native-signal-check-v1/gcd-v3.jsonl",
+          "stderr": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/work/native-signal-check-v1/gcd-v3.log",
+          "stdout_sha256": "b86e32b36cf7487a230640e32f2bc419c4a8bb792e994cfb6e483405fe9e44de",
+          "stderr_sha256": "10c2ab3bb32bdf54a28d742c441361399b77923f4045b31ec016fed59fe6a2dc"
+        }
+      ],
+      "passed": true
+    }
+  },
+  "provenance": {
+    "final_build_files_matched": 39,
+    "build_report_and_runtime_log_hashes_matched": true,
+    "generated_kernel_source": {
+      "manifest": {
+        "path": "work/native-signal-check-v1/kernel-source-manifest.json",
+        "bytes": 15672862,
+        "sha256": "6121a788ed619d04c10df362e061ffeab78df8609093f1c4e84a92c7e45a3a60"
+      },
+      "files": 86876,
+      "regular_file_bytes": 1490781254
+    },
+    "copied_kernel_sources": [
+      {
+        "source": "experiments/native-linux/layout.h",
+        "generated": "work/native-signal-check-v1/kernel-source/arch/lkl/include/asm/nce-layout.h",
+        "sha256": "7a801b3f98095c6967a13e71d128a39efb5f206ab1144dcfdf060d964f02ff91"
+      },
+      {
+        "source": "experiments/native-linux/lkl-mmu-profile.h",
+        "generated": "work/native-signal-check-v1/kernel-source/arch/lkl/include/asm/nce-mmu-profile.h",
+        "sha256": "c6410a8ac3d795c136b00c8108e698ac7a7f04e0ec3cf85cfbc4a01a60fa48aa"
+      },
+      {
+        "source": "experiments/native-linux/lkl-syscall.h",
+        "generated": "work/native-signal-check-v1/kernel-source/arch/lkl/include/asm/syscall.h",
+        "sha256": "a895d2f1e7aa6a34b5645d21b6fcedbcd2952dd69ad6b6067724d51f47c1cfac"
+      },
+      {
+        "source": "experiments/native-linux/lkl-seccomp.h",
+        "generated": "work/native-signal-check-v1/kernel-source/arch/lkl/include/asm/seccomp.h",
+        "sha256": "95aa047dcb9ececaa38898eeebab120953c65448e05331cc079eae32807de7ac"
+      },
+      {
+        "source": "experiments/native-linux/guest-registers.h",
+        "generated": "work/native-signal-check-v1/kernel-source/arch/lkl/include/asm/guest-registers.h",
+        "sha256": "90a4d5b6e613ce4f2cda359dcd05f6e8d876a788bc437c2c1e13e05403e4627a"
+      },
+      {
+        "source": "experiments/native-linux/lkl-signal.h",
+        "generated": "work/native-signal-check-v1/kernel-source/arch/lkl/include/asm/signal.h",
+        "sha256": "d16a7718ab952a7f2f53adc6b6381a0cb2fd6b352f47cefb1ec72f0d862d1491"
+      },
+      {
+        "source": "experiments/native-linux/lkl-nce-mmu.c",
+        "generated": "work/native-signal-check-v1/kernel-source/arch/lkl/mm/nce_mmu.c",
+        "sha256": "d0ee874b00e58100cfd982c1ecbed136f98a85af4e96c7a252009ebc44edf075"
+      },
+      {
+        "source": "experiments/native-linux/lkl-nce-process.c",
+        "generated": "work/native-signal-check-v1/kernel-source/arch/lkl/kernel/nce_process.c",
+        "sha256": "0fe64668ed5c77a84f3c4cd1440b451908913eaed1c25cad4f2fc093581b8d22"
+      },
+      {
+        "source": "experiments/native-linux/lkl-nce-signal.c",
+        "generated": "work/native-signal-check-v1/kernel-source/arch/lkl/kernel/nce_signal.c",
+        "sha256": "fc7f6867c5f7f4965ce9674ab2e2643430ac0af88daafa2ec75767799a51435c"
+      },
+      {
+        "source": "experiments/native-linux/lkl-nce-schedule.c",
+        "generated": "work/native-signal-check-v1/kernel-source/arch/lkl/kernel/nce_schedule.c",
+        "sha256": "32dbb6b603eafb65cc9bd512a926ace0f9d9bd093601c3bf29f40f557d40af4e"
+      },
+      {
+        "source": "experiments/native-linux/lkl-nce-elf.c",
+        "generated": "work/native-signal-check-v1/kernel-source/arch/lkl/kernel/nce_elf.c",
+        "sha256": "31fa92e6d1615e78517769889353ef008d244089d6cb064eb1102d86ba2ba784"
+      },
+      {
+        "source": "experiments/native-linux/lkl-nce-block.c",
+        "generated": "work/native-signal-check-v1/kernel-source/arch/lkl/kernel/nce_block.c",
+        "sha256": "2a8d0356c87a73575f760755d4666a53ecacca3d55eb33dea797f1ebbb8e3b60"
+      },
+      {
+        "source": "experiments/native-linux/lkl-nce-reclaim.c",
+        "generated": "work/native-signal-check-v1/kernel-source/arch/lkl/kernel/nce_reclaim.c",
+        "sha256": "0341deb0311e7262427e4d0d6e5c0f335cb19af018ab227e4615840c736be293"
+      },
+      {
+        "source": "experiments/native-linux/lkl-mmu-context.h",
+        "generated": "work/native-signal-check-v1/kernel-source/arch/lkl/include/asm/mmu_context.h",
+        "sha256": "38b62f9a8056956cf41752467a9b6ff4ee0a31f9e339013600c23bd87e5c56d0"
+      },
+      {
+        "source": "experiments/native-linux/lkl-mmu.h",
+        "generated": "work/native-signal-check-v1/kernel-source/arch/lkl/include/asm/mmu.h",
+        "sha256": "a38bb934c2e33959d92c1bde7ad2aebd1bf6c77343956669bb59da6c8e11f2ca"
+      },
+      {
+        "source": "experiments/native-linux/lkl-uaccess.h",
+        "generated": "work/native-signal-check-v1/kernel-source/arch/lkl/include/asm/uaccess.h",
+        "sha256": "8db32d1ad3dc5261c267d1c50d1be741daca9c2a68e64aaebc06779ab6e8e64f"
+      },
+      {
+        "source": "experiments/native-linux/lkl-elf.h",
+        "generated": "work/native-signal-check-v1/kernel-source/arch/lkl/include/asm/elf.h",
+        "sha256": "addf40a6adc1a51ddb68bffa315f1c74afed260508cc154be1d696b149ceb99b"
+      },
+      {
+        "source": "experiments/native-linux/lkl-fcntl.h",
+        "generated": "work/native-signal-check-v1/kernel-source/arch/lkl/include/uapi/asm/fcntl.h",
+        "sha256": "a93dbe60bbed231461aead2289756e46996e8486b50e895a5b4af798ee98da47"
+      },
+      {
+        "source": "experiments/native-linux/lkl-tlbflush.h",
+        "generated": "work/native-signal-check-v1/kernel-source/arch/lkl/include/asm/tlbflush.h",
+        "sha256": "e9140c9203d073e3a46d2c2f0e3f88b816c8ddc652fba53bca1196b31b173eea"
+      }
+    ],
+    "additional_input_and_artifact_sha256": [
+      {
+        "path": "experiments/native-linux/lkl-process-host.c",
+        "bytes": 86791,
+        "sha256": "7427cc1542412d02c73995a8259ae46fcbad0c59943976a26830c36230371d38"
+      },
+      {
+        "path": "scripts/lkl_nce_patch.py",
+        "bytes": 25908,
+        "sha256": "9421fc0caa35b99c1c7c933e3a2c86db289f59a679523eb6fcf6e30d0710e861"
+      },
+      {
+        "path": "scripts/probe_lkl.py",
+        "bytes": 40515,
+        "sha256": "ab04b2a44ee3d18a096146e2ffd344698f8b12c776db3e7935663be3bfa57aef"
+      },
+      {
+        "path": "scripts/build_nce_userspace.py",
+        "bytes": 78762,
+        "sha256": "4fafb283fdc1babe0d62ef949eeffd50d2018fddb3420694ab9fb64a60d82149"
+      },
+      {
+        "path": "scripts/build_android_libc.py",
+        "bytes": 8304,
+        "sha256": "00e7a51f553911f71983a86df8d5ff3da1885fcd407c0dd9dc1ee837a0aa6ae5"
+      },
+      {
+        "path": "scripts/build_android_linker.py",
+        "bytes": 9160,
+        "sha256": "8df4e3342c2948021e2b247bd67e48e3a2117e45e5d790f697c620e3367817fc"
+      },
+      {
+        "path": "experiments/native-linux/lkl-bridge.c",
+        "bytes": 2073,
+        "sha256": "03db6e0a384ac151d7294eb47f6e147964c29a3f47b5ae443957495a014aed50"
+      },
+      {
+        "path": "work/native-signal-check-v1/kernel-build/.config",
+        "bytes": 42727,
+        "sha256": "833b6156cdd86b39644ab4b94a9deeca448c6b4e0eca6dfb0937bf91345adc02"
+      },
+      {
+        "path": "work/native-signal-check-v1/guest-image.h",
+        "bytes": 4130,
+        "sha256": "e5c4e5cddfc16b459f9e480134dc102e4811a5c9121d0a7ac9d52d933e94a5ba"
+      },
+      {
+        "path": "work/native-signal-check-v1/user-scripts.h",
+        "bytes": 131,
+        "sha256": "50aac5a459629cad2d5e73a7d8fc7224425fd27251879c732a8437ece139423e"
+      },
+      {
+        "path": "work/native-signal-check-v1/lkl-host-ops.h",
+        "bytes": 9217,
+        "sha256": "54bf2a775fa582ca2bc04fb6a25dc85525b6c69da1cde54f610c4a35e0c1a833"
+      },
+      {
+        "path": "work/native-signal-check-v1/art-aot-targets.h",
+        "bytes": 496,
+        "sha256": "a04d0bd867b8510b5605bf4fb4332b01176e27789fb5f63c30681c9220d89f49"
+      },
+      {
+        "path": "work/native-signal-check-v1/exec-guest.elf",
+        "bytes": 83312,
+        "sha256": "2653f70b168f2c2b58e048b5fe81137ebf36d6a8e6e13a37f4d579b02f6c3e9d"
+      },
+      {
+        "path": "work/native-signal-check-v1/libbuiltins.a",
+        "bytes": 60718,
+        "sha256": "091abbc76a469ed734fd89e77715c52a18a66701ac7df44c697a6048616f90f2"
+      },
+      {
+        "path": "work/native-signal-check-v1/musl/lib/libc.a",
+        "bytes": 2414050,
+        "sha256": "9ef7984527ae388d430839a19d075d0a7e3ec1222d6871511a72301823ae918e"
+      },
+      {
+        "path": "work/native-signal-check-v1/musl/lib/rcrt1.o",
+        "bytes": 2576,
+        "sha256": "ac8786de3a778ef250ad526324494d8c6ffd56df68d377ed62fe577cb22f06e6"
+      },
+      {
+        "path": "work/native-signal-check-v1/musl/lib/crti.o",
+        "bytes": 720,
+        "sha256": "77ab701cb5a51b1287eeb6ac47f2fe3419d28ceb6c60cfa4350a424bce64c178"
+      },
+      {
+        "path": "work/native-signal-check-v1/musl/lib/crtn.o",
+        "bytes": 656,
+        "sha256": "67075d2a260ab83147aa2dd3dd5fa3a2c5715af2ddcd101bb69d951ddfe14ed7"
+      },
+      {
+        "path": "work/native-signal-check-v1/data-v3.img",
+        "bytes": 67108864,
+        "sha256": "2bcaccc6f646a29a71c7b7308947703ab0d8bdcd2c5ce2e43f81f3fa85e9e19c"
+      },
+      {
+        "path": "work/native-signal-check-v1/system.img",
+        "bytes": 67108864,
+        "sha256": "3b6a07d0d404fab4e23b6d34bc6696a6a312dd92821332385e5af7c01c421351"
+      },
+      {
+        "path": "work/native-signal-check-v1/collect.py",
+        "bytes": 9206,
+        "sha256": "3d6d2564379a9f069b3d6c9d8a6b0f54cd5c449911f2828cbb7612cd54d56a2d"
+      }
+    ],
+    "musl_headers_manifest": {
+      "path": "work/native-signal-check-v1/musl-headers-manifest.json",
+      "bytes": 38266,
+      "sha256": "48d28db697ae18d6b813621c5ca07dce036e7d25b78b62afb7be066ab2324802"
+    }
+  },
+  "ios_compile": {
+    "passed": true,
+    "target": "arm64-apple-ios17.0",
+    "sdk": "iPhoneOS27.1",
+    "sources": [
+      "experiments/native-linux/lkl-host.c",
+      "experiments/native-linux/lkl-process-host.c",
+      "work/native-signal-check-v1/lkl-process-host.c"
+    ],
+    "commands": [
+      [
+        "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang",
+        "-O2",
+        "-g",
+        "-Wall",
+        "-Wextra",
+        "-Werror",
+        "-Wno-unused-function",
+        "-DNCE_PROCESS",
+        "-I",
+        "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/work/native-signal-check-v1",
+        "-I",
+        "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/experiments/native-linux",
+        "-target",
+        "arm64-apple-ios17.0",
+        "-isysroot",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS27.1.sdk",
+        "-c",
+        "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/experiments/native-linux/lkl-host.c",
+        "-o",
+        "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/work/native-signal-check-v1/ios-lkl-host.o"
+      ],
+      [
+        "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang",
+        "-O2",
+        "-g",
+        "-Wall",
+        "-Wextra",
+        "-Werror",
+        "-Wno-unused-function",
+        "-DNCE_PROCESS",
+        "-I",
+        "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/work/native-signal-check-v1",
+        "-I",
+        "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/experiments/native-linux",
+        "-target",
+        "arm64-apple-ios17.0",
+        "-isysroot",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS27.1.sdk",
+        "-c",
+        "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/experiments/native-linux/lkl-process-host.c",
+        "-o",
+        "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/work/native-signal-check-v1/ios-lkl-process-host.o"
+      ],
+      [
+        "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang",
+        "-O2",
+        "-g",
+        "-Wall",
+        "-Wextra",
+        "-Werror",
+        "-Wno-unused-function",
+        "-DNCE_PROCESS",
+        "-I",
+        "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/work/native-signal-check-v1",
+        "-I",
+        "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/experiments/native-linux",
+        "-target",
+        "arm64-apple-ios17.0",
+        "-isysroot",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS27.1.sdk",
+        "-c",
+        "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/work/native-signal-check-v1/lkl-process-host.c",
+        "-o",
+        "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-native-signal/work/native-signal-check-v1/ios-diagnostic.o"
+      ]
+    ],
+    "application_link": false,
+    "device_execution": false
+  },
+  "filesystem": {
+    "file": {
+      "path": "work/native-signal-check-v1/e2fsck-v3.json",
+      "bytes": 336,
+      "sha256": "f9f20a1825a90fa3b8b59bbd4a03584290f35e636dc06610f052aadcfc40587e"
+    },
+    "report": {
+      "command": [
+        "/opt/homebrew/opt/e2fsprogs/sbin/e2fsck",
+        "-fn",
+        "work/native-signal-check-v1/data-v3.img"
+      ],
+      "returncode": 0,
+      "read_only": true,
+      "log_sha256": "06691c418cfe897a1d009793a15d292468e3098aa9df65edec80a3389cf6f25e",
+      "data_sha256": "2bcaccc6f646a29a71c7b7308947703ab0d8bdcd2c5ce2e43f81f3fa85e9e19c"
+    }
+  },
+  "historical_build_logs": [
+    {
+      "file": {
+        "path": "work/native-signal-check-v1/build.log",
+        "bytes": 1687,
+        "sha256": "34a3ba888949919301ac37c140f3064168497a010f031fbd86d6de606395da76"
+      },
+      "reason": "诊断 lld 路径不存在，olddefconfig 返回 2。"
+    },
+    {
+      "file": {
+        "path": "work/native-signal-check-v1/build-v2.log",
+        "bytes": 1676,
+        "sha256": "c7dd4b00ee7be02061fdfe7f1049bfbd65e2a64e473e2e730e77e71b40b11f15"
+      },
+      "reason": "诊断 HOSTCC 缺少 Linux UAPI asm/types.h，内核构建返回 2。"
+    },
+    {
+      "file": {
+        "path": "work/native-signal-check-v1/build-v3.log",
+        "bytes": 4762,
+        "sha256": "8b7c8fcd8e4fdb8ca8126e77b165de6f8f5d90733082f5dd33601014ec0324ce"
+      },
+      "reason": "诊断未导出 vsnprintf、lkl_ops、sysctl_sched_base_slice，链接返回 1。"
+    },
+    {
+      "file": {
+        "path": "work/native-signal-check-v1/build-v4.log",
+        "bytes": 7311,
+        "sha256": "5d4f1ede3ce268a87aac8bec94d9cbab5d4f41ac8628e7ad1a74e25a61e07782"
+      },
+      "reason": "Bionic ELF 缺少 mapping symbols，诊断需要原检查器的 function_symbols 模式。"
+    },
+    {
+      "file": {
+        "path": "work/native-signal-check-v1/build-v5.log",
+        "bytes": 15062,
+        "sha256": "6a56455bcf18ba7da9e37fac950c02c139cc47e4d3e935c747badfeb291e6b9c"
+      },
+      "reason": "诊断装配成功；该次源码哈希按原报告保留。"
+    }
+  ],
+  "historical_run_reports": [
+    {
+      "file": {
+        "path": "work/native-signal-check-v1/summary.json",
+        "bytes": 7029,
+        "sha256": "665f8d988019165bf8063ab068b8bd897fc618ae4ad47212cb8e3cac338a27d0"
+      },
+      "build_report_sha256": "7c5b5cef573477ad03211e83035c9bf59217a58a0c1daa06e84bfa28be5f8414",
+      "passed": false,
+      "runs": [
+        {
+          "entry": "cli",
+          "returncode": -6,
+          "validated": false,
+          "stdout": {
+            "path": "work/native-signal-check-v1/cli.jsonl",
+            "bytes": 7204,
+            "sha256": "31c5abc40e3f3154b064f610734f95863571ebde0f035d78867ff562b07bb3aa"
+          },
+          "stderr": {
+            "path": "work/native-signal-check-v1/cli.log",
+            "bytes": 5697,
+            "sha256": "fae72c0f498fb0a4187c4b3fabcb90085ea5b20a2eca4ba06537d22002d72b0a"
+          }
+        },
+        {
+          "entry": "gcd",
+          "returncode": -6,
+          "validated": false,
+          "stdout": {
+            "path": "work/native-signal-check-v1/gcd.jsonl",
+            "bytes": 7306,
+            "sha256": "49aa6eff56cf49bdd4b7dd2df319c6f61155d312debaf581c7727e90d0060a61"
+          },
+          "stderr": {
+            "path": "work/native-signal-check-v1/gcd.log",
+            "bytes": 5697,
+            "sha256": "87a607fdc85706c07a0fb3e97ad188895e5fbe610f1344d4731596f77127340d"
+          }
+        }
+      ],
+      "reason": "musl 检查通过；Bionic 因诊断未准备随机设备在 getentropy 失败，两个入口退出 -6。"
+    },
+    {
+      "file": {
+        "path": "work/native-signal-check-v1/summary-v2.json",
+        "bytes": 11095,
+        "sha256": "0b8aa5de84940a01a85f71328ee87d64da7e5a8857608b347c3449df340fe14f"
+      },
+      "build_report_sha256": "d0fc05d9f65b849808e24598e72aab4ba79f5adbba24ae77fcacbcf3888ceca9",
+      "passed": false,
+      "runs": [
+        {
+          "entry": "cli",
+          "returncode": -6,
+          "validated": false,
+          "stdout": {
+            "path": "work/native-signal-check-v1/cli-v2.jsonl",
+            "bytes": 8198,
+            "sha256": "9957350a416c7bd3bfaa1038eccd4772efa5eb896f654a0562e8da82cdd3dc49"
+          },
+          "stderr": {
+            "path": "work/native-signal-check-v1/cli-v2.log",
+            "bytes": 878,
+            "sha256": "42bf8bce10f6672098d0cde254b600b6c0375c08d9d608863e63a13deca674f4"
+          }
+        },
+        {
+          "entry": "gcd",
+          "returncode": -6,
+          "validated": false,
+          "stdout": {
+            "path": "work/native-signal-check-v1/gcd-v2.jsonl",
+            "bytes": 8300,
+            "sha256": "09f2ba764940db8bae804a7e9d5fc43725de264ccf41346a583bdebb1ebeb688"
+          },
+          "stderr": {
+            "path": "work/native-signal-check-v1/gcd-v2.log",
+            "bytes": 878,
+            "sha256": "42bf8bce10f6672098d0cde254b600b6c0375c08d9d608863e63a13deca674f4"
+          }
+        }
+      ],
+      "reason": "两套信号检查通过；诊断缺少 /data 挂载使正式只读退出失败，linker config 缺失产生警告。"
+    }
+  ],
+  "historical_report_limit": "旧报告保留当次输入摘要；当前文件匹配结论仅适用于最终报告。",
+  "uncovered": [
+    "完整 Android framework",
+    "原始 SDK36 Bionic 的原生 NCE 运行",
+    "4 KiB 原生 NCE",
+    "持续资源与性能测量",
+    "iOS 应用链接",
+    "iPhone 运行、JIT 授权与热状态"
+  ],
+  "passed": true
+}
