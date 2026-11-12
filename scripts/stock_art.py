@@ -38,7 +38,9 @@ def unchanged(identity):
         return False
 
 
-def validate(rows, guest_page_bytes=16384, jit_first_use=False):
+def validate(rows, guest_page_bytes=16384, jit_mode="default"):
+    if jit_mode not in ('default', 'first-use', 'background'):
+        return False
     events = [row for row in rows if any(key.startswith('stock_art_') for key in row) or
               row.get('test') == 'stock_art_standard_jni']
     checks = [row for row in events if 'stock_art_check' in row]
@@ -70,9 +72,12 @@ def validate(rows, guest_page_bytes=16384, jit_first_use=False):
         return False
     expected = [
         {'stock_art_supervisor': True, 'page_size': guest_page_bytes, 'timeout_seconds': 90},
-        {'stock_art_config': True, 'jni_version': 0x10006, 'jvalue_bytes': 8, 'jit_requested': True, 'jit_first_use': jit_first_use},
+        {'stock_art_config': True, 'jni_version': 0x10006, 'jvalue_bytes': 8, 'jit_requested': True, 'jit_mode': jit_mode},
         maps[0], checks[0], {'stock_art_stage': 'create_vm'}, checks[1], maps[1], *checks[2:7], maps[2],
-        array, *checks[7:11], maps[3], checks[11], {'stock_art_jit': 'unverified', 'warmup_calls': 200000}, maps[4],
+        array, *checks[7:11], maps[3],
+        *[{'stock_art_warmup': round, 'calls': 200000, 'wait_before_ms': 200 if round else 0,
+           'observed': VALUES['warmup_result']} for round in range(10 if jit_mode == 'background' else 1)],
+        checks[11], {'stock_art_jit': 'unverified', 'warmup_calls': 200000 * (10 if jit_mode == 'background' else 1)}, maps[4],
         {'stock_art_stage': 'destroy_vm'}, checks[12],
         {'test': 'stock_art_standard_jni', 'passed': True, 'jit_execution_confirmed': False},
         {'stock_art_exit': True, 'success': True, 'exec_errno': 0, 'exit_code': 0, 'signal': 0, 'timed_out': False},

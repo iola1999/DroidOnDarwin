@@ -32,7 +32,7 @@ static void stock_art_setup(void)
     REQUIRE(!ferror(input) && fclose(input) == 0);
     REQUIRE(snprintf(path, sizeof(path), "%s/stock-art-boot-classpath", files) < (int)sizeof(path));
     put_host_file("/data/stock-art/boot-classpath", path, 0644);
-    put_file("/data/stock-art/jit-first-use", "stock-art-jit-first-use");
+    put_file("/data/stock-art/jit-mode", "stock-art-jit-mode");
     directory("/dev");
     const char *devices[] = {"/dev/null", "/dev/random", "/dev/urandom"};
     const unsigned numbers[] = {259, 264, 265};

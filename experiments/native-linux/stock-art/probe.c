@@ -12,6 +12,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/prctl.h>
+#include <time.h>
 #include <unistd.h>
 
 #define TOKEN INT64_C(0x1122334455667788)
@@ -121,9 +122,11 @@ static void *attached_thread(void *opaque)
 int main(int argc, char **argv)
 {
     setvbuf(stdout, NULL, _IOLBF, 0);
-    CHECK(NULL, "arguments", (argc == 2 || (argc == 3 && !strcmp(argv[2], "jit-first-use"))) && argv[1][0] == '/');
-    bool first_use = argc == 3;
-    printf("{\"stock_art_config\":true,\"jni_version\":%d,\"jvalue_bytes\":%zu,\"jit_requested\":true,\"jit_first_use\":%s}\n", JNI_VERSION_1_6, sizeof(jvalue), first_use ? "true" : "false");
+    CHECK(NULL, "arguments", (argc == 2 || argc == 3) && argv[1][0] == '/');
+    const char *mode = argc == 3 ? argv[2] : "default";
+    CHECK(NULL, "arguments", !strcmp(mode, "default") || !strcmp(mode, "first-use") || !strcmp(mode, "background"));
+    int first_use = !strcmp(mode, "first-use"), background = !strcmp(mode, "background");
+    printf("{\"stock_art_config\":true,\"jni_version\":%d,\"jvalue_bytes\":%zu,\"jit_requested\":true,\"jit_mode\":\"%s\"}\n", JNI_VERSION_1_6, sizeof(jvalue), mode);
     const char *environment[][2] = {
         {"ANDROID_ROOT", "/system"},
         {"ANDROID_DATA", "/data"},
@@ -158,10 +161,10 @@ int main(int argc, char **argv)
         {.optionString = boot},
         {.optionString = "-Djava.class.path=/data/stock-art/StockArtProbe.dex"},
         {.optionString = "-Djava.library.path=/system/lib64"},
-        {.optionString = "-verbose:gc"},
-        {.optionString = "-Xjitthreshold:0"},
+        {.optionString = background ? "-verbose:gc,jit" : "-verbose:gc"},
+        {.optionString = first_use ? "-Xjitthreshold:0" : "-XX:DumpJITInfoOnShutdown"},
     };
-    JavaVMInitArgs args = {.version = JNI_VERSION_1_6, .nOptions = sizeof(options) / sizeof(*options) - !first_use, .options = options, .ignoreUnrecognized = JNI_FALSE};
+    JavaVMInitArgs args = {.version = JNI_VERSION_1_6, .nOptions = sizeof(options) / sizeof(*options) - !(first_use || background), .options = options, .ignoreUnrecognized = JNI_FALSE};
     JavaVM *vm = NULL;
     JNIEnv *env = NULL;
     puts("{\"stock_art_stage\":\"create_vm\"}");
@@ -171,6 +174,8 @@ int main(int argc, char **argv)
     JavaVM *observed_vm = NULL;
     CHECK(env, "create_vm", created(&observed_vm, 1, &count) == JNI_OK && count == 1 && observed_vm == vm);
     passed("create_vm", create_result);
+    __android_log_set_logger(__android_log_stderr_logger);
+    __android_log_set_minimum_priority(background ? ANDROID_LOG_VERBOSE : ANDROID_LOG_INFO);
     snapshot("after-vm");
 
     jclass local_type = (*env)->FindClass(env, "StockArtProbe");
@@ -282,14 +287,26 @@ int main(int argc, char **argv)
     CHECK(NULL, "observation", prctl(PR_SET_NAME, "art-jit-begin", 0, 0, 0) == 0);
     snapshot("before-warmup");
     jvalue warmup_argument = {.i = iterations};
-    jlong warmed = (*env)->CallStaticLongMethodA(env, type, method(env, type, "warmup", "(I)J"), &warmup_argument);
-    no_exception(env, "warmup_result");
     int64_t expected = 0;
     for (int i = 0; i < iterations; ++i)
         expected += ((i * 17) ^ (i >> 3)) + 9;
-    CHECK(env, "warmup_result", warmed == expected);
+    jlong warmed = 0;
+    jmethodID warmup = method(env, type, "warmup", "(I)J");
+    unsigned rounds = background ? 10 : 1;
+    for (unsigned round = 0; round < rounds; ++round) {
+        unsigned wait_ms = background && round ? 200 : 0;
+        if (wait_ms) {
+            struct timespec delay = {.tv_nsec = wait_ms * 1000000L};
+            while (nanosleep(&delay, &delay))
+                CHECK(NULL, "background_wait", errno == EINTR);
+        }
+        warmed = (*env)->CallStaticLongMethodA(env, type, warmup, &warmup_argument);
+        no_exception(env, "warmup_result");
+        CHECK(env, "warmup_result", warmed == expected);
+        printf("{\"stock_art_warmup\":%u,\"calls\":%d,\"wait_before_ms\":%u,\"observed\":%" PRId64 "}\n", round, iterations, wait_ms, warmed);
+    }
     passed("warmup_result", warmed);
-    printf("{\"stock_art_jit\":\"unverified\",\"warmup_calls\":%d}\n", iterations);
+    printf("{\"stock_art_jit\":\"unverified\",\"warmup_calls\":%u}\n", iterations * rounds);
     snapshot("after-warmup");
     CHECK(NULL, "observation", prctl(PR_SET_NAME, "art-jit-end", 0, 0, 0) == 0);
     (*env)->DeleteWeakGlobalRef(env, weak);
