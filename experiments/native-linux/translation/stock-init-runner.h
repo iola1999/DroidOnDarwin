@@ -25,6 +25,9 @@ static void stock_init_dump_kernel_log(void)
     printf("{\"stock_init_kernel_log\":true,\"read_result\":%ld}\n", log_bytes);
 }
 
+static double stock_init_now(void);
+#include "stock-init-partitions.h"
+
 static void stock_init_setup(void)
 {
     const char *root = getenv("NCE_STOCK_INIT_DIRECTORY");
@@ -33,6 +36,10 @@ static void stock_init_setup(void)
     int original_system = original_image && original_image[0];
     const char *vendor_image = getenv("NCE_STOCK_INIT_VENDOR");
     int hyperos = vendor_image && vendor_image[0];
+    const char *lp_text = getenv("NCE_STOCK_INIT_LP");
+    int lp = lp_text && !strcmp(lp_text, "1");
+    int complete = hyperos || lp;
+    REQUIRE(!lp || (original_system && !hyperos));
     REQUIRE(!hyperos || (original_system && getenv("NCE_STOCK_INIT_SYSTEM_DLKM") && getenv("NCE_STOCK_INIT_SYSTEM_DLKM")[0]));
     /* Original first-stage init uses tmpfs so nodes are accessible before restorecon. */
     directory("/dev");
@@ -45,8 +52,12 @@ static void stock_init_setup(void)
         long sysfs[6] = {(long)"sysfs", (long)"/sys", (long)"sysfs"};
         REQUIRE(call(40, sysfs) == 0);
         block_device("/sys/block/ncedisk1/dev", "/dev/ncesystem", 0400);
-        long partition[6] = {(long)"/dev/ncesystem", (long)"/system-image", (long)"ext4", 1};
-        REQUIRE(call(40, partition) == 0);
+        if (lp)
+            stock_init_sdk_mount(root);
+        else {
+            long partition[6] = {(long)"/dev/ncesystem", (long)"/system-image", (long)"ext4", 1};
+            REQUIRE(call(40, partition) == 0);
+        }
         long system[6] = {(long)"/system-image/system", (long)"/system", 0, 4096};
         REQUIRE(call(40, system) == 0);
         puts("{\"stock_init_original_system_mounted\":true,\"readonly\":true}");
@@ -78,12 +89,12 @@ static void stock_init_setup(void)
             }
         }
     }
-    if (hyperos) {
-        /* LKL's empty /init bootstraps host syscall tasks before original root links. */
+    if (complete) {
+        /* LKL 的空 /init 用于启动宿主 syscall 任务，原根链接在此之后恢复。 */
         long bootstrap[6] = {-100, (long)"/init", 0x20000};
         long fd = call(56, bootstrap);
         REQUIRE(fd >= 0);
-        /* Linux statx has a fixed 256-byte ABI; only this prefix is read. */
+        /* Linux statx 使用固定的 256-byte ABI，此处仅读取所需前缀。 */
         struct {
             uint32_t stx_mask, stx_blksize;
             uint64_t stx_attributes;
@@ -118,13 +129,13 @@ static void stock_init_setup(void)
         REQUIRE(strchr(line, '\n'));
         if (line[0] == 'D') {
             REQUIRE(sscanf(line, "D\t%1023s %c", guest, &extra) == 1);
-            if (!original_system || !stock_init_raw_path(guest, hyperos))
+            if (!original_system || !stock_init_raw_path(guest, complete))
                 directory(guest);
         } else if (line[0] == 'L') {
             char target[1024], actual[1024] = {0};
             char label[256] = {0};
             unsigned uid, gid;
-            if (hyperos)
+            if (complete)
                 REQUIRE(sscanf(line, "L\t%u\t%u\t%1023s\t%1023s\t%255s %c", &uid, &gid, guest, target, label, &extra) == 5);
             else
                 REQUIRE(sscanf(line, "L\t%u\t%u\t%1023s\t%1023s %c", &uid, &gid, guest, target, &extra) == 4);
@@ -133,7 +144,7 @@ static void stock_init_setup(void)
             REQUIRE(call(36, link) == 0);
             long owner[6] = {-100, (long)guest, uid, gid, 0x100};
             REQUIRE(call(54, owner) == 0);
-            if (hyperos) {
+            if (complete) {
                 long attribute[6] = {(long)guest, (long)"security.selinux", (long)label, (long)strlen(label) + 1, 0};
                 long assigned = call(6, attribute);
                 if (assigned)
@@ -148,18 +159,19 @@ static void stock_init_setup(void)
             REQUIRE(sscanf(line, "F\t%o\t%1023s %c", &mode, guest, &extra) == 2);
             REQUIRE(guest[0] == '/' && !strstr(guest, ".."));
             REQUIRE(snprintf(path, sizeof(path), "%s/root%s", root, guest) < (int)sizeof(path));
-            if (!original_system || !stock_init_raw_path(guest, hyperos))
+            if (!original_system || !stock_init_raw_path(guest, complete))
                 put_host_file(guest, path, mode);
         }
     }
     REQUIRE(!ferror(input) && fclose(input) == 0);
-    if (hyperos) {
+    if (complete) {
         long root_file[6] = {(long)"/system-image/init.environ.rc", (long)"/init.environ.rc", 0, 4096};
         REQUIRE(call(40, root_file) == 0);
         put_file("/stock-init-original-metadata.tsv", "original-metadata.tsv");
         puts("{\"stock_init_original_root_file\":true,\"path\":\"/init.environ.rc\",\"readonly\":true}");
     }
-    put_text("/stock-init-profile", hyperos ? "hyperos" : "sdk36");
+    put_text("/stock-init-profile", hyperos ? "hyperos" : lp ? "sdk36-lp"
+                                                             : "sdk36");
     const char *directories[] = {"/dev", "/dev/socket", "/dev/block", "/dev/pts", "/dev/dm-user", "/sys", "/apex", "/bootstrap-apex", "/linkerconfig", "/mnt", "/data", "/metadata", "/debug_ramdisk", "/second_stage_resources"};
     for (unsigned i = 0; i < sizeof(directories) / sizeof(*directories); ++i)
         directory(directories[i]);
@@ -213,10 +225,12 @@ static void stock_init_observe_context(long pid, char *previous, long *previous_
         return;
     *previous_result = result;
     memcpy(previous, label, sizeof(label));
+    flockfile(stdout);
     printf("{\"stock_init_task_context\":true,\"ancestor_pid\":%ld,\"read_result\":%ld,\"label_hex\":\"", pid, result);
     for (long i = 0; i < result && i < (long)sizeof(label) - 1; ++i)
         printf("%02x", (unsigned char)label[i]);
     puts("\"}");
+    funlockfile(stdout);
 }
 
 static int stock_init_run(void)
@@ -265,5 +279,7 @@ static int stock_init_run(void)
     dump_file("/stderr", stderr);
     stock_init_dump_kernel_log();
     printf("{\"stock_init_observation\":true,\"mode\":\"%s\",\"ancestor_pid\":%ld,\"waited\":%ld,\"status\":%d,\"deadline_stop\":%s,\"kill_result\":%ld}\n", getenv("NCE_STOCK_INIT_MODE"), pid, waited, status, stopped ? "true" : "false", killed);
+    if (getenv("NCE_STOCK_INIT_LP") && !strcmp(getenv("NCE_STOCK_INIT_LP"), "1"))
+        stock_init_sdk_cleanup(lifecycle);
     return lifecycle && (!stopped || status != 9);
 }

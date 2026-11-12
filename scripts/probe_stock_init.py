@@ -24,7 +24,21 @@ def sha(path):
         return hashlib.file_digest(stream, 'sha256').hexdigest()
 
 
-def prepare(runtime, desktop, metadata, out, system_image=None):
+def read_observations(path):
+    rows = []
+    with path.open() as source:
+        for number, line in enumerate(source, 1):
+            if line.startswith('{'):
+                try:
+                    rows.append(json.loads(line))
+                except json.JSONDecodeError as error:
+                    raise ValueError(f'观察日志解析失败：{path}:{number}:{error.colno}: {error.msg}') from error
+    return rows
+
+
+def prepare(runtime, desktop, metadata, out, system_image=None, *, sdk_partitions=False):
+    if sdk_partitions and not system_image:
+        raise ValueError('完整 SDK36 LP 需要原始系统镜像')
     if system_image and sha(system_image) != SYSTEM_IMAGE_SHA:
         raise ValueError('SDK36 原始系统镜像摘要不匹配')
     runtime_manifest = runtime.with_name('android36-runtime.json')
@@ -79,38 +93,56 @@ def prepare(runtime, desktop, metadata, out, system_image=None):
             add(desktop, relative, '/' + relative)
     for guest in ROOT_FILES:
         add(metadata, guest.lstrip('/'), guest)
+    if sdk_partitions:
+        from stock_init_sdk import SERVICE_FILES
+        add(runtime, 'bin/keystore2', '/system/bin/keystore2')
+        for guest in SERVICE_FILES:
+            add(desktop, guest.lstrip('/'), guest)
     directories = {str(parent) for guest in records for parent in Path(guest).parents if str(parent) != '/'}
     lines = ['D\t' + name for name in sorted(directories, key=lambda name: (name.count('/'), name))]
     lines += ['F\t%o\t%s' % (item['mode'], guest) for guest, item in records.items()]
     original_metadata = None
+    sdk_input = {}
     if system_image:
-        from stock_init_metadata import metadata as read_metadata
-        original_metadata = read_metadata(system_image, records, directories, out)
-        link = original_metadata['/etc']
-        lines.append('L\t%d\t%d\t/etc\t%s' % (link['uid'], link['gid'], link['link_target']))
+        if sdk_partitions:
+            from stock_init_sdk import prepare_partitions
+            sdk_input = prepare_partitions(system_image, records, out)
+            for path, link in sorted(sdk_input['original_root_links'].items()):
+                lines.append('L\t%d\t%d\t%s\t%s\t%s' %
+                             (link['uid'], link['gid'], path, link['link_target'], link['selinux']))
+        else:
+            from stock_init_metadata import metadata as read_metadata
+            original_metadata = read_metadata(system_image, records, directories, out)
+            link = original_metadata['/etc']
+            lines.append('L\t%d\t%d\t/etc\t%s' % (link['uid'], link['gid'], link['link_target']))
     (out / 'files.tsv').write_text('\n'.join(lines) + '\n')
 
-    return {'runtime_manifest': str(runtime_manifest), 'runtime_manifest_sha256': RUNTIME_SHA,
+    deployed = ({'path': str(system_image), 'sha256': SYSTEM_IMAGE_SHA} if sdk_partitions else
+                {'path': str(out / 'original-system-metadata.img'), 'sha256': sha(out / 'original-system-metadata.img')} if system_image else None)
+    return {**sdk_input, 'runtime_manifest': str(runtime_manifest), 'runtime_manifest_sha256': RUNTIME_SHA,
             'desktop_manifest': str(desktop_manifest), 'desktop_manifest_sha256': DESKTOP_SHA,
             'closure': closure, 'files': records, 'original_system_metadata': original_metadata,
             'original_system_image': {'path': str(system_image), 'sha256': SYSTEM_IMAGE_SHA} if system_image else None,
-            'deployed_system_partition': {'path': str(out / 'original-system-metadata.img'), 'sha256': sha(out / 'original-system-metadata.img')} if system_image else None,
-            'limitations': [('Original system partition mounted read-only; vendor/product/system_ext service binaries are not deployed.' if system_image else
+            'deployed_system_partition': deployed,
+            'limitations': [('Original ext4 system/vendor/product/system_ext and EROFS system_dlkm extents mounted read-only.' if sdk_partitions else
+                              'Original system partition mounted read-only; vendor/product/system_ext service binaries are not deployed.' if system_image else
                               'Original rc files retained; service binaries beyond init/ueventd and APEX containers are not staged.'),
                             'The runner supplies mounted partition directories; first-stage init and original fstab mounts are untested.']}
 
 
-def validate(rows, mode, original_system=False, *, guest_page_bytes=16384, kernel_log='', hyperos_input=None):
+def validate(rows, mode, original_system=False, *, guest_page_bytes=16384, kernel_log='', original_input=None):
     layouts = [row for row in rows if row.get('config') == 'translation_guest_layout']
     if len(layouts) != 1:
         return False
     guest = layouts[0]
+    if original_input and not original_system:
+        return False
     if 'BUG: non-zero pgtables_bytes on freeing mm:' in kernel_log:
         return False
     if not validate_guest_layout(rows, 'sparse', True, guest_page_bytes, sparse_end=guest.get('guest_end')):
         return False
-    if hyperos_input and (guest_page_bytes != 4096 or not original_system or
-                         (mode != 'lifecycle' and guest['guest_end'] != 1 << 39)):
+    if original_input and 'hyperos_manifest' in original_input and (
+            guest_page_bytes != 4096 or (mode != 'lifecycle' and guest['guest_end'] != 1 << 39)):
         return False
     observations = [r for r in rows if 'stock_init_observation' in r]
     cleanup = [r for r in rows if r.get('test') == 'translated_context_cleanup']
@@ -179,7 +211,7 @@ def validate(rows, mode, original_system=False, *, guest_page_bytes=16384, kerne
             any(row['stock_init_original_system_mounted'] is not True or row['readonly'] is not True for row in mounts)):
         return False
     links = [r for r in rows if 'stock_init_root_symlink' in r]
-    expected_links = hyperos_input['original_root_links'] if hyperos_input else {'/etc': {'link_target': '/system/etc', 'uid': 0, 'gid': 0}}
+    expected_links = original_input['original_root_links'] if original_input else {'/etc': {'link_target': '/system/etc', 'uid': 0, 'gid': 0}}
     if (links != ([{'stock_init_root_symlink': True, 'path': path, 'target': row['link_target'],
                   'uid': row['uid'], 'gid': row['gid'], 'creation_mode': 0o777}
                  for path, row in sorted(expected_links.items())] if original_system else []) or
@@ -188,21 +220,26 @@ def validate(rows, mode, original_system=False, *, guest_page_bytes=16384, kerne
         return False
     partitions = [r for r in rows if 'stock_init_original_partition_mounted' in r]
     expected_partitions = [('/product', 'bind'), ('/system_ext', 'bind'), ('/vendor', 'erofs'), ('/system_dlkm', 'erofs')]
+    if original_input:
+        expected_partitions = original_input.get('partition_mounts', expected_partitions)
     if (partitions != ([{'stock_init_original_partition_mounted': True, 'path': path, 'filesystem': filesystem, 'readonly': True}
-                       for path, filesystem in expected_partitions] if hyperos_input else []) or
+                       for path, filesystem in expected_partitions] if original_input else []) or
             any(row['stock_init_original_partition_mounted'] is not True or row['readonly'] is not True for row in partitions)):
         return False
     root_files = [r for r in rows if 'stock_init_original_root_file' in r]
-    if (root_files != ([{'stock_init_original_root_file': True, 'path': '/init.environ.rc', 'readonly': True}] if hyperos_input else []) or
+    if (root_files != ([{'stock_init_original_root_file': True, 'path': '/init.environ.rc', 'readonly': True}] if original_input else []) or
             any(row['stock_init_original_root_file'] is not True or row['readonly'] is not True for row in root_files)):
         return False
     metadata_rows = [r for r in rows if 'stock_init_original_metadata' in r]
     expected_metadata = [{'stock_init_original_metadata': True, 'path': path, 'uid': row['uid'], 'gid': row['gid'],
                           'mode': row['mode'], 'inode_type': row['inode_type'], 'label_hex': row['selinux_xattr_hex']}
-                         for path, row in sorted(hyperos_input['expected_runtime_metadata'].items())] if hyperos_input else []
+                         for path, row in sorted(original_input['expected_runtime_metadata'].items())] if original_input else []
     if (metadata_rows != expected_metadata or any(row['stock_init_original_metadata'] is not True or
                                                  any(type(row[key]) is not int for key in ('uid', 'gid', 'mode', 'inode_type'))
                                                  for row in metadata_rows)):
+        return False
+    from stock_init_sdk import validate_dm
+    if not validate_dm(rows, (original_input or {}).get('sdk_partitions'), mode=mode):
         return False
     lifecycle = [r for r in rows if 'stock_init_lifecycle' in r]
     original = [r for r in rows if 'stock_init_exec' in r]
@@ -226,14 +263,17 @@ def main():
     parser.add_argument('--root-metadata', type=Path)
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--system-image', type=Path)
+    parser.add_argument('--sdk-partitions', action='store_true', help='由固定原盘只读映射 SDK36 五个 LP 分区')
     parser.add_argument('--hyperos-manifest', type=Path)
     parser.add_argument('--lifecycle-only', action='store_true', help='仅检查原分区元数据、PID 1 信号与停止回收')
     args = parser.parse_args()
     if args.hyperos_manifest:
-        if any((args.runtime, args.desktop, args.root_metadata, args.system_image)):
+        if any((args.runtime, args.desktop, args.root_metadata, args.system_image, args.sdk_partitions)):
             parser.error('HyperOS 固定清单与 SDK36 输入参数不能同时使用')
     elif not all((args.runtime, args.desktop, args.root_metadata)):
         parser.error('SDK36 需要 --runtime、--desktop 和 --root-metadata')
+    if args.sdk_partitions and not args.system_image:
+        parser.error('--sdk-partitions 需要 --system-image')
     source = args.report.resolve()
     base = json.loads(source.read_text())
     config = base['configuration']
@@ -266,7 +306,8 @@ def main():
             from stock_init_hyperos import prepare as prepare_hyperos
             prepared = prepare_hyperos(args.hyperos_manifest.resolve(), out)
         else:
-            prepared = prepare(args.runtime.resolve(), args.desktop.resolve(), args.root_metadata.resolve(), out, args.system_image.resolve() if args.system_image else None)
+            prepared = prepare(args.runtime.resolve(), args.desktop.resolve(), args.root_metadata.resolve(), out,
+                               args.system_image.resolve() if args.system_image else None, sdk_partitions=args.sdk_partitions)
     except Exception as error:
         (out / 'failure.json').write_text(json.dumps({'stage': 'original_input_preparation', 'error': str(error)}, ensure_ascii=False, indent=2) + '\n')
         raise
@@ -278,10 +319,18 @@ def main():
     if args.lifecycle_only:
         result['scope'] = ('Original HyperOS 4 KiB partition metadata and PID 1 lifecycle observation; original init remains unexecuted'
                            if args.hyperos_manifest else 'Original SDK36 partition and PID 1 lifecycle observation; original init remains unexecuted')
-    for path in (Path(__file__).resolve(), EXP / 'translation/stock-init-guest.c', EXP / 'translation/stock-init-runner.h', EXP / 'translation/stock-init-trace.h', EXP / 'userspace/signal-tests.c', EXP / 'userspace/signal-registers.S', ROOT / 'scripts/stock_init_metadata.py'):
+    for path in (Path(__file__).resolve(), EXP / 'translation/stock-init-guest.c', EXP / 'translation/stock-init-runner.h',
+                 EXP / 'translation/stock-init-partitions.h', EXP / 'translation/stock-init-trace.h',
+                 EXP / 'userspace/signal-tests.c', EXP / 'userspace/signal-registers.S',
+                 ROOT / 'scripts/stock_init_metadata.py', ROOT / 'scripts/stock_init_sdk.py',
+                 ROOT / 'scripts/prepare_android_runtime.py', out / 'files.tsv'):
         result['sha256'][str(path.relative_to(ROOT))] = sha(path)
     if args.hyperos_manifest:
         for path in (ROOT / 'scripts/stock_init_hyperos.py', out / 'files.tsv', out / 'original-metadata.tsv'):
+            result['sha256'][str(path.relative_to(ROOT))] = sha(path)
+    if args.sdk_partitions:
+        for path in (out / 'original-partitions.tsv', out / 'original-metadata.tsv', out / 'original-system-dlkm-metadata.erofs',
+                     ROOT / 'scripts/hyperos_erofs_metadata.py'):
             result['sha256'][str(path.relative_to(ROOT))] = sha(path)
     runner_source = (EXP / 'translation/linux-runner.c').read_text()
     start = runner_source.index('static void stock_bionic_setup(void)')
@@ -291,6 +340,11 @@ def main():
     if runner_source.count(original) != 1:
         raise ValueError('运行器组件入口已变化')
     runner_source = runner_source.replace(original, '    } else if (stock_bionic) {\n        stock_init_setup();\n        translation_memory_phase("guest_execution");\n        failed = stock_init_run();')
+    if args.sdk_partitions:
+        release = '    REQUIRE(translation_kernel_release(&loaded) == 0);'
+        if runner_source.count(release) != 1:
+            raise ValueError('运行器内核释放位置已变化')
+        runner_source = runner_source.replace(release, release + '\n    puts("{\\"stock_init_shutdown\\":true,\\"halt_result\\":0,\\"host_disks_closed\\":true,\\"kernel_release_result\\":0}");')
     for shell_setup in ('    args[1] = (long)"/bin";\n    REQUIRE(call(34, args) == 0);\n',
                         '    put_file("/bin/sh", "dash.elf");\n'):
         if runner_source.count(shell_setup) != 1:
@@ -352,6 +406,8 @@ def main():
     selected.update(NCE_TRANSLATION_FILES=str(out), NCE_TRANSLATION_WORKLOAD='bionic',
                     NCE_TRANSLATION_CACHE_MIB=str(config['translation_cache_bytes'] // (1 << 20)), NCE_STOCK_INIT_DIRECTORY=str(out))
     selected['NCE_STOCK_INIT_SYSTEM'] = (prepared.get('deployed_system_partition') or {}).get('path', '')
+    if args.sdk_partitions:
+        selected['NCE_STOCK_INIT_LP'] = '1'
     if args.hyperos_manifest:
         selected.update(NCE_STOCK_INIT_VENDOR=prepared['original_vendor']['path'],
                         NCE_STOCK_INIT_SYSTEM_DLKM=prepared['original_system_dlkm']['path'])
@@ -377,10 +433,21 @@ def main():
                     returncode = proc.returncode
                 except subprocess.TimeoutExpired:
                     returncode = 'timeout'
-            rows = [json.loads(line) for line in (out / (label + '.jsonl')).read_text().splitlines() if line.startswith('{')]
             stderr = (out / (label + '.log')).read_text()
-            valid = returncode == 0 and validate(rows, mode, bool(selected['NCE_STOCK_INIT_SYSTEM']), guest_page_bytes=config.get('guest_page_bytes', 16384), kernel_log=stderr,
-                                               hyperos_input=prepared if args.hyperos_manifest else None) and 'stock_init_exec_errno' not in stderr
+            output = out / (label + '.jsonl')
+            try:
+                rows = read_observations(output)
+            except ValueError as error:
+                failure = {'stage': 'observation_json_parse', 'entry': entry, 'mode': mode,
+                           'returncode': returncode, 'error': str(error),
+                           'raw_stdout': str(output), 'raw_stdout_sha256': sha(output)}
+                result['runs'].append({**failure, 'observation_validated': False, 'results': [], 'stderr': stderr})
+                (out / 'failure.json').write_text(json.dumps(failure, ensure_ascii=False, indent=2) + '\n')
+                (out / 'summary.json').write_text(json.dumps(result, indent=2) + '\n')
+                raise SystemExit(str(error))
+            valid = returncode == 0 and validate(rows, mode, bool(selected['NCE_STOCK_INIT_SYSTEM']),
+                                               guest_page_bytes=config.get('guest_page_bytes', 16384), kernel_log=stderr,
+                                               original_input=prepared if args.hyperos_manifest or args.sdk_partitions else None) and 'stock_init_exec_errno' not in stderr
             guest_writes = ''.join(bytes.fromhex(row['hex']).decode('utf-8', errors='replace') for row in rows
                                    if 'stock_init_write' in row and bytes.fromhex(row['hex']).startswith(b'<'))
             result['runs'].append({'entry': entry, 'mode': mode, 'returncode': returncode, 'observation_validated': valid,

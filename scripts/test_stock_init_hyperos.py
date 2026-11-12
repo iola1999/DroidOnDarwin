@@ -20,9 +20,12 @@ def main():
     tests = []
     source = args.manifest.resolve()
     report = json.loads(args.sdk_init_report.read_text())
+    page_bytes = report['source_configuration'].get('guest_page_bytes', 16384)
+    assert page_bytes == 4096
     for run in report['runs']:
         assert run['observation_validated'] and validate(run['results'], run['mode'], True,
-                                                       guest_page_bytes=report['source_configuration'].get('guest_page_bytes', 16384), kernel_log=run['stderr'])
+                                                       guest_page_bytes=page_bytes, kernel_log=run['stderr'],
+                                                       original_input=report['input'] if report['input'].get('sdk_partitions') else None)
     tests.append('actual_sdk36_four_entries')
 
     with tempfile.TemporaryDirectory(prefix='hyperos-init-contract-', dir=ROOT / 'work/native-linux-nce') as temporary:
@@ -60,7 +63,10 @@ def main():
         rows = [row for row in rows if row.get('config') != 'translation_page_sizes']
         rows.append({'config': 'translation_page_sizes', 'guest_page_bytes': 4096,
                      'host_page_bytes': 16384, 'host_address_limit': 1 << 39})
-        rows = [row for row in rows if 'stock_init_root_symlink' not in row]
+        replaced = {'stock_init_root_symlink', 'stock_init_original_partition_mounted',
+                    'stock_init_original_root_file', 'stock_init_original_metadata', 'stock_init_shutdown'}
+        rows = [row for row in rows if not replaced.intersection(row) and
+                not any(key.startswith('stock_init_sdk_') for key in row)]
         rows += [{'stock_init_root_symlink': True, 'path': path, 'target': item['link_target'],
                   'uid': item['uid'], 'gid': item['gid'], 'creation_mode': 0o777}
                  for path, item in sorted(prepared['original_root_links'].items())]
@@ -74,11 +80,11 @@ def main():
         rows.append(trace)
 
         def observed(candidate, **kwargs):
-            return validate(candidate, 'lifecycle', True, guest_page_bytes=4096, hyperos_input=prepared, **kwargs)
+            return validate(candidate, 'lifecycle', True, guest_page_bytes=4096, original_input=prepared, **kwargs)
 
         assert observed(rows)
-        assert not validate(rows, 'lifecycle', True, hyperos_input=prepared)
-        assert not validate(rows, 'lifecycle', False, guest_page_bytes=4096, hyperos_input=prepared)
+        assert not validate(rows, 'lifecycle', True, original_input=prepared)
+        assert not validate(rows, 'lifecycle', False, guest_page_bytes=4096, original_input=prepared)
         low_rows = deepcopy(rows)
         low_layout = next(row for row in low_rows if row.get('config') == 'translation_guest_layout')
         low_layout['guest_end'] = 1 << 36
