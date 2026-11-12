@@ -239,6 +239,23 @@ static void check(void *unused)
     concurrent_queries(watch, ram + 2 * PAGE_BYTES, 1, true, false);
     assert(*(volatile unsigned char *)(ram + 2 * PAGE_BYTES) == 89);
     report("code_watch_concurrent_partial_protection_failure");
+    uint64_t adjacent = nce_code_watch_version(watch, ram + PAGE_BYTES);
+    for (unsigned changed_page = 0; changed_page < 4; ++changed_page) {
+        uint64_t before = nce_code_watch_version(watch, ram);
+        for (unsigned index = 0; index < 4; ++index)
+            assert(nce_code_watch_version(watch, ram + index * 4096) == before);
+        unsigned char *write_alias = changed_page & 1 ? ram : alias;
+        *(volatile unsigned char *)(write_alias + changed_page * 4096) = 101 + changed_page;
+        uint64_t after = nce_code_watch_version(watch, ram);
+        assert(after > before);
+        for (unsigned index = 0; index < 4; ++index) {
+            assert(nce_code_watch_version(watch, ram + index * 4096) == after);
+            if (index <= changed_page)
+                assert(*(volatile unsigned char *)(ram + index * 4096) == 101 + index);
+        }
+        assert(nce_code_watch_version(watch, ram + PAGE_BYTES) == adjacent);
+    }
+    report("code_watch_four_4k_pages_share_host_version");
     nce_code_watch_destroy(watch);
     *(volatile unsigned char *)ram = 51;
     *(volatile unsigned char *)alias = 63;
