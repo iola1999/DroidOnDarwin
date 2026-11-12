@@ -39,6 +39,14 @@ static void observe_pc(Process *p, uint64_t completed, uint64_t next)
 }
 #endif
 
+static void observe_fault(Process *p, unsigned long address, int access, int result)
+{
+    if (observe_integer && p->observed_window)
+        printf("{\"execution_observation\":\"guest_fault\",\"sequence\":%lu,\"pid\":%ld,\"tid\":%ld,\"mm\":%lu,\"pc\":%lu,\"address\":%lu,\"access\":%d,\"result\":%d}\n",
+               ++observation_sequence, p->observed_pid, p->observed_tid, execution->view->pgd,
+               p->regs.pc, address, access, result);
+}
+
 static bool observe_vm(Process *p, long number, const long *args)
 {
     /* Logging before dispatch also covers a call which blocks or never returns.

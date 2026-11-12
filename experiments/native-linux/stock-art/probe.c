@@ -161,7 +161,7 @@ int main(int argc, char **argv)
         {.optionString = boot},
         {.optionString = "-Djava.class.path=/data/stock-art/StockArtProbe.dex"},
         {.optionString = "-Djava.library.path=/system/lib64"},
-        {.optionString = background ? "-verbose:gc,jit" : "-verbose:gc"},
+        {.optionString = first_use || background ? "-verbose:gc,jit" : "-verbose:gc"},
         {.optionString = first_use ? "-Xjitthreshold:0" : "-XX:DumpJITInfoOnShutdown"},
     };
     JavaVMInitArgs args = {.version = JNI_VERSION_1_6, .nOptions = sizeof(options) / sizeof(*options) - !(first_use || background), .options = options, .ignoreUnrecognized = JNI_FALSE};
@@ -175,7 +175,7 @@ int main(int argc, char **argv)
     CHECK(env, "create_vm", created(&observed_vm, 1, &count) == JNI_OK && count == 1 && observed_vm == vm);
     passed("create_vm", create_result);
     __android_log_set_logger(__android_log_stderr_logger);
-    __android_log_set_minimum_priority(background ? ANDROID_LOG_VERBOSE : ANDROID_LOG_INFO);
+    __android_log_set_minimum_priority(first_use || background ? ANDROID_LOG_VERBOSE : ANDROID_LOG_INFO);
     snapshot("after-vm");
 
     jclass local_type = (*env)->FindClass(env, "StockArtProbe");
@@ -306,6 +306,21 @@ int main(int argc, char **argv)
         printf("{\"stock_art_warmup\":%u,\"calls\":%d,\"wait_before_ms\":%u,\"observed\":%" PRId64 "}\n", round, iterations, wait_ms, warmed);
     }
     passed("warmup_result", warmed);
+    jclass exceptions = (*env)->FindClass(env, "StockArtExceptions");
+    CHECK(env, "implicit_null", exceptions);
+    jint null_result = (*env)->CallStaticIntMethod(env, exceptions, method(env, exceptions, "implicitNull", "()I"));
+    no_exception(env, "implicit_null");
+    CHECK(env, "implicit_null", null_result == 47);
+    passed("implicit_null", null_result);
+    jint stack_result = (*env)->CallStaticIntMethod(env, exceptions, method(env, exceptions, "stackOverflow", "()I"));
+    no_exception(env, "stack_overflow");
+    CHECK(env, "stack_overflow", stack_result == 47);
+    passed("stack_overflow", stack_result);
+    jlong gc_result = (*env)->CallStaticLongMethod(env, exceptions, method(env, exceptions, "gcWithLiveReferences", "()J"));
+    no_exception(env, "gc_live_references");
+    CHECK(env, "gc_live_references", gc_result == 8386560);
+    passed("gc_live_references", gc_result);
+    (*env)->DeleteLocalRef(env, exceptions);
     printf("{\"stock_art_jit\":\"unverified\",\"warmup_calls\":%u}\n", iterations * rounds);
     snapshot("after-warmup");
     CHECK(NULL, "observation", prctl(PR_SET_NAME, "art-jit-end", 0, 0, 0) == 0);

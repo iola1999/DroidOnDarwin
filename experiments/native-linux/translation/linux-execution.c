@@ -884,6 +884,7 @@ static void user_run(void *opaque)
             unsigned long translated_address = data_tbi && access != NCE_FAULT_EXEC ? address & UINT64_C(0x00ffffffffffffff) : address;
             int result = page_fault(translated_address, access);
             if (result) {
+                observe_fault(p, address, access, result);
                 fprintf(stderr, "guest fault pc=%lx address=%lx access=%d result=%d\n", p->regs.pc, address, access, result);
                 user_fault(address, 0);
             }

@@ -1,0 +1,582 @@
+{
+  "scope": "Unfinished original ART exception experiment checkpoint; CLI failed at compiled implicit-null handling; stack overflow, live-reference GC, GCD and OSR not executed",
+  "status": "paused_at_user_request",
+  "base_commit": "c05503e",
+  "platform": {
+    "platform": "macOS-27.0-arm64-arm-64bit-Mach-O",
+    "cpu": "Apple M5 Ultra",
+    "system_build": "26A428"
+  },
+  "configuration": {
+    "data_tbi": true,
+    "guest_layout": "sparse",
+    "code_memory": "dual",
+    "execution": "direct",
+    "direct": {
+      "mapping_entries": 256,
+      "route_entries": 256,
+      "selective_writes": false,
+      "reuse_code_checks": false,
+      "memory": "flat",
+      "code_watch": false,
+      "cross_page": false,
+      "route_epochs": false,
+      "retain_routes": false,
+      "memory_groups": false,
+      "native_exclusive": false,
+      "vector_table": false,
+      "simd_math": false
+    },
+    "mapping": "pte",
+    "sparse_scan": true,
+    "fault_prefetch": false,
+    "guest_page_bytes": 16384,
+    "workload": "stock-art",
+    "entries": [
+      "cli"
+    ],
+    "art_nterp": 1,
+    "cpus": 1,
+    "high_res_timers": false,
+    "online_cpus": 1,
+    "uaccess_stop": "all",
+    "parallel_profile": false,
+    "art_expanded_jit": 0,
+    "art_fast_baseline": 0,
+    "cache_invalidation": "pages",
+    "exec_cache": "full",
+    "tlb_invalidation": "full",
+    "linux_fastpath": 0,
+    "guest_ram_bytes": 1073741824,
+    "translation_cache_bytes": 16777216,
+    "instruction_batch": 50000,
+    "memory_interval_ms": 100,
+    "preemption": "instructions",
+    "timer_interval_ns": 2000000
+  },
+  "measurement": "Functionality and failure diagnosis only; no performance comparison.",
+  "invocations": [
+    "python3 scripts/prepare_stock_art.py --runtime ../../work/native-linux-nce/android/android36 --manifest ../../work/native-linux-nce/android/android36-runtime.json --output work/stock-art-exceptions-v1",
+    "python3 scripts/probe_lkl_translation.py --mapping pte --execution direct --direct-memory flat --guest-layout sparse --data-tbi 1 --cpus 1 --code-memory dual --reuse-engine-build --workload stock-art --stock-art-directory work/stock-art-exceptions-v1 --stock-art-observe-jit 1 --stock-art-jit-mode first-use --entry cli --output work/native-linux-nce/stock-art-exceptions-v1"
+  ],
+  "raw_artifacts": {
+    "work/native-linux-nce/stock-art-exceptions-v1/summary.json": {
+      "sha256": "094683db33e631d76e4e5bd09f7e33539a001bbe4a616095c576dc546502dafb",
+      "bytes": 841009
+    },
+    "work/native-linux-nce/stock-art-exceptions-v1/cli-0.jsonl": {
+      "sha256": "f18f30546b7e94a266f93a1a33a0b561ee3ea103565428504c7edf74bb335b1f",
+      "bytes": 71904
+    },
+    "work/native-linux-nce/stock-art-exceptions-v1/cli-0.log": {
+      "sha256": "3db26ca092fa8933e9b271937067fa2527fb616382943b0531857a4f4c4d784c",
+      "bytes": 37599
+    },
+    "work/stock-art-exceptions-v1/manifest.json": {
+      "sha256": "3e23b03fcbd1ffcb98c8589a41e09f2447510c2f21a5fa59d9155a9206e2ed57",
+      "bytes": 599464
+    }
+  },
+  "inputs": {
+    "identity": {
+      "url": "https://dl.google.com/android/repository/sys-img/google_apis/arm64-v8a-ps16k-36_r07.zip",
+      "archive_sha1": "dda632745023567113d9954101709c6526a3c250"
+    },
+    "input_manifest_sha256": "4b1a45b0ee51725c68f1c29765958d0b60b45a5f2325bedfc61764cd49232249",
+    "prepared_manifest_sha256": "3e23b03fcbd1ffcb98c8589a41e09f2447510c2f21a5fa59d9155a9206e2ed57",
+    "original_unique_files": 290,
+    "prepared_source_sha256": {
+      "experiments/native-linux/stock-art/probe.c": "90fef85fa1688a1e544e2cfa2f99c6e705b3fdc05c7b0fa1636ba9d3eaaad9ac",
+      "experiments/native-linux/stock-art/StockArtProbe.java": "09b7cb53bb801194e1f629f3d7074d7dbcf7f86582164be5185fd589ce88a83b",
+      "experiments/native-linux/stock-art/StockArtExceptions.java": "a51a5a0fbb6c873bc8238b234ad944186508763788cf69ad18188da99ff0bf48",
+      "experiments/native-linux/stock-art/dependencies.json": "c9462a396acb6d39d8052d01220a534ae8483ab6d3977f82413d401ff7e40e5f",
+      "scripts/prepare_stock_art.py": "adaf1329178e5839dbbbd8ec7fec068cc23a3ad9c622a3fdbc11c6c61e0a255c",
+      "scripts/build_apk_fixture.py": "426f9ac9644ba8296aac8d44a8ef032025f65df452eb00b0a8bd6eed9bdf73f7"
+    },
+    "fixture_files": {
+      "/linkerconfig/ld.config.txt": {
+        "kind": "fixture",
+        "sha256": "8749163e47598c35f969477c5c8a7fed6af747532ed6acfd9dbb195d8fd78a15",
+        "bytes": 1215,
+        "mode": 420
+      },
+      "/system/bin/stock-art-probe": {
+        "kind": "fixture",
+        "sha256": "c5baa3f1ea4809c56d03f47c0ed17ad28230a0060626ce7dfc7edd14bc7d7ae1",
+        "bytes": 69128,
+        "mode": 493
+      },
+      "/data/stock-art/StockArtProbe.dex": {
+        "kind": "fixture",
+        "sha256": "96ebe8994d7e20238113b5cdbc0928b684201816b581e8c1a7a46dafc9d3f8ca",
+        "bytes": 7288,
+        "mode": 420
+      }
+    },
+    "tools": {
+      "ndk": "Pkg.Desc = Android NDK\nPkg.Revision = 29.0.14206865\nPkg.BaseRevision = 29.0.14206865\nPkg.ReleaseName = r29\n",
+      "fixture_min_api": 35,
+      "javac": "javac 17.0.19",
+      "clang": "Android (13989888, +pgo, -bolt, +lto, -mlgo, based on r563880c) clang version 21.0.0 (https://android.googlesource.com/toolchain/llvm-project 5e96669f06077099aa41290cdb4c5e6fa0f59349)\nTarget: arm64-apple-darwin27.0.0\nThread model: posix\nInstalledDir: /opt/homebrew/Caskroom/android-ndk/29/AndroidNDK14206865.app/Contents/NDK/toolchains/llvm/prebuilt/darwin-x86_64/bin",
+      "d8_sha256": "4097ff9c46c185c6e7214da7fe9b1befb5adeea5cc9ca349270e0249904f9240",
+      "android_jar_sha256": "4566663c3876e022b4fa4ced8c8697c4ab1688267f090114fd92d027b32e619b",
+      "jni_header_sha256": "5df9074457c041b372f2c68ff646d6e8600cd673a223885e8df21c44c94ec667"
+    },
+    "original_unique_bytes": 145501325,
+    "installed_original_files": 291,
+    "installed_original_bytes": 147750805
+  },
+  "execution_source_sha256": {
+    "experiments/native-linux/translation/kernel-image.c": "33792252482c0c6be81d1009a45f1a12f17233a7fd472d12a7f394afd136217f",
+    "experiments/native-linux/translation/linux-elf.c": "e3557d2945b3e6dc0b9c1b4ae7041a6dd21a785e4981f97ddff1ea9837d68365",
+    "experiments/native-linux/translation/linux-execution.c": "9ccb0870363d5d2f7c52a5e4cdaefe8549186c9401b2def3ac7cad499c7c8784",
+    "experiments/native-linux/translation/interaction-profile.c": "8016783f7a3f0087f0dc369b0316655d95bd612a1fc49547b8c7eada4501881c",
+    "experiments/native-linux/translation/linux-runner.c": "5fa9e4fc32d237290415c7ec79ac0f68e96872b1ddc22c705a2a870e05beaecf",
+    "experiments/native-linux/translation/linux-memory.c": "0cc6ab6ff8ab7abe76c1c73aaf18fecb200ff27251ea29f0f15b0618a6020e31",
+    "experiments/native-linux/lkl-host.c": "49c63f1be4112408bbe5bdced53cf8bd0314eedaf770fe4d869d30edf3a6c671",
+    "experiments/native-linux/translation/code-watch.c": "1bfa90873b4e52f1ca0766e169999f948cbff313eccffba14be0e76e7dd1305e",
+    "experiments/native-linux/translation/read-view.c": "85ad462693b9ff64532bbf2056a2c6b09cefb1bbd4d8fbcf0cb7570697ed3c2a",
+    "experiments/native-linux/translation/unicorn-code-memory.c": "f7fe3981500192267b25ae33cb4aeb5ef38f31c674ddb3cb0ebfa0a0edb43d6e",
+    "experiments/native-linux/direct/engine.cpp": "64cd552c7a72a86e8eddb757bca851982149827fe2291bf78ccda17384d2ace9",
+    "experiments/native-linux/direct/compile.cpp": "5d968269feaf6f3bf8ecbbf785cc982ce5f595aa3a5a225e02c45e83ca8a13fb",
+    "experiments/native-linux/direct/decode.cpp": "e2ce2940d0c5d5c1658c45d8a4beee40f9dbb662f960eabb0cad96b0ce84efc1",
+    "experiments/native-linux/direct/memory-groups.cpp": "6447bb9544d9cfbc9f872e6e721b17854aae3a1f88fcedcd9767831aaf1ae9a6",
+    "experiments/native-linux/direct/read-faults.cpp": "6e514b9e0f8b9675e2eaad955440fd4909b8f19e6e1637ea16d083d2a9809348",
+    "experiments/native-linux/direct/cross-page.cpp": "ab2aea50c200cb993fbbad08a2c26423391a428a1359225669a30d2baf8f622d",
+    "experiments/native-linux/direct/entry.S": "14896f395d465d65aff18e22598c804e2faa8740fdb72128b2b86c25e6defab4",
+    "experiments/native-linux/code-memory.c": "8215ac2a2564049be0b45a80b3774ec994d6e51b6eb2057ed00cd515ef682981",
+    "experiments/native-linux/execute-check.c": "2e5a080e11bb3ec9407be2495c30a0391d2e8a858f1fe1a01a624eed3a8dd3c5",
+    "experiments/native-linux/direct/decode.h": "eafddef33888746adfc25306f6b2ab7903ff9f50adce3b0cf55e43f1e8cba5a9",
+    "experiments/native-linux/direct/memory-groups.h": "c6250a511c45dd7bbd5733ff43b55dd8a0eb6501d9759bb12a413f9c121a6b31",
+    "experiments/native-linux/direct/direct.h": "d3dd2db1778f2275d9fa6d81ab623bf50633267212ef01073758f9d5bd96284c",
+    "experiments/native-linux/direct/internal.h": "d23624be4246b0b1e21c831aeb9359989ea3647fbcb88486639c0e1f436f2173",
+    "experiments/native-linux/direct/layout.h": "bea63a67f1145501152a6eaf400e9d1393badc55871c7b61e365a4bd2782bb23",
+    "experiments/native-linux/direct/page-table-layout.h": "500897ffde014c17c73d03a92b34b07a9990e52695c369d9228c01d5d4600109",
+    "experiments/native-linux/code-memory.h": "b76ec86c799b073a58b08dc04300d091cb63531d31289ea22fdfb16d4495870a",
+    "experiments/native-linux/execute-check.h": "db1decd5ee536b58b9974ff03951d79dddfc3f74c1205ad34b7c725de4bf6883",
+    "experiments/native-linux/nce.h": "7bcdc5e777e10e1d70f0bf1838a2160e87c70613a44b90b16c3e07aedf4a9f58",
+    "experiments/native-linux/guest-registers.h": "90a4d5b6e613ce4f2cda359dcd05f6e8d876a788bc437c2c1e13e05403e4627a",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/code_block.hpp": "c1b59e9d8a37775f8558fb3a0f7b34a6b7dbd2b2c13c088be65253c2223faa8a",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/dual_code_block.hpp": "619a01b3c69e107cc1c13c79b0dfbe97b09395e70a6c705b77e0531894a69620",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/feature_detection/cpu_feature.hpp": "2ae6e67bd4af85bd7d6d6eb7585f73cbdc237183167bb265a0427b74807e0a02",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/feature_detection/feature_detection.hpp": "4d13c256d5028d1ca3e5a0ad59382e888b79e033b72cffe7dae4c3e9ecc8d97e",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/feature_detection/feature_detection_apple.hpp": "99d88802080a50bd7d73a07020c18eee44417e193ff5515cbad8f6972890bbc6",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/feature_detection/feature_detection_freebsd.hpp": "84a10ab44c7c566523705703fb118904156c39b6b93148d458e2ab77a80a2c2d",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/feature_detection/feature_detection_generic.hpp": "4b78fafbb988a18b25b1aeb04c5ebff6b3a675f502e315fd8430f2d3f61f0fd2",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/feature_detection/feature_detection_hwcaps.hpp": "5839e027d9145f182149586fc30f129f33d5b482ffa174ed4ac6f9bb3b5a3b3f",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/feature_detection/feature_detection_idregs.hpp": "f759c5fd02bb2d2bafe45376e3856fa9371737282b22f66101fd4ae8db5f7b96",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/feature_detection/feature_detection_linux.hpp": "a49f3c60ad2cae71c158fd9207fdbad5e40837793f57289490603455302299c6",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/feature_detection/feature_detection_netbsd.hpp": "1315afa43ea61ffb7beb1102bf090d24d1285f2340028b5da50c3d31491dd09c",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/feature_detection/feature_detection_openbsd.hpp": "941dd25a778b8153e3e98aa9b7795a2c54359d24d8337f56a8658993f3fecb96",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/feature_detection/feature_detection_w32.hpp": "f228126514f482b43c0304a1f9dfb5942b93afabfc4372662af1193679c503de",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/feature_detection/id_registers.hpp": "ed83ce3fdaa0bea503dbdd9c0e728e8cb4eb0307fdf3bc60192fc0dfa130d1c8",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/feature_detection/read_id_registers_directly.hpp": "ff2e769fabf6f43d6e12939072e6cd911694f7966d2bd8c4ce6c3075aad34020",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/arm64_encode_helpers.inc.hpp": "55576102b1774f7f7b681857a3d2c6843776045cccd24fa09b8c4713929adbaf",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/cpu_feature.inc.hpp": "5919c8d8b32ae0899d04a888d8e852a79c604b33f9b6cffe632234437f57ab67",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/enum.hpp": "603697b7a7e16795219a74fa2d735e8bd442c79cdcb539ed0abed2b83417fd26",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/imm.hpp": "268b0414bf57c82cddb3de6b286e8e1ce52fb2b413aaecaa1f0cf9099b7e7cc1",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/list.hpp": "0592b31d29a6f1bfbee46cdb0aa5ce778edc9643db90a39d42215970357328e9",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/mnemonics_fpsimd_v8.0.inc.hpp": "3ecdfd1ff46ff749b2525e1a75acbabc6022848f700a6f16b36f480ab954a266",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/mnemonics_fpsimd_v8.1.inc.hpp": "404268b9e0e3b4708d5018fd1fbf3ea1339c641382e7cfd15534af56a7672e69",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/mnemonics_fpsimd_v8.2.inc.hpp": "52e7a48b969badf327c00c2ea4556353c61950a0c452adeaee37c6820926261f",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/mnemonics_fpsimd_v8.3.inc.hpp": "84bcced18fe10c753ec5ea1c84e9531ab1ceb4e08b046519e75788a14b814ae4",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/mnemonics_generic_v8.0.inc.hpp": "8ffd907bb38b27700022e29d40111fe72e640d003ad6aa3e372c4d8a7ebd3f6c",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/mnemonics_generic_v8.1.inc.hpp": "9f60f325c392e907dd9d2cbab62e1f8cfc7ab95c88e54df75b1a1f64bc7fa93b",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/mnemonics_generic_v8.2.inc.hpp": "1b53f462d1ed7e0a763236dbef9c4bfc70f6430cf5f8b420b2acc4dd2e8884ab",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/mnemonics_generic_v8.3.inc.hpp": "4b775baed83b1bb32b7bd339433175ce09b4bbc6da33d887bc9ca989d42b5d76",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/multi_typed_name.hpp": "a4322bfdb95f8477e6f92b31194110ef860c7402d50ce18daae6e016d4fa9aac",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/oaknut_exception.inc.hpp": "48629c93b468527c440dad30f8044818aa202caff67e73f45a246a3e96f8ad28",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/offset.hpp": "cb48c0eface8f5458a89402a090084690d3f999ff562e63870a1b16f438a7d52",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/overloaded.hpp": "03f0f551fa10b0b3d8d2c75130c1023ddcc5e8a3566629470408aad370d87fc2",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/reg.hpp": "352456b9b9ea1fb8cb5637e82169e16f08189579da9645ad5a5c1992f95ed198",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/impl/string_literal.hpp": "96dce09750c24842a88e8eb3dfdafe047a5ab94c9398c94ea41cca8e1434e1bb",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/oaknut.hpp": "e25f4222f8f7d17b683d5ea8ff2851f88a3b40c478fcdc6046fe962cfcab2f37",
+    "work/native-linux-nce/oaknut-94c726ce0338b054eb8cb5ea91de8fe6c19f4392/include/oaknut/oaknut_exception.hpp": "8277ac5a6cf6697305fd169d817d6786b0011027d66962fc9d982ffbce2c19a0",
+    "scripts/probe_direct_execution.py": "e06c90b6b86746a22c7c484536084c5307f0d206680c08f6bd2bdd1c9237fe41",
+    "work/native-linux-nce/oaknut-94c726c.tar.gz": "c404db82002f9a851a412b3d55ac9be8a42a2e319fd2fc8a73e63e6ef5d4f97b",
+    "experiments/native-linux/translation/code-watch.h": "1ec6e739e1a542c52a2ed54b7310d1cc0a3317dfa25d1d59aeb971e972ea0747",
+    "experiments/native-linux/translation/read-view.h": "40a09185089ab8a02a76a6789b7b2149ffdb9dc225c7b1c5b4532d6022307488",
+    "scripts/build_nce_userspace.py": "4fafb283fdc1babe0d62ef949eeffd50d2018fddb3420694ab9fb64a60d82149",
+    "experiments/native-linux/userspace/bionic-test.c": "ffa10bd0d16dd15edddb368a0435d9d94b529270c13a89f6b3c5536dc40c0b76",
+    "experiments/native-linux/userspace/proc-exit-tests.c": "58c79b40b0fabaf40707baf80d3cca4883311f33c00139ed8db6f3d02d5353df",
+    "experiments/native-linux/userspace/file-tests.c": "e260e5222cf7efea3140941404100a05be3b383299f2da4cc174a531cc166b8b",
+    "experiments/native-linux/userspace/seccomp-tests.c": "7ac584c36df43561ad7c947eeec40ba0c39188a28d1a79245100b4f683626931",
+    "experiments/native-linux/userspace/signal-tests.c": "43b86323b4dd66c98db20065b8cc41d868fb7ab538135d6eba9d7c65a263a549",
+    "experiments/native-linux/userspace/signal-registers.S": "68e13063df3b1a82a0b5805eb98082204b7ee6e29e7c020cc452ef5199f6d257",
+    "experiments/native-linux/translation/unicorn-code-memory.h": "03e9a24ca9133e989426ca621ad9962c327be47ce889e845f4b668b657243ed7",
+    "experiments/native-linux/translation/linux-elf.h": "faec3fcc8a93eafc0a140830836881e8f2447f20b9b59ec26b7b8230f8b0489b",
+    "experiments/native-linux/translation/linux-execution.h": "ea490ee46e90df3ee0664815dc45e0f58f071378e2b0af333b498d134644ecc2",
+    "experiments/native-linux/translation/interaction-profile.h": "39700898fbcd32c4d4060dad1e494826d50109ab7c5efed50daaf02603938e5a",
+    "experiments/native-linux/translation/linux-memory.h": "11b7a1402acaa07152cdb17d43fed3e6effdeb65af902e8b64ae5ea5cded35e9",
+    "experiments/native-linux/stock-art/supervisor.c": "0dd0b70ebb0c93e0e0f7651b545437c4fccc42145108babde8306e3aa34cf80e",
+    "scripts/probe_lkl_translation.py": "a1b0d03730ee79d28805be1e97f3bd86ff7a6a1988bc4d7ec2adaf76332a6040",
+    "experiments/native-linux/dispatch-test.c": "5211698bd58018aae173d4c6d75daeeb0e4eb357fb2742c4c08d595bc9d7b55b",
+    "experiments/native-linux/layout.h": "9ecb6dc474edfc516284effcbd1999ba445ba88372233636391771a0715deaa5",
+    "work/native-linux-nce/lkl-translation-kernel/lkl-image.bin": "a09eb8ff926996ce3d41beadb4d06fd45865b7d69eb2f8f0033b296781ba66c4",
+    "work/native-linux-nce/lkl-translation-kernel/lkl-image.h": "886e8573b7d9c4828e47be82e3657c83710e159d58058454899cb01cc65d4e1a",
+    "work/native-linux-nce/lkl-translation-kernel/lkl.so": "cb8e082f89ee490bc9463c60145d899523a6b1ec099f3fa7325f12dab68dd472",
+    "work/native-linux-nce/lkl-translation-kernel/lkl-host-ops.h": "54bf2a775fa582ca2bc04fb6a25dc85525b6c69da1cde54f610c4a35e0c1a833",
+    "experiments/native-linux/translation/kernel-api.h": "6acf8b846b78e4e493bd8dd97b42140b28747deac2a367dc7926f924e1c12076",
+    "experiments/native-linux/translation/kernel-image.h": "6946b1a5ce89be9b55634e25115185af009bff2b126f5a10ac4e0690b70b1528",
+    "work/native-linux-nce/stock-art-exceptions-v1/translation-symbols.h": "7c91d6575a6616121471782d671bf90ed447ae2bf410621110c2cbe4f29859be",
+    "scripts/build_translation_engine.py": "e5ab4173a424f834a739d0d31e14b9fa75a89074716d5f5c5a49e1358b1a1b59",
+    "work/native-linux-nce/unicorn-tb-stop-dual/build.json": "6729390632a57e198387b9240022c808f2ee253ce399fa5dac82bc498be90099",
+    "work/native-linux-nce/unicorn-tb-stop-dual/prefix/lib/libunicorn.a": "a69c2949b8c277ac32701b40c382f00190e533270d41dbb1cf1b7f7fd3250c57",
+    "work/native-linux-nce/stock-art-exceptions-v1/cli": "59cf71686c28618ddd53df032371306b1bd452e72c6667ce180d10affa098fb1",
+    "work/native-linux-nce/stock-art-exceptions-v1/gcd": "e0d5a429e42b0ec18cbdcc5f20e49fc57ffcc75cc029040134e2bc7961136e13",
+    "work/native-linux-nce/stock-art-exceptions-v1/guest.elf": "1d68b344b8d38ea82c42d3bc2e6afecd8c47bdaefb8bffbaa16b28a5ce661d0a",
+    "work/native-linux-nce/stock-art-exceptions-v1/late.elf": "f68174621a2c8c1bf203b68068c97743c59c5cd48ff6c43a12945c141e707d1b",
+    "work/native-linux-nce/stock-art-exceptions-v1/sigreturn.elf": "795d053b14585230d5f6ec0d09fdd5d91b8685c9fb6acdd0935d3d9359baf271",
+    "work/native-linux-nce/stock-art-exceptions-v1/dynamic.elf": "c7be9a096eacbde4ddf2166fbe57392a730f01497a439ecc96acff66f79da571",
+    "work/native-linux-nce/stock-art-exceptions-v1/libc.so": "13e5a9fcf04c9e9f89f0dba662fe6fde2ca7b8d8201eb622d42edc4a28d5f515",
+    "work/native-linux-nce/stock-art-exceptions-v1/dependency.so": "878d6795ecc3afcf6f3bcbf34119e8ec106dbd734b9c216b1352b426b31f06da",
+    "work/native-linux-nce/stock-art-exceptions-v1/plugin.so": "4646ac0f0191552449161c2b5b61bcac054ebc0427d559503ec8547e38077fe9",
+    "work/native-linux-nce/stock-art-exceptions-v1/dash.elf": "8b38ef10487508f46b683f6ef7a747520d5c5c88da1783ce697596f60d4d7851",
+    "experiments/native-linux/translation/stock-art-runner.h": "79e9e0ce529900deeb2bb398e0ecc1d11cc1a6130e83fef0b58e0933b2cfcca2",
+    "experiments/native-linux/translation/execution-observation.h": "daa3e39310a7b996eb7a06350876a424ff0b2b07da2f45db420eda0b7434517b",
+    "experiments/native-linux/translation/component-supervisor.h": "781c95ff693aa49ba412ad800e5b835b059b0538f7285fa0129e024e6f065378",
+    "scripts/stock_art.py": "c1790bbccc5c12b622d49ce1cb6efd5150befad69bd98c321922906b7dcc0fcd",
+    "scripts/stock_art_jit.py": "336996c8afe339e3ac740e53daab70644e0a45354db51e798db00f894cdce5d2",
+    "scripts/prepare_stock_art.py": "adaf1329178e5839dbbbd8ec7fec068cc23a3ad9c622a3fdbc11c6c61e0a255c",
+    "work/native-linux-nce/stock-art-exceptions-v1/stock-art-files.tsv": "26662f46983197028dcf98e47dbe720cec7324ab1efa4a45f6072578092d72a8",
+    "work/native-linux-nce/stock-art-exceptions-v1/stock-art-boot-classpath": "11d830161f81803f69da1daea122af392721d47e12c9ba984a499521762b6d28",
+    "work/native-linux-nce/stock-art-exceptions-v1/stock-art-jit-mode": "66d5e482c5f5006ebeaf3ee2fac6a6c4054e60995df81ca3a807b9f1ace6d620",
+    "scripts/build_lkl_translation_kernel.py": "56f3801c26bdd90450fe273ca5661b0485da713fc08e90b8099155acedd5c1ba",
+    "scripts/lkl_translation_patch.py": "cab799a0eaddd47ed985307c54b7f4383f1d852bb3d4cb9e1cd8fa9e10c45ff1",
+    "experiments/native-linux/lkl-nce-mmu.c": "d0ee874b00e58100cfd982c1ecbed136f98a85af4e96c7a252009ebc44edf075",
+    "work/native-linux-nce/lkl-translation-kernel/build.json": "d8bd98800fd595ece7d19e0e915aa3c9e378a9296c556d454697fcf142bc9cc1"
+  },
+  "run": {
+    "entry": "cli",
+    "iteration": 0,
+    "returncode": 0,
+    "validated": false,
+    "parse_errors": [],
+    "stock_art_inputs_unchanged": true,
+    "stock_art_maps": [
+      {
+        "name": "before-vm",
+        "present": true,
+        "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-art/work/native-linux-nce/stock-art-exceptions-v1/cli-0-art/maps-before-vm.txt",
+        "bytes": 5647,
+        "sha256": "a198b437305063722dff77816e6d278597429e384655be24275568010e767377",
+        "validated": true
+      },
+      {
+        "name": "after-vm",
+        "present": true,
+        "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-art/work/native-linux-nce/stock-art-exceptions-v1/cli-0-art/maps-after-vm.txt",
+        "bytes": 125119,
+        "sha256": "3794bcfa386554ae8dcb53ccba7a16b3d8b89d67237cf5f5e4c65dfd10857657",
+        "validated": true
+      },
+      {
+        "name": "after-gc",
+        "present": true,
+        "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-art/work/native-linux-nce/stock-art-exceptions-v1/cli-0-art/maps-after-gc.txt",
+        "bytes": 125631,
+        "sha256": "63b0a95a72446d6ff246ac1d686117a31ee0f69f5750dc89ae0a637299939d66",
+        "validated": true
+      },
+      {
+        "name": "before-warmup",
+        "present": true,
+        "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/offline-stock-art/work/native-linux-nce/stock-art-exceptions-v1/cli-0-art/maps-before-warmup.txt",
+        "bytes": 125631,
+        "sha256": "63b0a95a72446d6ff246ac1d686117a31ee0f69f5750dc89ae0a637299939d66",
+        "validated": true
+      },
+      {
+        "name": "after-warmup",
+        "present": false,
+        "validated": true
+      }
+    ],
+    "stock_art_jit_observation": {
+      "jit_execution_confirmed": false,
+      "scope": "Completed integer instruction within a stable ART JIT RX mapping; method identity unverified",
+      "error": "观测窗口缺失或重复",
+      "samples": 0,
+      "guest_faults": [],
+      "candidates": [],
+      "confirmed": []
+    }
+  },
+  "raw_selected_rows": [
+    {
+      "stock_art_supervisor": true,
+      "page_size": 16384,
+      "timeout_seconds": 90
+    },
+    {
+      "stock_art_config": true,
+      "jni_version": 65542,
+      "jvalue_bytes": 8,
+      "jit_requested": true,
+      "jit_mode": "first-use"
+    },
+    {
+      "stock_art_maps": "before-vm",
+      "bytes": 5647
+    },
+    {
+      "stock_art_check": "vm_absent",
+      "passed": true,
+      "observed": 0
+    },
+    {
+      "stock_art_stage": "create_vm"
+    },
+    {
+      "stock_art_check": "create_vm",
+      "passed": true,
+      "observed": 0
+    },
+    {
+      "stock_art_maps": "after-vm",
+      "bytes": 125119
+    },
+    {
+      "stock_art_check": "load_dex",
+      "passed": true,
+      "observed": 1
+    },
+    {
+      "stock_art_check": "primitive_arguments",
+      "passed": true,
+      "observed": 1234605616436508552
+    },
+    {
+      "stock_art_check": "registered_natives",
+      "passed": true,
+      "observed": 1234605616436508552
+    },
+    {
+      "stock_art_check": "gc_observed",
+      "passed": true,
+      "observed": 1
+    },
+    {
+      "stock_art_check": "global_reference",
+      "passed": true,
+      "observed": 1234605616436508552
+    },
+    {
+      "stock_art_maps": "after-gc",
+      "bytes": 125631
+    },
+    {
+      "stock_art_array_storage": true,
+      "address": 100925452,
+      "is_copy": false
+    },
+    {
+      "stock_art_check": "array_storage",
+      "passed": true,
+      "observed": 47
+    },
+    {
+      "execution_observation": "marker",
+      "sequence": 1,
+      "pid": 2,
+      "tid": 2,
+      "mm": 481044692992,
+      "name": "art-jit-begin",
+      "pending_vm_calls": 0
+    },
+    {
+      "execution_observation": "guest_fault",
+      "sequence": 303,
+      "pid": 2,
+      "tid": 2,
+      "mm": 481044692992,
+      "pc": 335608448,
+      "address": 12,
+      "access": 0,
+      "result": -14
+    },
+    {
+      "stock_art_check": "java_threads",
+      "passed": true,
+      "observed": 2000
+    },
+    {
+      "stock_art_check": "native_thread",
+      "passed": true,
+      "observed": 58
+    },
+    {
+      "stock_art_check": "java_exception",
+      "passed": true,
+      "observed": 1
+    },
+    {
+      "stock_art_maps": "before-warmup",
+      "bytes": 125631
+    },
+    {
+      "stock_art_warmup": 0,
+      "calls": 200000,
+      "wait_before_ms": 0,
+      "observed": 340011506336
+    },
+    {
+      "stock_art_check": "warmup_result",
+      "passed": true,
+      "observed": 340011506336
+    },
+    {
+      "stock_art_exit": true,
+      "success": false,
+      "exec_errno": 0,
+      "exit_code": -1,
+      "signal": 11,
+      "timed_out": false
+    },
+    {
+      "stock_art_export": "before-vm",
+      "present": true,
+      "bytes": 5647
+    },
+    {
+      "stock_art_export": "after-vm",
+      "present": true,
+      "bytes": 125119
+    },
+    {
+      "stock_art_export": "after-gc",
+      "present": true,
+      "bytes": 125631
+    },
+    {
+      "stock_art_export": "before-warmup",
+      "present": true,
+      "bytes": 125631
+    },
+    {
+      "stock_art_export": "after-warmup",
+      "present": false
+    },
+    {
+      "test": "translated_context_cleanup",
+      "passed": true,
+      "allocated": 13,
+      "freed": 13,
+      "maps": 0,
+      "revocations": 0,
+      "tlb_fills": 326071,
+      "faults": 5708,
+      "syscalls": 647204,
+      "preemptions": 8046
+    }
+  ],
+  "raw_log_excerpt": [
+    {
+      "line": 2,
+      "text": "guest fault pc=1400bb70 address=0 access=0 result=-14"
+    },
+    {
+      "line": 127,
+      "text": "guest fault pc=1400fa80 address=c access=0 result=-14"
+    },
+    {
+      "line": 214,
+      "text": "01-30 08:13:36.691     2     2 I stock-art-probe: jit_code_cache.cc:1673 Not compiling int StockArtExceptions.implicitNull() because it has the resolution stub"
+    },
+    {
+      "line": 215,
+      "text": "01-30 08:13:36.692     2     2 I stock-art-probe: jit.cc:227 Compiling method void StockArtExceptions$Box.<init>(int) kind=Optimized"
+    },
+    {
+      "line": 217,
+      "text": "01-30 08:13:36.704     2     2 I stock-art-probe: jit_code_cache.cc:836 JIT added (kind=Optimized) void StockArtExceptions$Box.<init>(int)@0x2cc738ad0 ccache_size=60KB:  dcache_size=62KB: 0x1400fa10,0x1400fa1c"
+    },
+    {
+      "line": 218,
+      "text": "01-30 08:13:36.704     2     2 I stock-art-probe: jit_compiler.cc:206 Compilation of void StockArtExceptions$Box.<init>(int) took 11.783ms"
+    },
+    {
+      "line": 219,
+      "text": "01-30 08:13:36.704     2     2 I stock-art-probe: jit.cc:227 Compiling method long StockArtExceptions.readAfterLoop(StockArtExceptions$Box, int) kind=Optimized"
+    },
+    {
+      "line": 221,
+      "text": "01-30 08:13:36.744     2     2 I stock-art-probe: jit_code_cache.cc:836 JIT added (kind=Optimized) long StockArtExceptions.readAfterLoop(StockArtExceptions$Box, int)@0x2cc738a20 ccache_size=60KB:  dcache_size=63KB: 0x1400fa40,0x1400fac0"
+    },
+    {
+      "line": 222,
+      "text": "01-30 08:13:36.744     2     2 I stock-art-probe: jit_compiler.cc:206 Compilation of long StockArtExceptions.readAfterLoop(StockArtExceptions$Box, int) took 39.893ms"
+    },
+    {
+      "line": 223,
+      "text": "01-30 08:13:36.745     2     2 I stock-art-probe: jit.cc:227 Compiling method void StockArtExceptions.require(boolean) kind=Optimized"
+    },
+    {
+      "line": 225,
+      "text": "01-30 08:13:36.773     2     2 I stock-art-probe: jit_code_cache.cc:836 JIT added (kind=Optimized) void StockArtExceptions.require(boolean)@0x2cc738a60 ccache_size=61KB:  dcache_size=63KB: 0x1400fae0,0x1400fb98"
+    },
+    {
+      "line": 226,
+      "text": "01-30 08:13:36.773     2     2 I stock-art-probe: jit_compiler.cc:206 Compilation of void StockArtExceptions.require(boolean) took 28.516ms"
+    },
+    {
+      "line": 227,
+      "text": "libc: Fatal signal 11 (SIGSEGV), code 128 (SI_KERNEL), fault addr 0x0 in tid 2 (art-jit-begin), pid 2 (art-jit-begin)"
+    }
+  ],
+  "method_pc_association": {
+    "method": "long StockArtExceptions.readAfterLoop(StockArtExceptions$Box, int)",
+    "logged_code_range": [
+      335608384,
+      335608512
+    ],
+    "completed_samples_in_range": 65,
+    "first_completed_sample": {
+      "execution_observation": "integer_completed",
+      "sequence": 213,
+      "pid": 2,
+      "tid": 2,
+      "mm": 481044692992,
+      "pc": 335608416,
+      "next_pc": 335608424
+    },
+    "last_completed_sample": {
+      "execution_observation": "integer_completed",
+      "sequence": 302,
+      "pid": 2,
+      "tid": 2,
+      "mm": 481044692992,
+      "pc": 335608416,
+      "next_pc": 335608448
+    },
+    "faults_in_range": [
+      {
+        "execution_observation": "guest_fault",
+        "sequence": 303,
+        "pid": 2,
+        "tid": 2,
+        "mm": 481044692992,
+        "pc": 335608448,
+        "address": 12,
+        "access": 0,
+        "result": -14
+      }
+    ],
+    "limitation": "The process exited before the end marker and after-warmup maps; whole-window stable-map validation failed."
+  },
+  "checks_completed_before_pause": {
+    "report_parser_rejected_cases": 364,
+    "jit_parser_rejected_cases": 54,
+    "input_negative_cases": 9,
+    "c_formatting_completed": true,
+    "git_diff_check_passed": true
+  },
+  "pending": [
+    "Investigate SIGSEGV/SI_KERNEL after the compiled null access; signal restore rejection is unconfirmed",
+    "Complete null exception catch and continuation",
+    "Execute stack overflow and live-reference GC cases",
+    "Run GCD and default/background modes",
+    "Investigate OSR after exception paths pass",
+    "Device validation"
+  ]
+}

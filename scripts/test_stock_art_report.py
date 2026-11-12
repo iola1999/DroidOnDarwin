@@ -22,6 +22,7 @@ def rows():
         check('java_exception', 1), maps('before-warmup'),
         {'stock_art_warmup': 0, 'calls': 200000, 'wait_before_ms': 0,
          'observed': sum(((i * 17) ^ (i >> 3)) + 9 for i in range(200000))}, check('warmup_result', sum(((i * 17) ^ (i >> 3)) + 9 for i in range(200000))),
+        check('implicit_null', 47), check('stack_overflow', 47), check('gc_live_references', 8386560),
         {'stock_art_jit': 'unverified', 'warmup_calls': 200000}, maps('after-warmup'),
         {'stock_art_stage': 'destroy_vm'}, check('destroy_vm', 0),
         {'test': 'stock_art_standard_jni', 'passed': True, 'jit_execution_confirmed': False},

@@ -57,6 +57,25 @@ def main():
         changed[1]['pc'], changed[1]['next_pc'] = 0x23400, 0x10004
         assert not observe(directory, changed)['jit_execution_confirmed']
         rejected += 1
+        fault = dict(base, execution_observation='guest_fault', sequence=2, pc=0x10008,
+                     address=8, access=0, result=-14)
+        faults_only = [rows[0], fault, rows[-1]]
+        observed = observe(directory, faults_only)
+        assert observed['guest_faults'] == [fault] and observed['samples'] == 0
+        assert not observed['jit_execution_confirmed'] and observed['error'] is None
+        combined = [rows[0], fault, dict(rows[1], sequence=3), dict(rows[-1], sequence=4)]
+        assert observe(directory, combined)['jit_execution_confirmed']
+        for key, value in [('pid', 3), ('tid', 3), ('mm', 654321), ('pc', True), ('pc', 0x10001),
+                           ('address', -1), ('address', 1 << 64), ('access', True), ('access', 3),
+                           ('result', False), ('result', 0)]:
+            changed = deepcopy(combined)
+            changed[1][key] = value
+            assert observe(directory, changed)['error'] is not None, (key, value)
+            assert not observe(directory, changed)['jit_execution_confirmed']
+            rejected += 1
+        changed = [rows[0], rows[1], rows[2], dict(fault, sequence=4)]
+        assert observe(directory, changed)['error'] is not None
+        rejected += 1
         (directory / 'maps-before-warmup.txt').unlink()
         assert not observe(directory, rows)['jit_execution_confirmed']
         rejected += 1
