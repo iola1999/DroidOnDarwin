@@ -1,0 +1,3916 @@
+{
+  "scope": "主线页表/信号特殊映射与4KiB原始ART观察组合；Mac功能与iOS编译，无完整系统或设备性能结论",
+  "source_parent": "a1985f03e001858a67d571d763c2376373bf8e21",
+  "platform": "macOS-27.0-arm64-arm-64bit-Mach-O",
+  "core": [
+    {
+      "report": {
+        "path": "work/native-linux-nce/stock-init-special-mapping-main-core-16k-v1/summary.json",
+        "bytes": 109336,
+        "sha256": "6707c2ee7590af9b7c7791526053c83d2f48cec91e70ed3c6bbacaf63d955378"
+      },
+      "cpu": "Apple M5 Ultra",
+      "system_build": "26A428",
+      "configuration": {
+        "data_tbi": true,
+        "guest_layout": "sparse",
+        "code_memory": "dual",
+        "execution": "direct",
+        "direct": {
+          "mapping_entries": 256,
+          "route_entries": 256,
+          "selective_writes": false,
+          "reuse_code_checks": false,
+          "memory": "flat",
+          "code_watch": true,
+          "cross_page": true,
+          "route_epochs": false,
+          "retain_routes": false,
+          "memory_groups": false,
+          "native_exclusive": true,
+          "vector_table": false,
+          "simd_math": false
+        },
+        "mapping": "pte",
+        "sparse_scan": true,
+        "fault_prefetch": false,
+        "guest_page_bytes": 16384,
+        "host_page_bytes": 16384,
+        "workload": "core",
+        "entries": [
+          "cli",
+          "gcd"
+        ],
+        "art_nterp": 1,
+        "cpus": 1,
+        "high_res_timers": false,
+        "online_cpus": 1,
+        "uaccess_stop": "all",
+        "parallel_profile": false,
+        "art_expanded_jit": 0,
+        "art_fast_baseline": 0,
+        "cache_invalidation": "pages",
+        "exec_cache": "pages",
+        "tlb_invalidation": "pages",
+        "linux_fastpath": 0,
+        "guest_ram_bytes": 1073741824,
+        "translation_cache_bytes": 134217728,
+        "instruction_batch": 50000,
+        "memory_interval_ms": 100,
+        "preemption": "timer",
+        "timer_interval_ns": 2000000
+      },
+      "runs": [
+        {
+          "entry": "cli",
+          "returncode": 0,
+          "validated": true,
+          "checks": [
+            {
+              "test": "translation_prepared_code_execution",
+              "passed": true
+            },
+            {
+              "test": "translated_sparse_host_pointer_sources",
+              "passed": true
+            },
+            {
+              "test": "translated_same_host_va_cow_shared",
+              "passed": true
+            },
+            {
+              "test": "translated_sparse_pte_cow_shared_uaccess",
+              "passed": true
+            },
+            {
+              "test": "translated_sparse_reservation_materialization",
+              "passed": true
+            },
+            {
+              "test": "translated_data_tbi_and_unicorn_alias_invalidation",
+              "passed": true
+            },
+            {
+              "test": "translated_tagged_syscall_abi_rejected",
+              "passed": true
+            },
+            {
+              "test": "translated_tagged_fetch_rejected",
+              "passed": true
+            },
+            {
+              "test": "translated_guest_layout_boundaries",
+              "passed": true,
+              "layout": "sparse"
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "anon_rw_rx",
+              "passed": true,
+              "observed": 42
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "anon_rewrite",
+              "passed": true,
+              "observed": 91
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "rx_write",
+              "passed": true,
+              "signal": 11,
+              "si_code": 2,
+              "address": 738263040,
+              "expected_address": 738263040
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "remove_execute",
+              "passed": true,
+              "signal": 11,
+              "si_code": 2,
+              "address": 738263040,
+              "expected_address": 738263040
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "mremap_move",
+              "passed": true,
+              "observed": 91
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "mremap_old_unmapped",
+              "passed": true,
+              "signal": 11,
+              "si_code": 1,
+              "address": 738263040,
+              "expected_address": 738263040
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unmapped_execute",
+              "passed": true,
+              "signal": 11,
+              "si_code": 1,
+              "address": 738279424,
+              "expected_address": 738279424
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "anon_rx_map",
+              "passed": true,
+              "observed": 1
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "anon_rwx",
+              "passed": true,
+              "observed": 74
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "exec_only_vma",
+              "passed": true,
+              "observed": 58
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "ordinary_file_rx",
+              "passed": true,
+              "observed": 57
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "readonly_shared_write",
+              "passed": true,
+              "observed": 13
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "noexec_mmap",
+              "passed": true,
+              "observed": 1
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "noexec_mprotect",
+              "passed": true,
+              "observed": 13
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unpopulated_exec_alias",
+              "passed": true,
+              "observed": 59
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "private_cow_parent",
+              "passed": true,
+              "observed": 41
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "private_file_cow",
+              "passed": true,
+              "observed": 41
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "memfd_alias_updates",
+              "passed": true,
+              "observed": 16
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "memfd_pwrite",
+              "passed": true,
+              "observed": 97
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "memfd_shared_fork",
+              "passed": true,
+              "observed": 111
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "memfd_mremap_clone",
+              "passed": true,
+              "observed": 111
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unicorn_alias_update",
+              "passed": true,
+              "observed": 201
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unicorn_pwrite_update",
+              "passed": true,
+              "observed": 202
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unicorn_tagged_pwrite_updates",
+              "passed": true,
+              "observed": 3
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unicorn_unseen_pwrite",
+              "passed": true,
+              "observed": 203
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "same_va_new_backing",
+              "passed": true,
+              "observed": 87
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "sealed_write",
+              "passed": true,
+              "observed": 1
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unicorn_self_page_flush",
+              "passed": true,
+              "observed": 67
+            },
+            {
+              "test": "linux_simd_fallback_continuation",
+              "passed": true
+            },
+            {
+              "test": "translated_timer_boundaries",
+              "passed": true,
+              "high_res_timers": false,
+              "resolution_ns": 10000000
+            },
+            {
+              "test": "linux_signal_mask_altstack_nested",
+              "passed": true
+            },
+            {
+              "test": "linux_signal_register_restore",
+              "passed": true
+            },
+            {
+              "test": "linux_signal_kernel_restorer",
+              "passed": true,
+              "pid": 1
+            },
+            {
+              "test": "linux_signal_eintr_restart",
+              "passed": true
+            },
+            {
+              "test": "linux_signal_fault_recovery",
+              "passed": true
+            },
+            {
+              "test": "linux_signal_context_redirect",
+              "passed": true
+            },
+            {
+              "test": "linux_signal_frame_validation_stop_exit",
+              "passed": true
+            },
+            {
+              "test": "linux_pthread_cancel_signal",
+              "passed": true
+            },
+            {
+              "test": "linux_signal_timer_preemption",
+              "passed": true
+            },
+            {
+              "test": "linux_signal_suite",
+              "passed": true,
+              "libc": "musl-translated"
+            },
+            {
+              "test": "linux_brk_growth_cow",
+              "passed": true
+            },
+            {
+              "test": "linux_fault_contiguous_data_boundaries",
+              "passed": true
+            },
+            {
+              "test": "linux_user_string_boundaries",
+              "passed": true,
+              "libc": "musl"
+            },
+            {
+              "test": "linux_exec_symlink",
+              "passed": true,
+              "libc": "musl"
+            },
+            {
+              "test": "linux_aarch64_file_open_flags",
+              "passed": true,
+              "libc": "musl"
+            },
+            {
+              "test": "linux_stack_growth_and_limit",
+              "passed": true
+            },
+            {
+              "test": "linux_android_elf_reservation_boundaries",
+              "passed": true
+            },
+            {
+              "test": "linux_sparse_reservation_cow",
+              "passed": true,
+              "reserved_bytes": 2147483648
+            },
+            {
+              "test": "linux_mmap_byte_offset",
+              "passed": true
+            },
+            {
+              "test": "linux_fault_register_state",
+              "passed": true,
+              "switches": 64
+            },
+            {
+              "test": "linux_user_memory_boundaries",
+              "passed": true,
+              "reuse_rounds": 64
+            },
+            {
+              "test": "linux_ram_capacity_cow",
+              "passed": true,
+              "bytes": 671088640
+            },
+            {
+              "test": "linux_mm_exchange_integrity",
+              "passed": true,
+              "cases": 28
+            },
+            {
+              "test": "translated_pthread_tls_mutex",
+              "passed": true
+            },
+            {
+              "test": "translated_signals_protection_restore",
+              "passed": true
+            },
+            {
+              "test": "translated_runtime_elf_exec",
+              "passed": true
+            },
+            {
+              "test": "linux_dynamic_link_dlopen_constructors",
+              "passed": true
+            },
+            {
+              "test": "linux_dynamic_tls_threads",
+              "passed": true
+            },
+            {
+              "test": "linux_dynamic_fork_signal",
+              "passed": true
+            },
+            {
+              "test": "translated_runtime_libraries",
+              "passed": true
+            },
+            {
+              "test": "translated_linux_process",
+              "path": "/probe-guest",
+              "passed": true,
+              "waited": 25,
+              "status": 0
+            },
+            {
+              "test": "translated_host_pointer_copy",
+              "passed": true
+            },
+            {
+              "test": "translated_context_cleanup",
+              "passed": true,
+              "allocated": 70,
+              "freed": 70,
+              "maps": 0,
+              "revocations": 0,
+              "tlb_fills": 70263,
+              "faults": 152440,
+              "syscalls": 17224,
+              "preemptions": 44
+            },
+            {
+              "result": "passed"
+            }
+          ],
+          "stderr": {
+            "path": "work/native-linux-nce/stock-init-special-mapping-main-core-16k-v1/cli-0.log",
+            "bytes": 4356,
+            "sha256": "0d886c25adb9a0be640ba4fe01c840d74f8d33f34b70ebc5fa78f28317b63ef7"
+          },
+          "page_table_warning": false
+        },
+        {
+          "entry": "gcd",
+          "returncode": 0,
+          "validated": true,
+          "checks": [
+            {
+              "test": "dispatch_signal_mask",
+              "sigusr2_blocked": 1
+            },
+            {
+              "test": "translation_prepared_code_execution",
+              "passed": true
+            },
+            {
+              "test": "translated_sparse_host_pointer_sources",
+              "passed": true
+            },
+            {
+              "test": "translated_same_host_va_cow_shared",
+              "passed": true
+            },
+            {
+              "test": "translated_sparse_pte_cow_shared_uaccess",
+              "passed": true
+            },
+            {
+              "test": "translated_sparse_reservation_materialization",
+              "passed": true
+            },
+            {
+              "test": "translated_data_tbi_and_unicorn_alias_invalidation",
+              "passed": true
+            },
+            {
+              "test": "translated_tagged_syscall_abi_rejected",
+              "passed": true
+            },
+            {
+              "test": "translated_tagged_fetch_rejected",
+              "passed": true
+            },
+            {
+              "test": "translated_guest_layout_boundaries",
+              "passed": true,
+              "layout": "sparse"
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "anon_rw_rx",
+              "passed": true,
+              "observed": 42
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "anon_rewrite",
+              "passed": true,
+              "observed": 91
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "rx_write",
+              "passed": true,
+              "signal": 11,
+              "si_code": 2,
+              "address": 738263040,
+              "expected_address": 738263040
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "remove_execute",
+              "passed": true,
+              "signal": 11,
+              "si_code": 2,
+              "address": 738263040,
+              "expected_address": 738263040
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "mremap_move",
+              "passed": true,
+              "observed": 91
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "mremap_old_unmapped",
+              "passed": true,
+              "signal": 11,
+              "si_code": 1,
+              "address": 738263040,
+              "expected_address": 738263040
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unmapped_execute",
+              "passed": true,
+              "signal": 11,
+              "si_code": 1,
+              "address": 738279424,
+              "expected_address": 738279424
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "anon_rx_map",
+              "passed": true,
+              "observed": 1
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "anon_rwx",
+              "passed": true,
+              "observed": 74
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "exec_only_vma",
+              "passed": true,
+              "observed": 58
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "ordinary_file_rx",
+              "passed": true,
+              "observed": 57
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "readonly_shared_write",
+              "passed": true,
+              "observed": 13
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "noexec_mmap",
+              "passed": true,
+              "observed": 1
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "noexec_mprotect",
+              "passed": true,
+              "observed": 13
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unpopulated_exec_alias",
+              "passed": true,
+              "observed": 59
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "private_cow_parent",
+              "passed": true,
+              "observed": 41
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "private_file_cow",
+              "passed": true,
+              "observed": 41
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "memfd_alias_updates",
+              "passed": true,
+              "observed": 16
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "memfd_pwrite",
+              "passed": true,
+              "observed": 97
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "memfd_shared_fork",
+              "passed": true,
+              "observed": 111
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "memfd_mremap_clone",
+              "passed": true,
+              "observed": 111
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unicorn_alias_update",
+              "passed": true,
+              "observed": 201
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unicorn_pwrite_update",
+              "passed": true,
+              "observed": 202
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unicorn_tagged_pwrite_updates",
+              "passed": true,
+              "observed": 3
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unicorn_unseen_pwrite",
+              "passed": true,
+              "observed": 203
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "same_va_new_backing",
+              "passed": true,
+              "observed": 87
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "sealed_write",
+              "passed": true,
+              "observed": 1
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unicorn_self_page_flush",
+              "passed": true,
+              "observed": 67
+            },
+            {
+              "test": "linux_simd_fallback_continuation",
+              "passed": true
+            },
+            {
+              "test": "translated_timer_boundaries",
+              "passed": true,
+              "high_res_timers": false,
+              "resolution_ns": 10000000
+            },
+            {
+              "test": "linux_signal_mask_altstack_nested",
+              "passed": true
+            },
+            {
+              "test": "linux_signal_register_restore",
+              "passed": true
+            },
+            {
+              "test": "linux_signal_kernel_restorer",
+              "passed": true,
+              "pid": 1
+            },
+            {
+              "test": "linux_signal_eintr_restart",
+              "passed": true
+            },
+            {
+              "test": "linux_signal_fault_recovery",
+              "passed": true
+            },
+            {
+              "test": "linux_signal_context_redirect",
+              "passed": true
+            },
+            {
+              "test": "linux_signal_frame_validation_stop_exit",
+              "passed": true
+            },
+            {
+              "test": "linux_pthread_cancel_signal",
+              "passed": true
+            },
+            {
+              "test": "linux_signal_timer_preemption",
+              "passed": true
+            },
+            {
+              "test": "linux_signal_suite",
+              "passed": true,
+              "libc": "musl-translated"
+            },
+            {
+              "test": "linux_brk_growth_cow",
+              "passed": true
+            },
+            {
+              "test": "linux_fault_contiguous_data_boundaries",
+              "passed": true
+            },
+            {
+              "test": "linux_user_string_boundaries",
+              "passed": true,
+              "libc": "musl"
+            },
+            {
+              "test": "linux_exec_symlink",
+              "passed": true,
+              "libc": "musl"
+            },
+            {
+              "test": "linux_aarch64_file_open_flags",
+              "passed": true,
+              "libc": "musl"
+            },
+            {
+              "test": "linux_stack_growth_and_limit",
+              "passed": true
+            },
+            {
+              "test": "linux_android_elf_reservation_boundaries",
+              "passed": true
+            },
+            {
+              "test": "linux_sparse_reservation_cow",
+              "passed": true,
+              "reserved_bytes": 2147483648
+            },
+            {
+              "test": "linux_mmap_byte_offset",
+              "passed": true
+            },
+            {
+              "test": "linux_fault_register_state",
+              "passed": true,
+              "switches": 64
+            },
+            {
+              "test": "linux_user_memory_boundaries",
+              "passed": true,
+              "reuse_rounds": 64
+            },
+            {
+              "test": "linux_ram_capacity_cow",
+              "passed": true,
+              "bytes": 671088640
+            },
+            {
+              "test": "linux_mm_exchange_integrity",
+              "passed": true,
+              "cases": 28
+            },
+            {
+              "test": "translated_pthread_tls_mutex",
+              "passed": true
+            },
+            {
+              "test": "translated_signals_protection_restore",
+              "passed": true
+            },
+            {
+              "test": "translated_runtime_elf_exec",
+              "passed": true
+            },
+            {
+              "test": "linux_dynamic_link_dlopen_constructors",
+              "passed": true
+            },
+            {
+              "test": "linux_dynamic_tls_threads",
+              "passed": true
+            },
+            {
+              "test": "linux_dynamic_fork_signal",
+              "passed": true
+            },
+            {
+              "test": "translated_runtime_libraries",
+              "passed": true
+            },
+            {
+              "test": "translated_linux_process",
+              "path": "/probe-guest",
+              "passed": true,
+              "waited": 25,
+              "status": 0
+            },
+            {
+              "test": "translated_host_pointer_copy",
+              "passed": true
+            },
+            {
+              "test": "translated_context_cleanup",
+              "passed": true,
+              "allocated": 70,
+              "freed": 70,
+              "maps": 0,
+              "revocations": 0,
+              "tlb_fills": 70262,
+              "faults": 152440,
+              "syscalls": 17224,
+              "preemptions": 48
+            },
+            {
+              "result": "passed"
+            }
+          ],
+          "stderr": {
+            "path": "work/native-linux-nce/stock-init-special-mapping-main-core-16k-v1/gcd-0.log",
+            "bytes": 4356,
+            "sha256": "27cb9ab4998eb84602d205cf6b4698c26f9a111615fc5b87c7eeb7469d717953"
+          },
+          "page_table_warning": false
+        }
+      ]
+    },
+    {
+      "report": {
+        "path": "work/native-linux-nce/stock-init-special-mapping-main-core-4k-v1/summary.json",
+        "bytes": 112715,
+        "sha256": "9586f734f359268ec347fdf63db5863cfd3fb8970abf6d307daabd118d6b0d96"
+      },
+      "cpu": "Apple M5 Ultra",
+      "system_build": "26A428",
+      "configuration": {
+        "data_tbi": true,
+        "guest_layout": "sparse",
+        "code_memory": "dual",
+        "execution": "direct",
+        "direct": {
+          "mapping_entries": 256,
+          "route_entries": 256,
+          "selective_writes": false,
+          "reuse_code_checks": false,
+          "memory": "flat",
+          "code_watch": true,
+          "cross_page": true,
+          "route_epochs": false,
+          "retain_routes": false,
+          "memory_groups": false,
+          "native_exclusive": true,
+          "vector_table": false,
+          "simd_math": false
+        },
+        "mapping": "pte",
+        "sparse_scan": true,
+        "fault_prefetch": false,
+        "guest_page_bytes": 4096,
+        "host_page_bytes": 16384,
+        "workload": "core",
+        "entries": [
+          "cli",
+          "gcd"
+        ],
+        "art_nterp": 1,
+        "cpus": 1,
+        "high_res_timers": false,
+        "online_cpus": 1,
+        "uaccess_stop": "all",
+        "parallel_profile": false,
+        "art_expanded_jit": 0,
+        "art_fast_baseline": 0,
+        "cache_invalidation": "pages",
+        "exec_cache": "pages",
+        "tlb_invalidation": "pages",
+        "linux_fastpath": 0,
+        "guest_ram_bytes": 1073741824,
+        "translation_cache_bytes": 134217728,
+        "instruction_batch": 50000,
+        "memory_interval_ms": 100,
+        "preemption": "timer",
+        "timer_interval_ns": 2000000
+      },
+      "runs": [
+        {
+          "entry": "cli",
+          "returncode": 0,
+          "validated": true,
+          "checks": [
+            {
+              "test": "translation_prepared_code_execution",
+              "passed": true
+            },
+            {
+              "test": "translated_sparse_host_pointer_sources",
+              "passed": true
+            },
+            {
+              "test": "translated_same_host_va_cow_shared",
+              "passed": true
+            },
+            {
+              "test": "translated_sparse_pte_cow_shared_uaccess",
+              "passed": true
+            },
+            {
+              "test": "translated_sparse_reservation_materialization",
+              "passed": true
+            },
+            {
+              "test": "translated_data_tbi_and_unicorn_alias_invalidation",
+              "passed": true
+            },
+            {
+              "test": "translated_tagged_syscall_abi_rejected",
+              "passed": true
+            },
+            {
+              "test": "translated_tagged_fetch_rejected",
+              "passed": true
+            },
+            {
+              "test": "translated_guest_layout_boundaries",
+              "passed": true,
+              "layout": "sparse"
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "anon_rw_rx",
+              "passed": true,
+              "observed": 42
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "anon_rewrite",
+              "passed": true,
+              "observed": 91
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "rx_write",
+              "passed": true,
+              "signal": 11,
+              "si_code": 2,
+              "address": 738263040,
+              "expected_address": 738263040
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "remove_execute",
+              "passed": true,
+              "signal": 11,
+              "si_code": 2,
+              "address": 738263040,
+              "expected_address": 738263040
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "mremap_move",
+              "passed": true,
+              "observed": 91
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "mremap_old_unmapped",
+              "passed": true,
+              "signal": 11,
+              "si_code": 1,
+              "address": 738263040,
+              "expected_address": 738263040
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unmapped_execute",
+              "passed": true,
+              "signal": 11,
+              "si_code": 1,
+              "address": 738267136,
+              "expected_address": 738267136
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "anon_rx_map",
+              "passed": true,
+              "observed": 1
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "anon_rwx",
+              "passed": true,
+              "observed": 74
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "exec_only_vma",
+              "passed": true,
+              "observed": 58
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "ordinary_file_rx",
+              "passed": true,
+              "observed": 57
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "readonly_shared_write",
+              "passed": true,
+              "observed": 13
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "noexec_mmap",
+              "passed": true,
+              "observed": 1
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "noexec_mprotect",
+              "passed": true,
+              "observed": 13
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unpopulated_exec_alias",
+              "passed": true,
+              "observed": 59
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "private_cow_parent",
+              "passed": true,
+              "observed": 41
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "private_file_cow",
+              "passed": true,
+              "observed": 41
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "memfd_alias_updates",
+              "passed": true,
+              "observed": 16
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "memfd_pwrite",
+              "passed": true,
+              "observed": 97
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "memfd_shared_fork",
+              "passed": true,
+              "observed": 111
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "memfd_mremap_clone",
+              "passed": true,
+              "observed": 111
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unicorn_alias_update",
+              "passed": true,
+              "observed": 201
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unicorn_pwrite_update",
+              "passed": true,
+              "observed": 202
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unicorn_tagged_pwrite_updates",
+              "passed": true,
+              "observed": 3
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unicorn_unseen_pwrite",
+              "passed": true,
+              "observed": 203
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "same_va_new_backing",
+              "passed": true,
+              "observed": 87
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "sealed_write",
+              "passed": true,
+              "observed": 1
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unicorn_self_page_flush",
+              "passed": true,
+              "observed": 67
+            },
+            {
+              "test": "linux_simd_fallback_continuation",
+              "passed": true
+            },
+            {
+              "test": "translated_timer_boundaries",
+              "passed": true,
+              "high_res_timers": false,
+              "resolution_ns": 10000000
+            },
+            {
+              "test": "linux_signal_mask_altstack_nested",
+              "passed": true
+            },
+            {
+              "test": "linux_signal_register_restore",
+              "passed": true
+            },
+            {
+              "test": "linux_signal_kernel_restorer",
+              "passed": true,
+              "pid": 1
+            },
+            {
+              "test": "linux_signal_eintr_restart",
+              "passed": true
+            },
+            {
+              "test": "linux_signal_fault_recovery",
+              "passed": true
+            },
+            {
+              "test": "linux_signal_context_redirect",
+              "passed": true
+            },
+            {
+              "test": "linux_signal_frame_validation_stop_exit",
+              "passed": true
+            },
+            {
+              "test": "linux_pthread_cancel_signal",
+              "passed": true
+            },
+            {
+              "test": "linux_signal_timer_preemption",
+              "passed": true
+            },
+            {
+              "test": "linux_signal_suite",
+              "passed": true,
+              "libc": "musl-translated"
+            },
+            {
+              "test": "linux_brk_growth_cow",
+              "passed": true
+            },
+            {
+              "test": "linux_fault_contiguous_data_boundaries",
+              "passed": true
+            },
+            {
+              "test": "linux_user_string_boundaries",
+              "passed": true,
+              "libc": "musl"
+            },
+            {
+              "test": "linux_exec_symlink",
+              "passed": true,
+              "libc": "musl"
+            },
+            {
+              "test": "linux_aarch64_file_open_flags",
+              "passed": true,
+              "libc": "musl"
+            },
+            {
+              "test": "linux_stack_growth_and_limit",
+              "passed": true
+            },
+            {
+              "test": "linux_android_elf_reservation_boundaries",
+              "passed": true
+            },
+            {
+              "test": "linux_sparse_reservation_cow",
+              "passed": true,
+              "reserved_bytes": 2147483648
+            },
+            {
+              "test": "linux_mmap_byte_offset",
+              "passed": true
+            },
+            {
+              "test": "linux_fault_register_state",
+              "passed": true,
+              "switches": 64
+            },
+            {
+              "test": "linux_user_memory_boundaries",
+              "passed": true,
+              "reuse_rounds": 64
+            },
+            {
+              "test": "linux_ram_capacity_cow",
+              "passed": true,
+              "bytes": 671088640
+            },
+            {
+              "test": "linux_mm_exchange_integrity",
+              "passed": true,
+              "cases": 28
+            },
+            {
+              "test": "translated_pthread_tls_mutex",
+              "passed": true
+            },
+            {
+              "test": "translated_signals_protection_restore",
+              "passed": true
+            },
+            {
+              "test": "translated_runtime_elf_exec",
+              "passed": true
+            },
+            {
+              "test": "linux_dynamic_link_dlopen_constructors",
+              "passed": true
+            },
+            {
+              "test": "linux_dynamic_tls_threads",
+              "passed": true
+            },
+            {
+              "test": "linux_dynamic_fork_signal",
+              "passed": true
+            },
+            {
+              "test": "translated_runtime_libraries",
+              "passed": true
+            },
+            {
+              "test": "translated_linux_process",
+              "path": "/probe-guest",
+              "passed": true,
+              "waited": 25,
+              "status": 0
+            },
+            {
+              "test": "translated_host_pointer_copy",
+              "passed": true
+            },
+            {
+              "test": "translated_context_cleanup",
+              "passed": true,
+              "allocated": 70,
+              "freed": 70,
+              "maps": 0,
+              "revocations": 0,
+              "tlb_fills": 70424,
+              "faults": 152522,
+              "syscalls": 17226,
+              "preemptions": 26
+            },
+            {
+              "result": "passed"
+            }
+          ],
+          "stderr": {
+            "path": "work/native-linux-nce/stock-init-special-mapping-main-core-4k-v1/cli-0.log",
+            "bytes": 4356,
+            "sha256": "8d2fb4ad4b760c3df53eeb68880124bf8c745da380073c2dff56f3873819a60a"
+          },
+          "page_table_warning": false
+        },
+        {
+          "entry": "gcd",
+          "returncode": 0,
+          "validated": true,
+          "checks": [
+            {
+              "test": "dispatch_signal_mask",
+              "sigusr2_blocked": 1
+            },
+            {
+              "test": "translation_prepared_code_execution",
+              "passed": true
+            },
+            {
+              "test": "translated_sparse_host_pointer_sources",
+              "passed": true
+            },
+            {
+              "test": "translated_same_host_va_cow_shared",
+              "passed": true
+            },
+            {
+              "test": "translated_sparse_pte_cow_shared_uaccess",
+              "passed": true
+            },
+            {
+              "test": "translated_sparse_reservation_materialization",
+              "passed": true
+            },
+            {
+              "test": "translated_data_tbi_and_unicorn_alias_invalidation",
+              "passed": true
+            },
+            {
+              "test": "translated_tagged_syscall_abi_rejected",
+              "passed": true
+            },
+            {
+              "test": "translated_tagged_fetch_rejected",
+              "passed": true
+            },
+            {
+              "test": "translated_guest_layout_boundaries",
+              "passed": true,
+              "layout": "sparse"
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "anon_rw_rx",
+              "passed": true,
+              "observed": 42
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "anon_rewrite",
+              "passed": true,
+              "observed": 91
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "rx_write",
+              "passed": true,
+              "signal": 11,
+              "si_code": 2,
+              "address": 738263040,
+              "expected_address": 738263040
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "remove_execute",
+              "passed": true,
+              "signal": 11,
+              "si_code": 2,
+              "address": 738263040,
+              "expected_address": 738263040
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "mremap_move",
+              "passed": true,
+              "observed": 91
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "mremap_old_unmapped",
+              "passed": true,
+              "signal": 11,
+              "si_code": 1,
+              "address": 738263040,
+              "expected_address": 738263040
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unmapped_execute",
+              "passed": true,
+              "signal": 11,
+              "si_code": 1,
+              "address": 738267136,
+              "expected_address": 738267136
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "anon_rx_map",
+              "passed": true,
+              "observed": 1
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "anon_rwx",
+              "passed": true,
+              "observed": 74
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "exec_only_vma",
+              "passed": true,
+              "observed": 58
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "ordinary_file_rx",
+              "passed": true,
+              "observed": 57
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "readonly_shared_write",
+              "passed": true,
+              "observed": 13
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "noexec_mmap",
+              "passed": true,
+              "observed": 1
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "noexec_mprotect",
+              "passed": true,
+              "observed": 13
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unpopulated_exec_alias",
+              "passed": true,
+              "observed": 59
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "private_cow_parent",
+              "passed": true,
+              "observed": 41
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "private_file_cow",
+              "passed": true,
+              "observed": 41
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "memfd_alias_updates",
+              "passed": true,
+              "observed": 16
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "memfd_pwrite",
+              "passed": true,
+              "observed": 97
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "memfd_shared_fork",
+              "passed": true,
+              "observed": 111
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "memfd_mremap_clone",
+              "passed": true,
+              "observed": 111
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unicorn_alias_update",
+              "passed": true,
+              "observed": 201
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unicorn_pwrite_update",
+              "passed": true,
+              "observed": 202
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unicorn_tagged_pwrite_updates",
+              "passed": true,
+              "observed": 3
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unicorn_unseen_pwrite",
+              "passed": true,
+              "observed": 203
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "same_va_new_backing",
+              "passed": true,
+              "observed": 87
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "sealed_write",
+              "passed": true,
+              "observed": 1
+            },
+            {
+              "test": "linux_standard_jit",
+              "case": "unicorn_self_page_flush",
+              "passed": true,
+              "observed": 67
+            },
+            {
+              "test": "linux_simd_fallback_continuation",
+              "passed": true
+            },
+            {
+              "test": "translated_timer_boundaries",
+              "passed": true,
+              "high_res_timers": false,
+              "resolution_ns": 10000000
+            },
+            {
+              "test": "linux_signal_mask_altstack_nested",
+              "passed": true
+            },
+            {
+              "test": "linux_signal_register_restore",
+              "passed": true
+            },
+            {
+              "test": "linux_signal_kernel_restorer",
+              "passed": true,
+              "pid": 1
+            },
+            {
+              "test": "linux_signal_eintr_restart",
+              "passed": true
+            },
+            {
+              "test": "linux_signal_fault_recovery",
+              "passed": true
+            },
+            {
+              "test": "linux_signal_context_redirect",
+              "passed": true
+            },
+            {
+              "test": "linux_signal_frame_validation_stop_exit",
+              "passed": true
+            },
+            {
+              "test": "linux_pthread_cancel_signal",
+              "passed": true
+            },
+            {
+              "test": "linux_signal_timer_preemption",
+              "passed": true
+            },
+            {
+              "test": "linux_signal_suite",
+              "passed": true,
+              "libc": "musl-translated"
+            },
+            {
+              "test": "linux_brk_growth_cow",
+              "passed": true
+            },
+            {
+              "test": "linux_fault_contiguous_data_boundaries",
+              "passed": true
+            },
+            {
+              "test": "linux_user_string_boundaries",
+              "passed": true,
+              "libc": "musl"
+            },
+            {
+              "test": "linux_exec_symlink",
+              "passed": true,
+              "libc": "musl"
+            },
+            {
+              "test": "linux_aarch64_file_open_flags",
+              "passed": true,
+              "libc": "musl"
+            },
+            {
+              "test": "linux_stack_growth_and_limit",
+              "passed": true
+            },
+            {
+              "test": "linux_android_elf_reservation_boundaries",
+              "passed": true
+            },
+            {
+              "test": "linux_sparse_reservation_cow",
+              "passed": true,
+              "reserved_bytes": 2147483648
+            },
+            {
+              "test": "linux_mmap_byte_offset",
+              "passed": true
+            },
+            {
+              "test": "linux_fault_register_state",
+              "passed": true,
+              "switches": 64
+            },
+            {
+              "test": "linux_user_memory_boundaries",
+              "passed": true,
+              "reuse_rounds": 64
+            },
+            {
+              "test": "linux_ram_capacity_cow",
+              "passed": true,
+              "bytes": 671088640
+            },
+            {
+              "test": "linux_mm_exchange_integrity",
+              "passed": true,
+              "cases": 28
+            },
+            {
+              "test": "translated_pthread_tls_mutex",
+              "passed": true
+            },
+            {
+              "test": "translated_signals_protection_restore",
+              "passed": true
+            },
+            {
+              "test": "translated_runtime_elf_exec",
+              "passed": true
+            },
+            {
+              "test": "linux_dynamic_link_dlopen_constructors",
+              "passed": true
+            },
+            {
+              "test": "linux_dynamic_tls_threads",
+              "passed": true
+            },
+            {
+              "test": "linux_dynamic_fork_signal",
+              "passed": true
+            },
+            {
+              "test": "translated_runtime_libraries",
+              "passed": true
+            },
+            {
+              "test": "translated_linux_process",
+              "path": "/probe-guest",
+              "passed": true,
+              "waited": 25,
+              "status": 0
+            },
+            {
+              "test": "translated_host_pointer_copy",
+              "passed": true
+            },
+            {
+              "test": "translated_context_cleanup",
+              "passed": true,
+              "allocated": 70,
+              "freed": 70,
+              "maps": 0,
+              "revocations": 0,
+              "tlb_fills": 70424,
+              "faults": 152522,
+              "syscalls": 17226,
+              "preemptions": 33
+            },
+            {
+              "result": "passed"
+            }
+          ],
+          "stderr": {
+            "path": "work/native-linux-nce/stock-init-special-mapping-main-core-4k-v1/gcd-0.log",
+            "bytes": 4356,
+            "sha256": "da9ac4b6acc511013220d52e48fa01cb51ad5e60dec7c890f02a0f36b1172e95"
+          },
+          "page_table_warning": false
+        }
+      ]
+    }
+  ],
+  "stock_init": {
+    "report": {
+      "path": "work/native-linux-nce/stock-init-special-mapping-main-original-v1/summary.json",
+      "bytes": 7120240,
+      "sha256": "852467172c49eecd8a7fe8b9be9efc586f7b44bcda1748502771950b17ad3d9d"
+    },
+    "source_report": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/stock-init-special-mapping-main-core-16k-v1/summary.json",
+    "source_report_sha256": "6707c2ee7590af9b7c7791526053c83d2f48cec91e70ed3c6bbacaf63d955378",
+    "source_configuration": {
+      "data_tbi": true,
+      "guest_layout": "sparse",
+      "code_memory": "dual",
+      "execution": "direct",
+      "direct": {
+        "mapping_entries": 256,
+        "route_entries": 256,
+        "selective_writes": false,
+        "reuse_code_checks": false,
+        "memory": "flat",
+        "code_watch": true,
+        "cross_page": true,
+        "route_epochs": false,
+        "retain_routes": false,
+        "memory_groups": false,
+        "native_exclusive": true,
+        "vector_table": false,
+        "simd_math": false
+      },
+      "mapping": "pte",
+      "sparse_scan": true,
+      "fault_prefetch": false,
+      "guest_page_bytes": 16384,
+      "host_page_bytes": 16384,
+      "workload": "core",
+      "entries": [
+        "cli",
+        "gcd"
+      ],
+      "art_nterp": 1,
+      "cpus": 1,
+      "high_res_timers": false,
+      "online_cpus": 1,
+      "uaccess_stop": "all",
+      "parallel_profile": false,
+      "art_expanded_jit": 0,
+      "art_fast_baseline": 0,
+      "cache_invalidation": "pages",
+      "exec_cache": "pages",
+      "tlb_invalidation": "pages",
+      "linux_fastpath": 0,
+      "guest_ram_bytes": 1073741824,
+      "translation_cache_bytes": 134217728,
+      "instruction_batch": 50000,
+      "memory_interval_ms": 100,
+      "preemption": "timer",
+      "timer_interval_ns": 2000000
+    },
+    "runs": [
+      {
+        "entry": "cli",
+        "mode": "lifecycle",
+        "returncode": 0,
+        "observation_validated": true,
+        "checks": [
+          {
+            "test": "translation_prepared_code_execution",
+            "passed": true
+          },
+          {
+            "test": "linux_signal_kernel_restorer",
+            "passed": true,
+            "pid": 1
+          },
+          {
+            "test": "linux_signal_kernel_restorer",
+            "passed": true,
+            "pid": 2
+          },
+          {
+            "stock_init_observation": true,
+            "mode": "lifecycle",
+            "ancestor_pid": 26,
+            "waited": 26,
+            "status": 9,
+            "deadline_stop": true,
+            "kill_result": 0
+          },
+          {
+            "test": "translated_context_cleanup",
+            "passed": true,
+            "allocated": 2,
+            "freed": 2,
+            "maps": 0,
+            "revocations": 0,
+            "tlb_fills": 22,
+            "faults": 19,
+            "syscalls": 69,
+            "preemptions": 1
+          },
+          {
+            "result": "passed"
+          }
+        ],
+        "execs": [],
+        "selected_guest_log": [],
+        "page_table_warning": false,
+        "service_signal11": false
+      },
+      {
+        "entry": "gcd",
+        "mode": "lifecycle",
+        "returncode": 0,
+        "observation_validated": true,
+        "checks": [
+          {
+            "test": "dispatch_signal_mask",
+            "sigusr2_blocked": 1
+          },
+          {
+            "test": "translation_prepared_code_execution",
+            "passed": true
+          },
+          {
+            "test": "linux_signal_kernel_restorer",
+            "passed": true,
+            "pid": 1
+          },
+          {
+            "test": "linux_signal_kernel_restorer",
+            "passed": true,
+            "pid": 2
+          },
+          {
+            "stock_init_observation": true,
+            "mode": "lifecycle",
+            "ancestor_pid": 26,
+            "waited": 26,
+            "status": 9,
+            "deadline_stop": true,
+            "kill_result": 0
+          },
+          {
+            "test": "translated_context_cleanup",
+            "passed": true,
+            "allocated": 2,
+            "freed": 2,
+            "maps": 0,
+            "revocations": 0,
+            "tlb_fills": 22,
+            "faults": 19,
+            "syscalls": 69,
+            "preemptions": 1
+          },
+          {
+            "result": "passed"
+          }
+        ],
+        "execs": [],
+        "selected_guest_log": [],
+        "page_table_warning": false,
+        "service_signal11": false
+      },
+      {
+        "entry": "cli",
+        "mode": "original",
+        "returncode": 0,
+        "observation_validated": true,
+        "checks": [
+          {
+            "test": "translation_prepared_code_execution",
+            "passed": true
+          },
+          {
+            "test": "linux_signal_kernel_restorer",
+            "passed": true,
+            "pid": 1
+          },
+          {
+            "stock_init_observation": true,
+            "mode": "original",
+            "ancestor_pid": 26,
+            "waited": 26,
+            "status": 1,
+            "deadline_stop": false,
+            "kill_result": 0
+          },
+          {
+            "test": "translated_context_cleanup",
+            "passed": true,
+            "allocated": 48,
+            "freed": 48,
+            "maps": 0,
+            "revocations": 0,
+            "tlb_fills": 14019,
+            "faults": 4168,
+            "syscalls": 30521,
+            "preemptions": 185
+          },
+          {
+            "result": "passed"
+          }
+        ],
+        "execs": [
+          {
+            "path": "/system/bin/init",
+            "result": 0
+          },
+          {
+            "path": "/system/bin/init",
+            "result": 0
+          },
+          {
+            "path": "/system/bin/init",
+            "result": 0
+          },
+          {
+            "path": "/system/bin/ueventd",
+            "result": 0
+          },
+          {
+            "path": "/system/bin/apexd",
+            "result": 0
+          }
+        ],
+        "selected_guest_log": [
+          "<6>ueventd: Coldboot took 0.071 seconds",
+          "<3>apexd-bootstrap: Failed to pre-allocate loop devices : wait for '/dev/loop-control' timed out and took 20004ms: No such file or directory",
+          "<3>apexd-bootstrap: Failed to open device-mapper: No such file or directory",
+          "<3>apexd-bootstrap: Failed to activate /system/apex/com.android.runtime.apex(com.android.runtime@1): Could not create loop device for /system/apex/com.android.runtime.apex: Failed to open loop-control: No such file or directory",
+          "<3>apexd-bootstrap: Failed to activate /system/apex/com.android.i18n.apex(com.android.i18n@1): Could not create loop device for /system/apex/com.android.i18n.apex: Failed to open loop-control: No such file or directory",
+          "<3>apexd-bootstrap: Failed to activate /system/apex/com.android.virt.apex(com.android.virt@3): Could not create loop device for /system/apex/com.android.virt.apex: Failed to open loop-control: No such file or directory",
+          "<3>apexd-bootstrap: Failed to activate /system/apex/com.google.android.tzdata6.apex(com.android.tzdata@360499999): Could not create loop device for /system/apex/com.google.android.tzdata6.apex: Failed to open loop-control: No such file or directory",
+          "<3>apexd-bootstrap: Failed to activate apexes: Failed to activate 4 APEX packages. One of the errors: Failed to activate /system/apex/com.android.runtime.apex(com.android.runtime@1): Could not create loop device for /system/apex/com.android.runtime.apex: Failed to open loop-control: No such file or directory",
+          "<6>init: Got shutdown_command 'reboot,bootloader,bootstrap-apexd-failed' Calling HandlePowerctlMessage()"
+        ],
+        "page_table_warning": false,
+        "service_signal11": false
+      },
+      {
+        "entry": "gcd",
+        "mode": "original",
+        "returncode": 0,
+        "observation_validated": true,
+        "checks": [
+          {
+            "test": "dispatch_signal_mask",
+            "sigusr2_blocked": 1
+          },
+          {
+            "test": "translation_prepared_code_execution",
+            "passed": true
+          },
+          {
+            "test": "linux_signal_kernel_restorer",
+            "passed": true,
+            "pid": 1
+          },
+          {
+            "stock_init_observation": true,
+            "mode": "original",
+            "ancestor_pid": 26,
+            "waited": 26,
+            "status": 1,
+            "deadline_stop": false,
+            "kill_result": 0
+          },
+          {
+            "test": "translated_context_cleanup",
+            "passed": true,
+            "allocated": 48,
+            "freed": 48,
+            "maps": 0,
+            "revocations": 0,
+            "tlb_fills": 14383,
+            "faults": 4173,
+            "syscalls": 30382,
+            "preemptions": 206
+          },
+          {
+            "result": "passed"
+          }
+        ],
+        "execs": [
+          {
+            "path": "/system/bin/init",
+            "result": 0
+          },
+          {
+            "path": "/system/bin/init",
+            "result": 0
+          },
+          {
+            "path": "/system/bin/init",
+            "result": 0
+          },
+          {
+            "path": "/system/bin/ueventd",
+            "result": 0
+          },
+          {
+            "path": "/system/bin/apexd",
+            "result": 0
+          }
+        ],
+        "selected_guest_log": [
+          "<6>ueventd: Coldboot took 0.092 seconds",
+          "<3>apexd-bootstrap: Failed to pre-allocate loop devices : wait for '/dev/loop-control' timed out and took 20001ms: No such file or directory",
+          "<3>apexd-bootstrap: Failed to open device-mapper: No such file or directory",
+          "<3>apexd-bootstrap: Failed to activate /system/apex/com.android.runtime.apex(com.android.runtime@1): Could not create loop device for /system/apex/com.android.runtime.apex: Failed to open loop-control: No such file or directory",
+          "<3>apexd-bootstrap: Failed to activate /system/apex/com.android.i18n.apex(com.android.i18n@1): Could not create loop device for /system/apex/com.android.i18n.apex: Failed to open loop-control: No such file or directory",
+          "<3>apexd-bootstrap: Failed to activate /system/apex/com.google.android.tzdata6.apex(com.android.tzdata@360499999): Could not create loop device for /system/apex/com.google.android.tzdata6.apex: Failed to open loop-control: No such file or directory",
+          "<3>apexd-bootstrap: Failed to activate /system/apex/com.android.virt.apex(com.android.virt@3): Could not create loop device for /system/apex/com.android.virt.apex: Failed to open loop-control: No such file or directory",
+          "<3>apexd-bootstrap: Failed to activate apexes: Failed to activate 4 APEX packages. One of the errors: Failed to activate /system/apex/com.android.runtime.apex(com.android.runtime@1): Could not create loop device for /system/apex/com.android.runtime.apex: Failed to open loop-control: No such file or directory",
+          "<6>init: Got shutdown_command 'reboot,bootloader,bootstrap-apexd-failed' Calling HandlePowerctlMessage()"
+        ],
+        "page_table_warning": false,
+        "service_signal11": false
+      }
+    ]
+  },
+  "art": [
+    {
+      "report": {
+        "path": "work/native-linux-nce/stock-art-jit-main-special-mapping-v1/summary.json",
+        "bytes": 1866861,
+        "sha256": "e985b65132cb5de4841172fb47e5183574db14831d26c11e4dd29232c50b7a64"
+      },
+      "configuration": {
+        "data_tbi": true,
+        "guest_layout": "sparse",
+        "code_memory": "dual",
+        "execution": "direct",
+        "direct": {
+          "mapping_entries": 256,
+          "route_entries": 256,
+          "selective_writes": false,
+          "reuse_code_checks": false,
+          "memory": "flat",
+          "code_watch": false,
+          "cross_page": false,
+          "route_epochs": false,
+          "retain_routes": false,
+          "memory_groups": false,
+          "native_exclusive": false,
+          "vector_table": false,
+          "simd_math": false
+        },
+        "mapping": "pte",
+        "sparse_scan": true,
+        "fault_prefetch": false,
+        "guest_page_bytes": 16384,
+        "host_page_bytes": 16384,
+        "workload": "stock-art",
+        "entries": [
+          "cli",
+          "gcd"
+        ],
+        "art_nterp": 1,
+        "cpus": 1,
+        "high_res_timers": false,
+        "online_cpus": 1,
+        "uaccess_stop": "all",
+        "parallel_profile": false,
+        "art_expanded_jit": 0,
+        "art_fast_baseline": 0,
+        "cache_invalidation": "pages",
+        "exec_cache": "full",
+        "tlb_invalidation": "full",
+        "linux_fastpath": 0,
+        "guest_ram_bytes": 1073741824,
+        "translation_cache_bytes": 16777216,
+        "instruction_batch": 50000,
+        "memory_interval_ms": 100,
+        "preemption": "instructions",
+        "timer_interval_ns": 2000000
+      },
+      "prepared_manifest_sha256": "5a61f7bca29c80a35c7b40ff2669e2377cc4e0c3b1d56376c04e9d43fc089a7d",
+      "runtime_source": "sdk36",
+      "runs": [
+        {
+          "entry": "cli",
+          "returncode": 0,
+          "validated": true,
+          "inputs_unchanged": true,
+          "checks": [
+            {
+              "stock_art_config": true,
+              "jni_version": 65542,
+              "jvalue_bytes": 8,
+              "jit_requested": true,
+              "jit_mode": "first-use"
+            },
+            {
+              "stock_art_check": "vm_absent",
+              "passed": true,
+              "observed": 0
+            },
+            {
+              "stock_art_stage": "create_vm"
+            },
+            {
+              "stock_art_check": "create_vm",
+              "passed": true,
+              "observed": 0
+            },
+            {
+              "stock_art_check": "load_dex",
+              "passed": true,
+              "observed": 1
+            },
+            {
+              "stock_art_check": "primitive_arguments",
+              "passed": true,
+              "observed": 1234605616436508552
+            },
+            {
+              "stock_art_check": "registered_natives",
+              "passed": true,
+              "observed": 1234605616436508552
+            },
+            {
+              "stock_art_check": "gc_observed",
+              "passed": true,
+              "observed": 1
+            },
+            {
+              "stock_art_check": "global_reference",
+              "passed": true,
+              "observed": 1234605616436508552
+            },
+            {
+              "stock_art_array_storage": true,
+              "address": 100925452,
+              "is_copy": false
+            },
+            {
+              "stock_art_check": "array_storage",
+              "passed": true,
+              "observed": 47
+            },
+            {
+              "stock_art_check": "java_threads",
+              "passed": true,
+              "observed": 2000
+            },
+            {
+              "stock_art_check": "native_thread",
+              "passed": true,
+              "observed": 58
+            },
+            {
+              "stock_art_check": "java_exception",
+              "passed": true,
+              "observed": 1
+            },
+            {
+              "stock_art_warmup": 0,
+              "calls": 200000,
+              "wait_before_ms": 0,
+              "observed": 340011506336
+            },
+            {
+              "stock_art_check": "warmup_result",
+              "passed": true,
+              "observed": 340011506336
+            },
+            {
+              "stock_art_check": "implicit_null",
+              "passed": true,
+              "observed": 47
+            },
+            {
+              "stock_art_check": "stack_overflow",
+              "passed": true,
+              "observed": 47
+            },
+            {
+              "stock_art_check": "gc_live_references",
+              "passed": true,
+              "observed": 8386560
+            },
+            {
+              "stock_art_jit": "unverified",
+              "warmup_calls": 200000
+            },
+            {
+              "stock_art_stage": "destroy_vm"
+            },
+            {
+              "stock_art_check": "destroy_vm",
+              "passed": true,
+              "observed": 0
+            },
+            {
+              "stock_art_exit": true,
+              "success": true,
+              "exec_errno": 0,
+              "exit_code": 0,
+              "signal": 0,
+              "timed_out": false
+            },
+            {
+              "test": "translated_context_cleanup",
+              "passed": true,
+              "allocated": 12,
+              "freed": 12,
+              "maps": 0,
+              "revocations": 0,
+              "tlb_fills": 307490,
+              "faults": 7026,
+              "syscalls": 41241,
+              "preemptions": 13846
+            }
+          ],
+          "observation": {
+            "jit_execution_confirmed": true,
+            "scope": "Completed integer instruction within a stable ART JIT RX mapping; method identity unverified",
+            "error": null,
+            "samples": 1388,
+            "guest_faults": [
+              {
+                "execution_observation": "guest_fault",
+                "sequence": 311,
+                "pid": 2,
+                "tid": 2,
+                "mm": 481044692992,
+                "pc": 354712192,
+                "address": 12,
+                "access": 0,
+                "result": -14
+              }
+            ],
+            "candidates": [
+              {
+                "start": 354648064,
+                "end": 388202496,
+                "permissions": "r-xs",
+                "offset": 33554432,
+                "device": "00:01",
+                "inode": 2,
+                "name": "/memfd:jit-cache (deleted)",
+                "invalidating_calls": [],
+                "completed_samples": 102
+              }
+            ],
+            "confirmed": [
+              {
+                "start": 354648064,
+                "end": 388202496,
+                "permissions": "r-xs",
+                "offset": 33554432,
+                "device": "00:01",
+                "inode": 2,
+                "name": "/memfd:jit-cache (deleted)",
+                "invalidating_calls": [],
+                "completed_samples": 102,
+                "first": {
+                  "execution_observation": "integer_completed",
+                  "sequence": 91,
+                  "pid": 2,
+                  "tid": 2,
+                  "mm": 481044692992,
+                  "pc": 354712004,
+                  "next_pc": 354712012
+                },
+                "last": {
+                  "execution_observation": "integer_completed",
+                  "sequence": 1927,
+                  "pid": 2,
+                  "tid": 2,
+                  "mm": 481044692992,
+                  "pc": 354716380,
+                  "next_pc": 354716396
+                }
+              }
+            ],
+            "identity": {
+              "pid": 2,
+              "tid": 2,
+              "mm": 481044692992
+            },
+            "window": [
+              1,
+              1979
+            ]
+          },
+          "maps": [
+            {
+              "name": "before-vm",
+              "present": true,
+              "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/stock-art-jit-main-special-mapping-v1/cli-0-art/maps-before-vm.txt",
+              "bytes": 5555,
+              "sha256": "272069bca4862cb246d02580f6433ceb5cf801ccc85a7b5eedf20c5a8d1af9f8",
+              "validated": true
+            },
+            {
+              "name": "after-vm",
+              "present": true,
+              "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/stock-art-jit-main-special-mapping-v1/cli-0-art/maps-after-vm.txt",
+              "bytes": 125287,
+              "sha256": "5f3cc669cefa52ff14016c4af21bc5d6bf2080ae8ef2d4d6b9116d44d59f3b88",
+              "validated": true
+            },
+            {
+              "name": "after-gc",
+              "present": true,
+              "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/stock-art-jit-main-special-mapping-v1/cli-0-art/maps-after-gc.txt",
+              "bytes": 125842,
+              "sha256": "648b455c8bb01dc9497796b81d9d6faabd5d5d5c69bc3a0e328be28d7be44910",
+              "validated": true
+            },
+            {
+              "name": "before-warmup",
+              "present": true,
+              "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/stock-art-jit-main-special-mapping-v1/cli-0-art/maps-before-warmup.txt",
+              "bytes": 125842,
+              "sha256": "648b455c8bb01dc9497796b81d9d6faabd5d5d5c69bc3a0e328be28d7be44910",
+              "validated": true
+            },
+            {
+              "name": "after-warmup",
+              "present": true,
+              "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/stock-art-jit-main-special-mapping-v1/cli-0-art/maps-after-warmup.txt",
+              "bytes": 125842,
+              "sha256": "68c2f507ebdcf85ab651f8eb913babe716cdadaf99530a194c139ee9b9a19a2b",
+              "validated": true
+            }
+          ],
+          "stdout_sha256": "fa1af31e7ac70bffd056a5ac3470f8a1a39b70c4612f0bf7eacfe66201558924",
+          "stderr_sha256": "0717eea58ac656c5505a94e3d02663cd1adff941d840e74a32646040e1563a9a"
+        },
+        {
+          "entry": "gcd",
+          "returncode": 0,
+          "validated": true,
+          "inputs_unchanged": true,
+          "checks": [
+            {
+              "stock_art_config": true,
+              "jni_version": 65542,
+              "jvalue_bytes": 8,
+              "jit_requested": true,
+              "jit_mode": "first-use"
+            },
+            {
+              "stock_art_check": "vm_absent",
+              "passed": true,
+              "observed": 0
+            },
+            {
+              "stock_art_stage": "create_vm"
+            },
+            {
+              "stock_art_check": "create_vm",
+              "passed": true,
+              "observed": 0
+            },
+            {
+              "stock_art_check": "load_dex",
+              "passed": true,
+              "observed": 1
+            },
+            {
+              "stock_art_check": "primitive_arguments",
+              "passed": true,
+              "observed": 1234605616436508552
+            },
+            {
+              "stock_art_check": "registered_natives",
+              "passed": true,
+              "observed": 1234605616436508552
+            },
+            {
+              "stock_art_check": "gc_observed",
+              "passed": true,
+              "observed": 1
+            },
+            {
+              "stock_art_check": "global_reference",
+              "passed": true,
+              "observed": 1234605616436508552
+            },
+            {
+              "stock_art_array_storage": true,
+              "address": 100925452,
+              "is_copy": false
+            },
+            {
+              "stock_art_check": "array_storage",
+              "passed": true,
+              "observed": 47
+            },
+            {
+              "stock_art_check": "java_threads",
+              "passed": true,
+              "observed": 2000
+            },
+            {
+              "stock_art_check": "native_thread",
+              "passed": true,
+              "observed": 58
+            },
+            {
+              "stock_art_check": "java_exception",
+              "passed": true,
+              "observed": 1
+            },
+            {
+              "stock_art_warmup": 0,
+              "calls": 200000,
+              "wait_before_ms": 0,
+              "observed": 340011506336
+            },
+            {
+              "stock_art_check": "warmup_result",
+              "passed": true,
+              "observed": 340011506336
+            },
+            {
+              "stock_art_check": "implicit_null",
+              "passed": true,
+              "observed": 47
+            },
+            {
+              "stock_art_check": "stack_overflow",
+              "passed": true,
+              "observed": 47
+            },
+            {
+              "stock_art_check": "gc_live_references",
+              "passed": true,
+              "observed": 8386560
+            },
+            {
+              "stock_art_jit": "unverified",
+              "warmup_calls": 200000
+            },
+            {
+              "stock_art_stage": "destroy_vm"
+            },
+            {
+              "stock_art_check": "destroy_vm",
+              "passed": true,
+              "observed": 0
+            },
+            {
+              "stock_art_exit": true,
+              "success": true,
+              "exec_errno": 0,
+              "exit_code": 0,
+              "signal": 0,
+              "timed_out": false
+            },
+            {
+              "test": "translated_context_cleanup",
+              "passed": true,
+              "allocated": 12,
+              "freed": 12,
+              "maps": 0,
+              "revocations": 0,
+              "tlb_fills": 298388,
+              "faults": 7018,
+              "syscalls": 651626,
+              "preemptions": 13810
+            }
+          ],
+          "observation": {
+            "jit_execution_confirmed": true,
+            "scope": "Completed integer instruction within a stable ART JIT RX mapping; method identity unverified",
+            "error": null,
+            "samples": 1385,
+            "guest_faults": [
+              {
+                "execution_observation": "guest_fault",
+                "sequence": 310,
+                "pid": 2,
+                "tid": 2,
+                "mm": 481044692992,
+                "pc": 335607840,
+                "address": 12,
+                "access": 0,
+                "result": -14
+              }
+            ],
+            "candidates": [
+              {
+                "start": 335544320,
+                "end": 369098752,
+                "permissions": "r-xs",
+                "offset": 33554432,
+                "device": "00:01",
+                "inode": 2,
+                "name": "/memfd:jit-cache (deleted)",
+                "invalidating_calls": [],
+                "completed_samples": 103
+              }
+            ],
+            "confirmed": [
+              {
+                "start": 335544320,
+                "end": 369098752,
+                "permissions": "r-xs",
+                "offset": 33554432,
+                "device": "00:01",
+                "inode": 2,
+                "name": "/memfd:jit-cache (deleted)",
+                "invalidating_calls": [],
+                "completed_samples": 103,
+                "first": {
+                  "execution_observation": "integer_completed",
+                  "sequence": 91,
+                  "pid": 2,
+                  "tid": 2,
+                  "mm": 481044692992,
+                  "pc": 335607652,
+                  "next_pc": 335607660
+                },
+                "last": {
+                  "execution_observation": "integer_completed",
+                  "sequence": 1924,
+                  "pid": 2,
+                  "tid": 2,
+                  "mm": 481044692992,
+                  "pc": 335612028,
+                  "next_pc": 335612044
+                }
+              }
+            ],
+            "identity": {
+              "pid": 2,
+              "tid": 2,
+              "mm": 481044692992
+            },
+            "window": [
+              1,
+              1976
+            ]
+          },
+          "maps": [
+            {
+              "name": "before-vm",
+              "present": true,
+              "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/stock-art-jit-main-special-mapping-v1/gcd-0-art/maps-before-vm.txt",
+              "bytes": 5604,
+              "sha256": "c40a37c2f13756d5c1f7dbf7d0e4c6ec544a71fa556073475d8260906deff7c2",
+              "validated": true
+            },
+            {
+              "name": "after-vm",
+              "present": true,
+              "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/stock-art-jit-main-special-mapping-v1/gcd-0-art/maps-after-vm.txt",
+              "bytes": 125168,
+              "sha256": "89b599d97a503072b75044137251a7838e98005d4ec6beeac7b4d218eebe23f3",
+              "validated": true
+            },
+            {
+              "name": "after-gc",
+              "present": true,
+              "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/stock-art-jit-main-special-mapping-v1/gcd-0-art/maps-after-gc.txt",
+              "bytes": 125684,
+              "sha256": "a749fcc1184e733275470e3fc53e1541b5e2e61799cf779d05b50991f40885d8",
+              "validated": true
+            },
+            {
+              "name": "before-warmup",
+              "present": true,
+              "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/stock-art-jit-main-special-mapping-v1/gcd-0-art/maps-before-warmup.txt",
+              "bytes": 125684,
+              "sha256": "a749fcc1184e733275470e3fc53e1541b5e2e61799cf779d05b50991f40885d8",
+              "validated": true
+            },
+            {
+              "name": "after-warmup",
+              "present": true,
+              "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/stock-art-jit-main-special-mapping-v1/gcd-0-art/maps-after-warmup.txt",
+              "bytes": 125684,
+              "sha256": "625fcb7270fc6eff674b20e07d9d2d9b5a2072e5ec4840b873435957c061bc64",
+              "validated": true
+            }
+          ],
+          "stdout_sha256": "51b4fed86fe34fb5120fed4f97fa32848b889ceef6c803836392622af02f6aaa",
+          "stderr_sha256": "fe19f050615d89630e9a4b9442b6b3bab0dd802118d157045e17217c8caadc55"
+        }
+      ]
+    },
+    {
+      "report": {
+        "path": "work/native-linux-nce/hyperos-art-jit-main-special-mapping-v1/summary.json",
+        "bytes": 1510825,
+        "sha256": "a9ae0b8d484daae70e29bdff5cb2c3019e43cda4bbc0063ed4dd426cb3509326"
+      },
+      "configuration": {
+        "data_tbi": true,
+        "guest_layout": "sparse",
+        "code_memory": "dual",
+        "execution": "direct",
+        "direct": {
+          "mapping_entries": 256,
+          "route_entries": 256,
+          "selective_writes": false,
+          "reuse_code_checks": false,
+          "memory": "flat",
+          "code_watch": true,
+          "cross_page": true,
+          "route_epochs": false,
+          "retain_routes": false,
+          "memory_groups": false,
+          "native_exclusive": true,
+          "vector_table": false,
+          "simd_math": false
+        },
+        "mapping": "pte",
+        "sparse_scan": true,
+        "fault_prefetch": false,
+        "guest_page_bytes": 4096,
+        "host_page_bytes": 16384,
+        "workload": "stock-art",
+        "entries": [
+          "cli",
+          "gcd"
+        ],
+        "art_nterp": 1,
+        "cpus": 1,
+        "high_res_timers": false,
+        "online_cpus": 1,
+        "uaccess_stop": "all",
+        "parallel_profile": false,
+        "art_expanded_jit": 0,
+        "art_fast_baseline": 0,
+        "cache_invalidation": "pages",
+        "exec_cache": "full",
+        "tlb_invalidation": "full",
+        "linux_fastpath": 0,
+        "guest_ram_bytes": 1073741824,
+        "translation_cache_bytes": 16777216,
+        "instruction_batch": 50000,
+        "memory_interval_ms": 100,
+        "preemption": "instructions",
+        "timer_interval_ns": 2000000
+      },
+      "prepared_manifest_sha256": "6b64f103a73a1e00ac14b90a48787b852b3965a7566d332f8151e8bc8d464a9c",
+      "runtime_source": "hyperos",
+      "runs": [
+        {
+          "entry": "cli",
+          "returncode": 0,
+          "validated": true,
+          "inputs_unchanged": true,
+          "checks": [
+            {
+              "stock_art_config": true,
+              "jni_version": 65542,
+              "jvalue_bytes": 8,
+              "jit_requested": true,
+              "jit_mode": "first-use"
+            },
+            {
+              "stock_art_check": "vm_absent",
+              "passed": true,
+              "observed": 0
+            },
+            {
+              "stock_art_stage": "create_vm"
+            },
+            {
+              "stock_art_check": "create_vm",
+              "passed": true,
+              "observed": 0
+            },
+            {
+              "stock_art_check": "load_dex",
+              "passed": true,
+              "observed": 1
+            },
+            {
+              "stock_art_check": "primitive_arguments",
+              "passed": true,
+              "observed": 1234605616436508552
+            },
+            {
+              "stock_art_check": "registered_natives",
+              "passed": true,
+              "observed": 1234605616436508552
+            },
+            {
+              "stock_art_check": "gc_observed",
+              "passed": true,
+              "observed": 1
+            },
+            {
+              "stock_art_check": "global_reference",
+              "passed": true,
+              "observed": 1234605616436508552
+            },
+            {
+              "stock_art_array_storage": true,
+              "address": 100925452,
+              "is_copy": false
+            },
+            {
+              "stock_art_check": "array_storage",
+              "passed": true,
+              "observed": 47
+            },
+            {
+              "stock_art_check": "java_threads",
+              "passed": true,
+              "observed": 2000
+            },
+            {
+              "stock_art_check": "native_thread",
+              "passed": true,
+              "observed": 58
+            },
+            {
+              "stock_art_check": "java_exception",
+              "passed": true,
+              "observed": 1
+            },
+            {
+              "stock_art_warmup": 0,
+              "calls": 200000,
+              "wait_before_ms": 0,
+              "observed": 340011506336
+            },
+            {
+              "stock_art_check": "warmup_result",
+              "passed": true,
+              "observed": 340011506336
+            },
+            {
+              "stock_art_check": "implicit_null",
+              "passed": true,
+              "observed": 47
+            },
+            {
+              "stock_art_check": "stack_overflow",
+              "passed": true,
+              "observed": 47
+            },
+            {
+              "stock_art_check": "gc_live_references",
+              "passed": true,
+              "observed": 8386560
+            },
+            {
+              "stock_art_jit": "unverified",
+              "warmup_calls": 200000
+            },
+            {
+              "stock_art_stage": "destroy_vm"
+            },
+            {
+              "stock_art_check": "destroy_vm",
+              "passed": true,
+              "observed": 0
+            },
+            {
+              "stock_art_exit": true,
+              "success": true,
+              "exec_errno": 0,
+              "exit_code": 0,
+              "signal": 0,
+              "timed_out": false
+            },
+            {
+              "test": "translated_context_cleanup",
+              "passed": true,
+              "allocated": 12,
+              "freed": 12,
+              "maps": 0,
+              "revocations": 0,
+              "tlb_fills": 51627,
+              "faults": 18069,
+              "syscalls": 45602,
+              "preemptions": 13933
+            }
+          ],
+          "observation": {
+            "jit_execution_confirmed": true,
+            "scope": "Completed integer instruction within a stable ART JIT RX mapping; method identity unverified",
+            "error": null,
+            "samples": 1199,
+            "guest_faults": [
+              {
+                "execution_observation": "guest_fault",
+                "sequence": 387,
+                "pid": 2,
+                "tid": 2,
+                "mm": 481047105536,
+                "pc": 391700688,
+                "address": 12,
+                "access": 0,
+                "result": -14
+              }
+            ],
+            "candidates": [
+              {
+                "start": 391639040,
+                "end": 425193472,
+                "permissions": "r-xs",
+                "offset": 33554432,
+                "device": "00:01",
+                "inode": 2,
+                "name": "/memfd:jit-cache (deleted)",
+                "invalidating_calls": [],
+                "completed_samples": 103
+              }
+            ],
+            "confirmed": [
+              {
+                "start": 391639040,
+                "end": 425193472,
+                "permissions": "r-xs",
+                "offset": 33554432,
+                "device": "00:01",
+                "inode": 2,
+                "name": "/memfd:jit-cache (deleted)",
+                "invalidating_calls": [],
+                "completed_samples": 103,
+                "first": {
+                  "execution_observation": "integer_completed",
+                  "sequence": 143,
+                  "pid": 2,
+                  "tid": 2,
+                  "mm": 481047105536,
+                  "pc": 391700524,
+                  "next_pc": 391700500
+                },
+                "last": {
+                  "execution_observation": "integer_completed",
+                  "sequence": 1188,
+                  "pid": 2,
+                  "tid": 2,
+                  "mm": 481047105536,
+                  "pc": 391704860,
+                  "next_pc": 391704868
+                }
+              }
+            ],
+            "identity": {
+              "pid": 2,
+              "tid": 2,
+              "mm": 481047105536
+            },
+            "window": [
+              1,
+              1283
+            ]
+          },
+          "maps": [
+            {
+              "name": "before-vm",
+              "present": true,
+              "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/hyperos-art-jit-main-special-mapping-v1/cli-0-art/maps-before-vm.txt",
+              "bytes": 5901,
+              "sha256": "1e50e35975afde44472c8eb325177c4df8f5b27012e9b90ddf3b944c674a411b",
+              "validated": true
+            },
+            {
+              "name": "after-vm",
+              "present": true,
+              "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/hyperos-art-jit-main-special-mapping-v1/cli-0-art/maps-after-vm.txt",
+              "bytes": 132965,
+              "sha256": "1b65019b6d749bacee4b3d17e4c82425483bd4f5fa8afdd866f7233082eace1c",
+              "validated": true
+            },
+            {
+              "name": "after-gc",
+              "present": true,
+              "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/hyperos-art-jit-main-special-mapping-v1/cli-0-art/maps-after-gc.txt",
+              "bytes": 133051,
+              "sha256": "fbba82e6891aeb6bfd9d655248682001a2b8f74c5d9b0ed631dc521a677a7d6d",
+              "validated": true
+            },
+            {
+              "name": "before-warmup",
+              "present": true,
+              "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/hyperos-art-jit-main-special-mapping-v1/cli-0-art/maps-before-warmup.txt",
+              "bytes": 133051,
+              "sha256": "fbba82e6891aeb6bfd9d655248682001a2b8f74c5d9b0ed631dc521a677a7d6d",
+              "validated": true
+            },
+            {
+              "name": "after-warmup",
+              "present": true,
+              "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/hyperos-art-jit-main-special-mapping-v1/cli-0-art/maps-after-warmup.txt",
+              "bytes": 133051,
+              "sha256": "3569701200573c63f3fe446a56c8a861a095b532e537ede6cd2e07b3117c8b43",
+              "validated": true
+            }
+          ],
+          "stdout_sha256": "7d5c576ccd8b2875081dde7d798015102406cb53719325ce027696cd507b49a5",
+          "stderr_sha256": "48247e297d73666e8b2ca21a0c6cf5231bfe7d4dba89adeaf29fbd953efbee4b"
+        },
+        {
+          "entry": "gcd",
+          "returncode": 0,
+          "validated": true,
+          "inputs_unchanged": true,
+          "checks": [
+            {
+              "stock_art_config": true,
+              "jni_version": 65542,
+              "jvalue_bytes": 8,
+              "jit_requested": true,
+              "jit_mode": "first-use"
+            },
+            {
+              "stock_art_check": "vm_absent",
+              "passed": true,
+              "observed": 0
+            },
+            {
+              "stock_art_stage": "create_vm"
+            },
+            {
+              "stock_art_check": "create_vm",
+              "passed": true,
+              "observed": 0
+            },
+            {
+              "stock_art_check": "load_dex",
+              "passed": true,
+              "observed": 1
+            },
+            {
+              "stock_art_check": "primitive_arguments",
+              "passed": true,
+              "observed": 1234605616436508552
+            },
+            {
+              "stock_art_check": "registered_natives",
+              "passed": true,
+              "observed": 1234605616436508552
+            },
+            {
+              "stock_art_check": "gc_observed",
+              "passed": true,
+              "observed": 1
+            },
+            {
+              "stock_art_check": "global_reference",
+              "passed": true,
+              "observed": 1234605616436508552
+            },
+            {
+              "stock_art_array_storage": true,
+              "address": 100925452,
+              "is_copy": false
+            },
+            {
+              "stock_art_check": "array_storage",
+              "passed": true,
+              "observed": 47
+            },
+            {
+              "stock_art_check": "java_threads",
+              "passed": true,
+              "observed": 2000
+            },
+            {
+              "stock_art_check": "native_thread",
+              "passed": true,
+              "observed": 58
+            },
+            {
+              "stock_art_check": "java_exception",
+              "passed": true,
+              "observed": 1
+            },
+            {
+              "stock_art_warmup": 0,
+              "calls": 200000,
+              "wait_before_ms": 0,
+              "observed": 340011506336
+            },
+            {
+              "stock_art_check": "warmup_result",
+              "passed": true,
+              "observed": 340011506336
+            },
+            {
+              "stock_art_check": "implicit_null",
+              "passed": true,
+              "observed": 47
+            },
+            {
+              "stock_art_check": "stack_overflow",
+              "passed": true,
+              "observed": 47
+            },
+            {
+              "stock_art_check": "gc_live_references",
+              "passed": true,
+              "observed": 8386560
+            },
+            {
+              "stock_art_jit": "unverified",
+              "warmup_calls": 200000
+            },
+            {
+              "stock_art_stage": "destroy_vm"
+            },
+            {
+              "stock_art_check": "destroy_vm",
+              "passed": true,
+              "observed": 0
+            },
+            {
+              "stock_art_exit": true,
+              "success": true,
+              "exec_errno": 0,
+              "exit_code": 0,
+              "signal": 0,
+              "timed_out": false
+            },
+            {
+              "test": "translated_context_cleanup",
+              "passed": true,
+              "allocated": 12,
+              "freed": 12,
+              "maps": 0,
+              "revocations": 0,
+              "tlb_fills": 53862,
+              "faults": 18115,
+              "syscalls": 45494,
+              "preemptions": 13954
+            }
+          ],
+          "observation": {
+            "jit_execution_confirmed": true,
+            "scope": "Completed integer instruction within a stable ART JIT RX mapping; method identity unverified",
+            "error": null,
+            "samples": 1197,
+            "guest_faults": [
+              {
+                "execution_observation": "guest_fault",
+                "sequence": 385,
+                "pid": 2,
+                "tid": 2,
+                "mm": 481047105536,
+                "pc": 445085664,
+                "address": 12,
+                "access": 0,
+                "result": -14
+              }
+            ],
+            "candidates": [
+              {
+                "start": 445022208,
+                "end": 478576640,
+                "permissions": "r-xs",
+                "offset": 33554432,
+                "device": "00:01",
+                "inode": 2,
+                "name": "/memfd:jit-cache (deleted)",
+                "invalidating_calls": [],
+                "completed_samples": 103
+              }
+            ],
+            "confirmed": [
+              {
+                "start": 445022208,
+                "end": 478576640,
+                "permissions": "r-xs",
+                "offset": 33554432,
+                "device": "00:01",
+                "inode": 2,
+                "name": "/memfd:jit-cache (deleted)",
+                "invalidating_calls": [],
+                "completed_samples": 103,
+                "first": {
+                  "execution_observation": "integer_completed",
+                  "sequence": 141,
+                  "pid": 2,
+                  "tid": 2,
+                  "mm": 481047105536,
+                  "pc": 445085476,
+                  "next_pc": 445085484
+                },
+                "last": {
+                  "execution_observation": "integer_completed",
+                  "sequence": 1187,
+                  "pid": 2,
+                  "tid": 2,
+                  "mm": 481047105536,
+                  "pc": 445089836,
+                  "next_pc": 445089844
+                }
+              }
+            ],
+            "identity": {
+              "pid": 2,
+              "tid": 2,
+              "mm": 481047105536
+            },
+            "window": [
+              1,
+              1281
+            ]
+          },
+          "maps": [
+            {
+              "name": "before-vm",
+              "present": true,
+              "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/hyperos-art-jit-main-special-mapping-v1/gcd-0-art/maps-before-vm.txt",
+              "bytes": 5885,
+              "sha256": "bd8d7cb1769303161a65d010acb5008b2bf496aee0ee8f350c249d35d94a74d9",
+              "validated": true
+            },
+            {
+              "name": "after-vm",
+              "present": true,
+              "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/hyperos-art-jit-main-special-mapping-v1/gcd-0-art/maps-after-vm.txt",
+              "bytes": 132545,
+              "sha256": "df593480df9c813fb0070bc6b22c292a219cdec7e405031161b88789950d275c",
+              "validated": true
+            },
+            {
+              "name": "after-gc",
+              "present": true,
+              "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/hyperos-art-jit-main-special-mapping-v1/gcd-0-art/maps-after-gc.txt",
+              "bytes": 132588,
+              "sha256": "d1c65b6a8eca166d08324657a48546ef9a642a2d758f2708e6e1e4cb0ff24c96",
+              "validated": true
+            },
+            {
+              "name": "before-warmup",
+              "present": true,
+              "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/hyperos-art-jit-main-special-mapping-v1/gcd-0-art/maps-before-warmup.txt",
+              "bytes": 132588,
+              "sha256": "d1c65b6a8eca166d08324657a48546ef9a642a2d758f2708e6e1e4cb0ff24c96",
+              "validated": true
+            },
+            {
+              "name": "after-warmup",
+              "present": true,
+              "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/hyperos-art-jit-main-special-mapping-v1/gcd-0-art/maps-after-warmup.txt",
+              "bytes": 132588,
+              "sha256": "f64beda9df47f32767ed6f8bc9dc443fd2b60ba01264776e97bd9de0cdb8f1c6",
+              "validated": true
+            }
+          ],
+          "stdout_sha256": "4f4516f5d0f680e624bc3d04b536af287e23a217c76f90c45bc8ee8a9daa5a56",
+          "stderr_sha256": "47816b16997d8f62e0da953cd28a49f9bb12ba9e927f7440e4f362351d7b3943"
+        }
+      ]
+    },
+    {
+      "report": {
+        "path": "work/native-linux-nce/hyperos-art-background-main-special-mapping-v1/summary.json",
+        "bytes": 2840790,
+        "sha256": "91a443c4905af65011d67d79f0edb0ecc567f180f30934169e7e88bd65308946"
+      },
+      "configuration": {
+        "data_tbi": true,
+        "guest_layout": "sparse",
+        "code_memory": "dual",
+        "execution": "direct",
+        "direct": {
+          "mapping_entries": 256,
+          "route_entries": 256,
+          "selective_writes": false,
+          "reuse_code_checks": false,
+          "memory": "flat",
+          "code_watch": true,
+          "cross_page": true,
+          "route_epochs": false,
+          "retain_routes": false,
+          "memory_groups": false,
+          "native_exclusive": true,
+          "vector_table": false,
+          "simd_math": false
+        },
+        "mapping": "pte",
+        "sparse_scan": true,
+        "fault_prefetch": false,
+        "guest_page_bytes": 4096,
+        "host_page_bytes": 16384,
+        "workload": "stock-art",
+        "entries": [
+          "cli",
+          "gcd"
+        ],
+        "art_nterp": 1,
+        "cpus": 1,
+        "high_res_timers": false,
+        "online_cpus": 1,
+        "uaccess_stop": "all",
+        "parallel_profile": false,
+        "art_expanded_jit": 0,
+        "art_fast_baseline": 0,
+        "cache_invalidation": "pages",
+        "exec_cache": "full",
+        "tlb_invalidation": "full",
+        "linux_fastpath": 0,
+        "guest_ram_bytes": 1073741824,
+        "translation_cache_bytes": 16777216,
+        "instruction_batch": 50000,
+        "memory_interval_ms": 100,
+        "preemption": "instructions",
+        "timer_interval_ns": 2000000
+      },
+      "prepared_manifest_sha256": "6b64f103a73a1e00ac14b90a48787b852b3965a7566d332f8151e8bc8d464a9c",
+      "runtime_source": "hyperos",
+      "runs": [
+        {
+          "entry": "cli",
+          "returncode": 0,
+          "validated": true,
+          "inputs_unchanged": true,
+          "checks": [
+            {
+              "stock_art_config": true,
+              "jni_version": 65542,
+              "jvalue_bytes": 8,
+              "jit_requested": true,
+              "jit_mode": "background"
+            },
+            {
+              "stock_art_check": "vm_absent",
+              "passed": true,
+              "observed": 0
+            },
+            {
+              "stock_art_stage": "create_vm"
+            },
+            {
+              "stock_art_check": "create_vm",
+              "passed": true,
+              "observed": 0
+            },
+            {
+              "stock_art_check": "load_dex",
+              "passed": true,
+              "observed": 1
+            },
+            {
+              "stock_art_check": "primitive_arguments",
+              "passed": true,
+              "observed": 1234605616436508552
+            },
+            {
+              "stock_art_check": "registered_natives",
+              "passed": true,
+              "observed": 1234605616436508552
+            },
+            {
+              "stock_art_check": "gc_observed",
+              "passed": true,
+              "observed": 1
+            },
+            {
+              "stock_art_check": "global_reference",
+              "passed": true,
+              "observed": 1234605616436508552
+            },
+            {
+              "stock_art_array_storage": true,
+              "address": 100925452,
+              "is_copy": false
+            },
+            {
+              "stock_art_check": "array_storage",
+              "passed": true,
+              "observed": 47
+            },
+            {
+              "stock_art_check": "java_threads",
+              "passed": true,
+              "observed": 2000
+            },
+            {
+              "stock_art_check": "native_thread",
+              "passed": true,
+              "observed": 58
+            },
+            {
+              "stock_art_check": "java_exception",
+              "passed": true,
+              "observed": 1
+            },
+            {
+              "stock_art_warmup": 0,
+              "calls": 200000,
+              "wait_before_ms": 0,
+              "observed": 340011506336
+            },
+            {
+              "stock_art_warmup": 1,
+              "calls": 200000,
+              "wait_before_ms": 200,
+              "observed": 340011506336
+            },
+            {
+              "stock_art_warmup": 2,
+              "calls": 200000,
+              "wait_before_ms": 200,
+              "observed": 340011506336
+            },
+            {
+              "stock_art_warmup": 3,
+              "calls": 200000,
+              "wait_before_ms": 200,
+              "observed": 340011506336
+            },
+            {
+              "stock_art_warmup": 4,
+              "calls": 200000,
+              "wait_before_ms": 200,
+              "observed": 340011506336
+            },
+            {
+              "stock_art_warmup": 5,
+              "calls": 200000,
+              "wait_before_ms": 200,
+              "observed": 340011506336
+            },
+            {
+              "stock_art_warmup": 6,
+              "calls": 200000,
+              "wait_before_ms": 200,
+              "observed": 340011506336
+            },
+            {
+              "stock_art_warmup": 7,
+              "calls": 200000,
+              "wait_before_ms": 200,
+              "observed": 340011506336
+            },
+            {
+              "stock_art_warmup": 8,
+              "calls": 200000,
+              "wait_before_ms": 200,
+              "observed": 340011506336
+            },
+            {
+              "stock_art_warmup": 9,
+              "calls": 200000,
+              "wait_before_ms": 200,
+              "observed": 340011506336
+            },
+            {
+              "stock_art_check": "warmup_result",
+              "passed": true,
+              "observed": 340011506336
+            },
+            {
+              "stock_art_check": "implicit_null",
+              "passed": true,
+              "observed": 47
+            },
+            {
+              "stock_art_check": "stack_overflow",
+              "passed": true,
+              "observed": 47
+            },
+            {
+              "stock_art_check": "gc_live_references",
+              "passed": true,
+              "observed": 8386560
+            },
+            {
+              "stock_art_jit": "unverified",
+              "warmup_calls": 2000000
+            },
+            {
+              "stock_art_stage": "destroy_vm"
+            },
+            {
+              "stock_art_check": "destroy_vm",
+              "passed": true,
+              "observed": 0
+            },
+            {
+              "stock_art_exit": true,
+              "success": true,
+              "exec_errno": 0,
+              "exit_code": 0,
+              "signal": 0,
+              "timed_out": false
+            },
+            {
+              "test": "translated_context_cleanup",
+              "passed": true,
+              "allocated": 12,
+              "freed": 12,
+              "maps": 0,
+              "revocations": 0,
+              "tlb_fills": 26993,
+              "faults": 12039,
+              "syscalls": 2535679,
+              "preemptions": 11588
+            }
+          ],
+          "observation": {
+            "jit_execution_confirmed": true,
+            "scope": "Completed integer instruction within a stable ART JIT RX mapping; method identity unverified",
+            "error": null,
+            "samples": 3968,
+            "guest_faults": [],
+            "candidates": [
+              {
+                "start": 268435456,
+                "end": 301989888,
+                "permissions": "r-xs",
+                "offset": 33554432,
+                "device": "00:01",
+                "inode": 2,
+                "name": "/memfd:jit-cache (deleted)",
+                "invalidating_calls": [],
+                "completed_samples": 324
+              }
+            ],
+            "confirmed": [
+              {
+                "start": 268435456,
+                "end": 301989888,
+                "permissions": "r-xs",
+                "offset": 33554432,
+                "device": "00:01",
+                "inode": 2,
+                "name": "/memfd:jit-cache (deleted)",
+                "invalidating_calls": [],
+                "completed_samples": 324,
+                "first": {
+                  "execution_observation": "integer_completed",
+                  "sequence": 1170,
+                  "pid": 2,
+                  "tid": 2,
+                  "mm": 481047105536,
+                  "pc": 268439076,
+                  "next_pc": 268439084
+                },
+                "last": {
+                  "execution_observation": "integer_completed",
+                  "sequence": 1509,
+                  "pid": 2,
+                  "tid": 2,
+                  "mm": 481047105536,
+                  "pc": 268439076,
+                  "next_pc": 268439084
+                }
+              }
+            ],
+            "identity": {
+              "pid": 2,
+              "tid": 2,
+              "mm": 481047105536
+            },
+            "window": [
+              1,
+              4026
+            ]
+          },
+          "maps": [
+            {
+              "name": "before-vm",
+              "present": true,
+              "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/hyperos-art-background-main-special-mapping-v1/cli-0-art/maps-before-vm.txt",
+              "bytes": 5942,
+              "sha256": "ee0110ce82fd4505918fa05c7ff63d486f661fa83b384abb5064504cccad6a50",
+              "validated": true
+            },
+            {
+              "name": "after-vm",
+              "present": true,
+              "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/hyperos-art-background-main-special-mapping-v1/cli-0-art/maps-after-vm.txt",
+              "bytes": 131710,
+              "sha256": "2d0bc4911d50decf6b6f93fbcdfe421d34e515f723561b3b8b52395ec72309d5",
+              "validated": true
+            },
+            {
+              "name": "after-gc",
+              "present": true,
+              "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/hyperos-art-background-main-special-mapping-v1/cli-0-art/maps-after-gc.txt",
+              "bytes": 132613,
+              "sha256": "c2a1eb8e5316265a74323f2c5dc6f388fd1bad4978e20c019dde717b9984f80c",
+              "validated": true
+            },
+            {
+              "name": "before-warmup",
+              "present": true,
+              "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/hyperos-art-background-main-special-mapping-v1/cli-0-art/maps-before-warmup.txt",
+              "bytes": 132613,
+              "sha256": "c2a1eb8e5316265a74323f2c5dc6f388fd1bad4978e20c019dde717b9984f80c",
+              "validated": true
+            },
+            {
+              "name": "after-warmup",
+              "present": true,
+              "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/hyperos-art-background-main-special-mapping-v1/cli-0-art/maps-after-warmup.txt",
+              "bytes": 132613,
+              "sha256": "c2a1eb8e5316265a74323f2c5dc6f388fd1bad4978e20c019dde717b9984f80c",
+              "validated": true
+            }
+          ],
+          "stdout_sha256": "fdb80f8c73f5c073f7bbe2eb1328392a2379d49f488107d5b44f694e39c36a63",
+          "stderr_sha256": "446cfebcd80ef72e632a4c0d78110b08f7f6536ac8eb5f5a52c15d8184489169"
+        },
+        {
+          "entry": "gcd",
+          "returncode": 0,
+          "validated": true,
+          "inputs_unchanged": true,
+          "checks": [
+            {
+              "stock_art_config": true,
+              "jni_version": 65542,
+              "jvalue_bytes": 8,
+              "jit_requested": true,
+              "jit_mode": "background"
+            },
+            {
+              "stock_art_check": "vm_absent",
+              "passed": true,
+              "observed": 0
+            },
+            {
+              "stock_art_stage": "create_vm"
+            },
+            {
+              "stock_art_check": "create_vm",
+              "passed": true,
+              "observed": 0
+            },
+            {
+              "stock_art_check": "load_dex",
+              "passed": true,
+              "observed": 1
+            },
+            {
+              "stock_art_check": "primitive_arguments",
+              "passed": true,
+              "observed": 1234605616436508552
+            },
+            {
+              "stock_art_check": "registered_natives",
+              "passed": true,
+              "observed": 1234605616436508552
+            },
+            {
+              "stock_art_check": "gc_observed",
+              "passed": true,
+              "observed": 1
+            },
+            {
+              "stock_art_check": "global_reference",
+              "passed": true,
+              "observed": 1234605616436508552
+            },
+            {
+              "stock_art_array_storage": true,
+              "address": 100925452,
+              "is_copy": false
+            },
+            {
+              "stock_art_check": "array_storage",
+              "passed": true,
+              "observed": 47
+            },
+            {
+              "stock_art_check": "java_threads",
+              "passed": true,
+              "observed": 2000
+            },
+            {
+              "stock_art_check": "native_thread",
+              "passed": true,
+              "observed": 58
+            },
+            {
+              "stock_art_check": "java_exception",
+              "passed": true,
+              "observed": 1
+            },
+            {
+              "stock_art_warmup": 0,
+              "calls": 200000,
+              "wait_before_ms": 0,
+              "observed": 340011506336
+            },
+            {
+              "stock_art_warmup": 1,
+              "calls": 200000,
+              "wait_before_ms": 200,
+              "observed": 340011506336
+            },
+            {
+              "stock_art_warmup": 2,
+              "calls": 200000,
+              "wait_before_ms": 200,
+              "observed": 340011506336
+            },
+            {
+              "stock_art_warmup": 3,
+              "calls": 200000,
+              "wait_before_ms": 200,
+              "observed": 340011506336
+            },
+            {
+              "stock_art_warmup": 4,
+              "calls": 200000,
+              "wait_before_ms": 200,
+              "observed": 340011506336
+            },
+            {
+              "stock_art_warmup": 5,
+              "calls": 200000,
+              "wait_before_ms": 200,
+              "observed": 340011506336
+            },
+            {
+              "stock_art_warmup": 6,
+              "calls": 200000,
+              "wait_before_ms": 200,
+              "observed": 340011506336
+            },
+            {
+              "stock_art_warmup": 7,
+              "calls": 200000,
+              "wait_before_ms": 200,
+              "observed": 340011506336
+            },
+            {
+              "stock_art_warmup": 8,
+              "calls": 200000,
+              "wait_before_ms": 200,
+              "observed": 340011506336
+            },
+            {
+              "stock_art_warmup": 9,
+              "calls": 200000,
+              "wait_before_ms": 200,
+              "observed": 340011506336
+            },
+            {
+              "stock_art_check": "warmup_result",
+              "passed": true,
+              "observed": 340011506336
+            },
+            {
+              "stock_art_check": "implicit_null",
+              "passed": true,
+              "observed": 47
+            },
+            {
+              "stock_art_check": "stack_overflow",
+              "passed": true,
+              "observed": 47
+            },
+            {
+              "stock_art_check": "gc_live_references",
+              "passed": true,
+              "observed": 8386560
+            },
+            {
+              "stock_art_jit": "unverified",
+              "warmup_calls": 2000000
+            },
+            {
+              "stock_art_stage": "destroy_vm"
+            },
+            {
+              "stock_art_check": "destroy_vm",
+              "passed": true,
+              "observed": 0
+            },
+            {
+              "stock_art_exit": true,
+              "success": true,
+              "exec_errno": 0,
+              "exit_code": 0,
+              "signal": 0,
+              "timed_out": false
+            },
+            {
+              "test": "translated_context_cleanup",
+              "passed": true,
+              "allocated": 12,
+              "freed": 12,
+              "maps": 0,
+              "revocations": 0,
+              "tlb_fills": 26149,
+              "faults": 11941,
+              "syscalls": 2562032,
+              "preemptions": 11588
+            }
+          ],
+          "observation": {
+            "jit_execution_confirmed": true,
+            "scope": "Completed integer instruction within a stable ART JIT RX mapping; method identity unverified",
+            "error": null,
+            "samples": 3964,
+            "guest_faults": [],
+            "candidates": [
+              {
+                "start": 335544320,
+                "end": 369098752,
+                "permissions": "r-xs",
+                "offset": 33554432,
+                "device": "00:01",
+                "inode": 2,
+                "name": "/memfd:jit-cache (deleted)",
+                "invalidating_calls": [],
+                "completed_samples": 324
+              }
+            ],
+            "confirmed": [
+              {
+                "start": 335544320,
+                "end": 369098752,
+                "permissions": "r-xs",
+                "offset": 33554432,
+                "device": "00:01",
+                "inode": 2,
+                "name": "/memfd:jit-cache (deleted)",
+                "invalidating_calls": [],
+                "completed_samples": 324,
+                "first": {
+                  "execution_observation": "integer_completed",
+                  "sequence": 1168,
+                  "pid": 2,
+                  "tid": 2,
+                  "mm": 481047105536,
+                  "pc": 335547940,
+                  "next_pc": 335547948
+                },
+                "last": {
+                  "execution_observation": "integer_completed",
+                  "sequence": 1507,
+                  "pid": 2,
+                  "tid": 2,
+                  "mm": 481047105536,
+                  "pc": 335547940,
+                  "next_pc": 335547948
+                }
+              }
+            ],
+            "identity": {
+              "pid": 2,
+              "tid": 2,
+              "mm": 481047105536
+            },
+            "window": [
+              1,
+              4021
+            ]
+          },
+          "maps": [
+            {
+              "name": "before-vm",
+              "present": true,
+              "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/hyperos-art-background-main-special-mapping-v1/gcd-0-art/maps-before-vm.txt",
+              "bytes": 5848,
+              "sha256": "be835cd76e381be009195f0075e4009854f664ddc55ff0cf5985daecd45f6289",
+              "validated": true
+            },
+            {
+              "name": "after-vm",
+              "present": true,
+              "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/hyperos-art-background-main-special-mapping-v1/gcd-0-art/maps-after-vm.txt",
+              "bytes": 131808,
+              "sha256": "02dc3b71dbe93750b5b6413b3caee7e33ad8718fb4cfe6dad72ced778adc7634",
+              "validated": true
+            },
+            {
+              "name": "after-gc",
+              "present": true,
+              "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/hyperos-art-background-main-special-mapping-v1/gcd-0-art/maps-after-gc.txt",
+              "bytes": 132754,
+              "sha256": "0dac8bb5907d9250e97c2c190c1a2a1bde66f0848a0c3f157bf7f84964acbfd7",
+              "validated": true
+            },
+            {
+              "name": "before-warmup",
+              "present": true,
+              "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/hyperos-art-background-main-special-mapping-v1/gcd-0-art/maps-before-warmup.txt",
+              "bytes": 132754,
+              "sha256": "0dac8bb5907d9250e97c2c190c1a2a1bde66f0848a0c3f157bf7f84964acbfd7",
+              "validated": true
+            },
+            {
+              "name": "after-warmup",
+              "present": true,
+              "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/hyperos-art-background-main-special-mapping-v1/gcd-0-art/maps-after-warmup.txt",
+              "bytes": 132754,
+              "sha256": "0dac8bb5907d9250e97c2c190c1a2a1bde66f0848a0c3f157bf7f84964acbfd7",
+              "validated": true
+            }
+          ],
+          "stdout_sha256": "5bb9835892e8db4fd47d1810cf5b93ab7f2c91e651c1bc8c2f18a91c347c4801",
+          "stderr_sha256": "fc634aa596299b438d28cc5691fdf8153ae684a89eb09757e58f53158a5224e2"
+        }
+      ]
+    }
+  ],
+  "ios": [
+    {
+      "report": {
+        "path": "work/native-linux-nce/stock-init-special-mapping-main-ios-16k-v1/build.json",
+        "bytes": 43259,
+        "sha256": "85ddbed4046465ad3e197fb4fd416342e24d214c6ca6b5be244459fd7b7f8f65"
+      },
+      "scope": "Cross compilation; device execution pending",
+      "target": "ios",
+      "sdk": "/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS27.1.sdk",
+      "source_report": "work/native-linux-nce/stock-init-special-mapping-main-core-16k-v1/summary.json",
+      "library": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/stock-init-special-mapping-main-ios-16k-v1/libtranslation.a",
+      "library_sha256": "c75c1f7a9736a9885022d371d0f01022747ef39db72f92c6cb9266247c4ca25d"
+    },
+    {
+      "report": {
+        "path": "work/native-linux-nce/stock-init-special-mapping-main-ios-4k-v1/build.json",
+        "bytes": 43378,
+        "sha256": "184e14313509d8e93353cb2bc51eb06ccd8bb4f4bbde2aeb526374f1ed940326"
+      },
+      "scope": "Cross compilation; device execution pending",
+      "target": "ios",
+      "sdk": "/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS27.1.sdk",
+      "source_report": "work/native-linux-nce/stock-init-special-mapping-main-core-4k-v1/summary.json",
+      "library": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/stock-init-special-mapping-main-ios-4k-v1/libtranslation.a",
+      "library_sha256": "c117b5cadc1fdf4d12009cf7928329c9bdfb098c3732001b4292ab8ab3bfe542"
+    },
+    {
+      "report": {
+        "path": "work/native-linux-nce/stock-init-special-mapping-main-init-ios-v1/init-copy-build.json",
+        "bytes": 4479,
+        "sha256": "54c852b6027eb6264630e360b56a7e2d5c5654624ec1d465e99587c026072d3e"
+      },
+      "scope": "iOS compilation of actual stock-init generated runner and execution copies; no device execution",
+      "target": "arm64-apple-ios26.0",
+      "sdk": "/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS27.1.sdk",
+      "source_report": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/stock-init-special-mapping-main-original-v1/summary.json",
+      "source_report_sha256": "852467172c49eecd8a7fe8b9be9efc586f7b44bcda1748502771950b17ad3d9d"
+    }
+  ],
+  "input_hash_checks": [
+    {
+      "report": "work/native-linux-nce/stock-init-special-mapping-main-core-16k-v1/summary.json",
+      "files": 119,
+      "all_match": true
+    },
+    {
+      "report": "work/native-linux-nce/stock-init-special-mapping-main-core-4k-v1/summary.json",
+      "files": 120,
+      "all_match": true
+    },
+    {
+      "report": "work/native-linux-nce/stock-init-special-mapping-main-original-v1/summary.json",
+      "files": 129,
+      "all_match": true
+    },
+    {
+      "report": "work/native-linux-nce/stock-art-jit-main-special-mapping-v1/summary.json",
+      "files": 118,
+      "all_match": true
+    },
+    {
+      "report": "work/native-linux-nce/hyperos-art-jit-main-special-mapping-v1/summary.json",
+      "files": 119,
+      "all_match": true
+    },
+    {
+      "report": "work/native-linux-nce/hyperos-art-background-main-special-mapping-v1/summary.json",
+      "files": 119,
+      "all_match": true
+    },
+    {
+      "report": "work/native-linux-nce/stock-init-special-mapping-main-ios-16k-v1/build.json",
+      "files": 112,
+      "all_match": true
+    },
+    {
+      "report": "work/native-linux-nce/stock-init-special-mapping-main-ios-4k-v1/build.json",
+      "files": 112,
+      "all_match": true
+    },
+    {
+      "report": "work/native-linux-nce/stock-init-special-mapping-main-init-ios-v1/init-copy-build.json",
+      "files": 4,
+      "all_match": true
+    }
+  ],
+  "warning_regression": {
+    "report": {
+      "path": "work/stock-init-special-mapping-main-checks/warning-regression.json",
+      "bytes": 198,
+      "sha256": "fc1da8e187e956d41ebf25dfbcee1bb8215b4ef3de46f7a3a12a28d0b1947985"
+    },
+    "test": "kernel_page_table_release",
+    "passed": true,
+    "accepted_runs": 8,
+    "original_warning_rejections": 8,
+    "failure_log_sha256": "105f4bf3014e19ce3ebc19666fc8c31abbd4019b1d647afb271d1cbba05bf912"
+  }
+}
