@@ -1,0 +1,129 @@
+{
+  "scope": "HyperOS original disk adapter and fixed input stage; guest mount and original init execution remain unverified",
+  "source_base_commit": "aafac7081c33f477a5cf1f4aa7fe106e66c68de7",
+  "platform": "macOS-27.0-arm64-arm-64bit-Mach-O",
+  "system_build": "26A428",
+  "cpu": "Apple M5 Ultra",
+  "artifacts": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-hyperos-init/work/native-linux-nce/hyperos-init-build-checks-v2",
+  "input_manifest": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-hyperos-jit/work/native-linux-nce/hyperos-init-input-v6/manifest.json",
+  "input_manifest_sha256": "1ece2c7f87a9064a28a823309476d10044a795bad25b887e5e07a8859137ad06",
+  "sdk_init_parser_source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/stock-init-apex-main-original-v2/summary.json",
+  "host_checks": [
+    {
+      "test": "host_disk_bounds_readonly_and_locking",
+      "passed": true
+    },
+    {
+      "test": "host_context_preserves_thread_masks",
+      "passed": true
+    }
+  ],
+  "input_checks": {
+    "test": "stock_init_hyperos_contract",
+    "passed": true,
+    "cases": [
+      "actual_sdk36_four_entries",
+      "fixed_hyperos_mount_input",
+      "changed_manifest",
+      "unavailable_original_vendor",
+      "changed_original_file",
+      "accepted_512gib_pc",
+      "rejected_64gib_profile",
+      "rejected_unmounted_profile",
+      "missing_partition",
+      "writable_partition",
+      "numeric_readonly",
+      "wrong_filesystem",
+      "missing_root_link",
+      "wrong_root_link",
+      "missing_root_file",
+      "missing_metadata",
+      "wrong_label",
+      "wrong_owner",
+      "wrong_mode",
+      "wrong_inode_type",
+      "numeric_metadata_owner",
+      "rejected_sparse_end_pc",
+      "rejected_page_table_warning"
+    ],
+    "hyperos_execution_validated": false
+  },
+  "compilations": {
+    "guest-compile": {
+      "command": [
+        "/opt/homebrew/opt/llvm/bin/clang",
+        "--target=aarch64-linux-musl",
+        "-mno-outline-atomics",
+        "-fPIE",
+        "-O2",
+        "-g",
+        "-Wall",
+        "-Wextra",
+        "-Werror",
+        "-nostdinc",
+        "-isystem",
+        "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-hyperos-init/work/native-linux-nce/musl-build/install/include",
+        "-isystem",
+        "/opt/homebrew/Cellar/llvm/22.1.7_1/lib/clang/22/include",
+        "-DNCE_GUEST_PAGE_SHIFT=12",
+        "-D_GNU_SOURCE",
+        "-c",
+        "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-hyperos-init/experiments/native-linux/translation/stock-init-guest.c",
+        "-o",
+        "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-hyperos-init/work/native-linux-nce/hyperos-init-build-checks-v2/stock-init-guest.o"
+      ],
+      "returncode": 0,
+      "source_sha256": {
+        "experiments/native-linux/translation/stock-init-guest.c": "6e0f7d4ab1c559b45bdd7bf2f7049d8c931ab876f7280682dc4459f56c2bb6bf"
+      },
+      "object_sha256": "d8b1b0ff2affd4ce6227569cb1fe6d26d6519b4da80e3e13cf9847c71cd311bd"
+    },
+    "ios-host-compile": {
+      "command": [
+        "xcrun",
+        "clang",
+        "-target",
+        "arm64-apple-ios26.0",
+        "-isysroot",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS27.1.sdk",
+        "-O2",
+        "-Wall",
+        "-Wextra",
+        "-Werror",
+        "-DNCE_GUEST_PAGE_SHIFT=12",
+        "-I",
+        "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-hyperos-init/work/native-linux-nce/processes",
+        "-I",
+        "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-hyperos-init/experiments/native-linux",
+        "-c",
+        "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-hyperos-init/experiments/native-linux/lkl-host.c",
+        "-o",
+        "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-hyperos-init/work/native-linux-nce/hyperos-init-build-checks-v2/ios-lkl-host.o"
+      ],
+      "returncode": 0,
+      "source_sha256": {
+        "experiments/native-linux/lkl-host.c": "0d162a35edff2a800a1162d5e51da6a18cf80254cf67266b5ff82c538a60b845",
+        "experiments/native-linux/layout.h": "f45d823008b98c3da8e3f7efee80fa46b1a8a4fa7bc6b9fae8d50797220a5659"
+      },
+      "object_sha256": "d897fb77bc7fe6763ecc7911f49274547857ed84866ce21222ea7d1d5d7f5b8a"
+    }
+  },
+  "source_sha256": {
+    "experiments/native-linux/layout.h": "f45d823008b98c3da8e3f7efee80fa46b1a8a4fa7bc6b9fae8d50797220a5659",
+    "experiments/native-linux/lkl-host.c": "0d162a35edff2a800a1162d5e51da6a18cf80254cf67266b5ff82c538a60b845",
+    "experiments/native-linux/lkl-nce-block.c": "a7bd65c2b8a8c076f42ce8521c7163b223ced8147eea9e18f20f5489ae3efce3",
+    "experiments/native-linux/host-context-test.c": "7947f2ba3d82a1734a25f1c7a86093f5acce4b5bb24b81c0561d01e5c8a7e534",
+    "experiments/native-linux/translation/stock-init-guest.c": "6e0f7d4ab1c559b45bdd7bf2f7049d8c931ab876f7280682dc4459f56c2bb6bf",
+    "experiments/native-linux/translation/stock-init-runner.h": "bde8d64ed06c57af567936f2064f3587ef05345ad85936b45f4596a0be21d1c0",
+    "scripts/probe_lkl.py": "43f6484cea481c9af21d79c32faaee0da9925e661a0e6853c6ca3031691cac6d",
+    "scripts/probe_stock_init.py": "e0e1f8a38a03e1aca56fa636f37312618ef633b95f2cd6190e739f50dc6897ba",
+    "scripts/stock_init_hyperos.py": "980dfd0159cde79fd68ca9bdd56352996003e4556184da36ca1e4a1a73db5a38",
+    "scripts/test_stock_init_hyperos.py": "526936a5e24517612c432b9779c57bfdeaa670ce844def30056f882f8044536b"
+  },
+  "limitations": [
+    "EROFS Linux mounts, original guest metadata checks and HyperOS init are not yet executed.",
+    "Shared 16 KiB core and init execution remain to be rerun after the final ASLR integration.",
+    "iOS compilation currently covers the disk adapter; generated init runner/execution and runtime remain to be built.",
+    "Original first-stage, userdata/encryption/boot properties, AArch32 services, complete HyperOS and iPhone execution remain unverified."
+  ]
+}

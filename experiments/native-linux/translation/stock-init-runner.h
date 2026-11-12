@@ -2,12 +2,38 @@
 #pragma once
 #include <time.h>
 
+static int stock_init_raw_path(const char *path, int hyperos)
+{
+    const char *partitions[] = {"/system", "/product", "/system_ext", "/vendor", "/system_dlkm"};
+    for (unsigned i = 0; i < (hyperos ? 5U : 1U); ++i) {
+        size_t length = strlen(partitions[i]);
+        if (!strcmp(path, partitions[i]) || (!strncmp(path, partitions[i], length) && path[length] == '/'))
+            return 1;
+    }
+    return 0;
+}
+
+static void stock_init_dump_kernel_log(void)
+{
+    char *kernel_log = calloc(1, 1 << 20);
+    REQUIRE(kernel_log);
+    long log_args[6] = {3, (long)kernel_log, (1 << 20) - 1};
+    long log_bytes = call(116, log_args);
+    if (log_bytes > 0)
+        REQUIRE(fwrite(kernel_log, 1, log_bytes, stderr) == (size_t)log_bytes);
+    free(kernel_log);
+    printf("{\"stock_init_kernel_log\":true,\"read_result\":%ld}\n", log_bytes);
+}
+
 static void stock_init_setup(void)
 {
     const char *root = getenv("NCE_STOCK_INIT_DIRECTORY");
     REQUIRE(root && root[0] == '/');
     const char *original_image = getenv("NCE_STOCK_INIT_SYSTEM");
     int original_system = original_image && original_image[0];
+    const char *vendor_image = getenv("NCE_STOCK_INIT_VENDOR");
+    int hyperos = vendor_image && vendor_image[0];
+    REQUIRE(!hyperos || (original_system && getenv("NCE_STOCK_INIT_SYSTEM_DLKM") && getenv("NCE_STOCK_INIT_SYSTEM_DLKM")[0]));
     /* Original first-stage init uses tmpfs so nodes are accessible before restorecon. */
     directory("/dev");
     long devfs[6] = {(long)"tmpfs", (long)"/dev", (long)"tmpfs", 2, (long)"mode=0755"};
@@ -24,6 +50,62 @@ static void stock_init_setup(void)
         long system[6] = {(long)"/system-image/system", (long)"/system", 0, 4096};
         REQUIRE(call(40, system) == 0);
         puts("{\"stock_init_original_system_mounted\":true,\"readonly\":true}");
+        if (hyperos) {
+            const char *bound[] = {"/product", "/system_ext"};
+            for (unsigned i = 0; i < sizeof(bound) / sizeof(*bound); ++i) {
+                char source[64];
+                REQUIRE(snprintf(source, sizeof(source), "/system-image%s", bound[i]) < (int)sizeof(source));
+                directory(bound[i]);
+                long bind[6] = {(long)source, (long)bound[i], 0, 4096};
+                REQUIRE(call(40, bind) == 0);
+                printf("{\"stock_init_original_partition_mounted\":true,\"path\":\"%s\",\"filesystem\":\"bind\",\"readonly\":true}\n", bound[i]);
+            }
+            const char *erofs[] = {"/vendor", "/system_dlkm"};
+            for (unsigned i = 0; i < sizeof(erofs) / sizeof(*erofs); ++i) {
+                char sysfs_path[64], device[64];
+                REQUIRE(snprintf(sysfs_path, sizeof(sysfs_path), "/sys/block/ncedisk%u/dev", i + 2) < (int)sizeof(sysfs_path));
+                REQUIRE(snprintf(device, sizeof(device), "/dev/nce%s", erofs[i] + 1) < (int)sizeof(device));
+                block_device(sysfs_path, device, 0400);
+                directory(erofs[i]);
+                long mount[6] = {(long)device, (long)erofs[i], (long)"erofs", 1};
+                long mounted = call(40, mount);
+                if (mounted) {
+                    fprintf(stderr, "stock_init_mount path=%s filesystem=erofs result=%ld\n", erofs[i], mounted);
+                    stock_init_dump_kernel_log();
+                }
+                REQUIRE(mounted == 0);
+                printf("{\"stock_init_original_partition_mounted\":true,\"path\":\"%s\",\"filesystem\":\"erofs\",\"readonly\":true}\n", erofs[i]);
+            }
+        }
+    }
+    if (hyperos) {
+        /* LKL's empty /init bootstraps host syscall tasks before original root links. */
+        long bootstrap[6] = {-100, (long)"/init", 0x20000};
+        long fd = call(56, bootstrap);
+        REQUIRE(fd >= 0);
+        /* Linux statx has a fixed 256-byte ABI; only this prefix is read. */
+        struct {
+            uint32_t stx_mask, stx_blksize;
+            uint64_t stx_attributes;
+            uint32_t stx_nlink, stx_uid, stx_gid;
+            uint16_t stx_mode, spare;
+            uint64_t stx_ino, stx_size;
+            unsigned char remainder[208];
+        } status = {0};
+        _Static_assert(sizeof(status) == 256, "Linux statx buffer size");
+        long info[6] = {fd, (long)"", 0x1000, 0x21f, (long)&status};
+        REQUIRE(call(291, info) == 0 && (status.stx_mask & 0x21f) == 0x21f);
+        fprintf(stderr, "stock_init_bootstrap path=/init uid=%u gid=%u mode=%u links=%u bytes=%llu\n", status.stx_uid, status.stx_gid, status.stx_mode, status.stx_nlink, (unsigned long long)status.stx_size);
+        REQUIRE(status.stx_mode == 0100700 && status.stx_uid == 0 && status.stx_gid == 0 && status.stx_nlink == 1 && status.stx_size == 0);
+        unsigned char byte;
+        bootstrap[0] = fd;
+        bootstrap[1] = (long)&byte;
+        bootstrap[2] = 1;
+        REQUIRE(call(63, bootstrap) == 0 && call(57, bootstrap) == 0);
+        bootstrap[0] = -100;
+        bootstrap[1] = (long)"/init";
+        bootstrap[2] = 0;
+        REQUIRE(call(35, bootstrap) == 0);
     }
     char path[4096];
     REQUIRE(snprintf(path, sizeof(path), "%s/files.tsv", root) < (int)sizeof(path));
@@ -36,17 +118,28 @@ static void stock_init_setup(void)
         REQUIRE(strchr(line, '\n'));
         if (line[0] == 'D') {
             REQUIRE(sscanf(line, "D\t%1023s %c", guest, &extra) == 1);
-            if (!original_system || (strcmp(guest, "/system") && strncmp(guest, "/system/", 8)))
+            if (!original_system || !stock_init_raw_path(guest, hyperos))
                 directory(guest);
         } else if (line[0] == 'L') {
             char target[1024], actual[1024] = {0};
+            char label[256] = {0};
             unsigned uid, gid;
-            REQUIRE(sscanf(line, "L\t%u\t%u\t%1023s\t%1023s %c", &uid, &gid, guest, target, &extra) == 4);
+            if (hyperos)
+                REQUIRE(sscanf(line, "L\t%u\t%u\t%1023s\t%1023s\t%255s %c", &uid, &gid, guest, target, label, &extra) == 5);
+            else
+                REQUIRE(sscanf(line, "L\t%u\t%u\t%1023s\t%1023s %c", &uid, &gid, guest, target, &extra) == 4);
             REQUIRE(guest[0] == '/' && target[0] == '/' && !strstr(guest, "..") && !strstr(target, ".."));
             long link[6] = {(long)target, -100, (long)guest};
             REQUIRE(call(36, link) == 0);
             long owner[6] = {-100, (long)guest, uid, gid, 0x100};
             REQUIRE(call(54, owner) == 0);
+            if (hyperos) {
+                long attribute[6] = {(long)guest, (long)"security.selinux", (long)label, (long)strlen(label) + 1, 0};
+                long assigned = call(6, attribute);
+                if (assigned)
+                    fprintf(stderr, "stock_init_root_label path=%s result=%ld\n", guest, assigned);
+                REQUIRE(assigned == 0);
+            }
             long readlink[6] = {-100, (long)guest, (long)actual, sizeof(actual) - 1};
             long length = call(78, readlink);
             REQUIRE(length == (long)strlen(target) && !memcmp(actual, target, length));
@@ -55,11 +148,18 @@ static void stock_init_setup(void)
             REQUIRE(sscanf(line, "F\t%o\t%1023s %c", &mode, guest, &extra) == 2);
             REQUIRE(guest[0] == '/' && !strstr(guest, ".."));
             REQUIRE(snprintf(path, sizeof(path), "%s/root%s", root, guest) < (int)sizeof(path));
-            if (!original_system || strncmp(guest, "/system/", 8))
+            if (!original_system || !stock_init_raw_path(guest, hyperos))
                 put_host_file(guest, path, mode);
         }
     }
     REQUIRE(!ferror(input) && fclose(input) == 0);
+    if (hyperos) {
+        long root_file[6] = {(long)"/system-image/init.environ.rc", (long)"/init.environ.rc", 0, 4096};
+        REQUIRE(call(40, root_file) == 0);
+        put_file("/stock-init-original-metadata.tsv", "original-metadata.tsv");
+        puts("{\"stock_init_original_root_file\":true,\"path\":\"/init.environ.rc\",\"readonly\":true}");
+    }
+    put_text("/stock-init-profile", hyperos ? "hyperos" : "sdk36");
     const char *directories[] = {"/dev", "/dev/socket", "/dev/block", "/dev/pts", "/dev/dm-user", "/sys", "/apex", "/bootstrap-apex", "/linkerconfig", "/mnt", "/data", "/metadata", "/debug_ramdisk", "/second_stage_resources"};
     for (unsigned i = 0; i < sizeof(directories) / sizeof(*directories); ++i)
         directory(directories[i]);
@@ -163,14 +263,7 @@ static int stock_init_run(void)
     }
     dump_file("/stdout", stdout);
     dump_file("/stderr", stderr);
-    char *kernel_log = calloc(1, 1 << 20);
-    REQUIRE(kernel_log);
-    long log_args[6] = {3, (long)kernel_log, (1 << 20) - 1};
-    long log_bytes = call(116, log_args);
-    if (log_bytes > 0)
-        REQUIRE(fwrite(kernel_log, 1, log_bytes, stderr) == (size_t)log_bytes);
-    free(kernel_log);
-    printf("{\"stock_init_kernel_log\":true,\"read_result\":%ld}\n", log_bytes);
+    stock_init_dump_kernel_log();
     printf("{\"stock_init_observation\":true,\"mode\":\"%s\",\"ancestor_pid\":%ld,\"waited\":%ld,\"status\":%d,\"deadline_stop\":%s,\"kill_result\":%ld}\n", getenv("NCE_STOCK_INIT_MODE"), pid, waited, status, stopped ? "true" : "false", killed);
     return lifecycle && (!stopped || status != 9);
 }

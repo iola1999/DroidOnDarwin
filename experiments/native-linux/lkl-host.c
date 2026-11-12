@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 #include "lkl-host-ops.h"
+#include "layout.h"
 #include <dispatch/dispatch.h>
 #include <pthread.h>
 #include <setjmp.h>
@@ -46,15 +47,15 @@ static void host_panic(void)
 {
     abort();
 }
-/* Slot 0 is persistent data; slot 1 is the read-only bundled system. */
+/* Slot 0 is persistent data; system, vendor and system_dlkm are read-only. */
 static struct {
     int fd;
     unsigned long long bytes;
-} disks[2] = {{-1, 0}, {-1, 0}};
+} disks[NCE_DISK_COUNT] = {{-1, 0}, {-1, 0}, {-1, 0}, {-1, 0}};
 
 int nce_disk_open(unsigned index, const char *path)
 {
-    if (index >= 2)
+    if (index >= NCE_DISK_COUNT)
         return -1;
     if (!path)
         return 0;
@@ -75,7 +76,7 @@ int nce_disk_open(unsigned index, const char *path)
 
 void nce_disk_close(void)
 {
-    for (unsigned index = 0; index < 2; ++index) {
+    for (unsigned index = 0; index < NCE_DISK_COUNT; ++index) {
         if (disks[index].fd < 0)
             continue;
         if (!index)
@@ -88,12 +89,12 @@ void nce_disk_close(void)
 
 static unsigned long long disk_size(unsigned int index)
 {
-    return index < 2 ? disks[index].bytes : 0;
+    return index < NCE_DISK_COUNT ? disks[index].bytes : 0;
 }
 static int disk_io(unsigned int index, unsigned int operation, unsigned long long offset,
                    void *buffer, unsigned long size)
 {
-    if (index >= 2 || disks[index].fd < 0)
+    if (index >= NCE_DISK_COUNT || disks[index].fd < 0)
         return -1;
     int fd = disks[index].fd;
     if (operation == 2)

@@ -1,0 +1,1624 @@
+{
+  "scope": "Original HyperOS root/bootstrap preparation and actual 4 KiB init selinux_setup failure observation; shared SDK36 16 KiB core/init and iOS compile checks",
+  "platform": "macOS-27.0-arm64-arm-64bit-Mach-O",
+  "cpu": "Apple M5 Ultra",
+  "system_build": "26A428",
+  "source_base_commit": "828d4eb9d2fc9efbb1a186c54f3a4d990ef96d57",
+  "dependencies": {
+    "prepared_input": "aafac70",
+    "four_disks": "bd43b83d2b30da525ce80cb9f0579a41b640be1e",
+    "erofs_configuration": "b46b9450527b24b81af721566a58a25a820fd5d9",
+    "erofs_global_buffer": "5391c16b33ffe3b26df9ebcc292bb48947283373",
+    "aslr_original": "964984508d27c2b120b7636df2d490e0243ab51e"
+  },
+  "input": {
+    "manifest": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-hyperos-jit/work/native-linux-nce/hyperos-init-input-v6/manifest.json",
+    "manifest_sha256": "1ece2c7f87a9064a28a823309476d10044a795bad25b887e5e07a8859137ad06",
+    "source_identity": {
+      "manifest": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/project-audit-2026-11-12/references/hyperos3-input/manifest.json",
+      "manifest_sha256": "7785f61d0e1846fa14d9f3af9db49c905a02604128747a0d617eeff381504ceb",
+      "scan": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/project-audit-2026-11-12/references/hyperos3-input/core-scan-v4/scan.json",
+      "scan_sha256": "bfa0564789255476b36d361810ee23f42b5b99ffae77eb6743778377850bc370",
+      "repository": "NEORUAA/HyperOS-AVD",
+      "source_commit": "9d7ddd3f046e89d33cb205b5fbbf6dc5b728155c",
+      "release": "v0.1.0-a16-hyperos3-fuxi-r1",
+      "hyperos": "3.0.2.0.WMCCNXM",
+      "source": "Third-party MysticGSI assembly of HyperOS system and ranchu vendor/system_dlkm",
+      "parts": [
+        {
+          "name": "HyperOS-AVD-v0.1.0-macos-arm64.tar.gz.part001",
+          "size": 1610612736,
+          "sha256": "5ef3d16c8f02088d60b01024a39065398dd669ab50100ea9547cb64b83db95e9"
+        },
+        {
+          "name": "HyperOS-AVD-v0.1.0-macos-arm64.tar.gz.part002",
+          "size": 1610612736,
+          "sha256": "9ba2b360d0a28f95ba1e1fe4cd135706498a1ada75caa64ff6596b366c2c4b07"
+        },
+        {
+          "name": "HyperOS-AVD-v0.1.0-macos-arm64.tar.gz.part003",
+          "size": 493624687,
+          "sha256": "1b9fe789439b784e13303818faa568739f49ee45bed1389d12e9aec99f64888f"
+        }
+      ],
+      "archive_inputs": {
+        "images/kernel-ranchu": {
+          "source_sha256": "b950027375a82427604eba65f41de7188737e444b01cb625c61056ffd14cf427",
+          "source_bytes": 14489771,
+          "path": "work/native-linux-nce/hyperos-init-input-v6/kernel-ranchu",
+          "bytes": 14489771,
+          "sha256": "b950027375a82427604eba65f41de7188737e444b01cb625c61056ffd14cf427",
+          "partitions": null
+        },
+        "images/ramdisk.img": {
+          "source_sha256": "15760b3106f9cf92f4acd00aeaaab47151dd802aeed7fe19231ba1d918b29d51",
+          "source_bytes": 2285114,
+          "path": "work/native-linux-nce/hyperos-init-input-v6/ramdisk.img",
+          "bytes": 2285114,
+          "sha256": "15760b3106f9cf92f4acd00aeaaab47151dd802aeed7fe19231ba1d918b29d51",
+          "partitions": null
+        },
+        "images/system.img": {
+          "source_sha256": "61a6011155548708075cb2a69969e689b253881cd5610b911c2df68878304cca",
+          "source_bytes": 6792675328,
+          "path": "work/native-linux-nce/hyperos-init-input-v6/system_dlkm.erofs",
+          "bytes": 7393280,
+          "sha256": "dd55dc42d416bcbd1510fc5a91d8e2fb1b08752b4d87e6de73afacae96ee6639",
+          "partitions": [
+            {
+              "name": "system",
+              "attributes": 1,
+              "group": 1,
+              "size": 6724648960,
+              "ranges": [
+                {
+                  "source": 3145728,
+                  "length": 6724648960,
+                  "target": 0
+                }
+              ]
+            },
+            {
+              "name": "vendor",
+              "attributes": 1,
+              "group": 1,
+              "size": 52797440,
+              "ranges": [
+                {
+                  "source": 6728712192,
+                  "length": 52797440,
+                  "target": 0
+                }
+              ]
+            },
+            {
+              "name": "system_dlkm",
+              "attributes": 1,
+              "group": 1,
+              "size": 7393280,
+              "ranges": [
+                {
+                  "source": 6782189568,
+                  "length": 7393280,
+                  "target": 0
+                }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    "files": 438,
+    "apex_samples": 86,
+    "apex_containers": 40,
+    "services": 179,
+    "original_root_links": 7,
+    "missing_service_binaries": [
+      "/system/bin/adbd",
+      "/system/bin/traced_relay",
+      "/system_ext/bin/miuibpfservice",
+      "/system_ext/xbin/mqsasd",
+      "/system/xbin/su",
+      "/vendor/bin/boringssl_self_test32"
+    ],
+    "partitions": {
+      "deployed_system_partition": {
+        "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/project-audit-2026-11-12/references/hyperos3-input/extracted/system.ext4",
+        "bytes": 6724648960,
+        "sha256": "dd65f33741bfce77b22b5c58b8d696b16da52f15a825acafcbcede47a3cfa3ca"
+      },
+      "original_vendor": {
+        "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/project-audit-2026-11-12/references/hyperos3-input/logical-vendor/vendor.erofs",
+        "bytes": 52797440,
+        "sha256": "0549061f9afe13c94baaa942eb08319b0498b66ac38b2cfd73cbbba541153fbd"
+      },
+      "original_system_dlkm": {
+        "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-hyperos-jit/work/native-linux-nce/hyperos-init-input-v6/system_dlkm.erofs",
+        "bytes": 7393280,
+        "sha256": "dd55dc42d416bcbd1510fc5a91d8e2fb1b08752b4d87e6de73afacae96ee6639"
+      }
+    }
+  },
+  "reports": {
+    "core_4k": {
+      "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-hyperos-init/work/native-linux-nce/hyperos-erofs-aslr-core-4k-v1/summary.json",
+      "sha256": "952e5b6cbc165436c0ce81c797969ac5a4c64aff545a69e2c227902984b1f7ba"
+    },
+    "kernel_4k": {
+      "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-hyperos-init/work/native-linux-nce/hyperos-erofs-aslr-core-4k-v1/kernel-build.json",
+      "sha256": "00fa93df3acefc709881e9d74d127b412baf64f6705d549b26593a4ff23839e7"
+    },
+    "core_16k": {
+      "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-hyperos-init/work/native-linux-nce/hyperos-shared-sdk-core-16k-v1/summary.json",
+      "sha256": "f898b0d4afbbb48dc085cf3ecfe3c2242a557857526979fae41a62ddda6bd8b2"
+    },
+    "kernel_16k": {
+      "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-hyperos-init/work/native-linux-nce/hyperos-shared-sdk-core-16k-v1/kernel-build.json",
+      "sha256": "65ee0e5606b9c8ed8b8883283a0d3b463eed2ee5b9805c27eef156a60b8457e4"
+    },
+    "bootstrap_conflict_cli": {
+      "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-hyperos-init/work/native-linux-nce/hyperos-erofs-aslr-lifecycle-4k-v1/summary.json",
+      "sha256": "51a36c2e79713a3b8d513b92be479fd295a84988171942e5fe06f07985f621b9"
+    },
+    "bootstrap_conflict_gcd": {
+      "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-hyperos-init/work/native-linux-nce/hyperos-erofs-aslr-lifecycle-4k-v1-gcd-diagnostic/summary.json",
+      "sha256": "bdb6c21d783b1a41332fc3475d1b53fc55e8484a90521e21a98c31dade4e5631"
+    },
+    "lifecycle_final": {
+      "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-hyperos-init/work/native-linux-nce/hyperos-erofs-aslr-lifecycle-4k-v3/summary.json",
+      "sha256": "5e4d984f2db205bc9a10a50d2cd5446130a8b089766e00a7d196fe2808f377de"
+    },
+    "original_hyperos": {
+      "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-hyperos-init/work/native-linux-nce/hyperos-original-erofs-aslr-4k-v1/summary.json",
+      "sha256": "6e553aa900075e836400ae4828886446afa9fb9b3b4307f411e0c734ebbe1d9a"
+    },
+    "sdk_wrong_directory": {
+      "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-hyperos-init/work/native-linux-nce/hyperos-shared-sdk-original-16k-v1/failure.json",
+      "sha256": "6be074a9e0055068e1f52a2f14dfbf0e74f3c719dbfc281aae883d9e632ed186"
+    },
+    "original_sdk_16k": {
+      "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-hyperos-init/work/native-linux-nce/hyperos-shared-sdk-original-16k-v2/summary.json",
+      "sha256": "3e4acd27084abdb486b1c3da88001cc29a16cb72c8a25de2a65ba0da8f4856c9"
+    },
+    "ios_runtime": {
+      "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-hyperos-init/work/native-linux-nce/hyperos-erofs-aslr-runtime-ios-v1/build.json",
+      "sha256": "fa0a2ea36cb9d3e35e0b98b6f231eef6902d9ed9467115553a751c380f1990cc"
+    },
+    "ios_runner_wrong_argument_order": {
+      "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-hyperos-init/work/native-linux-nce/hyperos-original-runner-ios-v1/build.json",
+      "sha256": "e291e8007656e64c5bf8c3d29dd93f7e9b12048fd91db8dac9754dc162c330e6"
+    },
+    "ios_actual_runner": {
+      "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-hyperos-init/work/native-linux-nce/hyperos-original-runner-ios-v2/build.json",
+      "sha256": "3a43fd0dee330d368ff36e34d392ce311ca72c264b5a5f5a06044b3e366ae8df"
+    },
+    "contract": {
+      "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-hyperos-init/work/native-linux-nce/hyperos-shell-bootstrap-contract-v1.console.log",
+      "sha256": "8c8031ed6cadd630912d6301fec186058f97ed7599a97c44ade70232f29db88b"
+    },
+    "input_tools": {
+      "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-hyperos-init/work/native-linux-nce/hyperos-shell-bootstrap-input-tests-v1.console.log",
+      "sha256": "921b60a7fd52e978fbb551cacd29df2d6708879400278e1fcc70fceeb0c6f8e0"
+    },
+    "ios_actual_sdk_runner": {
+      "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-hyperos-init/work/native-linux-nce/hyperos-shared-sdk-runner-ios-v1/build.json",
+      "sha256": "764e9342a52d231c890d8c9497cd5c84e50ecd19fe0ab5c7c33cbdba0bf4523e"
+    }
+  },
+  "core_4k": {
+    "configuration": {
+      "data_tbi": true,
+      "guest_layout": "sparse",
+      "code_memory": "dual",
+      "execution": "direct",
+      "direct": {
+        "mapping_entries": 256,
+        "route_entries": 256,
+        "selective_writes": false,
+        "reuse_code_checks": false,
+        "memory": "flat",
+        "code_watch": false,
+        "cross_page": false,
+        "route_epochs": false,
+        "retain_routes": false,
+        "memory_groups": false,
+        "native_exclusive": false,
+        "vector_table": false,
+        "simd_math": false
+      },
+      "mapping": "pte",
+      "sparse_scan": true,
+      "fault_prefetch": false,
+      "guest_page_bytes": 4096,
+      "host_page_bytes": 16384,
+      "workload": "core",
+      "entries": [
+        "cli",
+        "gcd"
+      ],
+      "art_nterp": 1,
+      "cpus": 1,
+      "high_res_timers": false,
+      "online_cpus": 1,
+      "uaccess_stop": "all",
+      "parallel_profile": false,
+      "art_expanded_jit": 0,
+      "art_fast_baseline": 0,
+      "cache_invalidation": "pages",
+      "exec_cache": "full",
+      "tlb_invalidation": "full",
+      "linux_fastpath": 0,
+      "guest_ram_bytes": 1073741824,
+      "translation_cache_bytes": 16777216,
+      "instruction_batch": 50000,
+      "memory_interval_ms": 100,
+      "preemption": "instructions",
+      "timer_interval_ns": 2000000
+    },
+    "runs": [
+      {
+        "entry": "cli",
+        "returncode": 0,
+        "validated": true,
+        "layout": {
+          "config": "translation_guest_layout",
+          "mode": "sparse",
+          "guest_base": 65536,
+          "guest_end": 549755813888,
+          "guest_span_bytes": 549755748352,
+          "flat_coverage_bytes": 4294967296,
+          "physical_base": 481036337152,
+          "ram_base": 549755813888,
+          "ram_bytes": 1073741824,
+          "reservation_base": 481036337152,
+          "reservation_bytes": 1140850688
+        },
+        "cleanup": {
+          "test": "translated_context_cleanup",
+          "passed": true,
+          "allocated": 116,
+          "freed": 116,
+          "maps": 0,
+          "revocations": 0,
+          "tlb_fills": 71233,
+          "faults": 153353,
+          "syscalls": 18582,
+          "preemptions": 481
+        },
+        "aslr_cases": [
+          {
+            "test": "linux_mmap_aslr",
+            "case": "minimum",
+            "passed": true
+          },
+          {
+            "test": "linux_mmap_aslr",
+            "case": "maximum",
+            "passed": true
+          },
+          {
+            "test": "linux_mmap_aslr",
+            "case": "no_randomize",
+            "passed": true
+          },
+          {
+            "test": "linux_mmap_aslr",
+            "case": "compat_layout",
+            "passed": true
+          },
+          {
+            "test": "linux_mmap_aslr",
+            "case": "infinite_stack",
+            "passed": true
+          },
+          {
+            "test": "linux_mmap_aslr",
+            "case": "large_stack",
+            "passed": true
+          },
+          {
+            "test": "linux_mmap_aslr",
+            "case": "large_no_randomize",
+            "passed": true
+          },
+          {
+            "test": "linux_mmap_aslr",
+            "case": "legacy_sysctl",
+            "passed": true
+          },
+          {
+            "test": "linux_mmap_aslr",
+            "case": "fallback",
+            "passed": true
+          }
+        ]
+      },
+      {
+        "entry": "gcd",
+        "returncode": 0,
+        "validated": true,
+        "layout": {
+          "config": "translation_guest_layout",
+          "mode": "sparse",
+          "guest_base": 65536,
+          "guest_end": 549755813888,
+          "guest_span_bytes": 549755748352,
+          "flat_coverage_bytes": 4294967296,
+          "physical_base": 481036337152,
+          "ram_base": 549755813888,
+          "ram_bytes": 1073741824,
+          "reservation_base": 481036337152,
+          "reservation_bytes": 1140850688
+        },
+        "cleanup": {
+          "test": "translated_context_cleanup",
+          "passed": true,
+          "allocated": 116,
+          "freed": 116,
+          "maps": 0,
+          "revocations": 0,
+          "tlb_fills": 71233,
+          "faults": 153353,
+          "syscalls": 18583,
+          "preemptions": 339
+        },
+        "aslr_cases": [
+          {
+            "test": "linux_mmap_aslr",
+            "case": "minimum",
+            "passed": true
+          },
+          {
+            "test": "linux_mmap_aslr",
+            "case": "maximum",
+            "passed": true
+          },
+          {
+            "test": "linux_mmap_aslr",
+            "case": "no_randomize",
+            "passed": true
+          },
+          {
+            "test": "linux_mmap_aslr",
+            "case": "compat_layout",
+            "passed": true
+          },
+          {
+            "test": "linux_mmap_aslr",
+            "case": "infinite_stack",
+            "passed": true
+          },
+          {
+            "test": "linux_mmap_aslr",
+            "case": "large_stack",
+            "passed": true
+          },
+          {
+            "test": "linux_mmap_aslr",
+            "case": "large_no_randomize",
+            "passed": true
+          },
+          {
+            "test": "linux_mmap_aslr",
+            "case": "legacy_sysctl",
+            "passed": true
+          },
+          {
+            "test": "linux_mmap_aslr",
+            "case": "fallback",
+            "passed": true
+          }
+        ]
+      }
+    ]
+  },
+  "core_16k": {
+    "configuration": {
+      "data_tbi": true,
+      "guest_layout": "sparse",
+      "code_memory": "dual",
+      "execution": "direct",
+      "direct": {
+        "mapping_entries": 256,
+        "route_entries": 256,
+        "selective_writes": false,
+        "reuse_code_checks": false,
+        "memory": "flat",
+        "code_watch": false,
+        "cross_page": false,
+        "route_epochs": false,
+        "retain_routes": false,
+        "memory_groups": false,
+        "native_exclusive": false,
+        "vector_table": false,
+        "simd_math": false
+      },
+      "mapping": "pte",
+      "sparse_scan": true,
+      "fault_prefetch": false,
+      "guest_page_bytes": 16384,
+      "host_page_bytes": 16384,
+      "workload": "core",
+      "entries": [
+        "cli",
+        "gcd"
+      ],
+      "art_nterp": 1,
+      "cpus": 1,
+      "high_res_timers": false,
+      "online_cpus": 1,
+      "uaccess_stop": "all",
+      "parallel_profile": false,
+      "art_expanded_jit": 0,
+      "art_fast_baseline": 0,
+      "cache_invalidation": "pages",
+      "exec_cache": "full",
+      "tlb_invalidation": "full",
+      "linux_fastpath": 0,
+      "guest_ram_bytes": 1073741824,
+      "translation_cache_bytes": 16777216,
+      "instruction_batch": 50000,
+      "memory_interval_ms": 100,
+      "preemption": "instructions",
+      "timer_interval_ns": 2000000
+    },
+    "runs": [
+      {
+        "entry": "cli",
+        "returncode": 0,
+        "validated": true,
+        "layout": {
+          "config": "translation_guest_layout",
+          "mode": "sparse",
+          "guest_base": 65536,
+          "guest_end": 549755813888,
+          "guest_span_bytes": 549755748352,
+          "flat_coverage_bytes": 4294967296,
+          "physical_base": 481036337152,
+          "ram_base": 549755813888,
+          "ram_bytes": 1073741824,
+          "reservation_base": 481036337152,
+          "reservation_bytes": 1140850688
+        },
+        "cleanup": {
+          "test": "translated_context_cleanup",
+          "passed": true,
+          "allocated": 116,
+          "freed": 116,
+          "maps": 0,
+          "revocations": 0,
+          "tlb_fills": 70670,
+          "faults": 152949,
+          "syscalls": 18591,
+          "preemptions": 233
+        },
+        "aslr_cases": [
+          {
+            "test": "linux_mmap_aslr",
+            "case": "minimum",
+            "passed": true
+          },
+          {
+            "test": "linux_mmap_aslr",
+            "case": "maximum",
+            "passed": true
+          },
+          {
+            "test": "linux_mmap_aslr",
+            "case": "no_randomize",
+            "passed": true
+          },
+          {
+            "test": "linux_mmap_aslr",
+            "case": "compat_layout",
+            "passed": true
+          },
+          {
+            "test": "linux_mmap_aslr",
+            "case": "infinite_stack",
+            "passed": true
+          },
+          {
+            "test": "linux_mmap_aslr",
+            "case": "large_stack",
+            "passed": true
+          },
+          {
+            "test": "linux_mmap_aslr",
+            "case": "large_no_randomize",
+            "passed": true
+          },
+          {
+            "test": "linux_mmap_aslr",
+            "case": "legacy_sysctl",
+            "passed": true
+          },
+          {
+            "test": "linux_mmap_aslr",
+            "case": "fallback",
+            "passed": true
+          }
+        ]
+      },
+      {
+        "entry": "gcd",
+        "returncode": 0,
+        "validated": true,
+        "layout": {
+          "config": "translation_guest_layout",
+          "mode": "sparse",
+          "guest_base": 65536,
+          "guest_end": 549755813888,
+          "guest_span_bytes": 549755748352,
+          "flat_coverage_bytes": 4294967296,
+          "physical_base": 481036337152,
+          "ram_base": 549755813888,
+          "ram_bytes": 1073741824,
+          "reservation_base": 481036337152,
+          "reservation_bytes": 1140850688
+        },
+        "cleanup": {
+          "test": "translated_context_cleanup",
+          "passed": true,
+          "allocated": 116,
+          "freed": 116,
+          "maps": 0,
+          "revocations": 0,
+          "tlb_fills": 70670,
+          "faults": 152957,
+          "syscalls": 18591,
+          "preemptions": 598
+        },
+        "aslr_cases": [
+          {
+            "test": "linux_mmap_aslr",
+            "case": "minimum",
+            "passed": true
+          },
+          {
+            "test": "linux_mmap_aslr",
+            "case": "maximum",
+            "passed": true
+          },
+          {
+            "test": "linux_mmap_aslr",
+            "case": "no_randomize",
+            "passed": true
+          },
+          {
+            "test": "linux_mmap_aslr",
+            "case": "compat_layout",
+            "passed": true
+          },
+          {
+            "test": "linux_mmap_aslr",
+            "case": "infinite_stack",
+            "passed": true
+          },
+          {
+            "test": "linux_mmap_aslr",
+            "case": "large_stack",
+            "passed": true
+          },
+          {
+            "test": "linux_mmap_aslr",
+            "case": "large_no_randomize",
+            "passed": true
+          },
+          {
+            "test": "linux_mmap_aslr",
+            "case": "legacy_sysctl",
+            "passed": true
+          },
+          {
+            "test": "linux_mmap_aslr",
+            "case": "fallback",
+            "passed": true
+          }
+        ]
+      }
+    ]
+  },
+  "lifecycle": [
+    {
+      "entry": "cli",
+      "mode": "lifecycle",
+      "returncode": 0,
+      "observation_validated": true,
+      "observation": {
+        "stock_init_observation": true,
+        "mode": "lifecycle",
+        "ancestor_pid": 29,
+        "waited": 29,
+        "status": 9,
+        "deadline_stop": true,
+        "kill_result": 0
+      },
+      "cleanup": {
+        "test": "translated_context_cleanup",
+        "passed": true,
+        "allocated": 2,
+        "freed": 2,
+        "maps": 0,
+        "revocations": 0,
+        "tlb_fills": 29,
+        "faults": 22,
+        "syscalls": 140,
+        "preemptions": 0
+      },
+      "original_metadata_count": 13,
+      "root_links": [
+        {
+          "stock_init_root_symlink": true,
+          "path": "/adb_keys",
+          "target": "/product/etc/security/adb_keys",
+          "uid": 0,
+          "gid": 0,
+          "creation_mode": 511
+        },
+        {
+          "stock_init_root_symlink": true,
+          "path": "/bin",
+          "target": "/system/bin",
+          "uid": 0,
+          "gid": 0,
+          "creation_mode": 511
+        },
+        {
+          "stock_init_root_symlink": true,
+          "path": "/bugreports",
+          "target": "/data/user_de/0/com.android.shell/files/bugreports",
+          "uid": 0,
+          "gid": 0,
+          "creation_mode": 511
+        },
+        {
+          "stock_init_root_symlink": true,
+          "path": "/d",
+          "target": "/sys/kernel/debug",
+          "uid": 0,
+          "gid": 0,
+          "creation_mode": 511
+        },
+        {
+          "stock_init_root_symlink": true,
+          "path": "/etc",
+          "target": "/system/etc",
+          "uid": 0,
+          "gid": 0,
+          "creation_mode": 511
+        },
+        {
+          "stock_init_root_symlink": true,
+          "path": "/init",
+          "target": "/system/bin/init",
+          "uid": 0,
+          "gid": 2000,
+          "creation_mode": 511
+        },
+        {
+          "stock_init_root_symlink": true,
+          "path": "/sdcard",
+          "target": "/storage/self/primary",
+          "uid": 0,
+          "gid": 0,
+          "creation_mode": 511
+        }
+      ],
+      "elf_paths": [
+        "/probe-guest",
+        "/lib/nce-sigreturn.so"
+      ],
+      "task_context": [],
+      "reboot": [],
+      "attempted_log_messages": {
+        "Loading SELinux policy": false,
+        "init second stage started!": false,
+        "SetupMountNamespaces done": false
+      },
+      "erofs_errors": [],
+      "failure_logs": []
+    },
+    {
+      "entry": "gcd",
+      "mode": "lifecycle",
+      "returncode": 0,
+      "observation_validated": true,
+      "observation": {
+        "stock_init_observation": true,
+        "mode": "lifecycle",
+        "ancestor_pid": 29,
+        "waited": 29,
+        "status": 9,
+        "deadline_stop": true,
+        "kill_result": 0
+      },
+      "cleanup": {
+        "test": "translated_context_cleanup",
+        "passed": true,
+        "allocated": 2,
+        "freed": 2,
+        "maps": 0,
+        "revocations": 0,
+        "tlb_fills": 29,
+        "faults": 22,
+        "syscalls": 140,
+        "preemptions": 0
+      },
+      "original_metadata_count": 13,
+      "root_links": [
+        {
+          "stock_init_root_symlink": true,
+          "path": "/adb_keys",
+          "target": "/product/etc/security/adb_keys",
+          "uid": 0,
+          "gid": 0,
+          "creation_mode": 511
+        },
+        {
+          "stock_init_root_symlink": true,
+          "path": "/bin",
+          "target": "/system/bin",
+          "uid": 0,
+          "gid": 0,
+          "creation_mode": 511
+        },
+        {
+          "stock_init_root_symlink": true,
+          "path": "/bugreports",
+          "target": "/data/user_de/0/com.android.shell/files/bugreports",
+          "uid": 0,
+          "gid": 0,
+          "creation_mode": 511
+        },
+        {
+          "stock_init_root_symlink": true,
+          "path": "/d",
+          "target": "/sys/kernel/debug",
+          "uid": 0,
+          "gid": 0,
+          "creation_mode": 511
+        },
+        {
+          "stock_init_root_symlink": true,
+          "path": "/etc",
+          "target": "/system/etc",
+          "uid": 0,
+          "gid": 0,
+          "creation_mode": 511
+        },
+        {
+          "stock_init_root_symlink": true,
+          "path": "/init",
+          "target": "/system/bin/init",
+          "uid": 0,
+          "gid": 2000,
+          "creation_mode": 511
+        },
+        {
+          "stock_init_root_symlink": true,
+          "path": "/sdcard",
+          "target": "/storage/self/primary",
+          "uid": 0,
+          "gid": 0,
+          "creation_mode": 511
+        }
+      ],
+      "elf_paths": [
+        "/probe-guest",
+        "/lib/nce-sigreturn.so"
+      ],
+      "task_context": [],
+      "reboot": [],
+      "attempted_log_messages": {
+        "Loading SELinux policy": false,
+        "init second stage started!": false,
+        "SetupMountNamespaces done": false
+      },
+      "erofs_errors": [],
+      "failure_logs": []
+    }
+  ],
+  "hyperos_original": [
+    {
+      "entry": "cli",
+      "mode": "lifecycle",
+      "returncode": 0,
+      "observation_validated": true,
+      "observation": {
+        "stock_init_observation": true,
+        "mode": "lifecycle",
+        "ancestor_pid": 29,
+        "waited": 29,
+        "status": 9,
+        "deadline_stop": true,
+        "kill_result": 0
+      },
+      "cleanup": {
+        "test": "translated_context_cleanup",
+        "passed": true,
+        "allocated": 2,
+        "freed": 2,
+        "maps": 0,
+        "revocations": 0,
+        "tlb_fills": 29,
+        "faults": 22,
+        "syscalls": 140,
+        "preemptions": 0
+      },
+      "original_metadata_count": 13,
+      "root_links": [
+        {
+          "stock_init_root_symlink": true,
+          "path": "/adb_keys",
+          "target": "/product/etc/security/adb_keys",
+          "uid": 0,
+          "gid": 0,
+          "creation_mode": 511
+        },
+        {
+          "stock_init_root_symlink": true,
+          "path": "/bin",
+          "target": "/system/bin",
+          "uid": 0,
+          "gid": 0,
+          "creation_mode": 511
+        },
+        {
+          "stock_init_root_symlink": true,
+          "path": "/bugreports",
+          "target": "/data/user_de/0/com.android.shell/files/bugreports",
+          "uid": 0,
+          "gid": 0,
+          "creation_mode": 511
+        },
+        {
+          "stock_init_root_symlink": true,
+          "path": "/d",
+          "target": "/sys/kernel/debug",
+          "uid": 0,
+          "gid": 0,
+          "creation_mode": 511
+        },
+        {
+          "stock_init_root_symlink": true,
+          "path": "/etc",
+          "target": "/system/etc",
+          "uid": 0,
+          "gid": 0,
+          "creation_mode": 511
+        },
+        {
+          "stock_init_root_symlink": true,
+          "path": "/init",
+          "target": "/system/bin/init",
+          "uid": 0,
+          "gid": 2000,
+          "creation_mode": 511
+        },
+        {
+          "stock_init_root_symlink": true,
+          "path": "/sdcard",
+          "target": "/storage/self/primary",
+          "uid": 0,
+          "gid": 0,
+          "creation_mode": 511
+        }
+      ],
+      "elf_paths": [
+        "/probe-guest",
+        "/lib/nce-sigreturn.so"
+      ],
+      "task_context": [],
+      "reboot": [],
+      "attempted_log_messages": {
+        "Loading SELinux policy": false,
+        "init second stage started!": false,
+        "SetupMountNamespaces done": false
+      },
+      "erofs_errors": [],
+      "failure_logs": []
+    },
+    {
+      "entry": "gcd",
+      "mode": "lifecycle",
+      "returncode": 0,
+      "observation_validated": true,
+      "observation": {
+        "stock_init_observation": true,
+        "mode": "lifecycle",
+        "ancestor_pid": 29,
+        "waited": 29,
+        "status": 9,
+        "deadline_stop": true,
+        "kill_result": 0
+      },
+      "cleanup": {
+        "test": "translated_context_cleanup",
+        "passed": true,
+        "allocated": 2,
+        "freed": 2,
+        "maps": 0,
+        "revocations": 0,
+        "tlb_fills": 29,
+        "faults": 22,
+        "syscalls": 140,
+        "preemptions": 0
+      },
+      "original_metadata_count": 13,
+      "root_links": [
+        {
+          "stock_init_root_symlink": true,
+          "path": "/adb_keys",
+          "target": "/product/etc/security/adb_keys",
+          "uid": 0,
+          "gid": 0,
+          "creation_mode": 511
+        },
+        {
+          "stock_init_root_symlink": true,
+          "path": "/bin",
+          "target": "/system/bin",
+          "uid": 0,
+          "gid": 0,
+          "creation_mode": 511
+        },
+        {
+          "stock_init_root_symlink": true,
+          "path": "/bugreports",
+          "target": "/data/user_de/0/com.android.shell/files/bugreports",
+          "uid": 0,
+          "gid": 0,
+          "creation_mode": 511
+        },
+        {
+          "stock_init_root_symlink": true,
+          "path": "/d",
+          "target": "/sys/kernel/debug",
+          "uid": 0,
+          "gid": 0,
+          "creation_mode": 511
+        },
+        {
+          "stock_init_root_symlink": true,
+          "path": "/etc",
+          "target": "/system/etc",
+          "uid": 0,
+          "gid": 0,
+          "creation_mode": 511
+        },
+        {
+          "stock_init_root_symlink": true,
+          "path": "/init",
+          "target": "/system/bin/init",
+          "uid": 0,
+          "gid": 2000,
+          "creation_mode": 511
+        },
+        {
+          "stock_init_root_symlink": true,
+          "path": "/sdcard",
+          "target": "/storage/self/primary",
+          "uid": 0,
+          "gid": 0,
+          "creation_mode": 511
+        }
+      ],
+      "elf_paths": [
+        "/probe-guest",
+        "/lib/nce-sigreturn.so"
+      ],
+      "task_context": [],
+      "reboot": [],
+      "attempted_log_messages": {
+        "Loading SELinux policy": false,
+        "init second stage started!": false,
+        "SetupMountNamespaces done": false
+      },
+      "erofs_errors": [],
+      "failure_logs": []
+    },
+    {
+      "entry": "cli",
+      "mode": "original",
+      "returncode": 0,
+      "observation_validated": true,
+      "observation": {
+        "stock_init_observation": true,
+        "mode": "original",
+        "ancestor_pid": 30,
+        "waited": 30,
+        "status": 1,
+        "deadline_stop": false,
+        "kill_result": 0
+      },
+      "cleanup": {
+        "test": "translated_context_cleanup",
+        "passed": true,
+        "allocated": 3,
+        "freed": 3,
+        "maps": 0,
+        "revocations": 0,
+        "tlb_fills": 554827,
+        "faults": 10622,
+        "syscalls": 33343,
+        "preemptions": 2716
+      },
+      "original_metadata_count": 13,
+      "root_links": [
+        {
+          "stock_init_root_symlink": true,
+          "path": "/adb_keys",
+          "target": "/product/etc/security/adb_keys",
+          "uid": 0,
+          "gid": 0,
+          "creation_mode": 511
+        },
+        {
+          "stock_init_root_symlink": true,
+          "path": "/bin",
+          "target": "/system/bin",
+          "uid": 0,
+          "gid": 0,
+          "creation_mode": 511
+        },
+        {
+          "stock_init_root_symlink": true,
+          "path": "/bugreports",
+          "target": "/data/user_de/0/com.android.shell/files/bugreports",
+          "uid": 0,
+          "gid": 0,
+          "creation_mode": 511
+        },
+        {
+          "stock_init_root_symlink": true,
+          "path": "/d",
+          "target": "/sys/kernel/debug",
+          "uid": 0,
+          "gid": 0,
+          "creation_mode": 511
+        },
+        {
+          "stock_init_root_symlink": true,
+          "path": "/etc",
+          "target": "/system/etc",
+          "uid": 0,
+          "gid": 0,
+          "creation_mode": 511
+        },
+        {
+          "stock_init_root_symlink": true,
+          "path": "/init",
+          "target": "/system/bin/init",
+          "uid": 0,
+          "gid": 2000,
+          "creation_mode": 511
+        },
+        {
+          "stock_init_root_symlink": true,
+          "path": "/sdcard",
+          "target": "/storage/self/primary",
+          "uid": 0,
+          "gid": 0,
+          "creation_mode": 511
+        }
+      ],
+      "elf_paths": [
+        "/probe-guest",
+        "/lib/nce-sigreturn.so",
+        "/system/bin/init",
+        "/system/bin/bootstrap/linker64",
+        "/system/bin/secilc"
+      ],
+      "task_context": [
+        {
+          "stock_init_task_context": true,
+          "ancestor_pid": 30,
+          "read_result": 7,
+          "label_hex": "6b65726e656c00"
+        }
+      ],
+      "reboot": [
+        {
+          "stock_init_reboot": true,
+          "args": [
+            4276215469,
+            672274793,
+            2712847316,
+            4043057
+          ]
+        }
+      ],
+      "attempted_log_messages": {
+        "Loading SELinux policy": false,
+        "init second stage started!": false,
+        "SetupMountNamespaces done": false
+      },
+      "erofs_errors": [
+        "<3>erofs: (device ncedisk2): z_erofs_read_folio: read error -12 @ 27 of nid 755063",
+        "<3>erofs: (device ncedisk2): z_erofs_read_folio: read error -12 @ 27 of nid 755063",
+        "<3>erofs: (device ncedisk2): z_erofs_read_folio: read error -12 @ 27 of nid 755063"
+      ],
+      "failure_logs": [
+        "<3>init: /system/bin/secilc: Failure reading file: /vendor/etc/selinux/plat_pub_versioned.cil",
+        "<3>init: /system/bin/secilc exited with status 255",
+        "<2>init: Unable to open SELinux policy",
+        "<3>init: InitFatalReboot: signal 6"
+      ]
+    },
+    {
+      "entry": "gcd",
+      "mode": "original",
+      "returncode": 0,
+      "observation_validated": true,
+      "observation": {
+        "stock_init_observation": true,
+        "mode": "original",
+        "ancestor_pid": 29,
+        "waited": 29,
+        "status": 1,
+        "deadline_stop": false,
+        "kill_result": 0
+      },
+      "cleanup": {
+        "test": "translated_context_cleanup",
+        "passed": true,
+        "allocated": 3,
+        "freed": 3,
+        "maps": 0,
+        "revocations": 0,
+        "tlb_fills": 479039,
+        "faults": 10618,
+        "syscalls": 33854,
+        "preemptions": 2749
+      },
+      "original_metadata_count": 13,
+      "root_links": [
+        {
+          "stock_init_root_symlink": true,
+          "path": "/adb_keys",
+          "target": "/product/etc/security/adb_keys",
+          "uid": 0,
+          "gid": 0,
+          "creation_mode": 511
+        },
+        {
+          "stock_init_root_symlink": true,
+          "path": "/bin",
+          "target": "/system/bin",
+          "uid": 0,
+          "gid": 0,
+          "creation_mode": 511
+        },
+        {
+          "stock_init_root_symlink": true,
+          "path": "/bugreports",
+          "target": "/data/user_de/0/com.android.shell/files/bugreports",
+          "uid": 0,
+          "gid": 0,
+          "creation_mode": 511
+        },
+        {
+          "stock_init_root_symlink": true,
+          "path": "/d",
+          "target": "/sys/kernel/debug",
+          "uid": 0,
+          "gid": 0,
+          "creation_mode": 511
+        },
+        {
+          "stock_init_root_symlink": true,
+          "path": "/etc",
+          "target": "/system/etc",
+          "uid": 0,
+          "gid": 0,
+          "creation_mode": 511
+        },
+        {
+          "stock_init_root_symlink": true,
+          "path": "/init",
+          "target": "/system/bin/init",
+          "uid": 0,
+          "gid": 2000,
+          "creation_mode": 511
+        },
+        {
+          "stock_init_root_symlink": true,
+          "path": "/sdcard",
+          "target": "/storage/self/primary",
+          "uid": 0,
+          "gid": 0,
+          "creation_mode": 511
+        }
+      ],
+      "elf_paths": [
+        "/probe-guest",
+        "/lib/nce-sigreturn.so",
+        "/system/bin/init",
+        "/system/bin/bootstrap/linker64",
+        "/system/bin/secilc"
+      ],
+      "task_context": [
+        {
+          "stock_init_task_context": true,
+          "ancestor_pid": 29,
+          "read_result": 7,
+          "label_hex": "6b65726e656c00"
+        }
+      ],
+      "reboot": [
+        {
+          "stock_init_reboot": true,
+          "args": [
+            4276215469,
+            672274793,
+            2712847316,
+            4043057
+          ]
+        }
+      ],
+      "attempted_log_messages": {
+        "Loading SELinux policy": false,
+        "init second stage started!": false,
+        "SetupMountNamespaces done": false
+      },
+      "erofs_errors": [
+        "<3>erofs: (device ncedisk2): z_erofs_read_folio: read error -12 @ 0 of nid 755063"
+      ],
+      "failure_logs": [
+        "<3>init: /system/bin/secilc: Failure reading file: /vendor/etc/selinux/plat_pub_versioned.cil",
+        "<3>init: /system/bin/secilc exited with status 255",
+        "<2>init: Unable to open SELinux policy",
+        "<3>init: InitFatalReboot: signal 6"
+      ]
+    }
+  ],
+  "sdk36_shared_original": [
+    {
+      "entry": "cli",
+      "mode": "lifecycle",
+      "returncode": 0,
+      "observation_validated": true,
+      "observation": {
+        "stock_init_observation": true,
+        "mode": "lifecycle",
+        "ancestor_pid": 28,
+        "waited": 28,
+        "status": 9,
+        "deadline_stop": true,
+        "kill_result": 0
+      },
+      "cleanup": {
+        "test": "translated_context_cleanup",
+        "passed": true,
+        "allocated": 2,
+        "freed": 2,
+        "maps": 0,
+        "revocations": 0,
+        "tlb_fills": 21,
+        "faults": 16,
+        "syscalls": 72,
+        "preemptions": 0
+      },
+      "original_metadata_count": 0,
+      "root_links": [
+        {
+          "stock_init_root_symlink": true,
+          "path": "/etc",
+          "target": "/system/etc",
+          "uid": 0,
+          "gid": 0,
+          "creation_mode": 511
+        }
+      ],
+      "elf_paths": [
+        "/probe-guest",
+        "/lib/nce-sigreturn.so"
+      ],
+      "task_context": [],
+      "reboot": [],
+      "attempted_log_messages": {
+        "Loading SELinux policy": false,
+        "init second stage started!": false,
+        "SetupMountNamespaces done": false
+      },
+      "erofs_errors": [],
+      "failure_logs": []
+    },
+    {
+      "entry": "gcd",
+      "mode": "lifecycle",
+      "returncode": 0,
+      "observation_validated": true,
+      "observation": {
+        "stock_init_observation": true,
+        "mode": "lifecycle",
+        "ancestor_pid": 28,
+        "waited": 28,
+        "status": 9,
+        "deadline_stop": true,
+        "kill_result": 0
+      },
+      "cleanup": {
+        "test": "translated_context_cleanup",
+        "passed": true,
+        "allocated": 2,
+        "freed": 2,
+        "maps": 0,
+        "revocations": 0,
+        "tlb_fills": 21,
+        "faults": 16,
+        "syscalls": 72,
+        "preemptions": 0
+      },
+      "original_metadata_count": 0,
+      "root_links": [
+        {
+          "stock_init_root_symlink": true,
+          "path": "/etc",
+          "target": "/system/etc",
+          "uid": 0,
+          "gid": 0,
+          "creation_mode": 511
+        }
+      ],
+      "elf_paths": [
+        "/probe-guest",
+        "/lib/nce-sigreturn.so"
+      ],
+      "task_context": [],
+      "reboot": [],
+      "attempted_log_messages": {
+        "Loading SELinux policy": false,
+        "init second stage started!": false,
+        "SetupMountNamespaces done": false
+      },
+      "erofs_errors": [],
+      "failure_logs": []
+    },
+    {
+      "entry": "cli",
+      "mode": "original",
+      "returncode": 0,
+      "observation_validated": true,
+      "observation": {
+        "stock_init_observation": true,
+        "mode": "original",
+        "ancestor_pid": 28,
+        "waited": 28,
+        "status": 1,
+        "deadline_stop": false,
+        "kill_result": 0
+      },
+      "cleanup": {
+        "test": "translated_context_cleanup",
+        "passed": true,
+        "allocated": 148,
+        "freed": 148,
+        "maps": 0,
+        "revocations": 0,
+        "tlb_fills": 80611,
+        "faults": 18229,
+        "syscalls": 93570,
+        "preemptions": 20846
+      },
+      "original_metadata_count": 0,
+      "root_links": [
+        {
+          "stock_init_root_symlink": true,
+          "path": "/etc",
+          "target": "/system/etc",
+          "uid": 0,
+          "gid": 0,
+          "creation_mode": 511
+        }
+      ],
+      "elf_paths": [
+        "/probe-guest",
+        "/lib/nce-sigreturn.so",
+        "/system/bin/init",
+        "/system/bin/bootstrap/linker64",
+        "/system/bin/apexd",
+        "/apex/com.android.runtime/bin/linkerconfig",
+        "/apex/com.android.runtime/bin/linker64",
+        "/system/bin/prng_seeder",
+        "/system/bin/logd",
+        "/system/bin/lmkd",
+        "/system/bin/servicemanager",
+        "/system/bin/sh",
+        "/system/bin/vold",
+        "/system/bin/vdc",
+        "/system/bin/aconfigd-system",
+        "/system/bin/recovery-refresh",
+        "/system/bin/hw/android.system.suspend-service",
+        "/system/bin/keystore2",
+        "/system/bin/tombstoned",
+        "/apex/com.android.runtime/bin/crash_dump64"
+      ],
+      "task_context": [
+        {
+          "stock_init_task_context": true,
+          "ancestor_pid": 28,
+          "read_result": 7,
+          "label_hex": "6b65726e656c00"
+        },
+        {
+          "stock_init_task_context": true,
+          "ancestor_pid": 28,
+          "read_result": 14,
+          "label_hex": "753a723a6b65726e656c3a733000"
+        },
+        {
+          "stock_init_task_context": true,
+          "ancestor_pid": 28,
+          "read_result": -13,
+          "label_hex": ""
+        }
+      ],
+      "reboot": [
+        {
+          "stock_init_reboot": true,
+          "args": [
+            4276215469,
+            672274793,
+            2712847316,
+            3899649
+          ]
+        }
+      ],
+      "attempted_log_messages": {
+        "Loading SELinux policy": true,
+        "init second stage started!": true,
+        "SetupMountNamespaces done": true
+      },
+      "erofs_errors": [],
+      "failure_logs": [
+        "<6>init: Service 'apexd-bootstrap' (pid 6) exited with status 0 waiting took 0.676000 seconds",
+        "<6>init: Service 'exec 1 (/system/bin/vdc checkpoint markBootAttempt)' (pid 59) exited with status 0 waiting took 0.412000 seconds",
+        "<6>init: Service 'system_aconfigd_platform_init' (pid 63) exited with status 1 waiting took 0.252000 seconds",
+        "<6>init: Service 'exec 2 (/system/bin/recovery-refresh)' (pid 64) exited with status 254 oneshot service took 0.216000 seconds in background",
+        "<6>init: Service 'exec 3 (/system/bin/vdc checkpoint prepareCheckpoint)' (pid 67) exited with status 0 waiting took 0.218000 seconds",
+        "<6>init: Service 'tombstoned' (pid 70) exited with status 1",
+        "<6>init: Untracked pid 80 exited with status 1",
+        "<6>init: Untracked pid 99 exited with status 1",
+        "<6>init: Service 'tombstoned' (pid 100) exited with status 1",
+        "<6>init: Untracked pid 115 exited with status 1",
+        "<6>init: Service 'tombstoned' (pid 116) exited with status 1",
+        "<6>init: Untracked pid 131 exited with status 1",
+        "<6>init: Service 'tombstoned' (pid 132) exited with status 1",
+        "<2>init: critical process 'keystore2' exited 4 times before boot completed",
+        "<3>init: InitFatalReboot: signal 6"
+      ]
+    },
+    {
+      "entry": "gcd",
+      "mode": "original",
+      "returncode": 0,
+      "observation_validated": true,
+      "observation": {
+        "stock_init_observation": true,
+        "mode": "original",
+        "ancestor_pid": 28,
+        "waited": 28,
+        "status": 1,
+        "deadline_stop": false,
+        "kill_result": 0
+      },
+      "cleanup": {
+        "test": "translated_context_cleanup",
+        "passed": true,
+        "allocated": 148,
+        "freed": 148,
+        "maps": 0,
+        "revocations": 0,
+        "tlb_fills": 96022,
+        "faults": 18193,
+        "syscalls": 93684,
+        "preemptions": 20684
+      },
+      "original_metadata_count": 0,
+      "root_links": [
+        {
+          "stock_init_root_symlink": true,
+          "path": "/etc",
+          "target": "/system/etc",
+          "uid": 0,
+          "gid": 0,
+          "creation_mode": 511
+        }
+      ],
+      "elf_paths": [
+        "/probe-guest",
+        "/lib/nce-sigreturn.so",
+        "/system/bin/init",
+        "/system/bin/bootstrap/linker64",
+        "/system/bin/apexd",
+        "/apex/com.android.runtime/bin/linkerconfig",
+        "/apex/com.android.runtime/bin/linker64",
+        "/system/bin/prng_seeder",
+        "/system/bin/lmkd",
+        "/system/bin/servicemanager",
+        "/system/bin/sh",
+        "/system/bin/logd",
+        "/system/bin/vold",
+        "/system/bin/vdc",
+        "/system/bin/aconfigd-system",
+        "/system/bin/recovery-refresh",
+        "/system/bin/hw/android.system.suspend-service",
+        "/system/bin/keystore2",
+        "/system/bin/tombstoned",
+        "/apex/com.android.runtime/bin/crash_dump64"
+      ],
+      "task_context": [
+        {
+          "stock_init_task_context": true,
+          "ancestor_pid": 28,
+          "read_result": 7,
+          "label_hex": "6b65726e656c00"
+        },
+        {
+          "stock_init_task_context": true,
+          "ancestor_pid": 28,
+          "read_result": 14,
+          "label_hex": "753a723a6b65726e656c3a733000"
+        },
+        {
+          "stock_init_task_context": true,
+          "ancestor_pid": 28,
+          "read_result": -13,
+          "label_hex": ""
+        }
+      ],
+      "reboot": [
+        {
+          "stock_init_reboot": true,
+          "args": [
+            4276215469,
+            672274793,
+            2712847316,
+            3899649
+          ]
+        }
+      ],
+      "attempted_log_messages": {
+        "Loading SELinux policy": true,
+        "init second stage started!": true,
+        "SetupMountNamespaces done": true
+      },
+      "erofs_errors": [],
+      "failure_logs": [
+        "<6>init: Service 'apexd-bootstrap' (pid 6) exited with status 0 waiting took 0.788000 seconds",
+        "<6>init: Service 'exec 1 (/system/bin/vdc checkpoint markBootAttempt)' (pid 59) exited with status 0 waiting took 0.561000 seconds",
+        "<6>init: Service 'system_aconfigd_platform_init' (pid 63) exited with status 1 waiting took 0.270000 seconds",
+        "<6>init: Service 'exec 2 (/system/bin/recovery-refresh)' (pid 64) exited with status 254 oneshot service took 0.212000 seconds in background",
+        "<6>init: Service 'exec 3 (/system/bin/vdc checkpoint prepareCheckpoint)' (pid 67) exited with status 0 waiting took 0.269000 seconds",
+        "<6>init: Service 'tombstoned' (pid 70) exited with status 1",
+        "<6>init: Untracked pid 81 exited with status 1",
+        "<6>init: Untracked pid 99 exited with status 1",
+        "<6>init: Service 'tombstoned' (pid 100) exited with status 1",
+        "<6>init: Untracked pid 115 exited with status 1",
+        "<6>init: Service 'tombstoned' (pid 116) exited with status 1",
+        "<6>init: Untracked pid 131 exited with status 1",
+        "<6>init: Service 'tombstoned' (pid 132) exited with status 1",
+        "<6>init: Untracked pid 147 exited with status 1",
+        "<2>init: critical process 'keystore2' exited 4 times before boot completed",
+        "<3>init: InitFatalReboot: signal 6"
+      ]
+    }
+  ],
+  "ios_runtime_library_sha256": "cc42e7ece7c7f5acc56890e4194c618e096b3ab867de8fe6666cb74758ba229e",
+  "original_inputs_rehashed_unchanged": true,
+  "source_sha256": {
+    "scripts/probe_stock_init.py": "88e526f894bdf1bd3084a021752010bbf77a089e3ae7bb3541486734fb118eb6",
+    "experiments/native-linux/translation/stock-init-runner.h": "773440e180bcd9cfdf2bf485f82c4aff4a03b7da3519ad8e64b588081314148b"
+  },
+  "unverified": [
+    "Invalid bootstrap metadata rejection was not injected.",
+    "EROFS file decompression page-array mapping remains unresolved.",
+    "Original HyperOS SELinux policy loading and domain transition remain unsuccessful.",
+    "Bootstrap binfmt post-start invalid /init reentry remains unresolved.",
+    "Complete first-stage, original userdata/encryption inputs and boot properties remain unprepared.",
+    "Formal HyperOS APEX activation, AArch32 services, complete desktop/APK and iPhone execution remain unverified.",
+    "SDK36 vendor/product/system_ext service deployment is outside this fixed shared input."
+  ]
+}

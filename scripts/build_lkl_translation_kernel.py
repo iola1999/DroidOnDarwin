@@ -140,11 +140,12 @@ def build(cpus=1, high_res_timers=False, guest_page_bytes=16384):
              source / 'arch/lkl/mm/nce_mmu.c', source / 'arch/lkl/kernel/nce_elf.c',
              source / 'arch/lkl/include/asm/pgtable-mmu-3level.h', source / 'arch/lkl/include/asm/nce-translation.h',
              source / 'arch/lkl/include/asm/mmu.h', source / 'arch/lkl/kernel/threads.c',
+             source / 'arch/lkl/kernel/setup.c',
              source / 'arch/lkl/Kconfig', source / 'arch/lkl/include/asm/processor.h',
              source / 'mm/util.c', source / 'mm/mmap.c', source / 'kernel/sysctl.c',
              *[out / name for name in ('lkl.so', 'lkl-image.bin', 'lkl-image.h', 'lkl-host-ops.h')]]
     if guest_page_bytes == 4096:
-        files += [ROOT / 'scripts/lkl_4k_vmalloc_patch.py', source / 'mm/vmalloc.c', source / 'mm/memory.c', source / 'arch/lkl/include/asm/vmalloc.h', source / 'kernel/bpf/ringbuf.c']
+        files += [ROOT / 'scripts/lkl_4k_vmalloc_patch.py', source / 'mm/vmalloc.c', source / 'mm/memory.c', source / 'arch/lkl/include/asm/vmalloc.h', source / 'kernel/bpf/ringbuf.c', source / 'fs/erofs/zutil.c']
     if cpus == 2:
         files += [ROOT / ('scripts/' + name + '.py') for name in ('lkl_smp_patch', 'lkl_smp_mmu_patch', 'lkl_translation_smp_patch')]
         files += list((EXP / 'smp').glob('*.[ch]'))

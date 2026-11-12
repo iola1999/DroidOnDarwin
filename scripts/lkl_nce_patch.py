@@ -141,6 +141,9 @@ static void free_host_syscall_state(void)
          "\n\tfree_host_syscall_state();\n}")
     edit(arch + "kernel/setup.c", "\tsyscalls_init();",
          '\tif (syscalls_init())\n\t\tpanic("cannot initialize host syscall tasks");')
+    edit(arch + "kernel/setup.c", "\tlkl_ops->sem_up(init_sem);",
+         '\t/* Only the initial bootstrap owns syscalls_init() and init_sem. */\n'
+         '\tunregister_binfmt(&lkl_run_init_binfmt);\n\n\tlkl_ops->sem_up(init_sem);')
     edit(arch + "Kconfig", "depends on !SMP && !COREDUMP && !SECCOMP && !UPROBES",
          "depends on !SMP && !COREDUMP && !UPROBES")
     edit(arch + "Kconfig", "\tselect GENERIC_ATOMIC64",

@@ -64,6 +64,35 @@ void file_tests(const char *libc)
             seen |= 2;
     }
     CHECK(seen == 3 && closedir(entries) == 0);
+    CHECK(unlink("/init") == 0 || errno == ENOENT);
+    int init = open("/init", O_CREAT | O_WRONLY | O_CLOEXEC, 0700);
+    CHECK(init >= 0 && close(init) == 0);
+    for (unsigned attempt = 0; attempt < 2; ++attempt) {
+        pid_t child = fork();
+        CHECK(child >= 0);
+        if (!child) {
+            execl("/init", "init", NULL);
+            _exit(errno == ENOEXEC ? 0 : 113);
+        }
+        int status;
+        CHECK(waitpid(child, &status, 0) == child && WIFEXITED(status) && WEXITSTATUS(status) == 0);
+        if (!attempt) {
+            init = open("/init", O_WRONLY | O_CLOEXEC);
+            const unsigned char truncated_elf[] = {0x7f, 'E', 'L', 'F'};
+            CHECK(init >= 0 && write(init, truncated_elf, sizeof(truncated_elf)) == sizeof(truncated_elf) && close(init) == 0);
+        }
+    }
+    CHECK(unlink("/init") == 0 && symlink("/bin/sh", "/init") == 0);
+    pid_t init_child = fork();
+    CHECK(init_child >= 0);
+    if (!init_child) {
+        execl("/init", "init", "-c", "exit 23", NULL);
+        _exit(114);
+    }
+    int init_status;
+    CHECK(waitpid(init_child, &init_status, 0) == init_child && WIFEXITED(init_status) && WEXITSTATUS(init_status) == 23);
+    CHECK(unlink("/init") == 0);
+    printf("{\"test\":\"linux_init_exec_formats\",\"passed\":true,\"libc\":\"%s\"}\n", libc);
     CHECK(symlink("/bin/sh", "/open-flags/shell") == 0);
     pid_t child = fork();
     CHECK(child >= 0);

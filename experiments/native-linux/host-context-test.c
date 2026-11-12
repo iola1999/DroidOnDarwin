@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 #include "lkl-host-ops.h"
+#include "layout.h"
 #include <pthread.h>
 #include <signal.h>
 #include <stdio.h>
@@ -9,6 +10,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <sys/file.h>
+#include <limits.h>
 
 extern struct lkl_host_operations nce_lkl_host;
 #define CHECK(c) \
@@ -45,10 +47,15 @@ static void *worker(void *unused)
 
 static void disk_tests(void)
 {
-    char path[] = "/tmp/nce-storage-XXXXXX";
+    const char *temporary = getenv("TMPDIR");
+    if (!temporary || temporary[0] != '/')
+        temporary = "/tmp";
+    char path[PATH_MAX];
+    CHECK(snprintf(path, sizeof(path), "%s/nce-storage-XXXXXX", temporary) < (int)sizeof(path));
     int fd = mkstemp(path);
     CHECK(fd >= 0 && ftruncate(fd, 513) == 0);
     CHECK(nce_disk_open(0, path) == -1);
+    CHECK(nce_disk_open(NCE_DISK_COUNT, path) == -1);
     CHECK(ftruncate(fd, 1024) == 0);
     CHECK(nce_disk_open(0, path) == 0);
     CHECK(nce_lkl_host.disk_size(0) == 1024 && nce_lkl_host.disk_size(2) == 0);
@@ -60,16 +67,24 @@ static void disk_tests(void)
     CHECK(memcmp(read, write, sizeof(read)) == 0);
     CHECK(nce_lkl_host.disk_io(0, 0, 513, read, sizeof(read)) == -1);
     CHECK(nce_lkl_host.disk_io(0, 1, UINT64_MAX, write, 1) == -1);
-    CHECK(nce_lkl_host.disk_io(2, 0, 0, read, 1) == -1);
+    CHECK(nce_lkl_host.disk_io(NCE_DISK_COUNT, 0, 0, read, 1) == -1);
     CHECK(nce_lkl_host.disk_io(0, 3, 0, read, 1) == -1);
     CHECK(nce_lkl_host.disk_io(0, 2, 0, NULL, 0) == 0);
     nce_disk_close();
-    CHECK(nce_disk_open(1, path) == 0);
-    CHECK(nce_lkl_host.disk_io(1, 0, 512, read, sizeof(read)) == 0);
-    CHECK(memcmp(read, write, sizeof(read)) == 0);
-    CHECK(nce_lkl_host.disk_io(1, 1, 0, write, 1) == -1);
+    for (unsigned index = 1; index < NCE_DISK_COUNT; ++index) {
+        CHECK(nce_disk_open(index, path) == 0);
+        CHECK(flock(fd, LOCK_EX | LOCK_NB) == -1);
+        CHECK(nce_lkl_host.disk_size(index) == 1024);
+        CHECK(nce_lkl_host.disk_io(index, 0, 512, read, sizeof(read)) == 0);
+        CHECK(memcmp(read, write, sizeof(read)) == 0);
+        CHECK(nce_lkl_host.disk_io(index, 1, 0, write, 1) == -1);
+        CHECK(nce_lkl_host.disk_io(index, 0, 513, read, sizeof(read)) == -1);
+        CHECK(nce_lkl_host.disk_io(index, 2, 0, NULL, 0) == 0);
+    }
     nce_disk_close();
-    CHECK(nce_lkl_host.disk_size(0) == 0 && nce_lkl_host.disk_size(1) == 0);
+    CHECK(flock(fd, LOCK_EX | LOCK_NB) == 0 && flock(fd, LOCK_UN) == 0);
+    for (unsigned index = 0; index < NCE_DISK_COUNT; ++index)
+        CHECK(nce_lkl_host.disk_size(index) == 0 && nce_lkl_host.disk_io(index, 0, 0, read, 1) == -1);
     CHECK(close(fd) == 0 && unlink(path) == 0);
     puts("{\"test\":\"host_disk_bounds_readonly_and_locking\",\"passed\":true}");
 }

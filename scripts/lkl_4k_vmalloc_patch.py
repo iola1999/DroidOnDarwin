@@ -120,6 +120,26 @@ void arch_sync_kernel_mappings(unsigned long start, unsigned long end)
          '\tarea = __get_vm_area_node(real_size, align, shift, VM_ALLOC |',
          '\tarea = __get_vm_area_node(size, align, shift, VM_ALLOC |')
 
+    edit('fs/erofs/zutil.c', '#include "internal.h"',
+         '#include "internal.h"\n#include <asm/nce-layout.h>')
+    edit('fs/erofs/zutil.c', '\tint last, i, j;',
+         '\tconst unsigned int group = NCE_HOST_PAGE_SIZE / PAGE_SIZE;\n\tint i, j;')
+    edit('fs/erofs/zutil.c', '\tmutex_lock(&gbuf_resize_mutex);',
+         '\t/* LKL aliases complete host pages with contiguous physical backing. */\n'
+         '\tnrpages = ALIGN(nrpages, group);\n\tmutex_lock(&gbuf_resize_mutex);')
+    edit('fs/erofs/zutil.c',
+         '\t\tdo {\n\t\t\tlast = j;\n\t\t\tj = alloc_pages_bulk_array(GFP_KERNEL, nrpages,\n'
+         '\t\t\t\t\t\t   tmp_pages);\n\t\t\tif (last == j)\n\t\t\t\tgoto out;\n\t\t} while (j != nrpages);',
+         '''\t\tfor (; j < nrpages; j += group) {
+\t\t\tstruct page *page = alloc_pages(GFP_KERNEL, get_order(NCE_HOST_PAGE_SIZE));
+
+\t\t\tif (!page)
+\t\t\t\tgoto out;
+\t\t\tsplit_page(page, get_order(NCE_HOST_PAGE_SIZE));
+\t\t\tfor (unsigned int offset = 0; offset < group; ++offset)
+\t\t\t\ttmp_pages[j + offset] = page + offset;
+\t\t}''')
+
     edit('kernel/bpf/ringbuf.c', '#include <linux/vmalloc.h>',
          '#include <linux/vmalloc.h>\n#include <asm/nce-layout.h>')
     # The position pages keep their 4 KiB mmap offsets. Padding before them

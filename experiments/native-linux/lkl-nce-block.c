@@ -4,8 +4,9 @@
 #include <linux/init.h>
 #include <linux/module.h>
 #include <asm/host_ops.h>
+#include <asm/nce-layout.h>
 
-static struct gendisk *nce_disks[2];
+static struct gendisk *nce_disks[NCE_DISK_COUNT];
 static int nce_major;
 
 static void nce_submit_bio(struct bio *bio)
@@ -83,7 +84,7 @@ static int __init nce_block_init(void)
         disk->private_data = (void *)(unsigned long)index;
         snprintf(disk->disk_name, DISK_NAME_LEN, "ncedisk%u", index);
         set_capacity(disk, bytes >> SECTOR_SHIFT);
-        set_disk_ro(disk, index == 1);
+        set_disk_ro(disk, index != 0);
         error = add_disk(disk);
         if (error) {
             put_disk(disk);

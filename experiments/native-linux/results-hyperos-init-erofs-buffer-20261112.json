@@ -1,0 +1,133 @@
+{
+  "scope": "4 KiB EROFS global buffer backing; original vendor/system_dlkm mounts observed; metadata and init remain unexecuted",
+  "platform": "macOS-27.0-arm64-arm-64bit-Mach-O",
+  "cpu": "Apple M5 Ultra",
+  "system_build": "26A428",
+  "source_base_commit": "b46b9450527b24b81af721566a58a25a820fd5d9",
+  "reports": {
+    "core": {
+      "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-hyperos-init/work/native-linux-nce/hyperos-erofs-buffer-core-4k-v1/summary.json",
+      "sha256": "94a21661e343a1095bdd85ce6040310f635242694e3a564040a8f46669595a85"
+    },
+    "kernel_build": {
+      "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-hyperos-init/work/native-linux-nce/hyperos-erofs-buffer-core-4k-v1/kernel-build.json",
+      "sha256": "af177273df8da25a81ac613411d696c03e7f7c1c2e9ce6bcb5566cb176367930"
+    },
+    "mount_cli_failure": {
+      "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-hyperos-init/work/native-linux-nce/hyperos-erofs-buffer-mount-4k-v1/summary.json",
+      "sha256": "f7f8b800cd61f364cf39bc03b5468abb52aa21f908bf43b3c880169f2d047b21"
+    },
+    "mount_gcd_failure": {
+      "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-hyperos-init/work/native-linux-nce/hyperos-erofs-buffer-mount-4k-v1-gcd-diagnostic/summary.json",
+      "sha256": "29fb668590cb71e0fc5956945344b11df1c5f0c1b4430c1442b2ed36c471447c"
+    }
+  },
+  "core": {
+    "guest_page_bytes": 4096,
+    "host_page_bytes": 16384,
+    "sparse_end_bytes": 68719476736,
+    "aslr_integrated": false,
+    "entries": [
+      {
+        "entry": "cli",
+        "returncode": 0,
+        "validated": true,
+        "cleanup": {
+          "test": "translated_context_cleanup",
+          "passed": true,
+          "allocated": 70,
+          "freed": 70,
+          "maps": 0,
+          "revocations": 0,
+          "tlb_fills": 70495,
+          "faults": 152522,
+          "syscalls": 17226,
+          "preemptions": 362
+        },
+        "page_table_warning_count": 0,
+        "stderr_log": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-hyperos-init/work/native-linux-nce/hyperos-erofs-buffer-core-4k-v1/cli-0.log"
+      },
+      {
+        "entry": "gcd",
+        "returncode": 0,
+        "validated": true,
+        "cleanup": {
+          "test": "translated_context_cleanup",
+          "passed": true,
+          "allocated": 70,
+          "freed": 70,
+          "maps": 0,
+          "revocations": 0,
+          "tlb_fills": 70495,
+          "faults": 152522,
+          "syscalls": 17226,
+          "preemptions": 537
+        },
+        "page_table_warning_count": 0,
+        "stderr_log": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-hyperos-init/work/native-linux-nce/hyperos-erofs-buffer-core-4k-v1/gcd-0.log"
+      }
+    ]
+  },
+  "allocation_contract": {
+    "request_page_alignment": 4,
+    "allocation_order": 2,
+    "split_backing": true,
+    "host_group_validation_retained": true,
+    "ownership": "Original gbuf page arrays, reference counts, growth locks and release paths retained."
+  },
+  "kernel_image_sha256": "c976ec172a9f0033df6c6d39819305a41953d191368b889b58ee48951b78913c",
+  "generated_zutil_sha256": "39119b64dc8632beb05db155642e1d1663265cbf907df5861302cd7bed56f5ee",
+  "mount": {
+    "entries": [
+      {
+        "entry": "cli",
+        "returncode": -6,
+        "observation_validated": false,
+        "mounted": [
+          "/system",
+          "/product",
+          "/system_ext",
+          "/vendor",
+          "/system_dlkm"
+        ],
+        "failure_stderr": "runner:104: call(36, link) == 0\n",
+        "guest_metadata_count": 0,
+        "original_init_executed": false,
+        "planned_linux_cleanup_completed": false
+      },
+      {
+        "entry": "gcd",
+        "returncode": -6,
+        "observation_validated": false,
+        "mounted": [
+          "/system",
+          "/product",
+          "/system_ext",
+          "/vendor",
+          "/system_dlkm"
+        ],
+        "failure_stderr": "runner:104: call(36, link) == 0\n",
+        "guest_metadata_count": 0,
+        "original_init_executed": false,
+        "planned_linux_cleanup_completed": false
+      }
+    ],
+    "original_partition_hashes_unchanged": true,
+    "next_blocker": "Core setup creates /bin and /bin/sh before the original /bin -> /system/bin symlink."
+  },
+  "source_sha256": {
+    "scripts/lkl_4k_vmalloc_patch.py": "3d9e32cfaa9d61a915de353c115a6298b1282aea30b0a8695bf5732baf8f4dc5",
+    "scripts/build_lkl_translation_kernel.py": "ddea2a6a86fcaf914c2fe1baf33377370a26168d4fb8ddeacd89c221174b3657"
+  },
+  "checks": {
+    "python_compile": true,
+    "core_entries_validated": true,
+    "original_erofs_mounts_observed": true
+  },
+  "remaining": [
+    "Prepare original root links and validate 13 metadata entries with both lifecycle entries.",
+    "Integrate fixed ASLR 964984508d27c2b120b7636df2d490e0243ab51e and rebuild current combination.",
+    "Observe original HyperOS init CLI/GCD, rerun shared SDK36 16 KiB core/init and final iOS builds.",
+    "EROFS decompression mappings beyond superblock mount, original first-stage, userdata/encryption/boot properties, AArch32, full HyperOS and iPhone remain unverified."
+  ]
+}

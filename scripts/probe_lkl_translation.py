@@ -45,9 +45,10 @@ def validate_android_image(root, directory):
         raise ValueError('Android 系统镜像与当前用户态源码不一致，请先通过 scripts/probe_lkl.py 重建并验证：' + ', '.join(stale))
 
 
-def validate_guest_layout(rows, requested, flat=False, guest_page_bytes=16384):
+def validate_guest_layout(rows, requested, flat=False, guest_page_bytes=16384, *, sparse_end=SPARSE_GUEST_END):
     records = [row for row in rows if row.get('config') == 'translation_guest_layout']
-    if len(records) != 1 or requested not in ('host', 'low', 'sparse') or guest_page_bytes not in (4096, 16384):
+    if (len(records) != 1 or requested not in ('host', 'low', 'sparse') or guest_page_bytes not in (4096, 16384) or
+            type(sparse_end) is not int or sparse_end not in (1 << 36, SPARSE_GUEST_END)):
         return False
     row = records[0]
     fields = ('guest_base', 'guest_end', 'guest_span_bytes', 'flat_coverage_bytes',
@@ -68,7 +69,7 @@ def validate_guest_layout(rows, requested, flat=False, guest_page_bytes=16384):
             (ram < reserve + reserve_size and reserve < ram + ram_size)):
         return False
     if requested in ('low', 'sparse'):
-        return ((flat or guest_page_bytes == 4096) and base == 0x10000 and end == (SPARSE_GUEST_END if requested == 'sparse' else coverage) and physical == reserve and
+        return ((flat or guest_page_bytes == 4096) and base == 0x10000 and end == (sparse_end if requested == 'sparse' else coverage) and physical == reserve and
                 reserve_size == ram_size + (64 << 20))
     return (base == reserve and end == base + coverage and physical == end and
             reserve_size == coverage + ram_size + (64 << 20))

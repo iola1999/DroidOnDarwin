@@ -1,0 +1,127 @@
+{
+  "scope": "4 KiB EROFS kernel/core and iOS compilation; original partition lifecycle remains incomplete",
+  "platform": "macOS-27.0-arm64-arm-64bit-Mach-O",
+  "source_base_commit": "bd43b83d2b30da525ce80cb9f0579a41b640be1e",
+  "reports": {
+    "config_failure": {
+      "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-hyperos-init/work/native-linux-nce/hyperos-mount-core-4k-v1/failure.json",
+      "sha256": "cd88030562cf0fe02798b6f1e53fcfbc837c840e6d38e5bbe8a01229d77e8668"
+    },
+    "core": {
+      "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-hyperos-init/work/native-linux-nce/hyperos-mount-core-4k-v2/summary.json",
+      "sha256": "7526f5ef1092190c2113b2acdf47b8262904a73518f5ed7ccd218a3d68278a59"
+    },
+    "ios_runtime": {
+      "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-hyperos-init/work/native-linux-nce/hyperos-mount-runtime-ios-v1/build.json",
+      "sha256": "28c14bfa41a09be6d9aca0466061a25483be5e793e3d3939eef892079f9e2aae"
+    },
+    "mount_failure": {
+      "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-hyperos-init/work/native-linux-nce/hyperos-original-mount-4k-v1/summary.json",
+      "sha256": "56f92904498c7d506b99ec3b7cecc8ab74aaca0f2551d70d82c809eff205938a"
+    },
+    "gcd_mount_failure": {
+      "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-hyperos-init/work/native-linux-nce/hyperos-original-mount-4k-v1-gcd-diagnostic/summary.json",
+      "sha256": "5bcf6ef1dce9c2d74b35a156a83bdd1659f1f138ceb889d5f4d3e53bdb0f0e00"
+    },
+    "mount_diagnostic": {
+      "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/continue-hyperos-init/work/native-linux-nce/hyperos-original-mount-4k-v2/summary.json",
+      "sha256": "7e037f1da7bf5fb7c16bb352e0ccbd58bd4e41b37458d56a636f833cd599efb4"
+    }
+  },
+  "core": {
+    "entries": [
+      "cli",
+      "gcd"
+    ],
+    "validated": true,
+    "context_release_per_entry": {
+      "allocated": 70,
+      "freed": 70
+    },
+    "guest_page_bytes": 4096,
+    "sparse_end_bytes": 68719476736,
+    "aslr_integrated": false
+  },
+  "config": {
+    "original_failure": "MISC_FILESYSTEMS=n disables EROFS requests in olddefconfig",
+    "fixed_options": [
+      "MISC_FILESYSTEMS",
+      "EROFS_FS",
+      "EROFS_FS_XATTR",
+      "EROFS_FS_SECURITY",
+      "EROFS_FS_ZIP",
+      "LZ4_DECOMPRESS"
+    ]
+  },
+  "ios_runtime_library_sha256": "7540bb1e37cbf081459b58161d34697e23d169e1560f424b70d1feeabbc2c555",
+  "mount_failure": {
+    "cli_returncode": -6,
+    "gcd_returncode": -6,
+    "mounted": [
+      "/system",
+      "/product",
+      "/system_ext"
+    ],
+    "failed_partition": "/vendor",
+    "filesystem": "erofs",
+    "cli_diagnostic_mount_result": -12,
+    "guest_metadata_executed": false,
+    "original_init_executed": false,
+    "planned_linux_cleanup_completed": false
+  },
+  "original_partition_hashes_unchanged": true,
+  "contract_checks": {
+    "test": "stock_init_hyperos_contract",
+    "passed": true,
+    "cases": [
+      "actual_sdk36_four_entries",
+      "fixed_hyperos_mount_input",
+      "changed_manifest",
+      "unavailable_original_vendor",
+      "changed_original_file",
+      "accepted_512gib_pc",
+      "rejected_64gib_pc",
+      "accepted_64gib_lifecycle",
+      "rejected_unmounted_profile",
+      "missing_partition",
+      "writable_partition",
+      "numeric_readonly",
+      "wrong_filesystem",
+      "missing_root_link",
+      "wrong_root_link",
+      "missing_root_file",
+      "missing_metadata",
+      "wrong_label",
+      "wrong_owner",
+      "wrong_mode",
+      "wrong_inode_type",
+      "numeric_metadata_owner",
+      "rejected_sparse_end_pc",
+      "rejected_page_table_warning"
+    ],
+    "hyperos_execution_validated": false
+  },
+  "shared_lock_checks": [
+    {
+      "test": "host_disk_bounds_readonly_and_locking",
+      "passed": true
+    },
+    {
+      "test": "host_context_preserves_thread_masks",
+      "passed": true
+    }
+  ],
+  "source_sha256": {
+    "scripts/probe_lkl.py": "4ea00926f5a7136ef7f1ac8868986692be7385e26e4391b9e510d3b5b8350529",
+    "scripts/probe_stock_init.py": "f74ddade61399c9f68bd9789eee403556165be85c9f7e3f51c902703ac730694",
+    "scripts/test_stock_init_hyperos.py": "820c3d762ac5544d7c7a8acc2203640dc984169a74a3ca9fbe507ca1871cb18c",
+    "experiments/native-linux/host-context-test.c": "e71432fcb99ee588f6058c33d6af2a4d619bd988ef257f07b7a0deaf3ad3c716",
+    "experiments/native-linux/translation/stock-init-runner.h": "339f102ec2c4e44b326121e1694fe161040a993dbd79800d3e48096eaf81fb91"
+  },
+  "remaining": [
+    "Locate the original vendor EROFS -ENOMEM and complete mount/13 metadata/lifecycle checks.",
+    "Integrate final ASLR and run original HyperOS init CLI/GCD with policy and service declarations retained.",
+    "Rerun shared 16 KiB SDK36 core/init and final iOS compilation.",
+    "Original first-stage, userdata/encryption/boot properties, AArch32, full HyperOS and iPhone remain unverified."
+  ]
+}
