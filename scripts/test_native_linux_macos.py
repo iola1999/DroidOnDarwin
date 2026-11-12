@@ -2,10 +2,12 @@
 """检查 Mac 宿主的数据管理、坐标转换、代码签名与包内依赖。"""
 import argparse
 import json
+import os
 from pathlib import Path
 import plistlib
 import shutil
 import subprocess
+import tempfile
 from package_native_linux_macos import ROOT, EXP, INPUT, OUT, audit_libraries, digest, run
 
 
@@ -41,6 +43,60 @@ def check_imported_runtime(smoke, output):
     record['runtime'] = 'host-check-runtime'
     metadata.write_text(json.dumps(record))
     return 'matching import started; changed and missing runtime rejected before core/log creation; data preserved'
+
+
+def check_translation_runtime_metadata(smoke, output):
+    resources = smoke / 'Resources'
+    binary = smoke / 'MacOS/HostChecks'
+    info_path = smoke / 'Info.plist'
+    runtime_path = resources / 'Runtime.json'
+    original_info = info_path.read_bytes()
+    original_runtime = runtime_path.read_bytes()
+    info = plistlib.loads(original_info)
+    info['DroidOnDarwinTranslationCPUs'] = 1
+    environment = {key: value for key, value in os.environ.items() if not key.startswith('NCE_')}
+    environment.update(NCE_TRANSLATION_APP='1', NCE_ART_AOT='0',
+                       NCE_TRANSLATION_ONLINE_CPUS='1', NCE_TRANSLATION_CACHE_MIB='128',
+                       NCE_DIRECT_CODE_WATCH='1', NCE_DIRECT_CROSS_PAGE='1')
+    case_directory = Path(tempfile.mkdtemp(prefix='translation-runtime-', dir=output))
+    directory = case_directory / 'data'
+    fresh = case_directory / 'fresh'
+    assert not directory.exists() and not fresh.exists()
+    command = [str(binary), '--run-device', '--data-directory', str(directory)]
+
+    def metadata(execution):
+        runtime_path.write_text(json.dumps({'runtime': 'host-check-runtime', 'execution': execution}))
+
+    def snapshot():
+        return {str(path.relative_to(directory)): digest(path)
+                for path in directory.rglob('*') if path.is_file()}
+
+    try:
+        info_path.write_bytes(plistlib.dumps(info))
+        for execution in ({'engine': 'direct', 'cpus': 1},
+                          {'engine': 'direct', 'cpus': 1, 'guest_layout': 'sparse', 'data_tbi': True}):
+            metadata(execution)
+            result = run(command, env=environment, capture_output=True, text=True, timeout=45)
+            log = max((directory / 'Logs').glob('*'), key=lambda path: path.stat().st_mtime)
+            assert log.read_text().splitlines()[-1].startswith('app lifecycle checks passed:'), result
+            assert (directory / 'android-data.img').exists()
+        original_files = snapshot()
+        failures = [({'engine': 'direct', 'cpus': 1, 'guest_layout': 'sparse', 'data_tbi': None}, '格式无效'),
+                    ({'engine': 'direct', 'cpus': 1, 'guest_layout': 'unknown', 'data_tbi': True}, '组合无效'),
+                    ({'engine': 'direct', 'cpus': 2, 'guest_layout': 'sparse', 'data_tbi': True}, '组合无效')]
+        for execution, expected in failures:
+            metadata(execution)
+            for target in (fresh, directory):
+                result = subprocess.run([str(binary), '--run-device', '--data-directory', str(target)],
+                                        env=environment, capture_output=True, text=True, timeout=15)
+                assert result.returncode == 1 and expected in result.stderr, result
+                assert 'android_desktop_running' not in result.stdout
+                assert not fresh.exists()
+                assert snapshot() == original_files
+    finally:
+        info_path.write_bytes(original_info)
+        runtime_path.write_bytes(original_runtime)
+    return 'legacy and sparse/TBI started; three invalid metadata classes rejected before core/data/log preparation; existing files preserved'
 
 
 def main():
@@ -90,6 +146,7 @@ def main():
     assert line.startswith('app lifecycle checks passed:')
     checks['app_lifecycle'] = line
     checks['import_runtime'] = check_imported_runtime(smoke, OUT)
+    checks['translation_runtime_metadata'] = check_translation_runtime_metadata(smoke, OUT)
     store_test = OUT / 'device-store-tests'
     run(['xcrun', 'clang++', '-std=c++17', '-O2', '-fobjc-arc', '-Wall', '-Wextra', '-Werror', '-framework', 'Foundation', EXP / 'app/DeviceStore.mm', EXP / 'app/DeviceStoreTests.mm', EXP / 'macos/Storage.mm', '-o', store_test])
     checks['devices'] = run([store_test], capture_output=True, text=True, timeout=30).stdout.strip()
