@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""用实际 SDK36 LP 启动报告检查原盘范围、只读访问与 loop 清除。"""
+"""用实际 SDK36 LP 启动报告检查原盘范围、只读访问与 DM 移除。"""
 import argparse
 from copy import deepcopy
 import hashlib
@@ -31,12 +31,12 @@ def main():
     for run in report['runs']:
         assert run['observation_validated'] and validate(run['results'], run['mode'], True,
                                                        guest_page_bytes=page_bytes, kernel_log=run['stderr'], original_input=prepared)
-    cases.append('actual_sdk36_entries_and_readonly_loops')
+    cases.append('actual_sdk36_entries_and_readonly_dm')
     original = next(run for run in report['runs'] if run['mode'] == 'lifecycle')
 
     def rejected(name, key, field=None, value=None):
         rows = deepcopy(original['results'])
-        row = next(row for row in rows if key in row and not row.get('temporary'))
+        row = next(row for row in rows if key in row)
         if field is None:
             rows.remove(row)
         else:
@@ -45,16 +45,19 @@ def main():
                             kernel_log=original['stderr'], original_input=prepared), name
         cases.append(name)
 
-    rejected('missing_loop', 'stock_init_sdk_loop')
-    rejected('wrong_offset', 'stock_init_sdk_loop', 'offset', 0)
-    rejected('wrong_sizelimit', 'stock_init_sdk_loop', 'sizelimit', 512)
-    rejected('read_beyond_extent', 'stock_init_sdk_loop', 'end_read_result', 1)
-    rejected('writable_loop', 'stock_init_sdk_loop', 'flags', 0)
-    rejected('numeric_temporary', 'stock_init_sdk_loop', 'temporary', 0)
-    rejected('missing_loop_release', 'stock_init_sdk_loop_released')
-    rejected('still_bound_loop', 'stock_init_sdk_loop_released', 'status_result', 0)
-    rejected('failed_loop_removal', 'stock_init_sdk_loop_released', 'remove_result', -16)
-    rejected('accepted_block_write', 'stock_init_sdk_loop_lifecycle', 'block_write_result', 1)
+    rejected('missing_dm', 'stock_init_sdk_dm')
+    rejected('wrong_backing_device', 'stock_init_sdk_dm', 'backing_device', 65026)
+    rejected('wrong_backing_start', 'stock_init_sdk_dm', 'backing_start_sector', 0)
+    rejected('wrong_dm_length', 'stock_init_sdk_dm', 'sectors', 1)
+    rejected('dm_nonzero_start', 'stock_init_sdk_dm', 'sector_start', 1)
+    rejected('read_beyond_extent', 'stock_init_sdk_dm', 'end_read_result', 1)
+    rejected('writable_dm', 'stock_init_sdk_dm', 'flags', 32)
+    rejected('numeric_device', 'stock_init_sdk_dm', 'device', False)
+    rejected('wrong_target_type', 'stock_init_sdk_dm', 'target', 'zero')
+    rejected('missing_dm_removal', 'stock_init_sdk_dm_removed')
+    rejected('still_registered_dm', 'stock_init_sdk_dm_removed', 'status_result', 0)
+    rejected('failed_dm_removal', 'stock_init_sdk_dm_removed', 'remove_result', -16)
+    rejected('accepted_block_write', 'stock_init_sdk_readonly', 'block_write_result', 1)
     rejected('wrong_metadata_label', 'stock_init_original_metadata', 'label_hex', '00')
     rejected('wrong_partition_format', 'stock_init_original_partition_mounted', 'filesystem', 'tmpfs')
     rejected('missing_shutdown', 'stock_init_shutdown')
@@ -63,8 +66,27 @@ def main():
     rejected('numeric_halt', 'stock_init_shutdown', 'halt_result', False)
     originals = [run for run in report['runs'] if run['mode'] == 'original']
     for run in originals:
+        rows = run['results']
+        property_path = '/system/etc/selinux/plat_property_contexts'.encode().hex()
+        opened = next(i for i, row in enumerate(rows)
+                      if row.get('stock_init_security') == 56 and row.get('path_hex') == property_path)
+        fd = rows[opened]['result']
+        assert fd >= 0
+        first_read = next(row for row in rows[opened + 1:]
+                          if row.get('stock_init_syscall') == 63 and row['args'][0] == fd)
+        assert first_read['result'] > 0
+        keymint_path = '/vendor/bin/hw/android.hardware.security.keymint-service'.encode().hex()
+        keymint_execs = [row for row in rows
+                        if row.get('stock_init_security') == 221 and row.get('path_hex') == keymint_path]
+        assert keymint_execs and all(row['result'] == 0 for row in keymint_execs)
+        for instance in ('android.hardware.security.keymint.IKeyMintDevice/default',
+                         'android.hardware.security.secureclock.ISecureClock/default',
+                         'android.hardware.security.sharedsecret.ISharedSecret/default',
+                         'android.hardware.security.keymint.IRemotelyProvisionedComponent/default'):
+            assert any(instance in line and ',uid=9999,sid=u:r:hal_keymint_default:s0)' in line
+                       for line in run['guest_write_text'].splitlines())
         for key, field, value in (('stock_init_sdk_cleanup_deferred', 'unmount_result', -5),
-                                  ('stock_init_sdk_cleanup_deferred', 'closed_loop_fds', 0),
+                                  ('stock_init_sdk_cleanup_deferred', 'closed_partition_fds', 0),
                                   ('stock_init_shutdown', 'host_disks_closed', False)):
             rows = deepcopy(run['results'])
             row = next(row for row in rows if key in row)
@@ -72,6 +94,7 @@ def main():
             assert not validate(rows, 'original', True, guest_page_bytes=page_bytes,
                                 kernel_log=run['stderr'], original_input=prepared)
     if originals:
+        cases.append('original_property_read_keymint_and_vintf')
         cases.append('rejected_incomplete_original_shutdown')
 
     image = Path(prepared['original_system_image']['path'])

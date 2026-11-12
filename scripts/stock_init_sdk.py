@@ -1,4 +1,4 @@
-"""核对 SDK36 固定 LP 原盘，准备标准只读 loop 与原元数据检查。"""
+"""核对 SDK36 固定 LP 原盘，准备标准只读 DM linear 与原元数据检查。"""
 import hashlib
 import subprocess
 
@@ -89,23 +89,24 @@ def prepare_partitions(image, records, output):
             'partition_mounts': [('/' + name, row['filesystem']) for name, row in partitions.items() if name != 'system']}
 
 
-def validate_loops(rows, partitions, *, mode='lifecycle'):
-    loops = [row for row in rows if 'stock_init_sdk_loop' in row]
-    released = [row for row in rows if 'stock_init_sdk_loop_released' in row]
-    lifecycle = [row for row in rows if 'stock_init_sdk_loop_lifecycle' in row]
+def validate_dm(rows, partitions, *, mode='lifecycle'):
+    mappings = [row for row in rows if 'stock_init_sdk_dm' in row]
+    removed = [row for row in rows if 'stock_init_sdk_dm_removed' in row]
+    readonly = [row for row in rows if 'stock_init_sdk_readonly' in row]
+    versions = [row for row in rows if 'stock_init_sdk_dm_version' in row]
     deferred = [row for row in rows if 'stock_init_sdk_cleanup_deferred' in row]
     shutdown = [row for row in rows if 'stock_init_shutdown' in row]
     if not partitions:
-        return not loops and not released and not lifecycle and not deferred and not shutdown
+        return not mappings and not removed and not readonly and not versions and not deferred and not shutdown
     names = list(partitions)
     if deferred:
         expected = {'stock_init_sdk_cleanup_deferred': True, 'path': '/init.environ.rc',
-                    'unmount_result': -1, 'closed_loop_fds': len(names)}
+                    'unmount_result': -1, 'closed_partition_fds': len(names)}
         if (mode != 'original' or len(deferred) != 1 or
                 deferred[0].get('stock_init_sdk_cleanup_deferred') is not True or
                 type(deferred[0].get('unmount_result')) is not int or
                 deferred[0]['unmount_result'] not in (-1, -13) or
-                type(deferred[0].get('closed_loop_fds')) is not int):
+                type(deferred[0].get('closed_partition_fds')) is not int):
             return False
         expected['unmount_result'] = deferred[0]['unmount_result']
         if deferred != [expected]:
@@ -116,32 +117,43 @@ def validate_loops(rows, partitions, *, mode='lifecycle'):
             type(shutdown[0]['halt_result']) is not int or type(shutdown[0]['kernel_release_result']) is not int or
             shutdown[0]['stock_init_shutdown'] is not True or shutdown[0]['host_disks_closed'] is not True):
         return False
-    release_names = [] if deferred else names
-    if len(loops) != len(names) + 1 or len(released) != len(release_names) + 1 or len(lifecycle) != 1:
+    remove_names = [] if deferred else names
+    if (len(mappings) != len(names) or len(removed) != len(remove_names) or len(readonly) != 1 or
+            len(versions) != 1 or set(versions[0]) != {'stock_init_sdk_dm_version'}):
+        return False
+    version = versions[0]['stock_init_sdk_dm_version']
+    if (type(version) is not list or len(version) != 3 or
+            any(type(value) is not int or not 0 <= value < 1 << 32 for value in version) or
+            version[0] != 4 or version[1] < 48):
         return False
     identities = {}
-    for row, (name, temporary) in zip(loops, [('vendor', True), *[(name, False) for name in names]]):
-        if (set(row) != {'stock_init_sdk_loop', 'partition', 'loop_id', 'offset', 'sizelimit', 'capacity', 'flags', 'end_read_result', 'temporary'} or
-                row['stock_init_sdk_loop'] is not True or row['partition'] != name or row['temporary'] is not temporary or
-                any(type(row[key]) is not int for key in ('loop_id', 'offset', 'sizelimit', 'capacity', 'flags', 'end_read_result')) or
-                not 0 <= row['loop_id'] < 256 or row['offset'] != partitions[name]['offset'] or
-                row['sizelimit'] != partitions[name]['sizelimit'] or row['capacity'] != row['sizelimit'] or
-                row['flags'] != 1 or row['end_read_result'] != 0):
+    for row, name in zip(mappings, names):
+        if (set(row) != {'stock_init_sdk_dm', 'partition', 'device', 'backing_device', 'sector_start', 'sectors',
+                        'backing_start_sector', 'capacity', 'flags', 'target', 'end_read_result'} or
+                row['stock_init_sdk_dm'] is not True or row['partition'] != name or row['target'] != 'linear' or
+                any(type(row[key]) is not int for key in ('device', 'backing_device', 'sector_start', 'sectors',
+                                                        'backing_start_sector', 'capacity', 'flags', 'end_read_result')) or
+                not 0 < row['device'] < 1 << 32 or not 0 < row['backing_device'] < 1 << 32 or
+                ((row['backing_device'] & 255) | ((row['backing_device'] >> 12) & 0xfff00)) != 1 or
+                row['sector_start'] != 0 or row['sectors'] * 512 != partitions[name]['sizelimit'] or
+                row['backing_start_sector'] * 512 != partitions[name]['offset'] or
+                row['capacity'] != partitions[name]['sizelimit'] or not 0 <= row['flags'] < 1 << 32 or
+                row['flags'] & 33 != 33 or row['flags'] & (2 | 256) or row['end_read_result'] != 0):
             return False
-        identities[name, temporary] = row['loop_id']
-    if len({identities[name, False] for name in names}) != len(names):
+        identities[name] = row['device']
+    if len(set(identities.values())) != len(names) or len({row['backing_device'] for row in mappings}) != 1:
         return False
-    for row, (name, temporary) in zip(released, [('vendor', True), *[(name, False) for name in reversed(release_names)]]):
-        if (set(row) != {'stock_init_sdk_loop_released', 'partition', 'loop_id', 'clear_result', 'status_result', 'remove_result', 'status_waits', 'remove_waits', 'temporary'} or
-                row['stock_init_sdk_loop_released'] is not True or row['partition'] != name or row['temporary'] is not temporary or
-                any(type(row[key]) is not int for key in ('loop_id', 'clear_result', 'status_result', 'remove_result', 'status_waits', 'remove_waits')) or
-                row['loop_id'] != identities[name, temporary] or row['clear_result'] != 0 or
-                row['status_result'] != -6 or row['remove_result'] != 0 or row['status_waits'] < 0 or row['remove_waits'] < 0):
+    for row, name in zip(removed, reversed(remove_names)):
+        if (set(row) != {'stock_init_sdk_dm_removed', 'partition', 'device', 'remove_result', 'status_result', 'remove_waits'} or
+                row['stock_init_sdk_dm_removed'] is not True or row['partition'] != name or
+                any(type(row[key]) is not int for key in ('device', 'remove_result', 'status_result', 'remove_waits')) or
+                row['device'] != identities[name] or row['status_result'] != -6 or
+                row['remove_result'] != 0 or row['remove_waits'] < 0):
             return False
-    row = lifecycle[0]
-    return (set(row) == {'stock_init_sdk_loop_lifecycle', 'file_open_result', 'block_open_result', 'block_write_result', 'unmount_result'} and
-            row['stock_init_sdk_loop_lifecycle'] is True and
-            all(type(row[key]) is int for key in ('file_open_result', 'block_open_result', 'block_write_result', 'unmount_result')) and
-            row['file_open_result'] == -30 and row['unmount_result'] == 0 and
+    row = readonly[0]
+    return (set(row) == {'stock_init_sdk_readonly', 'file_open_result', 'block_open_result', 'block_write_result'} and
+            row['stock_init_sdk_readonly'] is True and
+            all(type(row[key]) is int for key in ('file_open_result', 'block_open_result', 'block_write_result')) and
+            row['file_open_result'] == -30 and
             ((row['block_open_result'] >= 0 and row['block_write_result'] == -1) or
              (row['block_open_result'] == -13 and row['block_write_result'] == -13)))

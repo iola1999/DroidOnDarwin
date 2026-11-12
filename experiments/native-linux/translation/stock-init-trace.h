@@ -79,7 +79,7 @@ static void stock_init_trace_security(long number, const long *args, long result
 
 static void stock_init_trace_result(long number, const long *args, long result, unsigned long pc)
 {
-    if (result >= 0 && number != 142)
+    if (result >= 0 && number != 142 && number != 63)
         return;
     printf("{\"stock_init_syscall\":%ld,\"pc\":%lu,\"args\":[%lu,%lu,%lu,%lu,%lu,%lu],\"result\":%ld}\n",
            number, pc, (unsigned long)args[0], (unsigned long)args[1], (unsigned long)args[2],

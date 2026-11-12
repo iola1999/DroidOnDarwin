@@ -226,8 +226,8 @@ def validate(rows, mode, original_system=False, *, guest_page_bytes=16384, kerne
                                                  any(type(row[key]) is not int for key in ('uid', 'gid', 'mode', 'inode_type'))
                                                  for row in metadata_rows)):
         return False
-    from stock_init_sdk import validate_loops
-    if not validate_loops(rows, (original_input or {}).get('sdk_partitions'), mode=mode):
+    from stock_init_sdk import validate_dm
+    if not validate_dm(rows, (original_input or {}).get('sdk_partitions'), mode=mode):
         return False
     lifecycle = [r for r in rows if 'stock_init_lifecycle' in r]
     original = [r for r in rows if 'stock_init_exec' in r]
