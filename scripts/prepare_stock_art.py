@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""编译标准 JNI fixture，核对并准备原始 SDK36 ART 组件；不运行客体。"""
+"""编译标准 JNI fixture，核对并准备固定 SDK36 或 HyperOS ART 组件；不运行客体。"""
 import argparse
 import hashlib
 import json
@@ -20,6 +20,8 @@ NDK = Path('/opt/homebrew/share/android-ndk')
 TOOL = NDK / 'toolchains/llvm/prebuilt/darwin-x86_64'
 RUNTIME_MANIFEST_SHA256 = '4b1a45b0ee51725c68f1c29765958d0b60b45a5f2325bedfc61764cd49232249'
 DEPENDENCIES_SHA256 = 'c9462a396acb6d39d8052d01220a534ae8483ab6d3977f82413d401ff7e40e5f'
+HYPEROS_MANIFEST_SHA256 = 'c9ec384e1eee4c754152fddaae8d351ff5f1adaafb86e5cdc88fb02f5f712d0a'
+HYPEROS_DEPENDENCIES_SHA256 = '3f10c62550991d55de0e7b2c67b8967c1cf1a75dcb019497f3f2d8e6043bb655'
 BOOT_JARS = (
     'com.android.art/javalib/core-oj.jar',
     'com.android.art/javalib/core-libart.jar',
@@ -52,6 +54,8 @@ def run(command, commands):
 def guest_path(relative):
     if relative.startswith('com.android.'):
         return '/apex/' + relative
+    if relative.startswith('system_ext/'):
+        return '/' + relative
     if relative.startswith(('lib64/', 'etc/')):
         return '/system/' + relative
     raise ValueError('未定义 guest 路径：' + relative)
@@ -135,11 +139,37 @@ def inputs(runtime, manifest_path, commands):
     return manifest, records
 
 
-def linker_config():
+def hyperos_inputs(runtime, manifest_path, commands):
+    lock_path = SOURCE / 'hyperos-dependencies.json'
+    if sha(lock_path) != HYPEROS_DEPENDENCIES_SHA256 or sha(manifest_path) != HYPEROS_MANIFEST_SHA256:
+        raise ValueError('固定 HyperOS ART 来源摘要不匹配')
+    lock = json.loads(lock_path.read_text())
+    if lock['source_manifest_sha256'] != HYPEROS_MANIFEST_SHA256 or lock['missing']:
+        raise ValueError('HyperOS ART 依赖来源或闭包不完整')
+    records = {}
+    for relative, expected in lock['files'].items():
+        path = runtime / relative
+        if sha(path) != expected['sha256'] or path.stat().st_size != expected['bytes']:
+            raise ValueError('原始 HyperOS 文件摘要不匹配：' + relative)
+        record = dict(expected, source=str(path), guest=guest_path(relative))
+        if relative.endswith('.so') or relative.endswith('/linker64'):
+            record['loads'] = elf_loads(path.read_bytes(), page_bytes=4096)
+            dynamic = run([TOOL / 'bin/llvm-readelf', '--dynamic', path], commands)
+            if re.findall(r'Shared library: \[([^]]+)\]', dynamic) != expected['needed']:
+                raise ValueError('HyperOS DT_NEEDED 与固定报告不一致：' + relative)
+        elif relative.endswith('.jar'):
+            with zipfile.ZipFile(path) as archive:
+                if 'classes.dex' not in archive.namelist() or archive.testzip() is not None:
+                    raise ValueError('HyperOS boot JAR 无完整 DEX：' + relative)
+        records[relative] = record
+    return json.loads(manifest_path.read_text()), records
+
+
+def linker_config(source_kind='sdk36'):
     lines = ['dir.stock_art = /system/bin', '', '[stock_art]',
              'additional.namespaces = com_android_art,com_android_i18n,com_android_conscrypt,com_android_os_statsd',
              'namespace.default.isolated = false', 'namespace.default.visible = true',
-             'namespace.default.search.paths = ' + ':'.join(SEARCH_PATHS)]
+             'namespace.default.search.paths = ' + ':'.join((*SEARCH_PATHS, '/system_ext/lib64') if source_kind == 'hyperos' else SEARCH_PATHS)]
     for name in ('com_android_art', 'com_android_i18n', 'com_android_conscrypt', 'com_android_os_statsd'):
         lines += [f'namespace.{name}.isolated = false', f'namespace.{name}.visible = true',
                   f'namespace.{name}.links = default', f'namespace.{name}.link.default.allow_all_shared_libs = true']
@@ -148,13 +178,32 @@ def linker_config():
 
 def verify(output):
     report = json.loads((output / 'manifest.json').read_text())
-    if (report['input_manifest_sha256'] != RUNTIME_MANIFEST_SHA256 or
-            report['dependencies_sha256'] != DEPENDENCIES_SHA256 or report['runtime_executed'] is not False):
+    source_kind = report.get('runtime_source', 'sdk36')
+    if source_kind not in ('sdk36', 'hyperos'):
+        raise ValueError('未知 ART 来源')
+    original_hash = HYPEROS_MANIFEST_SHA256 if source_kind == 'hyperos' else RUNTIME_MANIFEST_SHA256
+    dependency_hash = HYPEROS_DEPENDENCIES_SHA256 if source_kind == 'hyperos' else DEPENDENCIES_SHA256
+    if (report['input_manifest_sha256'] != original_hash or
+            report['dependencies_sha256'] != dependency_hash or report['runtime_executed'] is not False):
         raise ValueError('组件 manifest 身份或阶段不匹配')
+    expected_page_bytes = 4096 if source_kind == 'hyperos' else 16384
+    if report.get('guest_page_bytes', 16384) != expected_page_bytes:
+        raise ValueError('ART 来源与准备页大小不匹配')
     original_manifest = Path(report['source_manifest'])
-    if sha(original_manifest) != RUNTIME_MANIFEST_SHA256:
-        raise ValueError('原始 SDK36 runtime manifest 摘要不匹配')
-    originals = json.loads(original_manifest.read_text())['files']
+    if sha(original_manifest) != original_hash:
+        raise ValueError('原始 ART runtime manifest 摘要不匹配')
+    if source_kind == 'hyperos':
+        lock = SOURCE / 'hyperos-dependencies.json'
+        if sha(lock) != dependency_hash:
+            raise ValueError('HyperOS ART 依赖摘要不匹配')
+        originals = {name: item['sha256'] for name, item in json.loads(lock.read_text())['files'].items()}
+        expected_paths = {guest_path(name): name for name in originals}
+        expected_paths['/system/bin/linker64'] = 'com.android.runtime/bin/linker64'
+        actual_paths = {name: item.get('source_relative') for name, item in report['files'].items() if item['kind'] == 'original'}
+        if actual_paths != expected_paths:
+            raise ValueError('HyperOS 原始文件集合与固定依赖不一致')
+    else:
+        originals = json.loads(original_manifest.read_text())['files']
     for name, expected in report['source_sha256'].items():
         if sha(ROOT / name) != expected:
             raise ValueError('fixture 构建源码摘要不匹配：' + name)
@@ -174,12 +223,13 @@ def verify(output):
     return report
 
 
-def prepare(runtime, manifest_path, output):
+def prepare(runtime, manifest_path, output, source_kind='sdk36'):
     if not output.resolve().is_relative_to((ROOT / 'work').resolve()):
         raise ValueError('输出必须位于本工作树 work 目录')
     commands = []
     runtime, manifest_path = runtime.resolve(), manifest_path.resolve()
-    manifest, records = inputs(runtime, manifest_path, commands)
+    manifest, records = (hyperos_inputs if source_kind == 'hyperos' else inputs)(runtime, manifest_path, commands)
+    lock_path = SOURCE / ('hyperos-dependencies.json' if source_kind == 'hyperos' else 'dependencies.json')
     output.mkdir(parents=True, exist_ok=False)
     root = output / 'root'
     directories = ('/system/bin', '/system/lib64', '/linkerconfig', '/data/stock-art',
@@ -197,7 +247,7 @@ def prepare(runtime, manifest_path, output):
         files[record['guest']] = {'kind': 'original', 'source_relative': relative,
                                   'sha256': record['sha256'], 'bytes': record['bytes']}
     configuration = root / 'linkerconfig/ld.config.txt'
-    configuration.write_text(linker_config())
+    configuration.write_text(linker_config(source_kind))
     classes, dex = output / 'classes', output / 'dex'
     classes.mkdir()
     dex.mkdir()
@@ -217,7 +267,7 @@ def prepare(runtime, manifest_path, output):
     loads = elf_loads(executable.read_bytes())
     dynamic = run([TOOL / 'bin/llvm-readelf', '--dynamic', executable], commands)
     needed = re.findall(r'Shared library: \[([^]]+)\]', dynamic)
-    lock = json.loads((SOURCE / 'dependencies.json').read_text())
+    lock = json.loads(lock_path.read_text())
     if not set(needed) <= lock['libraries'].keys():
         raise ValueError('fixture 引入未固定依赖：' + repr(needed))
     headers = run([TOOL / 'bin/llvm-readelf', '--program-headers', executable], commands)
@@ -246,12 +296,13 @@ def prepare(runtime, manifest_path, output):
     for guest, record in files.items():
         record['mode'] = (root / guest.lstrip('/')).stat().st_mode & 0o777
     report = {
-        'scope': 'Prepared original SDK36 ART inputs and compiled standard JNI fixture; guest runtime not executed',
+        'scope': 'Prepared fixed original ART inputs and compiled standard JNI fixture; guest runtime not executed',
+        'runtime_source': source_kind, 'guest_page_bytes': 4096 if source_kind == 'hyperos' else 16384,
         'runtime_executed': False, 'source_runtime': str(runtime), 'source_manifest': str(manifest_path),
-        'input_manifest_sha256': sha(manifest_path), 'dependencies_sha256': sha(SOURCE / 'dependencies.json'),
-        'identity': {key: manifest[key] for key in ('url', 'archive_sha1')},
+        'input_manifest_sha256': sha(manifest_path), 'dependencies_sha256': sha(lock_path),
+        'identity': manifest['source'] if source_kind == 'hyperos' else {key: manifest[key] for key in ('url', 'archive_sha1')},
         'source_sha256': {str(p.relative_to(ROOT)): sha(p) for p in
-                          [SOURCE / 'probe.c', SOURCE / 'StockArtProbe.java', SOURCE / 'dependencies.json',
+                          [SOURCE / 'probe.c', SOURCE / 'StockArtProbe.java', lock_path,
                            Path(__file__), ROOT / 'scripts/build_apk_fixture.py']},
         'tools': {'ndk': (NDK / 'source.properties').read_text(), 'fixture_min_api': 35,
                   'javac': run([JAVA / 'javac', '-version'], commands).strip(),
@@ -268,7 +319,7 @@ def prepare(runtime, manifest_path, output):
                         'Static dependencies only; further dynamic loads and property requirements untested',
                         'JIT requested; compilation and execution of generated Java code unverified'],
     }
-    if sha(manifest_path) != RUNTIME_MANIFEST_SHA256 or any(
+    if sha(manifest_path) != (HYPEROS_MANIFEST_SHA256 if source_kind == 'hyperos' else RUNTIME_MANIFEST_SHA256) or any(
             sha(Path(record['source'])) != record['sha256'] for record in records.values()):
         raise ValueError('准备期间原始组件输入发生变化')
     (output / 'manifest.json').write_text(json.dumps(report, ensure_ascii=False, indent=2) + '\n')
@@ -278,13 +329,14 @@ def prepare(runtime, manifest_path, output):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--runtime-source', choices=('sdk36', 'hyperos'), default='sdk36')
     parser.add_argument('--runtime', type=Path, default=ROOT / 'work/native-linux-nce/android/android36')
     parser.add_argument('--manifest', type=Path, default=ROOT / 'work/native-linux-nce/android/android36-runtime.json')
     output = parser.add_mutually_exclusive_group(required=True)
     output.add_argument('--output', type=Path)
     output.add_argument('--verify', type=Path)
     args = parser.parse_args()
-    report = verify(args.verify.resolve()) if args.verify else prepare(args.runtime, args.manifest, args.output.resolve())
+    report = verify(args.verify.resolve()) if args.verify else prepare(args.runtime, args.manifest, args.output.resolve(), args.runtime_source)
     print(json.dumps({'status': 'prepared', 'runtime_executed': False, 'files': len(report['files']),
                       'original_bytes': sum(r['bytes'] for r in report['files'].values() if r['kind'] == 'original')}, ensure_ascii=False))
 

@@ -44,9 +44,9 @@ def validate_android_image(root, directory):
         raise ValueError('Android 系统镜像与当前用户态源码不一致，请先通过 scripts/probe_lkl.py 重建并验证：' + ', '.join(stale))
 
 
-def validate_guest_layout(rows, requested, flat=False):
+def validate_guest_layout(rows, requested, flat=False, guest_page_bytes=16384):
     records = [row for row in rows if row.get('config') == 'translation_guest_layout']
-    if len(records) != 1 or requested not in ('host', 'low', 'sparse'):
+    if len(records) != 1 or requested not in ('host', 'low', 'sparse') or guest_page_bytes not in (4096, 16384):
         return False
     row = records[0]
     fields = ('guest_base', 'guest_end', 'guest_span_bytes', 'flat_coverage_bytes',
@@ -61,20 +61,21 @@ def validate_guest_layout(rows, requested, flat=False):
     if (not base or end <= base or row['guest_span_bytes'] != end - base or
             row['flat_coverage_bytes'] != (coverage if flat else 0) or ram_size != 1 << 30 or
             not ram or any(row[key] % 16384 for key in fields) or physical < end or
-            not reserve or reserve >= 1 << 40 or reserve_size > (1 << 40) - reserve or
+            not reserve or reserve >= 1 << (39 if guest_page_bytes == 4096 else 40) or
+            reserve_size > (1 << (39 if guest_page_bytes == 4096 else 40)) - reserve or
             ram_size > (1 << 64) - ram or (ram < end and base < ram + ram_size) or
             (ram < reserve + reserve_size and reserve < ram + ram_size)):
         return False
     if requested in ('low', 'sparse'):
-        return (flat and base == 0x10000 and end == (1 << 36 if requested == 'sparse' else coverage) and physical == reserve and
+        return ((flat if guest_page_bytes == 16384 else not flat) and base == 0x10000 and end == (1 << 36 if requested == 'sparse' else coverage) and physical == reserve and
                 reserve_size == ram_size + (64 << 20))
     return (base == reserve and end == base + coverage and physical == end and
             reserve_size == coverage + ram_size + (64 << 20))
 
 
-def validate_standard_jit(rows, data_tbi=False):
+def validate_standard_jit(rows, data_tbi=False, *, guest_page_bytes=16384):
     if [row for row in rows if row.get('config') == 'linux_standard_jit'] != [
-            {'config': 'linux_standard_jit', 'page_bytes': 16384}]:
+            {'config': 'linux_standard_jit', 'page_bytes': guest_page_bytes}]:
         return False
     values = {'anon_rw_rx': 42, 'anon_rewrite': 91, 'mremap_move': 91,
               'anon_rx_map': 1, 'anon_rwx': 74, 'ordinary_file_rx': 57,
@@ -106,7 +107,45 @@ def validate_standard_jit(rows, data_tbi=False):
     return True
 
 
-def validate(rows, memory_interval, mapping="window", workload="core", tlb_invalidation=None, execution=None, direct_config=None, cpus=1, parallel_profile=None, uaccess_stop=None, code_lookup_limit=None, code_memory=None, online_cpus=None, guest_layout=None, data_tbi=None):
+def validate(rows, memory_interval, mapping="window", workload="core", tlb_invalidation=None, execution=None, direct_config=None, cpus=1, parallel_profile=None, uaccess_stop=None, code_lookup_limit=None, code_memory=None, online_cpus=None, guest_layout=None, guest_page_bytes=16384, data_tbi=None):
+    if guest_page_bytes not in (4096, 16384):
+        return False
+    if guest_page_bytes == 4096:
+        if mapping != 'pte' or execution != 'unicorn' or cpus != 1 or guest_layout not in ('low', 'sparse'):
+            return False
+        if [row for row in rows if row.get('config') == 'translation_page_sizes'] != [
+                {'config': 'translation_page_sizes', 'guest_page_bytes': 4096,
+                 'host_page_bytes': 16384, 'host_address_limit': 1 << 39}]:
+            return False
+        layouts = [row for row in rows if row.get('config') == 'translation_guest_layout']
+        if len(layouts) != 1 or not validate_guest_layout(rows, guest_layout, False, guest_page_bytes):
+            return False
+        layout = layouts[0]
+        physical = layout['physical_base']
+        end = layout['reservation_base'] + layout['reservation_bytes']
+        ram = layout['ram_base']
+        requests = [row for row in rows if 'host_alias_request' in row]
+        if not requests:
+            return False
+        for row in requests:
+            if (set(row) != {'host_alias_request', 'target', 'source', 'bytes', 'accepted'} or
+                    row['host_alias_request'] not in ('map', 'revoke', 'reclaim') or row['accepted'] is not True or
+                    any(type(row[key]) != int or not 0 <= row[key] < 1 << 64 or row[key] % 16384
+                        for key in ('target', 'source', 'bytes'))):
+                return False
+            target, source, size = row['target'], row['source'], row['bytes']
+            if not size or not physical <= target <= end or size > end - target:
+                return False
+            if row['host_alias_request'] == 'revoke':
+                if source:
+                    return False
+            elif not ram <= source <= ram + (1 << 30) or size > ram + (1 << 30) - source:
+                return False
+            if row['host_alias_request'] == 'reclaim' and target - physical != source - ram:
+                return False
+        if requests[0] != {'host_alias_request': 'map', 'target': physical, 'source': ram,
+                            'bytes': 1 << 30, 'accepted': True}:
+            return False
     if data_tbi is not None:
         tbi_config = [row for row in rows if row.get('config') == 'translation_data_tbi']
         if (tbi_config != [{'config': 'translation_data_tbi', 'data': data_tbi, 'fetch': False, 'tagged_syscall_abi': False}] or
@@ -120,9 +159,11 @@ def validate(rows, memory_interval, mapping="window", workload="core", tlb_inval
             return False
     if guest_layout is not None:
         flat = execution == 'direct' and direct_config is not None and direct_config['memory'] in ('flat', 'view')
-        if not validate_guest_layout(rows, guest_layout, flat):
+        if not validate_guest_layout(rows, guest_layout, flat, guest_page_bytes):
             return False
-        if guest_layout in ('low', 'sparse') and (mapping != 'pte' or execution != 'direct' or cpus != 1 or direct_config['memory'] != 'flat'):
+        if guest_layout in ('low', 'sparse') and (mapping != 'pte' or cpus != 1 or
+                (guest_page_bytes == 16384 and (execution != 'direct' or direct_config['memory'] != 'flat')) or
+                (guest_page_bytes == 4096 and execution != 'unicorn')):
             return False
         if workload == 'core' and mapping == 'pte':
             if data_tbi:
@@ -142,7 +183,7 @@ def validate(rows, memory_interval, mapping="window", workload="core", tlb_inval
                 pointers = [row for row in rows if row.get('config') == 'translation_host_pointer_sources']
                 if (len(pointers) != 1 or set(pointers[0]) != {'config', 'low', 'high', 'stack', 'text'} or
                         any(type(pointers[0][k]) is not int or not 0 < pointers[0][k] < 1 << 64 for k in ('low', 'high', 'stack', 'text')) or
-                        not 0x10000 <= pointers[0]['low'] <= (1 << 36) - 16384 or pointers[0]['high'] < 1 << 36):
+                        not 0x10000 <= pointers[0]['low'] <= (1 << 36) - guest_page_bytes or pointers[0]['high'] < 1 << 36):
                     return False
             if [row for row in rows if row.get('test') == 'translated_guest_layout_boundaries'] != [
                     {'test': 'translated_guest_layout_boundaries', 'passed': True, 'layout': guest_layout}]:
@@ -222,16 +263,16 @@ def validate(rows, memory_interval, mapping="window", workload="core", tlb_inval
                 'linux_dynamic_link_dlopen_constructors', 'linux_dynamic_tls_threads', 'linux_dynamic_fork_signal'}
     if workload == 'core' and mapping == 'pte':
         expected.remove('linux_dynamic_code')
-        if not validate_standard_jit(rows, data_tbi):
+        if not validate_standard_jit(rows, data_tbi=data_tbi, guest_page_bytes=guest_page_bytes):
             return False
     elif workload == 'stock-art':
         from stock_art import validate as validate_stock_art
-        if not validate_stock_art(rows):
+        if not validate_stock_art(rows, guest_page_bytes=guest_page_bytes):
             return False
         expected = {'stock_art_standard_jni', 'translated_context_cleanup'}
     elif workload == 'bionic':
         from stock_bionic import validate as validate_stock
-        if not validate_stock(rows):
+        if not validate_stock(rows, guest_page_bytes):
             return False
         expected = {'stock_bionic_observation_complete', 'translated_context_cleanup'}
     elif workload == 'android':
@@ -438,6 +479,7 @@ def main():
     parser.add_argument('--mapping', choices=('window', 'pte'), default='window')
     parser.add_argument('--data-tbi', type=int, choices=(0, 1), default=0)
     parser.add_argument('--guest-layout', choices=('host', 'low', 'sparse'), default='host')
+    parser.add_argument('--guest-page-bytes', type=int, choices=(4096, 16384), default=16384)
     parser.add_argument('--data-seed', type=Path, help='服务和桌面检查使用的初始 ext4 数据盘')
     parser.add_argument('--persistent-data', action='store_true', help='各入口与重复轮次连续使用同一数据盘，检查重启持久化')
     parser.add_argument('--apk-fixture-dir', type=Path, help='运行时传入同签名 Java/JNI APK，首轮安装更新，后续启动只检查已安装 v2')
@@ -462,7 +504,10 @@ def main():
     parser.add_argument('--output', type=Path, default=DEFAULT_OUT)
     parser.add_argument('--memory-interval-ms', type=int, default=100)
     args = parser.parse_args()
-    if args.guest_layout in ('low', 'sparse') and (args.mapping != 'pte' or args.execution != 'direct' or args.direct_memory != 'flat' or args.cpus != 1):
+    if args.guest_page_bytes == 4096 and (args.mapping != 'pte' or args.execution != 'unicorn' or
+            args.guest_layout not in ('low', 'sparse') or args.cpus != 1 or args.workload not in ('core', 'bionic', 'stock-art')):
+        parser.error('4 KiB 实验需要单 CPU 的 low或sparse/pte/unicorn，负载仅限 core/bionic/stock-art')
+    if args.guest_page_bytes == 16384 and args.guest_layout in ('low', 'sparse') and (args.mapping != 'pte' or args.execution != 'direct' or args.direct_memory != 'flat' or args.cpus != 1):
         parser.error('低客体地址实验需要单 CPU 的 pte/direct/flat')
     if args.data_tbi and args.execution == 'direct' and args.direct_memory == 'view':
         parser.error('用户数据 TBI 暂不支持 read-view')
@@ -556,7 +601,7 @@ def main():
         if not args.stock_art_directory or args.mapping != 'pte' or args.cpus != 1 or args.entry == 'window':
             parser.error('stock-art 需要已准备目录和单核 PTE CLI/GCD')
         from stock_art import attach
-        stock_art = attach(args.stock_art_directory, out)
+        stock_art = attach(args.stock_art_directory, out, guest_page_bytes=args.guest_page_bytes)
     elif args.stock_art_directory:
         parser.error('--stock-art-directory 仅用于 stock-art')
     stock_runtime = None
@@ -572,7 +617,7 @@ def main():
     kernel = KERNEL
     if args.mapping == 'pte':
         from build_lkl_translation_kernel import build
-        kernel = build(args.cpus, args.high_res_timers)
+        kernel = build(args.cpus, args.high_res_timers, args.guest_page_bytes)
     else:
         native_manifest = json.loads((kernel / 'lkl-summary.json').read_text())
         if sha(kernel / 'lkl-image.bin') != native_manifest['kernel_sha256'] or any(
@@ -603,6 +648,7 @@ def main():
     (out / 'translation-symbols.h').write_text(header)
     inputs = [EXP / 'translation/kernel-image.c', EXP / 'translation/linux-elf.c', EXP / 'translation/linux-execution.c', EXP / 'translation/interaction-profile.c', EXP / 'translation/linux-runner.c', EXP / 'translation/linux-memory.c', EXP / 'lkl-host.c']
     commands = []
+    page_flag = f'-DNCE_GUEST_PAGE_SHIFT={args.guest_page_bytes.bit_length() - 1}'
     direct_link, direct_files = [], []
     if args.execution == 'direct':
         from probe_direct_execution import build_engine as build_direct
@@ -642,7 +688,7 @@ def main():
                           angle / 'libANGLE-shared.dylib']
     build_entries = ('cli', 'gcd', 'window') if args.entry == 'window' else ('cli', 'gcd')
     for mode in build_entries:
-        command = ['xcrun', 'clang', '-O2', '-g', '-DNCE_PROCESS', f'-DNCE_TRANSLATION_CPUS={args.cpus}', '-Wall', '-Wextra', '-Werror',
+        command = ['xcrun', 'clang', '-O2', '-g', '-DNCE_PROCESS', f'-DNCE_TRANSLATION_CPUS={args.cpus}', page_flag, '-Wall', '-Wextra', '-Werror',
                    '-I', EXP, '-I', kernel, '-I', out, '-I', KERNEL / 'host-include', '-I', library / 'include',
                    *inputs, library / 'lib/libunicorn.a', *graphics_link, *[x for x in direct_link if x != '-lc++' or '-lc++' not in graphics_link], '-o', out / mode]
         if args.code_memory == 'dual':
@@ -665,7 +711,7 @@ def main():
                   EXP / 'translation' / ('stock-bionic-supervisor.c' if stock_runtime else 'linux-guest.c'))
     command = [llvm / 'clang', '--target=aarch64-linux-musl', '-mno-outline-atomics', '-fPIE', '-O2', '-g',
                '-Wall', '-Wextra', '-Werror', '-nostdinc', '-isystem', libc / 'include', '-isystem', resource,
-               f'-DNCE_TRANSLATION_CPUS={args.cpus}', f'-DNCE_TRANSLATION_HIGH_RES_TIMERS={int(args.high_res_timers)}',
+               f'-DNCE_TRANSLATION_CPUS={args.cpus}', f'-DNCE_TRANSLATION_HIGH_RES_TIMERS={int(args.high_res_timers)}', page_flag,
                '-c', guest_main, '-o', out / 'guest.o']
     if args.mapping == 'pte' and not stock_runtime and not stock_art:
         command.append('-DNCE_TRANSLATION_STANDARD_JIT')
@@ -684,7 +730,7 @@ def main():
     for source in guest_sources:
         obj = out / (source.stem + '.o')
         compile_command = [llvm / 'clang', '--target=aarch64-linux-musl', '-mno-outline-atomics', '-fPIE', '-O2', '-g',
-                           '-Wall', '-Wextra', '-Werror', '-ffunction-sections', '-Dmain=unused_mm_main', '-nostdinc', '-isystem', libc / 'include', '-isystem', resource,
+                           '-Wall', '-Wextra', '-Werror', '-ffunction-sections', '-Dmain=unused_mm_main', page_flag, '-nostdinc', '-isystem', libc / 'include', '-isystem', resource,
                            '-c', source, '-o', obj]
         run(compile_command)
         commands.append(list(map(str, compile_command)))
@@ -714,7 +760,7 @@ def main():
         command = [ndk / 'toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android35-clang',
                    '-O2', '-g', '-mno-outline-atomics', '-Wall', '-Wextra', '-Werror',
                    '-Wl,-z,max-page-size=16384,-z,common-page-size=16384',
-                   EXP / 'translation/stock-bionic-guest.c', '-ldl', '-o', out / 'bionic-test.elf']
+                   page_flag, EXP / 'translation/stock-bionic-guest.c', '-ldl', '-o', out / 'bionic-test.elf']
         run(command)
         commands.append(list(map(str, command)))
     elif not stock_art:
@@ -764,6 +810,8 @@ def main():
     if args.mapping == 'pte':
         files += [ROOT / 'scripts/build_lkl_translation_kernel.py', ROOT / 'scripts/lkl_translation_patch.py',
                   EXP / 'lkl-nce-mmu.c', kernel / 'build.json']
+    if args.guest_page_bytes == 4096:
+        files.append(ROOT / 'scripts/lkl_4k_vmalloc_patch.py')
     if args.cpus == 2:
         files += [EXP / 'translation/smp-guest.c', ROOT / 'scripts/lkl_translation_smp_patch.py']
     data_seed = None
@@ -863,7 +911,7 @@ def main():
                     if not stock_art:
                         raise
                     parse_errors.append({'line': line_number, 'error': str(error)})
-            passed = not parse_errors and returncode == 0 and validate(rows, args.memory_interval_ms, args.mapping, args.workload, args.tlb_invalidation, args.execution, direct_config, args.cpus, bool(args.parallel_profile), args.smp_uaccess_stop, code_memory=args.code_memory, online_cpus=args.online_cpus, guest_layout=args.guest_layout, data_tbi=bool(args.data_tbi))
+            passed = not parse_errors and returncode == 0 and validate(rows, args.memory_interval_ms, args.mapping, args.workload, args.tlb_invalidation, args.execution, direct_config, args.cpus, bool(args.parallel_profile), args.smp_uaccess_stop, code_memory=args.code_memory, online_cpus=args.online_cpus, guest_layout=args.guest_layout, data_tbi=bool(args.data_tbi), guest_page_bytes=args.guest_page_bytes)
             apk_validated = None
             if apk_fixture:
                 previous = [row for result in results for row in result['results']]
@@ -907,7 +955,7 @@ def main():
               'platform': platform.platform(), 'cpu': subprocess.check_output(['sysctl', '-n', 'machdep.cpu.brand_string'], text=True).strip(),
               'system_build': subprocess.check_output(['sw_vers', '-buildVersion'], text=True).strip(),
               'dependency': dependency, 'commands': commands, 'host_unchanged_after_guest_build': True,
-              'configuration': {'data_tbi': bool(args.data_tbi), 'guest_layout': args.guest_layout, 'code_memory': args.code_memory, 'execution': args.execution, 'direct': direct_config, 'mapping': args.mapping, 'sparse_scan': True, 'fault_prefetch': False, 'guest_page_bytes': 16384,
+              'configuration': {'data_tbi': bool(args.data_tbi), 'guest_layout': args.guest_layout, 'code_memory': args.code_memory, 'execution': args.execution, 'direct': direct_config, 'mapping': args.mapping, 'sparse_scan': True, 'fault_prefetch': False, 'guest_page_bytes': args.guest_page_bytes, 'host_page_bytes': 16384,
                                 'workload': args.workload, 'entries': entries, 'art_nterp': args.art_nterp,
                                 'cpus': args.cpus, 'high_res_timers': args.high_res_timers, 'online_cpus': args.online_cpus, 'uaccess_stop': args.smp_uaccess_stop, 'parallel_profile': bool(args.parallel_profile), 'art_expanded_jit': args.art_expanded_jit, 'art_fast_baseline': args.art_fast_baseline,
                                 'cache_invalidation': args.cache_invalidation,

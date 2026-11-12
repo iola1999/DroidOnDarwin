@@ -24,7 +24,8 @@
             _exit(95); \
         } \
     } while (0)
-#define PAGE 16384
+#include "../layout.h"
+#define PAGE NCE_PAGE_SIZE
 static _Thread_local unsigned tls = 7;
 static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 static unsigned counter;
@@ -92,7 +93,7 @@ static void layout_tests(void)
         CHECK(mapped != MAP_FAILED && (unsigned long)mapped >= base && (unsigned long)mapped <= end - PAGE);
         const char path[] = "/host-pointer";
         memcpy(mapped, path, sizeof(path));
-        const unsigned long high_bits[] = {1UL << 32, 1UL << 48};
+        const unsigned long high_bits[] = {1UL << 32, 1UL << 39, 1UL << 48};
         for (unsigned i = 0; i < sizeof(high_bits) / sizeof(*high_bits); ++i) {
             unsigned long address = (unsigned long)mapped + high_bits[i];
             CHECK((!low || address >= end) && (uint32_t)address == (unsigned long)mapped);

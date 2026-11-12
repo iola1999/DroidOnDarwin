@@ -32,7 +32,9 @@ def run(command):
     return result.stdout + result.stderr
 
 
-def elf_loads(data):
+def elf_loads(data, *, page_bytes=PAGE):
+    if page_bytes not in (4096, 16384):
+        raise ValueError('ELF LOAD 页大小需要为 4 KiB 或 16 KiB')
     if data[:7] != b'\x7fELF\x02\x01\x01' or struct.unpack_from('<H', data, 18)[0] != 183:
         raise ValueError('JNI 库需要为小端 ARM64 ELF')
     offset = struct.unpack_from('<Q', data, 32)[0]
@@ -43,8 +45,8 @@ def elf_loads(data):
     for index in range(count):
         kind, flags, file_offset, address, _, filesz, memsz, alignment = struct.unpack_from('<IIQQQQQQ', data, offset + index * size)
         if kind == 1:
-            if alignment < PAGE or alignment % PAGE or (address - file_offset) % PAGE:
-                raise ValueError('JNI LOAD 段不满足 16 KiB 映射条件')
+            if alignment < page_bytes or alignment % page_bytes or (address - file_offset) % page_bytes:
+                raise ValueError(f'JNI LOAD 段不满足 {page_bytes // 1024} KiB 映射条件')
             loads.append(dict(offset=file_offset, vaddr=address, filesz=filesz, memsz=memsz, alignment=alignment, flags=flags))
     if not loads:
         raise ValueError('JNI 库没有 LOAD 段')

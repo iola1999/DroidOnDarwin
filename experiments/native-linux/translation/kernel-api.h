@@ -1,8 +1,10 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 #pragma once
 
+#include "../layout.h"
+
 #define NCE_MM_TRANSLATED 4
-#define NCE_TRANSLATION_CODE_WORDS 1024
+#define NCE_TRANSLATION_CODE_WORDS (NCE_RAM_SIZE / NCE_PAGE_SIZE / 64)
 #define NCE_TRANSLATION_MAX_CPUS 2
 
 /* Writers stop affected guests before publishing invalidations. Each CPU

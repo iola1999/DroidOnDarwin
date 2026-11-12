@@ -41,7 +41,7 @@ extern struct lkl_host_operations nce_lkl_host;
 extern int nce_disk_open(unsigned index, const char *path);
 extern void nce_disk_close(void);
 static long (*call)(long, long *);
-static unsigned char host_low_source[NCE_PAGE_SIZE] __attribute__((aligned(NCE_PAGE_SIZE)));
+static unsigned char host_low_source[NCE_HOST_PAGE_SIZE] __attribute__((aligned(NCE_HOST_PAGE_SIZE)));
 
 static void directory(const char *path)
 {
@@ -557,7 +557,7 @@ int nce_lkl_run(const char *path)
             for (unsigned i = 0; i < 2; ++i) {
                 mach_vm_address_t high = state.guest_end;
                 if (i)
-                    REQUIRE(mach_vm_map(mach_task_self(), &high, NCE_PAGE_SIZE, 0, VM_FLAGS_ANYWHERE,
+                    REQUIRE(mach_vm_map(mach_task_self(), &high, NCE_HOST_PAGE_SIZE, 0, VM_FLAGS_ANYWHERE,
                                         MEMORY_OBJECT_NULL, 0, FALSE, VM_PROT_READ | VM_PROT_WRITE, VM_PROT_ALL, VM_INHERIT_DEFAULT) == KERN_SUCCESS);
                 host_sources[i] = i ? (void *)high : host_low_source;
                 unsigned long address = (unsigned long)host_sources[i];
@@ -635,7 +635,7 @@ int nce_lkl_run(const char *path)
                 REQUIRE(!memcmp(host_sources[i] + 128, &host_value, sizeof(host_value)));
                 REQUIRE(!memcmp(host_sources[i] + 256, &host_value, sizeof(host_value)));
                 if (i)
-                    REQUIRE(!munmap(host_sources[i], NCE_PAGE_SIZE));
+                    REQUIRE(!munmap(host_sources[i], NCE_HOST_PAGE_SIZE));
             }
         }
         puts("{\"test\":\"translated_host_pointer_copy\",\"passed\":true}");

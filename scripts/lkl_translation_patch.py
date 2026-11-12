@@ -3,7 +3,9 @@
 from pathlib import Path
 
 
-def apply(source: Path, experiment: Path):
+def apply(source: Path, experiment: Path, guest_page_bytes=16384):
+    if guest_page_bytes not in (4096, 16384):
+        raise ValueError("unsupported guest page size")
     path = source / 'arch/lkl/mm/nce_mmu.c'
     text = (experiment / 'lkl-nce-mmu.c').read_text()
 
@@ -315,11 +317,11 @@ void nce_translation_cleanup(void)
         if context.read_text() != content:
             context.write_text(content)
     header = source / 'arch/lkl/include/asm/nce-translation.h'
-    content = (experiment / 'translation/kernel-api.h').read_bytes()
+    content = (experiment / 'translation/kernel-api.h').read_bytes().replace(b'#include "../layout.h"', b'#include "nce-layout.h"')
     if not header.exists() or header.read_bytes() != content:
         header.write_bytes(content)
     header = source / 'arch/lkl/include/asm/nce-direct-page-table.h'
-    content = (experiment / 'direct/page-table-layout.h').read_bytes()
+    content = (experiment / 'direct/page-table-layout.h').read_bytes().replace(b'#include "../layout.h"', b'#include "nce-layout.h"')
     if not header.exists() or header.read_bytes() != content:
         header.write_bytes(content)
 
@@ -387,3 +389,23 @@ SYSCALL_DEFINE6(nce_mmap, unsigned long, addr, unsigned long, len,
             if content.count(marker) != 1:
                 raise RuntimeError('Translation first user address mismatch')
             pgtable.write_text(content.replace(marker, replacement))
+
+    if guest_page_bytes == 4096:
+        replacements = {
+            'arch/lkl/include/asm/page-mmu.h': [('#define PAGE_SHIFT\t14', '#define PAGE_SHIFT\t12')],
+            'arch/lkl/include/asm/pgtable-mmu-3level.h': [
+                ('#define PGDIR_SHIFT\t36', '#define PGDIR_SHIFT\t30'),
+                ('#define PMD_SHIFT\t25', '#define PMD_SHIFT\t21'),
+                *[(f'#define PTRS_PER_{level} 2048', f'#define PTRS_PER_{level} 512') for level in ('PTE', 'PMD', 'PGD')]],
+        }
+        for name, pairs in replacements.items():
+            path = source / name
+            content = path.read_text()
+            for before, after in pairs:
+                if content.count(before) != 1:
+                    raise RuntimeError('4 KiB kernel source mismatch: ' + name)
+                content = content.replace(before, after)
+            path.write_text(content)
+
+        import lkl_4k_vmalloc_patch
+        lkl_4k_vmalloc_patch.apply(source)

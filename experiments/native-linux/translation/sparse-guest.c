@@ -10,7 +10,8 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
-#define PAGE 16384UL
+#include "../layout.h"
+#define PAGE NCE_PAGE_SIZE
 #define CHECK(c) \
     do { \
         if (!(c)) { \
