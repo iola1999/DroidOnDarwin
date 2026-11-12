@@ -20,7 +20,22 @@
 
 2026-11-13 主线依次接收 `c4ffb10`、`27358ed` 和 `ddc064b6` 的固定阶段，保留 `2567514` 的 4 KiB EROFS gbuf、原根目录准备与 bootstrap binfmt 注销。共同 init 验证器采用 `original_input`，继续检查单条实际布局、guest 下界/上界、历史 64 GiB lifecycle 及 HyperOS original 的 512 GiB 要求；生成 HyperOS contract 输入前清除 SDK 专用分区记录，再保留原地址边界检查。
 
-主线独立审阅 DM 固定 ABI、绝对 LP 起点、容量、只读条件、fd 与设备移除顺序。固定 16 KiB 原报告通过 31 项 SDK contract 检查，共享 HyperOS 输入通过 27 项检查，C 格式、Python 编译与差异检查成功。两页主线 core 的 121/120 项输入仍一致；正式主线组合的两页原 init 和实际生成 iOS 副本继续验收，侧树的成功及首轮失败保持原构建身份。
+主线独立审阅 DM 固定 ABI、绝对 LP 起点、容量、只读条件、fd 与设备移除顺序。固定 16 KiB 原报告通过 31 项 SDK contract 检查，共享 HyperOS 输入通过 27 项检查，C 格式、Python 编译与差异检查成功。两页主线 core 的 121/120 项输入仍一致；正式主线组合已完成下述两页原 init 和实际生成 iOS 副本检查，侧树的成功及首轮失败保持原构建身份。
+
+### 主线两页组合结果
+
+主线首轮的两页 lifecycle 成功，4 KiB 的 EROFS 挂载失败已消失。CLI original 随后出现[多段 JSON 与内存采样交错](../bug-fix/2026-11-13-原始init日志并发回归.md)，两份首轮 original 保持观察失败。修复 stdout 流锁后，在新的 `sdk-dm-main-4k-v2`、`sdk-dm-main-16k-v2` 完成 CLI/GCD 的 lifecycle 与 original；八入口均 returncode=0、`observation_validated=true`，每个入口保留 19 项原 metadata，页表告警为零。
+
+| 主线报告 | 原报告 bytes / SHA-256 | lifecycle 回收 | original CLI/GCD 回收 |
+| --- | --- | --- | --- |
+| sdk-dm-main-4k-v2/summary.json | 119,724,364 / `471d54d3fc64bb2adeae4ce7177ddabbec2f58cc079399b2f89ca6bb8023761b` | 各 2/2 | 190/190、191/191 |
+| sdk-dm-main-16k-v2/summary.json | 116,956,733 / `cbe0c849f2810727bee28525a5ae6b58e85a018c945edee2b66114ee575ea81d` | 各 2/2 | 各 190/190 |
+
+lifecycle 的五个 DM 设备严格移除；original 保留原卸载拒绝、fd 关闭、halt 和映射释放。两页原 KeyMint exec 与四个 default VINTF 检查通过，实际 `getHardwareInfo()` 响应尚未读取。SQLite 创建仍返回 -30，后续只读 open=-2；NetBpfLoad 在 `bpf_jit_enable` 缺失后执行原 reboot。PID1 status=1、deadline_stop=false，完整原启动继续验收。
+
+两页 SDK contract 各 31 项、共享 HyperOS contract 27 项检查成功。iOS runtime 重新构建后，各 15 条命令、115 项输入匹配；实际 init runner/execution 各两条命令，4 KiB 为 172 项输入，16 KiB 为 171 项。首次使用旧 runtime 编译实际副本在头文件摘要检查处停止，失败保存后使用新 runtime 复验成功。
+
+[主线组合归档](../../../../experiments/native-linux/results-sdk-dm-main-20261113.json)保存关键观察、原记录索引、205 项独立输入摘要、日志失败及 iOS 身份失败。归档前逐项核对成功；归档后清理四轮展开 root、实验二进制、原 system_dlkm 中间片段和 iOS 对象/静态库，共 108 项，包含 32 个符号链接，其余文件的逻辑大小合计 194,751,892 bytes；实际存储释放量未测量。两份大 summary 用 `zstd -19 --rm` 压缩，解压摘要与原值一致，原大小与摘要、压缩文件身份及清单写入 `work/cleanup-2026-11-13/sdk-dm-main-v1.json` 并由归档保存。原盘、固定原库、元数据来源、生成 C/TSV、原始 JSONL 和 `init-bootstrap-main-core-{4k,16k}-v1` 继续保留供数据阶段使用。已清理产物可按归档的原命令再生成；读取原报告使用对应 `.json.zst` 文件。
 
 ### 原盘与实际映射
 

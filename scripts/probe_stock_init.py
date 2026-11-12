@@ -24,6 +24,18 @@ def sha(path):
         return hashlib.file_digest(stream, 'sha256').hexdigest()
 
 
+def read_observations(path):
+    rows = []
+    with path.open() as source:
+        for number, line in enumerate(source, 1):
+            if line.startswith('{'):
+                try:
+                    rows.append(json.loads(line))
+                except json.JSONDecodeError as error:
+                    raise ValueError(f'观察日志解析失败：{path}:{number}:{error.colno}: {error.msg}') from error
+    return rows
+
+
 def prepare(runtime, desktop, metadata, out, system_image=None, *, sdk_partitions=False):
     if sdk_partitions and not system_image:
         raise ValueError('完整 SDK36 LP 需要原始系统镜像')
@@ -421,8 +433,18 @@ def main():
                     returncode = proc.returncode
                 except subprocess.TimeoutExpired:
                     returncode = 'timeout'
-            rows = [json.loads(line) for line in (out / (label + '.jsonl')).read_text().splitlines() if line.startswith('{')]
             stderr = (out / (label + '.log')).read_text()
+            output = out / (label + '.jsonl')
+            try:
+                rows = read_observations(output)
+            except ValueError as error:
+                failure = {'stage': 'observation_json_parse', 'entry': entry, 'mode': mode,
+                           'returncode': returncode, 'error': str(error),
+                           'raw_stdout': str(output), 'raw_stdout_sha256': sha(output)}
+                result['runs'].append({**failure, 'observation_validated': False, 'results': [], 'stderr': stderr})
+                (out / 'failure.json').write_text(json.dumps(failure, ensure_ascii=False, indent=2) + '\n')
+                (out / 'summary.json').write_text(json.dumps(result, indent=2) + '\n')
+                raise SystemExit(str(error))
             valid = returncode == 0 and validate(rows, mode, bool(selected['NCE_STOCK_INIT_SYSTEM']),
                                                guest_page_bytes=config.get('guest_page_bytes', 16384), kernel_log=stderr,
                                                original_input=prepared if args.hyperos_manifest or args.sdk_partitions else None) and 'stock_init_exec_errno' not in stderr

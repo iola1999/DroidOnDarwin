@@ -1,0 +1,316 @@
+{
+  "scope": "Actual stock-init-trace.h concurrent pthread/stdout regression; memcpy guest reads and getpid simulation",
+  "old_header_revision": "ddc064b6c0112c4f99be410fd844255844f06c2b",
+  "fixed_header_source": "Main workspace flockfile/funlockfile implementation; source identified by input SHA-256",
+  "reports": {
+    "old": {
+      "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/stock-init-keymint/work/native-linux-nce/stock-init-trace-concurrent-old-v1/result.json",
+      "bytes": 13366,
+      "sha256": "c7bd4f696d1a2792252930cb62d979082af2ce661698a4108b1e05447908a3e1",
+      "report": {
+        "test": "stock_init_trace_concurrent_json",
+        "passed": false,
+        "iterations": 128,
+        "threads": 4,
+        "host": "macOS-27.0-arm64-arm-64bit-Mach-O",
+        "sha256": {
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/stock-init-keymint/experiments/native-linux/translation/stock-init-trace-test.c": "e1ef0ff0a52ca71da0158ed09c55b763dbe04631192d08e3de84651fee0fe39e",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/stock-init-keymint/scripts/test_stock_init_trace.py": "3ceaeccbde200d07064a28b31594673c81d1d08fd2eef24cf77cf96d85ab26b7",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/stock-init-keymint/experiments/native-linux/translation/stock-init-trace.h": "97538991e6bf580e43e52668d16adbcf94f7352553d927878be6165b9eb6a8bd"
+        },
+        "commands": {
+          "build": [
+            "/usr/bin/clang",
+            "-std=c11",
+            "-O2",
+            "-Wall",
+            "-Wextra",
+            "-Werror",
+            "-pthread",
+            "-DSTOCK_INIT_TRACE_HEADER=\"/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/stock-init-keymint/experiments/native-linux/translation/stock-init-trace.h\"",
+            "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/stock-init-keymint/experiments/native-linux/translation/stock-init-trace-test.c",
+            "-o",
+            "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/stock-init-keymint/work/native-linux-nce/stock-init-trace-concurrent-old-v1/stock-init-trace-test"
+          ],
+          "run": [
+            "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/stock-init-keymint/work/native-linux-nce/stock-init-trace-concurrent-old-v1/stock-init-trace-test",
+            "128"
+          ]
+        },
+        "program_returncode": 0,
+        "line_count": 4993,
+        "expected_line_count": 4993,
+        "parse_error_count": 518,
+        "parse_errors": [
+          {
+            "line": 2,
+            "error": "Expecting ',' delimiter: line 1 column 97 (char 96)",
+            "line_sha256": "f5a1522aa58d4cf748543a033ece3d9efc54f5f36e69b59c9aa64f5bd0dee623",
+            "preview": "{\"stock_init_write\":64,\"fd\":1000,\"result\":2304,\"vector\":0,\"bytes\":2304,\"captured\":2048,\"hex\":\"{\"memory_sample\":true,\"iteration\":0,\"rss_bytes\":1,\"guest_bytes\":7}"
+          },
+          {
+            "line": 3,
+            "error": "Extra data: line 1 column 2 (char 1)",
+            "line_sha256": "97b6a04943cd969d511e2f7fbe7f36cba7f54d83cb5934f107c6520ccb44bdb0",
+            "preview": "031425364758697a8b9cadbecfe0f102132435465768798a9bacbdcedff00112233445566778899aabbccddeef00112233445566778899aabbccddeeff102132435465768798a9ba{\"memory_sample\":true,\"iteration\":1,\"rss_bytes\":4097,\"guest_bytes\":16391}"
+          },
+          {
+            "line": 9,
+            "error": "Expecting ',' delimiter: line 1 column 61 (char 60)",
+            "line_sha256": "7d0aa02175a9c67dfac3cf9a1075218b09c6d1dd5242606abfef076f32f698d0",
+            "preview": "{\"stock_init_security\":5,\"result\":0,\"fd\":-1,\"path_hex\":\"2f{\"memory_sample\":true,\"iteration\":7,\"rss_bytes\":28673,\"guest_bytes\":114695}"
+          },
+          {
+            "line": 34,
+            "error": "Extra data: line 1 column 3 (char 2)",
+            "line_sha256": "ccde6aba69478a82c1e791a8172d6f515dfb42d22f71410db4c4259bbb5f8126",
+            "preview": "73cbdcedfe0f2031425364758697a8b9cadbecfd0e1f30415263748596a7b8c9daebfc0d1e2f4051627384{\"memory_sample\":true,\"iteration\":32,\"rss_bytes\":131073,\"guest_bytes\":524295}"
+          },
+          {
+            "line": 61,
+            "error": "Extra data: line 1 column 3 (char 2)",
+            "line_sha256": "2cd0cfd2eea6807fe4765727f1a92efa7974a12bd16de4cce6684172db266947",
+            "preview": "95a6b7c8d9eafb0c1d2e3f5061728394a5b6c7d8e9fa0b1c2d3e4f60718293a4b5c6d7e8f90a1b2c3d4e5f708192a3b4c5d6e7f8091a2b3c4d5e6f8091a2b3c4797374656d2f6574632f73656c696e75782f74726163652d636f6e63757272656e63792d66696c65\",\"name_hex\":\"73656375726974792e73656c696e7578\",\"value_hex\":\"0724415e7b98b5d2ef0c29d5e6f708192a3b4c5d6e7f90a1b2c3{\"memory_sample\":true,\"iteration\":59,\"rss_bytes\":241665,\"guest_bytes\":966663}"
+          },
+          {
+            "line": 67,
+            "error": "Expecting value: line 1 column 1 (char 0)",
+            "line_sha256": "2425920390bcd4fd62db5bb62d329c11d642729856deadcabbf836efa83a4cc7",
+            "preview": "d4e5f60718293a4b5c6d7e8fa0b1c2d3e4f5061728394a5b6c7d8e9fb0c1d2e3f4054663809d{\"memory_sample\":true,\"iteration\":65,\"rss_bytes\":266241,\"guest_bytes\":1064967}"
+          },
+          {
+            "line": 99,
+            "error": "Extra data: line 1 column 3 (char 2)",
+            "line_sha256": "39407cd74f33cd06b1b8c922b54c4d3ce11e7bb2c3addf4bb74271d2f77d7182",
+            "preview": "16ba{\"memory_sample\":true,\"iteration\":97,\"rss_bytes\":397313,\"guest_bytes\":1589255}"
+          },
+          {
+            "line": 115,
+            "error": "Expecting value: line 1 column 1 (char 0)",
+            "line_sha256": "386b14619c84ad91c047b81acde14ee92748056838ff6100659bb04affff974b",
+            "preview": "d7f4112e4b6885a2bfdcf91633506d8aa7c4e1fe2738495a6b7c8d9eafc0d1e2f30415263748596a7b8c9daebfd0e1f2031425364758697a8b9cadbecfe0f102132435465768798a9bacbdcedff00112233445566778899aabbc{\"memory_sample\":true,\"iteration\":113,\"rss_bytes\":462849,\"guest_bytes\":1851399}"
+          }
+        ],
+        "artifacts": {
+          "stock-init-trace-test": {
+            "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/stock-init-keymint/work/native-linux-nce/stock-init-trace-concurrent-old-v1/stock-init-trace-test",
+            "bytes": 35336,
+            "sha256": "fc0d03307b4d795b04c1f53cdbf5370ce315c4aac604d819ee0932c0e3f9621a"
+          },
+          "trace.jsonl": {
+            "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/stock-init-keymint/work/native-linux-nce/stock-init-trace-concurrent-old-v1/trace.jsonl",
+            "bytes": 1151960,
+            "sha256": "2a5793795cba9499654580ad5ede108494e1ba8bff17bd5c837e9e6bdc7c628d"
+          },
+          "trace.stderr": {
+            "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/stock-init-keymint/work/native-linux-nce/stock-init-trace-concurrent-old-v1/trace.stderr",
+            "bytes": 75,
+            "sha256": "4770eb31c46c2b208979ece7cc35dd693ddfd20743c86a9b9f0961e854a6ac2a"
+          },
+          "build.log": {
+            "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/stock-init-keymint/work/native-linux-nce/stock-init-trace-concurrent-old-v1/build.log",
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        "missing_row_count": 628,
+        "unexpected_row_count": 110,
+        "missing_samples": [
+          {
+            "row": {
+              "bytes": 2304,
+              "captured": 2048,
+              "fd": 1000,
+              "hex": "031425364758697a8b9cadbecfe0f102132435465768798a9bacbdcedff00112233445566778899aabbccddeef00112233445566778899aabbccddeeff102132435465768798a9bacbdcedfe0f2031425364758697a8b9cadbecfd0e1f30415263748596a7b8c9daebfc0d1e2f405162738495a6b7c8d9eafb0c1d2e3f5061728394a5b6c7d8e9fa0b1c2d3e4f60718293a4b5c6d7e8f90a1b2c3d4e5f708192a3b4c5d6e7f8091a2b3c4d5e6f8091a2b3c4d5e6f708192a3b4c5d6e7f90a1b2c3d4e5f60718293a4b5c6d7e8fa0b1c2d3e4f5061728394a5b6c7d8e9fb0c1d2e3f405162738495a6b7c8d9eafc0d1e2f30415263748596a7b8c9daebfd0e1f2031425364758697a8b9cadbecfe0f102132435465768798a9bacbdcedff00112233445566778899aabbccddeef00112233445566778899aabbccddeeff102132435465768798a9bacbdcedfe0f2031425364758697a8b9cadbecfd0e1f30415263748596a7b8c9daebfc0d1e2f405162738495a6b7c8d9eafb0c1d2e3f5061728394a5b6c7d8e9fa0b1c2d3e4f60718293a4b5c6d7e8f90a1b2c3d4e5f708192a3b4c5d6e7f8091a2b3c4d5e6f8091a2b3c4d5e6f708192a3b4c5d6e7f90a1b2c3d4e5f60718293a4b5c6d7e8fa0b1c2d3e4f5061728394a5b6c7d8e9fb0c1d2e3f405162738495a6b7c8d9eafc0d1e2f30415263748596a7b8c9daebfd0e1f2031425364758697a8b9cadbecfe0f102132435465768798a9bacbdcedff00112233445566778899aabbccddeef00112233445566778899aabbccddeeff102132435465768798a9bacbdcedfe0f2031425364758697a8b9cadbecfd0e1f30415263748596a7b8c9daebfc0d1e2f405162738495a6b7c8d9eafb0c1d2e3f5061728394a5b6c7d8e9fa0b1c2d3e4f60718293a4b5c6d7e8f90a1b2c3d4e5f708192a3b4c5d6e7f8091a2b3c4d5e6f8091a2b3c4d5e6f708192a3b4c5d6e7f90a1b2c3d4e5f60718293a4b5c6d7e8fa0b1c2d3e4f5061728394a5b6c7d8e9fb0c1d2e3f405162738495a6b7c8d9eafc0d1e2f30415263748596a7b8c9daebfd0e1f2031425364758697a8b9cadbecfe0f102132435465768798a9bacbdcedff00112233445566778899aabbccddeef00112233445566778899aabbccddeeff102132435465768798a9bacbdcedfe0f2031425364758697a8b9cadbecfd0e1f30415263748596a7b8c9daebfc0d1e2f405162738495a6b7c8d9eafb0c1d2e3f5061728394a5b6c7d8e9fa0b1c2d3e4f60718293a4b5c6d7e8f90a1b2c3d4e5f708192a3b4c5d6e7f8091a2b3c4d5e6f8091a2b3c4d5e6f708192a3b4c5d6e7f90a1b2c3d4e5f60718293a4b5c6d7e8fa0b1c2d3e4f5061728394a5b6c7d8e9fb0c1d2e3f405162738495a6b7c8d9eafc0d1e2f30415263748596a7b8c9daebfd0e1f2031425364758697a8b9cadbecfe0f102132435465768798a9bacbdcedff00112233445566778899aabbccddeef00112233445566778899aabbccddeeff102132435465768798a9bacbdcedfe0f2031425364758697a8b9cadbecfd0e1f30415263748596a7b8c9daebfc0d1e2f405162738495a6b7c8d9eafb0c1d2e3f5061728394a5b6c7d8e9fa0b1c2d3e4f60718293a4b5c6d7e8f90a1b2c3d4e5f708192a3b4c5d6e7f8091a2b3c4d5e6f8091a2b3c4d5e6f708192a3b4c5d6e7f90a1b2c3d4e5f60718293a4b5c6d7e8fa0b1c2d3e4f5061728394a5b6c7d8e9fb0c1d2e3f405162738495a6b7c8d9eafc0d1e2f30415263748596a7b8c9daebfd0e1f2031425364758697a8b9cadbecfe0f102132435465768798a9bacbdcedff00112233445566778899aabbccddeef00112233445566778899aabbccddeeff102132435465768798a9bacbdcedfe0f2031425364758697a8b9cadbecfd0e1f30415263748596a7b8c9daebfc0d1e2f405162738495a6b7c8d9eafb0c1d2e3f5061728394a5b6c7d8e9fa0b1c2d3e4f60718293a4b5c6d7e8f90a1b2c3d4e5f708192a3b4c5d6e7f8091a2b3c4d5e6f8091a2b3c4d5e6f708192a3b4c5d6e7f90a1b2c3d4e5f60718293a4b5c6d7e8fa0b1c2d3e4f5061728394a5b6c7d8e9fb0c1d2e3f405162738495a6b7c8d9eafc0d1e2f30415263748596a7b8c9daebfd0e1f2031425364758697a8b9cadbecfe0f102132435465768798a9bacbdcedff00112233445566778899aabbccddeef00112233445566778899aabbccddeeff102132435465768798a9bacbdcedfe0f2031425364758697a8b9cadbecfd0e1f30415263748596a7b8c9daebfc0d1e2f405162738495a6b7c8d9eafb0c1d2e3f5061728394a5b6c7d8e9fa0b1c2d3e4f60718293a4b5c6d7e8f90a1b2c3d4e5f708192a3b4c5d6e7f8091a2b3c4d5e6f8091a2b3c4d5e6f708192a3b4c5d6e7f90a1b2c3d4e5f60718293a4b5c6d7e8fa0b1c2d3e4f5061728394a5b6c7d8e9fb0c1d2e3f405162738495a6b7c8d9eafc0d1e2f30415263748596a7b8c9daebfd0e1f2031425364758697a8b9cadbecfe0f102132435465768798a9bacbdcedff00112233445566778899aabbccddeef00112233445566778899aabbccddeeff102132435465768798a9bacbdcedfe0f2031425364758697a8b9cadbecfd0e1f30415263748596a7b8c9daebfc0d1e2f405162738495a6b7c8d9eafb0c1d2e3f5061728394a5b6c7d8e9fa0b1c2d3e4f60718293a4b5c6d7e8f90a1b2c3d4e5f708192a3b4c5d6e7f8091a2b3c4d5e6f8091a2b3c4d5e6f708192a3b4c5d6e7f90a1b2c3d4e5f60718293a4b5c6d7e8fa0b1c2d3e4f5061728394a5b6c7d8e9fb0c1d2e3f405162738495a6b7c8d9eafc0d1e2f30415263748596a7b8c9daebfd0e1f2",
+              "result": 2304,
+              "stock_init_write": 64,
+              "vector": 0
+            },
+            "count": 1
+          },
+          {
+            "row": {
+              "bytes": 48,
+              "captured": 48,
+              "fd": 2000,
+              "hex": "78899aabbccddeef00112233445566778899aabbccddeeff102132435465768798a9bacbdcedfe0f2031425364758697",
+              "result": 144,
+              "stock_init_write": 66,
+              "vector": 0
+            },
+            "count": 1
+          },
+          {
+            "row": {
+              "bytes": 96,
+              "captured": 96,
+              "fd": 2000,
+              "hex": "62738495a6b7c8d9eafb0c1d2e3f5061728394a5b6c7d8e9fa0b1c2d3e4f60718293a4b5c6d7e8f90a1b2c3d4e5f708192a3b4c5d6e7f8091a2b3c4d5e6f8091a2b3c4d5e6f708192a3b4c5d6e7f90a1b2c3d4e5f60718293a4b5c6d7e8fa0b1",
+              "result": 144,
+              "stock_init_write": 66,
+              "vector": 1
+            },
+            "count": 1
+          }
+        ],
+        "unexpected_samples": [
+          {
+            "row": {
+              "bytes": 96,
+              "captured": 96,
+              "fd": 2001,
+              "hex": "62738495a6b7c8d9eafb0c1d2e3f5061728394a5b6c7d8e9fa0b1c2d3e4f60718293a4b5c6d7e8f90a1b2c3d4e5f7081652f6574632f73656c696e75782f7492a3b4c5d6e7f8091a2b3c4d5e6f8091a2b3c4d5e6f708192a3b4c5d6e7f90a1b2c3d4e5f60718293a4b5c6d7e8fa0b1",
+              "result": 144,
+              "stock_init_write": 66,
+              "vector": 1
+            },
+            "count": 1
+          },
+          {
+            "row": {
+              "args": [
+                4366128392,
+                4366128420,
+                4366128444,
+                4096,
+                0,
+                0
+              ],
+              "paths_hex": [
+                "2f6465762f6c6f6f702d74726163652d636f6e63757272656e6379",
+                "2f646174612f74726163652d636fdaf714314e6b88a5c2dffc193653708daac7e4016e63757272656e6379",
+                "65787434"
+              ],
+              "pid": 70268,
+              "result": 0,
+              "stock_init_block": 40
+            },
+            "count": 1
+          },
+          {
+            "row": {
+              "args": [
+                4366128392,
+                4366128420,
+                4366128444,
+                4096,
+                0,
+                0
+              ],
+              "paths_hex": [
+                "2f6465762f6c6f6f702d74726163652d636f6e63757272656e6379",
+                "2f6461a3b4c5d6e7f8091a2b3c4d5e6f8091a2b3c4d5e6f708192a3b4c5d6e7f90a1b2c3d4e5f60718293a4b5c6d7e8fa0b1c2d3e4f5061728394a5b6c7d8e9fb0c1d2e3f405162738495a6b7c8d9eafc0d1e2f30415263748596a7b8c9daebfd0e1f2031425364758697a8b9cad74612f74726163652d636f6e63757272656e6379",
+                "bcd9f613304d6a87a4c1defb1835526f8ca9c6e3001d3a577491aecbe805223f5c7996b3d0ed0a2744617e9bb8d5f20f2c496683a0bddaf714314e6b88a5c2dffc193653708daac7e4011e3b587592afcce90623405d7a97b4d1ee0b2845627f9cb9d6f3102d4a6784a1bedbf815324f6c89a6c3e0fd1a3754718eab65787434"
+              ],
+              "pid": 70268,
+              "result": -16,
+              "stock_init_block": 40
+            },
+            "count": 1
+          }
+        ],
+        "stub_calls": {
+          "stock_init_trace_calls": true,
+          "copy_user": 18048,
+          "getpid": 128,
+          "threads": 4
+        },
+        "inputs_unchanged": true
+      }
+    },
+    "fixed": {
+      "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/stock-init-keymint/work/native-linux-nce/stock-init-trace-concurrent-fixed-v1/result.json",
+      "bytes": 3196,
+      "sha256": "004a8441784000f6e9ea0b26de4906af0d88c1931572bbbdb5b3d784731d05ea",
+      "report": {
+        "test": "stock_init_trace_concurrent_json",
+        "passed": true,
+        "iterations": 128,
+        "threads": 4,
+        "host": "macOS-27.0-arm64-arm-64bit-Mach-O",
+        "sha256": {
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/stock-init-keymint/experiments/native-linux/translation/stock-init-trace-test.c": "e1ef0ff0a52ca71da0158ed09c55b763dbe04631192d08e3de84651fee0fe39e",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/stock-init-keymint/scripts/test_stock_init_trace.py": "3ceaeccbde200d07064a28b31594673c81d1d08fd2eef24cf77cf96d85ab26b7",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/experiments/native-linux/translation/stock-init-trace.h": "ca9176469ecb35fdad2e62ed1a1f7e8a98e94fb2897d891dd5c6086bc2061e5a"
+        },
+        "commands": {
+          "build": [
+            "/usr/bin/clang",
+            "-std=c11",
+            "-O2",
+            "-Wall",
+            "-Wextra",
+            "-Werror",
+            "-pthread",
+            "-DSTOCK_INIT_TRACE_HEADER=\"/Users/fan/project/github.com/iola1999/DroidOnDarwin/experiments/native-linux/translation/stock-init-trace.h\"",
+            "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/stock-init-keymint/experiments/native-linux/translation/stock-init-trace-test.c",
+            "-o",
+            "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/stock-init-keymint/work/native-linux-nce/stock-init-trace-concurrent-fixed-v1/stock-init-trace-test"
+          ],
+          "run": [
+            "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/stock-init-keymint/work/native-linux-nce/stock-init-trace-concurrent-fixed-v1/stock-init-trace-test",
+            "128"
+          ]
+        },
+        "program_returncode": 0,
+        "line_count": 4993,
+        "expected_line_count": 4993,
+        "parse_error_count": 0,
+        "parse_errors": [],
+        "artifacts": {
+          "stock-init-trace-test": {
+            "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/stock-init-keymint/work/native-linux-nce/stock-init-trace-concurrent-fixed-v1/stock-init-trace-test",
+            "bytes": 35432,
+            "sha256": "42d74ef05b68a4ffd7a1625b6916aab6f910270292d479c44552472fcaff831c"
+          },
+          "trace.jsonl": {
+            "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/stock-init-keymint/work/native-linux-nce/stock-init-trace-concurrent-fixed-v1/trace.jsonl",
+            "bytes": 1151960,
+            "sha256": "15577500ac6179a7a782effb7fe5c2a36b2cda96a33b011d4d66269a91c8b4fb"
+          },
+          "trace.stderr": {
+            "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/stock-init-keymint/work/native-linux-nce/stock-init-trace-concurrent-fixed-v1/trace.stderr",
+            "bytes": 75,
+            "sha256": "4770eb31c46c2b208979ece7cc35dd693ddfd20743c86a9b9f0961e854a6ac2a"
+          },
+          "build.log": {
+            "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/stock-init-keymint/work/native-linux-nce/stock-init-trace-concurrent-fixed-v1/build.log",
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        "missing_row_count": 0,
+        "unexpected_row_count": 0,
+        "missing_samples": [],
+        "unexpected_samples": [],
+        "stub_calls": {
+          "stock_init_trace_calls": true,
+          "copy_user": 18048,
+          "getpid": 128,
+          "threads": 4
+        },
+        "inputs_unchanged": true
+      }
+    }
+  },
+  "checks": {
+    "old_header_reproduced_invalid_json": true,
+    "fixed_header_complete_json_and_content": true,
+    "inputs_and_raw_artifacts_matched": true,
+    "existing_source_files_modified": false
+  },
+  "complexity_review": {
+    "consumers": [
+      "scripts/test_stock_init_trace.py compiles the C fixture against the requested header"
+    ],
+    "state": [
+      "One atomic start flag lets four independent pthreads begin together",
+      "Counters compare unordered complete rows"
+    ],
+    "ablation": [
+      "Removing the memory thread stops covering the sampled output in the original failure",
+      "Checking syntax alone misses 110 valid but unexpected rows in the baseline",
+      "Including a rewritten test header would stop covering the actual production trace implementation"
+    ]
+  }
+}

@@ -225,10 +225,12 @@ static void stock_init_observe_context(long pid, char *previous, long *previous_
         return;
     *previous_result = result;
     memcpy(previous, label, sizeof(label));
+    flockfile(stdout);
     printf("{\"stock_init_task_context\":true,\"ancestor_pid\":%ld,\"read_result\":%ld,\"label_hex\":\"", pid, result);
     for (long i = 0; i < result && i < (long)sizeof(label) - 1; ++i)
         printf("%02x", (unsigned char)label[i]);
     puts("\"}");
+    funlockfile(stdout);
 }
 
 static int stock_init_run(void)

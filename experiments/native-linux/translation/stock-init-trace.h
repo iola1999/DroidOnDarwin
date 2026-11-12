@@ -16,10 +16,13 @@ static void stock_init_trace_write(long number, const long *args, long result)
         size_t size = vectors[1] < sizeof(data) ? vectors[1] : sizeof(data);
         if (!size || copy_user(data, vectors[0], size, 0))
             continue;
+        /* 内存采样线程也写 stdout，流锁必须覆盖整条多段记录。 */
+        flockfile(stdout);
         printf("{\"stock_init_write\":%ld,\"fd\":%ld,\"result\":%ld,\"vector\":%u,\"bytes\":%lu,\"captured\":%lu,\"hex\":\"", number, args[0], result, i, vectors[1], size);
         for (size_t j = 0; j < size; ++j)
             printf("%02x", data[j]);
         puts("\"}");
+        funlockfile(stdout);
     }
 }
 
@@ -64,6 +67,7 @@ static void stock_init_trace_security(long number, const long *args, long result
         if (bytes && copy_user(value, args[2], bytes, 0))
             bytes = 0;
     }
+    flockfile(stdout);
     printf("{\"stock_init_security\":%ld,\"result\":%ld,\"fd\":%ld,\"path_hex\":\"",
            number, result, fd_based ? args[0] : -1L);
     for (size_t i = 0; i < strlen((char *)path); ++i)
@@ -75,6 +79,7 @@ static void stock_init_trace_security(long number, const long *args, long result
     for (size_t i = 0; i < bytes; ++i)
         printf("%02x", value[i]);
     puts("\"}");
+    funlockfile(stdout);
 }
 
 static void stock_init_trace_result(long number, const long *args, long result, unsigned long pc)
@@ -102,8 +107,10 @@ static void stock_init_trace_block(long number, const long *args, long result)
         !strstr((char *)paths[0], "device-mapper") && !strstr((char *)paths[0], "/dev/dm-"))
         return;
     long pid_args[6] = {0};
+    long pid = run_syscall(172, pid_args);
+    flockfile(stdout);
     printf("{\"stock_init_block\":%ld,\"pid\":%ld,\"result\":%ld,\"args\":[%lu,%lu,%lu,%lu,%lu,%lu],\"paths_hex\":[",
-           number, run_syscall(172, pid_args), result,
+           number, pid, result,
            (unsigned long)args[0], (unsigned long)args[1], (unsigned long)args[2],
            (unsigned long)args[3], (unsigned long)args[4], (unsigned long)args[5]);
     for (unsigned i = 0; i < count; ++i) {
@@ -113,4 +120,5 @@ static void stock_init_trace_block(long number, const long *args, long result)
         putchar('"');
     }
     puts("]}");
+    funlockfile(stdout);
 }
