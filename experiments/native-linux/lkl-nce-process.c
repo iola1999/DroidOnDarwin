@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0 */
 #include <linux/mm.h>
 #include <linux/mman.h>
+#include <linux/pid_namespace.h>
 #include <linux/sched/signal.h>
 #include <linux/sched/task.h>
 #include <linux/syscalls.h>
@@ -28,6 +29,42 @@ long nce_launch(long *params)
         .fn_arg = (void *)params[0],
     };
     return kernel_clone(&args);
+}
+
+long nce_stop_namespace(long *params)
+{
+    struct task_struct *target;
+    struct pid_namespace *namespace;
+    pid_t pid;
+    int result = -ESRCH;
+
+    if (current->thread.nce_state)
+        return -ENOSYS;
+    pid = params[0];
+    if (pid <= 0 || params[0] != pid)
+        return -EINVAL;
+    for (unsigned i = 1; i < 6; ++i) {
+        if (params[i])
+            return -EINVAL;
+    }
+
+    rcu_read_lock();
+    read_lock(&tasklist_lock);
+    target = find_task_by_vpid(pid);
+    if (target) {
+        namespace = task_active_pid_ns(target);
+        if (target->real_parent != current || !READ_ONCE(target->thread.nce_state) ||
+            !thread_group_leader(target) || !is_child_reaper(task_pid(target)) ||
+            namespace == &init_pid_ns || namespace->parent != task_active_pid_ns(current))
+            result = -EPERM;
+        else {
+            /* Host teardown must remain possible after the guest loads its SELinux policy. */
+            result = group_send_sig_info(SIGKILL, SEND_SIG_PRIV, target, PIDTYPE_TGID);
+        }
+    }
+    read_unlock(&tasklist_lock);
+    rcu_read_unlock();
+    return result;
 }
 
 void start_thread(struct pt_regs *regs, unsigned long entry, unsigned long stack)

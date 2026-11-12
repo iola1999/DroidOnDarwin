@@ -4,10 +4,13 @@
 #include <sched.h>
 #include <signal.h>
 #include <stdio.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/mount.h>
 #include <sys/stat.h>
+#include <sys/statfs.h>
+#include <sys/sysmacros.h>
 #include <sys/types.h>
 #include <sys/xattr.h>
 #include <unistd.h>
@@ -21,6 +24,44 @@
     } while (0)
 
 void signal_kernel_restorer_tests(void);
+
+static void data_checks(void)
+{
+    FILE *input = fopen("/stock-init-data", "r");
+    if (!input) {
+        CHECK(errno == ENOENT);
+        return;
+    }
+    int held;
+    unsigned long long device;
+    CHECK(fscanf(input, "%d %llu", &held, &device) == 2 && fclose(input) == 0);
+    /* /probe-guest 的 exec 已关闭父任务目录 fd 的 CLOEXEC 副本。 */
+    CHECK(held >= 3 && fcntl(held, F_GETFD) == -1 && errno == EBADF);
+    held = open("/data", O_RDONLY | O_DIRECTORY | O_CLOEXEC);
+    struct stat status, node;
+    struct statfs filesystem;
+    CHECK(held >= 3 && fcntl(held, F_GETFD) == FD_CLOEXEC && fstat(held, &status) == 0);
+    CHECK(stat("/dev/block/vdc", &node) == 0 && status.st_dev == node.st_rdev);
+    uint64_t actual_device = ((uint64_t)major(status.st_dev) << 32) | minor(status.st_dev);
+    CHECK(actual_device == device);
+    CHECK(fstatfs(held, &filesystem) == 0 && filesystem.f_type == 0xef53);
+    int fd = open("/data/.nce-init-generation", O_RDONLY | O_CLOEXEC);
+    unsigned long long previous = 0;
+    char text[128] = {0};
+    if (fd >= 0) {
+        ssize_t count = read(fd, text, sizeof(text) - 1);
+        char extra;
+        CHECK(count > 0 && close(fd) == 0 && sscanf(text, "DroidOnDarwin stock-init generation %llu %c", &previous, &extra) == 1);
+    } else
+        CHECK(errno == ENOENT);
+    CHECK(previous < UINT64_MAX);
+    int bytes = snprintf(text, sizeof(text), "DroidOnDarwin stock-init generation %llu\n", previous + 1);
+    CHECK(bytes > 0 && bytes < (int)sizeof(text));
+    fd = open("/data/.nce-init-generation", O_WRONLY | O_CREAT | O_TRUNC | O_CLOEXEC, 0600);
+    CHECK(fd >= 0 && write(fd, text, bytes) == bytes && fsync(fd) == 0 && close(fd) == 0);
+    CHECK(fsync(held) == 0 && close(held) == 0);
+    printf("{\"stock_init_data_generation\":true,\"previous\":%llu,\"generation\":%llu,\"device\":%llu,\"inherited_fd_closed\":true,\"file_fsync\":0,\"directory_fsync\":0}\n", previous, previous + 1, (unsigned long long)actual_device);
+}
 
 static void original_metadata_checks(void)
 {
@@ -52,10 +93,22 @@ static void original_metadata_checks(void)
     CHECK(!ferror(input) && fclose(input) == 0);
 }
 
-int main(void)
+int main(int argc, char **argv)
 {
     setvbuf(stdout, NULL, _IONBF, 0);
+    if (argc == 1 && !strcmp(argv[0], "/probe-stop-ordinary")) {
+        pid_t pid = getpid();
+        CHECK(pid > 1 && syscall(247, pid) == -1 && errno == ENOSYS);
+        printf("{\"stock_init_ordinary_ready\":true,\"pid\":%d,\"guest_stop_errno\":%d}\n", pid, errno);
+        char ready[32];
+        int bytes = snprintf(ready, sizeof(ready), "%d\n", pid);
+        int fd = open("/stock-init-ordinary-ready", O_WRONLY | O_CREAT | O_EXCL | O_CLOEXEC, 0600);
+        CHECK(bytes > 0 && bytes < (int)sizeof(ready) && fd >= 0 && write(fd, ready, bytes) == bytes && close(fd) == 0);
+        for (;;)
+            pause();
+    }
     CHECK(getpid() == 1);
+    CHECK(syscall(247, getpid()) == -1 && errno == ENOSYS);
     CHECK(unshare(CLONE_NEWNS) == 0);
     CHECK(mount(NULL, "/", NULL, MS_PRIVATE | MS_REC, NULL) == 0);
     CHECK(mount("proc", "/proc", "proc", MS_NOSUID | MS_NODEV | MS_NOEXEC, NULL) == 0);
@@ -63,6 +116,7 @@ int main(void)
     CHECK(readlink("/proc/self", self, sizeof(self) - 1) > 0 && atoi(self) == 1);
     original_metadata_checks();
     signal_kernel_restorer_tests();
+    data_checks();
     int fd = open("/stock-init-mode", O_RDONLY);
     char mode[32] = {0};
     CHECK(fd >= 0 && read(fd, mode, sizeof(mode) - 1) > 0 && close(fd) == 0);
@@ -72,6 +126,7 @@ int main(void)
         pid_t child = fork();
         CHECK(child >= 0);
         if (!child) {
+            CHECK(syscall(247, getpid()) == -1 && errno == ENOSYS);
             signal_kernel_restorer_tests();
             CHECK(close(ready[0]) == 0 && write(ready[1], "r", 1) == 1 && close(ready[1]) == 0);
             for (;;)

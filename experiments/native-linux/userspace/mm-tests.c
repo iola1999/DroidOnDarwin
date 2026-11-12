@@ -177,6 +177,7 @@ void memory_tests(void)
     CHECK(syscall(SYS_write, fd, UINTPTR_MAX - 7, 32) == -1 && errno == EFAULT);
     CHECK(syscall(SYS_openat, AT_FDCWD, 1, O_RDONLY, 0) == -1 && errno == EFAULT);
     CHECK(syscall(246, 0, 0) == -1 && errno == ENOSYS);
+    CHECK(syscall(247, 0) == -1 && errno == ENOSYS);
     CHECK(mprotect(data + PAGE, PAGE, PROT_NONE) == 0);
     CHECK(syscall(SYS_write, fd, data + PAGE, 1) == -1 && errno == EFAULT);
     CHECK(syscall(SYS_futex, data + PAGE, 128, 0, 0, 0, 0) == -1 && errno == EFAULT);

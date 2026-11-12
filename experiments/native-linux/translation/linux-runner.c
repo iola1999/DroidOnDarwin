@@ -39,7 +39,7 @@ extern int nce_wait_debugger_detach(unsigned timeout_ms);
     } while (0)
 extern struct lkl_host_operations nce_lkl_host;
 extern int nce_disk_open(unsigned index, const char *path);
-extern void nce_disk_close(void);
+extern int nce_disk_close(void);
 static long (*call)(long, long *);
 static unsigned char host_low_source[NCE_HOST_PAGE_SIZE] __attribute__((aligned(NCE_HOST_PAGE_SIZE)));
 
@@ -662,7 +662,8 @@ int nce_lkl_run(const char *path)
     }
     REQUIRE(halt() == 0);
     cleanup();
-    nce_disk_close();
+    int disk_close_result = nce_disk_close();
+    failed |= disk_close_result != 0;
     translation_linux_cleanup();
     REQUIRE(translation_kernel_release(&loaded) == 0);
     if (!TRANSLATION_LOOKUP)

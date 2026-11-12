@@ -107,6 +107,11 @@ static void stock_init_dm_configure(struct stock_init_partition *partition, long
     long opened[6] = {-100, (long)partition->device, 0};
     partition->fd = call(56, opened);
     REQUIRE(partition->fd >= 0);
+    /* 保存的分区引用须留到 cleanup，标准流准备会替换 fd 0..2。 */
+    long duplicate[6] = {partition->fd, 1030, 3}; /* F_DUPFD_CLOEXEC */
+    long retained = call(25, duplicate);
+    REQUIRE(retained >= 3 && call(57, duplicate) == 0);
+    partition->fd = retained;
     uint64_t capacity = 0;
     long size[6] = {partition->fd, 0x80081272, (long)&capacity}; /* BLKGETSIZE64 */
     REQUIRE(call(29, size) == 0 && capacity == partition->size);

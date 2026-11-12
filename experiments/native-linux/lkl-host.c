@@ -87,7 +87,7 @@ int nce_disk_close(void)
         int close_result = close(disks[index].fd) ? -errno : 0;
         if (!first_error)
             first_error = sync_result ? sync_result : close_result;
-        /* A failed close has an unspecified fd state; its number must not be retried. */
+        /* Darwin SDK does not document fd state after an error; retry may close a reused fd. */
         disks[index].fd = -1;
         disks[index].bytes = 0;
         printf("{\"host_disk_close\":true,\"slot\":%u,\"sync_attempted\":%s,\"sync_result\":%d,\"close_result\":%d}\n",

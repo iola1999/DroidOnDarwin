@@ -27,6 +27,8 @@ static void stock_init_dump_kernel_log(void)
 
 static double stock_init_now(void);
 #include "stock-init-partitions.h"
+#include "stock-init-data.h"
+#include "stock-init-stop.h"
 
 static void stock_init_setup(void)
 {
@@ -199,6 +201,7 @@ static void stock_init_setup(void)
     const char *mode = getenv("NCE_STOCK_INIT_MODE");
     REQUIRE(mode && (!strcmp(mode, "lifecycle") || !strcmp(mode, "original")));
     put_text("/stock-init-mode", mode);
+    stock_init_data_mount();
 }
 
 static double stock_init_now(void)
@@ -245,6 +248,7 @@ static int stock_init_run(void)
             REQUIRE(call(24, dup) == fd && call(57, dup) == 0);
         }
     }
+    stock_init_data_retain();
     long launch[6] = {(long)translation_linux_process("/probe-guest"), 1};
     long pid = call(246, launch);
     REQUIRE(pid > 1);
@@ -263,13 +267,9 @@ static int stock_init_run(void)
         if (!lifecycle)
             stock_init_observe_context(pid, previous_context, &previous_result);
         if (stock_init_now() >= deadline) {
-            long kill[6] = {pid, 9};
-            killed = call(129, kill);
-            REQUIRE(killed == 0);
-            stopped = 1;
-            wait[2] = 0;
-            waited = call(260, wait);
-            REQUIRE(waited == pid);
+            if (lifecycle)
+                stock_init_stop_boundaries(pid);
+            waited = stock_init_stop(pid, &status, &killed, &stopped);
             break;
         }
         struct timespec delay = {0, 10000000};
@@ -279,7 +279,12 @@ static int stock_init_run(void)
     dump_file("/stderr", stderr);
     stock_init_dump_kernel_log();
     printf("{\"stock_init_observation\":true,\"mode\":\"%s\",\"ancestor_pid\":%ld,\"waited\":%ld,\"status\":%d,\"deadline_stop\":%s,\"kill_result\":%ld}\n", getenv("NCE_STOCK_INIT_MODE"), pid, waited, status, stopped ? "true" : "false", killed);
+    long reaped[6] = {pid};
+    long reaped_result = call(247, reaped);
+    printf("{\"stock_init_host_stop_reaped\":true,\"ancestor_pid\":%ld,\"result\":%ld}\n", pid, reaped_result);
+    REQUIRE(reaped_result == -3);
+    int data_failed = stock_init_data_cleanup(lifecycle);
     if (getenv("NCE_STOCK_INIT_LP") && !strcmp(getenv("NCE_STOCK_INIT_LP"), "1"))
         stock_init_sdk_cleanup(lifecycle);
-    return lifecycle && (!stopped || status != 9);
+    return data_failed || (lifecycle && (!stopped || status != 9));
 }

@@ -4,9 +4,9 @@ import argparse
 import hashlib
 import json
 import os
+from datetime import datetime
 from pathlib import Path
 import re
-import shutil
 import subprocess
 from probe_lkl_translation import validate_guest_layout
 
@@ -58,10 +58,11 @@ def prepare(runtime, desktop, metadata, out, system_image=None, *, sdk_partition
             raise ValueError('原始文件摘要不匹配：' + str(path))
         target = out / 'root' / guest.lstrip('/')
         target.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copyfile(path, target)
+        subprocess.run(['cp', '-c', path, target], check=True, timeout=30)
         mode = 0o755 if path.stat().st_mode & 0o111 else 0o644
         target.chmod(mode)
         records[guest] = {'source': str(path), 'sha256': expected, 'bytes': path.stat().st_size, 'mode': mode}
+        records[guest].update(staged_path=str(target), staging='apfs-clone')
         if path.is_symlink():
             records[guest].update(source_link_target=str(path.readlink()), verified_target=canonical, staged_as='regular-file')
 
@@ -147,7 +148,7 @@ def validate(rows, mode, original_system=False, *, guest_page_bytes=16384, kerne
     observations = [r for r in rows if 'stock_init_observation' in r]
     cleanup = [r for r in rows if r.get('test') == 'translated_context_cleanup']
     logs = [r for r in rows if 'stock_init_kernel_log' in r]
-    endings = [r for r in rows if 'result' in r and 'component_vm' not in r and 'stock_init_write' not in r and 'stock_init_security' not in r and 'stock_init_syscall' not in r and 'stock_init_block' not in r]
+    endings = [r for r in rows if 'result' in r and 'component_vm' not in r and 'stock_init_write' not in r and 'stock_init_security' not in r and 'stock_init_syscall' not in r and 'stock_init_block' not in r and 'stock_init_stop_request' not in r and 'stock_init_host_stop' not in r and 'stock_init_host_stop_reaped' not in r]
     if len(observations) != 1 or len(cleanup) != 1 or len(logs) != 1 or endings != [{'result': 'passed'}]:
         return False
     o, c, log = observations[0], cleanup[0], logs[0]
@@ -155,11 +156,17 @@ def validate(rows, mode, original_system=False, *, guest_page_bytes=16384, kerne
             o['stock_init_observation'] is not True or o['mode'] != mode or type(o['deadline_stop']) is not bool or
             any(type(o[key]) is not int for key in ('ancestor_pid', 'waited', 'status', 'kill_result')) or
             o['ancestor_pid'] <= 1 or o['waited'] != o['ancestor_pid'] or not 0 <= o['status'] <= 65535 or
-            o['kill_result'] != 0 or (o['deadline_stop'] and o['status'] != 9) or
+            (o['deadline_stop'] and o['status'] != 9) or
             c.get('passed') is not True or type(c.get('allocated')) is not int or c['allocated'] <= 0 or
             type(c.get('freed')) is not int or c['allocated'] != c['freed'] or
             set(log) != {'stock_init_kernel_log', 'read_result'} or log['stock_init_kernel_log'] is not True or
             type(log['read_result']) is not int or not -4095 <= log['read_result'] < 1 << 20):
+        return False
+    from stock_init_stop import validate as validate_stop
+    stop_contract = (original_input or {}).get('namespace_stop_contract')
+    if stop_contract is not None and (type(stop_contract) is not int or stop_contract != 1):
+        return False
+    if not validate_stop(rows, o, mode, required=stop_contract == 1):
         return False
     writes = [r for r in rows if 'stock_init_write' in r]
     for row in writes:
@@ -241,6 +248,9 @@ def validate(rows, mode, original_system=False, *, guest_page_bytes=16384, kerne
     from stock_init_sdk import validate_dm
     if not validate_dm(rows, (original_input or {}).get('sdk_partitions'), mode=mode):
         return False
+    from stock_init_data import validate as validate_data
+    if not validate_data(rows, bool((original_input or {}).get('data_image')), mode):
+        return False
     lifecycle = [r for r in rows if 'stock_init_lifecycle' in r]
     original = [r for r in rows if 'stock_init_exec' in r]
     restorer = [r for r in rows if r.get('test') == 'linux_signal_kernel_restorer']
@@ -249,7 +259,8 @@ def validate(rows, mode, original_system=False, *, guest_page_bytes=16384, kerne
         return False
     if mode == 'lifecycle':
         return (lifecycle == [{'stock_init_lifecycle': True, 'pid': 1, 'child': 2}] and not original and
-                o['deadline_stop'] and o['status'] == 9 and c['allocated'] == 2 and log['read_result'] >= 0)
+                o['deadline_stop'] and o['status'] == 9 and
+                c['allocated'] == (3 if any('stock_init_owned_ordinary' in row for row in rows) else 2) and log['read_result'] >= 0)
     paths = [r.get('path') for r in rows if r.get('phase') == 'runtime_elf']
     return (not lifecycle and original == [{'stock_init_exec': True, 'pid': 1, 'argument': 'selinux_setup'}] and
             paths.count('/system/bin/init') == 1 and paths.count('/system/bin/bootstrap/linker64') == 1)
@@ -266,6 +277,7 @@ def main():
     parser.add_argument('--sdk-partitions', action='store_true', help='由固定原盘只读映射 SDK36 五个 LP 分区')
     parser.add_argument('--hyperos-manifest', type=Path)
     parser.add_argument('--lifecycle-only', action='store_true', help='仅检查原分区元数据、PID 1 信号与停止回收')
+    parser.add_argument('--data-image', type=Path, help='SDK36 mounted-partition 观察使用的显式 ext4 数据盘')
     args = parser.parse_args()
     if args.hyperos_manifest:
         if any((args.runtime, args.desktop, args.root_metadata, args.system_image, args.sdk_partitions)):
@@ -274,6 +286,8 @@ def main():
         parser.error('SDK36 需要 --runtime、--desktop 和 --root-metadata')
     if args.sdk_partitions and not args.system_image:
         parser.error('--sdk-partitions 需要 --system-image')
+    if args.data_image and (not args.sdk_partitions or args.hyperos_manifest):
+        parser.error('--data-image 需要 SDK36 --sdk-partitions')
     source = args.report.resolve()
     base = json.loads(source.read_text())
     config = base['configuration']
@@ -311,6 +325,21 @@ def main():
     except Exception as error:
         (out / 'failure.json').write_text(json.dumps({'stage': 'original_input_preparation', 'error': str(error)}, ensure_ascii=False, indent=2) + '\n')
         raise
+    if not args.hyperos_manifest:
+        clones = ROOT / ('work/cleanup-' + datetime.now().strftime('%Y-%m-%d'))
+        clones.mkdir(exist_ok=True)
+        clone_log = clones / (out.name + '-clones.json')
+        clone_log.write_text(json.dumps({'method': 'cp -c', 'files': prepared['files']}, indent=2) + '\n')
+        prepared['clone_manifest'] = {'path': str(clone_log), 'sha256': sha(clone_log)}
+    prepared['namespace_stop_contract'] = 1
+    if args.data_image:
+        from stock_init_data import inspect as inspect_data, export_clean
+        args.data_image = args.data_image.resolve(strict=True)
+        if args.data_image.samefile(args.system_image):
+            parser.error('数据盘与原系统盘需要独立文件')
+        prepared['data_image'] = inspect_data(args.data_image)
+        if prepared['data_image']['bytes'] != prepared['data_image']['filesystem_bytes']:
+            parser.error('数据盘大小与 ext4 超级块不匹配')
     result = {key: base[key] for key in ('platform', 'cpu', 'system_build', 'dependency')}
     result.update(scope=('Original HyperOS 4 KiB init selinux_setup/second_stage observation; original partitions and full rc retained; first-stage and system boot unverified'
                          if args.hyperos_manifest else 'Original SDK36 init selinux_setup/second_stage observation; full rc retained; first-stage and system boot unverified'),
@@ -324,6 +353,9 @@ def main():
                  EXP / 'userspace/signal-tests.c', EXP / 'userspace/signal-registers.S',
                  ROOT / 'scripts/stock_init_metadata.py', ROOT / 'scripts/stock_init_sdk.py',
                  ROOT / 'scripts/prepare_android_runtime.py', out / 'files.tsv'):
+        result['sha256'][str(path.relative_to(ROOT))] = sha(path)
+    for path in (EXP / 'translation/stock-init-data.h', ROOT / 'scripts/stock_init_data.py',
+                 EXP / 'translation/stock-init-stop.h', ROOT / 'scripts/stock_init_stop.py'):
         result['sha256'][str(path.relative_to(ROOT))] = sha(path)
     if args.hyperos_manifest:
         for path in (ROOT / 'scripts/stock_init_hyperos.py', out / 'files.tsv', out / 'original-metadata.tsv'):
@@ -344,14 +376,14 @@ def main():
         release = '    REQUIRE(translation_kernel_release(&loaded) == 0);'
         if runner_source.count(release) != 1:
             raise ValueError('运行器内核释放位置已变化')
-        runner_source = runner_source.replace(release, release + '\n    puts("{\\"stock_init_shutdown\\":true,\\"halt_result\\":0,\\"host_disks_closed\\":true,\\"kernel_release_result\\":0}");')
+        runner_source = runner_source.replace(release, release + '\n    printf("{\\"stock_init_shutdown\\":true,\\"halt_result\\":0,\\"host_disks_closed\\":%s,\\"kernel_release_result\\":0}\\n", disk_close_result == 0 ? "true" : "false");')
     for shell_setup in ('    args[1] = (long)"/bin";\n    REQUIRE(call(34, args) == 0);\n',
                         '    put_file("/bin/sh", "dash.elf");\n'):
         if runner_source.count(shell_setup) != 1:
             raise ValueError('运行器 core shell 准备已变化')
         runner_source = runner_source.replace(shell_setup, '')
     disk_setup = ''.join('    if (getenv("%s") && getenv("%s")[0]) REQUIRE(nce_disk_open(%d, getenv("%s")) == 0);\n' % (name, name, index, name)
-                         for index, name in ((1, 'NCE_STOCK_INIT_SYSTEM'), (2, 'NCE_STOCK_INIT_VENDOR'), (3, 'NCE_STOCK_INIT_SYSTEM_DLKM')))
+                         for index, name in ((0, 'NCE_TRANSLATION_DATA'), (1, 'NCE_STOCK_INIT_SYSTEM'), (2, 'NCE_STOCK_INIT_VENDOR'), (3, 'NCE_STOCK_INIT_SYSTEM_DLKM')))
     runner_source = runner_source.replace('    const char *online_text =', disk_setup + '    const char *online_text =')
     runner_source = runner_source.replace('static int detach_preparation(void)', '#include "stock-init-runner.h"\n\nstatic int detach_preparation(void)')
     runner = out / 'linux-runner.c'
@@ -408,6 +440,8 @@ def main():
     selected['NCE_STOCK_INIT_SYSTEM'] = (prepared.get('deployed_system_partition') or {}).get('path', '')
     if args.sdk_partitions:
         selected['NCE_STOCK_INIT_LP'] = '1'
+    if args.data_image:
+        selected['NCE_TRANSLATION_DATA'] = str(args.data_image)
     if args.hyperos_manifest:
         selected.update(NCE_STOCK_INIT_VENDOR=prepared['original_vendor']['path'],
                         NCE_STOCK_INIT_SYSTEM_DLKM=prepared['original_system_dlkm']['path'])
@@ -423,10 +457,28 @@ def main():
         subprocess.run(command, check=True, timeout=120)
         result['commands'].append(command)
         result['sha256'][str((out / entry).relative_to(ROOT))] = sha(out / entry)
-    for mode in (('lifecycle',) if args.lifecycle_only else ('lifecycle', 'original')):
+    stages = [('lifecycle', 'lifecycle')]
+    if not args.lifecycle_only:
+        stages.append(('original', 'original'))
+        if args.data_image:
+            stages.append(('lifecycle', 'recovery'))
+    previous_generation = None
+    for mode, phase in stages:
         for entry in ('cli', 'gcd'):
             env = {**{key: value for key, value in os.environ.items() if not key.startswith('NCE_')}, **selected, 'NCE_STOCK_INIT_MODE': mode}
-            label = entry + '-' + mode
+            label = entry + '-' + phase
+            try:
+                data_before = inspect_data(args.data_image) if args.data_image else None
+                if args.data_image:
+                    expected_data = result['runs'][-1]['data_after'] if result['runs'] else prepared['data_image']
+                    if data_before['sha256'] != expected_data['sha256']:
+                        raise ValueError('两次运行之间的数据盘摘要变化')
+            except (ValueError, OSError) as error:
+                failure = {'stage': 'data_before_run', 'entry': entry, 'mode': mode, 'phase': phase, 'error': str(error)}
+                result['data_state_error'] = failure
+                (out / 'failure.json').write_text(json.dumps(failure, ensure_ascii=False, indent=2) + '\n')
+                (out / 'summary.json').write_text(json.dumps(result, indent=2) + '\n')
+                raise
             with (out / (label + '.jsonl')).open('w') as stdout, (out / (label + '.log')).open('w') as stderr:
                 try:
                     proc = subprocess.run([out / entry, kernel], env=env, stdout=stdout, stderr=stderr, timeout=90)
@@ -438,9 +490,17 @@ def main():
             try:
                 rows = read_observations(output)
             except ValueError as error:
+                data_after_error = None
+                try:
+                    data_after = inspect_data(args.data_image) if args.data_image else None
+                except (ValueError, OSError) as inspect_error:
+                    data_after, data_after_error = None, str(inspect_error)
                 failure = {'stage': 'observation_json_parse', 'entry': entry, 'mode': mode,
+                           'phase': phase,
                            'returncode': returncode, 'error': str(error),
-                           'raw_stdout': str(output), 'raw_stdout_sha256': sha(output)}
+                           'raw_stdout': str(output), 'raw_stdout_sha256': sha(output),
+                           **({'data_before': data_before, 'data_after': data_after} if args.data_image else {}),
+                           **({'data_after_error': data_after_error} if data_after_error else {})}
                 result['runs'].append({**failure, 'observation_validated': False, 'results': [], 'stderr': stderr})
                 (out / 'failure.json').write_text(json.dumps(failure, ensure_ascii=False, indent=2) + '\n')
                 (out / 'summary.json').write_text(json.dumps(result, indent=2) + '\n')
@@ -448,15 +508,56 @@ def main():
             valid = returncode == 0 and validate(rows, mode, bool(selected['NCE_STOCK_INIT_SYSTEM']),
                                                guest_page_bytes=config.get('guest_page_bytes', 16384), kernel_log=stderr,
                                                original_input=prepared if args.hyperos_manifest or args.sdk_partitions else None) and 'stock_init_exec_errno' not in stderr
+            data_after_error = None
+            try:
+                data_after = inspect_data(args.data_image) if args.data_image else None
+            except (ValueError, OSError) as error:
+                data_after, data_after_error = None, str(error)
+                valid = False
+            if args.data_image and data_after is not None:
+                if any(data_after[key] != prepared['data_image'][key] for key in ('uuid', 'bytes', 'filesystem_bytes', 'block_bytes')):
+                    valid = False
+                if valid:
+                    generation = next(row for row in rows if 'stock_init_data_generation' in row)
+                    if previous_generation is not None and generation['previous'] != previous_generation:
+                        valid = False
+                    else:
+                        previous_generation = generation['generation']
+                if mode == 'lifecycle' and not data_after['clean']:
+                    valid = False
             guest_writes = ''.join(bytes.fromhex(row['hex']).decode('utf-8', errors='replace') for row in rows
                                    if 'stock_init_write' in row and bytes.fromhex(row['hex']).startswith(b'<'))
-            result['runs'].append({'entry': entry, 'mode': mode, 'returncode': returncode, 'observation_validated': valid,
+            result['runs'].append({'entry': entry, 'mode': mode, 'phase': phase, 'returncode': returncode, 'observation_validated': valid,
+                                   **({'data_before': data_before, 'data_after': data_after} if args.data_image else {}),
+                                   **({'data_after_error': data_after_error} if data_after_error else {}),
                                    'results': rows, 'stderr': stderr, 'guest_write_text': guest_writes,
                                    'attempted_log_messages': {text: text in stderr or text in guest_writes for text in ('Loading SELinux policy', 'init second stage started!', 'SetupMountNamespaces done')}})
             (out / 'summary.json').write_text(json.dumps(result, indent=2) + '\n')
             print(label, 'observed=' + str(valid), flush=True)
             if not valid:
+                (out / 'failure.json').write_text(json.dumps({'stage': 'init_observation_validation', 'entry': entry,
+                                                            'mode': mode, 'phase': phase, 'returncode': returncode,
+                                                            'raw_stdout': str(output), 'raw_stdout_sha256': sha(output),
+                                                            **({'data_before': data_before, 'data_after': data_after} if args.data_image else {}),
+                                                            **({'data_after_error': data_after_error} if data_after_error else {})}, indent=2) + '\n')
                 raise SystemExit('init 观察或回收检查失败：' + str(out / 'summary.json'))
+    if args.data_image:
+        try:
+            result['data_export'] = export_clean(args.data_image, out / 'data-export')
+            if result['data_export']['generation'] != previous_generation:
+                raise ValueError('恢复后的磁盘 generation 不匹配')
+            result['data_persistence_validated'] = True
+            result['original_sqlite_validated'] = (result['data_export'].get('quick_check') == ['ok'] and
+                                                   result['data_export'].get('sqlite_header') == b'SQLite format 3\0'.hex() and
+                                                   'sqlite_error' not in result['data_export'])
+            if not args.lifecycle_only and not result['original_sqlite_validated']:
+                raise ValueError('原 Keystore SQLite 文件格式或 quick_check 检查失败')
+        except (ValueError, OSError, subprocess.SubprocessError) as error:
+            result['data_export_error'] = str(error)
+            (out / 'failure.json').write_text(json.dumps({'stage': 'data_export', 'error': str(error)}, ensure_ascii=False, indent=2) + '\n')
+            (out / 'summary.json').write_text(json.dumps(result, indent=2) + '\n')
+            raise
+        (out / 'summary.json').write_text(json.dumps(result, indent=2) + '\n')
     if any(sha(ROOT / name) != expected for name, expected in result['sha256'].items()):
         raise ValueError('运行期间构建输入变化')
     if any(sha(Path(item['source'])) != item['sha256'] for item in prepared['files'].values()):
