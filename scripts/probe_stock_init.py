@@ -81,11 +81,13 @@ def prepare(runtime, desktop, metadata, out, system_image=None):
     directories = {str(parent) for guest in records for parent in Path(guest).parents if str(parent) != '/'}
     lines = ['D\t' + name for name in sorted(directories, key=lambda name: (name.count('/'), name))]
     lines += ['F\t%o\t%s' % (item['mode'], guest) for guest, item in records.items()]
-    (out / 'files.tsv').write_text('\n'.join(lines) + '\n')
     original_metadata = None
     if system_image:
         from stock_init_metadata import metadata as read_metadata
         original_metadata = read_metadata(system_image, records, directories, out)
+        link = original_metadata['/etc']
+        lines.append('L\t%d\t%d\t/etc\t%s' % (link['uid'], link['gid'], link['link_target']))
+    (out / 'files.tsv').write_text('\n'.join(lines) + '\n')
 
     return {'runtime_manifest': str(runtime_manifest), 'runtime_manifest_sha256': RUNTIME_SHA,
             'desktop_manifest': str(desktop_manifest), 'desktop_manifest_sha256': DESKTOP_SHA,
@@ -151,6 +153,10 @@ def validate(rows, mode, original_system=False):
             return False
     mounts = [r for r in rows if 'stock_init_original_system_mounted' in r]
     if mounts != ([{'stock_init_original_system_mounted': True, 'readonly': True}] if original_system else []):
+        return False
+    links = [r for r in rows if 'stock_init_root_symlink' in r]
+    if links != ([{'stock_init_root_symlink': True, 'path': '/etc', 'target': '/system/etc',
+                  'uid': 0, 'gid': 0, 'creation_mode': 0o777}] if original_system else []):
         return False
     lifecycle = [r for r in rows if 'stock_init_lifecycle' in r]
     original = [r for r in rows if 'stock_init_exec' in r]

@@ -18,6 +18,7 @@ def metadata(image, records, directories, output):
     declarations = {
         'ext2fs_open': [c.c_char_p, c.c_int, c.c_int, c.c_int, pointer, c.POINTER(pointer)],
         'ext2fs_close': [pointer],
+        'ext2fs_namei': [pointer, ino_type, ino_type, c.c_char_p, c.POINTER(ino_type)],
         'ext2fs_namei_follow': [pointer, ino_type, ino_type, c.c_char_p, c.POINTER(ino_type)],
         'ext2fs_read_inode': [pointer, ino_type, pointer],
         'ext2fs_xattrs_open': [pointer, ino_type, c.POINTER(pointer)],
@@ -47,10 +48,11 @@ def metadata(image, records, directories, output):
                          pointer.in_dll(lib, 'unix_io_manager'), c.byref(fs)), 'open')
     items = {}
     try:
-        paths = sorted({path for path in [*records, *directories] if path == '/system' or path.startswith('/system/')})
+        paths = sorted({'/etc', *{path for path in [*records, *directories] if path == '/system' or path.startswith('/system/')}})
         for path in paths:
             ino = ino_type()
-            check(lib.ext2fs_namei_follow(fs, 2, 2, path.encode(), c.byref(ino)), path)
+            namei = lib.ext2fs_namei if path == '/etc' else lib.ext2fs_namei_follow
+            check(namei(fs, 2, 2, path.encode(), c.byref(ino)), path)
             inode = c.create_string_buffer(128)
             check(lib.ext2fs_read_inode(fs, ino, inode), path)
             mode, uid = struct.unpack_from('<HH', inode.raw)
@@ -91,6 +93,15 @@ def metadata(image, records, directories, output):
                     raise ValueError('元数据镜像文件与已校验原输入不同：' + path)
             items[path] = {'mode': mode & 0o7777, 'uid': uid, 'gid': gid, 'selinux': context,
                            'selinux_xattr_hex': label.hex(), 'original_inode': ino.value}
+            if path == '/etc':
+                size = struct.unpack_from('<I', inode.raw, 4)[0]
+                blocks = struct.unpack_from('<I', inode.raw, 28)[0]
+                if mode & 0o170000 != 0o120000 or blocks or not 0 < size <= 60:
+                    raise ValueError('原 /etc 必须为 fast symlink')
+                target = inode.raw[40:40 + size].decode('ascii')
+                if target != '/system/etc':
+                    raise ValueError('原 /etc 链接目标不同：' + target)
+                items[path]['link_target'] = target
     finally:
         check(lib.ext2fs_close(fs), 'close')
 

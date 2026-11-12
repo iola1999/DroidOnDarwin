@@ -38,6 +38,19 @@ static void stock_init_setup(void)
             REQUIRE(sscanf(line, "D\t%1023s %c", guest, &extra) == 1);
             if (!original_system || (strcmp(guest, "/system") && strncmp(guest, "/system/", 8)))
                 directory(guest);
+        } else if (line[0] == 'L') {
+            char target[1024], actual[1024] = {0};
+            unsigned uid, gid;
+            REQUIRE(sscanf(line, "L\t%u\t%u\t%1023s\t%1023s %c", &uid, &gid, guest, target, &extra) == 4);
+            REQUIRE(guest[0] == '/' && target[0] == '/' && !strstr(guest, "..") && !strstr(target, ".."));
+            long link[6] = {(long)target, -100, (long)guest};
+            REQUIRE(call(36, link) == 0);
+            long owner[6] = {-100, (long)guest, uid, gid, 0x100};
+            REQUIRE(call(54, owner) == 0);
+            long readlink[6] = {-100, (long)guest, (long)actual, sizeof(actual) - 1};
+            long length = call(78, readlink);
+            REQUIRE(length == (long)strlen(target) && !memcmp(actual, target, length));
+            printf("{\"stock_init_root_symlink\":true,\"path\":\"%s\",\"target\":\"%s\",\"uid\":%u,\"gid\":%u,\"creation_mode\":511}\n", guest, target, uid, gid);
         } else {
             REQUIRE(sscanf(line, "F\t%o\t%1023s %c", &mode, guest, &extra) == 2);
             REQUIRE(guest[0] == '/' && !strstr(guest, ".."));
