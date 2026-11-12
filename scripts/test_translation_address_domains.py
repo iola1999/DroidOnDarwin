@@ -115,6 +115,7 @@ def main():
         compile_guest = next(list(cmd) for cmd in report['commands'] if '-c' in cmd and str(EXP / 'translation/linux-guest.c') in cmd)
         compile_guest[compile_guest.index(str(EXP / 'translation/linux-guest.c'))] = str(guest)
         compile_guest[compile_guest.index('-o') + 1] = str(out / 'guest.o')
+        compile_guest += ['-iquote', str(EXP / 'translation')]
         link_guest = next(list(cmd) for cmd in report['commands'] if '-o' in cmd and cmd[cmd.index('-o') + 1] == str(source.parent / 'guest.elf'))
         link_guest[link_guest.index(str(source.parent / 'guest.o'))] = str(out / 'guest.o')
         link_guest[link_guest.index('-o') + 1] = str(out / 'guest.elf')
