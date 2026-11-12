@@ -131,6 +131,8 @@ def prepare(runtime, desktop, metadata, out, system_image=None, *, sdk_partition
 
 
 def validate(rows, mode, original_system=False, *, guest_page_bytes=16384, kernel_log='', original_input=None, exec_elf_images=None):
+    exec_contract = (exec_elf_images is not None or
+                     (original_input is not None and 'exec_elf_images' in original_input))
     layouts = [row for row in rows if row.get('config') == 'translation_guest_layout']
     if len(layouts) != 1:
         return False
@@ -158,8 +160,14 @@ def validate(rows, mode, original_system=False, *, guest_page_bytes=16384, kerne
             o['kill_result'] != 0 or (o['deadline_stop'] and o['status'] != 9) or
             c.get('passed') is not True or type(c.get('allocated')) is not int or c['allocated'] <= 0 or
             type(c.get('freed')) is not int or c['allocated'] != c['freed'] or
+            (exec_contract and (type(c.get('stock_init_exec_count')) is not int or
+                                not 0 <= c['stock_init_exec_count'] < 1 << 64)) or
             set(log) != {'stock_init_kernel_log', 'read_result'} or log['stock_init_kernel_log'] is not True or
             type(log['read_result']) is not int or not -4095 <= log['read_result'] < 1 << 20):
+        return False
+    if exec_contract and [row for row in rows if 'stock_init_observation' in row or
+                          row.get('test') == 'translated_context_cleanup' or
+                          row.get('result') in ('passed', 'failed')] != [o, c, {'result': 'passed'}]:
         return False
     writes = [r for r in rows if 'stock_init_write' in r]
     for row in writes:
@@ -171,8 +179,14 @@ def validate(rows, mode, original_system=False, *, guest_page_bytes=16384, kerne
             return False
     security = [r for r in rows if 'stock_init_security' in r]
     for row in security:
-        if (set(row) != {'stock_init_security', 'result', 'fd', 'path_hex', 'name_hex', 'value_hex'} or
+        init_exec = (exec_contract and row.get('stock_init_security') == 221 and row.get('result') == 0 and
+                     row.get('path_hex') == '/system/bin/init'.encode().hex())
+        fields = {'stock_init_security', 'result', 'fd', 'path_hex', 'name_hex', 'value_hex'}
+        if init_exec:
+            fields.add('exec_index')
+        if (set(row) != fields or
                 any(type(row[key]) is not int for key in ('stock_init_security', 'result', 'fd')) or
+                (init_exec and (type(row['exec_index']) is not int or not 0 < row['exec_index'] < 1 << 64)) or
                 row['stock_init_security'] not in (*range(5, 11), 56, 221) or row['fd'] < -1 or
                 any(type(row[key]) is not str or re.fullmatch('(?:[0-9a-f]{2})*', row[key]) is None
                     for key in ('path_hex', 'name_hex', 'value_hex')) or
@@ -250,11 +264,14 @@ def validate(rows, mode, original_system=False, *, guest_page_bytes=16384, kerne
     if mode == 'lifecycle':
         return (lifecycle == [{'stock_init_lifecycle': True, 'pid': 1, 'child': 2}] and not original and
                 o['deadline_stop'] and o['status'] == 9 and c['allocated'] == 2 and log['read_result'] >= 0 and
+                (not exec_contract or (c['stock_init_exec_count'] == 0 and not any('exec_index' in row for row in security))) and
                 not any('stock_init_exec_layout' in row for row in rows))
-    if exec_elf_images or any('stock_init_exec_layout' in row for row in rows):
+    if exec_contract:
         from exec_aslr import validate_exec_layout
         return (not lifecycle and original == [{'stock_init_exec': True, 'pid': 1, 'argument': 'selinux_setup'}] and
                 validate_exec_layout(rows, exec_elf_images, guest, guest_page_bytes))
+    if any('stock_init_exec_layout' in row for row in rows):
+        return False
     paths = [r.get('path') for r in rows if r.get('phase') == 'runtime_elf']
     return (not lifecycle and original == [{'stock_init_exec': True, 'pid': 1, 'argument': 'selinux_setup'}] and
             paths.count('/system/bin/init') == 1 and paths.count('/system/bin/bootstrap/linker64') == 1)
@@ -371,7 +388,9 @@ def main():
     execution = out / 'linux-execution.c'
     execution_text = (EXP / 'translation/linux-execution.c').read_text()
     execution_text = execution_text.replace('static void user_run(void *opaque)',
-                                             '#include "stock-init-trace.h"\n#include "stock-init-exec.h"\n\nstatic void user_run(void *opaque)')
+                                             '#include "stock-init-trace.h"\n#include "stock-init-exec.h"\n\n'
+                                             '/* The init probe runs on one guest CPU and records both rows before user_return. */\n'
+                                             'static unsigned long stock_init_exec_count;\n\nstatic void user_run(void *opaque)')
     before = '            long result = run_syscall(number, args);'
     if execution_text.count(before) != 1:
         raise ValueError('syscall 观察位置已变化')
@@ -379,12 +398,21 @@ def main():
                 '            if (number == 221) stock_init_trace_string(exec_path, args[0], sizeof(exec_path));\n'
                 '            if (number == 142) printf("{\\"stock_init_reboot\\":true,\\"args\\":[%lu,%lu,%lu,%lu]}\\n", (unsigned long)args[0], (unsigned long)args[1], (unsigned long)args[2], (unsigned long)args[3]);\n'
                 + before + '\n'
+                '            unsigned long exec_index = 0;\n'
+                '            if (number == 221 && result == 0 && !strcmp((const char *)exec_path, "/system/bin/init"))\n'
+                '                exec_index = ++stock_init_exec_count;\n'
                 '            stock_init_trace_write(number, args, result);\n'
-                '            stock_init_trace_security(number, args, result, exec_path);\n'
-                '            stock_init_trace_exec(number, result, exec_path, p);\n'
+                '            stock_init_trace_security(number, args, result, exec_path, exec_index);\n'
+                '            stock_init_trace_exec(exec_index, p);\n'
                 '            stock_init_trace_block(number, args, result);\n'
                 '            stock_init_trace_result(number, args, result, p->regs.pc);\n')
     execution_text = execution_text.replace(before, observed)
+    cleanup_format = '\\"preemptions\\":%lu}\\n",'
+    cleanup_args = 'allocated == freed ? "true" : "false", allocated, freed, maps, revocations, fills, faults, calls, preemptions);'
+    if execution_text.count(cleanup_format) != 1 or execution_text.count(cleanup_args) != 1:
+        raise ValueError('终末回收观察位置已变化')
+    execution_text = execution_text.replace(cleanup_format, '\\"preemptions\\":%lu,\\"stock_init_exec_count\\":%lu}\\n",')
+    execution_text = execution_text.replace(cleanup_args, cleanup_args[:-2] + ', stock_init_exec_count);')
     execution.write_text(execution_text)
     result['sha256'][str(execution.relative_to(ROOT))] = sha(execution)
     for path in source.parent.iterdir():

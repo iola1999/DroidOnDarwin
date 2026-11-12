@@ -60,9 +60,9 @@ static void *emit_rows(void *opaque)
             stock_init_trace_write(66, writev, 144);
         } else if (worker->role == 1) {
             long xattr[6] = {(long)security_path, (long)attribute, (long)label, sizeof(label)};
-            stock_init_trace_security(5, xattr, 0, NULL);
+            stock_init_trace_security(5, xattr, 0, NULL, 0);
             xattr[0] = 3000 + i;
-            stock_init_trace_security(7, xattr, -13, NULL);
+            stock_init_trace_security(7, xattr, -13, NULL, 0);
         } else if (worker->role == 2) {
             stock_init_trace_block(40, mount_args, i & 1 ? -16 : 0);
             stock_init_trace_result(63, mount_args, 1, 0x12340 + 4UL * i);

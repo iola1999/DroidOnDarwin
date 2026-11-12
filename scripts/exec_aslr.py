@@ -104,8 +104,19 @@ def validate_exec_layout(rows, images, guest, page):
     if not interpreter or program['type'] != 3 or interpreter['type'] != 3:
         return False
     events = [row for row in rows if 'stock_init_exec_layout' in row or
+              'stock_init_observation' in row or row.get('test') == 'translated_context_cleanup' or
+              row.get('result') in ('passed', 'failed') or
               (row.get('stock_init_security') == 221 and
                row.get('path_hex') == '/system/bin/init'.encode().hex() and row.get('result') == 0)]
+    if (len(events) < 5 or events[-3].get('stock_init_observation') is not True or
+            events[-2].get('test') != 'translated_context_cleanup' or events[-1] != {'result': 'passed'}):
+        return False
+    summary = events[-2]
+    events = events[:-3]
+    if (type(summary.get('stock_init_exec_count')) is not int or
+            not 0 < summary['stock_init_exec_count'] < 1 << 64 or
+            summary['stock_init_exec_count'] != len(events) // 2):
+        return False
     if not events or len(events) % 2 or any('stock_init_exec_layout' in events[i] or
                                           'stock_init_exec_layout' not in events[i + 1]
                                           for i in range(0, len(events), 2)):
@@ -113,11 +124,17 @@ def validate_exec_layout(rows, images, guest, page):
     samples = events[1::2]
     if not any(row.get('pid') == 1 for row in samples):
         return False
-    fields = ('pid', 'sp', 'pc', 'phdr', 'entry', 'at_base', 'page_bytes', 'phnum', 'phentsize',
+    fields = ('exec_index', 'pid', 'sp', 'pc', 'phdr', 'entry', 'at_base', 'page_bytes', 'phnum', 'phentsize',
               'phdr_mapping', 'entry_mapping', 'pc_mapping')
-    for row in samples:
+    for index, (security, row) in enumerate(zip(events[::2], samples), 1):
+        if (security != {'stock_init_security': 221, 'result': 0, 'fd': -1,
+                         'path_hex': '/system/bin/init'.encode().hex(), 'name_hex': '', 'value_hex': '',
+                         'exec_index': index} or
+                any(type(security[key]) is not int for key in ('stock_init_security', 'result', 'fd', 'exec_index'))):
+            return False
         if (set(row) != {'stock_init_exec_layout', 'read_result', *fields} or
                 row['stock_init_exec_layout'] is not True or type(row['read_result']) is not int or row['read_result'] != 0 or
+                row['exec_index'] != index or
                 any(type(row[key]) is not int or not 0 <= row[key] < 1 << 64 for key in fields) or row['pid'] <= 0 or
                 row['page_bytes'] != page or row['phnum'] != program['phnum'] or row['phentsize'] != program['phentsize'] or
                 not guest['guest_base'] <= row['sp'] < guest['guest_end'] or row['sp'] % 16 or
