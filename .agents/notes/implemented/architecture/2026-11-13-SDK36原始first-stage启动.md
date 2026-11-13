@@ -1,8 +1,8 @@
 # 决策记录: SDK36 原始 first-stage 启动
 
-状态: proposed
+状态: implemented
 
-本阶段在 `codex/sdk-first-stage` 继续实施，已包含主线 `6f041e4`。原 ramdisk 读取、部署、启动参数、设备模型、DM 回收和观察工具已完成源码实现；宿主输入与验收回放已有结果，首次 16 KiB core 在客体执行前失败，第二轮 core 成功。[独立构建输入](../bug-fix/2026-11-13-独立构建的符号链接输入.md)与[Linux 大小写文件](../bug-fix/2026-11-13-Linux源码与构建的大小写文件.md)继续修正。raw v7 的 CLI/GCD lifecycle 已验证成功，首个原 `/init` 已完成 first-stage；[原策略后的 DM 回收](../bug-fix/2026-11-13-原策略加载后的DM回收失败.md)返回 EACCES，使完整 raw 阶段失败。专用宿主清理实现与宿主回归已完成，[客体 stdout 顺序](../bug-fix/2026-11-13-first-stage客体stdout回读顺序.md)按实际回读位置修正。原 GCD original、同盘恢复和本轮 iOS 编译尚未完成，当前准备两页新 core。
+本阶段在 `codex/sdk-first-stage` 实施，包含主线 `6f041e4`。原 ramdisk 读取、部署、启动参数、设备模型、DM 回收和观察工具已完成源码实现。首次 16 KiB core 在客体执行前失败，第二轮 core 成功；[独立构建输入](../bug-fix/2026-11-13-独立构建的符号链接输入.md)与[Linux 大小写文件](../bug-fix/2026-11-13-Linux源码与构建的大小写文件.md)修正已通过最终来源核对。raw v7 的 CLI/GCD lifecycle 成功，首个原 `/init` 完成 first-stage，随后[原策略后的 DM 回收](../bug-fix/2026-11-13-原策略加载后的DM回收失败.md)返回 EACCES，使完整 raw 阶段失败。专用宿主清理及[客体 stdout 顺序](../bug-fix/2026-11-13-first-stage客体stdout回读顺序.md)修正已完成，宿主输入与验收回放成功；两页 v9 的 core、original CLI/GCD、同盘 recovery 与 iOS 编译均成功，完整 Android boot 继续待验收。
 
 ## 问题
 
@@ -10,7 +10,7 @@
 
 固定 SDK ramdisk 的完整两段 newc 含 29 项，原 `/init` 为 AArch64 ET_EXEC，无 PT_INTERP，入口为 `0x30c000`、PT_LOAD 对齐为 16384 bytes。第二段的原 `first_stage_ramdisk/fstab.ranchu` 提供五个 logical 分区、平台 by-name metadata 和 latemount data。只读调查与固定来源见主工作区 `work/native-linux-nce/sdk-first-stage-source-review-v2/`；system/core 固定为 `68be0c2c0006a0740d0b1809abe4717308f90d15`，与 SDK 二进制的精确对应尚未确认。
 
-## 提案
+## 决策
 
 在既有原 init 观察工具增加显式 SDK ramdisk 入口，继续使用同一 PID 1、限时观察、执行日志和 host stop。输入保持原 ramdisk、fstab、module 配置、system GPT/LP、原 rc 与 policy 字节。输入档案明确区分 mounted-partition 和 first-stage，成功观察与完整系统 boot 分别记录。
 
@@ -34,17 +34,9 @@ Python 按 class 链接取得 canonical 目录后解析 device/subsystem 相对�
 
 执行观察复用成功 syscall 的序号、auxv/PTE 和终末总数，原 `/init` ET_EXEC 按链接地址核对，后续 `/system/bin/init` 按原 ET_DYN/interpreter 核对。两类入口均按实际成功执行序号与终末 `stock_init_exec_count` 核对执行对；raw 首对另要求 `/init` PID 1。
 
-观察工具在验收或派生字段解析失败后继续检查候选盘，保存原 rows、stderr、原输出路径与摘要、已成功解析的字段和 observation_errors，再写 failure 与 summary。非法 write/path 十六进制等错误已有宿主回归；客体运行后的保存流程由独立 fixture 检查，客体实际失败仍需本轮执行确认。完整 raw 命令完成全部观察、同盘恢复与来源核对后，要求 original CLI/GCD 两份记录的 `first_stage.completed` 和观察验收均为 True；失败保存 `first_stage_completion_error`、`failure.json` 与 summary，并以非零状态退出。lifecycle-only 保留生命周期验收范围，完整 boot 继续单独记录。
+观察工具在验收或派生字段解析失败后继续检查候选盘，保存原 rows、stderr、原输出路径与摘要、已成功解析的字段和 observation_errors，再写 failure 与 summary。非法 write/path 十六进制等错误已有宿主回归；客体运行后的保存流程由独立 fixture 检查，v6 的结束记录筛选失败、v7 的 DM 回收失败和 v8 的 recovery 挂载失败均保留实际输出、候选 after、failure 与 summary。完整 raw 命令完成全部观察、同盘恢复与来源核对后，要求 original CLI/GCD 两份记录的 `first_stage.completed` 和观察验收均为 True；失败保存 `first_stage_completion_error`、`failure.json` 与 summary，并以非零状态退出。lifecycle-only 保留生命周期验收范围，完整 boot 继续单独记录。
 
-## 曾考虑的替代方案
-
-- 从 vendor 补 early fstab：完整 ramdisk 第二段已包含原 fstab，直接使用原文件。
-- 在宿主创建 by-name 或预挂五分区：该路径无法验证原 first-stage 的设备与挂载流程，继续由原 init 执行。
-- 为每盘新增名称与平台属性 API：当前单个 hardware 参数和真实 platform 父对象已有具体使用方，先采用最小固定模型。
-- 复制完整 init 观察器：PID 1、停止、日志、构建和执行关联已有共同使用方，扩展原入口并按职责增加 ramdisk 模块。
-- 在当前已验收候选上运行原 late-fs：可能改变已有持久状态，创建新的实验候选并连续使用。
-
-## 验收标准
+### 验收标准
 
 1. 固定 ramdisk、原 `/init`、early fstab、九模块、system GPT/LP 与原 rc/policy 摘要匹配；内存解析错误与双 archive 边界回归成功。旧前段清单保留原范围。
 2. 默认与 ranchu 模式的实际 sysfs 父对象、subsystem、uevent、dev_t/PARTNAME、平台与全局 by-name 符合各自合同；缺失、相近及重复 hardware 值按固定参数语法检查。
@@ -77,6 +69,33 @@ iOS 的首次准备通过另外两项引用读取 Unicorn 和 gfxstream include�
 
 `work/raw-first-stage-c-review-v1/build-input-review-v4.json` 的 SHA-256 为 `e218ae5a9447de402faa3e035cd56f114714abed5e9d980740822c52acb54759`；该版覆盖末级 source 链接、克隆和 Unicorn 目录/来源检查。输出目录祖先链接与 Linux 大小写文件随后发现，分别保留首次失败并继续增量复核。文字审阅 `work/sdk-first-stage-writing-review-v1/summary.json` 的 SHA-256 为 `92d2abe320f54517c6e6e235e613dcce191a2f9b3fdba3727e9a7820e2fae850`；挂载顺序、实际 exec 计数和共享输入的历史状态已据源码修正。
 
-## 风险
+### 两页阶段结果
+
+两页 v9 阶段代码固定为 `8d4308181ed0cc7c3f017d727840cf9014c3c874`，原 MAIN 准备输入仍以 `6f041e4` 的 21 项原路径为准。固定 Linux 为 `d0f76a77e8c2ca68bd7d96190b8da09040eab072`，完整 pristine/prepared 清单包含 86,901 项，构建在大小写敏感 APFS 的独立目录执行。验收环境为 Apple M5 Ultra、macOS 27.0（26A428），iOS 编译使用 SDK 27.1；本轮只验证本机功能、输入身份与交叉编译。
+
+| 客体页大小 | core CLI/GCD | 独立内核核对 | raw/recovery | iOS 对象身份 | 最终 data / metadata generation |
+| --- | --- | --- | --- | --- | --- |
+| 16 KiB | 各 128 条成功，各 270/270 回收 | 726 项成功 | 六入口成功 | 16 个对象，31 项检查成功 | 32 / 23 |
+| 4 KiB | 各 128 条成功，各 270/270 回收 | 728 项成功 | 六入口成功 | 16 个对象，31 项检查成功 | 37 / 23 |
+
+四个 original 均 `observation_validated=True`、`first_stage.completed=True`，完成原 ramdisk 部署、设备发现、metadata 与五个 LP 挂载、SwitchRoot、原 ramdisk init 删除和动态 init exec。实际原始 init 的 exec 总数各为 4；观察状态均为 1、`deadline_stop=False`。原策略后普通 DM REMOVE_ALL/LIST_DEVICES 的 EACCES 保留，宿主 syscall248 清理成功并确认两棵注册树为空；guest 请求、六个非零参数和仍有 namespace 的拒绝边界通过。
+
+两页各连续使用原候选，六入口 before/after 全字段相接。原 first-stage 后的同盘 recovery 读写挂载、generation、file/directory fsync、syncfs、close、umount、DM 清理、磁盘关闭及映射释放通过。最终四盘均 clean，独立 inspector 各读取两次，与最后 GCD recovery after 全字段一致。SQLite export 的 generation 分别为 32、37，quick_check 均为 ok，schema 各 19 项；本轮实际导出的 DB 没有 WAL/journal/SHM，带 WAL 的恢复继续按独立范围验证。metadata 目录属性的验收来源为 same_disk_recovery，raw 派生目录错误保持原记录。
+
+两页 iOS runtime 和实际生成的 init runner/execution 均成功；14 个 runtime 对象与两个 init 对象各为 ARM64 iOS，LC_BUILD_VERSION 的 platform 为 2、minos 为 26.0、SDK 为 27.1，输入、配置、静态库及 init 对象摘要绑定通过。八项阶段均保持 105 项来源与 raw scope，进程组为空且没有清理信号。
+
+[阶段归档](../../../../experiments/native-linux/results-sdk-first-stage-20261113.json.zst)保留验收结果、非敏感 trace、来源身份与实际失败。原 v3 至 v8 的生成、部署、筛选、DM 回收及配额挂载失败继续按对应记录保存；最终清单保留必要脚本、配置、生成源码、编译命令和对象身份，再清理可再生成的构建与展开目录。当前挂载卷仅用于 Mac 构建，已生成的 iOS 对象仍待整包与设备运行验证。
+
+四份 original 仍观察到原 vold 的 default-key DM_TABLE_LOAD=-22，完整 Android boot 保持 pending。后续由[原 vold 与 default-key](../../proposed/architecture/2026-11-13-SDK36原始vold与default-key.md)继续处理加密与完整启动；原始签名 APK、HyperOS 3、设备授权、资源、持续交互性能与热状态按完整目标继续推进。
+
+## 曾考虑的替代方案
+
+- 从 vendor 补 early fstab：完整 ramdisk 第二段已包含原 fstab，直接使用原文件。
+- 在宿主创建 by-name 或预挂五分区：该路径无法验证原 first-stage 的设备与挂载流程，继续由原 init 执行。
+- 为每盘新增名称与平台属性 API：当前单个 hardware 参数和真实 platform 父对象已有具体使用方，先采用最小固定模型。
+- 复制完整 init 观察器：PID 1、停止、日志、构建和执行关联已有共同使用方，扩展原入口并按职责增加 ramdisk 模块。
+- 在当前已验收候选上运行原 late-fs：可能改变已有持久状态，创建新的实验候选并连续使用。
+
+## 影响
 
 原九模块为 `6.6.66-android15-8-gd0c43a640eab-ab13812146`，当前 LKL 使用 Linux 6.12；原 Modprobe、uname 和加载返回需实际观察，单个失败对原启动的影响依赖具体路径。共享平台父设备是满足固定原 fstab 的兼容模型，原 emulator 的 system 父地址尚未固定。原 metadata、vold/default-key、FBE、quota、fsverity 和 checkpoint 的运行行为分别验收，完整 boot 尚未确认。

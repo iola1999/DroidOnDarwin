@@ -1,18 +1,18 @@
 # 决策记录: SDK first-stage 块设备模型
 
-状态: proposed
+状态: implemented
 
-本阶段已获主会话授权，在 `codex/sdk-first-stage` 独立树完成驱动源码，初始基准为 `b8d746a6364596e8815c7e3ba11f3962cb0da5cd`，当前已包含主线 `6f041e4`。驱动与 bridge 的源码已集成，四个实验候选已准备；首次 16 KiB core 在客体执行前失败，第二轮 core 成功。[独立构建输入](../bug-fix/2026-11-13-独立构建的符号链接输入.md)与[Linux 大小写文件](../bug-fix/2026-11-13-Linux源码与构建的大小写文件.md)继续修正。原 `/init` 尚未运行。记录保留 proposed，待实际设备与生命周期验收。
+本阶段已获主会话授权，在 `codex/sdk-first-stage` 独立树完成驱动源码，初始基准为 `b8d746a6364596e8815c7e3ba11f3962cb0da5cd`，包含主线 `6f041e4`。驱动与 bridge 的源码已集成，四个实验候选已准备；首次 16 KiB core 在客体执行前失败，第二轮 core 成功。[独立构建输入](../bug-fix/2026-11-13-独立构建的符号链接输入.md)与[Linux 大小写文件](../bug-fix/2026-11-13-Linux源码与构建的大小写文件.md)修正已通过最终来源核对。两页 v9 的原 `/init`、实际设备与生命周期、同盘 recovery 和 iOS 编译均成功，设备运行继续待真机验证。
 
 ## 问题
 
-[SDK metadata 分区与 GPT 扫描](../../implemented/architecture/2026-11-13-SDKmetadata分区与GPT扫描.md)已提供标准分区、PARTNAME 和扩展 dev_t。此前块驱动使用 `add_disk(disk)`，没有真实 platform 父设备；固定 Android `DeviceHandler::FindPlatformDevice()` 沿 sysfs 的 `subsystem` 链接查找父设备，原 `/metadata` 平台 by-name 路径需要 `a003c00.virtio_mmio`。原 data fstab 指定 `/dev/block/vdc`，`HandleBlockDeviceEvent()` 从 DEVPATH 末段创建节点，partition_map 不能替代实际 `disk_name`。
+[SDK metadata 分区与 GPT 扫描](2026-11-13-SDKmetadata分区与GPT扫描.md)已提供标准分区、PARTNAME 和扩展 dev_t。此前块驱动使用 `add_disk(disk)`，没有真实 platform 父设备；固定 Android `DeviceHandler::FindPlatformDevice()` 沿 sysfs 的 `subsystem` 链接查找父设备，原 `/metadata` 平台 by-name 路径需要 `a003c00.virtio_mmio`。原 data fstab 指定 `/dev/block/vdc`，`HandleBlockDeviceEvent()` 从 DEVPATH 末段创建节点，partition_map 不能替代实际 `disk_name`。
 
 来源调查保存在 `work/native-linux-nce/sdk-first-stage-source-review-v2/`。其中 `report.md` 的 SHA-256 为 `9e97d89917c4778af445bdffd1b979fb4438321afd81dc645f9e9624018a977b`，`sources.json` 为 `f4b84ad8b0b7524f56ee27d80816c52c6d4a3606015b611c678693b991456b97`。固定 system-core 为 `68be0c2c0006a0740d0b1809abe4717308f90d15`；其与 SDK 原二进制的精确构建对应继续待确认。
 
 原 ramdisk 的两个串联 newc archive 已含 `first_stage_ramdisk/fstab.ranchu`，SHA-256 为 `b4572d0245a6bd33fec9b3fcee224a314e4ad62d44dd4f88d636983e6d47b144`。`androidboot.hardware=ranchu` 能选择该副本；无优先级更高的 boot-device 输入时，fs_mgr 从 metadata 平台路径提取 boot device。system 与 metadata 共用该父设备，可由原 DeviceHandler 创建全局 super 链接。SDK emulator 的原 system 父地址尚未固定，本阶段提供原 fstab 与设备链接所需的兼容模型。
 
-## 提案
+## 决策
 
 ### 参数与设备身份
 
@@ -42,15 +42,7 @@ platform 注册失败由标准 API 释放未注册对象，本驱动注销已申
 | system-core `init/devices.cpp:275–322,488–545,758–793` | 真实 platform 识别、PARTNAME/by-name 与 DEVPATH 节点命名 |
 | system-core `fs_mgr/libfstab/boot_config.cpp:143–164`、`fstab.cpp:553–574,913–950` | hardware 首值、原 early fstab 查找与 boot-device 回退 |
 
-## 曾考虑的替代方案
-
-- 全部入口静态使用同一 platform 和 vdc：现有 core、storage 和原生准备入口使用 ncedisk 名称，改变这些名称需要额外适配；本阶段保留默认合同。
-- 新增 host disk_name/platform 属性：需要新的 host/kernel 字段、复制与校验；当前固定 SDK 已有同时选择原 fstab 的 hardware 参数，未发现必须独立设置属性的使用方。
-- data/system/metadata 全部改为 vdc/vdb/vdd：原 data 路径要求 vdc，system/metadata 的使用方要求 PARTNAME 与 by-name；保留其 ncedisk 名称已满足当前消费者。
-- 只改 uevent 字符串或由运行器创建 vdc 别名：原 init 重挂 `/dev` 后需要再次生成节点，FindPlatformDevice 仍要真实 sysfs 父设备；本阶段使用 Linux 的父对象和真实 disk_name。
-- 保存持久设备模式或增加新的 halt hook：初始化结果和已有设备引用已满足使用方，现有内建驱动以整个 LKL 实例释放内存；额外状态及回调尚无消费入口。
-
-## 验收标准
+### 验收标准
 
 驱动源码交付时已完成定向格式化、`git diff --check`、完整差异与引用/失败顺序审阅，记录实际源码摘要。该阶段的构建与运行结果留待主会话安排，源码审阅不替代实际行为验收。
 
@@ -83,6 +75,20 @@ platform 注册失败由标准 API 释放未注册对象，本驱动注销已申
 
 真实使用方为原 metadata fstab、DeviceHandler 的平台/by-name 生成、原 data 节点，以及默认 ncedisk 的现有 core/storage/native/mounted-partition。新增内容只处理 init 期间的参数选择、一个标准 platform 对象和 slot 0 名称；对象的注册引用是成功后的必要所有权，失败路径的局部指针负责 unregister。删除 parent 会使平台链接查找缺少真实 sysfs 来源，删除 slot 0 名称分支会使原 fstab 的 vdc 节点缺失，删除首值规则会使重复参数选择与原 fs_mgr 不一致。host_ops、磁盘表示、分区表示和停止状态均保持现有实现。
 
-## 风险
+### 本轮阶段结果
+
+两页 v9 的 raw CLI/GCD 均完成实际 sysfs、设备号、GPT/LP、metadata by-name、原分区挂载与 SwitchRoot 关联检查；同盘 recovery 与退出回收成功。raw 使用 vdc，mounted recovery 使用 ncedisk0，两类入口分别沿用自己的设备合同。
+
+详见[原始 first-stage 两页阶段结果](2026-11-13-SDK36原始first-stage启动.md#两页阶段结果)。
+
+## 曾考虑的替代方案
+
+- 全部入口静态使用同一 platform 和 vdc：现有 core、storage 和原生准备入口使用 ncedisk 名称，改变这些名称需要额外适配；本阶段保留默认合同。
+- 新增 host disk_name/platform 属性：需要新的 host/kernel 字段、复制与校验；当前固定 SDK 已有同时选择原 fstab 的 hardware 参数，未发现必须独立设置属性的使用方。
+- data/system/metadata 全部改为 vdc/vdb/vdd：原 data 路径要求 vdc，system/metadata 的使用方要求 PARTNAME 与 by-name；保留其 ncedisk 名称已满足当前消费者。
+- 只改 uevent 字符串或由运行器创建 vdc 别名：原 init 重挂 `/dev` 后需要再次生成节点，FindPlatformDevice 仍要真实 sysfs 父设备；本阶段使用 Linux 的父对象和真实 disk_name。
+- 保存持久设备模式或增加新的 halt hook：初始化结果和已有设备引用已满足使用方，现有内建驱动以整个 LKL 实例释放内存；额外状态及回调尚无消费入口。
+
+## 影响
 
 新 full first-stage 已提供固定 hardware 参数，其实际内核 cmdline 尚未运行核对。共享父设备的兼容结论来自固定 fstab 与 Android 源码，实际生成、原 SDK 二进制流程及链接回收尚未运行。更高优先级 hardware/boot-device 输入、原模块 ABI 与完整启动条件须随新入口记录；本阶段保留已有输入和验证边界。

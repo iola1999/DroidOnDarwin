@@ -8,9 +8,11 @@
 
 已完成两轮只读源码调查，结果位于 `work/native-linux-nce/sdk-vold-crypto-source-scan-v1/` 和 [v2 报告](../../../../work/native-linux-nce/sdk-vold-crypto-source-scan-v2/report.md)。v2 核对 29 份输入，前次 22 份文件的字节及两个源码提交保持。vold 固定为 `11760521a2e86389c56620ec50e780e8b17e40ca`，Android common 6.12 固定为 `fefe19f9fd971e83f58b475469116e21d5d795b3`；与 SDK build `BE2A.250530.026.F3`、incremental `13894323` 的精确源码对应尚未确认。
 
-16 KiB raw v7 使用原 ramdisk init，已完成 metadata、五个 LP 挂载与 SwitchRoot。后续原 vold 请求创建 `userdata` 的 `default-key` target，长度 1,048,576 sectors，DM_TABLE_LOAD 返回 -22。原 `/data` 流程随后记录 mkdir 的 EROFS、user_keys 准备的 ENOENT；`vdc cryptfs init_user0` 退出 25，init 请求 recovery，缺少 `/misc` 后进入 `InitFatalReboot` 并调用 reboot。该阶段最终失败项为[原策略后的宿主 DM 回收](../bug-fix/2026-11-13-原策略加载后的DM回收失败.md)，原 stdout 与候选 after 保持；vold 加密仍是完整 boot 的独立失败。
+16 KiB raw v7 使用原 ramdisk init，已完成 metadata、五个 LP 挂载与 SwitchRoot。后续原 vold 请求创建 `userdata` 的 `default-key` target，长度 1,048,576 sectors，DM_TABLE_LOAD 返回 -22。原 `/data` 流程随后记录 mkdir 的 EROFS、user_keys 准备的 ENOENT；`vdc cryptfs init_user0` 退出 25，init 请求 recovery，缺少 `/misc` 后进入 `InitFatalReboot` 并调用 reboot。该阶段最终失败项为[原策略后的宿主 DM 回收](../../implemented/bug-fix/2026-11-13-原策略加载后的DM回收失败.md)，原 stdout 与候选 after 保持；vold 加密仍是完整 boot 的独立失败。
 
 本次实际翻译内核关闭 `BLK_INLINE_ENCRYPTION`、`DM_CRYPT`、`FS_ENCRYPTION` 和 `FS_VERITY`，`default-key` 驱动也尚未移植。上述请求记录没有确认密钥服务操作成功，继续按原 API 返回、实际加密 I/O 与同盘恢复验证。原 v7 日志归属 Linux revision `d0f76a77e8c2ca68bd7d96190b8da09040eab072` 的 16 KiB 构建，CLI original stdout 的 SHA-256 为 `cb8fed0177931c48fb8d02b37c3b8f3ce40d131a329e2aef012edd4ed29ebc9a`。
+
+v9 的 16 KiB 与 4 KiB first-stage、宿主 DM 回收、同盘 recovery 和 iOS 编译均已完成。四个 original 入口的原 vold 请求仍为起始 sector 0、长度 1,048,576 sectors 的 `default-key`，`DM_TABLE_LOAD=-22`；观察结果均为 `status=1`、`deadline_stop=False`，完整 boot 保持 pending。[阶段归档](../../../../experiments/native-linux/results-sdk-first-stage-20261113.json.zst)保存非敏感 target 属性与结果、原阶段身份和恢复结果。后续加密实验使用独立候选盘，继续保留这四盘的实际状态。
 
 ## 提案
 
