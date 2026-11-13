@@ -36,6 +36,28 @@ static void stock_init_ramdisk_mtime(const struct stock_init_ramdisk_entry *entr
     REQUIRE(call(88, args) == 0);
 }
 
+static void stock_init_ramdisk_device(unsigned index)
+{
+    const struct stock_init_ramdisk_entry *entry = &stock_init_ramdisk_entries[index];
+    REQUIRE(entry->rdev_major < 4096 && entry->rdev_minor < (1U << 20));
+    uint32_t device = (entry->rdev_major << 8) | (entry->rdev_minor & 255) | ((entry->rdev_minor & ~255U) << 12);
+    long make[6] = {-100, (long)entry->path, entry->mode, device};
+    long result = call(33, make);
+    printf("{\"stock_init_ramdisk_mknod\":%u,\"path\":\"%s\",\"rdev_major\":%u,\"rdev_minor\":%u,\"result\":%ld}\n",
+           index + 1, entry->path, entry->rdev_major, entry->rdev_minor, result);
+    REQUIRE(result == 0 || result == -17);
+    if (result == -17) {
+        /* LKL 的默认 rootfs 会创建 /dev/console；归档覆盖前核对设备身份。 */
+        struct stock_init_ramdisk_status status = {0};
+        long info[6] = {-100, (long)entry->path, 0x100, 0x7ff, (long)&status};
+        long observed = call(291, info);
+        printf("{\"stock_init_ramdisk_existing_device\":%u,\"path\":\"%s\",\"statx_result\":%ld,\"mask\":%u,\"mode\":%u,\"nlink\":%u,\"rdev_major\":%u,\"rdev_minor\":%u}\n",
+               index + 1, entry->path, observed, status.mask, status.mode, status.links, status.rdev_major, status.rdev_minor);
+        REQUIRE(observed == 0 && (status.mask & 5) == 5 && (status.mode & 0170000) == 0020000 &&
+                status.rdev_major == entry->rdev_major && status.rdev_minor == entry->rdev_minor && status.links == entry->nlink);
+    }
+}
+
 static void stock_init_ramdisk_write(const struct stock_init_ramdisk_entry *entry)
 {
     long open[6] = {-100, (long)entry->path, 0x241, entry->mode & 07777};
@@ -121,13 +143,7 @@ static void stock_init_ramdisk_setup(void)
             long result = call(34, make);
             REQUIRE(result == 0 || result == -17);
         } else if (kind == 0020000) {
-            REQUIRE(entry->rdev_major < 4096 && entry->rdev_minor < (1U << 20));
-            uint32_t device = (entry->rdev_major << 8) | (entry->rdev_minor & 255) | ((entry->rdev_minor & ~255U) << 12);
-            long make[6] = {-100, (long)entry->path, entry->mode, device};
-            long result = call(33, make);
-            printf("{\"stock_init_ramdisk_mknod\":%u,\"path\":\"%s\",\"rdev_major\":%u,\"rdev_minor\":%u,\"result\":%ld}\n",
-                   i + 1, entry->path, entry->rdev_major, entry->rdev_minor, result);
-            REQUIRE(result == 0);
+            stock_init_ramdisk_device(i);
         } else {
             REQUIRE(kind == 0100000);
             stock_init_ramdisk_write(entry);
