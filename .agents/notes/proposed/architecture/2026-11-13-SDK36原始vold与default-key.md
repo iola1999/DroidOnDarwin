@@ -16,7 +16,15 @@ v9 的 16 KiB 与 4 KiB first-stage、宿主 DM 回收、同盘 recovery 和 iOS
 
 ## 提案
 
-先比较原 `default-key` 补丁及其 bio/fscrypt 依赖与当前 LKL 6.12 接口，再选择必要补丁移植或 Android common 内核来源。选择须保留原 target 参数、算法、key type、FBE 内容请求的 skip 条件、克隆/拆分/bio 重用和密钥释放。实施沿用已授权的离线开发范围，完整系统的验收条件保持。
+已完成[内核移植比较](../../../../work/native-linux-nce/sdk-vold-kernel-compare-v1/report.md)，报告 SHA-256 为 `6bd12afcfee48d36d2d3b4cfb3e81ef94934b7ee713a87fc61d15ddc419e889d`。继续使用固定 LKL 6.12，移植 `default-key` 驱动、key type 验证与能力检查、bio skip 属性和 fscrypt 对应调用。保留现有 fscrypt 函数签名、设备枚举和 key 的 release 发布顺序。实施沿用已授权的离线开发范围，完整系统的验收条件保持。
+
+必要修改涉及 14 份 Linux 文件，另在 CQHCI、UFS core 和 Exynos UFS 的原能力初始化位置显式声明 STANDARD，保持三项硬件路径的现有 key type 契约。profile 初始化继续清零；fallback 声明 STANDARD，DM 以全部类型开始与底层能力相交。当前 ncedisk 没有硬件 crypto profile，合法 wrapped key 按实际能力返回 EOPNOTSUPP。
+
+固定 common 驱动作为独立上游输入保存，构建补丁适配当前 LKL 缺少的 `BLK_FEAT_ORDERED_HWQ` 声明，不引入 zoned operation 和 Android KABI/OEM 的其他修改。补丁对 IV 加法显式检查溢出，保留有效 target 的原 DUN 计算与底层偏移。`DM_DEFAULT_KEY` 保留 tristate，新增驱动需要的三项 blk-crypto API 继续使用 GPL 模块导出。
+
+先构建两页独立候选，使用标准 AES-256-XTS 向量或独立宿主实现计算密文。16-byte IV 为 `LE64(DUN)` 接 8 个零字节；按底层分区、target 起点和 target 内 sector 分别计算物理位置与 DUN。覆盖 512/4096-byte 单元、页边界、相邻范围、未对齐和溢出拒绝、无硬件 wrapped key，以及 fallback 初始化失败后的 dtr/evict。随后验证软件和 inline FBE 的实际 I/O，再进入原 vold、Keystore2/KeyMint 与同盘恢复。
+
+加密补丁与既有 NCE 架构补丁分别保存，共同进入 process 和翻译内核的来源摘要及生成文件清单。完成[阶段清理](../../implemented/process/2026-11-13-SDKfirst-stage阶段清理.md)后新建大小写敏感 APFS 构建卷和独立工作分支；本阶段重新登记输入，不沿用旧生成物的源码身份。
 
 固定 vold 的 metadata 默认算法为 AES-256-XTS，创建 `default-key` target，当前 LKL 没有该驱动。common 的 `DM_DEFAULT_KEY` 依赖 `BLK_INLINE_ENCRYPTION`，`blk_crypto_init_key()` 与当前接口有 key type 差异。原 fstab 未声明 `wrappedkey_v0`，最终选项仍需在原二进制和实际属性中核对。fscrypt 的加密普通文件使用 `bi_skip_dm_default_key`，软件 FBE 和 inline FBE 的内容请求都需保留对应条件。
 
@@ -31,6 +39,8 @@ v9 的 16 KiB 与 4 KiB first-stage、宿主 DM 回收、同盘 recovery 和 iOS
 - 单独启用 `DM_CRYPT`：它提供的 target 无法直接处理原 vold 的 `default-key` 请求。
 - 仅复制 `dm-default-key.c`：当前接口还有 key type 和 FBE bio 条件差异，单文件编译无法验证这部分行为。
 - 直接替换全部 blk-crypto 与 fscrypt 文件：尚未核对完整调用方和现有 LKL 修改，先比较必要依赖与实际改动。
+
+比较后确认，整批 common 文件还会引入 Android KABI/OEM、zoned operation、`get_devices_new` 及 key 发布方式的其他变化，当前采用必要差异。仅适配驱动以调用旧 init_key 接口仍会缺少 key size/type、profile 能力交集、FBE skip 和失败 evict 的共同契约，这些判断分别保存在现有 blk-crypto、bio 和 fscrypt 的负责位置。
 
 ## 验收标准
 
