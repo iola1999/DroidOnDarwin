@@ -1,4 +1,5 @@
 """准备原 SDK36 ramdisk 输入，并检查 first-stage 的独立观察结果。"""
+import hashlib
 import json
 import re
 import stat
@@ -12,9 +13,23 @@ CMDLINE = 'androidboot.hardware=ranchu'
 INIT_PATHS = ('/init', '/system/bin/init')
 
 
-def prepare(ramdisk, output, mounted_input):
+def prepare(ramdisk, output, mounted_input, *, plain_data=False, early_overcommit=False):
+    if early_overcommit and not plain_data:
+        raise ValueError('提前设置内存提交策略需要无加密实验入口')
     parsed = read(ramdisk)
     entries = parsed['entries']
+    if plain_data:
+        from stock_init_plain_data import transform_fstab
+        fstab = [row for row in entries if row['path'] == 'first_stage_ramdisk/fstab.ranchu']
+        if len(fstab) != 1:
+            raise ValueError('SDK 无加密实验需要唯一的 early fstab')
+        original = fstab[0]
+        deployed = transform_fstab(original['data'])
+        digest = hashlib.sha256(deployed).hexdigest()
+        if digest != mounted_input['sdk_plain_data']['fstab_candidate_sha256']:
+            raise ValueError('SDK early 与 vendor fstab 候选不同')
+        original.update(source_bytes=original['bytes'], source_sha256=original['sha256'],
+                        data=deployed, bytes=len(deployed), sha256=digest, data_mode='plain')
     program = next(row for row in entries if row['path'] == 'init')
     spec = elf_spec_bytes(program['data'], '/init')
     if (spec['type'] != 2 or spec['interpreter'] is not None or
@@ -27,7 +42,8 @@ def prepare(ramdisk, output, mounted_input):
         payload.extend(row['data'])
     header = output / 'sdk-ramdisk.h'
     with header.open('w') as stream:
-        stream.write('/* 本轮固定 ramdisk 的原文件字节与部署属性。 */\n#pragma once\n')
+        description = '本轮固定 ramdisk 与无加密 early fstab 的部署字节和属性。' if plain_data else '本轮固定 ramdisk 的原文件字节与部署属性。'
+        stream.write('/* ' + description + ' */\n#pragma once\n')
         stream.write('struct stock_init_ramdisk_entry {\n'
                      '    const char *path;\n'
                      '    const unsigned char *data;\n'
@@ -43,10 +59,20 @@ def prepare(ramdisk, output, mounted_input):
                           row['uid'], row['gid'], row['mtime'], row['rdev_major'], row['rdev_minor'], row['nlink']))
         stream.write('};\n')
     manifest = {key: value for key, value in parsed.items() if key != 'entries'}
-    manifest.update(profile=PROFILE, cmdline=CMDLINE,
+    manifest.update(profile=PROFILE, cmdline=CMDLINE + (' sysctl.vm.overcommit_memory=1' if early_overcommit else ''),
                     entries=[{key: value for key, value in row.items() if key != 'data'} for row in entries],
                     header=str(header), payload_bytes=len(payload),
                     deployment='original regular-file bytes embedded in this runner; inode identifiers assigned by Linux')
+    observer = mounted_input.get('system_observer')
+    if observer is not None:
+        from stock_init_system_observer import CONTRACT
+        if not plain_data or observer.get('contract') != CONTRACT:
+            raise ValueError('原系统服务观察器需要无加密实验入口')
+        manifest['cmdline'] += ' ' + observer['cmdline_option']
+    if plain_data:
+        manifest.update(data_mode='plain',
+                        early_overcommit=early_overcommit,
+                        deployment='fixed ramdisk input with declared plain-data early fstab; inode identifiers assigned by Linux')
     manifest_path = output / 'sdk-ramdisk.json'
     manifest_path.write_text(json.dumps(manifest, indent=2) + '\n')
     return {**mounted_input, 'sdk_ramdisk': manifest, 'first_stage_contract': 1, 'host_dm_cleanup_contract': 1,
@@ -276,7 +302,12 @@ def validate(rows, mode, inputs, guest, page):
         return False
     text = bytes.fromhex(cmdline[0]['value_hex']).decode('ascii', errors='replace').strip('\n')
     hardware = [word for word in text.split(' ') if word.startswith('androidboot.hardware=')]
-    if hardware != [CMDLINE] or '\0' in text:
+    sysctls = [word for word in text.split(' ') if word.startswith('sysctl.')]
+    expected_cmdline = manifest.get('cmdline', CMDLINE)
+    if type(expected_cmdline) is not str:
+        return False
+    expected_sysctls = [word for word in expected_cmdline.split(' ') if word.startswith('sysctl.')]
+    if hardware != [CMDLINE] or sysctls != expected_sysctls or '\0' in text:
         return False
     prepared = next(row for row in rows if 'stock_init_first_stage_dm_prepare' in row)
     observation = next(row for row in rows if 'stock_init_observation' in row)

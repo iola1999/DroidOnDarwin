@@ -19,7 +19,7 @@ def digest(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def build(report_path, out, target):
+def build(report_path, out, target, *, reuse_engine_build=False):
     report_path, out = report_path.resolve(), out.resolve()
     if not out.is_relative_to(WORK) or target not in ('macos', 'ios'):
         raise ValueError('需要 macos/ios 目标，输出必须在 work/native-linux-nce')
@@ -39,6 +39,8 @@ def build(report_path, out, target):
     if (dependency.get('target') != target or dependency.get('code_memory') != 'dual' or
             not dependency.get('sha256') or any(not (ROOT / name).is_file() or digest(ROOT / name) != value
                                                for name, value in dependency['sha256'].items())):
+        if reuse_engine_build:
+            raise ValueError('Unicorn 构建输入或产物已变化，需要先核对共享构建')
         dependency = build_unicorn('dual', target)
     unicorn = dependency_path.parent / 'prefix'
     if not unicorn.samefile(Path(dependency['path'])):
@@ -58,6 +60,8 @@ def build(report_path, out, target):
                'translation/linux-runner.c', 'translation/linux-memory.c', 'translation/code-watch.c',
                'translation/read-view.c', 'translation/unicorn-code-memory.c', 'lkl-host.c', 'input.c',
                'session.c', 'session-profile.c', 'graphics/host-graphics.cpp']
+    if config.get('bpf_jit'):
+        sources.append('translation/bpf-code-memory.c')
     for name in sources:
         source = EXP / name
         obj = out / (source.stem + '.o')
@@ -93,5 +97,6 @@ if __name__ == '__main__':
     parser.add_argument('--probe-report', type=Path, required=True)
     parser.add_argument('--target', choices=('macos', 'ios'), required=True)
     parser.add_argument('--output', type=Path, required=True)
+    parser.add_argument('--reuse-engine-build', action='store_true')
     args = parser.parse_args()
-    print(build(args.probe_report, args.output, args.target)['library'])
+    print(build(args.probe_report, args.output, args.target, reuse_engine_build=args.reuse_engine_build)['library'])

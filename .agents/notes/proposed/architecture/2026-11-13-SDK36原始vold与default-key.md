@@ -16,6 +16,8 @@ v9 的 16 KiB 与 4 KiB first-stage、宿主 DM 回收、同盘 recovery 和 iOS
 
 ## 提案
 
+2026-11-13 用户询问加密的必要性和性能成本。当前先按[SDK 无加密启动与性能基线](../testing/2026-11-13-SDK无加密启动与性能基线.md)移除独立候选的两项 `/data` 加密配置，验证完整启动和系统性能。本文保留原 fstab 的加密候选、实现选择和验收边界；其实际加密 I/O 与整机比较继续待验收。
+
 已完成[内核移植比较](../../../../work/native-linux-nce/sdk-vold-kernel-compare-v1/report.md)，报告 SHA-256 为 `6bd12afcfee48d36d2d3b4cfb3e81ef94934b7ee713a87fc61d15ddc419e889d`。继续使用固定 LKL 6.12，移植 `default-key` 驱动、key type 验证与能力检查、bio skip 属性和 fscrypt 对应调用。保留现有 fscrypt 函数签名、设备枚举和 key 的 release 发布顺序。实施沿用已授权的离线开发范围，完整系统的验收条件保持。
 
 必要修改涉及 14 份 Linux 文件，另在 CQHCI、UFS core 和 Exynos UFS 的原能力初始化位置显式声明 STANDARD，保持三项硬件路径的现有 key type 契约。profile 初始化继续清零；fallback 声明 STANDARD，DM 以全部类型开始与底层能力相交。当前 ncedisk 没有硬件 crypto profile，合法 wrapped key 按实际能力返回 EOPNOTSUPP。

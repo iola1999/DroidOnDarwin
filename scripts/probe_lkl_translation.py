@@ -170,9 +170,13 @@ def validate_aslr(rows, guest_page_bytes):
     return True
 
 
-def validate(rows, memory_interval, mapping="window", workload="core", tlb_invalidation=None, execution=None, direct_config=None, cpus=1, parallel_profile=None, uaccess_stop=None, code_lookup_limit=None, code_memory=None, online_cpus=None, guest_layout=None, guest_page_bytes=16384, data_tbi=None, stock_art_jit_mode="default", *, kernel_log="", exec_aslr_fixtures=None):
+def validate(rows, memory_interval, mapping="window", workload="core", tlb_invalidation=None, execution=None, direct_config=None, cpus=1, parallel_profile=None, uaccess_stop=None, code_lookup_limit=None, code_memory=None, online_cpus=None, guest_layout=None, guest_page_bytes=16384, data_tbi=None, stock_art_jit_mode="default", *, kernel_log="", exec_aslr_fixtures=None, bpf_jit=False):
     if 'BUG: non-zero pgtables_bytes on freeing mm:' in kernel_log:
         return False
+    if bpf_jit:
+        pools = [row for row in rows if row.get('test') == 'translated_bpf_code_pool_cleanup']
+        if (len(pools) != 1 or set(pools[0]) != {'test', 'passed'} or pools[0]['passed'] is not True):
+            return False
     if guest_page_bytes not in (4096, 16384):
         return False
     if guest_page_bytes == 4096:
@@ -563,6 +567,7 @@ def main():
     parser.add_argument('--direct-memory', choices=('cached', 'pte', 'refill', 'flat', 'view'), default='cached')
     parser.add_argument('--build-only', action='store_true')
     parser.add_argument('--reuse-engine-build', action='store_true', help='校验摘要后复用已构建的 Unicorn，用于执行器成组对照')
+    parser.add_argument('--bpf-jit', action='store_true', help='启用独立的 LKL ARM64 eBPF JIT')
     parser.add_argument('--mapping', choices=('window', 'pte'), default='window')
     parser.add_argument('--data-tbi', type=int, choices=(0, 1), default=0)
     parser.add_argument('--guest-layout', choices=('host', 'low', 'sparse'), default='host')
@@ -593,6 +598,8 @@ def main():
     parser.add_argument('--output', type=Path, default=DEFAULT_OUT)
     parser.add_argument('--memory-interval-ms', type=int, default=100)
     args = parser.parse_args()
+    if args.bpf_jit and (args.cpus != 1 or args.mapping != 'pte' or args.code_memory != 'dual'):
+        parser.error('LKL ARM64 BPF JIT 需要单 CPU PTE/dual 配置')
     if args.stock_art_jit_mode != 'default' and args.workload != 'stock-art':
         parser.error('JIT 诊断模式仅用于 stock-art')
     if args.stock_art_observe_jit and (args.workload != 'stock-art' or args.execution != 'direct' or args.cpus != 1):
@@ -715,7 +722,7 @@ def main():
     kernel = KERNEL
     if args.mapping == 'pte':
         from build_lkl_translation_kernel import build
-        kernel = build(args.cpus, args.high_res_timers, args.guest_page_bytes)
+        kernel = build(args.cpus, args.high_res_timers, args.guest_page_bytes, args.bpf_jit)
     else:
         native_manifest = json.loads((kernel / 'lkl-summary.json').read_text())
         if sha(kernel / 'lkl-image.bin') != native_manifest['kernel_sha256'] or any(
@@ -745,6 +752,8 @@ def main():
         header += f'#define {constant} 0x{symbol:x}UL\n'
     (out / 'translation-symbols.h').write_text(header)
     inputs = [EXP / 'translation/kernel-image.c', EXP / 'translation/linux-elf.c', EXP / 'translation/linux-execution.c', EXP / 'translation/interaction-profile.c', EXP / 'translation/linux-runner.c', EXP / 'translation/linux-memory.c', EXP / 'lkl-host.c']
+    if args.bpf_jit:
+        inputs.append(EXP / 'translation/bpf-code-memory.c')
     commands = []
     page_flag = f'-DNCE_GUEST_PAGE_SHIFT={args.guest_page_bytes.bit_length() - 1}'
     direct_link, direct_files = [], []
@@ -917,6 +926,8 @@ def main():
                   EXP / 'lkl-nce-mmu.c', kernel / 'build.json', EXP / 'translation/exec-aslr.h']
     if args.guest_page_bytes == 4096:
         files.append(ROOT / 'scripts/lkl_4k_vmalloc_patch.py')
+    if args.bpf_jit:
+        files += [ROOT / 'scripts/lkl_bpf_jit_patch.py', EXP / 'lkl-bpf-jit-memory.c', EXP / 'translation/bpf-code-memory.h']
     if args.cpus == 2:
         files += [EXP / 'translation/smp-guest.c', ROOT / 'scripts/lkl_translation_smp_patch.py']
     data_seed = None
@@ -1018,7 +1029,7 @@ def main():
                         raise
                     parse_errors.append({'line': line_number, 'error': str(error)})
             kernel_log = (out / f'{stem}.log').read_text()
-            passed = not parse_errors and returncode == 0 and validate(rows, args.memory_interval_ms, args.mapping, args.workload, args.tlb_invalidation, args.execution, direct_config, args.cpus, bool(args.parallel_profile), args.smp_uaccess_stop, code_memory=args.code_memory, online_cpus=args.online_cpus, guest_layout=args.guest_layout, data_tbi=bool(args.data_tbi), guest_page_bytes=args.guest_page_bytes, stock_art_jit_mode=args.stock_art_jit_mode, kernel_log=kernel_log, exec_aslr_fixtures=exec_aslr_fixtures)
+            passed = not parse_errors and returncode == 0 and validate(rows, args.memory_interval_ms, args.mapping, args.workload, args.tlb_invalidation, args.execution, direct_config, args.cpus, bool(args.parallel_profile), args.smp_uaccess_stop, code_memory=args.code_memory, online_cpus=args.online_cpus, guest_layout=args.guest_layout, data_tbi=bool(args.data_tbi), guest_page_bytes=args.guest_page_bytes, stock_art_jit_mode=args.stock_art_jit_mode, kernel_log=kernel_log, exec_aslr_fixtures=exec_aslr_fixtures, bpf_jit=args.bpf_jit)
             apk_validated = None
             if apk_fixture:
                 previous = [row for result in results for row in result['results']]
@@ -1068,7 +1079,7 @@ def main():
               'dependency': dependency, 'commands': commands, 'host_unchanged_after_guest_build': True,
               'configuration': {'data_tbi': bool(args.data_tbi), 'guest_layout': args.guest_layout, 'code_memory': args.code_memory, 'execution': args.execution, 'direct': direct_config, 'mapping': args.mapping, 'sparse_scan': True, 'fault_prefetch': False, 'guest_page_bytes': args.guest_page_bytes, 'host_page_bytes': 16384,
                                 'workload': args.workload, 'entries': entries, 'art_nterp': args.art_nterp,
-                                'cpus': args.cpus, 'high_res_timers': args.high_res_timers, 'online_cpus': args.online_cpus, 'uaccess_stop': args.smp_uaccess_stop, 'parallel_profile': bool(args.parallel_profile), 'art_expanded_jit': args.art_expanded_jit, 'art_fast_baseline': args.art_fast_baseline,
+                                'cpus': args.cpus, 'high_res_timers': args.high_res_timers, 'bpf_jit': args.bpf_jit, 'online_cpus': args.online_cpus, 'uaccess_stop': args.smp_uaccess_stop, 'parallel_profile': bool(args.parallel_profile), 'art_expanded_jit': args.art_expanded_jit, 'art_fast_baseline': args.art_fast_baseline,
                                 'cache_invalidation': args.cache_invalidation,
                                 'exec_cache': args.exec_cache,
                                 'tlb_invalidation': args.tlb_invalidation,

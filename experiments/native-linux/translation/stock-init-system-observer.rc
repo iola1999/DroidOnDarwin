@@ -1,0 +1,13 @@
+service droid_plain_system_observer /system/bin/sh -c __DROID_PLAIN_SYSTEM_OBSERVER_SCRIPT__
+    class late_start
+    user shell
+    group shell log readproc
+    seclabel u:r:shell:s0
+    disabled
+    oneshot
+
+on property:sys.boot_completed=1
+    mkdir /data/local/tests 0701 shell shell
+    mkdir /data/local/tests/system 0701 shell shell
+    restorecon /data/local/tests /data/local/tests/system
+    start droid_plain_system_observer

@@ -7,6 +7,9 @@
 #include "linux-memory.h"
 #include "layout.h"
 #include "lkl-host-ops.h"
+#ifdef LKL_NCE_BPF_JIT
+#include "bpf-code-memory.h"
+#endif
 #include "lkl-image.h"
 #include "translation-symbols.h"
 #include <TargetConditionals.h>
@@ -441,6 +444,20 @@ int nce_lkl_run(const char *path)
         return 1;
     }
     unsigned char *kernel = loaded.base;
+#ifdef LKL_NCE_BPF_JIT
+    if (translation_bpf_code_prepare(TRANSLATION_BPF_CODE_BYTES)) {
+        printf("{\"result\":\"failed\",\"reason\":\"bpf_code_preparation\",\"errno\":%d}\n", errno);
+        detach_preparation();
+        translation_kernel_release(&loaded);
+        translation_memory_stop();
+        return 1;
+    }
+    nce_lkl_host.bpf_code_alloc = translation_bpf_code_alloc;
+    nce_lkl_host.bpf_code_free = translation_bpf_code_free;
+    nce_lkl_host.bpf_code_write_alias = translation_bpf_code_write_alias;
+    nce_lkl_host.bpf_code_publish = translation_bpf_code_publish;
+    nce_lkl_host.bpf_code_capacity = translation_bpf_code_capacity;
+#endif
     int (*init)(struct lkl_host_operations *) = (void *)(kernel + LKL_INIT);
 #if TRANSLATION_LOOKUP
     int (*start)(unsigned long, unsigned long *, unsigned) = (void *)(kernel + NCE_LKL_START_CPUS);
@@ -458,6 +475,10 @@ int nce_lkl_run(const char *path)
 #ifdef NCE_TRANSLATION_DUAL_MAP
     if (guest_base && !preparation_failed)
         preparation_failed = translation_kernel_check_code(&loaded) || translation_linux_check_code();
+#ifdef LKL_NCE_BPF_JIT
+    if (guest_base && !preparation_failed)
+        preparation_failed = translation_bpf_code_check();
+#endif
     printf("{\"test\":\"translation_prepared_code_execution\",\"passed\":%s}\n",
            guest_base && !preparation_failed ? "true" : "false");
 #endif
@@ -465,6 +486,9 @@ int nce_lkl_run(const char *path)
         if (guest_base)
             translation_linux_abort_setup();
         translation_kernel_release(&loaded);
+#ifdef LKL_NCE_BPF_JIT
+        REQUIRE(!translation_bpf_code_release(false));
+#endif
         if (!TRANSLATION_LOOKUP)
             free(views);
         translation_memory_stop();
@@ -672,6 +696,11 @@ int nce_lkl_run(const char *path)
     int disk_close_result = nce_disk_close();
     failed |= disk_close_result != 0;
     translation_linux_cleanup();
+#ifdef LKL_NCE_BPF_JIT
+    int bpf_release = translation_bpf_code_release(true);
+    printf("{\"test\":\"translated_bpf_code_pool_cleanup\",\"passed\":%s}\n", bpf_release == 0 ? "true" : "false");
+    failed |= bpf_release != 0;
+#endif
     REQUIRE(translation_kernel_release(&loaded) == 0);
     if (!TRANSLATION_LOOKUP)
         free(views);

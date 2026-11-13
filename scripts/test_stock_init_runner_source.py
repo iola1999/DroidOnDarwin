@@ -26,7 +26,8 @@ def main():
     source = source[:start] + source[end:]
     entropy = 'long random[6] = {-100, (long)"/dev/random", 2};'
     device = 'long random_device[6] = {-100, (long)"/dev/random", 0020666, 264};'
-    converted = _first_stage_runner_source(source)
+    converted = _first_stage_runner_source(source, 'androidboot.hardware=ranchu')
+    overcommit = _first_stage_runner_source(source, 'androidboot.hardware=ranchu sysctl.vm.overcommit_memory=1')
     checks = []
 
     def check(name, passed):
@@ -37,6 +38,8 @@ def main():
           converted.count('int (*start)(unsigned long, unsigned long *, unsigned, const char *) = (void *)(kernel + NCE_LKL_START_CPUS_CMDLINE);') == 1)
     check('runtime-cmdline-selection',
           converted.count('start(scheduler_slice_us * 1000, &slice, online_cpus, stock_init_first_stage_enabled() ? "androidboot.hardware=ranchu" : NULL)') == 1)
+    check('early-overcommit-cmdline-selection',
+          overcommit.count('start(scheduler_slice_us * 1000, &slice, online_cpus, stock_init_first_stage_enabled() ? "androidboot.hardware=ranchu sysctl.vm.overcommit_memory=1" : NULL)') == 1)
     check('runtime-entropy-selection',
           converted.count('long random[6] = {-100, (long)(stock_init_first_stage_enabled() ? "/dev/urandom" : "/dev/random"), 2};') == 1)
     check('random-device-declaration-preserved', source.count(device) == converted.count(device) == 1)
@@ -45,7 +48,7 @@ def main():
     for name, modified in (('missing-entropy-declaration', source.replace(entropy, '')),
                            ('duplicate-entropy-declaration', source + '\n' + entropy)):
         try:
-            _first_stage_runner_source(modified)
+            _first_stage_runner_source(modified, 'androidboot.hardware=ranchu')
         except ValueError as error:
             check(name, str(error) == '运行器启动参数或熵来源位置已变化')
         else:

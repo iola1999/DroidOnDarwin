@@ -41,8 +41,13 @@ def expected_rows(manifest, iterations):
                                 'path_hex': path, 'name_hex': attribute, 'value_hex': label})] += 1
         expected[canonical({'stock_init_block': 40, 'pid': manifest['pid'], 'result': -16 if i & 1 else 0,
                             'args': manifest['block_args'], 'paths_hex': paths})] += 1
-        expected[canonical({'stock_init_syscall': 63, 'pc': 0x12340 + 4 * i,
-                            'args': manifest['block_args'], 'result': 1})] += 1
+        if i < 64 or not ((i + 1) & i):
+            expected[canonical({'stock_init_syscall': 63, 'trace_index': i + 1, 'pc': 0x12340 + 4 * i,
+                                'args': manifest['block_args'], 'result': 1})] += 1
+    recorded = sum(i < 64 or not ((i + 1) & i) for i in range(iterations))
+    expected[canonical({'stock_init_syscall_summary': True, 'syscall': 63, 'failed': False,
+                        'last_syscall': 63, 'seen': iterations, 'recorded': recorded, 'omitted': iterations - recorded,
+                        'last_pc': 0x12340 + 4 * (iterations - 1), 'last_args': manifest['block_args'], 'last_result': 1})] += 1
     for i in range(iterations * 32):
         expected[canonical({'memory_sample': True, 'iteration': i,
                             'rss_bytes': 4096 * i + 1, 'guest_bytes': 16384 * i + 7})] += 1
@@ -88,7 +93,6 @@ def main():
                 parse_errors.append({'line': number, 'error': str(error),
                                      'line_sha256': hashlib.sha256(line.encode()).hexdigest(), 'preview': line[:512]})
         result['line_count'] = len(lines)
-        result['expected_line_count'] = 1 + 39 * args.iterations
         result['parse_error_count'] = len(parse_errors)
         result['parse_errors'] = parse_errors[:8]
         result['artifacts'] = {path.name: {'path': str(path), 'bytes': path.stat().st_size, 'sha256': sha(path)}
@@ -101,6 +105,7 @@ def main():
                 any(type(value) is not int for value in manifest['block_args'])):
             raise ValueError('fixture 首行无效')
         expected = expected_rows(manifest, args.iterations)
+        result['expected_line_count'] = 1 + sum(expected.values())
         actual = Counter(canonical(row) for row in parsed[1:])
         missing, unexpected = expected - actual, actual - expected
         result['missing_row_count'] = sum(missing.values())

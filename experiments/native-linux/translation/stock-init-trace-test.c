@@ -108,6 +108,7 @@ int main(int argc, char **argv)
     atomic_store_explicit(&started, true, memory_order_release);
     for (unsigned i = 0; i < 4; ++i)
         assert(pthread_join(threads[i], NULL) == 0);
+    stock_init_trace_summary();
     assert(fflush(stdout) == 0);
     fprintf(stderr, "{\"stock_init_trace_calls\":true,\"copy_user\":%lu,\"getpid\":%lu,\"threads\":4}\n",
             atomic_load_explicit(&copy_calls, memory_order_relaxed),

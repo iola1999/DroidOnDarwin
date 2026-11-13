@@ -2,6 +2,10 @@
 #pragma once
 #include <time.h>
 
+#ifndef NCE_STOCK_INIT_OBSERVE_SECONDS
+#define NCE_STOCK_INIT_OBSERVE_SECONDS 30
+#endif
+
 static int stock_init_raw_path(const char *path, int hyperos)
 {
     const char *partitions[] = {"/system", "/product", "/system_ext", "/vendor", "/system_dlkm"};
@@ -315,6 +319,31 @@ static void stock_init_observe_context(long pid, char *previous, long *previous_
     funlockfile(stdout);
 }
 
+#ifdef NCE_STOCK_INIT_VM_STATE
+static void stock_init_vm_state(void)
+{
+    const char *paths[] = {"/proc/sys/vm/overcommit_memory", "/proc/meminfo"};
+    for (unsigned i = 0; i < sizeof(paths) / sizeof(*paths); ++i) {
+        unsigned char data[4096];
+        long args[6] = {-100, (long)paths[i], 0};
+        long opened = call(56, args), read_result = opened, closed = -1;
+        if (opened >= 0) {
+            args[0] = opened;
+            args[1] = (long)data;
+            args[2] = sizeof(data);
+            read_result = call(63, args);
+            closed = call(57, args);
+        }
+        flockfile(stdout);
+        printf("{\"stock_init_vm_state\":true,\"path\":\"%s\",\"open_result\":%ld,\"read_result\":%ld,\"close_result\":%ld,\"data_hex\":\"", paths[i], opened, read_result, closed);
+        for (long j = 0; j < read_result && j < (long)sizeof(data); ++j)
+            printf("%02x", data[j]);
+        puts("\"}");
+        funlockfile(stdout);
+    }
+}
+#endif
+
 static int stock_init_run(void)
 {
     int first_stage = stock_init_first_stage_enabled();
@@ -332,6 +361,9 @@ static int stock_init_run(void)
         stock_init_volume_retain(&stock_init_data);
         stock_init_volume_retain(&stock_init_metadata);
     }
+#ifdef NCE_STOCK_INIT_VM_STATE
+    stock_init_vm_state();
+#endif
     long launch[6] = {(long)translation_linux_process("/probe-guest"), 1};
     long pid = call(246, launch);
     REQUIRE(pid > 1);
@@ -346,7 +378,7 @@ static int stock_init_run(void)
     int status = -1, stopped = 0;
     long waited = 0, killed = 0;
     int lifecycle = !strcmp(getenv("NCE_STOCK_INIT_MODE"), "lifecycle");
-    double deadline = stock_init_now() + (lifecycle ? 2 : 30);
+    double deadline = stock_init_now() + (lifecycle ? 2 : NCE_STOCK_INIT_OBSERVE_SECONDS);
     char previous_context[256] = {0};
     long previous_result = -1;
     for (;;) {

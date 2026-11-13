@@ -67,6 +67,7 @@ int main(int argc, char **argv)
     (void)stock_init_trace_write;
     (void)stock_init_trace_security;
     (void)stock_init_trace_result;
+    (void)stock_init_trace_summary;
     for (int i = 1; i < argc; ++i)
         region(argv[i], strlen(argv[i]) + 1);
     if (argc == 7 && !strcmp(argv[1], "block")) {

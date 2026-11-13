@@ -225,7 +225,8 @@ static void thread_exit(void)
 }
 static int thread_join(lkl_thread_t t)
 {
-    return pthread_join((pthread_t)t, NULL) ? -1 : 0;
+    REQUIRE(pthread_join((pthread_t)t, NULL) == 0);
+    return 0;
 }
 static lkl_thread_t thread_self(void)
 {
