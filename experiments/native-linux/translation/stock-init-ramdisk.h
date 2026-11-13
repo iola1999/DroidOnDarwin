@@ -124,7 +124,10 @@ static void stock_init_ramdisk_setup(void)
             REQUIRE(entry->rdev_major < 4096 && entry->rdev_minor < (1U << 20));
             uint32_t device = (entry->rdev_major << 8) | (entry->rdev_minor & 255) | ((entry->rdev_minor & ~255U) << 12);
             long make[6] = {-100, (long)entry->path, entry->mode, device};
-            REQUIRE(call(33, make) == 0);
+            long result = call(33, make);
+            printf("{\"stock_init_ramdisk_mknod\":%u,\"path\":\"%s\",\"rdev_major\":%u,\"rdev_minor\":%u,\"result\":%ld}\n",
+                   i + 1, entry->path, entry->rdev_major, entry->rdev_minor, result);
+            REQUIRE(result == 0);
         } else {
             REQUIRE(kind == 0100000);
             stock_init_ramdisk_write(entry);
