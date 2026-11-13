@@ -114,6 +114,57 @@ v3 保持同一 core、vendor、宿主 renderer 与策略，使用新的独立�
 
 v2/v3 结束后，原 liblog fixture 与四份原日志的协议及 syscall 采样复核成功。核对全部入口停止状态和只读调查的实际依赖后，清理两轮 26 项展开 root、系统中间副本、程序、对象、dSYM 和 data/metadata 克隆盘，以及本轮 liblog fixture 二进制，共 27 项、10,036,009,642 bytes 的文件逻辑大小。未测物理释放量。原日志、summary、生成 TU/头、导出结果、固定原盘、vendor v4 和 core v3 来源保持；清单为 `work/cleanup-2026-11-14/init-graphics-v2-v3.json`。复现这两轮需使用相应 wrapper 重新生成中间产物；iOS 输入前后核对发生于清理前。
 
+### allocate2 的 Binder 交易诊断
+
+三标签诊断 `work/sdk-plain-validation-v1/composer-allocator-taglog-v1/result.json` 已完成。CLI/GCD 的 lifecycle、original 和 recovery 六入口均实际退出 0，进程组清空，未发送额外清理信号；同盘 recovery 结束后 data/metadata 均为 clean。生产与生成来源前后保持。两份 original 各记录 18 条，省略 0 条，均两次报告 `Failed to allocate (360 x 640) layerCount 1 format 1 usage a00: -129`。候选 allocator 的错误标签未出现，完整 boot 继续为 failed。
+
+原 vendor `libui.so` 在 Gralloc5Allocator 的 allocate2 失败分支读取 `AStatus_getExceptionCode`。`EX_SERVICE_SPECIFIC=-8` 会转换服务错误，其他异常保留原值；NDK 的 `EX_TRANSACTION_FAILED=-129` 与本轮返回相同。mapper import 发生在 AStatus 成功之后。该三标签轮次尚未读取实际 Binder 错误结构。
+
+原 Composer 在两入口分配错误前都调用 `BINDER_GET_EXTENDED_ERROR`，ioctl request 为 `0xc00c6211`，实际返回 0。该三标签轮次只保存用户结构的地址。实际内核 ABI 为 12 bytes 的 `{u32 id, u32 command, s32 param}`；驱动在该 ioctl 内复制并重置线程的 extended error。因此下一轮只在原 ioctl 成功后，用已有只读 `copy_user` 读取返回结构；不新增查询 ioctl。新生成副本继续保留三标签、FATAL、原 rc、策略、SDK 图形 ELF、180 秒 original 与六入口验收。每入口最多记录 64 份结构，同时汇总复制失败、身份获取失败及省略计数。先检查请求筛选、边界、输入保持、signed param 和记录限额，再运行新 APFS 克隆盘。
+
+诊断来源与实际 vendor/core 在停止后逐项复核。取得实际 command/param 后按对应内核分支处理，并覆盖 CLI/GCD、资源回收与原策略行为。此诊断不改变完整系统、显示、APK 或持续性能的验收条件。
+
+本轮 Binder 诊断 `work/sdk-plain-validation-v1/composer-binder-error-v1/result.json` 已结束。两份 original 各读到 2 份，复制失败、身份获取失败和省略均为 0；CLI 的交易 id 为 1113/1566，GCD 为 1295/1954，四份均为 `command=29201（BR_FAILED_REPLY）, param=-1（EPERM）`。六入口实际退出和恢复检查成功，生产、生成和工具来源前后保持，完整 boot 继续 failed。原系统停止后的内核日志读取均返回 `-13`，AVC 内容仍未取得。
+
+该轮独立结束审阅核对 13 组、512 项摘要，其中内层来源为 335 项。CLI original 的图形连接为 `opened=closed=16`，GCD 为 `opened=closed=17`。确认六入口进程组均清空和后续诊断的实际使用方后，清理 14 项展开 root、中间镜像、程序、对象、dSYM 与克隆盘，文件逻辑大小为 5,025,379,547 bytes，物理释放量未测。原日志、summary、生成源码、导出、原盘、vendor v4 与 core v3 前后保持，清单为 `work/cleanup-2026-11-14/composer-binder-error-v1.json`。335 项内层来源的复核发生于清理前；复现需由该轮 wrapper 重新生成中间产物。
+
+实际内核 `binder_transaction_log_failed` 已保存失败交易的 `debug_id`、调用/回复方向、双方进程/线程、数据大小、对象偏移表大小、`return_error_line`、command 和 param。当前 ELF 的该符号相对镜像基址地址为 `0x9f269c`，大小 `0x2708`；`CONFIG_DEBUG_INFO_NONE=y`，ELF 没有可用 DWARF 类型。下一步使用实际 Binder 编译命令的只读 layout 检查确认结构布局，再在新生成副本中按 extended error 的 id 读取对应失败记录。采集继续有界，检查记录完成标记，保留未找到与记录未完成计数，并核对整个读取范围位于实际内核镜像。该步骤保持内核、原策略与原 ioctl 的实际行为。
+
+新增诊断只由生成 probe 和 C fixture 使用，分别保存实际复制失败、身份获取失败和达到记录限额的调用，未增加产品配置或新的公共查询接口。直接再发 GET 查询会读取已重置的线程错误；记录全部 Binder payload 尚无必要，先读取现有失败记录的步骤与行号。静态调查继续核对 `TF_ACCEPT_FDS`、memfd/refcount 的原标签和 Binder 文件传输权限。
+
+实际 Binder 编译参数的只读 layout 检查已成功，未重建内核或启动 guest。`work/sdk-plain-validation-v1/binder-log-abi-review-v1/result.json` 核对八项来源前后保持：失败记录每槽 312 bytes、32 槽，数组从日志结构的 offset 8 开始，整个日志为 9992 bytes。`debug_id_done`、`return_error_line`、command 与 param 分别位于槽内 offset 4、44、48、52；日志范围 `[10430108, 10440100)` 位于当前 10485760-byte 内核镜像的 RW 段。
+
+下一轮 `composer-binder-failed-v1` 保留原 extended error 读取及三标签诊断，额外扫描已有失败日志的 32 槽；按 id、command 与 signed param 匹配，并在复制固定 56 bytes 字段前后核对非零完成标记。未找到、未完成、字段不匹配和达到 64 条限额分别计数。扫描留在原 syscall 回调中，不增加 Linux 调用或等待；全部 guest 线程停止后输出一次汇总。日志的 from/to PID、TID 来自内核初始 PID 命名空间，原 ioctl 记录的 PID、TID 来自 guest 命名空间，两类编号均保留，验证不要求两类编号相同。目标 PID、TID 为零的记录保留，这些字段可能尚未写入。
+
+生成前先检查未完成与变化的完成标记、首尾槽、command/param 不匹配、目标编号为零、两类编号不同、signed 字段边界、输入保持和记录限额；再复核实际内核来源与唯一基址设置位置，使用新 APFS 克隆盘完成相同六入口与 180 秒 original 观察。内核改变后必须按新 ELF 和实际编译参数重新确认布局与地址。具体 EPERM 步骤仍待此次动态记录，完整 boot 验收继续保持。
+
+首次 prepare 的 Binder fixture 校验因新增失败汇总改变末尾位置而失败，已按事件种类筛选该 fixture 的输入。prepare v2 的独立审阅又发现，原 extended error 已达 64 条限额后仍可能输出失败交易，缺少对应的原记录；读取入口改为仅处理已输出的 extended error，原省略计数继续保留。prepare v3 的协议、字段关联与混合限额检查成功：前 64 次 `BR_OK` 后再出现一份匹配失败，extended error 记录 64 条、省略一条，失败交易没有单独输出。前三份 prepare 结果均保留；随后使用相同生成源码完成实际 guest 运行。
+
+
+`composer-binder-failed-v1` 已完成六入口与两个 original 各 180 秒的观察。六入口实际退出均为 0，进程组均清空，未发送额外清理信号；同盘 recovery 后 data/metadata 均为 clean。两份 original 各记录 18 条 tag、2 份 extended error 和 2 份失败交易，复制、身份、槽匹配及省略失败均为 0，图形连接均为 `opened=closed=16`。336 项内层来源及生产、生成和工具来源保持，独立结束审阅的 99 项检查成功。first-stage 完成，完整 boot 仍为 failed。外层结果为 `work/sdk-plain-validation-v1/composer-binder-failed-v1/result.json`，原日志与 summary 为 `work/native-linux-nce/sdk-plain-init-composer-binder-failed-16k-v1/`；独立审阅为同轮 `independent-observed-review.json`。
+
+四份失败均为 `call_type=2` 的回复，`data_size=168`、`offsets_size=16`，`return_error_line=3518`，command 为 `BR_FAILED_REPLY`，param 为 `-EPERM`。实际冻结的 `binder.c:3518` 对应 `BINDER_TYPE_FD` 的 `binder_translate_fd` 返回负值。原 GET 的 fd 为 4、request 为 `0xc00c6211`、返回 0；同线程随后均记录 360×640、layerCount 1、format 1、usage `0xa00` 的分配返回 `-129`。原 init 确认 allocator 的 guest PID 为 CLI 206、GCD 204，Composer 为 214、215。
+
+| 入口 | 交易 ID | guest PID/TID | 内核 from→to | extended error / failed / 分配日志行 |
+| --- | --- | --- | --- | --- |
+| CLI | 1137 | 214/260 | 380:435→388:436 | 30935 / 30936 / 30938 |
+| CLI | 1708 | 214/260 | 380:435→388:436 | 35953 / 35954 / 35956 |
+| GCD | 1153 | 215/259 | 378:433→389:436 | 30959 / 30960 / 30962 |
+| GCD | 1579 | 215/259 | 378:433→389:436 | 35740 / 35741 / 35743 |
+
+失败记录保留 `target_handle=-1` 与 `to_node=0`。该记录没有 FD 对象序号、对象 offset 或原 FD 值，具体失败 FD 仍待采集。`binder_translate_fd` 的 EPERM 条件继续保留两项：目标不接受 FD，或 `security_binder_transfer_file` 失败后归一为 EPERM。原系统与 vendor 的 libbinder ELF 均设置 `TF_ACCEPT_FDS`，实际交易 flags 尚未读取。
+
+固定源码与原 ELF 的有界反汇编确认，正常 `NativeHandle` 回复从数组索引 0 开始，先写入 memfd `bufferFd`，随后写入 goldfish 字符设备 refcount FD，来源为 `work/sdk-plain-validation-v1/composer-client-review-v1/allocator-followup/reply-fd-order-v2/report.json`。原 CIL 允许 Composer 使用 allocator 的 FD，并允许读写 qemu 字符设备；Composer 读写 `hal_graphics_allocator_default_tmpfs` 普通 file 的查询无匹配。实际 inode SID 尚未取得，当前无法确认具体 SELinux 条件。
+
+下一轮只在已输出原 extended error 的成功回调中读取当前静态 printk 文本环，每入口最多四份、每份 131072 bytes，关联原交易 ID、guest PID/TID 和失败记录的内核编号。实际 ELF 的 `__log_buf`、`log_buf`、`log_buf_len`、`prb`、`printk_rb_static` 偏移分别为 `0x9b1300`、`0x716780`、`0x716788`、`0x716778`、`0x72e888`；读取前后核对活跃对象仍指向上述静态实例，同时读取 `binder_debug_mask` 的实际值。继续使用已有内核基址，不增加 Linux 查询、等待或内核重建。原字节包含记录 ID、填充、循环覆盖和旧内容；仅对可以核对的完整文本作结论，缺少文本仍保留上述两项 EPERM 条件。
+
+本轮结束后核对宿主进程组、打开文件与保留来源，清理 15 项展开 root、中间镜像、程序、对象、dSYM、本轮 data/metadata 克隆盘和首次 prepare 遗留的 fixture 可执行文件，文件逻辑大小共 5,025,438,429 bytes，物理释放量未测。432 份保留文件摘要与 16 个符号链接目标前后保持；原盘、core v3、vendor v4、所有 prepare 失败与成功报告、生成源码、原日志、summary 和导出结果保留。清单为 `work/cleanup-2026-11-14/composer-binder-failed-v1.json`。336 项来源复核发生于清理前；复现需要按该轮 wrapper 重新生成中间产物。
+
+静态 printk 调查来源为 `work/sdk-plain-validation-v1/composer-client-review-v1/allocator-followup/binder-fd-printk-static-review-v2.json`。22 项来源前后保持，27 段源码引用复核成功；ELF、bin、header 和 .config 与冻结 core/kernel manifest 匹配。Binder、printk 和 audit 源码保存本轮读取摘要，其原编译逐文件状态仍未核对。文本块含 8-byte 的记录 ID 前缀，有效文本长度另存 `printk_info.text_len`；去掉换行和级别前缀后，首个 NUL 可能位于残留字节之后。此次快照未采 descriptor/info，仅保存原字节与固定文本匹配，记录提交与有效文本边界待核对。v2 修正了最初报告的 ELF RW 范围说明，实际 Memsz 结束于 `0x9ffef9`；原报告及其摘要保持。
+
+新增读取仅由 work 内生成 probe 和 C fixture 使用，原内核、宿主、策略、SDK ELF、三标签与 FATAL 的采集保持。先检查静态指针与长度、读取范围、输入保持、记录限额和原 extended error 关联，再用新 APFS 克隆盘运行相同六入口、180 秒 original 和完整 boot 验收。该步骤尚未修改共享缓冲区实现；DMA heap 的 PFNMAP、首次写、共享与释放仍待实际验证。
+
+
 ## 曾考虑的替代方案
 
 - 先把 netd 重启列为独立根因：CLI 首次 SurfaceFlinger SIGABRT 早于 Zygote/netd 的 signal 9，原 rc 明确规定重启关系；先调查 SurfaceFlinger 自身退出。

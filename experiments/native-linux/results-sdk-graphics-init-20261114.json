@@ -5456,6 +5456,86 @@
       "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/composer-client-review-v1/result.json",
       "sha256": "d57c79c709df891a881ecf1f72c1660c54ba8337546ac4ad6065422bda58ee52",
       "status": "passed"
+    },
+    "allocator_observed_review": {
+      "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/composer-allocator-taglog-v1/allocator-observed-review.json",
+      "sha256": "7e081da0268a173882cb880dcdb9ce9c7a2b0ff6bfa5e165de72f6adcbb08b16"
+    },
+    "allocator_status_elf": {
+      "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/composer-client-review-v1/allocator-followup/allocation-status-elf.json",
+      "sha256": "703013d60a2a07edc41f7cbffd04ba470255f58de812297f99b32d6888dfc106"
+    },
+    "host_buffer_contract": {
+      "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/composer-client-review-v1/allocator-followup/host-buffer-contract.json",
+      "sha256": "3880eb963a497befc25321be433591223d5595b574a6155c9c02852adee94fab"
+    },
+    "binder_fd_nce_review": {
+      "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/composer-client-review-v1/allocator-followup/binder-fd-nce-review.json",
+      "sha256": "0ca360f9e5647d177ae75dfecace9dad5e8b1ac5a695ff68da26112b207fae4b"
+    },
+    "binder_error_observed_review": {
+      "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/composer-binder-error-v1/independent-observed-review.json",
+      "sha256": "2aa3800dfc6587fe20bbc39958a3b166f4f17a3ed04db5337e226428d0acdf47"
+    },
+    "binder_error_cleanup": {
+      "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/cleanup-2026-11-14/composer-binder-error-v1.json",
+      "sha256": "a1fe35cc2362831f38bd41daec28a3baa77533a006da023ac73e40520aff1726"
+    },
+    "binder_permissions_review": {
+      "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/composer-client-review-v1/allocator-followup/binder-permissions-review.json",
+      "sha256": "c7027a3058c9b4de7853922180bcb8becc90e997783215768e03367127a6b0f5"
+    },
+    "binder_permissions_elf": {
+      "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/composer-client-review-v1/allocator-followup/binder-permissions-elf.json",
+      "sha256": "caf5d513dc8e849f044688d5eecc9b818df82f9b226b6637683f424333140dc0"
+    },
+    "binder_permissions_policy": {
+      "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/composer-client-review-v1/allocator-followup/binder-permissions-policy.json",
+      "sha256": "d3c8bc1884f72b6da866da9d754d10382cfc13984ea3306aeed473b7df52f4d5"
+    },
+    "binder_fd_selinux_review": {
+      "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/composer-client-review-v1/allocator-followup/binder-fd-selinux-review.json",
+      "sha256": "d1c14531e716bcab19855ef800d58e4a22642f8c65e15fd8e37bbd0069a877e0"
+    },
+    "binder_fd_reply_plan": {
+      "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/composer-client-review-v1/allocator-followup/binder-fd-reply-plan.json",
+      "sha256": "cec3077093b3842fd4893b20c781fa70fec3c21f6b131a4777f4bfe3629f78fa"
+    },
+    "binder_log_abi_review": {
+      "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/binder-log-abi-review-v1/result.json",
+      "sha256": "5c6b6cf366c2e217c544cd1d00055f216ceda8a9c5508cdd44ebb31994961c49"
+    },
+    "binder-fd-selinux-review.json": {
+      "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/composer-client-review-v1/allocator-followup/binder-fd-selinux-review.json",
+      "sha256": "d1c14531e716bcab19855ef800d58e4a22642f8c65e15fd8e37bbd0069a877e0"
+    },
+    "binder-permissions-review.json": {
+      "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/composer-client-review-v1/allocator-followup/binder-permissions-review.json",
+      "sha256": "c7027a3058c9b4de7853922180bcb8becc90e997783215768e03367127a6b0f5"
+    },
+    "binder-permissions-elf.json": {
+      "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/composer-client-review-v1/allocator-followup/binder-permissions-elf.json",
+      "sha256": "caf5d513dc8e849f044688d5eecc9b818df82f9b226b6637683f424333140dc0"
+    },
+    "binder-permissions-policy.json": {
+      "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/composer-client-review-v1/allocator-followup/binder-permissions-policy.json",
+      "sha256": "d3c8bc1884f72b6da866da9d754d10382cfc13984ea3306aeed473b7df52f4d5"
+    },
+    "shared-buffer-fd-options.json": {
+      "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/composer-client-review-v1/allocator-followup/shared-buffer-fd-options.json",
+      "sha256": "243eeb5dba52b0df5b9dbf6d42c61182b81bdc3509fbfb9b2c31350af131f6e0"
+    },
+    "reply-fd-order-v2/report.json": {
+      "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/composer-client-review-v1/allocator-followup/reply-fd-order-v2/report.json",
+      "sha256": "6fe76a0a895d8af43292196d0e966e0918d8117ab05636e174890fc00fe11e60"
+    },
+    "binder-fd-printk-static-review.json": {
+      "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/composer-client-review-v1/allocator-followup/binder-fd-printk-static-review.json",
+      "sha256": "dc0f13698dc7a31bb843f3723a08d9ef8ff727977220f085360485f595a3fe91"
+    },
+    "binder-fd-printk-static-review-v2.json": {
+      "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/composer-client-review-v1/allocator-followup/binder-fd-printk-static-review-v2.json",
+      "sha256": "44a1f1496bc0e00d82a8624ce0a29cf336f03d249df652ad1d31f1fe2c675e52"
     }
   },
   "composer_diagnostic": {
@@ -6264,5 +6344,2139 @@
       "status": "passed"
     },
     "intermediate_artifacts_removed": true
+  },
+  "allocator_diagnostic": {
+    "name": "composer-allocator-taglog-v1",
+    "status": "failed",
+    "runtime": {
+      "platform": "macOS-27.0-arm64-arm-64bit-Mach-O",
+      "cpu": "Apple M5 Ultra",
+      "system_build": "26A428"
+    },
+    "configuration": {
+      "data_tbi": true,
+      "guest_layout": "sparse",
+      "code_memory": "dual",
+      "execution": "direct",
+      "direct": {
+        "mapping_entries": 256,
+        "route_entries": 256,
+        "selective_writes": false,
+        "reuse_code_checks": false,
+        "memory": "flat",
+        "code_watch": false,
+        "cross_page": false,
+        "route_epochs": false,
+        "retain_routes": false,
+        "memory_groups": false,
+        "native_exclusive": false,
+        "vector_table": false,
+        "simd_math": false
+      },
+      "mapping": "pte",
+      "sparse_scan": true,
+      "fault_prefetch": false,
+      "guest_page_bytes": 16384,
+      "host_page_bytes": 16384,
+      "workload": "core",
+      "entries": [
+        "cli",
+        "gcd"
+      ],
+      "art_nterp": 1,
+      "cpus": 1,
+      "high_res_timers": false,
+      "bpf_jit": true,
+      "online_cpus": 1,
+      "uaccess_stop": "all",
+      "parallel_profile": false,
+      "art_expanded_jit": 0,
+      "art_fast_baseline": 0,
+      "cache_invalidation": "pages",
+      "exec_cache": "pages",
+      "tlb_invalidation": "pages",
+      "linux_fastpath": 0,
+      "guest_ram_bytes": 1073741824,
+      "translation_cache_bytes": 134217728,
+      "instruction_batch": 50000,
+      "memory_interval_ms": 100,
+      "preemption": "timer",
+      "timer_interval_ns": 2000000
+    },
+    "observation_seconds": 180,
+    "source_report": {
+      "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sdk-plain-init-composer-allocator-taglog-16k-v1/summary.json",
+      "sha256": "589e6516e923cfd5602935c4b2b0571e2ad2bbf9b16e28ea3f5d3ef4803a1694"
+    },
+    "wrapper_report": {
+      "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/composer-allocator-taglog-v1/result.json",
+      "sha256": "8437d96ff08cede455ed9ceb001d856ff0fe69bb2b43c9468853414552c2185a"
+    },
+    "independent_review": {
+      "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/composer-allocator-taglog-v1/allocator-observed-review.json",
+      "sha256": "7e081da0268a173882cb880dcdb9ce9c7a2b0ff6bfa5e165de72f6adcbb08b16"
+    },
+    "source_revision": "43bf20fe1c52caf91fffb90530557aa53fe3eebb",
+    "source_manifest_entries": 334,
+    "source_recheck_before_cleanup": true,
+    "source_unchanged": true,
+    "generated_unchanged": true,
+    "first_stage_completed": true,
+    "full_boot_validation": "failed",
+    "observation_and_cleanup_passed": true,
+    "taglog_contract": {
+      "tags": {
+        "RanchuHwc": [
+          5,
+          6,
+          7
+        ],
+        "allocator-service.nce": [
+          6
+        ],
+        "GraphicBufferAllocator": [
+          6
+        ]
+      },
+      "capture_limit_bytes": 2048,
+      "record_limit_shared": 128
+    },
+    "fixture": {
+      "passed": true,
+      "records": 128,
+      "summary": {
+        "stock_init_taglog_summary": true,
+        "seen": 147,
+        "recorded": 128,
+        "omitted": 19,
+        "capture_limit_bytes": 2048,
+        "record_limit": 128
+      },
+      "validator_rejections": 28,
+      "input_checks": {
+        "taglog_fixture": true,
+        "passed": true,
+        "inputs_unchanged": true,
+        "protocol_rejections": 21,
+        "priority_cases": 30,
+        "similar_tag_cases": 12,
+        "boundary_cases": 12,
+        "shared_limit": true
+      }
+    },
+    "runs": [
+      {
+        "entry": "cli",
+        "phase": "lifecycle",
+        "returncode": 0,
+        "actual_exit": 0,
+        "observation_validated": true,
+        "process_group_empty": true,
+        "cleanup_signals": [],
+        "log": {
+          "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sdk-plain-init-composer-allocator-taglog-16k-v1/cli-lifecycle.jsonl",
+          "sha256": "db0983dd60a7c1bfb0a437b08ff1a7307b787b17a8574dcf53462132b2afb8b6"
+        },
+        "taglog_summary": {
+          "stock_init_taglog_summary": true,
+          "seen": 0,
+          "recorded": 0,
+          "omitted": 0,
+          "capture_limit_bytes": 2048,
+          "record_limit": 128
+        },
+        "errors": [],
+        "data_clean_after": true,
+        "metadata_clean_after": true
+      },
+      {
+        "entry": "gcd",
+        "phase": "lifecycle",
+        "returncode": 0,
+        "actual_exit": 0,
+        "observation_validated": true,
+        "process_group_empty": true,
+        "cleanup_signals": [],
+        "log": {
+          "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sdk-plain-init-composer-allocator-taglog-16k-v1/gcd-lifecycle.jsonl",
+          "sha256": "f58877f0c1a7616da2d4292623f1b2f059b51c0a77cceb724ca7305b2fccf80b"
+        },
+        "taglog_summary": {
+          "stock_init_taglog_summary": true,
+          "seen": 0,
+          "recorded": 0,
+          "omitted": 0,
+          "capture_limit_bytes": 2048,
+          "record_limit": 128
+        },
+        "errors": [],
+        "data_clean_after": true,
+        "metadata_clean_after": true
+      },
+      {
+        "entry": "cli",
+        "phase": "original",
+        "returncode": 0,
+        "actual_exit": 0,
+        "observation_validated": true,
+        "process_group_empty": true,
+        "cleanup_signals": [],
+        "log": {
+          "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sdk-plain-init-composer-allocator-taglog-16k-v1/cli-original.jsonl",
+          "sha256": "136251491562c504a386fb1646ddfe081824875404db9c8f36203cdd41f7a70b"
+        },
+        "taglog_summary": {
+          "stock_init_taglog_summary": true,
+          "seen": 18,
+          "recorded": 18,
+          "omitted": 0,
+          "capture_limit_bytes": 2048,
+          "record_limit": 128
+        },
+        "errors": [
+          {
+            "line": 30900,
+            "pid": 215,
+            "tid": 273,
+            "tag": "RanchuHwc",
+            "priority": 6,
+            "message": "getVsyncHzFromProperty: failed to parse vsync period '', returning default 60"
+          },
+          {
+            "line": 30930,
+            "pid": 215,
+            "tid": 273,
+            "tag": "RanchuHwc",
+            "priority": 6,
+            "message": "start: failed to set Vsync thread priority: Invalid argument"
+          },
+          {
+            "line": 30966,
+            "pid": 215,
+            "tid": 273,
+            "tag": "GraphicBufferAllocator",
+            "priority": 6,
+            "message": "Failed to allocate (360 x 640) layerCount 1 format 1 usage a00: -129"
+          },
+          {
+            "line": 30967,
+            "pid": 215,
+            "tid": 273,
+            "tag": "RanchuHwc",
+            "priority": 6,
+            "message": "create: Failed to allocate drm ahb"
+          },
+          {
+            "line": 30968,
+            "pid": 215,
+            "tid": 273,
+            "tag": "RanchuHwc",
+            "priority": 6,
+            "message": "createHostComposerDisplayInfo: display:0 failed to allocate swapchain"
+          },
+          {
+            "line": 30969,
+            "pid": 215,
+            "tid": 273,
+            "tag": "RanchuHwc",
+            "priority": 6,
+            "message": "onDisplayCreate failed to initialize host info for display:0"
+          },
+          {
+            "line": 30970,
+            "pid": 215,
+            "tid": 273,
+            "tag": "RanchuHwc",
+            "priority": 6,
+            "message": "createDisplayLocked failed to register display:0 with composer"
+          },
+          {
+            "line": 30982,
+            "pid": 215,
+            "tid": 273,
+            "tag": "RanchuHwc",
+            "priority": 6,
+            "message": "createDisplaysLocked failed to create display from config"
+          },
+          {
+            "line": 30983,
+            "pid": 215,
+            "tid": 273,
+            "tag": "RanchuHwc",
+            "priority": 6,
+            "message": "init failed to create displays."
+          },
+          {
+            "line": 35956,
+            "pid": 215,
+            "tid": 273,
+            "tag": "RanchuHwc",
+            "priority": 6,
+            "message": "getVsyncHzFromProperty: failed to parse vsync period '', returning default 60"
+          },
+          {
+            "line": 35976,
+            "pid": 215,
+            "tid": 273,
+            "tag": "RanchuHwc",
+            "priority": 6,
+            "message": "start: failed to set Vsync thread priority: Invalid argument"
+          },
+          {
+            "line": 35993,
+            "pid": 215,
+            "tid": 273,
+            "tag": "GraphicBufferAllocator",
+            "priority": 6,
+            "message": "Failed to allocate (360 x 640) layerCount 1 format 1 usage a00: -129"
+          },
+          {
+            "line": 35994,
+            "pid": 215,
+            "tid": 273,
+            "tag": "RanchuHwc",
+            "priority": 6,
+            "message": "create: Failed to allocate drm ahb"
+          },
+          {
+            "line": 35995,
+            "pid": 215,
+            "tid": 273,
+            "tag": "RanchuHwc",
+            "priority": 6,
+            "message": "createHostComposerDisplayInfo: display:0 failed to allocate swapchain"
+          },
+          {
+            "line": 35996,
+            "pid": 215,
+            "tid": 273,
+            "tag": "RanchuHwc",
+            "priority": 6,
+            "message": "onDisplayCreate failed to initialize host info for display:0"
+          },
+          {
+            "line": 35997,
+            "pid": 215,
+            "tid": 273,
+            "tag": "RanchuHwc",
+            "priority": 6,
+            "message": "createDisplayLocked failed to register display:0 with composer"
+          },
+          {
+            "line": 36013,
+            "pid": 215,
+            "tid": 273,
+            "tag": "RanchuHwc",
+            "priority": 6,
+            "message": "createDisplaysLocked failed to create display from config"
+          },
+          {
+            "line": 36014,
+            "pid": 215,
+            "tid": 273,
+            "tag": "RanchuHwc",
+            "priority": 6,
+            "message": "init failed to create displays."
+          }
+        ],
+        "data_clean_after": false,
+        "metadata_clean_after": true
+      },
+      {
+        "entry": "gcd",
+        "phase": "original",
+        "returncode": 0,
+        "actual_exit": 0,
+        "observation_validated": true,
+        "process_group_empty": true,
+        "cleanup_signals": [],
+        "log": {
+          "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sdk-plain-init-composer-allocator-taglog-16k-v1/gcd-original.jsonl",
+          "sha256": "3862a380b9bc70d81fe96a2b530088d19731f707bc301cb5d61819dd890030c1"
+        },
+        "taglog_summary": {
+          "stock_init_taglog_summary": true,
+          "seen": 18,
+          "recorded": 18,
+          "omitted": 0,
+          "capture_limit_bytes": 2048,
+          "record_limit": 128
+        },
+        "errors": [
+          {
+            "line": 30977,
+            "pid": 214,
+            "tid": 260,
+            "tag": "RanchuHwc",
+            "priority": 6,
+            "message": "getVsyncHzFromProperty: failed to parse vsync period '', returning default 60"
+          },
+          {
+            "line": 30995,
+            "pid": 214,
+            "tid": 260,
+            "tag": "RanchuHwc",
+            "priority": 6,
+            "message": "start: failed to set Vsync thread priority: Invalid argument"
+          },
+          {
+            "line": 31011,
+            "pid": 214,
+            "tid": 260,
+            "tag": "GraphicBufferAllocator",
+            "priority": 6,
+            "message": "Failed to allocate (360 x 640) layerCount 1 format 1 usage a00: -129"
+          },
+          {
+            "line": 31012,
+            "pid": 214,
+            "tid": 260,
+            "tag": "RanchuHwc",
+            "priority": 6,
+            "message": "create: Failed to allocate drm ahb"
+          },
+          {
+            "line": 31013,
+            "pid": 214,
+            "tid": 260,
+            "tag": "RanchuHwc",
+            "priority": 6,
+            "message": "createHostComposerDisplayInfo: display:0 failed to allocate swapchain"
+          },
+          {
+            "line": 31014,
+            "pid": 214,
+            "tid": 260,
+            "tag": "RanchuHwc",
+            "priority": 6,
+            "message": "onDisplayCreate failed to initialize host info for display:0"
+          },
+          {
+            "line": 31015,
+            "pid": 214,
+            "tid": 260,
+            "tag": "RanchuHwc",
+            "priority": 6,
+            "message": "createDisplayLocked failed to register display:0 with composer"
+          },
+          {
+            "line": 31030,
+            "pid": 214,
+            "tid": 260,
+            "tag": "RanchuHwc",
+            "priority": 6,
+            "message": "createDisplaysLocked failed to create display from config"
+          },
+          {
+            "line": 31031,
+            "pid": 214,
+            "tid": 260,
+            "tag": "RanchuHwc",
+            "priority": 6,
+            "message": "init failed to create displays."
+          },
+          {
+            "line": 35885,
+            "pid": 214,
+            "tid": 260,
+            "tag": "RanchuHwc",
+            "priority": 6,
+            "message": "getVsyncHzFromProperty: failed to parse vsync period '', returning default 60"
+          },
+          {
+            "line": 35895,
+            "pid": 214,
+            "tid": 260,
+            "tag": "RanchuHwc",
+            "priority": 6,
+            "message": "start: failed to set Vsync thread priority: Invalid argument"
+          },
+          {
+            "line": 35906,
+            "pid": 214,
+            "tid": 260,
+            "tag": "GraphicBufferAllocator",
+            "priority": 6,
+            "message": "Failed to allocate (360 x 640) layerCount 1 format 1 usage a00: -129"
+          },
+          {
+            "line": 35907,
+            "pid": 214,
+            "tid": 260,
+            "tag": "RanchuHwc",
+            "priority": 6,
+            "message": "create: Failed to allocate drm ahb"
+          },
+          {
+            "line": 35908,
+            "pid": 214,
+            "tid": 260,
+            "tag": "RanchuHwc",
+            "priority": 6,
+            "message": "createHostComposerDisplayInfo: display:0 failed to allocate swapchain"
+          },
+          {
+            "line": 35909,
+            "pid": 214,
+            "tid": 260,
+            "tag": "RanchuHwc",
+            "priority": 6,
+            "message": "onDisplayCreate failed to initialize host info for display:0"
+          },
+          {
+            "line": 35910,
+            "pid": 214,
+            "tid": 260,
+            "tag": "RanchuHwc",
+            "priority": 6,
+            "message": "createDisplayLocked failed to register display:0 with composer"
+          },
+          {
+            "line": 35920,
+            "pid": 214,
+            "tid": 260,
+            "tag": "RanchuHwc",
+            "priority": 6,
+            "message": "createDisplaysLocked failed to create display from config"
+          },
+          {
+            "line": 35921,
+            "pid": 214,
+            "tid": 260,
+            "tag": "RanchuHwc",
+            "priority": 6,
+            "message": "init failed to create displays."
+          }
+        ],
+        "data_clean_after": false,
+        "metadata_clean_after": true
+      },
+      {
+        "entry": "cli",
+        "phase": "recovery",
+        "returncode": 0,
+        "actual_exit": 0,
+        "observation_validated": true,
+        "process_group_empty": true,
+        "cleanup_signals": [],
+        "log": {
+          "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sdk-plain-init-composer-allocator-taglog-16k-v1/cli-recovery.jsonl",
+          "sha256": "be5dbd92d8bfd50b03bb1aacd0aec82b309a71855861bec537c922727b98f4b4"
+        },
+        "taglog_summary": {
+          "stock_init_taglog_summary": true,
+          "seen": 0,
+          "recorded": 0,
+          "omitted": 0,
+          "capture_limit_bytes": 2048,
+          "record_limit": 128
+        },
+        "errors": [],
+        "data_clean_after": true,
+        "metadata_clean_after": true
+      },
+      {
+        "entry": "gcd",
+        "phase": "recovery",
+        "returncode": 0,
+        "actual_exit": 0,
+        "observation_validated": true,
+        "process_group_empty": true,
+        "cleanup_signals": [],
+        "log": {
+          "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sdk-plain-init-composer-allocator-taglog-16k-v1/gcd-recovery.jsonl",
+          "sha256": "a697b1594aa3035b6a06bb826c86d5f17c2aecfeb11d05675c4aba64cd6ea58a"
+        },
+        "taglog_summary": {
+          "stock_init_taglog_summary": true,
+          "seen": 0,
+          "recorded": 0,
+          "omitted": 0,
+          "capture_limit_bytes": 2048,
+          "record_limit": 128
+        },
+        "errors": [],
+        "data_clean_after": true,
+        "metadata_clean_after": true
+      }
+    ],
+    "failure_mapping": {
+      "exception": "EX_TRANSACTION_FAILED",
+      "value": -129,
+      "observed_width": 360,
+      "observed_height": 640,
+      "layer_count": 1,
+      "format": 1,
+      "usage": 2560,
+      "binder_extended_error_request": 3222037009,
+      "binder_extended_error_ioctl_result": 0,
+      "underlying_status": "本轮未采集；下一轮读取原 ioctl 返回结构"
+    },
+    "cleanup": {
+      "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/cleanup-2026-11-14/composer-allocator-taglog-v1.json",
+      "sha256": "c96171b98977d30430753c18364c024e8ada4d41ebd0b2e6982d4d0502951bba",
+      "status": "passed",
+      "target_count": 14,
+      "logical_bytes": 5025377415,
+      "preserved_unchanged": true,
+      "reproduction": "原盘、core v3、vendor v4、生成源码与原日志保留；由该轮 wrapper 重新生成已清理的 root、程序、对象、中间镜像及克隆盘。"
+    },
+    "limitations": [
+      "完整 boot、显示、原始签名 APK 与持续性能仍待完成。",
+      "诊断运行的耗时用于本机排障，设备 JIT、资源与热状态待真机验证。"
+    ]
+  },
+  "binder_error_diagnostic": {
+    "name": "composer-binder-error-v1",
+    "status": "failed",
+    "runtime": {
+      "platform": "macOS-27.0-arm64-arm-64bit-Mach-O",
+      "cpu": "Apple M5 Ultra",
+      "system_build": "26A428"
+    },
+    "configuration": {
+      "data_tbi": true,
+      "guest_layout": "sparse",
+      "code_memory": "dual",
+      "execution": "direct",
+      "direct": {
+        "mapping_entries": 256,
+        "route_entries": 256,
+        "selective_writes": false,
+        "reuse_code_checks": false,
+        "memory": "flat",
+        "code_watch": false,
+        "cross_page": false,
+        "route_epochs": false,
+        "retain_routes": false,
+        "memory_groups": false,
+        "native_exclusive": false,
+        "vector_table": false,
+        "simd_math": false
+      },
+      "mapping": "pte",
+      "sparse_scan": true,
+      "fault_prefetch": false,
+      "guest_page_bytes": 16384,
+      "host_page_bytes": 16384,
+      "workload": "core",
+      "entries": [
+        "cli",
+        "gcd"
+      ],
+      "art_nterp": 1,
+      "cpus": 1,
+      "high_res_timers": false,
+      "bpf_jit": true,
+      "online_cpus": 1,
+      "uaccess_stop": "all",
+      "parallel_profile": false,
+      "art_expanded_jit": 0,
+      "art_fast_baseline": 0,
+      "cache_invalidation": "pages",
+      "exec_cache": "pages",
+      "tlb_invalidation": "pages",
+      "linux_fastpath": 0,
+      "guest_ram_bytes": 1073741824,
+      "translation_cache_bytes": 134217728,
+      "instruction_batch": 50000,
+      "memory_interval_ms": 100,
+      "preemption": "timer",
+      "timer_interval_ns": 2000000
+    },
+    "observation_seconds": 180,
+    "source_revision": "43bf20fe1c52caf91fffb90530557aa53fe3eebb",
+    "source_report": {
+      "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sdk-plain-init-composer-binder-error-16k-v1/summary.json",
+      "sha256": "72d9cfee4824b96c92e5caf6660c70a56f0f143f5064c234dcc3153bcb77c4ed"
+    },
+    "wrapper_report": {
+      "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/composer-binder-error-v1/result.json",
+      "sha256": "aac05ab3113d7f01fe6f009c118ab11fca5a56e481bb17912786ae286596bf27"
+    },
+    "independent_review": {
+      "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/composer-binder-error-v1/independent-observed-review.json",
+      "sha256": "2aa3800dfc6587fe20bbc39958a3b166f4f17a3ed04db5337e226428d0acdf47"
+    },
+    "source_manifest_entries": 335,
+    "independent_source_groups": [
+      {
+        "group": "outer",
+        "count": 15,
+        "passed": true
+      },
+      {
+        "group": "generated",
+        "count": 3,
+        "passed": true
+      },
+      {
+        "group": "tools",
+        "count": 2,
+        "passed": true
+      },
+      {
+        "group": "summary",
+        "count": 335,
+        "passed": true
+      },
+      {
+        "group": "kernel_build",
+        "count": 113,
+        "passed": true
+      },
+      {
+        "group": "translation_dependency",
+        "count": 17,
+        "passed": true
+      },
+      {
+        "group": "allocator_reference",
+        "count": 11,
+        "passed": true
+      },
+      {
+        "group": "vendor_source",
+        "count": 5,
+        "passed": true
+      },
+      {
+        "group": "vendor_tools",
+        "count": 3,
+        "passed": true
+      },
+      {
+        "group": "vendor_elf",
+        "count": 3,
+        "passed": true
+      },
+      {
+        "group": "deployed_image",
+        "count": 1,
+        "passed": true
+      },
+      {
+        "group": "original_images",
+        "count": 2,
+        "passed": true
+      },
+      {
+        "group": "runtime_manifests",
+        "count": 2,
+        "passed": true
+      }
+    ],
+    "source_recheck_before_cleanup": true,
+    "first_stage_completed": true,
+    "full_boot_validation": "failed",
+    "observation_and_cleanup_passed": true,
+    "source_unchanged": true,
+    "generated_unchanged": true,
+    "tools_unchanged": true,
+    "binder_capture_passed": true,
+    "binder_error_contract": {
+      "syscall": 29,
+      "request_low32": 3222037009,
+      "result": 0,
+      "capture_bytes": 12,
+      "record_limit": 64,
+      "extra_ioctl": false
+    },
+    "binder_fixture": {
+      "passed": true,
+      "summary": {
+        "stock_init_binder_extended_error_summary": true,
+        "seen": 81,
+        "recorded": 64,
+        "copy_failed": 4,
+        "identity_failed": 4,
+        "omitted": 9,
+        "capture_bytes": 12,
+        "record_limit": 64
+      },
+      "validator_rejections": 16,
+      "input_checks": {
+        "binder_error_fixture": true,
+        "passed": true,
+        "request_rejections": 5,
+        "copy_boundaries": 4,
+        "identity_boundaries": 4,
+        "value_boundaries": 3,
+        "inputs_unchanged": true
+      }
+    },
+    "runs": [
+      {
+        "entry": "cli",
+        "phase": "lifecycle",
+        "returncode": 0,
+        "actual_exit": 0,
+        "observation_validated": true,
+        "process_group_empty": true,
+        "cleanup_signals": [],
+        "log": {
+          "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sdk-plain-init-composer-binder-error-16k-v1/cli-lifecycle.jsonl",
+          "sha256": "671939826c1597af6dc2caf1d77b7310201e92bea0d76a049a5fb35e6cd2e857"
+        },
+        "errors": [],
+        "binder_summary": {
+          "stock_init_binder_extended_error_summary": true,
+          "seen": 0,
+          "recorded": 0,
+          "copy_failed": 0,
+          "identity_failed": 0,
+          "omitted": 0,
+          "capture_bytes": 12,
+          "record_limit": 64
+        },
+        "channels": [
+          {
+            "test": "native_graphics_channels_released",
+            "passed": true,
+            "opened": 0,
+            "closed": 0
+          }
+        ],
+        "data_clean_after": true,
+        "metadata_clean_after": true
+      },
+      {
+        "entry": "gcd",
+        "phase": "lifecycle",
+        "returncode": 0,
+        "actual_exit": 0,
+        "observation_validated": true,
+        "process_group_empty": true,
+        "cleanup_signals": [],
+        "log": {
+          "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sdk-plain-init-composer-binder-error-16k-v1/gcd-lifecycle.jsonl",
+          "sha256": "f183d324c55de6218878ebc50626b183ac6e066de16215f99e6b3fa2c42b8f6b"
+        },
+        "errors": [],
+        "binder_summary": {
+          "stock_init_binder_extended_error_summary": true,
+          "seen": 0,
+          "recorded": 0,
+          "copy_failed": 0,
+          "identity_failed": 0,
+          "omitted": 0,
+          "capture_bytes": 12,
+          "record_limit": 64
+        },
+        "channels": [
+          {
+            "test": "native_graphics_channels_released",
+            "passed": true,
+            "opened": 0,
+            "closed": 0
+          }
+        ],
+        "data_clean_after": true,
+        "metadata_clean_after": true
+      },
+      {
+        "entry": "cli",
+        "phase": "original",
+        "returncode": 0,
+        "actual_exit": 0,
+        "observation_validated": true,
+        "process_group_empty": true,
+        "cleanup_signals": [],
+        "log": {
+          "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sdk-plain-init-composer-binder-error-16k-v1/cli-original.jsonl",
+          "sha256": "1b141cba92ead98086b3e2de6530ea01a77acdf2309eeb1c0ce9978e8e7fa024"
+        },
+        "errors": [
+          {
+            "stock_init_binder_extended_error": true,
+            "error_index": 1,
+            "pid": 215,
+            "tid": 260,
+            "fd": 4,
+            "address": 385468872440,
+            "id": 1113,
+            "command": 29201,
+            "param": -1,
+            "line": 30900
+          },
+          {
+            "stock_init_binder_extended_error": true,
+            "error_index": 2,
+            "pid": 215,
+            "tid": 260,
+            "fd": 4,
+            "address": 385468872440,
+            "id": 1566,
+            "command": 29201,
+            "param": -1,
+            "line": 36019
+          }
+        ],
+        "binder_summary": {
+          "stock_init_binder_extended_error_summary": true,
+          "seen": 2,
+          "recorded": 2,
+          "copy_failed": 0,
+          "identity_failed": 0,
+          "omitted": 0,
+          "capture_bytes": 12,
+          "record_limit": 64
+        },
+        "channels": [
+          {
+            "test": "native_graphics_channels_released",
+            "passed": true,
+            "opened": 16,
+            "closed": 16
+          }
+        ],
+        "data_clean_after": false,
+        "metadata_clean_after": true
+      },
+      {
+        "entry": "gcd",
+        "phase": "original",
+        "returncode": 0,
+        "actual_exit": 0,
+        "observation_validated": true,
+        "process_group_empty": true,
+        "cleanup_signals": [],
+        "log": {
+          "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sdk-plain-init-composer-binder-error-16k-v1/gcd-original.jsonl",
+          "sha256": "f5924d95bda7629ffc2e1a5214ca5092e4055e1914b368848172af84f65b28b3"
+        },
+        "errors": [
+          {
+            "stock_init_binder_extended_error": true,
+            "error_index": 1,
+            "pid": 216,
+            "tid": 216,
+            "fd": 4,
+            "address": 549750281832,
+            "id": 1295,
+            "command": 29201,
+            "param": -1,
+            "line": 31892
+          },
+          {
+            "stock_init_binder_extended_error": true,
+            "error_index": 2,
+            "pid": 216,
+            "tid": 216,
+            "fd": 4,
+            "address": 549750281832,
+            "id": 1954,
+            "command": 29201,
+            "param": -1,
+            "line": 37687
+          }
+        ],
+        "binder_summary": {
+          "stock_init_binder_extended_error_summary": true,
+          "seen": 2,
+          "recorded": 2,
+          "copy_failed": 0,
+          "identity_failed": 0,
+          "omitted": 0,
+          "capture_bytes": 12,
+          "record_limit": 64
+        },
+        "channels": [
+          {
+            "test": "native_graphics_channels_released",
+            "passed": true,
+            "opened": 17,
+            "closed": 17
+          }
+        ],
+        "data_clean_after": false,
+        "metadata_clean_after": true
+      },
+      {
+        "entry": "cli",
+        "phase": "recovery",
+        "returncode": 0,
+        "actual_exit": 0,
+        "observation_validated": true,
+        "process_group_empty": true,
+        "cleanup_signals": [],
+        "log": {
+          "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sdk-plain-init-composer-binder-error-16k-v1/cli-recovery.jsonl",
+          "sha256": "28882d282219b5f7555f8ef67fd3d17327dfdee5bf47a33d82b7687a172134c7"
+        },
+        "errors": [],
+        "binder_summary": {
+          "stock_init_binder_extended_error_summary": true,
+          "seen": 0,
+          "recorded": 0,
+          "copy_failed": 0,
+          "identity_failed": 0,
+          "omitted": 0,
+          "capture_bytes": 12,
+          "record_limit": 64
+        },
+        "channels": [
+          {
+            "test": "native_graphics_channels_released",
+            "passed": true,
+            "opened": 0,
+            "closed": 0
+          }
+        ],
+        "data_clean_after": true,
+        "metadata_clean_after": true
+      },
+      {
+        "entry": "gcd",
+        "phase": "recovery",
+        "returncode": 0,
+        "actual_exit": 0,
+        "observation_validated": true,
+        "process_group_empty": true,
+        "cleanup_signals": [],
+        "log": {
+          "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sdk-plain-init-composer-binder-error-16k-v1/gcd-recovery.jsonl",
+          "sha256": "00d071ca1443c98ac3629362ec59becdc802a913647b7107610e1ac2f8778fad"
+        },
+        "errors": [],
+        "binder_summary": {
+          "stock_init_binder_extended_error_summary": true,
+          "seen": 0,
+          "recorded": 0,
+          "copy_failed": 0,
+          "identity_failed": 0,
+          "omitted": 0,
+          "capture_bytes": 12,
+          "record_limit": 64
+        },
+        "channels": [
+          {
+            "test": "native_graphics_channels_released",
+            "passed": true,
+            "opened": 0,
+            "closed": 0
+          }
+        ],
+        "data_clean_after": true,
+        "metadata_clean_after": true
+      }
+    ],
+    "failure_mapping": {
+      "command": 29201,
+      "command_name": "BR_FAILED_REPLY",
+      "param": -1,
+      "errno_name": "EPERM",
+      "transaction_count": 4,
+      "specific_step": "待已有 Binder 失败日志的实际方向与源码行定位"
+    },
+    "cleanup": {
+      "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/cleanup-2026-11-14/composer-binder-error-v1.json",
+      "sha256": "a1fe35cc2362831f38bd41daec28a3baa77533a006da023ac73e40520aff1726",
+      "status": "passed",
+      "target_count": 14,
+      "logical_bytes": 5025379547,
+      "preserved_unchanged": true,
+      "reproduction": "原盘、core v3、vendor v4、生成源码与原日志保留；由该轮 wrapper 重新生成已清理的 root、程序、对象、中间镜像及克隆盘。"
+    },
+    "limitations": [
+      "完整 boot、显示、原始签名 APK 与持续性能仍待完成。",
+      "实际 inode SID 与具体权限检查步骤尚未采集。",
+      "诊断运行的耗时用于本机排障，设备 JIT、资源与热状态待真机验证。"
+    ]
+  },
+  "binder_failed_diagnostic": {
+    "name": "composer-binder-failed-v1",
+    "status": "failed",
+    "runtime": {
+      "platform": "macOS-27.0-arm64-arm-64bit-Mach-O",
+      "cpu": "Apple M5 Ultra",
+      "system_build": "26A428"
+    },
+    "configuration": {
+      "data_tbi": true,
+      "guest_layout": "sparse",
+      "code_memory": "dual",
+      "execution": "direct",
+      "direct": {
+        "mapping_entries": 256,
+        "route_entries": 256,
+        "selective_writes": false,
+        "reuse_code_checks": false,
+        "memory": "flat",
+        "code_watch": false,
+        "cross_page": false,
+        "route_epochs": false,
+        "retain_routes": false,
+        "memory_groups": false,
+        "native_exclusive": false,
+        "vector_table": false,
+        "simd_math": false
+      },
+      "mapping": "pte",
+      "sparse_scan": true,
+      "fault_prefetch": false,
+      "guest_page_bytes": 16384,
+      "host_page_bytes": 16384,
+      "workload": "core",
+      "entries": [
+        "cli",
+        "gcd"
+      ],
+      "art_nterp": 1,
+      "cpus": 1,
+      "high_res_timers": false,
+      "bpf_jit": true,
+      "online_cpus": 1,
+      "uaccess_stop": "all",
+      "parallel_profile": false,
+      "art_expanded_jit": 0,
+      "art_fast_baseline": 0,
+      "cache_invalidation": "pages",
+      "exec_cache": "pages",
+      "tlb_invalidation": "pages",
+      "linux_fastpath": 0,
+      "guest_ram_bytes": 1073741824,
+      "translation_cache_bytes": 134217728,
+      "instruction_batch": 50000,
+      "memory_interval_ms": 100,
+      "preemption": "timer",
+      "timer_interval_ns": 2000000
+    },
+    "observation_seconds": 180,
+    "source_revision": "43bf20fe1c52caf91fffb90530557aa53fe3eebb",
+    "source_report": {
+      "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sdk-plain-init-composer-binder-failed-16k-v1/summary.json",
+      "sha256": "59e8abaf4a75707d14b939959f728e50328cc8dd64feaba78c257c0c44a22023"
+    },
+    "wrapper_report": {
+      "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/composer-binder-failed-v1/result.json",
+      "sha256": "8068c4fbecea456a8cac03808b19e1af069c7f8b6e34fbc6ddd788c844e60b73"
+    },
+    "independent_review": {
+      "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/composer-binder-failed-v1/independent-observed-review.json",
+      "sha256": "b791c1d5396fb2169d1ee8e2757e887a7ffa3fe64ddee169cf450e235890abbe"
+    },
+    "independent_checks_passed": 99,
+    "source_manifest_entries": 336,
+    "independent_source_counts": {
+      "wrapper": 24,
+      "generated": 3,
+      "tools": 2,
+      "wrapper_logs": 16,
+      "raw_current": 336,
+      "core": 144,
+      "kernel": 113,
+      "core_kernel_union": 244,
+      "previous_retained_summary": 335,
+      "previous_files_rechecked": false,
+      "normalized_added_inputs": [
+        "$DIAGNOSTIC/stock-init-binder-failed.h"
+      ]
+    },
+    "source_recheck_before_cleanup": true,
+    "first_stage_completed": true,
+    "full_boot_validation": "failed",
+    "observation_and_cleanup_passed": true,
+    "source_unchanged": true,
+    "generated_unchanged": true,
+    "tools_unchanged": true,
+    "binder_capture_passed": true,
+    "binder_failed_capture_passed": true,
+    "binder_error_contract": {
+      "syscall": 29,
+      "request_low32": 3222037009,
+      "result": 0,
+      "capture_bytes": 12,
+      "record_limit": 64,
+      "extra_ioctl": false
+    },
+    "binder_failed_contract": {
+      "offset": 10430108,
+      "log_bytes": 9992,
+      "entry_bytes": 312,
+      "capture_bytes": 56,
+      "slot_count": 32,
+      "record_limit": 64,
+      "extra_syscalls": false,
+      "match": [
+        "id",
+        "command",
+        "param"
+      ],
+      "completion": "两次完成标记及复制 ID 一致",
+      "only_recorded_extended_error": true,
+      "pid_namespaces": {
+        "pid_tid": "guest",
+        "from_to": "initial"
+      }
+    },
+    "binder_layout_recheck": {
+      "passed": true,
+      "report": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/binder-log-abi-review-v1/result.json",
+      "report_sha256": "5c6b6cf366c2e217c544cd1d00055f216ceda8a9c5508cdd44ebb31994961c49",
+      "sources": 8,
+      "failed_symbol": {
+        "offset": 10430108,
+        "size": 9992
+      }
+    },
+    "binder_fixture": {
+      "passed": true,
+      "summary": {
+        "stock_init_binder_extended_error_summary": true,
+        "seen": 81,
+        "recorded": 64,
+        "copy_failed": 4,
+        "identity_failed": 4,
+        "omitted": 9,
+        "capture_bytes": 12,
+        "record_limit": 64
+      },
+      "validator_rejections": 16,
+      "input_checks": {
+        "binder_error_fixture": true,
+        "passed": true,
+        "request_rejections": 5,
+        "copy_boundaries": 4,
+        "identity_boundaries": 4,
+        "value_boundaries": 3,
+        "inputs_unchanged": true
+      }
+    },
+    "binder_failed_fixture": {
+      "passed": true,
+      "summary": {
+        "stock_init_binder_failed_summary": true,
+        "seen": 83,
+        "found": 75,
+        "recorded": 64,
+        "unavailable": 1,
+        "not_found": 1,
+        "incomplete": 4,
+        "mismatched": 2,
+        "omitted": 11,
+        "entry_bytes": 312,
+        "slot_count": 32,
+        "record_limit": 64
+      },
+      "validator_rejections": 26,
+      "correlation_passed": true,
+      "input_checks": {
+        "binder_failed_fixture": true,
+        "passed": true,
+        "filter_cases": 2,
+        "unavailable_cases": 1,
+        "not_found_cases": 1,
+        "incomplete_cases": 4,
+        "mismatch_cases": 2,
+        "slot_cases": 2,
+        "zero_target_cases": 1,
+        "pid_namespace_cases": 1,
+        "signed_cases": 1,
+        "inputs_unchanged": true
+      }
+    },
+    "binder_linked_limit_fixture": {
+      "passed": true,
+      "extended_error_summary": {
+        "stock_init_binder_extended_error_summary": true,
+        "seen": 65,
+        "recorded": 64,
+        "copy_failed": 0,
+        "identity_failed": 0,
+        "omitted": 1,
+        "capture_bytes": 12,
+        "record_limit": 64
+      },
+      "failed_summary": {
+        "stock_init_binder_failed_summary": true,
+        "seen": 0,
+        "found": 0,
+        "recorded": 0,
+        "unavailable": 0,
+        "not_found": 0,
+        "incomplete": 0,
+        "mismatched": 0,
+        "omitted": 0,
+        "entry_bytes": 312,
+        "slot_count": 32,
+        "record_limit": 64
+      },
+      "input_checks": {
+        "binder_linked_limit_fixture": true,
+        "passed": true,
+        "br_ok_before_limit": 64,
+        "matching_failure_after_limit": 1,
+        "inputs_unchanged": true
+      }
+    },
+    "prepare_reports": [
+      {
+        "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/composer-binder-failed-v1/prepare-result.json",
+        "sha256": "df90422ef6ffb2b161dfc577643e794a750c2e934f0b7161deb5f645ef1dbc99"
+      },
+      {
+        "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/composer-binder-failed-v1/prepare-result-v2.json",
+        "sha256": "0504c02c81859ba77184d2bf4f2f61337444ce59329007650ce93a5a09de0986"
+      },
+      {
+        "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/composer-binder-failed-v1/prepare-result-v3.json",
+        "sha256": "23398ba30f847c6a1669ef4db510dd8bb10befee2de59290f770c02e8443cf34"
+      },
+      {
+        "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/composer-binder-failed-v1/main-prepare-recheck-v3.json",
+        "sha256": "7cfe0bda739a360c4e8fad74301923828e3cb5761118f461176d63cb3064115b"
+      },
+      {
+        "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/composer-binder-failed-v1/independent-prepare-review.json",
+        "sha256": "7480ec495a850ec2c604d2e08d5f6bf675ee12be6b436511b9d605effde3a332"
+      }
+    ],
+    "runs": [
+      {
+        "entry": "cli",
+        "phase": "lifecycle",
+        "returncode": 0,
+        "actual_exit": 0,
+        "observation_validated": true,
+        "process_group_empty": true,
+        "cleanup_signals": [],
+        "log": {
+          "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sdk-plain-init-composer-binder-failed-16k-v1/cli-lifecycle.jsonl",
+          "sha256": "2107d552e5bfa28ad82d8820a7f0c401cd9957c7ed8f897937b5018481976d3d"
+        },
+        "errors": [],
+        "binder_summary": {
+          "stock_init_binder_extended_error_summary": true,
+          "seen": 0,
+          "recorded": 0,
+          "copy_failed": 0,
+          "identity_failed": 0,
+          "omitted": 0,
+          "capture_bytes": 12,
+          "record_limit": 64
+        },
+        "failed_transactions": [],
+        "failed_summary": {
+          "stock_init_binder_failed_summary": true,
+          "seen": 0,
+          "found": 0,
+          "recorded": 0,
+          "unavailable": 0,
+          "not_found": 0,
+          "incomplete": 0,
+          "mismatched": 0,
+          "omitted": 0,
+          "entry_bytes": 312,
+          "slot_count": 32,
+          "record_limit": 64
+        },
+        "channels": [
+          {
+            "test": "native_graphics_channels_released",
+            "passed": true,
+            "opened": 0,
+            "closed": 0
+          }
+        ],
+        "data_clean_after": true,
+        "metadata_clean_after": true
+      },
+      {
+        "entry": "gcd",
+        "phase": "lifecycle",
+        "returncode": 0,
+        "actual_exit": 0,
+        "observation_validated": true,
+        "process_group_empty": true,
+        "cleanup_signals": [],
+        "log": {
+          "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sdk-plain-init-composer-binder-failed-16k-v1/gcd-lifecycle.jsonl",
+          "sha256": "aed38269a37b2ab324deb4d306899576615b462590859ec0bf48713093e5b7e8"
+        },
+        "errors": [],
+        "binder_summary": {
+          "stock_init_binder_extended_error_summary": true,
+          "seen": 0,
+          "recorded": 0,
+          "copy_failed": 0,
+          "identity_failed": 0,
+          "omitted": 0,
+          "capture_bytes": 12,
+          "record_limit": 64
+        },
+        "failed_transactions": [],
+        "failed_summary": {
+          "stock_init_binder_failed_summary": true,
+          "seen": 0,
+          "found": 0,
+          "recorded": 0,
+          "unavailable": 0,
+          "not_found": 0,
+          "incomplete": 0,
+          "mismatched": 0,
+          "omitted": 0,
+          "entry_bytes": 312,
+          "slot_count": 32,
+          "record_limit": 64
+        },
+        "channels": [
+          {
+            "test": "native_graphics_channels_released",
+            "passed": true,
+            "opened": 0,
+            "closed": 0
+          }
+        ],
+        "data_clean_after": true,
+        "metadata_clean_after": true
+      },
+      {
+        "entry": "cli",
+        "phase": "original",
+        "returncode": 0,
+        "actual_exit": 0,
+        "observation_validated": true,
+        "process_group_empty": true,
+        "cleanup_signals": [],
+        "log": {
+          "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sdk-plain-init-composer-binder-failed-16k-v1/cli-original.jsonl",
+          "sha256": "55c1e142d9e3f56fff9c5e40462fe92b69ecc341794705a17289801cd3ebbfdc"
+        },
+        "errors": [
+          {
+            "stock_init_binder_extended_error": true,
+            "error_index": 1,
+            "pid": 214,
+            "tid": 260,
+            "fd": 4,
+            "address": 338987185912,
+            "id": 1137,
+            "command": 29201,
+            "param": -1,
+            "line": 30935
+          },
+          {
+            "stock_init_binder_extended_error": true,
+            "error_index": 2,
+            "pid": 214,
+            "tid": 260,
+            "fd": 4,
+            "address": 338987185912,
+            "id": 1708,
+            "command": 29201,
+            "param": -1,
+            "line": 35953
+          }
+        ],
+        "binder_summary": {
+          "stock_init_binder_extended_error_summary": true,
+          "seen": 2,
+          "recorded": 2,
+          "copy_failed": 0,
+          "identity_failed": 0,
+          "omitted": 0,
+          "capture_bytes": 12,
+          "record_limit": 64
+        },
+        "failed_transactions": [
+          {
+            "stock_init_binder_failed_transaction": true,
+            "failure_index": 1,
+            "pid": 214,
+            "tid": 260,
+            "fd": 4,
+            "id": 1137,
+            "debug_id_done": 1137,
+            "call_type": 2,
+            "from_proc": 380,
+            "from_thread": 435,
+            "target_handle": -1,
+            "to_proc": 388,
+            "to_thread": 436,
+            "to_node": 0,
+            "data_size": 168,
+            "offsets_size": 16,
+            "return_error_line": 3518,
+            "command": 29201,
+            "param": -1,
+            "line": 30936
+          },
+          {
+            "stock_init_binder_failed_transaction": true,
+            "failure_index": 2,
+            "pid": 214,
+            "tid": 260,
+            "fd": 4,
+            "id": 1708,
+            "debug_id_done": 1708,
+            "call_type": 2,
+            "from_proc": 380,
+            "from_thread": 435,
+            "target_handle": -1,
+            "to_proc": 388,
+            "to_thread": 436,
+            "to_node": 0,
+            "data_size": 168,
+            "offsets_size": 16,
+            "return_error_line": 3518,
+            "command": 29201,
+            "param": -1,
+            "line": 35954
+          }
+        ],
+        "failed_summary": {
+          "stock_init_binder_failed_summary": true,
+          "seen": 2,
+          "found": 2,
+          "recorded": 2,
+          "unavailable": 0,
+          "not_found": 0,
+          "incomplete": 0,
+          "mismatched": 0,
+          "omitted": 0,
+          "entry_bytes": 312,
+          "slot_count": 32,
+          "record_limit": 64
+        },
+        "channels": [
+          {
+            "test": "native_graphics_channels_released",
+            "passed": true,
+            "opened": 16,
+            "closed": 16
+          }
+        ],
+        "data_clean_after": false,
+        "metadata_clean_after": true
+      },
+      {
+        "entry": "gcd",
+        "phase": "original",
+        "returncode": 0,
+        "actual_exit": 0,
+        "observation_validated": true,
+        "process_group_empty": true,
+        "cleanup_signals": [],
+        "log": {
+          "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sdk-plain-init-composer-binder-failed-16k-v1/gcd-original.jsonl",
+          "sha256": "4ec4ebc57208e584e1d5bd13ac5bb3244e52019c10eb47f75afd7f4572487ec6"
+        },
+        "errors": [
+          {
+            "stock_init_binder_extended_error": true,
+            "error_index": 1,
+            "pid": 215,
+            "tid": 259,
+            "fd": 4,
+            "address": 325373163256,
+            "id": 1153,
+            "command": 29201,
+            "param": -1,
+            "line": 30959
+          },
+          {
+            "stock_init_binder_extended_error": true,
+            "error_index": 2,
+            "pid": 215,
+            "tid": 259,
+            "fd": 4,
+            "address": 325373163256,
+            "id": 1579,
+            "command": 29201,
+            "param": -1,
+            "line": 35740
+          }
+        ],
+        "binder_summary": {
+          "stock_init_binder_extended_error_summary": true,
+          "seen": 2,
+          "recorded": 2,
+          "copy_failed": 0,
+          "identity_failed": 0,
+          "omitted": 0,
+          "capture_bytes": 12,
+          "record_limit": 64
+        },
+        "failed_transactions": [
+          {
+            "stock_init_binder_failed_transaction": true,
+            "failure_index": 1,
+            "pid": 215,
+            "tid": 259,
+            "fd": 4,
+            "id": 1153,
+            "debug_id_done": 1153,
+            "call_type": 2,
+            "from_proc": 378,
+            "from_thread": 433,
+            "target_handle": -1,
+            "to_proc": 389,
+            "to_thread": 436,
+            "to_node": 0,
+            "data_size": 168,
+            "offsets_size": 16,
+            "return_error_line": 3518,
+            "command": 29201,
+            "param": -1,
+            "line": 30960
+          },
+          {
+            "stock_init_binder_failed_transaction": true,
+            "failure_index": 2,
+            "pid": 215,
+            "tid": 259,
+            "fd": 4,
+            "id": 1579,
+            "debug_id_done": 1579,
+            "call_type": 2,
+            "from_proc": 378,
+            "from_thread": 433,
+            "target_handle": -1,
+            "to_proc": 389,
+            "to_thread": 436,
+            "to_node": 0,
+            "data_size": 168,
+            "offsets_size": 16,
+            "return_error_line": 3518,
+            "command": 29201,
+            "param": -1,
+            "line": 35741
+          }
+        ],
+        "failed_summary": {
+          "stock_init_binder_failed_summary": true,
+          "seen": 2,
+          "found": 2,
+          "recorded": 2,
+          "unavailable": 0,
+          "not_found": 0,
+          "incomplete": 0,
+          "mismatched": 0,
+          "omitted": 0,
+          "entry_bytes": 312,
+          "slot_count": 32,
+          "record_limit": 64
+        },
+        "channels": [
+          {
+            "test": "native_graphics_channels_released",
+            "passed": true,
+            "opened": 16,
+            "closed": 16
+          }
+        ],
+        "data_clean_after": false,
+        "metadata_clean_after": true
+      },
+      {
+        "entry": "cli",
+        "phase": "recovery",
+        "returncode": 0,
+        "actual_exit": 0,
+        "observation_validated": true,
+        "process_group_empty": true,
+        "cleanup_signals": [],
+        "log": {
+          "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sdk-plain-init-composer-binder-failed-16k-v1/cli-recovery.jsonl",
+          "sha256": "5bdb247eb7d1e0a45007e8917a5472b530ac07b42a37db96082f2b1934177c28"
+        },
+        "errors": [],
+        "binder_summary": {
+          "stock_init_binder_extended_error_summary": true,
+          "seen": 0,
+          "recorded": 0,
+          "copy_failed": 0,
+          "identity_failed": 0,
+          "omitted": 0,
+          "capture_bytes": 12,
+          "record_limit": 64
+        },
+        "failed_transactions": [],
+        "failed_summary": {
+          "stock_init_binder_failed_summary": true,
+          "seen": 0,
+          "found": 0,
+          "recorded": 0,
+          "unavailable": 0,
+          "not_found": 0,
+          "incomplete": 0,
+          "mismatched": 0,
+          "omitted": 0,
+          "entry_bytes": 312,
+          "slot_count": 32,
+          "record_limit": 64
+        },
+        "channels": [
+          {
+            "test": "native_graphics_channels_released",
+            "passed": true,
+            "opened": 0,
+            "closed": 0
+          }
+        ],
+        "data_clean_after": true,
+        "metadata_clean_after": true
+      },
+      {
+        "entry": "gcd",
+        "phase": "recovery",
+        "returncode": 0,
+        "actual_exit": 0,
+        "observation_validated": true,
+        "process_group_empty": true,
+        "cleanup_signals": [],
+        "log": {
+          "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sdk-plain-init-composer-binder-failed-16k-v1/gcd-recovery.jsonl",
+          "sha256": "6c9fa11ec6370c2785f78f6464b5f0dedbf9e28b26100eada443030893157068"
+        },
+        "errors": [],
+        "binder_summary": {
+          "stock_init_binder_extended_error_summary": true,
+          "seen": 0,
+          "recorded": 0,
+          "copy_failed": 0,
+          "identity_failed": 0,
+          "omitted": 0,
+          "capture_bytes": 12,
+          "record_limit": 64
+        },
+        "failed_transactions": [],
+        "failed_summary": {
+          "stock_init_binder_failed_summary": true,
+          "seen": 0,
+          "found": 0,
+          "recorded": 0,
+          "unavailable": 0,
+          "not_found": 0,
+          "incomplete": 0,
+          "mismatched": 0,
+          "omitted": 0,
+          "entry_bytes": 312,
+          "slot_count": 32,
+          "record_limit": 64
+        },
+        "channels": [
+          {
+            "test": "native_graphics_channels_released",
+            "passed": true,
+            "opened": 0,
+            "closed": 0
+          }
+        ],
+        "data_clean_after": true,
+        "metadata_clean_after": true
+      }
+    ],
+    "allocation_failure_correlations": [
+      {
+        "entry": "cli",
+        "id": 1137,
+        "ee_line": 30935,
+        "failure_line": 30936,
+        "get_result_line": 30937,
+        "gba_line": 30938,
+        "extended_error": {
+          "stock_init_binder_extended_error": true,
+          "error_index": 1,
+          "pid": 214,
+          "tid": 260,
+          "fd": 4,
+          "address": 338987185912,
+          "id": 1137,
+          "command": 29201,
+          "param": -1
+        },
+        "transaction": {
+          "stock_init_binder_failed_transaction": true,
+          "failure_index": 1,
+          "pid": 214,
+          "tid": 260,
+          "fd": 4,
+          "id": 1137,
+          "debug_id_done": 1137,
+          "call_type": 2,
+          "from_proc": 380,
+          "from_thread": 435,
+          "target_handle": -1,
+          "to_proc": 388,
+          "to_thread": 436,
+          "to_node": 0,
+          "data_size": 168,
+          "offsets_size": 16,
+          "return_error_line": 3518,
+          "command": 29201,
+          "param": -1
+        },
+        "original_get": {
+          "stock_init_block": 29,
+          "pid": 214,
+          "result": 0,
+          "args": [
+            4,
+            3222037009,
+            338987185912,
+            0,
+            0,
+            1
+          ],
+          "paths_hex": []
+        },
+        "gba": {
+          "stock_init_taglog": true,
+          "log_index": 3,
+          "pid": 214,
+          "tid": 260,
+          "header_tid": 260,
+          "log_id": 0,
+          "sec": 2696234,
+          "nsec": 155054000,
+          "fd": 3,
+          "write_result": 104,
+          "priority": 6,
+          "tag_bytes": 23,
+          "message_bytes": 69,
+          "captured_bytes": 69,
+          "tag_hex": "47726170686963427566666572416c6c6f6361746f7200",
+          "message_hex": "4661696c656420746f20616c6c6f63617465202833363020782036343029206c61796572436f756e74203120666f726d61742031207573616765206130303a202d31323900",
+          "message": "Failed to allocate (360 x 640) layerCount 1 format 1 usage a00: -129"
+        },
+        "adjacent_allocator_write_read": [
+          {
+            "line": 30933,
+            "row": {
+              "stock_init_block": 29,
+              "pid": 206,
+              "result": 0,
+              "args": [
+                5,
+                3224396289,
+                363354276864,
+                16,
+                16,
+                0
+              ],
+              "paths_hex": []
+            }
+          }
+        ],
+        "allocator_write_read_transaction_id_sampled": false
+      },
+      {
+        "entry": "cli",
+        "id": 1708,
+        "ee_line": 35953,
+        "failure_line": 35954,
+        "get_result_line": 35955,
+        "gba_line": 35956,
+        "extended_error": {
+          "stock_init_binder_extended_error": true,
+          "error_index": 2,
+          "pid": 214,
+          "tid": 260,
+          "fd": 4,
+          "address": 338987185912,
+          "id": 1708,
+          "command": 29201,
+          "param": -1
+        },
+        "transaction": {
+          "stock_init_binder_failed_transaction": true,
+          "failure_index": 2,
+          "pid": 214,
+          "tid": 260,
+          "fd": 4,
+          "id": 1708,
+          "debug_id_done": 1708,
+          "call_type": 2,
+          "from_proc": 380,
+          "from_thread": 435,
+          "target_handle": -1,
+          "to_proc": 388,
+          "to_thread": 436,
+          "to_node": 0,
+          "data_size": 168,
+          "offsets_size": 16,
+          "return_error_line": 3518,
+          "command": 29201,
+          "param": -1
+        },
+        "original_get": {
+          "stock_init_block": 29,
+          "pid": 214,
+          "result": 0,
+          "args": [
+            4,
+            3222037009,
+            338987185912,
+            4,
+            12,
+            0
+          ],
+          "paths_hex": []
+        },
+        "gba": {
+          "stock_init_taglog": true,
+          "log_index": 12,
+          "pid": 214,
+          "tid": 260,
+          "header_tid": 260,
+          "log_id": 0,
+          "sec": 2696292,
+          "nsec": 41892000,
+          "fd": 3,
+          "write_result": 104,
+          "priority": 6,
+          "tag_bytes": 23,
+          "message_bytes": 69,
+          "captured_bytes": 69,
+          "tag_hex": "47726170686963427566666572416c6c6f6361746f7200",
+          "message_hex": "4661696c656420746f20616c6c6f63617465202833363020782036343029206c61796572436f756e74203120666f726d61742031207573616765206130303a202d31323900",
+          "message": "Failed to allocate (360 x 640) layerCount 1 format 1 usage a00: -129"
+        },
+        "adjacent_allocator_write_read": [
+          {
+            "line": 35951,
+            "row": {
+              "stock_init_block": 29,
+              "pid": 206,
+              "result": 0,
+              "args": [
+                5,
+                3224396289,
+                363354276864,
+                16,
+                16,
+                0
+              ],
+              "paths_hex": []
+            }
+          }
+        ],
+        "allocator_write_read_transaction_id_sampled": false
+      },
+      {
+        "entry": "gcd",
+        "id": 1153,
+        "ee_line": 30959,
+        "failure_line": 30960,
+        "get_result_line": 30961,
+        "gba_line": 30962,
+        "extended_error": {
+          "stock_init_binder_extended_error": true,
+          "error_index": 1,
+          "pid": 215,
+          "tid": 259,
+          "fd": 4,
+          "address": 325373163256,
+          "id": 1153,
+          "command": 29201,
+          "param": -1
+        },
+        "transaction": {
+          "stock_init_binder_failed_transaction": true,
+          "failure_index": 1,
+          "pid": 215,
+          "tid": 259,
+          "fd": 4,
+          "id": 1153,
+          "debug_id_done": 1153,
+          "call_type": 2,
+          "from_proc": 378,
+          "from_thread": 433,
+          "target_handle": -1,
+          "to_proc": 389,
+          "to_thread": 436,
+          "to_node": 0,
+          "data_size": 168,
+          "offsets_size": 16,
+          "return_error_line": 3518,
+          "command": 29201,
+          "param": -1
+        },
+        "original_get": {
+          "stock_init_block": 29,
+          "pid": 215,
+          "result": 0,
+          "args": [
+            4,
+            3222037009,
+            325373163256,
+            0,
+            0,
+            1
+          ],
+          "paths_hex": []
+        },
+        "gba": {
+          "stock_init_taglog": true,
+          "log_index": 3,
+          "pid": 215,
+          "tid": 259,
+          "header_tid": 259,
+          "log_id": 0,
+          "sec": 2696413,
+          "nsec": 81267000,
+          "fd": 3,
+          "write_result": 104,
+          "priority": 6,
+          "tag_bytes": 23,
+          "message_bytes": 69,
+          "captured_bytes": 69,
+          "tag_hex": "47726170686963427566666572416c6c6f6361746f7200",
+          "message_hex": "4661696c656420746f20616c6c6f63617465202833363020782036343029206c61796572436f756e74203120666f726d61742031207573616765206130303a202d31323900",
+          "message": "Failed to allocate (360 x 640) layerCount 1 format 1 usage a00: -129"
+        },
+        "adjacent_allocator_write_read": [
+          {
+            "line": 30957,
+            "row": {
+              "stock_init_block": 29,
+              "pid": 204,
+              "result": 0,
+              "args": [
+                5,
+                3224396289,
+                316697641984,
+                16,
+                16,
+                0
+              ],
+              "paths_hex": []
+            }
+          }
+        ],
+        "allocator_write_read_transaction_id_sampled": false
+      },
+      {
+        "entry": "gcd",
+        "id": 1579,
+        "ee_line": 35740,
+        "failure_line": 35741,
+        "get_result_line": 35742,
+        "gba_line": 35743,
+        "extended_error": {
+          "stock_init_binder_extended_error": true,
+          "error_index": 2,
+          "pid": 215,
+          "tid": 259,
+          "fd": 4,
+          "address": 325373163256,
+          "id": 1579,
+          "command": 29201,
+          "param": -1
+        },
+        "transaction": {
+          "stock_init_binder_failed_transaction": true,
+          "failure_index": 2,
+          "pid": 215,
+          "tid": 259,
+          "fd": 4,
+          "id": 1579,
+          "debug_id_done": 1579,
+          "call_type": 2,
+          "from_proc": 378,
+          "from_thread": 433,
+          "target_handle": -1,
+          "to_proc": 389,
+          "to_thread": 436,
+          "to_node": 0,
+          "data_size": 168,
+          "offsets_size": 16,
+          "return_error_line": 3518,
+          "command": 29201,
+          "param": -1
+        },
+        "original_get": {
+          "stock_init_block": 29,
+          "pid": 215,
+          "result": 0,
+          "args": [
+            4,
+            3222037009,
+            325373163256,
+            4,
+            12,
+            0
+          ],
+          "paths_hex": []
+        },
+        "gba": {
+          "stock_init_taglog": true,
+          "log_index": 12,
+          "pid": 215,
+          "tid": 259,
+          "header_tid": 259,
+          "log_id": 0,
+          "sec": 2696469,
+          "nsec": 734419000,
+          "fd": 3,
+          "write_result": 104,
+          "priority": 6,
+          "tag_bytes": 23,
+          "message_bytes": 69,
+          "captured_bytes": 69,
+          "tag_hex": "47726170686963427566666572416c6c6f6361746f7200",
+          "message_hex": "4661696c656420746f20616c6c6f63617465202833363020782036343029206c61796572436f756e74203120666f726d61742031207573616765206130303a202d31323900",
+          "message": "Failed to allocate (360 x 640) layerCount 1 format 1 usage a00: -129"
+        },
+        "adjacent_allocator_write_read": [
+          {
+            "line": 35738,
+            "row": {
+              "stock_init_block": 29,
+              "pid": 204,
+              "result": 0,
+              "args": [
+                5,
+                3224396289,
+                316697641984,
+                16,
+                16,
+                0
+              ],
+              "paths_hex": []
+            }
+          }
+        ],
+        "allocator_write_read_transaction_id_sampled": false
+      }
+    ],
+    "failure_mapping": {
+      "command": 29201,
+      "command_name": "BR_FAILED_REPLY",
+      "param": -1,
+      "errno_name": "EPERM",
+      "transaction_count": 4,
+      "call_type": 2,
+      "direction": "reply",
+      "data_size": 168,
+      "offsets_size": 16,
+      "source_line": 3518,
+      "source_branch": "BINDER_TYPE_FD 的 binder_translate_fd 返回负值",
+      "specific_fd": "待采集",
+      "specific_permission_condition": "待采集",
+      "remaining_conditions": [
+        "target_allows_fd 为 false",
+        "security_binder_transfer_file 返回负值后归一为 EPERM"
+      ]
+    },
+    "limitations": [
+      "完整 boot、显示、原始签名 APK 与持续性能仍待完成。",
+      "失败记录未保存 FD 对象序号、原 FD 值或实际 inode SID。",
+      "pid/tid 为 guest PID 命名空间，from/to 为内核初始 PID 命名空间；两类编号均按实际值保存。",
+      "本轮耗时只记录诊断运行；iOS 实际 JIT、资源与热状态待真机验证。"
+    ],
+    "cleanup": {
+      "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/cleanup-2026-11-14/composer-binder-failed-v1.json",
+      "sha256": "060a9e031e58d39ab3536e60e7338db85be2e35c169c2092d36cb4d130b7d79d",
+      "status": "passed",
+      "target_count": 15,
+      "logical_bytes": 5025438429,
+      "preserved_files": 432,
+      "preserved_symlinks": 16,
+      "preserved_unchanged": true,
+      "reproduction": "原盘、core v3、vendor v4、生成源码、全部 prepare 与审阅结果、原日志保留；由同轮 wrapper 重新生成展开 root、程序、对象、中间镜像与克隆盘。"
+    }
   }
 }
