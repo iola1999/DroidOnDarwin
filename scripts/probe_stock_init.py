@@ -36,6 +36,24 @@ def read_observations(path):
     return rows
 
 
+def _first_stage_runner_source(source):
+    replacements = (
+        ('int (*start)(unsigned long, unsigned long *, unsigned) = (void *)(kernel + NCE_LKL_START_CPUS);',
+         'int (*start)(unsigned long, unsigned long *, unsigned, const char *) = (void *)(kernel + NCE_LKL_START_CPUS_CMDLINE);'),
+        ('start(scheduler_slice_us * 1000, &slice, online_cpus)',
+         'start(scheduler_slice_us * 1000, &slice, online_cpus, stock_init_first_stage_enabled() ? "androidboot.hardware=ranchu" : NULL)'),
+        ('long random[6] = {-100, (long)"/dev/random", 2};',
+         'long random[6] = {-100, (long)(stock_init_first_stage_enabled() ? "/dev/urandom" : "/dev/random"), 2};'),
+        ('static void seed_entropy(void)',
+         'static int stock_init_first_stage_enabled(void);\n\nstatic void seed_entropy(void)'),
+    )
+    if any(source.count(original) != 1 for original, _ in replacements):
+        raise ValueError('运行器启动参数或熵来源位置已变化')
+    for original, replacement in replacements:
+        source = source.replace(original, replacement)
+    return source
+
+
 def prepare(runtime, desktop, metadata, out, system_image=None, *, sdk_partitions=False):
     if sdk_partitions and not system_image:
         raise ValueError('完整 SDK36 LP 需要原始系统镜像')
@@ -470,15 +488,7 @@ def main():
             raise ValueError('运行器内核释放位置已变化')
         runner_source = runner_source.replace(release, release + '\n    printf("{\\"stock_init_shutdown\\":true,\\"halt_result\\":0,\\"host_disks_closed\\":%s,\\"kernel_release_result\\":0}\\n", disk_close_result == 0 ? "true" : "false");')
     if args.sdk_ramdisk:
-        old_start = 'int (*start)(unsigned long, unsigned long *, unsigned) = (void *)(kernel + NCE_LKL_START_CPUS);'
-        old_call = 'start(scheduler_slice_us * 1000, &slice, online_cpus)'
-        for text in (old_start, old_call, '(long)"/dev/random"'):
-            if runner_source.count(text) != 1:
-                raise ValueError('运行器启动参数或熵来源位置已变化')
-        runner_source = runner_source.replace(old_start, 'int (*start)(unsigned long, unsigned long *, unsigned, const char *) = (void *)(kernel + NCE_LKL_START_CPUS_CMDLINE);')
-        runner_source = runner_source.replace(old_call, 'start(scheduler_slice_us * 1000, &slice, online_cpus, stock_init_first_stage_enabled() ? "androidboot.hardware=ranchu" : NULL)')
-        runner_source = runner_source.replace('(long)"/dev/random"', '(long)(stock_init_first_stage_enabled() ? "/dev/urandom" : "/dev/random")')
-        runner_source = runner_source.replace('static void seed_entropy(void)', 'static int stock_init_first_stage_enabled(void);\n\nstatic void seed_entropy(void)')
+        runner_source = _first_stage_runner_source(runner_source)
     for shell_setup in ('    args[1] = (long)"/bin";\n    REQUIRE(call(34, args) == 0);\n',
                         '    put_file("/bin/sh", "dash.elf");\n'):
         if runner_source.count(shell_setup) != 1:
