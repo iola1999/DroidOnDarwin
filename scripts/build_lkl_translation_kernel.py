@@ -176,6 +176,8 @@ def build(cpus=1, high_res_timers=False, guest_page_bytes=16384, bpf_jit=False):
     probe_lkl.package_elf(out / 'lkl.so', smp_exports={'nce_translation_enter', 'nce_translation_leave', 'nce_translation_exclusive', 'nce_window_unlock', 'nce_translation_written'})
     files = [Path(__file__), Path(lkl_translation_patch.__file__), Path(probe_lkl.__file__),
              ROOT / 'scripts/lkl_nce_patch.py', ROOT / 'scripts/lkl_translation_aslr_patch.py', *copied, EXP / 'translation/kernel-api.h',
+             *[source / 'arch/lkl' / destination for _, destination in lkl_nce_patch.COPIED_SOURCES],
+             source / 'arch/lkl/kernel/Makefile',
              EXP / 'lkl-bridge.c', EXP / 'direct/page-table-layout.h', config, build_dir / '.config',
              source / 'arch/lkl/include/asm/page-mmu.h', source / 'arch/lkl/include/asm/nce-layout.h',
              source / 'arch/lkl/mm/nce_mmu.c', source / 'arch/lkl/kernel/nce_elf.c',

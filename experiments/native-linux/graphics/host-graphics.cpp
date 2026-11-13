@@ -1,11 +1,13 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 #include "host-graphics.h"
+#include "graphics-socket-address.h"
 #include <render-utils/render_api.h>
 #include <render-utils/RenderLib.h>
 #include <atomic>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <mutex>
 #include <thread>
 #include <vector>
 
@@ -42,6 +44,8 @@ static long call(long number, long a = 0, long b = 0, long c = 0, long d = 0)
 struct Connection {
     long fd;
     gfxstream::RenderChannelPtr channel;
+    std::mutex channel_mutex;
+    bool closing = false;
     std::thread reader;
     std::atomic<bool> done{false};
 
@@ -52,6 +56,12 @@ struct Connection {
     }
     ~Connection()
     {
+        {
+            std::lock_guard<std::mutex> lock(channel_mutex);
+            closing = true;
+            if (channel)
+                channel->stop();
+        }
         call(210, fd, 2);
         reader.join();
         CHECK(call(57, fd) == 0);
@@ -139,13 +149,23 @@ struct Connection {
                 return false;
             }
         }
-        channel = renderer->createRenderChannel();
-        CHECK(channel);
+        auto created = renderer->createRenderChannel();
+        CHECK(created);
+        {
+            std::lock_guard<std::mutex> lock(channel_mutex);
+            /* 停止可与 channel 创建并发；停止后的新 channel 在发布前结束。 */
+            if (closing) {
+                created->stop();
+                return false;
+            }
+            channel = std::move(created);
+        }
         if (raw) {
             Channel::Buffer flags;
             flags.resize(4);
             memset(flags.data(), 0, 4);
-            CHECK(channel->tryWrite(std::move(flags)) == Channel::IoResult::Ok);
+            if (channel->tryWrite(std::move(flags)) != Channel::IoResult::Ok)
+                return false;
         }
         return true;
     }
@@ -201,19 +221,14 @@ int nce_graphics_start(long (*linux_syscall)(long, long *))
                                             NCE_GPU_WIDTH, NCE_GPU_HEIGHT, 1, 0, false, false));
         std::puts("{\"test\":\"native_metal_display_created\",\"passed\":true}");
     }
-    /* Linux sockaddr_un has a 16-bit family; Darwin's layout also has a length byte. */
-    struct {
-        unsigned short family;
-        char path[108];
-    } address = {1, "/dev/nce-render"};
+    struct nce_graphics_socket_address address = NCE_GRAPHICS_SOCKET_ADDRESS_INIT;
     listener = call(198, 1, 1 | 0x80000, 0);
     CHECK(listener >= 0);
     /* The launcher replaces descriptors 0..2 for each guest program. */
     long reserved = call(25, listener, 1030, 16);
     CHECK(reserved >= 16 && call(57, listener) == 0);
     listener = reserved;
-    CHECK(listener >= 0 && call(200, listener, (long)&address, sizeof(address)) == 0);
-    CHECK(call(53, -100, (long)address.path, 0666) == 0);
+    CHECK(listener >= 0 && call(200, listener, (long)&address, NCE_GRAPHICS_SOCKET_ADDRESS_BYTES) == 0);
     CHECK(call(201, listener, 16) == 0);
     stopping.store(false);
     opened = closed = 0;
@@ -258,11 +273,10 @@ void nce_graphics_stop()
     call(210, listener, 2);
     accept_thread.join();
     CHECK(call(57, listener) == 0);
-    CHECK(call(35, -100, (long)"/dev/nce-render", 0) == 0);
     listener = -1;
     renderer->stop(true);
     renderer.reset();
     library.reset();
-    CHECK(opened > 0 && opened == closed);
+    CHECK(opened == closed);
     std::printf("{\"test\":\"native_graphics_channels_released\",\"passed\":true,\"opened\":%u,\"closed\":%u}\n", opened, closed);
 }

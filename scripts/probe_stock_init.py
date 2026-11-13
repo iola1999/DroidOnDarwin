@@ -8,7 +8,8 @@ from datetime import datetime
 from pathlib import Path
 import re
 import subprocess
-from probe_lkl_translation import validate_guest_layout
+from probe_lkl_translation import build_graphics, validate_guest_layout
+from stock_init_liblog import validate_liblog
 from process_observer import OBSERVATION_MAX_BYTES as _OBSERVATION_MAX_BYTES, observe as _observe
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -329,6 +330,14 @@ def _memory_state(rows, prepared, first_stage):
 
 
 def validate(rows, mode, original_system=False, *, guest_page_bytes=16384, kernel_log='', original_input=None, exec_elf_images=None, first_stage=False, bpf_jit=False):
+    if not validate_liblog(rows, required=bool(original_input and original_input.get('liblog_fatal_contract'))):
+        return False
+    if original_input and original_input.get('graphics_contract'):
+        channels = [row for row in rows if row.get('test') == 'native_graphics_channels_released']
+        if (len(channels) != 1 or set(channels[0]) != {'test', 'passed', 'opened', 'closed'} or
+                channels[0]['passed'] is not True or type(channels[0]['opened']) is not int or
+                type(channels[0]['closed']) is not int or not 0 <= channels[0]['opened'] == channels[0]['closed'] < 1 << 32):
+            return False
     exec_contract = (exec_elf_images is not None or
                      (original_input is not None and 'exec_elf_images' in original_input))
     layouts = [row for row in rows if row.get('config') == 'translation_guest_layout']
@@ -534,6 +543,10 @@ def main():
     parser.add_argument('--sdk-plain-data', action='store_true', help='在独立 SDK36 候选中移除 /data 的文件加密和密钥目录选项')
     parser.add_argument('--sdk-early-overcommit', action='store_true', help='无加密实验在原 init 前设置 vm.overcommit_memory=1')
     parser.add_argument('--sdk-system-observer', action='store_true', help='无加密原 init 部署系统服务观察器并验收完整启动')
+    parser.add_argument('--sdk-graphics', type=Path, help='使用 stock_init_graphics 生成并校验的 vendor 图形候选报告')
+    parser.add_argument('--graphics-prefix', type=Path, help='gfxstream 宿主库的 prefix 目录')
+    parser.add_argument('--graphics-angle', type=Path, help='ANGLE Metal 宿主库目录')
+    parser.add_argument('--sdk-liblog-fatal', action='store_true', help='有界采集固定 SDK liblog 四向量 FATAL 消息')
     parser.add_argument('--observation-seconds', type=int, default=30, help='原 init 观察时限，单位秒；自定义值用于无加密候选')
     parser.add_argument('--hyperos-manifest', type=Path)
     parser.add_argument('--lifecycle-only', action='store_true', help='仅检查原分区元数据、PID 1 信号与停止回收')
@@ -550,6 +563,12 @@ def main():
         parser.error('--sdk-early-overcommit 需要 --sdk-plain-data')
     if args.sdk_system_observer and (not args.sdk_plain_data or args.lifecycle_only):
         parser.error('--sdk-system-observer 需要无加密原 init 的完整观察入口')
+    if args.sdk_liblog_fatal and not args.sdk_plain_data:
+        parser.error('--sdk-liblog-fatal 需要 --sdk-plain-data')
+    if args.sdk_graphics and (not args.sdk_plain_data or not args.graphics_prefix or not args.graphics_angle):
+        parser.error('--sdk-graphics 需要无加密原 init、--graphics-prefix 与 --graphics-angle')
+    if not args.sdk_graphics and (args.graphics_prefix or args.graphics_angle):
+        parser.error('图形宿主路径需要 --sdk-graphics')
     if args.metadata_image and args.hyperos_manifest:
         parser.error('SDK metadata 与 HyperOS vendor 共用 slot 2，开盘前拒绝同时输入')
     if args.sdk_ramdisk and args.sdk_partitions:
@@ -591,6 +610,19 @@ def main():
     for name, expected in base['sha256'].items():
         if sha(ROOT / name) != expected:
             raise ValueError('基准输入变化：' + name)
+    kernel_directory = next((ROOT / name).parent for name in base['sha256'] if name.endswith('/lkl-image.h'))
+    kernel_manifest_path = kernel_directory / 'build.json'
+    if str(kernel_manifest_path.relative_to(ROOT)) not in base['sha256']:
+        raise ValueError('核心报告缺少内核构建清单')
+    kernel_manifest = json.loads(kernel_manifest_path.read_text())
+    if any(kernel_manifest.get(key, default) != config.get(key, default) for key, default in
+           (('cpus', 1), ('guest_page_bytes', 16384), ('bpf_jit', False), ('high_res_timers', False))):
+        raise ValueError('内核构建清单与核心配置不同')
+    source_hashes = dict(base['sha256'])
+    for name, expected in kernel_manifest['sha256'].items():
+        if (name in source_hashes and source_hashes[name] != expected) or sha(ROOT / name) != expected:
+            raise ValueError('内核构建输入变化：' + name)
+        source_hashes[name] = expected
     out = args.output.resolve()
     allowed_output = out.is_relative_to(ROOT / 'work/native-linux-nce')
     if args.sdk_plain_data:
@@ -618,6 +650,13 @@ def main():
         if args.sdk_plain_data:
             from stock_init_plain_data import prepare_system
             prepared = prepare_system(args.system_image.resolve(strict=True), out, prepared)
+        if args.sdk_graphics:
+            from stock_init_graphics import read_candidate
+            graphics = read_candidate(args.sdk_graphics)
+            prepared['deployed_system_partition'] = dict(graphics['candidate_image'])
+            prepared['sdk_partitions']['vendor']['sha256'] = graphics['candidate_vendor_sha256']
+            prepared['sdk_graphics'] = graphics
+            prepared['graphics_contract'] = 1
         if args.sdk_system_observer:
             from stock_init_system_observer import prepare as prepare_system_observer
             prepared['system_observer'] = prepare_system_observer(out)
@@ -642,6 +681,8 @@ def main():
         clone_log.write_text(json.dumps({'method': 'cp -c', 'files': prepared['files']}, indent=2) + '\n')
         prepared['clone_manifest'] = {'path': str(clone_log), 'sha256': sha(clone_log)}
     prepared['namespace_stop_contract'] = 1
+    if args.sdk_liblog_fatal:
+        prepared['liblog_fatal_contract'] = 1
     if args.sdk_plain_data:
         prepared['vm_state_contract'] = 1
         prepared['vm_trace_scope'] = 'All mmap/mprotect/munmap failures; successful mmap only for writable private anonymous requests of at least 1 GiB.'
@@ -673,7 +714,7 @@ def main():
     result.update(scope=('Original HyperOS 4 KiB init selinux_setup/second_stage observation; original partitions and full rc retained; first-stage and system boot unverified'
                          if args.hyperos_manifest else 'Original SDK36 init selinux_setup/second_stage observation; full rc retained; first-stage and system boot unverified'),
                   source_report=str(source), source_report_sha256=sha(source), source_configuration=config,
-                  input=prepared, commands=[], runs=[], sha256=dict(base['sha256']))
+                  input=prepared, commands=[], runs=[], sha256=source_hashes)
     if args.lifecycle_only:
         result['scope'] = ('Original HyperOS 4 KiB partition metadata and PID 1 lifecycle observation; original init remains unexecuted'
                            if args.hyperos_manifest else 'Original SDK36 partition and PID 1 lifecycle observation; original init remains unexecuted')
@@ -692,6 +733,7 @@ def main():
                  EXP / 'translation/stock-init-exec.h', ROOT / 'scripts/exec_aslr.py',
                  EXP / 'userspace/signal-tests.c', EXP / 'userspace/signal-registers.S',
                  ROOT / 'scripts/stock_init_metadata.py', ROOT / 'scripts/stock_init_sdk.py',
+                 ROOT / 'scripts/stock_init_liblog.py',
                  ROOT / 'scripts/prepare_android_runtime.py', out / 'files.tsv'):
         result['sha256'][_manifest_path(path)] = sha(path)
     for path in (EXP / 'translation/stock-init-dm-abi.h', EXP / 'translation/stock-init-dm.h'):
@@ -722,6 +764,20 @@ def main():
         for path in (EXP / 'translation/stock-init-system-observer.h', EXP / 'translation/stock-init-system-observer.rc',
                      EXP / 'translation/stock-init-system-observer.sh', ROOT / 'scripts/stock_init_system_observer.py',
                      out / 'stock-init-system-observer-data.h', out / 'stock-init-system-observer.json'):
+            result['sha256'][_manifest_path(path)] = sha(path)
+    graphics_link, graphics_files = [], []
+    if args.sdk_graphics:
+        command, graphics_link, graphics_files = build_graphics(out, prefix=args.graphics_prefix, angle=args.graphics_angle)
+        result['commands'].append(command)
+        graphics_files += [EXP / 'input.c', EXP / 'session.c', EXP / 'session-profile.c']
+        result['graphics_host'] = {'prefix': str(args.graphics_prefix.resolve()), 'angle': str(args.graphics_angle.resolve()),
+                                   'backend': 'gfxstream/ANGLE Metal', 'window': False}
+        for path in graphics_files:
+            result['sha256'][_manifest_path(path)] = sha(path)
+        for path in (Path(prepared['sdk_graphics']['report_path']), ROOT / 'scripts/stock_init_graphics.py'):
+            result['sha256'][_manifest_path(path)] = sha(path)
+    if args.sdk_liblog_fatal:
+        for path in (EXP / 'translation/stock-init-liblog.h',):
             result['sha256'][_manifest_path(path)] = sha(path)
     runner_source = (EXP / 'translation/linux-runner.c').read_text()
     start = runner_source.index('static void stock_bionic_setup(void)')
@@ -795,6 +851,13 @@ def main():
     execution_text = execution_text.replace(before, observed)
     if args.sdk_plain_data:
         execution_text = _init_vm_trace_source(execution_text)
+    if args.sdk_liblog_fatal:
+        execution_text = execution_text.replace('#include "stock-init-trace.h"',
+                                                '#include "stock-init-trace.h"\n#include "stock-init-liblog.h"', 1)
+        hook = '            stock_init_trace_write(number, args, result);'
+        if execution_text.count(hook) != 1:
+            raise ValueError('liblog FATAL 的 syscall 观察位置已变化')
+        execution_text = execution_text.replace(hook, hook + '\n            stock_init_liblog_after_syscall(number, args, result);')
     cleanup_format = '\\"preemptions\\":%lu}\\n",'
     cleanup_args = 'allocated == freed ? "true" : "false", allocated, freed, maps, revocations, fills, faults, calls, preemptions);'
     if execution_text.count(cleanup_format) != 1 or execution_text.count(cleanup_args) != 1:
@@ -804,7 +867,8 @@ def main():
     cleanup_start = '    unsigned long fills = 0, faults = 0, calls = 0, preemptions = 0;'
     if execution_text.count(cleanup_start) != 1:
         raise ValueError('终末 trace 汇总位置已变化')
-    execution_text = execution_text.replace(cleanup_start, '    stock_init_trace_summary();\n' + cleanup_start)
+    execution_text = execution_text.replace(cleanup_start, '    stock_init_trace_summary();\n' +
+                                            ('    stock_init_liblog_summary();\n' if args.sdk_liblog_fatal else '') + cleanup_start)
     execution.write_text(execution_text)
     result['sha256'][_manifest_path(execution)] = sha(execution)
     for path in source.parent.iterdir():
@@ -850,6 +914,8 @@ def main():
     if args.hyperos_manifest:
         selected.update(NCE_STOCK_INIT_VENDOR=prepared['original_vendor']['path'],
                         NCE_STOCK_INIT_SYSTEM_DLKM=prepared['original_system_dlkm']['path'])
+    if args.sdk_graphics:
+        selected.update(DYLD_LIBRARY_PATH=str(args.graphics_angle.resolve()), ANGLE_DEFAULT_PLATFORM='metal')
     result['test_environment'] = selected
     for entry in ('cli', 'gcd'):
         command = next(list(cmd) for cmd in base['commands'] if '-o' in cmd and Path(cmd[cmd.index('-o') + 1]).name == entry)
@@ -859,6 +925,10 @@ def main():
         command[command.index(str(EXP / 'translation/linux-execution.c'))] = str(execution)
         command[command.index('-o') + 1] = str(out / entry)
         command += ['-iquote', str(EXP / 'translation')]
+        if args.sdk_graphics:
+            command += [*map(str, graphics_link), *map(str, (EXP / 'input.c', EXP / 'session.c', EXP / 'session-profile.c'))]
+        if args.sdk_liblog_fatal:
+            command += ['-DNCE_STOCK_INIT_LOG_LIBLOG_FATAL']
         if args.sdk_ramdisk:
             command += ['-DNCE_STOCK_INIT_RAMDISK', '-iquote', str(out)]
         if args.sdk_plain_data:
@@ -1101,6 +1171,14 @@ def main():
         candidate = prepared['sdk_plain_data']['candidate_image']
         if sha(Path(candidate['path'])) != candidate['sha256']:
             raise ValueError('运行期间无加密系统候选变化')
+    if args.sdk_graphics:
+        graphics_after = read_candidate(prepared['sdk_graphics']['report_path'])
+        if graphics_after != prepared['sdk_graphics']:
+            raise ValueError('运行期间实际图形候选或报告变化')
+        result['graphics_candidate_recheck'] = {
+            'passed': True, 'report_sha256': graphics_after['report_sha256'],
+            'candidate_sha256': graphics_after['candidate_image']['sha256'],
+            'vendor_sha256': graphics_after['candidate_vendor_sha256']}
     if args.hyperos_manifest:
         for name in ('deployed_system_partition', 'original_vendor', 'original_system_dlkm'):
             record = prepared[name]

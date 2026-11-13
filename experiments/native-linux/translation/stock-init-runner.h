@@ -364,6 +364,9 @@ static int stock_init_run(void)
 #ifdef NCE_STOCK_INIT_VM_STATE
     stock_init_vm_state();
 #endif
+#ifdef NCE_GRAPHICS
+    REQUIRE(nce_graphics_start(call) == 0);
+#endif
     long launch[6] = {(long)translation_linux_process("/probe-guest"), 1};
     long pid = call(246, launch);
     REQUIRE(pid > 1);
@@ -409,6 +412,9 @@ static int stock_init_run(void)
     long reaped_result = call(247, reaped);
     printf("{\"stock_init_host_stop_reaped\":true,\"ancestor_pid\":%ld,\"result\":%ld}\n", pid, reaped_result);
     REQUIRE(reaped_result == -3);
+#ifdef NCE_GRAPHICS
+    nce_graphics_stop();
+#endif
 #if defined(NCE_STOCK_INIT_RAMDISK)
     if (first_stage) {
         long sync_args[6] = {0};

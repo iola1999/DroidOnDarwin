@@ -7,11 +7,11 @@
 #include <string.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
-#include <sys/un.h>
 #include <sys/wait.h>
 #include <unistd.h>
 #include <time.h>
 #include "../graphics/host-graphics.h"
+#include "../graphics/graphics-socket-address.h"
 #include "renderControl_opcodes.h"
 #undef OP_last
 #include "gles2_opcodes.h"
@@ -197,8 +197,8 @@ static void draw_scene(u32 surface)
     CHECK(color_buffer);
     int reference = socket(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC, 0);
     CHECK(reference >= 0);
-    struct sockaddr_un reference_address = {.sun_family = AF_UNIX, .sun_path = "/dev/nce-render"};
-    CHECK(connect(reference, (struct sockaddr *)&reference_address, sizeof(reference_address)) == 0);
+    struct nce_graphics_socket_address reference_address = NCE_GRAPHICS_SOCKET_ADDRESS_INIT;
+    CHECK(connect(reference, (struct sockaddr *)&reference_address, NCE_GRAPHICS_SOCKET_ADDRESS_BYTES) == 0);
     write_all(reference, "pipe:refcount", sizeof("pipe:refcount"));
     write_all(reference, &color_buffer, sizeof(color_buffer));
     COMMAND(OP_rcSetWindowColorBuffer, surface, color_buffer);
@@ -268,9 +268,8 @@ static void render(int scene, unsigned variant)
     max_fragment = scene ? 65536 : 113;
     fd = socket(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC, 0);
     CHECK(fd >= 0);
-    struct sockaddr_un address = {.sun_family = AF_UNIX};
-    strcpy(address.sun_path, "/dev/nce-render");
-    CHECK(connect(fd, (struct sockaddr *)&address, sizeof(address)) == 0);
+    struct nce_graphics_socket_address address = NCE_GRAPHICS_SOCKET_ADDRESS_INIT;
+    CHECK(connect(fd, (struct sockaddr *)&address, NCE_GRAPHICS_SOCKET_ADDRESS_BYTES) == 0);
     u32 flags = 0;
     transfer(&flags, 4, 0);
     COMMAND(OP_rcGetRendererVersion);

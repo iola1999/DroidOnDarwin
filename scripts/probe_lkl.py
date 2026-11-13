@@ -3,7 +3,7 @@
 import argparse
 import art_aot
 import hashlib
-from lkl_nce_patch import apply
+from lkl_nce_patch import COPIED_SOURCES, apply
 from build_nce_userspace import build as build_userspace
 import json
 import os
@@ -227,7 +227,8 @@ def main():
             from lkl_smp_mmu_patch import apply as apply_mmu
             base_inputs = [Path(__file__).with_name("lkl_nce_patch.py"),
                            *sorted(EXPERIMENT.glob("lkl-nce-*.c")), *sorted(EXPERIMENT.glob("lkl-*.h")),
-                           EXPERIMENT / "guest-registers.h", EXPERIMENT / "layout.h"]
+                           EXPERIMENT / "guest-registers.h", EXPERIMENT / "layout.h",
+                           *[EXPERIMENT / name for name, _ in COPIED_SOURCES]]
             base_hashes = {str(p.relative_to(ROOT)): hashlib.sha256(p.read_bytes()).hexdigest() for p in base_inputs}
             marker = SOURCE / ".droidondarwin-smp-process-base.json"
             if marker.exists():

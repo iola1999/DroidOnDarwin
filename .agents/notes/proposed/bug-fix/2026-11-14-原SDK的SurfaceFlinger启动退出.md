@@ -25,7 +25,7 @@ CLI 原日志 `work/native-linux-nce/sdk-plain-init-16k-v13/cli-original.jsonl` 
 
 原 SDK 的 `vendor/etc/init/hwc3.rc` 启动 `vendor.hwcomposer-3`，可执行文件为 `/vendor/bin/hw/android.hardware.graphics.composer3-service.ranchu`，其 `onrestart` 重启 SurfaceFlinger。`vendor/etc/vintf/manifest/hwc3.xml` 声明 AIDL `android.hardware.graphics.composer3` version 4、`IComposer/default`。CLI 行 22121 开始启动该服务，随后 pid 215 在行 24530 查询并找到对应 device VINTF 声明。该日志尚未确认服务注册、`createClient`、显示设备初始化或 RenderEngine 初始化；日志中未找到该 composer 服务的退出记录。
 
-实际 probe 设置 `NCE_TRANSLATION_WORKLOAD=bionic` 并进入 `stock_init_run()`；阶段结果的 `source_configuration.workload=core` 来自复用的 BPF core 配置。CLI/GCD 编译命令均未启用 `NCE_GRAPHICS`，未链接宿主 graphics 源码与 Apple 图形框架；二进制也没有 `nce_graphics_start`、`nce_host_input` 和 `nce_session_set_syscall` 导出。一般 runner 中的图形调用位于 `NCE_GRAPHICS` 条件编译及 desktop 分支。此配置尚未提供原 SDK 图形设备所需的宿主实现，SurfaceFlinger 本次 SIGABRT 的内部触发点仍缺少自身诊断。
+实际 probe 设置 `NCE_TRANSLATION_WORKLOAD=bionic` 并进入 `stock_init_run()`；阶段结果的 `source_configuration.workload=core` 来自复用的 BPF core 配置。CLI/GCD 编译命令均未启用 `NCE_GRAPHICS`，未链接宿主 graphics 源码与 Apple 图形框架；二进制也没有 `nce_graphics_start`、`nce_host_input` 和 `nce_session_set_syscall` 导出。一般 runner 中的图形调用位于 `NCE_GRAPHICS` 条件编译及 desktop 分支。此配置尚未提供原 SDK 图形设备所需的宿主实现。后续生成副本已取得 SurfaceFlinger 自身 FATAL，见下文。
 
 ### 停止后的 tombstone
 
@@ -33,7 +33,7 @@ CLI 原日志 `work/native-linux-nce/sdk-plain-init-16k-v13/cli-original.jsonl` 
 
 导出的 50 份文本与 50 份 protobuf tombstone 共 16,551,175 bytes。50 份文本都记录 `media.swcodec`，没有 SurfaceFlinger 的文本 tombstone。优先检查的 `tombstone_18` 为 pid 2502/tid 2506，`tombstone_19` 为 pid 2574/tid 2578；二者均为 SIGABRT，Abort message 为 `GoldfishAddressSpaceHostMemoryAllocator failed to open`。对应 v13 GCD 原日志的服务启动/退出行分别为 107269/109727 和 109862/112319。
 
-两份回溯依次经过 `GoldfishMapper::GoldfishMapper()`、`AIMapper_loadIMapper`、`android::Gralloc5Mapper`、`GraphicBufferMapper`、`GraphicBuffer`、`AHardwareBuffer_isSupported`，再进入 codec2 软件解码器接口构造。原 SDK fingerprint 为 `google/sdk_gphone16k_arm64/emu64a16k:16/BE2A.250530.026.F3/13894323:userdebug/dev-keys`，页大小为 16384 bytes。原 `mapper.ranchu.so` 的 SHA-256 为 `311ccf0653ab04154fa3c6acbfa99b81f0dc904f501228dee4dc8725e0a6b870`，与原 desktop manifest 相同；其 BuildId `5126b31f9f2b5a6acd2edf15be421276` 与回溯一致。这些记录确认 media.swcodec 的 mapper 初始化失败；SurfaceFlinger 的 Abort message 和回溯仍未取得。结构化解析保存在同目录的 `analysis.json`。
+两份回溯依次经过 `GoldfishMapper::GoldfishMapper()`、`AIMapper_loadIMapper`、`android::Gralloc5Mapper`、`GraphicBufferMapper`、`GraphicBuffer`、`AHardwareBuffer_isSupported`，再进入 codec2 软件解码器接口构造。原 SDK fingerprint 为 `google/sdk_gphone16k_arm64/emu64a16k:16/BE2A.250530.026.F3/13894323:userdebug/dev-keys`，页大小为 16384 bytes。原 `mapper.ranchu.so` 的 SHA-256 为 `311ccf0653ab04154fa3c6acbfa99b81f0dc904f501228dee4dc8725e0a6b870`，与原 desktop manifest 相同；其 BuildId `5126b31f9f2b5a6acd2edf15be421276` 与回溯一致。这些记录确认 media.swcodec 的 mapper 初始化失败；本次只读导出未取得 SurfaceFlinger 的 Abort message 和回溯。结构化解析保存在同目录的 `analysis.json`。
 
 ## 提案
 
@@ -51,9 +51,68 @@ v13 实际 `root/system/lib64/liblog.so` 与保留的原 SDK `android36/lib64/li
 
 ### 后续接口调查
 
-SurfaceFlinger 下一步需要自身 FATAL 消息或 tombstone，随后按实际返回调查 composer3 的服务注册、`createClient`、Gralloc mapper 和 RenderEngine 初始化。media.swcodec 已确认的失败另按原 `GoldfishMapper` 与 `GoldfishAddressSpaceHostMemoryAllocator` 的 open/ioctl/mmap 调用核对设备契约。现有自建 gralloc 与原 SDK mapper 的实现和使用入口分别核对。
+生成副本取得 FATAL 消息后，下一步按实际返回调查 composer3 的服务注册、`createClient`、Gralloc mapper 和 RenderEngine 初始化。media.swcodec 已确认的失败另按原 `GoldfishMapper` 与 `GoldfishAddressSpaceHostMemoryAllocator` 的 open/ioctl/mmap 调用核对设备契约。现有自建 gralloc 与原 SDK mapper 的实现和使用入口分别核对。
 
 原 `logd` pid 72、`tombstoned` pid 104 已启动。CLI 行 15058 记录 `getsockopt`（209）fd 25、SOL_SOCKET=1、option=17 返回 -88（ENOTSOCK），下一行是 `logd: SocketListener: Failed to start unbound listener`。具体 listener、调用方与 SurfaceFlinger 日志缺失的关系仍待确认。现有 [系统服务观察器](../../../../experiments/native-linux/translation/stock-init-system-observer.rc) 由 `sys.boot_completed=1` 触发，采集 boot 与服务状态；v13 两入口均缺少该轮 boot-id 的完整导出。新增 guest 诊断服务暂缓，先使用生成副本的原 liblog 采集与停止后只读 tombstone 导出。
+
+### 生成副本的 RenderEngine FATAL
+
+`work/sdk-plain-validation-v1/surfaceflinger-log-v1/` 复用 v13 的已核对输入与独立 APFS 克隆盘，CLI/GCD 各观察 30 秒。每个入口捕获 181 条 FATAL，其中五条的 tag 为 `RenderEngine`，消息为 `no suitable EGLConfig found, giving up`，并带有 `format: 1`、`vendor: Android`、`version: 1.4 Android META-EGL`。原消息长度为 407 bytes，本次全部捕获，`write_result=432`。随后原 init 对相同 PID 记录 signal 6。CLI 的 PID/TID 分别为 250/326、376/386、446/456、516/526、585/595；GCD 分别为 255/331、383/391、458/465、529/535、600/606。原日志及源码摘要保留在该目录，完整消息与解析结果由结构化报告记录。
+
+初次诊断的 `result.json` 保留 `status=failed`。新增 FATAL 行使用 `trace_index`，被 `_validate_syscall_trace` 的全局筛选纳入，导致原启动两入口 `validate=False`。`revalidation.json` 保留这个失败，在原日志中分别去除独立诊断行、仅将诊断字段改为 `log_index`，两种方式的完整启动观察 validator 均成功；实际原行与使用 `log_index` 的协议及限额 fixture 一起验证也成功。fixture 覆盖 21 项无效协议条件、2048-byte 捕获边界、16-bit header tid，以及 520 次匹配中记录 512 次、省略八次的计数。复核没有重新启动 Android，也没有修改生产 probe。
+
+原启动两入口实际退出 0，宿主进程组为空；随后 CLI/GCD 的同盘 mounted-partition recovery 验证成功，两盘最终 clean。清理前检查盘使用方，删除本轮十项候选盘、程序与 dSYM，逻辑大小共 575,211,769 bytes；206 项生产源码、原盘与 v13 输入在运行、复核和清理后保持。清单为 `work/cleanup-2026-11-14/surfaceflinger-log-v1.json`，复现副本的源码和命令保存于 `revalidation/`。原启动及完整 boot 的失败继续保留；下一阶段的图形适配见[原 SDK 图形服务与宿主传输](../architecture/2026-11-14-原SDK图形服务与宿主传输.md)。
+
+### 实际 renderer 接入后的原 init 诊断
+
+本轮使用新 `sdk-plain-graphics-core16k-v2`、vendor 图形候选 v3、独立 APFS data/metadata 克隆盘、gfxstream/ANGLE Metal 和有界 liblog 模块，CLI/GCD 的 original 各观察 30 秒。六个 lifecycle/original/recovery 入口均实际退出 0，观察 validator 成功，宿主进程组回收成功；first-stage 完成，两盘最终 clean。实际图形候选和报告在运行后重新读回校验，原盘和外层冻结输入保持。完整系统观察器继续失败，结果见[图形原 init 诊断](../../../../experiments/native-linux/results-sdk-graphics-init-20261114.json)。
+
+每个入口的 renderer 均报告 `opened=closed=0`。CLI original 捕获 19 条 FATAL，其中四条来自本轮 SurfaceFlinger PID；GCD original 捕获 20 条 FATAL，其中五条来自 SurfaceFlinger PID。两入口仍出现完整的 `no suitable EGLConfig found, giving up` 消息。原日志同时记录 `dlkm_loader` 加载 `/vendor/lib/modules/goldfish_pipe.ko`，`insmod` 返回 `Function not implemented`。该轮尚未提供 `/dev/goldfish_pipe_dprctd` 字符设备，原 EGL 的实际传输路径继续由[图形提案](../architecture/2026-11-14-原SDK图形服务与宿主传输.md#原-egl-的设备路径)推进。
+
+v1 诊断结束后，核对宿主使用方并与只读协作者确认依赖，清理 13 项展开 root、系统中间镜像、宿主程序、对象、dSYM 和本轮 data/metadata 克隆盘，文件逻辑大小共 5,017,979,897 bytes。原日志、summary、生成 runner 源码与 data-export 保留；v13 原系统盘、固定 data/metadata 原盘及新 v4 候选在清理前后摘要保持。清单为 `work/cleanup-2026-11-14/init-graphics-v1.json`，已在结构化结果中保存其摘要。复现 v1 需要使用原 wrapper 命令重新生成上述中间产物。
+
+### 字符设备与原 qemupipe 的原 init 诊断
+
+v2 使用包含字符设备的 core v3、保留原 qemupipe 的 vendor v4 与新的独立 APFS data/metadata 克隆盘，CLI/GCD 的 original 各观察 30 秒。六个 lifecycle/original/recovery 入口的观察 validator、实际退出 0 和进程组回收均成功，first-stage 完成，两盘经 recovery 后 clean；333 项来源与实际候选在运行前后复核成功。完整系统观察器仍未取得本轮 boot-id 的完整导出，`full_boot_validation=failed`。
+
+两份 original 日志均记录 `opened=closed=4`，每份捕获七条 FATAL，未出现 `RenderEngine` FATAL。两份日志均只有一次 SurfaceFlinger 启动，CLI 的 PID 为 241、GCD 为 254；Zygote 的 PID 均为 192。30 秒观察中未记录这两个服务退出。原 `no suitable EGLConfig found, giving up` 的本轮计数为 0；上述结果只确认已测图形连接和退出状态，Composer 注册、RenderEngine 完成、显示及完整系统仍待观察。
+
+每份日志的其余 FATAL 为四条 `crash_dump64` 的 `failed to get child pid via PTRACE_GETEVENTMSG: Invalid argument` 与三条 sensors HAL 的 `sensors transport is not opened`。原 logd 的 `SocketListener: Failed to start unbound listener` 继续出现。原日志保存在 `work/native-linux-nce/sdk-plain-init-graphics-16k-v2/`，外层结果为 `work/sdk-plain-validation-v1/init-graphics-v2/result.json`；失败原因继续分别调查。该诊断的约 111 秒外层耗时包含准备、六个入口与读回，不用于整机性能比较。
+
+v3 保持同一 core、vendor、宿主 renderer 与策略，使用新的独立克隆盘，将 original 观察扩大到 180 秒。六个入口的观察、实际退出 0 和进程组回收均成功，两盘最终 clean；333 项来源在运行后复核一致，实际图形候选读回成功。两份系统观察器导出均缺少本轮 boot-id 目录，`full_boot_observed=false`、`full_boot_validation=failed`。外层结果保存于 `work/sdk-plain-validation-v1/init-graphics-v3/result.json`，摘要与原日志保存于 `work/native-linux-nce/sdk-plain-init-graphics-16k-v3/`。
+
+两入口均报告 `opened=closed=16`，`no suitable EGLConfig found, giving up` 的 FATAL 计数继续为 0。CLI 记录 40 条 FATAL，分别为 21 条 `crash_dump64`、17 条 sensors HAL 和两条 `HwcComposer`；GCD 记录 41 条，分别为 21、18 和两条。两条新的 HwcComposer 消息均为 `Can't create AidlComposerClient`。完整消息已捕获，结束计数的 `omitted=0`。对应原日志行号如下：
+
+| 入口 | HwcComposer FATAL 行号 | SurfaceFlinger PID/TID | 同 PID 的 signal 6 行号 |
+| --- | --- | --- | --- |
+| CLI | 30984 | 252/252 | 31153 |
+| CLI | 35709 | 436/436 | 35900 |
+| GCD | 30798 | 251/251 | 30964 |
+| GCD | 35749 | 431/431 | 35925 |
+
+每个入口共记录三次 SurfaceFlinger 启动和两次 SIGABRT，原 rc 继续重启 Zygote/netd。CLI 的第三个 SurfaceFlinger PID 为 556，GCD 为 553，观察结束前未记录这两个 PID 的退出。原 Composer 服务在 CLI 为 PID 215、GCD 为 216；两份日志均记录其查询到 device VINTF 声明，尚未取得客户端初始化成功的结果。30 秒观察的服务状态只覆盖该区间，180 秒结果暴露了后续失败。
+
+下一轮按原 SDK ELF 和固定源码核对 `createClient` 的失败分支，补充有界的 Composer 初始化消息与实际设备调用采集。原 logd、sensors 和 crash_dump64 的失败继续分别保存；原策略、完整 boot、图形显示、通用 APK 与持续性能的验收条件保持。
+
+原 Composer ELF 的 BuildId 为 `21d937e07bcf91617caebca8c200661d`，与固定 SDK r07 清单的文件摘要相同。该 ELF 包含 `RanchuHwc` tag，以及 `failed as composer client already exists`、`failed to init composer client`、`failed to initialize DrmClient` 消息。下一份生成副本仅额外采集该 tag 的 WARN/ERROR/FATAL（priority 5/6/7），每条最多捕获 2048 bytes、每个入口最多记录 128 条，并输出匹配、省略计数。现有 FATAL 采集保持；新增采集先验证 tag、priority、协议边界、输入保持与记录限额，再运行新的独立克隆盘。原 rc、策略和原图形 ELF 保持。
+
+参考 `goldfish-opengl` 的固定修订为 `ad6692caa5eeda26fb0dde1a6ca44494f07712d5`，其 `createClient` 对已有客户端最多等待五秒，初始化失败返回原 error；该参考源码与 SDK r07 编译源码的对应尚未确认。原属性与实际分支继续核对，具体失败原因由新增日志确定。只读调查来源保存在 `work/sdk-plain-validation-v1/composer-client-review-v1/`。
+
+### Composer 缓冲区分配诊断
+
+`composer-taglog-v1` 已在生成副本完成两个 original 入口各 180 秒的观察。六个 lifecycle/original/recovery 入口的观察、实际退出 0 与进程组回收均成功，first-stage 完成，独立 data/metadata 克隆经 recovery 后 clean。生产来源、生成副本和实际 vendor 候选前后核对成功，停止后再次逐项核对 334 项来源。每个 original 入口的图形连接均为 `opened=closed=16`，各捕获 16 条 `RanchuHwc` ERROR，记录省略数为 0。现有 FATAL 采集继续通过协议复核，完整系统观察器仍缺少本轮 boot-id 的完整导出，`full_boot_validation=failed`。外层结果为 `work/sdk-plain-validation-v1/composer-taglog-v1/result.json`，原日志及摘要为 `work/native-linux-nce/sdk-plain-init-composer-taglog-16k-v1/`；入仓结果保存了本轮摘要与来源复核引用。
+
+两入口两次客户端初始化均记录同一错误顺序：`create: Failed to allocate drm ahb`、`createHostComposerDisplayInfo: display:0 failed to allocate swapchain`、`onDisplayCreate failed to initialize host info for display:0`、`createDisplayLocked failed to register display:0 with composer`、`createDisplaysLocked failed to create display from config`、`init failed to create displays.`。首次 DRM 分配失败位于 CLI 原日志第 31039 行、GCD 第 30983 行；再次失败位于第 35806 行与第 35610 行。Composer 的 PID 均为 214，CLI 的 TID 为 254，GCD 为 260。空 vsync 属性使用默认 60 Hz 与设置 Vsync 线程优先级返回 `Invalid argument` 也已记录，这两项与分配失败的关系尚未确认。
+
+该轮 fixture 已验证 `RanchuHwc` 的 priority 5/6/7、其他 tag 与 priority 的拒绝、错误 header、2049-byte 消息的 2048-byte 捕获及输入保持。134 次匹配记录 128 次、省略六次，结束计数一致。原 FATAL 模块、原 rc、策略和图形 ELF 保持；这些诊断结果只用于定位启动故障。
+
+原 Composer ELF 的 Host 分支固定使用 format 1、layerCount 1、usage `0xa00` 和三张 swapchain 图像，宽高读取活动 display config；原 libui 在 `GraphicBufferAllocator` 的 priority 6 日志中输出实际宽高、layerCount、format、usage 与 `status_t`。v4 memfd allocator 支持上述固定 format、layerCount 与 usage，分配失败日志的 tag 为 `allocator-service.nce`、priority 为 6，包含函数及源码行号。实际宽高、返回码及本轮 allocator 失败分支尚未取得。
+
+下一份独立生成副本保留 `RanchuHwc` 的 priority 5/6/7，再采集 `GraphicBufferAllocator` 与 `allocator-service.nce` 的 priority 6，三个 tag 共用每入口 128 条和每条 2048 bytes 的限额。先验证允许与拒绝条件、协议、输入保持和共享记录限额，再使用新克隆盘运行相同六入口、180 秒 original 和完整 boot 验收。按实际返回定位 allocator 内存、宿主缓冲区创建或 mapper 导入错误后，再决定实现改动。
+
+该轮结束后核对实际使用方和后续诊断的依赖，清理 15 项展开 root、系统中间镜像、程序、对象、dSYM、data/metadata 克隆及 fixture 二进制，共 5,025,412,539 bytes 的文件逻辑大小，物理释放量未测。原日志、summary、生成 TU/头、导出、原盘、vendor v4 和 core v3 保持；清单为 `work/cleanup-2026-11-14/composer-taglog-v1.json`。334 项来源复核发生于清理前，复现需由该轮 wrapper 重新生成中间产物。
+
+v2/v3 结束后，原 liblog fixture 与四份原日志的协议及 syscall 采样复核成功。核对全部入口停止状态和只读调查的实际依赖后，清理两轮 26 项展开 root、系统中间副本、程序、对象、dSYM 和 data/metadata 克隆盘，以及本轮 liblog fixture 二进制，共 27 项、10,036,009,642 bytes 的文件逻辑大小。未测物理释放量。原日志、summary、生成 TU/头、导出结果、固定原盘、vendor v4 和 core v3 来源保持；清单为 `work/cleanup-2026-11-14/init-graphics-v2-v3.json`。复现这两轮需使用相应 wrapper 重新生成中间产物；iOS 输入前后核对发生于清理前。
 
 ## 曾考虑的替代方案
 
@@ -69,7 +128,7 @@ SurfaceFlinger 下一步需要自身 FATAL 消息或 tombstone，随后按实际
 3. 新 CLI/GCD 使用独立克隆盘，取得 SurfaceFlinger 自身 FATAL/tombstone 或明确记录仍缺少的诊断；composer 注册、客户端初始化和设备调用按实际日志分别确认。退出、进程组回收和同盘 recovery 继续全部检查。
 4. 完整 Android 启动仍要求本轮 `sys.boot_completed=1` 与系统观察器结果通过。图形显示、通用原始签名 APK、持续交互与热状态后续分别验证，iPhone 运行仍待真机验证。
 
-本次实际运行 `python3 -B work/sdk-plain-validation-v1/surfaceflinger-tombstones-v1/analyze.py`，11 项来源检查全部成功，包含导出文件、原盘导出摘要、v13 二进制、原 rc、图形库 BuildId 与固定 liblog 源码。此脚本只读取停止后的 JSONL、已导出的 tombstone 与保留的源码/二进制，没有打开 data/metadata 盘。FATAL fixture、新原 init 诊断与完整 boot 验收尚未运行。
+本次实际运行 `python3 -B work/sdk-plain-validation-v1/surfaceflinger-tombstones-v1/analyze.py`，11 项来源检查全部成功，包含导出文件、原盘导出摘要、v13 二进制、原 rc、图形库 BuildId 与固定 liblog 源码。此脚本只读取停止后的 JSONL、已导出的 tombstone 与保留的源码/二进制，没有打开 data/metadata 盘。FATAL fixture 与生成副本的原 init 诊断结果见下文；完整 boot 验收继续为 failed。
 
 ## 风险
 

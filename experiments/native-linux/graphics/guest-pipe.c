@@ -4,8 +4,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <sys/socket.h>
-#include <sys/un.h>
 #include <unistd.h>
+#include "graphics-socket-address.h"
 
 /* SDK graphics clients call this public symbol through their PLT. */
 int qemu_pipe_open_ns(const char *ns, const char *name, int flags)
@@ -14,11 +14,11 @@ int qemu_pipe_open_ns(const char *ns, const char *name, int flags)
         errno = ENOENT;
         return -ENOENT;
     }
-    struct sockaddr_un address = {.sun_family = AF_UNIX, .sun_path = "/dev/nce-render"};
+    struct nce_graphics_socket_address address = NCE_GRAPHICS_SOCKET_ADDRESS_INIT;
     int fd = socket(AF_UNIX, SOCK_STREAM | (flags & O_CLOEXEC ? SOCK_CLOEXEC : 0), 0);
     if (fd < 0)
         return -errno;
-    if (connect(fd, (struct sockaddr *)&address, sizeof(address)) < 0) {
+    if (connect(fd, (struct sockaddr *)&address, NCE_GRAPHICS_SOCKET_ADDRESS_BYTES) < 0) {
         int error = errno;
         close(fd);
         errno = error;

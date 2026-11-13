@@ -1,0 +1,214 @@
+{
+  "status": "diagnosis_completed",
+  "full_boot_validation": "failed",
+  "scope": "生成副本的 liblog FATAL 诊断；完整 Android 与性能验收继续待验证",
+  "source_report": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sdk-plain-init-16k-v13/summary.json.zst",
+  "source_report_uncompressed_sha256": "bacbbe0528b6330acd86ec56a4bc203eaf0919df73c40a5a47e4f04ee5f2124d",
+  "observation_seconds": 30,
+  "protocol": {
+    "header_bytes": 11,
+    "priority_bytes": 1,
+    "fatal_priority": 7,
+    "vectors": 4,
+    "payload_max_bytes": 4068,
+    "tag_max_bytes": 128,
+    "capture_max_bytes": 2048,
+    "record_max": 512,
+    "tid_comparison": "header.tid == (uint16_t)guest gettid",
+    "filtered_binary_log_ids": [
+      2,
+      5,
+      6
+    ]
+  },
+  "fixture": {
+    "protocol": {
+      "passed": true,
+      "seen": 3,
+      "recorded": 3,
+      "omitted": 0,
+      "invalid_protocol_cases": 21
+    },
+    "limit": {
+      "passed": true,
+      "seen": 520,
+      "recorded": 512,
+      "omitted": 8,
+      "invalid_protocol_cases": 0
+    }
+  },
+  "original_diagnostic_validation": "failed",
+  "revalidation_status": "passed",
+  "source_input_count": 206,
+  "source_unchanged": true,
+  "runs": [
+    {
+      "entry": "cli",
+      "phase": "original",
+      "host_exit": 0,
+      "host_process_group_empty": true,
+      "raw_observation_validated": false,
+      "fatal_count": 181,
+      "surfaceflinger_count": 5,
+      "surfaceflinger_identities": [
+        {
+          "pid": 250,
+          "tid": 326
+        },
+        {
+          "pid": 376,
+          "tid": 386
+        },
+        {
+          "pid": 446,
+          "tid": 456
+        },
+        {
+          "pid": 516,
+          "tid": 526
+        },
+        {
+          "pid": 585,
+          "tid": 595
+        }
+      ],
+      "stdout": "work/sdk-plain-validation-v1/surfaceflinger-log-v1/cli.jsonl",
+      "stdout_sha256": "781c3f115d04f786778d4ca026cc3948a3dd71feb218a7524cf128396d4e38f5",
+      "stderr": "work/sdk-plain-validation-v1/surfaceflinger-log-v1/cli.log",
+      "stderr_sha256": "780e9a9db8f401a7a65fac915a4daf04692e8fcba836ca4a215a9abb68599292",
+      "surfaceflinger_message": {
+        "tag": "RenderEngine",
+        "message": "no suitable EGLConfig found, giving up (format: 1, vendor: Android, version: 1.4 Android META-EGL, extensions: EGL_ANDROID_front_buffer_auto_refresh EGL_ANDROID_get_native_client_buffer EGL_ANDROID_presentation_time EGL_EXT_surface_CTA861_3_metadata EGL_EXT_surface_SMPTE2086_metadata EGL_KHR_get_all_proc_addresses EGL_KHR_swap_buffers_with_damage EGL_ANDROID_get_frame_timestamps , Client API: OpenGL_ES)",
+        "message_bytes": 407,
+        "captured_bytes": 407,
+        "write_result": 432
+      },
+      "validator": {
+        "raw_validator": false,
+        "validator_without_diagnostic_rows": true,
+        "validator_with_log_index": true
+      },
+      "final_disks": {
+        "data": false,
+        "metadata": true
+      }
+    },
+    {
+      "entry": "gcd",
+      "phase": "original",
+      "host_exit": 0,
+      "host_process_group_empty": true,
+      "raw_observation_validated": false,
+      "fatal_count": 181,
+      "surfaceflinger_count": 5,
+      "surfaceflinger_identities": [
+        {
+          "pid": 255,
+          "tid": 331
+        },
+        {
+          "pid": 383,
+          "tid": 391
+        },
+        {
+          "pid": 458,
+          "tid": 465
+        },
+        {
+          "pid": 529,
+          "tid": 535
+        },
+        {
+          "pid": 600,
+          "tid": 606
+        }
+      ],
+      "stdout": "work/sdk-plain-validation-v1/surfaceflinger-log-v1/gcd.jsonl",
+      "stdout_sha256": "9e4b2d78edfbb6d267fb09915901064bbd231d91493b29d3a5614e74b5a74bcb",
+      "stderr": "work/sdk-plain-validation-v1/surfaceflinger-log-v1/gcd.log",
+      "stderr_sha256": "9d98ba3afafdac9670645aa7b0f985a085bf0d89002aa46811feb8b26e856b15",
+      "surfaceflinger_message": {
+        "tag": "RenderEngine",
+        "message": "no suitable EGLConfig found, giving up (format: 1, vendor: Android, version: 1.4 Android META-EGL, extensions: EGL_ANDROID_front_buffer_auto_refresh EGL_ANDROID_get_native_client_buffer EGL_ANDROID_presentation_time EGL_EXT_surface_CTA861_3_metadata EGL_EXT_surface_SMPTE2086_metadata EGL_KHR_get_all_proc_addresses EGL_KHR_swap_buffers_with_damage EGL_ANDROID_get_frame_timestamps , Client API: OpenGL_ES)",
+        "message_bytes": 407,
+        "captured_bytes": 407,
+        "write_result": 432
+      },
+      "validator": {
+        "raw_validator": false,
+        "validator_without_diagnostic_rows": true,
+        "validator_with_log_index": true
+      },
+      "final_disks": {
+        "data": false,
+        "metadata": true
+      }
+    },
+    {
+      "entry": "cli",
+      "phase": "recovery",
+      "host_exit": 0,
+      "host_process_group_empty": true,
+      "raw_observation_validated": true,
+      "fatal_count": 0,
+      "surfaceflinger_count": 0,
+      "surfaceflinger_identities": [],
+      "stdout": "work/sdk-plain-validation-v1/surfaceflinger-log-v1/recovery/cli.jsonl",
+      "stdout_sha256": "2fb1b2e7ba455f9c3ed002428191e9db1702782ae2eb569347286fe28cee0e24",
+      "stderr": "work/sdk-plain-validation-v1/surfaceflinger-log-v1/recovery/cli.log",
+      "stderr_sha256": "589485f04681d19eaaca54112a704a2b5c330c94ebd1aa7515de5ab36f0852d6",
+      "validator": {
+        "raw_validator": true
+      },
+      "final_disks": {
+        "data": true,
+        "metadata": true
+      }
+    },
+    {
+      "entry": "gcd",
+      "phase": "recovery",
+      "host_exit": 0,
+      "host_process_group_empty": true,
+      "raw_observation_validated": true,
+      "fatal_count": 0,
+      "surfaceflinger_count": 0,
+      "surfaceflinger_identities": [],
+      "stdout": "work/sdk-plain-validation-v1/surfaceflinger-log-v1/recovery/gcd.jsonl",
+      "stdout_sha256": "3104e26a94d3ec8962095e8a2505c8e2aa9bd6f41f4f51103c0b369a067192d7",
+      "stderr": "work/sdk-plain-validation-v1/surfaceflinger-log-v1/recovery/gcd.log",
+      "stderr_sha256": "ac820be8f8edf58a6dc429c92ba373bde5824d689b1d5a1658deeb427f54c4c3",
+      "validator": {
+        "raw_validator": true
+      },
+      "final_disks": {
+        "data": true,
+        "metadata": true
+      }
+    }
+  ],
+  "artifacts": {
+    "work/sdk-plain-validation-v1/surfaceflinger-log-v1/result.json": {
+      "sha256": "4dd41fc2920de7319d4259d13f586fbad751bb34f1cfa095becf77fc3fabd587",
+      "bytes": 583938
+    },
+    "work/sdk-plain-validation-v1/surfaceflinger-log-v1/revalidation.json": {
+      "sha256": "477311fa918dcce4d93adbd6d19f4ed184f6a8dec99305cf5d6eb756acad7815",
+      "bytes": 45980
+    },
+    "work/cleanup-2026-11-14/surfaceflinger-log-v1.json": {
+      "sha256": "52f73cb4c8593633f96ddabfcd3fb2ecddee131c25ead326eaeb80c165857aa0",
+      "bytes": 107523
+    },
+    "work/cleanup-2026-11-14/surfaceflinger-log-v1-sanitize.json": {
+      "sha256": "32420a2ff895c44a1671bdac42f65529e15878f51ed3e37328dbaad7a4144cc9",
+      "bytes": 7260
+    }
+  },
+  "cleanup": {
+    "status": "passed",
+    "removed_logical_bytes": 575211769,
+    "deletion_count": 10,
+    "original_sources_unchanged": true
+  }
+}

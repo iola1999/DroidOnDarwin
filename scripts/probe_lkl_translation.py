@@ -7,6 +7,7 @@ import os
 from pathlib import Path
 import platform
 import re
+import shlex
 import shutil
 import struct
 import subprocess
@@ -26,6 +27,40 @@ def run(command, **kwargs):
 
 def sha(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def build_graphics(output, *, prefix=None, angle=None):
+    """编译现有宿主 renderer，并返回链接参数与实际构建输入。"""
+    prefix = (prefix or ROOT / 'work/gfxstream-build-macos-ios-api/prefix').resolve(strict=True)
+    angle = (angle or ROOT / 'work/angle-macos/prefix/lib').resolve(strict=True)
+    gfx = ROOT / 'work/gfxstream-src'
+    manifest_path = prefix.parent / 'manifest.json'
+    manifest = json.loads(manifest_path.read_text())
+    backend = (prefix / 'lib/libgfxstream_backend.dylib').resolve(strict=True)
+    for name, expected in manifest['inputs'].items():
+        if sha(ROOT / name) != expected:
+            raise ValueError('gfxstream 源码发生变化，需要重新构建：' + name)
+    for name, expected in manifest['libraries'].items():
+        if sha(Path(name)) != expected:
+            raise ValueError('gfxstream 库与构建记录不一致：' + name)
+    if backend not in {Path(name).resolve(strict=True) for name in manifest['libraries']}:
+        raise ValueError('选中的 gfxstream backend 未包含在构建记录中：' + str(backend))
+    dependency = output / 'host-graphics.d'
+    command = ['xcrun', 'clang++', '-std=c++17', '-O2', '-g', '-Wall', '-Wextra', '-Werror',
+               '-Wno-return-type-c-linkage', '-isystem', gfx / 'host/include',
+               '-isystem', gfx / 'host/features/include', '-isystem', gfx / 'common/base/include',
+               '-MD', '-MF', dependency, '-c', EXP / 'graphics/host-graphics.cpp', '-o', output / 'host-graphics.o']
+    run(command)
+    headers = [Path(name) for name in shlex.split(dependency.read_text().replace('\\\n', ' ').split(':', 1)[1])]
+    files = [manifest_path, EXP / 'graphics/host-graphics.cpp', EXP / 'graphics/host-graphics.h',
+             EXP / 'graphics/graphics-socket-address.h', EXP / 'input.h', EXP / 'session.h',
+             EXP / 'session-internal.h', EXP / 'interaction-profile.h',
+             backend, angle / 'libANGLE-shared.dylib']
+    files += [ROOT / name for name in manifest['inputs']]
+    files += [path for path in headers if path.is_relative_to(gfx)]
+    link = ['-DNCE_GRAPHICS', output / 'host-graphics.o', '-L', prefix / 'lib', '-lgfxstream_backend', '-lc++',
+            '-Wl,-rpath,' + str(prefix / 'lib'), '-Wl,-rpath,' + str(angle)]
+    return list(map(str, command)), link, list(dict.fromkeys(files))
 
 
 def validate_android_image(root, directory):
@@ -770,29 +805,10 @@ def main():
             inputs += [EXP / 'code-memory.c', EXP / 'execute-check.c']
     graphics_link, graphics_files = [], []
     if args.workload == 'desktop':
-        gfx = ROOT / 'work/gfxstream-src'
-        prefix = ROOT / 'work/gfxstream-build-macos-ios-api/prefix'
         angle = ROOT / 'work/angle-macos/prefix/lib'
-        manifest_path = prefix.parent / 'manifest.json'
-        graphics_manifest = json.loads(manifest_path.read_text())
-        for name, expected in graphics_manifest['inputs'].items():
-            if sha(ROOT / name) != expected:
-                raise SystemExit('gfxstream 源码发生变化，需要重新构建：' + name)
-        for name, expected in graphics_manifest['libraries'].items():
-            if sha(Path(name)) != expected:
-                raise SystemExit('gfxstream 库与构建记录不一致：' + name)
-        command = ['xcrun', 'clang++', '-std=c++17', '-O2', '-g', '-Wall', '-Wextra', '-Werror',
-                   '-Wno-return-type-c-linkage', '-isystem', gfx / 'host/include',
-                   '-isystem', gfx / 'host/features/include', '-isystem', gfx / 'common/base/include',
-                   '-c', EXP / 'graphics/host-graphics.cpp', '-o', out / 'host-graphics.o']
-        run(command)
-        commands.append(list(map(str, command)))
+        command, graphics_link, graphics_files = build_graphics(out, angle=angle)
+        commands.append(command)
         inputs += [EXP / 'input.c', EXP / 'session.c', EXP / 'session-profile.c']
-        graphics_link = ['-DNCE_GRAPHICS', out / 'host-graphics.o', '-L', prefix / 'lib', '-lgfxstream_backend', '-lc++',
-                         '-Wl,-rpath,' + str(prefix / 'lib'), '-Wl,-rpath,' + str(angle)]
-        graphics_files = [manifest_path, EXP / 'graphics/host-graphics.cpp', EXP / 'graphics/host-graphics.h',
-                          EXP / 'input.h', EXP / 'session.h', EXP / 'session-internal.h', EXP / 'interaction-profile.h', prefix / 'lib/libgfxstream_backend.dylib',
-                          angle / 'libANGLE-shared.dylib']
     build_entries = ('cli', 'gcd', 'window') if args.entry == 'window' else ('cli', 'gcd')
     for mode in build_entries:
         command = ['xcrun', 'clang', '-O2', '-g', '-DNCE_PROCESS', f'-DNCE_TRANSLATION_CPUS={args.cpus}', page_flag, '-Wall', '-Wextra', '-Werror',

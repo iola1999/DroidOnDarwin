@@ -21,7 +21,9 @@ COPIED_SOURCES = (("layout.h", "include/asm/nce-layout.h"),
                   ("lkl-uaccess.h", "include/asm/uaccess.h"),
                   ("lkl-elf.h", "include/asm/elf.h"),
                   ("lkl-fcntl.h", "include/uapi/asm/fcntl.h"),
-                  ("lkl-tlbflush.h", "include/asm/tlbflush.h"))
+                  ("lkl-tlbflush.h", "include/asm/tlbflush.h"),
+                  ("graphics/graphics-socket-address.h", "include/asm/nce-graphics-socket-address.h"),
+                  ("graphics/lkl-graphics-pipe.c", "kernel/nce_graphics_pipe.c"))
 
 
 def apply(source: Path, experiment: Path):
@@ -306,6 +308,8 @@ static void free_host_syscall_state(void)
          "obj-$(CONFIG_BLOCK) += nce_block.o\nobj-$(CONFIG_PAGE_REPORTING) += nce_reclaim.o")
     edit(arch + "kernel/Makefile", "obj-$(CONFIG_PAGE_REPORTING) += nce_reclaim.o",
          "obj-$(CONFIG_PAGE_REPORTING) += nce_reclaim.o\nobj-$(CONFIG_MMU) += nce_schedule.o")
+    edit(arch + "kernel/Makefile", "obj-$(CONFIG_MMU) += nce_schedule.o",
+         "obj-$(CONFIG_MMU) += nce_schedule.o\nobj-$(CONFIG_UNIX) += nce_graphics_pipe.o")
     for local, destination in COPIED_SOURCES:
         target = source / arch / destination
         content = (experiment / local).read_bytes()
