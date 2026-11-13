@@ -2,7 +2,7 @@
 
 状态: proposed
 
-本阶段在 `codex/sdk-first-stage` 继续实施，已包含主线 `6f041e4`。原 ramdisk 读取、部署、启动参数、设备模型、DM 回收和观察工具已完成源码实现；宿主输入与验收回放已有结果，首次 16 KiB core 在客体执行前失败，第二轮 core 成功。[独立构建输入](../bug-fix/2026-11-13-独立构建的符号链接输入.md)与[Linux 大小写文件](../bug-fix/2026-11-13-Linux源码与构建的大小写文件.md)继续修正。原 `/init`、同盘恢复和本轮 iOS 编译尚未执行。
+本阶段在 `codex/sdk-first-stage` 继续实施，已包含主线 `6f041e4`。原 ramdisk 读取、部署、启动参数、设备模型、DM 回收和观察工具已完成源码实现；宿主输入与验收回放已有结果，首次 16 KiB core 在客体执行前失败，第二轮 core 成功。[独立构建输入](../bug-fix/2026-11-13-独立构建的符号链接输入.md)与[Linux 大小写文件](../bug-fix/2026-11-13-Linux源码与构建的大小写文件.md)继续修正。raw v7 的 CLI/GCD lifecycle 已验证成功，首个原 `/init` 已完成 first-stage；[原策略后的 DM 回收](../bug-fix/2026-11-13-原策略加载后的DM回收失败.md)返回 EACCES，使完整 raw 阶段失败。专用宿主清理实现与宿主回归已完成，[客体 stdout 顺序](../bug-fix/2026-11-13-first-stage客体stdout回读顺序.md)按实际回读位置修正。原 GCD original、同盘恢复和本轮 iOS 编译尚未完成，当前准备两页新 core。
 
 ## 问题
 
@@ -22,7 +22,7 @@
 
 原 `FreeRamdisk()` 删除初始 ramfs 文件，观察输出通过父任务已有的 Linux fd 1/2 以 pread 读取。helper 的文件表、fs_struct 和 mount namespace 与父任务分开；父任务不持有原 first-stage 挂载、目录或 namespace 的引用。实际 wait4 回收 PID 1 后，检查 owned PID 已不存在，再执行全局 sync。sync syscall 固定返回 0，卷错误仍由日志、host fsync/close、退出后的状态和同盘恢复检查。
 
-DM 对象的生命周期独立于 mount namespace。父任务在部署 ramdisk 前临时打开 misc device-mapper control，保留唯一的 CLOEXEC fd 并删除临时节点；该 fd 只引用控制设备。回收与 sync 完成后执行标准 DM_REMOVE_ALL，再用 DM_LIST_DEVICES 检查实际列表为空。remove_all 返回 0 仍可能跳过 busy 设备，必须核对列表。实际 wait4 回收与 reaped 检查成功后，sync、DM 检查和输出读取的失败会保留返回值，并继续日志、halt 和 host close。setup、wait4 或 reaped 的 REQUIRE 失败仍立即结束宿主进程；本阶段没有增加通用错误回收。
+DM 对象的生命周期独立于 mount namespace。父任务在部署 ramdisk 前临时打开 misc device-mapper control，保留唯一的 CLOEXEC fd 并删除临时节点；该 fd 只引用控制设备。回收与 sync 完成后执行标准 DM_REMOVE_ALL，再用 DM_LIST_DEVICES 检查实际列表为空。remove_all 返回 0 仍可能跳过 busy 设备，必须核对列表。实际 wait4 回收与 reaped 检查成功后，sync、DM 检查和输出读取的失败会保留返回值，并继续日志、halt 和 host close。setup、wait4 或 reaped 的 REQUIRE 失败仍立即结束宿主进程；本阶段没有增加通用错误回收。 v7 原系统加载策略后，普通 REMOVE_ALL、LIST_DEVICES 均返回 EACCES；当前修复在保留这两项实际返回后调用专用宿主 syscall248，核对内核注册树已空，再关闭 control fd。调用边界、互斥和新日志契约见 DM 回收记录。
 
 ramdisk 的普通文件载荷和元数据表生成到本轮 runner 的头文件，按原顺序部署；部署后用 statx 和 pread/memcmp 核对实际内容与属性。archive 的 inode/dev 字段保留在输入清单中，ramfs 的 inode 号和目录 nlink 由 Linux 创建。父任务读取实际 cmdline 后卸载已有 proc，部署目录并恢复其 mtime，再恢复父 proc 供观察。helper 去除继承 proc，临时挂载自身 PID namespace 的 proc 完成检查，执行原 `/init` 前卸载，由原程序自行挂载。
 

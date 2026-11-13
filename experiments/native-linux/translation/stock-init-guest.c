@@ -94,13 +94,22 @@ static void original_metadata_checks(const char *profile)
     CHECK(!ferror(input) && fclose(input) == 0);
 }
 
+static void stock_init_dm_guest_denied(const char *role)
+{
+    CHECK(syscall(248, 0L, 0L, 0L, 0L, 0L, 0L) == -1 && errno == ENOSYS);
+    int denied_errno = errno;
+    printf("{\"stock_init_first_stage_dm_guest_denied\":true,\"pid\":%d,\"role\":\"%s\",\"errno\":%d}\n", getpid(), role, denied_errno);
+}
+
 int main(int argc, char **argv)
 {
     setvbuf(stdout, NULL, _IONBF, 0);
     if (argc == 1 && !strcmp(argv[0], "/probe-stop-ordinary")) {
         pid_t pid = getpid();
         CHECK(pid > 1 && syscall(247, pid) == -1 && errno == ENOSYS);
-        printf("{\"stock_init_ordinary_ready\":true,\"pid\":%d,\"guest_stop_errno\":%d}\n", pid, errno);
+        int stop_errno = errno;
+        stock_init_dm_guest_denied("ordinary");
+        printf("{\"stock_init_ordinary_ready\":true,\"pid\":%d,\"guest_stop_errno\":%d}\n", pid, stop_errno);
         char ready[32];
         int bytes = snprintf(ready, sizeof(ready), "%d\n", pid);
         int fd = open("/stock-init-ordinary-ready", O_WRONLY | O_CREAT | O_EXCL | O_CLOEXEC, 0600);
@@ -110,6 +119,7 @@ int main(int argc, char **argv)
     }
     CHECK(getpid() == 1);
     CHECK(syscall(247, getpid()) == -1 && errno == ENOSYS);
+    stock_init_dm_guest_denied("namespace");
     char profile[32] = {0};
     int fd = open("/stock-init-profile", O_RDONLY);
     CHECK(fd >= 0 && read(fd, profile, sizeof(profile) - 1) > 0 && close(fd) == 0);
@@ -138,6 +148,7 @@ int main(int argc, char **argv)
         CHECK(child >= 0);
         if (!child) {
             CHECK(syscall(247, getpid()) == -1 && errno == ENOSYS);
+            stock_init_dm_guest_denied("child");
             signal_kernel_restorer_tests();
             CHECK(close(ready[0]) == 0 && write(ready[1], "r", 1) == 1 && close(ready[1]) == 0);
             for (;;)

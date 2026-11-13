@@ -84,6 +84,19 @@ out:
     return result;
 }
 
+static void stock_init_first_stage_dm_parameter_boundaries(void)
+{
+    long results[6];
+    for (unsigned i = 0; i < 6; ++i) {
+        long args[6] = {0};
+        args[i] = 1;
+        results[i] = call(248, args);
+    }
+    printf("{\"stock_init_first_stage_dm_host_boundary\":true,\"operation\":\"parameters\",\"results\":[%ld,%ld,%ld,%ld,%ld,%ld]}\n", results[0], results[1], results[2], results[3], results[4], results[5]);
+    for (unsigned i = 0; i < 6; ++i)
+        REQUIRE(results[i] == -22);
+}
+
 /* 调用方完成实际 wait/reaped 与 sync 后调用。失败返回，后续 halt 仍由调用方完成。 */
 static long stock_init_first_stage_dm_cleanup(void)
 {
@@ -93,8 +106,8 @@ static long stock_init_first_stage_dm_cleanup(void)
     if (control >= 0) {
         union stock_init_dm_message message;
         stock_init_dm_prepare(&message, NULL, 0);
-        result = stock_init_dm_ioctl(control, STOCK_INIT_DM_REMOVE_ALL, &message);
-        stock_init_first_stage_dm_ioctl_result("cleanup", STOCK_INIT_DM_REMOVE_ALL, result, &message);
+        long removed = stock_init_dm_ioctl(control, STOCK_INIT_DM_REMOVE_ALL, &message);
+        stock_init_first_stage_dm_ioctl_result("cleanup", STOCK_INIT_DM_REMOVE_ALL, removed, &message);
         stock_init_dm_prepare(&message, NULL, 0);
         long listed = stock_init_dm_ioctl(control, STOCK_INIT_DM_LIST_DEVICES, &message);
         stock_init_first_stage_dm_ioctl_result("cleanup", STOCK_INIT_DM_LIST_DEVICES, listed, &message);
@@ -115,8 +128,13 @@ static long stock_init_first_stage_dm_cleanup(void)
                     checked = -16;
             }
         }
-        if (!result)
-            result = checked;
+        /* 原策略后的普通 ioctl 结果保留；宿主请求独立核对实际注册设备。 */
+        long host_args[6] = {0};
+        long host_result = call(248, host_args);
+        empty = host_result == 0;
+        printf("{\"stock_init_first_stage_dm_host_cleanup\":true,\"syscall\":248,\"result\":%ld,\"empty\":%s}\n", host_result, empty ? "true" : "false");
+        int ordinary_expected = (!removed && !checked) || (removed == -13 && listed == -13);
+        result = host_result ? host_result : (ordinary_expected ? 0 : (removed ? removed : (checked ? checked : -22)));
         /* Linux close 先清除 fd 表项，错误返回也不能重新关闭同一 fd。 */
         stock_init_first_stage_dm_control = -1;
         long closed = stock_init_first_stage_dm_close("cleanup", "close_control", control);

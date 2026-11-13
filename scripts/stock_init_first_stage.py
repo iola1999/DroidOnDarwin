@@ -49,7 +49,7 @@ def prepare(ramdisk, output, mounted_input):
                     deployment='original regular-file bytes embedded in this runner; inode identifiers assigned by Linux')
     manifest_path = output / 'sdk-ramdisk.json'
     manifest_path.write_text(json.dumps(manifest, indent=2) + '\n')
-    return {**mounted_input, 'sdk_ramdisk': manifest, 'first_stage_contract': 1,
+    return {**mounted_input, 'sdk_ramdisk': manifest, 'first_stage_contract': 1, 'host_dm_cleanup_contract': 1,
             'exec_elf_images': {**mounted_input['exec_elf_images'], '/init': spec}}
 
 
@@ -68,7 +68,7 @@ def _ordered(rows, events):
     return all(before < after for before, after in zip(positions, positions[1:]))
 
 
-def _validate_dm_cleanup(rows):
+def _validate_dm_cleanup(rows, *, host_cleanup=False):
     controls = [row for row in rows if 'stock_init_first_stage_dm_control' in row]
     ioctls = [row for row in rows if 'stock_init_first_stage_dm_ioctl' in row]
     prepares = [row for row in rows if 'stock_init_first_stage_dm_prepare' in row]
@@ -96,17 +96,21 @@ def _validate_dm_cleanup(rows):
               'data_size', 'data_start', 'dev', 'first_dev_observed', 'first_dev_within_data_size', 'first_dev'}
     if [(row.get('phase'), row.get('command')) for row in ioctls] != expected:
         return False
+    denied = host_cleanup and all(row.get('result') == -13 for row in ioctls[1:])
     for row in ioctls:
         listed = row['command'] == 2
+        denied_request = denied and row['phase'] == 'cleanup'
         if (set(row) != fields or row['stock_init_first_stage_dm_ioctl'] is not True or
-                type(row['result']) is not int or row['result'] != 0 or
+                type(row['result']) is not int or row['result'] != (-13 if denied_request else 0) or
                 not all(_uint(row[key], 32) for key in ('command', 'flags', 'data_size', 'data_start')) or
                 not all(_uint(row[key]) for key in ('dev', 'first_dev')) or
                 type(row['version']) is not list or len(row['version']) != 3 or
                 not all(_uint(value, 32) for value in row['version']) or
                 row['version'][0] != 4 or row['version'][1] < 48 or
+                (denied_request and row['version'] != [4, 48, 0]) or
                 row['flags'] != 0 or row['data_start'] != 312 or
-                row['data_size'] != (312 if listed else 1024) or row['dev'] != 0 or row['first_dev'] != 0 or
+                row['data_size'] != (312 if listed and not denied_request else 1024) or
+                row['dev'] != 0 or row['first_dev'] != 0 or
                 row['first_dev_observed'] is not listed or row['first_dev_within_data_size'] is not False):
             return False
     if (prepares != [{'stock_init_first_stage_dm_prepare': True, 'result': 0, 'control_fd': control}] or
@@ -120,8 +124,65 @@ def _validate_dm_cleanup(rows):
     if (len(reaped) != 1 or synced != [{'stock_init_first_stage_sync': True, 'result': 0}] or
             synced[0]['stock_init_first_stage_sync'] is not True or type(synced[0]['result']) is not int):
         return False
+    host = []
+    if host_cleanup:
+        host = [row for row in rows if 'stock_init_first_stage_dm_host_cleanup' in row]
+        if (host != [{'stock_init_first_stage_dm_host_cleanup': True, 'syscall': 248, 'result': 0, 'empty': True}] or
+                host[0]['stock_init_first_stage_dm_host_cleanup'] is not True or host[0]['empty'] is not True or
+                any(type(host[0][key]) is not int for key in ('syscall', 'result'))):
+            return False
     return _ordered(rows, (*controls[:5], ioctls[0], prepares[0], reaped[0], synced[0],
-                           ioctls[1], ioctls[2], controls[-1], cleanups[0]))
+                           ioctls[1], ioctls[2], *host, controls[-1], cleanups[0]))
+
+
+def _validate_dm_host_boundaries(rows, mode, prepared, cmdline, ready, observation):
+    boundaries = [row for row in rows if 'stock_init_first_stage_dm_host_boundary' in row]
+    if len(boundaries) != 2:
+        return False
+    parameters, running = boundaries
+    if (set(parameters) != {'stock_init_first_stage_dm_host_boundary', 'operation', 'results'} or
+            parameters['stock_init_first_stage_dm_host_boundary'] is not True or
+            parameters['operation'] != 'parameters' or type(parameters['results']) is not list or
+            parameters['results'] != [-22] * 6 or any(type(value) is not int for value in parameters['results']) or
+            set(running) != {'stock_init_first_stage_dm_host_boundary', 'operation', 'result', 'ancestor_pid'} or
+            running['stock_init_first_stage_dm_host_boundary'] is not True or running['operation'] != 'running_namespace' or
+            type(running['result']) is not int or running['result'] != -16 or
+            not _uint(running['ancestor_pid'], 31) or running['ancestor_pid'] == 0 or
+            type(observation['ancestor_pid']) is not int or running['ancestor_pid'] != observation['ancestor_pid'] or
+            not _ordered(rows, (prepared, parameters, cmdline, ready, running, observation))):
+        return False
+    if mode == 'original':
+        executed = [row for row in rows if 'stock_init_exec' in row]
+        if len(executed) != 1 or not _uint(executed[0].get('pid'), 31) or executed[0]['pid'] == 0:
+            return False
+        roles = {'namespace': executed[0]['pid']}
+    elif mode == 'lifecycle':
+        lifecycle = [row for row in rows if 'stock_init_lifecycle' in row]
+        ordinary = [row for row in rows if 'stock_init_owned_ordinary' in row]
+        ordinary_ready = [row for row in rows if 'stock_init_ordinary_ready' in row]
+        if (len(lifecycle) != 1 or len(ordinary) != 1 or len(ordinary_ready) != 1 or
+                any(not _uint(lifecycle[0].get(key), 31) or lifecycle[0][key] == 0 for key in ('pid', 'child')) or
+                not _uint(ordinary[0].get('pid'), 31) or ordinary[0]['pid'] == 0 or
+                type(ordinary[0].get('ready_pid')) is not int or
+                type(ordinary_ready[0].get('pid')) is not int or
+                ordinary[0]['ready_pid'] != ordinary[0]['pid'] or ordinary_ready[0]['pid'] != ordinary[0]['pid']):
+            return False
+        roles = {'namespace': lifecycle[0]['pid'], 'child': lifecycle[0]['child'], 'ordinary': ordinary[0]['pid']}
+    else:
+        return False
+    denied = [row for row in rows if 'stock_init_first_stage_dm_guest_denied' in row]
+    if len(denied) != len(roles):
+        return False
+    cleanup = next(row for row in rows if 'stock_init_first_stage_dm_cleanup' in row)
+    stdout = next(row for row in rows if 'stock_init_output' in row and row['fd'] == 1)
+    for row in denied:
+        if (set(row) != {'stock_init_first_stage_dm_guest_denied', 'pid', 'role', 'errno'} or
+                row['stock_init_first_stage_dm_guest_denied'] is not True or not _uint(row['pid'], 31) or row['pid'] == 0 or
+                type(row['role']) is not str or row['role'] not in roles or row['pid'] != roles[row['role']] or
+                type(row['errno']) is not int or row['errno'] != 38 or
+                not _ordered(rows, (cleanup, row, stdout))):
+            return False
+    return len({row['role'] for row in denied}) == len(roles)
 
 
 def _validate_table_rows(rows):
@@ -173,8 +234,17 @@ def _validate_table_rows(rows):
 
 
 def validate(rows, mode, inputs, guest, page):
-    if (type(inputs) is not dict or type(inputs.get('first_stage_contract')) is not int or
-            inputs['first_stage_contract'] != 1 or not _validate_dm_cleanup(rows) or not _validate_table_rows(rows) or
+    if type(inputs) is not dict:
+        return False
+    host_cleanup = 'host_dm_cleanup_contract' in inputs
+    if host_cleanup and (type(inputs['host_dm_cleanup_contract']) is not int or inputs['host_dm_cleanup_contract'] != 1):
+        return False
+    if not host_cleanup and any(any(key in row for key in ('stock_init_first_stage_dm_host_cleanup',
+                                                          'stock_init_first_stage_dm_host_boundary',
+                                                          'stock_init_first_stage_dm_guest_denied')) for row in rows):
+        return False
+    if (type(inputs.get('first_stage_contract')) is not int or inputs['first_stage_contract'] != 1 or
+            not _validate_dm_cleanup(rows, host_cleanup=host_cleanup) or not _validate_table_rows(rows) or
             not validate_devices(rows, inputs, True)):
         return False
     manifest = inputs.get('sdk_ramdisk', {})
@@ -224,6 +294,8 @@ def validate(rows, mode, inputs, guest, page):
                 type(row['read_result']) is not int or row['read_result'] != 0 for row in output)):
         return False
     cleanup = next(row for row in rows if 'stock_init_first_stage_dm_cleanup' in row)
+    if host_cleanup and not _validate_dm_host_boundaries(rows, mode, prepared, cmdline[0], ready[0], observation):
+        return False
     kernel_log = next(row for row in rows if 'stock_init_kernel_log' in row)
     if kernel_log['read_result'] < 0 and (mode != 'original' or kernel_log['read_result'] not in (-1, -13)):
         return False
@@ -261,7 +333,7 @@ def validate(rows, mode, inputs, guest, page):
                 not any('stock_init_exec_layout' in row for row in rows))
     return (mode == 'original' and not lifecycle and
             executed == [{'stock_init_exec': True, 'pid': 1, 'path': '/init', 'arguments': []}] and
-            bool(first_exec) and _ordered(rows, (ready[0], executed[0], first_exec[0], observation)) and
+            bool(first_exec) and _ordered(rows, (cleanup, executed[0], output[0])) and
             validate_exec_layout(rows, inputs['exec_elf_images'], guest, page, init_paths=INIT_PATHS))
 
 

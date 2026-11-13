@@ -150,6 +150,8 @@ def build(cpus=1, high_res_timers=False, guest_page_bytes=16384):
              source / 'arch/lkl/mm/nce_mmu.c', source / 'arch/lkl/kernel/nce_elf.c',
              source / 'arch/lkl/include/asm/pgtable-mmu-3level.h', source / 'arch/lkl/include/asm/nce-translation.h',
              source / 'arch/lkl/include/asm/mmu.h', source / 'arch/lkl/kernel/threads.c',
+             source / 'arch/lkl/kernel/nce_process.c', source / 'arch/lkl/kernel/syscalls.c',
+             source / 'drivers/md/dm-ioctl.c',
              source / 'arch/lkl/kernel/setup.c',
              source / 'arch/lkl/Kconfig', source / 'arch/lkl/include/asm/processor.h',
              source / 'arch/lkl/include/asm/elf.h', source / 'fs/binfmt_elf.c',

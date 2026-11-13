@@ -89,16 +89,19 @@ def raw_rows(run, ramdisk, spec, dm, page):
     for entry in deployed:
         if stat.S_IFMT(entry['mode']) == stat.S_IFDIR:
             entry.update(nlink=2, size=0)
-    prepare = [row for row in dm if row.get('phase') == 'prepare' or 'stock_init_first_stage_dm_prepare' in row]
-    finish = [row for row in dm if row.get('phase') == 'cleanup' or 'stock_init_first_stage_dm_cleanup' in row]
+    prepare = [row for row in dm if row.get('phase') == 'prepare' or 'stock_init_first_stage_dm_prepare' in row or
+               (row.get('stock_init_first_stage_dm_host_boundary') is True and row.get('operation') == 'parameters')]
+    finish = [row for row in dm if row.get('phase') == 'cleanup' or 'stock_init_first_stage_dm_cleanup' in row or
+              'stock_init_first_stage_dm_host_cleanup' in row]
     rows = [*prepare,
             {'stock_init_first_stage_cmdline': True, 'value_hex': b'console=ttyS0 androidboot.hardware=ranchu\n'.hex()},
             *deployed, *device_rows(True), {'stock_init_ramdisk_ready': True, 'entries': 29, 'proc_restored': True},
             next(row for row in original if row.get('config') == 'translation_guest_layout'),
             *[row for row in original if row.get('test') == 'linux_signal_kernel_restorer']]
+    executed = []
     if run['mode'] == 'original':
         generated = raw_fixture(exec_rows(original), spec, page)
-        rows += [{'stock_init_exec': True, 'pid': 1, 'path': '/init', 'arguments': []}]
+        executed = [{'stock_init_exec': True, 'pid': 1, 'path': '/init', 'arguments': []}]
         rows += [row for row in generated if 'stock_init_exec_layout' in row or 'stock_init_security' in row]
         contexts = next(row for row in generated if row.get('test') == 'translated_context_cleanup')
     else:
@@ -107,7 +110,7 @@ def raw_rows(run, ramdisk, spec, dm, page):
     kinds = ('stock_init_host_stop_boundaries', 'stock_init_ordinary_ready', 'stock_init_owned_ordinary',
              'stock_init_stop_request', 'stock_init_host_stop', 'stock_init_observation', 'stock_init_host_stop_reaped')
     rows += [row for row in original if any(kind in row for kind in kinds)]
-    rows += [{'stock_init_first_stage_sync': True, 'result': 0}, *finish,
+    rows += [{'stock_init_first_stage_sync': True, 'result': 0}, *finish, *executed,
              {'stock_init_output': True, 'fd': 1, 'bytes': 0, 'read_result': 0},
              {'stock_init_output': True, 'fd': 2, 'bytes': 0, 'read_result': 0}, marker(original, 'stock_init_kernel_log')]
     rows += [row for row in original if 'host_disk_close' in row]

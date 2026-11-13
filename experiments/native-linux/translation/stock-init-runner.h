@@ -107,6 +107,7 @@ static void stock_init_setup(void)
 #if defined(NCE_STOCK_INIT_RAMDISK)
     if (stock_init_first_stage_enabled()) {
         REQUIRE(stock_init_first_stage_dm_prepare() == 0);
+        stock_init_first_stage_dm_parameter_boundaries();
         stock_init_remove_bootstrap();
         stock_init_ramdisk_setup();
         long sysfs[6] = {(long)"sysfs", (long)"/sys", (long)"sysfs", 2 | 4 | 8};
@@ -334,6 +335,14 @@ static int stock_init_run(void)
     long launch[6] = {(long)translation_linux_process("/probe-guest"), 1};
     long pid = call(246, launch);
     REQUIRE(pid > 1);
+#if defined(NCE_STOCK_INIT_RAMDISK)
+    if (first_stage) {
+        long dm_args[6] = {0};
+        long result = call(248, dm_args);
+        printf("{\"stock_init_first_stage_dm_host_boundary\":true,\"operation\":\"running_namespace\",\"result\":%ld,\"ancestor_pid\":%ld}\n", result, pid);
+        REQUIRE(result == -16);
+    }
+#endif
     int status = -1, stopped = 0;
     long waited = 0, killed = 0;
     int lifecycle = !strcmp(getenv("NCE_STOCK_INIT_MODE"), "lifecycle");

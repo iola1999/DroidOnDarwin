@@ -6,7 +6,11 @@
 
 原 `fstab.ranchu` 的 `/data` 使用 ext4、quota、fileencryption、fsverity 和 `keydirectory=/metadata/vold/metadata_encryption`。现有[数据分区阶段](../../implemented/architecture/2026-11-13-原始init的数据分区与回收.md)验证普通 ext4 持久化、原 Keystore SQLite 的格式和完整性；原 vold 的加密、密钥 API、配额与内容校验仍待验收。完整 first-stage 和原 late-fs 需要按这些原始选项继续推进。
 
-已完成两轮只读源码调查，结果位于 `work/native-linux-nce/sdk-vold-crypto-source-scan-v1/` 和 [v2 报告](../../../../work/native-linux-nce/sdk-vold-crypto-source-scan-v2/report.md)。v2 核对 29 份输入，前次 22 份文件的字节及两个源码提交保持。vold 固定为 `11760521a2e86389c56620ec50e780e8b17e40ca`，Android common 固定为 `fefe19f9fd971e83f58b475469116e21d5d795b3`；与 SDK build `BE2A.250530.026.F3`、incremental `13894323` 的精确源码对应尚未确认。
+已完成两轮只读源码调查，结果位于 `work/native-linux-nce/sdk-vold-crypto-source-scan-v1/` 和 [v2 报告](../../../../work/native-linux-nce/sdk-vold-crypto-source-scan-v2/report.md)。v2 核对 29 份输入，前次 22 份文件的字节及两个源码提交保持。vold 固定为 `11760521a2e86389c56620ec50e780e8b17e40ca`，Android common 6.12 固定为 `fefe19f9fd971e83f58b475469116e21d5d795b3`；与 SDK build `BE2A.250530.026.F3`、incremental `13894323` 的精确源码对应尚未确认。
+
+16 KiB raw v7 使用原 ramdisk init，已完成 metadata、五个 LP 挂载与 SwitchRoot。后续原 vold 请求创建 `userdata` 的 `default-key` target，长度 1,048,576 sectors，DM_TABLE_LOAD 返回 -22。原 `/data` 流程随后记录 mkdir 的 EROFS、user_keys 准备的 ENOENT；`vdc cryptfs init_user0` 退出 25，init 请求 recovery，缺少 `/misc` 后进入 `InitFatalReboot` 并调用 reboot。该阶段最终失败项为[原策略后的宿主 DM 回收](../bug-fix/2026-11-13-原策略加载后的DM回收失败.md)，原 stdout 与候选 after 保持；vold 加密仍是完整 boot 的独立失败。
+
+本次实际翻译内核关闭 `BLK_INLINE_ENCRYPTION`、`DM_CRYPT`、`FS_ENCRYPTION` 和 `FS_VERITY`，`default-key` 驱动也尚未移植。上述请求记录没有确认密钥服务操作成功，继续按原 API 返回、实际加密 I/O 与同盘恢复验证。原 v7 日志归属 Linux revision `d0f76a77e8c2ca68bd7d96190b8da09040eab072` 的 16 KiB 构建，CLI original stdout 的 SHA-256 为 `cb8fed0177931c48fb8d02b37c3b8f3ce40d131a329e2aef012edd4ed29ebc9a`。
 
 ## 提案
 
@@ -38,4 +42,4 @@
 
 ## 风险
 
-软件 blk-crypto fallback 会使用 CPU 与缓冲区，原 workload 的资源和持续性能尚未测量。KeyMint/Keystore2 的服务依赖、原文件系统选项和 checkpoint 可能分别阻断完整系统；调查与实现按实际进入范围记录。当前没有原 vold 加密或完整 first-stage 的运行结果。
+软件 blk-crypto fallback 会使用 CPU 与缓冲区，原 workload 的资源和持续性能尚未测量。KeyMint/Keystore2 的服务依赖、原文件系统选项和 checkpoint 可能分别阻断完整系统；调查与实现按实际进入范围记录。v7 已观察 first-stage 完成与原 vold 的 target 加载失败；原 vold 加密、完整 boot 和持续性能尚未验收。

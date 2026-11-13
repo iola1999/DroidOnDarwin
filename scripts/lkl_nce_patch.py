@@ -278,9 +278,21 @@ static void free_host_syscall_state(void)
     edit(arch + "kernel/syscalls.c", "extern long nce_reserve_elf(long *params);", "extern long nce_reserve_elf(long *params);\nextern long nce_map_code(long *params);\nextern long nce_publish_code(long *params);\nextern long nce_check_memory_syscall(long no, long *params);")
     edit(arch + "kernel/syscalls.c", "extern long nce_check_memory_syscall(long no, long *params);",
          "extern long nce_check_memory_syscall(long no, long *params);\nextern long nce_stop_namespace(long *params);")
+    edit(arch + "kernel/syscalls.c", "extern long nce_stop_namespace(long *params);",
+         "extern long nce_stop_namespace(long *params);\nextern long nce_host_dm_cleanup(long *params);")
     edit(arch + "kernel/syscalls.c", "\tif (no == 245)", "\tif (no == 243) return nce_map_code(params);\n\tif (no == 244) return nce_publish_code(params);\n\tif (no == 226 || no == 216) {\n\t\tlong error = nce_check_memory_syscall(no, params);\n\t\tif (error) return error;\n\t}\n\tif (no == 245)")
     edit(arch + "kernel/syscalls.c", "\tif (no == 246)\n\t\treturn nce_launch(params);",
          "\tif (no == 246)\n\t\treturn nce_launch(params);\n\tif (no == 247)\n\t\treturn nce_stop_namespace(params);")
+    edit(arch + "kernel/syscalls.c", "\tif (no == 247)\n\t\treturn nce_stop_namespace(params);",
+         "\tif (no == 247)\n\t\treturn nce_stop_namespace(params);\n\tif (no == 248)\n\t\treturn nce_host_dm_cleanup(params);")
+    edit("drivers/md/dm-ioctl.c", "void dm_deferred_remove(void)\n{\n\tdm_hash_remove_all(true, false, true);\n}",
+         "void dm_deferred_remove(void)\n{\n\tdm_hash_remove_all(true, false, true);\n}\n\n"
+         "#ifdef CONFIG_LKL\nint dm_lkl_host_cleanup(void);\n"
+         "int dm_lkl_host_cleanup(void)\n{\n\tint result;\n\n"
+         "\tdm_hash_remove_all(true, false, false);\n\tdm_issue_global_event();\n"
+         "\tdown_read(&_hash_lock);\n"
+         "\tresult = RB_EMPTY_ROOT(&name_rb_tree) && RB_EMPTY_ROOT(&uuid_rb_tree) ? 0 : -EBUSY;\n"
+         "\tup_read(&_hash_lock);\n\treturn result;\n}\n#endif")
     edit(arch + "kernel/syscalls.c", "\tkernel_sigaction(SIGCHLD, SIG_IGN);", "#ifndef CONFIG_MMU\n\tkernel_sigaction(SIGCHLD, SIG_IGN);\n#endif")
     edit(arch + "kernel/setup.c", "if (strcmp(\"/init\", bprm->filename) != 0)\n\t\treturn -EINVAL;", "if (strcmp(\"/init\", bprm->filename) != 0)\n\t\treturn -ENOEXEC;")
     edit(arch + "kernel/setup.c", "\tinit_pid_ns.child_reaper = 0;", "#ifndef CONFIG_MMU\n\tinit_pid_ns.child_reaper = 0;\n#endif")

@@ -1,12 +1,20 @@
 /* SPDX-License-Identifier: GPL-2.0 */
 #include <linux/mm.h>
 #include <linux/mman.h>
+#include <linux/mutex.h>
 #include <linux/pid_namespace.h>
 #include <linux/sched/signal.h>
 #include <linux/sched/task.h>
 #include <linux/syscalls.h>
 #include <linux/smp.h>
 #include <asm/host_ops.h>
+
+/* Hold through task publication and host DM teardown. */
+static DEFINE_MUTEX(nce_launch_lock);
+
+#ifdef CONFIG_BLK_DEV_DM
+extern int dm_lkl_host_cleanup(void);
+#endif
 
 static int user_start(void *state)
 {
@@ -28,7 +36,48 @@ long nce_launch(long *params)
         .fn = user_start,
         .fn_arg = (void *)params[0],
     };
-    return kernel_clone(&args);
+    long result;
+
+    mutex_lock(&nce_launch_lock);
+    result = kernel_clone(&args);
+    mutex_unlock(&nce_launch_lock);
+    return result;
+}
+
+long nce_host_dm_cleanup(long *params)
+{
+#ifdef CONFIG_BLK_DEV_DM
+    struct task_struct *group, *task;
+    int result = 0;
+
+    if (!test_thread_flag(TIF_HOST_THREAD) || current->thread.nce_state)
+        return -ENOSYS;
+    for (unsigned i = 0; i < 6; ++i) {
+        if (params[i])
+            return -EINVAL;
+    }
+
+    mutex_lock(&nce_launch_lock);
+    rcu_read_lock();
+    read_lock(&tasklist_lock);
+    for_each_process_thread(group, task)
+    {
+        if (READ_ONCE(task->thread.nce_state) ||
+            (!test_tsk_thread_flag(task, TIF_HOST_THREAD) && !(task->flags & PF_KTHREAD))) {
+            result = -EBUSY;
+            goto unlock_tasks;
+        }
+    }
+unlock_tasks:
+    read_unlock(&tasklist_lock);
+    rcu_read_unlock();
+    if (!result)
+        result = dm_lkl_host_cleanup();
+    mutex_unlock(&nce_launch_lock);
+    return result;
+#else
+    return -ENOSYS;
+#endif
 }
 
 long nce_stop_namespace(long *params)
