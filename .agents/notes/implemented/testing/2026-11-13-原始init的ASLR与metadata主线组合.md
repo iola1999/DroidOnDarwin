@@ -46,6 +46,14 @@ original 保留原 namespace 的 metadata 属性 `EACCES` 和卸载返回，同�
 
 复验源码 `combined-review-v1/review.py` 为 26,043 bytes，SHA-256 为 `f0204ff07d0878160ab3d0c8482a80e905f0ed9c25ff68f7abd4adc5ef6aeca3`；复用的只读 helper 为 `work/native-linux-nce/init-data-stop-archive-review-v3/check.py`，SHA-256 为 `45cfb94abea968e4245cba574ea64dc4c31f08e740468b3282ce038dc3e12b5a`。小型复验源码与结构化结果继续保留。旧 ASLR/metadata 侧树和本阶段中间产物在审阅通过后按清单清理，原盘、当前候选及新 first-stage 工作树保留。
 
+### 阶段产物清理
+
+2026-11-13 执行 `python3 work/cleanup-2026-11-13/aslr-metadata-stage-cleanup-v1.py --apply`，exit code 为 0。独立核对后的固定计划 SHA-256 为 `c5d6bed96289bf107e68cd4139023d10cfa917626d57f6f8c5c6658e5a987281`，执行脚本为 `5d59e088e77306a132f344229d99b3aa4d499c9b0e3f2ce8414b73caef0e5411`。[执行记录](../../../../work/cleanup-2026-11-13/aslr-metadata-stage-execution-v1.jsonl)共 9,657 行，末行是 `completed`，没有失败事件，SHA-256 为 `9ff7c20193ff7f8dd7bd53d625ed656cd07de53cfc5f2ad50de34cb16948e17b`。
+
+8,332 个文件以原文件移动到 [aslr-metadata-retained-v1](../../../../work/native-linux-nce/aslr-metadata-retained-v1/)，普通文件逻辑字节共 4,453,257,571。原 `work/exec-aslr/` 和 `work/sdk-metadata/` 的相对目录分别保存在该目录的 `exec-aslr/` 和 `sdk-metadata/`；主线阶段的移动项位于 `main/`。历史报告内的输入路径与摘要保持，当前路径由固定计划的 `retention_moves` 对照。三份 ASLR processes 镜像、六份 SQLite 导出、首次失败、原日志、报告及复验源码继续保留。61 个内核生成源码与头文件保留原路径，供 first-stage 生命周期和 ABI 来源核对。
+
+保留文件逐项核对后删除 1,320 个固定清单项目，包括中间构建和展开源码；普通文件逻辑字节共 14,694,975,114，APFS 实际回收空间未测量。`git worktree remove` 完成两棵已合入侧树的删除，分支与原提交保留。执行前后均核对原盘、当前 data/metadata 候选、长期内核和 SDK first-stage 工作树；清理完成时主线仍为 `513b1cf`，工作区干净。进程与打开文件检查没有匹配使用方，`lsof` 的 TimeMachine SMB stat 警告原样保存在执行结果中。
+
 ### 复杂度审查与偏离
 
 合并沿用 `exec_elf_images`、实际执行计数、metadata 输入和已有回收记录，未增加另一份运行状态或报告表示。metadata volume/completion 与 stop 回归显式传入报告所属的 ELF 输入，原 SDK 缺参数负例保留；十九处调用的静态清点、八个回归命令及三十二个历史入口回放均成功。移除显式 ELF 输入会破坏 ASLR 的完整执行关联检查，移除目录 fd 或停止顺序会失去 namespace 回收后的同步保证。

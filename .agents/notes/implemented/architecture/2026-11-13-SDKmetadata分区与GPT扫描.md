@@ -135,4 +135,4 @@ raw v2 的独立日志审阅拒绝 2,796 项字段/顺序变体，另发现私�
 
 [合并报告回放](../../../../work/native-linux-nce/init-aslr-metadata-main-acceptance-v1/merged-report-replay-v1/result.json)完成八个实际回归命令及 32 个入口验证。两页各 454 项 metadata、66 项历史兼容、11 项完成条件和 154 项停止边界成功，原 SDK LP 回归成功。32 个入口分别来自 metadata 的 12 个、无 metadata data/stop 的 12 个和 ASLR 的八个实际报告。回放只读取既有报告、源码及 SDK LP 元数据；当前候选盘和原日志保持。相关 C 格式与差异检查成功。
 
-两页主线实际组合使用新的独立内核目录，core、data/metadata/ASLR 六入口及 iOS runtime/实际 init 对象均成功，完整归档和独立来源审阅通过，详见[主线组合记录](../testing/2026-11-13-原始init的ASLR与metadata主线组合.md)。metadata 两页 generation 均从 15 到 21，data 的 4 KiB 为 29 到 35、16 KiB 为 24 到 30；lifecycle/recovery 的原 rc 属性、original 的 APEX sessions 访问和两卷最终 clean 状态成功，original 属性读取的 EACCES 保留。当前候选继续保留，已合并侧树和阶段中间产物按清单清理。
+两页主线实际组合使用新的独立内核目录，core、data/metadata/ASLR 六入口及 iOS runtime/实际 init 对象均成功，完整归档和独立来源审阅通过，详见[主线组合记录](../testing/2026-11-13-原始init的ASLR与metadata主线组合.md)。metadata 两页 generation 均从 15 到 21，data 的 4 KiB 为 29 到 35、16 KiB 为 24 到 30；lifecycle/recovery 的原 rc 属性、original 的 APEX sessions 访问和两卷最终 clean 状态成功，original 属性读取的 EACCES 保留。当前候选继续保留，阶段清理已完成，侧树保留文件的当前位置见[清理记录](../testing/2026-11-13-原始init的ASLR与metadata主线组合.md#阶段产物清理)。
