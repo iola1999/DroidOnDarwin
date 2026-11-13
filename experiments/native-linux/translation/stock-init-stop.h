@@ -102,8 +102,8 @@ static long stock_init_stop(long pid, int *status, long *killed, int *stopped)
         printf("{\"stock_init_host_stop\":true,\"ancestor_pid\":%ld,\"signal\":9,\"result\":%ld}\n", pid, effective);
     }
     if (effective && effective != -3) {
-        dump_file("/stdout", stdout);
-        dump_file("/stderr", stderr);
+        stock_init_dump_output(1, stdout);
+        stock_init_dump_output(2, stderr);
         stock_init_dump_kernel_log();
     }
     REQUIRE(effective == 0 || effective == -3);

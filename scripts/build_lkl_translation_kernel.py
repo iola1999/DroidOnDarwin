@@ -29,9 +29,17 @@ def build(cpus=1, high_res_timers=False, guest_page_bytes=16384):
         out = out.with_name(out.name + '-highres')
     if guest_page_bytes == 4096:
         out = out.with_name(out.name + '-4k-vmalloc')
-    base = WORK / 'lkl-source'
+    # cp -R 保留顶层符号链接；补丁只能写入独立克隆目录。
+    base = (WORK / 'lkl-source').resolve(strict=True)
     source = out / 'source'
     build_dir = out / 'build'
+    # 输出目录检查先于创建、删除和复制，祖先链接也可能改变实际写入位置。
+    if any(path.is_symlink() or not path.resolve().is_relative_to(WORK)
+           for path in (out, source, build_dir)):
+        raise RuntimeError('独立内核源码与构建输出需要本树 WORK 内的独立目录')
+    source_device = probe_lkl.require_case_sensitive_directory(base)
+    if any(probe_lkl.require_case_sensitive_directory(path) != source_device for path in (out, source, build_dir)):
+        raise RuntimeError('APFS 克隆需要 Linux 源码与构建目录位于同一文件系统')
     out.mkdir(parents=True, exist_ok=True)
     if (base / '.droidondarwin-source-revision').read_text().strip() != probe_lkl.REVISION:
         raise RuntimeError('需要先准备当前单核 LKL 源码')
@@ -55,6 +63,8 @@ def build(cpus=1, high_res_timers=False, guest_page_bytes=16384):
             shutil.rmtree(source)
         if not source.exists():
             probe_lkl.run(['/bin/cp', '-cR', base, source], timeout=120)
+        if not source.is_dir() or source.samefile(base):
+            raise RuntimeError('独立内核源码目录与原始输入没有分离')
         if (source / '.droidondarwin-source-revision').read_text().strip() != probe_lkl.REVISION:
             raise RuntimeError('独立内核源码版本不匹配，需要重新准备该构建目录')
         probe_lkl.apply(source, EXP)

@@ -40,7 +40,9 @@ def build(report_path, out, target):
             not dependency.get('sha256') or any(not (ROOT / name).is_file() or digest(ROOT / name) != value
                                                for name, value in dependency['sha256'].items())):
         dependency = build_unicorn('dual', target)
-    unicorn = Path(dependency['path'])
+    unicorn = dependency_path.parent / 'prefix'
+    if not unicorn.samefile(Path(dependency['path'])):
+        raise ValueError('Unicorn 库目录与构建记录不一致')
     objects, inputs = build_engine(out / 'direct', 'dual', target, guest_page_bytes=guest_page_bytes)
     sdk = subprocess.check_output(['xcrun', '--sdk', 'iphoneos' if target == 'ios' else 'macosx', '--show-sdk-path'], text=True).strip()
     flags = ['-target', 'arm64-apple-ios26.0' if target == 'ios' else 'arm64-apple-macos' + platform.mac_ver()[0],

@@ -3,6 +3,9 @@
 #include <linux/blkdev.h>
 #include <linux/init.h>
 #include <linux/module.h>
+#include <linux/platform_device.h>
+#include <linux/slab.h>
+#include <linux/string.h>
 #include <asm/host_ops.h>
 #include <asm/nce-layout.h>
 
@@ -49,8 +52,30 @@ static const struct block_device_operations nce_block_ops = {
     .submit_bio = nce_submit_bio,
 };
 
+static int __init nce_ranchu_devices(void)
+{
+    char *cmdline = kstrdup(saved_command_line, GFP_KERNEL);
+    char *args, *param, *value;
+    int ranchu = 0;
+
+    if (!cmdline)
+        return -ENOMEM;
+    args = skip_spaces(cmdline);
+    while (*args) {
+        args = next_arg(args, &param, &value);
+        if (strcmp(param, "androidboot.hardware"))
+            continue;
+        /* fs_mgr selects the first hardware value, including an empty value. */
+        ranchu = value && !strcmp(value, "ranchu");
+        break;
+    }
+    kfree(cmdline);
+    return ranchu;
+}
+
 static int __init nce_block_init(void)
 {
+    struct platform_device *parent = NULL;
     struct queue_limits limits = {
         .logical_block_size = 512,
         .physical_block_size = PAGE_SIZE,
@@ -61,9 +86,20 @@ static int __init nce_block_init(void)
         return 0;
     if (!lkl_ops->disk_writable)
         return -EINVAL;
+    int ranchu = nce_ranchu_devices();
+    if (ranchu < 0)
+        return ranchu;
     nce_major = register_blkdev(0, "ncedisk");
     if (nce_major < 0)
         return nce_major;
+    if (ranchu) {
+        /* The original metadata fstab names this full platform path. */
+        parent = platform_device_register_simple("a003c00.virtio_mmio", PLATFORM_DEVID_NONE, NULL, 0);
+        if (IS_ERR(parent)) {
+            error = PTR_ERR(parent);
+            goto unregister_major;
+        }
+    }
     for (unsigned int index = 0; index < ARRAY_SIZE(nce_disks); ++index) {
         u64 bytes = lkl_ops->disk_size(index);
         struct gendisk *disk;
@@ -83,16 +119,20 @@ static int __init nce_block_init(void)
         disk->minors = 1;
         disk->fops = &nce_block_ops;
         disk->private_data = (void *)(unsigned long)index;
-        snprintf(disk->disk_name, DISK_NAME_LEN, "ncedisk%u", index);
+        if (ranchu && !index)
+            snprintf(disk->disk_name, DISK_NAME_LEN, "vdc");
+        else
+            snprintf(disk->disk_name, DISK_NAME_LEN, "ncedisk%u", index);
         set_capacity(disk, bytes >> SECTOR_SHIFT);
         set_disk_ro(disk, !lkl_ops->disk_writable(index));
-        error = add_disk(disk);
+        error = device_add_disk(parent ? &parent->dev : NULL, disk, NULL);
         if (error) {
             put_disk(disk);
             goto fail;
         }
         nce_disks[index] = disk;
     }
+    /* Successful disks and their parent remain registered until LKL releases kernel RAM. */
     return 0;
 fail:
     for (unsigned int index = 0; index < ARRAY_SIZE(nce_disks); ++index) {
@@ -102,6 +142,9 @@ fail:
         put_disk(nce_disks[index]);
         nce_disks[index] = NULL;
     }
+    if (parent)
+        platform_device_unregister(parent);
+unregister_major:
     unregister_blkdev(nce_major, "ncedisk");
     return error;
 }

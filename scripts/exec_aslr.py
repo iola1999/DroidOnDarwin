@@ -10,15 +10,15 @@ EXP = ROOT / 'experiments/native-linux'
 MODES = {'off': (0, 0), 'mmap_only': (1, 0), 'full': (2, 0), 'personality': (2, 0x40000)}
 
 
-def elf_spec(path):
-    data = path.read_bytes()
+def elf_spec_bytes(data, label):
+    """从内存中的原 ELF 字节读取 program headers；label 用于错误信息。"""
     if data[:7] != b'\x7fELF\x02\x01\x01':
-        raise ValueError('需要 AArch64 ELF：' + str(path))
+        raise ValueError('需要 AArch64 ELF：' + str(label))
     kind, machine = struct.unpack_from('<HH', data, 16)
     entry, phoff = struct.unpack_from('<QQ', data, 24)
     phsize, phnum = struct.unpack_from('<HH', data, 54)
     if machine != 183 or phsize != 56 or not 0 < phnum <= 32:
-        raise ValueError('ELF program headers 不匹配：' + str(path))
+        raise ValueError('ELF program headers 不匹配：' + str(label))
     loads, phdr_vaddr, interpreter = [], None, None
     for i in range(phnum):
         ptype, flags, offset, vaddr, _, filesz, memsz, align = struct.unpack_from('<IIQQQQQQ', data, phoff + i * phsize)
@@ -29,9 +29,13 @@ def elf_spec(path):
             if offset <= phoff < offset + filesz:
                 phdr_vaddr = vaddr + phoff - offset
     if not loads or phdr_vaddr is None or len(loads) > 16:
-        raise ValueError('缺少可核对的 PT_LOAD/AT_PHDR：' + str(path))
+        raise ValueError('缺少可核对的 PT_LOAD/AT_PHDR：' + str(label))
     return {'type': kind, 'entry': entry, 'phdr_vaddr': phdr_vaddr, 'phnum': phnum,
             'phentsize': phsize, 'interpreter': interpreter, 'loads': loads}
+
+
+def elf_spec(path):
+    return elf_spec_bytes(path.read_bytes(), path)
 
 
 def build(out, libc, guest_page_bytes):
@@ -96,18 +100,27 @@ def image_valid(actual, expected, guest, page):
                (load['align'] <= 1 or not bias % load['align']) for load in loads)
 
 
-def validate_exec_layout(rows, images, guest, page):
-    if not images or '/system/bin/init' not in images:
+def validate_exec_layout(rows, images, guest, page, *, init_paths=('/system/bin/init',)):
+    """核对原 init 执行对；raw 的第一对为 /init PID1，后续数量由阶段验收检查。"""
+    if type(images) is not dict or init_paths not in (('/system/bin/init',), ('/init', '/system/bin/init')):
         return False
-    program = images['/system/bin/init']
-    interpreter = images.get(program['interpreter'])
-    if not interpreter or program['type'] != 3 or interpreter['type'] != 3:
-        return False
+    for path in init_paths:
+        program = images.get(path)
+        if type(program) is not dict:
+            return False
+        if path == '/init':
+            if program.get('type') != 2 or program.get('interpreter') is not None:
+                return False
+        else:
+            interpreter = images.get(program.get('interpreter'))
+            if program.get('type') != 3 or type(interpreter) is not dict or interpreter.get('type') != 3:
+                return False
+    path_hexes = {path.encode().hex(): path for path in init_paths}
     events = [row for row in rows if 'stock_init_exec_layout' in row or
               'stock_init_observation' in row or row.get('test') == 'translated_context_cleanup' or
               row.get('result') in ('passed', 'failed') or
               (row.get('stock_init_security') == 221 and
-               row.get('path_hex') == '/system/bin/init'.encode().hex() and row.get('result') == 0)]
+               type(row.get('path_hex')) is str and row['path_hex'] in path_hexes and row.get('result') == 0)]
     if (len(events) < 5 or events[-3].get('stock_init_observation') is not True or
             events[-2].get('test') != 'translated_context_cleanup' or events[-1] != {'result': 'passed'}):
         return False
@@ -127,8 +140,13 @@ def validate_exec_layout(rows, images, guest, page):
     fields = ('exec_index', 'pid', 'sp', 'pc', 'phdr', 'entry', 'at_base', 'page_bytes', 'phnum', 'phentsize',
               'phdr_mapping', 'entry_mapping', 'pc_mapping')
     for index, (security, row) in enumerate(zip(events[::2], samples), 1):
+        path = path_hexes.get(security.get('path_hex')) if type(security.get('path_hex')) is str else None
+        if path is None:
+            return False
+        program = images[path]
+        interpreter = None if path == '/init' else images[program['interpreter']]
         if (security != {'stock_init_security': 221, 'result': 0, 'fd': -1,
-                         'path_hex': '/system/bin/init'.encode().hex(), 'name_hex': '', 'value_hex': '',
+                         'path_hex': path.encode().hex(), 'name_hex': '', 'value_hex': '',
                          'exec_index': index} or
                 any(type(security[key]) is not int for key in ('stock_init_security', 'result', 'fd', 'exec_index'))):
             return False
@@ -138,19 +156,26 @@ def validate_exec_layout(rows, images, guest, page):
                 any(type(row[key]) is not int or not 0 <= row[key] < 1 << 64 for key in fields) or row['pid'] <= 0 or
                 row['page_bytes'] != page or row['phnum'] != program['phnum'] or row['phentsize'] != program['phentsize'] or
                 not guest['guest_base'] <= row['sp'] < guest['guest_end'] or row['sp'] % 16 or
-                row['entry'] < program['entry'] or row['pc'] != row['at_base'] + interpreter['entry']):
+                row['entry'] < program['entry']):
+            return False
+        if init_paths == ('/init', '/system/bin/init') and (
+                (index == 1 and (path != '/init' or row['pid'] != 1)) or (index > 1 and path != '/system/bin/init')):
             return False
         bias = row['entry'] - program['entry']
-        if row['phdr'] != bias + program['phdr_vaddr']:
+        if (row['phdr'] != bias + program['phdr_vaddr'] or
+                (program['type'] == 2 and (bias or row['at_base'] or row['pc'] != program['entry'])) or
+                (interpreter is not None and row['pc'] != row['at_base'] + interpreter['entry'])):
             return False
-        for spec, base in ((program, bias), (interpreter, row['at_base'])):
+        loaded_images = ((program, bias),) + (((interpreter, row['at_base']),) if interpreter is not None else ())
+        for spec, base in loaded_images:
             if any(not guest['guest_base'] <= base + load['vaddr'] < guest['guest_end'] or
                    load['memsz'] > guest['guest_end'] - base - load['vaddr'] or
                    (load['align'] > 1 and base % load['align']) for load in spec['loads']):
                 return False
         for address, mapping, spec, base in ((row['phdr'], row['phdr_mapping'], program, bias),
                                              (row['entry'], row['entry_mapping'], program, bias),
-                                             (row['pc'], row['pc_mapping'], interpreter, row['at_base'])):
+                                             (row['pc'], row['pc_mapping'], interpreter if interpreter is not None else program,
+                                              row['at_base'] if interpreter is not None else bias)):
             load = next((load for load in spec['loads'] if base + load['vaddr'] <= address < base + load['vaddr'] + load['memsz']), None)
             prot = mapping & (page - 1)
             if (load is None or not mapping or mapping & -page >= 1 << 30 or prot & ~7 or not prot & 1 or

@@ -1,27 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 #pragma once
-#include <stdint.h>
-
-/* Darwin 宿主按 Linux dm-ioctl.h 的固定 ABI 传递原 LP linear 表。 */
-struct stock_init_dm_info {
-    uint32_t version[3], data_size, data_start, target_count;
-    int32_t open_count;
-    uint32_t flags, event_nr, padding;
-    uint64_t dev;
-    char name[128], uuid[129], data[7];
-};
-struct stock_init_dm_target {
-    uint64_t sector_start, length;
-    int32_t status;
-    uint32_t next;
-    char type[16];
-};
-union stock_init_dm_message {
-    struct stock_init_dm_info info;
-    unsigned char data[1024];
-};
-_Static_assert(sizeof(struct stock_init_dm_info) == 312, "Linux dm_ioctl ABI");
-_Static_assert(sizeof(struct stock_init_dm_target) == 40, "Linux dm_target_spec ABI");
+#include "stock-init-dm.h"
 
 struct stock_init_partition {
     const char *name, *mount, *filesystem;
@@ -36,24 +15,6 @@ static struct stock_init_partition stock_init_partitions[] = {
     {.name = "vendor", .mount = "/vendor", .filesystem = "ext4"},
     {.name = "system_dlkm", .mount = "/system_dlkm", .filesystem = "erofs"},
 };
-
-static void stock_init_dm_prepare(union stock_init_dm_message *message, const char *name, uint32_t flags)
-{
-    memset(message, 0, sizeof(*message));
-    message->info.version[0] = 4;
-    message->info.version[1] = 48;
-    message->info.data_size = sizeof(*message);
-    message->info.data_start = sizeof(message->info);
-    message->info.flags = flags;
-    if (name)
-        REQUIRE(snprintf(message->info.name, sizeof(message->info.name), "%s", name) < (int)sizeof(message->info.name));
-}
-
-static long stock_init_dm_ioctl(long control, unsigned command, union stock_init_dm_message *message)
-{
-    long args[6] = {control, 0xc138fd00U | command, (long)message};
-    return call(29, args);
-}
 
 static unsigned stock_init_device_minor(uint64_t dev)
 {

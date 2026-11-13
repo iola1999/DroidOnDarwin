@@ -25,16 +25,109 @@ static void stock_init_dump_kernel_log(void)
     printf("{\"stock_init_kernel_log\":true,\"read_result\":%ld}\n", log_bytes);
 }
 
+static int stock_init_dump_output(long fd, FILE *output)
+{
+    unsigned char buffer[65536];
+    unsigned long offset = 0;
+    long result;
+    for (;;) {
+        long args[6] = {fd, (long)buffer, sizeof(buffer), (long)offset};
+        result = call(67, args);
+        if (result == -4)
+            continue;
+        if (result <= 0)
+            break;
+        if (fwrite(buffer, 1, result, output) != (size_t)result) {
+            result = -5;
+            break;
+        }
+        offset += result;
+    }
+    printf("{\"stock_init_output\":true,\"fd\":%ld,\"bytes\":%lu,\"read_result\":%ld}\n", fd, offset, result);
+    return result != 0;
+}
+
+static void stock_init_remove_bootstrap(void)
+{
+    /* LKL 的空 /init 用于启动宿主 syscall 任务，原根内容在此之后恢复。 */
+    long bootstrap[6] = {-100, (long)"/init", 0x20000};
+    long fd = call(56, bootstrap);
+    REQUIRE(fd >= 0);
+    /* Linux statx 使用固定的 256-byte ABI，此处仅读取所需前缀。 */
+    struct {
+        uint32_t stx_mask, stx_blksize;
+        uint64_t stx_attributes;
+        uint32_t stx_nlink, stx_uid, stx_gid;
+        uint16_t stx_mode, spare;
+        uint64_t stx_ino, stx_size;
+        unsigned char remainder[208];
+    } status = {0};
+    _Static_assert(sizeof(status) == 256, "Linux statx buffer size");
+    long info[6] = {fd, (long)"", 0x1000, 0x21f, (long)&status};
+    REQUIRE(call(291, info) == 0 && (status.stx_mask & 0x21f) == 0x21f);
+    fprintf(stderr, "stock_init_bootstrap path=/init uid=%u gid=%u mode=%u links=%u bytes=%llu\n", status.stx_uid, status.stx_gid, status.stx_mode, status.stx_nlink, (unsigned long long)status.stx_size);
+    REQUIRE(status.stx_mode == 0100700 && status.stx_uid == 0 && status.stx_gid == 0 && status.stx_nlink == 1 && status.stx_size == 0);
+    unsigned char byte;
+    bootstrap[0] = fd;
+    bootstrap[1] = (long)&byte;
+    bootstrap[2] = 1;
+    REQUIRE(call(63, bootstrap) == 0 && call(57, bootstrap) == 0);
+    bootstrap[0] = -100;
+    bootstrap[1] = (long)"/init";
+    bootstrap[2] = 0;
+    REQUIRE(call(35, bootstrap) == 0);
+}
+
 static double stock_init_now(void);
 #include "stock-init-partitions.h"
 #include "stock-init-data.h"
 #include "stock-init-metadata.h"
 #include "stock-init-stop.h"
+#if defined(NCE_STOCK_INIT_RAMDISK)
+#include "stock-init-first-stage-dm.h"
+#include "stock-init-first-stage-devices.h"
+#include "stock-init-ramdisk.h"
+#endif
+
+static int stock_init_first_stage_enabled(void)
+{
+#if defined(NCE_STOCK_INIT_RAMDISK)
+    const char *value = getenv("NCE_STOCK_INIT_FIRST_STAGE");
+    REQUIRE(value && (!strcmp(value, "0") || !strcmp(value, "1")));
+    return !strcmp(value, "1");
+#else
+    return 0;
+#endif
+}
 
 static void stock_init_setup(void)
 {
     const char *root = getenv("NCE_STOCK_INIT_DIRECTORY");
     REQUIRE(root && root[0] == '/');
+#if defined(NCE_STOCK_INIT_RAMDISK)
+    if (stock_init_first_stage_enabled()) {
+        REQUIRE(stock_init_first_stage_dm_prepare() == 0);
+        stock_init_remove_bootstrap();
+        stock_init_ramdisk_setup();
+        long sysfs[6] = {(long)"sysfs", (long)"/sys", (long)"sysfs", 2 | 4 | 8};
+        long mounted = call(40, sysfs);
+        printf("{\"stock_init_first_stage_sysfs_mount\":true,\"operation\":\"mount\",\"result\":%ld}\n", mounted);
+        REQUIRE(mounted == 0);
+        const char *data = getenv("NCE_TRANSLATION_DATA");
+        const char *metadata = getenv("NCE_STOCK_INIT_METADATA");
+        long devices = stock_init_first_stage_devices(1, data && data[0], metadata && metadata[0]);
+        long unmount[6] = {(long)"/sys", 0};
+        long unmounted = call(39, unmount);
+        printf("{\"stock_init_first_stage_sysfs_mount\":true,\"operation\":\"unmount\",\"result\":%ld}\n", unmounted);
+        REQUIRE(unmounted == 0 && devices == 0);
+        puts("{\"stock_init_ramdisk_ready\":true,\"entries\":29,\"proc_restored\":true}");
+        put_text("/stock-init-profile", "sdk36-first-stage");
+        const char *mode = getenv("NCE_STOCK_INIT_MODE");
+        REQUIRE(mode && (!strcmp(mode, "lifecycle") || !strcmp(mode, "original")));
+        put_text("/stock-init-mode", mode);
+        return;
+    }
+#endif
     const char *original_image = getenv("NCE_STOCK_INIT_SYSTEM");
     int original_system = original_image && original_image[0];
     const char *vendor_image = getenv("NCE_STOCK_INIT_VENDOR");
@@ -53,7 +146,17 @@ static void stock_init_setup(void)
         directory("/system-image");
         directory("/system");
         long sysfs[6] = {(long)"sysfs", (long)"/sys", (long)"sysfs"};
-        REQUIRE(call(40, sysfs) == 0);
+        long mounted = call(40, sysfs);
+#if defined(NCE_STOCK_INIT_RAMDISK)
+        printf("{\"stock_init_first_stage_sysfs_mount\":true,\"operation\":\"mount\",\"result\":%ld}\n", mounted);
+#endif
+        REQUIRE(mounted == 0);
+#if defined(NCE_STOCK_INIT_RAMDISK)
+        REQUIRE(lp && !hyperos);
+        const char *data = getenv("NCE_TRANSLATION_DATA");
+        const char *metadata = getenv("NCE_STOCK_INIT_METADATA");
+        REQUIRE(stock_init_first_stage_devices(0, data && data[0], metadata && metadata[0]) == 0);
+#endif
         block_device("/sys/block/ncedisk1/dev", "/dev/ncesystem", 0400);
         if (lp)
             stock_init_sdk_mount(root);
@@ -92,35 +195,8 @@ static void stock_init_setup(void)
             }
         }
     }
-    if (complete) {
-        /* LKL 的空 /init 用于启动宿主 syscall 任务，原根链接在此之后恢复。 */
-        long bootstrap[6] = {-100, (long)"/init", 0x20000};
-        long fd = call(56, bootstrap);
-        REQUIRE(fd >= 0);
-        /* Linux statx 使用固定的 256-byte ABI，此处仅读取所需前缀。 */
-        struct {
-            uint32_t stx_mask, stx_blksize;
-            uint64_t stx_attributes;
-            uint32_t stx_nlink, stx_uid, stx_gid;
-            uint16_t stx_mode, spare;
-            uint64_t stx_ino, stx_size;
-            unsigned char remainder[208];
-        } status = {0};
-        _Static_assert(sizeof(status) == 256, "Linux statx buffer size");
-        long info[6] = {fd, (long)"", 0x1000, 0x21f, (long)&status};
-        REQUIRE(call(291, info) == 0 && (status.stx_mask & 0x21f) == 0x21f);
-        fprintf(stderr, "stock_init_bootstrap path=/init uid=%u gid=%u mode=%u links=%u bytes=%llu\n", status.stx_uid, status.stx_gid, status.stx_mode, status.stx_nlink, (unsigned long long)status.stx_size);
-        REQUIRE(status.stx_mode == 0100700 && status.stx_uid == 0 && status.stx_gid == 0 && status.stx_nlink == 1 && status.stx_size == 0);
-        unsigned char byte;
-        bootstrap[0] = fd;
-        bootstrap[1] = (long)&byte;
-        bootstrap[2] = 1;
-        REQUIRE(call(63, bootstrap) == 0 && call(57, bootstrap) == 0);
-        bootstrap[0] = -100;
-        bootstrap[1] = (long)"/init";
-        bootstrap[2] = 0;
-        REQUIRE(call(35, bootstrap) == 0);
-    }
+    if (complete)
+        stock_init_remove_bootstrap();
     char path[4096];
     REQUIRE(snprintf(path, sizeof(path), "%s/files.tsv", root) < (int)sizeof(path));
     FILE *input = fopen(path, "r");
@@ -240,6 +316,7 @@ static void stock_init_observe_context(long pid, char *previous, long *previous_
 
 static int stock_init_run(void)
 {
+    int first_stage = stock_init_first_stage_enabled();
     const char *streams[] = {"/stdin", "/stdout", "/stderr"};
     for (long fd = 0; fd < 3; ++fd) {
         long args[6] = {-100, (long)streams[fd], 0x242, 0600};
@@ -250,8 +327,10 @@ static int stock_init_run(void)
             REQUIRE(call(24, dup) == fd && call(57, dup) == 0);
         }
     }
-    stock_init_volume_retain(&stock_init_data);
-    stock_init_volume_retain(&stock_init_metadata);
+    if (!first_stage) {
+        stock_init_volume_retain(&stock_init_data);
+        stock_init_volume_retain(&stock_init_metadata);
+    }
     long launch[6] = {(long)translation_linux_process("/probe-guest"), 1};
     long pid = call(246, launch);
     REQUIRE(pid > 1);
@@ -278,17 +357,32 @@ static int stock_init_run(void)
         struct timespec delay = {0, 10000000};
         REQUIRE(nanosleep(&delay, NULL) == 0);
     }
-    dump_file("/stdout", stdout);
-    dump_file("/stderr", stderr);
-    stock_init_dump_kernel_log();
+    int output_failed = 0;
+    if (!first_stage) {
+        output_failed = stock_init_dump_output(1, stdout);
+        output_failed |= stock_init_dump_output(2, stderr);
+        stock_init_dump_kernel_log();
+    }
     printf("{\"stock_init_observation\":true,\"mode\":\"%s\",\"ancestor_pid\":%ld,\"waited\":%ld,\"status\":%d,\"deadline_stop\":%s,\"kill_result\":%ld}\n", getenv("NCE_STOCK_INIT_MODE"), pid, waited, status, stopped ? "true" : "false", killed);
     long reaped[6] = {pid};
     long reaped_result = call(247, reaped);
     printf("{\"stock_init_host_stop_reaped\":true,\"ancestor_pid\":%ld,\"result\":%ld}\n", pid, reaped_result);
     REQUIRE(reaped_result == -3);
+#if defined(NCE_STOCK_INIT_RAMDISK)
+    if (first_stage) {
+        long sync_args[6] = {0};
+        long synced = call(81, sync_args);
+        printf("{\"stock_init_first_stage_sync\":true,\"result\":%ld}\n", synced);
+        long dm_result = stock_init_first_stage_dm_cleanup();
+        output_failed = stock_init_dump_output(1, stdout);
+        output_failed |= stock_init_dump_output(2, stderr);
+        stock_init_dump_kernel_log();
+        return synced != 0 || dm_result != 0 || output_failed || (lifecycle && (!stopped || status != 9));
+    }
+#endif
     int metadata_failed = stock_init_metadata_finish(lifecycle);
     int data_failed = stock_init_volume_cleanup(&stock_init_data, lifecycle);
     if (getenv("NCE_STOCK_INIT_LP") && !strcmp(getenv("NCE_STOCK_INIT_LP"), "1"))
         stock_init_sdk_cleanup(lifecycle);
-    return metadata_failed || data_failed || (lifecycle && (!stopped || status != 9));
+    return metadata_failed || data_failed || output_failed || (lifecycle && (!stopped || status != 9));
 }

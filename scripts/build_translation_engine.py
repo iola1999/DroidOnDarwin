@@ -24,6 +24,12 @@ def build(code_memory='map-jit', target='macos'):
     output = WORK / (('unicorn-tb-stop' if code_memory == 'map-jit' else 'unicorn-tb-stop-dual') +
                      ('-ios' if target == 'ios' else ''))
     prefix = output / 'prefix'
+    # 构建会重写补丁源码和依赖产物，共享链接只供摘要匹配后的复用。
+    writable = [source, output]
+    if not archive.exists():
+        writable.append(archive)
+    if any(not path.resolve().is_relative_to(WORK.resolve()) for path in writable):
+        raise RuntimeError('Unicorn 重建需要本树独立源码、输出目录和下载位置')
     output.mkdir(parents=True, exist_ok=True)
     if not archive.exists():
         urllib.request.urlretrieve('https://codeload.github.com/unicorn-engine/unicorn/tar.gz/refs/tags/2.1.4', archive)

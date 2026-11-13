@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""在已验证的 sparse 构建上观察固定原始 init 的 SELinux 阶段与 PID 1 回收。"""
+"""在已验证的 sparse 构建上观察固定原始 init 的启动与 PID 1 回收。"""
 import argparse
 import hashlib
 import json
@@ -131,7 +131,7 @@ def prepare(runtime, desktop, metadata, out, system_image=None, *, sdk_partition
                             'The runner supplies mounted partition directories; first-stage init and original fstab mounts are untested.']}
 
 
-def validate(rows, mode, original_system=False, *, guest_page_bytes=16384, kernel_log='', original_input=None, exec_elf_images=None):
+def validate(rows, mode, original_system=False, *, guest_page_bytes=16384, kernel_log='', original_input=None, exec_elf_images=None, first_stage=False):
     exec_contract = (exec_elf_images is not None or
                      (original_input is not None and 'exec_elf_images' in original_input))
     layouts = [row for row in rows if row.get('config') == 'translation_guest_layout']
@@ -150,7 +150,7 @@ def validate(rows, mode, original_system=False, *, guest_page_bytes=16384, kerne
     observations = [r for r in rows if 'stock_init_observation' in r]
     cleanup = [r for r in rows if r.get('test') == 'translated_context_cleanup']
     logs = [r for r in rows if 'stock_init_kernel_log' in r]
-    endings = [r for r in rows if 'result' in r and 'component_vm' not in r and 'stock_init_write' not in r and 'stock_init_security' not in r and 'stock_init_syscall' not in r and 'stock_init_block' not in r and 'stock_init_stop_request' not in r and 'stock_init_host_stop' not in r and 'stock_init_host_stop_reaped' not in r and 'stock_init_metadata_directory_sync' not in r]
+    endings = [r for r in rows if 'result' in r and 'component_vm' not in r and 'stock_init_write' not in r and 'stock_init_security' not in r and 'stock_init_syscall' not in r and 'stock_init_block' not in r and 'stock_init_stop_request' not in r and 'stock_init_host_stop' not in r and 'stock_init_host_stop_reaped' not in r and 'stock_init_metadata_directory_sync' not in r and 'stock_init_dm_table_load' not in r and not any(key.startswith('stock_init_first_stage_') for key in r)]
     if len(observations) != 1 or len(cleanup) != 1 or len(logs) != 1 or endings != [{'result': 'passed'}]:
         return False
     o, c, log = observations[0], cleanup[0], logs[0]
@@ -186,8 +186,9 @@ def validate(rows, mode, original_system=False, *, guest_page_bytes=16384, kerne
             return False
     security = [r for r in rows if 'stock_init_security' in r]
     for row in security:
+        init_paths = ('/init', '/system/bin/init') if first_stage else ('/system/bin/init',)
         init_exec = (exec_contract and row.get('stock_init_security') == 221 and row.get('result') == 0 and
-                     row.get('path_hex') == '/system/bin/init'.encode().hex())
+                     row.get('path_hex') in {path.encode().hex() for path in init_paths})
         fields = {'stock_init_security', 'result', 'fd', 'path_hex', 'name_hex', 'value_hex'}
         if init_exec:
             fields.add('exec_index')
@@ -210,6 +211,8 @@ def validate(rows, mode, original_system=False, *, guest_page_bytes=16384, kerne
             return False
     for row in (r for r in rows if 'stock_init_block' in r):
         counts = {29: 0, 33: 1, 40: 3, 56: 1}
+        if (original_input or {}).get('first_stage_contract') == 1:
+            counts.update({34: 1, 35: 1, 36: 2, 39: 1, 49: 1, 51: 1})
         if (set(row) != {'stock_init_block', 'pid', 'result', 'args', 'paths_hex'} or
                 type(row['stock_init_block']) is not int or row['stock_init_block'] not in counts or
                 type(row['pid']) is not int or row['pid'] <= 0 or type(row['result']) is not int or
@@ -226,6 +229,17 @@ def validate(rows, mode, original_system=False, *, guest_page_bytes=16384, kerne
                 row['ancestor_pid'] != o['ancestor_pid'] or type(row['read_result']) is not int or
                 not -4095 <= row['read_result'] <= 255 or type(row['label_hex']) is not str or
                 re.fullmatch('[0-9a-f]{%d}' % (2 * max(row['read_result'], 0)), row['label_hex']) is None):
+            return False
+    if first_stage:
+        from stock_init_first_stage import validate as validate_first_stage
+        return validate_first_stage(rows, mode, original_input, guest, guest_page_bytes)
+    if (original_input or {}).get('first_stage_contract') == 1:
+        from stock_init_first_stage_devices import validate as validate_devices
+        if not validate_devices(rows, original_input, False):
+            return False
+        devices = next(row for row in rows if 'stock_init_first_stage_devices' in row)
+        mounted = next((row for row in rows if 'stock_init_original_system_mounted' in row), None)
+        if mounted is None or rows.index(devices) >= rows.index(mounted):
             return False
     mounts = [r for r in rows if 'stock_init_original_system_mounted' in r]
     if (mounts != ([{'stock_init_original_system_mounted': True, 'readonly': True}] if original_system else []) or
@@ -302,6 +316,7 @@ def main():
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--system-image', type=Path)
     parser.add_argument('--sdk-partitions', action='store_true', help='由固定原盘只读映射 SDK36 五个 LP 分区')
+    parser.add_argument('--sdk-ramdisk', type=Path, help='无 stage 参数执行固定 SDK36 原 ramdisk 的 /init，并在同盘恢复检查')
     parser.add_argument('--hyperos-manifest', type=Path)
     parser.add_argument('--lifecycle-only', action='store_true', help='仅检查原分区元数据、PID 1 信号与停止回收')
     parser.add_argument('--data-image', type=Path, help='SDK36 mounted-partition 观察使用的显式 ext4 数据盘')
@@ -309,17 +324,22 @@ def main():
     args = parser.parse_args()
     if args.metadata_image and args.hyperos_manifest:
         parser.error('SDK metadata 与 HyperOS vendor 共用 slot 2，开盘前拒绝同时输入')
+    if args.sdk_ramdisk and args.sdk_partitions:
+        parser.error('--sdk-ramdisk 与 --sdk-partitions 需要分别运行')
+    sdk = bool(args.sdk_partitions or args.sdk_ramdisk)
     if args.hyperos_manifest:
-        if any((args.runtime, args.desktop, args.root_metadata, args.system_image, args.sdk_partitions)):
+        if any((args.runtime, args.desktop, args.root_metadata, args.system_image, sdk)):
             parser.error('HyperOS 固定清单与 SDK36 输入参数不能同时使用')
     elif not all((args.runtime, args.desktop, args.root_metadata)):
         parser.error('SDK36 需要 --runtime、--desktop 和 --root-metadata')
-    if args.sdk_partitions and not args.system_image:
-        parser.error('--sdk-partitions 需要 --system-image')
-    if args.data_image and (not args.sdk_partitions or args.hyperos_manifest):
-        parser.error('--data-image 需要 SDK36 --sdk-partitions')
-    if args.metadata_image and not args.sdk_partitions:
-        parser.error('--metadata-image 需要 SDK36 --sdk-partitions')
+    if sdk and not args.system_image:
+        parser.error('SDK36 分区与 ramdisk 入口需要 --system-image')
+    if args.data_image and (not sdk or args.hyperos_manifest):
+        parser.error('--data-image 需要 SDK36 分区或 ramdisk 入口')
+    if args.metadata_image and not sdk:
+        parser.error('--metadata-image 需要 SDK36 分区或 ramdisk 入口')
+    if args.sdk_ramdisk and not args.lifecycle_only and not all((args.data_image, args.metadata_image)):
+        parser.error('原 first-stage 运行需要独立的 --data-image 与 --metadata-image')
     source = args.report.resolve()
     base = json.loads(source.read_text())
     config = base['configuration']
@@ -353,12 +373,17 @@ def main():
             prepared = prepare_hyperos(args.hyperos_manifest.resolve(), out)
         else:
             prepared = prepare(args.runtime.resolve(), args.desktop.resolve(), args.root_metadata.resolve(), out,
-                               args.system_image.resolve() if args.system_image else None, sdk_partitions=args.sdk_partitions)
+                               args.system_image.resolve() if args.system_image else None, sdk_partitions=sdk)
         from exec_aslr import elf_spec
         program = elf_spec(Path(prepared['files']['/system/bin/init']['source']))
         interpreter = program['interpreter']
         prepared['exec_elf_images'] = {'/system/bin/init': program,
                                       interpreter: elf_spec(Path(prepared['files'][interpreter]['source']))}
+        if args.sdk_ramdisk:
+            from stock_init_first_stage import prepare as prepare_first_stage
+            prepared = prepare_first_stage(args.sdk_ramdisk.resolve(strict=True), out, prepared)
+            prepared['limitations'] = ['Raw original /init performs first-stage device discovery, mounts and root changes; progress is recorded separately from full boot.',
+                                       'Mounted-partition preparation is used only by same-disk recovery.']
     except Exception as error:
         (out / 'failure.json').write_text(json.dumps({'stage': 'original_input_preparation', 'error': str(error)}, ensure_ascii=False, indent=2) + '\n')
         raise
@@ -400,12 +425,17 @@ def main():
     if args.lifecycle_only:
         result['scope'] = ('Original HyperOS 4 KiB partition metadata and PID 1 lifecycle observation; original init remains unexecuted'
                            if args.hyperos_manifest else 'Original SDK36 partition and PID 1 lifecycle observation; original init remains unexecuted')
+    if args.sdk_ramdisk:
+        result['scope'] = ('Original SDK36 ramdisk and PID 1 lifecycle observation' if args.lifecycle_only else
+                           'Original SDK36 /init without stage arguments; first-stage progress, stop and same-disk recovery observed; full boot requires separate completion')
     for path in (Path(__file__).resolve(), EXP / 'translation/stock-init-guest.c', EXP / 'translation/stock-init-runner.h',
                  EXP / 'translation/stock-init-partitions.h', EXP / 'translation/stock-init-trace.h',
                  EXP / 'translation/stock-init-exec.h', ROOT / 'scripts/exec_aslr.py',
                  EXP / 'userspace/signal-tests.c', EXP / 'userspace/signal-registers.S',
                  ROOT / 'scripts/stock_init_metadata.py', ROOT / 'scripts/stock_init_sdk.py',
                  ROOT / 'scripts/prepare_android_runtime.py', out / 'files.tsv'):
+        result['sha256'][str(path.relative_to(ROOT))] = sha(path)
+    for path in (EXP / 'translation/stock-init-dm-abi.h', EXP / 'translation/stock-init-dm.h'):
         result['sha256'][str(path.relative_to(ROOT))] = sha(path)
     for path in (EXP / 'translation/stock-init-data.h', EXP / 'translation/stock-init-volume.h',
                  EXP / 'translation/stock-init-metadata.h', ROOT / 'scripts/stock_init_metadata_volume.py', ROOT / 'scripts/stock_init_data.py',
@@ -416,9 +446,15 @@ def main():
     if args.hyperos_manifest:
         for path in (ROOT / 'scripts/stock_init_hyperos.py', out / 'files.tsv', out / 'original-metadata.tsv'):
             result['sha256'][str(path.relative_to(ROOT))] = sha(path)
-    if args.sdk_partitions:
+    if sdk:
         for path in (out / 'original-partitions.tsv', out / 'original-metadata.tsv', out / 'original-system-dlkm-metadata.erofs',
                      ROOT / 'scripts/hyperos_erofs_metadata.py'):
+            result['sha256'][str(path.relative_to(ROOT))] = sha(path)
+    if args.sdk_ramdisk:
+        for path in (ROOT / 'scripts/stock_init_first_stage.py', ROOT / 'scripts/stock_init_sdk_ramdisk.py',
+                     ROOT / 'scripts/stock_init_first_stage_devices.py', EXP / 'translation/stock-init-first-stage-devices.h',
+                     EXP / 'translation/stock-init-ramdisk.h', EXP / 'translation/stock-init-first-stage-dm.h',
+                     out / 'sdk-ramdisk.h', out / 'sdk-ramdisk.json'):
             result['sha256'][str(path.relative_to(ROOT))] = sha(path)
     runner_source = (EXP / 'translation/linux-runner.c').read_text()
     start = runner_source.index('static void stock_bionic_setup(void)')
@@ -428,11 +464,21 @@ def main():
     if runner_source.count(original) != 1:
         raise ValueError('运行器组件入口已变化')
     runner_source = runner_source.replace(original, '    } else if (stock_bionic) {\n        stock_init_setup();\n        translation_memory_phase("guest_execution");\n        failed = stock_init_run();')
-    if args.sdk_partitions:
+    if sdk:
         release = '    REQUIRE(translation_kernel_release(&loaded) == 0);'
         if runner_source.count(release) != 1:
             raise ValueError('运行器内核释放位置已变化')
         runner_source = runner_source.replace(release, release + '\n    printf("{\\"stock_init_shutdown\\":true,\\"halt_result\\":0,\\"host_disks_closed\\":%s,\\"kernel_release_result\\":0}\\n", disk_close_result == 0 ? "true" : "false");')
+    if args.sdk_ramdisk:
+        old_start = 'int (*start)(unsigned long, unsigned long *, unsigned) = (void *)(kernel + NCE_LKL_START_CPUS);'
+        old_call = 'start(scheduler_slice_us * 1000, &slice, online_cpus)'
+        for text in (old_start, old_call, '(long)"/dev/random"'):
+            if runner_source.count(text) != 1:
+                raise ValueError('运行器启动参数或熵来源位置已变化')
+        runner_source = runner_source.replace(old_start, 'int (*start)(unsigned long, unsigned long *, unsigned, const char *) = (void *)(kernel + NCE_LKL_START_CPUS_CMDLINE);')
+        runner_source = runner_source.replace(old_call, 'start(scheduler_slice_us * 1000, &slice, online_cpus, stock_init_first_stage_enabled() ? "androidboot.hardware=ranchu" : NULL)')
+        runner_source = runner_source.replace('(long)"/dev/random"', '(long)(stock_init_first_stage_enabled() ? "/dev/urandom" : "/dev/random")')
+        runner_source = runner_source.replace('static void seed_entropy(void)', 'static int stock_init_first_stage_enabled(void);\n\nstatic void seed_entropy(void)')
     for shell_setup in ('    args[1] = (long)"/bin";\n    REQUIRE(call(34, args) == 0);\n',
                         '    put_file("/bin/sh", "dash.elf");\n'):
         if runner_source.count(shell_setup) != 1:
@@ -471,9 +517,13 @@ def main():
     observed = ('            unsigned char exec_path[256] = {0};\n'
                 '            if (number == 221) stock_init_trace_string(exec_path, args[0], sizeof(exec_path));\n'
                 '            if (number == 142) printf("{\\"stock_init_reboot\\":true,\\"args\\":[%lu,%lu,%lu,%lu]}\\n", (unsigned long)args[0], (unsigned long)args[1], (unsigned long)args[2], (unsigned long)args[3]);\n'
+                + ('            struct stock_init_trace_dm_sample dm_sample;\n'
+                   '            stock_init_trace_dm_before(number, args, &dm_sample);\n' if args.sdk_ramdisk else '')
                 + before + '\n'
+                + ('            stock_init_trace_dm_after(&dm_sample, args, result);\n' if args.sdk_ramdisk else '') +
                 '            unsigned long exec_index = 0;\n'
-                '            if (number == 221 && result == 0 && !strcmp((const char *)exec_path, "/system/bin/init"))\n'
+                '            if (number == 221 && result == 0 && (!strcmp((const char *)exec_path, "/system/bin/init")' +
+                (' || !strcmp((const char *)exec_path, "/init")' if args.sdk_ramdisk else '') + '))\n'
                 '                exec_index = ++stock_init_exec_count;\n'
                 '            stock_init_trace_write(number, args, result);\n'
                 '            stock_init_trace_security(number, args, result, exec_path, exec_index);\n'
@@ -521,8 +571,10 @@ def main():
     selected.update(NCE_TRANSLATION_FILES=str(out), NCE_TRANSLATION_WORKLOAD='bionic',
                     NCE_TRANSLATION_CACHE_MIB=str(config['translation_cache_bytes'] // (1 << 20)), NCE_STOCK_INIT_DIRECTORY=str(out))
     selected['NCE_STOCK_INIT_SYSTEM'] = (prepared.get('deployed_system_partition') or {}).get('path', '')
-    if args.sdk_partitions:
+    if sdk:
         selected['NCE_STOCK_INIT_LP'] = '1'
+    if args.sdk_ramdisk:
+        selected['NCE_STOCK_INIT_FIRST_STAGE'] = '1'
     if args.data_image:
         selected['NCE_TRANSLATION_DATA'] = str(args.data_image)
     if args.metadata_image:
@@ -539,6 +591,8 @@ def main():
         command[command.index(str(EXP / 'translation/linux-execution.c'))] = str(execution)
         command[command.index('-o') + 1] = str(out / entry)
         command += ['-iquote', str(EXP / 'translation')]
+        if args.sdk_ramdisk:
+            command += ['-DNCE_STOCK_INIT_RAMDISK', '-iquote', str(out)]
         subprocess.run(command, check=True, timeout=120)
         result['commands'].append(command)
         result['sha256'][str((out / entry).relative_to(ROOT))] = sha(out / entry)
@@ -556,6 +610,9 @@ def main():
     for mode, phase in stages:
         for entry in ('cli', 'gcd'):
             env = {**{key: value for key, value in os.environ.items() if not key.startswith('NCE_')}, **selected, 'NCE_STOCK_INIT_MODE': mode}
+            first_stage = bool(args.sdk_ramdisk and phase != 'recovery')
+            if args.sdk_ramdisk:
+                env['NCE_STOCK_INIT_FIRST_STAGE'] = '1' if first_stage else '0'
             label = entry + '-' + phase
             states = {}
             for name, path, inspector in volumes:
@@ -597,10 +654,15 @@ def main():
                 (out / 'failure.json').write_text(json.dumps(failure, ensure_ascii=False, indent=2) + '\n')
                 (out / 'summary.json').write_text(json.dumps(result, indent=2) + '\n')
                 raise SystemExit(str(error))
-            valid = returncode == 0 and validate(rows, mode, bool(selected['NCE_STOCK_INIT_SYSTEM']),
-                                               guest_page_bytes=config.get('guest_page_bytes', 16384), kernel_log=stderr,
-                                               original_input=prepared if args.hyperos_manifest or args.sdk_partitions else None,
-                                               exec_elf_images=prepared['exec_elf_images']) and 'stock_init_exec_errno' not in stderr
+            observation_errors = []
+            try:
+                valid = returncode == 0 and validate(rows, mode, bool(selected['NCE_STOCK_INIT_SYSTEM']),
+                                                   guest_page_bytes=config.get('guest_page_bytes', 16384), kernel_log=stderr,
+                                                   original_input=prepared if args.hyperos_manifest or sdk else None,
+                                                   exec_elf_images=prepared['exec_elf_images'], first_stage=first_stage) and 'stock_init_exec_errno' not in stderr
+            except (ValueError, TypeError, KeyError, IndexError) as error:
+                valid = False
+                observation_errors.append({'stage': 'observation_validation', 'type': type(error).__name__, 'error': str(error)})
             for name, path, inspector in volumes:
                 try:
                     after = inspector(path)
@@ -613,9 +675,10 @@ def main():
                 keys = ('uuid', 'bytes', 'filesystem_bytes', 'block_bytes')
                 if name == 'metadata':
                     keys += ('partition', 'gpt_prefix_sha256', 'gpt_suffix_sha256')
-                if any(after[key] != prepared[name + '_image'][key] for key in keys):
+                identity = states[name + '_before'] if args.sdk_ramdisk else prepared[name + '_image']
+                if any(after[key] != identity[key] for key in keys if not first_stage or key != 'uuid'):
                     valid = False
-                if valid:
+                if valid and not first_stage:
                     generation = next(row for row in rows if 'stock_init_' + name + '_generation' in row)
                     if previous_generation[name] is not None and generation['previous'] != previous_generation[name]:
                         valid = False
@@ -623,14 +686,36 @@ def main():
                         previous_generation[name] = generation['generation']
                 if mode == 'lifecycle' and not after['clean']:
                     valid = False
+                if first_stage and mode == 'lifecycle' and after['sha256'] != states[name + '_before']['sha256']:
+                    valid = False
             metadata_rc = {}
-            if args.metadata_image:
-                from stock_init_metadata_volume import rc_results
-                metadata_rc = {'metadata_rc': rc_results(rows)}
-            guest_writes = ''.join(bytes.fromhex(row['hex']).decode('utf-8', errors='replace') for row in rows
-                                   if 'stock_init_write' in row and bytes.fromhex(row['hex']).startswith(b'<'))
+            guest_writes = ''
+            progress = {}
+            sysfs_devices = {}
+            try:
+                observation_stage = 'metadata_rc'
+                if args.metadata_image:
+                    from stock_init_metadata_volume import rc_results
+                    metadata_rc = {'metadata_rc': rc_results(rows)}
+                observation_stage = 'guest_write_text'
+                guest_writes = ''.join(bytes.fromhex(row['hex']).decode('utf-8', errors='replace') for row in rows
+                                       if 'stock_init_write' in row and bytes.fromhex(row['hex']).startswith(b'<'))
+                observation_stage = 'first_stage_sysfs'
+                if args.sdk_ramdisk:
+                    from stock_init_first_stage_devices import observe as observe_devices
+                    sysfs_devices = {'sysfs_devices': observe_devices(rows, prepared, first_stage)}
+                observation_stage = 'first_stage_progress'
+                if first_stage and mode == 'original':
+                    from stock_init_first_stage import progress as first_stage_progress
+                    progress = {'first_stage': first_stage_progress(rows, prepared)}
+            except (ValueError, TypeError, KeyError, IndexError) as error:
+                valid = False
+                observation_errors.append({'stage': observation_stage, 'type': type(error).__name__, 'error': str(error)})
             result['runs'].append({'entry': entry, 'mode': mode, 'phase': phase, 'returncode': returncode, 'observation_validated': valid,
+                                   'profile': 'sdk36-first-stage' if first_stage else 'hyperos' if args.hyperos_manifest else 'sdk36-lp' if sdk else 'sdk36',
+                                   **progress, **sysfs_devices,
                                    **states, **metadata_rc,
+                                   'raw_stdout': str(output), 'raw_stdout_sha256': sha(output), 'observation_errors': observation_errors,
                                    'results': rows, 'stderr': stderr, 'guest_write_text': guest_writes,
                                    'attempted_log_messages': {text: text in stderr or text in guest_writes for text in ('Loading SELinux policy', 'init second stage started!', 'SetupMountNamespaces done')}})
             (out / 'summary.json').write_text(json.dumps(result, indent=2) + '\n')
@@ -639,6 +724,7 @@ def main():
                 (out / 'failure.json').write_text(json.dumps({'stage': 'init_observation_validation', 'entry': entry,
                                                             'mode': mode, 'phase': phase, 'returncode': returncode,
                                                             'raw_stdout': str(output), 'raw_stdout_sha256': sha(output),
+                                                            'observation_errors': observation_errors,
                                                             **states}, indent=2) + '\n')
                 raise SystemExit('init 观察或回收检查失败：' + str(out / 'summary.json'))
     if args.data_image:
@@ -650,7 +736,7 @@ def main():
             result['original_sqlite_validated'] = (result['data_export'].get('quick_check') == ['ok'] and
                                                    result['data_export'].get('sqlite_header') == b'SQLite format 3\0'.hex() and
                                                    'sqlite_error' not in result['data_export'])
-            if not args.lifecycle_only and not result['original_sqlite_validated']:
+            if not args.lifecycle_only and not args.sdk_ramdisk and not result['original_sqlite_validated']:
                 raise ValueError('原 Keystore SQLite 文件格式或 quick_check 检查失败')
         except (ValueError, OSError, subprocess.SubprocessError) as error:
             result['data_export_error'] = str(error)
@@ -672,13 +758,20 @@ def main():
         result['metadata_original_unchanged'] = sha(metadata_original) == ORIGINAL_SHA
         (out / 'summary.json').write_text(json.dumps(result, indent=2) + '\n')
         from stock_init_metadata_volume import require_complete
-        require_complete(result, args.lifecycle_only)
+        require_complete(result, args.lifecycle_only or bool(args.sdk_ramdisk))
+    if args.sdk_ramdisk:
+        original_runs = [run for run in result['runs'] if run['mode'] == 'original']
+        result['first_stage_completed'] = bool(original_runs) and all(run['first_stage']['completed'] for run in original_runs)
+        result['full_boot_observed'] = None
+        result['full_boot_validation'] = 'pending'
     if any(sha(ROOT / name) != expected for name, expected in result['sha256'].items()):
         raise ValueError('运行期间构建输入变化')
     if any(sha(Path(item['source'])) != item['sha256'] for item in prepared['files'].values()):
         raise ValueError('运行期间原始输入变化')
     if args.system_image and sha(args.system_image) != SYSTEM_IMAGE_SHA:
         raise ValueError('运行期间原始系统镜像变化')
+    if args.sdk_ramdisk and sha(args.sdk_ramdisk) != prepared['sdk_ramdisk']['input_sha256']:
+        raise ValueError('运行期间原始 ramdisk 变化')
     if args.hyperos_manifest:
         for name in ('deployed_system_partition', 'original_vendor', 'original_system_dlkm'):
             record = prepared[name]
@@ -686,6 +779,16 @@ def main():
                 raise ValueError('运行期间原 HyperOS 分区变化：' + name)
         if sha(args.hyperos_manifest) != prepared['hyperos_manifest_sha256']:
             raise ValueError('运行期间原 HyperOS 固定清单变化')
+    (out / 'summary.json').write_text(json.dumps(result, indent=2) + '\n')
+    if args.sdk_ramdisk:
+        from stock_init_first_stage import require_complete as require_first_stage_complete
+        try:
+            require_first_stage_complete(result, args.lifecycle_only)
+        except ValueError as error:
+            result['first_stage_completion_error'] = str(error)
+            (out / 'failure.json').write_text(json.dumps({'stage': 'first_stage_completion', 'error': str(error)}, ensure_ascii=False, indent=2) + '\n')
+            (out / 'summary.json').write_text(json.dumps(result, indent=2) + '\n')
+            raise SystemExit(str(error) + '：' + str(out / 'summary.json'))
     print(out / 'summary.json')
 
 

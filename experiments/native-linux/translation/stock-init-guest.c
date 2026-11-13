@@ -67,11 +67,8 @@ static void volume_checks(const char *name, const char *node_path)
     printf("{\"stock_init_%s_generation\":true,\"previous\":%llu,\"generation\":%llu,\"device\":%llu,\"inherited_fd_closed\":true,\"file_fsync\":0,\"directory_fsync\":0}\n", name, previous, previous + 1, (unsigned long long)actual_device);
 }
 
-static void original_metadata_checks(void)
+static void original_metadata_checks(const char *profile)
 {
-    char profile[32] = {0};
-    int fd = open("/stock-init-profile", O_RDONLY);
-    CHECK(fd >= 0 && read(fd, profile, sizeof(profile) - 1) > 0 && close(fd) == 0);
     if (!strcmp(profile, "sdk36"))
         return;
     CHECK(!strcmp(profile, "hyperos") || !strcmp(profile, "sdk36-lp"));
@@ -113,16 +110,25 @@ int main(int argc, char **argv)
     }
     CHECK(getpid() == 1);
     CHECK(syscall(247, getpid()) == -1 && errno == ENOSYS);
+    char profile[32] = {0};
+    int fd = open("/stock-init-profile", O_RDONLY);
+    CHECK(fd >= 0 && read(fd, profile, sizeof(profile) - 1) > 0 && close(fd) == 0);
+    int first_stage = !strcmp(profile, "sdk36-first-stage");
     CHECK(unshare(CLONE_NEWNS) == 0);
     CHECK(mount(NULL, "/", NULL, MS_PRIVATE | MS_REC, NULL) == 0);
+    if (first_stage)
+        CHECK(umount("/proc") == 0);
     CHECK(mount("proc", "/proc", "proc", MS_NOSUID | MS_NODEV | MS_NOEXEC, NULL) == 0);
     char self[32] = {0};
     CHECK(readlink("/proc/self", self, sizeof(self) - 1) > 0 && atoi(self) == 1);
-    original_metadata_checks();
+    if (!first_stage)
+        original_metadata_checks(profile);
     signal_kernel_restorer_tests();
-    volume_checks("data", "/dev/block/vdc");
-    volume_checks("metadata", "/dev/block/vdd");
-    int fd = open("/stock-init-mode", O_RDONLY);
+    if (!first_stage) {
+        volume_checks("data", "/dev/block/vdc");
+        volume_checks("metadata", "/dev/block/vdd");
+    }
+    fd = open("/stock-init-mode", O_RDONLY);
     char mode[32] = {0};
     CHECK(fd >= 0 && read(fd, mode, sizeof(mode) - 1) > 0 && close(fd) == 0);
     if (!strcmp(mode, "lifecycle")) {
@@ -144,6 +150,14 @@ int main(int argc, char **argv)
             pause();
     }
     CHECK(!strcmp(mode, "original"));
+    if (first_stage) {
+        CHECK(umount("/proc") == 0);
+        printf("{\"stock_init_exec\":true,\"pid\":1,\"path\":\"/init\",\"arguments\":[]}\n");
+        const char *args[] = {"/init", NULL};
+        execv(args[0], (char *const *)args);
+        dprintf(2, "{\"stock_init_exec_errno\":%d}\n", errno);
+        return 121;
+    }
     printf("{\"stock_init_exec\":true,\"pid\":%d,\"argument\":\"selinux_setup\"}\n", getpid());
     const char *args[] = {"/system/bin/init", "selinux_setup", NULL};
     execv(args[0], (char *const *)args);

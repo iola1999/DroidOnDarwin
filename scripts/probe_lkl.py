@@ -34,6 +34,19 @@ def run(args, **kwargs):
     return subprocess.run([str(x) for x in args], check=True, timeout=kwargs.pop('timeout', 300), **kwargs)
 
 
+def require_case_sensitive_directory(path):
+    directory = path.resolve()
+    while not directory.exists():
+        directory = directory.parent
+    filesystem = subprocess.check_output(['df', '-P', str(directory)], text=True, timeout=30)
+    device = filesystem.splitlines()[1].split()[0]
+    info = plistlib.loads(subprocess.check_output(['diskutil', 'info', '-plist', device], timeout=30))
+    # Linux 的源码、对象和 .cmd 均有仅大小写不同的文件名。
+    if info.get('FilesystemName') != 'Case-sensitive APFS':
+        raise RuntimeError('Linux 源码与构建目录需要区分大小写的 APFS 文件系统')
+    return directory.stat().st_dev
+
+
 def check_ext4_shutdown(path):
     # e2fsck -n may return zero while skipping an unreplayed journal.
     with path.open('rb') as disk:
@@ -77,7 +90,7 @@ def package_elf(path, *, smp_exports=None):
     symtab = next(s for s in sections if s[1] == 11)
     strings = sections[symtab[6]]
     strings = data[strings[4]:strings[4] + strings[5]]
-    required = {"lkl_init", "lkl_syscall", "lkl_sys_halt", "lkl_cleanup", "nce_lkl_start", "nce_lkl_start_cpus"}
+    required = {"lkl_init", "lkl_syscall", "lkl_sys_halt", "lkl_cleanup", "nce_lkl_start", "nce_lkl_start_cpus", "nce_lkl_start_cpus_cmdline"}
     if PROCESS:
         required |= {"nce_run_syscall", "nce_page_fault", "nce_set_layout", "nce_user_return", "nce_user_fault", "nce_user_preempt", "nce_prepare_user"}
     if SMP:
@@ -153,13 +166,17 @@ def main():
         for name in ("libANGLE-shared.dylib",):
             if not (angle / name).is_file():
                 parser.error("Missing ANGLE library: " + str(angle / name))
+    if platform.system() != "Darwin" or platform.machine() != "arm64":
+        raise SystemExit("Requires an Apple Silicon Mac")
     base = OUT
+    source_device = require_case_sensitive_directory(SOURCE)
+    if require_case_sensitive_directory(base) != source_device:
+        raise RuntimeError('APFS 克隆需要 Linux 源码与输出目录位于同一文件系统')
     smp_variant = "smp-core" if arguments.core_scheduling else "smp"
     if SMP:
         source = base / f"lkl-{smp_variant}-process-source"
-        if not source.exists():
-            run(["/bin/cp", "-cR", SOURCE, source], timeout=120)
-        SOURCE = source
+        if source.is_symlink() or require_case_sensitive_directory(source) != source_device:
+            raise RuntimeError('SMP 源码克隆需要同一 APFS 文件系统内的独立目录')
     if PROCESS:
         BUILD = base / "lkl-process-build"
         if arguments.art_boot_image:
@@ -176,11 +193,16 @@ def main():
             directory += "-" + smp_variant
             BUILD = base / f"lkl-{smp_variant}-process-build"
         OUT = base / directory
+    if any(require_case_sensitive_directory(path) != source_device for path in (OUT, BUILD)):
+        raise RuntimeError('Linux 源码与构建输出需要位于同一 APFS 文件系统')
+    if SMP:
+        if not source.exists():
+            run(["/bin/cp", "-cR", SOURCE.resolve(strict=True), source], timeout=120)
+        SOURCE = source
+    if PROCESS:
         OUT.mkdir(exist_ok=True)
         for name in ("guest-image.h", "guest-source.sha256"):
             shutil.copyfile(base / name, OUT / name)
-    if platform.system() != "Darwin" or platform.machine() != "arm64":
-        raise SystemExit("Requires an Apple Silicon Mac")
     if not (OUT / "guest-image.h").exists():
         raise SystemExit("Run scripts/probe_native_linux.py first")
     if (OUT / "guest-source.sha256").read_text().strip() != hashlib.sha256((EXPERIMENT / "guest.S").read_bytes()).hexdigest():

@@ -688,7 +688,10 @@ def main():
     else:
         from build_translation_engine import build as build_engine
         dependency = build_engine(args.code_memory)
-    library = Path(dependency['path'])
+    # 共享记录保留原树路径；摘要使用本树引用并核对实际目录。
+    library = manifest.parent / 'prefix'
+    if not library.samefile(Path(dependency['path'])):
+        parser.error('Unicorn 库目录与构建记录不一致')
     out.mkdir(parents=True, exist_ok=True)
     stock_art = None
     if args.workload == 'stock-art':
