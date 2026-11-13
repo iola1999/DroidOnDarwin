@@ -10,7 +10,7 @@ import sys
 sys.dont_write_bytecode = True
 
 from probe_stock_init import ROOT, validate
-from stock_init_metadata_volume import rc_results
+from stock_init_metadata_volume import rc_results, require_complete
 from test_stock_init_stop import index_of
 
 
@@ -19,14 +19,63 @@ def sha(path):
         return hashlib.file_digest(stream, 'sha256').hexdigest()
 
 
-def accepted(rows, run, report, prepared=None):
-    if not validate(rows, run['mode'], True,
+def observations_valid(rows, run, report, prepared=None):
+    return validate(rows, run['mode'], True,
                     guest_page_bytes=report['source_configuration'].get('guest_page_bytes', 16384),
-                    kernel_log=run['stderr'], original_input=prepared or report['input']):
+                    kernel_log=run['stderr'], original_input=prepared if prepared is not None else report['input'])
+
+
+def accepted(rows, run, report, prepared=None):
+    if not observations_valid(rows, run, report, prepared):
         return False
     observed = rc_results(rows)
     return ((run['mode'] != 'original' or observed['apex_sessions_opened']) and
             (run['phase'] != 'recovery' or observed['directories_match_original_rc'] is True))
+
+
+def directory_variants(rows, mode):
+    directories = [index for index, row in enumerate(rows) if 'stock_init_metadata_directory' in row]
+    first = directories[0]
+    # mode 日志保留 07777，uid/gid 来自 statx 的 uint32 字段。
+    for field, maximum in (('mode', 0o7777), ('uid', (1 << 32) - 1), ('gid', (1 << 32) - 1)):
+        values = [('boolean', False, False), ('string', '0', False)]
+        if rows[first]['stat_result'] == 0:
+            values += [('negative', -1, False), ('above_maximum', maximum + 1, False),
+                       ('minimum', 0, True), ('maximum', maximum, True)]
+        for name, value, expected in values:
+            changed = deepcopy(rows)
+            changed[first][field] = value
+            yield 'directory_abi_' + field + '_' + name, changed, expected
+    if rows[first]['stat_result'] == 0:
+        changed = deepcopy(rows)
+        changed[first]['mode'] = 1 << 16
+        yield 'directory_abi_mode_uint16_overflow', changed, False
+        changed = deepcopy(rows)
+        changed[first]['mode'] = 0o754
+        yield 'directory_valid_mode_rc_mismatch', changed, True
+    for index in directories:
+        row = rows[index]
+        path = row['path'].strip('/').replace('/', '_')
+        if row['stat_result'] != 0:
+            for field in ('device', 'mode', 'inode_type', 'uid', 'gid'):
+                changed = deepcopy(rows)
+                changed[index][field] = 1
+                yield 'directory_denied_' + path + '_nonzero_' + field, changed, False
+        if row['stat_result'] == -13:
+            for label_result in (0, -2):
+                changed = deepcopy(rows)
+                changed[index]['label_result'] = label_result
+                changed[index]['label_hex'] = ''
+                yield 'directory_denied_' + path + '_label_' + str(label_result), changed, False
+        for status in (-2, -13):
+            if row['stat_result'] == status:
+                continue
+            changed = deepcopy(rows)
+            changed[index].update(stat_result=status, label_result=status, label_hex='',
+                                  device=0, mode=0, inode_type=0, uid=0, gid=0)
+            expected = ((mode == 'lifecycle' and status == -2 and row['path'] != '/metadata') or
+                        (mode == 'original' and status == -13))
+            yield 'directory_stat_' + path + '_' + str(status) + '_zero_attributes', changed, expected
 
 
 def variants(rows, mode, phase):
@@ -119,16 +168,16 @@ def main():
         parser.error('--output 需要新文件')
     paths = [args.report.resolve(), args.historical_report.resolve(), Path(__file__).resolve(),
              ROOT / 'scripts/probe_stock_init.py', ROOT / 'scripts/stock_init_data.py',
-             ROOT / 'scripts/stock_init_metadata_volume.py', ROOT / 'scripts/stock_init_stop.py']
+             ROOT / 'scripts/stock_init_metadata_volume.py', ROOT / 'scripts/stock_init_stop.py',
+             ROOT / 'experiments/native-linux/translation/stock-init-volume.h',
+             ROOT / 'experiments/native-linux/translation/stock-init-metadata.h']
     result = {'test': 'stock_init_metadata_volume_report_contract', 'passed': False, 'cases': [],
               'report': str(paths[0]), 'historical_report': str(paths[1]),
               'scope': '实际报告与删除、改值、顺序变体；不启动客体或读取文件内容。',
               'sha256': {str(path): sha(path) for path in paths}}
     try:
         report = json.loads(paths[0].read_text())
-        if (report.get('metadata_persistence_validated') is not True or report.get('metadata_rc_validated') is not True or
-                report.get('metadata_original_unchanged') is not True):
-            raise ValueError('需要完成同盘恢复、原目录和 APEX sessions 验收的实际报告')
+        require_complete(report, lifecycle_only=False)
         expected = {(phase, entry) for phase in ('lifecycle', 'original', 'recovery') for entry in ('cli', 'gcd')}
         if len(report['runs']) != 6 or {(run['phase'], run['entry']) for run in report['runs']} != expected:
             raise ValueError('需要完整的六入口')
@@ -145,6 +194,18 @@ def main():
                 try:
                     case['accepted'] = accepted(rows, run, report)
                     case['passed'] = case['accepted'] is False
+                except (KeyError, TypeError, ValueError, IndexError) as error:
+                    case['error'] = str(error)
+                result['cases'].append(case)
+            for name, rows, expected in directory_variants(run['results'], run['mode']):
+                case = {'phase': run['phase'], 'entry': run['entry'], 'case': name,
+                        'check': 'directory_observation_abi', 'expected_accepted': expected, 'passed': False}
+                try:
+                    case['accepted'] = observations_valid(rows, run, report)
+                    case['passed'] = case['accepted'] is expected
+                    if name == 'directory_valid_mode_rc_mismatch':
+                        case['rc_validated'] = rc_results(rows)['directories_match_original_rc']
+                        case['passed'] = case['passed'] and case['rc_validated'] is False
                 except (KeyError, TypeError, ValueError, IndexError) as error:
                     case['error'] = str(error)
                 result['cases'].append(case)
@@ -167,10 +228,25 @@ def main():
         if historical['input'].get('metadata_image'):
             raise ValueError('历史兼容报告需要保留无 metadata 的输入契约')
         result['historical_checks'] = [{'phase': run['phase'], 'entry': run['entry'],
-                                       'passed': validate(run['results'], run['mode'], True,
-                                                          guest_page_bytes=historical['source_configuration'].get('guest_page_bytes', 16384),
-                                                          kernel_log=run['stderr'], original_input=historical['input'])}
+                                       'passed': observations_valid(run['results'], run, historical)}
                                       for run in historical['runs']]
+        metadata_examples = {key: row for row in report['runs'][0]['results'] for key in row
+                             if key.startswith('stock_init_metadata_')}
+        for run in historical['runs']:
+            for name in ('omitted', 'null'):
+                prepared = deepcopy(historical['input'])
+                prepared.pop('metadata_image', None)
+                if name == 'null':
+                    prepared['metadata_image'] = None
+                result['historical_checks'].append({'phase': run['phase'], 'entry': run['entry'],
+                                                    'case': 'metadata_input_' + name,
+                                                    'passed': observations_valid(run['results'], run, historical, prepared)})
+            for key, example in metadata_examples.items():
+                rows = deepcopy(run['results'])
+                rows.insert(len(rows) - 1, deepcopy(example))
+                result['historical_checks'].append({'phase': run['phase'], 'entry': run['entry'],
+                                                    'case': 'unexpected_' + key,
+                                                    'passed': observations_valid(rows, run, historical) is False})
         result['inputs_unchanged'] = all(sha(Path(path)) == digest for path, digest in result['sha256'].items())
         result['passed'] = result['inputs_unchanged'] and all(case['passed'] for case in result['cases'] + result['historical_checks'])
     except (OSError, KeyError, TypeError, ValueError, IndexError) as error:

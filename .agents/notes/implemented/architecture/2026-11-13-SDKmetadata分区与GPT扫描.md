@@ -56,7 +56,7 @@
 
 host 模式回归 10 项成功，保留原五项历史检查；覆盖可写 slot 2、多可写槽同步、锁冲突、越界与关闭失败后继续关闭其余槽。关闭日志的 `sync_attempted` 由实际模式决定。输入边界回归 11 项成功，原 metadata 输入拒绝与槽冲突均在开盘前发生；既有无 metadata 的两页六入口报告按原字段继续通过。
 
-提交归档保留每个最终入口的 88–91 条设备、目录、generation、同步与停止记录，12 个过滤入口回放成功。完整原始报告和 stdout/stderr 通过路径、大小及 SHA-256 关联，编译命令与阶段私有验证源码随归档保存；275 个当前记录输入的摘要一致。
+提交归档保留每个最终入口的 88–91 条设备、目录、generation、同步与停止记录，12 个过滤入口回放成功。完整原始报告和 stdout/stderr 通过路径、大小及 SHA-256 关联，编译命令与阶段私有验证源码随归档保存；275 个记录输入的摘要在 `33ce79d1fa19c2d593fabb91c992969030cd7b60` 原阶段核对一致。
 
 两页整盘设备均为 `254:2`，分区为 `259:2`；sysfs 的 PARTNAME=`metadata`、start=2048、size=32768 sectors。分区与整盘相同偏移的 ext4 超级块一致，容量、块设备 rdev 与挂载 st_dev 一致，EOF/越界读取均返回 0。SDK LP 原 system/product/system_ext/vendor 的 ext4 和 system_dlkm 的 DM-EROFS 仍通过原只读检查；原 SDK system.img 的输入摘要保持。
 
@@ -112,3 +112,17 @@ raw v2 的独立日志审阅拒绝 2,796 项字段/顺序变体，另发现私�
 两卷 guest 共用 generation 格式检查，data 的旧路径、文件格式与 JSON 字段保持。Python 只在本阶段入口列出实际两卷并按顺序检查，未增加通用磁盘注册表。生成副本移除继承的 Android/services 开盘段后，只剩本阶段使用的开盘路径；标准 core/runtime 的消费关系保持。候选归属由初始 `cp -c` 清单与逐轮 before/after 摘要记录，失败继续使用同盘，清理须由主会话独立审阅后执行。
 
 与初始提案的偏离集中在实际 SELinux EACCES 的观察方式、生成副本的开盘顺序以及原产物暂缓清理。挂载、持久化、原目录恢复与系统字节契约保持；完整 first-stage 和原 vold 的验收范围继续单独推进。
+
+### 合入前验收修正
+
+独立审阅在 `33ce79d1fa19c2d593fabb91c992969030cd7b60` 归档上确认 37 份来源、275 个输入、两页实际运行、候选连续性和 iOS 身份一致，另发现两项验收遗漏。目录 mode/uid/gid 只有类型检查，负值与超出 ABI 上界的内存变体仍能通过；CLI 计算 `metadata_rc_validated=false` 后仍可能成功退出。原审阅保存在侧树 `work/sdk-metadata-final-review-v1/result-final.json`，SHA-256 为 `0ade43da66538fe9866295c9cf35c7ead18cda5566a5b6980b315982c1b33818`，字节保持。
+
+目录验证现要求 mode 在 0..07777、uid/gid 在 0..UINT32_MAX，来源为 `stock-init-metadata.h` 的 `status.mode & 07777` 及 `stock-init-volume.h` 的 uint32 uid/gid。类型检查、错误后的零值字段和 EACCES 处理保持。完整 metadata 阶段在保存 summary 后必须完成原目录与 APEX sessions 验收；lifecycle-only 的实际入口没有 original/recovery，继续按持久化和原盘摘要验收，原 rc 状态保留 false。CLI 与报告回归共用完成条件检查，删除重复的完成 flag 判断；该函数仅处理 metadata 最终结果，不增加状态或运行入口。
+
+本次修正只涉及 Python 验证与报告回放，不重跑内核、客体或 iOS 编译。旧实际构建报告继续使用原来源 hash，原失败结果保留；当前验证源码和派生报告分别记录新 hash。日志、候选与库继续保留。
+
+两页 `boundary-v4.json` 各 454 项 metadata 检查成功，包含原 266 项和新增 188 项；各 66 项历史检查成功，包含原六入口、omitted/null 输入和意外 metadata 记录。新增属性变体直接调用观察验证，分别核对 ABI 上下界、bool/string 类型、拒绝后的零值和成对 EACCES，恢复阶段的原 rc 判定单独检查。这样可以区分 ABI 有效的属性与符合原 rc 的属性。原 `boundary-v3.json` 和原独立失败报告保持。
+
+两页完成条件回归各 11 项成功，原无 metadata 的六入口也各自成功。回归从 `probe_stock_init.py` 选择原 metadata 汇总 AST 代码块，执行真实的汇总与完成条件；输入来自已保存报告，原盘摘要函数使用固定返回。mode/uid/gid/label 与原 rc 不同的有效属性及 sessions open 失败均先保存 `metadata_rc_validated=false` 再失败；lifecycle-only 保存同一状态后成功，原盘摘要失败继续拒绝。该回归覆盖 CLI 末尾的调用关系，未执行客体或磁盘操作。
+
+[验收修正归档](../../../../experiments/native-linux/results-stock-init-sdk-metadata-validation-20261113.json)的 SHA-256 为 `81136092f7e8f89b46c5c4187330f89fdd8e931600eb35dc417612ab0c039458`。归档保存两页专项结果、当前四份验证源码的摘要和派生生成器，重新回放原 12 个过滤入口成功；30 份原 JSON 来源保持，118 份跟踪源码只出现预期三个既有验证脚本的变化，新增完成条件回归单独登记。原运行归档 SHA-256 继续为 `fad2aae39031cf9086454fdb55f852bddd9348d1fb1a277dc07aa3d5fefdc752`，旧报告的字段与来源身份保持。全部专项只读取报告和源码；旧 275 输入登记中的 work 产物沿用原身份，本次未重新读取镜像或候选。追加提交后由主会话组织专项独立复验。

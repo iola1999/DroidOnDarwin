@@ -629,8 +629,8 @@ def main():
         result['metadata_final_generation'] = previous_generation['metadata']
         result['metadata_original_unchanged'] = sha(metadata_original) == ORIGINAL_SHA
         (out / 'summary.json').write_text(json.dumps(result, indent=2) + '\n')
-        if not result['metadata_persistence_validated'] or not result['metadata_original_unchanged']:
-            raise ValueError('metadata 持久化或原盘摘要检查失败')
+        from stock_init_metadata_volume import require_complete
+        require_complete(result, args.lifecycle_only)
     if any(sha(ROOT / name) != expected for name, expected in result['sha256'].items()):
         raise ValueError('运行期间构建输入变化')
     if any(sha(Path(item['source'])) != item['sha256'] for item in prepared['files'].values()):

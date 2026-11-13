@@ -64,6 +64,7 @@ def validate(rows, enabled, mode, data_enabled=False, contract=None):
     for path, row in zip(DIRECTORIES, directories):
         if (set(row) != fields or row['stock_init_metadata_directory'] is not True or row['path'] != path or
                 any(type(row[key]) is not int for key in fields - {'stock_init_metadata_directory', 'path', 'label_hex'}) or
+                not 0 <= row['mode'] <= 0o7777 or any(not 0 <= row[key] < 1 << 32 for key in ('uid', 'gid')) or
                 not -4095 <= row['stat_result'] <= 0 or not -4095 <= row['label_result'] <= 256 or
                 type(row['label_hex']) is not str or re.fullmatch('[0-9a-f]{%d}' % (max(row['label_result'], 0) * 2), row['label_hex']) is None):
             return False
@@ -101,3 +102,10 @@ def rc_results(rows):
     result.update(directory_contract=matched, directories_match_original_rc=all(matched.values()) if complete else None,
                   attributes_denied=all(row['stat_result'] == row['label_result'] == -13 for row in attributes))
     return result
+
+
+def require_complete(report, lifecycle_only):
+    if report.get('metadata_persistence_validated') is not True or report.get('metadata_original_unchanged') is not True:
+        raise ValueError('metadata 持久化或原盘摘要检查失败')
+    if not lifecycle_only and report.get('metadata_rc_validated') is not True:
+        raise ValueError('metadata 原目录或 APEX sessions 验收失败')
