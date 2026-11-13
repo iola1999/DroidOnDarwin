@@ -115,6 +115,36 @@ def raw_rows(run, ramdisk, spec, dm, page):
     return rows, manifest
 
 
+def check_ramdisk_endings(cases, raw, accepted, label):
+    devices = [row for row in raw if 'stock_init_ramdisk_entry' in row and stat.S_IFMT(row['mode']) == stat.S_IFCHR]
+    diagnostics = [{'stock_init_ramdisk_mknod': row['stock_init_ramdisk_entry'], 'path': row['path'],
+                    'rdev_major': row['rdev_major'], 'rdev_minor': row['rdev_minor'], 'result': 0}
+                   for row in devices]
+    offset = raw.index(marker(raw, 'stock_init_ramdisk_entry'))
+    created = raw[:offset] + diagnostics + raw[offset:]
+    check(cases, 'ramdisk_endings/new_devices/' + label, lambda: accepted(created), True,
+          provenance='synthetic_mknod_diagnostics_from_original_ramdisk_entries')
+    console = next(row for row in devices if row['path'] == '/dev/console')
+    existing = [{**row, 'result': -17} if row['path'] == console['path'] else row for row in diagnostics]
+    console_index = next(index for index, row in enumerate(existing) if row['path'] == console['path'])
+    existing.insert(console_index + 1, {'stock_init_ramdisk_existing_device': console['stock_init_ramdisk_entry'],
+                    'path': console['path'], 'statx_result': 0, 'mask': 0x7ff,
+                    'mode': stat.S_IFCHR | 0o600, 'nlink': console['nlink'],
+                    'rdev_major': console['rdev_major'], 'rdev_minor': console['rdev_minor']})
+    reused = raw[:offset] + existing + raw[offset:]
+    check(cases, 'ramdisk_endings/existing_console/' + label, lambda: accepted(reused), True,
+          provenance='synthetic_eexist_and_statx_diagnostics_with_original_ramdisk_device')
+    variants = [
+        ('final_missing', [row for row in reused if row != {'result': 'passed'}]),
+        ('final_duplicate', [*reused, {'result': 'passed'}]),
+        ('final_failed', [{'result': 'failed'} if row == {'result': 'passed'} else row for row in reused]),
+        ('unknown_result_extra', [*reused, {'result': 0}]),
+    ]
+    for name, rows in variants:
+        check(cases, 'ramdisk_endings/' + name + '/' + label, lambda rows=rows: accepted(rows), False,
+              provenance='synthetic_final_result_boundary_with_device_diagnostics')
+
+
 def progress_rows(inputs, dynamic_pair, partition_order, numeric=False):
     def block(number, paths, **arguments):
         args = [0] * 6
@@ -411,6 +441,8 @@ def main():
                                 original_input=raw_input, exec_elf_images=raw_input['exec_elf_images'], first_stage=True)
 
             check(cases, 'raw/' + label, lambda: accepted(raw), True, provenance='synthetic_raw_with_actual_base')
+            if report_name == 'init_16k' and run['entry'] == 'cli' and run['mode'] == 'lifecycle':
+                check_ramdisk_endings(cases, raw, accepted, label)
             if report_name == 'init_4k' and run['entry'] == 'cli' and run['mode'] == 'original':
                 check_table_schema(cases, raw, accepted, trace_results)
                 check_sysfs_contract(cases, raw_input, raw, accepted, device_fixture)

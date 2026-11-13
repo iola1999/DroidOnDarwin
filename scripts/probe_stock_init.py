@@ -168,7 +168,7 @@ def validate(rows, mode, original_system=False, *, guest_page_bytes=16384, kerne
     observations = [r for r in rows if 'stock_init_observation' in r]
     cleanup = [r for r in rows if r.get('test') == 'translated_context_cleanup']
     logs = [r for r in rows if 'stock_init_kernel_log' in r]
-    endings = [r for r in rows if 'result' in r and 'component_vm' not in r and 'stock_init_write' not in r and 'stock_init_security' not in r and 'stock_init_syscall' not in r and 'stock_init_block' not in r and 'stock_init_stop_request' not in r and 'stock_init_host_stop' not in r and 'stock_init_host_stop_reaped' not in r and 'stock_init_metadata_directory_sync' not in r and 'stock_init_dm_table_load' not in r and not any(key.startswith('stock_init_first_stage_') for key in r)]
+    endings = [r for r in rows if 'result' in r and 'component_vm' not in r and 'stock_init_write' not in r and 'stock_init_security' not in r and 'stock_init_syscall' not in r and 'stock_init_block' not in r and 'stock_init_stop_request' not in r and 'stock_init_host_stop' not in r and 'stock_init_host_stop_reaped' not in r and 'stock_init_metadata_directory_sync' not in r and 'stock_init_dm_table_load' not in r and 'stock_init_ramdisk_mknod' not in r and not any(key.startswith('stock_init_first_stage_') for key in r)]
     if len(observations) != 1 or len(cleanup) != 1 or len(logs) != 1 or endings != [{'result': 'passed'}]:
         return False
     o, c, log = observations[0], cleanup[0], logs[0]
