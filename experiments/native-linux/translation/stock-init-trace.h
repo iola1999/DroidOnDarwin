@@ -37,7 +37,8 @@ static int stock_init_trace_string(unsigned char *value, unsigned long address, 
     return -1;
 }
 
-static void stock_init_trace_security(long number, const long *args, long result, const unsigned char *exec_path)
+static void stock_init_trace_security(long number, const long *args, long result, const unsigned char *exec_path,
+                                      unsigned long exec_index)
 {
     if (!((number >= 5 && number <= 10) || number == 221 || number == 56))
         return;
@@ -78,7 +79,10 @@ static void stock_init_trace_security(long number, const long *args, long result
     printf("\",\"value_hex\":\"");
     for (size_t i = 0; i < bytes; ++i)
         printf("%02x", value[i]);
-    puts("\"}");
+    printf("\"");
+    if (exec_index)
+        printf(",\"exec_index\":%lu", exec_index);
+    puts("}");
     funlockfile(stdout);
 }
 

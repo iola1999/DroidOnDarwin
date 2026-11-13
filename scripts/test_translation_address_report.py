@@ -11,10 +11,11 @@ from test_translation_address_domains import validate_domains
 def main():
     report = json.loads(Path(sys.argv[1]).read_text())
     config = report['configuration']
+    fixtures = report.get('exec_aslr_fixtures')
     rejected = 0
     for run in report['runs']:
         rows = run['results']
-        assert run['validated'] and validate_domains(rows, config)
+        assert run['validated'] and validate_domains(rows, config, exec_aslr_fixtures=fixtures)
         indexes = [i for i, row in enumerate(rows) if 'address_domain_region' in row or
                    row.get('test') == 'translated_host_guest_numeric_overlap' or
                    row.get('config') == 'translation_guest_layout']
@@ -37,9 +38,9 @@ def main():
                         changed[index][key] = bad
                         variants.append(changed)
             for changed in variants:
-                assert not validate_domains(changed, config), (index, rows[index])
+                assert not validate_domains(changed, config, exec_aslr_fixtures=fixtures), (index, rows[index])
                 rejected += 1
-        assert not validate_domains(rows[:-3] + rows[-2:] + rows[-3:-2], config)
+        assert not validate_domains(rows[:-3] + rows[-2:] + rows[-3:-2], config, exec_aslr_fixtures=fixtures)
         rejected += 1
     print(f'address-domain report: actual CLI/GCD accepted; {rejected} negative cases passed')
 

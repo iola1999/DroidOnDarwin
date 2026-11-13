@@ -30,17 +30,22 @@ def main():
                                      c['tlb_invalidation'], c['execution'], c['direct'], c['cpus'],
                                      c['parallel_profile'], c['uaccess_stop'], code_memory=c['code_memory'],
                                      online_cpus=c['online_cpus'], guest_layout=c['guest_layout'],
-                                     guest_page_bytes=c['guest_page_bytes'], data_tbi=c['data_tbi'], kernel_log=log)
+                                     guest_page_bytes=c['guest_page_bytes'], data_tbi=c['data_tbi'], kernel_log=log,
+                                     exec_aslr_fixtures=report.get('exec_aslr_fixtures'))
 
             assert run['validated'] and valid(log_path.read_text())
             assert not valid(failure)
             accepted += 1
             rejected += 1
     report = json.loads(args.init_report.read_text())
+    prepared = report['input']
+    options = {'guest_page_bytes': report['source_configuration'].get('guest_page_bytes', 16384),
+               'original_input': prepared if prepared.get('sdk_partitions') or prepared.get('hyperos_manifest') else None,
+               'exec_elf_images': prepared.get('exec_elf_images')}
     for run in report['runs']:
         assert run['observation_validated']
-        assert validate_init(run['results'], run['mode'], True, kernel_log=run['stderr'])
-        assert not validate_init(run['results'], run['mode'], True, kernel_log=failure)
+        assert validate_init(run['results'], run['mode'], True, kernel_log=run['stderr'], **options)
+        assert not validate_init(run['results'], run['mode'], True, kernel_log=failure, **options)
         accepted += 1
         rejected += 1
     print(json.dumps({'test': 'kernel_page_table_release', 'passed': True,

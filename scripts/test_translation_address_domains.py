@@ -18,13 +18,14 @@ def sha(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def validate_domains(rows, config, *, kernel_log=''):
+def validate_domains(rows, config, *, kernel_log='', exec_aslr_fixtures=None):
     product_rows = [row for row in rows if 'address_domain_region' not in row and row.get('test') != 'translated_host_guest_numeric_overlap']
     if not validate(product_rows, config['memory_interval_ms'], config['mapping'], config['workload'],
                     config['tlb_invalidation'], config['execution'], config['direct'], config['cpus'], config['parallel_profile'],
                     config['uaccess_stop'], code_memory=config['code_memory'], online_cpus=config['online_cpus'],
                     guest_layout=config['guest_layout'], data_tbi=config['data_tbi'],
-                    guest_page_bytes=config.get('guest_page_bytes', 16384), kernel_log=kernel_log):
+                    guest_page_bytes=config.get('guest_page_bytes', 16384), kernel_log=kernel_log,
+                    exec_aslr_fixtures=exec_aslr_fixtures):
         return False
     layouts = [row for row in rows if row.get('config') == 'translation_guest_layout']
     regions = [row for row in rows if 'address_domain_region' in row]
@@ -90,6 +91,8 @@ def main():
     result = {key: report[key] for key in ('platform', 'cpu', 'system_build', 'configuration', 'dependency')}
     if 'stock_runtime' in report:
         result['stock_runtime'] = report['stock_runtime']
+    if 'exec_aslr_fixtures' in report:
+        result['exec_aslr_fixtures'] = report['exec_aslr_fixtures']
     result.update(scope='Formal 512 GiB sparse guest with host-lifecycle test inputs; functional checks only; iOS unverified',
                   test_guest_end=SPARSE_GUEST_END,
                   source_report=str(source), source_report_sha256=sha(source), test_environment=selected,
@@ -119,7 +122,8 @@ def main():
                 returncode = 'timeout'
         rows = [json.loads(line) for line in (out / f'{entry}.jsonl').read_text().splitlines() if line.startswith('{')]
         stderr = (out / f'{entry}.log').read_text()
-        valid = returncode == 0 and validate_domains(rows, config, kernel_log=stderr)
+        valid = returncode == 0 and validate_domains(rows, config, kernel_log=stderr,
+                                                   exec_aslr_fixtures=report.get('exec_aslr_fixtures'))
         run = {'entry': entry, 'returncode': returncode, 'validated': valid, 'results': rows,
                'stderr': stderr, 'stdout_sha256': sha(out / f'{entry}.jsonl'), 'stderr_sha256': sha(out / f'{entry}.log')}
         if 'stock_runtime' in report:

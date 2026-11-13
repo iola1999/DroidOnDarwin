@@ -24,7 +24,8 @@ def main():
         def accepted(rows):
             return validate(rows, config['memory_interval_ms'], config['mapping'], config['workload'],
                             config['tlb_invalidation'], config['execution'], config['direct'],
-                            code_memory=config['code_memory'], online_cpus=1, guest_layout=config['guest_layout'], data_tbi=config['data_tbi'], guest_page_bytes=config.get('guest_page_bytes', 16384))
+                            code_memory=config['code_memory'], online_cpus=1, guest_layout=config['guest_layout'], data_tbi=config['data_tbi'], guest_page_bytes=config.get('guest_page_bytes', 16384),
+                            exec_aslr_fixtures=report.get('exec_aslr_fixtures'))
 
         for run in report['runs']:
             original = run['results']
