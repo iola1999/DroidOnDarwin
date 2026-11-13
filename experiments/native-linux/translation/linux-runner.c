@@ -38,7 +38,7 @@ extern int nce_wait_debugger_detach(unsigned timeout_ms);
         } \
     } while (0)
 extern struct lkl_host_operations nce_lkl_host;
-extern int nce_disk_open(unsigned index, const char *path);
+extern int nce_disk_open(unsigned index, const char *path, int writable);
 extern int nce_disk_close(void);
 static long (*call)(long, long *);
 static unsigned char host_low_source[NCE_HOST_PAGE_SIZE] __attribute__((aligned(NCE_HOST_PAGE_SIZE)));
@@ -481,10 +481,10 @@ int nce_lkl_run(const char *path)
     int android = services || (workload && !strcmp(workload, "android"));
     if (android) {
         REQUIRE(getenv("NCE_TRANSLATION_SYSTEM"));
-        REQUIRE(nce_disk_open(1, getenv("NCE_TRANSLATION_SYSTEM")) == 0);
+        REQUIRE(nce_disk_open(1, getenv("NCE_TRANSLATION_SYSTEM"), 0) == 0);
         if (services) {
             REQUIRE(getenv("NCE_TRANSLATION_DATA"));
-            REQUIRE(nce_disk_open(0, getenv("NCE_TRANSLATION_DATA")) == 0);
+            REQUIRE(nce_disk_open(0, getenv("NCE_TRANSLATION_DATA"), 1) == 0);
         }
     }
     const char *online_text = getenv("NCE_TRANSLATION_ONLINE_CPUS");

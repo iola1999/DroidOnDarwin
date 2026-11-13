@@ -141,7 +141,8 @@ def main():
             if (mode != ('original' if phase == 'original' else 'lifecycle') or run['returncode'] != 0 or
                     run['observation_validated'] is not True or
                     not validate(run['results'], mode, True, guest_page_bytes=page_bytes,
-                                 kernel_log=run['stderr'], original_input=prepared)):
+                                 kernel_log=run['stderr'], original_input=prepared,
+                                 exec_elf_images=prepared.get('exec_elf_images'))):
                 raise ValueError('实际入口校验失败：' + phase + '/' + entry)
             result['cases'].append({'phase': phase, 'entry': entry, 'case': 'actual_entry', 'passed': True})
             host_stops += sum('stock_init_host_stop' in row for row in run['results'])
@@ -149,7 +150,8 @@ def main():
                 case = {'phase': phase, 'entry': entry, 'case': name, 'passed': False}
                 try:
                     case['accepted'] = validate(rows, mode, True, guest_page_bytes=page_bytes,
-                                                kernel_log=run['stderr'], original_input=prepared)
+                                                kernel_log=run['stderr'], original_input=prepared,
+                                                exec_elf_images=prepared.get('exec_elf_images'))
                     case['passed'] = case['accepted'] is False
                 except (KeyError, TypeError, IndexError, ValueError) as error:
                     case['error'] = str(error)

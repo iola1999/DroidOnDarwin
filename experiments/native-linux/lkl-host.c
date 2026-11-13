@@ -47,30 +47,32 @@ static void host_panic(void)
 {
     abort();
 }
-/* Slot 0 is persistent data; system, vendor and system_dlkm are read-only. */
+/* Access mode is fixed from open until Linux workers stop and the disk closes. */
 static struct {
     int fd;
     unsigned long long bytes;
-} disks[NCE_DISK_COUNT] = {{-1, 0}, {-1, 0}, {-1, 0}, {-1, 0}};
+    int writable;
+} disks[NCE_DISK_COUNT] = {{-1, 0, 0}, {-1, 0, 0}, {-1, 0, 0}, {-1, 0, 0}};
 
-int nce_disk_open(unsigned index, const char *path)
+int nce_disk_open(unsigned index, const char *path, int writable)
 {
-    if (index >= NCE_DISK_COUNT)
+    if (index >= NCE_DISK_COUNT || (writable != 0 && writable != 1))
         return -1;
     if (!path)
         return 0;
     REQUIRE(disks[index].fd == -1);
-    int fd = open(path, (index ? O_RDONLY : O_RDWR) | O_CLOEXEC);
+    int fd = open(path, (writable ? O_RDWR : O_RDONLY) | O_CLOEXEC);
     if (fd < 0)
         return -1;
     struct stat info;
     if (fstat(fd, &info) || !S_ISREG(info.st_mode) || info.st_size < 512 || info.st_size % 512 ||
-        flock(fd, (index ? LOCK_SH : LOCK_EX) | LOCK_NB)) {
+        flock(fd, (writable ? LOCK_EX : LOCK_SH) | LOCK_NB)) {
         close(fd);
         return -1;
     }
     disks[index].fd = fd;
     disks[index].bytes = info.st_size;
+    disks[index].writable = writable;
     return 0;
 }
 
@@ -81,8 +83,9 @@ int nce_disk_close(void)
     for (unsigned index = 0; index < NCE_DISK_COUNT; ++index) {
         if (disks[index].fd < 0)
             continue;
+        int writable = disks[index].writable;
         int sync_result = 0;
-        if (!index && fsync(disks[index].fd))
+        if (writable && fsync(disks[index].fd))
             sync_result = -errno;
         int close_result = close(disks[index].fd) ? -errno : 0;
         if (!first_error)
@@ -90,8 +93,9 @@ int nce_disk_close(void)
         /* Darwin SDK does not document fd state after an error; retry may close a reused fd. */
         disks[index].fd = -1;
         disks[index].bytes = 0;
+        disks[index].writable = 0;
         printf("{\"host_disk_close\":true,\"slot\":%u,\"sync_attempted\":%s,\"sync_result\":%d,\"close_result\":%d}\n",
-               index, index ? "false" : "true", sync_result, close_result);
+               index, writable ? "true" : "false", sync_result, close_result);
     }
     return first_error;
 }
@@ -100,6 +104,10 @@ static unsigned long long disk_size(unsigned int index)
 {
     return index < NCE_DISK_COUNT ? disks[index].bytes : 0;
 }
+static int disk_writable(unsigned int index)
+{
+    return index < NCE_DISK_COUNT && disks[index].fd >= 0 && disks[index].writable;
+}
 static int disk_io(unsigned int index, unsigned int operation, unsigned long long offset,
                    void *buffer, unsigned long size)
 {
@@ -107,8 +115,8 @@ static int disk_io(unsigned int index, unsigned int operation, unsigned long lon
         return -1;
     int fd = disks[index].fd;
     if (operation == 2)
-        return index ? 0 : (fsync(fd) ? -1 : 0);
-    if (operation > 1 || (operation && index) || offset > disks[index].bytes ||
+        return disks[index].writable ? (fsync(fd) ? -1 : 0) : 0;
+    if (operation > 1 || (operation && !disks[index].writable) || offset > disks[index].bytes ||
         size > disks[index].bytes - offset)
         return -1;
     while (size) {
@@ -324,6 +332,7 @@ static void jump_back(struct lkl_jmp_buf *b, int value)
 struct lkl_host_operations nce_lkl_host = {
     .disk_size = disk_size,
     .disk_io = disk_io,
+    .disk_writable = disk_writable,
     .print = host_print,
     .panic = host_panic,
     .sem_alloc = sem_alloc,

@@ -29,7 +29,7 @@ void nce_compute_benchmark(void);
         } \
     } while (0)
 extern struct lkl_host_operations nce_lkl_host;
-int nce_disk_open(unsigned index, const char *path);
+int nce_disk_open(unsigned index, const char *path, int writable);
 int nce_disk_close(void);
 static long (*kernel_syscall)(long, long *);
 
@@ -266,8 +266,8 @@ int nce_lkl_run(const char *image_path)
     set_layout(base, mapping_mode, views, host_hwcap(), nce_process_mmu_profile(), sparse_scan, fault_prefetch);
 #endif
     puts("{\"phase\":\"linux_init\"}");
-    REQUIRE(nce_disk_open(0, getenv("NCE_STORAGE_IMAGE")) == 0);
-    REQUIRE(nce_disk_open(1, getenv("NCE_SYSTEM_IMAGE")) == 0);
+    REQUIRE(nce_disk_open(0, getenv("NCE_STORAGE_IMAGE"), 1) == 0);
+    REQUIRE(nce_disk_open(1, getenv("NCE_SYSTEM_IMAGE"), 0) == 0);
     REQUIRE(init(&nce_lkl_host) == 0);
     uint64_t started = now();
     unsigned long applied_slice_ns = 0;

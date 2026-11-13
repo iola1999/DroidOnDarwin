@@ -150,7 +150,7 @@ def validate(rows, mode, original_system=False, *, guest_page_bytes=16384, kerne
     observations = [r for r in rows if 'stock_init_observation' in r]
     cleanup = [r for r in rows if r.get('test') == 'translated_context_cleanup']
     logs = [r for r in rows if 'stock_init_kernel_log' in r]
-    endings = [r for r in rows if 'result' in r and 'component_vm' not in r and 'stock_init_write' not in r and 'stock_init_security' not in r and 'stock_init_syscall' not in r and 'stock_init_block' not in r and 'stock_init_stop_request' not in r and 'stock_init_host_stop' not in r and 'stock_init_host_stop_reaped' not in r]
+    endings = [r for r in rows if 'result' in r and 'component_vm' not in r and 'stock_init_write' not in r and 'stock_init_security' not in r and 'stock_init_syscall' not in r and 'stock_init_block' not in r and 'stock_init_stop_request' not in r and 'stock_init_host_stop' not in r and 'stock_init_host_stop_reaped' not in r and 'stock_init_metadata_directory_sync' not in r]
     if len(observations) != 1 or len(cleanup) != 1 or len(logs) != 1 or endings != [{'result': 'passed'}]:
         return False
     o, c, log = observations[0], cleanup[0], logs[0]
@@ -263,7 +263,12 @@ def validate(rows, mode, original_system=False, *, guest_page_bytes=16384, kerne
     if not validate_dm(rows, (original_input or {}).get('sdk_partitions'), mode=mode):
         return False
     from stock_init_data import validate as validate_data
-    if not validate_data(rows, bool((original_input or {}).get('data_image')), mode):
+    metadata_input = (original_input or {}).get('metadata_image')
+    if not validate_data(rows, bool((original_input or {}).get('data_image')), mode, metadata_enabled=bool(metadata_input)):
+        return False
+    from stock_init_metadata_volume import validate as validate_metadata_volume
+    if not validate_metadata_volume(rows, bool(metadata_input), mode, bool((original_input or {}).get('data_image')),
+                                    (metadata_input or {}).get('partition')):
         return False
     lifecycle = [r for r in rows if 'stock_init_lifecycle' in r]
     original = [r for r in rows if 'stock_init_exec' in r]
@@ -300,7 +305,10 @@ def main():
     parser.add_argument('--hyperos-manifest', type=Path)
     parser.add_argument('--lifecycle-only', action='store_true', help='仅检查原分区元数据、PID 1 信号与停止回收')
     parser.add_argument('--data-image', type=Path, help='SDK36 mounted-partition 观察使用的显式 ext4 数据盘')
+    parser.add_argument('--metadata-image', type=Path, help='SDK36 mounted-partition 观察使用的原 GPT metadata 盘独立可写副本')
     args = parser.parse_args()
+    if args.metadata_image and args.hyperos_manifest:
+        parser.error('SDK metadata 与 HyperOS vendor 共用 slot 2，开盘前拒绝同时输入')
     if args.hyperos_manifest:
         if any((args.runtime, args.desktop, args.root_metadata, args.system_image, args.sdk_partitions)):
             parser.error('HyperOS 固定清单与 SDK36 输入参数不能同时使用')
@@ -310,6 +318,8 @@ def main():
         parser.error('--sdk-partitions 需要 --system-image')
     if args.data_image and (not args.sdk_partitions or args.hyperos_manifest):
         parser.error('--data-image 需要 SDK36 --sdk-partitions')
+    if args.metadata_image and not args.sdk_partitions:
+        parser.error('--metadata-image 需要 SDK36 --sdk-partitions')
     source = args.report.resolve()
     base = json.loads(source.read_text())
     config = base['configuration']
@@ -367,6 +377,21 @@ def main():
         prepared['data_image'] = inspect_data(args.data_image)
         if prepared['data_image']['bytes'] != prepared['data_image']['filesystem_bytes']:
             parser.error('数据盘大小与 ext4 超级块不匹配')
+    if args.metadata_image:
+        from stock_init_metadata_volume import inspect as inspect_metadata_volume, ORIGINAL_SHA
+        args.metadata_image = args.metadata_image.resolve(strict=True)
+        metadata_original = args.system_image.resolve().with_name('encryptionkey.img')
+        if sha(metadata_original) != ORIGINAL_SHA:
+            parser.error('SDK 原 encryptionkey.img 摘要不匹配')
+        if args.metadata_image.samefile(metadata_original) or args.metadata_image.samefile(args.system_image) or (args.data_image and args.metadata_image.samefile(args.data_image)):
+            parser.error('metadata 可写盘需要与原盘、系统盘及数据盘独立')
+        original_state = inspect_metadata_volume(metadata_original)
+        prepared['metadata_image'] = inspect_metadata_volume(args.metadata_image)
+        if any(prepared['metadata_image'][key] != original_state[key] for key in ('partition', 'gpt_prefix_sha256', 'gpt_suffix_sha256')):
+            parser.error('metadata 候选的原 GPT 外围字节不同')
+        prepared['metadata_original'] = {'path': str(metadata_original), 'sha256': ORIGINAL_SHA}
+        partition = prepared['metadata_image']['partition']
+        (out / 'metadata-partition.tsv').write_text('{name} {partition} {start_sector} {sectors} {whole_sectors}\n'.format(**partition))
     result = {key: base[key] for key in ('platform', 'cpu', 'system_build', 'dependency')}
     result.update(scope=('Original HyperOS 4 KiB init selinux_setup/second_stage observation; original partitions and full rc retained; first-stage and system boot unverified'
                          if args.hyperos_manifest else 'Original SDK36 init selinux_setup/second_stage observation; full rc retained; first-stage and system boot unverified'),
@@ -382,9 +407,12 @@ def main():
                  ROOT / 'scripts/stock_init_metadata.py', ROOT / 'scripts/stock_init_sdk.py',
                  ROOT / 'scripts/prepare_android_runtime.py', out / 'files.tsv'):
         result['sha256'][str(path.relative_to(ROOT))] = sha(path)
-    for path in (EXP / 'translation/stock-init-data.h', ROOT / 'scripts/stock_init_data.py',
+    for path in (EXP / 'translation/stock-init-data.h', EXP / 'translation/stock-init-volume.h',
+                 EXP / 'translation/stock-init-metadata.h', ROOT / 'scripts/stock_init_metadata_volume.py', ROOT / 'scripts/stock_init_data.py',
                  EXP / 'translation/stock-init-stop.h', ROOT / 'scripts/stock_init_stop.py'):
         result['sha256'][str(path.relative_to(ROOT))] = sha(path)
+    if args.metadata_image:
+        result['sha256'][str((out / 'metadata-partition.tsv').relative_to(ROOT))] = sha(out / 'metadata-partition.tsv')
     if args.hyperos_manifest:
         for path in (ROOT / 'scripts/stock_init_hyperos.py', out / 'files.tsv', out / 'original-metadata.tsv'):
             result['sha256'][str(path.relative_to(ROOT))] = sha(path)
@@ -410,9 +438,23 @@ def main():
         if runner_source.count(shell_setup) != 1:
             raise ValueError('运行器 core shell 准备已变化')
         runner_source = runner_source.replace(shell_setup, '')
-    disk_setup = ''.join('    if (getenv("%s") && getenv("%s")[0]) REQUIRE(nce_disk_open(%d, getenv("%s")) == 0);\n' % (name, name, index, name)
-                         for index, name in ((0, 'NCE_TRANSLATION_DATA'), (1, 'NCE_STOCK_INIT_SYSTEM'), (2, 'NCE_STOCK_INIT_VENDOR'), (3, 'NCE_STOCK_INIT_SYSTEM_DLKM')))
-    runner_source = runner_source.replace('    const char *online_text =', disk_setup + '    const char *online_text =')
+    disk_setup = ('    REQUIRE(!(getenv("NCE_STOCK_INIT_METADATA") && getenv("NCE_STOCK_INIT_METADATA")[0] && getenv("NCE_STOCK_INIT_VENDOR") && getenv("NCE_STOCK_INIT_VENDOR")[0]));\n'
+                  '    REQUIRE(!getenv("NCE_STOCK_INIT_METADATA") || !getenv("NCE_STOCK_INIT_METADATA")[0] || (getenv("NCE_STOCK_INIT_LP") && !strcmp(getenv("NCE_STOCK_INIT_LP"), "1")));\n')
+    disk_setup += ''.join('    if (getenv("%s") && getenv("%s")[0]) REQUIRE(nce_disk_open(%d, getenv("%s"), %d) == 0);\n' % (name, name, index, name, writable)
+                          for index, name, writable in ((0, 'NCE_TRANSLATION_DATA', 1), (1, 'NCE_STOCK_INIT_SYSTEM', 0),
+                                                        (2, 'NCE_STOCK_INIT_VENDOR', 0), (3, 'NCE_STOCK_INIT_SYSTEM_DLKM', 0),
+                                                        (2, 'NCE_STOCK_INIT_METADATA', 1)))
+    opening = ('    if (android) {\n'
+               '        REQUIRE(getenv("NCE_TRANSLATION_SYSTEM"));\n'
+               '        REQUIRE(nce_disk_open(1, getenv("NCE_TRANSLATION_SYSTEM"), 0) == 0);\n'
+               '        if (services) {\n'
+               '            REQUIRE(getenv("NCE_TRANSLATION_DATA"));\n'
+               '            REQUIRE(nce_disk_open(0, getenv("NCE_TRANSLATION_DATA"), 1) == 0);\n'
+               '        }\n'
+               '    }\n')
+    if runner_source.count(opening) != 1:
+        raise ValueError('运行器原磁盘开盘位置已变化')
+    runner_source = runner_source.replace(opening, disk_setup)
     runner_source = runner_source.replace('static int detach_preparation(void)', '#include "stock-init-runner.h"\n\nstatic int detach_preparation(void)')
     runner = out / 'linux-runner.c'
     runner.write_text(runner_source)
@@ -483,6 +525,8 @@ def main():
         selected['NCE_STOCK_INIT_LP'] = '1'
     if args.data_image:
         selected['NCE_TRANSLATION_DATA'] = str(args.data_image)
+    if args.metadata_image:
+        selected['NCE_STOCK_INIT_METADATA'] = str(args.metadata_image)
     if args.hyperos_manifest:
         selected.update(NCE_STOCK_INIT_VENDOR=prepared['original_vendor']['path'],
                         NCE_STOCK_INIT_SYSTEM_DLKM=prepared['original_system_dlkm']['path'])
@@ -501,25 +545,32 @@ def main():
     stages = [('lifecycle', 'lifecycle')]
     if not args.lifecycle_only:
         stages.append(('original', 'original'))
-        if args.data_image:
+        if args.data_image or args.metadata_image:
             stages.append(('lifecycle', 'recovery'))
-    previous_generation = None
+    volumes = []
+    if args.data_image:
+        volumes.append(('data', args.data_image, inspect_data))
+    if args.metadata_image:
+        volumes.append(('metadata', args.metadata_image, inspect_metadata_volume))
+    previous_generation = {name: None for name, _, _ in volumes}
     for mode, phase in stages:
         for entry in ('cli', 'gcd'):
             env = {**{key: value for key, value in os.environ.items() if not key.startswith('NCE_')}, **selected, 'NCE_STOCK_INIT_MODE': mode}
             label = entry + '-' + phase
-            try:
-                data_before = inspect_data(args.data_image) if args.data_image else None
-                if args.data_image:
-                    expected_data = result['runs'][-1]['data_after'] if result['runs'] else prepared['data_image']
-                    if data_before['sha256'] != expected_data['sha256']:
-                        raise ValueError('两次运行之间的数据盘摘要变化')
-            except (ValueError, OSError) as error:
-                failure = {'stage': 'data_before_run', 'entry': entry, 'mode': mode, 'phase': phase, 'error': str(error)}
-                result['data_state_error'] = failure
-                (out / 'failure.json').write_text(json.dumps(failure, ensure_ascii=False, indent=2) + '\n')
-                (out / 'summary.json').write_text(json.dumps(result, indent=2) + '\n')
-                raise
+            states = {}
+            for name, path, inspector in volumes:
+                try:
+                    before = inspector(path)
+                    states[name + '_before'] = before
+                    expected = result['runs'][-1][name + '_after'] if result['runs'] else prepared[name + '_image']
+                    if before['sha256'] != expected['sha256']:
+                        raise ValueError('两次运行之间的磁盘摘要变化：' + name)
+                except (ValueError, OSError) as error:
+                    failure = {'stage': name + '_before_run', 'entry': entry, 'mode': mode, 'phase': phase, 'error': str(error)}
+                    result[name + '_state_error'] = failure
+                    (out / 'failure.json').write_text(json.dumps(failure, ensure_ascii=False, indent=2) + '\n')
+                    (out / 'summary.json').write_text(json.dumps(result, indent=2) + '\n')
+                    raise
             with (out / (label + '.jsonl')).open('w') as stdout, (out / (label + '.log')).open('w') as stderr:
                 try:
                     proc = subprocess.run([out / entry, kernel], env=env, stdout=stdout, stderr=stderr, timeout=90)
@@ -531,17 +582,17 @@ def main():
             try:
                 rows = read_observations(output)
             except ValueError as error:
-                data_after_error = None
-                try:
-                    data_after = inspect_data(args.data_image) if args.data_image else None
-                except (ValueError, OSError) as inspect_error:
-                    data_after, data_after_error = None, str(inspect_error)
+                for name, path, inspector in volumes:
+                    try:
+                        states[name + '_after'] = inspector(path)
+                    except (ValueError, OSError) as inspect_error:
+                        states[name + '_after'] = None
+                        states[name + '_after_error'] = str(inspect_error)
                 failure = {'stage': 'observation_json_parse', 'entry': entry, 'mode': mode,
                            'phase': phase,
                            'returncode': returncode, 'error': str(error),
                            'raw_stdout': str(output), 'raw_stdout_sha256': sha(output),
-                           **({'data_before': data_before, 'data_after': data_after} if args.data_image else {}),
-                           **({'data_after_error': data_after_error} if data_after_error else {})}
+                           **states}
                 result['runs'].append({**failure, 'observation_validated': False, 'results': [], 'stderr': stderr})
                 (out / 'failure.json').write_text(json.dumps(failure, ensure_ascii=False, indent=2) + '\n')
                 (out / 'summary.json').write_text(json.dumps(result, indent=2) + '\n')
@@ -550,28 +601,36 @@ def main():
                                                guest_page_bytes=config.get('guest_page_bytes', 16384), kernel_log=stderr,
                                                original_input=prepared if args.hyperos_manifest or args.sdk_partitions else None,
                                                exec_elf_images=prepared['exec_elf_images']) and 'stock_init_exec_errno' not in stderr
-            data_after_error = None
-            try:
-                data_after = inspect_data(args.data_image) if args.data_image else None
-            except (ValueError, OSError) as error:
-                data_after, data_after_error = None, str(error)
-                valid = False
-            if args.data_image and data_after is not None:
-                if any(data_after[key] != prepared['data_image'][key] for key in ('uuid', 'bytes', 'filesystem_bytes', 'block_bytes')):
+            for name, path, inspector in volumes:
+                try:
+                    after = inspector(path)
+                    states[name + '_after'] = after
+                except (ValueError, OSError) as error:
+                    states[name + '_after'] = None
+                    states[name + '_after_error'] = str(error)
+                    valid = False
+                    continue
+                keys = ('uuid', 'bytes', 'filesystem_bytes', 'block_bytes')
+                if name == 'metadata':
+                    keys += ('partition', 'gpt_prefix_sha256', 'gpt_suffix_sha256')
+                if any(after[key] != prepared[name + '_image'][key] for key in keys):
                     valid = False
                 if valid:
-                    generation = next(row for row in rows if 'stock_init_data_generation' in row)
-                    if previous_generation is not None and generation['previous'] != previous_generation:
+                    generation = next(row for row in rows if 'stock_init_' + name + '_generation' in row)
+                    if previous_generation[name] is not None and generation['previous'] != previous_generation[name]:
                         valid = False
                     else:
-                        previous_generation = generation['generation']
-                if mode == 'lifecycle' and not data_after['clean']:
+                        previous_generation[name] = generation['generation']
+                if mode == 'lifecycle' and not after['clean']:
                     valid = False
+            metadata_rc = {}
+            if args.metadata_image:
+                from stock_init_metadata_volume import rc_results
+                metadata_rc = {'metadata_rc': rc_results(rows)}
             guest_writes = ''.join(bytes.fromhex(row['hex']).decode('utf-8', errors='replace') for row in rows
                                    if 'stock_init_write' in row and bytes.fromhex(row['hex']).startswith(b'<'))
             result['runs'].append({'entry': entry, 'mode': mode, 'phase': phase, 'returncode': returncode, 'observation_validated': valid,
-                                   **({'data_before': data_before, 'data_after': data_after} if args.data_image else {}),
-                                   **({'data_after_error': data_after_error} if data_after_error else {}),
+                                   **states, **metadata_rc,
                                    'results': rows, 'stderr': stderr, 'guest_write_text': guest_writes,
                                    'attempted_log_messages': {text: text in stderr or text in guest_writes for text in ('Loading SELinux policy', 'init second stage started!', 'SetupMountNamespaces done')}})
             (out / 'summary.json').write_text(json.dumps(result, indent=2) + '\n')
@@ -580,13 +639,12 @@ def main():
                 (out / 'failure.json').write_text(json.dumps({'stage': 'init_observation_validation', 'entry': entry,
                                                             'mode': mode, 'phase': phase, 'returncode': returncode,
                                                             'raw_stdout': str(output), 'raw_stdout_sha256': sha(output),
-                                                            **({'data_before': data_before, 'data_after': data_after} if args.data_image else {}),
-                                                            **({'data_after_error': data_after_error} if data_after_error else {})}, indent=2) + '\n')
+                                                            **states}, indent=2) + '\n')
                 raise SystemExit('init 观察或回收检查失败：' + str(out / 'summary.json'))
     if args.data_image:
         try:
             result['data_export'] = export_clean(args.data_image, out / 'data-export')
-            if result['data_export']['generation'] != previous_generation:
+            if result['data_export']['generation'] != previous_generation['data']:
                 raise ValueError('恢复后的磁盘 generation 不匹配')
             result['data_persistence_validated'] = True
             result['original_sqlite_validated'] = (result['data_export'].get('quick_check') == ['ok'] and
@@ -600,6 +658,21 @@ def main():
             (out / 'summary.json').write_text(json.dumps(result, indent=2) + '\n')
             raise
         (out / 'summary.json').write_text(json.dumps(result, indent=2) + '\n')
+    if args.metadata_image:
+        original_runs = [run for run in result['runs'] if run['mode'] == 'original']
+        result['metadata_persistence_validated'] = (all(run['observation_validated'] for run in result['runs']) and
+                                                    result['runs'][-1]['metadata_after']['clean'] and
+                                                    (args.lifecycle_only or len([run for run in result['runs'] if run['phase'] == 'recovery']) == 2))
+        recovery_runs = [run for run in result['runs'] if run['phase'] == 'recovery']
+        result['metadata_rc_validated'] = (bool(original_runs) and len(recovery_runs) == 2 and
+                                           all(run['metadata_rc']['apex_sessions_opened'] for run in original_runs) and
+                                           all(run['metadata_rc']['directories_match_original_rc'] is True for run in recovery_runs))
+        result['metadata_directory_validation_source'] = 'same_disk_recovery' if result['metadata_rc_validated'] else None
+        result['metadata_final_generation'] = previous_generation['metadata']
+        result['metadata_original_unchanged'] = sha(metadata_original) == ORIGINAL_SHA
+        (out / 'summary.json').write_text(json.dumps(result, indent=2) + '\n')
+        from stock_init_metadata_volume import require_complete
+        require_complete(result, args.lifecycle_only)
     if any(sha(ROOT / name) != expected for name, expected in result['sha256'].items()):
         raise ValueError('运行期间构建输入变化')
     if any(sha(Path(item['source'])) != item['sha256'] for item in prepared['files'].values()):

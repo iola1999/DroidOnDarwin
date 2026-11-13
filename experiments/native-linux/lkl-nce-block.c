@@ -59,6 +59,8 @@ static int __init nce_block_init(void)
     int error = 0;
     if (!lkl_ops->disk_size || !lkl_ops->disk_io)
         return 0;
+    if (!lkl_ops->disk_writable)
+        return -EINVAL;
     nce_major = register_blkdev(0, "ncedisk");
     if (nce_major < 0)
         return nce_major;
@@ -79,12 +81,11 @@ static int __init nce_block_init(void)
         disk->major = nce_major;
         disk->first_minor = index;
         disk->minors = 1;
-        disk->flags = GENHD_FL_NO_PART;
         disk->fops = &nce_block_ops;
         disk->private_data = (void *)(unsigned long)index;
         snprintf(disk->disk_name, DISK_NAME_LEN, "ncedisk%u", index);
         set_capacity(disk, bytes >> SECTOR_SHIFT);
-        set_disk_ro(disk, index != 0);
+        set_disk_ro(disk, !lkl_ops->disk_writable(index));
         error = add_disk(disk);
         if (error) {
             put_disk(disk);
