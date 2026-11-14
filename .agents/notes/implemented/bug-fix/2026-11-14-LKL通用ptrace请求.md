@@ -64,6 +64,8 @@ driver 现为每个内核从实际 `lkl.so` 生成 COPY_USER 与 LOOKUP 偏移�
 
 822 项实际编译输入、199 项仓库编译输入、14 个内核导出偏移、实际宿主 `.d` 和内核 `.cmd` 均核对成功。两个宿主程序从实际链接输入重新链接，指令区摘要相同；内核从原链接对象重新链接，ELF 摘要相同。外层 driver 的 `protected_inputs_unchanged=false` 原值保留，唯一变化是主会话更新的 v12 结果 JSON，运行前后摘要与该文件不参与实际编译的检查分别保存。原结果与两份独立复查报告保持，详细来源见[阶段结果](../../../../experiments/native-linux/results-lkl-ptrace-integration-20261115.json)。
 
+阶段提交 `07ca854` 推送后，标准检查的隔离工作树使用 `git worktree remove` 移除，私有缓存按[清单](../../../../../../../cleanup-2026-11-15/ptrace-processes-integration-v1.json)清理。删除文件逻辑大小合计 9,985,695,515 bytes，42 份保留文件的摘要前后相同，物理释放量未测量。原结果、失败、依赖、链接 map、摘要与源码变更快照保持；复现从该提交建立独立工作树并执行已记录的标准命令，ARM64 regset 调查使用独立原源码目录。
+
 ## 影响
 
 原 Android crash_dump64 使用的通用 ptrace 请求可以进入内核现有实现，自动附加的 clone 子任务在执行首个用户指令前处理 ptrace 停止和待处理信号。该阶段没有新增 ptrace 状态或宿主执行线程。GETREGSET/SETREGSET 的 EIO 边界继续保留，ARM64 公开寄存器布局另行调查；完整 SDK 在集成此修复后的启动、桌面、APK、HyperOS、iOS 执行与持续性能继续验收。

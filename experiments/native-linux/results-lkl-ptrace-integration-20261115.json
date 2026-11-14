@@ -154,10 +154,18 @@
     }
   },
   "artifacts": {
-    "state": "retained_for_main_session_cleanup",
+    "state": "cleaned",
     "worktree": "work/sdk-vold-linux-v1/mount/ptrace-processes-integrated-v1",
     "private_cache": "work/sdk-ptrace-generic-v1/processes-integration-v1/temporary-cache",
-    "active_processes": []
+    "active_processes": [],
+    "cleanup": {
+      "path": "work/cleanup-2026-11-15/ptrace-processes-integration-v1.json",
+      "sha256": "00514c9dcfd0808c94d2f0e5906237f41ea4603ee4b23a52469545cdf9ae6c07",
+      "removed_logical_bytes": 9985695515,
+      "retained_files": 42,
+      "retained_unchanged": true,
+      "physical_space_reclaimed": null
+    }
   },
   "limits": [
     "本机标准测试程序和宿主编译检查；完整 Android 启动、HyperOS、设备资源、JIT 授权、持续性能和热状态继续按对应阶段验证。"
