@@ -1,0 +1,837 @@
+{
+  "scope": "macOS LKL 四类受控循环的任务、延迟数据、timer 与 SIGUSR1 进展",
+  "status": "passed",
+  "date": "2026-11-15",
+  "platform": "macOS-27.0-arm64-arm-64bit-Mach-O",
+  "cpu": "Apple M5 Ultra",
+  "hardware": {
+    "machdep.cpu.brand_string": "Apple M5 Ultra",
+    "hw.model": "Mac17,15",
+    "hw.memsize": "274877906944"
+  },
+  "system_build": "ProductName:\t\tmacOS\nProductVersion:\t\t27.0\nBuildVersion:\t\t26A428",
+  "started_utc": "2026-11-14T17:03:05.852582+00:00",
+  "ended_utc": "2026-11-14T17:03:10.306798+00:00",
+  "v12_source_revision": "774e47ae0125ce066564fa81173baf471b7eb94c",
+  "configuration": {
+    "data_tbi": true,
+    "guest_layout": "sparse",
+    "code_memory": "dual",
+    "execution": "direct",
+    "direct": {
+      "mapping_entries": 256,
+      "route_entries": 256,
+      "selective_writes": false,
+      "reuse_code_checks": false,
+      "memory": "flat",
+      "code_watch": false,
+      "cross_page": false,
+      "route_epochs": false,
+      "retain_routes": false,
+      "memory_groups": false,
+      "native_exclusive": false,
+      "vector_table": false,
+      "simd_math": false
+    },
+    "mapping": "pte",
+    "sparse_scan": true,
+    "fault_prefetch": false,
+    "guest_page_bytes": 16384,
+    "host_page_bytes": 16384,
+    "workload": "core",
+    "entries": [
+      "cli",
+      "gcd"
+    ],
+    "art_nterp": 1,
+    "cpus": 1,
+    "high_res_timers": false,
+    "bpf_jit": true,
+    "online_cpus": 1,
+    "uaccess_stop": "all",
+    "parallel_profile": false,
+    "art_expanded_jit": 0,
+    "art_fast_baseline": 0,
+    "cache_invalidation": "pages",
+    "exec_cache": "pages",
+    "tlb_invalidation": "pages",
+    "linux_fastpath": 0,
+    "guest_ram_bytes": 1073741824,
+    "translation_cache_bytes": 134217728,
+    "instruction_batch": 50000,
+    "memory_interval_ms": 100,
+    "preemption": "timer",
+    "timer_interval_ns": 2000000
+  },
+  "executed_guest": "static-musl-syscall-progress-fixture",
+  "build": {
+    "tool_versions": {
+      "clang": "Homebrew clang version 22.1.7",
+      "llvm-nm": "llvm-nm, compatible with GNU nm",
+      "llvm-objdump": "Homebrew LLVM version 22.1.7"
+    },
+    "host_build_commands_replayed": 25,
+    "guest_flags": [
+      "--target=aarch64-linux-musl",
+      "-mno-outline-atomics",
+      "-fPIE",
+      "-O2",
+      "-g",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-nostdinc"
+    ],
+    "guest_source_sha256": "3d5b5d905aa76c73d06289f50bde4d45568672027133a9ed34f524735c0d7cef",
+    "guest_hashes": {
+      "user_loop": "7cde024c509529dfe41653bd687e61a7e859885625535ba48fc21051bba32784",
+      "getpid": "25dbd70a54813ad69f34e23fcec86df880021d9715cbb660e514de68c16cf6a7",
+      "read_eagain": "649c5e7168e0b482cf67a580c403cb9bd0173f8fafcb0da1bafbe46720515c24",
+      "poll_wait": "d493b3945638c82bc26c082809a162c34571b52397e44045533308d2d26bf125"
+    },
+    "host_hashes": {
+      "cli": "28cb89b9c5bb38803fd723af7d2e7aa8a2881e6e34167c2afbd265198b12b4f5",
+      "gcd": "7af9284cc86804fa5f694ce4f00077545b713a35fc01a447966f651b3200acfc"
+    },
+    "kernel": "work/sdk-vold-linux-v1/mount/plain-repo/work/native-linux-nce/lkl-translation-ashmem-production-kernel-v1-bpf-jit",
+    "kernel_sha256": {
+      "build.json": "cbc845669f9a055509acd17abf9b162a575a2d51b2dbc3d5662f224e2ef04a2e",
+      "lkl.so": "cc61d18fd8246e48a85d7ba0052a5159d23eef9ab7dd2607bbbe61a655a4ff06",
+      "lkl-image.bin": "acf7896fce9a7254df9676c9fb9df86cb77c459de4f5d2d71c0709996c613817",
+      "build/.config": "a813b734f7d7f6ae8c6ef82cb11381712976432e23a262c76b9a8702254a05a9"
+    },
+    "kernel_export_count": 16,
+    "translation_exports": {
+      "TRANSLATION_COPY_USER": {
+        "symbol": "nce_copy_user",
+        "offset": 1144248,
+        "elf_image_bytes_checked": 64
+      },
+      "TRANSLATION_LOOKUP": {
+        "symbol": "nce_translate_user",
+        "offset": 1135264,
+        "elf_image_bytes_checked": 64
+      }
+    }
+  },
+  "input_checks": {
+    "build_input_count": 656,
+    "runtime_input_count": 658,
+    "build_inputs_unchanged": true,
+    "runtime_inputs_unchanged": true,
+    "actual_host_dependency_files": 23,
+    "actual_host_dependencies": 353,
+    "v12_shared_inputs_checked": 352,
+    "v12_shared_inputs_passed": true,
+    "original_output_sources_passed": true
+  },
+  "measurement": {
+    "clock": "guest CLOCK_MONOTONIC",
+    "raw_unit": "ns",
+    "derived_unit": "ms",
+    "runs_per_case_and_entry": 1,
+    "helper_delay_ms": 150,
+    "stop_delay_ms": 100,
+    "timer_first_ms": 50,
+    "worker_deadline_ms": 2000,
+    "parent_deadline_ms": 3000,
+    "host_deadline_seconds": 20,
+    "interval_definition": "接收时间减调用完成时间为下界，减调用开始时间为上界；范围保存原始差值。",
+    "extra_syscalls": "timer/SIGUSR1 handler 与成功 read 后调用 clock_gettime；普通 EAGAIN 分支保持 read，user_loop/getpid 主体不调用时钟。",
+    "post_loop_read_cases": [
+      "user_loop",
+      "getpid"
+    ],
+    "poll_stop": "poll 等待返回后检查共享 stop，实际退出间隔保留。",
+    "statistics": "每个模式与入口只有一个样本，未进行独立重复、频率控制、温度或功耗采集。",
+    "host_load_average": [
+      {
+        "case": "user_loop",
+        "entry": "cli",
+        "before": [
+          4.41552734375,
+          5.26953125,
+          6.55078125
+        ],
+        "after": [
+          4.41552734375,
+          5.26953125,
+          6.55078125
+        ]
+      },
+      {
+        "case": "user_loop",
+        "entry": "gcd",
+        "before": [
+          4.41552734375,
+          5.26953125,
+          6.55078125
+        ],
+        "after": [
+          4.41552734375,
+          5.26953125,
+          6.55078125
+        ]
+      },
+      {
+        "case": "getpid",
+        "entry": "cli",
+        "before": [
+          4.41552734375,
+          5.26953125,
+          6.55078125
+        ],
+        "after": [
+          4.41552734375,
+          5.26953125,
+          6.55078125
+        ]
+      },
+      {
+        "case": "getpid",
+        "entry": "gcd",
+        "before": [
+          4.41552734375,
+          5.26953125,
+          6.55078125
+        ],
+        "after": [
+          4.41552734375,
+          5.26953125,
+          6.55078125
+        ]
+      },
+      {
+        "case": "read_eagain",
+        "entry": "cli",
+        "before": [
+          4.41552734375,
+          5.26953125,
+          6.55078125
+        ],
+        "after": [
+          4.41552734375,
+          5.26953125,
+          6.55078125
+        ]
+      },
+      {
+        "case": "read_eagain",
+        "entry": "gcd",
+        "before": [
+          4.41552734375,
+          5.26953125,
+          6.55078125
+        ],
+        "after": [
+          4.41552734375,
+          5.26953125,
+          6.55078125
+        ]
+      },
+      {
+        "case": "poll_wait",
+        "entry": "cli",
+        "before": [
+          4.41552734375,
+          5.26953125,
+          6.55078125
+        ],
+        "after": [
+          4.41552734375,
+          5.26953125,
+          6.55078125
+        ]
+      },
+      {
+        "case": "poll_wait",
+        "entry": "gcd",
+        "before": [
+          4.41552734375,
+          5.26953125,
+          6.55078125
+        ],
+        "after": [
+          4.41552734375,
+          5.26953125,
+          6.55078125
+        ]
+      }
+    ]
+  },
+  "runs": [
+    {
+      "case": "user_loop",
+      "entry": "cli",
+      "status": "passed",
+      "body_syscall": null,
+      "request_bytes": 0,
+      "iterations": 73454375,
+      "eagain": 0,
+      "read_success": 1,
+      "read_in_loop": false,
+      "interrupted": 0,
+      "poll_timeouts": 0,
+      "timer_signals": 1,
+      "usr1_signals": 1,
+      "timer_in_loop": true,
+      "usr1_in_loop": true,
+      "expired": false,
+      "unexpected_result": 0,
+      "timing_ns": {
+        "helper_started_ns": 36707000,
+        "helper_wait_started_ns": 38758000,
+        "helper_woke_ns": 193583000,
+        "data_write_started_ns": 193585000,
+        "data_written_ns": 193597000,
+        "signal_send_started_ns": 193598000,
+        "signal_sent_ns": 193635000,
+        "stop_wait_started_ns": 193680000,
+        "stop_requested_ns": 293703000,
+        "entry_marker_ns": 36388000,
+        "timer_set_started_ns": 36363000,
+        "timer_set_finished_ns": 36374000,
+        "loop_started_ns": 36777000,
+        "loop_ended_ns": 293806000,
+        "data_read_ns": 293842000,
+        "timer_seen_ns": 93428000,
+        "timer_last_seen_ns": 93428000,
+        "usr1_seen_ns": 193690000
+      },
+      "delays_ms": {
+        "loop_duration": 257.029,
+        "helper_wait": 154.825,
+        "first_timer_from_set_bounds": [
+          57.054,
+          57.065
+        ],
+        "sigusr1_from_send_bounds": [
+          0.055,
+          0.092
+        ],
+        "data_read_from_write_bounds": [
+          100.245,
+          100.257
+        ],
+        "stop_to_loop_exit": 0.103
+      },
+      "host_pid": 2668,
+      "host_exit": 0,
+      "host_elapsed_ms": 375.184417,
+      "source": {
+        "stdout": "work/syscall-progress-audit-v1/run-01/user_loop-cli.jsonl",
+        "stdout_sha256": "eedec19f3ba0da312b98c200de9ee05e8f3dd1b185e62c59bc0499ebb4ea7702",
+        "guest_case_line": 33,
+        "stderr": "work/syscall-progress-audit-v1/run-01/user_loop-cli.stderr",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    {
+      "case": "user_loop",
+      "entry": "gcd",
+      "status": "passed",
+      "body_syscall": null,
+      "request_bytes": 0,
+      "iterations": 78828712,
+      "eagain": 0,
+      "read_success": 1,
+      "read_in_loop": false,
+      "interrupted": 0,
+      "poll_timeouts": 0,
+      "timer_signals": 1,
+      "usr1_signals": 1,
+      "timer_in_loop": true,
+      "usr1_in_loop": true,
+      "expired": false,
+      "unexpected_result": 0,
+      "timing_ns": {
+        "helper_started_ns": 27272000,
+        "helper_wait_started_ns": 27284000,
+        "helper_woke_ns": 182293000,
+        "data_write_started_ns": 182294000,
+        "data_written_ns": 182301000,
+        "signal_send_started_ns": 182302000,
+        "signal_sent_ns": 182342000,
+        "stop_wait_started_ns": 182398000,
+        "stop_requested_ns": 291851000,
+        "entry_marker_ns": 25857000,
+        "timer_set_started_ns": 25840000,
+        "timer_set_finished_ns": 25847000,
+        "loop_started_ns": 26152000,
+        "loop_ended_ns": 291993000,
+        "data_read_ns": 292043000,
+        "timer_seen_ns": 82246000,
+        "timer_last_seen_ns": 82246000,
+        "usr1_seen_ns": 182409000
+      },
+      "delays_ms": {
+        "loop_duration": 265.841,
+        "helper_wait": 155.009,
+        "first_timer_from_set_bounds": [
+          56.399,
+          56.406
+        ],
+        "sigusr1_from_send_bounds": [
+          0.067,
+          0.107
+        ],
+        "data_read_from_write_bounds": [
+          109.742,
+          109.749
+        ],
+        "stop_to_loop_exit": 0.142
+      },
+      "host_pid": 2723,
+      "host_exit": 0,
+      "host_elapsed_ms": 375.360625,
+      "source": {
+        "stdout": "work/syscall-progress-audit-v1/run-01/user_loop-gcd.jsonl",
+        "stdout_sha256": "aa817deda0974ef2d98a2df8ffe1fefdecacc80c6e9641e676e7a4c5ad34a8b9",
+        "guest_case_line": 34,
+        "stderr": "work/syscall-progress-audit-v1/run-01/user_loop-gcd.stderr",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    {
+      "case": "getpid",
+      "entry": "cli",
+      "status": "passed",
+      "body_syscall": 172,
+      "request_bytes": 0,
+      "iterations": 1122984,
+      "eagain": 0,
+      "read_success": 1,
+      "read_in_loop": false,
+      "interrupted": 0,
+      "poll_timeouts": 0,
+      "timer_signals": 1,
+      "usr1_signals": 1,
+      "timer_in_loop": true,
+      "usr1_in_loop": true,
+      "expired": false,
+      "unexpected_result": 0,
+      "timing_ns": {
+        "helper_started_ns": 37129000,
+        "helper_wait_started_ns": 37145000,
+        "helper_woke_ns": 202596000,
+        "data_write_started_ns": 202598000,
+        "data_written_ns": 202609000,
+        "signal_send_started_ns": 202610000,
+        "signal_sent_ns": 202649000,
+        "stop_wait_started_ns": 202697000,
+        "stop_requested_ns": 317475000,
+        "entry_marker_ns": 35874000,
+        "timer_set_started_ns": 35855000,
+        "timer_set_finished_ns": 35863000,
+        "loop_started_ns": 36180000,
+        "loop_ended_ns": 317590000,
+        "data_read_ns": 317629000,
+        "timer_seen_ns": 92090000,
+        "timer_last_seen_ns": 92090000,
+        "usr1_seen_ns": 202706000
+      },
+      "delays_ms": {
+        "loop_duration": 281.41,
+        "helper_wait": 165.451,
+        "first_timer_from_set_bounds": [
+          56.227,
+          56.235
+        ],
+        "sigusr1_from_send_bounds": [
+          0.057,
+          0.096
+        ],
+        "data_read_from_write_bounds": [
+          115.02,
+          115.031
+        ],
+        "stop_to_loop_exit": 0.115
+      },
+      "host_pid": 2745,
+      "host_exit": 0,
+      "host_elapsed_ms": 433.940042,
+      "source": {
+        "stdout": "work/syscall-progress-audit-v1/run-01/getpid-cli.jsonl",
+        "stdout_sha256": "22c2149b68ef2b297506a2ce8aff992531dc5ccea434caf4727e44cac5878b22",
+        "guest_case_line": 33,
+        "stderr": "work/syscall-progress-audit-v1/run-01/getpid-cli.stderr",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    {
+      "case": "getpid",
+      "entry": "gcd",
+      "status": "passed",
+      "body_syscall": 172,
+      "request_bytes": 0,
+      "iterations": 1190470,
+      "eagain": 0,
+      "read_success": 1,
+      "read_in_loop": false,
+      "interrupted": 0,
+      "poll_timeouts": 0,
+      "timer_signals": 1,
+      "usr1_signals": 1,
+      "timer_in_loop": true,
+      "usr1_in_loop": true,
+      "expired": false,
+      "unexpected_result": 0,
+      "timing_ns": {
+        "helper_started_ns": 36520000,
+        "helper_wait_started_ns": 36681000,
+        "helper_woke_ns": 201688000,
+        "data_write_started_ns": 201690000,
+        "data_written_ns": 201702000,
+        "signal_send_started_ns": 201702000,
+        "signal_sent_ns": 201737000,
+        "stop_wait_started_ns": 201795000,
+        "stop_requested_ns": 322090000,
+        "entry_marker_ns": 36315000,
+        "timer_set_started_ns": 36297000,
+        "timer_set_finished_ns": 36304000,
+        "loop_started_ns": 36716000,
+        "loop_ended_ns": 322203000,
+        "data_read_ns": 322245000,
+        "timer_seen_ns": 90984000,
+        "timer_last_seen_ns": 90984000,
+        "usr1_seen_ns": 201805000
+      },
+      "delays_ms": {
+        "loop_duration": 285.487,
+        "helper_wait": 165.007,
+        "first_timer_from_set_bounds": [
+          54.68,
+          54.687
+        ],
+        "sigusr1_from_send_bounds": [
+          0.068,
+          0.103
+        ],
+        "data_read_from_write_bounds": [
+          120.543,
+          120.555
+        ],
+        "stop_to_loop_exit": 0.113
+      },
+      "host_pid": 2800,
+      "host_exit": 0,
+      "host_elapsed_ms": 430.620459,
+      "source": {
+        "stdout": "work/syscall-progress-audit-v1/run-01/getpid-gcd.jsonl",
+        "stdout_sha256": "b074c15384c357bf6004b999b44b3b9ec4e02a7a477fb3d4b0a78f55491c25cd",
+        "guest_case_line": 34,
+        "stderr": "work/syscall-progress-audit-v1/run-01/getpid-gcd.stderr",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    {
+      "case": "read_eagain",
+      "entry": "cli",
+      "status": "passed",
+      "body_syscall": 63,
+      "request_bytes": 524288,
+      "iterations": 1043371,
+      "eagain": 1043370,
+      "read_success": 1,
+      "read_in_loop": true,
+      "interrupted": 0,
+      "poll_timeouts": 0,
+      "timer_signals": 1,
+      "usr1_signals": 1,
+      "timer_in_loop": true,
+      "usr1_in_loop": true,
+      "expired": false,
+      "unexpected_result": 0,
+      "timing_ns": {
+        "helper_started_ns": 34599000,
+        "helper_wait_started_ns": 34634000,
+        "helper_woke_ns": 198017000,
+        "data_write_started_ns": 198018000,
+        "data_written_ns": 198029000,
+        "signal_send_started_ns": 198029000,
+        "signal_sent_ns": 198067000,
+        "stop_wait_started_ns": 198115000,
+        "stop_requested_ns": 310029000,
+        "entry_marker_ns": 26018000,
+        "timer_set_started_ns": 25997000,
+        "timer_set_finished_ns": 26007000,
+        "loop_started_ns": 26340000,
+        "loop_ended_ns": 310145000,
+        "data_read_ns": 198140000,
+        "timer_seen_ns": 81650000,
+        "timer_last_seen_ns": 81650000,
+        "usr1_seen_ns": 198124000
+      },
+      "delays_ms": {
+        "loop_duration": 283.805,
+        "helper_wait": 163.383,
+        "first_timer_from_set_bounds": [
+          55.643,
+          55.653
+        ],
+        "sigusr1_from_send_bounds": [
+          0.057,
+          0.095
+        ],
+        "data_read_from_write_bounds": [
+          0.111,
+          0.122
+        ],
+        "stop_to_loop_exit": 0.116
+      },
+      "host_pid": 2804,
+      "host_exit": 0,
+      "host_elapsed_ms": 391.774666,
+      "source": {
+        "stdout": "work/syscall-progress-audit-v1/run-01/read_eagain-cli.jsonl",
+        "stdout_sha256": "4e1c8a1f21a5b5d0787983fe973e878ea782e0fc6025a10f419b3cc9df2bcd26",
+        "guest_case_line": 33,
+        "stderr": "work/syscall-progress-audit-v1/run-01/read_eagain-cli.stderr",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    {
+      "case": "read_eagain",
+      "entry": "gcd",
+      "status": "passed",
+      "body_syscall": 63,
+      "request_bytes": 524288,
+      "iterations": 1020273,
+      "eagain": 1020272,
+      "read_success": 1,
+      "read_in_loop": true,
+      "interrupted": 0,
+      "poll_timeouts": 0,
+      "timer_signals": 1,
+      "usr1_signals": 1,
+      "timer_in_loop": true,
+      "usr1_in_loop": true,
+      "expired": false,
+      "unexpected_result": 0,
+      "timing_ns": {
+        "helper_started_ns": 26114000,
+        "helper_wait_started_ns": 36637000,
+        "helper_woke_ns": 194480000,
+        "data_write_started_ns": 194481000,
+        "data_written_ns": 194494000,
+        "signal_send_started_ns": 194495000,
+        "signal_sent_ns": 194533000,
+        "stop_wait_started_ns": 194593000,
+        "stop_requested_ns": 302307000,
+        "entry_marker_ns": 25856000,
+        "timer_set_started_ns": 25838000,
+        "timer_set_finished_ns": 25846000,
+        "loop_started_ns": 26216000,
+        "loop_ended_ns": 302409000,
+        "data_read_ns": 194621000,
+        "timer_seen_ns": 81600000,
+        "timer_last_seen_ns": 81600000,
+        "usr1_seen_ns": 194602000
+      },
+      "delays_ms": {
+        "loop_duration": 276.193,
+        "helper_wait": 157.843,
+        "first_timer_from_set_bounds": [
+          55.754,
+          55.762
+        ],
+        "sigusr1_from_send_bounds": [
+          0.069,
+          0.107
+        ],
+        "data_read_from_write_bounds": [
+          0.127,
+          0.14
+        ],
+        "stop_to_loop_exit": 0.102
+      },
+      "host_pid": 2861,
+      "host_exit": 0,
+      "host_elapsed_ms": 393.98725,
+      "source": {
+        "stdout": "work/syscall-progress-audit-v1/run-01/read_eagain-gcd.jsonl",
+        "stdout_sha256": "e2ef3fd2f1b8ee3d9115de699d5efb38db67328e5fc39dff96e4b86ef369644f",
+        "guest_case_line": 34,
+        "stderr": "work/syscall-progress-audit-v1/run-01/read_eagain-gcd.stderr",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    {
+      "case": "poll_wait",
+      "entry": "cli",
+      "status": "passed",
+      "body_syscall": 73,
+      "request_bytes": 524288,
+      "iterations": 6,
+      "eagain": 0,
+      "read_success": 1,
+      "read_in_loop": true,
+      "interrupted": 1,
+      "poll_timeouts": 4,
+      "timer_signals": 1,
+      "usr1_signals": 1,
+      "timer_in_loop": true,
+      "usr1_in_loop": true,
+      "expired": false,
+      "unexpected_result": 0,
+      "timing_ns": {
+        "helper_started_ns": 36246000,
+        "helper_wait_started_ns": 36355000,
+        "helper_woke_ns": 192011000,
+        "data_write_started_ns": 192012000,
+        "data_written_ns": 192029000,
+        "signal_send_started_ns": 192030000,
+        "signal_sent_ns": 192082000,
+        "stop_wait_started_ns": 192156000,
+        "stop_requested_ns": 302111000,
+        "entry_marker_ns": 35967000,
+        "timer_set_started_ns": 35948000,
+        "timer_set_finished_ns": 35956000,
+        "loop_started_ns": 36329000,
+        "loop_ended_ns": 362156000,
+        "data_read_ns": 192234000,
+        "timer_seen_ns": 91576000,
+        "timer_last_seen_ns": 91576000,
+        "usr1_seen_ns": 192172000
+      },
+      "delays_ms": {
+        "loop_duration": 325.827,
+        "helper_wait": 155.656,
+        "first_timer_from_set_bounds": [
+          55.62,
+          55.628
+        ],
+        "sigusr1_from_send_bounds": [
+          0.09,
+          0.142
+        ],
+        "data_read_from_write_bounds": [
+          0.205,
+          0.222
+        ],
+        "stop_to_loop_exit": 60.045
+      },
+      "host_pid": 2883,
+      "host_exit": 0,
+      "host_elapsed_ms": 482.103959,
+      "source": {
+        "stdout": "work/syscall-progress-audit-v1/run-01/poll_wait-cli.jsonl",
+        "stdout_sha256": "40a57199d365b818a58b7a0a6bf455b5eff8e860d2405753e3dd36a6847a19b1",
+        "guest_case_line": 33,
+        "stderr": "work/syscall-progress-audit-v1/run-01/poll_wait-cli.stderr",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    {
+      "case": "poll_wait",
+      "entry": "gcd",
+      "status": "passed",
+      "body_syscall": 73,
+      "request_bytes": 524288,
+      "iterations": 5,
+      "eagain": 0,
+      "read_success": 1,
+      "read_in_loop": true,
+      "interrupted": 1,
+      "poll_timeouts": 3,
+      "timer_signals": 1,
+      "usr1_signals": 1,
+      "timer_in_loop": true,
+      "usr1_in_loop": true,
+      "expired": false,
+      "unexpected_result": 0,
+      "timing_ns": {
+        "helper_started_ns": 56680000,
+        "helper_wait_started_ns": 56793000,
+        "helper_woke_ns": 211758000,
+        "data_write_started_ns": 211761000,
+        "data_written_ns": 211781000,
+        "signal_send_started_ns": 211782000,
+        "signal_sent_ns": 211846000,
+        "stop_wait_started_ns": 211921000,
+        "stop_requested_ns": 312072000,
+        "entry_marker_ns": 56398000,
+        "timer_set_started_ns": 56380000,
+        "timer_set_finished_ns": 56388000,
+        "loop_started_ns": 56765000,
+        "loop_ended_ns": 321070000,
+        "data_read_ns": 212007000,
+        "timer_seen_ns": 110772000,
+        "timer_last_seen_ns": 110772000,
+        "usr1_seen_ns": 211941000
+      },
+      "delays_ms": {
+        "loop_duration": 264.305,
+        "helper_wait": 154.965,
+        "first_timer_from_set_bounds": [
+          54.384,
+          54.392
+        ],
+        "sigusr1_from_send_bounds": [
+          0.095,
+          0.159
+        ],
+        "data_read_from_write_bounds": [
+          0.226,
+          0.246
+        ],
+        "stop_to_loop_exit": 8.998
+      },
+      "host_pid": 2940,
+      "host_exit": 0,
+      "host_elapsed_ms": 445.542208,
+      "source": {
+        "stdout": "work/syscall-progress-audit-v1/run-01/poll_wait-gcd.jsonl",
+        "stdout_sha256": "075e34b1c323d678703705d048e544fb9052d4360bba94dd88c8c443764ddb10",
+        "guest_case_line": 34,
+        "stderr": "work/syscall-progress-audit-v1/run-01/poll_wait-gcd.stderr",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    }
+  ],
+  "completion": {
+    "expected_runs": 8,
+    "completed_runs": 8,
+    "missing_runs": [],
+    "all_host_exit_zero": true,
+    "all_guest_fd_mapping_child_and_bpf_cleanup_passed": true,
+    "observer_exceptions": []
+  },
+  "initial_failure": {
+    "phase": "build-01 auxiliary-runtime path check",
+    "status": "failed",
+    "error": {
+      "type": "FileNotFoundError",
+      "message": "[Errno 2] No such file or directory: '/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-vold-linux-v1/mount/plain-repo/work/native-linux-nce/android/android36/bin/linker64'"
+    },
+    "guest_compile_and_link_passed": true,
+    "guest_execution_started": false,
+    "inputs_unchanged_at_end": true,
+    "resolved_runtime": "work/native-linux-nce/android/android36/com.android.runtime"
+  },
+  "source_reports": {
+    "first_build": {
+      "path": "work/syscall-progress-audit-v1/build-01/report.json",
+      "sha256": "a4b7b9419adda167a049b1a67fe21a5d71164033d8e7a012e096755389ac6332"
+    },
+    "build": {
+      "path": "work/syscall-progress-audit-v1/build-02/report.json",
+      "sha256": "1973b263824c6a8d2fadc677bb555b3b918829b546c9dc4a5bccaf36435ea222"
+    },
+    "run": {
+      "path": "work/syscall-progress-audit-v1/run-01/report.json",
+      "sha256": "306f62c4ca1b395cfe17d3b2dcf2da3e91628708e057a2b42b87995dbeecf9f5"
+    }
+  },
+  "reproduction": {
+    "prepare": "python3 work/syscall-progress-audit-v1/prepare.py --output work/syscall-progress-audit-v1/build-02",
+    "run": "python3 work/syscall-progress-audit-v1/run.py --build work/syscall-progress-audit-v1/build-02 --output work/syscall-progress-audit-v1/run-01 --timeout 20",
+    "new_attempt": "复现使用尚未存在的 build/run 直接子目录，并串行协调所有 LKL host。"
+  },
+  "boundaries": [
+    "四种受控循环的实际进展已验证。",
+    "Android read 的任务、FD 与等待契约继续由 v13 诊断。",
+    "完整 boot、应用操作与持续性能按原目标分别验收。",
+    "iOS 实际执行、JIT 授权、设备资源与热状态待真机验证。"
+  ]
+}
