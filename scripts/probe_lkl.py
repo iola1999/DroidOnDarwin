@@ -62,6 +62,19 @@ def check_ext4_shutdown(path):
     print('Ext4 shutdown state is clean: ' + str(path), flush=True)
 
 
+def changed_inputs(sources, started_ns, directory_cutoffs=()):
+    """目录内输入使用对应准备完成时间，其他输入使用运行启动时间。"""
+    cutoffs = [(directory.resolve(), cutoff) for directory, cutoff in directory_cutoffs]
+    changed = []
+    for path in sources:
+        resolved = path.resolve()
+        cutoff = next((cutoff for directory, cutoff in cutoffs
+                       if resolved.is_relative_to(directory)), started_ns)
+        if path.stat().st_mtime_ns > cutoff:
+            changed.append(path)
+    return changed
+
+
 def package_elf(path, *, smp_exports=None):
     data = path.read_bytes()
     phoff, shoff = struct.unpack_from("<QQ", data, 32)
@@ -270,6 +283,7 @@ def main():
             f"CC={shlex.join(map(str, target))}", f"HOSTCC={shlex.join([clang, '-isysroot', sdk, '-I', str(include), *(['-idirafter', str(OUT / 'linux-uapi/include')] if PROCESS else [])])}",
             f"LD={shutil.which('ld.lld')}", "AR=llvm-ar", "NM=llvm-nm", "OBJCOPY=llvm-objcopy",
             "OBJDUMP=llvm-objdump", "STRIP=llvm-strip"]
+    source_prepared_ns = time.time_ns()
     BUILD.mkdir(exist_ok=True)
     with (OUT / "lkl-build.log").open("w") as log:
         if PROCESS:
@@ -325,6 +339,7 @@ def main():
         run([*make, "-j8", "all"], env=env, stdout=log, stderr=subprocess.STDOUT)
     if PROCESS:
         ashmem_dependency_command, ashmem_inputs = lkl_ashmem_patch.compiled_inputs(BUILD)
+    build_finished_ns = time.time_ns()
     shutil.copyfile(SOURCE / "arch/lkl/include/uapi/asm/host_ops.h", OUT / "lkl-host-ops.h")
     run([*target, "-fPIC", "-fno-stack-protector", "-O2", "-I", OUT, "-I", EXPERIMENT,
          "-c", EXPERIMENT / "lkl-bridge.c", "-o", OUT / "lkl-bridge.o"])
@@ -585,7 +600,8 @@ def main():
         manifest["aosp_launcher_sha256"] = hashlib.sha256(
             (android / "android36-aosp-components/Launcher3QuickStep/Launcher3QuickStep.apk").read_bytes()).hexdigest()
         manifest["android_gralloc_build"] = json.loads((ROOT / "work/native-linux-nce/gralloc-build/manifest.json").read_text())
-    changed = [str(p.relative_to(ROOT)) for p in sources if p.stat().st_mtime_ns > started_ns]
+    changed = [str(p.relative_to(ROOT)) for p in changed_inputs(
+        sources, started_ns, ((SOURCE, source_prepared_ns), (BUILD, build_finished_ns)))]
     if changed:
         raise SystemExit("Build inputs changed during validation; rerun: " + ", ".join(changed))
     manifest["input_sha256"] = {str(p.relative_to(ROOT)): hashlib.sha256(p.read_bytes()).hexdigest() for p in sources}

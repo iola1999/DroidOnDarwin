@@ -1,0 +1,149 @@
+{
+  "schema": 1,
+  "date": "2026-11-14",
+  "base_head": "b1fdf1becbbba5f62e6fb8184d105a176e26814b",
+  "scope": "独立原生 16 KiB processes CLI/GCD；Bionic、Binder、ART 与既有平台固定件。",
+  "source_changes": {
+    "scripts/probe_lkl.py": "a8f2c2c3e3163bb976bc707c214260f87c405de06262acc3857668c0a3ee3b6f",
+    "scripts/test_lkl_input_completion.py": "56361662f5546329987b5f5435bd7ea07dfbe457786c7381f7d23b0fc2e5b0f5"
+  },
+  "before": {
+    "command": [
+      "python3",
+      "-B",
+      "scripts/probe_lkl.py",
+      "--processes",
+      "--storage-image",
+      "work/native-linux-nce/native-merge-check-v1/data.img"
+    ],
+    "outer_returncode": 1,
+    "modes": {
+      "cli": {
+        "records": 5807,
+        "json_errors": [],
+        "completed": true,
+        "failed_checks": [],
+        "passed_checks": 204,
+        "inherited_blocked_threads": 0,
+        "storage_generation": 1
+      },
+      "gcd": {
+        "records": 5809,
+        "json_errors": [],
+        "completed": true,
+        "failed_checks": [],
+        "passed_checks": 204,
+        "inherited_blocked_threads": 67,
+        "storage_generation": 2
+      }
+    },
+    "ext4": {
+      "present": true,
+      "magic": 61267,
+      "state": 1,
+      "incompat": 8898,
+      "ro_compat": 1131,
+      "clean": true
+    },
+    "rejected_generated_input_rows": 79,
+    "result": {
+      "path": "work/native-processes-merge-validation-v1/result.json",
+      "sha256": "3cc85254f6ae36f4b6aa99fd45191cbe04464930ddfe85a297d37869c2eee425"
+    },
+    "failure": {
+      "path": "work/native-processes-merge-validation-v1/initial-completion-failure.json",
+      "sha256": "fdf62c7b4dedab856d2011c4480374766d9835fab6b295e843e254a6a7a37b31"
+    }
+  },
+  "regression": {
+    "command": [
+      "python3",
+      "-B",
+      "scripts/test_lkl_input_completion.py",
+      "-v"
+    ],
+    "returncode": 0,
+    "passed": true,
+    "cases": 4,
+    "result": {
+      "path": "work/native-processes-merge-validation-v1/input-completion-regression.json",
+      "sha256": "8ca979f527a415dfa2a832871bf8392ba9eae5318b7c5baa556aa6ddc07350f5"
+    }
+  },
+  "after": {
+    "command": [
+      "python3",
+      "-B",
+      "scripts/probe_lkl.py",
+      "--processes",
+      "--storage-image",
+      "work/native-linux-nce/native-merge-check-v2/data.img"
+    ],
+    "outer_returncode": 0,
+    "modes": {
+      "cli": {
+        "records": 5807,
+        "json_errors": [],
+        "completed": true,
+        "failed_checks": [],
+        "passed_checks": 204,
+        "inherited_blocked_threads": 0,
+        "storage_generation": 1
+      },
+      "gcd": {
+        "records": 5809,
+        "json_errors": [],
+        "completed": true,
+        "failed_checks": [],
+        "passed_checks": 204,
+        "inherited_blocked_threads": 67,
+        "storage_generation": 2
+      }
+    },
+    "ext4": {
+      "present": true,
+      "magic": 61267,
+      "state": 1,
+      "incompat": 8898,
+      "ro_compat": 1131,
+      "clean": true
+    },
+    "input_count": 822,
+    "repository_input_count": 209,
+    "all_actual_input_hashes_matched_before_cleanup": true,
+    "kernel_sha256": "87efa69e1cd62dd5ff3dea89ae09ded766462815116a277b5964b780525f8292",
+    "kernel_unchanged_from_initial_run": true,
+    "config_sha256": "56ad2ebe2e5d3ec1d199b5669c792dc216951d71f33ce9d70a7a36bde59015f4",
+    "ios_object_sha256": {
+      "ios-lkl-host.o": "6af8df97e8f073c7b76ce9930fb2b1dff586f64e5b1749ae5ece8382210d3af0",
+      "ios-lkl-process-host.o": "5e13e420b01bf0eeea28b1e28985610434d6968d1b4014deca8e6ff0165da608",
+      "ios-payload.o": "f2aefac3bef525b9f4702e777274b1a7edbc97b9c0e198d5301d6817a3f87f64"
+    },
+    "summary": {
+      "path": "work/native-processes-merge-validation-v1/after-input-check-fix-v1/retained/lkl-summary.json",
+      "sha256": "514132f8fef8e351a9776ef2ea9d8a71ddbed66d38198f63630718d1d614ac33"
+    },
+    "result": {
+      "path": "work/native-processes-merge-validation-v1/after-input-check-fix-v1/validation-summary.json",
+      "sha256": "bde7f406b5ce851428712fa18869f317332652bb71db7f373b0db823b39d0dcf"
+    }
+  },
+  "shared_existing_input_contents_unchanged": true,
+  "repository_tracking_added_results": [
+    "experiments/native-linux/results-sdk-binder-init-20261114.json",
+    "experiments/native-linux/results-sdk-binder-state-init-20261114.json"
+  ],
+  "review": {
+    "reviewer": "handoff_audit",
+    "passed": true,
+    "source_boundary": "apply/file2alias 完成后、headers_install 与内核编译前",
+    "build_boundary": "all 与 compiled_inputs 完成后"
+  },
+  "cleanup_manifest": "work/cleanup-2026-11-14/native-processes-merge-v1.json",
+  "deviations": "原计划只补原生验收；首次运行复现输入完成检查的生成文件时间问题，主会话授权在隔离树修复并补回归。",
+  "limits": [
+    "完成检查沿用修改时间；保持原修改时间的内容变化不在这项检查的检测范围内。",
+    "本机负载验证；设备运行、资源、JIT 授权、持续性能和热状态待真机验证。",
+    "新原生运行使用既有固定件；原 SDK 默认显示和 HyperOS 阶段另行验收。"
+  ]
+}
