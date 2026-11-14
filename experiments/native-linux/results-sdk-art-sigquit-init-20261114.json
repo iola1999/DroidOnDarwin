@@ -1,0 +1,309 @@
+{
+  "scope": "固定 SDK36 r07、16 KiB、BPF JIT 原 init 诊断；本机 Apple Silicon/macOS，设备执行与性能未验证",
+  "full_boot_validation": "failed",
+  "runs": {
+    "8": {
+      "summary": {
+        "status": "failed",
+        "full_boot_validation": "failed",
+        "host_build_passed": true,
+        "observation_and_cleanup_passed": true,
+        "capture_structure_passed": true,
+        "ashmem_original_passed": true,
+        "source_unchanged": true,
+        "source_revision_unchanged": true,
+        "data_persistence_validated": true,
+        "metadata_persistence_validated": true,
+        "original_sqlite_validated": true,
+        "runs": [
+          {
+            "entry": "cli",
+            "phase": "lifecycle",
+            "returncode": 0,
+            "validator": true,
+            "process_group_empty": true,
+            "data_clean": true,
+            "metadata_clean": true
+          },
+          {
+            "entry": "gcd",
+            "phase": "lifecycle",
+            "returncode": 0,
+            "validator": true,
+            "process_group_empty": true,
+            "data_clean": true,
+            "metadata_clean": true
+          },
+          {
+            "entry": "cli",
+            "phase": "original",
+            "returncode": 0,
+            "validator": true,
+            "process_group_empty": true,
+            "data_clean": false,
+            "metadata_clean": true
+          },
+          {
+            "entry": "gcd",
+            "phase": "original",
+            "returncode": 0,
+            "validator": true,
+            "process_group_empty": true,
+            "data_clean": false,
+            "metadata_clean": true
+          },
+          {
+            "entry": "cli",
+            "phase": "recovery",
+            "returncode": 0,
+            "validator": true,
+            "process_group_empty": true,
+            "data_clean": true,
+            "metadata_clean": true
+          },
+          {
+            "entry": "gcd",
+            "phase": "recovery",
+            "returncode": 0,
+            "validator": true,
+            "process_group_empty": true,
+            "data_clean": true,
+            "metadata_clean": true
+          }
+        ],
+        "signals": [
+          {
+            "entry": "cli",
+            "boot_id": "91f8f201-d065-4c81-8d6f-7bf916c8d62b",
+            "signal_attempted": false,
+            "syscall_result": null,
+            "target_pid": 0,
+            "cleanup_failed": false,
+            "regs_restored": true
+          },
+          {
+            "entry": "gcd",
+            "boot_id": "6a3b3730-1fd7-441b-a609-ccea91d6412a",
+            "signal_attempted": false,
+            "syscall_result": null,
+            "target_pid": 0,
+            "cleanup_failed": false,
+            "regs_restored": true
+          }
+        ],
+        "trace_summary": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/art-sigquit-trace-v8/trace-summary.json"
+      },
+      "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/art-sigquit-original-init-v8/result-summary-v8.json",
+      "sha256": "1f28b23b8a53d718d44bedf7b8df6c7288fc7c87dc314811e05897d75698be4b"
+    },
+    "9": {
+      "summary": {
+        "status": "failed",
+        "full_boot_validation": "failed",
+        "host_build_passed": true,
+        "observation_and_cleanup_passed": true,
+        "capture_structure_passed": true,
+        "ashmem_original_passed": true,
+        "source_unchanged": true,
+        "source_revision_unchanged": true,
+        "data_persistence_validated": true,
+        "metadata_persistence_validated": true,
+        "original_sqlite_validated": true,
+        "signals": [
+          {
+            "entry": "cli",
+            "target_pid": 492,
+            "boot_id": "e9b546d0-b4d4-42fc-a5aa-44939f92ff4b",
+            "signal_attempted": true,
+            "syscall_result": 0,
+            "opened_fds": 80,
+            "close_successes": 80,
+            "incomplete": false
+          },
+          {
+            "entry": "gcd",
+            "target_pid": 491,
+            "boot_id": "8b2f9b58-8320-4b63-b6fb-8e2140f2c34f",
+            "signal_attempted": true,
+            "syscall_result": 0,
+            "opened_fds": 77,
+            "close_successes": 77,
+            "incomplete": false
+          }
+        ],
+        "trace_summary": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/art-sigquit-trace-v9/trace-summary.json",
+        "runs": [
+          {
+            "entry": "cli",
+            "phase": "lifecycle",
+            "returncode": 0,
+            "process_group_empty": true,
+            "data_clean": true,
+            "metadata_clean": true
+          },
+          {
+            "entry": "gcd",
+            "phase": "lifecycle",
+            "returncode": 0,
+            "process_group_empty": true,
+            "data_clean": true,
+            "metadata_clean": true
+          },
+          {
+            "entry": "cli",
+            "phase": "original",
+            "returncode": 0,
+            "process_group_empty": true,
+            "data_clean": false,
+            "metadata_clean": true
+          },
+          {
+            "entry": "gcd",
+            "phase": "original",
+            "returncode": 0,
+            "process_group_empty": true,
+            "data_clean": false,
+            "metadata_clean": true
+          },
+          {
+            "entry": "cli",
+            "phase": "recovery",
+            "returncode": 0,
+            "process_group_empty": true,
+            "data_clean": true,
+            "metadata_clean": true
+          },
+          {
+            "entry": "gcd",
+            "phase": "recovery",
+            "returncode": 0,
+            "process_group_empty": true,
+            "data_clean": true,
+            "metadata_clean": true
+          }
+        ]
+      },
+      "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/art-sigquit-original-init-v9/result-summary-v9.json",
+      "sha256": "e4df6181df11dd96f9d8b029e49c290ef4848e9c1cfd0574b6666a3e462f248f"
+    }
+  },
+  "trace_summaries": {
+    "8": {
+      "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/art-sigquit-trace-v8/trace-summary.json",
+      "sha256": "023e2da976a91847eb2cfdd521612fd85e89afea3e0d664b093a8ab6c9de8050",
+      "files": [
+        {
+          "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/art-sigquit-trace-v8/final-02/anr_1970-02-01-18-21-33-413",
+          "sha256": "98f15670c0835eecab191fd49b48d3192e0c7a7cd9678f0dbe2ef539d581d2b3",
+          "entry": "cli",
+          "pid": 493,
+          "complete": true,
+          "binder_method": "getBootDisplayModeSupport",
+          "other_missing_end_pids": []
+        },
+        {
+          "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/art-sigquit-trace-v8/final-02/anr_1970-02-01-18-22-19-004",
+          "sha256": "68412dac9c75934b7d8a1954e1ff36f537c2195a29644b3184825d23e17ceaab",
+          "entry": "cli",
+          "pid": 493,
+          "complete": true,
+          "binder_method": "getBootDisplayModeSupport",
+          "other_missing_end_pids": []
+        },
+        {
+          "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/art-sigquit-trace-v8/final-02/anr_1970-02-01-18-26-33-752",
+          "sha256": "5c3af67ca1d2d66e9c287215d4513868cd102d197fdb44e19afa402d9a08b7d3",
+          "entry": "gcd",
+          "pid": 486,
+          "complete": true,
+          "binder_method": "getBootDisplayModeSupport",
+          "other_missing_end_pids": []
+        },
+        {
+          "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/art-sigquit-trace-v8/final-02/anr_1970-02-01-18-27-18-950",
+          "sha256": "0d94df89caee156b046f41199472947873eb63cfd16cf33bc1cb92a3ace336a8",
+          "entry": "gcd",
+          "pid": 486,
+          "complete": true,
+          "binder_method": "getBootDisplayModeSupport",
+          "other_missing_end_pids": []
+        }
+      ]
+    },
+    "9": {
+      "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/art-sigquit-trace-v9/trace-summary.json",
+      "sha256": "f469aad705db221671a208743fefdd2c3896f3afd69ded68c20501fcf2573669",
+      "files": [
+        {
+          "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/art-sigquit-trace-v9/anr_1970-02-01-18-33-33-852",
+          "sha256": "bf5b7fe06033d9a5ad5bdc35966e0cfa16367e83b1b6837724232995783d3fad",
+          "entry": "cli",
+          "pid": 492,
+          "complete": true,
+          "binder_method": "getBootDisplayModeSupport",
+          "other_missing_end_pids": []
+        },
+        {
+          "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/art-sigquit-trace-v9/anr_1970-02-01-18-34-19-354",
+          "sha256": "1ad25d45e72f2716cef7a7d44d5776a1e3e8cea8840b77701c61f825aba84931",
+          "entry": "cli",
+          "pid": 492,
+          "complete": true,
+          "binder_method": "getBootDisplayModeSupport",
+          "other_missing_end_pids": []
+        },
+        {
+          "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/art-sigquit-trace-v9/trace_00",
+          "sha256": "f097687c1dcf93043849d9e8b910f8893cc762ad18d373c2da30f8b63b378b37",
+          "entry": "cli",
+          "pid": 492,
+          "complete": true,
+          "binder_method": "getPhysicalDisplayIds",
+          "other_missing_end_pids": []
+        },
+        {
+          "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/art-sigquit-trace-v9/anr_1970-02-01-18-38-39-897",
+          "sha256": "86386c44e4b2e6dce42a8dccfa14a6112dd54e5305ea2ba0d0d057196bb85ca5",
+          "entry": "gcd",
+          "pid": 491,
+          "complete": true,
+          "binder_method": "getBootDisplayModeSupport",
+          "other_missing_end_pids": []
+        },
+        {
+          "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/art-sigquit-trace-v9/anr_1970-02-01-18-39-25-984",
+          "sha256": "22d2242fb01ee24b05fb52e519a684fcad848bbca8b93b7df12bdeb2e233fbb9",
+          "entry": "gcd",
+          "pid": 491,
+          "complete": true,
+          "binder_method": "getBootDisplayModeSupport",
+          "other_missing_end_pids": [
+            "298",
+            "305"
+          ]
+        },
+        {
+          "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/art-sigquit-trace-v9/trace_01",
+          "sha256": "c8111852e8a042a5825d622fa45f890c113640f2e687b7e9e1fe48acf98f136e",
+          "entry": "gcd",
+          "pid": 491,
+          "complete": true,
+          "binder_method": "getBootDisplayModeSupport",
+          "other_missing_end_pids": []
+        }
+      ]
+    }
+  },
+  "directory_abi": {
+    "original_flags": 589824,
+    "corrected_flags": 540672,
+    "O_DIRECTORY": 16384,
+    "O_DIRECT": 65536,
+    "O_CLOEXEC": 524288
+  },
+  "runtime_source_revision": "756cdee6b68fb7416bd5deb57a1a3c40da7c6819",
+  "cleanup_manifests": [
+    "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/cleanup-2026-11-14/art-sigquit-original-init-v8.json",
+    "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/cleanup-2026-11-14/art-sigquit-original-init-v9.json"
+  ]
+}
