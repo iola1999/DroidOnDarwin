@@ -1,0 +1,1038 @@
+{
+  "scope": "固定 SDK36 r07 原 init 的 16 KiB 600 秒后期 Binder/ART 诊断；完整系统与持续性能继续验证",
+  "record_date": "2026-11-15",
+  "status": "failed",
+  "full_boot_validation": "failed",
+  "source_revision": "774e47ae0125ce066564fa81173baf471b7eb94c",
+  "environment": {
+    "platform": "macOS-27.0-arm64-arm-64bit-Mach-O",
+    "cpu": "Apple M5 Ultra",
+    "system_build": "26A428",
+    "execution": "direct",
+    "mapping": "pte",
+    "guest_layout": "sparse",
+    "data_tbi": true,
+    "code_memory": "dual",
+    "guest_page_bytes": 16384,
+    "cpus": 1,
+    "guest_ram_bytes": 1073741824,
+    "translation_cache_bytes": 134217728,
+    "bpf_jit": true,
+    "high_res_timers": false,
+    "direct_memory": "flat",
+    "data_mode": "plain",
+    "observation_seconds": 600,
+    "original_entry_timeout_seconds": 660,
+    "pid1_sample_seconds": [
+      5,
+      30,
+      450
+    ]
+  },
+  "reports": {
+    "run": {
+      "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/dms-binder-state-original-init-v12-600s/run/report.json",
+      "bytes": 3295597,
+      "sha256": "2bc34f325303559c084c7faa7ec56c0f6045279eeb36d32e2795994b308d48e3"
+    },
+    "summary": {
+      "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sdk-plain-init-binder-state-16k-v12-600s/summary.json",
+      "bytes": 65254894,
+      "sha256": "5378bba639e8f6d4f22b034231786d714da282d5b5449375262ddde70e869195"
+    },
+    "prepare": {
+      "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/dms-binder-state-original-init-v12-600s/prepare-01/report.json",
+      "bytes": 1405635,
+      "sha256": "f4ecbe53aa01765bdb3536a1f98f1522381b8c75fea956fa07b2c1d33c41389a"
+    },
+    "syntax": {
+      "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/dms-binder-state-original-init-v12-600s/preflight-02/report.json",
+      "bytes": 283355,
+      "sha256": "8721315f39bfdcfe1b397e15f3de258bb4fadf371e0f72b9994f7d37b12ea462"
+    },
+    "source_audit": {
+      "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/dms-binder-state-original-init-v12-600s/completed-source-audit.json",
+      "bytes": 587192,
+      "sha256": "c09a6a00fece23827c8d1be9ea36e622ac89a554c8e63531f0914285e1f4270b"
+    },
+    "binder_fixture": {
+      "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/dms-binder-state-original-init-v12-600s/binder-validation.json",
+      "bytes": 37067,
+      "sha256": "d0f62ff72f3ba7eece3e0d1812c43ec25b61bc8c15e951ddaa800eaa8424a53f"
+    },
+    "binder_text": {
+      "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/dms-binder-state-original-init-v12-600s/binder-text/report.json",
+      "bytes": 36846,
+      "sha256": "41277e0ef153dad2ba62df7940ac88bf4b6dd6b918aca96d9bbc296f60d7b46b"
+    },
+    "trace_export": {
+      "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/art-sigquit-trace-v12-600s/report.json",
+      "bytes": 149025,
+      "sha256": "366ed48709cc4f027d44f349f6467bf67ed1d676a4fd3f3969d352f5f478b80f"
+    },
+    "trace_summary": {
+      "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/art-sigquit-trace-v12-600s/trace-summary-v12.json",
+      "bytes": 142119,
+      "sha256": "620215cd9fb4fa87c685063fd3b93ffaf88da558cddc07c2a6f5434baa4ec800"
+    },
+    "protected_disks": {
+      "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/art-sigquit-trace-v12-600s/protected-inputs.json",
+      "bytes": 12964,
+      "sha256": "5406834498c1908a285a846fde9d6aa99c695622c629c5a12021a10f976f41e3"
+    },
+    "system_server_timeline": {
+      "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/art-sigquit-trace-v12-600s/system-server-timeline-v12.json",
+      "bytes": 472773,
+      "sha256": "45d61389b819b66b4b753af7f4e418659911d07c8802cb5c671cdf830f38878f"
+    },
+    "timeline_source_verification": {
+      "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/art-sigquit-trace-v12-600s/timeline-source-verification.json",
+      "bytes": 7887,
+      "sha256": "fb05fc3c3cda2c71c642334768b2ab88d764c9ff82cbcfb2388aa417a2b688a4"
+    },
+    "independent_export_audit": {
+      "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-ptrace-generic-v1/v12-export-input-review.json",
+      "bytes": 31492,
+      "sha256": "bcf98e6797c77bc5ea45b818874e4e195c31439ae5f7b01db37f6b4054f54b13"
+    },
+    "read_static": {
+      "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/read-eagain-static-audit-v1/report.json",
+      "bytes": 26573,
+      "sha256": "df7a3bff44cf4cd7d205da97a9ae5a6cc2dde472a0ed16ec597caad66c318ca5"
+    },
+    "driver_static": {
+      "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/goldfish-pipe-wait-audit-v1/report.json",
+      "bytes": 17915,
+      "sha256": "ea56e515a82bb79a9ae48fb2dd0070e84a4b811e3917e92b3b88726aa9868168"
+    }
+  },
+  "checks": {
+    "host_build_passed": true,
+    "six_entry_order_passed": true,
+    "observation_and_cleanup_passed": true,
+    "capture_structure_passed": true,
+    "ashmem_original_passed": true,
+    "source_unchanged": true,
+    "source_revision_unchanged": true,
+    "first_stage_completed": true,
+    "full_boot_observed": false,
+    "data_persistence_validated": true,
+    "metadata_persistence_validated": true,
+    "metadata_rc_validated": true,
+    "metadata_original_unchanged": true,
+    "original_sqlite_validated": true
+  },
+  "input_verification": {
+    "frozen_files": 1682,
+    "fixed_prepare_files": 1674,
+    "generated_files": 8,
+    "actual_compilation_unique_inputs": 1115,
+    "actual_compilation_inputs_unchanged": true,
+    "verified_followup_changes": [
+      {
+        "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-vold-linux-v1/mount/plain-repo/scripts/probe_lkl.py",
+        "run_sha256": "0e0cf5c8b31281c28903ca01156879bf4fa68c6f26212ef10e350311e20471cc",
+        "current_sha256": "a8f2c2c3e3163bb976bc707c214260f87c405de06262acc3857668c0a3ee3b6f",
+        "run_git_revision": "774e47ae0125ce066564fa81173baf471b7eb94c",
+        "followup_git_revision": "c1b9616f7a3abd3047c0c9ad9b8018899786eeb5",
+        "historical_blob_verified": true,
+        "scope": "v12 结束后提交的生成输入时间检查；原 core 构建来源保持原记录"
+      }
+    ]
+  },
+  "compilation_conditions": [
+    {
+      "platform": "macos",
+      "entry": "cli",
+      "returncode": 0
+    },
+    {
+      "platform": "macos",
+      "entry": "gcd",
+      "returncode": 0
+    },
+    {
+      "platform": "ios",
+      "entry": "cli",
+      "returncode": 0
+    },
+    {
+      "platform": "ios",
+      "entry": "gcd",
+      "returncode": 0
+    }
+  ],
+  "ios_check": "arm64-apple-ios26.0 / iPhoneOS27.1 SDK，-fsyntax-only；本轮未运行 iOS guest",
+  "wrapper": {
+    "returncode": 1,
+    "process_group_empty": true,
+    "elapsed_seconds": 1266.5746530410834,
+    "time_scope": "包含准备、编译、六入口诊断与关闭，未用于启动性能比较"
+  },
+  "runs": [
+    {
+      "entry": "cli",
+      "phase": "lifecycle",
+      "returncode": 0,
+      "observation_validated": true,
+      "process_group_empty": true,
+      "cleanup_signals": [],
+      "errors": [],
+      "output_limit_exceeded": false,
+      "data_after": {
+        "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/dms-binder-state-original-init-v12-600s/run/data-16k.img",
+        "bytes": 536870912,
+        "sha256": "352d4fbf236555d5808a45351663dfad87416f5492c59b11dde36aea7a33550f",
+        "block_bytes": 4096,
+        "filesystem_bytes": 536870912,
+        "reserved_blocks": 2621,
+        "reserved_uid": 0,
+        "reserved_gid": 1065,
+        "state": 1,
+        "needs_recovery": false,
+        "orphan_present": false,
+        "clean": true,
+        "uuid": "25c89a996b5d4e54b81ec7077e6fcbeb"
+      },
+      "metadata_after": {
+        "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/dms-binder-state-original-init-v12-600s/run/metadata-16k.img",
+        "bytes": 18874368,
+        "sha256": "91b2cc14050e7fb41040eef0ec0d281ece784f55fb91314c286731419381f263",
+        "block_bytes": 4096,
+        "filesystem_bytes": 16777216,
+        "reserved_blocks": 40,
+        "reserved_uid": 0,
+        "reserved_gid": 0,
+        "state": 1,
+        "needs_recovery": false,
+        "orphan_present": false,
+        "clean": true,
+        "uuid": "b08db4c1cfe546f0b32af06729e6a3f2",
+        "partition": {
+          "name": "metadata",
+          "partition": 1,
+          "start_sector": 2048,
+          "sectors": 32768,
+          "whole_sectors": 36864
+        },
+        "gpt_prefix_sha256": "e6b383fff56dd068e890ba7e1f0ce076e50568610968b86d7f19482547d6edb5",
+        "gpt_suffix_sha256": "207a7a4dfb44a76466ecbe3ead18279c2ff4d5e39446f2f33c113094889f1128"
+      },
+      "stdout": {
+        "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sdk-plain-init-binder-state-16k-v12-600s/cli-lifecycle.jsonl",
+        "bytes": 41476,
+        "sha256": "94d7874d2098a351232a6a0779479b51f9efeed9e47981133bcbf009624b34f3"
+      }
+    },
+    {
+      "entry": "gcd",
+      "phase": "lifecycle",
+      "returncode": 0,
+      "observation_validated": true,
+      "process_group_empty": true,
+      "cleanup_signals": [],
+      "errors": [],
+      "output_limit_exceeded": false,
+      "data_after": {
+        "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/dms-binder-state-original-init-v12-600s/run/data-16k.img",
+        "bytes": 536870912,
+        "sha256": "352d4fbf236555d5808a45351663dfad87416f5492c59b11dde36aea7a33550f",
+        "block_bytes": 4096,
+        "filesystem_bytes": 536870912,
+        "reserved_blocks": 2621,
+        "reserved_uid": 0,
+        "reserved_gid": 1065,
+        "state": 1,
+        "needs_recovery": false,
+        "orphan_present": false,
+        "clean": true,
+        "uuid": "25c89a996b5d4e54b81ec7077e6fcbeb"
+      },
+      "metadata_after": {
+        "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/dms-binder-state-original-init-v12-600s/run/metadata-16k.img",
+        "bytes": 18874368,
+        "sha256": "91b2cc14050e7fb41040eef0ec0d281ece784f55fb91314c286731419381f263",
+        "block_bytes": 4096,
+        "filesystem_bytes": 16777216,
+        "reserved_blocks": 40,
+        "reserved_uid": 0,
+        "reserved_gid": 0,
+        "state": 1,
+        "needs_recovery": false,
+        "orphan_present": false,
+        "clean": true,
+        "uuid": "b08db4c1cfe546f0b32af06729e6a3f2",
+        "partition": {
+          "name": "metadata",
+          "partition": 1,
+          "start_sector": 2048,
+          "sectors": 32768,
+          "whole_sectors": 36864
+        },
+        "gpt_prefix_sha256": "e6b383fff56dd068e890ba7e1f0ce076e50568610968b86d7f19482547d6edb5",
+        "gpt_suffix_sha256": "207a7a4dfb44a76466ecbe3ead18279c2ff4d5e39446f2f33c113094889f1128"
+      },
+      "stdout": {
+        "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sdk-plain-init-binder-state-16k-v12-600s/gcd-lifecycle.jsonl",
+        "bytes": 41525,
+        "sha256": "29bc3bc60dc05cd1b83f764fe0f15ccccf90138fd55c6c997ccd35b152efb2d3"
+      }
+    },
+    {
+      "entry": "cli",
+      "phase": "original",
+      "returncode": 0,
+      "observation_validated": true,
+      "process_group_empty": true,
+      "cleanup_signals": [],
+      "errors": [],
+      "output_limit_exceeded": false,
+      "data_after": {
+        "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/dms-binder-state-original-init-v12-600s/run/data-16k.img",
+        "bytes": 536870912,
+        "sha256": "902afc4a263aaa6ae4ce2331a61504f209f482616ed439f59631ec0415c76cc8",
+        "block_bytes": 4096,
+        "filesystem_bytes": 536870912,
+        "reserved_blocks": 2621,
+        "reserved_uid": 0,
+        "reserved_gid": 1065,
+        "state": 1,
+        "needs_recovery": true,
+        "orphan_present": true,
+        "clean": false,
+        "uuid": "25c89a996b5d4e54b81ec7077e6fcbeb"
+      },
+      "metadata_after": {
+        "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/dms-binder-state-original-init-v12-600s/run/metadata-16k.img",
+        "bytes": 18874368,
+        "sha256": "59ca547aeec51d7aa851830399c271adc5088daeb575c4366779c48a3b611e86",
+        "block_bytes": 4096,
+        "filesystem_bytes": 16777216,
+        "reserved_blocks": 40,
+        "reserved_uid": 0,
+        "reserved_gid": 0,
+        "state": 1,
+        "needs_recovery": false,
+        "orphan_present": false,
+        "clean": true,
+        "uuid": "b08db4c1cfe546f0b32af06729e6a3f2",
+        "partition": {
+          "name": "metadata",
+          "partition": 1,
+          "start_sector": 2048,
+          "sectors": 32768,
+          "whole_sectors": 36864
+        },
+        "gpt_prefix_sha256": "e6b383fff56dd068e890ba7e1f0ce076e50568610968b86d7f19482547d6edb5",
+        "gpt_suffix_sha256": "207a7a4dfb44a76466ecbe3ead18279c2ff4d5e39446f2f33c113094889f1128"
+      },
+      "stdout": {
+        "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sdk-plain-init-binder-state-16k-v12-600s/cli-original.jsonl",
+        "bytes": 16105753,
+        "sha256": "fbf40ab13a41c67c15279526c6e1de57c9c0751d8a5aa31b3cf9462185db510c"
+      }
+    },
+    {
+      "entry": "gcd",
+      "phase": "original",
+      "returncode": 0,
+      "observation_validated": true,
+      "process_group_empty": true,
+      "cleanup_signals": [],
+      "errors": [],
+      "output_limit_exceeded": false,
+      "data_after": {
+        "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/dms-binder-state-original-init-v12-600s/run/data-16k.img",
+        "bytes": 536870912,
+        "sha256": "e365e7febabe27d9556a09d30880e7931f1e316a4d059b0a3e733589392b82dc",
+        "block_bytes": 4096,
+        "filesystem_bytes": 536870912,
+        "reserved_blocks": 2621,
+        "reserved_uid": 0,
+        "reserved_gid": 1065,
+        "state": 1,
+        "needs_recovery": true,
+        "orphan_present": true,
+        "clean": false,
+        "uuid": "25c89a996b5d4e54b81ec7077e6fcbeb"
+      },
+      "metadata_after": {
+        "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/dms-binder-state-original-init-v12-600s/run/metadata-16k.img",
+        "bytes": 18874368,
+        "sha256": "4533d1528f554e6ef2609332bf8b4d206fe0ef9f6152b6d44051921e4435494a",
+        "block_bytes": 4096,
+        "filesystem_bytes": 16777216,
+        "reserved_blocks": 40,
+        "reserved_uid": 0,
+        "reserved_gid": 0,
+        "state": 1,
+        "needs_recovery": false,
+        "orphan_present": false,
+        "clean": true,
+        "uuid": "b08db4c1cfe546f0b32af06729e6a3f2",
+        "partition": {
+          "name": "metadata",
+          "partition": 1,
+          "start_sector": 2048,
+          "sectors": 32768,
+          "whole_sectors": 36864
+        },
+        "gpt_prefix_sha256": "e6b383fff56dd068e890ba7e1f0ce076e50568610968b86d7f19482547d6edb5",
+        "gpt_suffix_sha256": "207a7a4dfb44a76466ecbe3ead18279c2ff4d5e39446f2f33c113094889f1128"
+      },
+      "stdout": {
+        "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sdk-plain-init-binder-state-16k-v12-600s/gcd-original.jsonl",
+        "bytes": 16047940,
+        "sha256": "33d9c80638586ca4776c60f2c9d676571cf2d403210af403db67040db9478b69"
+      }
+    },
+    {
+      "entry": "cli",
+      "phase": "recovery",
+      "returncode": 0,
+      "observation_validated": true,
+      "process_group_empty": true,
+      "cleanup_signals": [],
+      "errors": [],
+      "output_limit_exceeded": false,
+      "data_after": {
+        "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/dms-binder-state-original-init-v12-600s/run/data-16k.img",
+        "bytes": 536870912,
+        "sha256": "ef68f84b2439038fa7ee6078e7d60a253d953dea9acc91840b68c1afe72615c9",
+        "block_bytes": 4096,
+        "filesystem_bytes": 536870912,
+        "reserved_blocks": 2621,
+        "reserved_uid": 0,
+        "reserved_gid": 1065,
+        "state": 1,
+        "needs_recovery": false,
+        "orphan_present": false,
+        "clean": true,
+        "uuid": "25c89a996b5d4e54b81ec7077e6fcbeb"
+      },
+      "metadata_after": {
+        "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/dms-binder-state-original-init-v12-600s/run/metadata-16k.img",
+        "bytes": 18874368,
+        "sha256": "e4ed22137cac23fe1ec3f0219b6cfffbc9703973b3fa0e633685a8e7a013130e",
+        "block_bytes": 4096,
+        "filesystem_bytes": 16777216,
+        "reserved_blocks": 40,
+        "reserved_uid": 0,
+        "reserved_gid": 0,
+        "state": 1,
+        "needs_recovery": false,
+        "orphan_present": false,
+        "clean": true,
+        "uuid": "b08db4c1cfe546f0b32af06729e6a3f2",
+        "partition": {
+          "name": "metadata",
+          "partition": 1,
+          "start_sector": 2048,
+          "sectors": 32768,
+          "whole_sectors": 36864
+        },
+        "gpt_prefix_sha256": "e6b383fff56dd068e890ba7e1f0ce076e50568610968b86d7f19482547d6edb5",
+        "gpt_suffix_sha256": "207a7a4dfb44a76466ecbe3ead18279c2ff4d5e39446f2f33c113094889f1128"
+      },
+      "stdout": {
+        "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sdk-plain-init-binder-state-16k-v12-600s/cli-recovery.jsonl",
+        "bytes": 47674,
+        "sha256": "6809bdca0d27224ed9f636ddd13ba5737c85a4357b5776b474845145d05d92ef"
+      }
+    },
+    {
+      "entry": "gcd",
+      "phase": "recovery",
+      "returncode": 0,
+      "observation_validated": true,
+      "process_group_empty": true,
+      "cleanup_signals": [],
+      "errors": [],
+      "output_limit_exceeded": false,
+      "data_after": {
+        "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/dms-binder-state-original-init-v12-600s/run/data-16k.img",
+        "bytes": 536870912,
+        "sha256": "ab880b154d345cf61788acd64ca99366d0489083ed84a25da8771d5e340263d2",
+        "block_bytes": 4096,
+        "filesystem_bytes": 536870912,
+        "reserved_blocks": 2621,
+        "reserved_uid": 0,
+        "reserved_gid": 1065,
+        "state": 1,
+        "needs_recovery": false,
+        "orphan_present": false,
+        "clean": true,
+        "uuid": "25c89a996b5d4e54b81ec7077e6fcbeb"
+      },
+      "metadata_after": {
+        "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/dms-binder-state-original-init-v12-600s/run/metadata-16k.img",
+        "bytes": 18874368,
+        "sha256": "1d86cc0fd0c8c03e6f7576b4ccd4994484a46ee2d29c290ed32317fb50bad616",
+        "block_bytes": 4096,
+        "filesystem_bytes": 16777216,
+        "reserved_blocks": 40,
+        "reserved_uid": 0,
+        "reserved_gid": 0,
+        "state": 1,
+        "needs_recovery": false,
+        "orphan_present": false,
+        "clean": true,
+        "uuid": "b08db4c1cfe546f0b32af06729e6a3f2",
+        "partition": {
+          "name": "metadata",
+          "partition": 1,
+          "start_sector": 2048,
+          "sectors": 32768,
+          "whole_sectors": 36864
+        },
+        "gpt_prefix_sha256": "e6b383fff56dd068e890ba7e1f0ce076e50568610968b86d7f19482547d6edb5",
+        "gpt_suffix_sha256": "207a7a4dfb44a76466ecbe3ead18279c2ff4d5e39446f2f33c113094889f1128"
+      },
+      "stdout": {
+        "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sdk-plain-init-binder-state-16k-v12-600s/gcd-recovery.jsonl",
+        "bytes": 47731,
+        "sha256": "dae78f88351eed4b0188c905a2d33c0cb69b33562266f292abf37c8f5c559d5d"
+      }
+    }
+  ],
+  "original_captures": [
+    {
+      "entry": "cli",
+      "capture_status": {
+        "taglog": "passed",
+        "logd": "complete",
+        "ashmem": "complete",
+        "sigquit": "complete",
+        "binder": "complete"
+      },
+      "taglog": {
+        "stock_init_taglog_summary": true,
+        "seen": 267,
+        "recorded": 128,
+        "omitted": 139,
+        "capture_limit_bytes": 2048,
+        "record_limit": 128
+      },
+      "sigquit": {
+        "stock_init_sigquit": "sample",
+        "schema": 1,
+        "process": 514412401024,
+        "sample": 3,
+        "target_ns": 450000000000,
+        "elapsed_ns": 450108150000,
+        "pid": 1,
+        "uid": 0,
+        "seccomp_mode": 0,
+        "mode_final": 0,
+        "mode_skipped": false,
+        "context_valid": true,
+        "boot_valid": true,
+        "boot_id": "37696470-d78e-4d4e-af85-bc1dd141c5f9",
+        "scan_complete": true,
+        "visited_pids": 73,
+        "vanished_pids": 0,
+        "directory_reads": 2,
+        "targets": 1,
+        "target_pid": 1389,
+        "pidfd": 21,
+        "signal_syscall": 424,
+        "signal": 3,
+        "signal_attempted": true,
+        "syscall_result": 0,
+        "opened_fds": 81,
+        "close_attempts": 81,
+        "close_successes": 81,
+        "mapped": true,
+        "unmap_attempts": 1,
+        "unmap_success": true,
+        "cleanup_failed": false,
+        "failed": false,
+        "regs_unchanged": true,
+        "regs_restored": true,
+        "incomplete": false
+      },
+      "binder_targets": {
+        "stock_init_binder": "targets",
+        "schema": 1,
+        "pid_namespace": "pid1",
+        "system_server_pid": 1389,
+        "surfaceflinger_pid": 261,
+        "surfaceflinger_targets": 1
+      },
+      "binder_files": [
+        {
+          "stock_init_binder": "file",
+          "schema": 1,
+          "path": "/proc/self/mountinfo",
+          "target_pid": 0,
+          "start_ns": 2757010652713000,
+          "end_ns": 2757010653452000,
+          "reads": 5,
+          "bytes": 15783,
+          "read_limit": 32,
+          "chunk_bytes": 4096,
+          "eof": true,
+          "truncated": false,
+          "errno_result": 0,
+          "copy_remaining": 0,
+          "opened": 1,
+          "closed": 1,
+          "complete": true,
+          "sha256": "74b7d73bd4f004b1ab07bb7d327b23edbdb4dab5c6d881a2daed707657523622"
+        },
+        {
+          "stock_init_binder": "file",
+          "schema": 1,
+          "path": "/dev/binderfs/binder_logs/transactions",
+          "target_pid": 0,
+          "start_ns": 2757010653455000,
+          "end_ns": 2757010653599000,
+          "reads": 2,
+          "bytes": 2019,
+          "read_limit": 32,
+          "chunk_bytes": 4096,
+          "eof": true,
+          "truncated": false,
+          "errno_result": 0,
+          "copy_remaining": 0,
+          "opened": 1,
+          "closed": 1,
+          "complete": true,
+          "sha256": "b1b6f4395ac23fc56278294e934d4b670ee6d9628b448a64febb2632889bb1cd"
+        },
+        {
+          "stock_init_binder": "file",
+          "schema": 1,
+          "path": "/dev/binderfs/binder_logs/state",
+          "target_pid": 0,
+          "start_ns": 2757010653603000,
+          "end_ns": 2757010655045000,
+          "reads": 10,
+          "bytes": 32920,
+          "read_limit": 32,
+          "chunk_bytes": 4096,
+          "eof": true,
+          "truncated": false,
+          "errno_result": 0,
+          "copy_remaining": 0,
+          "opened": 1,
+          "closed": 1,
+          "complete": true,
+          "sha256": "d62d2974a43cc76405e36c7d487ab0bb8007010bdb7b33eef48d1fb47c025428"
+        }
+      ],
+      "read_summaries": [
+        {
+          "stock_init_syscall_summary": true,
+          "syscall": 63,
+          "failed": false,
+          "last_syscall": 63,
+          "seen": 168827,
+          "recorded": 75,
+          "omitted": 168752,
+          "last_pc": 437062626056,
+          "last_args": [
+            25,
+            426001234684,
+            4067,
+            18446744073709551615,
+            18446744073709551615,
+            426001234691
+          ],
+          "last_result": 279
+        },
+        {
+          "stock_init_syscall_summary": true,
+          "syscall": 63,
+          "failed": true,
+          "last_syscall": 63,
+          "seen": 348407287,
+          "recorded": 86,
+          "omitted": 348407201,
+          "last_pc": 415300823816,
+          "last_args": [
+            114,
+            401166152680,
+            8,
+            8,
+            4294967295,
+            0
+          ],
+          "last_result": -512
+        }
+      ],
+      "read_512k_samples": [
+        {
+          "stock_init_syscall": 63,
+          "trace_index": 16777216,
+          "pc": 315500882696,
+          "args": [
+            10,
+            304236216320,
+            524288,
+            18446744073709551615,
+            18446744073709551615,
+            304334325200
+          ],
+          "result": -11
+        },
+        {
+          "stock_init_syscall": 63,
+          "trace_index": 33554432,
+          "pc": 315500882696,
+          "args": [
+            10,
+            304236216320,
+            524288,
+            18446744073709551615,
+            18446744073709551615,
+            304334325584
+          ],
+          "result": -11
+        },
+        {
+          "stock_init_syscall": 63,
+          "trace_index": 131072,
+          "pc": 315500882696,
+          "args": [
+            10,
+            304236216320,
+            524288,
+            18446744073709551615,
+            18446744073709551615,
+            304236740636
+          ],
+          "result": 4
+        },
+        {
+          "stock_init_syscall": 63,
+          "trace_index": 67108864,
+          "pc": 315500882696,
+          "args": [
+            10,
+            304236216320,
+            524288,
+            18446744073709551615,
+            18446744073709551615,
+            304236740710
+          ],
+          "result": -11
+        },
+        {
+          "stock_init_syscall": 63,
+          "trace_index": 134217728,
+          "pc": 315500882696,
+          "args": [
+            10,
+            304236216320,
+            524288,
+            18446744073709551615,
+            18446744073709551615,
+            144115495432476560
+          ],
+          "result": -11
+        },
+        {
+          "stock_init_syscall": 63,
+          "trace_index": 268435456,
+          "pc": 292606012168,
+          "args": [
+            8,
+            281567215616,
+            524288,
+            18446744073709551615,
+            18446744073709551615,
+            290455618936
+          ],
+          "result": -11
+        }
+      ]
+    },
+    {
+      "entry": "gcd",
+      "capture_status": {
+        "taglog": "passed",
+        "logd": "complete",
+        "ashmem": "complete",
+        "sigquit": "complete",
+        "binder": "complete"
+      },
+      "taglog": {
+        "stock_init_taglog_summary": true,
+        "seen": 200,
+        "recorded": 128,
+        "omitted": 72,
+        "capture_limit_bytes": 2048,
+        "record_limit": 128
+      },
+      "sigquit": {
+        "stock_init_sigquit": "sample",
+        "schema": 1,
+        "process": 511266629248,
+        "sample": 3,
+        "target_ns": 450000000000,
+        "elapsed_ns": 450323112000,
+        "pid": 1,
+        "uid": 0,
+        "seccomp_mode": 0,
+        "mode_final": 0,
+        "mode_skipped": false,
+        "context_valid": true,
+        "boot_valid": true,
+        "boot_id": "e298d007-cc23-4828-a9df-9b3ec92dbfe9",
+        "scan_complete": true,
+        "visited_pids": 73,
+        "vanished_pids": 0,
+        "directory_reads": 2,
+        "targets": 1,
+        "target_pid": 1529,
+        "pidfd": 21,
+        "signal_syscall": 424,
+        "signal": 3,
+        "signal_attempted": true,
+        "syscall_result": 0,
+        "opened_fds": 81,
+        "close_attempts": 81,
+        "close_successes": 81,
+        "mapped": true,
+        "unmap_attempts": 1,
+        "unmap_success": true,
+        "cleanup_failed": false,
+        "failed": false,
+        "regs_unchanged": true,
+        "regs_restored": true,
+        "incomplete": false
+      },
+      "binder_targets": {
+        "stock_init_binder": "targets",
+        "schema": 1,
+        "pid_namespace": "pid1",
+        "system_server_pid": 1529,
+        "surfaceflinger_pid": 246,
+        "surfaceflinger_targets": 1
+      },
+      "binder_files": [
+        {
+          "stock_init_binder": "file",
+          "schema": 1,
+          "path": "/proc/self/mountinfo",
+          "target_pid": 0,
+          "start_ns": 2757613057404000,
+          "end_ns": 2757613058049000,
+          "reads": 5,
+          "bytes": 15783,
+          "read_limit": 32,
+          "chunk_bytes": 4096,
+          "eof": true,
+          "truncated": false,
+          "errno_result": 0,
+          "copy_remaining": 0,
+          "opened": 1,
+          "closed": 1,
+          "complete": true,
+          "sha256": "71ce42f2fa3964267774c78395df3cb9f63149d998a940b147f7f4bbe7955b22"
+        },
+        {
+          "stock_init_binder": "file",
+          "schema": 1,
+          "path": "/dev/binderfs/binder_logs/transactions",
+          "target_pid": 0,
+          "start_ns": 2757613058052000,
+          "end_ns": 2757613058221000,
+          "reads": 2,
+          "bytes": 3254,
+          "read_limit": 32,
+          "chunk_bytes": 4096,
+          "eof": true,
+          "truncated": false,
+          "errno_result": 0,
+          "copy_remaining": 0,
+          "opened": 1,
+          "closed": 1,
+          "complete": true,
+          "sha256": "73796282935fe45116f83812abcca278fe638305f2ec803cc248772763d7a833"
+        },
+        {
+          "stock_init_binder": "file",
+          "schema": 1,
+          "path": "/dev/binderfs/binder_logs/state",
+          "target_pid": 0,
+          "start_ns": 2757613058224000,
+          "end_ns": 2757613059517000,
+          "reads": 10,
+          "bytes": 33804,
+          "read_limit": 32,
+          "chunk_bytes": 4096,
+          "eof": true,
+          "truncated": false,
+          "errno_result": 0,
+          "copy_remaining": 0,
+          "opened": 1,
+          "closed": 1,
+          "complete": true,
+          "sha256": "b86ed8f15c7ca907ea8b3494d80649e1c6162deff4f403cb432a75197ea67853"
+        }
+      ],
+      "read_summaries": [
+        {
+          "stock_init_syscall_summary": true,
+          "syscall": 63,
+          "failed": false,
+          "last_syscall": 63,
+          "seen": 169107,
+          "recorded": 75,
+          "omitted": 169032,
+          "last_pc": 362215484168,
+          "last_args": [
+            25,
+            351087409916,
+            4067,
+            18446744073709551615,
+            18446744073709551615,
+            351087409923
+          ],
+          "last_result": 66
+        },
+        {
+          "stock_init_syscall_summary": true,
+          "syscall": 63,
+          "failed": true,
+          "last_syscall": 63,
+          "seen": 375322599,
+          "recorded": 86,
+          "omitted": 375322513,
+          "last_pc": 280158235400,
+          "last_args": [
+            110,
+            265521951720,
+            8,
+            8,
+            4294967295,
+            0
+          ],
+          "last_result": -512
+        }
+      ],
+      "read_512k_samples": [
+        {
+          "stock_init_syscall": 63,
+          "trace_index": 16777216,
+          "pc": 544296364808,
+          "args": [
+            10,
+            533035991040,
+            524288,
+            18446744073709551615,
+            18446744073709551615,
+            540653560419
+          ],
+          "result": -11
+        },
+        {
+          "stock_init_syscall": 63,
+          "trace_index": 33554432,
+          "pc": 544296364808,
+          "args": [
+            10,
+            533035991040,
+            524288,
+            18446744073709551615,
+            18446744073709551615,
+            144115727923891952
+          ],
+          "result": -11
+        },
+        {
+          "stock_init_syscall": 63,
+          "trace_index": 67108864,
+          "pc": 544296364808,
+          "args": [
+            10,
+            533035991040,
+            524288,
+            18446744073709551615,
+            18446744073709551615,
+            533036515360
+          ],
+          "result": -11
+        },
+        {
+          "stock_init_syscall": 63,
+          "trace_index": 134217728,
+          "pc": 393093409544,
+          "args": [
+            8,
+            381977149440,
+            524288,
+            18446744073709551615,
+            18446744073709551615,
+            390328845496
+          ],
+          "result": -11
+        },
+        {
+          "stock_init_syscall": 63,
+          "trace_index": 268435456,
+          "pc": 544296364808,
+          "args": [
+            10,
+            533035991040,
+            524288,
+            18446744073709551615,
+            18446744073709551615,
+            144115726313283056
+          ],
+          "result": -11
+        }
+      ]
+    }
+  ],
+  "system_server_snapshots": {
+    "cli": {
+      "early_pid": 564,
+      "late_pid": 1389,
+      "late_file": "trace_00",
+      "late_main": "CompatConfig.loadConfigFiles / ICU NativeConverter.setCallbackDecode / libart GetStringChars",
+      "late_native_wait": "ConditionVariable::WaitHoldingLocks",
+      "display_thread": "MessageQueue.nativePollOnce"
+    },
+    "gcd": {
+      "early_pid": 492,
+      "late_pid": 1529,
+      "late_files": [
+        "trace_01",
+        "trace_02"
+      ],
+      "late_main_locations": [
+        "Runtime.nativeLoad / libandroid_servers.so __cxx_global_var_init.14",
+        "LowMemDetector / ActivityManagerService initialization"
+      ],
+      "same_main_pid_sysTid_self_handle": true,
+      "last_display_thread": "MessageQueue.nativePollOnce"
+    },
+    "early_wait": "两入口的 main 等待 DisplayManagerService$SyncRoot，ART 线程 17 持锁并进行 Binder ioctl。",
+    "zygote_restart_observed": true,
+    "short_anr_missing_system_server": 2,
+    "limits": [
+      "快照记录不同时间与 PID，CLI 后期 libart 等待原因尚未确认。",
+      "两份短 ANR 的协议失败与独立完整 trace 分别保留。",
+      "Binder 全局编号与 PID1 namespace 目标的对应关系尚未取得。"
+    ]
+  },
+  "cleanup": {
+    "status": "pending",
+    "reason": "导出与后期分析已完成，等待 v13 输入克隆与本轮清理。"
+  },
+  "limits": [
+    "标签预算为 128 条，两入口均有 omitted，未记录的后期阶段保持未知。",
+    "read 汇总分别累计成功与全部负值；last_result 仅描述末次请求，不能用于解释整组 errno。",
+    "512 KiB read 的任务、FD 路径和当前 ELF 基址尚未由本轮采集。",
+    "观察包含 Binder 与 SIGQUIT 诊断负载，尚未用于启动、交互或设备性能结论。",
+    "完整 boot、桌面、原始签名 APK、HyperOS、App、设备运行与持续热状态继续验证。"
+  ],
+  "summary_source": {
+    "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/dms-binder-state-original-init-v12-600s/summarize_completed.py",
+    "bytes": 9565,
+    "sha256": "c794e66275f48c0b14e5f87fc1841bdefc3011edd1d28672dbbfac2d94a33803"
+  }
+}

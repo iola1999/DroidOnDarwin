@@ -227,6 +227,8 @@ static void free_host_syscall_state(void)
          "#define KSTK_ESP(tsk) (task_pt_regs(tsk) ? task_pt_regs(tsk)->sp : 0)")
     ptrace = arch + "include/asm/ptrace.h"
     edit(ptrace, "#include <linux/errno.h>", "#include <linux/errno.h>\n#include <asm/guest-registers.h>")
+    edit(ptrace, "struct task_struct;", "struct task_struct;\nextern int ptrace_request(struct task_struct *child, long request,\n                          unsigned long addr, unsigned long data);")
+    edit(ptrace, "\treturn -EINVAL;", "\treturn ptrace_request(child, request, addr, data);")
     edit(ptrace, "#define user_stack_pointer(regs) 0", "#define user_stack_pointer(regs) ((regs) ? (regs)->sp : 0)")
     edit(ptrace, "#define instruction_pointer(regs) 0", "#define instruction_pointer(regs) ((regs) ? (regs)->pc : 0)")
     edit(arch + "include/asm/processor.h", "static inline void start_thread(struct pt_regs *regs, unsigned long entry,\n\t\t\t unsigned long stack) {}", "void start_thread(struct pt_regs *regs, unsigned long entry, unsigned long stack);")
@@ -267,7 +269,12 @@ static void free_host_syscall_state(void)
         edit(arch + "kernel/threads.c", "\tlkl_ops->sem_up(_next->sched_sem);", "#ifdef CONFIG_MMU\n\tif (lkl_ops->user_switch)\n\t\tlkl_ops->user_switch(next->thread.nce_state);\n#endif\n\tlkl_ops->sem_up(_next->sched_sem);")
     edit(arch + "kernel/threads.c", "lkl_ops->user_switch(next->thread.nce_state);",
          "lkl_ops->user_switch(next->thread.nce_state, raw_smp_processor_id(), num_possible_cpus());")
-    edit(arch + "kernel/threads.c", "int copy_thread(struct task_struct *p, const struct kernel_clone_args *args)", "#ifdef CONFIG_MMU\nstatic int user_bootstrap(void *unused)\n{\n\tlkl_ops->user_run(current->thread.nce_state);\n\treturn 0;\n}\n#endif\n\nint copy_thread(struct task_struct *p, const struct kernel_clone_args *args)")
+    if "static int user_bootstrap(void *unused)" not in (source / arch / "kernel/threads.c").read_text():
+        edit(arch + "kernel/threads.c", "int copy_thread(struct task_struct *p, const struct kernel_clone_args *args)", "#ifdef CONFIG_MMU\nstatic int user_bootstrap(void *unused)\n{\n\tlkl_ops->user_run(current->thread.nce_state);\n\treturn 0;\n}\n#endif\n\nint copy_thread(struct task_struct *p, const struct kernel_clone_args *args)")
+    edit(arch + "kernel/threads.c", "#include <asm/switch_to.h>", "#include <asm/switch_to.h>\n#include <asm/signal.h>")
+    if "\tnce_user_return(-1, 0, 0);" not in (source / arch / "kernel/threads.c").read_text():
+        edit(arch + "kernel/threads.c", "\tlkl_ops->user_run(current->thread.nce_state);",
+             "\t/* Process ptrace stops and pending signals before the first user instruction. */\n\tnce_user_return(-1, 0, 0);\n\tlkl_ops->user_run(current->thread.nce_state);")
     edit(arch + "kernel/threads.c", "if (!test_ti_thread_flag(ti, TIF_HOST_THREAD)) {", "if (!test_ti_thread_flag(ti, TIF_HOST_THREAD) && ti->tid) {")
     edit(arch + "kernel/threads.c", "\ttba = kmalloc(sizeof(*tba), GFP_KERNEL);", "\tclear_ti_thread_flag(ti, TIF_HOST_THREAD);\n#ifdef CONFIG_MMU\n\tif (!esp) {\n\t\tif (!current->thread.nce_state || !lkl_ops->user_clone)\n\t\t\treturn -EINVAL;\n\t\tp->thread.nce_state = lkl_ops->user_clone(current->thread.nce_state,\n\t\t\targs->stack, args->tls, args->flags);\n\t\tif (!p->thread.nce_state)\n\t\t\treturn -ENOMEM;\n\t\tesp = (unsigned long)user_bootstrap;\n\t}\n#endif\n\ttba = kmalloc(sizeof(*tba), GFP_KERNEL);")
     edit(arch + "include/asm/syscalls.h", "#define sys_clone sys_ni_syscall", "#ifndef CONFIG_MMU\n#define sys_clone sys_ni_syscall\n#endif")

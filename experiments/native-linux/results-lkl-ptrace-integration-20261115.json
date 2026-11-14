@@ -1,0 +1,165 @@
+{
+  "schema": 1,
+  "stage": "通用 ptrace 修复集成后的原生 16 KiB processes 验证",
+  "status": "passed",
+  "source": {
+    "candidate_head": "c1b9616f7a3abd3047c0c9ad9b8018899786eeb5",
+    "lkl_revision": "d0f76a77e8c2ca68bd7d96190b8da09040eab072",
+    "lkl_nce_patch_sha256": "033b6a4024495d7bfc71653b0b06c1f28cf15fd4bd2345590f5ba765d523534f",
+    "kernel_sha256": "f4ce2896538befdd036ed098193b57c370dd1a2904d89b918f320602def05387",
+    "config_sha256": "56ad2ebe2e5d3ec1d199b5669c792dc216951d71f33ce9d70a7a36bde59015f4",
+    "snapshot": {
+      "path": "work/sdk-ptrace-generic-v1/processes-integration-v1/candidate-state.json",
+      "sha256": "786449da5f59ff757357fa398bf28b92c6c36ff347d9c3ed74b4c1c8efded248"
+    },
+    "patch": {
+      "path": "work/sdk-ptrace-generic-v1/processes-integration-v1/candidate-state.patch",
+      "sha256": "acd6101a18b8e22baf07a576ddc6194e56ac9f3a75188ce6d5d6cb7c5cb37a09"
+    }
+  },
+  "standard_invocation": {
+    "argv": [
+      "python3",
+      "-B",
+      "scripts/probe_lkl.py",
+      "--processes",
+      "--storage-image",
+      "work/native-linux-nce/ptrace-processes-check-v1/data.img"
+    ],
+    "cwd": "work/sdk-vold-linux-v1/mount/ptrace-processes-integrated-v1",
+    "returncode": 0,
+    "host_toolchain": {
+      "path": "work/sdk-ptrace-generic-v1/processes-integration-v1/host-toolchain.json",
+      "sha256": "f975e9ceab093b5eb93616d5479f05b7caba9a31a376e9c36d6ddff0f39ecf8b"
+    }
+  },
+  "cli": {
+    "completed": true,
+    "passed_checks": 204,
+    "failed_checks": [],
+    "storage_generation": 1
+  },
+  "gcd": {
+    "completed": true,
+    "passed_checks": 204,
+    "failed_checks": [],
+    "inherited_blocked_threads": 67,
+    "storage_generation": 2
+  },
+  "ext4": {
+    "present": true,
+    "magic": 61267,
+    "state": 1,
+    "incompat": 8898,
+    "ro_compat": 1131,
+    "clean": true
+  },
+  "ios": {
+    "target": "arm64-apple-ios17.0",
+    "objects_sha256": {
+      "ios-lkl-host.o": "0161e2b87ffa2ba6f509c180af18aa6eb700b0b73d581b020e0eb728db9e4469",
+      "ios-lkl-process-host.o": "ce25636047fee51abfa12df93f28253d3b0cd7cbda3d7a806484466a6c553264",
+      "ios-payload.o": "c8f67cfe2d06c16a92aa394c97157a2807299e646d8800336690a36291678629"
+    },
+    "host_object_dependency_replay_identical": true,
+    "device_execution": "pending"
+  },
+  "actual_inputs": {
+    "compiled_inputs": 822,
+    "repository_inputs": 199,
+    "kernel_header_export_offsets": 14,
+    "all_input_sha256_matched": true,
+    "all_generated_sha256_matched": true,
+    "compiler_dependency_checks_passed": true,
+    "both_host_relinked_instruction_sections_identical": true,
+    "relinked_kernel_elf_identical": true
+  },
+  "main_session_result_update": {
+    "path": "experiments/native-linux/results-sdk-binder-late-init-20261115.json",
+    "change_owner": "主会话更新 v12 结构化结果",
+    "before_sha256": "c676600fb78b9d82df69bb83b5fdf970a84455a72bbd405faf0472ede292bdd5",
+    "after_sha256": "6451c2c83cd3f83456611d16c3890750eecff193388ba5430caac9c7b6f8defe",
+    "after_read_scope": "独立复查读取主会话暂时保持不变的当前结果文件",
+    "original_protected_inputs_unchanged": false,
+    "actual_input_intersection": [],
+    "original_reports_preserved": true
+  },
+  "shared_clone_inputs_unchanged": true,
+  "process_group_empty": true,
+  "git_diff_check_passed": true,
+  "ptrace_regset_boundary": {
+    "scope": "ptrace 专项 guest 回归",
+    "entries": {
+      "cli": {
+        "getregset_errno": 5,
+        "setregset_errno": 5,
+        "errno_name": "EIO",
+        "cases": [
+          "blocking_read",
+          "clone_event",
+          "running_user_loop"
+        ],
+        "failed_output_preserved": true
+      },
+      "gcd": {
+        "getregset_errno": 5,
+        "setregset_errno": 5,
+        "errno_name": "EIO",
+        "cases": [
+          "blocking_read",
+          "clone_event",
+          "running_user_loop"
+        ],
+        "failed_output_preserved": true
+      }
+    },
+    "source": {
+      "path": "work/sdk-ptrace-generic-v1/final-cli-gcd-v1/report.json",
+      "sha256": "4399e6a9184e1cb6131d0f6871553e24ebacd2422218d632b5b54f78624d8b13"
+    }
+  },
+  "android_validation": {
+    "scope": "标准原生测试程序覆盖 Bionic、Binder、ART Java 与 ARM64 JIT 工作负载。",
+    "completed_v12_full_boot": {
+      "status": "failed",
+      "source_revision": "774e47ae0125ce066564fa81173baf471b7eb94c",
+      "report": {
+        "path": "work/sdk-plain-validation-v1/dms-binder-state-original-init-v12-600s/run/report.json",
+        "sha256": "2bc34f325303559c084c7faa7ec56c0f6045279eeb36d32e2795994b308d48e3"
+      }
+    },
+    "ptrace_integrated_full_sdk_boot": "pending",
+    "hyperos": "pending"
+  },
+  "reports": {
+    "standard": {
+      "path": "work/sdk-ptrace-generic-v1/processes-integration-v1/result.json",
+      "sha256": "c3fe0cd968bba1af169b25b46b0a330eda4d3047d08c4d85d0e9a4c18c871944"
+    },
+    "runtime_summary": {
+      "path": "work/sdk-ptrace-generic-v1/processes-integration-v1/retained/lkl-summary.json",
+      "sha256": "a2e2858d88a4c17a7e17b5d947a840a34677ead758e4cbea0623e7805e2c7e64"
+    },
+    "input_review": {
+      "path": "work/sdk-ptrace-generic-v1/processes-integration-v1/input-review.json",
+      "sha256": "c6d8e4dd14e7be002586c1a40014e6bdf3da84ab668ff19502dadfa406c7a4e3"
+    },
+    "link_input_review": {
+      "path": "work/sdk-ptrace-generic-v1/processes-integration-v1/link-input-review.json",
+      "sha256": "fc54406635c6a56c86bf8b5e4ab43e90a021921eb9c0aeac4b0c8f9ae8af4646"
+    },
+    "v12_readonly_export_review": {
+      "path": "work/sdk-ptrace-generic-v1/v12-export-input-review.json",
+      "sha256": "bcf98e6797c77bc5ea45b818874e4e195c31439ae5f7b01db37f6b4054f54b13"
+    }
+  },
+  "artifacts": {
+    "state": "retained_for_main_session_cleanup",
+    "worktree": "work/sdk-vold-linux-v1/mount/ptrace-processes-integrated-v1",
+    "private_cache": "work/sdk-ptrace-generic-v1/processes-integration-v1/temporary-cache",
+    "active_processes": []
+  },
+  "limits": [
+    "本机标准测试程序和宿主编译检查；完整 Android 启动、HyperOS、设备资源、JIT 授权、持续性能和热状态继续按对应阶段验证。"
+  ]
+}
