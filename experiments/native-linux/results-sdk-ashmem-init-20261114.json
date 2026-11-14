@@ -277,6 +277,18 @@
       "bytes": 5599,
       "sha256": "c830446c7288c2bf88e905ba4f7b480b4bec0923d9a2a6e03361f4a2ffa4538e",
       "status": "failed"
+    },
+    "v7_summary": {
+      "path": "../../../sdk-plain-validation-v1/ashmem-original-init-v7/result-summary.json",
+      "bytes": 11991,
+      "sha256": "e497576d6791d3f2295548b6893cb7cb688c166a534712e73da4e6a9d166c58b",
+      "status": "failed"
+    },
+    "ashmem_4k": {
+      "path": "../../../sdk-plain-validation-v1/ashmem-4k-v1/summary.json",
+      "bytes": 13246,
+      "sha256": "aef774f4b28e8a5bfbc30beef7a93f46ee3ee060fbcf69c3ae765e7352ec6bc0",
+      "status": "passed"
     }
   },
   "driver_fixture": {
@@ -1303,8 +1315,8 @@
     "v5": "用户暂停后 CLI original 被 SIGTERM 中断，actual_exit=-15、进程组清空；原三入口与外层 running 报告保留。"
   },
   "next_validation": [
-    "在独立v7采集固定SDK的OnBootPhase_100_服务阶段及实际DisplayManager/LocalDisplay标签，确定具体等待服务。",
-    "核对原ART SIGQUIT线程转储路径，取得实际锁与Binder/显示等待。",
+    "独立v8在真实PID1域请求一次SIGQUIT，沿原ART/tombstoned输出Java栈，确认DisplayManagerService锁与调用状态。",
+    "独立4KiB ashmem核心与正常/失败共享映射验证，保持原大小查询和实际4KiB映射边界。",
     "继续完整boot、桌面、原始签名APK、iOS App与持续性能验收。"
   ],
   "limitations": [
@@ -1494,5 +1506,40 @@
       "WaitForDisplay",
       "Starting phase 100"
     ]
+  },
+  "v7_validation": {
+    "full_boot_validation": "failed",
+    "observation_and_cleanup_passed": true,
+    "original_sqlite_validated": true,
+    "data_final_clean": true,
+    "metadata_final_clean": true,
+    "phase100_completed_services_per_original": 14,
+    "unfinished_service": "com.android.server.display.DisplayManagerService",
+    "taglog_recorded_per_original": 120,
+    "taglog_omitted_per_original": 0,
+    "source_revision": "03d9465"
+  },
+  "ashmem_4k_validation": {
+    "core_entries": [
+      "cli",
+      "gcd"
+    ],
+    "fixture_variants": [
+      "normal",
+      "content-failure",
+      "child-failure"
+    ],
+    "status": "passed",
+    "requested_sizes": [
+      11304,
+      27688
+    ],
+    "mapped_lengths": [
+      12288,
+      28672
+    ],
+    "guest_page_bytes": 4096,
+    "performance_measurement_performed": false,
+    "kernel_page_release_verified": false
   }
 }

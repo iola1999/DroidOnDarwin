@@ -76,6 +76,14 @@ v4 在 CLI 构建的 Direct 对象摘要调用处抛出 `AttributeError: 'str' o
 
 两个 system_server 均记录 `StartDisplayManager` 完成，随后到 `WaitForDisplay` 与 `Starting phase 100`；当前阶段过滤没有包含逐服务的 `OnBootPhase_100_` 文本，具体等待服务尚未确认。原失败、日志与阶段消息保留，下一步按[默认显示等待](../bug-fix/2026-11-14-原SDK默认显示等待.md)补采服务回调与线程状态。固定驱动与原设备调用已通过本轮本机组合，完整系统、桌面、APK 与持续性能继续验收。
 
+### 4 KiB 独立核心与共享内存
+
+使用独立 APFS 源码克隆和输出目录，固定驱动的 4 KiB、单 CPU、BPF JIT 内核、core CLI/GCD 与正常/content-failure/child-failure 六项 fixture 均完成本机检查，[摘要](../../../../../../../sdk-plain-validation-v1/ashmem-4k-v1/summary.json)保存实际构建、原始日志与回收结果。core 两入口实际退出 0，各回收 270/270 上下文；fixture 宿主线程均完成并 join，剩余 FD/VMA 为 0，进程组清空。候选源码、HEAD、固定输入与 16 KiB 产物保持，本轮用于功能检查。
+
+fixture 保留原 11304/27688 字节 SET_SIZE 与 GET_SIZE 契约，4 KiB 下的映射和解除长度分别为 12288/28672，原 32768 字节越界请求保持。正常与 child-failure 的宿主线程各为 28/28/28，content-failure 各为 27/27/27；失败 variant 的预期 guest 原退出状态为 256，宿主实际退出 0。内核镜像释放已检查，ashmem 物理页最终释放和压力 purge 仍待验证。native/SMP、4 KiB 原系统与 iOS 执行继续验收。
+
+本轮 4 KiB source/build、core/fixture 对象、程序及可再生成共享库副本已按[清单](../../../../../../../cleanup-2026-11-14/ashmem-4k-v1.json)清理，逻辑大小为 1,781,419,675 bytes，物理释放量未测量。固定新内核 ELF/bin、ABI 头、实际配置、命令、诊断源码、依赖、报告与日志保持；旧 manifest 原文保持。后续原系统或 iOS 检查需在新独立输出中按保存脚本重建已清理来源。
+
 ## 曾考虑的替代方案
 
 - 将 `sys.use_memfd` 设为 `true`：现有 Framework 测试已经采用该配置，原 SDK 和部分原始 JNI 调用仍可能使用 ashmem ioctl；本轮先实现原设备接口。
