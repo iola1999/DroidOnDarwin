@@ -121,6 +121,21 @@
       "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/sdk-regset-original-init-v15-180s/run/report.json",
       "bytes": 2739436,
       "sha256": "23e1e0027b2991fe2b184e1cdc08682052a0f11a69434e33b92efe9bb7e48f33"
+    },
+    "sdk_v15_offline_reanalysis": {
+      "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/cleanup-2026-11-15/v15-offline-capture-reanalysis.json",
+      "bytes": 919665,
+      "sha256": "98e98f7530ce97eebca77b7298f85c823cf65c455e5614e7a50d3a4eebde4f0f"
+    },
+    "sdk_v15_tombstone_review": {
+      "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/cleanup-2026-11-15/v15-tombstone-independent-review.json",
+      "bytes": 1053003,
+      "sha256": "dc8075d55278a930faa3af3d350e1538aecb400ae581f956fc11a4a36fc99796"
+    },
+    "sdk_v15_completed_review": {
+      "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/cleanup-2026-11-15/v15-completed-result-independent-review.json",
+      "bytes": 20372,
+      "sha256": "fe65d6b8ed3767a82f46e279ce28b7196e011593861d4c95847af3326d5ca1bc"
     }
   },
   "sources_at_delivery": {
@@ -882,18 +897,489 @@
           "error": "[Errno 2] No such file or directory: '/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/sdk-regset-original-init-v15-180s/frozen/project/work/sdk-plain-validation-v1/dms-binder-state-original-init-v12-600s/pid1_validation.py'"
         }
       }
-    ]
+    ],
+    "offline_reanalysis": {
+      "status": "passed",
+      "non_ashmem_results_equal": true,
+      "original_report_unchanged": true,
+      "ashmem": [
+        {
+          "entry": "cli",
+          "phase": "lifecycle",
+          "status": "complete",
+          "structure_passed": true,
+          "original_contract_passed": false,
+          "summary": {
+            "stock_init_ashmem_summary": true,
+            "seen": 0,
+            "recorded": 0,
+            "omitted": 0,
+            "record_limit": 256
+          },
+          "applications": []
+        },
+        {
+          "entry": "gcd",
+          "phase": "lifecycle",
+          "status": "complete",
+          "structure_passed": true,
+          "original_contract_passed": false,
+          "summary": {
+            "stock_init_ashmem_summary": true,
+            "seen": 0,
+            "recorded": 0,
+            "omitted": 0,
+            "record_limit": 256
+          },
+          "applications": []
+        },
+        {
+          "entry": "cli",
+          "phase": "original",
+          "status": "incomplete",
+          "structure_passed": true,
+          "original_contract_passed": false,
+          "summary": {
+            "stock_init_ashmem_summary": true,
+            "seen": 21,
+            "recorded": 21,
+            "omitted": 0,
+            "record_limit": 256
+          },
+          "applications": [
+            {
+              "pid": 498,
+              "fd": 75,
+              "status": "complete",
+              "requested_bytes": 11304,
+              "mmap_result": 379222769664
+            }
+          ]
+        },
+        {
+          "entry": "gcd",
+          "phase": "original",
+          "status": "incomplete",
+          "structure_passed": true,
+          "original_contract_passed": false,
+          "summary": {
+            "stock_init_ashmem_summary": true,
+            "seen": 21,
+            "recorded": 21,
+            "omitted": 0,
+            "record_limit": 256
+          },
+          "applications": [
+            {
+              "pid": 500,
+              "fd": 75,
+              "status": "complete",
+              "requested_bytes": 11304,
+              "mmap_result": 307209142272
+            }
+          ]
+        },
+        {
+          "entry": "cli",
+          "phase": "recovery",
+          "status": "complete",
+          "structure_passed": true,
+          "original_contract_passed": false,
+          "summary": {
+            "stock_init_ashmem_summary": true,
+            "seen": 0,
+            "recorded": 0,
+            "omitted": 0,
+            "record_limit": 256
+          },
+          "applications": []
+        },
+        {
+          "entry": "gcd",
+          "phase": "recovery",
+          "status": "complete",
+          "structure_passed": true,
+          "original_contract_passed": false,
+          "summary": {
+            "stock_init_ashmem_summary": true,
+            "seen": 0,
+            "recorded": 0,
+            "omitted": 0,
+            "record_limit": 256
+          },
+          "applications": []
+        }
+      ],
+      "late_sample_requirement_seconds": 450,
+      "original_observation_seconds": 180
+    },
+    "independent_review": {
+      "status": "passed",
+      "independent_review_status": "passed",
+      "original_status": "failed",
+      "full_boot_validation": "failed",
+      "first_stage_completed": true,
+      "full_boot_observed": false,
+      "original_capture_structure_passed": false,
+      "ashmem_original_contract_passed": false,
+      "source_files_unchanged": true,
+      "actual_input_count": 4322,
+      "actual_inputs_match_completed_before_after": true,
+      "actual_input_manifest_sha256": "1b84a1e49479e306caa04b1704d970cafa5bb7b64466c05a6b114f6d890fdce6",
+      "host_process": {
+        "pid": 28723,
+        "returncode": 1,
+        "actual_exit": 1,
+        "timed_out": false,
+        "timeout_seconds": 1200,
+        "cleanup_signals": [],
+        "output_limit_exceeded": false,
+        "log_limit_bytes": 33554432,
+        "observed_log_bytes": {
+          "stdout": 164,
+          "stderr": 177
+        },
+        "errors": [],
+        "process_group_members": [],
+        "process_group_empty": true
+      },
+      "six_entries": [
+        {
+          "entry": "cli",
+          "phase": "lifecycle",
+          "returncode": 0,
+          "observation_validated": true,
+          "process_group_empty": true,
+          "raw_stdout": {
+            "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sdk-plain-init-regset-16k-v15-180s/cli-lifecycle.jsonl",
+            "bytes": 41313,
+            "sha256": "4429608a08cf79309a09987180e3f33089666752d43f05b80917cc162cef6e8e"
+          }
+        },
+        {
+          "entry": "gcd",
+          "phase": "lifecycle",
+          "returncode": 0,
+          "observation_validated": true,
+          "process_group_empty": true,
+          "raw_stdout": {
+            "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sdk-plain-init-regset-16k-v15-180s/gcd-lifecycle.jsonl",
+            "bytes": 41201,
+            "sha256": "0891c1b4d8fd1517b8b6b0e65f2bf919e660e8b0cfec14776bb02d19114f882b"
+          }
+        },
+        {
+          "entry": "cli",
+          "phase": "original",
+          "returncode": 0,
+          "observation_validated": true,
+          "process_group_empty": true,
+          "raw_stdout": {
+            "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sdk-plain-init-regset-16k-v15-180s/cli-original.jsonl",
+            "bytes": 9866893,
+            "sha256": "7cae7eaf41513bbee0b26f1d89439c11369fb43a282aa7a655816b3ae01fa635"
+          }
+        },
+        {
+          "entry": "gcd",
+          "phase": "original",
+          "returncode": 0,
+          "observation_validated": true,
+          "process_group_empty": true,
+          "raw_stdout": {
+            "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sdk-plain-init-regset-16k-v15-180s/gcd-original.jsonl",
+            "bytes": 9470397,
+            "sha256": "cc0a3c9932efcadf61b6fc94bcf343dda432e7224f111c142152bb63a7332879"
+          }
+        },
+        {
+          "entry": "cli",
+          "phase": "recovery",
+          "returncode": 0,
+          "observation_validated": true,
+          "process_group_empty": true,
+          "raw_stdout": {
+            "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sdk-plain-init-regset-16k-v15-180s/cli-recovery.jsonl",
+            "bytes": 47512,
+            "sha256": "1883dc9f36a0bca74bc6e018095610a602b3415575db1159088bc8d59728b604"
+          }
+        },
+        {
+          "entry": "gcd",
+          "phase": "recovery",
+          "returncode": 0,
+          "observation_validated": true,
+          "process_group_empty": true,
+          "raw_stdout": {
+            "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sdk-plain-init-regset-16k-v15-180s/gcd-recovery.jsonl",
+            "bytes": 47562,
+            "sha256": "79c96c584589e8966c75528a79fdc0ee21406ccc95895fc8415a3c12452b16e6"
+          }
+        }
+      ],
+      "final_files": [
+        {
+          "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/sdk-regset-original-init-v15-180s/run/data-16k.img",
+          "bytes": 536870912,
+          "sha256": "c98abe4688bc1b13ad201661352ecefc8a02dbb96310c0886f4f245ba1f55bcd"
+        },
+        {
+          "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/sdk-regset-original-init-v15-180s/run/metadata-16k.img",
+          "bytes": 18874368,
+          "sha256": "b4f3cb513b3fa1dd0d0371f03c466a757b4181d9f3781a7d91eed5dee3e14c97"
+        }
+      ],
+      "data_final_generation": 54,
+      "limitations": [
+        "完整系统服务观察结果缺失，原完整启动验收失败。",
+        "450 秒 PID1、Binder 和 SIGQUIT 条件保持，本轮 original 观察窗口为 180 秒。",
+        "成功 ptrace 请求未采集；寄存器与回溯完整性依据实际文本和 PB 输出核对。",
+        "独立审阅通过仅表示记录、文件和来源核对成功。"
+      ],
+      "sqlite_quick_check": [
+        "ok"
+      ],
+      "full_boot_observer_exports": [
+        {
+          "entry": "cli",
+          "boot_id": "98883adb-e831-4b69-93b0-27760a2a0933",
+          "verified_exec_indices": [
+            2,
+            3
+          ],
+          "directory": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sdk-plain-init-regset-16k-v15-180s/system-observer-export/cli/98883adb-e831-4b69-93b0-27760a2a0933",
+          "complete": false,
+          "passed": false,
+          "error": "本轮数据盘中缺少完整的系统服务观察结果"
+        },
+        {
+          "entry": "gcd",
+          "boot_id": "0c5d98ad-350b-48e9-a1c9-20e8837203f0",
+          "verified_exec_indices": [
+            2,
+            3
+          ],
+          "directory": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sdk-plain-init-regset-16k-v15-180s/system-observer-export/gcd/0c5d98ad-350b-48e9-a1c9-20e8837203f0",
+          "complete": false,
+          "passed": false,
+          "error": "本轮数据盘中缺少完整的系统服务观察结果"
+        }
+      ]
+    },
+    "tombstones": {
+      "status": "passed",
+      "originals_unchanged": true,
+      "full_boot_validation": "failed",
+      "schema_source": {
+        "url": "https://android.googlesource.com/platform/system/core/+/refs/tags/android-16.0.0_r2/debuggerd/proto/tombstone.proto?format=TEXT",
+        "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/cleanup-2026-11-15/v15-offline-tombstone-inputs/tombstone.proto",
+        "bytes": 5096,
+        "sha256": "4bc64faf6b96c1f25a7b288802392f84872c948b39cd1a28f223ade68cf02af4",
+        "source_role": "Android 16 tombstone field definitions; each parsed value is compared with actual paired text"
+      },
+      "text_file_count": 50,
+      "binary_file_count": 50,
+      "text_changed_from_seed_count": 50,
+      "pb_changed_from_seed_count": 50,
+      "task_cmdline_counts": {
+        "/vendor/bin/hw/android.hardware.sensors-service.multihal": 50
+      },
+      "register_count": 34,
+      "continuous_frame_counts": {
+        "13": 50
+      },
+      "text_binary_task_register_frame_matches": 50,
+      "limitations": [
+        "syscall 117 仅采集负返回值，前 64 条及其后的 2 次幂索引保留参数；成功请求未采集。",
+        "每次成功 GETREGSET 的参数、请求 note 与返回值未采集；完整寄存器和回溯依据实际输出核对。",
+        "FATAL 日志上限为 512 条，每条最多 2048 字节；终末遗漏计数覆盖上限后的记录。",
+        "最后一份已采集 DEBUG 转储只有头部；其后未采集消息保持未确认。",
+        "PB 字段使用保存的 Android 16 schema 解析，任务、寄存器和回溯逐项与同名实际文本比较。"
+      ],
+      "logs": [
+        {
+          "entry": "cli",
+          "raw_stdout": {
+            "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sdk-plain-init-regset-16k-v15-180s/cli-original.jsonl",
+            "bytes": 9866893,
+            "sha256": "7cae7eaf41513bbee0b26f1d89439c11369fb43a282aa7a655816b3ae01fa635"
+          },
+          "fatal_records": 512,
+          "debug_records": 499,
+          "liblog_summary": {
+            "stock_init_liblog_summary": true,
+            "seen": 1022,
+            "recorded": 512,
+            "omitted": 510,
+            "capture_limit_bytes": 2048,
+            "record_limit": 512
+          },
+          "debug_dump_status_counts": {
+            "complete": 13,
+            "incomplete": 1
+          },
+          "negative_ptrace_summary": {
+            "stock_init_syscall_summary": true,
+            "syscall": 117,
+            "failed": true,
+            "last_syscall": 117,
+            "seen": 6984,
+            "recorded": 70,
+            "omitted": 6914,
+            "last_pc": 511186724616,
+            "last_args": [
+              33,
+              1105,
+              313516312704,
+              549749229008,
+              1,
+              0
+            ],
+            "last_result": -5
+          },
+          "sampled_request_counts": [
+            {
+              "request": 33,
+              "regset_note": null,
+              "result": -5,
+              "recorded": 67
+            },
+            {
+              "request": 16900,
+              "regset_note": 1033,
+              "result": -5,
+              "recorded": 2
+            },
+            {
+              "request": 16900,
+              "regset_note": 1034,
+              "result": -5,
+              "recorded": 1
+            }
+          ],
+          "successful_ptrace_requests": "not_captured",
+          "debug_dump_count": 14,
+          "debug_dump_task_counts": [
+            {
+              "cmdline": "/vendor/bin/dlkm_loader",
+              "status": "complete",
+              "total_frames": 6,
+              "count": 1
+            },
+            {
+              "cmdline": "/vendor/bin/hw/android.hardware.sensors-service.multihal",
+              "status": "complete",
+              "total_frames": 13,
+              "count": 12
+            },
+            {
+              "cmdline": "/vendor/bin/hw/android.hardware.sensors-service.multihal",
+              "status": "incomplete",
+              "total_frames": null,
+              "count": 1
+            }
+          ],
+          "complete_tombstone_matches": 12,
+          "partial_header_tombstone_matches": 1
+        },
+        {
+          "entry": "gcd",
+          "raw_stdout": {
+            "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sdk-plain-init-regset-16k-v15-180s/gcd-original.jsonl",
+            "bytes": 9470397,
+            "sha256": "cc0a3c9932efcadf61b6fc94bcf343dda432e7224f111c142152bb63a7332879"
+          },
+          "fatal_records": 512,
+          "debug_records": 499,
+          "liblog_summary": {
+            "stock_init_liblog_summary": true,
+            "seen": 947,
+            "recorded": 512,
+            "omitted": 435,
+            "capture_limit_bytes": 2048,
+            "record_limit": 512
+          },
+          "debug_dump_status_counts": {
+            "complete": 13,
+            "incomplete": 1
+          },
+          "negative_ptrace_summary": {
+            "stock_init_syscall_summary": true,
+            "syscall": 117,
+            "failed": true,
+            "last_syscall": 117,
+            "seen": 6335,
+            "recorded": 70,
+            "omitted": 6265,
+            "last_pc": 404923246344,
+            "last_args": [
+              16900,
+              176,
+              1034,
+              549750941440,
+              549750937092,
+              549750941581
+            ],
+            "last_result": -5
+          },
+          "sampled_request_counts": [
+            {
+              "request": 33,
+              "regset_note": null,
+              "result": -5,
+              "recorded": 68
+            },
+            {
+              "request": 16900,
+              "regset_note": 1033,
+              "result": -5,
+              "recorded": 1
+            },
+            {
+              "request": 16900,
+              "regset_note": 1034,
+              "result": -5,
+              "recorded": 1
+            }
+          ],
+          "successful_ptrace_requests": "not_captured",
+          "debug_dump_count": 14,
+          "debug_dump_task_counts": [
+            {
+              "cmdline": "/vendor/bin/dlkm_loader",
+              "status": "complete",
+              "total_frames": 6,
+              "count": 1
+            },
+            {
+              "cmdline": "/vendor/bin/hw/android.hardware.sensors-service.multihal",
+              "status": "complete",
+              "total_frames": 13,
+              "count": 12
+            },
+            {
+              "cmdline": "/vendor/bin/hw/android.hardware.sensors-service.multihal",
+              "status": "incomplete",
+              "total_frames": null,
+              "count": 1
+            }
+          ],
+          "complete_tombstone_matches": 12,
+          "partial_header_tombstone_matches": 1
+        }
+      ]
+    }
   },
   "limits": [
     "原生专项使用同一 C 检查的 x18 兼容副本；Direct/Unicorn 使用原共享 ELF。",
     "ENOMEM 与缺少目标后端状态尚未做故障注入。",
-    "v15 原 ashmem 分析缺少冻结 pid1_validation.py；原报告保持，独立重分析另行记录。",
-    "完整 SDK 转储、boot、桌面、通用原始签名 APK、HyperOS 与持续性能继续验收。",
+    "v15 原 ashmem 分析的动态依赖缺项已单独重分析；450 秒样本超出 180 秒观察窗口，完整诊断契约保持 incomplete。",
+    "boot、桌面、通用原始签名 APK、HyperOS 与持续性能继续验收。",
     "本机结果和 iOS arm64 编译检查分别记录，iOS 执行、设备资源、JIT 授权与热状态待真机验证。"
   ],
   "summary_source": {
     "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-ptrace-generic-v1/regset-read-v1/summarize_completed.py",
-    "bytes": 6700,
-    "sha256": "54c421c49dc914f421fae35de0b5134737fd47759ed9ceb68f1b6ff28f1d1bdc"
+    "bytes": 13147,
+    "sha256": "0bc26f45caabf55acd3653c1e35c655163d1f7521f1f342bc570f66cce7f6c73"
   }
 }
