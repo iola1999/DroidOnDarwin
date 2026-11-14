@@ -1,0 +1,856 @@
+{
+  "scope": "固定 SDK36 r07 原 init 的一次 read/EAGAIN 身份诊断与原六入口验收",
+  "record_date": "2026-11-15",
+  "status": "failed",
+  "full_boot_validation": "failed",
+  "environment": {
+    "platform": "macOS-27.0-arm64-arm-64bit-Mach-O",
+    "cpu": "Apple M5 Ultra",
+    "system_build": "26A428",
+    "data_mode": "plain",
+    "source_configuration": {
+      "data_tbi": true,
+      "guest_layout": "sparse",
+      "code_memory": "dual",
+      "execution": "direct",
+      "direct": {
+        "mapping_entries": 256,
+        "route_entries": 256,
+        "selective_writes": false,
+        "reuse_code_checks": false,
+        "memory": "flat",
+        "code_watch": false,
+        "cross_page": false,
+        "route_epochs": false,
+        "retain_routes": false,
+        "memory_groups": false,
+        "native_exclusive": false,
+        "vector_table": false,
+        "simd_math": false
+      },
+      "mapping": "pte",
+      "sparse_scan": true,
+      "fault_prefetch": false,
+      "guest_page_bytes": 16384,
+      "host_page_bytes": 16384,
+      "workload": "core",
+      "entries": [
+        "cli",
+        "gcd"
+      ],
+      "art_nterp": 1,
+      "cpus": 1,
+      "high_res_timers": false,
+      "bpf_jit": true,
+      "online_cpus": 1,
+      "uaccess_stop": "all",
+      "parallel_profile": false,
+      "art_expanded_jit": 0,
+      "art_fast_baseline": 0,
+      "cache_invalidation": "pages",
+      "exec_cache": "pages",
+      "tlb_invalidation": "pages",
+      "linux_fastpath": 0,
+      "guest_ram_bytes": 1073741824,
+      "translation_cache_bytes": 134217728,
+      "instruction_batch": 50000,
+      "memory_interval_ms": 100,
+      "preemption": "timer",
+      "timer_interval_ns": 2000000
+    }
+  },
+  "diagnostic_schedule": {
+    "read_identity": {
+      "syscall": 63,
+      "requested_bytes": 524288,
+      "result": -11,
+      "minimum_trace_index": 65536
+    },
+    "pid1_third_binder_sigquit": {
+      "inherited_target_seconds": 450,
+      "original_observation_seconds": 180,
+      "expected_in_window": false,
+      "condition_changed": false
+    }
+  },
+  "sdk_identity": {
+    "runtime_manifest": {
+      "prepared_path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/read-identity-original-init-v13-180s/frozen/project/work/native-linux-nce/android/android36-runtime.json",
+      "retained_path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36-runtime.json",
+      "sha256": "4b1a45b0ee51725c68f1c29765958d0b60b45a5f2325bedfc61764cd49232249",
+      "url": "https://dl.google.com/android/repository/sys-img/google_apis/arm64-v8a-ps16k-36_r07.zip",
+      "archive_sha1": "dda632745023567113d9954101709c6526a3c250"
+    },
+    "desktop_manifest": {
+      "prepared_path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/read-identity-original-init-v13-180s/frozen/project/work/native-linux-nce/android/android36-desktop/manifest.json",
+      "retained_path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36-desktop/manifest.json",
+      "sha256": "515c9fe37032c16e01048a9a63f83708b314558d5322de2eb41773db09179772",
+      "url": "https://dl.google.com/android/repository/sys-img/google_apis/arm64-v8a-ps16k-36_r07.zip",
+      "archive_sha1": "dda632745023567113d9954101709c6526a3c250"
+    }
+  },
+  "reports": {
+    "run": {
+      "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/read-identity-original-init-v13-180s/run/report.json",
+      "bytes": 2391439,
+      "sha256": "15c0e0d909610ca4cfc974a6c5a82ec83ae398609e5228349f603bbd9621c01f"
+    },
+    "summary": {
+      "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sdk-plain-init-read-identity-16k-v13-180s/summary.json",
+      "bytes": 38065535,
+      "sha256": "e0873c593ae221fd86f4cfc31772cd4a79a1b2c1337dafcab16bf70667f9c881"
+    },
+    "build": {
+      "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/read-identity-original-init-v13-180s/build-03/report.json",
+      "bytes": 4156451,
+      "sha256": "d3d83a9b071fcd12e5e6e407bf7a3f862d4142b47e89763a1eaa284b4aa6dd52"
+    },
+    "prepared": {
+      "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/read-identity-original-init-v13-180s/build-03/prebuilt.json",
+      "bytes": 2927976,
+      "sha256": "0ea6ee358c9d9b9c034e0ce55f4ebdf24694a873044e72e73438909148027d9c"
+    },
+    "ready": {
+      "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/read-identity-original-init-v13-180s/ready-02.json",
+      "bytes": 5000,
+      "sha256": "c4bbb9cb70abe1e26841de000c6e229af16720e1e72e30f91a1d0e085dd171c5"
+    },
+    "preparation_independent_review": {
+      "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/read-identity-original-init-v13-180s-independent-review.json",
+      "bytes": 19657,
+      "sha256": "f70ea609995649de5c269f5713ba09f5bec9baa24c19a6d23a0836c6e190876c"
+    },
+    "result_independent_review": {
+      "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/v13-read-identity-result-review-v1/final-summary.json",
+      "bytes": 21256,
+      "sha256": "a2833139d69bddc7d5c1e96f4285b5f4c43eafc144c26a7b8bd3100ece34dc67"
+    },
+    "offline_original_replay": {
+      "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/read-identity-original-init-v13-180s/offline-probe-review-01.json",
+      "bytes": 23121,
+      "sha256": "1d7d124efa62eca735712867abfb1cdfd181a976f2794587f1ca68ec95b1a9ff"
+    },
+    "v12_dependency_audit": {
+      "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/read-identity-original-init-v13-180s/v12-cleanup-dependency-audit-01.json",
+      "bytes": 824005,
+      "sha256": "55662003b84c0e735ac7cdb4e06cba9e097ed72a528435fada188432cef0ca0a"
+    }
+  },
+  "checks": {
+    "six_entry_order_passed": true,
+    "observation_and_cleanup_passed": true,
+    "capture_structure_passed": false,
+    "ashmem_original_passed": false,
+    "read_identity_originals_recorded": true,
+    "inputs_unchanged": true,
+    "first_stage_completed": true,
+    "full_boot_observed": false,
+    "data_persistence_validated": true,
+    "metadata_persistence_validated": true,
+    "metadata_rc_validated": true,
+    "metadata_original_unchanged": true,
+    "original_sqlite_validated": true
+  },
+  "checked_inputs": 3457,
+  "runs": [
+    {
+      "entry": "cli",
+      "phase": "lifecycle",
+      "returncode": 0,
+      "observation_validated": true,
+      "process_group_empty": true,
+      "cleanup_signals": [],
+      "errors": [],
+      "output_limit_exceeded": false,
+      "data_after": {
+        "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/read-identity-original-init-v13-180s/run/data-16k.img",
+        "bytes": 536870912,
+        "sha256": "352d4fbf236555d5808a45351663dfad87416f5492c59b11dde36aea7a33550f",
+        "block_bytes": 4096,
+        "filesystem_bytes": 536870912,
+        "reserved_blocks": 2621,
+        "reserved_uid": 0,
+        "reserved_gid": 1065,
+        "state": 1,
+        "needs_recovery": false,
+        "orphan_present": false,
+        "clean": true,
+        "uuid": "25c89a996b5d4e54b81ec7077e6fcbeb"
+      },
+      "metadata_after": {
+        "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/read-identity-original-init-v13-180s/run/metadata-16k.img",
+        "bytes": 18874368,
+        "sha256": "91b2cc14050e7fb41040eef0ec0d281ece784f55fb91314c286731419381f263",
+        "block_bytes": 4096,
+        "filesystem_bytes": 16777216,
+        "reserved_blocks": 40,
+        "reserved_uid": 0,
+        "reserved_gid": 0,
+        "state": 1,
+        "needs_recovery": false,
+        "orphan_present": false,
+        "clean": true,
+        "uuid": "b08db4c1cfe546f0b32af06729e6a3f2",
+        "partition": {
+          "name": "metadata",
+          "partition": 1,
+          "start_sector": 2048,
+          "sectors": 32768,
+          "whole_sectors": 36864
+        },
+        "gpt_prefix_sha256": "e6b383fff56dd068e890ba7e1f0ce076e50568610968b86d7f19482547d6edb5",
+        "gpt_suffix_sha256": "207a7a4dfb44a76466ecbe3ead18279c2ff4d5e39446f2f33c113094889f1128"
+      },
+      "raw_stdout": {
+        "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sdk-plain-init-read-identity-16k-v13-180s/cli-lifecycle.jsonl",
+        "bytes": 41801,
+        "sha256": "e4a54e6d5c00e1f382c80777d5dfa36033c59aeb13aace0a5a0eb27aa67d814d"
+      }
+    },
+    {
+      "entry": "gcd",
+      "phase": "lifecycle",
+      "returncode": 0,
+      "observation_validated": true,
+      "process_group_empty": true,
+      "cleanup_signals": [],
+      "errors": [],
+      "output_limit_exceeded": false,
+      "data_after": {
+        "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/read-identity-original-init-v13-180s/run/data-16k.img",
+        "bytes": 536870912,
+        "sha256": "352d4fbf236555d5808a45351663dfad87416f5492c59b11dde36aea7a33550f",
+        "block_bytes": 4096,
+        "filesystem_bytes": 536870912,
+        "reserved_blocks": 2621,
+        "reserved_uid": 0,
+        "reserved_gid": 1065,
+        "state": 1,
+        "needs_recovery": false,
+        "orphan_present": false,
+        "clean": true,
+        "uuid": "25c89a996b5d4e54b81ec7077e6fcbeb"
+      },
+      "metadata_after": {
+        "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/read-identity-original-init-v13-180s/run/metadata-16k.img",
+        "bytes": 18874368,
+        "sha256": "91b2cc14050e7fb41040eef0ec0d281ece784f55fb91314c286731419381f263",
+        "block_bytes": 4096,
+        "filesystem_bytes": 16777216,
+        "reserved_blocks": 40,
+        "reserved_uid": 0,
+        "reserved_gid": 0,
+        "state": 1,
+        "needs_recovery": false,
+        "orphan_present": false,
+        "clean": true,
+        "uuid": "b08db4c1cfe546f0b32af06729e6a3f2",
+        "partition": {
+          "name": "metadata",
+          "partition": 1,
+          "start_sector": 2048,
+          "sectors": 32768,
+          "whole_sectors": 36864
+        },
+        "gpt_prefix_sha256": "e6b383fff56dd068e890ba7e1f0ce076e50568610968b86d7f19482547d6edb5",
+        "gpt_suffix_sha256": "207a7a4dfb44a76466ecbe3ead18279c2ff4d5e39446f2f33c113094889f1128"
+      },
+      "raw_stdout": {
+        "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sdk-plain-init-read-identity-16k-v13-180s/gcd-lifecycle.jsonl",
+        "bytes": 41529,
+        "sha256": "4af003dc50020352af2504ec6f57a75ff47823f549a61b45a2c4aa5fe7fd7c91"
+      }
+    },
+    {
+      "entry": "cli",
+      "phase": "original",
+      "returncode": 0,
+      "observation_validated": true,
+      "process_group_empty": true,
+      "cleanup_signals": [],
+      "errors": [],
+      "output_limit_exceeded": false,
+      "data_after": {
+        "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/read-identity-original-init-v13-180s/run/data-16k.img",
+        "bytes": 536870912,
+        "sha256": "bdf0bf57d46603f9f8cab1003217a56d51240ca26c0a676ec6cb01154322fba6",
+        "block_bytes": 4096,
+        "filesystem_bytes": 536870912,
+        "reserved_blocks": 2621,
+        "reserved_uid": 0,
+        "reserved_gid": 1065,
+        "state": 1,
+        "needs_recovery": true,
+        "orphan_present": true,
+        "clean": false,
+        "uuid": "25c89a996b5d4e54b81ec7077e6fcbeb"
+      },
+      "metadata_after": {
+        "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/read-identity-original-init-v13-180s/run/metadata-16k.img",
+        "bytes": 18874368,
+        "sha256": "f3b4bc19bff4127d6a2b6cfaac909d0953ea0503bccc91660d44b8e1d925ad6a",
+        "block_bytes": 4096,
+        "filesystem_bytes": 16777216,
+        "reserved_blocks": 40,
+        "reserved_uid": 0,
+        "reserved_gid": 0,
+        "state": 1,
+        "needs_recovery": false,
+        "orphan_present": false,
+        "clean": true,
+        "uuid": "b08db4c1cfe546f0b32af06729e6a3f2",
+        "partition": {
+          "name": "metadata",
+          "partition": 1,
+          "start_sector": 2048,
+          "sectors": 32768,
+          "whole_sectors": 36864
+        },
+        "gpt_prefix_sha256": "e6b383fff56dd068e890ba7e1f0ce076e50568610968b86d7f19482547d6edb5",
+        "gpt_suffix_sha256": "207a7a4dfb44a76466ecbe3ead18279c2ff4d5e39446f2f33c113094889f1128"
+      },
+      "raw_stdout": {
+        "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sdk-plain-init-read-identity-16k-v13-180s/cli-original.jsonl",
+        "bytes": 8810519,
+        "sha256": "609a4c64299300f6c726d23782d1a887dbd0e2d96b2ecd62c5d489fa1c687ad9"
+      }
+    },
+    {
+      "entry": "gcd",
+      "phase": "original",
+      "returncode": 0,
+      "observation_validated": true,
+      "process_group_empty": true,
+      "cleanup_signals": [],
+      "errors": [],
+      "output_limit_exceeded": false,
+      "data_after": {
+        "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/read-identity-original-init-v13-180s/run/data-16k.img",
+        "bytes": 536870912,
+        "sha256": "de12f323d73987534056962976dd991f4580a63e4760d7a87cc243ae141c8b6b",
+        "block_bytes": 4096,
+        "filesystem_bytes": 536870912,
+        "reserved_blocks": 2621,
+        "reserved_uid": 0,
+        "reserved_gid": 1065,
+        "state": 1,
+        "needs_recovery": true,
+        "orphan_present": true,
+        "clean": false,
+        "uuid": "25c89a996b5d4e54b81ec7077e6fcbeb"
+      },
+      "metadata_after": {
+        "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/read-identity-original-init-v13-180s/run/metadata-16k.img",
+        "bytes": 18874368,
+        "sha256": "80aca18b9de45e305deed29a1b42c06e473997fccb39b3252a756131507ac095",
+        "block_bytes": 4096,
+        "filesystem_bytes": 16777216,
+        "reserved_blocks": 40,
+        "reserved_uid": 0,
+        "reserved_gid": 0,
+        "state": 1,
+        "needs_recovery": false,
+        "orphan_present": false,
+        "clean": true,
+        "uuid": "b08db4c1cfe546f0b32af06729e6a3f2",
+        "partition": {
+          "name": "metadata",
+          "partition": 1,
+          "start_sector": 2048,
+          "sectors": 32768,
+          "whole_sectors": 36864
+        },
+        "gpt_prefix_sha256": "e6b383fff56dd068e890ba7e1f0ce076e50568610968b86d7f19482547d6edb5",
+        "gpt_suffix_sha256": "207a7a4dfb44a76466ecbe3ead18279c2ff4d5e39446f2f33c113094889f1128"
+      },
+      "raw_stdout": {
+        "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sdk-plain-init-read-identity-16k-v13-180s/gcd-original.jsonl",
+        "bytes": 8954701,
+        "sha256": "4c3ba194627d2540d18d15a54b12028c014ad14e9d6bd9e39c3006cf6f70c1b8"
+      }
+    },
+    {
+      "entry": "cli",
+      "phase": "recovery",
+      "returncode": 0,
+      "observation_validated": true,
+      "process_group_empty": true,
+      "cleanup_signals": [],
+      "errors": [],
+      "output_limit_exceeded": false,
+      "data_after": {
+        "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/read-identity-original-init-v13-180s/run/data-16k.img",
+        "bytes": 536870912,
+        "sha256": "b69c3476d98ee4c9afc3076005f3c7d4f0c9a72d1a0cb4bdb183774455f93d48",
+        "block_bytes": 4096,
+        "filesystem_bytes": 536870912,
+        "reserved_blocks": 2621,
+        "reserved_uid": 0,
+        "reserved_gid": 1065,
+        "state": 1,
+        "needs_recovery": false,
+        "orphan_present": false,
+        "clean": true,
+        "uuid": "25c89a996b5d4e54b81ec7077e6fcbeb"
+      },
+      "metadata_after": {
+        "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/read-identity-original-init-v13-180s/run/metadata-16k.img",
+        "bytes": 18874368,
+        "sha256": "bf78bc2591616d7b8bff84af9f996800c87156b6c1e972a2c798cab74a25d25b",
+        "block_bytes": 4096,
+        "filesystem_bytes": 16777216,
+        "reserved_blocks": 40,
+        "reserved_uid": 0,
+        "reserved_gid": 0,
+        "state": 1,
+        "needs_recovery": false,
+        "orphan_present": false,
+        "clean": true,
+        "uuid": "b08db4c1cfe546f0b32af06729e6a3f2",
+        "partition": {
+          "name": "metadata",
+          "partition": 1,
+          "start_sector": 2048,
+          "sectors": 32768,
+          "whole_sectors": 36864
+        },
+        "gpt_prefix_sha256": "e6b383fff56dd068e890ba7e1f0ce076e50568610968b86d7f19482547d6edb5",
+        "gpt_suffix_sha256": "207a7a4dfb44a76466ecbe3ead18279c2ff4d5e39446f2f33c113094889f1128"
+      },
+      "raw_stdout": {
+        "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sdk-plain-init-read-identity-16k-v13-180s/cli-recovery.jsonl",
+        "bytes": 47513,
+        "sha256": "dbcfed2a3861ab1f5df7d2afc262ba3956a1236c7e58ec038cb2b5642a0e0014"
+      }
+    },
+    {
+      "entry": "gcd",
+      "phase": "recovery",
+      "returncode": 0,
+      "observation_validated": true,
+      "process_group_empty": true,
+      "cleanup_signals": [],
+      "errors": [],
+      "output_limit_exceeded": false,
+      "data_after": {
+        "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/read-identity-original-init-v13-180s/run/data-16k.img",
+        "bytes": 536870912,
+        "sha256": "db24831da413124faee8499d40d881f35fbf2a6a0f72a534b36960187ec6ce0a",
+        "block_bytes": 4096,
+        "filesystem_bytes": 536870912,
+        "reserved_blocks": 2621,
+        "reserved_uid": 0,
+        "reserved_gid": 1065,
+        "state": 1,
+        "needs_recovery": false,
+        "orphan_present": false,
+        "clean": true,
+        "uuid": "25c89a996b5d4e54b81ec7077e6fcbeb"
+      },
+      "metadata_after": {
+        "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/read-identity-original-init-v13-180s/run/metadata-16k.img",
+        "bytes": 18874368,
+        "sha256": "bcc04ed8e58d61024afcbed9e6c36d7a2fd85376908a00416457192f1866e00d",
+        "block_bytes": 4096,
+        "filesystem_bytes": 16777216,
+        "reserved_blocks": 40,
+        "reserved_uid": 0,
+        "reserved_gid": 0,
+        "state": 1,
+        "needs_recovery": false,
+        "orphan_present": false,
+        "clean": true,
+        "uuid": "b08db4c1cfe546f0b32af06729e6a3f2",
+        "partition": {
+          "name": "metadata",
+          "partition": 1,
+          "start_sector": 2048,
+          "sectors": 32768,
+          "whole_sectors": 36864
+        },
+        "gpt_prefix_sha256": "e6b383fff56dd068e890ba7e1f0ce076e50568610968b86d7f19482547d6edb5",
+        "gpt_suffix_sha256": "207a7a4dfb44a76466ecbe3ead18279c2ff4d5e39446f2f33c113094889f1128"
+      },
+      "raw_stdout": {
+        "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sdk-plain-init-read-identity-16k-v13-180s/gcd-recovery.jsonl",
+        "bytes": 47719,
+        "sha256": "86db1e26fc3260fb74fc2c2732b600f80f551ba8886be149232e4667b9e89dac"
+      }
+    }
+  ],
+  "originals": [
+    {
+      "entry": "cli",
+      "raw_stdout": {
+        "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sdk-plain-init-read-identity-16k-v13-180s/cli-original.jsonl",
+        "bytes": 8810519,
+        "sha256": "609a4c64299300f6c726d23782d1a887dbd0e2d96b2ecd62c5d489fa1c687ad9"
+      },
+      "independent_review": {
+        "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/v13-read-identity-result-review-v1/cli-original-review.json",
+        "bytes": 241770,
+        "sha256": "338b06f6fadc9a70c65f6a8a5945ff52b30c719aeef07b83e0e532609bca74f4"
+      },
+      "status": "recorded",
+      "query_status": "complete",
+      "query_failures": [],
+      "query_truncations": [],
+      "cleanup_status": "complete",
+      "cleanup": {
+        "cmdline": {
+          "allocated": true,
+          "attempted": 1,
+          "result": 0
+        },
+        "maps": {
+          "allocated": true,
+          "attempted": 1,
+          "result": 0
+        },
+        "duplicate": {
+          "allocated": true,
+          "attempted": 1,
+          "result": 0
+        },
+        "mapping": {
+          "allocated": true,
+          "attempted": 1,
+          "result": 0
+        }
+      },
+      "registers_restored": true,
+      "trace_index": 12567840,
+      "process": {
+        "pid": 255,
+        "tid": 342,
+        "exe": "/system/bin/surfaceflinger",
+        "cmdline": {
+          "strings": [
+            "/system/bin/surfaceflinger"
+          ],
+          "nul_terminated": true
+        },
+        "starttime": null,
+        "starttime_status": "not_captured",
+        "pid_namespace": "not_captured"
+      },
+      "fd": {
+        "original": 10,
+        "duplicate": 12,
+        "flags_fd": 12,
+        "F_GETFL": 133122,
+        "access_mode": "read_write",
+        "O_NONBLOCK": true,
+        "FD_CLOEXEC_readback": "not_captured",
+        "path": "/dev/goldfish_pipe_dprctd"
+      },
+      "addresses": {
+        "pc": {
+          "address": 538091072264,
+          "address_hex": "0x7d48ba2b08",
+          "proc_map_matches": [
+            {
+              "start": 538090569728,
+              "end": 538091159552,
+              "permissions": "r-xp",
+              "offset": 360448,
+              "device": "07:1b",
+              "inode": 24,
+              "path": "/apex/com.android.runtime/lib64/bionic/libc.so"
+            }
+          ],
+          "runtime_elf_matches": [],
+          "status": "mapped",
+          "executable_mapping": true,
+          "elf_reference": {
+            "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/com.android.runtime/lib64/bionic/libc.so",
+            "sha256": "d3f8599b8b3f00101a31f94ac170ceb5875ee8446c201cb18382b2e02df84301",
+            "reference_kind": "documented_sdk_elf",
+            "recorded_source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/com.android.runtime/lib64/bionic/libc.so"
+          },
+          "file_offset": 862984,
+          "elf_reference_status": "sha256_verified",
+          "pt_load_matches": [
+            {
+              "offset": 360448,
+              "vaddr": 360448,
+              "filesz": 582704,
+              "memsz": 582704,
+              "flags": 5,
+              "align": 16384
+            }
+          ],
+          "mapped_file_full_bytes_readback": "not_captured",
+          "elf_vaddr": 862984,
+          "load_bias": 538090209280,
+          "executable_elf_segment": true
+        },
+        "lr": {
+          "address": 526886757188,
+          "address_hex": "0x7aace5e344",
+          "proc_map_matches": [
+            {
+              "start": 526886699008,
+              "end": 526886764544,
+              "permissions": "r-xp",
+              "offset": 49152,
+              "device": "fd:04",
+              "inode": 597,
+              "path": "/vendor/lib64/egl/libEGL_emulation.so"
+            }
+          ],
+          "runtime_elf_matches": [],
+          "status": "mapped",
+          "executable_mapping": true,
+          "elf_reference": {
+            "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36-desktop/vendor/lib64/egl/libEGL_emulation.so",
+            "sha256": "ee7addbb4d7830bec69023e55906accea85036f765ad5eb104df96fc83edc54f",
+            "reference_kind": "prepared_desktop_manifest_sdk_elf",
+            "reference_manifest": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36-desktop/manifest.json",
+            "reference_manifest_sha256": "515c9fe37032c16e01048a9a63f83708b314558d5322de2eb41773db09179772"
+          },
+          "file_offset": 107332,
+          "elf_reference_status": "sha256_verified",
+          "pt_load_matches": [
+            {
+              "offset": 49152,
+              "vaddr": 49152,
+              "filesz": 62368,
+              "memsz": 62368,
+              "flags": 5,
+              "align": 16384
+            }
+          ],
+          "mapped_file_full_bytes_readback": "not_captured",
+          "elf_vaddr": 107332,
+          "load_bias": 526886649856,
+          "executable_elf_segment": true
+        }
+      },
+      "diagnostic_calls": 20,
+      "page_bytes": 16384,
+      "maps": {
+        "reads": 5,
+        "returned_bytes": 50753,
+        "captured_bytes": 50753,
+        "eof": 1,
+        "truncated": 0,
+        "failed": 0
+      },
+      "late_diagnostic_plan": {
+        "target_seconds": 450,
+        "observation_seconds": 180,
+        "expected_in_window": false,
+        "sigquit_records_observed": false,
+        "binder_records_observed": false
+      },
+      "capture_status": {
+        "taglog": "passed",
+        "logd": "complete",
+        "ashmem": "failed",
+        "sigquit": "incomplete",
+        "binder": "incomplete"
+      }
+    },
+    {
+      "entry": "gcd",
+      "raw_stdout": {
+        "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sdk-plain-init-read-identity-16k-v13-180s/gcd-original.jsonl",
+        "bytes": 8954701,
+        "sha256": "4c3ba194627d2540d18d15a54b12028c014ad14e9d6bd9e39c3006cf6f70c1b8"
+      },
+      "independent_review": {
+        "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/v13-read-identity-result-review-v1/gcd-original-review.json",
+        "bytes": 242638,
+        "sha256": "af32967a7e8935e889b789b82e4d1a8f61c564be17a057ba1359327be4d2e16f"
+      },
+      "status": "recorded",
+      "query_status": "complete",
+      "query_failures": [],
+      "query_truncations": [],
+      "cleanup_status": "complete",
+      "cleanup": {
+        "cmdline": {
+          "allocated": true,
+          "attempted": 1,
+          "result": 0
+        },
+        "maps": {
+          "allocated": true,
+          "attempted": 1,
+          "result": 0
+        },
+        "duplicate": {
+          "allocated": true,
+          "attempted": 1,
+          "result": 0
+        },
+        "mapping": {
+          "allocated": true,
+          "attempted": 1,
+          "result": 0
+        }
+      },
+      "registers_restored": true,
+      "trace_index": 9413605,
+      "process": {
+        "pid": 245,
+        "tid": 332,
+        "exe": "/system/bin/surfaceflinger",
+        "cmdline": {
+          "strings": [
+            "/system/bin/surfaceflinger"
+          ],
+          "nul_terminated": true
+        },
+        "starttime": null,
+        "starttime_status": "not_captured",
+        "pid_namespace": "not_captured"
+      },
+      "fd": {
+        "original": 10,
+        "duplicate": 12,
+        "flags_fd": 12,
+        "F_GETFL": 133122,
+        "access_mode": "read_write",
+        "O_NONBLOCK": true,
+        "FD_CLOEXEC_readback": "not_captured",
+        "path": "/dev/goldfish_pipe_dprctd"
+      },
+      "addresses": {
+        "pc": {
+          "address": 344734952200,
+          "address_hex": "0x5043cdeb08",
+          "proc_map_matches": [
+            {
+              "start": 344734449664,
+              "end": 344735039488,
+              "permissions": "r-xp",
+              "offset": 360448,
+              "device": "07:12",
+              "inode": 24,
+              "path": "/apex/com.android.runtime/lib64/bionic/libc.so"
+            }
+          ],
+          "runtime_elf_matches": [],
+          "status": "mapped",
+          "executable_mapping": true,
+          "elf_reference": {
+            "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/com.android.runtime/lib64/bionic/libc.so",
+            "sha256": "d3f8599b8b3f00101a31f94ac170ceb5875ee8446c201cb18382b2e02df84301",
+            "reference_kind": "documented_sdk_elf",
+            "recorded_source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36/com.android.runtime/lib64/bionic/libc.so"
+          },
+          "file_offset": 862984,
+          "elf_reference_status": "sha256_verified",
+          "pt_load_matches": [
+            {
+              "offset": 360448,
+              "vaddr": 360448,
+              "filesz": 582704,
+              "memsz": 582704,
+              "flags": 5,
+              "align": 16384
+            }
+          ],
+          "mapped_file_full_bytes_readback": "not_captured",
+          "elf_vaddr": 862984,
+          "load_bias": 344734089216,
+          "executable_elf_segment": true
+        },
+        "lr": {
+          "address": 333528392516,
+          "address_hex": "0x4da7d76344",
+          "proc_map_matches": [
+            {
+              "start": 333528334336,
+              "end": 333528399872,
+              "permissions": "r-xp",
+              "offset": 49152,
+              "device": "fd:04",
+              "inode": 597,
+              "path": "/vendor/lib64/egl/libEGL_emulation.so"
+            }
+          ],
+          "runtime_elf_matches": [],
+          "status": "mapped",
+          "executable_mapping": true,
+          "elf_reference": {
+            "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36-desktop/vendor/lib64/egl/libEGL_emulation.so",
+            "sha256": "ee7addbb4d7830bec69023e55906accea85036f765ad5eb104df96fc83edc54f",
+            "reference_kind": "prepared_desktop_manifest_sdk_elf",
+            "reference_manifest": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/android/android36-desktop/manifest.json",
+            "reference_manifest_sha256": "515c9fe37032c16e01048a9a63f83708b314558d5322de2eb41773db09179772"
+          },
+          "file_offset": 107332,
+          "elf_reference_status": "sha256_verified",
+          "pt_load_matches": [
+            {
+              "offset": 49152,
+              "vaddr": 49152,
+              "filesz": 62368,
+              "memsz": 62368,
+              "flags": 5,
+              "align": 16384
+            }
+          ],
+          "mapped_file_full_bytes_readback": "not_captured",
+          "elf_vaddr": 107332,
+          "load_bias": 333528285184,
+          "executable_elf_segment": true
+        }
+      },
+      "diagnostic_calls": 20,
+      "page_bytes": 16384,
+      "maps": {
+        "reads": 5,
+        "returned_bytes": 50890,
+        "captured_bytes": 50890,
+        "eof": 1,
+        "truncated": 0,
+        "failed": 0
+      },
+      "late_diagnostic_plan": {
+        "target_seconds": 450,
+        "observation_seconds": 180,
+        "expected_in_window": false,
+        "sigquit_records_observed": false,
+        "binder_records_observed": false
+      },
+      "capture_status": {
+        "taglog": "passed",
+        "logd": "complete",
+        "ashmem": "failed",
+        "sigquit": "incomplete",
+        "binder": "incomplete"
+      }
+    }
+  ],
+  "wrapper": {
+    "returncode": 1,
+    "process_group_empty": true,
+    "elapsed_seconds": 406.31362462509423,
+    "time_scope": "六入口观察、诊断、恢复和来源检查，未用于性能比较"
+  },
+  "same_elf_offsets_across_entries": true,
+  "ios_check": "八项 macOS/iOS CLI/GCD 语法检查；实际 iOS 执行待真机验证",
+  "limits": [
+    "每入口仅记录一份匹配调用，其他 read/EAGAIN 的进程和 FD 未由本次采样逐项确定。",
+    "未读取 /proc/self/stat；starttime 与 PID namespace 未采集。",
+    "F_GETFL 回读 access mode 和 O_NONBLOCK；FD_CLOEXEC 未回读。",
+    "ELF 参考文件与已保留 SDK 来源摘要相符，完整映射文件字节未从 guest 回读。",
+    "完整 boot 保留 failed，设备执行、持续性能与热状态待后续验证。",
+    "LR 确认 qemu_pipe_read；512 KiB 的具体上层调用未取得动态 FP 链，后续静态调用关系按该范围解释。",
+    "一次样本仅描述本次 read，全部历史负值计数的来源继续分别核对。",
+    "完整 boot、桌面、通用原始签名 APK、HyperOS、App、持续性能与热状态继续验收。"
+  ],
+  "cleanup": {
+    "status": "pending",
+    "reason": "实际结果已保存，后续原 SDK 构建输入先独立保存再清理。"
+  },
+  "summary_source": {
+    "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/read-identity-original-init-v13-180s/summarize_completed.py",
+    "bytes": 8201,
+    "sha256": "44a1a2d0db67f18782cb91224bcad9c12769553d4d0383054995d2af29d73fac"
+  }
+}
