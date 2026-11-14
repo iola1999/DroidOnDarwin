@@ -13,6 +13,7 @@ COPIED_SOURCES = (("layout.h", "include/asm/nce-layout.h"),
                   ("lkl-nce-mmu.c", "mm/nce_mmu.c"),
                   ("lkl-nce-process.c", "kernel/nce_process.c"),
                   ("lkl-nce-signal.c", "kernel/nce_signal.c"),
+                  ("lkl-nce-ptrace.c", "kernel/nce_ptrace.c"),
                   ("lkl-nce-schedule.c", "kernel/nce_schedule.c"),
                   ("lkl-nce-elf.c", "kernel/nce_elf.c"),
                   ("lkl-nce-block.c", "kernel/nce_block.c"),
@@ -229,6 +230,11 @@ static void free_host_syscall_state(void)
     edit(ptrace, "#include <linux/errno.h>", "#include <linux/errno.h>\n#include <asm/guest-registers.h>")
     edit(ptrace, "struct task_struct;", "struct task_struct;\nextern int ptrace_request(struct task_struct *child, long request,\n                          unsigned long addr, unsigned long data);")
     edit(ptrace, "\treturn -EINVAL;", "\treturn ptrace_request(child, request, addr, data);")
+    edit(ptrace, "extern int ptrace_request(struct task_struct *child, long request,\n                          unsigned long addr, unsigned long data);",
+         "extern int ptrace_request(struct task_struct *child, long request,\n                          unsigned long addr, unsigned long data);\n"
+         "#ifdef CONFIG_MMU\nextern long nce_ptrace(struct task_struct *child, long request,\n                       unsigned long addr, unsigned long data);\n#endif")
+    edit(ptrace, "\treturn ptrace_request(child, request, addr, data);",
+         "#ifdef CONFIG_MMU\n\treturn nce_ptrace(child, request, addr, data);\n#else\n\treturn ptrace_request(child, request, addr, data);\n#endif")
     edit(ptrace, "#define user_stack_pointer(regs) 0", "#define user_stack_pointer(regs) ((regs) ? (regs)->sp : 0)")
     edit(ptrace, "#define instruction_pointer(regs) 0", "#define instruction_pointer(regs) ((regs) ? (regs)->pc : 0)")
     edit(arch + "include/asm/processor.h", "static inline void start_thread(struct pt_regs *regs, unsigned long entry,\n\t\t\t unsigned long stack) {}", "void start_thread(struct pt_regs *regs, unsigned long entry, unsigned long stack);")
@@ -263,6 +269,10 @@ static void free_host_syscall_state(void)
     edit(arch + "include/uapi/asm/host_ops.h",
          "unsigned long (*user_elf)(const char *path, const void *header, const void *phdrs);",
          "unsigned long (*user_elf)(const char *path, unsigned long source_offset, const void *header, const void *phdrs);\n\tunsigned long (*user_elf_offset)(unsigned long address);")
+    edit(arch + "include/uapi/asm/host_ops.h",
+         "\tint (*user_reserved)(unsigned long address, unsigned long length);",
+         "\tint (*user_reserved)(unsigned long address, unsigned long length);\n"
+         "\tunsigned long (*user_get_tls)(void *state);")
     edit(arch + "kernel/threads.c", "\tti->flags = org_ti->flags;", "\tp->thread.nce_state = NULL;\n\tti->flags = org_ti->flags;")
     edit(arch + "kernel/threads.c", "\tkill_thread(ti);\n\tkfree(ti);", "\tkill_thread(ti);\n#ifdef CONFIG_MMU\n\tif (tsk->thread.nce_state)\n\t\tlkl_ops->user_free(tsk->thread.nce_state);\n#endif\n\tkfree(ti);")
     if "if (lkl_ops->user_switch)" not in (source / arch / "kernel/threads.c").read_text():
@@ -326,6 +336,8 @@ static void free_host_syscall_state(void)
          "obj-$(CONFIG_PAGE_REPORTING) += nce_reclaim.o\nobj-$(CONFIG_MMU) += nce_schedule.o")
     edit(arch + "kernel/Makefile", "obj-$(CONFIG_MMU) += nce_schedule.o",
          "obj-$(CONFIG_MMU) += nce_schedule.o\nobj-$(CONFIG_UNIX) += nce_graphics_pipe.o")
+    edit(arch + "kernel/Makefile", "obj-$(CONFIG_UNIX) += nce_graphics_pipe.o",
+         "obj-$(CONFIG_UNIX) += nce_graphics_pipe.o\nobj-$(CONFIG_MMU) += nce_ptrace.o")
     for local, destination in COPIED_SOURCES:
         target = source / arch / destination
         content = (experiment / local).read_bytes()

@@ -96,9 +96,9 @@
       "sha256": "15c0e0d909610ca4cfc974a6c5a82ec83ae398609e5228349f603bbd9621c01f"
     },
     "summary": {
-      "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sdk-plain-init-read-identity-16k-v13-180s/summary.json",
-      "bytes": 38065535,
-      "sha256": "e0873c593ae221fd86f4cfc31772cd4a79a1b2c1337dafcab16bf70667f9c881"
+      "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sdk-plain-init-read-identity-16k-v13-180s/summary.json.zst",
+      "bytes": 752201,
+      "sha256": "6cfada9191090fe7eb2f3d107062891d36b223ce23a9dbfdd9fcf66fb041d962"
     },
     "build": {
       "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/read-identity-original-init-v13-180s/build-03/report.json",
@@ -845,12 +845,20 @@
     "完整 boot、桌面、通用原始签名 APK、HyperOS、App、持续性能与热状态继续验收。"
   ],
   "cleanup": {
-    "status": "pending",
-    "reason": "实际结果已保存，后续原 SDK 构建输入先独立保存再清理。"
+    "status": "completed",
+    "report": {
+      "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/cleanup-2026-11-15/read-identity-v13.json",
+      "bytes": 45338,
+      "sha256": "35ee7b8be9999d43ea74b9877648d6c750facd01bbc3af668c45cc9e2095425a"
+    },
+    "removed_targets": 87,
+    "removed_logical_bytes": 10038750269,
+    "retained_unchanged": true,
+    "physical_space_reclaimed": null
   },
   "summary_source": {
     "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/read-identity-original-init-v13-180s/summarize_completed.py",
-    "bytes": 8201,
-    "sha256": "44a1a2d0db67f18782cb91224bcad9c12769553d4d0383054995d2af29d73fac"
+    "bytes": 8331,
+    "sha256": "064a77771f12afb25915dedeb7559262f6c5380cff8312cd842402e778c9c078"
   }
 }

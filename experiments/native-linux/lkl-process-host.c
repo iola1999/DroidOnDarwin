@@ -605,6 +605,10 @@ static void *user_clone(void *parent, unsigned long sp, unsigned long tls, unsig
     ++allocated;
     return state;
 }
+static unsigned long user_get_tls(void *state)
+{
+    return ((NceState *)state)->tls;
+}
 static void user_free(void *state)
 {
     Process *process = state;
@@ -817,6 +821,7 @@ unsigned long nce_process_setup(void)
     nce_lkl_host.shmem_mmap = shmem_map;
     nce_lkl_host.munmap = protect_none;
     nce_lkl_host.user_clone = user_clone;
+    nce_lkl_host.user_get_tls = user_get_tls;
     nce_lkl_host.user_free = user_free;
     nce_lkl_host.user_switch = user_switch;
     nce_lkl_host.user_run = user_run;

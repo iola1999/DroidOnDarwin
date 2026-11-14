@@ -1,0 +1,899 @@
+{
+  "scope": "Mac 本机 ARM64 只读 GPR/TLS regset 与原 SDK 集成结果",
+  "record_date": "2026-11-15",
+  "status": "passed",
+  "platform": "macOS-27.0-arm64-arm-64bit-Mach-O",
+  "machine": "arm64",
+  "configuration": {
+    "data_tbi": true,
+    "guest_layout": "sparse",
+    "code_memory": "dual",
+    "execution": "direct",
+    "direct": {
+      "mapping_entries": 256,
+      "route_entries": 256,
+      "selective_writes": false,
+      "reuse_code_checks": false,
+      "memory": "flat",
+      "code_watch": false,
+      "cross_page": false,
+      "route_epochs": false,
+      "retain_routes": false,
+      "memory_groups": false,
+      "native_exclusive": false,
+      "vector_table": false,
+      "simd_math": false
+    },
+    "mapping": "pte",
+    "sparse_scan": true,
+    "fault_prefetch": false,
+    "guest_page_bytes": 16384,
+    "host_page_bytes": 16384,
+    "workload": "core",
+    "entries": [
+      "cli",
+      "gcd"
+    ],
+    "art_nterp": 1,
+    "cpus": 1,
+    "high_res_timers": false,
+    "bpf_jit": true,
+    "online_cpus": 1,
+    "uaccess_stop": "all",
+    "parallel_profile": false,
+    "art_expanded_jit": 0,
+    "art_fast_baseline": 0,
+    "cache_invalidation": "pages",
+    "exec_cache": "pages",
+    "tlb_invalidation": "pages",
+    "linux_fastpath": 0,
+    "guest_ram_bytes": 1073741824,
+    "translation_cache_bytes": 134217728,
+    "instruction_batch": 50000,
+    "memory_interval_ms": 100,
+    "preemption": "timer",
+    "timer_interval_ns": 2000000
+  },
+  "interface": {
+    "gpr_bytes": 272,
+    "tls_bytes": 16,
+    "element_bytes": 8,
+    "short_tls_bytes": 8,
+    "setregset_and_other_notes": "EIO"
+  },
+  "reports": {
+    "kernel_build": {
+      "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-ptrace-generic-v1/regset-read-v1/kernel-build.json",
+      "bytes": 145843,
+      "sha256": "9ff79afd0afef487606913b4fd79f58d1d2dd5211b41e71f6bea3ac7f40b1921"
+    },
+    "kernel_abi": {
+      "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-ptrace-generic-v1/regset-read-v1/kernel-abi-review.json",
+      "bytes": 2779,
+      "sha256": "656f8b3397c993566a55ba2ff76e25aac9e11ccad3e42f0c73dbb733761ee534"
+    },
+    "translation_matrix": {
+      "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-ptrace-generic-v1/regset-read-v1/host-driver-03/run/report.json",
+      "bytes": 987471,
+      "sha256": "5ffb361d5c9711c4fbb336bb6f4691ca309645372b366d558cd8c472378a3434"
+    },
+    "native_standard": {
+      "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-ptrace-generic-v1/regset-read-v1/processes-integration-01/final-review.json",
+      "bytes": 5657,
+      "sha256": "909f77dbd144c8e62d2e9c8142029626b2c9f34eac21c453a88ae129a4b42cda"
+    },
+    "native_kernel_abi": {
+      "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-ptrace-generic-v1/regset-read-v1/processes-integration-01/final-kernel-abi-review.json",
+      "bytes": 2453,
+      "sha256": "e7ce5d14596806ad59ea93215d911fa9a79feca8670dacacfac8397de4242ae7"
+    },
+    "host_ops_layout": {
+      "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-ptrace-generic-v1/regset-read-v1/processes-integration-01/host-ops-layout-review.json",
+      "bytes": 34668,
+      "sha256": "f4dd2b2b2a98706a79dcb9fc5c23aed2f52004afc3efaa07621415a837588581"
+    },
+    "native_regset": {
+      "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-ptrace-generic-v1/regset-read-v1/processes-integration-01/native-diagnostic-01/final-review-counted.json",
+      "bytes": 3084,
+      "sha256": "9299de590a7306dda4f56472026766361dbeb1256f5b3cbf513798ba2988a9ce"
+    },
+    "completeness_delivery": {
+      "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-ptrace-generic-v1/regset-read-v1/probe-completeness-v1/delivery-review.json",
+      "bytes": 6960,
+      "sha256": "a59ff548dcb7cc7d96d7ddf1cd74c91d5399c3ec1faf4f6876e7479808de7b41"
+    },
+    "completeness_applied": {
+      "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-ptrace-generic-v1/regset-read-v1/probe-completeness-v1/applied-production-review.json",
+      "bytes": 1473,
+      "sha256": "655f3f5b1731f539c1589c720e7d32d8608f720f1abd09e86516fc2033fb05bf"
+    },
+    "production_replay": {
+      "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-ptrace-generic-v1/regset-read-v1/probe-completeness-v1/production-offline-replay.json",
+      "bytes": 26520,
+      "sha256": "686f98a8cbc5c46ed1393c95a0f76625a9401895042ae270cf35e95b035081ef"
+    },
+    "sdk_v14": {
+      "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/sdk-regset-original-init-v14-180s/run/report.json",
+      "bytes": 2464951,
+      "sha256": "c2125af6cc705189443c6a3dc8a4f009b76296ca8bdc1534c153fd4b0962b915"
+    },
+    "sdk_v15": {
+      "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/sdk-regset-original-init-v15-180s/run/report.json",
+      "bytes": 2739436,
+      "sha256": "23e1e0027b2991fe2b184e1cdc08682052a0f11a69434e33b92efe9bb7e48f33"
+    }
+  },
+  "sources_at_delivery": {
+    "experiments/native-linux/lkl-nce-ptrace.c": {
+      "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-vold-linux-v1/mount/plain-repo/experiments/native-linux/lkl-nce-ptrace.c",
+      "bytes": 2666,
+      "sha256": "784dc3658f233d924607c8bfc8e5af4ec59fb0ab63bb1f89ec5e57e7185ca820"
+    },
+    "experiments/native-linux/lkl-process-host.c": {
+      "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-vold-linux-v1/mount/plain-repo/experiments/native-linux/lkl-process-host.c",
+      "bytes": 86925,
+      "sha256": "7278265cc85a9d0ef6d8aefe3343581b0d922e8bfe31065813e84db471923e73"
+    },
+    "experiments/native-linux/translation/linux-execution.c": {
+      "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-vold-linux-v1/mount/plain-repo/experiments/native-linux/translation/linux-execution.c",
+      "bytes": 63775,
+      "sha256": "19b23bfd7f0086a8759b95f876f67c51c4a01488262b4a181e8b8cdbde44a6d6"
+    },
+    "experiments/native-linux/translation/ptrace-guest.c": {
+      "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-vold-linux-v1/mount/plain-repo/experiments/native-linux/translation/ptrace-guest.c",
+      "bytes": 36939,
+      "sha256": "c3fea2c92373ee98e969c2f76f8f6d3bc307fb3329800ad725ad990b591b1688"
+    },
+    "scripts/lkl_nce_patch.py": {
+      "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-vold-linux-v1/mount/plain-repo/scripts/lkl_nce_patch.py",
+      "bytes": 31261,
+      "sha256": "fde7adf641d6b5f0d417375c59d0edebc1c77beaf80a1d84be8b43097084b5f4"
+    },
+    "scripts/probe_lkl_ptrace.py": {
+      "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-vold-linux-v1/mount/plain-repo/scripts/probe_lkl_ptrace.py",
+      "bytes": 36641,
+      "sha256": "e7681d8c8dc893a094923fbd0fffe7708a9fa4018bc466ce216b672f195802f6"
+    }
+  },
+  "translation": {
+    "inputs_checked": 672,
+    "inputs_unchanged": true,
+    "guest_sha256": "d07e00bfa97701b3b8388c38b93500b722b427f2dc72a9536fafe927a6ff4eb2",
+    "runs": [
+      {
+        "kernel": "candidate-unicorn",
+        "entry": "cli",
+        "configuration": {
+          "data_tbi": true,
+          "guest_layout": "host",
+          "code_memory": "dual",
+          "execution": "unicorn",
+          "direct": null,
+          "mapping": "pte",
+          "sparse_scan": true,
+          "fault_prefetch": false,
+          "guest_page_bytes": 16384,
+          "host_page_bytes": 16384,
+          "workload": "core",
+          "entries": [
+            "cli",
+            "gcd"
+          ],
+          "art_nterp": 1,
+          "cpus": 1,
+          "high_res_timers": false,
+          "bpf_jit": true,
+          "online_cpus": 1,
+          "uaccess_stop": "all",
+          "parallel_profile": false,
+          "art_expanded_jit": 0,
+          "art_fast_baseline": 0,
+          "cache_invalidation": "pages",
+          "exec_cache": "pages",
+          "tlb_invalidation": "pages",
+          "linux_fastpath": 0,
+          "guest_ram_bytes": 1073741824,
+          "translation_cache_bytes": 134217728,
+          "instruction_batch": 50000,
+          "memory_interval_ms": 100,
+          "preemption": "timer",
+          "timer_interval_ns": 2000000
+        },
+        "guest_sha256": "d07e00bfa97701b3b8388c38b93500b722b427f2dc72a9536fafe927a6ff4eb2",
+        "ptrace_checks": 216,
+        "register_snapshots": 6,
+        "regset_capability": [
+          {
+            "test": "lkl_ptrace_regset_capability",
+            "supported": true
+          }
+        ],
+        "host_process": {
+          "pid": 64684,
+          "returncode": 0,
+          "actual_exit": 0,
+          "timed_out": false,
+          "timeout_seconds": 60,
+          "cleanup_signals": [],
+          "output_limit_exceeded": false,
+          "log_limit_bytes": 33554432,
+          "observed_log_bytes": {
+            "stdout": 40971,
+            "stderr": 0
+          },
+          "errors": [],
+          "process_group_members": [],
+          "process_group_empty": true
+        },
+        "stdout": {
+          "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-ptrace-generic-v1/regset-read-v1/host-driver-03/run/candidate-unicorn-cli.jsonl",
+          "bytes": 40971,
+          "sha256": "d9f3090590e5501843a16c21a722487402f7afbd8a6ad87c919c8276604d7479"
+        },
+        "stderr": {
+          "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-ptrace-generic-v1/regset-read-v1/host-driver-03/run/candidate-unicorn-cli.stderr",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      },
+      {
+        "kernel": "baseline",
+        "entry": "cli",
+        "configuration": {
+          "data_tbi": true,
+          "guest_layout": "sparse",
+          "code_memory": "dual",
+          "execution": "direct",
+          "direct": {
+            "mapping_entries": 256,
+            "route_entries": 256,
+            "selective_writes": false,
+            "reuse_code_checks": false,
+            "memory": "flat",
+            "code_watch": false,
+            "cross_page": false,
+            "route_epochs": false,
+            "retain_routes": false,
+            "memory_groups": false,
+            "native_exclusive": false,
+            "vector_table": false,
+            "simd_math": false
+          },
+          "mapping": "pte",
+          "sparse_scan": true,
+          "fault_prefetch": false,
+          "guest_page_bytes": 16384,
+          "host_page_bytes": 16384,
+          "workload": "core",
+          "entries": [
+            "cli",
+            "gcd"
+          ],
+          "art_nterp": 1,
+          "cpus": 1,
+          "high_res_timers": false,
+          "bpf_jit": true,
+          "online_cpus": 1,
+          "uaccess_stop": "all",
+          "parallel_profile": false,
+          "art_expanded_jit": 0,
+          "art_fast_baseline": 0,
+          "cache_invalidation": "pages",
+          "exec_cache": "pages",
+          "tlb_invalidation": "pages",
+          "linux_fastpath": 0,
+          "guest_ram_bytes": 1073741824,
+          "translation_cache_bytes": 134217728,
+          "instruction_batch": 50000,
+          "memory_interval_ms": 100,
+          "preemption": "timer",
+          "timer_interval_ns": 2000000
+        },
+        "guest_sha256": "d07e00bfa97701b3b8388c38b93500b722b427f2dc72a9536fafe927a6ff4eb2",
+        "ptrace_checks": 198,
+        "register_snapshots": 0,
+        "regset_capability": [
+          {
+            "test": "lkl_ptrace_regset_capability",
+            "supported": false
+          }
+        ],
+        "host_process": {
+          "pid": 64757,
+          "returncode": 0,
+          "actual_exit": 0,
+          "timed_out": false,
+          "timeout_seconds": 60,
+          "cleanup_signals": [],
+          "output_limit_exceeded": false,
+          "log_limit_bytes": 33554432,
+          "observed_log_bytes": {
+            "stdout": 36795,
+            "stderr": 0
+          },
+          "errors": [],
+          "process_group_members": [],
+          "process_group_empty": true
+        },
+        "stdout": {
+          "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-ptrace-generic-v1/regset-read-v1/host-driver-03/run/baseline-cli.jsonl",
+          "bytes": 36795,
+          "sha256": "5bace0c782fece707a0115531f126cf481e83da112ea1a263a92fabbd0f450b0"
+        },
+        "stderr": {
+          "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-ptrace-generic-v1/regset-read-v1/host-driver-03/run/baseline-cli.stderr",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      },
+      {
+        "kernel": "baseline",
+        "entry": "gcd",
+        "configuration": {
+          "data_tbi": true,
+          "guest_layout": "sparse",
+          "code_memory": "dual",
+          "execution": "direct",
+          "direct": {
+            "mapping_entries": 256,
+            "route_entries": 256,
+            "selective_writes": false,
+            "reuse_code_checks": false,
+            "memory": "flat",
+            "code_watch": false,
+            "cross_page": false,
+            "route_epochs": false,
+            "retain_routes": false,
+            "memory_groups": false,
+            "native_exclusive": false,
+            "vector_table": false,
+            "simd_math": false
+          },
+          "mapping": "pte",
+          "sparse_scan": true,
+          "fault_prefetch": false,
+          "guest_page_bytes": 16384,
+          "host_page_bytes": 16384,
+          "workload": "core",
+          "entries": [
+            "cli",
+            "gcd"
+          ],
+          "art_nterp": 1,
+          "cpus": 1,
+          "high_res_timers": false,
+          "bpf_jit": true,
+          "online_cpus": 1,
+          "uaccess_stop": "all",
+          "parallel_profile": false,
+          "art_expanded_jit": 0,
+          "art_fast_baseline": 0,
+          "cache_invalidation": "pages",
+          "exec_cache": "pages",
+          "tlb_invalidation": "pages",
+          "linux_fastpath": 0,
+          "guest_ram_bytes": 1073741824,
+          "translation_cache_bytes": 134217728,
+          "instruction_batch": 50000,
+          "memory_interval_ms": 100,
+          "preemption": "timer",
+          "timer_interval_ns": 2000000
+        },
+        "guest_sha256": "d07e00bfa97701b3b8388c38b93500b722b427f2dc72a9536fafe927a6ff4eb2",
+        "ptrace_checks": 198,
+        "register_snapshots": 0,
+        "regset_capability": [
+          {
+            "test": "lkl_ptrace_regset_capability",
+            "supported": false
+          }
+        ],
+        "host_process": {
+          "pid": 64760,
+          "returncode": 0,
+          "actual_exit": 0,
+          "timed_out": false,
+          "timeout_seconds": 60,
+          "cleanup_signals": [],
+          "output_limit_exceeded": false,
+          "log_limit_bytes": 33554432,
+          "observed_log_bytes": {
+            "stdout": 36846,
+            "stderr": 0
+          },
+          "errors": [],
+          "process_group_members": [],
+          "process_group_empty": true
+        },
+        "stdout": {
+          "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-ptrace-generic-v1/regset-read-v1/host-driver-03/run/baseline-gcd.jsonl",
+          "bytes": 36846,
+          "sha256": "1786f6ae3e585652254178a802e5bb1e3a6471df329460c9621fadf0c3b574e3"
+        },
+        "stderr": {
+          "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-ptrace-generic-v1/regset-read-v1/host-driver-03/run/baseline-gcd.stderr",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      },
+      {
+        "kernel": "candidate",
+        "entry": "cli",
+        "configuration": {
+          "data_tbi": true,
+          "guest_layout": "sparse",
+          "code_memory": "dual",
+          "execution": "direct",
+          "direct": {
+            "mapping_entries": 256,
+            "route_entries": 256,
+            "selective_writes": false,
+            "reuse_code_checks": false,
+            "memory": "flat",
+            "code_watch": false,
+            "cross_page": false,
+            "route_epochs": false,
+            "retain_routes": false,
+            "memory_groups": false,
+            "native_exclusive": false,
+            "vector_table": false,
+            "simd_math": false
+          },
+          "mapping": "pte",
+          "sparse_scan": true,
+          "fault_prefetch": false,
+          "guest_page_bytes": 16384,
+          "host_page_bytes": 16384,
+          "workload": "core",
+          "entries": [
+            "cli",
+            "gcd"
+          ],
+          "art_nterp": 1,
+          "cpus": 1,
+          "high_res_timers": false,
+          "bpf_jit": true,
+          "online_cpus": 1,
+          "uaccess_stop": "all",
+          "parallel_profile": false,
+          "art_expanded_jit": 0,
+          "art_fast_baseline": 0,
+          "cache_invalidation": "pages",
+          "exec_cache": "pages",
+          "tlb_invalidation": "pages",
+          "linux_fastpath": 0,
+          "guest_ram_bytes": 1073741824,
+          "translation_cache_bytes": 134217728,
+          "instruction_batch": 50000,
+          "memory_interval_ms": 100,
+          "preemption": "timer",
+          "timer_interval_ns": 2000000
+        },
+        "guest_sha256": "d07e00bfa97701b3b8388c38b93500b722b427f2dc72a9536fafe927a6ff4eb2",
+        "ptrace_checks": 216,
+        "register_snapshots": 6,
+        "regset_capability": [
+          {
+            "test": "lkl_ptrace_regset_capability",
+            "supported": true
+          }
+        ],
+        "host_process": {
+          "pid": 64763,
+          "returncode": 0,
+          "actual_exit": 0,
+          "timed_out": false,
+          "timeout_seconds": 60,
+          "cleanup_signals": [],
+          "output_limit_exceeded": false,
+          "log_limit_bytes": 33554432,
+          "observed_log_bytes": {
+            "stdout": 42418,
+            "stderr": 0
+          },
+          "errors": [],
+          "process_group_members": [],
+          "process_group_empty": true
+        },
+        "stdout": {
+          "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-ptrace-generic-v1/regset-read-v1/host-driver-03/run/candidate-cli.jsonl",
+          "bytes": 42418,
+          "sha256": "48c20efad65c8c841b533e65ac7d6b7a59feec948c353dac020118a0f98177ba"
+        },
+        "stderr": {
+          "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-ptrace-generic-v1/regset-read-v1/host-driver-03/run/candidate-cli.stderr",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      },
+      {
+        "kernel": "candidate",
+        "entry": "gcd",
+        "configuration": {
+          "data_tbi": true,
+          "guest_layout": "sparse",
+          "code_memory": "dual",
+          "execution": "direct",
+          "direct": {
+            "mapping_entries": 256,
+            "route_entries": 256,
+            "selective_writes": false,
+            "reuse_code_checks": false,
+            "memory": "flat",
+            "code_watch": false,
+            "cross_page": false,
+            "route_epochs": false,
+            "retain_routes": false,
+            "memory_groups": false,
+            "native_exclusive": false,
+            "vector_table": false,
+            "simd_math": false
+          },
+          "mapping": "pte",
+          "sparse_scan": true,
+          "fault_prefetch": false,
+          "guest_page_bytes": 16384,
+          "host_page_bytes": 16384,
+          "workload": "core",
+          "entries": [
+            "cli",
+            "gcd"
+          ],
+          "art_nterp": 1,
+          "cpus": 1,
+          "high_res_timers": false,
+          "bpf_jit": true,
+          "online_cpus": 1,
+          "uaccess_stop": "all",
+          "parallel_profile": false,
+          "art_expanded_jit": 0,
+          "art_fast_baseline": 0,
+          "cache_invalidation": "pages",
+          "exec_cache": "pages",
+          "tlb_invalidation": "pages",
+          "linux_fastpath": 0,
+          "guest_ram_bytes": 1073741824,
+          "translation_cache_bytes": 134217728,
+          "instruction_batch": 50000,
+          "memory_interval_ms": 100,
+          "preemption": "timer",
+          "timer_interval_ns": 2000000
+        },
+        "guest_sha256": "d07e00bfa97701b3b8388c38b93500b722b427f2dc72a9536fafe927a6ff4eb2",
+        "ptrace_checks": 216,
+        "register_snapshots": 6,
+        "regset_capability": [
+          {
+            "test": "lkl_ptrace_regset_capability",
+            "supported": true
+          }
+        ],
+        "host_process": {
+          "pid": 64766,
+          "returncode": 0,
+          "actual_exit": 0,
+          "timed_out": false,
+          "timeout_seconds": 60,
+          "cleanup_signals": [],
+          "output_limit_exceeded": false,
+          "log_limit_bytes": 33554432,
+          "observed_log_bytes": {
+            "stdout": 42622,
+            "stderr": 0
+          },
+          "errors": [],
+          "process_group_members": [],
+          "process_group_empty": true
+        },
+        "stdout": {
+          "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-ptrace-generic-v1/regset-read-v1/host-driver-03/run/candidate-gcd.jsonl",
+          "bytes": 42622,
+          "sha256": "2b9bbabbcad91b0fdc05f6db137a1126ede8f10883ac708f2c797450a020e96e"
+        },
+        "stderr": {
+          "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-ptrace-generic-v1/regset-read-v1/host-driver-03/run/candidate-gcd.stderr",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      },
+      {
+        "kernel": "candidate-unicorn",
+        "entry": "gcd",
+        "configuration": {
+          "data_tbi": true,
+          "guest_layout": "host",
+          "code_memory": "dual",
+          "execution": "unicorn",
+          "direct": null,
+          "mapping": "pte",
+          "sparse_scan": true,
+          "fault_prefetch": false,
+          "guest_page_bytes": 16384,
+          "host_page_bytes": 16384,
+          "workload": "core",
+          "entries": [
+            "cli",
+            "gcd"
+          ],
+          "art_nterp": 1,
+          "cpus": 1,
+          "high_res_timers": false,
+          "bpf_jit": true,
+          "online_cpus": 1,
+          "uaccess_stop": "all",
+          "parallel_profile": false,
+          "art_expanded_jit": 0,
+          "art_fast_baseline": 0,
+          "cache_invalidation": "pages",
+          "exec_cache": "pages",
+          "tlb_invalidation": "pages",
+          "linux_fastpath": 0,
+          "guest_ram_bytes": 1073741824,
+          "translation_cache_bytes": 134217728,
+          "instruction_batch": 50000,
+          "memory_interval_ms": 100,
+          "preemption": "timer",
+          "timer_interval_ns": 2000000
+        },
+        "guest_sha256": "d07e00bfa97701b3b8388c38b93500b722b427f2dc72a9536fafe927a6ff4eb2",
+        "ptrace_checks": 216,
+        "register_snapshots": 6,
+        "regset_capability": [
+          {
+            "test": "lkl_ptrace_regset_capability",
+            "supported": true
+          }
+        ],
+        "host_process": {
+          "pid": 64822,
+          "returncode": 0,
+          "actual_exit": 0,
+          "timed_out": false,
+          "timeout_seconds": 60,
+          "cleanup_signals": [],
+          "output_limit_exceeded": false,
+          "log_limit_bytes": 33554432,
+          "observed_log_bytes": {
+            "stdout": 40859,
+            "stderr": 0
+          },
+          "errors": [],
+          "process_group_members": [],
+          "process_group_empty": true
+        },
+        "stdout": {
+          "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-ptrace-generic-v1/regset-read-v1/host-driver-03/run/candidate-unicorn-gcd.jsonl",
+          "bytes": 40859,
+          "sha256": "eef963bbe7d6cabd11b7bf30e80b65faee0fc60855e12d8d704c3b436199af0f"
+        },
+        "stderr": {
+          "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-ptrace-generic-v1/regset-read-v1/host-driver-03/run/candidate-unicorn-gcd.stderr",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      }
+    ]
+  },
+  "native_standard": {
+    "modes": {
+      "cli": {
+        "records": 5807,
+        "completed": true,
+        "passed_checks": 204,
+        "failed_checks": [],
+        "inherited_blocked_threads": 0,
+        "storage_generation": 1,
+        "context_lifetime": {
+          "test": "linux_nce_context_lifetime",
+          "allocated": 1925,
+          "freed": 1925
+        },
+        "results_sha256": "e1fb188a83beb9f10f4f6af9b12f0e2fa194621be0b1248a73204991d3a5262d"
+      },
+      "gcd": {
+        "records": 5809,
+        "completed": true,
+        "passed_checks": 204,
+        "failed_checks": [],
+        "inherited_blocked_threads": 67,
+        "storage_generation": 2,
+        "context_lifetime": {
+          "test": "linux_nce_context_lifetime",
+          "allocated": 1925,
+          "freed": 1925
+        },
+        "results_sha256": "27b026da7f3bbb1febd6bd0c000d6da498ff40f68c86db4457e24f8ebd3652a6"
+      }
+    },
+    "inputs": {
+      "summary_inputs": 823,
+      "all_summary_inputs_match_actual_files": true,
+      "all_summary_generated_inputs_match_actual_files": true,
+      "isolated_source_unchanged": true,
+      "production_source_unchanged": true,
+      "protected_inputs_unchanged": true,
+      "dependency_inputs": {
+        "work/native-linux-nce/lkl-process-build/drivers/android/.ashmem.o.cmd": "69f232d5a21c5f4d5ad392dd314d26d1bcfc547e62d958b1e001c107b917ad7f",
+        "work/native-linux-nce/lkl-process-build/drivers/android/ashmem-inputs.d": "ffedb4ec7a1d12ad543327d5da93e4aee6d0c7f99f05e369c67fbdbbc62654a3"
+      }
+    },
+    "ext4": {
+      "state": 1,
+      "incompat": 8898,
+      "ro_compat": 1131,
+      "clean": true,
+      "canonical_e2fsck_completed": true,
+      "storage_started_from_seed": true,
+      "final_data_image_sha256": "abdc4e3401cf60ebda9150def1b526e6af6fe82b3cd79f2706f182478eb906c2"
+    },
+    "device_execution": "pending"
+  },
+  "native_regset": {
+    "modes": {
+      "cli": {
+        "ptrace_checks": 216,
+        "records": 5727,
+        "snapshots": 6,
+        "snapshot_counts": {
+          "running_user_loop:1": 2,
+          "blocking_read:2": 2,
+          "clone_settls:3": 1,
+          "clone_settls:4": 1
+        },
+        "runtime_elf_base": 481402290176,
+        "pc_checked_against_actual_elf_symbols": true,
+        "seeded_registers_and_original_masks_checked": true,
+        "stdout_bytes": 32992,
+        "guest_wait_status": 0,
+        "owned_children_reaped": [
+          "running_user_loop",
+          "blocking_read",
+          "clone_event",
+          "clone_settls"
+        ],
+        "context_lifetime": {
+          "test": "linux_nce_context_lifetime",
+          "allocated": 7,
+          "freed": 7
+        },
+        "stdout_sha256": "50690baed23597e09398eaba197ba614bd80b307fa86764a8ff35b381576c3f4",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "gcd": {
+        "ptrace_checks": 216,
+        "records": 5729,
+        "snapshots": 6,
+        "snapshot_counts": {
+          "running_user_loop:1": 2,
+          "blocking_read:2": 2,
+          "clone_settls:3": 1,
+          "clone_settls:4": 1
+        },
+        "runtime_elf_base": 481402290176,
+        "pc_checked_against_actual_elf_symbols": true,
+        "seeded_registers_and_original_masks_checked": true,
+        "stdout_bytes": 32992,
+        "guest_wait_status": 0,
+        "owned_children_reaped": [
+          "running_user_loop",
+          "blocking_read",
+          "clone_event",
+          "clone_settls"
+        ],
+        "context_lifetime": {
+          "test": "linux_nce_context_lifetime",
+          "allocated": 7,
+          "freed": 7
+        },
+        "stdout_sha256": "7ee00a4a12bef7b5ec1a4fbf3e9b6072ddc337f4a02067b695c7397592534ad9",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    "inputs_checked": 942,
+    "ext4": {
+      "command": [
+        "/opt/homebrew/opt/e2fsprogs/sbin/e2fsck",
+        "-f",
+        "-n",
+        "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-vold-linux-v1/mount/regset-processes-integrated-v1/work/regset-native-diagnostic-01/work/native-linux-nce/processes/android-data.img"
+      ],
+      "returncode": 0,
+      "clean": true,
+      "data_sha256": "69d2668ad030ea66f8218928b91ae4b3fbd3b66a6f2d1d8c0f88c4d4e18a297d"
+    },
+    "device_execution": false,
+    "fixture_elf_sha256": "8d1c9e1f24c4b99990bb8c44046ddcd2fe13df0c348255aba8355830edf9d796"
+  },
+  "completeness": {
+    "production_sha256": "e7681d8c8dc893a094923fbd0fffe7708a9fa4018bc466ce216b672f195802f6",
+    "historical_sha256": "e7d940152713f76699ad58c56a1f6c7a9484b483e72bd11502b2f949f74b4430",
+    "production_replay_checks": 24,
+    "historical_run_report_rewritten": false
+  },
+  "sdk_v15": {
+    "status": "failed",
+    "full_boot_validation": "failed",
+    "first_stage_completed": true,
+    "six_entry_order_passed": true,
+    "observation_and_cleanup_passed": true,
+    "inputs_unchanged": true,
+    "runs": [
+      {
+        "entry": "cli",
+        "phase": "lifecycle",
+        "returncode": 0,
+        "observation_validated": true,
+        "data_clean": true,
+        "metadata_clean": true
+      },
+      {
+        "entry": "gcd",
+        "phase": "lifecycle",
+        "returncode": 0,
+        "observation_validated": true,
+        "data_clean": true,
+        "metadata_clean": true
+      },
+      {
+        "entry": "cli",
+        "phase": "original",
+        "returncode": 0,
+        "observation_validated": true,
+        "data_clean": false,
+        "metadata_clean": true
+      },
+      {
+        "entry": "gcd",
+        "phase": "original",
+        "returncode": 0,
+        "observation_validated": true,
+        "data_clean": false,
+        "metadata_clean": true
+      },
+      {
+        "entry": "cli",
+        "phase": "recovery",
+        "returncode": 0,
+        "observation_validated": true,
+        "data_clean": true,
+        "metadata_clean": true
+      },
+      {
+        "entry": "gcd",
+        "phase": "recovery",
+        "returncode": 0,
+        "observation_validated": true,
+        "data_clean": true,
+        "metadata_clean": true
+      }
+    ],
+    "capture_errors": [
+      {
+        "entry": "cli",
+        "ashmem": {
+          "status": "failed",
+          "error": "[Errno 2] No such file or directory: '/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/sdk-regset-original-init-v15-180s/frozen/project/work/sdk-plain-validation-v1/dms-binder-state-original-init-v12-600s/pid1_validation.py'"
+        }
+      },
+      {
+        "entry": "gcd",
+        "ashmem": {
+          "status": "failed",
+          "error": "[Errno 2] No such file or directory: '/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/sdk-regset-original-init-v15-180s/frozen/project/work/sdk-plain-validation-v1/dms-binder-state-original-init-v12-600s/pid1_validation.py'"
+        }
+      }
+    ]
+  },
+  "limits": [
+    "原生专项使用同一 C 检查的 x18 兼容副本；Direct/Unicorn 使用原共享 ELF。",
+    "ENOMEM 与缺少目标后端状态尚未做故障注入。",
+    "v15 原 ashmem 分析缺少冻结 pid1_validation.py；原报告保持，独立重分析另行记录。",
+    "完整 SDK 转储、boot、桌面、通用原始签名 APK、HyperOS 与持续性能继续验收。",
+    "本机结果和 iOS arm64 编译检查分别记录，iOS 执行、设备资源、JIT 授权与热状态待真机验证。"
+  ],
+  "summary_source": {
+    "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-ptrace-generic-v1/regset-read-v1/summarize_completed.py",
+    "bytes": 6700,
+    "sha256": "54c421c49dc914f421fae35de0b5134737fd47759ed9ceb68f1b6ff28f1d1bdc"
+  }
+}

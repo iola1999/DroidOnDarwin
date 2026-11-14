@@ -741,6 +741,11 @@ static void *user_clone(void *parent, unsigned long sp, unsigned long tls, unsig
     return p;
 }
 
+static unsigned long user_get_tls(void *state)
+{
+    return ((Process *)state)->tls;
+}
+
 static void user_free(void *p)
 {
     __atomic_fetch_add(&freed, 1, __ATOMIC_RELAXED);
@@ -1189,6 +1194,7 @@ unsigned long translation_linux_setup(void *kernel, unsigned long copy_user_offs
     nce_lkl_host.shmem_mmap = shmem_map;
     nce_lkl_host.munmap = revoke_pages;
     nce_lkl_host.user_clone = user_clone;
+    nce_lkl_host.user_get_tls = user_get_tls;
     nce_lkl_host.user_free = user_free;
     nce_lkl_host.user_switch = user_switch;
     nce_lkl_host.user_run = user_run;
