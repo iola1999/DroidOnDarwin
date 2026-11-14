@@ -10,6 +10,7 @@ import shutil
 import subprocess
 
 import lkl_nce_patch
+import lkl_ashmem_patch
 import lkl_translation_patch
 import probe_lkl
 
@@ -58,6 +59,7 @@ def build(cpus=1, high_res_timers=False, guest_page_bytes=16384, bpf_jit=False):
     # 复制文件与补丁脚本共同决定生成源码，缺少任一来源会复用过期内核。
     copied = [EXP / name for name, _ in lkl_nce_patch.COPIED_SOURCES]
     patch_files = [Path(__file__), Path(probe_lkl.__file__), Path(lkl_translation_patch.__file__),
+                   Path(lkl_ashmem_patch.__file__), *lkl_ashmem_patch.input_files(),
                    ROOT / 'scripts/lkl_nce_patch.py', ROOT / 'scripts/lkl_translation_aslr_patch.py', *copied,
                    EXP / 'translation/kernel-api.h', EXP / 'direct/page-table-layout.h']
     if guest_page_bytes == 4096:
@@ -71,12 +73,13 @@ def build(cpus=1, high_res_timers=False, guest_page_bytes=16384, bpf_jit=False):
     patch_digest = hashlib.sha256(str(guest_page_bytes).encode() + b''.join(path.read_bytes() for path in patch_files)).hexdigest()
     stamp = out / 'source-inputs.sha256'
     prepared = source.exists() and stamp.exists() and stamp.read_text().strip() == patch_digest
-    if prepared and bpf_jit:
-        # Reuse the existing build manifest to detect changes in generated BPF inputs.
+    generated_source_files = [source / name for name in lkl_ashmem_patch.GENERATED_FILES] + bpf_source_files
+    if prepared:
+        # 复用源码前核对保存的生成文件摘要。
         try:
             hashes = json.loads((out / 'build.json').read_text())['sha256']
             prepared = all(path.is_file() and hashes.get(str(path.relative_to(ROOT))) ==
-                           hashlib.sha256(path.read_bytes()).hexdigest() for path in bpf_source_files)
+                           hashlib.sha256(path.read_bytes()).hexdigest() for path in generated_source_files)
         except (OSError, KeyError, json.JSONDecodeError):
             prepared = False
     if not prepared:
@@ -139,11 +142,13 @@ def build(cpus=1, high_res_timers=False, guest_page_bytes=16384, bpf_jit=False):
         run([source / 'scripts/config', '--file', build_dir / '.config',
              *[argument for name in probe_lkl.BLOCK_OPTIONS for argument in ('-e', name)],
              '-e', 'BINFMT_SCRIPT',
+             '-e', 'SHMEM', '-e', 'ASHMEM',
              *(['-e', 'LKL_BPF_JIT', '-e', 'BPF_JIT', '-d', 'BPF_JIT_ALWAYS_ON'] if bpf_jit else []),
              '--set-val', 'ARCH_MMAP_RND_BITS', str(maximum)], log)
         run([*make, 'olddefconfig'], log)
-        if any('CONFIG_' + name + '=y\n' not in (build_dir / '.config').read_text() for name in probe_lkl.BLOCK_OPTIONS):
-            raise RuntimeError('生成的翻译内核配置缺少 Android 块设备或 system DMA heap 支持')
+        if any('CONFIG_' + name + '=y\n' not in (build_dir / '.config').read_text()
+               for name in (*probe_lkl.BLOCK_OPTIONS, 'SHMEM', 'ASHMEM')):
+            raise RuntimeError('生成的翻译内核配置缺少 Android 块设备、system DMA heap 或 ashmem 支持')
         if ('CONFIG_HIGH_RES_TIMERS=y' in (build_dir / '.config').read_text()) != high_res_timers:
             raise RuntimeError('生成的内核配置与请求的定时器变体不一致')
         if 'CONFIG_BINFMT_SCRIPT=y\n' not in (build_dir / '.config').read_text():
@@ -157,6 +162,8 @@ def build(cpus=1, high_res_timers=False, guest_page_bytes=16384, bpf_jit=False):
         if any('CONFIG_' + value + '\n' not in (build_dir / '.config').read_text() for value in aslr):
             raise RuntimeError('生成的翻译内核配置与 mmap 随机位数不一致')
         run([*make, '-j8', 'all'], log)
+        dependency_command, ashmem_inputs = lkl_ashmem_patch.compiled_inputs(build_dir)
+        commands.append(dependency_command)
         shutil.copyfile(source / 'arch/lkl/include/uapi/asm/host_ops.h', out / 'lkl-host-ops.h')
         run([*target, '-fPIC', '-fno-stack-protector', '-O2', '-I', out, '-I', EXP,
              '-c', EXP / 'lkl-bridge.c', '-o', out / 'lkl-bridge.o'], log)
@@ -175,6 +182,8 @@ def build(cpus=1, high_res_timers=False, guest_page_bytes=16384, bpf_jit=False):
     probe_lkl.SMP = cpus == 2
     probe_lkl.package_elf(out / 'lkl.so', smp_exports={'nce_translation_enter', 'nce_translation_leave', 'nce_translation_exclusive', 'nce_window_unlock', 'nce_translation_written'})
     files = [Path(__file__), Path(lkl_translation_patch.__file__), Path(probe_lkl.__file__),
+             Path(lkl_ashmem_patch.__file__), *lkl_ashmem_patch.input_files(),
+             *generated_source_files, *ashmem_inputs,
              ROOT / 'scripts/lkl_nce_patch.py', ROOT / 'scripts/lkl_translation_aslr_patch.py', *copied, EXP / 'translation/kernel-api.h',
              *[source / 'arch/lkl' / destination for _, destination in lkl_nce_patch.COPIED_SOURCES],
              source / 'arch/lkl/kernel/Makefile',

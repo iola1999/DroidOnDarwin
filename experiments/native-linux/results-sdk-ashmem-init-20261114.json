@@ -1,0 +1,1412 @@
+{
+  "schema": 1,
+  "scope": "固定 Android common ashmem 接入及原 SDK36 六入口；完整系统与持续性能继续验收",
+  "status": "failed",
+  "runtime": {
+    "platform": "macOS-27.0-arm64-arm-64bit-Mach-O",
+    "cpu": "Apple M5 Ultra",
+    "system_build": "26A428"
+  },
+  "configuration": {
+    "data_tbi": true,
+    "guest_layout": "sparse",
+    "code_memory": "dual",
+    "execution": "direct",
+    "direct": {
+      "mapping_entries": 256,
+      "route_entries": 256,
+      "selective_writes": false,
+      "reuse_code_checks": false,
+      "memory": "flat",
+      "code_watch": false,
+      "cross_page": false,
+      "route_epochs": false,
+      "retain_routes": false,
+      "memory_groups": false,
+      "native_exclusive": false,
+      "vector_table": false,
+      "simd_math": false
+    },
+    "mapping": "pte",
+    "sparse_scan": true,
+    "fault_prefetch": false,
+    "guest_page_bytes": 16384,
+    "host_page_bytes": 16384,
+    "workload": "core",
+    "entries": [
+      "cli",
+      "gcd"
+    ],
+    "art_nterp": 1,
+    "cpus": 1,
+    "high_res_timers": false,
+    "bpf_jit": true,
+    "online_cpus": 1,
+    "uaccess_stop": "all",
+    "parallel_profile": false,
+    "art_expanded_jit": 0,
+    "art_fast_baseline": 0,
+    "cache_invalidation": "pages",
+    "exec_cache": "pages",
+    "tlb_invalidation": "pages",
+    "linux_fastpath": 0,
+    "guest_ram_bytes": 1073741824,
+    "translation_cache_bytes": 134217728,
+    "instruction_batch": 50000,
+    "memory_interval_ms": 100,
+    "preemption": "timer",
+    "timer_interval_ns": 2000000
+  },
+  "source_revision": "64fa685ba8c53bdbadee47ff45e8a9c4a8075524",
+  "upstream": {
+    "tag": "android16-6.12-2025-06_r1",
+    "revision": "2d954fcf3d1b73a41d0fa498324da357ec96cbdf",
+    "manifest": {
+      "path": "third_party/android-ashmem/sources.json",
+      "bytes": 3364,
+      "sha256": "8d1b015b07b3a25601ab036c1926ffa1bd30a2f1f6ff2d113f64c1249a17871a"
+    }
+  },
+  "reports": {
+    "kernel": {
+      "path": "../../../sdk-plain-validation-v1/ashmem-production-kernel-v1/result.json",
+      "bytes": 3912,
+      "sha256": "72f290ae3ddd201dc6c32fe770f18f83d7235085d46c490a2084721fef283488",
+      "status": "built"
+    },
+    "core": {
+      "path": "work/native-linux-nce/ashmem-production-core16k-v1/summary.json",
+      "bytes": 885751,
+      "sha256": "2468ac27c43297769dada8d098ee40b8ab60d075912e7ae8ef6cd4f765d3d288",
+      "status": null
+    },
+    "fixture": {
+      "path": "../../../sdk-plain-validation-v1/ashmem-fixture-v1/hosts-v1/runs-summary.json",
+      "bytes": 276283,
+      "sha256": "c3c8e14d1840e23bd46f6a21762ac33de79986596af1d13b2b122a7fb5217c9c",
+      "status": "passed"
+    },
+    "fixture_review": {
+      "path": "../../../sdk-plain-validation-v1/ashmem-fixture-review-v1/end-review.json",
+      "bytes": 784279,
+      "sha256": "2b263fd6f1f31ac9d7f7197c9afb49e38f8701d777fcf65758b5262b1176936c",
+      "status": "passed"
+    },
+    "runtime_ios": {
+      "path": "../../../sdk-plain-validation-v1/ashmem-production-runtime-ios-v1/report.json",
+      "bytes": 422489,
+      "sha256": "391ca3bc4e4fab45ba7cefd319745506847b01c52a03a21b35cd18d5e8e610d0",
+      "status": "built"
+    },
+    "runtime_ios_review": {
+      "path": "../../../sdk-plain-validation-v1/ashmem-production-runtime-ios-review-v1/review-v3.json",
+      "bytes": 1619056,
+      "sha256": "0ab5ff457a0130d086a25ae83620e6a5e359b62c48956ef928170cb3f7e8abb2",
+      "status": "passed"
+    },
+    "complexity_review": {
+      "path": "../../../sdk-plain-validation-v1/ashmem-production-complexity-review-v1/review.json",
+      "bytes": 27810,
+      "sha256": "5f7ec0c6f2a9319cacc39b3c65a324bca335c3aac2284dff8f8c83f747da0cd6",
+      "status": "passed"
+    },
+    "production_final_review": {
+      "path": "../../../sdk-plain-validation-v1/ashmem-production-final-review-v1/report.json",
+      "bytes": 44473,
+      "sha256": "743f4bbc8716b84131959271f4da0982b885ba0b151682ed1c68081884c9c633",
+      "status": "passed"
+    },
+    "v2_runtime": {
+      "path": "../../../sdk-plain-validation-v1/ashmem-original-init-v2/run/report.json",
+      "bytes": 2241391,
+      "sha256": "594b1c681b49faa861b36a9e6466e5f17d0bbf6fa30ff6997873d8bc20cb6630",
+      "status": "failed"
+    },
+    "v2_runtime_review": {
+      "path": "../../../sdk-plain-validation-v1/ashmem-original-init-runtime-review-v2/report.json",
+      "bytes": 715443,
+      "sha256": "ecbeb6383d50782cf4ccf6abe3cf36a48d2f425d88e0c655df87f9c286b3e63b",
+      "status": "failed"
+    },
+    "field_regression": {
+      "path": "../../../sdk-plain-validation-v1/ashmem-field-regression-v1/report.json",
+      "bytes": 15507,
+      "sha256": "493ef926969a27357d5b40380148c111fbc61207242278b97ec48ff31f7e129c",
+      "status": "passed"
+    },
+    "field_regression_review": {
+      "path": "../../../sdk-plain-validation-v1/ashmem-field-regression-review-v1/review.json",
+      "bytes": 17183,
+      "sha256": "76a640ab41a3236fb25b05dd8f9289ede803925ff310a9508ddbcf804ae2abad",
+      "status": "passed"
+    },
+    "host_proc_review": {
+      "path": "../../../sdk-plain-validation-v1/ashmem-node-host-proc-review-v1/report.json",
+      "bytes": 30898,
+      "sha256": "bfead138e4a6d91cef82e6ed8b9254bf5e75b5b5e19cdb6c2309b0f04b402c2d",
+      "status": "static_review_complete"
+    },
+    "v2_recovery": {
+      "path": "../../../sdk-plain-validation-v1/ashmem-original-init-v2-recovery/v2/result.json",
+      "bytes": 702890,
+      "sha256": "e36462514b74d4781af7c14f9883fc62d1e46399a185bb11b7641df7f60751ec",
+      "status": "failed"
+    },
+    "v2_readonly": {
+      "path": "../../../sdk-plain-validation-v1/ashmem-original-init-v2-recovery/readonly-v1/result.json",
+      "bytes": 696865,
+      "sha256": "9d63c26ab372ac1e08c7193170cfed6d3c835f0d9691dc9c5629fb3f18a91400",
+      "status": "failed"
+    },
+    "quota_audit": {
+      "path": "../../../sdk-plain-validation-v1/ashmem-data-quota-audit-v1/report.json",
+      "bytes": 51126,
+      "sha256": "7d3a75584f6a14059e0a4bea93c11066f15c97c6de3a45ac74139b44cd757f53",
+      "status": "passed"
+    },
+    "v2_ios": {
+      "path": "../../../sdk-plain-validation-v1/ashmem-original-init-ios16k-v1/plan-v2/result.json",
+      "bytes": 1048379,
+      "sha256": "f040a5c657c4a7d065437acc2cc3c869fd115191082af17d7dbc919445bf023f",
+      "status": "passed"
+    },
+    "v2_ios_review": {
+      "path": "../../../sdk-plain-validation-v1/ashmem-original-init-ios-review-v2/report.json",
+      "bytes": 821796,
+      "sha256": "c279ada347982a2fc179b3419cebdd6375090a798281baa0a412138ec295e369",
+      "status": "passed"
+    },
+    "v3_boundary": {
+      "path": "../../../sdk-plain-validation-v1/ashmem-original-init-v3/validation-v1/report.json",
+      "bytes": 9015,
+      "sha256": "01ef827be915ba0157ed24b0d76035a1bdb2e27ca5a16c7c588bd051a5fa5b65",
+      "status": "passed"
+    },
+    "v3_prepare": {
+      "path": "../../../sdk-plain-validation-v1/ashmem-original-init-v3/prepare-01/report.json",
+      "bytes": 1267980,
+      "sha256": "2f38ab83b5b9e9210fded9c809714b94333a21f727dcfa58785349f90ef96ad4",
+      "status": "prepared"
+    },
+    "v3_prepare_review": {
+      "path": "../../../sdk-plain-validation-v1/ashmem-original-init-review-v3/prepare-review.json",
+      "bytes": 710568,
+      "sha256": "226d7d67af6287628fa8054137b0dddaf2d3c1c8c625729d6915e47dd4fa86a2",
+      "status": "passed"
+    },
+    "v3_runtime": {
+      "path": "../../../sdk-plain-validation-v1/ashmem-original-init-v3/run/report.json",
+      "bytes": 2347767,
+      "sha256": "83c5cb422af7cc54880469e5bdafb79514fe92cdff513d45fd65df512757d3ef",
+      "status": "failed"
+    },
+    "v3_runtime_review": {
+      "path": "../../../sdk-plain-validation-v1/ashmem-original-init-runtime-review-v3/end-review.json",
+      "bytes": 152058,
+      "sha256": "67b2be9bd96d8061c6d0819e18119e7d4f40bfbf6cd2f900f0c739a374eab5f5",
+      "status": "passed"
+    },
+    "v3_source_readback": {
+      "path": "../../../sdk-plain-validation-v1/ashmem-original-init-runtime-review-v3/source-readback-v2.json",
+      "bytes": 1543774,
+      "sha256": "835eaf3ca47dd2da3f7b1491139578d30a1f46f66d29d51833708cd5d1f9807e",
+      "status": "source_and_compile_inputs_verified"
+    },
+    "v3_machine_review": {
+      "path": "../../../sdk-plain-validation-v1/ashmem-original-init-runtime-review-v3/machine-review.json",
+      "bytes": 181621,
+      "sha256": "1c5dcf2e922f7f732c3497bf236a95897ecc1c1bdc7fb465ccd87040a682befa",
+      "status": "passed"
+    },
+    "v3_ios": {
+      "path": "../../../sdk-plain-validation-v1/ashmem-original-init-ios16k-v3/summary.json",
+      "bytes": 15290,
+      "sha256": "173f27b2f82fae076cfbd5116af15da157ba4f802c175377ca4ca353cef2f590",
+      "status": "passed"
+    },
+    "system_server_progress": {
+      "path": "../../../sdk-plain-validation-v1/ashmem-system-server-progress-audit-v1/report.json",
+      "bytes": 41656,
+      "sha256": "8b4b9af26b3fecd408433de54db28f3d09834c98be591889b6c3d83ad5faa5b9",
+      "status": "passed"
+    },
+    "system_server_query_addendum": {
+      "path": "../../../sdk-plain-validation-v1/ashmem-system-server-progress-audit-v1/query-addendum-v1.json",
+      "bytes": 41091,
+      "sha256": "28404eece48e7d5e0119ffbcf719324a6584f56ed24759dcd8fdf78bef9cc6bf",
+      "status": "passed"
+    },
+    "v4_failure": {
+      "path": "../../../sdk-plain-validation-v1/ashmem-original-init-v4/run/report.json",
+      "bytes": 674642,
+      "sha256": "8953dbe554e869cbf851dd58bb869a364c7ef8b62e722a5f7598c42f88084a2f",
+      "status": "failed"
+    },
+    "v5_interruption_review": {
+      "path": "../../../sdk-plain-validation-v1/ashmem-original-init-v5-interruption-review/report.json",
+      "bytes": 17672,
+      "sha256": "642a235cb68f1dde28b82de293fbf14c794c0545f9c0d7581c4ec92e73f888a5",
+      "status": "reviewed"
+    },
+    "v5_recovery": {
+      "path": "../../../sdk-plain-validation-v1/ashmem-original-init-v5-recovery/result.json",
+      "bytes": 710555,
+      "sha256": "0d55e2e2882ff060a760e14494369634e21272a17ad375c5b276850d7428dadf",
+      "status": "failed"
+    },
+    "ios_final_link": {
+      "path": "../../../sdk-plain-validation-v1/ashmem-ios-final-link-v1/report.json",
+      "bytes": 734668,
+      "sha256": "4d0425fd223500a5131f8aed939b0e97e2dbbe17e1659885a4b3bd71396c4fb4",
+      "status": "passed"
+    },
+    "ios_final_link_readback": {
+      "path": "../../../sdk-plain-validation-v1/ashmem-ios-final-link-v1/readback.json",
+      "bytes": 5176,
+      "sha256": "358525833cb70d8d6a752e2785f37eeff625943795eddff8c2291eb2cbd70451",
+      "status": "passed"
+    }
+  },
+  "driver_fixture": {
+    "status": "passed",
+    "performance_measurement_performed": false,
+    "runs": [
+      {
+        "entry": "cli",
+        "variant": "normal",
+        "status": "passed",
+        "guest_raw_status": 0,
+        "guest_expected_exit": 0,
+        "host_actual_exit": 0,
+        "host_threads": {
+          "test": "fixture_host_threads",
+          "passed": true,
+          "created": 28,
+          "completed": 28,
+          "joined": 28,
+          "create_failures": 0,
+          "detach_calls": 0
+        },
+        "parent_cleanup": {
+          "test": "ashmem_cleanup",
+          "case": 2,
+          "variant": 0,
+          "pid": 1,
+          "first_errno": 0,
+          "unmap_failures": 0,
+          "close_failures": 0,
+          "child_pid": -1,
+          "reaped_pid": -1,
+          "child_result": 0,
+          "child_status": 0,
+          "remaining_fds": 0,
+          "remaining_vmas": 0,
+          "child_pending": false
+        },
+        "process_group_empty": true,
+        "kernel_image_released": true,
+        "kernel_page_release_verified": false
+      },
+      {
+        "entry": "cli",
+        "variant": "content-failure",
+        "status": "passed",
+        "guest_raw_status": 256,
+        "guest_expected_exit": 1,
+        "host_actual_exit": 0,
+        "host_threads": {
+          "test": "fixture_host_threads",
+          "passed": true,
+          "created": 27,
+          "completed": 27,
+          "joined": 27,
+          "create_failures": 0,
+          "detach_calls": 0
+        },
+        "parent_cleanup": {
+          "test": "ashmem_cleanup",
+          "case": 1,
+          "variant": 1,
+          "pid": 1,
+          "first_errno": 5,
+          "unmap_failures": 0,
+          "close_failures": 0,
+          "child_pid": -1,
+          "reaped_pid": -1,
+          "child_result": 0,
+          "child_status": 0,
+          "remaining_fds": 0,
+          "remaining_vmas": 0,
+          "child_pending": false
+        },
+        "process_group_empty": true,
+        "kernel_image_released": true,
+        "kernel_page_release_verified": false
+      },
+      {
+        "entry": "cli",
+        "variant": "child-failure",
+        "status": "passed",
+        "guest_raw_status": 256,
+        "guest_expected_exit": 1,
+        "host_actual_exit": 0,
+        "host_threads": {
+          "test": "fixture_host_threads",
+          "passed": true,
+          "created": 28,
+          "completed": 28,
+          "joined": 28,
+          "create_failures": 0,
+          "detach_calls": 0
+        },
+        "parent_cleanup": {
+          "test": "ashmem_cleanup",
+          "case": 1,
+          "variant": 2,
+          "pid": 1,
+          "first_errno": 5,
+          "unmap_failures": 0,
+          "close_failures": 0,
+          "child_pid": 2,
+          "reaped_pid": 2,
+          "child_result": 1,
+          "child_status": 9,
+          "remaining_fds": 0,
+          "remaining_vmas": 0,
+          "child_pending": false
+        },
+        "process_group_empty": true,
+        "kernel_image_released": true,
+        "kernel_page_release_verified": false
+      },
+      {
+        "entry": "gcd",
+        "variant": "normal",
+        "status": "passed",
+        "guest_raw_status": 0,
+        "guest_expected_exit": 0,
+        "host_actual_exit": 0,
+        "host_threads": {
+          "test": "fixture_host_threads",
+          "passed": true,
+          "created": 28,
+          "completed": 28,
+          "joined": 28,
+          "create_failures": 0,
+          "detach_calls": 0
+        },
+        "parent_cleanup": {
+          "test": "ashmem_cleanup",
+          "case": 2,
+          "variant": 0,
+          "pid": 1,
+          "first_errno": 0,
+          "unmap_failures": 0,
+          "close_failures": 0,
+          "child_pid": -1,
+          "reaped_pid": -1,
+          "child_result": 0,
+          "child_status": 0,
+          "remaining_fds": 0,
+          "remaining_vmas": 0,
+          "child_pending": false
+        },
+        "process_group_empty": true,
+        "kernel_image_released": true,
+        "kernel_page_release_verified": false
+      },
+      {
+        "entry": "gcd",
+        "variant": "content-failure",
+        "status": "passed",
+        "guest_raw_status": 256,
+        "guest_expected_exit": 1,
+        "host_actual_exit": 0,
+        "host_threads": {
+          "test": "fixture_host_threads",
+          "passed": true,
+          "created": 27,
+          "completed": 27,
+          "joined": 27,
+          "create_failures": 0,
+          "detach_calls": 0
+        },
+        "parent_cleanup": {
+          "test": "ashmem_cleanup",
+          "case": 1,
+          "variant": 1,
+          "pid": 1,
+          "first_errno": 5,
+          "unmap_failures": 0,
+          "close_failures": 0,
+          "child_pid": -1,
+          "reaped_pid": -1,
+          "child_result": 0,
+          "child_status": 0,
+          "remaining_fds": 0,
+          "remaining_vmas": 0,
+          "child_pending": false
+        },
+        "process_group_empty": true,
+        "kernel_image_released": true,
+        "kernel_page_release_verified": false
+      },
+      {
+        "entry": "gcd",
+        "variant": "child-failure",
+        "status": "passed",
+        "guest_raw_status": 256,
+        "guest_expected_exit": 1,
+        "host_actual_exit": 0,
+        "host_threads": {
+          "test": "fixture_host_threads",
+          "passed": true,
+          "created": 28,
+          "completed": 28,
+          "joined": 28,
+          "create_failures": 0,
+          "detach_calls": 0
+        },
+        "parent_cleanup": {
+          "test": "ashmem_cleanup",
+          "case": 1,
+          "variant": 2,
+          "pid": 1,
+          "first_errno": 5,
+          "unmap_failures": 0,
+          "close_failures": 0,
+          "child_pid": 2,
+          "reaped_pid": 2,
+          "child_result": 1,
+          "child_status": 9,
+          "remaining_fds": 0,
+          "remaining_vmas": 0,
+          "child_pending": false
+        },
+        "process_group_empty": true,
+        "kernel_image_released": true,
+        "kernel_page_release_verified": false
+      }
+    ]
+  },
+  "original_init": {
+    "guest_observation_seconds": 180,
+    "original_host_timeout_seconds": 240,
+    "six_entry_order_passed": true,
+    "observation_and_cleanup_passed": true,
+    "capture_structure_passed": true,
+    "ashmem_original_passed": false,
+    "first_stage_completed": true,
+    "full_boot_observed": false,
+    "full_boot_validation": "failed",
+    "data_persistence_validated": true,
+    "metadata_persistence_validated": true,
+    "metadata_rc_validated": true,
+    "metadata_original_unchanged": true,
+    "original_sqlite_validated": true,
+    "source_unchanged": true,
+    "source_revision_unchanged": true,
+    "runs": [
+      {
+        "entry": "cli",
+        "mode": "lifecycle",
+        "phase": "lifecycle",
+        "returncode": 0,
+        "observation_validated": true,
+        "raw_stdout": {
+          "path": "../../../native-linux-nce/sdk-plain-init-ashmem-16k-v3/cli-lifecycle.jsonl",
+          "bytes": 41524,
+          "sha256": "d31073a5f3ee291c223bb095733f37d1cd4900f55de5fa00914a8887c8402047"
+        },
+        "data_after": {
+          "clean": true,
+          "sha256": "352d4fbf236555d5808a45351663dfad87416f5492c59b11dde36aea7a33550f",
+          "uuid": "25c89a996b5d4e54b81ec7077e6fcbeb",
+          "bytes": 536870912,
+          "filesystem_bytes": 536870912
+        },
+        "metadata_after": {
+          "clean": true,
+          "sha256": "91b2cc14050e7fb41040eef0ec0d281ece784f55fb91314c286731419381f263",
+          "uuid": "b08db4c1cfe546f0b32af06729e6a3f2",
+          "bytes": 18874368,
+          "filesystem_bytes": 16777216
+        },
+        "process_group_empty": true
+      },
+      {
+        "entry": "gcd",
+        "mode": "lifecycle",
+        "phase": "lifecycle",
+        "returncode": 0,
+        "observation_validated": true,
+        "raw_stdout": {
+          "path": "../../../native-linux-nce/sdk-plain-init-ashmem-16k-v3/gcd-lifecycle.jsonl",
+          "bytes": 41576,
+          "sha256": "02c3b7ea42f3b95967ef45cd1fab04758ad0945c7178a8d5c478b0f2fd4ef3fc"
+        },
+        "data_after": {
+          "clean": true,
+          "sha256": "352d4fbf236555d5808a45351663dfad87416f5492c59b11dde36aea7a33550f",
+          "uuid": "25c89a996b5d4e54b81ec7077e6fcbeb",
+          "bytes": 536870912,
+          "filesystem_bytes": 536870912
+        },
+        "metadata_after": {
+          "clean": true,
+          "sha256": "91b2cc14050e7fb41040eef0ec0d281ece784f55fb91314c286731419381f263",
+          "uuid": "b08db4c1cfe546f0b32af06729e6a3f2",
+          "bytes": 18874368,
+          "filesystem_bytes": 16777216
+        },
+        "process_group_empty": true
+      },
+      {
+        "entry": "cli",
+        "mode": "original",
+        "phase": "original",
+        "returncode": 0,
+        "observation_validated": true,
+        "raw_stdout": {
+          "path": "../../../native-linux-nce/sdk-plain-init-ashmem-16k-v3/cli-original.jsonl",
+          "bytes": 9031758,
+          "sha256": "4638ea3927a074ba8a8a2079c3c8b6326e73827d878e4015b6cdfc79c63b8ab9"
+        },
+        "data_after": {
+          "clean": false,
+          "sha256": "fcc32ab53eb8eece80af68968ab174f51df8e5456e77777dd6921101488f254d",
+          "uuid": "25c89a996b5d4e54b81ec7077e6fcbeb",
+          "bytes": 536870912,
+          "filesystem_bytes": 536870912
+        },
+        "metadata_after": {
+          "clean": true,
+          "sha256": "8981777562f7694c7b81ead96fa768a2323fa54f2c09b6ae9c4f4b2c41950e7b",
+          "uuid": "b08db4c1cfe546f0b32af06729e6a3f2",
+          "bytes": 18874368,
+          "filesystem_bytes": 16777216
+        },
+        "process_group_empty": true
+      },
+      {
+        "entry": "gcd",
+        "mode": "original",
+        "phase": "original",
+        "returncode": 0,
+        "observation_validated": true,
+        "raw_stdout": {
+          "path": "../../../native-linux-nce/sdk-plain-init-ashmem-16k-v3/gcd-original.jsonl",
+          "bytes": 9119436,
+          "sha256": "68e06195398310de14b42ad1ecce6adc1754def0dfbb58db83622d468000a823"
+        },
+        "data_after": {
+          "clean": false,
+          "sha256": "eba91127a546a20302e52b95c2ada844e278c30f9c628315aa15a84776f96d12",
+          "uuid": "25c89a996b5d4e54b81ec7077e6fcbeb",
+          "bytes": 536870912,
+          "filesystem_bytes": 536870912
+        },
+        "metadata_after": {
+          "clean": true,
+          "sha256": "c3f93db0faec85264d92061e68c0bfb80ced51ccf6780aecfd79c002299994e8",
+          "uuid": "b08db4c1cfe546f0b32af06729e6a3f2",
+          "bytes": 18874368,
+          "filesystem_bytes": 16777216
+        },
+        "process_group_empty": true
+      },
+      {
+        "entry": "cli",
+        "mode": "lifecycle",
+        "phase": "recovery",
+        "returncode": 0,
+        "observation_validated": true,
+        "raw_stdout": {
+          "path": "../../../native-linux-nce/sdk-plain-init-ashmem-16k-v3/cli-recovery.jsonl",
+          "bytes": 47888,
+          "sha256": "3a33a74c97d53e6d92a64a7099db159b04db89e755ca7e2e94c1a3409ce26d82"
+        },
+        "data_after": {
+          "clean": true,
+          "sha256": "140d99be5c8209b82adc5ee0baea4042cd76c67de2c77a86144486b69c8c00c5",
+          "uuid": "25c89a996b5d4e54b81ec7077e6fcbeb",
+          "bytes": 536870912,
+          "filesystem_bytes": 536870912
+        },
+        "metadata_after": {
+          "clean": true,
+          "sha256": "fc85e5aed0a1f5e9b8d46c52055bba20541b5bf2609a0854f0f0fdb46c1b1db7",
+          "uuid": "b08db4c1cfe546f0b32af06729e6a3f2",
+          "bytes": 18874368,
+          "filesystem_bytes": 16777216
+        },
+        "process_group_empty": true
+      },
+      {
+        "entry": "gcd",
+        "mode": "lifecycle",
+        "phase": "recovery",
+        "returncode": 0,
+        "observation_validated": true,
+        "raw_stdout": {
+          "path": "../../../native-linux-nce/sdk-plain-init-ashmem-16k-v3/gcd-recovery.jsonl",
+          "bytes": 47935,
+          "sha256": "2e85061926abda091be17c4ec9242055177fee7d12448fb1a845387920badea7"
+        },
+        "data_after": {
+          "clean": true,
+          "sha256": "23f9086d20af2b5c60ca799e51a3ee163ed0b7a5e6c4815e5e37669d45e8d0bf",
+          "uuid": "25c89a996b5d4e54b81ec7077e6fcbeb",
+          "bytes": 536870912,
+          "filesystem_bytes": 536870912
+        },
+        "metadata_after": {
+          "clean": true,
+          "sha256": "7808be61363d31af20a971f344f2a7baa274c97752bbc651556c55ff3e5d0cfa",
+          "uuid": "b08db4c1cfe546f0b32af06729e6a3f2",
+          "bytes": 18874368,
+          "filesystem_bytes": 16777216
+        },
+        "process_group_empty": true
+      }
+    ],
+    "original_captures": [
+      {
+        "entry": "cli",
+        "raw_stdout": {
+          "path": "../../../native-linux-nce/sdk-plain-init-ashmem-16k-v3/cli-original.jsonl",
+          "bytes": 9031758,
+          "sha256": "4638ea3927a074ba8a8a2079c3c8b6326e73827d878e4015b6cdfc79c63b8ab9"
+        },
+        "taglog_status": "passed",
+        "logd_status": "complete",
+        "ashmem_status": "incomplete",
+        "proc_contract_passed": true,
+        "call_summary": {
+          "stock_init_ashmem_summary": true,
+          "seen": 21,
+          "recorded": 21,
+          "omitted": 0,
+          "record_limit": 256
+        },
+        "applications": [
+          {
+            "pid": 493,
+            "fd": 79,
+            "status": "complete",
+            "openat": {
+              "stock_init_ashmem_call": true,
+              "index": 17,
+              "pid": 493,
+              "tid": 493,
+              "number": 56,
+              "args": [
+                4294967196,
+                425036188304,
+                524290,
+                0,
+                40,
+                425036188351
+              ],
+              "syscall_result": 79,
+              "path_hex": "2f6465762f6173686d656d62326561646465352d656337312d346137362d623333382d316234326364633063653033",
+              "name_copy_result": 0,
+              "name_hex": ""
+            },
+            "set_name": {
+              "stock_init_ashmem_call": true,
+              "index": 18,
+              "pid": 493,
+              "tid": 493,
+              "number": 29,
+              "args": [
+                79,
+                1090549505,
+                429852455540,
+                0,
+                40,
+                425036188351
+              ],
+              "syscall_result": 0,
+              "path_hex": "",
+              "name_copy_result": 0,
+              "name_hex": "4170706c69636174696f6e5368617265644d656d6f7279"
+            },
+            "set_size": {
+              "stock_init_ashmem_call": true,
+              "index": 19,
+              "pid": 493,
+              "tid": 493,
+              "number": 29,
+              "args": [
+                79,
+                1074296579,
+                11304,
+                0,
+                40,
+                425036188351
+              ],
+              "syscall_result": 0,
+              "path_hex": "",
+              "name_copy_result": 0,
+              "name_hex": ""
+            },
+            "mmap": {
+              "stock_init_ashmem_call": true,
+              "index": 20,
+              "pid": 493,
+              "tid": 493,
+              "number": 222,
+              "args": [
+                0,
+                11304,
+                3,
+                1,
+                79,
+                0
+              ],
+              "syscall_result": 430644723712,
+              "path_hex": "",
+              "name_copy_result": 0,
+              "name_hex": ""
+            }
+          }
+        ],
+        "node_samples": [
+          {
+            "sample": 1,
+            "status": "incomplete",
+            "boot": {
+              "stock_init_ashmem_boot": true,
+              "sample": 1,
+              "ancestor_pid": 28,
+              "proc_fd": 3,
+              "path": "sys/kernel/random/boot_id",
+              "elapsed_seconds": 5.288975,
+              "open_result": 5,
+              "read_result": 37,
+              "close_result": 0,
+              "valid": true,
+              "boot_hex": "62326561646465352d656337312d346137362d623333382d316234326364633063653033"
+            },
+            "nodes": [
+              {
+                "stock_init_ashmem_node": true,
+                "sample": 1,
+                "ancestor_pid": 28,
+                "proc_fd": 3,
+                "suffix": false,
+                "boot_id": "b2eadde5-ec71-4a76-b338-1b42cdc0ce03",
+                "path": "28/root/dev/ashmem",
+                "open_result": -13,
+                "calls_executed": false,
+                "stat_result": -1,
+                "stat_mask": 0,
+                "mode": 0,
+                "uid": 0,
+                "gid": 0,
+                "rdev_major": 0,
+                "rdev_minor": 0,
+                "inode": 0,
+                "label_result": -1,
+                "close_result": -1,
+                "label_hex": ""
+              },
+              {
+                "stock_init_ashmem_node": true,
+                "sample": 1,
+                "ancestor_pid": 28,
+                "proc_fd": 3,
+                "suffix": true,
+                "boot_id": "b2eadde5-ec71-4a76-b338-1b42cdc0ce03",
+                "path": "28/root/dev/ashmemb2eadde5-ec71-4a76-b338-1b42cdc0ce03",
+                "open_result": -13,
+                "calls_executed": false,
+                "stat_result": -1,
+                "stat_mask": 0,
+                "mode": 0,
+                "uid": 0,
+                "gid": 0,
+                "rdev_major": 0,
+                "rdev_minor": 0,
+                "inode": 0,
+                "label_result": -1,
+                "close_result": -1,
+                "label_hex": ""
+              }
+            ]
+          },
+          {
+            "sample": 2,
+            "status": "incomplete",
+            "boot": {
+              "stock_init_ashmem_boot": true,
+              "sample": 2,
+              "ancestor_pid": 28,
+              "proc_fd": 3,
+              "path": "sys/kernel/random/boot_id",
+              "elapsed_seconds": 30.015752,
+              "open_result": 7,
+              "read_result": 37,
+              "close_result": 0,
+              "valid": true,
+              "boot_hex": "62326561646465352d656337312d346137362d623333382d316234326364633063653033"
+            },
+            "nodes": [
+              {
+                "stock_init_ashmem_node": true,
+                "sample": 2,
+                "ancestor_pid": 28,
+                "proc_fd": 3,
+                "suffix": false,
+                "boot_id": "b2eadde5-ec71-4a76-b338-1b42cdc0ce03",
+                "path": "28/root/dev/ashmem",
+                "open_result": -13,
+                "calls_executed": false,
+                "stat_result": -1,
+                "stat_mask": 0,
+                "mode": 0,
+                "uid": 0,
+                "gid": 0,
+                "rdev_major": 0,
+                "rdev_minor": 0,
+                "inode": 0,
+                "label_result": -1,
+                "close_result": -1,
+                "label_hex": ""
+              },
+              {
+                "stock_init_ashmem_node": true,
+                "sample": 2,
+                "ancestor_pid": 28,
+                "proc_fd": 3,
+                "suffix": true,
+                "boot_id": "b2eadde5-ec71-4a76-b338-1b42cdc0ce03",
+                "path": "28/root/dev/ashmemb2eadde5-ec71-4a76-b338-1b42cdc0ce03",
+                "open_result": -13,
+                "calls_executed": false,
+                "stat_result": -1,
+                "stat_mask": 0,
+                "mode": 0,
+                "uid": 0,
+                "gid": 0,
+                "rdev_major": 0,
+                "rdev_minor": 0,
+                "inode": 0,
+                "label_result": -1,
+                "close_result": -1,
+                "label_hex": ""
+              }
+            ]
+          },
+          {
+            "sample": 3,
+            "status": "incomplete",
+            "boot": {
+              "stock_init_ashmem_boot": true,
+              "sample": 3,
+              "ancestor_pid": 28,
+              "proc_fd": 3,
+              "path": "sys/kernel/random/boot_id",
+              "elapsed_seconds": 170.02046,
+              "open_result": 32,
+              "read_result": 37,
+              "close_result": 0,
+              "valid": true,
+              "boot_hex": "62326561646465352d656337312d346137362d623333382d316234326364633063653033"
+            },
+            "nodes": [
+              {
+                "stock_init_ashmem_node": true,
+                "sample": 3,
+                "ancestor_pid": 28,
+                "proc_fd": 3,
+                "suffix": false,
+                "boot_id": "b2eadde5-ec71-4a76-b338-1b42cdc0ce03",
+                "path": "28/root/dev/ashmem",
+                "open_result": -13,
+                "calls_executed": false,
+                "stat_result": -1,
+                "stat_mask": 0,
+                "mode": 0,
+                "uid": 0,
+                "gid": 0,
+                "rdev_major": 0,
+                "rdev_minor": 0,
+                "inode": 0,
+                "label_result": -1,
+                "close_result": -1,
+                "label_hex": ""
+              },
+              {
+                "stock_init_ashmem_node": true,
+                "sample": 3,
+                "ancestor_pid": 28,
+                "proc_fd": 3,
+                "suffix": true,
+                "boot_id": "b2eadde5-ec71-4a76-b338-1b42cdc0ce03",
+                "path": "28/root/dev/ashmemb2eadde5-ec71-4a76-b338-1b42cdc0ce03",
+                "open_result": -13,
+                "calls_executed": false,
+                "stat_result": -1,
+                "stat_mask": 0,
+                "mode": 0,
+                "uid": 0,
+                "gid": 0,
+                "rdev_major": 0,
+                "rdev_minor": 0,
+                "inode": 0,
+                "label_result": -1,
+                "close_result": -1,
+                "label_hex": ""
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "entry": "gcd",
+        "raw_stdout": {
+          "path": "../../../native-linux-nce/sdk-plain-init-ashmem-16k-v3/gcd-original.jsonl",
+          "bytes": 9119436,
+          "sha256": "68e06195398310de14b42ad1ecce6adc1754def0dfbb58db83622d468000a823"
+        },
+        "taglog_status": "passed",
+        "logd_status": "complete",
+        "ashmem_status": "incomplete",
+        "proc_contract_passed": true,
+        "call_summary": {
+          "stock_init_ashmem_summary": true,
+          "seen": 21,
+          "recorded": 21,
+          "omitted": 0,
+          "record_limit": 256
+        },
+        "applications": [
+          {
+            "pid": 489,
+            "fd": 75,
+            "status": "complete",
+            "openat": {
+              "stock_init_ashmem_call": true,
+              "index": 17,
+              "pid": 489,
+              "tid": 489,
+              "number": 56,
+              "args": [
+                4294967196,
+                285633258192,
+                524290,
+                0,
+                40,
+                285633258239
+              ],
+              "syscall_result": 75,
+              "path_hex": "2f6465762f6173686d656d35316439383461612d376134372d343537652d393365652d316462636338356333393234",
+              "name_copy_result": 0,
+              "name_hex": ""
+            },
+            "set_name": {
+              "stock_init_ashmem_call": true,
+              "index": 18,
+              "pid": 489,
+              "tid": 489,
+              "number": 29,
+              "args": [
+                75,
+                1090549505,
+                288461730420,
+                0,
+                40,
+                285633258239
+              ],
+              "syscall_result": 0,
+              "path_hex": "",
+              "name_copy_result": 0,
+              "name_hex": "4170706c69636174696f6e5368617265644d656d6f7279"
+            },
+            "set_size": {
+              "stock_init_ashmem_call": true,
+              "index": 19,
+              "pid": 489,
+              "tid": 489,
+              "number": 29,
+              "args": [
+                75,
+                1074296579,
+                11304,
+                0,
+                40,
+                285633258239
+              ],
+              "syscall_result": 0,
+              "path_hex": "",
+              "name_copy_result": 0,
+              "name_hex": ""
+            },
+            "mmap": {
+              "stock_init_ashmem_call": true,
+              "index": 20,
+              "pid": 489,
+              "tid": 489,
+              "number": 222,
+              "args": [
+                0,
+                11304,
+                3,
+                1,
+                75,
+                0
+              ],
+              "syscall_result": 289094270976,
+              "path_hex": "",
+              "name_copy_result": 0,
+              "name_hex": ""
+            }
+          }
+        ],
+        "node_samples": [
+          {
+            "sample": 1,
+            "status": "incomplete",
+            "boot": {
+              "stock_init_ashmem_boot": true,
+              "sample": 1,
+              "ancestor_pid": 28,
+              "proc_fd": 3,
+              "path": "sys/kernel/random/boot_id",
+              "elapsed_seconds": 5.013112,
+              "open_result": 5,
+              "read_result": 37,
+              "close_result": 0,
+              "valid": true,
+              "boot_hex": "35316439383461612d376134372d343537652d393365652d316462636338356333393234"
+            },
+            "nodes": [
+              {
+                "stock_init_ashmem_node": true,
+                "sample": 1,
+                "ancestor_pid": 28,
+                "proc_fd": 3,
+                "suffix": false,
+                "boot_id": "51d984aa-7a47-457e-93ee-1dbcc85c3924",
+                "path": "28/root/dev/ashmem",
+                "open_result": -13,
+                "calls_executed": false,
+                "stat_result": -1,
+                "stat_mask": 0,
+                "mode": 0,
+                "uid": 0,
+                "gid": 0,
+                "rdev_major": 0,
+                "rdev_minor": 0,
+                "inode": 0,
+                "label_result": -1,
+                "close_result": -1,
+                "label_hex": ""
+              },
+              {
+                "stock_init_ashmem_node": true,
+                "sample": 1,
+                "ancestor_pid": 28,
+                "proc_fd": 3,
+                "suffix": true,
+                "boot_id": "51d984aa-7a47-457e-93ee-1dbcc85c3924",
+                "path": "28/root/dev/ashmem51d984aa-7a47-457e-93ee-1dbcc85c3924",
+                "open_result": -13,
+                "calls_executed": false,
+                "stat_result": -1,
+                "stat_mask": 0,
+                "mode": 0,
+                "uid": 0,
+                "gid": 0,
+                "rdev_major": 0,
+                "rdev_minor": 0,
+                "inode": 0,
+                "label_result": -1,
+                "close_result": -1,
+                "label_hex": ""
+              }
+            ]
+          },
+          {
+            "sample": 2,
+            "status": "incomplete",
+            "boot": {
+              "stock_init_ashmem_boot": true,
+              "sample": 2,
+              "ancestor_pid": 28,
+              "proc_fd": 3,
+              "path": "sys/kernel/random/boot_id",
+              "elapsed_seconds": 30.002058,
+              "open_result": 7,
+              "read_result": 37,
+              "close_result": 0,
+              "valid": true,
+              "boot_hex": "35316439383461612d376134372d343537652d393365652d316462636338356333393234"
+            },
+            "nodes": [
+              {
+                "stock_init_ashmem_node": true,
+                "sample": 2,
+                "ancestor_pid": 28,
+                "proc_fd": 3,
+                "suffix": false,
+                "boot_id": "51d984aa-7a47-457e-93ee-1dbcc85c3924",
+                "path": "28/root/dev/ashmem",
+                "open_result": -13,
+                "calls_executed": false,
+                "stat_result": -1,
+                "stat_mask": 0,
+                "mode": 0,
+                "uid": 0,
+                "gid": 0,
+                "rdev_major": 0,
+                "rdev_minor": 0,
+                "inode": 0,
+                "label_result": -1,
+                "close_result": -1,
+                "label_hex": ""
+              },
+              {
+                "stock_init_ashmem_node": true,
+                "sample": 2,
+                "ancestor_pid": 28,
+                "proc_fd": 3,
+                "suffix": true,
+                "boot_id": "51d984aa-7a47-457e-93ee-1dbcc85c3924",
+                "path": "28/root/dev/ashmem51d984aa-7a47-457e-93ee-1dbcc85c3924",
+                "open_result": -13,
+                "calls_executed": false,
+                "stat_result": -1,
+                "stat_mask": 0,
+                "mode": 0,
+                "uid": 0,
+                "gid": 0,
+                "rdev_major": 0,
+                "rdev_minor": 0,
+                "inode": 0,
+                "label_result": -1,
+                "close_result": -1,
+                "label_hex": ""
+              }
+            ]
+          },
+          {
+            "sample": 3,
+            "status": "incomplete",
+            "boot": {
+              "stock_init_ashmem_boot": true,
+              "sample": 3,
+              "ancestor_pid": 28,
+              "proc_fd": 3,
+              "path": "sys/kernel/random/boot_id",
+              "elapsed_seconds": 170.019915,
+              "open_result": 32,
+              "read_result": 37,
+              "close_result": 0,
+              "valid": true,
+              "boot_hex": "35316439383461612d376134372d343537652d393365652d316462636338356333393234"
+            },
+            "nodes": [
+              {
+                "stock_init_ashmem_node": true,
+                "sample": 3,
+                "ancestor_pid": 28,
+                "proc_fd": 3,
+                "suffix": false,
+                "boot_id": "51d984aa-7a47-457e-93ee-1dbcc85c3924",
+                "path": "28/root/dev/ashmem",
+                "open_result": -13,
+                "calls_executed": false,
+                "stat_result": -1,
+                "stat_mask": 0,
+                "mode": 0,
+                "uid": 0,
+                "gid": 0,
+                "rdev_major": 0,
+                "rdev_minor": 0,
+                "inode": 0,
+                "label_result": -1,
+                "close_result": -1,
+                "label_hex": ""
+              },
+              {
+                "stock_init_ashmem_node": true,
+                "sample": 3,
+                "ancestor_pid": 28,
+                "proc_fd": 3,
+                "suffix": true,
+                "boot_id": "51d984aa-7a47-457e-93ee-1dbcc85c3924",
+                "path": "28/root/dev/ashmem51d984aa-7a47-457e-93ee-1dbcc85c3924",
+                "open_result": -13,
+                "calls_executed": false,
+                "stat_result": -1,
+                "stat_mask": 0,
+                "mode": 0,
+                "uid": 0,
+                "gid": 0,
+                "rdev_major": 0,
+                "rdev_minor": 0,
+                "inode": 0,
+                "label_result": -1,
+                "close_result": -1,
+                "label_hex": ""
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "ios": {
+    "status": "passed",
+    "native_prepare_input_count": 1354,
+    "compile_input_count": 369,
+    "compile_inputs_unchanged": true,
+    "readback_input_count": 417,
+    "readback_inputs_unchanged": true,
+    "successful_command_count": 14,
+    "platform": {
+      "target": "arm64-apple-ios26.0",
+      "object_cpu": "arm64",
+      "object_type": "Mach-O OBJECT",
+      "platform": "iOS",
+      "minos": "26.0",
+      "sdk": "27.1",
+      "sdk_path": "/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS27.1.sdk",
+      "clang_version": "Apple clang version 21.0.0 (clang-2100.3.34.2)\nTarget: arm64-apple-darwin27.0.0\nThread model: posix\nInstalledDir: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin"
+    },
+    "ios_tools_sdk_unchanged": true,
+    "compilation_performed": true,
+    "guest_started": false,
+    "app_linked": false
+  },
+  "historical_failures": {
+    "v2": "新增 result 字段被原终末校验选入；三入口结束后停止，原报告 failed 保留。",
+    "field_regression": "55333 条冻结 JSON 中仅 21 条在内存改为 syscall_result；四项正反例成功。",
+    "quota": "固定原盘与恢复候选的三类 ID 0 盘内记录比 e2fsck 重算多 131072 bytes 和一个 inode；两盘未修复。",
+    "quota_boundary": "差额与 orphan inode 12 占用相同，e2fsprogs 1.47.4 重算排除该 inode；盘内最初计入步骤尚未确认。",
+    "v4": "Direct 对象字符串路径传给要求 Path 的摘要回调，构建失败且 guest 未启动；独立 v5 修正两处调用。",
+    "v5": "用户暂停后 CLI original 被 SIGTERM 中断，actual_exit=-15、进程组清空；原三入口与外层 running 报告保留。"
+  },
+  "next_validation": [
+    "独立 v6 保持已通过的设备与 SystemServer 采集实现，重新冻结实际链接对象并完成原六入口。",
+    "继续验收 sys.boot_completed、进程、Binder 服务、cmd 查询、桌面、APK 和持续性能。",
+    "继续完整 iOS App/UI、运行资源与设备执行验收。"
+  ],
+  "limitations": [
+    "原 core、prepare 和运行报告没有记录九个 Direct 预存对象的运行前后摘要；当前路径与对象读回另存，下一轮纳入冻结输入。",
+    "native process/SMP、4 KiB 和非 BPF ashmem 实际构建运行未验证。",
+    "内存压力 purge 与最终内核物理页释放未验证。",
+    "v3 宿主两类节点共 12 次 open 均为 EACCES；设备属性与标签未取得。",
+    "iOS App 链接、实际执行、设备 JIT 授权、持续性能和热状态待真机验证。",
+    "本轮未进行整机性能测量；宿主存在其他并行构建。"
+  ],
+  "analysis": {
+    "path": "../../../sdk-plain-validation-v1/ashmem-stage-v1/compose.py",
+    "bytes": 10234,
+    "sha256": "9e8f01a11e2abcdb23e3a389005844ad26e246339065d3d7bdfcbe2a9d567c34"
+  },
+  "followup_validation": {
+    "original_version": "v5",
+    "original_result": "interrupted",
+    "host_interruption_signal": 15,
+    "node_samples": [
+      {
+        "line": 17253,
+        "sample": 1,
+        "elapsed_ns": 5060128000,
+        "boot_id": "d19b41e1-7049-4d0f-80a3-44c633ac9ebc",
+        "nodes": [
+          {
+            "path": "/dev/ashmem",
+            "mode": 8630,
+            "uid": 0,
+            "gid": 0,
+            "inode": 781,
+            "rdev_major": 10,
+            "rdev_minor": 126,
+            "label": "u:object_r:ashmem_device:s0"
+          },
+          {
+            "path": "/dev/ashmemd19b41e1-7049-4d0f-80a3-44c633ac9ebc",
+            "mode": 8630,
+            "uid": 0,
+            "gid": 0,
+            "inode": 782,
+            "rdev_major": 10,
+            "rdev_minor": 126,
+            "label": "u:object_r:ashmem_libcutils_device:s0"
+          }
+        ],
+        "temporary_mapping_released": true,
+        "register_frame_restored": true
+      },
+      {
+        "line": 28079,
+        "sample": 2,
+        "elapsed_ns": 34889755000,
+        "boot_id": "d19b41e1-7049-4d0f-80a3-44c633ac9ebc",
+        "nodes": [
+          {
+            "path": "/dev/ashmem",
+            "mode": 8630,
+            "uid": 0,
+            "gid": 0,
+            "inode": 781,
+            "rdev_major": 10,
+            "rdev_minor": 126,
+            "label": "u:object_r:ashmem_device:s0"
+          },
+          {
+            "path": "/dev/ashmemd19b41e1-7049-4d0f-80a3-44c633ac9ebc",
+            "mode": 8630,
+            "uid": 0,
+            "gid": 0,
+            "inode": 782,
+            "rdev_major": 10,
+            "rdev_minor": 126,
+            "label": "u:object_r:ashmem_libcutils_device:s0"
+          }
+        ],
+        "temporary_mapping_released": true,
+        "register_frame_restored": true
+      }
+    ],
+    "recovery_passed": true,
+    "recovery_result": "failed",
+    "ios_final_execution_link": "passed",
+    "ios_link_entries": [
+      {
+        "entry": "runtime",
+        "platform": "iOS",
+        "cpu": "arm64",
+        "filetype": "EXECUTE",
+        "minos": "26.0",
+        "sdk": "27.1",
+        "sha256": "edebfe5f4ebf8b32ebe58b5dda1fb6ae92b9cf52974ce4f39b8ba18e72ea084c"
+      },
+      {
+        "entry": "cli",
+        "platform": "iOS",
+        "cpu": "arm64",
+        "filetype": "EXECUTE",
+        "minos": "26.0",
+        "sdk": "27.1",
+        "sha256": "2d0999a0e6e3c83eed8ce9074c7db5b03f19dd2613f192f4384480bb1b0fdfad"
+      },
+      {
+        "entry": "gcd",
+        "platform": "iOS",
+        "cpu": "arm64",
+        "filetype": "EXECUTE",
+        "minos": "26.0",
+        "sdk": "27.1",
+        "sha256": "fd8fbf23799678ee385135554c169e780b6375735c7a93829da1d560cdc8f198"
+      }
+    ],
+    "ios_app_packaged": false,
+    "guest_started_by_link_check": false
+  }
+}

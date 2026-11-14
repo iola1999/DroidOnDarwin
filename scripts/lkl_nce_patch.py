@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """为固定版本的 LKL 应用 N2 原型所需的架构修改。"""
 from pathlib import Path
+import lkl_ashmem_patch
 
 # 直接复制进源码树的文件，构建身份与内核源码重放的判断都以这份清单为准。
 COPIED_SOURCES = (("layout.h", "include/asm/nce-layout.h"),
@@ -27,6 +28,8 @@ COPIED_SOURCES = (("layout.h", "include/asm/nce-layout.h"),
 
 
 def apply(source: Path, experiment: Path):
+    lkl_ashmem_patch.apply(source)
+
     def edit(name, before, after):
         path = source / name
         text = path.read_text()

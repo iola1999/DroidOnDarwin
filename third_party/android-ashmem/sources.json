@@ -1,0 +1,63 @@
+{
+  "repository": "https://android.googlesource.com/kernel/common",
+  "tag": "android16-6.12-2025-06_r1",
+  "revision": "2d954fcf3d1b73a41d0fa498324da357ec96cbdf",
+  "source_kernel_version": "6.12.23",
+  "files": {
+    "ashmem.c": {
+      "upstream_path": "drivers/staging/android/ashmem.c",
+      "url": "https://android.googlesource.com/kernel/common/+/2d954fcf3d1b73a41d0fa498324da357ec96cbdf/drivers/staging/android/ashmem.c?format=TEXT",
+      "bytes": 26184,
+      "sha256": "63bd518d3e739ae6a190b4fc8ebf9359c8745d5e579c6cdf562a8c8776f56089"
+    },
+    "ashmem.h": {
+      "upstream_path": "drivers/staging/android/ashmem.h",
+      "url": "https://android.googlesource.com/kernel/common/+/2d954fcf3d1b73a41d0fa498324da357ec96cbdf/drivers/staging/android/ashmem.h?format=TEXT",
+      "bytes": 858,
+      "sha256": "e662b3ff9efda7e96a3cd60720080d0869b98fdc5a663e4357c56868bb6ceed0"
+    },
+    "uapi/ashmem.h": {
+      "upstream_path": "drivers/staging/android/uapi/ashmem.h",
+      "url": "https://android.googlesource.com/kernel/common/+/2d954fcf3d1b73a41d0fa498324da357ec96cbdf/drivers/staging/android/uapi/ashmem.h?format=TEXT",
+      "bytes": 1379,
+      "sha256": "32e4a2b6f0430e6607e36a1331c1d73661a1cd5e74262928bcbb4005ba571516"
+    },
+    "upstream/Kconfig": {
+      "upstream_path": "drivers/staging/android/Kconfig",
+      "url": "https://android.googlesource.com/kernel/common/+/2d954fcf3d1b73a41d0fa498324da357ec96cbdf/drivers/staging/android/Kconfig?format=TEXT",
+      "bytes": 644,
+      "sha256": "a8c121a4aa29900b9d268879db684880ce3b8a00ef37f7a40b66a464a36154de"
+    },
+    "upstream/Makefile": {
+      "upstream_path": "drivers/staging/android/Makefile",
+      "url": "https://android.googlesource.com/kernel/common/+/2d954fcf3d1b73a41d0fa498324da357ec96cbdf/drivers/staging/android/Makefile?format=TEXT",
+      "bytes": 167,
+      "sha256": "9ee6f924bb39497cd0559793f54dbdeb83f9fbf08c6f680cb9aa9fa6eb3c305e"
+    },
+    "upstream/page_size_compat.h": {
+      "upstream_path": "include/linux/page_size_compat.h",
+      "url": "https://android.googlesource.com/kernel/common/+/2d954fcf3d1b73a41d0fa498324da357ec96cbdf/include/linux/page_size_compat.h?format=TEXT",
+      "bytes": 5808,
+      "sha256": "2bf96d23d42a0428987d6a0b997fecd76d4baa6576ea25dbfc0d8ccb3c80b94f"
+    },
+    "COPYING": {
+      "upstream_path": "COPYING",
+      "url": "https://android.googlesource.com/kernel/common/+/2d954fcf3d1b73a41d0fa498324da357ec96cbdf/COPYING?format=TEXT",
+      "bytes": 496,
+      "sha256": "fb5a425bd3b3cd6071a3a9aff9909a859e7c1158d54d32e07658398cd67eb6a0"
+    },
+    "LICENSES/preferred/GPL-2.0": {
+      "upstream_path": "LICENSES/preferred/GPL-2.0",
+      "url": "https://android.googlesource.com/kernel/common/+/2d954fcf3d1b73a41d0fa498324da357ec96cbdf/LICENSES/preferred/GPL-2.0?format=TEXT",
+      "bytes": 18729,
+      "sha256": "f6b78c087c3ebdf0f3c13415070dd480a3f35d8fc76f3d02180a407c1c812f79"
+    },
+    "LICENSES/dual/Apache-2.0": {
+      "upstream_path": "LICENSES/dual/Apache-2.0",
+      "url": "https://android.googlesource.com/kernel/common/+/2d954fcf3d1b73a41d0fa498324da357ec96cbdf/LICENSES/dual/Apache-2.0?format=TEXT",
+      "bytes": 10045,
+      "sha256": "7e4d3fba250d15e9e0afa380d4b611828fa2560cc8fdebe95bcf2f01a487de12"
+    }
+  },
+  "adapted_c_sha256": "9ced943b04893f79a7f9a80aaeada68e02971a180d4d1447176b482d8e130892"
+}

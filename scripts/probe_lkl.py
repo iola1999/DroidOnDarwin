@@ -3,6 +3,7 @@
 import argparse
 import art_aot
 import hashlib
+import lkl_ashmem_patch
 from lkl_nce_patch import COPIED_SOURCES, apply
 from build_nce_userspace import build as build_userspace
 import json
@@ -227,6 +228,7 @@ def main():
             from lkl_smp_patch import apply as apply_smp
             from lkl_smp_mmu_patch import apply as apply_mmu
             base_inputs = [Path(__file__).with_name("lkl_nce_patch.py"),
+                           Path(lkl_ashmem_patch.__file__), *lkl_ashmem_patch.input_files(),
                            *sorted(EXPERIMENT.glob("lkl-nce-*.c")), *sorted(EXPERIMENT.glob("lkl-*.h")),
                            EXPERIMENT / "guest-registers.h", EXPERIMENT / "layout.h",
                            *[EXPERIMENT / name for name, _ in COPIED_SOURCES]]
@@ -284,6 +286,7 @@ def main():
                         "NET", "UNIX", "INET", "AUDIT", "SECURITY", "SECURITY_NETWORK",
                         "SECURITY_SELINUX", "SECURITY_SELINUX_DEVELOP"]
             options += list(BLOCK_OPTIONS)
+            options += ["SHMEM", "ASHMEM"]
             options += ["EXT4_FS", "EXT4_FS_SECURITY", "EXT4_FS_POSIX_ACL", "TMPFS_POSIX_ACL", "FUSE_FS", "CGROUPS", "MEMCG", "CGROUP_CPUACCT", "CGROUP_SCHED", "FAIR_GROUP_SCHED", "SECCOMP", "SECCOMP_FILTER", "PAGE_REPORTING", "INOTIFY_USER"]
             options += ["INPUT", "INPUT_EVDEV", "INPUT_MISC", "INPUT_UINPUT"]
             options += ["PSI", "BPF_SYSCALL", "CGROUP_BPF", "NETFILTER", "NETFILTER_ADVANCED",
@@ -311,14 +314,17 @@ def main():
         switches += [arg for name in ("KALLSYMS", "DEBUG_INFO", "SLUB_DEBUG", *([] if PROCESS else ["BLOCK"])) for arg in ("-d", name)]
         run([SOURCE / "scripts/config", "--file", BUILD / ".config", *switches], env=env)
         run([*make, "olddefconfig"], env=env, stdout=log, stderr=subprocess.STDOUT)
-        if PROCESS and any("CONFIG_" + name + "=y\n" not in (BUILD / ".config").read_text() for name in BLOCK_OPTIONS):
-            raise RuntimeError("生成的内核配置缺少 Android 块设备或 system DMA heap 支持")
+        if PROCESS and any("CONFIG_" + name + "=y\n" not in (BUILD / ".config").read_text()
+                           for name in (*BLOCK_OPTIONS, "SHMEM", "ASHMEM")):
+            raise RuntimeError("生成的内核配置缺少 Android 块设备、system DMA heap 或 ashmem 支持")
         if SMP:
             config = (BUILD / ".config").read_text()
             assert all(name + "=y\n" in config for name in ("CONFIG_SMP", "CONFIG_MMU", "CONFIG_MMU_GATHER_RCU_TABLE_FREE"))
             assert "CONFIG_NR_CPUS=2\n" in config
             assert ("CONFIG_SCHED_CORE=y\n" in config) == arguments.core_scheduling
         run([*make, "-j8", "all"], env=env, stdout=log, stderr=subprocess.STDOUT)
+    if PROCESS:
+        ashmem_dependency_command, ashmem_inputs = lkl_ashmem_patch.compiled_inputs(BUILD)
     shutil.copyfile(SOURCE / "arch/lkl/include/uapi/asm/host_ops.h", OUT / "lkl-host-ops.h")
     run([*target, "-fPIC", "-fno-stack-protector", "-O2", "-I", OUT, "-I", EXPERIMENT,
          "-c", EXPERIMENT / "lkl-bridge.c", "-o", OUT / "lkl-bridge.o"])
@@ -493,6 +499,7 @@ def main():
                 "kernel_sha256": hashlib.sha256((OUT / "lkl-image.bin").read_bytes()).hexdigest()}
     if PROCESS:
         manifest["storage_started_from_seed"] = storage_started_from_seed
+        manifest["ashmem_dependency_command"] = ashmem_dependency_command
     if angle:
         manifest["window_results"] = window_results
         manifest["graphics_libraries_sha256"] = {str(p): hashlib.sha256(p.read_bytes()).hexdigest() for p in graphics_files}
@@ -508,6 +515,8 @@ def main():
     if PROCESS:
         manifest["dispatch_results"] = dispatch_results
         sources += [EXPERIMENT / "nce-cpu.h", EXPERIMENT / "memory.h", EXPERIMENT / "code-memory.h", EXPERIMENT / "layout.h", EXPERIMENT / "execute-check.h", EXPERIMENT / "input.h", EXPERIMENT / "session.h", EXPERIMENT / "session-internal.h", EXPERIMENT / "interaction-profile.h", Path(__file__).with_name("lkl_nce_patch.py"),
+                    Path(lkl_ashmem_patch.__file__), *lkl_ashmem_patch.input_files(),
+                    *[SOURCE / name for name in lkl_ashmem_patch.GENERATED_FILES], *ashmem_inputs, BUILD / ".config",
                     *sorted(EXPERIMENT.glob("lkl-*.h")),
                     *sorted(EXPERIMENT.glob("lkl-nce-*.c")), EXPERIMENT / "exec-guest.S", EXPERIMENT / "programs.h",
                     Path(__file__).with_name("build_nce_userspace.py"), Path(__file__).with_name("test_host_disk_close.py"), EXPERIMENT / "dispatch-test.c", EXPERIMENT / "host-context-test.c",
