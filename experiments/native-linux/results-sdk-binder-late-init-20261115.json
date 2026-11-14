@@ -36,9 +36,9 @@
       "sha256": "2bc34f325303559c084c7faa7ec56c0f6045279eeb36d32e2795994b308d48e3"
     },
     "summary": {
-      "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sdk-plain-init-binder-state-16k-v12-600s/summary.json",
-      "bytes": 65254894,
-      "sha256": "5378bba639e8f6d4f22b034231786d714da282d5b5449375262ddde70e869195"
+      "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sdk-plain-init-binder-state-16k-v12-600s/summary.json.zst",
+      "bytes": 1046225,
+      "sha256": "3cdc09bf2c4d1b0c9cfb1d00d7065c0bd78b2f91ef76ef41667bcdc4edd18143"
     },
     "prepare": {
       "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/dms-binder-state-original-init-v12-600s/prepare-01/report.json",
@@ -1020,8 +1020,38 @@
     ]
   },
   "cleanup": {
-    "status": "pending",
-    "reason": "导出与后期分析已完成，等待 v13 输入克隆与本轮清理。"
+    "status": "completed",
+    "report": {
+      "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/cleanup-2026-11-15/binder-v12.json",
+      "bytes": 444510,
+      "sha256": "b626834258bac1cef22294c1b8658ac888d611c3d53478255be8498584c1be00"
+    },
+    "removed_targets": 76,
+    "removed_logical_bytes": 5055303095,
+    "retained_files": 735,
+    "retained_unchanged": true,
+    "removed_paths_absent": true,
+    "summary_compression": {
+      "original": {
+        "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sdk-plain-init-binder-state-16k-v12-600s/summary.json",
+        "bytes": 65254894,
+        "sha256": "5378bba639e8f6d4f22b034231786d714da282d5b5449375262ddde70e869195",
+        "command": [
+          "zstd",
+          "-19",
+          "--rm",
+          "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sdk-plain-init-binder-state-16k-v12-600s/summary.json"
+        ]
+      },
+      "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sdk-plain-init-binder-state-16k-v12-600s/summary.json.zst",
+      "bytes": 1046225,
+      "sha256": "3cdc09bf2c4d1b0c9cfb1d00d7065c0bd78b2f91ef76ef41667bcdc4edd18143",
+      "decompressed_sha256": "5378bba639e8f6d4f22b034231786d714da282d5b5449375262ddde70e869195",
+      "original_removed": true,
+      "verified": true,
+      "log": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/cleanup-2026-11-15/binder-v12-compression.log"
+    },
+    "physical_space_reclaimed": null
   },
   "limits": [
     "标签预算为 128 条，两入口均有 omitted，未记录的后期阶段保持未知。",
@@ -1032,7 +1062,7 @@
   ],
   "summary_source": {
     "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/dms-binder-state-original-init-v12-600s/summarize_completed.py",
-    "bytes": 9565,
-    "sha256": "c794e66275f48c0b14e5f87fc1841bdefc3011edd1d28672dbbfac2d94a33803"
+    "bytes": 10752,
+    "sha256": "7098c958c48e4abb88d405a0b17f4153b139f44238f7c9731b314dc98d0c57a2"
   }
 }
