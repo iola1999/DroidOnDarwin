@@ -265,6 +265,18 @@
       "bytes": 5176,
       "sha256": "358525833cb70d8d6a752e2785f37eeff625943795eddff8c2291eb2cbd70451",
       "status": "passed"
+    },
+    "v6_runtime": {
+      "path": "../../../sdk-plain-validation-v1/ashmem-original-init-v6/run/report.json",
+      "bytes": 2360414,
+      "sha256": "c748a02af8c283f2dc777c9c22f4d20a7f84cf322821a927f45f63a0348fddc2",
+      "status": "failed"
+    },
+    "v6_summary": {
+      "path": "../../../sdk-plain-validation-v1/ashmem-original-init-v6/result-summary.json",
+      "bytes": 5599,
+      "sha256": "c830446c7288c2bf88e905ba4f7b480b4bec0923d9a2a6e03361f4a2ffa4538e",
+      "status": "failed"
     }
   },
   "driver_fixture": {
@@ -1291,9 +1303,9 @@
     "v5": "用户暂停后 CLI original 被 SIGTERM 中断，actual_exit=-15、进程组清空；原三入口与外层 running 报告保留。"
   },
   "next_validation": [
-    "独立 v6 保持已通过的设备与 SystemServer 采集实现，重新冻结实际链接对象并完成原六入口。",
-    "继续验收 sys.boot_completed、进程、Binder 服务、cmd 查询、桌面、APK 和持续性能。",
-    "继续完整 iOS App/UI、运行资源与设备执行验收。"
+    "在独立v7采集固定SDK的OnBootPhase_100_服务阶段及实际DisplayManager/LocalDisplay标签，确定具体等待服务。",
+    "核对原ART SIGQUIT线程转储路径，取得实际锁与Binder/显示等待。",
+    "继续完整boot、桌面、原始签名APK、iOS App与持续性能验收。"
   ],
   "limitations": [
     "原 core、prepare 和运行报告没有记录九个 Direct 预存对象的运行前后摘要；当前路径与对象读回另存，下一轮纳入冻结输入。",
@@ -1408,5 +1420,79 @@
     ],
     "ios_app_packaged": false,
     "guest_started_by_link_check": false
+  },
+  "v6_validation": {
+    "status": "failed",
+    "full_boot_validation": "failed",
+    "observation_and_cleanup_passed": true,
+    "capture_structure_passed": true,
+    "ashmem_original_passed": true,
+    "data_persistence_validated": true,
+    "metadata_persistence_validated": true,
+    "metadata_rc_validated": true,
+    "original_sqlite_validated": true,
+    "source_unchanged": true,
+    "source_revision_unchanged": true,
+    "source_revision_after": "a434013850c988969abb1be9510c0f5ffad9bd75",
+    "runs": [
+      {
+        "entry": "cli",
+        "phase": "lifecycle",
+        "actual_exit": 0,
+        "validated": true,
+        "process_group_empty": true,
+        "data_clean": true,
+        "metadata_clean": true
+      },
+      {
+        "entry": "gcd",
+        "phase": "lifecycle",
+        "actual_exit": 0,
+        "validated": true,
+        "process_group_empty": true,
+        "data_clean": true,
+        "metadata_clean": true
+      },
+      {
+        "entry": "cli",
+        "phase": "original",
+        "actual_exit": 0,
+        "validated": true,
+        "process_group_empty": true,
+        "data_clean": false,
+        "metadata_clean": true
+      },
+      {
+        "entry": "gcd",
+        "phase": "original",
+        "actual_exit": 0,
+        "validated": true,
+        "process_group_empty": true,
+        "data_clean": false,
+        "metadata_clean": true
+      },
+      {
+        "entry": "cli",
+        "phase": "recovery",
+        "actual_exit": 0,
+        "validated": true,
+        "process_group_empty": true,
+        "data_clean": true,
+        "metadata_clean": true
+      },
+      {
+        "entry": "gcd",
+        "phase": "recovery",
+        "actual_exit": 0,
+        "validated": true,
+        "process_group_empty": true,
+        "data_clean": true,
+        "metadata_clean": true
+      }
+    ],
+    "system_server_last_messages": [
+      "WaitForDisplay",
+      "Starting phase 100"
+    ]
   }
 }

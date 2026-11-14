@@ -70,6 +70,12 @@ v4 在 CLI 构建的 Direct 对象摘要调用处抛出 `AttributeError: 'str' o
 
 本阶段提交固定驱动与构建接入，主题继续 proposed。独立 helper 的实际使用方为共同 NCE apply 与 native/translation 构建入口，负责固定源码适配和编译来源，删除后需要在两个入口重复实现。原 ioctl、共享映射与保护契约继续保留；16 KiB 局部结果和本次设备采样分别记录，native/SMP、4 KiB、压力 purge、最终物理页释放及完整系统继续验收。
 
+### v6 六入口与系统阶段
+
+独立 [v6 原六入口](../../../../../../../sdk-plain-validation-v1/ashmem-original-init-v6/run/report.json)已完成，候选 `a434013` 与准备输入前后保持。每入口实际宿主退出 0、原 validator 成功、进程组清空，停止与资源回收、同盘 data/metadata、metadata 原 rc 属性与 SQLite 检查成功，两盘最终 clean。CLI/GCD 均成功创建并映射 `ApplicationSharedMemory`，每入口三次 PID1 设备属性、标签和临时资源回收检查均成功，`ashmem_original_passed=true`。完整 boot 仍为 failed。
+
+两个 system_server 均记录 `StartDisplayManager` 完成，随后到 `WaitForDisplay` 与 `Starting phase 100`；当前阶段过滤没有包含逐服务的 `OnBootPhase_100_` 文本，具体等待服务尚未确认。原失败、日志与阶段消息保留，下一步按[默认显示等待](../bug-fix/2026-11-14-原SDK默认显示等待.md)补采服务回调与线程状态。固定驱动与原设备调用已通过本轮本机组合，完整系统、桌面、APK 与持续性能继续验收。
+
 ## 曾考虑的替代方案
 
 - 将 `sys.use_memfd` 设为 `true`：现有 Framework 测试已经采用该配置，原 SDK 和部分原始 JNI 调用仍可能使用 ashmem ioctl；本轮先实现原设备接口。
