@@ -146,6 +146,12 @@ static void free_host_syscall_state(void)
     edit(arch + "kernel/setup.c", "\tlkl_ops->sem_up(init_sem);",
          '\t/* Only the initial bootstrap owns syscalls_init() and init_sem. */\n'
          '\tunregister_binfmt(&lkl_run_init_binfmt);\n\n\tlkl_ops->sem_up(init_sem);')
+    edit(arch + "kernel/setup.c", 'int __init lkl_start_kernel(const char *fmt, ...)\n{\n\tint ret;\n\tva_list ap;',
+         'int __init lkl_start_kernel(const char *fmt, ...)\n{\n\tint ret;\n\tlkl_thread_t init_tid;\n\tva_list ap;')
+    edit(arch + "kernel/setup.c", '\tret = lkl_ops->thread_create(lkl_run_kernel, NULL);\n\tif (!ret) {',
+         '\tif (!lkl_ops->thread_create(lkl_run_kernel, NULL)) {')
+    edit(arch + "kernel/setup.c", '\tlkl_ops->sem_down(init_sem);\n\tlkl_ops->sem_free(init_sem);',
+         '\tlkl_ops->sem_down(init_sem);\n\t/* PID1\'s bootstrap pthread must finish before tid and CPU ownership change. */\n\tinit_tid = current_thread_info()->tid;\n\tif (lkl_ops->thread_join(init_tid))\n\t\tlkl_bug("cannot join init bootstrap thread\\n");\n\tlkl_ops->sem_free(init_sem);')
     edit(arch + "Kconfig", "depends on !SMP && !COREDUMP && !SECCOMP && !UPROBES",
          "depends on !SMP && !COREDUMP && !UPROBES")
     edit(arch + "Kconfig", "\tselect GENERIC_ATOMIC64",

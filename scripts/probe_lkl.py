@@ -27,7 +27,8 @@ EXPERIMENT = ROOT / "experiments/native-linux"
 REVISION = "d0f76a77e8c2ca68bd7d96190b8da09040eab072"
 SMP = False
 BLOCK_OPTIONS = ("BLOCK", "BLK_DEV", "BLK_DEV_LOOP", "BLK_DEV_WRITE_MOUNTED", "MD", "BLK_DEV_DM", "DM_VERITY", "CRYPTO_SHA256",
-                 "MISC_FILESYSTEMS", "EROFS_FS", "EROFS_FS_XATTR", "EROFS_FS_SECURITY", "EROFS_FS_ZIP", "QUOTA", "QFMT_V2")
+                 "MISC_FILESYSTEMS", "EROFS_FS", "EROFS_FS_XATTR", "EROFS_FS_SECURITY", "EROFS_FS_ZIP", "QUOTA", "QFMT_V2",
+                 "DMA_SHARED_BUFFER", "DMABUF_HEAPS", "DMABUF_HEAPS_SYSTEM")
 
 
 def run(args, **kwargs):
@@ -311,7 +312,7 @@ def main():
         run([SOURCE / "scripts/config", "--file", BUILD / ".config", *switches], env=env)
         run([*make, "olddefconfig"], env=env, stdout=log, stderr=subprocess.STDOUT)
         if PROCESS and any("CONFIG_" + name + "=y\n" not in (BUILD / ".config").read_text() for name in BLOCK_OPTIONS):
-            raise RuntimeError("生成的内核配置缺少 Android 块设备支持")
+            raise RuntimeError("生成的内核配置缺少 Android 块设备或 system DMA heap 支持")
         if SMP:
             config = (BUILD / ".config").read_text()
             assert all(name + "=y\n" in config for name in ("CONFIG_SMP", "CONFIG_MMU", "CONFIG_MMU_GATHER_RCU_TABLE_FREE"))
@@ -515,7 +516,7 @@ def main():
                     Path(__file__).with_name("prepare_android_desktop.py"), Path(__file__).with_name("build_android_linker.py"),
                     Path(__file__).with_name("build_android_libc.py"), Path(__file__).with_name("build_android_art.py"),
                     Path(__file__).with_name("build_android_crypto.py"), Path(__file__).with_name("build_android_gralloc.py"), Path(__file__).with_name("build_android_network.py"),
-                    ROOT / "patches/nce-gralloc-memfd.patch",
+                    ROOT / "patches/nce-gralloc-system-dmaheap.patch",
                     EXPERIMENT / "android-sources.json", *sorted((EXPERIMENT / "art").glob("*")),
                     *sorted((EXPERIMENT / "userspace").glob("*")), *sorted(p for p in (EXPERIMENT / "services").rglob("*") if p.is_file()),
                     *sorted(p for p in (EXPERIMENT / "graphics").rglob("*") if p.is_file())]

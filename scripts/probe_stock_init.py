@@ -32,6 +32,31 @@ def _manifest_path(path):
     return str(path.relative_to(ROOT)) if path.is_relative_to(ROOT) else str(path)
 
 
+def _host_source_command(base, core, entry):
+    links = [list(command) for command in base['commands']
+             if '-c' not in command and '-o' in command and
+             Path(command[command.index('-o') + 1]) == core / entry]
+    if len(links) != 1:
+        raise ValueError('核心宿主链接命令缺失或重复：' + entry)
+    sources = {}
+    for command in base['commands']:
+        if '-c' not in command or '-o' not in command:
+            continue
+        source = command[command.index('-c') + 1]
+        target = command[command.index('-o') + 1]
+        # core 目录中的 C 对象需要重编译；Direct 对象继续按原命令链接。
+        if not source.endswith('.c') or Path(target).parent != core:
+            continue
+        if target in sources and sources[target] != source:
+            raise ValueError('核心 C 对象对应多个源文件：' + target)
+        sources[target] = source
+    command = [sources.get(value, value) for value in links[0]]
+    for name in ('linux-runner.c', 'linux-execution.c', 'linux-elf.c'):
+        if command.count(str(EXP / 'translation' / name)) != 1:
+            raise ValueError('核心宿主 C 源缺失或重复：' + name)
+    return command
+
+
 def read_observations(path):
     if path.stat().st_size > _OBSERVATION_MAX_BYTES:
         raise ValueError(f'观察日志超过 {_OBSERVATION_MAX_BYTES} bytes：{path}')
@@ -918,7 +943,7 @@ def main():
         selected.update(DYLD_LIBRARY_PATH=str(args.graphics_angle.resolve()), ANGLE_DEFAULT_PLATFORM='metal')
     result['test_environment'] = selected
     for entry in ('cli', 'gcd'):
-        command = next(list(cmd) for cmd in base['commands'] if '-o' in cmd and Path(cmd[cmd.index('-o') + 1]).name == entry)
+        command = _host_source_command(base, source.parent, entry)
         includes = [command[i + 1] for i, value in enumerate(command[:-1]) if value == '-I']
         kernel = next(Path(path) / 'lkl-image.bin' for path in includes if (Path(path) / 'lkl-image.bin').is_file())
         command[command.index(str(EXP / 'translation/linux-runner.c'))] = str(runner)

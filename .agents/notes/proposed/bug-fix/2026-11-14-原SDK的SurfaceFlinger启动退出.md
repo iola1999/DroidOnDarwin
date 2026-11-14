@@ -165,6 +165,30 @@ v2/v3 结束后，原 liblog fixture 与四份原日志的协议及 syscall 采�
 新增读取仅由 work 内生成 probe 和 C fixture 使用，原内核、宿主、策略、SDK ELF、三标签与 FATAL 的采集保持。先检查静态指针与长度、读取范围、输入保持、记录限额和原 extended error 关联，再用新 APFS 克隆盘运行相同六入口、180 秒 original 和完整 boot 验收。该步骤尚未修改共享缓冲区实现；DMA heap 的 PFNMAP、首次写、共享与释放仍待实际验证。
 
 
+
+### 静态 printk 快照与日志读取上限
+
+`composer-binder-printk-v1` 的实际运行在 CLI original 结束后的日志读取阶段停止，结果见[失败报告](../../../../../../../sdk-plain-validation-v1/composer-binder-printk-v1/result.json)。CLI/GCD lifecycle 和 CLI original 三入口均实际退出 0、进程组清空，未发送额外清理信号。CLI original 已完成 180 秒观察并输出两份 extended error、失败交易与 printk 快照；通用读取器在原日志第 30959 行拒绝超过 64 KiB 的单行，该行含 131072 bytes 文本环的 262144-byte 十六进制字段。准备阶段和独立准备审阅未覆盖这项读取上限。GCD original、两项 recovery 和完整 boot 尚未由该轮验收，CLI 后的候选 data 需要 recovery；失败报告、原日志和实际执行源码保持。
+
+两份 CLI 快照的 Binder debug_mask 前后均为 7，交易 ID 为 1153、1589。固定字节包含同一项 AVC：`denied { read write }`、初始命名空间 `pid=377`、`comm="binder:204_1"`、path `2F6D656D66643A6E63652D6772616C6C6F63202864656C6574656429`（`/memfd:nce-gralloc (deleted)`）、`dev="tmpfs"`、`scontext=u:r:hal_graphics_composer_default:s0`、`tcontext=u:object_r:hal_graphics_allocator_default_tmpfs:s0`、`tclass=file`、`permissive=0`；两次 inode 为 20、24。邻近 Binder 固定文本包含对应的回复 ID、`29201/-1`、`168-16` 和 `line 3518`，与失败记录相同。上述字段按原字节记录，单条 finalized、text_len、复制期间并发及残留文本边界仍未核对。
+
+下一份独立生成副本只为字段、字节长度和限额均有效的 printk 行提供 `262144+4096` bytes 读取空间，普通日志继续限制为 64 KiB，整份日志继续限制为 32 MiB 和 200000 条 JSON。在新 guest 运行前，用实际失败日志验证读取与原观察 validator，并覆盖超长普通行、错误 printk 字段、十六进制及整体上限。原盘先完成同盘 recovery，随后使用新 APFS 克隆盘重复完整六入口。原共享缓冲区、策略、SDK ELF 与内核保持；标准 system DMA heap 的候选实现另做首次写、跨进程共享、同步与最终释放检查。
+
+v1 随后使用同一候选盘和已编译程序完成独立 CLI/GCD recovery，两盘最终 clean，原 SQLite 的只读完整性和 schema 检查成功；[恢复报告](../../../../../../../sdk-plain-validation-v1/composer-binder-printk-v1-recovery/result.json)与原失败分别保留。[独立恢复审阅](../../../../../../../sdk-plain-validation-v1/composer-binder-printk-review-v2/recovery-review.json)核对实际退出、进程组、同盘摘要、UUID、保留块和 GPT 身份，143 项检查成功。该恢复未补做 v1 的 GCD original，v1 的完整六入口仍未验收。
+
+v2 的最终准备报告为 `composer-binder-printk-v2/prepare-result-v5.json`。有界 reader 接受恰好 266240 bytes 的有效 printk 行，再增加 1 byte 拒绝；普通行、整份日志和 JSON 数量继续使用原限制。原 CLI 失败日志经新 reader 和原 first-stage validator 检查成功，实际加载的 12 个项目 Python 模块均纳入来源；58 份来源、3 份生成物与 3 个工具前后保持。prepare v4 曾遗漏实际加载的 `build_apk_fixture.py`，原失败和对应执行源码保留。
+
+[v2 实际结果](../../../../../../../sdk-plain-validation-v1/composer-binder-printk-v2/result.json)的 lifecycle、original 和同盘 recovery CLI/GCD 六入口均通过观察、退出与回收检查，两个 original 各观察 180 秒，最后 data/metadata 均为 clean。58 份来源、生成物、工具和分支版本保持，三标签、extended error、失败交易与 printk 的关联检查成功。完整 boot 仍为 failed，系统服务观察结果未完整导出。
+
+[固定文本分析](../../../../../../../sdk-plain-validation-v1/composer-binder-printk-v2/fixed-text-result.json)保存四份快照的原字节摘要与偏移。CLI 的交易 ID 为 1102、1520，GCD 为 1164、1751；四份快照均找到对应 Binder 回复失败 marker。两个入口均包含 Composer 读写 `/memfd:nce-gralloc (deleted)` 的 AVC 固定字段，目标类型为 `hal_graphics_allocator_default_tmpfs`，`tclass=file`，`permissive` 固定前缀为 0；CLI 的 inode 为 19、24，GCD 为 19。GCD 第二份快照只找到此前 inode 19 的 AVC，未取得与第二次失败逐条对应的新 AVC。诊断 ioctl 使用 Binder 设备 FD，NativeHandle 内的实际失败 FD 及实际请求 `TF_ACCEPT_FDS` 仍未采集。单条 finalized、text_len、记录提交和复制期间并发仍未验证，固定文本分析不用于推断完整记录顺序。
+
+[v2 结束审阅](../../../../../../../sdk-plain-validation-v1/composer-binder-printk-review-v2/observed-review.json)完成 595 项检查，确认外层 58 份来源、3 份生成物、3 个工具和内层 337 项来源保持。两个 original 的 renderer 均为 `opened=closed=16`，四个 lifecycle/recovery 为 0/0，BPF 执行池回收成功，最后 data generation 为 54、metadata 为 45。随后清理两轮的 28 项中间产物，逻辑文件大小为 10,050,784,146 bytes；619 份保留文件与 32 个符号链接前后保持，物理释放量未测量。原失败、原日志、完整准备源码、恢复报告和 SQLite 导出保留，清单为 `work/cleanup-2026-11-14/composer-binder-printk-v1-v2.json`；复现按原 wrapper 从固定 core/kernel/vendor 和原盘重新生成候选。
+
+后续[system DMA heap 独立候选](../architecture/2026-11-14-原SDK图形服务与宿主传输.md#system-dma-heap-的独立存储候选)已在修正回调地址后的 normal CLI 完成 guest 共享映射和 SYNC 检查，整体宿主 join 检查仍失败，exporter 最终释放未确认。该实验尚未接入原 allocator/composer 与 Binder，原 SurfaceFlinger 和完整 boot 的失败结果保持。
+
+
+system DMA heap 的 v4 六项实际运行已完成共享映射、START/END、失败回收和最终 exporter 释放检查，正式 PID1 bootstrap join 后宿主创建、结束与 join 数量均相等。该结果覆盖独立 root fixture；原 Android allocator/composer、Binder FD、SurfaceFlinger 与完整 boot 仍待组合运行。下一阶段将新 allocator 与 mapper 一并部署，使用从组合 ELF/bin 重新生成的原 init runner，原策略与完整 boot 验收条件保持。
+
 ## 曾考虑的替代方案
 
 - 先把 netd 重启列为独立根因：CLI 首次 SurfaceFlinger SIGABRT 早于 Zygote/netd 的 signal 9，原 rc 明确规定重启关系；先调查 SurfaceFlinger 自身退出。

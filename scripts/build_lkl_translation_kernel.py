@@ -143,7 +143,7 @@ def build(cpus=1, high_res_timers=False, guest_page_bytes=16384, bpf_jit=False):
              '--set-val', 'ARCH_MMAP_RND_BITS', str(maximum)], log)
         run([*make, 'olddefconfig'], log)
         if any('CONFIG_' + name + '=y\n' not in (build_dir / '.config').read_text() for name in probe_lkl.BLOCK_OPTIONS):
-            raise RuntimeError('生成的翻译内核配置缺少 Android 块设备支持')
+            raise RuntimeError('生成的翻译内核配置缺少 Android 块设备或 system DMA heap 支持')
         if ('CONFIG_HIGH_RES_TIMERS=y' in (build_dir / '.config').read_text()) != high_res_timers:
             raise RuntimeError('生成的内核配置与请求的定时器变体不一致')
         if 'CONFIG_BINFMT_SCRIPT=y\n' not in (build_dir / '.config').read_text():

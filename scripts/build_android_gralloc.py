@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""构建使用 Linux memfd 的 Android allocator 和 mapper。"""
+"""构建使用 system DMA heap 的 Android allocator 和 mapper。"""
 import hashlib
 import json
 import os
@@ -50,11 +50,11 @@ def prepare_sources():
 def build():
     OUT.mkdir(exist_ok=True)
     prepare_sources()
-    patch = ROOT / 'patches/nce-gralloc-memfd.patch'
+    patch = ROOT / 'patches/nce-gralloc-system-dmaheap.patch'
     gralloc = OUT / 'source'
     if gralloc.exists():
         shutil.rmtree(gralloc)
-    shutil.copytree(SOURCE / 'goldfish-hals/gralloc', gralloc)
+    run(['/bin/cp', '-cR', SOURCE / 'goldfish-hals/gralloc', gralloc])
     run(['git', 'apply', '--unsafe-paths', patch], cwd=gralloc)
     aidl = Path('/opt/homebrew/share/android-commandlinetools/build-tools/36.0.0/aidl')
     generated = OUT / 'aidl'
@@ -79,8 +79,10 @@ def build():
     platform_headers = OUT / 'platform-include'
     platform_headers.mkdir(exist_ok=True)
     for name in ('hardware', 'system'):
-        shutil.copytree(ROOT / 'work/gfxstream-src/third_party/android/include' / name,
-                        platform_headers / name, dirs_exist_ok=True)
+        destination = platform_headers / name
+        if destination.exists():
+            shutil.rmtree(destination)
+        run(['/bin/cp', '-cR', ROOT / 'work/gfxstream-src/third_party/android/include' / name, destination])
     includes = [generated, gralloc, ANDROID / 'binder-include', ANDROID / 'libbase/include',
         ANDROID / 'liblog/liblog/include', common / 'support/include', SOURCE / 'goldfish-debug/include',
         SOURCE / 'cutils-include', SOURCE / 'sync-include',

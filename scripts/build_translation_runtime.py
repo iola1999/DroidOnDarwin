@@ -161,7 +161,7 @@ def build(report_path, out, target, *, reuse_engine_build=False):
               'kernel_build': str(kernel_build_path.relative_to(ROOT)), 'kernel_configuration': kernel_configuration,
               'source_inputs_unchanged_after_build': True, 'header_dependencies': header_dependencies,
               'commands': commands, 'library': str(library), 'library_sha256': digest(library),
-              'sha256': {str(path.relative_to(ROOT)): digest(path) for path in inputs}}
+              'sha256': {str(path.relative_to(ROOT)) if path.is_relative_to(ROOT) else str(path): digest(path) for path in inputs}}
     (out / 'build.json').write_text(json.dumps(result, indent=2) + '\n')
     return result
 

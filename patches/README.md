@@ -7,7 +7,8 @@
 | `gfxstream-ios.patch` | `scripts/build_gfxstream.py` | iOS 构建、Darwin 平台接口与 EGL 适配 |
 | `gfxstream-ios-serial-gles.patch` | 同上 | GLES 命令的串行处理 |
 | `gfxstream-angle-shaders.patch` | 同上 | ANGLE 的 shader 处理适配 |
-| `nce-gralloc-memfd.patch` | `scripts/build_android_gralloc.py` | Android gralloc 使用 memfd 共享缓冲区，并处理分配失败时的释放 |
+| `nce-gralloc-system-dmaheap.patch` | `scripts/build_android_gralloc.py` | Android gralloc 使用 system DMA heap，共享 metadata 和像素映射配对标准 SYNC |
+| `nce-gralloc-memfd.patch` | 历史 memfd 候选 | 保存上游至 memfd allocator/mapper 的改动来源 |
 
 平台适配源文件位于 `src/gfxstream-ios/`，构建时复制到对应的 gfxstream 源目录。上游版本由各脚本固定，补丁与适配文件的哈希写入构建清单。更新这些文件后重新构建图形库并运行桌面检查，再打包应用。
 

@@ -1,0 +1,288 @@
+--- a/allocator.cpp
++++ b/allocator.cpp
+@@ -35,7 +35,12 @@
+ #include <debug.h>
+ #include <drm_fourcc.h>
+ #include <glUtils.h>
+-#include <goldfish_address_space.h>
++#include <fcntl.h>
++#include <linux/dma-buf.h>
++#include <linux/dma-heap.h>
++#include <sys/ioctl.h>
++#include <sys/mman.h>
++#include <unistd.h>
+ #include <gralloc_cb_bp.h>
+ #include <qemu_pipe_bp.h>
+ 
+@@ -68,6 +73,11 @@
+ #endif // GL_UNSIGNED_INT_2_10_10_10_REV
+ 
+ namespace {
++int syncDmaBuf(const int fd, const uint64_t flags) {
++    const dma_buf_sync sync = {.flags = flags};
++    return TEMP_FAILURE_RETRY(ioctl(fd, DMA_BUF_IOCTL_SYNC, &sync));
++}
++
+ enum class EmulatorFrameworkFormat : uint8_t {
+     GL_COMPATIBLE = 0,
+     YV12 = 1,
+@@ -489,16 +499,14 @@
+             HostConnectionSession connSession(mHostConn.get());
+             ExtendedRCEncoderContext* const rcEnc = connSession.getRcEncoder();
+             LOG_ALWAYS_FATAL_IF(!rcEnc);
+-            const bool hasSharedSlots =
+-                rcEnc->featureInfo_const()->hasSharedSlotsHostMemoryAllocator;
+ 
+             for (int i = 0; i < count; ++i) {
+                 std::unique_ptr<cb_handle_t> cb = allocateImpl(
+-                    req, *rcEnc, ++mBufferIdGenerator, hasSharedSlots);
++                    req, *rcEnc, ++mBufferIdGenerator);
+                 if (cb) {
+                     cbs[i] = std::move(cb);
+                 } else {
+-                    for (--i; i > 0; --i) {
++                    for (--i; i >= 0; --i) {
+                         unallocate(std::move(cbs[i]));
+                     }
+                     return toBinderStatus(FAILURE(AllocationError::NO_RESOURCES));
+@@ -559,27 +567,48 @@
+     std::unique_ptr<cb_handle_t>
+     allocateImpl(const AllocationRequest& req,
+                  ExtendedRCEncoderContext& rcEnc,
+-                 const uint64_t bufferID,
+-                 const bool hasSharedSlots) const {
++                 const uint64_t bufferID) const {
+         android::base::unique_fd cpuAlocatorFd;
+-        GoldfishAddressSpaceBlock bufferBits;
+         const size_t imageSizeInBytesAligned = align(req.imageSizeInBytes, 16);
+         const size_t totalAllocationSize =
+             imageSizeInBytesAligned + sizeof(CbExternalMetadata) + req.reservedRegionSize;
+ 
++        const size_t pageSize = getpagesize();
++        const size_t mappedSize = align(totalAllocationSize, pageSize);
++        android::base::unique_fd heapFd(TEMP_FAILURE_RETRY(open("/dev/dma_heap/system", O_RDONLY | O_CLOEXEC)));
++        if (!heapFd.ok()) {
++            return FAILURE_V(nullptr, "system DMA heap open failed: errno=%d", errno);
++        }
++        dma_heap_allocation_data allocation = {
++            .len = mappedSize,
++            .fd = 0,
++            .fd_flags = O_RDWR | O_CLOEXEC,
++            .heap_flags = 0,
++        };
++        if (TEMP_FAILURE_RETRY(ioctl(heapFd.get(), DMA_HEAP_IOCTL_ALLOC, &allocation)) < 0) {
++            return FAILURE_V(nullptr, "system DMA heap allocation failed: errno=%d", errno);
++        }
++        cpuAlocatorFd.reset(static_cast<int>(allocation.fd));
++        void* buffer = mmap(nullptr, mappedSize, PROT_READ | PROT_WRITE,
++                            MAP_SHARED, cpuAlocatorFd.get(), 0);
++        if (buffer == MAP_FAILED) return FAILURE(nullptr);
++        // Metadata and the reserved region use the mapping's CPU access session.
++        if (syncDmaBuf(cpuAlocatorFd.get(), DMA_BUF_SYNC_START | DMA_BUF_SYNC_RW) < 0) {
++            const int syncError = errno;
++            munmap(buffer, mappedSize);
++            return FAILURE_V(nullptr, "DMA_BUF_IOCTL_SYNC START failed: errno=%d", syncError);
++        }
++        auto unmap = [mappedSize, fd = cpuAlocatorFd.get()](void* pointer) {
++            if (syncDmaBuf(fd, DMA_BUF_SYNC_END | DMA_BUF_SYNC_RW) < 0) {
++                ALOGE("DMA_BUF_IOCTL_SYNC END failed: errno=%d", errno);
++            }
++            munmap(pointer, mappedSize);
++        };
++        std::unique_ptr<void, decltype(unmap)> mapping(buffer, unmap);
+         {
+-            GoldfishAddressSpaceHostMemoryAllocator hostMemoryAllocator(hasSharedSlots);
+-            LOG_ALWAYS_FATAL_IF(!hostMemoryAllocator.is_opened());
+-
+-            if (hostMemoryAllocator.hostMalloc(&bufferBits, totalAllocationSize)) {
+-                return FAILURE(nullptr);
+-            }
+-
+-            cpuAlocatorFd.reset(hostMemoryAllocator.release());
+-
+             CbExternalMetadata& metadata =
+                 *reinterpret_cast<CbExternalMetadata*>(
+-                    static_cast<char*>(bufferBits.guestPtr()) + imageSizeInBytesAligned);
++                    static_cast<char*>(buffer) + imageSizeInBytesAligned);
+ 
+             memset(&metadata, 0, sizeof(metadata));
+             metadata.magic = CbExternalMetadata::kMagicValue;
+@@ -644,8 +673,8 @@
+             if (req.imageSizeInBytes) {
+                 snprintf(bufferValueStr, sizeof(bufferValueStr),
+                          "{ ptr=%p mappedSize=%zu offset=0x%" PRIX64 " } imageSizeInBytes=%zu",
+-                         bufferBits.guestPtr(), size_t(bufferBits.size()),
+-                         bufferBits.offset(), size_t(req.imageSizeInBytes));
++                         buffer, size_t(mappedSize),
++                         uint64_t(0), size_t(req.imageSizeInBytes));
+             } else {
+                 strcpy(bufferValueStr, "null");
+             }
+@@ -661,11 +690,11 @@
+         auto cb = std::make_unique<cb_handle_t>(
+             cpuAlocatorFd.release(), hostHandleRefCountFd.release(), hostHandle,
+             req.usage, static_cast<uint32_t>(req.format), req.drmFormat,
+-            req.stride0, req.imageSizeInBytes, bufferBits.guestPtr(),
+-            bufferBits.size(), bufferBits.offset(),
++            req.stride0, req.imageSizeInBytes, buffer,
++            mappedSize, uint64_t(0),
+             imageSizeInBytesAligned);
+ 
+-        bufferBits.release();  // now cb owns it
++        mapping.release();
+         return cb;
+     }
+ 
+@@ -676,10 +705,13 @@
+ 
+         if (cb->bufferFd >= 0) {
+             if (cb->mmapedSize > 0) {
+-                GoldfishAddressSpaceBlock::memoryUnmap(cb->getBufferPtr(), cb->mmapedSize);
+-            }
+-
+-            GoldfishAddressSpaceHostMemoryAllocator::closeHandle(cb->bufferFd);
++                if (syncDmaBuf(cb->bufferFd, DMA_BUF_SYNC_END | DMA_BUF_SYNC_RW) < 0) {
++                    ALOGE("DMA_BUF_IOCTL_SYNC END failed: errno=%d", errno);
++                }
++                munmap(cb->getBufferPtr(), cb->mmapedSize);
++            }
++
++            close(cb->bufferFd);
+         }
+     }
+ 
+--- a/mapper.cpp
++++ b/mapper.cpp
+@@ -36,7 +36,10 @@
+ 
+ #include <debug.h>
+ #include <FormatConversions.h>
+-#include <goldfish_address_space.h>
++#include <linux/dma-buf.h>
++#include <sys/ioctl.h>
++#include <sys/mman.h>
++#include <unistd.h>
+ #include <gralloc_cb_bp.h>
+ 
+ #include "CbExternalMetadata.h"
+@@ -58,6 +61,11 @@
+ using ::android::hardware::graphics::mapper::MetadataWriter;
+ 
+ namespace {
++int syncDmaBuf(const int fd, const uint64_t flags) {
++    const dma_buf_sync sync = {.flags = flags};
++    return TEMP_FAILURE_RETRY(ioctl(fd, DMA_BUF_IOCTL_SYNC, &sync));
++}
++
+ constexpr size_t kMetadataBufferInitialSize = 1024;
+ constexpr uint32_t kCPU_READ_MASK = static_cast<uint32_t>(BufferUsage::CPU_READ_MASK);
+ constexpr uint32_t kCPU_WRITE_MASK = static_cast<uint32_t>(BufferUsage::CPU_WRITE_MASK);
+@@ -298,17 +306,6 @@
+     GoldfishMapper()
+             : mHostConn(HostConnection::createUnique(kCapsetNone))
+             , mDebugLevel(getDebugLevel()) {
+-        GoldfishAddressSpaceHostMemoryAllocator hostMemoryAllocator(false);
+-        LOG_ALWAYS_FATAL_IF(!hostMemoryAllocator.is_opened(),
+-            "GoldfishAddressSpaceHostMemoryAllocator failed to open");
+-
+-        GoldfishAddressSpaceBlock bufferBits;
+-        LOG_ALWAYS_FATAL_IF(hostMemoryAllocator.hostMalloc(&bufferBits, 256),
+-                            "hostMalloc failed");
+-
+-        mPhysAddrToOffset = bufferBits.physAddr() - bufferBits.offset();
+-        hostMemoryAllocator.hostFree(&bufferBits);
+-
+         static GoldfishMapper* s_instance;
+ 
+         mMapper.version = AIMAPPER_VERSION_5;
+@@ -408,15 +405,20 @@
+             const int bufferFd = cb->bufferFd;
+             LOG_ALWAYS_FATAL_IF(bufferFd < 0);
+ 
+-            void* newPtr;
+-            const int err = GoldfishAddressSpaceBlock::memoryMap(
+-                cb->getBufferPtr(), cb->mmapedSize,
+-                bufferFd, cb->getMmapedOffset(), &newPtr);
+-            if (err) {
++            void* newPtr = mmap(nullptr, cb->mmapedSize, PROT_READ | PROT_WRITE,
++                                MAP_SHARED, bufferFd, 0);
++            if (newPtr == MAP_FAILED) {
+                 native_handle_close(imported);
+                 native_handle_delete(imported);
+-                return FAILURE_V(AIMAPPER_ERROR_NO_RESOURCES, "%s: %s",
+-                                 "NO_RESOURCES", strerror(err));
++                return FAILURE(AIMAPPER_ERROR_NO_RESOURCES);
++            }
++            // getReservedRegion returns a CPU pointer valid until freeBuffer.
++            if (syncDmaBuf(bufferFd, DMA_BUF_SYNC_START | DMA_BUF_SYNC_RW) < 0) {
++                const int syncError = errno;
++                munmap(newPtr, cb->mmapedSize);
++                native_handle_close(imported);
++                native_handle_delete(imported);
++                return FAILURE_V(AIMAPPER_ERROR_NO_RESOURCES, "DMA_BUF_IOCTL_SYNC START failed: errno=%d", syncError);
+             }
+             cb->setBufferPtr(newPtr);
+         }
+@@ -448,7 +450,10 @@
+         if (cb->hostHandle && (cb->lockedUsage & kCPU_WRITE_MASK)) {
+             flushToHost(*cb);
+         }
+-        GoldfishAddressSpaceBlock::memoryUnmap(cb->getBufferPtr(),
++        if (cb->mmapedSize && syncDmaBuf(cb->bufferFd, DMA_BUF_SYNC_END | DMA_BUF_SYNC_RW) < 0) {
++            ALOGE("DMA_BUF_IOCTL_SYNC END failed: errno=%d", errno);
++        }
++        munmap(cb->getBufferPtr(),
+                                                cb->mmapedSize);
+         native_handle_close(cb);
+         native_handle_delete(cb);
+@@ -608,13 +613,10 @@
+                                         0, 0, metadata.width, metadata.height,
+                                         cb.getBufferPtr(), cb.bufferSize);
+         } else {
+-            LOG_ALWAYS_FATAL_IF(!rcEnc->featureInfo()->hasReadColorBufferDma);
+-            rcEnc->bindDmaDirectly(cb.getBufferPtr(),
+-                                   getMmapedPhysAddr(cb.getMmapedOffset()));
+-            rcEnc->rcReadColorBufferDMA(rcEnc, cb.hostHandle,
+-                                        0, 0, metadata.width, metadata.height,
+-                                        metadata.glFormat, metadata.glType,
+-                                        cb.getBufferPtr(), cb.bufferSize);
++            rcEnc->rcReadColorBuffer(rcEnc, cb.hostHandle,
++                                      0, 0, metadata.width, metadata.height,
++                                      metadata.glFormat, metadata.glType,
++                                      cb.getBufferPtr());
+         }
+ 
+         return AIMAPPER_ERROR_NONE;
+@@ -625,12 +627,10 @@
+         const HostConnectionSession conn = getHostConnectionSession();
+         ExtendedRCEncoderContext *const rcEnc = conn.getRcEncoder();
+ 
+-        rcEnc->bindDmaDirectly(cb.getBufferPtr(),
+-                               getMmapedPhysAddr(cb.getMmapedOffset()));
+-        rcEnc->rcUpdateColorBufferDMA(rcEnc, cb.hostHandle,
+-                                      0, 0, metadata.width, metadata.height,
+-                                      metadata.glFormat, metadata.glType,
+-                                      cb.getBufferPtr(), cb.bufferSize);
++        rcEnc->rcUpdateColorBuffer(rcEnc, cb.hostHandle,
++                                    0, 0, metadata.width, metadata.height,
++                                    metadata.glFormat, metadata.glType,
++                                    cb.getBufferPtr());
+     }
+ 
+     int32_t getMetadata(const buffer_handle_t buffer,
+@@ -1081,14 +1081,11 @@
+         return HostConnectionSession(mHostConn.get());
+     }
+ 
+-    uint64_t getMmapedPhysAddr(const uint64_t offset) const {
+-        return mPhysAddrToOffset + offset;
+-    }
++
+ 
+     AIMapper mMapper;
+     const std::unique_ptr<HostConnection> mHostConn;
+     std::unordered_set<const cb_handle_t*> mImportedBuffers;
+-    uint64_t mPhysAddrToOffset;
+     mutable std::mutex mImportedBuffersMtx;
+     const DebugLevel mDebugLevel;
+ };
