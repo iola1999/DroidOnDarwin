@@ -1,0 +1,1685 @@
+{
+  "schema": "droidondarwin.sdk-common-read-wait-stage.v1",
+  "status": "comparison_delivered",
+  "recorded_utc": "2026-11-15T01:26:09.841825+00:00",
+  "scope": "已完成 Common 原实现重建基线与等待候选的本机六入口比较，保存既有 v15 参照、输入关系、启动消息、全局 read 计数与验收缺项。",
+  "stage": {
+    "delivered": "比较结果与采集边界",
+    "waiting_code_status": "independent_build_in_progress",
+    "full_system_validation": "continuing",
+    "full_boot_accepted": false,
+    "new_guest_started_for_stage_record": false,
+    "new_build_executed_for_stage_record": false
+  },
+  "source_reports": [
+    {
+      "id": "independent_comparison",
+      "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/common-sdk-comparison-v1/independent-result-review-v1/comparison.json",
+      "sha256": "77ecaccb393e0c4864a56c8503eda6fc30387e9e876becf5c4a6e8df2d5862c5",
+      "bytes": 195924
+    },
+    {
+      "id": "baseline_run",
+      "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/common-sdk-comparison-v1/baseline/run/report.json",
+      "sha256": "0ee146048a7af6d4f49bee3adc696f2188142a31e5a9413e47ecd5e8614544ec",
+      "bytes": 2923142
+    },
+    {
+      "id": "wait_run",
+      "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/common-sdk-comparison-v1/wait/run/report.json",
+      "sha256": "6f174994270b1c943d19917e5b638a9fd149f8a3da69831ad6a54bb4a58ce41c",
+      "bytes": 2923402
+    },
+    {
+      "id": "boot_review",
+      "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/common-sdk-comparison-v1/boot-next-step-review-v1/report.json",
+      "sha256": "db25d2b55cd73e6165a38102597fc63a19ec1ec460cbf021422f0e3227084b9c",
+      "bytes": 47063
+    }
+  ],
+  "source_summaries": [
+    {
+      "id": "baseline_summary",
+      "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/common-sdk-comparison-v1/baseline/output/summary.json",
+      "sha256": "9ad9ff6a5b0c9d7f38e91b8ac7af4137f545e9c6cbb3ca57555db1112cf5856d",
+      "bytes": 42027908
+    },
+    {
+      "id": "wait_summary",
+      "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/common-sdk-comparison-v1/wait/output/summary.json",
+      "sha256": "c8743f656e4b41bdb46e21017fa1cc3231ee8d53e73226c847991df605c3e22a",
+      "bytes": 104259538
+    }
+  ],
+  "decision_source": {
+    "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/common-sdk-comparison-v1/plan.json",
+    "sha256": "08d098555ffc3835f5aba58d78942d46781ba693ea8f08fed0506e94e0f1f741",
+    "bytes": 3252
+  },
+  "independent_review": {
+    "status": "passed",
+    "scope": "两变体来源关系、六入口结束与原日志字段比较",
+    "read_sources": 38,
+    "sources_unchanged": true,
+    "current_input_rehash_scope": "本报告实际读取的原报告、六入口日志、共享宿主、准备报告、种子、终盘和导出 SQLite；4399 项完整输入检查保留原运行器结果。",
+    "boot_review_status": "completed",
+    "boot_review_validated": true,
+    "boot_review_scope": "读取既有结果中的前后输入清单并比较；另行核对四份 original 日志摘要和六个 sensors 文件。全部 4401 个输入与 83 个 Python 输入的完整校验沿用本轮主报告。"
+  },
+  "measurement": {
+    "platform": "macOS-27.0-arm64-arm-64bit-Mach-O",
+    "cpu": "Apple M5 Ultra",
+    "system_build": "26A428",
+    "shared_source_configuration": {
+      "data_tbi": true,
+      "execution": "direct",
+      "guest_page_bytes": 16384,
+      "host_page_bytes": 16384,
+      "cpus": 1,
+      "online_cpus": 1,
+      "guest_ram_bytes": 1073741824,
+      "translation_cache_bytes": 134217728,
+      "instruction_batch": 50000,
+      "memory_interval_ms": 100,
+      "preemption": "timer",
+      "timer_interval_ns": 2000000
+    },
+    "kernel_build_reference": {
+      "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-ptrace-generic-v1/regset-read-v1/kernel-build.json",
+      "sha256": "9ff79afd0afef487606913b4fd79f58d1d2dd5211b41e71f6bea3ac7f40b1921"
+    },
+    "kernel_abi_reference": {
+      "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-ptrace-generic-v1/regset-read-v1/kernel-abi-review.json",
+      "sha256": "656f8b3397c993566a55ba2ff76e25aac9e11ccad3e42f0c73dbb733761ee534"
+    },
+    "diagnostic_schedule": {
+      "read_identity": {
+        "syscall": 63,
+        "requested_bytes": 524288,
+        "result": -11,
+        "minimum_trace_index": 65536
+      },
+      "pid1_third_binder_sigquit": {
+        "inherited_target_seconds": 450,
+        "original_observation_seconds": 180,
+        "expected_in_window": false,
+        "condition_changed": false
+      }
+    },
+    "device_boundary": "本机离线记录。iPhone 安装、JIT 授权、设备资源、持续性能与热状态待真机验证。",
+    "shared_host_files": {
+      "cli": {
+        "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sdk-plain-init-regset-16k-v15-180s/cli",
+        "bytes": 7453040,
+        "sha256": "9f739aaef260c0df21dd206e907bfa42019f1d24e45c6dbce23e92a974a010ee"
+      },
+      "gcd": {
+        "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sdk-plain-init-regset-16k-v15-180s/gcd",
+        "bytes": 7453744,
+        "sha256": "75cfd1387ef8019474008bd89cc2a118f35103f117dc80cf22520cc0baccfe2d"
+      }
+    },
+    "entry_order": [
+      "cli-lifecycle",
+      "gcd-lifecycle",
+      "cli-original",
+      "gcd-original",
+      "cli-recovery",
+      "gcd-recovery"
+    ],
+    "original_observation_seconds": 180,
+    "original_host_timeout_seconds": 240,
+    "other_entry_host_timeout_seconds": 90,
+    "overall_timeout_seconds": 1200,
+    "service_duration_unit": "milliseconds",
+    "service_duration_scope": "原 SystemServerTiming 日志中具名服务区间的 took to complete 耗时。完整 Android 启动、帧时间和持续交互性能尚未验收。",
+    "wrapper_elapsed_seconds": {
+      "baseline": 432.14442762499675,
+      "wait": 433.8520387499593
+    },
+    "wrapper_elapsed_scope": "预检结束后、首次保存与可写盘克隆以前开始；包括克隆、六入口运行、回收、导出、capture 重分析、输入检查和原始日志摘要，结束于末次保存以前。",
+    "wrapper_elapsed_clock": "Python time.monotonic",
+    "wrapper_elapsed_used_for_boot_performance_comparison": false,
+    "android_boot_completion_seconds": null
+  },
+  "variants": {
+    "baseline": {
+      "status": "failed",
+      "first_stage_completed": true,
+      "full_boot_observed": false,
+      "full_boot_validation": "failed",
+      "data_persistence_validated": true,
+      "metadata_persistence_validated": true,
+      "metadata_rc_validated": true,
+      "metadata_original_unchanged": true,
+      "original_sqlite_validated": true,
+      "six_entry_order_passed": true,
+      "observation_and_cleanup_passed": true,
+      "capture_structure_passed": true,
+      "read_identity_originals_recorded": true,
+      "ashmem_original_passed": false,
+      "inputs_unchanged": true,
+      "missing_runs": [],
+      "run_report": "baseline_run",
+      "summary": "baseline_summary",
+      "command": [
+        "/opt/homebrew/opt/python@3.14/bin/python3.14",
+        "-B",
+        "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/common-sdk-comparison-v1/prebuilt_probe.py",
+        "--prepared",
+        "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/common-sdk-comparison-v1/baseline/build-01/prebuilt.json"
+      ],
+      "prepared_result": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/common-sdk-comparison-v1/baseline/build-01/prebuilt.json",
+      "shared_host_output": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sdk-plain-init-regset-16k-v15-180s",
+      "host_build_reference": {
+        "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/sdk-regset-original-init-v15-180s/build-01/report.json",
+        "sha256": "1c984f620b12d41a48380c6d6d857cdf4a346f5721e6ce1b1bd1eea8a5b5cc2a",
+        "role": "reuse_v15",
+        "compilation_executed": false
+      },
+      "graphics_candidate_recheck": {
+        "passed": true,
+        "report_sha256": "5fefbfb565c0ca149976ef4278fd31435804b4fe70badb8035375729d9b520c3",
+        "candidate_sha256": "3db2d44da00e3ddfb95c3ef399174704bf6bbc1e38ba23348ce0601f206bcd76",
+        "vendor_sha256": "907aa7792f16b02d9e69f474650d48c2368ca5f222761fa05c2e15408b04a4eb"
+      },
+      "independent_writable_clones": [
+        {
+          "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/sdk-regset-original-init-v15-180s/disk-seeds/data-16k.img",
+          "target": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/common-sdk-comparison-v1/baseline/run/data-16k.img",
+          "command": [
+            "cp",
+            "-c",
+            "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/sdk-regset-original-init-v15-180s/disk-seeds/data-16k.img",
+            "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/common-sdk-comparison-v1/baseline/run/data-16k.img"
+          ],
+          "initial_sha256": "352d4fbf236555d5808a45351663dfad87416f5492c59b11dde36aea7a33550f",
+          "bytes": 536870912,
+          "method": "cp -c"
+        },
+        {
+          "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/sdk-regset-original-init-v15-180s/disk-seeds/metadata-16k.img",
+          "target": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/common-sdk-comparison-v1/baseline/run/metadata-16k.img",
+          "command": [
+            "cp",
+            "-c",
+            "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/sdk-regset-original-init-v15-180s/disk-seeds/metadata-16k.img",
+            "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/common-sdk-comparison-v1/baseline/run/metadata-16k.img"
+          ],
+          "initial_sha256": "91b2cc14050e7fb41040eef0ec0d281ece784f55fb91314c286731419381f263",
+          "bytes": 18874368,
+          "method": "cp -c"
+        }
+      ],
+      "six_entries": [
+        {
+          "entry": "cli",
+          "phase": "lifecycle",
+          "mode": "lifecycle",
+          "returncode": 0,
+          "observation_validated": true,
+          "process_group_empty": true,
+          "cleanup_signals": [],
+          "errors": [],
+          "output_limit_exceeded": false,
+          "stdout": {
+            "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/common-sdk-comparison-v1/baseline/output/cli-lifecycle.jsonl",
+            "sha256": "52b606b1ca841fa9c7e8adf6628cd1710b60e7f53aa524d27eb133d475935de1"
+          },
+          "data_after": {
+            "clean": true,
+            "needs_recovery": false,
+            "sha256": "352d4fbf236555d5808a45351663dfad87416f5492c59b11dde36aea7a33550f"
+          },
+          "metadata_after": {
+            "clean": true,
+            "needs_recovery": false,
+            "sha256": "91b2cc14050e7fb41040eef0ec0d281ece784f55fb91314c286731419381f263"
+          }
+        },
+        {
+          "entry": "gcd",
+          "phase": "lifecycle",
+          "mode": "lifecycle",
+          "returncode": 0,
+          "observation_validated": true,
+          "process_group_empty": true,
+          "cleanup_signals": [],
+          "errors": [],
+          "output_limit_exceeded": false,
+          "stdout": {
+            "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/common-sdk-comparison-v1/baseline/output/gcd-lifecycle.jsonl",
+            "sha256": "71f4df66d32fa0ce20114a6ca3c890b66e21e7381c09c981fda77340b419d27b"
+          },
+          "data_after": {
+            "clean": true,
+            "needs_recovery": false,
+            "sha256": "352d4fbf236555d5808a45351663dfad87416f5492c59b11dde36aea7a33550f"
+          },
+          "metadata_after": {
+            "clean": true,
+            "needs_recovery": false,
+            "sha256": "91b2cc14050e7fb41040eef0ec0d281ece784f55fb91314c286731419381f263"
+          }
+        },
+        {
+          "entry": "cli",
+          "phase": "original",
+          "mode": "original",
+          "returncode": 0,
+          "observation_validated": true,
+          "process_group_empty": true,
+          "cleanup_signals": [],
+          "errors": [],
+          "output_limit_exceeded": false,
+          "stdout": {
+            "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/common-sdk-comparison-v1/baseline/output/cli-original.jsonl",
+            "sha256": "4795993f372055be95b9147e688e9ab267824816aae920edf2d860cb406e9250"
+          },
+          "data_after": {
+            "clean": false,
+            "needs_recovery": true,
+            "sha256": "05930514e08f5f5001688e7949fa9caf0347d734f74935d5c2d9fe8ad8049b50"
+          },
+          "metadata_after": {
+            "clean": true,
+            "needs_recovery": false,
+            "sha256": "9d21bf046a3b902fc75bd6e076f95202543db340d8f4edd09bee589fc5290fb0"
+          }
+        },
+        {
+          "entry": "gcd",
+          "phase": "original",
+          "mode": "original",
+          "returncode": 0,
+          "observation_validated": true,
+          "process_group_empty": true,
+          "cleanup_signals": [],
+          "errors": [],
+          "output_limit_exceeded": false,
+          "stdout": {
+            "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/common-sdk-comparison-v1/baseline/output/gcd-original.jsonl",
+            "sha256": "df3794ba9b7a289034acd86100043ef7130f32620f4bfae22844d1bf6c80f8ff"
+          },
+          "data_after": {
+            "clean": false,
+            "needs_recovery": true,
+            "sha256": "67dbb4f737570f45d49cd33f907585f4391b07ca12312d7248c7d3684c801c5d"
+          },
+          "metadata_after": {
+            "clean": true,
+            "needs_recovery": false,
+            "sha256": "664eb00c2744bb389e7af396530dc3873f925e425db62fe08ed70a82a09815b5"
+          }
+        },
+        {
+          "entry": "cli",
+          "phase": "recovery",
+          "mode": "lifecycle",
+          "returncode": 0,
+          "observation_validated": true,
+          "process_group_empty": true,
+          "cleanup_signals": [],
+          "errors": [],
+          "output_limit_exceeded": false,
+          "stdout": {
+            "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/common-sdk-comparison-v1/baseline/output/cli-recovery.jsonl",
+            "sha256": "d8ba3f42e675c153b4d405f9e446c6ad8a94027c5f4a735073bfb2b3171d40a5"
+          },
+          "data_after": {
+            "clean": true,
+            "needs_recovery": false,
+            "sha256": "afe19fe1adf4b092fc2c9d5372427199f59d66560222ab4859e6763496f193d2"
+          },
+          "metadata_after": {
+            "clean": true,
+            "needs_recovery": false,
+            "sha256": "ee295eb132c55880bea1aa1b6b4d70461aa6dc99d6551f8b5e3f7112bbc044a2"
+          }
+        },
+        {
+          "entry": "gcd",
+          "phase": "recovery",
+          "mode": "lifecycle",
+          "returncode": 0,
+          "observation_validated": true,
+          "process_group_empty": true,
+          "cleanup_signals": [],
+          "errors": [],
+          "output_limit_exceeded": false,
+          "stdout": {
+            "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/common-sdk-comparison-v1/baseline/output/gcd-recovery.jsonl",
+            "sha256": "ba95c9eadf57b9a9fbda350dfc65f69ea54869793b962f6e34f3a86fd9f3b68a"
+          },
+          "data_after": {
+            "clean": true,
+            "needs_recovery": false,
+            "sha256": "0b7ab5db8aea03048e3a9ea0f8bd8d89d44a9c40d88928ebae24c172be757a69"
+          },
+          "metadata_after": {
+            "clean": true,
+            "needs_recovery": false,
+            "sha256": "1903ab232bba1fef04f01813d180505b39d4942f6985f01fb17591030167aacd"
+          }
+        }
+      ],
+      "original_captures": [
+        {
+          "entry": "cli",
+          "ashmem_status": "incomplete",
+          "binder_status": "incomplete",
+          "sigquit_status": "incomplete",
+          "late_diagnostic_plan": {
+            "target_seconds": 450,
+            "observation_seconds": 180,
+            "expected_in_window": false,
+            "sigquit_records_observed": false,
+            "binder_records_observed": false
+          },
+          "observer": {
+            "boot_id": "796fef02-fa56-4318-b9dc-97bd928d6f2c",
+            "deployed": true,
+            "verified_exec_indices": [
+              2,
+              3
+            ],
+            "payloads": 2,
+            "export_returncode": 0,
+            "complete": false,
+            "passed": false,
+            "matching_write_records": 0
+          },
+          "observer_query_results_status": "not_captured",
+          "fatal_summary": {
+            "jsonl_line": 57332,
+            "stock_init_liblog_summary": true,
+            "seen": 911,
+            "recorded": 512,
+            "omitted": 399,
+            "capture_limit_bytes": 2048,
+            "record_limit": 512
+          }
+        },
+        {
+          "entry": "gcd",
+          "ashmem_status": "incomplete",
+          "binder_status": "incomplete",
+          "sigquit_status": "incomplete",
+          "late_diagnostic_plan": {
+            "target_seconds": 450,
+            "observation_seconds": 180,
+            "expected_in_window": false,
+            "sigquit_records_observed": false,
+            "binder_records_observed": false
+          },
+          "observer": {
+            "boot_id": "00bfa619-85eb-4108-af50-998519e950b6",
+            "deployed": true,
+            "verified_exec_indices": [
+              2,
+              3
+            ],
+            "payloads": 2,
+            "export_returncode": 0,
+            "complete": false,
+            "passed": false,
+            "matching_write_records": 0
+          },
+          "observer_query_results_status": "not_captured",
+          "fatal_summary": {
+            "jsonl_line": 57443,
+            "stock_init_liblog_summary": true,
+            "seen": 911,
+            "recorded": 512,
+            "omitted": 399,
+            "capture_limit_bytes": 2048,
+            "record_limit": 512
+          }
+        }
+      ],
+      "data_recovery": {
+        "original_data_needed_recovery": true,
+        "recovery_data_clean": true,
+        "recovery_metadata_clean": true,
+        "final_data": {
+          "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/common-sdk-comparison-v1/baseline/run/data-16k.img",
+          "bytes": 536870912,
+          "sha256": "0b7ab5db8aea03048e3a9ea0f8bd8d89d44a9c40d88928ebae24c172be757a69",
+          "clean": true,
+          "needs_recovery": false
+        },
+        "final_metadata": {
+          "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/common-sdk-comparison-v1/baseline/run/metadata-16k.img",
+          "bytes": 18874368,
+          "sha256": "1903ab232bba1fef04f01813d180505b39d4942f6985f01fb17591030167aacd",
+          "clean": true,
+          "needs_recovery": false
+        }
+      },
+      "sqlite": {
+        "generation": 54,
+        "file": {
+          "present": true,
+          "bytes": 94208,
+          "sha256": "11b04f927300f8a61ce7f4c715906319172d8c3d4539fcf817e4de29f7ec8eed"
+        },
+        "header_hex": "53514c69746520666f726d6174203300",
+        "quick_check": [
+          "ok"
+        ],
+        "schema_entries": 19,
+        "query": {
+          "mode": "ro",
+          "sqlite_version": "3.53.2",
+          "scope": "文件格式、quick_check 与 schema；存在的 WAL、journal、SHM 随数据库共同查询。",
+          "connection_closed": true,
+          "cleanup_completed": true
+        },
+        "scope": "文件格式、quick_check 与 schema；保留原 original_sqlite_validated 结果。"
+      },
+      "input_validation": {
+        "reported_before_count": 4401,
+        "reported_after_count": 4401,
+        "reported_before_after_equal": true,
+        "shared_reported_paths": 4399,
+        "python_before_count": 83,
+        "python_after_count": 83,
+        "python_before_after_equal": true,
+        "full_input_rehash_in_stage_record": false
+      }
+    },
+    "wait": {
+      "status": "failed",
+      "first_stage_completed": true,
+      "full_boot_observed": false,
+      "full_boot_validation": "failed",
+      "data_persistence_validated": true,
+      "metadata_persistence_validated": true,
+      "metadata_rc_validated": true,
+      "metadata_original_unchanged": true,
+      "original_sqlite_validated": true,
+      "six_entry_order_passed": true,
+      "observation_and_cleanup_passed": true,
+      "capture_structure_passed": true,
+      "read_identity_originals_recorded": true,
+      "ashmem_original_passed": false,
+      "inputs_unchanged": true,
+      "missing_runs": [],
+      "run_report": "wait_run",
+      "summary": "wait_summary",
+      "command": [
+        "/opt/homebrew/opt/python@3.14/bin/python3.14",
+        "-B",
+        "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/common-sdk-comparison-v1/prebuilt_probe.py",
+        "--prepared",
+        "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/common-sdk-comparison-v1/wait/build-01/prebuilt.json"
+      ],
+      "prepared_result": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/common-sdk-comparison-v1/wait/build-01/prebuilt.json",
+      "shared_host_output": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/native-linux-nce/sdk-plain-init-regset-16k-v15-180s",
+      "host_build_reference": {
+        "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/sdk-regset-original-init-v15-180s/build-01/report.json",
+        "sha256": "1c984f620b12d41a48380c6d6d857cdf4a346f5721e6ce1b1bd1eea8a5b5cc2a",
+        "role": "reuse_v15",
+        "compilation_executed": false
+      },
+      "graphics_candidate_recheck": {
+        "passed": true,
+        "report_sha256": "fcddeeb48ab55e78fe7709d0166d5630471908c552f3c9433b04d13801019e53",
+        "candidate_sha256": "fc5852874802842440750a3de7243a98c7437ec59e726f6a59bee2a0b3e9265c",
+        "vendor_sha256": "354186a467d8bf6842cd7565fdf4b8b921fae8193d622b0342de3cf2fcd54655"
+      },
+      "independent_writable_clones": [
+        {
+          "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/sdk-regset-original-init-v15-180s/disk-seeds/data-16k.img",
+          "target": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/common-sdk-comparison-v1/wait/run/data-16k.img",
+          "command": [
+            "cp",
+            "-c",
+            "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/sdk-regset-original-init-v15-180s/disk-seeds/data-16k.img",
+            "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/common-sdk-comparison-v1/wait/run/data-16k.img"
+          ],
+          "initial_sha256": "352d4fbf236555d5808a45351663dfad87416f5492c59b11dde36aea7a33550f",
+          "bytes": 536870912,
+          "method": "cp -c"
+        },
+        {
+          "source": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/sdk-regset-original-init-v15-180s/disk-seeds/metadata-16k.img",
+          "target": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/common-sdk-comparison-v1/wait/run/metadata-16k.img",
+          "command": [
+            "cp",
+            "-c",
+            "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/sdk-regset-original-init-v15-180s/disk-seeds/metadata-16k.img",
+            "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/common-sdk-comparison-v1/wait/run/metadata-16k.img"
+          ],
+          "initial_sha256": "91b2cc14050e7fb41040eef0ec0d281ece784f55fb91314c286731419381f263",
+          "bytes": 18874368,
+          "method": "cp -c"
+        }
+      ],
+      "six_entries": [
+        {
+          "entry": "cli",
+          "phase": "lifecycle",
+          "mode": "lifecycle",
+          "returncode": 0,
+          "observation_validated": true,
+          "process_group_empty": true,
+          "cleanup_signals": [],
+          "errors": [],
+          "output_limit_exceeded": false,
+          "stdout": {
+            "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/common-sdk-comparison-v1/wait/output/cli-lifecycle.jsonl",
+            "sha256": "4c82e0208583d5883c87f3fbfb3a4ffc65ec6647fe996de88470740a91854197"
+          },
+          "data_after": {
+            "clean": true,
+            "needs_recovery": false,
+            "sha256": "352d4fbf236555d5808a45351663dfad87416f5492c59b11dde36aea7a33550f"
+          },
+          "metadata_after": {
+            "clean": true,
+            "needs_recovery": false,
+            "sha256": "91b2cc14050e7fb41040eef0ec0d281ece784f55fb91314c286731419381f263"
+          }
+        },
+        {
+          "entry": "gcd",
+          "phase": "lifecycle",
+          "mode": "lifecycle",
+          "returncode": 0,
+          "observation_validated": true,
+          "process_group_empty": true,
+          "cleanup_signals": [],
+          "errors": [],
+          "output_limit_exceeded": false,
+          "stdout": {
+            "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/common-sdk-comparison-v1/wait/output/gcd-lifecycle.jsonl",
+            "sha256": "fe29ac1be22d99ad7ce60abda198f53e5da4d27e68d65616e6e9a00ca2568637"
+          },
+          "data_after": {
+            "clean": true,
+            "needs_recovery": false,
+            "sha256": "352d4fbf236555d5808a45351663dfad87416f5492c59b11dde36aea7a33550f"
+          },
+          "metadata_after": {
+            "clean": true,
+            "needs_recovery": false,
+            "sha256": "91b2cc14050e7fb41040eef0ec0d281ece784f55fb91314c286731419381f263"
+          }
+        },
+        {
+          "entry": "cli",
+          "phase": "original",
+          "mode": "original",
+          "returncode": 0,
+          "observation_validated": true,
+          "process_group_empty": true,
+          "cleanup_signals": [],
+          "errors": [],
+          "output_limit_exceeded": false,
+          "stdout": {
+            "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/common-sdk-comparison-v1/wait/output/cli-original.jsonl",
+            "sha256": "b918360a648a38c2b0e26317b36bcc27ae7abdfa9854d4929b8c84d173c274d2"
+          },
+          "data_after": {
+            "clean": false,
+            "needs_recovery": true,
+            "sha256": "33efda840e3640f496e121f0cf22141ae03057eee10240c539ac21701fedbb93"
+          },
+          "metadata_after": {
+            "clean": true,
+            "needs_recovery": false,
+            "sha256": "10c2e0d79a62ae6af64e8833265e1bcfb793307b9546722d628067d44f33fd6e"
+          }
+        },
+        {
+          "entry": "gcd",
+          "phase": "original",
+          "mode": "original",
+          "returncode": 0,
+          "observation_validated": true,
+          "process_group_empty": true,
+          "cleanup_signals": [],
+          "errors": [],
+          "output_limit_exceeded": false,
+          "stdout": {
+            "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/common-sdk-comparison-v1/wait/output/gcd-original.jsonl",
+            "sha256": "20d1025d88b5c79a4b4385d1f2f72b1ff672873cd5aa2d79e8109a9487dc7d1e"
+          },
+          "data_after": {
+            "clean": false,
+            "needs_recovery": true,
+            "sha256": "d9835ca3a0bbb9551040cfe75b07ceca6162f8b1511b7ea055c706741b5340ea"
+          },
+          "metadata_after": {
+            "clean": true,
+            "needs_recovery": false,
+            "sha256": "517b587985417249db64064558047423ef0fca0688b402b1e83b820eeb14ebd5"
+          }
+        },
+        {
+          "entry": "cli",
+          "phase": "recovery",
+          "mode": "lifecycle",
+          "returncode": 0,
+          "observation_validated": true,
+          "process_group_empty": true,
+          "cleanup_signals": [],
+          "errors": [],
+          "output_limit_exceeded": false,
+          "stdout": {
+            "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/common-sdk-comparison-v1/wait/output/cli-recovery.jsonl",
+            "sha256": "7ad874b058a0b751c3f0ca1a56ab346a5f46543369403eccac507e2a92509697"
+          },
+          "data_after": {
+            "clean": true,
+            "needs_recovery": false,
+            "sha256": "ee9f5c7d6724daa73a931bb8cbd72723255abd9667c6bc1fd2467bb4a501cff4"
+          },
+          "metadata_after": {
+            "clean": true,
+            "needs_recovery": false,
+            "sha256": "2512669cebc45f71255ad2fa2efa571495fb519b5dc4dc8d6ffc9462e5875df9"
+          }
+        },
+        {
+          "entry": "gcd",
+          "phase": "recovery",
+          "mode": "lifecycle",
+          "returncode": 0,
+          "observation_validated": true,
+          "process_group_empty": true,
+          "cleanup_signals": [],
+          "errors": [],
+          "output_limit_exceeded": false,
+          "stdout": {
+            "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/common-sdk-comparison-v1/wait/output/gcd-recovery.jsonl",
+            "sha256": "de242f4028f882bc7eec8f01d309e63222d3267401024c305cae2d8db00eee9d"
+          },
+          "data_after": {
+            "clean": true,
+            "needs_recovery": false,
+            "sha256": "6e55f03eac418fe59d3e13d2e01b8148e87f4f65fca9071fe654464b90eafa0c"
+          },
+          "metadata_after": {
+            "clean": true,
+            "needs_recovery": false,
+            "sha256": "d00d4221ca2000ee2e99cd2b7f441cba3150abc9b6174938ee227f03fdd5a064"
+          }
+        }
+      ],
+      "original_captures": [
+        {
+          "entry": "cli",
+          "ashmem_status": "incomplete",
+          "binder_status": "incomplete",
+          "sigquit_status": "incomplete",
+          "late_diagnostic_plan": {
+            "target_seconds": 450,
+            "observation_seconds": 180,
+            "expected_in_window": false,
+            "sigquit_records_observed": false,
+            "binder_records_observed": false
+          },
+          "observer": {
+            "boot_id": "eeb1bd5d-f728-4dee-b1de-9cf4844b7407",
+            "deployed": true,
+            "verified_exec_indices": [
+              2,
+              3
+            ],
+            "payloads": 2,
+            "export_returncode": 0,
+            "complete": false,
+            "passed": false,
+            "matching_write_records": 0
+          },
+          "observer_query_results_status": "not_captured",
+          "fatal_summary": {
+            "jsonl_line": 155795,
+            "stock_init_liblog_summary": true,
+            "seen": 1281,
+            "recorded": 512,
+            "omitted": 769,
+            "capture_limit_bytes": 2048,
+            "record_limit": 512
+          }
+        },
+        {
+          "entry": "gcd",
+          "ashmem_status": "incomplete",
+          "binder_status": "incomplete",
+          "sigquit_status": "incomplete",
+          "late_diagnostic_plan": {
+            "target_seconds": 450,
+            "observation_seconds": 180,
+            "expected_in_window": false,
+            "sigquit_records_observed": false,
+            "binder_records_observed": false
+          },
+          "observer": {
+            "boot_id": "07743ec0-8e17-47c2-8fb0-1699e44bad45",
+            "deployed": true,
+            "verified_exec_indices": [
+              2,
+              3
+            ],
+            "payloads": 2,
+            "export_returncode": 0,
+            "complete": false,
+            "passed": false,
+            "matching_write_records": 0
+          },
+          "observer_query_results_status": "not_captured",
+          "fatal_summary": {
+            "jsonl_line": 152707,
+            "stock_init_liblog_summary": true,
+            "seen": 1281,
+            "recorded": 512,
+            "omitted": 769,
+            "capture_limit_bytes": 2048,
+            "record_limit": 512
+          }
+        }
+      ],
+      "data_recovery": {
+        "original_data_needed_recovery": true,
+        "recovery_data_clean": true,
+        "recovery_metadata_clean": true,
+        "final_data": {
+          "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/common-sdk-comparison-v1/wait/run/data-16k.img",
+          "bytes": 536870912,
+          "sha256": "6e55f03eac418fe59d3e13d2e01b8148e87f4f65fca9071fe654464b90eafa0c",
+          "clean": true,
+          "needs_recovery": false
+        },
+        "final_metadata": {
+          "path": "/Users/fan/project/github.com/iola1999/DroidOnDarwin/work/sdk-plain-validation-v1/common-sdk-comparison-v1/wait/run/metadata-16k.img",
+          "bytes": 18874368,
+          "sha256": "d00d4221ca2000ee2e99cd2b7f441cba3150abc9b6174938ee227f03fdd5a064",
+          "clean": true,
+          "needs_recovery": false
+        }
+      },
+      "sqlite": {
+        "generation": 54,
+        "file": {
+          "present": true,
+          "bytes": 94208,
+          "sha256": "11b04f927300f8a61ce7f4c715906319172d8c3d4539fcf817e4de29f7ec8eed"
+        },
+        "header_hex": "53514c69746520666f726d6174203300",
+        "quick_check": [
+          "ok"
+        ],
+        "schema_entries": 19,
+        "query": {
+          "mode": "ro",
+          "sqlite_version": "3.53.2",
+          "scope": "文件格式、quick_check 与 schema；存在的 WAL、journal、SHM 随数据库共同查询。",
+          "connection_closed": true,
+          "cleanup_completed": true
+        },
+        "scope": "文件格式、quick_check 与 schema；保留原 original_sqlite_validated 结果。"
+      },
+      "input_validation": {
+        "reported_before_count": 4401,
+        "reported_after_count": 4401,
+        "reported_before_after_equal": true,
+        "shared_reported_paths": 4399,
+        "python_before_count": 83,
+        "python_after_count": 83,
+        "python_before_after_equal": true,
+        "full_input_rehash_in_stage_record": false
+      }
+    }
+  },
+  "original_comparison": {
+    "cli": {
+      "v15": {
+        "negative_read": {
+          "seen": 105719367,
+          "recorded": 84,
+          "omitted": 105719283
+        },
+        "nonnegative_read_seen": 151810,
+        "display_phase100_completed": false,
+        "package_manager_completed": false,
+        "full_boot_validation": "failed",
+        "start_core_services_start_recorded": false,
+        "selected_stage_markers": [
+          {
+            "line": 40286,
+            "pid": 498,
+            "tid": 498,
+            "log_index": 89,
+            "sec": 2777108,
+            "nsec": 964888000,
+            "tag": "SystemServerTiming",
+            "message": "WaitForDisplay",
+            "captured_bytes": 15,
+            "tag_bytes": 19,
+            "message_bytes": 15
+          },
+          {
+            "line": 40287,
+            "pid": 498,
+            "tid": 498,
+            "log_index": 90,
+            "sec": 2777108,
+            "nsec": 964999000,
+            "tag": "SystemServiceManager",
+            "message": "Starting phase 100",
+            "captured_bytes": 19,
+            "tag_bytes": 21,
+            "message_bytes": 19
+          },
+          {
+            "line": 40321,
+            "pid": 498,
+            "tid": 498,
+            "log_index": 120,
+            "sec": 2777108,
+            "nsec": 985621000,
+            "tag": "SystemServerTiming",
+            "message": "OnBootPhase_100_com.android.server.display.DisplayManagerService",
+            "captured_bytes": 65,
+            "tag_bytes": 19,
+            "message_bytes": 65
+          }
+        ],
+        "service_durations": {},
+        "taglog_summary": {
+          "line": 60284,
+          "stock_init_taglog_summary": true,
+          "seen": 120,
+          "recorded": 120,
+          "omitted": 0,
+          "capture_limit_bytes": 2048,
+          "record_limit": 128
+        },
+        "read_identity": {
+          "line": 28508,
+          "pid": 253,
+          "tid": 338,
+          "trace_index": 11255609,
+          "original_fd": 10,
+          "duplicate_fd": 12,
+          "flags": 133122,
+          "nonblocking": true,
+          "fd_path": "/dev/goldfish_pipe_dprctd",
+          "executable": "/system/bin/surfaceflinger",
+          "query_status": "complete",
+          "cleanup_status": "complete",
+          "registers_restored": true,
+          "calls_count": 20,
+          "stack_and_got_sampled": false,
+          "maps_sha256": "7e3cf6fc6880b2cf07f0079078a5bfde1a0d2b5c6130d5c2213d36f39f2d7cb7",
+          "pc_file_offset": "0xd2b08",
+          "lr_file_offset": "0x1a344"
+        },
+        "last_captured_taglog": {
+          "line": 40321,
+          "pid": 498,
+          "tid": 498,
+          "log_index": 120,
+          "sec": 2777108,
+          "nsec": 985621000,
+          "tag": "SystemServerTiming",
+          "message": "OnBootPhase_100_com.android.server.display.DisplayManagerService",
+          "captured_bytes": 65,
+          "tag_bytes": 19,
+          "message_bytes": 65
+        }
+      },
+      "baseline": {
+        "negative_read": {
+          "seen": 112518045,
+          "recorded": 84,
+          "omitted": 112517961
+        },
+        "nonnegative_read_seen": 149863,
+        "display_phase100_completed": false,
+        "package_manager_completed": false,
+        "full_boot_validation": "failed",
+        "start_core_services_start_recorded": false,
+        "selected_stage_markers": [
+          {
+            "line": 40072,
+            "pid": 496,
+            "tid": 496,
+            "log_index": 89,
+            "sec": 2779188,
+            "nsec": 895645000,
+            "tag": "SystemServerTiming",
+            "message": "WaitForDisplay",
+            "captured_bytes": 15,
+            "tag_bytes": 19,
+            "message_bytes": 15
+          },
+          {
+            "line": 40073,
+            "pid": 496,
+            "tid": 496,
+            "log_index": 90,
+            "sec": 2779188,
+            "nsec": 895706000,
+            "tag": "SystemServiceManager",
+            "message": "Starting phase 100",
+            "captured_bytes": 19,
+            "tag_bytes": 21,
+            "message_bytes": 19
+          },
+          {
+            "line": 40103,
+            "pid": 496,
+            "tid": 496,
+            "log_index": 120,
+            "sec": 2779188,
+            "nsec": 896751000,
+            "tag": "SystemServerTiming",
+            "message": "OnBootPhase_100_com.android.server.display.DisplayManagerService",
+            "captured_bytes": 65,
+            "tag_bytes": 19,
+            "message_bytes": 65
+          }
+        ],
+        "service_durations": {},
+        "taglog_summary": {
+          "line": 57333,
+          "stock_init_taglog_summary": true,
+          "seen": 120,
+          "recorded": 120,
+          "omitted": 0,
+          "capture_limit_bytes": 2048,
+          "record_limit": 128
+        },
+        "read_identity": {
+          "line": 28511,
+          "pid": 255,
+          "tid": 338,
+          "trace_index": 12952721,
+          "original_fd": 10,
+          "duplicate_fd": 12,
+          "flags": 133122,
+          "nonblocking": true,
+          "fd_path": "/dev/goldfish_pipe_dprctd",
+          "executable": "/system/bin/surfaceflinger",
+          "query_status": "complete",
+          "cleanup_status": "complete",
+          "registers_restored": true,
+          "calls_count": 20,
+          "stack_and_got_sampled": false,
+          "maps_sha256": "ba2325d226e625bf935c08b65fdeedddf6a63764da9976b6a26d5e3c86449cf1",
+          "pc_file_offset": "0xd2b08",
+          "lr_file_offset": "0x1a344"
+        },
+        "last_captured_taglog": {
+          "line": 40103,
+          "pid": 496,
+          "tid": 496,
+          "log_index": 120,
+          "sec": 2779188,
+          "nsec": 896751000,
+          "tag": "SystemServerTiming",
+          "message": "OnBootPhase_100_com.android.server.display.DisplayManagerService",
+          "captured_bytes": 65,
+          "tag_bytes": 19,
+          "message_bytes": 65
+        }
+      },
+      "wait": {
+        "negative_read": {
+          "seen": 12281234,
+          "recorded": 81,
+          "omitted": 12281153
+        },
+        "nonnegative_read_seen": 384411,
+        "display_phase100_completed": true,
+        "package_manager_completed": true,
+        "full_boot_validation": "failed",
+        "start_core_services_start_recorded": true,
+        "selected_stage_markers": [
+          {
+            "line": 35649,
+            "pid": 434,
+            "tid": 434,
+            "log_index": 89,
+            "sec": 2779814,
+            "nsec": 143102000,
+            "tag": "SystemServerTiming",
+            "message": "WaitForDisplay",
+            "captured_bytes": 15,
+            "tag_bytes": 19,
+            "message_bytes": 15
+          },
+          {
+            "line": 35650,
+            "pid": 434,
+            "tid": 434,
+            "log_index": 90,
+            "sec": 2779814,
+            "nsec": 143239000,
+            "tag": "SystemServiceManager",
+            "message": "Starting phase 100",
+            "captured_bytes": 19,
+            "tag_bytes": 21,
+            "message_bytes": 19
+          },
+          {
+            "line": 35680,
+            "pid": 434,
+            "tid": 434,
+            "log_index": 120,
+            "sec": 2779814,
+            "nsec": 144640000,
+            "tag": "SystemServerTiming",
+            "message": "OnBootPhase_100_com.android.server.display.DisplayManagerService",
+            "captured_bytes": 65,
+            "tag_bytes": 19,
+            "message_bytes": 65
+          },
+          {
+            "line": 36119,
+            "pid": 434,
+            "tid": 434,
+            "log_index": 123,
+            "sec": 2779816,
+            "nsec": 44392000,
+            "tag": "SystemServerTiming",
+            "message": "OnBootPhase_100_com.android.server.display.DisplayManagerService took to complete: 1900ms",
+            "captured_bytes": 90,
+            "tag_bytes": 19,
+            "message_bytes": 90
+          },
+          {
+            "line": 36121,
+            "pid": 434,
+            "tid": 434,
+            "log_index": 125,
+            "sec": 2779816,
+            "nsec": 44496000,
+            "tag": "SystemServerTiming",
+            "message": "WaitForDisplay took to complete: 1902ms",
+            "captured_bytes": 40,
+            "tag_bytes": 19,
+            "message_bytes": 40
+          },
+          {
+            "line": 36147,
+            "pid": 434,
+            "tid": 434,
+            "log_index": 126,
+            "sec": 2779816,
+            "nsec": 80441000,
+            "tag": "SystemServerTiming",
+            "message": "StartPackageManagerService",
+            "captured_bytes": 27,
+            "tag_bytes": 19,
+            "message_bytes": 27
+          },
+          {
+            "line": 62431,
+            "pid": 434,
+            "tid": 434,
+            "log_index": 127,
+            "sec": 2779869,
+            "nsec": 543481000,
+            "tag": "SystemServerTiming",
+            "message": "StartPackageManagerService took to complete: 53463ms",
+            "captured_bytes": 53,
+            "tag_bytes": 19,
+            "message_bytes": 53
+          },
+          {
+            "line": 74814,
+            "pid": 434,
+            "tid": 434,
+            "log_index": 128,
+            "sec": 2779872,
+            "nsec": 243776000,
+            "tag": "SystemServerTiming",
+            "message": "startCoreServices",
+            "captured_bytes": 18,
+            "tag_bytes": 19,
+            "message_bytes": 18
+          }
+        ],
+        "service_durations": {
+          "OnBootPhase_100_com.android.server.display.DisplayManagerService": {
+            "milliseconds": 1900,
+            "source_line": 36119,
+            "pid": 434,
+            "tid": 434
+          },
+          "WaitForDisplay": {
+            "milliseconds": 1902,
+            "source_line": 36121,
+            "pid": 434,
+            "tid": 434
+          },
+          "StartPackageManagerService": {
+            "milliseconds": 53463,
+            "source_line": 62431,
+            "pid": 434,
+            "tid": 434
+          }
+        },
+        "taglog_summary": {
+          "line": 155796,
+          "stock_init_taglog_summary": true,
+          "seen": 129,
+          "recorded": 128,
+          "omitted": 1,
+          "capture_limit_bytes": 2048,
+          "record_limit": 128
+        },
+        "read_identity": {
+          "line": 28456,
+          "pid": 254,
+          "tid": 344,
+          "trace_index": 11626190,
+          "original_fd": 10,
+          "duplicate_fd": 12,
+          "flags": 133122,
+          "nonblocking": true,
+          "fd_path": "/dev/goldfish_pipe_dprctd",
+          "executable": "/system/bin/surfaceflinger",
+          "query_status": "complete",
+          "cleanup_status": "complete",
+          "registers_restored": true,
+          "calls_count": 20,
+          "stack_and_got_sampled": false,
+          "maps_sha256": "854b6df6992ad91202fae71c663dce23f0879345ad58042571e1f551a782652c",
+          "pc_file_offset": "0xd2b08",
+          "lr_file_offset": "0x1a344"
+        },
+        "last_captured_taglog": {
+          "line": 74814,
+          "pid": 434,
+          "tid": 434,
+          "log_index": 128,
+          "sec": 2779872,
+          "nsec": 243776000,
+          "tag": "SystemServerTiming",
+          "message": "startCoreServices",
+          "captured_bytes": 18,
+          "tag_bytes": 19,
+          "message_bytes": 18
+        }
+      },
+      "wait_minus_baseline_negative_read_count": -100236811
+    },
+    "gcd": {
+      "v15": {
+        "negative_read": {
+          "seen": 110118557,
+          "recorded": 84,
+          "omitted": 110118473
+        },
+        "nonnegative_read_seen": 149877,
+        "display_phase100_completed": false,
+        "package_manager_completed": false,
+        "full_boot_validation": "failed",
+        "start_core_services_start_recorded": false,
+        "selected_stage_markers": [
+          {
+            "line": 40757,
+            "pid": 500,
+            "tid": 500,
+            "log_index": 89,
+            "sec": 2777303,
+            "nsec": 240731000,
+            "tag": "SystemServerTiming",
+            "message": "WaitForDisplay",
+            "captured_bytes": 15,
+            "tag_bytes": 19,
+            "message_bytes": 15
+          },
+          {
+            "line": 40758,
+            "pid": 500,
+            "tid": 500,
+            "log_index": 90,
+            "sec": 2777303,
+            "nsec": 240801000,
+            "tag": "SystemServiceManager",
+            "message": "Starting phase 100",
+            "captured_bytes": 19,
+            "tag_bytes": 21,
+            "message_bytes": 19
+          },
+          {
+            "line": 40788,
+            "pid": 500,
+            "tid": 500,
+            "log_index": 120,
+            "sec": 2777303,
+            "nsec": 241961000,
+            "tag": "SystemServerTiming",
+            "message": "OnBootPhase_100_com.android.server.display.DisplayManagerService",
+            "captured_bytes": 65,
+            "tag_bytes": 19,
+            "message_bytes": 65
+          }
+        ],
+        "service_durations": {},
+        "taglog_summary": {
+          "line": 57266,
+          "stock_init_taglog_summary": true,
+          "seen": 120,
+          "recorded": 120,
+          "omitted": 0,
+          "capture_limit_bytes": 2048,
+          "record_limit": 128
+        },
+        "read_identity": {
+          "line": 28407,
+          "pid": 243,
+          "tid": 337,
+          "trace_index": 11529583,
+          "original_fd": 10,
+          "duplicate_fd": 12,
+          "flags": 133122,
+          "nonblocking": true,
+          "fd_path": "/dev/goldfish_pipe_dprctd",
+          "executable": "/system/bin/surfaceflinger",
+          "query_status": "complete",
+          "cleanup_status": "complete",
+          "registers_restored": true,
+          "calls_count": 20,
+          "stack_and_got_sampled": false,
+          "maps_sha256": "55ffb51ab3b85df902d01e3405284821a795a5c02b12b6b7999c1768d1e5ade4",
+          "pc_file_offset": "0xd2b08",
+          "lr_file_offset": "0x1a344"
+        },
+        "last_captured_taglog": {
+          "line": 40788,
+          "pid": 500,
+          "tid": 500,
+          "log_index": 120,
+          "sec": 2777303,
+          "nsec": 241961000,
+          "tag": "SystemServerTiming",
+          "message": "OnBootPhase_100_com.android.server.display.DisplayManagerService",
+          "captured_bytes": 65,
+          "tag_bytes": 19,
+          "message_bytes": 65
+        }
+      },
+      "baseline": {
+        "negative_read": {
+          "seen": 110602336,
+          "recorded": 84,
+          "omitted": 110602252
+        },
+        "nonnegative_read_seen": 150017,
+        "display_phase100_completed": false,
+        "package_manager_completed": false,
+        "full_boot_validation": "failed",
+        "start_core_services_start_recorded": false,
+        "selected_stage_markers": [
+          {
+            "line": 40205,
+            "pid": 486,
+            "tid": 486,
+            "log_index": 89,
+            "sec": 2779369,
+            "nsec": 923810000,
+            "tag": "SystemServerTiming",
+            "message": "WaitForDisplay",
+            "captured_bytes": 15,
+            "tag_bytes": 19,
+            "message_bytes": 15
+          },
+          {
+            "line": 40206,
+            "pid": 486,
+            "tid": 486,
+            "log_index": 90,
+            "sec": 2779369,
+            "nsec": 924012000,
+            "tag": "SystemServiceManager",
+            "message": "Starting phase 100",
+            "captured_bytes": 19,
+            "tag_bytes": 21,
+            "message_bytes": 19
+          },
+          {
+            "line": 40236,
+            "pid": 486,
+            "tid": 486,
+            "log_index": 120,
+            "sec": 2779369,
+            "nsec": 925185000,
+            "tag": "SystemServerTiming",
+            "message": "OnBootPhase_100_com.android.server.display.DisplayManagerService",
+            "captured_bytes": 65,
+            "tag_bytes": 19,
+            "message_bytes": 65
+          }
+        ],
+        "service_durations": {},
+        "taglog_summary": {
+          "line": 57444,
+          "stock_init_taglog_summary": true,
+          "seen": 120,
+          "recorded": 120,
+          "omitted": 0,
+          "capture_limit_bytes": 2048,
+          "record_limit": 128
+        },
+        "read_identity": {
+          "line": 28488,
+          "pid": 243,
+          "tid": 342,
+          "trace_index": 12895400,
+          "original_fd": 10,
+          "duplicate_fd": 12,
+          "flags": 133122,
+          "nonblocking": true,
+          "fd_path": "/dev/goldfish_pipe_dprctd",
+          "executable": "/system/bin/surfaceflinger",
+          "query_status": "complete",
+          "cleanup_status": "complete",
+          "registers_restored": true,
+          "calls_count": 20,
+          "stack_and_got_sampled": false,
+          "maps_sha256": "c90d6252f85f7faf837f1cb6da15096febf1ecead7e392d71b51c5cf6b79e125",
+          "pc_file_offset": "0xd2b08",
+          "lr_file_offset": "0x1a344"
+        },
+        "last_captured_taglog": {
+          "line": 40236,
+          "pid": 486,
+          "tid": 486,
+          "log_index": 120,
+          "sec": 2779369,
+          "nsec": 925185000,
+          "tag": "SystemServerTiming",
+          "message": "OnBootPhase_100_com.android.server.display.DisplayManagerService",
+          "captured_bytes": 65,
+          "tag_bytes": 19,
+          "message_bytes": 65
+        }
+      },
+      "wait": {
+        "negative_read": {
+          "seen": 14700970,
+          "recorded": 81,
+          "omitted": 14700889
+        },
+        "nonnegative_read_seen": 298465,
+        "display_phase100_completed": true,
+        "package_manager_completed": true,
+        "full_boot_validation": "failed",
+        "start_core_services_start_recorded": true,
+        "selected_stage_markers": [
+          {
+            "line": 35372,
+            "pid": 435,
+            "tid": 435,
+            "log_index": 89,
+            "sec": 2779997,
+            "nsec": 864681000,
+            "tag": "SystemServerTiming",
+            "message": "WaitForDisplay",
+            "captured_bytes": 15,
+            "tag_bytes": 19,
+            "message_bytes": 15
+          },
+          {
+            "line": 35373,
+            "pid": 435,
+            "tid": 435,
+            "log_index": 90,
+            "sec": 2779997,
+            "nsec": 864755000,
+            "tag": "SystemServiceManager",
+            "message": "Starting phase 100",
+            "captured_bytes": 19,
+            "tag_bytes": 21,
+            "message_bytes": 19
+          },
+          {
+            "line": 35403,
+            "pid": 435,
+            "tid": 435,
+            "log_index": 120,
+            "sec": 2779997,
+            "nsec": 865948000,
+            "tag": "SystemServerTiming",
+            "message": "OnBootPhase_100_com.android.server.display.DisplayManagerService",
+            "captured_bytes": 65,
+            "tag_bytes": 19,
+            "message_bytes": 65
+          },
+          {
+            "line": 36191,
+            "pid": 435,
+            "tid": 435,
+            "log_index": 123,
+            "sec": 2780000,
+            "nsec": 198677000,
+            "tag": "SystemServerTiming",
+            "message": "OnBootPhase_100_com.android.server.display.DisplayManagerService took to complete: 2333ms",
+            "captured_bytes": 90,
+            "tag_bytes": 19,
+            "message_bytes": 90
+          },
+          {
+            "line": 36193,
+            "pid": 435,
+            "tid": 435,
+            "log_index": 125,
+            "sec": 2780000,
+            "nsec": 198776000,
+            "tag": "SystemServerTiming",
+            "message": "WaitForDisplay took to complete: 2334ms",
+            "captured_bytes": 40,
+            "tag_bytes": 19,
+            "message_bytes": 40
+          },
+          {
+            "line": 36243,
+            "pid": 435,
+            "tid": 435,
+            "log_index": 126,
+            "sec": 2780000,
+            "nsec": 234030000,
+            "tag": "SystemServerTiming",
+            "message": "StartPackageManagerService",
+            "captured_bytes": 27,
+            "tag_bytes": 19,
+            "message_bytes": 27
+          },
+          {
+            "line": 53344,
+            "pid": 435,
+            "tid": 435,
+            "log_index": 127,
+            "sec": 2780038,
+            "nsec": 121777000,
+            "tag": "SystemServerTiming",
+            "message": "StartPackageManagerService took to complete: 37887ms",
+            "captured_bytes": 53,
+            "tag_bytes": 19,
+            "message_bytes": 53
+          },
+          {
+            "line": 60403,
+            "pid": 435,
+            "tid": 435,
+            "log_index": 128,
+            "sec": 2780040,
+            "nsec": 509176000,
+            "tag": "SystemServerTiming",
+            "message": "startCoreServices",
+            "captured_bytes": 18,
+            "tag_bytes": 19,
+            "message_bytes": 18
+          }
+        ],
+        "service_durations": {
+          "OnBootPhase_100_com.android.server.display.DisplayManagerService": {
+            "milliseconds": 2333,
+            "source_line": 36191,
+            "pid": 435,
+            "tid": 435
+          },
+          "WaitForDisplay": {
+            "milliseconds": 2334,
+            "source_line": 36193,
+            "pid": 435,
+            "tid": 435
+          },
+          "StartPackageManagerService": {
+            "milliseconds": 37887,
+            "source_line": 53344,
+            "pid": 435,
+            "tid": 435
+          }
+        },
+        "taglog_summary": {
+          "line": 152708,
+          "stock_init_taglog_summary": true,
+          "seen": 200,
+          "recorded": 128,
+          "omitted": 72,
+          "capture_limit_bytes": 2048,
+          "record_limit": 128
+        },
+        "read_identity": {
+          "line": 28520,
+          "pid": 243,
+          "tid": 345,
+          "trace_index": 13759781,
+          "original_fd": 10,
+          "duplicate_fd": 12,
+          "flags": 133122,
+          "nonblocking": true,
+          "fd_path": "/dev/goldfish_pipe_dprctd",
+          "executable": "/system/bin/surfaceflinger",
+          "query_status": "complete",
+          "cleanup_status": "complete",
+          "registers_restored": true,
+          "calls_count": 20,
+          "stack_and_got_sampled": false,
+          "maps_sha256": "099f5ec30f851d27582f94d3ad19a8026b6434c02d5618c132b1a2faaff6d7fe",
+          "pc_file_offset": "0xd2b08",
+          "lr_file_offset": "0x1a344"
+        },
+        "last_captured_taglog": {
+          "line": 60403,
+          "pid": 435,
+          "tid": 435,
+          "log_index": 128,
+          "sec": 2780040,
+          "nsec": 509176000,
+          "tag": "SystemServerTiming",
+          "message": "startCoreServices",
+          "captured_bytes": 18,
+          "tag_bytes": 19,
+          "message_bytes": 18
+        }
+      },
+      "wait_minus_baseline_negative_read_count": -95901366
+    }
+  },
+  "global_negative_read_scope": {
+    "syscall": 63,
+    "result_selection": "result < 0",
+    "unit": "calls",
+    "grouping": "宿主按 syscall 编号与结果正负分组；计数包含全部已记录服务与 FD。",
+    "ordinary_sample_pid_tid_captured": false,
+    "per_graphics_fd_call_count_captured": false,
+    "last_errno_explains_all_negative_results": false,
+    "parameter_selection": "各组前 64 次与后续 2 次幂索引；未保存的参数无法还原到某个 FD 或请求大小。",
+    "kernel_restart_results": [
+      "-512",
+      "-514"
+    ]
+  },
+  "observer": {
+    "trigger": "on property:sys.boot_completed=1",
+    "service": "droid_plain_system_observer",
+    "service_configuration": {
+      "class": "late_start",
+      "user": "shell",
+      "groups": [
+        "shell",
+        "log",
+        "readproc"
+      ],
+      "seclabel": "u:r:shell:s0",
+      "disabled": true,
+      "oneshot": true
+    },
+    "deployment_scope": "verified_exec_indices [2,3] 记录 PID1 的文件部署校验。observer 服务进程的成功启动尚未采集。",
+    "missing_checkpoint": "四份数据盘的 /local/tests/system/<boot_id> 均缺少对应目录，缺项发生在结果目录生成以前。",
+    "unresolved_causes": [
+      "sys.boot_completed=1 属性触发尚未发生",
+      "observer 在读取 boot_id 或创建结果目录以前退出"
+    ],
+    "queried_service_count": 19,
+    "individual_query_results": "未采集",
+    "query_timeout_seconds": 5,
+    "query_kill_after_seconds": 1,
+    "conclusion": "现有记录只能确认结果目录缺失；19 项内部查询的执行结果尚未确定。",
+    "individual_query_results_status": "not_captured",
+    "full_boot_acceptance": "取得 450 秒 Binder/线程记录与后续阶段起止，定位实际等待。完整启动继续以 observer 的唯一完整 result.passed.tsv、19 项输出与 boot_id 一致性验收。"
+  },
+  "capture_limits": {
+    "boot_taglog": {
+      "source_key": "boot_taglog",
+      "record_limit": 128,
+      "capture_limit_bytes": 2048,
+      "selection": "固定 tag 与优先级；SystemServerTiming 仅记录选定阶段名和 phase 100。Watchdog、SensorService phase 200 及其他后续服务起止尚未纳入本轮选择。"
+    },
+    "fatal_liblog": {
+      "source_key": "fatal_liblog",
+      "record_limit": 512,
+      "capture_limit_bytes": 2048,
+      "priority": 7
+    },
+    "limitation": "taglog 的 omitted 是通过本轮选择条件后超出数量上限的条数；未被选择的 tag 与消息未计入 seen。FATAL 摘要同样只覆盖其选择条件。",
+    "original_observation_seconds": 180,
+    "original_host_timeout_seconds": 240,
+    "other_entry_host_timeout_seconds": 90,
+    "overall_timeout_seconds": 1200,
+    "late_diagnostics": "PID1 第三次采样、Binder 和 SIGQUIT 的 450 秒条件保持；本轮 180 秒窗口结束前这些记录均为 incomplete。"
+  },
+  "dynamic_call_relation": {
+    "fp_and_got_captured_in_these_runs": false,
+    "common_wait_branch_to_graphics_fd_confirmed": false,
+    "pselect6_ppoll_scope": "仅保留负结果；普通记录缺少 PID/TID、pollfd 内存、FD、events/revents 与 timeout 内容，成功调用没有计数或参数。",
+    "next_step": "以本次调用帧与 GOT 身份及有界 syscall 记录核对上层方法和动态绑定；完整系统继续按 observer 契约验收。"
+  },
+  "alternatives": [
+    "复制整个 SDK 和 frozen tree 会增加重复产物；已有宿主通过环境变量选择系统盘。",
+    "重编译两个宿主会增加未控制变量；同一 v15 宿主已完成独立构建复核。",
+    "只列顶层 import 会遗漏同目录动态读取的 pid1_validation.py；离线执行完整分析链补充实际读取文件。"
+  ],
+  "limits": [
+    "syscall 汇总按宿主中的 syscall 编号和结果正负分组；普通样本没有 PID/TID，read 负结果总数包含其他服务与 FD。",
+    "普通参数只保留各组前 64 次和后续 2 次幂索引；遗漏参数无法还原为某个 FD 或请求大小的调用次数。",
+    "负结果包含客体内核的 -512、-514 等重启结果；实际样本结果原样保留。",
+    "成功结果仅采集 read/63 和 reboot/142；成功 pselect6/72 与 ppoll/73 没有计数或参数记录。",
+    "pselect6/ppoll 记录没有 PID/TID、pollfd 内存、实际 FD、events/revents、timeout 内容或动态调用关系；已有负结果无法确认 Common 等待分支的调用。",
+    "read 身份每个宿主仅尝试一次，条件为 original、read/63、524288 bytes、-11、全局负 read 索引至少 65536。",
+    "maps 来自该次身份采样；映射路径与 PC/LR 范围已核对，全部映射文件字节、FP 链及 GOT 值未采集。",
+    "taglog 最多 128 条、FATAL 最多 512 条，每条 capture 上限 2048 bytes；实际遗漏计数逐入口保存。",
+    "450 秒 PID1 Binder/SIGQUIT 条件超过每个 original 的 180 秒观察窗口；完整启动与原 ashmem 契约保留原结果。",
+    "每个变体的 CLI/GCD 仅运行一次；验证总耗时没有对应 Android 启动完成事件。"
+  ],
+  "verification": {
+    "source_report_hashes_checked": true,
+    "summary_hashes_checked": true,
+    "shared_path_count_checked_from_original_reports": 4399,
+    "shared_path_hash_differences": [],
+    "reported_input_tables_equal": true,
+    "reported_python_tables_equal": true,
+    "full_input_rehash_performed_for_stage_record": false,
+    "scope": "当前整理核对四份来源报告、两份 summary 及报告间的字段关系；4399/4401 项完整文件摘要检查沿用原运行器结果。"
+  }
+}
